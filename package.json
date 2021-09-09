@@ -1,0 +1,16 @@
+{
+  "name": "alinea",
+  "version": "0.0.0",
+  "license": "MIT",
+  "scripts": {
+    "dev": "yarn workspace @alinea/stories dev"
+  },
+  "files": [],
+  "workspaces": [
+    "packages/*"
+  ],
+  "devDependencies": {
+    "@types/node": "^16.9.0",
+    "uvu": "^0.5.1"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "name": "@alinea/server",
+  "version": "0.0.0",
+  "license": "MIT",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsup src/index.ts --dts"
+  },
+  "dependencies": {
+    "@alinea/core": "0.0.0"
+  },
+  "devDependencies": {
+    "tsup": "^4.14.0"
+  }
+}
