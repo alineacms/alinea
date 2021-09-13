@@ -1,11 +1,15 @@
+import {Api, Hub} from '@alinea/core'
+import express, {Router} from 'express'
 import {IncomingMessage, ServerResponse} from 'http'
-import {Config} from 'packages/core/src/Config'
+import cors from 'cors'
 
-export function serve(config: Config) {
-  return (req: IncomingMessage, res: ServerResponse) => {
-    res.statusCode = 200
-    res.setHeader('Content-Type', 'application/json')
-    res.setHeader('Access-Control-Allow-Origin', '*')
-    res.end(JSON.stringify({status: 'ok'}))
-  }
+export function serve(hub: Hub) {
+  const router = Router()
+  router.use(cors())
+  router.get(Api.nav.content.list(), async (req, res) => {
+    res.json(await hub.content().list())
+  })
+  const app = express()
+  app.use(router)
+  return (req: IncomingMessage, res: ServerResponse): void => app(req, res)
 }

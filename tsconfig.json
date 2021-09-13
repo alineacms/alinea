@@ -1,16 +1,17 @@
 {
   "compilerOptions": {
+    "module": "ESNext",
     "skipLibCheck": true,
-    "noEmit": true,
     "strict": true,
     "declaration": true,
     "declarationMap": true,
     "moduleResolution": "node",
     "jsx": "react",
     "allowSyntheticDefaultImports": true,
-    "baseUrl": ".",
+    "importHelpers": true,
     "paths": {
-      "@alinea/*": ["packages/*/src"]
+      "@alinea/*": ["./packages/*/src"],
+      "@alinea/core/*": ["./packages/core/src/*"]
     }
   }
 }

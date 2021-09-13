@@ -14,9 +14,15 @@ const styles = {
 }
 
 export function Sidebar() {
-  const {api} = useConfig()
+  const {client} = useConfig()
   const {isLoading, error, data} = useQuery('sidebar', () =>
-    fetch(api + '/test').then(res => res.json())
+    client.content().list()
   )
-  return <div className={styles.root()}>{data}</div>
+  return (
+    <div className={styles.root()}>
+      {data?.map(entry => {
+        return <div key={entry.id}>{entry.id}</div>
+      })}
+    </div>
+  )
 }

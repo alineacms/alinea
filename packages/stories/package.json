@@ -4,8 +4,9 @@
   "license": "MIT",
   "scripts": {
     "dev": "run-p dev:client dev:server",
-    "dev:client": "esbuild src/client.ts --servedir=. --outdir=dist --bundle",
-    "dev:server": "node build.js -watch -run"
+    "dev:client": "esbuild src/client.ts --servedir=. --outdir=dist --bundle --minify --sourcemap",
+    "dev:server": "node build.js -watch -run",
+    "build": "node build.js"
   },
   "devDependencies": {
     "esbuild": "^0.12.26",
