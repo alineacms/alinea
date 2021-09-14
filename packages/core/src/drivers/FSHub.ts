@@ -16,7 +16,5 @@ export class FSContent implements Content {
 export class FSHub implements Hub {
   constructor(public path: string) {}
 
-  content() {
-    return new FSContent(this.path)
-  }
+  content = new FSContent(this.path)
 }

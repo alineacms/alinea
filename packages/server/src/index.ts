@@ -7,7 +7,7 @@ export function serve(hub: Hub) {
   const router = Router()
   router.use(cors())
   router.get(Api.nav.content.list(), async (req, res) => {
-    res.json(await hub.content().list())
+    res.json(await hub.content.list())
   })
   const app = express()
   app.use(router)

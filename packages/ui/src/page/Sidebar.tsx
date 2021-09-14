@@ -1,7 +1,7 @@
 import {css} from '@stitches/react'
 import React from 'react'
 import {useQuery} from 'react-query'
-import {useConfig} from '../App'
+import {useApp} from '../App'
 
 const styles = {
   root: css({
@@ -14,9 +14,9 @@ const styles = {
 }
 
 export function Sidebar() {
-  const {client} = useConfig()
+  const {client} = useApp()
   const {isLoading, error, data} = useQuery('sidebar', () =>
-    client.content().list()
+    client.content.list()
   )
   return (
     <div className={styles.root()}>

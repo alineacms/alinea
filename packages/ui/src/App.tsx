@@ -39,7 +39,7 @@ const appConfig = createContext<
   {config: FrontendConfig; client: Client} | undefined
 >(undefined)
 
-export function useConfig() {
+export function useApp() {
   return useContext(appConfig)!
 }
 

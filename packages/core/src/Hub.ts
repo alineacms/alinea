@@ -16,5 +16,5 @@ export interface Content {
 }
 
 export interface Hub {
-  content(): Content
+  content: Content
 }

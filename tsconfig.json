@@ -13,5 +13,6 @@
       "@alinea/*": ["./packages/*/src"],
       "@alinea/core/*": ["./packages/core/src/*"]
     }
-  }
+  },
+  "include": ["packages"]
 }

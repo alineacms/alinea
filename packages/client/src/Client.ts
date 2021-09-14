@@ -17,7 +17,5 @@ export class Client implements Hub {
     return await response.json()
   }
 
-  content() {
-    return new ClientContent(this)
-  }
+  content = new ClientContent(this)
 }
