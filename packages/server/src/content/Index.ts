@@ -1,9 +1,10 @@
 import {Content, Entry, Hub, Label} from '../../../core/src/Hub'
 import {Collection, SqliteStore, Store} from 'helder.store'
 import {BetterSqlite3} from 'helder.store/drivers/BetterSqlite3'
-import {promises} from 'fs'
+import {constants, promises} from 'fs'
 import prettyMilliseconds from 'pretty-ms'
 import convertHrtime from 'convert-hrtime'
+import {basename} from 'path'
 
 function join(...parts: Array<string>) {
   return parts.join('/')
@@ -20,7 +21,8 @@ async function index(path: string, store: Store) {
     for (const file of files) {
       const stat = await promises.stat(join(path, target, file))
       const localPath = join(target, file)
-      if (stat.isDirectory()) {
+      const isContainer = stat.isDirectory()
+      if (isContainer) {
         total += await process(localPath)
         store.insert(Entry, {
           path: localPath,
