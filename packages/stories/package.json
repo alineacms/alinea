@@ -9,7 +9,7 @@
     "build": "node build.js"
   },
   "devDependencies": {
-    "esbuild": "^0.12.26",
+    "esbuild": "^0.12.27",
     "estrella": "^1.4.1",
     "npm-run-all": "^4.1.5",
     "typescript": "^4.4.3"

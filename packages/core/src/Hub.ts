@@ -1,18 +1,25 @@
 export type Id<T> = string & {__t: T}
 
-type LabelData = {[language: string]: string}
-export type Label = {$label: {[language: string]: string}}
-export function Label(data: LabelData) {
+export namespace Label {
+  export type Data = {[language: string]: string}
+}
+export interface Label {
+  $label: Label.Data
+}
+export function Label(data: Label.Data) {
   return {$label: data}
 }
 
-export type Entry = {
-  id: Id<Entry>
-  title: Label
+export interface Entry {
+  path: string
+  isContainer?: boolean
+  title: string
+  parent?: string
 }
 
 export interface Content {
-  list(): Promise<Array<Entry>>
+  get(path: string): Promise<Entry | null>
+  list(parent?: string): Promise<Array<Entry>>
 }
 
 export interface Hub {

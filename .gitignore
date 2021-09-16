@@ -6,3 +6,5 @@ node_modules
 !.yarn/plugins
 !.yarn/sdks
 !.yarn/versions
+/packages/stories/content/*
+!/packages/stories/content/.keep

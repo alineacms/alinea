@@ -5,7 +5,8 @@ const common = {
   clear: false,
   tslint: true,
   quiet: true,
-  bundle: true
+  bundle: true,
+  sourcemap: true
 }
 
 /*build({
@@ -23,5 +24,7 @@ build({
   },
   platform: 'node',
   entry: 'src/server.ts',
-  outfile: 'dist/server.js'
+  outfile: 'dist/server.js',
+  external: ['better-sqlite3'],
+  run: ['node', '--enable-source-maps', 'dist/server.js']
 })

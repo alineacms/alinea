@@ -29,9 +29,10 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     fontFamily: 'sans-serif',
-    height: '100%',
+    height: '100vh',
     color: 'white',
-    fontSize: '14px'
+    fontSize: '14px',
+    overflow: 'hidden'
   })
 }
 
@@ -94,7 +95,7 @@ export function App({config}: AppProps) {
       <QueryClientProvider client={queryClient}>
         <div className={styles.root()}>
           <Toolbar />
-          <div style={{flex: '1', display: 'flex'}}>
+          <div style={{flex: '1', display: 'flex', minHeight: 0}}>
             <Sidebar />
             <div style={{padding: '10px', width: '100%'}}>
               <div style={{padding: '10px'}}>Field:</div>

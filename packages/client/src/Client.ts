@@ -4,8 +4,12 @@ import fetch from 'isomorphic-fetch'
 export class ClientContent implements Content {
   constructor(protected client: Client) {}
 
-  list(): Promise<Array<Entry>> {
-    return this.client.fetch(Api.nav.content.list())
+  get(path: string): Promise<Entry | null> {
+    return this.client.fetch(Api.nav.content.get(path))
+  }
+
+  list(parent?: string): Promise<Array<Entry>> {
+    return this.client.fetch(Api.nav.content.list(parent))
   }
 }
 
