@@ -4,7 +4,7 @@ import React, {useEffect, useRef, useState} from 'react'
 import {useQuery} from 'react-query'
 import {useApp} from '../App'
 import {MdChevronRight, MdExpandMore, MdInsertDriveFile} from 'react-icons/md'
-import {Link, Route} from 'wouter'
+import {Link, useLocation} from 'wouter'
 
 const styles = {
   root: css({
@@ -77,17 +77,16 @@ type TreeNodeProps = {
 
 function TreeNode({entry, level, isOpen, toggleOpen}: TreeNodeProps) {
   const ref = useRef<HTMLAnchorElement>(null)
-  /*
-  // Do this for selected one (through route), not open one
+  const [location] = useLocation()
+  const isSelected = location === entry.path
   useEffect(() => {
-    if (isOpen(entry.path)) {
-      ref.current!.scrollIntoView({behavior: 'smooth'})
-    }
-  }, [])*/
+    if (isSelected)
+      ref.current!.scrollIntoView({behavior: 'smooth', block: 'center'})
+  }, [isSelected])
   return (
     <>
       <Link
-        href={'/#' + entry.path}
+        href={entry.path}
         onClick={() => {
           if (entry.isContainer) toggleOpen(entry.path)
         }}
@@ -96,7 +95,8 @@ function TreeNode({entry, level, isOpen, toggleOpen}: TreeNodeProps) {
           ref={ref}
           className={styles.link()}
           style={{
-            paddingLeft: `${10 + level * 8}px`
+            paddingLeft: `${10 + level * 8}px`,
+            background: isSelected ? 'rgb(55, 55, 61)' : undefined
           }}
         >
           <div className={styles.link.icon()}>
@@ -139,7 +139,14 @@ type OpenChildren = {
 }
 
 export function Sidebar() {
-  const [open, setOpen] = useState(new Set())
+  const [location] = useLocation()
+  const [open, setOpen] = useState(
+    new Set(
+      location.split('/').map((part, index, parts) => {
+        return parts.slice(0, index + 1).join('/')
+      })
+    )
+  )
   const isOpen = (path: string) => open.has(path)
   const toggleOpen = (path: string) => {
     const res = new Set(open)

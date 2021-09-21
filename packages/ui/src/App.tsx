@@ -12,6 +12,8 @@ import {Toolbar} from './page/Toolbar'
 import {QueryClient, QueryClientProvider, useQuery} from 'react-query'
 import Helmet from 'react-helmet'
 import {Client} from '@alinea/client'
+import {useHashLocation} from './hooks/UseLocation'
+import {Router, Route, useLocation} from 'wouter'
 
 export type AppProps = {
   config: FrontendConfig
@@ -75,6 +77,32 @@ const favicon = btoa(`
   </svg>
 `)
 
+type EntryEditProps = {path: string}
+
+function EntryEdit({path}: EntryEditProps) {
+  const {client} = useApp()
+  const {data} = useQuery(['entry', path], () => client.content.get(path))
+  if (!data) return null
+  return (
+    <div style={{padding: '10px', height: '100%'}}>
+      <textarea
+        spellCheck="false"
+        style={{
+          width: '100%',
+          height: '100%',
+          fontFamily: 'monospace',
+          background: '#191A1F',
+          color: 'rgb(204, 204, 204)',
+          padding: '10px',
+          lineHeight: 1.5
+        }}
+        placeholder="Fill some data"
+        value={JSON.stringify(data, null, '  ')}
+      />
+    </div>
+  )
+}
+
 export function App({config}: AppProps) {
   const [queryClient] = useState(() => new QueryClient())
   const client = useMemo(() => new Client(config.api), [config.api])
@@ -82,39 +110,33 @@ export function App({config}: AppProps) {
     globalStyles()
   }, [])
   return (
-    <appConfig.Provider value={{config, client}}>
-      <Helmet>
-        <meta charSet="utf-8" />
-        <title>{config.name}</title>
-        <link
-          rel="icon"
-          type="image/svg"
-          href={`data:image/svg+xml;base64,${favicon}`}
-        />
-      </Helmet>
-      <QueryClientProvider client={queryClient}>
-        <div className={styles.root()}>
-          <Toolbar />
-          <div style={{flex: '1', display: 'flex', minHeight: 0}}>
-            <Sidebar />
-            <div style={{padding: '10px', width: '100%'}}>
-              <div style={{padding: '10px'}}>Field:</div>
-              <textarea
-                style={{
-                  width: '100%',
-                  height: '300px',
-                  fontFamily: 'monospace',
-                  background: '#191A1F',
-                  color: 'white',
-                  padding: '10px',
-                  lineHeight: 1.5
-                }}
-                placeholder="Fill some data"
-              />
+    <Router hook={useHashLocation}>
+      <appConfig.Provider value={{config, client}}>
+        <Helmet>
+          <meta charSet="utf-8" />
+          <title>{config.name}</title>
+          <link
+            rel="icon"
+            type="image/svg"
+            href={`data:image/svg+xml;base64,${favicon}`}
+          />
+        </Helmet>
+        <QueryClientProvider client={queryClient}>
+          <div className={styles.root()}>
+            <Toolbar />
+            <div style={{flex: '1', display: 'flex', minHeight: 0}}>
+              <Sidebar />
+              <div style={{padding: '10px', width: '100%'}}>
+                <Route path="/:slug*">
+                  {({slug}) => {
+                    return <EntryEdit path={slug} />
+                  }}
+                </Route>
+              </div>
             </div>
           </div>
-        </div>
-      </QueryClientProvider>
-    </appConfig.Provider>
+        </QueryClientProvider>
+      </appConfig.Provider>
+    </Router>
   )
 }

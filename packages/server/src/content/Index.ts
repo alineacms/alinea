@@ -59,6 +59,7 @@ function init(path: string): Progress<Content> {
     console.log('Start indexing...')
     const total = await index(path, store)
     store.createIndex(Entry, 'parent', [Entry.parent])
+    store.createIndex(Entry, 'path', [Entry.path])
     const diff = process.hrtime.bigint() - startTime
     console.log(
       `Done indexing ${total} entries in ${prettyMilliseconds(
@@ -74,7 +75,7 @@ class Indexed implements Content {
   constructor(protected store: Store) {}
 
   async get(path: string): Promise<Entry | null> {
-    return this.store.first(Entry.where(Entry.id.is(path)))
+    return this.store.first(Entry.where(Entry.path.is(path)))
   }
 
   async list(path?: string): Promise<Array<Entry>> {
