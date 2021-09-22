@@ -8,7 +8,7 @@ export class ClientContent implements Content {
     return this.client.fetch(Api.nav.content.get(path))
   }
 
-  list(parent?: string): Promise<Array<Entry>> {
+  list(parent?: string): Promise<Array<Entry & {children: number}>> {
     return this.client.fetch(Api.nav.content.list(parent))
   }
 }

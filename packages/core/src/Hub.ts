@@ -19,7 +19,7 @@ export interface Entry {
 
 export interface Content {
   get(path: string): Promise<Entry | null>
-  list(parent?: string): Promise<Array<Entry>>
+  list(parent?: string): Promise<Array<Entry & {children: number}>>
 }
 
 export interface Hub {

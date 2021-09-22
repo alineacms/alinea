@@ -1,6 +1,6 @@
 export namespace Api {
-  function stripSlash(path: string) {
-    return path.startsWith('/') ? path.substring(1) : path
+  function stripSlash(path?: string): string {
+    return path?.startsWith('/') ? path.substring(1) : path || ''
   }
   export const nav = {
     content: {
@@ -8,7 +8,7 @@ export namespace Api {
         return `/content/${stripSlash(path)}`
       },
       list(parent?: string) {
-        return `/content.list/${stripSlash(parent || '')}`
+        return `/content.list/${stripSlash(parent)}`
       }
     }
   }

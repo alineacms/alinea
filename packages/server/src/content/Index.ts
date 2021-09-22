@@ -1,5 +1,5 @@
 import {Content, Entry, Hub, Label} from '../../../core/src/Hub'
-import {Collection, SqliteStore, Store} from 'helder.store'
+import {Collection, Functions, SqliteStore, Store} from 'helder.store'
 import {BetterSqlite3} from 'helder.store/drivers/BetterSqlite3'
 import {constants, promises} from 'fs'
 import prettyMilliseconds from 'pretty-ms'
@@ -78,13 +78,16 @@ class Indexed implements Content {
     return this.store.first(Entry.where(Entry.path.is(path)))
   }
 
-  async list(path?: string): Promise<Array<Entry>> {
+  async list(path?: string): Promise<Array<Entry & {children: number}>> {
     return this.store.all(
       Entry.where(path ? Entry.parent.is(path) : Entry.parent.isNull()).select({
         path: Entry.path,
         isContainer: Entry.isContainer,
         parent: Entry.parent,
-        title: Entry.title
+        title: Entry.title,
+        children: Entry.where(Entry.parent.is(Entry.path))
+          .select(Functions.count())
+          .first()
       })
     )
   }
@@ -99,7 +102,7 @@ export class Index implements Content {
     return this.index.then(index => index.get(path))
   }
 
-  list(path?: string): Promise<Array<Entry>> {
+  list(path?: string): Promise<Array<Entry & {children: number}>> {
     return this.index.then(index => index.list(path))
   }
 }

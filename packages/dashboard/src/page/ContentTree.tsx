@@ -1,42 +1,14 @@
 import {Entry} from '@alinea/core'
-import {css} from '@stitches/react'
-import React, {useEffect, useRef, useState} from 'react'
-import {useQuery} from 'react-query'
-import {useApp} from '../App'
+import {fromModule} from '@alinea/ui/styler'
+import React, {useRef, useState} from 'react'
 import {MdChevronRight, MdExpandMore, MdInsertDriveFile} from 'react-icons/md'
+import {useQuery} from 'react-query'
 import {Link, useLocation} from 'wouter'
+import {useApp} from '../App'
+import {useInitialEffect} from '../hooks/UseInitialEffect'
+import css from './ContentTree.module.scss'
 
-const styles = {
-  root: css({
-    height: '100%',
-    width: '330px',
-    borderRight: '1px solid #595959',
-    background: '#191A1F',
-    overflow: 'auto'
-  }),
-  link: Object.assign(
-    css({
-      height: '22px',
-      fontSize: '13px',
-      color: 'rgb(204, 204, 204)',
-      display: 'flex',
-      alignItems: 'center',
-      cursor: 'pointer',
-      padding: '0 10px',
-      textDecoration: 'none',
-      '&:hover': {
-        background: 'rgb(55, 55, 61)'
-      }
-    }),
-    {
-      icon: css({
-        width: '22px',
-        textAlign: 'center',
-        flexShrink: 0
-      })
-    }
-  )
-}
+const styles = fromModule(css)
 
 type TreeChildrenProps = {
   parent?: string | undefined
@@ -71,7 +43,7 @@ function TreeChildren({
 }
 
 type TreeNodeProps = {
-  entry: Entry
+  entry: Entry & {children: number}
   level: number
 } & OpenChildren
 
@@ -79,10 +51,10 @@ function TreeNode({entry, level, isOpen, toggleOpen}: TreeNodeProps) {
   const ref = useRef<HTMLAnchorElement>(null)
   const [location] = useLocation()
   const isSelected = location === entry.path
-  useEffect(() => {
+  useInitialEffect(() => {
     if (isSelected)
       ref.current!.scrollIntoView({behavior: 'smooth', block: 'center'})
-  }, [isSelected])
+  })
   return (
     <>
       <Link
@@ -93,13 +65,13 @@ function TreeNode({entry, level, isOpen, toggleOpen}: TreeNodeProps) {
       >
         <a
           ref={ref}
-          className={styles.link()}
+          className={styles.node()}
           style={{
             paddingLeft: `${10 + level * 8}px`,
             background: isSelected ? 'rgb(55, 55, 61)' : undefined
           }}
         >
-          <div className={styles.link.icon()}>
+          <div className={styles.node.icon()}>
             {entry.isContainer ? (
               isOpen(entry.path) ? (
                 <MdExpandMore size={20} />
@@ -117,7 +89,7 @@ function TreeNode({entry, level, isOpen, toggleOpen}: TreeNodeProps) {
               overflow: 'hidden'
             }}
           >
-            {entry.title}
+            {entry.title} {entry.isContainer && `(${entry.children})`}
           </span>
         </a>
       </Link>
@@ -138,7 +110,7 @@ type OpenChildren = {
   toggleOpen: (path: string) => void
 }
 
-export function Sidebar() {
+export function ContentTree() {
   const [location] = useLocation()
   const [open, setOpen] = useState(
     new Set(
@@ -154,9 +126,5 @@ export function Sidebar() {
     else res.add(path)
     setOpen(res)
   }
-  return (
-    <div className={styles.root()}>
-      <TreeChildren isOpen={isOpen} toggleOpen={toggleOpen} />
-    </div>
-  )
+  return <TreeChildren isOpen={isOpen} toggleOpen={toggleOpen} />
 }

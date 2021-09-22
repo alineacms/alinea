@@ -1,41 +1,24 @@
-import {css, globalCss} from '@stitches/react'
-import React, {
-  createContext,
-  useContext,
-  useLayoutEffect,
-  useMemo,
-  useState
-} from 'react'
-import {FrontendConfig} from './FrontendConfig'
-import {Sidebar} from './page/Sidebar'
-import {Toolbar} from './page/Toolbar'
-import {QueryClient, QueryClientProvider, useQuery} from 'react-query'
-import Helmet from 'react-helmet'
 import {Client} from '@alinea/client'
+import {Sidebar} from '@alinea/ui/Sidebar'
+import {fromModule} from '@alinea/ui/styler'
+import React, {createContext, useContext, useMemo, useState} from 'react'
+import Helmet from 'react-helmet'
+import {MdSearch, MdSettings} from 'react-icons/md'
+import {QueryClient, QueryClientProvider} from 'react-query'
+import {Route, Router} from 'wouter'
+import css from './App.module.scss'
+// Todo: bundle this properly
+import './css/fonts.css'
+import {FrontendConfig} from './FrontendConfig'
 import {useHashLocation} from './hooks/UseLocation'
-import {Router, Route, useLocation} from 'wouter'
+import {ContentTree} from './page/ContentTree'
+import {EntryEdit} from './page/EntryEdit'
+import {Toolbar} from './page/Toolbar'
+
+const styles = fromModule(css)
 
 export type AppProps = {
   config: FrontendConfig
-}
-
-const globalStyles = globalCss({
-  '*': {padding: 0, margin: 0, boxSizing: 'border-box'},
-  html: {height: '100%'},
-  body: {height: '100%', margin: 0, background: '#14151a'},
-  '#root': {height: '100%'}
-})
-
-const styles = {
-  root: css({
-    display: 'flex',
-    flexDirection: 'column',
-    fontFamily: 'sans-serif',
-    height: '100vh',
-    color: 'white',
-    fontSize: '14px',
-    overflow: 'hidden'
-  })
 }
 
 const appConfig = createContext<
@@ -77,38 +60,9 @@ const favicon = btoa(`
   </svg>
 `)
 
-type EntryEditProps = {path: string}
-
-function EntryEdit({path}: EntryEditProps) {
-  const {client} = useApp()
-  const {data} = useQuery(['entry', path], () => client.content.get(path))
-  if (!data) return null
-  return (
-    <div style={{padding: '10px', height: '100%'}}>
-      <textarea
-        spellCheck="false"
-        style={{
-          width: '100%',
-          height: '100%',
-          fontFamily: 'monospace',
-          background: '#191A1F',
-          color: 'rgb(204, 204, 204)',
-          padding: '10px',
-          lineHeight: 1.5
-        }}
-        placeholder="Fill some data"
-        value={JSON.stringify(data, null, '  ')}
-      />
-    </div>
-  )
-}
-
 export function App({config}: AppProps) {
   const [queryClient] = useState(() => new QueryClient())
   const client = useMemo(() => new Client(config.api), [config.api])
-  useLayoutEffect(() => {
-    globalStyles()
-  }, [])
   return (
     <Router hook={useHashLocation}>
       <appConfig.Provider value={{config, client}}>
@@ -125,7 +79,19 @@ export function App({config}: AppProps) {
           <div className={styles.root()}>
             <Toolbar />
             <div style={{flex: '1', display: 'flex', minHeight: 0}}>
-              <Sidebar />
+              <Sidebar.Root>
+                <Sidebar.Menu>
+                  <Sidebar.Menu.Item>
+                    <MdSearch />
+                  </Sidebar.Menu.Item>
+                  <Sidebar.Menu.Item>
+                    <MdSettings />
+                  </Sidebar.Menu.Item>
+                </Sidebar.Menu>
+                <Sidebar.List>
+                  <ContentTree />
+                </Sidebar.List>
+              </Sidebar.Root>
               <div style={{padding: '10px', width: '100%'}}>
                 <Route path="/:slug*">
                   {({slug}) => {

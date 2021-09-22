@@ -11,8 +11,10 @@
     "importHelpers": true,
     "paths": {
       "@alinea/*": ["./packages/*/src"],
-      "@alinea/core/*": ["./packages/core/src/*"]
-    }
+      "@alinea/core/*": ["./packages/core/src/*"],
+      "@alinea/ui/*": ["./packages/ui/src/*"]
+    },
+    "plugins": [{"name": "typescript-plugin-css-modules"}]
   },
   "include": ["packages"]
 }

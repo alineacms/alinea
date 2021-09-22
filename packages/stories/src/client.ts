@@ -1,4 +1,4 @@
-import {init} from '@alinea/ui'
+import {init} from '@alinea/dashboard'
 
 init({
   name: 'stories',

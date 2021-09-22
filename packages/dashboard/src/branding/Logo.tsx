@@ -1,42 +1,21 @@
 import React from 'react'
 import {PropsWithChildren} from 'react'
-import {css} from '@stitches/react'
+import {fromModule} from '@alinea/ui/styler'
+import css from './Logo.module.scss'
+
+const styles = fromModule(css)
 
 export type LogoShapeProps = PropsWithChildren<{}>
-
-const styles = {
-  root: css({
-    position: 'relative',
-    width: '24px',
-    height: '24px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: '0',
-    fontWeight: 'bold',
-    color: '#14151a',
-    fontSize: '14px'
-  }),
-  bg: css({
-    position: 'absolute',
-    top: '0',
-    left: '0',
-    width: '100%',
-    height: '100%',
-    zIndex: '-1'
-  })
-}
 
 export function Logo({children}: LogoShapeProps) {
   return (
     <div className={styles.root()}>
       <svg
-        className={styles.bg()}
-        width="36"
-        height="36"
+        className={styles.root.bg()}
         viewBox="0 0 36 36"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
+        preserveAspectRatio="none"
       >
         <defs>
           <linearGradient

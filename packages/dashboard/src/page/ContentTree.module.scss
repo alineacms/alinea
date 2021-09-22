@@ -1,0 +1,24 @@
+.node {
+  height: 26px;
+  font-size: 13px;
+  color: white;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  padding: 0 10px;
+  text-decoration: none;
+  position: relative;
+  z-index: 1;
+  font-weight: 500;
+
+  &:hover {
+    background: #37373d;
+  }
+
+  &-icon {
+    width: 22px;
+    text-align: center;
+    flex-shrink: 0;
+    color: #858585;
+  }
+}
