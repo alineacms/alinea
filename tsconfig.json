@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "noEmit": true,
     "module": "ESNext",
     "skipLibCheck": true,
     "strict": true,
@@ -10,13 +11,12 @@
     "allowSyntheticDefaultImports": true,
     "importHelpers": true,
     "paths": {
-      "@alinea/*": ["./packages/*/src"],
-      "@alinea/core/*": ["./packages/core/src/*"],
-      "@alinea/editor/*": ["./packages/editor/src/*"],
-      "@alinea/ui/*": ["./packages/ui/src/*"],
-      "@alinea/input.*": ["./packages/input/*/src"]
+      "@alinea/input.*": ["./node_modules/@alinea/input.*/src"],
+      "@alinea/core/*": ["./node_modules/@alinea/core/src/*"],
+      "@alinea/editor/*": ["./node_modules/@alinea/editor/src/*"],
+      "@alinea/ui/*": ["./node_modules/@alinea/ui/src/*"],
+      "@alinea/*": ["./node_modules/@alinea/*/src"]
     },
     "plugins": [{"name": "typescript-plugin-css-modules"}]
-  },
-  "include": ["packages"]
+  }
 }

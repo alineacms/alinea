@@ -4,9 +4,6 @@
   "license": "MIT",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
-  "scripts": {
-    "build": "tsc"
-  },
   "exports": {
     ".": "./dist"
   },
@@ -26,7 +23,6 @@
     "@fontsource/inter": "^4.5.0",
     "@types/react": "^17.0.20",
     "@types/react-dom": "^17.0.9",
-    "@types/react-helmet": "^6.1.2",
-    "typescript": "^4.4.3"
+    "@types/react-helmet": "^6.1.2"
   }
 }

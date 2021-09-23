@@ -12,8 +12,6 @@ __metadata:
     "@alinea/core": 0.0.0
     "@types/isomorphic-fetch": ^0.0.35
     isomorphic-fetch: ^3.0.0
-    tslib: ^2.3.1
-    typescript: ^4.4.3
   languageName: unknown
   linkType: soft
 
@@ -22,7 +20,6 @@ __metadata:
   resolution: "@alinea/core@workspace:packages/core"
   dependencies:
     tslib: ^2.3.1
-    typescript: ^4.4.3
   languageName: unknown
   linkType: soft
 
@@ -43,7 +40,6 @@ __metadata:
     react-icons: ^4.2.0
     react-query: ^3.23.2
     tslib: ^2.3.1
-    typescript: ^4.4.3
     wouter: ^2.7.4
   languageName: unknown
   linkType: soft
@@ -51,9 +47,6 @@ __metadata:
 "@alinea/editor@workspace:packages/editor":
   version: 0.0.0-use.local
   resolution: "@alinea/editor@workspace:packages/editor"
-  dependencies:
-    tslib: ^2.3.1
-    typescript: ^4.4.3
   languageName: unknown
   linkType: soft
 
@@ -85,7 +78,6 @@ __metadata:
     helder.store: ^0.0.0-alpha.9
     pretty-ms: ^7.0.1
     tslib: ^2.3.1
-    typescript: ^4.4.3
   languageName: unknown
   linkType: soft
 
@@ -577,6 +569,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/cross-spawn@npm:^6.0.2":
+  version: 6.0.2
+  resolution: "@types/cross-spawn@npm:6.0.2"
+  dependencies:
+    "@types/node": "*"
+  checksum: fa9edd32178878cab3ea8d6d0260639e0fe4860ddb3887b8de53d6e8036e154fc5f313c653f690975aa25025aea8beb83fb0870b931bf8d9202c3ac530a24c9d
+  languageName: node
+  linkType: hard
+
 "@types/express-serve-static-core@npm:^4.17.18":
   version: 4.17.24
   resolution: "@types/express-serve-static-core@npm:4.17.24"
@@ -1021,9 +1022,12 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "alinea@workspace:."
   dependencies:
+    "@types/cross-spawn": ^6.0.2
     "@types/node": ^16.9.0
     "@typescript-eslint/eslint-plugin": ^4.31.0
     "@typescript-eslint/parser": ^4.31.0
+    cross-spawn: ^7.0.3
+    cross-spawn-promise: ^0.10.2
     esbuild: ^0.12.27
     eslint: ^7.32.0
     eslint-plugin-react: ^7.25.1
@@ -1566,6 +1570,26 @@ __metadata:
   languageName: node
   linkType: hard
 
+"cross-spawn-promise@npm:^0.10.2":
+  version: 0.10.2
+  resolution: "cross-spawn-promise@npm:0.10.2"
+  dependencies:
+    cross-spawn: ^5.1.0
+  checksum: 9616ad2afc633203b6b3431c22ec26701fa8bf34c2395e33136f48608dbef1ad37bcdc6706d5ed1dfa7cc093e3a56a6d54203a4f7a4f2ccf84d8e67f1fc33aed
+  languageName: node
+  linkType: hard
+
+"cross-spawn@npm:^5.1.0":
+  version: 5.1.0
+  resolution: "cross-spawn@npm:5.1.0"
+  dependencies:
+    lru-cache: ^4.0.1
+    shebang-command: ^1.2.0
+    which: ^1.2.9
+  checksum: 726939c9954fc70c20e538923feaaa33bebc253247d13021737c3c7f68cdc3e0a57f720c0fe75057c0387995349f3f12e20e9bfdbf12274db28019c7ea4ec166
+  languageName: node
+  linkType: hard
+
 "cross-spawn@npm:^6.0.5":
   version: 6.0.5
   resolution: "cross-spawn@npm:6.0.5"
@@ -1579,7 +1603,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cross-spawn@npm:^7.0.2":
+"cross-spawn@npm:^7.0.2, cross-spawn@npm:^7.0.3":
   version: 7.0.3
   resolution: "cross-spawn@npm:7.0.3"
   dependencies:
@@ -3256,6 +3280,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"lru-cache@npm:^4.0.1":
+  version: 4.1.5
+  resolution: "lru-cache@npm:4.1.5"
+  dependencies:
+    pseudomap: ^1.0.2
+    yallist: ^2.1.2
+  checksum: 4bb4b58a36cd7dc4dcec74cbe6a8f766a38b7426f1ff59d4cf7d82a2aa9b9565cd1cb98f6ff60ce5cd174524868d7bc9b7b1c294371851356066ca9ac4cf135a
+  languageName: node
+  linkType: hard
+
 "lru-cache@npm:^6.0.0":
   version: 6.0.0
   resolution: "lru-cache@npm:6.0.0"
@@ -4331,6 +4365,13 @@ __metadata:
   version: 1.0.1
   resolution: "prr@npm:1.0.1"
   checksum: 3bca2db0479fd38f8c4c9439139b0c42dcaadcc2fbb7bb8e0e6afaa1383457f1d19aea9e5f961d5b080f1cfc05bfa1fe9e45c97a1d3fd6d421950a73d3108381
+  languageName: node
+  linkType: hard
+
+"pseudomap@npm:^1.0.2":
+  version: 1.0.2
+  resolution: "pseudomap@npm:1.0.2"
+  checksum: 856c0aae0ff2ad60881168334448e898ad7a0e45fe7386d114b150084254c01e200c957cf378378025df4e052c7890c5bd933939b0e0d2ecfcc1dc2f0b2991f5
   languageName: node
   linkType: hard
 
@@ -5587,6 +5628,13 @@ typescript@^4.4.3:
   version: 1.0.2
   resolution: "wrappy@npm:1.0.2"
   checksum: 159da4805f7e84a3d003d8841557196034155008f817172d4e986bd591f74aa82aa7db55929a54222309e01079a65a92a9e6414da5a6aa4b01ee44a511ac3ee5
+  languageName: node
+  linkType: hard
+
+"yallist@npm:^2.1.2":
+  version: 2.1.2
+  resolution: "yallist@npm:2.1.2"
+  checksum: 9ba99409209f485b6fcb970330908a6d41fa1c933f75e08250316cce19383179a6b70a7e0721b89672ebb6199cc377bf3e432f55100da6a7d6e11902b0a642cb
   languageName: node
   linkType: hard
 

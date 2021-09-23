@@ -3,7 +3,8 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "dev": "yarn workspace @alinea/stories dev"
+    "dev": "yarn workspace @alinea/stories dev",
+    "build": "node scripts/build"
   },
   "files": [],
   "workspaces": [
@@ -11,9 +12,12 @@
     "packages/input/*"
   ],
   "devDependencies": {
+    "@types/cross-spawn": "^6.0.2",
     "@types/node": "^16.9.0",
     "@typescript-eslint/eslint-plugin": "^4.31.0",
     "@typescript-eslint/parser": "^4.31.0",
+    "cross-spawn": "^7.0.3",
+    "cross-spawn-promise": "^0.10.2",
     "esbuild": "^0.12.27",
     "eslint": "^7.32.0",
     "eslint-plugin-react": "^7.25.1",

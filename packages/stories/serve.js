@@ -31,7 +31,7 @@ serve(
     bundle: true,
     sourcemap: true,
     minify: true,
-    inject: ['./react-shim.js'],
+    inject: ['../../scripts/react-shim.js'],
     plugins: [
       ScssModulesPlugin({
         cache: false,
