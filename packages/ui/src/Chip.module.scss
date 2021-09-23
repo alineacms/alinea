@@ -1,0 +1,21 @@
+.root {
+  border-radius: 16px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  display: inline-flex !important;
+  align-items: center;
+  outline: none;
+  white-space: nowrap;
+  flex-shrink: 0;
+  background: #303136;
+  color: white;
+
+  > * + * {
+    margin-left: 2px;
+  }
+
+  &-label {
+    padding: 3px 6px;
+  }
+}

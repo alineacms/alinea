@@ -1,6 +1,41 @@
-import React from 'react'
+import {Channel, Entry, Field} from '@alinea/core'
+import {Suspense} from 'react'
 import {useQuery} from 'react-query'
 import {useApp} from '../App'
+
+type EntryEditFieldProps = {
+  name: string
+  field: Field
+}
+function MissingView() {
+  return <div>Missing view</div>
+}
+
+function EntryEditField({field}: EntryEditFieldProps) {
+  const View = field.view
+  if (!View) return <MissingView />
+  return (
+    <div>
+      <View field={field} />
+    </div>
+  )
+}
+
+type EntryEditFieldsProps = {
+  channel: Channel
+  entry: Entry
+}
+
+function EntryEditFields({channel, entry}: EntryEditFieldsProps) {
+  const fields = Channel.fields(channel)
+  return (
+    <div>
+      {fields.map(([name, field]) => {
+        return <EntryEditField key={name} name={name} field={field} />
+      })}
+    </div>
+  )
+}
 
 export type EntryEditProps = {path: string}
 
@@ -14,25 +49,19 @@ export function EntryEdit({path}: EntryEditProps) {
     content: '<p>Hello World! 🌎️</p>'
   })*/
   if (!data) return null
+  const channel = client.schema.getChannel(data.channel)
   return (
-    <div style={{padding: '10px', height: '100%', overflow: 'auto'}}>
-      <h1 style={{position: 'relative', zIndex: 1}}>{data.title}</h1>
-
-      <textarea
-        spellCheck="false"
-        style={{
-          width: '100%',
-          marginTop: '30px',
-          height: '500px',
-          fontFamily: 'monospace',
-          background: '#191A1F',
-          color: 'rgb(204, 204, 204)',
-          padding: '10px',
-          lineHeight: 1.5
-        }}
-        placeholder="Fill some data"
-        value={JSON.stringify(data, null, '  ')}
-      />
+    <div style={{padding: '50px 100px', height: '100%', overflow: 'auto'}}>
+      <h1 style={{position: 'relative', zIndex: 1, paddingBottom: '10px'}}>
+        {data.title}
+      </h1>
+      <Suspense fallback={null}>
+        {channel ? (
+          <EntryEditFields channel={channel} entry={data} />
+        ) : (
+          'Channel not found'
+        )}
+      </Suspense>
     </div>
   )
 }

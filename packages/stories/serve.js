@@ -1,7 +1,22 @@
-#!/usr/bin/env node
 const {serve} = require('esbuild')
 const alias = require('esbuild-plugin-alias')
 const {ScssModulesPlugin} = require('esbuild-scss-modules-plugin')
+const path = require('path')
+const fs = require('fs')
+
+/*
+These should resolved using the conditional exports, but before building
+those are not available so we point at the source directly.
+*/
+const packages = fs.readdirSync('../input')
+const inputAliases = Object.fromEntries(
+  packages.map(package => {
+    return [
+      `@alinea/input.${package}`,
+      path.resolve(`../input/${package}/src/browser.ts`)
+    ]
+  })
+)
 
 serve(
   {
@@ -9,17 +24,21 @@ serve(
     host: '127.0.0.1'
   },
   {
+    format: 'esm',
+    splitting: true,
     entryPoints: ['src/client.ts'],
     outdir: 'dist',
     bundle: true,
     sourcemap: true,
     minify: true,
+    inject: ['./react-shim.js'],
     plugins: [
       ScssModulesPlugin({
         cache: false,
         localsConvention: 'dashes'
       }),
       alias({
+        ...inputAliases,
         react: require.resolve('preact/compat'),
         'react-dom': require.resolve('preact/compat')
       })

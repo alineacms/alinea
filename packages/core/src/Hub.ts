@@ -1,21 +1,5 @@
-export type Id<T> = string & {__t: T}
-
-export namespace Label {
-  export type Data = {[language: string]: string}
-}
-export interface Label {
-  $label: Label.Data
-}
-export function Label(data: Label.Data) {
-  return {$label: data}
-}
-
-export interface Entry {
-  path: string
-  isContainer?: boolean
-  title: string
-  parent?: string
-}
+import {Entry} from './Entry'
+import {Schema} from './Schema'
 
 export interface Content {
   get(path: string): Promise<Entry | null>
@@ -23,5 +7,6 @@ export interface Content {
 }
 
 export interface Hub {
+  schema: Schema
   content: Content
 }

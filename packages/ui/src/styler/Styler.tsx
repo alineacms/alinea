@@ -1,4 +1,4 @@
-import React, {forwardRef} from 'react'
+import {forwardRef} from 'react'
 import type {ModuleStyles, Styler, Variant} from './ModuleStyles'
 
 const cache = new Map()

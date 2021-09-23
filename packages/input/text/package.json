@@ -1,0 +1,16 @@
+{
+  "name": "@alinea/input.text",
+  "version": "0.0.0",
+  "license": "MIT",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist",
+      "browser": "./dist/browser"
+    }
+  }
+}

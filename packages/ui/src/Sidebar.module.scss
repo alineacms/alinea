@@ -2,7 +2,7 @@
   display: flex;
   height: 100%;
   flex-shrink: 0;
-  box-shadow: 0 0 200px black;
+  //box-shadow: 0 0 200px black;
 
   &-menu {
     position: relative;
@@ -10,16 +10,15 @@
     flex-direction: column;
     width: 44px;
     flex-shrink: 0;
-    background: #191a1f;
     height: 100%;
-    box-shadow: 0 0 90px black;
+    box-shadow: 0 0 120px black;
 
     &-item {
       position: relative;
       z-index: 1;
       display: flex;
-      height: 38px;
-      width: 44px;
+      height: 44px;
+      width: 100%;
       align-items: center;
       justify-content: center;
       font-size: 20px;
@@ -45,11 +44,11 @@
       height: 6px;
     }
     &::-webkit-scrollbar-track {
-      border-radius: 10px;
+      // border-radius: 10px;
       background: rgba(255, 255, 255, 0.1);
     }
     &::-webkit-scrollbar-thumb {
-      border-radius: 10px;
+      // border-radius: 10px;
       background: rgba(255, 255, 255, 0.2);
     }
     &::-webkit-scrollbar-thumb:hover {

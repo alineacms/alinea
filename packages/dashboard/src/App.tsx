@@ -1,9 +1,9 @@
 import {Client} from '@alinea/client'
 import {Sidebar} from '@alinea/ui/Sidebar'
 import {fromModule} from '@alinea/ui/styler'
-import React, {createContext, useContext, useMemo, useState} from 'react'
+import {createContext, useContext, useMemo, useState} from 'react'
 import Helmet from 'react-helmet'
-import {MdSearch, MdSettings} from 'react-icons/md'
+import {MdPerson, MdSearch, MdSettings} from 'react-icons/md'
 import {QueryClient, QueryClientProvider} from 'react-query'
 import {Route, Router} from 'wouter'
 import css from './App.module.scss'
@@ -62,13 +62,16 @@ const favicon = btoa(`
 
 export function App({config}: AppProps) {
   const [queryClient] = useState(() => new QueryClient())
-  const client = useMemo(() => new Client(config.api), [config.api])
+  const client = useMemo(
+    () => new Client(config.schema, config.api),
+    [config.schema, config.api]
+  )
   return (
     <Router hook={useHashLocation}>
       <appConfig.Provider value={{config, client}}>
         <Helmet>
           <meta charSet="utf-8" />
-          <title>{config.name}</title>
+          <title>Stories</title>
           <link
             rel="icon"
             type="image/svg"
@@ -87,6 +90,9 @@ export function App({config}: AppProps) {
                   <Sidebar.Menu.Item>
                     <MdSettings />
                   </Sidebar.Menu.Item>
+                  <Sidebar.Menu.Item>
+                    <MdPerson />
+                  </Sidebar.Menu.Item>
                 </Sidebar.Menu>
                 <Sidebar.List>
                   <ContentTree />
@@ -100,6 +106,7 @@ export function App({config}: AppProps) {
                 </Route>
               </div>
             </div>
+            <div style={{height: '22px', background: '#303136'}} />
           </div>
         </QueryClientProvider>
       </appConfig.Provider>

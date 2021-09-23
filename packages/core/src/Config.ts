@@ -1,3 +1,5 @@
+import {Schema} from './Schema'
+
 export type Config = {
-  name: string
+  schema: Schema
 }

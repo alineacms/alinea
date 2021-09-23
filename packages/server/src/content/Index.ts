@@ -1,10 +1,9 @@
-import {Content, Entry, Hub, Label} from '../../../core/src/Hub'
+import {Content, Entry} from '@alinea/core'
+import convertHrtime from 'convert-hrtime'
+import {promises} from 'fs'
 import {Collection, Functions, SqliteStore, Store} from 'helder.store'
 import {BetterSqlite3} from 'helder.store/drivers/BetterSqlite3'
-import {constants, promises} from 'fs'
 import prettyMilliseconds from 'pretty-ms'
-import convertHrtime from 'convert-hrtime'
-import {basename} from 'path'
 
 function join(...parts: Array<string>) {
   return parts.join('/')
@@ -15,15 +14,15 @@ const Entry = new Collection<Entry>('Entry')
 type Progress<T> = Promise<T> & {progress(): number}
 
 async function index(path: string, store: Store) {
+  let total = 0
   async function process(target: string) {
-    let total = 0
     const files = await promises.readdir(join(path, target))
-    for (const file of files) {
+    const tasks = files.map(file => async () => {
       const stat = await promises.stat(join(path, target, file))
       const localPath = join(target, file)
       const isContainer = stat.isDirectory()
       if (isContainer) {
-        total += await process(localPath)
+        await process(localPath)
         store.insert(Entry, {
           path: localPath,
           isContainer: true,
@@ -31,8 +30,8 @@ async function index(path: string, store: Store) {
           parent: target ? target : undefined
         })
       } else {
+        total++
         try {
-          total++
           store.insert(Entry, {
             ...JSON.parse(
               await promises.readFile(join(path, localPath), 'utf-8')
@@ -44,10 +43,12 @@ async function index(path: string, store: Store) {
           console.log(`Could not parse ${localPath}`)
         }
       }
-    }
-    return total
+    })
+    // Todo: limit concurrency?
+    await Promise.all(tasks.map(t => t()))
   }
-  return await process('')
+  await process('')
+  return total
 }
 
 function init(path: string): Progress<Content> {
@@ -79,13 +80,15 @@ class Indexed implements Content {
   }
 
   async list(path?: string): Promise<Array<Entry & {children: number}>> {
+    const Parent = Entry.as('Parent')
     return this.store.all(
       Entry.where(path ? Entry.parent.is(path) : Entry.parent.isNull()).select({
+        channel: Entry.channel,
         path: Entry.path,
         isContainer: Entry.isContainer,
         parent: Entry.parent,
         title: Entry.title,
-        children: Entry.where(Entry.parent.is(Entry.path))
+        children: Parent.where(Parent.parent.is(Entry.path))
           .select(Functions.count())
           .first()
       })

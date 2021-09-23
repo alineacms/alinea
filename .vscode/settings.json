@@ -1,5 +1,11 @@
 {
   "editor.formatOnSave": true,
   "editor.tabSize": 2,
-  "typescript.tsdk": "./node_modules/typescript/lib"
+  "typescript.tsdk": "./node_modules/typescript/lib",
+  "editor.codeActionsOnSave": {
+    "source.organizeImports": true
+  },
+  "typescript.tsserver.watchOptions": {
+    "watchFile": "useFsEvents"
+  }
 }

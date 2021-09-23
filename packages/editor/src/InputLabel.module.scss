@@ -1,0 +1,26 @@
+.root {
+  display: block;
+
+  &-title {
+    font-size: 13px;
+    font-weight: bold;
+    & + * {
+      margin-top: 4px;
+    }
+
+    &-optional {
+      display: inline-block;
+      border-radius: 8px;
+      padding: 2px 6px;
+      background: #dbdee2;
+      margin-left: 8px;
+      font-weight: normal;
+      color: #383434;
+    }
+
+    &-help {
+      font-weight: normal;
+      padding-bottom: 4px;
+    }
+  }
+}

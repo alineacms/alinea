@@ -7,7 +7,8 @@
   },
   "files": [],
   "workspaces": [
-    "packages/*"
+    "packages/*",
+    "packages/input/*"
   ],
   "devDependencies": {
     "@types/node": "^16.9.0",

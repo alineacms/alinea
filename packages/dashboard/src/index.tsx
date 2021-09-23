@@ -1,10 +1,10 @@
-import React from 'react'
 import {render} from 'react-dom'
-import {FrontendConfig} from './FrontendConfig'
 import {App} from './App'
+import {FrontendConfig} from './FrontendConfig'
 
 export function init(config: FrontendConfig) {
-  const element = document.currentScript!
+  const scripts = document.getElementsByTagName('script')
+  const element = scripts[scripts.length - 1]
   const div = document.createElement('div')
   div.id = 'root'
   element.parentElement!.replaceChild(div, element)

@@ -6,13 +6,15 @@
     "declaration": true,
     "declarationMap": true,
     "moduleResolution": "node",
-    "jsx": "react",
+    "jsx": "react-jsx",
     "allowSyntheticDefaultImports": true,
     "importHelpers": true,
     "paths": {
       "@alinea/*": ["./packages/*/src"],
       "@alinea/core/*": ["./packages/core/src/*"],
-      "@alinea/ui/*": ["./packages/ui/src/*"]
+      "@alinea/editor/*": ["./packages/editor/src/*"],
+      "@alinea/ui/*": ["./packages/ui/src/*"],
+      "@alinea/input.*": ["./packages/input/*/src"]
     },
     "plugins": [{"name": "typescript-plugin-css-modules"}]
   },

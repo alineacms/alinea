@@ -1,6 +1,6 @@
-import React from 'react'
-
 // Source: https://codesandbox.io/s/typescript-as-prop-dicj8?file=/src/App.tsx:0-1216
+
+import {forwardRef, ForwardRefRenderFunction} from 'react'
 
 // --------------------
 // GENERIC TYPES
@@ -30,10 +30,7 @@ export type ComponentWithAs<Props, DefaultType extends As> = {
 // --------------------
 
 export function forwardRefWithAs<Props, DefaultType extends As>(
-  component: React.ForwardRefRenderFunction<any, any>
+  component: ForwardRefRenderFunction<any, any>
 ) {
-  return React.forwardRef(component) as unknown as ComponentWithAs<
-    Props,
-    DefaultType
-  >
+  return forwardRef(component) as unknown as ComponentWithAs<Props, DefaultType>
 }

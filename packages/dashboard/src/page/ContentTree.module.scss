@@ -1,24 +1,47 @@
 .node {
+  display: flex;
+  align-items: center;
   height: 26px;
   font-size: 13px;
   color: white;
-  display: flex;
-  align-items: center;
   cursor: pointer;
   padding: 0 10px;
   text-decoration: none;
+  font-weight: 500;
   position: relative;
   z-index: 1;
-  font-weight: 500;
 
   &:hover {
     background: #37373d;
   }
 
+  &.is-selected {
+    background: rgb(55, 55, 61);
+  }
+
   &-icon {
-    width: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
     text-align: center;
     flex-shrink: 0;
     color: #858585;
+  }
+
+  &-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #ffbd67;
+    color: #191a1f;
+    border-radius: 14px;
+    height: 14px;
+    min-width: 14px;
+    padding: 0 3px;
+    white-space: nowrap;
+    font-size: 9px;
+    font-weight: bold;
   }
 }

@@ -1,6 +1,7 @@
 import {Entry} from '@alinea/core'
+import {HStack} from '@alinea/ui/Stack'
 import {fromModule} from '@alinea/ui/styler'
-import React, {useRef, useState} from 'react'
+import {useRef, useState} from 'react'
 import {MdChevronRight, MdExpandMore, MdInsertDriveFile} from 'react-icons/md'
 import {useQuery} from 'react-query'
 import {Link, useLocation} from 'wouter'
@@ -53,7 +54,7 @@ function TreeNode({entry, level, isOpen, toggleOpen}: TreeNodeProps) {
   const isSelected = location === entry.path
   useInitialEffect(() => {
     if (isSelected)
-      ref.current!.scrollIntoView({behavior: 'smooth', block: 'center'})
+      ref.current!.scrollIntoView({/*behavior: 'smooth',*/ block: 'center'})
   })
   return (
     <>
@@ -65,11 +66,8 @@ function TreeNode({entry, level, isOpen, toggleOpen}: TreeNodeProps) {
       >
         <a
           ref={ref}
-          className={styles.node()}
-          style={{
-            paddingLeft: `${10 + level * 8}px`,
-            background: isSelected ? 'rgb(55, 55, 61)' : undefined
-          }}
+          className={styles.node.is({selected: isSelected})()}
+          style={{paddingLeft: `${10 + level * 8}px`}}
         >
           <div className={styles.node.icon()}>
             {entry.isContainer ? (
@@ -82,15 +80,20 @@ function TreeNode({entry, level, isOpen, toggleOpen}: TreeNodeProps) {
               <MdInsertDriveFile size={12} />
             )}
           </div>
-          <span
-            style={{
-              whiteSpace: 'nowrap',
-              textOverflow: 'ellipsis',
-              overflow: 'hidden'
-            }}
-          >
-            {entry.title} {entry.isContainer && `(${entry.children})`}
-          </span>
+          <HStack center gap={8} style={{width: '100%'}}>
+            <span
+              style={{
+                whiteSpace: 'nowrap',
+                textOverflow: 'ellipsis',
+                overflow: 'hidden'
+              }}
+            >
+              {entry.title}
+            </span>
+            {entry.isContainer && entry.children > 0 && (
+              <div className={styles.node.badge()}>{entry.children}</div>
+            )}
+          </HStack>
         </a>
       </Link>
       {entry.isContainer && isOpen(entry.path) && (

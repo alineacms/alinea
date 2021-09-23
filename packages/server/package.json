@@ -17,7 +17,7 @@
     "convert-hrtime": "^5.0.0",
     "cors": "^2.8.5",
     "express": "^4.17.1",
-    "helder.store": "^0.0.0-alpha.6",
+    "helder.store": "^0.0.0-alpha.9",
     "pretty-ms": "^7.0.1",
     "tslib": "^2.3.1"
   },

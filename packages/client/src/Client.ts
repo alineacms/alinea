@@ -1,4 +1,4 @@
-import {Api, Content, Entry, Hub} from '@alinea/core'
+import {Api, Content, Entry, Hub, Schema} from '@alinea/core'
 import fetch from 'isomorphic-fetch'
 
 export class ClientContent implements Content {
@@ -14,7 +14,7 @@ export class ClientContent implements Content {
 }
 
 export class Client implements Hub {
-  constructor(protected url: string) {}
+  constructor(public schema: Schema, protected url: string) {}
 
   async fetch(endpoint: string, init?: RequestInit) {
     const response = await fetch(this.url + endpoint, init)

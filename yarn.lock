@@ -57,6 +57,18 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@alinea/input.number@workspace:packages/input/number":
+  version: 0.0.0-use.local
+  resolution: "@alinea/input.number@workspace:packages/input/number"
+  languageName: unknown
+  linkType: soft
+
+"@alinea/input.text@workspace:packages/input/text":
+  version: 0.0.0-use.local
+  resolution: "@alinea/input.text@workspace:packages/input/text"
+  languageName: unknown
+  linkType: soft
+
 "@alinea/server@workspace:packages/server":
   version: 0.0.0-use.local
   resolution: "@alinea/server@workspace:packages/server"
@@ -70,7 +82,7 @@ __metadata:
     convert-hrtime: ^5.0.0
     cors: ^2.8.5
     express: ^4.17.1
-    helder.store: ^0.0.0-alpha.6
+    helder.store: ^0.0.0-alpha.9
     pretty-ms: ^7.0.1
     tslib: ^2.3.1
     typescript: ^4.4.3
@@ -95,7 +107,6 @@ __metadata:
   resolution: "@alinea/ui@workspace:packages/ui"
   dependencies:
     "@stitches/react": ^1.2.0
-    fela: ^11.6.1
     tslib: ^2.3.1
     typescript: ^4.4.3
   languageName: unknown
@@ -1579,15 +1590,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"css-in-js-utils@npm:^3.0.0":
-  version: 3.1.0
-  resolution: "css-in-js-utils@npm:3.1.0"
-  dependencies:
-    hyphenate-style-name: ^1.0.3
-  checksum: 066318e918c04a5e5bce46b38fe81052ea6ac051bcc6d3c369a1d59ceb1546cb2b6086901ab5d22be084122ee3732169996a3dfb04d3406eaee205af77aec61b
-  languageName: node
-  linkType: hard
-
 "css-parse@npm:~2.0.0":
   version: 2.0.0
   resolution: "css-parse@npm:2.0.0"
@@ -1632,13 +1634,6 @@ __metadata:
   version: 3.0.8
   resolution: "csstype@npm:3.0.8"
   checksum: 5939a003858a31a32cbc52a8f45496aa0c2bcb4629b21c5bc14a7ddcac1a3d4adfd655f56843dc14940f60563378e9444af2c9c373b3f212601b9eeb6740b8db
-  languageName: node
-  linkType: hard
-
-"csstype@npm:^3.0.5":
-  version: 3.0.9
-  resolution: "csstype@npm:3.0.9"
-  checksum: 199f9af7e673f9f188525c3102a329d637ff46c52f6385a4427ff5cb17adcb736189150170a7af7c5701d18d7704bdad130273f4aa7e44c6c4f9967e6115dc93
   languageName: node
   linkType: hard
 
@@ -2284,13 +2279,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fast-loops@npm:^1.0.0":
-  version: 1.1.3
-  resolution: "fast-loops@npm:1.1.3"
-  checksum: b674378ba2ed8364ca1a00768636e88b22201c8d010fa62a8588a4cace04f90bac46714c13cf638be82b03438d2fe813600da32291fb47297a1bd7fa6cef0cee
-  languageName: node
-  linkType: hard
-
 "fastparse@npm:^1.1.2":
   version: 1.1.2
   resolution: "fastparse@npm:1.1.2"
@@ -2304,29 +2292,6 @@ __metadata:
   dependencies:
     reusify: ^1.0.4
   checksum: 32cf15c29afe622af187d12fc9cd93e160a0cb7c31a3bb6ace86b7dea3b28e7b72acde89c882663f307b2184e14782c6c664fa315973c03626c7d4bff070bb0b
-  languageName: node
-  linkType: hard
-
-"fela-utils@npm:^11.6.1":
-  version: 11.6.1
-  resolution: "fela-utils@npm:11.6.1"
-  dependencies:
-    css-in-js-utils: ^3.0.0
-    fast-loops: ^1.0.0
-  checksum: cbcab79b59bbdb01a41183a78f43a0544147fdbab1a2062cf2f9b8f28c8a3219ff22d605cb96d53845f6d0200eb4b4e0de6996ce5cb9c09a442d989e3cfffe42
-  languageName: node
-  linkType: hard
-
-"fela@npm:^11.6.1":
-  version: 11.6.1
-  resolution: "fela@npm:11.6.1"
-  dependencies:
-    css-in-js-utils: ^3.0.0
-    csstype: ^3.0.5
-    fast-loops: ^1.0.0
-    fela-utils: ^11.6.1
-    isobject: ^3.0.1
-  checksum: bc35f31e4ea9a36c317cead0280f2b577d829e9bd3aaa5305570bdf29d98fa9971fa8550ebb7e45a179da73ea6f054ab2ac89b2590c32b9969a2f4aa2ac198c3
   languageName: node
   linkType: hard
 
@@ -2624,10 +2589,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"helder.store@npm:^0.0.0-alpha.6":
-  version: 0.0.0-alpha.6
-  resolution: "helder.store@npm:0.0.0-alpha.6"
-  checksum: 8fd33761aeba226ef6939129b378aa5e6797d5a5a2c7eed9d39e2b7f72bca082058b3dec0131f04f3ab0212d6ddc5744d5fa943d69d4767829b8ec3ad9641261
+"helder.store@npm:^0.0.0-alpha.9":
+  version: 0.0.0-alpha.9
+  resolution: "helder.store@npm:0.0.0-alpha.9"
+  checksum: 72febf538f935b581db7e64d0881bd41bc100b1c44fd50d96a0999991487d060db82faf0a46d4a9810dbe35d3b06702854d36bed858f868a0eb3e7e20206433e
   languageName: node
   linkType: hard
 
@@ -2698,13 +2663,6 @@ __metadata:
   dependencies:
     ms: ^2.0.0
   checksum: 9c7a74a2827f9294c009266c82031030eae811ca87b0da3dceb8d6071b9bde22c9f3daef0469c3c533cc67a97d8a167cd9fc0389350e5f415f61a79b171ded16
-  languageName: node
-  linkType: hard
-
-"hyphenate-style-name@npm:^1.0.3":
-  version: 1.0.4
-  resolution: "hyphenate-style-name@npm:1.0.4"
-  checksum: 4f5bf4b055089754924babebaa23c17845937bcca6aee95d5d015f8fa1e6814279002bd6a9e541e3fac2cd02519fc76305396727066c57c8e21a7e73e7a12137
   languageName: node
   linkType: hard
 
@@ -3061,13 +3019,6 @@ __metadata:
   version: 2.0.0
   resolution: "isexe@npm:2.0.0"
   checksum: 26bf6c5480dda5161c820c5b5c751ae1e766c587b1f951ea3fcfc973bafb7831ae5b54a31a69bd670220e42e99ec154475025a468eae58ea262f813fdc8d1c62
-  languageName: node
-  linkType: hard
-
-"isobject@npm:^3.0.1":
-  version: 3.0.1
-  resolution: "isobject@npm:3.0.1"
-  checksum: db85c4c970ce30693676487cca0e61da2ca34e8d4967c2e1309143ff910c207133a969f9e4ddb2dc6aba670aabce4e0e307146c310350b298e74a31f7d464703
   languageName: node
   linkType: hard
 

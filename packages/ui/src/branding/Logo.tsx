@@ -1,6 +1,5 @@
-import React from 'react'
 import {PropsWithChildren} from 'react'
-import {fromModule} from '@alinea/ui/styler'
+import {fromModule} from '../styler'
 import css from './Logo.module.scss'
 
 const styles = fromModule(css)
