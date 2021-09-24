@@ -30,7 +30,6 @@ serve(
     outdir: 'dist',
     bundle: true,
     sourcemap: true,
-    minify: true,
     inject: ['../../scripts/react-shim.js'],
     plugins: [
       ScssModulesPlugin({

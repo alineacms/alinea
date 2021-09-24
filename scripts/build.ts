@@ -15,6 +15,9 @@ const externalPlugin: Plugin = {
   name: 'external-plugin',
   setup(build) {
     build.onResolve({filter: /.*/}, args => {
+      // Todo: here we can easily check which dependencies we're using and
+      // whether they were declared in the package manifest. If not
+      // display a warning so the manifest can be updated.
       const extension = path.extname(args.path)
       if (bundle.has(extension)) return
       if (args.kind === 'entry-point') return

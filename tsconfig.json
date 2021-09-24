@@ -2,6 +2,7 @@
   "compilerOptions": {
     "noEmit": true,
     "module": "ESNext",
+    "target": "ESNext",
     "skipLibCheck": true,
     "strict": true,
     "declaration": true,
@@ -18,5 +19,7 @@
       "@alinea/*": ["./node_modules/@alinea/*/src"]
     },
     "plugins": [{"name": "typescript-plugin-css-modules"}]
-  }
+  },
+  "include": ["./packages"],
+  "exclude": ["./node_modules"]
 }

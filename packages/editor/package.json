@@ -7,6 +7,10 @@
   "exports": {
     ".": "./dist"
   },
+  "dependencies": {
+    "@alinea/core": "0.0.0",
+    "yjs": "^13.5.12"
+  },
   "peerDependencies": {
     "react": "*"
   }

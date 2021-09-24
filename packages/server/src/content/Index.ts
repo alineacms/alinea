@@ -79,7 +79,7 @@ class Indexed implements Content {
     return this.store.first(Entry.where(Entry.path.is(path)))
   }
 
-  async list(path?: string): Promise<Array<Entry & {children: number}>> {
+  async list(path?: string): Promise<Array<Entry.WithChildrenCount>> {
     const Parent = Entry.as('Parent')
     return this.store.all(
       Entry.where(path ? Entry.parent.is(path) : Entry.parent.isNull()).select({
@@ -88,7 +88,7 @@ class Indexed implements Content {
         isContainer: Entry.isContainer,
         parent: Entry.parent,
         title: Entry.title,
-        children: Parent.where(Parent.parent.is(Entry.path))
+        childrenCount: Parent.where(Parent.parent.is(Entry.path))
           .select(Functions.count())
           .first()
       })
@@ -97,15 +97,17 @@ class Indexed implements Content {
 }
 
 export class Index implements Content {
-  index = init(this.path)
+  index: Progress<Content>
 
-  constructor(protected path: string) {}
+  constructor(protected path: string) {
+    this.index = init(this.path)
+  }
 
   get(path: string): Promise<Entry | null> {
     return this.index.then(index => index.get(path))
   }
 
-  list(path?: string): Promise<Array<Entry & {children: number}>> {
+  list(path?: string): Promise<Array<Entry.WithChildrenCount>> {
     return this.index.then(index => index.list(path))
   }
 }

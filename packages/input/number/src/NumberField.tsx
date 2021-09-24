@@ -6,7 +6,7 @@ export type NumberOptions = {
   initialValue?: number
 }
 
-export type NumberField = Field<string, NumberOptions>
+export type NumberField = Field<number> & {label: Label; options: NumberOptions}
 
 export function createNumber(
   label: Label,

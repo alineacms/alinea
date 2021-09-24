@@ -8,7 +8,10 @@ const currentLocation = () => {
   return window.location.hash.replace(/^#/, '') || '/'
 }
 
-const navigate = (to: string) => (window.location.hash = to)
+const navigate = (to: string) => {
+  const location = to.startsWith('/#') ? to.substr(2) : to
+  window.location.hash = location
+}
 
 export const useHashLocation = (): [string, (to: string) => void] => {
   const [loc, setLoc] = useState(currentLocation())

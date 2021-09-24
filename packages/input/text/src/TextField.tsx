@@ -7,7 +7,7 @@ export type TextOptions = {
   initialValue?: string
 }
 
-export type TextField = Field<string, TextOptions>
+export type TextField = Field<string> & {label: Label; options: TextOptions}
 
 export function createText(label: Label, options: TextOptions = {}): TextField {
   return {

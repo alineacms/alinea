@@ -1,7 +1,9 @@
 import {Logo} from '@alinea/ui/branding/Logo'
 import {HStack} from '@alinea/ui/Stack'
 import {fromModule} from '@alinea/ui/styler'
+import {memo} from 'react'
 import {
+  MdBrightnessMedium,
   MdFormatBold,
   MdFormatItalic,
   MdFormatQuote,
@@ -15,7 +17,7 @@ import css from './Toolbar.module.scss'
 
 const styles = fromModule(css)
 
-export function Toolbar() {
+export const Toolbar = memo(function Toolbar() {
   return (
     <HStack center className={styles.root()}>
       <HStack center gap={16}>
@@ -37,6 +39,26 @@ export function Toolbar() {
           <MdInsertPhoto />
         </HStack>
       </div>
+      <div>
+        <HStack center gap={20}>
+          <MdBrightnessMedium />
+          <div
+            style={{
+              borderRadius: '100%',
+              background: '#FF8577',
+              color: 'white',
+              width: '24px',
+              height: '24px',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              fontSize: '13px'
+            }}
+          >
+            <span>B</span>
+          </div>
+        </HStack>
+      </div>
     </HStack>
   )
-}
+})

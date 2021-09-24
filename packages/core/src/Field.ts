@@ -1,4 +1,5 @@
 import type {ComponentType} from 'react'
+import {InputPath} from './InputPath'
 import {Label} from './Label'
 
 export type FieldOptions = {
@@ -37,8 +38,9 @@ export function field<Shape extends FieldShape>(type: Shape['type']) {
   }
 }*/
 
-export type FieldRenderer<Type = any, Options = any> = ComponentType<{
-  field: Field<Type, Options>
+export type FieldRenderer<T, F> = ComponentType<{
+  path: InputPath<T>
+  field: F
 }>
 
 export function renderer<T, K extends keyof T>(
@@ -48,17 +50,16 @@ export function renderer<T, K extends keyof T>(
   return () => loader().then(res => res[name])
 }
 
-export function withView<T, O, C extends (...args: Array<any>) => Field<T, O>>(
-  create: C,
-  view: FieldRenderer<T, O>
-) {
+export function withView<
+  T,
+  F extends Field<T>,
+  C extends (...args: Array<any>) => F
+>(create: C, view: FieldRenderer<T, F>) {
   return (...args: Parameters<C>) => {
     return {...create(...args), view}
   }
 }
 
-export interface Field<Type = any, Options = any> {
-  label: Label
-  options: Options
-  view?: FieldRenderer<Type, Options>
+export interface Field<T = any> {
+  view?: FieldRenderer<T, Field<T>>
 }

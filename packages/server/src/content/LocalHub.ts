@@ -1,7 +1,10 @@
+import {Content, Hub} from '@alinea/core'
 import {Schema} from '@alinea/core/Schema'
 import {Index} from './Index'
 
-export class LocalHub {
-  constructor(public schema: Schema, protected contentPath: string) {}
-  content = new Index(this.contentPath)
+export class LocalHub implements Hub {
+  content: Content
+  constructor(public schema: Schema, protected contentPath: string) {
+    this.content = new Index(this.contentPath)
+  }
 }

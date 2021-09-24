@@ -1,19 +1,20 @@
 import {Client} from '@alinea/client'
 import {Sidebar} from '@alinea/ui/Sidebar'
 import {fromModule} from '@alinea/ui/styler'
-import {createContext, useContext, useMemo, useState} from 'react'
+import 'preact/debug'
+import {createContext, Suspense, useContext, useMemo, useState} from 'react'
 import Helmet from 'react-helmet'
 import {MdPerson, MdSearch, MdSettings} from 'react-icons/md'
 import {QueryClient, QueryClientProvider} from 'react-query'
-import {Route, Router} from 'wouter'
+import {Route} from 'react-router'
+import {HashRouter} from 'react-router-dom'
 import css from './App.module.scss'
 // Todo: bundle this properly
 import './css/fonts.css'
 import {FrontendConfig} from './FrontendConfig'
-import {useHashLocation} from './hooks/UseLocation'
-import {ContentTree} from './page/ContentTree'
-import {EntryEdit} from './page/EntryEdit'
-import {Toolbar} from './page/Toolbar'
+import {ContentTree} from './view/ContentTree'
+import {EntryEdit} from './view/EntryEdit'
+import {Toolbar} from './view/Toolbar'
 
 const styles = fromModule(css)
 
@@ -67,7 +68,7 @@ export function App({config}: AppProps) {
     [config.schema, config.api]
   )
   return (
-    <Router hook={useHashLocation}>
+    <HashRouter>
       <appConfig.Provider value={{config, client}}>
         <Helmet>
           <meta charSet="utf-8" />
@@ -100,16 +101,20 @@ export function App({config}: AppProps) {
               </Sidebar.Root>
               <div style={{padding: '10px', width: '100%'}}>
                 <Route path="/:slug*">
-                  {({slug}) => {
-                    return <EntryEdit path={slug} />
+                  {({match}) => {
+                    return (
+                      <Suspense fallback={null}>
+                        <EntryEdit path={match?.params.slug!} />
+                      </Suspense>
+                    )
                   }}
                 </Route>
               </div>
             </div>
-            <div style={{height: '22px', background: '#303136'}} />
+            <div style={{height: '22px', background: '#303136'}}></div>
           </div>
         </QueryClientProvider>
       </appConfig.Provider>
-    </Router>
+    </HashRouter>
   )
 }
