@@ -41,6 +41,9 @@ __metadata:
     react-query: ^3.23.2
     tslib: ^2.3.1
     wouter: ^2.7.4
+  peerDependencies:
+    react: "*"
+    react-dom: "*"
   languageName: unknown
   linkType: soft
 
@@ -601,6 +604,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/glob@npm:^7.1.4":
+  version: 7.1.4
+  resolution: "@types/glob@npm:7.1.4"
+  dependencies:
+    "@types/minimatch": "*"
+    "@types/node": "*"
+  checksum: 6911a956448f5eddea1e4371f814bf92072e8ceedba83de6ce2a6745938a6f0327376e1c0072fa0d7b3b73d84e255aafda53c1dff148225cfe542a8cc5d54b02
+  languageName: node
+  linkType: hard
+
 "@types/isomorphic-fetch@npm:^0.0.35":
   version: 0.0.35
   resolution: "@types/isomorphic-fetch@npm:0.0.35"
@@ -626,6 +639,13 @@ __metadata:
   version: 1.3.2
   resolution: "@types/mime@npm:1.3.2"
   checksum: 0493368244cced1a69cb791b485a260a422e6fcc857782e1178d1e6f219f1b161793e9f87f5fae1b219af0f50bee24fcbe733a18b4be8fdd07a38a8fb91146fd
+  languageName: node
+  linkType: hard
+
+"@types/minimatch@npm:*":
+  version: 3.0.5
+  resolution: "@types/minimatch@npm:3.0.5"
+  checksum: c41d136f67231c3131cf1d4ca0b06687f4a322918a3a5adddc87ce90ed9dbd175a3610adee36b106ae68c0b92c637c35e02b58c8a56c424f71d30993ea220b92
   languageName: node
   linkType: hard
 
@@ -1023,12 +1043,14 @@ __metadata:
   resolution: "alinea@workspace:."
   dependencies:
     "@types/cross-spawn": ^6.0.2
+    "@types/glob": ^7.1.4
     "@types/node": ^16.9.0
     "@typescript-eslint/eslint-plugin": ^4.31.0
     "@typescript-eslint/parser": ^4.31.0
     cross-spawn: ^7.0.3
     cross-spawn-promise: ^0.10.2
     esbuild: ^0.12.27
+    esbuild-node: ^0.4.0
     eslint: ^7.32.0
     eslint-plugin-react: ^7.25.1
     eslint-plugin-react-hooks: ^4.2.0
@@ -1954,6 +1976,17 @@ __metadata:
     is-date-object: ^1.0.1
     is-symbol: ^1.0.2
   checksum: 4ead6671a2c1402619bdd77f3503991232ca15e17e46222b0a41a5d81aebc8740a77822f5b3c965008e631153e9ef0580540007744521e72de8e33599fca2eed
+  languageName: node
+  linkType: hard
+
+"esbuild-node@npm:^0.4.0":
+  version: 0.4.0
+  resolution: "esbuild-node@npm:0.4.0"
+  peerDependencies:
+    esbuild: ">=0.6.0"
+  bin:
+    esbuild-node: bin/esbuild-node.js
+  checksum: 341a4dae3cd0ef870fc45498a3043aa268747274b05459c2c789d370e3b8bf905358b261eba92e07c67da9a826f5ab8efae16e8200813b4b01312b0e3cc31ce2
   languageName: node
   linkType: hard
 

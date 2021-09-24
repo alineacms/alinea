@@ -9,5 +9,8 @@
       "import": "./dist/index.js",
       "browser": "./dist/browser.js"
     }
+  },
+  "peerDependencies": {
+    "react": "*"
   }
 }

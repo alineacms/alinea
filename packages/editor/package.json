@@ -6,5 +6,8 @@
   "types": "dist/index.d.ts",
   "exports": {
     ".": "./dist"
+  },
+  "peerDependencies": {
+    "react": "*"
   }
 }
