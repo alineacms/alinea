@@ -7,5 +7,6 @@
   },
   "typescript.tsserver.watchOptions": {
     "watchFile": "useFsEvents"
-  }
+  },
+  "emmet.showExpandedAbbreviation": "never"
 }

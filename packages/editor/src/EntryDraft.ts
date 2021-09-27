@@ -1,50 +1,28 @@
 import {Entry, InputPath} from '@alinea/core'
+import {WebsocketProvider} from 'y-websocket'
 import * as Y from 'yjs'
 
 const ROOT_KEY = 'root'
 
-function toYValue(value: any) {
-  if (Array.isArray(value)) {
-    const array = new Y.Array()
-    value.forEach(item => {
-      array.push(toYValue(item))
-    })
-    return array
-  }
-  if (value && typeof value === 'object') {
-    const map = new Y.Map()
-    Object.keys(value).forEach(key => {
-      map.set(key, value[key])
-    })
-    return map
-  }
-  return value
-}
-
-// Todo: use the schema to fill the doc
-function docFromEntry(entry: Entry) {
-  const doc = new Y.Doc()
-  const root = doc.getMap(ROOT_KEY)
-  const data: {[key: string]: any} = entry
-  for (const key of Object.keys(data)) {
-    root.set(key, toYValue(data[key]))
-  }
-  return doc
-}
-
 export class EntryDraft implements Entry {
   public doc: Y.Doc
+  private provider: WebsocketProvider
 
-  constructor(public entry: Entry) {
-    this.doc = docFromEntry(entry)
+  constructor(public path: string) {
+    this.doc = new Y.Doc()
+    this.provider = new WebsocketProvider(
+      `ws://${window.location.hostname}:4500`,
+      this.path,
+      this.doc
+    )
+  }
+
+  destroy() {
+    this.provider.destroy()
   }
 
   private get root() {
     return this.doc.getMap(ROOT_KEY)
-  }
-
-  get path() {
-    return this.root.get('path')
   }
 
   get title() {
@@ -55,7 +33,8 @@ export class EntryDraft implements Entry {
     return this.root.get('channel')
   }
 
-  get<T>(target: Y.AbstractType<any>, path: Array<string | number>): T {
+  get(target: Y.AbstractType<any>, path: Array<string | number>): any {
+    if (path.length === 0) return target
     const current = path[0]
     switch (typeof current) {
       case 'string':
@@ -71,7 +50,6 @@ export class EntryDraft implements Entry {
   }
 
   getParent<T>(path: InputPath<T>): any {
-    if (path.length === 1) return this.root
     return this.get(this.root, path.slice(0, -1))
   }
 

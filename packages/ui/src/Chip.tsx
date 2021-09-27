@@ -7,10 +7,9 @@ const styles = fromModule(css)
 
 export type ChipProps = StackProps & {
   icon?: IconType
-  mod?: 'primary' | 'secondary'
 }
 
-export function Chip({children, mod, icon: Icon, ...props}: ChipProps) {
+export function Chip({children, icon: Icon, ...props}: ChipProps) {
   return (
     <HStack
       center

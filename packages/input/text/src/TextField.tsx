@@ -2,6 +2,7 @@ import {Field, Label} from '@alinea/core'
 
 export type TextOptions = {
   help?: Label
+  optional?: boolean
   multiline?: boolean
   inline?: boolean
   initialValue?: string

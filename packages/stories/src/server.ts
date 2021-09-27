@@ -1,5 +1,7 @@
-import {LocalHub, serve} from '@alinea/server'
+import {LocalHub, Server} from '@alinea/server'
 import {createServer} from 'http'
 import {schema} from './schema'
 
-createServer(serve(new LocalHub(schema, './content'))).listen(4500)
+const server = new Server(new LocalHub(schema, './content'))
+
+createServer(server.respond).on('upgrade', server.upgrade).listen(4500)

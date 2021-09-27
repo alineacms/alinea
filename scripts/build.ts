@@ -11,6 +11,18 @@ const tsc = root + '/node_modules/.bin/tsc'
 
 const bundle = new Set(['.scss', '.css'])
 
+// Todo: before building we should update the main tsconfig by changing the
+// paths to point to the node_modules location. If we don't typescript generates
+// declarations for each of the symlinked packages. We don't do this by default
+// because it makes vscode autocomplete end up in the symlinks and it gets
+// very confusing.
+
+// "@alinea/input.*": ["./node_modules/@alinea/input.*/src"],
+// "@alinea/core/*": ["./node_modules/@alinea/core/src/*"],
+// "@alinea/editor/*": ["./node_modules/@alinea/editor/src/*"],
+// "@alinea/ui/*": ["./node_modules/@alinea/ui/src/*"],
+// "@alinea/*": ["./node_modules/@alinea/*/src"]
+
 const externalPlugin: Plugin = {
   name: 'external-plugin',
   setup(build) {

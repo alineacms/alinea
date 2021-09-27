@@ -12,11 +12,11 @@
     "allowSyntheticDefaultImports": true,
     "importHelpers": true,
     "paths": {
-      "@alinea/input.*": ["./node_modules/@alinea/input.*/src"],
-      "@alinea/core/*": ["./node_modules/@alinea/core/src/*"],
-      "@alinea/editor/*": ["./node_modules/@alinea/editor/src/*"],
-      "@alinea/ui/*": ["./node_modules/@alinea/ui/src/*"],
-      "@alinea/*": ["./node_modules/@alinea/*/src"]
+      "@alinea/input.*": ["./packages/input/*/src"],
+      "@alinea/core/*": ["./packages/core/src/*"],
+      "@alinea/editor/*": ["./packages/editor/src/*"],
+      "@alinea/ui/*": ["./packages/ui/src/*"],
+      "@alinea/*": ["./packages/*/src"]
     },
     "plugins": [{"name": "typescript-plugin-css-modules"}]
   },

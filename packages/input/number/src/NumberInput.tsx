@@ -1,5 +1,5 @@
 import {InputPath} from '@alinea/core'
-import {InputLabel} from '@alinea/editor'
+import {Label} from '@alinea/editor'
 import {fromModule} from '@alinea/ui/styler'
 import {NumberField} from './NumberField'
 import css from './NumberInput.module.scss'
@@ -14,9 +14,9 @@ export type NumberInputProps = {
 export function NumberInput({field}: NumberInputProps) {
   return (
     <div>
-      <InputLabel label={field.label}>
+      <Label label={field.label}>
         <input type="number" />
-      </InputLabel>
+      </Label>
     </div>
   )
 }

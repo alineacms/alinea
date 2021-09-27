@@ -3,8 +3,8 @@ import {EntryDraft} from '../EntryDraft'
 
 const context = createContext<EntryDraft | undefined>(undefined)
 
-export function useEntryDraft() {
+export function useCurrentDraft() {
   return useContext(context)
 }
 
-export const EntryDraftProvider = context.Provider
+export const CurrentDraftProvider = context.Provider

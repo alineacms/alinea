@@ -1,6 +1,7 @@
 export * from './Api'
 export * from './Channel'
 export * from './Config'
+export * from './Doc'
 export * from './Entry'
 export * from './Field'
 export * from './Hub'

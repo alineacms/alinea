@@ -79,6 +79,11 @@ class Indexed implements Content {
     return this.store.first(Entry.where(Entry.path.is(path)))
   }
 
+  async put(path: string, entry: Entry): Promise<void> {
+    // Todo: only update keys that changed?
+    this.store.update(Entry.where(Entry.path.is(path)), entry as any)
+  }
+
   async list(path?: string): Promise<Array<Entry.WithChildrenCount>> {
     const Parent = Entry.as('Parent')
     return this.store.all(
@@ -105,6 +110,10 @@ export class Index implements Content {
 
   get(path: string): Promise<Entry | null> {
     return this.index.then(index => index.get(path))
+  }
+
+  put(path: string, entry: Entry): Promise<void> {
+    return this.index.then(index => index.put(path, entry))
   }
 
   list(path?: string): Promise<Array<Entry.WithChildrenCount>> {
