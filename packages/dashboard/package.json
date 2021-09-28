@@ -18,8 +18,7 @@
     "react-icons": "^4.2.0",
     "react-query": "^3.23.2",
     "react-router": "^5.2.1",
-    "react-router-dom": "^5.3.0",
-    "tslib": "^2.3.1"
+    "react-router-dom": "^5.3.0"
   },
   "devDependencies": {
     "@fontsource/inter": "^4.5.0",

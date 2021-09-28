@@ -3,13 +3,18 @@ import {Fields, Label, useInput} from '@alinea/editor'
 import {fromModule, IconButton, TextLabel} from '@alinea/ui'
 import {Create} from '@alinea/ui/Create'
 import {HStack, VStack} from '@alinea/ui/Stack'
+import {generateKeyBetween} from 'fractional-indexing'
 import {MdDelete} from 'react-icons/md'
 import {ListField} from './ListField'
 import css from './ListInput.module.scss'
 
 const styles = fromModule(css)
 
-export type ListRow = {$id: string; $channel: string}
+export type ListRow = {
+  $id: string
+  $index: string
+  $channel: string
+}
 
 type ListInputRow<T> = {
   path: InputPath<T>
@@ -63,8 +68,11 @@ export type ListInputProps<T> = {
 }
 
 export function ListInput<T extends ListRow>({path, field}: ListInputProps<T>) {
-  const [rows, input] = useInput(path)
+  const [data, input] = useInput(path)
   const {help} = field.options
+  const rows = data
+    .slice(0)
+    .sort((a: ListRow, b: ListRow) => a.$index?.localeCompare(b.$index))
   return (
     <Label label={field.label} help={help}>
       <div className={styles.root()}>
@@ -74,7 +82,7 @@ export function ListInput<T extends ListRow>({path, field}: ListInputProps<T>) {
               <ListInputRow<T>
                 key={row.$id}
                 field={field}
-                path={inputPath<T>(path.concat(i))}
+                path={inputPath<T>(path.concat(row.$id))}
                 onDelete={() => input.delete(i)}
               />
             )
@@ -83,7 +91,14 @@ export function ListInput<T extends ListRow>({path, field}: ListInputProps<T>) {
       </div>
       <ListCreateRow
         onCreate={(channel: string) => {
-          input.push({$id: createId(), $channel: channel} as T)
+          input.push({
+            $id: createId(),
+            $channel: channel,
+            $index: generateKeyBetween(
+              rows[rows.length - 1]?.$index || null,
+              null
+            )
+          } as T)
         }}
         field={field}
       />
