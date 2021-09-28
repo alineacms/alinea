@@ -1,6 +1,6 @@
 import {InputPath} from '@alinea/core'
 import {Label} from '@alinea/editor'
-import {fromModule} from '@alinea/ui/styler'
+import {fromModule} from '@alinea/ui'
 import {NumberField} from './NumberField'
 import css from './NumberInput.module.scss'
 

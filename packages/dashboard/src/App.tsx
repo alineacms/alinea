@@ -1,6 +1,6 @@
 import {Client} from '@alinea/client'
+import {fromModule} from '@alinea/ui'
 import {Sidebar} from '@alinea/ui/Sidebar'
-import {fromModule} from '@alinea/ui/styler'
 import 'preact/debug'
 import {createContext, Suspense, useContext, useMemo, useState} from 'react'
 import Helmet from 'react-helmet'
@@ -99,7 +99,7 @@ export function App({config}: AppProps) {
                   <ContentTree />
                 </Sidebar.List>
               </Sidebar.Root>
-              <div style={{padding: '10px', width: '100%'}}>
+              <div style={{width: '100%'}}>
                 <Route path="/:slug*">
                   {({match}) => {
                     return (
@@ -111,7 +111,7 @@ export function App({config}: AppProps) {
                 </Route>
               </div>
             </div>
-            <div style={{height: '22px', background: '#303136'}}></div>
+            <div style={{height: '22px', background: 'var(--outline)'}}></div>
           </div>
         </QueryClientProvider>
       </appConfig.Provider>

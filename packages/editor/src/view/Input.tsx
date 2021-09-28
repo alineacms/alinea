@@ -1,5 +1,5 @@
 import {Field, InputPath} from '@alinea/core'
-import {fromModule} from '@alinea/ui/styler'
+import {fromModule} from '@alinea/ui'
 import css from './Input.module.scss'
 
 const styles = fromModule(css)

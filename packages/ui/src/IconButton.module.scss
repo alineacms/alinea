@@ -1,0 +1,18 @@
+.root {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.8em;
+  height: 1.8em;
+  cursor: pointer;
+  border-radius: 100%;
+  font-size: 1em;
+  flex-shrink: 0;
+  border: none;
+  background: var(--foreground);
+  color: var(--background);
+
+  &:hover {
+    background: var(--accent);
+  }
+}

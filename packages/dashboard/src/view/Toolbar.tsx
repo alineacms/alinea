@@ -1,6 +1,6 @@
+import {fromModule} from '@alinea/ui'
 import {Logo} from '@alinea/ui/branding/Logo'
 import {HStack} from '@alinea/ui/Stack'
-import {fromModule} from '@alinea/ui/styler'
 import {memo} from 'react'
 import {
   MdBrightnessMedium,
@@ -46,7 +46,7 @@ export const Toolbar = memo(function Toolbar() {
             style={{
               borderRadius: '100%',
               background: '#FF8577',
-              color: 'white',
+              color: 'var(--foreground)',
               width: '24px',
               height: '24px',
               display: 'flex',

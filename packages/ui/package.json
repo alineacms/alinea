@@ -4,18 +4,13 @@
   "license": "MIT",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
-  "scripts": {
-    "build": "tsc"
-  },
   "exports": {
     ".": "./dist"
   },
   "dependencies": {
-    "@stitches/react": "^1.2.0",
-    "tslib": "^2.3.1"
-  },
-  "devDependencies": {
-    "typescript": "^4.4.3"
+    "@alinea/core": "0.0.0",
+    "react-icons": "^4.2.0",
+    "@stitches/react": "^1.2.0"
   },
   "peerDependencies": {
     "react": "*"

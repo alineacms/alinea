@@ -1,5 +1,5 @@
 import {Channel, inputPath} from '@alinea/core'
-import {fromModule} from '@alinea/ui/styler'
+import {fromModule} from '@alinea/ui'
 import css from './Fields.module.scss'
 import {Input} from './Input'
 

@@ -11,7 +11,8 @@
     width: 44px;
     flex-shrink: 0;
     height: 100%;
-    box-shadow: 0 0 120px black;
+    //border-right: 6px solid var(--outline);
+    //box-shadow: 0 0 120px black;
 
     &-item {
       position: relative;
@@ -26,8 +27,8 @@
       color: #858585;
 
       &:hover {
-        color: white;
-        background: #37373d;
+        color: var(--foreground);
+        background: var(--highlight);
       }
     }
   }
@@ -45,7 +46,7 @@
     }
     &::-webkit-scrollbar-track {
       // border-radius: 10px;
-      background: rgba(255, 255, 255, 0.1);
+      background: var(--outline);
     }
     &::-webkit-scrollbar-thumb {
       // border-radius: 10px;

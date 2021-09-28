@@ -1,5 +1,5 @@
 import {PropsWithChildren} from 'react'
-import {fromModule} from '../styler'
+import {fromModule} from '../util/styler'
 import css from './Logo.module.scss'
 
 const styles = fromModule(css)
@@ -25,10 +25,13 @@ export function Logo({children}: LogoShapeProps) {
             y2="0%"
             gradientTransform="rotate(65)"
           >
-            <stop offset="0%" style={{stopColor: '#FFBD67', stopOpacity: 1}} />
+            <stop
+              offset="0%"
+              style={{stopColor: 'var(--accent)', stopOpacity: 1}}
+            />
             <stop
               offset="100%"
-              style={{stopColor: '#FFBD67', stopOpacity: 1}}
+              style={{stopColor: 'var(--accent)', stopOpacity: 1}}
             />
           </linearGradient>
         </defs>

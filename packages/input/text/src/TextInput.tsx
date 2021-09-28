@@ -1,6 +1,6 @@
 import {InputPath} from '@alinea/core'
 import {Label, useInput} from '@alinea/editor'
-import {fromModule} from '@alinea/ui/styler'
+import {fromModule} from '@alinea/ui'
 import TextareaAutosize from 'react-autosize-textarea'
 import {TextField} from './TextField'
 import css from './TextInput.module.scss'

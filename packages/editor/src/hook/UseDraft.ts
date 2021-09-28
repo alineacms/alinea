@@ -7,11 +7,11 @@ export function useDraft(path: string) {
   // Todo: find a better way to check when an entry is sufficiently
   // loaded before displaying it.
   useEffect(() => {
-    if (loading.channel && current !== loading) {
+    if (loading.$channel && current !== loading) {
       setCurrent(loading)
     } else {
       const checkLoaded = () => {
-        if (!loading.channel) return
+        if (!loading.$channel) return
         loading.doc.off('update', checkLoaded)
         setCurrent(loading)
       }

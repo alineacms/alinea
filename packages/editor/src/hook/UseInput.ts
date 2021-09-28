@@ -1,12 +1,15 @@
 import {InputPath} from '@alinea/core'
-import {useEffect, useMemo, useReducer} from 'react'
+import {useEffect, useMemo} from 'react'
+import {FieldMutator} from '../EntryDraft'
 import {useCurrentDraft} from './UseCurrentDraft'
+import {useForceUpdate} from './UseForceUpdate'
 
-export function useInput<T>(path: InputPath<T>): [T, (value: T) => void] {
+export type InputPair<T> = readonly [T, FieldMutator<T>]
+
+export function useInput<T>(path: InputPath<T>): InputPair<T> {
   const draft = useCurrentDraft()
   if (!draft) throw 'Could not load draft'
-  // https://reactjs.org/docs/hooks-faq.html#is-there-something-like-forceupdate
-  const [, redraw] = useReducer(x => x + 1, 0)
+  const redraw = useForceUpdate()
   const input = useMemo(
     () => draft.getInput<T>(path),
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -14,6 +17,6 @@ export function useInput<T>(path: InputPath<T>): [T, (value: T) => void] {
   )
   useEffect(() => {
     return input.observe(redraw)
-  }, [input, draft])
-  return [input.value, input.setValue]
+  }, [input, redraw])
+  return [input.value, input.mutator]
 }

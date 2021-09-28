@@ -1,6 +1,6 @@
 import {Entry} from '@alinea/core'
+import {fromModule} from '@alinea/ui'
 import {HStack} from '@alinea/ui/Stack'
-import {fromModule} from '@alinea/ui/styler'
 import {forwardRef, memo, Ref, useCallback, useRef, useState} from 'react'
 import {MdChevronRight, MdExpandMore, MdInsertDriveFile} from 'react-icons/md'
 import {useQuery} from 'react-query'

@@ -116,6 +116,7 @@ __metadata:
     cors: ^2.8.5
     express: ^4.17.1
     helder.store: ^0.0.0-alpha.12
+    p-limit: ^4.0.0
     pretty-ms: ^7.0.1
     tslib: ^2.3.1
     ws: ^8.2.2
@@ -4277,6 +4278,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"p-limit@npm:^4.0.0":
+  version: 4.0.0
+  resolution: "p-limit@npm:4.0.0"
+  dependencies:
+    yocto-queue: ^1.0.0
+  checksum: 01d9d70695187788f984226e16c903475ec6a947ee7b21948d6f597bed788e3112cc7ec2e171c1d37125057a5f45f3da21d8653e04a3a793589e12e9e80e756b
+  languageName: node
+  linkType: hard
+
 "p-map@npm:^4.0.0":
   version: 4.0.0
   resolution: "p-map@npm:4.0.0"
@@ -6282,5 +6292,12 @@ typescript@^4.4.3:
   dependencies:
     lib0: ^0.2.41
   checksum: 3faf92344bfa6848b879cdd42d4c4d4b9273c9339c88f91b5d100215873a748d7429590ce023f1007c4b9e3b867f58b0798d24bdef2545aafcb6fc9312719747
+  languageName: node
+  linkType: hard
+
+"yocto-queue@npm:^1.0.0":
+  version: 1.0.0
+  resolution: "yocto-queue@npm:1.0.0"
+  checksum: 2cac84540f65c64ccc1683c267edce396b26b1e931aa429660aefac8fbe0188167b7aee815a3c22fa59a28a58d898d1a2b1825048f834d8d629f4c2a5d443801
   languageName: node
   linkType: hard

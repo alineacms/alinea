@@ -13,6 +13,8 @@ export interface Channel<T = {}> {
 }
 
 export namespace Channel {
+  export type TypeOf<T> = T extends Channel<infer U> ? U : never
+
   export function concat(a: Channel, b: Channel) {
     const aFields = Channel.fields(a)
     const bFields = Channel.fields(b)
@@ -37,10 +39,18 @@ export namespace Channel {
   }
 }
 
-export function channel<T>(
+type RowOf<LazyFields> = LazyFields extends Lazy<infer U>
+  ? U extends {[key: string]: any}
+    ? {
+        [K in keyof U]: U[K] extends Field<infer T> ? T : any
+      }
+    : never
+  : never
+
+export function channel<Fields extends LazyRecord<Field>>(
   label: Label,
-  fields: Lazy<{[key: string]: Lazy<Field>}>,
+  fields: Fields,
   options?: Channel['options']
-): Channel<T> {
+): Channel<RowOf<Fields>> {
   return {label, fields, options}
 }

@@ -1,0 +1,19 @@
+.root {
+  padding: 3px 0;
+}
+
+.button {
+  font-size: 13.5px;
+  font-weight: bold;
+  padding: 3px 0;
+  transition: 0.25s ease-out;
+  background: none;
+  border: none;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+
+  &:hover {
+    color: #febd6e;
+  }
+}

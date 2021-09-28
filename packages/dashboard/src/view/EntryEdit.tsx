@@ -1,4 +1,4 @@
-import {inputPath} from '@alinea/core'
+import {inputPath, Schema} from '@alinea/core'
 import {
   CurrentDraftProvider,
   Fields,
@@ -6,9 +6,13 @@ import {
   useDraft,
   useInput
 } from '@alinea/editor'
+import {fromModule} from '@alinea/ui'
 import {Suspense} from 'react'
 import {Helmet} from 'react-helmet'
 import {useApp} from '../App'
+import css from './EntryEdit.module.scss'
+
+const styles = fromModule(css)
 
 function EntryEditHeader() {
   const [title] = useInput(inputPath<string>(['title']))
@@ -29,9 +33,9 @@ type EntryEditDraftProps = {}
 function EntryEditDraft({}: EntryEditDraftProps) {
   const {client} = useApp()
   const draft = useCurrentDraft()!
-  const channel = client.schema.getChannel(draft.channel)
+  const channel = Schema.getChannel(client.schema, draft.$channel)
   return (
-    <div style={{padding: '50px 100px', height: '100%', overflow: 'auto'}}>
+    <div className={styles.draft()}>
       <EntryEditHeader />
       <Suspense fallback={null}>
         {channel ? <Fields channel={channel} /> : 'Channel not found'}

@@ -3,6 +3,7 @@ import convertHrtime from 'convert-hrtime'
 import {promises} from 'fs'
 import {Collection, Functions, SqliteStore, Store} from 'helder.store'
 import {BetterSqlite3} from 'helder.store/drivers/BetterSqlite3'
+import pLimit from 'p-limit'
 import prettyMilliseconds from 'pretty-ms'
 
 function join(...parts: Array<string>) {
@@ -15,6 +16,7 @@ type Progress<T> = Promise<T> & {progress(): number}
 
 async function index(path: string, store: Store) {
   let total = 0
+  const openfile = pLimit(4)
   async function process(target: string) {
     const files = await promises.readdir(join(path, target))
     const tasks = files.map(file => async () => {
@@ -32,19 +34,22 @@ async function index(path: string, store: Store) {
       } else {
         total++
         try {
+          const parsed = JSON.parse(
+            await openfile(() =>
+              promises.readFile(join(path, localPath), 'utf-8')
+            )
+          )
           store.insert(Entry, {
-            ...JSON.parse(
-              await promises.readFile(join(path, localPath), 'utf-8')
-            ),
+            ...parsed,
+            $channel: parsed.channel,
             path: localPath,
             parent: target ? target : undefined
           })
         } catch (e) {
-          console.log(`Could not parse ${localPath}`)
+          console.log(`Could not parse ${localPath} because:\n  ${e}`)
         }
       }
     })
-    // Todo: limit concurrency?
     await Promise.all(tasks.map(t => t()))
   }
   await process('')
@@ -88,7 +93,7 @@ class Indexed implements Content {
     const Parent = Entry.as('Parent')
     return this.store.all(
       Entry.where(path ? Entry.parent.is(path) : Entry.parent.isNull()).select({
-        channel: Entry.channel,
+        $channel: Entry.$channel,
         path: Entry.path,
         isContainer: Entry.isContainer,
         parent: Entry.parent,

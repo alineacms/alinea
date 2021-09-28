@@ -3,7 +3,7 @@ import {Label} from './Label'
 export type Id<T> = string & {__t: T}
 
 export interface Entry {
-  channel: string
+  $channel: string
   path: string
   isContainer?: boolean
   title: Label

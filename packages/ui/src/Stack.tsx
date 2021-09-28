@@ -1,7 +1,7 @@
-import React, {CSSProperties, forwardRef, HTMLProps, PropsWithRef} from 'react'
-import {styler} from './styler'
 // Todo: find the smallest css in js runtime lib for this purpose
 import {css} from '@stitches/react'
+import React, {CSSProperties, forwardRef, HTMLProps, PropsWithRef} from 'react'
+import {styler} from './util/styler'
 
 export type StackProps = PropsWithRef<
   Omit<HTMLProps<HTMLDivElement>, 'wrap'> & {

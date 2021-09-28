@@ -1,6 +1,6 @@
+import {fromModule} from '@alinea/ui'
 import {Chip} from '@alinea/ui/Chip'
 import {HStack} from '@alinea/ui/Stack'
-import {fromModule} from '@alinea/ui/styler'
 import {memo, PropsWithChildren, ReactNode} from 'react'
 import css from './InputLabel.module.scss'
 

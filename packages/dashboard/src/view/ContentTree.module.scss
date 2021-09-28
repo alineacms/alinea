@@ -3,7 +3,7 @@
   align-items: center;
   height: 26px;
   font-size: 13px;
-  color: white;
+  color: var(--foreground);
   cursor: pointer;
   padding: 0 10px;
   text-decoration: none;
@@ -12,11 +12,13 @@
   z-index: 1;
 
   &:hover {
-    background: #37373d;
+    background: var(--highlight);
+    color: var(--foreground);
   }
 
   &.is-selected {
-    background: rgb(55, 55, 61);
+    background: var(--selected);
+    color: var(--foreground);
   }
 
   &-icon {
@@ -34,7 +36,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #ffbd67;
+    background: var(--accent);
     color: #191a1f;
     border-radius: 14px;
     height: 14px;

@@ -3,7 +3,7 @@ import {Entry} from '.'
 
 const ROOT_KEY = 'root'
 
-function toYValue(value: any) {
+export function toYValue(value: any) {
   if (Array.isArray(value)) {
     const array = new Y.Array()
     value.forEach(item => {

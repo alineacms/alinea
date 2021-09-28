@@ -5,21 +5,38 @@ body,
   margin: 0;
 }
 
+:root {
+  --accent: #febc6d;
+  --background: #191a1f;
+  --foreground: white;
+  --highlight: #37373d;
+  --selected: #37373d;
+  --outline: #303136;
+}
+
+* {
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+}
+
 .root {
+  /*
+  // Light mode
+  --background: white;
+  --foreground: #191a1f;
+  --highlight: #f0f0f0;
+  --selected: #e5eef3;
+  --outline: rgb(246, 249, 250);
+  */
   display: flex;
   flex-direction: column;
   font-family: sans-serif;
   height: 100vh;
-  color: white;
+  color: var(--foreground);
   font-size: 14px;
   overflow: hidden;
-  background: #191a1f;
+  background: var(--background);
   font-display: block;
   font-family: Inter, sans-serif;
-
-  * {
-    padding: 0;
-    margin: 0;
-    box-sizing: border-box;
-  }
 }
