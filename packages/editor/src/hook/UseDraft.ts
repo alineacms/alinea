@@ -2,23 +2,25 @@ import {useEffect, useMemo, useState} from 'react'
 import {EntryDraft} from '..'
 
 export function useDraft(path: string) {
-  const draft = useMemo(() => new EntryDraft(path), [path])
-  const [loaded, setLoaded] = useState(false)
+  const [current, setCurrent] = useState<EntryDraft | null>(null)
+  const loading = useMemo(() => new EntryDraft(path), [path])
+  // Todo: find a better way to check when an entry is sufficiently
+  // loaded before displaying it.
   useEffect(() => {
-    if (draft.channel && !loaded) {
-      setLoaded(true)
+    if (loading.channel && current !== loading) {
+      setCurrent(loading)
     } else {
-      if (loaded) setLoaded(false)
-      // Todo: find a proper way to wait for first sync of document to complete
       const checkLoaded = () => {
-        if (!draft.channel) return
-        draft.doc.off('update', checkLoaded)
-        setLoaded(true)
+        if (!loading.channel) return
+        loading.doc.off('update', checkLoaded)
+        setCurrent(loading)
       }
-      draft.doc.on('update', checkLoaded)
+      loading.doc.on('update', checkLoaded)
+      return () => loading.doc.off('update', checkLoaded)
     }
-    if (draft) return () => draft.destroy()
-  }, [draft])
-  if (!loaded) return null
-  return draft
+  }, [loading])
+  useEffect(() => {
+    if (current) return () => current.destroy()
+  }, [current])
+  return current
 }
