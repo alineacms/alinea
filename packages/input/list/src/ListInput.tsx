@@ -1,4 +1,4 @@
-import {inputPath, InputPath, Schema} from '@alinea/core'
+import {createId, inputPath, InputPath, Schema} from '@alinea/core'
 import {Fields, Label, useInput} from '@alinea/editor'
 import {fromModule, IconButton, TextLabel} from '@alinea/ui'
 import {Create} from '@alinea/ui/Create'
@@ -9,7 +9,7 @@ import css from './ListInput.module.scss'
 
 const styles = fromModule(css)
 
-export type ListRow = {$channel: string}
+export type ListRow = {$id: string; $channel: string}
 
 type ListInputRow<T> = {
   path: InputPath<T>
@@ -72,7 +72,7 @@ export function ListInput<T extends ListRow>({path, field}: ListInputProps<T>) {
           {rows.map((row, i) => {
             return (
               <ListInputRow<T>
-                key={i}
+                key={row.$id}
                 field={field}
                 path={inputPath<T>(path.concat(i))}
                 onDelete={() => input.delete(i)}
@@ -83,7 +83,7 @@ export function ListInput<T extends ListRow>({path, field}: ListInputProps<T>) {
       </div>
       <ListCreateRow
         onCreate={(channel: string) => {
-          input.push({$channel: channel} as T)
+          input.push({$id: createId(), $channel: channel} as T)
         }}
         field={field}
       />

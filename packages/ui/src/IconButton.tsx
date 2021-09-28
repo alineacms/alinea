@@ -9,9 +9,9 @@ export type IconButtonProps = HTMLAttributes<HTMLButtonElement> & {
   icon: IconType
 }
 
-export function IconButton({icon: Icon}: IconButtonProps) {
+export function IconButton({icon: Icon, ...props}: IconButtonProps) {
   return (
-    <button className={styles.root()}>
+    <button className={styles.root()} {...props}>
       <Icon />
     </button>
   )

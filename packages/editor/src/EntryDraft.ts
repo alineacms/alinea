@@ -25,7 +25,6 @@ function inputMutator<T>(
   if (item instanceof Y.Array) {
     return {
       push: (row: T) => {
-        console.log(row)
         item.push([toYValue(row)])
       },
       delete: item.delete.bind(item)
