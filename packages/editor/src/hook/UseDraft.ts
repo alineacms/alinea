@@ -10,13 +10,18 @@ export function useDraft(path: string) {
     if (loading.$channel && current !== loading) {
       setCurrent(loading)
     } else {
-      const checkLoaded = () => {
+      let isRemoved = false
+      function checkLoaded() {
         if (!loading.$channel) return
-        loading.doc.off('update', checkLoaded)
+        off()
         setCurrent(loading)
       }
-      loading.doc.on('update', checkLoaded)
-      return () => loading.doc.off('update', checkLoaded)
+      const off = () => {
+        if (!isRemoved) loading.doc.getMap('root').unobserve(checkLoaded)
+        isRemoved = true
+      }
+      loading.doc.getMap('root').observe(checkLoaded)
+      return off
     }
   }, [loading])
   useEffect(() => {

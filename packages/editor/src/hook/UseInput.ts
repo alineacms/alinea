@@ -7,15 +7,15 @@ export type InputPair<T> = readonly [T, Value.Mutator<T>]
 
 export function useInput<T>(
   path: InputPath<T>,
-  value = Value.Scalar
+  type = Value.Scalar
 ): InputPair<T> {
   const draft = useCurrentDraft()
   if (!draft) throw 'Could not load draft'
   const redraw = useForceUpdate()
   const input = useMemo(
-    () => draft.getInput<T>(path, value),
+    () => draft.getInput<T>(path, type),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [draft, value, ...path]
+    [draft, type, ...path]
   )
   useEffect(() => {
     return input.observe(redraw)

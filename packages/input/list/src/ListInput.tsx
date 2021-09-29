@@ -11,16 +11,19 @@ import {
   DraggableSyntheticListeners,
   DragOverlay,
   DragStartEvent,
+  LayoutMeasuringStrategy,
   PointerSensor,
   useSensor,
   useSensors
 } from '@dnd-kit/core'
 import {
+  AnimateLayoutChanges,
+  defaultAnimateLayoutChanges,
   SortableContext,
   useSortable,
   verticalListSortingStrategy
 } from '@dnd-kit/sortable'
-import {CSS} from '@dnd-kit/utilities'
+import {CSS, FirstArgument} from '@dnd-kit/utilities'
 import {
   CSSProperties,
   HTMLAttributes,
@@ -55,9 +58,18 @@ type ListInputRowProps<T extends ListRow> = PropsWithChildren<
   } & HTMLAttributes<HTMLDivElement>
 >
 
+function animateLayoutChanges(args: FirstArgument<AnimateLayoutChanges>) {
+  const {isSorting, wasSorting} = args
+  if (isSorting || wasSorting) return defaultAnimateLayoutChanges(args)
+  return true
+}
+
 function ListInputRowSortable<T extends ListRow>(props: ListInputRowProps<T>) {
   const {attributes, listeners, setNodeRef, transform, transition, isDragging} =
-    useSortable({id: props.row.$id})
+    useSortable({
+      animateLayoutChanges,
+      id: props.row.$id
+    })
   const style: CSSProperties = {
     transform: CSS.Transform.toString(transform),
     transition: transition || undefined
@@ -127,7 +139,9 @@ export type ListInputProps<T> = {
   path: InputPath<Array<T>>
   field: ListField<T>
 }
-
+const layoutMeasuringConfig = {
+  strategy: LayoutMeasuringStrategy.Always
+}
 export function ListInput<T extends ListRow>({path, field}: ListInputProps<T>) {
   const [rows, input] = useInput(path, field.value)
   const {help} = field.options
@@ -155,6 +169,7 @@ export function ListInput<T extends ListRow>({path, field}: ListInputProps<T>) {
           collisionDetection={closestCenter}
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
+          layoutMeasuring={layoutMeasuringConfig}
         >
           <SortableContext items={ids} strategy={verticalListSortingStrategy}>
             <VStack gap={10}>

@@ -2,7 +2,6 @@
 
 import {docFromEntry} from '@alinea/core/Doc'
 import {Hub} from '@alinea/core/Hub'
-import {Schema} from '@alinea/core/Schema'
 import {IncomingMessage} from 'http'
 import {createDecoder, readVarUint, readVarUint8Array} from 'lib0/decoding'
 import {
@@ -147,8 +146,8 @@ export class DocServer {
     })
     const entry = await this.hub.content.get(path)
     if (entry) {
-      const channel = Schema.getChannel(this.hub.schema, entry.$channel)
-      if (channel) docFromEntry(channel, entry, doc)
+      // const channel = Schema.getChannel(this.hub.schema, entry.$channel)
+      docFromEntry(entry, doc)
     }
     doc.on('update', (update: Uint8Array) => {
       const updated = doc.getMap('root').toJSON()
