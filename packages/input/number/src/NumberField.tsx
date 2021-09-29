@@ -1,4 +1,4 @@
-import {Field, Label} from '@alinea/core'
+import {Field, Label, Value} from '@alinea/core'
 
 export type NumberOptions = {
   help?: Label
@@ -13,6 +13,7 @@ export function createNumber(
   options: NumberOptions = {}
 ): NumberField {
   return {
+    value: Value.Scalar,
     label,
     options
   }

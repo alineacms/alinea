@@ -16,18 +16,19 @@ export type ListRow = {
   $channel: string
 }
 
-type ListInputRow<T> = {
+type ListInputRow<T extends ListRow> = {
+  row: T
   path: InputPath<T>
   field: ListField<T>
   onDelete: () => void
 }
 
 function ListInputRow<T extends ListRow>({
+  row,
   field,
   path,
   onDelete
 }: ListInputRow<T>) {
-  const [row] = useInput(path)
   const channel = Schema.getChannel(field.options.schema, row.$channel)
   if (!channel) return null
   return (
@@ -68,11 +69,9 @@ export type ListInputProps<T> = {
 }
 
 export function ListInput<T extends ListRow>({path, field}: ListInputProps<T>) {
-  const [data, input] = useInput(path)
+  const [rows, input] = useInput(path, field.value)
   const {help} = field.options
-  const rows = data
-    .slice(0)
-    .sort((a: ListRow, b: ListRow) => a.$index?.localeCompare(b.$index))
+  console.log(rows)
   return (
     <Label label={field.label} help={help}>
       <div className={styles.root()}>
@@ -81,9 +80,10 @@ export function ListInput<T extends ListRow>({path, field}: ListInputProps<T>) {
             return (
               <ListInputRow<T>
                 key={row.$id}
+                row={row}
                 field={field}
                 path={inputPath<T>(path.concat(row.$id))}
-                onDelete={() => input.delete(i)}
+                onDelete={() => input.delete(row.$id)}
               />
             )
           })}

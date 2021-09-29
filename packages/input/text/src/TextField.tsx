@@ -1,4 +1,4 @@
-import type {Field, Label} from '@alinea/core'
+import {Field, Label, Value} from '@alinea/core'
 
 export type TextOptions = {
   help?: Label
@@ -12,6 +12,7 @@ export type TextField = Field<string> & {label: Label; options: TextOptions}
 
 export function createText(label: Label, options: TextOptions = {}): TextField {
   return {
+    value: Value.Scalar,
     label,
     options
   }
