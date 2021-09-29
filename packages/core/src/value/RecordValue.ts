@@ -22,6 +22,13 @@ export namespace RecordValue {
     }
     return res
   }
+  export function watch(parent: Y.Map<any>, key: string) {
+    return (fun: () => void) => {
+      const record = parent.get(key)
+      record.observe(fun)
+      return () => record.unobserve(fun)
+    }
+  }
   export function mutator<T>(parent: Y.Map<any>, key: string): Mutator<T> {
     return {
       set<K extends keyof T>(k: K, v: T[K]) {

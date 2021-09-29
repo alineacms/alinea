@@ -54,19 +54,7 @@ export class EntryDraft implements Entry {
       get value(): T {
         return Value.fromY(parent.get(key))
       },
-      observe(fun: () => void) {
-        function watch(event: Y.YMapEvent<any>) {
-          if (type === Value.Scalar) {
-            if (event.keysChanged.has(key)) fun()
-          } else {
-            fun()
-          }
-        }
-        const item = parent.get(key)
-        const target = type === Value.Scalar ? parent : item
-        target.observe(watch)
-        return () => target.unobserve(watch)
-      }
+      observe: Value.watch(type, parent, key)
     }
   }
 }

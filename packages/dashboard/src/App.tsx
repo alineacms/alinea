@@ -1,7 +1,7 @@
 import {Client} from '@alinea/client'
 import {fromModule} from '@alinea/ui'
 import {Sidebar} from '@alinea/ui/Sidebar'
-import 'preact/debug'
+//import 'preact/debug'
 import {createContext, Suspense, useContext, useMemo, useState} from 'react'
 import Helmet from 'react-helmet'
 import {MdPerson, MdSearch, MdSettings} from 'react-icons/md'

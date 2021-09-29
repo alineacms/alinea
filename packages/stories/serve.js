@@ -4,12 +4,14 @@ const {ScssModulesPlugin} = require('esbuild-scss-modules-plugin')
 const path = require('path')
 const fs = require('fs')
 
+const usePreact = true
+
 /*
 These should resolved using the conditional exports, but before building
 those are not available so we point at the source directly.
 */
 const packages = fs.readdirSync('../input')
-const inputAliases = Object.fromEntries(
+const aliases = Object.fromEntries(
   packages.map(package => {
     return [
       `@alinea/input.${package}`,
@@ -17,6 +19,11 @@ const inputAliases = Object.fromEntries(
     ]
   })
 )
+
+if (usePreact) {
+  aliases.react = require.resolve('preact/compat')
+  aliases['react-dom'] = require.resolve('preact/compat')
+}
 
 serve(
   {
@@ -36,11 +43,7 @@ serve(
         cache: false,
         localsConvention: 'dashes'
       }),
-      alias({
-        ...inputAliases,
-        react: require.resolve('preact/compat'),
-        'react-dom': require.resolve('preact/compat')
-      })
+      alias(aliases)
     ],
     loader: {
       '.woff': 'file',

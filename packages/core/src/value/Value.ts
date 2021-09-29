@@ -36,6 +36,16 @@ export namespace Value {
     }
     return value
   }
+  export function watch(type: Value, parent: Y.Map<any>, key: string) {
+    switch (type) {
+      case Value.Scalar:
+        return ScalarValue.watch(parent, key)
+      case Value.Record:
+        return RecordValue.watch(parent, key)
+      case Value.List:
+        return ListValue.watch(parent, key)
+    }
+  }
   export function mutator<T>(
     type: Value,
     parent: Y.Map<any>,
