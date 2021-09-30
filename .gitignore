@@ -8,3 +8,4 @@ node_modules
 !.yarn/versions
 /packages/stories/content/*
 !/packages/stories/content/.keep
+.env

@@ -1,7 +1,6 @@
 import spawn from 'cross-spawn-promise'
 import {build, Plugin} from 'esbuild'
 import {ScssModulesPlugin} from 'esbuild-scss-modules-plugin'
-import fs from 'fs'
 import glob from 'glob'
 import path from 'path'
 
@@ -39,9 +38,6 @@ const externalPlugin: Plugin = {
 }
 
 async function buildPackage(pkg: string) {
-  const meta = JSON.parse(fs.readFileSync(pkg, 'utf-8'))
-  const needsReact = Boolean(meta.peerDependencies?.react)
-  const inject = needsReact ? [root + '/scripts/react-shim.js'] : undefined
   const location = pkg.substr(0, pkg.length - '/package.json'.length)
   const cwd = path.join(root, location)
   try {
@@ -52,6 +48,9 @@ async function buildPackage(pkg: string) {
   }
   const entryPoints = glob.sync('src/**/*.{ts,tsx}', {cwd})
   for (const entryPoint of entryPoints) {
+    const inject = entryPoint.endsWith('.tsx')
+      ? [root + '/scripts/react-shim.js']
+      : undefined
     const sub = path.dirname(entryPoint).substr('src/'.length)
     await build({
       absWorkingDir: cwd,

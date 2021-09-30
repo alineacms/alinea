@@ -1,0 +1,110 @@
+import {HTMLAttributes, Ref} from 'react'
+import {Link, LinkProps} from 'react-router-dom'
+import css from './Typo.module.scss'
+import {forwardRefWithAs, PropsWithAs} from './util/PropsWithAs'
+import {fromModule} from './util/styler'
+
+const styles = fromModule(css)
+
+export namespace Typo {
+  type TypoProps = {flat?: boolean; light?: boolean}
+
+  function H1Component(
+    props: PropsWithAs<TypoProps, 'h1'>,
+    ref: Ref<HTMLHeadingElement>
+  ) {
+    const {as: Type = 'h1', flat, light, ...rest} = props
+    return (
+      <Type
+        ref={ref}
+        {...rest}
+        className={styles.h1.is({flat, light}).mergeProps(rest)()}
+      />
+    )
+  }
+
+  function H2Component(
+    props: PropsWithAs<TypoProps, 'h2'>,
+    ref: Ref<HTMLHeadingElement>
+  ) {
+    const {as: Type = 'h2', flat, light, ...rest} = props
+    return (
+      <Type
+        ref={ref}
+        {...rest}
+        className={styles.h2.is({flat, light}).mergeProps(rest)()}
+      />
+    )
+  }
+
+  function H3Component(
+    props: PropsWithAs<TypoProps, 'h3'>,
+    ref: Ref<HTMLHeadingElement>
+  ) {
+    const {as: Type = 'h3', flat, light, ...rest} = props
+    return (
+      <Type
+        ref={ref}
+        {...rest}
+        className={styles.h3.is({flat, light}).mergeProps(rest)()}
+      />
+    )
+  }
+
+  function H4Component(
+    props: PropsWithAs<TypoProps, 'h4'>,
+    ref: Ref<HTMLHeadingElement>
+  ) {
+    const {as: Type = 'h4', flat, light, ...rest} = props
+    return (
+      <Type
+        ref={ref}
+        {...rest}
+        className={styles.h4.is({flat, light}).mergeProps(rest)()}
+      />
+    )
+  }
+
+  function PComponent(
+    props: PropsWithAs<TypoProps, 'p'>,
+    ref: Ref<HTMLHeadingElement>
+  ) {
+    const {as: Type = 'p', flat, light, ...rest} = props
+    return (
+      <Type
+        ref={ref}
+        {...rest}
+        className={styles.p.is({flat, light}).mergeProps(rest)()}
+      />
+    )
+  }
+
+  function LinkComponent(props: LinkProps) {
+    return <Link {...props} className={styles.link.mergeProps(props)()} />
+  }
+
+  function MonospaceComponent(props: HTMLAttributes<HTMLSpanElement>) {
+    return <span {...props} className={styles.monospace.mergeProps(props)()} />
+  }
+
+  function SmallComponent(
+    props: PropsWithAs<{}, 'span'>,
+    ref: Ref<HTMLSpanElement>
+  ) {
+    const {as: Type = 'span', ...rest} = props
+    return (
+      <Type {...props} className={styles.small.mergeProps(props)()} ref={ref} />
+    )
+  }
+
+  export const H1 = forwardRefWithAs<TypoProps, 'h1'>(H1Component)
+  export const H2 = forwardRefWithAs<TypoProps, 'h2'>(H2Component)
+  export const H3 = forwardRefWithAs<TypoProps, 'h3'>(H3Component)
+  export const H4 = forwardRefWithAs<TypoProps, 'h4'>(H4Component)
+  export const P = forwardRefWithAs<TypoProps, 'p'>(PComponent)
+  export const Link = forwardRefWithAs<TypoProps, Link>(LinkComponent)
+  export const Monospace = forwardRefWithAs<TypoProps, 'span'>(
+    MonospaceComponent
+  )
+  export const Small = forwardRefWithAs<TypoProps, 'span'>(SmallComponent)
+}

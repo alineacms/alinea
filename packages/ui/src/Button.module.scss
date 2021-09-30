@@ -1,0 +1,16 @@
+.root {
+  border: none;
+  background: var(--highlight);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 14px;
+  min-height: 26px;
+  border-radius: 4px;
+  padding: 8px 15px;
+
+  &:hover {
+    background: var(--selected);
+  }
+}

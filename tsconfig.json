@@ -13,6 +13,8 @@
     "importHelpers": true,
     "paths": {
       "@alinea/input.*": ["./packages/input/*/src"],
+      "@alinea/auth.*": ["./packages/input/*/src"],
+      "@alinea/auth.passwordless/*": ["./packages/auth/passwordless/src/*"],
       "@alinea/core/*": ["./packages/core/src/*"],
       "@alinea/editor/*": ["./packages/editor/src/*"],
       "@alinea/ui/*": ["./packages/ui/src/*"],
