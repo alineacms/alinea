@@ -10,5 +10,8 @@
   "dependencies": {
     "base-x": "^3.0.8",
     "get-random-values": "^1.2.2"
+  },
+  "devDependencies": {
+    "@types/react": "^17.0.20"
   }
 }

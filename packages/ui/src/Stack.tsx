@@ -1,6 +1,7 @@
 // Todo: find the smallest css in js runtime lib for this purpose
 import {css} from '@stitches/react'
-import React, {CSSProperties, forwardRef, HTMLProps, PropsWithRef} from 'react'
+import {CSSProperties, forwardRef, HTMLProps, PropsWithRef} from 'react'
+import {px} from '.'
 import {styler} from './util/styler'
 
 export type StackProps = PropsWithRef<
@@ -16,10 +17,6 @@ export type StackProps = PropsWithRef<
     autoWidth?: boolean
   }
 >
-
-function px(pixels: number | string) {
-  return `${pixels}px`
-}
 
 function stack(props: StackProps) {
   const direction = props.direction || 'column'

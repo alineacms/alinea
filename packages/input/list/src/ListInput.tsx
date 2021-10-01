@@ -107,7 +107,11 @@ function ListInputRow<T extends ListRow>({
       {...rest}
     >
       <HStack gap={10}>
-        <IconButton icon={MdDragHandle} {...handle} />
+        <IconButton
+          icon={MdDragHandle}
+          {...handle}
+          style={{cursor: handle ? 'grab' : 'grabbing'}}
+        />
         <div style={{flexGrow: 1}}>
           <Fields channel={channel as any} path={path} />
         </div>

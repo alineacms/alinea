@@ -1,4 +1,4 @@
-import {HTMLAttributes} from 'react'
+import {forwardRef, HTMLAttributes, Ref} from 'react'
 import type {IconType} from 'react-icons'
 import css from './IconButton.module.scss'
 import {fromModule} from './util/styler'
@@ -9,10 +9,13 @@ export type IconButtonProps = HTMLAttributes<HTMLButtonElement> & {
   icon: IconType
 }
 
-export function IconButton({icon: Icon, ...props}: IconButtonProps) {
+export const IconButton = forwardRef(function IconButton(
+  {icon: Icon, ...props}: IconButtonProps,
+  ref: Ref<HTMLButtonElement>
+) {
   return (
-    <button className={styles.root()} {...props}>
+    <button ref={ref} className={styles.root()} {...props}>
       <Icon />
     </button>
   )
-}
+})

@@ -7,8 +7,9 @@
   justify-content: center;
   z-index: 0;
   font-weight: bold;
-  color: #14151a;
+  color: var(--accent-foreground);
   font-size: 14px;
+  flex-shrink: 0;
 
   &-bg {
     position: absolute;

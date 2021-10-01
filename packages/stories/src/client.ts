@@ -1,4 +1,13 @@
-import {init} from '@alinea/dashboard'
+import {PasswordLessLogin} from '@alinea/auth.passwordless/PasswordLessLogin'
+import {Dashboard} from '@alinea/dashboard'
 import {mySchema} from './schema'
 
-init({schema: mySchema, api: 'http://localhost:4500'})
+const dashboard = new Dashboard({
+  name: 'Alinea',
+  schema: mySchema,
+  apiUrl: 'http://localhost:4500',
+  color: '#FFBD67',
+  auth: PasswordLessLogin
+})
+
+dashboard.render()

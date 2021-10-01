@@ -9,7 +9,7 @@ import {
 import {fromModule} from '@alinea/ui'
 import {Suspense} from 'react'
 import {Helmet} from 'react-helmet'
-import {useApp} from '../App'
+import {useSession} from '../hook/UseSession'
 import css from './EntryEdit.module.scss'
 
 const styles = fromModule(css)
@@ -31,9 +31,9 @@ function EntryEditHeader() {
 type EntryEditDraftProps = {}
 
 function EntryEditDraft({}: EntryEditDraftProps) {
-  const {client} = useApp()
+  const session = useSession()
   const draft = useCurrentDraft()!
-  const channel = Schema.getChannel(client.schema, draft.$channel)
+  const channel = Schema.getChannel(session.hub.schema, draft.$channel)
   return (
     <div className={styles.draft()}>
       <EntryEditHeader />

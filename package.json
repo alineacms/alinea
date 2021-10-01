@@ -4,12 +4,14 @@
   "license": "MIT",
   "scripts": {
     "dev": "yarn workspace @alinea/stories dev",
-    "build": "esbuild-node scripts/build.ts"
+    "build": "esbuild-node scripts/build.ts",
+    "postinstall": "copy-env-cli"
   },
   "files": [],
   "workspaces": [
     "packages/*",
-    "packages/input/*"
+    "packages/input/*",
+    "packages/auth/*"
   ],
   "devDependencies": {
     "@types/cross-spawn": "^6.0.2",
@@ -17,6 +19,7 @@
     "@types/node": "^16.9.0",
     "@typescript-eslint/eslint-plugin": "^4.31.0",
     "@typescript-eslint/parser": "^4.31.0",
+    "copy-env-cli": "^1.0.0",
     "cross-spawn": "^7.0.3",
     "cross-spawn-promise": "^0.10.2",
     "esbuild": "^0.12.27",

@@ -2,14 +2,14 @@
   display: inline-flex;
   align-items: center;
   border-radius: 14.4px;
-  height: 17px;
+  //height: 17px;
   font-size: 11px;
   white-space: nowrap;
   flex-shrink: 0;
-  color: #2b3342;
-  background: rgba(219, 222, 226, 0.87);
+  color: var(--foreground);
+  background: var(--highlight);
 
   &-label {
-    padding: 3px 8px;
+    padding: 5px 8px;
   }
 }

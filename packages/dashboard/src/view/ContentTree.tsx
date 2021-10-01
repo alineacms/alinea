@@ -5,8 +5,8 @@ import {forwardRef, memo, Ref, useCallback, useRef, useState} from 'react'
 import {MdChevronRight, MdExpandMore, MdInsertDriveFile} from 'react-icons/md'
 import {useQuery} from 'react-query'
 import {Link, useLocation} from 'react-router-dom'
-import {useApp} from '../App'
 import {useInitialEffect} from '../hook/UseInitialEffect'
+import {useSession} from '../hook/UseSession'
 import css from './ContentTree.module.scss'
 
 const styles = fromModule(css)
@@ -22,9 +22,9 @@ function TreeChildren({
   isOpen,
   toggleOpen
 }: TreeChildrenProps) {
-  const {client} = useApp()
+  const session = useSession()
   const {isLoading, error, data} = useQuery(['children', parent], () =>
-    client.content.list(parent)
+    session.hub.content.list(parent)
   )
   return (
     <>
@@ -51,7 +51,7 @@ type TreeNodeProps = {
 function TreeNode({entry, level, isOpen, toggleOpen}: TreeNodeProps) {
   const ref = useRef<HTMLAnchorElement>(null)
   const location = useLocation()
-  const isSelected = location.pathname === entry.$id
+  const isSelected = location.pathname.slice(1) === entry.$id
   const handleOpen = useCallback(() => {
     if (entry.$isContainer) toggleOpen(entry.$id)
   }, [toggleOpen])

@@ -38,25 +38,23 @@
     height: 100%;
     flex: 1;
     min-width: 0;
-    overflow: auto;
+    overflow-y: scroll;
 
     &::-webkit-scrollbar {
       width: 6px;
       height: 6px;
     }
     &::-webkit-scrollbar-track {
-      // border-radius: 10px;
       background: var(--outline);
     }
     &::-webkit-scrollbar-thumb {
-      // border-radius: 10px;
-      background: rgba(255, 255, 255, 0.2);
+      background: rgba(var(--negative), 0.2);
     }
     &::-webkit-scrollbar-thumb:hover {
-      background: rgba(255, 255, 255, 0.4);
+      background: rgba(var(--negative), 0.4);
     }
     &::-webkit-scrollbar-thumb:active {
-      background: rgba(255, 255, 255, 0.9);
+      background: rgba(var(--negative), 0.9);
     }
   }
 }
