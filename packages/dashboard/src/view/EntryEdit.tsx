@@ -33,7 +33,7 @@ type EntryEditDraftProps = {}
 function EntryEditDraft({}: EntryEditDraftProps) {
   const session = useSession()
   const draft = useCurrentDraft()!
-  const channel = Schema.getChannel(session.schema, draft.$channel)
+  const channel = Schema.getChannel(session.hub.schema, draft.$channel)
   return (
     <div className={styles.draft()}>
       <EntryEditHeader />

@@ -1,9 +1,16 @@
-import {fromModule} from '@alinea/ui'
+import {
+  Avatar,
+  DropdownMenu,
+  fromModule,
+  IconButton,
+  useColorScheme
+} from '@alinea/ui'
 import {Logo} from '@alinea/ui/branding/Logo'
 import {HStack} from '@alinea/ui/Stack'
 import {memo} from 'react'
 import {
   MdBrightnessMedium,
+  MdExpandMore,
   MdFormatBold,
   MdFormatItalic,
   MdFormatQuote,
@@ -13,11 +20,14 @@ import {
   MdUnfoldMore
 } from 'react-icons/md'
 import {RiFlashlightFill} from 'react-icons/ri'
+import {useSession} from '../hook/UseSession'
 import css from './Toolbar.module.scss'
 
 const styles = fromModule(css)
 
 export const Toolbar = memo(function Toolbar() {
+  const session = useSession()
+  const [colorScheme, setColorScheme] = useColorScheme()
   return (
     <HStack center className={styles.root()}>
       <HStack center gap={16}>
@@ -40,23 +50,27 @@ export const Toolbar = memo(function Toolbar() {
         </HStack>
       </div>
       <div>
-        <HStack center gap={20}>
-          <MdBrightnessMedium />
-          <div
-            style={{
-              borderRadius: '100%',
-              background: '#FF8577',
-              color: 'var(--foreground)',
-              width: '24px',
-              height: '24px',
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              fontSize: '13px'
+        <HStack center gap={10}>
+          <IconButton
+            icon={MdBrightnessMedium}
+            onClick={() => {
+              setColorScheme(colorScheme === 'dark' ? 'light' : 'dark')
             }}
-          >
-            <span>B</span>
-          </div>
+          />
+          <DropdownMenu.Root>
+            <DropdownMenu.Trigger>
+              <HStack center gap={4}>
+                <Avatar user={session.user} />
+                <MdExpandMore />
+              </HStack>
+            </DropdownMenu.Trigger>
+
+            <DropdownMenu.Content>
+              <DropdownMenu.Item onSelect={() => session.logout()}>
+                Logout
+              </DropdownMenu.Item>
+            </DropdownMenu.Content>
+          </DropdownMenu.Root>
         </HStack>
       </div>
     </HStack>

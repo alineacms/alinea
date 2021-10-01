@@ -1,7 +1,6 @@
 import type {Router} from 'express'
 import {IncomingHttpHeaders} from 'http'
 import {ComponentType} from 'react'
-import {Hub} from './Hub'
 import {Session} from './Session'
 
 export namespace Auth {
@@ -10,10 +9,7 @@ export namespace Auth {
     authenticate(header: IncomingHttpHeaders): Promise<Session>
   }
 
-  export type ViewProps = {setSession: (session: Session) => void}
+  export type ViewProps = {setSession: (session: Session | undefined) => void}
 
-  export type Hook = () => {
-    session?: Session & Hub
-    view: ComponentType<ViewProps>
-  }
+  export type View = ComponentType<ViewProps>
 }

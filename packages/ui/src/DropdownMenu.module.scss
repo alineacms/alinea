@@ -1,0 +1,38 @@
+.root {
+}
+
+.content {
+  min-width: 220px;
+  background-color: white;
+  border-radius: 6px;
+  padding: 5px;
+  box-shadow: 0px 10px 38px -10px rgba(9, 12, 15, 0.35),
+    0px 10px 20px -15px rgba(22, 23, 24, 0.2);
+  font-family: Inter, sans-serif;
+}
+
+.trigger {
+  all: unset;
+  cursor: pointer;
+}
+
+.item {
+  all: unset;
+  font: inherit;
+  font-size: 13px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  height: 25px;
+  position: relative;
+  user-select: none;
+  border-radius: 3px;
+  padding: 0px 5px;
+  cursor: pointer;
+
+  &:focus {
+    // Todo: make our css vars work with these portaled items (or somehow
+    // make radix portal these in our viewport)
+    background-color: #f7f6f6;
+  }
+}

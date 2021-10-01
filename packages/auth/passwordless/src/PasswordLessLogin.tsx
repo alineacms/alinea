@@ -1,19 +1,12 @@
-import {Auth} from '@alinea/core'
+import {Client} from '@alinea/client'
+import {Auth, Session} from '@alinea/core'
 import {useDashboard} from '@alinea/dashboard'
-import {
-  Button,
-  FavIcon,
-  fromModule,
-  Loader,
-  Logo,
-  px,
-  Typo,
-  Viewport
-} from '@alinea/ui'
+import {Button, fromModule, Loader, Logo, px, Typo} from '@alinea/ui'
 import {HStack, VStack} from '@alinea/ui/Stack'
-import {FormEvent, PropsWithChildren, useEffect, useState} from 'react'
+import jwtDecode from 'jwt-decode'
+import {FormEvent, PropsWithChildren, useLayoutEffect, useState} from 'react'
 import Helmet from 'react-helmet'
-import {MdArrowForward} from 'react-icons/md'
+import {MdArrowBack, MdArrowForward} from 'react-icons/md'
 import {RiFlashlightFill} from 'react-icons/ri'
 import css from './PasswordLessLogin.module.scss'
 
@@ -29,6 +22,7 @@ const enum LoginState {
   Loading,
   Input,
   Sent,
+  NotFound,
   Error
 }
 
@@ -92,7 +86,10 @@ function LoginForm({onSubmit, email, setEmail}: LoginFormProps) {
   )
 }
 
-type LoginScreenProps = {state: LoginState} & LoginFormProps
+type LoginScreenProps = {
+  state: LoginState
+  setState: (state: LoginState) => void
+} & LoginFormProps
 
 function LoginScreen(props: LoginScreenProps) {
   switch (props.state) {
@@ -107,6 +104,23 @@ function LoginScreen(props: LoginScreenProps) {
           <Typo.P>We&apos;ve sent you link at {props.email}</Typo.P>
         </LoginBox>
       )
+    case LoginState.NotFound:
+      return (
+        <LoginBox>
+          <LoginHeader>Oops</LoginHeader>
+          <Typo.P flat>
+            The email adress &quot;{props.email}&quot; is not known
+          </Typo.P>
+          <div>
+            <Button onClick={() => props.setState(LoginState.Input)}>
+              <HStack center gap={8}>
+                <MdArrowBack />
+                <span>Try again</span>
+              </HStack>
+            </Button>
+          </div>
+        </LoginBox>
+      )
     case LoginState.Error:
       return (
         <LoginBox>
@@ -117,31 +131,71 @@ function LoginScreen(props: LoginScreenProps) {
   }
 }
 
+function useResolveToken(setSession: (session: Session | undefined) => void) {
+  const {schema, apiUrl} = useDashboard()
+  useLayoutEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const isTokenFromUrl = params.has('token')
+    const token =
+      params.get('token') || localStorage.getItem('@alinea/auth.passwordless')
+    if (token) {
+      const user: any = token && jwtDecode(token)
+      function logout() {
+        localStorage.removeItem('@alinea/auth.passwordless')
+        setSession(undefined)
+      }
+      function applyAuth(init?: RequestInit) {
+        return {
+          ...init,
+          headers: {...init?.headers, authorization: `Bearer ${token}`}
+        }
+      }
+      setSession({
+        user,
+        hub: new Client(schema, apiUrl, applyAuth, logout),
+        async logout() {
+          logout()
+        }
+      })
+      if (isTokenFromUrl) {
+        localStorage.setItem('@alinea/auth.passwordless', token)
+        history.pushState(null, '', window.location.pathname)
+      }
+    }
+  }, [])
+}
+
 export function PasswordLessLogin({setSession}: Auth.ViewProps) {
-  const {apiUrl} = useDashboard()
-  const [state, setState] = useState(LoginState.Loading)
+  const {color, apiUrl} = useDashboard()
+  const [state, setState] = useState(LoginState.Input)
   const [email, setEmail] = useState('')
+
+  useResolveToken(setSession)
+
   function handleSubmit() {
-    setState(LoginState.Sent)
+    setState(LoginState.Loading)
     fetch(`${apiUrl}/auth.passwordless`, {
       headers: {'content-type': 'application/json'},
       method: 'POST',
       body: JSON.stringify({email})
-    }).catch(() => {
-      setState(LoginState.Error)
     })
+      .then(res => {
+        switch (res.status) {
+          case 200:
+            return setState(LoginState.Sent)
+          case 404:
+            return setState(LoginState.NotFound)
+          default:
+            return setState(LoginState.Error)
+        }
+      })
+      .catch(() => {
+        setState(LoginState.Error)
+      })
   }
-  useEffect(() => {
-    fetch(`${apiUrl}/auth.passwordless`).then(res => {
-      if (res.status === 200) {
-        // Set session
-      }
-      setState(LoginState.Input)
-    })
-  }, [])
+
   return (
-    <Viewport>
-      <FavIcon color="#FFBD67" />
+    <>
       <Helmet>
         <title>Log in</title>
       </Helmet>
@@ -149,16 +203,13 @@ export function PasswordLessLogin({setSession}: Auth.ViewProps) {
         <div style={{margin: 'auto', padding: px(20)}}>
           <LoginScreen
             state={state}
+            setState={setState}
             onSubmit={handleSubmit}
             email={email}
             setEmail={setEmail}
           />
         </div>
       </div>
-    </Viewport>
+    </>
   )
-}
-
-export const usePasswordLessLogin: Auth.Hook = () => {
-  return {view: PasswordLessLogin}
 }

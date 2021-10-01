@@ -24,7 +24,7 @@ function TreeChildren({
 }: TreeChildrenProps) {
   const session = useSession()
   const {isLoading, error, data} = useQuery(['children', parent], () =>
-    session.content.list(parent)
+    session.hub.content.list(parent)
   )
   return (
     <>
@@ -51,7 +51,7 @@ type TreeNodeProps = {
 function TreeNode({entry, level, isOpen, toggleOpen}: TreeNodeProps) {
   const ref = useRef<HTMLAnchorElement>(null)
   const location = useLocation()
-  const isSelected = location.pathname === entry.$id
+  const isSelected = location.pathname.slice(1) === entry.$id
   const handleOpen = useCallback(() => {
     if (entry.$isContainer) toggleOpen(entry.$id)
   }, [toggleOpen])

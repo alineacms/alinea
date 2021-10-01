@@ -1,6 +1,8 @@
+import {Schema, Session} from '@alinea/core'
 import {Auth} from '@alinea/core/Auth'
 import {FavIcon, Viewport} from '@alinea/ui'
 import {Sidebar} from '@alinea/ui/Sidebar'
+import {getRandomColor} from '@alinea/ui/util/GetRandomColor'
 //import 'preact/debug'
 import {Suspense, useState} from 'react'
 import {Helmet} from 'react-helmet'
@@ -10,18 +12,18 @@ import {Route} from 'react-router'
 import {HashRouter} from 'react-router-dom'
 // Todo: bundle this properly
 import './css/fonts.css'
-import {AppProvider} from './hook/UseDashboard'
+import {DashboardProvider, useDashboard} from './hook/UseDashboard'
 import {SessionProvider} from './hook/UseSession'
 import {ContentTree} from './view/ContentTree'
 import {EntryEdit} from './view/EntryEdit'
 import {Toolbar} from './view/Toolbar'
 
-export function AppRoot() {
+function AppAuthenticated() {
+  const {name, color} = useDashboard()
   return (
-    <Viewport>
-      <FavIcon color="#FFBD67" />
+    <>
       <Helmet>
-        <title>Stories</title>
+        <title>{name}</title>
       </Helmet>
       <Toolbar />
       <div style={{flex: '1', display: 'flex', minHeight: 0}}>
@@ -54,29 +56,52 @@ export function AppRoot() {
         </div>
       </div>
       <div style={{height: '22px', background: 'var(--outline)'}}></div>
+    </>
+  )
+}
+
+type AppRootProps = {
+  session: Session | undefined
+  setSession: (session: Session | undefined) => void
+}
+
+function AppRoot({session, setSession}: AppRootProps) {
+  const {color, name, auth: Auth} = useDashboard()
+  const inner = session ? (
+    <AppAuthenticated />
+  ) : (
+    <Auth setSession={setSession} />
+  )
+  return (
+    <Viewport color={color}>
+      <FavIcon color={color} />
+      {inner}
     </Viewport>
   )
 }
 
 export type AppProps = {
+  name: string
+  schema: Schema
   apiUrl: string
-  color: string
-  useAuth: Auth.Hook
+  auth: Auth.View
+  color?: string
 }
 
 export function App(props: AppProps) {
-  const {session, view: Auth} = props.useAuth()
   const [queryClient] = useState(() => new QueryClient())
-  const inner = session ? <AppRoot /> : <Auth setSession={console.log} />
+  const [session, setSession] = useState<Session | undefined>()
   return (
-    <AppProvider value={props}>
+    <DashboardProvider
+      value={{...props, color: props.color || getRandomColor(props.name)}}
+    >
       <HashRouter>
         <SessionProvider value={session}>
           <QueryClientProvider client={queryClient}>
-            {inner}
+            <AppRoot session={session} setSession={setSession} />
           </QueryClientProvider>
         </SessionProvider>
       </HashRouter>
-    </AppProvider>
+    </DashboardProvider>
   )
 }

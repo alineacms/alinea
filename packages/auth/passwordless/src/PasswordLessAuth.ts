@@ -1,7 +1,7 @@
 import {Auth, Session} from '@alinea/core'
 import bodyParser from 'body-parser'
-import cookieParser from 'cookie-parser'
 import {Router} from 'express'
+import expressJwt from 'express-jwt'
 import type {IncomingHttpHeaders} from 'http'
 import jwt from 'jsonwebtoken'
 import {Transporter} from 'nodemailer'
@@ -12,6 +12,7 @@ type PasswordLessAuthOptions = {
   from: string
   transporter: Transporter
   jwtSecret: string
+  isUser: (email: string) => Promise<boolean>
 }
 
 // Todo: rate limit requests. In theory we need some external state store to do
@@ -28,13 +29,13 @@ export class PasswordLessAuth implements Auth.Server {
 
   router(): Router {
     const router = Router()
-    router.post('/auth.passwordless', bodyParser.json(), (req, res) => {
+    router.post('/auth.passwordless', bodyParser.json(), async (req, res) => {
       const email = req.body.email
       if (!email) return res.sendStatus(400)
+      const isUser = await this.options.isUser(email)
+      if (!isUser) return res.sendStatus(404)
       const token = jwt.sign({sub: email}, this.options.jwtSecret)
-      const url = `${req.protocol}://${req.get('host')}${
-        req.originalUrl
-      }?token=${token}`
+      const url = `${this.options.dashboardUrl}?token=${token}`
       this.options.transporter
         .sendMail({
           from: this.options.from,
@@ -43,24 +44,12 @@ export class PasswordLessAuth implements Auth.Server {
           text: url
         })
         .then(() => {
-          res.send('ok')
+          res.sendStatus(200)
         })
     })
-    router.get('/auth.passwordless', cookieParser(), (req, res) => {
-      if (req.query.token) {
-        res.cookie('auth.passwordless', req.query.token, {
-          secure: req.protocol === 'https',
-          httpOnly: true
-        })
-        return res.redirect(this.options.dashboardUrl)
-      }
-      const token = req.cookies['auth.passwordless']
-      if (token)
-        try {
-          return res.json(jwt.verify(token, this.options.jwtSecret))
-        } catch (e) {}
-      res.sendStatus(403)
-    })
+    router.use(
+      expressJwt({secret: this.options.jwtSecret, algorithms: ['HS256']})
+    )
     return router
   }
 }

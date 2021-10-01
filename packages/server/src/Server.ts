@@ -8,6 +8,7 @@ import Websocket, {WebSocketServer} from 'ws'
 import {DocServer} from './ws/DocServer'
 
 export type ServerOptions = {
+  dashboardUrl: string
   auth: Auth.Server
   hub: Hub
 }
@@ -19,7 +20,12 @@ export class Server {
   constructor(protected options: ServerOptions) {
     const router = Router()
     router.use(compression())
-    router.use(cors({credentials: true}))
+    router.use(
+      cors({
+        origin: options.dashboardUrl,
+        credentials: true
+      })
+    )
     router.use(this.options.auth.router())
     router.get(Api.nav.content.get('*'), async (req, res) => {
       const path = req.params['0']

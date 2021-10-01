@@ -1,10 +1,12 @@
 import {createContext, useContext} from 'react'
 import {AppProps} from '../App'
 
-const context = createContext<AppProps | undefined>(undefined)
+type DashboardContext = AppProps & {color: string}
+
+const context = createContext<DashboardContext | undefined>(undefined)
 
 export function useDashboard() {
   return useContext(context)!
 }
 
-export const AppProvider = context.Provider
+export const DashboardProvider = context.Provider

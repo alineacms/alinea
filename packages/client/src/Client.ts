@@ -19,10 +19,16 @@ export class ClientContent implements Content {
 }
 
 export class Client implements Hub {
-  constructor(public schema: Schema, protected url: string) {}
+  constructor(
+    public schema: Schema,
+    protected url: string,
+    protected applyAuth: (request?: RequestInit) => RequestInit,
+    protected unauthorized: () => void
+  ) {}
 
   async fetch(endpoint: string, init?: RequestInit) {
-    const response = await fetch(this.url + endpoint, init)
+    const response = await fetch(this.url + endpoint, this.applyAuth(init))
+    if (response.status === 401) this.unauthorized()
     return await response.json()
   }
 
