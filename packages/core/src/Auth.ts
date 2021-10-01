@@ -10,7 +10,7 @@ export namespace Auth {
     authenticate(header: IncomingHttpHeaders): Promise<Session>
   }
 
-  export type ViewProps = {setToken: (token: string) => void}
+  export type ViewProps = {setSession: (session: Session) => void}
 
   export type Hook = () => {
     session?: Session & Hub

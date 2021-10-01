@@ -25,6 +25,6 @@ build({
   platform: 'node',
   entry: 'src/server.ts',
   outfile: 'dist/server.js',
-  external: ['better-sqlite3', '@alinea/input.text/TextInput'],
+  external: ['better-sqlite3'],
   run: ['node', '--enable-source-maps', 'dist/server.js']
 })

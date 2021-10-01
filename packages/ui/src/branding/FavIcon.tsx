@@ -1,10 +1,10 @@
-import {memo} from 'react'
+import {Helmet} from 'react-helmet'
 
 type FavIconProps = {
   color: string
 }
 
-export const FavIcon = memo(function FavIcon({color}: FavIconProps) {
+export function FavIcon({color}: FavIconProps) {
   const favicon = btoa(`
     <svg
       width="36"
@@ -37,10 +37,12 @@ export const FavIcon = memo(function FavIcon({color}: FavIconProps) {
   `)
 
   return (
-    <link
-      rel="icon"
-      type="image/svg"
-      href={`data:image/svg+xml;base64,${favicon}`}
-    />
+    <Helmet>
+      <link
+        rel="icon"
+        type="image/svg"
+        href={`data:image/svg+xml;base64,${favicon}`}
+      />
+    </Helmet>
   )
-})
+}

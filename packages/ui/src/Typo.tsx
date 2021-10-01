@@ -1,5 +1,5 @@
 import {HTMLAttributes, Ref} from 'react'
-import {Link, LinkProps} from 'react-router-dom'
+import {LinkProps} from 'react-router-dom'
 import css from './Typo.module.scss'
 import {forwardRefWithAs, PropsWithAs} from './util/PropsWithAs'
 import {fromModule} from './util/styler'
@@ -102,9 +102,7 @@ export namespace Typo {
   export const H3 = forwardRefWithAs<TypoProps, 'h3'>(H3Component)
   export const H4 = forwardRefWithAs<TypoProps, 'h4'>(H4Component)
   export const P = forwardRefWithAs<TypoProps, 'p'>(PComponent)
-  export const Link = forwardRefWithAs<TypoProps, Link>(LinkComponent)
-  export const Monospace = forwardRefWithAs<TypoProps, 'span'>(
-    MonospaceComponent
-  )
+  export const Link = LinkComponent
+  export const Monospace = MonospaceComponent
   export const Small = forwardRefWithAs<TypoProps, 'span'>(SmallComponent)
 }

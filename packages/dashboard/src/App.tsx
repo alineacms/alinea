@@ -1,24 +1,28 @@
 import {Auth} from '@alinea/core/Auth'
-import {Viewport} from '@alinea/ui'
+import {FavIcon, Viewport} from '@alinea/ui'
 import {Sidebar} from '@alinea/ui/Sidebar'
 //import 'preact/debug'
 import {Suspense, useState} from 'react'
-import Helmet from 'react-helmet'
+import {Helmet} from 'react-helmet'
 import {MdPerson, MdSearch, MdSettings} from 'react-icons/md'
 import {QueryClient, QueryClientProvider} from 'react-query'
 import {Route} from 'react-router'
 import {HashRouter} from 'react-router-dom'
 // Todo: bundle this properly
 import './css/fonts.css'
+import {AppProvider} from './hook/UseDashboard'
 import {SessionProvider} from './hook/UseSession'
 import {ContentTree} from './view/ContentTree'
 import {EntryEdit} from './view/EntryEdit'
-import {FavIcon} from './view/FavIcon'
 import {Toolbar} from './view/Toolbar'
 
 export function AppRoot() {
   return (
     <Viewport>
+      <FavIcon color="#FFBD67" />
+      <Helmet>
+        <title>Stories</title>
+      </Helmet>
       <Toolbar />
       <div style={{flex: '1', display: 'flex', minHeight: 0}}>
         <Sidebar.Root>
@@ -55,26 +59,24 @@ export function AppRoot() {
 }
 
 export type AppProps = {
-  api: string
+  apiUrl: string
+  color: string
   useAuth: Auth.Hook
 }
 
-export function App({useAuth}: AppProps) {
-  const {session, view: Auth} = useAuth()
+export function App(props: AppProps) {
+  const {session, view: Auth} = props.useAuth()
   const [queryClient] = useState(() => new QueryClient())
-  const inner = session ? <AppRoot /> : <Auth setToken={console.log} />
+  const inner = session ? <AppRoot /> : <Auth setSession={console.log} />
   return (
-    <HashRouter>
-      <SessionProvider value={session}>
-        <QueryClientProvider client={queryClient}>
-          <Helmet>
-            <meta charSet="utf-8" />
-            <title>Stories</title>
-            <FavIcon color="#FFBD67" />
-          </Helmet>
-          {inner}
-        </QueryClientProvider>
-      </SessionProvider>
-    </HashRouter>
+    <AppProvider value={props}>
+      <HashRouter>
+        <SessionProvider value={session}>
+          <QueryClientProvider client={queryClient}>
+            {inner}
+          </QueryClientProvider>
+        </SessionProvider>
+      </HashRouter>
+    </AppProvider>
   )
 }

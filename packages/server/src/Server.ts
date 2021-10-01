@@ -19,7 +19,7 @@ export class Server {
   constructor(protected options: ServerOptions) {
     const router = Router()
     router.use(compression())
-    router.use(cors())
+    router.use(cors({credentials: true}))
     router.use(this.options.auth.router())
     router.get(Api.nav.content.get('*'), async (req, res) => {
       const path = req.params['0']
