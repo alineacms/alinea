@@ -46,4 +46,4 @@ export function parseId(str: string) {
   }
 }
 
-export const createId = <T = string>(): T => ksuid() as any
+export const createId = (): string => ksuid()

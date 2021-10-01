@@ -138,31 +138,31 @@ export class DocServer {
 
   constructor(protected hub: Hub) {}
 
-  async getDoc(path: string, gc = true): Promise<SharedDoc> {
-    if (this.docs.has(path)) return this.docs.get(path)
+  async getDoc(id: string, gc = true): Promise<SharedDoc> {
+    if (this.docs.has(id)) return this.docs.get(id)
     const doc = new SharedDoc(() => {
       doc.destroy()
-      this.docs.delete(path)
+      this.docs.delete(id)
     })
-    const entry = await this.hub.content.get(path)
+    const entry = await this.hub.content.get(id)
     if (entry) {
       // const channel = Schema.getChannel(this.hub.schema, entry.$channel)
       docFromEntry(entry, doc)
     }
     doc.on('update', (update: Uint8Array) => {
       const updated = doc.getMap('root').toJSON()
-      this.hub.content.put(path, updated)
+      this.hub.content.put(id, updated)
     })
 
-    this.docs.set(path, doc)
+    this.docs.set(id, doc)
     return doc
   }
 
   connect = async (socket: WebSocket, req: IncomingMessage) => {
-    const path = req.url!
+    const id = req.url!.slice(1)
     socket.binaryType = 'arraybuffer'
     // get doc, initialize if it does not exist yet
-    const doc = await this.getDoc(path, true)
+    const doc = await this.getDoc(id, true)
     doc.conns.set(socket, new Set())
 
     // listen and reply to events

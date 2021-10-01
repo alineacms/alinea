@@ -4,7 +4,7 @@ const {ScssModulesPlugin} = require('esbuild-scss-modules-plugin')
 const path = require('path')
 const fs = require('fs')
 
-const usePreact = true
+const usePreact = false
 
 /*
 These should resolved using the conditional exports, but before building

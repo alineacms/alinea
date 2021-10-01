@@ -16,11 +16,11 @@ export class Server {
     router.use(compression())
     router.use(cors())
     router.get(Api.nav.content.get('*'), async (req, res) => {
-      const path = '/' + req.params['0']
+      const path = req.params['0']
       res.json(await hub.content.get(path))
     })
     router.get(Api.nav.content.list('*'), async (req, res) => {
-      const parent = req.params['0'] ? '/' + req.params['0'] : undefined
+      const parent = req.params['0'] ? req.params['0'] : undefined
       res.json(await hub.content.list(parent))
     })
     router.get('*', async (req, res) => {

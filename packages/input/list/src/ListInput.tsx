@@ -11,6 +11,7 @@ import {
   DraggableSyntheticListeners,
   DragOverlay,
   DragStartEvent,
+  KeyboardSensor,
   LayoutMeasuringStrategy,
   PointerSensor,
   useSensor,
@@ -20,6 +21,7 @@ import {
   AnimateLayoutChanges,
   defaultAnimateLayoutChanges,
   SortableContext,
+  sortableKeyboardCoordinates,
   useSortable,
   verticalListSortingStrategy
 } from '@dnd-kit/sortable'
@@ -147,7 +149,12 @@ export function ListInput<T extends ListRow>({path, field}: ListInputProps<T>) {
   const {help} = field.options
   const ids = rows.map(row => row.$id)
   const [dragging, setDragging] = useState<T | null>(null)
-  const sensors = useSensors(useSensor(PointerSensor))
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates
+    })
+  )
 
   function handleDragStart(event: DragStartEvent) {
     const {active} = event

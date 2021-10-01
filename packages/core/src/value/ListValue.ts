@@ -5,6 +5,8 @@ import {Value} from './Value'
 
 export type ListValue<T> = Array<ListValue.Row>
 
+// Todo: might as well use Y.Array and just sort the array by $index
+// in useInput. It would mean we don't have to store $type.
 export namespace ListValue {
   export type Row = {
     $id: string

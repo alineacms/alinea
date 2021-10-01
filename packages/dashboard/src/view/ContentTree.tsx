@@ -31,7 +31,7 @@ function TreeChildren({
       {data?.map(entry => {
         return (
           <TreeNode
-            key={entry.path}
+            key={entry.$id}
             entry={entry}
             level={level}
             isOpen={isOpen}
@@ -51,9 +51,9 @@ type TreeNodeProps = {
 function TreeNode({entry, level, isOpen, toggleOpen}: TreeNodeProps) {
   const ref = useRef<HTMLAnchorElement>(null)
   const location = useLocation()
-  const isSelected = location.pathname === entry.path
+  const isSelected = location.pathname === entry.$id
   const handleOpen = useCallback(() => {
-    if (entry.isContainer) toggleOpen(entry.path)
+    if (entry.$isContainer) toggleOpen(entry.$id)
   }, [toggleOpen])
   useInitialEffect(() => {
     if (isSelected)
@@ -66,12 +66,12 @@ function TreeNode({entry, level, isOpen, toggleOpen}: TreeNodeProps) {
         entry={entry}
         level={level}
         isSelected={isSelected}
-        isOpened={isOpen(entry.path)}
+        isOpened={isOpen(entry.$id)}
         onOpen={handleOpen}
       />
-      {entry.isContainer && isOpen(entry.path) && (
+      {entry.$isContainer && isOpen(entry.$id) && (
         <TreeChildren
-          parent={entry.path}
+          parent={entry.$id}
           level={level + 1}
           isOpen={isOpen}
           toggleOpen={toggleOpen}
@@ -97,13 +97,13 @@ const TreeNodeLink = memo(
     return (
       <Link
         ref={ref}
-        to={entry.path}
+        to={entry.$id}
         onClick={onOpen}
         className={styles.node.is({selected: isSelected})()}
         style={{paddingLeft: `${10 + level * 8}px`}}
       >
         <div className={styles.node.icon()}>
-          {entry.isContainer ? (
+          {entry.$isContainer ? (
             isOpened ? (
               <MdExpandMore size={20} />
             ) : (
@@ -123,7 +123,7 @@ const TreeNodeLink = memo(
           >
             {entry.title}
           </span>
-          {entry.isContainer && entry.childrenCount > 0 && (
+          {entry.$isContainer && entry.childrenCount > 0 && (
             <div className={styles.node.badge()}>{entry.childrenCount}</div>
           )}
         </HStack>

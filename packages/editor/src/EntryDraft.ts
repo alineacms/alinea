@@ -28,12 +28,16 @@ export class EntryDraft implements Entry {
     return this.doc.getMap(ROOT_KEY)
   }
 
-  get title() {
-    return this.root.get('title')
+  get $id() {
+    return this.root.get('$id')
   }
 
   get $channel() {
     return this.root.get('$channel')
+  }
+
+  get title() {
+    return this.root.get('title')
   }
 
   get(target: Y.Map<any>, path: Array<string>): Parent {
