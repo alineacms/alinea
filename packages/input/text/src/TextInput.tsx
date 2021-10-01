@@ -22,7 +22,7 @@ export function TextInput({path, field}: TextInputProps) {
         <Input
           className={styles.root.input()}
           type="text"
-          value={value}
+          value={value || ''}
           onChange={e => setValue(e.currentTarget.value)}
         />
       </Label>

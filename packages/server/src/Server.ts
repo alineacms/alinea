@@ -22,11 +22,11 @@ export class Server {
     router.use(cors())
     router.use(this.options.auth.router())
     router.get(Api.nav.content.get('*'), async (req, res) => {
-      const path = '/' + req.params['0']
+      const path = req.params['0']
       res.json(await this.options.hub.content.get(path))
     })
     router.get(Api.nav.content.list('*'), async (req, res) => {
-      const parent = req.params['0'] ? '/' + req.params['0'] : undefined
+      const parent = req.params['0'] ? req.params['0'] : undefined
       res.json(await this.options.hub.content.list(parent))
     })
     router.get('*', async (req, res) => {

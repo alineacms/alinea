@@ -1,32 +1,24 @@
 import * as Y from 'yjs'
 import {Entry} from '.'
+import {Value} from './value/Value'
 
 const ROOT_KEY = 'root'
 
-export function toYValue(value: any) {
-  if (Array.isArray(value)) {
-    const array = new Y.Array()
-    value.forEach(item => {
-      array.push([toYValue(item)])
-    })
-    return array
-  }
-  if (value && typeof value === 'object') {
-    const map = new Y.Map()
-    Object.keys(value).forEach(key => {
-      map.set(key, value[key])
-    })
-    return map
-  }
-  return value
-}
+const entryFields = new Set([
+  '$channel',
+  'path',
+  'isContainer',
+  'title',
+  'parent'
+])
 
-// Todo: use the schema to fill the doc
-export function docFromEntry(doc: Y.Doc, entry: Entry) {
+export function docFromEntry(
+  entry: Entry & {[key: string]: any},
+  doc = new Y.Doc()
+) {
   const root = doc.getMap(ROOT_KEY)
-  const data: {[key: string]: any} = entry
-  for (const key of Object.keys(data)) {
-    root.set(key, toYValue(data[key]))
+  for (const key of Object.keys(entry)) {
+    root.set(key, Value.toY(entry[key]))
   }
   return doc
 }

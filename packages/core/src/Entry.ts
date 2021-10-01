@@ -3,13 +3,14 @@ import {Label} from './Label'
 export type Id<T> = string & {__t: T}
 
 export interface Entry {
+  $id: string
+  $parent?: string
   $channel: string
-  path: string
-  isContainer?: boolean
+  $isContainer?: boolean
   title: Label
-  parent?: string
 }
 
 export namespace Entry {
+  export type WithParents = Entry /* & {$parents: Array<string>}*/
   export type WithChildrenCount = Entry & {childrenCount: number}
 }

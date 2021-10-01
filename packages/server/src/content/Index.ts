@@ -1,4 +1,4 @@
-import {Content, Entry} from '@alinea/core'
+import {Content, createId, Entry} from '@alinea/core'
 import convertHrtime from 'convert-hrtime'
 import {promises} from 'fs'
 import {Collection, Functions, SqliteStore, Store} from 'helder.store'
@@ -10,27 +10,29 @@ function join(...parts: Array<string>) {
   return parts.join('/')
 }
 
-const Entry = new Collection<Entry>('Entry')
+const Entry = new Collection<Entry & {id: string}>('Entry')
 
 type Progress<T> = Promise<T> & {progress(): number}
 
 async function index(path: string, store: Store) {
   let total = 0
   const openfile = pLimit(4)
-  async function process(target: string) {
+  async function process(target: string, parentId?: string) {
     const files = await promises.readdir(join(path, target))
     const tasks = files.map(file => async () => {
       const stat = await promises.stat(join(path, target, file))
       const localPath = join(target, file)
       const isContainer = stat.isDirectory()
       if (isContainer) {
-        await process(localPath)
-        store.insert(Entry, {
-          path: localPath,
-          isContainer: true,
-          title: file,
-          parent: target ? target : undefined
+        const parent = store.insert(Entry, {
+          $id: createId(),
+          $parent: parentId,
+          //path: localPath,
+          $isContainer: true,
+          $channel: '',
+          title: file
         })
+        await process(localPath, parent.$id)
       } else {
         total++
         try {
@@ -40,10 +42,10 @@ async function index(path: string, store: Store) {
             )
           )
           store.insert(Entry, {
-            ...parsed,
+            $id: parsed.$id || createId(),
+            $parent: parentId,
             $channel: parsed.channel,
-            path: localPath,
-            parent: target ? target : undefined
+            ...parsed
           })
         } catch (e) {
           console.log(`Could not parse ${localPath} because:\n  ${e}`)
@@ -64,8 +66,8 @@ function init(path: string): Progress<Content> {
     const store = new SqliteStore(new BetterSqlite3())
     console.log('Start indexing...')
     const total = await index(path, store)
-    store.createIndex(Entry, 'parent', [Entry.parent])
-    store.createIndex(Entry, 'path', [Entry.path])
+    store.createIndex(Entry, '$id', [Entry.$id])
+    store.createIndex(Entry, '$parent', [Entry.$parent])
     const diff = process.hrtime.bigint() - startTime
     console.log(
       `Done indexing ${total} entries in ${prettyMilliseconds(
@@ -80,25 +82,27 @@ function init(path: string): Progress<Content> {
 class Indexed implements Content {
   constructor(protected store: Store) {}
 
-  async get(path: string): Promise<Entry | null> {
-    return this.store.first(Entry.where(Entry.path.is(path)))
+  async get(id: string): Promise<Entry | null> {
+    return this.store.first(Entry.where(Entry.$id.is(id)))
   }
 
-  async put(path: string, entry: Entry): Promise<void> {
+  async put(id: string, entry: Entry): Promise<void> {
     // Todo: only update keys that changed?
-    this.store.update(Entry.where(Entry.path.is(path)), entry as any)
+    this.store.update(Entry.where(Entry.$id.is(id)), entry as any)
   }
 
-  async list(path?: string): Promise<Array<Entry.WithChildrenCount>> {
+  async list(parentId?: string): Promise<Array<Entry.WithChildrenCount>> {
     const Parent = Entry.as('Parent')
     return this.store.all(
-      Entry.where(path ? Entry.parent.is(path) : Entry.parent.isNull()).select({
+      Entry.where(
+        parentId ? Entry.$parent.is(parentId) : Entry.$parent.isNull()
+      ).select({
+        $id: Entry.$id,
         $channel: Entry.$channel,
-        path: Entry.path,
-        isContainer: Entry.isContainer,
-        parent: Entry.parent,
+        $parent: Entry.$parent,
+        $isContainer: Entry.$isContainer,
         title: Entry.title,
-        childrenCount: Parent.where(Parent.parent.is(Entry.path))
+        childrenCount: Parent.where(Parent.$parent.is(Entry.$id))
           .select(Functions.count())
           .first()
       })
@@ -109,19 +113,19 @@ class Indexed implements Content {
 export class Index implements Content {
   index: Progress<Content>
 
-  constructor(protected path: string) {
-    this.index = init(this.path)
+  constructor(protected id: string) {
+    this.index = init(this.id)
   }
 
-  get(path: string): Promise<Entry | null> {
-    return this.index.then(index => index.get(path))
+  get(id: string): Promise<Entry.WithParents | null> {
+    return this.index.then(index => index.get(id))
   }
 
-  put(path: string, entry: Entry): Promise<void> {
-    return this.index.then(index => index.put(path, entry))
+  put(id: string, entry: Entry): Promise<void> {
+    return this.index.then(index => index.put(id, entry))
   }
 
-  list(path?: string): Promise<Array<Entry.WithChildrenCount>> {
-    return this.index.then(index => index.list(path))
+  list(parentId?: string): Promise<Array<Entry.WithChildrenCount>> {
+    return this.index.then(index => index.list(parentId))
   }
 }

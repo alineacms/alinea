@@ -1,4 +1,4 @@
-import type {Field, Label, Schema} from '@alinea/core'
+import {Field, Label, Schema, Value} from '@alinea/core'
 
 export type ListOptions<T> = {
   schema: Schema<T>
@@ -17,6 +17,7 @@ export function createList<T>(
   options: ListOptions<T>
 ): ListField<T> {
   return {
+    value: Value.List,
     label,
     options
   }

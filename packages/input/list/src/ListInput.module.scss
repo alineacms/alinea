@@ -1,4 +1,5 @@
 .root {
+  position: relative;
   margin: 0 -10px;
   padding: 8px 0;
 }
@@ -11,12 +12,16 @@
   &:before {
     content: '';
     position: absolute;
-    background: rgba(189, 211, 221, 0.1);
+    background: #292d33;
     border-radius: 8px;
     top: 0;
     bottom: 0;
     left: 0;
     right: 0;
     z-index: -1;
+  }
+
+  &.is-dragging {
+    opacity: 0.5;
   }
 }

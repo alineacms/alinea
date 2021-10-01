@@ -13,7 +13,6 @@
     "@alinea/editor": "0.0.0",
     "@tiptap/react": "^2.0.0-beta.70",
     "@tiptap/starter-kit": "^2.0.0-beta.109",
-    "preact": "^10.5.14",
     "react-helmet": "^6.1.0",
     "react-icons": "^4.2.0",
     "react-query": "^3.23.2",
