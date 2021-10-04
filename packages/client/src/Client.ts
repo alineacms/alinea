@@ -22,8 +22,10 @@ export class Client implements Hub {
   constructor(
     public schema: Schema,
     protected url: string,
-    protected applyAuth: (request?: RequestInit) => RequestInit,
-    protected unauthorized: () => void
+    protected applyAuth: (
+      request?: RequestInit
+    ) => RequestInit | undefined = v => v,
+    protected unauthorized: () => void = () => {}
   ) {}
 
   async fetch(endpoint: string, init?: RequestInit) {

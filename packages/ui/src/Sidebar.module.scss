@@ -45,7 +45,7 @@
       height: 6px;
     }
     &::-webkit-scrollbar-track {
-      background: var(--outline);
+      background: transparent; //var(--outline);
     }
     &::-webkit-scrollbar-thumb {
       background: rgba(var(--negative), 0.2);

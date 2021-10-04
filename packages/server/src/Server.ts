@@ -9,7 +9,7 @@ import {DocServer} from './ws/DocServer'
 
 export type ServerOptions = {
   dashboardUrl: string
-  auth: Auth.Server
+  auth?: Auth.Server
   hub: Hub
 }
 
@@ -18,22 +18,18 @@ export class Server {
   wss = new WebSocketServer({noServer: true})
 
   constructor(protected options: ServerOptions) {
+    const {hub, dashboardUrl, auth} = options
     const router = Router()
     router.use(compression())
-    router.use(
-      cors({
-        origin: options.dashboardUrl,
-        credentials: true
-      })
-    )
-    router.use(this.options.auth.router())
+    router.use(cors({origin: dashboardUrl}))
+    if (auth) router.use(auth.router())
     router.get(Api.nav.content.get('*'), async (req, res) => {
       const path = req.params['0']
-      res.json(await this.options.hub.content.get(path))
+      res.json(await hub.content.get(path))
     })
     router.get(Api.nav.content.list('*'), async (req, res) => {
       const parent = req.params['0'] ? req.params['0'] : undefined
-      res.json(await this.options.hub.content.list(parent))
+      res.json(await hub.content.list(parent))
     })
     router.get('*', async (req, res) => {
       res.json({status: 404})

@@ -29,7 +29,7 @@ const hub = new LocalHub(mySchema, './content')
 
 const server = new Server({
   dashboardUrl,
-  auth,
+  //auth,
   hub
 })
 

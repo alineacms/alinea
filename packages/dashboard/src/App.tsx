@@ -1,11 +1,13 @@
+import {Client} from '@alinea/client'
 import {Session} from '@alinea/core'
-import {FavIcon, Viewport} from '@alinea/ui'
+import {FavIcon, Typo, Viewport} from '@alinea/ui'
 import {Sidebar} from '@alinea/ui/Sidebar'
+import {HStack} from '@alinea/ui/Stack'
 import {getRandomColor} from '@alinea/ui/util/GetRandomColor'
 //import 'preact/debug'
-import {Suspense, useState} from 'react'
+import {Fragment, Suspense, useState} from 'react'
 import {Helmet} from 'react-helmet'
-import {MdPerson, MdSearch, MdSettings} from 'react-icons/md'
+import {MdPerson, MdSearch, MdSettings, MdWarning} from 'react-icons/md'
 import {QueryClient, QueryClientProvider} from 'react-query'
 import {Route} from 'react-router'
 import {HashRouter} from 'react-router-dom'
@@ -19,7 +21,7 @@ import {EntryEdit} from './view/EntryEdit'
 import {Toolbar} from './view/Toolbar'
 
 function AppAuthenticated() {
-  const {name, color} = useDashboard()
+  const {name, color, auth} = useDashboard()
   return (
     <>
       <Helmet>
@@ -55,7 +57,24 @@ function AppAuthenticated() {
           </Route>
         </div>
       </div>
-      <div style={{height: '22px', background: 'var(--outline)'}}></div>
+      <div
+        style={{
+          height: '22px',
+          background: 'var(--outline)',
+          display: 'flex',
+          alignItems: 'center',
+          padding: '0 8px'
+        }}
+      >
+        {!auth && (
+          <Typo.Small>
+            <HStack center gap={5}>
+              <MdWarning />
+              <span>Using no authentication</span>
+            </HStack>
+          </Typo.Small>
+        )}
+      </div>
     </>
   )
 }
@@ -66,7 +85,7 @@ type AppRootProps = {
 }
 
 function AppRoot({session, setSession}: AppRootProps) {
-  const {color, name, auth: Auth} = useDashboard()
+  const {color, name, auth: Auth = Fragment} = useDashboard()
   const inner = session ? (
     <AppAuthenticated />
   ) : (
@@ -80,9 +99,18 @@ function AppRoot({session, setSession}: AppRootProps) {
   )
 }
 
+function localSession(options: DashboardOptions) {
+  return {
+    user: {sub: 'anonymous'},
+    hub: new Client(options.schema, options.apiUrl)
+  }
+}
+
 export function App(props: DashboardOptions) {
   const [queryClient] = useState(() => new QueryClient())
-  const [session, setSession] = useState<Session | undefined>()
+  const [session, setSession] = useState<Session | undefined>(
+    !props.auth ? localSession(props) : undefined
+  )
   return (
     <DashboardProvider
       value={{...props, color: props.color || getRandomColor(props.name)}}

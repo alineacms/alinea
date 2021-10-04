@@ -1,7 +1,7 @@
 import {Auth, Session} from '@alinea/core'
 import bodyParser from 'body-parser'
-import {Router} from 'express'
-import expressJwt from 'express-jwt'
+import {Request, Response, Router} from 'express'
+import expressJwt, {UnauthorizedError} from 'express-jwt'
 import type {IncomingHttpHeaders} from 'http'
 import jwt from 'jsonwebtoken'
 import {Transporter} from 'nodemailer'
@@ -50,6 +50,15 @@ export class PasswordLessAuth implements Auth.Server {
     router.use(
       expressJwt({secret: this.options.jwtSecret, algorithms: ['HS256']})
     )
+    router.use(function (
+      err: Error,
+      req: Request,
+      res: Response,
+      next: () => void
+    ) {
+      if (err instanceof UnauthorizedError) res.sendStatus(401)
+      else next()
+    })
     return router
   }
 }

@@ -7,7 +7,7 @@ export type DashboardOptions = {
   name: string
   schema: Schema
   apiUrl: string
-  auth: Auth.View
+  auth?: Auth.View
   color?: string
 }
 
