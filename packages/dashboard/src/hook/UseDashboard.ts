@@ -1,7 +1,7 @@
 import {createContext, useContext} from 'react'
-import {AppProps} from '../App'
+import {DashboardOptions} from '../Dashboard'
 
-type DashboardContext = AppProps & {color: string}
+type DashboardContext = DashboardOptions & {color: string}
 
 const context = createContext<DashboardContext | undefined>(undefined)
 

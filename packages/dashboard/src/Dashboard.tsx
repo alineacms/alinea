@@ -1,8 +1,18 @@
+import {Auth} from '@alinea/core/Auth'
+import {Schema} from '@alinea/core/Schema'
 import {render} from 'react-dom'
-import {App, AppProps} from './App'
+import {App} from './App'
+
+export type DashboardOptions = {
+  name: string
+  schema: Schema
+  apiUrl: string
+  auth: Auth.View
+  color?: string
+}
 
 export class Dashboard {
-  constructor(protected options: AppProps) {}
+  constructor(protected options: DashboardOptions) {}
 
   render() {
     const scripts = document.getElementsByTagName('script')

@@ -1,5 +1,4 @@
-import {Schema, Session} from '@alinea/core'
-import {Auth} from '@alinea/core/Auth'
+import {Session} from '@alinea/core'
 import {FavIcon, Viewport} from '@alinea/ui'
 import {Sidebar} from '@alinea/ui/Sidebar'
 import {getRandomColor} from '@alinea/ui/util/GetRandomColor'
@@ -10,6 +9,7 @@ import {MdPerson, MdSearch, MdSettings} from 'react-icons/md'
 import {QueryClient, QueryClientProvider} from 'react-query'
 import {Route} from 'react-router'
 import {HashRouter} from 'react-router-dom'
+import {DashboardOptions} from '.'
 // Todo: bundle this properly
 import './css/fonts.css'
 import {DashboardProvider, useDashboard} from './hook/UseDashboard'
@@ -80,15 +80,7 @@ function AppRoot({session, setSession}: AppRootProps) {
   )
 }
 
-export type AppProps = {
-  name: string
-  schema: Schema
-  apiUrl: string
-  auth: Auth.View
-  color?: string
-}
-
-export function App(props: AppProps) {
+export function App(props: DashboardOptions) {
   const [queryClient] = useState(() => new QueryClient())
   const [session, setSession] = useState<Session | undefined>()
   return (
