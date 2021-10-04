@@ -1,0 +1,11 @@
+.root {
+  display: inline-block;
+  vertical-align: top;
+  font-size: 1em;
+  font-style: normal;
+  flex-shrink: 0;
+
+  > svg {
+    display: block;
+  }
+}

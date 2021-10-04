@@ -1,9 +1,6 @@
-import simpleGit from 'simple-git'
 import {Persistence} from '../Persistence'
 
 export class GitPersistence implements Persistence {
-  git = simpleGit()
-
   constructor() {}
 
   async get(key: string): Promise<Buffer | undefined> {

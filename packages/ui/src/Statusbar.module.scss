@@ -1,0 +1,15 @@
+.root {
+  height: 22px;
+  display: flex;
+  justify-content: flex-end;
+  background: var(--outline);
+  // color: var(--accent-foreground);
+}
+
+.status {
+  display: flex;
+  height: 100%;
+  font-size: 0.8em;
+  cursor: pointer;
+  padding: 0 6px;
+}

@@ -1,8 +1,7 @@
 import {Client} from '@alinea/client'
 import {Session} from '@alinea/core'
-import {FavIcon, Typo, Viewport} from '@alinea/ui'
+import {FavIcon, Statusbar, Viewport} from '@alinea/ui'
 import {Sidebar} from '@alinea/ui/Sidebar'
-import {HStack} from '@alinea/ui/Stack'
 import {getRandomColor} from '@alinea/ui/util/GetRandomColor'
 //import 'preact/debug'
 import {Fragment, Suspense, useState} from 'react'
@@ -23,7 +22,7 @@ import {Toolbar} from './view/Toolbar'
 function AppAuthenticated() {
   const {name, color, auth} = useDashboard()
   return (
-    <>
+    <Statusbar.Provider>
       <Helmet>
         <title>{name}</title>
       </Helmet>
@@ -50,32 +49,21 @@ function AppAuthenticated() {
             {({match}) => {
               return (
                 <Suspense fallback={null}>
-                  <EntryEdit path={match?.params.slug!} />
+                  <EntryEdit id={match?.params.slug!} />
                 </Suspense>
               )
             }}
           </Route>
         </div>
       </div>
-      <div
-        style={{
-          height: '22px',
-          background: 'var(--outline)',
-          display: 'flex',
-          alignItems: 'center',
-          padding: '0 8px'
-        }}
-      >
+      <Statusbar.Root>
         {!auth && (
-          <Typo.Small>
-            <HStack center gap={5}>
-              <MdWarning />
-              <span>Using no authentication</span>
-            </HStack>
-          </Typo.Small>
+          <Statusbar.Status icon={MdWarning}>
+            Using no authentication
+          </Statusbar.Status>
         )}
-      </div>
-    </>
+      </Statusbar.Root>
+    </Statusbar.Provider>
   )
 }
 

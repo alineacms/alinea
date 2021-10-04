@@ -1,10 +1,16 @@
-import {createContext, useContext} from 'react'
+import {createContext, useContext, useEffect, useState} from 'react'
+import {EntryDraftStatus} from '..'
 import {EntryDraft} from '../EntryDraft'
 
 const context = createContext<EntryDraft | undefined>(undefined)
 
-export function useCurrentDraft() {
-  return useContext(context)
+export function useCurrentDraft(): [EntryDraft, EntryDraftStatus] {
+  const draft = useContext(context)!
+  const [status, setStatus] = useState(EntryDraftStatus.Synced)
+  useEffect(() => {
+    return draft.watchStatus(setStatus)
+  }, [draft])
+  return [draft, status]
 }
 
 export const CurrentDraftProvider = context.Provider

@@ -64,6 +64,7 @@ __metadata:
     "@types/react-helmet": ^6.1.2
     "@types/react-router": ^5.1.16
     "@types/react-router-dom": ^5.3.0
+    js-base64: ^3.7.2
     react-helmet: ^6.1.0
     react-icons: ^4.2.0
     react-query: ^3.23.2
@@ -144,7 +145,7 @@ __metadata:
     convert-hrtime: ^5.0.0
     cors: ^2.8.5
     express: ^4.17.1
-    helder.store: ^0.0.0-alpha.12
+    helder.store: ^0.0.0-alpha.13
     p-limit: ^4.0.0
     pretty-ms: ^7.0.1
     ws: ^8.2.2
@@ -3445,10 +3446,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"helder.store@npm:^0.0.0-alpha.12":
-  version: 0.0.0-alpha.12
-  resolution: "helder.store@npm:0.0.0-alpha.12"
-  checksum: d30b0d4ab614831376a14634b3abf7b51b801ce6bd6a1e83afc0da68495d83ed871922ec8e4461d54087a09e811d8edcc2f5caabb6cc0f9d9971ff676fecdf04
+"helder.store@npm:^0.0.0-alpha.13":
+  version: 0.0.0-alpha.13
+  resolution: "helder.store@npm:0.0.0-alpha.13"
+  checksum: 1b15efea9bc0dd1c8727cc5205b6f9b0c8a614a934fb2abfdce74743ac58b428e4fb3d588522672ffde098e47412cd433e440c13ca30c85f74448eceab2a7eda
   languageName: node
   linkType: hard
 
@@ -3938,6 +3939,13 @@ __metadata:
   version: 0.2.4
   resolution: "isomorphic.js@npm:0.2.4"
   checksum: 7adb91495de1ff0af9a524cb7ffccde7984ea7c547f3b9fe387b51a2be6c3f607a086d253224a985cf55a28e41d57f5cb22e285543e95ab97e7ba36783f2cd81
+  languageName: node
+  linkType: hard
+
+"js-base64@npm:^3.7.2":
+  version: 3.7.2
+  resolution: "js-base64@npm:3.7.2"
+  checksum: 573f28e9a27c3df60096d4d3f551bcb4fcb6d49161cf83396e9bad9b76f94736a70bb70b8808fe834dff2a388f76604ba09d6e153bbf181646e407720139fa5b
   languageName: node
   linkType: hard
 

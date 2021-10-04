@@ -1,27 +1,67 @@
-import {Entry, InputPath} from '@alinea/core'
+import {docFromEntry, Draft, Entry, InputPath, Outcome} from '@alinea/core'
 import {Value} from '@alinea/core/value/Value'
-import {WebsocketProvider} from 'y-websocket'
+import {fromUint8Array, toUint8Array} from 'js-base64'
+import {Observable} from 'lib0/observable'
+import {Room, WebrtcProvider} from 'y-webrtc'
 import * as Y from 'yjs'
 
 const ROOT_KEY = 'root'
 
 type Parent = Y.Map<any>
 
-export class EntryDraft implements Entry {
-  public doc: Y.Doc
-  private provider: WebsocketProvider
+export enum EntryDraftStatus {
+  Synced,
+  Saving,
+  Pending
+}
 
-  constructor(public path: string) {
+export class EntryDraft extends Observable<'status'> implements Entry {
+  public doc: Y.Doc
+  private saveTimeout: any = null
+
+  constructor(
+    private entry: Entry,
+    draft: Draft | null,
+    protected saveDraft: (doc: string) => Promise<Outcome<void>>
+  ) {
+    super()
     this.doc = new Y.Doc()
-    this.provider = new WebsocketProvider(
-      `ws://${window.location.hostname}:4500`,
-      this.path,
-      this.doc
-    )
+    if (draft?.doc) Y.applyUpdate(this.doc, toUint8Array(draft.doc))
+    else docFromEntry(entry, this.doc)
   }
 
-  destroy() {
-    this.provider.destroy()
+  connect() {
+    const provider = new WebrtcProvider(this.$id, this.doc)
+    const watch = (
+      update: Uint8Array,
+      origin: Room | undefined,
+      doc: Y.Doc,
+      transaction: Y.Transaction
+    ) => {
+      if (origin) return
+      this.emit('status', [EntryDraftStatus.Pending])
+      clearTimeout(this.saveTimeout)
+      this.saveTimeout = setTimeout(() => {
+        this.saveTimeout = null
+        this.emit('status', [EntryDraftStatus.Saving])
+        this.saveDraft(fromUint8Array(Y.encodeStateAsUpdate(this.doc))).then(
+          () => {
+            if (this.saveTimeout === null)
+              this.emit('status', [EntryDraftStatus.Synced])
+          }
+        )
+      }, 3000)
+    }
+    this.doc.on('update', watch)
+    return () => {
+      provider.destroy()
+      this.doc.off('update', watch)
+    }
+  }
+
+  watchStatus(fun: (status: EntryDraftStatus) => void) {
+    this.on('status', fun)
+    return () => this.off('status', fun)
   }
 
   private get root() {
@@ -29,15 +69,15 @@ export class EntryDraft implements Entry {
   }
 
   get $id() {
-    return this.root.get('$id')
+    return this.root.get('$id') || this.entry.$id
   }
 
   get $channel() {
-    return this.root.get('$channel')
+    return this.root.get('$channel') || this.entry.$channel
   }
 
   get title() {
-    return this.root.get('title')
+    return this.root.get('title') || this.entry.title
   }
 
   get(target: Y.Map<any>, path: Array<string>): Parent {

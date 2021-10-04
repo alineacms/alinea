@@ -1,7 +1,13 @@
-import {Content, createId, Entry} from '@alinea/core'
+import {Content, createId, Draft, Entry, Outcome} from '@alinea/core'
 import convertHrtime from 'convert-hrtime'
 import {promises} from 'fs'
-import {Collection, Functions, SqliteStore, Store} from 'helder.store'
+import {
+  Collection,
+  Expression,
+  Functions,
+  SqliteStore,
+  Store
+} from 'helder.store'
 import {BetterSqlite3} from 'helder.store/drivers/BetterSqlite3'
 import pLimit from 'p-limit'
 import prettyMilliseconds from 'pretty-ms'
@@ -11,6 +17,7 @@ function join(...parts: Array<string>) {
 }
 
 const Entry = new Collection<Entry & {id: string}>('Entry')
+const Draft = new Collection<Draft & {id: string}>('Draft')
 
 type Progress<T> = Promise<T> & {progress(): number}
 
@@ -68,6 +75,7 @@ function init(path: string): Progress<Content> {
     const total = await index(path, store)
     store.createIndex(Entry, '$id', [Entry.$id])
     store.createIndex(Entry, '$parent', [Entry.$parent])
+    store.createIndex(Draft, 'entry', [Draft.entry])
     const diff = process.hrtime.bigint() - startTime
     console.log(
       `Done indexing ${total} entries in ${prettyMilliseconds(
@@ -86,9 +94,25 @@ class Indexed implements Content {
     return this.store.first(Entry.where(Entry.$id.is(id)))
   }
 
-  async put(id: string, entry: Entry): Promise<void> {
+  async entryWithDraft(id: string): Promise<Entry.WithDraft | null> {
+    const entry = this.store.first(Entry.where(Entry.$id.is(id)))
+    const draft = this.store.first(Draft.where(Draft.entry.is(id)))
+    return entry && {entry, draft}
+  }
+
+  async put(id: string, entry: Entry): Promise<Outcome<void>> {
     // Todo: only update keys that changed?
-    this.store.update(Entry.where(Entry.$id.is(id)), entry as any)
+    return Outcome.attempt(() => {
+      this.store.update(Entry.where(Entry.$id.is(id)), entry as any)
+    })
+  }
+
+  async putDraft(id: string, doc: string): Promise<Outcome<void>> {
+    return Outcome.attempt(() => {
+      const existing = this.store.first(Draft.where(Draft.entry.is(id)))
+      if (existing) this.store.update(Draft, {doc: Expression.value(doc)})
+      else this.store.insert(Draft, {entry: id, doc})
+    })
   }
 
   async list(parentId?: string): Promise<Array<Entry.WithChildrenCount>> {
@@ -121,8 +145,16 @@ export class Index implements Content {
     return this.index.then(index => index.get(id))
   }
 
-  put(id: string, entry: Entry): Promise<void> {
+  entryWithDraft(id: string): Promise<Entry.WithDraft | null> {
+    return this.index.then(index => index.entryWithDraft(id))
+  }
+
+  put(id: string, entry: Entry): Promise<Outcome<void>> {
     return this.index.then(index => index.put(id, entry))
+  }
+
+  putDraft(id: string, doc: string): Promise<Outcome<void>> {
+    return this.index.then(index => index.putDraft(id, doc))
   }
 
   list(parentId?: string): Promise<Array<Entry.WithChildrenCount>> {

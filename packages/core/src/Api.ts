@@ -4,8 +4,11 @@ export namespace Api {
   }
   export const nav = {
     content: {
-      get(path: string) {
-        return `/content/${stripSlash(path)}`
+      get(id: string) {
+        return `/content/${stripSlash(id)}`
+      },
+      entryWithDraft(id: string) {
+        return `/content.draft/${stripSlash(id)}`
       },
       list(parent?: string) {
         return `/content.list/${stripSlash(parent)}`

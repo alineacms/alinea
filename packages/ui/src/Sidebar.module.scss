@@ -2,6 +2,7 @@
   display: flex;
   height: 100%;
   flex-shrink: 0;
+  border-right: 1px solid var(--outline);
   //box-shadow: 0 0 200px black;
 
   &-menu {
@@ -11,7 +12,7 @@
     width: 44px;
     flex-shrink: 0;
     height: 100%;
-    //border-right: 6px solid var(--outline);
+    border-right: 1px solid var(--outline);
     //box-shadow: 0 0 120px black;
 
     &-item {

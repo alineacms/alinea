@@ -1,3 +1,4 @@
+import {Draft} from '.'
 import {Label} from './Label'
 
 export type Id<T> = string & {__t: T}
@@ -13,4 +14,5 @@ export interface Entry {
 export namespace Entry {
   export type WithParents = Entry /* & {$parents: Array<string>}*/
   export type WithChildrenCount = Entry & {childrenCount: number}
+  export type WithDraft = {entry: Entry; draft: Draft | null}
 }

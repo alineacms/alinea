@@ -1,4 +1,5 @@
 import {Api, Auth, Hub} from '@alinea/core'
+import bodyParser from 'body-parser'
 import compression from 'compression'
 import cors from 'cors'
 import express, {Router} from 'express'
@@ -23,16 +24,29 @@ export class Server {
     router.use(compression())
     router.use(cors({origin: dashboardUrl}))
     if (auth) router.use(auth.router())
-    router.get(Api.nav.content.get('*'), async (req, res) => {
-      const path = req.params['0']
-      res.json(await hub.content.get(path))
+    router.get(Api.nav.content.get(':id'), async (req, res) => {
+      const id = req.params.id
+      res.json(await hub.content.get(id))
+    })
+    router.get(Api.nav.content.entryWithDraft(':id'), async (req, res) => {
+      const id = req.params.id
+      const result = await hub.content.entryWithDraft(id)
+      res.json(result || null)
     })
     router.get(Api.nav.content.list('*'), async (req, res) => {
       const parent = req.params['0'] ? req.params['0'] : undefined
       res.json(await hub.content.list(parent))
     })
+    router.put(
+      Api.nav.content.entryWithDraft(':id'),
+      bodyParser.json(),
+      async (req, res) => {
+        const id = req.params.id
+        res.json(await hub.content.putDraft(id, req.body.doc))
+      }
+    )
     router.get('*', async (req, res) => {
-      res.json({status: 404})
+      res.sendStatus(404)
     })
     this.app.use(router)
     const docServer = new DocServer(this.options.hub)

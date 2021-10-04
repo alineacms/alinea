@@ -1,7 +1,7 @@
 import {InputPath, Value} from '@alinea/core'
+import {useForceUpdate} from '@alinea/ui'
 import {useEffect, useMemo} from 'react'
 import {useCurrentDraft} from './UseCurrentDraft'
-import {useForceUpdate} from './UseForceUpdate'
 
 export type InputPair<T> = readonly [T, Value.Mutator<T>]
 
@@ -9,7 +9,7 @@ export function useInput<T>(
   path: InputPath<T>,
   type = Value.Scalar
 ): InputPair<T> {
-  const draft = useCurrentDraft()
+  const [draft] = useCurrentDraft()
   if (!draft) throw 'Could not load draft'
   const redraw = useForceUpdate()
   const input = useMemo(

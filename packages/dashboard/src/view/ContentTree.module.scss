@@ -10,6 +10,8 @@
   font-weight: 500;
   position: relative;
   z-index: 1;
+  border-radius: 5px;
+  margin: 0 3px 0 6px;
 
   &:hover {
     background: var(--highlight);

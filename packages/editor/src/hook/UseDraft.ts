@@ -1,31 +1,18 @@
-import {useEffect, useMemo, useState} from 'react'
-import {EntryDraft} from '..'
+import {Entry} from '@alinea/core/Entry'
+import {Outcome} from '@alinea/core/Outcome'
+import {useEffect, useMemo} from 'react'
+import {EntryDraft} from '../EntryDraft'
 
-export function useDraft(path: string) {
-  const [current, setCurrent] = useState<EntryDraft | null>(null)
-  const loading = useMemo(() => new EntryDraft(path), [path])
-  // Todo: find a better way to check when an entry is sufficiently
-  // loaded before displaying it.
+export function useDraft(
+  data: Entry.WithDraft,
+  saveDraft: (doc: string) => Promise<Outcome<void>>
+) {
+  const current = useMemo(() => {
+    if (data) return new EntryDraft(data.entry, data.draft, saveDraft)
+    else return null
+  }, [data, saveDraft])
   useEffect(() => {
-    if (loading.$channel && current !== loading) {
-      setCurrent(loading)
-    } else {
-      let isRemoved = false
-      function checkLoaded() {
-        if (!loading.$channel) return
-        off()
-        setCurrent(loading)
-      }
-      const off = () => {
-        if (!isRemoved) loading.doc.getMap('root').unobserve(checkLoaded)
-        isRemoved = true
-      }
-      loading.doc.getMap('root').observe(checkLoaded)
-      return off
-    }
-  }, [loading])
-  useEffect(() => {
-    if (current) return () => current.destroy()
+    if (current) return current.connect()
   }, [current])
   return current
 }
