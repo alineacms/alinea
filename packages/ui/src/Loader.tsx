@@ -1,6 +1,6 @@
 import {HTMLAttributes} from 'react'
-import {fromModule} from '.'
 import css from './Loader.module.scss'
+import {fromModule} from './util/styler'
 
 const styles = fromModule(css)
 

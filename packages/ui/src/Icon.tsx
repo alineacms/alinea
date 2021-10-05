@@ -1,7 +1,7 @@
 import {HTMLAttributes, ReactNode} from 'react'
 import type {IconType} from 'react-icons'
-import {fromModule} from '.'
 import css from './Icon.module.scss'
+import {fromModule} from './util/styler'
 
 const styles = fromModule(css)
 

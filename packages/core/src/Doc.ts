@@ -1,5 +1,5 @@
 import * as Y from 'yjs'
-import {Entry} from '.'
+import {Entry} from './Entry'
 import {Value} from './value/Value'
 
 const ROOT_KEY = 'root'

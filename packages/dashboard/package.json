@@ -5,7 +5,9 @@
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
-    ".": "./dist"
+    ".": "./dist",
+    "./global.css": "./src/css/fonts.css",
+    "./": "./dist/"
   },
   "dependencies": {
     "@alinea/client": "0.0.0",

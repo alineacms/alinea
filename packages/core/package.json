@@ -5,7 +5,8 @@
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
-    ".": "./dist"
+    ".": "./dist",
+    "./": "./dist/"
   },
   "dependencies": {
     "base-x": "^3.0.8",

@@ -1,5 +1,4 @@
 import {PropsWithChildren, useState} from 'react'
-import {useColorScheme} from 'use-color-scheme'
 import {ColorScheme, ColorSchemeProvider} from './hook/UseColorScheme'
 import {useContrastColor} from './hook/UseContrastColor'
 import {fromModule} from './util/styler'
@@ -14,12 +13,11 @@ type ViewportProps = PropsWithChildren<{
 export function Viewport({children, color}: ViewportProps) {
   const accentColor = color!
   const accentColorForeground = useContrastColor(accentColor)
-  const {scheme} = useColorScheme()
+  //const {scheme} = useColorScheme()
   const [schemePreference, setSchemePreference] = useState<
     'light' | 'dark' | undefined
   >(undefined)
-  const usedScheme: ColorScheme =
-    schemePreference || (scheme !== 'none' ? (scheme as ColorScheme) : 'dark')
+  const usedScheme: ColorScheme = schemePreference || 'dark' //(scheme !== 'none' ? (scheme as ColorScheme) : 'dark')
   return (
     <ColorSchemeProvider value={[usedScheme, setSchemePreference]}>
       <main

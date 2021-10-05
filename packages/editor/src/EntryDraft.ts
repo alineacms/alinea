@@ -50,7 +50,7 @@ export class EntryDraft extends Observable<'status'> implements Entry {
               this.emit('status', [EntryDraftStatus.Synced])
           }
         )
-      }, 3000)
+      }, 1000)
     }
     this.doc.on('update', watch)
     return () => {

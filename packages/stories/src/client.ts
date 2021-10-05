@@ -1,12 +1,10 @@
-import {Dashboard} from '@alinea/dashboard'
+import {renderDashboard} from '@alinea/dashboard'
 import {mySchema} from './schema'
 
-const dashboard = new Dashboard({
+renderDashboard({
   name: 'Alinea',
   schema: mySchema,
   apiUrl: 'http://localhost:4500',
-  color: '#FFBD67'
+  color: '#6E57D0' //'#FFBD67'
   //auth: PasswordLessLogin
 })
-
-dashboard.render()

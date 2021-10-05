@@ -1,26 +1,19 @@
 import spawn from 'cross-spawn-promise'
 import {build, Plugin} from 'esbuild'
-import {ScssModulesPlugin} from 'esbuild-scss-modules-plugin'
+import fs from 'fs'
 import glob from 'glob'
 import path from 'path'
+import rmfr from 'rmfr'
+import {ScssModulesPlugin} from './scss-modules'
 
+const skipTypes = false
 const packages = glob.sync('packages/**/package.json')
 const root = process.cwd()
 const tsc = root + '/node_modules/.bin/tsc'
 
-const bundle = new Set(['.scss', '.css'])
-
-// Todo: before building we should update the main tsconfig by changing the
-// paths to point to the node_modules location. If we don't typescript generates
-// declarations for each of the symlinked packages. We don't do this by default
-// because it makes vscode autocomplete end up in the symlinks and it gets
-// very confusing.
-
-// "@alinea/input.*": ["./node_modules/@alinea/input.*/src"],
-// "@alinea/core/*": ["./node_modules/@alinea/core/src/*"],
-// "@alinea/editor/*": ["./node_modules/@alinea/editor/src/*"],
-// "@alinea/ui/*": ["./node_modules/@alinea/ui/src/*"],
-// "@alinea/*": ["./node_modules/@alinea/*/src"]
+const bundle = new Set(['.scss'])
+const which = process.argv[2]
+const exclude = ['website']
 
 const externalPlugin: Plugin = {
   name: 'external-plugin',
@@ -37,15 +30,42 @@ const externalPlugin: Plugin = {
   }
 }
 
+let globalCss = ''
+
 async function buildPackage(pkg: string) {
   const location = pkg.substr(0, pkg.length - '/package.json'.length)
+  const meta = JSON.parse(await fs.promises.readFile(pkg, 'utf8'))
+  console.log(`> ${location}`)
   const cwd = path.join(root, location)
-  try {
-    await spawn(tsc, [], {stdio: 'inherit', cwd})
-  } catch (error) {
-    console.error((error as any).stderr.toString())
-    process.exit(1)
-  }
+  await rmfr(path.join(cwd, 'dist'))
+  if (!skipTypes)
+    try {
+      const tsconfig = path.join(location, 'tsconfig.json')
+      // Before building we update the main tsconfig by changing the paths to
+      // point to the node_modules location. If we don't typescript generates
+      // declarations for each of the symlinked packages. We don't do this by default
+      // because it makes vscode autocomplete end up in the symlinks and it gets
+      // very confusing.
+      if (fs.existsSync(tsconfig)) {
+        const config = fs.readFileSync(tsconfig, 'utf-8')
+        fs.writeFileSync(
+          tsconfig,
+          config.replace('tsconfig.json', 'tsconfig.build.json')
+        )
+        await spawn(tsc, [], {
+          stdio: 'inherit',
+          cwd
+        })
+        fs.writeFileSync(
+          tsconfig,
+          config.replace('tsconfig.build.json', 'tsconfig.json')
+        )
+      }
+    } catch (error) {
+      if (error?.stderr) console.error((error as any).stderr.toString())
+      else console.error(error)
+      process.exit(1)
+    }
   const entryPoints = glob.sync('src/**/*.{ts,tsx}', {cwd})
   for (const entryPoint of entryPoints) {
     const inject = entryPoint.endsWith('.tsx')
@@ -64,17 +84,47 @@ async function buildPackage(pkg: string) {
         externalPlugin,
         ScssModulesPlugin({
           cache: false,
-          localsConvention: 'dashes'
+          localsConvention: 'dashes',
+          generateScopedName: 'alinea__[name]-[local]'
         })
       ]
     })
   }
-  console.log(`> ${location}`)
+  const cssFiles = glob.sync('dist/**/*.css', {cwd})
+  let cssBundle = ''
+  for (const cssFile of cssFiles) {
+    cssBundle +=
+      (await fs.promises.readFile(path.join(cwd, cssFile), 'utf-8')) + '\n'
+  }
+  if (cssBundle) {
+    await fs.promises.writeFile(path.join(cwd, 'dist/index.css'), cssBundle)
+    globalCss += cssBundle
+  }
 }
 
-Promise.all(
-  packages.filter(pkg => !pkg.includes('node_modules')).map(buildPackage)
-).catch(e => {
+const sync = true
+
+async function main() {
+  const builds = packages.map(pkg => {
+    return async () => {
+      const isExternal = pkg.includes('node_modules')
+      const isSelected = which ? pkg.includes(which) : true
+      const isExcluded = exclude.some(ex => pkg.includes(ex))
+      const needsBuilding = !isExternal && isSelected && !isExcluded
+      if (needsBuilding) await buildPackage(pkg)
+    }
+  })
+  if (sync) {
+    for (const build of builds) await build()
+  } else {
+    await Promise.all(builds.map(build => build()))
+  }
+  if (!which) {
+    await fs.promises.writeFile('packages/css/index.css', globalCss)
+  }
+}
+
+main().catch(e => {
   console.error(e)
   process.exit(1)
 })

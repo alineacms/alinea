@@ -1,6 +1,6 @@
 import * as RadixDropdownMenu from '@radix-ui/react-dropdown-menu'
-import {fromModule} from '.'
 import css from './DropdownMenu.module.scss'
+import {fromModule} from './util/styler'
 
 const styles = fromModule(css)
 

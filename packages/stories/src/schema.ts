@@ -5,10 +5,7 @@ import {text} from '@alinea/input.text'
 const blocks = list('Blocks', {
   schema: schema({
     textblock: channel('Text block', {
-      text: text('Text'),
-      multi: text('Multi', {
-        multiline: true
-      })
+      text: text('Text')
     })
   })
 })

@@ -11,10 +11,11 @@ import {
 } from 'react'
 import {createPortal} from 'react-dom'
 import type {IconType} from 'react-icons'
-import {fromModule, useForceUpdate} from '.'
+import {useForceUpdate} from './hook/UseForceUpdate'
 import {Icon} from './Icon'
 import {HStack} from './Stack'
 import css from './Statusbar.module.scss'
+import {fromModule} from './util/styler'
 
 const styles = fromModule(css)
 

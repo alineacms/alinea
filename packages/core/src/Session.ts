@@ -1,4 +1,4 @@
-import {Hub} from '.'
+import {Hub} from './Hub'
 import {User} from './User'
 
 export interface Session {

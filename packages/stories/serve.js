@@ -41,7 +41,8 @@ serve(
     plugins: [
       ScssModulesPlugin({
         cache: false,
-        localsConvention: 'dashes'
+        localsConvention: 'dashes',
+        generateScopedName: 'alinea-[name]-[local]-[hash:base64:5]'
       }),
       alias(aliases)
     ],

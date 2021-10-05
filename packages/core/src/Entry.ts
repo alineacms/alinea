@@ -1,4 +1,4 @@
-import {Draft} from '.'
+import {Draft} from './Draft'
 import {Label} from './Label'
 
 export type Id<T> = string & {__t: T}

@@ -5,5 +5,5 @@
     "noEmit": false,
     "emitDeclarationOnly": true
   },
-  "include": ["src"]
+  "include": ["src", "../env.d.ts"]
 }
