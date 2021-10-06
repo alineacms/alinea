@@ -2,7 +2,7 @@
   "compilerOptions": {
     "noEmit": true,
     "module": "ESNext",
-    "target": "ES2017",
+    "target": "ESNext",
     "skipLibCheck": true,
     "strict": true,
     "declaration": true,

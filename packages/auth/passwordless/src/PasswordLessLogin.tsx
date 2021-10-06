@@ -6,8 +6,8 @@ import {HStack, VStack} from '@alinea/ui/Stack'
 import jwtDecode from 'jwt-decode'
 import {FormEvent, PropsWithChildren, useLayoutEffect, useState} from 'react'
 import Helmet from 'react-helmet'
-import {MdArrowBack, MdArrowForward} from 'react-icons/md'
-import {RiFlashlightFill} from 'react-icons/ri'
+import {MdArrowBack, MdArrowForward} from 'react-icons/md/index'
+import {RiFlashlightFill} from 'react-icons/ri/index'
 import css from './PasswordLessLogin.module.scss'
 
 const styles = fromModule(css)

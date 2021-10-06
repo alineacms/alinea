@@ -7,7 +7,7 @@ import rmfr from 'rmfr'
 import {ScssModulesPlugin} from './scss-modules'
 
 let skipTypes = false
-let which: string | undefined
+let which = []
 const packages = glob.sync('packages/**/package.json')
 const root = process.cwd()
 const tsc = root + '/node_modules/.bin/tsc'
@@ -16,7 +16,7 @@ const bundle = new Set(['.scss'])
 const exclude = ['website']
 for (const arg of process.argv.slice(2)) {
   if (arg === '--skip-types') skipTypes = true
-  else which = arg
+  else which.push(arg)
 }
 
 const externalPlugin: Plugin = {
@@ -30,7 +30,10 @@ const externalPlugin: Plugin = {
       if (bundle.has(extension)) return
       if (args.kind === 'entry-point') return
       // Help nodejs find files by appending the extension, see evanw/esbuild#622
-      const isRelative = args.path.startsWith('.')
+      const isSub = args.path.split('/').length > 2
+      const isRelative =
+        args.path.startsWith('.') ||
+        (isSub && path.extname(args.path) !== '.js')
       // https://stackoverflow.com/questions/64453859/directory-import-is-not-supported-resolving-es-modules-with-node-js
       const isDirImport = /^@alinea\/[^\/]*$/.test(args.path)
       const modulePath = isRelative
@@ -123,7 +126,8 @@ async function main() {
   const builds = packages.map(pkg => {
     return async () => {
       const isExternal = pkg.includes('node_modules')
-      const isSelected = which ? pkg.includes(which) : true
+      const isSelected =
+        which.length > 0 ? which.some(w => pkg.includes(w)) : true
       const isExcluded = exclude.some(ex => pkg.includes(ex))
       const needsBuilding = !isExternal && isSelected && !isExcluded
       if (needsBuilding) await buildPackage(pkg)
@@ -134,7 +138,7 @@ async function main() {
   } else {
     await Promise.all(builds.map(build => build()))
   }
-  if (!which) {
+  if (which.length === 0) {
     await fs.promises.writeFile('packages/css/index.css', globalCss)
   }
 }

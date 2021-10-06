@@ -103,6 +103,7 @@ export namespace Typo {
   export const H4 = forwardRefWithAs<TypoProps, 'h4'>(H4Component)
   export const P = forwardRefWithAs<TypoProps, 'p'>(PComponent)
   export const Link = LinkComponent
+  export const link = styles.link
   export const Monospace = MonospaceComponent
   export const Small = forwardRefWithAs<TypoProps, 'span'>(SmallComponent)
 }

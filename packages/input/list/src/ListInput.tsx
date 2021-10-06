@@ -33,7 +33,7 @@ import {
   Ref,
   useState
 } from 'react'
-import {MdDelete, MdDragHandle} from 'react-icons/md'
+import {MdDelete, MdDragHandle} from 'react-icons/md/index'
 import {ListField} from './ListField'
 import css from './ListInput.module.scss'
 

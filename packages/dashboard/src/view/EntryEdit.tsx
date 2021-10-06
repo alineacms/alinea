@@ -10,7 +10,7 @@ import {
 import {fromModule, Statusbar} from '@alinea/ui'
 import {Suspense} from 'react'
 import {Helmet} from 'react-helmet'
-import {MdCheck, MdEdit, MdRotateLeft} from 'react-icons/md'
+import {MdCheck, MdEdit, MdRotateLeft} from 'react-icons/md/index'
 import {useQuery} from 'react-query'
 import {useSession} from '../hook/UseSession'
 import css from './EntryEdit.module.scss'

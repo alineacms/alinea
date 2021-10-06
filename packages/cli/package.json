@@ -1,0 +1,23 @@
+{
+  "bin": {
+    "alinea": "./dist/index.js"
+  },
+  "name": "@alinea/cli",
+  "version": "0.0.0",
+  "license": "MIT",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "exports": {
+    ".": "./dist/index.js",
+    "./*": "./dist/*"
+  },
+  "dependencies": {
+    "@alinea/core": "0.0.0",
+    "dirname-filename-esm": "^1.1.1",
+    "sade": "^1.7.4"
+  },
+  "devDependencies": {
+    "@types/sade": "^1.7.3"
+  }
+}

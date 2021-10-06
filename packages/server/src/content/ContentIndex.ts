@@ -1,91 +1,6 @@
-import {Content, createId, Draft, Entry, Outcome} from '@alinea/core'
-import convertHrtime from 'convert-hrtime'
-import {promises} from 'fs'
-import {
-  Collection,
-  Expression,
-  Functions,
-  SqliteStore,
-  Store
-} from 'helder.store'
-import {BetterSqlite3} from 'helder.store/drivers/BetterSqlite3.js'
-import pLimit from 'p-limit'
-import prettyMilliseconds from 'pretty-ms'
-
-function join(...parts: Array<string>) {
-  return parts.join('/')
-}
-
-const Entry = new Collection<Entry & {id: string}>('Entry')
-const Draft = new Collection<Draft & {id: string}>('Draft')
-
-type Progress<T> = Promise<T> & {progress(): number}
-
-async function index(path: string, store: Store) {
-  let total = 0
-  const openfile = pLimit(4)
-  async function process(target: string, parentId?: string) {
-    const files = await promises.readdir(join(path, target))
-    const tasks = files.map(file => async () => {
-      const stat = await promises.stat(join(path, target, file))
-      const localPath = join(target, file)
-      const isContainer = stat.isDirectory()
-      if (isContainer) {
-        const parent = store.insert(Entry, {
-          $id: createId(),
-          $parent: parentId,
-          //path: localPath,
-          $isContainer: true,
-          $channel: '',
-          title: file
-        })
-        await process(localPath, parent.$id)
-      } else {
-        total++
-        try {
-          const parsed = JSON.parse(
-            await openfile(() =>
-              promises.readFile(join(path, localPath), 'utf-8')
-            )
-          )
-          store.insert(Entry, {
-            $id: parsed.$id || createId(),
-            $parent: parentId,
-            $channel: parsed.channel,
-            ...parsed
-          })
-        } catch (e) {
-          console.log(`Could not parse ${localPath} because:\n  ${e}`)
-        }
-      }
-    })
-    await Promise.all(tasks.map(t => t()))
-  }
-  await process('')
-  return total
-}
-
-function init(path: string): Progress<Content> {
-  // Check if the index exists, if not build it
-  let progress = 0
-  async function build(): Promise<Content> {
-    const startTime = process.hrtime.bigint()
-    const store = new SqliteStore(new BetterSqlite3())
-    console.log('Start indexing...')
-    const total = await index(path, store)
-    store.createIndex(Entry, '$id', [Entry.$id])
-    store.createIndex(Entry, '$parent', [Entry.$parent])
-    store.createIndex(Draft, 'entry', [Draft.entry])
-    const diff = process.hrtime.bigint() - startTime
-    console.log(
-      `Done indexing ${total} entries in ${prettyMilliseconds(
-        convertHrtime(diff).milliseconds
-      )}`
-    )
-    return new Indexed(store)
-  }
-  return Object.assign(build(), {progress: () => progress})
-}
+import {Content, Draft, Entry, Outcome} from '@alinea/core'
+import {getCachedIndex} from '@alinea/index'
+import {Expression, Functions, Store} from 'helder.store'
 
 class Indexed implements Content {
   constructor(protected store: Store) {}
@@ -135,10 +50,10 @@ class Indexed implements Content {
 }
 
 export class ContentIndex implements Content {
-  index: Progress<Content>
+  index: Promise<Content>
 
   constructor(protected id: string) {
-    this.index = init(this.id)
+    this.index = getCachedIndex(this.id).then(store => new Indexed(store))
   }
 
   get(id: string): Promise<Entry.WithParents | null> {

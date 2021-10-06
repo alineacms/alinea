@@ -18,8 +18,8 @@ import {
   MdInsertLink,
   MdInsertPhoto,
   MdUnfoldMore
-} from 'react-icons/md'
-import {RiFlashlightFill} from 'react-icons/ri'
+} from 'react-icons/md/index'
+import {RiFlashlightFill} from 'react-icons/ri/index'
 import {useSession} from '../hook/UseSession'
 import css from './Toolbar.module.scss'
 

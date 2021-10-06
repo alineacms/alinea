@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@alinea/core": "0.0.0",
+    "@alinea/index": "0.0.0",
     "better-sqlite3": "^7.4.3",
     "compression": "^1.7.4",
     "convert-hrtime": "^5.0.0",

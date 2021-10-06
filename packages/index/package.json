@@ -1,0 +1,15 @@
+{
+  "name": "@alinea/index",
+  "version": "0.0.0",
+  "license": "MIT",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "exports": {
+    ".": "./dist/index.js",
+    "./*": "./dist/*"
+  },
+  "dependencies": {
+    "@alinea/core": "0.0.0"
+  }
+}

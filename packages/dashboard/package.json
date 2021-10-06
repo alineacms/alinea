@@ -4,8 +4,9 @@
   "license": "MIT",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
+  "type": "module",
   "exports": {
-    ".": "./dist",
+    ".": "./dist/index.js",
     "./global.css": "./src/css/fonts.css",
     "./*": "./dist/*"
   },

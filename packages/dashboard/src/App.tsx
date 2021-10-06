@@ -6,7 +6,7 @@ import {getRandomColor} from '@alinea/ui/util/GetRandomColor'
 //import 'preact/debug'
 import {Fragment, Suspense, useState} from 'react'
 import {Helmet} from 'react-helmet'
-import {MdPerson, MdSearch, MdSettings, MdWarning} from 'react-icons/md'
+import {MdPerson, MdSearch, MdSettings, MdWarning} from 'react-icons/md/index'
 import {QueryClient, QueryClientProvider} from 'react-query'
 import {Route} from 'react-router'
 import {HashRouter} from 'react-router-dom'
@@ -105,7 +105,7 @@ export function App(props: DashboardOptions) {
     <DashboardProvider
       value={{...props, color: props.color || getRandomColor(props.name)}}
     >
-      <HashRouter>
+      <HashRouter hashType="noslash">
         <SessionProvider value={session}>
           <QueryClientProvider client={queryClient}>
             <AppRoot session={session} setSession={setSession} />
