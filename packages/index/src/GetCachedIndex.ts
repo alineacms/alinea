@@ -12,6 +12,9 @@ const cacheDir = path.join(path.dirname(indexDir), '../.cache')
 
 export async function getCachedIndex(dir: string, cache = cacheDir) {
   const name = path.basename(dir)
+  console.log(`cache path: ${cache}`)
+  console.log(`cwd: ${process.cwd()}`)
+  console.log(`exists: ${fs.existsSync(cache) ? 'yes' : 'no'}`)
   if (!fs.existsSync(cache)) fs.mkdirSync(cache, {recursive: true})
   const indexFile = path.join(cache, name)
   const exists = fs.existsSync(indexFile)
