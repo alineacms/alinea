@@ -4,7 +4,7 @@
   "license": "MIT",
   "scripts": {
     "dev": "next dev",
-    "build": "alinea index content -o .next/server/chunks/content && next build",
+    "build": "next build && alinea index content -o .next/server/chunks/content",
     "start": "next start",
     "lint": "next lint"
   },
