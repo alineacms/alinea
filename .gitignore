@@ -9,3 +9,4 @@ node_modules
 /packages/stories/content/*
 !/packages/stories/content/.keep
 .env
+.env.cache*

@@ -5,7 +5,7 @@ import {ContentIndex} from './ContentIndex'
 export type LocalHubOptions = {
   schema: Schema
   contentPath: string
-  cachePath?: string
+  cacheFile?: string
 }
 
 export class LocalHub implements Hub {
@@ -13,6 +13,6 @@ export class LocalHub implements Hub {
   schema: Schema
   constructor(protected options: LocalHubOptions) {
     this.schema = options.schema
-    this.content = new ContentIndex(options.contentPath, options.cachePath)
+    this.content = new ContentIndex(options.contentPath, options.cacheFile)
   }
 }

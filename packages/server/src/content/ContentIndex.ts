@@ -52,8 +52,8 @@ class Indexed implements Content {
 export class ContentIndex implements Content {
   index: Promise<Content>
 
-  constructor(protected contentPath: string, protected cachePath?: string) {
-    this.index = getCachedIndex(this.contentPath, this.cachePath).then(
+  constructor(protected contentPath: string, protected cacheFile?: string) {
+    this.index = getCachedIndex(this.contentPath, this.cacheFile).then(
       store => new Indexed(store)
     )
   }

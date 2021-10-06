@@ -10,15 +10,17 @@ const indexDir = import.meta.url
   : __dirname
 const cacheDir = path.join(path.dirname(indexDir), '../.cache')
 
-export async function getCachedIndex(dir: string, cache = cacheDir) {
+export async function getCachedIndex(dir: string, cacheFile?: string) {
   const name = path.basename(dir)
-  console.log(`cache path: ${cache}`)
+  const indexFile = cacheFile || path.join(cacheDir, name)
+  const cacheLocation = path.dirname(indexFile)
+  console.log(`cache path: ${indexFile}`)
   console.log(`cwd: ${process.cwd()}`)
   console.log(fs.readdirSync(process.cwd()))
-  console.log(fs.readdirSync(path.join(process.cwd(), '.next')))
-  console.log(`exists: ${fs.existsSync(cache) ? 'yes' : 'no'}`)
-  if (!fs.existsSync(cache)) fs.mkdirSync(cache, {recursive: true})
-  const indexFile = path.join(cache, name)
+  console.log(`exists: ${fs.existsSync(indexFile) ? 'yes' : 'no'}`)
+  console.log(path.resolve(indexFile))
+  if (!fs.existsSync(cacheLocation))
+    fs.mkdirSync(cacheLocation, {recursive: true})
   const exists = fs.existsSync(indexFile)
   const store = new SqliteStore(new BetterSqlite3(indexFile))
   if (exists) return store
