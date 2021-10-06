@@ -8,7 +8,7 @@ import {
   SqliteStore,
   Store
 } from 'helder.store'
-import {BetterSqlite3} from 'helder.store/drivers/BetterSqlite3'
+import {BetterSqlite3} from 'helder.store/drivers/BetterSqlite3.js'
 import pLimit from 'p-limit'
 import prettyMilliseconds from 'pretty-ms'
 
@@ -134,7 +134,7 @@ class Indexed implements Content {
   }
 }
 
-export class Index implements Content {
+export class ContentIndex implements Content {
   index: Progress<Content>
 
   constructor(protected id: string) {

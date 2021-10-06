@@ -1,7 +1,7 @@
 import {PropsWithChildren, useState} from 'react'
 import {ColorScheme, ColorSchemeProvider} from './hook/UseColorScheme'
 import {useContrastColor} from './hook/UseContrastColor'
-import {fromModule} from './util/styler'
+import {fromModule} from './util/Styler'
 import css from './Viewport.module.scss'
 
 const styles = fromModule(css)

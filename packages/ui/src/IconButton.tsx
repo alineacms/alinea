@@ -1,7 +1,7 @@
 import {forwardRef, HTMLAttributes, Ref} from 'react'
 import type {IconType} from 'react-icons'
 import css from './IconButton.module.scss'
-import {fromModule} from './util/styler'
+import {fromModule} from './util/Styler'
 
 const styles = fromModule(css)
 

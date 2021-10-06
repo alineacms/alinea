@@ -1,9 +1,9 @@
 import {LocalHub, Server} from '@alinea/server'
 import {NextApiRequest, NextApiResponse} from 'next'
-import {pagesSchema} from '../../schema'
+import {pagesSchema} from '../../../schema'
 
 const server = new Server({
-  dashboardUrl: 'http://localhost:3000/',
+  dashboardUrl: '/admin',
   hub: new LocalHub(pagesSchema, 'content')
 })
 

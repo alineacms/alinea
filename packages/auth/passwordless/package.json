@@ -7,7 +7,7 @@
       "import": "./dist/index.js",
       "browser": "./dist/browser.js"
     },
-    "./": "./dist/"
+    "./*": "./dist/*"
   },
   "dependencies": {
     "@alinea/core": "0.0.0",

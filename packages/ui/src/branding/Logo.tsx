@@ -1,5 +1,5 @@
 import {PropsWithChildren} from 'react'
-import {fromModule} from '../util/styler'
+import {fromModule} from '../util/Styler'
 import css from './Logo.module.scss'
 
 const styles = fromModule(css)

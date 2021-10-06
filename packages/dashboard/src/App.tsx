@@ -45,11 +45,13 @@ function AppAuthenticated() {
           </Sidebar.List>
         </Sidebar.Root>
         <div style={{width: '100%'}}>
-          <Route path="/:slug*">
+          <Route path="/:id">
             {({match}) => {
+              const id = match?.params.id
+              if (!id) return null
               return (
                 <Suspense fallback={null}>
-                  <EntryEdit id={match?.params.slug!} />
+                  <EntryEdit id={id} />
                 </Suspense>
               )
             }}

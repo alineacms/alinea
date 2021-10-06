@@ -5,6 +5,6 @@ renderDashboard({
   name: 'Alinea',
   schema: mySchema,
   apiUrl: 'http://localhost:4500',
-  color: '#6E57D0' //'#FFBD67'
+  color: '#FFBD67' //'#6E57D0'
   //auth: PasswordLessLogin
 })

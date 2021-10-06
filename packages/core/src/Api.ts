@@ -11,6 +11,7 @@ export namespace Api {
         return `/content.draft/${stripSlash(id)}`
       },
       list(parent?: string) {
+        if (!parent) return '/content.list'
         return `/content.list/${stripSlash(parent)}`
       }
     }

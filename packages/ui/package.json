@@ -6,7 +6,7 @@
   "types": "dist/index.d.ts",
   "exports": {
     ".": "./dist",
-    "./": "./dist/"
+    "./*": "./dist/*"
   },
   "dependencies": {
     "@alinea/core": "0.0.0",

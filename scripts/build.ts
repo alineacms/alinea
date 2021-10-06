@@ -6,14 +6,18 @@ import path from 'path'
 import rmfr from 'rmfr'
 import {ScssModulesPlugin} from './scss-modules'
 
-const skipTypes = false
+let skipTypes = false
+let which: string | undefined
 const packages = glob.sync('packages/**/package.json')
 const root = process.cwd()
 const tsc = root + '/node_modules/.bin/tsc'
 
 const bundle = new Set(['.scss'])
-const which = process.argv[2]
 const exclude = ['website']
+for (const arg of process.argv.slice(2)) {
+  if (arg === '--skip-types') skipTypes = true
+  else which = arg
+}
 
 const externalPlugin: Plugin = {
   name: 'external-plugin',
@@ -25,7 +29,16 @@ const externalPlugin: Plugin = {
       const extension = path.extname(args.path)
       if (bundle.has(extension)) return
       if (args.kind === 'entry-point') return
-      return {external: true}
+      // Help nodejs find files by appending the extension, see evanw/esbuild#622
+      const isRelative = args.path.startsWith('.')
+      // https://stackoverflow.com/questions/64453859/directory-import-is-not-supported-resolving-es-modules-with-node-js
+      const isDirImport = /^@alinea\/[^\/]*$/.test(args.path)
+      const modulePath = isRelative
+        ? args.path + '.js'
+        : isDirImport
+        ? args.path + '/index.js'
+        : args.path
+      return {path: modulePath, external: true}
     })
   }
 }
@@ -37,8 +50,9 @@ async function buildPackage(pkg: string) {
   const meta = JSON.parse(await fs.promises.readFile(pkg, 'utf8'))
   console.log(`> ${location}`)
   const cwd = path.join(root, location)
-  await rmfr(path.join(cwd, 'dist'))
-  if (!skipTypes)
+  if (!skipTypes) {
+    await rmfr(path.join(cwd, 'dist'))
+
     try {
       const tsconfig = path.join(location, 'tsconfig.json')
       // Before building we update the main tsconfig by changing the paths to
@@ -66,6 +80,7 @@ async function buildPackage(pkg: string) {
       else console.error(error)
       process.exit(1)
     }
+  }
   const entryPoints = glob.sync('src/**/*.{ts,tsx}', {cwd})
   for (const entryPoint of entryPoints) {
     const inject = entryPoint.endsWith('.tsx')

@@ -1,10 +1,10 @@
 import {Content, Hub} from '@alinea/core'
 import {Schema} from '@alinea/core/Schema'
-import {Index} from './Index'
+import {ContentIndex} from './ContentIndex'
 
 export class LocalHub implements Hub {
   content: Content
   constructor(public schema: Schema, protected contentPath: string) {
-    this.content = new Index(this.contentPath)
+    this.content = new ContentIndex(this.contentPath)
   }
 }

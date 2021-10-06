@@ -1,6 +1,6 @@
 import {generateKeyBetween} from 'fractional-indexing'
 import * as Y from 'yjs'
-import {createId} from '..'
+import {createId} from '../Id'
 import {Value} from './Value'
 
 export type ListValue<T> = Array<ListValue.Row>

@@ -1,6 +1,5 @@
 import {createContext, useContext, useEffect, useState} from 'react'
-import {EntryDraftStatus} from '..'
-import {EntryDraft} from '../EntryDraft'
+import {EntryDraft, EntryDraftStatus} from '../EntryDraft'
 
 const context = createContext<EntryDraft | undefined>(undefined)
 

@@ -2,7 +2,7 @@ import {HTMLAttributes, Ref} from 'react'
 import {LinkProps} from 'react-router-dom'
 import css from './Typo.module.scss'
 import {forwardRefWithAs, PropsWithAs} from './util/PropsWithAs'
-import {fromModule} from './util/styler'
+import {fromModule} from './util/Styler'
 
 const styles = fromModule(css)
 

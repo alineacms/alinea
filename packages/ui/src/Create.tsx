@@ -2,7 +2,7 @@ import {HTMLAttributes} from 'react'
 import {MdAddCircle} from 'react-icons/md'
 import css from './Create.module.scss'
 import {HStack} from './Stack'
-import {fromModule} from './util/styler'
+import {fromModule} from './util/Styler'
 
 const styles = fromModule(css)
 

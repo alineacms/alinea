@@ -15,7 +15,7 @@ import {useForceUpdate} from './hook/UseForceUpdate'
 import {Icon} from './Icon'
 import {HStack} from './Stack'
 import css from './Statusbar.module.scss'
-import {fromModule} from './util/styler'
+import {fromModule} from './util/Styler'
 
 const styles = fromModule(css)
 

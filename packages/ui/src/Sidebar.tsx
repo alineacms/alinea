@@ -1,5 +1,5 @@
 import css from './Sidebar.module.scss'
-import {fromModule} from './util/styler'
+import {fromModule} from './util/Styler'
 
 const styles = fromModule(css)
 

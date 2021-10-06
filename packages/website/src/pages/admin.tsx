@@ -1,4 +1,4 @@
-import {Dashboard} from '@alinea/dashboard'
+import {Dashboard} from '@alinea/dashboard/index.js'
 import {pagesSchema} from '../schema'
 
 export default function Admin() {

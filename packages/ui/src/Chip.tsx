@@ -1,7 +1,7 @@
 import type {IconType} from 'react-icons'
 import css from './Chip.module.scss'
 import {HStack, StackProps} from './Stack'
-import {fromModule} from './util/styler'
+import {fromModule} from './util/Styler'
 
 const styles = fromModule(css)
 

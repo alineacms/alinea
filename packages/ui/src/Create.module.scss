@@ -6,14 +6,16 @@
   font-size: 13.5px;
   font-weight: bold;
   padding: 3px 0;
-  transition: color 0.25s ease-out;
   background: none;
   border: none;
   font: inherit;
   color: inherit;
   cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
 
   &:hover {
-    color: #febd6e;
+    color: var(--accent-foreground);
+    background: var(--accent);
   }
 }

@@ -7,7 +7,7 @@
   "exports": {
     ".": "./dist",
     "./global.css": "./src/css/fonts.css",
-    "./": "./dist/"
+    "./*": "./dist/*"
   },
   "dependencies": {
     "@alinea/client": "0.0.0",
