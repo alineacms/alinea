@@ -12,7 +12,7 @@ const cacheDir = path.join(path.dirname(indexDir), '../.cache')
 
 export async function getCachedIndex(dir: string, cacheFile?: string) {
   const name = path.basename(dir)
-  const indexFile = cacheFile || path.join(cacheDir, name)
+  const indexFile = path.resolve(cacheFile || path.join(cacheDir, name))
   const cacheLocation = path.dirname(indexFile)
   console.log(`cache path: ${indexFile}`)
   console.log(`cwd: ${process.cwd()}`)
@@ -22,7 +22,11 @@ export async function getCachedIndex(dir: string, cacheFile?: string) {
   if (!fs.existsSync(cacheLocation))
     fs.mkdirSync(cacheLocation, {recursive: true})
   const exists = fs.existsSync(indexFile)
-  const store = new SqliteStore(new BetterSqlite3(indexFile))
+  const store = new SqliteStore(
+    new BetterSqlite3(indexFile, {
+      readonly: exists
+    })
+  )
   if (exists) return store
   return createIndex(store, dir)
 }
