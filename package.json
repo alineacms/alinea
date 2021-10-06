@@ -4,7 +4,7 @@
   "license": "MIT",
   "scripts": {
     "dev": "yarn workspace @alinea/stories dev",
-    "build": "esbuild-node scripts/build.ts && cd packages/website && yarn build",
+    "build": "esbuild-node scripts/build.ts",
     "postinstall": "copy-env-cli"
   },
   "files": [],

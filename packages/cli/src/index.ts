@@ -7,8 +7,9 @@ prog
   .version('0.0.0')
   .command('index <content>')
   .describe('Index the content directory. Expects json files.')
-  .action(async dir => {
-    await getCachedIndex(dir)
+  .option('-o, --output', 'Change the output directory')
+  .action(async (dir, opts) => {
+    await getCachedIndex(dir, opts.output)
   })
 
 prog.parse(process.argv)

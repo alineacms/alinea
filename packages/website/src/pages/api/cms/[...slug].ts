@@ -1,10 +1,14 @@
-import {Server} from '@alinea/server'
+import {LocalHub, Server} from '@alinea/server'
 import {NextApiRequest, NextApiResponse} from 'next'
-import {hub} from '../../../hub'
+import {pagesSchema} from '../../../schema'
 
 const server = new Server({
   dashboardUrl: '/admin',
-  hub
+  hub: new LocalHub({
+    schema: pagesSchema,
+    contentPath: 'content',
+    cachePath: '.next/server/chunks/content'
+  })
 })
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
