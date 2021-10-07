@@ -1,8 +1,10 @@
 import {createIndex} from '@alinea/index'
-import fs from 'fs'
+import {constants} from 'fs'
+import fs from 'fs-extra'
 import {BetterSqlite3} from 'helder.store/drivers/BetterSqlite3.js'
 import {SqliteStore} from 'helder.store/sqlite/SqliteStore.js'
 import {createRequire} from 'module'
+import os from 'os'
 import path from 'path'
 
 const indexDir = import.meta.url
@@ -12,15 +14,38 @@ const cacheDir = path.join(path.dirname(indexDir), '../.cache')
 
 export async function getCachedIndex(dir: string, cacheFile?: string) {
   const name = path.basename(dir)
-  const indexFile = path.resolve(cacheFile || path.join(cacheDir, name))
+  let indexFile = path.resolve(cacheFile || path.join(cacheDir, name))
   const cacheLocation = path.dirname(indexFile)
+  await fs.mkdir(cacheLocation, {recursive: true})
   console.log(`cache path: ${indexFile}`)
   console.log(`cwd: ${process.cwd()}`)
-  console.log(fs.readdirSync(process.cwd()))
-  console.log(`exists: ${fs.existsSync(indexFile) ? 'yes' : 'no'}`)
+  console.log(await fs.readdir(process.cwd()))
+  try {
+    const stat = await fs.stat(indexFile)
+    console.log(stat)
+  } catch (e) {
+    console.log(`cannot stat, because ${e}`)
+  }
   console.log(path.resolve(indexFile))
-  if (!fs.existsSync(cacheLocation))
-    fs.mkdirSync(cacheLocation, {recursive: true})
+  try {
+    await fs.access(indexFile, constants.W_OK)
+  } catch (e) {
+    console.log('not writeable')
+    const tmpFile = path.join(os.tmpdir(), name)
+    try {
+      const stat = await fs.stat(tmpFile)
+      console.log(stat)
+    } catch (e) {
+      console.log('copy to tmp')
+      try {
+        await fs.copyFile(indexFile, tmpFile)
+        console.log('copied to tmp')
+      } catch (e) {
+        console.log(`could not copy because ${e}`)
+      }
+    }
+    indexFile = tmpFile
+  }
   const exists = fs.existsSync(indexFile)
   const store = new SqliteStore(
     new BetterSqlite3(indexFile, {

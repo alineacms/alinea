@@ -1,5 +1,4 @@
 import {LocalHub, Server} from '@alinea/server'
-import {NextApiRequest, NextApiResponse} from 'next'
 import {pagesSchema} from '../../../schema'
 
 const cacheDir =
@@ -14,6 +13,4 @@ const server = new Server({
   })
 })
 
-export default function handler(req: NextApiRequest, res: NextApiResponse) {
-  return server.respond(req, res)
-}
+export default server.respond

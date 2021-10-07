@@ -10,6 +10,10 @@
     "./*": "./dist/*"
   },
   "dependencies": {
-    "@alinea/core": "0.0.0"
+    "@alinea/core": "0.0.0",
+    "fs-extra": "^10.0.0"
+  },
+  "devDependencies": {
+    "@types/fs-extra": "^9.0.13"
   }
 }
