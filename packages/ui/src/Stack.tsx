@@ -1,6 +1,12 @@
 // Todo: find the smallest css in js runtime lib for this purpose
 import {css} from '@stitches/react'
-import {CSSProperties, forwardRef, HTMLProps, PropsWithRef} from 'react'
+import {
+  CSSProperties,
+  forwardRef,
+  HTMLProps,
+  PropsWithChildren,
+  PropsWithRef
+} from 'react'
 import {styler} from './util/Styler'
 import {px} from './util/Units'
 
@@ -75,3 +81,17 @@ export const VStack = forwardRef<HTMLDivElement, StackProps>(function VStack(
 export const HStack: typeof VStack = forwardRef(function HStack(props, ref) {
   return <VStack direction="row" {...props} ref={ref} />
 })
+
+export namespace Stack {
+  export function Left({children}: PropsWithChildren<{}>) {
+    return <div style={{marginRight: 'auto'}}>{children}</div>
+  }
+  export function Center({children}: PropsWithChildren<{}>) {
+    return (
+      <div style={{marginRight: 'auto', marginLeft: 'auto'}}>{children}</div>
+    )
+  }
+  export function Right({children}: PropsWithChildren<{}>) {
+    return <div style={{marginLeft: 'auto'}}>{children}</div>
+  }
+}

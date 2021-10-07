@@ -8,8 +8,13 @@
   flex-shrink: 0;
   color: var(--foreground);
   background: var(--highlight);
+  padding-left: 4px;
+
+  &-icon {
+    margin-left: 4px;
+  }
 
   &-label {
-    padding: 5px 8px;
+    padding: 5px 8px 5px 4px;
   }
 }

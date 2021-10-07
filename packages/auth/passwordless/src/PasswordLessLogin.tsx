@@ -73,7 +73,7 @@ function LoginForm({onSubmit, email, setEmail}: LoginFormProps) {
                 onChange={e => setEmail(e.target.value)}
               />
             </div>
-            <Button type="submit">
+            <Button size="large" type="submit">
               <HStack center gap={8}>
                 <span>Sign in</span>
                 <MdArrowForward />
@@ -124,8 +124,8 @@ function LoginScreen(props: LoginScreenProps) {
     case LoginState.Error:
       return (
         <LoginBox>
-          <LoginHeader>Oops, something went wrong</LoginHeader>
-          <Typo.P>Please try again later</Typo.P>
+          <LoginHeader>Oops</LoginHeader>
+          <Typo.P>Something went wrong, please try again later</Typo.P>
         </LoginBox>
       )
   }

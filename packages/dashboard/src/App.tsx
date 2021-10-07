@@ -6,7 +6,12 @@ import {getRandomColor} from '@alinea/ui/util/GetRandomColor'
 //import 'preact/debug'
 import {Fragment, Suspense, useState} from 'react'
 import {Helmet} from 'react-helmet'
-import {MdPerson, MdSearch, MdSettings, MdWarning} from 'react-icons/md/index'
+import {
+  MdInsertDriveFile,
+  MdPublishedWithChanges,
+  MdSearch,
+  MdWarning
+} from 'react-icons/md/index'
 import {QueryClient, QueryClientProvider} from 'react-query'
 import {Route} from 'react-router'
 import {HashRouter} from 'react-router-dom'
@@ -30,14 +35,14 @@ function AppAuthenticated() {
       <div style={{flex: '1', display: 'flex', minHeight: 0}}>
         <Sidebar.Root>
           <Sidebar.Menu>
+            <Sidebar.Menu.Item selected>
+              <MdInsertDriveFile />
+            </Sidebar.Menu.Item>
             <Sidebar.Menu.Item>
               <MdSearch />
             </Sidebar.Menu.Item>
             <Sidebar.Menu.Item>
-              <MdSettings />
-            </Sidebar.Menu.Item>
-            <Sidebar.Menu.Item>
-              <MdPerson />
+              <MdPublishedWithChanges />
             </Sidebar.Menu.Item>
           </Sidebar.Menu>
           <Sidebar.List>

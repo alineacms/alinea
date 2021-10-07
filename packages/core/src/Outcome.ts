@@ -41,4 +41,14 @@ export namespace Outcome {
       return Outcome.Failure(e)
     }
   }
+
+  export async function promised<Data>(
+    run: () => Promise<Data>
+  ): Promise<Outcome<Data>> {
+    try {
+      return Outcome.Success(await run())
+    } catch (e: any) {
+      return Outcome.Failure(e)
+    }
+  }
 }

@@ -1,8 +1,11 @@
-import {channel, schema} from '@alinea/core'
+import {channel, createSchema} from '@alinea/core'
 import {text} from '@alinea/input.text'
 
-export const pagesSchema = schema({
-  page: channel('Page', {
-    title: text('Title')
-  })
+const home = channel('Home', {
+  title: text('Title', {multiline: true}),
+  headline: text('Headline', {multiline: true})
+})
+
+export const schema = createSchema({
+  home
 })

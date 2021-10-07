@@ -161,5 +161,9 @@ export function ContentTree() {
     },
     [setOpen]
   )
-  return <TreeChildren isOpen={isOpen} toggleOpen={toggleOpen} />
+  return (
+    <div>
+      <TreeChildren isOpen={isOpen} toggleOpen={toggleOpen} />
+    </div>
+  )
 }

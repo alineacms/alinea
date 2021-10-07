@@ -1,2 +1,2 @@
+export * from './ContentIndex'
 export * from './CreateIndex'
-export * from './GetCachedIndex'

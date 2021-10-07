@@ -13,10 +13,11 @@ body,
 
 .root {
   &.is-dark {
-    --background: #11181c;
+    //--background: #11181c;
+    --background: #121923;
     --foreground: white;
-    --highlight: #37373d;
-    --selected: #44484b;
+    --highlight: #393a3f;
+    --selected: #303136;
     --outline: #303136;
     --negative: 255, 255, 255;
   }
@@ -25,7 +26,7 @@ body,
     --background: white;
     --foreground: #11181c;
     --highlight: #f7f6f6;
-    --selected: #f5f4f0;
+    --selected: rgb(246, 249, 250); //#f5f4f0;
     --outline: rgb(246, 249, 250);
     --negative: 0, 0, 0;
   }

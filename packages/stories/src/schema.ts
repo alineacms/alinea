@@ -1,9 +1,9 @@
-import {Channel, channel, schema} from '@alinea/core'
+import {Channel, channel, createSchema} from '@alinea/core'
 import {list} from '@alinea/input.list'
 import {text} from '@alinea/input.text'
 
 const blocks = list('Blocks', {
-  schema: schema({
+  schema: createSchema({
     textblock: channel('Text block', {
       text: text('Text')
     })
@@ -24,4 +24,4 @@ const page = channel('Page', {
 
 export type Page = Channel.TypeOf<typeof page>
 
-export const mySchema = schema({page})
+export const schema = createSchema({page})

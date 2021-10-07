@@ -1,16 +1,46 @@
 .root {
+  position: relative;
   border: none;
-  background: var(--highlight);
-  color: inherit;
+  background: var(--foreground);
+  color: var(--background);
   font: inherit;
   cursor: pointer;
-  font-weight: bold;
-  font-size: 14px;
-  min-height: 26px;
-  border-radius: 4px;
-  padding: 8px 15px;
+  //border: 2px solid var(--background);
+  overflow: hidden;
+  z-index: 0;
+
+  &-label {
+  }
+
+  &:after {
+    position: absolute;
+    content: '';
+    background: var(--background);
+    opacity: 0;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: -1;
+  }
+
+  &.mod-medium {
+    min-height: 22px;
+    font-size: 13px;
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+
+  &.mod-large {
+    min-height: 26px;
+    font-size: 14px;
+    padding: 6px 13px;
+    border-radius: 8px;
+  }
 
   &:hover {
-    background: var(--selected);
+    &:after {
+      opacity: 0.05;
+    }
   }
 }

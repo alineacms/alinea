@@ -1,30 +1,38 @@
 import {createId, Draft, Entry} from '@alinea/core'
 import convertHrtime from 'convert-hrtime'
-import {promises} from 'fs'
+import fs from 'fs/promises'
 import {Store} from 'helder.store'
 import pLimit from 'p-limit'
+import path from 'path'
 import prettyMilliseconds from 'pretty-ms'
 
 function join(...parts: Array<string>) {
   return parts.join('/')
 }
 
+async function completeEntry(
+  entry: Entry,
+  save: (entry: Entry) => Promise<void>
+) {
+  if (!entry.$id) return save({$id: createId(), ...(entry as any)})
+}
+
 type Progress<T> = Promise<T> & {progress(): number}
 
-async function index(path: string, store: Store) {
+async function index(dir: string, store: Store) {
   let total = 0
   const openfile = pLimit(4)
   async function process(target: string, parentId?: string) {
-    const files = await promises.readdir(join(path, target))
+    const files = await fs.readdir(join(dir, target))
     const tasks = files.map(file => async () => {
-      const stat = await promises.stat(join(path, target, file))
+      const stat = await fs.stat(join(dir, target, file))
       const localPath = join(target, file)
       const isContainer = stat.isDirectory()
       if (isContainer) {
         const parent = store.insert(Entry, {
           $id: createId(),
+          $path: localPath,
           $parent: parentId,
-          //path: localPath,
           $isContainer: true,
           $channel: '',
           title: file
@@ -33,15 +41,19 @@ async function index(path: string, store: Store) {
       } else {
         total++
         try {
+          const location = join(dir, localPath)
           const parsed = JSON.parse(
-            await openfile(() =>
-              promises.readFile(join(path, localPath), 'utf-8')
-            )
+            await openfile(() => fs.readFile(location, 'utf-8'))
           )
+          // Fill missing details
+          await completeEntry(parsed, (entry: Entry) => {
+            return fs.writeFile(location, JSON.stringify(entry, null, '  '))
+          })
+          const name = path.basename(file, '.json')
           store.insert(Entry, {
             $id: parsed.$id || createId(),
+            $path: join(target, name === 'index' ? '' : name),
             $parent: parentId,
-            $channel: parsed.channel,
             ...parsed
           })
         } catch (e) {
@@ -56,7 +68,6 @@ async function index(path: string, store: Store) {
 }
 
 function init(store: Store, path: string): Progress<Store> {
-  // Check if the index exists, if not build it
   let progress = 0
   async function build(): Promise<Store> {
     const startTime = process.hrtime.bigint()
@@ -75,8 +86,6 @@ function init(store: Store, path: string): Progress<Store> {
   }
   return Object.assign(build(), {progress: () => progress})
 }
-
-// const store = new SqliteStore(new BetterSqlite3())
 
 export function createIndex(store: Store, path: string) {
   return init(store, path)

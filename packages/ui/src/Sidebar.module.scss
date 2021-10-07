@@ -2,7 +2,7 @@
   display: flex;
   height: 100%;
   flex-shrink: 0;
-  border-right: 1px solid var(--outline);
+  flex: 1 0 0;
   //box-shadow: 0 0 200px black;
 
   &-menu {
@@ -31,6 +31,20 @@
         color: var(--foreground);
         background: var(--highlight);
       }
+
+      &.is-selected {
+        color: var(--foreground);
+
+        &:before {
+          position: absolute;
+          content: '';
+          width: 1.5px;
+          height: 100%;
+          background: var(--foreground);
+          right: 0;
+          top: 0;
+        }
+      }
     }
   }
 
@@ -39,7 +53,8 @@
     height: 100%;
     flex: 1;
     min-width: 0;
-    overflow-y: scroll;
+    overflow-y: auto;
+    border-right: 1px solid var(--outline);
 
     &::-webkit-scrollbar {
       width: 6px;

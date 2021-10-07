@@ -1,5 +1,6 @@
+import {ContentIndex} from '@alinea/index'
 import {LocalHub, Server} from '@alinea/server'
-import {pagesSchema} from '../../../schema'
+import {schema} from '../../../schema'
 
 const cacheDir =
   process.env.NODE_ENV === 'production' ? 'packages/website/' : ''
@@ -7,9 +8,8 @@ const cacheDir =
 const server = new Server({
   dashboardUrl: '/admin',
   hub: new LocalHub({
-    schema: pagesSchema,
-    contentPath: 'content',
-    cacheFile: `${cacheDir}.next/server/chunks/content`
+    schema: schema,
+    index: ContentIndex.fromCacheFile(`${cacheDir}.next/server/chunks/content`)
   })
 })
 

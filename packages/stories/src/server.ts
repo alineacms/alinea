@@ -1,17 +1,14 @@
 import {PasswordLessAuth} from '@alinea/auth.passwordless/PasswordLessAuth'
+import {ContentIndex} from '@alinea/index'
 import {LocalHub, Server} from '@alinea/server'
 import dotenv from 'dotenv'
 import {createTransport} from 'nodemailer'
-import {mySchema} from './schema'
-
-process.on('unhandledRejection', (error, p) => {
-  console.log('=== UNHANDLED REJECTION ===')
-  console.dir(error)
-})
+import {schema} from '../../website/src/schema'
 
 dotenv.config({path: '../../.env'})
 
 const dashboardUrl = 'http://localhost:8000'
+
 const auth = new PasswordLessAuth({
   dashboardUrl,
   subject: 'Login',
@@ -30,14 +27,18 @@ const auth = new PasswordLessAuth({
     return true
   }
 })
-const hub = new LocalHub(mySchema, './content')
+
+const index = ContentIndex.fromMemory()
+
+const hub = new LocalHub({
+  schema: schema,
+  index
+})
 
 const server = new Server({
   dashboardUrl,
-  //auth,
+  auth,
   hub
 })
 
-server.listen(4500)
-
-// Todo: "build": "alinea track-build -- next build"
+index.indexDirectory('../website/content').then(() => server.listen(4500))

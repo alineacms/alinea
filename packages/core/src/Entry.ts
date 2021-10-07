@@ -4,10 +4,18 @@ import {Label} from './Label'
 
 export type Id<T> = string & {__t: T}
 
+export enum EntryStatus {
+  Draft = 'draft',
+  Published = 'published',
+  Archived = 'archived'
+}
+
 export interface Entry {
   $id: string
-  $parent?: string
   $channel: string
+  $path: string
+  $status?: EntryStatus
+  $parent?: string
   $isContainer?: boolean
   title: Label
 }
@@ -18,4 +26,5 @@ export namespace Entry {
   export type WithDraft = {entry: Entry; draft: Draft | null}
 }
 
+// Todo: export this elsewhere
 export const Entry = new Collection<Entry & {id: string}>('Entry')

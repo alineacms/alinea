@@ -1,10 +1,10 @@
 import {Dashboard} from '@alinea/dashboard'
-import {pagesSchema} from '../schema'
+import {schema} from '../schema'
 
 export default function Admin() {
   return (
     process.browser && (
-      <Dashboard name="web" schema={pagesSchema} apiUrl="/api/cms" />
+      <Dashboard name="web" schema={schema} apiUrl="/api/cms" />
     )
   )
 }

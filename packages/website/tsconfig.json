@@ -8,7 +8,7 @@
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "incremental": true,
-    "target": "es5",
+    "target": "esnext",
     "skipLibCheck": true,
     "strict": false,
     "noEmit": true,

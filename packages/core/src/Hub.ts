@@ -8,6 +8,7 @@ export interface Content {
   put(id: string, entry: Entry): Promise<Outcome<void>>
   putDraft(id: string, doc: string): Promise<Outcome<void>>
   list(parentId?: string): Promise<Array<Entry.WithChildrenCount>>
+  //publish(id: string, doc: string): Promise<Outcome<void>>
 }
 
 export interface Hub {

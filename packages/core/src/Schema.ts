@@ -9,7 +9,7 @@ type ChannelsToEntry<T> = T extends {[key: string]: any}
   ? UnionOfValues<{[K in keyof T]: T[K] & {$channel: K}}>
   : never
 
-export function schema<Channels extends LazyRecord<Channel>>(
+export function createSchema<Channels extends LazyRecord<Channel>>(
   channels: Channels
 ): Schema<ChannelsToEntry<ChannelsToRows<Channels>>> {
   return channels

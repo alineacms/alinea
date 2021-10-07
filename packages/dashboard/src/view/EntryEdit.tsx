@@ -1,33 +1,86 @@
-import {inputPath, Schema} from '@alinea/core'
+import {EntryStatus, inputPath, Schema} from '@alinea/core'
 import {
   CurrentDraftProvider,
+  EntryDraft,
   EntryDraftStatus,
   Fields,
   useCurrentDraft,
   useDraft,
   useInput
 } from '@alinea/editor'
-import {fromModule, Statusbar} from '@alinea/ui'
+import {AppBar, Chip, fromModule, Stack, Statusbar} from '@alinea/ui'
 import {Suspense} from 'react'
 import {Helmet} from 'react-helmet'
-import {MdCheck, MdEdit, MdRotateLeft} from 'react-icons/md/index'
+import {MdPublish} from 'react-icons/md'
+import {MdArchive, MdCheck, MdEdit, MdRotateLeft} from 'react-icons/md/index'
 import {useQuery} from 'react-query'
+import {useDashboard} from '..'
 import {useSession} from '../hook/UseSession'
 import css from './EntryEdit.module.scss'
+
+type EntryStatusChipProps = {
+  status: EntryStatus
+}
+
+function EntryStatusChip({status}: EntryStatusChipProps) {
+  switch (status) {
+    case EntryStatus.Published:
+      return <Chip icon={MdCheck}>Published</Chip>
+    case EntryStatus.Draft:
+      return <Chip icon={MdEdit}>Draft</Chip>
+    case EntryStatus.Archived:
+      return <Chip icon={MdArchive}>Archived</Chip>
+  }
+}
 
 const styles = fromModule(css)
 
 function EntryEditHeader() {
+  const {schema} = useDashboard()
+  const session = useSession()
+  const [entry] = useCurrentDraft()
+  const [channelKey] = useInput(EntryDraft.$channel)
+  const [status = EntryStatus.Published] = useInput(EntryDraft.$status)
+  const channel = Schema.getChannel(schema, channelKey)
+  function handlePublish() {
+    //session.hub.content.publish(entry)
+  }
+  return (
+    <AppBar.Root>
+      <Stack.Right>
+        <AppBar.Item>
+          <EntryStatusChip status={status} />
+        </AppBar.Item>
+      </Stack.Right>
+      {status !== EntryStatus.Published && (
+        <AppBar.Item
+          as="button"
+          icon={MdPublish}
+          onClick={() => alert('almost there')}
+        >
+          Publish
+        </AppBar.Item>
+      )}
+      {/*<Tabs.Root defaultValue="channel">
+        <Tabs.List>
+          <Tabs.Trigger value="channel">
+            {channel?.label && <TextLabel label={channel?.label} />}
+          </Tabs.Trigger>
+        </Tabs.List>
+    </Tabs.Root>*/}
+    </AppBar.Root>
+  )
+}
+
+function EntryTitle() {
   const [title] = useInput(inputPath<string>(['title']))
   return (
-    <header>
-      <h1 style={{position: 'relative', zIndex: 1, paddingBottom: '10px'}}>
-        {title}
-        <Helmet>
-          <title>{title}</title>
-        </Helmet>
-      </h1>
-    </header>
+    <h1 style={{position: 'relative', zIndex: 1, paddingBottom: '10px'}}>
+      {title}
+      <Helmet>
+        <title>{title}</title>
+      </Helmet>
+    </h1>
   )
 }
 
@@ -53,16 +106,20 @@ function EntryEditDraft({}: EntryEditDraftProps) {
   const [draft, status] = useCurrentDraft()!
   const channel = Schema.getChannel(session.hub.schema, draft.$channel)
   return (
-    <div className={styles.draft()}>
+    <>
       <EntryEditHeader />
-      <Suspense fallback={null}>
-        {channel ? <Fields channel={channel} /> : 'Channel not found'}
-      </Suspense>
+      <div className={styles.draft()}>
+        <EntryTitle />
 
-      <Statusbar.Slot>
-        <EntryEditStatus status={status} />
-      </Statusbar.Slot>
-    </div>
+        <Suspense fallback={null}>
+          {channel ? <Fields channel={channel} /> : 'Channel not found'}
+        </Suspense>
+
+        <Statusbar.Slot>
+          <EntryEditStatus status={status} />
+        </Statusbar.Slot>
+      </div>
+    </>
   )
 }
 
@@ -73,7 +130,7 @@ export function EntryEdit({id}: EntryEditProps) {
   const {isLoading, data} = useQuery(
     ['entry', id],
     () => hub.content.entryWithDraft(id),
-    {refetchOnMount: false, refetchOnWindowFocus: false}
+    {refetchOnWindowFocus: false}
   )
   const draft = useDraft(data!, doc => {
     return hub.content.putDraft(id, doc)

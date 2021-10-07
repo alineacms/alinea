@@ -11,12 +11,6 @@ import {memo} from 'react'
 import {
   MdBrightnessMedium,
   MdExpandMore,
-  MdFormatBold,
-  MdFormatItalic,
-  MdFormatQuote,
-  MdFormatUnderlined,
-  MdInsertLink,
-  MdInsertPhoto,
   MdUnfoldMore
 } from 'react-icons/md/index'
 import {RiFlashlightFill} from 'react-icons/ri/index'
@@ -40,6 +34,7 @@ export const Toolbar = memo(function Toolbar() {
         </HStack>
       </HStack>
       <div style={{margin: 'auto', fontSize: '20px'}}>
+        {/*
         <HStack center gap={20}>
           <MdFormatBold />
           <MdFormatItalic />
@@ -47,7 +42,7 @@ export const Toolbar = memo(function Toolbar() {
           <MdFormatQuote />
           <MdInsertLink />
           <MdInsertPhoto />
-        </HStack>
+        </HStack>*/}
       </div>
       <div>
         <HStack center gap={10}>
