@@ -11,5 +11,6 @@ module.exports = {
       config.optimization.providedExports = true
     }
     return config
-  }
+  },
+  experimental: {esmExternals: true}
 }
