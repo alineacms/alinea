@@ -1,8 +1,8 @@
 import {HTMLAttributes} from 'react'
 import type {IconType} from 'react-icons'
-import {HStack} from '.'
 import css from './AppBar.module.scss'
 import {Icon} from './Icon'
+import {HStack} from './Stack'
 import {PropsWithAs} from './util/PropsWithAs'
 import {fromModule} from './util/Styler'
 

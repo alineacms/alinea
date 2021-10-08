@@ -46,7 +46,7 @@ export class EntryDraft extends Observable<'status'> implements Entry {
   }
 
   connect() {
-    const provider = new WebrtcProvider(this.$id, this.doc)
+    const provider = new WebrtcProvider('alinea-' + this.$id, this.doc)
     const save = () => {
       this.saveTimeout = null
       this.emit('status', [EntryDraftStatus.Saving])

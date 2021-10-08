@@ -11,10 +11,15 @@ import {
 import {AppBar, Chip, fromModule, Stack, Statusbar} from '@alinea/ui'
 import {Suspense} from 'react'
 import {Helmet} from 'react-helmet'
-import {MdPublish} from 'react-icons/md'
-import {MdArchive, MdCheck, MdEdit, MdRotateLeft} from 'react-icons/md/index'
+import {
+  MdArchive,
+  MdCheck,
+  MdEdit,
+  MdPublish,
+  MdRotateLeft
+} from 'react-icons/md/index'
 import {useQuery} from 'react-query'
-import {useDashboard} from '..'
+import {useDashboard} from '../hook/UseDashboard'
 import {useSession} from '../hook/UseSession'
 import css from './EntryEdit.module.scss'
 

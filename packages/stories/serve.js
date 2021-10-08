@@ -52,5 +52,5 @@ serve(
     }
   }
 ).then(res => {
-  console.log(`\n\x1b[36m> Serving on http://${res.host}:${res.port}\x1b[39m\n`)
+  console.log(`\n\x1b[36m> Serving on http://localhost:${res.port}\x1b[39m\n`)
 })

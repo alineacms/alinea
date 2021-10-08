@@ -12,5 +12,7 @@ module.exports = {
     }
     return config
   },
-  experimental: {esmExternals: true}
+  experimental: {
+    esmExternals: true
+  }
 }
