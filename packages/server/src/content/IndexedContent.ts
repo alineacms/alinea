@@ -1,9 +1,13 @@
 import {Content, Draft, Entry, Outcome} from '@alinea/core'
 import {ContentIndex} from '@alinea/index'
 import {Expression, Functions} from 'helder.store'
+import {Persistence} from '../Persistence'
 
 export class IndexedContent implements Content {
-  constructor(protected index: ContentIndex) {}
+  constructor(
+    protected index: ContentIndex,
+    protected persistence: Persistence
+  ) {}
 
   async get(id: string): Promise<Entry | null> {
     const store = await this.index.store
@@ -52,5 +56,9 @@ export class IndexedContent implements Content {
           .first()
       })
     )
+  }
+
+  async publish(entries: Array<Entry>): Promise<Outcome<void>> {
+    return this.persistence.publish(entries)
   }
 }

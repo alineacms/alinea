@@ -80,6 +80,14 @@ export class Server {
         res.json(await hub.content.putDraft(id, req.body.doc))
       }
     )
+    router.post(
+      prefix + Api.nav.content.publish(),
+      bodyParser.json(),
+      async (req, res) => {
+        const entries = req.body
+        res.json(await hub.content.publish(entries))
+      }
+    )
     router.get('*', async (req, res) => {
       res.status(404).json({error: 'Not found'})
     })

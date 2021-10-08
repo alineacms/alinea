@@ -9,7 +9,7 @@ import {
   useInput
 } from '@alinea/editor'
 import {AppBar, Chip, fromModule, Stack, Statusbar} from '@alinea/ui'
-import {Suspense} from 'react'
+import {Suspense, useState} from 'react'
 import {Helmet} from 'react-helmet'
 import {
   MdArchive,
@@ -43,12 +43,16 @@ const styles = fromModule(css)
 function EntryEditHeader() {
   const {schema} = useDashboard()
   const session = useSession()
-  const [entry] = useCurrentDraft()
+  const [draft] = useCurrentDraft()
   const [channelKey] = useInput(EntryDraft.$channel)
   const [status = EntryStatus.Published] = useInput(EntryDraft.$status)
   const channel = Schema.getChannel(schema, channelKey)
+  const [isPublishing, setPublishing] = useState(false)
   function handlePublish() {
-    //session.hub.content.publish(entry)
+    setPublishing(true)
+    return session.hub.content.publish([draft.getEntry()]).finally(() => {
+      setPublishing(false)
+    })
   }
   return (
     <AppBar.Root>
@@ -57,13 +61,14 @@ function EntryEditHeader() {
           <EntryStatusChip status={status} />
         </AppBar.Item>
       </Stack.Right>
-      {status !== EntryStatus.Published && (
-        <AppBar.Item
-          as="button"
-          icon={MdPublish}
-          onClick={() => alert('almost there')}
-        >
+      {status !== EntryStatus.Published && !isPublishing && (
+        <AppBar.Item as="button" icon={MdPublish} onClick={handlePublish}>
           Publish
+        </AppBar.Item>
+      )}
+      {isPublishing && (
+        <AppBar.Item as="button" icon={MdRotateLeft}>
+          Publishing...
         </AppBar.Item>
       )}
       {/*<Tabs.Root defaultValue="channel">

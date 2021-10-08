@@ -78,6 +78,10 @@ export class EntryDraft extends Observable<'status'> implements Entry {
     }
   }
 
+  getEntry(): Entry {
+    return Value.fromY(this.root)
+  }
+
   watchStatus(fun: (status: EntryDraftStatus) => void) {
     this.on('status', fun)
     return () => this.off('status', fun)

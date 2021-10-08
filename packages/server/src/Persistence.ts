@@ -1,4 +1,5 @@
+import {Entry, Outcome} from '@alinea/core'
+
 export interface Persistence {
-  get(key: string): Promise<Buffer | undefined>
-  set(key: string, value: Buffer): Promise<void>
+  publish(entries: Array<Entry>): Promise<Outcome<void>>
 }

@@ -1,4 +1,8 @@
+import {User} from './User'
+
 export namespace Api {
+  export type Context = {user?: User}
+
   function stripSlash(path?: string): string {
     return path?.startsWith('/') ? path.substring(1) : path || ''
   }
@@ -13,6 +17,9 @@ export namespace Api {
       list(parent?: string) {
         if (!parent) return '/content.list'
         return `/content.list/${stripSlash(parent)}`
+      },
+      publish() {
+        return `/content.publish`
       }
     }
   }

@@ -28,6 +28,14 @@ export class ClientContent implements Content {
   list(parent?: string): Promise<Array<Entry.WithChildrenCount>> {
     return this.client.fetch(Api.nav.content.list(parent))
   }
+
+  publish(entries: Array<Entry>): Promise<Outcome<void>> {
+    return this.client.fetch(Api.nav.content.publish(), {
+      method: 'POST',
+      body: JSON.stringify(entries),
+      headers: {'content-type': 'application/json'}
+    })
+  }
 }
 
 export class Client implements Hub {

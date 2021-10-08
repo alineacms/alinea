@@ -3,12 +3,8 @@ import convertHrtime from 'convert-hrtime'
 import fs from 'fs/promises'
 import {Store} from 'helder.store'
 import pLimit from 'p-limit'
-import path from 'path'
+import path from 'path/posix'
 import prettyMilliseconds from 'pretty-ms'
-
-function join(...parts: Array<string>) {
-  return parts.join('/')
-}
 
 async function completeEntry(
   entry: Entry,
@@ -23,10 +19,10 @@ async function index(dir: string, store: Store) {
   let total = 0
   const openfile = pLimit(4)
   async function process(target: string, parentId?: string) {
-    const files = await fs.readdir(join(dir, target))
+    const files = await fs.readdir(path.join(dir, target))
     const tasks = files.map(file => async () => {
-      const stat = await fs.stat(join(dir, target, file))
-      const localPath = join(target, file)
+      const stat = await fs.stat(path.join(dir, target, file))
+      const localPath = path.join(target, file)
       const isContainer = stat.isDirectory()
       if (isContainer) {
         const parent = store.insert(Entry, {
@@ -41,7 +37,7 @@ async function index(dir: string, store: Store) {
       } else {
         total++
         try {
-          const location = join(dir, localPath)
+          const location = path.join(dir, localPath)
           const parsed = JSON.parse(
             await openfile(() => fs.readFile(location, 'utf-8'))
           )
@@ -50,9 +46,10 @@ async function index(dir: string, store: Store) {
             return fs.writeFile(location, JSON.stringify(entry, null, '  '))
           })
           const name = path.basename(file, '.json')
+          const entryPath = path.join(target, name === 'index' ? '' : name)
           store.insert(Entry, {
             $id: parsed.$id || createId(),
-            $path: join(target, name === 'index' ? '' : name),
+            $path: entryPath,
             $parent: parentId,
             ...parsed
           })
@@ -63,7 +60,7 @@ async function index(dir: string, store: Store) {
     })
     await Promise.all(tasks.map(t => t()))
   }
-  await process('')
+  await process('/')
   return total
 }
 
