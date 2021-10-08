@@ -7,8 +7,8 @@ import {getRandomColor} from '@alinea/ui/util/GetRandomColor'
 import {Fragment, Suspense, useState} from 'react'
 import {Helmet} from 'react-helmet'
 import {
+  MdCheck,
   MdInsertDriveFile,
-  MdPublishedWithChanges,
   MdSearch,
   MdWarning
 } from 'react-icons/md/index'
@@ -42,7 +42,7 @@ function AppAuthenticated() {
               <MdSearch />
             </Sidebar.Menu.Item>
             <Sidebar.Menu.Item>
-              <MdPublishedWithChanges />
+              <MdCheck />
             </Sidebar.Menu.Item>
           </Sidebar.Menu>
           <Sidebar.List>
