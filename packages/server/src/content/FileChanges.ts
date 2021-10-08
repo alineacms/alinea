@@ -1,6 +1,6 @@
 import {Entry} from '@alinea/core'
 import {Store} from 'helder.store'
-import path from 'path/posix'
+import {posix as path} from 'path'
 
 function entryLocation(entry: Entry) {
   return entry.$path.endsWith('/')

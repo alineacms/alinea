@@ -2,11 +2,16 @@
   "name": "@alinea/auth.passwordless",
   "version": "0.0.0",
   "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "typesVersions": {
+    "*": {
+      "*": [
+        "./dist/*"
+      ]
+    }
+  },
   "exports": {
-    ".": {
-      "import": "./dist/index.js",
-      "browser": "./dist/browser.js"
-    },
     "./*": "./dist/*"
   },
   "dependencies": {

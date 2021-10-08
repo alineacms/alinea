@@ -3,7 +3,7 @@ import convertHrtime from 'convert-hrtime'
 import fs from 'fs/promises'
 import {Store} from 'helder.store'
 import pLimit from 'p-limit'
-import path from 'path/posix'
+import {posix as path} from 'path'
 import prettyMilliseconds from 'pretty-ms'
 
 async function completeEntry(

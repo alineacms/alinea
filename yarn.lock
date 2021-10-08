@@ -5,7 +5,7 @@ __metadata:
   version: 4
   cacheKey: 8
 
-"@alinea/auth.passwordless@workspace:packages/auth/passwordless":
+"@alinea/auth.passwordless@0.0.0, @alinea/auth.passwordless@workspace:packages/auth/passwordless":
   version: 0.0.0-use.local
   resolution: "@alinea/auth.passwordless@workspace:packages/auth/passwordless"
   dependencies:
@@ -223,6 +223,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@alinea/website@workspace:packages/website"
   dependencies:
+    "@alinea/auth.passwordless": 0.0.0
     "@alinea/cli": 0.0.0
     "@alinea/core": 0.0.0
     "@alinea/dashboard": 0.0.0
