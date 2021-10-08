@@ -3,6 +3,7 @@ import bodyParser from 'body-parser'
 import cors from 'cors'
 import express, {Router} from 'express'
 import {createServer, IncomingMessage, ServerResponse} from 'http'
+import {json} from 'micro'
 import {Socket} from 'net'
 import Websocket, {WebSocketServer} from 'ws'
 //import {DocServer} from './ws/DocServer'
@@ -74,14 +75,15 @@ export class Server {
       bodyParser.json(),
       async (req, res) => {
         const id = req.params.id
-        res.json(await hub.content.putDraft(id, req.body.doc))
+        const body = req.body || (await json(req))
+        res.json(await hub.content.putDraft(id, body.doc))
       }
     )
     router.post(
       prefix + Api.nav.content.publish(),
       bodyParser.json(),
       async (req, res) => {
-        const entries = req.body
+        const entries = req.body || (await json(req))
         res.json(await hub.content.publish(entries))
       }
     )

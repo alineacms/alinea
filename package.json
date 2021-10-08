@@ -37,5 +37,9 @@
     "typescript-plugin-css-modules": "^3.4.0",
     "uvu": "^0.5.1"
   },
-  "packageManager": "yarn@3.0.2"
+  "packageManager": "yarn@3.0.2",
+  "dependencies": {
+    "@alinea/server": "workspace:packages/server",
+    "micro": "^9.3.4"
+  }
 }

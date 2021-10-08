@@ -170,6 +170,7 @@ __metadata:
     "@octokit/rest": ^18.12.0
     "@types/compression": ^1.7.2
     "@types/cors": ^2.8.12
+    "@types/micro": ^7.3.6
     "@types/ws": ^8.2.0
     better-sqlite3: ^7.4.3
     compression: ^1.7.4
@@ -1444,6 +1445,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/engine.io@npm:*":
+  version: 3.1.7
+  resolution: "@types/engine.io@npm:3.1.7"
+  dependencies:
+    "@types/node": "*"
+  checksum: 62b129eac3fca625cfae4591d4fab56872c44c1f7bb625af2f9e6c1bb28f8210276026e1007dc2da433ee5943972534078402515168135cc155a18c41dfec6a2
+  languageName: node
+  linkType: hard
+
 "@types/express-jwt@npm:^6.0.2":
   version: 6.0.2
   resolution: "@types/express-jwt@npm:6.0.2"
@@ -1539,6 +1549,16 @@ __metadata:
   dependencies:
     "@types/node": "*"
   checksum: 33c30354641bc7849be7507e9f48685b1f487e944321a932650eac6c247c85184667f5e207ccfcab0da8cb24bde93a8372c09cacf1849e976bbf2cb90b26ce90
+  languageName: node
+  linkType: hard
+
+"@types/micro@npm:^7.3.6":
+  version: 7.3.6
+  resolution: "@types/micro@npm:7.3.6"
+  dependencies:
+    "@types/node": "*"
+    "@types/socket.io": 2.1.13
+  checksum: 8389a8827311ab48bc47da8d70b9bd599b062cd933bac2486be4e30e82fdfaf8bd4420720a2d98d3351c7220e0de1db8221347e9076b94027f02ce14251ec1cc
   languageName: node
   linkType: hard
 
@@ -1831,6 +1851,26 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/socket.io-parser@npm:*":
+  version: 2.2.1
+  resolution: "@types/socket.io-parser@npm:2.2.1"
+  dependencies:
+    "@types/node": "*"
+  checksum: 4ebe4881725c673fbb8fdbba0f88c7a87fde76e0a590a9de3171adfa999a7f94f9ecca3daafb53414a7d11d5c3fff8592c241562989e28113d7ecd746c799d08
+  languageName: node
+  linkType: hard
+
+"@types/socket.io@npm:2.1.13":
+  version: 2.1.13
+  resolution: "@types/socket.io@npm:2.1.13"
+  dependencies:
+    "@types/engine.io": "*"
+    "@types/node": "*"
+    "@types/socket.io-parser": "*"
+  checksum: 7c4748d30632dd54a7fc36ee1d51edb31014e78a13f2e4cb6a4a37bf5c6415472b2f827b36238d495a47ea677eb95261b1fdee68bfee6d9e4a3bd26077d88ace
+  languageName: node
+  linkType: hard
+
 "@types/ws@npm:^8.2.0":
   version: 8.2.0
   resolution: "@types/ws@npm:8.2.0"
@@ -2058,6 +2098,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "alinea@workspace:."
   dependencies:
+    "@alinea/server": "workspace:packages/server"
     "@types/cross-spawn": ^6.0.2
     "@types/glob": ^7.1.4
     "@types/node": ^16.9.0
@@ -2075,6 +2116,7 @@ __metadata:
     eslint-plugin-react: ^7.25.1
     eslint-plugin-react-hooks: ^4.2.0
     fs-extra: ^10.0.0
+    micro: ^9.3.4
     ncp: ^2.0.0
     rmfr: ^2.0.0
     typescript: ^4.4.3

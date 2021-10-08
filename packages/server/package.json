@@ -30,6 +30,7 @@
   "devDependencies": {
     "@types/compression": "^1.7.2",
     "@types/cors": "^2.8.12",
+    "@types/micro": "^7.3.6",
     "@types/ws": "^8.2.0"
   }
 }
