@@ -1,6 +1,6 @@
 import {createId, Draft, Entry} from '@alinea/core'
 import convertHrtime from 'convert-hrtime'
-import fs from 'fs/promises'
+import {promises as fs} from 'fs'
 import {Store} from 'helder.store'
 import pLimit from 'p-limit'
 import {posix as path} from 'path'

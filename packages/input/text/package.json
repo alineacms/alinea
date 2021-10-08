@@ -8,7 +8,7 @@
   "sideEffects": false,
   "exports": {
     ".": {
-      "import": "./dist/index.js",
+      "node": "./dist/index.js",
       "browser": "./dist/browser.js"
     },
     "./index.css": "./dist/index.css"

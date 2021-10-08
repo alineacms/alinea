@@ -10,6 +10,11 @@ import dotenv from 'dotenv'
 import {createTransport} from 'nodemailer'
 import {schema} from '../../website/src/schema'
 
+process.on('unhandledRejection', (error, p) => {
+  console.log('=== UNHANDLED REJECTION ===')
+  console.dir(error)
+})
+
 dotenv.config({path: '../../.env'})
 
 const dashboardUrl = 'http://localhost:8000'

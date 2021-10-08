@@ -5,7 +5,7 @@ declare module '*.module.scss' {
 
 declare module 'get-random-values'
 
-declare module 'octokit-commit-multiple-files/create-or-update-files' {
+declare module 'octokit-commit-multiple-files/create-or-update-files.js' {
   import {Octokit} from '@octokit/rest'
 
   const createOrUpdateFiles: (

@@ -46,9 +46,6 @@ export class Server {
     // for etag (empty body) responses.
     // router.use(compression())
     router.use(cors({origin: dashboardUrl}))
-    router.use((req, res, next) => {
-      next()
-    })
     if (auth) router.use(auth.router())
     router.get(prefix + Api.nav.content.get(':id'), async (req, res) => {
       const id = req.params.id

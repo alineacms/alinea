@@ -30,7 +30,8 @@ const externalPlugin: Plugin = {
       if (bundle.has(extension)) return
       if (args.kind === 'entry-point') return
       // Help nodejs find files by appending the extension, see evanw/esbuild#622
-      const isSub = args.path.split('/').length > 2
+      const length = args.path.split('/').length
+      const isSub = args.path.startsWith('@') ? length > 2 : length > 1
       const isRelative =
         args.path.startsWith('.') ||
         (isSub && path.extname(args.path) !== '.js')

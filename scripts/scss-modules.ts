@@ -3,7 +3,7 @@
 // MIT License
 
 import type * as esbuild from 'esbuild'
-import fs from 'fs/promises'
+import {promises as fs} from 'fs'
 import path from 'path'
 import postcss from 'postcss'
 import {default as postcssModules} from 'postcss-modules'

@@ -1,7 +1,7 @@
 import {Entry, Outcome} from '@alinea/core'
 import {ContentIndex} from '@alinea/index'
 import {Octokit} from '@octokit/rest'
-import createOrUpdateFiles from 'octokit-commit-multiple-files/create-or-update-files'
+import createOrUpdateFiles from 'octokit-commit-multiple-files/create-or-update-files.js'
 import {posix as path} from 'path'
 import {Persistence} from '../Persistence'
 import {fileChanges} from './FileChanges'
