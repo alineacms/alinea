@@ -18,11 +18,13 @@ export class ClientContent implements Content {
   }
 
   putDraft(id: string, doc: string): Promise<Outcome<void>> {
-    return this.client.fetch(Api.nav.content.entryWithDraft(id), {
-      method: 'PUT',
-      body: JSON.stringify({doc}),
-      headers: {'content-type': 'application/json'}
-    })
+    return this.client
+      .fetch(Api.nav.content.entryWithDraft(id), {
+        method: 'PUT',
+        body: JSON.stringify({doc}),
+        headers: {'content-type': 'application/json'}
+      })
+      .then(res => Outcome.fromJSON(res))
   }
 
   list(parent?: string): Promise<Array<Entry.WithChildrenCount>> {
@@ -30,11 +32,13 @@ export class ClientContent implements Content {
   }
 
   publish(entries: Array<Entry>): Promise<Outcome<void>> {
-    return this.client.fetch(Api.nav.content.publish(), {
-      method: 'POST',
-      body: JSON.stringify(entries),
-      headers: {'content-type': 'application/json'}
-    })
+    return this.client
+      .fetch(Api.nav.content.publish(), {
+        method: 'POST',
+        body: JSON.stringify(entries),
+        headers: {'content-type': 'application/json'}
+      })
+      .then(res => Outcome.fromJSON(res))
   }
 }
 

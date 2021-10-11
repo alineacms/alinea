@@ -16,15 +16,14 @@ export class FSPersistence implements Persistence {
       const {contentChanges, fileRemoves} = fileChanges(store, entries)
       const tasks = fileRemoves
         .map(file => {
-          return limit(() => fs.unlink(path.join(this.dir, file)))
+          return () => fs.unlink(path.join(this.dir, file))
         })
         .concat(
           contentChanges.map(([file, contents]) => {
-            return limit(() =>
-              fs.writeFile(path.join(this.dir, file), contents)
-            )
+            return () => fs.writeFile(path.join(this.dir, file), contents)
           })
         )
+        .map(limit)
       return Promise.all(tasks).then(() => void 0)
     })
   }

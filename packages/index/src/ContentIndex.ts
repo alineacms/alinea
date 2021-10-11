@@ -46,11 +46,11 @@ export class ContentIndex {
       const cacheLocation = path.dirname(indexFile)
       await fs.mkdir(cacheLocation, {recursive: true})
       const stats = await Outcome.promised(() => fs.stat(indexFile))
-      if (Outcome.isSuccess(stats)) {
+      if (stats.isSuccess()) {
         const writeable = await Outcome.promised(() =>
           fs.access(indexFile, constants.W_OK)
         )
-        if (Outcome.isFailure(writeable)) {
+        if (writeable.isFailure()) {
           // We have an existing index file, but it is not writeable.
           // This can happen in serverless environments.
           // Copy the index to a temporary file so we can read/write.
