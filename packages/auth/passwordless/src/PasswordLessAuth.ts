@@ -1,8 +1,8 @@
 import {Auth} from '@alinea/core'
+import {parseJson} from '@alinea/server'
 import {Request, Response, Router} from 'express'
 import expressJwt, {UnauthorizedError} from 'express-jwt'
 import jwt from 'jsonwebtoken'
-import {json} from 'micro'
 import {Transporter} from 'nodemailer'
 
 type PasswordLessAuthOptions = {
@@ -25,7 +25,7 @@ export class PasswordLessAuth implements Auth.Server {
   router(): Router {
     const router = Router()
     router.post('(/*)?/auth.passwordless', async (req, res) => {
-      const body = req.body || (await json(req))
+      const body = await parseJson(req)
       const email = body.email
       if (!email) return res.sendStatus(400)
       const isUser = await this.options.isUser(email)

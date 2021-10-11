@@ -2,9 +2,9 @@ import {Api, Auth, Hub} from '@alinea/core'
 import cors from 'cors'
 import express, {Router} from 'express'
 import {createServer, IncomingMessage, ServerResponse} from 'http'
-import {json} from 'micro'
 import {Socket} from 'net'
 import Websocket, {WebSocketServer} from 'ws'
+import {parseJson} from './util/BodyParser'
 //import {DocServer} from './ws/DocServer'
 
 export type ServerOptions = {
@@ -73,12 +73,12 @@ export class Server {
       prefix + Api.nav.content.entryWithDraft(':id'),
       async (req, res) => {
         const id = req.params.id
-        const body = req.body || (await json(req))
+        const body = await parseJson(req)
         res.json(await hub.content.putDraft(id, body.doc))
       }
     )
     router.post(prefix + Api.nav.content.publish(), async (req, res) => {
-      const entries = req.body || (await json(req))
+      const entries = await parseJson(req)
       res.json(await hub.content.publish(entries))
     })
     router.get('*', async (req, res) => {

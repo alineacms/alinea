@@ -49,7 +49,7 @@ const filePersistence = new FSPersistence(index, '../website/content')
 const hub = new LocalHub({
   schema: schema,
   index,
-  persistence: ghPersistence
+  persistence: filePersistence
 })
 const server = new Server({
   dashboardUrl,

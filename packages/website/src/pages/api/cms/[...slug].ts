@@ -25,7 +25,7 @@ const auth = new PasswordLessAuth({
       pass: process.env.MAIL_PASSWORD
     }
   }),
-  jwtSecret: process.env.JWT_SECRET,
+  jwtSecret: process.env.JWT_SECRET!,
   async isUser(email: string) {
     return email.endsWith('@codeurs.be')
   }
