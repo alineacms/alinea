@@ -7,11 +7,15 @@ import {schema} from '../../../schema'
 
 dotenv.config({path: '../../.env'})
 
+const cacheDir =
+  process.env.NODE_ENV === 'production' ? 'packages/website/' : ''
 const dashboardUrl =
   process.env.NODE_ENV === 'production'
     ? 'https://alinea.vercel.app/admin'
     : 'http://localhost:3000/admin'
-const index = ContentIndex.fromCacheFile()
+const index = ContentIndex.fromCacheFile(
+  `${cacheDir}.next/server/chunks/content`
+)
 const auth = new PasswordLessAuth({
   dashboardUrl,
   subject: 'Login',
