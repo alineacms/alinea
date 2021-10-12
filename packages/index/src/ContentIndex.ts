@@ -9,7 +9,7 @@ import {createRequire} from 'module'
 import os from 'os'
 import path from 'path'
 
-function getLocalCacheDir() {
+function getLocalCacheFile() {
   const indexDir = import.meta.url
     ? createRequire(import.meta.url).resolve('@alinea/index')
     : __dirname
@@ -39,7 +39,7 @@ export class ContentIndex {
     })
   }
 
-  static fromCacheFile(cacheFile: string = getLocalCacheDir()) {
+  static fromCacheFile(cacheFile: string = getLocalCacheFile()) {
     return new ContentIndex(async () => {
       const name = path.basename(cacheFile)
       let indexFile = path.resolve(cacheFile)

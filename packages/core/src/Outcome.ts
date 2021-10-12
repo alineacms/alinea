@@ -8,7 +8,7 @@ export class Outcome<D, F = Error> {
   }
 
   isFailure(): this is Failure<D, F> {
-    return this.success
+    return !this.success
   }
 
   get pair(): [D, undefined] | [undefined, F] {

@@ -1,18 +1,17 @@
 import {PasswordLessAuth} from '@alinea/auth.passwordless/PasswordLessAuth.js'
 import {ContentIndex} from '@alinea/index'
 import {GithubPersistence, LocalHub, Server} from '@alinea/server'
+import dotenv from 'dotenv'
 import {createTransport} from 'nodemailer'
 import {schema} from '../../../schema'
 
-const cacheDir =
-  process.env.NODE_ENV === 'production' ? 'packages/website/' : ''
+dotenv.config({path: '../../.env'})
+
 const dashboardUrl =
   process.env.NODE_ENV === 'production'
     ? 'https://alinea.vercel.app/admin'
     : 'http://localhost:3000/admin'
-const index = ContentIndex.fromCacheFile(
-  `${cacheDir}.next/server/chunks/content`
-)
+const index = ContentIndex.fromCacheFile()
 const auth = new PasswordLessAuth({
   dashboardUrl,
   subject: 'Login',
