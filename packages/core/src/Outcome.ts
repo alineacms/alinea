@@ -45,9 +45,6 @@ export class Outcome<D, F = Error> {
   }
 }
 
-const a = new Outcome<string>(true)
-const [x, y] = a.pair
-
 class Success<D, F> extends Outcome<D, F> {
   constructor(public data: D) {
     super(true)
