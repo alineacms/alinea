@@ -161,16 +161,6 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@alinea/pages@workspace:packages/pages":
-  version: 0.0.0-use.local
-  resolution: "@alinea/pages@workspace:packages/pages"
-  dependencies:
-    "@alinea/core": 0.0.0
-    "@alinea/index": 0.0.0
-    helder.store: ^0.0.0-alpha.18
-  languageName: unknown
-  linkType: soft
-
 "@alinea/server@0.0.0, @alinea/server@workspace:packages/server":
   version: 0.0.0-use.local
   resolution: "@alinea/server@workspace:packages/server"
