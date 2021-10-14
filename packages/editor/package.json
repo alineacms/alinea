@@ -1,6 +1,6 @@
 {
   "name": "@alinea/editor",
-  "version": "0.0.0",
+  "version": "1.0.0-alpha.0",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -15,7 +15,7 @@
     "./*": "./dist/*"
   },
   "dependencies": {
-    "@alinea/core": "0.0.0",
+    "@alinea/core": "^1.0.0-alpha.0",
     "y-webrtc": "^10.2.0",
     "yjs": "^13.5.12"
   },

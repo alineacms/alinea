@@ -1,6 +1,6 @@
 {
   "name": "@alinea/pages",
-  "version": "0.0.0",
+  "version": "1.0.0-alpha.0",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -15,8 +15,8 @@
     "./*": "./dist/*"
   },
   "dependencies": {
-    "@alinea/core": "0.0.0",
-    "@alinea/index": "0.0.0",
+    "@alinea/core": "^1.0.0-alpha.0",
+    "@alinea/index": "^1.0.0-alpha.0",
     "helder.store": "^0.0.0-alpha.17"
   }
 }

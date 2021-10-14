@@ -1,6 +1,6 @@
 {
   "name": "@alinea/server",
-  "version": "0.0.0",
+  "version": "1.0.0-alpha.0",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -15,8 +15,8 @@
     "./*": "./dist/*"
   },
   "dependencies": {
-    "@alinea/core": "0.0.0",
-    "@alinea/index": "0.0.0",
+    "@alinea/core": "^1.0.0-alpha.0",
+    "@alinea/index": "^1.0.0-alpha.0",
     "@octokit/rest": "^18.12.0",
     "better-sqlite3": "^7.4.3",
     "compression": "^1.7.4",

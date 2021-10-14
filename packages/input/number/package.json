@@ -1,6 +1,6 @@
 {
   "name": "@alinea/input.number",
-  "version": "0.0.0",
+  "version": "1.0.0-alpha.0",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -18,9 +18,9 @@
     "./index.css": "./dist/index.css"
   },
   "dependencies": {
-    "@alinea/core": "0.0.0",
-    "@alinea/editor": "0.0.0",
-    "@alinea/ui": "0.0.0"
+    "@alinea/core": "^1.0.0-alpha.0",
+    "@alinea/editor": "^1.0.0-alpha.0",
+    "@alinea/ui": "^1.0.0-alpha.0"
   },
   "peerDependencies": {
     "react": "*"
