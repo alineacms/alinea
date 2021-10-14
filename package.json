@@ -5,7 +5,8 @@
   "private": true,
   "scripts": {
     "dev": "yarn workspace @alinea/stories dev",
-    "build": "esbuild-node scripts/build.ts"
+    "build": "node -r tsm scripts/build.ts",
+    "publish:all": "yarn build && yarn workspaces foreach --no-private npm publish --tolerate-republish"
   },
   "files": [],
   "workspaces": [
@@ -23,16 +24,15 @@
     "@typescript-eslint/parser": "^4.31.0",
     "cross-spawn": "^7.0.3",
     "cross-spawn-promise": "^0.10.2",
-    "esbuild": "^0.12.27",
-    "esbuild-node": "^0.4.0",
+    "esbuild": "^0.13.6",
     "esbuild-plugin-sass-modules": "^0.0.1",
     "eslint": "^7.32.0",
     "eslint-plugin-react": "^7.25.1",
     "eslint-plugin-react-hooks": "^4.2.0",
     "fs-extra": "^10.0.0",
     "ncp": "^2.0.0",
-    "oao": "^2.0.2",
     "rmfr": "^2.0.0",
+    "tsm": "^2.1.2",
     "typescript": "^4.4.3",
     "typescript-plugin-css-modules": "^3.4.0",
     "uvu": "^0.5.1"
