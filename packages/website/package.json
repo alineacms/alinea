@@ -2,8 +2,9 @@
   "name": "@alinea/website",
   "version": "0.0.0",
   "license": "MIT",
+  "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "yarn workspace alinea build && next dev",
     "build": "next build && alinea index content -o .next/server/chunks/content",
     "start": "next start",
     "lint": "next lint"

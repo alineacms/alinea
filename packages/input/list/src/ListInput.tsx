@@ -1,4 +1,4 @@
-import {inputPath, InputPath, Schema} from '@alinea/core'
+import {inputPath, InputPath} from '@alinea/core'
 import {Fields, Label, useInput} from '@alinea/editor'
 import {fromModule, IconButton, TextLabel} from '@alinea/ui'
 import {Create} from '@alinea/ui/Create'
@@ -98,7 +98,7 @@ function ListInputRow<T extends ListRow>({
   isDragging,
   ...rest
 }: ListInputRowProps<T>) {
-  const channel = Schema.getChannel(field.options.schema, row.$channel)
+  const channel = field.options.schema.channel(row.$channel)
   if (!channel) return null
   return (
     <div
@@ -127,7 +127,7 @@ type ListCreateRowProps<T> = {
 }
 
 function ListCreateRow<T>({field, onCreate}: ListCreateRowProps<T>) {
-  const channels = Schema.iterate(field.options.schema)
+  const channels = Array.from(field.options.schema)
   return (
     <Create.Root>
       {channels.map(([key, channel]) => {

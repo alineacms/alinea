@@ -1,6 +1,6 @@
-import spawn from 'cross-spawn-promise'
+import {execSync} from 'child_process'
 import {build, Plugin} from 'esbuild'
-import fs from 'fs'
+import fs from 'fs-extra'
 import glob from 'glob'
 import path from 'path'
 import rmfr from 'rmfr'
@@ -55,35 +55,14 @@ async function buildPackage(pkg: string) {
   console.log(`> ${location}`)
   const cwd = path.join(root, location)
   if (!skipTypes) {
-    await rmfr(path.join(cwd, 'dist'))
-
-    try {
-      const tsconfig = path.join(location, 'tsconfig.json')
-      // Before building we update the main tsconfig by changing the paths to
-      // point to the node_modules location. If we don't typescript generates
-      // declarations for each of the symlinked packages. We don't do this by default
-      // because it makes vscode autocomplete end up in the symlinks and it gets
-      // very confusing.
-      if (fs.existsSync(tsconfig)) {
-        const config = fs.readFileSync(tsconfig, 'utf-8')
-        fs.writeFileSync(
-          tsconfig,
-          config.replace('tsconfig.json', 'tsconfig.build.json')
-        )
-        await spawn(tsc, [], {
-          stdio: 'inherit',
-          cwd
-        })
-        fs.writeFileSync(
-          tsconfig,
-          config.replace('tsconfig.build.json', 'tsconfig.json')
-        )
-      }
-    } catch (error) {
-      if (error?.stderr) console.error((error as any).stderr.toString())
-      else console.error(error)
-      process.exit(1)
-    }
+    const dist = path.join(cwd, 'dist')
+    await rmfr(dist)
+    const typeDir = path.join(
+      '.types',
+      location.substr('packages/'.length),
+      'src'
+    )
+    if (fs.existsSync(typeDir)) await fs.copy(typeDir, dist)
   }
   const entryPoints = glob.sync('src/**/*.{ts,tsx}', {cwd})
   for (const entryPoint of entryPoints) {
@@ -124,6 +103,14 @@ async function buildPackage(pkg: string) {
 const sync = true
 
 async function main() {
+  if (!skipTypes) {
+    console.log('> types')
+    try {
+      execSync(tsc, {stdio: 'inherit', cwd: root})
+    } catch (error) {
+      process.exit(error.status)
+    }
+  }
   const builds = packages.map(pkg => {
     return async () => {
       const isExternal = pkg.includes('node_modules')

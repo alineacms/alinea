@@ -1,4 +1,4 @@
-import {EntryStatus, inputPath, Schema} from '@alinea/core'
+import {EntryStatus, inputPath} from '@alinea/core'
 import {
   CurrentDraftProvider,
   EntryDraft,
@@ -46,7 +46,7 @@ function EntryEditHeader() {
   const [draft] = useCurrentDraft()
   const [channelKey] = useInput(EntryDraft.$channel)
   const [status = EntryStatus.Published] = useInput(EntryDraft.$status)
-  const channel = Schema.getChannel(schema, channelKey)
+  const channel = schema.channel(channelKey)
   const [isPublishing, setPublishing] = useState(false)
   function handlePublish() {
     setPublishing(true)
@@ -114,7 +114,7 @@ type EntryEditDraftProps = {}
 function EntryEditDraft({}: EntryEditDraftProps) {
   const session = useSession()
   const [draft, status] = useCurrentDraft()!
-  const channel = Schema.getChannel(session.hub.schema, draft.$channel)
+  const channel = session.hub.schema.channel(draft.$channel)
   return (
     <>
       <EntryEditHeader />

@@ -1,10 +1,9 @@
 import {Channel} from './Channel'
+import {Entry} from './Entry'
 import {LazyRecord} from './util/LazyRecord'
 
-export type Schema<T = any> = LazyRecord<Channel<T>>
-
 type UnionOfValues<T> = T[keyof T]
-type ChannelsToRows<T> = {[K in keyof T]: Channel.TypeOf<T[K]>}
+type ChannelsToRows<T> = {[K in keyof T]: Channel.TypeOf<T[K]> & Entry}
 type ChannelsToEntry<T> = T extends {[key: string]: any}
   ? UnionOfValues<{[K in keyof T]: T[K] & {$channel: K}}>
   : never
@@ -12,15 +11,19 @@ type ChannelsToEntry<T> = T extends {[key: string]: any}
 export function createSchema<Channels extends LazyRecord<Channel>>(
   channels: Channels
 ): Schema<ChannelsToEntry<ChannelsToRows<Channels>>> {
-  return channels
+  return new Schema(channels)
 }
 
-export namespace Schema {
-  export const iterate = LazyRecord.iterate
-  export function getChannel<T>(
-    schema: Schema<T>,
-    name: string
-  ): Channel | undefined {
-    return LazyRecord.get(schema, name)
+export class Schema<T extends {$channel: string} = Entry> {
+  constructor(public channels: LazyRecord<Channel<T>>) {}
+
+  [Symbol.iterator]() {
+    return LazyRecord.iterate(this.channels)[Symbol.iterator]()
+  }
+
+  channel<K extends T['$channel']>(
+    name: K
+  ): Channel<Extract<T, {$channel: K}>> | undefined {
+    return LazyRecord.get(this.channels, name)
   }
 }

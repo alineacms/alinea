@@ -1,0 +1,37 @@
+import {channel, createSchema, Entry, Schema} from '@alinea/core'
+import {text} from '@alinea/input.text'
+import {Store} from 'helder.store'
+import {Collection} from 'helder.store/Collection'
+
+export class Pages<T extends Entry> {
+  constructor(public schema: Schema<T>, public store: Store) {}
+
+  collection<K extends T['$channel']>(
+    channel: K
+  ): Collection<Extract<T, {$channel: K}>> {
+    return new Collection(channel)
+  }
+
+  whereChannel<K extends T['$channel']>(
+    channel: K
+  ): Array<Extract<T, {$channel: K}>> {
+    return this.store.all(
+      Entry.where(Entry.$channel.is(channel as string))
+    ) as any
+  }
+}
+
+const schema = createSchema({
+  Page: channel('Page', {
+    title: text('Title')
+  }),
+  Page2: channel('Page', {
+    title2: text('Title')
+  })
+})
+
+function createCollections(schema: Schema) {}
+
+const pages = new Pages(schema, null!)
+const Page = pages.collection('Page')
+const expr = Page.title.is(pages.collection('Page2').title2)

@@ -2,6 +2,10 @@
   "name": "@alinea/server",
   "version": "0.0.0",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/codeurs/alinea.git"
+  },
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
   "type": "module",
@@ -19,7 +23,7 @@
     "content-type": "^1.0.4",
     "convert-hrtime": "^5.0.0",
     "cors": "^2.8.5",
-    "helder.store": "^0.0.0-alpha.14",
+    "helder.store": "^0.0.0-alpha.17",
     "octokit-commit-multiple-files": "^3.2.1",
     "p-limit": "^4.0.0",
     "pretty-ms": "^7.0.1",

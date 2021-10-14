@@ -10,3 +10,4 @@ node_modules
 !/packages/stories/content/.keep
 .env
 .env.cache*
+/.types

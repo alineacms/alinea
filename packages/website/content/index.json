@@ -1,6 +1,6 @@
 {
   "$id": "home",
-  "$channel": "home",
+  "$channel": "Home",
   "title": "Home",
   "headline": "The website headline."
 }

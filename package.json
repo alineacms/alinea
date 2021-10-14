@@ -2,6 +2,7 @@
   "name": "alinea",
   "version": "0.0.0",
   "license": "MIT",
+  "private": true,
   "scripts": {
     "dev": "yarn workspace @alinea/stories dev",
     "build": "esbuild-node scripts/build.ts"
@@ -30,6 +31,7 @@
     "eslint-plugin-react-hooks": "^4.2.0",
     "fs-extra": "^10.0.0",
     "ncp": "^2.0.0",
+    "oao": "^2.0.2",
     "rmfr": "^2.0.0",
     "typescript": "^4.4.3",
     "typescript-plugin-css-modules": "^3.4.0",

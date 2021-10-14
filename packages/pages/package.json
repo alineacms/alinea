@@ -1,5 +1,5 @@
 {
-  "name": "@alinea/core",
+  "name": "@alinea/pages",
   "version": "0.0.0",
   "license": "MIT",
   "repository": {
@@ -15,10 +15,8 @@
     "./*": "./dist/*"
   },
   "dependencies": {
-    "base-x": "^3.0.8",
-    "get-random-values": "^1.2.2"
-  },
-  "devDependencies": {
-    "@types/react": "^17.0.20"
+    "@alinea/core": "0.0.0",
+    "@alinea/index": "0.0.0",
+    "helder.store": "^0.0.0-alpha.17"
   }
 }
