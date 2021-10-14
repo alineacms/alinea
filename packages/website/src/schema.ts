@@ -1,19 +1,13 @@
-import {channel, createSchema} from '@alinea/core'
-import {list} from '@alinea/input.list'
+import {channel, createSchema, DataOf} from '@alinea/core'
 import {text} from '@alinea/input.text'
 
-const Home = channel('Home', {
-  title: text('Title', {multiline: true}),
-  headline: text('Headline', {multiline: true}),
-  list: list('List', {
-    schema: createSchema({
-      item: channel('Item', {
-        field: text('Item', {multiline: true})
-      })
-    })
+export const schema = createSchema({
+  Home: channel('Home', {
+    title: text('Title', {multiline: true}),
+    headline: text('Headline', {multiline: true})
   })
 })
 
-export const schema = createSchema({
-  Home
-})
+export const {Home} = schema.channels
+
+export type Home = DataOf<typeof Home>

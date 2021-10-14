@@ -5,7 +5,8 @@
   "private": true,
   "scripts": {
     "dev": "yarn workspace alinea build && next dev",
-    "build": "next build && alinea index content -o .next/server/chunks/content",
+    "index": "alinea index content -o .next/server/chunks/content",
+    "build": "next build && yarn index",
     "start": "next start",
     "lint": "next lint"
   },

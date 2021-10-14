@@ -69,6 +69,8 @@ function init(store: Store, path: string): Progress<Store> {
   async function build(): Promise<Store> {
     const startTime = process.hrtime.bigint()
     console.log('Start indexing...')
+    store.delete(Entry)
+    store.delete(Draft)
     const total = await index(path, store)
     store.createIndex(Entry, '$id', [Entry.$id])
     store.createIndex(Entry, '$parent', [Entry.$parent])

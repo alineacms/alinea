@@ -1,5 +1,6 @@
 export * from './content/FSPersistence'
 export * from './content/GithubPersistence'
 export * from './content/LocalHub'
+export * from './Pages'
 export * from './Server'
 export * from './util/BodyParser'

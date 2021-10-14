@@ -30,7 +30,8 @@ export class ContentIndex {
   }
 
   async indexDirectory(dir: string) {
-    createIndex(await this.store, dir)
+    await createIndex(await this.store, dir)
+    return this
   }
 
   static fromMemory() {

@@ -167,7 +167,7 @@ __metadata:
   dependencies:
     "@alinea/core": 0.0.0
     "@alinea/index": 0.0.0
-    helder.store: ^0.0.0-alpha.17
+    helder.store: ^0.0.0-alpha.18
   languageName: unknown
   linkType: soft
 
@@ -187,7 +187,7 @@ __metadata:
     content-type: ^1.0.4
     convert-hrtime: ^5.0.0
     cors: ^2.8.5
-    helder.store: ^0.0.0-alpha.17
+    helder.store: ^0.0.0-alpha.18
     octokit-commit-multiple-files: ^3.2.1
     p-limit: ^4.0.0
     pretty-ms: ^7.0.1
@@ -4922,10 +4922,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"helder.store@npm:^0.0.0-alpha.17":
-  version: 0.0.0-alpha.17
-  resolution: "helder.store@npm:0.0.0-alpha.17"
-  checksum: 906cfa4e35b26a1a6fc7c14b165bf69bed156d25b1d71acb53c3db615cc194a10b6d16281deb122dd55c66cb976b906708621171ed39a7b2ee6dd4654fd13767
+"helder.store@npm:^0.0.0-alpha.18":
+  version: 0.0.0-alpha.18
+  resolution: "helder.store@npm:0.0.0-alpha.18"
+  checksum: 5cf0ab22f2c3f8fc20f6eb050a51e68c3d254fb3ca09c5f5fb89b8b18a376b0e42dc12144e059272fe6263ff164be260deb60cf631716814d08a687aef5b1095
   languageName: node
   linkType: hard
 

@@ -1,5 +1,6 @@
 module.exports = {
   webpack: (config, {buildId, dev, isServer, defaultLoaders, webpack}) => {
+    config.experiments = {topLevelAwait: true}
     if (isServer) {
       config.externals = [
         ...config.externals,

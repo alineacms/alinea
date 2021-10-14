@@ -1,18 +1,23 @@
 import {PasswordLessAuth} from '@alinea/auth.passwordless/PasswordLessAuth.js'
 import {ContentIndex} from '@alinea/index'
-import {GithubPersistence, LocalHub, Server} from '@alinea/server'
+import {
+  FSPersistence,
+  GithubPersistence,
+  LocalHub,
+  Server
+} from '@alinea/server'
 import dotenv from 'dotenv'
+import {NextApiRequest, NextApiResponse} from 'next'
 import {createTransport} from 'nodemailer'
 import {schema} from '../../../schema'
 
 dotenv.config({path: '../../.env'})
 
-const cacheDir =
-  process.env.NODE_ENV === 'production' ? 'packages/website/' : ''
-const dashboardUrl =
-  process.env.NODE_ENV === 'production'
-    ? 'https://alinea.vercel.app/admin'
-    : 'http://localhost:3000/admin'
+const isProduction = process.env.NODE_ENV === 'production'
+const cacheDir = isProduction ? 'packages/website/' : ''
+const dashboardUrl = isProduction
+  ? 'https://alinea.vercel.app/admin'
+  : 'http://localhost:3000/admin'
 const index = ContentIndex.fromCacheFile(
   `${cacheDir}.next/server/chunks/content`
 )
@@ -33,14 +38,16 @@ const auth = new PasswordLessAuth({
     return email.endsWith('@codeurs.be')
   }
 })
-const persistence = new GithubPersistence({
-  index,
-  contentDir: 'packages/website/content',
-  githubAuthToken: process.env.GITHUB_TOKEN!,
-  owner: 'codeurs',
-  repo: 'alinea',
-  branch: 'main'
-})
+const persistence = isProduction
+  ? new GithubPersistence({
+      index,
+      contentDir: 'packages/website/content',
+      githubAuthToken: process.env.GITHUB_TOKEN!,
+      owner: 'codeurs',
+      repo: 'alinea',
+      branch: 'main'
+    })
+  : new FSPersistence(index, 'content')
 const server = new Server({
   auth,
   dashboardUrl,
@@ -51,4 +58,16 @@ const server = new Server({
   })
 })
 
-export default server.respond
+let isIndexing: Promise<void> | undefined = undefined
+
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  if (!isProduction) {
+    isIndexing = isIndexing || index.indexDirectory('content').then(_ => void 0)
+    await isIndexing
+    isIndexing = undefined
+  }
+  return server.respond(req, res)
+}
