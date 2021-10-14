@@ -1,6 +1,6 @@
 {
   "name": "@alinea/input.text",
-  "version": "1.0.0-alpha.0",
+  "version": "1.0.0-alpha.1",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -18,9 +18,9 @@
     "./index.css": "./dist/index.css"
   },
   "dependencies": {
-    "@alinea/core": "^1.0.0-alpha.0",
-    "@alinea/editor": "^1.0.0-alpha.0",
-    "@alinea/ui": "^1.0.0-alpha.0",
+    "@alinea/core": "^1.0.0-alpha.1",
+    "@alinea/editor": "^1.0.0-alpha.1",
+    "@alinea/ui": "^1.0.0-alpha.1",
     "react-autosize-textarea": "^7.1.0"
   },
   "peerDependencies": {

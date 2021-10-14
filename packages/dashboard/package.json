@@ -1,6 +1,6 @@
 {
   "name": "@alinea/dashboard",
-  "version": "1.0.0-alpha.0",
+  "version": "1.0.0-alpha.1",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -16,9 +16,9 @@
     "./*": "./dist/*"
   },
   "dependencies": {
-    "@alinea/client": "^1.0.0-alpha.0",
-    "@alinea/core": "^1.0.0-alpha.0",
-    "@alinea/editor": "^1.0.0-alpha.0",
+    "@alinea/client": "^1.0.0-alpha.1",
+    "@alinea/core": "^1.0.0-alpha.1",
+    "@alinea/editor": "^1.0.0-alpha.1",
     "@fontsource/jetbrains-mono": "^4.5.0",
     "@tiptap/react": "^2.0.0-beta.70",
     "@tiptap/starter-kit": "^2.0.0-beta.109",

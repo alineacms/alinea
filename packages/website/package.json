@@ -1,6 +1,6 @@
 {
   "name": "@alinea/website",
-  "version": "1.0.0-alpha.0",
+  "version": "1.0.0-alpha.1",
   "license": "MIT",
   "private": true,
   "scripts": {
@@ -10,13 +10,13 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@alinea/auth.passwordless": "^1.0.0-alpha.0",
-    "@alinea/cli": "^1.0.0-alpha.0",
-    "@alinea/core": "^1.0.0-alpha.0",
-    "@alinea/dashboard": "^1.0.0-alpha.0",
-    "@alinea/index": "^1.0.0-alpha.0",
-    "@alinea/server": "^1.0.0-alpha.0",
-    "@alinea/ui": "^1.0.0-alpha.0",
+    "@alinea/auth.passwordless": "^1.0.0-alpha.1",
+    "@alinea/cli": "^1.0.0-alpha.1",
+    "@alinea/core": "^1.0.0-alpha.1",
+    "@alinea/dashboard": "^1.0.0-alpha.1",
+    "@alinea/index": "^1.0.0-alpha.1",
+    "@alinea/server": "^1.0.0-alpha.1",
+    "@alinea/ui": "^1.0.0-alpha.1",
     "next": "^11.1.2"
   },
   "devDependencies": {
