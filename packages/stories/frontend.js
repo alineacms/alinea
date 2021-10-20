@@ -4,7 +4,7 @@ const {ScssModulesPlugin} = require('esbuild-scss-modules-plugin')
 const path = require('path')
 const fs = require('fs')
 
-const usePreact = false
+const usePreact = true
 
 /*
 These should resolved using the conditional exports, but before building
@@ -49,6 +49,17 @@ serve(
     loader: {
       '.woff': 'file',
       '.woff2': 'file'
+    },
+    define: {
+      'process.env.__NEXT_TRAILING_SLASH': true,
+      'process.env.__NEXT_I18N_SUPPORT': false,
+      'process.env.__NEXT_ROUTER_BASEPATH': '""',
+      'process.env.__NEXT_SCROLL_RESTORATION': true,
+      'process.env.__NEXT_HAS_REWRITES': false,
+      'process.env.__NEXT_OPTIMIZE_CSS': false,
+      'process.env.__NEXT_CROSS_ORIGIN': '""',
+      'process.env.__NEXT_STRICT_MODE': false,
+      'process.env.__NEXT_IMAGE_OPTS': null
     }
   }
 ).then(res => {

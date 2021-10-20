@@ -28,10 +28,11 @@ export namespace Value {
     if (value instanceof Y.Map) {
       const type: Value = value.get('$type')
       switch (type) {
-        case Value.List:
-          return ListValue.fromY(value)
+        case undefined:
         case Value.Record:
           return RecordValue.fromY(value)
+        case Value.List:
+          return ListValue.fromY(value)
       }
     }
     return value

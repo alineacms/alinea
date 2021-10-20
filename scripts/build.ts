@@ -1,9 +1,8 @@
 import {execSync} from 'child_process'
 import {build, Plugin} from 'esbuild'
-import fs from 'fs-extra'
+import fs, {remove} from 'fs-extra'
 import glob from 'glob'
 import path from 'path'
-import rmfr from 'rmfr'
 import {ScssModulesPlugin} from './scss-modules'
 
 let skipTypes = false
@@ -56,7 +55,7 @@ async function buildPackage(pkg: string) {
   const cwd = path.join(root, location)
   if (!skipTypes) {
     const dist = path.join(cwd, 'dist')
-    await rmfr(dist)
+    await remove(dist)
     const typeDir = path.join(
       '.types',
       location.substr('packages/'.length),

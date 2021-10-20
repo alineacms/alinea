@@ -28,7 +28,10 @@ export enum PublishStatus {
   Draft
 }
 
-export class EntryDraft extends Observable<'status'> implements Entry {
+export class EntryDraft
+  extends Observable<'status' | 'change'>
+  implements Entry
+{
   public doc: Y.Doc
   private root: Y.Map<any>
   private saveTimeout: any = null
@@ -63,6 +66,7 @@ export class EntryDraft extends Observable<'status'> implements Entry {
       doc?: Y.Doc,
       transaction?: Y.Transaction
     ) => {
+      this.emit('change', [])
       if (this.$status === EntryStatus.Published)
         this.root.set('$status', EntryStatus.Draft)
       if (origin) return
@@ -85,6 +89,11 @@ export class EntryDraft extends Observable<'status'> implements Entry {
   watchStatus(fun: (status: EntryDraftStatus) => void) {
     this.on('status', fun)
     return () => this.off('status', fun)
+  }
+
+  watchChanges(fun: () => void) {
+    this.on('change', fun)
+    return () => this.off('change', fun)
   }
 
   static $path = inputPath<string>(['$path'])

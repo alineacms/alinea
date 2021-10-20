@@ -2,7 +2,7 @@ import {InputPath} from '@alinea/core'
 import {Label, useInput} from '@alinea/editor'
 import {fromModule} from '@alinea/ui'
 // Todo: this fails in nextjs/webpack
-// import TextareaAutosize from 'react-autosize-textarea'
+import TextareaAutosize from 'react-autosize-textarea'
 import {TextField} from './TextField'
 import css from './TextInput.module.scss'
 
@@ -16,7 +16,7 @@ export type TextInputProps = {
 export function TextInput({path, field}: TextInputProps) {
   const [value, setValue] = useInput(path)
   const {multiline, optional, help} = field.options
-  const Input = multiline ? 'textarea' : 'input'
+  const Input = multiline ? TextareaAutosize : 'input'
   return (
     <div className={styles.root()}>
       <Label label={field.label} help={help} optional={optional}>

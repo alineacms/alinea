@@ -1,4 +1,4 @@
-import {channel, createSchema, DataOf} from '@alinea/core'
+import {channel, createSchema, DataOf, EntryOf} from '@alinea/core'
 import {text} from '@alinea/input.text'
 
 export const schema = createSchema({
@@ -11,3 +11,5 @@ export const schema = createSchema({
 export const {Home} = schema.channels
 
 export type Home = DataOf<typeof Home>
+
+export type Page = EntryOf<typeof schema>

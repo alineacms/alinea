@@ -1,7 +1,9 @@
-import {Collection} from 'helder.store/Collection'
+import {Collection} from 'helder.store'
 import {Channel} from './Channel'
 import {Entry} from './Entry'
 import {LazyRecord} from './util/LazyRecord'
+
+export type HasChannel = {$channel: string}
 
 type UnionOfValues<T> = T[keyof T]
 type ChannelsToRows<T> = {[K in keyof T]: Channel.TypeOf<T[K]> & Entry}
@@ -10,6 +12,7 @@ type ChannelsToEntry<T> = T extends {[key: string]: any}
   : never
 
 export type DataOf<T> = T extends Collection<infer U> ? U : never
+export type EntryOf<T> = T extends Schema<infer U> ? U : never
 
 export function createSchema<Channels extends LazyRecord<Channel>>(
   channels: Channels
@@ -17,7 +20,9 @@ export function createSchema<Channels extends LazyRecord<Channel>>(
   return new Schema(channels) as any
 }
 
-export class Schema<T extends {$channel: string} = Entry> {
+type ChannelsOf<T> = T extends HasChannel ? T['$channel'] : string
+
+export class Schema<T = any> {
   #channels: LazyRecord<Channel<T>>
   constructor(channels: LazyRecord<Channel<T>>) {
     this.#channels = channels
@@ -27,14 +32,14 @@ export class Schema<T extends {$channel: string} = Entry> {
     return LazyRecord.iterate(this.#channels)[Symbol.iterator]()
   }
 
-  channel<K extends T['$channel']>(
+  channel<K extends ChannelsOf<T>>(
     name: K
   ): Channel<Extract<T, {$channel: K}>> | undefined {
     return LazyRecord.get(this.#channels, name)
   }
 
   get channels(): {
-    [K in T['$channel']]: Collection<Extract<T, {$channel: K}>>
+    [K in ChannelsOf<T>]: Collection<Extract<T, {$channel: K}>>
   } {
     return Object.fromEntries(
       Object.keys(this.#channels).map(name => {
@@ -43,7 +48,7 @@ export class Schema<T extends {$channel: string} = Entry> {
     ) as any
   }
 
-  collection<K extends T['$channel']>(
+  collection<K extends ChannelsOf<T>>(
     channel: K
   ): Collection<Extract<T, {$channel: K}>> {
     const alias = channel as string

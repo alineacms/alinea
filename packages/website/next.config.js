@@ -21,6 +21,6 @@ module.exports = {
     return config
   },
   experimental: {
-    esmExternals: true
+    esmExternals: 'loose'
   }
 }

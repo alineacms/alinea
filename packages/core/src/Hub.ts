@@ -11,7 +11,7 @@ export interface Content {
   publish(entries: Array<Entry>): Promise<Outcome<void>>
 }
 
-export interface Hub {
-  schema: Schema
+export interface Hub<T = any> {
+  schema: Schema<T>
   content: Content
 }

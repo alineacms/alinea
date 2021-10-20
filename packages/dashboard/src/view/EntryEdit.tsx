@@ -1,4 +1,4 @@
-import {EntryStatus, inputPath} from '@alinea/core'
+import {Entry, EntryStatus, inputPath} from '@alinea/core'
 import {
   CurrentDraftProvider,
   EntryDraft,
@@ -8,8 +8,16 @@ import {
   useDraft,
   useInput
 } from '@alinea/editor'
-import {AppBar, Chip, fromModule, Stack, Statusbar} from '@alinea/ui'
-import {Suspense, useState} from 'react'
+import {
+  AppBar,
+  Chip,
+  fromModule,
+  HStack,
+  Pane,
+  Stack,
+  Statusbar
+} from '@alinea/ui'
+import {ComponentType, Suspense, useEffect, useState} from 'react'
 import {Helmet} from 'react-helmet'
 import {
   MdArchive,
@@ -109,27 +117,49 @@ function EntryEditStatus({status}: EntryEditStatusProps) {
   }
 }
 
+type EntryPreviewProps = {
+  draft: EntryDraft
+  preview: ComponentType<{entry: Entry}>
+}
+
+function EntryPreview({draft, preview: Preview}: EntryPreviewProps) {
+  const [entry, setEntry] = useState(draft.getEntry())
+  useEffect(() => {
+    setEntry(draft.getEntry())
+    return draft.watchChanges(() => setEntry(draft.getEntry()))
+  }, [Preview, draft])
+  return <Preview entry={entry} />
+}
+
 type EntryEditDraftProps = {}
 
 function EntryEditDraft({}: EntryEditDraftProps) {
   const session = useSession()
   const [draft, status] = useCurrentDraft()!
   const channel = session.hub.schema.channel(draft.$channel)
+  const {preview} = useDashboard()
   return (
-    <>
-      <EntryEditHeader />
-      <div className={styles.draft()}>
-        <EntryTitle />
+    <HStack>
+      <div style={{flexGrow: 1}}>
+        <EntryEditHeader />
+        <div className={styles.draft()}>
+          <EntryTitle />
 
-        <Suspense fallback={null}>
-          {channel ? <Fields channel={channel} /> : 'Channel not found'}
-        </Suspense>
+          <Suspense fallback={null}>
+            {channel ? <Fields channel={channel} /> : 'Channel not found'}
+          </Suspense>
 
-        <Statusbar.Slot>
-          <EntryEditStatus status={status} />
-        </Statusbar.Slot>
+          <Statusbar.Slot>
+            <EntryEditStatus status={status} />
+          </Statusbar.Slot>
+        </div>
       </div>
-    </>
+      {preview && (
+        <Pane id="preview" resizable="left" defaultWidth={330} minWidth={320}>
+          <EntryPreview preview={preview} draft={draft} />
+        </Pane>
+      )}
+    </HStack>
   )
 }
 

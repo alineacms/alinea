@@ -1,0 +1,32 @@
+.root {
+  display: flex;
+  height: 100%;
+  &-inner {
+    flex-grow: 1;
+    height: 100%;
+  }
+}
+
+.divider {
+  position: relative;
+
+  &-handle {
+    position: absolute;
+    cursor: col-resize;
+    left: -8px;
+    right: -8px;
+    top: 0;
+    bottom: 0;
+
+    &-line {
+      height: 100%;
+      margin-left: 8px;
+      border-left: 1px solid var(--outline);
+      transition: border 0.25s ease-out;
+    }
+
+    &:hover &-line {
+      border-color: var(--highlight);
+    }
+  }
+}

@@ -4,9 +4,9 @@
   "license": "MIT",
   "scripts": {
     "dev": "run-p dev:client dev:server",
-    "dev:client": "node serve.js",
-    "dev:server": "node build.js -watch -run",
-    "build": "node build.js"
+    "dev:client": "node frontend.js",
+    "dev:server": "node backend.js -watch -run",
+    "build": "node backend.js"
   },
   "devDependencies": {
     "esbuild": "^0.13.6",

@@ -1,6 +1,6 @@
 import {Field, Label, Schema, Value} from '@alinea/core'
 
-export type ListOptions<T extends {$channel: string}> = {
+export type ListOptions<T> = {
   schema: Schema<T>
   help?: Label
   inline?: boolean
@@ -12,7 +12,7 @@ export type ListField<T> = Field<Array<T>> & {
   options: ListOptions<any>
 }
 
-export function createList<T extends {$channel: string}>(
+export function createList<T>(
   label: Label,
   options: ListOptions<T>
 ): ListField<T> {

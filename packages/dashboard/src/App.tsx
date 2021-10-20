@@ -1,6 +1,6 @@
 import {Client} from '@alinea/client'
 import {Session} from '@alinea/core'
-import {FavIcon, Statusbar, Viewport} from '@alinea/ui'
+import {FavIcon, Pane, Statusbar, Viewport} from '@alinea/ui'
 import {Sidebar} from '@alinea/ui/Sidebar'
 import {getRandomColor} from '@alinea/ui/util/GetRandomColor'
 //import 'preact/debug'
@@ -45,9 +45,14 @@ function AppAuthenticated() {
               <MdCheck />
             </Sidebar.Menu.Item>
           </Sidebar.Menu>
-          <Sidebar.List>
+          <Pane
+            id="content-tree"
+            resizable="right"
+            defaultWidth={330}
+            minWidth={200}
+          >
             <ContentTree />
-          </Sidebar.List>
+          </Pane>
         </Sidebar.Root>
         <div style={{width: '100%'}}>
           <Route path="/:id">
@@ -94,14 +99,14 @@ function AppRoot({session, setSession}: AppRootProps) {
   )
 }
 
-function localSession(options: DashboardOptions) {
+function localSession<T>(options: DashboardOptions<T>) {
   return {
     user: {sub: 'anonymous'},
     hub: new Client(options.schema, options.apiUrl)
   }
 }
 
-export function App(props: DashboardOptions) {
+export function App<T>(props: DashboardOptions<T>) {
   const [queryClient] = useState(() => new QueryClient())
   const [session, setSession] = useState<Session | undefined>(
     !props.auth ? localSession(props) : undefined

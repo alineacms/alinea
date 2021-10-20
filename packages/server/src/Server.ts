@@ -5,32 +5,13 @@ import {createServer, IncomingMessage, ServerResponse} from 'http'
 import {Socket} from 'net'
 import Websocket, {WebSocketServer} from 'ws'
 import {parseJson} from './util/BodyParser'
-//import {DocServer} from './ws/DocServer'
+import {finishResponse} from './util/FinishResponse'
 
-export type ServerOptions = {
+export type ServerOptions<T = any> = {
   dashboardUrl: string
   auth?: Auth.Server
-  hub: Hub
-}
-
-// Source: https://github.com/dougmoscrop/serverless-http/blob/f72fdeaa0d25844257e01ff1078585a92752f53a/lib/finish.js
-function finish(res: ServerResponse) {
-  return new Promise<void>((resolve, reject) => {
-    if (res.writableEnded) return resolve()
-    let finished = false
-    function done(err?: Error) {
-      if (finished) return
-      finished = true
-      res.removeListener('error', done)
-      res.removeListener('end', done)
-      res.removeListener('finish', done)
-      if (err) reject(err)
-      else resolve()
-    }
-    res.once('error', done)
-    res.once('end', done)
-    res.once('finish', done)
-  })
+  hub: Hub<T>
+  transformPreview?: (entry: T) => any
 }
 
 export class Server {
@@ -91,7 +72,9 @@ export class Server {
 
   respond = (req: IncomingMessage, res: ServerResponse): Promise<void> => {
     this.app(req, res)
-    return finish(res)
+    // Next.js expects us to return a promise that resolves when we're finished
+    // with the response.
+    return finishResponse(res)
   }
 
   upgrade = (req: IncomingMessage, socket: Socket, head: Buffer): void => {
