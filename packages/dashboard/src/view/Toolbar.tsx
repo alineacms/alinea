@@ -21,7 +21,7 @@ const styles = fromModule(css)
 
 export const Toolbar = memo(function Toolbar() {
   const session = useSession()
-  const [colorScheme, setColorScheme] = useColorScheme()
+  const [colorScheme, toggleColorScheme] = useColorScheme()
   return (
     <HStack center className={styles.root()}>
       <HStack center gap={16}>
@@ -46,12 +46,7 @@ export const Toolbar = memo(function Toolbar() {
       </div>
       <div>
         <HStack center gap={10}>
-          <IconButton
-            icon={MdBrightnessMedium}
-            onClick={() => {
-              setColorScheme(colorScheme === 'dark' ? 'light' : 'dark')
-            }}
-          />
+          <IconButton icon={MdBrightnessMedium} onClick={toggleColorScheme} />
           <DropdownMenu.Root>
             <DropdownMenu.Trigger>
               <HStack center gap={4}>

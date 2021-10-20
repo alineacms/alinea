@@ -1,29 +1,18 @@
-import {HStack, Logo, px, Typo, Viewport} from '@alinea/ui'
-import Link from 'next/link'
-import {HTMLAttributes, PropsWithChildren} from 'react'
-import {RiFlashlightFill} from 'react-icons/ri/index'
+import {HStack, px, Typo} from '@alinea/ui'
 import {Home} from '../schema'
+import {Container} from './layout/Container'
 
-function Container(props: PropsWithChildren<HTMLAttributes<HTMLDivElement>>) {
-  return <div style={{paddingLeft: px(25), paddingRight: px(25)}} {...props} />
-}
-
-export function HomePage({headline}: Home) {
+export function HomePage({headline, byline}: Home) {
   return (
-    <Viewport color="#FB934F">
-      <Container>
-        <header style={{padding: px(25)}}>
-          <HStack center gap={10}>
-            <Logo>
-              <RiFlashlightFill />
-            </Logo>
+    <Container>
+      <header style={{padding: `${px(25)} 0`}}>
+        <HStack style={{height: '200px'}} center justify="center" gap={10}>
+          <div>
             <Typo.H1 flat>{headline}</Typo.H1>
-          </HStack>
-        </header>
-        <Link href="/admin">
-          <a style={{color: 'white'}}>Go to admin panel</a>
-        </Link>
-      </Container>
-    </Viewport>
+            <Typo.P>{byline}</Typo.P>
+          </div>
+        </HStack>
+      </header>
+    </Container>
   )
 }

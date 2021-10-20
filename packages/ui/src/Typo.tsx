@@ -1,5 +1,4 @@
 import {HTMLAttributes, Ref} from 'react'
-import {LinkProps} from 'react-router-dom'
 import css from './Typo.module.scss'
 import {forwardRefWithAs, PropsWithAs} from './util/PropsWithAs'
 import {fromModule} from './util/Styler'
@@ -79,8 +78,8 @@ export namespace Typo {
     )
   }
 
-  function LinkComponent(props: LinkProps) {
-    return <Link {...props} className={styles.link.mergeProps(props)()} />
+  function LinkComponent(props: HTMLAttributes<HTMLAnchorElement>) {
+    return <a {...props} className={styles.link.mergeProps(props)()} />
   }
 
   function MonospaceComponent(props: HTMLAttributes<HTMLSpanElement>) {

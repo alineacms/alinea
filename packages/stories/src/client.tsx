@@ -3,7 +3,16 @@ import '@alinea/css'
 import {renderDashboard} from '@alinea/dashboard'
 import '@alinea/dashboard/global.css'
 import {schema} from '../../website/src/schema'
-import {Preview} from '../../website/src/view/Preview'
+import {Layout} from '../../website/src/view/layout/Layout'
+import {PageView} from '../../website/src/view/PageView'
+
+function Preview({entry}) {
+  return (
+    <Layout>
+      <PageView entry={entry} />
+    </Layout>
+  )
+}
 
 renderDashboard({
   name: 'Alinea',

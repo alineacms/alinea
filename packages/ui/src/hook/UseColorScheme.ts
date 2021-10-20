@@ -1,8 +1,8 @@
 import {createContext, useContext} from 'react'
 
-export type ColorScheme = 'light' | 'dark'
+export type ColorScheme = 'light' | 'dark' | undefined
 
-export type ColorSchemeContext = [ColorScheme, (scheme: ColorScheme) => void]
+export type ColorSchemeContext = [ColorScheme, () => void]
 
 const context = createContext<ColorSchemeContext | undefined>(undefined)
 

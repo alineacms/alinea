@@ -139,7 +139,7 @@ function EntryEditDraft({}: EntryEditDraftProps) {
   const channel = session.hub.schema.channel(draft.$channel)
   const {preview} = useDashboard()
   return (
-    <HStack>
+    <HStack style={{height: '100%'}}>
       <div style={{flexGrow: 1}}>
         <EntryEditHeader />
         <div className={styles.draft()}>

@@ -2,5 +2,6 @@
   "$id": "home",
   "$channel": "Home",
   "title": "Home",
-  "headline": "The website headline."
+  "headline": "The website headline",
+  "byline": "This is the marketing line"
 }

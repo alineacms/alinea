@@ -4,7 +4,7 @@
   "license": "MIT",
   "scripts": {
     "dev": "run-p dev:client dev:server",
-    "dev:client": "node frontend.js",
+    "dev:client": "node watch.mjs",
     "dev:server": "node backend.js -watch -run",
     "build": "node backend.js"
   },

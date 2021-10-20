@@ -77,10 +77,10 @@
 
 .link {
   text-decoration: underline;
-  text-decoration-color: rgba(0, 0, 0, 0.2);
+  text-decoration-color: rgba(var(--negative), 0.2);
   text-underline-offset: 1.5px;
-  transition: 0.25s ease-out;
   @extend .hyphenate;
+  cursor: pointer;
 
   &:hover {
     text-decoration-color: currentColor;

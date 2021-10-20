@@ -1,5 +1,5 @@
 import {PropsWithChildren, useState} from 'react'
-import {ColorScheme, ColorSchemeProvider} from './hook/UseColorScheme'
+import {ColorSchemeProvider} from './hook/UseColorScheme'
 import {useContrastColor} from './hook/UseContrastColor'
 import {fromModule} from './util/Styler'
 import css from './Viewport.module.scss'
@@ -14,12 +14,25 @@ export function Viewport({children, color}: ViewportProps) {
   const accentColor = color!
   const accentColorForeground = useContrastColor(accentColor)
   //const {scheme} = useColorScheme()
+  const persistenceId = `@alinea/ui/viewport`
   const [schemePreference, setSchemePreference] = useState<
     'light' | 'dark' | undefined
-  >(undefined)
-  const usedScheme: ColorScheme = schemePreference || 'dark' //(scheme !== 'none' ? (scheme as ColorScheme) : 'dark')
+  >(
+    typeof window !== 'undefined'
+      ? (window.localStorage?.getItem(persistenceId) as any) || undefined
+      : undefined
+  )
+  function toggleSchemePreference() {
+    const isLight =
+      schemePreference === undefined
+        ? window.matchMedia('(prefers-color-scheme: light)').matches
+        : schemePreference === 'light'
+    const next = isLight ? 'dark' : 'light'
+    setSchemePreference(next)
+    window?.localStorage?.setItem(persistenceId, next)
+  }
   return (
-    <ColorSchemeProvider value={[usedScheme, setSchemePreference]}>
+    <ColorSchemeProvider value={[schemePreference, toggleSchemePreference]}>
       <main
         style={
           {
@@ -27,7 +40,7 @@ export function Viewport({children, color}: ViewportProps) {
             '--accent-foreground': accentColorForeground
           } as any
         }
-        className={styles.root.is(usedScheme)()}
+        className={styles.root.is(schemePreference)()}
       >
         {children}
       </main>

@@ -11,24 +11,38 @@ body,
   box-sizing: border-box;
 }
 
+@mixin dark-theme {
+  //--background: #11181c;
+  --background: #121923;
+  --foreground: white;
+  --highlight: #393a3f;
+  --selected: #303136;
+  --outline: #303136;
+  --negative: 255, 255, 255;
+}
+
+@mixin light-theme {
+  --background: white;
+  --foreground: #11181c;
+  --highlight: #f7f6f6;
+  --selected: rgb(246, 249, 250); //#f5f4f0;
+  --outline: rgb(246, 249, 250);
+  --negative: 0, 0, 0;
+}
+
 .root {
-  &.is-dark {
-    //--background: #11181c;
-    --background: #121923;
-    --foreground: white;
-    --highlight: #393a3f;
-    --selected: #303136;
-    --outline: #303136;
-    --negative: 255, 255, 255;
+  @include dark-theme;
+
+  @media (prefers-color-scheme: light) {
+    @include light-theme;
   }
 
   &.is-light {
-    --background: white;
-    --foreground: #11181c;
-    --highlight: #f7f6f6;
-    --selected: rgb(246, 249, 250); //#f5f4f0;
-    --outline: rgb(246, 249, 250);
-    --negative: 0, 0, 0;
+    @include light-theme;
+  }
+
+  &.is-dark {
+    @include dark-theme;
   }
 
   display: flex;

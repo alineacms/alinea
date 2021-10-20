@@ -2,7 +2,8 @@ import {PasswordLessLogin} from '@alinea/auth.passwordless/PasswordLessLogin'
 import {EntryOf} from '@alinea/core'
 import Dashboard from '@alinea/dashboard'
 import {schema} from '../schema'
-import {Preview} from '../view/Preview'
+import {Layout} from '../view/layout/Layout'
+import {PageView} from '../view/PageView'
 
 /*const Dashboard: typeof import('@alinea/dashboard')['default'] = dynamic(
   () => import('@alinea/dashboard'),
@@ -19,7 +20,13 @@ export default function Admin() {
         schema={schema}
         apiUrl="/api/cms"
         auth={PasswordLessLogin}
-        preview={Preview}
+        preview={entry => {
+          return (
+            <Layout>
+              <PageView {...entry} />
+            </Layout>
+          )
+        }}
       />
     )
   )
