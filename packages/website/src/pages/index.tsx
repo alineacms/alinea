@@ -1,6 +1,6 @@
-import {InferGetStaticPropsType} from 'next'
 import {pages} from '../pages'
 import {Home} from '../schema'
+import {HomePage} from '../view/HomePage'
 
 export function getStaticProps() {
   return {
@@ -8,8 +8,4 @@ export function getStaticProps() {
   }
 }
 
-export default function HomePage(
-  home: InferGetStaticPropsType<typeof getStaticProps>
-) {
-  return <HomePage {...home} />
-}
+export default HomePage
