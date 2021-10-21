@@ -1,15 +1,47 @@
 .node {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   height: 26px;
   font-size: 13px;
-  color: var(--foreground);
-  cursor: pointer;
-  padding: 0 10px;
-  text-decoration: none;
   font-weight: 500;
-  position: relative;
-  z-index: 1;
+
+  &-link {
+    display: flex;
+    align-items: center;
+    flex-grow: 1;
+    color: var(--foreground);
+    cursor: pointer;
+    text-decoration: none;
+    padding-right: 10px;
+
+    &-badge {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--accent);
+      color: var(--accent-foreground);
+      border-radius: 14px;
+      height: 14px;
+      min-width: 14px;
+      padding: 0 3px;
+      white-space: nowrap;
+      font-size: 9px;
+      font-weight: bold;
+    }
+
+    &-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 20px;
+      text-align: center;
+      flex-shrink: 0;
+      color: #858585;
+    }
+  }
 
   &:hover {
     background: var(--highlight);
@@ -21,34 +53,9 @@
     color: var(--foreground);
   }
 
-  &-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 20px;
-    height: 20px;
-    text-align: center;
-    flex-shrink: 0;
-    color: #858585;
-  }
-
-  &-badge {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--accent);
-    color: var(--accent-foreground);
-    border-radius: 14px;
-    height: 14px;
-    min-width: 14px;
-    padding: 0 3px;
-    white-space: nowrap;
-    font-size: 9px;
-    font-weight: bold;
-  }
-
   &-create {
     opacity: 0;
+    padding-right: 10px;
   }
 
   &:hover &-create,

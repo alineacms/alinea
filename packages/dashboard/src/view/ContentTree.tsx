@@ -61,9 +61,10 @@ function TreeNode({entry, level, isOpen, toggleOpen}: TreeNodeProps) {
   const ref = useRef<HTMLAnchorElement>(null)
   const location = useLocation()
   const isSelected = location.pathname.slice(1) === entry.$id
-  const handleOpen = useCallback(() => {
+  const handleToggleOpen = useCallback(() => {
     if (entry.$isContainer) toggleOpen(entry.$id)
   }, [toggleOpen])
+  const isOpened = isOpen(entry.$id)
   useInitialEffect(() => {
     if (isSelected)
       ref.current!.scrollIntoView({/*behavior: 'smooth',*/ block: 'center'})
@@ -75,10 +76,10 @@ function TreeNode({entry, level, isOpen, toggleOpen}: TreeNodeProps) {
         entry={entry}
         level={level}
         isSelected={isSelected}
-        isOpened={isOpen(entry.$id)}
-        onOpen={handleOpen}
+        isOpened={isOpened}
+        toggleOpen={handleToggleOpen}
       />
-      {entry.$isContainer && isOpen(entry.$id) && (
+      {entry.$isContainer && isOpened && (
         <TreeChildren
           parent={entry.$id}
           level={level + 1}
@@ -117,53 +118,64 @@ type TreeNodeLinkProps = {
   isSelected: boolean
   level: number
   isOpened: boolean
-  onOpen: () => void
+  toggleOpen: () => void
 }
 
 const TreeNodeLink = memo(
   forwardRef(function TreeNodeLink(
-    {entry, isOpened, onOpen, isSelected, level}: TreeNodeLinkProps,
+    {entry, isOpened, toggleOpen, isSelected, level}: TreeNodeLinkProps,
     ref: Ref<HTMLAnchorElement>
   ) {
     return (
-      <Link
-        ref={ref}
-        to={entry.$id}
-        onClick={onOpen}
-        className={styles.node.is({selected: isSelected})()}
-        style={{paddingLeft: `${10 + level * 8}px`}}
-      >
-        <div className={styles.node.icon()}>
-          {entry.$isContainer ? (
-            isOpened ? (
-              <MdExpandMore size={20} />
+      <div className={styles.node.is({selected: isSelected})()}>
+        <Link
+          ref={ref}
+          to={entry.$id}
+          onClick={toggleOpen}
+          className={styles.node.link()}
+          style={{paddingLeft: `${10 + level * 8}px`}}
+        >
+          <div className={styles.node.link.icon()}>
+            {entry.$isContainer ? (
+              isOpened ? (
+                <MdExpandMore size={20} />
+              ) : (
+                <MdChevronRight size={20} />
+              )
             ) : (
-              <MdChevronRight size={20} />
-            )
-          ) : (
-            <MdInsertDriveFile size={12} />
-          )}
-        </div>
-        <HStack center gap={8} style={{width: '100%'}}>
-          <span
-            style={{
-              whiteSpace: 'nowrap',
-              textOverflow: 'ellipsis',
-              overflow: 'hidden'
+              <MdInsertDriveFile size={12} />
+            )}
+          </div>
+          <HStack
+            center
+            gap={8}
+            style={{width: '100%'}}
+            onClick={event => {
+              if (isOpened) event.stopPropagation()
             }}
           >
-            {entry.title}
-          </span>
-          {entry.$isContainer && entry.childrenCount > 0 && (
-            <div className={styles.node.badge()}>{entry.childrenCount}</div>
-          )}
-          {entry.$isContainer && (
-            <Stack.Right className={styles.node.create()}>
-              <TreeNodeChildrenCreator entry={entry} />
-            </Stack.Right>
-          )}
-        </HStack>
-      </Link>
+            <span
+              style={{
+                whiteSpace: 'nowrap',
+                textOverflow: 'ellipsis',
+                overflow: 'hidden'
+              }}
+            >
+              {entry.title}
+            </span>
+            {entry.$isContainer && entry.childrenCount > 0 && (
+              <div className={styles.node.link.badge()}>
+                {entry.childrenCount}
+              </div>
+            )}
+          </HStack>
+        </Link>
+        {entry.$isContainer && (
+          <Stack.Right className={styles.node.create()}>
+            <TreeNodeChildrenCreator entry={entry} />
+          </Stack.Right>
+        )}
+      </div>
     )
   })
 )
