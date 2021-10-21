@@ -1,6 +1,6 @@
 import {createId, Draft, Entry, outcome} from '@alinea/core'
 import convertHrtime from 'convert-hrtime'
-import fs, {constants} from 'fs-extra'
+import fs from 'fs-extra'
 import {Store} from 'helder.store'
 import pLimit from 'p-limit'
 import {posix as path} from 'path'
@@ -45,13 +45,13 @@ async function index(dir: string, store: Store) {
         // Find entry data in path/index.json
         const indexLocation = path.join(dir, localPath, '/index.json')
         const hasIndex = await outcome.succeeds(
-          fs.access(indexLocation, constants.R_OK)
+          fs.access(indexLocation, fs.constants.R_OK)
         )
         if (hasIndex) entry = await entryData(indexLocation)
         // Find entry data in path.json
         const namedLocation = path.join(dir, `${localPath}.json`)
         const hasNamedLocation = await outcome.succeeds(
-          fs.access(namedLocation, constants.R_OK)
+          fs.access(namedLocation, fs.constants.R_OK)
         )
         if (hasNamedLocation) entry = await entryData(namedLocation)
         const parent = store.insert(Entry, {
