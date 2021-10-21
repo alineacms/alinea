@@ -1,40 +1,51 @@
 import {Field} from './Field'
 import {Label} from './Label'
+import {Type} from './Type'
+import {RecordType} from './type/RecordType'
 import {Lazy} from './util/Lazy'
 import {LazyRecord} from './util/LazyRecord'
 
-export interface Channel<T = {}> {
-  label: Label
-  fields: LazyRecord<Field>
-  options?: {
+export namespace Channel {
+  export type TypeOf<T> = T extends Channel<infer U> ? U : never
+  export type Options = {
     isContainer?: boolean
     contains?: Array<string>
   }
 }
 
-export namespace Channel {
-  export type TypeOf<T> = T extends Channel<infer U> ? U : never
+export class Channel<T = {}> {
+  #fields: LazyRecord<Field>
 
-  export function concat(a: Channel, b: Channel) {
-    const aFields = Channel.fields(a)
-    const bFields = Channel.fields(b)
-    return {
-      label: `${Lazy.get(a.label)}+${Lazy.get(b.label)}`,
-      fields: Object.fromEntries(aFields.concat(bFields)),
-      options: {...a.options, ...b.options}
-    }
+  constructor(
+    public label: Label,
+    fields: LazyRecord<Field>,
+    public options: Channel.Options = {}
+  ) {
+    this.#fields = fields
   }
 
-  export function fields(channel: Channel) {
-    return LazyRecord.iterate(channel.fields)
-  }
-
-  export function field(channel: Channel, key: string) {
-    const field = LazyRecord.get(channel.fields, key)
-    if (!field)
-      throw new Error(
-        `No such field: "${key}" in channel "${Lazy.get(channel.label)}"`
+  get type(): RecordType {
+    return Type.Record(
+      Object.fromEntries(
+        Array.from(this).map(([key, field]) => {
+          return [key, field.type]
+        })
       )
+    )
+  }
+
+  [Symbol.iterator]() {
+    return LazyRecord.iterate(this.#fields)[Symbol.iterator]()
+  }
+
+  get fields() {
+    return LazyRecord.resolve(this.#fields)
+  }
+
+  field(key: string) {
+    const field = this.fields[key]
+    if (!field)
+      throw new Error(`No such field: "${key}" in channel "${this.label}"`)
     return field
   }
 }
@@ -50,7 +61,7 @@ type RowOf<LazyFields> = LazyFields extends Lazy<infer U>
 export function channel<Fields extends LazyRecord<Field>>(
   label: Label,
   fields: Fields,
-  options?: Channel['options']
+  options?: Channel.Options
 ): Channel<RowOf<Fields>> {
-  return {label, fields, options}
+  return new Channel(label, fields, options)
 }

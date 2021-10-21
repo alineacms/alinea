@@ -8,7 +8,7 @@ import {createRequire} from 'module'
 import path from 'path'
 
 const require = createRequire(import.meta.url)
-const usePreact = true
+const usePreact = false
 const clients = []
 
 /*

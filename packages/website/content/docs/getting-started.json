@@ -1,5 +1,26 @@
 {
   "$id": "1zoD8OoAFHj6I1IeO8n8ltfBVJ0",
   "$channel": "Doc",
-  "title": "Getting started"
+  "title": "Getting started",
+  "body": "<paragraph></paragraph><paragraph></paragraph><paragraph>Test</paragraph>",
+  "blocks": [
+    {
+      "$id": "1zpMEbbcnB7Xv3ObeU5MrR44woG",
+      "$index": "a0",
+      "$channel": "A",
+      "field1": "A"
+    },
+    {
+      "$id": "1zpMtSA7IsD3mgrOkNQNNrzaPh4",
+      "$index": "a1",
+      "$channel": "A",
+      "field1": "B"
+    },
+    {
+      "$id": "1zpPEaoCJXU9g7l0uZif1YX4sVC",
+      "$index": "a2",
+      "$channel": "B",
+      "field1": "C"
+    }
+  ]
 }

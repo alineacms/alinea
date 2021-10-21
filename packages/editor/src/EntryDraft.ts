@@ -1,13 +1,14 @@
 import {
+  Channel,
   docFromEntry,
   Draft,
   Entry,
   EntryStatus,
   inputPath,
   InputPath,
-  Outcome
+  Outcome,
+  Type
 } from '@alinea/core'
-import {Value} from '@alinea/core/value/Value'
 import {fromUint8Array, toUint8Array} from 'js-base64'
 import {Observable} from 'lib0/observable'
 import {Room, WebrtcProvider} from 'y-webrtc'
@@ -37,6 +38,7 @@ export class EntryDraft
   private saveTimeout: any = null
 
   constructor(
+    private channel: Channel,
     private entry: Entry,
     draft: Draft | null,
     protected saveDraft: (doc: string) => Promise<Outcome<void>>
@@ -44,7 +46,7 @@ export class EntryDraft
     super()
     this.doc = new Y.Doc()
     if (draft?.doc) Y.applyUpdate(this.doc, toUint8Array(draft.doc))
-    else docFromEntry(entry, this.doc)
+    else docFromEntry(channel, entry, this.doc)
     this.root = this.doc.getMap(ROOT_KEY)
   }
 
@@ -69,7 +71,8 @@ export class EntryDraft
       this.emit('change', [])
       if (this.$status === EntryStatus.Published)
         this.root.set('$status', EntryStatus.Draft)
-      if (origin) return
+      // This update did not originate from us
+      if (origin instanceof Room) return
       this.emit('status', [EntryDraftStatus.Pending])
       clearTimeout(this.saveTimeout)
       this.saveTimeout = setTimeout(save, 3000)
@@ -83,7 +86,13 @@ export class EntryDraft
   }
 
   getEntry(): Entry {
-    return Value.fromY(this.root)
+    return {
+      $id: this.$id,
+      $path: this.$path,
+      $channel: this.$channel,
+      title: this.title,
+      ...this.channel.type.fromY(this.root)
+    }
   }
 
   watchStatus(fun: (status: EntryDraftStatus) => void) {
@@ -96,10 +105,10 @@ export class EntryDraft
     return () => this.off('change', fun)
   }
 
-  static $path = inputPath<string>(['$path'])
-  static $channel = inputPath<string>(['$channel'])
-  static $status = inputPath<EntryStatus | undefined>(['$status'])
-  static title = inputPath<string>(['title'])
+  static $path = inputPath<string>(Type.Scalar, ['$path'])
+  static $channel = inputPath<string>(Type.Scalar, ['$channel'])
+  static $status = inputPath<EntryStatus | undefined>(Type.Scalar, ['$status'])
+  static title = inputPath<string>(Type.Scalar, ['title'])
 
   get $id() {
     return this.root.get('$id') || this.entry.$id
@@ -128,20 +137,19 @@ export class EntryDraft
     return this.get(target.get(path[0]), path.slice(1))
   }
 
-  getParent<T>(path: InputPath<T>): Parent {
-    return this.get(this.root, path.slice(0, -1))
+  getParent(location: Array<string>): Parent {
+    return this.get(this.root, location.slice(0, -1))
   }
 
-  getInput<T>(path: InputPath<T>, type: Value) {
-    const key = path[path.length - 1]
-    const parent = this.getParent(path)
-    const mutator = Value.mutator(type, parent, key)
+  getInput<T>(path: InputPath<T>) {
+    const key = path.location[path.location.length - 1]
+    const parent = this.getParent(path.location)
     return {
-      mutator,
+      mutator: path.type.mutator(parent, key),
       get value(): T {
-        return Value.fromY(parent.get(key))
+        return path.type.fromY(parent.get(key))
       },
-      observe: Value.watch(type, parent, key)
+      observe: path.type.watch(parent, key)
     }
   }
 }

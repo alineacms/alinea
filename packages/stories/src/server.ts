@@ -53,7 +53,7 @@ const hub = new LocalHub({
 })
 const server = new Server({
   dashboardUrl,
-  auth,
+  //  auth,
   hub
 })
 

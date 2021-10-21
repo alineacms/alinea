@@ -1,7 +1,13 @@
-// Todo: input path should also contain the base type of the field we're
-// targeting
-export type InputPath<T> = Array<string> & {__t: T}
+import {Type} from './Type'
 
-export function inputPath<T>(of: Array<string>) {
-  return of as InputPath<T>
+export type InputPath<T> = {
+  type: Type<T>
+  location: Array<string>
+}
+
+export function inputPath<T>(
+  type: Type<T>,
+  location: Array<string>
+): InputPath<T> {
+  return {type, location}
 }

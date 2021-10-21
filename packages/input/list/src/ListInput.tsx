@@ -1,4 +1,4 @@
-import {inputPath, InputPath} from '@alinea/core'
+import {inputPath, InputPath, Type} from '@alinea/core'
 import {Fields, Label, useInput} from '@alinea/editor'
 import {fromModule, IconButton, TextLabel} from '@alinea/ui'
 import {Create} from '@alinea/ui/Create'
@@ -149,7 +149,7 @@ const layoutMeasuringConfig = {
   strategy: LayoutMeasuringStrategy.Always
 }
 export function ListInput<T extends ListRow>({path, field}: ListInputProps<T>) {
-  const [rows, input] = useInput(path, field.value)
+  const [rows, input] = useInput(path)
   const {help} = field.options
   const ids = rows.map(row => row.$id)
   const [dragging, setDragging] = useState<T | null>(null)
@@ -190,7 +190,10 @@ export function ListInput<T extends ListRow>({path, field}: ListInputProps<T>) {
                     key={row.$id}
                     row={row}
                     field={field}
-                    path={inputPath<T>(path.concat(row.$id))}
+                    path={inputPath<T>(
+                      Type.Scalar,
+                      path.location.concat(row.$id)
+                    )}
                     onDelete={() => input.delete(row.$id)}
                   />
                 )
@@ -209,7 +212,10 @@ export function ListInput<T extends ListRow>({path, field}: ListInputProps<T>) {
                 key="overlay"
                 row={dragging}
                 field={field}
-                path={inputPath<T>(path.concat(dragging.$id))}
+                path={inputPath<T>(
+                  Type.Scalar,
+                  path.location.concat(dragging.$id)
+                )}
               />
             ) : null}
           </DragOverlay>

@@ -1,6 +1,6 @@
 import * as Y from 'yjs'
+import {Channel} from './Channel'
 import {Entry} from './Entry'
-import {Value} from './value/Value'
 
 const ROOT_KEY = 'root'
 
@@ -13,12 +13,14 @@ const entryFields = new Set([
 ])
 
 export function docFromEntry(
+  channel: Channel,
   entry: Entry & {[key: string]: any},
   doc = new Y.Doc()
 ) {
   const root = doc.getMap(ROOT_KEY)
-  for (const key of Object.keys(entry)) {
-    root.set(key, Value.toY(entry[key]))
+  for (const [key, field] of channel) {
+    const contents = entry[key]
+    root.set(key, field.type.toY(contents))
   }
   return doc
 }

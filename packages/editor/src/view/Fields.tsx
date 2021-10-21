@@ -10,13 +10,17 @@ type EntryEditFieldsProps = {
   channel: Channel
 }
 
-export function Fields({path = inputPath([]), channel}: EntryEditFieldsProps) {
-  const fields = Channel.fields(channel)
+export function Fields({path, channel}: EntryEditFieldsProps) {
+  const fields = Array.from(channel)
   return (
     <div className={styles.root()}>
       {fields.map(([name, field]) => {
         return (
-          <Input key={name} path={inputPath(path.concat(name))} field={field} />
+          <Input
+            key={name}
+            path={inputPath(field.type, (path?.location || []).concat(name))}
+            field={field}
+          />
         )
       })}
     </div>

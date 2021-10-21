@@ -1,6 +1,7 @@
 import {Collection} from 'helder.store'
 import {Channel} from './Channel'
 import {Entry} from './Entry'
+import {RecordType} from './type/RecordType'
 import {LazyRecord} from './util/LazyRecord'
 
 export type HasChannel = {$channel: string}
@@ -24,8 +25,17 @@ type ChannelsOf<T> = T extends HasChannel ? T['$channel'] : string
 
 export class Schema<T = any> {
   #channels: LazyRecord<Channel<T>>
+
   constructor(channels: LazyRecord<Channel<T>>) {
     this.#channels = channels
+  }
+
+  get types(): Record<string, RecordType> {
+    return Object.fromEntries(
+      Array.from(this).map(([key, channel]) => {
+        return [key, channel.type]
+      })
+    )
   }
 
   [Symbol.iterator]() {
@@ -42,7 +52,7 @@ export class Schema<T = any> {
     return LazyRecord.keys(this.#channels)
   }
 
-  get channels(): {
+  get collections(): {
     [K in ChannelsOf<T>]: Collection<Extract<T, {$channel: K}>>
   } {
     return Object.fromEntries(

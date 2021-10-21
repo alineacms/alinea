@@ -1,24 +1,21 @@
-import {InputPath, Value} from '@alinea/core'
+import {InputPath, Type} from '@alinea/core'
 import {useForceUpdate} from '@alinea/ui'
 import {useEffect, useMemo} from 'react'
 import {useCurrentDraft} from './UseCurrentDraft'
 
-export type InputPair<T> = readonly [T, Value.Mutator<T>]
+export type InputPair<T> = readonly [T, Type.Mutator<T>]
 
-export function useInput<T>(
-  path: InputPath<T>,
-  type = Value.Scalar
-): InputPair<T> {
+export function useInput<T>(path: InputPath<T>): InputPair<T> {
   const [draft] = useCurrentDraft()
   if (!draft) throw 'Could not load draft'
   const redraw = useForceUpdate()
   const input = useMemo(
-    () => draft.getInput<T>(path, type),
+    () => draft.getInput<T>(path),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [draft, type, ...path]
+    [draft, path.type, ...path.location]
   )
   useEffect(() => {
     return input.observe(redraw)
   }, [input, redraw])
-  return [input.value, input.mutator as Value.Mutator<T>]
+  return [input.value, input.mutator as Type.Mutator<T>]
 }

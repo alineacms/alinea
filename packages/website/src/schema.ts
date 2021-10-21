@@ -1,4 +1,6 @@
 import {channel, createSchema, DataOf, EntryOf} from '@alinea/core'
+import {list} from '@alinea/input.list'
+import {richText} from '@alinea/input.richtext'
 import {text} from '@alinea/input.text'
 
 export const schema = createSchema({
@@ -12,10 +14,23 @@ export const schema = createSchema({
     {title: text('Title', {multiline: true})},
     {isContainer: true, contains: ['Doc']}
   ),
-  Doc: channel('Doc', {title: text('Title', {multiline: true})})
+  Doc: channel('Doc', {
+    title: text('Title', {multiline: true}),
+    body: richText('Body'),
+    blocks: list('List test', {
+      schema: createSchema({
+        A: channel('Type A', {
+          field1: text('Field 1')
+        }),
+        B: channel('Type B', {
+          field1: text('Field 2')
+        })
+      })
+    })
+  })
 })
 
-export const {Home, Docs, Doc} = schema.channels
+export const {Home, Docs, Doc} = schema.collections
 
 export type Home = DataOf<typeof Home>
 export type Docs = DataOf<typeof Docs>

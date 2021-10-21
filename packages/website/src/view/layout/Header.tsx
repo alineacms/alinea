@@ -1,4 +1,4 @@
-import {HStack, Logo, px, Stack, Typo} from '@alinea/ui'
+import {HStack, Logo, px, Stack} from '@alinea/ui'
 import Link from 'next/link'
 import {RiFlashlightFill} from 'react-icons/ri/index'
 import {Container} from './Container'
@@ -9,13 +9,15 @@ export function Header() {
       <Container>
         <HStack center gap={10}>
           <Link href="/">
-            <Logo>
-              <RiFlashlightFill />
-            </Logo>
+            <a>
+              <Logo>
+                <RiFlashlightFill />
+              </Logo>
+            </a>
           </Link>
           <Stack.Right>
             <Link href="/docs">
-              <Typo.Link>Docs</Typo.Link>
+              <a>Docs</a>
             </Link>
           </Stack.Right>
         </HStack>

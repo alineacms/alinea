@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "yarn workspace @alinea/stories dev",
     "build": "node -r tsm scripts/build.ts",
+    "test": "uvu -r tsm packages 'test.*?Test.*?\\.ts$'",
     "publish:all": "yarn build && yarn workspaces foreach --no-private npm publish --tolerate-republish"
   },
   "files": [],

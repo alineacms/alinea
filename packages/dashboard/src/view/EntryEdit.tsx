@@ -1,4 +1,4 @@
-import {Entry, EntryStatus, inputPath} from '@alinea/core'
+import {Entry, EntryStatus} from '@alinea/core'
 import {
   CurrentDraftProvider,
   EntryDraft,
@@ -15,7 +15,8 @@ import {
   HStack,
   Pane,
   Stack,
-  Statusbar
+  Statusbar,
+  Typo
 } from '@alinea/ui'
 import {ComponentType, Suspense, useEffect, useState} from 'react'
 import {Helmet} from 'react-helmet'
@@ -64,6 +65,9 @@ function EntryEditHeader() {
   }
   return (
     <AppBar.Root>
+      <AppBar.Item>
+        <Typo.Monospace>{draft.$path}</Typo.Monospace>
+      </AppBar.Item>
       <Stack.Right>
         <AppBar.Item>
           <EntryStatusChip status={status} />
@@ -91,7 +95,7 @@ function EntryEditHeader() {
 }
 
 function EntryTitle() {
-  const [title] = useInput(inputPath<string>(['title']))
+  const [title] = useInput(EntryDraft.title)
   return (
     <h1 style={{position: 'relative', zIndex: 1, paddingBottom: '10px'}}>
       {title}
@@ -172,7 +176,8 @@ export function EntryEdit({id}: EntryEditProps) {
     () => hub.content.entryWithDraft(id),
     {refetchOnWindowFocus: false}
   )
-  const draft = useDraft(data!, doc => {
+  const channel = hub.schema.channel(data?.entry.$channel)
+  const draft = useDraft(channel!, data!, doc => {
     return hub.content.putDraft(id, doc)
   })
   if (!draft) return null

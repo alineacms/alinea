@@ -78,7 +78,7 @@ async function index(dir: string, store: Store) {
           if (shouldBeIndexed) {
             const entryPath = path.join(target, isIndex ? '' : name)
             store.insert(Entry, {
-              $path: path.join(localPath, entryPath),
+              $path: entryPath,
               $parent: parentId,
               ...entry
             })

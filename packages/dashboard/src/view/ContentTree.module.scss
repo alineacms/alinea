@@ -53,6 +53,10 @@
     color: var(--foreground);
   }
 
+  &.is-selected &-link {
+    font-weight: bold;
+  }
+
   &-create {
     opacity: 0;
     padding-right: 10px;

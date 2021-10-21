@@ -27,10 +27,7 @@
     "fractional-indexing": "^2.0.0",
     "react-icons": "^4.2.0"
   },
-  "peerDependencies": {
-    "react": "*"
-  },
   "devDependencies": {
-    "yjs": "^13.5.12"
+    "yjs": "^13.5.16"
   }
 }

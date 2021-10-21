@@ -17,9 +17,6 @@
   "dependencies": {
     "@alinea/core": "0.0.0",
     "y-webrtc": "^10.2.0",
-    "yjs": "^13.5.12"
-  },
-  "peerDependencies": {
-    "react": "*"
+    "yjs": "^13.5.16"
   }
 }

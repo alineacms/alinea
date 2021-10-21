@@ -20,8 +20,6 @@
     "@alinea/core": "0.0.0",
     "@alinea/editor": "0.0.0",
     "@fontsource/jetbrains-mono": "^4.5.0",
-    "@tiptap/react": "^2.0.0-beta.70",
-    "@tiptap/starter-kit": "^2.0.0-beta.109",
     "js-base64": "^3.7.2",
     "react-helmet": "^6.1.0",
     "react-icons": "^4.3.1",
@@ -36,9 +34,5 @@
     "@types/react-helmet": "^6.1.2",
     "@types/react-router": "^5.1.16",
     "@types/react-router-dom": "^5.3.0"
-  },
-  "peerDependencies": {
-    "react": "*",
-    "react-dom": "*"
   }
 }
