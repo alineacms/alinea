@@ -215,7 +215,6 @@ __metadata:
     "@stitches/react": ^1.2.0
     color2k: ^1.2.4
     react-icons: ^4.2.0
-    use-color-scheme: ^1.1.3
   peerDependencies:
     react: "*"
   languageName: unknown
@@ -9181,16 +9180,6 @@ typescript@^4.4.3:
     "@types/react":
       optional: true
   checksum: b0027242311ed3fb006575c3be69efe31946f17129f2464707f4fcf2e167b91917236569a1d622c57b36843bc05efd9740a4ba51591553ad6fe2799cc12b138e
-  languageName: node
-  linkType: hard
-
-"use-color-scheme@npm:^1.1.3":
-  version: 1.1.3
-  resolution: "use-color-scheme@npm:1.1.3"
-  peerDependencies:
-    react: ">=16.9.0"
-    react-dom: ">=16.9.0"
-  checksum: 73fdbb5b7fc17866878279bab45f2c9203837fb74b66a8f656df429475fad7ecfbb17be9187652355af137d1f14e8b0e2937cfcb4aa35c398795d031913a08a6
   languageName: node
   linkType: hard
 
