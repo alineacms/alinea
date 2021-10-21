@@ -193,7 +193,7 @@ __metadata:
   resolution: "@alinea/stories@workspace:packages/stories"
   dependencies:
     dotenv: ^10.0.0
-    esbuild: ^0.13.6
+    esbuild: ^0.13.8
     esbuild-plugin-alias: ^0.1.2
     esbuild-scss-modules-plugin: ^1.0.0
     estrella: ^1.4.1
@@ -2043,7 +2043,7 @@ __metadata:
     "@types/sass": ^1.16.1
     "@typescript-eslint/eslint-plugin": ^4.31.0
     "@typescript-eslint/parser": ^4.31.0
-    esbuild: ^0.13.6
+    esbuild: ^0.13.8
     esbuild-plugin-sass-modules: ^0.0.1
     eslint: ^7.32.0
     eslint-plugin-react: ^7.25.1
@@ -3628,10 +3628,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"esbuild-android-arm64@npm:0.13.6":
-  version: 0.13.6
-  resolution: "esbuild-android-arm64@npm:0.13.6"
-  checksum: 7d54aee49117f76db19fa7f9390e132231d0e8dd5a78ba34ca301174ee295fe5b753131d3ad2b7b94d18aed756367ae563f401879e02138af3984c5612f1a2bc
+"esbuild-android-arm64@npm:0.13.8":
+  version: 0.13.8
+  resolution: "esbuild-android-arm64@npm:0.13.8"
+  checksum: b8a0b50211cb7943132643bf9b718a36efa0bb664cde0d628f5513e96bf339d217a517793876a43399b8a814003d861c19c1f681c50070de1366397a0b061750
   languageName: node
   linkType: hard
 
@@ -3642,10 +3642,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"esbuild-darwin-64@npm:0.13.6":
-  version: 0.13.6
-  resolution: "esbuild-darwin-64@npm:0.13.6"
-  checksum: 82be2f27442c80cb2715dff9d4cf0040659cdcb0f6bdeb6c6ab7aad22c3d5142c7d22bb44af299c75b68fc1350e7ada32e9e28a0404669820a67024e5c21388a
+"esbuild-darwin-64@npm:0.13.8":
+  version: 0.13.8
+  resolution: "esbuild-darwin-64@npm:0.13.8"
+  checksum: fb630872d7fe8ff5b704126f54f99413016e46a55f365ad24e4df6f070d28a3dc67f935cfda20cbdb39635eb31c9c6f645352374265b24a96584e2e39d90064f
   languageName: node
   linkType: hard
 
@@ -3656,10 +3656,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"esbuild-darwin-arm64@npm:0.13.6":
-  version: 0.13.6
-  resolution: "esbuild-darwin-arm64@npm:0.13.6"
-  checksum: e0e70160544f97016f1c2f9b48c1b9cf8a9b9f50aaa6ce250fb965029f690bd5ae1ee57100a97596c03b0c711afb0547ba30b21c6a609af02c00c11a3b33eceb
+"esbuild-darwin-arm64@npm:0.13.8":
+  version: 0.13.8
+  resolution: "esbuild-darwin-arm64@npm:0.13.8"
+  checksum: b7f8fe7a0c5d40f1cad5e8c9026a30975335f757b9260e6dd250cb1f4c8ef90db100a4758dc4831115cd852257a47cd4d0a3a4633cf11ecac71e57846b4a7f9c
   languageName: node
   linkType: hard
 
@@ -3670,10 +3670,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"esbuild-freebsd-64@npm:0.13.6":
-  version: 0.13.6
-  resolution: "esbuild-freebsd-64@npm:0.13.6"
-  checksum: 6824f1eeeefdd45b18a90d37fe95bb5e00468a7f695bb97c8a05e3c4a544bd69bae478830537372ce8c031d666a930eea0b1ce7fad0dc30560710d0f3e3eb308
+"esbuild-freebsd-64@npm:0.13.8":
+  version: 0.13.8
+  resolution: "esbuild-freebsd-64@npm:0.13.8"
+  checksum: bdac72a9aef00594457710fcff0072a4481a9a7c83228c5602c58360f9d866f32d0ca2b42a961a2d61e4e9bce1375cd939faf29b2f4fd30d3a37b05269fc5251
   languageName: node
   linkType: hard
 
@@ -3684,10 +3684,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"esbuild-freebsd-arm64@npm:0.13.6":
-  version: 0.13.6
-  resolution: "esbuild-freebsd-arm64@npm:0.13.6"
-  checksum: c124ec722c2f9d50d1f1f43988c61727d88f2d09b4b74c7b6cdb3e67e4e3c14de058ed24aa2466a4ed9a5d77e251759ae707ba16a9dfa8c347b0f66b4a794b1d
+"esbuild-freebsd-arm64@npm:0.13.8":
+  version: 0.13.8
+  resolution: "esbuild-freebsd-arm64@npm:0.13.8"
+  checksum: ad6d729e780cf662aa5401ab00a28cbc8244d23ebce5eeaa0fcdffe44337431c1fcaf6cd36c97d2aaaf36a696cee01275fe93b593780fcf991d0692be32048b5
   languageName: node
   linkType: hard
 
@@ -3698,10 +3698,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"esbuild-linux-32@npm:0.13.6":
-  version: 0.13.6
-  resolution: "esbuild-linux-32@npm:0.13.6"
-  checksum: 78fcc6abde73240f032f055bf684e82124096349706d7a03c21bf8ce9ffca87f2830211aff4f0d3e25c4e6206b5a4fff3d9a1890bb196e8f1a2e0a192223ede9
+"esbuild-linux-32@npm:0.13.8":
+  version: 0.13.8
+  resolution: "esbuild-linux-32@npm:0.13.8"
+  checksum: dfb87e3d6b1b688a2b9717f7c98946ac69c80b6de45761177139c04d8310b110ea1d5910b822dd8828622bdc846f2aba743f255218dff44c2d72c2175493c07e
   languageName: node
   linkType: hard
 
@@ -3712,10 +3712,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"esbuild-linux-64@npm:0.13.6":
-  version: 0.13.6
-  resolution: "esbuild-linux-64@npm:0.13.6"
-  checksum: 93db782de13a0b778a6ff2e102a88e9566f333667953278bb6c8d01a0d6083a10780195237f2bc89452e5baaea75c0a8561b754852af35374389884e7bd2ba08
+"esbuild-linux-64@npm:0.13.8":
+  version: 0.13.8
+  resolution: "esbuild-linux-64@npm:0.13.8"
+  checksum: 008e028475e087aceb900b4f6bec25cd4202017249322f30a8767826628c400c59543b19a567f39ec2348467d9a7995491e2e5c788add7691a850b2995e4a37e
   languageName: node
   linkType: hard
 
@@ -3726,10 +3726,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"esbuild-linux-arm64@npm:0.13.6":
-  version: 0.13.6
-  resolution: "esbuild-linux-arm64@npm:0.13.6"
-  checksum: 9db3054b02aa31f17e39823c0a3ac36240ae370e49b61c0dc584e194f7d9e2244a7b52c44305e5c158a5f57e57ddd249975321494b3262af13807bac6c11d596
+"esbuild-linux-arm64@npm:0.13.8":
+  version: 0.13.8
+  resolution: "esbuild-linux-arm64@npm:0.13.8"
+  checksum: bd8cc7b2bd74b7d7372f33c46cf98e90b75264e323fcbf1a4c5d75bfca226148691e4ef17b543beaa6b533ea8b87447305af60f10470ab44b5dc3037d79dd2ec
   languageName: node
   linkType: hard
 
@@ -3740,10 +3740,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"esbuild-linux-arm@npm:0.13.6":
-  version: 0.13.6
-  resolution: "esbuild-linux-arm@npm:0.13.6"
-  checksum: 41bf4320d319147ecbc3921c841d6ec3621606bd198ee92a788c139dc8d74b773ce167da9e0113f2346fc942f477d978327f7c5291f0d51196933cdc8b39d4ef
+"esbuild-linux-arm@npm:0.13.8":
+  version: 0.13.8
+  resolution: "esbuild-linux-arm@npm:0.13.8"
+  checksum: c10db7b1577df9d1efedd8f7adf57df39f0eca9b4036bf21a6051010670779d2dc07cfcc072c55dca4716802796aeab973f5c50bfed6ff7b29b33978c5b36ec4
   languageName: node
   linkType: hard
 
@@ -3754,10 +3754,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"esbuild-linux-mips64le@npm:0.13.6":
-  version: 0.13.6
-  resolution: "esbuild-linux-mips64le@npm:0.13.6"
-  checksum: e63be70811dc52516d643c4f4fb040fa37a249ce0977038b6673e0122eec23f1b50f75e550b36fc852f4554aff4b186e382162b16a98b6cdd6746278742b0503
+"esbuild-linux-mips64le@npm:0.13.8":
+  version: 0.13.8
+  resolution: "esbuild-linux-mips64le@npm:0.13.8"
+  checksum: cefa7c059cadb78af0bfb2171012e94e3b219ba1a386b69e9a5a30d8cf7d5f16559e8eba41da93d1e9db7d0ff64c7e5a98c48ef445b1496ea0921fc1b4dd7a2e
   languageName: node
   linkType: hard
 
@@ -3768,17 +3768,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"esbuild-linux-ppc64le@npm:0.13.6":
-  version: 0.13.6
-  resolution: "esbuild-linux-ppc64le@npm:0.13.6"
-  checksum: 5c94784397e18bb9f6fc4016f4d926654d47237131e3e51ca3b4db585f14f49fd5e0d8195042f6337d66dddd483a9655715b9b3f0b2eb10daafb8970a4a9d450
+"esbuild-linux-ppc64le@npm:0.13.8":
+  version: 0.13.8
+  resolution: "esbuild-linux-ppc64le@npm:0.13.8"
+  checksum: 2afb8b26a2eb200a8d2a9594ea2bdbb21b1810ed399ff6cfe358fffbb3d9b2ad997f4bbae8d474694476a7ceb31f0fc04e391a7a78b8235ccd4f29fcc120c2de
   languageName: node
   linkType: hard
 
-"esbuild-netbsd-64@npm:0.13.6":
-  version: 0.13.6
-  resolution: "esbuild-netbsd-64@npm:0.13.6"
-  checksum: 909aadc538cd61295ae66b743ff774ddff7f86d7ffd478453ad59d0fccffa0c424c3bd8d55e6a265e63c17399fb0f058c2e33afb35288df2a7f010a5f5ff63cf
+"esbuild-netbsd-64@npm:0.13.8":
+  version: 0.13.8
+  resolution: "esbuild-netbsd-64@npm:0.13.8"
+  checksum: 0f73634a3e82896bc8f8d677b37494a6578606780de10b47d929b22f81a2afc63a5dd0a3c6a309f999565c828e6556074d78b9357b9a892462b23ddac7424620
   languageName: node
   linkType: hard
 
@@ -3789,10 +3789,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"esbuild-openbsd-64@npm:0.13.6":
-  version: 0.13.6
-  resolution: "esbuild-openbsd-64@npm:0.13.6"
-  checksum: f5a8fa9fe51aa2b1af0bd303c0bfa5c62de499eff518a188d5a4480f30e71595ef62ccf668c1028e00539ad99f2b95c512624d9d5a416cc19cc69b98c139154e
+"esbuild-openbsd-64@npm:0.13.8":
+  version: 0.13.8
+  resolution: "esbuild-openbsd-64@npm:0.13.8"
+  checksum: 969edda8773e18377bd3df919c67e3524d6ab7a1b310bed2174fe4c3f7547676ae83197df07aba5e562eec27c3ddf44a7850fae917755a5cdf6d163a0396d7be
   languageName: node
   linkType: hard
 
@@ -3835,10 +3835,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"esbuild-sunos-64@npm:0.13.6":
-  version: 0.13.6
-  resolution: "esbuild-sunos-64@npm:0.13.6"
-  checksum: 0be0cdf189205a0aafa2d9d501585152d591b4bbf6d55ba5c94ac9a045fea1bca425617765965c5c3303c1257bc5128a543d2890e11da22a103fe184c6d2b5c7
+"esbuild-sunos-64@npm:0.13.8":
+  version: 0.13.8
+  resolution: "esbuild-sunos-64@npm:0.13.8"
+  checksum: 3f9bdae8f5a23765529fad75c4bb74922bf689767bb4a27bce379133cf02c02ea9976db33cb664dd6bbbdeba6c3a94b74c50f8e7542fe724690c5f2dbe1210cf
   languageName: node
   linkType: hard
 
@@ -3849,10 +3849,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"esbuild-windows-32@npm:0.13.6":
-  version: 0.13.6
-  resolution: "esbuild-windows-32@npm:0.13.6"
-  checksum: 49368cd52f43e2667c28876f2cfdaaaf3dcbbf73915715951f8a01b22f3d9926a9212eef85ac8f9d9e7e369c41df4d44abbc831459c7fe0dcb4b6b869cddf1bd
+"esbuild-windows-32@npm:0.13.8":
+  version: 0.13.8
+  resolution: "esbuild-windows-32@npm:0.13.8"
+  checksum: ca259559f8bdf31d396e1661612d745611274a2baf2d85570507ebe3adb1e1a1dbfac640859f8358a4b4dcf4dcbd65b3e01373d76a205b1838d4bd237bd566f3
   languageName: node
   linkType: hard
 
@@ -3863,10 +3863,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"esbuild-windows-64@npm:0.13.6":
-  version: 0.13.6
-  resolution: "esbuild-windows-64@npm:0.13.6"
-  checksum: 695f3755ba4801992dfaf46eca938bc75f163fa99aaf0d44d49e89c4c202ba11542e600130f3ee0a778c0d0defd156e07f572f2b7b4eb6e99160f4f8383d7035
+"esbuild-windows-64@npm:0.13.8":
+  version: 0.13.8
+  resolution: "esbuild-windows-64@npm:0.13.8"
+  checksum: a4ab47051682682b887ee2020d8b089734f4344b8af845d116cde63302eb49ea2c93f3bcc129d16c1a27444bb68be48cc940ff055bbe337c03e7e296b90bfb7f
   languageName: node
   linkType: hard
 
@@ -3877,10 +3877,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"esbuild-windows-arm64@npm:0.13.6":
-  version: 0.13.6
-  resolution: "esbuild-windows-arm64@npm:0.13.6"
-  checksum: 01769a9950cd5bc90e827a26342a41a0b9c6796fb02e4b769e477438a3e4db9484e3337b26958ea2f3d66685f2366fbad32bab468b591be06171dcca19241192
+"esbuild-windows-arm64@npm:0.13.8":
+  version: 0.13.8
+  resolution: "esbuild-windows-arm64@npm:0.13.8"
+  checksum: f7183974a273a561b04bbfb5f8a7dd4e44fc9115003ddc364d75de38910a0a5f7eaf39935073b2108d2db0844b07429c627a4b7759bb01e7050b5a8336f5a393
   languageName: node
   linkType: hard
 
@@ -3952,27 +3952,27 @@ __metadata:
   languageName: node
   linkType: hard
 
-"esbuild@npm:^0.13.6":
-  version: 0.13.6
-  resolution: "esbuild@npm:0.13.6"
+"esbuild@npm:^0.13.8":
+  version: 0.13.8
+  resolution: "esbuild@npm:0.13.8"
   dependencies:
-    esbuild-android-arm64: 0.13.6
-    esbuild-darwin-64: 0.13.6
-    esbuild-darwin-arm64: 0.13.6
-    esbuild-freebsd-64: 0.13.6
-    esbuild-freebsd-arm64: 0.13.6
-    esbuild-linux-32: 0.13.6
-    esbuild-linux-64: 0.13.6
-    esbuild-linux-arm: 0.13.6
-    esbuild-linux-arm64: 0.13.6
-    esbuild-linux-mips64le: 0.13.6
-    esbuild-linux-ppc64le: 0.13.6
-    esbuild-netbsd-64: 0.13.6
-    esbuild-openbsd-64: 0.13.6
-    esbuild-sunos-64: 0.13.6
-    esbuild-windows-32: 0.13.6
-    esbuild-windows-64: 0.13.6
-    esbuild-windows-arm64: 0.13.6
+    esbuild-android-arm64: 0.13.8
+    esbuild-darwin-64: 0.13.8
+    esbuild-darwin-arm64: 0.13.8
+    esbuild-freebsd-64: 0.13.8
+    esbuild-freebsd-arm64: 0.13.8
+    esbuild-linux-32: 0.13.8
+    esbuild-linux-64: 0.13.8
+    esbuild-linux-arm: 0.13.8
+    esbuild-linux-arm64: 0.13.8
+    esbuild-linux-mips64le: 0.13.8
+    esbuild-linux-ppc64le: 0.13.8
+    esbuild-netbsd-64: 0.13.8
+    esbuild-openbsd-64: 0.13.8
+    esbuild-sunos-64: 0.13.8
+    esbuild-windows-32: 0.13.8
+    esbuild-windows-64: 0.13.8
+    esbuild-windows-arm64: 0.13.8
   dependenciesMeta:
     esbuild-android-arm64:
       optional: true
@@ -4010,7 +4010,7 @@ __metadata:
       optional: true
   bin:
     esbuild: bin/esbuild
-  checksum: 35f2e77a15de7d5a9df9f726de89ceed6b4955d59fd48902ef32665221a495eba33a0b15d461421e90e0f09baaddeb97da3c111416bf73e97aa84aec3cb6067a
+  checksum: 239b48f26af525236d96385a0854eb86886581d503eee81c18d189cc8d099ff182fc0de9b14c4328fd146ca3ec506efa5d011c95c6af2dd7011cb0b225dfd140
   languageName: node
   linkType: hard
 

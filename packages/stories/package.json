@@ -9,7 +9,7 @@
     "build": "node backend.js"
   },
   "devDependencies": {
-    "esbuild": "^0.13.6",
+    "esbuild": "^0.13.8",
     "esbuild-plugin-alias": "^0.1.2",
     "esbuild-scss-modules-plugin": "^1.0.0",
     "estrella": "^1.4.1",
