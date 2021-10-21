@@ -1,5 +1,11 @@
 import {Entry} from '@alinea/core'
-import {fromModule, useInitialEffect} from '@alinea/ui'
+import {
+  Create,
+  fromModule,
+  Stack,
+  TextLabel,
+  useInitialEffect
+} from '@alinea/ui'
 import {HStack} from '@alinea/ui/Stack'
 import {forwardRef, memo, Ref, useCallback, useRef, useState} from 'react'
 import {
@@ -84,6 +90,28 @@ function TreeNode({entry, level, isOpen, toggleOpen}: TreeNodeProps) {
   )
 }
 
+type TreeNodeChildrenCreator = {entry: Entry}
+
+function TreeNodeChildrenCreator({entry}: TreeNodeChildrenCreator) {
+  const {schema} = useSession().hub
+  const channel = schema.channel(entry.$channel)
+  if (!channel) return null
+  const channelOptions = channel.options?.contains || schema.keys
+  if (channelOptions.length === 1)
+    return (
+      <Create.Root>
+        <Create.Button>
+          <TextLabel label={schema.channel(channelOptions[0])?.label!} />
+        </Create.Button>
+      </Create.Root>
+    )
+  return (
+    <Create.Root>
+      <Create.Button>Create new</Create.Button>
+    </Create.Root>
+  )
+}
+
 type TreeNodeLinkProps = {
   entry: Entry.WithChildrenCount
   isSelected: boolean
@@ -128,6 +156,11 @@ const TreeNodeLink = memo(
           </span>
           {entry.$isContainer && entry.childrenCount > 0 && (
             <div className={styles.node.badge()}>{entry.childrenCount}</div>
+          )}
+          {entry.$isContainer && (
+            <Stack.Right className={styles.node.create()}>
+              <TreeNodeChildrenCreator entry={entry} />
+            </Stack.Right>
           )}
         </HStack>
       </Link>

@@ -46,4 +46,13 @@
     font-size: 9px;
     font-weight: bold;
   }
+
+  &-create {
+    opacity: 0;
+  }
+
+  &:hover &-create,
+  &.is-selected &-create {
+    opacity: 1;
+  }
 }

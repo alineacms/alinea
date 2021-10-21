@@ -38,6 +38,10 @@ export class Schema<T = any> {
     return LazyRecord.get(this.#channels, name)
   }
 
+  get keys() {
+    return LazyRecord.keys(this.#channels)
+  }
+
   get channels(): {
     [K in ChannelsOf<T>]: Collection<Extract<T, {$channel: K}>>
   } {

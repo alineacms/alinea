@@ -3,6 +3,7 @@ import {css} from '@stitches/react'
 import {
   CSSProperties,
   forwardRef,
+  HTMLAttributes,
   HTMLProps,
   PropsWithChildren,
   PropsWithRef
@@ -83,15 +84,24 @@ export const HStack: typeof VStack = forwardRef(function HStack(props, ref) {
 })
 
 export namespace Stack {
-  export function Left({children}: PropsWithChildren<{}>) {
-    return <div style={{marginRight: 'auto'}}>{children}</div>
+  export function Left(
+    props: PropsWithChildren<HTMLAttributes<HTMLDivElement>>
+  ) {
+    return <div {...props} style={{...props.style, marginRight: 'auto'}} />
   }
-  export function Center({children}: PropsWithChildren<{}>) {
+  export function Center(
+    props: PropsWithChildren<HTMLAttributes<HTMLDivElement>>
+  ) {
     return (
-      <div style={{marginRight: 'auto', marginLeft: 'auto'}}>{children}</div>
+      <div
+        {...props}
+        style={{...props.style, marginRight: 'auto', marginLeft: 'auto'}}
+      />
     )
   }
-  export function Right({children}: PropsWithChildren<{}>) {
-    return <div style={{marginLeft: 'auto'}}>{children}</div>
+  export function Right(
+    props: PropsWithChildren<HTMLAttributes<HTMLDivElement>>
+  ) {
+    return <div {...props} style={{...props.style, marginLeft: 'auto'}} />
   }
 }

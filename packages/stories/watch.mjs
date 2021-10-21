@@ -106,6 +106,8 @@ esbuild.serve({servedir: '.'}, {}).then(server => {
     )
   }).listen(8000)
 
+  console.log(`\n\x1b[36m> Serving on http://localhost:8000\x1b[39m\n`)
+
   setTimeout(() => {
     const op = {
       darwin: ['open'],

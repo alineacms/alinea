@@ -1,23 +1,39 @@
-import {createId, Draft, Entry} from '@alinea/core'
+import {createId, Draft, Entry, outcome} from '@alinea/core'
 import convertHrtime from 'convert-hrtime'
-import {promises as fs} from 'fs'
+import fs, {constants} from 'fs-extra'
 import {Store} from 'helder.store'
 import pLimit from 'p-limit'
 import {posix as path} from 'path'
 import prettyMilliseconds from 'pretty-ms'
 
+const openfile = pLimit(4)
+
 async function completeEntry(
   entry: Entry,
   save: (entry: Entry) => Promise<void>
 ) {
-  if (!entry.$id) return save({$id: createId(), ...(entry as any)})
+  if (!entry.$id) {
+    const result = {$id: createId(), ...(entry as any)}
+    await save(result)
+    return result
+  }
+  return entry
+}
+
+async function entryData(location: string) {
+  const parsed = JSON.parse(
+    await openfile(() => fs.readFile(location, 'utf-8'))
+  )
+  const entry = await completeEntry(parsed, (entry: Entry) => {
+    return fs.writeFile(location, JSON.stringify(entry, null, '  '))
+  })
+  return entry
 }
 
 type Progress<T> = Promise<T> & {progress(): number}
 
 async function index(dir: string, store: Store) {
   let total = 0
-  const openfile = pLimit(4)
   async function process(target: string, parentId?: string) {
     const files = await fs.readdir(path.join(dir, target))
     const tasks = files.map(file => async () => {
@@ -25,34 +41,48 @@ async function index(dir: string, store: Store) {
       const localPath = path.join(target, file)
       const isContainer = stat.isDirectory()
       if (isContainer) {
+        let entry = {}
+        // Find entry data in path/index.json
+        const indexLocation = path.join(dir, localPath, '/index.json')
+        const hasIndex = await outcome.succeeds(
+          fs.access(indexLocation, constants.R_OK)
+        )
+        if (hasIndex) entry = await entryData(indexLocation)
+        // Find entry data in path.json
+        const namedLocation = path.join(dir, `${localPath}.json`)
+        const hasNamedLocation = await outcome.succeeds(
+          fs.access(namedLocation, constants.R_OK)
+        )
+        if (hasNamedLocation) entry = await entryData(namedLocation)
         const parent = store.insert(Entry, {
           $id: createId(),
           $path: localPath,
           $parent: parentId,
           $isContainer: true,
           $channel: '',
-          title: file
+          title: file,
+          ...entry
         })
         await process(localPath, parent.$id)
       } else {
         total++
         try {
           const location = path.join(dir, localPath)
-          const parsed = JSON.parse(
-            await openfile(() => fs.readFile(location, 'utf-8'))
-          )
-          // Fill missing details
-          await completeEntry(parsed, (entry: Entry) => {
-            return fs.writeFile(location, JSON.stringify(entry, null, '  '))
-          })
+          const entry = await entryData(location)
           const name = path.basename(file, '.json')
-          const entryPath = path.join(target, name === 'index' ? '' : name)
-          store.insert(Entry, {
-            $id: parsed.$id || createId(),
-            $path: entryPath,
-            $parent: parentId,
-            ...parsed
-          })
+          const isIndex = name === 'index'
+          const dirStat = await outcome(fs.stat(path.join(dir, target, name)))
+          const isNamedLocation =
+            dirStat.isSuccess() && dirStat.data.isDirectory()
+          const shouldBeIndexed = !isNamedLocation && (!isIndex || !parentId)
+          if (shouldBeIndexed) {
+            const entryPath = path.join(target, isIndex ? '' : name)
+            store.insert(Entry, {
+              $path: path.join(localPath, entryPath),
+              $parent: parentId,
+              ...entry
+            })
+          }
         } catch (e) {
           console.log(`Could not parse ${localPath} because:\n  ${e}`)
         }

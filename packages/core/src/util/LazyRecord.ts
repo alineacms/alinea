@@ -10,6 +10,10 @@ export namespace LazyRecord {
     ])
   }
 
+  export function keys<V>(collection: LazyRecord<V>): Array<string> {
+    return Object.keys(Lazy.get(collection))
+  }
+
   export function get<V>(collection: LazyRecord<V>, key: string): V {
     return Lazy.get(Lazy.get(collection)[key])
   }
