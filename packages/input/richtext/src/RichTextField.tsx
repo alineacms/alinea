@@ -1,4 +1,5 @@
 import {Field, Label, Schema, Type} from '@alinea/core'
+import {TextDoc} from '@alinea/core/type/RichTextType'
 
 export type RichTextOptions<T> = {
   help?: Label
@@ -9,7 +10,7 @@ export type RichTextOptions<T> = {
   schema?: Schema<T>
 }
 
-export type RichTextField<T> = Field<string> & {
+export type RichTextField<T> = Field<TextDoc> & {
   label: Label
   options: RichTextOptions<T>
 }
@@ -19,7 +20,7 @@ export function createRichText<T>(
   options: RichTextOptions<T> = {}
 ): RichTextField<T> {
   return {
-    type: Type.XmlFragment,
+    type: Type.RichText,
     label,
     options
   }

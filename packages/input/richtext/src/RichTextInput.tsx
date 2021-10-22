@@ -1,4 +1,4 @@
-import {InputPath} from '@alinea/core'
+import {InputPath, TextDoc} from '@alinea/core'
 import {Label, useInput} from '@alinea/editor'
 import {fromModule} from '@alinea/ui'
 import Collaboration from '@tiptap/extension-collaboration'
@@ -10,7 +10,7 @@ import css from './RichTextInput.module.scss'
 const styles = fromModule(css)
 
 export type RichTextInputProps<T> = {
-  path: InputPath<string>
+  path: InputPath<TextDoc>
   field: RichTextField<T>
 }
 

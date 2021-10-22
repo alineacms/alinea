@@ -1,8 +1,8 @@
 import * as Y from 'yjs'
 import {ListType} from './type/ListType'
 import {RecordType} from './type/RecordType'
+import {RichTextType} from './type/RichTextType'
 import {ScalarType} from './type/ScalarType'
-import {XmlFragmentType} from './type/XmlFragmentType'
 
 type YType = Y.AbstractType<any>
 
@@ -16,7 +16,7 @@ export interface Type<T = any> {
 export namespace Type {
   export type Mutator<T> = any
   export const Scalar = ScalarType.inst
-  export const XmlFragment = XmlFragmentType.inst
+  export const RichText = RichTextType.inst
   export function List(shapes: Record<string, RecordType<any>>) {
     return new ListType(shapes)
   }

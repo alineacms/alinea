@@ -9,19 +9,20 @@ namespace Node {
     marks?: Array<Mark>
   }
   export type Element = {
-    type: string
+    type: Omit<string, 'text'>
     attrs?: Record<string, any>
-    content?: Array<Node>
+    content?: Array<TextNode>
   }
 }
 
-type Node = Node.Text | Node.Element
-type Doc = {type: 'doc'; content: Array<Node>}
+export type TextNode = Node.Text
+export type ElementNode = Node.Element
+export type TextDoc = {type: 'doc'; content: Array<TextNode | ElementNode>}
 
 // Adapted from: https://github.com/yjs/y-prosemirror/blob/1c393fb3254cc1ed4933e8326b57c1316793122a/src/lib.js#L245
 function serialize(
   item: Y.XmlElement | Y.XmlText | Y.XmlHook
-): Node | Array<Node> {
+): TextNode | Array<TextNode> {
   // Todo: what is this thing?
   if (item instanceof Y.XmlHook) {
     return []
@@ -59,7 +60,7 @@ function unserializeMarks(marks: Array<Node.Mark>) {
   return Object.fromEntries(marks.map(mark => [mark.type, mark.attrs]))
 }
 
-function unserialize(node: Node): Y.XmlText | Y.XmlElement {
+function unserialize(node: TextNode): Y.XmlText | Y.XmlElement {
   switch (node.type) {
     case 'text': {
       const {text, marks} = node as Node.Text
@@ -80,16 +81,16 @@ function unserialize(node: Node): Y.XmlText | Y.XmlElement {
   }
 }
 
-export class XmlFragmentType implements Type<Node> {
-  static inst = new XmlFragmentType()
-  toY(value: Doc) {
+export class RichTextType implements Type<TextNode> {
+  static inst = new RichTextType()
+  toY(value: TextDoc) {
     const fragment = new Y.XmlFragment()
     const content = value?.content
     if (!content) return fragment
     fragment.insert(0, content.map(unserialize))
     return fragment
   }
-  fromY(value: Y.XmlFragment): Doc {
+  fromY(value: Y.XmlFragment): TextDoc {
     return {
       type: 'doc',
       content: value.toArray().map(serialize).flat()
