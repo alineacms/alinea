@@ -9,15 +9,16 @@ import css from './RichTextInput.module.scss'
 
 const styles = fromModule(css)
 
-export type RichTextInputProps = {
+export type RichTextInputProps<T> = {
   path: InputPath<string>
-  field: RichTextField
+  field: RichTextField<T>
 }
 
-export function RichTextInput({path, field}: RichTextInputProps) {
+export function RichTextInput<T>({path, field}: RichTextInputProps<T>) {
   const {optional, help} = field.options
-  const [, fragment] = useInput(path)
+  const [content, fragment] = useInput(path)
   const editor = useEditor({
+    content,
     extensions: [
       Collaboration.configure({fragment}),
       StarterKit.configure({history: false})

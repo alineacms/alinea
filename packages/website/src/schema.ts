@@ -22,8 +22,8 @@ export const schema = createSchema({
         A: channel('Type A', {
           field1: text('Field 1')
         }),
-        B: channel('Type B', {
-          field1: text('Field 2')
+        Wysiwyg: channel('Wysiwyg', {
+          field1: richText('Field 2')
         })
       })
     })

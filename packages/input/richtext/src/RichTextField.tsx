@@ -1,21 +1,23 @@
-import {Field, Label, Type} from '@alinea/core'
+import {Field, Label, Schema, Type} from '@alinea/core'
 
-export type RichTextOptions = {
+export type RichTextOptions<T> = {
   help?: Label
   optional?: boolean
   inline?: boolean
   initialValue?: string
+  // Allow these blocks to be created between text fragments
+  schema?: Schema<T>
 }
 
-export type RichTextField = Field<string> & {
+export type RichTextField<T> = Field<string> & {
   label: Label
-  options: RichTextOptions
+  options: RichTextOptions<T>
 }
 
-export function createRichText(
+export function createRichText<T>(
   label: Label,
-  options: RichTextOptions = {}
-): RichTextField {
+  options: RichTextOptions<T> = {}
+): RichTextField<T> {
   return {
     type: Type.XmlFragment,
     label,
