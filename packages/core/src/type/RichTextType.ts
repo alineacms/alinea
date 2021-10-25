@@ -94,7 +94,7 @@ export class RichTextType implements Type<TextDoc> {
   fromY(value: Y.XmlFragment): TextDoc {
     return {
       type: 'doc',
-      content: value.toArray().map(serialize).flat()
+      content: value?.toArray().map(serialize).flat() || []
     }
   }
   watch(parent: Y.Map<any>, key: string) {
