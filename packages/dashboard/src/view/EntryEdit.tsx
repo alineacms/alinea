@@ -14,6 +14,7 @@ import {
   fromModule,
   HStack,
   Pane,
+  px,
   Stack,
   Statusbar,
   Typo
@@ -65,8 +66,18 @@ function EntryEditHeader() {
   }
   return (
     <AppBar.Root>
-      <AppBar.Item>
-        <Typo.Monospace>{draft.$path}</Typo.Monospace>
+      <AppBar.Item full style={{flexGrow: 1}}>
+        <Typo.Monospace
+          style={{
+            display: 'block',
+            width: '100%',
+            background: 'var(--highlight)',
+            padding: `${px(8)} ${px(15)}`,
+            borderRadius: px(8)
+          }}
+        >
+          {draft.$path}
+        </Typo.Monospace>
       </AppBar.Item>
       <Stack.Right>
         <AppBar.Item>

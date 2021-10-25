@@ -46,3 +46,16 @@ export function Logo({children}: LogoShapeProps) {
     </div>
   )
 }
+
+/*
+
+<svg width="1em" viewBox="0 0 72 102">
+  <path
+    stroke="var(--foreground)"
+    fill="none"
+    strokeWidth="10"
+    d="M6,66C6,32.9,32.9,6,66,6v90c-16.6,0-30-13.4-30-30l0,0c0-16.6,13.4-30,30-30l0,0"
+  />
+</svg>
+
+*/

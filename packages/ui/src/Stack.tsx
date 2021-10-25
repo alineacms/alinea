@@ -46,6 +46,9 @@ function stack(props: StackProps) {
       marginLeft: px(props.gap || 0)
     }
   }
+  if (props.full) {
+    styles[direction === 'row' ? 'width' : 'height'] = '100%'
+  }
   return styles
 }
 
@@ -64,9 +67,10 @@ export const VStack = forwardRef<HTMLDivElement, StackProps>(function VStack(
     justify,
     center,
     wrap,
+    full,
     ...rest
   } = props
-  const key = `${gap}-${align}-${direction}-${justify}-${center}-${wrap}`
+  const key = `${gap}-${align}-${direction}-${justify}-${center}-${wrap}-${full}`
   const Tag = tag as any
   if (!cache.has(key)) cache.set(key, styler(css(stack(props))()))
   const className = cache.get(key)

@@ -113,7 +113,7 @@ export class RichTextType<T> implements Type<TextDoc<Row & T>> {
     const doc = new Y.XmlFragment()
     map.set('$doc', doc)
     const types = this.types
-    if (types)
+    if (types && value.blocks)
       for (const [name, block] of Object.entries(value.blocks)) {
         map.set(name, types[block.$channel].toY(block))
       }

@@ -9,6 +9,36 @@
         "$id": "1zzs6wF0OYU4VjlgWH0Yr7TjE0I",
         "$channel": "CodeBlock",
         "code": "Dit is mijn codeblock"
+      },
+      "200Cjwa5GRksoKNE5CK6A8xujMC": {
+        "$id": "200Cjwa5GRksoKNE5CK6A8xujMC",
+        "$channel": "Inception",
+        "wysiwyg": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "heading",
+              "attrs": {
+                "level": 1
+              },
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Dit is een wysiwyg"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "In een wysiwyg"
+                }
+              ]
+            }
+          ]
+        }
       }
     },
     "content": [
@@ -46,6 +76,9 @@
         }
       },
       {
+        "type": "paragraph"
+      },
+      {
         "type": "paragraph",
         "content": [
           {
@@ -66,6 +99,15 @@
             "text": " text."
           }
         ]
+      },
+      {
+        "type": "paragraph"
+      },
+      {
+        "type": "Inception",
+        "attrs": {
+          "id": "200Cjwa5GRksoKNE5CK6A8xujMC"
+        }
       }
     ]
   },
