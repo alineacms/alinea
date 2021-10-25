@@ -1,24 +1,28 @@
 import {ElementNode, TextDoc, TextNode} from '@alinea/core'
+import {Fragment} from 'react'
 
-const tags = {
+const tags: Record<string, any> = {
   heading: 'h1',
-  bold: 'b'
+  bold: 'b',
+  paragraph: 'p'
 }
 
 function RichTextNode(node: TextNode | ElementNode) {
   switch (node.type) {
     case 'text':
-      const {text} = node as TextNode
-      return <span>{text}</span>
+      const {text, marks} = node as TextNode
+      const wrappers = marks?.map(mark => tags[mark.type] || Fragment) || []
+      return wrappers.reduce((children, Tag) => {
+        return <Tag>{children}</Tag>
+      }, text)
     default:
       const {type, content} = node as ElementNode
-      if (!content) return null
       const Tag = tags[type] || Fragment
       return (
         <Tag>
-          {content.map((node, i) => (
-            <RichTextNode key={i} {...node} />
-          ))}
+          {content?.map((node, i) => <RichTextNode key={i} {...node} />) || (
+            <br />
+          )}
         </Tag>
       )
   }

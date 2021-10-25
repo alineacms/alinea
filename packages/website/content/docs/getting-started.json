@@ -62,6 +62,42 @@
       "$index": "a0",
       "$channel": "A",
       "field1": "A"
+    },
+    {
+      "$id": "1zzR6QpzVIkNPWsA0FXLmij6AsA",
+      "$index": "a2",
+      "$channel": "Wysiwyg",
+      "field1": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "sfhfdghfgh",
+                "marks": [
+                  {
+                    "type": "bold"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "paragraph"
+          },
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "fdghdfgh"
+              }
+            ]
+          }
+        ]
+      }
     }
   ]
 }

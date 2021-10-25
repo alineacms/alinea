@@ -5,24 +5,25 @@ namespace Node {
   export type Mark = {type: string; attrs?: Record<string, string>}
   export type Text = {
     type: 'text'
-    text: string
+    text?: string
     marks?: Array<Mark>
   }
   export type Element = {
-    type: Omit<string, 'text'>
+    type: string
     attrs?: Record<string, any>
-    content?: Array<TextNode>
+    content?: Array<Node>
   }
 }
 
 export type TextNode = Node.Text
 export type ElementNode = Node.Element
-export type TextDoc = {type: 'doc'; content: Array<TextNode | ElementNode>}
+type Node = TextNode | ElementNode
+export type TextDoc = {type: 'doc'; content: Array<Node>}
 
 // Adapted from: https://github.com/yjs/y-prosemirror/blob/1c393fb3254cc1ed4933e8326b57c1316793122a/src/lib.js#L245
 function serialize(
   item: Y.XmlElement | Y.XmlText | Y.XmlHook
-): TextNode | Array<TextNode> {
+): Node | Array<Node> {
   // Todo: what is this thing?
   if (item instanceof Y.XmlHook) {
     return []
@@ -57,15 +58,15 @@ function serialize(
 }
 
 function unserializeMarks(marks: Array<Node.Mark>) {
-  return Object.fromEntries(marks.map(mark => [mark.type, mark.attrs]))
+  return Object.fromEntries(marks.map(mark => [mark.type, {...mark.attrs}]))
 }
 
-function unserialize(node: TextNode): Y.XmlText | Y.XmlElement {
+function unserialize(node: Node): Y.XmlText | Y.XmlElement {
   switch (node.type) {
     case 'text': {
       const {text, marks} = node as Node.Text
       const type = new Y.XmlText()
-      type.insert(0, text, marks && unserializeMarks(marks))
+      if (text) type.insert(0, text, marks && unserializeMarks(marks))
       return type
     }
     default: {
@@ -73,7 +74,7 @@ function unserialize(node: TextNode): Y.XmlText | Y.XmlElement {
       const type = new Y.XmlElement(node.type)
       for (const key in attrs) {
         const val = attrs[key]
-        if (val !== null) type.setAttribute(key, val)
+        if (val) type.setAttribute(key, val)
       }
       if (content) type.insert(0, content.map(unserialize))
       return type
@@ -81,7 +82,7 @@ function unserialize(node: TextNode): Y.XmlText | Y.XmlElement {
   }
 }
 
-export class RichTextType implements Type<TextNode> {
+export class RichTextType implements Type<TextDoc> {
   static inst = new RichTextType()
   toY(value: TextDoc) {
     const fragment = new Y.XmlFragment()
