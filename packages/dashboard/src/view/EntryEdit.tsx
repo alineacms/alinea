@@ -144,7 +144,7 @@ function EntryEditDraft({}: EntryEditDraftProps) {
   const {preview} = useDashboard()
   return (
     <HStack style={{height: '100%'}}>
-      <div style={{flexGrow: 1}}>
+      <div style={{flexGrow: 1, display: 'flex', flexDirection: 'column'}}>
         <EntryEditHeader />
         <div className={styles.draft()}>
           <EntryTitle />

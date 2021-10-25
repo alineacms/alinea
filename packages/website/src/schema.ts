@@ -16,7 +16,16 @@ export const schema = createSchema({
   ),
   Doc: channel('Doc', {
     title: text('Title', {multiline: true}),
-    body: richText('Body'),
+    body: richText('Body', {
+      blocks: createSchema({
+        CodeBlock: channel('CodeBlock', {
+          code: text('Code', {multiline: true})
+        }),
+        Inception: channel('Inception', {
+          wysiwyg: richText('Wysiwyg')
+        })
+      })
+    }),
     blocks: list('List test', {
       schema: createSchema({
         A: channel('Type A', {

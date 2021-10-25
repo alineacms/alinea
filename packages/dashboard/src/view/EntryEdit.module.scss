@@ -2,6 +2,7 @@
   padding: 20px 35px;
   height: 100%;
   overflow-y: auto;
+  flex-grow: 1;
 
   &::-webkit-scrollbar {
     width: 6px;

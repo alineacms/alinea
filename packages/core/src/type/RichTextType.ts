@@ -1,7 +1,8 @@
 import * as Y from 'yjs'
 import {Type} from '../Type'
+import {RecordType} from './RecordType'
 
-namespace Node {
+export namespace RichTextNode {
   export type Mark = {type: string; attrs?: Record<string, string>}
   export type Text = {
     type: 'text'
@@ -11,19 +12,21 @@ namespace Node {
   export type Element = {
     type: string
     attrs?: Record<string, any>
-    content?: Array<Node>
+    content?: Array<RichTextNode>
   }
 }
+export type RichTextNode<T = any> = RichTextNode.Text | RichTextNode.Element
 
-export type TextNode = Node.Text
-export type ElementNode = Node.Element
-type Node = TextNode | ElementNode
-export type TextDoc = {type: 'doc'; content: Array<Node>}
+export type TextDoc<T> = {
+  type: 'doc'
+  blocks: Record<string, Row & T>
+  content: Array<RichTextNode<T>>
+}
 
 // Adapted from: https://github.com/yjs/y-prosemirror/blob/1c393fb3254cc1ed4933e8326b57c1316793122a/src/lib.js#L245
 function serialize(
   item: Y.XmlElement | Y.XmlText | Y.XmlHook
-): Node | Array<Node> {
+): RichTextNode | Array<RichTextNode> {
   // Todo: what is this thing?
   if (item instanceof Y.XmlHook) {
     return []
@@ -32,14 +35,14 @@ function serialize(
     const delta: Array<{insert: any; attributes: Record<string, any>}> =
       item.toDelta()
     return delta.map(d => {
-      const text: Node.Text = {
+      const text: RichTextNode.Text = {
         type: 'text',
         text: d.insert
       }
       if (d.attributes) {
         text.marks = Object.keys(d.attributes).map(type => {
           const attrs = d.attributes[type]
-          const mark: Node.Mark = {type}
+          const mark: RichTextNode.Mark = {type}
           if (attrs && Object.keys(attrs).length) mark.attrs = attrs
           return mark
         })
@@ -47,7 +50,7 @@ function serialize(
       return text
     })
   }
-  const res: Node.Element = {type: item.nodeName}
+  const res: RichTextNode.Element = {type: item.nodeName}
   const attrs = item.getAttributes()
   if (attrs && Object.keys(attrs).length) res.attrs = attrs
   const children = item.toArray()
@@ -57,44 +60,85 @@ function serialize(
   return res
 }
 
-function unserializeMarks(marks: Array<Node.Mark>) {
+function unserializeMarks(marks: Array<RichTextNode.Mark>) {
   return Object.fromEntries(marks.map(mark => [mark.type, {...mark.attrs}]))
 }
 
-function unserialize(node: Node): Y.XmlText | Y.XmlElement {
+function unserialize(node: RichTextNode): Y.XmlText | Y.XmlElement {
   switch (node.type) {
     case 'text': {
-      const {text, marks} = node as Node.Text
+      const {text, marks} = node as RichTextNode.Text
       const type = new Y.XmlText()
       if (text) type.insert(0, text, marks && unserializeMarks(marks))
       return type
     }
     default: {
-      const {attrs, content} = node as Node.Element
-      const type = new Y.XmlElement(node.type)
+      const {type, attrs, content} = node as RichTextNode.Element
+      const element = new Y.XmlElement(type)
       for (const key in attrs) {
         const val = attrs[key]
-        if (val) type.setAttribute(key, val)
+        if (val) element.setAttribute(key, val)
       }
-      if (content) type.insert(0, content.map(unserialize))
-      return type
+      if (content) element.insert(0, content.map(unserialize))
+      return element
     }
   }
 }
 
-export class RichTextType implements Type<TextDoc> {
-  static inst = new RichTextType()
-  toY(value: TextDoc) {
-    const fragment = new Y.XmlFragment()
-    const content = value?.content
-    if (!content) return fragment
-    fragment.insert(0, content.map(unserialize))
-    return fragment
+type Row = {
+  $id: string
+  $channel: string
+}
+
+export class RichTextType<T> implements Type<TextDoc<Row & T>> {
+  types?: Record<string, RecordType<Row & T>>
+  constructor(protected shapes?: Record<string, RecordType<T>>) {
+    this.types =
+      shapes &&
+      Object.fromEntries(
+        Object.entries(shapes).map(([key, type]) => {
+          return [
+            key,
+            new RecordType({
+              $id: Type.Scalar,
+              $channel: Type.Scalar,
+              ...type.shape
+            })
+          ]
+        })
+      )
   }
-  fromY(value: Y.XmlFragment): TextDoc {
+  toY(value: TextDoc<Row & T>) {
+    const map = new Y.Map()
+    const doc = new Y.XmlFragment()
+    map.set('$doc', doc)
+    const types = this.types
+    if (types)
+      for (const [name, block] of Object.entries(value.blocks)) {
+        map.set(name, types[block.$channel].toY(block))
+      }
+    const content = value?.content
+    if (!content) return map
+    doc.insert(0, content.map(unserialize))
+    return map
+  }
+  fromY(value: Y.Map<any>): TextDoc<Row & T> {
+    const doc: Y.XmlFragment = value.get('$doc')
+    const types = this.types
+    const blocks = types
+      ? Object.fromEntries(
+          Array.from(value.entries())
+            // Todo: filter out unused blocks
+            .filter(([key]) => key !== '$doc')
+            .map(([key, item]) => {
+              return [key, types[item.get('$channel')].fromY(item)]
+            })
+        )
+      : undefined
     return {
       type: 'doc',
-      content: value?.toArray().map(serialize).flat() || []
+      blocks: blocks,
+      content: doc?.toArray().map(serialize).flat() || []
     }
   }
   watch(parent: Y.Map<any>, key: string) {
@@ -102,7 +146,21 @@ export class RichTextType implements Type<TextDoc> {
     return () => {}
   }
   mutator(parent: Y.Map<any>, key: string) {
-    return parent.get(key)
+    const map = parent.get(key)
+    return {
+      map: parent.get(key),
+      fragment: map.get('$doc'),
+      insert: (id: string, block: string) => {
+        if (!this.types) throw new Error('No types defined')
+        map.set(
+          id,
+          this.types[block].toY({
+            $id: id,
+            $channel: block
+          } as any)
+        )
+      }
+    }
   }
 }
 

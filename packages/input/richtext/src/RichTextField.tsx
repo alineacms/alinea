@@ -7,10 +7,10 @@ export type RichTextOptions<T> = {
   inline?: boolean
   initialValue?: string
   // Allow these blocks to be created between text fragments
-  schema?: Schema<T>
+  blocks?: Schema<T>
 }
 
-export type RichTextField<T> = Field<TextDoc> & {
+export interface RichTextField<T> extends Field<TextDoc<T>> {
   label: Label
   options: RichTextOptions<T>
 }
@@ -20,7 +20,7 @@ export function createRichText<T>(
   options: RichTextOptions<T> = {}
 ): RichTextField<T> {
   return {
-    type: Type.RichText,
+    type: Type.RichText(options.blocks?.types),
     label,
     options
   }

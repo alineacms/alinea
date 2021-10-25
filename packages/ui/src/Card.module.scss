@@ -1,0 +1,14 @@
+.root {
+  background: var(--highlight);
+  border-radius: 20px;
+  margin: 0 -8px;
+  padding: 8px;
+}
+
+.content {
+  flex-grow: 1;
+}
+
+.options {
+  padding: 0;
+}

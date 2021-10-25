@@ -4,6 +4,13 @@
   "title": "Getting started",
   "body": {
     "type": "doc",
+    "blocks": {
+      "1zzs6wF0OYU4VjlgWH0Yr7TjE0I": {
+        "$id": "1zzs6wF0OYU4VjlgWH0Yr7TjE0I",
+        "$channel": "CodeBlock",
+        "code": "Dit is mijn codeblock"
+      }
+    },
     "content": [
       {
         "type": "heading",
@@ -25,20 +32,7 @@
         "content": [
           {
             "type": "text",
-            "text": "This is the "
-          },
-          {
-            "type": "text",
-            "text": "body",
-            "marks": [
-              {
-                "type": "bold"
-              }
-            ]
-          },
-          {
-            "type": "text",
-            "text": " text."
+            "text": "This is the body text."
           }
         ]
       },
@@ -46,11 +40,30 @@
         "type": "paragraph"
       },
       {
+        "type": "CodeBlock",
+        "attrs": {
+          "id": "1zzs6wF0OYU4VjlgWH0Yr7TjE0I"
+        }
+      },
+      {
         "type": "paragraph",
         "content": [
           {
             "type": "text",
-            "text": "And more text."
+            "text": "And "
+          },
+          {
+            "type": "text",
+            "text": "more",
+            "marks": [
+              {
+                "type": "italic"
+              }
+            ]
+          },
+          {
+            "type": "text",
+            "text": " text."
           }
         ]
       }
@@ -65,7 +78,7 @@
     },
     {
       "$id": "1zzR6QpzVIkNPWsA0FXLmij6AsA",
-      "$index": "a2",
+      "$index": "a1",
       "$channel": "Wysiwyg",
       "field1": {
         "type": "doc",

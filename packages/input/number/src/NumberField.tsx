@@ -6,7 +6,10 @@ export type NumberOptions = {
   initialValue?: number
 }
 
-export type NumberField = Field<number> & {label: Label; options: NumberOptions}
+export interface NumberField extends Field<number> {
+  label: Label
+  options: NumberOptions
+}
 
 export function createNumber(
   label: Label,

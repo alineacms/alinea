@@ -7,7 +7,7 @@ export type ListOptions<T> = {
   initialValue?: number
 }
 
-export type ListField<T> = Field<Array<T>> & {
+export interface ListField<T> extends Field<Array<T>> {
   label: Label
   options: ListOptions<any>
 }

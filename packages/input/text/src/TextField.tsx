@@ -8,7 +8,10 @@ export type TextOptions = {
   initialValue?: string
 }
 
-export type TextField = Field<string> & {label: Label; options: TextOptions}
+export interface TextField extends Field<string> {
+  label: Label
+  options: TextOptions
+}
 
 export function createText(label: Label, options: TextOptions = {}): TextField {
   return {

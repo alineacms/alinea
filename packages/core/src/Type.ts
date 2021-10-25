@@ -16,7 +16,9 @@ export interface Type<T = any> {
 export namespace Type {
   export type Mutator<T> = any
   export const Scalar = ScalarType.inst
-  export const RichText = RichTextType.inst
+  export function RichText(shapes?: Record<string, RecordType<any>>) {
+    return new RichTextType(shapes)
+  }
   export function List(shapes: Record<string, RecordType<any>>) {
     return new ListType(shapes)
   }

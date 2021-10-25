@@ -21,13 +21,17 @@ export function createSchema<Channels extends LazyRecord<Channel>>(
   return new Schema(channels) as any
 }
 
-type ChannelsOf<T> = T extends HasChannel ? T['$channel'] : string
+export type ChannelsOf<T> = T extends HasChannel ? T['$channel'] : string
 
 export class Schema<T = any> {
   #channels: LazyRecord<Channel<T>>
 
   constructor(channels: LazyRecord<Channel<T>>) {
     this.#channels = channels
+  }
+
+  get channels() {
+    return LazyRecord.resolve(this.#channels)
   }
 
   get types(): Record<string, RecordType> {
