@@ -1,7 +1,7 @@
 import {PasswordLessLogin} from '@alinea/auth.passwordless/PasswordLessLogin'
 import {EntryOf} from '@alinea/core'
 import Dashboard from '@alinea/dashboard'
-import {schema} from '../schema'
+import {schema} from 'alinea/schema'
 import {PageView} from '../view/PageView'
 
 /*const Dashboard: typeof import('@alinea/dashboard')['default'] = dynamic(

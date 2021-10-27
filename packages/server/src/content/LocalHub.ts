@@ -1,12 +1,12 @@
+import {Cache} from '@alinea/cache'
 import {Content, Hub} from '@alinea/core'
 import {Schema} from '@alinea/core/Schema'
-import {ContentIndex} from '@alinea/index'
 import {Persistence} from '../Persistence'
 import {IndexedContent} from './IndexedContent'
 
 export type LocalHubOptions<T> = {
   schema: Schema<T>
-  index: ContentIndex
+  index: Cache
   persistence: Persistence
 }
 

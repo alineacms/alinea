@@ -1,4 +1,4 @@
-import {Docs} from '../schema'
+import {Docs} from 'alinea/schema'
 import {Container} from './layout/Container'
 
 export function DocsPage({}: Docs) {

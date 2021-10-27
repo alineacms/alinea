@@ -1,5 +1,5 @@
 import {PasswordLessAuth} from '@alinea/auth.passwordless/PasswordLessAuth'
-import {ContentIndex} from '@alinea/index'
+import {Cache} from '@alinea/cache'
 import {
   FSPersistence,
   GithubPersistence,
@@ -8,7 +8,7 @@ import {
 } from '@alinea/server'
 import dotenv from 'dotenv'
 import {createTransport} from 'nodemailer'
-import {schema} from '../../website/src/schema'
+import {schema} from '../../website/.alinea/schema'
 
 process.on('unhandledRejection', (error, p) => {
   console.log('=== UNHANDLED REJECTION ===')
@@ -36,7 +36,7 @@ const auth = new PasswordLessAuth({
     return true
   }
 })
-const index = ContentIndex.fromMemory()
+const index = Cache.fromMemory({schema, dir: '../website/content'})
 const ghPersistence = new GithubPersistence({
   index,
   contentDir: 'packages/website/content',
@@ -53,8 +53,10 @@ const hub = new LocalHub({
 })
 const server = new Server({
   dashboardUrl,
-  //  auth,
+  // auth,
   hub
 })
 
-index.indexDirectory('../website/content').then(() => server.listen(4500))
+server.listen(4500)
+
+console.log('Server started')

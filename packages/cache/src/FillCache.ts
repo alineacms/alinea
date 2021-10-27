@@ -1,10 +1,19 @@
-import {createId, Draft, Entry, outcome} from '@alinea/core'
+import {
+  createId,
+  docFromEntry,
+  Draft,
+  Entry,
+  outcome,
+  Schema
+} from '@alinea/core'
 import convertHrtime from 'convert-hrtime'
 import fs from 'fs-extra'
 import {Store} from 'helder.store'
+import {fromUint8Array} from 'js-base64'
 import pLimit from 'p-limit'
 import {posix as path} from 'path'
 import prettyMilliseconds from 'pretty-ms'
+import * as Y from 'yjs'
 
 const openfile = pLimit(4)
 
@@ -32,7 +41,7 @@ async function entryData(location: string) {
 
 type Progress<T> = Promise<T> & {progress(): number}
 
-async function index(dir: string, store: Store) {
+async function index(schema: Schema, dir: string, store: Store) {
   let total = 0
   async function process(target: string, parentId?: string) {
     const files = await fs.readdir(path.join(dir, target))
@@ -67,7 +76,7 @@ async function index(dir: string, store: Store) {
         total++
         try {
           const location = path.join(dir, localPath)
-          const entry = await entryData(location)
+          const data = await entryData(location)
           const name = path.basename(file, '.json')
           const isIndex = name === 'index'
           const dirStat = await outcome(fs.stat(path.join(dir, target, name)))
@@ -76,11 +85,18 @@ async function index(dir: string, store: Store) {
           const shouldBeIndexed = !isNamedLocation && (!isIndex || !parentId)
           if (shouldBeIndexed) {
             const entryPath = path.join(target, isIndex ? '' : name)
-            store.insert(Entry, {
+            const entry = {
               $path: entryPath,
               $parent: parentId,
-              ...entry
-            })
+              ...data
+            }
+            store.insert(Entry, entry)
+            const type = schema.type(entry.type)
+            if (type) {
+              const yDoc = docFromEntry(type, entry)
+              const doc = fromUint8Array(Y.encodeStateAsUpdate(yDoc))
+              store.insert(Draft, {entry: entry.id, doc})
+            }
           }
         } catch (e) {
           console.log(`Could not parse ${localPath} because:\n  ${e}`)
@@ -93,14 +109,14 @@ async function index(dir: string, store: Store) {
   return total
 }
 
-function init(store: Store, path: string): Progress<Store> {
+function init(schema: Schema, store: Store, path: string): Progress<Store> {
   let progress = 0
   async function build(): Promise<Store> {
     const startTime = process.hrtime.bigint()
     console.log('Start indexing...')
     store.delete(Entry)
     store.delete(Draft)
-    const total = await index(path, store)
+    const total = await index(schema, path, store)
     store.createIndex(Entry, '$parent', [Entry.$parent])
     store.createIndex(Draft, 'entry', [Draft.entry])
     const diff = process.hrtime.bigint() - startTime
@@ -114,6 +130,6 @@ function init(store: Store, path: string): Progress<Store> {
   return Object.assign(build(), {progress: () => progress})
 }
 
-export function createIndex(store: Store, path: string) {
-  return init(store, path)
+export function fillCache(schema: Schema, store: Store, path: string) {
+  return init(schema, store, path)
 }

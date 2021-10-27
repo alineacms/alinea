@@ -4,7 +4,7 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "dev": "yarn workspace alinea build && next dev",
+    "dev": "yarn workspace @alinea/root build && next dev",
     "index": "alinea index content -o .next/server/chunks/content",
     "build": "next build && yarn index",
     "start": "next start",
@@ -12,16 +12,16 @@
   },
   "dependencies": {
     "@alinea/auth.passwordless": "0.0.0",
+    "@alinea/cache": "0.0.0",
     "@alinea/cli": "0.0.0",
     "@alinea/core": "0.0.0",
     "@alinea/dashboard": "0.0.0",
-    "@alinea/index": "0.0.0",
     "@alinea/server": "0.0.0",
     "@alinea/ui": "0.0.0",
     "next": "^11.1.2"
   },
   "devDependencies": {
     "cross-env": "^7.0.3",
-    "tsm": "^2.1.0"
+    "tsm": "^2.1.3"
   }
 }

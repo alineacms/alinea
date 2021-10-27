@@ -1,7 +1,7 @@
 import '@alinea/css'
 import {renderDashboard} from '@alinea/dashboard'
 import '@alinea/dashboard/global.css'
-import {schema} from '../../website/src/schema'
+import {schema} from '../../website/.alinea/schema'
 import {PageView} from '../../website/src/view/PageView'
 
 renderDashboard({

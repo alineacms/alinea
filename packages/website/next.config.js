@@ -11,7 +11,7 @@ module.exports = {
         '@alinea/core',
         '@alinea/dashboard',
         '@alinea/editor',
-        '@alinea/index',
+        '@alinea/cache',
         '@alinea/input.list',
         '@alinea/input.number',
         '@alinea/input.text',

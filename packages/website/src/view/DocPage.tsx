@@ -1,5 +1,5 @@
 import {Typo} from '@alinea/ui'
-import {Doc} from '../schema'
+import {Doc} from 'alinea/schema'
 import {Container} from './layout/Container'
 import {RichText} from './layout/RichText'
 

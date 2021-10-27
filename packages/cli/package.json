@@ -19,8 +19,8 @@
   },
   "dependencies": {
     "@alinea/core": "0.0.0",
-    "dirname-filename-esm": "^1.1.1",
-    "sade": "^1.7.4"
+    "sade": "^1.7.4",
+    "tsm": "^2.1.3"
   },
   "devDependencies": {
     "@types/sade": "^1.7.3"

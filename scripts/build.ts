@@ -11,7 +11,7 @@ const packages = glob.sync('packages/**/package.json')
 const root = process.cwd()
 const tsc = root + '/node_modules/.bin/tsc'
 
-const bundle = new Set(['.scss'])
+const bundle = new Set(['.scss', '.json'])
 const exclude = ['website']
 for (const arg of process.argv.slice(2)) {
   if (arg === '--skip-types') skipTypes = true
@@ -77,6 +77,7 @@ async function buildPackage(pkg: string) {
       entryPoints: [entryPoint],
       outdir: path.join('dist', sub),
       inject,
+      loader: {'.json': 'json'},
       plugins: [
         externalPlugin,
         ScssModulesPlugin({

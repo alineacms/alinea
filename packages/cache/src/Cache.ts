@@ -1,6 +1,4 @@
-import {createId} from '@alinea/core/Id'
-import {Outcome} from '@alinea/core/Outcome'
-import {createIndex} from '@alinea/index'
+import {createId, Entry, outcome, Schema} from '@alinea/core'
 import {constants} from 'fs'
 import fs from 'fs-extra'
 import {Store} from 'helder.store'
@@ -9,10 +7,11 @@ import {SqliteStore} from 'helder.store/sqlite/SqliteStore.js'
 import {createRequire} from 'module'
 import os from 'os'
 import path from 'path'
+import {fillCache} from './FillCache'
 
 function getLocalCacheFile() {
   const indexDir = import.meta.url
-    ? createRequire(import.meta.url).resolve('@alinea/index')
+    ? createRequire(import.meta.url).resolve('@alinea/cache')
     : __dirname
   return path.join(path.dirname(indexDir), '../.cache')
 }
@@ -21,38 +20,64 @@ function storeFromFile(file: string) {
   return new SqliteStore(new BetterSqlite3(file), createId)
 }
 
-export class ContentIndex {
+export type CacheOptions = {
+  schema: Schema
+  dir: string
+}
+
+export class Cache {
   private storePromise: Promise<Store> | undefined
 
-  constructor(private open: () => Promise<Store>) {}
+  constructor(
+    public schema: Schema,
+    public dir: string,
+    private open: () => Promise<Store>
+  ) {}
 
   get store() {
-    return this.storePromise || (this.storePromise = this.open())
+    return this.storePromise || (this.storePromise = this.init(true))
   }
 
-  async indexDirectory(dir: string) {
-    await createIndex(await this.store, dir)
-    return this
+  private initStore(fill = true) {
+    return this.storePromise || (this.storePromise = this.init(fill))
   }
 
-  static fromMemory() {
-    return new ContentIndex(async () => {
+  private async init(fill: boolean) {
+    const store = await this.open()
+    if (fill) {
+      const hasEntries = Boolean(store.first(Entry))
+      if (!hasEntries) await fillCache(this.schema, store, this.dir)
+    }
+    return store
+  }
+
+  async sync() {
+    const store = await this.initStore(false)
+    return fillCache(this.schema, store, this.dir)
+  }
+
+  static fromMemory({schema, dir}: CacheOptions) {
+    return new Cache(schema, dir, async () => {
       return new SqliteStore(new BetterSqlite3(), createId)
     })
   }
 
-  static fromCacheFile(cacheFile: string = getLocalCacheFile()) {
-    return new ContentIndex(async () => {
+  static fromFile({
+    schema,
+    dir,
+    cacheFile = getLocalCacheFile()
+  }: CacheOptions & {cacheFile: string}) {
+    return new Cache(schema, dir, async () => {
       const name = path.basename(cacheFile)
       let indexFile = path.resolve(cacheFile)
       const cacheLocation = path.dirname(indexFile)
       await fs.mkdir(cacheLocation, {recursive: true})
-      const stats = await Outcome.promised(() => fs.stat(indexFile))
-      if (stats.isSuccess()) {
-        const writeable = await Outcome.promised(() =>
+      const exists = await outcome.succeeds(fs.stat(indexFile))
+      if (exists) {
+        const writeable = await outcome.succeeds(
           fs.access(indexFile, constants.W_OK)
         )
-        if (writeable.isFailure()) {
+        if (!writeable) {
           // We have an existing index file, but it is not writeable.
           // This can happen in serverless environments.
           // Copy the index to a temporary file so we can read/write.

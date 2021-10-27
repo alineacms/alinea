@@ -11,6 +11,7 @@
     "declaration": true,
     "declarationMap": true,
     "moduleResolution": "node",
+    "resolveJsonModule": true,
     "jsx": "react-jsx",
     "allowSyntheticDefaultImports": true,
     "importHelpers": true,

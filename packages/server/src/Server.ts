@@ -2,8 +2,6 @@ import {Api, Auth, Hub} from '@alinea/core'
 import cors from 'cors'
 import express, {Router} from 'express'
 import {createServer, IncomingMessage, ServerResponse} from 'http'
-import {Socket} from 'net'
-import Websocket, {WebSocketServer} from 'ws'
 import {parseJson} from './util/BodyParser'
 import {finishResponse} from './util/FinishResponse'
 
@@ -16,7 +14,6 @@ export type ServerOptions<T = any> = {
 
 export class Server {
   app = express()
-  wss = new WebSocketServer({noServer: true})
 
   constructor(protected options: ServerOptions) {
     const {hub, dashboardUrl, auth} = options
@@ -75,13 +72,6 @@ export class Server {
     // Next.js expects us to return a promise that resolves when we're finished
     // with the response.
     return finishResponse(res)
-  }
-
-  upgrade = (req: IncomingMessage, socket: Socket, head: Buffer): void => {
-    const handleAuth = (ws: Websocket) => {
-      this.wss.emit('connection', ws, req)
-    }
-    this.wss.handleUpgrade(req, socket, head, handleAuth)
   }
 
   listen(port: number) {

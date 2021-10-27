@@ -1,8 +1,11 @@
 import {createError, Entry, ErrorCode, Schema} from '@alinea/core'
+import autoBind from 'auto-bind'
 import {Cursor, Expression, Store} from 'helder.store'
 
 export class Pages<T extends Entry> {
-  constructor(public schema: Schema<T>, private store: Store) {}
+  constructor(public schema: Schema<T>, private store: Store) {
+    autoBind(this)
+  }
 
   all<T>(cursor: Cursor<T>): Array<T> {
     return this.store.all(cursor)
@@ -26,5 +29,8 @@ export class Pages<T extends Entry> {
     const id =
       typeof entry === 'string' ? entry : 'id' in entry ? entry.id : entry
     return Entry.where(Entry.$parent.is(id))
+  }
+  whereUrl<T extends Entry>(url: string): Cursor<T> {
+    return Entry.where(Entry.$path.is(url))
   }
 }

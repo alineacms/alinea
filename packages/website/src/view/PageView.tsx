@@ -1,4 +1,4 @@
-import {Page} from '../schema'
+import {Page} from 'alinea/schema'
 import {DocPage} from './DocPage'
 import {DocsPage} from './DocsPage'
 import {HomePage} from './HomePage'

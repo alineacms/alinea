@@ -1,15 +1,14 @@
 import {PasswordLessAuth} from '@alinea/auth.passwordless/PasswordLessAuth.js'
-import {ContentIndex} from '@alinea/index'
+import {Cache} from '@alinea/cache'
 import {
   FSPersistence,
   GithubPersistence,
   LocalHub,
   Server
 } from '@alinea/server'
+import {schema} from 'alinea/schema'
 import dotenv from 'dotenv'
-import {NextApiRequest, NextApiResponse} from 'next'
 import {createTransport} from 'nodemailer'
-import {schema} from '../../../schema'
 
 dotenv.config({path: '../../.env'})
 
@@ -18,9 +17,11 @@ const cacheDir = isProduction ? 'packages/website/' : ''
 const dashboardUrl = isProduction
   ? 'https://alinea.vercel.app/admin'
   : 'http://localhost:3000/admin'
-const index = ContentIndex.fromCacheFile(
-  `${cacheDir}.next/server/chunks/content`
-)
+const index = Cache.fromFile({
+  schema,
+  dir: 'content',
+  cacheFile: `${cacheDir}.next/server/chunks/content`
+})
 const auth = new PasswordLessAuth({
   dashboardUrl,
   subject: 'Login',
@@ -58,16 +59,4 @@ const server = new Server({
   })
 })
 
-let isIndexing: Promise<void> | undefined = undefined
-
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (!isProduction) {
-    isIndexing = isIndexing || index.indexDirectory('content').then(_ => void 0)
-    await isIndexing
-    isIndexing = undefined
-  }
-  return server.respond(req, res)
-}
+export default server.respond
