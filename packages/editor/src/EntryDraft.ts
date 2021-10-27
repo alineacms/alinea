@@ -52,7 +52,7 @@ export class EntryDraft
   }
 
   connect() {
-    const provider = new WebrtcProvider('alinea-' + this.id, this.doc)
+    const provider = new WebrtcProvider('@alinea/entry-' + this.id, this.doc)
     const save = () => {
       this.saveTimeout = null
       this.emit('status', [EntryDraftStatus.Saving])
@@ -80,8 +80,8 @@ export class EntryDraft
     }
     this.doc.on('update', watch)
     return () => {
-      provider.destroy()
       this.doc.off('update', watch)
+      provider.destroy()
       if (this.saveTimeout) save()
     }
   }

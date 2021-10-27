@@ -117,40 +117,10 @@
       "field1": "A"
     },
     {
-      "id": "1zzR6QpzVIkNPWsA0FXLmij6AsA",
+      "id": "205y6G9Y8CYQr9awIrEZUxAvdCW",
       "$index": "a1",
-      "type": "Wysiwyg",
-      "field1": {
-        "type": "doc",
-        "content": [
-          {
-            "type": "paragraph",
-            "content": [
-              {
-                "type": "text",
-                "text": "sfhfdghfgh",
-                "marks": [
-                  {
-                    "type": "bold"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "type": "paragraph"
-          },
-          {
-            "type": "paragraph",
-            "content": [
-              {
-                "type": "text",
-                "text": "fdghdfgh"
-              }
-            ]
-          }
-        ]
-      }
+      "type": "A",
+      "field1": "B"
     }
   ]
 }

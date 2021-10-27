@@ -36,7 +36,10 @@ const auth = new PasswordLessAuth({
     return true
   }
 })
-const index = Cache.fromMemory({schema, dir: '../website/content'})
+const index = Cache.fromMemory({
+  schema,
+  dir: '../website/content'
+})
 const ghPersistence = new GithubPersistence({
   index,
   contentDir: 'packages/website/content',

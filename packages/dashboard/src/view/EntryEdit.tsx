@@ -51,16 +51,12 @@ function EntryStatusChip({status}: EntryStatusChipProps) {
 const styles = fromModule(css)
 
 function EntryEditHeader() {
-  const {schema} = useDashboard()
   const session = useSession()
   const [draft] = useCurrentDraft()
-  const [typeKey] = useInput(EntryDraft.type)
   const [status = EntryStatus.Published] = useInput(EntryDraft.$status)
-  const type = schema.type(typeKey)
   const [isPublishing, setPublishing] = useState(false)
   function handlePublish() {
     setPublishing(true)
-    console.log(draft.getEntry())
     return session.hub.content.publish([draft.getEntry()]).finally(() => {
       setPublishing(false)
     })
@@ -186,7 +182,7 @@ export function EntryEdit({id}: EntryEditProps) {
   const {isLoading, data} = useQuery(
     ['entry', id],
     () => hub.content.entryWithDraft(id),
-    {refetchOnWindowFocus: false}
+    {refetchOnWindowFocus: false, keepPreviousData: true, cacheTime: 0}
   )
   const type = hub.schema.type(data?.entry.type)
   const draft = useDraft(type!, data!, doc => {

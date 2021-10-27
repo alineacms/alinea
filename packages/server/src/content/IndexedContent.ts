@@ -29,8 +29,9 @@ export class IndexedContent implements Content {
   async putDraft(id: string, doc: string): Promise<Outcome<void>> {
     const store = await this.cache.store
     return Outcome.attempt(() => {
-      const existing = store.first(Draft.where(Draft.entry.is(id)))
-      if (existing) store.update(Draft, {doc: Expression.value(doc)})
+      const query = Draft.where(Draft.entry.is(id))
+      const existing = store.first(query)
+      if (existing) store.update(query, {doc: Expression.value(doc)})
       else store.insert(Draft, {entry: id, doc})
     })
   }

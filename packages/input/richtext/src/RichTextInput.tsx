@@ -2,11 +2,9 @@ import {createId, InputPath, Schema, TextDoc, Type} from '@alinea/core'
 import {Fields, Label, useInput} from '@alinea/editor'
 import {Card, fromModule, HStack, IconButton, TextLabel} from '@alinea/ui'
 import {mergeAttributes, Node} from '@tiptap/core'
-import BubbleMenuExtension from '@tiptap/extension-bubble-menu'
 import Collaboration from '@tiptap/extension-collaboration'
 import FloatingMenuExtension from '@tiptap/extension-floating-menu'
 import {
-  BubbleMenu,
   Editor,
   EditorContent,
   FloatingMenu,
@@ -144,7 +142,7 @@ export function RichTextInput<T>({path, field}: RichTextInputProps<T>) {
   const editor = useEditor({
     content,
     extensions: [
-      BubbleMenuExtension,
+      // BubbleMenuExtension,
       FloatingMenuExtension,
       Collaboration.configure({fragment}),
       StarterKit.configure({history: false}),
@@ -155,7 +153,7 @@ export function RichTextInput<T>({path, field}: RichTextInputProps<T>) {
   return (
     <div className={styles.root()}>
       <InsertMenu editor={editor} schema={blocks} onInsert={insert} />
-      <BubbleMenu editor={editor}>
+      {/*<BubbleMenu editor={editor}>
         <button
           onClick={() => editor.chain().focus().toggleBold().run()}
           className={editor.isActive('bold') ? 'is-active' : ''}
@@ -174,7 +172,7 @@ export function RichTextInput<T>({path, field}: RichTextInputProps<T>) {
         >
           strike
         </button>
-      </BubbleMenu>
+  </BubbleMenu>*/}
       <Label label={field.label} help={help} optional={optional}>
         <EditorContent className={styles.root.editor()} editor={editor} />
       </Label>
