@@ -1,9 +1,10 @@
+import {createId} from '@alinea/core/Id'
 import {Outcome} from '@alinea/core/Outcome'
 import {createIndex} from '@alinea/index'
 import {constants} from 'fs'
 import fs from 'fs-extra'
 import {Store} from 'helder.store'
-import {BetterSqlite3} from 'helder.store/drivers/BetterSqlite3.js'
+import {BetterSqlite3} from 'helder.store/sqlite/drivers/BetterSqlite3.js'
 import {SqliteStore} from 'helder.store/sqlite/SqliteStore.js'
 import {createRequire} from 'module'
 import os from 'os'
@@ -17,7 +18,7 @@ function getLocalCacheFile() {
 }
 
 function storeFromFile(file: string) {
-  return new SqliteStore(new BetterSqlite3(file))
+  return new SqliteStore(new BetterSqlite3(file), createId)
 }
 
 export class ContentIndex {
@@ -36,7 +37,7 @@ export class ContentIndex {
 
   static fromMemory() {
     return new ContentIndex(async () => {
-      return new SqliteStore(new BetterSqlite3())
+      return new SqliteStore(new BetterSqlite3(), createId)
     })
   }
 
