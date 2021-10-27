@@ -1,5 +1,5 @@
 {
   "id": "docs",
-  "$channel": "Docs",
+  "type": "Docs",
   "title": "Docs"
 }

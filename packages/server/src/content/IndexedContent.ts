@@ -47,7 +47,7 @@ export class IndexedContent implements Content {
       ).select({
         id: Entry.id,
         $path: Entry.$path,
-        $channel: Entry.$channel,
+        type: Entry.type,
         $parent: Entry.$parent,
         $isContainer: Entry.$isContainer,
         title: Entry.title,

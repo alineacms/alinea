@@ -54,7 +54,7 @@ function EntryEditHeader() {
   const {schema} = useDashboard()
   const session = useSession()
   const [draft] = useCurrentDraft()
-  const [typeKey] = useInput(EntryDraft.$channel)
+  const [typeKey] = useInput(EntryDraft.type)
   const [status = EntryStatus.Published] = useInput(EntryDraft.$status)
   const type = schema.type(typeKey)
   const [isPublishing, setPublishing] = useState(false)
@@ -151,7 +151,7 @@ type EntryEditDraftProps = {}
 function EntryEditDraft({}: EntryEditDraftProps) {
   const session = useSession()
   const [draft, status] = useCurrentDraft()!
-  const type = session.hub.schema.type(draft.$channel)
+  const type = session.hub.schema.type(draft.type)
   const {preview} = useDashboard()
   return (
     <HStack style={{height: '100%'}}>
@@ -187,7 +187,7 @@ export function EntryEdit({id}: EntryEditProps) {
     () => hub.content.entryWithDraft(id),
     {refetchOnWindowFocus: false}
   )
-  const type = hub.schema.type(data?.entry.$channel)
+  const type = hub.schema.type(data?.entry.type)
   const draft = useDraft(type!, data!, doc => {
     return hub.content.putDraft(id, doc)
   })

@@ -4,14 +4,6 @@ import {Type} from './Type'
 
 const ROOT_KEY = 'root'
 
-const entryFields = new Set([
-  '$channel',
-  'path',
-  'isContainer',
-  'title',
-  'parent'
-])
-
 export function docFromEntry(
   type: Type,
   entry: Entry & {[key: string]: any},

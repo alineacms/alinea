@@ -7,7 +7,7 @@ import {RecordValue} from './RecordValue'
 type Row = {
   id: string
   $index: string
-  $channel: string
+  type: string
 }
 
 /*
@@ -36,7 +36,7 @@ export class ListValue<T> implements Value<Array<Row & T>> {
           new RecordValue({
             id: Value.Scalar,
             $index: Value.Scalar,
-            $channel: Value.Scalar,
+            type: Value.Scalar,
             ...type.shape
           })
         ]
@@ -49,7 +49,7 @@ export class ListValue<T> implements Value<Array<Row & T>> {
     let currentIndex = null
     for (const row of rows) {
       const id = row.id
-      const type = row.$channel
+      const type = row.type
       const valueType = this.values[type]
       if (!id || !type || !valueType) continue
       currentIndex = generateKeyBetween(currentIndex, null)
@@ -61,7 +61,7 @@ export class ListValue<T> implements Value<Array<Row & T>> {
     const rows = []
     for (const key of map.keys()) {
       const row = map.get(key)
-      const type = row.get('$channel')
+      const type = row.get('type')
       rows.push(this.values[type].fromY(row) as Row & T)
     }
     rows.sort(sort)
@@ -91,7 +91,7 @@ export class ListValue<T> implements Value<Array<Row & T>> {
         const id = createId()
         record.set(
           id,
-          this.values[row.$channel].toY({
+          this.values[row.type].toY({
             ...row,
             id,
             $index: generateKeyBetween(

@@ -4,12 +4,12 @@ import {Type} from './Type'
 import {RecordValue} from './type/RecordValue'
 import {LazyRecord} from './util/LazyRecord'
 
-export type HasType = {$channel: string}
+export type HasType = {type: string}
 
 type UnionOfValues<T> = T[keyof T]
 type TypeToRows<T> = {[K in keyof T]: Type.Of<T[K]> & Entry}
 type TypeToEntry<T> = T extends {[key: string]: any}
-  ? UnionOfValues<{[K in keyof T]: T[K] & {$channel: K}}>
+  ? UnionOfValues<{[K in keyof T]: T[K] & {type: K}}>
   : never
 
 export type DataOf<T> = T extends Collection<infer U> ? U : never
@@ -21,7 +21,7 @@ export function createSchema<Types extends LazyRecord<Type>>(
   return new Schema(types) as any
 }
 
-export type TypesOf<T> = T extends HasType ? T['$channel'] : string
+export type TypesOf<T> = T extends HasType ? T['type'] : string
 
 export class Schema<T = any> {
   #types: LazyRecord<Type<T>>
@@ -46,9 +46,7 @@ export class Schema<T = any> {
     return LazyRecord.iterate(this.#types)[Symbol.iterator]()
   }
 
-  type<K extends TypesOf<T>>(
-    name: K
-  ): Type<Extract<T, {$channel: K}>> | undefined {
+  type<K extends TypesOf<T>>(name: K): Type<Extract<T, {type: K}>> | undefined {
     return LazyRecord.get(this.#types, name)
   }
 
@@ -57,7 +55,7 @@ export class Schema<T = any> {
   }
 
   get collections(): {
-    [K in TypesOf<T>]: Collection<Extract<T, {$channel: K}>>
+    [K in TypesOf<T>]: Collection<Extract<T, {type: K}>>
   } {
     return Object.fromEntries(
       Object.keys(this.#types).map(name => {
@@ -66,12 +64,10 @@ export class Schema<T = any> {
     ) as any
   }
 
-  collection<K extends TypesOf<T>>(
-    type: K
-  ): Collection<Extract<T, {$channel: K}>> {
+  collection<K extends TypesOf<T>>(type: K): Collection<Extract<T, {type: K}>> {
     const alias = type as string
     return new Collection('Entry', {
-      where: Entry.as(alias).$channel.is(alias),
+      where: Entry.as(alias).type.is(alias),
       alias
     })
   }

@@ -43,7 +43,7 @@ function RichTextNodeView<T>(node: RichTextNode<T>) {
 type RichTextProps<T> = {
   doc: TextDoc<T>
   view?: Partial<{
-    [K in TypesOf<T>]: ComponentType<Extract<T, {$channel: K}>>
+    [K in TypesOf<T>]: ComponentType<Extract<T, {type: K}>>
   }>
 }
 

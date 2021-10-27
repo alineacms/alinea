@@ -95,7 +95,7 @@ type TreeNodeChildrenCreator = {entry: Entry}
 
 function TreeNodeChildrenCreator({entry}: TreeNodeChildrenCreator) {
   const {schema} = useSession().hub
-  const type = schema.type(entry.$channel)
+  const type = schema.type(entry.type)
   if (!type) return null
   const typeOptions = type.options?.contains || schema.keys
   if (typeOptions.length === 1)

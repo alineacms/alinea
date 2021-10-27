@@ -1,18 +1,18 @@
 {
   "id": "1zoD8OoAFHj6I1IeO8n8ltfBVJ0",
-  "$channel": "Doc",
+  "type": "Doc",
   "title": "Getting started",
   "body": {
     "type": "doc",
     "blocks": {
       "1zzs6wF0OYU4VjlgWH0Yr7TjE0I": {
         "id": "1zzs6wF0OYU4VjlgWH0Yr7TjE0I",
-        "$channel": "CodeBlock",
+        "type": "CodeBlock",
         "code": "Dit is mijn codeblock"
       },
       "200Cjwa5GRksoKNE5CK6A8xujMC": {
         "id": "200Cjwa5GRksoKNE5CK6A8xujMC",
-        "$channel": "Inception",
+        "type": "Inception",
         "wysiwyg": {
           "type": "doc",
           "content": [
@@ -115,13 +115,13 @@
     {
       "id": "1zpMEbbcnB7Xv3ObeU5MrR44woG",
       "$index": "a0",
-      "$channel": "A",
+      "type": "A",
       "field1": "A"
     },
     {
       "id": "1zzR6QpzVIkNPWsA0FXLmij6AsA",
       "$index": "a1",
-      "$channel": "Wysiwyg",
+      "type": "Wysiwyg",
       "field1": {
         "type": "doc",
         "content": [

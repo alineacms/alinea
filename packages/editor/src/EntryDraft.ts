@@ -5,6 +5,7 @@ import {
   EntryStatus,
   inputPath,
   InputPath,
+  Label,
   Outcome,
   Type,
   Value
@@ -38,7 +39,7 @@ export class EntryDraft
   private saveTimeout: any = null
 
   constructor(
-    private $channel: Type,
+    private channel: Type,
     private entry: Entry,
     draft: Draft | null,
     protected saveDraft: (doc: string) => Promise<Outcome<void>>
@@ -46,7 +47,7 @@ export class EntryDraft
     super()
     this.doc = new Y.Doc()
     if (draft?.doc) Y.applyUpdate(this.doc, toUint8Array(draft.doc))
-    else docFromEntry($channel, entry, this.doc)
+    else docFromEntry(channel, entry, this.doc)
     this.root = this.doc.getMap(ROOT_KEY)
   }
 
@@ -89,9 +90,9 @@ export class EntryDraft
     return {
       id: this.id,
       $path: this.$path,
-      $channel: this.$channel,
+      type: this.type,
       title: this.title,
-      ...this.$channel.valueType.fromY(this.root)
+      ...this.channel.valueType.fromY(this.root)
     }
   }
 
@@ -106,29 +107,29 @@ export class EntryDraft
   }
 
   static $path = inputPath<string>(Value.Scalar, ['$path'])
-  static $channel = inputPath<string>(Value.Scalar, ['$channel'])
+  static type = inputPath<string>(Value.Scalar, ['type'])
   static $status = inputPath<EntryStatus | undefined>(Value.Scalar, ['$status'])
   static title = inputPath<string>(Value.Scalar, ['title'])
 
-  get id() {
+  get id(): string {
     return this.root.get('id') || this.entry.id
   }
 
-  get $path() {
+  get $path(): string {
     return this.root.get('$path') || this.entry.$path
   }
 
-  get $channel() {
-    return this.root.get('$channel') || this.entry.$channel
+  get type(): string {
+    return this.root.get('type') || this.entry.type
   }
 
-  get $status() {
+  get $status(): EntryStatus {
     return (
       this.root.get('$status') || this.entry.$status || EntryStatus.Published
     )
   }
 
-  get title() {
+  get title(): Label {
     return this.root.get('title') || this.entry.title
   }
 

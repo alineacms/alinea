@@ -87,7 +87,7 @@ function unserialize(node: RichTextNode): Y.XmlText | Y.XmlElement {
 
 type Row = {
   id: string
-  $channel: string
+  type: string
 }
 
 export class RichTextValue<T> implements Value<TextDoc<Row & T>> {
@@ -101,7 +101,7 @@ export class RichTextValue<T> implements Value<TextDoc<Row & T>> {
             key,
             new RecordValue({
               id: Value.Scalar,
-              $channel: Value.Scalar,
+              type: Value.Scalar,
               ...value.shape
             })
           ]
@@ -115,7 +115,7 @@ export class RichTextValue<T> implements Value<TextDoc<Row & T>> {
     const types = this.values
     if (types && value.blocks)
       for (const [name, block] of Object.entries(value.blocks)) {
-        map.set(name, types[block.$channel].toY(block))
+        map.set(name, types[block.type].toY(block))
       }
     const content = value?.content
     if (!content) return map
@@ -131,7 +131,7 @@ export class RichTextValue<T> implements Value<TextDoc<Row & T>> {
             // Todo: filter out unused blocks
             .filter(([key]) => key !== '$doc')
             .map(([key, item]) => {
-              return [key, types[item.get('$channel')].fromY(item)]
+              return [key, types[item.get('type')].fromY(item)]
             })
         )
       : undefined
@@ -156,7 +156,7 @@ export class RichTextValue<T> implements Value<TextDoc<Row & T>> {
           id,
           this.values[block].toY({
             id: id,
-            $channel: block
+            type: block
           } as any)
         )
       }

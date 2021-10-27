@@ -9,7 +9,7 @@ export type PageViewProps = {
 }
 
 function EntryView({entry}: PageViewProps) {
-  switch (entry?.$channel) {
+  switch (entry?.type) {
     case 'Home':
       return <HomePage {...entry} />
     case 'Docs':

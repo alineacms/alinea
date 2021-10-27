@@ -42,7 +42,7 @@ const styles = fromModule(css)
 export type ListRow = {
   id: string
   $index: string
-  $channel: string
+  type: string
 }
 
 type ListInputRowProps<T extends ListRow> = PropsWithChildren<
@@ -98,7 +98,7 @@ function ListInputRow<T extends ListRow>({
   isDragging,
   ...rest
 }: ListInputRowProps<T>) {
-  const type = field.options.schema.type(row.$channel)
+  const type = field.options.schema.type(row.type)
   if (!type) return null
   return (
     <div
@@ -223,9 +223,7 @@ export function ListInput<T extends ListRow>({path, field}: ListInputProps<T>) {
       </div>
       <ListCreateRow
         onCreate={(type: string) => {
-          input.push({
-            $channel: type
-          })
+          input.push({type})
         }}
         field={field}
       />

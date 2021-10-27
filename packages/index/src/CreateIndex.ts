@@ -58,7 +58,7 @@ async function index(dir: string, store: Store) {
           $path: localPath,
           $parent: parentId,
           $isContainer: true,
-          $channel: '',
+          type: '',
           title: file,
           ...entry
         })

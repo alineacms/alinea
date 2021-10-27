@@ -12,12 +12,13 @@ export enum EntryStatus {
 
 export interface Entry {
   id: string
-  $channel: string
+  type: string
+  title: Label
+  // Indexed properties
   $path: string
   $status?: EntryStatus
   $parent?: string
   $isContainer?: boolean
-  title: Label
 }
 
 export namespace Entry {
