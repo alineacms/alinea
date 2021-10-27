@@ -1,5 +1,5 @@
-import {Field, Label, Schema, Type} from '@alinea/core'
-import {TextDoc} from '@alinea/core/type/RichTextType'
+import {Field, Label, Schema, Value} from '@alinea/core'
+import {TextDoc} from '@alinea/core/type/RichTextValue'
 
 export type RichTextOptions<T> = {
   help?: Label
@@ -20,7 +20,7 @@ export function createRichText<T>(
   options: RichTextOptions<T> = {}
 ): RichTextField<T> {
   return {
-    type: Type.RichText(options.blocks?.types),
+    type: Value.RichText(options.blocks?.valueTypes),
     label,
     options
   }

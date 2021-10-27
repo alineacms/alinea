@@ -1,7 +1,7 @@
 import {Collection} from 'helder.store'
 import {Channel} from './Channel'
 import {Entry} from './Entry'
-import {RecordType} from './type/RecordType'
+import {RecordValue} from './type/RecordValue'
 import {LazyRecord} from './util/LazyRecord'
 
 export type HasChannel = {$channel: string}
@@ -34,10 +34,10 @@ export class Schema<T = any> {
     return LazyRecord.resolve(this.#channels)
   }
 
-  get types(): Record<string, RecordType> {
+  get valueTypes(): Record<string, RecordValue> {
     return Object.fromEntries(
       Array.from(this).map(([key, channel]) => {
-        return [key, channel.type]
+        return [key, channel.valueType]
       })
     )
   }

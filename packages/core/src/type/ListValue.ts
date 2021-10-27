@@ -1,8 +1,8 @@
 import {generateKeyBetween} from 'fractional-indexing'
 import * as Y from 'yjs'
 import {createId} from '../Id'
-import {Type} from '../Type'
-import {RecordType} from './RecordType'
+import {Value} from '../Value'
+import {RecordValue} from './RecordValue'
 
 type Row = {
   $id: string
@@ -26,17 +26,17 @@ function sort(a: Row, b: Row) {
 
 // Todo: might as well use Y.Array and just sort the array by $index
 // in useInput. It would mean we don't have to store $type.
-export class ListType<T> implements Type<Array<Row & T>> {
-  types: Record<string, RecordType<Row & T>>
-  constructor(shapes: Record<string, RecordType<T>>) {
-    this.types = Object.fromEntries(
+export class ListValue<T> implements Value<Array<Row & T>> {
+  values: Record<string, RecordValue<Row & T>>
+  constructor(shapes: Record<string, RecordValue<T>>) {
+    this.values = Object.fromEntries(
       Object.entries(shapes).map(([key, type]) => {
         return [
           key,
-          new RecordType({
-            $id: Type.Scalar,
-            $index: Type.Scalar,
-            $channel: Type.Scalar,
+          new RecordValue({
+            $id: Value.Scalar,
+            $index: Value.Scalar,
+            $channel: Value.Scalar,
             ...type.shape
           })
         ]
@@ -50,7 +50,7 @@ export class ListType<T> implements Type<Array<Row & T>> {
     for (const row of rows) {
       const id = row.$id
       const channel = row.$channel
-      const type = this.types[channel]
+      const type = this.values[channel]
       if (!id || !channel || !type) continue
       currentIndex = generateKeyBetween(currentIndex, null)
       map.set(id, type.toY({...row, $index: currentIndex}))
@@ -62,7 +62,7 @@ export class ListType<T> implements Type<Array<Row & T>> {
     for (const key of map.keys()) {
       const row = map.get(key)
       const channel = row.get('$channel')
-      rows.push(this.types[channel].fromY(row) as Row & T)
+      rows.push(this.values[channel].fromY(row) as Row & T)
     }
     rows.sort(sort)
     return rows
@@ -91,7 +91,7 @@ export class ListType<T> implements Type<Array<Row & T>> {
         const id = createId()
         record.set(
           id,
-          this.types[row.$channel].toY({
+          this.values[row.$channel].toY({
             ...row,
             $id: id,
             $index: generateKeyBetween(

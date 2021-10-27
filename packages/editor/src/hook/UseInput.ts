@@ -1,9 +1,9 @@
-import {InputPath, Type} from '@alinea/core'
+import {InputPath, Value} from '@alinea/core'
 import {useForceUpdate} from '@alinea/ui'
 import {useEffect, useMemo} from 'react'
 import {useCurrentDraft} from './UseCurrentDraft'
 
-export type InputPair<T> = readonly [T, Type.Mutator<T>]
+export type InputPair<T> = readonly [T, Value.Mutator<T>]
 
 export function useInput<T>(path: InputPath<T>): InputPair<T> {
   const [draft] = useCurrentDraft()
@@ -17,5 +17,5 @@ export function useInput<T>(path: InputPath<T>): InputPair<T> {
   useEffect(() => {
     return input.observe(redraw)
   }, [input, redraw])
-  return [input.value, input.mutator as Type.Mutator<T>]
+  return [input.value, input.mutator as Value.Mutator<T>]
 }

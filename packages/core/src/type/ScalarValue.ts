@@ -1,8 +1,8 @@
 import * as Y from 'yjs'
-import {Type} from '../Type'
+import {Value} from '../Value'
 
-export class ScalarType<T> implements Type<T> {
-  static inst = new ScalarType()
+export class ScalarValue<T> implements Value<T> {
+  static inst = new ScalarValue()
   constructor() {}
   toY(value: T) {
     return value

@@ -7,7 +7,7 @@ import {
   inputPath,
   InputPath,
   Outcome,
-  Type
+  Value
 } from '@alinea/core'
 import {fromUint8Array, toUint8Array} from 'js-base64'
 import {Observable} from 'lib0/observable'
@@ -91,7 +91,7 @@ export class EntryDraft
       $path: this.$path,
       $channel: this.$channel,
       title: this.title,
-      ...this.channel.type.fromY(this.root)
+      ...this.channel.valueType.fromY(this.root)
     }
   }
 
@@ -105,10 +105,10 @@ export class EntryDraft
     return () => this.off('change', fun)
   }
 
-  static $path = inputPath<string>(Type.Scalar, ['$path'])
-  static $channel = inputPath<string>(Type.Scalar, ['$channel'])
-  static $status = inputPath<EntryStatus | undefined>(Type.Scalar, ['$status'])
-  static title = inputPath<string>(Type.Scalar, ['title'])
+  static $path = inputPath<string>(Value.Scalar, ['$path'])
+  static $channel = inputPath<string>(Value.Scalar, ['$channel'])
+  static $status = inputPath<EntryStatus | undefined>(Value.Scalar, ['$status'])
+  static title = inputPath<string>(Value.Scalar, ['title'])
 
   get $id() {
     return this.root.get('$id') || this.entry.$id

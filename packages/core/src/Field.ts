@@ -1,6 +1,6 @@
 import type {ComponentType} from 'react'
 import {InputPath} from './InputPath'
-import {Type} from './Type'
+import {Value} from './Value'
 
 export type FieldRenderer<T, F> = ComponentType<{
   path: InputPath<T>
@@ -25,6 +25,6 @@ export function withView<
 }
 
 export interface Field<T = any> {
-  type: Type
+  type: Value
   view?: FieldRenderer<T, Field<T>>
 }

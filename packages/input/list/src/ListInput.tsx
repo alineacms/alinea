@@ -1,4 +1,4 @@
-import {inputPath, InputPath, Type} from '@alinea/core'
+import {inputPath, InputPath, Value} from '@alinea/core'
 import {Fields, Label, useInput} from '@alinea/editor'
 import {fromModule, IconButton, TextLabel} from '@alinea/ui'
 import {Create} from '@alinea/ui/Create'
@@ -191,7 +191,7 @@ export function ListInput<T extends ListRow>({path, field}: ListInputProps<T>) {
                     row={row}
                     field={field}
                     path={inputPath<T>(
-                      Type.Scalar,
+                      Value.Scalar,
                       path.location.concat(row.$id)
                     )}
                     onDelete={() => input.delete(row.$id)}
@@ -213,7 +213,7 @@ export function ListInput<T extends ListRow>({path, field}: ListInputProps<T>) {
                 row={dragging}
                 field={field}
                 path={inputPath<T>(
-                  Type.Scalar,
+                  Value.Scalar,
                   path.location.concat(dragging.$id)
                 )}
               />

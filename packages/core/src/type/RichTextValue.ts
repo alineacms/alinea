@@ -1,6 +1,6 @@
 import * as Y from 'yjs'
-import {Type} from '../Type'
-import {RecordType} from './RecordType'
+import {Value} from '../Value'
+import {RecordValue} from './RecordValue'
 
 export namespace RichTextNode {
   export type Mark = {type: string; attrs?: Record<string, string>}
@@ -90,19 +90,19 @@ type Row = {
   $channel: string
 }
 
-export class RichTextType<T> implements Type<TextDoc<Row & T>> {
-  types?: Record<string, RecordType<Row & T>>
-  constructor(protected shapes?: Record<string, RecordType<T>>) {
-    this.types =
+export class RichTextValue<T> implements Value<TextDoc<Row & T>> {
+  values?: Record<string, RecordValue<Row & T>>
+  constructor(protected shapes?: Record<string, RecordValue<T>>) {
+    this.values =
       shapes &&
       Object.fromEntries(
-        Object.entries(shapes).map(([key, type]) => {
+        Object.entries(shapes).map(([key, value]) => {
           return [
             key,
-            new RecordType({
-              $id: Type.Scalar,
-              $channel: Type.Scalar,
-              ...type.shape
+            new RecordValue({
+              $id: Value.Scalar,
+              $channel: Value.Scalar,
+              ...value.shape
             })
           ]
         })
@@ -112,7 +112,7 @@ export class RichTextType<T> implements Type<TextDoc<Row & T>> {
     const map = new Y.Map()
     const doc = new Y.XmlFragment()
     map.set('$doc', doc)
-    const types = this.types
+    const types = this.values
     if (types && value.blocks)
       for (const [name, block] of Object.entries(value.blocks)) {
         map.set(name, types[block.$channel].toY(block))
@@ -124,7 +124,7 @@ export class RichTextType<T> implements Type<TextDoc<Row & T>> {
   }
   fromY(value: Y.Map<any>): TextDoc<Row & T> {
     const doc: Y.XmlFragment = value.get('$doc')
-    const types = this.types
+    const types = this.values
     const blocks = types
       ? Object.fromEntries(
           Array.from(value.entries())
@@ -151,10 +151,10 @@ export class RichTextType<T> implements Type<TextDoc<Row & T>> {
       map: parent.get(key),
       fragment: map.get('$doc'),
       insert: (id: string, block: string) => {
-        if (!this.types) throw new Error('No types defined')
+        if (!this.values) throw new Error('No types defined')
         map.set(
           id,
-          this.types[block].toY({
+          this.values[block].toY({
             $id: id,
             $channel: block
           } as any)

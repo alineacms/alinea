@@ -1,8 +1,10 @@
 import * as Y from 'yjs'
-import {Type} from '../Type'
+import {Value} from '../Value'
 
-export class RecordType<T extends Record<string, any> = {}> implements Type<T> {
-  constructor(public shape: Record<string, Type>) {}
+export class RecordValue<T extends Record<string, any> = {}>
+  implements Value<T>
+{
+  constructor(public shape: Record<string, Value>) {}
   toY(value: T) {
     const map = new Y.Map()
     for (const key of Object.keys(this.shape)) {

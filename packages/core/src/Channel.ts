@@ -1,7 +1,7 @@
+import {Value} from '.'
 import {Field} from './Field'
 import {Label} from './Label'
-import {Type} from './Type'
-import {RecordType} from './type/RecordType'
+import {RecordValue} from './type/RecordValue'
 import {Lazy} from './util/Lazy'
 import {LazyRecord} from './util/LazyRecord'
 
@@ -24,8 +24,8 @@ export class Channel<T = {}> {
     this.#fields = fields
   }
 
-  get type(): RecordType {
-    return Type.Record(
+  get valueType(): RecordValue {
+    return Value.Record(
       Object.fromEntries(
         Array.from(this).map(([key, field]) => {
           return [key, field.type]
