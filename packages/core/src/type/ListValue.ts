@@ -25,7 +25,7 @@ function sort(a: Row, b: Row) {
 }
 
 // Todo: might as well use Y.Array and just sort the array by $index
-// in useInput. It would mean we don't have to store $type.
+// in useInput.
 export class ListValue<T> implements Value<Array<Row & T>> {
   values: Record<string, RecordValue<Row & T>>
   constructor(shapes: Record<string, RecordValue<T>>) {
