@@ -1,25 +1,25 @@
-import {Value} from '.'
 import {Field} from './Field'
 import {Label} from './Label'
 import {RecordValue} from './type/RecordValue'
 import {Lazy} from './util/Lazy'
 import {LazyRecord} from './util/LazyRecord'
+import {Value} from './Value'
 
-export namespace Channel {
-  export type TypeOf<T> = T extends Channel<infer U> ? U : never
+export namespace Type {
+  export type Of<T> = T extends Type<infer U> ? U : never
   export type Options = {
     isContainer?: boolean
     contains?: Array<string>
   }
 }
 
-export class Channel<T = {}> {
+export class Type<T = {}> {
   #fields: LazyRecord<Field>
 
   constructor(
     public label: Label,
     fields: LazyRecord<Field>,
-    public options: Channel.Options = {}
+    public options: Type.Options = {}
   ) {
     this.#fields = fields
   }
@@ -45,7 +45,7 @@ export class Channel<T = {}> {
   field(key: string) {
     const field = this.fields[key]
     if (!field)
-      throw new Error(`No such field: "${key}" in channel "${this.label}"`)
+      throw new Error(`No such field: "${key}" in type "${this.label}"`)
     return field
   }
 }
@@ -58,10 +58,10 @@ type RowOf<LazyFields> = LazyFields extends Lazy<infer U>
     : never
   : never
 
-export function channel<Fields extends LazyRecord<Field>>(
+export function type<Fields extends LazyRecord<Field>>(
   label: Label,
   fields: Fields,
-  options?: Channel.Options
-): Channel<RowOf<Fields>> {
-  return new Channel(label, fields, options)
+  options?: Type.Options
+): Type<RowOf<Fields>> {
+  return new Type(label, fields, options)
 }

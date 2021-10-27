@@ -49,11 +49,11 @@ export class ListValue<T> implements Value<Array<Row & T>> {
     let currentIndex = null
     for (const row of rows) {
       const id = row.$id
-      const channel = row.$channel
-      const type = this.values[channel]
-      if (!id || !channel || !type) continue
+      const type = row.$channel
+      const valueType = this.values[type]
+      if (!id || !type || !valueType) continue
       currentIndex = generateKeyBetween(currentIndex, null)
-      map.set(id, type.toY({...row, $index: currentIndex}))
+      map.set(id, valueType.toY({...row, $index: currentIndex}))
     }
     return map
   }
@@ -61,8 +61,8 @@ export class ListValue<T> implements Value<Array<Row & T>> {
     const rows = []
     for (const key of map.keys()) {
       const row = map.get(key)
-      const channel = row.get('$channel')
-      rows.push(this.values[channel].fromY(row) as Row & T)
+      const type = row.get('$channel')
+      rows.push(this.values[type].fromY(row) as Row & T)
     }
     rows.sort(sort)
     return rows

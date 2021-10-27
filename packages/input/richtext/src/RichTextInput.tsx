@@ -1,4 +1,4 @@
-import {Channel, createId, InputPath, Schema, TextDoc} from '@alinea/core'
+import {createId, InputPath, Schema, TextDoc, Type} from '@alinea/core'
 import {Fields, Label, useInput} from '@alinea/editor'
 import {Card, fromModule, HStack, IconButton, TextLabel} from '@alinea/ui'
 import {mergeAttributes, Node} from '@tiptap/core'
@@ -15,7 +15,7 @@ import {
   useEditor
 } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
-import {MdDelete, MdDragHandle} from 'react-icons/md'
+import {MdDelete, MdDragHandle} from 'react-icons/md/index'
 import {RichTextField} from './RichTextField'
 import css from './RichTextInput.module.scss'
 
@@ -26,10 +26,10 @@ type NodeViewProps = {
   deleteNode: () => void
 }
 
-function channelExtension(
+function typeExtension(
   parent: InputPath<TextDoc<any>>,
   name: string,
-  channel: Channel
+  type: Type
 ) {
   function View({node, deleteNode}: NodeViewProps) {
     const {id} = node.attrs
@@ -51,7 +51,7 @@ function channelExtension(
                   type: undefined!,
                   location: parent.location.concat(id)
                 }}
-                channel={channel}
+                type={type}
               />
             </Card.Content>
             <Card.Options>
@@ -89,35 +89,33 @@ function schemaToExtensions(
   schema: Schema | undefined
 ) {
   if (!schema) return []
-  const {channels} = schema
-  return Object.entries(channels).map(([name, channel]) => {
-    return channelExtension(path, name, channel)
+  const {types} = schema
+  return Object.entries(types).map(([name, type]) => {
+    return typeExtension(path, name, type)
   })
 }
 
 type InsertMenuProps = {
   editor: Editor
   schema: Schema | undefined
-  onInsert: (id: string, channel: string) => void
+  onInsert: (id: string, type: string) => void
 }
 
 function InsertMenu({editor, schema, onInsert}: InsertMenuProps) {
   const id = createId()
-  const blocks = Object.entries(schema?.channels || {}).map(
-    ([type, channel]) => {
-      return (
-        <button
-          key={type}
-          onClick={() => {
-            onInsert(id, type)
-            editor.chain().focus().insertContent({type, attrs: {id}}).run()
-          }}
-        >
-          <TextLabel label={channel.label} />
-        </button>
-      )
-    }
-  )
+  const blocks = Object.entries(schema?.types || {}).map(([key, type]) => {
+    return (
+      <button
+        key={key}
+        onClick={() => {
+          onInsert(id, key)
+          editor.chain().focus().insertContent({type: key, attrs: {id}}).run()
+        }}
+      >
+        <TextLabel label={type.label} />
+      </button>
+    )
+  })
   return (
     <FloatingMenu editor={editor}>
       <button

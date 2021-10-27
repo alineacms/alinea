@@ -1,37 +1,37 @@
-import {channel, createSchema, DataOf, EntryOf} from '@alinea/core'
+import {createSchema, DataOf, EntryOf, type} from '@alinea/core'
 import {list} from '@alinea/input.list'
 import {richText} from '@alinea/input.richtext'
 import {text} from '@alinea/input.text'
 
 export const schema = createSchema({
-  Home: channel('Home', {
+  Home: type('Home', {
     title: text('Title', {multiline: true}),
     headline: text('Headline', {multiline: true}),
     byline: text('Byline', {multiline: true})
   }),
-  Docs: channel(
+  Docs: type(
     'Docs',
     {title: text('Title', {multiline: true})},
     {isContainer: true, contains: ['Doc']}
   ),
-  Doc: channel('Doc', {
+  Doc: type('Doc', {
     title: text('Title', {multiline: true}),
     body: richText('Body', {
       blocks: createSchema({
-        CodeBlock: channel('CodeBlock', {
+        CodeBlock: type('CodeBlock', {
           code: text('Code', {multiline: true})
         }),
-        Inception: channel('Inception', {
+        Inception: type('Inception', {
           wysiwyg: richText('Wysiwyg')
         })
       })
     }),
     blocks: list('List test', {
       schema: createSchema({
-        A: channel('Type A', {
+        A: type('Type A', {
           field1: text('Field 1')
         }),
-        Wysiwyg: channel('Wysiwyg', {
+        Wysiwyg: type('Wysiwyg', {
           field1: richText('Field 2')
         })
       })

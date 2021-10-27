@@ -1,5 +1,4 @@
 import {
-  Channel,
   docFromEntry,
   Draft,
   Entry,
@@ -7,6 +6,7 @@ import {
   inputPath,
   InputPath,
   Outcome,
+  Type,
   Value
 } from '@alinea/core'
 import {fromUint8Array, toUint8Array} from 'js-base64'
@@ -38,7 +38,7 @@ export class EntryDraft
   private saveTimeout: any = null
 
   constructor(
-    private channel: Channel,
+    private type: Type,
     private entry: Entry,
     draft: Draft | null,
     protected saveDraft: (doc: string) => Promise<Outcome<void>>
@@ -46,7 +46,7 @@ export class EntryDraft
     super()
     this.doc = new Y.Doc()
     if (draft?.doc) Y.applyUpdate(this.doc, toUint8Array(draft.doc))
-    else docFromEntry(channel, entry, this.doc)
+    else docFromEntry(type, entry, this.doc)
     this.root = this.doc.getMap(ROOT_KEY)
   }
 
@@ -91,7 +91,7 @@ export class EntryDraft
       $path: this.$path,
       $channel: this.$channel,
       title: this.title,
-      ...this.channel.valueType.fromY(this.root)
+      ...this.type.valueType.fromY(this.root)
     }
   }
 

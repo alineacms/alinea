@@ -1,37 +1,37 @@
 import {Collection} from 'helder.store'
-import {Channel} from './Channel'
 import {Entry} from './Entry'
+import {Type} from './Type'
 import {RecordValue} from './type/RecordValue'
 import {LazyRecord} from './util/LazyRecord'
 
-export type HasChannel = {$channel: string}
+export type HasType = {$channel: string}
 
 type UnionOfValues<T> = T[keyof T]
-type ChannelsToRows<T> = {[K in keyof T]: Channel.TypeOf<T[K]> & Entry}
-type ChannelsToEntry<T> = T extends {[key: string]: any}
+type TypeToRows<T> = {[K in keyof T]: Type.Of<T[K]> & Entry}
+type TypeToEntry<T> = T extends {[key: string]: any}
   ? UnionOfValues<{[K in keyof T]: T[K] & {$channel: K}}>
   : never
 
 export type DataOf<T> = T extends Collection<infer U> ? U : never
 export type EntryOf<T> = T extends Schema<infer U> ? U : never
 
-export function createSchema<Channels extends LazyRecord<Channel>>(
-  channels: Channels
-): Schema<ChannelsToEntry<ChannelsToRows<Channels>>> {
-  return new Schema(channels) as any
+export function createSchema<Types extends LazyRecord<Type>>(
+  types: Types
+): Schema<TypeToEntry<TypeToRows<Types>>> {
+  return new Schema(types) as any
 }
 
-export type ChannelsOf<T> = T extends HasChannel ? T['$channel'] : string
+export type TypesOf<T> = T extends HasType ? T['$channel'] : string
 
 export class Schema<T = any> {
-  #channels: LazyRecord<Channel<T>>
+  #types: LazyRecord<Type<T>>
 
-  constructor(channels: LazyRecord<Channel<T>>) {
-    this.#channels = channels
+  constructor(types: LazyRecord<Type<T>>) {
+    this.#types = types
   }
 
-  get channels() {
-    return LazyRecord.resolve(this.#channels)
+  get types() {
+    return LazyRecord.resolve(this.#types)
   }
 
   get valueTypes(): Record<string, RecordValue> {
@@ -43,33 +43,33 @@ export class Schema<T = any> {
   }
 
   [Symbol.iterator]() {
-    return LazyRecord.iterate(this.#channels)[Symbol.iterator]()
+    return LazyRecord.iterate(this.#types)[Symbol.iterator]()
   }
 
-  channel<K extends ChannelsOf<T>>(
+  type<K extends TypesOf<T>>(
     name: K
-  ): Channel<Extract<T, {$channel: K}>> | undefined {
-    return LazyRecord.get(this.#channels, name)
+  ): Type<Extract<T, {$channel: K}>> | undefined {
+    return LazyRecord.get(this.#types, name)
   }
 
   get keys() {
-    return LazyRecord.keys(this.#channels)
+    return LazyRecord.keys(this.#types)
   }
 
   get collections(): {
-    [K in ChannelsOf<T>]: Collection<Extract<T, {$channel: K}>>
+    [K in TypesOf<T>]: Collection<Extract<T, {$channel: K}>>
   } {
     return Object.fromEntries(
-      Object.keys(this.#channels).map(name => {
+      Object.keys(this.#types).map(name => {
         return [name, this.collection(name)]
       })
     ) as any
   }
 
-  collection<K extends ChannelsOf<T>>(
-    channel: K
+  collection<K extends TypesOf<T>>(
+    type: K
   ): Collection<Extract<T, {$channel: K}>> {
-    const alias = channel as string
+    const alias = type as string
     return new Collection('Entry', {
       where: Entry.as(alias).$channel.is(alias),
       alias

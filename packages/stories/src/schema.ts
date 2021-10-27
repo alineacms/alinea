@@ -1,16 +1,16 @@
-import {Channel, channel, createSchema} from '@alinea/core'
+import {createSchema, Type, type} from '@alinea/core'
 import {list} from '@alinea/input.list'
 import {text} from '@alinea/input.text'
 
 const blocks = list('Blocks', {
   schema: createSchema({
-    textblock: channel('Text block', {
+    textblock: type('Text block', {
       text: text('Text')
     })
   })
 })
 
-const page = channel('Page', {
+const page = type('Page', {
   title: text('Title', {
     multiline: true,
     help: 'Wordt gebruikt in de website of app (interne titel wordt gebruikt indien leeg)',
@@ -22,6 +22,6 @@ const page = channel('Page', {
   blocks
 })
 
-export type Page = Channel.TypeOf<typeof page>
+export type Page = Type.Of<typeof page>
 
 export const schema = createSchema({page})

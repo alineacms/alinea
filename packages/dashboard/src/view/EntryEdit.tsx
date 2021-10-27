@@ -54,9 +54,9 @@ function EntryEditHeader() {
   const {schema} = useDashboard()
   const session = useSession()
   const [draft] = useCurrentDraft()
-  const [channelKey] = useInput(EntryDraft.$channel)
+  const [typeKey] = useInput(EntryDraft.$channel)
   const [status = EntryStatus.Published] = useInput(EntryDraft.$status)
-  const channel = schema.channel(channelKey)
+  const type = schema.type(typeKey)
   const [isPublishing, setPublishing] = useState(false)
   function handlePublish() {
     setPublishing(true)
@@ -94,10 +94,10 @@ function EntryEditHeader() {
           Publishing...
         </AppBar.Item>
       )}
-      {/*<Tabs.Root defaultValue="channel">
+      {/*<Tabs.Root defaultValue="type">
         <Tabs.List>
-          <Tabs.Trigger value="channel">
-            {channel?.label && <TextLabel label={channel?.label} />}
+          <Tabs.Trigger value="type">
+            {type?.label && <TextLabel label={type?.label} />}
           </Tabs.Trigger>
         </Tabs.List>
     </Tabs.Root>*/}
@@ -151,7 +151,7 @@ type EntryEditDraftProps = {}
 function EntryEditDraft({}: EntryEditDraftProps) {
   const session = useSession()
   const [draft, status] = useCurrentDraft()!
-  const channel = session.hub.schema.channel(draft.$channel)
+  const type = session.hub.schema.type(draft.$channel)
   const {preview} = useDashboard()
   return (
     <HStack style={{height: '100%'}}>
@@ -161,7 +161,7 @@ function EntryEditDraft({}: EntryEditDraftProps) {
           <EntryTitle />
 
           <Suspense fallback={null}>
-            {channel ? <Fields channel={channel} /> : 'Channel not found'}
+            {type ? <Fields type={type} /> : 'Channel not found'}
           </Suspense>
 
           <Statusbar.Slot>
@@ -187,8 +187,8 @@ export function EntryEdit({id}: EntryEditProps) {
     () => hub.content.entryWithDraft(id),
     {refetchOnWindowFocus: false}
   )
-  const channel = hub.schema.channel(data?.entry.$channel)
-  const draft = useDraft(channel!, data!, doc => {
+  const type = hub.schema.type(data?.entry.$channel)
+  const draft = useDraft(type!, data!, doc => {
     return hub.content.putDraft(id, doc)
   })
   if (!draft) return null

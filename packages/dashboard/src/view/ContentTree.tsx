@@ -95,14 +95,14 @@ type TreeNodeChildrenCreator = {entry: Entry}
 
 function TreeNodeChildrenCreator({entry}: TreeNodeChildrenCreator) {
   const {schema} = useSession().hub
-  const channel = schema.channel(entry.$channel)
-  if (!channel) return null
-  const channelOptions = channel.options?.contains || schema.keys
-  if (channelOptions.length === 1)
+  const type = schema.type(entry.$channel)
+  if (!type) return null
+  const typeOptions = type.options?.contains || schema.keys
+  if (typeOptions.length === 1)
     return (
       <Create.Root>
         <Create.Button>
-          <TextLabel label={schema.channel(channelOptions[0])?.label!} />
+          <TextLabel label={schema.type(typeOptions[0])?.label!} />
         </Create.Button>
       </Create.Root>
     )

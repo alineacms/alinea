@@ -98,8 +98,8 @@ function ListInputRow<T extends ListRow>({
   isDragging,
   ...rest
 }: ListInputRowProps<T>) {
-  const channel = field.options.schema.channel(row.$channel)
-  if (!channel) return null
+  const type = field.options.schema.type(row.$channel)
+  if (!type) return null
   return (
     <div
       className={styles.row.is({dragging: isDragging})()}
@@ -113,7 +113,7 @@ function ListInputRow<T extends ListRow>({
           style={{cursor: handle ? 'grab' : 'grabbing'}}
         />
         <div style={{flexGrow: 1}}>
-          <Fields channel={channel as any} path={path} />
+          <Fields type={type as any} path={path} />
         </div>
         <IconButton icon={MdDelete} onClick={onDelete} />
       </HStack>
@@ -123,17 +123,17 @@ function ListInputRow<T extends ListRow>({
 
 type ListCreateRowProps<T> = {
   field: ListField<T>
-  onCreate: (channel: string) => void
+  onCreate: (type: string) => void
 }
 
 function ListCreateRow<T>({field, onCreate}: ListCreateRowProps<T>) {
-  const channels = Array.from(field.options.schema)
+  const types = Array.from(field.options.schema)
   return (
     <Create.Root>
-      {channels.map(([key, channel]) => {
+      {types.map(([key, type]) => {
         return (
           <Create.Button key={key} onClick={() => onCreate(key)}>
-            <TextLabel label={channel.label} />
+            <TextLabel label={type.label} />
           </Create.Button>
         )
       })}
@@ -222,9 +222,9 @@ export function ListInput<T extends ListRow>({path, field}: ListInputProps<T>) {
         </DndContext>
       </div>
       <ListCreateRow
-        onCreate={(channel: string) => {
+        onCreate={(type: string) => {
           input.push({
-            $channel: channel
+            $channel: type
           })
         }}
         field={field}

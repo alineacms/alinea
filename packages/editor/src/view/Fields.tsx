@@ -1,4 +1,4 @@
-import {Channel, InputPath, inputPath} from '@alinea/core'
+import {InputPath, inputPath, Type} from '@alinea/core'
 import {fromModule} from '@alinea/ui'
 import css from './Fields.module.scss'
 import {Input} from './Input'
@@ -7,11 +7,11 @@ const styles = fromModule(css)
 
 type EntryEditFieldsProps = {
   path?: InputPath<any>
-  channel: Channel
+  type: Type
 }
 
-export function Fields({path, channel}: EntryEditFieldsProps) {
-  const fields = Array.from(channel)
+export function Fields({path, type}: EntryEditFieldsProps) {
+  const fields = Array.from(type)
   return (
     <div className={styles.root()}>
       {fields.map(([name, field]) => {

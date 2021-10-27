@@ -1,4 +1,4 @@
-import {ChannelsOf, RichTextNode, TextDoc} from '@alinea/core'
+import {RichTextNode, TextDoc, TypesOf} from '@alinea/core'
 import {ComponentType, Fragment} from 'react'
 
 function getTag(type: string, attributes: Record<string, any> | undefined) {
@@ -18,7 +18,7 @@ function getTag(type: string, attributes: Record<string, any> | undefined) {
   }
 }
 
-function RichTextNode<T>(node: RichTextNode<T>) {
+function RichTextNodeView<T>(node: RichTextNode<T>) {
   switch (node.type) {
     case 'text':
       const {text, marks} = node as RichTextNode.Text
@@ -32,9 +32,9 @@ function RichTextNode<T>(node: RichTextNode<T>) {
       const Tag = getTag(type, attrs) || Fragment
       return (
         <Tag>
-          {content?.map((node, i) => <RichTextNode key={i} {...node} />) || (
-            <br />
-          )}
+          {content?.map((node, i) => (
+            <RichTextNodeView key={i} {...node} />
+          )) || <br />}
         </Tag>
       )
   }
@@ -43,7 +43,7 @@ function RichTextNode<T>(node: RichTextNode<T>) {
 type RichTextProps<T> = {
   doc: TextDoc<T>
   view?: Partial<{
-    [K in ChannelsOf<T>]: ComponentType<Extract<T, {$channel: K}>>
+    [K in TypesOf<T>]: ComponentType<Extract<T, {$channel: K}>>
   }>
 }
 
@@ -58,7 +58,7 @@ export function RichText<T>({doc, view}: RichTextProps<T>) {
           const id = (node as RichTextNode.Element).attrs?.id
           return <Custom key={i} {...doc.blocks[id]} />
         }
-        return <RichTextNode key={i} {...node} />
+        return <RichTextNodeView key={i} {...node} />
       })}
     </>
   )
