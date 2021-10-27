@@ -100,7 +100,6 @@ export class RichTextValue<T> implements Value<TextDoc<Row & T>> {
           return [
             key,
             new RecordValue({
-              id: Value.Scalar,
               type: Value.Scalar,
               ...value.shape
             })
@@ -152,13 +151,7 @@ export class RichTextValue<T> implements Value<TextDoc<Row & T>> {
       fragment: map.get('$doc'),
       insert: (id: string, block: string) => {
         if (!this.values) throw new Error('No types defined')
-        map.set(
-          id,
-          this.values[block].toY({
-            id: id,
-            type: block
-          } as any)
-        )
+        map.set(id, this.values[block].toY({type: block} as any))
       }
     }
   }

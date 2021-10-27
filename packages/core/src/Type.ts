@@ -1,3 +1,4 @@
+import {createError} from './ErrorWithCode'
 import {Field} from './Field'
 import {Label} from './Label'
 import {RecordValue} from './type/RecordValue'
@@ -13,33 +14,39 @@ export namespace Type {
   }
 }
 
-export class Type<T = {}> {
-  #fields: LazyRecord<Field>
+const reserved = new Set(['id', 'type'])
 
+export class Type<T = {}> {
   constructor(
     public label: Label,
-    fields: LazyRecord<Field>,
+    public fields: Record<string, Field>,
     public options: Type.Options = {}
   ) {
-    this.#fields = fields
+    for (const key of Object.keys(fields)) {
+      if (reserved.has(key))
+        throw createError(
+          `Field name "${key}" is reserved, in channel "${label}"`
+        )
+    }
   }
 
   get valueType(): RecordValue {
     return Value.Record(
       Object.fromEntries(
-        Array.from(this).map(([key, field]) => {
-          return [key, field.type]
-        })
+        [
+          ['id', Value.Scalar as Value],
+          ['type', Value.Scalar as Value]
+        ].concat(
+          Array.from(this).map(([key, field]) => {
+            return [key, field.type]
+          })
+        )
       )
     )
   }
 
   [Symbol.iterator]() {
-    return LazyRecord.iterate(this.#fields)[Symbol.iterator]()
-  }
-
-  get fields() {
-    return LazyRecord.resolve(this.#fields)
+    return Object.entries(this.fields)[Symbol.iterator]()
   }
 
   field(key: string) {
@@ -60,8 +67,8 @@ type RowOf<LazyFields> = LazyFields extends Lazy<infer U>
 
 export function type<Fields extends LazyRecord<Field>>(
   label: Label,
-  fields: Fields,
+  fields: Fields & {id?: never; type?: never},
   options?: Type.Options
 ): Type<RowOf<Fields>> {
-  return new Type(label, fields, options)
+  return new Type(label, LazyRecord.resolve(fields), options)
 }

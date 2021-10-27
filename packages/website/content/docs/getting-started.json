@@ -1,17 +1,15 @@
 {
-  "id": "1zoD8OoAFHj6I1IeO8n8ltfBVJ0",
+  "id": "20580nQzbOBR3Lt4kIdxyRGglc6",
   "type": "Doc",
   "title": "Getting started",
   "body": {
     "type": "doc",
     "blocks": {
       "1zzs6wF0OYU4VjlgWH0Yr7TjE0I": {
-        "id": "1zzs6wF0OYU4VjlgWH0Yr7TjE0I",
         "type": "CodeBlock",
         "code": "Dit is mijn codeblock"
       },
       "200Cjwa5GRksoKNE5CK6A8xujMC": {
-        "id": "200Cjwa5GRksoKNE5CK6A8xujMC",
         "type": "Inception",
         "wysiwyg": {
           "type": "doc",

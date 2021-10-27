@@ -23,7 +23,7 @@ export function fileChanges(store: Store, entries: Array<Entry>) {
       fileRemoves.push(file)
     }
     // Remove indexed properties
-    const {id, $path, $parent, $isContainer, $status, ...data} = entry as any
+    const {$path, $parent, $isContainer, $status, ...data} = entry as any
     contentChanges.push([file, JSON.stringify(data, null, '  ')])
   }
   return {contentChanges, fileRemoves}

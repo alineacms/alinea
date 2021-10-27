@@ -10,6 +10,8 @@ export function docFromEntry(
   doc = new Y.Doc()
 ) {
   const root = doc.getMap(ROOT_KEY)
+  root.set('id', entry.id)
+  root.set('type', entry.type)
   for (const [key, field] of type) {
     const contents = entry[key]
     root.set(key, field.type.toY(contents))

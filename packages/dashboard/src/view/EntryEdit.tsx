@@ -60,6 +60,7 @@ function EntryEditHeader() {
   const [isPublishing, setPublishing] = useState(false)
   function handlePublish() {
     setPublishing(true)
+    console.log(draft.getEntry())
     return session.hub.content.publish([draft.getEntry()]).finally(() => {
       setPublishing(false)
     })
