@@ -1,17 +1,17 @@
 {
-  "$id": "1zoD8OoAFHj6I1IeO8n8ltfBVJ0",
+  "id": "1zoD8OoAFHj6I1IeO8n8ltfBVJ0",
   "$channel": "Doc",
   "title": "Getting started",
   "body": {
     "type": "doc",
     "blocks": {
       "1zzs6wF0OYU4VjlgWH0Yr7TjE0I": {
-        "$id": "1zzs6wF0OYU4VjlgWH0Yr7TjE0I",
+        "id": "1zzs6wF0OYU4VjlgWH0Yr7TjE0I",
         "$channel": "CodeBlock",
         "code": "Dit is mijn codeblock"
       },
       "200Cjwa5GRksoKNE5CK6A8xujMC": {
-        "$id": "200Cjwa5GRksoKNE5CK6A8xujMC",
+        "id": "200Cjwa5GRksoKNE5CK6A8xujMC",
         "$channel": "Inception",
         "wysiwyg": {
           "type": "doc",
@@ -113,13 +113,13 @@
   },
   "blocks": [
     {
-      "$id": "1zpMEbbcnB7Xv3ObeU5MrR44woG",
+      "id": "1zpMEbbcnB7Xv3ObeU5MrR44woG",
       "$index": "a0",
       "$channel": "A",
       "field1": "A"
     },
     {
-      "$id": "1zzR6QpzVIkNPWsA0FXLmij6AsA",
+      "id": "1zzR6QpzVIkNPWsA0FXLmij6AsA",
       "$index": "a1",
       "$channel": "Wysiwyg",
       "field1": {

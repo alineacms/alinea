@@ -40,7 +40,7 @@ function TreeChildren({
       {data?.map(entry => {
         return (
           <TreeNode
-            key={entry.$id}
+            key={entry.id}
             entry={entry}
             level={level}
             isOpen={isOpen}
@@ -60,11 +60,11 @@ type TreeNodeProps = {
 function TreeNode({entry, level, isOpen, toggleOpen}: TreeNodeProps) {
   const ref = useRef<HTMLAnchorElement>(null)
   const location = useLocation()
-  const isSelected = location.pathname.slice(1) === entry.$id
+  const isSelected = location.pathname.slice(1) === entry.id
   const handleToggleOpen = useCallback(() => {
-    if (entry.$isContainer) toggleOpen(entry.$id)
+    if (entry.$isContainer) toggleOpen(entry.id)
   }, [toggleOpen])
-  const isOpened = isOpen(entry.$id)
+  const isOpened = isOpen(entry.id)
   useInitialEffect(() => {
     if (isSelected)
       ref.current!.scrollIntoView({/*behavior: 'smooth',*/ block: 'center'})
@@ -81,7 +81,7 @@ function TreeNode({entry, level, isOpen, toggleOpen}: TreeNodeProps) {
       />
       {entry.$isContainer && isOpened && (
         <TreeChildren
-          parent={entry.$id}
+          parent={entry.id}
           level={level + 1}
           isOpen={isOpen}
           toggleOpen={toggleOpen}
@@ -130,7 +130,7 @@ const TreeNodeLink = memo(
       <div className={styles.node.is({selected: isSelected})()}>
         <Link
           ref={ref}
-          to={entry.$id}
+          to={entry.id}
           onClick={toggleOpen}
           className={styles.node.link()}
           style={{paddingLeft: `${10 + level * 8}px`}}

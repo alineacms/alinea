@@ -24,7 +24,7 @@ export class Pages<T extends Entry> {
   children(entry: string | Expression<string> | Entry, depth = 1): Cursor<T> {
     if (depth > 1) throw 'todo depth > 1'
     const id =
-      typeof entry === 'string' ? entry : '$id' in entry ? entry.$id : entry
+      typeof entry === 'string' ? entry : 'id' in entry ? entry.id : entry
     return Entry.where(Entry.$parent.is(id))
   }
 }

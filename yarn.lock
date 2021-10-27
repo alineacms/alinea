@@ -179,7 +179,7 @@ __metadata:
     content-type: ^1.0.4
     convert-hrtime: ^5.0.0
     cors: ^2.8.5
-    helder.store: ^0.0.0-alpha.19
+    helder.store: ^0.0.0-alpha.20
     octokit-commit-multiple-files: ^3.2.1
     p-limit: ^4.0.0
     pretty-ms: ^7.0.1
@@ -4651,10 +4651,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"helder.store@npm:^0.0.0-alpha.19":
-  version: 0.0.0-alpha.19
-  resolution: "helder.store@npm:0.0.0-alpha.19"
-  checksum: f7af01caaa3391889beba5b63bb1446faed91a2980b41ee2260c529638f41c7d1bff5939a14ad9b3e61783437677cfa59d474c4a7d49deaa81e51fd013f01554
+"helder.store@npm:^0.0.0-alpha.20":
+  version: 0.0.0-alpha.20
+  resolution: "helder.store@npm:0.0.0-alpha.20"
+  checksum: 867b51ce3bacd4dcce6ca4ea9a32ab82a0558b073ad772b30b0ba7b17f9bf3afe99df2763a948c3175c2aed065959b0963f08772c4140b0af7b3680f0e375492
   languageName: node
   linkType: hard
 

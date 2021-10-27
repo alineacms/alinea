@@ -86,7 +86,7 @@ function unserialize(node: RichTextNode): Y.XmlText | Y.XmlElement {
 }
 
 type Row = {
-  $id: string
+  id: string
   $channel: string
 }
 
@@ -100,7 +100,7 @@ export class RichTextValue<T> implements Value<TextDoc<Row & T>> {
           return [
             key,
             new RecordValue({
-              $id: Value.Scalar,
+              id: Value.Scalar,
               $channel: Value.Scalar,
               ...value.shape
             })
@@ -155,7 +155,7 @@ export class RichTextValue<T> implements Value<TextDoc<Row & T>> {
         map.set(
           id,
           this.values[block].toY({
-            $id: id,
+            id: id,
             $channel: block
           } as any)
         )

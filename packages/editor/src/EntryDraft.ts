@@ -38,7 +38,7 @@ export class EntryDraft
   private saveTimeout: any = null
 
   constructor(
-    private type: Type,
+    private $channel: Type,
     private entry: Entry,
     draft: Draft | null,
     protected saveDraft: (doc: string) => Promise<Outcome<void>>
@@ -46,12 +46,12 @@ export class EntryDraft
     super()
     this.doc = new Y.Doc()
     if (draft?.doc) Y.applyUpdate(this.doc, toUint8Array(draft.doc))
-    else docFromEntry(type, entry, this.doc)
+    else docFromEntry($channel, entry, this.doc)
     this.root = this.doc.getMap(ROOT_KEY)
   }
 
   connect() {
-    const provider = new WebrtcProvider('alinea-' + this.$id, this.doc)
+    const provider = new WebrtcProvider('alinea-' + this.id, this.doc)
     const save = () => {
       this.saveTimeout = null
       this.emit('status', [EntryDraftStatus.Saving])
@@ -87,11 +87,11 @@ export class EntryDraft
 
   getEntry(): Entry {
     return {
-      $id: this.$id,
+      id: this.id,
       $path: this.$path,
       $channel: this.$channel,
       title: this.title,
-      ...this.type.valueType.fromY(this.root)
+      ...this.$channel.valueType.fromY(this.root)
     }
   }
 
@@ -110,8 +110,8 @@ export class EntryDraft
   static $status = inputPath<EntryStatus | undefined>(Value.Scalar, ['$status'])
   static title = inputPath<string>(Value.Scalar, ['title'])
 
-  get $id() {
-    return this.root.get('$id') || this.entry.$id
+  get id() {
+    return this.root.get('id') || this.entry.id
   }
 
   get $path() {

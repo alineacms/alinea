@@ -18,7 +18,7 @@ export function fileChanges(store: Store, entries: Array<Entry>) {
     fileRemoves: Array<string> = []
   for (const entry of entries) {
     const file = entryFile(entry)
-    const existing = store.first(Entry.where(Entry.$id.is(entry.$id)))
+    const existing = store.first(Entry.where(Entry.id.is(entry.id)))
     if (existing && existing.$path !== entry.$path) {
       fileRemoves.push(file)
     }

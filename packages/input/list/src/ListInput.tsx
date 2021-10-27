@@ -40,7 +40,7 @@ import css from './ListInput.module.scss'
 const styles = fromModule(css)
 
 export type ListRow = {
-  $id: string
+  id: string
   $index: string
   $channel: string
 }
@@ -70,7 +70,7 @@ function ListInputRowSortable<T extends ListRow>(props: ListInputRowProps<T>) {
   const {attributes, listeners, setNodeRef, transform, transition, isDragging} =
     useSortable({
       animateLayoutChanges,
-      id: props.row.$id
+      id: props.row.id
     })
   const style: CSSProperties = {
     transform: CSS.Transform.toString(transform),
@@ -151,7 +151,7 @@ const layoutMeasuringConfig = {
 export function ListInput<T extends ListRow>({path, field}: ListInputProps<T>) {
   const [rows, input] = useInput(path)
   const {help} = field.options
-  const ids = rows.map(row => row.$id)
+  const ids = rows.map(row => row.id)
   const [dragging, setDragging] = useState<T | null>(null)
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -162,7 +162,7 @@ export function ListInput<T extends ListRow>({path, field}: ListInputProps<T>) {
 
   function handleDragStart(event: DragStartEvent) {
     const {active} = event
-    setDragging(rows.find(row => row.$id === active.id) || null)
+    setDragging(rows.find(row => row.id === active.id) || null)
   }
 
   function handleDragEnd(event: DragEndEvent) {
@@ -187,14 +187,14 @@ export function ListInput<T extends ListRow>({path, field}: ListInputProps<T>) {
               {rows.map(row => {
                 return (
                   <ListInputRowSortable<T>
-                    key={row.$id}
+                    key={row.id}
                     row={row}
                     field={field}
                     path={inputPath<T>(
                       Value.Scalar,
-                      path.location.concat(row.$id)
+                      path.location.concat(row.id)
                     )}
-                    onDelete={() => input.delete(row.$id)}
+                    onDelete={() => input.delete(row.id)}
                   />
                 )
               })}
@@ -214,7 +214,7 @@ export function ListInput<T extends ListRow>({path, field}: ListInputProps<T>) {
                 field={field}
                 path={inputPath<T>(
                   Value.Scalar,
-                  path.location.concat(dragging.$id)
+                  path.location.concat(dragging.id)
                 )}
               />
             ) : null}

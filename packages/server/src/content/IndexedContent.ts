@@ -11,12 +11,12 @@ export class IndexedContent implements Content {
 
   async get(id: string): Promise<Entry | null> {
     const store = await this.index.store
-    return store.first(Entry.where(Entry.$id.is(id)))
+    return store.first(Entry.where(Entry.id.is(id)))
   }
 
   async entryWithDraft(id: string): Promise<Entry.WithDraft | null> {
     const store = await this.index.store
-    const entry = store.first(Entry.where(Entry.$id.is(id)))
+    const entry = store.first(Entry.where(Entry.id.is(id)))
     const draft = store.first(Draft.where(Draft.entry.is(id)))
     return entry && {entry, draft}
   }
@@ -25,7 +25,7 @@ export class IndexedContent implements Content {
     const store = await this.index.store
     // Todo: only update keys that changed?
     return Outcome.attempt(() => {
-      store.update(Entry.where(Entry.$id.is(id)), entry as any)
+      store.update(Entry.where(Entry.id.is(id)), entry as any)
     })
   }
 
@@ -45,13 +45,13 @@ export class IndexedContent implements Content {
       Entry.where(
         parentId ? Entry.$parent.is(parentId) : Entry.$parent.isNull()
       ).select({
-        $id: Entry.$id,
+        id: Entry.id,
         $path: Entry.$path,
         $channel: Entry.$channel,
         $parent: Entry.$parent,
         $isContainer: Entry.$isContainer,
         title: Entry.title,
-        childrenCount: Parent.where(Parent.$parent.is(Entry.$id))
+        childrenCount: Parent.where(Parent.$parent.is(Entry.id))
           .select(Functions.count())
           .first()
       })

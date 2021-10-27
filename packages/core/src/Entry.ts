@@ -11,7 +11,7 @@ export enum EntryStatus {
 }
 
 export interface Entry {
-  $id: string
+  id: string
   $channel: string
   $path: string
   $status?: EntryStatus

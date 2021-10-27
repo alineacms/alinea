@@ -5,14 +5,14 @@ import {Value} from '../Value'
 import {RecordValue} from './RecordValue'
 
 type Row = {
-  $id: string
+  id: string
   $index: string
   $channel: string
 }
 
 /*
   export type Mutator<T extends Row> = {
-    push: (row: Omit<T, '$id' | '$index'>) => void
+    push: (row: Omit<T, 'id' | '$index'>) => void
     delete: (id: string) => void
     move: (oldIndex: number, newIndex: number) => void
   }
@@ -34,7 +34,7 @@ export class ListValue<T> implements Value<Array<Row & T>> {
         return [
           key,
           new RecordValue({
-            $id: Value.Scalar,
+            id: Value.Scalar,
             $index: Value.Scalar,
             $channel: Value.Scalar,
             ...type.shape
@@ -48,7 +48,7 @@ export class ListValue<T> implements Value<Array<Row & T>> {
     const rows = Array.isArray(value) ? value : []
     let currentIndex = null
     for (const row of rows) {
-      const id = row.$id
+      const id = row.id
       const type = row.$channel
       const valueType = this.values[type]
       if (!id || !type || !valueType) continue
@@ -85,7 +85,7 @@ export class ListValue<T> implements Value<Array<Row & T>> {
   }
   mutator<T extends Row>(parent: Y.Map<any>, key: string) {
     return {
-      push: (row: Omit<T, '$id' | '$index'>) => {
+      push: (row: Omit<T, 'id' | '$index'>) => {
         const record = parent.get(key)
         const rows: Array<Row> = this.fromY(record) as any
         const id = createId()
@@ -93,7 +93,7 @@ export class ListValue<T> implements Value<Array<Row & T>> {
           id,
           this.values[row.$channel].toY({
             ...row,
-            $id: id,
+            id,
             $index: generateKeyBetween(
               rows[rows.length - 1]?.$index || null,
               null
@@ -109,13 +109,13 @@ export class ListValue<T> implements Value<Array<Row & T>> {
         const record = parent.get(key)
         const rows: Array<Row> = this.fromY(record) as any
         const from = rows[oldIndex]
-        const into = rows.filter(row => row.$id !== from.$id)
+        const into = rows.filter(row => row.id !== from.id)
         const prev = into[newIndex - 1]
         const next = into[newIndex]
         const a = prev?.$index || null
         const b = next?.$index || null
         const $index = generateKeyBetween(a, b)
-        const row = record.get(from.$id)
+        const row = record.get(from.id)
         row.set('$index', $index)
       }
     }

@@ -12,8 +12,8 @@ async function completeEntry(
   entry: Entry,
   save: (entry: Entry) => Promise<void>
 ) {
-  if (!entry.$id) {
-    const result = {$id: createId(), ...(entry as any)}
+  if (!entry.id) {
+    const result = {id: createId(), ...(entry as any)}
     await save(result)
     return result
   }
@@ -55,7 +55,6 @@ async function index(dir: string, store: Store) {
         )
         if (hasNamedLocation) entry = await entryData(namedLocation)
         const parent = store.insert(Entry, {
-          $id: createId(),
           $path: localPath,
           $parent: parentId,
           $isContainer: true,
@@ -63,7 +62,7 @@ async function index(dir: string, store: Store) {
           title: file,
           ...entry
         })
-        await process(localPath, parent.$id)
+        await process(localPath, parent.id)
       } else {
         total++
         try {
@@ -102,7 +101,6 @@ function init(store: Store, path: string): Progress<Store> {
     store.delete(Entry)
     store.delete(Draft)
     const total = await index(path, store)
-    store.createIndex(Entry, '$id', [Entry.$id])
     store.createIndex(Entry, '$parent', [Entry.$parent])
     store.createIndex(Draft, 'entry', [Draft.entry])
     const diff = process.hrtime.bigint() - startTime
