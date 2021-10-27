@@ -1,6 +1,6 @@
 module.exports = {
   webpack: (config, {buildId, dev, isServer, defaultLoaders, webpack}) => {
-    config.experiments = {topLevelAwait: true}
+    config.experiments = {...config.experiments, topLevelAwait: true}
     if (isServer) {
       config.externals = [
         ...config.externals,
@@ -16,7 +16,8 @@ module.exports = {
         '@alinea/input.number',
         '@alinea/input.text',
         '@alinea/server',
-        '@alinea/ui'
+        '@alinea/ui',
+        'yjs'
       ]
       config.externalsType = 'import'
       config.optimization.providedExports = true

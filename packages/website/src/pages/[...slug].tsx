@@ -1,5 +1,3 @@
-import {first, pages} from 'alinea/pages'
-import {GetStaticPropsContext} from 'next'
 import {PageView} from '../view/PageView'
 
 export function getStaticPaths() {
@@ -9,13 +7,6 @@ export function getStaticPaths() {
   }
 }
 
-export function getStaticProps(context: GetStaticPropsContext) {
-  const paths = (context.params?.slug as Array<string>) || []
-  const slug = '/' + paths.join('/')
-  const entry = first(pages.whereUrl(slug))
-  return {
-    props: {entry}
-  }
-}
+export {getStaticProps} from '.'
 
 export default PageView

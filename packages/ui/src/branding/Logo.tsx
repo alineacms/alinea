@@ -1,14 +1,15 @@
-import {createId} from '@alinea/core'
-import {PropsWithChildren} from 'react'
+import {PropsWithChildren, useMemo} from 'react'
 import {fromModule} from '../util/Styler'
 import css from './Logo.module.scss'
 
 const styles = fromModule(css)
 
+let unique = 0
+
 export type LogoShapeProps = PropsWithChildren<{}>
 
 export function Logo({children}: LogoShapeProps) {
-  const id = createId()
+  const id = useMemo(() => `@alinea/logo-${unique++}`, [])
   return (
     <div className={styles.root()}>
       <svg

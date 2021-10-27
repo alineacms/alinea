@@ -99,7 +99,8 @@ async function index(schema: Schema, dir: string, store: Store) {
             }
           }
         } catch (e) {
-          console.log(`Could not parse ${localPath} because:\n  ${e}`)
+          console.log(`Could not parse ${localPath} because:`)
+          console.error(e)
         }
       }
     })

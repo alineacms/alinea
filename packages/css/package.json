@@ -7,6 +7,12 @@
     "url": "https://github.com/codeurs/alinea.git"
   },
   "exports": {
-    ".": "./index.css"
-  }
+    ".": "./index.css",
+    "./global.css": "./global.css"
+  },
+  "files": [
+    "fonts",
+    "global.css",
+    "index.css"
+  ]
 }

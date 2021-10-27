@@ -18,7 +18,7 @@
     "@alinea/dashboard": "0.0.0",
     "@alinea/server": "0.0.0",
     "@alinea/ui": "0.0.0",
-    "next": "^11.1.2"
+    "next": "^12.0.1"
   },
   "devDependencies": {
     "cross-env": "^7.0.3",

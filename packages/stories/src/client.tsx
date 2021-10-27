@@ -1,6 +1,6 @@
 import '@alinea/css'
+import '@alinea/css/global.css'
 import {renderDashboard} from '@alinea/dashboard'
-import '@alinea/dashboard/global.css'
 import {schema} from '../../website/.alinea/schema'
 import {PageView} from '../../website/src/view/PageView'
 
