@@ -71,7 +71,7 @@ function AppAuthenticated() {
       <Statusbar.Root>
         {!auth && (
           <Statusbar.Status icon={MdWarning}>
-            Using no authentication
+            Not using authentication
           </Statusbar.Status>
         )}
       </Statusbar.Root>

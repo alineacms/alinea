@@ -1,13 +1,11 @@
 import {spawn} from 'child_process'
 import esbuild from 'esbuild'
 import alias from 'esbuild-plugin-alias'
-import {ScssModulesPlugin} from 'esbuild-scss-modules-plugin'
 import fs from 'fs'
 import {createServer, request} from 'http'
-import {createRequire} from 'module'
 import path from 'path'
+import {ScssModulesPlugin} from '../../scripts/scss-modules-dev'
 
-const require = createRequire(import.meta.url)
 const usePreact = false
 const clients = []
 
@@ -52,15 +50,15 @@ esbuild
       '.woff2': 'file'
     },
     define: {
-      'process.env.__NEXT_TRAILING_SLASH': true,
-      'process.env.__NEXT_I18N_SUPPORT': false,
+      'process.env.__NEXT_TRAILING_SLASH': String(true),
+      'process.env.__NEXT_I18N_SUPPORT': String(false),
       'process.env.__NEXT_ROUTER_BASEPATH': '""',
-      'process.env.__NEXT_SCROLL_RESTORATION': true,
-      'process.env.__NEXT_HAS_REWRITES': false,
-      'process.env.__NEXT_OPTIMIZE_CSS': false,
+      'process.env.__NEXT_SCROLL_RESTORATION': String(true),
+      'process.env.__NEXT_HAS_REWRITES': String(false),
+      'process.env.__NEXT_OPTIMIZE_CSS': String(false),
       'process.env.__NEXT_CROSS_ORIGIN': '""',
-      'process.env.__NEXT_STRICT_MODE': false,
-      'process.env.__NEXT_IMAGE_OPTS': null
+      'process.env.__NEXT_STRICT_MODE': String(false),
+      'process.env.__NEXT_IMAGE_OPTS': String(null)
     },
     banner: {
       js: '(() => new EventSource("/~esbuild").onmessage = () => location.reload())();'
@@ -91,7 +89,7 @@ esbuild.serve({servedir: '.'}, {}).then(server => {
     req.pipe(
       request(
         {
-          hostname: server.hostname,
+          hostname: server.host,
           port: server.port,
           path: url,
           method,
