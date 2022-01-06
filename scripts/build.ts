@@ -3,7 +3,7 @@ import {build, Plugin} from 'esbuild'
 import fs, {remove} from 'fs-extra'
 import glob from 'glob'
 import path from 'path'
-import {ScssModulesPlugin} from './scss-modules'
+import {ScssModulesPlugin} from './scss-modules-prod'
 
 let skipTypes = false
 let which = []

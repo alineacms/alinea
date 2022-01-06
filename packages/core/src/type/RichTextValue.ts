@@ -122,6 +122,7 @@ export class RichTextValue<T> implements Value<TextDoc<Row & T>> {
     return map
   }
   fromY(value: Y.Map<any>): TextDoc<Row & T> {
+    if (!value) return {type: 'doc', blocks: {}, content: []}
     const doc: Y.XmlFragment = value.get('$doc')
     const types = this.values
     const blocks = types

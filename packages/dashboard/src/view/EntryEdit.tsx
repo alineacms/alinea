@@ -131,7 +131,7 @@ function EntryEditStatus({status}: EntryEditStatusProps) {
 
 type EntryPreviewProps = {
   draft: EntryDraft
-  preview: ComponentType<{entry: Entry}>
+  preview: ComponentType<Entry>
 }
 
 function EntryPreview({draft, preview: Preview}: EntryPreviewProps) {
@@ -140,7 +140,7 @@ function EntryPreview({draft, preview: Preview}: EntryPreviewProps) {
     setEntry(draft.getEntry())
     return draft.watchChanges(() => setEntry(draft.getEntry()))
   }, [Preview, draft])
-  return <Preview entry={entry} />
+  return <Preview {...entry} />
 }
 
 type EntryEditDraftProps = {}
@@ -168,7 +168,9 @@ function EntryEditDraft({}: EntryEditDraftProps) {
       </div>
       {preview && (
         <Pane id="preview" resizable="left" defaultWidth={330} minWidth={320}>
-          <EntryPreview preview={preview} draft={draft} />
+          <div className={styles.draft.preview()}>
+            <EntryPreview preview={preview} draft={draft} />
+          </div>
         </Pane>
       )}
     </HStack>

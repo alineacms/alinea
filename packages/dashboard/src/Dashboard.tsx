@@ -10,7 +10,7 @@ export interface DashboardOptions<T> {
   apiUrl: string
   auth?: Auth.View
   color?: string
-  preview?: ComponentType<{entry: T}>
+  preview?: ComponentType<T>
 }
 
 export const Dashboard = App

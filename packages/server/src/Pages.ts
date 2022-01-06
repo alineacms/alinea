@@ -30,7 +30,7 @@ export class Pages<T extends Entry> {
       typeof entry === 'string' ? entry : 'id' in entry ? entry.id : entry
     return Entry.where(Entry.$parent.is(id))
   }
-  whereUrl<T extends Entry>(url: string): Cursor<T> {
+  whereUrl(url: string): Cursor<T> {
     return Entry.where(Entry.$path.is(url))
   }
 }
