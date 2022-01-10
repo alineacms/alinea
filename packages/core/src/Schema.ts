@@ -71,4 +71,6 @@ export class Schema<T = any> {
       alias
     })
   }
+
+  entry: Collection<T> = new Collection('Entry')
 }

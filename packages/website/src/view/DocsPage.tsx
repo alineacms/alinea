@@ -1,6 +1,6 @@
+import {Docs} from '.alinea'
 import {Label} from '@alinea/core'
 import {TextLabel} from '@alinea/ui'
-import {Docs} from 'alinea/schema'
 import Link from 'next/link'
 import {Container} from './layout/Container'
 

@@ -24,7 +24,7 @@
     "content-type": "^1.0.4",
     "convert-hrtime": "^5.0.0",
     "cors": "^2.8.5",
-    "helder.store": "^0.0.0-alpha.20",
+    "helder.store": "^0.0.0-alpha.21",
     "octokit-commit-multiple-files": "^3.2.1",
     "p-limit": "^4.0.0",
     "pretty-ms": "^7.0.1",

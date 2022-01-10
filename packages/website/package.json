@@ -4,9 +4,8 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "dev": "yarn workspace @alinea/root build && next dev",
-    "index": "alinea index content -o .next/server/chunks/content",
-    "build": "next build && yarn index",
+    "dev": "yarn workspace @alinea/root build && alinea generate && next dev",
+    "build": "alinea generate && next build",
     "start": "next start",
     "lint": "next lint"
   },
