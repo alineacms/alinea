@@ -58,7 +58,8 @@ esbuild
       'process.env.__NEXT_OPTIMIZE_CSS': String(false),
       'process.env.__NEXT_CROSS_ORIGIN': '""',
       'process.env.__NEXT_STRICT_MODE': String(false),
-      'process.env.__NEXT_IMAGE_OPTS': String(null)
+      'process.env.__NEXT_IMAGE_OPTS': String(null),
+      __dirname: '""'
     },
     banner: {
       js: '(() => new EventSource("/~esbuild").onmessage = () => location.reload())();'
