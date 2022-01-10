@@ -136,6 +136,12 @@ async function generate(options: Options) {
       plugins: [externalPlugin]
     })
   )
+  await fs.copy(path.join(__dirname, 'static'), outdir, {
+    overwrite: true,
+    filter(src, dest) {
+      return !src.includes('cache.')
+    }
+  })
   const schemaFile = path.join(outdir, 'schema.js')
   const outFile = 'file://' + path.join(cwd, schemaFile)
   const exports = await import(outFile)
@@ -162,12 +168,6 @@ async function generate(options: Options) {
     )
     await fs.writeFile(path.join(outdir, 'cache.wasm'), embedInWasm(data))
   }
-  await fs.copy(path.join(__dirname, 'static'), outdir, {
-    overwrite: true,
-    filter(src, dest) {
-      return !src.includes('cache.')
-    }
-  })
   const schemaSource = await fs.readFile(schemaFile, 'utf-8')
   await fs.writeFile(
     schemaFile,
