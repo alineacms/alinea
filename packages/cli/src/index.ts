@@ -139,7 +139,9 @@ async function generate(options: Options) {
   await fs.copy(path.join(__dirname, 'static'), outdir, {
     overwrite: true,
     filter(src, dest) {
-      return !src.includes('cache.')
+      return (
+        !src.includes('cache.legacy.js') && !src.includes('cache.modern.js')
+      )
     }
   })
   const schemaFile = path.join(outdir, 'schema.js')
