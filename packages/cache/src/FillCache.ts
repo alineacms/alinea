@@ -76,6 +76,7 @@ async function index(schema: Schema, dir: string, store: Store) {
         total++
         try {
           const location = path.join(dir, localPath)
+          if (!location.endsWith('.json')) return
           const data = await entryData(location)
           const name = path.basename(file, '.json')
           const isIndex = name === 'index'
@@ -118,6 +119,7 @@ function init(schema: Schema, store: Store, path: string): Progress<Store> {
     store.delete(Entry)
     store.delete(Draft)
     const total = await index(schema, path, store)
+    store.createIndex(Entry, '$path', [Entry.$path])
     store.createIndex(Entry, '$parent', [Entry.$parent])
     store.createIndex(Draft, 'entry', [Draft.entry])
     const diff = process.hrtime.bigint() - startTime

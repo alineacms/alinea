@@ -1,4 +1,4 @@
-import {createSchema, DataOf, EntryOf, type} from '@alinea/core'
+import {createSchema, type} from '@alinea/core'
 import {list} from '@alinea/input.list'
 import {richText} from '@alinea/input.richtext'
 import {text} from '@alinea/input.text'
@@ -38,11 +38,3 @@ export const schema = createSchema({
     })
   })
 })
-
-export const {Home, Docs, Doc} = schema.collections
-
-export type Home = DataOf<typeof Home>
-export type Docs = DataOf<typeof Docs>
-export type Doc = DataOf<typeof Doc>
-
-export type Page = EntryOf<typeof schema>

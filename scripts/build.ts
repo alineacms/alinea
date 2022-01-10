@@ -63,8 +63,12 @@ async function buildPackage(pkg: string) {
     )
     if (fs.existsSync(typeDir)) await fs.copy(typeDir, dist)
   }
+  const staticDir = path.join(location, 'src', 'static')
+  if (fs.existsSync(staticDir))
+    await fs.copy(staticDir, path.join(cwd, 'dist', 'static'))
   const entryPoints = glob.sync('src/**/*.{ts,tsx}', {cwd})
   for (const entryPoint of entryPoints) {
+    if (entryPoint.endsWith('.d.ts')) continue
     const inject = entryPoint.endsWith('.tsx')
       ? [root + '/scripts/react-shim.js']
       : undefined

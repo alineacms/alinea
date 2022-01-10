@@ -30,8 +30,8 @@ export class Cache {
 
   constructor(
     public schema: Schema,
-    public dir: string,
-    private open: () => Promise<Store>
+    private open: () => Promise<Store>,
+    public dir?: string
   ) {}
 
   get store() {
@@ -44,7 +44,7 @@ export class Cache {
 
   private async init(fill: boolean) {
     const store = await this.open()
-    if (fill) {
+    if (fill && this.dir) {
       const hasEntries = Boolean(store.first(Entry))
       if (!hasEntries) await fillCache(this.schema, store, this.dir)
     }
@@ -52,14 +52,23 @@ export class Cache {
   }
 
   async sync() {
+    if (!this.dir) throw new Error(`This cache is readonly`)
     const store = await this.initStore(false)
     return fillCache(this.schema, store, this.dir)
   }
 
+  static fromPromise(schema: Schema, store: Promise<Store>) {
+    return new Cache(schema, () => store)
+  }
+
   static fromMemory({schema, dir}: CacheOptions) {
-    return new Cache(schema, dir, async () => {
-      return new SqliteStore(new BetterSqlite3(), createId)
-    })
+    return new Cache(
+      schema,
+      async () => {
+        return new SqliteStore(new BetterSqlite3(), createId)
+      },
+      dir
+    )
   }
 
   static fromFile({
@@ -67,26 +76,30 @@ export class Cache {
     dir,
     cacheFile = getLocalCacheFile()
   }: CacheOptions & {cacheFile: string}) {
-    return new Cache(schema, dir, async () => {
-      const name = path.basename(cacheFile)
-      let indexFile = path.resolve(cacheFile)
-      const cacheLocation = path.dirname(indexFile)
-      await fs.mkdir(cacheLocation, {recursive: true})
-      const exists = await outcome.succeeds(fs.stat(indexFile))
-      if (exists) {
-        const writeable = await outcome.succeeds(
-          fs.access(indexFile, constants.W_OK)
-        )
-        if (!writeable) {
-          // We have an existing index file, but it is not writeable.
-          // This can happen in serverless environments.
-          // Copy the index to a temporary file so we can read/write.
-          const tmpFile = path.join(os.tmpdir(), name)
-          await fs.copyFile(indexFile, tmpFile)
-          return storeFromFile(tmpFile)
+    return new Cache(
+      schema,
+      async () => {
+        const name = path.basename(cacheFile)
+        let indexFile = path.resolve(cacheFile)
+        const cacheLocation = path.dirname(indexFile)
+        await fs.mkdir(cacheLocation, {recursive: true})
+        const exists = await outcome.succeeds(fs.stat(indexFile))
+        if (exists) {
+          const writeable = await outcome.succeeds(
+            fs.access(indexFile, constants.W_OK)
+          )
+          if (!writeable) {
+            // We have an existing index file, but it is not writeable.
+            // This can happen in serverless environments.
+            // Copy the index to a temporary file so we can read/write.
+            const tmpFile = path.join(os.tmpdir(), name)
+            await fs.copyFile(indexFile, tmpFile)
+            return storeFromFile(tmpFile)
+          }
         }
-      }
-      return storeFromFile(indexFile)
-    })
+        return storeFromFile(indexFile)
+      },
+      dir
+    )
   }
 }

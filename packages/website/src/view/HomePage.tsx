@@ -1,5 +1,5 @@
+import {Home} from '.alinea'
 import {HStack, px, Typo} from '@alinea/ui'
-import {Home} from 'alinea/schema'
 import {Container} from './layout/Container'
 
 export function HomePage({headline, byline}: Home) {

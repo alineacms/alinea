@@ -1,3 +1,4 @@
+import {schema, store} from '.alinea'
 import {PasswordLessAuth} from '@alinea/auth.passwordless/PasswordLessAuth.js'
 import {Cache} from '@alinea/cache'
 import {
@@ -6,22 +7,22 @@ import {
   LocalHub,
   Server
 } from '@alinea/server'
-import {schema} from 'alinea/schema'
 import dotenv from 'dotenv'
 import {createTransport} from 'nodemailer'
 
 dotenv.config({path: '../../.env'})
 
 const isProduction = process.env.NODE_ENV === 'production'
-const cacheDir = isProduction ? 'packages/website/' : ''
 const dashboardUrl = isProduction
   ? 'https://alinea.vercel.app/admin'
   : 'http://localhost:3000/admin'
+/*const cacheDir = isProduction ? 'packages/website/' : ''
 const index = Cache.fromFile({
   schema,
   dir: 'content',
   cacheFile: `${cacheDir}.next/server/chunks/content`
-})
+})*/
+const index = Cache.fromPromise(schema, store)
 const auth = new PasswordLessAuth({
   dashboardUrl,
   subject: 'Login',
