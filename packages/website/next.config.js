@@ -29,7 +29,7 @@ module.exports = {
     return config
   },
   experimental: {
-    esmExternals: true
+    esmExternals: 'loose'
   },
   typescript: {
     // We check types in plenty other places, no need to waste time here
