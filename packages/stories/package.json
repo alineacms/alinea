@@ -2,6 +2,7 @@
   "name": "@alinea/stories",
   "version": "0.0.0",
   "license": "MIT",
+  "type": "module",
   "scripts": {
     "dev": "run-p dev:client dev:server",
     "dev:client": "node -r tsm watch.ts",

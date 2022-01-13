@@ -13,7 +13,7 @@ import {
   useEditor
 } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
-import {MdDelete, MdDragHandle} from 'react-icons/md/index'
+import {MdDelete, MdDragHandle} from 'react-icons/md'
 import {RichTextField} from './RichTextField'
 import css from './RichTextInput.module.scss'
 

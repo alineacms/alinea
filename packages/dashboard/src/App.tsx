@@ -6,12 +6,7 @@ import {getRandomColor} from '@alinea/ui/util/GetRandomColor'
 //import 'preact/debug'
 import {Fragment, Suspense, useState} from 'react'
 import {Helmet} from 'react-helmet'
-import {
-  MdCheck,
-  MdInsertDriveFile,
-  MdSearch,
-  MdWarning
-} from 'react-icons/md/index'
+import {MdCheck, MdInsertDriveFile, MdSearch, MdWarning} from 'react-icons/md'
 import {QueryClient, QueryClientProvider} from 'react-query'
 import {Route} from 'react-router'
 import {HashRouter} from 'react-router-dom'

@@ -4,9 +4,11 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "dev": "yarn workspace @alinea/stories dev",
-    "build": "node -r tsm scripts/build.ts",
-    "test": "uvu -r tsm packages 'test.*?Test.*?\\.ts$'",
+    "dev": "run-p dev:compile dev:check",
+    "dev:compile": "esbx dev",
+    "dev:check": "tsc -w",
+    "build": "esbx build",
+    "test": "esbx test",
     "publish:all": "yarn build && yarn workspaces foreach --no-private npm publish --tolerate-republish",
     "postinstall": "ncp node_modules/@fontsource/inter/files packages/css/fonts/ && ncp node_modules/@fontsource/jetbrains-mono/files/ packages/css/fonts"
   },
@@ -17,6 +19,13 @@
     "packages/auth/*"
   ],
   "devDependencies": {
+    "@esbx/extension": "0.0.4",
+    "@esbx/react": "^0.0.3",
+    "@esbx/reload": "^0.0.3",
+    "@esbx/reporter": "^0.0.3",
+    "@esbx/run": "^0.0.3",
+    "@esbx/static": "^0.0.3",
+    "@esbx/workspaces": "^0.0.3",
     "@types/glob": "^7.1.4",
     "@types/node": "^16.9.0",
     "@types/sass": "^1.16.1",
@@ -24,19 +33,24 @@
     "@typescript-eslint/parser": "^4.31.0",
     "esbuild": "^0.13.8",
     "esbuild-plugin-sass-modules": "^0.0.1",
+    "esbx": "^0.0.3",
     "eslint": "^7.32.0",
     "eslint-plugin-react": "^7.25.1",
     "eslint-plugin-react-hooks": "^4.2.0",
     "fs-extra": "^10.0.0",
     "glob": "^7.2.0",
     "ncp": "^2.0.0",
-    "tsm": "^2.1.3",
+    "npm-run-all": "^4.1.5",
+    "preact": "^10.6.4",
+    "pretty-bytes": "^5.6.0",
+    "serve-handler": "^6.1.3",
     "typescript": "^4.4.3",
     "typescript-plugin-css-modules": "^3.4.0",
     "uvu": "^0.5.1"
   },
   "packageManager": "yarn@3.1.1",
   "resolutions": {
+    "@esbx/extension": "0.0.4",
     "esbuild": "0.13.8",
     "yjs": "13.5.14"
   }

@@ -6,8 +6,11 @@ import {
   LocalHub,
   Server
 } from '@alinea/server'
+import compression from 'compression'
 import dotenv from 'dotenv'
+import express from 'express'
 import {createTransport} from 'nodemailer'
+import serveHandler from 'serve-handler'
 import {schema} from '../../website/.alinea/schema'
 
 process.on('unhandledRejection', (error, p) => {
@@ -59,7 +62,14 @@ const server = new Server({
   // auth,
   hub
 })
+const app = express()
+app.use(server.app)
+app.use(compression())
+app.use((req, res) =>
+  serveHandler(req, res, {
+    public: '.'
+  })
+)
+app.listen(4500)
 
-server.listen(4500)
-
-console.log('Server started')
+console.log('Server started on http://localhost:4500')

@@ -1,5 +1,8 @@
 import {withView} from '@alinea/core'
+import {lazy} from 'react'
 import {createRichText} from './RichTextField'
-import {RichTextInput} from './RichTextInput'
 export * from './RichTextField'
-export const richText = withView(createRichText, RichTextInput)
+export const richText = withView(
+  createRichText,
+  lazy(() => import('./RichTextInput').then(m => ({default: m.RichTextInput})))
+)

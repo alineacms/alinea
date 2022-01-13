@@ -59,9 +59,9 @@ export class Server {
       const entries = await parseJson(req)
       res.json(await hub.content.publish(entries))
     })
-    router.get('*', async (req, res) => {
+    /*router.get('*', async (req, res) => {
       res.status(404).json({error: 'Not found'})
-    })
+    })*/
     this.app.use(router)
     //const docServer = new DocServer(this.options.hub)
     //this.wss.on('connection', docServer.connect)

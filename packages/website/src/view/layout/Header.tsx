@@ -1,6 +1,6 @@
 import {HStack, Logo, px, Stack} from '@alinea/ui'
 import Link from 'next/link'
-import {RiFlashlightFill} from 'react-icons/ri/index'
+import {RiFlashlightFill} from 'react-icons/ri'
 import {Container} from './Container'
 
 export function Header() {

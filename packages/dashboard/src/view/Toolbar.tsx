@@ -8,12 +8,8 @@ import {
 import {Logo} from '@alinea/ui/branding/Logo'
 import {HStack} from '@alinea/ui/Stack'
 import {memo} from 'react'
-import {
-  MdBrightnessMedium,
-  MdExpandMore,
-  MdUnfoldMore
-} from 'react-icons/md/index'
-import {RiFlashlightFill} from 'react-icons/ri/index'
+import {MdBrightnessMedium, MdExpandMore, MdUnfoldMore} from 'react-icons/md'
+import {RiFlashlightFill} from 'react-icons/ri'
 import {useSession} from '../hook/UseSession'
 import css from './Toolbar.module.scss'
 

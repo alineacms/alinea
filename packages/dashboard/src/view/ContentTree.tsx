@@ -8,11 +8,7 @@ import {
 } from '@alinea/ui'
 import {HStack} from '@alinea/ui/Stack'
 import {forwardRef, memo, Ref, useCallback, useRef, useState} from 'react'
-import {
-  MdChevronRight,
-  MdExpandMore,
-  MdInsertDriveFile
-} from 'react-icons/md/index'
+import {MdChevronRight, MdExpandMore, MdInsertDriveFile} from 'react-icons/md'
 import {useQuery} from 'react-query'
 import {Link, useLocation} from 'react-router-dom'
 import {useSession} from '../hook/UseSession'

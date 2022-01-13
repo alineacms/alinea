@@ -27,7 +27,7 @@ import {
   MdEdit,
   MdPublish,
   MdRotateLeft
-} from 'react-icons/md/index'
+} from 'react-icons/md'
 import {useQuery} from 'react-query'
 import {useDashboard} from '../hook/UseDashboard'
 import {useSession} from '../hook/UseSession'

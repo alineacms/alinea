@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "preserveWatchOutput": true,
     "outDir": ".types",
     "incremental": true,
     "assumeChangesOnlyAffectDirectDependencies": true,
