@@ -1,5 +1,5 @@
+import {InputPath} from '@alinea/editor'
 import type {ComponentType} from 'react'
-import {InputPath} from './InputPath'
 import {Value} from './Value'
 
 export type FieldRenderer<T, F> = ComponentType<{

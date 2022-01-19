@@ -5,6 +5,16 @@ export class RecordValue<T extends Record<string, any> = {}>
   implements Value<T>
 {
   constructor(public shape: Record<string, Value>) {}
+  create() {
+    return Object.fromEntries(
+      Object.entries(this.shape).map(([key, field]) => {
+        return [key, field.create()]
+      })
+    ) as T
+  }
+  typeOfChild<C>(yValue: T, child: string): Value<C> {
+    return this.shape[child]
+  }
   toY(value: T) {
     const map = new Y.Map()
     for (const key of Object.keys(this.shape)) {

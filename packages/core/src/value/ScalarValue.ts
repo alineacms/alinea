@@ -1,9 +1,16 @@
 import * as Y from 'yjs'
+import {createError} from '..'
 import {Value} from '../Value'
 
 export class ScalarValue<T> implements Value<T> {
   static inst = new ScalarValue()
   constructor() {}
+  create(): T {
+    return undefined! as T
+  }
+  typeOfChild<C>(yValue: T, child: string): Value<C> {
+    throw createError(`No children in scalar values`)
+  }
   toY(value: T) {
     return value
   }

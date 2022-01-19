@@ -1,5 +1,6 @@
 import {generateKeyBetween} from 'fractional-indexing'
 import * as Y from 'yjs'
+import {createError} from '..'
 import {createId} from '../Id'
 import {Value} from '../Value'
 import {RecordValue} from './RecordValue'
@@ -42,6 +43,16 @@ export class ListValue<T> implements Value<Array<Row & T>> {
         ]
       })
     )
+  }
+  create() {
+    return [] as Array<Row & T>
+  }
+  typeOfChild<C>(yValue: Y.Map<any>, child: string): Value<C> {
+    const row = yValue.get(child)
+    const type = row && row.get('type')
+    const value = type && this.values[type]
+    if (value) return value as unknown as Value<C>
+    throw createError(`Could not determine type of child "${child}"`)
   }
   toY(value: Array<Row & T>) {
     const map = new Y.Map()

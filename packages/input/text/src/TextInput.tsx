@@ -1,5 +1,4 @@
-import {InputPath} from '@alinea/core'
-import {Label, useInput} from '@alinea/editor'
+import {InputPath, Label, useInput} from '@alinea/editor'
 import {fromModule} from '@alinea/ui'
 import {TextareaAutosize} from 'react-autosize-textarea/lib/TextareaAutosize'
 import {TextField} from './TextField'

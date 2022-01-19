@@ -6,7 +6,7 @@ import {RunPlugin} from '@esbx/run'
 import {SassPlugin} from '@esbx/sass'
 import {StaticPlugin} from '@esbx/static'
 import {findNodeModules} from '@esbx/util'
-import {BuildTask, TestTask} from '@esbx/workspaces'
+import {BuildTask, getManifest, getWorkspaces, TestTask} from '@esbx/workspaces'
 import type {BuildOptions, Plugin} from 'esbuild'
 import {build} from 'esbuild'
 import fs from 'fs-extra'
@@ -82,6 +82,16 @@ export const testTask = TestTask.configure({buildOptions})
 These should be resolved using the conditional exports, but before building
 those are not available so we point at the source directly.
 */
+const internal = Object.fromEntries(
+  getWorkspaces(process.cwd())
+    .filter(pkg => {
+      return fs.existsSync(`${pkg}/src/index.ts`)
+    })
+    .map(pkg => {
+      const {name} = getManifest(pkg)
+      return [name, path.resolve(`${pkg}/src/index.ts`)]
+    })
+)
 const packages = fs.readdirSync('packages/input')
 const aliases = Object.fromEntries(
   packages.map(pkg => {
@@ -98,17 +108,19 @@ const devOptions: BuildOptions = {
   splitting: true,
   entryPoints: ['packages/stories/src/client.tsx'],
   bundle: true,
-  minify: true,
   treeShaking: true,
   outdir: 'packages/stories/dist',
   plugins: [
     ...buildOptions.plugins,
-    AliasPlugin.configure(aliases),
+    AliasPlugin.configure({
+      ...internal,
+      ...aliases
+    }),
     ReporterPlugin.configure({name: 'Client'}),
     ReloadPlugin
   ],
   define: {
-    'process.env.NODE_ENV': '"production"',
+    'process.env.NODE_ENV': '"development"',
     'process.env.__NEXT_TRAILING_SLASH': String(true),
     'process.env.__NEXT_I18N_SUPPORT': String(false),
     'process.env.__NEXT_ROUTER_BASEPATH': '""',
@@ -135,7 +147,8 @@ const serverOptions: BuildOptions = {
   plugins: [
     ...buildOptions.plugins,
     ReporterPlugin.configure({name: 'Server'}),
-    RunPlugin.configure({cmd: 'node dist/server.js', cwd: 'packages/stories'})
+    RunPlugin.configure({cmd: 'node dist/server.js', cwd: 'packages/stories'}),
+    AliasPlugin.configure(internal)
   ]
 }
 

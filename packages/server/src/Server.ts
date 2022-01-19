@@ -47,6 +47,11 @@ export class Server {
         res.json(await hub.content.list(parent))
       }
     )
+    router.put(prefix + Api.nav.content.get(':id'), async (req, res) => {
+      const id = req.params.id
+      const body = await parseJson(req)
+      res.json(await hub.content.put(id, body))
+    })
     router.put(
       prefix + Api.nav.content.entryWithDraft(':id'),
       async (req, res) => {

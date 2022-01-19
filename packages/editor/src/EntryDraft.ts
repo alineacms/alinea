@@ -3,13 +3,12 @@ import {
   Draft,
   Entry,
   EntryStatus,
-  inputPath,
-  InputPath,
   Label,
   Outcome,
   Type,
   Value
 } from '@alinea/core'
+import {InputPath} from '@alinea/editor'
 import {fromUint8Array, toUint8Array} from 'js-base64'
 import {Observable} from 'lib0/observable'
 import {Room, WebrtcProvider} from 'y-webrtc'
@@ -106,10 +105,18 @@ export class EntryDraft
     return () => this.off('change', fun)
   }
 
-  static $path = inputPath<string>(Value.Scalar, ['$path'])
-  static type = inputPath<string>(Value.Scalar, ['type'])
-  static $status = inputPath<EntryStatus | undefined>(Value.Scalar, ['$status'])
-  static title = inputPath<string>(Value.Scalar, ['title'])
+  static get $path() {
+    return new InputPath.EntryProperty<string>(['$path'])
+  }
+  static get type() {
+    return new InputPath.EntryProperty<string>(['type'])
+  }
+  static get $status() {
+    return new InputPath.EntryProperty<EntryStatus | undefined>(['$status'])
+  }
+  static get title() {
+    return new InputPath.EntryProperty<string>(['title'])
+  }
 
   get id(): string {
     return this.root.get('id') || this.entry.id
@@ -133,24 +140,27 @@ export class EntryDraft
     return this.root.get('title') || this.entry.title
   }
 
-  get(target: Y.Map<any>, path: Array<string>): Parent {
-    if (path.length === 0) return target as Parent
-    return this.get(target.get(path[0]), path.slice(1))
+  getLocation(location: Array<string>) {
+    let target = this.root
+    let parent = target
+    let type: Value = this.channel.valueType
+    for (const key of location) {
+      parent = target
+      type = type.typeOfChild(target, key)
+      target = target.get(key)
+    }
+    return {type, parent, target}
   }
 
-  getParent(location: Array<string>): Parent {
-    return this.get(this.root, location.slice(0, -1))
-  }
-
-  getInput<T>(path: InputPath<T>) {
-    const key = path.location[path.location.length - 1]
-    const parent = this.getParent(path.location)
+  getInput<T>(location: Array<string>) {
+    const key = location[location.length - 1]
+    const {type, parent} = this.getLocation(location)
     return {
-      mutator: path.type.mutator(parent, key),
+      mutator: type.mutator(parent, key),
       get value(): T {
-        return path.type.fromY(parent.get(key))
+        return type.fromY(parent.get(key))
       },
-      observe: path.type.watch(parent, key)
+      observe: type.watch(parent, key)
     }
   }
 }

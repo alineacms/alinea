@@ -1,4 +1,5 @@
-import {Field, InputPath} from '@alinea/core'
+import {Field} from '@alinea/core'
+import {InputPath} from '@alinea/editor'
 import {fromModule} from '@alinea/ui'
 import css from './Input.module.scss'
 

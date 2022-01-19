@@ -11,7 +11,7 @@ export function useDraft(
 ) {
   const current = useMemo(() => {
     if (data) return new EntryDraft(type, data.entry, data.draft, saveDraft)
-    else return null
+    return null
   }, [data, saveDraft])
   useEffect(() => {
     if (current) return current.connect()

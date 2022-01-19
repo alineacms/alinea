@@ -1,5 +1,4 @@
-import {inputPath, InputPath, Value} from '@alinea/core'
-import {Fields, Label, useInput} from '@alinea/editor'
+import {Fields, InputPath, Label, useInput} from '@alinea/editor'
 import {fromModule, IconButton, TextLabel} from '@alinea/ui'
 import {Create} from '@alinea/ui/Create'
 import {HStack, VStack} from '@alinea/ui/Stack'
@@ -190,10 +189,7 @@ export function ListInput<T extends ListRow>({path, field}: ListInputProps<T>) {
                     key={row.id}
                     row={row}
                     field={field}
-                    path={inputPath<T>(
-                      Value.Scalar,
-                      path.location.concat(row.id)
-                    )}
+                    path={path.child(row.id)}
                     onDelete={() => input.delete(row.id)}
                   />
                 )
@@ -212,10 +208,7 @@ export function ListInput<T extends ListRow>({path, field}: ListInputProps<T>) {
                 key="overlay"
                 row={dragging}
                 field={field}
-                path={inputPath<T>(
-                  Value.Scalar,
-                  path.location.concat(dragging.id)
-                )}
+                path={path.child(dragging.id)}
               />
             ) : null}
           </DragOverlay>

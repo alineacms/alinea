@@ -97,14 +97,18 @@ function TreeNodeChildrenCreator({entry}: TreeNodeChildrenCreator) {
   if (typeOptions.length === 1)
     return (
       <Create.Root>
-        <Create.Button>
-          <TextLabel label={schema.type(typeOptions[0])?.label!} />
-        </Create.Button>
+        <Link to={`/${entry.id}/new`}>
+          <Create.Button>
+            <TextLabel label={schema.type(typeOptions[0])?.label!} />
+          </Create.Button>
+        </Link>
       </Create.Root>
     )
   return (
     <Create.Root>
-      <Create.Button>Create new</Create.Button>
+      <Link to={`/${entry.id}/new`}>
+        <Create.Button>Create new</Create.Button>
+      </Link>
     </Create.Root>
   )
 }
@@ -126,7 +130,7 @@ const TreeNodeLink = memo(
       <div className={styles.node.is({selected: isSelected})()}>
         <Link
           ref={ref}
-          to={entry.id}
+          to={'/' + entry.id}
           onClick={toggleOpen}
           className={styles.node.link()}
           style={{paddingLeft: `${10 + level * 8}px`}}

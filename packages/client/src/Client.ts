@@ -12,9 +12,15 @@ export class ClientContent implements Content {
     return this.client.fetch(Api.nav.content.entryWithDraft(id))
   }
 
-  put(path: string, entry: Entry): Promise<Outcome<void>> {
-    return Promise.reject()
+  put(id: string, entry: Entry): Promise<Outcome<void>> {
     //return this.client.fetch(Api.nav.content.get(path))
+    return this.client
+      .fetch(Api.nav.content.get(id), {
+        method: 'PUT',
+        body: JSON.stringify(entry),
+        headers: {'content-type': 'application/json'}
+      })
+      .then(res => Outcome.fromJSON(res))
   }
 
   putDraft(id: string, doc: string): Promise<Outcome<void>> {

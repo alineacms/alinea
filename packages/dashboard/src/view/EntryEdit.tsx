@@ -4,15 +4,19 @@ import {
   EntryDraft,
   EntryDraftStatus,
   Fields,
+  InputPath,
   useCurrentDraft,
   useDraft,
   useInput
 } from '@alinea/editor'
+import {select, SelectInput} from '@alinea/input.select'
+import {text} from '@alinea/input.text'
 import {
   AppBar,
   Chip,
   fromModule,
   HStack,
+  Loader,
   Pane,
   px,
   Stack,
@@ -29,6 +33,10 @@ import {
   MdRotateLeft
 } from 'react-icons/md'
 import {useQuery} from 'react-query'
+import {useHistory} from 'react-router'
+import {Link} from 'react-router-dom'
+import {slugify} from 'simple-slugify'
+import {TextInput} from '../../../input/path/dist/TextInput'
 import {useDashboard} from '../hook/UseDashboard'
 import {useSession} from '../hook/UseSession'
 import css from './EntryEdit.module.scss'
@@ -177,6 +185,113 @@ function EntryEditDraft({}: EntryEditDraftProps) {
   )
 }
 
+type NewEntryEditProps = {typeKey: string}
+
+function NewEntryEdit({typeKey}: NewEntryEditProps) {
+  const {hub} = useSession()
+  const type = hub.schema.type(typeKey)!
+  console.log(hub.schema)
+  console.log(type)
+  const data = {
+    entry: type.create(typeKey),
+    draft: null
+  }
+  const draft = useDraft(type, data, doc => {
+    return hub.content.putDraft(data.entry.id, doc)
+  })
+  if (!draft) return null
+  return (
+    <>
+      <CurrentDraftProvider value={draft}>
+        <EntryEditDraft />
+      </CurrentDraftProvider>
+    </>
+  )
+}
+
+export type NewEntryProps = {parent: string}
+
+export function NewEntry({parent}: NewEntryProps) {
+  const history = useHistory()
+  const {hub} = useSession()
+  const {isLoading, data: parentEntry} = useQuery(
+    ['entry', parent],
+    () => hub.content.entryWithDraft(parent),
+    {
+      refetchOnWindowFocus: false,
+      keepPreviousData: true,
+      suspense: true
+    }
+  )
+  const type = hub.schema.type(parentEntry?.entry.type)
+  const types = type?.options.contains || hub.schema.keys
+  const [selectedType, setSelectedType] = useState(
+    types.length === 1 ? types[0] : undefined
+  )
+  const [title, setTitle] = useState('')
+  const [isCreating, setCreating] = useState(false)
+  function handleCreate() {
+    if (!selectedType) return
+    setCreating(true)
+    const type = hub.schema.type(selectedType)!
+    const path = slugify(title)
+    const entry = {
+      ...type.create(selectedType),
+      path,
+      $parent: parentEntry?.entry.id,
+      $path: (parentEntry?.entry.$path || '') + '/' + path
+    }
+    hub.content
+      .put(entry.id, {...entry, title})
+      .then(() => {
+        history.push(`/${entry.id}`)
+      })
+      .finally(() => {
+        setCreating(false)
+      })
+  }
+  /*useEffect(() => {
+    if (!selectedType) return
+    const type = hub.schema.type(selectedType)!
+    const entry = type.create(selectedType)
+    hub.content.put(entry.id, entry).then(() => {
+      history.push(`/${entry.id}`)
+    })
+  }, [selectedType])
+  */
+  //if (selectedType) return <NewEntryEdit typeKey={selectedType} />
+  return (
+    <div className={styles.new()}>
+      <div className={styles.new.modal()}>
+        {isCreating ? (
+          <Loader absolute />
+        ) : (
+          <>
+            <TextInput
+              path={new InputPath.StatePair(title, setTitle)}
+              field={text('Title')}
+            />
+            <SelectInput
+              path={new InputPath.StatePair(selectedType, setSelectedType)}
+              field={select(
+                'Select type',
+                Object.fromEntries(
+                  types.map(typeKey => {
+                    const type = hub.schema.type(typeKey)
+                    return [typeKey, type?.label || typeKey]
+                  })
+                )
+              )}
+            />
+            <Link to={`/${parent}`}>Cancel</Link>
+            <button onClick={handleCreate}>Create</button>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
+
 export type EntryEditProps = {id: string}
 
 export function EntryEdit({id}: EntryEditProps) {
@@ -194,7 +309,7 @@ export function EntryEdit({id}: EntryEditProps) {
   return (
     <>
       <CurrentDraftProvider value={draft}>
-        <EntryEditDraft />
+        <EntryEditDraft key={draft.id} />
       </CurrentDraftProvider>
     </>
   )

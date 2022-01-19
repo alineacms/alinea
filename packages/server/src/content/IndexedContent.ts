@@ -20,9 +20,11 @@ export class IndexedContent implements Content {
 
   async put(id: string, entry: Entry): Promise<Outcome<void>> {
     const store = await this.cache.store
-    // Todo: only update keys that changed?
+    const query = Entry.where(Entry.id.is(id))
+    const existing = store.first(query)
     return Outcome.attempt(() => {
-      store.update(Entry.where(Entry.id.is(id)), entry as any)
+      if (!existing) store.insert(Entry, entry)
+      else store.update(query, entry as any)
     })
   }
 

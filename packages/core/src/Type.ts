@@ -1,10 +1,12 @@
+import {Entry} from './Entry'
 import {createError} from './ErrorWithCode'
 import {Field} from './Field'
+import {createId} from './Id'
 import {Label} from './Label'
-import {RecordValue} from './type/RecordValue'
 import {Lazy} from './util/Lazy'
 import {LazyRecord} from './util/LazyRecord'
 import {Value} from './Value'
+import {RecordValue} from './value/RecordValue'
 
 export namespace Type {
   export type Of<T> = T extends Type<infer U> ? U : never
@@ -30,19 +32,21 @@ export class Type<T = {}> {
     }
   }
 
-  get valueType(): RecordValue {
+  get valueType() {
     return Value.Record(
       Object.fromEntries(
         [
           ['id', Value.Scalar as Value],
-          ['type', Value.Scalar as Value]
+          ['type', Value.Scalar as Value],
+          // Todo: this should probably not be part of the schema but local state
+          ['$status', Value.Scalar as Value]
         ].concat(
           Array.from(this).map(([key, field]) => {
             return [key, field.type]
           })
         )
       )
-    )
+    ) as RecordValue<T>
   }
 
   [Symbol.iterator]() {
@@ -54,6 +58,18 @@ export class Type<T = {}> {
     if (!field)
       throw new Error(`No such field: "${key}" in type "${this.label}"`)
     return field
+  }
+
+  empty() {
+    return this.valueType.create()
+  }
+
+  create(name: string) {
+    return {
+      ...this.empty(),
+      type: name,
+      id: createId()
+    } as Entry & T
   }
 }
 

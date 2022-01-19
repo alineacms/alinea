@@ -1,5 +1,6 @@
-import {InputPath, inputPath, Type} from '@alinea/core'
+import {Type} from '@alinea/core'
 import {fromModule} from '@alinea/ui'
+import {InputPath} from '../InputPath'
 import css from './Fields.module.scss'
 import {Input} from './Input'
 
@@ -10,18 +11,12 @@ type EntryEditFieldsProps = {
   type: Type
 }
 
-export function Fields({path, type}: EntryEditFieldsProps) {
+export function Fields({path = InputPath.root, type}: EntryEditFieldsProps) {
   const fields = Array.from(type)
   return (
     <div className={styles.root()}>
       {fields.map(([name, field]) => {
-        return (
-          <Input
-            key={name}
-            path={inputPath(field.type, (path?.location || []).concat(name))}
-            field={field}
-          />
-        )
+        return <Input key={name} path={path.child(name)} field={field} />
       })}
     </div>
   )

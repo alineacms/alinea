@@ -1,5 +1,5 @@
 {
-  "name": "@alinea/editor",
+  "name": "@alinea/input.path",
   "version": "0.0.0",
   "license": "MIT",
   "repository": {
@@ -8,17 +8,17 @@
   },
   "types": "dist/index.d.ts",
   "type": "module",
-  "sideEffects": [
-    "*.scss",
-    "*.css"
-  ],
   "exports": {
-    ".": "./dist/index.js",
-    "./*": "./dist/*"
+    ".": {
+      "node": "./dist/index.js",
+      "browser": "./dist/browser.js"
+    },
+    "./index.css": "./dist/index.css"
   },
   "dependencies": {
     "@alinea/core": "0.0.0",
-    "y-webrtc": "^10.2.0",
-    "yjs": "^13.5.16"
+    "@alinea/editor": "0.0.0",
+    "@alinea/ui": "0.0.0",
+    "simple-slugify": "^1.0.0"
   }
 }

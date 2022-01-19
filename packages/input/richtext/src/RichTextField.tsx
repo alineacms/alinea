@@ -1,5 +1,5 @@
 import {Field, Label, Schema, Value} from '@alinea/core'
-import {TextDoc} from '@alinea/core/type/RichTextValue'
+import {TextDoc} from '@alinea/core/value/RichTextValue'
 
 export type RichTextOptions<T> = {
   help?: Label

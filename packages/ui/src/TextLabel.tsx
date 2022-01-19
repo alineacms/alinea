@@ -6,5 +6,5 @@ export type TextLabelProps = {
 
 export function TextLabel({label}: TextLabelProps) {
   if (typeof label !== 'string') throw 'Todo: translated labels'
-  return <span>{label}</span>
+  return <>{label}</>
 }

@@ -1,5 +1,4 @@
 //import {PasswordLessLogin} from '@alinea/auth.passwordless/PasswordLessLogin'
-import '@alinea/css'
 import '@alinea/css/global.css'
 import {renderDashboard} from '@alinea/dashboard'
 import {schema} from '../../website/src/schema'

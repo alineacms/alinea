@@ -14,8 +14,8 @@ function entryFile(entry: Entry) {
 }
 
 export function fileChanges(store: Store, entries: Array<Entry>) {
-  const contentChanges: Array<[string, string]> = [],
-    fileRemoves: Array<string> = []
+  const contentChanges: Array<[string, string]> = []
+  const fileRemoves: Array<string> = []
   for (const entry of entries) {
     const file = entryFile(entry)
     const existing = store.first(Entry.where(Entry.id.is(entry.id)))

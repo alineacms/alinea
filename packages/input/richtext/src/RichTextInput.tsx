@@ -1,5 +1,5 @@
-import {createId, InputPath, Schema, TextDoc, Type} from '@alinea/core'
-import {Fields, Label, useInput} from '@alinea/editor'
+import {createId, Schema, TextDoc, Type} from '@alinea/core'
+import {Fields, InputPath, Label, useInput} from '@alinea/editor'
 import {Card, fromModule, HStack, IconButton, TextLabel} from '@alinea/ui'
 import {mergeAttributes, Node} from '@tiptap/core'
 import Collaboration from '@tiptap/extension-collaboration'
@@ -44,13 +44,7 @@ function typeExtension(
               />
             </Card.Options>
             <Card.Content>
-              <Fields
-                path={{
-                  type: undefined!,
-                  location: parent.location.concat(id)
-                }}
-                type={type}
-              />
+              <Fields path={parent.child(id)} type={type} />
             </Card.Content>
             <Card.Options>
               <IconButton icon={MdDelete} onClick={deleteNode} />

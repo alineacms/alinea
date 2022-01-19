@@ -43,3 +43,32 @@
     }
   }
 }
+
+.new {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  display: flex;
+
+  &-modal {
+    position: relative;
+    margin: auto;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    padding: 20px;
+    background: var(--background);
+    border-radius: 4px;
+  }
+
+  &::before {
+    content: '';
+    background: rgba(0, 0, 0, 0.2);
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+  }
+}

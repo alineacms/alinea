@@ -1,4 +1,5 @@
 import * as Y from 'yjs'
+import {createError} from '..'
 import {Value} from '../Value'
 import {RecordValue} from './RecordValue'
 
@@ -106,6 +107,22 @@ export class RichTextValue<T> implements Value<TextDoc<Row & T>> {
           ]
         })
       )
+  }
+  create() {
+    return {
+      type: 'doc',
+      blocks: {},
+      content: []
+    } as TextDoc<Row & T>
+  }
+  typeOfChild<C>(yValue: Y.Map<any>, child: string): Value<C> {
+    const block = yValue.get(child)
+    const type = block && block.get('type')
+    const value = type && this.values && this.values[type]
+    if (value) return value as unknown as Value<C>
+    console.log(this.fromY(yValue))
+    console.log(child)
+    throw createError(`Type of block "${child}" not found`)
   }
   toY(value: TextDoc<Row & T>) {
     const map = new Y.Map()

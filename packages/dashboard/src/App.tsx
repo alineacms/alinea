@@ -8,15 +8,13 @@ import {Fragment, Suspense, useState} from 'react'
 import {Helmet} from 'react-helmet'
 import {MdCheck, MdInsertDriveFile, MdSearch, MdWarning} from 'react-icons/md'
 import {QueryClient, QueryClientProvider} from 'react-query'
-import {Route} from 'react-router'
+import {Route, Switch} from 'react-router'
 import {HashRouter} from 'react-router-dom'
-// Todo: bundle this properly
-// import './css/fonts.css'
 import {DashboardOptions} from './Dashboard'
 import {DashboardProvider, useDashboard} from './hook/UseDashboard'
 import {SessionProvider} from './hook/UseSession'
 import {ContentTree} from './view/ContentTree'
-import {EntryEdit} from './view/EntryEdit'
+import {EntryEdit, NewEntry} from './view/EntryEdit'
 import {Toolbar} from './view/Toolbar'
 
 function AppAuthenticated() {
@@ -27,7 +25,9 @@ function AppAuthenticated() {
         <title>{name}</title>
       </Helmet>
       <Toolbar />
-      <div style={{flex: '1', display: 'flex', minHeight: 0}}>
+      <div
+        style={{flex: '1', display: 'flex', minHeight: 0, position: 'relative'}}
+      >
         <Sidebar.Root>
           <Sidebar.Menu>
             <Sidebar.Menu.Item selected>
@@ -50,17 +50,21 @@ function AppAuthenticated() {
           </Pane>
         </Sidebar.Root>
         <div style={{width: '100%'}}>
-          <Route path="/:id">
-            {({match}) => {
-              const id = match?.params.id
-              if (!id) return null
-              return (
-                <Suspense fallback={null}>
-                  <EntryEdit id={id} />
-                </Suspense>
-              )
-            }}
-          </Route>
+          <Switch>
+            <Route path="/:id">
+              {({match}) => {
+                const id = match?.params.id!
+                return (
+                  <Suspense fallback={null}>
+                    <Route path="/:id/new">
+                      <NewEntry parent={id} />
+                    </Route>
+                    <EntryEdit id={id} />
+                  </Suspense>
+                )
+              }}
+            </Route>
+          </Switch>
         </div>
       </div>
       <Statusbar.Root>
