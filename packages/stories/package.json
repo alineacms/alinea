@@ -10,15 +10,10 @@
     "build": "node backend.js"
   },
   "devDependencies": {
-    "esbuild": "^0.13.8",
-    "esbuild-plugin-alias": "^0.1.2",
-    "esbuild-scss-modules-plugin": "^1.0.0",
-    "estrella": "^1.4.1",
     "npm-run-all": "^4.1.5",
     "preact": "^10.5.14",
     "react": "^17.0.2",
-    "react-dom": "^17.0.2",
-    "typescript": "^4.4.3"
+    "react-dom": "^17.0.2"
   },
   "dependencies": {
     "dotenv": "^10.0.0"

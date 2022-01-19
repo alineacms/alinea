@@ -21,6 +21,8 @@ export class Pages<T extends Entry> {
   count<T>(cursor: Cursor<T>): number {
     return this.store.count(cursor)
   }
+
+  // Todo: make below static?
   get root(): Cursor<T> {
     return Entry.where(Entry.$parent.isNull())
   }

@@ -4,7 +4,7 @@ import fetch from 'isomorphic-fetch'
 export class ClientContent implements Content {
   constructor(protected client: Client) {}
 
-  get(id: string): Promise<Entry | null> {
+  get(id: string): Promise<Entry.WithParents | null> {
     return this.client.fetch(Api.nav.content.get(id))
   }
 

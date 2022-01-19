@@ -76,7 +76,6 @@ export const buildTask = {
     await fs.writeFile('packages/css/index.css', Buffer.concat(globalCss))
   }
 }
-export const testTask = TestTask.configure({buildOptions})
 
 /*
 These should be resolved using the conditional exports, but before building
@@ -155,3 +154,19 @@ const serverOptions: BuildOptions = {
 export const dev = {
   action: () => Promise.all([build(devOptions), build(serverOptions)])
 }
+
+export const clean = {
+  action() {
+    for (const location of getWorkspaces(process.cwd())) {
+      fs.removeSync(`${location}/dist`)
+    }
+  }
+}
+
+export const testTask = TestTask.configure({
+  buildOptions: {
+    ...buildOptions,
+    external: modules.filter(m => !m.includes('@alinea')),
+    plugins: [AliasPlugin.configure(internal)]
+  }
+})

@@ -16,7 +16,7 @@ export const schema = createSchema({
     {title: text('Title', {multiline: true}), path: path('Path')},
     {isContainer: true, contains: ['Doc']}
   ),
-  Doc: type('Documentation page', {
+  Doc: type('Doc', {
     title: text('Title', {multiline: true}),
     path: path('Path'),
     body: richText('Body', {

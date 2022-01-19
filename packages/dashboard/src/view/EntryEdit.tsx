@@ -10,7 +10,7 @@ import {
   useInput
 } from '@alinea/editor'
 import {select, SelectInput} from '@alinea/input.select'
-import {text} from '@alinea/input.text'
+import {text, TextInput} from '@alinea/input.text'
 import {
   AppBar,
   Chip,
@@ -23,7 +23,7 @@ import {
   Statusbar,
   Typo
 } from '@alinea/ui'
-import {ComponentType, Suspense, useEffect, useState} from 'react'
+import {ComponentType, FormEvent, Suspense, useEffect, useState} from 'react'
 import {Helmet} from 'react-helmet'
 import {
   MdArchive,
@@ -32,11 +32,10 @@ import {
   MdPublish,
   MdRotateLeft
 } from 'react-icons/md'
-import {useQuery} from 'react-query'
+import {useQuery, useQueryClient} from 'react-query'
 import {useHistory} from 'react-router'
 import {Link} from 'react-router-dom'
 import {slugify} from 'simple-slugify'
-import {TextInput} from '../../../input/path/dist/TextInput'
 import {useDashboard} from '../hook/UseDashboard'
 import {useSession} from '../hook/UseSession'
 import css from './EntryEdit.module.scss'
@@ -212,6 +211,7 @@ function NewEntryEdit({typeKey}: NewEntryEditProps) {
 export type NewEntryProps = {parent: string}
 
 export function NewEntry({parent}: NewEntryProps) {
+  const queryClient = useQueryClient()
   const history = useHistory()
   const {hub} = useSession()
   const {isLoading, data: parentEntry} = useQuery(
@@ -230,7 +230,8 @@ export function NewEntry({parent}: NewEntryProps) {
   )
   const [title, setTitle] = useState('')
   const [isCreating, setCreating] = useState(false)
-  function handleCreate() {
+  function handleCreate(e: FormEvent) {
+    e.preventDefault()
     if (!selectedType) return
     setCreating(true)
     const type = hub.schema.type(selectedType)!
@@ -244,25 +245,17 @@ export function NewEntry({parent}: NewEntryProps) {
     hub.content
       .put(entry.id, {...entry, title})
       .then(() => {
+        if (entry.$parent)
+          queryClient.invalidateQueries('children', entry.$parent)
         history.push(`/${entry.id}`)
       })
       .finally(() => {
         setCreating(false)
       })
   }
-  /*useEffect(() => {
-    if (!selectedType) return
-    const type = hub.schema.type(selectedType)!
-    const entry = type.create(selectedType)
-    hub.content.put(entry.id, entry).then(() => {
-      history.push(`/${entry.id}`)
-    })
-  }, [selectedType])
-  */
-  //if (selectedType) return <NewEntryEdit typeKey={selectedType} />
   return (
     <div className={styles.new()}>
-      <div className={styles.new.modal()}>
+      <form className={styles.new.modal()} onSubmit={handleCreate}>
         {isCreating ? (
           <Loader absolute />
         ) : (
@@ -284,10 +277,10 @@ export function NewEntry({parent}: NewEntryProps) {
               )}
             />
             <Link to={`/${parent}`}>Cancel</Link>
-            <button onClick={handleCreate}>Create</button>
+            <button>Create</button>
           </>
         )}
-      </div>
+      </form>
     </div>
   )
 }

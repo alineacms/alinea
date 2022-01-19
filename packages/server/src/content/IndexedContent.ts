@@ -6,9 +6,16 @@ import {Persistence} from '../Persistence'
 export class IndexedContent implements Content {
   constructor(protected cache: Cache, protected persistence: Persistence) {}
 
-  async get(id: string): Promise<Entry | null> {
+  async get(id: string): Promise<Entry.WithParents | null> {
     const store = await this.cache.store
-    return store.first(Entry.where(Entry.id.is(id)))
+    const self = store.first(Entry.where(Entry.id.is(id)))
+    if (!self) return null
+    function parents(entry: Entry): Array<string> {
+      if (!entry.$parent) return []
+      const parent = store.first(Entry.where(Entry.id.is(entry.$parent)))
+      return parent ? [parent.id, ...parents(parent)] : []
+    }
+    return {...self, parents: parents(self)}
   }
 
   async entryWithDraft(id: string): Promise<Entry.WithDraft | null> {
@@ -59,6 +66,6 @@ export class IndexedContent implements Content {
   }
 
   async publish(entries: Array<Entry>): Promise<Outcome<void>> {
-    return this.persistence.publish(entries)
+    return this.persistence.persist(entries)
   }
 }

@@ -8,6 +8,7 @@ import {
   Server
 } from '@alinea/server'
 import dotenv from 'dotenv'
+import fs from 'fs/promises'
 import {createTransport} from 'nodemailer'
 
 dotenv.config({path: '../../.env'})
@@ -49,7 +50,7 @@ const persistence = isProduction
       repo: 'alinea',
       branch: 'main'
     })
-  : new FSPersistence(index, 'content')
+  : new FSPersistence(fs, index, 'content')
 const server = new Server({
   auth,
   dashboardUrl,

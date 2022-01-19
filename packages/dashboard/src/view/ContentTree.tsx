@@ -7,7 +7,15 @@ import {
   useInitialEffect
 } from '@alinea/ui'
 import {HStack} from '@alinea/ui/Stack'
-import {forwardRef, memo, Ref, useCallback, useRef, useState} from 'react'
+import {
+  forwardRef,
+  memo,
+  Ref,
+  useCallback,
+  useEffect,
+  useRef,
+  useState
+} from 'react'
 import {MdChevronRight, MdExpandMore, MdInsertDriveFile} from 'react-icons/md'
 import {useQuery} from 'react-query'
 import {Link, useLocation} from 'react-router-dom'
@@ -185,15 +193,14 @@ type OpenChildren = {
   toggleOpen: (path: string) => void
 }
 
-export function ContentTree() {
+type ContentTreeProps = {
+  selected?: string
+}
+
+export function ContentTree({selected}: ContentTreeProps) {
+  const session = useSession()
   const location = useLocation()
-  const [open, setOpen] = useState(
-    new Set(
-      location.pathname.split('/').map((part, index, parts) => {
-        return parts.slice(0, index + 1).join('/')
-      })
-    )
-  )
+  const [open, setOpen] = useState(() => new Set())
   const isOpen = useCallback((path: string) => open.has(path), [open])
   const toggleOpen = useCallback(
     (path: string) => {
@@ -206,6 +213,12 @@ export function ContentTree() {
     },
     [setOpen]
   )
+  useEffect(() => {
+    if (!selected) return
+    session.hub.content.get(selected).then(entry => {
+      if (entry?.parents) setOpen(new Set([...open, ...entry?.parents]))
+    })
+  }, [selected])
   return (
     <div>
       <TreeChildren isOpen={isOpen} toggleOpen={toggleOpen} />

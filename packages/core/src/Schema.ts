@@ -59,7 +59,7 @@ export class Schema<T = any> {
   } {
     return Object.fromEntries(
       Object.keys(this.#types).map(name => {
-        return [name, this.collection(name)]
+        return [name, this.collection(name as any)]
       })
     ) as any
   }

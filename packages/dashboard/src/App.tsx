@@ -8,7 +8,7 @@ import {Fragment, Suspense, useState} from 'react'
 import {Helmet} from 'react-helmet'
 import {MdCheck, MdInsertDriveFile, MdSearch, MdWarning} from 'react-icons/md'
 import {QueryClient, QueryClientProvider} from 'react-query'
-import {Route, Switch} from 'react-router'
+import {Route} from 'react-router'
 import {HashRouter} from 'react-router-dom'
 import {DashboardOptions} from './Dashboard'
 import {DashboardProvider, useDashboard} from './hook/UseDashboard'
@@ -40,32 +40,32 @@ function AppAuthenticated() {
               <MdCheck />
             </Sidebar.Menu.Item>
           </Sidebar.Menu>
-          <Pane
-            id="content-tree"
-            resizable="right"
-            defaultWidth={330}
-            minWidth={200}
-          >
-            <ContentTree />
-          </Pane>
         </Sidebar.Root>
-        <div style={{width: '100%'}}>
-          <Switch>
-            <Route path="/:id">
-              {({match}) => {
-                const id = match?.params.id!
-                return (
+        <Route path="/:id">
+          {({match}) => {
+            const id = match?.params.id!
+            return (
+              <>
+                <Pane
+                  id="content-tree"
+                  resizable="right"
+                  defaultWidth={330}
+                  minWidth={200}
+                >
+                  <ContentTree selected={id} />
+                </Pane>
+                <div style={{width: '100%'}}>
                   <Suspense fallback={null}>
                     <Route path="/:id/new">
                       <NewEntry parent={id} />
                     </Route>
                     <EntryEdit id={id} />
                   </Suspense>
-                )
-              }}
-            </Route>
-          </Switch>
-        </div>
+                </div>
+              </>
+            )
+          }}
+        </Route>
       </div>
       <Statusbar.Root>
         {!auth && (

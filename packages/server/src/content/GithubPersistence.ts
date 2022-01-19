@@ -22,7 +22,7 @@ export class GithubPersistence implements Persistence {
     this.octokit = new Octokit({auth: options.githubAuthToken})
   }
 
-  async publish(entries: Array<Entry>) {
+  async persist(entries: Array<Entry>) {
     return Outcome.promised(async () => {
       const store = await this.options.index.store
       const {contentChanges, fileRemoves} = fileChanges(store, entries)

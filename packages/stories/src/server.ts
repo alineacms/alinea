@@ -9,6 +9,7 @@ import {
 import compression from 'compression'
 import dotenv from 'dotenv'
 import express from 'express'
+import fs from 'fs/promises'
 import {createTransport} from 'nodemailer'
 import serveHandler from 'serve-handler'
 import {schema} from '../../website/.alinea/schema'
@@ -51,7 +52,7 @@ const ghPersistence = new GithubPersistence({
   repo: 'alinea',
   branch: 'main'
 })
-const filePersistence = new FSPersistence(index, '../website/content')
+const filePersistence = new FSPersistence(fs, index, '../website/content')
 const hub = new LocalHub({
   schema: schema,
   index,
