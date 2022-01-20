@@ -113,7 +113,7 @@ function schemaTypes(location: string, schema: Schema) {
       )
       .join('\n')}
   `
-    .replaceAll('  ', '')
+    .replace(/  /g, '')
     .trim()
 }
 
