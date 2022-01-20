@@ -3,7 +3,6 @@
   "version": "0.0.0",
   "license": "MIT",
   "private": true,
-  "type": "module",
   "scripts": {
     "dev": "run-p dev:compile dev:check",
     "dev:compile": "esbx dev",
