@@ -35,7 +35,7 @@ import {
 import {useQuery, useQueryClient} from 'react-query'
 import {useHistory} from 'react-router'
 import {Link} from 'react-router-dom'
-import {slugify} from 'simple-slugify'
+import slug from 'simple-slugify'
 import {useDashboard} from '../hook/UseDashboard'
 import {useSession} from '../hook/UseSession'
 import css from './EntryEdit.module.scss'
@@ -235,7 +235,7 @@ export function NewEntry({parent}: NewEntryProps) {
     if (!selectedType) return
     setCreating(true)
     const type = hub.schema.type(selectedType)!
-    const path = slugify(title)
+    const path = slug.slugify(title)
     const entry = {
       ...type.create(selectedType),
       path,

@@ -1,5 +1,5 @@
 module.exports = {
-  /*webpack: (config, {buildId, dev, isServer, defaultLoaders, webpack}) => {
+  webpack: (config, {buildId, dev, isServer, defaultLoaders, webpack}) => {
     config.experiments = {
       ...config.experiments,
       topLevelAwait: true,
@@ -27,7 +27,7 @@ module.exports = {
       config.optimization.providedExports = true
     }
     return config
-  },*/
+  },
   experimental: {
     esmExternals: 'loose'
   },
