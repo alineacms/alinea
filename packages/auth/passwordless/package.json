@@ -24,7 +24,7 @@
     "jwt-decode": "^3.1.2",
     "nodemailer": "^6.6.5",
     "querystring": "^0.2.1",
-    "react-icons": "^4.2.0"
+    "react-icons": "^4.3.1"
   },
   "devDependencies": {
     "@types/cookie-parser": "^1.4.2",

@@ -1,7 +1,7 @@
 import {alinea, Page} from '.alinea'
 import {Entry} from '@alinea/core'
 import {GetStaticPropsContext} from 'next'
-import {PageView} from 'src/view/PageView'
+import {PageView} from '../view/PageView'
 
 async function propsOf(page: Page) {
   const pages = await alinea.pages

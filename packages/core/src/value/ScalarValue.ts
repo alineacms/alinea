@@ -1,5 +1,5 @@
 import * as Y from 'yjs'
-import {createError} from '..'
+import {createError} from '../ErrorWithCode'
 import {Value} from '../Value'
 
 export class ScalarValue<T> implements Value<T> {

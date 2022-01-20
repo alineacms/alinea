@@ -1,6 +1,6 @@
 import {generateKeyBetween} from 'fractional-indexing'
 import * as Y from 'yjs'
-import {createError} from '..'
+import {createError} from '../ErrorWithCode'
 import {createId} from '../Id'
 import {Value} from '../Value'
 import {RecordValue} from './RecordValue'

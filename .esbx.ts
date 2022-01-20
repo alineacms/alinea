@@ -12,6 +12,28 @@ import {build} from 'esbuild'
 import fs from 'fs-extra'
 import path from 'path'
 
+const ExtensionPlugin: Plugin = {
+  name: 'extension',
+  setup(build) {
+    build.initialOptions.bundle = true
+    const outExtension = build.initialOptions.outExtension?.['.js'] || '.js'
+    build.onResolve({filter: /.*/}, ({kind, path}) => {
+      if (kind === 'entry-point') return
+      if (path.startsWith('react-icons'))
+        return {path: path + '/index.js', external: true}
+      const isLocal =
+        path.startsWith('./') ||
+        path.startsWith('../') ||
+        (path.startsWith('@alinea') && path.split('/').length > 2)
+      const hasOutExtension = path.endsWith(outExtension)
+      const hasExtension = path.split('/').pop()?.includes('.')
+      if (isLocal && hasExtension && !hasOutExtension) return
+      if (hasOutExtension || !isLocal) return {path, external: true}
+      return {path: path + outExtension, external: true}
+    })
+  }
+}
+
 const globalCss = []
 const BundleCSSPlugin: Plugin = {
   name: 'BundleCSSPlugin',
@@ -64,9 +86,10 @@ const buildOptions: BuildOptions = {
 }
 
 const builder = BuildTask.configure({
+  exclude: ['@alinea/stories', '@alinea/website', '@alinea/css'],
   buildOptions: {
     ...buildOptions,
-    plugins: [...buildOptions.plugins, BundleCSSPlugin]
+    plugins: [...buildOptions.plugins, BundleCSSPlugin, ExtensionPlugin]
   }
 })
 export const buildTask = {
