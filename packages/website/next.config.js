@@ -1,10 +1,5 @@
 module.exports = {
   webpack: (config, {buildId, dev, isServer, defaultLoaders, webpack}) => {
-    config.experiments = {
-      ...config.experiments,
-      topLevelAwait: true,
-      asyncWebAssembly: true
-    }
     if (isServer) {
       config.externals = [
         ...config.externals,
@@ -27,9 +22,6 @@ module.exports = {
       config.optimization.providedExports = true
     }
     return config
-  },
-  experimental: {
-    esmExternals: 'loose'
   },
   typescript: {
     // We check types in plenty other places, no need to waste time here
