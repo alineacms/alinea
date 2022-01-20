@@ -6,6 +6,7 @@
   --highlight: #393a3f;
   --selected: #303136;
   --outline: #303136;
+  --positive: 0, 0, 0;
   --negative: 255, 255, 255;
 }
 
@@ -15,6 +16,7 @@
   --highlight: #f7f6f6;
   --selected: #f3f3f3; //rgb(246, 249, 250); //#f5f4f0;
   --outline: #eceff1; //rgb(246, 249, 250);
+  --positive: 255, 255, 255;
   --negative: 0, 0, 0;
 }
 
