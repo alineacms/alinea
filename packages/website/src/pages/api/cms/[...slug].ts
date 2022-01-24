@@ -1,7 +1,7 @@
 import {schema, store} from '.alinea'
 import {PasswordLessAuth} from '@alinea/auth.passwordless/PasswordLessAuth.js'
-import {Cache} from '@alinea/cache'
 import {
+  Cache,
   FSPersistence,
   GithubPersistence,
   LocalHub,

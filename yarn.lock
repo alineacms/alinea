@@ -27,16 +27,6 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@alinea/cache@0.0.0, @alinea/cache@workspace:packages/cache":
-  version: 0.0.0-use.local
-  resolution: "@alinea/cache@workspace:packages/cache"
-  dependencies:
-    "@alinea/core": 0.0.0
-    "@types/fs-extra": ^9.0.13
-    fs-extra: ^10.0.0
-  languageName: unknown
-  linkType: soft
-
 "@alinea/cli@0.0.0, @alinea/cli@workspace:packages/cli":
   version: 0.0.0-use.local
   resolution: "@alinea/cli@workspace:packages/cli"
@@ -198,7 +188,7 @@ __metadata:
     "@esbx/run": ^0.0.9
     "@esbx/sass": ^0.0.9
     "@esbx/static": ^0.0.9
-    "@esbx/workspaces": ^0.0.11
+    "@esbx/workspaces": ^0.0.12
     "@types/glob": ^7.1.4
     "@types/node": ^16.9.0
     "@typescript-eslint/eslint-plugin": ^4.31.0
@@ -226,7 +216,6 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@alinea/server@workspace:packages/server"
   dependencies:
-    "@alinea/cache": 0.0.0
     "@alinea/core": 0.0.0
     "@octokit/rest": ^18.12.0
     "@types/compression": ^1.7.2
@@ -279,7 +268,6 @@ __metadata:
   resolution: "@alinea/website@workspace:packages/website"
   dependencies:
     "@alinea/auth.passwordless": 0.0.0
-    "@alinea/cache": 0.0.0
     "@alinea/cli": 0.0.0
     "@alinea/core": 0.0.0
     "@alinea/dashboard": 0.0.0
@@ -500,9 +488,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@esbx/workspaces@npm:^0.0.11":
-  version: 0.0.11
-  resolution: "@esbx/workspaces@npm:0.0.11"
+"@esbx/workspaces@npm:^0.0.12":
+  version: 0.0.12
+  resolution: "@esbx/workspaces@npm:0.0.12"
   dependencies:
     "@esbx/extension": 0.0.0
     "@esbx/external": 0.0.0
@@ -512,7 +500,7 @@ __metadata:
     glob: ^7.2.0
     tsconfig-resolver: ^3.0.1
     which: ^2.0.2
-  checksum: 47056e5451603cb6841fd38a3392548ccdd326a08fbbbdeca783cba5cbf75aef6027d701ec5765270d7be3b11eee03e5c6619d73b5af7b35007037229d3654bb
+  checksum: aeef107eef52bed0c534f36112c8f40034c99e34825c4766b6d43df5132b7229da7aaacb2d422a66326bbef2f28859a591ca90527f12ab639fa9db4891d0c35b
   languageName: node
   linkType: hard
 
@@ -1600,15 +1588,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/fs-extra@npm:^9.0.13":
-  version: 9.0.13
-  resolution: "@types/fs-extra@npm:9.0.13"
-  dependencies:
-    "@types/node": "*"
-  checksum: add79e212acd5ac76b97b9045834e03a7996aef60a814185e0459088fd290519a3c1620865d588fa36c4498bf614210d2a703af5cf80aa1dbc125db78f6edac3
-  languageName: node
-  linkType: hard
-
 "@types/glob@npm:^7.1.4":
   version: 7.1.4
   resolution: "@types/glob@npm:7.1.4"
@@ -2090,7 +2069,6 @@ __metadata:
   resolution: "alinea@workspace:packages/alinea"
   dependencies:
     "@alinea/auth.passwordless": 0.0.0
-    "@alinea/cache": 0.0.0
     "@alinea/cli": 0.0.0
     "@alinea/client": 0.0.0
     "@alinea/core": 0.0.0

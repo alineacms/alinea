@@ -1,7 +1,7 @@
-import {Cache} from '@alinea/cache'
 import {Content, Draft, Entry, Outcome} from '@alinea/core'
 import {Expression, Functions} from 'helder.store'
 import {Persistence} from '../Persistence'
+import {Cache} from './cache/Cache'
 
 export class IndexedContent implements Content {
   constructor(protected cache: Cache, protected persistence: Persistence) {}

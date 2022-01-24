@@ -1,0 +1,63 @@
+import {Entry} from '@alinea/core/Entry'
+import {Volume} from 'memfs'
+import {test} from 'uvu'
+import * as assert from 'uvu/assert'
+import {FS} from '../src/content/FS'
+import {JsonLoader} from '../src/content/loader/JsonLoader'
+import {FileSource} from '../src/content/Source'
+
+function entry(entry: Entry.Raw) {
+  return JSON.stringify(entry)
+}
+
+const fs: FS = Volume.fromNestedJSON({
+  content: {
+    '/index.json': entry({
+      id: 'root',
+      type: 'Type',
+      title: 'Test title'
+    }),
+    sub: {
+      '/index.json': entry({
+        id: 'sub',
+        type: 'Sub',
+        title: 'Sub title'
+      }),
+      '/entry.json': entry({
+        id: 'sub-entry',
+        type: 'SubEntry',
+        title: 'Sub entry title'
+      })
+    }
+  }
+}).promises as any
+
+const source = new FileSource(fs, 'content', JsonLoader)
+
+async function toArray<T>(gen: AsyncGenerator<T>): Promise<Array<T>> {
+  const arr = []
+  for await (const i of gen) arr.push(i)
+  return arr
+}
+
+test('reading', async () => {
+  const [root, sub, subEntry] = await toArray(source.entries())
+  assert.is(root.id, 'root')
+  assert.is(root.$path, '/')
+  assert.is(sub.id, 'sub')
+  assert.is(sub.$parent, undefined)
+  assert.is(sub.$path, '/sub')
+  assert.is(subEntry.id, 'sub-entry')
+  assert.is(subEntry.$parent, 'sub')
+  assert.is(subEntry.$path, '/sub/entry')
+})
+
+test('inserting', async () => {
+  const [root] = await toArray(source.entries())
+  await source.insert([{...root, title: 'New root title'}])
+  const [newRoot] = await toArray(source.entries())
+  assert.is(newRoot.id, 'root')
+  assert.is(newRoot.title, 'New root title')
+})
+
+test.run()

@@ -7,13 +7,14 @@ import {
   Schema
 } from '@alinea/core'
 import convertHrtime from 'convert-hrtime'
-import fs from 'fs-extra'
+import {constants} from 'fs'
 import {Store} from 'helder.store'
 import {fromUint8Array} from 'js-base64'
 import pLimit from 'p-limit'
 import {posix as path} from 'path'
 import prettyMilliseconds from 'pretty-ms'
 import * as Y from 'yjs'
+import {FS} from '../FS'
 
 const openfile = pLimit(4)
 
@@ -29,7 +30,7 @@ async function completeEntry(
   return entry
 }
 
-async function entryData(location: string) {
+async function entryData(fs: FS, location: string) {
   const parsed = JSON.parse(
     await openfile(() => fs.readFile(location, 'utf-8'))
   )
@@ -41,7 +42,7 @@ async function entryData(location: string) {
 
 type Progress<T> = Promise<T> & {progress(): number}
 
-async function index(schema: Schema, dir: string, store: Store) {
+async function index(fs: FS, schema: Schema, dir: string, store: Store) {
   let total = 0
   async function process(target: string, parentId?: string) {
     const files = await fs.readdir(path.join(dir, target))
@@ -54,15 +55,15 @@ async function index(schema: Schema, dir: string, store: Store) {
         // Find entry data in path/index.json
         const indexLocation = path.join(dir, localPath, '/index.json')
         const hasIndex = await outcome.succeeds(
-          fs.access(indexLocation, fs.constants.R_OK)
+          fs.access(indexLocation, constants.R_OK)
         )
-        if (hasIndex) entry = await entryData(indexLocation)
+        if (hasIndex) entry = await entryData(fs, indexLocation)
         // Find entry data in path.json
         const namedLocation = path.join(dir, `${localPath}.json`)
         const hasNamedLocation = await outcome.succeeds(
-          fs.access(namedLocation, fs.constants.R_OK)
+          fs.access(namedLocation, constants.R_OK)
         )
-        if (hasNamedLocation) entry = await entryData(namedLocation)
+        if (hasNamedLocation) entry = await entryData(fs, namedLocation)
         const parent = store.insert(Entry, {
           $path: localPath,
           $parent: parentId,
@@ -77,7 +78,7 @@ async function index(schema: Schema, dir: string, store: Store) {
         try {
           const location = path.join(dir, localPath)
           if (!location.endsWith('.json')) return
-          const data = await entryData(location)
+          const data = await entryData(fs, location)
           const name = path.basename(file, '.json')
           const isIndex = name === 'index'
           const dirStat = await outcome(fs.stat(path.join(dir, target, name)))
@@ -111,14 +112,19 @@ async function index(schema: Schema, dir: string, store: Store) {
   return total
 }
 
-function init(schema: Schema, store: Store, path: string): Progress<Store> {
+function init(
+  fs: FS,
+  schema: Schema,
+  store: Store,
+  path: string
+): Progress<Store> {
   let progress = 0
   async function build(): Promise<Store> {
     const startTime = process.hrtime.bigint()
     console.log('Start indexing...')
     store.delete(Entry)
     store.delete(Draft)
-    const total = await index(schema, path, store)
+    const total = await index(fs, schema, path, store)
     store.createIndex(Entry, '$path', [Entry.$path])
     store.createIndex(Entry, '$parent', [Entry.$parent])
     store.createIndex(Draft, 'entry', [Draft.entry])
@@ -133,6 +139,6 @@ function init(schema: Schema, store: Store, path: string): Progress<Store> {
   return Object.assign(build(), {progress: () => progress})
 }
 
-export function fillCache(schema: Schema, store: Store, path: string) {
-  return init(schema, store, path)
+export function fillCache(fs: FS, schema: Schema, store: Store, path: string) {
+  return init(fs, schema, store, path)
 }

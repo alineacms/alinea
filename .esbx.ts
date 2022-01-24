@@ -12,6 +12,15 @@ import {build} from 'esbuild'
 import fs from 'fs-extra'
 import path from 'path'
 
+const FixReactIconsPlugin: Plugin = {
+  name: 'FixReactIconsPlugin',
+  setup(build) {
+    build.onResolve({filter: /react-icons.*/}, ({path}) => {
+      return {path: path + '/index.js', external: true}
+    })
+  }
+}
+
 const ExtensionPlugin: Plugin = {
   name: 'extension',
   setup(build) {
@@ -189,7 +198,12 @@ export const clean = {
 export const testTask = TestTask.configure({
   buildOptions: {
     ...buildOptions,
+    sourcemap: true,
     external: modules.filter(m => !m.includes('@alinea')),
-    plugins: [AliasPlugin.configure(internal)]
+    plugins: [
+      ...buildOptions.plugins,
+      AliasPlugin.configure(internal),
+      FixReactIconsPlugin
+    ]
   }
 })

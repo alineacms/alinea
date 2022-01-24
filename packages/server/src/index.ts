@@ -1,3 +1,4 @@
+export * from './content/cache/Cache'
 export * from './content/FSPersistence'
 export * from './content/GithubPersistence'
 export * from './content/LocalHub'

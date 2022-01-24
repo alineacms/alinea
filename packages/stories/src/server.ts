@@ -1,6 +1,6 @@
 import {PasswordLessAuth} from '@alinea/auth.passwordless/PasswordLessAuth'
-import {Cache} from '@alinea/cache'
 import {
+  Cache,
   FSPersistence,
   GithubPersistence,
   LocalHub,

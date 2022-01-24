@@ -1,5 +1,5 @@
-import {Cache} from '@alinea/cache'
 import {Schema} from '@alinea/core/Schema'
+import {Cache} from '@alinea/server'
 import {encode} from 'base64-arraybuffer'
 import {dirname, filename} from 'dirname-filename-esm'
 import {build, BuildResult, Plugin} from 'esbuild'
@@ -148,7 +148,7 @@ async function generate(options: Options) {
   const outFile = 'file://' + path.join(cwd, schemaFile)
   const exports = await import(outFile)
   const schema = exports.default || exports.schema
-  const cache = Cache.fromMemory({schema, dir: content})
+  const cache = Cache.fromMemory({schema, dir: content, fs: fs.promises})
   const store = (await cache.sync()) as SqliteStore
   // Todo: implement serialize on store
   const db = (store as any).db.db

@@ -1,9 +1,9 @@
-import {Cache} from '@alinea/cache'
 import {Entry, Outcome} from '@alinea/core'
 import {Octokit} from '@octokit/rest'
 import createOrUpdateFiles from 'octokit-commit-multiple-files/create-or-update-files.js'
 import {posix as path} from 'path'
 import {Persistence} from '../Persistence'
+import {Cache} from './cache/Cache'
 import {fileChanges} from './FileChanges'
 
 export type GithubPersistenceOptions = {
