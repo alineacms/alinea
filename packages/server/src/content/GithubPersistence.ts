@@ -1,4 +1,4 @@
-import {Entry, Outcome} from '@alinea/core'
+import {Entry, outcome} from '@alinea/core'
 import {Octokit} from '@octokit/rest'
 import createOrUpdateFiles from 'octokit-commit-multiple-files/create-or-update-files.js'
 import {posix as path} from 'path'
@@ -23,7 +23,7 @@ export class GithubPersistence implements Persistence {
   }
 
   async persist(entries: Array<Entry>) {
-    return Outcome.promised(async () => {
+    return outcome(async () => {
       const store = await this.options.index.store
       const {contentChanges, fileRemoves} = fileChanges(store, entries)
       return createOrUpdateFiles(this.octokit, {

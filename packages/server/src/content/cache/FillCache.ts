@@ -14,7 +14,7 @@ import pLimit from 'p-limit'
 import {posix as path} from 'path'
 import prettyMilliseconds from 'pretty-ms'
 import * as Y from 'yjs'
-import {FS} from '../FS'
+import {FS} from '../../backend/FS'
 
 const openfile = pLimit(4)
 
@@ -83,7 +83,7 @@ async function index(fs: FS, schema: Schema, dir: string, store: Store) {
           const isIndex = name === 'index'
           const dirStat = await outcome(fs.stat(path.join(dir, target, name)))
           const isNamedLocation =
-            dirStat.isSuccess() && dirStat.data.isDirectory()
+            dirStat.isSuccess() && dirStat.value.isDirectory()
           const shouldBeIndexed = !isNamedLocation && (!isIndex || !parentId)
           if (shouldBeIndexed) {
             const entryPath = path.join(target, isIndex ? '' : name)

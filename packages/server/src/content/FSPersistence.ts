@@ -1,10 +1,10 @@
 import {Entry, outcome} from '@alinea/core'
 import pLimit from 'p-limit'
 import path from 'path'
+import {FS} from '../backend/FS'
 import {Persistence} from '../Persistence'
 import {Cache} from './cache/Cache'
 import {fileChanges} from './FileChanges'
-import {FS} from './FS'
 
 const limit = pLimit(4)
 

@@ -24,7 +24,7 @@ export interface Entry {
 export namespace Entry {
   export type WithParents = Entry & {parents: Array<string>}
   export type WithChildrenCount = Entry & {childrenCount: number}
-  export type WithDraft = {entry: Entry; draft: Draft | null}
+  export type WithDraft = {entry: Entry; draft?: Draft | null}
   export type Raw = Omit<
     Entry,
     '$path' | '$status' | '$parent' | '$isContainer'

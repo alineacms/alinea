@@ -129,7 +129,7 @@ export class RichTextValue<T> implements Value<TextDoc<Row & T>> {
     const doc = new Y.XmlFragment()
     map.set('$doc', doc)
     const types = this.values
-    if (types && value.blocks)
+    if (types && value && value.blocks)
       for (const [name, block] of Object.entries(value.blocks)) {
         map.set(name, types[block.type].toY(block))
       }

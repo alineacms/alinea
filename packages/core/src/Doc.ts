@@ -6,9 +6,13 @@ const ROOT_KEY = 'root'
 
 export function docFromEntry(
   type: Type,
-  entry: Entry & {[key: string]: any},
+  entry: Entry.Raw & {[key: string]: any},
   doc = new Y.Doc()
 ) {
+  const {clientID} = doc
+  // By setting a consistent clientID, we can ensure that this call is more or
+  // less guaranteed to be deterministic
+  doc.clientID = 1
   const root = doc.getMap(ROOT_KEY)
   root.set('id', entry.id)
   root.set('type', entry.type)
@@ -16,5 +20,6 @@ export function docFromEntry(
     const contents = entry[key]
     root.set(key, field.type.toY(contents))
   }
+  doc.clientID = clientID
   return doc
 }

@@ -26,6 +26,7 @@
     "sql.js": "^1.6.2"
   },
   "devDependencies": {
+    "@types/fs-extra": "^9.0.13",
     "@types/sade": "^1.7.3"
   }
 }

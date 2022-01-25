@@ -1,15 +1,21 @@
 import {PasswordLessAuth} from '@alinea/auth.passwordless/PasswordLessAuth'
+import {createId} from '@alinea/core'
 import {
-  Cache,
-  FSPersistence,
-  GithubPersistence,
-  LocalHub,
+  Backend,
+  FileSource,
+  GitDrafts,
+  Index,
+  JsonLoader,
   Server
 } from '@alinea/server'
 import compression from 'compression'
 import dotenv from 'dotenv'
 import express from 'express'
 import fs from 'fs/promises'
+import {BetterSqlite3} from 'helder.store/sqlite/drivers/BetterSqlite3.js'
+import {SqliteStore} from 'helder.store/sqlite/SqliteStore.js'
+import http from 'isomorphic-git/http/node/index.js'
+import {fs as memFs} from 'memfs'
 import {createTransport} from 'nodemailer'
 import serveHandler from 'serve-handler'
 import {schema} from '../../website/.alinea/schema'
@@ -40,9 +46,11 @@ const auth = new PasswordLessAuth({
     return true
   }
 })
+/*
 const index = Cache.fromMemory({
   schema,
-  dir: '../website/content'
+  dir: '../website/content',
+  fs
 })
 const ghPersistence = new GithubPersistence({
   index,
@@ -57,7 +65,33 @@ const hub = new LocalHub({
   schema: schema,
   index,
   persistence: filePersistence
+})*/
+const store = new SqliteStore(new BetterSqlite3(), createId)
+const source = new FileSource({
+  fs,
+  dir: '../website/content',
+  loader: JsonLoader
 })
+// const drafts = new FileDrafts({fs, dir: './bin/drafts'})
+const onAuth = () => ({username: process.env.GITHUB_TOKEN})
+
+const drafts = new GitDrafts({
+  fs: memFs.promises as any,
+  dir: '/tmp',
+  http,
+  onAuth,
+  url: 'https://github.com/benmerckx/content',
+  ref: 'drafts',
+  author: {
+    name: 'Ben',
+    email: 'ben@codeurs.be'
+  }
+})
+await Index.create(store, source)
+const hub = {
+  schema,
+  content: new Backend(store, source, drafts) //
+}
 const server = new Server({
   dashboardUrl,
   // auth,

@@ -1,4 +1,5 @@
 dist
+bin
 node_modules
 .yarn/*
 !.yarn/patches

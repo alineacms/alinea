@@ -128,7 +128,7 @@ const aliases = Object.fromEntries(
   packages.map(pkg => {
     return [
       `@alinea/input.${pkg}`,
-      path.resolve(`packages/input/${pkg}/src/browser.ts`)
+      path.resolve(`packages/input/${pkg}/src/index.ts`)
     ]
   })
 )
@@ -179,7 +179,8 @@ const serverOptions: BuildOptions = {
     ...buildOptions.plugins,
     ReporterPlugin.configure({name: 'Server'}),
     RunPlugin.configure({cmd: 'node dist/server.js', cwd: 'packages/stories'}),
-    AliasPlugin.configure(internal)
+    AliasPlugin.configure(internal),
+    FixReactIconsPlugin
   ]
 }
 

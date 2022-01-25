@@ -2,6 +2,8 @@ type JSONRep<D, F> = {success: true; data: D} | {success: false; error: F}
 
 type OutcomeRunner = (() => any) | Promise<any>
 
+type Pair<T, E> = [T, undefined] | [undefined, E]
+
 type OutcomeReturn<T> = T extends () => Promise<infer X>
   ? Promise<Outcome<X>>
   : T extends () => infer X
@@ -54,8 +56,68 @@ export const outcome = Object.assign(outcomeRunner, {
   }
 })
 
-export class Outcome<D, F = Error> {
-  /** @internal */ constructor(public success: boolean) {}
+export type Outcome<D = void, F = Error> = Outcome.OutcomeImpl<D, F> &
+  Pair<D, F>
+
+export namespace Outcome {
+  export function fromJSON<D, F = Error>(json: JSONRep<D, F>): Outcome<D, F> {
+    if (json.success) return Success(json.data)
+    return Failure(json.error)
+  }
+
+  export function Success<D, F>(data: D): Outcome<D, F> {
+    return new SuccessOutcome(data) as any
+  }
+
+  export function Failure<D, F>(error: F): Outcome<D, F> {
+    return new FailureOutcome(error) as any
+  }
+
+  export abstract class OutcomeImpl<D, F> {
+    constructor(public success: boolean) {}
+
+    isSuccess(): this is SuccessOutcome<D, F> {
+      return this.success
+    }
+
+    isFailure(): this is FailureOutcome<D, F> {
+      return !this.success
+    }
+  }
+
+  class SuccessOutcome<D, F> extends OutcomeImpl<D, F> {
+    constructor(public value: D) {
+      super(true)
+    }
+
+    *[Symbol.iterator]() {
+      yield this.value
+      yield undefined
+    }
+
+    toJSON(): JSONRep<D, F> {
+      return {success: true, data: this.value}
+    }
+  }
+
+  class FailureOutcome<D, F> extends OutcomeImpl<D, F> {
+    constructor(public error: F) {
+      super(false)
+    }
+
+    *[Symbol.iterator]() {
+      yield undefined
+      yield this.error
+    }
+
+    toJSON(): JSONRep<D, F> {
+      return {success: false, error: this.error}
+    }
+  }
+}
+/*
+export abstract class Outcome<D = void, F = Error> {
+  constructor(public success: boolean) {}
 
   isSuccess(): this is Success<D, F> {
     return this.success
@@ -65,9 +127,7 @@ export class Outcome<D, F = Error> {
     return !this.success
   }
 
-  get pair(): [D, undefined] | [undefined, F] {
-    throw 'implement'
-  }
+  abstract get pair(): [D, undefined] | [undefined, F]
 
   static fromJSON<D, F>(json: JSONRep<D, F>): Outcome<D, F> {
     if (json.success) return Outcome.Success(json.data)
@@ -100,22 +160,32 @@ export class Outcome<D, F = Error> {
 }
 
 class Success<D, F> extends Outcome<D, F> {
-  constructor(public data: D) {
+  constructor(public value: D) {
     super(true)
   }
 
+  *[Symbol.iterator]() {
+    yield this.value
+    yield undefined
+  }
+
   get pair(): [D, undefined] {
-    return [this.data, undefined]
+    return [this.value, undefined]
   }
 
   toJSON(): JSONRep<D, F> {
-    return {success: true, data: this.data}
+    return {success: true, data: this.value}
   }
 }
 
 class Failure<D, F> extends Outcome<D, F> {
   constructor(public error: F) {
     super(false)
+  }
+
+  *[Symbol.iterator]() {
+    yield undefined
+    yield this.error
   }
 
   get pair(): [undefined, F] {
@@ -126,3 +196,4 @@ class Failure<D, F> extends Outcome<D, F> {
     return {success: false, error: this.error}
   }
 }
+*/

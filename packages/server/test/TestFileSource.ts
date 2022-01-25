@@ -2,9 +2,9 @@ import {Entry} from '@alinea/core/Entry'
 import {Volume} from 'memfs'
 import {test} from 'uvu'
 import * as assert from 'uvu/assert'
-import {FS} from '../src/content/FS'
-import {JsonLoader} from '../src/content/loader/JsonLoader'
-import {FileSource} from '../src/content/Source'
+import {FS} from '../src/backend/FS'
+import {JsonLoader} from '../src/backend/loader/JsonLoader'
+import {FileSource} from '../src/backend/Source'
 
 function entry(entry: Entry.Raw) {
   return JSON.stringify(entry)
@@ -32,7 +32,7 @@ const fs: FS = Volume.fromNestedJSON({
   }
 }).promises as any
 
-const source = new FileSource(fs, 'content', JsonLoader)
+const source = new FileSource({fs, dir: 'content', loader: JsonLoader})
 
 async function toArray<T>(gen: AsyncGenerator<T>): Promise<Array<T>> {
   const arr = []
@@ -54,7 +54,7 @@ test('reading', async () => {
 
 test('inserting', async () => {
   const [root] = await toArray(source.entries())
-  await source.insert([{...root, title: 'New root title'}])
+  await source.publish([{...root, title: 'New root title'}])
   const [newRoot] = await toArray(source.entries())
   assert.is(newRoot.id, 'root')
   assert.is(newRoot.title, 'New root title')

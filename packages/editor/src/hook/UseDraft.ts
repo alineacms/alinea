@@ -10,7 +10,8 @@ export function useDraft(
   saveDraft: (doc: string) => Promise<Outcome<void>>
 ) {
   const current = useMemo(() => {
-    if (data) return new EntryDraft(type, data.entry, data.draft, saveDraft)
+    if (data)
+      return new EntryDraft(type, data.entry, data.draft || null, saveDraft)
     return null
   }, [data, saveDraft])
   useEffect(() => {

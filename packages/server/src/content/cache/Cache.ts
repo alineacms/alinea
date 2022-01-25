@@ -2,7 +2,7 @@ import {createId, Entry, Schema} from '@alinea/core'
 import {Store} from 'helder.store'
 import {BetterSqlite3} from 'helder.store/sqlite/drivers/BetterSqlite3.js'
 import {SqliteStore} from 'helder.store/sqlite/SqliteStore.js'
-import {FS} from '../FS'
+import {FS} from '../../backend/FS'
 import {fillCache} from './FillCache'
 
 function storeFromFile(file: string) {

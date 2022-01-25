@@ -1,13 +1,18 @@
-import {Content, Draft, Entry, outcome, Outcome} from '@alinea/core'
-import {Expression, Functions} from 'helder.store'
-import {Persistence} from '../Persistence'
-import {Cache} from './cache/Cache'
+import {Content, Entry, outcome, Outcome} from '@alinea/core'
+import {decode, encode} from 'base64-arraybuffer'
+import {Functions, Store} from 'helder.store'
+import {Drafts} from './Drafts'
+import {Source} from './Source'
 
-export class IndexedContent implements Content {
-  constructor(protected cache: Cache, protected persistence: Persistence) {}
+export class Backend implements Content {
+  constructor(
+    protected store: Store,
+    protected source: Source,
+    protected drafts: Drafts
+  ) {}
 
   async get(id: string): Promise<Entry.WithParents | null> {
-    const store = await this.cache.store
+    const {store} = this
     const self = store.first(Entry.where(Entry.id.is(id)))
     if (!self) return null
     function parents(entry: Entry): Array<string> {
@@ -19,14 +24,24 @@ export class IndexedContent implements Content {
   }
 
   async entryWithDraft(id: string): Promise<Entry.WithDraft | null> {
-    const store = await this.cache.store
+    const {store} = this
     const entry = store.first(Entry.where(Entry.id.is(id)))
-    const draft = store.first(Draft.where(Draft.entry.is(id)))
-    return entry && {entry, draft}
+    if (!entry) return null
+    const [update] = await this.drafts.get(id)
+    if (update) {
+      return {
+        entry,
+        draft: {
+          entry: id,
+          doc: encode(update)
+        }
+      }
+    }
+    return {entry}
   }
 
-  async put(id: string, entry: Entry): Promise<Outcome<void>> {
-    const store = await this.cache.store
+  async put(id: string, entry: Entry): Promise<Outcome> {
+    const {store} = this
     const query = Entry.where(Entry.id.is(id))
     const existing = store.first(query)
     return outcome(() => {
@@ -35,37 +50,32 @@ export class IndexedContent implements Content {
     })
   }
 
-  async putDraft(id: string, doc: string): Promise<Outcome<void>> {
-    const store = await this.cache.store
-    return outcome(() => {
-      const query = Draft.where(Draft.entry.is(id))
-      const existing = store.first(query)
-      if (existing) store.update(query, {doc: Expression.value(doc)})
-      else store.insert(Draft, {entry: id, doc})
-    })
+  async putDraft(id: string, doc: string): Promise<Outcome> {
+    return outcome(this.drafts.update(id, new Uint8Array(decode(doc))))
   }
 
   async list(parentId?: string): Promise<Array<Entry.WithChildrenCount>> {
-    const store = await this.cache.store
+    const {store} = this
     const Parent = Entry.as('Parent')
     return store.all(
       Entry.where(
         parentId ? Entry.$parent.is(parentId) : Entry.$parent.isNull()
       ).select({
         id: Entry.id,
-        $path: Entry.$path,
         type: Entry.type,
-        $parent: Entry.$parent,
-        $isContainer: Entry.$isContainer,
         title: Entry.title,
         childrenCount: Parent.where(Parent.$parent.is(Entry.id))
           .select(Functions.count())
-          .first()
+          .first(),
+
+        $path: Entry.$path,
+        $parent: Entry.$parent,
+        $isContainer: Entry.$isContainer
       })
     )
   }
 
   async publish(entries: Array<Entry>): Promise<Outcome<void>> {
-    return this.persistence.persist(entries)
+    return this.source.publish(entries)
   }
 }

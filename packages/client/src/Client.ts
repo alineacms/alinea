@@ -12,7 +12,7 @@ export class ClientContent implements Content {
     return this.client.fetch(Api.nav.content.entryWithDraft(id))
   }
 
-  put(id: string, entry: Entry): Promise<Outcome<void>> {
+  put(id: string, entry: Entry): Promise<Outcome> {
     //return this.client.fetch(Api.nav.content.get(path))
     return this.client
       .fetch(Api.nav.content.get(id), {
@@ -23,7 +23,7 @@ export class ClientContent implements Content {
       .then(res => Outcome.fromJSON(res))
   }
 
-  putDraft(id: string, doc: string): Promise<Outcome<void>> {
+  putDraft(id: string, doc: string): Promise<Outcome> {
     return this.client
       .fetch(Api.nav.content.entryWithDraft(id), {
         method: 'PUT',
