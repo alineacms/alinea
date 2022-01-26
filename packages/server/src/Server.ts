@@ -71,17 +71,17 @@ export class Server {
     router.get(prefix + Api.nav.drafts.get(':id'), async (req, res) => {
       const id = req.params.id
       const stateVector = req.query.stateVector
-      const [update, err] = await hub.drafts.get(
+      const outcome = await hub.drafts.get(
         id,
         typeof stateVector === 'string'
           ? new Uint8Array(decode(stateVector))
           : undefined
       )
-      if (update)
+      if (outcome.isSuccess() && outcome.value)
         return res
           .setHeader('content-type', 'application/octet-stream')
-          .end(Buffer.from(update))
-      if (err) return res.status(500).json(err)
+          .end(Buffer.from(outcome.value))
+      if (outcome.isFailure()) return res.status(500).json(outcome.toJSON())
       return res.sendStatus(404)
     })
 

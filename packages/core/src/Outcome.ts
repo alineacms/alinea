@@ -89,6 +89,8 @@ export namespace Outcome {
     isFailure(): this is FailureOutcome<T> {
       return !this.success
     }
+
+    abstract toJSON(): JSONRep<T>
   }
 
   class SuccessOutcome<T> extends OutcomeImpl<T> {
