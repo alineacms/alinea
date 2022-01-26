@@ -1,5 +1,5 @@
 import {Entry, Outcome, outcome} from '@alinea/core'
-import path from 'path/posix'
+import {posix as path} from 'path'
 import {FS} from './FS'
 
 export interface Source {

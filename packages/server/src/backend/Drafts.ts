@@ -1,7 +1,7 @@
 import {createId, Drafts} from '@alinea/core'
 import {Outcome, outcome} from '@alinea/core/Outcome'
 import git, {AuthCallback, HttpClient, PromiseFsClient} from 'isomorphic-git'
-import path from 'path/posix'
+import {posix as path} from 'path'
 import * as Y from 'yjs'
 import {FS} from './FS'
 
