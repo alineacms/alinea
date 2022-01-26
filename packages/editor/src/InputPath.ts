@@ -20,7 +20,7 @@ export namespace InputPath {
     }
 
     use() {
-      const [draft] = useCurrentDraft()
+      const draft = useCurrentDraft()
       if (!draft) throw 'Could not load draft'
       const redraw = useForceUpdate()
       const input = useMemo(

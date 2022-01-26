@@ -65,7 +65,7 @@ export class FileSource implements Source {
             ...entry,
             $path: path.join(target, isIndex ? '' : name),
             $parent: parentId,
-            $isContainer: isIndex
+            $isContainer: isIndex || undefined
           }
           if (isIndex) parentId = entry.id
         }

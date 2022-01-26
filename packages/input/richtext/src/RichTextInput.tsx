@@ -1,5 +1,5 @@
 import {createId, Schema, TextDoc, Type} from '@alinea/core'
-import {Fields, InputPath, Label, useInput} from '@alinea/editor'
+import {Fields, InputLabel, InputPath, useInput} from '@alinea/editor'
 import {Card, fromModule, HStack, IconButton, TextLabel} from '@alinea/ui'
 import {mergeAttributes, Node} from '@tiptap/core'
 import Collaboration from '@tiptap/extension-collaboration'
@@ -167,9 +167,9 @@ export function RichTextInput<T>({path, field}: RichTextInputProps<T>) {
           strike
         </button>
   </BubbleMenu>*/}
-      <Label label={field.label} help={help} optional={optional}>
+      <InputLabel label={field.label} help={help} optional={optional}>
         <EditorContent className={styles.root.editor()} editor={editor} />
-      </Label>
+      </InputLabel>
     </div>
   )
 }

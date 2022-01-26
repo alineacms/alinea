@@ -60,7 +60,10 @@ __metadata:
   dependencies:
     "@types/react": ^17.0.20
     base-x: ^3.0.8
+    base-x-bytearray: ^0.1.3
+    base62: ^2.0.1
     get-random-values: ^1.2.2
+    serialize-error: ^9.0.0
     yjs: ^13.5.16
   languageName: unknown
   linkType: soft
@@ -2240,12 +2243,26 @@ __metadata:
   languageName: node
   linkType: hard
 
+"base-x-bytearray@npm:^0.1.3":
+  version: 0.1.3
+  resolution: "base-x-bytearray@npm:0.1.3"
+  checksum: 1e402c2e0d1f8b6fc4a995d79ce12be6cf40bee9b38e80ebb5bd60dcc26839191fbdcbda27d1d21337a9b9c3efa2b182912d60ff215fb4e47e6e090f8f7e1b04
+  languageName: node
+  linkType: hard
+
 "base-x@npm:^3.0.8":
   version: 3.0.8
   resolution: "base-x@npm:3.0.8"
   dependencies:
     safe-buffer: ^5.0.1
   checksum: 92b95493e636999d6505d9c5abfa049fce1bdde9327f733c5984e712cdb98482d2d45410e4ac1d04e5a004545e46898674f405db04c9555ba3e35fc00b150bf4
+  languageName: node
+  linkType: hard
+
+"base62@npm:^2.0.1":
+  version: 2.0.1
+  resolution: "base62@npm:2.0.1"
+  checksum: bbccab35bd2291595c0108521d725fb3a98ee4a80d15110623516bfd980c77eddbbc72b0611ab2e9419dfa799b23c0c181ef2af0c5d550275dd8f18846a58c1b
   languageName: node
   linkType: hard
 
@@ -6763,6 +6780,15 @@ resolve@^2.0.0-next.3:
   languageName: node
   linkType: hard
 
+"serialize-error@npm:^9.0.0":
+  version: 9.0.0
+  resolution: "serialize-error@npm:9.0.0"
+  dependencies:
+    type-fest: ^2.5.3
+  checksum: ee9bb845599c6123b3a58c0a16028356b5f0ce18e2e3ebe59d8fb8aa46271ab74116538b59528fea81c324a0df1af54d9d30209b07b24bac00bd6df14fa8b7a4
+  languageName: node
+  linkType: hard
+
 "serve-handler@npm:^6.1.3":
   version: 6.1.3
   resolution: "serve-handler@npm:6.1.3"
@@ -7441,6 +7467,13 @@ resolve@^2.0.0-next.3:
   version: 0.13.1
   resolution: "type-fest@npm:0.13.1"
   checksum: e6bf2e3c449f27d4ef5d56faf8b86feafbc3aec3025fc9a5fbe2db0a2587c44714521f9c30d8516a833c8c506d6263f5cc11267522b10c6ccdb6cc55b0a9d1c4
+  languageName: node
+  linkType: hard
+
+"type-fest@npm:^2.5.3":
+  version: 2.10.0
+  resolution: "type-fest@npm:2.10.0"
+  checksum: a14df0691efc38fe2d0c88ed28182a979c662b71b9e9776638cbaf0ba081f5afcd95ce23c3085f67367a5555b1984b6db828df57cf3b2ae2d61c01b10fa5bc40
   languageName: node
   linkType: hard
 

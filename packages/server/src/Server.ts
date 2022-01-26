@@ -1,8 +1,9 @@
 import {Api, Auth, Hub} from '@alinea/core'
+import {decode} from 'base64-arraybuffer'
 import cors from 'cors'
 import express, {Router} from 'express'
 import {createServer, IncomingMessage, ServerResponse} from 'http'
-import {parseJson} from './util/BodyParser'
+import {parseBuffer, parseJson} from './util/BodyParser'
 import {finishResponse} from './util/FinishResponse'
 
 export type ServerOptions<T = any> = {
@@ -29,14 +30,14 @@ export class Server {
       const id = req.params.id
       res.json(await hub.content.get(id))
     })
-    router.get(
+    /*router.get(
       prefix + Api.nav.content.entryWithDraft(':id'),
       async (req, res) => {
         const id = req.params.id
         const result = await hub.content.entryWithDraft(id)
         res.json(result || null)
       }
-    )
+    )*/
     router.get(
       [
         prefix + Api.nav.content.list(':parent'),
@@ -52,18 +53,47 @@ export class Server {
       const body = await parseJson(req)
       res.json(await hub.content.put(id, body))
     })
-    router.put(
+    /*router.put(
       prefix + Api.nav.content.entryWithDraft(':id'),
       async (req, res) => {
         const id = req.params.id
         const body = await parseJson(req)
         res.json(await hub.content.putDraft(id, body.doc))
       }
-    )
+    )*/
     router.post(prefix + Api.nav.content.publish(), async (req, res) => {
       const entries = await parseJson(req)
       res.json(await hub.content.publish(entries))
     })
+
+    // Drafts
+
+    router.get(prefix + Api.nav.drafts.get(':id'), async (req, res) => {
+      const id = req.params.id
+      const stateVector = req.query.stateVector
+      const [update, err] = await hub.drafts.get(
+        id,
+        typeof stateVector === 'string'
+          ? new Uint8Array(decode(stateVector))
+          : undefined
+      )
+      if (update)
+        return res
+          .setHeader('content-type', 'application/octet-stream')
+          .end(update)
+      return res.sendStatus(404)
+    })
+
+    router.put(prefix + Api.nav.drafts.get(':id'), async (req, res) => {
+      const id = req.params.id
+      res.json(await hub.drafts.update(id, (await parseBuffer(req)) as Buffer))
+    })
+
+    router.delete(prefix + Api.nav.drafts.get(':id'), async (req, res) => {
+      const id = req.params.id
+      res.json(await hub.drafts.delete(id))
+    })
+
     /*router.get('*', async (req, res) => {
       res.status(404).json({error: 'Not found'})
     })*/

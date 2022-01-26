@@ -1,5 +1,5 @@
 import {PasswordLessAuth} from '@alinea/auth.passwordless/PasswordLessAuth'
-import {createId} from '@alinea/core'
+import {createId, Hub} from '@alinea/core'
 import {
   Backend,
   FileSource,
@@ -88,9 +88,10 @@ const drafts = new GitDrafts({
   }
 })
 await Index.create(store, source)
-const hub = {
+const hub: Hub = {
   schema,
-  content: new Backend(store, source, drafts) //
+  content: new Backend(store, source),
+  drafts //
 }
 const server = new Server({
   dashboardUrl,

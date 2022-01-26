@@ -1,3 +1,4 @@
+import {encode} from 'base64-arraybuffer'
 import {User} from './User'
 
 export namespace Api {
@@ -11,15 +12,20 @@ export namespace Api {
       get(id: string) {
         return `/content/${stripSlash(id)}`
       },
-      entryWithDraft(id: string) {
-        return `/content.draft/${stripSlash(id)}`
-      },
       list(parent?: string) {
         if (!parent) return '/content.list'
         return `/content.list/${stripSlash(parent)}`
       },
       publish() {
         return `/content.publish`
+      }
+    },
+    drafts: {
+      get(id: string, stateVector?: Uint8Array) {
+        const route = `/draft/${id}`
+        if (stateVector)
+          return route + '?stateVector=' + encode(stateVector.buffer)
+        return route
       }
     }
   }

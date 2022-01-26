@@ -153,9 +153,7 @@ function useResolveToken(setSession: (session: Session | undefined) => void) {
       setSession({
         user,
         hub: new Client(schema, apiUrl, applyAuth, logout),
-        async logout() {
-          logout()
-        }
+        end: async () => logout()
       })
       if (isTokenFromUrl) {
         localStorage.setItem('@alinea/auth.passwordless', token)

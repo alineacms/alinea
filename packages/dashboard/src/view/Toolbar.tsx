@@ -52,11 +52,9 @@ export const Toolbar = memo(function Toolbar() {
             </DropdownMenu.Trigger>
 
             <DropdownMenu.Content>
-              {session.logout && (
-                <DropdownMenu.Item onSelect={session.logout}>
-                  Logout
-                </DropdownMenu.Item>
-              )}
+              <DropdownMenu.Item onSelect={session.end}>
+                Logout
+              </DropdownMenu.Item>
             </DropdownMenu.Content>
           </DropdownMenu.Root>
         </HStack>

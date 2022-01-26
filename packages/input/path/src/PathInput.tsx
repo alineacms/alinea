@@ -1,5 +1,5 @@
 import {createError} from '@alinea/core'
-import {InputPath, Label, useInput} from '@alinea/editor'
+import {InputLabel, InputPath, useInput} from '@alinea/editor'
 import {fromModule} from '@alinea/ui'
 import slug from 'simple-slugify'
 import {PathField} from './PathField'
@@ -22,14 +22,14 @@ export function PathInput({path, field}: PathInputProps) {
   const [value = slug.slugify(source), setValue] = useInput(path)
   return (
     <div className={styles.root()}>
-      <Label label={field.label} help={help} optional={optional}>
+      <InputLabel label={field.label} help={help} optional={optional}>
         <input
           className={styles.root.input()}
           type="path"
           value={value || ''}
           onChange={e => setValue(slug.slugify(e.currentTarget.value))}
         />
-      </Label>
+      </InputLabel>
     </div>
   )
 }

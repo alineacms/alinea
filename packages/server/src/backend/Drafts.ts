@@ -1,18 +1,9 @@
-import {createId} from '@alinea/core'
+import {createId, Drafts} from '@alinea/core'
 import {Outcome, outcome} from '@alinea/core/Outcome'
 import git, {AuthCallback, HttpClient, PromiseFsClient} from 'isomorphic-git'
 import path from 'path/posix'
 import * as Y from 'yjs'
 import {FS} from './FS'
-
-export interface Drafts {
-  get(
-    id: string,
-    stateVector?: Uint8Array
-  ): Promise<Outcome<Uint8Array | undefined>>
-  update(id: string, update: Uint8Array): Promise<void>
-  delete(id: string): Promise<void>
-}
 
 export type FileDraftsOptions = {
   fs: FS
@@ -29,10 +20,11 @@ export class FileDrafts implements Drafts {
     return outcome(async () => {
       const {fs, dir} = this.options
       const location = path.join(dir, id)
-      const updates = await outcome(fs.readdir(location))
-      if (!updates.isSuccess()) return undefined
+      const [files] = await outcome(fs.readdir(location))
+      if (!files) return undefined
+      files.sort((a, b) => a.localeCompare(b))
       const doc = new Y.Doc()
-      for (const file of updates.value) {
+      for (const file of files) {
         const update = await outcome(fs.readFile(path.join(location, file)))
         if (update.isSuccess()) Y.applyUpdate(doc, update.value)
       }

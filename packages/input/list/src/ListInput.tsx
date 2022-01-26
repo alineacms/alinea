@@ -1,4 +1,4 @@
-import {Fields, InputPath, Label, useInput} from '@alinea/editor'
+import {Fields, InputLabel, InputPath, useInput} from '@alinea/editor'
 import {fromModule, IconButton, TextLabel} from '@alinea/ui'
 import {Create} from '@alinea/ui/Create'
 import {HStack, VStack} from '@alinea/ui/Stack'
@@ -172,7 +172,7 @@ export function ListInput<T extends ListRow>({path, field}: ListInputProps<T>) {
   }
 
   return (
-    <Label label={field.label} help={help}>
+    <InputLabel label={field.label} help={help}>
       <div className={styles.root()}>
         <DndContext
           sensors={sensors}
@@ -220,6 +220,6 @@ export function ListInput<T extends ListRow>({path, field}: ListInputProps<T>) {
         }}
         field={field}
       />
-    </Label>
+    </InputLabel>
   )
 }

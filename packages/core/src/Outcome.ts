@@ -1,8 +1,13 @@
-type JSONRep<D, F> = {success: true; data: D} | {success: false; error: F}
+import {deserializeError, ErrorObject, serializeError} from 'serialize-error'
+import {createError} from './ErrorWithCode'
+
+type JSONRep<D> =
+  | {success: true; data: D}
+  | {success: false; error: ErrorObject}
 
 type OutcomeRunner = (() => any) | Promise<any>
 
-type Pair<T, E> = [T, undefined] | [undefined, E]
+type Pair<T> = [T, undefined] | [undefined, Error]
 
 type OutcomeReturn<T> = T extends () => Promise<infer X>
   ? Promise<Outcome<X>>
@@ -56,37 +61,38 @@ export const outcome = Object.assign(outcomeRunner, {
   }
 })
 
-export type Outcome<D = void, F = Error> = Outcome.OutcomeImpl<D, F> &
-  Pair<D, F>
+export type Outcome<T = void> = Outcome.OutcomeImpl<T> & Pair<T>
 
 export namespace Outcome {
-  export function fromJSON<D, F = Error>(json: JSONRep<D, F>): Outcome<D, F> {
+  export function fromJSON<T>(json: JSONRep<T>): Outcome<T> {
     if (json.success) return Success(json.data)
-    return Failure(json.error)
+    return Failure(deserializeError(json.error)) as any
   }
 
-  export function Success<D, F>(data: D): Outcome<D, F> {
+  export function Success<T>(data: T): Outcome<T> {
     return new SuccessOutcome(data) as any
   }
 
-  export function Failure<D, F>(error: F): Outcome<D, F> {
-    return new FailureOutcome(error) as any
+  export function Failure(error: Error | any): Outcome<unknown> {
+    return new FailureOutcome(
+      error instanceof Error ? error : createError(error)
+    ) as any
   }
 
-  export abstract class OutcomeImpl<D, F> {
+  export abstract class OutcomeImpl<T> {
     constructor(public success: boolean) {}
 
-    isSuccess(): this is SuccessOutcome<D, F> {
+    isSuccess(): this is SuccessOutcome<T> {
       return this.success
     }
 
-    isFailure(): this is FailureOutcome<D, F> {
+    isFailure(): this is FailureOutcome<T> {
       return !this.success
     }
   }
 
-  class SuccessOutcome<D, F> extends OutcomeImpl<D, F> {
-    constructor(public value: D) {
+  class SuccessOutcome<T> extends OutcomeImpl<T> {
+    constructor(public value: T) {
       super(true)
     }
 
@@ -95,13 +101,13 @@ export namespace Outcome {
       yield undefined
     }
 
-    toJSON(): JSONRep<D, F> {
+    toJSON(): JSONRep<T> {
       return {success: true, data: this.value}
     }
   }
 
-  class FailureOutcome<D, F> extends OutcomeImpl<D, F> {
-    constructor(public error: F) {
+  class FailureOutcome<T> extends OutcomeImpl<T> {
+    constructor(public error: Error) {
       super(false)
     }
 
@@ -110,8 +116,8 @@ export namespace Outcome {
       yield this.error
     }
 
-    toJSON(): JSONRep<D, F> {
-      return {success: false, error: this.error}
+    toJSON(): JSONRep<T> {
+      return {success: false, error: serializeError(this.error)}
     }
   }
 }

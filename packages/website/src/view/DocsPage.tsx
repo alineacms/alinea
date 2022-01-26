@@ -8,10 +8,10 @@ type DocsPageProps = Docs & {
   children: Array<{$path: string; title: Label}>
 }
 
-export function DocsPage({children}: DocsPageProps) {
+export function DocsPage({children, title}: DocsPageProps) {
   return (
     <Container>
-      Docs 123
+      <h1>{title}</h1>
       <div>
         {children?.map(child => {
           return (

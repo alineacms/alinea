@@ -25,25 +25,25 @@ function getTime(date = new Date()) {
 
 function getPayload() {
   const view = new Uint8Array(PAYLOAD_LENGTH)
-  let bytes = getRandomValues(view)
+  const bytes = getRandomValues(view)
   return Buffer.from(bytes)
 }
 
 function ksuid(date?: Date) {
-  let time = getTime(date)
-  let payload = getPayload()
-  let id = Buffer.concat([time, payload], ID_LENGTH)
+  const time = getTime(date)
+  const payload = getPayload()
+  const id = Buffer.concat([time, payload], ID_LENGTH)
   return base62.encode(id)
 }
 
 export function parseId(str: string) {
-  let id = base62.decode(str)
-  if (id.length !== ID_LENGTH) throw new Error(`invalid ksuid`)
+  const buffer = base62.decode(str)
+  const id = buffer.length === ID_LENGTH ? buffer : buffer.slice(-ID_LENGTH)
   const timestamp = id.readUInt32BE(0)
-  return {
-    time: new Date(1e3 * timestamp + EPOCH_IN_MS),
-    payload: Buffer.from(id.slice(TIME_LENGTH, ID_LENGTH))
-  }
+  return [
+    new Date(1e3 * timestamp + EPOCH_IN_MS),
+    Buffer.from(id.slice(TIME_LENGTH, ID_LENGTH))
+  ] as const
 }
 
 export const createId = (): string => ksuid()

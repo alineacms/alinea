@@ -1,15 +1,13 @@
 import {Content, Entry, outcome, Outcome} from '@alinea/core'
-import {decode, encode} from 'base64-arraybuffer'
 import {Functions, Store} from 'helder.store'
-import {Drafts} from './Drafts'
 import {Source} from './Source'
 
 export class Backend implements Content {
   constructor(
     protected store: Store,
-    protected source: Source,
-    protected drafts: Drafts
-  ) {}
+    protected source: Source
+  ) //protected drafts: Drafts
+  {}
 
   async get(id: string): Promise<Entry.WithParents | null> {
     const {store} = this
@@ -23,7 +21,7 @@ export class Backend implements Content {
     return {...self, parents: parents(self)}
   }
 
-  async entryWithDraft(id: string): Promise<Entry.WithDraft | null> {
+  /*async entryWithDraft(id: string): Promise<Entry.WithDraft | null> {
     const {store} = this
     const entry = store.first(Entry.where(Entry.id.is(id)))
     if (!entry) return null
@@ -38,7 +36,7 @@ export class Backend implements Content {
       }
     }
     return {entry}
-  }
+  }*/
 
   async put(id: string, entry: Entry): Promise<Outcome> {
     const {store} = this
@@ -50,9 +48,9 @@ export class Backend implements Content {
     })
   }
 
-  async putDraft(id: string, doc: string): Promise<Outcome> {
+  /*async putDraft(id: string, doc: string): Promise<Outcome> {
     return outcome(this.drafts.update(id, new Uint8Array(decode(doc))))
-  }
+  }*/
 
   async list(parentId?: string): Promise<Array<Entry.WithChildrenCount>> {
     const {store} = this

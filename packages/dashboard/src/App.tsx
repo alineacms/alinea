@@ -1,17 +1,25 @@
 import {Client} from '@alinea/client'
 import {Session} from '@alinea/core'
-import {FavIcon, Pane, Statusbar, Viewport} from '@alinea/ui'
+import {FavIcon, Pane, Statusbar, useObservable, Viewport} from '@alinea/ui'
 import {Sidebar} from '@alinea/ui/Sidebar'
 import {getRandomColor} from '@alinea/ui/util/GetRandomColor'
 //import 'preact/debug'
 import {Fragment, Suspense, useState} from 'react'
 import {Helmet} from 'react-helmet'
-import {MdCheck, MdInsertDriveFile, MdSearch, MdWarning} from 'react-icons/md'
+import {
+  MdCheck,
+  MdEdit,
+  MdInsertDriveFile,
+  MdRotateLeft,
+  MdSearch,
+  MdWarning
+} from 'react-icons/md'
 import {QueryClient, QueryClientProvider} from 'react-query'
 import {Route} from 'react-router'
 import {HashRouter} from 'react-router-dom'
 import {DashboardOptions} from './Dashboard'
 import {DashboardProvider, useDashboard} from './hook/UseDashboard'
+import {DraftsProvider, useDrafts} from './hook/UseDrafts'
 import {SessionProvider} from './hook/UseSession'
 import {ContentTree} from './view/ContentTree'
 import {EntryEdit, NewEntry} from './view/EntryEdit'
@@ -68,6 +76,7 @@ function AppAuthenticated() {
         </Route>
       </div>
       <Statusbar.Root>
+        <DraftsStatus />
         {!auth && (
           <Statusbar.Status icon={MdWarning}>
             Not using authentication
@@ -76,6 +85,19 @@ function AppAuthenticated() {
       </Statusbar.Root>
     </Statusbar.Provider>
   )
+}
+
+function DraftsStatus() {
+  const drafts = useDrafts()
+  const status = useObservable(drafts.status)
+  switch (status) {
+    case 'synced':
+      return <Statusbar.Status icon={MdCheck}>Synced</Statusbar.Status>
+    case 'editing':
+      return <Statusbar.Status icon={MdEdit}>Editing</Statusbar.Status>
+    case 'saving':
+      return <Statusbar.Status icon={MdRotateLeft}>Saving</Statusbar.Status>
+  }
 }
 
 type AppRootProps = {
@@ -101,7 +123,8 @@ function AppRoot({session, setSession}: AppRootProps) {
 function localSession<T>(options: DashboardOptions<T>) {
   return {
     user: {sub: 'anonymous'},
-    hub: new Client(options.schema, options.apiUrl)
+    hub: new Client(options.schema, options.apiUrl),
+    end: async () => {}
   }
 }
 
@@ -116,9 +139,11 @@ export function App<T>(props: DashboardOptions<T>) {
     >
       <HashRouter hashType="noslash">
         <SessionProvider value={session}>
-          <QueryClientProvider client={queryClient}>
-            <AppRoot session={session} setSession={setSession} />
-          </QueryClientProvider>
+          <DraftsProvider>
+            <QueryClientProvider client={queryClient}>
+              <AppRoot session={session} setSession={setSession} />
+            </QueryClientProvider>
+          </DraftsProvider>
         </SessionProvider>
       </HashRouter>
     </DashboardProvider>
