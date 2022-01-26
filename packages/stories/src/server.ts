@@ -46,26 +46,6 @@ const auth = new PasswordLessAuth({
     return true
   }
 })
-/*
-const index = Cache.fromMemory({
-  schema,
-  dir: '../website/content',
-  fs
-})
-const ghPersistence = new GithubPersistence({
-  index,
-  contentDir: 'packages/website/content',
-  githubAuthToken: process.env.GITHUB_TOKEN!,
-  owner: 'codeurs',
-  repo: 'alinea',
-  branch: 'main'
-})
-const filePersistence = new FSPersistence(fs, index, '../website/content')
-const hub = new LocalHub({
-  schema: schema,
-  index,
-  persistence: filePersistence
-})*/
 const store = new SqliteStore(new BetterSqlite3(), createId)
 const source = new FileSource({
   fs,

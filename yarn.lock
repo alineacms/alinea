@@ -60,8 +60,6 @@ __metadata:
   dependencies:
     "@types/react": ^17.0.20
     base-x: ^3.0.8
-    base-x-bytearray: ^0.1.3
-    base62: ^2.0.1
     get-random-values: ^1.2.2
     serialize-error: ^9.0.0
     yjs: ^13.5.16
@@ -2243,26 +2241,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"base-x-bytearray@npm:^0.1.3":
-  version: 0.1.3
-  resolution: "base-x-bytearray@npm:0.1.3"
-  checksum: 1e402c2e0d1f8b6fc4a995d79ce12be6cf40bee9b38e80ebb5bd60dcc26839191fbdcbda27d1d21337a9b9c3efa2b182912d60ff215fb4e47e6e090f8f7e1b04
-  languageName: node
-  linkType: hard
-
 "base-x@npm:^3.0.8":
   version: 3.0.8
   resolution: "base-x@npm:3.0.8"
   dependencies:
     safe-buffer: ^5.0.1
   checksum: 92b95493e636999d6505d9c5abfa049fce1bdde9327f733c5984e712cdb98482d2d45410e4ac1d04e5a004545e46898674f405db04c9555ba3e35fc00b150bf4
-  languageName: node
-  linkType: hard
-
-"base62@npm:^2.0.1":
-  version: 2.0.1
-  resolution: "base62@npm:2.0.1"
-  checksum: bbccab35bd2291595c0108521d725fb3a98ee4a80d15110623516bfd980c77eddbbc72b0611ab2e9419dfa799b23c0c181ef2af0c5d550275dd8f18846a58c1b
   languageName: node
   linkType: hard
 
