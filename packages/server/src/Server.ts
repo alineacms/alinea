@@ -80,7 +80,7 @@ export class Server {
       if (update)
         return res
           .setHeader('content-type', 'application/octet-stream')
-          .end(update)
+          .end(Buffer.from(update))
       return res.sendStatus(404)
     })
 

@@ -35,6 +35,7 @@
     "esbuild": "^0.14.11",
     "esbuild-plugin-sass-modules": "^0.0.1",
     "esbx": "^0.0.9",
+    "eslint": "^8.7.0",
     "eslint-plugin-react": "^7.25.1",
     "eslint-plugin-react-hooks": "^4.2.0",
     "fs-extra": "^10.0.0",
