@@ -69,12 +69,14 @@ function AppAuthenticated() {
                     <ContentTree selected={id} />
                   </Pane>
                   <div style={{width: '100%'}}>
-                    <Suspense fallback={null}>
-                      <Route path="/:id/new">
-                        <NewEntry parent={id} />
-                      </Route>
-                      <EntryEdit id={id} />
-                    </Suspense>
+                    {id && (
+                      <Suspense fallback={null}>
+                        <Route path="/:id/new">
+                          <NewEntry parent={id} />
+                        </Route>
+                        <EntryEdit id={id} />
+                      </Suspense>
+                    )}
                   </div>
                 </>
               )

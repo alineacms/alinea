@@ -26,7 +26,12 @@ export class FileDrafts implements Drafts {
       const doc = new Y.Doc()
       for (const file of files) {
         const update = await outcome(fs.readFile(path.join(location, file)))
-        if (update.isSuccess()) Y.applyUpdate(doc, update.value)
+        try {
+          if (update.isSuccess()) Y.applyUpdate(doc, update.value)
+        } catch (e) {
+          // I ran into "Integer out of range!" which shouldn't happen,
+          // Todo: find out why it happens
+        }
       }
       return Y.encodeStateAsUpdate(doc, stateVector)
     })
