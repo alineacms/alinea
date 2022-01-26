@@ -1,6 +1,13 @@
 import {Client} from '@alinea/client'
 import {Session} from '@alinea/core'
-import {FavIcon, Pane, Statusbar, useObservable, Viewport} from '@alinea/ui'
+import {
+  FavIcon,
+  Loader,
+  Pane,
+  Statusbar,
+  useObservable,
+  Viewport
+} from '@alinea/ui'
 import {Sidebar} from '@alinea/ui/Sidebar'
 import {getRandomColor} from '@alinea/ui/util/GetRandomColor'
 //import 'preact/debug'
@@ -70,7 +77,7 @@ function AppAuthenticated() {
                   </Pane>
                   <div style={{width: '100%'}}>
                     {id && (
-                      <Suspense fallback={null}>
+                      <Suspense fallback={<Loader absolute />}>
                         <Route path="/:id/new">
                           <NewEntry parent={id} />
                         </Route>
