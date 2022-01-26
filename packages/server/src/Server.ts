@@ -81,6 +81,7 @@ export class Server {
         return res
           .setHeader('content-type', 'application/octet-stream')
           .end(Buffer.from(update))
+      if (err) return res.status(500).json(err)
       return res.sendStatus(404)
     })
 
