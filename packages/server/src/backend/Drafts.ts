@@ -29,8 +29,8 @@ export class FileDrafts implements Drafts {
         try {
           if (update.isSuccess()) Y.applyUpdate(doc, update.value)
         } catch (e) {
-          // I ran into "Integer out of range!" which shouldn't happen,
-          // Todo: find out why it happens
+          // I ran into "Integer out of range!" which shouldn't happen
+          // Todo: find out why we ended up with an invalid update
         }
       }
       return Y.encodeStateAsUpdate(doc, stateVector)
