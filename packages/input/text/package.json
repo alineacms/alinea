@@ -9,7 +9,12 @@
   "types": "dist/index.d.ts",
   "type": "module",
   "exports": {
-    ".": "./dist/index.js",
+    ".": {
+      "browser": "./dist/view.js",
+      "default": "./dist/index.js"
+    },
+    "./view": "./dist/view.js",
+    "./view.js": "./dist/view.js",
     "./index.css": "./dist/index.css"
   },
   "dependencies": {

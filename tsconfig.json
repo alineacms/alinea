@@ -18,7 +18,8 @@
     "esModuleInterop": true,
     "importHelpers": true,
     "paths": {
-      "@alinea/input.*": ["./packages/input/*/src/index.ts"],
+      "@alinea/input.*/view": ["./packages/input/*/src/view.ts"],
+      "@alinea/input.*": ["./packages/input/*/src/view.ts"],
       "@alinea/auth.*": ["./packages/input/*/src"],
       "@alinea/auth.passwordless/*": ["./packages/auth/passwordless/src/*"],
       "@alinea/core/*": ["./packages/core/src/*"],

@@ -8,8 +8,8 @@ export function useDraft(id: string) {
   const {data: draft} = useQuery(
     ['draft', id],
     () => {
-      return docs.get(id).then(({entry, type, doc}) => {
-        return new EntryDraft(type, doc)
+      return docs.get(id).then(({type, entry, doc}) => {
+        return new EntryDraft(type, entry, doc)
       })
     },
     {

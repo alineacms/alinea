@@ -14,7 +14,11 @@ export class EntryDraft implements Entry {
   public entry: Observable<Entry>
   private root: Y.Map<any>
 
-  constructor(public channel: Type, public doc: Y.Doc) {
+  constructor(
+    public channel: Type,
+    protected source: Entry,
+    public doc: Y.Doc
+  ) {
     this.root = doc.getMap(ROOT_KEY)
     this.entry = observable(this.getEntry())
   }
@@ -51,15 +55,15 @@ export class EntryDraft implements Entry {
   }
 
   get id(): string {
-    return this.root.get('id')
+    return this.root.get('id') || this.source.id
   }
 
   get $path(): string {
-    return this.root.get('$path')
+    return this.root.get('$path') || this.source.$path
   }
 
   get type(): string {
-    return this.root.get('type')
+    return this.root.get('type') || this.source.type
   }
 
   get $status(): EntryStatus {
@@ -67,7 +71,7 @@ export class EntryDraft implements Entry {
   }
 
   get title(): Label {
-    return this.root.get('title')
+    return this.root.get('title') || this.source.title
   }
 
   getLocation(location: Array<string>) {

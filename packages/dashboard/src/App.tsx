@@ -28,62 +28,69 @@ import {Toolbar} from './view/Toolbar'
 function AppAuthenticated() {
   const {name, color, auth} = useDashboard()
   return (
-    <Statusbar.Provider>
-      <Helmet>
-        <title>{name}</title>
-      </Helmet>
-      <Toolbar />
-      <div
-        style={{flex: '1', display: 'flex', minHeight: 0, position: 'relative'}}
-      >
-        <Sidebar.Root>
-          <Sidebar.Menu>
-            <Sidebar.Menu.Item selected>
-              <MdInsertDriveFile />
-            </Sidebar.Menu.Item>
-            <Sidebar.Menu.Item>
-              <MdSearch />
-            </Sidebar.Menu.Item>
-            <Sidebar.Menu.Item>
-              <MdCheck />
-            </Sidebar.Menu.Item>
-          </Sidebar.Menu>
-        </Sidebar.Root>
-        <Route path="/:id">
-          {({match}) => {
-            const id = match?.params.id!
-            return (
-              <>
-                <Pane
-                  id="content-tree"
-                  resizable="right"
-                  defaultWidth={330}
-                  minWidth={200}
-                >
-                  <ContentTree selected={id} />
-                </Pane>
-                <div style={{width: '100%'}}>
-                  <Suspense fallback={null}>
-                    <Route path="/:id/new">
-                      <NewEntry parent={id} />
-                    </Route>
-                    <EntryEdit id={id} />
-                  </Suspense>
-                </div>
-              </>
-            )
+    <DraftsProvider>
+      <Statusbar.Provider>
+        <Helmet>
+          <title>{name}</title>
+        </Helmet>
+        <Toolbar />
+        <div
+          style={{
+            flex: '1',
+            display: 'flex',
+            minHeight: 0,
+            position: 'relative'
           }}
-        </Route>
-      </div>
-      <Statusbar.Root>
-        <DraftsStatus />
-        {!auth && (
-          <Statusbar.Status icon={MdWarning}>
-            Not using authentication
-          </Statusbar.Status>
-        )}
-      </Statusbar.Root>
-    </Statusbar.Provider>
+        >
+          <Sidebar.Root>
+            <Sidebar.Menu>
+              <Sidebar.Menu.Item selected>
+                <MdInsertDriveFile />
+              </Sidebar.Menu.Item>
+              <Sidebar.Menu.Item>
+                <MdSearch />
+              </Sidebar.Menu.Item>
+              <Sidebar.Menu.Item>
+                <MdCheck />
+              </Sidebar.Menu.Item>
+            </Sidebar.Menu>
+          </Sidebar.Root>
+          <Route path="/:id">
+            {({match}) => {
+              const id = match?.params.id!
+              return (
+                <>
+                  <Pane
+                    id="content-tree"
+                    resizable="right"
+                    defaultWidth={330}
+                    minWidth={200}
+                  >
+                    <ContentTree selected={id} />
+                  </Pane>
+                  <div style={{width: '100%'}}>
+                    <Suspense fallback={null}>
+                      <Route path="/:id/new">
+                        <NewEntry parent={id} />
+                      </Route>
+                      <EntryEdit id={id} />
+                    </Suspense>
+                  </div>
+                </>
+              )
+            }}
+          </Route>
+        </div>
+        <Statusbar.Root>
+          <DraftsStatus />
+          {!auth && (
+            <Statusbar.Status icon={MdWarning}>
+              Not using authentication
+            </Statusbar.Status>
+          )}
+        </Statusbar.Root>
+      </Statusbar.Provider>
+    </DraftsProvider>
   )
 }
 
@@ -139,11 +146,9 @@ export function App<T>(props: DashboardOptions<T>) {
     >
       <HashRouter hashType="noslash">
         <SessionProvider value={session}>
-          <DraftsProvider>
-            <QueryClientProvider client={queryClient}>
-              <AppRoot session={session} setSession={setSession} />
-            </QueryClientProvider>
-          </DraftsProvider>
+          <QueryClientProvider client={queryClient}>
+            <AppRoot session={session} setSession={setSession} />
+          </QueryClientProvider>
         </SessionProvider>
       </HashRouter>
     </DashboardProvider>

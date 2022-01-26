@@ -128,7 +128,7 @@ const aliases = Object.fromEntries(
   packages.map(pkg => {
     return [
       `@alinea/input.${pkg}`,
-      path.resolve(`packages/input/${pkg}/src/index.ts`)
+      path.resolve(`packages/input/${pkg}/src/view.ts`)
     ]
   })
 )

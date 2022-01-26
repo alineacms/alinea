@@ -7,8 +7,10 @@ import {
   useCurrentDraft,
   useInput
 } from '@alinea/editor'
-import {select, SelectInput} from '@alinea/input.select'
-import {text, TextInput} from '@alinea/input.text'
+import {select} from '@alinea/input.select'
+import {SelectInput} from '@alinea/input.select/view'
+import {text} from '@alinea/input.text'
+import {TextInput} from '@alinea/input.text/view'
 import {
   AppBar,
   Chip,
