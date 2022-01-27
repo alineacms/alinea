@@ -15,7 +15,6 @@
     "./*": "./dist/*"
   },
   "dependencies": {
-    "@alinea/cache": "0.0.0",
     "@alinea/core": "0.0.0",
     "@octokit/rest": "^18.12.0",
     "auto-bind": "^5.0.1",
@@ -25,6 +24,7 @@
     "convert-hrtime": "^5.0.0",
     "cors": "^2.8.5",
     "helder.store": "^0.0.0-alpha.21",
+    "isomorphic-git": "^1.10.5",
     "octokit-commit-multiple-files": "^3.2.1",
     "p-limit": "^4.0.0",
     "pretty-ms": "^7.0.1",

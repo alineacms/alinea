@@ -4,7 +4,11 @@
     "strict": true,
     "noEmit": true,
     "emitDeclarationOnly": false,
-    "lib": ["dom", "dom.iterable", "esnext"],
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
     "allowJs": true,
     "forceConsistentCasingInFileNames": true,
     "esModuleInterop": true,
@@ -15,8 +19,15 @@
     "skipLibCheck": true,
     "module": "esnext",
     "moduleResolution": "node",
-    "baseUrl": "."
+    "baseUrl": ".",
+    "incremental": true
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],
-  "exclude": ["node_modules"]
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
 }

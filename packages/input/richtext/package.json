@@ -10,9 +10,11 @@
   "type": "module",
   "exports": {
     ".": {
-      "node": "./dist/index.js",
-      "browser": "./dist/browser.js"
+      "browser": "./dist/view.js",
+      "default": "./dist/index.js"
     },
+    "./view": "./dist/view.js",
+    "./view.js": "./dist/view.js",
     "./index.css": "./dist/index.css"
   },
   "dependencies": {

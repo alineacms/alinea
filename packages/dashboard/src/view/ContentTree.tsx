@@ -2,6 +2,7 @@ import {Entry} from '@alinea/core'
 import {
   Create,
   fromModule,
+  Loader,
   Stack,
   TextLabel,
   useInitialEffect
@@ -11,12 +12,18 @@ import {
   forwardRef,
   memo,
   Ref,
+  Suspense,
   useCallback,
   useEffect,
   useRef,
   useState
 } from 'react'
-import {MdChevronRight, MdExpandMore, MdInsertDriveFile} from 'react-icons/md'
+import {
+  MdChevronRight,
+  MdError,
+  MdExpandMore,
+  MdInsertDriveFile
+} from 'react-icons/md'
 import {useQuery} from 'react-query'
 import {Link, useLocation} from 'react-router-dom'
 import {useSession} from '../hook/UseSession'
@@ -36,12 +43,25 @@ function TreeChildren({
   toggleOpen
 }: TreeChildrenProps) {
   const session = useSession()
-  const {isLoading, error, data} = useQuery(['children', parent], () =>
-    session.hub.content.list(parent)
+  const {data} = useQuery(
+    ['children', parent],
+    () => session.hub.list(parent),
+    {suspense: true}
   )
+  if (data?.isFailure()) {
+    console.error(data.error)
+    return (
+      <div
+        style={{margin: '10px auto', display: 'flex', justifyContent: 'center'}}
+      >
+        <MdError />
+      </div>
+    )
+  }
+  const list = data && data.isSuccess() ? data.value : undefined
   return (
     <>
-      {data?.map(entry => {
+      {list?.map(entry => {
         return (
           <TreeNode
             key={entry.id}
@@ -57,7 +77,7 @@ function TreeChildren({
 }
 
 type TreeNodeProps = {
-  entry: Entry.WithChildrenCount
+  entry: Entry.AsListItem
   level: number
 } & OpenChildren
 
@@ -83,14 +103,22 @@ function TreeNode({entry, level, isOpen, toggleOpen}: TreeNodeProps) {
         isOpened={isOpened}
         toggleOpen={handleToggleOpen}
       />
-      {entry.$isContainer && isOpened && (
-        <TreeChildren
-          parent={entry.id}
-          level={level + 1}
-          isOpen={isOpen}
-          toggleOpen={toggleOpen}
-        />
-      )}
+      <Suspense
+        fallback={
+          <div className={styles.node.loader()}>
+            <Loader small />
+          </div>
+        }
+      >
+        {entry.$isContainer && isOpened && (
+          <TreeChildren
+            parent={entry.id}
+            level={level + 1}
+            isOpen={isOpen}
+            toggleOpen={toggleOpen}
+          />
+        )}
+      </Suspense>
     </>
   )
 }
@@ -122,7 +150,7 @@ function TreeNodeChildrenCreator({entry}: TreeNodeChildrenCreator) {
 }
 
 type TreeNodeLinkProps = {
-  entry: Entry.WithChildrenCount
+  entry: Entry.AsListItem
   isSelected: boolean
   level: number
   isOpened: boolean
@@ -159,7 +187,7 @@ const TreeNodeLink = memo(
             gap={8}
             style={{width: '100%'}}
             onClick={event => {
-              if (isOpened) event.stopPropagation()
+              if (!isSelected && isOpened) event.stopPropagation()
             }}
           >
             <span
@@ -194,12 +222,10 @@ type OpenChildren = {
 }
 
 type ContentTreeProps = {
-  selected?: string
+  select?: Array<string>
 }
 
-export function ContentTree({selected}: ContentTreeProps) {
-  const session = useSession()
-  const location = useLocation()
+export function ContentTree({select = []}: ContentTreeProps) {
   const [open, setOpen] = useState(() => new Set())
   const isOpen = useCallback((path: string) => open.has(path), [open])
   const toggleOpen = useCallback(
@@ -214,11 +240,8 @@ export function ContentTree({selected}: ContentTreeProps) {
     [setOpen]
   )
   useEffect(() => {
-    if (!selected) return
-    session.hub.content.get(selected).then(entry => {
-      if (entry?.parents) setOpen(new Set([...open, ...entry?.parents]))
-    })
-  }, [selected])
+    if (select.length) setOpen(new Set([...open, ...select]))
+  }, [select.join('.')])
   return (
     <div>
       <TreeChildren isOpen={isOpen} toggleOpen={toggleOpen} />

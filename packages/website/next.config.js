@@ -1,11 +1,11 @@
 module.exports = {
-  /*webpack: (config, {buildId, dev, isServer, defaultLoaders, webpack}) => {
+  webpack: (config, {buildId, dev, isServer, defaultLoaders, webpack}) => {
     config.experiments = {
       ...config.experiments,
       topLevelAwait: true,
       asyncWebAssembly: true
     }
-    if (isServer) {
+    /*if (isServer) {
       config.externals = [
         ...config.externals,
         '@alinea/auth.passwordless',
@@ -15,7 +15,6 @@ module.exports = {
         '@alinea/core',
         '@alinea/dashboard',
         '@alinea/editor',
-        '@alinea/cache',
         '@alinea/input.list',
         '@alinea/input.number',
         '@alinea/input.text',
@@ -25,9 +24,9 @@ module.exports = {
       ]
       config.externalsType = 'import'
       config.optimization.providedExports = true
-    }
+    }*/
     return config
-  },*/
+  },
   experimental: {
     esmExternals: 'loose'
   },

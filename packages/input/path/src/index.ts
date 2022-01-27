@@ -1,2 +1,3 @@
+import {createPath} from './PathField'
 export * from './PathField'
-export {createPath as path} from './PathField'
+export const path = createPath

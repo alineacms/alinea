@@ -1,2 +1,3 @@
+import {createRichText} from './RichTextField'
 export * from './RichTextField'
-export {createRichText as richText} from './RichTextField'
+export const richText = createRichText

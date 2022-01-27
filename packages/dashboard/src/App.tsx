@@ -1,17 +1,33 @@
-import {Client} from '@alinea/client'
+import {HubClient} from '@alinea/client'
 import {Session} from '@alinea/core'
-import {FavIcon, Pane, Statusbar, Viewport} from '@alinea/ui'
+import {
+  FavIcon,
+  Loader,
+  Pane,
+  Statusbar,
+  useObservable,
+  Viewport
+} from '@alinea/ui'
 import {Sidebar} from '@alinea/ui/Sidebar'
 import {getRandomColor} from '@alinea/ui/util/GetRandomColor'
 //import 'preact/debug'
 import {Fragment, Suspense, useState} from 'react'
 import {Helmet} from 'react-helmet'
-import {MdCheck, MdInsertDriveFile, MdSearch, MdWarning} from 'react-icons/md'
+import {
+  MdCheck,
+  MdEdit,
+  MdInsertDriveFile,
+  MdRotateLeft,
+  MdSearch,
+  MdWarning
+} from 'react-icons/md'
 import {QueryClient, QueryClientProvider} from 'react-query'
 import {Route} from 'react-router'
 import {HashRouter} from 'react-router-dom'
 import {DashboardOptions} from './Dashboard'
 import {DashboardProvider, useDashboard} from './hook/UseDashboard'
+import {useDraft} from './hook/UseDraft'
+import {DraftsProvider, useDrafts} from './hook/UseDrafts'
 import {SessionProvider} from './hook/UseSession'
 import {ContentTree} from './view/ContentTree'
 import {EntryEdit, NewEntry} from './view/EntryEdit'
@@ -20,62 +36,95 @@ import {Toolbar} from './view/Toolbar'
 function AppAuthenticated() {
   const {name, color, auth} = useDashboard()
   return (
-    <Statusbar.Provider>
-      <Helmet>
-        <title>{name}</title>
-      </Helmet>
-      <Toolbar />
-      <div
-        style={{flex: '1', display: 'flex', minHeight: 0, position: 'relative'}}
-      >
-        <Sidebar.Root>
-          <Sidebar.Menu>
-            <Sidebar.Menu.Item selected>
-              <MdInsertDriveFile />
-            </Sidebar.Menu.Item>
-            <Sidebar.Menu.Item>
-              <MdSearch />
-            </Sidebar.Menu.Item>
-            <Sidebar.Menu.Item>
-              <MdCheck />
-            </Sidebar.Menu.Item>
-          </Sidebar.Menu>
-        </Sidebar.Root>
-        <Route path="/:id">
-          {({match}) => {
-            const id = match?.params.id!
-            return (
-              <>
-                <Pane
-                  id="content-tree"
-                  resizable="right"
-                  defaultWidth={330}
-                  minWidth={200}
-                >
-                  <ContentTree selected={id} />
-                </Pane>
-                <div style={{width: '100%'}}>
-                  <Suspense fallback={null}>
-                    <Route path="/:id/new">
-                      <NewEntry parent={id} />
-                    </Route>
-                    <EntryEdit id={id} />
-                  </Suspense>
-                </div>
-              </>
-            )
+    <DraftsProvider>
+      <Statusbar.Provider>
+        <Helmet>
+          <title>{name}</title>
+        </Helmet>
+        <Toolbar />
+        <div
+          style={{
+            flex: '1',
+            display: 'flex',
+            minHeight: 0,
+            position: 'relative'
           }}
-        </Route>
-      </div>
-      <Statusbar.Root>
-        {!auth && (
-          <Statusbar.Status icon={MdWarning}>
-            Not using authentication
-          </Statusbar.Status>
-        )}
-      </Statusbar.Root>
-    </Statusbar.Provider>
+        >
+          <Sidebar.Root>
+            <Sidebar.Menu>
+              <Sidebar.Menu.Item selected>
+                <MdInsertDriveFile />
+              </Sidebar.Menu.Item>
+              <Sidebar.Menu.Item>
+                <MdSearch />
+              </Sidebar.Menu.Item>
+              <Sidebar.Menu.Item>
+                <MdCheck />
+              </Sidebar.Menu.Item>
+            </Sidebar.Menu>
+          </Sidebar.Root>
+          <Suspense fallback={<Loader absolute />}>
+            <Route path="/:id">
+              {({match}) => {
+                return <EntryRoute id={match?.params.id} />
+              }}
+            </Route>
+          </Suspense>
+        </div>
+        <Statusbar.Root>
+          <DraftsStatus />
+          {!auth && (
+            <Statusbar.Status icon={MdWarning}>
+              Not using authentication
+            </Statusbar.Status>
+          )}
+        </Statusbar.Root>
+      </Statusbar.Provider>
+    </DraftsProvider>
   )
+}
+
+type EntryRouteProps = {
+  id?: string
+}
+
+function EntryRoute({id}: EntryRouteProps) {
+  const draft = useDraft(id)
+  return (
+    <>
+      <Pane
+        id="content-tree"
+        resizable="right"
+        defaultWidth={330}
+        minWidth={200}
+      >
+        <ContentTree select={draft?.parents} />
+      </Pane>
+      <div style={{width: '100%'}}>
+        {draft && (
+          <>
+            <Route path="/:id/new">
+              <NewEntry parentId={id} />
+            </Route>
+            <EntryEdit draft={draft} />
+          </>
+        )}
+      </div>
+    </>
+  )
+}
+
+function DraftsStatus() {
+  const drafts = useDrafts()
+  const status = useObservable(drafts.status)
+  switch (status) {
+    case 'synced':
+      return <Statusbar.Status icon={MdCheck}>Synced</Statusbar.Status>
+    case 'editing':
+      return <Statusbar.Status icon={MdEdit}>Editing</Statusbar.Status>
+    case 'saving':
+      return <Statusbar.Status icon={MdRotateLeft}>Saving</Statusbar.Status>
+  }
 }
 
 type AppRootProps = {
@@ -101,7 +150,8 @@ function AppRoot({session, setSession}: AppRootProps) {
 function localSession<T>(options: DashboardOptions<T>) {
   return {
     user: {sub: 'anonymous'},
-    hub: new Client(options.schema, options.apiUrl)
+    hub: new HubClient(options.schema, options.apiUrl),
+    end: async () => {}
   }
 }
 

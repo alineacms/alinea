@@ -1,2 +1,3 @@
+import {createList} from './ListField'
 export * from './ListField'
-export {createList as list} from './ListField'
+export const list = createList

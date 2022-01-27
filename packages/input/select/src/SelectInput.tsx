@@ -1,4 +1,4 @@
-import {InputPath, Label, useInput} from '@alinea/editor'
+import {InputLabel, InputPath, useInput} from '@alinea/editor'
 import {fromModule} from '@alinea/ui'
 import {SelectField} from './SelectField'
 import css from './SelectInput.module.scss'
@@ -16,7 +16,7 @@ export function SelectInput({path, field}: SelectInputProps) {
   const {items} = field
   return (
     <div className={styles.root()}>
-      <Label label={field.label} help={help} optional={optional}>
+      <InputLabel label={field.label} help={help} optional={optional}>
         <select value={value} onChange={e => setValue(e.target.value)}>
           {Object.entries(items).map(([key, label]) => {
             return (
@@ -26,7 +26,7 @@ export function SelectInput({path, field}: SelectInputProps) {
             )
           })}
         </select>
-      </Label>
+      </InputLabel>
     </div>
   )
 }

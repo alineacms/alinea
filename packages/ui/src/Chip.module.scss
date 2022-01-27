@@ -17,4 +17,9 @@
   &-label {
     padding: 5px 8px 5px 4px;
   }
+
+  &.is-accent {
+    background: var(--accent);
+    color: var(--accent-foreground);
+  }
 }

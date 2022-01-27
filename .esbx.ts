@@ -12,6 +12,15 @@ import {build} from 'esbuild'
 import fs from 'fs-extra'
 import path from 'path'
 
+const FixReactIconsPlugin: Plugin = {
+  name: 'FixReactIconsPlugin',
+  setup(build) {
+    build.onResolve({filter: /react-icons.*/}, ({path}) => {
+      return {path: path + '/index.js', external: true}
+    })
+  }
+}
+
 const ExtensionPlugin: Plugin = {
   name: 'extension',
   setup(build) {
@@ -119,7 +128,7 @@ const aliases = Object.fromEntries(
   packages.map(pkg => {
     return [
       `@alinea/input.${pkg}`,
-      path.resolve(`packages/input/${pkg}/src/browser.ts`)
+      path.resolve(`packages/input/${pkg}/src/view.ts`)
     ]
   })
 )
@@ -170,7 +179,8 @@ const serverOptions: BuildOptions = {
     ...buildOptions.plugins,
     ReporterPlugin.configure({name: 'Server'}),
     RunPlugin.configure({cmd: 'node dist/server.js', cwd: 'packages/stories'}),
-    AliasPlugin.configure(internal)
+    AliasPlugin.configure(internal),
+    FixReactIconsPlugin
   ]
 }
 
@@ -189,7 +199,12 @@ export const clean = {
 export const testTask = TestTask.configure({
   buildOptions: {
     ...buildOptions,
+    sourcemap: true,
     external: modules.filter(m => !m.includes('@alinea')),
-    plugins: [AliasPlugin.configure(internal)]
+    plugins: [
+      ...buildOptions.plugins,
+      AliasPlugin.configure(internal),
+      FixReactIconsPlugin
+    ]
   }
 })

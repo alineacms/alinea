@@ -1,4 +1,4 @@
-import {InputPath, Label, useInput} from '@alinea/editor'
+import {InputLabel, InputPath, useInput} from '@alinea/editor'
 import {fromModule} from '@alinea/ui'
 import {TextareaAutosize} from 'react-autosize-textarea/lib/TextareaAutosize.js'
 import {TextField} from './TextField'
@@ -17,14 +17,14 @@ export function TextInput({path, field}: TextInputProps) {
   const Input = multiline ? TextareaAutosize : 'input'
   return (
     <div className={styles.root()}>
-      <Label label={field.label} help={help} optional={optional}>
+      <InputLabel label={field.label} help={help} optional={optional}>
         <Input
           className={styles.root.input()}
           type="text"
           value={value || ''}
           onChange={e => setValue(e.currentTarget.value)}
         />
-      </Label>
+      </InputLabel>
     </div>
   )
 }

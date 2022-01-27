@@ -24,6 +24,18 @@
     left: 50%;
     transform: translate(-50%, -50%);
   }
+
+  &.mod-small & {
+    &-inner {
+      border-width: 2px;
+      &,
+      &:after {
+        border-radius: 50%;
+        width: 1em;
+        height: 1em;
+      }
+    }
+  }
 }
 
 @keyframes load8 {

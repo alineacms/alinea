@@ -35,7 +35,7 @@ export type LabelProps = PropsWithChildren<{
   optional?: boolean
 }>
 
-export function Label({
+export function InputLabel({
   children,
   label,
   help,

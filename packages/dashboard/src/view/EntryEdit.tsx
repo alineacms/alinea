@@ -1,16 +1,16 @@
-import {Entry, EntryStatus} from '@alinea/core'
+import {docFromEntry, Entry, EntryStatus} from '@alinea/core'
 import {
   CurrentDraftProvider,
   EntryDraft,
-  EntryDraftStatus,
   Fields,
   InputPath,
   useCurrentDraft,
-  useDraft,
   useInput
 } from '@alinea/editor'
-import {select, SelectInput} from '@alinea/input.select'
-import {text, TextInput} from '@alinea/input.text'
+import {select} from '@alinea/input.select'
+import {SelectInput} from '@alinea/input.select/view'
+import {text} from '@alinea/input.text'
+import {TextInput} from '@alinea/input.text/view'
 import {
   AppBar,
   Chip,
@@ -20,10 +20,10 @@ import {
   Pane,
   px,
   Stack,
-  Statusbar,
-  Typo
+  Typo,
+  useObservable
 } from '@alinea/ui'
-import {ComponentType, FormEvent, Suspense, useEffect, useState} from 'react'
+import {ComponentType, FormEvent, Suspense, useState} from 'react'
 import {Helmet} from 'react-helmet'
 import {
   MdArchive,
@@ -36,7 +36,9 @@ import {useQuery, useQueryClient} from 'react-query'
 import {useHistory} from 'react-router'
 import {Link} from 'react-router-dom'
 import slug from 'simple-slugify'
+import * as Y from 'yjs'
 import {useDashboard} from '../hook/UseDashboard'
+import {useDrafts} from '../hook/UseDrafts'
 import {useSession} from '../hook/UseSession'
 import css from './EntryEdit.module.scss'
 
@@ -48,8 +50,14 @@ function EntryStatusChip({status}: EntryStatusChipProps) {
   switch (status) {
     case EntryStatus.Published:
       return <Chip icon={MdCheck}>Published</Chip>
+    case EntryStatus.Publishing:
+      return <Chip icon={MdRotateLeft}>Publishing</Chip>
     case EntryStatus.Draft:
-      return <Chip icon={MdEdit}>Draft</Chip>
+      return (
+        <Chip accent icon={MdEdit}>
+          Draft
+        </Chip>
+      )
     case EntryStatus.Archived:
       return <Chip icon={MdArchive}>Archived</Chip>
   }
@@ -58,15 +66,21 @@ function EntryStatusChip({status}: EntryStatusChipProps) {
 const styles = fromModule(css)
 
 function EntryEditHeader() {
-  const session = useSession()
-  const [draft] = useCurrentDraft()
-  const [status = EntryStatus.Published] = useInput(EntryDraft.$status)
+  const queryClient = useQueryClient()
+  const drafts = useDrafts()
+  const draft = useCurrentDraft()
+  const status = useObservable(draft.status)
   const [isPublishing, setPublishing] = useState(false)
   function handlePublish() {
     setPublishing(true)
-    return session.hub.content.publish([draft.getEntry()]).finally(() => {
-      setPublishing(false)
-    })
+    return drafts
+      .publish(draft)
+      .then(() => {
+        queryClient.invalidateQueries(['children', draft.$parent])
+      })
+      .finally(() => {
+        setPublishing(false)
+      })
   }
   return (
     <AppBar.Root>
@@ -80,7 +94,7 @@ function EntryEditHeader() {
             borderRadius: px(8)
           }}
         >
-          {draft.$path}
+          {draft.url}
         </Typo.Monospace>
       </AppBar.Item>
       <Stack.Right>
@@ -91,11 +105,6 @@ function EntryEditHeader() {
       {status !== EntryStatus.Published && !isPublishing && (
         <AppBar.Item as="button" icon={MdPublish} onClick={handlePublish}>
           Publish
-        </AppBar.Item>
-      )}
-      {isPublishing && (
-        <AppBar.Item as="button" icon={MdRotateLeft}>
-          Publishing...
         </AppBar.Item>
       )}
       {/*<Tabs.Root defaultValue="type">
@@ -121,40 +130,20 @@ function EntryTitle() {
   )
 }
 
-type EntryEditStatusProps = {
-  status: EntryDraftStatus
-}
-
-function EntryEditStatus({status}: EntryEditStatusProps) {
-  switch (status) {
-    case EntryDraftStatus.Synced:
-      return <Statusbar.Status icon={MdCheck}>Synced</Statusbar.Status>
-    case EntryDraftStatus.Pending:
-      return <Statusbar.Status icon={MdEdit}>Editing</Statusbar.Status>
-    case EntryDraftStatus.Saving:
-      return <Statusbar.Status icon={MdRotateLeft}>Saving</Statusbar.Status>
-  }
-}
-
 type EntryPreviewProps = {
   draft: EntryDraft
   preview: ComponentType<Entry>
 }
 
 function EntryPreview({draft, preview: Preview}: EntryPreviewProps) {
-  const [entry, setEntry] = useState(draft.getEntry())
-  useEffect(() => {
-    setEntry(draft.getEntry())
-    return draft.watchChanges(() => setEntry(draft.getEntry()))
-  }, [Preview, draft])
+  const entry = useObservable(draft.entry)
   return <Preview {...entry} />
 }
 
-type EntryEditDraftProps = {}
+type EntryEditDraftProps = {draft: EntryDraft}
 
-function EntryEditDraft({}: EntryEditDraftProps) {
+function EntryEditDraft({draft}: EntryEditDraftProps) {
   const session = useSession()
-  const [draft, status] = useCurrentDraft()!
   const type = session.hub.schema.type(draft.type)
   const {preview} = useDashboard()
   return (
@@ -167,10 +156,6 @@ function EntryEditDraft({}: EntryEditDraftProps) {
           <Suspense fallback={null}>
             {type ? <Fields type={type} /> : 'Channel not found'}
           </Suspense>
-
-          <Statusbar.Slot>
-            <EntryEditStatus status={status} />
-          </Statusbar.Slot>
         </div>
       </div>
       {preview && (
@@ -184,13 +169,12 @@ function EntryEditDraft({}: EntryEditDraftProps) {
   )
 }
 
+/*
 type NewEntryEditProps = {typeKey: string}
 
 function NewEntryEdit({typeKey}: NewEntryEditProps) {
   const {hub} = useSession()
   const type = hub.schema.type(typeKey)!
-  console.log(hub.schema)
-  console.log(type)
   const data = {
     entry: type.create(typeKey),
     draft: null
@@ -207,50 +191,57 @@ function NewEntryEdit({typeKey}: NewEntryEditProps) {
     </>
   )
 }
+*/
 
-export type NewEntryProps = {parent: string}
+export type NewEntryProps = {parentId?: string}
 
-export function NewEntry({parent}: NewEntryProps) {
+export function NewEntry({parentId}: NewEntryProps) {
   const queryClient = useQueryClient()
   const history = useHistory()
   const {hub} = useSession()
-  const {isLoading, data: parentEntry} = useQuery(
-    ['entry', parent],
-    () => hub.content.entryWithDraft(parent),
+  const {data: parentEntry} = useQuery(
+    ['parent', parentId],
+    () => {
+      return parentId ? hub.entry(parentId) : undefined
+    },
     {
-      refetchOnWindowFocus: false,
-      keepPreviousData: true,
-      suspense: true
+      suspense: true,
+      refetchOnWindowFocus: false
     }
   )
-  const type = hub.schema.type(parentEntry?.entry.type)
+  const parent = parentEntry?.isSuccess() ? parentEntry.value?.entry : undefined
+  const type = parent && hub.schema.type(parent.type)
   const types = type?.options.contains || hub.schema.keys
   const [selectedType, setSelectedType] = useState(
     types.length === 1 ? types[0] : undefined
   )
   const [title, setTitle] = useState('')
-  const [isCreating, setCreating] = useState(false)
+  const [isCreating, setIsCreating] = useState(false)
   function handleCreate(e: FormEvent) {
     e.preventDefault()
     if (!selectedType) return
-    setCreating(true)
+    setIsCreating(true)
     const type = hub.schema.type(selectedType)!
     const path = slug.slugify(title)
     const entry = {
       ...type.create(selectedType),
       path,
-      $parent: parentEntry?.entry.id,
-      $path: (parentEntry?.entry.$path || '') + '/' + path
+      $parent: parent?.id,
+      url: (parent?.url || '') + '/' + path,
+      title
     }
-    hub.content
-      .put(entry.id, {...entry, title})
-      .then(() => {
-        if (entry.$parent)
-          queryClient.invalidateQueries('children', entry.$parent)
-        history.push(`/${entry.id}`)
+    const doc = docFromEntry(type, entry)
+    hub
+      .updateDraft(entry.id, Y.encodeStateAsUpdate(doc))
+      .then(result => {
+        if (result.isSuccess()) {
+          if (entry.$parent)
+            queryClient.invalidateQueries(['children', entry.$parent])
+          history.push(`/${entry.id}`)
+        }
       })
       .finally(() => {
-        setCreating(false)
+        setIsCreating(false)
       })
   }
   return (
@@ -285,25 +276,12 @@ export function NewEntry({parent}: NewEntryProps) {
   )
 }
 
-export type EntryEditProps = {id: string}
+export type EntryEditProps = {draft: EntryDraft}
 
-export function EntryEdit({id}: EntryEditProps) {
-  const {hub} = useSession()
-  const {isLoading, data} = useQuery(
-    ['entry', id],
-    () => hub.content.entryWithDraft(id),
-    {refetchOnWindowFocus: false, keepPreviousData: true, cacheTime: 0}
-  )
-  const type = hub.schema.type(data?.entry.type)
-  const draft = useDraft(type!, data!, doc => {
-    return hub.content.putDraft(id, doc)
-  })
-  if (!draft) return null
+export function EntryEdit({draft}: EntryEditProps) {
   return (
-    <>
-      <CurrentDraftProvider value={draft}>
-        <EntryEditDraft key={draft.id} />
-      </CurrentDraftProvider>
-    </>
+    <CurrentDraftProvider value={draft}>
+      <EntryEditDraft key={draft.doc.guid} draft={draft} />
+    </CurrentDraftProvider>
   )
 }

@@ -15,7 +15,6 @@
   },
   "dependencies": {
     "@alinea/auth.passwordless": "0.0.0",
-    "@alinea/cache": "0.0.0",
     "@alinea/cli": "0.0.0",
     "@alinea/client": "0.0.0",
     "@alinea/core": "0.0.0",

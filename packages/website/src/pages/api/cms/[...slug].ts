@@ -1,14 +1,15 @@
 import {schema, store} from '.alinea'
 import {PasswordLessAuth} from '@alinea/auth.passwordless/PasswordLessAuth.js'
-import {Cache} from '@alinea/cache'
 import {
-  FSPersistence,
-  GithubPersistence,
-  LocalHub,
+  GitDrafts,
+  GithubTarget,
+  HubServer,
+  JsonLoader,
   Server
 } from '@alinea/server'
 import dotenv from 'dotenv'
-import fs from 'fs/promises'
+import http from 'isomorphic-git/http/node/index.js'
+import {fs as memFs} from 'memfs'
 import {createTransport} from 'nodemailer'
 
 dotenv.config({path: '../../.env'})
@@ -17,13 +18,33 @@ const isProduction = process.env.NODE_ENV === 'production'
 const dashboardUrl = isProduction
   ? 'https://alinea.vercel.app/admin'
   : 'http://localhost:3000/admin'
-/*const cacheDir = isProduction ? 'packages/website/' : ''
-const index = Cache.fromFile({
+const onAuth = () => ({username: process.env.GITHUB_TOKEN})
+const gitConfig = {
+  author: {
+    name: 'Ben',
+    email: 'ben@codeurs.be'
+  }
+}
+const drafts = new GitDrafts({
   schema,
-  dir: 'content',
-  cacheFile: `${cacheDir}.next/server/chunks/content`
-})*/
-const index = Cache.fromPromise(schema, store)
+  fs: memFs.promises as any,
+  dir: '/tmp',
+  http,
+  onAuth,
+  url: 'https://github.com/benmerckx/content',
+  branch: 'drafts',
+  ...gitConfig
+})
+const target = new GithubTarget({
+  loader: JsonLoader,
+  contentDir: 'packages/website/content',
+  githubAuthToken: process.env.GITHUB_TOKEN!,
+  owner: 'codeurs',
+  repo: 'alinea',
+  branch: 'main',
+  ...gitConfig
+})
+const hub = new HubServer(schema, await store, drafts, target)
 const auth = new PasswordLessAuth({
   dashboardUrl,
   subject: 'Login',
@@ -41,24 +62,10 @@ const auth = new PasswordLessAuth({
     return email.endsWith('@codeurs.be')
   }
 })
-const persistence = isProduction
-  ? new GithubPersistence({
-      index,
-      contentDir: 'packages/website/content',
-      githubAuthToken: process.env.GITHUB_TOKEN!,
-      owner: 'codeurs',
-      repo: 'alinea',
-      branch: 'main'
-    })
-  : new FSPersistence(fs, index, 'content')
 const server = new Server({
   auth,
   dashboardUrl,
-  hub: new LocalHub({
-    schema: schema,
-    index,
-    persistence
-  })
+  hub
 })
 
 export default server.respond

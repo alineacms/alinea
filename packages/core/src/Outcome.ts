@@ -1,6 +1,13 @@
-type JSONRep<D, F> = {success: true; data: D} | {success: false; error: F}
+import {deserializeError, ErrorObject, serializeError} from 'serialize-error'
+import {createError} from './ErrorWithCode'
+
+type JSONRep<D> =
+  | {success: true; data: D}
+  | {success: false; error: ErrorObject}
 
 type OutcomeRunner = (() => any) | Promise<any>
+
+type Pair<T> = [T, undefined] | [undefined, Error]
 
 type OutcomeReturn<T> = T extends () => Promise<infer X>
   ? Promise<Outcome<X>>
@@ -54,75 +61,67 @@ export const outcome = Object.assign(outcomeRunner, {
   }
 })
 
-export class Outcome<D, F = Error> {
-  /** @internal */ constructor(public success: boolean) {}
+export type Outcome<T = void> = Outcome.OutcomeImpl<T> & Pair<T>
 
-  isSuccess(): this is Success<D, F> {
-    return this.success
+export namespace Outcome {
+  export function fromJSON<T>(json: JSONRep<T>): Outcome<T> {
+    if (json.success) return Success(json.data)
+    return Failure(deserializeError(json.error))
   }
 
-  isFailure(): this is Failure<D, F> {
-    return !this.success
+  export function Success<T>(data: T): Outcome<T> {
+    return new SuccessOutcome(data) as any
   }
 
-  get pair(): [D, undefined] | [undefined, F] {
-    throw 'implement'
+  export function Failure<T>(error: Error | any): Outcome<T> {
+    return new FailureOutcome(
+      error instanceof Error ? error : createError(error)
+    ) as any
   }
 
-  static fromJSON<D, F>(json: JSONRep<D, F>): Outcome<D, F> {
-    if (json.success) return Outcome.Success(json.data)
-    else return Outcome.Failure(json.error)
+  export abstract class OutcomeImpl<T> {
+    constructor(public success: boolean) {}
+
+    isSuccess(): this is SuccessOutcome<T> {
+      return this.success
+    }
+
+    isFailure(): this is FailureOutcome<T> {
+      return !this.success
+    }
+
+    abstract toJSON(): JSONRep<T>
   }
 
-  static attempt<D>(run: () => D): Outcome<D> {
-    try {
-      return Outcome.Success(run())
-    } catch (e: any) {
-      return Outcome.Failure(e)
+  class SuccessOutcome<T> extends OutcomeImpl<T> {
+    error = undefined
+    constructor(public value: T) {
+      super(true)
+    }
+
+    *[Symbol.iterator]() {
+      yield this.value
+      yield undefined
+    }
+
+    toJSON(): JSONRep<T> {
+      return {success: true, data: this.value}
     }
   }
 
-  static async promised<F>(run: () => Promise<F>): Promise<Outcome<F>> {
-    try {
-      return Outcome.Success(await run())
-    } catch (e: any) {
-      return Outcome.Failure(e)
+  class FailureOutcome<T> extends OutcomeImpl<T> {
+    value = undefined
+    constructor(public error: Error) {
+      super(false)
     }
-  }
 
-  static Success<D, F = Error>(data: D): Outcome<D, F> {
-    return new Success(data)
-  }
+    *[Symbol.iterator]() {
+      yield undefined
+      yield this.error
+    }
 
-  static Failure<D, F = Error>(error: F): Outcome<D, F> {
-    return new Failure(error)
-  }
-}
-
-class Success<D, F> extends Outcome<D, F> {
-  constructor(public data: D) {
-    super(true)
-  }
-
-  get pair(): [D, undefined] {
-    return [this.data, undefined]
-  }
-
-  toJSON(): JSONRep<D, F> {
-    return {success: true, data: this.data}
-  }
-}
-
-class Failure<D, F> extends Outcome<D, F> {
-  constructor(public error: F) {
-    super(false)
-  }
-
-  get pair(): [undefined, F] {
-    return [undefined, this.error]
-  }
-
-  toJSON(): JSONRep<D, F> {
-    return {success: false, error: this.error}
+    toJSON(): JSONRep<T> {
+      return {success: false, error: serializeError(this.error)}
+    }
   }
 }

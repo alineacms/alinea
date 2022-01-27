@@ -1,2 +1,3 @@
+import {createNumber} from './NumberField'
 export * from './NumberField'
-export {createNumber as number} from './NumberField'
+export const number = createNumber
