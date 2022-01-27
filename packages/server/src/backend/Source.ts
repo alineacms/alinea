@@ -1,16 +1,11 @@
 import {Entry} from '@alinea/core'
 import {posix as path} from 'path'
 import {FS} from './FS'
+import {Loader} from './Loader'
+import {Target} from './Target'
 
 export interface Source {
-  publish(entries: Array<Entry>): Promise<void>
   entries(): AsyncGenerator<Entry>
-}
-
-export interface Loader {
-  extension: string
-  parse(input: Buffer): Entry.Raw
-  format(entry: Entry.Raw): Buffer
 }
 
 export type FileSourceOptions = {
@@ -19,7 +14,7 @@ export type FileSourceOptions = {
   loader: Loader
 }
 
-export class FileSource implements Source {
+export class FileSource implements Source, Target {
   constructor(protected options: FileSourceOptions) {}
 
   async publish(entries: Array<Entry>): Promise<void> {

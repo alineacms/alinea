@@ -19,7 +19,7 @@
     "importHelpers": true,
     "paths": {
       "@alinea/input.*/view": ["./packages/input/*/src/view.ts"],
-      "@alinea/input.*": ["./packages/input/*/src/view.ts"],
+      "@alinea/input.*": ["./packages/input/*/src/index.ts"],
       "@alinea/auth.*": ["./packages/input/*/src"],
       "@alinea/auth.passwordless/*": ["./packages/auth/passwordless/src/*"],
       "@alinea/core/*": ["./packages/core/src/*"],
@@ -30,5 +30,5 @@
     "plugins": [{"name": "typescript-plugin-css-modules"}]
   },
   "include": ["packages"],
-  "exclude": ["node_modules", "packages/website"]
+  "exclude": ["node_modules", "packages/website", "packages/stories"]
 }

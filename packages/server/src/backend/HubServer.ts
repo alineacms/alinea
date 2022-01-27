@@ -2,14 +2,14 @@ import {accumulate, Entry, future, Future, Hub, Schema} from '@alinea/core'
 import {Functions, Store} from 'helder.store'
 import {Drafts} from './Drafts'
 import {Index} from './Index'
-import {Source} from './Source'
+import {Target} from './Target'
 
 export class HubServer implements Hub {
   constructor(
     public schema: Schema,
     protected store: Store,
-    protected source: Source,
-    protected drafts: Drafts
+    protected drafts: Drafts,
+    protected target: Target
   ) {}
 
   async entry(
@@ -68,7 +68,7 @@ export class HubServer implements Hub {
   }
 
   publishEntries(entries: Array<Entry>): Future<void> {
-    return future(this.source.publish(entries))
+    return future(this.target.publish(entries))
   }
 }
 

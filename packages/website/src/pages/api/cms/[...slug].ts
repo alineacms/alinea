@@ -1,6 +1,12 @@
 import {schema, store} from '.alinea'
 import {PasswordLessAuth} from '@alinea/auth.passwordless/PasswordLessAuth.js'
-import {GitDrafts, HubServer, Server} from '@alinea/server'
+import {
+  GitDrafts,
+  GithubTarget,
+  HubServer,
+  JsonLoader,
+  Server
+} from '@alinea/server'
 import dotenv from 'dotenv'
 import http from 'isomorphic-git/http/node/index.js'
 import {fs as memFs} from 'memfs'
@@ -13,6 +19,13 @@ const dashboardUrl = isProduction
   ? 'https://alinea.vercel.app/admin'
   : 'http://localhost:3000/admin'
 const onAuth = () => ({username: process.env.GITHUB_TOKEN})
+const gitConfig = {
+  branch: 'drafts',
+  author: {
+    name: 'Ben',
+    email: 'ben@codeurs.be'
+  }
+}
 const drafts = new GitDrafts({
   schema,
   fs: memFs.promises as any,
@@ -20,14 +33,17 @@ const drafts = new GitDrafts({
   http,
   onAuth,
   url: 'https://github.com/benmerckx/content',
-  ref: 'drafts',
-  author: {
-    name: 'Ben',
-    email: 'ben@codeurs.be'
-  }
+  ...gitConfig
 })
-const hub = new HubServer(schema, await store, undefined!, drafts)
-
+const target = new GithubTarget({
+  loader: JsonLoader,
+  contentDir: 'packages/website/content',
+  githubAuthToken: process.env.GITHUB_TOKEN!,
+  owner: 'codeurs',
+  repo: 'alinea',
+  ...gitConfig
+})
+const hub = new HubServer(schema, await store, drafts, target)
 const auth = new PasswordLessAuth({
   dashboardUrl,
   subject: 'Login',

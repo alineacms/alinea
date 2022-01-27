@@ -19,9 +19,9 @@ export function withView<
   F extends Field<T>,
   C extends (...args: Array<any>) => F
 >(create: C, view: FieldRenderer<T, F>) {
-  return (...args: Parameters<C>) => {
+  return ((...args: Parameters<C>) => {
     return {...create(...args), view}
-  }
+  }) as C
 }
 
 export interface Field<T = any> {

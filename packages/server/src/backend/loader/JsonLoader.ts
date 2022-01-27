@@ -1,5 +1,5 @@
 import {Entry} from '@alinea/core/Entry'
-import {Loader} from '../Source'
+import {Loader} from '../Loader'
 
 export const JsonLoader: Loader = {
   extension: '.json',

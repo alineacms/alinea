@@ -81,7 +81,7 @@ export type GitDraftsOptions = FileDraftsOptions & {
   http: HttpClient
   onAuth: AuthCallback
   url: string
-  ref: string
+  branch: string
   author: {
     name: string
     email: string
@@ -118,7 +118,7 @@ export class GitDrafts extends FileDrafts {
         await git.branch({
           fs: this.fs,
           dir,
-          ref: this.options.ref,
+          ref: this.options.branch,
           checkout: true
         })
       }
@@ -170,7 +170,7 @@ export class GitDrafts extends FileDrafts {
     await git.push({
       ...this.options,
       fs: this.fs,
-      remoteRef: this.options.ref
+      remoteRef: this.options.branch
     })
   }
 

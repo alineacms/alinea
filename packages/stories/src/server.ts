@@ -16,7 +16,7 @@ import {BetterSqlite3} from 'helder.store/sqlite/drivers/BetterSqlite3.js'
 import {SqliteStore} from 'helder.store/sqlite/SqliteStore.js'
 import {createTransport} from 'nodemailer'
 import serveHandler from 'serve-handler'
-import {schema} from '../../website/.alinea/schema'
+import {schema} from '../../website/src/schema'
 
 process.on('unhandledRejection', (error, p) => {
   console.log('=== UNHANDLED REJECTION ===')
@@ -45,7 +45,7 @@ const auth = new PasswordLessAuth({
   }
 })
 const store = new SqliteStore(new BetterSqlite3(), createId)
-const source = new FileSource({
+const content = new FileSource({
   fs,
   dir: '../website/content',
   loader: JsonLoader
@@ -73,9 +73,9 @@ const drafts = new FileDrafts({
   dir: './dist/drafts'
 })
 
-await Index.create(store, source)
+await Index.create(store, content)
 
-const hub = new HubServer(schema, store, source, drafts)
+const hub = new HubServer(schema, store, drafts, content)
 const server = new Server({
   dashboardUrl,
   // auth,
