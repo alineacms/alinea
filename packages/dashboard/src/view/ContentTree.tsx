@@ -41,7 +41,11 @@ function TreeChildren({
   toggleOpen
 }: TreeChildrenProps) {
   const session = useSession()
-  const {data} = useQuery(['children', parent], () => session.hub.list(parent))
+  const {data} = useQuery(
+    ['children', parent],
+    () => session.hub.list(parent),
+    {suspense: true}
+  )
   if (data?.isFailure()) {
     console.error(data.error)
     return (

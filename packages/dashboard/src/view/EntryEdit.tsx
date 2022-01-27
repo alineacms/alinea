@@ -107,11 +107,6 @@ function EntryEditHeader() {
           Publish
         </AppBar.Item>
       )}
-      {isPublishing && (
-        <AppBar.Item as="button" icon={MdRotateLeft}>
-          Publishing...
-        </AppBar.Item>
-      )}
       {/*<Tabs.Root defaultValue="type">
         <Tabs.List>
           <Tabs.Trigger value="type">
