@@ -49,7 +49,6 @@ export class HubClient implements Hub {
   publishEntries(entries: Array<Entry>): Future {
     return this.fetchJson(Hub.routes.publish(), {
       method: 'POST',
-      headers: {'content-type': 'application/json'},
       body: JSON.stringify(entries)
     }).then(toFuture)
   }
@@ -61,12 +60,13 @@ export class HubClient implements Hub {
   }
 
   protected fetchJson(endpoint: string, init?: RequestInit) {
-    return this.fetch(
-      endpoint,
-      this.applyAuth({
-        ...init,
-        headers: {...init?.headers, accept: 'application/json'}
-      })
-    )
+    return this.fetch(endpoint, {
+      ...init,
+      headers: {
+        ...init?.headers,
+        'content-type': 'application/json',
+        accept: 'application/json'
+      }
+    })
   }
 }
