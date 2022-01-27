@@ -30,5 +30,5 @@
     "plugins": [{"name": "typescript-plugin-css-modules"}]
   },
   "include": ["packages"],
-  "exclude": ["node_modules", "packages/website", "packages/stories"]
+  "exclude": ["node_modules", "packages/website"]
 }

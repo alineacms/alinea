@@ -43,13 +43,13 @@ async function toArray<T>(gen: AsyncGenerator<T>): Promise<Array<T>> {
 test('reading', async () => {
   const [root, sub, subEntry] = await toArray(source.entries())
   assert.is(root.id, 'root')
-  assert.is(root.$path, '/')
+  assert.is(root.url, '/')
   assert.is(sub.id, 'sub')
   assert.is(sub.$parent, undefined)
-  assert.is(sub.$path, '/sub')
+  assert.is(sub.url, '/sub')
   assert.is(subEntry.id, 'sub-entry')
   assert.is(subEntry.$parent, 'sub')
-  assert.is(subEntry.$path, '/sub/entry')
+  assert.is(subEntry.url, '/sub/entry')
 })
 
 test('inserting', async () => {

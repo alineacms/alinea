@@ -5,7 +5,7 @@ import Link from 'next/link'
 import {Container} from './layout/Container'
 
 type DocsPageProps = Docs & {
-  children: Array<{$path: string; title: Label}>
+  children: Array<{url: string; title: Label}>
 }
 
 export function DocsPage({children, title}: DocsPageProps) {
@@ -15,7 +15,7 @@ export function DocsPage({children, title}: DocsPageProps) {
       <div>
         {children?.map(child => {
           return (
-            <Link key={child.$path} href={child.$path}>
+            <Link key={child.url} href={child.url}>
               <a>
                 <TextLabel label={child.title} />
               </a>

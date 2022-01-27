@@ -1,10 +1,4 @@
-import {
-  createError,
-  docFromEntry,
-  Entry,
-  entryFromDoc,
-  typeOfDoc
-} from '@alinea/core'
+import {createError, docFromEntry} from '@alinea/core'
 import {Hub} from '@alinea/core/Hub'
 import {observable} from '@alinea/ui'
 import {createContext, PropsWithChildren, useContext, useMemo} from 'react'
@@ -24,40 +18,22 @@ class Drafts {
     const {hub} = this
     const sv = Y.encodeStateVector(doc)
     const update = Y.encodeStateAsUpdate(doc, this.stateVectors.get(id)!)
-    await hub.drafts.update(id, update).then(() => {
+    await hub.updateDraft(id, update).then(() => {
       this.stateVectors.set(id, sv)
     })
   }
 
-  // Todo: we could get both entry and draft in one call
   async get(id: string) {
     const {hub} = this
     const doc = new Y.Doc()
-    let type = undefined
-    let stateVector = undefined
-    let entry = (await hub.content.get(id)) as Entry
-    if (entry) {
-      type = hub.schema.type(entry.type)
-      if (type) {
-        docFromEntry(type, entry, doc)
-        stateVector = Y.encodeStateVector(doc)
-        this.stateVectors.set(id, stateVector)
-      }
-    }
-    const [update, err] = await hub.drafts.get(id, stateVector)
-    if (update) {
-      Y.applyUpdate(doc, update)
-      const sv = Y.encodeStateVector(doc)
-      this.stateVectors.set(id, sv)
-      if (!entry) {
-        const typeKey = typeOfDoc(doc)
-        type = this.hub.schema.type(typeKey)
-        if (type) entry = entryFromDoc(type, doc)
-      }
-    }
-    if (!entry) throw createError(`Entry not found`)
-    if (!type) throw createError(`Type not found`)
-    return {entry, type, doc}
+    const [result, error] = await hub.entry(id)
+    if (error) throw error
+    if (!result) throw createError(404, `Entry not found`)
+    const type = hub.schema.type(result.entry.type)
+    if (!type) throw createError(404, `Type not found`)
+    docFromEntry(type, result.entry, doc)
+    this.stateVectors.set(id, Y.encodeStateVector(doc))
+    return {...result, type, doc}
   }
 
   connect(id: string, doc: Y.Doc) {

@@ -1,9 +1,9 @@
-import {Entry, Outcome, outcome} from '@alinea/core'
+import {Entry} from '@alinea/core'
 import {posix as path} from 'path'
 import {FS} from './FS'
 
 export interface Source {
-  publish(entries: Array<Entry>): Promise<Outcome<void>>
+  publish(entries: Array<Entry>): Promise<void>
   entries(): AsyncGenerator<Entry>
 }
 
@@ -22,18 +22,15 @@ export type FileSourceOptions = {
 export class FileSource implements Source {
   constructor(protected options: FileSourceOptions) {}
 
-  publish(entries: Array<Entry>): Promise<Outcome<void>> {
+  async publish(entries: Array<Entry>): Promise<void> {
     const {fs, dir, loader} = this.options
-    return outcome(async () => {
-      for (const entry of entries) {
-        const {$path, $parent, $isContainer, ...data} = entry
-        const file =
-          entry.$path + ($isContainer ? 'index' : '') + loader.extension
-        const location = path.join(dir, file)
-        await fs.mkdir(path.dirname(location), {recursive: true})
-        await fs.writeFile(location, loader.format(data))
-      }
-    })
+    for (const entry of entries) {
+      const {url, $parent, $isContainer, ...data} = entry
+      const file = entry.url + ($isContainer ? 'index' : '') + loader.extension
+      const location = path.join(dir, file)
+      await fs.mkdir(path.dirname(location), {recursive: true})
+      await fs.writeFile(location, loader.format(data))
+    }
   }
 
   // Todo: this does not use any parallelism so either do or switch to a
@@ -63,7 +60,7 @@ export class FileSource implements Source {
           const entry = loader.parse(await fs.readFile(location))
           yield {
             ...entry,
-            $path: path.join(target, isIndex ? '' : name),
+            url: path.join(target, isIndex ? '' : name),
             $parent: parentId,
             $isContainer: isIndex || undefined
           }

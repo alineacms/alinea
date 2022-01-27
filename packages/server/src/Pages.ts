@@ -33,6 +33,6 @@ export class Pages<T extends Entry> {
     return Entry.where(Entry.$parent.is(id))
   }
   whereUrl(url: string): Cursor<T> {
-    return Entry.where(Entry.$path.is(url))
+    return Entry.where(Entry.url.is(url))
   }
 }

@@ -73,7 +73,7 @@ export namespace Outcome {
     return new SuccessOutcome(data) as any
   }
 
-  export function Failure(error: Error | any): Outcome<unknown> {
+  export function Failure<T>(error: Error | any): Outcome<T> {
     return new FailureOutcome(
       error instanceof Error ? error : createError(error)
     ) as any
@@ -123,85 +123,3 @@ export namespace Outcome {
     }
   }
 }
-/*
-export abstract class Outcome<D = void, F = Error> {
-  constructor(public success: boolean) {}
-
-  isSuccess(): this is Success<D, F> {
-    return this.success
-  }
-
-  isFailure(): this is Failure<D, F> {
-    return !this.success
-  }
-
-  abstract get pair(): [D, undefined] | [undefined, F]
-
-  static fromJSON<D, F>(json: JSONRep<D, F>): Outcome<D, F> {
-    if (json.success) return Outcome.Success(json.data)
-    else return Outcome.Failure(json.error)
-  }
-
-  static attempt<D>(run: () => D): Outcome<D> {
-    try {
-      return Outcome.Success(run())
-    } catch (e: any) {
-      return Outcome.Failure(e)
-    }
-  }
-
-  static async promised<F>(run: () => Promise<F>): Promise<Outcome<F>> {
-    try {
-      return Outcome.Success(await run())
-    } catch (e: any) {
-      return Outcome.Failure(e)
-    }
-  }
-
-  static Success<D, F = Error>(data: D): Outcome<D, F> {
-    return new Success(data)
-  }
-
-  static Failure<D, F = Error>(error: F): Outcome<D, F> {
-    return new Failure(error)
-  }
-}
-
-class Success<D, F> extends Outcome<D, F> {
-  constructor(public value: D) {
-    super(true)
-  }
-
-  *[Symbol.iterator]() {
-    yield this.value
-    yield undefined
-  }
-
-  get pair(): [D, undefined] {
-    return [this.value, undefined]
-  }
-
-  toJSON(): JSONRep<D, F> {
-    return {success: true, data: this.value}
-  }
-}
-
-class Failure<D, F> extends Outcome<D, F> {
-  constructor(public error: F) {
-    super(false)
-  }
-
-  *[Symbol.iterator]() {
-    yield undefined
-    yield this.error
-  }
-
-  get pair(): [undefined, F] {
-    return [undefined, this.error]
-  }
-
-  toJSON(): JSONRep<D, F> {
-    return {success: false, error: this.error}
-  }
-}
-*/

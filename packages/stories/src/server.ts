@@ -1,9 +1,9 @@
 import {PasswordLessAuth} from '@alinea/auth.passwordless/PasswordLessAuth'
-import {createId, Hub} from '@alinea/core'
+import {createId} from '@alinea/core'
 import {
-  Backend,
+  FileDrafts,
   FileSource,
-  GitDrafts,
+  HubServer,
   Index,
   JsonLoader,
   Server
@@ -14,8 +14,6 @@ import express from 'express'
 import fs from 'fs/promises'
 import {BetterSqlite3} from 'helder.store/sqlite/drivers/BetterSqlite3.js'
 import {SqliteStore} from 'helder.store/sqlite/SqliteStore.js'
-import http from 'isomorphic-git/http/node/index.js'
-import {fs as memFs} from 'memfs'
 import {createTransport} from 'nodemailer'
 import serveHandler from 'serve-handler'
 import {schema} from '../../website/.alinea/schema'
@@ -52,12 +50,13 @@ const source = new FileSource({
   dir: '../website/content',
   loader: JsonLoader
 })
-// const drafts = new FileDrafts({fs, dir: './bin/drafts'})
+
 const onAuth = () => ({username: process.env.GITHUB_TOKEN})
 
-const drafts = new GitDrafts({
-  fs: memFs.promises as any,
-  dir: '/tmp',
+/*const drafts = new GitDrafts({
+  schema,
+  fs,
+  dir: './dist/drafts',
   http,
   onAuth,
   url: 'https://github.com/benmerckx/content',
@@ -66,13 +65,17 @@ const drafts = new GitDrafts({
     name: 'Ben',
     email: 'ben@codeurs.be'
   }
-})
-await Index.create(store, source)
-const hub: Hub = {
+})*/
+
+const drafts = new FileDrafts({
   schema,
-  content: new Backend(store, source),
-  drafts //
-}
+  fs,
+  dir: './dist/drafts'
+})
+
+await Index.create(store, source)
+
+const hub = new HubServer(schema, store, source, drafts)
 const server = new Server({
   dashboardUrl,
   // auth,

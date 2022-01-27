@@ -11,7 +11,7 @@ async function propsOf(page: Page) {
         ...page,
         children: pages.all(
           pages.children(page.id).select({
-            $path: Entry.$path,
+            url: Entry.url,
             title: Entry.title
           })
         )

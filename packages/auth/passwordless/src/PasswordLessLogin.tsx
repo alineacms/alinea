@@ -1,4 +1,4 @@
-import {Client} from '@alinea/client'
+import {HubClient} from '@alinea/client'
 import {Auth, Session} from '@alinea/core'
 import {useDashboard} from '@alinea/dashboard'
 import {Button, fromModule, Loader, Logo, px, Typo} from '@alinea/ui'
@@ -152,7 +152,7 @@ function useResolveToken(setSession: (session: Session | undefined) => void) {
       }
       setSession({
         user,
-        hub: new Client(schema, apiUrl, applyAuth, logout),
+        hub: new HubClient(schema, apiUrl, applyAuth, logout),
         end: async () => logout()
       })
       if (isTokenFromUrl) {

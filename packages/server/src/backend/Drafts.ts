@@ -1,11 +1,19 @@
-import {createId, Drafts} from '@alinea/core'
-import {Outcome, outcome} from '@alinea/core/Outcome'
+import {createId, future, Schema} from '@alinea/core'
+import {outcome} from '@alinea/core/Outcome'
 import git, {AuthCallback, HttpClient, PromiseFsClient} from 'isomorphic-git'
 import {posix as path} from 'path'
 import * as Y from 'yjs'
 import {FS} from './FS'
 
+export interface Drafts {
+  get(id: string, stateVector?: Uint8Array): Promise<Uint8Array | undefined>
+  update(id: string, update: Uint8Array): Promise<void>
+  delete(id: string): Promise<void>
+  updates(): AsyncGenerator<{id: string; update: Uint8Array}>
+}
+
 export type FileDraftsOptions = {
+  schema: Schema
   fs: FS
   dir: string
 }
@@ -16,25 +24,23 @@ export class FileDrafts implements Drafts {
   async get(
     id: string,
     stateVector?: Uint8Array
-  ): Promise<Outcome<Uint8Array | undefined>> {
-    return outcome(async () => {
-      const {fs, dir} = this.options
-      const location = path.join(dir, id)
-      const [files] = await outcome(fs.readdir(location))
-      if (!files) return undefined
-      files.sort((a, b) => a.localeCompare(b))
-      const doc = new Y.Doc()
-      for (const file of files) {
-        const update = await outcome(fs.readFile(path.join(location, file)))
-        try {
-          if (update.isSuccess()) Y.applyUpdate(doc, update.value)
-        } catch (e) {
-          // I ran into "Integer out of range!" which shouldn't happen
-          // Todo: find out why we ended up with an invalid update
-        }
+  ): Promise<Uint8Array | undefined> {
+    const {fs, dir} = this.options
+    const location = path.join(dir, id)
+    const [files] = await outcome(fs.readdir(location))
+    if (!files) return undefined
+    files.sort((a, b) => a.localeCompare(b))
+    const doc = new Y.Doc()
+    for (const file of files) {
+      const update = await outcome(fs.readFile(path.join(location, file)))
+      try {
+        if (update.isSuccess()) Y.applyUpdate(doc, update.value)
+      } catch (e) {
+        // I ran into "Integer out of range!" which shouldn't happen
+        // Todo: find out why we ended up with an invalid update
       }
-      return Y.encodeStateAsUpdate(doc, stateVector)
-    })
+    }
+    return Y.encodeStateAsUpdate(doc, stateVector)
   }
 
   async applyUpdate(
@@ -58,6 +64,16 @@ export class FileDrafts implements Drafts {
     const {fs, dir} = this.options
     const location = path.join(dir, id)
     await fs.rmdir(location, {recursive: true})
+  }
+
+  async *updates(): AsyncGenerator<{id: string; update: Uint8Array}> {
+    const {fs, dir, schema} = this.options
+    const directories = await fs.readdir(dir)
+    for (const dir of directories) {
+      if (dir.startsWith('.')) continue
+      const [update, err] = await future(this.get(dir))
+      if (update) yield {id: dir, update}
+    }
   }
 }
 
@@ -129,7 +145,7 @@ export class GitDrafts extends FileDrafts {
   async get(
     id: string,
     stateVector?: Uint8Array
-  ): Promise<Outcome<Uint8Array | undefined>> {
+  ): Promise<Uint8Array | undefined> {
     await this.init()
     return super.get(id, stateVector)
   }
@@ -174,5 +190,12 @@ export class GitDrafts extends FileDrafts {
       message: `discard: ${id}`
     })
     await git.push({...this.options, fs: this.fs})
+  }
+
+  async *updates() {
+    await this.init()
+    for await (const update of super.updates()) {
+      yield update
+    }
   }
 }

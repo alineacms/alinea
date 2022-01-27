@@ -32,7 +32,7 @@ import {
   MdPublish,
   MdRotateLeft
 } from 'react-icons/md'
-import {useQuery, useQueryClient} from 'react-query'
+import {useQueryClient} from 'react-query'
 import {useHistory} from 'react-router'
 import {Link} from 'react-router-dom'
 import slug from 'simple-slugify'
@@ -66,7 +66,7 @@ function EntryEditHeader() {
   const [isPublishing, setPublishing] = useState(false)
   function handlePublish() {
     setPublishing(true)
-    return session.hub.content.publish([draft.getEntry()]).finally(() => {
+    return session.hub.publishEntries([draft.getEntry()]).finally(() => {
       setPublishing(false)
     })
   }
@@ -82,7 +82,7 @@ function EntryEditHeader() {
             borderRadius: px(8)
           }}
         >
-          {draft.$path}
+          {draft.url}
         </Typo.Monospace>
       </AppBar.Item>
       <Stack.Right>
@@ -186,22 +186,14 @@ function NewEntryEdit({typeKey}: NewEntryEditProps) {
 }
 */
 
-export type NewEntryProps = {parent: string}
+export type NewEntryProps = {parentId: string}
 
-export function NewEntry({parent}: NewEntryProps) {
+export function NewEntry({parentId}: NewEntryProps) {
   const queryClient = useQueryClient()
   const history = useHistory()
   const {hub} = useSession()
-  const {isLoading, data: parentEntry} = useQuery(
-    ['entry', parent],
-    () => hub.content.get(parent),
-    {
-      refetchOnWindowFocus: false,
-      keepPreviousData: true,
-      suspense: true
-    }
-  )
-  const type = hub.schema.type(parentEntry?.type)
+  const parent = useDraft(parentId)
+  const type = parent && hub.schema.type(parent.type)
   const types = type?.options.contains || hub.schema.keys
   const [selectedType, setSelectedType] = useState(
     types.length === 1 ? types[0] : undefined
@@ -217,17 +209,19 @@ export function NewEntry({parent}: NewEntryProps) {
     const entry = {
       ...type.create(selectedType),
       path,
-      $parent: parentEntry?.id,
-      $path: (parentEntry?.$path || '') + '/' + path,
+      $parent: parent?.id,
+      url: (parent?.url || '') + '/' + path,
       title
     }
     const doc = docFromEntry(type, entry)
-    hub.drafts
-      .update(entry.id, Y.encodeStateAsUpdate(doc))
-      .then(() => {
-        if (entry.$parent)
-          queryClient.invalidateQueries('children', entry.$parent)
-        history.push(`/${entry.id}`)
+    hub
+      .updateDraft(entry.id, Y.encodeStateAsUpdate(doc))
+      .then(result => {
+        if (result.isSuccess()) {
+          if (entry.$parent)
+            queryClient.invalidateQueries('children', entry.$parent)
+          history.push(`/${entry.id}`)
+        }
       })
       .finally(() => {
         setIsCreating(false)

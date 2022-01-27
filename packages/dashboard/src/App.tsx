@@ -1,4 +1,4 @@
-import {Client} from '@alinea/client'
+import {HubClient} from '@alinea/client'
 import {Session} from '@alinea/core'
 import {
   FavIcon,
@@ -79,7 +79,7 @@ function AppAuthenticated() {
                     {id && (
                       <Suspense fallback={<Loader absolute />}>
                         <Route path="/:id/new">
-                          <NewEntry parent={id} />
+                          <NewEntry parentId={id} />
                         </Route>
                         <EntryEdit id={id} />
                       </Suspense>
@@ -139,7 +139,7 @@ function AppRoot({session, setSession}: AppRootProps) {
 function localSession<T>(options: DashboardOptions<T>) {
   return {
     user: {sub: 'anonymous'},
-    hub: new Client(options.schema, options.apiUrl),
+    hub: new HubClient(options.schema, options.apiUrl),
     end: async () => {}
   }
 }

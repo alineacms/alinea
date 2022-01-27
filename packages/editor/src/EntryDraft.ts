@@ -42,8 +42,8 @@ export class EntryDraft implements Entry {
     return entryFromDoc(this.channel, this.doc)
   }
 
-  static get $path() {
-    return new InputPath.EntryProperty<string>(['$path'])
+  static get url() {
+    return new InputPath.EntryProperty<string>(['url'])
   }
   static get type() {
     return new InputPath.EntryProperty<string>(['type'])
@@ -59,8 +59,8 @@ export class EntryDraft implements Entry {
     return this.root.get('id') || this.source.id
   }
 
-  get $path(): string {
-    return this.root.get('$path') || this.source.$path
+  get url(): string {
+    return this.root.get('url') || this.source.url
   }
 
   get type(): string {
@@ -81,6 +81,7 @@ export class EntryDraft implements Entry {
     let type: Value = this.channel.valueType
     for (const key of location) {
       parent = target
+      if (!target) break
       type = type.typeOfChild(target, key)
       target = target.get(key)
     }

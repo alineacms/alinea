@@ -1,9 +1,11 @@
+import {createId} from '@alinea/core/Id'
 import {Schema} from '@alinea/core/Schema'
-import {Cache} from '@alinea/server'
+import {FileSource, Index, JsonLoader} from '@alinea/server'
 import {encode} from 'base64-arraybuffer'
 import {dirname, filename} from 'dirname-filename-esm'
 import {build, BuildResult, Plugin} from 'esbuild'
 import fs from 'fs-extra'
+import {BetterSqlite3} from 'helder.store/sqlite/drivers/BetterSqlite3.js'
 import {SqliteStore} from 'helder.store/sqlite/SqliteStore.js'
 import {signed, unsigned} from 'leb128'
 import {createRequire} from 'module'
@@ -148,9 +150,13 @@ async function generate(options: Options) {
   const outFile = 'file://' + path.join(cwd, schemaFile)
   const exports = await import(outFile)
   const schema = exports.default || exports.schema
-  const cache = Cache.fromMemory({schema, dir: content, fs: fs.promises})
-  const store = (await cache.sync()) as SqliteStore
-  // Todo: implement serialize on store
+  const store = new SqliteStore(new BetterSqlite3(), createId)
+  const source = new FileSource({
+    fs: fs.promises,
+    dir: content,
+    loader: JsonLoader
+  })
+  await Index.create(store, source)
   const db = (store as any).db.db
   const data = db.serialize()
   if (legacy) {

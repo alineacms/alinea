@@ -7,16 +7,13 @@ import {
   useInitialEffect
 } from '@alinea/ui'
 import {HStack} from '@alinea/ui/Stack'
+import {forwardRef, memo, Ref, useCallback, useRef, useState} from 'react'
 import {
-  forwardRef,
-  memo,
-  Ref,
-  useCallback,
-  useEffect,
-  useRef,
-  useState
-} from 'react'
-import {MdChevronRight, MdExpandMore, MdInsertDriveFile} from 'react-icons/md'
+  MdChevronRight,
+  MdError,
+  MdExpandMore,
+  MdInsertDriveFile
+} from 'react-icons/md'
 import {useQuery} from 'react-query'
 import {Link, useLocation} from 'react-router-dom'
 import {useSession} from '../hook/UseSession'
@@ -36,12 +33,21 @@ function TreeChildren({
   toggleOpen
 }: TreeChildrenProps) {
   const session = useSession()
-  const {isLoading, error, data} = useQuery(['children', parent], () =>
-    session.hub.content.list(parent)
-  )
+  const {data} = useQuery(['children', parent], () => session.hub.list(parent))
+  if (data?.isFailure()) {
+    console.error(data.error)
+    return (
+      <div
+        style={{margin: '10px auto', display: 'flex', justifyContent: 'center'}}
+      >
+        <MdError />
+      </div>
+    )
+  }
+  const list = data && data.isSuccess() ? data.value : undefined
   return (
     <>
-      {data?.map(entry => {
+      {list?.map(entry => {
         return (
           <TreeNode
             key={entry.id}
@@ -57,7 +63,7 @@ function TreeChildren({
 }
 
 type TreeNodeProps = {
-  entry: Entry.WithChildrenCount
+  entry: Entry.AsListItem
   level: number
 } & OpenChildren
 
@@ -122,7 +128,7 @@ function TreeNodeChildrenCreator({entry}: TreeNodeChildrenCreator) {
 }
 
 type TreeNodeLinkProps = {
-  entry: Entry.WithChildrenCount
+  entry: Entry.AsListItem
   isSelected: boolean
   level: number
   isOpened: boolean
@@ -199,7 +205,6 @@ type ContentTreeProps = {
 
 export function ContentTree({selected}: ContentTreeProps) {
   const session = useSession()
-  const location = useLocation()
   const [open, setOpen] = useState(() => new Set())
   const isOpen = useCallback((path: string) => open.has(path), [open])
   const toggleOpen = useCallback(
@@ -213,12 +218,12 @@ export function ContentTree({selected}: ContentTreeProps) {
     },
     [setOpen]
   )
-  useEffect(() => {
+  /*useEffect(() => {
     if (!selected) return
     session.hub.content.get(selected).then(entry => {
       if (entry?.parents) setOpen(new Set([...open, ...entry?.parents]))
     })
-  }, [selected])
+  }, [selected])*/
   return (
     <div>
       <TreeChildren isOpen={isOpen} toggleOpen={toggleOpen} />

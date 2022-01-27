@@ -1,4 +1,4 @@
-import {docFromEntry, Entry, type} from '@alinea/core'
+import {createSchema, docFromEntry, Entry, type} from '@alinea/core'
 import {path} from '@alinea/input.path'
 import {text} from '@alinea/input.text'
 import dotenv from 'dotenv'
@@ -23,7 +23,8 @@ const Doc = type('Doc', {
 
 const drafts = new FileDrafts({
   fs: fs.promises as any,
-  dir: '/tmp'
+  dir: '/tmp',
+  schema: createSchema({Doc})
 })
 
 test('update doc', async () => {
@@ -32,12 +33,12 @@ test('update doc', async () => {
   await drafts.update(entry.id, Y.encodeStateAsUpdate(yDoc))
   yDoc.getMap('root').set('title', 'Hello world')
   await drafts.update(entry.id, Y.encodeStateAsUpdate(yDoc, stateVector))
-  const [updateValue] = await drafts.get(entry.id)
+  const updateValue = await drafts.get(entry.id)
   const retrieved = new Y.Doc()
   if (updateValue) Y.applyUpdate(retrieved, updateValue)
   const result = retrieved.getMap('root').toJSON()
   assert.is(result.title, 'Hello world')
-  const [value] = await drafts.get(entry.id, stateVector)
+  const value = await drafts.get(entry.id, stateVector)
   if (value) Y.applyUpdate(yDoc, value)
   assert.is(result.title, 'Hello world')
 })
