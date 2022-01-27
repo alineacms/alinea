@@ -109,6 +109,7 @@ export class GitDrafts extends FileDrafts {
         git.clone({
           ...this.options,
           fs: this.fs,
+          ref: this.options.branch,
           depth: 1,
           singleBranch: true
         })
@@ -130,7 +131,7 @@ export class GitDrafts extends FileDrafts {
 
   sync() {
     console.log('syncing')
-    return git.pull({...this.options, fs: this.fs})
+    return git.pull({...this.options, ref: this.options.branch, fs: this.fs})
   }
 
   init() {
@@ -173,6 +174,7 @@ export class GitDrafts extends FileDrafts {
       await git.push({
         ...this.options,
         fs: this.fs,
+        ref: this.options.branch,
         remoteRef: this.options.branch
       })
     } catch (e) {
@@ -180,6 +182,7 @@ export class GitDrafts extends FileDrafts {
       await git.push({
         ...this.options,
         fs: this.fs,
+        ref: this.options.branch,
         remoteRef: this.options.branch
       })
     }
@@ -203,7 +206,7 @@ export class GitDrafts extends FileDrafts {
       author: this.options.author,
       message: `discard: ${[...added].join(', ')}`
     })
-    await git.push({...this.options, fs: this.fs})
+    await git.push({...this.options, ref: this.options.branch, fs: this.fs})
   }
 
   async *updates() {
