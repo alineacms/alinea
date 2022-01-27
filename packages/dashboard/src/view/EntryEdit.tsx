@@ -1,4 +1,4 @@
-import {Entry, EntryStatus} from '@alinea/core'
+import {docFromEntry, Entry, EntryStatus} from '@alinea/core'
 import {
   CurrentDraftProvider,
   EntryDraft,
@@ -36,6 +36,7 @@ import {useQuery, useQueryClient} from 'react-query'
 import {useHistory} from 'react-router'
 import {Link} from 'react-router-dom'
 import slug from 'simple-slugify'
+import * as Y from 'yjs'
 import {useDashboard} from '../hook/UseDashboard'
 import {useDraft} from '../hook/UseDraft'
 import {useSession} from '../hook/UseSession'
@@ -206,28 +207,30 @@ export function NewEntry({parent}: NewEntryProps) {
     types.length === 1 ? types[0] : undefined
   )
   const [title, setTitle] = useState('')
-  const [isCreating, setCreating] = useState(false)
+  const [isCreating, setIsCreating] = useState(false)
   function handleCreate(e: FormEvent) {
     e.preventDefault()
     if (!selectedType) return
-    setCreating(true)
+    setIsCreating(true)
     const type = hub.schema.type(selectedType)!
     const path = slug.slugify(title)
     const entry = {
       ...type.create(selectedType),
       path,
       $parent: parentEntry?.id,
-      $path: (parentEntry?.$path || '') + '/' + path
+      $path: (parentEntry?.$path || '') + '/' + path,
+      title
     }
-    hub.content
-      .put(entry.id, {...entry, title})
+    const doc = docFromEntry(type, entry)
+    hub.drafts
+      .update(entry.id, Y.encodeStateAsUpdate(doc))
       .then(() => {
         if (entry.$parent)
           queryClient.invalidateQueries('children', entry.$parent)
         history.push(`/${entry.id}`)
       })
       .finally(() => {
-        setCreating(false)
+        setIsCreating(false)
       })
   }
   return (

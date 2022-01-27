@@ -1,5 +1,10 @@
-import {docFromEntry} from '@alinea/core/Doc'
-import {createError} from '@alinea/core/ErrorWithCode'
+import {
+  createError,
+  docFromEntry,
+  Entry,
+  entryFromDoc,
+  typeOfDoc
+} from '@alinea/core'
 import {Hub} from '@alinea/core/Hub'
 import {observable} from '@alinea/ui'
 import {createContext, PropsWithChildren, useContext, useMemo} from 'react'
@@ -24,22 +29,34 @@ class Drafts {
     })
   }
 
-  // Todo: we could get both entry and draft one call
+  // Todo: we could get both entry and draft in one call
   async get(id: string) {
     const {hub} = this
-    const entry = await hub.content.get(id)
-    if (!entry) throw createError(`Entry not found`)
-    const type = hub.schema.type(entry.type)
-    if (!type) throw createError(`Type not found`)
-    const doc = docFromEntry(type, entry)
-    const sv = Y.encodeStateVector(doc)
-    this.stateVectors.set(id, sv)
-    const [update, err] = await hub.drafts.get(id, sv)
+    const doc = new Y.Doc()
+    let type = undefined
+    let stateVector = undefined
+    let entry = (await hub.content.get(id)) as Entry
+    if (entry) {
+      type = hub.schema.type(entry.type)
+      if (type) {
+        docFromEntry(type, entry, doc)
+        stateVector = Y.encodeStateVector(doc)
+        this.stateVectors.set(id, stateVector)
+      }
+    }
+    const [update, err] = await hub.drafts.get(id, stateVector)
     if (update) {
       Y.applyUpdate(doc, update)
       const sv = Y.encodeStateVector(doc)
       this.stateVectors.set(id, sv)
+      if (!entry) {
+        const typeKey = typeOfDoc(doc)
+        type = this.hub.schema.type(typeKey)
+        if (type) entry = entryFromDoc(type, doc)
+      }
     }
+    if (!entry) throw createError(`Entry not found`)
+    if (!type) throw createError(`Type not found`)
     return {entry, type, doc}
   }
 

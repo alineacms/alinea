@@ -5,9 +5,8 @@ import {Source} from './Source'
 export class Backend implements Content {
   constructor(
     protected store: Store,
-    protected source: Source
-  ) //protected drafts: Drafts
-  {}
+    protected source: Source //protected drafts: Drafts
+  ) {}
 
   async get(id: string): Promise<Entry.WithParents | null> {
     const {store} = this
@@ -65,7 +64,6 @@ export class Backend implements Content {
         childrenCount: Parent.where(Parent.$parent.is(Entry.id))
           .select(Functions.count())
           .first(),
-
         $path: Entry.$path,
         $parent: Entry.$parent,
         $isContainer: Entry.$isContainer

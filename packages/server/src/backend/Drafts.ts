@@ -96,6 +96,7 @@ export class GitDrafts extends FileDrafts {
         })
       )
       if (res.isFailure()) {
+        console.warn(res.error)
         await git.init({fs: this.fs, dir})
         await git.addRemote({fs: this.fs, dir, remote: 'origin', url})
         await git.branch({

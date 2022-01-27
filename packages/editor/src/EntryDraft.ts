@@ -1,4 +1,11 @@
-import {Entry, EntryStatus, Label, Type, Value} from '@alinea/core'
+import {
+  Entry,
+  entryFromDoc,
+  EntryStatus,
+  Label,
+  Type,
+  Value
+} from '@alinea/core'
 import {InputPath} from '@alinea/editor'
 import {observable, Observable} from '@alinea/ui'
 import * as Y from 'yjs'
@@ -32,13 +39,7 @@ export class EntryDraft implements Entry {
   }
 
   getEntry(): Entry {
-    return {
-      id: this.id,
-      $path: this.$path,
-      type: this.type,
-      title: this.title,
-      ...this.channel.valueType.fromY(this.root)
-    }
+    return entryFromDoc(this.channel, this.doc)
   }
 
   static get $path() {

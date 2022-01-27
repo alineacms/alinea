@@ -41,6 +41,7 @@ export class FileSource implements Source {
   async *entries(): AsyncGenerator<Entry> {
     const {fs, dir, loader} = this.options
     const targets = ['/']
+    let parentId: string | undefined = undefined
     while (targets.length > 0) {
       const target = targets.shift()!
       const files = await fs.readdir(path.join(dir, target))
@@ -49,7 +50,6 @@ export class FileSource implements Source {
         if (b.startsWith('index.')) return 1
         return a.localeCompare(b)
       })
-      let parentId: string | undefined = undefined
       for (const file of files) {
         const location = path.join(dir, target, file)
         const stat = await fs.stat(location)

@@ -23,7 +23,7 @@ export class Server {
     // Use of compression here results in a failure in nextjs.
     // api-utils apiRes.end is called with [undefined, undefined]
     // for etag (empty body) responses.
-    // router.use(compression())
+    // router.use(compression({filter: () => true}))
     router.use(cors({origin: dashboardUrl}))
     if (auth) router.use(auth.router())
     router.get(prefix + Api.nav.content.get(':id'), async (req, res) => {
