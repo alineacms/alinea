@@ -27,12 +27,12 @@ export class FileDrafts implements Drafts {
   ): Promise<Uint8Array | undefined> {
     const {fs, dir} = this.options
     const location = path.join(dir, id)
-    const [files] = await outcome(fs.readdir(location))
+    const [files] = await future(fs.readdir(location))
     if (!files) return undefined
     files.sort((a, b) => a.localeCompare(b))
     const doc = new Y.Doc()
     for (const file of files) {
-      const update = await outcome(fs.readFile(path.join(location, file)))
+      const update = await future(fs.readFile(path.join(location, file)))
       try {
         if (update.isSuccess()) Y.applyUpdate(doc, update.value)
       } catch (e) {
@@ -63,12 +63,12 @@ export class FileDrafts implements Drafts {
   async delete(id: string): Promise<void> {
     const {fs, dir} = this.options
     const location = path.join(dir, id)
-    await fs.rmdir(location, {recursive: true})
+    await fs.rm(location, {recursive: true, force: true})
   }
 
   async *updates(): AsyncGenerator<{id: string; update: Uint8Array}> {
     const {fs, dir, schema} = this.options
-    const directories = await fs.readdir(dir)
+    const [directories = []] = await future(fs.readdir(dir))
     for (const dir of directories) {
       if (dir.startsWith('.')) continue
       const [update, err] = await future(this.get(dir))

@@ -66,7 +66,7 @@ export type Outcome<T = void> = Outcome.OutcomeImpl<T> & Pair<T>
 export namespace Outcome {
   export function fromJSON<T>(json: JSONRep<T>): Outcome<T> {
     if (json.success) return Success(json.data)
-    return Failure(deserializeError(json.error)) as any
+    return Failure(deserializeError(json.error))
   }
 
   export function Success<T>(data: T): Outcome<T> {
@@ -80,6 +80,8 @@ export namespace Outcome {
   }
 
   export abstract class OutcomeImpl<T> {
+    abstract value: T | undefined
+    abstract error: Error | undefined
     constructor(public success: boolean) {}
 
     isSuccess(): this is SuccessOutcome<T> {
@@ -94,6 +96,7 @@ export namespace Outcome {
   }
 
   class SuccessOutcome<T> extends OutcomeImpl<T> {
+    error = undefined
     constructor(public value: T) {
       super(true)
     }
@@ -109,6 +112,7 @@ export namespace Outcome {
   }
 
   class FailureOutcome<T> extends OutcomeImpl<T> {
+    value = undefined
     constructor(public error: Error) {
       super(false)
     }

@@ -1,4 +1,10 @@
-import {docFromEntry, Entry, entryFromDoc, Schema} from '@alinea/core'
+import {
+  docFromEntry,
+  Entry,
+  entryFromDoc,
+  EntryStatus,
+  Schema
+} from '@alinea/core'
 import convertHrtime from 'convert-hrtime'
 import {Store} from 'helder.store'
 import prettyMilliseconds from 'pretty-ms'
@@ -36,12 +42,27 @@ export class Index {
       const doc = new Y.Doc()
       if (existing) docFromEntry(schema, existing, doc)
       Y.applyUpdate(doc, update)
-      let entry = entryFromDoc(schema, doc)
-      const parentUrl = (entry.url || '').split('/').slice(0, -1).join('/')
+      const data = entryFromDoc(schema, doc)
+      const parentUrl = (data.url || '').split('/').slice(0, -1).join('/')
       const parent = store.first(Entry.where(Entry.url.is(parentUrl)))
-      if (parent) entry = {...entry, $parent: parent.id}
+      const entry = {
+        ...data,
+        $parent: parent?.id,
+        $status: EntryStatus.Draft
+      }
       if (existing) store.update(condition, entry as any)
       else store.insert(Entry, entry)
     }
+  }
+
+  static applyPublish(store: Store, entries: Array<Entry>) {
+    return store.transaction(() => {
+      for (const entry of entries) {
+        const condition = Entry.where(Entry.id.is(entry.id))
+        const existing = store.first(condition)
+        if (existing) store.update(condition, entry as any)
+        else store.insert(Entry, entry)
+      }
+    })
   }
 }

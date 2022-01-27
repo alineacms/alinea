@@ -1,5 +1,6 @@
-import {createError, docFromEntry} from '@alinea/core'
+import {createError, docFromEntry, EntryStatus} from '@alinea/core'
 import {Hub} from '@alinea/core/Hub'
+import {EntryDraft} from '@alinea/editor/EntryDraft'
 import {observable} from '@alinea/ui'
 import {createContext, PropsWithChildren, useContext, useMemo} from 'react'
 import {Room, WebrtcProvider} from 'y-webrtc'
@@ -9,6 +10,7 @@ import {useSession} from './UseSession'
 type DraftsStatus = 'synced' | 'editing' | 'saving'
 
 class Drafts {
+  saveTimeout: ReturnType<typeof setTimeout> | null = null
   status = observable<DraftsStatus>('synced')
   stateVectors = new Map()
 
@@ -36,14 +38,24 @@ class Drafts {
     return {...result, type, doc}
   }
 
+  async publish(draft: EntryDraft) {
+    if (this.saveTimeout) clearTimeout(this.saveTimeout)
+    draft.status(EntryStatus.Publishing)
+    this.status('saving')
+    return this.hub.publishEntries([draft.getEntry()]).then(res => {
+      if (res.isFailure()) console.error(res.error)
+      draft.status(res.isSuccess() ? EntryStatus.Published : EntryStatus.Draft)
+      this.status('synced')
+    })
+  }
+
   connect(id: string, doc: Y.Doc) {
-    let saveTimeout: ReturnType<typeof setTimeout> | null = null
     const provider = new WebrtcProvider('@alinea/entry-' + id, doc)
     const save = async () => {
-      saveTimeout = null
+      this.saveTimeout = null
       this.status('saving')
       await this.save(id, doc)
-      if (saveTimeout === null) this.status('synced')
+      if (this.saveTimeout === null) this.status('synced')
     }
     const watch = (
       update?: Uint8Array,
@@ -54,15 +66,15 @@ class Drafts {
       // This update did not originate from us
       if (origin instanceof Room) return
       this.status('editing')
-      if (saveTimeout) clearTimeout(saveTimeout)
-      saveTimeout = setTimeout(save, 3000)
+      if (this.saveTimeout) clearTimeout(this.saveTimeout)
+      this.saveTimeout = setTimeout(save, 3000)
     }
     doc.on('update', watch)
     return () => {
       doc.off('update', watch)
       provider.destroy()
-      if (saveTimeout) {
-        clearTimeout(saveTimeout)
+      if (this.saveTimeout) {
+        clearTimeout(this.saveTimeout)
         save()
       }
     }

@@ -26,6 +26,7 @@ import {Route} from 'react-router'
 import {HashRouter} from 'react-router-dom'
 import {DashboardOptions} from './Dashboard'
 import {DashboardProvider, useDashboard} from './hook/UseDashboard'
+import {useDraft} from './hook/UseDraft'
 import {DraftsProvider, useDrafts} from './hook/UseDrafts'
 import {SessionProvider} from './hook/UseSession'
 import {ContentTree} from './view/ContentTree'
@@ -62,33 +63,13 @@ function AppAuthenticated() {
               </Sidebar.Menu.Item>
             </Sidebar.Menu>
           </Sidebar.Root>
-          <Route path="/:id">
-            {({match}) => {
-              const id = match?.params.id!
-              return (
-                <>
-                  <Pane
-                    id="content-tree"
-                    resizable="right"
-                    defaultWidth={330}
-                    minWidth={200}
-                  >
-                    <ContentTree selected={id} />
-                  </Pane>
-                  <div style={{width: '100%'}}>
-                    {id && (
-                      <Suspense fallback={<Loader absolute />}>
-                        <Route path="/:id/new">
-                          <NewEntry parentId={id} />
-                        </Route>
-                        <EntryEdit id={id} />
-                      </Suspense>
-                    )}
-                  </div>
-                </>
-              )
-            }}
-          </Route>
+          <Suspense fallback={<Loader absolute />}>
+            <Route path="/:id">
+              {({match}) => {
+                return <EntryRoute id={match?.params.id} />
+              }}
+            </Route>
+          </Suspense>
         </div>
         <Statusbar.Root>
           <DraftsStatus />
@@ -100,6 +81,36 @@ function AppAuthenticated() {
         </Statusbar.Root>
       </Statusbar.Provider>
     </DraftsProvider>
+  )
+}
+
+type EntryRouteProps = {
+  id?: string
+}
+
+function EntryRoute({id}: EntryRouteProps) {
+  const draft = useDraft(id)
+  return (
+    <>
+      <Pane
+        id="content-tree"
+        resizable="right"
+        defaultWidth={330}
+        minWidth={200}
+      >
+        <ContentTree select={draft?.parents} />
+      </Pane>
+      <div style={{width: '100%'}}>
+        {draft && (
+          <>
+            <Route path="/:id/new">
+              <NewEntry parentId={id} />
+            </Route>
+            <EntryEdit draft={draft} />
+          </>
+        )}
+      </div>
+    </>
   )
 }
 

@@ -2,6 +2,7 @@ import {
   Entry,
   entryFromDoc,
   EntryStatus,
+  Hub,
   Label,
   Type,
   Value
@@ -19,19 +20,27 @@ export enum PublishStatus {
 
 export class EntryDraft implements Entry {
   public entry: Observable<Entry>
+  public status: Observable<EntryStatus>
   private root: Y.Map<any>
 
   constructor(
+    protected hub: Hub,
     public channel: Type,
     protected source: Entry,
+    public parents: Array<string>,
     public doc: Y.Doc
   ) {
     this.root = doc.getMap(ROOT_KEY)
     this.entry = observable(this.getEntry())
+    this.status = observable(this.$status)
   }
 
   connect() {
-    const watch = () => this.entry(this.getEntry())
+    const watch = () => {
+      if (this.status() === EntryStatus.Published)
+        this.status(EntryStatus.Draft)
+      this.entry(this.getEntry())
+    }
     this.doc.on('update', watch)
     return () => {
       this.doc.off('update', watch)
@@ -68,7 +77,13 @@ export class EntryDraft implements Entry {
   }
 
   get $status(): EntryStatus {
-    return this.root.get('$status') || EntryStatus.Published
+    return (
+      this.root.get('$status') || this.source.$status || EntryStatus.Published
+    )
+  }
+
+  get $parent(): string | undefined {
+    return this.root.get('$parent') || this.source.$parent
   }
 
   get title(): Label {

@@ -7,7 +7,15 @@ import {
   useInitialEffect
 } from '@alinea/ui'
 import {HStack} from '@alinea/ui/Stack'
-import {forwardRef, memo, Ref, useCallback, useRef, useState} from 'react'
+import {
+  forwardRef,
+  memo,
+  Ref,
+  useCallback,
+  useEffect,
+  useRef,
+  useState
+} from 'react'
 import {
   MdChevronRight,
   MdError,
@@ -165,7 +173,7 @@ const TreeNodeLink = memo(
             gap={8}
             style={{width: '100%'}}
             onClick={event => {
-              if (isOpened) event.stopPropagation()
+              if (!isSelected && isOpened) event.stopPropagation()
             }}
           >
             <span
@@ -200,11 +208,10 @@ type OpenChildren = {
 }
 
 type ContentTreeProps = {
-  selected?: string
+  select?: Array<string>
 }
 
-export function ContentTree({selected}: ContentTreeProps) {
-  const session = useSession()
+export function ContentTree({select = []}: ContentTreeProps) {
   const [open, setOpen] = useState(() => new Set())
   const isOpen = useCallback((path: string) => open.has(path), [open])
   const toggleOpen = useCallback(
@@ -218,12 +225,9 @@ export function ContentTree({selected}: ContentTreeProps) {
     },
     [setOpen]
   )
-  /*useEffect(() => {
-    if (!selected) return
-    session.hub.content.get(selected).then(entry => {
-      if (entry?.parents) setOpen(new Set([...open, ...entry?.parents]))
-    })
-  }, [selected])*/
+  useEffect(() => {
+    if (select.length) setOpen(new Set([...open, ...select]))
+  }, [select.join('.')])
   return (
     <div>
       <TreeChildren isOpen={isOpen} toggleOpen={toggleOpen} />

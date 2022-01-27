@@ -1,4 +1,12 @@
-import {accumulate, Entry, future, Future, Hub, Schema} from '@alinea/core'
+import {
+  accumulate,
+  Entry,
+  future,
+  Future,
+  Hub,
+  outcome,
+  Schema
+} from '@alinea/core'
 import {Functions, Store} from 'helder.store'
 import {Drafts} from './Drafts'
 import {Index} from './Index'
@@ -68,7 +76,13 @@ export class HubServer implements Hub {
   }
 
   publishEntries(entries: Array<Entry>): Future<void> {
-    return future(this.target.publish(entries))
+    const {store, drafts} = this
+    return outcome(async () => {
+      await this.target.publish(entries)
+      // Todo: This makes updates instantly available but should be configurable
+      Index.applyPublish(store, entries)
+      for (const entry of entries) await drafts.delete(entry.id)
+    })
   }
 }
 

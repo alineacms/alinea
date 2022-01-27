@@ -6,6 +6,7 @@ export type Id<T> = string & {__t: T}
 export enum EntryStatus {
   Draft = 'draft',
   Published = 'published',
+  Publishing = 'publishing',
   Archived = 'archived'
 }
 

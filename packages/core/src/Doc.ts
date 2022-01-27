@@ -21,6 +21,8 @@ export function entryFromDoc(info: Schema | Type, doc: Y.Doc): Entry {
     type: typeKey,
     url: root.get('url') as string,
     title: root.get('title') as Label,
+    $parent: root.get('$parent') as boolean,
+    $isContainer: root.get('$isContainer') as boolean,
     ...type.valueType.fromY(root)
   }
 }
@@ -41,6 +43,8 @@ export function docFromEntry(
   root.set('id', entry.id)
   root.set('type', entry.type)
   root.set('url', entry.url)
+  root.set('$parent', entry.$parent)
+  root.set('$isContainer', entry.$isContainer)
   for (const [key, field] of type) {
     const contents = entry[key]
     root.set(key, field.type.toY(contents))

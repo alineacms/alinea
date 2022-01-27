@@ -7,6 +7,6 @@ export const JsonLoader: Loader = {
     return JSON.parse(input.toString()) as Entry.Raw
   },
   format(entry: Entry.Raw) {
-    return Buffer.from(JSON.stringify(entry))
+    return Buffer.from(JSON.stringify(entry, null, '  '))
   }
 }

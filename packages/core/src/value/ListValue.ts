@@ -69,7 +69,8 @@ export class ListValue<T> implements Value<Array<Row & T>> {
     return map
   }
   fromY(map: Y.Map<any>): Array<Row & T> {
-    const rows = []
+    const rows: Array<Row & T> = []
+    if (!map) return rows
     for (const key of map.keys()) {
       const row = map.get(key)
       const type = row.get('type')

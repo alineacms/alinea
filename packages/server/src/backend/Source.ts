@@ -20,7 +20,7 @@ export class FileSource implements Source, Target {
   async publish(entries: Array<Entry>): Promise<void> {
     const {fs, dir, loader} = this.options
     for (const entry of entries) {
-      const {url, $parent, $isContainer, ...data} = entry
+      const {url, $parent, $isContainer, $status, ...data} = entry
       const file = entry.url + ($isContainer ? 'index' : '') + loader.extension
       const location = path.join(dir, file)
       await fs.mkdir(path.dirname(location), {recursive: true})
