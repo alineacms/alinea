@@ -169,11 +169,20 @@ export class GitDrafts extends FileDrafts {
       author,
       message: `update: ${id} (${updateId})`
     })
-    await git.push({
-      ...this.options,
-      fs: this.fs,
-      remoteRef: this.options.branch
-    })
+    try {
+      await git.push({
+        ...this.options,
+        fs: this.fs,
+        remoteRef: this.options.branch
+      })
+    } catch (e) {
+      await this.sync()
+      await git.push({
+        ...this.options,
+        fs: this.fs,
+        remoteRef: this.options.branch
+      })
+    }
   }
 
   async delete(ids: Array<string>): Promise<void> {
