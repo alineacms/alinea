@@ -2,6 +2,7 @@ import {Entry} from '@alinea/core'
 import {
   Create,
   fromModule,
+  Loader,
   Stack,
   TextLabel,
   useInitialEffect
@@ -11,6 +12,7 @@ import {
   forwardRef,
   memo,
   Ref,
+  Suspense,
   useCallback,
   useEffect,
   useRef,
@@ -101,14 +103,22 @@ function TreeNode({entry, level, isOpen, toggleOpen}: TreeNodeProps) {
         isOpened={isOpened}
         toggleOpen={handleToggleOpen}
       />
-      {entry.$isContainer && isOpened && (
-        <TreeChildren
-          parent={entry.id}
-          level={level + 1}
-          isOpen={isOpen}
-          toggleOpen={toggleOpen}
-        />
-      )}
+      <Suspense
+        fallback={
+          <div className={styles.node.loader()}>
+            <Loader small />
+          </div>
+        }
+      >
+        {entry.$isContainer && isOpened && (
+          <TreeChildren
+            parent={entry.id}
+            level={level + 1}
+            isOpen={isOpen}
+            toggleOpen={toggleOpen}
+          />
+        )}
+      </Suspense>
     </>
   )
 }
