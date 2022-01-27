@@ -2,7 +2,7 @@
   "compilerOptions": {
     "preserveWatchOutput": true,
     "outDir": ".types",
-    // "incremental": true,
+    "incremental": true,
     "assumeChangesOnlyAffectDirectDependencies": true,
     "emitDeclarationOnly": true,
     "module": "ESNext",

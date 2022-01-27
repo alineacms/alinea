@@ -204,7 +204,7 @@ export function NewEntry({parentId}: NewEntryProps) {
   const queryClient = useQueryClient()
   const history = useHistory()
   const {hub} = useSession()
-  const {data: parent} = useQuery(
+  const {data: parentEntry} = useQuery(
     ['parent', parentId],
     () => {
       return parentId ? hub.entry(parentId) : undefined
@@ -214,8 +214,8 @@ export function NewEntry({parentId}: NewEntryProps) {
       refetchOnWindowFocus: false
     }
   )
-  const type =
-    parent && parent.value && hub.schema.type(parent.value.entry.type)
+  const parent = parentEntry?.isSuccess() ? parentEntry.value?.entry : undefined
+  const type = parent && hub.schema.type(parent.type)
   const types = type?.options.contains || hub.schema.keys
   const [selectedType, setSelectedType] = useState(
     types.length === 1 ? types[0] : undefined
@@ -231,8 +231,8 @@ export function NewEntry({parentId}: NewEntryProps) {
     const entry = {
       ...type.create(selectedType),
       path,
-      $parent: parent!.value?.entry.id,
-      url: (parent!.value?.entry.url || '') + '/' + path,
+      $parent: parent?.id,
+      url: (parent?.url || '') + '/' + path,
       title
     }
     const doc = docFromEntry(type, entry)
