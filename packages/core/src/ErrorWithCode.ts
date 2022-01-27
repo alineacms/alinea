@@ -43,6 +43,10 @@ class ErrorWithCode extends Error {
   static Unauthorized = new ErrorWithCode(ErrorCode.Unauthorized)
 }
 
+export function isError(error: Error): error is ErrorWithCode {
+  return error instanceof ErrorWithCode
+}
+
 export function createError(code: number): ErrorWithCode
 export function createError(code: ErrorCode): ErrorWithCode
 export function createError(message: string): ErrorWithCode

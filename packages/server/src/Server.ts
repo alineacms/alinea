@@ -1,7 +1,7 @@
-import {Auth, Hub} from '@alinea/core'
+import {Auth, Hub, isError, Outcome} from '@alinea/core'
 import {decode} from 'base64-arraybuffer'
 import cors from 'cors'
-import express, {Router} from 'express'
+import express, {Response, Router} from 'express'
 import {createServer, IncomingMessage, ServerResponse} from 'http'
 import {parseBuffer, parseJson} from './util/BodyParser'
 import {finishResponse} from './util/FinishResponse'
@@ -15,37 +15,45 @@ export type ServerOptions<T = any> = {
 
 function hubRoutes(hub: Hub, router: Router) {
   const prefix = '(/*)?'
+  function respond<T>(res: Response, outcome: Outcome<T>) {
+    if (outcome.isFailure())
+      res.status(isError(outcome.error) ? outcome.error.code : 500)
+    res.json(outcome)
+  }
   // Hub.entry
   router.get(prefix + Hub.routes.entry(':id'), async (req, res) => {
     const id = req.params.id
     const svParam = req.query.stateVector
     const stateVector =
       typeof svParam === 'string' ? new Uint8Array(decode(svParam)) : undefined
-    res.json(await hub.entry(id, stateVector))
+    return respond(res, await hub.entry(id, stateVector))
   })
   // Hub.list
   router.get(
     [prefix + Hub.routes.list(':parentId'), prefix + Hub.routes.list()],
     async (req, res) => {
       const parentId = req.params.parentId
-      res.json(await hub.list(parentId))
+      return respond(res, await hub.list(parentId))
     }
   )
   // Hub.updateDraft
   router.put(prefix + Hub.routes.draft(':id'), async (req, res) => {
     const id = req.params.id
-    res.json(await hub.updateDraft(id, (await parseBuffer(req)) as Buffer))
+    return respond(
+      res,
+      await hub.updateDraft(id, (await parseBuffer(req)) as Buffer)
+    )
   })
   // Hub.deleteDraft
   router.delete(prefix + Hub.routes.draft(':id'), async (req, res) => {
     const id = req.params.id
-    res.json(await hub.deleteDraft(id))
+    return respond(res, await hub.deleteDraft(id))
   })
   // Hub.publishEntries
   router.post(prefix + Hub.routes.publish(), async (req, res) => {
     const entries = await parseJson(req)
     console.log(entries)
-    res.json(await hub.publishEntries(entries))
+    return respond(res, await hub.publishEntries(entries))
   })
 }
 

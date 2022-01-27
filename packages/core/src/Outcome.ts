@@ -80,8 +80,6 @@ export namespace Outcome {
   }
 
   export abstract class OutcomeImpl<T> {
-    abstract value: T | undefined
-    abstract error: Error | undefined
     constructor(public success: boolean) {}
 
     isSuccess(): this is SuccessOutcome<T> {
