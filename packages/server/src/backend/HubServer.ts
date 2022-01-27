@@ -72,7 +72,7 @@ export class HubServer implements Hub {
   }
 
   deleteDraft(id: string): Future<void> {
-    return future(this.drafts.delete(id))
+    return future(this.drafts.delete([id]))
   }
 
   publishEntries(entries: Array<Entry>): Future<void> {
@@ -81,7 +81,7 @@ export class HubServer implements Hub {
       await this.target.publish(entries)
       // Todo: This makes updates instantly available but should be configurable
       Index.applyPublish(store, entries)
-      for (const entry of entries) await drafts.delete(entry.id)
+      await drafts.delete(entries.map(entry => entry.id))
     })
   }
 }

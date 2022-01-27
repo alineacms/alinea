@@ -8,7 +8,7 @@ import {FS} from './FS'
 export interface Drafts {
   get(id: string, stateVector?: Uint8Array): Promise<Uint8Array | undefined>
   update(id: string, update: Uint8Array): Promise<void>
-  delete(id: string): Promise<void>
+  delete(ids: Array<string>): Promise<void>
   updates(): AsyncGenerator<{id: string; update: Uint8Array}>
 }
 
@@ -60,10 +60,12 @@ export class FileDrafts implements Drafts {
     return this.applyUpdate(id, update, updateId)
   }
 
-  async delete(id: string): Promise<void> {
+  async delete(ids: Array<string>): Promise<void> {
     const {fs, dir} = this.options
-    const location = path.join(dir, id)
-    await fs.rm(location, {recursive: true, force: true})
+    for (const id of ids) {
+      const location = path.join(dir, id)
+      await fs.rm(location, {recursive: true, force: true})
+    }
   }
 
   async *updates(): AsyncGenerator<{id: string; update: Uint8Array}> {
@@ -174,20 +176,23 @@ export class GitDrafts extends FileDrafts {
     })
   }
 
-  async delete(id: string): Promise<void> {
+  async delete(ids: Array<string>): Promise<void> {
     const {dir} = this.options
     await this.init()
-    await super.delete(id)
-    await git.add({
-      fs: this.fs,
-      dir,
-      filepath: id
-    })
+    await super.delete(ids)
+    const added = new Set()
+    for (const id of ids) {
+      try {
+        await git.add({fs: this.fs, dir, filepath: id})
+        added.add(id)
+      } catch (e) {}
+    }
+    if (added.size === 0) return
     await git.commit({
       fs: this.fs,
       dir,
       author: this.options.author,
-      message: `discard: ${id}`
+      message: `discard: ${[...added].join(', ')}`
     })
     await git.push({...this.options, fs: this.fs})
   }
