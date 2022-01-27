@@ -65,7 +65,7 @@ export class HubClient implements Hub {
       endpoint,
       this.applyAuth({
         ...init,
-        headers: {accept: 'application/json'}
+        headers: {...init?.headers, accept: 'application/json'}
       })
     )
   }
