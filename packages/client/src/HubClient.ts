@@ -1,9 +1,7 @@
-import {createError, Entry, Future, Hub, Outcome, Schema} from '@alinea/core'
+import {Entry, Future, Hub, Outcome, Schema} from '@alinea/core'
 import fetch from 'isomorphic-fetch'
 
 async function toFuture<T = void>(res: Response): Future<T> {
-  if (res.status > 300)
-    return Outcome.Failure(createError(res.status, res.statusText))
   return Outcome.fromJSON(await res.json())
 }
 

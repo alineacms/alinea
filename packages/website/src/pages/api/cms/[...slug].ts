@@ -20,7 +20,6 @@ const dashboardUrl = isProduction
   : 'http://localhost:3000/admin'
 const onAuth = () => ({username: process.env.GITHUB_TOKEN})
 const gitConfig = {
-  branch: 'drafts',
   author: {
     name: 'Ben',
     email: 'ben@codeurs.be'
@@ -33,6 +32,7 @@ const drafts = new GitDrafts({
   http,
   onAuth,
   url: 'https://github.com/benmerckx/content',
+  branch: 'drafts',
   ...gitConfig
 })
 const target = new GithubTarget({
@@ -41,6 +41,7 @@ const target = new GithubTarget({
   githubAuthToken: process.env.GITHUB_TOKEN!,
   owner: 'codeurs',
   repo: 'alinea',
+  branch: 'main',
   ...gitConfig
 })
 const hub = new HubServer(schema, await store, drafts, target)

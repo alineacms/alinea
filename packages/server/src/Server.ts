@@ -52,7 +52,6 @@ function hubRoutes(hub: Hub, router: Router) {
   // Hub.publishEntries
   router.post(prefix + Hub.routes.publish(), async (req, res) => {
     const entries = await parseJson(req)
-    console.log(entries)
     return respond(res, await hub.publishEntries(entries))
   })
 }
