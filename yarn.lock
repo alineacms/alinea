@@ -79,8 +79,6 @@ __metadata:
     "@alinea/client": 0.0.0
     "@alinea/core": 0.0.0
     "@alinea/editor": 0.0.0
-    "@fontsource/inter": ^4.5.0
-    "@fontsource/jetbrains-mono": ^4.5.0
     "@types/react": ^17.0.20
     "@types/react-dom": ^17.0.9
     "@types/react-helmet": ^6.1.2
@@ -608,20 +606,6 @@ __metadata:
   dependencies:
     tslib: ^2.1.0
   checksum: 411011976afd098918ad4fa277d496b01b176a78a50b418fbe331ebf6b8593d561ed6df1b632938bc7aae745a59bb31f1e234560def96392e6bd89a131ca9527
-  languageName: node
-  linkType: hard
-
-"@fontsource/inter@npm:^4.5.0":
-  version: 4.5.0
-  resolution: "@fontsource/inter@npm:4.5.0"
-  checksum: 1e5d35587287f966ea51035fd8c04d7bbbc7d13d5f494996642574f32863d97e7a17446ca4c682d2237a856ac035285ea70138b80211c2764e5576e4f5ae331d
-  languageName: node
-  linkType: hard
-
-"@fontsource/jetbrains-mono@npm:^4.5.0":
-  version: 4.5.0
-  resolution: "@fontsource/jetbrains-mono@npm:4.5.0"
-  checksum: 3de42f6f26506e597026c2460e9f34dc002cb8b34d7e04871ad0d2a15f277d087170ab9e0604176d23ae4ec90fefe2730660672b6b9ffd7f4cc8335ead11e134
   languageName: node
   linkType: hard
 

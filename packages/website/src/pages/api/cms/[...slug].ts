@@ -1,4 +1,4 @@
-import {schema, store} from '.alinea'
+import {createCache, schema} from '.alinea'
 import {PasswordLessAuth} from '@alinea/auth.passwordless/PasswordLessAuth.js'
 import {JsonLoader, Server} from '@alinea/server'
 import {GithubTarget} from '@alinea/server/target/GithubTarget'
@@ -45,7 +45,7 @@ const server = new Server({
   auth,
   dashboardUrl,
   schema,
-  store: await store,
+  store: await createCache(),
   drafts: drafts,
   target
 })
