@@ -33,7 +33,6 @@ export class FirestoreDrafts implements Drafts {
     const {collection} = this.options
     const doc = new Y.Doc()
     const current = await this.get(id)
-    console.log(current)
     if (current) Y.applyUpdate(doc, current)
     Y.applyUpdate(doc, update)
     const ref = collection.doc(id)
