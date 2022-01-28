@@ -1,73 +1,111 @@
-import {Auth, Hub, isError, Outcome} from '@alinea/core'
-import {decode} from 'base64-arraybuffer'
-import cors from 'cors'
-import express, {Response, Router} from 'express'
+import {
+  accumulate,
+  Auth,
+  Entry,
+  future,
+  Future,
+  Hub,
+  outcome,
+  Schema
+} from '@alinea/core'
+import {encode} from 'base64-arraybuffer'
+import express from 'express'
+import {Functions, Store} from 'helder.store'
 import {createServer, IncomingMessage, ServerResponse} from 'http'
-import {parseBuffer, parseJson} from './util/BodyParser'
+import {Cache} from './Cache'
+import {Drafts} from './Drafts'
+import {createServerRouter} from './router/ServerRouter'
+import {Target} from './Target'
 import {finishResponse} from './util/FinishResponse'
 
-export type ServerOptions<T = any> = {
-  dashboardUrl: string
+export type ServerOptions<T> = {
+  schema: Schema<T>
+  store: Store
+  drafts: Drafts
+  target: Target
   auth?: Auth.Server
-  hub: Hub<T>
-  transformPreview?: (entry: T) => any
+  dashboardUrl: string
 }
 
-function hubRoutes(hub: Hub, router: Router) {
-  const prefix = '(/*)?'
-  function respond<T>(res: Response, outcome: Outcome<T>) {
-    if (outcome.isFailure())
-      res.status(isError(outcome.error) ? outcome.error.code : 500)
-    res.json(outcome)
-  }
-  // Hub.entry
-  router.get(prefix + Hub.routes.entry(':id'), async (req, res) => {
-    const id = req.params.id
-    const svParam = req.query.stateVector
-    const stateVector =
-      typeof svParam === 'string' ? new Uint8Array(decode(svParam)) : undefined
-    return respond(res, await hub.entry(id, stateVector))
-  })
-  // Hub.list
-  router.get(
-    [prefix + Hub.routes.list(':parentId'), prefix + Hub.routes.list()],
-    async (req, res) => {
-      const parentId = req.params.parentId
-      return respond(res, await hub.list(parentId))
-    }
-  )
-  // Hub.updateDraft
-  router.put(prefix + Hub.routes.draft(':id'), async (req, res) => {
-    const id = req.params.id
-    const body = (await parseBuffer(req)) as Buffer
-    return respond(res, await hub.updateDraft(id, body))
-  })
-  // Hub.deleteDraft
-  router.delete(prefix + Hub.routes.draft(':id'), async (req, res) => {
-    const id = req.params.id
-    return respond(res, await hub.deleteDraft(id))
-  })
-  // Hub.publishEntries
-  router.post(prefix + Hub.routes.publish(), async (req, res) => {
-    const entries = await parseJson(req)
-    return respond(res, await hub.publishEntries(entries))
-  })
-}
-
-export class Server {
+export class Server<T = any> implements Hub<T> {
+  schema: Schema<T>
   app = express()
 
-  constructor(protected options: ServerOptions) {
-    const {hub, dashboardUrl, auth} = options
-    const router = Router()
-    // Use of compression here results in a failure in nextjs.
-    // api-utils apiRes.end is called with [undefined, undefined]
-    // for etag (empty body) responses.
-    // router.use(compression({filter: () => true}))
-    router.use(cors({origin: dashboardUrl}))
-    if (auth) router.use(auth.router())
-    hubRoutes(hub, router)
-    this.app.use(router)
+  constructor(public options: ServerOptions<T>) {
+    this.schema = options.schema
+    this.app.use(createServerRouter(this))
+  }
+
+  async entry(
+    id: string,
+    stateVector?: Uint8Array
+  ): Future<Entry.Detail | null> {
+    const {schema, store, drafts} = this.options
+    function parents(entry: Entry): Array<string> {
+      if (!entry.$parent) return []
+      const parent = store.first(Entry.where(Entry.id.is(entry.$parent)))
+      return parent ? [parent.id, ...parents(parent)] : []
+    }
+    const draft = await drafts.get(id, stateVector)
+    return future(
+      queryWithDrafts(schema, store, drafts, () => {
+        const entry = store.first(Entry.where(Entry.id.is(id)))
+        return (
+          entry && {
+            entry,
+            parents: parents(entry),
+            draft: draft && encode(draft)
+          }
+        )
+      })
+    )
+  }
+
+  async list(parentId?: string): Future<Array<Entry.Summary>> {
+    const {schema, store, drafts} = this.options
+    const Parent = Entry.as('Parent')
+    return future(
+      queryWithDrafts(schema, store, drafts, () => {
+        return store.all(
+          Entry.where(
+            parentId ? Entry.$parent.is(parentId) : Entry.$parent.isNull()
+          ).select({
+            id: Entry.id,
+            type: Entry.type,
+            title: Entry.title,
+            url: Entry.url,
+            $parent: Entry.$parent,
+            $isContainer: Entry.$isContainer,
+            childrenCount: Parent.where(Parent.$parent.is(Entry.id))
+              .select(Functions.count())
+              .first()
+          })
+        )
+      })
+    )
+  }
+
+  updateDraft(id: string, update: Uint8Array): Future<void> {
+    const {drafts} = this.options
+    return future(drafts.update(id, update))
+  }
+
+  deleteDraft(id: string): Future<void> {
+    const {drafts} = this.options
+    return future(drafts.delete([id]))
+  }
+
+  publishEntries(entries: Array<Entry>): Future<void> {
+    const {store, drafts, target} = this.options
+    return outcome(async () => {
+      await target.publish(entries)
+      // Todo: This makes updates instantly available but should be configurable
+      // Todo: if there's another instance running it won't have the drafts or
+      // these changes so it would show the old data, so maybe we should always
+      // hang on to drafts?
+      Cache.applyPublish(store, entries)
+      await drafts.delete(entries.map(entry => entry.id))
+    })
   }
 
   respond = (req: IncomingMessage, res: ServerResponse): Promise<void> => {
@@ -78,7 +116,27 @@ export class Server {
   }
 
   listen(port: number) {
-    //.on('upgrade', this.upgrade)
     return createServer(this.respond).listen(port)
+  }
+}
+
+async function queryWithDrafts<T>(
+  schema: Schema,
+  store: Store,
+  drafts: Drafts,
+  run: () => T
+): Promise<T> {
+  const updates = await accumulate(drafts.updates())
+  let result: T | undefined
+  try {
+    return store.transaction(() => {
+      Cache.applyUpdates(store, schema, updates)
+      result = run()
+      throw 'rollback'
+    })
+  } catch (e) {
+    if (e === 'rollback') return result!
+    console.log(e)
+    throw e
   }
 }

@@ -1,12 +1,12 @@
 {
   "compilerOptions": {
+    "module": "ESNext",
+    "target": "ESNext",
     "preserveWatchOutput": true,
     "outDir": ".types",
     "incremental": true,
     "assumeChangesOnlyAffectDirectDependencies": true,
     "emitDeclarationOnly": true,
-    "module": "ESNext",
-    "target": "ESNext",
     "skipLibCheck": true,
     "strict": true,
     "declaration": true,

@@ -1,10 +1,11 @@
 import {alinea, Page} from '.alinea'
 import {Entry} from '@alinea/core'
+import {Pages} from '@alinea/server'
 import {GetStaticPropsContext} from 'next'
+import {drafts} from '../drafts'
 import {PageView} from '../view/PageView'
 
-async function propsOf(page: Page) {
-  const pages = await alinea.pages
+function propsOf(pages: Pages<Page>, page: Page) {
   switch (page.type) {
     case 'Docs':
       return {
@@ -22,13 +23,14 @@ async function propsOf(page: Page) {
 }
 
 export async function getStaticProps(context: GetStaticPropsContext) {
-  const pages = await alinea.pages
+  let pages = await alinea.pages
+  if (context.preview) pages = await pages.preview(drafts)
   const paths = (context.params?.slug as Array<string>) || []
   const slug = '/' + paths.join('/')
   const page = pages.first(pages.whereUrl(slug))
   if (!page) return {props: {}}
   return {
-    props: await propsOf(page)
+    props: propsOf(pages, page)
   }
 }
 

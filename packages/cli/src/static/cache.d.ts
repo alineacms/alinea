@@ -1,2 +1,2 @@
 import {Store} from 'helder.store'
-export const store: Promise<Store>
+export const createCache: () => Promise<Store>

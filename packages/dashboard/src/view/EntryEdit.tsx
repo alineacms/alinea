@@ -99,7 +99,7 @@ function EntryEditHeader() {
             display: 'block',
             width: '100%',
             background: 'var(--highlight)',
-            padding: `${px(8)} ${px(15)}`,
+            padding: `${px(6)} ${px(15)}`,
             borderRadius: px(8)
           }}
         >
@@ -113,7 +113,7 @@ function EntryEditHeader() {
       </Stack.Right>
       {status !== EntryStatus.Published && !isPublishing && (
         <AppBar.Item as="button" icon={MdPublish} onClick={handlePublish}>
-          Publish
+          <span>Publish</span>
         </AppBar.Item>
       )}
       {/*<Tabs.Root defaultValue="type">

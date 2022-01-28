@@ -3,11 +3,9 @@ import type {CollectionReference} from 'firebase-admin/firestore'
 import * as Y from 'yjs'
 import {Drafts} from '../Drafts'
 
-type Row = {published: boolean; draft: Buffer}
-
 export type FirestoreDraftsOptions = {
   schema: Schema
-  collection: CollectionReference<Row>
+  collection: CollectionReference
 }
 
 export class FirestoreDrafts implements Drafts {

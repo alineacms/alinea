@@ -29,7 +29,5 @@ await SqlJs.init({
   }*/
 })
 
-export const store = new SqliteStore(
-  new SqlJs(new __sqlJs.Database(buffer)),
-  createId
-)
+export const createCache = () =>
+  new SqliteStore(new SqlJs(new __sqlJs.Database(buffer)), createId)

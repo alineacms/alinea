@@ -1,1 +1,1 @@
-export * from './HubClient'
+export * from './Client'

@@ -181,8 +181,15 @@ const serverOptions: BuildOptions = {
     ReporterPlugin.configure({name: 'Server'}),
     RunPlugin.configure({cmd: 'node dist/server.js', cwd: 'packages/stories'}),
     AliasPlugin.configure(internal),
+    AliasPlugin.configure({
+      'next/link': path.resolve('./node_modules/next/link.js')
+    }),
     FixReactIconsPlugin
-  ]
+  ],
+  banner: {
+    // Previewing the next.js website makes us load a bunch of non ESM javascript
+    js: "import {createRequire} from 'module';global.require = createRequire(import.meta.url);"
+  }
 }
 
 export const dev = {

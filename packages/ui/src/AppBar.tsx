@@ -32,7 +32,11 @@ export namespace AppBar {
         className={styles.item.is({interactive}).mergeProps(props)()}
       >
         <HStack center gap={8} full>
-          <Icon icon={icon} />
+          {icon && (
+            <div className={styles.item.icon()}>
+              <Icon icon={icon} />
+            </div>
+          )}
           {children}
         </HStack>
       </Tag>

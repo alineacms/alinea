@@ -2,6 +2,7 @@
   display: flex;
   align-items: center;
   border-bottom: 1px solid var(--outline);
+  background: var(--background);
 }
 
 .item {
@@ -10,6 +11,12 @@
   align-items: center;
   padding: 0 10px;
   height: 44px;
+  font-size: 13px;
+
+  &-icon {
+    display: flex;
+    font-size: 1.2em;
+  }
 
   &.is-interactive {
     cursor: pointer;

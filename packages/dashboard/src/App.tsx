@@ -1,4 +1,4 @@
-import {HubClient} from '@alinea/client'
+import {Client} from '@alinea/client'
 import {Session} from '@alinea/core'
 import {
   FavIcon,
@@ -150,7 +150,7 @@ function AppRoot({session, setSession}: AppRootProps) {
 function localSession<T>(options: DashboardOptions<T>) {
   return {
     user: {sub: 'anonymous'},
-    hub: new HubClient(options.schema, options.apiUrl),
+    hub: new Client(options.schema, options.apiUrl),
     end: async () => {}
   }
 }

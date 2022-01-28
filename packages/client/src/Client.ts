@@ -5,7 +5,7 @@ async function toFuture<T = void>(res: Response): Future<T> {
   return Outcome.fromJSON(await res.json())
 }
 
-export class HubClient implements Hub {
+export class Client implements Hub {
   constructor(
     public schema: Schema,
     protected url: string,

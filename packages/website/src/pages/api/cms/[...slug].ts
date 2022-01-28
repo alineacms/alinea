@@ -1,12 +1,10 @@
 import {schema, store} from '.alinea'
 import {PasswordLessAuth} from '@alinea/auth.passwordless/PasswordLessAuth.js'
-import {HubServer, JsonLoader, Server} from '@alinea/server'
-import {FirestoreDrafts} from '@alinea/server/drafts/FirestoreDrafts'
+import {JsonLoader, Server} from '@alinea/server'
 import {GithubTarget} from '@alinea/server/target/GithubTarget'
 import dotenv from 'dotenv'
-import {cert, initializeApp} from 'firebase-admin/app'
-import {getFirestore} from 'firebase-admin/firestore'
 import {createTransport} from 'nodemailer'
+import {drafts} from '../../../drafts'
 
 dotenv.config({path: '../../.env'})
 
@@ -14,13 +12,6 @@ const isProduction = process.env.NODE_ENV === 'production'
 const dashboardUrl = isProduction
   ? 'https://alinea.vercel.app/admin'
   : 'http://localhost:3000/admin'
-initializeApp({
-  credential: cert(JSON.parse(process.env.FIRESTORE_SERVICE_ACCOUNT!))
-})
-const drafts = new FirestoreDrafts({
-  schema,
-  collection: getFirestore().collection('Draft')
-})
 const target = new GithubTarget({
   loader: JsonLoader,
   contentDir: 'packages/website/content',
@@ -33,7 +24,6 @@ const target = new GithubTarget({
     email: 'ben@codeurs.be'
   }
 })
-const hub = new HubServer(schema, await store, drafts, target)
 const auth = new PasswordLessAuth({
   dashboardUrl,
   subject: 'Login',
@@ -54,7 +44,10 @@ const auth = new PasswordLessAuth({
 const server = new Server({
   auth,
   dashboardUrl,
-  hub
+  schema,
+  store: await store,
+  drafts: drafts,
+  target
 })
 
 export default server.respond
