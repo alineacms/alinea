@@ -40,8 +40,6 @@ function hubRoutes(hub: Hub, router: Router) {
   router.put(prefix + Hub.routes.draft(':id'), async (req, res) => {
     const id = req.params.id
     const body = (await parseBuffer(req)) as Buffer
-    console.log(typeof body)
-    console.log(body)
     return respond(res, await hub.updateDraft(id, body))
   })
   // Hub.deleteDraft
