@@ -22,6 +22,7 @@ export class FirestoreDrafts implements Drafts {
     const row = await ref.get()
     if (!row.exists) return undefined
     const data = row.data()!
+    if (!(data.draft instanceof Uint8Array)) return undefined
     if (!stateVector) return data.draft
     const doc = new Y.Doc()
     Y.applyUpdate(doc, data.draft)
