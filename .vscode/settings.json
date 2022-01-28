@@ -9,5 +9,6 @@
     "watchFile": "useFsEvents"
   },
   "emmet.showExpandedAbbreviation": "never",
-  "todo-tree.general.tags": ["Todo"]
+  "todo-tree.general.tags": ["Todo"],
+  "search.useGlobalIgnoreFiles": true
 }

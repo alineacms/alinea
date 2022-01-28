@@ -77,7 +77,7 @@ function TreeChildren({
 }
 
 type TreeNodeProps = {
-  entry: Entry.AsListItem
+  entry: Entry.Summary
   level: number
 } & OpenChildren
 
@@ -150,7 +150,7 @@ function TreeNodeChildrenCreator({entry}: TreeNodeChildrenCreator) {
 }
 
 type TreeNodeLinkProps = {
-  entry: Entry.AsListItem
+  entry: Entry.Summary
   isSelected: boolean
   level: number
   isOpened: boolean

@@ -15,18 +15,15 @@ export class HubClient implements Hub {
     protected unauthorized: () => void = () => {}
   ) {}
 
-  entry(
-    id: string,
-    stateVector?: Uint8Array
-  ): Future<Entry.WithParents | null> {
+  entry(id: string, stateVector?: Uint8Array): Future<Entry.Detail | null> {
     return this.fetchJson(Hub.routes.entry(id, stateVector)).then<
-      Outcome<Entry.WithParents | null>
+      Outcome<Entry.Detail | null>
     >(toFuture)
   }
 
-  list(parentId?: string): Future<Array<Entry.AsListItem>> {
+  list(parentId?: string): Future<Array<Entry.Summary>> {
     return this.fetchJson(Hub.routes.list(parentId)).then<
-      Outcome<Array<Entry.AsListItem>>
+      Outcome<Array<Entry.Summary>>
     >(toFuture)
   }
 

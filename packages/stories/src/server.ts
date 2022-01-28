@@ -3,6 +3,7 @@ import {createId} from '@alinea/core'
 import {
   FileDrafts,
   FileSource,
+  GitDrafts,
   HubServer,
   Index,
   JsonLoader,
@@ -14,14 +15,10 @@ import express from 'express'
 import fs from 'fs/promises'
 import {BetterSqlite3} from 'helder.store/sqlite/drivers/BetterSqlite3.js'
 import {SqliteStore} from 'helder.store/sqlite/SqliteStore.js'
+import http from 'isomorphic-git/http/node/index.js'
 import {createTransport} from 'nodemailer'
 import serveHandler from 'serve-handler'
 import {schema} from '../../website/src/schema'
-
-process.on('unhandledRejection', (error, p) => {
-  console.log('=== UNHANDLED REJECTION ===')
-  console.dir(error)
-})
 
 dotenv.config({path: '../../.env'})
 
@@ -53,21 +50,21 @@ const content = new FileSource({
 
 const onAuth = () => ({username: process.env.GITHUB_TOKEN})
 
-/*const drafts = new GitDrafts({
+const gitDrafts = new GitDrafts({
   schema,
   fs,
   dir: './dist/drafts',
   http,
   onAuth,
   url: 'https://github.com/benmerckx/content',
-  ref: 'drafts',
+  branch: 'drafts',
   author: {
     name: 'Ben',
     email: 'ben@codeurs.be'
   }
-})*/
+})
 
-const drafts = new FileDrafts({
+const fileDrafts = new FileDrafts({
   schema,
   fs,
   dir: './dist/drafts'
@@ -75,7 +72,7 @@ const drafts = new FileDrafts({
 
 await Index.create(store, content)
 
-const hub = new HubServer(schema, store, drafts, content)
+const hub = new HubServer(schema, store, gitDrafts, content)
 const server = new Server({
   dashboardUrl,
   // auth,

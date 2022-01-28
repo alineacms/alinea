@@ -38,15 +38,15 @@ import {Link} from 'react-router-dom'
 import slug from 'simple-slugify'
 import * as Y from 'yjs'
 import {useDashboard} from '../hook/UseDashboard'
-import {useDrafts} from '../hook/UseDrafts'
+import {DraftsStatus, useDrafts} from '../hook/UseDrafts'
 import {useSession} from '../hook/UseSession'
 import css from './EntryEdit.module.scss'
 
-type EntryStatusChipProps = {
-  status: EntryStatus
-}
-
-function EntryStatusChip({status}: EntryStatusChipProps) {
+function EntryStatusChip() {
+  const drafts = useDrafts()
+  const draftsStatus = useObservable(drafts.status)
+  const draft = useCurrentDraft()
+  const status = useObservable(draft.status)
   switch (status) {
     case EntryStatus.Published:
       return <Chip icon={MdCheck}>Published</Chip>
@@ -54,7 +54,16 @@ function EntryStatusChip({status}: EntryStatusChipProps) {
       return <Chip icon={MdRotateLeft}>Publishing</Chip>
     case EntryStatus.Draft:
       return (
-        <Chip accent icon={MdEdit}>
+        <Chip
+          accent
+          icon={
+            draftsStatus === DraftsStatus.Saving
+              ? MdRotateLeft
+              : draftsStatus === DraftsStatus.Synced
+              ? MdCheck
+              : MdEdit
+          }
+        >
           Draft
         </Chip>
       )
@@ -66,10 +75,10 @@ function EntryStatusChip({status}: EntryStatusChipProps) {
 const styles = fromModule(css)
 
 function EntryEditHeader() {
-  const queryClient = useQueryClient()
   const drafts = useDrafts()
   const draft = useCurrentDraft()
   const status = useObservable(draft.status)
+  const queryClient = useQueryClient()
   const [isPublishing, setPublishing] = useState(false)
   function handlePublish() {
     setPublishing(true)
@@ -99,7 +108,7 @@ function EntryEditHeader() {
       </AppBar.Item>
       <Stack.Right>
         <AppBar.Item>
-          <EntryStatusChip status={status} />
+          <EntryStatusChip />
         </AppBar.Item>
       </Stack.Right>
       {status !== EntryStatus.Published && !isPublishing && (

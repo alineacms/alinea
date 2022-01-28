@@ -27,7 +27,7 @@ import {HashRouter} from 'react-router-dom'
 import {DashboardOptions} from './Dashboard'
 import {DashboardProvider, useDashboard} from './hook/UseDashboard'
 import {useDraft} from './hook/UseDraft'
-import {DraftsProvider, useDrafts} from './hook/UseDrafts'
+import {DraftsProvider, DraftsStatus, useDrafts} from './hook/UseDrafts'
 import {SessionProvider} from './hook/UseSession'
 import {ContentTree} from './view/ContentTree'
 import {EntryEdit, NewEntry} from './view/EntryEdit'
@@ -72,7 +72,7 @@ function AppAuthenticated() {
           </Suspense>
         </div>
         <Statusbar.Root>
-          <DraftsStatus />
+          <DraftsStatusSummary />
           {!auth && (
             <Statusbar.Status icon={MdWarning}>
               Not using authentication
@@ -114,15 +114,15 @@ function EntryRoute({id}: EntryRouteProps) {
   )
 }
 
-function DraftsStatus() {
+function DraftsStatusSummary() {
   const drafts = useDrafts()
   const status = useObservable(drafts.status)
   switch (status) {
-    case 'synced':
+    case DraftsStatus.Synced:
       return <Statusbar.Status icon={MdCheck}>Synced</Statusbar.Status>
-    case 'editing':
+    case DraftsStatus.Editing:
       return <Statusbar.Status icon={MdEdit}>Editing</Statusbar.Status>
-    case 'saving':
+    case DraftsStatus.Saving:
       return <Statusbar.Status icon={MdRotateLeft}>Saving</Statusbar.Status>
   }
 }

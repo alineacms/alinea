@@ -6,8 +6,8 @@ import {User} from './User'
 
 export interface Hub<T = any> {
   schema: Schema<T>
-  entry(id: string, stateVector?: Uint8Array): Future<Entry.WithParents | null>
-  list(parentId?: string): Future<Array<Entry.AsListItem>>
+  entry(id: string, stateVector?: Uint8Array): Future<Entry.Detail | null>
+  list(parentId?: string): Future<Array<Entry.Summary>>
   updateDraft(id: string, update: Uint8Array): Future
   deleteDraft(id: string): Future
   publishEntries(entries: Array<Entry>): Future

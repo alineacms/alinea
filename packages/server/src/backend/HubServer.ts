@@ -7,6 +7,7 @@ import {
   outcome,
   Schema
 } from '@alinea/core'
+import {encode} from 'base64-arraybuffer'
 import {Functions, Store} from 'helder.store'
 import {Drafts} from './Drafts'
 import {Index} from './Index'
@@ -23,27 +24,29 @@ export class HubServer implements Hub {
   async entry(
     id: string,
     stateVector?: Uint8Array
-  ): Future<Entry.WithParents | null> {
+  ): Future<Entry.Detail | null> {
     const {schema, store, drafts} = this
     function parents(entry: Entry): Array<string> {
       if (!entry.$parent) return []
       const parent = store.first(Entry.where(Entry.id.is(entry.$parent)))
       return parent ? [parent.id, ...parents(parent)] : []
     }
+    const draft = await this.drafts.get(id, stateVector)
     return future(
       queryWithDrafts(schema, store, drafts, () => {
         const entry = store.first(Entry.where(Entry.id.is(id)))
         return (
           entry && {
             entry,
-            parents: parents(entry)
+            parents: parents(entry),
+            draft: draft && encode(draft)
           }
         )
       })
     )
   }
 
-  async list(parentId?: string): Future<Array<Entry.AsListItem>> {
+  async list(parentId?: string): Future<Array<Entry.Summary>> {
     const {schema, store, drafts} = this
     const Parent = Entry.as('Parent')
     return future(
@@ -80,6 +83,9 @@ export class HubServer implements Hub {
     return outcome(async () => {
       await this.target.publish(entries)
       // Todo: This makes updates instantly available but should be configurable
+      // Todo: if there's another instance running it won't have the drafts or
+      // these changes so it would show the old data, so maybe we should always
+      // hang on to drafts?
       Index.applyPublish(store, entries)
       await drafts.delete(entries.map(entry => entry.id))
     })

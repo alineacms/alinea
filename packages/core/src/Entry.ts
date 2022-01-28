@@ -22,11 +22,12 @@ export interface Entry {
 }
 
 export namespace Entry {
-  export type WithParents = {
+  export type Detail = {
     entry: Entry
     parents: Array<string>
+    draft: string | undefined
   }
-  export type AsListItem = Pick<
+  export type Summary = Pick<
     Entry,
     'id' | 'type' | 'title' | 'url' | '$parent' | '$isContainer'
   > & {
