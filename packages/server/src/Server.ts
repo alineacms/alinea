@@ -39,10 +39,9 @@ function hubRoutes(hub: Hub, router: Router) {
   // Hub.updateDraft
   router.put(prefix + Hub.routes.draft(':id'), async (req, res) => {
     const id = req.params.id
-    return respond(
-      res,
-      await hub.updateDraft(id, (await parseBuffer(req)) as Buffer)
-    )
+    const body = (await parseBuffer(req)) as Buffer
+    console.log(body)
+    return respond(res, await hub.updateDraft(id, body))
   })
   // Hub.deleteDraft
   router.delete(prefix + Hub.routes.draft(':id'), async (req, res) => {
