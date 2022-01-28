@@ -15,6 +15,7 @@ export enum DraftsStatus {
 }
 
 class Drafts {
+  saveDelay = 1000
   saveTimeout: ReturnType<typeof setTimeout> | null = null
   status = observable<DraftsStatus>(DraftsStatus.Synced)
   stateVectors = new WeakMap<Y.Doc, Uint8Array>()
@@ -76,7 +77,7 @@ class Drafts {
       if (origin instanceof Room) return
       this.status(DraftsStatus.Editing)
       if (this.saveTimeout) clearTimeout(this.saveTimeout)
-      this.saveTimeout = setTimeout(save, 3000)
+      this.saveTimeout = setTimeout(save, this.saveDelay)
     }
     doc.on('update', watch)
     return () => {

@@ -36,6 +36,7 @@
     "@types/content-type": "^1.1.5",
     "@types/cors": "^2.8.12",
     "@types/serve-handler": "^6.1.1",
-    "@types/ws": "^8.2.0"
+    "@types/ws": "^8.2.0",
+    "firebase-admin": "^10.0.2"
   }
 }

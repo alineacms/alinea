@@ -1,15 +1,11 @@
 import {schema, store} from '.alinea'
 import {PasswordLessAuth} from '@alinea/auth.passwordless/PasswordLessAuth.js'
-import {
-  GitDrafts,
-  GithubTarget,
-  HubServer,
-  JsonLoader,
-  Server
-} from '@alinea/server'
+import {HubServer, JsonLoader, Server} from '@alinea/server'
+import {FirestoreDrafts} from '@alinea/server/drafts/FirestoreDrafts'
+import {GithubTarget} from '@alinea/server/target/GithubTarget'
 import dotenv from 'dotenv'
-import http from 'isomorphic-git/http/node/index.js'
-import {fs as memFs} from 'memfs'
+import {cert, initializeApp} from 'firebase-admin/app'
+import {getFirestore} from 'firebase-admin/firestore'
 import {createTransport} from 'nodemailer'
 
 dotenv.config({path: '../../.env'})
@@ -18,22 +14,12 @@ const isProduction = process.env.NODE_ENV === 'production'
 const dashboardUrl = isProduction
   ? 'https://alinea.vercel.app/admin'
   : 'http://localhost:3000/admin'
-const onAuth = () => ({username: process.env.GITHUB_TOKEN})
-const gitConfig = {
-  author: {
-    name: 'Ben',
-    email: 'ben@codeurs.be'
-  }
-}
-const drafts = new GitDrafts({
+initializeApp({
+  credential: cert(JSON.parse(process.env.FIRESTORE_SERVICE_ACCOUNT!))
+})
+const drafts = new FirestoreDrafts({
   schema,
-  fs: memFs.promises as any,
-  dir: '/tmp',
-  http,
-  onAuth,
-  url: 'https://github.com/benmerckx/content',
-  branch: 'drafts',
-  ...gitConfig
+  collection: getFirestore().collection('Draft')
 })
 const target = new GithubTarget({
   loader: JsonLoader,
@@ -42,7 +28,10 @@ const target = new GithubTarget({
   owner: 'codeurs',
   repo: 'alinea',
   branch: 'main',
-  ...gitConfig
+  author: {
+    name: 'Ben',
+    email: 'ben@codeurs.be'
+  }
 })
 const hub = new HubServer(schema, await store, drafts, target)
 const auth = new PasswordLessAuth({

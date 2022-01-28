@@ -2,11 +2,14 @@ import {PasswordLessAuth} from '@alinea/auth.passwordless/PasswordLessAuth'
 import {createId} from '@alinea/core'
 import {Cache, HubServer, JsonLoader, Server} from '@alinea/server'
 import {FileDrafts} from '@alinea/server/drafts/FileDrafts'
+import {FirestoreDrafts} from '@alinea/server/drafts/FirestoreDrafts'
 import {GitDrafts} from '@alinea/server/drafts/GitDrafts'
 import {FileSource} from '@alinea/server/source/FileSource'
 import compression from 'compression'
 import dotenv from 'dotenv'
 import express from 'express'
+import {cert, initializeApp} from 'firebase-admin/app'
+import {getFirestore} from 'firebase-admin/firestore'
 import fs from 'fs/promises'
 import {BetterSqlite3} from 'helder.store/sqlite/drivers/BetterSqlite3.js'
 import {SqliteStore} from 'helder.store/sqlite/SqliteStore.js'
@@ -65,9 +68,17 @@ const fileDrafts = new FileDrafts({
   dir: './dist/drafts'
 })
 
+initializeApp({
+  credential: cert('../../private/serviceAccount.json')
+})
+const firestoreDrafts = new FirestoreDrafts({
+  schema,
+  collection: getFirestore().collection('Draft')
+})
+
 await Cache.create(store, content)
 
-const hub = new HubServer(schema, store, gitDrafts, content)
+const hub = new HubServer(schema, store, firestoreDrafts, content)
 const server = new Server({
   dashboardUrl,
   // auth,
