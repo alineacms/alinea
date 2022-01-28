@@ -1,14 +1,9 @@
 import {PasswordLessAuth} from '@alinea/auth.passwordless/PasswordLessAuth'
 import {createId} from '@alinea/core'
-import {
-  FileDrafts,
-  FileSource,
-  GitDrafts,
-  HubServer,
-  Index,
-  JsonLoader,
-  Server
-} from '@alinea/server'
+import {Cache, HubServer, JsonLoader, Server} from '@alinea/server'
+import {FileDrafts} from '@alinea/server/drafts/FileDrafts'
+import {GitDrafts} from '@alinea/server/drafts/GitDrafts'
+import {FileSource} from '@alinea/server/source/FileSource'
 import compression from 'compression'
 import dotenv from 'dotenv'
 import express from 'express'
@@ -70,7 +65,7 @@ const fileDrafts = new FileDrafts({
   dir: './dist/drafts'
 })
 
-await Index.create(store, content)
+await Cache.create(store, content)
 
 const hub = new HubServer(schema, store, gitDrafts, content)
 const server = new Server({

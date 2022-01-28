@@ -9,8 +9,8 @@ import {
 } from '@alinea/core'
 import {encode} from 'base64-arraybuffer'
 import {Functions, Store} from 'helder.store'
+import {Cache} from './Cache'
 import {Drafts} from './Drafts'
-import {Index} from './Index'
 import {Target} from './Target'
 
 export class HubServer implements Hub {
@@ -86,7 +86,7 @@ export class HubServer implements Hub {
       // Todo: if there's another instance running it won't have the drafts or
       // these changes so it would show the old data, so maybe we should always
       // hang on to drafts?
-      Index.applyPublish(store, entries)
+      Cache.applyPublish(store, entries)
       await drafts.delete(entries.map(entry => entry.id))
     })
   }
@@ -102,7 +102,7 @@ async function queryWithDrafts<T>(
   let result: T | undefined
   try {
     return store.transaction(() => {
-      Index.applyUpdates(store, schema, updates)
+      Cache.applyUpdates(store, schema, updates)
       result = run()
       throw 'rollback'
     })

@@ -6,7 +6,7 @@ import {fs} from 'memfs'
 import {test} from 'uvu'
 import * as assert from 'uvu/assert'
 import * as Y from 'yjs'
-import {FileDrafts} from '../src/backend/Drafts'
+import {FileDrafts} from '../src/drafts/FileDrafts'
 
 dotenv.config()
 

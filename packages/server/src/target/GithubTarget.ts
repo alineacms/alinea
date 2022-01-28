@@ -2,11 +2,8 @@ import {Entry} from '@alinea/core'
 import {Octokit} from '@octokit/rest'
 import createOrUpdateFiles from 'octokit-commit-multiple-files/create-or-update-files.js'
 import {posix as path} from 'path'
-import {Loader} from './Loader'
-
-export interface Target {
-  publish(entries: Array<Entry>): Promise<void>
-}
+import {Loader} from '../Loader'
+import {Target} from '../Target'
 
 export type GithubTargetOptions = {
   loader: Loader

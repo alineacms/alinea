@@ -1,12 +1,9 @@
 import {Entry} from '@alinea/core'
 import {posix as path} from 'path'
-import {FS} from './FS'
-import {Loader} from './Loader'
-import {Target} from './Target'
-
-export interface Source {
-  entries(): AsyncGenerator<Entry>
-}
+import {FS} from '../FS'
+import {Loader} from '../Loader'
+import {Source} from '../Source'
+import {Target} from '../Target'
 
 export type FileSourceOptions = {
   fs: FS

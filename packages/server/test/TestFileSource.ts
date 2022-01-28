@@ -2,9 +2,9 @@ import {Entry} from '@alinea/core/Entry'
 import {Volume} from 'memfs'
 import {test} from 'uvu'
 import * as assert from 'uvu/assert'
-import {FS} from '../src/backend/FS'
-import {JsonLoader} from '../src/backend/loader/JsonLoader'
-import {FileSource} from '../src/backend/Source'
+import {FS} from '../src/FS'
+import {JsonLoader} from '../src/loader/JsonLoader'
+import {FileSource} from '../src/source/FileSource'
 
 function entry(entry: Entry.Raw) {
   return JSON.stringify(entry)

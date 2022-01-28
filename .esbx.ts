@@ -11,6 +11,7 @@ import type {BuildOptions, Plugin} from 'esbuild'
 import {build} from 'esbuild'
 import fs from 'fs-extra'
 import path from 'path'
+import {createId} from './packages/core/src/Id'
 
 const FixReactIconsPlugin: Plugin = {
   name: 'FixReactIconsPlugin',
@@ -208,3 +209,9 @@ export const testTask = TestTask.configure({
     ]
   }
 })
+
+export const mkid = {
+  action() {
+    console.log(createId())
+  }
+}

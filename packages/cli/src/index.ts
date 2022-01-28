@@ -1,6 +1,7 @@
 import {createId} from '@alinea/core/Id'
 import {Schema} from '@alinea/core/Schema'
-import {FileSource, Index, JsonLoader} from '@alinea/server'
+import {Cache, JsonLoader} from '@alinea/server'
+import {FileSource} from '@alinea/server/source/FileSource'
 import {encode} from 'base64-arraybuffer'
 import {dirname, filename} from 'dirname-filename-esm'
 import {build, BuildResult, Plugin} from 'esbuild'
@@ -156,7 +157,7 @@ async function generate(options: Options) {
     dir: content,
     loader: JsonLoader
   })
-  await Index.create(store, source)
+  await Cache.create(store, source)
   const db = (store as any).db.db
   const data = db.serialize()
   if (legacy) {

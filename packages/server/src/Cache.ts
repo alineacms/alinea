@@ -11,7 +11,7 @@ import prettyMilliseconds from 'pretty-ms'
 import * as Y from 'yjs'
 import {Source} from './Source'
 
-export class Index {
+export class Cache {
   static async create(store: Store, from: Source) {
     const startTime = process.hrtime.bigint()
     console.log('Start indexing...')
