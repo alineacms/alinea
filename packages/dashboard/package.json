@@ -6,7 +6,6 @@
     "type": "git",
     "url": "https://github.com/codeurs/alinea.git"
   },
-  "module": "dist/index.js",
   "types": "dist/index.d.ts",
   "type": "module",
   "exports": {
@@ -17,8 +16,6 @@
     "@alinea/client": "0.0.0",
     "@alinea/core": "0.0.0",
     "@alinea/editor": "0.0.0",
-    "@fontsource/inter": "^4.5.0",
-    "@fontsource/jetbrains-mono": "^4.5.0",
     "js-base64": "^3.7.2",
     "react-helmet": "^6.1.0",
     "react-icons": "^4.3.1",

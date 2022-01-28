@@ -10,8 +10,7 @@
     "build": "esbx build",
     "test": "esbx test",
     "clean": "esbx clean",
-    "publish:all": "yarn build && yarn workspaces foreach --no-private npm publish --tolerate-republish",
-    "postinstall": "ncp node_modules/@fontsource/inter/files packages/css/fonts/ && ncp node_modules/@fontsource/jetbrains-mono/files/ packages/css/fonts"
+    "publish:all": "yarn build && yarn workspaces foreach --no-private npm publish --tolerate-republish"
   },
   "files": [],
   "workspaces": [
