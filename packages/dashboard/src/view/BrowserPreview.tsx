@@ -1,8 +1,8 @@
 import {AppBar, fromModule, HStack, px, Typo, useObservable} from '@alinea/ui'
 import {useEffect, useRef} from 'react'
 import {
-  MdKeyboardArrowLeft,
-  MdKeyboardArrowRight,
+  MdArrowBack,
+  MdArrowForward,
   MdLock,
   MdOpenInNew,
   MdRefresh
@@ -29,14 +29,14 @@ export function BrowserPreview({url}: BrowserPreviewProps) {
       <AppBar.Root>
         <AppBar.Item
           as="button"
-          icon={MdKeyboardArrowLeft}
+          icon={MdArrowBack}
           onClick={() => {
             ref.current?.contentWindow?.history.back()
           }}
         />
         <AppBar.Item
           as="button"
-          icon={MdKeyboardArrowRight}
+          icon={MdArrowForward}
           onClick={() => {
             ref.current?.contentWindow?.history.forward()
           }}
