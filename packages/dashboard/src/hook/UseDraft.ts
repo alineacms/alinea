@@ -9,11 +9,10 @@ export function useDraft(id: string | undefined) {
   const docs = useDrafts()
   const {data: draft} = useQuery(
     ['draft', id],
-    () => {
+    async () => {
       if (!id) return undefined
-      return docs.get(id).then(({type, parents, entry, doc}) => {
-        return new EntryDraft(hub, type, entry, parents, doc)
-      })
+      const {type, parents, entry, doc} = await docs.get(id)
+      return new EntryDraft(hub, type, entry, parents, doc)
     },
     {
       suspense: true,

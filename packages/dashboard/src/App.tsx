@@ -101,14 +101,10 @@ function EntryRoute({id}: EntryRouteProps) {
         <ContentTree select={draft?.parents} />
       </Pane>
       <div style={{width: '100%'}}>
-        {draft && (
-          <>
-            <Route path="/:id/new">
-              <NewEntry parentId={id} />
-            </Route>
-            <EntryEdit draft={draft} />
-          </>
-        )}
+        <Route path="/:id/new">
+          <NewEntry parentId={id} />
+        </Route>
+        {draft && <EntryEdit draft={draft} />}
       </div>
     </>
   )

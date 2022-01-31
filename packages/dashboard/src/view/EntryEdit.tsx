@@ -28,6 +28,7 @@ import {Helmet} from 'react-helmet'
 import {
   MdArchive,
   MdCheck,
+  MdDelete,
   MdEdit,
   MdPublish,
   MdRotateLeft
@@ -79,6 +80,11 @@ function EntryEditHeader() {
   const status = useObservable(draft.status)
   const queryClient = useQueryClient()
   const [isPublishing, setPublishing] = useState(false)
+  function handleDiscard() {
+    return drafts.discard(draft).then(() => {
+      queryClient.invalidateQueries(['draft', draft.id])
+    })
+  }
   function handlePublish() {
     setPublishing(true)
     return drafts
@@ -110,6 +116,11 @@ function EntryEditHeader() {
           <EntryStatusChip />
         </AppBar.Item>
       </Stack.Right>
+      {status === EntryStatus.Draft && (
+        <AppBar.Item as="button" icon={MdDelete} onClick={handleDiscard}>
+          <span>Discard</span>
+        </AppBar.Item>
+      )}
       {status !== EntryStatus.Published && !isPublishing && (
         <AppBar.Item as="button" icon={MdPublish} onClick={handlePublish}>
           <span>Publish</span>

@@ -48,6 +48,15 @@ class Drafts {
     return {...result, type, doc}
   }
 
+  async discard(draft: EntryDraft) {
+    if (this.saveTimeout) clearTimeout(this.saveTimeout)
+    draft.status(EntryStatus.Publishing)
+    this.status(DraftsStatus.Saving)
+    return this.hub.deleteDraft(draft.id).then(() => {
+      draft.status(EntryStatus.Published)
+    })
+  }
+
   async publish(draft: EntryDraft) {
     if (this.saveTimeout) clearTimeout(this.saveTimeout)
     draft.status(EntryStatus.Publishing)
