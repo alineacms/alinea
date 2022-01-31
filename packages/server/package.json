@@ -6,13 +6,18 @@
     "type": "git",
     "url": "https://github.com/codeurs/alinea.git"
   },
-  "types": "dist/index.d.ts",
   "type": "module",
   "sideEffects": false,
   "exports": {
     ".": "./dist/index.js",
-    "./*.js": "./dist/*.js",
-    "./*": "./dist/*.js"
+    "./*": "./dist/*"
+  },
+  "typesVersions": {
+    "*": {
+      "*": [
+        "./dist/*"
+      ]
+    }
   },
   "dependencies": {
     "@alinea/core": "0.0.0",
