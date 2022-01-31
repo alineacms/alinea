@@ -22,14 +22,32 @@ export function BrowserPreview({url}: BrowserPreviewProps) {
   const status = useObservable(drafts.status)
   useEffect(() => {
     if (status === DraftsStatus.Synced)
-      ref.current!.contentWindow!.location.reload()
+      ref.current?.contentWindow?.location.reload()
   }, [status])
   return (
     <div className={styles.root()}>
       <AppBar.Root>
-        <AppBar.Item as="button" icon={MdKeyboardArrowLeft} />
-        <AppBar.Item as="button" icon={MdKeyboardArrowRight} />
-        <AppBar.Item as="button" icon={MdRefresh} />
+        <AppBar.Item
+          as="button"
+          icon={MdKeyboardArrowLeft}
+          onClick={() => {
+            ref.current?.contentWindow?.history.back()
+          }}
+        />
+        <AppBar.Item
+          as="button"
+          icon={MdKeyboardArrowRight}
+          onClick={() => {
+            ref.current?.contentWindow?.history.forward()
+          }}
+        />
+        <AppBar.Item
+          as="button"
+          icon={MdRefresh}
+          onClick={() => {
+            ref.current?.contentWindow?.location.reload()
+          }}
+        />
         <AppBar.Item full style={{flexGrow: 1, minWidth: 0}}>
           <Typo.Monospace
             style={{
