@@ -221,6 +221,7 @@ __metadata:
     "@types/compression": ^1.7.2
     "@types/content-type": ^1.1.5
     "@types/cors": ^2.8.12
+    "@types/js-yaml": ^4.0.5
     "@types/serve-handler": ^6.1.1
     "@types/ws": ^8.2.0
     auto-bind: ^5.0.1
@@ -232,6 +233,7 @@ __metadata:
     firebase-admin: ^10.0.2
     helder.store: ^0.0.0-alpha.21
     isomorphic-git: ^1.10.5
+    js-yaml: ^4.1.0
     octokit-commit-multiple-files: ^3.2.1
     p-limit: ^4.0.0
     pretty-ms: ^7.0.1
@@ -1940,6 +1942,13 @@ __metadata:
   version: 0.0.35
   resolution: "@types/isomorphic-fetch@npm:0.0.35"
   checksum: ae57d2605d24f799fd3d838d59986e88e8a345c65c1751122f6b39b62de504e0a61cd62f04e6e157406c84cba60a6a39eb6d5d2c0a9e9ac153759d5354b5e7e9
+  languageName: node
+  linkType: hard
+
+"@types/js-yaml@npm:^4.0.5":
+  version: 4.0.5
+  resolution: "@types/js-yaml@npm:4.0.5"
+  checksum: 7dcac8c50fec31643cc9d6444b5503239a861414cdfaa7ae9a38bc22597c4d850c4b8cec3d82d73b3fbca408348ce223b0408d598b32e094470dfffc6d486b4d
   languageName: node
   linkType: hard
 
