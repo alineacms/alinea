@@ -1,7 +1,7 @@
 import {schema} from '.alinea'
 import {PasswordLessLogin} from '@alinea/auth.passwordless/PasswordLessLogin'
-import {EntryOf} from '@alinea/core'
-import Dashboard from '@alinea/dashboard'
+import {Entry, EntryOf} from '@alinea/core'
+import Dashboard, {BrowserPreview} from '@alinea/dashboard'
 
 /*
 const Dashboard: typeof import('@alinea/dashboard')['default'] = dynamic(
@@ -10,6 +10,10 @@ const Dashboard: typeof import('@alinea/dashboard')['default'] = dynamic(
     ssr: false
   }
 ) as any*/
+
+function Preview(entry: Entry) {
+  return <BrowserPreview url={`/api/preview?${entry.url}`} />
+}
 
 export default function Admin() {
   return (
@@ -20,9 +24,7 @@ export default function Admin() {
           schema={schema}
           apiUrl="/api/cms"
           auth={PasswordLessLogin}
-          /*preview={entry => {
-          return <PageView {...entry} />
-        }}*/
+          preview={Preview}
         />
       )}
     </div>

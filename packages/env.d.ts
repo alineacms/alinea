@@ -8,20 +8,6 @@ declare module '*.module.scss' {
 declare module 'get-random-values'
 declare module 'leb128'
 
-declare module 'simple-slugify' {
-  export type SlugifyOptions = {
-    lowercase?: boolean
-    normalize?: string
-    replacement?: string
-    reserved?: boolean
-    unsafe?: boolean
-    trim?: boolean
-    spaceLess?: boolean
-    space?: boolean
-  }
-  export function slugify(str: string, options?: SlugifyOptions): string
-}
-
 declare module 'octokit-commit-multiple-files/create-or-update-files.js' {
   import {Octokit} from '@octokit/rest'
 

@@ -5,6 +5,14 @@ module.exports = {
       topLevelAwait: true,
       asyncWebAssembly: true
     }
+    // https://github.com/vercel/next.js/issues/17806#issuecomment-913437792
+    config.module.rules.push({
+      test: /\.m?js$/,
+      type: 'javascript/auto',
+      resolve: {
+        fullySpecified: false
+      }
+    })
     /*if (isServer) {
       config.externals = [
         ...config.externals,

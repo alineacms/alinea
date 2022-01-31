@@ -43,8 +43,15 @@ export class Cache {
       if (existing) docFromEntry(schema, existing, doc)
       Y.applyUpdate(doc, update)
       const data = entryFromDoc(schema, doc)
-      const parentUrl = (data.url || '').split('/').slice(0, -1).join('/')
-      const parent = store.first(Entry.where(Entry.url.is(parentUrl)))
+      function stripLast(path: string) {
+        const last = path.lastIndexOf('/')
+        if (last > -1) return path.substring(0, last) || '/'
+        return path
+      }
+      const parent =
+        data.url === '/'
+          ? undefined
+          : store.first(Entry.where(Entry.url.is(stripLast(data.url))))
       const entry = {
         ...data,
         $parent: parent?.id,

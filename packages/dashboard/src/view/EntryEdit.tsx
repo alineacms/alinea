@@ -1,4 +1,4 @@
-import {docFromEntry, Entry, EntryStatus} from '@alinea/core'
+import {docFromEntry, Entry, EntryStatus, slugify} from '@alinea/core'
 import {
   CurrentDraftProvider,
   EntryDraft,
@@ -35,7 +35,6 @@ import {
 import {useQuery, useQueryClient} from 'react-query'
 import {useHistory} from 'react-router'
 import {Link} from 'react-router-dom'
-import slug from 'simple-slugify'
 import * as Y from 'yjs'
 import {useDashboard} from '../hook/UseDashboard'
 import {DraftsStatus, useDrafts} from '../hook/UseDrafts'
@@ -231,7 +230,7 @@ export function NewEntry({parentId}: NewEntryProps) {
     if (!selectedType) return
     setIsCreating(true)
     const type = hub.schema.type(selectedType)!
-    const path = slug.slugify(title)
+    const path = slugify(title)
     const entry = {
       ...type.create(selectedType),
       path,
@@ -276,7 +275,7 @@ export function NewEntry({parentId}: NewEntryProps) {
                 )
               )}
             />
-            <Link to={`/${parent}`}>Cancel</Link>
+            <Link to={`/${parent?.id}`}>Cancel</Link>
             <button>Create</button>
           </>
         )}

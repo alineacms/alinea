@@ -55,7 +55,7 @@ export function BrowserPreview({url}: BrowserPreviewProps) {
             </HStack>
           </Typo.Monospace>
         </AppBar.Item>
-        <AppBar.Item as="button" icon={MdOpenInNew} />
+        <AppBar.Item as="a" icon={MdOpenInNew} href={url} target="_blank" />
       </AppBar.Root>
       <div style={{flexGrow: 1}}>
         <iframe

@@ -3,7 +3,7 @@ import {Schema} from '@alinea/core/Schema'
 import {Cache, JsonLoader} from '@alinea/server'
 import {FileSource} from '@alinea/server/source/FileSource'
 import {encode} from 'base64-arraybuffer'
-import {dirname, filename} from 'dirname-filename-esm'
+import {dirname} from 'dirname-filename-esm'
 import {build, BuildResult, Plugin} from 'esbuild'
 import fs from 'fs-extra'
 import {BetterSqlite3} from 'helder.store/sqlite/drivers/BetterSqlite3.js'
@@ -16,7 +16,6 @@ import {version} from '../package.json'
 
 const require = createRequire(import.meta.url)
 const __dirname = dirname(import.meta)
-const __filename = filename(import.meta)
 
 const prog = sade('alinea')
 

@@ -136,7 +136,6 @@ __metadata:
     "@alinea/core": 0.0.0
     "@alinea/editor": 0.0.0
     "@alinea/ui": 0.0.0
-    simple-slugify: ^1.0.0
   languageName: unknown
   linkType: soft
 
@@ -276,7 +275,9 @@ __metadata:
     "@alinea/dashboard": 0.0.0
     "@alinea/server": 0.0.0
     "@alinea/ui": 0.0.0
+    "@types/find-config": ^1.0.1
     cross-env: ^7.0.3
+    find-config: ^1.0.0
     next: ^12.0.8
   languageName: unknown
   linkType: soft
@@ -1899,6 +1900,13 @@ __metadata:
     "@types/qs": "*"
     "@types/serve-static": "*"
   checksum: 12a2a0e6c4b993fc0854bec665906788aea0d8ee4392389d7a98a5de1eefdd33c9e1e40a91f3afd274011119c506f7b4126acb97fae62ae20b654974d44cba12
+  languageName: node
+  linkType: hard
+
+"@types/find-config@npm:^1.0.1":
+  version: 1.0.1
+  resolution: "@types/find-config@npm:1.0.1"
+  checksum: d6d7e80e57c73b8e864631515a1c3bb6964de2ec8b18912d1675733146f448330f427aca0a571ca9afb50b2d60717665d8982d4ad6f18e75e6d3d2ad3e7313ad
   languageName: node
   linkType: hard
 
@@ -4316,6 +4324,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"find-config@npm:^1.0.0":
+  version: 1.0.0
+  resolution: "find-config@npm:1.0.0"
+  dependencies:
+    user-home: ^2.0.0
+  checksum: 446c8c11551b4946ef8adaca00d595119826141c31d306f433a763d02162da4f4bc1de53ccbf2e0f6ccc76782951dca0c69b9a65c76a37bfbaa1705d0a1401b1
+  languageName: node
+  linkType: hard
+
 "firebase-admin@npm:^10.0.2":
   version: 10.0.2
   resolution: "firebase-admin@npm:10.0.2"
@@ -6700,6 +6717,13 @@ fsevents@~2.3.2:
   languageName: node
   linkType: hard
 
+"os-homedir@npm:^1.0.0":
+  version: 1.0.2
+  resolution: "os-homedir@npm:1.0.2"
+  checksum: af609f5a7ab72de2f6ca9be6d6b91a599777afc122ac5cad47e126c1f67c176fe9b52516b9eeca1ff6ca0ab8587fe66208bc85e40a3940125f03cdb91408e9d2
+  languageName: node
+  linkType: hard
+
 "p-limit@npm:^3.0.1":
   version: 3.1.0
   resolution: "p-limit@npm:3.1.0"
@@ -8208,13 +8232,6 @@ resolve@^2.0.0-next.3:
   languageName: node
   linkType: hard
 
-"simple-slugify@npm:^1.0.0":
-  version: 1.0.0
-  resolution: "simple-slugify@npm:1.0.0"
-  checksum: 1e34f2f77c96b34342f5214882ce9faaf2032dc6a56f1fa4dc38d74dafbd8227a1b9be35a2cc8348cfeff57e0f9ef1fd86bfc8b661c8dbfbb1f00262157c44b0
-  languageName: node
-  linkType: hard
-
 "slash@npm:^3.0.0":
   version: 3.0.0
   resolution: "slash@npm:3.0.0"
@@ -9042,6 +9059,15 @@ resolve@^2.0.0-next.3:
   peerDependencies:
     react: ^16.8.0 || ^17.0.0
   checksum: 96e64977a573244fd11350a3141b2cf57fb72dd9dd902f387c8a0a565d0a948bc81588bd7378c6ef6defc0d1119f37f73aac4a7a287c8443abd444bd4e7bbea8
+  languageName: node
+  linkType: hard
+
+"user-home@npm:^2.0.0":
+  version: 2.0.0
+  resolution: "user-home@npm:2.0.0"
+  dependencies:
+    os-homedir: ^1.0.0
+  checksum: a3329faa959fcd9e3e01a03347ca974f7f6b8896e6a634f29c61d8d5b61557d853c6fc5a6dff1a28e2da85b400d0e4490368a28de452ba8c41a2bf3a92cb110a
   languageName: node
   linkType: hard
 
