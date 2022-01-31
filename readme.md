@@ -3,7 +3,7 @@
 Roadmap
 
 - [x] Creating entries
-- [ ] Preview => iframe + map data with server
+- [x] Preview => iframe + map data with server
 - [ ] Track publish status
 - [ ] Media management
 - [ ] Sort entries
