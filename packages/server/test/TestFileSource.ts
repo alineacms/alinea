@@ -1,4 +1,7 @@
 import {Entry} from '@alinea/core/Entry'
+import {createSchema} from '@alinea/core/Schema'
+import {type} from '@alinea/core/Type'
+import {text} from '@alinea/input.text'
 import {Volume} from 'memfs'
 import {test} from 'uvu'
 import * as assert from 'uvu/assert'
@@ -9,6 +12,12 @@ import {FileSource} from '../src/source/FileSource'
 function entry(entry: Entry.Raw) {
   return JSON.stringify(entry)
 }
+
+const schema = createSchema({
+  Type: type('Type', {
+    title: text('Title')
+  })
+})
 
 const fs: FS = Volume.fromNestedJSON({
   content: {
@@ -32,7 +41,7 @@ const fs: FS = Volume.fromNestedJSON({
   }
 }).promises as any
 
-const source = new FileSource({fs, dir: 'content', loader: JsonLoader})
+const source = new FileSource({schema, fs, dir: 'content', loader: JsonLoader})
 
 async function toArray<T>(gen: AsyncGenerator<T>): Promise<Array<T>> {
   const arr = []

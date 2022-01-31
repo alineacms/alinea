@@ -28,6 +28,7 @@ const dashboardUrl = isProduction
   ? 'https://alinea.vercel.app/admin'
   : 'http://localhost:3000/admin'
 const target = new GithubTarget({
+  schema,
   loader: JsonLoader,
   contentDir: 'packages/website/content',
   githubAuthToken: process.env.GITHUB_TOKEN!,

@@ -1,4 +1,4 @@
-import {Entry} from '@alinea/core'
+import {Entry, Schema} from '@alinea/core'
 import {posix as path} from 'path'
 import {FS} from '../FS'
 import {Loader} from '../Loader'
@@ -6,6 +6,7 @@ import {Source} from '../Source'
 import {Target} from '../Target'
 
 export type FileSourceOptions = {
+  schema: Schema
   fs: FS
   dir: string
   loader: Loader
@@ -15,20 +16,20 @@ export class FileSource implements Source, Target {
   constructor(protected options: FileSourceOptions) {}
 
   async publish(entries: Array<Entry>): Promise<void> {
-    const {fs, dir, loader} = this.options
+    const {schema, fs, dir, loader} = this.options
     for (const entry of entries) {
       const {url, $parent, $isContainer, $status, ...data} = entry
       const file = entry.url + ($isContainer ? 'index' : '') + loader.extension
       const location = path.join(dir, file)
       await fs.mkdir(path.dirname(location), {recursive: true})
-      await fs.writeFile(location, loader.format(data))
+      await fs.writeFile(location, loader.format(schema, data))
     }
   }
 
   // Todo: this does not use any parallelism so either do or switch to a
   // sync version which should perform better
   async *entries(): AsyncGenerator<Entry> {
-    const {fs, dir, loader} = this.options
+    const {schema, fs, dir, loader} = this.options
     const targets = ['/']
     let parentId: string | undefined = undefined
     while (targets.length > 0) {
@@ -49,7 +50,7 @@ export class FileSource implements Source, Target {
           if (extension !== loader.extension) continue
           const name = path.basename(file, extension)
           const isIndex = name === 'index'
-          const entry = loader.parse(await fs.readFile(location))
+          const entry = loader.parse(schema, await fs.readFile(location))
           yield {
             ...entry,
             url: path.join(target, isIndex ? '' : name),

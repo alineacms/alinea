@@ -152,6 +152,7 @@ async function generate(options: Options) {
   const schema = exports.default || exports.schema
   const store = new SqliteStore(new BetterSqlite3(), createId)
   const source = new FileSource({
+    schema,
     fs: fs.promises,
     dir: content,
     loader: JsonLoader
