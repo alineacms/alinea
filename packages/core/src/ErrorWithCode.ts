@@ -27,7 +27,7 @@ export enum ErrorCode {
   BandwidthLimitExceeded = 509
 }
 
-class ErrorWithCode extends Error {
+export class ErrorWithCode extends Error {
   public code: ErrorCode
   constructor(code: number)
   constructor(code: ErrorCode)

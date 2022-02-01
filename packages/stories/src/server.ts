@@ -1,10 +1,11 @@
 import {PasswordLessAuth} from '@alinea/auth.passwordless/PasswordLessAuth'
 import {createId} from '@alinea/core'
 import {Cache, JsonLoader, Server} from '@alinea/server'
+import {FileData} from '@alinea/server/data/FileData'
+import {GithubData} from '@alinea/server/data/GithubData'
 import {FileDrafts} from '@alinea/server/drafts/FileDrafts'
 import {FirestoreDrafts} from '@alinea/server/drafts/FirestoreDrafts'
 import {GitDrafts} from '@alinea/server/drafts/GitDrafts'
-import {FileSource} from '@alinea/server/source/FileSource'
 import compression from 'compression'
 import dotenv from 'dotenv'
 import express from 'express'
@@ -43,10 +44,28 @@ const auth = new PasswordLessAuth({
   }
 })
 const store = new SqliteStore(new BetterSqlite3(), createId)
-const content = new FileSource({
+
+const data = new FileData({
+  schema,
   fs,
-  dir: '../website/content',
+  contentDir: '../website/content',
+  mediaDir: '../website/public',
   loader: JsonLoader
+})
+
+const githubData = new GithubData({
+  schema,
+  loader: JsonLoader,
+  contentDir: 'packages/website/content',
+  mediaDir: 'packages/website/public',
+  githubAuthToken: process.env.GITHUB_TOKEN!,
+  owner: 'codeurs',
+  repo: 'alinea',
+  branch: 'main',
+  author: {
+    name: 'Ben',
+    email: 'ben@codeurs.be'
+  }
 })
 
 const onAuth = () => ({username: process.env.GITHUB_TOKEN})
@@ -78,7 +97,7 @@ const firestoreDrafts = new FirestoreDrafts({
   collection: getFirestore().collection('Draft')
 })
 
-await Cache.create(store, content)
+await Cache.create(store, data)
 
 const server = new Server({
   dashboardUrl,
@@ -86,7 +105,8 @@ const server = new Server({
   schema,
   drafts: firestoreDrafts,
   store,
-  target: content
+  media: data,
+  target: data
 })
 
 const app = express()

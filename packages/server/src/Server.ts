@@ -1,10 +1,13 @@
 import {
   accumulate,
   Auth,
+  createError,
+  createId,
   Entry,
   future,
   Future,
   Hub,
+  Media,
   outcome,
   Schema
 } from '@alinea/core'
@@ -12,17 +15,19 @@ import {encode} from 'base64-arraybuffer'
 import express from 'express'
 import {Functions, Store} from 'helder.store'
 import {createServer, IncomingMessage, ServerResponse} from 'http'
+import {posix as path} from 'path'
 import {Cache} from './Cache'
+import {Data} from './Data'
 import {Drafts} from './Drafts'
 import {createServerRouter} from './router/ServerRouter'
-import {Target} from './Target'
 import {finishResponse} from './util/FinishResponse'
 
 export type ServerOptions<T> = {
   schema: Schema<T>
   store: Store
   drafts: Drafts
-  target: Target
+  target: Data.Target
+  media: Data.Media
   auth?: Auth.Server
   dashboardUrl: string
 }
@@ -108,6 +113,32 @@ export class Server<T = any> implements Hub<T> {
     })
   }
 
+  async uploadFile(file: Data.Media.Upload): Future<Media.File> {
+    const {store, drafts, target} = this.options
+    return outcome(async () => {
+      const id = createId()
+      const {media} = this.options
+      const parentUrl = path.dirname(file.path)
+      const parent = store.first(Entry.where(Entry.url.is(parentUrl)))
+      if (!parent) throw createError(400, `Parent not found: "${parentUrl}"`)
+      const location = await media.upload(file)
+      const extension = path.extname(location)
+      const entry: Media.File = {
+        id,
+        type: 'File',
+        $parent: parent.id,
+        title: path.basename(file.path, extension),
+        url: file.path,
+        location,
+        extension: extension,
+        size: file.buffer.byteLength,
+        preview: file.preview
+      }
+      await this.publishEntries([entry])
+      return entry
+    })
+  }
+
   respond = (req: IncomingMessage, res: ServerResponse): Promise<void> => {
     this.app(req, res)
     // Next.js expects us to return a promise that resolves when we're finished
@@ -136,7 +167,6 @@ async function queryWithDrafts<T>(
     })
   } catch (e) {
     if (e === 'rollback') return result!
-    console.log(e)
     throw e
   }
 }

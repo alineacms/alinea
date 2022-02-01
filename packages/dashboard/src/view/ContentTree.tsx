@@ -162,6 +162,20 @@ const TreeNodeLink = memo(
     {entry, isOpened, toggleOpen, isSelected, level}: TreeNodeLinkProps,
     ref: Ref<HTMLAnchorElement>
   ) {
+    const {hub} = useSession()
+    const type = hub.schema.type(entry.type)!
+    const isContainer = entry.$isContainer
+    const icon =
+      (type.options.icon && <type.options.icon />) ||
+      (isContainer ? (
+        isOpened ? (
+          <MdExpandMore size={20} />
+        ) : (
+          <MdChevronRight size={20} />
+        )
+      ) : (
+        <MdInsertDriveFile size={12} />
+      ))
     return (
       <div className={styles.node.is({selected: isSelected})()}>
         <Link
@@ -171,17 +185,7 @@ const TreeNodeLink = memo(
           className={styles.node.link()}
           style={{paddingLeft: `${10 + level * 8}px`}}
         >
-          <div className={styles.node.link.icon()}>
-            {entry.$isContainer ? (
-              isOpened ? (
-                <MdExpandMore size={20} />
-              ) : (
-                <MdChevronRight size={20} />
-              )
-            ) : (
-              <MdInsertDriveFile size={12} />
-            )}
-          </div>
+          <div className={styles.node.link.icon()}>{icon}</div>
           <HStack
             center
             gap={8}

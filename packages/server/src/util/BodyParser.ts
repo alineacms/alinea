@@ -21,7 +21,7 @@ export async function parseBuffer(
 ): Promise<Buffer | string> {
   const existingBody = getExistingBody(req)
   if (existingBody) return existingBody
-  const limit = options.limit || '1mb'
+  const limit = options.limit || '25mb'
   const type = req.headers['content-type'] || 'text/plain'
   const length = req.headers['content-length']
   const encoding =

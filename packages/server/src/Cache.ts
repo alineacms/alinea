@@ -1,4 +1,5 @@
 import {
+  createError,
   docFromEntry,
   Entry,
   entryFromDoc,
@@ -9,10 +10,10 @@ import convertHrtime from 'convert-hrtime'
 import {Store} from 'helder.store'
 import prettyMilliseconds from 'pretty-ms'
 import * as Y from 'yjs'
-import {Source} from './Source'
+import {Data} from './Data'
 
 export class Cache {
-  static async create(store: Store, from: Source) {
+  static async create(store: Store, from: Data.Source) {
     const startTime = process.hrtime.bigint()
     console.log('Start indexing...')
     store.delete(Entry)
@@ -43,6 +44,8 @@ export class Cache {
       if (existing) docFromEntry(schema, existing, doc)
       Y.applyUpdate(doc, update)
       const data = entryFromDoc(schema, doc)
+      const type = schema.type(data.type)
+      if (!type) throw createError(400, 'Type not found')
       function stripLast(path: string) {
         const last = path.lastIndexOf('/')
         if (last > -1) return path.substring(0, last) || '/'
@@ -55,6 +58,7 @@ export class Cache {
       const entry = {
         ...data,
         $parent: parent?.id,
+        $isContainer: type!.options.isContainer,
         $status: EntryStatus.Draft
       }
       if (existing) store.update(condition, entry as any)

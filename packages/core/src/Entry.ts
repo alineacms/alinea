@@ -13,9 +13,9 @@ export enum EntryStatus {
 export interface Entry {
   id: string
   type: string
-  url: string
   title: Label
   // Computed properties
+  url: string
   $status?: EntryStatus
   $parent?: string
   $isContainer?: boolean

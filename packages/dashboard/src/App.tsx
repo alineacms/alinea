@@ -1,5 +1,6 @@
 import {Client} from '@alinea/client'
 import {Session} from '@alinea/core'
+import {CurrentDraftProvider} from '@alinea/editor'
 import {
   FavIcon,
   Loader,
@@ -90,23 +91,29 @@ type EntryRouteProps = {
 
 function EntryRoute({id}: EntryRouteProps) {
   const draft = useDraft(id)
+  const type = draft?.channel
+  const View = type?.options.view || EntryEdit
+  const selected = ([] as Array<string | undefined>)
+    .concat(draft?.id)
+    .concat(draft?.parents)
+    .filter(Boolean) as Array<string>
   return (
-    <>
+    <CurrentDraftProvider value={draft}>
       <Pane
         id="content-tree"
         resizable="right"
         defaultWidth={330}
         minWidth={200}
       >
-        <ContentTree select={draft?.parents} />
+        <ContentTree select={selected} />
       </Pane>
       <div style={{width: '100%'}}>
         <Route path="/:id/new">
           <NewEntry parentId={id} />
         </Route>
-        {draft && <EntryEdit draft={draft} />}
+        {draft && <View draft={draft} />}
       </div>
-    </>
+    </CurrentDraftProvider>
   )
 }
 

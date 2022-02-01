@@ -17,7 +17,8 @@ const FixReactIconsPlugin: Plugin = {
   name: 'FixReactIconsPlugin',
   setup(build) {
     build.onResolve({filter: /react-icons.*/}, ({path}) => {
-      return {path: path + '/index.js', external: true}
+      if (!path.endsWith('index.js'))
+        return {path: path + '/index.js', external: true}
     })
   }
 }
@@ -29,8 +30,6 @@ const ExtensionPlugin: Plugin = {
     const outExtension = build.initialOptions.outExtension?.['.js'] || '.js'
     build.onResolve({filter: /.*/}, ({kind, path}) => {
       if (kind === 'entry-point') return
-      if (path.startsWith('react-icons'))
-        return {path: path + '/index.js', external: true}
       const isLocal =
         path.startsWith('./') ||
         path.startsWith('../') ||
@@ -99,31 +98,45 @@ const builder = BuildTask.configure({
   exclude: ['@alinea/stories', '@alinea/website', '@alinea/css'],
   buildOptions: {
     ...buildOptions,
-    plugins: [...buildOptions.plugins, BundleCSSPlugin, ExtensionPlugin]
+    plugins: [
+      ...buildOptions.plugins,
+      BundleCSSPlugin,
+      FixReactIconsPlugin,
+      ExtensionPlugin
+    ]
   }
 })
 export const buildTask = {
   ...builder,
   async action(options) {
     await builder.action(options)
-    await fs.writeFile('packages/css/index.css', Buffer.concat(globalCss))
+    await fs.writeFile('packages/css/src/index.css', Buffer.concat(globalCss))
   }
 }
 
+const InternalPackages: Plugin = {
+  name: 'InternalPackages',
+  setup(build) {
+    const paths = Object.fromEntries(
+      getWorkspaces(process.cwd()).map(location => {
+        const meta = getManifest(location)
+        return [meta.name, location]
+      })
+    )
+    build.onResolve({filter: /@alinea\/.*/}, async args => {
+      const segments = args.path.split('/')
+      const pkg = segments.slice(0, 2).join('/')
+      const location = paths[pkg]
+      if (!location) throw `${pkg} not found`
+      const loc = ['.', location, 'src', ...segments.slice(2)].join('/')
+      return await build.resolve(loc, {resolveDir: process.cwd()})
+    })
+  }
+}
 /*
 These should be resolved using the conditional exports, but before building
 those are not available so we point at the source directly.
 */
-const internal = Object.fromEntries(
-  getWorkspaces(process.cwd())
-    .filter(pkg => {
-      return fs.existsSync(`${pkg}/src/index.ts`)
-    })
-    .map(pkg => {
-      const {name} = getManifest(pkg)
-      return [name, path.resolve(`${pkg}/src/index.ts`)]
-    })
-)
 const packages = fs.readdirSync('packages/input')
 const aliases = Object.fromEntries(
   packages.map(pkg => {
@@ -144,10 +157,8 @@ const devOptions: BuildOptions = {
   outdir: 'packages/stories/dist',
   plugins: [
     ...buildOptions.plugins,
-    AliasPlugin.configure({
-      ...internal,
-      ...aliases
-    }),
+    AliasPlugin.configure(aliases),
+    InternalPackages,
     ReporterPlugin.configure({name: 'Client'}),
     ReloadPlugin
   ],
@@ -180,7 +191,7 @@ const serverOptions: BuildOptions = {
     ...buildOptions.plugins,
     ReporterPlugin.configure({name: 'Server'}),
     RunPlugin.configure({cmd: 'node dist/server.js', cwd: 'packages/stories'}),
-    AliasPlugin.configure(internal),
+    InternalPackages,
     AliasPlugin.configure({
       'next/link': path.resolve('./node_modules/next/link.js')
     }),
@@ -209,11 +220,7 @@ export const testTask = TestTask.configure({
     ...buildOptions,
     sourcemap: true,
     external: modules.filter(m => !m.includes('@alinea')),
-    plugins: [
-      ...buildOptions.plugins,
-      AliasPlugin.configure(internal),
-      FixReactIconsPlugin
-    ]
+    plugins: [...buildOptions.plugins, InternalPackages, FixReactIconsPlugin]
   }
 })
 

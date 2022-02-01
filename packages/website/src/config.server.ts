@@ -1,8 +1,8 @@
 import {cache, schema} from '.alinea'
 import {PasswordLessAuth} from '@alinea/auth.passwordless/PasswordLessAuth.js'
 import {JsonLoader, Server} from '@alinea/server'
+import {GithubData} from '@alinea/server/data/GithubData.js'
 import {FirestoreDrafts} from '@alinea/server/drafts/FirestoreDrafts.js'
-import {GithubTarget} from '@alinea/server/target/GithubTarget.js'
 import dotenv from 'dotenv'
 import findConfig from 'find-config'
 import {cert, getApp, initializeApp} from 'firebase-admin/app'
@@ -27,10 +27,11 @@ const isProduction = process.env.NODE_ENV === 'production'
 const dashboardUrl = isProduction
   ? 'https://alinea.vercel.app/admin'
   : 'http://localhost:3000/admin'
-const target = new GithubTarget({
+const data = new GithubData({
   schema,
   loader: JsonLoader,
   contentDir: 'packages/website/content',
+  mediaDir: 'packages/website/public',
   githubAuthToken: process.env.GITHUB_TOKEN!,
   owner: 'codeurs',
   repo: 'alinea',
@@ -63,5 +64,6 @@ export const server = new Server({
   schema,
   store: (await cache)(),
   drafts: drafts,
-  target
+  target: data,
+  media: data
 })

@@ -1,0 +1,27 @@
+.root {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  display: flex;
+
+  &-background {
+    background: rgba(var(--positive), 0.8);
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+  }
+
+  &-inner {
+    position: relative;
+    margin: auto;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    padding: 20px;
+    background: var(--background);
+    border-radius: 4px;
+  }
+}

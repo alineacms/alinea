@@ -1,7 +1,7 @@
 import {createId} from '@alinea/core/Id'
 import {Schema} from '@alinea/core/Schema'
 import {Cache, JsonLoader} from '@alinea/server'
-import {FileSource} from '@alinea/server/source/FileSource'
+import {FileData} from '@alinea/server/data/FileData'
 import {encode} from 'base64-arraybuffer'
 import {dirname} from 'dirname-filename-esm'
 import {build, BuildResult, Plugin} from 'esbuild'
@@ -151,10 +151,10 @@ async function generate(options: Options) {
   const exports = await import(outFile)
   const schema = exports.default || exports.schema
   const store = new SqliteStore(new BetterSqlite3(), createId)
-  const source = new FileSource({
+  const source = new FileData({
     schema,
     fs: fs.promises,
-    dir: content,
+    contentDir: content,
     loader: JsonLoader
   })
   await Cache.create(store, source)

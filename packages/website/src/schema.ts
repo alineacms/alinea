@@ -1,16 +1,25 @@
 import {createSchema, type} from '@alinea/core'
+import {media} from '@alinea/dashboard'
 import {list} from '@alinea/input.list'
 import {path} from '@alinea/input.path'
 import {richText} from '@alinea/input.richtext'
 import {text} from '@alinea/input.text'
 
 export const schema = createSchema({
-  Home: type('Home', {
-    title: text('Title', {multiline: true}),
-    path: path('Path'),
-    headline: text('Headline', {multiline: true}),
-    byline: text('Byline', {multiline: true})
-  }),
+  ...media,
+  Home: type(
+    'Home',
+    {
+      title: text('Title', {multiline: true}),
+      path: path('Path'),
+      headline: text('Headline', {multiline: true}),
+      byline: text('Byline', {multiline: true})
+    },
+    {
+      isRootType: true,
+      isContainer: true
+    }
+  ),
   Docs: type(
     'Docs',
     {title: text('Title', {multiline: true}), path: path('Path')},

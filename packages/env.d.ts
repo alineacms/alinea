@@ -26,6 +26,7 @@ declare module 'octokit-commit-multiple-files/create-or-update-files.js' {
         files: {
           [file: string]:
             | string
+            | ArrayBuffer
             | {contents: string; mode: string; type: string}
         }
         filesToDelete?: Array<string>

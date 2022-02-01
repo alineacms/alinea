@@ -69,6 +69,11 @@ export namespace Outcome {
     return Failure(deserializeError(json.error))
   }
 
+  export function unpack<T>(outcome: Outcome<T>): T {
+    if (outcome.isSuccess()) return outcome.value
+    throw (outcome as any).error
+  }
+
   export function Success<T>(data: T): Outcome<T> {
     return new SuccessOutcome(data) as any
   }

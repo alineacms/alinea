@@ -6,6 +6,7 @@
   height: 26px;
   font-size: 13px;
   font-weight: 500;
+  max-width: 100%;
 
   &-loader {
     height: 26px;
@@ -22,8 +23,11 @@
     color: var(--foreground);
     cursor: pointer;
     text-decoration: none;
-    padding-right: 10px;
+    padding-right: 15px;
     height: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 
     &-badge {
       display: flex;

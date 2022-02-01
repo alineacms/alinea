@@ -10,6 +10,7 @@ renderDashboard({
   color: '#6E57D0', // '#FFBD67', // '#6E57D0',
   // auth: PasswordLessLogin,
   preview(entry) {
+    if (entry.type === 'MediaLibrary') return null
     return <BrowserPreview url={`/api/preview?${entry.url}`} />
   }
 })

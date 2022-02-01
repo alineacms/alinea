@@ -1,153 +1,23 @@
-import {docFromEntry, Entry, EntryStatus, slugify} from '@alinea/core'
-import {
-  CurrentDraftProvider,
-  EntryDraft,
-  Fields,
-  InputPath,
-  useCurrentDraft,
-  useInput
-} from '@alinea/editor'
+import {docFromEntry, Entry, slugify} from '@alinea/core'
+import {EntryDraft, Fields, InputPath} from '@alinea/editor'
 import {select} from '@alinea/input.select'
 import {SelectInput} from '@alinea/input.select/view'
 import {text} from '@alinea/input.text'
 import {TextInput} from '@alinea/input.text/view'
-import {
-  AppBar,
-  Chip,
-  fromModule,
-  HStack,
-  Loader,
-  Pane,
-  px,
-  Stack,
-  Typo,
-  useObservable
-} from '@alinea/ui'
+import {fromModule, HStack, Loader, useObservable} from '@alinea/ui'
+import {Modal} from '@alinea/ui/Modal'
 import {ComponentType, FormEvent, Suspense, useState} from 'react'
-import {Helmet} from 'react-helmet'
-import {
-  MdArchive,
-  MdCheck,
-  MdDelete,
-  MdEdit,
-  MdPublish,
-  MdRotateLeft
-} from 'react-icons/md'
 import {useQuery, useQueryClient} from 'react-query'
 import {useHistory} from 'react-router'
 import {Link} from 'react-router-dom'
 import * as Y from 'yjs'
 import {useDashboard} from '../hook/UseDashboard'
-import {DraftsStatus, useDrafts} from '../hook/UseDrafts'
 import {useSession} from '../hook/UseSession'
+import {EntryHeader} from './entry/EntryHeader'
+import {EntryTitle} from './entry/EntryTitle'
 import css from './EntryEdit.module.scss'
 
-function EntryStatusChip() {
-  const drafts = useDrafts()
-  const draftsStatus = useObservable(drafts.status)
-  const draft = useCurrentDraft()
-  const status = useObservable(draft.status)
-  switch (status) {
-    case EntryStatus.Published:
-      return <Chip icon={MdCheck}>Published</Chip>
-    case EntryStatus.Publishing:
-      return <Chip icon={MdRotateLeft}>Publishing</Chip>
-    case EntryStatus.Draft:
-      return (
-        <Chip
-          accent
-          icon={
-            draftsStatus === DraftsStatus.Saving
-              ? MdRotateLeft
-              : draftsStatus === DraftsStatus.Synced
-              ? MdCheck
-              : MdEdit
-          }
-        >
-          Draft
-        </Chip>
-      )
-    case EntryStatus.Archived:
-      return <Chip icon={MdArchive}>Archived</Chip>
-  }
-}
-
 const styles = fromModule(css)
-
-function EntryEditHeader() {
-  const drafts = useDrafts()
-  const draft = useCurrentDraft()
-  const status = useObservable(draft.status)
-  const queryClient = useQueryClient()
-  const [isPublishing, setPublishing] = useState(false)
-  function handleDiscard() {
-    return drafts.discard(draft).then(() => {
-      queryClient.invalidateQueries(['draft', draft.id])
-    })
-  }
-  function handlePublish() {
-    setPublishing(true)
-    return drafts
-      .publish(draft)
-      .then(() => {
-        queryClient.invalidateQueries(['children', draft.$parent])
-      })
-      .finally(() => {
-        setPublishing(false)
-      })
-  }
-  return (
-    <AppBar.Root>
-      <AppBar.Item full style={{flexGrow: 1}}>
-        <Typo.Monospace
-          style={{
-            display: 'block',
-            width: '100%',
-            background: 'var(--highlight)',
-            padding: `${px(6)} ${px(15)}`,
-            borderRadius: px(8)
-          }}
-        >
-          {draft.url}
-        </Typo.Monospace>
-      </AppBar.Item>
-      <Stack.Right>
-        <AppBar.Item>
-          <EntryStatusChip />
-        </AppBar.Item>
-      </Stack.Right>
-      {status === EntryStatus.Draft && (
-        <AppBar.Item as="button" icon={MdDelete} onClick={handleDiscard}>
-          <span>Discard</span>
-        </AppBar.Item>
-      )}
-      {status !== EntryStatus.Published && !isPublishing && (
-        <AppBar.Item as="button" icon={MdPublish} onClick={handlePublish}>
-          <span>Publish</span>
-        </AppBar.Item>
-      )}
-      {/*<Tabs.Root defaultValue="type">
-        <Tabs.List>
-          <Tabs.Trigger value="type">
-            {type?.label && <TextLabel label={type?.label} />}
-          </Tabs.Trigger>
-        </Tabs.List>
-    </Tabs.Root>*/}
-    </AppBar.Root>
-  )
-}
-
-function EntryTitle() {
-  const [title] = useInput(EntryDraft.title)
-  return (
-    <h1 style={{position: 'relative', zIndex: 1, paddingBottom: '10px'}}>
-      {title}
-      <Helmet>
-        <title>{title}</title>
-      </Helmet>
-    </h1>
-  )
-}
 
 type EntryPreviewProps = {
   draft: EntryDraft
@@ -168,7 +38,7 @@ function EntryEditDraft({draft}: EntryEditDraftProps) {
   return (
     <HStack style={{height: '100%'}}>
       <div style={{flexGrow: 1, display: 'flex', flexDirection: 'column'}}>
-        <EntryEditHeader />
+        <EntryHeader />
         <div className={styles.draft()}>
           <EntryTitle />
 
@@ -177,40 +47,10 @@ function EntryEditDraft({draft}: EntryEditDraftProps) {
           </Suspense>
         </div>
       </div>
-      {preview && (
-        <Pane id="preview" resizable="left" defaultWidth={330} minWidth={320}>
-          <div className={styles.draft.preview()}>
-            <EntryPreview preview={preview} draft={draft} />
-          </div>
-        </Pane>
-      )}
+      {preview && <EntryPreview preview={preview} draft={draft} />}
     </HStack>
   )
 }
-
-/*
-type NewEntryEditProps = {typeKey: string}
-
-function NewEntryEdit({typeKey}: NewEntryEditProps) {
-  const {hub} = useSession()
-  const type = hub.schema.type(typeKey)!
-  const data = {
-    entry: type.create(typeKey),
-    draft: null
-  }
-  const draft = useDraft(type, data, doc => {
-    return hub.content.putDraft(data.entry.id, doc)
-  })
-  if (!draft) return null
-  return (
-    <>
-      <CurrentDraftProvider value={draft}>
-        <EntryEditDraft />
-      </CurrentDraftProvider>
-    </>
-  )
-}
-*/
 
 export type NewEntryProps = {parentId?: string}
 
@@ -231,9 +71,7 @@ export function NewEntry({parentId}: NewEntryProps) {
   const parent = parentEntry?.isSuccess() ? parentEntry.value?.entry : undefined
   const type = parent && hub.schema.type(parent.type)
   const types = type?.options.contains || hub.schema.keys
-  const [selectedType, setSelectedType] = useState(
-    types.length === 1 ? types[0] : undefined
-  )
+  const [selectedType, setSelectedType] = useState(types[0])
   const [title, setTitle] = useState('')
   const [isCreating, setIsCreating] = useState(false)
   function handleCreate(e: FormEvent) {
@@ -246,7 +84,7 @@ export function NewEntry({parentId}: NewEntryProps) {
       ...type.create(selectedType),
       path,
       $parent: parent?.id,
-      url: (parent?.url || '') + '/' + path,
+      url: (parent?.url || '') + (parent?.url.endsWith('/') ? '' : '/') + path,
       title
     }
     const doc = docFromEntry(type, entry)
@@ -254,8 +92,7 @@ export function NewEntry({parentId}: NewEntryProps) {
       .updateDraft(entry.id, Y.encodeStateAsUpdate(doc))
       .then(result => {
         if (result.isSuccess()) {
-          if (entry.$parent)
-            queryClient.invalidateQueries(['children', entry.$parent])
+          queryClient.invalidateQueries(['children', entry.$parent])
           history.push(`/${entry.id}`)
         }
       })
@@ -263,9 +100,12 @@ export function NewEntry({parentId}: NewEntryProps) {
         setIsCreating(false)
       })
   }
+  function handleClose() {
+    history.push(`/${parent?.id}`)
+  }
   return (
-    <div className={styles.new()}>
-      <form className={styles.new.modal()} onSubmit={handleCreate}>
+    <Modal open onClose={handleClose}>
+      <form onSubmit={handleCreate}>
         {isCreating ? (
           <Loader absolute />
         ) : (
@@ -291,16 +131,12 @@ export function NewEntry({parentId}: NewEntryProps) {
           </>
         )}
       </form>
-    </div>
+    </Modal>
   )
 }
 
 export type EntryEditProps = {draft: EntryDraft}
 
 export function EntryEdit({draft}: EntryEditProps) {
-  return (
-    <CurrentDraftProvider value={draft}>
-      <EntryEditDraft key={draft.doc.guid} draft={draft} />
-    </CurrentDraftProvider>
-  )
+  return <EntryEditDraft key={draft.doc.guid} draft={draft} />
 }

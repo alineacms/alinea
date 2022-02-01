@@ -1,4 +1,4 @@
-import {Hub, isError} from '@alinea/core'
+import {createError, Hub, isError} from '@alinea/core'
 import {Outcome} from '@alinea/core/Outcome'
 import {decode} from 'base64-arraybuffer'
 import cors from 'cors'
@@ -52,6 +52,13 @@ export function createServerRouter(hub: Server) {
   router.post(prefix + Hub.routes.publish(), async (req, res) => {
     const entries = await parseJson(req)
     return respond(res, await hub.publishEntries(entries))
+  })
+  // Hub.uploadFile
+  router.post(prefix + Hub.routes.upload(), async (req, res) => {
+    const location = req.header('x-file-name')
+    if (typeof location !== 'string') throw createError(400)
+    const body = (await parseBuffer(req)) as Buffer
+    return respond(res, await hub.uploadFile({buffer: body, path: location}))
   })
   return router
 }

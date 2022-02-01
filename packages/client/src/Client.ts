@@ -1,4 +1,4 @@
-import {Entry, Future, Hub, Outcome, Schema} from '@alinea/core'
+import {Entry, Future, Hub, Media, Outcome, Schema} from '@alinea/core'
 import fetch from 'isomorphic-fetch'
 
 async function toFuture<T = void>(res: Response): Future<T> {
@@ -16,15 +16,15 @@ export class Client implements Hub {
   ) {}
 
   entry(id: string, stateVector?: Uint8Array): Future<Entry.Detail | null> {
-    return this.fetchJson(Hub.routes.entry(id, stateVector)).then<
-      Outcome<Entry.Detail | null>
-    >(toFuture)
+    return this.fetchJson(Hub.routes.entry(id, stateVector), {
+      method: 'GET'
+    }).then<Outcome<Entry.Detail | null>>(toFuture)
   }
 
   list(parentId?: string): Future<Array<Entry.Summary>> {
-    return this.fetchJson(Hub.routes.list(parentId)).then<
-      Outcome<Array<Entry.Summary>>
-    >(toFuture)
+    return this.fetchJson(Hub.routes.list(parentId), {
+      method: 'GET'
+    }).then<Outcome<Array<Entry.Summary>>>(toFuture)
   }
 
   updateDraft(id: string, update: Uint8Array): Future {
@@ -46,6 +46,23 @@ export class Client implements Hub {
       method: 'POST',
       body: JSON.stringify(entries)
     }).then(toFuture)
+  }
+
+  uploadFile(file: Hub.Upload): Future<Media.File> {
+    return this.fetch(Hub.routes.upload(), {
+      method: 'POST',
+      body: file.buffer,
+      headers: {
+        'content-type': 'application/octet-stream',
+        'x-file-name': file.path
+      }
+    }).then<Outcome<Media.File>>(toFuture)
+  }
+
+  listFiles(location?: string): Future<Array<Hub.DirEntry>> {
+    return this.fetch(Hub.routes.files(location), {
+      method: 'GET'
+    }).then<Outcome<Array<Hub.DirEntry>>>(toFuture)
   }
 
   protected async fetch(endpoint: string, init?: RequestInit) {
