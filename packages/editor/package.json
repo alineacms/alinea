@@ -8,10 +8,6 @@
   },
   "types": "dist/index.d.ts",
   "type": "module",
-  "sideEffects": [
-    "*.scss",
-    "*.css"
-  ],
   "exports": {
     ".": "./dist/index.js",
     "./*": "./dist/*"

@@ -43,7 +43,16 @@ function EntryEditDraft({draft}: EntryEditDraftProps) {
           <EntryTitle />
 
           <Suspense fallback={null}>
-            {type ? <Fields type={type} /> : 'Channel not found'}
+            {type ? (
+              <Fields
+                // We key here currently because the tiptap/yjs combination fails to register
+                // changes when the fragment is changed while the editor is mounted.
+                key={draft.doc.guid}
+                type={type}
+              />
+            ) : (
+              'Channel not found'
+            )}
           </Suspense>
         </div>
       </div>
@@ -138,5 +147,5 @@ export function NewEntry({parentId}: NewEntryProps) {
 export type EntryEditProps = {draft: EntryDraft}
 
 export function EntryEdit({draft}: EntryEditProps) {
-  return <EntryEditDraft key={draft.doc.guid} draft={draft} />
+  return <EntryEditDraft draft={draft} />
 }

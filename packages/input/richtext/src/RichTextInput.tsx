@@ -133,16 +133,19 @@ export type RichTextInputProps<T> = {
 export function RichTextInput<T>({path, field}: RichTextInputProps<T>) {
   const {blocks, optional, help} = field.options
   const [content, {fragment, insert}] = useInput(path)
-  const editor = useEditor({
-    content,
-    extensions: [
-      // BubbleMenuExtension,
-      FloatingMenuExtension,
-      Collaboration.configure({fragment}),
-      StarterKit.configure({history: false}),
-      ...schemaToExtensions(path, blocks)
-    ]
-  })
+  const editor = useEditor(
+    {
+      content,
+      extensions: [
+        // BubbleMenuExtension,
+        FloatingMenuExtension,
+        Collaboration.configure({fragment}),
+        StarterKit.configure({history: false}),
+        ...schemaToExtensions(path, blocks)
+      ]
+    },
+    [fragment]
+  )
   if (!editor) return null
   return (
     <div className={styles.root()}>

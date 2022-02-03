@@ -23,10 +23,7 @@ export namespace InputPath {
       const draft = useCurrentDraft()
       if (!draft) throw 'Could not load draft'
       const redraw = useForceUpdate()
-      const input = useMemo(
-        () => draft.getInput<T>(this.location),
-        [draft, ...this.location]
-      )
+      const input = useMemo(() => draft.getInput<T>(this.location), [draft])
       useEffect(() => {
         return input.observe(redraw)
       }, [input, redraw])

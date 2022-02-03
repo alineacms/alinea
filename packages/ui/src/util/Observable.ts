@@ -43,7 +43,8 @@ export function observable<T>(value: T): Observable<T> {
 export function useObservable<T>(observable: Observable<T>) {
   const [state, setState] = useState<T>(observable)
   useEffect(() => {
+    setState(observable())
     return observable.subscribe(setState)
-  }, [])
+  }, [observable])
   return state
 }

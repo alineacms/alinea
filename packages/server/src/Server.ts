@@ -12,8 +12,9 @@ import {
   Schema
 } from '@alinea/core'
 import {encode} from 'base64-arraybuffer'
+import crypto from 'crypto'
 import express from 'express'
-import {Functions, Store} from 'helder.store'
+import {Cursor, Functions, Store} from 'helder.store'
 import {createServer, IncomingMessage, ServerResponse} from 'http'
 import {posix as path} from 'path'
 import {Cache} from './Cache'
@@ -80,6 +81,7 @@ export class Server<T = any> implements Hub<T> {
             title: Entry.title,
             url: Entry.url,
             $parent: Entry.$parent,
+            preview: Entry.get('preview'),
             $isContainer: Entry.$isContainer,
             childrenCount: Parent.where(Parent.$parent.is(Entry.id))
               .select(Functions.count())
@@ -88,6 +90,13 @@ export class Server<T = any> implements Hub<T> {
         )
       })
     )
+  }
+
+  async query<T>(cursor: Cursor<T>): Future<Array<T>> {
+    const {schema, store, drafts} = this.options
+    return outcome(() => {
+      return store.all(cursor)
+    })
   }
 
   updateDraft(id: string, update: Uint8Array): Future<void> {
@@ -132,6 +141,10 @@ export class Server<T = any> implements Hub<T> {
         location,
         extension: extension,
         size: file.buffer.byteLength,
+        hash: crypto
+          .createHash('md5')
+          .update(Buffer.from(file.buffer))
+          .digest('hex'),
         preview: file.preview
       }
       await this.publishEntries([entry])

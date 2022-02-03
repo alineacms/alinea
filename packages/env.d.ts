@@ -8,6 +8,19 @@ declare module '*.module.scss' {
 declare module 'get-random-values'
 declare module 'leb128'
 
+declare module 'image-blob-reduce' {
+  type Options = {
+    max: number
+    unsharpAmount?: number
+    unsharpRadius?: number
+    unsharpThreshold?: number
+  }
+  const reduce: () => {
+    toBlob: (blob: Blob, options: Options) => Promise<Blob>
+  }
+  export default reduce
+}
+
 declare module 'octokit-commit-multiple-files/create-or-update-files.js' {
   import {Octokit} from '@octokit/rest'
 

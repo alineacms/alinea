@@ -61,7 +61,7 @@ export class Cache {
         $isContainer: type!.options.isContainer,
         $status: EntryStatus.Draft
       }
-      if (existing) store.update(condition, entry as any)
+      if (existing) store.update(condition, entry)
       else store.insert(Entry, entry)
     }
   }
@@ -71,7 +71,7 @@ export class Cache {
       for (const entry of entries) {
         const condition = Entry.where(Entry.id.is(entry.id))
         const existing = store.first(condition)
-        if (existing) store.update(condition, entry as any)
+        if (existing) store.update(condition, entry)
         else store.insert(Entry, entry)
       }
     })

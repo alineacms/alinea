@@ -4,7 +4,7 @@ import {Entry} from './Entry'
 export namespace Media {
   export type Library = Entry
 
-  export const Library = new Collection('Entry', {
+  export const Library = new Collection<Library>('Entry', {
     where: Entry.as('MediaLibrary').type.is('MediaLibrary'),
     alias: 'MediaLibrary'
   })
@@ -13,10 +13,11 @@ export namespace Media {
     location: string
     extension: string
     size: number
+    hash: string
     preview?: string
   }
 
-  export const File = new Collection('Entry', {
+  export const File = new Collection<File>('Entry', {
     where: Entry.as('File').type.is('File'),
     alias: 'File'
   })

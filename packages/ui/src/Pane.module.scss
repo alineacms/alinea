@@ -22,6 +22,8 @@
       height: 100%;
       margin-left: 8px;
       border-left: 1px solid var(--outline);
+      position: relative;
+      z-index: 2;
     }
 
     &:hover &-line {

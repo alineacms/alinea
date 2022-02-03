@@ -84,6 +84,7 @@ __metadata:
     "@types/react-helmet": ^6.1.2
     "@types/react-router": ^5.1.16
     "@types/react-router-dom": ^5.3.0
+    image-blob-reduce: ^4.1.0
     js-base64: ^3.7.2
     react-helmet: ^6.1.0
     react-icons: ^4.3.1
@@ -218,6 +219,7 @@ __metadata:
   dependencies:
     "@alinea/core": 0.0.0
     "@octokit/rest": ^18.12.0
+    "@types/busboy": ^1.3.0
     "@types/compression": ^1.7.2
     "@types/content-type": ^1.1.5
     "@types/cors": ^2.8.12
@@ -226,12 +228,13 @@ __metadata:
     "@types/ws": ^8.2.0
     auto-bind: ^5.0.1
     better-sqlite3: ^7.4.3
+    busboy: ^1.4.0
     compression: ^1.7.4
     content-type: ^1.0.4
     convert-hrtime: ^5.0.0
     cors: ^2.8.5
     firebase-admin: ^10.0.2
-    helder.store: ^0.0.0-alpha.21
+    helder.store: ^0.0.0-alpha.26
     isomorphic-git: ^1.10.5
     js-yaml: ^4.1.0
     octokit-commit-multiple-files: ^3.2.1
@@ -1812,6 +1815,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/busboy@npm:^1.3.0":
+  version: 1.3.0
+  resolution: "@types/busboy@npm:1.3.0"
+  dependencies:
+    "@types/node": "*"
+  checksum: 6438cf56ab1f957017a408b6e375265ee18be181449bf5227736508b2b673c6fa6a2f843beed2cd95e697f15b7c2020673cba2cd2fa0f1fd198598e630b79657
+  languageName: node
+  linkType: hard
+
 "@types/compression@npm:^1.7.2":
   version: 1.7.2
   resolution: "@types/compression@npm:1.7.2"
@@ -2851,6 +2863,15 @@ __metadata:
     base64-js: ^1.3.1
     ieee754: ^1.2.1
   checksum: 5ad23293d9a731e4318e420025800b42bf0d264004c0286c8cc010af7a270c7a0f6522e84f54b9ad65cbd6db20b8badbfd8d2ebf4f80fa03dab093b89e68c3f9
+  languageName: node
+  linkType: hard
+
+"busboy@npm:^1.4.0":
+  version: 1.4.0
+  resolution: "busboy@npm:1.4.0"
+  dependencies:
+    streamsearch: ^1.1.0
+  checksum: 1970853fd390f62df0db15d44ee8c0fbb3bca84e0c3083531f955e31dbc3ec9e77faa4d5a47d520ff5ec7a79596af9b957741383b0cd4d9513b71f8524096442
   languageName: node
   linkType: hard
 
@@ -4689,6 +4710,13 @@ fsevents@~2.3.2:
   languageName: node
   linkType: hard
 
+"glur@npm:^1.1.2":
+  version: 1.1.2
+  resolution: "glur@npm:1.1.2"
+  checksum: d80a50fe7f713a564cf50a8e46e2385e5256233c1180b94c06dfdf038655c8b11aa648dd8516b66025abfe437f4201aa10c0e759b68b9a37241375707cf107ea
+  languageName: node
+  linkType: hard
+
 "google-auth-library@npm:^7.0.0, google-auth-library@npm:^7.6.1, google-auth-library@npm:^7.9.2":
   version: 7.11.0
   resolution: "google-auth-library@npm:7.11.0"
@@ -4818,10 +4846,10 @@ fsevents@~2.3.2:
   languageName: node
   linkType: hard
 
-"helder.store@npm:^0.0.0-alpha.21":
-  version: 0.0.0-alpha.21
-  resolution: "helder.store@npm:0.0.0-alpha.21"
-  checksum: 5a6d919f77f6c4590bf08569f5fb5092e853064d3b6180e1e0ece24035012419e2cfb10cc8ae33f6fff093835601ba8eac4e542f6337fbf12a6d6f49b45d5e03
+"helder.store@npm:^0.0.0-alpha.26":
+  version: 0.0.0-alpha.26
+  resolution: "helder.store@npm:0.0.0-alpha.26"
+  checksum: c8b88214f94973065f6cf3a85aaa90199a769868a1b90dce21e4ada32157539240c7dbbfd93f174c6eceb514441920c58d44af7bee57cc0723716480f9fc237e
   languageName: node
   linkType: hard
 
@@ -5004,6 +5032,15 @@ fsevents@~2.3.2:
   version: 5.2.0
   resolution: "ignore@npm:5.2.0"
   checksum: 6b1f926792d614f64c6c83da3a1f9c83f6196c2839aa41e1e32dd7b8d174cef2e329d75caabb62cb61ce9dc432f75e67d07d122a037312db7caa73166a1bdb77
+  languageName: node
+  linkType: hard
+
+"image-blob-reduce@npm:^4.1.0":
+  version: 4.1.0
+  resolution: "image-blob-reduce@npm:4.1.0"
+  dependencies:
+    pica: ^9.0.0
+  checksum: 48aa9efaf4f432c7baf135ec8f28f5b9a19c7aef0e9e7f223916fe7ca0676ac0adefdd005abd72a4a0c6dc31c871de2115224f298cce76b071dff332a8ea5ab4
   languageName: node
   linkType: hard
 
@@ -6289,6 +6326,16 @@ fsevents@~2.3.2:
   languageName: node
   linkType: hard
 
+"multimath@npm:^2.0.0":
+  version: 2.0.0
+  resolution: "multimath@npm:2.0.0"
+  dependencies:
+    glur: ^1.1.2
+    object-assign: ^4.1.1
+  checksum: 420d2090e4c9466c8195281011643a7087a3f8db9f7621fb19e13dce34d468d16f6e686625426efd4dbd1c9fa1cbc3c07ff634d9d9534dc6fa47b0849c2bcd69
+  languageName: node
+  linkType: hard
+
 "nano-time@npm:1.0.0":
   version: 1.0.0
   resolution: "nano-time@npm:1.0.0"
@@ -6878,6 +6925,18 @@ fsevents@~2.3.2:
   version: 4.0.0
   resolution: "path-type@npm:4.0.0"
   checksum: 5b1e2daa247062061325b8fdbfd1fb56dde0a448fb1455453276ea18c60685bdad23a445dc148cf87bc216be1573357509b7d4060494a6fd768c7efad833ee45
+  languageName: node
+  linkType: hard
+
+"pica@npm:^9.0.0":
+  version: 9.0.1
+  resolution: "pica@npm:9.0.1"
+  dependencies:
+    glur: ^1.1.2
+    multimath: ^2.0.0
+    object-assign: ^4.1.1
+    webworkify: ^1.5.0
+  checksum: 0063206643ef54c6641f3f8795807de9567acebbe3160839ae87bbf870ff2e4e4caca8135dd050e1f5427d12737488d4ede7f3cce4525ae86f2a0138d397f738
   languageName: node
   linkType: hard
 
@@ -9171,6 +9230,13 @@ resolve@^2.0.0-next.3:
   version: 0.1.4
   resolution: "websocket-extensions@npm:0.1.4"
   checksum: 5976835e68a86afcd64c7a9762ed85f2f27d48c488c707e67ba85e717b90fa066b98ab33c744d64255c9622d349eedecf728e65a5f921da71b58d0e9591b9038
+  languageName: node
+  linkType: hard
+
+"webworkify@npm:^1.5.0":
+  version: 1.5.0
+  resolution: "webworkify@npm:1.5.0"
+  checksum: 426c10e0b94cac0678aed05fdf1abce98e8e11a523380537bab99fcd63df7c4b71b3630e61ab8052fdbd8d6e55e53700523b423cd475b258f95be5189d8cde49
   languageName: node
   linkType: hard
 

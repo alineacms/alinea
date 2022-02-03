@@ -1,8 +1,9 @@
 import {Entry, Future, Hub, Media, Outcome, Schema} from '@alinea/core'
+import {Cursor} from 'helder.store'
 import fetch from 'isomorphic-fetch'
 
 async function toFuture<T = void>(res: Response): Future<T> {
-  return Outcome.fromJSON(await res.json())
+  return Outcome.fromJSON<T>(await res.json())
 }
 
 export class Client implements Hub {
@@ -27,6 +28,13 @@ export class Client implements Hub {
     }).then<Outcome<Array<Entry.Summary>>>(toFuture)
   }
 
+  query<T>(cursor: Cursor<T>): Future<Array<T>> {
+    return this.fetchJson(Hub.routes.query(), {
+      method: 'POST',
+      body: JSON.stringify(cursor.toJSON())
+    }).then<Outcome<Array<T>>>(toFuture)
+  }
+
   updateDraft(id: string, update: Uint8Array): Future {
     return this.fetch(Hub.routes.draft(id), {
       method: 'PUT',
@@ -49,13 +57,13 @@ export class Client implements Hub {
   }
 
   uploadFile(file: Hub.Upload): Future<Media.File> {
+    const form = new FormData()
+    if (file.preview) form.append('preview', file.preview)
+    form.append('buffer', new Blob([file.buffer]))
+    form.append('path', file.path)
     return this.fetch(Hub.routes.upload(), {
       method: 'POST',
-      body: file.buffer,
-      headers: {
-        'content-type': 'application/octet-stream',
-        'x-file-name': file.path
-      }
+      body: form
     }).then<Outcome<Media.File>>(toFuture)
   }
 

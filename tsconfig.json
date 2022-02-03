@@ -25,6 +25,7 @@
       "@alinea/core/*": ["./packages/core/src/*"],
       "@alinea/server/*": ["./packages/server/src/*"],
       "@alinea/editor/*": ["./packages/editor/src/*"],
+      "@alinea/ui": ["./packages/ui/src"],
       "@alinea/ui/*": ["./packages/ui/src/*"],
       "@alinea/*": ["./packages/*/src"]
     },

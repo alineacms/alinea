@@ -1,5 +1,13 @@
-import {AppBar, fromModule, HStack, px, Typo, useObservable} from '@alinea/ui'
-import {useEffect, useRef} from 'react'
+import {
+  AppBar,
+  fromModule,
+  HStack,
+  Loader,
+  px,
+  Typo,
+  useObservable
+} from '@alinea/ui'
+import {useEffect, useRef, useState} from 'react'
 import {
   MdArrowBack,
   MdArrowForward,
@@ -21,10 +29,21 @@ export function BrowserPreview({url}: BrowserPreviewProps) {
   const ref = useRef<HTMLIFrameElement>(null)
   const drafts = useDrafts()
   const status = useObservable(drafts.status)
+  const [loading, setLoading] = useState(true)
   useEffect(() => {
-    if (status === DraftsStatus.Synced)
+    setLoading(true)
+  }, [url])
+  useEffect(() => {
+    if (status === DraftsStatus.Synced) {
       ref.current?.contentWindow?.location.reload()
+    }
   }, [status])
+  useEffect(() => {
+    if (loading) {
+      const timeout = setTimeout(() => setLoading(false), 300)
+      return () => clearTimeout(timeout)
+    }
+  }, [loading])
   return (
     <Preview>
       <div className={styles.root()}>
@@ -77,7 +96,10 @@ export function BrowserPreview({url}: BrowserPreviewProps) {
           </AppBar.Item>
           <AppBar.Item as="a" icon={MdOpenInNew} href={url} target="_blank" />
         </AppBar.Root>
-        <div style={{flexGrow: 1}}>
+        <div style={{flexGrow: 1, position: 'relative'}}>
+          <div className={styles.root.loader.is({loading})()}>
+            <Loader />
+          </div>
           <iframe
             ref={ref}
             className={styles.root.iframe()}

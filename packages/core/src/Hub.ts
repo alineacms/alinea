@@ -1,4 +1,5 @@
 import {encode} from 'base64-arraybuffer'
+import {Cursor} from 'helder.store'
 import {Media} from '.'
 import {Entry} from './Entry'
 import {Future} from './Future'
@@ -9,6 +10,7 @@ export interface Hub<T = any> {
   schema: Schema<T>
   entry(id: string, stateVector?: Uint8Array): Future<Entry.Detail | null>
   list(parentId?: string): Future<Array<Entry.Summary>>
+  query<T>(cursor: Cursor<T>): Future<Array<T>>
   updateDraft(id: string, update: Uint8Array): Future
   deleteDraft(id: string): Future
   uploadFile(file: Hub.Upload): Future<Media.File>
@@ -18,7 +20,7 @@ export interface Hub<T = any> {
 export namespace Hub {
   export type Context = {user?: User}
 
-  export type Upload = {path: string; buffer: ArrayBuffer}
+  export type Upload = {path: string; buffer: ArrayBuffer; preview?: string}
   export type Stat = {
     size?: number
     lastModified?: Date
@@ -43,6 +45,9 @@ export namespace Hub {
     },
     upload() {
       return `/upload`
+    },
+    query() {
+      return `/query`
     },
     files(location?: string) {
       return `/files${location ? '/' + location : ''}`

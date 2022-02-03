@@ -9,4 +9,23 @@
     border: none;
     background: white;
   }
+
+  &-loader {
+    position: absolute;
+    z-index: 1;
+    height: 100%;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--background);
+    opacity: 0;
+    transition: opacity 0.4s ease-out;
+    pointer-events: none;
+
+    &.is-loading {
+      opacity: 1;
+      transition: none;
+    }
+  }
 }

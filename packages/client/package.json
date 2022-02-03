@@ -8,7 +8,6 @@
   },
   "types": "dist/index.d.ts",
   "type": "module",
-  "sideEffects": false,
   "exports": {
     ".": "./dist/index.js",
     "./*": "./dist/*"

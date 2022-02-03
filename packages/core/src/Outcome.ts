@@ -95,6 +95,7 @@ export namespace Outcome {
       return !this.success
     }
 
+    abstract map<U>(fn: (data: T) => U): Outcome<U>
     abstract toJSON(): JSONRep<T>
   }
 
@@ -107,6 +108,10 @@ export namespace Outcome {
     *[Symbol.iterator]() {
       yield this.value
       yield undefined
+    }
+
+    map<U>(fn: (data: T) => U): Outcome<U> {
+      return Success(fn(this.value))
     }
 
     toJSON(): JSONRep<T> {
@@ -123,6 +128,10 @@ export namespace Outcome {
     *[Symbol.iterator]() {
       yield undefined
       yield this.error
+    }
+
+    map<U>(fn: (data: T) => U): Outcome<U> {
+      return this as any as Outcome<U>
     }
 
     toJSON(): JSONRep<T> {

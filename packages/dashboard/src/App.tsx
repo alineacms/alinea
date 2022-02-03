@@ -2,10 +2,13 @@ import {Client} from '@alinea/client'
 import {Session} from '@alinea/core'
 import {CurrentDraftProvider} from '@alinea/editor'
 import {
+  AppBar,
   FavIcon,
   Loader,
   Pane,
+  px,
   Statusbar,
+  Typo,
   useObservable,
   Viewport
 } from '@alinea/ui'
@@ -105,6 +108,23 @@ function EntryRoute({id}: EntryRouteProps) {
         defaultWidth={330}
         minWidth={200}
       >
+        <AppBar.Root>
+          <AppBar.Item full style={{flexGrow: 1}}>
+            <Typo.Monospace
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                width: '100%',
+                height: px(28),
+                background: 'var(--highlight)',
+                padding: `${px(6)} ${px(15)} ${px(6)} ${px(12)}`,
+                borderRadius: px(8)
+              }}
+            >
+              <MdSearch size={15} />
+            </Typo.Monospace>
+          </AppBar.Item>
+        </AppBar.Root>
         <ContentTree select={selected} />
       </Pane>
       <div style={{width: '100%'}}>
