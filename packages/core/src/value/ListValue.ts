@@ -74,7 +74,8 @@ export class ListValue<T> implements Value<Array<Row & T>> {
     for (const key of map.keys()) {
       const row = map.get(key)
       const type = row.get('type')
-      rows.push(this.values[type].fromY(row) as Row & T)
+      const rowType = this.values[type]
+      if (rowType) rows.push(rowType.fromY(row) as Row & T)
     }
     rows.sort(sort)
     return rows

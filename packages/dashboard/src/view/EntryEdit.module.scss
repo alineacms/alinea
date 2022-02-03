@@ -1,8 +1,9 @@
-.draft {
-  padding: 20px 35px;
-  height: 100%;
-  overflow-y: auto;
+.root {
   flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+  height: 100%;
 
   &::-webkit-scrollbar {
     width: 6px;
@@ -19,5 +20,10 @@
   }
   &::-webkit-scrollbar-thumb:active {
     background: rgba(var(--negative), 0.9);
+  }
+
+  &-draft {
+    padding: 20px 35px;
+    flex-grow: 1;
   }
 }

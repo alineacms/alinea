@@ -1,5 +1,6 @@
 import {createSchema, type} from '@alinea/core'
 import {media} from '@alinea/dashboard'
+import {link} from '@alinea/input.link'
 import {list} from '@alinea/input.list'
 import {path} from '@alinea/input.path'
 import {richText} from '@alinea/input.richtext'
@@ -45,6 +46,9 @@ export const schema = createSchema({
         }),
         Wysiwyg: type('Wysiwyg', {
           field1: richText('Field 2')
+        }),
+        Image: type('Image', {
+          image: link('Link')
         })
       })
     })

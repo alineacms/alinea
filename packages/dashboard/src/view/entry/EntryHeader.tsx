@@ -1,17 +1,19 @@
 import {EntryStatus} from '@alinea/core'
 import {useCurrentDraft} from '@alinea/editor'
-import {AppBar, Chip, px, Stack, Typo, useObservable} from '@alinea/ui'
+import {AppBar, Chip, HStack, px, Stack, Typo, useObservable} from '@alinea/ui'
 import {useState} from 'react'
 import {
   MdArchive,
   MdCheck,
   MdDelete,
   MdEdit,
+  MdInsertDriveFile,
   MdPublish,
   MdRotateLeft
 } from 'react-icons/md'
 import {useQueryClient} from 'react-query'
 import {DraftsStatus, useDrafts} from '../../hook/UseDrafts'
+import {useSession} from '../../hook/UseSession'
 
 function EntryStatusChip() {
   const drafts = useDrafts()
@@ -44,8 +46,10 @@ function EntryStatusChip() {
 }
 
 export function EntryHeader() {
+  const {hub} = useSession()
   const drafts = useDrafts()
   const draft = useCurrentDraft()
+  const type = hub.schema.type(draft.type)
   const status = useObservable(draft.status)
   const queryClient = useQueryClient()
   const [isPublishing, setPublishing] = useState(false)
@@ -70,14 +74,33 @@ export function EntryHeader() {
       <AppBar.Item full style={{flexGrow: 1}}>
         <Typo.Monospace
           style={{
-            display: 'block',
+            display: 'flex',
+            alignItems: 'center',
             width: '100%',
             background: 'var(--highlight)',
             padding: `${px(6)} ${px(15)}`,
             borderRadius: px(8)
           }}
         >
-          {draft.url}
+          <HStack gap={8} center>
+            <div style={{flexShrink: 0}}>
+              {type?.options.icon ? (
+                <type.options.icon />
+              ) : (
+                <MdInsertDriveFile size={12} style={{display: 'block'}} />
+              )}
+            </div>
+            <span
+              style={{
+                display: 'block',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap'
+              }}
+            >
+              {draft.url}
+            </span>
+          </HStack>
         </Typo.Monospace>
       </AppBar.Item>
       <Stack.Right>

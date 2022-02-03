@@ -18,14 +18,14 @@
     }
   }
 
-  &.mod-absolute {
+  &.is-absolute {
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
   }
 
-  &.mod-small & {
+  &.is-small & {
     &-inner {
       border-width: 2px;
       &,

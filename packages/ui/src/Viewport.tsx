@@ -40,7 +40,7 @@ export function Viewport({children, color}: ViewportProps) {
             '--accent-foreground': accentColorForeground
           } as any
         }
-        className={styles.root.is(schemePreference)()}
+        className={styles.root(schemePreference)}
       >
         {children}
       </main>

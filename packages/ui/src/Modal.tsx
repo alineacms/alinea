@@ -15,7 +15,7 @@ export function Modal({children, open, onClose, ...props}: ModalProps) {
     <div
       role="dialog"
       aria-modal
-      className={styles.root.is({open}).mergeProps(props)()}
+      className={styles.root.mergeProps(props)({open})}
       {...props}
     >
       <div className={styles.root.background()} onClick={onClose}></div>

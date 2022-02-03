@@ -12,7 +12,7 @@ type LoaderProps = {
 
 export function Loader({light, absolute, small, ...props}: LoaderProps) {
   return (
-    <div className={styles.loader.mergeProps(props).mod({small, absolute})()}>
+    <div className={styles.loader.mergeProps(props)({small, absolute})}>
       <div
         {...props}
         className={styles.loader.inner()}

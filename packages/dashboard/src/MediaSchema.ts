@@ -5,14 +5,14 @@ import {MediaExplorer} from './view/MediaExplorer'
 
 export const media = {
   MediaLibrary: type(
-    'Media Library',
+    'Media directory',
     {
       title: text('Title')
     },
     {
       isRootType: true,
       isContainer: true,
-      contains: ['File'],
+      contains: ['MediaLibrary'],
       view: MediaExplorer,
       icon: MdOutlinePermMedia
     }

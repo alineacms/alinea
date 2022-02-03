@@ -91,6 +91,7 @@ __metadata:
     react-query: ^3.34.12
     react-router: ^5.2.1
     react-router-dom: ^5.3.0
+    react-tiny-virtual-list: ^2.2.0
   languageName: unknown
   linkType: soft
 
@@ -100,6 +101,22 @@ __metadata:
   dependencies:
     "@alinea/core": 0.0.0
     y-webrtc: ^10.2.0
+    yjs: ^13.5.16
+  languageName: unknown
+  linkType: soft
+
+"@alinea/input.link@workspace:packages/input/link":
+  version: 0.0.0-use.local
+  resolution: "@alinea/input.link@workspace:packages/input/link"
+  dependencies:
+    "@alinea/core": 0.0.0
+    "@alinea/editor": 0.0.0
+    "@alinea/ui": 0.0.0
+    "@dnd-kit/core": ^3.1.1
+    "@dnd-kit/sortable": ^4.0.0
+    "@dnd-kit/utilities": ^2.0.0
+    fractional-indexing: ^2.0.0
+    react-icons: ^4.3.1
     yjs: ^13.5.16
   languageName: unknown
   linkType: soft
@@ -7267,6 +7284,17 @@ fsevents@~2.3.2:
   languageName: node
   linkType: hard
 
+"prop-types@npm:^15.5.7":
+  version: 15.8.1
+  resolution: "prop-types@npm:15.8.1"
+  dependencies:
+    loose-envify: ^1.4.0
+    object-assign: ^4.1.1
+    react-is: ^16.13.1
+  checksum: c056d3f1c057cb7ff8344c645450e14f088a915d078dcda795041765047fa080d38e5d626560ccaac94a4e16e3aa15f3557c1a9a8d1174530955e992c675e459
+  languageName: node
+  linkType: hard
+
 "propagate@npm:^2.0.0":
   version: 2.0.1
   resolution: "propagate@npm:2.0.1"
@@ -7636,7 +7664,7 @@ fsevents@~2.3.2:
   languageName: node
   linkType: hard
 
-"react-is@npm:^16.6.0, react-is@npm:^16.7.0, react-is@npm:^16.8.1":
+"react-is@npm:^16.13.1, react-is@npm:^16.6.0, react-is@npm:^16.7.0, react-is@npm:^16.8.1":
   version: 16.13.1
   resolution: "react-is@npm:16.13.1"
   checksum: f7a19ac3496de32ca9ae12aa030f00f14a3d45374f1ceca0af707c831b2a6098ef0d6bdae51bd437b0a306d7f01d4677fcc8de7c0d331eb47ad0f46130e53c5f
@@ -7763,6 +7791,17 @@ fsevents@~2.3.2:
     "@types/react":
       optional: true
   checksum: d44524158c403658132c33bcbe2c274fc919981fbe05a5205033a6adf3d1a1c3d07433d519213285dd581a932f9e2c66bd8b4511af40ec02a39ac4d426e146d4
+  languageName: node
+  linkType: hard
+
+"react-tiny-virtual-list@npm:^2.2.0":
+  version: 2.2.0
+  resolution: "react-tiny-virtual-list@npm:2.2.0"
+  dependencies:
+    prop-types: ^15.5.7
+  peerDependencies:
+    react: 15.x || 16.x
+  checksum: e89908ab643827f8cda2f3b8dcdb1406c800cfa830ad7a9e76a8f806a5fe07c1a5f33d136967ad177e9e786903667c4053449e1b0143bfb7d7b482f667f8372b
   languageName: node
   linkType: hard
 

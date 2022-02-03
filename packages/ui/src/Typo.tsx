@@ -17,7 +17,7 @@ export namespace Typo {
       <Type
         ref={ref}
         {...rest}
-        className={styles.h1.is({flat, light}).mergeProps(rest)()}
+        className={styles.h1.mergeProps(rest)({flat, light})}
       />
     )
   }
@@ -31,7 +31,7 @@ export namespace Typo {
       <Type
         ref={ref}
         {...rest}
-        className={styles.h2.is({flat, light}).mergeProps(rest)()}
+        className={styles.h2.mergeProps(rest)({flat, light})}
       />
     )
   }
@@ -45,7 +45,7 @@ export namespace Typo {
       <Type
         ref={ref}
         {...rest}
-        className={styles.h3.is({flat, light}).mergeProps(rest)()}
+        className={styles.h3.mergeProps(rest)({flat, light})}
       />
     )
   }
@@ -59,7 +59,7 @@ export namespace Typo {
       <Type
         ref={ref}
         {...rest}
-        className={styles.h4.is({flat, light}).mergeProps(rest)()}
+        className={styles.h4.mergeProps(rest)({flat, light})}
       />
     )
   }
@@ -73,7 +73,7 @@ export namespace Typo {
       <Type
         ref={ref}
         {...rest}
-        className={styles.p.is({flat, light}).mergeProps(rest)()}
+        className={styles.p.mergeProps(rest)({flat, light})}
       />
     )
   }

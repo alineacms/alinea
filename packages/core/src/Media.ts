@@ -21,4 +21,11 @@ export namespace Media {
     where: Entry.as('File').type.is('File'),
     alias: 'File'
   })
+
+  export namespace File {
+    export type Preview = Pick<
+      File,
+      'id' | 'title' | 'extension' | 'size' | 'preview'
+    >
+  }
 }

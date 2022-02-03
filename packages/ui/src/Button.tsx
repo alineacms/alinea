@@ -19,7 +19,7 @@ export function Button({
   ...props
 }: ButtonProps) {
   return (
-    <button {...props} className={styles.root.mod(size).mergeProps(props)()}>
+    <button {...props} className={styles.root.mergeProps(props)(size)}>
       <HStack center gap={8}>
         <Icon icon={icon} />
         <div>{children}</div>

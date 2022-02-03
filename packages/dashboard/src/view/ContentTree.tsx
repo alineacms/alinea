@@ -2,7 +2,6 @@ import {Entry} from '@alinea/core'
 import {
   Create,
   fromModule,
-  Loader,
   Stack,
   TextLabel,
   useInitialEffect
@@ -46,7 +45,7 @@ function TreeChildren({
   const {data} = useQuery(
     ['children', parent],
     () => session.hub.list(parent),
-    {suspense: true}
+    {suspense: true, keepPreviousData: true}
   )
   if (data?.isFailure()) {
     console.error(data.error)
@@ -105,9 +104,9 @@ function TreeNode({entry, level, isOpen, toggleOpen}: TreeNodeProps) {
       />
       <Suspense
         fallback={
-          <div className={styles.node.loader()}>
+          null /*<div className={styles.node.loader()}>
             <Loader small />
-          </div>
+          </div>*/
         }
       >
         {entry.$isContainer && isOpened && (
@@ -133,18 +132,14 @@ function TreeNodeChildrenCreator({entry}: TreeNodeChildrenCreator) {
   if (typeOptions.length === 1)
     return (
       <Create.Root>
-        <Link to={`/${entry.id}/new`}>
-          <Create.Button>
-            <TextLabel label={schema.type(typeOptions[0])?.label!} />
-          </Create.Button>
-        </Link>
+        <Create.Link to={`/${entry.id}/new`}>
+          <TextLabel label={schema.type(typeOptions[0])?.label!} />
+        </Create.Link>
       </Create.Root>
     )
   return (
     <Create.Root>
-      <Link to={`/${entry.id}/new`}>
-        <Create.Button>Create new</Create.Button>
-      </Link>
+      <Create.Link to={`/${entry.id}/new`}>Create new</Create.Link>
     </Create.Root>
   )
 }
@@ -177,7 +172,7 @@ const TreeNodeLink = memo(
         <MdInsertDriveFile size={12} />
       ))
     return (
-      <div className={styles.node.is({selected: isSelected})()}>
+      <div className={styles.node({selected: isSelected})}>
         <Link
           ref={ref}
           to={'/' + entry.id}
@@ -191,7 +186,7 @@ const TreeNodeLink = memo(
             gap={8}
             style={{width: '100%'}}
             onClick={event => {
-              if (!isSelected && isOpened) event.stopPropagation()
+              event.stopPropagation()
             }}
           >
             <span
@@ -205,7 +200,7 @@ const TreeNodeLink = memo(
             </span>
             {entry.$isContainer && entry.childrenCount > 0 && (
               <div className={styles.node.link.badge()}>
-                {entry.childrenCount}
+                <div>{entry.childrenCount}</div>
               </div>
             )}
           </HStack>

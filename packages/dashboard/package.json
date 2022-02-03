@@ -22,7 +22,8 @@
     "react-icons": "^4.3.1",
     "react-query": "^3.34.12",
     "react-router": "^5.2.1",
-    "react-router-dom": "^5.3.0"
+    "react-router-dom": "^5.3.0",
+    "react-tiny-virtual-list": "^2.2.0"
   },
   "devDependencies": {
     "@types/react": "^17.0.20",

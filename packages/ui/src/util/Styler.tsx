@@ -5,13 +5,10 @@ type VariantImpl<T extends string> = T | {[K in T]?: boolean}
 export type Variant<T extends string> = VariantImpl<T> | Array<VariantImpl<T>>
 
 export type Styler = {
-  (): string
+  (...state: Array<Variant<any>>): string
   className: string
   with(...extra: Array<string | Styler | undefined>): Styler
   mergeProps(attrs: {[key: string]: any} | undefined): Styler
-  sub(sub: string): Styler
-  is(state: Variant<any>): Styler
-  mod(modifier: Variant<any>): Styler
   toSelector(): string
   toString(): string
   toElement<Props, Type extends As>(element: Type): ComponentWithAs<Props, Type>
@@ -43,24 +40,27 @@ const cache = new Map()
 const variant = (
   key: string,
   selector: Styler,
-  state: Variant<any>,
+  states: Array<Variant<any>>,
   variants?: Map<string, string>
 ) => {
-  if (!state) return selector
   const getVariant = (name: string) => {
     const variant = `${key}-${name}`
     return (variants && variants.get(variant)) || variant
   }
-  if (Array.isArray(state))
-    return styler(`${state.map(getVariant).join(' ')} ${selector}`, variants)
-  if (typeof state === 'object')
-    return selector.with(
-      ...Object.entries(state)
-        .map(([cl, active]) => active && cl)
-        .filter(v => v)
-        .map(_ => getVariant(_ as any))
-    )
-  return styler(`${getVariant(state)} ${selector}`, variants)
+  const additions: Array<string> = []
+  for (const state of states) {
+    if (!state) continue
+    if (Array.isArray(state)) additions.push(...state.map(getVariant))
+    else if (typeof state === 'object')
+      additions.push(
+        ...Object.entries(state)
+          .map(([cl, active]) => active && cl)
+          .filter(Boolean)
+          .map(_ => getVariant(_ as any))
+      )
+    else additions.push(getVariant(state))
+  }
+  return additions.concat(String(selector)).join(' ')
 }
 
 const createStyler = (
@@ -90,18 +90,6 @@ const createStyler = (
         const b = props.className
         // tslint:disable-next-line:triple-equals
         return styler(value, variants).with(a, a != b && b)
-      }
-    },
-    is: {
-      enumerable: false,
-      value(state: Variant<any>) {
-        return variant('is', this, state, variants)
-      }
-    },
-    mod: {
-      enumerable: false,
-      value(state: Variant<any>) {
-        return variant('mod', this, state, variants)
       }
     },
     toSelector: {
@@ -137,13 +125,13 @@ export const styler = (
   variants?: Map<string, string>
 ): Styler => {
   if (!variants && cache.has(selector)) return cache.get(selector)
-  const inst: any = () => selector
+  const inst: any = function (...states: Array<Variant<any>>) {
+    return variant('is', inst, states, variants)
+  }
   createStyler(inst, selector, variants)
   cache.set(selector, inst)
   return inst
 }
-
-const variantKeys = new Set(['is', 'mod'])
 
 export const fromModule = <M extends {[key: string]: string}>(
   styles: M
@@ -152,7 +140,7 @@ export const fromModule = <M extends {[key: string]: string}>(
   const variants: Map<string, string> = new Map()
   for (const key of Object.keys(styles)) {
     const parts = key.split('-')
-    if (variantKeys.has(parts[0])) variants.set(key, styles[key])
+    if (parts[0] === 'is') variants.set(key, styles[key])
     let parent = ''
     let target: any = res
     parts.forEach(sub => {

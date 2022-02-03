@@ -13,7 +13,7 @@ export namespace Sidebar {
     return (
       <a
         {...props}
-        className={styles.root.menu.item.is({selected}).mergeProps(props)()}
+        className={styles.root.menu.item.mergeProps(props)({selected})}
       />
     )
   }

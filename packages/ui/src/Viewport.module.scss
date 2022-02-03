@@ -1,5 +1,5 @@
 @mixin dark-theme {
-  --background: #11181c;
+  --background: #1f2025; // #131924; // #1e1e1e; //#11181c;
   //--background: #121923;
   //--background: #050606;
   --foreground: white;
@@ -8,6 +8,7 @@
   --outline: #303136;
   --positive: 0, 0, 0;
   --negative: 255, 255, 255;
+  --shadow: rgba(0, 0, 0, 0.9);
 }
 
 @mixin light-theme {
@@ -18,6 +19,7 @@
   --outline: #eceff1; //rgb(246, 249, 250);
   --positive: 255, 255, 255;
   --negative: 0, 0, 0;
+  --shadow: rgba(0, 0, 0, 0.1);
 }
 
 .root {

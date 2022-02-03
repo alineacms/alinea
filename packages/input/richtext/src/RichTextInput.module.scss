@@ -9,11 +9,12 @@
     width: 100%;
     padding: 4px 0;
     resize: none;
+    outline: none;
 
-    &:focus {
+    /*&:focus {
       border-radius: 4px;
       outline: none;
       box-shadow: rgb(222 236 238 / 40%) 0 0 0 0.2em;
-    }
+    }*/
   }
 }

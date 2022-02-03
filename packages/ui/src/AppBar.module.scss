@@ -1,9 +1,12 @@
 .root {
+  position: sticky;
+  top: 0;
+  z-index: 2;
   display: flex;
   align-items: center;
   border-bottom: 1px solid var(--outline);
-  background: var(--background);
-  // backdrop-filter: blur(4px);
+  background-color: rgba(var(--positive), 0.3);
+  backdrop-filter: blur(12px);
 }
 
 .item {

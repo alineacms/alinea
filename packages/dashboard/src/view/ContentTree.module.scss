@@ -3,7 +3,7 @@
   z-index: 1;
   display: flex;
   align-items: center;
-  height: 26px;
+  height: 30px;
   font-size: 13px;
   font-weight: 500;
   max-width: 100%;
@@ -35,12 +35,12 @@
       justify-content: center;
       background: var(--accent);
       color: var(--accent-foreground);
-      border-radius: 14px;
-      height: 14px;
-      min-width: 14px;
+      border-radius: 15px;
+      height: 15px;
+      min-width: 15px;
       padding: 0 3px;
       white-space: nowrap;
-      font-size: 9px;
+      font-size: 9.5px;
       font-weight: bold;
     }
 
@@ -49,10 +49,15 @@
       align-items: center;
       justify-content: center;
       width: 20px;
+      margin-right: 4px;
       height: 20px;
       text-align: center;
       flex-shrink: 0;
-      color: #858585;
+      color: rgba(var(--negative), 0.5);
+
+      &:hover {
+        color: var(--foreground);
+      }
     }
   }
 

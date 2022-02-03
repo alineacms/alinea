@@ -27,10 +27,7 @@ export namespace AppBar {
   }: ItemProps) {
     const interactive = Tag === 'button' || Tag === 'a'
     return (
-      <Tag
-        {...props}
-        className={styles.item.is({interactive}).mergeProps(props)()}
-      >
+      <Tag {...props} className={styles.item.mergeProps(props)({interactive})}>
         <HStack center gap={8} full>
           {icon && (
             <div className={styles.item.icon()}>

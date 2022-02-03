@@ -1,6 +1,13 @@
 import {createId, Schema, TextDoc, Type} from '@alinea/core'
 import {Fields, InputLabel, InputPath, useInput} from '@alinea/editor'
-import {Card, fromModule, HStack, IconButton, TextLabel} from '@alinea/ui'
+import {
+  Card,
+  Create,
+  fromModule,
+  HStack,
+  IconButton,
+  TextLabel
+} from '@alinea/ui'
 import {mergeAttributes, Node} from '@tiptap/core'
 import Collaboration from '@tiptap/extension-collaboration'
 import FloatingMenuExtension from '@tiptap/extension-floating-menu'
@@ -97,7 +104,7 @@ function InsertMenu({editor, schema, onInsert}: InsertMenuProps) {
   const id = createId()
   const blocks = Object.entries(schema?.types || {}).map(([key, type]) => {
     return (
-      <button
+      <Create.Button
         key={key}
         onClick={() => {
           onInsert(id, key)
@@ -105,22 +112,24 @@ function InsertMenu({editor, schema, onInsert}: InsertMenuProps) {
         }}
       >
         <TextLabel label={type.label} />
-      </button>
+      </Create.Button>
     )
   })
   return (
     <FloatingMenu editor={editor}>
-      <button
-        onClick={() => editor.chain().focus().toggleHeading({level: 1}).run()}
-      >
-        H1
-      </button>
-      <button
-        onClick={() => editor.chain().focus().toggleHeading({level: 2}).run()}
-      >
-        H2
-      </button>
-      {blocks}
+      <Create.Root>
+        <Create.Button
+          onClick={() => editor.chain().focus().toggleHeading({level: 1}).run()}
+        >
+          H1
+        </Create.Button>
+        <Create.Button
+          onClick={() => editor.chain().focus().toggleHeading({level: 1}).run()}
+        >
+          H2
+        </Create.Button>
+        {blocks}
+      </Create.Root>
     </FloatingMenu>
   )
 }

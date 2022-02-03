@@ -1,13 +1,16 @@
 import {Hub} from '@alinea/core/Hub'
 import {Media} from '@alinea/core/Media'
 import {Outcome} from '@alinea/core/Outcome'
-import {useCurrentDraft} from '@alinea/editor'
-import {fromModule, Loader, px} from '@alinea/ui'
-import {ChangeEvent, useRef} from 'react'
+import {Fields, useCurrentDraft} from '@alinea/editor'
+import {fromModule, Typo} from '@alinea/ui'
+import {Functions} from 'helder.store'
+import {ChangeEvent, Suspense, useRef} from 'react'
 import {useQuery} from 'react-query'
+import VirtualList from 'react-tiny-virtual-list'
 import {useSession} from '../hook/UseSession'
 import {EntryHeader} from './entry/EntryHeader'
 import {EntryTitle} from './entry/EntryTitle'
+import {MediaRow} from './media/MediaRow'
 import css from './MediaExplorer.module.scss'
 
 const styles = fromModule(css)
@@ -41,8 +44,22 @@ export type MediaExplorerProps = {}
 export function MediaExplorer({}: MediaExplorerProps) {
   const draft = useCurrentDraft()
   const {hub} = useSession()
+  const type = hub.schema.type(draft.type)!
   const {File} = Media
-  const {data, isLoading} = useQuery(['media', draft.id], () => {
+  const {data} = useQuery(
+    ['media:total', draft.id],
+    () => {
+      return hub
+        .query(
+          File.where(File.$parent.is(draft.id)).select({
+            total: Functions.count()
+          })
+        )
+        .then(Outcome.unpack)
+    },
+    {suspense: true}
+  )
+  /*const {data, isLoading} = useQuery(['media', draft.id], () => {
     return hub
       .query(
         File.where(File.$parent.is(draft.id)).select({
@@ -54,20 +71,47 @@ export function MediaExplorer({}: MediaExplorerProps) {
         })
       )
       .then(Outcome.unpack)
-  })
+  })*/
+  const total = data![0].total
   const inputRef = useRef<HTMLInputElement>(null)
   async function handleFileUpload(event: ChangeEvent<HTMLInputElement>) {
     const file = inputRef.current?.files?.[0]
     if (!file) return
     return uploadFile(hub, draft.url + '/' + file.name, file).then(console.log)
   }
+  const perRow = 4
+  const height = 120
   return (
     <>
       <EntryHeader />
       <div className={styles.root()}>
-        <EntryTitle />
+        <EntryTitle>
+          <Typo.Small>({total})</Typo.Small>
+        </EntryTitle>
 
-        {isLoading ? (
+        <Suspense fallback={null}>
+          <Fields type={type} />
+        </Suspense>
+        <div>
+          <input ref={inputRef} type="file" onChange={handleFileUpload} />
+        </div>
+        <VirtualList
+          width="100%"
+          height={600}
+          itemCount={Math.ceil(total / perRow)}
+          itemSize={height}
+          renderItem={({index, style}) => {
+            const from = index * perRow
+            const to = from + perRow
+            return (
+              <div key={index} style={{...style, height}}>
+                <MediaRow parentId={draft.id} from={from} to={to} />
+              </div>
+            )
+          }}
+        />
+
+        {/*isLoading ? (
           <Loader absolute />
         ) : (
           <div>
@@ -75,17 +119,10 @@ export function MediaExplorer({}: MediaExplorerProps) {
               <input ref={inputRef} type="file" onChange={handleFileUpload} />
             </div>
             {data?.map(file => {
-              return (
-                <div key={file.id} style={{padding: px(10)}}>
-                  {file.preview && <img src={file.preview} />}
-                  {file.title}
-                  <div>Size: {file.size}</div>
-                  <div>Extension: {file.extension}</div>
-                </div>
-              )
+              return <MediaThumbnail key={file.id} file={file} />
             })}
           </div>
-        )}
+        )*/}
       </div>
     </>
   )

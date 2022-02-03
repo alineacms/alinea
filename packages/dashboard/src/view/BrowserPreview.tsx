@@ -97,7 +97,7 @@ export function BrowserPreview({url}: BrowserPreviewProps) {
           <AppBar.Item as="a" icon={MdOpenInNew} href={url} target="_blank" />
         </AppBar.Root>
         <div style={{flexGrow: 1, position: 'relative'}}>
-          <div className={styles.root.loader.is({loading})()}>
+          <div className={styles.root.loader({loading})}>
             <Loader />
           </div>
           <iframe

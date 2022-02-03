@@ -16,7 +16,7 @@ export function Chip({children, icon, accent, ...props}: ChipProps) {
     <HStack
       center
       {...props}
-      className={styles.root.is({accent}).mergeProps(props)()}
+      className={styles.root.mergeProps(props)({accent})}
     >
       {icon && <Icon className={styles.root.icon()} icon={icon} />}
       <div className={styles.root.label()}>{children}</div>

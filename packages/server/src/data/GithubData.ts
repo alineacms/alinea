@@ -65,7 +65,7 @@ export class GithubData implements Data.Target, Data.Media {
       author,
       changes: [
         {
-          message: 'Upload files',
+          message: 'Upload files [skip ci]',
           files: changes
         }
       ]

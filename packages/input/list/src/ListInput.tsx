@@ -100,11 +100,7 @@ function ListInputRow<T extends ListRow>({
   const type = field.options.schema.type(row.type)
   if (!type) return null
   return (
-    <div
-      className={styles.row.is({dragging: isDragging})()}
-      ref={rootRef}
-      {...rest}
-    >
+    <div className={styles.row({dragging: isDragging})} ref={rootRef} {...rest}>
       <HStack gap={10}>
         <IconButton
           icon={MdDragHandle}
