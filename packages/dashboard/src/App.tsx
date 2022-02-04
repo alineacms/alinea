@@ -93,13 +93,14 @@ type EntryRouteProps = {
 }
 
 function EntryRoute({id}: EntryRouteProps) {
-  const draft = useDraft(id)
+  const {draft, isLoading} = useDraft(id)
   const type = draft?.channel
   const View = type?.options.view || EntryEdit
   const selected = ([] as Array<string | undefined>)
     .concat(draft?.id)
     .concat(draft?.parents)
     .filter(Boolean) as Array<string>
+  // Todo: add loader
   return (
     <CurrentDraftProvider value={draft}>
       <Pane
@@ -127,9 +128,13 @@ function EntryRoute({id}: EntryRouteProps) {
         </AppBar.Root>
         <ContentTree select={selected} />
       </Pane>
-      <div style={{width: '100%'}}>
+      <div style={{width: '100%', height: '100%'}}>
         <Route path="/:id/new">
-          <NewEntry parentId={id} />
+          {({match}) => {
+            const matched = match?.params.id
+            const isEntry = matched === draft?.id
+            return <NewEntry parentId={isEntry ? id : undefined} />
+          }}
         </Route>
         {draft && <View draft={draft} />}
       </div>

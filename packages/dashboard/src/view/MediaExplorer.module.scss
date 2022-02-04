@@ -1,3 +1,36 @@
 .root {
-  padding: 20px 35px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+
+  &-inner {
+    flex-grow: 1;
+    padding-top: 35px;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+
+    &-header {
+      padding: 0 35px;
+    }
+  }
+
+  &-list {
+    &::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    &::-webkit-scrollbar-track {
+      background: transparent; //var(--outline);
+    }
+    &::-webkit-scrollbar-thumb {
+      background: rgba(var(--negative), 0.2);
+    }
+    &::-webkit-scrollbar-thumb:hover {
+      background: rgba(var(--negative), 0.4);
+    }
+    &::-webkit-scrollbar-thumb:active {
+      background: rgba(var(--negative), 0.9);
+    }
+  }
 }

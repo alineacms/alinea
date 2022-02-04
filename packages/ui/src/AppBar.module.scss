@@ -1,11 +1,11 @@
 .root {
   position: sticky;
   top: 0;
-  z-index: 2;
+  z-index: 3;
   display: flex;
   align-items: center;
-  border-bottom: 1px solid var(--outline);
-  background-color: rgba(var(--positive), 0.3);
+  // border-bottom: 1px solid var(--outline);
+  background-color: rgba(var(--positive), 0.6);
   backdrop-filter: blur(12px);
 }
 

@@ -15,7 +15,7 @@ export namespace Create {
       <RRLink {...props} className={styles.button.mergeProps(props)()}>
         <HStack center gap={4}>
           <MdAddCircle />
-          <span>{children}</span>
+          {children && <span>{children}</span>}
         </HStack>
       </RRLink>
     )
@@ -29,7 +29,7 @@ export namespace Create {
       <button {...props} className={styles.button.mergeProps(props)()}>
         <HStack center gap={4}>
           <MdAddCircle />
-          <span>{children}</span>
+          {children && <span>{children}</span>}
         </HStack>
       </button>
     )

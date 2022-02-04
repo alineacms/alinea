@@ -4,7 +4,7 @@ import {select} from '@alinea/input.select'
 import {SelectInput} from '@alinea/input.select/view'
 import {text} from '@alinea/input.text'
 import {TextInput} from '@alinea/input.text/view'
-import {fromModule, HStack, Loader, useObservable} from '@alinea/ui'
+import {fromModule, HStack, Loader, Typo, useObservable} from '@alinea/ui'
 import {Modal} from '@alinea/ui/Modal'
 import {ComponentType, FormEvent, Suspense, useState} from 'react'
 import {useQuery, useQueryClient} from 'react-query'
@@ -113,7 +113,8 @@ export function NewEntry({parentId}: NewEntryProps) {
     history.push(`/${parent?.id}`)
   }
   return (
-    <Modal open onClose={handleClose}>
+    <Modal open={Boolean(parentId)} onClose={handleClose}>
+      <Typo.H1>New entry</Typo.H1>
       <form onSubmit={handleCreate}>
         {isCreating ? (
           <Loader absolute />

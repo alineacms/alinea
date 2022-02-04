@@ -1,10 +1,12 @@
 .root {
   display: flex;
   height: 100%;
+
   &-inner {
     flex-grow: 1;
     height: 100%;
     overflow: auto;
+
     &::-webkit-scrollbar {
       width: 6px;
       height: 6px;
@@ -40,7 +42,7 @@
       margin-left: 8px;
       border-left: 1px solid var(--outline);
       position: relative;
-      z-index: 2;
+      z-index: 4;
     }
 
     &:hover &-line {

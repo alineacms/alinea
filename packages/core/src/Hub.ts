@@ -20,7 +20,12 @@ export interface Hub<T = any> {
 export namespace Hub {
   export type Context = {user?: User}
 
-  export type Upload = {path: string; buffer: ArrayBuffer; preview?: string}
+  export type Upload = {
+    path: string
+    buffer: ArrayBuffer
+    preview?: string
+    color?: string
+  }
   export type Stat = {
     size?: number
     lastModified?: Date

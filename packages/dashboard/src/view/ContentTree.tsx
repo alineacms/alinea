@@ -1,11 +1,5 @@
 import {Entry} from '@alinea/core'
-import {
-  Create,
-  fromModule,
-  Stack,
-  TextLabel,
-  useInitialEffect
-} from '@alinea/ui'
+import {Create, fromModule, Stack, useInitialEffect} from '@alinea/ui'
 import {HStack} from '@alinea/ui/Stack'
 import {
   forwardRef,
@@ -129,17 +123,9 @@ function TreeNodeChildrenCreator({entry}: TreeNodeChildrenCreator) {
   const type = schema.type(entry.type)
   if (!type) return null
   const typeOptions = type.options?.contains || schema.keys
-  if (typeOptions.length === 1)
-    return (
-      <Create.Root>
-        <Create.Link to={`/${entry.id}/new`}>
-          <TextLabel label={schema.type(typeOptions[0])?.label!} />
-        </Create.Link>
-      </Create.Root>
-    )
   return (
     <Create.Root>
-      <Create.Link to={`/${entry.id}/new`}>Create new</Create.Link>
+      <Create.Link to={`/${entry.id}/new`} />
     </Create.Root>
   )
 }
@@ -193,7 +179,8 @@ const TreeNodeLink = memo(
               style={{
                 whiteSpace: 'nowrap',
                 textOverflow: 'ellipsis',
-                overflow: 'hidden'
+                overflow: 'hidden',
+                color: `var(--foreground-faded)`
               }}
             >
               {entry.title}

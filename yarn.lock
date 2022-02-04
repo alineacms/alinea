@@ -79,11 +79,13 @@ __metadata:
     "@alinea/client": 0.0.0
     "@alinea/core": 0.0.0
     "@alinea/editor": 0.0.0
+    "@react-hook/size": ^2.1.2
     "@types/react": ^17.0.20
     "@types/react-dom": ^17.0.9
     "@types/react-helmet": ^6.1.2
     "@types/react-router": ^5.1.16
     "@types/react-router-dom": ^5.3.0
+    fast-average-color: ^7.0.1
     image-blob-reduce: ^4.1.0
     js-base64: ^3.7.2
     react-helmet: ^6.1.0
@@ -762,6 +764,13 @@ __metadata:
   version: 1.2.1
   resolution: "@humanwhocodes/object-schema@npm:1.2.1"
   checksum: a824a1ec31591231e4bad5787641f59e9633827d0a2eaae131a288d33c9ef0290bd16fda8da6f7c0fcb014147865d12118df10db57f27f41e20da92369fcb3f1
+  languageName: node
+  linkType: hard
+
+"@juggle/resize-observer@npm:^3.3.1":
+  version: 3.3.1
+  resolution: "@juggle/resize-observer@npm:3.3.1"
+  checksum: ddabc4044276a2cb57d469c4917206c7e39f2463aa8e3430e33e4eda554412afe29c22afa40e6708b49dad5d56768dc83acd68a704b1dcd49a0906bb96b991b2
   languageName: node
   linkType: hard
 
@@ -1511,6 +1520,51 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@react-hook/latest@npm:^1.0.2":
+  version: 1.0.3
+  resolution: "@react-hook/latest@npm:1.0.3"
+  peerDependencies:
+    react: ">=16.8"
+  checksum: 2408c9cd35c5cfa7697b6da3bc5eebef254a932ade70955074c474f23be7dd3e2f81bbba12edcc9208bd0f89c6ed366d6b11d4f6d7b1052877a0bac8f74afad4
+  languageName: node
+  linkType: hard
+
+"@react-hook/passive-layout-effect@npm:^1.2.0":
+  version: 1.2.1
+  resolution: "@react-hook/passive-layout-effect@npm:1.2.1"
+  peerDependencies:
+    react: ">=16.8"
+  checksum: 217cb8aa90fb8e677672319a9a466d7752890cf4357c76df000b207696e9cc717cf2ee88080671cc9dae238a82f92093ab4f61ab2f6032d2a8db958fc7d99b5d
+  languageName: node
+  linkType: hard
+
+"@react-hook/resize-observer@npm:^1.2.1":
+  version: 1.2.5
+  resolution: "@react-hook/resize-observer@npm:1.2.5"
+  dependencies:
+    "@juggle/resize-observer": ^3.3.1
+    "@react-hook/latest": ^1.0.2
+    "@react-hook/passive-layout-effect": ^1.2.0
+    "@types/raf-schd": ^4.0.0
+    raf-schd: ^4.0.2
+  peerDependencies:
+    react: ">=16.8"
+  checksum: a2f3b333e344adb3d7a4cfd2bc77fd75054b07063fba706d57bef0c497650c3e82038eafb64fa4148c08527e8b0a34f2f70392da1700a7a0d9676ee8ba795c16
+  languageName: node
+  linkType: hard
+
+"@react-hook/size@npm:^2.1.2":
+  version: 2.1.2
+  resolution: "@react-hook/size@npm:2.1.2"
+  dependencies:
+    "@react-hook/passive-layout-effect": ^1.2.0
+    "@react-hook/resize-observer": ^1.2.1
+  peerDependencies:
+    react: ">=16.8"
+  checksum: 89876e93957f420ba63518b60992b46ca82b0d12da0cf50ad487461e0b4230ec0e036ecf100840e2b2e93c9101895ad33e8bd6bc02a25641c28c904a09ab2563
+  languageName: node
+  linkType: hard
+
 "@stitches/react@npm:^1.2.0":
   version: 1.2.0
   resolution: "@stitches/react@npm:1.2.0"
@@ -2069,6 +2123,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/offscreencanvas@npm:^2019.6.4":
+  version: 2019.6.4
+  resolution: "@types/offscreencanvas@npm:2019.6.4"
+  checksum: ea05348b49cb0dc082fadf7ccc283e53c03ecf9b94c5ee096fce447edfcb563f6c060714609b72cee7848ea24589aa56297144a2b3a89a833e6ea24eaaa96da9
+  languageName: node
+  linkType: hard
+
 "@types/orderedmap@npm:*":
   version: 1.0.0
   resolution: "@types/orderedmap@npm:1.0.0"
@@ -2190,6 +2251,13 @@ __metadata:
   version: 6.9.7
   resolution: "@types/qs@npm:6.9.7"
   checksum: 7fd6f9c25053e9b5bb6bc9f9f76c1d89e6c04f7707a7ba0e44cc01f17ef5284adb82f230f542c2d5557d69407c9a40f0f3515e8319afd14e1e16b5543ac6cdba
+  languageName: node
+  linkType: hard
+
+"@types/raf-schd@npm:^4.0.0":
+  version: 4.0.1
+  resolution: "@types/raf-schd@npm:4.0.1"
+  checksum: 0babaa85541aadc6e5f8aa64ec79cd68bf67ea56abb7610c8daf3ca5f4b1a75d12e4e147a0b5434938a4031650ebddc733021ec4e7db4f11f7955390ec32c917
   languageName: node
   linkType: hard
 
@@ -4253,6 +4321,15 @@ __metadata:
   version: 3.0.2
   resolution: "extend@npm:3.0.2"
   checksum: a50a8309ca65ea5d426382ff09f33586527882cf532931cb08ca786ea3146c0553310bda688710ff61d7668eba9f96b923fe1420cdf56a2c3eaf30fcab87b515
+  languageName: node
+  linkType: hard
+
+"fast-average-color@npm:^7.0.1":
+  version: 7.0.1
+  resolution: "fast-average-color@npm:7.0.1"
+  dependencies:
+    "@types/offscreencanvas": ^2019.6.4
+  checksum: 8597f52a0f18f6fd1218f052f9c42334b8f58ee3fd6130167b7a8e62ed12300c66afc842461699ab545c4b4aeed00c0b231321f8c752300e01a48db659d4a825
   languageName: node
   linkType: hard
 
@@ -7536,6 +7613,13 @@ fsevents@~2.3.2:
   version: 1.2.3
   resolution: "queue-microtask@npm:1.2.3"
   checksum: b676f8c040cdc5b12723ad2f91414d267605b26419d5c821ff03befa817ddd10e238d22b25d604920340fd73efd8ba795465a0377c4adf45a4a41e4234e42dc4
+  languageName: node
+  linkType: hard
+
+"raf-schd@npm:^4.0.2":
+  version: 4.0.3
+  resolution: "raf-schd@npm:4.0.3"
+  checksum: 45514041c5ad31fa96aef3bb3c572a843b92da2f2cd1cb4a47c9ad58e48761d3a4126e18daa32b2bfa0bc2551a42d8f324a0e40e536cb656969929602b4e8b58
   languageName: node
   linkType: hard
 

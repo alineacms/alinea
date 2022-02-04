@@ -7,7 +7,7 @@ import {useSession} from './UseSession'
 export function useDraft(id: string | undefined) {
   const {hub} = useSession()
   const docs = useDrafts()
-  const {data: draft} = useQuery(
+  const {data: draft, isLoading} = useQuery(
     ['draft', id],
     async () => {
       if (!id) return undefined
@@ -26,5 +26,5 @@ export function useDraft(id: string | undefined) {
       return () => cancel.forEach(c => c())
     }
   }, [draft])
-  return draft
+  return {draft, isLoading}
 }

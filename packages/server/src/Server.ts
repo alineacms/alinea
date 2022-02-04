@@ -81,7 +81,6 @@ export class Server<T = any> implements Hub<T> {
             title: Entry.title,
             url: Entry.url,
             $parent: Entry.$parent,
-            preview: Entry.get('preview'),
             $isContainer: Entry.$isContainer,
             childrenCount: Parent.where(Parent.$parent.is(Entry.id))
               .select(Functions.count())
@@ -145,7 +144,8 @@ export class Server<T = any> implements Hub<T> {
           .createHash('md5')
           .update(Buffer.from(file.buffer))
           .digest('hex'),
-        preview: file.preview
+        preview: file.preview,
+        averageColor: file.color
       }
       await this.publishEntries([entry])
       return entry

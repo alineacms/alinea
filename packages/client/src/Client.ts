@@ -59,6 +59,7 @@ export class Client implements Hub {
   uploadFile(file: Hub.Upload): Future<Media.File> {
     const form = new FormData()
     if (file.preview) form.append('preview', file.preview)
+    if (file.color) form.append('color', file.color)
     form.append('buffer', new Blob([file.buffer]))
     form.append('path', file.path)
     return this.fetch(Hub.routes.upload(), {
@@ -73,10 +74,18 @@ export class Client implements Hub {
     }).then<Outcome<Array<Hub.DirEntry>>>(toFuture)
   }
 
-  protected async fetch(endpoint: string, init?: RequestInit) {
-    const response = await fetch(this.url + endpoint, this.applyAuth(init))
-    if (response.status === 401) this.unauthorized()
-    return response
+  protected fetch(endpoint: string, init?: RequestInit) {
+    const controller = new AbortController()
+    const signal = controller.signal
+    const promise = fetch(this.url + endpoint, {
+      ...this.applyAuth(init),
+      signal
+    }).then(res => {
+      if (res.status === 401) this.unauthorized()
+      return res
+    })
+    ;(promise as any).cancel = () => controller.abort()
+    return promise
   }
 
   protected fetchJson(endpoint: string, init?: RequestInit) {

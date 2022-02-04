@@ -15,6 +15,7 @@ export namespace Media {
     size: number
     hash: string
     preview?: string
+    averageColor?: string
   }
 
   export const File = new Collection<File>('Entry', {
@@ -25,7 +26,7 @@ export namespace Media {
   export namespace File {
     export type Preview = Pick<
       File,
-      'id' | 'title' | 'extension' | 'size' | 'preview'
+      'id' | 'title' | 'extension' | 'size' | 'preview' | 'averageColor'
     >
   }
 }

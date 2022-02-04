@@ -15,7 +15,12 @@ export namespace Data {
   }
 
   export namespace Media {
-    export type Upload = {path: string; buffer: ArrayBuffer; preview?: string}
+    export type Upload = {
+      path: string
+      buffer: ArrayBuffer
+      preview?: string
+      color?: string
+    }
     export type Download =
       | {type: 'buffer'; buffer: ArrayBuffer}
       | {type: 'url'; url: string}

@@ -22,6 +22,7 @@ export class Cache {
       total++
       store.insert(Entry, entry)
     }
+    store.createIndex(Entry, 'type', [Entry.type])
     store.createIndex(Entry, 'url', [Entry.url])
     store.createIndex(Entry, 'parent', [Entry.$parent])
     const diff = process.hrtime.bigint() - startTime

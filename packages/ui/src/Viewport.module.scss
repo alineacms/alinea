@@ -3,10 +3,11 @@
   //--background: #121923;
   //--background: #050606;
   --foreground: white;
+  --foreground-faded: rgb(223, 221, 221);
   --highlight: #393a3f;
   --selected: #303136;
   --outline: #303136;
-  --positive: 0, 0, 0;
+  --positive: 31, 32, 37;
   --negative: 255, 255, 255;
   --shadow: rgba(0, 0, 0, 0.9);
 }
@@ -14,11 +15,12 @@
 @mixin light-theme {
   --background: white;
   --foreground: #11181c;
+  --foreground-faded: #1e282e;
   --highlight: #f7f6f6;
   --selected: #f3f3f3; //rgb(246, 249, 250); //#f5f4f0;
   --outline: #eceff1; //rgb(246, 249, 250);
   --positive: 255, 255, 255;
-  --negative: 0, 0, 0;
+  --negative: 31, 32, 37;
   --shadow: rgba(0, 0, 0, 0.1);
 }
 

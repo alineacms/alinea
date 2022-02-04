@@ -32,7 +32,6 @@ export namespace Entry {
     'id' | 'type' | 'title' | 'url' | '$parent' | '$isContainer'
   > & {
     childrenCount: number
-    preview?: string
   }
   export type Raw = Omit<Entry, 'url' | '$status' | '$parent' | '$isContainer'>
 }
