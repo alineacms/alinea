@@ -1,3 +1,4 @@
+import {getRandomColor} from '@alinea/ui/util/GetRandomColor'
 import {ComponentType} from 'react'
 import {Label} from './Label'
 import {Schema} from './Schema'
@@ -9,13 +10,17 @@ export type Workspace<T = any> = {
   schema: Schema<T>
   contentDir: string
   mediaDir?: string
-  color?: string
+  color: string
   preview?: ComponentType<T>
 }
 
 export function workspace<T>(
   name: Label,
-  options: Omit<Workspace<T>, 'name'>
+  options: Omit<Workspace<T>, 'name' | 'color'> & {color?: string}
 ): Workspace<T> {
-  return {name, ...options}
+  return {
+    name,
+    ...options,
+    color: options.color || getRandomColor(JSON.stringify(name))
+  }
 }

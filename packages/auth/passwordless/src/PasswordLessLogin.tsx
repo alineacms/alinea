@@ -164,7 +164,7 @@ function useResolveToken(setSession: (session: Session | undefined) => void) {
 }
 
 export function PasswordLessLogin({setSession}: Auth.ViewProps) {
-  const {color, apiUrl} = useDashboard()
+  const {apiUrl} = useDashboard()
   const [state, setState] = useState(LoginState.Input)
   const [email, setEmail] = useState('')
 

@@ -13,7 +13,6 @@ import {
   Viewport
 } from '@alinea/ui'
 import {Sidebar} from '@alinea/ui/Sidebar'
-import {getRandomColor} from '@alinea/ui/util/GetRandomColor'
 //import 'preact/debug'
 import {Fragment, Suspense, useState} from 'react'
 import {Helmet} from 'react-helmet'
@@ -95,7 +94,11 @@ type EntryRouteProps = {
 }
 
 function EntryRoute({id}: EntryRouteProps) {
+  const {config} = useDashboard()
   const {draft, isLoading} = useDraft(id)
+  const {name, color} = draft
+    ? config.workspaces[draft.workspace]
+    : config.defaultWorkspace
   const type = draft?.channel
   const View = type?.options.view || EntryEdit
   const selected = ([] as Array<string | undefined>)
@@ -105,41 +108,44 @@ function EntryRoute({id}: EntryRouteProps) {
   // Todo: add loader
   return (
     <CurrentDraftProvider value={draft}>
-      <Pane
-        id="content-tree"
-        resizable="right"
-        defaultWidth={330}
-        minWidth={200}
-      >
-        <AppBar.Root>
-          <AppBar.Item full style={{flexGrow: 1}}>
-            <Typo.Monospace
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                width: '100%',
-                height: px(28),
-                background: 'var(--highlight)',
-                padding: `${px(6)} ${px(15)} ${px(6)} ${px(12)}`,
-                borderRadius: px(8)
-              }}
-            >
-              <MdSearch size={15} />
-            </Typo.Monospace>
-          </AppBar.Item>
-        </AppBar.Root>
-        <ContentTree select={selected} />
-      </Pane>
-      <div style={{width: '100%', height: '100%'}}>
-        <Route path="/:id/new">
-          {({match}) => {
-            const matched = match?.params.id
-            const isEntry = matched === draft?.id
-            return <NewEntry parentId={isEntry ? id : undefined} />
-          }}
-        </Route>
-        {draft && <View draft={draft} />}
-      </div>
+      <Viewport color={color}>
+        <FavIcon color={color} />
+        <Pane
+          id="content-tree"
+          resizable="right"
+          defaultWidth={330}
+          minWidth={200}
+        >
+          <AppBar.Root>
+            <AppBar.Item full style={{flexGrow: 1}}>
+              <Typo.Monospace
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  width: '100%',
+                  height: px(28),
+                  background: 'var(--highlight)',
+                  padding: `${px(6)} ${px(15)} ${px(6)} ${px(12)}`,
+                  borderRadius: px(8)
+                }}
+              >
+                <MdSearch size={15} />
+              </Typo.Monospace>
+            </AppBar.Item>
+          </AppBar.Root>
+          <ContentTree select={selected} />
+        </Pane>
+        <div style={{width: '100%', height: '100%'}}>
+          <Route path="/:id/new">
+            {({match}) => {
+              const matched = match?.params.id
+              const isEntry = matched === draft?.id
+              return <NewEntry parentId={isEntry ? id : undefined} />
+            }}
+          </Route>
+          {draft && <View draft={draft} />}
+        </div>
+      </Viewport>
     </CurrentDraftProvider>
   )
 }
@@ -163,19 +169,16 @@ type AppRootProps = {
 }
 
 function AppRoot({session, setSession}: AppRootProps) {
-  const {auth: Auth = Fragment} = useDashboard()
-  const {name, color = getRandomColor(JSON.stringify(name))} = useWorkspace()
-  const inner = session ? (
-    <AppAuthenticated />
-  ) : (
-    <Auth setSession={setSession} />
-  )
-  return (
-    <Viewport color={color}>
-      <FavIcon color={color} />
-      {inner}
-    </Viewport>
-  )
+  const {auth: Auth = Fragment, config} = useDashboard()
+  const {name, color} = config.defaultWorkspace
+  if (!session)
+    return (
+      <Viewport color={color}>
+        <FavIcon color={color} />
+        <Auth setSession={setSession} />
+      </Viewport>
+    )
+  return <AppAuthenticated />
 }
 
 function localSession(options: DashboardOptions) {

@@ -1,10 +1,14 @@
 import {Auth} from './Auth'
 import {createError} from './ErrorWithCode'
 import {Type} from './Type'
-import {Workspaces} from './Workspace'
+import {Workspace, Workspaces} from './Workspace'
 
 export class Config<T extends Workspaces = Workspaces> {
   constructor(public options: ConfigOptions<T>) {}
+
+  get defaultWorkspace(): Workspace {
+    return this.workspaces[Object.keys(this.workspaces)[0]]
+  }
 
   get workspaces(): T {
     return this.options.workspaces

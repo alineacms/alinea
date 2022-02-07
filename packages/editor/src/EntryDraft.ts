@@ -68,12 +68,16 @@ export class EntryDraft implements Entry {
     return this.root.get('id') || this.source.id
   }
 
-  get url(): string {
-    return this.root.get('url') || this.source.url
+  get workspace(): string {
+    return this.root.get('workspace') || this.source.workspace
   }
 
   get type(): string {
     return this.root.get('type') || this.source.type
+  }
+
+  get url(): string {
+    return this.root.get('url') || this.source.url
   }
 
   get $status(): EntryStatus {
