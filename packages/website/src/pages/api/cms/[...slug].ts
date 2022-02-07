@@ -1,4 +1,4 @@
-import {server} from '../../../config.server'
+import {server} from '../../../../alinea.server'
 
 export default server.respond
 

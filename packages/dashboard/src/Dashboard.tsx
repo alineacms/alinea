@@ -1,21 +1,18 @@
-import {Auth} from '@alinea/core/Auth'
-import {Schema} from '@alinea/core/Schema'
-import {ComponentType} from 'react'
+import {Auth, Config, Workspaces} from '@alinea/core'
 import {render} from 'react-dom'
 import {App} from './App'
 
-export interface DashboardOptions<T> {
-  name: string
-  schema: Schema<T>
+export interface DashboardOptions<T extends Workspaces = Workspaces> {
+  config: Config<T>
   apiUrl: string
   auth?: Auth.View
-  color?: string
-  preview?: ComponentType<T>
 }
 
 export const Dashboard = App
 
-export function renderDashboard<T>(options: DashboardOptions<T>) {
+export function renderDashboard<T extends Workspaces>(
+  options: DashboardOptions<T>
+) {
   const scripts = document.getElementsByTagName('script')
   const element = scripts[scripts.length - 1]
   const div = document.createElement('div')

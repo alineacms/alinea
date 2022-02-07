@@ -1,16 +1,16 @@
-import {alinea, Page} from '.alinea'
+import {Page, pages} from '.alinea/web'
 import {Entry} from '@alinea/core'
 import {Pages} from '@alinea/server'
 import {GetStaticPropsContext} from 'next'
-import {drafts} from 'src/config.server'
+import {drafts} from '../../alinea.server'
 import {PageView} from '../view/PageView'
 
-function propsOf(pages: Pages<Page>, page: Page) {
+async function propsOf(pages: Pages<Page>, page: Page) {
   switch (page.type) {
     case 'Docs':
       return {
         ...page,
-        children: pages.all(
+        children: await pages.all(
           pages.children(page.id).select({
             url: Entry.url,
             title: Entry.title
@@ -23,13 +23,12 @@ function propsOf(pages: Pages<Page>, page: Page) {
 }
 
 export async function getStaticProps(context: GetStaticPropsContext) {
-  let pages = await alinea.pages
-  if (context.preview) pages = await pages.preview(drafts)
+  const from = context.preview ? pages.preview(drafts) : pages
   const paths = (context.params?.slug as Array<string>) || []
   const slug = '/' + paths.join('/')
-  const page = pages.first(pages.whereUrl(slug))
+  const page = await from.first(pages.byUrl(slug))
   if (!page) return {props: {}}
-  return {props: propsOf(pages, page)}
+  return {props: await propsOf(from, page)}
 }
 
 type Unpack<T> = T extends Promise<infer X> ? X : T

@@ -15,7 +15,7 @@ type TypeToEntry<T> = T extends {[key: string]: any}
 export type DataOf<T> = T extends Collection<infer U> ? U : never
 export type EntryOf<T> = T extends Schema<infer U> ? U : never
 
-export function createSchema<Types extends LazyRecord<Type>>(
+export function schema<Types extends LazyRecord<Type>>(
   types: Types
 ): Schema<TypeToEntry<TypeToRows<Types>>> {
   return new Schema(types) as any

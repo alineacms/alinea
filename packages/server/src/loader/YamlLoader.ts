@@ -1,5 +1,4 @@
-import {Entry} from '@alinea/core/Entry'
-import {Schema} from '@alinea/core/Schema'
+import {Entry, Schema} from '@alinea/core'
 import yaml from 'js-yaml'
 import {Loader} from '../Loader'
 

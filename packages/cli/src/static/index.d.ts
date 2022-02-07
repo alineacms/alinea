@@ -1,5 +1,2 @@
-export * from './cache'
-export * from './schema'
-import {pages} from './pages'
-
-export const alinea: {pages: typeof pages}
+export * from './cache.js'
+export * from './config.js'

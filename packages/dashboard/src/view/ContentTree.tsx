@@ -20,6 +20,7 @@ import {
 import {useQuery} from 'react-query'
 import {Link, useLocation} from 'react-router-dom'
 import {useSession} from '../hook/UseSession'
+import {useWorkspace} from '../hook/UseWorkspace'
 import css from './ContentTree.module.scss'
 
 const styles = fromModule(css)
@@ -119,10 +120,9 @@ function TreeNode({entry, level, isOpen, toggleOpen}: TreeNodeProps) {
 type TreeNodeChildrenCreator = {entry: Entry}
 
 function TreeNodeChildrenCreator({entry}: TreeNodeChildrenCreator) {
-  const {schema} = useSession().hub
+  const {schema} = useWorkspace()
   const type = schema.type(entry.type)
   if (!type) return null
-  const typeOptions = type.options?.contains || schema.keys
   return (
     <Create.Root>
       <Create.Link to={`/${entry.id}/new`} />
@@ -143,8 +143,8 @@ const TreeNodeLink = memo(
     {entry, isOpened, toggleOpen, isSelected, level}: TreeNodeLinkProps,
     ref: Ref<HTMLAnchorElement>
   ) {
-    const {hub} = useSession()
-    const type = hub.schema.type(entry.type)!
+    const {schema} = useWorkspace()
+    const type = schema.type(entry.type)!
     const isContainer = entry.$isContainer
     const icon =
       (type.options.icon && <type.options.icon />) ||
@@ -179,8 +179,7 @@ const TreeNodeLink = memo(
               style={{
                 whiteSpace: 'nowrap',
                 textOverflow: 'ellipsis',
-                overflow: 'hidden',
-                color: `var(--foreground-faded)`
+                overflow: 'hidden'
               }}
             >
               {entry.title}

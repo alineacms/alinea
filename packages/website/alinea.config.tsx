@@ -1,12 +1,12 @@
-import {createSchema, type} from '@alinea/core'
-import {media} from '@alinea/dashboard'
+import {createConfig, schema, type, workspace} from '@alinea/core'
+import {BrowserPreview, media} from '@alinea/dashboard'
 import {link} from '@alinea/input.link'
 import {list} from '@alinea/input.list'
 import {path} from '@alinea/input.path'
 import {richText} from '@alinea/input.richtext'
 import {text} from '@alinea/input.text'
 
-export const schema = createSchema({
+const webSchema = schema({
   ...media,
   Home: type(
     'Home',
@@ -30,7 +30,7 @@ export const schema = createSchema({
     title: text('Title', {multiline: true}),
     path: path('Path'),
     body: richText('Body', {
-      blocks: createSchema({
+      blocks: schema({
         CodeBlock: type('CodeBlock', {
           code: text('Code', {multiline: true})
         }),
@@ -40,7 +40,7 @@ export const schema = createSchema({
       })
     }),
     blocks: list('List test', {
-      schema: createSchema({
+      schema: schema({
         A: type('Type A', {
           field1: text('Field 1')
         }),
@@ -53,4 +53,21 @@ export const schema = createSchema({
       })
     })
   })
+})
+
+export const config = createConfig({
+  dashboardUrl: 'http://localhost:4500',
+  apiUrl: 'http://localhost:4500',
+  workspaces: {
+    web: workspace('Alinea', {
+      schema: webSchema,
+      contentDir: './content',
+      mediaDir: './public',
+      color: '#FFBD67',
+      preview(entry) {
+        if (entry.type === 'MediaLibrary') return null
+        return <BrowserPreview url={`/api/preview?${entry.url}`} />
+      }
+    })
+  }
 })

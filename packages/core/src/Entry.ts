@@ -16,6 +16,7 @@ export interface Entry {
   title: Label
   // Computed properties
   url: string
+  workspace: string
   $status?: EntryStatus
   $parent?: string
   $isContainer?: boolean
@@ -29,11 +30,14 @@ export namespace Entry {
   }
   export type Summary = Pick<
     Entry,
-    'id' | 'type' | 'title' | 'url' | '$parent' | '$isContainer'
+    'id' | 'workspace' | 'type' | 'title' | 'url' | '$parent' | '$isContainer'
   > & {
     childrenCount: number
   }
-  export type Raw = Omit<Entry, 'url' | '$status' | '$parent' | '$isContainer'>
+  export type Raw = Omit<
+    Entry,
+    'workspace' | 'url' | '$status' | '$parent' | '$isContainer'
+  >
 }
 
 // Todo: export this elsewhere

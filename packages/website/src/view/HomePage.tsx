@@ -1,4 +1,4 @@
-import {Home} from '.alinea'
+import {Home} from '.alinea/web'
 import {HStack, px, Typo} from '@alinea/ui'
 import {Container} from './layout/Container'
 

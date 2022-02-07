@@ -1,4 +1,4 @@
-import {Docs} from '.alinea'
+import {Docs} from '.alinea/web'
 import {Label} from '@alinea/core'
 import {TextLabel} from '@alinea/ui'
 import Link from 'next/link'

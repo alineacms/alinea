@@ -1,3 +1,4 @@
+import {Config} from '@alinea/core/Config'
 import {createId} from '@alinea/core/Id'
 import {Schema} from '@alinea/core/Schema'
 import {Cache, JsonLoader} from '@alinea/server'
@@ -42,7 +43,7 @@ const externalPlugin: Plugin = {
 
 type Options = {
   watch?: boolean
-  schema?: string
+  config?: string
   content?: string
   outdir?: string
 }
@@ -83,10 +84,19 @@ async function embedInJs(source: string, data: Buffer) {
   return source.replace('$DB', encode(data)).replace('$SQLJS', encode(sqlJs))
 }
 
-function schemaCollections(schema: Schema) {
+function configType(location: string) {
+  const file = location.endsWith('.tsx') ? location.slice(0, -4) : location
+  return `
+    export * from ${JSON.stringify(file)}
+  `
+}
+
+function schemaCollections(workspace: string, schema: Schema) {
   const types = schema.types
   const typeNames = Object.keys(types)
   return `
+    import {config} from '../config.js'
+    export const schema = config.workspaces['${workspace}'].schema
     export const Page = schema.entry
     ${typeNames
       .map(type => `export const ${type} = schema.collection('${type}')`)
@@ -94,17 +104,14 @@ function schemaCollections(schema: Schema) {
   `.trim()
 }
 
-function schemaTypes(location: string, schema: Schema) {
-  const file = location.endsWith('.ts')
-    ? location.substr(0, location.length - 3)
-    : location
+function schemaTypes(workspace: string, schema: Schema) {
   const types = schema.types
   const typeNames = Object.keys(types)
   return `
+    import {config} from '../config.js'
     import {DataOf, EntryOf} from '@alinea/core'
     import {Collection} from 'helder.store'
-    import {schema} from ${JSON.stringify(file)}
-    export * from '../src/schema'
+    export const schema = config.workspaces['${workspace}'].schema
     export type Page = EntryOf<typeof schema>
     export const Page: Collection<Page>
     ${typeNames
@@ -121,43 +128,77 @@ function schemaTypes(location: string, schema: Schema) {
 
 async function generate(options: Options) {
   const legacy = true
-  const schemaLocation = options.schema || './src/schema.ts'
+  const configLocation = options.config || './alinea.config.tsx'
   const outdir = options.outdir || './.alinea'
-  const content = options.content || './content'
   const cwd = process.cwd()
-  if (!fs.existsSync(schemaLocation))
-    return fail(`Schema file not found at "${schemaLocation}"`)
+  if (!fs.existsSync(configLocation))
+    return fail(`Config file not found at "${configLocation}"`)
+  async function copy(...files: Array<string>) {
+    await Promise.all(
+      files.map(file =>
+        fs.copyFile(
+          path.join(__dirname, 'static', file),
+          path.join(outdir, file)
+        )
+      )
+    )
+  }
   await failOnBuildError(
     build({
       format: 'esm',
       target: 'esnext',
       outdir,
-      entryPoints: [schemaLocation],
+      entryPoints: {config: configLocation},
       bundle: true,
       platform: 'node',
       plugins: [externalPlugin]
     })
   )
-  await fs.copy(path.join(__dirname, 'static'), outdir, {
-    overwrite: true,
-    filter(src, dest) {
-      return (
-        !src.includes('cache.legacy.js') && !src.includes('cache.modern.js')
-      )
-    }
-  })
-  const schemaFile = path.join(outdir, 'schema.js')
-  const outFile = 'file://' + path.join(cwd, schemaFile)
+  await copy('package.json', 'index.js', 'index.d.ts', 'cache.d.ts')
+  await fs.writeFile(
+    path.join(outdir, 'config.d.ts'),
+    configType(
+      path
+        .relative(path.join(cwd, outdir), path.join(cwd, configLocation))
+        .split(path.sep)
+        .join('/')
+    )
+  )
+  const configFile = path.join(outdir, 'config.js')
+  const outFile = 'file://' + path.join(cwd, configFile)
   const exports = await import(outFile)
-  const schema = exports.default || exports.schema
+  const config: Config = exports.default || exports.config
   const store = new SqliteStore(new BetterSqlite3(), createId)
   const source = new FileData({
-    schema,
+    config,
     fs: fs.promises,
-    contentDir: content,
     loader: JsonLoader
   })
   await Cache.create(store, source)
+  for (const [key, workspace] of Object.entries(config.workspaces)) {
+    await fs.mkdir(path.join(outdir, key), {recursive: true})
+    await fs.writeFile(
+      path.join(outdir, key, 'schema.js'),
+      schemaCollections(key, workspace.schema)
+    )
+    await fs.writeFile(
+      path.join(outdir, key, 'schema.d.ts'),
+      schemaTypes(key, workspace.schema)
+    )
+    await fs.copy(
+      path.join(__dirname, 'static/workspace'),
+      path.join(outdir, key),
+      {overwrite: true}
+    )
+    const workspaceIndex = await fs.readFile(
+      path.join(__dirname, 'static/workspace/index.js'),
+      'utf-8'
+    )
+    await fs.writeFile(
+      path.join(outdir, key, 'index.js'),
+      workspaceIndex.replace('$WORKSPACE', key)
+    )
+  }
   const db = (store as any).db.db
   const data = db.serialize()
   if (legacy) {
@@ -177,21 +218,6 @@ async function generate(options: Options) {
     )
     await fs.writeFile(path.join(outdir, 'cache.wasm'), embedInWasm(data))
   }
-  const schemaSource = await fs.readFile(schemaFile, 'utf-8')
-  await fs.writeFile(
-    schemaFile,
-    schemaSource + '\n' + schemaCollections(schema)
-  )
-  await fs.writeFile(
-    path.join(outdir, 'schema.d.ts'),
-    schemaTypes(
-      path
-        .relative(path.join(cwd, outdir), path.join(cwd, schemaLocation))
-        .split(path.sep)
-        .join('/'),
-      schema
-    )
-  )
 }
 
 prog
@@ -200,10 +226,9 @@ prog
   .describe('Generate types and content cache')
   .option('-w, --watch', `Watch for changes to source files`)
   .option(
-    '-s, --schema',
-    `Location of the schema file, defaults to "./src/schema.ts"`
+    '-c, --config',
+    `Location of the config file, defaults to "./src/alinea.config.tsx"`
   )
-  .option('-c, --content', `Content directory, defaults to "./content"`)
   .option('-o, --outdir', `Output directory, defaults to "./.alinea"`)
   .action(generate)
 

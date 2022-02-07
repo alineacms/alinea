@@ -1,4 +1,4 @@
-import {cache, schema} from '.alinea'
+import {config, createCache} from '.alinea'
 import {PasswordLessAuth} from '@alinea/auth.passwordless/PasswordLessAuth.js'
 import {JsonLoader, Server} from '@alinea/server'
 import {GithubData} from '@alinea/server/data/GithubData.js'
@@ -20,7 +20,6 @@ try {
 }
 
 export const drafts = new FirestoreDrafts({
-  schema,
   collection: getFirestore().collection('Draft')
 })
 const isProduction = process.env.NODE_ENV === 'production'
@@ -28,7 +27,7 @@ const dashboardUrl = isProduction
   ? 'https://alinea.vercel.app/admin'
   : 'http://localhost:3000/admin'
 const data = new GithubData({
-  schema,
+  config,
   loader: JsonLoader,
   contentDir: 'packages/website/content',
   mediaDir: 'packages/website/public',
@@ -60,9 +59,8 @@ const auth = new PasswordLessAuth({
 })
 export const server = new Server({
   auth,
-  dashboardUrl,
-  schema,
-  store: (await cache)(),
+  config,
+  store: await createCache(),
   drafts: drafts,
   target: data,
   media: data

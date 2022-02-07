@@ -1,4 +1,4 @@
-import {createSchema, docFromEntry, Entry, type} from '@alinea/core'
+import {docFromEntry, Entry, type} from '@alinea/core'
 import {path} from '@alinea/input.path'
 import {text} from '@alinea/input.text'
 import dotenv from 'dotenv'
@@ -23,8 +23,7 @@ const Doc = type('Doc', {
 
 const drafts = new FileDrafts({
   fs: fs.promises as any,
-  dir: '/tmp',
-  schema: createSchema({Doc})
+  dir: '/tmp'
 })
 
 test('update doc', async () => {

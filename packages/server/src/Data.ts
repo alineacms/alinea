@@ -10,8 +10,8 @@ export namespace Data {
   }
 
   export interface Media {
-    upload(file: Media.Upload): Promise<string>
-    download(location: string): Promise<Media.Download>
+    upload(workspace: string, file: Media.Upload): Promise<string>
+    download(workspace: string, location: string): Promise<Media.Download>
   }
 
   export namespace Media {

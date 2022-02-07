@@ -132,7 +132,7 @@ function LoginScreen(props: LoginScreenProps) {
 }
 
 function useResolveToken(setSession: (session: Session | undefined) => void) {
-  const {schema, apiUrl} = useDashboard()
+  const {config, apiUrl} = useDashboard()
   useLayoutEffect(() => {
     const params = new URLSearchParams(window.location.search)
     const isTokenFromUrl = params.has('token')
@@ -152,7 +152,7 @@ function useResolveToken(setSession: (session: Session | undefined) => void) {
       }
       setSession({
         user,
-        hub: new Client(schema, apiUrl, applyAuth, logout),
+        hub: new Client(config, apiUrl, applyAuth, logout),
         end: async () => logout()
       })
       if (isTokenFromUrl) {

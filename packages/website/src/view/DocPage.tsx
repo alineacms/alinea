@@ -1,4 +1,4 @@
-import {Doc} from '.alinea'
+import {Doc} from '.alinea/web'
 import {Typo} from '@alinea/ui'
 import {Container} from './layout/Container'
 import {RichText} from './layout/RichText'

@@ -10,6 +10,7 @@ import {ChangeEvent, useRef} from 'react'
 import {useQuery, useQueryClient} from 'react-query'
 import VirtualList from 'react-tiny-virtual-list'
 import {useSession} from '../hook/UseSession'
+import {useWorkspace} from '../hook/UseWorkspace'
 import {EntryHeader} from './entry/EntryHeader'
 import {EntryTitle} from './entry/EntryTitle'
 import {MediaRow} from './media/MediaRow'
@@ -27,7 +28,12 @@ function blobUrl(blob: Blob): Promise<string> {
   })
 }
 
-async function uploadFile(hub: Hub, path: string, file: File) {
+async function uploadFile(
+  hub: Hub,
+  workspace: string,
+  path: string,
+  file: File
+) {
   let preview: string | undefined, color: string | undefined
   // If it's a known image file, let's try to create a thumbnail
   const extension = path.split('.').pop()
@@ -41,7 +47,7 @@ async function uploadFile(hub: Hub, path: string, file: File) {
     color = res.hex
   }
   const buffer = await file.arrayBuffer()
-  return hub.uploadFile({path, buffer, preview, color})
+  return hub.uploadFile(workspace, {path, buffer, preview, color})
 }
 
 const scrollOffsets = new Map<string, number>()
@@ -52,7 +58,7 @@ export function MediaExplorer({}: MediaExplorerProps) {
   const queryClient = useQueryClient()
   const draft = useCurrentDraft()
   const {hub} = useSession()
-  const type = hub.schema.type(draft.type)!
+  const {workspace} = useWorkspace()
   const {File} = Media
   const {data} = useQuery(
     ['media', 'total', draft.id],
@@ -74,7 +80,9 @@ export function MediaExplorer({}: MediaExplorerProps) {
     if (!files) return
     return Promise.all(
       Array.from(files).map(file =>
-        uploadFile(hub, draft.url + '/' + file.name, file).then(console.log)
+        uploadFile(hub, workspace, draft.url + '/' + file.name, file).then(
+          console.log
+        )
       )
     ).then(() => {
       queryClient.invalidateQueries(['media'])

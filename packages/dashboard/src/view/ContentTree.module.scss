@@ -23,7 +23,7 @@
     display: flex;
     align-items: center;
     flex-grow: 1;
-    color: var(--foreground);
+    color: var(--foreground-faded);
     cursor: pointer;
     text-decoration: none;
     padding-right: 15px;
@@ -65,16 +65,15 @@
 
   &:hover {
     background: var(--highlight);
-    color: var(--foreground);
   }
 
   &.is-selected {
     background: var(--selected);
-    color: var(--foreground);
   }
 
+  &:hover &-link,
   &.is-selected &-link {
-    // font-weight: bold;
+    color: var(--foreground);
   }
 
   &-create {

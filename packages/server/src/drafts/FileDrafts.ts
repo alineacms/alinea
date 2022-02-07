@@ -1,11 +1,10 @@
-import {createId, future, Schema} from '@alinea/core'
+import {createId, future} from '@alinea/core'
 import {posix as path} from 'path'
 import * as Y from 'yjs'
 import {Drafts} from '../Drafts'
 import {FS} from '../FS'
 
 export type FileDraftsOptions = {
-  schema: Schema
   fs: FS
   dir: string
 }
@@ -61,7 +60,7 @@ export class FileDrafts implements Drafts {
   }
 
   async *updates(): AsyncGenerator<{id: string; update: Uint8Array}> {
-    const {fs, dir, schema} = this.options
+    const {fs, dir} = this.options
     const [directories = []] = await future(fs.readdir(dir))
     for (const dir of directories) {
       if (dir.startsWith('.')) continue

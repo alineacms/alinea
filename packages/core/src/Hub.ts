@@ -1,19 +1,20 @@
 import {encode} from 'base64-arraybuffer'
 import {Cursor} from 'helder.store'
-import {Media} from '.'
+import {Config} from './Config'
 import {Entry} from './Entry'
 import {Future} from './Future'
-import {Schema} from './Schema'
+import {Media} from './Media'
 import {User} from './User'
+import {Workspaces} from './Workspace'
 
-export interface Hub<T = any> {
-  schema: Schema<T>
+export interface Hub<T extends Workspaces = Workspaces> {
+  config: Config<T>
   entry(id: string, stateVector?: Uint8Array): Future<Entry.Detail | null>
   list(parentId?: string): Future<Array<Entry.Summary>>
   query<T>(cursor: Cursor<T>): Future<Array<T>>
   updateDraft(id: string, update: Uint8Array): Future
   deleteDraft(id: string): Future
-  uploadFile(file: Hub.Upload): Future<Media.File>
+  uploadFile(workspace: keyof T, file: Hub.Upload): Future<Media.File>
   publishEntries(entries: Array<Entry>): Future
 }
 

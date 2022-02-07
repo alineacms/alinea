@@ -1,36 +1,51 @@
-import {accumulate, createError, Entry, ErrorCode, Schema} from '@alinea/core'
+import {
+  accumulate,
+  createError,
+  Entry,
+  ErrorCode,
+  Schema,
+  Workspace
+} from '@alinea/core'
 import autoBind from 'auto-bind'
 import {Cursor, Expression, Store} from 'helder.store'
 import {Cache} from './Cache'
 import {Drafts} from './Drafts'
 
 export class Pages<T extends Entry> {
-  store: Store
+  schema: Schema<T>
+  store: Promise<Store>
 
-  constructor(public schema: Schema<T>, private createCache: () => Store) {
+  constructor(
+    private workspace: Workspace<T>,
+    private createCache: () => Promise<Store>
+  ) {
     autoBind(this)
+    this.schema = workspace.schema
     this.store = createCache()
   }
 
-  all<T>(cursor: Cursor<T>): Array<T> {
-    return this.store.all(cursor)
+  async all<T>(cursor: Cursor<T>): Promise<Array<T>> {
+    const store = await this.store
+    return store.all(cursor)
   }
-  first<T>(cursor: Cursor<T>): T | null {
-    return this.store.first(cursor) || null
+  async first<T>(cursor: Cursor<T>): Promise<T | null> {
+    const store = await this.store
+    return store.first(cursor) || null
   }
-  sure<T>(cursor: Cursor<T>): T {
-    const result = this.first(cursor)
+  async sure<T>(cursor: Cursor<T>): Promise<T> {
+    const result = await this.first(cursor)
     if (result === null) throw createError(ErrorCode.NotFound)
     return result
   }
-  count<T>(cursor: Cursor<T>): number {
-    return this.store.count(cursor)
+  async count<T>(cursor: Cursor<T>): Promise<number> {
+    const store = await this.store
+    return store.count(cursor)
   }
-  async preview(drafts: Drafts): Promise<Pages<T>> {
-    const updates = await accumulate(drafts.updates())
-    if (updates.length === 0) return this
-    return new Pages(this.schema, () => {
-      const clone = this.createCache()
+  preview(drafts: Drafts): Pages<T> {
+    return new Pages(this.workspace, async () => {
+      const updates = await accumulate(drafts.updates())
+      if (updates.length === 0) return this.store
+      const clone = await this.createCache()
       Cache.applyUpdates(clone, this.schema, updates)
       return clone
     })
@@ -45,10 +60,10 @@ export class Pages<T extends Entry> {
       typeof entry === 'string' ? entry : 'id' in entry ? entry.id : entry
     return Entry.where(Entry.$parent.is(id))
   }
-  whereUrl(url: string): Cursor<T> {
+  byUrl(url: string): Cursor<T> {
     return Entry.where(Entry.url.is(url))
   }
-  whereId(id: string): Cursor<T> {
+  byId(id: string): Cursor<T> {
     return Entry.where(Entry.id.is(id))
   }
 }

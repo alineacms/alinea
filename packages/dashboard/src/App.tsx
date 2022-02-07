@@ -1,5 +1,5 @@
 import {Client} from '@alinea/client'
-import {Session} from '@alinea/core'
+import {Session, Workspaces} from '@alinea/core'
 import {CurrentDraftProvider} from '@alinea/editor'
 import {
   AppBar,
@@ -33,12 +33,14 @@ import {DashboardProvider, useDashboard} from './hook/UseDashboard'
 import {useDraft} from './hook/UseDraft'
 import {DraftsProvider, DraftsStatus, useDrafts} from './hook/UseDrafts'
 import {SessionProvider} from './hook/UseSession'
+import {useWorkspace} from './hook/UseWorkspace'
 import {ContentTree} from './view/ContentTree'
 import {EntryEdit, NewEntry} from './view/EntryEdit'
 import {Toolbar} from './view/Toolbar'
 
 function AppAuthenticated() {
-  const {name, color, auth} = useDashboard()
+  const {auth} = useDashboard()
+  const {name} = useWorkspace()
   return (
     <DraftsProvider>
       <Statusbar.Provider>
@@ -161,7 +163,8 @@ type AppRootProps = {
 }
 
 function AppRoot({session, setSession}: AppRootProps) {
-  const {color, name, auth: Auth = Fragment} = useDashboard()
+  const {auth: Auth = Fragment} = useDashboard()
+  const {name, color = getRandomColor(JSON.stringify(name))} = useWorkspace()
   const inner = session ? (
     <AppAuthenticated />
   ) : (
@@ -175,23 +178,21 @@ function AppRoot({session, setSession}: AppRootProps) {
   )
 }
 
-function localSession<T>(options: DashboardOptions<T>) {
+function localSession(options: DashboardOptions) {
   return {
     user: {sub: 'anonymous'},
-    hub: new Client(options.schema, options.apiUrl),
+    hub: new Client(options.config, options.apiUrl),
     end: async () => {}
   }
 }
 
-export function App<T>(props: DashboardOptions<T>) {
+export function App<T extends Workspaces>(props: DashboardOptions<T>) {
   const [queryClient] = useState(() => new QueryClient())
   const [session, setSession] = useState<Session | undefined>(
     !props.auth ? localSession(props) : undefined
   )
   return (
-    <DashboardProvider
-      value={{...props, color: props.color || getRandomColor(props.name)}}
-    >
+    <DashboardProvider value={props}>
       <HashRouter hashType="noslash">
         <SessionProvider value={session}>
           <QueryClientProvider client={queryClient}>

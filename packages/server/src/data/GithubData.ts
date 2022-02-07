@@ -1,4 +1,4 @@
-import {createError, createId, Entry, Schema, slugify} from '@alinea/core'
+import {Config, createError, createId, Entry, slugify} from '@alinea/core'
 import {Octokit} from '@octokit/rest'
 import createOrUpdateFiles from 'octokit-commit-multiple-files/create-or-update-files.js'
 import {posix as path} from 'path'
@@ -6,10 +6,9 @@ import {Data} from '../Data'
 import {Loader} from '../Loader'
 
 export type GithubTargetOptions = {
-  schema: Schema
+  config: Config
   loader: Loader
-  contentDir: string
-  mediaDir?: string
+  rootDir?: string
   githubAuthToken: string
   owner: string
   repo: string
@@ -28,11 +27,12 @@ export class GithubData implements Data.Target, Data.Media {
   }
 
   async publish(entries: Array<Entry>) {
-    const {schema, contentDir, loader} = this.options
+    const {loader, config, rootDir = '.'} = this.options
     const changes = entries.map(entry => {
-      const {url, $parent, $isContainer, ...data} = entry
+      const {workspace, url, $parent, $isContainer, $status, ...data} = entry
+      const {schema, contentDir} = config.workspaces[workspace]
       const file = entry.url + ($isContainer ? 'index' : '') + loader.extension
-      const location = path.join(contentDir, file)
+      const location = path.join(rootDir, contentDir, file)
       return [location, loader.format(schema, data)] as const
     })
     return createOrUpdateFiles(this.octokit, {
@@ -49,14 +49,15 @@ export class GithubData implements Data.Target, Data.Media {
     })
   }
 
-  async upload(file: Data.Media.Upload): Promise<string> {
-    const {mediaDir, owner, repo, branch, author} = this.options
+  async upload(workspace: string, file: Data.Media.Upload): Promise<string> {
+    const {config, rootDir = '.', owner, repo, branch, author} = this.options
+    const {mediaDir} = config.workspaces[workspace]
     if (!mediaDir) throw createError(500, 'Media directory not configured')
     const dir = path.dirname(file.path)
     const extension = path.extname(file.path)
     const name = path.basename(file.path, extension)
     const fileName = `${slugify(name)}.${createId()}${extension}`
-    const location = path.join(mediaDir, dir, fileName)
+    const location = path.join(rootDir, mediaDir, dir, fileName)
     const changes = {[location]: file.buffer}
     await createOrUpdateFiles(this.octokit, {
       owner,
@@ -73,11 +74,15 @@ export class GithubData implements Data.Target, Data.Media {
     return location
   }
 
-  async download(location: string): Promise<Data.Media.Download> {
-    const {mediaDir, owner, repo, branch} = this.options
+  async download(
+    workspace: string,
+    location: string
+  ): Promise<Data.Media.Download> {
+    const {config, rootDir = '.', owner, repo, branch} = this.options
+    const {mediaDir} = config.workspaces[workspace]
     if (!mediaDir) throw createError(500, 'Media directory not configured')
     const file = path.join(mediaDir, location)
-    const pathname = path.join(owner, repo, branch, file)
+    const pathname = path.join(rootDir, owner, repo, branch, file)
     const url = `https://raw.githubusercontent.com/${pathname}`
     const res = await fetch(url, {
       headers: {

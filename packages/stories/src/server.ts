@@ -18,9 +18,9 @@ import {createTransport} from 'nodemailer'
 import {createElement} from 'react'
 import ReactDOMServer from 'react-dom/server.js'
 import serveHandler from 'serve-handler'
+import {config} from '../../website/alinea.config'
 import PageView, {getStaticProps} from '../../website/src/pages'
 import App from '../../website/src/pages/_app'
-import {schema} from '../../website/src/schema'
 
 dotenv.config({path: '../../.env'})
 
@@ -46,18 +46,16 @@ const auth = new PasswordLessAuth({
 const store = new SqliteStore(new BetterSqlite3(), createId)
 
 const data = new FileData({
-  schema,
+  config,
   fs,
-  contentDir: '../website/content',
-  mediaDir: '../website/public',
-  loader: JsonLoader
+  loader: JsonLoader,
+  rootDir: '../website'
 })
 
 const githubData = new GithubData({
-  schema,
+  config,
   loader: JsonLoader,
-  contentDir: 'packages/website/content',
-  mediaDir: 'packages/website/public',
+  rootDir: 'packages/website',
   githubAuthToken: process.env.GITHUB_TOKEN!,
   owner: 'codeurs',
   repo: 'alinea',
@@ -71,7 +69,6 @@ const githubData = new GithubData({
 const onAuth = () => ({username: process.env.GITHUB_TOKEN})
 
 const gitDrafts = new GitDrafts({
-  schema,
   fs,
   dir: './dist/drafts',
   http,
@@ -85,7 +82,6 @@ const gitDrafts = new GitDrafts({
 })
 
 const fileDrafts = new FileDrafts({
-  schema,
   fs,
   dir: './dist/drafts'
 })
@@ -93,16 +89,14 @@ const fileDrafts = new FileDrafts({
   credential: cert('../../private/serviceAccount.json')
 })*/
 const firestoreDrafts = new FirestoreDrafts({
-  schema,
   collection: getFirestore().collection('Draft')
 })
 
 await Cache.create(store, data)
 
 const server = new Server({
-  dashboardUrl,
   // auth,
-  schema,
+  config,
   drafts: firestoreDrafts,
   store,
   media: data,

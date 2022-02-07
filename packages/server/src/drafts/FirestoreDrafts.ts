@@ -1,10 +1,8 @@
-import {Schema} from '@alinea/core'
 import type {CollectionReference} from 'firebase-admin/firestore'
 import * as Y from 'yjs'
 import {Drafts} from '../Drafts'
 
 export type FirestoreDraftsOptions = {
-  schema: Schema
   collection: CollectionReference
 }
 
