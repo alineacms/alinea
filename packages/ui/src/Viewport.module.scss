@@ -4,8 +4,8 @@
   //--background: #050606;
   --foreground: white;
   --foreground-faded: rgb(223, 221, 221);
-  --highlight: #393a3f;
-  --selected: #303136;
+  --highlight: #303136;
+  --selected: #393a3f;
   --outline: #303136;
   --positive: 31, 32, 37;
   --negative: 255, 255, 255;
@@ -13,13 +13,13 @@
 }
 
 @mixin light-theme {
-  --background: white;
+  --background: rgb(236, 231, 231); // #F9F8F9;
   --foreground: #0d1214;
   --foreground-faded: #1e282e;
-  --highlight: #f7f6f6;
-  --selected: #f3f3f3; //rgb(246, 249, 250); //#f5f4f0;
-  --outline: #eceff1; //rgb(246, 249, 250);
-  --positive: 255, 255, 255;
+  --highlight: #f6f4f4;
+  --selected: #fcfafa; //rgb(246, 249, 250); //#f5f4f0;
+  --outline: rgb(216, 213, 213); // #eceff1; //rgb(246, 249, 250);
+  --positive: 236, 231, 231;
   --negative: 31, 32, 37;
   --shadow: rgba(0, 0, 0, 0.1);
 }

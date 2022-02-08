@@ -12,7 +12,7 @@
   &:before {
     content: '';
     position: absolute;
-    background: var(--highlight);
+    background: var(--selected);
     border-radius: 20px;
     top: 0;
     bottom: 0;

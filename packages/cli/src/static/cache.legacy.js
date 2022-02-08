@@ -17,10 +17,9 @@ const sqlJsInit = SqlJs.init({
 
 export function createCache() {
   return sqlJsInit.then(() => {
-    return () =>
-      new SqliteStore(
-        new SqlJs(new __sqlJs.Database(new Uint8Array(buffer))),
-        createId
-      )
+    return new SqliteStore(
+      new SqlJs(new __sqlJs.Database(new Uint8Array(buffer))),
+      createId
+    )
   })
 }

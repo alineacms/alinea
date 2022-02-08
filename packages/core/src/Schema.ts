@@ -54,20 +54,24 @@ export class Schema<T = any> {
     return LazyRecord.keys(this.#types)
   }
 
-  get collections(): {
+  collections(workspace: string): {
     [K in TypesOf<T>]: Collection<Extract<T, {type: K}>>
   } {
     return Object.fromEntries(
       Object.keys(this.#types).map(name => {
-        return [name, this.collection(name as any)]
+        return [name, this.collection(workspace, name as any)]
       })
     ) as any
   }
 
-  collection<K extends TypesOf<T>>(type: K): Collection<Extract<T, {type: K}>> {
+  collection<K extends TypesOf<T>>(
+    workspace: string,
+    type: K
+  ): Collection<Extract<T, {type: K}>> {
     const alias = type as string
+    const fields = Entry.as(alias)
     return new Collection('Entry', {
-      where: Entry.as(alias).type.is(alias),
+      where: fields.type.is(alias).and(fields.workspace.is(workspace)),
       alias
     })
   }

@@ -19,6 +19,7 @@ import {
 } from 'react-icons/md'
 import {useQuery} from 'react-query'
 import {Link, useLocation} from 'react-router-dom'
+import {useDashboard} from '../hook/UseDashboard'
 import {useSession} from '../hook/UseSession'
 import {useWorkspace} from '../hook/UseWorkspace'
 import css from './ContentTree.module.scss'
@@ -76,9 +77,10 @@ type TreeNodeProps = {
 } & OpenChildren
 
 function TreeNode({entry, level, isOpen, toggleOpen}: TreeNodeProps) {
+  const {nav} = useDashboard()
   const ref = useRef<HTMLAnchorElement>(null)
   const location = useLocation()
-  const isSelected = location.pathname.slice(1) === entry.id
+  const isSelected = location.pathname === nav.entry(entry.workspace, entry.id)
   const handleToggleOpen = useCallback(() => {
     if (entry.$isContainer) toggleOpen(entry.id)
   }, [toggleOpen])
@@ -120,12 +122,13 @@ function TreeNode({entry, level, isOpen, toggleOpen}: TreeNodeProps) {
 type TreeNodeChildrenCreator = {entry: Entry}
 
 function TreeNodeChildrenCreator({entry}: TreeNodeChildrenCreator) {
+  const {nav} = useDashboard()
   const {schema} = useWorkspace()
   const type = schema.type(entry.type)
   if (!type) return null
   return (
     <Create.Root>
-      <Create.Link to={`/${entry.id}/new`} />
+      <Create.Link to={nav.create(entry.workspace, entry.id)} />
     </Create.Root>
   )
 }
@@ -143,6 +146,7 @@ const TreeNodeLink = memo(
     {entry, isOpened, toggleOpen, isSelected, level}: TreeNodeLinkProps,
     ref: Ref<HTMLAnchorElement>
   ) {
+    const {nav} = useDashboard()
     const {schema} = useWorkspace()
     const type = schema.type(entry.type)!
     const isContainer = entry.$isContainer
@@ -161,7 +165,7 @@ const TreeNodeLink = memo(
       <div className={styles.node({selected: isSelected})}>
         <Link
           ref={ref}
-          to={'/' + entry.id}
+          to={nav.entry(entry.workspace, entry.id)}
           onClick={toggleOpen}
           className={styles.node.link()}
           style={{paddingLeft: `${10 + level * 8}px`}}
@@ -173,6 +177,7 @@ const TreeNodeLink = memo(
             style={{width: '100%'}}
             onClick={event => {
               event.stopPropagation()
+              console.log('stopped')
             }}
           >
             <span

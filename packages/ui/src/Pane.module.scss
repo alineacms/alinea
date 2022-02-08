@@ -32,14 +32,15 @@
   &-handle {
     position: absolute;
     cursor: col-resize;
-    left: -8px;
+    // Leave some room for scrollbars
+    left: 0;
     right: -8px;
     top: 0;
     bottom: 0;
 
     &-line {
       height: 100%;
-      margin-left: 8px;
+      margin-left: 0px;
       border-left: 1px solid var(--outline);
       position: relative;
       z-index: 4;

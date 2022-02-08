@@ -46,7 +46,10 @@ export class Cache {
       if (existing) docFromEntry(config, existing, doc)
       Y.applyUpdate(doc, update)
       const data = entryFromDoc(config, doc)
-      const type = config.type(data.workspace, data.type)
+      const type =
+        config instanceof Config
+          ? config.type(data.workspace, data.type)
+          : config.type(data.type)
       if (!type) throw createError(400, 'Type not found')
       function stripLast(path: string) {
         const last = path.lastIndexOf('/')

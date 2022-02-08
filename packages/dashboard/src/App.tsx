@@ -28,6 +28,7 @@ import {QueryClient, QueryClientProvider} from 'react-query'
 import {Route} from 'react-router'
 import {HashRouter} from 'react-router-dom'
 import {DashboardOptions} from './Dashboard'
+import {nav} from './DashboardNav'
 import {DashboardProvider, useDashboard} from './hook/UseDashboard'
 import {useDraft} from './hook/UseDraft'
 import {DraftsProvider, DraftsStatus, useDrafts} from './hook/UseDrafts'
@@ -38,52 +39,55 @@ import {EntryEdit, NewEntry} from './view/EntryEdit'
 import {Toolbar} from './view/Toolbar'
 
 function AppAuthenticated() {
-  const {auth} = useDashboard()
-  const {name} = useWorkspace()
+  const {auth, nav} = useDashboard()
+  const {name, color} = useWorkspace()
   return (
     <DraftsProvider>
       <Statusbar.Provider>
-        <Helmet>
-          <title>{name}</title>
-        </Helmet>
-        <Toolbar />
-        <div
-          style={{
-            flex: '1',
-            display: 'flex',
-            minHeight: 0,
-            position: 'relative'
-          }}
-        >
-          <Sidebar.Root>
-            <Sidebar.Menu>
-              <Sidebar.Menu.Item selected>
-                <MdInsertDriveFile />
-              </Sidebar.Menu.Item>
-              <Sidebar.Menu.Item>
-                <MdSearch />
-              </Sidebar.Menu.Item>
-              <Sidebar.Menu.Item>
-                <MdCheck />
-              </Sidebar.Menu.Item>
-            </Sidebar.Menu>
-          </Sidebar.Root>
-          <Suspense fallback={<Loader absolute />}>
-            <Route path="/:id">
-              {({match}) => {
-                return <EntryRoute id={match?.params.id} />
-              }}
-            </Route>
-          </Suspense>
-        </div>
-        <Statusbar.Root>
-          <DraftsStatusSummary />
-          {!auth && (
-            <Statusbar.Status icon={MdWarning}>
-              Not using authentication
-            </Statusbar.Status>
-          )}
-        </Statusbar.Root>
+        <Viewport color={color}>
+          <FavIcon color={color} />
+          <Helmet>
+            <title>{name}</title>
+          </Helmet>
+          <Toolbar />
+          <div
+            style={{
+              flex: '1',
+              display: 'flex',
+              minHeight: 0,
+              position: 'relative'
+            }}
+          >
+            <Sidebar.Root>
+              <Sidebar.Menu>
+                <Sidebar.Menu.Item selected>
+                  <MdInsertDriveFile />
+                </Sidebar.Menu.Item>
+                <Sidebar.Menu.Item>
+                  <MdSearch />
+                </Sidebar.Menu.Item>
+                <Sidebar.Menu.Item>
+                  <MdCheck />
+                </Sidebar.Menu.Item>
+              </Sidebar.Menu>
+            </Sidebar.Root>
+            <Suspense fallback={<Loader absolute />}>
+              <Route path={nav.entry(':workspace', ':id')}>
+                {({match}) => {
+                  return <EntryRoute id={match?.params.id} />
+                }}
+              </Route>
+            </Suspense>
+          </div>
+          <Statusbar.Root>
+            <DraftsStatusSummary />
+            {!auth && (
+              <Statusbar.Status icon={MdWarning}>
+                Not using authentication
+              </Statusbar.Status>
+            )}
+          </Statusbar.Root>
+        </Viewport>
       </Statusbar.Provider>
     </DraftsProvider>
   )
@@ -94,11 +98,8 @@ type EntryRouteProps = {
 }
 
 function EntryRoute({id}: EntryRouteProps) {
-  const {config} = useDashboard()
+  const {config, nav} = useDashboard()
   const {draft, isLoading} = useDraft(id)
-  const {name, color} = draft
-    ? config.workspaces[draft.workspace]
-    : config.defaultWorkspace
   const type = draft?.channel
   const View = type?.options.view || EntryEdit
   const selected = ([] as Array<string | undefined>)
@@ -108,44 +109,42 @@ function EntryRoute({id}: EntryRouteProps) {
   // Todo: add loader
   return (
     <CurrentDraftProvider value={draft}>
-      <Viewport color={color}>
-        <FavIcon color={color} />
-        <Pane
-          id="content-tree"
-          resizable="right"
-          defaultWidth={330}
-          minWidth={200}
-        >
-          <AppBar.Root>
-            <AppBar.Item full style={{flexGrow: 1}}>
-              <Typo.Monospace
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  width: '100%',
-                  height: px(28),
-                  background: 'var(--highlight)',
-                  padding: `${px(6)} ${px(15)} ${px(6)} ${px(12)}`,
-                  borderRadius: px(8)
-                }}
-              >
-                <MdSearch size={15} />
-              </Typo.Monospace>
-            </AppBar.Item>
-          </AppBar.Root>
-          <ContentTree select={selected} />
-        </Pane>
-        <div style={{width: '100%', height: '100%'}}>
-          <Route path="/:id/new">
-            {({match}) => {
-              const matched = match?.params.id
-              const isEntry = matched === draft?.id
-              return <NewEntry parentId={isEntry ? id : undefined} />
-            }}
-          </Route>
-          {draft && <View draft={draft} />}
-        </div>
-      </Viewport>
+      <Pane
+        id="content-tree"
+        resizable="right"
+        defaultWidth={330}
+        minWidth={200}
+      >
+        <AppBar.Root>
+          <AppBar.Item full style={{flexGrow: 1}}>
+            <Typo.Monospace
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                width: '100%',
+                height: px(28),
+                background: 'var(--highlight)',
+                padding: `${px(6)} ${px(15)} ${px(6)} ${px(12)}`,
+                borderRadius: px(8)
+              }}
+            >
+              <MdSearch size={15} />
+            </Typo.Monospace>
+          </AppBar.Item>
+        </AppBar.Root>
+        <ContentTree select={selected} />
+      </Pane>
+      <div style={{width: '100%', height: '100%'}}>
+        <Route path={nav.create(':workspace', ':parent')}>
+          {({match}) => {
+            const matched = match?.params.parent
+            if (!matched) return null
+            const isEntry = matched === draft?.id
+            return <NewEntry parentId={isEntry ? id : undefined} />
+          }}
+        </Route>
+        {draft && <View draft={draft} />}
+      </div>
     </CurrentDraftProvider>
   )
 }
@@ -195,7 +194,7 @@ export function App<T extends Workspaces>(props: DashboardOptions<T>) {
     !props.auth ? localSession(props) : undefined
   )
   return (
-    <DashboardProvider value={props}>
+    <DashboardProvider value={{...props, nav}}>
       <HashRouter hashType="noslash">
         <SessionProvider value={session}>
           <QueryClientProvider client={queryClient}>

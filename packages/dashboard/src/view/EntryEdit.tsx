@@ -11,6 +11,7 @@ import {useQuery, useQueryClient} from 'react-query'
 import {useHistory} from 'react-router'
 import {Link} from 'react-router-dom'
 import * as Y from 'yjs'
+import {useDashboard} from '../hook/UseDashboard'
 import {useSession} from '../hook/UseSession'
 import {useWorkspace} from '../hook/UseWorkspace'
 import {EntryHeader} from './entry/EntryHeader'
@@ -64,10 +65,11 @@ function EntryEditDraft({draft}: EntryEditDraftProps) {
 export type NewEntryProps = {parentId?: string}
 
 export function NewEntry({parentId}: NewEntryProps) {
+  const {nav} = useDashboard()
   const queryClient = useQueryClient()
   const history = useHistory()
   const {hub} = useSession()
-  const {schema} = useWorkspace()
+  const {workspace, schema} = useWorkspace()
   const {data: parentEntry} = useQuery(
     ['parent', parentId],
     () => {
@@ -111,10 +113,11 @@ export function NewEntry({parentId}: NewEntryProps) {
       })
   }
   function handleClose() {
-    history.push(`/${parent?.id}`)
+    history.push(nav.entry(workspace, parent?.id))
   }
+  if (!parentId) return null
   return (
-    <Modal open={Boolean(parentId)} onClose={handleClose}>
+    <Modal open onClose={handleClose}>
       <Typo.H1>New entry</Typo.H1>
       <form onSubmit={handleCreate}>
         {isCreating ? (
@@ -137,7 +140,7 @@ export function NewEntry({parentId}: NewEntryProps) {
                 )
               )}
             />
-            <Link to={`/${parent?.id}`}>Cancel</Link>
+            <Link to={nav.entry(workspace, parent?.id)}>Cancel</Link>
             <button>Create</button>
           </>
         )}

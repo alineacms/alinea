@@ -68,6 +68,12 @@ export const config = createConfig({
         if (entry.type === 'MediaLibrary') return null
         return <BrowserPreview url={`/api/preview?${entry.url}`} />
       }
+    }),
+    stories: workspace('Stories', {
+      schema: webSchema,
+      contentDir: './content/stories',
+      mediaDir: './public',
+      color: '#6E57D0'
     })
   }
 })
