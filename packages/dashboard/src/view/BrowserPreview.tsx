@@ -102,6 +102,7 @@ export function BrowserPreview({url}: BrowserPreviewProps) {
           </div>
           <iframe
             ref={ref}
+            key={url}
             className={styles.root.iframe()}
             allow="accelerometer; ambient-light-sensor; camera; encrypted-media; geolocation; gyroscope; hid; microphone; midi; payment; usb; vr; xr-spatial-tracking"
             sandbox="allow-forms allow-modals allow-popups allow-presentation allow-same-origin allow-scripts allow-downloads allow-pointer-lock"
