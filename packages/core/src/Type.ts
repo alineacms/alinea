@@ -44,6 +44,8 @@ export class Type<T = {}> {
         [
           ['id', Value.Scalar as Value],
           ['type', Value.Scalar as Value],
+          ['workspace', Value.Scalar as Value],
+          ['root', Value.Scalar as Value],
           // Todo: this should probably not be part of the schema but local state
           ['$status', Value.Scalar as Value]
         ].concat(

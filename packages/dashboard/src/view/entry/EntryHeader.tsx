@@ -63,7 +63,12 @@ export function EntryHeader() {
     return drafts
       .publish(draft)
       .then(() => {
-        queryClient.invalidateQueries(['children', draft.$parent])
+        queryClient.invalidateQueries([
+          'children',
+          draft.workspace,
+          draft.root,
+          draft.$parent
+        ])
       })
       .finally(() => {
         setPublishing(false)

@@ -23,6 +23,7 @@ export class Cache {
       total++
       store.insert(Entry, entry)
     }
+    store.createIndex(Entry, 'root', [Entry.root])
     store.createIndex(Entry, 'workspace.type', [Entry.workspace, Entry.type])
     store.createIndex(Entry, 'url', [Entry.url])
     store.createIndex(Entry, 'parent', [Entry.$parent])

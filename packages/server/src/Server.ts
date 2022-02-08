@@ -71,26 +71,34 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
     )
   }
 
-  async list(parentId?: string): Future<Array<Entry.Summary>> {
+  list<K extends keyof T>(
+    workspace: K,
+    root: keyof T[K]['roots'],
+    parentId?: string
+  ): Future<Array<Entry.Summary>> {
     const {config, store, drafts} = this.options
     const Parent = Entry.as('Parent')
     return future(
       queryWithDrafts(config, store, drafts, () => {
         return store.all(
-          Entry.where(
-            parentId ? Entry.$parent.is(parentId) : Entry.$parent.isNull()
-          ).select({
-            id: Entry.id,
-            workspace: Entry.workspace,
-            type: Entry.type,
-            title: Entry.title,
-            url: Entry.url,
-            $parent: Entry.$parent,
-            $isContainer: Entry.$isContainer,
-            childrenCount: Parent.where(Parent.$parent.is(Entry.id))
-              .select(Functions.count())
-              .first()
-          })
+          Entry.where(Entry.workspace.is(workspace as string))
+            .where(Entry.root.is(root as string))
+            .where(
+              parentId ? Entry.$parent.is(parentId) : Entry.$parent.isNull()
+            )
+            .select({
+              id: Entry.id,
+              workspace: Entry.workspace,
+              root: Entry.root,
+              type: Entry.type,
+              title: Entry.title,
+              url: Entry.url,
+              $parent: Entry.$parent,
+              $isContainer: Entry.$isContainer,
+              childrenCount: Parent.where(Parent.$parent.is(Entry.id))
+                .select(Functions.count())
+                .first()
+            })
         )
       })
     )
@@ -126,9 +134,10 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
     })
   }
 
-  async uploadFile(
-    workspace: string,
-    file: Data.Media.Upload
+  uploadFile<K extends keyof T>(
+    workspace: K,
+    root: keyof T[K]['roots'],
+    file: Hub.Upload
   ): Future<Media.File> {
     const {store, drafts, target} = this.options
     return outcome(async () => {
@@ -141,7 +150,8 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
       const extension = path.extname(location)
       const entry: Media.File = {
         id,
-        workspace,
+        workspace: workspace as string,
+        root: root as string,
         type: 'File',
         $parent: parent.id,
         title: path.basename(file.path, extension),

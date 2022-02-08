@@ -10,11 +10,19 @@ import {Workspaces} from './Workspace'
 export interface Hub<T extends Workspaces = Workspaces> {
   config: Config<T>
   entry(id: string, stateVector?: Uint8Array): Future<Entry.Detail | null>
-  list(parentId?: string): Future<Array<Entry.Summary>>
+  list<K extends keyof T>(
+    workspace: K,
+    root: keyof T[K]['roots'],
+    parentId?: string
+  ): Future<Array<Entry.Summary>>
   query<T>(cursor: Cursor<T>): Future<Array<T>>
   updateDraft(id: string, update: Uint8Array): Future
   deleteDraft(id: string): Future
-  uploadFile(workspace: keyof T, file: Hub.Upload): Future<Media.File>
+  uploadFile<K extends keyof T>(
+    workspace: K,
+    root: keyof T[K]['roots'],
+    file: Hub.Upload
+  ): Future<Media.File>
   publishEntries(entries: Array<Entry>): Future
 }
 
@@ -40,8 +48,8 @@ export namespace Hub {
         return route + '?stateVector=' + encode(stateVector.buffer)
       return route
     },
-    list(parentId?: string) {
-      return `/content.list${parentId ? '/' + parentId : ''}`
+    list(workspace: string, root: string, parentId?: string) {
+      return `/list/` + [workspace, root, parentId].filter(Boolean).join('/')
     },
     draft(id: string) {
       return `/draft/${id}`

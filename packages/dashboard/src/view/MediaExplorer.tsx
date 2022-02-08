@@ -31,6 +31,7 @@ function blobUrl(blob: Blob): Promise<string> {
 async function uploadFile(
   hub: Hub,
   workspace: string,
+  root: string,
   path: string,
   file: File
 ) {
@@ -47,7 +48,7 @@ async function uploadFile(
     color = res.hex
   }
   const buffer = await file.arrayBuffer()
-  return hub.uploadFile(workspace, {path, buffer, preview, color})
+  return hub.uploadFile(workspace, root, {path, buffer, preview, color})
 }
 
 const scrollOffsets = new Map<string, number>()
@@ -80,9 +81,13 @@ export function MediaExplorer({}: MediaExplorerProps) {
     if (!files) return
     return Promise.all(
       Array.from(files).map(file =>
-        uploadFile(hub, workspace, draft.url + '/' + file.name, file).then(
-          console.log
-        )
+        uploadFile(
+          hub,
+          workspace,
+          draft.root,
+          draft.url + '/' + file.name,
+          file
+        ).then(console.log)
       )
     ).then(() => {
       queryClient.invalidateQueries(['media'])

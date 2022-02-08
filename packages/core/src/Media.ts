@@ -28,6 +28,7 @@ export namespace Media {
       File,
       | 'id'
       | 'workspace'
+      | 'root'
       | 'title'
       | 'extension'
       | 'size'

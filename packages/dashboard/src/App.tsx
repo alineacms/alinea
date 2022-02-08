@@ -19,19 +19,19 @@ import {Helmet} from 'react-helmet'
 import {
   MdCheck,
   MdEdit,
-  MdInsertDriveFile,
   MdRotateLeft,
   MdSearch,
   MdWarning
 } from 'react-icons/md'
 import {QueryClient, QueryClientProvider} from 'react-query'
-import {Route} from 'react-router'
+import {Route, useLocation} from 'react-router'
 import {HashRouter} from 'react-router-dom'
 import {DashboardOptions} from './Dashboard'
 import {nav} from './DashboardNav'
 import {DashboardProvider, useDashboard} from './hook/UseDashboard'
 import {useDraft} from './hook/UseDraft'
 import {DraftsProvider, DraftsStatus, useDrafts} from './hook/UseDrafts'
+import {useRoot} from './hook/UseRoot'
 import {SessionProvider} from './hook/UseSession'
 import {useWorkspace} from './hook/UseWorkspace'
 import {ContentTree} from './view/ContentTree'
@@ -40,7 +40,8 @@ import {Toolbar} from './view/Toolbar'
 
 function AppAuthenticated() {
   const {auth, nav} = useDashboard()
-  const {name, color} = useWorkspace()
+  const location = useLocation()
+  const {workspace, name, color, roots} = useWorkspace()
   return (
     <DraftsProvider>
       <Statusbar.Provider>
@@ -60,19 +61,21 @@ function AppAuthenticated() {
           >
             <Sidebar.Root>
               <Sidebar.Menu>
-                <Sidebar.Menu.Item selected>
-                  <MdInsertDriveFile />
-                </Sidebar.Menu.Item>
-                <Sidebar.Menu.Item>
-                  <MdSearch />
-                </Sidebar.Menu.Item>
-                <Sidebar.Menu.Item>
-                  <MdCheck />
-                </Sidebar.Menu.Item>
+                {Object.entries(roots).map(([key, root]) => (
+                  <Sidebar.Menu.Item
+                    key={key}
+                    selected={location.pathname.startsWith(
+                      nav.root(workspace, key)
+                    )}
+                    to={nav.root(workspace, key)}
+                  >
+                    <root.icon />
+                  </Sidebar.Menu.Item>
+                ))}
               </Sidebar.Menu>
             </Sidebar.Root>
             <Suspense fallback={<Loader absolute />}>
-              <Route path={nav.entry(':workspace', ':id')}>
+              <Route path={nav.entry(':workspace', ':root', ':id')}>
                 {({match}) => {
                   return <EntryRoute id={match?.params.id} />
                 }}
@@ -99,6 +102,8 @@ type EntryRouteProps = {
 
 function EntryRoute({id}: EntryRouteProps) {
   const {config, nav} = useDashboard()
+  const {workspace} = useWorkspace()
+  const {root} = useRoot()
   const {draft, isLoading} = useDraft(id)
   const type = draft?.channel
   const View = type?.options.view || EntryEdit
@@ -132,10 +137,10 @@ function EntryRoute({id}: EntryRouteProps) {
             </Typo.Monospace>
           </AppBar.Item>
         </AppBar.Root>
-        <ContentTree select={selected} />
+        <ContentTree workspace={workspace} root={root} select={selected} />
       </Pane>
       <div style={{width: '100%', height: '100%'}}>
-        <Route path={nav.create(':workspace', ':parent')}>
+        <Route path={nav.create(':workspace', ':root', ':parent')}>
           {({match}) => {
             const matched = match?.params.parent
             if (!matched) return null

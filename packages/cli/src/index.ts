@@ -86,9 +86,7 @@ async function embedInJs(source: string, data: Buffer) {
 
 function configType(location: string) {
   const file = location.endsWith('.tsx') ? location.slice(0, -4) : location
-  return `
-    export * from ${JSON.stringify(file)}
-  `
+  return `export * from ${JSON.stringify(file)}`
 }
 
 function schemaCollections(workspace: string, schema: Schema) {
@@ -101,7 +99,9 @@ function schemaCollections(workspace: string, schema: Schema) {
     ${typeNames
       .map(type => `export const ${type} = schema.collection('${type}')`)
       .join('\n')}
-  `.trim()
+  `
+    .replace(/  /g, '')
+    .trim()
 }
 
 function schemaTypes(workspace: string, schema: Schema) {

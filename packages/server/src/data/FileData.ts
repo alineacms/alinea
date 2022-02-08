@@ -1,4 +1,11 @@
-import {Config, createError, createId, Entry, slugify} from '@alinea/core'
+import {
+  Config,
+  createError,
+  createId,
+  Entry,
+  outcome,
+  slugify
+} from '@alinea/core'
 import {posix as path} from 'path'
 import {Data} from '../Data'
 import {FS} from '../FS'
@@ -31,43 +38,49 @@ export class FileData implements Data.Source, Data.Target, Data.Media {
   // sync version which should perform better
   async *entries(): AsyncGenerator<Entry> {
     const {config, fs, loader, rootDir = '.'} = this.options
-    for (const [workspace, {schema, contentDir}] of Object.entries(
+    for (const [workspace, {schema, contentDir, roots}] of Object.entries(
       config.workspaces
     )) {
-      const targets = ['/']
-      const parents = new Map()
-      while (targets.length > 0) {
-        const target = targets.shift()!
-        const files = await fs.readdir(path.join(rootDir, contentDir, target))
-        files.sort((a, b) => {
-          if (a.startsWith('index.')) return -1
-          if (b.startsWith('index.')) return 1
-          return a.localeCompare(b)
-        })
-        for (const file of files) {
-          const location = path.join(rootDir, contentDir, target, file)
-          const stat = await fs.stat(location)
-          if (stat.isDirectory()) {
-            targets.push(path.join(target, file))
-          } else {
-            const extension = path.extname(location)
-            if (extension !== loader.extension) continue
-            const name = path.basename(file, extension)
-            const isIndex = name === 'index'
-            const entry = loader.parse(schema, await fs.readFile(location))
-            const type = schema.type(entry.type)
-            const url = path.join(target, isIndex ? '' : name)
-            const parentId = parents.get(
-              isIndex ? stripLastSegment(target) : target
-            )
-            if (isIndex) parents.set(url, entry.id)
-            if (!type) continue
-            yield {
-              ...entry,
-              workspace,
-              url,
-              $parent: parentId,
-              $isContainer: type.options.isContainer
+      for (const root of Object.keys(roots)) {
+        const targets = ['/']
+        const parents = new Map()
+        while (targets.length > 0) {
+          const target = targets.shift()!
+          const [files, err] = await outcome(
+            fs.readdir(path.join(rootDir, contentDir, root, target))
+          )
+          if (!files) continue
+          files.sort((a, b) => {
+            if (a.startsWith('index.')) return -1
+            if (b.startsWith('index.')) return 1
+            return a.localeCompare(b)
+          })
+          for (const file of files) {
+            const location = path.join(rootDir, contentDir, root, target, file)
+            const stat = await fs.stat(location)
+            if (stat.isDirectory()) {
+              targets.push(path.join(target, file))
+            } else {
+              const extension = path.extname(location)
+              if (extension !== loader.extension) continue
+              const name = path.basename(file, extension)
+              const isIndex = name === 'index'
+              const entry = loader.parse(schema, await fs.readFile(location))
+              const type = schema.type(entry.type)
+              const url = path.join(target, isIndex ? '' : name)
+              const parentId = parents.get(
+                isIndex ? stripLastSegment(target) : target
+              )
+              if (isIndex) parents.set(url, entry.id)
+              if (!type) continue
+              yield {
+                ...entry,
+                workspace,
+                root,
+                url,
+                $parent: parentId,
+                $isContainer: type.options.isContainer
+              }
             }
           }
         }

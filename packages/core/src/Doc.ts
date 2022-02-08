@@ -26,21 +26,24 @@ export function entryFromDoc(
   config: Config | Schema | Type,
   doc: Y.Doc
 ): Entry {
-  const root = doc.getMap(ROOT_KEY)
-  const workspace = root.get('workspace') as string | undefined
-  const typeKey = root.get('type') as string | undefined
+  const docRoot = doc.getMap(ROOT_KEY)
+  const workspace = docRoot.get('workspace') as string | undefined
+  const root = docRoot.get('root') as string | undefined
+  const typeKey = docRoot.get('type') as string | undefined
   const type =
     workspace && typeKey && typeFromConfig(config, workspace, typeKey)
   if (!type) throw new Error(`Type "${typeKey}" not found`)
+  if (!root) throw new Error(`No root`)
   return {
-    id: root.get('id') as string,
+    id: docRoot.get('id') as string,
     workspace,
+    root,
     type: typeKey,
-    url: root.get('url') as string,
-    title: root.get('title') as Label,
-    $parent: root.get('$parent') as string,
-    $isContainer: root.get('$isContainer') as boolean,
-    ...type.valueType.fromY(root)
+    url: docRoot.get('url') as string,
+    title: docRoot.get('title') as Label,
+    $parent: docRoot.get('$parent') as string,
+    $isContainer: docRoot.get('$isContainer') as boolean,
+    ...type.valueType.fromY(docRoot)
   }
 }
 
@@ -59,6 +62,7 @@ export function docFromEntry(
   const root = doc.getMap(ROOT_KEY)
   root.set('id', entry.id)
   root.set('workspace', entry.workspace)
+  root.set('root', entry.root)
   root.set('type', entry.type)
   root.set('url', entry.url)
   root.set('$parent', entry.$parent)

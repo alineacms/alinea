@@ -22,15 +22,16 @@ try {
 export const drafts = new FirestoreDrafts({
   collection: getFirestore().collection('Draft')
 })
+
 const isProduction = process.env.NODE_ENV === 'production'
 const dashboardUrl = isProduction
   ? 'https://alinea.vercel.app/admin'
   : 'http://localhost:3000/admin'
+
 const data = new GithubData({
   config,
   loader: JsonLoader,
-  contentDir: 'packages/website/content',
-  mediaDir: 'packages/website/public',
+  rootDir: 'packages/website',
   githubAuthToken: process.env.GITHUB_TOKEN!,
   owner: 'codeurs',
   repo: 'alinea',
@@ -40,6 +41,7 @@ const data = new GithubData({
     email: 'ben@codeurs.be'
   }
 })
+
 const auth = new PasswordLessAuth({
   dashboardUrl,
   subject: 'Login',
@@ -57,6 +59,7 @@ const auth = new PasswordLessAuth({
     return email.endsWith('@codeurs.be')
   }
 })
+
 export const server = new Server({
   auth,
   config,

@@ -27,11 +27,15 @@ import css from './ContentTree.module.scss'
 const styles = fromModule(css)
 
 type TreeChildrenProps = {
+  workspace: string
+  root: string
   parent?: string | undefined
   level?: number
 } & OpenChildren
 
 function TreeChildren({
+  workspace,
+  root,
   parent,
   level = 0,
   isOpen,
@@ -39,8 +43,8 @@ function TreeChildren({
 }: TreeChildrenProps) {
   const session = useSession()
   const {data} = useQuery(
-    ['children', parent],
-    () => session.hub.list(parent),
+    ['children', workspace, root, parent],
+    () => session.hub.list(workspace, root, parent),
     {suspense: true, keepPreviousData: true}
   )
   if (data?.isFailure()) {
@@ -80,7 +84,8 @@ function TreeNode({entry, level, isOpen, toggleOpen}: TreeNodeProps) {
   const {nav} = useDashboard()
   const ref = useRef<HTMLAnchorElement>(null)
   const location = useLocation()
-  const isSelected = location.pathname === nav.entry(entry.workspace, entry.id)
+  const isSelected =
+    location.pathname === nav.entry(entry.workspace, entry.root, entry.id)
   const handleToggleOpen = useCallback(() => {
     if (entry.$isContainer) toggleOpen(entry.id)
   }, [toggleOpen])
@@ -108,6 +113,8 @@ function TreeNode({entry, level, isOpen, toggleOpen}: TreeNodeProps) {
       >
         {entry.$isContainer && isOpened && (
           <TreeChildren
+            workspace={entry.workspace}
+            root={entry.root}
             parent={entry.id}
             level={level + 1}
             isOpen={isOpen}
@@ -128,7 +135,7 @@ function TreeNodeChildrenCreator({entry}: TreeNodeChildrenCreator) {
   if (!type) return null
   return (
     <Create.Root>
-      <Create.Link to={nav.create(entry.workspace, entry.id)} />
+      <Create.Link to={nav.create(entry.workspace, entry.root, entry.id)} />
     </Create.Root>
   )
 }
@@ -165,7 +172,7 @@ const TreeNodeLink = memo(
       <div className={styles.node({selected: isSelected})}>
         <Link
           ref={ref}
-          to={nav.entry(entry.workspace, entry.id)}
+          to={nav.entry(entry.workspace, entry.root, entry.id)}
           onClick={toggleOpen}
           className={styles.node.link()}
           style={{paddingLeft: `${10 + level * 8}px`}}
@@ -212,10 +219,12 @@ type OpenChildren = {
 }
 
 type ContentTreeProps = {
+  workspace: string
+  root: string
   select?: Array<string>
 }
 
-export function ContentTree({select = []}: ContentTreeProps) {
+export function ContentTree({workspace, root, select = []}: ContentTreeProps) {
   const [open, setOpen] = useState(() => new Set())
   const isOpen = useCallback((path: string) => open.has(path), [open])
   const toggleOpen = useCallback(
@@ -234,7 +243,12 @@ export function ContentTree({select = []}: ContentTreeProps) {
   }, [select.join('.')])
   return (
     <div>
-      <TreeChildren isOpen={isOpen} toggleOpen={toggleOpen} />
+      <TreeChildren
+        workspace={workspace}
+        root={root}
+        isOpen={isOpen}
+        toggleOpen={toggleOpen}
+      />
     </div>
   )
 }

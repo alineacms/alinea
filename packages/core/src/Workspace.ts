@@ -1,7 +1,8 @@
-import {getRandomColor} from '@alinea/ui/util/GetRandomColor'
-import {ComponentType} from 'react'
+import type {ComponentType} from 'react'
 import {Label} from './Label'
-import {Schema} from './Schema'
+import {Root} from './Root'
+import {Schema, TypesOf} from './Schema'
+import {getRandomColor} from './util/GetRandomColor'
 
 export type Workspaces = Record<string, Workspace>
 
@@ -11,6 +12,7 @@ export type Workspace<T = any> = {
   contentDir: string
   mediaDir?: string
   color: string
+  roots: Record<string, Root<TypesOf<T>>>
   preview?: ComponentType<T>
 }
 

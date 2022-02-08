@@ -34,6 +34,7 @@
 
       &.is-selected {
         color: var(--foreground);
+        background: var(--selected);
 
         /*&:before {
           position: absolute;

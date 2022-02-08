@@ -1,5 +1,6 @@
 {
   "type": "module",
+  "sideEffects": false,
   "exports": {
     ".": {
       "browser": "./client.js",

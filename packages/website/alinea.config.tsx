@@ -5,6 +5,7 @@ import {list} from '@alinea/input.list'
 import {path} from '@alinea/input.path'
 import {richText} from '@alinea/input.richtext'
 import {text} from '@alinea/input.text'
+import {MdInsertDriveFile, MdOutlinePermMedia} from 'react-icons/md'
 
 const webSchema = schema({
   ...media,
@@ -16,10 +17,7 @@ const webSchema = schema({
       headline: text('Headline', {multiline: true}),
       byline: text('Byline', {multiline: true})
     },
-    {
-      isRootType: true,
-      isContainer: true
-    }
+    {isContainer: true}
   ),
   Docs: type(
     'Docs',
@@ -61,9 +59,19 @@ export const config = createConfig({
   workspaces: {
     web: workspace('Alinea', {
       schema: webSchema,
-      contentDir: './content',
+      contentDir: './content/web',
       mediaDir: './public',
       color: '#FFBD67',
+      roots: {
+        data: {
+          icon: MdInsertDriveFile,
+          contains: ['Home']
+        },
+        media: {
+          icon: MdOutlinePermMedia,
+          contains: ['MediaLibrary']
+        }
+      },
       preview(entry) {
         if (entry.type === 'MediaLibrary') return null
         return <BrowserPreview url={`/api/preview?${entry.url}`} />
@@ -72,8 +80,13 @@ export const config = createConfig({
     stories: workspace('Stories', {
       schema: webSchema,
       contentDir: './content/stories',
-      mediaDir: './public',
-      color: '#6E57D0'
+      color: '#6E57D0',
+      roots: {
+        content: {
+          icon: MdInsertDriveFile,
+          contains: ['Home']
+        }
+      }
     })
   }
 })

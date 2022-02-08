@@ -104,8 +104,13 @@ export function NewEntry({parentId}: NewEntryProps) {
       .updateDraft(entry.id, Y.encodeStateAsUpdate(doc))
       .then(result => {
         if (result.isSuccess()) {
-          queryClient.invalidateQueries(['children', entry.$parent])
-          history.push(`/${entry.id}`)
+          queryClient.invalidateQueries([
+            'children',
+            entry.workspace,
+            entry.root,
+            entry.$parent
+          ])
+          history.push(nav.entry(entry.workspace, entry.root, entry.id))
         }
       })
       .finally(() => {
@@ -113,7 +118,7 @@ export function NewEntry({parentId}: NewEntryProps) {
       })
   }
   function handleClose() {
-    history.push(nav.entry(workspace, parent?.id))
+    history.push(nav.entry(workspace, parent?.root, parent?.id))
   }
   if (!parentId) return null
   return (
@@ -140,7 +145,9 @@ export function NewEntry({parentId}: NewEntryProps) {
                 )
               )}
             />
-            <Link to={nav.entry(workspace, parent?.id)}>Cancel</Link>
+            <Link to={nav.entry(workspace, parent?.root, parent?.id)}>
+              Cancel
+            </Link>
             <button>Create</button>
           </>
         )}
