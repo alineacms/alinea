@@ -1,5 +1,4 @@
-import {Entry} from '@alinea/core/Entry'
-import {Schema} from '@alinea/core/Schema'
+import {Entry, Schema} from '@alinea/core'
 import {Loader} from '../Loader'
 
 export const JsonLoader: Loader = {

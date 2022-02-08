@@ -1,6 +1,8 @@
 import {createId} from '@alinea/core'
 import {SqlJs} from 'helder.store/sqlite/drivers/SqlJs.js'
 import {SqliteStore} from 'helder.store/sqlite/SqliteStore.js'
+// Todo: this won't work with the wasm import proposal because we can't pass
+// imports to it, so we'll probably end up inlining the wasm code.
 import * as sqlExports from 'sql.js/dist/sql-wasm.wasm'
 import * as cacheExports from './cache.wasm'
 
@@ -23,13 +25,16 @@ async function getWasmInstance(exports, imports) {
 
 const buffer = unpack((await getWasmInstance(cacheExports)).exports)
 
-export const cache = SqlJs.init({
+const sqlJsInit = SqlJs.init({
   async instantiateWasm(imports, successCallback) {
     const instance = await getWasmInstance(sqlExports, imports)
     successCallback(instance)
     return instance.exports
   }
-}).then(() => {
-  return () =>
-    new SqliteStore(new SqlJs(new __sqlJs.Database(buffer)), createId)
 })
+
+export function createCache() {
+  return sqlJsInit.then(
+    () => new SqliteStore(new SqlJs(new __sqlJs.Database(buffer)), createId)
+  )
+}

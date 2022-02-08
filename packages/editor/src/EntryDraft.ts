@@ -21,7 +21,7 @@ export enum PublishStatus {
 export class EntryDraft implements Entry {
   public entry: Observable<Entry>
   public status: Observable<EntryStatus>
-  private root: Y.Map<any>
+  #root: Y.Map<any>
 
   constructor(
     protected hub: Hub,
@@ -30,7 +30,7 @@ export class EntryDraft implements Entry {
     public parents: Array<string>,
     public doc: Y.Doc
   ) {
-    this.root = doc.getMap(ROOT_KEY)
+    this.#root = doc.getMap(ROOT_KEY)
     this.entry = observable(this.getEntry())
     this.status = observable(this.$status)
   }
@@ -65,33 +65,41 @@ export class EntryDraft implements Entry {
   }
 
   get id(): string {
-    return this.root.get('id') || this.source.id
+    return this.#root.get('id') || this.source.id
   }
 
-  get url(): string {
-    return this.root.get('url') || this.source.url
+  get workspace(): string {
+    return this.#root.get('workspace') || this.source.workspace
+  }
+
+  get root(): string {
+    return this.#root.get('root') || this.source.root
   }
 
   get type(): string {
-    return this.root.get('type') || this.source.type
+    return this.#root.get('type') || this.source.type
+  }
+
+  get url(): string {
+    return this.#root.get('url') || this.source.url
   }
 
   get $status(): EntryStatus {
     return (
-      this.root.get('$status') || this.source.$status || EntryStatus.Published
+      this.#root.get('$status') || this.source.$status || EntryStatus.Published
     )
   }
 
   get $parent(): string | undefined {
-    return this.root.get('$parent') || this.source.$parent
+    return this.#root.get('$parent') || this.source.$parent
   }
 
   get title(): Label {
-    return this.root.get('title') || this.source.title
+    return this.#root.get('title') || this.source.title
   }
 
   getLocation(location: Array<string>) {
-    let target = this.root
+    let target = this.#root
     let parent = target
     let type: Value = this.channel.valueType
     for (const key of location) {

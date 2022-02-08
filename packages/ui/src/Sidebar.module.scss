@@ -34,8 +34,9 @@
 
       &.is-selected {
         color: var(--foreground);
+        background: var(--selected);
 
-        &:before {
+        /*&:before {
           position: absolute;
           content: '';
           width: 1.5px;
@@ -43,7 +44,7 @@
           background: var(--foreground);
           right: 0;
           top: 0;
-        }
+        }*/
       }
     }
   }

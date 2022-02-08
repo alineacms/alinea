@@ -10,7 +10,6 @@ export const media = {
       title: text('Title')
     },
     {
-      isRootType: true,
       isContainer: true,
       contains: ['MediaLibrary'],
       view: MediaExplorer,

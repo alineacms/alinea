@@ -1,4 +1,12 @@
-import {Entry, Future, Hub, Media, Outcome, Schema} from '@alinea/core'
+import {
+  Config,
+  Entry,
+  Future,
+  Hub,
+  Media,
+  Outcome,
+  Workspaces
+} from '@alinea/core'
 import {Cursor} from 'helder.store'
 import fetch from 'isomorphic-fetch'
 
@@ -6,9 +14,9 @@ async function toFuture<T = void>(res: Response): Future<T> {
   return Outcome.fromJSON<T>(await res.json())
 }
 
-export class Client implements Hub {
+export class Client<T extends Workspaces> implements Hub<T> {
   constructor(
-    public schema: Schema,
+    public config: Config<T>,
     protected url: string,
     protected applyAuth: (
       request?: RequestInit
@@ -22,10 +30,17 @@ export class Client implements Hub {
     }).then<Outcome<Entry.Detail | null>>(toFuture)
   }
 
-  list(parentId?: string): Future<Array<Entry.Summary>> {
-    return this.fetchJson(Hub.routes.list(parentId), {
-      method: 'GET'
-    }).then<Outcome<Array<Entry.Summary>>>(toFuture)
+  list<K extends keyof T>(
+    workspace: K,
+    root: keyof T[K]['roots'],
+    parentId?: string
+  ): Future<Array<Entry.Summary>> {
+    return this.fetchJson(
+      Hub.routes.list(workspace as string, root as string, parentId),
+      {
+        method: 'GET'
+      }
+    ).then<Outcome<Array<Entry.Summary>>>(toFuture)
   }
 
   query<T>(cursor: Cursor<T>): Future<Array<T>> {
@@ -56,11 +71,17 @@ export class Client implements Hub {
     }).then(toFuture)
   }
 
-  uploadFile(file: Hub.Upload): Future<Media.File> {
+  uploadFile<K extends keyof T>(
+    workspace: K,
+    root: keyof T[K]['roots'],
+    file: Hub.Upload
+  ): Future<Media.File> {
     const form = new FormData()
     if (file.preview) form.append('preview', file.preview)
     if (file.color) form.append('color', file.color)
     form.append('buffer', new Blob([file.buffer]))
+    form.append('workspace', workspace as string)
+    form.append('root', root as string)
     form.append('path', file.path)
     return this.fetch(Hub.routes.upload(), {
       method: 'POST',

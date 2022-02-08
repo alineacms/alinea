@@ -13,6 +13,7 @@ import {Link} from 'react-router-dom'
 import * as Y from 'yjs'
 import {useDashboard} from '../hook/UseDashboard'
 import {useSession} from '../hook/UseSession'
+import {useWorkspace} from '../hook/UseWorkspace'
 import {EntryHeader} from './entry/EntryHeader'
 import {EntryTitle} from './entry/EntryTitle'
 import css from './EntryEdit.module.scss'
@@ -32,9 +33,9 @@ function EntryPreview({draft, preview: Preview}: EntryPreviewProps) {
 type EntryEditDraftProps = {draft: EntryDraft}
 
 function EntryEditDraft({draft}: EntryEditDraftProps) {
-  const session = useSession()
-  const type = session.hub.schema.type(draft.type)
-  const {preview} = useDashboard()
+  const {schema} = useWorkspace()
+  const type = schema.type(draft.type)
+  const {preview} = useWorkspace()
   return (
     <HStack style={{height: '100%'}}>
       <div className={styles.root()}>
@@ -64,9 +65,11 @@ function EntryEditDraft({draft}: EntryEditDraftProps) {
 export type NewEntryProps = {parentId?: string}
 
 export function NewEntry({parentId}: NewEntryProps) {
+  const {nav} = useDashboard()
   const queryClient = useQueryClient()
   const history = useHistory()
   const {hub} = useSession()
+  const {workspace, schema} = useWorkspace()
   const {data: parentEntry} = useQuery(
     ['parent', parentId],
     () => {
@@ -78,8 +81,8 @@ export function NewEntry({parentId}: NewEntryProps) {
     }
   )
   const parent = parentEntry?.isSuccess() ? parentEntry.value?.entry : undefined
-  const type = parent && hub.schema.type(parent.type)
-  const types = type?.options.contains || hub.schema.keys
+  const type = parent && schema.type(parent.type)
+  const types = type?.options.contains || schema.keys
   const [selectedType, setSelectedType] = useState(types[0])
   const [title, setTitle] = useState('')
   const [isCreating, setIsCreating] = useState(false)
@@ -87,7 +90,7 @@ export function NewEntry({parentId}: NewEntryProps) {
     e.preventDefault()
     if (!selectedType) return
     setIsCreating(true)
-    const type = hub.schema.type(selectedType)!
+    const type = schema.type(selectedType)!
     const path = slugify(title)
     const entry = {
       ...type.create(selectedType),
@@ -101,8 +104,13 @@ export function NewEntry({parentId}: NewEntryProps) {
       .updateDraft(entry.id, Y.encodeStateAsUpdate(doc))
       .then(result => {
         if (result.isSuccess()) {
-          queryClient.invalidateQueries(['children', entry.$parent])
-          history.push(`/${entry.id}`)
+          queryClient.invalidateQueries([
+            'children',
+            entry.workspace,
+            entry.root,
+            entry.$parent
+          ])
+          history.push(nav.entry(entry.workspace, entry.root, entry.id))
         }
       })
       .finally(() => {
@@ -110,10 +118,11 @@ export function NewEntry({parentId}: NewEntryProps) {
       })
   }
   function handleClose() {
-    history.push(`/${parent?.id}`)
+    history.push(nav.entry(workspace, parent?.root, parent?.id))
   }
+  if (!parentId) return null
   return (
-    <Modal open={Boolean(parentId)} onClose={handleClose}>
+    <Modal open onClose={handleClose}>
       <Typo.H1>New entry</Typo.H1>
       <form onSubmit={handleCreate}>
         {isCreating ? (
@@ -130,13 +139,15 @@ export function NewEntry({parentId}: NewEntryProps) {
                 'Select type',
                 Object.fromEntries(
                   types.map(typeKey => {
-                    const type = hub.schema.type(typeKey)
+                    const type = schema.type(typeKey)
                     return [typeKey, type?.label || typeKey]
                   })
                 )
               )}
             />
-            <Link to={`/${parent?.id}`}>Cancel</Link>
+            <Link to={nav.entry(workspace, parent?.root, parent?.id)}>
+              Cancel
+            </Link>
             <button>Create</button>
           </>
         )}

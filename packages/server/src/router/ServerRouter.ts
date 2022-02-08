@@ -10,7 +10,8 @@ import type {Server} from '../Server'
 import {parseBuffer, parseJson} from '../util/BodyParser'
 
 export function createServerRouter(hub: Server) {
-  const {auth, dashboardUrl} = hub.options
+  const {auth} = hub.options
+  const {dashboardUrl} = hub.config.options
   const router = Router()
   // Use of compression here results in a failure in nextjs.
   // api-utils apiRes.end is called with [undefined, undefined]
@@ -34,10 +35,15 @@ export function createServerRouter(hub: Server) {
   })
   // Hub.list
   router.get(
-    [prefix + Hub.routes.list(':parentId'), prefix + Hub.routes.list()],
+    [
+      prefix + Hub.routes.list(':workspace', ':root', ':parentId'),
+      prefix + Hub.routes.list(':workspace', ':root')
+    ],
     async (req, res) => {
+      const workspace = req.params.workspace
+      const root = req.params.root
       const parentId = req.params.parentId
-      return respond(res, await hub.list(parentId))
+      return respond(res, await hub.list(workspace, root, parentId))
     }
   )
   // Hub.query
@@ -64,6 +70,7 @@ export function createServerRouter(hub: Server) {
   // Hub.uploadFile
   router.post(prefix + Hub.routes.upload(), async (req, res) => {
     const bb = busboy({headers: req.headers})
+    let workspace: string | undefined, root: string | undefined
     const {path, buffer, preview, color} = await new Promise<
       Partial<Hub.Upload>
     >(resolve => {
@@ -79,6 +86,8 @@ export function createServerRouter(hub: Server) {
         }
       })
       bb.on('field', (name, value) => {
+        if (name === 'workspace') workspace = value
+        if (name === 'root') root = value
         if (name === 'path') res.path = value
         if (name === 'preview') res.preview = value
         if (name === 'color') res.color = value
@@ -86,9 +95,14 @@ export function createServerRouter(hub: Server) {
       bb.on('close', () => resolve(res))
       req.pipe(bb)
     })
+    if (!workspace) throw createError(400, 'missing workspace')
+    if (!root) throw createError(400, 'missing root')
     if (!path) throw createError(400, 'missing path')
     if (!buffer) throw createError(400, 'missing file')
-    return respond(res, await hub.uploadFile({buffer, path, preview, color}))
+    return respond(
+      res,
+      await hub.uploadFile(workspace, root, {buffer, path, preview, color})
+    )
   })
   return router
 }

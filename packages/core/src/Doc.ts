@@ -1,4 +1,5 @@
 import * as Y from 'yjs'
+import {Config} from './Config'
 import {Entry} from './Entry'
 import {createError} from './ErrorWithCode'
 import {Label} from './Label'
@@ -7,33 +8,52 @@ import {Type} from './Type'
 
 const ROOT_KEY = 'root'
 
-export function typeOfDoc(doc: Y.Doc) {
-  return doc.getMap(ROOT_KEY).get('type') as string | undefined
+function typeFromConfig(
+  config: Config | Schema | Type,
+  workspace: string,
+  typeKey: string
+): Type | undefined {
+  return config instanceof Type
+    ? config
+    : config instanceof Schema
+    ? config.type(typeKey)
+    : config instanceof Config
+    ? config.type(workspace, typeKey)
+    : undefined
 }
 
-export function entryFromDoc(info: Schema | Type, doc: Y.Doc): Entry {
-  const typeKey = typeOfDoc(doc)
-  const type = info instanceof Type ? info : info.type(typeKey)
+export function entryFromDoc(
+  config: Config | Schema | Type,
+  doc: Y.Doc
+): Entry {
+  const docRoot = doc.getMap(ROOT_KEY)
+  const workspace = docRoot.get('workspace') as string | undefined
+  const root = docRoot.get('root') as string | undefined
+  const typeKey = docRoot.get('type') as string | undefined
+  const type =
+    workspace && typeKey && typeFromConfig(config, workspace, typeKey)
   if (!type) throw new Error(`Type "${typeKey}" not found`)
-  const root = doc.getMap(ROOT_KEY)
+  if (!root) throw new Error(`No root`)
   return {
-    id: root.get('id') as string,
+    id: docRoot.get('id') as string,
+    workspace,
+    root,
     type: typeKey,
-    url: root.get('url') as string,
-    title: root.get('title') as Label,
-    $parent: root.get('$parent') as boolean,
-    $isContainer: root.get('$isContainer') as boolean,
-    ...type.valueType.fromY(root)
+    url: docRoot.get('url') as string,
+    title: docRoot.get('title') as Label,
+    $parent: docRoot.get('$parent') as string,
+    $isContainer: docRoot.get('$isContainer') as boolean,
+    ...type.valueType.fromY(docRoot)
   }
 }
 
 export function docFromEntry(
-  info: Schema | Type,
+  config: Config | Schema | Type,
   entry: Entry.Raw & {[key: string]: any},
   doc = new Y.Doc()
 ) {
   const typeKey = entry.type
-  const type = info instanceof Type ? info : info.type(typeKey)
+  const type = typeKey && typeFromConfig(config, entry.workspace, typeKey)
   if (!type) throw createError(`Type "${typeKey}" not found`)
   const {clientID} = doc
   // By setting a consistent clientID, we can ensure that this call is more or
@@ -41,6 +61,8 @@ export function docFromEntry(
   doc.clientID = 1
   const root = doc.getMap(ROOT_KEY)
   root.set('id', entry.id)
+  root.set('workspace', entry.workspace)
+  root.set('root', entry.root)
   root.set('type', entry.type)
   root.set('url', entry.url)
   root.set('$parent', entry.$parent)

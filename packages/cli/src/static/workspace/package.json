@@ -1,0 +1,10 @@
+{
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "browser": "./client.js",
+      "default": "./index.js"
+    }
+  }
+}

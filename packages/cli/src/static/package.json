@@ -1,9 +1,4 @@
 {
   "type": "module",
-  "exports": {
-    ".": {
-      "browser": "./client.js",
-      "default": "./index.js"
-    }
-  }
+  "sideEffects": false
 }

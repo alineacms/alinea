@@ -13,7 +13,7 @@ import {
 } from 'react-icons/md'
 import {useQueryClient} from 'react-query'
 import {DraftsStatus, useDrafts} from '../../hook/UseDrafts'
-import {useSession} from '../../hook/UseSession'
+import {useWorkspace} from '../../hook/UseWorkspace'
 
 function EntryStatusChip() {
   const drafts = useDrafts()
@@ -46,10 +46,10 @@ function EntryStatusChip() {
 }
 
 export function EntryHeader() {
-  const {hub} = useSession()
+  const {schema} = useWorkspace()
   const drafts = useDrafts()
   const draft = useCurrentDraft()
-  const type = hub.schema.type(draft.type)
+  const type = schema.type(draft.type)
   const status = useObservable(draft.status)
   const queryClient = useQueryClient()
   const [isPublishing, setPublishing] = useState(false)
@@ -63,7 +63,12 @@ export function EntryHeader() {
     return drafts
       .publish(draft)
       .then(() => {
-        queryClient.invalidateQueries(['children', draft.$parent])
+        queryClient.invalidateQueries([
+          'children',
+          draft.workspace,
+          draft.root,
+          draft.$parent
+        ])
       })
       .finally(() => {
         setPublishing(false)

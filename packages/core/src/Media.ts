@@ -26,7 +26,14 @@ export namespace Media {
   export namespace File {
     export type Preview = Pick<
       File,
-      'id' | 'title' | 'extension' | 'size' | 'preview' | 'averageColor'
+      | 'id'
+      | 'workspace'
+      | 'root'
+      | 'title'
+      | 'extension'
+      | 'size'
+      | 'preview'
+      | 'averageColor'
     >
   }
 }

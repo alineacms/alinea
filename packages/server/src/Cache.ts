@@ -1,4 +1,5 @@
 import {
+  Config,
   createError,
   docFromEntry,
   Entry,
@@ -22,7 +23,8 @@ export class Cache {
       total++
       store.insert(Entry, entry)
     }
-    store.createIndex(Entry, 'type', [Entry.type])
+    store.createIndex(Entry, 'root', [Entry.root])
+    store.createIndex(Entry, 'workspace.type', [Entry.workspace, Entry.type])
     store.createIndex(Entry, 'url', [Entry.url])
     store.createIndex(Entry, 'parent', [Entry.$parent])
     const diff = process.hrtime.bigint() - startTime
@@ -35,17 +37,20 @@ export class Cache {
 
   static applyUpdates(
     store: Store,
-    schema: Schema,
+    config: Config | Schema,
     updates: Array<{id: string; update: Uint8Array}>
   ) {
     for (const {id, update} of updates) {
       const condition = Entry.where(Entry.id.is(id))
       const existing = store.first(condition)
       const doc = new Y.Doc()
-      if (existing) docFromEntry(schema, existing, doc)
+      if (existing) docFromEntry(config, existing, doc)
       Y.applyUpdate(doc, update)
-      const data = entryFromDoc(schema, doc)
-      const type = schema.type(data.type)
+      const data = entryFromDoc(config, doc)
+      const type =
+        config instanceof Config
+          ? config.type(data.workspace, data.type)
+          : config.type(data.type)
       if (!type) throw createError(400, 'Type not found')
       function stripLast(path: string) {
         const last = path.lastIndexOf('/')

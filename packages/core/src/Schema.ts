@@ -15,7 +15,7 @@ type TypeToEntry<T> = T extends {[key: string]: any}
 export type DataOf<T> = T extends Collection<infer U> ? U : never
 export type EntryOf<T> = T extends Schema<infer U> ? U : never
 
-export function createSchema<Types extends LazyRecord<Type>>(
+export function schema<Types extends LazyRecord<Type>>(
   types: Types
 ): Schema<TypeToEntry<TypeToRows<Types>>> {
   return new Schema(types) as any
@@ -54,20 +54,24 @@ export class Schema<T = any> {
     return LazyRecord.keys(this.#types)
   }
 
-  get collections(): {
+  collections(workspace: string): {
     [K in TypesOf<T>]: Collection<Extract<T, {type: K}>>
   } {
     return Object.fromEntries(
       Object.keys(this.#types).map(name => {
-        return [name, this.collection(name as any)]
+        return [name, this.collection(workspace, name as any)]
       })
     ) as any
   }
 
-  collection<K extends TypesOf<T>>(type: K): Collection<Extract<T, {type: K}>> {
+  collection<K extends TypesOf<T>>(
+    workspace: string,
+    type: K
+  ): Collection<Extract<T, {type: K}>> {
     const alias = type as string
+    const fields = Entry.as(alias)
     return new Collection('Entry', {
-      where: Entry.as(alias).type.is(alias),
+      where: fields.type.is(alias).and(fields.workspace.is(workspace)),
       alias
     })
   }

@@ -1,4 +1,4 @@
-import {createError} from '@alinea/core/ErrorWithCode'
+import {createError} from '@alinea/core'
 
 // Todo: update link
 throw createError(

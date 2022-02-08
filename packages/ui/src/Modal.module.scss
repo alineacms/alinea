@@ -5,13 +5,10 @@
   right: 0;
   bottom: 0;
   z-index: 5;
-  display: flex;
-  pointer-events: none;
-  opacity: 0;
+  display: none;
 
   &.is-open {
-    pointer-events: all;
-    opacity: 1;
+    display: flex;
   }
 
   &-background {

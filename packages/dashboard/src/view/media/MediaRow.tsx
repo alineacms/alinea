@@ -22,6 +22,8 @@ function query(parentId: string, start: number, batchSize: number) {
     .take(batchSize)
     .select({
       id: File.id,
+      workspace: File.workspace,
+      root: File.root,
       title: File.title,
       extension: File.extension,
       size: File.size,

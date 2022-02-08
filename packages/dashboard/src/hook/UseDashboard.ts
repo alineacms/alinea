@@ -1,7 +1,8 @@
 import {createContext, useContext} from 'react'
 import {DashboardOptions} from '../Dashboard'
+import {nav} from '../DashboardNav'
 
-type DashboardContext = DashboardOptions<any> & {color: string}
+type DashboardContext = DashboardOptions & {nav: typeof nav}
 
 const context = createContext<DashboardContext | undefined>(undefined)
 

@@ -1,8 +1,12 @@
-import {Entry} from '@alinea/core/Entry'
-import {ErrorWithCode} from '@alinea/core/ErrorWithCode'
-import {outcome} from '@alinea/core/Outcome'
-import {createSchema} from '@alinea/core/Schema'
-import {type} from '@alinea/core/Type'
+import {
+  createConfig,
+  Entry,
+  ErrorWithCode,
+  outcome,
+  schema as createSchema,
+  type,
+  workspace
+} from '@alinea/core'
 import {text} from '@alinea/input.text'
 import {Volume} from 'memfs'
 import {test} from 'uvu'
@@ -15,10 +19,25 @@ function entry(entry: Entry.Raw) {
   return JSON.stringify(entry)
 }
 
-const schema = createSchema({
-  Type: type('Type', {
-    title: text('Title')
-  })
+const config = createConfig({
+  workspaces: {
+    main: workspace('Main', {
+      contentDir: 'content',
+      mediaDir: 'files',
+      schema: createSchema({
+        Type: type(
+          'Type',
+          {
+            title: text('Title')
+          },
+          {isContainer: true}
+        ),
+        Sub: type('Sub', {
+          title: text('Title')
+        })
+      })
+    })
+  }
 })
 
 const fs: FS = Volume.fromNestedJSON({
@@ -31,12 +50,12 @@ const fs: FS = Volume.fromNestedJSON({
     sub: {
       '/index.json': entry({
         id: 'sub',
-        type: 'Sub',
+        type: 'Type',
         title: 'Sub title'
       }),
       '/entry.json': entry({
         id: 'sub-entry',
-        type: 'SubEntry',
+        type: 'Sub',
         title: 'Sub entry title'
       })
     }
@@ -51,10 +70,8 @@ const fs: FS = Volume.fromNestedJSON({
 }).promises as any
 
 const data = new FileData({
-  schema,
+  config,
   fs,
-  contentDir: 'content',
-  mediaDir: 'files',
   loader: JsonLoader
 })
 
@@ -86,17 +103,17 @@ test('inserting', async () => {
 })
 
 test('file media', async () => {
-  const file01 = await data.download('file01.txt')
+  const file01 = await data.download('main', 'file01.txt')
   if (file01.type !== 'buffer') throw 'Buffer expected'
   assert.is(file01.buffer.toString(), 'content01')
-  const uploadPath = await data.upload({
+  const uploadPath = await data.upload('main', {
     path: 'file04.txt',
     buffer: Buffer.from('content04')
   })
-  const file04 = await data.download(uploadPath)
+  const file04 = await data.download('main', uploadPath)
   if (file04.type !== 'buffer') throw 'Buffer expected'
   assert.is(file04.buffer.toString(), 'content04')
-  const [, err1] = await outcome(data.download('../out.txt'))
+  const [, err1] = await outcome(data.download('main', '../out.txt'))
   assert.is((err1 as ErrorWithCode).code, 401)
 })
 

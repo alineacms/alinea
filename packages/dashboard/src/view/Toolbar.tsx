@@ -3,6 +3,7 @@ import {
   DropdownMenu,
   fromModule,
   IconButton,
+  TextLabel,
   useColorScheme
 } from '@alinea/ui'
 import {Logo} from '@alinea/ui/branding/Logo'
@@ -21,6 +22,7 @@ import {
 } from 'react-icons/md'
 import {RiFlashlightFill} from 'react-icons/ri'
 import {useSession} from '../hook/UseSession'
+import {useWorkspace} from '../hook/UseWorkspace'
 import css from './Toolbar.module.scss'
 
 const styles = fromModule(css)
@@ -28,6 +30,7 @@ const styles = fromModule(css)
 export const Toolbar = memo(function Toolbar() {
   const session = useSession()
   const [colorScheme, toggleColorScheme] = useColorScheme()
+  const {name} = useWorkspace()
   return (
     <HStack center className={styles.root()}>
       <HStack center gap={16}>
@@ -35,7 +38,9 @@ export const Toolbar = memo(function Toolbar() {
           <RiFlashlightFill />
         </Logo>
         <HStack center gap={4}>
-          <div style={{fontSize: '12px'}}>Project</div>
+          <div style={{fontSize: '12px'}}>
+            <TextLabel label={name} />
+          </div>
           <MdUnfoldMore />
         </HStack>
       </HStack>
