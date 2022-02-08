@@ -25,7 +25,7 @@ class Drafts {
   async save(id: string, doc: Y.Doc) {
     const {hub} = this
     const sv = Y.encodeStateVector(doc)
-    const update = Y.encodeStateAsUpdate(doc, this.stateVectors.get(doc)!)
+    const update = Y.encodeStateAsUpdate(doc, this.stateVectors.get(doc))
     await hub.updateDraft(id, update).then(() => {
       this.stateVectors.set(doc, sv)
     })

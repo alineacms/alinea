@@ -98,7 +98,7 @@ export class FileData implements Data.Source, Data.Target, Data.Media {
         entry.url +
         (type?.options.isContainer ? '/index' : '') +
         loader.extension
-      const location = path.join(rootDir, contentDir, file)
+      const location = path.join(rootDir, contentDir, entry.root, file)
       await fs.mkdir(path.dirname(location), {recursive: true})
       await fs.writeFile(location, loader.format(schema, data))
     }

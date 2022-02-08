@@ -5,7 +5,7 @@ import {list} from '@alinea/input.list'
 import {path} from '@alinea/input.path'
 import {richText} from '@alinea/input.richtext'
 import {text} from '@alinea/input.text'
-import {MdInsertDriveFile, MdOutlinePermMedia} from 'react-icons/md'
+import {MdInsertDriveFile, MdOutlinePermMedia} from 'react-icons/md/index.js'
 
 const webSchema = schema({
   ...media,

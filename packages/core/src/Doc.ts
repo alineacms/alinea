@@ -6,7 +6,7 @@ import {Label} from './Label'
 import {Schema} from './Schema'
 import {Type} from './Type'
 
-const ROOT_KEY = 'root'
+export const ROOT_KEY = '#root'
 
 function typeFromConfig(
   config: Config | Schema | Type,
@@ -59,17 +59,17 @@ export function docFromEntry(
   // By setting a consistent clientID, we can ensure that this call is more or
   // less guaranteed to be deterministic
   doc.clientID = 1
-  const root = doc.getMap(ROOT_KEY)
-  root.set('id', entry.id)
-  root.set('workspace', entry.workspace)
-  root.set('root', entry.root)
-  root.set('type', entry.type)
-  root.set('url', entry.url)
-  root.set('$parent', entry.$parent)
-  root.set('$isContainer', entry.$isContainer)
+  const docRoot = doc.getMap(ROOT_KEY)
+  docRoot.set('id', entry.id)
+  docRoot.set('workspace', entry.workspace)
+  docRoot.set('root', entry.root)
+  docRoot.set('type', entry.type)
+  docRoot.set('url', entry.url)
+  docRoot.set('$parent', entry.$parent)
+  docRoot.set('$isContainer', entry.$isContainer)
   for (const [key, field] of type) {
     const contents = entry[key]
-    root.set(key, field.type.toY(contents))
+    docRoot.set(key, field.type.toY(contents))
   }
   doc.clientID = clientID
   return doc

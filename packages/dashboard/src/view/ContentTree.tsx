@@ -184,7 +184,6 @@ const TreeNodeLink = memo(
             style={{width: '100%'}}
             onClick={event => {
               event.stopPropagation()
-              console.log('stopped')
             }}
           >
             <span

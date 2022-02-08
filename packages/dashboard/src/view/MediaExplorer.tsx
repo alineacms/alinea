@@ -2,7 +2,7 @@ import {Hub} from '@alinea/core/Hub'
 import {Media} from '@alinea/core/Media'
 import {Outcome} from '@alinea/core/Outcome'
 import {useCurrentDraft} from '@alinea/editor'
-import {fromModule, Typo} from '@alinea/ui'
+import {fromModule} from '@alinea/ui'
 import useSize from '@react-hook/size'
 import FastAverageColor from 'fast-average-color'
 import {Functions} from 'helder.store'
@@ -102,9 +102,7 @@ export function MediaExplorer({}: MediaExplorerProps) {
       <EntryHeader />
       <div className={styles.root.inner()}>
         <header className={styles.root.inner.header()}>
-          <EntryTitle>
-            <Typo.Small>({total})</Typo.Small>
-          </EntryTitle>
+          <EntryTitle />
 
           {/*<Suspense fallback={null}>
             <Fields type={type} />

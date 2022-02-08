@@ -705,6 +705,7 @@
 }
 .alinea__Sidebar-module-root-menu-item.alinea__Sidebar-module-is-selected {
   color: var(--foreground);
+  background: var(--selected);
 }
 .alinea__Sidebar-module-root-list {
   width: 330px;

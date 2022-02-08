@@ -1,4 +1,4 @@
-import {docFromEntry, Entry, type} from '@alinea/core'
+import {docFromEntry, Entry, ROOT_KEY, type} from '@alinea/core'
 import {path} from '@alinea/input.path'
 import {text} from '@alinea/input.text'
 import dotenv from 'dotenv'
@@ -30,12 +30,12 @@ test('update doc', async () => {
   const yDoc = docFromEntry(Doc, entry)
   const stateVector = Y.encodeStateVector(yDoc)
   await drafts.update(entry.id, Y.encodeStateAsUpdate(yDoc))
-  yDoc.getMap('root').set('title', 'Hello world')
+  yDoc.getMap(ROOT_KEY).set('title', 'Hello world')
   await drafts.update(entry.id, Y.encodeStateAsUpdate(yDoc, stateVector))
   const updateValue = await drafts.get(entry.id)
   const retrieved = new Y.Doc()
   if (updateValue) Y.applyUpdate(retrieved, updateValue)
-  const result = retrieved.getMap('root').toJSON()
+  const result = retrieved.getMap(ROOT_KEY).toJSON()
   assert.is(result.title, 'Hello world')
   const value = await drafts.get(entry.id, stateVector)
   if (value) Y.applyUpdate(yDoc, value)

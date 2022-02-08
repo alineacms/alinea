@@ -12,10 +12,10 @@ import {RecordValue} from './value/RecordValue'
 export namespace Type {
   export type Of<T> = T extends Type<infer U> ? U : never
   export type Options = {
-    /** Entries can be created in the root of the content tree */
-    isRootType?: boolean
     /** Entries can be created as children of this entry */
     isContainer?: boolean
+    /** Entries do not show up in the sidebar content tree */
+    isHidden?: boolean
     contains?: Array<string>
     icon?: ComponentType
     view?: ComponentType

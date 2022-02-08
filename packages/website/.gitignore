@@ -1,5 +1,5 @@
 /.alinea
 /.next
-/public/media
+/public/*
 /content/web/media/*
 !/content/web/media/index.json

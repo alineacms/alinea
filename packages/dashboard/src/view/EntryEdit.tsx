@@ -12,6 +12,7 @@ import {useHistory} from 'react-router'
 import {Link} from 'react-router-dom'
 import * as Y from 'yjs'
 import {useDashboard} from '../hook/UseDashboard'
+import {useRoot} from '../hook/UseRoot'
 import {useSession} from '../hook/UseSession'
 import {useWorkspace} from '../hook/UseWorkspace'
 import {EntryHeader} from './entry/EntryHeader'
@@ -70,6 +71,7 @@ export function NewEntry({parentId}: NewEntryProps) {
   const history = useHistory()
   const {hub} = useSession()
   const {workspace, schema} = useWorkspace()
+  const {root} = useRoot()
   const {data: parentEntry} = useQuery(
     ['parent', parentId],
     () => {
@@ -92,9 +94,11 @@ export function NewEntry({parentId}: NewEntryProps) {
     setIsCreating(true)
     const type = schema.type(selectedType)!
     const path = slugify(title)
-    const entry = {
+    const entry: Entry = {
       ...type.create(selectedType),
       path,
+      workspace,
+      root,
       $parent: parent?.id,
       url: (parent?.url || '') + (parent?.url.endsWith('/') ? '' : '/') + path,
       title

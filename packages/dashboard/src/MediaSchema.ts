@@ -16,7 +16,11 @@ export const media = {
       icon: MdOutlinePermMedia
     }
   ),
-  File: type('File', {
-    title: text('Title')
-  })
+  File: type(
+    'File',
+    {
+      title: text('Title')
+    },
+    {isHidden: true}
+  )
 }

@@ -60,7 +60,11 @@ export class Cache {
       const parent =
         data.url === '/'
           ? undefined
-          : store.first(Entry.where(Entry.url.is(stripLast(data.url))))
+          : store.first(
+              Entry.where(Entry.workspace.is(data.workspace))
+                .where(Entry.root.is(data.root))
+                .where(Entry.url.is(stripLast(data.url)))
+            )
       const entry = {
         ...data,
         $parent: parent?.id,

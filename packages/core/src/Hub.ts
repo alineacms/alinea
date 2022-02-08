@@ -10,17 +10,17 @@ import {Workspaces} from './Workspace'
 export interface Hub<T extends Workspaces = Workspaces> {
   config: Config<T>
   entry(id: string, stateVector?: Uint8Array): Future<Entry.Detail | null>
-  list<K extends keyof T>(
-    workspace: K,
-    root: keyof T[K]['roots'],
+  list(
+    workspace: string,
+    root: string,
     parentId?: string
   ): Future<Array<Entry.Summary>>
   query<T>(cursor: Cursor<T>): Future<Array<T>>
   updateDraft(id: string, update: Uint8Array): Future
   deleteDraft(id: string): Future
-  uploadFile<K extends keyof T>(
-    workspace: K,
-    root: keyof T[K]['roots'],
+  uploadFile(
+    workspace: string,
+    root: string,
     file: Hub.Upload
   ): Future<Media.File>
   publishEntries(entries: Array<Entry>): Future

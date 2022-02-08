@@ -35,29 +35,36 @@ const config = createConfig({
         Sub: type('Sub', {
           title: text('Title')
         })
-      })
+      }),
+      roots: {
+        data: {
+          contains: ['Type']
+        }
+      }
     })
   }
 })
 
 const fs: FS = Volume.fromNestedJSON({
   content: {
-    '/index.json': entry({
-      id: 'root',
-      type: 'Type',
-      title: 'Test title'
-    }),
-    sub: {
+    data: {
       '/index.json': entry({
-        id: 'sub',
+        id: 'root',
         type: 'Type',
-        title: 'Sub title'
+        title: 'Test title'
       }),
-      '/entry.json': entry({
-        id: 'sub-entry',
-        type: 'Sub',
-        title: 'Sub entry title'
-      })
+      sub: {
+        '/index.json': entry({
+          id: 'sub',
+          type: 'Type',
+          title: 'Sub title'
+        }),
+        '/entry.json': entry({
+          id: 'sub-entry',
+          type: 'Sub',
+          title: 'Sub entry title'
+        })
+      }
     }
   },
   files: {

@@ -71,13 +71,17 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
     )
   }
 
-  list<K extends keyof T>(
-    workspace: K,
-    root: keyof T[K]['roots'],
+  list(
+    workspace: string,
+    root: string,
     parentId?: string
   ): Future<Array<Entry.Summary>> {
     const {config, store, drafts} = this.options
     const Parent = Entry.as('Parent')
+    const schema = this.config.workspaces[workspace].schema
+    const hidden = Array.from(schema)
+      .filter(([, type]) => type.options.isHidden)
+      .map(([key]) => key)
     return future(
       queryWithDrafts(config, store, drafts, () => {
         return store.all(
@@ -86,6 +90,7 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
             .where(
               parentId ? Entry.$parent.is(parentId) : Entry.$parent.isNull()
             )
+            .where(Entry.type.isNotIn(hidden))
             .select({
               id: Entry.id,
               workspace: Entry.workspace,
@@ -134,9 +139,9 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
     })
   }
 
-  uploadFile<K extends keyof T>(
-    workspace: K,
-    root: keyof T[K]['roots'],
+  uploadFile(
+    workspace: string,
+    root: string,
     file: Hub.Upload
   ): Future<Media.File> {
     const {store, drafts, target} = this.options
@@ -144,7 +149,11 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
       const id = createId()
       const {media} = this.options
       const parentUrl = path.dirname(file.path)
-      const parent = store.first(Entry.where(Entry.url.is(parentUrl)))
+      const parent = store.first(
+        Entry.where(Entry.workspace.is(workspace))
+          .where(Entry.root.is(root))
+          .where(Entry.url.is(parentUrl))
+      )
       if (!parent) throw createError(400, `Parent not found: "${parentUrl}"`)
       const location = await media.upload(workspace as string, file)
       const extension = path.extname(location)

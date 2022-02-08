@@ -4,14 +4,13 @@ import {
   EntryStatus,
   Hub,
   Label,
+  ROOT_KEY,
   Type,
   Value
 } from '@alinea/core'
 import {InputPath} from '@alinea/editor'
 import {observable, Observable} from '@alinea/ui'
 import * as Y from 'yjs'
-
-const ROOT_KEY = 'root'
 
 export enum PublishStatus {
   Published,
