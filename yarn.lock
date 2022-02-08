@@ -32,6 +32,7 @@ __metadata:
   resolution: "@alinea/cli@workspace:packages/cli"
   dependencies:
     "@alinea/core": 0.0.0
+    "@esbx/react": ^0.0.9
     "@types/fs-extra": ^9.0.13
     "@types/sade": ^1.7.3
     base64-arraybuffer: ^1.0.1

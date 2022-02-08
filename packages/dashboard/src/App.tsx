@@ -19,6 +19,7 @@ import {Helmet} from 'react-helmet'
 import {
   MdCheck,
   MdEdit,
+  MdInsertDriveFile,
   MdRotateLeft,
   MdSearch,
   MdWarning
@@ -61,17 +62,21 @@ function AppAuthenticated() {
           >
             <Sidebar.Root>
               <Sidebar.Menu>
-                {Object.entries(roots).map(([key, root]) => (
-                  <Sidebar.Menu.Item
-                    key={key}
-                    selected={location.pathname.startsWith(
-                      nav.root(workspace, key)
-                    )}
-                    to={nav.root(workspace, key)}
-                  >
-                    <root.icon />
-                  </Sidebar.Menu.Item>
-                ))}
+                {Object.entries(roots).map(([key, root], i) => {
+                  const isSelected =
+                    location.pathname.length > 1
+                      ? location.pathname.startsWith(nav.root(workspace, key))
+                      : i === 0
+                  return (
+                    <Sidebar.Menu.Item
+                      key={key}
+                      selected={isSelected}
+                      to={nav.root(workspace, key)}
+                    >
+                      {root.icon ? <root.icon /> : <MdInsertDriveFile />}
+                    </Sidebar.Menu.Item>
+                  )
+                })}
               </Sidebar.Menu>
             </Sidebar.Root>
             <Suspense fallback={<Loader absolute />}>

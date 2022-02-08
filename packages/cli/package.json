@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@alinea/core": "0.0.0",
+    "@esbx/react": "^0.0.9",
     "base64-arraybuffer": "^1.0.1",
     "dirname-filename-esm": "^1.1.1",
     "leb128": "^0.0.5",

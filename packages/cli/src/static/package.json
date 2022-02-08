@@ -1,4 +1,11 @@
 {
   "type": "module",
-  "sideEffects": false
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "browser": "./client.js",
+      "default": "./index.js"
+    },
+    "$WORKSPACES": {}
+  }
 }

@@ -3,6 +3,7 @@ import {createId} from '@alinea/core/Id'
 import {Schema} from '@alinea/core/Schema'
 import {Cache, JsonLoader} from '@alinea/server'
 import {FileData} from '@alinea/server/data/FileData'
+import {ReactPlugin} from '@esbx/react'
 import {encode} from 'base64-arraybuffer'
 import {dirname} from 'dirname-filename-esm'
 import {build, BuildResult, Plugin} from 'esbuild'
@@ -151,10 +152,10 @@ async function generate(options: Options) {
       entryPoints: {config: configLocation},
       bundle: true,
       platform: 'node',
-      plugins: [externalPlugin]
+      plugins: [externalPlugin, ReactPlugin]
     })
   )
-  await copy('package.json', 'index.js', 'index.d.ts', 'cache.d.ts')
+  await copy('index.js', 'index.d.ts', 'client.js', 'client.d.ts', 'cache.d.ts')
   await fs.writeFile(
     path.join(outdir, 'config.d.ts'),
     configType(
@@ -175,6 +176,22 @@ async function generate(options: Options) {
     loader: JsonLoader
   })
   await Cache.create(store, source)
+  const pkg = await fs.readFile(
+    path.join(__dirname, 'static', 'package.json'),
+    'utf-8'
+  )
+  await fs.writeFile(
+    path.join(outdir, 'package.json'),
+    pkg.replace(
+      `    "$WORKSPACES": {}`,
+      Object.keys(config.workspaces)
+        .map(
+          key =>
+            `    "./${key}": {"browser": "./${key}/client.js", "default": "./${key}/index.js"}`
+        )
+        .join(',\n')
+    )
+  )
   for (const [key, workspace] of Object.entries(config.workspaces)) {
     await fs.mkdir(path.join(outdir, key), {recursive: true})
     await fs.writeFile(
