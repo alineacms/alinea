@@ -40,7 +40,7 @@ export function BrowserPreview({url}: BrowserPreviewProps) {
   }, [status])
   useEffect(() => {
     if (loading) {
-      const timeout = setTimeout(() => setLoading(false), 300)
+      const timeout = setTimeout(() => setLoading(false), 3000)
       return () => clearTimeout(timeout)
     }
   }, [loading])
@@ -107,6 +107,7 @@ export function BrowserPreview({url}: BrowserPreviewProps) {
             allow="accelerometer; ambient-light-sensor; camera; encrypted-media; geolocation; gyroscope; hid; microphone; midi; payment; usb; vr; xr-spatial-tracking"
             sandbox="allow-forms allow-modals allow-popups allow-presentation allow-same-origin allow-scripts allow-downloads allow-pointer-lock"
             src={url}
+            onLoad={() => setLoading(false)}
           />
         </div>
       </div>
