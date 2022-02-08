@@ -155,7 +155,14 @@ async function generate(options: Options) {
       plugins: [externalPlugin, ReactPlugin]
     })
   )
-  await copy('index.js', 'index.d.ts', 'client.js', 'client.d.ts', 'cache.d.ts')
+  await copy(
+    'package.json',
+    'index.js',
+    'index.d.ts',
+    'client.js',
+    'client.d.ts',
+    'cache.d.ts'
+  )
   await fs.writeFile(
     path.join(outdir, 'config.d.ts'),
     configType(
