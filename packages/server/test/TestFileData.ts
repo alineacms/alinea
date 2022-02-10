@@ -1,4 +1,5 @@
 import {
+  accumulate,
   createConfig,
   Entry,
   ErrorWithCode,
@@ -82,14 +83,8 @@ const data = new FileData({
   loader: JsonLoader
 })
 
-async function toArray<T>(gen: AsyncGenerator<T>): Promise<Array<T>> {
-  const arr = []
-  for await (const i of gen) arr.push(i)
-  return arr
-}
-
 test('reading', async () => {
-  const [root, sub, subEntry] = await toArray(data.entries())
+  const [root, sub, subEntry] = await accumulate(data.entries())
   assert.is(root.id, 'root')
   assert.is(root.$parent, undefined)
   assert.is(root.url, '/')
@@ -102,9 +97,9 @@ test('reading', async () => {
 })
 
 test('inserting', async () => {
-  const [root] = await toArray(data.entries())
+  const [root] = await accumulate(data.entries())
   await data.publish([{...root, title: 'New root title'}])
-  const [newRoot] = await toArray(data.entries())
+  const [newRoot] = await accumulate(data.entries())
   assert.is(newRoot.id, 'root')
   assert.is(newRoot.title, 'New root title')
 })

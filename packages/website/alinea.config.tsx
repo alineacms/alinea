@@ -7,13 +7,46 @@ import {richText} from '@alinea/input.richtext'
 import {text} from '@alinea/input.text'
 import {MdInsertDriveFile, MdOutlinePermMedia} from 'react-icons/md/index.js'
 
+const blocks = list('List test', {
+  schema: schema({
+    A: type('Type A', {
+      field1: text('Field 1'),
+      field2: text('Field 2', {width: 0.5}),
+      field3: text('Field 3', {width: 0.5})
+    }),
+    Wysiwyg: type('Wysiwyg', {
+      field1: richText('Field 2')
+    }),
+    Image: type('Image', {
+      image: link('Link')
+    }),
+    Depth: type('List again', {
+      items: list('Items', {
+        schema: schema({
+          A: type('Type A', {
+            field1: text('Field 1'),
+            field2: text('Field 2', {width: 0.5}),
+            field3: text('Field 3', {width: 0.5})
+          }),
+          Wysiwyg: type('Wysiwyg', {
+            field1: richText('Field 2')
+          })
+        })
+      })
+    })
+  })
+})
+
 const webSchema = schema({
   ...media,
   Home: type(
     'Home',
     {
-      title: text('Title', {multiline: true}),
-      path: path('Path'),
+      title: text('Title', {
+        width: 0.5,
+        multiline: true
+      }),
+      path: path('Path', {width: 0.5}),
       headline: text('Headline', {multiline: true}),
       byline: text('Byline', {multiline: true})
     },
@@ -21,7 +54,10 @@ const webSchema = schema({
   ),
   Docs: type(
     'Docs',
-    {title: text('Title', {multiline: true}), path: path('Path')},
+    {
+      title: text('Title', {width: 0.5, multiline: true}),
+      path: path('Path', {width: 0.5})
+    },
     {isContainer: true, contains: ['Doc']}
   ),
   Doc: type('Doc', {
@@ -37,19 +73,7 @@ const webSchema = schema({
         })
       })
     }),
-    blocks: list('List test', {
-      schema: schema({
-        A: type('Type A', {
-          field1: text('Field 1')
-        }),
-        Wysiwyg: type('Wysiwyg', {
-          field1: richText('Field 2')
-        }),
-        Image: type('Image', {
-          image: link('Link')
-        })
-      })
-    })
+    blocks
   })
 })
 

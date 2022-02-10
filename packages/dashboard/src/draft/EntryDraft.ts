@@ -8,9 +8,9 @@ import {
   Type,
   Value
 } from '@alinea/core'
-import {InputPath} from '@alinea/editor'
 import {observable, Observable} from '@alinea/ui'
 import * as Y from 'yjs'
+import {EntryProperty} from './EntryProperty'
 
 export enum PublishStatus {
   Published,
@@ -51,16 +51,16 @@ export class EntryDraft implements Entry {
   }
 
   static get url() {
-    return new InputPath.EntryProperty<string>(['url'])
+    return new EntryProperty<string>(['url'])
   }
   static get type() {
-    return new InputPath.EntryProperty<string>(['type'])
+    return new EntryProperty<string>(['type'])
   }
   static get $status() {
-    return new InputPath.EntryProperty<EntryStatus | undefined>(['$status'])
+    return new EntryProperty<EntryStatus | undefined>(['$status'])
   }
   static get title() {
-    return new InputPath.EntryProperty<string>(['title'])
+    return new EntryProperty<string>(['title'])
   }
 
   get id(): string {
@@ -114,7 +114,7 @@ export class EntryDraft implements Entry {
     const key = location[location.length - 1]
     const {type, parent} = this.getLocation(location)
     return {
-      mutator: type.mutator(parent, key),
+      mutator: type.mutator(parent, key) as Value.Mutator<T>,
       get value(): T {
         return type.fromY(parent.get(key))
       },

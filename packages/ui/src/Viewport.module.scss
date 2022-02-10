@@ -4,24 +4,28 @@
   //--background: #050606;
   --foreground: white;
   --foreground-faded: rgb(223, 221, 221);
-  --highlight: #303136;
-  --selected: #393a3f;
+  --inner: hsl(230, 6%, 15%);
+  --highlight: hsl(230, 6%, 20%);
+  --selected: hsl(230, 5%, 22%);
   --outline: #303136;
   --positive: 31, 32, 37;
-  --negative: 255, 255, 255;
-  --shadow: rgba(0, 0, 0, 0.9);
+  --negative: 236, 231, 231;
+  --shadow: rgba(0, 0, 0, 0.3);
 }
 
 @mixin light-theme {
-  --background: rgb(236, 231, 231); // #F9F8F9;
+  --background: hsl(0, 12%, 92%); // #F9F8F9;
+  // --background: hsl(0, 12%, 97%); // #F9F8F9;
   --foreground: #0d1214;
   --foreground-faded: #1e282e;
-  --highlight: #f6f4f4;
-  --selected: #fcfafa; //rgb(246, 249, 250); //#f5f4f0;
-  --outline: rgb(216, 213, 213); // #eceff1; //rgb(246, 249, 250);
+  --inner: hsl(0, 10%, 94%);
+  --highlight: hsl(0, 10%, 98%);
+  --selected: hsl(0, 0%, 100%); // #fcfafa; //rgb(246, 249, 250); //#f5f4f0;
+  // --outline: rgb(216, 213, 213); // #eceff1; //rgb(246, 249, 250);
+  --outline: hsl(0, 4%, 89%); // #eceff1; //rgb(246, 249, 250);
   --positive: 236, 231, 231;
   --negative: 31, 32, 37;
-  --shadow: rgba(0, 0, 0, 0.1);
+  --shadow: rgba(0, 0, 0, 0.08);
 }
 
 .root {
@@ -42,7 +46,7 @@
   display: flex;
   flex-direction: column;
   height: 100vh;
-  color: var(--foreground);
+  color: var(--foreground-faded);
   font-size: 14px;
   overflow: hidden;
   background: var(--background);

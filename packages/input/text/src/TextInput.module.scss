@@ -1,19 +1,16 @@
 .root {
-  border-bottom: 1px solid var(--outline);
-
   &-input {
+    display: block;
     background: transparent;
     border: none;
     color: inherit;
     font: inherit;
     width: 100%;
-    padding: 4px 0;
     resize: none;
+    padding: 8px 18px 8px 18px;
 
     &:focus {
-      border-radius: 4px;
       outline: none;
-      box-shadow: rgb(222 236 238 / 40%) 0 0 0 0.2em;
     }
   }
 }

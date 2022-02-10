@@ -1,5 +1,5 @@
 import {createContext, useContext} from 'react'
-import {EntryDraft} from '../EntryDraft'
+import {EntryDraft} from '../draft/EntryDraft'
 
 const context = createContext<EntryDraft | undefined>(undefined)
 

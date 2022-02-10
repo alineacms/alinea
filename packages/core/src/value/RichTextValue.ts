@@ -91,7 +91,15 @@ type Row = {
   type: string
 }
 
-export class RichTextValue<T> implements Value<TextDoc<Row & T>> {
+export type RichTextMutator<R> = {
+  map: Y.Map<any>
+  fragment: Y.XmlFragment
+  insert: (id: string, block: string) => void
+}
+
+export class RichTextValue<T>
+  implements Value<TextDoc<Row & T>, RichTextMutator<Row & T>>
+{
   values?: Record<string, RecordValue<Row & T>>
   constructor(protected shapes?: Record<string, RecordValue<T>>) {
     this.values =

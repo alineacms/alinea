@@ -1,13 +1,6 @@
 import {createId, Schema, TextDoc, Type} from '@alinea/core'
-import {Fields, InputLabel, InputPath, useInput} from '@alinea/editor'
-import {
-  Card,
-  Create,
-  fromModule,
-  HStack,
-  IconButton,
-  TextLabel
-} from '@alinea/ui'
+import {Fields, InputLabel, InputState, useInput} from '@alinea/editor'
+import {Card, Create, fromModule, IconButton, px, TextLabel} from '@alinea/ui'
 import {mergeAttributes, Node} from '@tiptap/core'
 import Collaboration from '@tiptap/extension-collaboration'
 import FloatingMenuExtension from '@tiptap/extension-floating-menu'
@@ -20,7 +13,7 @@ import {
   useEditor
 } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
-import {MdDelete, MdDragHandle} from 'react-icons/md'
+import {MdDelete, MdDragHandle, MdNotes} from 'react-icons/md'
 import {RichTextField} from './RichTextField'
 import css from './RichTextInput.module.scss'
 
@@ -32,7 +25,7 @@ type NodeViewProps = {
 }
 
 function typeExtension(
-  parent: InputPath<TextDoc<any>>,
+  parent: InputState<TextDoc<any>>,
   name: string,
   type: Type
 ) {
@@ -41,8 +34,8 @@ function typeExtension(
     if (!id) return null
     return (
       <NodeViewWrapper>
-        <Card.Root>
-          <HStack gap={10}>
+        <Card.Root style={{margin: `${px(18)} 0`}}>
+          <Card.Header>
             <Card.Options>
               <IconButton
                 icon={MdDragHandle}
@@ -50,13 +43,16 @@ function typeExtension(
                 style={{cursor: 'grab'}}
               />
             </Card.Options>
-            <Card.Content>
-              <Fields path={parent.child(id)} type={type} />
-            </Card.Content>
+            <Card.Title>
+              <TextLabel label={type.label} />
+            </Card.Title>
             <Card.Options>
               <IconButton icon={MdDelete} onClick={deleteNode} />
             </Card.Options>
-          </HStack>
+          </Card.Header>
+          <Card.Content>
+            <Fields state={parent.child(id)} type={type} />
+          </Card.Content>
         </Card.Root>
       </NodeViewWrapper>
     )
@@ -84,7 +80,7 @@ function typeExtension(
 }
 
 function schemaToExtensions(
-  path: InputPath<TextDoc<any>>,
+  path: InputState<TextDoc<any>>,
   schema: Schema | undefined
 ) {
   if (!schema) return []
@@ -135,13 +131,13 @@ function InsertMenu({editor, schema, onInsert}: InsertMenuProps) {
 }
 
 export type RichTextInputProps<T> = {
-  path: InputPath<TextDoc<T>>
+  state: InputState<TextDoc<T>>
   field: RichTextField<T>
 }
 
-export function RichTextInput<T>({path, field}: RichTextInputProps<T>) {
+export function RichTextInput<T>({state, field}: RichTextInputProps<T>) {
   const {blocks, optional, help} = field.options
-  const [content, {fragment, insert}] = useInput(path)
+  const [content, {fragment, insert}] = useInput(state)
   const editor = useEditor(
     {
       content,
@@ -150,16 +146,29 @@ export function RichTextInput<T>({path, field}: RichTextInputProps<T>) {
         FloatingMenuExtension,
         Collaboration.configure({fragment}),
         StarterKit.configure({history: false}),
-        ...schemaToExtensions(path, blocks)
+        ...schemaToExtensions(state, blocks)
       ]
     },
     [fragment]
   )
   if (!editor) return null
   return (
-    <div className={styles.root()}>
+    <InputLabel
+      label={field.label}
+      help={help}
+      optional={optional}
+      focused={editor.isFocused}
+      icon={MdNotes}
+      empty={editor.isEmpty}
+    >
       <InsertMenu editor={editor} schema={blocks} onInsert={insert} />
-      {/*<BubbleMenu editor={editor}>
+      <EditorContent className={styles.root.editor()} editor={editor} />
+    </InputLabel>
+  )
+}
+
+{
+  /*<BubbleMenu editor={editor}>
         <button
           onClick={() => editor.chain().focus().toggleBold().run()}
           className={editor.isActive('bold') ? 'is-active' : ''}
@@ -178,10 +187,5 @@ export function RichTextInput<T>({path, field}: RichTextInputProps<T>) {
         >
           strike
         </button>
-  </BubbleMenu>*/}
-      <InputLabel label={field.label} help={help} optional={optional}>
-        <EditorContent className={styles.root.editor()} editor={editor} />
-      </InputLabel>
-    </div>
-  )
+  </BubbleMenu>*/
 }

@@ -1,11 +1,15 @@
 import {Field, Label, Value} from '@alinea/core'
+import type {ComponentType} from 'react'
 
 export type TextOptions = {
+  width?: number
   help?: Label
   optional?: boolean
   multiline?: boolean
   inline?: boolean
   initialValue?: string
+  iconLeft?: ComponentType
+  iconRight?: ComponentType
 }
 
 export interface TextField extends Field<string> {

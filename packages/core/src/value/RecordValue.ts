@@ -1,8 +1,12 @@
 import * as Y from 'yjs'
 import {Value} from '../Value'
 
+export type RecordMutator<T> = {
+  set: <K extends keyof T>(k: K, v: T[K]) => void
+}
+
 export class RecordValue<T extends Record<string, any> = {}>
-  implements Value<T>
+  implements Value<T, RecordMutator<T>>
 {
   constructor(public shape: Record<string, Value>) {}
   create() {
@@ -36,7 +40,7 @@ export class RecordValue<T extends Record<string, any> = {}>
       return () => record.unobserve(fun)
     }
   }
-  mutator<T>(parent: Y.Map<any>, key: string) {
+  mutator(parent: Y.Map<any>, key: string) {
     return {
       set: <K extends keyof T>(k: K, v: T[K]) => {
         const record = parent.get(key)

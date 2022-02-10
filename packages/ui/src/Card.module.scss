@@ -1,8 +1,27 @@
 .root {
-  background: var(--selected);
-  border-radius: 20px;
-  margin: 0 -8px;
-  padding: 8px;
+  position: relative;
+  border-radius: 12px;
+  background: var(--background);
+  // box-shadow: 0 2px 3.5px var(--shadow);
+  overflow: hidden;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: var(--highlight);
+}
+
+.title {
+  font-size: 12px;
+  font-weight: bold;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  flex-grow: 1;
+  min-width: 0;
 }
 
 .content {

@@ -6,9 +6,7 @@ import {
   FavIcon,
   Loader,
   Pane,
-  px,
   Statusbar,
-  Typo,
   useObservable,
   Viewport
 } from '@alinea/ui'
@@ -21,7 +19,6 @@ import {
   MdEdit,
   MdInsertDriveFile,
   MdRotateLeft,
-  MdSearch,
   MdWarning
 } from 'react-icons/md'
 import {QueryClient, QueryClientProvider} from 'react-query'
@@ -37,6 +34,7 @@ import {SessionProvider} from './hook/UseSession'
 import {useWorkspace} from './hook/UseWorkspace'
 import {ContentTree} from './view/ContentTree'
 import {EntryEdit, NewEntry} from './view/EntryEdit'
+import {SearchBox} from './view/SearchBox'
 import {Toolbar} from './view/Toolbar'
 
 function AppAuthenticated() {
@@ -127,33 +125,23 @@ function EntryRoute({id}: EntryRouteProps) {
       >
         <AppBar.Root>
           <AppBar.Item full style={{flexGrow: 1}}>
-            <Typo.Monospace
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                width: '100%',
-                height: px(28),
-                background: 'var(--highlight)',
-                padding: `${px(6)} ${px(15)} ${px(6)} ${px(12)}`,
-                borderRadius: px(8)
-              }}
-            >
-              <MdSearch size={15} />
-            </Typo.Monospace>
+            <SearchBox />
           </AppBar.Item>
         </AppBar.Root>
         <ContentTree workspace={workspace} root={root} select={selected} />
       </Pane>
       <div style={{width: '100%', height: '100%'}}>
-        <Route path={nav.create(':workspace', ':root', ':parent')}>
-          {({match}) => {
-            const matched = match?.params.parent
-            if (!matched) return null
-            const isEntry = matched === draft?.id
-            return <NewEntry parentId={isEntry ? id : undefined} />
-          }}
-        </Route>
-        {draft && <View draft={draft} />}
+        <Suspense fallback={<Loader absolute />}>
+          <Route path={nav.create(':workspace', ':root', ':parent')}>
+            {({match}) => {
+              const matched = match?.params.parent
+              if (!matched) return null
+              const isEntry = matched === draft?.id
+              return <NewEntry parentId={isEntry ? id : undefined} />
+            }}
+          </Route>
+          {draft && <View draft={draft} />}
+        </Suspense>
       </div>
     </CurrentDraftProvider>
   )

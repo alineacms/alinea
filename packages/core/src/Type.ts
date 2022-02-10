@@ -7,7 +7,6 @@ import {Label} from './Label'
 import {Lazy} from './util/Lazy'
 import {LazyRecord} from './util/LazyRecord'
 import {Value} from './Value'
-import {RecordValue} from './value/RecordValue'
 
 export namespace Type {
   export type Of<T> = T extends Type<infer U> ? U : never
@@ -24,7 +23,7 @@ export namespace Type {
 
 const reserved = new Set(['id', 'type'])
 
-export class Type<T = {}> {
+export class Type<T extends {} = {}> {
   constructor(
     public label: Label,
     public fields: Record<string, Field>,
@@ -39,7 +38,7 @@ export class Type<T = {}> {
   }
 
   get valueType() {
-    return Value.Record(
+    return Value.Record<T>(
       Object.fromEntries(
         [
           ['id', Value.Scalar as Value],
@@ -54,7 +53,7 @@ export class Type<T = {}> {
           })
         )
       )
-    ) as RecordValue<T>
+    )
   }
 
   [Symbol.iterator]() {

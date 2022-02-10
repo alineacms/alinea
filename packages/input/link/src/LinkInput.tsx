@@ -1,4 +1,4 @@
-import {InputLabel, InputPath, useInput} from '@alinea/editor'
+import {InputLabel, InputState, useInput} from '@alinea/editor'
 import {fromModule} from '@alinea/ui'
 import {LinkField} from './LinkField'
 import css from './LinkInput.module.scss'
@@ -6,7 +6,7 @@ import css from './LinkInput.module.scss'
 const styles = fromModule(css)
 
 export type LinkInputProps = {
-  path: InputPath<string>
+  path: InputState<string>
   field: LinkField
 }
 

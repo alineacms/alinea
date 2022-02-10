@@ -1,24 +1,38 @@
 .root {
   position: relative;
-  margin: 0 -8px;
-  padding: 8px 0;
+
+  &-inner {
+    padding: 12px 18px 8px 18px;
+    background: var(--inner);
+  }
+
+  &-title {
+    padding-bottom: 12px;
+  }
+
+  &-rows {
+    padding-bottom: 4px;
+  }
+
+  & & {
+    padding: 8px;
+  }
+
+  & & &-inner {
+    border-radius: 6px;
+  }
+
+  &-header {
+    padding: 8px;
+  }
 }
 
 .row {
   position: relative;
-  z-index: 0;
-  padding: 8px;
+  background: var(--background);
 
-  &:before {
-    content: '';
-    position: absolute;
-    background: var(--selected);
-    border-radius: 20px;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    z-index: -1;
+  & + & {
+    // border-top: 1px solid var(--outline);
   }
 
   &.is-dragging {

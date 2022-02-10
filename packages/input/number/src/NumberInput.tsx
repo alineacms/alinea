@@ -1,4 +1,4 @@
-import {InputLabel, InputPath} from '@alinea/editor'
+import {InputLabel, InputState} from '@alinea/editor'
 import {fromModule} from '@alinea/ui'
 import {NumberField} from './NumberField'
 import css from './NumberInput.module.scss'
@@ -6,7 +6,7 @@ import css from './NumberInput.module.scss'
 const styles = fromModule(css)
 
 export type NumberInputProps = {
-  path: InputPath<number>
+  state: InputState<number>
   field: NumberField
 }
 

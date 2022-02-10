@@ -12,9 +12,12 @@
   // border: 1px solid rgba(var(--negative), 0.1);
   color: var(--foreground);
   background: transparent;
+  // box-shadow: 0 0 0 2px rgba(var(--negative), 0.1);
+  transition: 0.2s ease-out;
 
   &:hover {
-    background: var(--foreground);
-    color: var(--background);
+    color: var(--accent-foreground);
+    background: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent);
   }
 }

@@ -2,11 +2,12 @@ import {createId} from '@alinea/core'
 import {decode} from 'base64-arraybuffer'
 import {SqlJs} from 'helder.store/sqlite/drivers/SqlJs.js'
 import {SqliteStore} from 'helder.store/sqlite/SqliteStore.js'
+import initSqlJs from 'sql.js-fts5'
 
 const sqlJs = decode('$SQLJS')
 const buffer = decode('$DB')
 
-const sqlJsInit = SqlJs.init({
+const sqlJsInit = initSqlJs({
   instantiateWasm(imports, resolve) {
     const module = new WebAssembly.Module(sqlJs)
     const instance = new WebAssembly.Instance(module, imports)
@@ -16,9 +17,9 @@ const sqlJsInit = SqlJs.init({
 })
 
 export function createCache() {
-  return sqlJsInit.then(() => {
+  return sqlJsInit.then(({Database}) => {
     return new SqliteStore(
-      new SqlJs(new __sqlJs.Database(new Uint8Array(buffer))),
+      new SqlJs(new Database(new Uint8Array(buffer))),
       createId
     )
   })

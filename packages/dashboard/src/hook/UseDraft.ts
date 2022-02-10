@@ -1,6 +1,6 @@
-import {EntryDraft} from '@alinea/editor/EntryDraft'
 import {useEffect} from 'react'
 import {useQuery} from 'react-query'
+import {EntryDraft} from '../draft/EntryDraft'
 import {useDrafts} from './UseDrafts'
 import {useSession} from './UseSession'
 

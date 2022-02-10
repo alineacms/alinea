@@ -33,21 +33,22 @@
     position: absolute;
     cursor: col-resize;
     // Leave some room for scrollbars
-    left: 0;
-    right: -8px;
+    left: -1px;
+    right: -6px;
     top: 0;
     bottom: 0;
 
     &-line {
       height: 100%;
-      margin-left: 0px;
+      margin-left: 1px;
       border-left: 1px solid var(--outline);
       position: relative;
       z-index: 4;
     }
 
     &:hover &-line {
-      border-color: var(--highlight);
+      // border-color: rgba(var(--negative), 0.2);
+      border-width: 2px;
     }
   }
 }

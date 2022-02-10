@@ -616,7 +616,7 @@
 .alinea__Modal-module-root-inner {
   position: relative;
   margin: auto;
-  box-shadow: 0 2px 25px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 20px 60px var(--shadow);
   padding: 35px;
   background: var(--background);
   border-radius: 6px;
@@ -655,20 +655,20 @@
 .alinea__Pane-module-divider-handle {
   position: absolute;
   cursor: col-resize;
-  left: 0;
-  right: -8px;
+  left: -1px;
+  right: -6px;
   top: 0;
   bottom: 0;
 }
 .alinea__Pane-module-divider-handle-line {
   height: 100%;
-  margin-left: 0px;
+  margin-left: 1px;
   border-left: 1px solid var(--outline);
   position: relative;
   z-index: 4;
 }
 .alinea__Pane-module-divider-handle:hover .alinea__Pane-module-divider-handle-line {
-  border-color: var(--highlight);
+  border-width: 2px;
 }
 /*# sourceMappingURL=Pane.css.map */
 /* @esbx/sass::C:/projects/alinea/packages/ui/src/Sidebar.module.scss */
@@ -866,7 +866,7 @@
     255,
     255,
     255;
-  --shadow: rgba(0, 0, 0, 0.9);
+  --shadow: rgba(0, 0, 0, 0.95);
   display: flex;
   flex-direction: column;
   height: 100vh;
@@ -893,7 +893,7 @@
       31,
       32,
       37;
-    --shadow: rgba(0, 0, 0, 0.1);
+    --shadow: rgba(0, 0, 0, 0.15);
   }
 }
 .alinea__Viewport-module-root.alinea__Viewport-module-is-light {
@@ -911,7 +911,7 @@
     31,
     32,
     37;
-  --shadow: rgba(0, 0, 0, 0.1);
+  --shadow: rgba(0, 0, 0, 0.15);
 }
 .alinea__Viewport-module-root.alinea__Viewport-module-is-dark {
   --background: #1f2025;
@@ -928,7 +928,7 @@
     255,
     255,
     255;
-  --shadow: rgba(0, 0, 0, 0.9);
+  --shadow: rgba(0, 0, 0, 0.95);
 }
 /*# sourceMappingURL=Viewport.css.map */
 /* @esbx/sass::C:/projects/alinea/packages/input/link/src/LinkInput.module.scss */
@@ -950,7 +950,7 @@
 .alinea__ListInput-module-row:before {
   content: "";
   position: absolute;
-  background: var(--selected);
+  background: var(--highlight);
   border-radius: 20px;
   top: 0;
   bottom: 0;

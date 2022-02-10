@@ -1,6 +1,6 @@
-import {InputPath} from '../InputPath'
+import {InputState} from '../InputState'
 
 /* eslint-disable */
-export function useInput<T>(path: InputPath<T>) {
+export function useInput<T>(path: InputState<T>) {
   return path.use()
 }

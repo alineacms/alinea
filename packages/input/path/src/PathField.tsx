@@ -1,6 +1,7 @@
 import {Field, Label, Value} from '@alinea/core'
 
 export type PathOptions = {
+  width?: number
   from?: string
   help?: Label
   inline?: boolean

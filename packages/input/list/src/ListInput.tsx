@@ -1,7 +1,5 @@
-import {Fields, InputLabel, InputPath, useInput} from '@alinea/editor'
-import {fromModule, IconButton, TextLabel} from '@alinea/ui'
-import {Create} from '@alinea/ui/Create'
-import {HStack, VStack} from '@alinea/ui/Stack'
+import {Fields, InputState, LabelHeader, useInput} from '@alinea/editor'
+import {Card, Create, fromModule, IconButton, TextLabel} from '@alinea/ui'
 import {
   closestCenter,
   defaultDropAnimation,
@@ -32,7 +30,7 @@ import {
   Ref,
   useState
 } from 'react'
-import {MdDelete, MdDragHandle} from 'react-icons/md'
+import {MdDelete, MdDragHandle, MdOutlineList} from 'react-icons/md'
 import {ListField} from './ListField'
 import css from './ListInput.module.scss'
 
@@ -47,7 +45,7 @@ export type ListRow = {
 type ListInputRowProps<T extends ListRow> = PropsWithChildren<
   {
     row: T
-    path: InputPath<T>
+    path: InputState<T>
     field: ListField<T>
     isDragging?: boolean
     onDelete?: () => void
@@ -101,17 +99,24 @@ function ListInputRow<T extends ListRow>({
   if (!type) return null
   return (
     <div className={styles.row({dragging: isDragging})} ref={rootRef} {...rest}>
-      <HStack gap={10}>
-        <IconButton
-          icon={MdDragHandle}
-          {...handle}
-          style={{cursor: handle ? 'grab' : 'grabbing'}}
-        />
-        <div style={{flexGrow: 1}}>
-          <Fields type={type as any} path={path} />
-        </div>
-        <IconButton icon={MdDelete} onClick={onDelete} />
-      </HStack>
+      <Card.Header>
+        <Card.Options>
+          <IconButton
+            icon={MdDragHandle}
+            {...handle}
+            style={{cursor: handle ? 'grab' : 'grabbing'}}
+          />
+        </Card.Options>
+        <Card.Title>
+          <TextLabel label={type.label} />
+        </Card.Title>
+        <Card.Options>
+          <IconButton icon={MdDelete} onClick={onDelete} />
+        </Card.Options>
+      </Card.Header>
+      <Card.Content>
+        <Fields type={type as any} state={path} />
+      </Card.Content>
     </div>
   )
 }
@@ -137,14 +142,17 @@ function ListCreateRow<T>({field, onCreate}: ListCreateRowProps<T>) {
 }
 
 export type ListInputProps<T> = {
-  path: InputPath<Array<T>>
+  state: InputState<Array<T>>
   field: ListField<T>
 }
 const layoutMeasuringConfig = {
   strategy: LayoutMeasuringStrategy.Always
 }
-export function ListInput<T extends ListRow>({path, field}: ListInputProps<T>) {
-  const [rows, input] = useInput(path)
+export function ListInput<T extends ListRow>({
+  state,
+  field
+}: ListInputProps<T>) {
+  const [rows, list] = useInput(state)
   const {help} = field.options
   const ids = rows.map(row => row.id)
   const [dragging, setDragging] = useState<T | null>(null)
@@ -163,13 +171,16 @@ export function ListInput<T extends ListRow>({path, field}: ListInputProps<T>) {
   function handleDragEnd(event: DragEndEvent) {
     const {active, over} = event
     if (!over || active.id === over.id) return
-    input.move(ids.indexOf(active.id), ids.indexOf(over.id))
+    list.move(ids.indexOf(active.id), ids.indexOf(over.id))
     setDragging(null)
   }
 
   return (
-    <InputLabel label={field.label} help={help}>
-      <div className={styles.root()}>
+    <div className={styles.root()}>
+      <div className={styles.root.inner()}>
+        <div className={styles.root.title()}>
+          <LabelHeader label={field.label} icon={MdOutlineList} />
+        </div>
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
@@ -177,21 +188,23 @@ export function ListInput<T extends ListRow>({path, field}: ListInputProps<T>) {
           onDragEnd={handleDragEnd}
           layoutMeasuring={layoutMeasuringConfig}
         >
-          <SortableContext items={ids} strategy={verticalListSortingStrategy}>
-            <VStack gap={10}>
-              {rows.map(row => {
-                return (
-                  <ListInputRowSortable<T>
-                    key={row.id}
-                    row={row}
-                    field={field}
-                    path={path.child(row.id)}
-                    onDelete={() => input.delete(row.id)}
-                  />
-                )
-              })}
-            </VStack>
-          </SortableContext>
+          <div className={styles.root.rows()}>
+            <SortableContext items={ids} strategy={verticalListSortingStrategy}>
+              <Card.Root>
+                {rows.map(row => {
+                  return (
+                    <ListInputRowSortable<T>
+                      key={row.id}
+                      row={row}
+                      field={field}
+                      path={state.child(row.id)}
+                      onDelete={() => list.delete(row.id)}
+                    />
+                  )
+                })}
+              </Card.Root>
+            </SortableContext>
+          </div>
 
           <DragOverlay
             dropAnimation={{
@@ -204,18 +217,18 @@ export function ListInput<T extends ListRow>({path, field}: ListInputProps<T>) {
                 key="overlay"
                 row={dragging}
                 field={field}
-                path={path.child(dragging.id)}
+                path={state.child(dragging.id)}
               />
             ) : null}
           </DragOverlay>
         </DndContext>
+        <ListCreateRow
+          onCreate={(type: string) => {
+            list.push({type} as any)
+          }}
+          field={field}
+        />
       </div>
-      <ListCreateRow
-        onCreate={(type: string) => {
-          input.push({type})
-        }}
-        field={field}
-      />
-    </InputLabel>
+    </div>
   )
 }

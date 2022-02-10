@@ -23,7 +23,14 @@
   }
 
   &-draft {
-    padding: 35px;
+    padding: 45px 45px;
     flex-grow: 1;
+
+    &-fields {
+      background: var(--inner);
+      border-radius: 12px;
+      // box-shadow: 0 2px 3.5px var(--shadow);
+      overflow: hidden;
+    }
   }
 }

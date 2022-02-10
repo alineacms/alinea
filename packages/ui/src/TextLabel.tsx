@@ -1,10 +1,11 @@
 import {Label} from '@alinea/core'
+import {HTMLProps} from 'react'
 
 export type TextLabelProps = {
   label: Label
-}
+} & Omit<HTMLProps<HTMLSpanElement>, 'label'>
 
-export function TextLabel({label}: TextLabelProps) {
+export function TextLabel({label, ...props}: TextLabelProps) {
   if (typeof label !== 'string') throw 'Todo: translated labels'
-  return <>{label}</>
+  return <span {...props}>{label}</span>
 }

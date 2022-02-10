@@ -13,7 +13,7 @@ export namespace Create {
   export function Link({children, ...props}: LinkProps) {
     return (
       <RRLink {...props} className={styles.button.mergeProps(props)()}>
-        <HStack center gap={4}>
+        <HStack center gap={8}>
           <MdAddCircle />
           {children && <span>{children}</span>}
         </HStack>
@@ -27,7 +27,7 @@ export namespace Create {
   }: HTMLAttributes<HTMLButtonElement>) {
     return (
       <button {...props} className={styles.button.mergeProps(props)()}>
-        <HStack center gap={4}>
+        <HStack center gap={8}>
           <MdAddCircle />
           {children && <span>{children}</span>}
         </HStack>

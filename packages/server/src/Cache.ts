@@ -7,21 +7,36 @@ import {
   EntryStatus,
   Schema
 } from '@alinea/core'
+import {Search} from '@alinea/core/Search'
 import convertHrtime from 'convert-hrtime'
 import {Store} from 'helder.store'
+import {SqliteStore} from 'helder.store/sqlite/SqliteStore.js'
 import prettyMilliseconds from 'pretty-ms'
 import * as Y from 'yjs'
 import {Data} from './Data'
 
-export class Cache {
-  static async create(store: Store, from: Data.Source) {
+export namespace Cache {
+  function indexSearch(store: Store, entry: Entry) {
+    // Todo: unroll languages
+    const row = {id: entry.id, title: String(entry.title)}
+    const condition = Search.where(Search.id.is(entry.id))
+    const existing = store.first(condition)
+    //if (existing) store.update(condition, row)
+    if (!existing) store.insert(Search, row)
+  }
+
+  export async function create(store: SqliteStore, from: Data.Source) {
     const startTime = process.hrtime.bigint()
     console.log('Start indexing...')
     store.delete(Entry)
+    store.createFts5Table(Search, 'Search', () => {
+      return {title: Search.title}
+    })
     let total = 0
     for await (const entry of from.entries()) {
       total++
       store.insert(Entry, entry)
+      indexSearch(store, entry)
     }
     store.createIndex(Entry, 'root', [Entry.root])
     store.createIndex(Entry, 'workspace.type', [Entry.workspace, Entry.type])
@@ -35,7 +50,7 @@ export class Cache {
     )
   }
 
-  static applyUpdates(
+  export function applyUpdates(
     store: Store,
     config: Config | Schema,
     updates: Array<{id: string; update: Uint8Array}>
@@ -73,16 +88,18 @@ export class Cache {
       }
       if (existing) store.update(condition, entry)
       else store.insert(Entry, entry)
+      indexSearch(store, entry)
     }
   }
 
-  static applyPublish(store: Store, entries: Array<Entry>) {
+  export function applyPublish(store: Store, entries: Array<Entry>) {
     return store.transaction(() => {
       for (const entry of entries) {
         const condition = Entry.where(Entry.id.is(entry.id))
         const existing = store.first(condition)
         if (existing) store.update(condition, entry)
         else store.insert(Entry, entry)
+        indexSearch(store, entry)
       }
     })
   }

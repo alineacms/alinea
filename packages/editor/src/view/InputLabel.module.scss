@@ -1,17 +1,56 @@
 .root {
-  display: block;
+  display: inline-block;
+  vertical-align: top;
+  transition: border 0.25s ease-out;
+  border-bottom: 1px solid transparent;
+
+  &-inner {
+    padding: 0 0;
+  }
+
+  &.is-inline > &-inner {
+    background: var(--highlight);
+  }
+
+  &.is-focused > &-inner {
+    background: var(--selected);
+  }
+
+  &-header {
+    padding: 8px 12px 0 12px;
+  }
+
+  &.is-empty {
+    border-color: rgba(var(--negative), 0.1);
+  }
 }
 
 .header {
   &-title {
-    font-size: 13px;
-    padding-bottom: 4px;
+    display: inline-block;
+    font-size: 12px;
     font-weight: bold;
-    color: var(--foreground-faded);
+    color: var(--foreground);
+    background: var(--highlight);
+    border-radius: 6px;
+    padding: 3px 6px;
+  }
 
-    &-help {
-      font-weight: normal;
-      padding-bottom: 4px;
-    }
+  &-help {
+    font-weight: normal;
+    padding: 4px;
+    color: var(--foreground-faded);
+    font-style: italic;
+    font-size: 12px;
+  }
+
+  &.is-large &-title {
+    font-size: 20px;
+    padding-bottom: 12px;
+  }
+
+  &.is-focused &-title {
+    background: var(--accent);
+    color: var(--accent-foreground);
   }
 }

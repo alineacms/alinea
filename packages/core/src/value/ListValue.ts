@@ -25,9 +25,17 @@ function sort(a: Row, b: Row) {
   return 0
 }
 
+export type ListMutator<T> = {
+  push: (row: Omit<T, 'id' | '$index'>) => void
+  delete: (id: string) => void
+  move: (oldIndex: number, newIndex: number) => void
+}
+
 // Todo: might as well use Y.Array and just sort the array by $index
 // in useInput.
-export class ListValue<T> implements Value<Array<Row & T>> {
+export class ListValue<T>
+  implements Value<Array<Row & T>, ListMutator<Row & T>>
+{
   values: Record<string, RecordValue<Row & T>>
   constructor(shapes: Record<string, RecordValue<T>>) {
     this.values = Object.fromEntries(
@@ -73,6 +81,7 @@ export class ListValue<T> implements Value<Array<Row & T>> {
     if (!map) return rows
     for (const key of map.keys()) {
       const row = map.get(key)
+      if (!row || typeof row.get !== 'function') continue
       const type = row.get('type')
       const rowType = this.values[type]
       if (rowType) rows.push(rowType.fromY(row) as Row & T)
@@ -96,9 +105,9 @@ export class ListValue<T> implements Value<Array<Row & T>> {
       }
     }
   }
-  mutator<T extends Row>(parent: Y.Map<any>, key: string) {
+  mutator(parent: Y.Map<any>, key: string) {
     return {
-      push: (row: Omit<T, 'id' | '$index'>) => {
+      push: (row: Omit<Row & T, 'id' | '$index'>) => {
         const record = parent.get(key)
         const rows: Array<Row> = this.fromY(record) as any
         const id = createId()

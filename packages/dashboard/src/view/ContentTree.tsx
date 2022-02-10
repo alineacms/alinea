@@ -183,6 +183,7 @@ const TreeNodeLink = memo(
             gap={8}
             style={{width: '100%'}}
             onClick={event => {
+              if (isSelected && !isOpened) return
               event.stopPropagation()
             }}
           >

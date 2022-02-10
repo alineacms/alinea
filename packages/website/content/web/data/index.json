@@ -1,5 +1,6 @@
 {
   "id": "home",
+  "root": "data",
   "type": "Home",
   "title": "Alinea",
   "headline": "The website headline",

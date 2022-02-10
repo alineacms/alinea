@@ -1,14 +1,12 @@
-// Todo: find the smallest css in js runtime lib for this purpose
-import {css} from '@stitches/react'
 import {
   CSSProperties,
   forwardRef,
   HTMLAttributes,
   HTMLProps,
   PropsWithChildren,
-  PropsWithRef
+  PropsWithRef,
+  useMemo
 } from 'react'
-import {styler} from './util/Styler'
 import {px} from './util/Units'
 
 export type StackProps = PropsWithRef<
@@ -33,26 +31,12 @@ function stack(props: StackProps) {
     flexDirection: direction,
     alignItems: props.center ? 'center' : props.align || 'unset',
     justifyContent: props.justify || 'unset',
-    '>*+*': {
-      [direction === 'row' ? 'marginLeft' : 'marginTop']: px(props.gap || 0)
-    }
+    gap: px(props.gap || 0)
   }
-  if (props.wrap) {
-    styles.flexWrap = 'wrap'
-    styles.marginTop = `-${px(props.gap || 0)}`
-    styles.marginLeft = `-${px(props.gap || 0)}`
-    styles['>*'] = {
-      marginTop: px(props.gap || 0),
-      marginLeft: px(props.gap || 0)
-    }
-  }
-  if (props.full) {
-    styles[direction === 'row' ? 'width' : 'height'] = '100%'
-  }
+  if (props.wrap) styles.flexWrap = 'wrap'
+  if (props.full) styles[direction === 'row' ? 'width' : 'height'] = '100%'
   return styles
 }
-
-const cache = new Map()
 
 export const VStack = forwardRef<HTMLDivElement, StackProps>(function VStack(
   props,
@@ -72,10 +56,11 @@ export const VStack = forwardRef<HTMLDivElement, StackProps>(function VStack(
   } = props
   const key = `${gap}-${align}-${direction}-${justify}-${center}-${wrap}-${full}`
   const Tag = tag as any
-  if (!cache.has(key)) cache.set(key, styler(css(stack(props))()))
-  const className = cache.get(key)
+  const style = useMemo(() => {
+    return stack(props)
+  }, [key])
   const inner = (
-    <Tag {...rest} className={className.mergeProps(rest)()} ref={ref}>
+    <Tag {...rest} style={{...style, ...props.style}} ref={ref}>
       {children}
     </Tag>
   )

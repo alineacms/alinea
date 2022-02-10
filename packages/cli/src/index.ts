@@ -81,7 +81,9 @@ function embedInWasm(data: Buffer) {
 }
 
 async function embedInJs(source: string, data: Buffer) {
-  const sqlJs = await fs.readFile(require.resolve('sql.js/dist/sql-wasm.wasm'))
+  const sqlJs = await fs.readFile(
+    require.resolve('sql.js-fts5/dist/sql-wasm.wasm')
+  )
   return source.replace('$DB', encode(data)).replace('$SQLJS', encode(sqlJs))
 }
 

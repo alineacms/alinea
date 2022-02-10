@@ -2,7 +2,6 @@ import {Collection} from 'helder.store'
 import {Entry} from './Entry'
 import {Type} from './Type'
 import {LazyRecord} from './util/LazyRecord'
-import {RecordValue} from './value/RecordValue'
 
 export type HasType = {type: string}
 
@@ -34,7 +33,7 @@ export class Schema<T = any> {
     return LazyRecord.resolve(this.#types)
   }
 
-  get valueTypes(): Record<string, RecordValue> {
+  get valueTypes() {
     return Object.fromEntries(
       Array.from(this).map(([key, channel]) => {
         return [key, channel.valueType]
@@ -47,7 +46,9 @@ export class Schema<T = any> {
   }
 
   type<K extends TypesOf<T>>(name: K): Type<Extract<T, {type: K}>> | undefined {
-    return LazyRecord.get(this.#types, name) as Type<Extract<T, {type: K}>>
+    return LazyRecord.get(this.#types, name) as unknown as Type<
+      Extract<T, {type: K}>
+    >
   }
 
   get keys() {

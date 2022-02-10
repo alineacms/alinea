@@ -29,7 +29,8 @@
       "@alinea/ui/*": ["./packages/ui/src/*"],
       "@alinea/*": ["./packages/*/src"]
     },
-    "plugins": [{"name": "typescript-plugin-css-modules"}]
+    "plugins": [{"name": "typescript-plugin-css-modules"}],
+    "types": ["react/next", "react-dom/next"]
   },
   "include": ["packages"],
   "exclude": ["node_modules", "packages/website", "packages/stories"]

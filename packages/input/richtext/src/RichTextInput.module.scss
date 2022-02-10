@@ -1,5 +1,10 @@
 .root {
-  border-bottom: 1px solid var(--outline);
+  &-editor {
+    border-bottom: 1px solid transparent;
+    &.is-empty {
+      border-color: rgba(var(--negative), 0.1);
+    }
+  }
 
   &-editor > * {
     background: transparent;
@@ -7,14 +12,14 @@
     color: inherit;
     font: inherit;
     width: 100%;
-    padding: 4px 0;
     resize: none;
-    outline: none;
+    cursor: text;
+    line-height: 1.5;
+    padding: 8px 18px 8px 18px;
+    transition: border 0.25s ease-out;
 
-    /*&:focus {
-      border-radius: 4px;
+    &:focus {
       outline: none;
-      box-shadow: rgb(222 236 238 / 40%) 0 0 0 0.2em;
-    }*/
+    }
   }
 }

@@ -2,7 +2,9 @@ import * as Y from 'yjs'
 import {createError} from '../ErrorWithCode'
 import {Value} from '../Value'
 
-export class ScalarValue<T> implements Value<T> {
+export type ScalarMutator<T> = (value: T) => void
+
+export class ScalarValue<T> implements Value<T, ScalarMutator<T>> {
   static inst = new ScalarValue()
   constructor() {}
   create(): T {
@@ -27,6 +29,8 @@ export class ScalarValue<T> implements Value<T> {
     }
   }
   mutator(parent: Y.Map<any>, key: string) {
-    return (value: T) => parent.set(key, value)
+    return (value: T) => {
+      parent.set(key, value)
+    }
   }
 }

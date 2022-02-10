@@ -4,11 +4,11 @@
   flex-wrap: wrap;
   gap: 10px;
   width: 100%;
+  justify-content: center;
 }
 
 .button {
   display: inline-block;
-  font-size: 13.5px;
   font-weight: bold;
   padding: 3px 0;
   // background: var(--highlight);
@@ -23,6 +23,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   overflow: hidden;
+  font-size: 12px;
   // border-bottom: 1px solid var(--shadow);
 
   &:hover {

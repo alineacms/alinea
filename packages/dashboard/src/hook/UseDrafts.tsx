@@ -1,11 +1,11 @@
 import {createError, docFromEntry, EntryStatus} from '@alinea/core'
 import {Hub} from '@alinea/core/Hub'
-import {EntryDraft} from '@alinea/editor/EntryDraft'
 import {observable} from '@alinea/ui'
 import {decode} from 'base64-arraybuffer'
 import {createContext, PropsWithChildren, useContext, useMemo} from 'react'
 import {Room, WebrtcProvider} from 'y-webrtc'
 import * as Y from 'yjs'
+import {EntryDraft} from '../draft/EntryDraft'
 import {useSession} from './UseSession'
 
 export enum DraftsStatus {

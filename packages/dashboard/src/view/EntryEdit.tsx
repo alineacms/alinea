@@ -1,5 +1,5 @@
 import {docFromEntry, Entry, slugify} from '@alinea/core'
-import {EntryDraft, Fields, InputPath} from '@alinea/editor'
+import {EntryDraft, Fields, InputState} from '@alinea/editor'
 import {select} from '@alinea/input.select'
 import {SelectInput} from '@alinea/input.select/view'
 import {text} from '@alinea/input.text'
@@ -11,6 +11,7 @@ import {useQuery, useQueryClient} from 'react-query'
 import {useHistory} from 'react-router'
 import {Link} from 'react-router-dom'
 import * as Y from 'yjs'
+import {EntryProperty} from '../draft/EntryProperty'
 import {useDashboard} from '../hook/UseDashboard'
 import {useRoot} from '../hook/UseRoot'
 import {useSession} from '../hook/UseSession'
@@ -43,19 +44,21 @@ function EntryEditDraft({draft}: EntryEditDraftProps) {
         <EntryHeader />
         <div className={styles.root.draft()}>
           <EntryTitle />
-
-          <Suspense fallback={null}>
-            {type ? (
-              <Fields
-                // We key here currently because the tiptap/yjs combination fails to register
-                // changes when the fragment is changed while the editor is mounted.
-                key={draft.doc.guid}
-                type={type}
-              />
-            ) : (
-              'Channel not found'
-            )}
-          </Suspense>
+          <div className={styles.root.draft.fields()}>
+            <Suspense fallback={null}>
+              {type ? (
+                <Fields
+                  // We key here currently because the tiptap/yjs combination fails to register
+                  // changes when the fragment is changed while the editor is mounted.
+                  key={draft.doc.guid}
+                  type={type}
+                  state={EntryProperty.root}
+                />
+              ) : (
+                'Channel not found'
+              )}
+            </Suspense>
+          </div>
         </div>
       </div>
       {preview && <EntryPreview preview={preview} draft={draft} />}
@@ -134,11 +137,11 @@ export function NewEntry({parentId}: NewEntryProps) {
         ) : (
           <>
             <TextInput
-              path={new InputPath.StatePair(title, setTitle)}
+              state={new InputState.StatePair(title, setTitle)}
               field={text('Title')}
             />
             <SelectInput
-              path={new InputPath.StatePair(selectedType, setSelectedType)}
+              state={new InputState.StatePair(selectedType, setSelectedType)}
               field={select(
                 'Select type',
                 Object.fromEntries(
