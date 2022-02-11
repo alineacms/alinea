@@ -201,7 +201,7 @@ async function generate(options: Options) {
         },
         ...Object.fromEntries(
           Object.keys(config.workspaces).map(key => [
-            key,
+            `./${key}`,
             {browser: './${key}/client.js', default: './${key}/index.js'}
           ])
         )
