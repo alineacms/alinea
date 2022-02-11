@@ -6,12 +6,12 @@ import css from './LinkInput.module.scss'
 const styles = fromModule(css)
 
 export type LinkInputProps = {
-  path: InputState<string>
+  state: InputState<string>
   field: LinkField
 }
 
-export function LinkInput({path, field}: LinkInputProps) {
-  const [value, setValue] = useInput(path)
+export function LinkInput({state, field}: LinkInputProps) {
+  const [value, setValue] = useInput(state)
   const {optional, help} = field.options
   return (
     <div className={styles.root()}>

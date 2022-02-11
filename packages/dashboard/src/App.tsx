@@ -1,6 +1,5 @@
 import {Client} from '@alinea/client'
 import {Session, Workspaces} from '@alinea/core'
-import {CurrentDraftProvider} from '@alinea/editor'
 import {
   AppBar,
   FavIcon,
@@ -26,6 +25,7 @@ import {Route, useLocation} from 'react-router'
 import {HashRouter} from 'react-router-dom'
 import {DashboardOptions} from './Dashboard'
 import {nav} from './DashboardNav'
+import {CurrentDraftProvider} from './hook/UseCurrentDraft'
 import {DashboardProvider, useDashboard} from './hook/UseDashboard'
 import {useDraft} from './hook/UseDraft'
 import {DraftsProvider, DraftsStatus, useDrafts} from './hook/UseDrafts'

@@ -1,5 +1,4 @@
 import {EntryStatus} from '@alinea/core'
-import {useCurrentDraft} from '@alinea/editor'
 import {AppBar, Chip, HStack, px, Stack, Typo, useObservable} from '@alinea/ui'
 import {useState} from 'react'
 import {
@@ -12,6 +11,7 @@ import {
   MdRotateLeft
 } from 'react-icons/md'
 import {useQueryClient} from 'react-query'
+import {useCurrentDraft} from '../../hook/UseCurrentDraft'
 import {DraftsStatus, useDrafts} from '../../hook/UseDrafts'
 import {useWorkspace} from '../../hook/UseWorkspace'
 
