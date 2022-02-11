@@ -3,7 +3,7 @@
   border-radius: 12px;
   background: var(--lift);
   overflow: hidden;
-  box-shadow: 0 0 0 1px var(--outline), 0 2px 3.5px var(--shadow);
+  box-shadow: 0 2px 3.5px var(--shadow);
   //box-shadow: 0 0 0 1px var(--outline);
   // border: 1px solid var(--outline);
 }
@@ -30,6 +30,7 @@
 
 .content {
   flex-grow: 1;
+  padding: 0 10px 10px 10px;
 }
 
 .options {

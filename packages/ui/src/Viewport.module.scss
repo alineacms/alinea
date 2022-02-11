@@ -1,37 +1,38 @@
 @mixin dark-theme {
-  --background: hsl(0, 0%, 10%);
+  --background: rgb(29, 35, 42);
   --foreground: white;
   --foreground-faded: hsl(0, 3%, 83%);
-  --inner: hsl(230, 6%, 15%);
-  --highlight: hsl(230, 6%, 16%);
-  --lift: rgb(26, 26, 26);
-  --selected: hsl(230, 6%, 10%);
-  --outline: hsl(230, 6%, 18%);
-  --header: hsl(230, 5%, 25%);
-  --header-foreground: #c0c5c9;
-  --fields: hsl(0, 0%, 8%);
+  --inner: rgb(29, 35, 42);
+  --highlight: hsl(212, 18%, 16%);
+  --lift: hsl(212, 18%, 17%);
+  --selected: hsl(212, 18%, 22%);
+  --outline: hsl(212, 18%, 20%);
+  --header: hsl(212, 18%, 26%);
+  --header-foreground: hsl(207, 8%, 70%);
+  --fields: hsl(212, 18%, 11.5%);
+  --fields-foreground: #dee1e4;
   --fields-focus: #326db6;
-  --positive: 26, 26, 26;
+  --positive: 29, 35, 42;
   --negative: 236, 231, 231;
   --shadow: rgba(0, 0, 0, 0.5);
 }
 
 @mixin light-theme {
-  // --background: rgb(244, 244, 246); //hsl(0, 12%, 92%);
-  --background: rgb(236, 231, 231);
+  --background: hsl(0, 12%, 92%);
   --foreground: #0d1214;
   --foreground-faded: #1e282e;
   --inner: hsl(0, 12%, 92%);
   --highlight: hsl(0, 10%, 96%);
   --lift: hsl(0, 10%, 90%);
   --selected: hsl(0, 0%, 97%);
-  --outline: hsl(240, 15%, 88%);
-  --header: hsl(0, 12%, 98%);
-  --header-foreground: #756f6f;
-  --fields: hsl(0, 0%, 97%);
+  --outline: hsl(0, 12%, 88%);
+  --header: hsl(0deg 0% 61%);
+  --header-foreground: white;
+  --fields: #f6f4f4;
+  --fields-foreground: #756f6f;
   --fields-focus: #71a7ea;
   --positive: 236, 231, 231;
-  --negative: 26, 26, 26;
+  --negative: 29, 35, 42;
   --shadow: rgba(0, 0, 0, 0.08);
 }
 

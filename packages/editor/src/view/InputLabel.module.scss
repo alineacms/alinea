@@ -1,7 +1,6 @@
 .root {
   display: inline-block;
   vertical-align: top;
-  padding: 4px;
 
   &-inner {
     padding: 6px;
@@ -21,7 +20,7 @@
     display: inline-block;
     font-size: 12px;
     font-weight: bold;
-    color: var(--header-foreground);
+    color: var(--fields-foreground);
     // background: var(--highlight);
     border-radius: 6px;
     padding: 6px 0;

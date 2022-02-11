@@ -2,7 +2,7 @@ import {useInput} from '@alinea/editor'
 import {fromModule, HStack, IconButton, Typo} from '@alinea/ui'
 import {PropsWithChildren} from 'react'
 import {Helmet} from 'react-helmet'
-import {MdArrowBack} from 'react-icons/md'
+import {MdArrowBack, MdOutlineMoreHoriz} from 'react-icons/md'
 import {EntryDraft} from '../../draft/EntryDraft'
 import css from './EntryTitle.module.scss'
 
@@ -22,6 +22,7 @@ export function EntryTitle({children}: PropsWithChildren<{}>) {
             <span>{title}</span>
             {children}
           </Typo.H1>
+          <IconButton icon={MdOutlineMoreHoriz} />
         </HStack>
       </div>
     </>

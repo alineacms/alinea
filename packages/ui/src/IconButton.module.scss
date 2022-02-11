@@ -11,7 +11,7 @@
   border: none;
   color: inherit;
   background: transparent;
-  box-shadow: 0 0 0 1px rgba(var(--negative), 0.1);
+  background: rgba(var(--negative), 0.1);
   transition: 0.2s ease-out;
 
   &:hover {

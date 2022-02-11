@@ -16,7 +16,11 @@
   }
 
   & & {
-    padding: 8px;
+    padding: 8px 0;
+  }
+
+  & & &-inner {
+    padding: 0 15px;
   }
 
   &-header {

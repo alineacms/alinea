@@ -435,7 +435,7 @@
   border-radius: 12px;
   background: var(--lift);
   overflow: hidden;
-  box-shadow: 0 0 0 1px var(--outline), 0 2px 3.5px var(--shadow);
+  box-shadow: 0 2px 3.5px var(--shadow);
 }
 .alinea__Card-module-header {
   display: flex;
@@ -904,14 +904,14 @@
   --background: hsl(0, 0%, 10%);
   --foreground: white;
   --foreground-faded: hsl(0, 3%, 83%);
-  --inner: hsl(230, 6%, 15%);
+  --inner: hsl(0, 0%, 15%);
   --highlight: hsl(230, 6%, 16%);
   --lift: rgb(26, 26, 26);
   --selected: hsl(230, 6%, 10%);
   --outline: hsl(230, 6%, 18%);
   --header: hsl(230, 5%, 25%);
   --header-foreground: #c0c5c9;
-  --fields: hsl(0, 0%, 8%);
+  --fields: hsl(0, 0%, 6%);
   --fields-focus: #326db6;
   --positive:
     26,
@@ -944,7 +944,7 @@
     --outline: hsl(240, 15%, 88%);
     --header: hsl(0, 12%, 98%);
     --header-foreground: #756f6f;
-    --fields: hsl(0, 0%, 97%);
+    --fields: #f6f4f4;
     --fields-focus: #71a7ea;
     --positive:
       236,
@@ -968,7 +968,7 @@
   --outline: hsl(240, 15%, 88%);
   --header: hsl(0, 12%, 98%);
   --header-foreground: #756f6f;
-  --fields: hsl(0, 0%, 97%);
+  --fields: #f6f4f4;
   --fields-focus: #71a7ea;
   --positive:
     236,
@@ -984,14 +984,14 @@
   --background: hsl(0, 0%, 10%);
   --foreground: white;
   --foreground-faded: hsl(0, 3%, 83%);
-  --inner: hsl(230, 6%, 15%);
+  --inner: hsl(0, 0%, 15%);
   --highlight: hsl(230, 6%, 16%);
   --lift: rgb(26, 26, 26);
   --selected: hsl(230, 6%, 10%);
   --outline: hsl(230, 6%, 18%);
   --header: hsl(230, 5%, 25%);
   --header-foreground: #c0c5c9;
-  --fields: hsl(0, 0%, 8%);
+  --fields: hsl(0, 0%, 6%);
   --fields-focus: #326db6;
   --positive:
     26,
@@ -1059,7 +1059,7 @@
   resize: none;
   padding: 8px 15px;
   background: var(--fields);
-  border: 1px solid var(--outline);
+  border: 1px solid transparent;
   border-radius: 8px;
   line-height: 1.5;
 }
@@ -1080,7 +1080,7 @@
   resize: none;
   padding: 8px 15px;
   background: var(--fields);
-  border: 1px solid var(--outline);
+  border: 1px solid transparent;
   border-radius: 8px;
   resize: none;
   cursor: text;
@@ -1122,7 +1122,7 @@
   resize: none;
   padding: 8px 15px;
   background: var(--fields);
-  border: 1px solid var(--outline);
+  border: 1px solid transparent;
   border-radius: 8px;
   line-height: 1.5;
 }
