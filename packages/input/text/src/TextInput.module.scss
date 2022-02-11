@@ -7,10 +7,16 @@
     font: inherit;
     width: 100%;
     resize: none;
-    padding: 8px 18px 8px 18px;
+    padding: 8px 15px;
+    background: var(--fields);
+    border: 1px solid var(--outline);
+    border-radius: 8px;
+    line-height: 1.5;
 
     &:focus {
       outline: none;
+      background: var(--selected);
+      border-color: var(--fields-focus);
     }
   }
 }

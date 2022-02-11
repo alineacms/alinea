@@ -107,6 +107,11 @@
   opacity: 1;
 }
 /*# sourceMappingURL=ContentTree.css.map */
+/* @esbx/sass::C:/projects/alinea/packages/dashboard/src/view/entry/EntryTitle.module.scss */
+.alinea__EntryTitle-module-root {
+  padding-bottom: 25px;
+}
+/*# sourceMappingURL=EntryTitle.css.map */
 /* @esbx/sass::C:/projects/alinea/packages/dashboard/src/view/EntryEdit.module.scss */
 .alinea__EntryEdit-module-root {
   flex-grow: 1;
@@ -136,10 +141,7 @@
   flex-grow: 1;
 }
 .alinea__EntryEdit-module-root-draft-fields {
-  background: var(--fields);
-  border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 0 0 1px var(--outline), 0 2px 3.5px var(--shadow);
 }
 /*# sourceMappingURL=EntryEdit.css.map */
 /* @esbx/sass::C:/projects/alinea/packages/dashboard/src/view/media/MediaRow.module.scss */
@@ -300,31 +302,19 @@
 /* @esbx/sass::C:/projects/alinea/packages/editor/src/view/Fields.module.scss */
 .alinea__Fields-module-root {
   margin: 0;
-  overflow: hidden;
-}
-.alinea__Fields-module-root-inner {
-  margin-top: -1px;
-  margin-right: -1px;
 }
 /*# sourceMappingURL=Fields.css.map */
 /* @esbx/sass::C:/projects/alinea/packages/editor/src/view/InputLabel.module.scss */
 .alinea__InputLabel-module-root {
   display: inline-block;
   vertical-align: top;
-  border-top: 1px solid var(--outline);
-  border-right: 1px solid var(--outline);
+  padding: 4px;
 }
 .alinea__InputLabel-module-root-inner {
-  padding: 0 0;
-}
-.alinea__InputLabel-module-root.alinea__InputLabel-module-is-inline > .alinea__InputLabel-module-root-inner {
-  background: var(--highlight);
-}
-.alinea__InputLabel-module-root.alinea__InputLabel-module-is-focused > .alinea__InputLabel-module-root-inner {
-  background: var(--selected);
+  padding: 6px;
 }
 .alinea__InputLabel-module-root-header {
-  padding: 8px 12px 0 12px;
+  padding-top: 0;
 }
 .alinea__InputLabel-module-header-title {
   display: inline-block;
@@ -332,7 +322,7 @@
   font-weight: bold;
   color: var(--header-foreground);
   border-radius: 6px;
-  padding: 3px 6px;
+  padding: 6px 0;
 }
 .alinea__InputLabel-module-header-help {
   font-weight: normal;
@@ -453,6 +443,7 @@
   gap: 8px;
   padding: 8px 10px;
   background: var(--highlight);
+  background: var(--header);
   color: var(--header-foreground);
 }
 .alinea__Card-module-title {
@@ -910,25 +901,26 @@
 /*# sourceMappingURL=Typo.css.map */
 /* @esbx/sass::C:/projects/alinea/packages/ui/src/Viewport.module.scss */
 .alinea__Viewport-module-root {
-  --background: #11181c;
+  --background: hsl(0, 0%, 10%);
   --foreground: white;
-  --foreground-faded: rgb(223, 221, 221);
+  --foreground-faded: hsl(0, 3%, 83%);
   --inner: hsl(230, 6%, 15%);
-  --highlight: hsl(230, 6%, 18%);
-  --lift: hsl(230, 6%, 13%);
-  --selected: hsl(230, 5%, 20%);
+  --highlight: hsl(230, 6%, 16%);
+  --lift: rgb(26, 26, 26);
+  --selected: hsl(230, 6%, 10%);
   --outline: hsl(230, 6%, 18%);
-  --header: #11181c;
+  --header: hsl(230, 5%, 25%);
   --header-foreground: #c0c5c9;
-  --fields: hsl(230, 6%, 15%);
+  --fields: hsl(0, 0%, 8%);
+  --fields-focus: #326db6;
   --positive:
-    31,
-    32,
-    37;
+    26,
+    26,
+    26;
   --negative:
-    244,
-    244,
-    246;
+    236,
+    231,
+    231;
   --shadow: rgba(0, 0, 0, 0.5);
   display: flex;
   flex-direction: column;
@@ -946,21 +938,22 @@
     --foreground: #0d1214;
     --foreground-faded: #1e282e;
     --inner: hsl(0, 12%, 92%);
-    --highlight: hsl(0, 10%, 99%);
-    --lift: hsl(0, 10%, 96%);
-    --selected: hsl(0, 0%, 100%);
+    --highlight: hsl(0, 10%, 96%);
+    --lift: hsl(0, 10%, 90%);
+    --selected: hsl(0, 0%, 97%);
     --outline: hsl(240, 15%, 88%);
-    --header: #ede9e9;
+    --header: hsl(0, 12%, 98%);
     --header-foreground: #756f6f;
-    --fields: hsl(0, 9%, 98%);
+    --fields: hsl(0, 0%, 97%);
+    --fields-focus: #71a7ea;
     --positive:
       236,
       231,
       231;
     --negative:
-      31,
-      32,
-      37;
+      26,
+      26,
+      26;
     --shadow: rgba(0, 0, 0, 0.08);
   }
 }
@@ -969,43 +962,45 @@
   --foreground: #0d1214;
   --foreground-faded: #1e282e;
   --inner: hsl(0, 12%, 92%);
-  --highlight: hsl(0, 10%, 99%);
-  --lift: hsl(0, 10%, 96%);
-  --selected: hsl(0, 0%, 100%);
+  --highlight: hsl(0, 10%, 96%);
+  --lift: hsl(0, 10%, 90%);
+  --selected: hsl(0, 0%, 97%);
   --outline: hsl(240, 15%, 88%);
-  --header: #ede9e9;
+  --header: hsl(0, 12%, 98%);
   --header-foreground: #756f6f;
-  --fields: hsl(0, 9%, 98%);
+  --fields: hsl(0, 0%, 97%);
+  --fields-focus: #71a7ea;
   --positive:
     236,
     231,
     231;
   --negative:
-    31,
-    32,
-    37;
+    26,
+    26,
+    26;
   --shadow: rgba(0, 0, 0, 0.08);
 }
 .alinea__Viewport-module-root.alinea__Viewport-module-is-dark {
-  --background: #11181c;
+  --background: hsl(0, 0%, 10%);
   --foreground: white;
-  --foreground-faded: rgb(223, 221, 221);
+  --foreground-faded: hsl(0, 3%, 83%);
   --inner: hsl(230, 6%, 15%);
-  --highlight: hsl(230, 6%, 18%);
-  --lift: hsl(230, 6%, 13%);
-  --selected: hsl(230, 5%, 20%);
+  --highlight: hsl(230, 6%, 16%);
+  --lift: rgb(26, 26, 26);
+  --selected: hsl(230, 6%, 10%);
   --outline: hsl(230, 6%, 18%);
-  --header: #11181c;
+  --header: hsl(230, 5%, 25%);
   --header-foreground: #c0c5c9;
-  --fields: hsl(230, 6%, 15%);
+  --fields: hsl(0, 0%, 8%);
+  --fields-focus: #326db6;
   --positive:
-    31,
-    32,
-    37;
+    26,
+    26,
+    26;
   --negative:
-    244,
-    244,
-    246;
+    236,
+    231,
+    231;
   --shadow: rgba(0, 0, 0, 0.5);
 }
 /*# sourceMappingURL=Viewport.css.map */
@@ -1019,8 +1014,8 @@
   position: relative;
 }
 .alinea__ListInput-module-root-inner {
-  border-top: 1px solid var(--outline);
-  padding: 12px 18px 4px 18px;
+  border-radius: 12px;
+  padding: 11px;
   background: var(--inner);
 }
 .alinea__ListInput-module-root-title {
@@ -1031,10 +1026,6 @@
 }
 .alinea__ListInput-module-root .alinea__ListInput-module-root {
   padding: 8px;
-}
-.alinea__ListInput-module-root .alinea__ListInput-module-root .alinea__ListInput-module-root-inner {
-  border-radius: 6px;
-  border: 1px solid var(--outline);
 }
 .alinea__ListInput-module-root-header {
   padding: 8px;
@@ -1066,28 +1057,39 @@
   font: inherit;
   width: 100%;
   resize: none;
-  padding: 8px 18px 8px 18px;
-  transition: border 0.25s ease-out;
+  padding: 8px 15px;
+  background: var(--fields);
+  border: 1px solid var(--outline);
+  border-radius: 8px;
+  line-height: 1.5;
 }
 .alinea__PathInput-module-root-input:focus {
   outline: none;
+  background: var(--selected);
+  border-color: var(--fields-focus);
 }
 /*# sourceMappingURL=PathInput.css.map */
 /* @esbx/sass::C:/projects/alinea/packages/input/richtext/src/RichTextInput.module.scss */
 .alinea__RichTextInput-module-root-editor > * {
+  display: block;
   background: transparent;
   border: none;
   color: inherit;
   font: inherit;
   width: 100%;
   resize: none;
+  padding: 8px 15px;
+  background: var(--fields);
+  border: 1px solid var(--outline);
+  border-radius: 8px;
+  resize: none;
   cursor: text;
   line-height: 1.5;
-  padding: 8px 18px 8px 18px;
-  transition: border 0.25s ease-out;
 }
 .alinea__RichTextInput-module-root-editor > *:focus {
   outline: none;
+  background: var(--selected);
+  border-color: var(--fields-focus);
 }
 /*# sourceMappingURL=RichTextInput.css.map */
 /* @esbx/sass::C:/projects/alinea/packages/input/select/src/SelectInput.module.scss */
@@ -1118,10 +1120,16 @@
   font: inherit;
   width: 100%;
   resize: none;
-  padding: 8px 18px 8px 18px;
+  padding: 8px 15px;
+  background: var(--fields);
+  border: 1px solid var(--outline);
+  border-radius: 8px;
+  line-height: 1.5;
 }
 .alinea__TextInput-module-root-input:focus {
   outline: none;
+  background: var(--selected);
+  border-color: var(--fields-focus);
 }
 /*# sourceMappingURL=TextInput.css.map */
 /* @esbx/sass::C:/projects/alinea/packages/auth/passwordless/src/PasswordLessLogin.module.scss */

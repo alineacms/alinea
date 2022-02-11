@@ -15,11 +15,9 @@ export function Fields({state, type}: FieldsProps) {
   const fields = Array.from(type)
   return (
     <div className={styles.root()}>
-      <div className={styles.root.inner()}>
-        {fields.map(([name, field]) => {
-          return <Input key={name} state={state.child(name)} field={field} />
-        })}
-      </div>
+      {fields.map(([name, field]) => {
+        return <Input key={name} state={state.child(name)} field={field} />
+      })}
     </div>
   )
 }

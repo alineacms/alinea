@@ -1,23 +1,18 @@
 .root {
   display: inline-block;
   vertical-align: top;
-  border-top: 1px solid var(--outline);
-  border-right: 1px solid var(--outline);
+  padding: 4px;
 
   &-inner {
-    padding: 0 0;
+    padding: 6px;
   }
 
-  &.is-inline > &-inner {
-    background: var(--highlight);
-  }
-
-  &.is-focused > &-inner {
-    background: var(--selected);
-  }
+  /*&.is-focused > &-inner {
+    border-color: var(--outline);
+  }*/
 
   &-header {
-    padding: 8px 12px 0 12px;
+    padding-top: 0;
   }
 }
 
@@ -29,7 +24,7 @@
     color: var(--header-foreground);
     // background: var(--highlight);
     border-radius: 6px;
-    padding: 3px 6px;
+    padding: 6px 0;
   }
 
   &-help {

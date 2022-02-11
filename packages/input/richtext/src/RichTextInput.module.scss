@@ -1,18 +1,24 @@
 .root {
   &-editor > * {
+    display: block;
     background: transparent;
     border: none;
     color: inherit;
     font: inherit;
     width: 100%;
     resize: none;
+    padding: 8px 15px;
+    background: var(--fields);
+    border: 1px solid var(--outline);
+    border-radius: 8px;
+    resize: none;
     cursor: text;
     line-height: 1.5;
-    padding: 8px 18px 8px 18px;
-    transition: border 0.25s ease-out;
 
     &:focus {
       outline: none;
+      background: var(--selected);
+      border-color: var(--fields-focus);
     }
   }
 }

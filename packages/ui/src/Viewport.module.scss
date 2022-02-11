@@ -1,17 +1,18 @@
 @mixin dark-theme {
-  --background: hsl(202, 24%, 9%);
+  --background: hsl(0, 0%, 10%);
   --foreground: white;
   --foreground-faded: hsl(0, 3%, 83%);
   --inner: hsl(230, 6%, 15%);
-  --highlight: hsl(230, 6%, 18%);
-  --lift: hsl(202, 24%, 9%);
-  --selected: hsl(230, 5%, 20%);
+  --highlight: hsl(230, 6%, 16%);
+  --lift: rgb(26, 26, 26);
+  --selected: hsl(230, 6%, 10%);
   --outline: hsl(230, 6%, 18%);
-  --header: #11181c;
+  --header: hsl(230, 5%, 25%);
   --header-foreground: #c0c5c9;
-  --fields: hsl(230, 6%, 8%);
-  --positive: 31, 32, 37;
-  --negative: 244, 244, 246;
+  --fields: hsl(0, 0%, 8%);
+  --fields-focus: #326db6;
+  --positive: 26, 26, 26;
+  --negative: 236, 231, 231;
   --shadow: rgba(0, 0, 0, 0.5);
 }
 
@@ -21,15 +22,16 @@
   --foreground: #0d1214;
   --foreground-faded: #1e282e;
   --inner: hsl(0, 12%, 92%);
-  --highlight: hsl(0, 10%, 99%);
-  --lift: hsl(0, 10%, 96%);
-  --selected: hsl(0, 0%, 100%);
+  --highlight: hsl(0, 10%, 96%);
+  --lift: hsl(0, 10%, 90%);
+  --selected: hsl(0, 0%, 97%);
   --outline: hsl(240, 15%, 88%);
-  --header: #ede9e9;
+  --header: hsl(0, 12%, 98%);
   --header-foreground: #756f6f;
-  --fields: hsl(0, 9%, 96%);
+  --fields: hsl(0, 0%, 97%);
+  --fields-focus: #71a7ea;
   --positive: 236, 231, 231;
-  --negative: 31, 32, 37;
+  --negative: 26, 26, 26;
   --shadow: rgba(0, 0, 0, 0.08);
 }
 

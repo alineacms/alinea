@@ -2,8 +2,8 @@
   position: relative;
 
   &-inner {
-    border-top: 1px solid var(--outline);
-    padding: 12px 18px 4px 18px;
+    border-radius: 12px;
+    padding: 11px;
     background: var(--inner);
   }
 
@@ -17,11 +17,6 @@
 
   & & {
     padding: 8px;
-  }
-
-  & & &-inner {
-    border-radius: 6px;
-    border: 1px solid var(--outline);
   }
 
   &-header {
