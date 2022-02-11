@@ -1,9 +1,11 @@
 .root {
   position: relative;
   border-radius: 12px;
-  background: var(--background);
-  // box-shadow: 0 2px 3.5px var(--shadow);
+  background: var(--lift);
   overflow: hidden;
+  box-shadow: 0 0 0 1px var(--outline), 0 2px 3.5px var(--shadow);
+  //box-shadow: 0 0 0 1px var(--outline);
+  // border: 1px solid var(--outline);
 }
 
 .header {
@@ -12,6 +14,8 @@
   gap: 8px;
   padding: 8px 10px;
   background: var(--highlight);
+  // background: var(--header);
+  color: var(--header-foreground);
 }
 
 .title {
@@ -30,4 +34,7 @@
 
 .options {
   padding: 0;
+  display: flex;
+  gap: 8px;
+  align-items: center;
 }

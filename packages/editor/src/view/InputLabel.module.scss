@@ -1,8 +1,8 @@
 .root {
   display: inline-block;
   vertical-align: top;
-  transition: border 0.25s ease-out;
-  border-bottom: 1px solid transparent;
+  border-top: 1px solid var(--outline);
+  border-right: 1px solid var(--outline);
 
   &-inner {
     padding: 0 0;
@@ -19,10 +19,6 @@
   &-header {
     padding: 8px 12px 0 12px;
   }
-
-  &.is-empty {
-    border-color: rgba(var(--negative), 0.1);
-  }
 }
 
 .header {
@@ -30,8 +26,8 @@
     display: inline-block;
     font-size: 12px;
     font-weight: bold;
-    color: var(--foreground);
-    background: var(--highlight);
+    color: var(--header-foreground);
+    // background: var(--highlight);
     border-radius: 6px;
     padding: 3px 6px;
   }
@@ -50,7 +46,8 @@
   }
 
   &.is-focused &-title {
-    background: var(--accent);
-    color: var(--accent-foreground);
+    color: var(--foreground);
+    /*background: var(--accent);
+    color: var(--accent-foreground);*/
   }
 }

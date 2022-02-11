@@ -9,10 +9,9 @@
   font-size: 1em;
   flex-shrink: 0;
   border: none;
-  // border: 1px solid rgba(var(--negative), 0.1);
-  color: var(--foreground);
+  color: inherit;
   background: transparent;
-  // box-shadow: 0 0 0 2px rgba(var(--negative), 0.1);
+  box-shadow: 0 0 0 1px rgba(var(--negative), 0.1);
   transition: 0.2s ease-out;
 
   &:hover {

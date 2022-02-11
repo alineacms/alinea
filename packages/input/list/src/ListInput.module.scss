@@ -2,7 +2,8 @@
   position: relative;
 
   &-inner {
-    padding: 12px 18px 8px 18px;
+    border-top: 1px solid var(--outline);
+    padding: 12px 18px 4px 18px;
     background: var(--inner);
   }
 
@@ -20,6 +21,7 @@
 
   & & &-inner {
     border-radius: 6px;
+    border: 1px solid var(--outline);
   }
 
   &-header {
@@ -29,13 +31,19 @@
 
 .row {
   position: relative;
-  background: var(--background);
+  background: var(--lift);
 
   & + & {
-    // border-top: 1px solid var(--outline);
+    border-top: 1px solid var(--outline);
   }
 
   &.is-dragging {
     opacity: 0.5;
+  }
+
+  &.is-overlay {
+    border-radius: 12px;
+    box-shadow: 0 2px 30px var(--shadow);
+    overflow: hidden;
   }
 }

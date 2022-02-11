@@ -30,7 +30,13 @@ import {
   Ref,
   useState
 } from 'react'
-import {MdDelete, MdDragHandle, MdOutlineList} from 'react-icons/md'
+import {
+  MdClose,
+  MdDragHandle,
+  MdKeyboardArrowDown,
+  MdKeyboardArrowUp,
+  MdOutlineList
+} from 'react-icons/md'
 import {ListField} from './ListField'
 import css from './ListInput.module.scss'
 
@@ -41,21 +47,6 @@ export type ListRow = {
   $index: string
   type: string
 }
-
-type ListInputRowProps<T extends ListRow> = PropsWithChildren<
-  {
-    row: T
-    path: InputState<T>
-    field: ListField<T>
-    isDragging?: boolean
-    onDelete?: () => void
-    handle?: DraggableSyntheticListeners
-    // React ts types force our hand here since it's a generic component,
-    // and forwardRef does not forward generics.
-    // There's probably an issue for this on DefinitelyTyped.
-    rootRef?: Ref<HTMLDivElement>
-  } & HTMLAttributes<HTMLDivElement>
->
 
 function animateLayoutChanges(args: FirstArgument<AnimateLayoutChanges>) {
   const {isSorting, wasSorting} = args
@@ -85,6 +76,22 @@ function ListInputRowSortable<T extends ListRow>(props: ListInputRowProps<T>) {
   )
 }
 
+type ListInputRowProps<T extends ListRow> = PropsWithChildren<
+  {
+    row: T
+    path: InputState<T>
+    field: ListField<T>
+    isDragging?: boolean
+    onDelete?: () => void
+    handle?: DraggableSyntheticListeners
+    // React ts types force our hand here since it's a generic component,
+    // and forwardRef does not forward generics.
+    // There's probably an issue for this on DefinitelyTyped.
+    rootRef?: Ref<HTMLDivElement>
+    isDragOverlay?: boolean
+  } & HTMLAttributes<HTMLDivElement>
+>
+
 function ListInputRow<T extends ListRow>({
   row,
   field,
@@ -93,12 +100,17 @@ function ListInputRow<T extends ListRow>({
   handle,
   rootRef,
   isDragging,
+  isDragOverlay,
   ...rest
 }: ListInputRowProps<T>) {
   const type = field.options.schema.type(row.type)
   if (!type) return null
   return (
-    <div className={styles.row({dragging: isDragging})} ref={rootRef} {...rest}>
+    <div
+      className={styles.row({dragging: isDragging, overlay: isDragOverlay})}
+      ref={rootRef}
+      {...rest}
+    >
       <Card.Header>
         <Card.Options>
           <IconButton
@@ -111,7 +123,9 @@ function ListInputRow<T extends ListRow>({
           <TextLabel label={type.label} />
         </Card.Title>
         <Card.Options>
-          <IconButton icon={MdDelete} onClick={onDelete} />
+          <IconButton icon={MdKeyboardArrowUp} />
+          <IconButton icon={MdKeyboardArrowDown} />
+          <IconButton icon={MdClose} onClick={onDelete} />
         </Card.Options>
       </Card.Header>
       <Card.Content>
@@ -218,6 +232,7 @@ export function ListInput<T extends ListRow>({
                 row={dragging}
                 field={field}
                 path={state.child(dragging.id)}
+                isDragOverlay
               />
             ) : null}
           </DragOverlay>

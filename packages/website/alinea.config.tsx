@@ -12,7 +12,9 @@ const blocks = list('List test', {
     A: type('Type A', {
       field1: text('Field 1'),
       field2: text('Field 2', {width: 0.5}),
-      field3: text('Field 3', {width: 0.5})
+      field3: text('Field 3', {
+        width: 0.5
+      })
     }),
     Wysiwyg: type('Wysiwyg', {
       field1: richText('Field 2')
@@ -61,8 +63,8 @@ const webSchema = schema({
     {isContainer: true, contains: ['Doc']}
   ),
   Doc: type('Doc', {
-    title: text('Title', {multiline: true}),
-    path: path('Path'),
+    title: text('Title', {width: 0.5}),
+    path: path('Path', {width: 0.5}),
     body: richText('Body', {
       blocks: schema({
         CodeBlock: type('CodeBlock', {
@@ -85,7 +87,7 @@ export const config = createConfig({
       schema: webSchema,
       contentDir: './content/web',
       mediaDir: './public',
-      color: '#FFBD67',
+      color: '#6E57D0', //'#FFBD67',
       roots: {
         data: {
           icon: MdInsertDriveFile,

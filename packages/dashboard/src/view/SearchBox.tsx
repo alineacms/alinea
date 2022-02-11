@@ -3,6 +3,7 @@ import {Outcome} from '@alinea/core/Outcome'
 import {Search} from '@alinea/core/Search'
 import {useField} from '@alinea/editor'
 import {text} from '@alinea/input.text'
+import {px, Typo} from '@alinea/ui'
 import {MdSearch} from 'react-icons/md'
 import {useQuery} from 'react-query'
 import {useSession} from '../hook/UseSession'
@@ -48,6 +49,21 @@ export function SearchBox() {
     {keepPreviousData: true}
   )
   return (
+    <Typo.Monospace
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        width: '100%',
+        height: px(28),
+        background: 'var(--highlight)',
+        padding: `${px(6)} ${px(15)} ${px(6)} ${px(12)}`,
+        borderRadius: px(8)
+      }}
+    >
+      <MdSearch size={15} />
+    </Typo.Monospace>
+  )
+  /*return (
     <>
       <terms.input list="list" />
       <datalist id="list">
@@ -56,5 +72,5 @@ export function SearchBox() {
         })}
       </datalist>
     </>
-  )
+  )*/
 }

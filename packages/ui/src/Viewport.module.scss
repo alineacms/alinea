@@ -1,28 +1,33 @@
 @mixin dark-theme {
-  --background: #1f2025; // #131924; // #1e1e1e; //#11181c;
-  //--background: #121923;
-  //--background: #050606;
+  --background: hsl(202, 24%, 9%);
   --foreground: white;
-  --foreground-faded: rgb(223, 221, 221);
+  --foreground-faded: hsl(0, 3%, 83%);
   --inner: hsl(230, 6%, 15%);
-  --highlight: hsl(230, 6%, 20%);
-  --selected: hsl(230, 5%, 22%);
-  --outline: #303136;
+  --highlight: hsl(230, 6%, 18%);
+  --lift: hsl(202, 24%, 9%);
+  --selected: hsl(230, 5%, 20%);
+  --outline: hsl(230, 6%, 18%);
+  --header: #11181c;
+  --header-foreground: #c0c5c9;
+  --fields: hsl(230, 6%, 8%);
   --positive: 31, 32, 37;
-  --negative: 236, 231, 231;
-  --shadow: rgba(0, 0, 0, 0.3);
+  --negative: 244, 244, 246;
+  --shadow: rgba(0, 0, 0, 0.5);
 }
 
 @mixin light-theme {
-  --background: hsl(0, 12%, 92%); // #F9F8F9;
-  // --background: hsl(0, 12%, 97%); // #F9F8F9;
+  // --background: rgb(244, 244, 246); //hsl(0, 12%, 92%);
+  --background: rgb(236, 231, 231);
   --foreground: #0d1214;
   --foreground-faded: #1e282e;
-  --inner: hsl(0, 10%, 94%);
-  --highlight: hsl(0, 10%, 98%);
-  --selected: hsl(0, 0%, 100%); // #fcfafa; //rgb(246, 249, 250); //#f5f4f0;
-  // --outline: rgb(216, 213, 213); // #eceff1; //rgb(246, 249, 250);
-  --outline: hsl(0, 4%, 89%); // #eceff1; //rgb(246, 249, 250);
+  --inner: hsl(0, 12%, 92%);
+  --highlight: hsl(0, 10%, 99%);
+  --lift: hsl(0, 10%, 96%);
+  --selected: hsl(0, 0%, 100%);
+  --outline: hsl(240, 15%, 88%);
+  --header: #ede9e9;
+  --header-foreground: #756f6f;
+  --fields: hsl(0, 9%, 98%);
   --positive: 236, 231, 231;
   --negative: 31, 32, 37;
   --shadow: rgba(0, 0, 0, 0.08);

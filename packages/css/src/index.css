@@ -132,8 +132,14 @@
   background: rgba(var(--negative), 0.9);
 }
 .alinea__EntryEdit-module-root-draft {
-  padding: 35px;
+  padding: 35px 45px;
   flex-grow: 1;
+}
+.alinea__EntryEdit-module-root-draft-fields {
+  background: var(--fields);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 0 0 1px var(--outline), 0 2px 3.5px var(--shadow);
 }
 /*# sourceMappingURL=EntryEdit.css.map */
 /* @esbx/sass::C:/projects/alinea/packages/dashboard/src/view/media/MediaRow.module.scss */
@@ -293,27 +299,54 @@
 /*# sourceMappingURL=Toolbar.css.map */
 /* @esbx/sass::C:/projects/alinea/packages/editor/src/view/Fields.module.scss */
 .alinea__Fields-module-root {
-  margin: 0 -10px;
+  margin: 0;
+  overflow: hidden;
+}
+.alinea__Fields-module-root-inner {
+  margin-top: -1px;
+  margin-right: -1px;
 }
 /*# sourceMappingURL=Fields.css.map */
-/* @esbx/sass::C:/projects/alinea/packages/editor/src/view/Input.module.scss */
-.alinea__Input-module-root {
-  padding: 6px 10px;
-}
-/*# sourceMappingURL=Input.css.map */
 /* @esbx/sass::C:/projects/alinea/packages/editor/src/view/InputLabel.module.scss */
 .alinea__InputLabel-module-root {
-  display: block;
+  display: inline-block;
+  vertical-align: top;
+  border-top: 1px solid var(--outline);
+  border-right: 1px solid var(--outline);
+}
+.alinea__InputLabel-module-root-inner {
+  padding: 0 0;
+}
+.alinea__InputLabel-module-root.alinea__InputLabel-module-is-inline > .alinea__InputLabel-module-root-inner {
+  background: var(--highlight);
+}
+.alinea__InputLabel-module-root.alinea__InputLabel-module-is-focused > .alinea__InputLabel-module-root-inner {
+  background: var(--selected);
+}
+.alinea__InputLabel-module-root-header {
+  padding: 8px 12px 0 12px;
 }
 .alinea__InputLabel-module-header-title {
-  font-size: 13px;
-  padding-bottom: 4px;
+  display: inline-block;
+  font-size: 12px;
   font-weight: bold;
-  color: var(--foreground-faded);
+  color: var(--header-foreground);
+  border-radius: 6px;
+  padding: 3px 6px;
 }
-.alinea__InputLabel-module-header-title-help {
+.alinea__InputLabel-module-header-help {
   font-weight: normal;
-  padding-bottom: 4px;
+  padding: 4px;
+  color: var(--foreground-faded);
+  font-style: italic;
+  font-size: 12px;
+}
+.alinea__InputLabel-module-header.alinea__InputLabel-module-is-large .alinea__InputLabel-module-header-title {
+  font-size: 20px;
+  padding-bottom: 12px;
+}
+.alinea__InputLabel-module-header.alinea__InputLabel-module-is-focused .alinea__InputLabel-module-header-title {
+  color: var(--foreground);
 }
 /*# sourceMappingURL=InputLabel.css.map */
 /* @esbx/sass::C:/projects/alinea/packages/ui/src/AppBar.module.scss */
@@ -408,16 +441,37 @@
 /*# sourceMappingURL=Button.css.map */
 /* @esbx/sass::C:/projects/alinea/packages/ui/src/Card.module.scss */
 .alinea__Card-module-root {
-  background: var(--selected);
-  border-radius: 20px;
-  margin: 0 -8px;
-  padding: 8px;
+  position: relative;
+  border-radius: 12px;
+  background: var(--lift);
+  overflow: hidden;
+  box-shadow: 0 0 0 1px var(--outline), 0 2px 3.5px var(--shadow);
+}
+.alinea__Card-module-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: var(--highlight);
+  color: var(--header-foreground);
+}
+.alinea__Card-module-title {
+  font-size: 12px;
+  font-weight: bold;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  flex-grow: 1;
+  min-width: 0;
 }
 .alinea__Card-module-content {
   flex-grow: 1;
 }
 .alinea__Card-module-options {
   padding: 0;
+  display: flex;
+  gap: 8px;
+  align-items: center;
 }
 /*# sourceMappingURL=Card.css.map */
 /* @esbx/sass::C:/projects/alinea/packages/ui/src/Chip.module.scss */
@@ -450,10 +504,10 @@
   flex-wrap: wrap;
   gap: 10px;
   width: 100%;
+  justify-content: center;
 }
 .alinea__Create-module-button {
   display: inline-block;
-  font-size: 13.5px;
   font-weight: bold;
   padding: 3px 0;
   background: transparent;
@@ -467,6 +521,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   overflow: hidden;
+  font-size: 12px;
 }
 .alinea__Create-module-button:hover {
   color: var(--accent-foreground);
@@ -528,12 +583,15 @@
   font-size: 1em;
   flex-shrink: 0;
   border: none;
-  color: var(--foreground);
+  color: inherit;
   background: transparent;
+  box-shadow: 0 0 0 1px rgba(var(--negative), 0.1);
+  transition: 0.2s ease-out;
 }
 .alinea__IconButton-module-root:hover {
-  background: var(--foreground);
-  color: var(--background);
+  color: var(--accent-foreground);
+  background: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent);
 }
 /*# sourceMappingURL=IconButton.css.map */
 /* @esbx/sass::C:/projects/alinea/packages/ui/src/Loader.module.scss */
@@ -852,25 +910,30 @@
 /*# sourceMappingURL=Typo.css.map */
 /* @esbx/sass::C:/projects/alinea/packages/ui/src/Viewport.module.scss */
 .alinea__Viewport-module-root {
-  --background: #1f2025;
+  --background: #11181c;
   --foreground: white;
   --foreground-faded: rgb(223, 221, 221);
-  --highlight: #303136;
-  --selected: #393a3f;
-  --outline: #303136;
+  --inner: hsl(230, 6%, 15%);
+  --highlight: hsl(230, 6%, 18%);
+  --lift: hsl(230, 6%, 13%);
+  --selected: hsl(230, 5%, 20%);
+  --outline: hsl(230, 6%, 18%);
+  --header: #11181c;
+  --header-foreground: #c0c5c9;
+  --fields: hsl(230, 6%, 15%);
   --positive:
     31,
     32,
     37;
   --negative:
-    255,
-    255,
-    255;
-  --shadow: rgba(0, 0, 0, 0.95);
+    244,
+    244,
+    246;
+  --shadow: rgba(0, 0, 0, 0.5);
   display: flex;
   flex-direction: column;
   height: 100vh;
-  color: var(--foreground);
+  color: var(--foreground-faded);
   font-size: 14px;
   overflow: hidden;
   background: var(--background);
@@ -882,9 +945,14 @@
     --background: rgb(236, 231, 231);
     --foreground: #0d1214;
     --foreground-faded: #1e282e;
-    --highlight: #f6f4f4;
-    --selected: #fcfafa;
-    --outline: rgb(216, 213, 213);
+    --inner: hsl(0, 12%, 92%);
+    --highlight: hsl(0, 10%, 99%);
+    --lift: hsl(0, 10%, 96%);
+    --selected: hsl(0, 0%, 100%);
+    --outline: hsl(240, 15%, 88%);
+    --header: #ede9e9;
+    --header-foreground: #756f6f;
+    --fields: hsl(0, 9%, 98%);
     --positive:
       236,
       231,
@@ -893,16 +961,21 @@
       31,
       32,
       37;
-    --shadow: rgba(0, 0, 0, 0.15);
+    --shadow: rgba(0, 0, 0, 0.08);
   }
 }
 .alinea__Viewport-module-root.alinea__Viewport-module-is-light {
   --background: rgb(236, 231, 231);
   --foreground: #0d1214;
   --foreground-faded: #1e282e;
-  --highlight: #f6f4f4;
-  --selected: #fcfafa;
-  --outline: rgb(216, 213, 213);
+  --inner: hsl(0, 12%, 92%);
+  --highlight: hsl(0, 10%, 99%);
+  --lift: hsl(0, 10%, 96%);
+  --selected: hsl(0, 0%, 100%);
+  --outline: hsl(240, 15%, 88%);
+  --header: #ede9e9;
+  --header-foreground: #756f6f;
+  --fields: hsl(0, 9%, 98%);
   --positive:
     236,
     231,
@@ -911,24 +984,29 @@
     31,
     32,
     37;
-  --shadow: rgba(0, 0, 0, 0.15);
+  --shadow: rgba(0, 0, 0, 0.08);
 }
 .alinea__Viewport-module-root.alinea__Viewport-module-is-dark {
-  --background: #1f2025;
+  --background: #11181c;
   --foreground: white;
   --foreground-faded: rgb(223, 221, 221);
-  --highlight: #303136;
-  --selected: #393a3f;
-  --outline: #303136;
+  --inner: hsl(230, 6%, 15%);
+  --highlight: hsl(230, 6%, 18%);
+  --lift: hsl(230, 6%, 13%);
+  --selected: hsl(230, 5%, 20%);
+  --outline: hsl(230, 6%, 18%);
+  --header: #11181c;
+  --header-foreground: #c0c5c9;
+  --fields: hsl(230, 6%, 15%);
   --positive:
     31,
     32,
     37;
   --negative:
-    255,
-    255,
-    255;
-  --shadow: rgba(0, 0, 0, 0.95);
+    244,
+    244,
+    246;
+  --shadow: rgba(0, 0, 0, 0.5);
 }
 /*# sourceMappingURL=Viewport.css.map */
 /* @esbx/sass::C:/projects/alinea/packages/input/link/src/LinkInput.module.scss */
@@ -939,62 +1017,76 @@
 /* @esbx/sass::C:/projects/alinea/packages/input/list/src/ListInput.module.scss */
 .alinea__ListInput-module-root {
   position: relative;
-  margin: 0 -8px;
-  padding: 8px 0;
+}
+.alinea__ListInput-module-root-inner {
+  border-top: 1px solid var(--outline);
+  padding: 12px 18px 4px 18px;
+  background: var(--inner);
+}
+.alinea__ListInput-module-root-title {
+  padding-bottom: 12px;
+}
+.alinea__ListInput-module-root-rows {
+  padding-bottom: 4px;
+}
+.alinea__ListInput-module-root .alinea__ListInput-module-root {
+  padding: 8px;
+}
+.alinea__ListInput-module-root .alinea__ListInput-module-root .alinea__ListInput-module-root-inner {
+  border-radius: 6px;
+  border: 1px solid var(--outline);
+}
+.alinea__ListInput-module-root-header {
+  padding: 8px;
 }
 .alinea__ListInput-module-row {
   position: relative;
-  z-index: 0;
-  padding: 8px;
+  background: var(--lift);
 }
-.alinea__ListInput-module-row:before {
-  content: "";
-  position: absolute;
-  background: var(--highlight);
-  border-radius: 20px;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: -1;
+.alinea__ListInput-module-row + .alinea__ListInput-module-row {
+  border-top: 1px solid var(--outline);
 }
 .alinea__ListInput-module-row.alinea__ListInput-module-is-dragging {
   opacity: 0.5;
+}
+.alinea__ListInput-module-row.alinea__ListInput-module-is-overlay {
+  border-radius: 12px;
+  box-shadow: 0 2px 30px var(--shadow);
+  overflow: hidden;
 }
 /*# sourceMappingURL=ListInput.css.map */
 /* @esbx/sass::C:/projects/alinea/packages/input/number/src/NumberInput.module.scss */
 /*# sourceMappingURL=NumberInput.css.map */
 /* @esbx/sass::C:/projects/alinea/packages/input/path/src/PathInput.module.scss */
-.alinea__PathInput-module-root {
-  border-bottom: 1px solid var(--outline);
-}
 .alinea__PathInput-module-root-input {
+  display: block;
   background: transparent;
   border: none;
   color: inherit;
   font: inherit;
   width: 100%;
-  padding: 4px 0;
   resize: none;
+  padding: 8px 18px 8px 18px;
+  transition: border 0.25s ease-out;
 }
 .alinea__PathInput-module-root-input:focus {
-  border-radius: 4px;
   outline: none;
-  box-shadow: rgba(222, 236, 238, 0.4) 0 0 0 0.2em;
 }
 /*# sourceMappingURL=PathInput.css.map */
 /* @esbx/sass::C:/projects/alinea/packages/input/richtext/src/RichTextInput.module.scss */
-.alinea__RichTextInput-module-root {
-  border-bottom: 1px solid var(--outline);
-}
 .alinea__RichTextInput-module-root-editor > * {
   background: transparent;
   border: none;
   color: inherit;
   font: inherit;
   width: 100%;
-  padding: 4px 0;
   resize: none;
+  cursor: text;
+  line-height: 1.5;
+  padding: 8px 18px 8px 18px;
+  transition: border 0.25s ease-out;
+}
+.alinea__RichTextInput-module-root-editor > *:focus {
   outline: none;
 }
 /*# sourceMappingURL=RichTextInput.css.map */
@@ -1018,22 +1110,18 @@
 }
 /*# sourceMappingURL=SelectInput.css.map */
 /* @esbx/sass::C:/projects/alinea/packages/input/text/src/TextInput.module.scss */
-.alinea__TextInput-module-root {
-  border-bottom: 1px solid var(--outline);
-}
 .alinea__TextInput-module-root-input {
+  display: block;
   background: transparent;
   border: none;
   color: inherit;
   font: inherit;
   width: 100%;
-  padding: 4px 0;
   resize: none;
+  padding: 8px 18px 8px 18px;
 }
 .alinea__TextInput-module-root-input:focus {
-  border-radius: 4px;
   outline: none;
-  box-shadow: rgba(222, 236, 238, 0.4) 0 0 0 0.2em;
 }
 /*# sourceMappingURL=TextInput.css.map */
 /* @esbx/sass::C:/projects/alinea/packages/auth/passwordless/src/PasswordLessLogin.module.scss */

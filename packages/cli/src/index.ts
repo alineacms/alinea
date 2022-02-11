@@ -191,15 +191,22 @@ async function generate(options: Options) {
   )
   await fs.writeFile(
     path.join(outdir, 'package.json'),
-    pkg.replace(
-      `    "$WORKSPACES": {}`,
-      Object.keys(config.workspaces)
-        .map(
-          key =>
-            `    "./${key}": {"browser": "./${key}/client.js", "default": "./${key}/index.js"}`
+    JSON.stringify({
+      type: 'module',
+      sideEffects: false,
+      exports: {
+        '.': {
+          browser: './client.js',
+          default: './index.js'
+        },
+        ...Object.fromEntries(
+          Object.keys(config.workspaces).map(key => [
+            key,
+            {browser: './${key}/client.js', default: './${key}/index.js'}
+          ])
         )
-        .join(',\n')
-    )
+      }
+    })
   )
   for (const [key, workspace] of Object.entries(config.workspaces)) {
     await fs.mkdir(path.join(outdir, key), {recursive: true})

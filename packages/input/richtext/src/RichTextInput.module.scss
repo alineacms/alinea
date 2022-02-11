@@ -1,11 +1,4 @@
 .root {
-  &-editor {
-    border-bottom: 1px solid transparent;
-    &.is-empty {
-      border-color: rgba(var(--negative), 0.1);
-    }
-  }
-
   &-editor > * {
     background: transparent;
     border: none;

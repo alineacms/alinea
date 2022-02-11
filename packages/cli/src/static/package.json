@@ -5,7 +5,6 @@
     ".": {
       "browser": "./client.js",
       "default": "./index.js"
-    },
-    "$WORKSPACES": {}
+    }
   }
 }
