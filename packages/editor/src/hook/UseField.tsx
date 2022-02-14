@@ -1,3 +1,4 @@
+import {createError} from '@alinea/core'
 import {ROOT_KEY} from '@alinea/core/Doc'
 import {Field} from '@alinea/core/Field'
 import {Value} from '@alinea/core/Value'
@@ -47,6 +48,7 @@ export function useField<T>(field: Field<T>, initialValue?: T) {
     const doc = new Y.Doc()
     const root = doc.getMap(ROOT_KEY)
     root.set(FIELD_KEY, initialValue)
+    if (!field.type) throw createError('Cannot use field without type')
     const state = new FieldState<T>(field.type, root, FIELD_KEY)
     const Input = field.view!
     function input() {

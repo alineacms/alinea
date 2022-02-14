@@ -12,7 +12,7 @@
   }
 
   &-background {
-    background: rgba(var(--positive), 0.6);
+    background: rgba(var(--positive), 0.8);
     backdrop-filter: blur(5px);
     position: absolute;
     top: 0;
@@ -28,10 +28,11 @@
   &-inner {
     position: relative;
     margin: auto;
-    box-shadow: 0 20px 60px var(--shadow);
+    //box-shadow: 0 10px 150px 20px var(--shadow);
     padding: 35px;
-    background: var(--background);
+    background: var(--lift);
     border-radius: 6px;
     min-width: 600px;
+    box-shadow: 0 2px 3.5px var(--shadow);
   }
 }

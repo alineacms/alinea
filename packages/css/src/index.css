@@ -143,6 +143,9 @@
 .alinea__EntryEdit-module-root-draft-fields {
   overflow: hidden;
 }
+.alinea__EntryEdit-module-new-header {
+  padding-bottom: 20px;
+}
 /*# sourceMappingURL=EntryEdit.css.map */
 /* @esbx/sass::C:/projects/alinea/packages/dashboard/src/view/media/MediaRow.module.scss */
 .alinea__MediaRow-module-root {
@@ -308,7 +311,6 @@
 .alinea__InputLabel-module-root {
   display: inline-block;
   vertical-align: top;
-  padding: 4px;
 }
 .alinea__InputLabel-module-root-inner {
   padding: 6px;
@@ -320,7 +322,7 @@
   display: inline-block;
   font-size: 12px;
   font-weight: bold;
-  color: var(--header-foreground);
+  color: var(--fields-foreground);
   border-radius: 6px;
   padding: 6px 0;
 }
@@ -457,6 +459,7 @@
 }
 .alinea__Card-module-content {
   flex-grow: 1;
+  padding: 0 10px 10px 10px;
 }
 .alinea__Card-module-options {
   padding: 0;
@@ -576,7 +579,7 @@
   border: none;
   color: inherit;
   background: transparent;
-  box-shadow: 0 0 0 1px rgba(var(--negative), 0.1);
+  background: rgba(var(--negative), 0.1);
   transition: 0.2s ease-out;
 }
 .alinea__IconButton-module-root:hover {
@@ -651,7 +654,7 @@
   display: flex;
 }
 .alinea__Modal-module-root-background {
-  background: rgba(var(--positive), 0.6);
+  background: rgba(var(--positive), 0.8);
   backdrop-filter: blur(5px);
   position: absolute;
   top: 0;
@@ -665,11 +668,11 @@
 .alinea__Modal-module-root-inner {
   position: relative;
   margin: auto;
-  box-shadow: 0 20px 60px var(--shadow);
   padding: 35px;
-  background: var(--background);
+  background: var(--lift);
   border-radius: 6px;
   min-width: 600px;
+  box-shadow: 0 2px 3.5px var(--shadow);
 }
 /*# sourceMappingURL=Modal.css.map */
 /* @esbx/sass::C:/projects/alinea/packages/ui/src/Pane.module.scss */
@@ -901,22 +904,23 @@
 /*# sourceMappingURL=Typo.css.map */
 /* @esbx/sass::C:/projects/alinea/packages/ui/src/Viewport.module.scss */
 .alinea__Viewport-module-root {
-  --background: hsl(0, 0%, 10%);
+  --background: rgb(29, 35, 42);
   --foreground: white;
   --foreground-faded: hsl(0, 3%, 83%);
-  --inner: hsl(0, 0%, 15%);
-  --highlight: hsl(230, 6%, 16%);
-  --lift: rgb(26, 26, 26);
-  --selected: hsl(230, 6%, 10%);
-  --outline: hsl(230, 6%, 18%);
-  --header: hsl(230, 5%, 25%);
-  --header-foreground: #c0c5c9;
-  --fields: hsl(0, 0%, 6%);
+  --inner: rgb(29, 35, 42);
+  --highlight: hsl(212, 18%, 16%);
+  --lift: hsl(212, 18%, 17%);
+  --selected: hsl(212, 18%, 22%);
+  --outline: hsl(212, 18%, 20%);
+  --header: hsl(212, 18%, 26%);
+  --header-foreground: hsl(207, 8%, 70%);
+  --fields: hsl(212, 18%, 11.5%);
+  --fields-foreground: #dee1e4;
   --fields-focus: #326db6;
   --positive:
-    26,
-    26,
-    26;
+    29,
+    35,
+    42;
   --negative:
     236,
     231,
@@ -934,69 +938,72 @@
 }
 @media (prefers-color-scheme: light) {
   .alinea__Viewport-module-root {
-    --background: rgb(236, 231, 231);
+    --background: hsl(0, 12%, 92%);
     --foreground: #0d1214;
     --foreground-faded: #1e282e;
     --inner: hsl(0, 12%, 92%);
     --highlight: hsl(0, 10%, 96%);
     --lift: hsl(0, 10%, 90%);
     --selected: hsl(0, 0%, 97%);
-    --outline: hsl(240, 15%, 88%);
-    --header: hsl(0, 12%, 98%);
-    --header-foreground: #756f6f;
+    --outline: hsl(0, 12%, 88%);
+    --header: hsl(0deg 0% 61%);
+    --header-foreground: white;
     --fields: #f6f4f4;
+    --fields-foreground: #756f6f;
     --fields-focus: #71a7ea;
     --positive:
       236,
       231,
       231;
     --negative:
-      26,
-      26,
-      26;
+      29,
+      35,
+      42;
     --shadow: rgba(0, 0, 0, 0.08);
   }
 }
 .alinea__Viewport-module-root.alinea__Viewport-module-is-light {
-  --background: rgb(236, 231, 231);
+  --background: hsl(0, 12%, 92%);
   --foreground: #0d1214;
   --foreground-faded: #1e282e;
   --inner: hsl(0, 12%, 92%);
   --highlight: hsl(0, 10%, 96%);
   --lift: hsl(0, 10%, 90%);
   --selected: hsl(0, 0%, 97%);
-  --outline: hsl(240, 15%, 88%);
-  --header: hsl(0, 12%, 98%);
-  --header-foreground: #756f6f;
+  --outline: hsl(0, 12%, 88%);
+  --header: hsl(0deg 0% 61%);
+  --header-foreground: white;
   --fields: #f6f4f4;
+  --fields-foreground: #756f6f;
   --fields-focus: #71a7ea;
   --positive:
     236,
     231,
     231;
   --negative:
-    26,
-    26,
-    26;
+    29,
+    35,
+    42;
   --shadow: rgba(0, 0, 0, 0.08);
 }
 .alinea__Viewport-module-root.alinea__Viewport-module-is-dark {
-  --background: hsl(0, 0%, 10%);
+  --background: rgb(29, 35, 42);
   --foreground: white;
   --foreground-faded: hsl(0, 3%, 83%);
-  --inner: hsl(0, 0%, 15%);
-  --highlight: hsl(230, 6%, 16%);
-  --lift: rgb(26, 26, 26);
-  --selected: hsl(230, 6%, 10%);
-  --outline: hsl(230, 6%, 18%);
-  --header: hsl(230, 5%, 25%);
-  --header-foreground: #c0c5c9;
-  --fields: hsl(0, 0%, 6%);
+  --inner: rgb(29, 35, 42);
+  --highlight: hsl(212, 18%, 16%);
+  --lift: hsl(212, 18%, 17%);
+  --selected: hsl(212, 18%, 22%);
+  --outline: hsl(212, 18%, 20%);
+  --header: hsl(212, 18%, 26%);
+  --header-foreground: hsl(207, 8%, 70%);
+  --fields: hsl(212, 18%, 11.5%);
+  --fields-foreground: #dee1e4;
   --fields-focus: #326db6;
   --positive:
-    26,
-    26,
-    26;
+    29,
+    35,
+    42;
   --negative:
     236,
     231,
@@ -1004,6 +1011,28 @@
   --shadow: rgba(0, 0, 0, 0.5);
 }
 /*# sourceMappingURL=Viewport.css.map */
+/* @esbx/sass::C:/projects/alinea/packages/input/code/src/CodeInput.module.scss */
+.alinea__CodeInput-module-root-input {
+  display: block;
+  background: transparent;
+  border: none;
+  color: inherit;
+  font: inherit;
+  width: 100%;
+  resize: none;
+  padding: 8px 15px;
+  background: var(--fields);
+  border: 1px solid transparent;
+  border-radius: 8px;
+  line-height: 1.5;
+  font-family: "JetBrains Mono", monospace;
+}
+.alinea__CodeInput-module-root-input:focus {
+  outline: none;
+  background: var(--selected);
+  border-color: var(--fields-focus);
+}
+/*# sourceMappingURL=CodeInput.css.map */
 /* @esbx/sass::C:/projects/alinea/packages/input/link/src/LinkInput.module.scss */
 .alinea__LinkInput-module-root {
   position: relative;
@@ -1025,7 +1054,10 @@
   padding-bottom: 4px;
 }
 .alinea__ListInput-module-root .alinea__ListInput-module-root {
-  padding: 8px;
+  padding: 8px 0;
+}
+.alinea__ListInput-module-root .alinea__ListInput-module-root .alinea__ListInput-module-root-inner {
+  padding: 0 15px;
 }
 .alinea__ListInput-module-root-header {
   padding: 8px;

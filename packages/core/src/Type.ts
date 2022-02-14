@@ -49,9 +49,11 @@ export class Type<T = {}> {
           // Todo: this should probably not be part of the schema but local state
           ['$status', Value.Scalar as Value]
         ].concat(
-          Array.from(this).map(([key, field]) => {
-            return [key, field.type]
-          })
+          Array.from(this)
+            .filter(([, field]) => field.type)
+            .map(([key, field]) => {
+              return [key, field.type!]
+            })
         )
       )
     ) as unknown as RecordValue<{}>

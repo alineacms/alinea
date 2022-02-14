@@ -1,0 +1,23 @@
+.root {
+  &-input {
+    display: block;
+    background: transparent;
+    border: none;
+    color: inherit;
+    font: inherit;
+    width: 100%;
+    resize: none;
+    padding: 8px 15px;
+    background: var(--fields);
+    border: 1px solid transparent;
+    border-radius: 8px;
+    line-height: 1.5;
+    font-family: 'JetBrains Mono', monospace;
+
+    &:focus {
+      outline: none;
+      background: var(--selected);
+      border-color: var(--fields-focus);
+    }
+  }
+}

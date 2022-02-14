@@ -1,9 +1,11 @@
 import {createConfig, schema, type, workspace} from '@alinea/core'
 import {BrowserPreview, media} from '@alinea/dashboard'
+import {code} from '@alinea/input.code'
 import {link} from '@alinea/input.link'
 import {list} from '@alinea/input.list'
 import {path} from '@alinea/input.path'
 import {richText} from '@alinea/input.richtext'
+import {tabs} from '@alinea/input.tabs'
 import {text} from '@alinea/input.text'
 import {MdInsertDriveFile, MdOutlinePermMedia} from 'react-icons/md/index.js'
 
@@ -60,24 +62,39 @@ const webSchema = schema({
       title: text('Title', {width: 0.5, multiline: true}),
       path: path('Path', {width: 0.5})
     },
-    {isContainer: true, contains: ['Doc']}
+    {isContainer: true, contains: ['Doc', 'Docs']}
   ),
   Doc: type('Doc', {
     title: text('Title', {width: 0.5}),
     path: path('Path', {width: 0.5}),
     body: richText('Body', {
-      blocks: schema({
-        CodeBlock: type('CodeBlock', {
-          code: text('Code', {multiline: true})
-        }),
-        Inception: type('Inception', {
-          wysiwyg: richText('Wysiwyg')
-        })
-      })
+      blocks: schema(
+        <div>hello world</div>,
+        tabs(
+          tab('Visual code', {}),
+          tab('Example code', {
+            code: code('Code')
+          })
+        )
+      )
     }),
     blocks
   })
 })
+
+/*
+<Type key="doc" name="Doc">
+  <Text key="title" name="Title" width={0.5} />
+  <Path key="path" name="path" width={0.5} />
+  <RichText key="body" name="Body">
+    <Tabs>
+      <Tab name="Visual code">
+        <Code key="code" />
+      </Tab>
+    </Tabs>
+  </RichText>
+</Type>
+*/
 
 export const config = createConfig({
   dashboardUrl: 'http://localhost:4500',

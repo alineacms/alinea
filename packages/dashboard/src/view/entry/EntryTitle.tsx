@@ -1,5 +1,5 @@
 import {useInput} from '@alinea/editor'
-import {fromModule, HStack, IconButton, Typo} from '@alinea/ui'
+import {fromModule, HStack, IconButton, IconLink, Typo} from '@alinea/ui'
 import {PropsWithChildren} from 'react'
 import {Helmet} from 'react-helmet'
 import {MdArrowBack, MdOutlineMoreHoriz} from 'react-icons/md'
@@ -8,7 +8,11 @@ import css from './EntryTitle.module.scss'
 
 const styles = fromModule(css)
 
-export function EntryTitle({children}: PropsWithChildren<{}>) {
+export type EntryTitleProps = PropsWithChildren<{
+  backLink?: string
+}>
+
+export function EntryTitle({children, backLink}: EntryTitleProps) {
   const [title] = useInput(EntryDraft.title)
   return (
     <>
@@ -17,7 +21,7 @@ export function EntryTitle({children}: PropsWithChildren<{}>) {
       </Helmet>
       <div className={styles.root()}>
         <HStack center gap={18}>
-          <IconButton icon={MdArrowBack} />
+          {backLink && <IconLink icon={MdArrowBack} to={backLink} />}
           <Typo.H1 flat style={{position: 'relative'}}>
             <span>{title}</span>
             {children}

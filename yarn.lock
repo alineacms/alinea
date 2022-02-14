@@ -109,6 +109,17 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@alinea/input.code@workspace:packages/input/code":
+  version: 0.0.0-use.local
+  resolution: "@alinea/input.code@workspace:packages/input/code"
+  dependencies:
+    "@alinea/core": 0.0.0
+    "@alinea/editor": 0.0.0
+    "@alinea/ui": 0.0.0
+    react-autosize-textarea: ^7.1.0
+  languageName: unknown
+  linkType: soft
+
 "@alinea/input.link@workspace:packages/input/link":
   version: 0.0.0-use.local
   resolution: "@alinea/input.link@workspace:packages/input/link"
@@ -180,6 +191,16 @@ __metadata:
 "@alinea/input.select@workspace:packages/input/select":
   version: 0.0.0-use.local
   resolution: "@alinea/input.select@workspace:packages/input/select"
+  dependencies:
+    "@alinea/core": 0.0.0
+    "@alinea/editor": 0.0.0
+    "@alinea/ui": 0.0.0
+  languageName: unknown
+  linkType: soft
+
+"@alinea/input.tabs@workspace:packages/input/tabs":
+  version: 0.0.0-use.local
+  resolution: "@alinea/input.tabs@workspace:packages/input/tabs"
   dependencies:
     "@alinea/core": 0.0.0
     "@alinea/editor": 0.0.0

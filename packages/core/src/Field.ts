@@ -25,6 +25,6 @@ export function withView<
 }
 
 export interface Field<T = any> {
-  type: Value
+  type?: Value
   view?: FieldRenderer<T, Field<T>>
 }

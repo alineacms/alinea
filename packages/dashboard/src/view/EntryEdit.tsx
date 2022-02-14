@@ -4,9 +4,17 @@ import {select} from '@alinea/input.select'
 import {SelectInput} from '@alinea/input.select/view'
 import {text} from '@alinea/input.text'
 import {TextInput} from '@alinea/input.text/view'
-import {fromModule, HStack, Loader, Typo, useObservable} from '@alinea/ui'
+import {
+  fromModule,
+  HStack,
+  IconButton,
+  Loader,
+  Typo,
+  useObservable
+} from '@alinea/ui'
 import {Modal} from '@alinea/ui/Modal'
 import {ComponentType, FormEvent, Suspense, useState} from 'react'
+import {MdArrowBack} from 'react-icons/md'
 import {useQuery, useQueryClient} from 'react-query'
 import {useHistory} from 'react-router'
 import {Link} from 'react-router-dom'
@@ -36,6 +44,7 @@ function EntryPreview({draft, preview: Preview}: EntryPreviewProps) {
 type EntryEditDraftProps = {draft: EntryDraft}
 
 function EntryEditDraft({draft}: EntryEditDraftProps) {
+  const {nav} = useDashboard()
   const {schema} = useWorkspace()
   const type = schema.type(draft.type)
   const {preview} = useWorkspace()
@@ -44,7 +53,12 @@ function EntryEditDraft({draft}: EntryEditDraftProps) {
       <div className={styles.root()}>
         <EntryHeader />
         <div className={styles.root.draft()}>
-          <EntryTitle />
+          <EntryTitle
+            backLink={
+              draft.$parent &&
+              nav.entry(draft.workspace, draft.root, draft.$parent)
+            }
+          />
           <div className={styles.root.draft.fields()}>
             <Suspense fallback={null}>
               {type ? (
@@ -131,7 +145,10 @@ export function NewEntry({parentId}: NewEntryProps) {
   if (!parentId) return null
   return (
     <Modal open onClose={handleClose}>
-      <Typo.H1>New entry</Typo.H1>
+      <HStack center gap={18} className={styles.new.header()}>
+        <IconButton icon={MdArrowBack} onClick={handleClose} />
+        <Typo.H1 flat>New entry</Typo.H1>
+      </HStack>
       <form onSubmit={handleCreate}>
         {isCreating ? (
           <Loader absolute />

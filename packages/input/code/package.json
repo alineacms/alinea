@@ -1,0 +1,26 @@
+{
+  "name": "@alinea/input.code",
+  "version": "0.0.0",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/codeurs/alinea.git"
+  },
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "exports": {
+    ".": {
+      "browser": "./dist/view.js",
+      "default": "./dist/index.js"
+    },
+    "./view": "./dist/view.js",
+    "./view.js": "./dist/view.js",
+    "./index.css": "./dist/index.css"
+  },
+  "dependencies": {
+    "@alinea/core": "0.0.0",
+    "@alinea/editor": "0.0.0",
+    "@alinea/ui": "0.0.0",
+    "react-autosize-textarea": "^7.1.0"
+  }
+}

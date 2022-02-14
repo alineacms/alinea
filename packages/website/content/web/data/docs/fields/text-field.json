@@ -1,0 +1,13 @@
+{
+  "id": "24yE3ttFwpZGiAOJWRTGvP9kK1R",
+  "root": "data",
+  "type": "Doc",
+  "title": "Text field",
+  "path": "text-field",
+  "body": {
+    "type": "doc",
+    "blocks": {},
+    "content": []
+  },
+  "blocks": []
+}
