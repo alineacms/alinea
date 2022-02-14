@@ -3,3 +3,5 @@
 /public/*
 /content/web/media/*
 !/content/web/media/index.json
+/content/media/*
+!/content/media/index.json
