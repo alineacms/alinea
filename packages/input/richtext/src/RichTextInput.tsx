@@ -27,10 +27,6 @@ import {
   MdDragHandle,
   MdFormatBold,
   MdFormatItalic,
-  MdFormatQuote,
-  MdFormatUnderlined,
-  MdInsertLink,
-  MdInsertPhoto,
   MdNotes
 } from 'react-icons/md'
 import {RichTextField} from './RichTextField'
@@ -149,6 +145,36 @@ function InsertMenu({editor, schema, onInsert}: InsertMenuProps) {
   )
 }
 
+type ToolbarButtonsProps = {
+  editor: Editor
+}
+
+function ToolbarButtons({editor}: ToolbarButtonsProps) {
+  return (
+    <Toolbar.Slot>
+      <HStack center gap={20}>
+        <div>Normal text</div>
+        <IconButton
+          icon={MdFormatBold}
+          onMouseDown={e => {
+            e.preventDefault()
+            editor.chain().focus().toggleBold().run()
+          }}
+          active={editor.isActive('bold')}
+        />
+        <IconButton
+          icon={MdFormatItalic}
+          onMouseDown={e => {
+            e.preventDefault()
+            editor.chain().focus().toggleItalic().run()
+          }}
+          active={editor.isActive('italic')}
+        />
+      </HStack>
+    </Toolbar.Slot>
+  )
+}
+
 export type RichTextInputProps<T> = {
   state: InputState<TextDoc<T>>
   field: RichTextField<T>
@@ -173,26 +199,7 @@ export function RichTextInput<T>({state, field}: RichTextInputProps<T>) {
   if (!editor) return null
   return (
     <>
-      {editor?.isFocused && (
-        <Toolbar.Slot>
-          <HStack center gap={20}>
-            <div>Normal text</div>
-            <MdFormatBold
-              size={18}
-              onMouseDown={e => {
-                e.preventDefault()
-                editor.chain().focus().toggleBold().run()
-              }}
-              className={editor.isActive('bold') ? 'is-active' : ''}
-            />
-            <MdFormatItalic size={18} />
-            <MdFormatUnderlined size={18} />
-            <MdFormatQuote size={18} />
-            <MdInsertLink size={18} />
-            <MdInsertPhoto size={18} />
-          </HStack>
-        </Toolbar.Slot>
-      )}
+      {editor?.isFocused && <ToolbarButtons editor={editor} />}
       <InputLabel
         label={field.label}
         help={help}

@@ -82,6 +82,7 @@ type ListInputRowProps<T extends ListRow> = PropsWithChildren<
     path: InputState<T>
     field: ListField<T>
     isDragging?: boolean
+    onMove?: (direction: 1 | -1) => void
     onDelete?: () => void
     handle?: DraggableSyntheticListeners
     // React ts types force our hand here since it's a generic component,
@@ -96,6 +97,7 @@ function ListInputRow<T extends ListRow>({
   row,
   field,
   path,
+  onMove,
   onDelete,
   handle,
   rootRef,
@@ -123,8 +125,8 @@ function ListInputRow<T extends ListRow>({
           <TextLabel label={type.label} />
         </Card.Title>
         <Card.Options>
-          <IconButton icon={MdKeyboardArrowUp} />
-          <IconButton icon={MdKeyboardArrowDown} />
+          <IconButton icon={MdKeyboardArrowUp} onClick={() => onMove?.(-1)} />
+          <IconButton icon={MdKeyboardArrowDown} onClick={() => onMove?.(1)} />
           <IconButton icon={MdClose} onClick={onDelete} />
         </Card.Options>
       </Card.Header>
@@ -205,13 +207,14 @@ export function ListInput<T extends ListRow>({
           <div className={styles.root.rows()}>
             <SortableContext items={ids} strategy={verticalListSortingStrategy}>
               <Card.Root>
-                {rows.map(row => {
+                {rows.map((row, i) => {
                   return (
                     <ListInputRowSortable<T>
                       key={row.id}
                       row={row}
                       field={field}
                       path={state.child(row.id)}
+                      onMove={direction => list.move(i, i + direction)}
                       onDelete={() => list.delete(row.id)}
                     />
                   )

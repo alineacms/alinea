@@ -30,13 +30,13 @@ export function createSlots() {
 
   function useSlot() {
     const ref = useRef<HTMLDivElement>(null)
-    const [_, setRefs] = useContext(context)!
+    const [refs, setRefs] = useContext(context)!
     const redraw = useForceUpdate()
     useLayoutEffect(() => {
       setRefs(refs => refs.concat(ref))
-      setTimeout(redraw)
       return () => setRefs(refs => refs.filter(r => r !== ref))
     }, [])
+    useLayoutEffect(redraw, [refs])
     return ref
   }
 

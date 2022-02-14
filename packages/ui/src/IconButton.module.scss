@@ -11,8 +11,11 @@
   border: none;
   color: inherit;
   background: transparent;
-  background: rgba(var(--negative), 0.1);
   transition: 0.2s ease-out;
+
+  &.is-active {
+    background: rgba(var(--negative), 0.1);
+  }
 
   &:hover {
     color: var(--accent-foreground);

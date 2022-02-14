@@ -1,5 +1,5 @@
 import {Auth, Config, Workspaces} from '@alinea/core'
-import {render} from 'react-dom'
+import {createRoot} from 'react-dom'
 import {App} from './App'
 
 export interface DashboardOptions<T extends Workspaces = Workspaces> {
@@ -18,5 +18,6 @@ export function renderDashboard<T extends Workspaces>(
   const div = document.createElement('div')
   div.id = 'root'
   element.parentElement!.replaceChild(div, element)
-  render(<App {...options} />, div)
+  // render(<App {...options} />, div)
+  createRoot(div).render(<App {...options} />)
 }

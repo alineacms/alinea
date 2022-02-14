@@ -53,9 +53,7 @@ async function uploadFile(
 
 const scrollOffsets = new Map<string, number>()
 
-export type MediaExplorerProps = {}
-
-export function MediaExplorer({}: MediaExplorerProps) {
+export function MediaExplorer() {
   const queryClient = useQueryClient()
   const draft = useCurrentDraft()
   const {hub} = useSession()
