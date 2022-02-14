@@ -44,56 +44,58 @@ function AppAuthenticated() {
   return (
     <DraftsProvider>
       <Statusbar.Provider>
-        <Viewport color={color}>
-          <FavIcon color={color} />
-          <Helmet>
-            <title>{name}</title>
-          </Helmet>
-          <Toolbar />
-          <div
-            style={{
-              flex: '1',
-              display: 'flex',
-              minHeight: 0,
-              position: 'relative'
-            }}
-          >
-            <Sidebar.Root>
-              <Sidebar.Menu>
-                {Object.entries(roots).map(([key, root], i) => {
-                  const isSelected =
-                    location.pathname.length > 1
-                      ? location.pathname.startsWith(nav.root(workspace, key))
-                      : i === 0
-                  return (
-                    <Sidebar.Menu.Item
-                      key={key}
-                      selected={isSelected}
-                      to={nav.root(workspace, key)}
-                    >
-                      {root.icon ? <root.icon /> : <MdInsertDriveFile />}
-                    </Sidebar.Menu.Item>
-                  )
-                })}
-              </Sidebar.Menu>
-            </Sidebar.Root>
-            <Suspense fallback={<Loader absolute />}>
-              <Route path={nav.entry(':workspace', ':root', ':id')}>
-                {({match}) => {
-                  return <EntryRoute id={match?.params.id} />
-                }}
-              </Route>
-            </Suspense>
-          </div>
-          <Statusbar.Root>
-            <DraftsStatusSummary />
-            {!auth && (
-              <Statusbar.Status icon={MdWarning}>
-                Not using authentication
-              </Statusbar.Status>
-            )}
-          </Statusbar.Root>
-        </Viewport>
+        <Toolbar.Provider>
+          <Viewport color={color}>
+            <FavIcon color={color} />
+            <Helmet>
+              <title>{name}</title>
+            </Helmet>
+            <Toolbar.Root />
+            <div
+              style={{
+                flex: '1',
+                display: 'flex',
+                minHeight: 0,
+                position: 'relative'
+              }}
+            >
+              <Sidebar.Root>
+                <Sidebar.Menu>
+                  {Object.entries(roots).map(([key, root], i) => {
+                    const isSelected =
+                      location.pathname.length > 1
+                        ? location.pathname.startsWith(nav.root(workspace, key))
+                        : i === 0
+                    return (
+                      <Sidebar.Menu.Item
+                        key={key}
+                        selected={isSelected}
+                        to={nav.root(workspace, key)}
+                      >
+                        {root.icon ? <root.icon /> : <MdInsertDriveFile />}
+                      </Sidebar.Menu.Item>
+                    )
+                  })}
+                </Sidebar.Menu>
+              </Sidebar.Root>
+              <Suspense fallback={<Loader absolute />}>
+                <Route path={nav.entry(':workspace', ':root', ':id')}>
+                  {({match}) => {
+                    return <EntryRoute id={match?.params.id} />
+                  }}
+                </Route>
+              </Suspense>
+            </div>
+            <Statusbar.Root>
+              <DraftsStatusSummary />
+              {!auth && (
+                <Statusbar.Status icon={MdWarning}>
+                  Not using authentication
+                </Statusbar.Status>
+              )}
+            </Statusbar.Root>
+          </Viewport>
+        </Toolbar.Provider>
       </Statusbar.Provider>
     </DraftsProvider>
   )

@@ -1,4 +1,4 @@
-/* @esbx/sass::C:/projects/alinea/packages/dashboard/src/view/BrowserPreview.module.scss */
+/* @esbx/sass::C:/Users/ben/projects/alinea/packages/dashboard/src/view/BrowserPreview.module.scss */
 .alinea__BrowserPreview-module-root {
   height: 100%;
   display: flex;
@@ -28,7 +28,7 @@
   transition: none;
 }
 /*# sourceMappingURL=BrowserPreview.css.map */
-/* @esbx/sass::C:/projects/alinea/packages/dashboard/src/view/ContentTree.module.scss */
+/* @esbx/sass::C:/Users/ben/projects/alinea/packages/dashboard/src/view/ContentTree.module.scss */
 .alinea__ContentTree-module-node {
   position: relative;
   z-index: 1;
@@ -107,12 +107,12 @@
   opacity: 1;
 }
 /*# sourceMappingURL=ContentTree.css.map */
-/* @esbx/sass::C:/projects/alinea/packages/dashboard/src/view/entry/EntryTitle.module.scss */
+/* @esbx/sass::C:/Users/ben/projects/alinea/packages/dashboard/src/view/entry/EntryTitle.module.scss */
 .alinea__EntryTitle-module-root {
   padding-bottom: 25px;
 }
 /*# sourceMappingURL=EntryTitle.css.map */
-/* @esbx/sass::C:/projects/alinea/packages/dashboard/src/view/EntryEdit.module.scss */
+/* @esbx/sass::C:/Users/ben/projects/alinea/packages/dashboard/src/view/EntryEdit.module.scss */
 .alinea__EntryEdit-module-root {
   flex-grow: 1;
   display: flex;
@@ -147,7 +147,7 @@
   padding-bottom: 20px;
 }
 /*# sourceMappingURL=EntryEdit.css.map */
-/* @esbx/sass::C:/projects/alinea/packages/dashboard/src/view/media/MediaRow.module.scss */
+/* @esbx/sass::C:/Users/ben/projects/alinea/packages/dashboard/src/view/media/MediaRow.module.scss */
 .alinea__MediaRow-module-root {
   width: 100%;
   height: 100%;
@@ -155,7 +155,7 @@
   padding-bottom: 12px;
 }
 /*# sourceMappingURL=MediaRow.css.map */
-/* @esbx/sass::C:/projects/alinea/packages/dashboard/src/view/media/MediaThumbnail.module.scss */
+/* @esbx/sass::C:/Users/ben/projects/alinea/packages/dashboard/src/view/media/MediaThumbnail.module.scss */
 .alinea__MediaThumbnail-module-root {
   height: 100%;
   overflow: hidden;
@@ -236,7 +236,7 @@
   border-radius: 6px;
 }
 /*# sourceMappingURL=MediaThumbnail.css.map */
-/* @esbx/sass::C:/projects/alinea/packages/dashboard/src/view/MediaExplorer.module.scss */
+/* @esbx/sass::C:/Users/ben/projects/alinea/packages/dashboard/src/view/MediaExplorer.module.scss */
 .alinea__MediaExplorer-module-root {
   display: flex;
   flex-direction: column;
@@ -269,7 +269,7 @@
   background: rgba(var(--negative), 0.9);
 }
 /*# sourceMappingURL=MediaExplorer.css.map */
-/* @esbx/sass::C:/projects/alinea/packages/dashboard/src/view/Preview.module.scss */
+/* @esbx/sass::C:/Users/ben/projects/alinea/packages/dashboard/src/view/Preview.module.scss */
 .alinea__Preview-module-root {
   overflow: auto;
   height: 100%;
@@ -291,7 +291,7 @@
   background: rgba(var(--negative), 0.9);
 }
 /*# sourceMappingURL=Preview.css.map */
-/* @esbx/sass::C:/projects/alinea/packages/dashboard/src/view/Toolbar.module.scss */
+/* @esbx/sass::C:/Users/ben/projects/alinea/packages/dashboard/src/view/Toolbar.module.scss */
 .alinea__Toolbar-module-root {
   position: relative;
   z-index: 1;
@@ -302,12 +302,12 @@
   border-bottom: 1px solid var(--outline);
 }
 /*# sourceMappingURL=Toolbar.css.map */
-/* @esbx/sass::C:/projects/alinea/packages/editor/src/view/Fields.module.scss */
+/* @esbx/sass::C:/Users/ben/projects/alinea/packages/editor/src/view/Fields.module.scss */
 .alinea__Fields-module-root {
   margin: 0;
 }
 /*# sourceMappingURL=Fields.css.map */
-/* @esbx/sass::C:/projects/alinea/packages/editor/src/view/InputLabel.module.scss */
+/* @esbx/sass::C:/Users/ben/projects/alinea/packages/editor/src/view/InputLabel.module.scss */
 .alinea__InputLabel-module-root {
   display: inline-block;
   vertical-align: top;
@@ -341,7 +341,7 @@
   color: var(--foreground);
 }
 /*# sourceMappingURL=InputLabel.css.map */
-/* @esbx/sass::C:/projects/alinea/packages/ui/src/AppBar.module.scss */
+/* @esbx/sass::C:/Users/ben/projects/alinea/packages/ui/src/AppBar.module.scss */
 .alinea__AppBar-module-root {
   position: sticky;
   top: 0;
@@ -370,7 +370,7 @@
   background: var(--highlight);
 }
 /*# sourceMappingURL=AppBar.css.map */
-/* @esbx/sass::C:/projects/alinea/packages/ui/src/branding/Logo.module.scss */
+/* @esbx/sass::C:/Users/ben/projects/alinea/packages/ui/src/branding/Logo.module.scss */
 .alinea__Logo-module-root {
   position: relative;
   width: 24px;
@@ -393,7 +393,7 @@
   z-index: -1;
 }
 /*# sourceMappingURL=Logo.css.map */
-/* @esbx/sass::C:/projects/alinea/packages/ui/src/Button.module.scss */
+/* @esbx/sass::C:/Users/ben/projects/alinea/packages/ui/src/Button.module.scss */
 .alinea__Button-module-root {
   position: relative;
   border: none;
@@ -431,7 +431,7 @@
   opacity: 0.05;
 }
 /*# sourceMappingURL=Button.css.map */
-/* @esbx/sass::C:/projects/alinea/packages/ui/src/Card.module.scss */
+/* @esbx/sass::C:/Users/ben/projects/alinea/packages/ui/src/Card.module.scss */
 .alinea__Card-module-root {
   position: relative;
   border-radius: 12px;
@@ -468,7 +468,7 @@
   align-items: center;
 }
 /*# sourceMappingURL=Card.css.map */
-/* @esbx/sass::C:/projects/alinea/packages/ui/src/Chip.module.scss */
+/* @esbx/sass::C:/Users/ben/projects/alinea/packages/ui/src/Chip.module.scss */
 .alinea__Chip-module-root {
   display: inline-flex;
   align-items: center;
@@ -491,7 +491,7 @@
   color: var(--accent-foreground);
 }
 /*# sourceMappingURL=Chip.css.map */
-/* @esbx/sass::C:/projects/alinea/packages/ui/src/Create.module.scss */
+/* @esbx/sass::C:/Users/ben/projects/alinea/packages/ui/src/Create.module.scss */
 .alinea__Create-module-root {
   padding: 3px 0;
   display: flex;
@@ -522,7 +522,7 @@
   background: var(--accent);
 }
 /*# sourceMappingURL=Create.css.map */
-/* @esbx/sass::C:/projects/alinea/packages/ui/src/DropdownMenu.module.scss */
+/* @esbx/sass::C:/Users/ben/projects/alinea/packages/ui/src/DropdownMenu.module.scss */
 .alinea__DropdownMenu-module-content {
   min-width: 220px;
   background-color: white;
@@ -553,7 +553,7 @@
   background-color: #f7f6f6;
 }
 /*# sourceMappingURL=DropdownMenu.css.map */
-/* @esbx/sass::C:/projects/alinea/packages/ui/src/Icon.module.scss */
+/* @esbx/sass::C:/Users/ben/projects/alinea/packages/ui/src/Icon.module.scss */
 .alinea__Icon-module-root {
   display: inline-block;
   vertical-align: top;
@@ -565,7 +565,7 @@
   display: block;
 }
 /*# sourceMappingURL=Icon.css.map */
-/* @esbx/sass::C:/projects/alinea/packages/ui/src/IconButton.module.scss */
+/* @esbx/sass::C:/Users/ben/projects/alinea/packages/ui/src/IconButton.module.scss */
 .alinea__IconButton-module-root {
   display: flex;
   align-items: center;
@@ -588,7 +588,7 @@
   box-shadow: 0 0 0 3px var(--accent);
 }
 /*# sourceMappingURL=IconButton.css.map */
-/* @esbx/sass::C:/projects/alinea/packages/ui/src/Loader.module.scss */
+/* @esbx/sass::C:/Users/ben/projects/alinea/packages/ui/src/Loader.module.scss */
 .alinea__Loader-module-loader {
   margin: auto;
   position: relative;
@@ -640,7 +640,7 @@
   }
 }
 /*# sourceMappingURL=Loader.css.map */
-/* @esbx/sass::C:/projects/alinea/packages/ui/src/Modal.module.scss */
+/* @esbx/sass::C:/Users/ben/projects/alinea/packages/ui/src/Modal.module.scss */
 .alinea__Modal-module-root {
   position: absolute;
   top: 0;
@@ -675,7 +675,7 @@
   box-shadow: 0 2px 3.5px var(--shadow);
 }
 /*# sourceMappingURL=Modal.css.map */
-/* @esbx/sass::C:/projects/alinea/packages/ui/src/Pane.module.scss */
+/* @esbx/sass::C:/Users/ben/projects/alinea/packages/ui/src/Pane.module.scss */
 .alinea__Pane-module-root {
   display: flex;
   height: 100%;
@@ -723,7 +723,7 @@
   border-width: 2px;
 }
 /*# sourceMappingURL=Pane.css.map */
-/* @esbx/sass::C:/projects/alinea/packages/ui/src/Sidebar.module.scss */
+/* @esbx/sass::C:/Users/ben/projects/alinea/packages/ui/src/Sidebar.module.scss */
 .alinea__Sidebar-module-root {
   display: flex;
   height: 100%;
@@ -784,7 +784,7 @@
   background: rgba(var(--negative), 0.9);
 }
 /*# sourceMappingURL=Sidebar.css.map */
-/* @esbx/sass::C:/projects/alinea/packages/ui/src/Statusbar.module.scss */
+/* @esbx/sass::C:/Users/ben/projects/alinea/packages/ui/src/Statusbar.module.scss */
 .alinea__Statusbar-module-root {
   height: 22px;
   display: flex;
@@ -799,7 +799,7 @@
   padding: 0 6px;
 }
 /*# sourceMappingURL=Statusbar.css.map */
-/* @esbx/sass::C:/projects/alinea/packages/ui/src/Tabs.module.scss */
+/* @esbx/sass::C:/Users/ben/projects/alinea/packages/ui/src/Tabs.module.scss */
 .alinea__Tabs-module-list {
   display: flex;
 }
@@ -810,7 +810,7 @@
   box-shadow: inset 0 -1px 0 0 var(--accent), 0 1px 0 0 var(--accent);
 }
 /*# sourceMappingURL=Tabs.css.map */
-/* @esbx/sass::C:/projects/alinea/packages/ui/src/Typo.module.scss */
+/* @esbx/sass::C:/Users/ben/projects/alinea/packages/ui/src/Typo.module.scss */
 .alinea__Typo-module-hyphenate,
 .alinea__Typo-module-link,
 .alinea__Typo-module-p,
@@ -902,7 +902,7 @@
   font-size: 0.8em;
 }
 /*# sourceMappingURL=Typo.css.map */
-/* @esbx/sass::C:/projects/alinea/packages/ui/src/Viewport.module.scss */
+/* @esbx/sass::C:/Users/ben/projects/alinea/packages/ui/src/Viewport.module.scss */
 .alinea__Viewport-module-root {
   --background: rgb(29, 35, 42);
   --foreground: white;
@@ -1011,7 +1011,7 @@
   --shadow: rgba(0, 0, 0, 0.5);
 }
 /*# sourceMappingURL=Viewport.css.map */
-/* @esbx/sass::C:/projects/alinea/packages/input/code/src/CodeInput.module.scss */
+/* @esbx/sass::C:/Users/ben/projects/alinea/packages/input/code/src/CodeInput.module.scss */
 .alinea__CodeInput-module-root-input {
   display: block;
   background: transparent;
@@ -1033,12 +1033,12 @@
   border-color: var(--fields-focus);
 }
 /*# sourceMappingURL=CodeInput.css.map */
-/* @esbx/sass::C:/projects/alinea/packages/input/link/src/LinkInput.module.scss */
+/* @esbx/sass::C:/Users/ben/projects/alinea/packages/input/link/src/LinkInput.module.scss */
 .alinea__LinkInput-module-root {
   position: relative;
 }
 /*# sourceMappingURL=LinkInput.css.map */
-/* @esbx/sass::C:/projects/alinea/packages/input/list/src/ListInput.module.scss */
+/* @esbx/sass::C:/Users/ben/projects/alinea/packages/input/list/src/ListInput.module.scss */
 .alinea__ListInput-module-root {
   position: relative;
 }
@@ -1078,9 +1078,9 @@
   overflow: hidden;
 }
 /*# sourceMappingURL=ListInput.css.map */
-/* @esbx/sass::C:/projects/alinea/packages/input/number/src/NumberInput.module.scss */
+/* @esbx/sass::C:/Users/ben/projects/alinea/packages/input/number/src/NumberInput.module.scss */
 /*# sourceMappingURL=NumberInput.css.map */
-/* @esbx/sass::C:/projects/alinea/packages/input/path/src/PathInput.module.scss */
+/* @esbx/sass::C:/Users/ben/projects/alinea/packages/input/path/src/PathInput.module.scss */
 .alinea__PathInput-module-root-input {
   display: block;
   background: transparent;
@@ -1101,7 +1101,7 @@
   border-color: var(--fields-focus);
 }
 /*# sourceMappingURL=PathInput.css.map */
-/* @esbx/sass::C:/projects/alinea/packages/input/richtext/src/RichTextInput.module.scss */
+/* @esbx/sass::C:/Users/ben/projects/alinea/packages/input/richtext/src/RichTextInput.module.scss */
 .alinea__RichTextInput-module-root-editor > * {
   display: block;
   background: transparent;
@@ -1124,7 +1124,7 @@
   border-color: var(--fields-focus);
 }
 /*# sourceMappingURL=RichTextInput.css.map */
-/* @esbx/sass::C:/projects/alinea/packages/input/select/src/SelectInput.module.scss */
+/* @esbx/sass::C:/Users/ben/projects/alinea/packages/input/select/src/SelectInput.module.scss */
 .alinea__SelectInput-module-root {
   border-bottom: 1px solid var(--outline);
 }
@@ -1143,7 +1143,12 @@
   box-shadow: rgba(222, 236, 238, 0.4) 0 0 0 0.2em;
 }
 /*# sourceMappingURL=SelectInput.css.map */
-/* @esbx/sass::C:/projects/alinea/packages/input/text/src/TextInput.module.scss */
+/* @esbx/sass::C:/Users/ben/projects/alinea/packages/input/tabs/src/TabsView.module.scss */
+.alinea__TabsView-module-root {
+  background: red;
+}
+/*# sourceMappingURL=TabsView.css.map */
+/* @esbx/sass::C:/Users/ben/projects/alinea/packages/input/text/src/TextInput.module.scss */
 .alinea__TextInput-module-root-input {
   display: block;
   background: transparent;
@@ -1164,7 +1169,7 @@
   border-color: var(--fields-focus);
 }
 /*# sourceMappingURL=TextInput.css.map */
-/* @esbx/sass::C:/projects/alinea/packages/auth/passwordless/src/PasswordLessLogin.module.scss */
+/* @esbx/sass::C:/Users/ben/projects/alinea/packages/auth/passwordless/src/PasswordLessLogin.module.scss */
 .alinea__PasswordLessLogin-module-root-email {
   border-bottom: 1px solid currentColor;
 }

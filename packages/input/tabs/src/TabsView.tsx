@@ -1,15 +1,34 @@
-import {InputState} from '@alinea/editor/InputState'
-import {fromModule} from '@alinea/ui'
-import {TabsField} from './TabsField'
+import {InputForm, InputState} from '@alinea/editor'
+import {fromModule, Tabs, TextLabel} from '@alinea/ui'
+import {TabsSection} from './TabsSection'
 import css from './TabsView.module.scss'
 
 const styles = fromModule(css)
 
-export type TabsViewProps<T> = {
-  state: InputState<T>
-  field: TabsField
+export type TabsViewProps = {
+  state: InputState
+  section: TabsSection
 }
 
-export function TabsView<T>({field}: TabsViewProps<T>) {
-  return <div className={styles.root()}>tabs</div>
+export function TabsView({state, section}: TabsViewProps) {
+  return (
+    <Tabs.Root defaultValue={'0'}>
+      <Tabs.List>
+        {section.types.map((type, i) => {
+          return (
+            <Tabs.Trigger key={i} value={String(i)}>
+              <TextLabel label={type.label} />
+            </Tabs.Trigger>
+          )
+        })}
+      </Tabs.List>
+      {section.types.map((type, i) => {
+        return (
+          <Tabs.Content key={i} value={String(i)} tabIndex={i}>
+            <InputForm type={type} state={state} />
+          </Tabs.Content>
+        )
+      })}
+    </Tabs.Root>
+  )
 }

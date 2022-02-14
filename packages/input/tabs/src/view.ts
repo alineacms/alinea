@@ -1,6 +1,6 @@
-import {withView} from '@alinea/core'
-import {createTabs} from './TabsField'
+import {Section} from '@alinea/core'
+import {createTabs} from './TabsSection'
 import {TabsView} from './TabsView'
-export * from './TabsField'
+export * from './TabsSection'
 export * from './TabsView'
-export const tabs = withView(createTabs, TabsView)
+export const tabs = Section.withView(createTabs, TabsView)

@@ -5,5 +5,6 @@ export * from './hook/UseCurrentDraft'
 export * from './hook/UseDashboard'
 export * from './MediaSchema'
 export * from './view/BrowserPreview'
+export * from './view/Toolbar'
 import {Dashboard} from './Dashboard'
 export default Dashboard

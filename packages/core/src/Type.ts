@@ -1,9 +1,9 @@
 import type {ComponentType} from 'react'
 import {Entry} from './Entry'
-import {createError} from './ErrorWithCode'
 import {Field} from './Field'
 import {createId} from './Id'
 import {Label} from './Label'
+import {Section} from './Section'
 import {Lazy} from './util/Lazy'
 import {LazyRecord} from './util/LazyRecord'
 import {Value} from './Value'
@@ -25,21 +25,24 @@ export namespace Type {
 const reserved = new Set(['id', 'type'])
 
 export class Type<T = {}> {
+  #fields: Record<string, Lazy<Field>> | undefined
+
   constructor(
     public label: Label,
-    public fields: Record<string, Field>,
+    public sections: Array<Section>,
     public options: Type.Options = {}
-  ) {
-    for (const key of Object.keys(fields)) {
-      if (reserved.has(key))
-        throw createError(
-          `Field name "${key}" is reserved, in channel "${label}"`
-        )
-    }
+  ) {}
+
+  get fields() {
+    if (this.#fields) return this.#fields
+    const res = {}
+    for (const section of this.sections)
+      if (section.fields) Object.assign(res, Lazy.get(section.fields))
+    return (this.#fields = res)
   }
 
-  get valueType() {
-    return Value.Record<T>(
+  get valueType(): RecordValue {
+    return Value.Record(
       Object.fromEntries(
         [
           ['id', Value.Scalar as Value],
@@ -56,15 +59,15 @@ export class Type<T = {}> {
             })
         )
       )
-    ) as unknown as RecordValue<{}>
+    )
   }
 
   [Symbol.iterator]() {
-    return Object.entries(this.fields)[Symbol.iterator]()
+    return LazyRecord.iterate(this.fields)[Symbol.iterator]()
   }
 
   field(key: string) {
-    const field = this.fields[key]
+    const field = LazyRecord.get(this.fields, key)
     if (!field)
       throw new Error(`No such field: "${key}" in type "${this.label}"`)
     return field
@@ -81,20 +84,15 @@ export class Type<T = {}> {
       id: createId()
     } as Entry & T
   }
+
+  configure(options: Type.Options) {
+    return new Type(this.label, this.sections, {...this.options, ...options})
+  }
 }
 
-type RowOf<LazyFields> = LazyFields extends Lazy<infer U>
-  ? U extends {[key: string]: any}
-    ? {
-        [K in keyof U]: U[K] extends Field<infer T> ? T : any
-      }
-    : never
-  : never
-
-export function type<Fields extends LazyRecord<Field>>(
+export function type<T extends Array<Section.Input>>(
   label: Label,
-  fields: Fields & {id?: never; type?: never},
-  options?: Type.Options
-): Type<RowOf<Fields>> {
-  return new Type(label, LazyRecord.resolve(fields), options)
+  ...sections: T
+): Type<Section.FieldsOf<T[number]>> {
+  return new Type(label, sections.map(Section.from))
 }

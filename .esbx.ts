@@ -7,6 +7,7 @@ import {SassPlugin} from '@esbx/sass'
 import {StaticPlugin} from '@esbx/static'
 import {findNodeModules} from '@esbx/util'
 import {BuildTask, getManifest, getWorkspaces, TestTask} from '@esbx/workspaces'
+import crypto from 'crypto'
 import type {BuildOptions, Plugin} from 'esbuild'
 import {build} from 'esbuild'
 import fs from 'fs-extra'
@@ -106,6 +107,7 @@ const builder = BuildTask.configure({
     ]
   }
 })
+
 export const buildTask = {
   ...builder,
   async action(options) {
@@ -133,6 +135,49 @@ const InternalPackages: Plugin = {
     })
   }
 }
+
+let generating
+
+const GeneratePlugin: Plugin = {
+  name: 'GeneratePlugin',
+  setup(build) {
+    const outfile = path.posix.join(
+      process.cwd(),
+      'node_modules',
+      crypto.randomBytes(16).toString('hex') + '.mjs'
+    )
+    const cwd = path.resolve('packages/website')
+    async function generate() {
+      await build.esbuild.build({
+        bundle: true,
+        format: 'esm',
+        platform: 'node',
+        ...buildOptions,
+        outfile,
+        external: modules.filter(m => !m.includes('@alinea')),
+        plugins: [
+          ...buildOptions.plugins,
+          InternalPackages,
+          FixReactIconsPlugin,
+          StaticPlugin.configure({
+            sources: [path.resolve('packages/cli/src/index.ts')]
+          })
+        ],
+        stdin: {
+          contents: `import {generate} from '@alinea/cli/Generate'
+          export default generate({cwd: ${JSON.stringify(cwd)}})`,
+          resolveDir: process.cwd(),
+          sourcefile: 'gen.js'
+        }
+      })
+      await import(`file://${outfile}`)
+        .then(({default: promised}) => promised)
+        .finally(() => fs.promises.unlink(outfile))
+    }
+    return generating || (generating = generate())
+  }
+}
+
 /*
 These should be resolved using the conditional exports, but before building
 those are not available so we point at the source directly.
@@ -160,7 +205,8 @@ const devOptions: BuildOptions = {
     AliasPlugin.configure(aliases),
     InternalPackages,
     ReporterPlugin.configure({name: 'Client'}),
-    ReloadPlugin
+    ReloadPlugin,
+    GeneratePlugin
   ],
   define: {
     'process.env.NODE_ENV': '"development"',
@@ -195,7 +241,8 @@ const serverOptions: BuildOptions = {
     AliasPlugin.configure({
       'next/link': path.resolve('./node_modules/next/link.js')
     }),
-    FixReactIconsPlugin
+    FixReactIconsPlugin,
+    GeneratePlugin
   ],
   banner: {
     // Previewing the next.js website makes us load a bunch of non ESM javascript

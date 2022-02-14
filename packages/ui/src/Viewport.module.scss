@@ -1,7 +1,7 @@
 @mixin dark-theme {
-  --background: rgb(29, 35, 42);
+  --background: #1d232a;
   --foreground: white;
-  --foreground-faded: hsl(0, 3%, 83%);
+  --foreground-faded: hsl(0, 3%, 85%);
   --inner: rgb(29, 35, 42);
   --highlight: hsl(212, 18%, 16%);
   --lift: hsl(212, 18%, 17%);

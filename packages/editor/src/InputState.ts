@@ -2,7 +2,7 @@ import {Value} from '@alinea/core'
 
 export type InputPair<T> = readonly [T, Value.Mutator<T>]
 
-export interface InputState<T> {
+export interface InputState<T = any> {
   child<T>(field: string): InputState<T>
   use(): InputPair<T>
 }

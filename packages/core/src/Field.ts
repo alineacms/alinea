@@ -7,24 +7,26 @@ export type FieldRenderer<T, F> = ComponentType<{
   field: F
 }>
 
-export function renderer<T, K extends keyof T>(
+/*export function renderer<T, K extends keyof T>(
   name: K,
   loader: () => Promise<T>
 ): () => Promise<T[K]> {
   return () => loader().then(res => res[name])
-}
+}*/
 
-export function withView<
-  T,
-  F extends Field<T>,
-  C extends (...args: Array<any>) => F
->(create: C, view: FieldRenderer<T, F>) {
-  return ((...args: Parameters<C>) => {
-    return {...create(...args), view}
-  }) as C
+export namespace Field {
+  export function withView<
+    T,
+    F extends Field<T>,
+    C extends (...args: Array<any>) => F
+  >(create: C, view: FieldRenderer<T, F>) {
+    return ((...args: Parameters<C>) => {
+      return {...create(...args), view}
+    }) as C
+  }
 }
 
 export interface Field<T = any> {
-  type?: Value
+  type: Value<T>
   view?: FieldRenderer<T, Field<T>>
 }

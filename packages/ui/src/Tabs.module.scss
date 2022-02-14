@@ -1,9 +1,13 @@
 .list {
   display: flex;
+  gap: 16px;
+  padding: 6px;
 }
 
 .trigger {
-  height: 26px;
+  padding: 10px 0;
+  cursor: pointer;
+
   &[data-state='active'] {
     box-shadow: inset 0 -1px 0 0 var(--accent), 0 1px 0 0 var(--accent);
   }

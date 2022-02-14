@@ -1,4 +1,4 @@
-import {Fields, InputState, LabelHeader, useInput} from '@alinea/editor'
+import {InputForm, InputState, LabelHeader, useInput} from '@alinea/editor'
 import {Card, Create, fromModule, IconButton, TextLabel} from '@alinea/ui'
 import {
   closestCenter,
@@ -129,7 +129,7 @@ function ListInputRow<T extends ListRow>({
         </Card.Options>
       </Card.Header>
       <Card.Content>
-        <Fields type={type as any} state={path} />
+        <InputForm type={type as any} state={path} />
       </Card.Content>
     </div>
   )

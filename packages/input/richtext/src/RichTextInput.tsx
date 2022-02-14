@@ -1,6 +1,15 @@
 import {createId, Schema, TextDoc, Type} from '@alinea/core'
-import {Fields, InputLabel, InputState, useInput} from '@alinea/editor'
-import {Card, Create, fromModule, IconButton, px, TextLabel} from '@alinea/ui'
+import {Toolbar} from '@alinea/dashboard'
+import {InputForm, InputLabel, InputState, useInput} from '@alinea/editor'
+import {
+  Card,
+  Create,
+  fromModule,
+  HStack,
+  IconButton,
+  px,
+  TextLabel
+} from '@alinea/ui'
 import {mergeAttributes, Node} from '@tiptap/core'
 import Collaboration from '@tiptap/extension-collaboration'
 import FloatingMenuExtension from '@tiptap/extension-floating-menu'
@@ -13,7 +22,17 @@ import {
   useEditor
 } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
-import {MdDelete, MdDragHandle, MdNotes} from 'react-icons/md'
+import {
+  MdDelete,
+  MdDragHandle,
+  MdFormatBold,
+  MdFormatItalic,
+  MdFormatQuote,
+  MdFormatUnderlined,
+  MdInsertLink,
+  MdInsertPhoto,
+  MdNotes
+} from 'react-icons/md'
 import {RichTextField} from './RichTextField'
 import css from './RichTextInput.module.scss'
 
@@ -51,7 +70,7 @@ function typeExtension(
             </Card.Options>
           </Card.Header>
           <Card.Content>
-            <Fields state={parent.child(id)} type={type} />
+            <InputForm state={parent.child(id)} type={type} />
           </Card.Content>
         </Card.Root>
       </NodeViewWrapper>
@@ -153,17 +172,39 @@ export function RichTextInput<T>({state, field}: RichTextInputProps<T>) {
   )
   if (!editor) return null
   return (
-    <InputLabel
-      label={field.label}
-      help={help}
-      optional={optional}
-      focused={editor.isFocused}
-      icon={MdNotes}
-      empty={editor.isEmpty}
-    >
-      <InsertMenu editor={editor} schema={blocks} onInsert={insert} />
-      <EditorContent className={styles.root.editor()} editor={editor} />
-    </InputLabel>
+    <>
+      {editor?.isFocused && (
+        <Toolbar.Slot>
+          <HStack center gap={20}>
+            <div>Normal text</div>
+            <MdFormatBold
+              size={18}
+              onMouseDown={e => {
+                e.preventDefault()
+                editor.chain().focus().toggleBold().run()
+              }}
+              className={editor.isActive('bold') ? 'is-active' : ''}
+            />
+            <MdFormatItalic size={18} />
+            <MdFormatUnderlined size={18} />
+            <MdFormatQuote size={18} />
+            <MdInsertLink size={18} />
+            <MdInsertPhoto size={18} />
+          </HStack>
+        </Toolbar.Slot>
+      )}
+      <InputLabel
+        label={field.label}
+        help={help}
+        optional={optional}
+        focused={editor.isFocused}
+        icon={MdNotes}
+        empty={editor.isEmpty}
+      >
+        <InsertMenu editor={editor} schema={blocks} onInsert={insert} />
+        <EditorContent className={styles.root.editor()} editor={editor} />
+      </InputLabel>
+    </>
   )
 }
 

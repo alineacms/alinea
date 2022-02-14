@@ -128,8 +128,6 @@ export class RichTextValue<T>
     const type = block && block.get('type')
     const value = type && this.values && this.values[type]
     if (value) return value as unknown as Value<C>
-    console.log(this.fromY(yValue))
-    console.log(child)
     throw createError(`Type of block "${child}" not found`)
   }
   toY(value: TextDoc<Row & T>) {
@@ -154,7 +152,9 @@ export class RichTextValue<T>
       ? Object.fromEntries(
           Array.from(value.entries())
             // Todo: filter out unused blocks
-            .filter(([key]) => key !== '$doc')
+            .filter(([key, item]) => {
+              return key !== '$doc' && types[item.get('type')]
+            })
             .map(([key, item]) => {
               return [key, types[item.get('type')].fromY(item)]
             })
@@ -163,7 +163,7 @@ export class RichTextValue<T>
     return {
       type: 'doc',
       blocks: blocks,
-      content: doc?.toArray().map(serialize).flat() || []
+      content: doc?.toArray()?.map(serialize)?.flat() || []
     }
   }
   watch(parent: Y.Map<any>, key: string) {

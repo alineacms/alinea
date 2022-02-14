@@ -1,4 +1,5 @@
-import {Type} from '@alinea/core'
+import {Section} from '@alinea/core'
+import {LazyRecord} from '@alinea/core/util/LazyRecord'
 import {fromModule} from '@alinea/ui'
 import {InputState} from '../InputState'
 import css from './Fields.module.scss'
@@ -8,14 +9,14 @@ const styles = fromModule(css)
 
 export type FieldsProps = {
   state: InputState<any>
-  type: Type
+  fields: Section.Fields
 }
 
-export function Fields({state, type}: FieldsProps) {
-  const fields = Array.from(type)
+export function Fields({state, fields}: FieldsProps) {
+  const list = LazyRecord.iterate(fields)
   return (
     <div className={styles.root()}>
-      {fields.map(([name, field]) => {
+      {list.map(([name, field]) => {
         return <Input key={name} state={state.child(name)} field={field} />
       })}
     </div>

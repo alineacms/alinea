@@ -1,5 +1,5 @@
 import {docFromEntry, Entry, slugify} from '@alinea/core'
-import {Fields, InputState} from '@alinea/editor'
+import {InputForm, InputState} from '@alinea/editor'
 import {select} from '@alinea/input.select'
 import {SelectInput} from '@alinea/input.select/view'
 import {text} from '@alinea/input.text'
@@ -62,7 +62,7 @@ function EntryEditDraft({draft}: EntryEditDraftProps) {
           <div className={styles.root.draft.fields()}>
             <Suspense fallback={null}>
               {type ? (
-                <Fields
+                <InputForm
                   // We key here currently because the tiptap/yjs combination fails to register
                   // changes when the fragment is changed while the editor is mounted.
                   key={draft.doc.guid}
