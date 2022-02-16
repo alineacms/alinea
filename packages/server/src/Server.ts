@@ -94,6 +94,7 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
               title: Entry.title,
               url: Entry.url,
               parent: Entry.parent,
+              parents: Entry.parents,
               $isContainer: Entry.$isContainer,
               childrenCount: Parent.where(Parent.parent.is(Entry.id))
                 .select(Functions.count())
