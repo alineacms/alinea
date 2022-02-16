@@ -1,7 +1,6 @@
 import {Client} from '@alinea/client'
 import {Session, Workspaces} from '@alinea/core'
 import {
-  AppBar,
   FavIcon,
   Loader,
   Pane,
@@ -34,7 +33,6 @@ import {SessionProvider} from './hook/UseSession'
 import {useWorkspace} from './hook/UseWorkspace'
 import {ContentTree} from './view/ContentTree'
 import {EntryEdit, NewEntry} from './view/EntryEdit'
-import {SearchBox} from './view/SearchBox'
 import {Toolbar} from './view/Toolbar'
 
 function AppAuthenticated() {
@@ -116,7 +114,7 @@ function EntryRoute({id}: EntryRouteProps) {
     .concat(draft?.parents)
     .concat(draft?.id)
     .filter(Boolean) as Array<string>
-  // Todo: add loader
+  if (isLoading) return <Loader absolute />
   return (
     <CurrentDraftProvider value={draft}>
       <Pane
@@ -125,11 +123,6 @@ function EntryRoute({id}: EntryRouteProps) {
         defaultWidth={330}
         minWidth={200}
       >
-        <AppBar.Root>
-          <AppBar.Item full style={{flexGrow: 1}}>
-            <SearchBox />
-          </AppBar.Item>
-        </AppBar.Root>
         <ContentTree workspace={workspace} root={root} select={selected} />
       </Pane>
       <div style={{width: '100%', height: '100%'}}>

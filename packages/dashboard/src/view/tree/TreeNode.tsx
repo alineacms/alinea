@@ -1,7 +1,14 @@
 import {Entry} from '@alinea/core'
 import {Create, fromModule, Stack, useInitialEffect} from '@alinea/ui'
 import {HStack} from '@alinea/ui/Stack'
-import {forwardRef, memo, Ref, useCallback, useRef} from 'react'
+import {
+  forwardRef,
+  HTMLProps,
+  memo,
+  PropsWithoutRef,
+  useCallback,
+  useRef
+} from 'react'
 import {MdChevronRight, MdExpandMore, MdInsertDriveFile} from 'react-icons/md'
 import {Link, useLocation} from 'react-router-dom'
 import {useDashboard} from '../../hook/UseDashboard'
@@ -30,12 +37,12 @@ type TreeNodeLinkProps = {
   level: number
   isOpened: boolean
   toggleOpen: () => void
-}
+} & PropsWithoutRef<HTMLProps<HTMLDivElement>>
 
 const TreeNodeLink = memo(
-  forwardRef(function TreeNodeLink(
-    {entry, isOpened, toggleOpen, isSelected, level}: TreeNodeLinkProps,
-    ref: Ref<HTMLAnchorElement>
+  forwardRef<HTMLAnchorElement, TreeNodeLinkProps>(function TreeNodeLink(
+    {entry, isOpened, toggleOpen, isSelected, level, ...props},
+    ref
   ) {
     const {nav} = useDashboard()
     const {schema} = useWorkspace()
@@ -53,45 +60,52 @@ const TreeNodeLink = memo(
         <MdInsertDriveFile size={12} />
       ))
     return (
-      <div className={styles.root({selected: isSelected})}>
-        <Link
-          ref={ref}
-          to={nav.entry(entry.workspace, entry.root, entry.id)}
-          className={styles.root.link()}
-          style={{paddingLeft: `${10 + level * 8}px`}}
-        >
-          <div
-            className={styles.root.link.icon()}
+      <div className={styles.root({selected: isSelected})} {...props}>
+        <div className={styles.root.inner()}>
+          <Link
+            ref={ref}
+            to={nav.entry(entry.workspace, entry.root, entry.id)}
+            className={styles.root.link()}
+            style={{paddingLeft: `${10 + level * 8}px`}}
             onClick={event => {
-              if (!entry.$isContainer) return
-              event.preventDefault()
+              if (!entry.$isContainer || isOpened) return
               toggleOpen()
             }}
           >
-            {icon}
-          </div>
-          <HStack center gap={8} style={{width: '100%'}}>
-            <span
-              style={{
-                whiteSpace: 'nowrap',
-                textOverflow: 'ellipsis',
-                overflow: 'hidden'
+            <div
+              className={styles.root.link.icon()}
+              onClick={event => {
+                if (!entry.$isContainer) return
+                event.preventDefault()
+                event.stopPropagation()
+                toggleOpen()
               }}
             >
-              {entry.title}
-            </span>
-            {entry.$isContainer && entry.childrenCount > 0 && (
-              <div className={styles.root.link.badge()}>
-                <div>{entry.childrenCount}</div>
-              </div>
-            )}
-          </HStack>
-        </Link>
-        {entry.$isContainer && (
-          <Stack.Right className={styles.root.create()}>
-            <TreeNodeChildrenCreator entry={entry} />
-          </Stack.Right>
-        )}
+              {icon}
+            </div>
+            <HStack center gap={8} style={{width: '100%'}}>
+              <span
+                style={{
+                  whiteSpace: 'nowrap',
+                  textOverflow: 'ellipsis',
+                  overflow: 'hidden'
+                }}
+              >
+                {entry.title}
+              </span>
+              {entry.$isContainer && entry.childrenCount > 0 && (
+                <div className={styles.root.link.badge()}>
+                  <div>{entry.childrenCount}</div>
+                </div>
+              )}
+            </HStack>
+          </Link>
+          {entry.$isContainer && (
+            <Stack.Right className={styles.root.create()}>
+              <TreeNodeChildrenCreator entry={entry} />
+            </Stack.Right>
+          )}
+        </div>
       </div>
     )
   })
@@ -102,9 +116,15 @@ export type TreeNodeProps = {
   level: number
   isOpen: (path: string) => boolean
   toggleOpen: (path: string) => void
-}
+} & PropsWithoutRef<HTMLProps<HTMLDivElement>>
 
-export function TreeNode({entry, level, isOpen, toggleOpen}: TreeNodeProps) {
+export function TreeNode({
+  entry,
+  level,
+  isOpen,
+  toggleOpen,
+  ...props
+}: TreeNodeProps) {
   const {nav} = useDashboard()
   const ref = useRef<HTMLAnchorElement>(null)
   const location = useLocation()
@@ -126,6 +146,7 @@ export function TreeNode({entry, level, isOpen, toggleOpen}: TreeNodeProps) {
       isSelected={isSelected}
       isOpened={isOpened}
       toggleOpen={handleToggleOpen}
+      {...props}
     />
   )
 }

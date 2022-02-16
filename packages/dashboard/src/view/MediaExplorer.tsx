@@ -117,6 +117,7 @@ export function MediaExplorer() {
         <div ref={containerRef} style={{flexGrow: 1, overflow: 'hidden'}}>
           {containerHeight > 0 && (
             <VirtualList
+              className={styles.root.list()}
               width="100%"
               height={containerHeight}
               itemCount={Math.ceil(total / perRow)}
@@ -134,7 +135,6 @@ export function MediaExplorer() {
                   </div>
                 )
               }}
-              className={styles.root.list()}
               scrollOffset={scrollOffsets.get(draft.id) || 0}
               onScroll={scrollTop => {
                 scrollOffsets.set(draft.id, scrollTop)

@@ -1,14 +1,18 @@
 .root {
   position: relative;
   z-index: 1;
-  display: flex;
-  align-items: center;
-  height: 28px;
+  height: 30px;
   font-size: 13px;
   font-weight: 500;
   max-width: 100%;
-  border-radius: 6px;
-  margin: 2px 6px;
+  padding: 2px 6px;
+
+  &-inner {
+    height: 100%;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+  }
 
   &-loader {
     height: 26px;
@@ -62,11 +66,11 @@
     }
   }
 
-  &:hover {
+  &:hover &-inner {
     background: var(--highlight);
   }
 
-  &.is-selected {
+  &.is-selected &-inner {
     background: var(--selected);
   }
 

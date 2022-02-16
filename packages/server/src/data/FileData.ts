@@ -70,7 +70,7 @@ export class FileData implements Data.Source, Data.Target, Data.Media {
               )
               if (isIndex) parentIndex.set(url, entry.id)
               if (!type) continue
-              yield {
+              const res = {
                 ...entry,
                 workspace,
                 root,
@@ -80,6 +80,7 @@ export class FileData implements Data.Source, Data.Target, Data.Media {
                 parents,
                 $isContainer: type.options.isContainer
               }
+              yield res
             }
           }
         }
