@@ -59,18 +59,19 @@ export const ExprData = {
   },
   Query(cursor: CursorData): ExprData {
     return {type: 'query', cursor: cursor}
+  },
+  create(input: any) {
+    if (input == null) return ExprData.Param(ParamData.Value(null))
+    if (input instanceof Expr) return input.expr
+    if (input instanceof Cursor) return ExprData.Query(input.cursor)
+    return ExprData.Param(ParamData.Value(input))
   }
 }
 
-/** Expression or value of type T */
-type EV<T> = Expr<T> | T
+const toExpr = ExprData.create
 
-function toExpr<T>(ev: EV<T> | Cursor<T> | null): ExprData {
-  if (ev == null) return ExprData.Param(ParamData.Value(null))
-  if (ev instanceof Expr) return ev.expr
-  if (ev instanceof Cursor) return ExprData.Query(ev.cursor)
-  return ExprData.Param(ParamData.Value(ev))
-}
+/** Expression or value of type T */
+export type EV<T> = Expr<T> | T
 
 function isConstant<T>(e: ExprData, value: T): boolean {
   switch (e.type) {

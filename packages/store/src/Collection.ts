@@ -10,7 +10,7 @@ type CollectionOptions = {
   alias?: string
 }
 
-export class Collection<Row extends {}> extends Cursor<Row> {
+export class Collection<Row extends {} = any> extends Cursor<Row> {
   constructor(name: string, options: CollectionOptions = {}) {
     const {flat, columns, where, alias} = options
     const from = flat

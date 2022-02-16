@@ -11,8 +11,8 @@ export namespace Driver {
   }
 
   export type PreparedStatement = {
+    run(params: Array<any>): {changes: number}
     all<T>(params: Array<any>): Array<T>
-    run<T>(params: Array<any>): {changes: number}
     get<T>(params: Array<any>): T
   }
 }

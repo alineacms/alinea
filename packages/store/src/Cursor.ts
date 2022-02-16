@@ -1,7 +1,7 @@
-import {Collection} from './Collection'
+import type {Collection} from './Collection'
 import {Expr, ExprData} from './Expr'
 import {From} from './From'
-import {OrderBy} from './OrderBy'
+import type {OrderBy} from './OrderBy'
 import {SelectionData} from './Selection'
 
 export type CursorData = {

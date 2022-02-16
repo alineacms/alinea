@@ -1,13 +1,13 @@
-import {Collection} from './Collection'
-import {Cursor} from './Cursor'
-import {Expr} from './Expr'
+import type {Collection} from './Collection'
+import type {Cursor} from './Cursor'
+import type {Expr} from './Expr'
 
 export type QueryOptions = {
   debug?: boolean
 }
 
-type IdLess<Row> = Omit<Row, 'id'> & {id?: string}
-type Document = {id: string}
+export type IdLess<Row> = Omit<Row, 'id'> & {id?: string}
+export type Document = {id: string}
 
 export interface Store {
   all<Row>(cursor: Cursor<Row>, options?: QueryOptions): Array<Row>
@@ -18,15 +18,15 @@ export interface Store {
     collection: Collection<Row>,
     object: IdLess<Row>,
     options?: QueryOptions
-  ): Row & Document
+  ): Row
   insertAll<Row extends Document>(
     collection: Collection<Row>,
-    objects: IdLess<Row>,
+    objects: Array<IdLess<Row>>,
     options?: QueryOptions
   ): Array<Row>
   update<Row>(
     cursor: Cursor<Row>,
-    partial: Partial<Row>,
+    update: Partial<Row>,
     options?: QueryOptions
   ): {changes: number}
   createIndex<Row extends Document>(
