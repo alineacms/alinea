@@ -120,14 +120,15 @@ export function ContentTree({workspace, root, select = []}: ContentTreeProps) {
   const containerRef = useRef(null)
   const [containerWidth, containerHeight] = useSize(containerRef)
   const itemSize = 30
-  const scrollOffset = useMemo(() => {
+  const offset = useMemo(() => {
     const selected = select[select.length - 1]
     return selected
       ? entries.findIndex(entry => entry.id === selected) * itemSize
       : undefined
   }, [])
+  const scrollOffset = offset && offset < containerHeight ? 0 : offset
   return (
-    <div ref={containerRef} style={{height: '100%'}}>
+    <div ref={containerRef} style={{height: '100%', overflow: 'hidden'}}>
       {containerHeight > 0 && (
         <VirtualList
           className={styles.root.list()}
