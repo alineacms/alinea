@@ -1,0 +1,103 @@
+{
+  "id": "20580nQzbOBR3Lt4kIdxyRGglc6",
+  "root": "data",
+  "type": "Doc",
+  "title": "Getting started",
+  "blocks": [
+    {
+      "id": "258h6WzHYus17B6W3ypGfui7STP",
+      "index": "a0",
+      "type": "TextBlock",
+      "text": {
+        "type": "doc",
+        "blocks": {
+          "258w0M4ciMj7wf6kKWAnKl6HXxY": {
+            "type": "CodeBlock",
+            "code": "npm install alinea"
+          },
+          "258wBB9nLiZn6zYDRi7n1T4LXOY": {
+            "type": "CodeBlock",
+            "code": "npx alinea init"
+          }
+        },
+        "content": [
+          {
+            "type": "heading",
+            "attrs": {
+              "level": 1
+            },
+            "content": [
+              {
+                "type": "text",
+                "text": "Getting started"
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "Alinea can be integrated in existing or new projects. There are no specific steps tied to the set up your favorite framework. If you're starting fresh now is a good time to setup your framework in your preferred way."
+              }
+            ]
+          },
+          {
+            "type": "heading",
+            "attrs": {
+              "level": 2
+            },
+            "content": [
+              {
+                "type": "text",
+                "text": "Install dependencies"
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "Let's install the alinea package from NPM:"
+              }
+            ]
+          },
+          {
+            "type": "CodeBlock",
+            "attrs": {
+              "id": "258w0M4ciMj7wf6kKWAnKl6HXxY"
+            }
+          },
+          {
+            "type": "heading",
+            "attrs": {
+              "level": 2
+            },
+            "content": [
+              {
+                "type": "text",
+                "text": "Initialize the project"
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "With the following command we'll create the necessary config file."
+              }
+            ]
+          },
+          {
+            "type": "CodeBlock",
+            "attrs": {
+              "id": "258wBB9nLiZn6zYDRi7n1T4LXOY"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

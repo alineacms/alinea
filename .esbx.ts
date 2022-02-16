@@ -148,6 +148,7 @@ const GeneratePlugin: Plugin = {
     )
     const cwd = path.resolve('packages/website')
     async function generate() {
+      await buildTask.action({'skip-types': fs.existsSync('.types')})
       await build.esbuild.build({
         bundle: true,
         format: 'esm',

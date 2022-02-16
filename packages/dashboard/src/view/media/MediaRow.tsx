@@ -17,7 +17,7 @@ export type MediaRowProps = {
 }
 
 function query(parentId: string, start: number, batchSize: number) {
-  return File.where(File.$parent.is(parentId))
+  return File.where(File.parent.is(parentId))
     .skip(start * batchSize)
     .take(batchSize)
     .select({

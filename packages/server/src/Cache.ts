@@ -14,6 +14,7 @@ import {SqliteStore} from 'helder.store/sqlite/SqliteStore.js'
 import prettyMilliseconds from 'pretty-ms'
 import * as Y from 'yjs'
 import {Data} from './Data'
+import {parentUrl, walkUrl} from './util/Urls'
 
 export namespace Cache {
   function indexSearch(store: Store, entry: Entry) {
@@ -41,13 +42,38 @@ export namespace Cache {
     store.createIndex(Entry, 'root', [Entry.root])
     store.createIndex(Entry, 'workspace.type', [Entry.workspace, Entry.type])
     store.createIndex(Entry, 'url', [Entry.url])
-    store.createIndex(Entry, 'parent', [Entry.$parent])
+    store.createIndex(Entry, 'parent', [Entry.parent])
     const diff = process.hrtime.bigint() - startTime
     console.log(
       `Done indexing ${total} entries in ${prettyMilliseconds(
         convertHrtime(diff).milliseconds
       )}`
     )
+  }
+
+  function computeEntry(store: Store, config: Config | Schema, entry: Entry) {
+    const type =
+      config instanceof Config
+        ? config.type(entry.workspace, entry.type)
+        : config.type(entry.type)
+    if (!type) throw createError(400, 'Type not found')
+    const parents = walkUrl(parentUrl(entry.url)).map(url => {
+      const parent = store.first(
+        Entry.where(Entry.workspace.is(entry.workspace))
+          .where(Entry.root.is(entry.root))
+          .where(Entry.url.is(url))
+          .select({id: Entry.id})
+      )
+      if (!parent) throw createError(400, 'Parent not found')
+      return parent.id
+    })
+    return {
+      ...entry,
+      parent: parents[parents.length - 1],
+      parents: parents,
+      $isContainer: type!.options.isContainer,
+      $status: EntryStatus.Draft
+    }
   }
 
   export function applyUpdates(
@@ -62,39 +88,21 @@ export namespace Cache {
       if (existing) docFromEntry(config, existing, doc)
       Y.applyUpdate(doc, update)
       const data = entryFromDoc(config, doc)
-      const type =
-        config instanceof Config
-          ? config.type(data.workspace, data.type)
-          : config.type(data.type)
-      if (!type) throw createError(400, 'Type not found')
-      function stripLast(path: string) {
-        const last = path.lastIndexOf('/')
-        if (last > -1) return path.substring(0, last) || '/'
-        return path
-      }
-      const parent =
-        data.url === '/'
-          ? undefined
-          : store.first(
-              Entry.where(Entry.workspace.is(data.workspace))
-                .where(Entry.root.is(data.root))
-                .where(Entry.url.is(stripLast(data.url)))
-            )
-      const entry = {
-        ...data,
-        $parent: parent?.id,
-        $isContainer: type!.options.isContainer,
-        $status: EntryStatus.Draft
-      }
+      const entry = computeEntry(store, config, data)
       if (existing) store.update(condition, entry)
       else store.insert(Entry, entry)
       indexSearch(store, entry)
     }
   }
 
-  export function applyPublish(store: Store, entries: Array<Entry>) {
+  export function applyPublish(
+    store: Store,
+    config: Config | Schema,
+    entries: Array<Entry>
+  ) {
     return store.transaction(() => {
-      for (const entry of entries) {
+      for (const data of entries) {
+        const entry = computeEntry(store, config, data)
         const condition = Entry.where(Entry.id.is(entry.id))
         const existing = store.first(condition)
         if (existing) store.update(condition, entry)

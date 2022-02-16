@@ -9,7 +9,7 @@ export type ListOptions<T> = {
 
 export interface ListField<T> extends Field<Array<T>> {
   label: Label
-  options: ListOptions<any>
+  options: ListOptions<T>
 }
 
 export function createList<T>(

@@ -56,6 +56,7 @@ export function RichText<T>({doc, view}: RichTextProps<T>) {
         const Custom = custom[node.type]
         if (Custom) {
           const id = (node as RichTextNode.Element).attrs?.id
+          if (!doc.blocks?.[id]) return null
           return <Custom key={i} {...doc.blocks[id]} />
         }
         return <RichTextNodeView key={i} {...node} />

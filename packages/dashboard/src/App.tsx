@@ -113,8 +113,8 @@ function EntryRoute({id}: EntryRouteProps) {
   const type = draft?.channel
   const View = type?.options.view || EntryEdit
   const selected = ([] as Array<string | undefined>)
-    .concat(draft?.id)
     .concat(draft?.parents)
+    .concat(draft?.id)
     .filter(Boolean) as Array<string>
   // Todo: add loader
   return (

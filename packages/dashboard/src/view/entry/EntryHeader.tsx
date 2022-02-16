@@ -67,7 +67,7 @@ export function EntryHeader() {
           'children',
           draft.workspace,
           draft.root,
-          draft.$parent
+          draft.parent
         ])
       })
       .finally(() => {

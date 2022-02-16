@@ -29,7 +29,14 @@ export class GithubData implements Data.Target, Data.Media {
   async publish(entries: Array<Entry>) {
     const {loader, config, rootDir = '.'} = this.options
     const changes = entries.map(entry => {
-      const {workspace, url, $parent, $isContainer, $status, ...data} = entry
+      const {
+        workspace,
+        url,
+        parent: parent,
+        $isContainer,
+        $status,
+        ...data
+      } = entry
       const {schema, contentDir} = config.workspaces[workspace]
       const file = entry.url + ($isContainer ? 'index' : '') + loader.extension
       const location = path.join(rootDir, contentDir, file)

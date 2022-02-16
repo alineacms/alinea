@@ -1,4 +1,4 @@
-/* @esbx/sass::C:/Users/ben/projects/alinea/packages/dashboard/src/view/BrowserPreview.module.scss */
+/* @esbx/sass::C:/projects/alinea/packages/dashboard/src/view/BrowserPreview.module.scss */
 .alinea__BrowserPreview-module-root {
   height: 100%;
   display: flex;
@@ -28,7 +28,7 @@
   transition: none;
 }
 /*# sourceMappingURL=BrowserPreview.css.map */
-/* @esbx/sass::C:/Users/ben/projects/alinea/packages/dashboard/src/view/ContentTree.module.scss */
+/* @esbx/sass::C:/projects/alinea/packages/dashboard/src/view/ContentTree.module.scss */
 .alinea__ContentTree-module-node {
   position: relative;
   z-index: 1;
@@ -107,12 +107,12 @@
   opacity: 1;
 }
 /*# sourceMappingURL=ContentTree.css.map */
-/* @esbx/sass::C:/Users/ben/projects/alinea/packages/dashboard/src/view/entry/EntryTitle.module.scss */
+/* @esbx/sass::C:/projects/alinea/packages/dashboard/src/view/entry/EntryTitle.module.scss */
 .alinea__EntryTitle-module-root {
   padding-bottom: 25px;
 }
 /*# sourceMappingURL=EntryTitle.css.map */
-/* @esbx/sass::C:/Users/ben/projects/alinea/packages/dashboard/src/view/EntryEdit.module.scss */
+/* @esbx/sass::C:/projects/alinea/packages/dashboard/src/view/EntryEdit.module.scss */
 .alinea__EntryEdit-module-root {
   flex-grow: 1;
   display: flex;
@@ -147,7 +147,7 @@
   padding-bottom: 20px;
 }
 /*# sourceMappingURL=EntryEdit.css.map */
-/* @esbx/sass::C:/Users/ben/projects/alinea/packages/dashboard/src/view/media/MediaRow.module.scss */
+/* @esbx/sass::C:/projects/alinea/packages/dashboard/src/view/media/MediaRow.module.scss */
 .alinea__MediaRow-module-root {
   width: 100%;
   height: 100%;
@@ -155,7 +155,7 @@
   padding-bottom: 12px;
 }
 /*# sourceMappingURL=MediaRow.css.map */
-/* @esbx/sass::C:/Users/ben/projects/alinea/packages/dashboard/src/view/media/MediaThumbnail.module.scss */
+/* @esbx/sass::C:/projects/alinea/packages/dashboard/src/view/media/MediaThumbnail.module.scss */
 .alinea__MediaThumbnail-module-root {
   height: 100%;
   overflow: hidden;
@@ -236,7 +236,7 @@
   border-radius: 6px;
 }
 /*# sourceMappingURL=MediaThumbnail.css.map */
-/* @esbx/sass::C:/Users/ben/projects/alinea/packages/dashboard/src/view/MediaExplorer.module.scss */
+/* @esbx/sass::C:/projects/alinea/packages/dashboard/src/view/MediaExplorer.module.scss */
 .alinea__MediaExplorer-module-root {
   display: flex;
   flex-direction: column;
@@ -269,7 +269,7 @@
   background: rgba(var(--negative), 0.9);
 }
 /*# sourceMappingURL=MediaExplorer.css.map */
-/* @esbx/sass::C:/Users/ben/projects/alinea/packages/dashboard/src/view/Preview.module.scss */
+/* @esbx/sass::C:/projects/alinea/packages/dashboard/src/view/Preview.module.scss */
 .alinea__Preview-module-root {
   overflow: auto;
   height: 100%;
@@ -291,7 +291,7 @@
   background: rgba(var(--negative), 0.9);
 }
 /*# sourceMappingURL=Preview.css.map */
-/* @esbx/sass::C:/Users/ben/projects/alinea/packages/dashboard/src/view/Toolbar.module.scss */
+/* @esbx/sass::C:/projects/alinea/packages/dashboard/src/view/Toolbar.module.scss */
 .alinea__Toolbar-module-root {
   position: relative;
   z-index: 1;
@@ -301,13 +301,99 @@
   color: var(--foreground);
   border-bottom: 1px solid var(--outline);
 }
+.alinea__Toolbar-module-root-portal {
+  flex-grow: 1;
+  height: 100%;
+}
+.alinea__Toolbar-module-root-portal-slot {
+  height: 100%;
+}
 /*# sourceMappingURL=Toolbar.css.map */
-/* @esbx/sass::C:/Users/ben/projects/alinea/packages/editor/src/view/Fields.module.scss */
+/* @esbx/sass::C:/projects/alinea/packages/dashboard/src/view/tree/TreeNode.module.scss */
+.alinea__TreeNode-module-root {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  height: 28px;
+  font-size: 13px;
+  font-weight: 500;
+  max-width: 100%;
+  border-radius: 6px;
+  margin: 2px 6px;
+}
+.alinea__TreeNode-module-root-loader {
+  height: 26px;
+  background: var(--selected);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.alinea__TreeNode-module-root-link {
+  display: flex;
+  align-items: center;
+  flex-grow: 1;
+  color: var(--foreground-faded);
+  cursor: pointer;
+  text-decoration: none;
+  padding-right: 15px;
+  height: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.alinea__TreeNode-module-root-link-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent);
+  color: var(--accent-foreground);
+  border-radius: 15px;
+  height: 15px;
+  min-width: 15px;
+  padding: 0 3px;
+  white-space: nowrap;
+  font-size: 9.5px;
+}
+.alinea__TreeNode-module-root-link-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  margin-right: 4px;
+  height: 20px;
+  text-align: center;
+  flex-shrink: 0;
+  color: rgba(var(--negative), 0.5);
+}
+.alinea__TreeNode-module-root-link-icon:hover {
+  color: var(--foreground);
+}
+.alinea__TreeNode-module-root:hover {
+  background: var(--highlight);
+}
+.alinea__TreeNode-module-root.alinea__TreeNode-module-is-selected {
+  background: var(--selected);
+}
+.alinea__TreeNode-module-root:hover .alinea__TreeNode-module-root-link,
+.alinea__TreeNode-module-root.alinea__TreeNode-module-is-selected .alinea__TreeNode-module-root-link {
+  color: var(--foreground);
+}
+.alinea__TreeNode-module-root-create {
+  opacity: 0;
+  padding-right: 10px;
+}
+.alinea__TreeNode-module-root:hover .alinea__TreeNode-module-root-create,
+.alinea__TreeNode-module-root.alinea__TreeNode-module-is-selected .alinea__TreeNode-module-root-create {
+  opacity: 1;
+}
+/*# sourceMappingURL=TreeNode.css.map */
+/* @esbx/sass::C:/projects/alinea/packages/editor/src/view/Fields.module.scss */
 .alinea__Fields-module-root {
   margin: 0;
 }
 /*# sourceMappingURL=Fields.css.map */
-/* @esbx/sass::C:/Users/ben/projects/alinea/packages/editor/src/view/InputLabel.module.scss */
+/* @esbx/sass::C:/projects/alinea/packages/editor/src/view/InputLabel.module.scss */
 .alinea__InputLabel-module-root {
   display: inline-block;
   vertical-align: top;
@@ -341,7 +427,7 @@
   color: var(--foreground);
 }
 /*# sourceMappingURL=InputLabel.css.map */
-/* @esbx/sass::C:/Users/ben/projects/alinea/packages/ui/src/AppBar.module.scss */
+/* @esbx/sass::C:/projects/alinea/packages/ui/src/AppBar.module.scss */
 .alinea__AppBar-module-root {
   position: sticky;
   top: 0;
@@ -370,7 +456,7 @@
   background: var(--highlight);
 }
 /*# sourceMappingURL=AppBar.css.map */
-/* @esbx/sass::C:/Users/ben/projects/alinea/packages/ui/src/branding/Logo.module.scss */
+/* @esbx/sass::C:/projects/alinea/packages/ui/src/branding/Logo.module.scss */
 .alinea__Logo-module-root {
   position: relative;
   width: 24px;
@@ -393,7 +479,7 @@
   z-index: -1;
 }
 /*# sourceMappingURL=Logo.css.map */
-/* @esbx/sass::C:/Users/ben/projects/alinea/packages/ui/src/Button.module.scss */
+/* @esbx/sass::C:/projects/alinea/packages/ui/src/Button.module.scss */
 .alinea__Button-module-root {
   position: relative;
   border: none;
@@ -431,13 +517,14 @@
   opacity: 0.05;
 }
 /*# sourceMappingURL=Button.css.map */
-/* @esbx/sass::C:/Users/ben/projects/alinea/packages/ui/src/Card.module.scss */
+/* @esbx/sass::C:/projects/alinea/packages/ui/src/Card.module.scss */
 .alinea__Card-module-root {
   position: relative;
   border-radius: 12px;
   background: var(--lift);
   overflow: hidden;
   box-shadow: 0 2px 3.5px var(--shadow);
+  cursor: default;
 }
 .alinea__Card-module-header {
   display: flex;
@@ -459,7 +546,7 @@
 }
 .alinea__Card-module-content {
   flex-grow: 1;
-  padding: 0 10px 10px 10px;
+  padding: 10px;
 }
 .alinea__Card-module-options {
   padding: 0;
@@ -468,7 +555,7 @@
   align-items: center;
 }
 /*# sourceMappingURL=Card.css.map */
-/* @esbx/sass::C:/Users/ben/projects/alinea/packages/ui/src/Chip.module.scss */
+/* @esbx/sass::C:/projects/alinea/packages/ui/src/Chip.module.scss */
 .alinea__Chip-module-root {
   display: inline-flex;
   align-items: center;
@@ -491,7 +578,7 @@
   color: var(--accent-foreground);
 }
 /*# sourceMappingURL=Chip.css.map */
-/* @esbx/sass::C:/Users/ben/projects/alinea/packages/ui/src/Create.module.scss */
+/* @esbx/sass::C:/projects/alinea/packages/ui/src/Create.module.scss */
 .alinea__Create-module-root {
   padding: 3px 0;
   display: flex;
@@ -522,7 +609,7 @@
   background: var(--accent);
 }
 /*# sourceMappingURL=Create.css.map */
-/* @esbx/sass::C:/Users/ben/projects/alinea/packages/ui/src/DropdownMenu.module.scss */
+/* @esbx/sass::C:/projects/alinea/packages/ui/src/DropdownMenu.module.scss */
 .alinea__DropdownMenu-module-content {
   min-width: 220px;
   background-color: white;
@@ -553,7 +640,7 @@
   background-color: #f7f6f6;
 }
 /*# sourceMappingURL=DropdownMenu.css.map */
-/* @esbx/sass::C:/Users/ben/projects/alinea/packages/ui/src/Icon.module.scss */
+/* @esbx/sass::C:/projects/alinea/packages/ui/src/Icon.module.scss */
 .alinea__Icon-module-root {
   display: inline-block;
   vertical-align: top;
@@ -565,7 +652,7 @@
   display: block;
 }
 /*# sourceMappingURL=Icon.css.map */
-/* @esbx/sass::C:/Users/ben/projects/alinea/packages/ui/src/IconButton.module.scss */
+/* @esbx/sass::C:/projects/alinea/packages/ui/src/IconButton.module.scss */
 .alinea__IconButton-module-root {
   display: flex;
   align-items: center;
@@ -579,8 +666,10 @@
   border: none;
   color: inherit;
   background: transparent;
-  background: rgba(var(--negative), 0.1);
   transition: 0.2s ease-out;
+}
+.alinea__IconButton-module-root.alinea__IconButton-module-is-active {
+  background: rgba(var(--negative), 0.1);
 }
 .alinea__IconButton-module-root:hover {
   color: var(--accent-foreground);
@@ -588,7 +677,7 @@
   box-shadow: 0 0 0 3px var(--accent);
 }
 /*# sourceMappingURL=IconButton.css.map */
-/* @esbx/sass::C:/Users/ben/projects/alinea/packages/ui/src/Loader.module.scss */
+/* @esbx/sass::C:/projects/alinea/packages/ui/src/Loader.module.scss */
 .alinea__Loader-module-loader {
   margin: auto;
   position: relative;
@@ -640,7 +729,7 @@
   }
 }
 /*# sourceMappingURL=Loader.css.map */
-/* @esbx/sass::C:/Users/ben/projects/alinea/packages/ui/src/Modal.module.scss */
+/* @esbx/sass::C:/projects/alinea/packages/ui/src/Modal.module.scss */
 .alinea__Modal-module-root {
   position: absolute;
   top: 0;
@@ -675,7 +764,7 @@
   box-shadow: 0 2px 3.5px var(--shadow);
 }
 /*# sourceMappingURL=Modal.css.map */
-/* @esbx/sass::C:/Users/ben/projects/alinea/packages/ui/src/Pane.module.scss */
+/* @esbx/sass::C:/projects/alinea/packages/ui/src/Pane.module.scss */
 .alinea__Pane-module-root {
   display: flex;
   height: 100%;
@@ -723,7 +812,7 @@
   border-width: 2px;
 }
 /*# sourceMappingURL=Pane.css.map */
-/* @esbx/sass::C:/Users/ben/projects/alinea/packages/ui/src/Sidebar.module.scss */
+/* @esbx/sass::C:/projects/alinea/packages/ui/src/Sidebar.module.scss */
 .alinea__Sidebar-module-root {
   display: flex;
   height: 100%;
@@ -784,7 +873,7 @@
   background: rgba(var(--negative), 0.9);
 }
 /*# sourceMappingURL=Sidebar.css.map */
-/* @esbx/sass::C:/Users/ben/projects/alinea/packages/ui/src/Statusbar.module.scss */
+/* @esbx/sass::C:/projects/alinea/packages/ui/src/Statusbar.module.scss */
 .alinea__Statusbar-module-root {
   height: 22px;
   display: flex;
@@ -799,18 +888,21 @@
   padding: 0 6px;
 }
 /*# sourceMappingURL=Statusbar.css.map */
-/* @esbx/sass::C:/Users/ben/projects/alinea/packages/ui/src/Tabs.module.scss */
+/* @esbx/sass::C:/projects/alinea/packages/ui/src/Tabs.module.scss */
 .alinea__Tabs-module-list {
   display: flex;
+  gap: 16px;
+  padding: 6px;
 }
 .alinea__Tabs-module-trigger {
-  height: 26px;
+  padding: 10px 0;
+  cursor: pointer;
 }
 .alinea__Tabs-module-trigger[data-state=active] {
   box-shadow: inset 0 -1px 0 0 var(--accent), 0 1px 0 0 var(--accent);
 }
 /*# sourceMappingURL=Tabs.css.map */
-/* @esbx/sass::C:/Users/ben/projects/alinea/packages/ui/src/Typo.module.scss */
+/* @esbx/sass::C:/projects/alinea/packages/ui/src/Typo.module.scss */
 .alinea__Typo-module-hyphenate,
 .alinea__Typo-module-link,
 .alinea__Typo-module-p,
@@ -902,13 +994,13 @@
   font-size: 0.8em;
 }
 /*# sourceMappingURL=Typo.css.map */
-/* @esbx/sass::C:/Users/ben/projects/alinea/packages/ui/src/Viewport.module.scss */
+/* @esbx/sass::C:/projects/alinea/packages/ui/src/Viewport.module.scss */
 .alinea__Viewport-module-root {
-  --background: rgb(29, 35, 42);
+  --background: #1d232a;
   --foreground: white;
-  --foreground-faded: hsl(0, 3%, 83%);
+  --foreground-faded: hsl(0, 3%, 85%);
   --inner: rgb(29, 35, 42);
-  --highlight: hsl(212, 18%, 16%);
+  --highlight: hsl(212, 18%, 18%);
   --lift: hsl(212, 18%, 17%);
   --selected: hsl(212, 18%, 22%);
   --outline: hsl(212, 18%, 20%);
@@ -987,11 +1079,11 @@
   --shadow: rgba(0, 0, 0, 0.08);
 }
 .alinea__Viewport-module-root.alinea__Viewport-module-is-dark {
-  --background: rgb(29, 35, 42);
+  --background: #1d232a;
   --foreground: white;
-  --foreground-faded: hsl(0, 3%, 83%);
+  --foreground-faded: hsl(0, 3%, 85%);
   --inner: rgb(29, 35, 42);
-  --highlight: hsl(212, 18%, 16%);
+  --highlight: hsl(212, 18%, 18%);
   --lift: hsl(212, 18%, 17%);
   --selected: hsl(212, 18%, 22%);
   --outline: hsl(212, 18%, 20%);
@@ -1011,7 +1103,7 @@
   --shadow: rgba(0, 0, 0, 0.5);
 }
 /*# sourceMappingURL=Viewport.css.map */
-/* @esbx/sass::C:/Users/ben/projects/alinea/packages/input/code/src/CodeInput.module.scss */
+/* @esbx/sass::C:/projects/alinea/packages/input/code/src/CodeInput.module.scss */
 .alinea__CodeInput-module-root-input {
   display: block;
   background: transparent;
@@ -1033,18 +1125,18 @@
   border-color: var(--fields-focus);
 }
 /*# sourceMappingURL=CodeInput.css.map */
-/* @esbx/sass::C:/Users/ben/projects/alinea/packages/input/link/src/LinkInput.module.scss */
+/* @esbx/sass::C:/projects/alinea/packages/input/link/src/LinkInput.module.scss */
 .alinea__LinkInput-module-root {
   position: relative;
 }
 /*# sourceMappingURL=LinkInput.css.map */
-/* @esbx/sass::C:/Users/ben/projects/alinea/packages/input/list/src/ListInput.module.scss */
+/* @esbx/sass::C:/projects/alinea/packages/input/list/src/ListInput.module.scss */
 .alinea__ListInput-module-root {
   position: relative;
 }
 .alinea__ListInput-module-root-inner {
   border-radius: 12px;
-  padding: 11px;
+  padding: 11px 6px;
   background: var(--inner);
 }
 .alinea__ListInput-module-root-title {
@@ -1057,7 +1149,7 @@
   padding: 8px 0;
 }
 .alinea__ListInput-module-root .alinea__ListInput-module-root .alinea__ListInput-module-root-inner {
-  padding: 0 15px;
+  padding: 10px 15px 5px 15px;
 }
 .alinea__ListInput-module-root-header {
   padding: 8px;
@@ -1078,9 +1170,9 @@
   overflow: hidden;
 }
 /*# sourceMappingURL=ListInput.css.map */
-/* @esbx/sass::C:/Users/ben/projects/alinea/packages/input/number/src/NumberInput.module.scss */
+/* @esbx/sass::C:/projects/alinea/packages/input/number/src/NumberInput.module.scss */
 /*# sourceMappingURL=NumberInput.css.map */
-/* @esbx/sass::C:/Users/ben/projects/alinea/packages/input/path/src/PathInput.module.scss */
+/* @esbx/sass::C:/projects/alinea/packages/input/path/src/PathInput.module.scss */
 .alinea__PathInput-module-root-input {
   display: block;
   background: transparent;
@@ -1101,7 +1193,106 @@
   border-color: var(--fields-focus);
 }
 /*# sourceMappingURL=PathInput.css.map */
-/* @esbx/sass::C:/Users/ben/projects/alinea/packages/input/richtext/src/RichTextInput.module.scss */
+/* @esbx/sass::C:/projects/alinea/packages/input/richtext/src/RichTextInput.module.scss */
+.alinea__RichTextInput-module-hyphenate,
+.alinea__RichTextInput-module-link,
+.alinea__RichTextInput-module-p,
+.alinea__RichTextInput-module-h4,
+.alinea__RichTextInput-module-h3,
+.alinea__RichTextInput-module-root-editor > * h3,
+.alinea__RichTextInput-module-h2,
+.alinea__RichTextInput-module-root-editor > * h2,
+.alinea__RichTextInput-module-h1,
+.alinea__RichTextInput-module-root-editor > * h1 {
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-all;
+  word-break: break-word;
+  hyphens: auto;
+}
+.alinea__RichTextInput-module-h1,
+.alinea__RichTextInput-module-root-editor > * h1 {
+  min-width: 0;
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1.25;
+  margin-bottom: 20px;
+  white-space: pre-line;
+  text-rendering: optimizeLegibility;
+}
+.alinea__RichTextInput-module-h1.alinea__RichTextInput-module-is-flat,
+.alinea__RichTextInput-module-root-editor > * h1.alinea__RichTextInput-module-is-flat {
+  margin-bottom: 0;
+}
+.alinea__RichTextInput-module-h2,
+.alinea__RichTextInput-module-root-editor > * h2 {
+  min-width: 0;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.33;
+  margin-bottom: 9px;
+  white-space: pre-line;
+  text-rendering: optimizeLegibility;
+}
+.alinea__RichTextInput-module-h2.alinea__RichTextInput-module-is-flat,
+.alinea__RichTextInput-module-root-editor > * h2.alinea__RichTextInput-module-is-flat {
+  margin-bottom: 0;
+}
+.alinea__RichTextInput-module-h3,
+.alinea__RichTextInput-module-root-editor > * h3 {
+  min-width: 0;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.2;
+  margin-bottom: 5px;
+  white-space: pre-line;
+  text-rendering: optimizeLegibility;
+}
+.alinea__RichTextInput-module-h3.alinea__RichTextInput-module-is-flat,
+.alinea__RichTextInput-module-root-editor > * h3.alinea__RichTextInput-module-is-flat {
+  margin-bottom: 0;
+}
+.alinea__RichTextInput-module-h4 {
+  min-width: 0;
+  font-size: 13px;
+  font-weight: bold;
+  margin-bottom: 4px;
+  white-space: pre-line;
+  text-rendering: optimizeLegibility;
+}
+.alinea__RichTextInput-module-h4.alinea__RichTextInput-module-is-flat {
+  margin-bottom: 0;
+}
+.alinea__RichTextInput-module-p {
+  font-size: 14px;
+  line-height: 1.6;
+  margin-bottom: 14px;
+  max-width: 50ch;
+  text-rendering: optimizeLegibility;
+  white-space: pre-line;
+}
+.alinea__RichTextInput-module-p.alinea__RichTextInput-module-is-flat,
+.alinea__RichTextInput-module-p:last-child {
+  margin-bottom: 0;
+}
+.alinea__RichTextInput-module-link {
+  text-decoration: underline;
+  text-decoration-color: rgba(var(--negative), 0.2);
+  text-underline-offset: 1.5px;
+  cursor: pointer;
+}
+.alinea__RichTextInput-module-link:hover {
+  text-decoration-color: currentColor;
+}
+.alinea__RichTextInput-module-monospace {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.9em;
+  white-space: nowrap;
+  font-feature-settings: "tnum" 1;
+}
+.alinea__RichTextInput-module-small {
+  font-size: 0.8em;
+}
 .alinea__RichTextInput-module-root-editor > * {
   display: block;
   background: transparent;
@@ -1118,13 +1309,31 @@
   cursor: text;
   line-height: 1.5;
 }
-.alinea__RichTextInput-module-root-editor > *:focus {
+.alinea__RichTextInput-module-root-editor.alinea__RichTextInput-module-is-focus > * {
   outline: none;
   background: var(--selected);
   border-color: var(--fields-focus);
 }
+.alinea__RichTextInput-module-root-editor > * > :first-child {
+  margin-top: 0;
+}
+.alinea__RichTextInput-module-root-editor > * h1 {
+  margin-top: 3em;
+}
+.alinea__RichTextInput-module-root-editor > * h2 {
+  margin-top: 2em;
+}
+.alinea__RichTextInput-module-root-editor > * h3 {
+  margin-top: 1em;
+}
+.alinea__RichTextInput-module-buttons {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+}
 /*# sourceMappingURL=RichTextInput.css.map */
-/* @esbx/sass::C:/Users/ben/projects/alinea/packages/input/select/src/SelectInput.module.scss */
+/* @esbx/sass::C:/projects/alinea/packages/input/select/src/SelectInput.module.scss */
 .alinea__SelectInput-module-root {
   border-bottom: 1px solid var(--outline);
 }
@@ -1143,12 +1352,12 @@
   box-shadow: rgba(222, 236, 238, 0.4) 0 0 0 0.2em;
 }
 /*# sourceMappingURL=SelectInput.css.map */
-/* @esbx/sass::C:/Users/ben/projects/alinea/packages/input/tabs/src/TabsView.module.scss */
+/* @esbx/sass::C:/projects/alinea/packages/input/tabs/src/TabsView.module.scss */
 .alinea__TabsView-module-root {
   background: red;
 }
 /*# sourceMappingURL=TabsView.css.map */
-/* @esbx/sass::C:/Users/ben/projects/alinea/packages/input/text/src/TextInput.module.scss */
+/* @esbx/sass::C:/projects/alinea/packages/input/text/src/TextInput.module.scss */
 .alinea__TextInput-module-root-input {
   display: block;
   background: transparent;
@@ -1169,7 +1378,7 @@
   border-color: var(--fields-focus);
 }
 /*# sourceMappingURL=TextInput.css.map */
-/* @esbx/sass::C:/Users/ben/projects/alinea/packages/auth/passwordless/src/PasswordLessLogin.module.scss */
+/* @esbx/sass::C:/projects/alinea/packages/auth/passwordless/src/PasswordLessLogin.module.scss */
 .alinea__PasswordLessLogin-module-root-email {
   border-bottom: 1px solid currentColor;
 }

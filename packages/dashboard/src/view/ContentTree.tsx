@@ -1,222 +1,14 @@
-import {Entry} from '@alinea/core'
-import {Create, fromModule, Stack, useInitialEffect} from '@alinea/ui'
-import {HStack} from '@alinea/ui/Stack'
-import {
-  forwardRef,
-  memo,
-  Ref,
-  Suspense,
-  useCallback,
-  useEffect,
-  useRef,
-  useState
-} from 'react'
-import {
-  MdChevronRight,
-  MdError,
-  MdExpandMore,
-  MdInsertDriveFile
-} from 'react-icons/md'
+import {Entry, Outcome} from '@alinea/core'
+import {fromModule} from '@alinea/ui'
+import {Expression} from 'helder.store'
+import {useCallback, useLayoutEffect, useMemo, useState} from 'react'
 import {useQuery} from 'react-query'
-import {Link, useLocation} from 'react-router-dom'
 import {useDashboard} from '../hook/UseDashboard'
 import {useSession} from '../hook/UseSession'
-import {useWorkspace} from '../hook/UseWorkspace'
 import css from './ContentTree.module.scss'
+import {TreeNode} from './tree/TreeNode'
 
 const styles = fromModule(css)
-
-type TreeChildrenProps = {
-  workspace: string
-  root: string
-  parent?: string | undefined
-  level?: number
-} & OpenChildren
-
-function TreeChildren({
-  workspace,
-  root,
-  parent,
-  level = 0,
-  isOpen,
-  toggleOpen
-}: TreeChildrenProps) {
-  const session = useSession()
-  const {data} = useQuery(
-    ['children', workspace, root, parent],
-    () => session.hub.list(workspace, root, parent),
-    {suspense: true, keepPreviousData: true}
-  )
-  if (data?.isFailure()) {
-    console.error(data.error)
-    return (
-      <div
-        style={{margin: '10px auto', display: 'flex', justifyContent: 'center'}}
-      >
-        <MdError />
-      </div>
-    )
-  }
-  const list = data && data.isSuccess() ? data.value : undefined
-  return (
-    <>
-      {list?.map(entry => {
-        return (
-          <TreeNode
-            key={entry.id}
-            entry={entry}
-            level={level}
-            isOpen={isOpen}
-            toggleOpen={toggleOpen}
-          />
-        )
-      })}
-    </>
-  )
-}
-
-type TreeNodeProps = {
-  entry: Entry.Summary
-  level: number
-} & OpenChildren
-
-function TreeNode({entry, level, isOpen, toggleOpen}: TreeNodeProps) {
-  const {nav} = useDashboard()
-  const ref = useRef<HTMLAnchorElement>(null)
-  const location = useLocation()
-  const isSelected =
-    location.pathname === nav.entry(entry.workspace, entry.root, entry.id)
-  const handleToggleOpen = useCallback(() => {
-    if (entry.$isContainer) toggleOpen(entry.id)
-  }, [toggleOpen])
-  const isOpened = isOpen(entry.id)
-  useInitialEffect(() => {
-    if (isSelected)
-      ref.current!.scrollIntoView({/*behavior: 'smooth',*/ block: 'center'})
-  })
-  return (
-    <>
-      <TreeNodeLink
-        ref={ref}
-        entry={entry}
-        level={level}
-        isSelected={isSelected}
-        isOpened={isOpened}
-        toggleOpen={handleToggleOpen}
-      />
-      <Suspense
-        fallback={
-          null /*<div className={styles.node.loader()}>
-            <Loader small />
-          </div>*/
-        }
-      >
-        {entry.$isContainer && isOpened && (
-          <TreeChildren
-            workspace={entry.workspace}
-            root={entry.root}
-            parent={entry.id}
-            level={level + 1}
-            isOpen={isOpen}
-            toggleOpen={toggleOpen}
-          />
-        )}
-      </Suspense>
-    </>
-  )
-}
-
-type TreeNodeChildrenCreator = {entry: Entry}
-
-function TreeNodeChildrenCreator({entry}: TreeNodeChildrenCreator) {
-  const {nav} = useDashboard()
-  const {schema} = useWorkspace()
-  const type = schema.type(entry.type)
-  if (!type) return null
-  return (
-    <Create.Root>
-      <Create.Link to={nav.create(entry.workspace, entry.root, entry.id)} />
-    </Create.Root>
-  )
-}
-
-type TreeNodeLinkProps = {
-  entry: Entry.Summary
-  isSelected: boolean
-  level: number
-  isOpened: boolean
-  toggleOpen: () => void
-}
-
-const TreeNodeLink = memo(
-  forwardRef(function TreeNodeLink(
-    {entry, isOpened, toggleOpen, isSelected, level}: TreeNodeLinkProps,
-    ref: Ref<HTMLAnchorElement>
-  ) {
-    const {nav} = useDashboard()
-    const {schema} = useWorkspace()
-    const type = schema.type(entry.type)!
-    const isContainer = entry.$isContainer
-    const icon =
-      (type.options.icon && <type.options.icon />) ||
-      (isContainer ? (
-        isOpened ? (
-          <MdExpandMore size={20} />
-        ) : (
-          <MdChevronRight size={20} />
-        )
-      ) : (
-        <MdInsertDriveFile size={12} />
-      ))
-    return (
-      <div className={styles.node({selected: isSelected})}>
-        <Link
-          ref={ref}
-          to={nav.entry(entry.workspace, entry.root, entry.id)}
-          onClick={toggleOpen}
-          className={styles.node.link()}
-          style={{paddingLeft: `${10 + level * 8}px`}}
-        >
-          <div className={styles.node.link.icon()}>{icon}</div>
-          <HStack
-            center
-            gap={8}
-            style={{width: '100%'}}
-            onClick={event => {
-              if (isSelected && !isOpened) return
-              event.stopPropagation()
-            }}
-          >
-            <span
-              style={{
-                whiteSpace: 'nowrap',
-                textOverflow: 'ellipsis',
-                overflow: 'hidden'
-              }}
-            >
-              {entry.title}
-            </span>
-            {entry.$isContainer && entry.childrenCount > 0 && (
-              <div className={styles.node.link.badge()}>
-                <div>{entry.childrenCount}</div>
-              </div>
-            )}
-          </HStack>
-        </Link>
-        {entry.$isContainer && (
-          <Stack.Right className={styles.node.create()}>
-            <TreeNodeChildrenCreator entry={entry} />
-          </Stack.Right>
-        )}
-      </div>
-    )
-  })
-)
-
-type OpenChildren = {
-  isOpen: (path: string) => boolean
-  toggleOpen: (path: string) => void
-}
 
 type ContentTreeProps = {
   workspace: string
@@ -224,8 +16,60 @@ type ContentTreeProps = {
   select?: Array<string>
 }
 
+type QueryParams = {
+  workspace: string
+  root: string
+  open: Array<string>
+  hidden: Array<string>
+}
+
+function query({workspace, root, open, hidden}: QueryParams) {
+  const Parent = Entry.as('Parent')
+  const condition =
+    open.length > 0
+      ? Entry.parent.isIn(open).or(Entry.id.isIn(open))
+      : Entry.parent.isNull()
+  return Entry.where(condition)
+    .where(Entry.workspace.is(workspace))
+    .where(Entry.root.is(root))
+    .where(Entry.type.isNotIn(hidden))
+    .select({
+      id: Entry.id,
+      index: Entry.index,
+      workspace: Entry.workspace,
+      root: Entry.root,
+      type: Entry.type,
+      title: Entry.title,
+      url: Entry.url,
+      parent: Entry.parent,
+      parents: Entry.parents,
+      $isContainer: Entry.$isContainer,
+      childrenCount: Expression.value(0)
+      /* Parent.where(Parent.parent.is(Entry.id))
+        .select(Functions.count())
+        .first() */
+    })
+}
+
+function sortByIndex(entries: Array<Entry.Summary>) {
+  const index = new Map(entries.map(entry => [entry.id, entry]))
+  function parentIndex(id: string) {
+    const parent = index.get(id)!
+    return parent.index || parent.id
+  }
+  function indexOf(entry: Entry.Summary) {
+    return entry.parents
+      .map(parentIndex)
+      .concat(entry.index || entry.id)
+      .join('.')
+  }
+  return entries.sort((a, b) => indexOf(a).localeCompare(indexOf(b)))
+}
+
 export function ContentTree({workspace, root, select = []}: ContentTreeProps) {
-  const [open, setOpen] = useState(() => new Set())
+  const {config} = useDashboard()
+  const {hub} = useSession()
+  const [open, setOpen] = useState(() => new Set<string>())
   const isOpen = useCallback((path: string) => open.has(path), [open])
   const toggleOpen = useCallback(
     (path: string) => {
@@ -238,17 +82,45 @@ export function ContentTree({workspace, root, select = []}: ContentTreeProps) {
     },
     [setOpen]
   )
-  useEffect(() => {
+  const hidden = useMemo(() => {
+    const schema = config.workspaces[workspace].schema
+    return Array.from(schema)
+      .filter(([, type]) => type.options.isHidden)
+      .map(([key]) => key)
+  }, [workspace])
+  const ids = Array.from(open)
+  const {data, isLoading} = useQuery(
+    ['tree', workspace, root, ids.join('.')],
+    () =>
+      hub
+        .query(query({workspace, root, open: ids, hidden}))
+        .then(Outcome.unpack)
+        .then(sortByIndex),
+    {keepPreviousData: true, suspense: true}
+  )
+  useLayoutEffect(() => {
     if (select.length) setOpen(new Set([...open, ...select]))
   }, [select.join('.')])
   return (
     <div>
-      <TreeChildren
-        workspace={workspace}
-        root={root}
-        isOpen={isOpen}
-        toggleOpen={toggleOpen}
-      />
+      {data
+        ?.filter(entry => {
+          return entry.parents.reduce(
+            (acc, parent) => acc && open.has(parent),
+            true as boolean
+          )
+        })
+        .map(entry => {
+          return (
+            <TreeNode
+              key={entry.id}
+              entry={entry}
+              level={entry.parents.length}
+              isOpen={isOpen}
+              toggleOpen={toggleOpen}
+            />
+          )
+        })}
     </div>
   )
 }

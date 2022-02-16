@@ -55,8 +55,8 @@ function EntryEditDraft({draft}: EntryEditDraftProps) {
         <div className={styles.root.draft()}>
           <EntryTitle
             backLink={
-              draft.$parent &&
-              nav.entry(draft.workspace, draft.root, draft.$parent)
+              draft.parent &&
+              nav.entry(draft.workspace, draft.root, draft.parent)
             }
           />
           <div className={styles.root.draft.fields()}>
@@ -117,7 +117,7 @@ export function NewEntry({parentId}: NewEntryProps) {
       path,
       workspace,
       root,
-      $parent: parent?.id,
+      parent: parent?.id,
       url: (parent?.url || '') + (parent?.url.endsWith('/') ? '' : '/') + path,
       title
     }
@@ -130,7 +130,7 @@ export function NewEntry({parentId}: NewEntryProps) {
             'children',
             entry.workspace,
             entry.root,
-            entry.$parent
+            entry.parent
           ])
           history.push(nav.entry(entry.workspace, entry.root, entry.id))
         }

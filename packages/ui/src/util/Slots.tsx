@@ -1,6 +1,7 @@
 import {
   createContext,
   Dispatch,
+  HTMLProps,
   PropsWithChildren,
   Ref,
   SetStateAction,
@@ -46,12 +47,12 @@ export function createSlots() {
     return createPortal(children, ref.current)
   }
 
-  function Portal() {
+  function Portal(props: HTMLProps<HTMLDivElement>) {
     const [refs] = useContext(context)!
     return (
       <>
         {refs.map((ref, i) => {
-          return <div ref={ref} key={i} />
+          return <div ref={ref} key={i} {...props} />
         })}
       </>
     )

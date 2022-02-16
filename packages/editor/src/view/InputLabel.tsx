@@ -1,7 +1,13 @@
 import {fromModule} from '@alinea/ui'
 import {Chip} from '@alinea/ui/Chip'
 import {HStack} from '@alinea/ui/Stack'
-import {ComponentType, memo, PropsWithChildren, ReactNode} from 'react'
+import {
+  ComponentType,
+  forwardRef,
+  memo,
+  PropsWithChildren,
+  ReactNode
+} from 'react'
 import css from './InputLabel.module.scss'
 
 const styles = fromModule(css)
@@ -51,41 +57,47 @@ export type LabelProps = PropsWithChildren<{
   empty?: boolean
 }>
 
-export function InputLabel({
-  children,
-  label,
-  asLabel,
-  help,
-  optional,
-  width = 1,
-  inline = false,
-  collection = false,
-  focused = false,
-  size,
-  icon,
-  empty
-}: LabelProps) {
-  const Tag = asLabel ? 'label' : 'div'
-  return (
-    <Tag
-      className={styles.root({collection, inline, focused, empty})}
-      style={{width: `${width * 100}%`}}
-    >
-      <div className={styles.root.inner()}>
-        {!inline && (
-          <div className={styles.root.header()}>
-            <LabelHeader
-              label={label}
-              help={help}
-              optional={optional}
-              size={size}
-              focused={focused}
-              icon={icon}
-            />
-          </div>
-        )}
-        {children}
-      </div>
-    </Tag>
-  )
-}
+export const InputLabel = forwardRef<HTMLElement, LabelProps>(
+  function InputLabel(
+    {
+      children,
+      label,
+      asLabel,
+      help,
+      optional,
+      width = 1,
+      inline = false,
+      collection = false,
+      focused = false,
+      size,
+      icon,
+      empty
+    },
+    ref
+  ) {
+    const Tag = asLabel ? 'label' : 'div'
+    return (
+      <Tag
+        className={styles.root({collection, inline, focused, empty})}
+        style={{width: `${width * 100}%`}}
+        ref={ref as any}
+      >
+        <div className={styles.root.inner()}>
+          {!inline && (
+            <div className={styles.root.header()}>
+              <LabelHeader
+                label={label}
+                help={help}
+                optional={optional}
+                size={size}
+                focused={focused}
+                icon={icon}
+              />
+            </div>
+          )}
+          {children}
+        </div>
+      </Tag>
+    )
+  }
+)

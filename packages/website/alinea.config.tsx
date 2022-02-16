@@ -1,31 +1,9 @@
 import {createConfig, schema, type, workspace} from '@alinea/core'
 import {BrowserPreview, media} from '@alinea/dashboard'
-import {code} from '@alinea/input.code'
-import {list} from '@alinea/input.list'
 import {path} from '@alinea/input.path'
-import {richText} from '@alinea/input.richtext'
-import {tabs} from '@alinea/input.tabs'
 import {text} from '@alinea/input.text'
 import {MdInsertDriveFile, MdOutlinePermMedia} from 'react-icons/md/index.js'
-
-const body = list('List test', {
-  schema: schema({
-    Text: type('Text', {
-      text: richText('Text')
-    }),
-    Example: type(
-      'Example',
-      tabs(
-        type('Visual code', {
-          visual: code('Code sample')
-        }),
-        type('Example code', {
-          code: code('Code')
-        })
-      )
-    )
-  })
-})
+import {Blocks} from './src/view/blocks/Blocks'
 
 const webSchema = schema({
   ...media,
@@ -45,23 +23,9 @@ const webSchema = schema({
   Doc: type('Doc', {
     title: text('Title', {width: 0.5}),
     path: path('Path', {width: 0.5}),
-    body
+    blocks: Blocks
   })
 })
-
-/*
-<Type key="doc" name="Doc">
-  <Text key="title" name="Title" width={0.5} />
-  <Path key="path" name="path" width={0.5} />
-  <RichText key="body" name="Body">
-    <Tabs>
-      <Tab name="Visual code">
-        <Code key="code" />
-      </Tab>
-    </Tabs>
-  </RichText>
-</Type>
-*/
 
 export const config = createConfig({
   dashboardUrl: 'http://localhost:4500',
@@ -83,7 +47,8 @@ export const config = createConfig({
         }
       },
       preview(entry) {
-        if (entry.type === 'MediaLibrary') return null
+        const noPreviews = new Set(['Docs', 'MediaLibrary'])
+        if (noPreviews.has(entry.type)) return null
         return <BrowserPreview url={`/api/preview?${entry.url}`} />
       }
     }),

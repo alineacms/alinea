@@ -10,6 +10,7 @@ import {posix as path} from 'path'
 import {Data} from '../Data'
 import {FS} from '../FS'
 import {Loader} from '../Loader'
+import {parentUrl, walkUrl} from '../util/Urls'
 
 export type FileDataOptions = {
   config: Config
@@ -26,11 +27,6 @@ function isChildOf(child: string, parent: string) {
   return isSubdir
 }
 
-function stripLastSegment(path: string) {
-  const parts = path.split('/').slice(0, -1)
-  return parts.join('/') || '/'
-}
-
 export class FileData implements Data.Source, Data.Target, Data.Media {
   constructor(protected options: FileDataOptions) {}
 
@@ -43,7 +39,7 @@ export class FileData implements Data.Source, Data.Target, Data.Media {
     )) {
       for (const root of Object.keys(roots)) {
         const targets = ['/']
-        const parents = new Map()
+        const parentIndex = new Map<string, string>()
         while (targets.length > 0) {
           const target = targets.shift()!
           const [files, err] = await outcome(
@@ -68,17 +64,20 @@ export class FileData implements Data.Source, Data.Target, Data.Media {
               const entry = loader.parse(schema, await fs.readFile(location))
               const type = schema.type(entry.type)
               const url = path.join(target, isIndex ? '' : name)
-              const parentId = parents.get(
-                isIndex ? stripLastSegment(target) : target
+              const parentPath = isIndex ? parentUrl(target) : target
+              const parents = walkUrl(parentPath).map(
+                url => parentIndex.get(url)!
               )
-              if (isIndex) parents.set(url, entry.id)
+              if (isIndex) parentIndex.set(url, entry.id)
               if (!type) continue
               yield {
                 ...entry,
                 workspace,
                 root,
                 url,
-                $parent: parentId,
+                index: entry.index || entry.id,
+                parent: parents[parents.length - 1],
+                parents,
                 $isContainer: type.options.isContainer
               }
             }
@@ -91,7 +90,14 @@ export class FileData implements Data.Source, Data.Target, Data.Media {
   async publish(entries: Array<Entry>): Promise<void> {
     const {fs, config, loader, rootDir = '.'} = this.options
     for (const entry of entries) {
-      const {workspace, url, $parent, $isContainer, $status, ...data} = entry
+      const {
+        workspace,
+        url,
+        parent: parent,
+        $isContainer,
+        $status,
+        ...data
+      } = entry
       const {schema, contentDir} = config.workspaces[workspace]
       const type = schema.type(entry.type)
       const file =

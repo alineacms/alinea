@@ -1,9 +1,10 @@
 import {useInput} from '@alinea/editor'
-import {fromModule, HStack, IconButton, IconLink, Typo} from '@alinea/ui'
+import {Chip, fromModule, HStack, IconButton, IconLink, Typo} from '@alinea/ui'
 import {PropsWithChildren} from 'react'
 import {Helmet} from 'react-helmet'
 import {MdArrowBack, MdOutlineMoreHoriz} from 'react-icons/md'
 import {EntryDraft} from '../../draft/EntryDraft'
+import {useCurrentDraft} from '../../hook/UseCurrentDraft'
 import css from './EntryTitle.module.scss'
 
 const styles = fromModule(css)
@@ -13,6 +14,7 @@ export type EntryTitleProps = PropsWithChildren<{
 }>
 
 export function EntryTitle({children, backLink}: EntryTitleProps) {
+  const draft = useCurrentDraft()
   const [title] = useInput(EntryDraft.title)
   return (
     <>
@@ -26,6 +28,7 @@ export function EntryTitle({children, backLink}: EntryTitleProps) {
             <span>{title}</span>
             {children}
           </Typo.H1>
+          <Chip>{draft.channel.label}</Chip>
           <IconButton icon={MdOutlineMoreHoriz} />
         </HStack>
       </div>

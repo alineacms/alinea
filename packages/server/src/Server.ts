@@ -15,6 +15,7 @@ import {
 import {encode} from 'base64-arraybuffer'
 import crypto from 'crypto'
 import express from 'express'
+import {generateKeyBetween} from 'fractional-indexing'
 import {Cursor, Functions, Store} from 'helder.store'
 import {
   createServer as createHttpServer,
@@ -27,6 +28,7 @@ import {Data} from './Data'
 import {Drafts} from './Drafts'
 import {createServerRouter} from './router/ServerRouter'
 import {finishResponse} from './util/FinishResponse'
+import {parentUrl, walkUrl} from './util/Urls'
 
 export type ServerOptions<T extends Workspaces> = {
   config: Config<T>
@@ -51,11 +53,6 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
     stateVector?: Uint8Array
   ): Future<Entry.Detail | null> {
     const {config, store, drafts} = this.options
-    function parents(entry: Entry): Array<string> {
-      if (!entry.$parent) return []
-      const parent = store.first(Entry.where(Entry.id.is(entry.$parent)))
-      return parent ? [parent.id, ...parents(parent)] : []
-    }
     const draft = await drafts.get(id, stateVector)
     return future(
       queryWithDrafts(config, store, drafts, () => {
@@ -63,7 +60,6 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
         return (
           entry && {
             entry,
-            parents: parents(entry),
             draft: draft && encode(draft)
           }
         )
@@ -87,23 +83,23 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
         return store.all(
           Entry.where(Entry.workspace.is(workspace as string))
             .where(Entry.root.is(root as string))
-            .where(
-              parentId ? Entry.$parent.is(parentId) : Entry.$parent.isNull()
-            )
+            .where(parentId ? Entry.parent.is(parentId) : Entry.parent.isNull())
             .where(Entry.type.isNotIn(hidden))
             .select({
               id: Entry.id,
+              index: Entry.index,
               workspace: Entry.workspace,
               root: Entry.root,
               type: Entry.type,
               title: Entry.title,
               url: Entry.url,
-              $parent: Entry.$parent,
+              parent: Entry.parent,
               $isContainer: Entry.$isContainer,
-              childrenCount: Parent.where(Parent.$parent.is(Entry.id))
+              childrenCount: Parent.where(Parent.parent.is(Entry.id))
                 .select(Functions.count())
                 .first()
             })
+            .orderBy(Entry.index.asc())
         )
       })
     )
@@ -111,9 +107,11 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
 
   async query<T>(cursor: Cursor<T>): Future<Array<T>> {
     const {config, store, drafts} = this.options
-    return outcome(() => {
-      return store.all(cursor)
-    })
+    return future(
+      queryWithDrafts(config, store, drafts, () => {
+        return store.all(cursor)
+      })
+    )
   }
 
   updateDraft(id: string, update: Uint8Array): Future<void> {
@@ -127,14 +125,14 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
   }
 
   publishEntries(entries: Array<Entry>): Future<void> {
-    const {store, drafts, target} = this.options
+    const {store, config, drafts, target} = this.options
     return outcome(async () => {
       await target.publish(entries)
       // Todo: This makes updates instantly available but should be configurable
       // Todo: if there's another instance running it won't have the drafts or
       // these changes so it would show the old data, so maybe we should always
       // hang on to drafts?
-      Cache.applyPublish(store, entries)
+      Cache.applyPublish(store, config, entries)
       await drafts.delete(entries.map(entry => entry.id))
     })
   }
@@ -148,21 +146,34 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
     return outcome(async () => {
       const id = createId()
       const {media} = this.options
-      const parentUrl = path.dirname(file.path)
-      const parent = store.first(
-        Entry.where(Entry.workspace.is(workspace))
-          .where(Entry.root.is(root))
-          .where(Entry.url.is(parentUrl))
-      )
+      const parentPath = path.dirname(file.path)
+      const parents = walkUrl(parentUrl(parentPath)).map(url => {
+        const parent = store.first(
+          Entry.where(Entry.workspace.is(entry.workspace))
+            .where(Entry.root.is(entry.root))
+            .where(Entry.url.is(url))
+            .select({id: Entry.id})
+        )
+        if (!parent) throw createError(400, 'Parent not found')
+        return parent.id
+      })
+      const parent = parents[parents.length - 1]
       if (!parent) throw createError(400, `Parent not found: "${parentUrl}"`)
       const location = await media.upload(workspace as string, file)
       const extension = path.extname(location)
+      const prev = store.first(
+        Entry.where(Entry.workspace.is(workspace))
+          .where(Entry.root.is(root))
+          .where(Entry.parent.is(parent))
+      )
       const entry: Media.File = {
         id,
+        type: 'File',
+        index: generateKeyBetween(null, prev?.index || null),
         workspace: workspace as string,
         root: root as string,
-        type: 'File',
-        $parent: parent.id,
+        parent: parent,
+        parents,
         title: path.basename(file.path, extension),
         url: file.path,
         location,

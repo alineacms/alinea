@@ -14,37 +14,46 @@ export interface Entry {
   id: string
   type: string
   title: Label
+  index: string
   // Computed properties
-  root: string
   workspace: string
+  root: string
   url: string
   $status?: EntryStatus
-  $parent?: string
+  parent?: string
+  parents: Array<string>
   $isContainer?: boolean
 }
 
 export namespace Entry {
   export type Detail = {
     entry: Entry
-    parents: Array<string>
     draft: string | undefined
   }
   export type Summary = Pick<
     Entry,
     | 'id'
-    | 'workspace'
-    | 'root'
     | 'type'
     | 'title'
+    | 'index'
+    | 'workspace'
+    | 'root'
     | 'url'
-    | '$parent'
+    | 'parent'
+    | 'parents'
     | '$isContainer'
   > & {
     childrenCount: number
   }
   export type Raw = Omit<
     Entry,
-    'workspace' | 'root' | 'url' | '$status' | '$parent' | '$isContainer'
+    | 'workspace'
+    | 'root'
+    | 'url'
+    | '$status'
+    | 'parent'
+    | 'parents'
+    | '$isContainer'
   >
 }
 

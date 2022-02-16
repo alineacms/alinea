@@ -37,8 +37,8 @@ export namespace Toolbar {
             <MdUnfoldMore />
           </HStack>
         </HStack>
-        <div style={{margin: 'auto'}}>
-          <Portal />
+        <div className={styles.root.portal()}>
+          <Portal className={styles.root.portal.slot()} />
         </div>
         <div>
           <HStack center gap={10}>

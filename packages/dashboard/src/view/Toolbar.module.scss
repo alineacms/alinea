@@ -8,4 +8,13 @@
   color: var(--foreground);
   border-bottom: 1px solid var(--outline);
   // background: rgba(var(--negative), 0.04);
+
+  &-portal {
+    flex-grow: 1;
+    height: 100%;
+
+    &-slot {
+      height: 100%;
+    }
+  }
 }

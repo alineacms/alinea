@@ -1,5 +1,6 @@
 import {Collection} from 'helder.store'
 import {Entry} from './Entry'
+import {Field} from './Field'
 import {Type} from './Type'
 import {LazyRecord} from './util/LazyRecord'
 
@@ -21,6 +22,17 @@ export function schema<Types extends LazyRecord<Type>>(
 }
 
 export type TypesOf<T> = T extends HasType ? T['type'] : string
+
+export namespace Schema {
+  // Generic utility to get the type of a schema, type or field
+  export type TypeOf<T> = T extends Schema<infer U>
+    ? U
+    : T extends Type<infer U>
+    ? U
+    : T extends Field<infer U>
+    ? U
+    : never
+}
 
 export class Schema<T = any> {
   #types: LazyRecord<Type<T>>

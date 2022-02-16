@@ -44,7 +44,7 @@ const styles = fromModule(css)
 
 export type ListRow = {
   id: string
-  $index: string
+  index: string
   type: string
 }
 
@@ -105,7 +105,7 @@ function ListInputRow<T extends ListRow>({
   isDragOverlay,
   ...rest
 }: ListInputRowProps<T>) {
-  const type = field.options.schema.type(row.type)
+  const type = field.options.schema.type(row.type as any)
   if (!type) return null
   return (
     <div

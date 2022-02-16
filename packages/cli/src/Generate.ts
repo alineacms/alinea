@@ -39,6 +39,30 @@ const externalPlugin: Plugin = {
   }
 }
 
+const ignorePlugin: Plugin = {
+  name: 'ignore',
+  setup(build) {
+    const commonExtensions = [
+      'css',
+      'html',
+      'json',
+      'css',
+      'scss',
+      'less',
+      'png',
+      'jpg',
+      'gif',
+      'svg'
+    ]
+    const filter = new RegExp(
+      `(${commonExtensions.map(ext => `\\.${ext}`).join('|')})$`
+    )
+    build.onLoad({filter}, args => {
+      return {contents: 'export default null'}
+    })
+  }
+}
+
 function bin(strings: ReadonlyArray<String>, ...inserts: Array<Buffer>) {
   const res: Array<Buffer> = []
   strings.forEach(function (str, i) {
@@ -148,11 +172,12 @@ export async function generate(options: GenerateOptions) {
     build({
       format: 'esm',
       target: 'esnext',
+      treeShaking: true,
       outdir,
       entryPoints: {config: configLocation},
       bundle: true,
       platform: 'node',
-      plugins: [externalPlugin, ReactPlugin]
+      plugins: [externalPlugin, ignorePlugin, ReactPlugin]
     })
   )
   await copy(
@@ -180,7 +205,8 @@ export async function generate(options: GenerateOptions) {
   const source = new FileData({
     config,
     fs: fs.promises,
-    loader: JsonLoader
+    loader: JsonLoader,
+    rootDir: cwd
   })
   await Cache.create(store, source)
   const pkg = await fs.readFile(

@@ -51,17 +51,20 @@ const fs: FS = Volume.fromNestedJSON({
     data: {
       '/index.json': entry({
         id: 'root',
+        index: 'a',
         type: 'Type',
         title: 'Test title'
       }),
       sub: {
         '/index.json': entry({
           id: 'sub',
+          index: 'a',
           type: 'Type',
           title: 'Sub title'
         }),
         '/entry.json': entry({
           id: 'sub-entry',
+          index: 'b',
           type: 'Sub',
           title: 'Sub entry title'
         })
@@ -86,13 +89,13 @@ const data = new FileData({
 test('reading', async () => {
   const [root, sub, subEntry] = await accumulate(data.entries())
   assert.is(root.id, 'root')
-  assert.is(root.$parent, undefined)
+  assert.is(root.parent, undefined)
   assert.is(root.url, '/')
   assert.is(sub.id, 'sub')
-  assert.is(sub.$parent, 'root')
+  assert.is(sub.parent, 'root')
   assert.is(sub.url, '/sub')
   assert.is(subEntry.id, 'sub-entry')
-  assert.is(subEntry.$parent, 'sub')
+  assert.is(subEntry.parent, 'sub')
   assert.is(subEntry.url, '/sub/entry')
 })
 

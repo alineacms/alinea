@@ -42,18 +42,21 @@ const fs: FS = Volume.fromNestedJSON({
       '/index.json': entry({
         id: 'root',
         type: 'Type',
-        title: 'Test title'
+        title: 'Test title',
+        index: 'a0'
       }),
       sub: {
         '/index.json': entry({
           id: 'sub',
           type: 'Type',
-          title: 'Sub title'
+          title: 'Sub title',
+          index: 'a0'
         }),
         '/entry.json': entry({
           id: 'sub-entry',
           type: 'Sub',
-          title: 'Sub entry title'
+          title: 'Sub entry title',
+          index: 'a0'
         })
       }
     }

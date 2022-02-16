@@ -26,7 +26,6 @@ export class EntryDraft implements Entry {
     protected hub: Hub,
     public channel: Type,
     protected source: Entry,
-    public parents: Array<string>,
     public doc: Y.Doc
   ) {
     this.#root = doc.getMap(ROOT_KEY)
@@ -75,8 +74,16 @@ export class EntryDraft implements Entry {
     return this.#root.get('root') || this.source.root
   }
 
+  get parents(): Array<string> {
+    return this.#root.get('parents') || this.source.parents
+  }
+
   get type(): string {
     return this.#root.get('type') || this.source.type
+  }
+
+  get index(): string {
+    return this.#root.get('index') || this.source.index
   }
 
   get url(): string {
@@ -89,15 +96,15 @@ export class EntryDraft implements Entry {
     )
   }
 
-  get $parent(): string | undefined {
-    return this.#root.get('$parent') || this.source.$parent
+  get parent(): string | undefined {
+    return this.#root.get('parent') || this.source.parent
   }
 
   get title(): Label {
     return this.#root.get('title') || this.source.title
   }
 
-  getLocation(location: Array<string>) {
+  private getLocation(location: Array<string>) {
     let target = this.#root
     let parent = target
     let type: Value = this.channel.valueType

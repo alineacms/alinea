@@ -29,7 +29,7 @@ function query(workspace: string, terms: string) {
       type: Entry.type,
       title: Entry.title,
       url: Entry.url,
-      $parent: Entry.$parent,
+      parent: Entry.parent,
       $isContainer: Entry.$isContainer
     })
     .orderBy(Search.get('rank').asc())

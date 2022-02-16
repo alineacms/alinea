@@ -36,12 +36,14 @@ export function entryFromDoc(
   if (!root) throw new Error(`No root`)
   return {
     id: docRoot.get('id') as string,
+    type: typeKey,
     workspace,
     root,
-    type: typeKey,
+    parents: docRoot.get('parents') as Array<string>,
+    index: docRoot.get('index') as string,
     url: docRoot.get('url') as string,
     title: docRoot.get('title') as Label,
-    $parent: docRoot.get('$parent') as string,
+    parent: docRoot.get('parent') as string,
     $isContainer: docRoot.get('$isContainer') as boolean,
     ...type.valueType.fromY(docRoot)
   }
@@ -65,7 +67,7 @@ export function docFromEntry(
   docRoot.set('root', entry.root)
   docRoot.set('type', entry.type)
   docRoot.set('url', entry.url)
-  docRoot.set('$parent', entry.$parent)
+  docRoot.set('parent', entry.parent)
   docRoot.set('$isContainer', entry.$isContainer)
   for (const [key, field] of type) {
     const contents = entry[key]

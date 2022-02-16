@@ -64,7 +64,7 @@ export function MediaExplorer() {
     () => {
       return hub
         .query(
-          File.where(File.$parent.is(draft.id)).select({
+          File.where(File.parent.is(draft.id)).select({
             total: Functions.count()
           })
         )

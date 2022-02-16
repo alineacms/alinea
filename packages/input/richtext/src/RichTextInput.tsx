@@ -4,6 +4,7 @@ import {InputForm, InputLabel, InputState, useInput} from '@alinea/editor'
 import {
   Card,
   Create,
+  DropdownMenu,
   fromModule,
   HStack,
   IconButton,
@@ -22,6 +23,7 @@ import {
   useEditor
 } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
+import {forwardRef, Ref, useCallback, useRef, useState} from 'react'
 import {
   MdDelete,
   MdDragHandle,
@@ -147,33 +149,83 @@ function InsertMenu({editor, schema, onInsert}: InsertMenuProps) {
 
 type ToolbarButtonsProps = {
   editor: Editor
+  focusToggle: (target: EventTarget | null) => void
 }
 
-function ToolbarButtons({editor}: ToolbarButtonsProps) {
+const ToolbarButtons = forwardRef(function ToolbarButtons(
+  {editor, focusToggle}: ToolbarButtonsProps,
+  ref: Ref<HTMLDivElement>
+) {
+  const selectedStyle = editor.isActive('heading', {level: 1})
+    ? 'h1'
+    : editor.isActive('heading', {level: 2})
+    ? 'h2'
+    : editor.isActive('heading', {level: 3})
+    ? 'h3'
+    : 'paragraph'
   return (
     <Toolbar.Slot>
-      <HStack center gap={20}>
-        <div>Normal text</div>
-        <IconButton
-          icon={MdFormatBold}
-          onMouseDown={e => {
-            e.preventDefault()
-            editor.chain().focus().toggleBold().run()
-          }}
-          active={editor.isActive('bold')}
-        />
-        <IconButton
-          icon={MdFormatItalic}
-          onMouseDown={e => {
-            e.preventDefault()
-            editor.chain().focus().toggleItalic().run()
-          }}
-          active={editor.isActive('italic')}
-        />
-      </HStack>
+      <div
+        ref={ref}
+        tabIndex={-1}
+        className={styles.buttons()}
+        onFocus={e => focusToggle(e.currentTarget)}
+        onBlur={e => focusToggle(e.relatedTarget)}
+      >
+        <HStack center gap={20}>
+          <DropdownMenu.Root>
+            <DropdownMenu.Trigger>{selectedStyle}</DropdownMenu.Trigger>
+
+            <DropdownMenu.Content>
+              <DropdownMenu.Item
+                onSelect={() => editor.chain().focus().clearNodes().run()}
+              >
+                Normal text
+              </DropdownMenu.Item>
+              <DropdownMenu.Item
+                onSelect={() =>
+                  editor.chain().focus().setHeading({level: 1}).run()
+                }
+              >
+                Heading 1
+              </DropdownMenu.Item>
+              <DropdownMenu.Item
+                onSelect={() =>
+                  editor.chain().focus().setHeading({level: 2}).run()
+                }
+              >
+                Heading 2
+              </DropdownMenu.Item>
+              <DropdownMenu.Item
+                onSelect={() =>
+                  editor.chain().focus().setHeading({level: 3}).run()
+                }
+              >
+                Heading 3
+              </DropdownMenu.Item>
+            </DropdownMenu.Content>
+          </DropdownMenu.Root>
+          <IconButton
+            icon={MdFormatBold}
+            onClick={e => {
+              e.preventDefault()
+              editor.chain().focus().toggleBold().run()
+            }}
+            active={editor.isActive('bold')}
+          />
+          <IconButton
+            icon={MdFormatItalic}
+            onClick={e => {
+              e.preventDefault()
+              editor.chain().focus().toggleItalic().run()
+            }}
+            active={editor.isActive('italic')}
+          />
+        </HStack>
+      </div>
     </Toolbar.Slot>
   )
-}
+})
 
 export type RichTextInputProps<T> = {
   state: InputState<TextDoc<T>>
@@ -182,12 +234,27 @@ export type RichTextInputProps<T> = {
 
 export function RichTextInput<T>({state, field}: RichTextInputProps<T>) {
   const {blocks, optional, help} = field.options
+  const [focus, setFocus] = useState(false)
   const [content, {fragment, insert}] = useInput(state)
+  const toolbarRef = useRef<HTMLDivElement>(null)
+  const containerRef = useRef<HTMLElement>(null)
+  const focusToggle = useCallback(
+    function focusToggle(target: EventTarget | null) {
+      const element = target || document.activeElement
+      const isFocused =
+        toolbarRef.current?.contains(element as HTMLElement) ||
+        containerRef.current?.contains(element as HTMLElement) ||
+        false
+      setFocus(isFocused)
+    },
+    [setFocus]
+  )
   const editor = useEditor(
     {
       content,
+      onFocus: ({event}) => focusToggle(event.currentTarget),
+      onBlur: ({event}) => focusToggle(event.relatedTarget),
       extensions: [
-        // BubbleMenuExtension,
         FloatingMenuExtension,
         Collaboration.configure({fragment}),
         StarterKit.configure({history: false}),
@@ -199,41 +266,28 @@ export function RichTextInput<T>({state, field}: RichTextInputProps<T>) {
   if (!editor) return null
   return (
     <>
-      {editor?.isFocused && <ToolbarButtons editor={editor} />}
+      {focus && (
+        <ToolbarButtons
+          ref={toolbarRef}
+          editor={editor}
+          focusToggle={focusToggle}
+        />
+      )}
       <InputLabel
         label={field.label}
         help={help}
         optional={optional}
-        focused={editor.isFocused}
+        focused={focus}
         icon={MdNotes}
         empty={editor.isEmpty}
+        ref={containerRef}
       >
         <InsertMenu editor={editor} schema={blocks} onInsert={insert} />
-        <EditorContent className={styles.root.editor()} editor={editor} />
+        <EditorContent
+          className={styles.root.editor({focus})}
+          editor={editor}
+        />
       </InputLabel>
     </>
   )
-}
-
-{
-  /*<BubbleMenu editor={editor}>
-        <button
-          onClick={() => editor.chain().focus().toggleBold().run()}
-          className={editor.isActive('bold') ? 'is-active' : ''}
-        >
-          bold
-        </button>
-        <button
-          onClick={() => editor.chain().focus().toggleItalic().run()}
-          className={editor.isActive('italic') ? 'is-active' : ''}
-        >
-          italic
-        </button>
-        <button
-          onClick={() => editor.chain().focus().toggleStrike().run()}
-          className={editor.isActive('strike') ? 'is-active' : ''}
-        >
-          strike
-        </button>
-  </BubbleMenu>*/
 }

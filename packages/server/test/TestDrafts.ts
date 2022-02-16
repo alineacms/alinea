@@ -13,7 +13,8 @@ dotenv.config()
 const entry: Entry.Raw = {
   id: '20580nQzc',
   type: 'Doc',
-  title: 'Getting started'
+  title: 'Getting started',
+  index: 'a0'
 }
 
 const Doc = type('Doc', {

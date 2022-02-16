@@ -120,7 +120,7 @@ export class RichTextValue<T>
     return {
       type: 'doc',
       blocks: {},
-      content: []
+      content: [{type: 'paragraph'}]
     } as TextDoc<Row & T>
   }
   typeOfChild<C>(yValue: Y.Map<any>, child: string): Value<C> {
