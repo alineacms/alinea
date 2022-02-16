@@ -1,10 +1,16 @@
-export type Param = {type: 'value'; value: any} | {type: 'named'; name: string}
+export type ParamData =
+  | {type: 'value'; value: any}
+  | {type: 'named'; name: string}
 
-export const Param = {
-  Value(value: any): Param {
+export const ParamData = {
+  Value(value: any): ParamData {
     return {type: 'value', value: value}
   },
-  Named(name: string): Param {
+  Named(name: string): ParamData {
     return {type: 'named', name: name}
   }
+}
+
+export class Param {
+  constructor(public param: ParamData) {}
 }

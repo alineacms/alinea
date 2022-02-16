@@ -1,13 +1,13 @@
 import {Cursor, CursorData} from './Cursor'
 import {OrderBy, OrderDirection} from './OrderBy'
-import {Param} from './Param'
+import {ParamData} from './Param'
 
-enum UnOp {
+export enum UnOp {
   Not,
   IsNull
 }
 
-enum BinOp {
+export enum BinOp {
   Add,
   Subt,
   Mult,
@@ -33,7 +33,7 @@ export type ExprData =
   | {type: 'unop'; op: UnOp; expr: ExprData}
   | {type: 'binop'; op: BinOp; a: ExprData; b: ExprData}
   | {type: 'field'; path: Array<string>}
-  | {type: 'param'; param: Param}
+  | {type: 'param'; param: ParamData}
   | {type: 'call'; method: string; params: Array<ExprData>}
   | {type: 'access'; expr: ExprData; field: string}
   | {type: 'query'; cursor: CursorData}
@@ -48,7 +48,7 @@ export const ExprData = {
   Field(path: Array<string>): ExprData {
     return {type: 'field', path: path}
   },
-  Param(param: Param): ExprData {
+  Param(param: ParamData): ExprData {
     return {type: 'param', param: param}
   },
   Call(method: string, params: Array<ExprData>): ExprData {
@@ -66,10 +66,10 @@ export const ExprData = {
 type EV<T> = Expr<T> | T
 
 function toExpr<T>(ev: EV<T> | Cursor<T> | null): ExprData {
-  if (ev == null) return ExprData.Param(Param.Value(null))
+  if (ev == null) return ExprData.Param(ParamData.Value(null))
   if (ev instanceof Expr) return ev.expr
-  if (ev instanceof Cursor) return ExprData.Query(cursor.cursor)
-  return ExprData.Param(Param.Value(ev))
+  if (ev instanceof Cursor) return ExprData.Query(ev.cursor)
+  return ExprData.Param(ParamData.Value(ev))
 }
 
 function isConstant<T>(e: ExprData, value: T): boolean {
@@ -90,7 +90,7 @@ export class Expr<T> {
   static NULL = toExpr(null)
 
   static value<T>(value: T) {
-    return new Expr(ExprData.Param(Param.Value(value)))
+    return new Expr(ExprData.Param(ParamData.Value(value)))
   }
 
   static field(...path: Array<string>) {
@@ -99,7 +99,7 @@ export class Expr<T> {
 
   constructor(public expr: ExprData) {
     return new Proxy(this, {
-      get(target, key) {
+      get(target: any, key) {
         return key in target ? target[key] : target.get(key)
       }
     })
