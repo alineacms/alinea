@@ -16,7 +16,7 @@
     "skipLibCheck": true,
     "moduleResolution": "node",
     "incremental": true,
-    "paths": {".alinea": ["./.alinea"], ".alinea/*": ["./.alinea/*"]}
+    "baseUrl": "."
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],
   "exclude": ["node_modules"]
