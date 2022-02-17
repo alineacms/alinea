@@ -3,30 +3,30 @@ import {OrderBy, OrderDirection} from './OrderBy'
 import {ParamData} from './Param'
 
 export enum UnOp {
-  Not,
-  IsNull
+  Not = '!',
+  IsNull = 'is null'
 }
 
 export enum BinOp {
-  Add,
-  Subt,
-  Mult,
-  Mod,
-  Div,
-  Greater,
-  GreaterOrEqual,
-  Less,
-  LessOrEqual,
-  Equals,
-  NotEquals,
-  And,
-  Or,
-  Like,
-  Glob,
-  Match,
-  In,
-  NotIn,
-  Concat
+  Add = '+',
+  Subt = '-',
+  Mult = '*',
+  Mod = '%',
+  Div = '-',
+  Greater = '>',
+  GreaterOrEqual = '>=',
+  Less = '<',
+  LessOrEqual = '>=',
+  Equals = '==',
+  NotEquals = '!=',
+  And = '&&',
+  Or = '||',
+  Like = 'like',
+  Glob = 'glob',
+  Match = 'match',
+  In = 'in',
+  NotIn = 'not in',
+  Concat = 'concat'
 }
 
 export type ExprData =
@@ -90,7 +90,7 @@ function isConstant<T>(e: ExprData, value: T): boolean {
 export class Expr<T> {
   static NULL = toExpr(null)
 
-  static value<T>(value: T) {
+  static value<T>(value: T): Expr<T> {
     return new Expr(ExprData.Param(ParamData.Value(value)))
   }
 
@@ -165,19 +165,19 @@ export class Expr<T> {
       ExprData.UnOp(UnOp.Not, ExprData.UnOp(UnOp.IsNull, this.expr))
     )
   }
-  add<T extends number>(that: EV<T>): Expr<T> {
+  add(this: Expr<number>, that: EV<number>): Expr<number> {
     return new Expr(ExprData.BinOp(BinOp.Add, this.expr, toExpr(that)))
   }
-  substract<T extends number>(that: EV<T>): Expr<T> {
+  substract(this: Expr<number>, that: EV<number>): Expr<number> {
     return new Expr(ExprData.BinOp(BinOp.Subt, this.expr, toExpr(that)))
   }
-  multiply<T extends number>(that: EV<T>): Expr<T> {
+  multiply(this: Expr<number>, that: EV<number>): Expr<number> {
     return new Expr(ExprData.BinOp(BinOp.Mult, this.expr, toExpr(that)))
   }
-  remainder(that: EV<number>): Expr<number> {
+  remainder(this: Expr<number>, that: EV<number>): Expr<number> {
     return new Expr(ExprData.BinOp(BinOp.Mod, this.expr, toExpr(that)))
   }
-  divide<T extends number>(that: EV<T>): Expr<number> {
+  divide(this: Expr<number>, that: EV<number>): Expr<number> {
     return new Expr(ExprData.BinOp(BinOp.Div, this.expr, toExpr(that)))
   }
   greater(that: EV<any>): Expr<boolean> {
@@ -194,16 +194,16 @@ export class Expr<T> {
   lessOrEqual(that: EV<any>): Expr<boolean> {
     return new Expr(ExprData.BinOp(BinOp.LessOrEqual, this.expr, toExpr(that)))
   }
-  concat(that: EV<String>): Expr<String> {
+  concat(this: Expr<string>, that: EV<string>): Expr<string> {
     return new Expr(ExprData.BinOp(BinOp.Concat, this.expr, toExpr(that)))
   }
-  like(that: EV<String>): Expr<boolean> {
+  like(this: Expr<string>, that: EV<string>): Expr<boolean> {
     return new Expr(ExprData.BinOp(BinOp.Like, this.expr, toExpr(that)))
   }
-  glob(that: EV<String>): Expr<boolean> {
+  glob(this: Expr<string>, that: EV<string>): Expr<boolean> {
     return new Expr(ExprData.BinOp(BinOp.Glob, this.expr, toExpr(that)))
   }
-  match(that: EV<String>): Expr<boolean> {
+  match(this: Expr<string>, that: EV<string>): Expr<boolean> {
     return new Expr(ExprData.BinOp(BinOp.Match, this.expr, toExpr(that)))
   }
 

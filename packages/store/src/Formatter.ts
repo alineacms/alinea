@@ -28,12 +28,12 @@ const binOps = {
   [BinOp.Concat]: '||'
 }
 
-type FormatCursorOptions = {
+export type FormatCursorOptions = {
   includeSelection?: boolean
   formatSubject?: (selection: Statement) => Statement
 }
 
-type FormatExprOptions = FormatCursorOptions & {
+export type FormatExprOptions = FormatCursorOptions & {
   formatInline?: boolean
   formatAsJsonValue?: boolean
   formatShallow?: boolean
@@ -86,7 +86,9 @@ export abstract class Formatter {
     where: ExprData | undefined,
     options: FormatExprOptions
   ): Statement {
-    return where ? this.formatExpr(where, options) : new Statement('1')
+    return where
+      ? sql`where ${this.formatExpr(where, options)}`
+      : Statement.EMPTY
   }
 
   formatSelection(
@@ -99,9 +101,9 @@ export abstract class Formatter {
         switch (source.type) {
           case 'column':
             return Statement.raw(
-              `${this.escapeId(From.source(source))}.${this.escapeId(
+              `json(${this.escapeId(From.source(source))}.${this.escapeId(
                 source.column
-              )}`
+              )})`
             )
           case 'table':
             return this.formatSelection(
@@ -121,11 +123,11 @@ export abstract class Formatter {
             throw 'assert'
         }
       case 'cursor':
-        // Todo: single result '(select $sql)'
         const sub = this.formatCursor(selection.cursor, {
           ...options,
           formatSubject: subject => sql`${subject} as res`
         })
+        if (selection.cursor.singleResult) return sql`(select ${sub})`
         return sql`(select json_group_array(json(res)) from (select ${sub}))`
       case 'expr':
         return this.formatExpr(selection.expr, options)
@@ -134,11 +136,12 @@ export abstract class Formatter {
         const b = this.formatSelection(selection.b, options)
         return sql`json_patch(${a}, ${b})`
       case 'fields':
-        let res = Statement.EMPTY,
-          i = 0
+        let res = Statement.EMPTY
         const keys = Object.keys(selection.fields)
         Object.entries(selection.fields).forEach(([key, value], i) => {
-          res = sql`${Statement.raw(this.escape(key))}, ${res}`
+          res = sql`${res}${Statement.raw(
+            this.escape(key)
+          )}, ${this.formatSelection(value, options)}`
           if (i < keys.length - 1) res = sql`${res}, `
         })
         return sql`json_object(${res})`
@@ -152,7 +155,7 @@ export abstract class Formatter {
         ? options.formatSubject(subject)
         : subject
       : undefined
-    const from = this.formatFrom(cursor.from, options)
+    const from = sql`from ${this.formatFrom(cursor.from, options)}`
     const where = this.formatWhere(cursor.where, options)
     const limit =
       cursor.limit !== undefined || cursor.offset !== undefined
@@ -193,12 +196,16 @@ export abstract class Formatter {
               case typeof value === 'boolean':
                 return value ? sql`1` : sql`0`
               case Array.isArray(value):
-                const res = sql`(${value.map(this.escape).join(', ')})`
-                return options.formatAsJsonValue ? sql`json_array(${res})` : res
-              default:
+                const res = sql`(${Statement.raw(
+                  value.map((v: any): string => this.escape(v)).join(', ')
+                )})`
+                return options.formatAsJsonValue ? sql`json_array${res}` : res
+              case typeof value === 'string' || typeof value === 'number':
                 if (options.formatInline)
                   return Statement.raw(this.escape(value))
                 return new Statement('?', [expr.param])
+              default:
+                return new Statement(this.escape(value))
             }
         }
       case 'field':
@@ -258,13 +265,9 @@ export abstract class Formatter {
     update: Record<string, any>,
     options: FormatCursorOptions = {}
   ) {
-    const exprOptions = {
-      ...options,
-      formatAsJsonValue: false
-    }
-    const from = this.formatFrom(cursor.from, exprOptions)
-    const set = this.formatUpdateSetters(update, exprOptions)
-    const where = this.formatWhere(cursor.where, exprOptions)
-    return sql`update ${from} ${set} where ${where}`
+    const from = this.formatFrom(cursor.from, options)
+    const set = this.formatUpdateSetters(update, options)
+    const where = this.formatWhere(cursor.where, options)
+    return sql`update ${from} ${set} ${where}`
   }
 }

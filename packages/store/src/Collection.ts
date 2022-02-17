@@ -2,6 +2,7 @@ import {Cursor} from './Cursor'
 import {Expr, ExprData} from './Expr'
 import {From} from './From'
 import {Selection, SelectionData} from './Selection'
+import {Select, With} from './Types'
 
 type CollectionOptions = {
   flat?: boolean
@@ -10,7 +11,7 @@ type CollectionOptions = {
   alias?: string
 }
 
-export class Collection<Row extends {} = any> extends Cursor<Row> {
+class CollectionImpl<Row extends {} = any> extends Cursor<Row> {
   constructor(name: string, options: CollectionOptions = {}) {
     const {flat, columns, where, alias} = options
     const from = flat
@@ -20,6 +21,11 @@ export class Collection<Row extends {} = any> extends Cursor<Row> {
       from,
       selection: SelectionData.Row(from),
       where: where?.expr
+    })
+    return new Proxy(this, {
+      get(target: any, key) {
+        return key in target ? target[key] : target.get(key)
+      }
     })
   }
 
@@ -35,7 +41,7 @@ export class Collection<Row extends {} = any> extends Cursor<Row> {
     return new Selection(this.cursor.selection)
   }
 
-  with<S>(that: S) {
+  with<X extends Select>(that: X): With<Row, X> {
     return this.fields.with(that)
   }
 
@@ -46,3 +52,23 @@ export class Collection<Row extends {} = any> extends Cursor<Row> {
     })
   }
 }
+
+type UnionToIntersection<U> = (U extends any ? (k: U) => void : never) extends (
+  k: infer I
+) => void
+  ? I
+  : never
+
+export type FieldsOf<Row> = Row extends object
+  ? {[K in keyof Row]-?: Expr<Row[K]> & FieldsOf<Row[K]>}
+  : unknown
+
+export interface CollectionConstructor {
+  new <Row extends {}>(
+    name: string,
+    options?: CollectionOptions
+  ): Collection<Row>
+}
+
+export type Collection<T> = CollectionImpl<T> & UnionToIntersection<FieldsOf<T>>
+export const Collection = CollectionImpl as CollectionConstructor

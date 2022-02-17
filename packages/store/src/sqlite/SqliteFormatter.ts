@@ -1,4 +1,5 @@
-import {Formatter} from '../Formatter'
+import {ExprData} from '../Expr'
+import {FormatExprOptions, Formatter} from '../Formatter'
 import {sql, Statement} from '../Statement'
 
 const SINGLE_QUOTE = "'"
@@ -55,5 +56,23 @@ export const sqliteFormatter = new (class extends Formatter {
   }
   formatUnwrapArray(stmt: Statement): Statement {
     return sql`(select value from json_each(${stmt}))`
+  }
+  formatExpr(expr: ExprData, options: FormatExprOptions): Statement {
+    switch (expr.type) {
+      case 'call':
+        if (expr.method === 'cast') {
+          const [e, type] = expr.params
+          const typeName =
+            type.type === 'param' &&
+            type.param.type === 'value' &&
+            type.param.value
+          if (!typeName) throw 'assert'
+          return sql`cast(${this.formatExpr(
+            expr.params[0],
+            options
+          )} as ${Statement.raw(this.escapeString(typeName))})`
+        }
+    }
+    return super.formatExpr(expr, options)
   }
 })()

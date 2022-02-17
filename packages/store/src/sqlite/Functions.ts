@@ -6,14 +6,17 @@ export const Functions = new Proxy(
   {
     get(_, method: string) {
       return (...args: any[]) => {
-        new Expr(ExprData.Call(method, args.flat().map(ExprData.create)))
+        return new Expr(ExprData.Call(method, args.flat().map(ExprData.create)))
       }
     }
   }
 ) as Functions
 
 export type Functions = {
-  castAs(x: EV<any>, type: string): Expr<any>
+  cast(x: EV<any>, type: 'text'): Expr<string>
+  cast(x: EV<any>, type: 'real'): Expr<number>
+  cast(x: EV<any>, type: 'integer'): Expr<number>
+  cast(x: EV<any>, type: 'numeric'): Expr<number>
 
   // =====================================================
   // https://www.sqlite.org/lang_corefunc.html

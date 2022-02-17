@@ -1,6 +1,7 @@
 import {Cursor, CursorData} from './Cursor'
 import {Expr, ExprData} from './Expr'
 import {From} from './From'
+import {Select, With} from './Types'
 
 export type SelectionData =
   | {type: 'expr'; expr: ExprData}
@@ -47,7 +48,7 @@ export const SelectionData = {
 export class Selection<T> {
   constructor(public selection: SelectionData) {}
 
-  with<X>(that: X): Selection<T & X> {
+  with<X extends Select>(that: X): With<T, X> {
     return new Selection(
       SelectionData.With(this.selection, SelectionData.create(that))
     )

@@ -3,6 +3,7 @@ import {Expr, ExprData} from './Expr'
 import {From} from './From'
 import type {OrderBy} from './OrderBy'
 import {SelectionData} from './Selection'
+import {Select, TypeOf} from './Types'
 
 export type CursorData = {
   from: From
@@ -11,6 +12,7 @@ export type CursorData = {
   limit?: number
   offset?: number
   orderBy?: Array<OrderBy>
+  singleResult?: boolean
 }
 
 export class Cursor<Row> {
@@ -70,14 +72,21 @@ export class Cursor<Row> {
     })
   }
 
-  select<T>(selection: T): Cursor<T> {
-    return new Cursor({
+  select<X extends Select>(selection: X) {
+    return new Cursor<TypeOf<X>>({
       ...this.cursor,
       selection: SelectionData.create(selection)
     })
   }
 
-  orderBy(...orderBy: Array<OrderBy>) {
+  /*with<X extends Select>(selection: X) {
+    return new Cursor<Omit<Row, keyof TypeOf<X>> & TypeOf<X>>({
+      ...this.cursor,
+      selection: new Selection(this.cursor.selection).with(selection).selection
+    })
+  }*/
+
+  orderBy(...orderBy: Array<OrderBy>): Cursor<Row> {
     return new Cursor({
       ...this.cursor,
       orderBy: this.cursor.orderBy
@@ -91,4 +100,9 @@ export class Cursor<Row> {
   }
 }
 
-class CursorSingleRow<Row> extends Cursor<Row> {}
+export class CursorSingleRow<Row> extends Cursor<Row> {
+  __bogus: undefined
+  constructor(cursor: CursorData) {
+    super({...cursor, singleResult: true})
+  }
+}

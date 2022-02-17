@@ -1,6 +1,7 @@
 import type {Collection} from './Collection'
 import type {Cursor} from './Cursor'
 import type {Expr} from './Expr'
+import {Update} from './Types'
 
 export type QueryOptions = {
   debug?: boolean
@@ -26,7 +27,7 @@ export interface Store {
   ): Array<Row>
   update<Row>(
     cursor: Cursor<Row>,
-    update: Partial<Row>,
+    update: Update<Row>,
     options?: QueryOptions
   ): {changes: number}
   createIndex<Row extends Document>(

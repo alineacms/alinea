@@ -2,6 +2,7 @@ export interface Driver {
   transaction<T>(run: () => T): T
   exec(sql: String): void
   prepare(sql: String): Driver.PreparedStatement
+  export(): Uint8Array
 }
 
 export namespace Driver {

@@ -4,6 +4,7 @@ import {Driver} from '../Driver'
 import {Expr} from '../Expr'
 import {From} from '../From'
 import {Document, IdLess, QueryOptions, Store} from '../Store'
+import {Update} from '../Types'
 import {sqliteFormatter} from './SqliteFormatter'
 
 const f = sqliteFormatter
@@ -78,7 +79,7 @@ export class SqliteStore implements Store {
 
   update<Row>(
     cursor: Cursor<Row>,
-    update: Partial<Row>,
+    update: Update<Row>,
     options?: QueryOptions
   ): {changes: number} {
     return this.db.transaction(() => {
@@ -177,25 +178,24 @@ export class SqliteStore implements Store {
     const setters = keys.map((key, i) => {
       return `${key}=${newValues[i]}`
     })
-    const id = "'$.id'"
     const instruction = `
-			create trigger ${f.escapeId(`${name}_ai`)} after insert on ${table} begin
-				insert into ${idx}(id, ${keys.join(
+      create trigger ${f.escapeId(`${name}_ai`)} after insert on ${table} begin
+        insert into ${idx}(id, ${keys.join(
       ', '
     )}) values (json_extract(new.data, '$.id'), ${newValues.join(', ')});
-			end;
-			create trigger ${f.escapeId(`${name}_ad`)} after delete on ${table} begin
-				delete from ${idx} where id=json_extract(old.data, '$.id');
-			end;
-			create trigger ${f.escapeId(`${name}_au`)} after update on ${table} begin
+      end;
+      create trigger ${f.escapeId(`${name}_ad`)} after delete on ${table} begin
+        delete from ${idx} where id=json_extract(old.data, '$.id');
+      end;
+      create trigger ${f.escapeId(`${name}_au`)} after update on ${table} begin
         update ${idx} set ${setters} where id=json_extract(new.data, '$.id');
-			end;
-			insert into ${f.escapeId(name)}(id, ${keys.join(', ')})
-				select ${f.formatExpr(collection.id.expr, {
+      end;
+      insert into ${f.escapeId(name)}(id, ${keys.join(', ')})
+        select ${f.formatExpr(collection.id.expr, {
           formatShallow: true
         })}, ${originValues}
-				from ${table};
-		`
+        from ${table};
+    `
     this.db.exec(instruction)
   }
 
