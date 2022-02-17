@@ -1,5 +1,4 @@
-import {ExprData} from '..'
-import {EV, Expr} from '../Expr'
+import {EV, Expr, ExprData} from '../Expr'
 
 export const Functions = new Proxy(
   {},

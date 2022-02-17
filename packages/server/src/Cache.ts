@@ -8,9 +8,9 @@ import {
   Schema
 } from '@alinea/core'
 import {Search} from '@alinea/core/Search'
+import {Store} from '@alinea/store'
+import {SqliteStore} from '@alinea/store/sqlite/SqliteStore'
 import convertHrtime from 'convert-hrtime'
-import {Store} from 'helder.store'
-import {SqliteStore} from 'helder.store/sqlite/SqliteStore.js'
 import prettyMilliseconds from 'pretty-ms'
 import * as Y from 'yjs'
 import {Data} from './Data'

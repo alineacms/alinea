@@ -6,8 +6,8 @@ import {
   Schema,
   Workspace
 } from '@alinea/core'
+import {Cursor, Expr, Store} from '@alinea/store'
 import autoBind from 'auto-bind'
-import {Cursor, Expression, Store} from 'helder.store'
 import {Cache} from './Cache'
 import {Drafts} from './Drafts'
 
@@ -54,7 +54,7 @@ export class Pages<T extends Entry> {
   get root(): Cursor<T> {
     return Entry.where(Entry.parent.isNull())
   }
-  children(entry: string | Expression<string> | Entry, depth = 1): Cursor<T> {
+  children(entry: string | Expr<string> | Entry, depth = 1): Cursor<T> {
     if (depth > 1) throw 'todo depth > 1'
     const id =
       typeof entry === 'string' ? entry : 'id' in entry ? entry.id : entry

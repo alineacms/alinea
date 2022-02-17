@@ -11,13 +11,11 @@ test('Functions', () => {
   const db = store()
   const User = new Collection<{id: string; birthdate: string}>('User')
   const now = '1920-01-01'
-  const age: Expr<number> = cast(strftime('%Y', now), 'integer')
-    .substract(cast(strftime('%Y', User.birthdate), 'integer'))
+  const int = (e: Expr<any>) => cast(e, 'integer')
+  const age: Expr<number> = int(strftime('%Y', now))
+    .substract(int(strftime('%Y', User.birthdate)))
     .substract(
-      cast(
-        strftime('%m-%d', now).less(strftime('%m-%d', User.birthdate)),
-        'integer'
-      )
+      int(strftime('%m-%d', now).less(strftime('%m-%d', User.birthdate)))
     )
   const me = db.insert(User, {birthdate: '1900-01-01'})
   assert.is(db.first(User.select({age: age}).where(User.id.is(me.id)))!.age, 20)

@@ -1,2 +1,2 @@
-import {Store} from 'helder.store'
+import {Store} from '@alinea/store'
 export const createCache: () => Promise<Store>

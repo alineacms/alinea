@@ -176,7 +176,10 @@ export abstract class Formatter {
           return sql`${this.formatExpr(expr.expr, options)} is null`
         return sql`!(${this.formatExpr(expr.expr, options)})`
       case 'binop':
-        if (expr.op === BinOp.In || expr.op === BinOp.NotIn) {
+        if (
+          (expr.op === BinOp.In || expr.op === BinOp.NotIn) &&
+          expr.b.type === 'field'
+        ) {
           return sql`(${this.formatExpr(expr.a, options)} ${Statement.raw(
             binOps[expr.op]
           )} ${this.formatUnwrapArray(this.formatExpr(expr.b, options))})`

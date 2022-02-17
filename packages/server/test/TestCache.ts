@@ -7,8 +7,8 @@ import {
   workspace
 } from '@alinea/core'
 import {text} from '@alinea/input.text'
-import {SqlJs} from 'helder.store/sqlite/drivers/SqlJs.js'
-import {SqliteStore} from 'helder.store/sqlite/SqliteStore.js'
+import {SqlJsDriver} from '@alinea/store/sqlite/drivers/SqlJsDriver'
+import {SqliteStore} from '@alinea/store/sqlite/SqliteStore'
 import {Volume} from 'memfs'
 import initSqlJs from 'sql.js-fts5'
 import {test} from 'uvu'
@@ -74,7 +74,7 @@ const data = new FileData({config, fs, loader: JsonLoader})
 
 test('create', async () => {
   const sqlJs = await initSqlJs()
-  const store = new SqliteStore(new SqlJs(new sqlJs.Database()), createId)
+  const store = new SqliteStore(new SqlJsDriver(new sqlJs.Database()), createId)
   await Cache.create(store, data)
   console.log('ok')
 })

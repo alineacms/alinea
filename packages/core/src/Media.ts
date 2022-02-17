@@ -1,4 +1,4 @@
-import {Collection} from 'helder.store'
+import {Collection} from '@alinea/store'
 import {Entry} from './Entry'
 
 export namespace Media {

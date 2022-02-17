@@ -32,6 +32,7 @@ __metadata:
   resolution: "@alinea/cli@workspace:packages/cli"
   dependencies:
     "@alinea/core": 0.0.0
+    "@alinea/store": 0.0.0
     "@esbx/react": ^0.0.9
     "@types/fs-extra": ^9.0.13
     "@types/sade": ^1.7.3
@@ -260,6 +261,7 @@ __metadata:
   resolution: "@alinea/server@workspace:packages/server"
   dependencies:
     "@alinea/core": 0.0.0
+    "@alinea/store": 0.0.0
     "@octokit/rest": ^18.12.0
     "@types/busboy": ^1.3.0
     "@types/compression": ^1.7.2
@@ -276,7 +278,6 @@ __metadata:
     convert-hrtime: ^5.0.0
     cors: ^2.8.5
     firebase-admin: ^10.0.2
-    helder.store: ^0.0.0-alpha.27
     isomorphic-git: ^1.10.5
     js-yaml: ^4.1.0
     octokit-commit-multiple-files: ^3.2.1
@@ -287,7 +288,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@alinea/store@workspace:packages/store":
+"@alinea/store@0.0.0, @alinea/store@workspace:packages/store":
   version: 0.0.0-use.local
   resolution: "@alinea/store@workspace:packages/store"
   dependencies:
@@ -5064,13 +5065,6 @@ fsevents@~2.3.2:
   version: 0.2.4
   resolution: "hash-stream-validation@npm:0.2.4"
   checksum: a5633e6ece2f729729d7061274900b10b035d6b011bfffc9503440c4279cacb53eb461ad96c8c90bb6b5368d896833a06b924a7a1abdbad46a8a5434e0c17a64
-  languageName: node
-  linkType: hard
-
-"helder.store@npm:^0.0.0-alpha.27":
-  version: 0.0.0-alpha.27
-  resolution: "helder.store@npm:0.0.0-alpha.27"
-  checksum: b6c9c5777ffa536843c3835ffeed0276d179f9bba66ee0c3fea9632ed3e03ecc4f6514cb56075c40be48154f69115c7e93dba7b784f0acbd606a10d78c10efac
   languageName: node
   linkType: hard
 

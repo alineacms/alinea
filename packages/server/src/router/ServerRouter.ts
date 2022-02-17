@@ -1,11 +1,11 @@
 import {createError, Hub, isError} from '@alinea/core'
 import {Outcome} from '@alinea/core/Outcome'
+import {Cursor} from '@alinea/store'
 import {decode} from 'base64-arraybuffer'
 import busboy from 'busboy'
 import compression from 'compression'
 import cors from 'cors'
 import {Response, Router} from 'express'
-import {Cursor} from 'helder.store'
 import type {Server} from '../Server'
 import {parseBuffer, parseJson} from '../util/BodyParser'
 
@@ -49,7 +49,7 @@ export function createServerRouter(hub: Server) {
   // Hub.query
   router.post(prefix + Hub.routes.query(), async (req, res) => {
     const body = await parseJson(req)
-    return respond(res, await hub.query(Cursor.fromJSON(body)))
+    return respond(res, await hub.query(new Cursor(body)))
   })
   // Hub.updateDraft
   router.put(prefix + Hub.routes.draft(':id'), async (req, res) => {

@@ -7,7 +7,7 @@ import {
   Outcome,
   Workspaces
 } from '@alinea/core'
-import {Cursor} from 'helder.store'
+import {Cursor} from '@alinea/store'
 import fetch from 'isomorphic-fetch'
 
 async function toFuture<T = void>(res: Response): Future<T> {

@@ -6,13 +6,14 @@ import {GithubData} from '@alinea/server/data/GithubData'
 import {FileDrafts} from '@alinea/server/drafts/FileDrafts'
 import {FirestoreDrafts} from '@alinea/server/drafts/FirestoreDrafts'
 import {GitDrafts} from '@alinea/server/drafts/GitDrafts'
+import {BetterSqlite3Driver} from '@alinea/store/sqlite/drivers/BetterSqlite3Driver'
+import {SqliteStore} from '@alinea/store/sqlite/SqliteStore'
+import Database from 'better-sqlite3'
 import compression from 'compression'
 import dotenv from 'dotenv'
 import express from 'express'
 import {getFirestore} from 'firebase-admin/firestore'
 import fs from 'fs/promises'
-import {BetterSqlite3} from 'helder.store/sqlite/drivers/BetterSqlite3.js'
-import {SqliteStore} from 'helder.store/sqlite/SqliteStore.js'
 import http from 'isomorphic-git/http/node/index.js'
 import {createTransport} from 'nodemailer'
 import {createElement} from 'react'
@@ -43,7 +44,11 @@ const auth = new PasswordLessAuth({
     return true
   }
 })
-const store = new SqliteStore(new BetterSqlite3(), createId)
+
+const store = new SqliteStore(
+  new BetterSqlite3Driver(new Database(':memory:')),
+  createId
+)
 
 const data = new FileData({
   config,

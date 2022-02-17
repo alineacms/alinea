@@ -117,6 +117,10 @@ export class SqliteStore implements Store {
     return this.db.transaction(run)
   }
 
+  export() {
+    return this.db.export()
+  }
+
   prepare(query: String, options?: QueryOptions): Driver.PreparedStatement {
     if (options != null && options.debug) {
       console.log(query)
