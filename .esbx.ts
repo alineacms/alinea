@@ -95,6 +95,19 @@ const buildOptions: BuildOptions = {
   }
 }
 
+const AnalyzePlugin: Plugin = {
+  name: 'AnalyzePlugin',
+  setup(build) {
+    build.initialOptions.metafile = true
+    build.onEnd(async res => {
+      let text = await build.esbuild.analyzeMetafile(res.metafile, {
+        verbose: true
+      })
+      console.log(text)
+    })
+  }
+}
+
 const builder = BuildTask.configure({
   exclude: ['@alinea/stories', '@alinea/website', '@alinea/css'],
   buildOptions: {
