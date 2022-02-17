@@ -1,5 +1,5 @@
 import {Entry, Outcome} from '@alinea/core'
-import {Expr} from '@alinea/store'
+import {Functions} from '@alinea/store/sqlite/Functions'
 import {fromModule} from '@alinea/ui'
 import useSize from '@react-hook/size'
 import {useCallback, useMemo, useRef, useState} from 'react'
@@ -46,10 +46,9 @@ function query({workspace, root, open, hidden}: QueryParams) {
       parent: Entry.parent,
       parents: Entry.parents,
       $isContainer: Entry.$isContainer,
-      childrenCount: Expr.value(0)
-      /* Parent.where(Parent.parent.is(Entry.id))
+      childrenCount: Parent.where(Parent.parent.is(Entry.id))
         .select(Functions.count())
-        .first() */
+        .first()
     })
 }
 
