@@ -52,6 +52,8 @@ test('select', () => {
     )
   )!
   assert.is(res2.testProp, 123)
+  const res3 = db.first(Test.select(Expr.value('test')))!
+  assert.is(res3, 'test')
 })
 
 test('update', () => {
