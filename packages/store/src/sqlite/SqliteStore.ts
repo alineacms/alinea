@@ -21,9 +21,10 @@ export class SqliteStore implements Store {
 
   all<Row>(cursor: Cursor<Row>, options?: QueryOptions): Array<Row> {
     const stmt = f.formatSelect(cursor.cursor)
+    const isJson = cursor.cursor.selection.type !== 'expr'
     return this.prepare(stmt.sql, options)
       .all<string>(stmt.getParams())
-      .map((col: string) => JSON.parse(col))
+      .map((col: any) => (isJson ? JSON.parse(col) : col))
   }
 
   first<Row>(cursor: Cursor<Row>, options?: QueryOptions): Row | null {
