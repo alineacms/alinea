@@ -205,6 +205,8 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
   }
 }
 
+// Todo: keep a cache of either the updates to apply in a statement or
+// a separate in memory db with the applied updates
 async function queryWithDrafts<T>(
   config: Config,
   store: Store,
