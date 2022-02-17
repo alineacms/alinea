@@ -32,6 +32,7 @@ __metadata:
   resolution: "@alinea/cli@workspace:packages/cli"
   dependencies:
     "@alinea/core": 0.0.0
+    "@alinea/store": 0.0.0
     "@esbx/react": ^0.0.9
     "@types/fs-extra": ^9.0.13
     "@types/sade": ^1.7.3
@@ -260,6 +261,7 @@ __metadata:
   resolution: "@alinea/server@workspace:packages/server"
   dependencies:
     "@alinea/core": 0.0.0
+    "@alinea/store": 0.0.0
     "@octokit/rest": ^18.12.0
     "@types/busboy": ^1.3.0
     "@types/compression": ^1.7.2
@@ -269,14 +271,13 @@ __metadata:
     "@types/serve-handler": ^6.1.1
     "@types/ws": ^8.2.0
     auto-bind: ^5.0.1
-    better-sqlite3: ^7.4.3
+    better-sqlite3: ^7.5.0
     busboy: ^1.4.0
     compression: ^1.7.4
     content-type: ^1.0.4
     convert-hrtime: ^5.0.0
     cors: ^2.8.5
     firebase-admin: ^10.0.2
-    helder.store: ^0.0.0-alpha.27
     isomorphic-git: ^1.10.5
     js-yaml: ^4.1.0
     octokit-commit-multiple-files: ^3.2.1
@@ -284,6 +285,17 @@ __metadata:
     pretty-ms: ^7.0.1
     raw-body: ^2.4.1
     y-protocols: ^1.0.5
+  languageName: unknown
+  linkType: soft
+
+"@alinea/store@0.0.0, @alinea/store@workspace:packages/store":
+  version: 0.0.0-use.local
+  resolution: "@alinea/store@workspace:packages/store"
+  dependencies:
+    "@types/better-sqlite3": ^5.4.1
+    "@types/sql.js": ^1.4.2
+    better-sqlite3: ^7.5.0
+    sql.js: ^1.6.2
   languageName: unknown
   linkType: soft
 
@@ -1888,6 +1900,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/better-sqlite3@npm:^5.4.1":
+  version: 5.4.3
+  resolution: "@types/better-sqlite3@npm:5.4.3"
+  dependencies:
+    "@types/integer": "*"
+  checksum: b10bb5850da99fff6c6edc1a562f202b4a0d02256299ba275415b46b30645b734c9ac1ef77c799ecdb746144f8eb06e7b4377ad98b0aa191da4bdf7d4802f562
+  languageName: node
+  linkType: hard
+
 "@types/body-parser@npm:*":
   version: 1.19.1
   resolution: "@types/body-parser@npm:1.19.1"
@@ -1945,6 +1966,13 @@ __metadata:
   version: 2.8.12
   resolution: "@types/cors@npm:2.8.12"
   checksum: 8c45f112c7d1d2d831b4b266f2e6ed33a1887a35dcbfe2a18b28370751fababb7cd045e745ef84a523c33a25932678097bf79afaa367c6cb3fa0daa7a6438257
+  languageName: node
+  linkType: hard
+
+"@types/emscripten@npm:*":
+  version: 1.39.6
+  resolution: "@types/emscripten@npm:1.39.6"
+  checksum: 437f2f9cdfd9057255662508fa9a415fe704ba484c6198f3549c5b05feebcdcd612b1ec7b10026d2566935d05d3c36f9366087cb42bc90bd25772a88fcfc9343
   languageName: node
   linkType: hard
 
@@ -2030,6 +2058,13 @@ __metadata:
   version: 4.7.9
   resolution: "@types/history@npm:4.7.9"
   checksum: 556b062adb92795839301965776b0418e9ca32798bd8a6031345a6a84d7512771107143a497b7e3ff826d0b0d4456e962c6450485dda6f55c7dd33371e840529
+  languageName: node
+  linkType: hard
+
+"@types/integer@npm:*":
+  version: 4.0.1
+  resolution: "@types/integer@npm:4.0.1"
+  checksum: f180174622d9d6c2ce9e0cc37f7d78a1b37faf83b8685d730112029d02faacf9e8ba84c82028b662b0e5238e81b08651ed969c62f4589f7bd904bba10751445f
   languageName: node
   linkType: hard
 
@@ -2369,6 +2404,16 @@ __metadata:
     "@types/mime": ^1
     "@types/node": "*"
   checksum: eaca858739483e3ded254cad7d7a679dc2c8b3f52c8bb0cd845b3b7eb1984bde0371fdcb0a5c83aa12e6daf61b6beb762545021f520f08a1fe882a3fa4ea5554
+  languageName: node
+  linkType: hard
+
+"@types/sql.js@npm:^1.4.2":
+  version: 1.4.3
+  resolution: "@types/sql.js@npm:1.4.3"
+  dependencies:
+    "@types/emscripten": "*"
+    "@types/node": "*"
+  checksum: ba02fdc13efd96e0a59590b198cc62326dc30e252bda2c494beab9dcea16cd0cb7a145da473d4b3aaf2abc682b8caa0cd8febe0e0093a76cb596d131cbf58359
   languageName: node
   linkType: hard
 
@@ -2809,15 +2854,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"better-sqlite3@npm:^7.4.3":
-  version: 7.4.3
-  resolution: "better-sqlite3@npm:7.4.3"
+"better-sqlite3@npm:^7.5.0":
+  version: 7.5.0
+  resolution: "better-sqlite3@npm:7.5.0"
   dependencies:
     bindings: ^1.5.0
     node-gyp: latest
-    prebuild-install: ^6.0.1
-    tar: ^6.1.0
-  checksum: ba33f05755e867cf71b93f7d11f79073568b641ba13d10317bc83a0e2f88a24844f1dc0bdb435bcfd5c876f8a8c58dafd39c973e90e591ed96512813dedc8857
+    prebuild-install: ^7.0.0
+  checksum: 049ab5de6b7c13f9957c6a93fe9a044f745b8b47672c8dc0bb8e0d1a9c846d0744be0f5e1f0f80903e010a07ee7a9eb52bf3e12124db214bab5989d0270d4ddc
   languageName: node
   linkType: hard
 
@@ -3532,6 +3576,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"decompress-response@npm:^6.0.0":
+  version: 6.0.0
+  resolution: "decompress-response@npm:6.0.0"
+  dependencies:
+    mimic-response: ^3.1.0
+  checksum: d377cf47e02d805e283866c3f50d3d21578b779731e8c5072d6ce8c13cc31493db1c2f6784da9d1d5250822120cefa44f1deab112d5981015f2e17444b763812
+  languageName: node
+  linkType: hard
+
 "deep-extend@npm:^0.6.0":
   version: 0.6.0
   resolution: "deep-extend@npm:0.6.0"
@@ -3590,12 +3643,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"detect-libc@npm:^1.0.3":
-  version: 1.0.3
-  resolution: "detect-libc@npm:1.0.3"
-  bin:
-    detect-libc: ./bin/detect-libc.js
-  checksum: daaaed925ffa7889bd91d56e9624e6c8033911bb60f3a50a74a87500680652969dbaab9526d1e200a4c94acf80fc862a22131841145a0a8482d60a99c24f4a3e
+"detect-libc@npm:^2.0.0":
+  version: 2.0.1
+  resolution: "detect-libc@npm:2.0.1"
+  checksum: ccb05fcabbb555beb544d48080179c18523a343face9ee4e1a86605a8715b4169f94d663c21a03c310ac824592f2ba9a5270218819bb411ad7be578a527593d7
   languageName: node
   linkType: hard
 
@@ -5017,13 +5068,6 @@ fsevents@~2.3.2:
   languageName: node
   linkType: hard
 
-"helder.store@npm:^0.0.0-alpha.27":
-  version: 0.0.0-alpha.27
-  resolution: "helder.store@npm:0.0.0-alpha.27"
-  checksum: b6c9c5777ffa536843c3835ffeed0276d179f9bba66ee0c3fea9632ed3e03ecc4f6514cb56075c40be48154f69115c7e93dba7b784f0acbd606a10d78c10efac
-  languageName: node
-  linkType: hard
-
 "history@npm:^4.9.0":
   version: 4.10.1
   resolution: "history@npm:4.10.1"
@@ -6325,6 +6369,13 @@ fsevents@~2.3.2:
   languageName: node
   linkType: hard
 
+"mimic-response@npm:^3.1.0":
+  version: 3.1.0
+  resolution: "mimic-response@npm:3.1.0"
+  checksum: 25739fee32c17f433626bf19f016df9036b75b3d84a3046c7d156e72ec963dd29d7fc8a302f55a3d6c5a4ff24259676b15d915aad6480815a969ff2ec0836867
+  languageName: node
+  linkType: hard
+
 "min-document@npm:^2.19.0":
   version: 2.19.0
   resolution: "min-document@npm:2.19.0"
@@ -6688,12 +6739,12 @@ fsevents@~2.3.2:
   languageName: node
   linkType: hard
 
-"node-abi@npm:^2.21.0":
-  version: 2.30.1
-  resolution: "node-abi@npm:2.30.1"
+"node-abi@npm:^3.3.0":
+  version: 3.8.0
+  resolution: "node-abi@npm:3.8.0"
   dependencies:
-    semver: ^5.4.1
-  checksum: 3f4b0c912ce4befcd7ceab4493ba90b51d60dfcc90f567c93f731d897ef8691add601cb64c181683b800f21d479d68f9a6e15d8ab8acd16a5706333b9e30a881
+    semver: ^7.3.5
+  checksum: 3644dd51f4f189358ef56055407501aa698632d67448585b38c46c81a482a0c3bfb06da513ac4060a12ce5f607f208ba9d9c8280f1c38329670b709bd735fcae
   languageName: node
   linkType: hard
 
@@ -7362,26 +7413,26 @@ fsevents@~2.3.2:
   languageName: node
   linkType: hard
 
-"prebuild-install@npm:^6.0.1":
-  version: 6.1.4
-  resolution: "prebuild-install@npm:6.1.4"
+"prebuild-install@npm:^7.0.0":
+  version: 7.0.1
+  resolution: "prebuild-install@npm:7.0.1"
   dependencies:
-    detect-libc: ^1.0.3
+    detect-libc: ^2.0.0
     expand-template: ^2.0.3
     github-from-package: 0.0.0
     minimist: ^1.2.3
     mkdirp-classic: ^0.5.3
     napi-build-utils: ^1.0.1
-    node-abi: ^2.21.0
+    node-abi: ^3.3.0
     npmlog: ^4.0.1
     pump: ^3.0.0
     rc: ^1.2.7
-    simple-get: ^3.0.3
+    simple-get: ^4.0.0
     tar-fs: ^2.0.0
     tunnel-agent: ^0.6.0
   bin:
     prebuild-install: bin.js
-  checksum: de4313eda821305912af922700a2db04bb8e77fe8aa9c2788550f1000c026cbefc82da468ec0c0a37764c5417bd8169dbd540928535fb38d00bb9bbd673dd217
+  checksum: 117c8966f221242633bbf245755fb469dabc7085909f5e3db83359d6281a88dedbdada7e839315805a192c74b7cce3ed1a86c1382a8d950c1ea60a9d5d8e7bf0
   languageName: node
   linkType: hard
 
@@ -8360,7 +8411,7 @@ resolve@^2.0.0-next.3:
   languageName: node
   linkType: hard
 
-"semver@npm:2 || 3 || 4 || 5, semver@npm:^5.4.1, semver@npm:^5.5.0, semver@npm:^5.6.0":
+"semver@npm:2 || 3 || 4 || 5, semver@npm:^5.5.0, semver@npm:^5.6.0":
   version: 5.7.1
   resolution: "semver@npm:5.7.1"
   bin:
@@ -8557,7 +8608,7 @@ resolve@^2.0.0-next.3:
   languageName: node
   linkType: hard
 
-"simple-get@npm:^3.0.2, simple-get@npm:^3.0.3":
+"simple-get@npm:^3.0.2":
   version: 3.1.0
   resolution: "simple-get@npm:3.1.0"
   dependencies:
@@ -8565,6 +8616,17 @@ resolve@^2.0.0-next.3:
     once: ^1.3.1
     simple-concat: ^1.0.0
   checksum: cca91a9ab2b532fa8d367757c196b54e2dfe3325aab0298d66a3e2a45a29a9d335d1a3fb41f036dad14000f78baddd4170fbf9621d72869791d2912baf9469aa
+  languageName: node
+  linkType: hard
+
+"simple-get@npm:^4.0.0":
+  version: 4.0.1
+  resolution: "simple-get@npm:4.0.1"
+  dependencies:
+    decompress-response: ^6.0.0
+    once: ^1.3.1
+    simple-concat: ^1.0.0
+  checksum: e4132fd27cf7af230d853fa45c1b8ce900cb430dd0a3c6d3829649fe4f2b26574c803698076c4006450efb0fad2ba8c5455fbb5755d4b0a5ec42d4f12b31d27e
   languageName: node
   linkType: hard
 
@@ -9050,7 +9112,7 @@ resolve@^2.0.0-next.3:
   languageName: node
   linkType: hard
 
-"tar@npm:^6.0.2, tar@npm:^6.0.5, tar@npm:^6.1.0, tar@npm:^6.1.2":
+"tar@npm:^6.0.2, tar@npm:^6.0.5, tar@npm:^6.1.2":
   version: 6.1.11
   resolution: "tar@npm:6.1.11"
   dependencies:

@@ -1,5 +1,5 @@
+import {Cursor} from '@alinea/store'
 import {encode} from 'base64-arraybuffer'
-import {Cursor} from 'helder.store'
 import {Config} from './Config'
 import {Entry} from './Entry'
 import {Future} from './Future'

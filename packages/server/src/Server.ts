@@ -12,11 +12,12 @@ import {
   outcome,
   Workspaces
 } from '@alinea/core'
+import {Cursor, Store} from '@alinea/store'
+import {Functions} from '@alinea/store/sqlite/Functions'
 import {encode} from 'base64-arraybuffer'
 import crypto from 'crypto'
 import express from 'express'
 import {generateKeyBetween} from 'fractional-indexing'
-import {Cursor, Functions, Store} from 'helder.store'
 import {
   createServer as createHttpServer,
   IncomingMessage,

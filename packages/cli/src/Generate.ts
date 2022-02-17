@@ -3,13 +3,14 @@ import {createId} from '@alinea/core/Id'
 import {Schema} from '@alinea/core/Schema'
 import {Cache, JsonLoader} from '@alinea/server'
 import {FileData} from '@alinea/server/data/FileData'
+import {BetterSqlite3Driver} from '@alinea/store/sqlite/drivers/BetterSqlite3Driver'
+import {SqliteStore} from '@alinea/store/sqlite/SqliteStore'
 import {ReactPlugin} from '@esbx/react'
 import {encode} from 'base64-arraybuffer'
+import Database from 'better-sqlite3'
 import {dirname} from 'dirname-filename-esm'
 import {build, BuildResult, Plugin} from 'esbuild'
 import fs from 'fs-extra'
-import {BetterSqlite3} from 'helder.store/sqlite/drivers/BetterSqlite3.js'
-import {SqliteStore} from 'helder.store/sqlite/SqliteStore.js'
 import {signed, unsigned} from 'leb128'
 import {createRequire} from 'module'
 import path from 'path'
@@ -74,7 +75,7 @@ function bin(strings: ReadonlyArray<String>, ...inserts: Array<Buffer>) {
   return Buffer.concat(res)
 }
 
-function embedInWasm(data: Buffer) {
+function embedInWasm(data: Uint8Array) {
   const size = unsigned.encode(data.length)
   const length = signed.encode(data.length)
   const globalL = unsigned.encode(5 + length.length)
@@ -90,11 +91,11 @@ function embedInWasm(data: Buffer) {
     07 11 02 04 6461 7461 02 00 06 6c65 6e67 7468 03 00 // section "Export" (7)
     0b ${dataL} 01                                      // section "Data" (11)
     00 41 00 0b ${size}                                 // data segment header 0
-    ${data}                                             // data
+    ${Buffer.from(data)}                                             // data
   `
 }
 
-async function embedInJs(source: string, data: Buffer) {
+async function embedInJs(source: string, data: Uint8Array) {
   const sqlJs = await fs.readFile(
     require.resolve('sql.js-fts5/dist/sql-wasm.wasm')
   )
@@ -127,7 +128,7 @@ function schemaTypes(workspace: string, schema: Schema) {
   return `
     import {config} from '../config.js'
     import {DataOf, EntryOf} from '@alinea/core'
-    import {Collection} from 'helder.store'
+    import {Collection} from '@alinea/store'
     export const schema = config.workspaces['${workspace}'].schema
     export type Page = EntryOf<typeof schema>
     export const Page: Collection<Page>
@@ -201,7 +202,10 @@ export async function generate(options: GenerateOptions) {
   const outFile = 'file://' + configFile
   const exports = await import(outFile)
   const config: Config = exports.default || exports.config
-  const store = new SqliteStore(new BetterSqlite3(), createId)
+  const store = new SqliteStore(
+    new BetterSqlite3Driver(new Database(':memory:')),
+    createId
+  )
   const source = new FileData({
     config,
     fs: fs.promises,
@@ -260,8 +264,7 @@ export async function generate(options: GenerateOptions) {
       workspaceIndex.replace('$WORKSPACE', key)
     )
   }
-  const db = (store as any).db.db
-  const data = db.serialize()
+  const data = store.export()
   if (legacy) {
     const source = await fs.readFile(
       path.join(__dirname, 'static', 'cache.legacy.js'),

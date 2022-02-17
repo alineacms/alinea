@@ -1,7 +1,7 @@
 import {createId} from '@alinea/core'
+import {SqlJsDriver} from '@alinea/store/sqlite/drivers/SqlJsDriver.js'
+import {SqliteStore} from '@alinea/store/sqlite/SqliteStore.js'
 import {decode} from 'base64-arraybuffer'
-import {SqlJs} from 'helder.store/sqlite/drivers/SqlJs.js'
-import {SqliteStore} from 'helder.store/sqlite/SqliteStore.js'
 import initSqlJs from 'sql.js-fts5'
 
 const sqlJs = decode('$SQLJS')
@@ -19,7 +19,7 @@ const sqlJsInit = initSqlJs({
 export function createCache() {
   return sqlJsInit.then(({Database}) => {
     return new SqliteStore(
-      new SqlJs(new Database(new Uint8Array(buffer))),
+      new SqlJsDriver(new Database(new Uint8Array(buffer))),
       createId
     )
   })

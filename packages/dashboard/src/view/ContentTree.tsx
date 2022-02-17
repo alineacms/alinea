@@ -1,7 +1,7 @@
 import {Entry, Outcome} from '@alinea/core'
+import {Expr} from '@alinea/store'
 import {fromModule} from '@alinea/ui'
 import useSize from '@react-hook/size'
-import {Expression} from 'helder.store'
 import {useCallback, useMemo, useRef, useState} from 'react'
 import {useQuery} from 'react-query'
 import VirtualList from 'react-tiny-virtual-list'
@@ -46,7 +46,7 @@ function query({workspace, root, open, hidden}: QueryParams) {
       parent: Entry.parent,
       parents: Entry.parents,
       $isContainer: Entry.$isContainer,
-      childrenCount: Expression.value(0)
+      childrenCount: Expr.value(0)
       /* Parent.where(Parent.parent.is(Entry.id))
         .select(Functions.count())
         .first() */
