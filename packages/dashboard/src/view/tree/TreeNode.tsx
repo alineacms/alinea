@@ -2,10 +2,18 @@ import {Entry} from '@alinea/core'
 import {Create, fromModule, Stack, useInitialEffect} from '@alinea/ui'
 import {HStack} from '@alinea/ui/Stack'
 import {
+  AnimateLayoutChanges,
+  defaultAnimateLayoutChanges,
+  useSortable
+} from '@dnd-kit/sortable'
+import {CSS, FirstArgument} from '@dnd-kit/utilities'
+import {
+  CSSProperties,
   forwardRef,
   HTMLProps,
   memo,
   PropsWithoutRef,
+  Ref,
   useCallback,
   useRef
 } from 'react'
@@ -37,11 +45,26 @@ type TreeNodeLinkProps = {
   level: number
   isOpened: boolean
   toggleOpen: () => void
+  rootRef?: Ref<HTMLDivElement>
+  isDragging?: boolean
+  isDragOverlay?: boolean
+  isDropContainer?: boolean
 } & PropsWithoutRef<HTMLProps<HTMLDivElement>>
 
 const TreeNodeLink = memo(
   forwardRef<HTMLAnchorElement, TreeNodeLinkProps>(function TreeNodeLink(
-    {entry, isOpened, toggleOpen, isSelected, level, ...props},
+    {
+      entry,
+      isOpened,
+      toggleOpen,
+      isSelected,
+      level,
+      rootRef,
+      isDragging,
+      isDragOverlay,
+      isDropContainer,
+      ...props
+    },
     ref
   ) {
     const {nav} = useDashboard()
@@ -60,10 +83,20 @@ const TreeNodeLink = memo(
         <MdInsertDriveFile size={12} />
       ))
     return (
-      <div className={styles.root({selected: isSelected})} {...props}>
+      <div
+        className={styles.root({
+          selected: isSelected,
+          dragging: isDragging,
+          dragOverlay: isDragOverlay,
+          dropContainer: isDropContainer
+        })}
+        ref={rootRef}
+        {...props}
+      >
         <div className={styles.root.inner()}>
           <Link
             ref={ref}
+            draggable={false}
             to={nav.entry(entry.workspace, entry.root, entry.id)}
             className={styles.root.link()}
             style={{paddingLeft: `${10 + level * 8}px`}}
@@ -111,11 +144,54 @@ const TreeNodeLink = memo(
   })
 )
 
+function animateLayoutChanges(args: FirstArgument<AnimateLayoutChanges>) {
+  const {isSorting, wasSorting} = args
+  if (isSorting || wasSorting) return defaultAnimateLayoutChanges(args)
+  return true
+}
+
+// Todo: once there's a resolution here: https://github.com/clauderic/dnd-kit/pull/612
+// we can disable nodes based on the type we're dragging
+
+export function TreeNodeSortable(props: TreeNodeProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+    over
+  } = useSortable({
+    animateLayoutChanges: () => false,
+    id: props.entry.id
+  })
+  const style: CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition: transition || undefined
+  }
+  return (
+    <TreeNode
+      {...props}
+      rootRef={setNodeRef}
+      style={style}
+      {...listeners}
+      {...attributes}
+      isDragging={isDragging}
+      isDropContainer={over?.id === props.entry.id}
+    />
+  )
+}
+
 export type TreeNodeProps = {
   entry: Entry.Summary
   level: number
   isOpen: (path: string) => boolean
   toggleOpen: (path: string) => void
+  isDragging?: boolean
+  isDragOverlay?: boolean
+  isDropContainer?: boolean
+  rootRef?: Ref<HTMLDivElement>
 } & PropsWithoutRef<HTMLProps<HTMLDivElement>>
 
 export function TreeNode({
@@ -123,6 +199,7 @@ export function TreeNode({
   level,
   isOpen,
   toggleOpen,
+  rootRef,
   ...props
 }: TreeNodeProps) {
   const {nav} = useDashboard()
@@ -146,6 +223,7 @@ export function TreeNode({
       isSelected={isSelected}
       isOpened={isOpened}
       toggleOpen={handleToggleOpen}
+      rootRef={rootRef}
       {...props}
     />
   )

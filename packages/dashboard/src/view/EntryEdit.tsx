@@ -106,6 +106,7 @@ export function NewEntry({parentId}: NewEntryProps) {
   const [selectedType, setSelectedType] = useState(types[0])
   const [title, setTitle] = useState('')
   const [isCreating, setIsCreating] = useState(false)
+
   function handleCreate(e: FormEvent) {
     e.preventDefault()
     if (!selectedType) return
@@ -122,7 +123,7 @@ export function NewEntry({parentId}: NewEntryProps) {
       title
     }
     const doc = docFromEntry(type, entry)
-    hub
+    return hub
       .updateDraft(entry.id, Y.encodeStateAsUpdate(doc))
       .then(result => {
         if (result.isSuccess()) {
@@ -139,9 +140,11 @@ export function NewEntry({parentId}: NewEntryProps) {
         setIsCreating(false)
       })
   }
+
   function handleClose() {
     history.push(nav.entry(workspace, parent?.root, parent?.id))
   }
+
   if (!parentId) return null
   return (
     <Modal open onClose={handleClose}>

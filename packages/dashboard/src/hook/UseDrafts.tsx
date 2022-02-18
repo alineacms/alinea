@@ -1,4 +1,4 @@
-import {createError, docFromEntry, EntryStatus} from '@alinea/core'
+import {createError, docFromEntry, EntryStatus, ROOT_KEY} from '@alinea/core'
 import {Hub} from '@alinea/core/Hub'
 import {observable} from '@alinea/ui'
 import {decode} from 'base64-arraybuffer'
@@ -66,6 +66,12 @@ class Drafts {
       draft.status(res.isSuccess() ? EntryStatus.Published : EntryStatus.Draft)
       this.status(DraftsStatus.Synced)
     })
+  }
+
+  async setIndex(entryId: string, index: string) {
+    const draft = await this.get(entryId)
+    draft.doc.getMap(ROOT_KEY).set('index', index)
+    await this.save(entryId, draft.doc)
   }
 
   connect(id: string, doc: Y.Doc) {

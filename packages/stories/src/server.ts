@@ -134,4 +134,4 @@ app.get('/api/preview', async (req, res) => {
 app.use((req, res) => serveHandler(req, res, {public: '.'}))
 app.listen(4500)
 
-console.log('Server started on http://localhost:4500')
+console.log('> Server started on http://localhost:4500')

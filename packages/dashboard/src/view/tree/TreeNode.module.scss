@@ -74,6 +74,10 @@
     background: var(--selected);
   }
 
+  &.is-dragOverlay &-inner {
+    background: var(--selected);
+  }
+
   &:hover &-link,
   &.is-selected &-link {
     color: var(--foreground);

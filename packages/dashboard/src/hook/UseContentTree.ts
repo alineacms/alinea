@@ -23,12 +23,12 @@ function query({workspace, root, open, hidden}: QueryParams) {
     .where(Entry.root.is(root))
     .where(Entry.type.isNotIn(hidden))
     .select({
+      title: Entry.title,
       id: Entry.id,
       index: Entry.index,
       workspace: Entry.workspace,
       root: Entry.root,
       type: Entry.type,
-      title: Entry.title,
       url: Entry.url,
       parent: Entry.parent,
       parents: Entry.parents,
@@ -37,26 +37,7 @@ function query({workspace, root, open, hidden}: QueryParams) {
         .select(Functions.count())
         .first()
     })
-}
-
-function sortByIndex(entries: Array<Entry.Summary>) {
-  const index = new Map(entries.map(entry => [entry.id, entry]))
-  function parentIndex(id: string) {
-    const parent = index.get(id)!
-    if (!parent) {
-      console.log(entries)
-      console.log(index)
-      console.log(id)
-    }
-    return parent.index || parent.id
-  }
-  function indexOf(entry: Entry.Summary) {
-    return entry.parents
-      .map(parentIndex)
-      .concat(entry.index || entry.id)
-      .join('.')
-  }
-  return entries.sort((a, b) => indexOf(a).localeCompare(indexOf(b)))
+    .orderBy(Entry.index.asc())
 }
 
 type UseContentTreeOptions = {
@@ -73,13 +54,13 @@ export function useContentTree({
   const {config} = useDashboard()
   const {hub} = useSession()
   const [open, setOpen] = useState(() => new Set<string>(select))
-  const isOpen = useCallback((path: string) => open.has(path), [open])
+  const isOpen = useCallback((id: string) => open.has(id), [open])
   const toggleOpen = useCallback(
-    (path: string) => {
+    (id: string) => {
       setOpen(currentOpen => {
         const res = new Set(currentOpen)
-        if (res.has(path)) res.delete(path)
-        else res.add(path)
+        if (res.has(id)) res.delete(id)
+        else res.add(id)
         return res
       })
     },
@@ -92,13 +73,12 @@ export function useContentTree({
       .map(([key]) => key)
   }, [workspace])
   const ids = Array.from(new Set([...open, ...select])).sort()
-  const {data} = useQuery(
+  const {data, refetch} = useQuery(
     ['tree', workspace, root, ids.join('.')],
     () => {
       return hub
         .query(query({workspace, root, open: ids, hidden}))
         .then(Outcome.unpack)
-        .then(sortByIndex)
     },
     {
       keepPreviousData: true,
@@ -113,5 +93,5 @@ export function useContentTree({
       true
     )
   })
-  return {entries, isOpen, toggleOpen}
+  return {entries, isOpen, toggleOpen, refetch}
 }

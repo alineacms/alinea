@@ -10,6 +10,20 @@ export type QueryOptions = {
 export type IdLess<Row> = Omit<Row, 'id'> & {id?: string}
 export type Document = {id: string}
 
+/*
+Someday add a way for user defined functions to be added to the database.
+type ExprParameters<T extends (...args: any[]) => any> = T extends (
+  ...args: infer P
+) => any
+  ? {[K in keyof P]: EV<P[K]>}
+  : never
+
+type FunctionContructor = <T extends (...params: any[]) => any>(
+  name: string,
+  run: T
+) => (...p: ExprParameters<T>) => EV<ReturnType<T>>
+*/
+
 export interface Store {
   all<Row>(cursor: Cursor<Row>, options?: QueryOptions): Array<Row>
   first<Row>(cursor: Cursor<Row>, options?: QueryOptions): Row | null

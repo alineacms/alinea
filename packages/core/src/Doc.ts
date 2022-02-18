@@ -66,6 +66,7 @@ export function docFromEntry(
   docRoot.set('workspace', entry.workspace)
   docRoot.set('root', entry.root)
   docRoot.set('type', entry.type)
+  docRoot.set('index', entry.index)
   docRoot.set('url', entry.url)
   docRoot.set('parent', entry.parent)
   docRoot.set('$isContainer', entry.$isContainer)

@@ -1,10 +1,31 @@
+import {Entry} from '@alinea/core/Entry'
+import {generateKeyBetween} from '@alinea/core/util/FractionalIndexing'
 import {fromModule} from '@alinea/ui'
+import {
+  closestCenter,
+  defaultDropAnimation,
+  DndContext,
+  DragEndEvent,
+  DragOverlay,
+  DragStartEvent,
+  KeyboardSensor,
+  LayoutMeasuringStrategy,
+  PointerSensor,
+  useSensor,
+  useSensors
+} from '@dnd-kit/core'
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy
+} from '@dnd-kit/sortable'
 import useSize from '@react-hook/size'
-import {useMemo, useRef} from 'react'
+import {useMemo, useRef, useState} from 'react'
 import VirtualList from 'react-tiny-virtual-list'
 import {useContentTree} from '../hook/UseContentTree'
+import {useDrafts} from '../hook/UseDrafts'
 import css from './ContentTree.module.scss'
-import {TreeNode} from './tree/TreeNode'
+import {TreeNode, TreeNodeSortable} from './tree/TreeNode'
 
 const styles = fromModule(css)
 
@@ -14,12 +35,65 @@ type ContentTreeProps = {
   select?: Array<string>
 }
 
+const layoutMeasuringConfig = {
+  strategy: LayoutMeasuringStrategy.Always
+}
+
+function applyMoves<T extends {id: string; index: string}>(
+  entries: Array<T>,
+  moves: Array<readonly [string, string]>
+): Array<T> {
+  const res = entries.slice()
+  for (const [entryId, indexKey] of moves) {
+    const entryIndex = res.findIndex(e => e.id === entryId)
+    if (entryIndex > -1) {
+      res[entryIndex] = {...res[entryIndex], index: indexKey}
+    }
+  }
+  return res
+}
+
+function sortByIndex(entries: Array<Entry.Summary>) {
+  const index = new Map(entries.map(entry => [entry.id, entry]))
+  function parentIndex(id: string) {
+    const parent = index.get(id)!
+    return parent.index
+  }
+  function indexOf(entry: Entry.Summary) {
+    return entry.parents.map(parentIndex).concat(entry.index).join('.')
+  }
+  return entries.sort((a, b) => {
+    const indexA = indexOf(a)
+    const indexB = indexOf(b)
+    return indexA < indexB ? -1 : indexA > indexB ? 1 : 0
+  })
+}
+
 export function ContentTree({workspace, root, select = []}: ContentTreeProps) {
-  const {entries, isOpen, toggleOpen} = useContentTree({
+  const {
+    entries: treeEntries,
+    isOpen,
+    toggleOpen,
+    refetch
+  } = useContentTree({
     workspace,
     root,
     select
   })
+  const drafts = useDrafts()
+  const [moves, setMoves] = useState<Array<readonly [string, string]>>([])
+  const entries = sortByIndex(applyMoves(treeEntries, moves))
+  const [dragging, setDragging] = useState<Entry.Summary | null>(null)
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 2
+      }
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates
+    })
+  )
   const containerRef = useRef(null)
   const [containerWidth, containerHeight] = useSize(containerRef)
   const itemSize = 30
@@ -30,31 +104,104 @@ export function ContentTree({workspace, root, select = []}: ContentTreeProps) {
       : undefined
   }, [])
   const scrollOffset = offset && offset < containerHeight ? 0 : offset
+
+  function handleDragStart(event: DragStartEvent) {
+    const {active} = event
+    const dragging = entries.find(entry => entry.id === active.id) || null
+    if (dragging?.$isContainer && isOpen(dragging.id)) {
+      toggleOpen(dragging.id)
+    }
+    setDragging(dragging)
+  }
+
+  // Todo: this is not very pretty
+  function handleDragEnd(event: DragEndEvent) {
+    const {active, over} = event
+    setDragging(null)
+    if (!over || active.id === over.id) return
+    const aId = active.id
+    const aIndex = entries.findIndex(entry => entry.id === aId)
+    const a = entries[aIndex]
+    const bId = over.id
+    const bIndex = entries.findIndex(entry => entry.id === bId)
+    const b = entries[bIndex]
+    if (a?.parent !== b?.parent) return
+    function sibling(direction: number) {
+      const next = entries[bIndex + direction]
+      return next && next.parent === b.parent ? next : null
+    }
+    const candidates = aIndex > bIndex ? [sibling(-1), b] : [b, sibling(1)]
+    try {
+      const newIndex = generateKeyBetween(
+        candidates[0]?.index || null,
+        candidates[1]?.index || null
+      )
+      const move = [a.id, newIndex] as const
+      setMoves(current => [...current, move])
+      return drafts
+        .setIndex(aId, newIndex)
+        .then(() => refetch())
+        .then(() => {
+          setMoves(current => current.filter(m => m !== move))
+        })
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
   return (
-    <div ref={containerRef} style={{height: '100%', overflow: 'hidden'}}>
-      {containerHeight > 0 && (
-        <VirtualList
-          className={styles.root.list()}
-          width="100%"
-          height={containerHeight}
-          itemCount={entries.length}
-          itemSize={30}
-          scrollOffset={scrollOffset}
-          renderItem={({index, style}) => {
-            const entry = entries[index]
-            return (
-              <TreeNode
-                key={entry.id}
-                entry={entry}
-                level={entry.parents.length}
-                isOpen={isOpen}
-                toggleOpen={toggleOpen}
-                style={style}
-              />
-            )
-          }}
-        />
-      )}
-    </div>
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+      layoutMeasuring={layoutMeasuringConfig}
+    >
+      <SortableContext items={entries} strategy={verticalListSortingStrategy}>
+        <div ref={containerRef} style={{height: '100%', overflow: 'hidden'}}>
+          {containerHeight > 0 && (
+            <VirtualList
+              className={styles.root.list()}
+              width="100%"
+              height={containerHeight}
+              itemCount={entries.length}
+              itemSize={30}
+              scrollOffset={scrollOffset}
+              renderItem={({index, style}) => {
+                const entry = entries[index]
+                return (
+                  <TreeNodeSortable
+                    key={entry.id}
+                    entry={entry}
+                    level={entry.parents.length}
+                    isOpen={isOpen}
+                    toggleOpen={toggleOpen}
+                    style={style}
+                  />
+                )
+              }}
+            />
+          )}
+        </div>
+      </SortableContext>
+
+      <DragOverlay
+        dropAnimation={{
+          ...defaultDropAnimation,
+          dragSourceOpacity: 0.5
+        }}
+      >
+        {dragging ? (
+          <TreeNode
+            key="overlay"
+            entry={dragging}
+            level={dragging.parents.length}
+            isOpen={isOpen}
+            toggleOpen={toggleOpen}
+            isDragOverlay
+          />
+        ) : null}
+      </DragOverlay>
+    </DndContext>
   )
 }

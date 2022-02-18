@@ -35,7 +35,7 @@ export const config = createConfig({
       schema: webSchema,
       contentDir: './content/web',
       mediaDir: './public',
-      color: '#FFBD67',
+      color: '#6E57D0', // '#FFBD67',
       roots: {
         data: {
           icon: MdInsertDriveFile,
