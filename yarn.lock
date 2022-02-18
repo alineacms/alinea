@@ -131,7 +131,6 @@ __metadata:
     "@dnd-kit/core": ^3.1.1
     "@dnd-kit/sortable": ^4.0.0
     "@dnd-kit/utilities": ^2.0.0
-    fractional-indexing: ^2.0.0
     react-icons: ^4.3.1
     yjs: ^13.5.16
   languageName: unknown
@@ -147,7 +146,6 @@ __metadata:
     "@dnd-kit/core": ^3.1.1
     "@dnd-kit/sortable": ^4.0.0
     "@dnd-kit/utilities": ^2.0.0
-    fractional-indexing: ^2.0.0
     react-icons: ^4.3.1
     yjs: ^13.5.16
   languageName: unknown
@@ -4612,13 +4610,6 @@ __metadata:
   version: 0.2.0
   resolution: "forwarded@npm:0.2.0"
   checksum: fd27e2394d8887ebd16a66ffc889dc983fbbd797d5d3f01087c020283c0f019a7d05ee85669383d8e0d216b116d720fc0cef2f6e9b7eb9f4c90c6e0bc7fd28e6
-  languageName: node
-  linkType: hard
-
-"fractional-indexing@npm:^2.0.0":
-  version: 2.0.0
-  resolution: "fractional-indexing@npm:2.0.0"
-  checksum: 425d4e376a572984985a1ee0e0392fc7957ea7c13afc7b5d355b283acaeb8fecbb53bbed490a369c81d16d66e748938d3b0d4e8bbdbfb79ece8763c8871f097b
   languageName: node
   linkType: hard
 
