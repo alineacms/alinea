@@ -6,5 +6,5 @@ Roadmap
 - [x] Preview => iframe + map data with server
 - [ ] Track publish status
 - [ ] Media management
-- [ ] Sort entries
+- [x] Sort entries
 - [ ] Move entries
