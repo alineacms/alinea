@@ -91,6 +91,30 @@ export abstract class Formatter {
       : Statement.EMPTY
   }
 
+  formatGroupBy(
+    groupBy: Array<ExprData> | undefined,
+    options: FormatExprOptions
+  ) {
+    if (!groupBy || groupBy.length == 0) return Statement.EMPTY
+    const groups = []
+    const params = []
+    for (const expr of groupBy) {
+      const stmt = this.formatExpr(expr, options)
+      groups.push(stmt.sql)
+      params.push(...stmt.params)
+    }
+    return new Statement(`group by ${groups.join(', ')}`, params)
+  }
+
+  formatHaving(
+    having: ExprData | undefined,
+    options: FormatExprOptions
+  ): Statement {
+    return having
+      ? sql`having ${this.formatExpr(having, options)}`
+      : Statement.EMPTY
+  }
+
   formatSelection(
     selection: SelectionData,
     options: FormatExprOptions
@@ -157,6 +181,9 @@ export abstract class Formatter {
       : undefined
     const from = sql`from ${this.formatFrom(cursor.from, options)}`
     const where = this.formatWhere(cursor.where, options)
+    const groupBy = this.formatGroupBy(cursor.groupBy, options)
+    const having = this.formatHaving(cursor.having, options)
+    const order = this.formatOrderBy(cursor.orderBy, options)
     const limit =
       cursor.limit !== undefined || cursor.offset !== undefined
         ? sql`limit ${Param.value(cursor.limit || 0)}`
@@ -165,8 +192,7 @@ export abstract class Formatter {
       cursor.offset !== undefined
         ? sql`offset ${Param.value(cursor.offset)}`
         : undefined
-    const order = this.formatOrderBy(cursor.orderBy, options)
-    return sql`${select} ${from} ${where} ${order} ${limit} ${offset}`
+    return sql`${select} ${from} ${where} ${groupBy} ${having} ${order} ${limit} ${offset}`
   }
 
   formatExpr(expr: ExprData, options: FormatExprOptions): Statement {

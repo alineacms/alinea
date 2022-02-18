@@ -9,9 +9,11 @@ export type CursorData = {
   from: From
   selection: SelectionData
   where?: ExprData
+  having?: ExprData
   limit?: number
   offset?: number
   orderBy?: Array<OrderBy>
+  groupBy?: Array<ExprData>
   singleResult?: boolean
 }
 
@@ -79,6 +81,16 @@ export class Cursor<Row> {
     })
   }
 
+  having(having: Expr<boolean>): Cursor<Row> {
+    return new Cursor({
+      ...this.cursor,
+      having: (this.cursor.having
+        ? having.and(new Expr(this.cursor.having))
+        : having
+      ).expr
+    })
+  }
+
   /*with<X extends Select>(selection: X) {
     return new Cursor<Omit<Row, keyof TypeOf<X>> & TypeOf<X>>({
       ...this.cursor,
@@ -92,6 +104,14 @@ export class Cursor<Row> {
       orderBy: this.cursor.orderBy
         ? this.cursor.orderBy.concat(orderBy)
         : orderBy
+    })
+  }
+
+  groupBy(...groupBy: Array<Expr<any>>): Cursor<Row> {
+    const data = groupBy.map(e => e.expr)
+    return new Cursor({
+      ...this.cursor,
+      groupBy: this.cursor.groupBy ? this.cursor.groupBy.concat(data) : data
     })
   }
 

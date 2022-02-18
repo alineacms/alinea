@@ -28,7 +28,7 @@ export class SqliteStore implements Store {
   }
 
   first<Row>(cursor: Cursor<Row>, options?: QueryOptions): Row | null {
-    return this.all(cursor.take(1), options)[0]
+    return this.all(cursor.take(1), options)[0] || null
   }
 
   delete<Row>(cursor: Cursor<Row>, options?: QueryOptions): {changes: number} {
