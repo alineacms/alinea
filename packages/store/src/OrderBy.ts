@@ -1,6 +1,6 @@
 import {ExprData} from './Expr'
 
-export enum OrderDirection {
+export const enum OrderDirection {
   Asc,
   Desc
 }

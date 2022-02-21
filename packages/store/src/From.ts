@@ -1,6 +1,6 @@
 import {ExprData} from './Expr'
 
-export enum FromType {
+export const enum FromType {
   Table,
   Column,
   Join
@@ -43,7 +43,7 @@ export namespace From {
       case FromType.Column:
         return source(from.of)
       default:
-        throw 'Cannot source join'
+        throw 'assert'
     }
   }
   export function path(from: From): Array<string> {
@@ -53,7 +53,7 @@ export namespace From {
       case FromType.Table:
         return [from.alias || from.name]
       default:
-        throw 'Cannot field access'
+        throw 'assert'
     }
   }
 }

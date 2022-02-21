@@ -1,6 +1,7 @@
 import {ExprData, ExprType} from '../Expr'
 import {FormatExprOptions, Formatter} from '../Formatter'
-import {ParamType} from '../Param'
+import {ParamData, ParamType} from '../Param'
+import {SelectionData, SelectionType} from '../Selection'
 import {sql, Statement} from '../Statement'
 
 const SINGLE_QUOTE = "'"
@@ -31,6 +32,23 @@ export const sqliteFormatter = new (class extends Formatter {
     }
     buf += BACKTICK
     return buf
+  }
+  formatSelection(
+    selection: SelectionData,
+    options: FormatExprOptions
+  ): Statement {
+    switch (selection.type) {
+      case SelectionType.Case:
+        let result = sql`case ${this.formatExpr(selection.expr, options)}`
+        for (const [when, select] of Object.entries(selection.cases))
+          result = sql`${result}\nwhen ${this.formatExpr(
+            ExprData.Param(ParamData.Value(when)),
+            options
+          )} then ${this.formatSelection(select, options)}`
+        return sql`${result}\nend`
+      default:
+        return super.formatSelection(selection, options)
+    }
   }
   formatAccess(on: Statement, field: string): Statement {
     const target = Statement.raw(this.escapeString(`$.${field}`))

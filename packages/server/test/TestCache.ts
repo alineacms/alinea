@@ -26,7 +26,9 @@ const config = createConfig({
     main: workspace('Main', {
       contentDir: 'content',
       schema: createSchema({
-        Type: type('Type', {title: text('Title')}, {isContainer: true}),
+        Type: type('Type', {title: text('Title')}).configure({
+          isContainer: true
+        }),
         Sub: type('Sub', {
           title: text('Title')
         })

@@ -1,7 +1,7 @@
 import {CursorData} from './Cursor'
 import {BinOp, ExprData, ExprType, UnOp} from './Expr'
 import {From, FromType} from './From'
-import {OrderBy} from './OrderBy'
+import {OrderBy, OrderDirection} from './OrderBy'
 import {Param, ParamType} from './Param'
 import {SelectionData, SelectionType} from './Selection'
 import {sql, Statement} from './Statement'
@@ -76,7 +76,9 @@ export abstract class Formatter {
     const params = []
     for (const {expr, order} of orderBy) {
       const stmt = this.formatExpr(expr, options)
-      orders.push(`${stmt.sql} ${order === 'asc' ? 'asc' : 'desc'}`)
+      orders.push(
+        `${stmt.sql} ${order === OrderDirection.Asc ? 'asc' : 'desc'}`
+      )
       params.push(...stmt.params)
     }
     return new Statement(`order by ${orders.join(', ')}`, params)
@@ -169,6 +171,8 @@ export abstract class Formatter {
           if (i < keys.length - 1) res = sql`${res}, `
         })
         return sql`json_object(${res})`
+      case SelectionType.Case:
+        throw `Not supported in current formatter: _.case(...)`
     }
   }
 

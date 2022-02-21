@@ -78,6 +78,27 @@ test('update', () => {
   assert.is(db.first(byProp({prop: 20}))!.prop, 20)
 })*/
 
+test('case', () => {
+  const db = store()
+  type Test = {id: string; type: 'A' | 'B'}
+  const Test = new Collection<Test>('test')
+  const a = {type: 'A'} as const
+  const b = {type: 'B'} as const
+  db.insertAll(Test, [a, b])
+
+  assert.equal(
+    db.all(
+      Test.select(
+        Test.type.case({
+          A: Expr.value(1),
+          B: Expr.value(2)
+        })
+      )
+    ),
+    [1, 2]
+  )
+})
+
 test('json', () => {
   const db = store()
   const Test = new Collection<typeof a & {id: string}>('test')

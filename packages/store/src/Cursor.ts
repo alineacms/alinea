@@ -32,7 +32,6 @@ export class Cursor<Row> {
         'left',
         condition.expr
       )
-      // c.collections.set(Collection.getName(that), that);
     })
   }
 
@@ -48,7 +47,6 @@ export class Cursor<Row> {
         'inner',
         condition.expr
       )
-      // c.collections.set(Collection.getName(that), that);
     })
   }
 

@@ -3,11 +3,12 @@ import {Expr, ExprData} from './Expr'
 import {From} from './From'
 import {Select, With} from './Types'
 
-export enum SelectionType {
+export const enum SelectionType {
   Expr,
   Cursor,
   Fields,
   Row,
+  Case,
   With
 }
 
@@ -16,6 +17,11 @@ export type SelectionData =
   | {type: SelectionType.Cursor; cursor: CursorData}
   | {type: SelectionType.Fields; fields: Record<string, SelectionData>}
   | {type: SelectionType.Row; source: From}
+  | {
+      type: SelectionType.Case
+      expr: ExprData
+      cases: Record<string, SelectionData>
+    }
   | {type: SelectionType.With; a: SelectionData; b: SelectionData}
 
 export const SelectionData = {
@@ -30,6 +36,9 @@ export const SelectionData = {
   },
   Row(source: From): SelectionData {
     return {type: SelectionType.Row, source}
+  },
+  Case(expr: ExprData, cases: Record<string, SelectionData>): SelectionData {
+    return {type: SelectionType.Case, expr, cases}
   },
   With(a: SelectionData, b: SelectionData): SelectionData {
     return {type: SelectionType.With, a, b}
