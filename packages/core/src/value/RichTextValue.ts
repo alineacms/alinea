@@ -137,7 +137,8 @@ export class RichTextValue<T>
     const types = this.values
     if (types && value && value.blocks)
       for (const [name, block] of Object.entries(value.blocks)) {
-        map.set(name, types[block.type].toY(block))
+        const type = types[block.type]
+        if (type) map.set(name, type.toY(block))
       }
     const content = value?.content
     if (!content) return map

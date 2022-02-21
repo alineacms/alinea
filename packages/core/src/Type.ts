@@ -85,7 +85,7 @@ export class Type<T = {}> {
     } as Entry & T
   }
 
-  configure(options: Type.Options) {
+  configure(options: Type.Options): Type<T> {
     return new Type(this.label, this.sections, {...this.options, ...options})
   }
 }

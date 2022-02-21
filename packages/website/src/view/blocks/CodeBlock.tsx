@@ -1,17 +1,10 @@
-import {Schema, type} from '@alinea/core'
-import {code} from '@alinea/input.code'
 import {fromModule, Typo} from '@alinea/ui'
 import css from './CodeBlock.module.scss'
+import {CodeBlockSchema} from './CodeBlock.schema'
 
-const styles = /* @__PURE__ */ fromModule(css)
+const styles = fromModule(css)
 
-export const CodeBlock = type('Code', {
-  code: code('Code', {inline: true})
-})
-
-export type CodeBlock = Schema.TypeOf<typeof CodeBlock>
-
-export function CodeBlockView({code}: CodeBlock) {
+export function CodeBlock({code}: CodeBlockSchema) {
   return (
     <div className={styles.root()}>
       <Typo.Monospace>{code}</Typo.Monospace>

@@ -1,26 +1,18 @@
-import {Schema, schema, unreachable} from '@alinea/core'
-import {list} from '@alinea/input.list'
-import {TextBlock, TextBlockView} from './TextBlock'
-
-export const Blocks = list('Body', {
-  schema: schema({
-    TextBlock
-  })
-})
-
-export type Blocks = Schema.TypeOf<typeof Blocks>
+import {unreachable} from '@alinea/core'
+import {BlocksSchema} from './Blocks.schema'
+import {TextBlock} from './TextBlock'
 
 export type BlocksViewProps = {
-  blocks: Blocks
+  blocks: BlocksSchema
 }
 
-export function BlocksView({blocks}: BlocksViewProps) {
+export function Blocks({blocks}: BlocksViewProps) {
   return (
     <div>
       {blocks.map(block => {
         switch (block.type) {
           case 'TextBlock':
-            return <TextBlockView key={block.id} {...block} />
+            return <TextBlock key={block.id} {...block} />
           default:
             throw unreachable(block.type)
         }

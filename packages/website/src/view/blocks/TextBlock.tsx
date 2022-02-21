@@ -1,26 +1,15 @@
-import {schema, Schema, type} from '@alinea/core'
-import {richText} from '@alinea/input.richtext'
 import {fromModule} from '@alinea/ui'
 import {RichText} from '../layout/RichText'
-import {CodeBlock, CodeBlockView} from './CodeBlock'
+import {CodeBlock} from './CodeBlock'
 import css from './TextBlock.module.scss'
+import {TextBlockSchema} from './TextBlock.schema'
 
-const styles = /* @__PURE__ */ fromModule(css)
+const styles = fromModule(css)
 
-export const TextBlock = type('Text', {
-  text: richText('Text', {
-    blocks: schema({
-      CodeBlock
-    })
-  })
-})
-
-export type TextBlock = Schema.TypeOf<typeof TextBlock>
-
-export function TextBlockView({text}: TextBlock) {
+export function TextBlock({text}: TextBlockSchema) {
   return (
     <div className={styles.root()}>
-      <RichText doc={text} view={{CodeBlock: CodeBlockView}} />
+      <RichText doc={text} view={{CodeBlock: CodeBlock}} />
     </div>
   )
 }

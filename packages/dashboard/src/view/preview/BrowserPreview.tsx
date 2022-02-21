@@ -15,9 +15,9 @@ import {
   MdOpenInNew,
   MdRefresh
 } from 'react-icons/md'
-import {DraftsStatus, useDrafts} from '../hook/UseDrafts'
+import {DraftsStatus, useDrafts} from '../../hook/UseDrafts'
+import {Preview} from '../Preview'
 import css from './BrowserPreview.module.scss'
-import {Preview} from './Preview'
 
 const styles = fromModule(css)
 

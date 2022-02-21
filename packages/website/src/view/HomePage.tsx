@@ -1,8 +1,8 @@
-import {Home} from '.alinea/web'
 import {HStack, px, Typo} from '@alinea/ui'
+import {HomePageSchema} from './HomePage.schema'
 import {Container} from './layout/Container'
 
-export function HomePage({headline, byline}: Home) {
+export function HomePage({headline, byline}: HomePageSchema) {
   return (
     <Container>
       <header style={{padding: `${px(25)} 0`}}>

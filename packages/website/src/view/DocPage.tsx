@@ -1,6 +1,6 @@
 import {Doc} from '.alinea/web'
 import {Typo} from '@alinea/ui'
-import {BlocksView} from './blocks/Blocks'
+import {Blocks} from './blocks/Blocks'
 import {Container} from './layout/Container'
 
 type CodeBlockProps = {
@@ -14,7 +14,7 @@ function CodeBlock({code}: CodeBlockProps) {
 export function DocPage({title, blocks}: Doc) {
   return (
     <Container>
-      <BlocksView blocks={blocks} />
+      <Blocks blocks={blocks} />
     </Container>
   )
 }

@@ -97,6 +97,7 @@ __metadata:
     react-router: ^5.2.1
     react-router-dom: ^5.3.0
     react-tiny-virtual-list: ^2.2.0
+    use-error-boundary: ^2.0.6
   languageName: unknown
   linkType: soft
 
@@ -9454,6 +9455,19 @@ resolve@^2.0.0-next.3:
     "@types/react":
       optional: true
   checksum: b0027242311ed3fb006575c3be69efe31946f17129f2464707f4fcf2e167b91917236569a1d622c57b36843bc05efd9740a4ba51591553ad6fe2799cc12b138e
+  languageName: node
+  linkType: hard
+
+"use-error-boundary@npm:^2.0.6":
+  version: 2.0.6
+  resolution: "use-error-boundary@npm:2.0.6"
+  peerDependencies:
+    react: ">=16.9.0"
+    react-dom: ">=16.9.0"
+  peerDependenciesMeta:
+    react-dom:
+      optional: true
+  checksum: 07c61f517954f718c241670eb69463c603fd6baf376a78c472570fb4332c008be22833335342fa261238d5172dea51e486466d6d584fefc82be15ec624715d6c
   languageName: node
   linkType: hard
 
