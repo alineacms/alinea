@@ -1,64 +1,74 @@
 import {Cursor, CursorData} from './Cursor'
 import {OrderBy, OrderDirection} from './OrderBy'
-import {ParamData} from './Param'
+import {ParamData, ParamType} from './Param'
 
 export enum UnOp {
-  Not = '!',
-  IsNull = 'is null'
+  Not,
+  IsNull
 }
 
 export enum BinOp {
-  Add = '+',
-  Subt = '-',
-  Mult = '*',
-  Mod = '%',
-  Div = '/',
-  Greater = '>',
-  GreaterOrEqual = '>=',
-  Less = '<',
-  LessOrEqual = '<=',
-  Equals = '==',
-  NotEquals = '!=',
-  And = '&&',
-  Or = '||',
-  Like = 'like',
-  Glob = 'glob',
-  Match = 'match',
-  In = 'in',
-  NotIn = 'not in',
-  Concat = 'concat'
+  Add,
+  Subt,
+  Mult,
+  Mod,
+  Div,
+  Greater,
+  GreaterOrEqual,
+  Less,
+  LessOrEqual,
+  Equals,
+  NotEquals,
+  And,
+  Or,
+  Like,
+  Glob,
+  Match,
+  In,
+  NotIn,
+  Concat
+}
+
+export enum ExprType {
+  UnOp,
+  BinOp,
+  Field,
+  Param,
+  Call,
+  Access,
+  Query
 }
 
 export type ExprData =
-  | {type: 'unop'; op: UnOp; expr: ExprData}
-  | {type: 'binop'; op: BinOp; a: ExprData; b: ExprData}
-  | {type: 'field'; path: Array<string>}
-  | {type: 'param'; param: ParamData}
-  | {type: 'call'; method: string; params: Array<ExprData>}
-  | {type: 'access'; expr: ExprData; field: string}
-  | {type: 'query'; cursor: CursorData}
+  | {type: ExprType.UnOp; op: UnOp; expr: ExprData}
+  | {type: ExprType.BinOp; op: BinOp; a: ExprData; b: ExprData}
+  | {type: ExprType.Field; path: Array<string>}
+  | {type: ExprType.Param; param: ParamData}
+  | {type: ExprType.Call; method: string; params: Array<ExprData>}
+  | {type: ExprType.Access; expr: ExprData; field: string}
+  | {type: ExprType.Query; cursor: CursorData}
 
 export const ExprData = {
   UnOp(op: UnOp, expr: ExprData): ExprData {
-    return {type: 'unop', op: op, expr: expr}
+    return {type: ExprType.UnOp, op: op, expr: expr}
   },
   BinOp(op: BinOp, a: ExprData, b: ExprData): ExprData {
-    return {type: 'binop', op: op, a: a, b: b}
+    return {type: ExprType.BinOp, op: op, a: a, b: b}
   },
   Field(path: Array<string>): ExprData {
-    return {type: 'field', path: path}
+    return {type: ExprType.Field, path: path}
   },
   Param(param: ParamData): ExprData {
-    return {type: 'param', param: param}
+    return {type: ExprType.Param, param: param}
   },
   Call(method: string, params: Array<ExprData>): ExprData {
-    return {type: 'call', method: method, params: params}
+    return {type: ExprType.Call, method: method, params: params}
   },
   Access(expr: ExprData, field: string): ExprData {
-    return {type: 'access', expr: expr, field: field}
+    return {type: ExprType.Access, expr: expr, field: field}
   },
   Query(cursor: CursorData): ExprData {
-    return {type: 'query', cursor: cursor}
+    return {type: ExprType.Query, cursor: cursor}
   },
   create(input: any) {
     if (input == null) return ExprData.Param(ParamData.Value(null))
@@ -75,9 +85,9 @@ export type EV<T> = Expr<T> | T
 
 function isConstant<T>(e: ExprData, value: T): boolean {
   switch (e.type) {
-    case 'param':
+    case ExprType.Param:
       switch (e.param.type) {
-        case 'value':
+        case ParamType.Value:
           return e.param.value == value
         default:
           return false
@@ -209,14 +219,10 @@ export class Expr<T> {
 
   get<T>(path: string): Expr<T> {
     switch (this.expr.type) {
-      case 'field':
+      case ExprType.Field:
         return new Expr(ExprData.Field(this.expr.path.concat(path)))
       default:
         return new Expr(ExprData.Access(this.expr, path))
     }
-  }
-
-  toJSON() {
-    return this.expr
   }
 }

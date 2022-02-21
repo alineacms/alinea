@@ -114,10 +114,6 @@ export class Cursor<Row> {
       groupBy: this.cursor.groupBy ? this.cursor.groupBy.concat(data) : data
     })
   }
-
-  toJSON() {
-    return this.cursor
-  }
 }
 
 export class CursorSingleRow<Row> extends Cursor<Row> {

@@ -1,5 +1,6 @@
-import {ExprData} from '../Expr'
+import {ExprData, ExprType} from '../Expr'
 import {FormatExprOptions, Formatter} from '../Formatter'
+import {ParamType} from '../Param'
 import {sql, Statement} from '../Statement'
 
 const SINGLE_QUOTE = "'"
@@ -59,12 +60,12 @@ export const sqliteFormatter = new (class extends Formatter {
   }
   formatExpr(expr: ExprData, options: FormatExprOptions): Statement {
     switch (expr.type) {
-      case 'call':
+      case ExprType.Call:
         if (expr.method === 'cast') {
           const [e, type] = expr.params
           const typeName =
-            type.type === 'param' &&
-            type.param.type === 'value' &&
+            type.type === ExprType.Param &&
+            type.param.type === ParamType.Value &&
             type.param.value
           if (!typeName) throw 'assert'
           return sql`cast(${this.formatExpr(

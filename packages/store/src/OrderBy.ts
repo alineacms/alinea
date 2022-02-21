@@ -1,8 +1,8 @@
 import {ExprData} from './Expr'
 
 export enum OrderDirection {
-  Asc = 'asc',
-  Desc = 'desc'
+  Asc,
+  Desc
 }
 
 export type OrderBy = {

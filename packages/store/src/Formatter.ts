@@ -1,9 +1,9 @@
 import {CursorData} from './Cursor'
-import {BinOp, ExprData, UnOp} from './Expr'
-import {From} from './From'
+import {BinOp, ExprData, ExprType, UnOp} from './Expr'
+import {From, FromType} from './From'
 import {OrderBy} from './OrderBy'
-import {Param} from './Param'
-import {SelectionData} from './Selection'
+import {Param, ParamType} from './Param'
+import {SelectionData, SelectionType} from './Selection'
 import {sql, Statement} from './Statement'
 
 const binOps = {
@@ -50,15 +50,15 @@ export abstract class Formatter {
 
   formatFrom(from: From, options: FormatExprOptions): Statement {
     switch (from.type) {
-      case 'table':
+      case FromType.Table:
         return Statement.raw(
           from.alias
             ? `${this.escapeId(from.name)} as ${this.escapeId(from.alias)}`
             : this.escapeId(from.name)
         )
-      case 'column':
+      case FromType.Column:
         return this.formatFrom(from.of, options)
-      case 'join':
+      case FromType.Join:
         const left = this.formatFrom(from.left, options)
         const right = this.formatFrom(from.right, options)
         const on = this.formatExpr(from.on, options)
@@ -120,16 +120,16 @@ export abstract class Formatter {
     options: FormatExprOptions
   ): Statement {
     switch (selection.type) {
-      case 'row':
+      case SelectionType.Row:
         const {source} = selection
         switch (source.type) {
-          case 'column':
+          case FromType.Column:
             return Statement.raw(
               `json(${this.escapeId(From.source(source))}.${this.escapeId(
                 source.column
               )})`
             )
-          case 'table':
+          case FromType.Table:
             return this.formatSelection(
               SelectionData.Fields(
                 Object.fromEntries(
@@ -143,23 +143,23 @@ export abstract class Formatter {
               ),
               options
             )
-          case 'join':
+          case FromType.Join:
             throw 'assert'
         }
-      case 'cursor':
+      case SelectionType.Cursor:
         const sub = this.formatCursor(selection.cursor, {
           ...options,
           formatSubject: subject => sql`${subject} as res`
         })
         if (selection.cursor.singleResult) return sql`(select ${sub})`
         return sql`(select json_group_array(json(res)) from (select ${sub}))`
-      case 'expr':
+      case SelectionType.Expr:
         return this.formatExpr(selection.expr, options)
-      case 'with':
+      case SelectionType.With:
         const a = this.formatSelection(selection.a, options)
         const b = this.formatSelection(selection.b, options)
         return sql`json_patch(${a}, ${b})`
-      case 'fields':
+      case SelectionType.Fields:
         let res = Statement.EMPTY
         const keys = Object.keys(selection.fields)
         Object.entries(selection.fields).forEach(([key, value], i) => {
@@ -197,14 +197,14 @@ export abstract class Formatter {
 
   formatExpr(expr: ExprData, options: FormatExprOptions): Statement {
     switch (expr.type) {
-      case 'unop':
+      case ExprType.UnOp:
         if (expr.op === UnOp.IsNull)
           return sql`${this.formatExpr(expr.expr, options)} is null`
         return sql`!(${this.formatExpr(expr.expr, options)})`
-      case 'binop':
+      case ExprType.BinOp:
         if (
           (expr.op === BinOp.In || expr.op === BinOp.NotIn) &&
-          expr.b.type === 'field'
+          expr.b.type === ExprType.Field
         ) {
           return sql`(${this.formatExpr(expr.a, options)} ${Statement.raw(
             binOps[expr.op]
@@ -213,11 +213,11 @@ export abstract class Formatter {
         return sql`(${this.formatExpr(expr.a, options)} ${Statement.raw(
           binOps[expr.op]
         )} ${this.formatExpr(expr.b, options)})`
-      case 'param':
+      case ExprType.Param:
         switch (expr.param.type) {
-          case 'named':
+          case ParamType.Named:
             return new Statement('?', [expr.param])
-          case 'value':
+          case ParamType.Value:
             const value = expr.param.value
             switch (true) {
               case value === null:
@@ -237,9 +237,9 @@ export abstract class Formatter {
                 return new Statement(this.escape(value))
             }
         }
-      case 'field':
+      case ExprType.Field:
         return this.formatField(expr.path, Boolean(options.formatShallow))
-      case 'call': {
+      case ExprType.Call: {
         const params = expr.params.map(e => this.formatExpr(e, options))
         const expressions = params.map(stmt => stmt.sql).join(', ')
         return new Statement(
@@ -247,12 +247,12 @@ export abstract class Formatter {
           params.flatMap(stmt => stmt.params)
         )
       }
-      case 'access':
+      case ExprType.Access:
         return this.formatAccess(
           this.formatExpr(expr.expr, options),
           expr.field
         )
-      case 'query':
+      case ExprType.Query:
         return sql`(select ${this.formatCursor(expr.cursor, options)})`
     }
   }

@@ -2,7 +2,8 @@ import {Collection} from '../Collection'
 import {Cursor} from '../Cursor'
 import {Driver} from '../Driver'
 import {Expr} from '../Expr'
-import {From} from '../From'
+import {From, FromType} from '../From'
+import {SelectionType} from '../Selection'
 import {Document, IdLess, QueryOptions, Store} from '../Store'
 import {Update} from '../Types'
 import {sqliteFormatter} from './SqliteFormatter'
@@ -21,7 +22,7 @@ export class SqliteStore implements Store {
 
   all<Row>(cursor: Cursor<Row>, options?: QueryOptions): Array<Row> {
     const stmt = f.formatSelect(cursor.cursor)
-    const isJson = cursor.cursor.selection.type !== 'expr'
+    const isJson = cursor.cursor.selection.type !== SelectionType.Expr
     return this.prepare(stmt.sql, options)
       .all<string>(stmt.getParams())
       .map((col: any) => (isJson ? JSON.parse(col) : col))
@@ -52,12 +53,12 @@ export class SqliteStore implements Store {
       for (const object of objects) {
         if (!object.id) object.id = this.createId()
         const from = collection.cursor.from
-        if (from.type === 'column') {
+        if (from.type === FromType.Column) {
           this.prepare(
             `insert into ${f.escapeId(From.source(from.of))} values (?)`,
             options
           ).run([JSON.stringify(object)])
-        } else if (from.type === 'table') {
+        } else if (from.type === FromType.Table) {
           this.prepare(
             `insert into ${f.escapeId(from.name)} values (${from.columns
               .map(_ => '?')

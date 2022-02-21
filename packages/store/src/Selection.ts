@@ -3,28 +3,36 @@ import {Expr, ExprData} from './Expr'
 import {From} from './From'
 import {Select, With} from './Types'
 
+export enum SelectionType {
+  Expr,
+  Cursor,
+  Fields,
+  Row,
+  With
+}
+
 export type SelectionData =
-  | {type: 'expr'; expr: ExprData}
-  | {type: 'cursor'; cursor: CursorData}
-  | {type: 'fields'; fields: Record<string, SelectionData>}
-  | {type: 'row'; source: From}
-  | {type: 'with'; a: SelectionData; b: SelectionData}
+  | {type: SelectionType.Expr; expr: ExprData}
+  | {type: SelectionType.Cursor; cursor: CursorData}
+  | {type: SelectionType.Fields; fields: Record<string, SelectionData>}
+  | {type: SelectionType.Row; source: From}
+  | {type: SelectionType.With; a: SelectionData; b: SelectionData}
 
 export const SelectionData = {
   Expr(expr: ExprData): SelectionData {
-    return {type: 'expr', expr}
+    return {type: SelectionType.Expr, expr}
   },
   Cursor(cursor: CursorData): SelectionData {
-    return {type: 'cursor', cursor}
+    return {type: SelectionType.Cursor, cursor}
   },
   Fields(fields: Record<string, SelectionData>): SelectionData {
-    return {type: 'fields', fields}
+    return {type: SelectionType.Fields, fields}
   },
   Row(source: From): SelectionData {
-    return {type: 'row', source}
+    return {type: SelectionType.Row, source}
   },
   With(a: SelectionData, b: SelectionData): SelectionData {
-    return {type: 'with', a, b}
+    return {type: SelectionType.With, a, b}
   },
   create(input: any): SelectionData {
     if (input instanceof Selection) return input.selection
@@ -52,9 +60,5 @@ export class Selection<T> {
     return new Selection(
       SelectionData.With(this.selection, SelectionData.create(that))
     )
-  }
-
-  toJSON() {
-    return this.selection
   }
 }

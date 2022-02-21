@@ -1,4 +1,4 @@
-import {Param, ParamData} from './Param'
+import {Param, ParamData, ParamType} from './Param'
 
 export class Statement {
   constructor(public sql: string, public params: Array<ParamData> = []) {}
@@ -12,9 +12,9 @@ export class Statement {
   getParams(input?: Record<string, any>): Array<any> {
     return this.params.map(param => {
       switch (param.type) {
-        case 'value':
+        case ParamType.Value:
           return param.value
-        case 'named':
+        case ParamType.Named:
           if (!input) throw 'Missing input'
           return input[param.name]
       }

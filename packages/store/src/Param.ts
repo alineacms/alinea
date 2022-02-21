@@ -1,13 +1,18 @@
+export enum ParamType {
+  Value,
+  Named
+}
+
 export type ParamData =
-  | {type: 'value'; value: any}
-  | {type: 'named'; name: string}
+  | {type: ParamType.Value; value: any}
+  | {type: ParamType.Named; name: string}
 
 export const ParamData = {
   Value(value: any): ParamData {
-    return {type: 'value', value: value}
+    return {type: ParamType.Value, value: value}
   },
   Named(name: string): ParamData {
-    return {type: 'named', name: name}
+    return {type: ParamType.Named, name: name}
   }
 }
 
