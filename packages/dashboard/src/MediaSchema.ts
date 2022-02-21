@@ -4,23 +4,15 @@ import {MdOutlinePermMedia} from 'react-icons/md'
 import {MediaExplorer} from './view/MediaExplorer'
 
 export const media = {
-  MediaLibrary: type(
-    'Media directory',
-    {
-      title: text('Title')
-    },
-    {
-      isContainer: true,
-      contains: ['MediaLibrary'],
-      view: MediaExplorer,
-      icon: MdOutlinePermMedia
-    }
-  ),
-  File: type(
-    'File',
-    {
-      title: text('Title')
-    },
-    {isHidden: true}
-  )
+  MediaLibrary: type('Media directory', {
+    title: text('Title')
+  }).configure({
+    isContainer: true,
+    contains: ['MediaLibrary'],
+    view: MediaExplorer,
+    icon: MdOutlinePermMedia
+  }),
+  File: type('File', {
+    title: text('Title')
+  }).configure({isHidden: true})
 }

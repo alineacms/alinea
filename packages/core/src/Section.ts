@@ -16,7 +16,7 @@ export namespace Section {
 
   export type Fields<T = any> = Lazy<
     {
-      [key: string]: Lazy<T>
+      [key: string]: Lazy<Field<T>>
     } & {
       id?: never
       workspace?: never
