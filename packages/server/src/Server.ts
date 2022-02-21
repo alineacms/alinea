@@ -151,8 +151,8 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
       const parentPath = path.dirname(file.path)
       const parents = walkUrl(parentUrl(parentPath)).map(url => {
         const parent = store.first(
-          Entry.where(Entry.workspace.is(entry.workspace))
-            .where(Entry.root.is(entry.root))
+          Entry.where(Entry.workspace.is(workspace))
+            .where(Entry.root.is(root))
             .where(Entry.url.is(url))
             .select({id: Entry.id})
         )

@@ -14,10 +14,10 @@ type QueryParams = {
 
 function query({workspace, root, open, hidden}: QueryParams) {
   const Parent = Entry.as('Parent')
-  const condition =
-    open.length > 0
-      ? Entry.parent.isIn(open).or(Entry.id.isIn(open))
-      : Entry.parent.isNull()
+  const condition = Entry.parent
+    .isIn(open)
+    .or(Entry.id.isIn(open))
+    .or(Entry.parent.isNull())
   return Entry.where(condition)
     .where(Entry.workspace.is(workspace))
     .where(Entry.root.is(root))
