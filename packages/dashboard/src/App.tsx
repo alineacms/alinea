@@ -33,6 +33,7 @@ import {SessionProvider} from './hook/UseSession'
 import {useWorkspace} from './hook/UseWorkspace'
 import {ContentTree} from './view/ContentTree'
 import {EntryEdit, NewEntry} from './view/EntryEdit'
+import {SearchBox} from './view/SearchBox'
 import {Toolbar} from './view/Toolbar'
 
 function AppAuthenticated() {
@@ -123,6 +124,7 @@ function EntryRoute({id}: EntryRouteProps) {
         defaultWidth={330}
         minWidth={200}
       >
+        <SearchBox />
         <ContentTree workspace={workspace} root={root} select={selected} />
       </Pane>
       <div style={{width: '100%', height: '100%'}}>

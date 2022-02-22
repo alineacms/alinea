@@ -1,7 +1,8 @@
 import type {Collection} from './Collection'
-import type {Cursor} from './Cursor'
+import type {Cursor, CursorSingleRow} from './Cursor'
 import type {Expr} from './Expr'
-import {Update} from './Types'
+import type {Selection, SelectionInput} from './Selection'
+import type {Update} from './Update'
 
 export type QueryOptions = {
   debug?: boolean
@@ -50,4 +51,18 @@ export interface Store {
     on: Array<Expr<any>>
   ): void
   transaction<T>(run: () => T): T
+}
+
+export namespace Store {
+  export type TypeOf<T> = T extends Selection<infer K>
+    ? K
+    : T extends CursorSingleRow<infer K>
+    ? K
+    : T extends Cursor<infer K>
+    ? Array<K>
+    : T extends Expr<infer K>
+    ? K
+    : T extends Record<string, SelectionInput | Cursor<any>>
+    ? {[K in keyof T]: TypeOf<T[K]>}
+    : T
 }

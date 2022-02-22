@@ -223,6 +223,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@alinea/root@workspace:."
   dependencies:
+    "@alinea/ui": "workspace:^"
     "@esbx/extension": ^0.0.9
     "@esbx/react": ^0.0.9
     "@esbx/reload": ^0.0.9
@@ -235,6 +236,7 @@ __metadata:
     "@types/node": ^16.9.0
     "@typescript-eslint/eslint-plugin": ^4.31.0
     "@typescript-eslint/parser": ^4.31.0
+    ariakit: ^2.0.0-alpha.18
     esbuild: ^0.14.11
     esbuild-plugin-sass-modules: ^0.0.1
     esbx: ^0.0.9
@@ -249,7 +251,7 @@ __metadata:
     preact: ^10.6.4
     pretty-bytes: ^5.6.0
     serve-handler: ^6.1.3
-    typescript: ^4.5.4
+    typescript: ^4.5.5
     typescript-plugin-css-modules: ^3.4.0
     uvu: ^0.5.1
   languageName: unknown
@@ -309,7 +311,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@alinea/ui@0.0.0, @alinea/ui@workspace:packages/ui":
+"@alinea/ui@0.0.0, @alinea/ui@workspace:^, @alinea/ui@workspace:packages/ui":
   version: 0.0.0-use.local
   resolution: "@alinea/ui@workspace:packages/ui"
   dependencies:
@@ -1094,6 +1096,13 @@ __metadata:
   version: 1.0.0
   resolution: "@panva/asn1.js@npm:1.0.0"
   checksum: cb6bcc1918a7f08e81e7d7f5bde83c20a66b30248ddc3ef10b1612e0e0b9f722c2b07ca6b586a089a49c1b6cfb29d63fdd23d4bc00c8cc40538b5595bec66d7d
+  languageName: node
+  linkType: hard
+
+"@popperjs/core@npm:^2.11.0":
+  version: 2.11.2
+  resolution: "@popperjs/core@npm:2.11.2"
+  checksum: 5695bf020eda54636e16a62dc9b5fdd92beaf7b2d19f62fcef049d57c5cff92773562d80cbf760b217c3ec928da310eb24994ab6a00fd39dffa0af9b5dfc01a6
   languageName: node
   linkType: hard
 
@@ -2714,6 +2723,28 @@ __metadata:
   dependencies:
     tslib: ^1.0.0
   checksum: 2d40a328246baac7ae0b243ebe0cbef53c836c5f78c9212e9c1ff93f3aee185bd9aa51773e161e0025722d691c9d5f125070f6175a7074c4a57778ddc30d9e74
+  languageName: node
+  linkType: hard
+
+"ariakit-utils@npm:^0.17.0-alpha.11":
+  version: 0.17.0-alpha.11
+  resolution: "ariakit-utils@npm:0.17.0-alpha.11"
+  peerDependencies:
+    react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^18.0.0-beta
+  checksum: a42e15a471662b169985f150aeab1dae37ee2a8383e1e2a34dca750fcbbac53107b8de1b1435678b3fccc5efc6e783d2757f53ba5befdbd4695047bceea75455
+  languageName: node
+  linkType: hard
+
+"ariakit@npm:^2.0.0-alpha.18":
+  version: 2.0.0-alpha.18
+  resolution: "ariakit@npm:2.0.0-alpha.18"
+  dependencies:
+    "@popperjs/core": ^2.11.0
+    ariakit-utils: ^0.17.0-alpha.11
+  peerDependencies:
+    react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^18.0.0-beta
+    react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^18.0.0-beta
+  checksum: 679338084b78f1f4f901e015ac58b93a0cfc060bee1168299456a2324b42ccc6d4756e67faabe45b9878caca300f4998b121ece7a9ef37f136af81d4537d5ad2
   languageName: node
   linkType: hard
 
@@ -9339,23 +9370,23 @@ resolve@^2.0.0-next.3:
   languageName: node
   linkType: hard
 
-"typescript@npm:^4.5.4":
-  version: 4.5.4
-  resolution: "typescript@npm:4.5.4"
+"typescript@npm:^4.5.5":
+  version: 4.5.5
+  resolution: "typescript@npm:4.5.5"
   bin:
     tsc: bin/tsc
     tsserver: bin/tsserver
-  checksum: 59f3243f9cd6fe3161e6150ff6bf795fc843b4234a655dbd938a310515e0d61afd1ac942799e7415e4334255e41c2c49b7dd5d9fd38a17acd25a6779ca7e0961
+  checksum: 506f4c919dc8aeaafa92068c997f1d213b9df4d9756d0fae1a1e7ab66b585ab3498050e236113a1c9e57ee08c21ec6814ca7a7f61378c058d79af50a4b1f5a5e
   languageName: node
   linkType: hard
 
-"typescript@patch:typescript@^4.5.4#~builtin<compat/typescript>":
-  version: 4.5.4
-  resolution: "typescript@patch:typescript@npm%3A4.5.4#~builtin<compat/typescript>::version=4.5.4&hash=493e53"
+"typescript@patch:typescript@^4.5.5#~builtin<compat/typescript>":
+  version: 4.5.5
+  resolution: "typescript@patch:typescript@npm%3A4.5.5#~builtin<compat/typescript>::version=4.5.5&hash=493e53"
   bin:
     tsc: bin/tsc
     tsserver: bin/tsserver
-  checksum: 2e488dde7d2c4a2fa2e79cf2470600f8ce81bc0563c276b72df8ff412d74456ae532ba824650ae936ce207440c79720ddcfaa25e3cb4477572b8534fa4e34d49
+  checksum: c05c318d79c690f101d7ffb34cd6c7d6bbd884d3af9cefe7749ad0cd6be43c7082f098280982ca945dcba23fde34a08fed9602bb26540936baf8c0520727d3ba
   languageName: node
   linkType: hard
 

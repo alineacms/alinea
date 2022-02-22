@@ -1,12 +1,12 @@
 import {createConfig, schema, workspace} from '@alinea/core'
-import {BrowserPreview, media} from '@alinea/dashboard'
+import {BrowserPreview, MediaSchema} from '@alinea/dashboard'
 import {MdInsertDriveFile, MdOutlinePermMedia} from 'react-icons/md/index.js'
 import {DocPageSchema} from './src/view/DocPage.schema'
 import {DocsPageSchema} from './src/view/DocsPage.schema'
 import {HomePageSchema} from './src/view/HomePage.schema'
 
 const webSchema = schema({
-  ...media,
+  ...MediaSchema,
   Home: HomePageSchema,
   Docs: DocsPageSchema,
   Doc: DocPageSchema

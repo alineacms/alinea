@@ -1,4 +1,4 @@
-import {Collection} from '@alinea/store'
+import {Collection, Cursor, Selection} from '@alinea/store'
 import {Entry} from './Entry'
 import {Field} from './Field'
 import {Type} from './Type'
@@ -24,12 +24,16 @@ export function schema<Types extends LazyRecord<Type>>(
 export type TypesOf<T> = T extends HasType ? T['type'] : string
 
 export namespace Schema {
-  // Generic utility to get the type of a schema, type or field
+  // Generic utility to get the type of a schema, type or field or any Store type
   export type TypeOf<T> = T extends Schema<infer U>
     ? U
     : T extends Type<infer U>
     ? U
     : T extends Field<infer U>
+    ? U
+    : T extends Selection<infer U>
+    ? U
+    : T extends Cursor<infer U>
     ? U
     : never
 }

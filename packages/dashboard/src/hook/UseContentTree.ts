@@ -1,6 +1,6 @@
 import {Entry, Outcome} from '@alinea/core'
 import {Functions} from '@alinea/store/sqlite/Functions'
-import {useCallback, useMemo, useState} from 'react'
+import {useCallback, useEffect, useMemo, useState} from 'react'
 import {useQuery} from 'react-query'
 import {useDashboard} from '../hook/UseDashboard'
 import {useSession} from '../hook/UseSession'
@@ -93,5 +93,9 @@ export function useContentTree({
       true
     )
   })
+
+  useEffect(() => {
+    setOpen(current => new Set([...current, ...select]))
+  }, [select.join('.')])
   return {entries, isOpen, toggleOpen, refetch}
 }

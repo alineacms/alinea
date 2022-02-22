@@ -1,0 +1,72 @@
+.root {
+  position: relative;
+  padding: 4px 10px;
+
+  &-label {
+    position: relative;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    width: 100%;
+    height: 28px;
+    background: var(--highlight);
+    padding: 6px 15px 6px 12px;
+    border-radius: 8px;
+    line-height: 1.5;
+
+    &:focus-within {
+      background: var(--selected);
+      outline: 2px solid var(--fields-focus);
+    }
+
+    &-input {
+      border: none;
+      outline: none;
+      background: transparent;
+      color: inherit;
+      font: inherit;
+      font-size: 13px;
+    }
+  }
+
+  &-popover {
+    position: relative;
+    width: 250px;
+    max-height: 300px;
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+    overflow: auto;
+    border-radius: 0.5rem;
+    color: var(--foreground-faded);
+    background: var(--background);
+    padding: 0.5rem;
+    box-shadow: 0 4px 6px var(--shadow);
+
+    &:empty {
+      display: none;
+    }
+
+    &-item {
+      display: flex;
+      cursor: default;
+      scroll-margin: 0.5rem;
+      align-items: center;
+      gap: 0.5rem;
+      border-radius: 0.25rem;
+      padding: 0.5rem;
+      color: inherit;
+      text-decoration: none;
+      font-size: 13px;
+
+      &:hover {
+        background: var(--selected);
+      }
+
+      &[data-focus-visible] {
+        background: var(--fields-focus);
+        color: white;
+      }
+    }
+  }
+}

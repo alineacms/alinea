@@ -6,6 +6,8 @@
     flex-grow: 1;
     height: 100%;
     overflow: auto;
+    display: flex;
+    flex-direction: column;
 
     &::-webkit-scrollbar {
       width: 6px;

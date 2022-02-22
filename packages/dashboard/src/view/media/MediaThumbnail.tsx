@@ -1,7 +1,6 @@
 import {Media} from '@alinea/core'
 import {fromModule} from '@alinea/ui'
 import {useContrastColor} from '@alinea/ui/hook/UseContrastColor'
-import {transparentize} from 'color2k'
 import {MdInsertDriveFile} from 'react-icons/md'
 import {Link} from 'react-router-dom'
 import {useDashboard} from '../../hook/UseDashboard'
@@ -22,14 +21,7 @@ export function MediaThumbnail({file}: MediaThumbnailProps) {
       to={nav.entry(file.workspace, file.root, file.id)}
       className={styles.root()}
     >
-      <div
-        className={styles.root.preview()}
-        style={{
-          background:
-            file.averageColor && transparentize(file.averageColor, 0.8)
-          //color: fontColor
-        }}
-      >
+      <div className={styles.root.preview()}>
         <div className={styles.root.preview.picture()}>
           {preview ? (
             <img

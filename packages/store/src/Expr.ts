@@ -1,8 +1,8 @@
 import {Cursor, CursorData} from './Cursor'
 import {OrderBy, OrderDirection} from './OrderBy'
 import {ParamData, ParamType} from './Param'
-import {Selection, SelectionData} from './Selection'
-import {Select, TypeOf} from './Types'
+import {Selection, SelectionData, SelectionInput} from './Selection'
+import type {Store} from './Store'
 
 export const enum UnOp {
   Not,
@@ -207,16 +207,22 @@ export class Expr<T> {
   match(this: Expr<string>, that: EV<string>): Expr<boolean> {
     return binop(this, BinOp.Match, that)
   }
-  case<T extends string | number, C extends {[K in T]: Select}>(
+  case<
+    T extends string | number,
+    C extends {[K in T]: SelectionInput},
+    DC extends SelectionInput
+  >(
     this: Expr<T>,
-    cases: C
-  ): Selection<TypeOf<C[T]>> {
+    cases: C,
+    defaultCase?: DC
+  ): Selection<Store.TypeOf<C[T]> | Store.TypeOf<DC>> {
     return new Selection(
       SelectionData.Case(
         this.expr,
         Object.fromEntries(
           Object.entries(cases).map(([k, v]) => [k, SelectionData.create(v)])
-        )
+        ),
+        SelectionData.create(defaultCase)
       )
     )
   }

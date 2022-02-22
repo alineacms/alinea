@@ -1,7 +1,7 @@
 import {Cursor, CursorData} from './Cursor'
 import {Expr, ExprData} from './Expr'
 import {From} from './From'
-import {Select, With} from './Types'
+import type {Store} from './Store'
 
 export const enum SelectionType {
   Expr,
@@ -12,6 +12,11 @@ export const enum SelectionType {
   With
 }
 
+export type SelectionInput =
+  | Expr<any>
+  | Selection<any>
+  | Record<string, Expr<any> | Selection<any> | Cursor<any>>
+
 export type SelectionData =
   | {type: SelectionType.Expr; expr: ExprData}
   | {type: SelectionType.Cursor; cursor: CursorData}
@@ -21,6 +26,7 @@ export type SelectionData =
       type: SelectionType.Case
       expr: ExprData
       cases: Record<string, SelectionData>
+      defaultCase?: SelectionData
     }
   | {type: SelectionType.With; a: SelectionData; b: SelectionData}
 
@@ -37,8 +43,12 @@ export const SelectionData = {
   Row(source: From): SelectionData {
     return {type: SelectionType.Row, source}
   },
-  Case(expr: ExprData, cases: Record<string, SelectionData>): SelectionData {
-    return {type: SelectionType.Case, expr, cases}
+  Case(
+    expr: ExprData,
+    cases: Record<string, SelectionData>,
+    defaultCase?: SelectionData
+  ): SelectionData {
+    return {type: SelectionType.Case, expr, cases, defaultCase}
   },
   With(a: SelectionData, b: SelectionData): SelectionData {
     return {type: SelectionType.With, a, b}
@@ -65,9 +75,21 @@ export const SelectionData = {
 export class Selection<T> {
   constructor(public selection: SelectionData) {}
 
-  with<X extends Select>(that: X): With<T, X> {
+  with<X extends SelectionInput>(that: X): Selection.With<T, X> {
     return new Selection(
       SelectionData.With(this.selection, SelectionData.create(that))
     )
   }
+
+  static create<T extends SelectionInput>(
+    input: T
+  ): Selection<Store.TypeOf<T>> {
+    return new Selection(SelectionData.create(input))
+  }
+}
+
+export namespace Selection {
+  export type With<A, B> = Selection<
+    Omit<A, keyof Store.TypeOf<B>> & Store.TypeOf<B>
+  >
 }

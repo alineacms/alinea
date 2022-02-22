@@ -22,4 +22,9 @@
     background: var(--accent);
     box-shadow: 0 0 0 3px var(--accent);
   }
+
+  &:focus {
+    background: rgba(var(--negative), 0.2);
+    outline: 2px solid var(--fields-focus);
+  }
 }

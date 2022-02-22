@@ -2,8 +2,8 @@ import type {Collection} from './Collection'
 import {Expr, ExprData} from './Expr'
 import {From} from './From'
 import type {OrderBy} from './OrderBy'
-import {SelectionData} from './Selection'
-import {Select, TypeOf} from './Types'
+import {SelectionData, SelectionInput} from './Selection'
+import type {Store} from './Store'
 
 export type CursorData = {
   from: From
@@ -72,8 +72,8 @@ export class Cursor<Row> {
     })
   }
 
-  select<X extends Select>(selection: X) {
-    return new Cursor<TypeOf<X>>({
+  select<X extends SelectionInput>(selection: X) {
+    return new Cursor<Store.TypeOf<X>>({
       ...this.cursor,
       selection: SelectionData.create(selection)
     })
@@ -89,8 +89,8 @@ export class Cursor<Row> {
     })
   }
 
-  /*with<X extends Select>(selection: X) {
-    return new Cursor<Omit<Row, keyof TypeOf<X>> & TypeOf<X>>({
+  /*with<S extends SelectionInput>(selection: S) {
+    return new Cursor<Omit<Row, keyof Store.TypeOf<S>> & Store.TypeOf<S>>({
       ...this.cursor,
       selection: new Selection(this.cursor.selection).with(selection).selection
     })

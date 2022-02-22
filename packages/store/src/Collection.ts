@@ -1,8 +1,7 @@
 import {Cursor} from './Cursor'
 import {Expr, ExprData} from './Expr'
 import {From} from './From'
-import {Selection, SelectionData} from './Selection'
-import {Select, With} from './Types'
+import {Selection, SelectionData, SelectionInput} from './Selection'
 
 type CollectionOptions = {
   flat?: boolean
@@ -33,6 +32,17 @@ class CollectionImpl<Row extends {} = any> extends Cursor<Row> {
     return new Expr(ExprData.Field(From.path(this.cursor.from).concat(name)))
   }
 
+  pick<Props extends Array<keyof Row>>(
+    ...properties: Props
+  ): Selection<{
+    [K in Props[number]]: Row[K]
+  }> {
+    const fields: Record<string, SelectionData> = {}
+    for (const prop of properties)
+      fields[prop as string] = SelectionData.Expr(this.get(prop as string).expr)
+    return new Selection(SelectionData.Fields(fields))
+  }
+
   get id(): Expr<string> {
     return this.get('id')
   }
@@ -41,7 +51,7 @@ class CollectionImpl<Row extends {} = any> extends Cursor<Row> {
     return new Selection(this.cursor.selection)
   }
 
-  with<X extends Select>(that: X): With<Row, X> {
+  with<X extends SelectionInput>(that: X): Selection.With<Row, X> {
     return this.fields.with(that)
   }
 
@@ -71,4 +81,7 @@ export interface CollectionConstructor {
 }
 
 export type Collection<T> = CollectionImpl<T> & UnionToIntersection<FieldsOf<T>>
+export namespace Collection {
+  export type Generic = CollectionImpl<any>
+}
 export const Collection = CollectionImpl as CollectionConstructor

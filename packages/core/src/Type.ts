@@ -8,17 +8,23 @@ import {Lazy} from './util/Lazy'
 import {LazyRecord} from './util/LazyRecord'
 import {Value} from './Value'
 import {RecordValue} from './value/RecordValue'
+import type {View} from './View'
 
 export namespace Type {
   export type Of<T> = T extends Type<infer U> ? U : never
-  export type Options = {
+  export type Options<T> = {
     /** Entries can be created as children of this entry */
     isContainer?: boolean
     /** Entries do not show up in the sidebar content tree */
     isHidden?: boolean
+    /** Accepts entries of these types as children */
     contains?: Array<string>
     icon?: ComponentType
+
+    // Todo: there's a bunch of views here how should be approach naming?
     view?: ComponentType
+    summaryRow?: View<T, any>
+    summaryThumb?: View<T, any>
   }
 }
 
@@ -30,7 +36,7 @@ export class Type<T = {}> {
   constructor(
     public label: Label,
     public sections: Array<Section>,
-    public options: Type.Options = {}
+    public options: Type.Options<T> = {}
   ) {}
 
   get fields() {
@@ -85,8 +91,11 @@ export class Type<T = {}> {
     } as Entry & T
   }
 
-  configure(options: Type.Options): Type<T> {
-    return new Type(this.label, this.sections, {...this.options, ...options})
+  configure<I extends T>(options: Type.Options<I>): Type<I> {
+    return new Type<I>(this.label, this.sections, {
+      ...this.options,
+      ...options
+    } as Type.Options<I>)
   }
 }
 

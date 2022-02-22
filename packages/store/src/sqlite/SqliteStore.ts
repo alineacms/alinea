@@ -5,7 +5,7 @@ import {Expr} from '../Expr'
 import {From, FromType} from '../From'
 import {SelectionType} from '../Selection'
 import {Document, IdLess, QueryOptions, Store} from '../Store'
-import {Update} from '../Types'
+import type {Update} from '../Update'
 import {sqliteFormatter} from './SqliteFormatter'
 
 const f = sqliteFormatter
@@ -124,9 +124,7 @@ export class SqliteStore implements Store {
   }
 
   prepare(query: String, options?: QueryOptions): Driver.PreparedStatement {
-    if (options != null && options.debug) {
-      console.log(query)
-    }
+    if (options?.debug) console.log(query)
     return this.createOnError(() => this.db.prepare(query))
   }
 

@@ -45,6 +45,11 @@ export const sqliteFormatter = new (class extends Formatter {
             ExprData.Param(ParamData.Value(when)),
             options
           )} then ${this.formatSelection(select, options)}`
+        if (selection.defaultCase)
+          result = sql`${result}\nelse ${this.formatSelection(
+            selection.defaultCase,
+            options
+          )}`
         return sql`${result}\nend`
       default:
         return super.formatSelection(selection, options)

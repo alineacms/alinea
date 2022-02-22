@@ -28,7 +28,7 @@ function query(parentId: string, start: number, batchSize: number) {
       extension: File.extension,
       size: File.size,
       preview: File.preview,
-      color: File.averageColor
+      averageColor: File.averageColor
     })
     .orderBy(File.title.asc())
 }
