@@ -29,12 +29,12 @@ const binOps = {
 }
 
 export type FormatCursorOptions = {
+  formatInline?: boolean
   includeSelection?: boolean
   formatSubject?: (selection: Statement) => Statement
 }
 
 export type FormatExprOptions = FormatCursorOptions & {
-  formatInline?: boolean
   formatAsJsonValue?: boolean
   formatShallow?: boolean
 }
@@ -190,11 +190,19 @@ export abstract class Formatter {
     const order = this.formatOrderBy(cursor.orderBy, options)
     const limit =
       cursor.limit !== undefined || cursor.offset !== undefined
-        ? sql`limit ${Param.value(cursor.limit || 0)}`
+        ? sql`limit ${
+            options.formatInline
+              ? new Statement(this.escape(cursor.limit || 0))
+              : Param.value(cursor.limit || 0)
+          }`
         : undefined
     const offset =
       cursor.offset !== undefined
-        ? sql`offset ${Param.value(cursor.offset)}`
+        ? sql`offset ${
+            options.formatInline
+              ? new Statement(this.escape(cursor.offset))
+              : Param.value(cursor.offset)
+          }`
         : undefined
     return sql`${select} ${from} ${where} ${groupBy} ${having} ${order} ${limit} ${offset}`
   }
@@ -276,7 +284,7 @@ export abstract class Formatter {
   }
 
   // Todo: make abstract
-  formatUpdateSetters(
+  formatUpdateColumn(
     update: Record<string, any>,
     options: FormatExprOptions
   ): Statement {
@@ -293,13 +301,35 @@ export abstract class Formatter {
     return sql`set \`data\` = ${source}`
   }
 
+  formatUpdateTable(
+    columns: Array<string>,
+    update: Record<string, any>,
+    options: FormatExprOptions
+  ): Statement {
+    const stmts = []
+    for (const column of columns) {
+      if (!(column in update)) continue
+      const expr = this.formatExpr(ExprData.create(update[column]), {
+        ...options,
+        formatAsJsonValue: true
+      })
+      stmts.push(sql`${Statement.raw(this.escapeId(column))} = ${expr}`)
+    }
+    const cols = stmts.map(stmt => stmt.sql).join(', ')
+    const params = stmts.flatMap(stmt => stmt.params)
+    return sql`set ${new Statement(cols, params)}`
+  }
+
   formatUpdate(
     cursor: CursorData,
     update: Record<string, any>,
     options: FormatCursorOptions = {}
   ) {
     const from = this.formatFrom(cursor.from, options)
-    const set = this.formatUpdateSetters(update, options)
+    const set =
+      cursor.from.type === FromType.Table
+        ? this.formatUpdateTable(cursor.from.columns, update, options)
+        : this.formatUpdateColumn(update, options)
     const where = this.formatWhere(cursor.where, options)
     return sql`update ${from} ${set} ${where}`
   }

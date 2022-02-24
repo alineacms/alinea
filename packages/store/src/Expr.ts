@@ -222,7 +222,7 @@ export class Expr<T> {
         Object.fromEntries(
           Object.entries(cases).map(([k, v]) => [k, SelectionData.create(v)])
         ),
-        SelectionData.create(defaultCase)
+        defaultCase && SelectionData.create(defaultCase)
       )
     )
   }
@@ -230,6 +230,11 @@ export class Expr<T> {
     return this.expr.type === ExprType.Field
       ? new Expr(ExprData.Field(this.expr.path.concat(path)))
       : new Expr(ExprData.Access(this.expr, path))
+  }
+
+  static create<T>(input: EV<T>): Expr<T> {
+    if (input instanceof Expr) return input
+    return new Expr(ExprData.create(input))
   }
 }
 

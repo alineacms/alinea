@@ -7,7 +7,7 @@
   white-space: nowrap;
   flex-shrink: 0;
   color: var(--foreground);
-  background: var(--highlight);
+  background: var(--selected);
   padding-left: 4px;
 
   &-icon {
@@ -15,7 +15,7 @@
   }
 
   &-label {
-    padding: 5px 8px 5px 4px;
+    padding: 4px 8px 4px 4px;
   }
 
   &.is-accent {

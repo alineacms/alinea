@@ -1,5 +1,5 @@
 import type {Collection} from './Collection'
-import {Expr, ExprData} from './Expr'
+import {EV, Expr, ExprData} from './Expr'
 import {From} from './From'
 import type {OrderBy} from './OrderBy'
 import {SelectionData, SelectionInput} from './Selection'
@@ -62,12 +62,13 @@ export class Cursor<Row> {
     return new CursorSingleRow(this.take(1).cursor)
   }
 
-  where(where: Expr<boolean>): Cursor<Row> {
+  where(where: EV<boolean>): Cursor<Row> {
+    const condition = Expr.create(where)
     return new Cursor({
       ...this.cursor,
       where: (this.cursor.where
-        ? where.and(new Expr(this.cursor.where))
-        : where
+        ? condition.and(new Expr(this.cursor.where))
+        : condition
       ).expr
     })
   }

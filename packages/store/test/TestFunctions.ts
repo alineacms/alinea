@@ -2,10 +2,10 @@ import {test} from 'uvu'
 import * as assert from 'uvu/assert'
 import {Collection} from '../src/Collection'
 import {Expr} from '../src/Expr'
-import {Functions} from '../src/sqlite/Functions'
+import {SqliteFunctions} from '../src/sqlite/SqliteFunctions'
 import {store} from './DbSuite'
 
-const {cast, strftime} = Functions
+const {cast, strftime} = SqliteFunctions
 
 test('Functions', () => {
   const db = store()

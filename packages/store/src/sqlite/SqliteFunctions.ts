@@ -1,17 +1,10 @@
-import {EV, Expr, ExprData} from '../Expr'
+import {EV, Expr} from '../Expr'
+import {Functions} from '../Functions'
 
-export const Functions = new Proxy(
-  {},
-  {
-    get(_, method: string) {
-      return (...args: any[]) => {
-        return new Expr(ExprData.Call(method, args.flat().map(ExprData.create)))
-      }
-    }
-  }
-) as Functions
+export const SqliteFunctions = Functions as SqliteFunctions
 
-export type Functions = {
+export type SqliteFunctions = {
+  arrayLength(x: EV<Array<any>>): Expr<number>
   cast(x: EV<any>, type: 'text'): Expr<string>
   cast(x: EV<any>, type: 'real'): Expr<number>
   cast(x: EV<any>, type: 'integer'): Expr<number>
@@ -51,6 +44,7 @@ export type Functions = {
   last_insert_rowid(): Expr<number>
 
   /** For a string value X, the length(X) function returns the number of characters (not bytes) in X prior to the first NUL character. Since SQLite strings do not normally contain NUL characters, the length(X) function will usually return the total number of characters in the string X. For a blob value X, length(X) returns the number of bytes in the blob. If X is NULL then length(X) is NULL. If X is numeric then length(X) returns the length of a string representation of X.*/
+
   length(x: EV<string>): Expr<number>
 
   /** The likelihood(X,Y) function returns argument X unchanged. The value Y in likelihood(X,Y) must be a numbering ponumber constant between 0.0 and 1.0, inclusive. The likelihood(X) function is a no-op that the code generator optimizes away so that it consumes no CPU cycles during run-time (that is, during calls to sqlite3_step()). The purpose of the likelihood(X,Y) function is to provide a hnumber to the query planner that the argument X is a boolean that is true with a probability of approximately Y. The unlikely(X) function is short-hand for likelihood(X,0.0625). The likely(X) function is short-hand for likelihood(X,0.9375).*/

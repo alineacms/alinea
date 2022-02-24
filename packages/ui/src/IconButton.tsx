@@ -3,22 +3,25 @@ import type {IconType} from 'react-icons'
 import {Link, LinkProps} from 'react-router-dom'
 import css from './IconButton.module.scss'
 import {fromModule} from './util/Styler'
+import {px} from './util/Units'
 
 const styles = fromModule(css)
 
 export type IconButtonProps = HTMLAttributes<HTMLButtonElement> & {
   icon: IconType
+  size?: number
   active?: boolean
 }
 
 export const IconButton = forwardRef(function IconButton(
-  {icon: Icon, active, ...props}: IconButtonProps,
+  {icon: Icon, active, size, ...props}: IconButtonProps,
   ref: Ref<HTMLButtonElement>
 ) {
   return (
     <button
       ref={ref}
       {...props}
+      style={{fontSize: size ? px(size) : undefined}}
       className={styles.root.mergeProps(props)({active})}
     >
       <Icon />

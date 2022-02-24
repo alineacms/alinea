@@ -1,0 +1,50 @@
+.row {
+  height: 100%;
+  padding: 0 6px;
+}
+
+.thumb {
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  padding: 6px;
+  color: inherit;
+  text-decoration: none;
+
+  &-inner {
+    position: relative;
+    width: 100%;
+    min-height: 0;
+    border-radius: 6px;
+    overflow: hidden;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    background: rgba(var(--negative), 0.05);
+    transition: background 0.25s ease-out;
+  }
+
+  &:hover &-inner {
+    background: var(--selected);
+  }
+
+  &-header {
+    padding: 8px 12px;
+  }
+
+  &-title {
+    font-size: 18px;
+    font-weight: bold;
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+  }
+
+  &-footer {
+    padding: 8px 12px;
+    display: flex;
+  }
+}

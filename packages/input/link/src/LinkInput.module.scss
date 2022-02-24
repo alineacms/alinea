@@ -1,3 +1,102 @@
 .root {
   position: relative;
+
+  &-label {
+    display: flex;
+    background: transparent;
+    border: none;
+    color: inherit;
+    font: inherit;
+    width: 100%;
+    resize: none;
+    padding: 9px 16px;
+    background: var(--fields);
+    border-radius: 8px;
+    line-height: 1.5;
+
+    &-icon {
+      flex-shrink: 0;
+    }
+
+    &:focus-within {
+      background: var(--selected);
+      outline: 2px solid var(--fields-focus);
+    }
+
+    &-input {
+      border: none;
+      outline: none;
+      background: transparent;
+      color: inherit;
+      font: inherit;
+      font-size: 13px;
+      width: 100%;
+    }
+  }
+
+  &-popover {
+    position: relative;
+    width: 310px;
+    max-height: 300px;
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    overflow: auto;
+    border-radius: 0.5rem;
+    color: var(--foreground-faded);
+    background: var(--highlight);
+    padding: 5px;
+    box-shadow: /*0 0 0 1px var(--shadow), inset 0 0 0 1px var(--selected),*/ 0
+      4px 6px var(--shadow);
+
+    &::-webkit-scrollbar {
+      width: 12px;
+      height: 4px;
+    }
+    &::-webkit-scrollbar-track {
+      background: transparent; //var(--outline);
+    }
+    &::-webkit-scrollbar-thumb {
+      background: rgba(var(--negative), 0.2);
+      border: 4px solid rgba(0, 0, 0, 0);
+      background-clip: padding-box;
+    }
+    &::-webkit-scrollbar-thumb:hover {
+      background: rgba(var(--negative), 0.4);
+    }
+    &::-webkit-scrollbar-thumb:active {
+      background: rgba(var(--negative), 0.9);
+    }
+
+    &:empty {
+      display: none;
+    }
+
+    &-item {
+      display: flex;
+      cursor: default;
+      scroll-margin: 0.5rem;
+      align-items: center;
+      border-radius: 0.25rem;
+      padding: 4px 8px;
+      color: inherit;
+      text-decoration: none;
+      font-size: 13px;
+      width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      height: 30px;
+      flex-shrink: 0;
+
+      &:hover {
+        background: var(--selected);
+      }
+
+      &[aria-selected] {
+        background: var(--fields-focus);
+        color: white;
+      }
+    }
+  }
 }

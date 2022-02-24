@@ -26,8 +26,8 @@ export namespace Cache {
     const row = {id: entry.id, title: String(entry.title)}
     const condition = Search.where(Search.id.is(entry.id))
     const existing = store.first(condition)
-    //if (existing) store.update(condition, row)
-    if (!existing) store.insert(Search, row)
+    if (existing) store.update(condition, row)
+    else store.insert(Search, row)
   }
 
   function nextValidIndex(

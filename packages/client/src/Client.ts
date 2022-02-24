@@ -30,19 +30,6 @@ export class Client<T extends Workspaces> implements Hub<T> {
     }).then<Outcome<Entry.Detail | null>>(toFuture)
   }
 
-  list<K extends keyof T>(
-    workspace: K,
-    root: keyof T[K]['roots'],
-    parentId?: string
-  ): Future<Array<Entry.Summary>> {
-    return this.fetchJson(
-      Hub.routes.list(workspace as string, root as string, parentId),
-      {
-        method: 'GET'
-      }
-    ).then<Outcome<Array<Entry.Summary>>>(toFuture)
-  }
-
   query<T>(cursor: Cursor<T>): Future<Array<T>> {
     return this.fetchJson(Hub.routes.query(), {
       method: 'POST',
@@ -105,8 +92,15 @@ export class Client<T extends Workspaces> implements Hub<T> {
       if (res.status === 401) this.unauthorized()
       return res
     })
-    ;(promise as any).cancel = () => controller.abort()
-    return promise
+    const cancel = () => controller.abort()
+    function cancelify<T>(promise: Promise<T>) {
+      const next = promise.then.bind(promise)
+      return Object.assign(promise, {
+        cancel,
+        then: (...args: any[]) => cancelify(next(...args))
+      })
+    }
+    return cancelify(promise)
   }
 
   protected fetchJson(endpoint: string, init?: RequestInit) {

@@ -57,5 +57,4 @@ export namespace Entry {
   >
 }
 
-// Todo: export this elsewhere
 export const Entry = new Collection<Entry>('Entry')

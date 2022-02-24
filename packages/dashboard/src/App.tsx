@@ -28,6 +28,7 @@ import {CurrentDraftProvider} from './hook/UseCurrentDraft'
 import {DashboardProvider, useDashboard} from './hook/UseDashboard'
 import {useDraft} from './hook/UseDraft'
 import {DraftsProvider, DraftsStatus, useDrafts} from './hook/UseDrafts'
+import {ReferencePickerProvider} from './hook/UseReferencePicker'
 import {useRoot} from './hook/UseRoot'
 import {SessionProvider} from './hook/UseSession'
 import {useWorkspace} from './hook/UseWorkspace'
@@ -58,32 +59,36 @@ function AppAuthenticated() {
                 position: 'relative'
               }}
             >
-              <Sidebar.Root>
-                <Sidebar.Menu>
-                  {Object.entries(roots).map(([key, root], i) => {
-                    const isSelected =
-                      location.pathname.length > 1
-                        ? location.pathname.startsWith(nav.root(workspace, key))
-                        : i === 0
-                    return (
-                      <Sidebar.Menu.Item
-                        key={key}
-                        selected={isSelected}
-                        to={nav.root(workspace, key)}
-                      >
-                        {root.icon ? <root.icon /> : <MdInsertDriveFile />}
-                      </Sidebar.Menu.Item>
-                    )
-                  })}
-                </Sidebar.Menu>
-              </Sidebar.Root>
-              <Suspense fallback={<Loader absolute />}>
-                <Route path={nav.entry(':workspace', ':root', ':id')}>
-                  {({match}) => {
-                    return <EntryRoute id={match?.params.id} />
-                  }}
-                </Route>
-              </Suspense>
+              <ReferencePickerProvider>
+                <Sidebar.Root>
+                  <Sidebar.Menu>
+                    {Object.entries(roots).map(([key, root], i) => {
+                      const isSelected =
+                        location.pathname.length > 1
+                          ? location.pathname.startsWith(
+                              nav.root(workspace, key)
+                            )
+                          : i === 0
+                      return (
+                        <Sidebar.Menu.Item
+                          key={key}
+                          selected={isSelected}
+                          to={nav.root(workspace, key)}
+                        >
+                          {root.icon ? <root.icon /> : <MdInsertDriveFile />}
+                        </Sidebar.Menu.Item>
+                      )
+                    })}
+                  </Sidebar.Menu>
+                </Sidebar.Root>
+                <Suspense fallback={<Loader absolute />}>
+                  <Route path={nav.entry(':workspace', ':root', ':id')}>
+                    {({match}) => {
+                      return <EntryRoute id={match?.params.id} />
+                    }}
+                  </Route>
+                </Suspense>
+              </ReferencePickerProvider>
             </div>
             <Statusbar.Root>
               <DraftsStatusSummary />

@@ -10,11 +10,6 @@ import {Workspaces} from './Workspace'
 export interface Hub<T extends Workspaces = Workspaces> {
   config: Config<T>
   entry(id: string, stateVector?: Uint8Array): Future<Entry.Detail | null>
-  list(
-    workspace: string,
-    root: string,
-    parentId?: string
-  ): Future<Array<Entry.Summary>>
   query<T>(cursor: Cursor<T>): Future<Array<T>>
   updateDraft(id: string, update: Uint8Array): Future
   deleteDraft(id: string): Future
@@ -47,9 +42,6 @@ export namespace Hub {
       if (stateVector)
         return route + '?stateVector=' + encode(stateVector.buffer)
       return route
-    },
-    list(workspace: string, root: string, parentId?: string) {
-      return `/list/` + [workspace, root, parentId].filter(Boolean).join('/')
     },
     draft(id: string) {
       return `/draft/${id}`

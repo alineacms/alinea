@@ -14,7 +14,6 @@ import {
 } from '@alinea/core'
 import {generateKeyBetween} from '@alinea/core/util/FractionalIndexing'
 import {Cursor, Store} from '@alinea/store'
-import {Functions} from '@alinea/store/sqlite/Functions'
 import {encode} from 'base64-arraybuffer'
 import crypto from 'crypto'
 import express from 'express'
@@ -63,45 +62,6 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
             entry,
             draft: draft && encode(draft)
           }
-        )
-      })
-    )
-  }
-
-  list(
-    workspace: string,
-    root: string,
-    parentId?: string
-  ): Future<Array<Entry.Summary>> {
-    const {config, store, drafts} = this.options
-    const Parent = Entry.as('Parent')
-    const schema = this.config.workspaces[workspace].schema
-    const hidden = Array.from(schema)
-      .filter(([, type]) => type.options.isHidden)
-      .map(([key]) => key)
-    return future(
-      queryWithDrafts(config, store, drafts, () => {
-        return store.all(
-          Entry.where(Entry.workspace.is(workspace as string))
-            .where(Entry.root.is(root as string))
-            .where(parentId ? Entry.parent.is(parentId) : Entry.parent.isNull())
-            .where(Entry.type.isNotIn(hidden))
-            .select({
-              id: Entry.id,
-              index: Entry.index,
-              workspace: Entry.workspace,
-              root: Entry.root,
-              type: Entry.type,
-              title: Entry.title,
-              url: Entry.url,
-              parent: Entry.parent,
-              parents: Entry.parents,
-              $isContainer: Entry.$isContainer,
-              childrenCount: Parent.where(Parent.parent.is(Entry.id))
-                .select(Functions.count())
-                .first()
-            })
-            .orderBy(Entry.index.asc())
         )
       })
     )

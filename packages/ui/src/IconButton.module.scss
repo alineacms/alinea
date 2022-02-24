@@ -20,11 +20,17 @@
   &:hover {
     color: var(--accent-foreground);
     background: var(--accent);
-    box-shadow: 0 0 0 3px var(--accent);
+    box-shadow: 0 0 0 2px var(--accent);
   }
 
   &:focus {
-    background: rgba(var(--negative), 0.2);
-    outline: 2px solid var(--fields-focus);
+    outline: none;
+    color: inherit;
+    background: transparent;
+    box-shadow: 0 0 0 2px var(--accent);
+  }
+
+  &:focus.is-active {
+    background: rgba(var(--negative), 0.1);
   }
 }

@@ -54,7 +54,8 @@ declare module 'octokit-commit-multiple-files/create-or-update-files.js' {
   export default createOrUpdateFiles
 }
 
-// Todo: ask about ESM support upstream?
+// Todo: ask about ESM support upstream? or make sure these are never included
+// in server bundles using sideEffects or separate exports
 declare module 'ariakit/cjs/combobox/index.js' {
   export * from 'ariakit/combobox'
 }

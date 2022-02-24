@@ -39,18 +39,23 @@ export const sqliteFormatter = new (class extends Formatter {
   ): Statement {
     switch (selection.type) {
       case SelectionType.Case:
+        if (Object.keys(selection.cases).length === 0) {
+          if (selection.defaultCase)
+            return this.formatSelection(selection.defaultCase, options)
+          return sql`null`
+        }
         let result = sql`case ${this.formatExpr(selection.expr, options)}`
         for (const [when, select] of Object.entries(selection.cases))
-          result = sql`${result}\nwhen ${this.formatExpr(
+          result = sql`${result} when ${this.formatExpr(
             ExprData.Param(ParamData.Value(when)),
             options
           )} then ${this.formatSelection(select, options)}`
         if (selection.defaultCase)
-          result = sql`${result}\nelse ${this.formatSelection(
+          result = sql`${result} else ${this.formatSelection(
             selection.defaultCase,
             options
           )}`
-        return sql`${result}\nend`
+        return sql`${result} end`
       default:
         return super.formatSelection(selection, options)
     }
@@ -84,17 +89,24 @@ export const sqliteFormatter = new (class extends Formatter {
   formatExpr(expr: ExprData, options: FormatExprOptions): Statement {
     switch (expr.type) {
       case ExprType.Call:
-        if (expr.method === 'cast') {
-          const [e, type] = expr.params
-          const typeName =
-            type.type === ExprType.Param &&
-            type.param.type === ParamType.Value &&
-            type.param.value
-          if (!typeName) throw 'assert'
-          return sql`cast(${this.formatExpr(
-            expr.params[0],
-            options
-          )} as ${Statement.raw(this.escapeString(typeName))})`
+        switch (expr.method) {
+          case 'cast':
+            const [e, type] = expr.params
+            const typeName =
+              type.type === ExprType.Param &&
+              type.param.type === ParamType.Value &&
+              type.param.value
+            if (!typeName) throw 'assert'
+            return sql`cast(${this.formatExpr(
+              expr.params[0],
+              options
+            )} as ${Statement.raw(this.escapeString(typeName))})`
+          case 'arrayLength':
+            return this.formatExpr(
+              ExprData.Call('json_array_length', expr.params),
+              options
+            )
+          default:
         }
     }
     return super.formatExpr(expr, options)

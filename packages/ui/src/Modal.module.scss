@@ -27,12 +27,15 @@
 
   &-inner {
     position: relative;
-    margin: auto;
+    margin: 50px auto;
     //box-shadow: 0 10px 150px 20px var(--shadow);
     padding: 35px;
     background: var(--lift);
-    border-radius: 6px;
-    min-width: 600px;
+    border-radius: 12px;
+    max-width: 768px;
+    width: 100%;
     box-shadow: 0 2px 3.5px var(--shadow);
+    display: flex;
+    flex-direction: column;
   }
 }

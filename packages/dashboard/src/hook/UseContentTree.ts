@@ -1,5 +1,5 @@
 import {Entry, Outcome} from '@alinea/core'
-import {Functions} from '@alinea/store/sqlite/Functions'
+import {Functions} from '@alinea/store'
 import {useCallback, useEffect, useMemo, useState} from 'react'
 import {useQuery} from 'react-query'
 import {useDashboard} from '../hook/UseDashboard'

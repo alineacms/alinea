@@ -23,8 +23,6 @@ export type ListMutator<T> = {
   move: (oldIndex: number, newIndex: number) => void
 }
 
-// Todo: might as well use Y.Array and just sort the array by index
-// in useInput.
 export class ListValue<T>
   implements Value<Array<Row & T>, ListMutator<Row & T>>
 {

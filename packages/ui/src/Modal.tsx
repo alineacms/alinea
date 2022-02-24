@@ -10,6 +10,7 @@ export type ModalProps = PropsWithChildren<{
 }> &
   HTMLProps<HTMLDivElement>
 
+// Todo: for accessibility's sake we should use a tried and tested library here
 export function Modal({children, open, onClose, ...props}: ModalProps) {
   return (
     <div

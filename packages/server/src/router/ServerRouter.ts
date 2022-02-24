@@ -1,6 +1,7 @@
 import {createError, Hub, isError} from '@alinea/core'
 import {Outcome} from '@alinea/core/Outcome'
 import {Cursor} from '@alinea/store'
+import {sqliteFormatter} from '@alinea/store/sqlite/SqliteFormatter'
 import {decode} from 'base64-arraybuffer'
 import busboy from 'busboy'
 import compression from 'compression'
@@ -33,22 +34,13 @@ export function createServerRouter(hub: Server) {
       typeof svParam === 'string' ? new Uint8Array(decode(svParam)) : undefined
     return respond(res, await hub.entry(id, stateVector))
   })
-  // Hub.list
-  router.get(
-    [
-      prefix + Hub.routes.list(':workspace', ':root', ':parentId'),
-      prefix + Hub.routes.list(':workspace', ':root')
-    ],
-    async (req, res) => {
-      const workspace = req.params.workspace
-      const root = req.params.root
-      const parentId = req.params.parentId
-      return respond(res, await hub.list(workspace, root, parentId))
-    }
-  )
   // Hub.query
   router.post(prefix + Hub.routes.query(), async (req, res) => {
     const body = await parseJson(req)
+    res.header(
+      'x-query',
+      sqliteFormatter.formatSelect(body, {formatInline: true}).sql
+    )
     return respond(res, await hub.query(new Cursor(body)))
   })
   // Hub.updateDraft

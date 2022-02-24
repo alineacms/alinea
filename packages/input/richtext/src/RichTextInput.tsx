@@ -241,9 +241,13 @@ export function RichTextInput<T>({state, field}: RichTextInputProps<T>) {
   const focusToggle = useCallback(
     function focusToggle(target: EventTarget | null) {
       const element = target || document.activeElement
+      const editorElement = () =>
+        containerRef.current?.querySelector(
+          `${styles.root.editor.toSelector()} > .ProseMirror`
+        )
       const isFocused =
         toolbarRef.current?.contains(element as HTMLElement) ||
-        containerRef.current?.contains(element as HTMLElement) ||
+        element === editorElement() ||
         false
       setFocus(isFocused)
     },
