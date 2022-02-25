@@ -42,9 +42,11 @@
     "@types/compression": "^1.7.2",
     "@types/content-type": "^1.1.5",
     "@types/cors": "^2.8.12",
+    "@types/ioredis": "^4.28.8",
     "@types/js-yaml": "^4.0.5",
     "@types/serve-handler": "^6.1.1",
     "@types/ws": "^8.2.0",
-    "firebase-admin": "^10.0.2"
+    "firebase-admin": "^10.0.2",
+    "ioredis": "^4.28.5"
   }
 }

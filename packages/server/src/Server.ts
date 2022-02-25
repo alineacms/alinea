@@ -39,23 +39,60 @@ export type ServerOptions<T extends Workspaces> = {
   auth?: Auth.Server
 }
 
+type UpdatesCache = {
+  lastFetched: number
+  updates: Promise<Array<Drafts.Update>>
+}
+
 export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
   config: Config<T>
   app = express()
+  updateCache: UpdatesCache | undefined = undefined
 
   constructor(public options: ServerOptions<T>) {
     this.config = options.config
     this.app.use(createServerRouter(this))
   }
 
+  private async fetchUpdates(): Promise<Array<Drafts.Update>> {
+    const {drafts} = this.options
+    if (this.updateCache) {
+      const {lastFetched, updates} = this.updateCache
+      const minutesAgo = (Date.now() - lastFetched) / 1000 / 60
+      const isExpired = minutesAgo > 1
+      if (!isExpired) return updates
+    }
+    const updates = accumulate(drafts.updates())
+    this.updateCache = {lastFetched: Date.now(), updates}
+    return updates
+  }
+
+  // Todo: we could cache every statement in the transaction or
+  // keep a second in memory db running
+  private async queryWithDrafts<T>(run: () => T): Promise<T> {
+    const {config, store} = this.options
+    const updates = await this.fetchUpdates()
+    let result: T | undefined
+    try {
+      return store.transaction(() => {
+        Cache.applyUpdates(store, config, updates)
+        result = run()
+        throw 'rollback'
+      })
+    } catch (e) {
+      if (e === 'rollback') return result!
+      throw e
+    }
+  }
+
   async entry(
     id: string,
     stateVector?: Uint8Array
   ): Future<Entry.Detail | null> {
-    const {config, store, drafts} = this.options
+    const {store, drafts} = this.options
     const draft = await drafts.get(id, stateVector)
     return future(
-      queryWithDrafts(config, store, drafts, () => {
+      this.queryWithDrafts(() => {
         const entry = store.first(Entry.where(Entry.id.is(id)))
         return (
           entry && {
@@ -70,7 +107,7 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
   async query<T>(cursor: Cursor<T>): Future<Array<T>> {
     const {config, store, drafts} = this.options
     return future(
-      queryWithDrafts(config, store, drafts, () => {
+      this.queryWithDrafts(() => {
         return store.all(cursor)
       })
     )
@@ -78,7 +115,17 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
 
   updateDraft(id: string, update: Uint8Array): Future<void> {
     const {drafts} = this.options
-    return future(drafts.update(id, update))
+    return outcome(async () => {
+      const instruction = await drafts.update(id, update)
+      if (!this.updateCache) await this.fetchUpdates()
+      const cache = this.updateCache!
+      // Always add the update instruction to the cache because strong
+      // consistency is not guaranteed for every drafts implementation
+      this.updateCache = {
+        ...cache,
+        updates: cache.updates.then(res => [...res, instruction])
+      }
+    })
   }
 
   deleteDraft(id: string): Future<void> {
@@ -162,28 +209,6 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
 
   listen(port: number) {
     return createHttpServer(this.respond).listen(port)
-  }
-}
-
-// Todo: keep a cache of either the updates to apply in a statement or
-// a separate in memory db with the applied updates
-async function queryWithDrafts<T>(
-  config: Config,
-  store: Store,
-  drafts: Drafts,
-  run: () => T
-): Promise<T> {
-  const updates = await accumulate(drafts.updates())
-  let result: T | undefined
-  try {
-    return store.transaction(() => {
-      Cache.applyUpdates(store, config, updates)
-      result = run()
-      throw 'rollback'
-    })
-  } catch (e) {
-    if (e === 'rollback') return result!
-    throw e
   }
 }
 

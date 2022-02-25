@@ -1,6 +1,7 @@
 import {createId, outcome} from '@alinea/core'
 import git, {AuthCallback, HttpClient, PromiseFsClient} from 'isomorphic-git'
 import {posix as path} from 'path'
+import {Drafts} from '../Drafts'
 import {FileDrafts, FileDraftsOptions} from './FileDrafts'
 
 export type GitDraftsOptions = FileDraftsOptions & {
@@ -77,7 +78,7 @@ export class GitDrafts extends FileDrafts {
     return super.get(id, stateVector)
   }
 
-  async update(id: string, update: Uint8Array): Promise<void> {
+  async update(id: string, update: Uint8Array): Promise<Drafts.Update> {
     const {dir, author} = this.options
     await this.init()
     const updateId = createId()
@@ -110,6 +111,7 @@ export class GitDrafts extends FileDrafts {
         remoteRef: this.options.branch
       })
     }
+    return {id, update: (await this.get(id))!}
   }
 
   async delete(ids: Array<string>): Promise<void> {

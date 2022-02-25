@@ -25,33 +25,31 @@ export class FirestoreDrafts implements Drafts {
     return Y.encodeStateAsUpdate(doc, stateVector)
   }
 
-  async update(id: string, update: Uint8Array): Promise<void> {
+  async update(id: string, update: Uint8Array): Promise<Drafts.Update> {
     const {collection} = this.options
     const doc = new Y.Doc()
     const current = await this.get(id)
     if (current) Y.applyUpdate(doc, current)
     Y.applyUpdate(doc, update)
     const ref = collection.doc(id)
+    const draft = Buffer.from(Y.encodeStateAsUpdate(doc))
     await ref.set({
       published: false,
-      draft: Buffer.from(Y.encodeStateAsUpdate(doc))
+      draft
     })
+    return {id, update: draft}
   }
 
   async delete(ids: string[]): Promise<void> {
     const {collection} = this.options
-    // Todo: this can be batched
-    for (const id of ids) collection.doc(id).delete()
+    // Minor impovement: this could be batched
+    for (const id of ids) await collection.doc(id).delete()
   }
 
-  async *updates(): AsyncGenerator<
-    {id: string; update: Uint8Array},
-    any,
-    unknown
-  > {
+  async *updates(): AsyncGenerator<Drafts.Update> {
     const {collection} = this.options
     const drafts = await collection.get()
-    const iter: Array<{id: string; update: Uint8Array}> = []
+    const iter: Array<Drafts.Update> = []
     drafts.forEach(row => iter.push({id: row.id, update: row.data()!.draft}))
     for (const draft of iter.filter(row => Boolean(row.update))) yield draft
   }

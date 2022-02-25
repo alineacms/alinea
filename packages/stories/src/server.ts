@@ -4,16 +4,16 @@ import {Cache, JsonLoader, Server} from '@alinea/server'
 import {FileData} from '@alinea/server/data/FileData'
 import {GithubData} from '@alinea/server/data/GithubData'
 import {FileDrafts} from '@alinea/server/drafts/FileDrafts'
-import {FirestoreDrafts} from '@alinea/server/drafts/FirestoreDrafts'
 import {GitDrafts} from '@alinea/server/drafts/GitDrafts'
+import {RedisDrafts} from '@alinea/server/drafts/RedisDrafts.js'
 import {BetterSqlite3Driver} from '@alinea/store/sqlite/drivers/BetterSqlite3Driver'
 import {SqliteStore} from '@alinea/store/sqlite/SqliteStore'
 import Database from 'better-sqlite3'
 import compression from 'compression'
 import dotenv from 'dotenv'
 import express from 'express'
-import {getFirestore} from 'firebase-admin/firestore'
 import fs from 'fs/promises'
+import Redis from 'ioredis'
 import http from 'isomorphic-git/http/node/index.js'
 import {createTransport} from 'nodemailer'
 import {createElement} from 'react'
@@ -92,9 +92,13 @@ const fileDrafts = new FileDrafts({
 })
 /*initializeApp({
   credential: cert('../../private/serviceAccount.json')
-})*/
+})
 const firestoreDrafts = new FirestoreDrafts({
   collection: getFirestore().collection('Draft')
+})*/
+
+const redisDrafts = new RedisDrafts({
+  client: new Redis(process.env.REDIS_DSN)
 })
 
 await Cache.create(store, data)
@@ -102,7 +106,7 @@ await Cache.create(store, data)
 const server = new Server({
   // auth,
   config,
-  drafts: firestoreDrafts,
+  drafts: redisDrafts,
   store,
   media: data,
   target: data

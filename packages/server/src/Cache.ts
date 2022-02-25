@@ -41,7 +41,11 @@ export namespace Cache {
     return null
   }
 
-  function validateOrdersFor(store: Store, condition: Expr<boolean>) {
+  function validateOrdersFor(
+    store: Store,
+    condition: Expr<boolean>,
+    includeChildren = true
+  ) {
     const seen = new Set()
     const entries = store
       .all(
@@ -72,23 +76,46 @@ export namespace Cache {
     })
   }
 
-  function validateOrder(store: Store) {
-    const roots = store.all(
-      Entry.select({
-        workspace: Entry.workspace,
-        root: Entry.root
-      })
-        .where(Entry.parent.isNull())
-        .groupBy(Entry.workspace, Entry.root)
-    )
-    for (const root of roots) {
-      validateOrdersFor(
-        store,
-        Entry.workspace
-          .is(root.workspace)
-          .and(Entry.root.is(root.root))
-          .and(Entry.parent.isNull())
+  function validateOrder(store: Store, only?: Array<string>) {
+    if (only) {
+      const entries = store.all(
+        Entry.where(Entry.id.isIn([...new Set(only)])).select({
+          parent: Entry.parent,
+          workspace: Entry.workspace,
+          root: Entry.root
+        })
       )
+      for (const entry of entries) {
+        if (entry.parent)
+          validateOrdersFor(store, Entry.parent.is(entry.parent), false)
+        else
+          validateOrdersFor(
+            store,
+            Entry.workspace
+              .is(entry.workspace)
+              .and(Entry.root.is(entry.root))
+              .and(Entry.parent.isNull()),
+            false
+          )
+      }
+    } else {
+      const roots = store.all(
+        Entry.select({
+          workspace: Entry.workspace,
+          root: Entry.root
+        })
+          .where(Entry.parent.isNull())
+          .groupBy(Entry.workspace, Entry.root)
+      )
+      for (const root of roots) {
+        validateOrdersFor(
+          store,
+          Entry.workspace
+            .is(root.workspace)
+            .and(Entry.root.is(root.root))
+            .and(Entry.parent.isNull())
+        )
+      }
     }
   }
 
@@ -148,6 +175,7 @@ export namespace Cache {
     config: Config | Schema,
     updates: Array<{id: string; update: Uint8Array}>
   ) {
+    const changed = []
     for (const {id, update} of updates) {
       const condition = Entry.where(Entry.id.is(id))
       const existing = store.first(condition)
@@ -156,11 +184,12 @@ export namespace Cache {
       Y.applyUpdate(doc, update)
       const data = entryFromDoc(config, doc)
       const entry = computeEntry(store, config, data)
+      changed.push(id)
       if (existing) store.update(condition, entry)
       else store.insert(Entry, entry)
       indexSearch(store, entry)
     }
-    validateOrder(store)
+    validateOrder(store, changed)
   }
 
   export function applyPublish(

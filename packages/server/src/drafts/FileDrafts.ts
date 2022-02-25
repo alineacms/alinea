@@ -46,9 +46,10 @@ export class FileDrafts implements Drafts {
     await fs.writeFile(location, update)
   }
 
-  async update(id: string, update: Uint8Array): Promise<void> {
+  async update(id: string, update: Uint8Array): Promise<Drafts.Update> {
     const updateId = createId()
-    return this.applyUpdate(id, update, updateId)
+    this.applyUpdate(id, update, updateId)
+    return {id, update: (await this.get(id))!}
   }
 
   async delete(ids: Array<string>): Promise<void> {

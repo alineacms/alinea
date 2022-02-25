@@ -2,25 +2,16 @@ import {config, createCache} from '.alinea'
 import {PasswordLessAuth} from '@alinea/auth.passwordless/PasswordLessAuth.js'
 import {JsonLoader, Server} from '@alinea/server'
 import {GithubData} from '@alinea/server/data/GithubData.js'
-import {FirestoreDrafts} from '@alinea/server/drafts/FirestoreDrafts.js'
+import {RedisDrafts} from '@alinea/server/drafts/RedisDrafts.js'
 import dotenv from 'dotenv'
 import findConfig from 'find-config'
-import {cert, getApp, initializeApp} from 'firebase-admin/app'
-import {getFirestore} from 'firebase-admin/firestore'
+import Redis from 'ioredis'
 import {createTransport} from 'nodemailer'
 
 dotenv.config({path: findConfig('.env')!})
 
-try {
-  getApp()
-} catch (e) {
-  initializeApp({
-    credential: cert(JSON.parse(process.env.FIRESTORE_SERVICE_ACCOUNT!))
-  })
-}
-
-export const drafts = new FirestoreDrafts({
-  collection: getFirestore().collection('Draft')
+export const drafts = new RedisDrafts({
+  client: new Redis(process.env.REDIS_DSN)
 })
 
 const isProduction = process.env.NODE_ENV === 'production'
