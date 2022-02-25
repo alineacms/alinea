@@ -1,6 +1,6 @@
 import {config} from '.alinea'
 import {PasswordLessLogin} from '@alinea/auth.passwordless/PasswordLessLogin'
-import Dashboard from '@alinea/dashboard'
+import {Dashboard} from '@alinea/dashboard'
 
 export default function Admin() {
   return (
