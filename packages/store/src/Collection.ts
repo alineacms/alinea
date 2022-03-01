@@ -3,14 +3,14 @@ import {Expr, ExprData} from './Expr'
 import {From} from './From'
 import {Selection, SelectionData, SelectionInput} from './Selection'
 
-type CollectionOptions = {
+export type CollectionOptions = {
   flat?: boolean
   columns?: Array<string>
   where?: Expr<boolean>
   alias?: string
 }
 
-class CollectionImpl<Row extends {} = any> extends Cursor<Row> {
+export class CollectionImpl<Row extends {} = any> extends Cursor<Row> {
   constructor(name: string, options: CollectionOptions = {}) {
     const {flat, columns, where, alias} = options
     const from = flat

@@ -18,16 +18,16 @@
   }
 
   &:hover {
-    color: var(--accent-foreground);
-    background: var(--accent);
-    box-shadow: 0 0 0 2px var(--accent);
+    background: var(--fields-focus);
+    color: var(--focus-foreground);
+    box-shadow: 0 0 0 2px var(--fields-focus);
   }
 
   &:focus {
     outline: none;
     color: inherit;
     background: transparent;
-    box-shadow: 0 0 0 2px var(--accent);
+    box-shadow: 0 0 0 2px var(--fields-focus);
   }
 
   &:focus.is-active {

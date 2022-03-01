@@ -9,7 +9,8 @@ export namespace Media {
     alias: 'MediaLibrary'
   })
 
-  export type File = Entry & {
+  export type File = Omit<Entry, 'title'> & {
+    title: string
     location: string
     extension: string
     size: number

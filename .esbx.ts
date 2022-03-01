@@ -7,6 +7,7 @@ import {SassPlugin} from '@esbx/sass'
 import {StaticPlugin} from '@esbx/static'
 import {findNodeModules} from '@esbx/util'
 import {BuildTask, getManifest, getWorkspaces, TestTask} from '@esbx/workspaces'
+import {execSync} from 'child_process'
 import crypto from 'crypto'
 import type {BuildOptions, Plugin} from 'esbuild'
 import {build} from 'esbuild'
@@ -151,43 +152,44 @@ const InternalPackages: Plugin = {
 
 let generating
 
+async function generate() {
+  const outfile = path.posix.join(
+    process.cwd(),
+    'node_modules',
+    crypto.randomBytes(16).toString('hex') + '.mjs'
+  )
+  const cwd = path.resolve('packages/website')
+  await buildTask.action({'skip-types': fs.existsSync('.types')})
+  await build({
+    bundle: true,
+    format: 'esm',
+    platform: 'node',
+    ...buildOptions,
+    outfile,
+    external: modules.filter(m => !m.includes('@alinea')),
+    plugins: [
+      ...buildOptions.plugins,
+      InternalPackages,
+      FixReactIconsPlugin,
+      StaticPlugin.configure({
+        sources: [path.resolve('packages/cli/src/index.ts')]
+      })
+    ],
+    stdin: {
+      contents: `import {generate} from '@alinea/cli/Generate'
+      export default generate({cwd: ${JSON.stringify(cwd)}})`,
+      resolveDir: process.cwd(),
+      sourcefile: 'gen.js'
+    }
+  })
+  await import(`file://${outfile}`)
+    .then(({default: promised}) => promised)
+    .finally(() => fs.promises.unlink(outfile))
+}
+
 const GeneratePlugin: Plugin = {
   name: 'GeneratePlugin',
   setup(build) {
-    const outfile = path.posix.join(
-      process.cwd(),
-      'node_modules',
-      crypto.randomBytes(16).toString('hex') + '.mjs'
-    )
-    const cwd = path.resolve('packages/website')
-    async function generate() {
-      await buildTask.action({'skip-types': fs.existsSync('.types')})
-      await build.esbuild.build({
-        bundle: true,
-        format: 'esm',
-        platform: 'node',
-        ...buildOptions,
-        outfile,
-        external: modules.filter(m => !m.includes('@alinea')),
-        plugins: [
-          ...buildOptions.plugins,
-          InternalPackages,
-          FixReactIconsPlugin,
-          StaticPlugin.configure({
-            sources: [path.resolve('packages/cli/src/index.ts')]
-          })
-        ],
-        stdin: {
-          contents: `import {generate} from '@alinea/cli/Generate'
-          export default generate({cwd: ${JSON.stringify(cwd)}})`,
-          resolveDir: process.cwd(),
-          sourcefile: 'gen.js'
-        }
-      })
-      await import(`file://${outfile}`)
-        .then(({default: promised}) => promised)
-        .finally(() => fs.promises.unlink(outfile))
-    }
     return generating || (generating = generate())
   }
 }
@@ -288,5 +290,19 @@ export const testTask = TestTask.configure({
 export const mkid = {
   action() {
     console.log(createId())
+  }
+}
+
+export const cli = {
+  action: async () => {
+    await generate()
+    try {
+      execSync(
+        `node --experimental-specifier-resolution=node ./packages/cli/dist/index.js`,
+        {stdio: 'inherit'}
+      )
+    } catch (e) {
+      process.exit(e.status)
+    }
   }
 }

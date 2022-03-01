@@ -10,6 +10,7 @@
     "build": "esbx build",
     "test": "esbx test",
     "clean": "esbx clean",
+    "cli": "cli",
     "publish:all": "yarn build && yarn workspaces foreach --no-private npm publish --tolerate-republish"
   },
   "files": [],
@@ -31,6 +32,7 @@
     "@types/node": "^16.9.0",
     "@typescript-eslint/eslint-plugin": "^4.31.0",
     "@typescript-eslint/parser": "^4.31.0",
+    "cross-env": "^7.0.3",
     "esbuild": "^0.14.11",
     "esbuild-plugin-sass-modules": "^0.0.1",
     "esbx": "^0.0.9",
@@ -52,9 +54,5 @@
   "packageManager": "yarn@3.1.1",
   "resolutions": {
     "yjs": "13.5.14"
-  },
-  "dependencies": {
-    "@alinea/ui": "workspace:^",
-    "ariakit": "^2.0.0-alpha.18"
   }
 }

@@ -15,8 +15,7 @@ export const MediaSchema = {
   }),
   File: type('File', {
     title: text('Title')
-    // Todo: typed this as any until we introduce localisation
-  }).configure<any>({
+  }).configure({
     isHidden: true,
     summaryRow: FileSummaryRow,
     summaryThumb: FileSummaryThumb

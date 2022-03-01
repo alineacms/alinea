@@ -1,37 +1,21 @@
 .row {
   height: 100%;
-  padding: 0 6px;
+  min-width: 0;
+  font-size: 13px;
+  padding: 0 4px;
 }
 
 .thumb {
   height: 100%;
+  flex-grow: 1;
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  cursor: pointer;
-  padding: 6px;
-  color: inherit;
-  text-decoration: none;
-
-  &-inner {
-    position: relative;
-    width: 100%;
-    min-height: 0;
-    border-radius: 6px;
-    overflow: hidden;
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-    background: rgba(var(--negative), 0.05);
-    transition: background 0.25s ease-out;
-  }
-
-  &:hover &-inner {
-    background: var(--selected);
-  }
+  padding: 6px 0;
+  font-size: 13px;
 
   &-header {
-    padding: 8px 12px;
+    padding: 5px 12px 0 6px;
   }
 
   &-title {
@@ -40,11 +24,11 @@
     flex-grow: 1;
     display: flex;
     align-items: center;
-    padding: 8px 12px;
+    padding: 8px 12px 8px 6px;
   }
 
   &-footer {
-    padding: 8px 12px;
+    padding: 8px 0;
     display: flex;
   }
 }

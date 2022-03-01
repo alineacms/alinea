@@ -1,5 +1,5 @@
 import {Media, view} from '@alinea/core'
-import {Functions} from '@alinea/store'
+import {Functions, Store} from '@alinea/store'
 import {Collection} from '@alinea/store/Collection'
 import {
   Chip,
@@ -34,9 +34,14 @@ function fileSummarySelect(File: Collection<Media.File>) {
   }
 }
 
+type SummaryProps = Store.TypeOf<ReturnType<typeof fileSummarySelect>> & {
+  selected: boolean
+  onSelect: () => void
+}
+
 export const FileSummaryRow = view(
   fileSummarySelect,
-  function FileSummaryRow(file) {
+  function FileSummaryRow(file: SummaryProps) {
     return (
       <HStack center full gap={10} className={styles.row()}>
         <div className={styles.row.preview()}>
@@ -44,7 +49,7 @@ export const FileSummaryRow = view(
             <img src={file.preview} className={styles.row.preview.image()} />
           ) : (
             <div className={styles.row.preview.icon()}>
-              <MdInsertDriveFile size={36} />
+              <MdInsertDriveFile size={12} />
             </div>
           )}
         </div>
@@ -76,26 +81,21 @@ export const FileSummaryRow = view(
 
 export const FileSummaryThumb = view(
   fileSummarySelect,
-  function FileSummaryThumb(file) {
+  function FileSummaryThumb(file: SummaryProps) {
     return (
       <div className={styles.thumb()}>
         <div className={styles.thumb.preview()}>
-          <div className={styles.thumb.preview.picture()}>
-            {file.preview ? (
-              <img
-                src={file.preview}
-                className={styles.thumb.preview.picture.image()}
-              />
-            ) : (
-              <div className={styles.thumb.preview.icon()}>
-                <MdInsertDriveFile size={36} />
-              </div>
-            )}
-          </div>
-          <div className={styles.thumb.title()}>
-            <span className={styles.thumb.title.text()}>{file.title}</span>
-            <Chip style={{marginLeft: 'auto'}}>{file.extension}</Chip>
-          </div>
+          {file.preview ? (
+            <img src={file.preview} className={styles.thumb.preview.image()} />
+          ) : (
+            <div className={styles.thumb.preview.icon()}>
+              <MdInsertDriveFile size={36} />
+            </div>
+          )}
+        </div>
+        <div className={styles.thumb.footer()}>
+          <span className={styles.thumb.footer.title()}>{file.title}</span>
+          <Chip style={{marginLeft: 'auto'}}>{file.extension}</Chip>
         </div>
       </div>
     )

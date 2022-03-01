@@ -32,17 +32,17 @@ function entrySummaryQuery(Entry: Collection<Entry>) {
 
 export const EntrySummaryRow = view(
   entrySummaryQuery,
-  function EntrySummaryRow(entry) {
+  function EntrySummaryRow({id, title, type: typeName, parents}) {
     const {schema} = useWorkspace()
-    const type = schema.type(entry.type)!
+    const type = schema.type(typeName)!
     return (
       <HStack center full gap={10} className={styles.row()}>
         <VStack>
-          {entry.parents.length > 0 && (
+          {parents.length > 0 && (
             <Ellipsis>
               <Typo.Small>
                 <HStack center gap={3}>
-                  {entry.parents
+                  {parents
                     .map<ReactNode>(({title}, i) => (
                       <TextLabel key={i} label={title} />
                     ))
@@ -56,7 +56,7 @@ export const EntrySummaryRow = view(
             </Ellipsis>
           )}
           <Ellipsis>
-            <TextLabel label={entry.title} />
+            <TextLabel label={title} />
           </Ellipsis>
         </VStack>
         <Chip style={{marginLeft: 'auto'}}>
@@ -69,37 +69,35 @@ export const EntrySummaryRow = view(
 
 export const EntrySummaryThumb = view(
   entrySummaryQuery,
-  function EntrySummaryThumb(entry) {
+  function EntrySummaryThumb({id, title, type: typeName, parents}) {
     const {schema} = useWorkspace()
-    const type = schema.type(entry.type)!
+    const type = schema.type(typeName)!
     return (
       <div className={styles.thumb()}>
-        <div className={styles.thumb.inner()}>
-          {entry.parents.length > 0 && (
-            <header className={styles.thumb.header()}>
-              <Typo.Small>
-                <HStack center gap={3}>
-                  {entry.parents
-                    .map<ReactNode>(({title}, i) => (
-                      <TextLabel key={i} label={title} />
-                    ))
-                    .reduce((prev, curr, i) => [
-                      prev,
-                      <MdKeyboardArrowRight key={`s${i}`} />,
-                      curr
-                    ])}
-                </HStack>
-              </Typo.Small>
-            </header>
-          )}
-          <div className={styles.thumb.title()}>
-            <TextLabel label={entry.title} />
-          </div>
-          <div className={styles.thumb.footer()}>
-            <Chip style={{marginLeft: 'auto'}}>
-              <TextLabel label={type.label} />
-            </Chip>
-          </div>
+        {parents.length > 0 && (
+          <header className={styles.thumb.header()}>
+            <Typo.Small>
+              <HStack center gap={3}>
+                {parents
+                  .map<ReactNode>(({title}, i) => (
+                    <TextLabel key={i} label={title} />
+                  ))
+                  .reduce((prev, curr, i) => [
+                    prev,
+                    <MdKeyboardArrowRight key={`s${i}`} />,
+                    curr
+                  ])}
+              </HStack>
+            </Typo.Small>
+          </header>
+        )}
+        <div className={styles.thumb.title()}>
+          <TextLabel label={title} />
+        </div>
+        <div className={styles.thumb.footer()}>
+          <Chip style={{marginLeft: 'auto'}}>
+            <TextLabel label={type.label} />
+          </Chip>
         </div>
       </div>
     )

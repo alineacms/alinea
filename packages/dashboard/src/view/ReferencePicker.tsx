@@ -1,23 +1,19 @@
 import {Entry} from '@alinea/core/Entry'
-import {Outcome} from '@alinea/core/Outcome'
 import {Reference} from '@alinea/core/Reference'
 import {Search} from '@alinea/core/Search'
-import {SelectionInput} from '@alinea/store/Selection'
-import {fromModule, HStack, IconButton, Stack, Typo} from '@alinea/ui'
+import {Button, fromModule, HStack, IconButton, Stack, Typo} from '@alinea/ui'
 import {Modal} from '@alinea/ui/Modal'
-import {useMemo, useState} from 'react'
+import {useCallback, useMemo, useState} from 'react'
 import {
   MdArrowBack,
   MdOutlineGridView,
   MdOutlineList,
   MdSearch
 } from 'react-icons/md'
-import {useQuery} from 'react-query'
+import {useFocusList} from '../hook/UseFocusList'
 import {ReferencePickerOptions} from '../hook/UseReferencePicker'
 import {useRoot} from '../hook/UseRoot'
-import {useSession} from '../hook/UseSession'
 import {useWorkspace} from '../hook/UseWorkspace'
-import {EntrySummaryRow} from './entry/EntrySummary'
 import {Explorer} from './explorer/Explorer'
 import css from './ReferencePicker.module.scss'
 
@@ -43,7 +39,6 @@ function query({workspace, search, root}: QueryParams) {
     .where(search ? Search.title.match(searchTerms(search)) : true)
     .where(Entry.workspace.is(workspace))
     .orderBy(Entry.root.is(root).desc(), Search.get('rank').asc())
-    .take(10)
 }
 
 export type ReferencePickerProps = {
@@ -58,35 +53,31 @@ export function ReferencePicker({
   onCancel
 }: ReferencePickerProps) {
   const [search, setSearch] = useState('')
-  const {hub} = useSession()
+  const list = useFocusList({
+    onClear: () => setSearch('')
+  })
+  const [selected, setSelected] = useState(() => new Set<string>())
   const {workspace, schema} = useWorkspace()
   const {root} = useRoot()
-  const selection = useMemo(() => {
-    const cases: Record<string, SelectionInput> = {}
-    for (const [name, type] of schema) {
-      if (type.options.summaryRow)
-        cases[name] = type.options.summaryRow.selection(Entry)
-    }
-    return cases
-  }, [schema])
-  const {data, isLoading} = useQuery(
-    ['link', workspace, search],
-    async () => {
-      return hub
-        .query(
-          query({workspace, root, search}).select(
-            Entry.type.case(selection, EntrySummaryRow.selection(Entry))
-          )
-        )
-        .then(Outcome.unpack)
-    },
-    {keepPreviousData: true}
-  )
   const cursor = useMemo(
     () => query({workspace, root, search}),
     [workspace, root, search]
   )
   const [view, setView] = useState<'row' | 'thumb'>('row')
+  const handleSelect = useCallback(
+    (entry: Entry.Minimal) => {
+      setSelected(selected => {
+        const res = new Set(selected)
+        if (res.has(entry.id)) res.delete(entry.id)
+        else res.add(entry.id)
+        return res
+      })
+    },
+    [setSelected]
+  )
+  function handleConfirm() {
+    onConfirm([...selected].map(id => ({id})))
+  }
   return (
     <Modal open onClose={onCancel}>
       <HStack center gap={18} className={styles.root.header()}>
@@ -112,14 +103,32 @@ export function ReferencePicker({
         <input
           autoFocus
           placeholder="Search"
-          className={styles.root.label.input()}
           value={search}
-          onChange={e => setSearch(e.target.value)}
+          onChange={event => setSearch(event.target.value)}
+          className={styles.root.label.input()}
+          {...list.focusProps}
         />
       </label>
-      <div className={styles.root.results()}>
-        <Explorer schema={schema} cursor={cursor} type={view} />
-      </div>
+      <list.Container>
+        <div className={styles.root.results()}>
+          <Explorer
+            virtualized
+            schema={schema}
+            cursor={cursor}
+            type={view}
+            selectable
+            selected={selected}
+            onSelect={handleSelect}
+          />
+        </div>
+      </list.Container>
+      <HStack as="footer">
+        <Stack.Right>
+          <Button size="large" onClick={handleConfirm}>
+            Confirm
+          </Button>
+        </Stack.Right>
+      </HStack>
     </Modal>
   )
 }

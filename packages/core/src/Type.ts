@@ -23,14 +23,14 @@ export namespace Type {
 
     // Todo: there's a bunch of views here how should be approach naming?
     view?: ComponentType
-    summaryRow?: View<T, any>
-    summaryThumb?: View<T, any>
+    summaryRow?: View<any> // View<T>
+    summaryThumb?: View<any> // View<T>
   }
 }
 
 const reserved = new Set(['id', 'type'])
 
-export class Type<T = {}> {
+export class Type<T = any> {
   #fields: Record<string, Lazy<Field>> | undefined
 
   constructor(
@@ -91,11 +91,11 @@ export class Type<T = {}> {
     } as Entry & T
   }
 
-  configure<I extends T>(options: Type.Options<I>): Type<I> {
-    return new Type<I>(this.label, this.sections, {
+  configure(options: Type.Options<T>): Type<T> {
+    return new Type<T>(this.label, this.sections, {
       ...this.options,
       ...options
-    } as Type.Options<I>)
+    } as Type.Options<T>)
   }
 }
 

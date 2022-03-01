@@ -30,6 +30,7 @@ export namespace Entry {
     entry: Entry
     draft: string | undefined
   }
+  export type Minimal = Pick<Entry, 'id' | 'type' | 'workspace' | 'root'>
   export type Summary = Pick<
     Entry,
     | 'id'

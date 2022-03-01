@@ -1,16 +1,76 @@
 import {Entry, Outcome, Schema, View} from '@alinea/core'
+import {useExplorer} from '@alinea/dashboard/hook/UseExplorer'
+import {useFocusListItem} from '@alinea/dashboard/hook/UseFocusList'
 import {Cursor} from '@alinea/store'
 import {fromModule} from '@alinea/ui'
 import {memo} from 'react'
+import {MdCheckBox, MdCheckBoxOutlineBlank} from 'react-icons/md'
 import {useQuery} from 'react-query'
+import {Link} from 'react-router-dom'
+import {useDashboard} from '../../hook/UseDashboard'
 import {useSession} from '../../hook/UseSession'
 import css from './ExplorerRow.module.scss'
 
 const styles = fromModule(css)
 
-export type MediaRowProps = {
+type ExplorerRowItemProps = {
   schema: Schema
-  cursor: Cursor<{id: string; type: string}>
+  entry: Entry.Minimal
+  summaryView: 'summaryRow' | 'summaryThumb'
+  defaultView: View<Entry, any>
+}
+
+function ExplorerRowItem({
+  schema,
+  entry,
+  summaryView,
+  defaultView
+}: ExplorerRowItemProps) {
+  const {nav} = useDashboard()
+  const {selectable, selected, onSelect} = useExplorer()
+  const itemRef = useFocusListItem(() => onSelect(entry))
+  const View: any = schema.type(entry.type)?.options[summaryView] || defaultView
+  const Tag: any = selectable ? 'label' : Link
+  const props = selectable
+    ? {}
+    : {to: nav.entry(entry.workspace, entry.root, entry.id)}
+  const isSelected = selected.has(entry.id)
+  return (
+    <Tag
+      key={entry.id}
+      className={styles.item(summaryView === 'summaryRow' ? 'row' : 'thumb', {
+        selected: isSelected
+      })}
+      {...props}
+      ref={itemRef}
+    >
+      <div className={styles.item.inner()}>
+        {selectable && (
+          <>
+            <input
+              type="checkbox"
+              checked={selected.has(entry.id)}
+              onChange={() => onSelect(entry)}
+              className={styles.item.checkbox()}
+            />
+            <div className={styles.item.selection()}>
+              {selected.has(entry.id) ? (
+                <MdCheckBox />
+              ) : (
+                <MdCheckBoxOutlineBlank />
+              )}
+            </div>
+          </>
+        )}
+        <View {...entry} />
+      </div>
+    </Tag>
+  )
+}
+
+export type ExplorerRowProps = {
+  schema: Schema
+  cursor: Cursor<Entry.Minimal>
   batchSize: number
   amount: number
   from: number
@@ -26,7 +86,7 @@ export const ExplorerRow = memo(function ExplorerRow({
   from,
   summaryView,
   defaultView
-}: MediaRowProps) {
+}: ExplorerRowProps) {
   const {hub} = useSession()
   const start = Math.floor(from / batchSize)
   const startAt = from % batchSize
@@ -50,9 +110,15 @@ export const ExplorerRow = memo(function ExplorerRow({
         }}
       >
         {entries?.map(entry => {
-          const View: any =
-            schema.type(entry.type)?.options[summaryView] || defaultView
-          return <View key={entry.id} {...entry} />
+          return (
+            <ExplorerRowItem
+              key={entry.id}
+              schema={schema}
+              entry={entry}
+              summaryView={summaryView}
+              defaultView={defaultView}
+            />
+          )
         })}
       </div>
     </div>

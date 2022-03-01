@@ -16,6 +16,7 @@
     "@alinea/client": "0.0.0",
     "@alinea/core": "0.0.0",
     "@alinea/editor": "0.0.0",
+    "@headlessui/react": "^1.5.0",
     "@react-hook/size": "^2.1.2",
     "fast-average-color": "^7.0.1",
     "image-blob-reduce": "^4.1.0",

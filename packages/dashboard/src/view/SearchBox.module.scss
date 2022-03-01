@@ -39,8 +39,11 @@
   }
 
   &-popover {
-    position: relative;
-    width: 310px;
+    position: absolute;
+    top: 100%;
+    left: 10px;
+    right: 10px;
+    min-height: 55px;
     max-height: 300px;
     z-index: 5;
     display: flex;
