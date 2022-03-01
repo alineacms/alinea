@@ -88,10 +88,8 @@ __metadata:
     "@types/react-helmet": ^6.1.2
     "@types/react-router": ^5.1.16
     "@types/react-router-dom": ^5.3.0
-    downshift: ^6.1.7
     fast-average-color: ^7.0.1
     image-blob-reduce: ^4.1.0
-    js-base64: ^3.7.2
     react-helmet: ^6.1.0
     react-icons: ^4.3.1
     react-query: ^3.34.12
@@ -224,7 +222,6 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@alinea/root@workspace:."
   dependencies:
-    "@alinea/ui": "workspace:^"
     "@esbx/extension": ^0.0.9
     "@esbx/react": ^0.0.9
     "@esbx/reload": ^0.0.9
@@ -314,7 +311,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@alinea/ui@0.0.0, @alinea/ui@workspace:^, @alinea/ui@workspace:packages/ui":
+"@alinea/ui@0.0.0, @alinea/ui@workspace:packages/ui":
   version: 0.0.0-use.local
   resolution: "@alinea/ui@workspace:packages/ui"
   dependencies:
@@ -374,15 +371,6 @@ __metadata:
   dependencies:
     regenerator-runtime: ^0.13.4
   checksum: c40825430400e47c19b97e4142d5315d2910305b9714d44a711472587ee2fd4521fdba5f02ddd9df3902f5e988d9854fa83f4da1e0c091f70f6983fa52480606
-  languageName: node
-  linkType: hard
-
-"@babel/runtime@npm:^7.14.8":
-  version: 7.17.2
-  resolution: "@babel/runtime@npm:7.17.2"
-  dependencies:
-    regenerator-runtime: ^0.13.4
-  checksum: a48702d271ecc59c09c397856407afa29ff980ab537b3da58eeee1aeaa0f545402d340a1680c9af58aec94dfdcbccfb6abb211991b74686a86d03d3f6956cacd
   languageName: node
   linkType: hard
 
@@ -3288,13 +3276,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"compute-scroll-into-view@npm:^1.0.17":
-  version: 1.0.17
-  resolution: "compute-scroll-into-view@npm:1.0.17"
-  checksum: b20c05a10c37813c5a6e4bf053c00f65c88d23afed7a6bd7a2a69e05e2ffc2df3483ecfe407d36bf16b8cec8be21ae1966c9c523093a03117e567156cd79a51e
-  languageName: node
-  linkType: hard
-
 "computed-style@npm:~0.1.3":
   version: 0.1.4
   resolution: "computed-style@npm:0.1.4"
@@ -3784,21 +3765,6 @@ __metadata:
   version: 10.0.0
   resolution: "dotenv@npm:10.0.0"
   checksum: f412c5fe8c24fbe313d302d2500e247ba8a1946492db405a4de4d30dd0eb186a88a43f13c958c5a7de303938949c4231c56994f97d05c4bc1f22478d631b4005
-  languageName: node
-  linkType: hard
-
-"downshift@npm:^6.1.7":
-  version: 6.1.7
-  resolution: "downshift@npm:6.1.7"
-  dependencies:
-    "@babel/runtime": ^7.14.8
-    compute-scroll-into-view: ^1.0.17
-    prop-types: ^15.7.2
-    react-is: ^17.0.2
-    tslib: ^2.3.0
-  peerDependencies:
-    react: ">=16.12.0"
-  checksum: 0904ed8f285d31ee00e471dcddd57e72468bee354b191167bcaebe690ec292647fe4c31f483665094d750e72dd71e5d7db695acef33ab5dba6a39fed0112bab6
   languageName: node
   linkType: hard
 
@@ -5759,13 +5725,6 @@ fsevents@~2.3.2:
   dependencies:
     "@panva/asn1.js": ^1.0.0
   checksum: 80a3447b51f794f8f2c7e21395dd880b55d374a055564595c69ff17722fb07aeb2dff722b5da9030651f67fafc7494e9ec5f5b56f5e1836d1ac94e604e6096ea
-  languageName: node
-  linkType: hard
-
-"js-base64@npm:^3.7.2":
-  version: 3.7.2
-  resolution: "js-base64@npm:3.7.2"
-  checksum: 573f28e9a27c3df60096d4d3f551bcb4fcb6d49161cf83396e9bad9b76f94736a70bb70b8808fe834dff2a388f76604ba09d6e153bbf181646e407720139fa5b
   languageName: node
   linkType: hard
 
@@ -7988,7 +7947,7 @@ fsevents@~2.3.2:
   languageName: node
   linkType: hard
 
-"react-is@npm:17.0.2, react-is@npm:^17.0.2":
+"react-is@npm:17.0.2":
   version: 17.0.2
   resolution: "react-is@npm:17.0.2"
   checksum: 9d6d111d8990dc98bc5402c1266a808b0459b5d54830bbea24c12d908b536df7883f268a7868cfaedde3dd9d4e0d574db456f84d2e6df9c4526f99bb4b5344d8
@@ -9376,7 +9335,7 @@ resolve@^2.0.0-next.3:
   languageName: node
   linkType: hard
 
-"tslib@npm:^2.0.0, tslib@npm:^2.1.0, tslib@npm:^2.3.0":
+"tslib@npm:^2.0.0, tslib@npm:^2.1.0":
   version: 2.3.1
   resolution: "tslib@npm:2.3.1"
   checksum: de17a98d4614481f7fcb5cd53ffc1aaf8654313be0291e1bfaee4b4bb31a20494b7d218ff2e15017883e8ea9626599b3b0e0229c18383ba9dce89da2adf15cb9
