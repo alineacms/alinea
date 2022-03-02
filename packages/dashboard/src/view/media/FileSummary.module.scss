@@ -5,8 +5,8 @@
   padding: 0 4px;
 
   &-preview {
-    width: 22px;
-    height: 22px;
+    width: 28px;
+    height: 28px;
     background: rgba(var(--negative), 0.05);
     flex-shrink: 0;
     overflow: hidden;
@@ -67,10 +67,6 @@
       margin: auto;
       opacity: 0.4;
     }
-  }
-
-  &:hover &-preview {
-    background: var(--selected);
   }
 
   &-footer {

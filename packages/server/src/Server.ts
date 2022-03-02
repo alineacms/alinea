@@ -75,7 +75,7 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
     let result: T | undefined
     try {
       return store.transaction(() => {
-        Cache.applyUpdates(store, config, updates)
+        // Cache.applyUpdates(store, config, updates)
         result = run()
         throw 'rollback'
       })

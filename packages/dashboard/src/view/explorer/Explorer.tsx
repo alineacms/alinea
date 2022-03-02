@@ -1,6 +1,6 @@
-import {Entry, Outcome, Schema} from '@alinea/core'
+import {Entry, Outcome, Reference, Schema, View} from '@alinea/core'
 import {ExplorerProvider} from '@alinea/dashboard/hook/UseExplorer'
-import {Cursor, Functions, SelectionInput} from '@alinea/store'
+import {Cursor, Functions} from '@alinea/store'
 import {fromModule, Loader} from '@alinea/ui'
 import useSize from '@react-hook/size'
 import {useRef} from 'react'
@@ -18,18 +18,6 @@ const defaultSummaryView = {
   summaryThumb: EntrySummaryThumb
 }
 
-function getSelection(
-  schema: Schema,
-  summaryView: 'summaryRow' | 'summaryThumb'
-) {
-  const cases: Record<string, SelectionInput> = {}
-  for (const [name, type] of schema) {
-    const view = type.options[summaryView]
-    if (view) cases[name] = view.selection(Entry)
-  }
-  return cases
-}
-
 export type ExplorerProps = {
   schema: Schema
   cursor: Cursor<Entry>
@@ -37,8 +25,8 @@ export type ExplorerProps = {
   virtualized?: boolean
   max?: number
   selectable?: boolean
-  selected: Set<string>
-  onSelect: (id: Entry.Minimal) => void
+  selection?: Array<Reference>
+  onSelect?: (id: Entry.Minimal) => void
 }
 
 export function Explorer({
@@ -47,19 +35,20 @@ export function Explorer({
   cursor,
   virtualized,
   max,
-  selectable,
-  selected,
-  onSelect
+  selectable = false,
+  selection = [],
+  onSelect = () => {}
 }: ExplorerProps) {
   const {hub} = useSession()
   const {data, isLoading} = useQuery(
     ['explorer', type, cursor, schema, max],
     () => {
       const summaryView = type === 'row' ? 'summaryRow' : 'summaryThumb'
-      const selection = getSelection(schema, summaryView)
-      const result = hub.query(cursor.select(Functions.count()))
-      return Object.assign(
-        result.then(Outcome.unpack).then(([total]) => {
+      const selection = View.getSelection(schema, summaryView, Entry)
+      return hub
+        .query(cursor.select(Functions.count()))
+        .then(Outcome.unpack)
+        .then(([total]) => {
           const defaultView = defaultSummaryView[summaryView]
           return {
             type,
@@ -71,26 +60,19 @@ export function Explorer({
             summaryView,
             defaultView
           } as const
-        }),
-        {cancel: (result as any).cancel}
-      )
+        })
     },
     {keepPreviousData: true}
   )
   const containerRef = useRef(null)
   const [containerWidth, containerHeight] = useSize(containerRef)
-  const perRow = data?.type === 'thumb' ? Math.round(containerWidth / 240) : 1
+  const perRow = data?.type === 'thumb' ? Math.round(containerWidth / 200) : 1
   const height = data?.type === 'thumb' ? 200 : 50
   const batchSize = data?.type === 'thumb' ? perRow * 10 : 50
-  const showList = data && (!virtualized || containerHeight > 0)
+  const showList =
+    data && containerWidth > 0 && (!virtualized || containerHeight > 0)
   return (
-    <ExplorerProvider
-      value={{
-        selectable: Boolean(selectable),
-        selected,
-        onSelect
-      }}
-    >
+    <ExplorerProvider value={{selectable, selection, onSelect}}>
       <div ref={containerRef} className={styles.root()}>
         {showList ? (
           data.total > 0 ? (

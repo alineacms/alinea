@@ -27,14 +27,16 @@ function ExplorerRowItem({
   defaultView
 }: ExplorerRowItemProps) {
   const {nav} = useDashboard()
-  const {selectable, selected, onSelect} = useExplorer()
-  const itemRef = useFocusListItem(() => onSelect(entry))
+  const explorer = useExplorer()
+  const itemRef = useFocusListItem(() => explorer?.onSelect(entry))
   const View: any = schema.type(entry.type)?.options[summaryView] || defaultView
-  const Tag: any = selectable ? 'label' : Link
-  const props = selectable
+  const Tag: any = explorer?.selectable ? 'label' : Link
+  const props = explorer?.selectable
     ? {}
     : {to: nav.entry(entry.workspace, entry.root, entry.id)}
-  const isSelected = selected.has(entry.id)
+  const isSelected = Boolean(
+    explorer?.selection.find(v => v.type === 'entry' && v.entry === entry.id)
+  )
   return (
     <Tag
       key={entry.id}
@@ -45,20 +47,16 @@ function ExplorerRowItem({
       ref={itemRef}
     >
       <div className={styles.item.inner()}>
-        {selectable && (
+        {explorer?.selectable && (
           <>
             <input
               type="checkbox"
-              checked={selected.has(entry.id)}
-              onChange={() => onSelect(entry)}
+              checked={isSelected}
+              onChange={() => explorer?.onSelect(entry)}
               className={styles.item.checkbox()}
             />
             <div className={styles.item.selection()}>
-              {selected.has(entry.id) ? (
-                <MdCheckBox />
-              ) : (
-                <MdCheckBoxOutlineBlank />
-              )}
+              {isSelected ? <MdCheckBox /> : <MdCheckBoxOutlineBlank />}
             </div>
           </>
         )}

@@ -1,6 +1,7 @@
 .root {
   height: 100%;
   width: 100%;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -51,12 +52,12 @@
     align-items: center;
   }
 
-  &:hover &-inner {
-    background: var(--selected);
-  }
-
   &.is-selected &-inner {
     background: rgba(var(--negative), 0.1);
+  }
+
+  &:hover &-inner {
+    background: var(--selected);
   }
 
   &[aria-selected] &-inner {

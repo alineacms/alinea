@@ -85,12 +85,13 @@ export function SearchBox() {
                 <IconButton
                   size={12}
                   icon={MdOutlineList}
-                  active
+                  active={explorerView === 'row'}
                   onClick={() => setExplorerView('row')}
                 />
                 <IconButton
                   size={12}
                   icon={MdOutlineGridView}
+                  active={explorerView === 'thumb'}
                   onClick={() => setExplorerView('thumb')}
                 />
               </HStack>
@@ -99,22 +100,19 @@ export function SearchBox() {
         </label>
       </div>
       <list.Container>
-        {
-          /*isOpen &&*/ search && (
-            <div className={styles.root.popover()}>
-              <Explorer
-                schema={schema}
-                cursor={cursor}
-                type={explorerView}
-                selected={new Set()}
-                onSelect={entry =>
-                  history.push(nav.entry(entry.workspace, entry.root, entry.id))
-                }
-                max={5}
-              />
-            </div>
-          )
-        }
+        {isOpen && search && (
+          <div className={styles.root.popover()}>
+            <Explorer
+              schema={schema}
+              cursor={cursor}
+              type={explorerView}
+              onSelect={entry =>
+                history.push(nav.entry(entry.workspace, entry.root, entry.id))
+              }
+              max={25}
+            />
+          </div>
+        )}
       </list.Container>
     </div>
   )

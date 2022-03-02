@@ -19,7 +19,7 @@ function sort(a: Row, b: Row) {
 
 export type ListMutator<T> = {
   push: (row: Omit<T, 'id' | 'index'>) => void
-  delete: (id: string) => void
+  remove: (id: string) => void
   move: (oldIndex: number, newIndex: number) => void
 }
 
@@ -115,7 +115,7 @@ export class ListValue<T>
           } as any)
         )
       },
-      delete(id: string) {
+      remove(id: string) {
         const record = parent.get(key)
         record.delete(id)
       },

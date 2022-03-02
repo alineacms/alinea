@@ -1,3 +1,4 @@
+import {createId} from '@alinea/core'
 import {Entry} from '@alinea/core/Entry'
 import {Reference} from '@alinea/core/Reference'
 import {Search} from '@alinea/core/Search'
@@ -56,7 +57,9 @@ export function ReferencePicker({
   const list = useFocusList({
     onClear: () => setSearch('')
   })
-  const [selected, setSelected] = useState(() => new Set<string>())
+  const [selection, setSelection] = useState<Array<Reference>>(
+    () => options.selection || []
+  )
   const {workspace, schema} = useWorkspace()
   const {root} = useRoot()
   const cursor = useMemo(
@@ -66,17 +69,25 @@ export function ReferencePicker({
   const [view, setView] = useState<'row' | 'thumb'>('row')
   const handleSelect = useCallback(
     (entry: Entry.Minimal) => {
-      setSelected(selected => {
-        const res = new Set(selected)
-        if (res.has(entry.id)) res.delete(entry.id)
-        else res.add(entry.id)
+      setSelection(selected => {
+        const index = selected.findIndex(
+          v => v.type === 'entry' && v.entry === entry.id
+        )
+        if (index === -1)
+          return selected.concat({
+            id: createId(),
+            type: 'entry',
+            entry: entry.id
+          })
+        const res = selected.slice()
+        res.splice(index, 1)
         return res
       })
     },
-    [setSelected]
+    [setSelection]
   )
   function handleConfirm() {
-    onConfirm([...selected].map(id => ({id})))
+    onConfirm(selection)
   }
   return (
     <Modal open onClose={onCancel}>
@@ -117,7 +128,7 @@ export function ReferencePicker({
             cursor={cursor}
             type={view}
             selectable
-            selected={selected}
+            selection={selection}
             onSelect={handleSelect}
           />
         </div>

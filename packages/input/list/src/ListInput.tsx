@@ -215,7 +215,7 @@ export function ListInput<T extends ListRow>({
                       field={field}
                       path={state.child(row.id)}
                       onMove={direction => list.move(i, i + direction)}
-                      onDelete={() => list.delete(row.id)}
+                      onDelete={() => list.remove(row.id)}
                     />
                   )
                 })}

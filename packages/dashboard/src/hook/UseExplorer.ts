@@ -1,9 +1,9 @@
-import {Entry} from '@alinea/core'
+import {Entry, Reference} from '@alinea/core'
 import {createContext, useContext} from 'react'
 
 type ExplorerContext = {
   selectable: boolean
-  selected: Set<string>
+  selection: Array<Reference>
   onSelect: (id: Entry.Minimal) => void
 }
 
