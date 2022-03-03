@@ -23,9 +23,10 @@ const styles = fromModule(css)
 
 export type BrowserPreviewProps = {
   url: string
+  prettyUrl?: string
 }
 
-export function BrowserPreview({url}: BrowserPreviewProps) {
+export function BrowserPreview({url, prettyUrl}: BrowserPreviewProps) {
   const ref = useRef<HTMLIFrameElement>(null)
   const drafts = useDrafts()
   const status = useObservable(drafts.status)
@@ -89,7 +90,7 @@ export function BrowserPreview({url}: BrowserPreviewProps) {
                     whiteSpace: 'nowrap'
                   }}
                 >
-                  {url}
+                  {prettyUrl || url}
                 </span>
               </HStack>
             </Typo.Monospace>

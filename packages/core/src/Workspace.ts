@@ -13,7 +13,7 @@ export type Workspace<T = any> = {
   mediaDir?: string
   color: string
   roots: Record<string, Root<TypesOf<T>>>
-  preview?: ComponentType<T>
+  preview?: ComponentType<{entry: T; previewToken: string}>
 }
 
 export function workspace<T>(

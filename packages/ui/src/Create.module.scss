@@ -5,6 +5,8 @@
   gap: 10px;
   width: 100%;
   justify-content: center;
+  align-items: center;
+  min-height: 50px;
 }
 
 .button {
@@ -18,7 +20,7 @@
   color: inherit;
   cursor: pointer;
   padding: 4px 8px;
-  border-radius: 6px;
+  border-radius: 8px;
   text-decoration: none;
   text-overflow: ellipsis;
   white-space: nowrap;

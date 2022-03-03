@@ -33,12 +33,12 @@ const styles = fromModule(css)
 
 type EntryPreviewProps = {
   draft: EntryDraft
-  preview: ComponentType<Entry>
+  preview: ComponentType<{entry: Entry; previewToken: string}>
 }
 
 function EntryPreview({draft, preview: Preview}: EntryPreviewProps) {
   const entry = useObservable(draft.entry)
-  return <Preview {...entry} />
+  return <Preview entry={entry} previewToken={draft.previewToken} />
 }
 
 type EntryEditDraftProps = {draft: EntryDraft}

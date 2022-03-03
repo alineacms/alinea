@@ -1,0 +1,265 @@
+{
+  "id": "25HTEDPlYoRaZkCuSnix0fnYQdZ",
+  "type": "Doc",
+  "root": "data",
+  "index": "a1",
+  "title": "Dashboard",
+  "path": "dashboard",
+  "blocks": [
+    {
+      "id": "25HTEiuZ1248vU6D4ar6EjACGkg",
+      "index": "a0",
+      "type": "TextBlock",
+      "text": {
+        "type": "doc",
+        "blocks": {
+          "25pEP3J8GJVZJxJ97zVRb5LTZz7": {
+            "type": "ImageBlock",
+            "image": []
+          },
+          "25muw9QrxPIDaaJuTnryBWNJWMp": {
+            "type": "ImageBlock",
+            "image": [
+              {
+                "id": "25mwlccClNtZH7yAb6EMT9iYZsX",
+                "index": "a0",
+                "type": "entry"
+              },
+              {
+                "id": "25mwlcIXat6N9HE5ETrJNHoLSk8",
+                "index": "a1",
+                "type": "entry"
+              },
+              {
+                "id": "25mwm0P5xM3MT45O94aFI2BUiMz",
+                "index": "a2",
+                "type": "entry"
+              },
+              {
+                "id": "25mwm2U3eeeNvf4nVgu03MjX6ae",
+                "index": "a3",
+                "type": "entry"
+              },
+              {
+                "id": "25mwmedPCjbPMiu1QsWD2zGYwWr",
+                "index": "a4",
+                "type": "entry"
+              },
+              {
+                "id": "25mwmfUmwf9p6ino3xuzurLjYQ0",
+                "index": "a5",
+                "type": "entry"
+              },
+              {
+                "id": "25mwmdgYZbiKOvkveu1IkjczsLK",
+                "index": "a6",
+                "type": "entry"
+              },
+              {
+                "id": "25mwmdkNHev5mcSKs3p5rz2oakO",
+                "index": "a7",
+                "type": "entry"
+              },
+              {
+                "id": "25mwo9GTqJV7yvaaNw2lkyu52W9",
+                "index": "a8",
+                "type": "entry"
+              },
+              {
+                "id": "25mwo7jWIoGAdyKvvqyljNJqfxm",
+                "index": "a9",
+                "type": "entry"
+              },
+              {
+                "id": "25mwprZs7siclIPujuzn5YMFLWE",
+                "index": "aA",
+                "type": "entry"
+              },
+              {
+                "id": "25mwptKJMqOY7Npt06ZK9UE3eQB",
+                "index": "aB",
+                "type": "entry"
+              },
+              {
+                "id": "25mx00MgadCFbrs5hKwlVlIPhzV",
+                "index": "aC",
+                "type": "entry",
+                "entry": "25HNduo5a1wINekzCU1CVXsKvUy"
+              },
+              {
+                "id": "25mx0coLvVdf6AROSicehvPu0Z6",
+                "index": "aD",
+                "type": "entry",
+                "entry": "home"
+              }
+            ]
+          },
+          "25mx5oEeZMDs9z11lKmMtciaysv": {
+            "type": "ImageBlock",
+            "image": [
+              {
+                "id": "25mx7o7dqpj3JAhCYZtduepobrs",
+                "index": "a0",
+                "type": "entry",
+                "entry": "25VBbI0mlaZ8slB1afCEQfKf6GF"
+              },
+              {
+                "id": "25n2y9BnvAq4H5PeBwH6yuJFXVI",
+                "index": "a1",
+                "type": "entry",
+                "entry": "25VBbI0mlaZ8slB1afCEQfKf6GF"
+              },
+              {
+                "id": "25n3A1BgcBcc6B0jaXXsJUjsGgs",
+                "index": "a2",
+                "type": "entry",
+                "entry": "25VBbI0mlaZ8slB1afCEQfKf6GF"
+              },
+              {
+                "id": "25n3A1SJ4CSY1fEPy7yMTePswkh",
+                "index": "a3",
+                "type": "entry",
+                "entry": "25VBbI0mlaZ8slB1afCEQfKf6GF"
+              },
+              {
+                "id": "25n4deandrrCZGgiMCg7xn0CEGM",
+                "index": "a4",
+                "type": "entry",
+                "entry": "home"
+              }
+            ]
+          },
+          "25n4nohKWfOsCvSFLe2Mk3SapvE": {
+            "type": "ImageBlock",
+            "image": []
+          },
+          "25b0zOZPI0xAm9u8un6g2vNnRFA": {
+            "type": "ImageBlock",
+            "image": []
+          },
+          "25HUvQJ1zUWHnhGMfEeBc8mQyWW": {
+            "type": "CodeBlock"
+          },
+          "25HUvqctUB4ZjEBOMlKq5buHK5Y": {
+            "type": "CodeBlock",
+            "code": "npx alinea serve"
+          },
+          "25autwVTQJST72rNFx7xXTN3Bdj": {
+            "type": "ImageBlock",
+            "image": []
+          }
+        },
+        "content": [
+          {
+            "type": "heading",
+            "attrs": {
+              "level": 1
+            },
+            "content": [
+              {
+                "type": "text",
+                "text": "Accessing the admin interface"
+              }
+            ]
+          },
+          {
+            "type": "heading",
+            "attrs": {
+              "level": 2
+            },
+            "content": [
+              {
+                "type": "text",
+                "text": "Running locally"
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "The following command will start a local server and open it in your browser."
+              }
+            ]
+          },
+          {
+            "type": "CodeBlock",
+            "attrs": {
+              "id": "25HUvqctUB4ZjEBOMlKq5buHK5Y"
+            }
+          },
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "If all goes well you see something like this:"
+              }
+            ]
+          },
+          {
+            "type": "ImageBlock",
+            "attrs": {
+              "id": "25pEP3J8GJVZJxJ97zVRb5LTZz7"
+            }
+          },
+          {
+            "type": "paragraph"
+          },
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "If something went wrong, create an issue [here]."
+              }
+            ]
+          },
+          {
+            "type": "heading",
+            "attrs": {
+              "level": 2
+            },
+            "content": [
+              {
+                "type": "text",
+                "text": "Running publicly"
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "Later on we'll see how to add authentication and expose this admin interface publicly."
+              }
+            ]
+          },
+          {
+            "type": "heading",
+            "attrs": {
+              "level": 2
+            },
+            "content": [
+              {
+                "type": "text",
+                "text": "Creating pages"
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "…"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

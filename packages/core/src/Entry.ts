@@ -29,6 +29,7 @@ export namespace Entry {
   export type Detail = {
     entry: Entry
     draft: string | undefined
+    previewToken: string
   }
   export type Minimal = Pick<Entry, 'id' | 'type' | 'workspace' | 'root'>
   export type Summary = Pick<

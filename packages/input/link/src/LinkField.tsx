@@ -1,12 +1,15 @@
 import {Field, Label, Reference, Value} from '@alinea/core'
 import {RecordValue} from '@alinea/core/value/RecordValue'
 
+export type LinkType = 'entry' | 'image' | 'file' | 'external'
+
 export type LinkOptions = {
   width?: number
   optional?: boolean
   help?: Label
   inline?: boolean
-  initialValue?: number
+  type?: LinkType | Array<LinkType>
+  max?: number
 }
 
 export interface LinkField extends Field<Array<Reference>> {

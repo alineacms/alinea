@@ -1,5 +1,7 @@
 import {fromModule} from '@alinea/ui'
 import {HTMLProps, PropsWithChildren} from 'react'
+import {MdClose} from 'react-icons/md'
+import {IconButton} from './IconButton'
 import css from './Modal.module.scss'
 
 const styles = fromModule(css)
@@ -20,7 +22,15 @@ export function Modal({children, open, onClose, ...props}: ModalProps) {
       {...props}
     >
       <div className={styles.root.background()} onClick={onClose}></div>
-      <div className={styles.root.inner()}>{children}</div>
+      <div className={styles.root.inner()}>
+        <IconButton
+          className={styles.root.inner.close()}
+          size={18}
+          icon={MdClose}
+          onClick={onClose}
+        />
+        {children}
+      </div>
     </div>
   )
 }

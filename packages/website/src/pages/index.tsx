@@ -23,7 +23,9 @@ async function propsOf(pages: Pages<Page>, page: Page) {
 }
 
 export async function getStaticProps(context: GetStaticPropsContext) {
-  const from = context.preview ? pages.preview(drafts) : pages
+  const from = context.preview
+    ? pages.preview(drafts, context.previewData as string)
+    : pages
   const paths = (context.params?.slug as Array<string>) || []
   const slug = '/' + paths.join('/')
   const page = await from.first(pages.byUrl(slug))

@@ -54,8 +54,9 @@ const auth = new PasswordLessAuth({
 export const server = new Server({
   auth,
   config,
-  store: await createCache(),
+  createStore: createCache,
   drafts: drafts,
   target: data,
-  media: data
+  media: data,
+  jwtSecret: process.env.JWT_SECRET!
 })

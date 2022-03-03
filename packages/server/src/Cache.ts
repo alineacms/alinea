@@ -173,10 +173,10 @@ export namespace Cache {
   export function applyUpdates(
     store: Store,
     config: Config | Schema,
-    updates: Array<{id: string; update: Uint8Array}>
+    updates: IterableIterator<[string, Uint8Array]>
   ) {
     const changed = []
-    for (const {id, update} of updates) {
+    for (const [id, update] of updates) {
       const condition = Entry.where(Entry.id.is(id))
       const existing = store.first(condition)
       const doc = new Y.Doc()

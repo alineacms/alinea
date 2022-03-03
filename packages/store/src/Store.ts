@@ -28,8 +28,8 @@ type FunctionContructor = <T extends (...params: any[]) => any>(
 export interface Store {
   all<Row>(cursor: Cursor<Row>, options?: QueryOptions): Array<Row>
   first<Row>(cursor: Cursor<Row>, options?: QueryOptions): Row | null
-  delete<Row>(cursor: Cursor<Row>, options?: QueryOptions): {changes: number}
   count<Row>(cursor: Cursor<Row>, options?: QueryOptions): number
+  delete<Row>(cursor: Cursor<Row>, options?: QueryOptions): {changes: number}
   insert<Row extends Document>(
     collection: Collection<Row>,
     object: IdLess<Row>,

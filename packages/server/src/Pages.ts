@@ -1,5 +1,5 @@
 import {
-  accumulate,
+  Config,
   createError,
   Entry,
   ErrorCode,
@@ -8,14 +8,15 @@ import {
 } from '@alinea/core'
 import {Cursor, Expr, Store} from '@alinea/store'
 import autoBind from 'auto-bind'
-import {Cache} from './Cache'
 import {Drafts} from './Drafts'
+import {previewStore} from './PreviewStore'
 
 export class Pages<T extends Entry> {
   schema: Schema<T>
   store: Promise<Store>
 
   constructor(
+    private config: Config,
     private workspace: Workspace<T>,
     private createCache: () => Promise<Store>
   ) {
@@ -41,13 +42,11 @@ export class Pages<T extends Entry> {
     const store = await this.store
     return store.count(cursor)
   }
-  preview(drafts: Drafts): Pages<T> {
-    return new Pages(this.workspace, async () => {
-      const updates = await accumulate(drafts.updates())
-      if (updates.length === 0) return this.store
-      const clone = await this.createCache()
-      Cache.applyUpdates(clone, this.schema, updates)
-      return clone
+  preview(drafts: Drafts, id?: string): Pages<T> {
+    return new Pages(this.config, this.workspace, async () => {
+      const preview = previewStore(this.createCache, this.config, drafts)
+      if (id) await preview.fetchUpdate(id)
+      return preview.getStore()
     })
   }
 

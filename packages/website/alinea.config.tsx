@@ -31,10 +31,15 @@ export const config = createConfig({
           contains: ['MediaLibrary']
         }
       },
-      preview(entry) {
+      preview({entry, previewToken}) {
         const noPreviews = new Set(['Docs', 'MediaLibrary'])
         if (noPreviews.has(entry.type)) return null
-        return <BrowserPreview url={`/api/preview?${entry.url}`} />
+        return (
+          <BrowserPreview
+            url={`/api/preview?${previewToken}`}
+            prettyUrl={entry.url}
+          />
+        )
       }
     }),
     stories: workspace('Stories', {

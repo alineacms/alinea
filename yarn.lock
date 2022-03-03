@@ -281,6 +281,7 @@ __metadata:
     ioredis: ^4.28.5
     isomorphic-git: ^1.10.5
     js-yaml: ^4.1.0
+    jsonwebtoken: ^8.5.1
     octokit-commit-multiple-files: ^3.2.1
     p-limit: ^4.0.0
     pretty-ms: ^7.0.1

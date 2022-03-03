@@ -1,10 +1,10 @@
 import {
-  accumulate,
   Auth,
   Config,
   createError,
   createId,
   Entry,
+  entryFromDoc,
   future,
   Future,
   Hub,
@@ -22,109 +22,85 @@ import {
   IncomingMessage,
   ServerResponse
 } from 'http'
+import jwt from 'jsonwebtoken'
 import {posix as path} from 'path'
+import * as Y from 'yjs'
 import {Cache} from './Cache'
 import {Data} from './Data'
 import {Drafts} from './Drafts'
+import {PreviewStore, previewStore} from './PreviewStore'
 import {createServerRouter} from './router/ServerRouter'
 import {finishResponse} from './util/FinishResponse'
 import {parentUrl, walkUrl} from './util/Urls'
 
 export type ServerOptions<T extends Workspaces> = {
   config: Config<T>
-  store: Store
+  createStore: () => Promise<Store>
   drafts: Drafts
   target: Data.Target
   media: Data.Media
+  jwtSecret: string
   auth?: Auth.Server
-}
-
-type UpdatesCache = {
-  lastFetched: number
-  updates: Promise<Array<Drafts.Update>>
 }
 
 export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
   config: Config<T>
   app = express()
-  updateCache: UpdatesCache | undefined = undefined
+  store: Promise<Store>
+  preview: PreviewStore
 
   constructor(public options: ServerOptions<T>) {
     this.config = options.config
     this.app.use(createServerRouter(this))
-  }
-
-  private async fetchUpdates(): Promise<Array<Drafts.Update>> {
-    const {drafts} = this.options
-    if (this.updateCache) {
-      const {lastFetched, updates} = this.updateCache
-      const minutesAgo = (Date.now() - lastFetched) / 1000 / 60
-      const isExpired = minutesAgo > 1
-      if (!isExpired) return updates
-    }
-    const updates = accumulate(drafts.updates())
-    this.updateCache = {lastFetched: Date.now(), updates}
-    return updates
-  }
-
-  // Todo: we could cache every statement in the transaction or
-  // keep a second in memory db running
-  private async queryWithDrafts<T>(run: () => T): Promise<T> {
-    const {config, store} = this.options
-    const updates = await this.fetchUpdates()
-    let result: T | undefined
-    try {
-      return store.transaction(() => {
-        // Cache.applyUpdates(store, config, updates)
-        result = run()
-        throw 'rollback'
-      })
-    } catch (e) {
-      if (e === 'rollback') return result!
-      throw e
-    }
+    this.store = options.createStore()
+    this.preview = previewStore(
+      options.createStore,
+      options.config,
+      options.drafts
+    )
   }
 
   async entry(
     id: string,
     stateVector?: Uint8Array
   ): Future<Entry.Detail | null> {
-    const {store, drafts} = this.options
-    const draft = await drafts.get(id, stateVector)
-    return future(
-      this.queryWithDrafts(() => {
-        const entry = store.first(Entry.where(Entry.id.is(id)))
-        return (
-          entry && {
-            entry,
-            draft: draft && encode(draft)
-          }
-        )
-      })
-    )
+    const {config, drafts, jwtSecret} = this.options
+    let draft = await drafts.get(id, stateVector)
+    if (draft) {
+      const doc = new Y.Doc()
+      Y.applyUpdate(doc, draft)
+      const isValidDraft = outcome.succeeds(() => entryFromDoc(config, doc))
+      if (!isValidDraft) {
+        console.log(`Removed invalid draft ${id}`)
+        await drafts.delete([id])
+        draft = undefined
+      }
+    }
+    return outcome(async () => {
+      const store = await this.preview.getStore()
+      const entry = store.first(Entry.where(Entry.id.is(id)))
+      return (
+        entry && {
+          entry,
+          draft: draft && encode(draft),
+          previewToken: jwt.sign({id}, jwtSecret)
+        }
+      )
+    })
   }
 
   async query<T>(cursor: Cursor<T>): Future<Array<T>> {
-    const {config, store, drafts} = this.options
-    return future(
-      this.queryWithDrafts(() => {
-        return store.all(cursor)
-      })
-    )
+    return outcome(async () => {
+      const store = await this.preview.getStore()
+      return store.all(cursor)
+    })
   }
 
   updateDraft(id: string, update: Uint8Array): Future<void> {
     const {drafts} = this.options
     return outcome(async () => {
       const instruction = await drafts.update(id, update)
-      if (!this.updateCache) await this.fetchUpdates()
-      const cache = this.updateCache!
-      // Always add the update instruction to the cache because strong
-      // consistency is not guaranteed for every drafts implementation
-      this.updateCache = {
-        ...cache,
-        updates: cache.updates.then(res => [...res, instruction])
-      }
+      await this.preview.applyUpdate(instruction)
     })
   }
 
@@ -134,14 +110,14 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
   }
 
   publishEntries(entries: Array<Entry>): Future<void> {
-    const {store, config, drafts, target} = this.options
+    const {config, drafts, target} = this.options
     return outcome(async () => {
       await target.publish(entries)
       // Todo: This makes updates instantly available but should be configurable
       // Todo: if there's another instance running it won't have the drafts or
       // these changes so it would show the old data, so maybe we should always
       // hang on to drafts?
-      Cache.applyPublish(store, config, entries)
+      Cache.applyPublish(await this.store, config, entries)
       await drafts.delete(entries.map(entry => entry.id))
     })
   }
@@ -151,8 +127,8 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
     root: string,
     file: Hub.Upload
   ): Future<Media.File> {
-    const {store, drafts, target} = this.options
     return outcome(async () => {
+      const store = await this.preview.getStore()
       const id = createId()
       const {media} = this.options
       const parentPath = path.dirname(file.path)
@@ -198,6 +174,21 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
       await this.publishEntries([entry])
       return entry
     })
+  }
+
+  async parsePreviewToken(
+    previewToken: string
+  ): Promise<{id: string; url: string}> {
+    const {jwtSecret} = this.options
+    const {id} = jwt.verify(previewToken, jwtSecret) as {id: string}
+
+    const store = await this.preview.getStore()
+    await this.preview.fetchUpdate(id)
+    const entry = store.first(
+      Entry.where(Entry.id.is(id)).select({id: Entry.id, url: Entry.url})
+    )
+    if (!entry) throw createError(404, 'Entry not found')
+    return entry
   }
 
   respond = (req: IncomingMessage, res: ServerResponse): Promise<void> => {

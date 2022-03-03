@@ -53,6 +53,7 @@ export function ReferencePicker({
   onConfirm,
   onCancel
 }: ReferencePickerProps) {
+  const {defaultView, max, condition} = options
   const [search, setSearch] = useState('')
   const list = useFocusList({
     onClear: () => setSearch('')
@@ -63,28 +64,36 @@ export function ReferencePicker({
   const {workspace, schema} = useWorkspace()
   const {root} = useRoot()
   const cursor = useMemo(
-    () => query({workspace, root, search}),
-    [workspace, root, search]
+    () => query({workspace, root, search}).where(condition || true),
+    [workspace, root, search, condition]
   )
-  const [view, setView] = useState<'row' | 'thumb'>('row')
+  const [view, setView] = useState<'row' | 'thumb'>(defaultView || 'row')
   const handleSelect = useCallback(
     (entry: Entry.Minimal) => {
       setSelection(selected => {
         const index = selected.findIndex(
           v => v.type === 'entry' && v.entry === entry.id
         )
-        if (index === -1)
-          return selected.concat({
-            id: createId(),
-            type: 'entry',
-            entry: entry.id
-          })
-        const res = selected.slice()
-        res.splice(index, 1)
+        let res = selected.slice()
+        if (index === -1) {
+          res = res
+            .concat({
+              id: createId(),
+              type: 'entry',
+              entry: entry.id
+            })
+            .slice(-(max || 0))
+        } else {
+          res.splice(index, 1)
+          res = res.slice(-(max || 0))
+        }
+        // Special case: if we're expecting a single reference we'll confirm
+        // upon selection
+        if (max === 1 && res.length === 1) onConfirm(res)
         return res
       })
     },
-    [setSelection]
+    [setSelection, max]
   )
   function handleConfirm() {
     onConfirm(selection)
@@ -94,6 +103,17 @@ export function ReferencePicker({
       <HStack center gap={18} className={styles.root.header()}>
         <IconButton icon={MdArrowBack} onClick={onCancel} />
         <Typo.H1 flat>Select a reference</Typo.H1>
+      </HStack>
+      <label className={styles.root.label()}>
+        <MdSearch size={15} className={styles.root.label.icon()} />
+        <input
+          autoFocus
+          placeholder="Search"
+          value={search}
+          onChange={event => setSearch(event.target.value)}
+          className={styles.root.label.input()}
+          {...list.focusProps}
+        />
         <Stack.Right>
           <HStack gap={16}>
             <IconButton
@@ -108,17 +128,6 @@ export function ReferencePicker({
             />
           </HStack>
         </Stack.Right>
-      </HStack>
-      <label className={styles.root.label()}>
-        <MdSearch size={15} className={styles.root.label.icon()} />
-        <input
-          autoFocus
-          placeholder="Search"
-          value={search}
-          onChange={event => setSearch(event.target.value)}
-          className={styles.root.label.input()}
-          {...list.focusProps}
-        />
       </label>
       <list.Container>
         <div className={styles.root.results()}>

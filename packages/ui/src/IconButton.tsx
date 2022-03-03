@@ -21,7 +21,7 @@ export const IconButton = forwardRef(function IconButton(
     <button
       ref={ref}
       {...props}
-      style={{fontSize: size ? px(size) : undefined}}
+      style={{...props.style, fontSize: size ? px(size) : undefined}}
       className={styles.root.mergeProps(props)({active})}
     >
       <Icon />

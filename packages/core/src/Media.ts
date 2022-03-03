@@ -2,11 +2,16 @@ import {Collection} from '@alinea/store'
 import {Entry} from './Entry'
 
 export namespace Media {
+  export enum Type {
+    Libary = 'MediaLibrary',
+    File = 'File'
+  }
+
   export type Library = Entry
 
   export const Library = new Collection<Library>('Entry', {
-    where: Entry.as('MediaLibrary').type.is('MediaLibrary'),
-    alias: 'MediaLibrary'
+    where: Entry.as(Media.Type.Libary).type.is(Media.Type.Libary),
+    alias: Media.Type.Libary
   })
 
   export type File = Omit<Entry, 'title'> & {
@@ -20,8 +25,8 @@ export namespace Media {
   }
 
   export const File = new Collection<File>('Entry', {
-    where: Entry.as('File').type.is('File'),
-    alias: 'File'
+    where: Entry.as(Media.Type.File).type.is(Media.Type.File),
+    alias: Media.Type.File
   })
 
   export namespace File {

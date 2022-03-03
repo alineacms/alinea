@@ -1,7 +1,8 @@
-import {Entry, Outcome, Reference, View} from '@alinea/core'
+import {Entry, Media, Outcome, Reference, View} from '@alinea/core'
 import {useReferencePicker, useSession, useWorkspace} from '@alinea/dashboard'
 import {EntrySummaryRow} from '@alinea/dashboard/view/entry/EntrySummary'
 import {InputLabel, InputState, useInput} from '@alinea/editor'
+import {Expr} from '@alinea/store'
 import {Create, fromModule, HStack, IconButton, Typo} from '@alinea/ui'
 import {
   closestCenter,
@@ -29,7 +30,7 @@ import {CSS, FirstArgument} from '@dnd-kit/utilities'
 import {CSSProperties, HTMLAttributes, Ref, useMemo, useState} from 'react'
 import {MdDelete, MdDragHandle, MdLink} from 'react-icons/md'
 import {useQuery} from 'react-query'
-import {LinkField} from './LinkField'
+import {LinkField, LinkType} from './LinkField'
 import css from './LinkInput.module.scss'
 
 const styles = fromModule(css)
@@ -51,6 +52,7 @@ type LinkInputRowProps = {
   onRemove: () => void
   isDragging?: boolean
   isDragOverlay?: boolean
+  isSortable?: boolean
   handle?: DraggableSyntheticListeners
   rootRef?: Ref<HTMLDivElement>
 } & HTMLAttributes<HTMLDivElement>
@@ -63,6 +65,7 @@ function LinkInputRow({
   rootRef,
   isDragging,
   isDragOverlay,
+  isSortable,
   ...rest
 }: LinkInputRowProps) {
   switch (reference.type) {
@@ -76,9 +79,14 @@ function LinkInputRow({
           ref={rootRef}
           {...rest}
         >
-          <div {...handle}>
-            <IconButton icon={MdDragHandle} />
-          </div>
+          {isSortable && (
+            <div {...handle}>
+              <IconButton
+                icon={MdDragHandle}
+                style={{cursor: handle ? 'grab' : 'grabbing'}}
+              />
+            </div>
+          )}
           {entry && <LinkInputEntryRow key={entry.id} entry={entry} />}
           <div>
             <IconButton icon={MdDelete} onClick={onRemove} />
@@ -124,6 +132,36 @@ const layoutMeasuringConfig = {
   strategy: LayoutMeasuringStrategy.Always
 }
 
+const imageFormats = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.avif']
+
+function conditionOfType(type: LinkType) {
+  switch (type) {
+    case 'entry':
+      return Entry.type.isNot(Media.Type.File)
+    case 'image':
+      return Entry.type
+        .is(Media.Type.File)
+        .and(Entry.get('extension').isIn(imageFormats))
+    case 'file':
+      return Entry.type
+        .is(Media.Type.File)
+        .and(Entry.get('extension').isNotIn(imageFormats))
+    case 'external':
+      return Expr.value(true)
+  }
+}
+
+function restrictByType(
+  type: LinkType | Array<LinkType> | undefined
+): Expr<boolean> | undefined {
+  if (!type || (Array.isArray(type) && type.length === 0)) return undefined
+  let condition = Expr.value(false)
+  for (const t of Array.isArray(type) ? type : [type]) {
+    condition = condition.or(conditionOfType(t))
+  }
+  return condition
+}
+
 export type LinkInputProps = {
   state: InputState<Array<Reference>>
   field: LinkField
@@ -134,13 +172,15 @@ export function LinkInput({state, field}: LinkInputProps) {
   const [value, {push, move, remove}] = useInput(state)
   const {schema} = useWorkspace()
   const {pickLink} = useReferencePicker()
-  const {width, inline, optional, help} = field.options
+  const {type, width, inline, optional, help, max} = field.options
+
   const cursor = useMemo(() => {
     const entries = value
       .filter((v): v is Reference.Entry => v.type === 'entry')
       .map(v => v.entry)
     return Entry.where(Entry.id.isIn(entries))
   }, [value])
+
   const {data, isLoading} = useQuery(
     ['explorer', schema, cursor],
     () => {
@@ -160,9 +200,13 @@ export function LinkInput({state, field}: LinkInputProps) {
     },
     {keepPreviousData: true}
   )
+
   function handleCreate() {
     return pickLink({
-      selection: value
+      selection: value,
+      condition: restrictByType(type),
+      defaultView: type === 'image' ? 'thumb' : 'row',
+      max
     }).then(links => {
       const seen = new Set()
       if (!links) return
@@ -200,6 +244,8 @@ export function LinkInput({state, field}: LinkInputProps) {
     setDragging(null)
   }
 
+  const showLinkPicker = max ? value.length < max : true
+
   return (
     <DndContext
       sensors={sensors}
@@ -226,6 +272,7 @@ export function LinkInput({state, field}: LinkInputProps) {
                     entryData={id => data?.get(id)}
                     reference={reference}
                     onRemove={() => remove(reference.id)}
+                    isSortable={max !== 1}
                   />
                 )
               })}
@@ -246,9 +293,11 @@ export function LinkInput({state, field}: LinkInputProps) {
                 />
               ) : null}
             </DragOverlay>
-            <Create.Root>
-              <Create.Button onClick={handleCreate}>Pick link</Create.Button>
-            </Create.Root>
+            {showLinkPicker && (
+              <Create.Root>
+                <Create.Button onClick={handleCreate}>Pick link</Create.Button>
+              </Create.Root>
+            )}
           </div>
         </div>
       </InputLabel>

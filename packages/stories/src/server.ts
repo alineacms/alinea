@@ -45,11 +45,6 @@ const auth = new PasswordLessAuth({
   }
 })
 
-const store = new SqliteStore(
-  new BetterSqlite3Driver(new Database(':memory:')),
-  createId
-)
-
 const data = new FileData({
   config,
   fs,
@@ -101,26 +96,37 @@ const redisDrafts = new RedisDrafts({
   client: new Redis(process.env.REDIS_DSN)
 })
 
-await Cache.create(store, data)
+async function createStore() {
+  const store = new SqliteStore(
+    new BetterSqlite3Driver(new Database(':memory:')),
+    createId
+  )
+  await Cache.create(store, data)
+  return store
+}
 
 const server = new Server({
   // auth,
+  createStore,
   config,
   drafts: redisDrafts,
-  store,
   media: data,
-  target: data
+  target: data,
+  jwtSecret: process.env.JWT_SECRET!
 })
 
 const app = express()
 app.use(server.app)
 app.use(compression())
 app.get('/api/preview', async (req, res) => {
-  const url = new URL(req.url, 'http://localhost:4500')
-  const slug = url.search
+  const previewToken = decodeURIComponent(
+    new URL(req.url!, 'http://localhost').search
+  ).substring(1)
+  const {id, url} = await server.parsePreviewToken(previewToken)
   const {props} = await getStaticProps({
     preview: true,
-    params: {slug: slug.split('/').slice(1)}
+    previewData: id,
+    params: {slug: url.split('/').slice(1)}
   })
   const html = ReactDOMServer.renderToStaticMarkup(
     createElement(App, {

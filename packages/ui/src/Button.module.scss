@@ -1,13 +1,14 @@
 .root {
   position: relative;
   border: none;
-  background: var(--foreground);
+  background: rgba(var(--negative), 1);
   color: var(--background);
   font: inherit;
   cursor: pointer;
   //border: 2px solid var(--background);
   overflow: hidden;
   z-index: 0;
+  font-size: 13px;
 
   &-label {
   }
@@ -35,7 +36,7 @@
     min-height: 26px;
     font-size: 14px;
     padding: 6px 13px;
-    border-radius: 8px;
+    border-radius: 12px;
   }
 
   &:hover {

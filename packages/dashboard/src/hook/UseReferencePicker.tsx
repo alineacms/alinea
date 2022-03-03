@@ -1,9 +1,13 @@
 import {Reference} from '@alinea/core/Reference'
+import {Expr} from '@alinea/store/Expr'
 import {createContext, PropsWithChildren, useContext, useState} from 'react'
 import {ReferencePicker} from '../view/ReferencePicker'
 
 export type ReferencePickerOptions = {
   selection: Array<Reference> | undefined
+  defaultView?: 'row' | 'thumb'
+  condition?: Expr<boolean>
+  max?: number
 }
 
 type ReferencePickerContext = {
@@ -37,10 +41,14 @@ export function ReferencePickerProvider({children}: PropsWithChildren<{}>) {
               setOptions(options)
               setTrigger([resolve, reject])
             }
-          ).finally(() => {
-            setOptions(undefined)
-            setTrigger(undefined)
-          })
+          )
+            .finally(() => {
+              setOptions(undefined)
+              setTrigger(undefined)
+            })
+            .catch(() => {
+              return undefined
+            })
         }
       }}
     >

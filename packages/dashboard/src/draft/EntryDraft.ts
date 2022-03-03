@@ -26,7 +26,8 @@ export class EntryDraft implements Entry {
     protected hub: Hub,
     public channel: Type,
     protected source: Entry,
-    public doc: Y.Doc
+    public doc: Y.Doc,
+    public previewToken: string
   ) {
     this.#root = doc.getMap(ROOT_KEY)
     this.entry = observable(this.getEntry())

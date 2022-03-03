@@ -29,15 +29,20 @@
     position: relative;
     margin: 50px auto;
     //box-shadow: 0 10px 150px 20px var(--shadow);
-    padding: 35px;
+    padding: 45px;
     background: var(--inner);
-    border-radius: 12px;
+    border-radius: 16px;
     max-width: 768px;
     width: 100%;
     box-shadow: 0 2px 110px 10px var(--shadow);
-    border: 1px solid var(--lift);
-    outline: 1px solid var(--outline);
     display: flex;
     flex-direction: column;
+
+    &-close {
+      background: var(--inner);
+      position: absolute;
+      top: 12px;
+      right: 12px;
+    }
   }
 }

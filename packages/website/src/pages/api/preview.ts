@@ -1,9 +1,14 @@
 import type {NextApiRequest, NextApiResponse} from 'next'
+import {server} from '../../../alinea.server'
 
-export default function handler(req: NextApiRequest, res: NextApiResponse) {
-  const url = new URL(req.url!, 'http://localhost')
-  const slug = decodeURIComponent(url.search).substring(1)
-  res.setPreviewData({})
-  // Todo: let's sign the slug with our secret so we don't open redirects
-  res.redirect(slug)
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  const previewToken = decodeURIComponent(
+    new URL(req.url!, 'http://localhost').search
+  ).substring(1)
+  const {id, url} = await server.parsePreviewToken(previewToken)
+  res.setPreviewData(id)
+  res.redirect(url)
 }
