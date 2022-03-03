@@ -7,6 +7,7 @@ import busboy from 'busboy'
 import compression from 'compression'
 import cors from 'cors'
 import {Response, Router} from 'express'
+import serverTiming from 'server-timing'
 import type {Server} from '../Server'
 import {parseBuffer, parseJson} from '../util/BodyParser'
 
@@ -17,6 +18,7 @@ export function createServerRouter(hub: Server) {
   // Use of compression here results in a failure in nextjs.
   // api-utils apiRes.end is called with [undefined, undefined]
   // for etag (empty body) responses.
+  router.use(serverTiming())
   router.use(compression({filter: () => true}))
   router.use(cors({origin: dashboardUrl}))
   if (auth) router.use(auth.router())
@@ -32,7 +34,10 @@ export function createServerRouter(hub: Server) {
     const svParam = req.query.stateVector
     const stateVector =
       typeof svParam === 'string' ? new Uint8Array(decode(svParam)) : undefined
-    return respond(res, await hub.entry(id, stateVector))
+    res.startTime('entry', 'Entry metric')
+    const result = await hub.entry(id, stateVector)
+    res.endTime('entry')
+    return respond(res, result)
   })
   // Hub.query
   router.post(prefix + Hub.routes.query(), async (req, res) => {
@@ -41,23 +46,35 @@ export function createServerRouter(hub: Server) {
       'x-query',
       sqliteFormatter.formatSelect(body, {formatInline: true}).sql
     )
-    return respond(res, await hub.query(new Cursor(body)))
+    res.startTime('query', 'Query metric')
+    const result = await hub.query(new Cursor(body))
+    res.endTime('query')
+    return respond(res, result)
   })
   // Hub.updateDraft
   router.put(prefix + Hub.routes.draft(':id'), async (req, res) => {
     const id = req.params.id
     const body = (await parseBuffer(req)) as Buffer
-    return respond(res, await hub.updateDraft(id, body))
+    res.startTime('update', 'Update metric')
+    const result = await hub.updateDraft(id, body)
+    res.endTime('update')
+    return respond(res, result)
   })
   // Hub.deleteDraft
   router.delete(prefix + Hub.routes.draft(':id'), async (req, res) => {
     const id = req.params.id
-    return respond(res, await hub.deleteDraft(id))
+    res.startTime('delete', 'Delete metric')
+    const result = await hub.deleteDraft(id)
+    res.endTime('delete')
+    return respond(res, result)
   })
   // Hub.publishEntries
   router.post(prefix + Hub.routes.publish(), async (req, res) => {
     const entries = await parseJson(req)
-    return respond(res, await hub.publishEntries(entries))
+    res.startTime('publish', 'Publish metric')
+    const result = await hub.publishEntries(entries)
+    res.endTime('publish')
+    return respond(res, result)
   })
   // Hub.uploadFile
   router.post(prefix + Hub.routes.upload(), async (req, res) => {
@@ -91,10 +108,15 @@ export function createServerRouter(hub: Server) {
     if (!root) throw createError(400, 'missing root')
     if (!path) throw createError(400, 'missing path')
     if (!buffer) throw createError(400, 'missing file')
-    return respond(
-      res,
-      await hub.uploadFile(workspace, root, {buffer, path, preview, color})
-    )
+    res.startTime('upload', 'Upload metric')
+    const result = await hub.uploadFile(workspace, root, {
+      buffer,
+      path,
+      preview,
+      color
+    })
+    res.endTime('upload')
+    return respond(res, result)
   })
   return router
 }

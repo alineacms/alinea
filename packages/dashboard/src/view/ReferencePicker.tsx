@@ -2,14 +2,23 @@ import {createId} from '@alinea/core'
 import {Entry} from '@alinea/core/Entry'
 import {Reference} from '@alinea/core/Reference'
 import {Search} from '@alinea/core/Search'
-import {Button, fromModule, HStack, IconButton, Stack, Typo} from '@alinea/ui'
+import {
+  Button,
+  fromModule,
+  HStack,
+  IconButton,
+  Stack,
+  Typo,
+  VStack
+} from '@alinea/ui'
 import {Modal} from '@alinea/ui/Modal'
 import {useCallback, useMemo, useState} from 'react'
 import {
   MdArrowBack,
   MdOutlineGridView,
   MdOutlineList,
-  MdSearch
+  MdSearch,
+  MdUploadFile
 } from 'react-icons/md'
 import {useFocusList} from '../hook/UseFocusList'
 import {ReferencePickerOptions} from '../hook/UseReferencePicker'
@@ -104,44 +113,59 @@ export function ReferencePicker({
         <IconButton icon={MdArrowBack} onClick={onCancel} />
         <Typo.H1 flat>Select a reference</Typo.H1>
       </HStack>
-      <label className={styles.root.label()}>
-        <MdSearch size={15} className={styles.root.label.icon()} />
-        <input
-          autoFocus
-          placeholder="Search"
-          value={search}
-          onChange={event => setSearch(event.target.value)}
-          className={styles.root.label.input()}
-          {...list.focusProps}
-        />
-        <Stack.Right>
-          <HStack gap={16}>
-            <IconButton
-              icon={MdOutlineList}
-              active={view === 'row'}
-              onClick={() => setView('row')}
-            />
-            <IconButton
-              icon={MdOutlineGridView}
-              active={view === 'thumb'}
-              onClick={() => setView('thumb')}
-            />
-          </HStack>
-        </Stack.Right>
-      </label>
-      <list.Container>
-        <div className={styles.root.results()}>
-          <Explorer
-            virtualized
-            schema={schema}
-            cursor={cursor}
-            type={view}
-            selectable
-            selection={selection}
-            onSelect={handleSelect}
-          />
+      <HStack gap={16} style={{flexGrow: 1}}>
+        <div>
+          <Typo.H3>Create a new entry</Typo.H3>
+          <div>...</div>
+          <Typo.H3>Upload a file</Typo.H3>
+          <div>
+            <MdUploadFile size={30} />
+            Drag your documents or photos here to start uploading
+            <div>or</div>
+            <Button>Browse files</Button>
+          </div>
         </div>
-      </list.Container>
+        <VStack style={{flexGrow: 1, minHeight: 0}}>
+          <label className={styles.root.label()}>
+            <MdSearch size={15} className={styles.root.label.icon()} />
+            <input
+              autoFocus
+              placeholder="Search"
+              value={search}
+              onChange={event => setSearch(event.target.value)}
+              className={styles.root.label.input()}
+              {...list.focusProps}
+            />
+            <Stack.Right>
+              <HStack gap={16}>
+                <IconButton
+                  icon={MdOutlineList}
+                  active={view === 'row'}
+                  onClick={() => setView('row')}
+                />
+                <IconButton
+                  icon={MdOutlineGridView}
+                  active={view === 'thumb'}
+                  onClick={() => setView('thumb')}
+                />
+              </HStack>
+            </Stack.Right>
+          </label>
+          <list.Container>
+            <div className={styles.root.results()}>
+              <Explorer
+                virtualized
+                schema={schema}
+                cursor={cursor}
+                type={view}
+                selectable
+                selection={selection}
+                onSelect={handleSelect}
+              />
+            </div>
+          </list.Container>
+        </VStack>
+      </HStack>
       <HStack as="footer">
         <Stack.Right>
           <Button size="large" onClick={handleConfirm}>

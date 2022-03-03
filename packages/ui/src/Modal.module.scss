@@ -6,6 +6,7 @@
   bottom: 0;
   z-index: 5;
   display: none;
+  padding: 30px;
 
   &.is-open {
     display: flex;
@@ -27,12 +28,12 @@
 
   &-inner {
     position: relative;
-    margin: 50px auto;
+    margin: 20px auto;
     //box-shadow: 0 10px 150px 20px var(--shadow);
     padding: 45px;
     background: var(--inner);
     border-radius: 16px;
-    max-width: 768px;
+    max-width: 1024px;
     width: 100%;
     box-shadow: 0 2px 110px 10px var(--shadow);
     display: flex;
