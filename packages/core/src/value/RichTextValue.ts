@@ -149,22 +149,35 @@ export class RichTextValue<T>
     if (!value) return {type: 'doc', blocks: {}, content: []}
     const doc: Y.XmlFragment = value.get('$doc')
     const types = this.values
+    const content = doc?.toArray()?.map(serialize)?.flat() || []
+    const usedBlocks = new Set(
+      types
+        ? content.flatMap(node => {
+            const type = node.type
+            if (type === 'text') return []
+            if (type in types && 'attrs' in node) return [node.attrs!.id]
+            return []
+          })
+        : []
+    )
     const blocks = types
       ? Object.fromEntries(
           Array.from(value.entries())
-            // Todo: filter out unused blocks
             .filter(([key, item]) => {
               return key !== '$doc' && types[item.get('type')]
             })
             .map(([key, item]) => {
               return [key, types[item.get('type')].fromY(item)]
             })
+            .filter(([key, item]) => {
+              return usedBlocks.has(key)
+            })
         )
       : undefined
     return {
       type: 'doc',
-      blocks: blocks,
-      content: doc?.toArray()?.map(serialize)?.flat() || []
+      blocks,
+      content
     }
   }
   watch(parent: Y.Map<any>, key: string) {
