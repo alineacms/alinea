@@ -106,7 +106,7 @@ export function SearchBox() {
               schema={schema}
               cursor={cursor}
               type={explorerView}
-              onSelect={entry =>
+              toggleSelect={entry =>
                 history.push(nav.entry(entry.workspace, entry.root, entry.id))
               }
               max={25}

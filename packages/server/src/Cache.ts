@@ -145,7 +145,12 @@ export namespace Cache {
     )
   }
 
-  function computeEntry(store: Store, config: Config | Schema, entry: Entry) {
+  function computeEntry(
+    store: Store,
+    config: Config | Schema,
+    entry: Entry,
+    status: EntryStatus
+  ) {
     const type =
       config instanceof Config
         ? config.type(entry.workspace, entry.type)
@@ -166,7 +171,7 @@ export namespace Cache {
       parent: parents[parents.length - 1],
       parents: parents,
       $isContainer: type!.options.isContainer,
-      $status: EntryStatus.Draft
+      $status: status
     }
   }
 
@@ -183,7 +188,7 @@ export namespace Cache {
       if (existing) docFromEntry(config, existing, doc)
       Y.applyUpdate(doc, update)
       const data = entryFromDoc(config, doc)
-      const entry = computeEntry(store, config, data)
+      const entry = computeEntry(store, config, data, EntryStatus.Draft)
       changed.push(id)
       if (existing) store.update(condition, entry)
       else store.insert(Entry, entry)
@@ -199,7 +204,7 @@ export namespace Cache {
   ) {
     return store.transaction(() => {
       for (const data of entries) {
-        const entry = computeEntry(store, config, data)
+        const entry = computeEntry(store, config, data, EntryStatus.Published)
         const condition = Entry.where(Entry.id.is(entry.id))
         const existing = store.first(condition)
         if (existing) store.update(condition, entry)

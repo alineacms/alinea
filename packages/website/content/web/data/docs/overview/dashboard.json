@@ -15,7 +15,14 @@
         "blocks": {
           "25pEP3J8GJVZJxJ97zVRb5LTZz7": {
             "type": "ImageBlock",
-            "image": []
+            "image": [
+              {
+                "id": "263qHPVXswUIyfRF00AQq5QHmIL",
+                "index": "a0",
+                "type": "entry",
+                "entry": "263qHO7caJyUu7iLZpvQ8tCVpJs"
+              }
+            ]
           },
           "25muw9QrxPIDaaJuTnryBWNJWMp": {
             "type": "ImageBlock",
@@ -205,9 +212,6 @@
             }
           },
           {
-            "type": "paragraph"
-          },
-          {
             "type": "paragraph",
             "content": [
               {
@@ -254,7 +258,7 @@
             "content": [
               {
                 "type": "text",
-                "text": "…"
+                "text": "… "
               }
             ]
           }

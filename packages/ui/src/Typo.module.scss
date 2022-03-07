@@ -77,8 +77,8 @@
 
 .link {
   text-decoration: underline;
-  text-decoration-color: rgba(var(--negative), 0.2);
-  text-underline-offset: 1.5px;
+  text-decoration-color: rgba(var(--negative), 0.4);
+  text-underline-offset: 0.3em;
   @extend .hyphenate;
   cursor: pointer;
 

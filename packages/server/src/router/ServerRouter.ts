@@ -80,7 +80,7 @@ export function createServerRouter(hub: Server) {
   router.post(prefix + Hub.routes.upload(), async (req, res) => {
     const bb = busboy({headers: req.headers})
     let workspace: string | undefined, root: string | undefined
-    const {path, buffer, preview, color} = await new Promise<
+    const {path, buffer, preview, averageColor, blurHash} = await new Promise<
       Partial<Hub.Upload>
     >(resolve => {
       const res: Partial<Hub.Upload> = {}
@@ -99,7 +99,8 @@ export function createServerRouter(hub: Server) {
         if (name === 'root') root = value
         if (name === 'path') res.path = value
         if (name === 'preview') res.preview = value
-        if (name === 'color') res.color = value
+        if (name === 'averageColor') res.averageColor = value
+        if (name === 'blurHash') res.blurHash = value
       })
       bb.on('close', () => resolve(res))
       req.pipe(bb)
@@ -113,7 +114,8 @@ export function createServerRouter(hub: Server) {
       buffer,
       path,
       preview,
-      color
+      averageColor,
+      blurHash
     })
     res.endTime('upload')
     return respond(res, result)

@@ -7,24 +7,26 @@ import {
   fromModule,
   HStack,
   IconButton,
+  Loader,
+  px,
   Stack,
   Typo,
   VStack
 } from '@alinea/ui'
 import {Modal} from '@alinea/ui/Modal'
-import {useCallback, useMemo, useState} from 'react'
+import {Suspense, useCallback, useMemo, useState} from 'react'
 import {
   MdArrowBack,
   MdOutlineGridView,
   MdOutlineList,
-  MdSearch,
-  MdUploadFile
+  MdSearch
 } from 'react-icons/md'
 import {useFocusList} from '../hook/UseFocusList'
 import {ReferencePickerOptions} from '../hook/UseReferencePicker'
 import {useRoot} from '../hook/UseRoot'
 import {useWorkspace} from '../hook/UseWorkspace'
 import {Explorer} from './explorer/Explorer'
+import {FileUploader} from './media/FileUploader'
 import css from './ReferencePicker.module.scss'
 
 const styles = fromModule(css)
@@ -45,10 +47,13 @@ type QueryParams = {
 }
 
 function query({workspace, search, root}: QueryParams) {
+  const orderBy = search
+    ? [Entry.root.is(root).desc(), Search.get('rank').asc()]
+    : [Entry.id.desc()]
   return Search.leftJoin(Entry, Search.id.is(Entry.id))
     .where(search ? Search.title.match(searchTerms(search)) : true)
     .where(Entry.workspace.is(workspace))
-    .orderBy(Entry.root.is(root).desc(), Search.get('rank').asc())
+    .orderBy(...orderBy)
 }
 
 export type ReferencePickerProps = {
@@ -109,70 +114,66 @@ export function ReferencePicker({
   }
   return (
     <Modal open onClose={onCancel}>
-      <HStack center gap={18} className={styles.root.header()}>
-        <IconButton icon={MdArrowBack} onClick={onCancel} />
-        <Typo.H1 flat>Select a reference</Typo.H1>
-      </HStack>
-      <HStack gap={16} style={{flexGrow: 1}}>
-        <div>
-          <Typo.H3>Create a new entry</Typo.H3>
-          <div>...</div>
-          <Typo.H3>Upload a file</Typo.H3>
-          <div>
-            <MdUploadFile size={30} />
-            Drag your documents or photos here to start uploading
-            <div>or</div>
-            <Button>Browse files</Button>
-          </div>
-        </div>
-        <VStack style={{flexGrow: 1, minHeight: 0}}>
-          <label className={styles.root.label()}>
-            <MdSearch size={15} className={styles.root.label.icon()} />
-            <input
-              autoFocus
-              placeholder="Search"
-              value={search}
-              onChange={event => setSearch(event.target.value)}
-              className={styles.root.label.input()}
-              {...list.focusProps}
-            />
-            <Stack.Right>
-              <HStack gap={16}>
-                <IconButton
-                  icon={MdOutlineList}
-                  active={view === 'row'}
-                  onClick={() => setView('row')}
-                />
-                <IconButton
-                  icon={MdOutlineGridView}
-                  active={view === 'thumb'}
-                  onClick={() => setView('thumb')}
-                />
-              </HStack>
-            </Stack.Right>
-          </label>
-          <list.Container>
-            <div className={styles.root.results()}>
-              <Explorer
-                virtualized
-                schema={schema}
-                cursor={cursor}
-                type={view}
-                selectable
-                selection={selection}
-                onSelect={handleSelect}
+      <Suspense fallback={<Loader absolute />}>
+        <HStack center gap={18} className={styles.root.header()}>
+          <IconButton icon={MdArrowBack} onClick={onCancel} />
+          <Typo.H1 flat>Select a reference</Typo.H1>
+        </HStack>
+
+        <label className={styles.root.label()}>
+          <MdSearch size={15} className={styles.root.label.icon()} />
+          <input
+            autoFocus
+            placeholder="Search"
+            value={search}
+            onChange={event => setSearch(event.target.value)}
+            className={styles.root.label.input()}
+            {...list.focusProps}
+          />
+          <Stack.Right>
+            <HStack gap={16}>
+              <IconButton
+                icon={MdOutlineList}
+                active={view === 'row'}
+                onClick={() => setView('row')}
               />
-            </div>
-          </list.Container>
-        </VStack>
-      </HStack>
-      <HStack as="footer">
-        <Stack.Right>
-          <Button size="large" onClick={handleConfirm}>
-            Confirm
-          </Button>
-        </Stack.Right>
-      </HStack>
+              <IconButton
+                icon={MdOutlineGridView}
+                active={view === 'thumb'}
+                onClick={() => setView('thumb')}
+              />
+            </HStack>
+          </Stack.Right>
+        </label>
+        <HStack
+          gap={16}
+          style={{flexGrow: 1, padding: `${px(16)} 0`, minHeight: 0}}
+        >
+          {!search && <FileUploader max={max} toggleSelect={handleSelect} />}
+          <VStack style={{flexGrow: 1, minHeight: 0}}>
+            <list.Container>
+              <div className={styles.root.results()}>
+                <Explorer
+                  virtualized
+                  schema={schema}
+                  cursor={cursor}
+                  type={view}
+                  selectable
+                  selection={selection}
+                  toggleSelect={handleSelect}
+                />
+              </div>
+            </list.Container>
+          </VStack>
+        </HStack>
+        <HStack as="footer">
+          <Stack.Right>
+            <Button size="large" onClick={handleConfirm}>
+              Confirm
+            </Button>
+          </Stack.Right>
+        </HStack>
+      </Suspense>
     </Modal>
   )
 }

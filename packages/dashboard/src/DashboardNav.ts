@@ -4,7 +4,7 @@ export const nav = {
   },
   entry(workspace: string, root?: string, id?: string) {
     if (!id && !root) return `/${workspace}`
-    if (!root) return `/${workspace}/${root}`
+    if (!id) return `/${workspace}/${root}`
     return `/${workspace}/${root}/${id}`
   },
   create(workspace: string, root: string, parent: string) {

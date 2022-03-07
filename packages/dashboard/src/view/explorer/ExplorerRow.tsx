@@ -1,70 +1,13 @@
 import {Entry, Outcome, Schema, View} from '@alinea/core'
-import {useExplorer} from '@alinea/dashboard/hook/UseExplorer'
-import {useFocusListItem} from '@alinea/dashboard/hook/UseFocusList'
 import {Cursor} from '@alinea/store'
 import {fromModule} from '@alinea/ui'
 import {memo} from 'react'
-import {MdCheckBox, MdCheckBoxOutlineBlank} from 'react-icons/md'
 import {useQuery} from 'react-query'
-import {Link} from 'react-router-dom'
-import {useDashboard} from '../../hook/UseDashboard'
 import {useSession} from '../../hook/UseSession'
+import {ExplorerItem} from './ExplorerItem'
 import css from './ExplorerRow.module.scss'
 
 const styles = fromModule(css)
-
-type ExplorerRowItemProps = {
-  schema: Schema
-  entry: Entry.Minimal
-  summaryView: 'summaryRow' | 'summaryThumb'
-  defaultView: View<Entry, any>
-}
-
-function ExplorerRowItem({
-  schema,
-  entry,
-  summaryView,
-  defaultView
-}: ExplorerRowItemProps) {
-  const {nav} = useDashboard()
-  const explorer = useExplorer()
-  const itemRef = useFocusListItem(() => explorer?.onSelect(entry))
-  const View: any = schema.type(entry.type)?.options[summaryView] || defaultView
-  const Tag: any = explorer?.selectable ? 'label' : Link
-  const props = explorer?.selectable
-    ? {}
-    : {to: nav.entry(entry.workspace, entry.root, entry.id)}
-  const isSelected = Boolean(
-    explorer?.selection.find(v => v.type === 'entry' && v.entry === entry.id)
-  )
-  return (
-    <Tag
-      key={entry.id}
-      className={styles.item(summaryView === 'summaryRow' ? 'row' : 'thumb', {
-        selected: isSelected
-      })}
-      {...props}
-      ref={itemRef}
-    >
-      <div className={styles.item.inner()}>
-        {explorer?.selectable && (
-          <>
-            <input
-              type="checkbox"
-              checked={isSelected}
-              onChange={() => explorer?.onSelect(entry)}
-              className={styles.item.checkbox()}
-            />
-            <div className={styles.item.selection()}>
-              {isSelected ? <MdCheckBox /> : <MdCheckBoxOutlineBlank />}
-            </div>
-          </>
-        )}
-        <View {...entry} />
-      </div>
-    </Tag>
-  )
-}
 
 export type ExplorerRowProps = {
   schema: Schema
@@ -109,7 +52,7 @@ export const ExplorerRow = memo(function ExplorerRow({
       >
         {entries?.map(entry => {
           return (
-            <ExplorerRowItem
+            <ExplorerItem
               key={entry.id}
               schema={schema}
               entry={entry}

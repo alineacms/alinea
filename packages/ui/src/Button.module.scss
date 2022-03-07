@@ -29,19 +29,18 @@
     min-height: 22px;
     font-size: 13px;
     padding: 2px 8px;
-    border-radius: 4px;
+    border-radius: 10px;
   }
 
   &.is-large {
     min-height: 26px;
     font-size: 14px;
     padding: 6px 13px;
-    border-radius: 12px;
+    border-radius: 16px;
   }
 
   &:hover {
-    &:after {
-      opacity: 0.05;
-    }
+    background: var(--fields-focus);
+    color: var(--focus-foreground);
   }
 }

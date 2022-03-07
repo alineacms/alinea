@@ -18,7 +18,7 @@ import css from './MediaExplorer.module.scss'
 
 const styles = fromModule(css)
 
-const resizeable = new Set(['jpg', 'jpeg', 'png', 'gif', 'webp'])
+const resizeable = new Set(Media.imageExtensions)
 
 function blobUrl(blob: Blob): Promise<string> {
   return new Promise((resolve, _) => {
@@ -38,17 +38,27 @@ async function uploadFile(
   let preview: string | undefined, color: string | undefined
   // If it's a known image file, let's try to create a thumbnail
   const extension = path.split('.').pop()
-  const isImage = resizeable.has(extension!)
+  const isImage = resizeable.has('.' + extension!)
   if (isImage) {
     const {default: reduce} = await import('image-blob-reduce')
-    const blob = await reduce().toBlob(file, {max: 160})
+    const blob = await reduce().toBlob(file, {
+      max: 160,
+      unsharpAmount: 160,
+      unsharpRadius: 0.6,
+      unsharpThreshold: 1
+    })
     preview = await blobUrl(blob)
     const fac = new FastAverageColor()
     const res = await fac.getColorAsync(preview)
     color = res.hex
   }
   const buffer = await file.arrayBuffer()
-  return hub.uploadFile(workspace, root, {path, buffer, preview, color})
+  return hub.uploadFile(workspace, root, {
+    path,
+    buffer,
+    preview,
+    averageColor: color
+  })
 }
 
 const scrollOffsets = new Map<string, number>()

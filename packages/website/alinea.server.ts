@@ -10,7 +10,7 @@ import {createTransport} from 'nodemailer'
 
 dotenv.config({path: findConfig('.env')!})
 
-export const drafts = new RedisDrafts({
+const drafts = new RedisDrafts({
   client: new Redis(process.env.REDIS_DSN)
 })
 

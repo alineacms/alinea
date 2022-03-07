@@ -22,6 +22,7 @@ export namespace Type {
     icon?: ComponentType
 
     // Todo: there's a bunch of views here how should be approach naming?
+    // Todo: can be add a pageView here?
     view?: ComponentType
     summaryRow?: View<any> // View<T>
     summaryThumb?: View<any> // View<T>

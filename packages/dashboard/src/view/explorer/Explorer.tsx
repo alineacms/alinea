@@ -26,7 +26,7 @@ export type ExplorerProps = {
   max?: number
   selectable?: boolean
   selection?: Array<Reference>
-  onSelect?: (id: Entry.Minimal) => void
+  toggleSelect?: (id: Entry.Minimal) => void
 }
 
 export function Explorer({
@@ -37,7 +37,7 @@ export function Explorer({
   max,
   selectable = false,
   selection = [],
-  onSelect = () => {}
+  toggleSelect = () => {}
 }: ExplorerProps) {
   const {hub} = useSession()
   const {data, isLoading} = useQuery(
@@ -66,13 +66,13 @@ export function Explorer({
   )
   const containerRef = useRef(null)
   const [containerWidth, containerHeight] = useSize(containerRef)
-  const perRow = data?.type === 'thumb' ? Math.round(containerWidth / 200) : 1
+  const perRow = data?.type === 'thumb' ? Math.round(containerWidth / 240) : 1
   const height = data?.type === 'thumb' ? 200 : 50
   const batchSize = data?.type === 'thumb' ? perRow * 10 : 50
   const showList =
     data && containerWidth > 0 && (!virtualized || containerHeight > 0)
   return (
-    <ExplorerProvider value={{selectable, selection, onSelect}}>
+    <ExplorerProvider value={{selectable, selection, onSelect: toggleSelect}}>
       <div ref={containerRef} className={styles.root()}>
         {showList ? (
           data.total > 0 ? (
@@ -87,7 +87,7 @@ export function Explorer({
                 renderItem={({index, style}) => {
                   const from = index * perRow
                   return (
-                    <div key={index} style={{...style, height}}>
+                    <div key={index} style={{...style, height, flexShrink: 0}}>
                       <ExplorerRow
                         schema={schema}
                         cursor={data.cursor}
@@ -107,7 +107,7 @@ export function Explorer({
                 (_, index) => {
                   const from = index * perRow
                   return (
-                    <div key={index} style={{height}}>
+                    <div key={index} style={{height, flexShrink: 0}}>
                       <ExplorerRow
                         schema={schema}
                         cursor={data.cursor}

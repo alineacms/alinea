@@ -28,7 +28,8 @@ export namespace Hub {
     path: string
     buffer: ArrayBuffer
     preview?: string
-    color?: string
+    averageColor?: string
+    blurHash?: string
   }
   export type Stat = {
     size?: number

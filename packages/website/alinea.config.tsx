@@ -1,6 +1,12 @@
-import {createConfig, schema, workspace} from '@alinea/core'
-import {BrowserPreview, MediaSchema} from '@alinea/dashboard'
-import {MdInsertDriveFile, MdOutlinePermMedia} from 'react-icons/md/index.js'
+import {createConfig, schema, type, workspace} from '@alinea/core'
+import {MediaSchema} from '@alinea/dashboard/schema/MediaSchema.js'
+import {BrowserPreview} from '@alinea/dashboard/view/preview/BrowserPreview.js'
+import {text} from '@alinea/input.text'
+import {
+  MdBookmarkBorder,
+  MdInsertDriveFile,
+  MdOutlinePermMedia
+} from 'react-icons/md/index.js'
 import {DocPageSchema} from './src/view/DocPage.schema'
 import {DocsPageSchema} from './src/view/DocsPage.schema'
 import {HomePageSchema} from './src/view/HomePage.schema'
@@ -10,6 +16,15 @@ const webSchema = schema({
   Home: HomePageSchema,
   Docs: DocsPageSchema,
   Doc: DocPageSchema
+})
+
+const storiesSchema = schema({
+  StoryDir: type('StoryDir', {
+    title: text('Title')
+  }).configure({isContainer: true, contains: ['StoryDir', 'Story']}),
+  Story: type('Story', {
+    title: text('Title')
+  })
 })
 
 export const config = createConfig({
@@ -42,16 +57,49 @@ export const config = createConfig({
         )
       }
     }),
+    // The plan here is: if we can pass a custom Data.Source, we can easily
+    // generate a story and type for each *.story.tsx for example. However
+    // we want this configuration to only be available server side which
+    // complicates this a lot. We can either
+    // - be declarative instead of importing implementation
+    //    (source: {dir: ...}, source: {entryPoint: 'generatestories.ts'})
+    // - make sure the Source we use is removed for clients with export maps
+    // - create a separate file to configurate sources
+    // - move source config to alinea.server.ts
+    // - tweak AST to remove source while compiling config.js
+    // So far none of these sound appealing... In a perfect world we'd be able
+    // to use the same principle for fetching data from other external sources.
     stories: workspace('Stories', {
-      schema: webSchema,
+      schema: storiesSchema, //
       contentDir: './content/stories',
       color: '#6E57D0',
       roots: {
-        content: {
-          icon: MdInsertDriveFile,
-          contains: ['Home']
+        data: {
+          icon: MdBookmarkBorder,
+          contains: ['StoryDir', 'Story']
         }
       }
+      /*
+      const stories: Record<string, () => Promise<any>> = {
+        FileUploader: () => import('../dashboard/src/view/media/FileUploader.story')
+      }
+      const storyCache = new Map()
+      preview({entry}) {
+        const story = entry.title as string
+        const importer = stories[story]
+        if (!importer) return null
+        if (!storyCache.has(story)) {
+          storyCache.set(
+            story,
+            lazy(() =>
+              importer().then(m => ({default: m[story] || m[`${story}Story`]}))
+            )
+          )
+        }
+        const Story = storyCache.get(story)
+        return <Story />
+      }
+      */
     })
   }
 })

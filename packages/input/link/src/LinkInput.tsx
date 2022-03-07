@@ -132,8 +132,6 @@ const layoutMeasuringConfig = {
   strategy: LayoutMeasuringStrategy.Always
 }
 
-const imageFormats = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.avif']
-
 function conditionOfType(type: LinkType) {
   switch (type) {
     case 'entry':
@@ -141,11 +139,11 @@ function conditionOfType(type: LinkType) {
     case 'image':
       return Entry.type
         .is(Media.Type.File)
-        .and(Entry.get('extension').isIn(imageFormats))
+        .and(Entry.get('extension').isIn(Media.imageExtensions))
     case 'file':
       return Entry.type
         .is(Media.Type.File)
-        .and(Entry.get('extension').isNotIn(imageFormats))
+        .and(Entry.get('extension').isNotIn(Media.imageExtensions))
     case 'external':
       return Expr.value(true)
   }

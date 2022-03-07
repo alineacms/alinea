@@ -5,6 +5,7 @@ import {SelectInput} from '@alinea/input.select/view'
 import {text} from '@alinea/input.text'
 import {TextInput} from '@alinea/input.text/view'
 import {
+  Button,
   fromModule,
   HStack,
   IconButton,
@@ -176,7 +177,7 @@ export function NewEntry({parentId}: NewEntryProps) {
             <Link to={nav.entry(workspace, parent?.root, parent?.id)}>
               Cancel
             </Link>
-            <button>Create</button>
+            <Button>Create</Button>
           </>
         )}
       </form>

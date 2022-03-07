@@ -44,6 +44,7 @@ export const enum ExprType {
 export type ExprData =
   | {type: ExprType.UnOp; op: UnOp; expr: ExprData}
   | {type: ExprType.BinOp; op: BinOp; a: ExprData; b: ExprData}
+  // Todo: field access should be on a `From`
   | {type: ExprType.Field; path: Array<string>}
   | {type: ExprType.Param; param: ParamData}
   | {type: ExprType.Call; method: string; params: Array<ExprData>}

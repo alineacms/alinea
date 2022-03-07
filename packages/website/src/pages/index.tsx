@@ -2,7 +2,7 @@ import {Page, pages} from '.alinea/web'
 import {Entry} from '@alinea/core'
 import {Pages} from '@alinea/server'
 import {GetStaticPropsContext} from 'next'
-import {drafts} from '../../alinea.server'
+import {server} from '../../alinea.server'
 import {PageView} from '../view/PageView'
 
 async function propsOf(pages: Pages<Page>, page: Page) {
@@ -24,7 +24,7 @@ async function propsOf(pages: Pages<Page>, page: Page) {
 
 export async function getStaticProps(context: GetStaticPropsContext) {
   const from = context.preview
-    ? pages.preview(drafts, context.previewData as string)
+    ? pages.preview(server.drafts, context.previewData as string)
     : pages
   const paths = (context.params?.slug as Array<string>) || []
   const slug = '/' + paths.join('/')

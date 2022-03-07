@@ -1,4 +1,10 @@
-import {Collection} from '@alinea/store'
+import {
+  Collection,
+  Cursor,
+  Functions,
+  SelectionInput,
+  Store
+} from '@alinea/store'
 import {Label} from './Label'
 
 export type Id<T> = string & {__t: T}
@@ -31,7 +37,10 @@ export namespace Entry {
     draft: string | undefined
     previewToken: string
   }
-  export type Minimal = Pick<Entry, 'id' | 'type' | 'workspace' | 'root'>
+  export type Minimal = Pick<
+    Entry,
+    'id' | 'type' | 'workspace' | 'root' | 'url'
+  >
   export type Summary = Pick<
     Entry,
     | 'id'
@@ -60,3 +69,13 @@ export namespace Entry {
 }
 
 export const Entry = new Collection<Entry>('Entry')
+
+export function selectParents<S extends SelectionInput>(
+  Entry: Collection<Entry>,
+  selection: (Parent: Collection<Entry>) => S
+): Cursor<Store.TypeOf<S>> {
+  const Parent = Entry.as('Parent')
+  return Parent.where(Parent.id.isIn(Entry.parents))
+    .orderBy(Functions.arrayLength(Parent.parents).asc())
+    .select(selection(Parent))
+}

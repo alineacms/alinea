@@ -22,6 +22,7 @@ export namespace Media {
     hash: string
     preview?: string
     averageColor?: string
+    blurHash?: string
   }
 
   export const File = new Collection<File>('Entry', {
@@ -40,6 +41,23 @@ export namespace Media {
       | 'size'
       | 'preview'
       | 'averageColor'
+      | 'blurHash'
     >
+  }
+
+  export const imageExtensions = [
+    '.jpg',
+    '.jpeg',
+    '.png',
+    '.gif',
+    '.bmp',
+    '.webp',
+    '.avif',
+    '.heic'
+  ]
+
+  export function isImage(path: string) {
+    const extension = path.split('.').pop()
+    return extension && imageExtensions.includes(`.${extension}`)
   }
 }

@@ -6,12 +6,19 @@ const styles = fromModule(css)
 
 let unique = 0
 
-export type LogoShapeProps = PropsWithChildren<{}>
+export type LogoShapeProps = PropsWithChildren<{
+  foreground?: string
+  background?: string
+}>
 
-export function Logo({children}: LogoShapeProps) {
+export function Logo({
+  children,
+  foreground = `var(--accent-foreground)`,
+  background = `var(--accent)`
+}: LogoShapeProps) {
   const id = useMemo(() => `@alinea/logo-${unique++}`, [])
   return (
-    <div className={styles.root()}>
+    <div className={styles.root()} style={{color: foreground}}>
       <svg
         className={styles.root.bg()}
         viewBox="0 0 36 36"
@@ -28,13 +35,10 @@ export function Logo({children}: LogoShapeProps) {
             y2="0%"
             gradientTransform="rotate(65)"
           >
-            <stop
-              offset="0%"
-              style={{stopColor: 'var(--accent)', stopOpacity: 1}}
-            />
+            <stop offset="0%" style={{stopColor: background, stopOpacity: 1}} />
             <stop
               offset="100%"
-              style={{stopColor: 'var(--accent)', stopOpacity: 1}}
+              style={{stopColor: background, stopOpacity: 1}}
             />
           </linearGradient>
         </defs>

@@ -64,12 +64,13 @@ export class Client<T extends Workspaces> implements Hub<T> {
     file: Hub.Upload
   ): Future<Media.File> {
     const form = new FormData()
-    if (file.preview) form.append('preview', file.preview)
-    if (file.color) form.append('color', file.color)
-    form.append('buffer', new Blob([file.buffer]))
     form.append('workspace', workspace as string)
     form.append('root', root as string)
     form.append('path', file.path)
+    if (file.averageColor) form.append('averageColor', file.averageColor)
+    if (file.blurHash) form.append('blurHash', file.blurHash)
+    form.append('buffer', new Blob([file.buffer]))
+    if (file.preview) form.append('preview', file.preview)
     return this.fetch(Hub.routes.upload(), {
       method: 'POST',
       body: form

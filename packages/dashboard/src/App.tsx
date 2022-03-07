@@ -59,7 +59,7 @@ function AppAuthenticated() {
                 position: 'relative'
               }}
             >
-              <ReferencePickerProvider>
+              <ReferencePickerProvider key={workspace}>
                 <Sidebar.Root>
                   <Sidebar.Menu>
                     {Object.entries(roots).map(([key, root], i) => {
@@ -130,7 +130,12 @@ function EntryRoute({id}: EntryRouteProps) {
         minWidth={200}
       >
         <SearchBox />
-        <ContentTree workspace={workspace} root={root} select={selected} />
+        <ContentTree
+          key={workspace}
+          workspace={workspace}
+          root={root}
+          select={selected}
+        />
       </Pane>
       <div style={{width: '100%', height: '100%'}}>
         <Suspense fallback={<Loader absolute />}>

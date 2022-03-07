@@ -1,19 +1,32 @@
 .root {
-  border-bottom: 1px solid var(--outline);
+  position: relative;
+  background: var(--fields);
+  border-radius: 8px;
+
+  &:focus-within {
+    background: var(--selected);
+    outline: 2px solid var(--fields-focus);
+  }
 
   &-input {
+    appearance: none;
     background: transparent;
+    display: block;
     border: none;
     color: inherit;
     font: inherit;
     width: 100%;
-    padding: 4px 0;
-    resize: none;
+    padding: 9px 16px;
+    line-height: 1.5;
+    outline: none;
+    padding-right: 40px;
+  }
 
-    &:focus {
-      border-radius: 4px;
-      outline: none;
-      box-shadow: rgb(222 236 238 / 40%) 0 0 0 0.2em;
-    }
+  &-icon {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
   }
 }

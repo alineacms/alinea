@@ -65,10 +65,14 @@ export class PreviewStore {
     return this.syncUpdates()
   }
 
-  async deleteUpdate(id: string) {
-    this.updates.delete(id)
+  async deleteUpdates(ids: Array<string>) {
+    for (const id of ids) this.updates.delete(id)
     this.store = undefined
     return this.syncUpdates()
+  }
+
+  async deleteUpdate(id: string) {
+    return this.deleteUpdates([id])
   }
 
   private async syncUpdates() {

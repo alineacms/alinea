@@ -16,6 +16,7 @@ export type SelectionInput =
   | Expr<any>
   | Selection<any>
   | Record<string, Expr<any> | Selection<any> | Cursor<any>>
+// Todo: | ((collection: Collection<_>) => SelectionInput)
 
 export type SelectionData =
   | {type: SelectionType.Expr; expr: ExprData}

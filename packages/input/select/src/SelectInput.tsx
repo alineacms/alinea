@@ -1,6 +1,6 @@
 import {InputLabel, InputState, useInput} from '@alinea/editor'
-import {fromModule} from '@alinea/ui'
-import {MdArrowDropDownCircle} from 'react-icons/md'
+import {fromModule, HStack} from '@alinea/ui'
+import {MdArrowDropDownCircle, MdKeyboardArrowDown} from 'react-icons/md'
 import {SelectField} from './SelectField'
 import css from './SelectInput.module.scss'
 
@@ -16,22 +16,32 @@ export function SelectInput({state, field}: SelectInputProps) {
   const {optional, help} = field.options
   const {items} = field
   return (
-    <div className={styles.root()}>
+    <div>
       <InputLabel
+        asLabel
         label={field.label}
         help={help}
         optional={optional}
         icon={MdArrowDropDownCircle}
       >
-        <select value={value} onChange={e => setValue(e.target.value)}>
-          {Object.entries(items).map(([key, label]) => {
-            return (
-              <option key={key} value={key}>
-                {label}
-              </option>
-            )
-          })}
-        </select>
+        <HStack center className={styles.root()}>
+          <select
+            value={value}
+            onChange={e => setValue(e.target.value)}
+            className={styles.root.input()}
+          >
+            {Object.entries(items).map(([key, label]) => {
+              return (
+                <option key={key} value={key}>
+                  {label}
+                </option>
+              )
+            })}
+          </select>
+          <div className={styles.root.icon()}>
+            <MdKeyboardArrowDown size={18} />
+          </div>
+        </HStack>
       </InputLabel>
     </div>
   )

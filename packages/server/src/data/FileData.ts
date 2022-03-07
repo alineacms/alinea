@@ -3,6 +3,7 @@ import {
   createError,
   createId,
   Entry,
+  EntryStatus,
   outcome,
   slugify
 } from '@alinea/core'
@@ -78,7 +79,8 @@ export class FileData implements Data.Source, Data.Target, Data.Media {
                 index: entry.index || entry.id,
                 parent: parents[parents.length - 1],
                 parents,
-                $isContainer: type.options.isContainer
+                $isContainer: type.options.isContainer,
+                $status: EntryStatus.Published
               }
               yield res
             }

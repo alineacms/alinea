@@ -1,5 +1,5 @@
-import {Media, view} from '@alinea/core'
-import {Functions, Store} from '@alinea/store'
+import {Media, selectParents, view} from '@alinea/core'
+import {Store} from '@alinea/store'
 import {Collection} from '@alinea/store/Collection'
 import {
   Chip,
@@ -17,7 +17,6 @@ import css from './FileSummary.module.scss'
 const styles = fromModule(css)
 
 function fileSummarySelect(File: Collection<Media.File>) {
-  const Parent = File.as('Parent')
   return {
     id: File.id,
     type: File.type,
@@ -28,16 +27,11 @@ function fileSummarySelect(File: Collection<Media.File>) {
     size: File.size,
     preview: File.preview,
     averageColor: File.averageColor,
-    parents: Parent.where(Parent.id.isIn(File.parents))
-      .select({title: Parent.title})
-      .orderBy(Functions.arrayLength(Parent.parents).asc())
+    parents: selectParents(File, Parent => ({title: Parent.title}))
   }
 }
 
-type SummaryProps = Store.TypeOf<ReturnType<typeof fileSummarySelect>> & {
-  selected: boolean
-  onSelect: () => void
-}
+type SummaryProps = Store.TypeOf<ReturnType<typeof fileSummarySelect>>
 
 export const FileSummaryRow = view(
   fileSummarySelect,

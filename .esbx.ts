@@ -7,12 +7,14 @@ import {SassPlugin} from '@esbx/sass'
 import {StaticPlugin} from '@esbx/static'
 import {findNodeModules} from '@esbx/util'
 import {BuildTask, getManifest, getWorkspaces, TestTask} from '@esbx/workspaces'
+import autoprefixer from 'autoprefixer'
 import {execSync} from 'child_process'
 import crypto from 'crypto'
 import type {BuildOptions, Plugin} from 'esbuild'
 import {build} from 'esbuild'
 import fs from 'fs-extra'
 import path from 'path'
+import pxToRem from 'postcss-pxtorem'
 import {createId} from './packages/core/src/Id'
 
 const FixReactIconsPlugin: Plugin = {
@@ -84,6 +86,13 @@ const buildOptions: BuildOptions = {
     StaticPlugin,
     ReactPlugin,
     SassPlugin.configure({
+      postCssPlugins: [
+        pxToRem({
+          propList: ['*'],
+          minPixelValue: 2
+        }),
+        autoprefixer()
+      ],
       moduleOptions: {
         localsConvention: 'dashes',
         generateScopedName: 'alinea__[name]-[local]'

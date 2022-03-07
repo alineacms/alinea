@@ -1,13 +1,141 @@
-import {Button} from '@alinea/ui'
+import {Entry, selectParents} from '@alinea/core/Entry'
+import {Media} from '@alinea/core/Media'
+import {Outcome} from '@alinea/core/Outcome'
+import {useUploads} from '@alinea/dashboard/hook/UseUploads'
+import {InputState} from '@alinea/editor/InputState'
+import {select} from '@alinea/input.select'
+import {SelectInput} from '@alinea/input.select/view'
+import {fromModule, Typo, VStack} from '@alinea/ui'
+import {ChangeEvent, DragEvent, useRef, useState} from 'react'
 import {MdUploadFile} from 'react-icons/md'
+import {useQuery} from 'react-query'
+import {useSession} from '../../hook/UseSession'
+import {useWorkspace} from '../../hook/UseWorkspace'
+import {FileSummaryRow} from './FileSummary'
+import css from './FileUploader.module.scss'
 
-export function FileUploader() {
+const styles = fromModule(css)
+
+const {Library} = Media
+
+type FileUploaderProps = {
+  max?: number
+  toggleSelect: (id: Entry.Minimal) => void
+}
+
+export function FileUploader({max, toggleSelect}: FileUploaderProps) {
+  const {hub} = useSession()
+  const {workspace} = useWorkspace()
+  const {upload, uploads} = useUploads(toggleSelect)
+  const dropZone = useRef<HTMLDivElement>(null)
+  const [isOver, setIsOver] = useState(false)
+  const {data: libraries = []} = useQuery(
+    ['media-libraries', workspace],
+    () => {
+      return hub
+        .query(
+          Library.where(Library.workspace.is(workspace)).select({
+            id: Library.id,
+            title: Library.title,
+            workspace: Library.workspace,
+            root: Library.root,
+            url: Library.url,
+            parents: selectParents(Library, Parent => ({
+              title: Parent.title
+            }))
+          })
+        )
+        .then(Outcome.unpack)
+    }
+  )
+  const [uploadTo = libraries?.[0]?.id, setUploadTo] = useState<
+    string | undefined
+  >()
+  function handleDragEnter(event: DragEvent<HTMLDivElement>) {
+    setIsOver(true)
+  }
+  function handleDragLeave(event: DragEvent<HTMLDivElement>) {
+    if (event.target !== dropZone.current) return
+    if (dropZone.current!.contains(event.relatedTarget as HTMLElement)) return
+    setIsOver(false)
+  }
+  function handleDragOver(event: DragEvent<HTMLDivElement>) {
+    event.preventDefault()
+  }
+  function handleDrop(event: DragEvent<HTMLDivElement>) {
+    event.preventDefault()
+    const files = event.dataTransfer.files
+    setIsOver(false)
+    uploadFiles(files)
+  }
+  function handleFileInput(event: ChangeEvent<HTMLInputElement>) {
+    const {files} = event.target
+    if (files) uploadFiles(files)
+  }
+  function uploadFiles(files: FileList) {
+    const library = libraries?.find(l => l.id === uploadTo)
+    if (library) upload(files, library)
+  }
   return (
-    <div>
-      <MdUploadFile size={30} />
-      Drag your documents or photos here to start uploading
-      <div>or</div>
-      <Button>Browse files</Button>
-    </div>
+    <VStack
+      ref={dropZone}
+      className={styles.root({over: isOver})}
+      onDragEnter={handleDragEnter}
+      onDragLeave={handleDragLeave}
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
+    >
+      <div className={styles.root.uploads()}>
+        {uploads.map(upload => {
+          const library = libraries?.find(l => l.id === upload.to.id)
+          // Todo: show upload progress
+          return (
+            <FileSummaryRow
+              key={upload.id}
+              id={upload.id}
+              type={Media.Type.File}
+              title={upload.file.name}
+              extension={upload.file.name.split('.').pop()!}
+              size={upload.file.size}
+              workspace={upload.to.workspace}
+              root={upload.to.root}
+              preview={upload.preview}
+              averageColor={upload.averageColor}
+              parents={library!.parents.concat(library!)}
+            />
+          )
+        })}
+      </div>
+      <VStack center className={styles.root.desc()}>
+        <MdUploadFile size={30} />
+        <Typo.P as="label" className={styles.root.desc.label()}>
+          <input
+            type="file"
+            className={styles.root.desc.label.input()}
+            multiple={max !== 1}
+            onChange={handleFileInput}
+          />
+          <Typo.Link className={styles.root.desc.label.link()}>
+            Browse files
+          </Typo.Link>{' '}
+          or drag and drop to start uploading
+        </Typo.P>
+      </VStack>
+      <footer className={styles.root.footer()}>
+        <SelectInput
+          state={
+            new InputState.StatePair<string | undefined>(uploadTo, setUploadTo)
+          }
+          field={select(
+            'Upload to',
+            Object.fromEntries(
+              libraries!.map(library => {
+                return [library.id, library.title]
+              })
+            )
+          )}
+        />
+      </footer>
+    </VStack>
   )
 }

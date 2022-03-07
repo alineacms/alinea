@@ -5,7 +5,6 @@ import {
   createId,
   Entry,
   entryFromDoc,
-  future,
   Future,
   Hub,
   Media,
@@ -46,15 +45,15 @@ export type ServerOptions<T extends Workspaces> = {
 export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
   config: Config<T>
   app = express()
-  store: Promise<Store>
   preview: PreviewStore
+  createStore: () => Promise<Store>
 
   constructor(public options: ServerOptions<T>) {
     this.config = options.config
     this.app.use(createServerRouter(this))
-    this.store = options.createStore()
+    this.createStore = options.createStore
     this.preview = previewStore(
-      options.createStore,
+      () => this.createStore(),
       options.config,
       options.drafts
     )
@@ -106,19 +105,25 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
 
   deleteDraft(id: string): Future<void> {
     const {drafts} = this.options
-    return future(drafts.delete([id]))
+    return outcome(async () => {
+      await this.preview.deleteUpdate(id)
+      return drafts.delete([id])
+    })
   }
 
   publishEntries(entries: Array<Entry>): Future<void> {
     const {config, drafts, target} = this.options
+    function applyPublish(store: Store) {
+      Cache.applyPublish(store, config, entries)
+      return store
+    }
     return outcome(async () => {
       await target.publish(entries)
-      // Todo: This makes updates instantly available but should be configurable
-      // Todo: if there's another instance running it won't have the drafts or
-      // these changes so it would show the old data, so maybe we should always
-      // hang on to drafts?
-      Cache.applyPublish(await this.store, config, entries)
-      await drafts.delete(entries.map(entry => entry.id))
+      const ids = entries.map(entry => entry.id)
+      await drafts.delete(ids)
+      const create = this.createStore
+      this.createStore = () => create().then(applyPublish)
+      await this.preview.deleteUpdates(ids)
     })
   }
 
@@ -131,19 +136,18 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
       const store = await this.preview.getStore()
       const id = createId()
       const {media} = this.options
-      const parentPath = path.dirname(file.path)
-      const parents = walkUrl(parentUrl(parentPath)).map(url => {
+      const parents = walkUrl(parentUrl(file.path)).map(url => {
         const parent = store.first(
           Entry.where(Entry.workspace.is(workspace))
             .where(Entry.root.is(root))
             .where(Entry.url.is(url))
             .select({id: Entry.id})
         )
-        if (!parent) throw createError(400, 'Parent not found')
+        if (!parent) throw createError(400, `Parent not found: ${url}`)
         return parent.id
       })
       const parent = parents[parents.length - 1]
-      if (!parent) throw createError(400, `Parent not found: "${parentUrl}"`)
+      if (!parent) throw createError(400, `Parent not found: "${file.path}"`)
       const location = await media.upload(workspace as string, file)
       const extension = path.extname(location)
       const prev = store.first(
@@ -169,11 +173,16 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
           .update(Buffer.from(file.buffer))
           .digest('hex'),
         preview: file.preview,
-        averageColor: file.color
+        averageColor: file.averageColor,
+        blurHash: file.blurHash
       }
       await this.publishEntries([entry])
       return entry
     })
+  }
+
+  get drafts() {
+    return this.options.drafts
   }
 
   async parsePreviewToken(
