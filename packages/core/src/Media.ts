@@ -14,8 +14,7 @@ export namespace Media {
     alias: Media.Type.Libary
   })
 
-  export type File = Omit<Entry, 'title'> & {
-    title: string
+  export type File = Entry & {
     location: string
     extension: string
     size: number

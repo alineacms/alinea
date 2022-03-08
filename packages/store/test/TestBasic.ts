@@ -80,12 +80,11 @@ test('update', () => {
 
 test('case', () => {
   const db = store()
-  type Test = {id: string; type: 'A' | 'B'}
+  type Test = {id: string; type: 'A'; x: number} | {id: string; type: 'B'}
   const Test = new Collection<Test>('test')
   const a = {type: 'A'} as const
   const b = {type: 'B'} as const
   db.insertAll(Test, [a, b])
-
   assert.equal(
     db.all(
       Test.select(
@@ -112,6 +111,39 @@ test('json', () => {
   const res1 = db.first(q)!
   assert.is(res1.fieldA, 12)
   assert.is(res1.fieldB, 5)
+})
+
+test('each', () => {
+  const db = store()
+  const a = {
+    refs: [
+      {id: 'b', type: 'entry'},
+      {id: 'c', type: 'entry'}
+    ]
+  }
+  const Test = new Collection<typeof a & {id: string}>('test')
+  db.insertAll(Test, [a])
+  const res = db.first(Test.select({refs: Test.refs.each()}))
+  assert.equal(res!, a)
+
+  const b = {id: 'b', title: 'Entry B'}
+  const c = {id: 'c', title: 'Entry C'}
+  const Entry = new Collection<typeof b>('Entry')
+  db.insertAll(Entry, [b, c])
+
+  const refs = Test.refs.each()
+  const Link = Entry.as('Link')
+  const query = Test.select({
+    links: refs
+      .where(refs.get('type').is('entry'))
+      .innerJoin(Link, Link.id.is(refs.get('id')))
+      .select({id: Link.id, title: Link.title})
+  })
+  const res2 = db.first(query, {debug: true})!
+  assert.equal(res2.links, [
+    {id: 'b', title: 'Entry B'},
+    {id: 'c', title: 'Entry C'}
+  ])
 })
 
 test.run()

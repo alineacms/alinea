@@ -10,13 +10,13 @@ export namespace RichTextNode {
     text?: string
     marks?: Array<Mark>
   }
-  export type Element = {
-    type: string
+  export type Element<T = any> = {
+    type: T extends {type: string} ? T['type'] : string
     attrs?: Record<string, any>
     content?: Array<RichTextNode>
   }
 }
-export type RichTextNode<T = any> = RichTextNode.Text | RichTextNode.Element
+export type RichTextNode<T = any> = RichTextNode.Text | RichTextNode.Element<T>
 
 export type TextDoc<T> = {
   type: 'doc'

@@ -1,3 +1,5 @@
+import convertHrtime from 'convert-hrtime'
+import prettyMilliseconds from 'pretty-ms'
 import {Collection} from '../Collection'
 import {Cursor} from '../Cursor'
 import {Driver} from '../Driver'
@@ -50,8 +52,9 @@ export class SqliteStore implements Store {
     options?: QueryOptions
   ): Array<Row> {
     return this.db.transaction(() => {
-      for (const object of objects) {
-        if (!object.id) object.id = this.createId()
+      const res = []
+      for (let object of objects) {
+        if (!object.id) object = {...object, id: this.createId()}
         const from = collection.cursor.from
         if (from.type === FromType.Column) {
           this.prepare(
@@ -66,8 +69,9 @@ export class SqliteStore implements Store {
             options
           ).run(from.columns.map(col => (object as any)[col]))
         }
+        res.push(object)
       }
-      return objects as Array<Row>
+      return res as Array<Row>
     })
   }
 
@@ -124,8 +128,18 @@ export class SqliteStore implements Store {
   }
 
   prepare(query: String, options?: QueryOptions): Driver.PreparedStatement {
-    if (options?.debug) console.log(query)
-    return this.createOnError(() => this.db.prepare(query))
+    if (options?.debug) {
+      const startTime = process.hrtime.bigint()
+      console.log(query)
+      const result = this.createOnError(() => this.db.prepare(query))
+      const diff = process.hrtime.bigint() - startTime
+      console.log(
+        `\r> Queried in ${prettyMilliseconds(convertHrtime(diff).milliseconds)}`
+      )
+      return result
+    } else {
+      return this.createOnError(() => this.db.prepare(query))
+    }
   }
 
   createFts5<Row extends {}>(
@@ -228,7 +242,7 @@ export class SqliteStore implements Store {
   }
 
   createTable(name: string) {
-    const collection = new Collection(name)
+    const collection = new Collection<{id: string}>(name)
     this.db.exec(`create table if not exists ${f.escapeId(name)}(data json);`)
     this.createIndex(collection, 'id', [collection.id])
   }

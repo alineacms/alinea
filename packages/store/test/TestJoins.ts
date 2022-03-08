@@ -18,7 +18,7 @@ test('OrderBy', () => {
   const contact1 = db.insert(Contact, {user: user1.id})
   const contact2 = db.insert(Contact, {user: user2.id})
   const results = db.all(
-    Contact.leftJoin(User, User.id.is(Contact.user))
+    Contact.join(User, User.id.is(Contact.user))
       .select(Contact.with({user: User.fields}))
       .orderBy(User.name.asc())
   )
@@ -41,7 +41,7 @@ test('Cursor joins', () => {
   db.insert(Entry, {type: 'Type2', num: 1})
   db.insert(Entry, {type: 'Type3', num: 1})
   const res = db.first(
-    Type1.leftJoin(Type2, Type1.num.is(Type2.num)).select(
+    Type1.join(Type2, Type1.num.is(Type2.num)).select(
       Type1.fields.with({
         linked: Type2.fields
       })

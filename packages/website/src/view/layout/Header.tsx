@@ -2,8 +2,9 @@ import {HStack, Logo, px, Stack} from '@alinea/ui'
 import Link from 'next/link'
 import {RiFlashlightFill} from 'react-icons/ri'
 import {Container} from './Container'
+import {HeaderProps} from './Header.query'
 
-export function Header() {
+export function Header({links}: HeaderProps) {
   return (
     <header style={{padding: `${px(25)} 0`}}>
       <Container>
@@ -16,9 +17,15 @@ export function Header() {
             </a>
           </Link>
           <Stack.Right>
-            <Link href="/docs">
-              <a>Docs</a>
-            </Link>
+            <HStack center gap={10}>
+              {links.map(link => {
+                return (
+                  <Link key={link.id} href={link.url}>
+                    <a>{link.title}</a>
+                  </Link>
+                )
+              })}
+            </HStack>
           </Stack.Right>
         </HStack>
       </Container>

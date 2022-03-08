@@ -1,5 +1,5 @@
 import {Cursor} from './Cursor'
-import {Expr, ExprData} from './Expr'
+import {Expr} from './Expr'
 import {From} from './From'
 import {Selection, SelectionData, SelectionInput} from './Selection'
 
@@ -28,10 +28,6 @@ export class CollectionImpl<Row extends {} = any> extends Cursor<Row> {
     })
   }
 
-  get<T>(name: string): Expr<T> {
-    return new Expr(ExprData.Field(From.path(this.cursor.from).concat(name)))
-  }
-
   pick<Props extends Array<keyof Row>>(
     ...properties: Props
   ): Selection<{
@@ -44,7 +40,7 @@ export class CollectionImpl<Row extends {} = any> extends Cursor<Row> {
   }
 
   get id(): Expr<string> {
-    return this.get('id')
+    return this.get('id' as any)
   }
 
   get fields(): Selection<Row> {
@@ -63,14 +59,22 @@ export class CollectionImpl<Row extends {} = any> extends Cursor<Row> {
   }
 }
 
-type UnionToIntersection<U> = (U extends any ? (k: U) => void : never) extends (
-  k: infer I
-) => void
-  ? I
+// Source: https://stackoverflow.com/a/49279355/5872160
+type GetKeys<U> = U extends Record<infer K, any> ? K : never
+type UnionToIntersection<U extends object> = {
+  [K in GetKeys<U>]: U extends Record<K, infer T> ? T : never
+}
+// Source: https://stackoverflow.com/a/57334147/5872160
+type RequiredKeepUndefined<T> = {[K in keyof T]-?: [T[K]]} extends infer U
+  ? U extends Record<keyof U, [any]>
+    ? {[K in keyof U]: U[K][0]}
+    : never
   : never
 
-export type FieldsOf<Row> = Row extends object
-  ? {[K in keyof Row]-?: Expr<Row[K]> & FieldsOf<Row[K]>}
+export type FieldsOf<Row> = Row extends {}
+  ? {
+      [K in keyof Row]-?: Expr<Row[K]> /* & FieldsOf<Row[K]> */
+    }
   : unknown
 
 export interface CollectionConstructor {
@@ -80,8 +84,7 @@ export interface CollectionConstructor {
   ): Collection<Row>
 }
 
-export type Collection<T> = CollectionImpl<T> & UnionToIntersection<FieldsOf<T>>
-export namespace Collection {
-  export type Generic = CollectionImpl<any>
-}
+export type Collection<T> = CollectionImpl<T> &
+  (T extends {} ? FieldsOf<UnionToIntersection<RequiredKeepUndefined<T>>> : T)
+
 export const Collection = CollectionImpl as CollectionConstructor

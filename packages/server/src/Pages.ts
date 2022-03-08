@@ -51,18 +51,18 @@ export class Pages<T extends Entry> {
   }
 
   get root(): Cursor<T> {
-    return Entry.where(Entry.parent.isNull())
+    return Entry.where(Entry.parent.isNull()) as any
   }
   children(entry: string | Expr<string> | Entry, depth = 1): Cursor<T> {
     if (depth > 1) throw 'todo depth > 1'
     const id =
       typeof entry === 'string' ? entry : 'id' in entry ? entry.id : entry
-    return Entry.where(Entry.parent.is(id))
+    return Entry.where(Entry.parent.is(id)) as any
   }
   byUrl(url: string): Cursor<T> {
-    return Entry.where(Entry.url.is(url))
+    return Entry.where(Entry.url.is(url)) as any
   }
   byId(id: string): Cursor<T> {
-    return Entry.where(Entry.id.is(id))
+    return Entry.where(Entry.id.is(id)) as any
   }
 }

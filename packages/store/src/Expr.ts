@@ -1,4 +1,5 @@
 import {Cursor, CursorData} from './Cursor'
+import {From} from './From'
 import {OrderBy, OrderDirection} from './OrderBy'
 import {ParamData, ParamType} from './Param'
 import {Selection, SelectionData, SelectionInput} from './Selection'
@@ -44,11 +45,10 @@ export const enum ExprType {
 export type ExprData =
   | {type: ExprType.UnOp; op: UnOp; expr: ExprData}
   | {type: ExprType.BinOp; op: BinOp; a: ExprData; b: ExprData}
-  // Todo: field access should be on a `From`
-  | {type: ExprType.Field; path: Array<string>}
+  | {type: ExprType.Field; from: From; field: string}
+  | {type: ExprType.Access; expr: ExprData; field: string}
   | {type: ExprType.Param; param: ParamData}
   | {type: ExprType.Call; method: string; params: Array<ExprData>}
-  | {type: ExprType.Access; expr: ExprData; field: string}
   | {type: ExprType.Query; cursor: CursorData}
 
 export const ExprData = {
@@ -58,8 +58,8 @@ export const ExprData = {
   BinOp(op: BinOp, a: ExprData, b: ExprData): ExprData {
     return {type: ExprType.BinOp, op: op, a: a, b: b}
   },
-  Field(path: Array<string>): ExprData {
-    return {type: ExprType.Field, path: path}
+  Field(from: From, field: string): ExprData {
+    return {type: ExprType.Field, from, field}
   },
   Param(param: ParamData): ExprData {
     return {type: ExprType.Param, param: param}
@@ -105,10 +105,6 @@ export class Expr<T> {
 
   static value<T>(value: T): Expr<T> {
     return new Expr(ExprData.Param(ParamData.Value(value)))
-  }
-
-  static field(...path: Array<string>) {
-    return new Expr(ExprData.Field(path))
   }
 
   constructor(public expr: ExprData) {
@@ -208,15 +204,29 @@ export class Expr<T> {
   match(this: Expr<string>, that: EV<string>): Expr<boolean> {
     return binop(this, BinOp.Match, that)
   }
+  with<Row extends {}, X extends SelectionInput>(
+    this: Expr<Row>,
+    that: X
+  ): Selection.With<Row, X> {
+    return new Selection(SelectionData.Expr(this.expr)).with(that)
+  }
+  private static uniqueId = 0
+  each<T>(this: Expr<Array<T>>): Cursor<T> {
+    const from = From.Each(this.expr, `each${Expr.uniqueId++}`)
+    return new Cursor({
+      from,
+      selection: SelectionData.Row(from)
+    })
+  }
   case<
     T extends string | number,
-    C extends {[K in T]: SelectionInput},
+    C extends {[K in T]?: SelectionInput},
     DC extends SelectionInput
   >(
     this: Expr<T>,
     cases: C,
     defaultCase?: DC
-  ): Selection<Store.TypeOf<C[T]> | Store.TypeOf<DC>> {
+  ): Selection<Store.TypeOf<C[keyof C]> | Store.TypeOf<DC>> {
     return new Selection(
       SelectionData.Case(
         this.expr,
@@ -227,10 +237,9 @@ export class Expr<T> {
       )
     )
   }
-  get<T>(path: string): Expr<T> {
-    return this.expr.type === ExprType.Field
-      ? new Expr(ExprData.Field(this.expr.path.concat(path)))
-      : new Expr(ExprData.Access(this.expr, path))
+
+  get<K extends keyof T>(name: K): Expr<T[K]> {
+    return new Expr(ExprData.Access(this.expr, name as string))
   }
 
   static create<T>(input: EV<T>): Expr<T> {

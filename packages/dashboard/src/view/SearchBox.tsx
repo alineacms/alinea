@@ -29,7 +29,7 @@ type QueryParams = {
 }
 
 function query({workspace, search, root}: QueryParams) {
-  return Search.leftJoin(Entry, Search.id.is(Entry.id))
+  return Search.join(Entry, Search.id.is(Entry.id))
     .where(search ? Search.title.match(searchTerms(search)) : false)
     .where(Entry.workspace.is(workspace))
     .orderBy(Entry.root.is(root).desc(), Search.get('rank').asc())
@@ -47,7 +47,7 @@ export function SearchBox() {
   const {workspace, schema} = useWorkspace()
   const {root} = useRoot()
   const cursor = useMemo(
-    () => query({workspace, root, search}),
+    () => query({workspace, root, search}).select(Entry.fields),
     [workspace, root, search]
   )
   const [explorerView, setExplorerView] = useState<'row' | 'thumb'>('row')

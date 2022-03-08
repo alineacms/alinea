@@ -20,7 +20,7 @@ export type CursorData = {
 export class Cursor<Row> {
   constructor(public cursor: CursorData) {}
 
-  leftJoin(that: Collection<any>, on: Expr<boolean>): Cursor<Row> {
+  join(that: Collection<any>, on: Expr<boolean>): Cursor<Row> {
     const condition = that.cursor.where
       ? on.and(new Expr(that.cursor.where))
       : on
@@ -33,6 +33,10 @@ export class Cursor<Row> {
         condition.expr
       )
     })
+  }
+
+  get<K extends string>(name: K): Expr<K extends keyof Row ? Row[K] : any> {
+    return new Expr(ExprData.Field(this.cursor.from, name as string))
   }
 
   innerJoin(that: Collection<any>, on: Expr<boolean>): Cursor<Row> {

@@ -45,17 +45,27 @@ export abstract class Formatter {
   abstract escape(value: any): string
   abstract escapeId(id: string): string
   abstract formatAccess(on: Statement, field: string): Statement
-  abstract formatField(path: Array<string>, shallow: boolean): Statement
+  abstract formatField(from: From, field: string, shallow: boolean): Statement
   abstract formatUnwrapArray(sql: Statement): Statement
+
+  format(value: any) {
+    return new Statement(this.escape(value))
+  }
+
+  formatString(input: string) {
+    return new Statement(this.escape(String(input)))
+  }
+
+  formatId(id: string) {
+    return new Statement(this.escapeId(id))
+  }
 
   formatFrom(from: From, options: FormatExprOptions): Statement {
     switch (from.type) {
       case FromType.Table:
-        return Statement.raw(
-          from.alias
-            ? `${this.escapeId(from.name)} as ${this.escapeId(from.alias)}`
-            : this.escapeId(from.name)
-        )
+        return from.alias
+          ? sql`${this.formatId(from.name)} as ${this.formatId(from.alias)}`
+          : this.formatId(from.name)
       case FromType.Column:
         return this.formatFrom(from.of, options)
       case FromType.Join:
@@ -64,6 +74,8 @@ export abstract class Formatter {
         const on = this.formatExpr(from.on, options)
         const join = from.join === 'left' ? 'left' : 'inner'
         return sql`${left} ${Statement.raw(join)} join ${right} on ${on}`
+      case FromType.Each:
+        throw 'Not supported in current formatter: expr.each()'
     }
   }
 
@@ -98,14 +110,8 @@ export abstract class Formatter {
     options: FormatExprOptions
   ) {
     if (!groupBy || groupBy.length == 0) return Statement.EMPTY
-    const groups = []
-    const params = []
-    for (const expr of groupBy) {
-      const stmt = this.formatExpr(expr, options)
-      groups.push(stmt.sql)
-      params.push(...stmt.params)
-    }
-    return new Statement(`group by ${groups.join(', ')}`, params)
+    const by = groupBy.map(expr => this.formatExpr(expr, options))
+    return sql`group by ${Statement.join(by, ', ')}`
   }
 
   formatHaving(
@@ -125,21 +131,19 @@ export abstract class Formatter {
       case SelectionType.Row:
         const {source} = selection
         switch (source.type) {
+          case FromType.Each:
+            throw 'Not supported in current formatter: expr.each()'
           case FromType.Column:
-            return Statement.raw(
-              `json(${this.escapeId(From.source(source))}.${this.escapeId(
-                source.column
-              )})`
-            )
+            return sql`json(${this.formatId(
+              From.source(source)
+            )}.${this.formatId(source.column)})`
           case FromType.Table:
             return this.formatSelection(
               SelectionData.Fields(
                 Object.fromEntries(
                   source.columns.map(column => [
                     column,
-                    SelectionData.Expr(
-                      ExprData.Field([source.alias || source.name, column])
-                    )
+                    SelectionData.Expr(ExprData.Field(source, column))
                   ])
                 )
               ),
@@ -165,9 +169,10 @@ export abstract class Formatter {
         let res = Statement.EMPTY
         const keys = Object.keys(selection.fields)
         Object.entries(selection.fields).forEach(([key, value], i) => {
-          res = sql`${res}${Statement.raw(
-            this.escape(key)
-          )}, ${this.formatSelection(value, options)}`
+          res = sql`${res}${this.formatString(key)}, ${this.formatSelection(
+            value,
+            options
+          )}`
           if (i < keys.length - 1) res = sql`${res}, `
         })
         return sql`json_object(${res})`
@@ -192,7 +197,7 @@ export abstract class Formatter {
       cursor.limit !== undefined || cursor.offset !== undefined
         ? sql`limit ${
             options.formatInline
-              ? new Statement(this.escape(cursor.limit || 0))
+              ? this.format(cursor.limit || 0)
               : Param.value(cursor.limit || 0)
           }`
         : undefined
@@ -200,7 +205,7 @@ export abstract class Formatter {
       cursor.offset !== undefined
         ? sql`offset ${
             options.formatInline
-              ? new Statement(this.escape(cursor.offset))
+              ? this.format(cursor.offset)
               : Param.value(cursor.offset)
           }`
         : undefined
@@ -237,20 +242,24 @@ export abstract class Formatter {
               case typeof value === 'boolean':
                 return value ? sql`1` : sql`0`
               case Array.isArray(value):
-                const res = sql`(${Statement.raw(
-                  value.map((v: any): string => this.escape(v)).join(', ')
+                const res = sql`(${Statement.join(
+                  value.map((v: any): Statement => this.format(v)),
+                  ', '
                 )})`
                 return options.formatAsJsonValue ? sql`json_array${res}` : res
               case typeof value === 'string' || typeof value === 'number':
-                if (options.formatInline)
-                  return Statement.raw(this.escape(value))
+                if (options.formatInline) return this.format(value)
                 return new Statement('?', [expr.param])
               default:
-                return new Statement(this.escape(value))
+                return this.format(value)
             }
         }
       case ExprType.Field:
-        return this.formatField(expr.path, Boolean(options.formatShallow))
+        return this.formatField(
+          expr.from,
+          expr.field,
+          Boolean(options.formatShallow)
+        )
       case ExprType.Call: {
         const params = expr.params.map(e => this.formatExpr(e, options))
         const expressions = params.map(stmt => stmt.sql).join(', ')
@@ -294,9 +303,7 @@ export abstract class Formatter {
         ...options,
         formatAsJsonValue: true
       })
-      source = sql`json_set(${source}, ${Statement.raw(
-        this.escape(`$.${key}`)
-      )}, ${expr})`
+      source = sql`json_set(${source}, ${this.format(`$.${key}`)}, ${expr})`
     }
     return sql`set \`data\` = ${source}`
   }
@@ -306,18 +313,16 @@ export abstract class Formatter {
     update: Record<string, any>,
     options: FormatExprOptions
   ): Statement {
-    const stmts = []
+    const updates = []
     for (const column of columns) {
       if (!(column in update)) continue
       const expr = this.formatExpr(ExprData.create(update[column]), {
         ...options,
         formatAsJsonValue: true
       })
-      stmts.push(sql`${Statement.raw(this.escapeId(column))} = ${expr}`)
+      updates.push(sql`${this.formatId(column)} = ${expr}`)
     }
-    const cols = stmts.map(stmt => stmt.sql).join(', ')
-    const params = stmts.flatMap(stmt => stmt.params)
-    return sql`set ${new Statement(cols, params)}`
+    return sql`set ${Statement.join(updates, ', ')}`
   }
 
   formatUpdate(

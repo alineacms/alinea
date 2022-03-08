@@ -70,11 +70,11 @@ export namespace Entry {
 
 export const Entry = new Collection<Entry>('Entry')
 
-export function selectParents<S extends SelectionInput>(
-  Entry: Collection<Entry>,
+export function selectParents<S extends SelectionInput, E extends Entry>(
+  Entry: Collection<E>,
   selection: (Parent: Collection<Entry>) => S
 ): Cursor<Store.TypeOf<S>> {
-  const Parent = Entry.as('Parent')
+  const Parent = Entry.as('Parent') as unknown as Collection<Entry>
   return Parent.where(Parent.id.isIn(Entry.parents))
     .orderBy(Functions.arrayLength(Parent.parents).asc())
     .select(selection(Parent))

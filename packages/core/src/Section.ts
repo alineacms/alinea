@@ -28,7 +28,7 @@ export namespace Section {
   type InferFields<S> = S extends Presentational
     ? never
     : S extends Section<infer U>
-    ? InferFields<U>
+    ? U
     : S extends Lazy<infer U>
     ? U extends {[key: string]: any}
       ? {
@@ -49,11 +49,15 @@ export namespace Section {
 
   export function withView<
     T extends Section,
-    Factory extends (...args: Array<any>) => T
+    // We're not expecting a T return because we'd like factories to use
+    // Section types so the underlying fields can be inferred. This reduces
+    // type safety a little and should probably be revised later.
+    Factory extends (...args: Array<any>) => Section
   >(create: Factory, view: ComponentType<{state: InputState; section: T}>) {
     return ((...args: Parameters<Factory>) => {
       const section = create(...args)
-      section.view = ({state}) => createElement(view, {state, section})
+      section.view = ({state}) =>
+        createElement(view, {state, section: section as T})
       return section
     }) as Factory
   }

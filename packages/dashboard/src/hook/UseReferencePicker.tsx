@@ -8,6 +8,7 @@ export type ReferencePickerOptions = {
   defaultView?: 'row' | 'thumb'
   condition?: Expr<boolean>
   max?: number
+  showUploader?: boolean
 }
 
 type ReferencePickerContext = {

@@ -122,12 +122,17 @@ app.get('/api/preview', async (req, res) => {
   const previewToken = decodeURIComponent(
     new URL(req.url!, 'http://localhost').search
   ).substring(1)
+  res.startTime('token', 'Parse preview token')
   const {id, url} = await server.parsePreviewToken(previewToken)
+  res.endTime('token')
+  res.startTime('page', 'Fetch page props')
   const {props} = await getStaticProps({
     preview: true,
     previewData: id,
     params: {slug: url.split('/').slice(1)}
   })
+  res.endTime('page')
+  res.startTime('render', 'React render time')
   const html = ReactDOMServer.renderToStaticMarkup(
     createElement(App, {
       router: undefined!,
@@ -135,11 +140,12 @@ app.get('/api/preview', async (req, res) => {
       pageProps: props
     })
   )
-  return res.header('content-type', 'text/html').end(`
-      <!doctype html>
+  res.endTime('render')
+  return res.header('content-type', 'text/html').end(
+    `<!doctype html>
       <link href="/dist/server.css" rel="stylesheet" />
-      ${html}
-    `)
+      ${html}`
+  )
 })
 app.use((req, res) => serveHandler(req, res, {public: '.'}))
 app.listen(4500)

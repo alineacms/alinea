@@ -2,12 +2,12 @@ import {Field, Label, Schema, Value} from '@alinea/core'
 import {TextDoc} from '@alinea/core/value/RichTextValue'
 
 export type RichTextOptions<T> = {
+  // Allow these blocks to be created between text fragments
+  blocks?: Schema<T>
   help?: Label
   optional?: boolean
   inline?: boolean
   initialValue?: string
-  // Allow these blocks to be created between text fragments
-  blocks?: Schema<T>
 }
 
 export interface RichTextField<T> extends Field<TextDoc<T>> {
@@ -15,7 +15,7 @@ export interface RichTextField<T> extends Field<TextDoc<T>> {
   options: RichTextOptions<T>
 }
 
-export function createRichText<T>(
+export function createRichText<T = never>(
   label: Label,
   options: RichTextOptions<T> = {}
 ): RichTextField<T> {

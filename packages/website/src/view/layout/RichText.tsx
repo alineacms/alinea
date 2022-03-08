@@ -40,7 +40,7 @@ function RichTextNodeView<T>(node: RichTextNode<T>) {
   }
 }
 
-type RichTextProps<T> = {
+export type RichTextProps<T> = {
   doc: TextDoc<T>
   view?: Partial<{
     [K in TypesOf<T>]: ComponentType<Extract<T, {type: K}>>

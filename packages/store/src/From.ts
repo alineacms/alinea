@@ -3,10 +3,12 @@ import {ExprData} from './Expr'
 export const enum FromType {
   Table,
   Column,
-  Join
+  Join,
+  Each
 }
 
 export type From =
+  | {type: FromType.Each; expr: ExprData; alias: string}
   | {type: FromType.Table; name: string; columns: Array<string>; alias?: string}
   | {type: FromType.Column; of: From; column: string}
   | {
@@ -35,6 +37,9 @@ export namespace From {
     on: ExprData
   ): From {
     return {type: FromType.Join, left, right, join, on}
+  }
+  export function Each(expr: ExprData, alias: string): From {
+    return {type: FromType.Each, expr, alias}
   }
   export function source(from: From): string {
     switch (from.type) {

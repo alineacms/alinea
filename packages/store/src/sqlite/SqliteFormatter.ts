@@ -1,5 +1,6 @@
 import {ExprData, ExprType} from '../Expr'
 import {FormatExprOptions, Formatter} from '../Formatter'
+import {From, FromType} from '../From'
 import {ParamData, ParamType} from '../Param'
 import {SelectionData, SelectionType} from '../Selection'
 import {sql, Statement} from '../Statement'
@@ -33,11 +34,29 @@ export const sqliteFormatter = new (class extends Formatter {
     buf += BACKTICK
     return buf
   }
+  formatFrom(from: From, options: FormatExprOptions): Statement {
+    switch (from.type) {
+      case FromType.Each:
+        return sql`json_each(${this.formatExpr(
+          from.expr,
+          options
+        )}) as ${this.formatId(from.alias)}`
+      default:
+        return super.formatFrom(from, options)
+    }
+  }
   formatSelection(
     selection: SelectionData,
     options: FormatExprOptions
   ): Statement {
     switch (selection.type) {
+      case SelectionType.Row:
+        const {source} = selection
+        switch (source.type) {
+          case FromType.Each:
+            return sql`json(${this.formatId(source.alias)}.value)`
+        }
+        break
       case SelectionType.Case:
         if (Object.keys(selection.cases).length === 0) {
           if (selection.defaultCase)
@@ -56,31 +75,33 @@ export const sqliteFormatter = new (class extends Formatter {
             options
           )}`
         return sql`${result} end`
-      default:
-        return super.formatSelection(selection, options)
     }
+    return super.formatSelection(selection, options)
   }
   formatAccess(on: Statement, field: string): Statement {
-    const target = Statement.raw(this.escapeString(`$.${field}`))
+    const target = this.formatString(`$.${field}`)
     return sql`json_extract(${on}, ${target})`
   }
-  formatField(path: Array<string>, shallow = false): Statement {
-    switch (path.length) {
-      case 0:
+  formatField(from: From, field: string, shallow = false): Statement {
+    switch (from.type) {
+      case FromType.Each: {
+        const path = this.formatString(`$.${field}`)
+        return sql`json_extract(${this.formatId(from.alias)}.value, ${path})`
+      }
+      case FromType.Table: {
+        if (shallow) return this.formatId(field)
+        return sql`${this.formatId(from.alias || from.name)}.${this.formatId(
+          field
+        )}`
+      }
+      case FromType.Column: {
+        const origin = this.formatField(from.of, from.column, shallow)
+        const path = this.formatString(`$.${field}`)
+        return sql`json_extract(${origin}, ${path})`
+      }
+      case FromType.Join: {
         throw 'assert'
-      case 1:
-        return Statement.raw(this.escapeId(path[0]))
-      default:
-        const from = Statement.raw(
-          (shallow ? [path[1]] : [path[0], path[1]])
-            .map(this.escapeId)
-            .join('.')
-        )
-        if (path.length == 2) return from
-        const target = Statement.raw(
-          this.escapeString(`$.${path.slice(2).join('.')}`)
-        )
-        return sql`json_extract(${from}, ${target})`
+      }
     }
   }
   formatUnwrapArray(stmt: Statement): Statement {
@@ -100,13 +121,12 @@ export const sqliteFormatter = new (class extends Formatter {
             return sql`cast(${this.formatExpr(
               expr.params[0],
               options
-            )} as ${Statement.raw(this.escapeString(typeName))})`
+            )} as ${this.formatString(typeName)})`
           case 'arrayLength':
             return this.formatExpr(
               ExprData.Call('json_array_length', expr.params),
               options
             )
-          default:
         }
     }
     return super.formatExpr(expr, options)

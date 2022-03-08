@@ -7,7 +7,7 @@ const styles = fromModule(css)
 
 export type TabsViewProps = {
   state: InputState
-  section: TabsSection
+  section: TabsSection<any>
 }
 
 export function TabsView({state, section}: TabsViewProps) {

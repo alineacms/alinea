@@ -9,6 +9,13 @@ export class Statement {
     return new Statement(sql)
   }
 
+  static join(statements: Array<Statement>, separator: string) {
+    return new Statement(
+      statements.map(s => s.sql).join(separator),
+      statements.flatMap(s => s.params)
+    )
+  }
+
   getParams(input?: Record<string, any>): Array<any> {
     return this.params.map(param => {
       switch (param.type) {
@@ -31,7 +38,7 @@ export function sql(
   strings.forEach((string, i) => {
     buf += string
     const insert = inserts[i]
-    if (insert instanceof Statement) {
+    if (insert instanceof Statement && insert.sql) {
       buf += insert.sql
       params.push(...insert.params)
     } else if (insert instanceof Param) {

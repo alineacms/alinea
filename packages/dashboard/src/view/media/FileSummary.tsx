@@ -27,7 +27,9 @@ function fileSummarySelect(File: Collection<Media.File>) {
     size: File.size,
     preview: File.preview,
     averageColor: File.averageColor,
-    parents: selectParents(File, Parent => ({title: Parent.title}))
+    parents: selectParents(File, Parent => ({
+      title: Parent.title
+    }))
   }
 }
 

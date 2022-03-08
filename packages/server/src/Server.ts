@@ -190,7 +190,6 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
   ): Promise<{id: string; url: string}> {
     const {jwtSecret} = this.options
     const {id} = jwt.verify(previewToken, jwtSecret) as {id: string}
-
     const store = await this.preview.getStore()
     await this.preview.fetchUpdate(id)
     const entry = store.first(

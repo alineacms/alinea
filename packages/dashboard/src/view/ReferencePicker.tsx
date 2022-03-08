@@ -50,7 +50,7 @@ function query({workspace, search, root}: QueryParams) {
   const orderBy = search
     ? [Entry.root.is(root).desc(), Search.get('rank').asc()]
     : [Entry.id.desc()]
-  return Search.leftJoin(Entry, Search.id.is(Entry.id))
+  return Search.join(Entry, Search.id.is(Entry.id))
     .where(search ? Search.title.match(searchTerms(search)) : true)
     .where(Entry.workspace.is(workspace))
     .orderBy(...orderBy)
@@ -67,7 +67,7 @@ export function ReferencePicker({
   onConfirm,
   onCancel
 }: ReferencePickerProps) {
-  const {defaultView, max, condition} = options
+  const {defaultView, max, condition, showUploader} = options
   const [search, setSearch] = useState('')
   const list = useFocusList({
     onClear: () => setSearch('')
@@ -78,7 +78,10 @@ export function ReferencePicker({
   const {workspace, schema} = useWorkspace()
   const {root} = useRoot()
   const cursor = useMemo(
-    () => query({workspace, root, search}).where(condition || true),
+    () =>
+      query({workspace, root, search})
+        .where(condition || true)
+        .select(Entry.fields),
     [workspace, root, search, condition]
   )
   const [view, setView] = useState<'row' | 'thumb'>(defaultView || 'row')
@@ -149,7 +152,9 @@ export function ReferencePicker({
           gap={16}
           style={{flexGrow: 1, padding: `${px(16)} 0`, minHeight: 0}}
         >
-          {!search && <FileUploader max={max} toggleSelect={handleSelect} />}
+          {!search && showUploader && (
+            <FileUploader max={max} toggleSelect={handleSelect} />
+          )}
           <VStack style={{flexGrow: 1, minHeight: 0}}>
             <list.Container>
               <div className={styles.root.results()}>

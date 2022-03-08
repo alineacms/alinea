@@ -171,6 +171,7 @@ export function LinkInput({state, field}: LinkInputProps) {
   const {schema} = useWorkspace()
   const {pickLink} = useReferencePicker()
   const {type, width, inline, optional, help, max} = field.options
+  const types = Array.isArray(type) ? type : type ? [type] : []
 
   const cursor = useMemo(() => {
     const entries = value
@@ -204,6 +205,7 @@ export function LinkInput({state, field}: LinkInputProps) {
       selection: value,
       condition: restrictByType(type),
       defaultView: type === 'image' ? 'thumb' : 'row',
+      showUploader: types.includes('file'),
       max
     }).then(links => {
       const seen = new Set()
