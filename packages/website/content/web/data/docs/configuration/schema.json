@@ -12,7 +12,12 @@
       "type": "TextBlock",
       "text": {
         "type": "doc",
-        "blocks": {},
+        "blocks": {
+          "267QjRgoDq3nZ6Dth0o3MElJgzP": {
+            "type": "CodeBlock",
+            "code": "schema('My schema', {\n  schema, color, roots\n})"
+          }
+        },
         "content": [
           {
             "type": "heading",
@@ -34,6 +39,12 @@
                 "text": "A schema describes multiple types. Every type contains fields and in many instances can be thought of as describing all of the data on a page."
               }
             ]
+          },
+          {
+            "type": "CodeBlock",
+            "attrs": {
+              "id": "267QjRgoDq3nZ6Dth0o3MElJgzP"
+            }
           }
         ]
       }
