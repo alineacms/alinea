@@ -1,13 +1,13 @@
 {
-  "id": "25HWCBHEFdsLDtooZ4mzxeax3An",
+  "id": "267KTV8uPHIdZgFUQvJf06sfm4h",
   "type": "Doc",
   "root": "data",
-  "index": "Zz",
-  "title": "Configuration",
-  "path": "configuration",
+  "index": "a0V",
+  "title": "Schema",
+  "path": "schema",
   "blocks": [
     {
-      "id": "25HWDVdhsKXsw9R0i0ImOmwE32h",
+      "id": "267KUArMsLoytOeNGlQGAf4v4tt",
       "index": "a0",
       "type": "TextBlock",
       "text": {
@@ -22,7 +22,7 @@
             "content": [
               {
                 "type": "text",
-                "text": "Configuration"
+                "text": "Schema"
               }
             ]
           },
@@ -31,7 +31,7 @@
             "content": [
               {
                 "type": "text",
-                "text": "The  command (`alinea init`) we ran in Getting Started created an `alinea.config.tsx` file. This file holds settings and a schema."
+                "text": "A schema describes multiple types. Every type contains fields and in many instances can be thought of as describing all of the data on a page."
               }
             ]
           }

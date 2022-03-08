@@ -157,7 +157,12 @@ export abstract class Formatter {
           ...options,
           formatSubject: subject => sql`${subject} as res`
         })
-        if (selection.cursor.singleResult) return sql`(select ${sub})`
+        // Todo: test this with scalar/object/array values
+        if (selection.cursor.singleResult) {
+          if (selection.cursor.selection.type === SelectionType.Expr)
+            return sql`(select ${sub})`
+          return sql`json((select ${sub}))`
+        }
         return sql`(select json_group_array(json(res)) from (select ${sub}))`
       case SelectionType.Expr:
         return this.formatExpr(selection.expr, options)

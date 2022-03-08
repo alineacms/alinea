@@ -205,7 +205,7 @@ export function LinkInput({state, field}: LinkInputProps) {
       selection: value,
       condition: restrictByType(type),
       defaultView: type === 'image' ? 'thumb' : 'row',
-      showUploader: types.includes('file'),
+      showUploader: types.includes('file') || types.includes('image'),
       max
     }).then(links => {
       const seen = new Set()

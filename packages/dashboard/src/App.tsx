@@ -45,7 +45,7 @@ function AppAuthenticated() {
     <DraftsProvider>
       <Statusbar.Provider>
         <Toolbar.Provider>
-          <Viewport color={color}>
+          <Viewport contain color={color}>
             <FavIcon color={color} />
             <Helmet>
               <title>{name}</title>
@@ -177,7 +177,7 @@ function AppRoot({session, setSession}: AppRootProps) {
   const {name, color} = config.defaultWorkspace
   if (!session)
     return (
-      <Viewport color={color}>
+      <Viewport contain color={color}>
         <FavIcon color={color} />
         <Auth setSession={setSession} />
       </Viewport>

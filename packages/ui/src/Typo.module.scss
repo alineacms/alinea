@@ -81,6 +81,7 @@
   text-underline-offset: 0.3em;
   @extend .hyphenate;
   cursor: pointer;
+  color: inherit;
 
   &:hover {
     text-decoration-color: currentColor;

@@ -1,4 +1,4 @@
-import {ComponentType, createElement, Suspense} from 'react'
+import {ComponentType, createElement} from 'react'
 import {DocPage} from './DocPage'
 import {DocsPage} from './DocsPage'
 import {HomePage} from './HomePage'
@@ -20,9 +20,7 @@ function EntryView({entry}: PageViewProps) {
 export function PageView(props: PageViewProps) {
   return (
     <Layout {...props.layout}>
-      <Suspense fallback={'Loading...'}>
-        <EntryView {...props} />
-      </Suspense>
+      <EntryView {...props} />
     </Layout>
   )
 }

@@ -1,4 +1,4 @@
-import {PropsWithChildren, useState} from 'react'
+import {HTMLProps, PropsWithChildren, useState} from 'react'
 import {ColorSchemeProvider} from './hook/UseColorScheme'
 import {useContrastColor} from './hook/UseContrastColor'
 import {fromModule} from './util/Styler'
@@ -6,11 +6,14 @@ import css from './Viewport.module.scss'
 
 const styles = fromModule(css)
 
-type ViewportProps = PropsWithChildren<{
-  color: string
-}>
+type ViewportProps = PropsWithChildren<
+  {
+    color: string
+    contain?: boolean
+  } & HTMLProps<HTMLDivElement>
+>
 
-export function Viewport({children, color}: ViewportProps) {
+export function Viewport({children, color, contain, ...props}: ViewportProps) {
   const accentColor = color!
   const accentColorForeground = useContrastColor(accentColor)
   //const {scheme} = useColorScheme()
@@ -40,7 +43,8 @@ export function Viewport({children, color}: ViewportProps) {
             '--accent-foreground': accentColorForeground
           } as any
         }
-        className={styles.root(schemePreference)}
+        {...props}
+        className={styles.root.mergeProps(props)(schemePreference, {contain})}
       >
         {children}
       </main>

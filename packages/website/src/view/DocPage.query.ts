@@ -5,9 +5,20 @@ function docPagesMenuQuery() {
   return {todo: Expr.value(0)}
 }
 
-export function docPageQuery(Doc: Collection<Doc>) {
-  return Doc.fields.with({
-    menu: docPagesMenuQuery()
+export function docPageQuery(doc: Collection<Doc>) {
+  const siblings = Doc.where(Doc.parent.is(doc.parent)).select({
+    url: Doc.url,
+    title: Doc.title
+  })
+  const prev = siblings.where(Doc.index.less(doc.index)).first()
+  const next = siblings
+    .orderBy(Doc.index.asc())
+    .where(Doc.index.greater(doc.index))
+    .first()
+  return doc.fields.with({
+    menu: docPagesMenuQuery(),
+    prev,
+    next
   })
 }
 

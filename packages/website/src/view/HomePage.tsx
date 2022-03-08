@@ -1,8 +1,9 @@
 import {HStack, px, Typo} from '@alinea/ui'
-import {HomePageSchema} from './HomePage.schema'
+import Link from 'next/link'
+import {HomePageProps} from './HomePage.query'
 import {Container} from './layout/Container'
 
-export function HomePage({headline, byline}: HomePageSchema) {
+export function HomePage({headline, byline, gettingStarted}: HomePageProps) {
   return (
     <Container>
       <header style={{padding: `${px(25)} 0`}}>
@@ -10,6 +11,9 @@ export function HomePage({headline, byline}: HomePageSchema) {
           <div>
             <Typo.H1 flat>{headline}</Typo.H1>
             <Typo.P>{byline}</Typo.P>
+            <Link href={gettingStarted.url} passHref>
+              <Typo.Link>{gettingStarted.title}</Typo.Link>
+            </Link>
           </div>
         </HStack>
       </header>
