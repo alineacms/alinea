@@ -1,8 +1,23 @@
 {
   "id": "home",
-  "root": "data",
   "type": "Home",
+  "root": "data",
+  "index": "a0",
   "title": "Alinea",
   "headline": "The website headline",
-  "byline": "This is the marketing line"
+  "byline": "This is the marketing line",
+  "links": [
+    {
+      "id": "263wlwmdHFf89qUPgBh9JfcomkG",
+      "index": "Zz",
+      "type": "entry",
+      "entry": "home"
+    },
+    {
+      "id": "263wlTQJl4GPVikrzGKCxRKuJTg",
+      "index": "a0",
+      "type": "entry",
+      "entry": "20580nQzbOBR3Lt4kIdxyRGglc6"
+    }
+  ]
 }

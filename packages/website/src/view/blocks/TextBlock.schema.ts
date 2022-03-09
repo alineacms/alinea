@@ -3,17 +3,13 @@ import {richText} from '@alinea/input.richtext'
 import {CodeBlockSchema} from './CodeBlock.schema'
 import {ImageBlockSchema} from './ImageBlock.schema'
 
-const blocks = schema({
-  CodeBlock: CodeBlockSchema,
-  ImageBlock: ImageBlockSchema
-})
-
-const text = richText('Text', {
-  blocks
-})
-
 export const TextBlockSchema = type('Text', {
-  text
+  text: richText('Text', {
+    blocks: schema({
+      CodeBlock: CodeBlockSchema,
+      ImageBlock: ImageBlockSchema
+    })
+  })
 })
 
 export type TextBlockSchema = Schema.TypeOf<typeof TextBlockSchema>

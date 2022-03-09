@@ -2,7 +2,7 @@
   "id": "267KTV8uPHIdZgFUQvJf06sfm4h",
   "type": "Doc",
   "root": "data",
-  "index": "a0V",
+  "index": "ZzV",
   "title": "Schema",
   "path": "schema",
   "blocks": [
@@ -15,7 +15,7 @@
         "blocks": {
           "267QjRgoDq3nZ6Dth0o3MElJgzP": {
             "type": "CodeBlock",
-            "code": "schema('My schema', {\n  schema, color, roots\n})"
+            "code": "schema('My schema', {\n  TypeA, TypeB, TypeC\n})"
           }
         },
         "content": [
