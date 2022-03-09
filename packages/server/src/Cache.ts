@@ -1,7 +1,6 @@
 import {
   Config,
   createError,
-  docFromEntry,
   Entry,
   entryFromDoc,
   EntryStatus,
@@ -185,7 +184,7 @@ export namespace Cache {
       const condition = Entry.where(Entry.id.is(id))
       const existing = store.first(condition)
       const doc = new Y.Doc()
-      if (existing) docFromEntry(config, existing, doc)
+      // if (existing) docFromEntry(config, existing, doc)
       Y.applyUpdate(doc, update)
       const data = entryFromDoc(config, doc)
       const entry = computeEntry(store, config, data, EntryStatus.Draft)
