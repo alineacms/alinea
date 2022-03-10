@@ -11,7 +11,7 @@ export async function getStaticProps(context: GetStaticPropsContext) {
   const paths = (context.params?.slug as Array<string>) || []
   const slug = '/' + paths.join('/')
   const props = await from.first(pages.byUrl(slug).select(pageViewQuery(Page)))
-  if (!props) return {props: {}}
+  if (!props) return {notFound: true}
   return {props}
 }
 

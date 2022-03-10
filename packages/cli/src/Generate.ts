@@ -91,15 +91,19 @@ function embedInWasm(data: Uint8Array) {
     07 11 02 04 6461 7461 02 00 06 6c65 6e67 7468 03 00 // section "Export" (7)
     0b ${dataL} 01                                      // section "Data" (11)
     00 41 00 0b ${size}                                 // data segment header 0
-    ${Buffer.from(data)}                                             // data
+    ${Buffer.from(data)}                                // data
   `
 }
 
-async function embedInJs(source: string, data: Uint8Array) {
+async function embedSqlite(source: string) {
   const sqlJs = await fs.readFile(
     require.resolve('sql.js-fts5/dist/sql-wasm.wasm')
   )
-  return source.replace('$DB', encode(data)).replace('$SQLJS', encode(sqlJs))
+  return source.replace('$SQLJS', encode(sqlJs))
+}
+
+async function embedInJs(source: string, data: Uint8Array) {
+  return (await embedSqlite(source)).replace('$DB', encode(data))
 }
 
 function configType(location: string) {
@@ -156,7 +160,8 @@ export type GenerateOptions = {
 }
 
 export async function generate(options: GenerateOptions) {
-  const legacy = true
+  const hybrid = true,
+    legacy = false
   const cwd = options.cwd || process.cwd()
   const configLocation = path.join(cwd, options.config || './alinea.config.tsx')
   const outdir = path.join(cwd, options.outdir || './.alinea')
@@ -268,7 +273,14 @@ export async function generate(options: GenerateOptions) {
     )
   }
   const data = store.export()
-  if (legacy) {
+  if (hybrid) {
+    const source = await fs.readFile(
+      path.join(__dirname, 'static', 'cache.hybrid.js'),
+      'utf-8'
+    )
+    await fs.writeFile(path.join(outdir, 'cache.js'), await embedSqlite(source))
+    await fs.writeFile(path.join(outdir, 'cache.wasm'), embedInWasm(data))
+  } else if (legacy) {
     const source = await fs.readFile(
       path.join(__dirname, 'static', 'cache.legacy.js'),
       'utf-8'
