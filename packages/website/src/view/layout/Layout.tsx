@@ -1,4 +1,4 @@
-import {fromModule, Viewport} from '@alinea/ui'
+import {fromModule} from '@alinea/ui'
 import {PropsWithChildren} from 'react'
 import {Footer} from './Footer'
 import {Header} from './Header'
@@ -9,10 +9,10 @@ const styles = fromModule(css)
 
 export function Layout({children, header}: PropsWithChildren<LayoutProps>) {
   return (
-    <Viewport color="#FB934F" className={styles.root()}>
+    <div className={styles.root()}>
       <Header {...header} />
       <div className={styles.root.content()}>{children}</div>
       <Footer />
-    </Viewport>
+    </div>
   )
 }

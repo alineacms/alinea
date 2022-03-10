@@ -1,7 +1,7 @@
 import {Client} from '@alinea/client'
 import {Auth, Session} from '@alinea/core'
 import {useDashboard} from '@alinea/dashboard'
-import {Button, fromModule, Loader, Logo, px, Typo} from '@alinea/ui'
+import {Button, fromModule, Loader, LogoShape, px, Typo} from '@alinea/ui'
 import {HStack, VStack} from '@alinea/ui/Stack'
 import jwtDecode from 'jwt-decode'
 import {FormEvent, PropsWithChildren, useLayoutEffect, useState} from 'react'
@@ -37,9 +37,9 @@ function LoginBox({children}: PropsWithChildren<{}>) {
 function LoginHeader({children}: PropsWithChildren<{}>) {
   return (
     <HStack center gap={16}>
-      <Logo>
+      <LogoShape>
         <RiFlashlightFill />
-      </Logo>
+      </LogoShape>
       <Typo.H1 flat>{children}</Typo.H1>
     </HStack>
   )

@@ -1,4 +1,3 @@
-import {config, createCache} from '.alinea'
 import {PasswordLessAuth} from '@alinea/auth.passwordless/PasswordLessAuth.js'
 import {JsonLoader, Server} from '@alinea/server'
 import {GithubData} from '@alinea/server/data/GithubData.js'
@@ -7,6 +6,7 @@ import dotenv from 'dotenv'
 import findConfig from 'find-config'
 import Redis from 'ioredis'
 import {createTransport} from 'nodemailer'
+import {config, createCache} from './.alinea'
 
 dotenv.config({path: findConfig('.env')!})
 

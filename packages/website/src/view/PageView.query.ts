@@ -1,5 +1,5 @@
-import {Doc, Home, Page} from '.alinea/web'
 import {Collection, Store} from '@alinea/store'
+import {Doc, Home, Page} from '../../.alinea/web'
 import {docPageQuery} from './DocPage.query'
 import {homePageQuery} from './HomePage.query'
 import {layoutQuery} from './layout/Layout.query'
@@ -7,6 +7,10 @@ import {layoutQuery} from './layout/Layout.query'
 export function pageViewQuery(Page: Collection<Page>) {
   return {
     layout: layoutQuery(),
+    meta: {
+      title: Page.title,
+      url: Page.url
+    },
     entry: Page.type.case(
       {
         Home: homePageQuery(Page as Collection<Home>),

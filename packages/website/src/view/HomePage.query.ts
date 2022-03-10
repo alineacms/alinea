@@ -1,5 +1,5 @@
-import {Doc, Home} from '.alinea/web'
 import {Collection, Store} from '@alinea/store'
+import {Doc, Home} from '../../.alinea/web'
 
 export function homePageQuery(Home: Collection<Home>) {
   return Home.fields.with({

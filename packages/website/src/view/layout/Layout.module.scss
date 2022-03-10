@@ -1,9 +1,19 @@
 .root {
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+  background: white;
+  min-height: 100vh;
+  font-family: Inter, sans-serif;
+  font-size: 15px;
+  line-height: 1.4;
+  color: #1d232a;
+  background: linear-gradient(to bottom, hsl(0, 12%, 95%), hsl(0, 12%, 99%))
+    fixed;
 
   &-content {
+    position: relative;
     flex-grow: 1;
-    padding: 30px 0;
+    padding: 120px 0 30px 0;
   }
 }

@@ -15,8 +15,7 @@
     "jsx": "preserve",
     "skipLibCheck": true,
     "moduleResolution": "node",
-    "incremental": true,
-    "baseUrl": "."
+    "incremental": true
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],
   "exclude": []

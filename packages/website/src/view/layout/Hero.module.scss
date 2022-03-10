@@ -1,0 +1,27 @@
+.root {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding-bottom: 60px;
+}
+
+.title {
+  font-family: 'IBM Plex Sans';
+  font-size: 75px;
+  line-height: 1;
+  margin-bottom: 24px;
+  font-weight: bold;
+  white-space: pre-line;
+  color: hsl(340, 11%, 24%);
+}
+
+.action {
+  display: inline-block;
+  text-decoration: none;
+  background: hsl(340, 84%, 60%);
+  color: white;
+  padding: 10px 16px;
+  border-radius: 25px;
+  margin-top: 20px;
+}

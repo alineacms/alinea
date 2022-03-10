@@ -3,7 +3,7 @@ import type {ComponentType} from 'react'
 import {Schema} from './Schema'
 
 type ViewSelection<T, S> = (collection: Collection<T>) => S
-type ViewSelectionGeneric = (collection: Collection<any>) => SelectionInput
+type ViewSelectionGeneric = <T>(collection: Collection<T>) => SelectionInput
 
 export type View<
   T,

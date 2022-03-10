@@ -1,0 +1,22 @@
+.root {
+  position: relative;
+  padding: 30px 45px;
+  background: hsl(0, 12%, 98%);
+
+  &-link {
+    color: inherit;
+    text-decoration: none;
+    font-size: 13px;
+  }
+
+  &-bg {
+    position: absolute;
+    top: 100%;
+    margin-top: -1px;
+    fill: hsl(0, 12%, 98%);
+    left: 0;
+    right: 0;
+    z-index: 1;
+    pointer-events: none;
+  }
+}

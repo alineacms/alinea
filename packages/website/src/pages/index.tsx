@@ -1,8 +1,8 @@
-import {Page, pages} from '.alinea/web'
 import {GetStaticPropsContext} from 'next'
-import {pageViewQuery} from 'src/view/PageView.query'
+import {Page, pages} from '../../.alinea/web'
 import {server} from '../../alinea.server'
 import {PageView} from '../view/PageView'
+import {pageViewQuery} from '../view/PageView.query'
 
 export async function getStaticProps(context: GetStaticPropsContext) {
   const from = context.preview

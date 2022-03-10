@@ -1,19 +1,11 @@
-import {px} from '@alinea/ui'
+import {fromModule} from '@alinea/ui'
 import {HTMLAttributes, PropsWithChildren} from 'react'
+import css from './Container.module.scss'
+
+const styles = fromModule(css)
 
 export function Container(
   props: PropsWithChildren<HTMLAttributes<HTMLDivElement>>
 ) {
-  return (
-    <div
-      style={{
-        paddingLeft: px(25),
-        paddingRight: px(25),
-        maxWidth: px(960),
-        width: '100%',
-        margin: '0 auto'
-      }}
-      {...props}
-    />
-  )
+  return <div {...props} className={styles.root.mergeProps(props)()} />
 }

@@ -1,6 +1,6 @@
-import {Home} from '.alinea/web'
 import {Entry} from '@alinea/core'
 import {Store} from '@alinea/store'
+import {Home} from '../../../.alinea/web'
 
 export function headerQuery() {
   const links = Home.links.each()

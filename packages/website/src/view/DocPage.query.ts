@@ -1,8 +1,14 @@
-import {Doc} from '.alinea/web'
-import {Collection, Expr, Store} from '@alinea/store'
+import {Collection, Store} from '@alinea/store'
+import {Doc, Page} from '../../.alinea/web'
 
-function docPagesMenuQuery() {
-  return {todo: Expr.value(0)}
+function menuQuery() {
+  return Page.where(Page.type.is('Doc').or(Page.type.is('Docs')))
+    .select({
+      type: Page.type,
+      url: Page.url,
+      title: Page.title
+    })
+    .orderBy(Page.index.asc())
 }
 
 export function docPageQuery(doc: Collection<Doc>) {
@@ -10,13 +16,16 @@ export function docPageQuery(doc: Collection<Doc>) {
     url: Doc.url,
     title: Doc.title
   })
-  const prev = siblings.where(Doc.index.less(doc.index)).first()
+  const prev = siblings
+    .orderBy(Doc.index.desc())
+    .where(Doc.index.less(doc.index))
+    .first()
   const next = siblings
     .orderBy(Doc.index.asc())
     .where(Doc.index.greater(doc.index))
     .first()
   return doc.fields.with({
-    menu: docPagesMenuQuery(),
+    menu: menuQuery(),
     prev,
     next
   })

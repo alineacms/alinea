@@ -84,7 +84,10 @@ export interface CollectionConstructor {
   ): Collection<Row>
 }
 
-export type Collection<T> = CollectionImpl<T> &
-  (T extends {} ? FieldsOf<UnionToIntersection<RequiredKeepUndefined<T>>> : T)
+export type Collection<T = object> = CollectionImpl<T> &
+  FieldsOf<UnionToIntersection<RequiredKeepUndefined<T>>>
 
 export const Collection = CollectionImpl as CollectionConstructor
+
+type Hover = Collection<{type: 'ab'} | {type: 'cd'}>
+type Condition = {type: 'ab'} | {type: 'cd'} extends {} ? true : false

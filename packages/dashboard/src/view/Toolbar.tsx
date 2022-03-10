@@ -6,7 +6,7 @@ import {
   TextLabel,
   useColorScheme
 } from '@alinea/ui'
-import {Logo} from '@alinea/ui/branding/Logo'
+import {LogoShape} from '@alinea/ui/branding/LogoShape'
 import {HStack} from '@alinea/ui/Stack'
 import {contrastColor} from '@alinea/ui/util/ContrastColor'
 import {createSlots} from '@alinea/ui/util/Slots'
@@ -35,9 +35,9 @@ export namespace Toolbar {
           <DropdownMenu.Root>
             <DropdownMenu.Trigger>
               <HStack center gap={16}>
-                <Logo>
+                <LogoShape>
                   <RiFlashlightFill />
-                </Logo>
+                </LogoShape>
                 <HStack center gap={4}>
                   <div style={{fontSize: '13px'}}>
                     <TextLabel label={name} />
@@ -56,12 +56,12 @@ export namespace Toolbar {
                     onClick={() => history.push(nav.entry(key, firstRoot))}
                   >
                     <HStack center gap={16}>
-                      <Logo
+                      <LogoShape
                         foreground={contrastColor(workspace.color)}
                         background={workspace.color}
                       >
                         <RiFlashlightFill />
-                      </Logo>
+                      </LogoShape>
                       <div>
                         <TextLabel label={workspace.name} />
                       </div>
