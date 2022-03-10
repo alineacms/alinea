@@ -1,30 +1,5 @@
 module.exports = {
   webpack: (config, {buildId, dev, isServer, defaultLoaders, webpack}) => {
-    config.experiments = {
-      ...config.experiments,
-      topLevelAwait: true,
-      asyncWebAssembly: true
-    }
-
-    // https://github.com/vercel/next.js/issues/25852#issuecomment-1057059000
-    config.plugins.push({
-      apply(compiler) {
-        compiler.hooks.afterEmit.tapPromise(
-          'SymlinkWebpackPlugin',
-          async compiler => {
-            if (isServer) {
-              const {join} = require('path')
-              const {copySync} = require('fs-extra')
-              const actual = join(compiler.options.output.path, 'static')
-              const expected = join(compiler.options.output.path, '../static')
-              copySync(actual, expected)
-              console.log(`copied ${actual} -> ${expected}`)
-            }
-          }
-        )
-      }
-    })
-
     // https://github.com/vercel/next.js/issues/17806#issuecomment-913437792
     config.module.rules.push({
       test: /\.m?js$/,

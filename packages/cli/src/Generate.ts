@@ -160,8 +160,8 @@ export type GenerateOptions = {
 }
 
 export async function generate(options: GenerateOptions) {
-  const hybrid = true,
-    legacy = false
+  const hybrid = false,
+    legacy = true
   const cwd = options.cwd || process.cwd()
   const configLocation = path.join(cwd, options.config || './alinea.config.tsx')
   const outdir = path.join(cwd, options.outdir || './.alinea')
