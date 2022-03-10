@@ -11,7 +11,7 @@ module.exports = {
       apply(compiler) {
         compiler.hooks.afterEmit.tapPromise(
           'SymlinkWebpackPlugin',
-          compiler => {
+          async compiler => {
             if (isServer) {
               const {join} = require('path')
               const {copySync} = require('fs-extra')
