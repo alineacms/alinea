@@ -20,20 +20,16 @@ import {
   verticalListSortingStrategy
 } from '@dnd-kit/sortable'
 import useSize from '@react-hook/size'
-import {useMemo, useRef, useState} from 'react'
+import {useLayoutEffect, useMemo, useRef, useState} from 'react'
+import {useHistory} from 'react-router'
 import VirtualList from 'react-tiny-virtual-list'
 import {useContentTree} from '../hook/UseContentTree'
+import {useDashboard} from '../hook/UseDashboard'
 import {useDrafts} from '../hook/UseDrafts'
 import css from './ContentTree.module.scss'
 import {TreeNode, TreeNodeSortable} from './tree/TreeNode'
 
 const styles = fromModule(css)
-
-type ContentTreeProps = {
-  workspace: string
-  root: string
-  select?: Array<string>
-}
 
 const layoutMeasuringConfig = {
   strategy: LayoutMeasuringStrategy.Always
@@ -69,7 +65,19 @@ function sortByIndex(entries: Array<Entry.Summary>) {
   })
 }
 
-export function ContentTree({workspace, root, select = []}: ContentTreeProps) {
+export type ContentTreeProps = {
+  workspace: string
+  root: string
+  select?: Array<string>
+  redirectToRoot?: boolean
+}
+
+export function ContentTree({
+  workspace,
+  root,
+  select = [],
+  redirectToRoot
+}: ContentTreeProps) {
   const {
     entries: treeEntries,
     isOpen,
@@ -148,6 +156,17 @@ export function ContentTree({workspace, root, select = []}: ContentTreeProps) {
       console.error(e)
     }
   }
+
+  // Not sure if this should belong here but it's convenient for now
+  const history = useHistory()
+  const {nav} = useDashboard()
+  useLayoutEffect(() => {
+    if (redirectToRoot && entries.length > 0) {
+      const first = entries[0]
+      if (first.workspace === workspace && first.root === root)
+        history.replace(nav.entry(first.workspace, first.root, first.id))
+    }
+  }, [workspace, root, redirectToRoot, entries])
 
   return (
     <DndContext

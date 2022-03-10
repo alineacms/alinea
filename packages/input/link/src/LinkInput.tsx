@@ -88,7 +88,7 @@ function LinkInputRow({
             </div>
           )}
           {entry && <LinkInputEntryRow key={entry.id} entry={entry} />}
-          <div>
+          <div style={{marginLeft: 'auto'}}>
             <IconButton icon={MdDelete} onClick={onRemove} />
           </div>
         </HStack>

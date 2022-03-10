@@ -110,13 +110,13 @@ type EntryRouteProps = {
 }
 
 function EntryRoute({id}: EntryRouteProps) {
-  const {config, nav} = useDashboard()
+  const {nav} = useDashboard()
   const {workspace} = useWorkspace()
   const {root} = useRoot()
   const {draft, isLoading} = useDraft(id)
   const type = draft?.channel
   const View = type?.options.view || EntryEdit
-  const selected = ([] as Array<string | undefined>)
+  const select = ([] as Array<string | undefined>)
     .concat(draft?.parents)
     .concat(draft?.id)
     .filter(Boolean) as Array<string>
@@ -134,7 +134,8 @@ function EntryRoute({id}: EntryRouteProps) {
           key={workspace}
           workspace={workspace}
           root={root}
-          select={selected}
+          select={select}
+          redirectToRoot={!id}
         />
       </Pane>
       <div style={{width: '100%', height: '100%'}}>
