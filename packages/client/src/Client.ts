@@ -14,15 +14,19 @@ async function toFuture<T = void>(res: Response): Future<T> {
   return Outcome.fromJSON<T>(await res.json())
 }
 
+type AuthenticateRequest = (request?: RequestInit) => RequestInit | undefined
+
 export class Client<T extends Workspaces> implements Hub<T> {
   constructor(
     public config: Config<T>,
-    protected url: string,
-    protected applyAuth: (
-      request?: RequestInit
-    ) => RequestInit | undefined = v => v,
+    public url: string,
+    protected applyAuth: AuthenticateRequest = v => v,
     protected unauthorized: () => void = () => {}
   ) {}
+
+  authenticate(applyAuth: AuthenticateRequest, unauthorized: () => void) {
+    return new Client(this.config, this.url, applyAuth, unauthorized)
+  }
 
   entry(id: string, stateVector?: Uint8Array): Future<Entry.Detail | null> {
     return this.fetchJson(Hub.routes.entry(id, stateVector), {

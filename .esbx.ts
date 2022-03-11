@@ -228,11 +228,15 @@ const devOptions: BuildOptions = {
   plugins: [
     ...buildOptions.plugins,
     AliasPlugin.configure(aliases),
+    AliasPlugin.configure({
+      path: path.resolve('node_modules/path-browserify/index.js')
+    }),
     InternalPackages,
     ReporterPlugin.configure({name: 'Client'}),
     ReloadPlugin,
     GeneratePlugin
   ],
+  external: ['fs'],
   define: {
     'process.env.NODE_ENV': '"development"',
     'process.env.__NEXT_TRAILING_SLASH': String(true),
