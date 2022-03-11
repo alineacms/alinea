@@ -3,6 +3,7 @@
 .root {
   position: relative;
   padding-left: 35px;
+  margin-left: -80px;
   @media (max-width: 980px) {
     display: none;
   }
