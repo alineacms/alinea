@@ -9,10 +9,16 @@ const buffer = decode('$DB')
 
 const sqlJsInit = initSqlJs({
   instantiateWasm(imports, resolve) {
-    const module = new WebAssembly.Module(sqlJs)
-    const instance = new WebAssembly.Instance(module, imports)
-    resolve(instance)
-    return instance.exports
+    const intantiate =
+      typeof window !== 'undefined' && window.Response
+        ? WebAssembly.instantiateStreaming(
+            new Response(sqlJs, {
+              headers: {'content-type': 'application/wasm'}
+            }),
+            imports
+          )
+        : WebAssembly.instantiate(new WebAssembly.Module(sqlJs), imports)
+    intantiate.then(res => resolve(res.instance || res))
   }
 })
 

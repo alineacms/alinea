@@ -23,7 +23,7 @@ export class IndexedDBDrafts implements Drafts {
     const db = await this.db
     const [store] = idb.transact(db, [STORE_NAME], 'readonly')
     const draft = await idb.get(store, id)
-    if (!(draft instanceof ArrayBuffer)) return undefined
+    if (!(draft instanceof Uint8Array)) return undefined
     const update = new Uint8Array(draft)
     if (!stateVector) return update
     const doc = new Y.Doc()
@@ -33,13 +33,13 @@ export class IndexedDBDrafts implements Drafts {
 
   async update(id: string, update: Uint8Array): Promise<Drafts.Update> {
     const db = await this.db
-    const [store] = idb.transact(db, [STORE_NAME])
     const doc = new Y.Doc()
     const current = await this.get(id)
     if (current) Y.applyUpdate(doc, current)
     Y.applyUpdate(doc, update)
     const draft = Y.encodeStateAsUpdate(doc)
-    idb.put(store, draft, id)
+    const [store] = idb.transact(db, [STORE_NAME])
+    await idb.put(store, draft, id)
     return {id, update: draft}
   }
 
@@ -64,7 +64,7 @@ export class IndexedDBDrafts implements Drafts {
     for await (const id of ids) {
       yield {
         id,
-        update: new Uint8Array((await idb.get(store, id)) as ArrayBuffer)
+        update: (await idb.get(store, id)) as Uint8Array
       }
     }
   }
