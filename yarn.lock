@@ -343,6 +343,7 @@ __metadata:
     cross-env: ^7.0.3
     find-config: ^1.0.0
     next: ^12.1.0
+    postcss-pxtorem: ^6.0.0
   languageName: unknown
   linkType: soft
 

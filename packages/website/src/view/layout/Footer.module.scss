@@ -1,4 +1,10 @@
+@import '@alinea/website/src/style.scss';
+
 .root {
   position: relative;
-  padding: 60px 0;
+  padding: 30px 45px;
+
+  @include ml {
+    padding: 40px 45px;
+  }
 }

@@ -3,10 +3,13 @@ import {Doc, Page} from '../../.alinea/web'
 
 function menuQuery() {
   return Page.where(Page.type.is('Doc').or(Page.type.is('Docs')))
+    .where(Page.id.isNot('docs'))
     .select({
+      id: Page.id,
       type: Page.type,
       url: Page.url,
-      title: Page.title
+      title: Page.title,
+      parent: Page.parent
     })
     .orderBy(Page.index.asc())
 }

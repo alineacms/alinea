@@ -6,11 +6,7 @@ import {layoutQuery} from './layout/Layout.query'
 
 export function pageViewQuery(Page: Collection<Page>) {
   return {
-    layout: layoutQuery(),
-    meta: {
-      title: Page.title,
-      url: Page.url
-    },
+    layout: layoutQuery(Page),
     entry: Page.type.case(
       {
         Home: homePageQuery(Page as Collection<Home>),

@@ -1,9 +1,10 @@
-import {Field, Label, Reference, Value} from '@alinea/core'
+import {Field, Label, Reference, Type, Value} from '@alinea/core'
 import {RecordValue} from '@alinea/core/value/RecordValue'
 
 export type LinkType = 'entry' | 'image' | 'file' | 'external'
 
-export type LinkOptions = {
+export type LinkOptions<T> = {
+  fields?: Type<T>
   width?: number
   optional?: boolean
   help?: Label
@@ -12,20 +13,24 @@ export type LinkOptions = {
   max?: number
 }
 
-export interface LinkField extends Field<Array<Reference>> {
+export interface LinkField<T> extends Field<Array<Reference & T>> {
   label: Label
-  options: LinkOptions
+  options: LinkOptions<T>
 }
 
-export function createLink(label: Label, options: LinkOptions = {}): LinkField {
+export function createLink<T = {}>(
+  label: Label,
+  options: LinkOptions<T> = {}
+): LinkField<T> {
+  const extra = options.fields?.valueType
   return {
     type: Value.List({
       entry: new RecordValue({
         entry: Value.Scalar
-      }),
+      }).concat(extra),
       url: new RecordValue({
         url: Value.Scalar
-      })
+      }).concat(extra)
     }),
     label,
     options

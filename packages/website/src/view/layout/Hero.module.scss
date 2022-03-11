@@ -1,19 +1,29 @@
+@import '@alinea/website/src/style.scss';
+
 .root {
   display: flex;
   align-items: center;
   justify-content: center;
   text-align: center;
   padding-bottom: 60px;
+  flex-grow: 1;
 }
 
 .title {
-  font-family: 'IBM Plex Sans';
   font-size: 75px;
   line-height: 1;
   margin-bottom: 24px;
   font-weight: bold;
   white-space: pre-line;
   color: hsl(340, 11%, 24%);
+
+  @include s {
+    font-size: 45px;
+  }
+
+  @include m {
+    font-size: 60px;
+  }
 }
 
 .action {
@@ -24,4 +34,20 @@
   padding: 10px 16px;
   border-radius: 25px;
   margin-top: 20px;
+  font-size: 14px;
+
+  @include ml {
+    font-size: 16px;
+  }
+}
+
+.byLine {
+  font-size: 14px;
+  line-height: 1.4;
+  max-width: 50ch;
+
+  @include ml {
+    font-size: 16px;
+    white-space: pre-line;
+  }
 }

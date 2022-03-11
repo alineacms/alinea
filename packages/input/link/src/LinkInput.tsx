@@ -1,9 +1,17 @@
-import {Entry, Media, Outcome, Reference, View} from '@alinea/core'
+import {Entry, Media, Outcome, Reference, Type, View} from '@alinea/core'
 import {useReferencePicker, useSession, useWorkspace} from '@alinea/dashboard'
 import {EntrySummaryRow} from '@alinea/dashboard/view/entry/EntrySummary'
-import {InputLabel, InputState, useInput} from '@alinea/editor'
+import {Fields, InputLabel, InputState, useInput} from '@alinea/editor'
 import {Expr} from '@alinea/store'
-import {Create, fromModule, HStack, IconButton, Typo} from '@alinea/ui'
+import {
+  Card,
+  Create,
+  fromModule,
+  HStack,
+  IconButton,
+  Typo,
+  VStack
+} from '@alinea/ui'
 import {
   closestCenter,
   defaultDropAnimation,
@@ -46,7 +54,9 @@ function LinkInputEntryRow({entry}: LinkInputEntryRowProps) {
   return <View key={entry.id} {...entry} />
 }
 
-type LinkInputRowProps = {
+type LinkInputRowProps<T> = {
+  fields: Type<T> | undefined
+  state: InputState<T>
   reference: Reference
   entryData: (id: string) => Entry.Minimal | undefined
   onRemove: () => void
@@ -57,7 +67,9 @@ type LinkInputRowProps = {
   rootRef?: Ref<HTMLDivElement>
 } & HTMLAttributes<HTMLDivElement>
 
-function LinkInputRow({
+function LinkInputRow<T>({
+  fields,
+  state,
   reference,
   entryData,
   onRemove,
@@ -67,31 +79,41 @@ function LinkInputRow({
   isDragOverlay,
   isSortable,
   ...rest
-}: LinkInputRowProps) {
+}: LinkInputRowProps<T>) {
   switch (reference.type) {
     case 'entry':
       const entry = entryData(reference.entry)
       return (
-        <HStack
-          gap={8}
-          center
-          className={styles.row({dragging: isDragging, overlay: isDragOverlay})}
-          ref={rootRef}
-          {...rest}
-        >
-          {isSortable && (
-            <div {...handle}>
-              <IconButton
-                icon={MdDragHandle}
-                style={{cursor: handle ? 'grab' : 'grabbing'}}
-              />
+        <Card.Root ref={rootRef} {...rest}>
+          <HStack
+            gap={8}
+            center
+            className={styles.row({
+              // dragging: isDragging,
+              // overlay: isDragOverlay
+            })}
+          >
+            {isSortable && (
+              <div {...handle}>
+                <IconButton
+                  icon={MdDragHandle}
+                  style={{cursor: handle ? 'grab' : 'grabbing'}}
+                />
+              </div>
+            )}
+            <div>
+              {entry && <LinkInputEntryRow key={entry.id} entry={entry} />}
             </div>
+            <div style={{marginLeft: 'auto'}}>
+              <IconButton icon={MdDelete} onClick={onRemove} />
+            </div>
+          </HStack>
+          {fields && (
+            <Card.Content style={{paddingTop: 0}}>
+              <Fields fields={fields.fields} state={state} />
+            </Card.Content>
           )}
-          {entry && <LinkInputEntryRow key={entry.id} entry={entry} />}
-          <div style={{marginLeft: 'auto'}}>
-            <IconButton icon={MdDelete} onClick={onRemove} />
-          </div>
-        </HStack>
+        </Card.Root>
       )
 
     case 'url':
@@ -105,7 +127,7 @@ function animateLayoutChanges(args: FirstArgument<AnimateLayoutChanges>) {
   return true
 }
 
-function LinkInputRowSortable(props: LinkInputRowProps) {
+function LinkInputRowSortable<T>(props: LinkInputRowProps<T>) {
   const {attributes, listeners, setNodeRef, transform, transition, isDragging} =
     useSortable({
       animateLayoutChanges,
@@ -160,17 +182,17 @@ function restrictByType(
   return condition
 }
 
-export type LinkInputProps = {
+export type LinkInputProps<T> = {
   state: InputState<Array<Reference>>
-  field: LinkField
+  field: LinkField<T>
 }
 
-export function LinkInput({state, field}: LinkInputProps) {
+export function LinkInput<T>({state, field}: LinkInputProps<T>) {
   const {hub} = useSession()
   const [value, {push, move, remove}] = useInput(state)
   const {schema} = useWorkspace()
   const {pickLink} = useReferencePicker()
-  const {type, width, inline, optional, help, max} = field.options
+  const {fields, type, width, inline, optional, help, max} = field.options
   const types = Array.isArray(type) ? type : type ? [type] : []
 
   const cursor = useMemo(() => {
@@ -265,17 +287,21 @@ export function LinkInput({state, field}: LinkInputProps) {
         <div className={styles.root()}>
           <div className={styles.root.inner()}>
             <SortableContext items={ids} strategy={verticalListSortingStrategy}>
-              {value.map(reference => {
-                return (
-                  <LinkInputRowSortable
-                    key={reference.id}
-                    entryData={id => data?.get(id)}
-                    reference={reference}
-                    onRemove={() => remove(reference.id)}
-                    isSortable={max !== 1}
-                  />
-                )
-              })}
+              <VStack gap={8}>
+                {value.map(reference => {
+                  return (
+                    <LinkInputRowSortable
+                      key={reference.id}
+                      fields={fields}
+                      state={state.child(reference.id)}
+                      entryData={id => data?.get(id)}
+                      reference={reference}
+                      onRemove={() => remove(reference.id)}
+                      isSortable={max !== 1}
+                    />
+                  )
+                })}
+              </VStack>
             </SortableContext>
 
             <DragOverlay
@@ -286,10 +312,13 @@ export function LinkInput({state, field}: LinkInputProps) {
             >
               {dragging ? (
                 <LinkInputRow
+                  fields={fields}
+                  state={state.child(dragging.id)}
                   entryData={id => data?.get(id)}
                   reference={dragging}
                   onRemove={() => remove(dragging.id)}
                   isDragOverlay
+                  isSortable={max !== 1}
                 />
               ) : null}
             </DragOverlay>

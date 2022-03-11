@@ -9,7 +9,7 @@ export function headerQuery() {
     links: links
       .where(links.get('type').is('entry'))
       .innerJoin(Link, Link.id.is(links.get('entry')))
-      .select({id: Link.id, title: Link.title, url: Link.url})
+      .select({id: Link.id, title: links.get('title'), url: Link.url})
   }).first()
 }
 
