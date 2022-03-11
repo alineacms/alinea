@@ -7,4 +7,10 @@
   @include ml {
     padding: 40px 45px;
   }
+
+  &-link {
+    font-size: 13px;
+    text-underline-offset: 0.3em;
+    color: inherit;
+  }
 }
