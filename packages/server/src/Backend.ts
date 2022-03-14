@@ -1,5 +1,4 @@
 import {
-  Auth,
   Config,
   createError,
   createId,
@@ -20,6 +19,7 @@ import * as Y from 'yjs'
 import {Cache} from './Cache'
 import {Data} from './Data'
 import {Drafts} from './Drafts'
+import {Previews} from './Previews'
 import {PreviewStore, previewStore} from './PreviewStore'
 import {parentUrl, walkUrl} from './util/Urls'
 
@@ -29,18 +29,13 @@ export type BackendOptions<T extends Workspaces> = {
   drafts: Drafts
   target: Data.Target
   media: Data.Media
-  auth?: Auth.Server
+  previews: Previews
 }
 
-export abstract class Backend<T extends Workspaces = Workspaces>
-  implements Hub<T>
-{
+export class Backend<T extends Workspaces = Workspaces> implements Hub<T> {
   config: Config<T>
   preview: PreviewStore
   createStore: () => Promise<Store>
-
-  abstract signToken(tokenData: string | object | Buffer): string
-  abstract verifyToken<T>(token: string): T
 
   constructor(public options: BackendOptions<T>) {
     this.config = options.config
@@ -56,7 +51,7 @@ export abstract class Backend<T extends Workspaces = Workspaces>
     id: string,
     stateVector?: Uint8Array
   ): Future<Entry.Detail | null> {
-    const {config, drafts} = this.options
+    const {config, drafts, previews} = this.options
     let draft = await drafts.get(id, stateVector)
     if (draft) {
       const doc = new Y.Doc()
@@ -75,7 +70,7 @@ export abstract class Backend<T extends Workspaces = Workspaces>
         entry && {
           entry,
           draft: draft && encode(draft),
-          previewToken: this.signToken({id})
+          previewToken: previews.sign({id})
         }
       )
     })
@@ -175,10 +170,11 @@ export abstract class Backend<T extends Workspaces = Workspaces>
     return this.options.drafts
   }
 
-  async parsePreviewToken(
-    previewToken: string
-  ): Promise<{id: string; url: string}> {
-    const {id} = this.verifyToken<{id: string}>(previewToken)
+  async parsePreviewToken(token: string): Promise<{id: string; url: string}> {
+    const {previews} = this.options
+    const [tokenData, err] = outcome(() => previews.verify(token))
+    if (!tokenData) throw createError(400, 'Incorrect token')
+    const {id} = tokenData
     const store = await this.preview.getStore()
     await this.preview.fetchUpdate(id)
     const entry = store.first(

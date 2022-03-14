@@ -1,17 +1,16 @@
-import {Workspaces} from '@alinea/core'
+import {Auth, Workspaces} from '@alinea/core'
 import express from 'express'
 import {
   createServer as createHttpServer,
   IncomingMessage,
   ServerResponse
 } from 'http'
-import jwt from 'jsonwebtoken'
 import {Backend, BackendOptions} from './Backend'
 import {createServerRouter} from './router/ServerRouter'
 import {finishResponse} from './util/FinishResponse'
 
 export type ServerOptions<T extends Workspaces> = {
-  jwtSecret: string
+  auth?: Auth.Server
 } & BackendOptions<T>
 
 export class Server<T extends Workspaces = Workspaces> extends Backend<T> {
@@ -20,16 +19,6 @@ export class Server<T extends Workspaces = Workspaces> extends Backend<T> {
   constructor(public options: ServerOptions<T>) {
     super(options)
     this.app.use(createServerRouter(this))
-  }
-
-  signToken(tokenData: string | object | Buffer): string {
-    const {jwtSecret} = this.options
-    return jwt.sign(tokenData, jwtSecret)
-  }
-
-  verifyToken<T>(token: string): T {
-    const {jwtSecret} = this.options
-    return jwt.verify(token, jwtSecret) as T
   }
 
   respond = (req: IncomingMessage, res: ServerResponse): Promise<void> => {

@@ -3,6 +3,7 @@ import {PasswordLessAuth} from '@alinea/auth.passwordless/PasswordLessAuth.js'
 import {JsonLoader, Server} from '@alinea/server'
 import {GithubData} from '@alinea/server/data/GithubData.js'
 import {RedisDrafts} from '@alinea/server/drafts/RedisDrafts.js'
+import {JWTPreviews} from '@alinea/server/util/JWTPreviews.js'
 import dotenv from 'dotenv'
 import findConfig from 'find-config'
 import Redis from 'ioredis'
@@ -58,5 +59,5 @@ export const server = new Server({
   drafts: drafts,
   target: data,
   media: data,
-  jwtSecret: process.env.JWT_SECRET!
+  previews: new JWTPreviews(process.env.JWT_SECRET!)
 })
