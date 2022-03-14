@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "@alinea/core": "0.0.0",
+    "@alinea/sqlite-wasm": "^0.0.1",
     "@alinea/store": "0.0.0",
     "@octokit/rest": "^18.12.0",
     "auto-bind": "^5.0.1",

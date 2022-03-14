@@ -265,6 +265,7 @@ __metadata:
   resolution: "@alinea/server@workspace:packages/server"
   dependencies:
     "@alinea/core": 0.0.0
+    "@alinea/sqlite-wasm": ^0.0.1
     "@alinea/store": 0.0.0
     "@octokit/rest": ^18.12.0
     "@types/busboy": ^1.3.0
@@ -297,6 +298,15 @@ __metadata:
     y-protocols: ^1.0.5
   languageName: unknown
   linkType: soft
+
+"@alinea/sqlite-wasm@npm:^0.0.1":
+  version: 0.0.1
+  resolution: "@alinea/sqlite-wasm@npm:0.0.1"
+  dependencies:
+    base64-arraybuffer: ^1.0.2
+  checksum: 7c31dc288d01c1529dcf5fc972c4e42c6e97d8c8f30c826e7e6c188d6565a6892a7dfb42fab4fde4554e4ac0fdc04978a9a4730c7c2f1d1db1034866c6dc6049
+  languageName: node
+  linkType: hard
 
 "@alinea/store@0.0.0, @alinea/store@workspace:packages/store":
   version: 0.0.0-use.local
@@ -2841,6 +2851,13 @@ __metadata:
   version: 1.0.1
   resolution: "base64-arraybuffer@npm:1.0.1"
   checksum: 04b6fe6818b1c79774fa8aea169063521ad177f2ba04d2a4a0f00fca297d516319b551a3cda76050263da751b4ffb07d939fc1b5eb155f0e429659733e60afb0
+  languageName: node
+  linkType: hard
+
+"base64-arraybuffer@npm:^1.0.2":
+  version: 1.0.2
+  resolution: "base64-arraybuffer@npm:1.0.2"
+  checksum: 15e6400d2d028bf18be4ed97702b11418f8f8779fb8c743251c863b726638d52f69571d4cc1843224da7838abef0949c670bde46936663c45ad078e89fee5c62
   languageName: node
   linkType: hard
 

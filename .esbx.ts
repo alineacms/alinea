@@ -188,7 +188,7 @@ const InternalPackages: Plugin = {
       const segments = args.path.split('/')
       const pkg = segments.slice(0, 2).join('/')
       const location = paths[pkg]
-      if (!location) throw `${pkg} not found`
+      if (!location) return
       const loc = ['.', location, 'src', ...segments.slice(2)].join('/')
       return await build.resolve(loc, {resolveDir: process.cwd()})
     })
@@ -211,7 +211,9 @@ async function generate() {
     platform: 'node',
     ...buildOptions,
     outfile,
-    external: modules.filter(m => !m.includes('@alinea')),
+    external: modules.filter(
+      m => !m.includes('@alinea') || m.includes('@alinea/sqlite-wasm')
+    ),
     plugins: [
       ...buildOptions.plugins,
       InternalPackages,
@@ -256,6 +258,7 @@ const aliases = Object.fromEntries(
 const devOptions: BuildOptions = {
   ...buildOptions,
   watch: true,
+  minify: true,
   splitting: true,
   entryPoints: {client: 'packages/stories/src/local.tsx'},
   bundle: true,
@@ -274,7 +277,7 @@ const devOptions: BuildOptions = {
   ],
   external: ['fs'],
   define: {
-    'process.env.NODE_ENV': '"development"',
+    'process.env.NODE_ENV': '"production"',
     'process.env.__NEXT_TRAILING_SLASH': String(true),
     'process.env.__NEXT_I18N_SUPPORT': String(false),
     'process.env.__NEXT_ROUTER_BASEPATH': '""',
