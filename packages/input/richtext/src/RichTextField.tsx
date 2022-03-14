@@ -15,10 +15,13 @@ export interface RichTextField<T> extends Field<TextDoc<T>> {
   options: RichTextOptions<T>
 }
 
-export function createRichText<T = never>(
+export function createRichText<T>(
   label: Label,
   options: RichTextOptions<T> = {}
-): RichTextField<T> {
+): {
+  label: Label
+  options: RichTextOptions<T>
+} & Field<TextDoc<T>> {
   return {
     type: Value.RichText(options.blocks?.valueTypes),
     label,

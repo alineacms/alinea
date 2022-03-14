@@ -1,6 +1,5 @@
-import {fromModule, Typo} from '@alinea/ui'
+import {fromModule} from '@alinea/ui'
 import Link from 'next/link'
-import {Container} from './Container'
 import css from './Footer.module.scss'
 
 const styles = fromModule(css)
@@ -8,11 +7,9 @@ const styles = fromModule(css)
 export function Footer() {
   return (
     <footer className={styles.root()}>
-      <Container>
-        <Link href="/admin" passHref>
-          <Typo.Link>Go to admin panel</Typo.Link>
-        </Link>
-      </Container>
+      <Link href="/admin">
+        <a className={styles.root.link()}>Go to admin panel</a>
+      </Link>
     </footer>
   )
 }

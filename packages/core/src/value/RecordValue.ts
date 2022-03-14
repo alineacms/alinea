@@ -9,7 +9,8 @@ export class RecordValue<T extends Record<string, any> = {}>
   implements Value<T, RecordMutator<T>>
 {
   constructor(public shape: Record<string, Value>) {}
-  concat<X>(that: RecordValue<X>): RecordValue<T & X> {
+  concat<X>(that: RecordValue<X> | undefined): RecordValue<T & X> {
+    if (!that) return this as RecordValue<T & X>
     return new RecordValue({...this.shape, ...that.shape})
   }
   create() {

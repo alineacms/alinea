@@ -1,4 +1,16 @@
+@import '@alinea/website/src/style.scss';
+
 .root {
-  padding: 60px 0;
-  background: rgba(var(--negative), 0.1);
+  position: relative;
+  padding: 30px 45px;
+
+  @include ml {
+    padding: 40px 45px;
+  }
+
+  &-link {
+    font-size: 13px;
+    text-underline-offset: 0.3em;
+    color: inherit;
+  }
 }

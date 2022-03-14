@@ -4,7 +4,7 @@ import {SqliteStore} from '@alinea/store/sqlite/SqliteStore.js'
 import initSqlJs from 'sql.js-fts5'
 // Todo: this won't work with the wasm import proposal because we can't pass
 // imports to it, so we'll probably end up inlining the wasm code.
-import * as sqlExports from 'sql.js/dist/sql-wasm.wasm'
+import * as sqlExports from 'sql.js-fts5/dist/sql-wasm.wasm'
 import * as cacheExports from './cache.wasm'
 
 function unpack(exports) {

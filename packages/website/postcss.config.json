@@ -1,0 +1,11 @@
+{
+  "plugins": [
+    [
+      "postcss-pxtorem",
+      {
+        "propList": ["*"],
+        "minPixelValue": 2
+      }
+    ]
+  ]
+}

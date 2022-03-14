@@ -51,9 +51,17 @@ export function useContentTree({
   root,
   select
 }: UseContentTreeOptions) {
+  const persistenceId = `@alinea/dashboard/tree-${workspace}-${root}`
   const {config} = useDashboard()
   const {hub} = useSession()
-  const [open, setOpen] = useState(() => new Set<string>(select))
+  const [open, setOpen] = useState(() => {
+    const stored = window?.localStorage?.getItem(persistenceId)
+    const opened = stored && JSON.parse(stored)
+    return new Set<string>([
+      ...select,
+      ...(Array.isArray(opened) ? opened : [])
+    ])
+  })
   const isOpen = useCallback((id: string) => open.has(id), [open])
   const toggleOpen = useCallback(
     (id: string) => {
@@ -61,6 +69,7 @@ export function useContentTree({
         const res = new Set(currentOpen)
         if (res.has(id)) res.delete(id)
         else res.add(id)
+        window?.localStorage?.setItem(persistenceId, JSON.stringify([...res]))
         return res
       })
     },

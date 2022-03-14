@@ -1,8 +1,9 @@
 import '@alinea/css'
 import '@alinea/css/global.css'
 import type {AppProps} from 'next/app'
+import type {PageViewProps} from '../view/PageView.query'
 
-export function App({Component, pageProps}: AppProps<any>) {
+export function App({Component, pageProps}: AppProps<PageViewProps>) {
   return <Component {...pageProps} />
 }
 

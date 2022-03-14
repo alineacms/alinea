@@ -1,0 +1,20 @@
+@import '@alinea/website/src/style.scss';
+
+.root {
+  position: relative;
+  padding-left: 35px;
+  margin-left: -80px;
+  @media (max-width: 980px) {
+    display: none;
+  }
+
+  &-inner {
+    border-radius: 30px;
+    position: sticky;
+    top: 20px;
+    z-index: 1;
+    padding: 40px 40px;
+    background: hsl(0, 12%, 98%);
+    box-shadow: 0px 10px 50px rgba(0, 0, 0, 0.08);
+  }
+}

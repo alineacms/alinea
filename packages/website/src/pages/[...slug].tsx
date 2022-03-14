@@ -1,9 +1,13 @@
+import {Page, pages} from '../../.alinea/web'
 import {PageView} from '../view/PageView'
 
-export function getStaticPaths() {
+export async function getStaticPaths() {
+  const urls = await pages.all(
+    Page.where(Page.type.isIn(['Doc'])).select({url: Page.url})
+  )
   return {
     fallback: 'blocking',
-    paths: []
+    paths: urls.map(({url}) => ({params: {slug: url.split('/').slice(1)}}))
   }
 }
 

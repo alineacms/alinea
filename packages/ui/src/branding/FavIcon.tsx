@@ -1,10 +1,10 @@
 import {Helmet} from 'react-helmet'
 import {useContrastColor} from '../hook/UseContrastColor'
+import {btoa} from '../util/Base64'
 
 type FavIconProps = {
   color: string
 }
-
 export function FavIcon({color}: FavIconProps) {
   const accentColorForeground = useContrastColor(color)
 

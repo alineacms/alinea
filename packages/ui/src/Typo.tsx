@@ -1,4 +1,4 @@
-import {HTMLAttributes, Ref} from 'react'
+import {forwardRef, HTMLAttributes, Ref} from 'react'
 import css from './Typo.module.scss'
 import {forwardRefWithAs, PropsWithAs} from './util/PropsWithAs'
 import {fromModule} from './util/Styler'
@@ -78,9 +78,14 @@ export namespace Typo {
     )
   }
 
-  function LinkComponent(props: HTMLAttributes<HTMLAnchorElement>) {
-    return <a {...props} className={styles.link.mergeProps(props)()} />
-  }
+  const LinkComponent = forwardRef(function LinkComponent(
+    props: HTMLAttributes<HTMLAnchorElement>,
+    ref: Ref<HTMLAnchorElement>
+  ) {
+    return (
+      <a {...props} ref={ref} className={styles.link.mergeProps(props)()} />
+    )
+  })
 
   function MonospaceComponent(props: HTMLAttributes<HTMLSpanElement>) {
     return <span {...props} className={styles.monospace.mergeProps(props)()} />

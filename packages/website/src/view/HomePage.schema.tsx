@@ -14,10 +14,21 @@ export const HomePageSchema = type(
       }),
       path: path('Path', {width: 0.5}),
       headline: text('Headline', {multiline: true}),
-      byline: text('Byline', {multiline: true})
+      byline: text('Byline', {multiline: true}),
+      action: link('Action', {
+        max: 1,
+        fields: type('Fields', {
+          label: text('Button label')
+        })
+      })
     }),
     tab('Top navigation', {
-      links: link('Links', {type: 'entry'})
+      links: link('Links', {
+        type: 'entry',
+        fields: type('Fields', {
+          title: text('Title')
+        })
+      })
     })
   )
 ).configure({isContainer: true})

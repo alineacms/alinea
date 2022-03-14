@@ -1,6 +1,6 @@
 import {PropsWithChildren, useMemo} from 'react'
 import {fromModule} from '../util/Styler'
-import css from './Logo.module.scss'
+import css from './LogoShape.module.scss'
 
 const styles = fromModule(css)
 
@@ -11,7 +11,7 @@ export type LogoShapeProps = PropsWithChildren<{
   background?: string
 }>
 
-export function Logo({
+export function LogoShape({
   children,
   foreground = `var(--accent-foreground)`,
   background = `var(--accent)`

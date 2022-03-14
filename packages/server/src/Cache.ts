@@ -71,7 +71,7 @@ export namespace Cache {
       }
       seen.add(entry.index)
       prev = entry.index
-      if (entry.$isContainer)
+      if (includeChildren && entry.$isContainer)
         validateOrdersFor(store, Entry.parent.is(entry.id))
     })
   }

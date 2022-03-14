@@ -1,7 +1,7 @@
-import {Docs} from '.alinea/web'
 import {Label} from '@alinea/core'
 import {TextLabel} from '@alinea/ui'
 import Link from 'next/link'
+import {Docs} from '../../.alinea/web'
 import {Container} from './layout/Container'
 
 type DocsPageProps = Docs & {

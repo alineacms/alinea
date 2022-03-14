@@ -1,10 +1,5 @@
 module.exports = {
   webpack: (config, {buildId, dev, isServer, defaultLoaders, webpack}) => {
-    config.experiments = {
-      ...config.experiments,
-      topLevelAwait: true,
-      asyncWebAssembly: true
-    }
     // https://github.com/vercel/next.js/issues/17806#issuecomment-913437792
     config.module.rules.push({
       test: /\.m?js$/,
