@@ -260,7 +260,7 @@ const devOptions: BuildOptions = {
   watch: true,
   minify: true,
   splitting: true,
-  entryPoints: {client: 'packages/stories/src/local.tsx'},
+  entryPoints: {client: 'packages/stories/src/client.tsx'},
   bundle: true,
   treeShaking: true,
   outdir: 'packages/stories/dist',

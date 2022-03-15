@@ -138,18 +138,14 @@ app.get('/api/preview', async (req, res) => {
     res.endTime('page')
     res.startTime('render', 'React render time')
     const html = ReactDOMServer.renderToStaticMarkup(
-      createElement(App, {
-        router: undefined!,
-        Component: PageView,
-        pageProps: props
-      })
+      createElement(PageView, props)
     )
     res.endTime('render')
     return res.header('content-type', 'text/html').end(
       `<!doctype html>
-      <meta name="viewport" content="width=device-width, initial-scale=1">
-      <link href="/dist/server.css" rel="stylesheet" />
-      ${html}`
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link href="/dist/server.css" rel="stylesheet" />
+        ${html}`
     )
   } catch (e: any) {
     return res

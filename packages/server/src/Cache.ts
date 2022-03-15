@@ -192,7 +192,7 @@ export namespace Cache {
         console.error(err)
         continue
       }
-      const entry = computeEntry(store, config, data, EntryStatus.Draft)
+      const entry = computeEntry(store, config, data!, EntryStatus.Draft)
       changed.push(id)
       if (existing) store.update(condition, entry)
       else store.insert(Entry, entry)

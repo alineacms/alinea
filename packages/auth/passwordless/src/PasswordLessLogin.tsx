@@ -1,6 +1,6 @@
 import {Client} from '@alinea/client'
 import {Auth, createError, Session} from '@alinea/core'
-import {useDashboard, useSession} from '@alinea/dashboard'
+import {useDashboard} from '@alinea/dashboard'
 import {Button, fromModule, Loader, LogoShape, px, Typo} from '@alinea/ui'
 import {HStack, VStack} from '@alinea/ui/Stack'
 import jwtDecode from 'jwt-decode'
@@ -132,7 +132,7 @@ function LoginScreen(props: LoginScreenProps) {
 }
 
 function useResolveToken(setSession: (session: Session | undefined) => void) {
-  const {hub} = useSession()
+  const {client} = useDashboard()
   useLayoutEffect(() => {
     const params = new URLSearchParams(window.location.search)
     const isTokenFromUrl = params.has('token')
@@ -150,11 +150,11 @@ function useResolveToken(setSession: (session: Session | undefined) => void) {
           headers: {...init?.headers, authorization: `Bearer ${token}`}
         }
       }
-      if (!(hub instanceof Client))
+      if (!(client instanceof Client))
         throw createError(`Cannot authenticate with non http client`)
       setSession({
         user,
-        hub: hub.authenticate(applyAuth, logout),
+        hub: client.authenticate(applyAuth, logout),
         end: async () => logout()
       })
       if (isTokenFromUrl) {

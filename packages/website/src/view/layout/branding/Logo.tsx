@@ -1,14 +1,16 @@
 import {fromModule} from '@alinea/ui'
+import {HTMLAttributes} from 'react'
 import css from './Logo.module.scss'
 
 const styles = fromModule(css)
 
-export function Logo() {
+export function Logo(props: HTMLAttributes<SVGSVGElement>) {
   return (
     <svg
       viewBox="0 0 35 10"
       style={{fill: 'currentcolor'}}
-      className={styles.root()}
+      {...props}
+      className={styles.root.mergeProps(props)()}
     >
       <path d="M5.016 3V3.564C4.62 3.108 4.032 2.832 3.228 2.832C1.656 2.832 0.360001 4.212 0.360001 6C0.360001 7.788 1.656 9.168 3.228 9.168C4.032 9.168 4.62 8.892 5.016 8.436V9H6.816V3H5.016ZM3.588 7.464C2.76 7.464 2.16 6.9 2.16 6C2.16 5.1 2.76 4.536 3.588 4.536C4.416 4.536 5.016 5.1 5.016 6C5.016 6.9 4.416 7.464 3.588 7.464Z" />
       <path d="M8.13656 9H9.93656V0.239998H8.13656V9Z" />
