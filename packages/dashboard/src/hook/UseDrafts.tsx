@@ -1,4 +1,10 @@
-import {createError, docFromEntry, EntryStatus, ROOT_KEY} from '@alinea/core'
+import {
+  createError,
+  docFromEntry,
+  EntryStatus,
+  Outcome,
+  ROOT_KEY
+} from '@alinea/core'
 import {Hub} from '@alinea/core/Hub'
 import {observable} from '@alinea/ui'
 import {decode} from 'base64-arraybuffer'
@@ -26,9 +32,12 @@ class Drafts {
     const {hub} = this
     const sv = Y.encodeStateVector(doc)
     const update = Y.encodeStateAsUpdate(doc, this.stateVectors.get(doc))
-    await hub.updateDraft(id, update).then(() => {
-      this.stateVectors.set(doc, sv)
-    })
+    await hub
+      .updateDraft(id, update)
+      .then(Outcome.unpack)
+      .then(() => {
+        this.stateVectors.set(doc, sv)
+      })
   }
 
   async get(id: string) {

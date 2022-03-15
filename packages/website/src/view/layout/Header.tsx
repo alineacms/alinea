@@ -19,7 +19,7 @@ export function Header({links}: HeaderProps) {
               <LogoShape foreground="white" background="#EF437C">
                 <FiLayers />
               </LogoShape>
-              <Logo />
+              <Logo className={styles.root.logo.text()} />
             </HStack>
           </a>
         </Link>

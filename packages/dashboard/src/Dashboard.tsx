@@ -1,10 +1,10 @@
-import {Auth, Config, Workspaces} from '@alinea/core'
+import {Auth, Config, Hub, Workspaces} from '@alinea/core'
 import {render} from 'react-dom'
 import {App} from './App'
 
 export interface DashboardOptions<T extends Workspaces = Workspaces> {
   config: Config<T>
-  apiUrl: string
+  client: Hub<T>
   auth?: Auth.View
 }
 

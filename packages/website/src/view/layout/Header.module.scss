@@ -2,12 +2,16 @@
 
 .root {
   position: relative;
-  padding: 0 45px;
   background: hsl(0, 12%, 98%);
   height: 95px;
   display: flex;
   justify-content: center;
   flex-direction: column;
+  padding: 0 30px;
+
+  @include ml {
+    padding: 0 45px;
+  }
 
   &-logo {
     color: #44363b;
@@ -15,6 +19,12 @@
 
     @include ml {
       margin-top: -2px;
+    }
+
+    &-text {
+      @include s {
+        display: none;
+      }
     }
   }
 

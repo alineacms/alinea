@@ -1,13 +1,14 @@
 import {PasswordLessLogin} from '@alinea/auth.passwordless/PasswordLessLogin'
-import {Dashboard} from '@alinea/dashboard'
+import {Client} from '@alinea/client'
+import dynamic from 'next/dynamic'
 import {config} from '../../.alinea/config'
 
+const client = new Client(config, '/api/cms')
+
+const dashboard = () =>
+  import('@alinea/dashboard').then(({Dashboard}) => Dashboard)
+const Dashboard = dynamic(dashboard, {ssr: false})
+
 export default function Admin() {
-  return (
-    <div suppressHydrationWarning>
-      {process.browser && (
-        <Dashboard config={config} apiUrl="/api/cms" auth={PasswordLessLogin} />
-      )}
-    </div>
-  )
+  return <Dashboard config={config} client={client} auth={PasswordLessLogin} />
 }

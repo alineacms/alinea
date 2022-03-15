@@ -9,6 +9,7 @@ import {GithubData} from '@alinea/server/data/GithubData'
 import {FileDrafts} from '@alinea/server/drafts/FileDrafts'
 import {GitDrafts} from '@alinea/server/drafts/GitDrafts'
 import {RedisDrafts} from '@alinea/server/drafts/RedisDrafts.js'
+import {JWTPreviews} from '@alinea/server/util/JWTPreviews.js'
 import {BetterSqlite3Driver} from '@alinea/store/sqlite/drivers/BetterSqlite3Driver'
 import {SqliteStore} from '@alinea/store/sqlite/SqliteStore'
 import Database from 'better-sqlite3'
@@ -114,37 +115,43 @@ const server = new Server({
   drafts: redisDrafts,
   media: data,
   target: data,
-  jwtSecret: process.env.JWT_SECRET!
+  previews: new JWTPreviews(process.env.JWT_SECRET!)
 })
 
 const app = express()
 app.use(server.app)
 app.use(compression())
 app.get('/api/preview', async (req, res) => {
-  const previewToken = decodeURIComponent(
-    new URL(req.url!, 'http://localhost').search
-  ).substring(1)
-  res.startTime('token', 'Parse preview token')
-  const {id, url} = await server.parsePreviewToken(previewToken)
-  res.endTime('token')
-  res.startTime('page', 'Fetch page props')
-  const {props} = await getStaticProps({
-    preview: true,
-    previewData: id,
-    params: {slug: url.split('/').slice(1)}
-  })
-  res.endTime('page')
-  res.startTime('render', 'React render time')
-  const html = ReactDOMServer.renderToStaticMarkup(
-    createElement(PageView, props)
-  )
-  res.endTime('render')
-  return res.header('content-type', 'text/html').end(
-    `<!doctype html>
-      <meta name="viewport" content="width=device-width, initial-scale=1">
-      <link href="/dist/server.css" rel="stylesheet" />
-      ${html}`
-  )
+  try {
+    const previewToken = decodeURIComponent(
+      new URL(req.url!, 'http://localhost').search
+    ).substring(1)
+    res.startTime('token', 'Parse preview token')
+    const {id, url} = await server.parsePreviewToken(previewToken)
+    res.endTime('token')
+    res.startTime('page', 'Fetch page props')
+    const {props} = await getStaticProps({
+      preview: true,
+      previewData: id,
+      params: {slug: url.split('/').slice(1)}
+    })
+    res.endTime('page')
+    res.startTime('render', 'React render time')
+    const html = ReactDOMServer.renderToStaticMarkup(
+      createElement(PageView, props)
+    )
+    res.endTime('render')
+    return res.header('content-type', 'text/html').end(
+      `<!doctype html>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link href="/dist/server.css" rel="stylesheet" />
+        ${html}`
+    )
+  } catch (e: any) {
+    return res
+      .header('content-type', 'text/html')
+      .end(`${e.stack || e.message}`)
+  }
 })
 app.use((req, res) => serveHandler(req, res, {public: '.'}))
 app.listen(4500)

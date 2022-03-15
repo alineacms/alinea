@@ -4,6 +4,7 @@ import {
   Entry,
   entryFromDoc,
   EntryStatus,
+  outcome,
   Schema
 } from '@alinea/core'
 import {Search} from '@alinea/core/Search'
@@ -186,8 +187,12 @@ export namespace Cache {
       const doc = new Y.Doc()
       // if (existing) docFromEntry(config, existing, doc)
       Y.applyUpdate(doc, update)
-      const data = entryFromDoc(config, doc)
-      const entry = computeEntry(store, config, data, EntryStatus.Draft)
+      const [data, err] = outcome(() => entryFromDoc(config, doc))
+      if (err) {
+        console.error(err)
+        continue
+      }
+      const entry = computeEntry(store, config, data!, EntryStatus.Draft)
       changed.push(id)
       if (existing) store.update(condition, entry)
       else store.insert(Entry, entry)

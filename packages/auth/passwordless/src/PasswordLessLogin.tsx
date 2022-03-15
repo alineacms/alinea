@@ -1,5 +1,5 @@
 import {Client} from '@alinea/client'
-import {Auth, Session} from '@alinea/core'
+import {Auth, createError, Session} from '@alinea/core'
 import {useDashboard} from '@alinea/dashboard'
 import {Button, fromModule, Loader, LogoShape, px, Typo} from '@alinea/ui'
 import {HStack, VStack} from '@alinea/ui/Stack'
@@ -132,7 +132,7 @@ function LoginScreen(props: LoginScreenProps) {
 }
 
 function useResolveToken(setSession: (session: Session | undefined) => void) {
-  const {config, apiUrl} = useDashboard()
+  const {client} = useDashboard()
   useLayoutEffect(() => {
     const params = new URLSearchParams(window.location.search)
     const isTokenFromUrl = params.has('token')
@@ -150,9 +150,11 @@ function useResolveToken(setSession: (session: Session | undefined) => void) {
           headers: {...init?.headers, authorization: `Bearer ${token}`}
         }
       }
+      if (!(client instanceof Client))
+        throw createError(`Cannot authenticate with non http client`)
       setSession({
         user,
-        hub: new Client(config, apiUrl, applyAuth, logout),
+        hub: client.authenticate(applyAuth, logout),
         end: async () => logout()
       })
       if (isTokenFromUrl) {
@@ -164,7 +166,7 @@ function useResolveToken(setSession: (session: Session | undefined) => void) {
 }
 
 export function PasswordLessLogin({setSession}: Auth.ViewProps) {
-  const {apiUrl} = useDashboard()
+  const {client} = useDashboard()
   const [state, setState] = useState(LoginState.Input)
   const [email, setEmail] = useState('')
 
@@ -172,7 +174,9 @@ export function PasswordLessLogin({setSession}: Auth.ViewProps) {
 
   function handleSubmit() {
     setState(LoginState.Loading)
-    fetch(`${apiUrl}/auth.passwordless`, {
+    if (!(client instanceof Client))
+      throw createError(`Cannot authenticate with non http client`)
+    fetch(`${client.url}/auth.passwordless`, {
       headers: {'content-type': 'application/json'},
       method: 'POST',
       body: JSON.stringify({email})

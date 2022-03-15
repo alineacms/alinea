@@ -18,8 +18,8 @@ export class SqliteStore implements Store {
   constructor(private db: Driver, private createId: CreateId) {
     this.db = db
     this.createId = createId
-    this.db.exec('PRAGMA journal_mode = WAL')
-    this.db.exec('PRAGMA optimize')
+    //this.db.exec('PRAGMA journal_mode = WAL')
+    //this.db.exec('PRAGMA optimize')
   }
 
   all<Row>(cursor: Cursor<Row>, options?: QueryOptions): Array<Row> {
