@@ -148,9 +148,7 @@ app.get('/api/preview', async (req, res) => {
         ${html}`
     )
   } catch (e: any) {
-    return res
-      .header('content-type', 'text/html')
-      .end(`${e.stack || e.message}`)
+    return res.status(500).end(`${e.stack || e.message}`)
   }
 })
 app.use((req, res) => serveHandler(req, res, {public: '.'}))

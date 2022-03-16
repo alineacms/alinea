@@ -211,12 +211,25 @@ export class Expr<T> {
     return new Selection(SelectionData.Expr(this.expr)).with(that)
   }
   private static uniqueId = 0
+  private __id() {
+    return `__id${Expr.uniqueId++}`
+  }
   each<T>(this: Expr<Array<T>>): Cursor<T> {
-    const from = From.Each(this.expr, `each${Expr.uniqueId++}`)
+    const from = From.Each(this.expr, this.__id())
     return new Cursor({
       from,
       selection: SelectionData.Row(from)
     })
+  }
+  process<T, X>(this: Expr<T>, fn: (cursor: T) => X): Selection<X> {
+    return new Selection(SelectionData.Process(this.expr, this.__id(), fn))
+  }
+  map<T, X extends SelectionInput>(
+    this: Expr<Array<T>>,
+    fn: (cursor: Cursor<T>) => X
+  ): Selection<Array<Store.TypeOf<X>>> {
+    const row = this.each()
+    return row.select(fn(row)) as any
   }
   case<
     T extends string | number,

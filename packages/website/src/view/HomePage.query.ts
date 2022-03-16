@@ -6,13 +6,13 @@ export function homePageQuery(Home: Collection<Home>) {
   const Action = Page.as('Action')
   return Home.fields.with({
     action: action
-      .where(action.get('type').is('entry'))
+      .where(action.type.is('entry'))
       .select({
         url: action
-          .join(Action, Action.id.is(action.get('entry')))
+          .join(Action, Action.id.is(action.entry))
           .select(Action.url)
           .first(),
-        label: action.get('label')
+        label: action.label
       })
       .first()
   })

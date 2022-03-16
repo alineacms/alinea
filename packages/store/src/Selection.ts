@@ -9,7 +9,8 @@ export const enum SelectionType {
   Fields,
   Row,
   Case,
-  With
+  With,
+  Process
 }
 
 type SelectionInputBase = Expr<any> | Selection<any> | {cursor: CursorData}
@@ -28,6 +29,12 @@ export type SelectionData =
       defaultCase?: SelectionData
     }
   | {type: SelectionType.With; a: SelectionData; b: SelectionData}
+  | {
+      type: SelectionType.Process
+      expr: ExprData
+      id: string
+      fn: (input: any) => any
+    }
 
 export const SelectionData = {
   Expr(expr: ExprData): SelectionData {
@@ -52,6 +59,9 @@ export const SelectionData = {
   With(a: SelectionData, b: SelectionData): SelectionData {
     return {type: SelectionType.With, a, b}
   },
+  Process(expr: ExprData, id: string, fn: (input: any) => any): SelectionData {
+    return {type: SelectionType.Process, expr, id, fn}
+  },
   create(input: any): SelectionData {
     if (input instanceof Selection) return input.selection
     if (input instanceof Expr) return SelectionData.Expr(input.expr)
@@ -60,14 +70,16 @@ export const SelectionData = {
     if (input && input.fields instanceof Selection)
       return input.fields.selection
     if (input instanceof Cursor) return SelectionData.Cursor(input.cursor)
-    return SelectionData.Fields(
-      Object.fromEntries(
-        Object.entries(input).map(([key, value]) => [
-          key,
-          SelectionData.create(value)
-        ])
+    if (input && typeof input === 'object')
+      return SelectionData.Fields(
+        Object.fromEntries(
+          Object.entries(input).map(([key, value]) => [
+            key,
+            SelectionData.create(value)
+          ])
+        )
       )
-    )
+    return SelectionData.Expr(Expr.value(input).expr)
   }
 }
 
@@ -91,4 +103,46 @@ export namespace Selection {
   export type With<A, B> = Selection<
     Omit<A, keyof Store.TypeOf<B>> & Store.TypeOf<B>
   >
+}
+
+type Mapper = [id: string, fn: (value: any) => any]
+
+export function postProcess(selection: SelectionData, value: any) {
+  function get(selection: SelectionData): Array<Mapper> {
+    switch (selection.type) {
+      case SelectionType.Fields:
+        return Object.values(selection.fields).map(get).flat()
+      case SelectionType.Case:
+        const selections = Object.values(selection.cases)
+        if (selection.defaultCase) selections.push(selection.defaultCase)
+        return selections.map(get).flat()
+      case SelectionType.With:
+        return [selection.a, selection.b].map(get).flat()
+      case SelectionType.Cursor:
+        return get(selection.cursor.selection)
+      case SelectionType.Process:
+        return [[selection.id, selection.fn]]
+      default:
+        return []
+    }
+  }
+  const toProcess = get(selection)
+  if (toProcess.length === 0) return value
+  const fns = Object.fromEntries(toProcess)
+  function process(value: any): any {
+    if (!value) return value
+    if (Array.isArray(value)) return value.map(process)
+    if (typeof value === 'object') {
+      if ('$__process' in value && '$__expr' in value) {
+        const id = value['$__process']
+        const expr = value['$__expr']
+        return fns[id](expr)
+      }
+      const res: any = {}
+      for (const key of Object.keys(value)) res[key] = process(value[key])
+      return res
+    }
+    return value
+  }
+  return process(value)
 }

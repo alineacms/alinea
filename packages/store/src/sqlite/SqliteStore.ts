@@ -5,7 +5,7 @@ import {Cursor} from '../Cursor'
 import {Driver} from '../Driver'
 import {Expr} from '../Expr'
 import {From, FromType} from '../From'
-import {SelectionType} from '../Selection'
+import {postProcess, SelectionType} from '../Selection'
 import {Document, IdLess, QueryOptions, Store} from '../Store'
 import type {Update} from '../Update'
 import {sqliteFormatter} from './SqliteFormatter'
@@ -28,6 +28,7 @@ export class SqliteStore implements Store {
     return this.prepare(stmt.sql, options)
       .all<string>(stmt.getParams())
       .map((col: any) => (isJson ? JSON.parse(col) : col))
+      .map(res => postProcess(cursor.cursor.selection, res))
   }
 
   first<Row>(cursor: Cursor<Row>, options?: QueryOptions): Row | null {

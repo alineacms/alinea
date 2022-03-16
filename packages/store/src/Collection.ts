@@ -1,5 +1,6 @@
-import {Cursor} from './Cursor'
+import {CursorImpl} from './Cursor'
 import {Expr} from './Expr'
+import {Fields} from './Fields'
 import {From} from './From'
 import {Selection, SelectionData, SelectionInput} from './Selection'
 
@@ -10,7 +11,7 @@ export type CollectionOptions = {
   alias?: string
 }
 
-export class CollectionImpl<Row extends {} = any> extends Cursor<Row> {
+export class CollectionImpl<Row extends {} = any> extends CursorImpl<Row> {
   constructor(name: string, options: CollectionOptions = {}) {
     const {flat, columns, where, alias} = options
     const from = flat
@@ -20,11 +21,6 @@ export class CollectionImpl<Row extends {} = any> extends Cursor<Row> {
       from,
       selection: SelectionData.Row(from),
       where: where?.expr
-    })
-    return new Proxy(this, {
-      get(target: any, key) {
-        return key in target ? target[key] : target.get(key)
-      }
     })
   }
 
@@ -59,35 +55,10 @@ export class CollectionImpl<Row extends {} = any> extends Cursor<Row> {
   }
 }
 
-// Source: https://stackoverflow.com/a/49279355/5872160
-type GetKeys<U> = U extends Record<infer K, any> ? K : never
-type UnionToIntersection<U extends object> = {
-  [K in GetKeys<U>]: U extends Record<K, infer T> ? T : never
-}
-// Source: https://stackoverflow.com/a/57334147/5872160
-type RequiredKeepUndefined<T> = {[K in keyof T]-?: [T[K]]} extends infer U
-  ? U extends Record<keyof U, [any]>
-    ? {[K in keyof U]: U[K][0]}
-    : never
-  : never
-
-export type FieldsOf<Row> = Row extends {}
-  ? {
-      [K in keyof Row]-?: Expr<Row[K]> /* & FieldsOf<Row[K]> */
-    }
-  : unknown
-
 export interface CollectionConstructor {
-  new <Row extends {}>(
-    name: string,
-    options?: CollectionOptions
-  ): Collection<Row>
+  new <Row>(name: string, options?: CollectionOptions): Collection<Row>
 }
 
-export type Collection<T = object> = CollectionImpl<T> &
-  FieldsOf<UnionToIntersection<RequiredKeepUndefined<T>>>
+export type Collection<T> = CollectionImpl<T> & Fields<T>
 
 export const Collection = CollectionImpl as CollectionConstructor
-
-type Hover = Collection<{type: 'ab'} | {type: 'cd'}>
-type Condition = {type: 'ab'} | {type: 'cd'} extends {} ? true : false

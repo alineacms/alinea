@@ -1,5 +1,6 @@
 import {Collection, Store} from '@alinea/store'
 import {Doc, Page} from '../../.alinea/web'
+import {blocksQuery} from './blocks/Blocks.query'
 
 function menuQuery() {
   return Page.where(Page.type.is('Doc').or(Page.type.is('Docs')))
@@ -30,7 +31,8 @@ export function docPageQuery(doc: Collection<Doc>) {
   return doc.fields.with({
     menu: menuQuery(),
     prev,
-    next
+    next,
+    blocks: blocksQuery(doc.blocks)
   })
 }
 

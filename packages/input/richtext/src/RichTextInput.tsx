@@ -19,8 +19,7 @@ import {
   EditorContent,
   FloatingMenu,
   NodeViewWrapper,
-  ReactNodeViewRenderer,
-  useEditor
+  ReactNodeViewRenderer
 } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import {forwardRef, Ref, useCallback, useRef, useState} from 'react'
@@ -31,6 +30,7 @@ import {
   MdFormatItalic,
   MdNotes
 } from 'react-icons/md'
+import {useEditor} from './hook/UseEditor'
 import {RichTextField} from './RichTextField'
 import css from './RichTextInput.module.scss'
 

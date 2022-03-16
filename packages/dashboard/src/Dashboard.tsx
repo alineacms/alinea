@@ -1,5 +1,5 @@
 import {Auth, Config, Hub, Workspaces} from '@alinea/core'
-import {render} from 'react-dom'
+import {createRoot} from 'react-dom'
 import {App} from './App'
 
 export interface DashboardOptions<T extends Workspaces = Workspaces> {
@@ -18,7 +18,5 @@ export function renderDashboard<T extends Workspaces>(
   const div = document.createElement('div')
   div.id = 'root'
   element.parentElement!.replaceChild(div, element)
-  render(<App {...options} />, div)
-  // Seems tiptap editor is not optimized to run in react 18
-  // createRoot(div).render(<App {...options} />)
+  createRoot(div).render(<App {...options} />)
 }

@@ -1,8 +1,9 @@
 import type {Collection} from './Collection'
 import {EV, Expr, ExprData} from './Expr'
+import {Fields} from './Fields'
 import {From} from './From'
 import type {OrderBy} from './OrderBy'
-import {SelectionData, SelectionInput} from './Selection'
+import {Selection, SelectionData, SelectionInput} from './Selection'
 import type {Store} from './Store'
 
 export type CursorData = {
@@ -17,8 +18,14 @@ export type CursorData = {
   singleResult?: boolean
 }
 
-export class Cursor<Row> {
-  constructor(public cursor: CursorData) {}
+export class CursorImpl<Row> {
+  constructor(public cursor: CursorData) {
+    return new Proxy(this, {
+      get(target: any, key) {
+        return key in target ? target[key] : target.get(key)
+      }
+    })
+  }
 
   join<T>(that: Collection<T>, on: Expr<boolean>): Cursor<Row> {
     const condition = that.cursor.where
@@ -94,12 +101,9 @@ export class Cursor<Row> {
     })
   }
 
-  /*with<S extends SelectionInput>(selection: S) {
-    return new Cursor<Omit<Row, keyof Store.TypeOf<S>> & Store.TypeOf<S>>({
-      ...this.cursor,
-      selection: new Selection(this.cursor.selection).with(selection).selection
-    })
-  }*/
+  with<S extends SelectionInput>(selection: S): Selection.With<Row, S> {
+    return new Selection(this.cursor.selection).with(selection)
+  }
 
   orderBy(...orderBy: Array<OrderBy>): Cursor<Row> {
     return new Cursor({
@@ -123,9 +127,17 @@ export class Cursor<Row> {
   }
 }
 
-export class CursorSingleRow<Row> extends Cursor<Row> {
+export class CursorSingleRow<Row> extends CursorImpl<Row> {
   __bogus: undefined
   constructor(cursor: CursorData) {
     super({...cursor, singleResult: true})
   }
 }
+
+export interface CursorConstructor {
+  new <Row>(cursor: CursorData): Cursor<Row>
+}
+
+export type Cursor<T> = CursorImpl<T> & Fields<T>
+
+export const Cursor = CursorImpl as CursorConstructor

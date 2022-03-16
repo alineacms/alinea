@@ -7,9 +7,9 @@ export function headerQuery() {
   const Link = Entry.as('Link')
   return Home.select({
     links: links
-      .where(links.get('type').is('entry'))
-      .innerJoin(Link, Link.id.is(links.get('entry')))
-      .select({id: Link.id, title: links.get('title'), url: Link.url})
+      .where(links.type.is('entry'))
+      .innerJoin(Link, Link.id.is(links.entry))
+      .select({id: Link.id, title: links.title, url: Link.url})
   }).first()
 }
 

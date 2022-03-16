@@ -181,6 +181,10 @@ export abstract class Formatter {
           if (i < keys.length - 1) res = sql`${res}, `
         })
         return sql`json_object(${res})`
+      case SelectionType.Process:
+        return sql`json_object('$__process', ${this.formatString(
+          selection.id
+        )}, '$__expr', ${this.formatExpr(selection.expr, options)})`
       case SelectionType.Case:
         throw `Not supported in current formatter: _.case(...)`
     }

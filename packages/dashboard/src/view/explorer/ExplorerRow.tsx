@@ -9,9 +9,9 @@ import css from './ExplorerRow.module.scss'
 
 const styles = fromModule(css)
 
-export type ExplorerRowProps = {
+export type ExplorerRowProps<T extends Entry.Minimal> = {
   schema: Schema
-  cursor: Cursor<Entry.Minimal>
+  cursor: Cursor<T>
   batchSize: number
   amount: number
   from: number
@@ -19,7 +19,7 @@ export type ExplorerRowProps = {
   defaultView: View<Entry, any>
 }
 
-export const ExplorerRow = memo(function ExplorerRow({
+function ExplorerRowImpl<T extends Entry.Minimal>({
   schema,
   cursor,
   batchSize,
@@ -27,7 +27,7 @@ export const ExplorerRow = memo(function ExplorerRow({
   from,
   summaryView,
   defaultView
-}: ExplorerRowProps) {
+}: ExplorerRowProps<T>) {
   const {hub} = useSession()
   const start = Math.floor(from / batchSize)
   const startAt = from % batchSize
@@ -64,4 +64,6 @@ export const ExplorerRow = memo(function ExplorerRow({
       </div>
     </div>
   )
-})
+}
+
+export const ExplorerRow = memo(ExplorerRowImpl) as typeof ExplorerRowImpl
