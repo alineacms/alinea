@@ -7,10 +7,10 @@ import {
   workspace
 } from '@alinea/core'
 import {text} from '@alinea/input.text'
+import sqlite from '@alinea/sqlite-wasm'
 import {SqlJsDriver} from '@alinea/store/sqlite/drivers/SqlJsDriver'
 import {SqliteStore} from '@alinea/store/sqlite/SqliteStore'
 import {Volume} from 'memfs'
-import initSqlJs from 'sql.js-fts5'
 import {test} from 'uvu'
 import {Cache} from '../src'
 import {FileData} from '../src/data/FileData'
@@ -75,10 +75,9 @@ const fs: FS = Volume.fromNestedJSON({
 const data = new FileData({config, fs, loader: JsonLoader})
 
 test('create', async () => {
-  const sqlJs = await initSqlJs()
-  const store = new SqliteStore(new SqlJsDriver(new sqlJs.Database()), createId)
+  const {Database} = await sqlite()
+  const store = new SqliteStore(new SqlJsDriver(new Database()), createId)
   await Cache.create(store, config, data)
-  console.log('ok')
 })
 
 test.run()

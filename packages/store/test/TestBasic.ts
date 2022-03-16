@@ -139,7 +139,7 @@ test('each', () => {
       .innerJoin(Link, Link.id.is(refs.get('id')))
       .select({id: Link.id, title: Link.title})
   })
-  const res2 = db.first(query, {debug: true})!
+  const res2 = db.first(query)!
   assert.equal(res2.links, [
     {id: 'b', title: 'Entry B'},
     {id: 'c', title: 'Entry C'}

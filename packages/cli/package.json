@@ -22,12 +22,10 @@
     "base64-arraybuffer": "^1.0.1",
     "dirname-filename-esm": "^1.1.1",
     "leb128": "^0.0.5",
-    "sade": "^1.7.4",
-    "sql.js-fts5": "^1.4.0"
+    "sade": "^1.7.4"
   },
   "devDependencies": {
     "@types/fs-extra": "^9.0.13",
-    "@types/sade": "^1.7.3",
-    "sql.js": "^1.6.2"
+    "@types/sade": "^1.7.3"
   }
 }

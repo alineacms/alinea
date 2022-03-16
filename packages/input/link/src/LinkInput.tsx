@@ -290,7 +290,7 @@ export function LinkInput<T>({state, field}: LinkInputProps<T>) {
               <VStack gap={8}>
                 {value.map(reference => {
                   return (
-                    <LinkInputRowSortable
+                    <LinkInputRowSortable<T>
                       key={reference.id}
                       fields={fields}
                       state={state.child(reference.id)}
@@ -311,7 +311,7 @@ export function LinkInput<T>({state, field}: LinkInputProps<T>) {
               }}
             >
               {dragging ? (
-                <LinkInputRow
+                <LinkInputRow<T>
                   fields={fields}
                   state={state.child(dragging.id)}
                   entryData={id => data?.get(id)}

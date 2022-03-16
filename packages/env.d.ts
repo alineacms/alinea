@@ -7,11 +7,6 @@ declare module '*.module.scss' {
 
 declare module 'get-random-values'
 declare module 'leb128'
-declare module 'sql.js-fts5' {
-  export * from 'sql.js'
-  import sqlJs from 'sql.js'
-  export default sqlJs
-}
 declare module 'image-blob-reduce' {
   type Options = {
     max: number

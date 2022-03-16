@@ -97,7 +97,6 @@ test('reading', async () => {
 
 test('inserting', async () => {
   const [root] = await accumulate(data.entries())
-  console.log(root)
   await data.publish([{...root, title: 'New root title'}])
   const [newRoot] = await accumulate(data.entries())
   assert.is(newRoot.id, 'root')

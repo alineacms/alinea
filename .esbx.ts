@@ -211,9 +211,9 @@ async function generate() {
     platform: 'node',
     ...buildOptions,
     outfile,
-    external: modules.filter(
-      m => !m.includes('@alinea') || m.includes('@alinea/sqlite-wasm')
-    ),
+    external: modules
+      .filter(m => !m.includes('@alinea'))
+      .concat('@alinea/sqlite-wasm'),
     plugins: [
       ...buildOptions.plugins,
       InternalPackages,
@@ -300,7 +300,9 @@ const serverOptions: BuildOptions = {
   entryPoints: ['packages/stories/src/server.ts'],
   bundle: true,
   outdir: 'packages/stories/dist',
-  external: modules.filter(m => !m.includes('@alinea')),
+  external: modules
+    .filter(m => !m.includes('@alinea'))
+    .concat('@alinea/sqlite-wasm'),
   plugins: [
     ...buildOptions.plugins,
     ReporterPlugin.configure({name: 'Server'}),
@@ -335,7 +337,9 @@ export const testTask = TestTask.configure({
   buildOptions: {
     ...buildOptions,
     sourcemap: true,
-    external: modules.filter(m => !m.includes('@alinea')),
+    external: modules
+      .filter(m => !m.includes('@alinea'))
+      .concat('@alinea/sqlite-wasm'),
     plugins: [...buildOptions.plugins, InternalPackages, FixReactIconsPlugin]
   }
 })

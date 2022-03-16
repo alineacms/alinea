@@ -40,8 +40,6 @@ __metadata:
     dirname-filename-esm: ^1.1.1
     leb128: ^0.0.5
     sade: ^1.7.4
-    sql.js: ^1.6.2
-    sql.js-fts5: ^1.4.0
   bin:
     alinea: ./dist/index.js
   languageName: unknown
@@ -265,7 +263,7 @@ __metadata:
   resolution: "@alinea/server@workspace:packages/server"
   dependencies:
     "@alinea/core": 0.0.0
-    "@alinea/sqlite-wasm": ^0.0.1
+    "@alinea/sqlite-wasm": ^0.1.3
     "@alinea/store": 0.0.0
     "@octokit/rest": ^18.12.0
     "@types/busboy": ^1.3.0
@@ -299,12 +297,12 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@alinea/sqlite-wasm@npm:^0.0.1":
-  version: 0.0.1
-  resolution: "@alinea/sqlite-wasm@npm:0.0.1"
+"@alinea/sqlite-wasm@npm:^0.1.3":
+  version: 0.1.3
+  resolution: "@alinea/sqlite-wasm@npm:0.1.3"
   dependencies:
     base64-arraybuffer: ^1.0.2
-  checksum: 7c31dc288d01c1529dcf5fc972c4e42c6e97d8c8f30c826e7e6c188d6565a6892a7dfb42fab4fde4554e4ac0fdc04978a9a4730c7c2f1d1db1034866c6dc6049
+  checksum: b056b3d45909c9fa8764d5c0d3d6d6b3ce5aeb3ac035a39dc3fa60cbae7923c8f644a74c7cc0a00807f2c4ab0d81df901308c162b0de84f13cba1d1ba35ecc4e
   languageName: node
   linkType: hard
 
@@ -315,7 +313,6 @@ __metadata:
     "@types/better-sqlite3": ^5.4.1
     "@types/sql.js": ^1.4.2
     better-sqlite3: ^7.5.0
-    sql.js: ^1.6.2
   languageName: unknown
   linkType: soft
 
@@ -8882,20 +8879,6 @@ resolve@^2.0.0-next.3:
   version: 3.0.10
   resolution: "spdx-license-ids@npm:3.0.10"
   checksum: 94fde6f558941f82c737433000e20678eccad448fe5e87cbb98ba1d811a120ddf7fbc4a7a3ebfcd2f49c8c4541ba6537af07750ca5cb54900a064d53f68b888d
-  languageName: node
-  linkType: hard
-
-"sql.js-fts5@npm:^1.4.0":
-  version: 1.4.0
-  resolution: "sql.js-fts5@npm:1.4.0"
-  checksum: 37ebf5662b07cbc27cf6af819d2dcb60660073e8b7727b4e5f6d0b4af621804bb02819c131ae0cf8ddbebc57a9e098f02b6f372f4cab09c37e2f5f47ac04bfda
-  languageName: node
-  linkType: hard
-
-"sql.js@npm:^1.6.2":
-  version: 1.6.2
-  resolution: "sql.js@npm:1.6.2"
-  checksum: 880a98527be7a62f1c25099192b0760a105ea0ac634b78293d9bd46244209f9e96329974316ad98cbdf2ba3f7c8db167588139c31d9f7dfed2a779eb05da2809
   languageName: node
   linkType: hard
 

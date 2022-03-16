@@ -1,11 +1,11 @@
 import {createId} from '@alinea/core'
+import sqlite from '@alinea/sqlite-wasm'
 import BetterSqlite3Database from 'better-sqlite3'
-import sqlJs from 'sql.js-fts5'
 import {BetterSqlite3Driver} from '../src/sqlite/drivers/BetterSqlite3Driver'
 import {SqlJsDriver} from '../src/sqlite/drivers/SqlJsDriver'
 import {SqliteStore} from '../src/sqlite/SqliteStore'
 
-const {Database} = await sqlJs()
+const {Database} = await sqlite()
 
 const useWasm = true
 
