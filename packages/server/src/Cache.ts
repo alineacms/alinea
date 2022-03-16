@@ -119,7 +119,11 @@ export namespace Cache {
     }
   }
 
-  export async function create(store: SqliteStore, from: Data.Source) {
+  export async function create(
+    store: SqliteStore,
+    config: Config,
+    from: Data.Source
+  ) {
     const startTime = process.hrtime.bigint()
     process.stdout.write('> Start indexing...')
     store.delete(Entry)
@@ -136,6 +140,18 @@ export namespace Cache {
     store.createIndex(Entry, 'parent', [Entry.parent])
     store.createIndex(Entry, 'workspace.type', [Entry.workspace, Entry.type])
     store.createIndex(Entry, 'url', [Entry.url])
+    for (const [workspace, {schema}] of Object.entries(config.workspaces)) {
+      for (const [key, type] of schema) {
+        const {index} = type.options
+        if (!index) continue
+        const collection = schema.collection(workspace, key)
+        const indices = index(collection)
+        for (const [name, fields] of Object.entries(indices)) {
+          const indexName = `${workspace}.${key}.${name}`
+          store.createIndex(collection, indexName, fields)
+        }
+      }
+    }
     validateOrder(store)
     const diff = process.hrtime.bigint() - startTime
     console.log(

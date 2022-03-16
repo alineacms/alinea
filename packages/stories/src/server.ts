@@ -104,7 +104,7 @@ async function createStore() {
     new BetterSqlite3Driver(new Database(':memory:')),
     createId
   )
-  await Cache.create(store, data)
+  await Cache.create(store, config, data)
   return store
 }
 

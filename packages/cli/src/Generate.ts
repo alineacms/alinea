@@ -220,7 +220,7 @@ export async function generate(options: GenerateOptions) {
     loader: JsonLoader,
     rootDir: cwd
   })
-  await Cache.create(store, source)
+  await Cache.create(store, config, source)
   const pkg = await fs.readFile(
     path.join(__dirname, 'static', 'package.json'),
     'utf-8'

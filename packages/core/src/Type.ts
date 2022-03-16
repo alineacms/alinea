@@ -1,3 +1,4 @@
+import {Collection, Expr} from '@alinea/store'
 import type {ComponentType} from 'react'
 import {Entry} from './Entry'
 import {Field} from './Field'
@@ -26,6 +27,9 @@ export namespace Type {
     view?: ComponentType
     summaryRow?: View<any> // View<T>
     summaryThumb?: View<any> // View<T>
+
+    /** Create indexes on fields of this type */
+    index?: (fields: Collection<T>) => Record<string, Array<Expr<any>>>
   }
 }
 
@@ -94,10 +98,10 @@ export class Type<T = any> {
   }
 
   configure(options: Type.Options<T>): Type<T> {
-    return new Type<T>(this.label, this.sections, {
+    return new Type(this.label, this.sections, {
       ...this.options,
       ...options
-    } as Type.Options<T>)
+    })
   }
 }
 
