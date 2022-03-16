@@ -12,10 +12,8 @@ import {dirname} from 'dirname-filename-esm'
 import {build, BuildResult, Plugin} from 'esbuild'
 import fs from 'fs-extra'
 import {signed, unsigned} from 'leb128'
-import {createRequire} from 'module'
 import path from 'path'
 
-const require = createRequire(import.meta.url)
 const __dirname = dirname(import.meta)
 
 function fail(message: string) {
@@ -153,7 +151,8 @@ export type GenerateOptions = {
 }
 
 export async function generate(options: GenerateOptions) {
-  const legacy = false
+  const legacy = false,
+    debug = true
   const cwd = options.cwd || process.cwd()
   const configLocation = path.join(cwd, options.config || './alinea.config.tsx')
   const outdir = path.join(cwd, options.outdir || './.alinea')
@@ -271,7 +270,6 @@ export async function generate(options: GenerateOptions) {
       'utf-8'
     )
     await fs.writeFile(path.join(outdir, 'cache.js'), embedInJs(source, data))
-    // debug: await fs.writeFile(path.join(outdir, 'cache.db'), data)
   } else {
     await fs.copyFile(
       path.join(__dirname, 'static', 'cache.modern.js'),
@@ -279,4 +277,5 @@ export async function generate(options: GenerateOptions) {
     )
     await fs.writeFile(path.join(outdir, 'cache.wasm'), embedInWasm(data))
   }
+  if (debug) await fs.writeFile(path.join(outdir, 'cache.db'), data)
 }
