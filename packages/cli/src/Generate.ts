@@ -1,9 +1,9 @@
+import {Cache, Data, JsonLoader} from '@alinea/backend'
+import {FileData} from '@alinea/backend/data/FileData'
 import {outcome} from '@alinea/core'
 import {Config} from '@alinea/core/Config'
 import {createId} from '@alinea/core/Id'
 import {Schema} from '@alinea/core/Schema'
-import {Cache, Data, JsonLoader} from '@alinea/backend'
-import {FileData} from '@alinea/backend/data/FileData'
 import {BetterSqlite3Driver} from '@alinea/store/sqlite/drivers/BetterSqlite3Driver'
 import {SqliteStore} from '@alinea/store/sqlite/SqliteStore'
 import {ReactPlugin} from '@esbx/react'
@@ -150,8 +150,8 @@ export type GenerateOptions = {
 }
 
 export async function generate(options: GenerateOptions) {
-  const legacy = false,
-    debug = true
+  const legacy = true,
+    debug = false
   const cwd = options.cwd || process.cwd()
   const configDir = options.configDir || '.alinea'
   const configLocation = path.join(cwd, configDir, './config')
