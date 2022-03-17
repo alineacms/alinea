@@ -28,7 +28,7 @@ import PageView, {getStaticProps} from '../../website/src/pages'
 
 dotenv.config({path: '../../.env'})
 
-const dashboardUrl = 'http://localhost:8000'
+const dashboardUrl = 'http://localhost:4500'
 const auth = new PasswordLessAuth({
   dashboardUrl,
   subject: 'Login',
@@ -109,6 +109,7 @@ async function createStore() {
 }
 
 const server = new Server({
+  dashboardUrl,
   // auth,
   createStore,
   config,

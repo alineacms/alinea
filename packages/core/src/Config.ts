@@ -22,8 +22,6 @@ export class Config<T extends Workspaces = Workspaces> {
 }
 
 export type ConfigOptions<T> = {
-  dashboardUrl?: string
-  apiUrl?: string
   auth?: Auth.View
   workspaces: T
 }

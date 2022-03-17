@@ -12,8 +12,7 @@ import type {Server} from '../Server'
 import {parseBuffer, parseJson} from '../util/BodyParser'
 
 export function createServerRouter(hub: Server) {
-  const {auth} = hub.options
-  const {dashboardUrl} = hub.config.options
+  const {auth, dashboardUrl} = hub.options
   const router = Router()
   // Use of compression here results in a failure in nextjs.
   // api-utils apiRes.end is called with [undefined, undefined]

@@ -53,6 +53,7 @@ const auth = new PasswordLessAuth({
 })
 
 export const server = new Server({
+  dashboardUrl: 'https://alinea.sh/admin',
   auth,
   config,
   createStore: createCache,

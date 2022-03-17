@@ -28,8 +28,6 @@ const storiesSchema = schema({
 })
 
 export const config = createConfig({
-  dashboardUrl: 'http://localhost:4500',
-  apiUrl: 'http://localhost:4500',
   workspaces: {
     web: workspace('Alinea', {
       schema: webSchema,

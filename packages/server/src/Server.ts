@@ -10,6 +10,7 @@ import {createServerRouter} from './router/ServerRouter'
 import {finishResponse} from './util/FinishResponse'
 
 export type ServerOptions<T extends Workspaces> = {
+  dashboardUrl: string
   auth?: Auth.Server
 } & BackendOptions<T>
 
