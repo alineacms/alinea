@@ -39,14 +39,14 @@ export namespace Schema {
 }
 
 export class Schema<T = any> {
-  #types: LazyRecord<Type<T>>
+  private __types: LazyRecord<Type<T>>
 
   constructor(types: LazyRecord<Type<T>>) {
-    this.#types = types
+    this.__types = types
   }
 
   get types() {
-    return LazyRecord.resolve(this.#types)
+    return LazyRecord.resolve(this.__types)
   }
 
   get valueTypes() {
@@ -58,24 +58,24 @@ export class Schema<T = any> {
   }
 
   [Symbol.iterator]() {
-    return LazyRecord.iterate(this.#types)[Symbol.iterator]()
+    return LazyRecord.iterate(this.__types)[Symbol.iterator]()
   }
 
   type<K extends TypesOf<T>>(name: K): Type<Extract<T, {type: K}>> | undefined {
-    return LazyRecord.get(this.#types, name) as unknown as Type<
+    return LazyRecord.get(this.__types, name) as unknown as Type<
       Extract<T, {type: K}>
     >
   }
 
   get keys() {
-    return LazyRecord.keys(this.#types)
+    return LazyRecord.keys(this.__types)
   }
 
   collections(workspace: string): {
     [K in TypesOf<T>]: Collection<Extract<T, {type: K}>>
   } {
     return Object.fromEntries(
-      Object.keys(this.#types).map(name => {
+      Object.keys(this.__types).map(name => {
         return [name, this.collection(workspace, name as any)]
       })
     ) as any

@@ -5,7 +5,7 @@ import {Data} from '../Data'
 
 export type IndexedDBOptions = {}
 
-const DB_NAME = '@alinea/server.data.idb'
+const DB_NAME = '@alinea/backend.data.idb'
 const STORE_NAME = 'Data'
 
 export class IndexedDBData implements Data.Source, Data.Target, Data.Media {

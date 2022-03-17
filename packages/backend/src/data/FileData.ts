@@ -31,13 +31,12 @@ function isChildOf(child: string, parent: string) {
 export class FileData implements Data.Source, Data.Target, Data.Media {
   constructor(protected options: FileDataOptions) {}
 
-  // Todo: this does not use any parallelism so either do or switch to a
-  // sync version which should perform better
   async *entries(): AsyncGenerator<Entry> {
     const {config, fs, loader, rootDir = '.'} = this.options
-    for (const [workspace, {schema, contentDir, roots}] of Object.entries(
-      config.workspaces
-    )) {
+    for (const [
+      workspace,
+      {schema, source: contentDir, roots}
+    ] of Object.entries(config.workspaces)) {
       for (const root of Object.keys(roots)) {
         const targets = ['/']
         const parentIndex = new Map<string, string>()
@@ -101,7 +100,7 @@ export class FileData implements Data.Source, Data.Target, Data.Media {
         $status,
         ...data
       } = entry
-      const {schema, contentDir} = config.workspaces[workspace]
+      const {schema, source: contentDir} = config.workspaces[workspace]
       const type = schema.type(entry.type)
       const file =
         entry.url +

@@ -1,5 +1,5 @@
 import type {NextApiRequest, NextApiResponse} from 'next'
-import {server} from '../../../alinea.server'
+import {backend} from '../../../.alinea/backend'
 
 export default async function handler(
   req: NextApiRequest,
@@ -8,7 +8,7 @@ export default async function handler(
   const previewToken = decodeURIComponent(
     new URL(req.url!, 'http://localhost').search
   ).substring(1)
-  const {id, url} = await server.parsePreviewToken(previewToken)
+  const {id, url} = await backend.parsePreviewToken(previewToken)
   res.setPreviewData(id)
   res.redirect(url)
 }

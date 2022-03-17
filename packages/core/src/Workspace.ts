@@ -9,7 +9,7 @@ export type Workspaces = Record<string, Workspace>
 export type Workspace<T = any> = {
   name: Label
   schema: Schema<T>
-  contentDir: string
+  source: string
   mediaDir?: string
   color: string
   roots: Record<string, Root<TypesOf<T>>>

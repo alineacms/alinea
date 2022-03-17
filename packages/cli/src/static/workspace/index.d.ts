@@ -1,4 +1,4 @@
-import {Pages} from '@alinea/server'
+import {Pages} from '@alinea/backend'
 import {Page} from './schema.js'
 export * from './schema.js'
 export * from './types.js'

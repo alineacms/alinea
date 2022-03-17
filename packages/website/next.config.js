@@ -21,7 +21,7 @@ module.exports = {
         '@alinea/input.list',
         '@alinea/input.number',
         '@alinea/input.text',
-        '@alinea/server',
+        '@alinea/backend',
         '@alinea/ui',
         'yjs'
       ]

@@ -4,7 +4,7 @@ import {Drafts} from '../Drafts'
 
 export type IndexedDBOptions = {}
 
-const DB_NAME = '@alinea/server.drafts.idb'
+const DB_NAME = '@alinea/backend.drafts.idb'
 const STORE_NAME = 'Draft'
 
 export class IndexedDBDrafts implements Drafts {

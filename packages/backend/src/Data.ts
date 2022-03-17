@@ -1,8 +1,22 @@
-import {Entry} from '@alinea/core/Entry'
+import {Entry} from '@alinea/core'
 
 export namespace Data {
   export interface Source {
     entries(): AsyncGenerator<Entry>
+  }
+
+  export namespace Source {
+    export function concat(...sources: Array<Source>): Source {
+      return {
+        async *entries(): AsyncGenerator<Entry> {
+          for (const source of sources) {
+            for await (const entry of source.entries()) {
+              yield entry
+            }
+          }
+        }
+      }
+    }
   }
 
   export interface Target {

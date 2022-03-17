@@ -36,7 +36,7 @@ export namespace Type {
 const reserved = new Set(['id', 'type'])
 
 export class Type<T = any> {
-  #fields: Record<string, Lazy<Field>> | undefined
+  private __fields: Record<string, Lazy<Field>> | undefined
 
   constructor(
     public label: Label,
@@ -45,11 +45,11 @@ export class Type<T = any> {
   ) {}
 
   get fields() {
-    if (this.#fields) return this.#fields
+    if (this.__fields) return this.__fields
     const res = {}
     for (const section of this.sections)
       if (section.fields) Object.assign(res, Lazy.get(section.fields))
-    return (this.#fields = res)
+    return (this.__fields = res)
   }
 
   get valueType(): RecordValue {

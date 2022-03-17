@@ -1,8 +1,9 @@
+import {outcome} from '@alinea/core'
 import {Config} from '@alinea/core/Config'
 import {createId} from '@alinea/core/Id'
 import {Schema} from '@alinea/core/Schema'
-import {Cache, JsonLoader} from '@alinea/server'
-import {FileData} from '@alinea/server/data/FileData'
+import {Cache, Data, JsonLoader} from '@alinea/backend'
+import {FileData} from '@alinea/backend/data/FileData'
 import {BetterSqlite3Driver} from '@alinea/store/sqlite/drivers/BetterSqlite3Driver'
 import {SqliteStore} from '@alinea/store/sqlite/SqliteStore'
 import {ReactPlugin} from '@esbx/react'
@@ -143,21 +144,18 @@ function schemaTypes(workspace: string, schema: Schema) {
 }
 
 export type GenerateOptions = {
-  watch?: boolean
-  config?: string
-  content?: string
-  outdir?: string
+  configDir?: string
   cwd?: string
+  watch?: boolean
 }
 
 export async function generate(options: GenerateOptions) {
   const legacy = false,
     debug = true
   const cwd = options.cwd || process.cwd()
-  const configLocation = path.join(cwd, options.config || './alinea.config.tsx')
-  const outdir = path.join(cwd, options.outdir || './.alinea')
-  if (!fs.existsSync(configLocation))
-    return fail(`Config file not found at "${configLocation}"`)
+  const configDir = options.configDir || '.alinea'
+  const configLocation = path.join(cwd, configDir, './config')
+  const outdir = path.join(cwd, configDir, '.generated')
   async function copy(...files: Array<string>) {
     await Promise.all(
       files.map(file =>
@@ -186,7 +184,7 @@ export async function generate(options: GenerateOptions) {
     'index.d.ts',
     'client.js',
     'client.d.ts',
-    'cache.d.ts'
+    'store.d.ts'
   )
   await fs.writeFile(
     path.join(outdir, 'config.d.ts'),
@@ -201,21 +199,50 @@ export async function generate(options: GenerateOptions) {
   const outFile = 'file://' + configFile
   const exports = await import(outFile)
   const config: Config = exports.default || exports.config
+  if (!config) throw fail(`No config found in "${configFile}"`)
   const store = new SqliteStore(
     new BetterSqlite3Driver(new Database(':memory:')),
     createId
   )
-  const source = new FileData({
-    config,
-    fs: fs.promises,
-    loader: JsonLoader,
-    rootDir: cwd
+  const sources = Object.values(config.workspaces).map(workspace => {
+    return workspace.source
   })
-  await Cache.create(store, config, source)
-  const pkg = await fs.readFile(
-    path.join(__dirname, 'static', 'package.json'),
-    'utf-8'
+  const customSources: Array<Data.Source> = []
+  for (const sourceLocation of sources) {
+    const [stats, err] = await outcome(
+      fs.stat(path.join(cwd, configDir, sourceLocation))
+    )
+    if (err || !stats!.isDirectory()) {
+      // Attempt to build and extract source
+      const tmpFile = path.join(outdir, 'tmp', createId() + '.js')
+      await failOnBuildError(
+        build({
+          format: 'esm',
+          target: 'esnext',
+          treeShaking: true,
+          outfile: tmpFile,
+          entryPoints: [sourceLocation],
+          absWorkingDir: path.join(cwd, configDir),
+          bundle: true,
+          platform: 'node',
+          plugins: [externalPlugin, ignorePlugin, ReactPlugin]
+        })
+      )
+      const outFile = 'file://' + tmpFile
+      const exports = await import(outFile).finally(() => fs.unlink(tmpFile))
+      customSources.push(exports.default || exports.source)
+    }
+  }
+  const source = Data.Source.concat(
+    new FileData({
+      config,
+      fs: fs.promises,
+      loader: JsonLoader,
+      rootDir: path.join(cwd, configDir)
+    }),
+    ...customSources
   )
+  await Cache.create(store, config, source)
   await fs.writeFile(
     path.join(outdir, 'package.json'),
     JSON.stringify(
@@ -266,16 +293,16 @@ export async function generate(options: GenerateOptions) {
   const data = store.export()
   if (legacy) {
     const source = await fs.readFile(
-      path.join(__dirname, 'static', 'cache.legacy.js'),
+      path.join(__dirname, 'static', 'store.legacy.js'),
       'utf-8'
     )
-    await fs.writeFile(path.join(outdir, 'cache.js'), embedInJs(source, data))
+    await fs.writeFile(path.join(outdir, 'store.js'), embedInJs(source, data))
   } else {
     await fs.copyFile(
-      path.join(__dirname, 'static', 'cache.modern.js'),
-      path.join(outdir, 'cache.js')
+      path.join(__dirname, 'static', 'store.modern.js'),
+      path.join(outdir, 'store.js')
     )
-    await fs.writeFile(path.join(outdir, 'cache.wasm'), embedInWasm(data))
+    await fs.writeFile(path.join(outdir, 'store.wasm'), embedInWasm(data))
   }
-  if (debug) await fs.writeFile(path.join(outdir, 'cache.db'), data)
+  if (debug) await fs.writeFile(path.join(outdir, 'store.db'), data)
 }

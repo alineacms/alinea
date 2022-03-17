@@ -174,7 +174,7 @@ export function TreeNodeSortable(props: TreeNodeProps) {
     <TreeNode
       {...props}
       rootRef={setNodeRef}
-      style={style}
+      style={{...props.style, ...style}}
       {...listeners}
       {...attributes}
       isDragging={isDragging}

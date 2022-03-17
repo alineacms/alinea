@@ -23,7 +23,7 @@ function entry(entry: Entry.Raw) {
 const config = createConfig({
   workspaces: {
     main: workspace('Main', {
-      contentDir: 'content',
+      source: 'content',
       mediaDir: 'files',
       schema: createSchema({
         Type: type('Type', {

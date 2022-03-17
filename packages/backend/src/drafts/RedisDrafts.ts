@@ -7,7 +7,7 @@ export type RedisDraftsOptions = {
   client: Redis
 }
 
-const PREFIX = '@alinea/server.drafts.redis/'
+const PREFIX = '@alinea/backend.drafts.redis/'
 
 export class RedisDrafts implements Drafts {
   options: RedisDraftsOptions

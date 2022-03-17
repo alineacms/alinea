@@ -1,7 +1,7 @@
 import {PasswordLessLogin} from '@alinea/auth.passwordless/PasswordLessLogin'
 import {Client} from '@alinea/client'
 import dynamic from 'next/dynamic'
-import {config} from '../../.alinea/config'
+import {config} from '../../.alinea'
 
 const client = new Client(config, '/api/cms')
 

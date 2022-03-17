@@ -37,7 +37,7 @@ export class GithubData implements Data.Target, Data.Media {
         $status,
         ...data
       } = entry
-      const {schema, contentDir} = config.workspaces[workspace]
+      const {schema, source: contentDir} = config.workspaces[workspace]
       const file = entry.url + ($isContainer ? 'index' : '') + loader.extension
       const location = path.join(rootDir, contentDir, file)
       return [location, loader.format(schema, data)] as const

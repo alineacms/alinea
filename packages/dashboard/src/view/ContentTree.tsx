@@ -195,7 +195,7 @@ export function ContentTree({
                     level={entry.parents.length}
                     isOpen={isOpen}
                     toggleOpen={toggleOpen}
-                    style={style}
+                    style={{...style, height: 30}}
                   />
                 )
               }}

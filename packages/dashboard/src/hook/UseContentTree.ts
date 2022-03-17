@@ -9,10 +9,10 @@ type QueryParams = {
   workspace: string
   root: string
   open: Array<string>
-  hidden: Array<string>
+  visible: Array<string>
 }
 
-function query({workspace, root, open, hidden}: QueryParams) {
+function query({workspace, root, open, visible}: QueryParams) {
   const Parent = Entry.as('Parent')
   const condition = Entry.parent
     .isIn(open)
@@ -21,7 +21,7 @@ function query({workspace, root, open, hidden}: QueryParams) {
   return Entry.where(condition)
     .where(Entry.workspace.is(workspace))
     .where(Entry.root.is(root))
-    .where(Entry.type.isNotIn(hidden))
+    .where(Entry.type.isIn(visible))
     .select({
       title: Entry.title,
       id: Entry.id,
@@ -75,10 +75,10 @@ export function useContentTree({
     },
     [setOpen]
   )
-  const hidden = useMemo(() => {
+  const visible = useMemo(() => {
     const schema = config.workspaces[workspace].schema
     return Array.from(schema)
-      .filter(([, type]) => type.options.isHidden)
+      .filter(([, type]) => !type.options.isHidden)
       .map(([key]) => key)
   }, [workspace])
   const ids = Array.from(new Set([...open, ...select])).sort()
@@ -86,7 +86,7 @@ export function useContentTree({
     ['tree', workspace, root, ids.join('.')],
     () => {
       return hub
-        .query(query({workspace, root, open: ids, hidden}))
+        .query(query({workspace, root, open: ids, visible}))
         .then(Outcome.unpack)
     },
     {

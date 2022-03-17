@@ -1,13 +1,15 @@
 import {PasswordLessAuth} from '@alinea/auth.passwordless/PasswordLessAuth.js'
-import {JsonLoader, Server} from '@alinea/server'
-import {GithubData} from '@alinea/server/data/GithubData.js'
-import {RedisDrafts} from '@alinea/server/drafts/RedisDrafts.js'
-import {JWTPreviews} from '@alinea/server/util/JWTPreviews.js'
+import {JsonLoader, Server} from '@alinea/backend'
+import {GithubData} from '@alinea/backend/data/GithubData.js'
+import {RedisDrafts} from '@alinea/backend/drafts/RedisDrafts.js'
+import {JWTPreviews} from '@alinea/backend/util/JWTPreviews.js'
 import dotenv from 'dotenv'
 import findConfig from 'find-config'
 import Redis from 'ioredis'
 import {createTransport} from 'nodemailer'
-import {config, createCache} from './.alinea'
+// Todo: document this properly since it's counterintuitive to import from the generated folder
+import {config} from './.generated/config'
+import {createStore} from './.generated/store'
 
 dotenv.config({path: findConfig('.env')!})
 
@@ -17,7 +19,7 @@ const drafts = new RedisDrafts({
 
 const isProduction = process.env.NODE_ENV === 'production'
 const dashboardUrl = isProduction
-  ? 'https://alinea.vercel.app/admin'
+  ? 'https://alinea.sh/admin'
   : 'http://localhost:3000/admin'
 
 const data = new GithubData({
@@ -52,11 +54,11 @@ const auth = new PasswordLessAuth({
   }
 })
 
-export const server = new Server({
-  dashboardUrl: 'https://alinea.sh/admin',
+export const backend = new Server({
+  dashboardUrl,
   auth,
   config,
-  createStore: createCache,
+  createStore,
   drafts: drafts,
   target: data,
   media: data,

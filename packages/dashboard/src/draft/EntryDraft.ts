@@ -20,7 +20,7 @@ export enum PublishStatus {
 export class EntryDraft implements Entry {
   public entry: Observable<Entry>
   public status: Observable<EntryStatus>
-  #root: Y.Map<any>
+  private __root: Y.Map<any>
 
   constructor(
     protected hub: Hub,
@@ -29,7 +29,7 @@ export class EntryDraft implements Entry {
     public doc: Y.Doc,
     public previewToken: string
   ) {
-    this.#root = doc.getMap(ROOT_KEY)
+    this.__root = doc.getMap(ROOT_KEY)
     this.entry = observable(this.getEntry())
     this.status = observable(this.$status)
   }
@@ -64,49 +64,49 @@ export class EntryDraft implements Entry {
   }
 
   get id(): string {
-    return this.#root.get('id') || this.source.id
+    return this.__root.get('id') || this.source.id
   }
 
   get workspace(): string {
-    return this.#root.get('workspace') || this.source.workspace
+    return this.__root.get('workspace') || this.source.workspace
   }
 
   get root(): string {
-    return this.#root.get('root') || this.source.root
+    return this.__root.get('root') || this.source.root
   }
 
   get parents(): Array<string> {
-    return this.#root.get('parents') || this.source.parents
+    return this.__root.get('parents') || this.source.parents
   }
 
   get type(): string {
-    return this.#root.get('type') || this.source.type
+    return this.__root.get('type') || this.source.type
   }
 
   get index(): string {
-    return this.#root.get('index') || this.source.index
+    return this.__root.get('index') || this.source.index
   }
 
   get url(): string {
-    return this.#root.get('url') || this.source.url
+    return this.__root.get('url') || this.source.url
   }
 
   get $status(): EntryStatus {
     return (
-      this.#root.get('$status') || this.source.$status || EntryStatus.Published
+      this.__root.get('$status') || this.source.$status || EntryStatus.Published
     )
   }
 
   get parent(): string | undefined {
-    return this.#root.get('parent') || this.source.parent
+    return this.__root.get('parent') || this.source.parent
   }
 
   get title(): Label {
-    return this.#root.get('title') || this.source.title
+    return this.__root.get('title') || this.source.title
   }
 
   private getLocation(location: Array<string>) {
-    let target = this.#root
+    let target = this.__root
     let parent = target
     let type: Value = this.channel.valueType
     for (const key of location) {

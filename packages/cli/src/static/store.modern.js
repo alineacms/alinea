@@ -2,7 +2,7 @@ import {createId} from '@alinea/core'
 import init from '@alinea/sqlite-wasm'
 import {SqlJsDriver} from '@alinea/store/sqlite/drivers/SqlJsDriver.js'
 import {SqliteStore} from '@alinea/store/sqlite/SqliteStore.js'
-import * as cacheExports from './cache.wasm'
+import * as storeExports from './store.wasm'
 
 function unpack(exports) {
   return new Uint8Array(exports.data.buffer, 0, exports.length.value)
@@ -21,8 +21,8 @@ async function getWasmInstance(exports, imports) {
   throw new Error(`Unable to load wasm module`)
 }
 
-export function createCache() {
-  return Promise.all([getWasmInstance(cacheExports), init()]).then(
+export function createStore() {
+  return Promise.all([getWasmInstance(storeExports), init()]).then(
     ([{exports}, {Database}]) =>
       new SqliteStore(new SqlJsDriver(new Database(unpack(exports))), createId)
   )

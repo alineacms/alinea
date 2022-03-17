@@ -12,10 +12,10 @@
   },
   "dependencies": {
     "@alinea/auth.passwordless": "0.0.0",
+    "@alinea/backend": "0.0.0",
     "@alinea/cli": "0.0.0",
     "@alinea/core": "0.0.0",
     "@alinea/dashboard": "0.0.0",
-    "@alinea/server": "0.0.0",
     "@alinea/ui": "0.0.0",
     "next": "^12.1.0"
   },

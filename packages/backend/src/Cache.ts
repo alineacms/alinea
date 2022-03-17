@@ -21,11 +21,11 @@ import {Data} from './Data'
 import {parentUrl, walkUrl} from './util/Urls'
 
 export namespace Cache {
-  function indexSearch(store: Store, entry: Entry) {
+  function indexSearch(store: Store, entry: Entry, lookup = true) {
     // Todo: unroll languages
     const row = {id: entry.id, title: String(entry.title)}
-    const condition = Search.where(Search.id.is(entry.id))
-    const existing = store.first(condition)
+    const condition = Search.where(Search.id.match(entry.id))
+    const existing = lookup && store.first(condition)
     if (existing) store.update(condition, row)
     else store.insert(Search, row)
   }
@@ -133,12 +133,22 @@ export namespace Cache {
     let total = 0
     for await (const entry of from.entries()) {
       total++
+      if (total % 100 === 0)
+        process.stdout.write(`\r> Scanned ${total} entries`)
       store.insert(Entry, entry)
-      indexSearch(store, entry)
+      indexSearch(store, entry, false)
     }
-    store.createIndex(Entry, 'root', [Entry.root])
+    process.stdout.write(`\r>                          `)
+    process.stdout.write(`\r> Indexing...`)
+    store.createIndex(Entry, 'index', [Entry.index])
     store.createIndex(Entry, 'parent', [Entry.parent])
-    store.createIndex(Entry, 'workspace.type', [Entry.workspace, Entry.type])
+    store.createIndex(Entry, 'workspace.root.type', [
+      Entry.workspace,
+      Entry.root,
+      Entry.type
+    ])
+    store.createIndex(Entry, 'root', [Entry.root])
+    store.createIndex(Entry, 'type', [Entry.type])
     store.createIndex(Entry, 'url', [Entry.url])
     for (const [workspace, {schema}] of Object.entries(config.workspaces)) {
       for (const [key, type] of schema) {
