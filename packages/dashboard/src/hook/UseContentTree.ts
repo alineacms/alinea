@@ -92,7 +92,7 @@ export function useContentTree({
     {
       keepPreviousData: true,
       suspense: true,
-      cacheTime: 0,
+      cacheTime: 1,
       refetchOnWindowFocus: false
     }
   )

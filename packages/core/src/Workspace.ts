@@ -21,8 +21,8 @@ export function workspace<T>(
   options: Omit<Workspace<T>, 'name' | 'color'> & {color?: string}
 ): Workspace<T> {
   return {
-    name,
     ...options,
+    name,
     color: options.color || getRandomColor(JSON.stringify(name))
   }
 }

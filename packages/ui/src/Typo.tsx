@@ -1,4 +1,4 @@
-import {forwardRef, HTMLAttributes, Ref} from 'react'
+import {forwardRef, HTMLAttributes, HTMLProps, Ref} from 'react'
 import css from './Typo.module.scss'
 import {forwardRefWithAs, PropsWithAs} from './util/PropsWithAs'
 import {fromModule} from './util/Styler'
@@ -79,7 +79,7 @@ export namespace Typo {
   }
 
   const LinkComponent = forwardRef(function LinkComponent(
-    props: HTMLAttributes<HTMLAnchorElement>,
+    props: HTMLProps<HTMLAnchorElement>,
     ref: Ref<HTMLAnchorElement>
   ) {
     return (

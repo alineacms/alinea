@@ -129,26 +129,31 @@ function EntryRoute({id}: EntryRouteProps) {
         minWidth={200}
       >
         <SearchBox />
-        <ContentTree
-          key={workspace}
-          workspace={workspace}
-          root={root}
-          select={select}
-          redirectToRoot={!id}
-        />
+        {/* Todo: ideally we'd use the parent suspense but this cause a race condition in the demo page in next.js which I have not figured out yet */}
+        <Suspense fallback={null}>
+          <ContentTree
+            key={workspace}
+            workspace={workspace}
+            root={root}
+            select={select}
+            redirectToRoot={!id}
+          />
+        </Suspense>
       </Pane>
       <div style={{width: '100%', height: '100%'}}>
-        <Suspense fallback={<Loader absolute />}>
-          <Route path={nav.create(':workspace', ':root', ':parent')}>
-            {({match}) => {
-              const matched = match?.params.parent
-              if (!matched) return null
-              const isEntry = matched === draft?.id
-              return <NewEntry parentId={isEntry ? id : undefined} />
-            }}
-          </Route>
-          {draft && <View draft={draft} />}
-        </Suspense>
+        <Route path={nav.create(':workspace', ':root', ':parent')}>
+          {({match}) => {
+            const matched = match?.params.parent
+            if (!matched) return null
+            const isEntry = matched === draft?.id
+            return (
+              <Suspense fallback={<Loader absolute />}>
+                <NewEntry parentId={isEntry ? id : undefined} />
+              </Suspense>
+            )
+          }}
+        </Route>
+        {draft && <View draft={draft} />}
       </div>
     </CurrentDraftProvider>
   )

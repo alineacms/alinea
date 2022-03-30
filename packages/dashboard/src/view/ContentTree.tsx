@@ -163,8 +163,9 @@ export function ContentTree({
   useLayoutEffect(() => {
     if (redirectToRoot && entries.length > 0) {
       const first = entries[0]
-      if (first.workspace === workspace && first.root === root)
+      if (first.workspace === workspace && first.root === root) {
         history.replace(nav.entry(first.workspace, first.root, first.id))
+      }
     }
   }, [workspace, root, redirectToRoot, entries])
 
