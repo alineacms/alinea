@@ -1,3 +1,5 @@
+// Todo: provide a backend option which constructs all of these from environment
+import {config} from '.alinea/config'
 import {PasswordLessAuth} from '@alinea/auth.passwordless/PasswordLessAuth.js'
 import {JsonLoader, Server} from '@alinea/backend'
 import {GithubData} from '@alinea/backend/data/GithubData.js'
@@ -7,9 +9,7 @@ import dotenv from 'dotenv'
 import findConfig from 'find-config'
 import Redis from 'ioredis'
 import {createTransport} from 'nodemailer'
-// Todo: document this properly since it's counterintuitive to import from the generated folder
-import {config} from './.generated/config'
-import {createStore} from './.generated/store'
+import {createStore} from './.alinea'
 
 dotenv.config({path: findConfig('.env')!})
 

@@ -18,6 +18,7 @@
   "dependencies": {
     "@alinea/core": "0.0.0",
     "@alinea/store": "0.0.0",
+    "@esbx/eval": "^0.0.15",
     "@esbx/react": "^0.0.9",
     "base64-arraybuffer": "^1.0.1",
     "dirname-filename-esm": "^1.1.1",

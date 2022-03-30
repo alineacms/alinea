@@ -1,6 +1,6 @@
 import {AliasPlugin} from '@esbx/alias'
+import {EvalPlugin} from '@esbx/eval'
 import {ReactPlugin} from '@esbx/react'
-import {ReloadPlugin} from '@esbx/reload'
 import {ReporterPlugin} from '@esbx/reporter'
 import {RunPlugin} from '@esbx/run'
 import {SassPlugin} from '@esbx/sass'
@@ -8,7 +8,6 @@ import {StaticPlugin} from '@esbx/static'
 import {findNodeModules} from '@esbx/util'
 import {BuildTask, getManifest, getWorkspaces, TestTask} from '@esbx/workspaces'
 import autoprefixer from 'autoprefixer'
-import {execSync} from 'child_process'
 import crypto from 'crypto'
 import type {BuildOptions, Plugin} from 'esbuild'
 import {build} from 'esbuild'
@@ -119,6 +118,7 @@ const buildOptions: BuildOptions = {
   format: 'esm',
   sourcemap: true,
   plugins: [
+    EvalPlugin,
     StaticPlugin,
     ReactPlugin,
     SassPlugin.configure({
@@ -272,7 +272,7 @@ const devOptions: BuildOptions = {
     }),
     InternalPackages,
     ReporterPlugin.configure({name: 'Client'}),
-    ReloadPlugin,
+    // ReloadPlugin,
     GeneratePlugin
   ],
   external: ['fs'],
@@ -347,19 +347,5 @@ export const testTask = TestTask.configure({
 export const mkid = {
   action() {
     console.log(createId())
-  }
-}
-
-export const cli = {
-  action: async () => {
-    await generate()
-    try {
-      execSync(
-        `node --experimental-specifier-resolution=node ./packages/cli/dist/index.js`,
-        {stdio: 'inherit'}
-      )
-    } catch (e) {
-      process.exit(e.status)
-    }
   }
 }

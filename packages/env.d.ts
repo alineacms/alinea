@@ -5,8 +5,10 @@ declare module '*.module.scss' {
   export default classes
 }
 
+declare module 'eval:*'
 declare module 'get-random-values'
 declare module 'leb128'
+
 declare module 'image-blob-reduce' {
   type Options = {
     max: number

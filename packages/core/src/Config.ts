@@ -22,7 +22,9 @@ export class Config<T extends Workspaces = Workspaces> {
 }
 
 export type ConfigOptions<T> = {
+  // Todo: move to dashboard
   auth?: Auth.View
+  /** A record containing workspace configurations */
   workspaces: T
 }
 

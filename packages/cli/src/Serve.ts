@@ -9,19 +9,18 @@ import path from 'path'
 import {generate} from './Generate'
 
 export type ServeOptions = {
-  configDir?: string
   cwd?: string
+  configFile?: string
   port?: number
 }
 
 export async function serve(options: ServeOptions) {
+  const {cwd = process.cwd(), configFile = 'alinea.config'} = options
   const port = options.port || 4500
   const dashboardUrl = `http://localhost:${port}`
-  const cwd = options.cwd || process.cwd()
-  const configDir = options.configDir || '.alinea'
-  const generatedDir = path.join(cwd, configDir, '.generated')
-  const storeLocation = path.join(generatedDir, 'store.js')
-  const configLocation = path.join(generatedDir, 'config.js')
+  const outDir = path.join(cwd, '.alinea')
+  const storeLocation = path.join(outDir, 'store.js')
+  const configLocation = path.join(outDir, 'config.js')
   if (!existsSync(storeLocation)) await generate(options)
   const {createStore} = await import('file://' + storeLocation)
   const {config} = await import('file://' + configLocation)
@@ -29,11 +28,11 @@ export async function serve(options: ServeOptions) {
     config,
     fs,
     loader: JsonLoader,
-    rootDir: path.join(cwd, configDir)
+    rootDir: cwd
   })
   const drafts = new FileDrafts({
     fs,
-    dir: path.join(generatedDir, '.drafts')
+    dir: path.join(outDir, '_tmp/drafts')
   })
   const server = new Server({
     dashboardUrl,

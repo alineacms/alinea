@@ -1,4 +1,4 @@
-import {backend} from '../../../../.alinea/backend'
+import {backend} from '../../../../alinea.backend'
 
 export default backend.respond
 
