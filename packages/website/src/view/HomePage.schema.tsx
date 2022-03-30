@@ -31,6 +31,8 @@ export const HomePageSchema = type(
       })
     })
   )
-).configure({isContainer: true})
+).configure({
+  isContainer: true
+})
 
 export type HomePageSchema = Schema.TypeOf<typeof HomePageSchema>

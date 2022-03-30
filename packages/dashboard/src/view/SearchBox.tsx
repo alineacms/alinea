@@ -29,7 +29,7 @@ type QueryParams = {
 }
 
 function query({workspace, search, root}: QueryParams) {
-  return Search.join(Entry, Search.id.is(Entry.id))
+  return Search.leftJoin(Entry, Search.id.is(Entry.id))
     .where(search ? Search.title.match(searchTerms(search)) : false)
     .where(Entry.workspace.is(workspace))
     .orderBy(Entry.root.is(root).desc(), Search.get('rank').asc())

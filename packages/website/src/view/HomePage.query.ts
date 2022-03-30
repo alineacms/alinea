@@ -9,7 +9,7 @@ export function homePageQuery(Home: Collection<Home>) {
       .where(action.type.is('entry'))
       .select({
         url: action
-          .join(Action, Action.id.is(action.entry))
+          .leftJoin(Action, Action.id.is(action.entry))
           .select(Action.url)
           .first(),
         label: action.label

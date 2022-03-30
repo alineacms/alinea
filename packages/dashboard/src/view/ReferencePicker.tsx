@@ -50,7 +50,7 @@ function query({workspace, search, root}: QueryParams) {
   const orderBy = search
     ? [Entry.root.is(root).desc(), Search.get('rank').asc()]
     : [Entry.id.desc()]
-  return Search.join(Entry, Search.id.is(Entry.id))
+  return Search.leftJoin(Entry, Search.id.is(Entry.id))
     .where(search ? Search.title.match(searchTerms(search)) : true)
     .where(Entry.workspace.is(workspace))
     .orderBy(...orderBy)
