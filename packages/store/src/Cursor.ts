@@ -27,7 +27,7 @@ export class CursorImpl<Row> {
     })
   }
 
-  join<T>(that: Collection<T>, on: Expr<boolean>): Cursor<Row> {
+  leftJoin<T>(that: Collection<T>, on: Expr<boolean>): Cursor<Row> {
     const condition = that.cursor.where
       ? on.and(new Expr(that.cursor.where))
       : on
