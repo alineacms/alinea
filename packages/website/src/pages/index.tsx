@@ -1,5 +1,5 @@
-import {Page, pages} from '.alinea/web'
 import {GetStaticPropsContext} from 'next'
+import {Page, pages} from '../../.alinea/web'
 import {backend} from '../../alinea.backend'
 import {PageView} from '../view/PageView'
 import {pageViewQuery} from '../view/PageView.query'
