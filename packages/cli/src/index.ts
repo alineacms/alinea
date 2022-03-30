@@ -10,9 +10,11 @@ prog
   .describe('Generate types and content cache')
   .option('-w, --watch', `Watch for changes to source files`)
   .option(
-    '-d, --dir',
-    `Directory where the config file is found, defaults to ".alinea"`
+    '-c, --config',
+    `Location of the config file, defaults to "alinea.config.tsx"`
   )
-  .action(generate)
+  .action(args => {
+    return generate({configFile: args.config, watch: args.watch})
+  })
 
 prog.parse(process.argv)
