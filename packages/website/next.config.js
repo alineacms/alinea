@@ -1,4 +1,5 @@
 module.exports = {
+  productionBrowserSourceMaps: true,
   webpack: (config, {buildId, dev, isServer, defaultLoaders, webpack}) => {
     // https://github.com/vercel/next.js/issues/17806#issuecomment-913437792
     config.module.rules.push({

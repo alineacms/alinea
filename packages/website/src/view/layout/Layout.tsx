@@ -21,7 +21,7 @@ export function Layout({
       <FavIcon color="#EF437C" />
       <Head>
         <title>{meta.title}</title>
-        <style>
+        <style key="f-size">
           {`
           @media (max-width: 440px) {html {font-size: calc(4.4444vw + .00012px)}}
           @media (min-width: 1024px) {html {font-size: calc(0.2564102564vw + 0.93269rem)}}
