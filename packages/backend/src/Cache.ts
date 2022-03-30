@@ -24,7 +24,7 @@ export namespace Cache {
   function indexSearch(store: Store, entry: Entry, lookup = true) {
     // Todo: unroll languages
     const row = {id: entry.id, title: String(entry.title)}
-    const condition = Search.where(Search.id.match(entry.id))
+    const condition = Search.where(Search.id.is(entry.id))
     const existing = lookup && store.first(condition)
     if (existing) store.update(condition, row)
     else store.insert(Search, row)
