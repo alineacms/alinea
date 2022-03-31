@@ -1,4 +1,4 @@
-import {RichTextNode, TextDoc, TypesOf} from '@alinea/core'
+import {TextDoc, TextNode, TypesOf} from '@alinea/core'
 import {ComponentType, Fragment} from 'react'
 
 function getTag(type: string, attributes: Record<string, any> | undefined) {
@@ -18,17 +18,17 @@ function getTag(type: string, attributes: Record<string, any> | undefined) {
   }
 }
 
-function RichTextNodeView<T>(node: RichTextNode<T>) {
+function RichTextNodeView<T>(node: TextNode<T>) {
   switch (node.type) {
     case 'text':
-      const {text, marks} = node as RichTextNode.Text
+      const {text, marks} = node as TextNode.Text
       const wrappers =
         marks?.map(mark => getTag(mark.type, mark.attrs) || Fragment) || []
       return wrappers.reduce((children, Tag) => {
         return <Tag>{children}</Tag>
       }, <>{text}</>)
     default:
-      const {type, attrs, content} = node as RichTextNode.Element
+      const {type, attrs, content} = node as TextNode.Element
       const Tag = getTag(type, attrs) || Fragment
       return (
         <Tag>
@@ -55,7 +55,7 @@ export function RichText<T>({doc, view}: RichTextProps<T>) {
       {doc.content.map((node, i) => {
         const Custom = custom[node.type]
         if (Custom) {
-          const id = (node as RichTextNode.Element).attrs?.id
+          const id = (node as TextNode.Element).attrs?.id
           if (!doc.blocks?.[id]) return null
           return <Custom key={i} {...doc.blocks[id]} />
         }

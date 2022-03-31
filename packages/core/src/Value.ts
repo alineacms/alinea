@@ -1,7 +1,8 @@
 import * as Y from 'yjs'
+import {TextDoc} from './TextDoc'
 import {ListMutator, ListValue} from './value/ListValue'
 import {RecordMutator, RecordValue} from './value/RecordValue'
-import {RichTextMutator, RichTextValue, TextDoc} from './value/RichTextValue'
+import {RichTextMutator, RichTextValue} from './value/RichTextValue'
 import {ScalarMutator, ScalarValue} from './value/ScalarValue'
 
 type YType = Y.AbstractType<any>

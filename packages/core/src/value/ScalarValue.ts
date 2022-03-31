@@ -6,7 +6,7 @@ export type ScalarMutator<T> = (value: T) => void
 
 export class ScalarValue<T> implements Value<T, ScalarMutator<T>> {
   static inst = new ScalarValue()
-  constructor() {}
+  private constructor() {}
   create(): T {
     return undefined! as T
   }

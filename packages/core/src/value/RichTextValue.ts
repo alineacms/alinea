@@ -1,33 +1,13 @@
 import * as Y from 'yjs'
 import {createError} from '../ErrorWithCode'
+import {TextDoc, TextNode} from '../TextDoc'
 import {Value} from '../Value'
 import {RecordValue} from './RecordValue'
-
-export namespace RichTextNode {
-  export type Mark = {type: string; attrs?: Record<string, string>}
-  export type Text = {
-    type: 'text'
-    text?: string
-    marks?: Array<Mark>
-  }
-  export type Element<T = any> = {
-    type: T extends {type: string} ? T['type'] : string
-    attrs?: Record<string, any>
-    content?: Array<RichTextNode>
-  }
-}
-export type RichTextNode<T = any> = RichTextNode.Text | RichTextNode.Element<T>
-
-export type TextDoc<T> = {
-  type: 'doc'
-  blocks: Record<string, Row & T>
-  content: Array<RichTextNode<T>>
-}
 
 // Adapted from: https://github.com/yjs/y-prosemirror/blob/1c393fb3254cc1ed4933e8326b57c1316793122a/src/lib.js#L245
 function serialize(
   item: Y.XmlElement | Y.XmlText | Y.XmlHook
-): RichTextNode | Array<RichTextNode> {
+): TextNode | Array<TextNode> {
   // Todo: what is this thing?
   if (item instanceof Y.XmlHook) {
     return []
@@ -36,14 +16,14 @@ function serialize(
     const delta: Array<{insert: any; attributes: Record<string, any>}> =
       item.toDelta()
     return delta.map(d => {
-      const text: RichTextNode.Text = {
+      const text: TextNode.Text = {
         type: 'text',
         text: d.insert
       }
       if (d.attributes) {
         text.marks = Object.keys(d.attributes).map(type => {
           const attrs = d.attributes[type]
-          const mark: RichTextNode.Mark = {type}
+          const mark: TextNode.Mark = {type}
           if (attrs && Object.keys(attrs).length) mark.attrs = attrs
           return mark
         })
@@ -51,7 +31,7 @@ function serialize(
       return text
     })
   }
-  const res: RichTextNode.Element = {type: item.nodeName}
+  const res: TextNode.Element = {type: item.nodeName}
   const attrs = item.getAttributes()
   if (attrs && Object.keys(attrs).length) res.attrs = attrs
   const children = item.toArray()
@@ -61,20 +41,20 @@ function serialize(
   return res
 }
 
-function unserializeMarks(marks: Array<RichTextNode.Mark>) {
+function unserializeMarks(marks: Array<TextNode.Mark>) {
   return Object.fromEntries(marks.map(mark => [mark.type, {...mark.attrs}]))
 }
 
-function unserialize(node: RichTextNode): Y.XmlText | Y.XmlElement {
+function unserialize(node: TextNode): Y.XmlText | Y.XmlElement {
   switch (node.type) {
     case 'text': {
-      const {text, marks} = node as RichTextNode.Text
+      const {text, marks} = node as TextNode.Text
       const type = new Y.XmlText()
       if (text) type.insert(0, text, marks && unserializeMarks(marks))
       return type
     }
     default: {
-      const {type, attrs, content} = node as RichTextNode.Element
+      const {type, attrs, content} = node as TextNode.Element
       const element = new Y.XmlElement(type)
       for (const key in attrs) {
         const val = attrs[key]
@@ -86,21 +66,14 @@ function unserialize(node: RichTextNode): Y.XmlText | Y.XmlElement {
   }
 }
 
-type Row = {
-  id: string
-  type: string
-}
-
 export type RichTextMutator<R> = {
   map: Y.Map<any>
   fragment: Y.XmlFragment
   insert: (id: string, block: string) => void
 }
 
-export class RichTextValue<T>
-  implements Value<TextDoc<Row & T>, RichTextMutator<Row & T>>
-{
-  values?: Record<string, RecordValue<Row & T>>
+export class RichTextValue<T> implements Value<TextDoc<T>, RichTextMutator<T>> {
+  values?: Record<string, RecordValue<T>>
   constructor(protected shapes?: Record<string, RecordValue<T>>) {
     this.values =
       shapes &&
@@ -120,8 +93,8 @@ export class RichTextValue<T>
     return {
       type: 'doc',
       blocks: {},
-      content: [{type: 'paragraph'}]
-    } as TextDoc<Row & T>
+      content: []
+    } as TextDoc<T>
   }
   typeOfChild<C>(yValue: Y.Map<any>, child: string): Value<C> {
     const block = yValue.get(child)
@@ -130,7 +103,7 @@ export class RichTextValue<T>
     if (value) return value as unknown as Value<C>
     throw createError(`Type of block "${child}" not found`)
   }
-  toY(value: TextDoc<Row & T>) {
+  toY(value: TextDoc<T>) {
     const map = new Y.Map()
     const doc = new Y.XmlFragment()
     map.set('$doc', doc)
@@ -145,7 +118,7 @@ export class RichTextValue<T>
     doc.insert(0, content.map(unserialize))
     return map
   }
-  fromY(value: Y.Map<any>): TextDoc<Row & T> {
+  fromY(value: Y.Map<any>): TextDoc<T> {
     if (!value) return {type: 'doc', blocks: {}, content: []}
     const doc: Y.XmlFragment = value.get('$doc')
     const types = this.values
