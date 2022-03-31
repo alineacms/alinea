@@ -15,8 +15,9 @@ export default function Demo() {
       <Modal open={reminderOpen} onClose={() => setReminderOpen(false)}>
         <Typo.H1>Demo</Typo.H1>
         <Typo.P>
-          This is a local demo showcasing{' '}
-          <Typo.Link href="/">Alinea CMS</Typo.Link>
+          This is a demo showcasing the{' '}
+          <Typo.Link href="/">Alinea CMS</Typo.Link> dashboard. It is not
+          connected to a server, any changes you make are persisted locally.
         </Typo.P>
         <HStack>
           <Button size="large" onClick={() => setReminderOpen(false)}>
