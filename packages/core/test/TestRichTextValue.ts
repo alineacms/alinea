@@ -9,7 +9,10 @@ test('serialize', () => {
   const type = new RichTextValue({
     Block1: new RecordValue({
       field1: ScalarValue.inst,
-      field2: ScalarValue.inst
+      blockInner: new RecordValue({
+        field3: ScalarValue.inst,
+        field4: ScalarValue.inst
+      })
     }),
     Block2: new RecordValue({
       field3: ScalarValue.inst,
@@ -17,11 +20,31 @@ test('serialize', () => {
     })
   })
 
-  const value = type.create()
-  value.content.push({
-    type: 'paragraph',
-    content: [{type: 'text', text: 'Hello'}]
-  })
+  const value = [
+    {
+      type: 'paragraph',
+      content: [{type: 'text', text: 'Hello'}]
+    },
+    {
+      id: 'unique1',
+      type: 'Block1',
+      field1: 'a',
+      blockInner: {
+        field3: 'a',
+        field4: 'b'
+      }
+    },
+    {
+      type: 'paragraph',
+      content: [{type: 'text', text: 'Hello'}]
+    },
+    {
+      id: 'unique2',
+      type: 'Block2',
+      field3: 'a',
+      field4: 'b'
+    }
+  ]
   const yType = type.toY(value)
   // Changes are not reflected in Y types until mounted in a Y.Doc
   const doc = new Y.Doc()

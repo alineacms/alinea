@@ -33,7 +33,7 @@ function serialize(
   }
   const res: TextNode.Element = {type: item.nodeName}
   const attrs = item.getAttributes()
-  if (attrs && Object.keys(attrs).length) res.attrs = attrs
+  if (attrs && Object.keys(attrs).length) Object.assign(res, attrs)
   const children = item.toArray()
   if (children.length) {
     res.content = children.map(serialize).flat()
@@ -54,7 +54,7 @@ function unserialize(node: TextNode): Y.XmlText | Y.XmlElement {
       return type
     }
     default: {
-      const {type, attrs, content} = node as TextNode.Element
+      const {type, content, ...attrs} = node as TextNode.Element
       const element = new Y.XmlElement(type)
       for (const key in attrs) {
         const val = attrs[key]
@@ -67,7 +67,7 @@ function unserialize(node: TextNode): Y.XmlText | Y.XmlElement {
 }
 
 export type RichTextMutator<R> = {
-  map: Y.Map<any>
+  // map: Y.Map<any>
   fragment: Y.XmlFragment
   insert: (id: string, block: string) => void
 }
@@ -90,11 +90,7 @@ export class RichTextValue<T> implements Value<TextDoc<T>, RichTextMutator<T>> {
       )
   }
   create() {
-    return {
-      type: 'doc',
-      blocks: {},
-      content: []
-    } as TextDoc<T>
+    return [] as TextDoc<T>
   }
   typeOfChild<C>(yValue: Y.Map<any>, child: string): Value<C> {
     const block = yValue.get(child)
@@ -105,53 +101,34 @@ export class RichTextValue<T> implements Value<TextDoc<T>, RichTextMutator<T>> {
   }
   toY(value: TextDoc<T>) {
     const map = new Y.Map()
-    const doc = new Y.XmlFragment()
-    map.set('$doc', doc)
+    const text = new Y.XmlFragment()
+    map.set('$text', text)
     const types = this.values
-    if (types && value && value.blocks)
-      for (const [name, block] of Object.entries(value.blocks)) {
-        const type = types[block.type]
-        if (type) map.set(name, type.toY(block))
+    if (!Array.isArray(value)) return map
+    if (types)
+      for (const node of value) {
+        const type = types[node.type]
+        if (type && 'id' in node) map.set(node.id, type.toY(node as any))
       }
-    const content = value?.content
-    if (!content) return map
-    doc.insert(0, content.map(unserialize))
+    text.insert(0, value.map(unserialize))
     return map
   }
   fromY(value: Y.Map<any>): TextDoc<T> {
-    if (!value) return {type: 'doc', blocks: {}, content: []}
-    const doc: Y.XmlFragment = value.get('$doc')
-    const types = this.values
-    const content = doc?.toArray()?.map(serialize)?.flat() || []
-    const usedBlocks = new Set(
-      types
-        ? content.flatMap(node => {
-            const type = node.type
-            if (type === 'text') return []
-            if (type in types && 'attrs' in node) return [node.attrs!.id]
-            return []
-          })
-        : []
-    )
-    const blocks = types
-      ? Object.fromEntries(
-          Array.from(value.entries())
-            .filter(([key, item]) => {
-              return key !== '$doc' && types[item.get('type')]
-            })
-            .map(([key, item]) => {
-              return [key, types[item.get('type')].fromY(item)]
-            })
-            .filter(([key, item]) => {
-              return usedBlocks.has(key)
-            })
-        )
-      : undefined
-    return {
-      type: 'doc',
-      blocks,
-      content
-    }
+    if (!value) return []
+    const text: Y.XmlFragment = value.get('$text')
+    const types = this.values || {}
+    const content = text?.toArray()?.map(serialize)?.flat() || []
+    return content.map(node => {
+      const type = types[node.type]
+      if (type && 'id' in node) {
+        return {
+          id: node.id,
+          type: node.type,
+          ...type.fromY(value.get(node.id))
+        }
+      }
+      return node
+    })
   }
   watch(parent: Y.Map<any>, key: string) {
     // There's no watching involved, the editor should handle all rendering
@@ -160,8 +137,8 @@ export class RichTextValue<T> implements Value<TextDoc<T>, RichTextMutator<T>> {
   mutator(parent: Y.Map<any>, key: string) {
     const map = parent.get(key)
     return {
-      map: parent.get(key),
-      fragment: map.get('$doc'),
+      // map: parent.get(key),
+      fragment: map.get('$text'),
       insert: (id: string, block: string) => {
         if (!this.values) throw new Error('No types defined')
         map.set(id, this.values[block].toY({type: block} as any))

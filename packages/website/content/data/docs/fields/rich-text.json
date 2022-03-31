@@ -10,44 +10,34 @@
       "id": "268hzy1CCrx0N9PlycpZlqjx0R9",
       "index": "a0",
       "type": "TextBlock",
-      "text": {
-        "type": "doc",
-        "blocks": {
-          "268iODr7pOAG2BeDXXfDEvDZYfr": {
-            "type": "CodeBlock",
-            "code": "richText('My rich text field', {\n  blocks: schema({\n    CodeBlock: CodeBlockSchema,\n    ImageBlock: ImageBlockSchema\n  })\n})"
-          }
-        },
-        "content": [
-          {
-            "type": "heading",
-            "attrs": {
-              "level": 1
-            },
-            "content": [
-              {
-                "type": "text",
-                "text": "Rich text"
-              }
-            ]
+      "text": [
+        {
+          "type": "heading",
+          "attrs": {
+            "level": 1
           },
-          {
-            "type": "paragraph",
-            "content": [
-              {
-                "type": "text",
-                "text": "Rich text can contain text marks like bold, italics or underline. Content can be structured using headings. It can even contain other types as blocks that can be moved around freely."
-              }
-            ]
-          },
-          {
-            "type": "CodeBlock",
-            "attrs": {
-              "id": "268iODr7pOAG2BeDXXfDEvDZYfr"
+          "content": [
+            {
+              "type": "text",
+              "text": "Rich text"
             }
-          }
-        ]
-      }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "Rich text can contain text marks like bold, italics or underline. Content can be structured using headings. It can even contain other types as blocks that can be moved around freely."
+            }
+          ]
+        },
+        {
+          "type": "CodeBlock",
+          "id": "268iODr7pOAG2BeDXXfDEvDZYfr",
+          "code": "richText('My rich text field', {\n  blocks: schema({\n    CodeBlock: CodeBlockSchema,\n    ImageBlock: ImageBlockSchema\n  })\n})"
+        }
+      ]
     }
   ]
 }

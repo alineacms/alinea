@@ -10,33 +10,27 @@
       "id": "25HWDVdhsKXsw9R0i0ImOmwE32h",
       "index": "a0",
       "type": "TextBlock",
-      "text": {
-        "type": "doc",
-        "blocks": {},
-        "content": [
-          {
-            "type": "heading",
-            "attrs": {
-              "level": 1
-            },
-            "content": [
-              {
-                "type": "text",
-                "text": "Configuration"
-              }
-            ]
-          },
-          {
-            "type": "paragraph",
-            "content": [
-              {
-                "type": "text",
-                "text": "The  command (`alinea init`) we ran in Getting Started created an `alinea.config.tsx` file. This file holds settings and a schema."
-              }
-            ]
-          }
-        ]
-      }
+      "text": [
+        {
+          "type": "heading",
+          "level": 1,
+          "content": [
+            {
+              "type": "text",
+              "text": "Configuration"
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "The  command (`alinea init`) we ran in Getting Started created an `alinea.config.tsx` file. This file holds settings and a schema."
+            }
+          ]
+        }
+      ]
     }
   ]
 }

@@ -10,57 +10,47 @@
       "id": "268hqZiiT9sF3zQX1DZdHSJ6Ri3",
       "index": "a0",
       "type": "TextBlock",
-      "text": {
-        "type": "doc",
-        "blocks": {
-          "268hspT1GDy0ag8lya8m9dObKhX": {
-            "type": "CodeBlock",
-            "code": "tabs(\n  tab('Tab A', {\n    // ... fields\n  }),\n  tab('Tab B', {\n    // ... fields\n  })\n)"
-          }
-        },
-        "content": [
-          {
-            "type": "heading",
-            "attrs": {
-              "level": 1
-            },
-            "content": [
-              {
-                "type": "text",
-                "text": "Tabs"
-              }
-            ]
+      "text": [
+        {
+          "type": "heading",
+          "attrs": {
+            "level": 1
           },
-          {
-            "type": "paragraph",
-            "content": [
-              {
-                "type": "text",
-                "text": "Tabs help you structure the input fields in the admin panel. Tabs are a "
-              },
-              {
-                "type": "text",
-                "text": "section",
-                "marks": [
-                  {
-                    "type": "italic"
-                  }
-                ]
-              },
-              {
-                "type": "text",
-                "text": ", not a field. In themselves tabs do not hold data, but can declare underlying fields which do (or even more tabs). "
-              }
-            ]
-          },
-          {
-            "type": "CodeBlock",
-            "attrs": {
-              "id": "268hspT1GDy0ag8lya8m9dObKhX"
+          "content": [
+            {
+              "type": "text",
+              "text": "Tabs"
             }
-          }
-        ]
-      }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "Tabs help you structure the input fields in the admin panel. Tabs are a "
+            },
+            {
+              "type": "text",
+              "text": "section",
+              "marks": [
+                {
+                  "type": "italic"
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "text": ", not a field. In themselves tabs do not hold data, but can declare underlying fields which do (or even more tabs). "
+            }
+          ]
+        },
+        {
+          "type": "CodeBlock",
+          "id": "268hspT1GDy0ag8lya8m9dObKhX",
+          "code": "tabs(\n  tab('Tab A', {\n    // ... fields\n  }),\n  tab('Tab B', {\n    // ... fields\n  })\n)"
+        }
+      ]
     }
   ]
 }

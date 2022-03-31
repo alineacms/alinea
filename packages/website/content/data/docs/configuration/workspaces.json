@@ -10,44 +10,34 @@
       "id": "259FDszdsLTaK8UKjB6dWr0kKL3",
       "index": "a0",
       "type": "TextBlock",
-      "text": {
-        "type": "doc",
-        "blocks": {
-          "267Q4Kyg9hOUVaJWolmaa1wOndr": {
-            "type": "CodeBlock",
-            "code": "workspace('My workspace', {\n  schema, color, roots\n})"
-          }
-        },
-        "content": [
-          {
-            "type": "heading",
-            "attrs": {
-              "level": 1
-            },
-            "content": [
-              {
-                "type": "text",
-                "text": "Workspaces"
-              }
-            ]
+      "text": [
+        {
+          "type": "heading",
+          "attrs": {
+            "level": 1
           },
-          {
-            "type": "paragraph",
-            "content": [
-              {
-                "type": "text",
-                "text": "Workspaces allow you to manage content in separate \"buckets\". A workspace can have its own schema, media files and other configuration and can be useful when the content has (mostly) no relation to the content in other workspaces."
-              }
-            ]
-          },
-          {
-            "type": "CodeBlock",
-            "attrs": {
-              "id": "267Q4Kyg9hOUVaJWolmaa1wOndr"
+          "content": [
+            {
+              "type": "text",
+              "text": "Workspaces"
             }
-          }
-        ]
-      }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "Workspaces allow you to manage content in separate \"buckets\". A workspace can have its own schema, media files and other configuration and can be useful when the content has (mostly) no relation to the content in other workspaces."
+            }
+          ]
+        },
+        {
+          "type": "CodeBlock",
+          "id": "267Q4Kyg9hOUVaJWolmaa1wOndr",
+          "code": "workspace('My workspace', {\n  schema, color, roots\n})"
+        }
+      ]
     }
   ]
 }

@@ -1,7 +1,4 @@
 import {PasswordLessAuth} from '@alinea/auth.passwordless/PasswordLessAuth'
-// We import the global styles here so they're included in the bundle.
-// In the Next.js build these are imported in the _app view.
-import '@alinea/css/global.css'
 import {JsonLoader, Server} from '@alinea/backend'
 import {FileData} from '@alinea/backend/data/FileData'
 import {GithubData} from '@alinea/backend/data/GithubData'
@@ -9,6 +6,9 @@ import {FileDrafts} from '@alinea/backend/drafts/FileDrafts'
 import {GitDrafts} from '@alinea/backend/drafts/GitDrafts'
 import {RedisDrafts} from '@alinea/backend/drafts/RedisDrafts.js'
 import {JWTPreviews} from '@alinea/backend/util/JWTPreviews.js'
+// We import the global styles here so they're included in the bundle.
+// In the Next.js build these are imported in the _app view.
+import '@alinea/css/global.css'
 import compression from 'compression'
 import dotenv from 'dotenv'
 import express from 'express'
@@ -48,7 +48,7 @@ const data = new FileData({
   config,
   fs,
   loader: JsonLoader,
-  rootDir: '../website/.alinea'
+  rootDir: '../website'
 })
 
 const githubData = new GithubData({

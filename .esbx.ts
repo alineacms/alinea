@@ -1,6 +1,7 @@
 import {AliasPlugin} from '@esbx/alias'
 import {EvalPlugin} from '@esbx/eval'
 import {ReactPlugin} from '@esbx/react'
+import {ReloadPlugin} from '@esbx/reload'
 import {ReporterPlugin} from '@esbx/reporter'
 import {RunPlugin} from '@esbx/run'
 import {SassPlugin} from '@esbx/sass'
@@ -272,7 +273,7 @@ const devOptions: BuildOptions = {
     }),
     InternalPackages,
     ReporterPlugin.configure({name: 'Client'}),
-    // ReloadPlugin,
+    ReloadPlugin,
     GeneratePlugin
   ],
   external: ['fs'],

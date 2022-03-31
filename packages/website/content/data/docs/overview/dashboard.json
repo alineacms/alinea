@@ -10,133 +10,110 @@
       "id": "25HTEiuZ1248vU6D4ar6EjACGkg",
       "index": "a0",
       "type": "TextBlock",
-      "text": {
-        "type": "doc",
-        "blocks": {
-          "25pEP3J8GJVZJxJ97zVRb5LTZz7": {
-            "type": "ImageBlock",
-            "image": [
-              {
-                "id": "26EVjk4NlaUhK8HwoiH6sa0bZVh",
-                "index": "a0",
-                "type": "entry",
-                "entry": "263qHO7caJyUu7iLZpvQ8tCVpJs"
-              }
-            ]
-          },
-          "25HUvqctUB4ZjEBOMlKq5buHK5Y": {
-            "type": "CodeBlock",
-            "code": "npx alinea serve"
-          }
+      "text": [
+        {
+          "type": "heading",
+          "level": 1,
+          "content": [
+            {
+              "type": "text",
+              "text": "Accessing the admin interface"
+            }
+          ]
         },
-        "content": [
-          {
-            "type": "heading",
-            "attrs": {
-              "level": 1
-            },
-            "content": [
-              {
-                "type": "text",
-                "text": "Accessing the admin interface"
-              }
-            ]
-          },
-          {
-            "type": "heading",
-            "attrs": {
-              "level": 2
-            },
-            "content": [
-              {
-                "type": "text",
-                "text": "Running locally"
-              }
-            ]
-          },
-          {
-            "type": "paragraph",
-            "content": [
-              {
-                "type": "text",
-                "text": "The following command will start a local server and open it in your browser."
-              }
-            ]
-          },
-          {
-            "type": "CodeBlock",
-            "attrs": {
-              "id": "25HUvqctUB4ZjEBOMlKq5buHK5Y"
+        {
+          "type": "heading",
+          "level": 2,
+          "content": [
+            {
+              "type": "text",
+              "text": "Running locally"
             }
-          },
-          {
-            "type": "paragraph",
-            "content": [
-              {
-                "type": "text",
-                "text": "If all goes well you see something like this:"
-              }
-            ]
-          },
-          {
-            "type": "ImageBlock",
-            "attrs": {
-              "id": "25pEP3J8GJVZJxJ97zVRb5LTZz7"
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "The following command will start a local server and open it in your browser."
             }
-          },
-          {
-            "type": "paragraph",
-            "content": [
-              {
-                "type": "text",
-                "text": "If something went wrong, create an issue [here]."
-              }
-            ]
-          },
-          {
-            "type": "heading",
-            "attrs": {
-              "level": 2
-            },
-            "content": [
-              {
-                "type": "text",
-                "text": "Running publicly"
-              }
-            ]
-          },
-          {
-            "type": "paragraph",
-            "content": [
-              {
-                "type": "text",
-                "text": "Later on we'll see how to add authentication and expose this admin interface publicly."
-              }
-            ]
-          },
-          {
-            "type": "heading",
-            "attrs": {
-              "level": 2
-            },
-            "content": [
-              {
-                "type": "text",
-                "text": "Creating pages"
-              }
-            ]
-          },
-          {
-            "type": "paragraph",
-            "content": [
-              {
-                "type": "text",
-                "text": "You can create a page using the create page button in the left sidebar."
-              }
-            ]
-          }
-        ]
-      }
+          ]
+        },
+        {
+          "id": "25HTEiuZ1248vU6D4ar6EjACGkf",
+          "type": "CodeBlock",
+          "code": "npx alinea serve"
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "If all goes well you see something like this:"
+            }
+          ]
+        },
+        {
+          "id": "25HTEiuZ1248vU6D4ar6EjACGkx",
+          "type": "ImageBlock",
+          "image": [
+            {
+              "id": "279Q8XTi7gTi1TyRFMQ96oSteIm",
+              "index": "a0",
+              "type": "entry",
+              "entry": "263qHO7caJyUu7iLZpvQ8tCVpJs"
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "If something went wrong, create an issue [here]."
+            }
+          ]
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "content": [
+            {
+              "type": "text",
+              "text": "Running publicly"
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "Later on we'll see how to add authentication and expose this admin interface publicly."
+            }
+          ]
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "content": [
+            {
+              "type": "text",
+              "text": "Creating pages"
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "You can create a page using the create page button in the left sidebar."
+            }
+          ]
+        }
+      ]
     }
   ]
 }

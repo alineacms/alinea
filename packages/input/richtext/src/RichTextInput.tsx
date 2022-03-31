@@ -235,7 +235,7 @@ export type RichTextInputProps<T> = {
 export function RichTextInput<T>({state, field}: RichTextInputProps<T>) {
   const {blocks, optional, help} = field.options
   const [focus, setFocus] = useState(false)
-  const [content, {fragment, insert}] = useInput(state)
+  const [value, {fragment, insert}] = useInput(state)
   const toolbarRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLElement>(null)
   const focusToggle = useCallback(
@@ -255,7 +255,18 @@ export function RichTextInput<T>({state, field}: RichTextInputProps<T>) {
   )
   const editor = useEditor(
     {
-      content,
+      content: {
+        type: 'doc',
+        content: value.map(node => {
+          if (node.type === 'text') return node //
+          const {type, ...attrs} = node
+          return {
+            type,
+            content: 'content' in node ? node.content : undefined,
+            attrs
+          }
+        })
+      },
       onFocus: ({event}) => focusToggle(event.currentTarget),
       onBlur: ({event}) => focusToggle(event.relatedTarget),
       extensions: [

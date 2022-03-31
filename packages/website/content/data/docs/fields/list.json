@@ -10,44 +10,34 @@
       "id": "268i1rDJRNrTBVC4yDR7AfJoDpW",
       "index": "a0",
       "type": "TextBlock",
-      "text": {
-        "type": "doc",
-        "blocks": {
-          "268j9BBXf8jwwZ427XxBT2O0snb": {
-            "type": "CodeBlock",
-            "code": "list('My list field', {\n  schema: schema({\n    // ... types\n  })\n})"
-          }
-        },
-        "content": [
-          {
-            "type": "heading",
-            "attrs": {
-              "level": 1
-            },
-            "content": [
-              {
-                "type": "text",
-                "text": "List"
-              }
-            ]
+      "text": [
+        {
+          "type": "heading",
+          "attrs": {
+            "level": 1
           },
-          {
-            "type": "paragraph",
-            "content": [
-              {
-                "type": "text",
-                "text": "A list field contains blocks of fields. Every block is configured using a specific type. These can be created using the schema and type functions as seen before."
-              }
-            ]
-          },
-          {
-            "type": "CodeBlock",
-            "attrs": {
-              "id": "268j9BBXf8jwwZ427XxBT2O0snb"
+          "content": [
+            {
+              "type": "text",
+              "text": "List"
             }
-          }
-        ]
-      }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "A list field contains blocks of fields. Every block is configured using a specific type. These can be created using the schema and type functions as seen before."
+            }
+          ]
+        },
+        {
+          "type": "CodeBlock",
+          "id": "268j9BBXf8jwwZ427XxBT2O0snb",
+          "code": "list('My list field', {\n  schema: schema({\n    // ... types\n  })\n})"
+        }
+      ]
     }
   ]
 }

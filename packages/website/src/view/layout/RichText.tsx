@@ -28,7 +28,7 @@ function RichTextNodeView<T>(node: TextNode<T>) {
         return <Tag>{children}</Tag>
       }, <>{text}</>)
     default:
-      const {type, attrs, content} = node as TextNode.Element
+      const {type, content, ...attrs} = node as TextNode.Element
       const Tag = getTag(type, attrs) || Fragment
       return (
         <Tag>
@@ -49,16 +49,12 @@ export type RichTextProps<T> = {
 
 export function RichText<T>({doc, view}: RichTextProps<T>) {
   const custom: Record<string, any> = view || {}
-  if (!doc || !doc.content) return null
+  if (!Array.isArray(doc)) return null
   return (
     <>
-      {doc.content.map((node, i) => {
+      {doc.map((node, i) => {
         const Custom = custom[node.type]
-        if (Custom) {
-          const id = (node as TextNode.Element).attrs?.id
-          if (!doc.blocks?.[id]) return null
-          return <Custom key={i} {...doc.blocks[id]} />
-        }
+        if (Custom) return <Custom key={i} {...node} />
         return <RichTextNodeView key={i} {...node} />
       })}
     </>

@@ -9,18 +9,7 @@ export function blocksQuery(blocks: Expr<BlocksSchema>) {
           const {text} = block
           return {
             ...block,
-            text: {
-              ...text,
-              content: text.content.map(item => {
-                switch (item.type) {
-                  case 'ImageBlock':
-                    const data = text.blocks[item.attrs!.id]
-                    return data
-                  default:
-                    return item
-                }
-              })
-            }
+            text: text
           }
         default:
           return block
