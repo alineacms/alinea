@@ -6,7 +6,7 @@ import {ScalarValue} from './value/ScalarValue'
 
 type YType = Y.AbstractType<any>
 
-export interface Value<T = any, M = unknown> {
+export interface Value<T = any, M = any> {
   create(): T
   typeOfChild<C>(yValue: any, child: string): Value<C>
   toY(value: T): any
@@ -16,7 +16,7 @@ export interface Value<T = any, M = unknown> {
 }
 
 export namespace Value {
-  export const Scalar: Value<any> = ScalarValue.inst
+  export const Scalar: Value = ScalarValue.inst
   export function RichText(shapes?: Record<string, RecordValue<any>>) {
     return new RichTextValue(shapes)
   }
