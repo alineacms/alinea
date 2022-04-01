@@ -1,4 +1,4 @@
-name: test
+name: check
 
 on:
   push:
@@ -19,4 +19,6 @@ jobs:
           path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
           key: ${{ runner.os }}-yarn
       - run: yarn
-      - run: yarn test
+      - run: yarn build
+      - run: cd packages/website && yarn generate
+      - run: yarn tsc
