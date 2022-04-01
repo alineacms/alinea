@@ -88,10 +88,15 @@ export class CursorImpl<Row> {
     })
   }
 
-  select<X extends SelectionInput>(selection: X) {
+  select<
+    X extends SelectionInput | ((collection: Cursor<Row>) => SelectionInput)
+  >(selection: X) {
     return new Cursor<Store.TypeOf<X>>({
       ...this.cursor,
-      selection: SelectionData.create(selection)
+      selection:
+        typeof selection === 'function'
+          ? SelectionData.create(selection(this as any))
+          : SelectionData.create(selection)
     })
   }
 

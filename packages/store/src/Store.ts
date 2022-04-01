@@ -62,6 +62,8 @@ export namespace Store {
     ? Array<K>
     : T extends Expr<infer K>
     ? K
+    : T extends (cursor: any) => infer K
+    ? TypeOf<K>
     : T extends Record<string, SelectionInput | Cursor<any>>
     ? {[K in keyof T]: TypeOf<T[K]>}
     : T

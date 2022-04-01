@@ -39,7 +39,7 @@ test('select', () => {
   const a = {propA: 10, propB: 5}
   const b = {propA: 20, propB: 5}
   db.insertAll(Test, [a, b])
-  const res = db.all(Test.select({a: Test.propA, b: Test.propB}))
+  const res = db.all(Test.select(({propA, propB}) => ({a: propA, b: propB})))
   assert.equal(res, [
     {a: 10, b: 5},
     {a: 20, b: 5}
