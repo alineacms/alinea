@@ -39,10 +39,6 @@ export class CollectionImpl<Row extends {} = any> extends CursorImpl<Row> {
     return this.get('id' as any)
   }
 
-  get fields(): Selection<Row> {
-    return new Selection(this.cursor.selection)
-  }
-
   with<X extends SelectionInput>(that: X): Selection.With<Row, X> {
     return this.fields.with(that)
   }

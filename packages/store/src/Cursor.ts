@@ -27,6 +27,14 @@ export class CursorImpl<Row> {
     })
   }
 
+  get<K extends string>(name: K): Expr<K extends keyof Row ? Row[K] : any> {
+    return new Expr(ExprData.Field(this.cursor.from, name as string))
+  }
+
+  get fields(): Selection<Row> {
+    return new Selection(this.cursor.selection)
+  }
+
   leftJoin<T>(that: Collection<T>, on: Expr<boolean>): Cursor<Row> {
     const condition = that.cursor.where
       ? on.and(new Expr(that.cursor.where))
@@ -40,10 +48,6 @@ export class CursorImpl<Row> {
         condition.expr
       )
     })
-  }
-
-  get<K extends string>(name: K): Expr<K extends keyof Row ? Row[K] : any> {
-    return new Expr(ExprData.Field(this.cursor.from, name as string))
   }
 
   innerJoin<T>(that: Collection<T>, on: Expr<boolean>): Cursor<Row> {
