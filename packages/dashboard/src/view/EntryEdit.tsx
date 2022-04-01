@@ -104,7 +104,7 @@ export function NewEntry({parentId}: NewEntryProps) {
   const parent = parentEntry?.isSuccess() ? parentEntry.value?.entry : undefined
   const type = parent && schema.type(parent.type)
   const types = type?.options.contains || schema.keys
-  const [selectedType, setSelectedType] = useState(types[0])
+  const [selectedType, setSelectedType] = useState<string | undefined>(types[0])
   const [title, setTitle] = useState('')
   const [isCreating, setIsCreating] = useState(false)
 

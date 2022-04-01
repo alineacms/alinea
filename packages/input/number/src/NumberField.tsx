@@ -6,7 +6,7 @@ export type NumberOptions = {
   initialValue?: number
 }
 
-export interface NumberField extends Field<number> {
+export interface NumberField extends Field.Scalar<number> {
   label: Label
   options: NumberOptions
 }

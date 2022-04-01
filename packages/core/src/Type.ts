@@ -36,7 +36,7 @@ export namespace Type {
 const reserved = new Set(['id', 'type'])
 
 export class Type<T = any> {
-  private __fields: Record<string, Lazy<Field>> | undefined
+  private __fields: Record<string, Lazy<Field<any, any>>> | undefined
 
   constructor(
     public label: Label,

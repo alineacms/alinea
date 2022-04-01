@@ -1,4 +1,4 @@
-import {createId, Schema, TextDoc, Type} from '@alinea/core'
+import {createId, Schema, Type} from '@alinea/core'
 import {Toolbar} from '@alinea/dashboard'
 import {InputForm, InputLabel, InputState, useInput} from '@alinea/editor'
 import {
@@ -42,7 +42,7 @@ type NodeViewProps = {
 }
 
 function typeExtension(
-  parent: InputState<TextDoc<any>>,
+  parent: InputState<InputState.Text<any>>,
   name: string,
   type: Type
 ) {
@@ -97,7 +97,7 @@ function typeExtension(
 }
 
 function schemaToExtensions(
-  path: InputState<TextDoc<any>>,
+  path: InputState<InputState.Text<any>>,
   schema: Schema | undefined
 ) {
   if (!schema) return []
@@ -228,7 +228,7 @@ const ToolbarButtons = forwardRef(function ToolbarButtons(
 })
 
 export type RichTextInputProps<T> = {
-  state: InputState<TextDoc<T>>
+  state: InputState<InputState.Text<T>>
   field: RichTextField<T>
 }
 

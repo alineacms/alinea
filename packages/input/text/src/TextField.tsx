@@ -12,7 +12,7 @@ export type TextOptions = {
   iconRight?: ComponentType
 }
 
-export interface TextField extends Field<string> {
+export interface TextField extends Field.Scalar<string> {
   label: Label
   options: TextOptions
 }

@@ -123,9 +123,7 @@ export function FileUploader({max, toggleSelect}: FileUploaderProps) {
       </VStack>
       <footer className={styles.root.footer()}>
         <SelectInput
-          state={
-            new InputState.StatePair<string | undefined>(uploadTo, setUploadTo)
-          }
+          state={new InputState.StatePair(uploadTo, setUploadTo)}
           field={select(
             'Upload to',
             Object.fromEntries(

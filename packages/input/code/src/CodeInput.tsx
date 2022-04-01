@@ -9,7 +9,7 @@ import css from './CodeInput.module.scss'
 const styles = fromModule(css)
 
 export type CodeInputProps = {
-  state: InputState<string>
+  state: InputState<InputState.Scalar<string>>
   field: CodeField
 }
 

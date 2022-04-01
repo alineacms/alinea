@@ -8,7 +8,7 @@ export type PathOptions = {
   optional?: boolean
 }
 
-export interface PathField extends Field<string> {
+export interface PathField extends Field.Scalar<string> {
   label: Label
   options: PathOptions
 }

@@ -51,16 +51,19 @@ export class EntryDraft implements Entry {
   }
 
   static get url() {
-    return new EntryProperty<string>(['url'])
+    return new EntryProperty<string, (state: string) => string>(['url'])
   }
   static get type() {
-    return new EntryProperty<string>(['type'])
+    return new EntryProperty<string, (state: string) => string>(['type'])
   }
   static get $status() {
-    return new EntryProperty<EntryStatus | undefined>(['$status'])
+    return new EntryProperty<
+      EntryStatus | undefined,
+      (status: EntryStatus | undefined) => void
+    >(['$status'])
   }
   static get title() {
-    return new EntryProperty<string>(['title'])
+    return new EntryProperty<string, (state: string) => string>(['title'])
   }
 
   get id(): string {
@@ -118,12 +121,12 @@ export class EntryDraft implements Entry {
     return {type, parent, target}
   }
 
-  getInput<T>(location: Array<string>) {
+  getInput<V, M>(location: Array<string>) {
     const key = location[location.length - 1]
     const {type, parent} = this.getLocation(location)
     return {
-      mutator: type.mutator(parent, key) as Value.Mutator<T>,
-      get value(): T {
+      mutator: type.mutator(parent, key) as M,
+      get value(): V {
         return type.fromY(parent.get(key))
       },
       observe: type.watch(parent, key)

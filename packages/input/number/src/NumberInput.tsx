@@ -6,7 +6,7 @@ import css from './NumberInput.module.scss'
 const styles = fromModule(css)
 
 export type NumberInputProps = {
-  state: InputState<number>
+  state: InputState<InputState.Scalar<number>>
   field: NumberField
 }
 

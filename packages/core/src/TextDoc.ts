@@ -7,7 +7,7 @@ export namespace TextNode {
   }
   export type Element<T = any> = {
     type: string
-    content?: Array<TextNode<T>>
+    content?: TextDoc<T>
     [key: string]: any
   }
 }

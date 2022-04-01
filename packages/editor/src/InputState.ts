@@ -1,24 +1,28 @@
-import {Value} from '@alinea/core'
-
-export type InputPair<T> = readonly [T, Value.Mutator<T>]
+import {RichTextMutator} from '@alinea/core/'
+import {TextDoc} from '@alinea/core/TextDoc'
+import {ListMutator} from '@alinea/core/value/ListValue'
 
 export interface InputState<T = any> {
-  child<T>(field: string): InputState<T>
-  use(): InputPair<T>
+  child(field: string): InputState<any>
+  use(): T
 }
 
 /* eslint-disable */
 export namespace InputState {
-  export class StatePair<T> implements InputState<T> {
-    constructor(public current: T, public mutator: Value.Mutator<T>) {}
+  export type Scalar<T> = readonly [T, (value: T) => void]
+  export type List<T> = readonly [Array<T>, ListMutator<T>]
+  export type Text<T> = readonly [TextDoc<T>, RichTextMutator<T>]
 
-    child<T>(field: string) {
+  export class StatePair<V, M> implements InputState<readonly [V, M]> {
+    constructor(public current: V, public mutator: M) {}
+
+    child(field: string) {
       const {mutator} = this
       if (typeof mutator !== 'function')
         throw 'Cannot access child field of non-object'
-      const record = this.current as unknown as Record<string, T>
+      const record = this.current as unknown as Record<string, V>
       const current = record[field]
-      const mutate = (state: T) => {
+      const mutate = (state: V) => {
         mutator({...this.current, [field]: state})
       }
       // We don't have any field information here so we can only assume

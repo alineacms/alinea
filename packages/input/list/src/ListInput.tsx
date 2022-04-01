@@ -158,7 +158,7 @@ function ListCreateRow<T>({field, onCreate}: ListCreateRowProps<T>) {
 }
 
 export type ListInputProps<T> = {
-  state: InputState<Array<T>>
+  state: InputState<InputState.List<T>>
   field: ListField<T>
 }
 const layoutMeasuringConfig = {

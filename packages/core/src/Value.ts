@@ -1,9 +1,8 @@
 import * as Y from 'yjs'
-import {TextDoc} from './TextDoc'
-import {ListMutator, ListValue} from './value/ListValue'
-import {RecordMutator, RecordValue} from './value/RecordValue'
-import {RichTextMutator, RichTextValue} from './value/RichTextValue'
-import {ScalarMutator, ScalarValue} from './value/ScalarValue'
+import {ListValue} from './value/ListValue'
+import {RecordValue} from './value/RecordValue'
+import {RichTextValue} from './value/RichTextValue'
+import {ScalarValue} from './value/ScalarValue'
 
 type YType = Y.AbstractType<any>
 
@@ -17,16 +16,6 @@ export interface Value<T = any, M = unknown> {
 }
 
 export namespace Value {
-  export type Mutator<T> = T extends TextDoc<infer R>
-    ? RichTextMutator<R>
-    : T extends Array<infer R>
-    ? ListMutator<R>
-    : T extends Record<string, any>
-    ? RecordMutator<T>
-    : T extends string | number
-    ? ScalarMutator<T>
-    : never
-
   export const Scalar: Value<any> = ScalarValue.inst
   export function RichText(shapes?: Record<string, RecordValue<any>>) {
     return new RichTextValue(shapes)

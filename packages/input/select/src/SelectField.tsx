@@ -12,7 +12,7 @@ export type SelectOptions = {
   initialValue?: string
 }
 
-export interface SelectField extends Field<string | undefined> {
+export interface SelectField extends Field.Scalar<string | undefined> {
   label: Label
   items: SelectItems
   options: SelectOptions

@@ -5,18 +5,18 @@ import {Value} from '@alinea/core/Value'
 import {useForceUpdate} from '@alinea/ui'
 import {useEffect, useMemo} from 'react'
 import * as Y from 'yjs'
-import {InputPair, InputState} from '../InputState'
+import {InputState} from '../InputState'
 
 const FIELD_KEY = '#field'
 
-export class FieldState<T> implements InputState<T> {
+export class FieldState<V, M> implements InputState<readonly [V, M]> {
   constructor(
-    private value: Value<T>,
+    private value: Value<V>,
     private root: Y.Map<any>,
     private key: string
   ) {}
 
-  child<T>(field: string): InputState<T> {
+  child(field: string) {
     const current = this.root.get(this.key)
     return new FieldState(
       this.value.typeOfChild(current, field),
@@ -25,13 +25,10 @@ export class FieldState<T> implements InputState<T> {
     )
   }
 
-  use(): InputPair<T> {
+  use(): readonly [V, M] {
     const {current, mutator, observe} = useMemo(() => {
-      const current = (): T => this.root.get(this.key)
-      const mutator = this.value.mutator(
-        this.root,
-        FIELD_KEY
-      ) as Value.Mutator<T>
+      const current = (): V => this.root.get(this.key)
+      const mutator = this.value.mutator(this.root, FIELD_KEY) as M
       const observe = this.value.watch(this.root, FIELD_KEY)
       return {current, mutator, observe}
     }, [])
@@ -43,13 +40,13 @@ export class FieldState<T> implements InputState<T> {
   }
 }
 
-export function useField<T>(field: Field<T>, initialValue?: T) {
+export function useField<V, M>(field: Field<V, M>, initialValue?: V) {
   const {input, state} = useMemo(() => {
     const doc = new Y.Doc()
     const root = doc.getMap(ROOT_KEY)
     root.set(FIELD_KEY, initialValue)
     if (!field.type) throw createError('Cannot use field without type')
-    const state = new FieldState<T>(field.type, root, FIELD_KEY)
+    const state = new FieldState<V, M>(field.type, root, FIELD_KEY)
     const Input = field.view!
     function input() {
       return <Input state={state} field={field} />

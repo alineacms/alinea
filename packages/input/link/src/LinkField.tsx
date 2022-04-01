@@ -13,7 +13,7 @@ export type LinkOptions<T> = {
   max?: number
 }
 
-export interface LinkField<T> extends Field<Array<Reference & T>> {
+export interface LinkField<T> extends Field.List<Reference & T> {
   label: Label
   options: LinkOptions<T>
 }

@@ -7,7 +7,7 @@ import css from './SelectInput.module.scss'
 const styles = fromModule(css)
 
 export type SelectInputProps = {
-  state: InputState<string | undefined>
+  state: InputState<InputState.Scalar<string | undefined>>
   field: SelectField
 }
 

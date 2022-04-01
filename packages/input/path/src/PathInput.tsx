@@ -10,7 +10,7 @@ import css from './PathInput.module.scss'
 const styles = fromModule(css)
 
 export type PathInputProps = {
-  state: InputState<string>
+  state: InputState<InputState.Scalar<string>>
   field: PathField
 }
 
@@ -19,10 +19,11 @@ export function PathInput({state, field}: PathInputProps) {
     throw createError('State must be an Entry property')
   const {width, from = 'title', help, optional} = field.options
   const [focus, setFocus] = useState(false)
-  const [source = ''] = useInput<string>(
+  const [source = ''] = useInput<InputState.Scalar<string>>(
     new EntryProperty(state.location.slice(0, -1).concat(from))
   )
-  const [value = slugify(source), setValue] = useInput<string>(state)
+  const [value = slugify(source), setValue] =
+    useInput<InputState.Scalar<string>>(state)
   const [endsWithSeparator, setEndsWithSeparator] = useState(false)
   const inputValue = (value || '') + (endsWithSeparator ? '-' : '')
   const empty = value === ''

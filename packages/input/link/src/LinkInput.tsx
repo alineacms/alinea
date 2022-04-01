@@ -183,7 +183,7 @@ function restrictByType(
 }
 
 export type LinkInputProps<T> = {
-  state: InputState<Array<Reference>>
+  state: InputState<InputState.List<Reference & T>>
   field: LinkField<T>
 }
 
@@ -235,7 +235,7 @@ export function LinkInput<T>({state, field}: LinkInputProps<T>) {
       for (const link of links) {
         seen.add(link.id)
         if (value.find(v => v.id === link.id)) continue
-        push(link)
+        push(link as Reference & T)
       }
       for (const link of value) {
         if (seen.has(link.id)) continue

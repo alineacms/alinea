@@ -1,4 +1,4 @@
-import {Field, Label, Schema, TextDoc, Value} from '@alinea/core'
+import {Field, Label, Schema, Value} from '@alinea/core'
 
 export type RichTextOptions<T> = {
   // Allow these blocks to be created between text fragments
@@ -9,7 +9,7 @@ export type RichTextOptions<T> = {
   initialValue?: string
 }
 
-export interface RichTextField<T> extends Field<TextDoc<T>> {
+export interface RichTextField<T> extends Field.Text<T> {
   label: Label
   options: RichTextOptions<T>
 }
@@ -17,10 +17,7 @@ export interface RichTextField<T> extends Field<TextDoc<T>> {
 export function createRichText<T>(
   label: Label,
   options: RichTextOptions<T> = {}
-): {
-  label: Label
-  options: RichTextOptions<T>
-} & Field<TextDoc<T>> {
+): RichTextField<T> {
   return {
     type: Value.RichText(options.blocks?.valueTypes),
     label,

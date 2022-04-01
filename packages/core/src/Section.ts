@@ -14,9 +14,9 @@ export class Section<T = any> {
 export namespace Section {
   type Presentational = ReactElement
 
-  export type Fields<T = any> = Lazy<
+  export type Fields = Lazy<
     {
-      [key: string]: Lazy<Field<T>>
+      [key: string]: Lazy<Field<any, any>>
     } & {
       id?: never
       workspace?: never
@@ -32,7 +32,7 @@ export namespace Section {
     : S extends Lazy<infer U>
     ? U extends {[key: string]: any}
       ? {
-          [K in keyof U]: U[K] extends Field<infer T> ? T : never
+          [K in keyof U]: U[K] extends Field<infer T, infer M> ? T : never
         }
       : never
     : never

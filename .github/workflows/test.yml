@@ -19,4 +19,5 @@ jobs:
           path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
           key: ${{ runner.os }}-yarn
       - run: yarn
+      - run: yarn tsc
       - run: yarn test

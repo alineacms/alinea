@@ -9,7 +9,7 @@ import css from './TextInput.module.scss'
 const styles = fromModule(css)
 
 export type TextInputProps = {
-  state: InputState<string>
+  state: InputState<InputState.Scalar<string>>
   field: TextField
 }
 

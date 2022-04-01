@@ -9,7 +9,7 @@ export type CodeFieldOptions = {
   language?: string
 }
 
-export interface CodeField extends Field<string> {
+export interface CodeField extends Field.Scalar<string> {
   label: Label
   options: CodeFieldOptions
 }

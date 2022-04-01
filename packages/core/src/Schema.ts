@@ -29,7 +29,7 @@ export namespace Schema {
     ? U
     : T extends Type<infer U>
     ? U
-    : T extends Field<infer U>
+    : T extends Field<infer U, infer M>
     ? U
     : T extends Selection<infer U>
     ? U

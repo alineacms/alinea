@@ -6,7 +6,7 @@ import css from './TabsView.module.scss'
 const styles = fromModule(css)
 
 export type TabsViewProps = {
-  state: InputState
+  state: InputState<any>
   section: TabsSection<any>
 }
 

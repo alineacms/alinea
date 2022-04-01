@@ -1,32 +1,33 @@
 import {InputState} from '@alinea/editor'
 import type {ComponentType} from 'react'
+import {TextDoc} from './TextDoc'
 import {Value} from './Value'
+import {ListMutator} from './value/ListValue'
+import {RichTextMutator} from './value/RichTextValue'
 
-export type FieldRenderer<T, F> = ComponentType<{
-  state: InputState<T>
+export type FieldRenderer<V, M, F> = ComponentType<{
+  state: InputState<readonly [V, M]>
   field: F
 }>
 
-/*export function renderer<T, K extends keyof T>(
-  name: K,
-  loader: () => Promise<T>
-): () => Promise<T[K]> {
-  return () => loader().then(res => res[name])
-}*/
-
 export namespace Field {
   export function withView<
-    T,
-    F extends Field<T>,
+    V,
+    M,
+    F extends Field<V, M>,
     C extends (...args: Array<any>) => F
-  >(create: C, view: FieldRenderer<T, F>) {
+  >(create: C, view: FieldRenderer<V, M, F>): C {
     return ((...args: Parameters<C>) => {
       return {...create(...args), view}
-    }) as C
+    }) as any
   }
+
+  export type Scalar<T> = Field<T, (state: T) => void>
+  export type List<T> = Field<Array<T>, ListMutator<T>>
+  export type Text<T> = Field<TextDoc<T>, RichTextMutator<T>>
 }
 
-export interface Field<T = any> {
-  type: Value<T>
-  view?: FieldRenderer<T, Field<T>>
+export interface Field<V, M> {
+  type: Value<V, M>
+  view?: FieldRenderer<V, M, Field<V, M>>
 }
