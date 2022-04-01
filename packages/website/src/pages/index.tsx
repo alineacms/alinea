@@ -1,18 +1,20 @@
+import {Expr} from '@alinea/store/Expr'
 import {GetStaticPropsContext} from 'next'
-import {Page, pages} from '../../.alinea/web'
+import {Page} from '../../.alinea/web'
 import {backend} from '../../alinea.backend'
 import {PageView} from '../view/PageView'
 import {pageViewQuery} from '../view/PageView.query'
 
 export async function getStaticProps(context: GetStaticPropsContext) {
-  const from = context.preview
-    ? pages.preview(backend.drafts, context.previewData as string)
-    : pages
+  const pages = backend.loadPages('web', context.previewData as string)
   const paths = (context.params?.slug as Array<string>) || []
   const slug = '/' + paths.join('/')
-  const props = await from.first(pages.byUrl(slug).select(pageViewQuery(Page)))
-  if (!props) return {notFound: true}
-  return {props}
+  const page = await pages
+    .fetch(({url}) => url.is(slug))
+    .select(pageViewQuery(Page))
+    .include({id: Expr.value('string')})
+  if (!page) return {notFound: true}
+  return {props: page}
 }
 
 export default PageView

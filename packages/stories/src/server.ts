@@ -129,7 +129,7 @@ app.get('/api/preview', async (req, res) => {
     res.startTime('page', 'Fetch page props')
     const {props} = await getStaticProps({
       preview: true,
-      previewData: id,
+      previewData: previewToken,
       params: {slug: url.split('/').slice(1)}
     })
     res.endTime('page')

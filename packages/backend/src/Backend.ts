@@ -8,6 +8,7 @@ import {
   Hub,
   Media,
   outcome,
+  Workspace,
   Workspaces
 } from '@alinea/core'
 import {generateKeyBetween} from '@alinea/core/util/FractionalIndexing'
@@ -19,6 +20,7 @@ import * as Y from 'yjs'
 import {Cache} from './Cache'
 import {Data} from './Data'
 import {Drafts} from './Drafts'
+import {Pages} from './Pages'
 import {Previews} from './Previews'
 import {PreviewStore, previewStore} from './PreviewStore'
 import {parentUrl, walkUrl} from './util/Urls'
@@ -168,6 +170,29 @@ export class Backend<T extends Workspaces = Workspaces> implements Hub<T> {
 
   get drafts() {
     return this.options.drafts
+  }
+
+  pagesCache = new Map()
+  loadPages<K extends keyof T>(
+    workspaceKey: K,
+    previewToken?: string
+  ): Pages<T[K] extends Workspace<infer X> ? X : any> {
+    const cacheKey = `${String(workspaceKey)}/${previewToken}`
+    const workspace = this.config.workspaces[workspaceKey]
+    if (this.pagesCache.has(cacheKey)) return this.pagesCache.get(cacheKey)
+    const pages = new Pages(
+      this.config,
+      workspace,
+      previewToken
+        ? async () => {
+            const {id} = await this.parsePreviewToken(previewToken)
+            if (id) await this.preview.fetchUpdate(id)
+            return this.preview.getStore()
+          }
+        : () => this.createStore()
+    )
+    this.pagesCache.set(cacheKey, pages)
+    return pages as any
   }
 
   async parsePreviewToken(token: string): Promise<{id: string; url: string}> {

@@ -77,8 +77,12 @@ export class CursorImpl<Row> {
     return new CursorSingleRow(this.take(1).cursor)
   }
 
-  where(where: EV<boolean>): Cursor<Row> {
-    const condition = Expr.create(where)
+  where(
+    where: EV<boolean> | ((collection: Cursor<Row>) => EV<boolean>)
+  ): Cursor<Row> {
+    const condition = Expr.create(
+      typeof where === 'function' ? where(this as any) : where
+    )
     return new Cursor({
       ...this.cursor,
       where: (this.cursor.where
@@ -114,6 +118,12 @@ export class CursorImpl<Row> {
     return new Selection(this.cursor.selection).with(selection)
   }
 
+  include<I extends SelectionInput>(
+    selection: I
+  ): Cursor<Omit<Row, keyof Store.TypeOf<I>> & Store.TypeOf<I>> {
+    return this.select(this.with(selection))
+  }
+
   orderBy(...orderBy: Array<OrderBy>): Cursor<Row> {
     return new Cursor({
       ...this.cursor,
@@ -146,7 +156,5 @@ export class CursorSingleRow<Row> extends CursorImpl<Row> {
 export interface CursorConstructor {
   new <Row>(cursor: CursorData): Cursor<Row>
 }
-
 export type Cursor<T> = CursorImpl<T> & Fields<T>
-
 export const Cursor = CursorImpl as CursorConstructor

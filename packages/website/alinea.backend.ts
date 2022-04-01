@@ -1,4 +1,3 @@
-// Todo: provide a backend option which constructs all of these from environment
 import {PasswordLessAuth} from '@alinea/auth.passwordless/PasswordLessAuth.js'
 import {JsonLoader, Server} from '@alinea/backend'
 import {GithubData} from '@alinea/backend/data/GithubData.js'

@@ -14,7 +14,7 @@ type RequiredKeepUndefined<T> = {[K in keyof T]-?: [T[K]]} extends infer U
 
 type FieldsOf<Row> = Row extends Record<string, any>
   ? {
-      [K in keyof Row]-?: Expr<Row[K]> & Fields<Row[K]>
+      [K in keyof Row]-?: Expr<Row[K]> /*& Fields<Row[K]>*/
     }
   : never
 

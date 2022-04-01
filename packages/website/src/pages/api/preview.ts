@@ -8,7 +8,7 @@ export default async function handler(
   const previewToken = decodeURIComponent(
     new URL(req.url!, 'http://localhost').search
   ).substring(1)
-  const {id, url} = await backend.parsePreviewToken(previewToken)
-  res.setPreviewData(id)
+  const {url} = await backend.parsePreviewToken(previewToken)
+  res.setPreviewData(previewToken)
   res.redirect(url)
 }
