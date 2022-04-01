@@ -67,8 +67,7 @@ export const SelectionData = {
     if (input instanceof Expr) return SelectionData.Expr(input.expr)
     // We're avoiding an `instanceof Collection` check here beause it would
     // cause a circular import
-    if (input && input.fields instanceof Selection)
-      return input.fields.selection
+    if (input && typeof input.as === 'function') return input.fields.selection
     if (input instanceof Cursor) return SelectionData.Cursor(input.cursor)
     if (input && typeof input === 'object')
       return SelectionData.Fields(

@@ -6,7 +6,7 @@ export namespace TextNode {
     marks?: Array<Mark>
   }
   export type Element<T = any> = {
-    type: T extends {type: string} ? T['type'] : string
+    type: string
     content?: Array<TextNode<T>>
     [key: string]: any
   }

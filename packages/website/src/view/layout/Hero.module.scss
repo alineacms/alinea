@@ -10,12 +10,12 @@
 }
 
 .title {
-  font-size: 75px;
+  font-size: 60px;
   line-height: 1;
   margin-bottom: 24px;
   font-weight: bold;
   white-space: pre-line;
-  color: hsl(340, 11%, 24%);
+  color: #090e24;
 
   @include s {
     font-size: 45px;
