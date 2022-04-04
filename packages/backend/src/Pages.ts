@@ -11,13 +11,14 @@ import {
 import {Drafts} from './Drafts'
 import {previewStore} from './PreviewStore'
 
-export class PageImpl<P> {
-  constructor(private pages: PagesImpl<P>) {}
+export class Tree<P> {
+  constructor(private pages: PagesImpl<P>, private id: string) {}
 
-  children<C extends P>(
-    this: PageImpl<P> & {id: string},
-    depth = 1
-  ): Multiple<P, C> {
+  root(): Pages<P> {
+    throw `implement`
+  }
+
+  children<C extends P>(depth = 1): Multiple<P, C> {
     if (depth > 1) throw 'todo depth > 1'
     return new Multiple(
       this.pages,
@@ -25,16 +26,16 @@ export class PageImpl<P> {
     )
   }
 
-  nextSibling(this: {id: string}): Single<P, P> {
+  nextSibling(): Single<P, P> {
     throw `implement`
   }
 
-  prevSibling(this: {id: string}): Single<P, P> {
+  prevSibling(): Single<P, P> {
     throw `implement`
   }
 }
 
-export type Page<P, T> = T extends object ? PageImpl<P> & T : T
+export type Page<P, T> = T extends {id: string} ? T & {tree: Tree<P>} : T
 
 abstract class Base<P, T> extends Promise<T> {
   protected result: Promise<T> | undefined
@@ -60,9 +61,13 @@ class Multiple<P, T> extends Base<P, Array<Page<P, T>>> {
   protected async execute() {
     const store = await this.pages.store
     return store.all(this.cursor).map(page => {
-      return typeof page === 'object'
-        ? Object.assign(new PageImpl(this.pages), page)
-        : page
+      if (page && typeof page === 'object' && 'id' in page) {
+        Object.defineProperty(page, 'tree', {
+          value: new Tree(this.pages, page.id),
+          enumerable: false
+        })
+      }
+      return page
     })
   }
   async count(): Promise<number> {
@@ -114,9 +119,13 @@ class Single<P, T> extends Base<P, Page<P, T> | null> {
     const store = await this.pages.store
     const page = store.first(this.cursor)
     if (!page) return null
-    return typeof page === 'object'
-      ? Object.assign(new PageImpl(this.pages), page)
-      : page
+    if (typeof page === 'object' && 'id' in page) {
+      Object.defineProperty(page, 'tree', {
+        value: new Tree(this.pages, page.id),
+        enumerable: false
+      })
+    }
+    return page
   }
   select<
     X extends SelectionInput | ((collection: Cursor<T>) => SelectionInput)
