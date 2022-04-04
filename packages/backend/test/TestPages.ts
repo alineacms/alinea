@@ -17,7 +17,7 @@ test('tree', async () => {
 
   const entry1 = await sub.tree.children().first()
   if (!entry1) throw new Error(`entry expected`)
-  assert.is(entry1.id, 'sub-entry')
+  assert.is(entry1.id, 'sub-entry-1')
 
   const next = await entry1.tree.nextSibling()
   if (!next) throw new Error(`next expected`)
@@ -25,9 +25,8 @@ test('tree', async () => {
 
   const prev = await next.tree.prevSibling()
   if (!prev) throw new Error(`prev expected`)
-  assert.is(prev.id, 'sub-entry', 'prev')
+  assert.is(prev.id, 'sub-entry-1', 'prev')
 
-  assert.is(await next.tree.nextSibling(), null)
   assert.is(await prev.tree.prevSibling(), null)
 })
 

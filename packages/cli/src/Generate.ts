@@ -243,7 +243,7 @@ export async function generate(options: GenerateOptions) {
     }),
     ...customSources
   )
-  await Cache.create(store, config, source)
+  await Cache.create(store, config, source, true)
   await fs.writeFile(
     path.join(outDir, 'package.json'),
     JSON.stringify(
