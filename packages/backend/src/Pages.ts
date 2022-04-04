@@ -137,7 +137,6 @@ class Multiple<P, T> extends Base<P, Array<Page<P, T>>> {
       this.cursor.include(selection)
     )
   }
-  // Todo: clear earlier orderBy, because we'd want to be able to re-order children for example
   orderBy(...orderBy: Array<OrderBy>) {
     return new Multiple<P, T>(this.pages, this.cursor.orderBy(...orderBy))
   }
