@@ -12,26 +12,57 @@ import {Drafts} from './Drafts'
 import {previewStore} from './PreviewStore'
 
 export class Tree<P> {
-  constructor(private pages: PagesImpl<P>, private id: string) {}
+  constructor(private pages: Pages<P>, private id: string) {}
 
-  root(): Pages<P> {
-    throw `implement`
+  get root(): Pages<P> {
+    return this.pages
+  }
+
+  get siblings(): Multiple<P, P> {
+    const Self = Entry.as('Self')
+    return this.pages
+      .find(
+        Entry.parent.is(
+          Self.where(Self.id.is(this.id)).select(Self.parent).first()
+        )
+      )
+      .where(Entry.id.isNot(this.id))
+  }
+
+  find(
+    where: EV<boolean> | ((collection: Cursor<P>) => EV<boolean>)
+  ): Multiple<P, P> {
+    return new Multiple(this.pages, this.pages.collection.where(where))
   }
 
   children<C extends P>(depth = 1): Multiple<P, C> {
     if (depth > 1) throw 'todo depth > 1'
     return new Multiple(
       this.pages,
-      Entry.where(Entry.parent.is(this.id)) as any
+      this.pages.collection
+        .where(Entry.parent.is(this.id))
+        .orderBy(Entry.index.asc())
     )
   }
 
   nextSibling(): Single<P, P> {
-    throw `implement`
+    const Self = Entry.as('Self')
+    const self = Self.where(Self.id.is(this.id))
+    return this.pages
+      .find(Entry.parent.is(self.select(Self.parent).first()))
+      .orderBy(Entry.index.asc())
+      .where(Entry.index.greater(self.select(Self.index).first()))
+      .first()
   }
 
   prevSibling(): Single<P, P> {
-    throw `implement`
+    const Self = Entry.as('Self')
+    const self = Self.where(Self.id.is(this.id))
+    return this.pages
+      .find(Entry.parent.is(self.select(Self.parent).first()))
+      .orderBy(Entry.index.desc())
+      .where(Entry.index.less(self.select(Self.index).first()))
+      .first()
   }
 }
 
@@ -40,7 +71,7 @@ export type Page<P, T> = T extends {id: string} ? T & {tree: Tree<P>} : T
 abstract class Base<P, T> extends Promise<T> {
   protected result: Promise<T> | undefined
 
-  constructor(protected pages: PagesImpl<P>, protected cursor: Cursor<any>) {
+  constructor(protected pages: Pages<P>, protected cursor: Cursor<any>) {
     super(_ => _(undefined!))
   }
 
@@ -106,11 +137,15 @@ class Multiple<P, T> extends Base<P, Array<Page<P, T>>> {
       this.cursor.include(selection)
     )
   }
+  // Todo: clear earlier orderBy, because we'd want to be able to re-order children for example
   orderBy(...orderBy: Array<OrderBy>) {
     return new Multiple<P, T>(this.pages, this.cursor.orderBy(...orderBy))
   }
   groupBy(...groupBy: Array<Expr<any>>) {
     return new Multiple<P, T>(this.pages, this.cursor.groupBy(...groupBy))
+  }
+  first() {
+    return new Single<P, T>(this.pages, this.cursor.first() as any)
   }
 }
 
@@ -127,6 +162,18 @@ class Single<P, T> extends Base<P, Page<P, T> | null> {
     }
     return page
   }
+  leftJoin<T>(that: Collection<T>, on: Expr<boolean>) {
+    return new Single<P, T>(this.pages, this.cursor.leftJoin(that, on))
+  }
+  innerJoin<T>(that: Collection<T>, on: Expr<boolean>) {
+    return new Single<P, T>(this.pages, this.cursor.innerJoin(that, on))
+  }
+  skip(offset: number | undefined) {
+    return new Single<P, T>(this.pages, this.cursor.skip(offset))
+  }
+  where(where: EV<boolean> | ((collection: Cursor<T>) => EV<boolean>)) {
+    return new Single<P, T>(this.pages, this.cursor.where(where as any))
+  }
   select<
     X extends SelectionInput | ((collection: Cursor<T>) => SelectionInput)
   >(selection: X) {
@@ -135,11 +182,20 @@ class Single<P, T> extends Base<P, Page<P, T> | null> {
       this.cursor.select(selection as any)
     )
   }
+  having(having: Expr<boolean>) {
+    return new Single<P, T>(this.pages, this.cursor.having(having))
+  }
   include<I extends SelectionInput>(selection: I) {
     return new Single<P, Omit<T, keyof Store.TypeOf<I>> & Store.TypeOf<I>>(
       this.pages,
       this.cursor.include(selection)
     )
+  }
+  orderBy(...orderBy: Array<OrderBy>) {
+    return new Single<P, T>(this.pages, this.cursor.orderBy(...orderBy))
+  }
+  groupBy(...groupBy: Array<Expr<any>>) {
+    return new Single<P, T>(this.pages, this.cursor.groupBy(...groupBy))
   }
   children<C = T>(depth = 1) {
     if (depth > 1) throw 'todo depth > 1'
@@ -186,23 +242,30 @@ class PagesImpl<T> {
 
   ofType<C>(type: Collection<C>) {
     return new Multiple<T, C>(
-      this,
+      this as Pages<T>,
       type.cursor.where
         ? this.collection.where(Entry.type.is(new Expr(type.cursor.where)))
         : this.collection
     )
   }
 
+  all(): Multiple<T, T> {
+    return new Multiple(this as Pages<T>, this.collection) as any
+  }
+
   find(
     where: EV<boolean> | ((collection: Cursor<T>) => EV<boolean>)
   ): Multiple<T, T> {
-    return new Multiple(this, this.collection.where(where)) as any
+    return new Multiple(this as Pages<T>, this.collection.where(where)) as any
   }
 
   fetch(
     where: EV<boolean> | ((collection: Cursor<T>) => EV<boolean>)
   ): Single<T, T> {
-    return new Single<T, T>(this, this.collection.where(where)) as any
+    return new Single<T, T>(
+      this as Pages<T>,
+      this.collection.where(where)
+    ) as any
   }
 
   preview(drafts: Drafts, id?: string): Pages<T> {

@@ -122,10 +122,11 @@ export namespace Cache {
   export async function create(
     store: SqliteStore,
     config: Config,
-    from: Data.Source
+    from: Data.Source,
+    log = false
   ) {
     const startTime = process.hrtime.bigint()
-    process.stdout.write('> Start indexing...')
+    if (log) process.stdout.write('> Start indexing...')
     store.delete(Entry)
     store.createFts5Table(Search, 'Search', () => {
       return {title: Search.title}
@@ -133,13 +134,13 @@ export namespace Cache {
     let total = 0
     for await (const entry of from.entries()) {
       total++
-      if (total % 100 === 0)
+      if (log && total % 100 === 0)
         process.stdout.write(`\r> Scanned ${total} entries`)
       store.insert(Entry, entry)
       indexSearch(store, entry, false)
     }
-    process.stdout.write(`\r>                          `)
-    process.stdout.write(`\r> Indexing...`)
+    if (log) process.stdout.write(`\r>                          `)
+    if (log) process.stdout.write(`\r> Indexing...`)
     store.createIndex(Entry, 'index', [Entry.index])
     store.createIndex(Entry, 'parent', [Entry.parent])
     store.createIndex(Entry, 'workspace.root.type', [
@@ -164,11 +165,12 @@ export namespace Cache {
     }
     validateOrder(store)
     const diff = process.hrtime.bigint() - startTime
-    console.log(
-      `\r> Indexed ${total} entries in ${prettyMilliseconds(
-        convertHrtime(diff).milliseconds
-      )}`
-    )
+    if (log)
+      console.log(
+        `\r> Indexed ${total} entries in ${prettyMilliseconds(
+          convertHrtime(diff).milliseconds
+        )}`
+      )
   }
 
   function computeEntry(

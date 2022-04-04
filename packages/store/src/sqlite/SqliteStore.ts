@@ -135,7 +135,9 @@ export class SqliteStore implements Store {
       const result = this.createOnError(() => this.db.prepare(query))
       const diff = process.hrtime.bigint() - startTime
       console.log(
-        `\r> Queried in ${prettyMilliseconds(convertHrtime(diff).milliseconds)}`
+        `\r> Queried in ${prettyMilliseconds(convertHrtime(diff).milliseconds, {
+          millisecondsDecimalDigits: 2
+        })}`
       )
       return result
     } else {

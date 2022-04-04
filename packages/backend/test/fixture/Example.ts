@@ -7,10 +7,9 @@ import {
   workspace
 } from '@alinea/core'
 import {text} from '@alinea/input.text'
-import sqlite from '@alinea/sqlite-wasm'
-import {Store} from '@alinea/store'
-import {SqlJsDriver} from '@alinea/store/sqlite/drivers/SqlJsDriver'
+import {BetterSqlite3Driver} from '@alinea/store/sqlite/drivers/BetterSqlite3Driver'
 import {SqliteStore} from '@alinea/store/sqlite/SqliteStore'
+import Database from 'better-sqlite3'
 import {Cache} from '../../src/Cache'
 
 const config = createConfig({
@@ -49,6 +48,7 @@ const entries: Array<Entry> = [
     workspace: 'main',
     root: 'main',
     url: '/sub',
+    parent: 'root',
     parents: ['root']
   },
   {
@@ -58,7 +58,19 @@ const entries: Array<Entry> = [
     index: 'a0',
     workspace: 'main',
     root: 'main',
-    url: '/sub/entry',
+    url: '/sub/sub-entry',
+    parent: 'sub',
+    parents: ['root', 'sub']
+  },
+  {
+    id: 'sub-entry-2',
+    type: 'Sub',
+    title: 'Sub entry title 2',
+    index: 'a1',
+    workspace: 'main',
+    root: 'main',
+    url: '/sub/sub-entry-2',
+    parent: 'sub',
     parents: ['root', 'sub']
   }
 ]
@@ -69,9 +81,11 @@ const source = {
   }
 }
 
-export default async function createExample(): Promise<Store> {
-  const {Database} = await sqlite()
-  const store = new SqliteStore(new SqlJsDriver(new Database()), createId)
+export default async function createExample() {
+  const store = new SqliteStore(
+    new BetterSqlite3Driver(new Database(':memory:')),
+    createId
+  )
   await Cache.create(store, config, source)
-  return store
+  return {config, store}
 }

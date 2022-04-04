@@ -127,9 +127,7 @@ export class CursorImpl<Row> {
   orderBy(...orderBy: Array<OrderBy>): Cursor<Row> {
     return new Cursor({
       ...this.cursor,
-      orderBy: this.cursor.orderBy
-        ? this.cursor.orderBy.concat(orderBy)
-        : orderBy
+      orderBy: orderBy
     })
   }
 
@@ -137,7 +135,7 @@ export class CursorImpl<Row> {
     const data = groupBy.map(e => e.expr)
     return new Cursor({
       ...this.cursor,
-      groupBy: this.cursor.groupBy ? this.cursor.groupBy.concat(data) : data
+      groupBy: data
     })
   }
 

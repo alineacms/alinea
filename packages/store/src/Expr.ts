@@ -1,4 +1,4 @@
-import {Cursor, CursorData} from './Cursor'
+import {Cursor, CursorData, CursorSingleRow} from './Cursor'
 import {From} from './From'
 import {OrderBy, OrderDirection} from './OrderBy'
 import {ParamData, ParamType} from './Param'
@@ -154,7 +154,7 @@ export class Expr<T> {
       return this.isNotNull()
     return binop(this, BinOp.NotEquals, that)
   }
-  is(that: EV<T>): Expr<boolean> {
+  is(that: EV<T> | CursorSingleRow<T>): Expr<boolean> {
     if (that === null || (that instanceof Expr && isConstant(that.expr, null)))
       return this.isNull()
     return binop(this, BinOp.Equals, that)
