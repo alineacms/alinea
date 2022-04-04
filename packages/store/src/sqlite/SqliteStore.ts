@@ -18,15 +18,34 @@ export class SqliteStore implements Store {
   constructor(private db: Driver, private createId: CreateId) {
     this.db = db
     this.createId = createId
-    //this.db.exec('PRAGMA journal_mode = WAL')
-    //this.db.exec('PRAGMA optimize')
+    // this.db.exec('PRAGMA journal_mode = WAL')
+    // this.db.exec('PRAGMA optimize')
+    this.db.exec('PRAGMA synchronous = OFF')
+  }
+
+  private debug<T>(query: string, run: () => T, log = false): T {
+    if (!log) return run()
+    const startTime = process.hrtime.bigint()
+    console.log(query)
+    const result = run()
+    const diff = process.hrtime.bigint() - startTime
+    console.log(
+      `\r> Queried in ${prettyMilliseconds(convertHrtime(diff).milliseconds, {
+        millisecondsDecimalDigits: 2
+      })}`
+    )
+    return result
   }
 
   all<Row>(cursor: Cursor<Row>, options?: QueryOptions): Array<Row> {
     const stmt = f.formatSelect(cursor.cursor)
     const isJson = cursor.cursor.selection.type !== SelectionType.Expr
-    return this.prepare(stmt.sql, options)
-      .all<string>(stmt.getParams())
+    const prepared = this.prepare(stmt.sql)
+    return this.debug(
+      stmt.sql,
+      () => prepared.all<string>(stmt.getParams()),
+      options?.debug
+    )
       .map((col: any) => (isJson ? JSON.parse(col) : col))
       .map(res => postProcess(cursor.cursor.selection, res))
   }
@@ -37,12 +56,12 @@ export class SqliteStore implements Store {
 
   delete<Row>(cursor: Cursor<Row>, options?: QueryOptions): {changes: number} {
     const stmt = f.formatDelete(cursor.cursor)
-    return this.prepare(stmt.sql, options).run(stmt.getParams())
+    return this.prepare(stmt.sql).run(stmt.getParams())
   }
 
   count<Row>(cursor: Cursor<Row>, options?: QueryOptions): number {
     const stmt = f.formatSelect(cursor.cursor)
-    return this.prepare(`select count() from (${stmt.sql})`, options).get(
+    return this.prepare(`select count() from (${stmt.sql})`).get(
       stmt.getParams()
     )
   }
@@ -52,28 +71,24 @@ export class SqliteStore implements Store {
     objects: Array<IdLess<Row>>,
     options?: QueryOptions
   ): Array<Row> {
-    return this.db.transaction(() => {
-      const res = []
-      for (let object of objects) {
-        if (!object.id) object = {...object, id: this.createId()}
-        const from = collection.cursor.from
-        if (from.type === FromType.Column) {
-          this.prepare(
-            `insert into ${f.escapeId(From.source(from.of))} values (?)`,
-            options
-          ).run([JSON.stringify(object)])
-        } else if (from.type === FromType.Table) {
-          this.prepare(
-            `insert into ${f.escapeId(from.name)} values (${from.columns
-              .map(_ => '?')
-              .join(', ')})`,
-            options
-          ).run(from.columns.map(col => (object as any)[col]))
-        }
-        res.push(object)
+    const res = []
+    for (let object of objects) {
+      if (!object.id) object = {...object, id: this.createId()}
+      const from = collection.cursor.from
+      if (from.type === FromType.Column) {
+        this.prepare(
+          `insert into ${f.escapeId(From.source(from.of))} values (?)`
+        ).run([JSON.stringify(object)])
+      } else if (from.type === FromType.Table) {
+        this.prepare(
+          `insert into ${f.escapeId(from.name)} values (${from.columns
+            .map(_ => '?')
+            .join(', ')})`
+        ).run(from.columns.map(col => (object as any)[col]))
       }
-      return res as Array<Row>
-    })
+      res.push(object)
+    }
+    return res as Array<Row>
   }
 
   insert<Row extends Document>(
@@ -89,10 +104,8 @@ export class SqliteStore implements Store {
     update: Update<Row>,
     options?: QueryOptions
   ): {changes: number} {
-    return this.db.transaction(() => {
-      const stmt = f.formatUpdate(cursor.cursor, update)
-      return this.prepare(stmt.sql, options).run(stmt.getParams())
-    })
+    const stmt = f.formatUpdate(cursor.cursor, update)
+    return this.prepare(stmt.sql).run(stmt.getParams())
   }
 
   createIndex<Row extends Document>(
@@ -128,21 +141,12 @@ export class SqliteStore implements Store {
     return this.db.export()
   }
 
-  prepare(query: String, options?: QueryOptions): Driver.PreparedStatement {
-    if (options?.debug) {
-      const startTime = process.hrtime.bigint()
-      console.log(query)
-      const result = this.createOnError(() => this.db.prepare(query))
-      const diff = process.hrtime.bigint() - startTime
-      console.log(
-        `\r> Queried in ${prettyMilliseconds(convertHrtime(diff).milliseconds, {
-          millisecondsDecimalDigits: 2
-        })}`
-      )
-      return result
-    } else {
-      return this.createOnError(() => this.db.prepare(query))
-    }
+  prepared = new Map()
+  prepare(query: String): Driver.PreparedStatement {
+    if (this.prepared.has(query)) return this.prepared.get(query)
+    const result = this.createOnError(() => this.db.prepare(query))
+    this.prepared.set(query, result)
+    return result
   }
 
   createFts5<Row extends {}>(
@@ -220,28 +224,25 @@ export class SqliteStore implements Store {
     this.db.exec(instruction)
   }
 
-  createOnError<T>(run: () => T): T {
-    const next = (retry?: string): T => {
-      try {
-        return run()
-      } catch (e) {
-        const error = String(e)
-        const NO_TABLE = 'no such table: '
-        const index = error.indexOf(NO_TABLE)
-        if (index > -1) {
-          const table = error
-            .substr(index + NO_TABLE.length)
-            .split('.')
-            .pop()
-          if (retry != table && table != null) {
-            this.createTable(table)
-            return next(table)
-          }
+  createOnError<T>(run: () => T, retry?: string): T {
+    try {
+      return run()
+    } catch (e) {
+      const error = String(e)
+      const NO_TABLE = 'no such table: '
+      const index = error.indexOf(NO_TABLE)
+      if (index > -1) {
+        const table = error
+          .substr(index + NO_TABLE.length)
+          .split('.')
+          .pop()
+        if (retry != table && table != null) {
+          this.createTable(table)
+          return this.createOnError(run, table)
         }
-        throw e
       }
+      throw e
     }
-    return next()
   }
 
   createTable(name: string) {
