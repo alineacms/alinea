@@ -132,13 +132,25 @@ export namespace Cache {
       return {title: Search.title}
     })
     let total = 0
+    const batch: Array<Entry> = []
+    function commitBatch() {
+      store.transaction(() => {
+        for (const entry of batch) {
+          store.insert(Entry, entry)
+          indexSearch(store, entry, false)
+        }
+      })
+      batch.length = 0
+    }
     for await (const entry of from.entries()) {
       total++
-      if (log && total % 100 === 0)
+      if (log && total % 1000 === 0) {
         process.stdout.write(`\r> Scanned ${total} entries`)
-      store.insert(Entry, entry)
-      indexSearch(store, entry, false)
+        commitBatch()
+      }
+      batch.push(entry)
     }
+    commitBatch()
     if (log) process.stdout.write(`\r>                          `)
     if (log) process.stdout.write(`\r> Indexing...`)
     store.createIndex(Entry, 'index', [Entry.index])
@@ -151,6 +163,7 @@ export namespace Cache {
     store.createIndex(Entry, 'root', [Entry.root])
     store.createIndex(Entry, 'type', [Entry.type])
     store.createIndex(Entry, 'url', [Entry.url])
+    if (log) process.stdout.write(`\r> Validating order...`)
     for (const [workspace, {schema}] of Object.entries(config.workspaces)) {
       for (const [key, type] of schema) {
         const {index} = type.options
