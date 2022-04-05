@@ -54,7 +54,7 @@ export const sqliteFormatter = new (class extends Formatter {
         const {source} = selection
         switch (source.type) {
           case FromType.Each:
-            return sql`json(${this.formatId(source.alias)}.value)`
+            return sql`${this.formatId(source.alias)}.value`
         }
         break
       case SelectionType.Case:

@@ -1,5 +1,5 @@
-import {Entry, view} from '@alinea/core'
-import {Collection, Functions} from '@alinea/store'
+import {Entry, Tree, view} from '@alinea/core'
+import {Collection} from '@alinea/store'
 import {
   Chip,
   Ellipsis,
@@ -17,16 +17,13 @@ import css from './EntrySummary.module.scss'
 const styles = fromModule(css)
 
 function entrySummaryQuery(Entry: Collection<Entry>) {
-  const Parent = Entry.as('Parent')
   return {
     id: Entry.id,
     type: Entry.type,
     workspace: Entry.workspace,
     root: Entry.root,
     title: Entry.title,
-    parents: Parent.where(Parent.id.isIn(Entry.parents))
-      .select({title: Parent.title})
-      .orderBy(Functions.arrayLength(Parent.parents).asc())
+    parents: Tree.parents(Entry.id).select(parent => ({title: parent.title}))
   }
 }
 

@@ -1,4 +1,4 @@
-import {Media, selectParents, view} from '@alinea/core'
+import {Media, Tree, view} from '@alinea/core'
 import {Store} from '@alinea/store'
 import {Collection} from '@alinea/store/Collection'
 import {
@@ -27,8 +27,8 @@ function fileSummarySelect(File: Collection<Media.File>) {
     size: File.size,
     preview: File.preview,
     averageColor: File.averageColor,
-    parents: selectParents(File, Parent => ({
-      title: Parent.title
+    parents: Tree.parents(File.id).select(parent => ({
+      title: parent.title
     }))
   }
 }

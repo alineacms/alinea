@@ -1,6 +1,7 @@
-import {Entry, selectParents} from '@alinea/core/Entry'
+import {Entry} from '@alinea/core/Entry'
 import {Media} from '@alinea/core/Media'
 import {Outcome} from '@alinea/core/Outcome'
+import {Tree} from '@alinea/core/Tree'
 import {useUploads} from '@alinea/dashboard/hook/UseUploads'
 import {InputState} from '@alinea/editor/InputState'
 import {select} from '@alinea/input.select'
@@ -40,8 +41,8 @@ export function FileUploader({max, toggleSelect}: FileUploaderProps) {
             workspace: Library.workspace,
             root: Library.root,
             url: Library.url,
-            parents: selectParents(Library, Parent => ({
-              title: Parent.title
+            parents: Tree.parents(Library.id).select(parent => ({
+              title: parent.title
             }))
           })
         )

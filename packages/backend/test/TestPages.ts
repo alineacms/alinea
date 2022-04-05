@@ -7,13 +7,15 @@ test('tree', async () => {
   const {config, store} = await createExample()
   const pages = new Pages(config, config.workspaces.main, async () => store)
 
-  const root = await pages.fetch(({id}) => id.is('root'))
+  const root = await pages.findFirst(({id}) => id.is('root'))
   if (!root) throw new Error(`root expected`)
 
   const children = await root.tree.children()
   assert.is(children.length, 1)
   const [sub] = children
   assert.is(sub.id, 'sub')
+  const parents = await sub.tree.parents()
+  assert.is(parents.length, 1)
 
   const entry1 = await sub.tree.children().first()
   if (!entry1) throw new Error(`entry expected`)

@@ -3,7 +3,12 @@ import {EV, Expr, ExprData} from './Expr'
 import {Fields} from './Fields'
 import {From} from './From'
 import type {OrderBy} from './OrderBy'
-import {Selection, SelectionData, SelectionInput} from './Selection'
+import {
+  Selection,
+  SelectionData,
+  SelectionInput,
+  SelectionType
+} from './Selection'
 import type {Store} from './Store'
 
 export type CursorData = {
@@ -28,7 +33,19 @@ export class CursorImpl<Row> {
   }
 
   get<K extends string>(name: K): Expr<K extends keyof Row ? Row[K] : any> {
-    return new Expr(ExprData.Field(this.cursor.from, name as string))
+    switch (this.cursor.selection.type) {
+      case SelectionType.Row:
+        return new Expr(
+          ExprData.Field(this.cursor.selection.source, name as string)
+        )
+      case SelectionType.Cursor:
+        return new Expr(
+          ExprData.Field(this.cursor.selection.cursor.from, name as string)
+        )
+      // Todo: implement all
+      default:
+        return new Expr(ExprData.Field(this.cursor.from, name as string))
+    }
   }
 
   get fields(): Selection<Row> {

@@ -1,10 +1,4 @@
-import {
-  Collection,
-  Cursor,
-  Functions,
-  SelectionInput,
-  Store
-} from '@alinea/store'
+import {Collection} from '@alinea/store'
 import {Label} from './Label'
 
 export type Id<T> = string & {__t: T}
@@ -69,13 +63,3 @@ export namespace Entry {
 }
 
 export const Entry = new Collection<Entry>('Entry')
-
-export function selectParents<S extends SelectionInput, E extends Entry>(
-  Entry: Collection<E>,
-  selection: (Parent: Collection<Entry>) => S
-): Cursor<Store.TypeOf<S>> {
-  const Parent = Entry.as('Parent') as unknown as Collection<Entry>
-  return Parent.where(Parent.id.isIn(Entry.get('parents')))
-    .orderBy(Functions.arrayLength(Parent.parents).asc())
-    .select(selection(Parent))
-}

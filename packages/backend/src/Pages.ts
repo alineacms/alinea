@@ -1,4 +1,4 @@
-import {Config, Entry, Schema, TypesOf, Workspace} from '@alinea/core'
+import {Config, Entry, Schema, Tree, TypesOf, Workspace} from '@alinea/core'
 import {
   Collection,
   Cursor,
@@ -11,62 +11,35 @@ import {
 import {Drafts} from './Drafts'
 import {previewStore} from './PreviewStore'
 
-export class Tree<P> {
-  constructor(private pages: Pages<P>, private id: string) {}
+export class PageTree<P> {
+  constructor(private pages: Pages<P>, private id: EV<string>) {}
 
   get root(): Pages<P> {
     return this.pages
   }
 
-  get siblings(): Multiple<P, P> {
-    const Self = Entry.as('Self')
-    return this.pages
-      .find(
-        Entry.parent.is(
-          Self.where(Self.id.is(this.id)).select(Self.parent).first()
-        )
-      )
-      .where(Entry.id.isNot(this.id))
+  siblings(): Multiple<P, P> {
+    return new Multiple(this.pages, Tree.siblings(this.id))
   }
 
-  find(
-    where: EV<boolean> | ((collection: Cursor<P>) => EV<boolean>)
-  ): Multiple<P, P> {
-    return new Multiple(this.pages, this.pages.collection.where(where))
+  children<Child extends P>(depth = 1): Multiple<P, Child> {
+    return new Multiple(this.pages, Tree.children(this.id, depth))
   }
 
-  children<C extends P>(depth = 1): Multiple<P, C> {
-    if (depth > 1) throw 'todo depth > 1'
-    return new Multiple(
-      this.pages,
-      this.pages.collection
-        .where(Entry.parent.is(this.id))
-        .orderBy(Entry.index.asc())
-    )
+  parents<Parent extends P>(): Multiple<P, Parent> {
+    return new Multiple(this.pages, Tree.parents(this.id))
   }
 
   nextSibling(): Single<P, P> {
-    const Self = Entry.as('Self')
-    const self = Self.where(Self.id.is(this.id))
-    return this.pages
-      .find(Entry.parent.is(self.select(Self.parent).first()))
-      .orderBy(Entry.index.asc())
-      .where(Entry.index.greater(self.select(Self.index).first()))
-      .first()
+    return new Single(this.pages, Tree.nextSibling(this.id))
   }
 
   prevSibling(): Single<P, P> {
-    const Self = Entry.as('Self')
-    const self = Self.where(Self.id.is(this.id))
-    return this.pages
-      .find(Entry.parent.is(self.select(Self.parent).first()))
-      .orderBy(Entry.index.desc())
-      .where(Entry.index.less(self.select(Self.index).first()))
-      .first()
+    return new Single(this.pages, Tree.prevSibling(this.id))
   }
 }
 
-export type Page<P, T> = T extends {id: string} ? T & {tree: Tree<P>} : T
+export type Page<P, T> = T extends {id: string} ? T & {tree: PageTree<P>} : T
 
 abstract class Base<P, T> extends Promise<T> {
   protected result: Promise<T> | undefined
@@ -91,10 +64,10 @@ abstract class Base<P, T> extends Promise<T> {
 class Multiple<P, T> extends Base<P, Array<Page<P, T>>> {
   protected async execute() {
     const store = await this.pages.store
-    return store.all(this.cursor).map(page => {
+    return store.all(this.cursor, {debug: true}).map(page => {
       if (page && typeof page === 'object' && 'id' in page) {
         Object.defineProperty(page, 'tree', {
-          value: new Tree(this.pages, page.id),
+          value: new PageTree(this.pages, page.id),
           enumerable: false
         })
       }
@@ -146,6 +119,12 @@ class Multiple<P, T> extends Base<P, Array<Page<P, T>>> {
   first() {
     return new Single<P, T>(this.pages, this.cursor.first() as any)
   }
+  /*on<
+  K extends TypesOf<T>,
+  X extends SelectionInput | ((collection: Cursor<Extract<T, {type: K}>>) => SelectionInput)
+  >(type: K, select: X) {
+    return new Multiple
+  }*/
 }
 
 class Single<P, T> extends Base<P, Page<P, T> | null> {
@@ -155,7 +134,7 @@ class Single<P, T> extends Base<P, Page<P, T> | null> {
     if (!page) return null
     if (typeof page === 'object' && 'id' in page) {
       Object.defineProperty(page, 'tree', {
-        value: new Tree(this.pages, page.id),
+        value: new PageTree(this.pages, page.id),
         enumerable: false
       })
     }
@@ -204,7 +183,7 @@ class Single<P, T> extends Base<P, Page<P, T> | null> {
         Entry.parent.isIn(
           this.cursor.select<Expr<string | undefined>>(Entry.id)
         )
-      ) as any
+      )
     )
   }
 }
@@ -232,14 +211,24 @@ class PagesImpl<T> {
               ([name, workspace]) => workspace === self.workspace
             ) || []
           if (workspaceKey)
-            return self.ofType(self.schema.collection(workspaceKey, key as any))
+            return self.whereType(
+              self.schema.collection(workspaceKey, key as any)
+            )
         }
         return undefined
       }
     })
   }
 
-  ofType<C>(type: Collection<C>) {
+  whereUrl(url: EV<string>) {
+    return new Single<T, T>(this as Pages<T>, Entry.where(Entry.url.is(url)))
+  }
+
+  whereId(id: EV<string>) {
+    return new Single<T, T>(this as Pages<T>, Entry.where(Entry.id.is(id)))
+  }
+
+  whereType<C>(type: Collection<C>) {
     return new Multiple<T, C>(
       this as Pages<T>,
       type.cursor.where
@@ -249,22 +238,19 @@ class PagesImpl<T> {
   }
 
   all(): Multiple<T, T> {
-    return new Multiple(this as Pages<T>, this.collection) as any
+    return new Multiple(this as Pages<T>, this.collection)
   }
 
-  find(
-    where: EV<boolean> | ((collection: Cursor<T>) => EV<boolean>)
+  findMany(
+    where: Expr<boolean> | ((collection: Cursor<T>) => Expr<boolean>)
   ): Multiple<T, T> {
-    return new Multiple(this as Pages<T>, this.collection.where(where)) as any
+    return new Multiple(this as Pages<T>, this.collection.where(where))
   }
 
-  fetch(
-    where: EV<boolean> | ((collection: Cursor<T>) => EV<boolean>)
+  findFirst(
+    where: Expr<boolean> | ((collection: Cursor<T>) => Expr<boolean>)
   ): Single<T, T> {
-    return new Single<T, T>(
-      this as Pages<T>,
-      this.collection.where(where)
-    ) as any
+    return new Single<T, T>(this as Pages<T>, this.collection.where(where))
   }
 
   preview(drafts: Drafts, id?: string): Pages<T> {
@@ -276,7 +262,7 @@ class PagesImpl<T> {
   }
 
   get root() {
-    return this.find(Entry.parent.isNull())
+    return this.findMany(Entry.parent.isNull())
   }
 }
 

@@ -81,7 +81,7 @@ export class Backend<T extends Workspaces = Workspaces> implements Hub<T> {
   async query<T>(cursor: Cursor<T>): Future<Array<T>> {
     return outcome(async () => {
       const store = await this.preview.getStore()
-      return store.all(cursor)
+      return store.all(cursor, {debug: true})
     })
   }
 

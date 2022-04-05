@@ -267,6 +267,6 @@ function unop<This, Res>(self: Expr<This>, type: UnOp) {
   return new Expr<Res>(ExprData.UnOp(type, self.expr))
 }
 
-function binop<This, That, Res>(self: Expr<This>, type: BinOp, that: EV<That>) {
+function binop<This, That, Res>(self: Expr<This>, type: BinOp, that: That) {
   return new Expr<Res>(ExprData.BinOp(type, self.expr, toExpr(that)))
 }
