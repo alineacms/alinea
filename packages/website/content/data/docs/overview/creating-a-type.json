@@ -26,7 +26,7 @@
           "content": [
             {
               "type": "text",
-              "text": "The  command (`alinea init`) we ran in Getting Started created an `alinea.config.tsx` file. This file holds settings and a schema."
+              "text": "The command (`alinea init`) we ran in Getting Started created an `alinea.config.tsx` file. This file holds settings and a schema."
             }
           ]
         }
