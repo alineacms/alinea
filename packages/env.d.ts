@@ -9,6 +9,11 @@ declare module 'eval:*'
 declare module 'get-random-values'
 declare module 'leb128'
 
+declare module 'better-sqlite3-multiple-ciphers' {
+  import BetterSqlite3 from 'better-sqlite3'
+  export default BetterSqlite3
+}
+
 declare module 'image-blob-reduce' {
   type Options = {
     max: number

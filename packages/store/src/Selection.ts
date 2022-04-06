@@ -1,6 +1,6 @@
-import {Cursor, CursorData} from './Cursor'
+import {ExprType} from '.'
+import {CursorData} from './Cursor'
 import {Expr, ExprData} from './Expr'
-import {From} from './From'
 import type {Store} from './Store'
 
 export const enum SelectionType {
@@ -19,16 +19,6 @@ export type SelectionInput = SelectionInputBase | SelectionInputRecord
 
 export type SelectionData =
   | {type: SelectionType.Expr; expr: ExprData}
-  | {type: SelectionType.Cursor; cursor: CursorData}
-  | {type: SelectionType.Fields; fields: Record<string, SelectionData>}
-  | {type: SelectionType.Row; source: From}
-  | {
-      type: SelectionType.Case
-      expr: ExprData
-      cases: Record<string, SelectionData>
-      defaultCase?: SelectionData
-    }
-  | {type: SelectionType.With; a: SelectionData; b: SelectionData}
   | {
       type: SelectionType.Process
       expr: ExprData
@@ -40,25 +30,6 @@ export const SelectionData = {
   Expr(expr: ExprData): SelectionData {
     return {type: SelectionType.Expr, expr}
   },
-  Cursor(cursor: CursorData): SelectionData {
-    return {type: SelectionType.Cursor, cursor}
-  },
-  Fields(fields: Record<string, SelectionData>): SelectionData {
-    return {type: SelectionType.Fields, fields}
-  },
-  Row(source: From): SelectionData {
-    return {type: SelectionType.Row, source}
-  },
-  Case(
-    expr: ExprData,
-    cases: Record<string, SelectionData>,
-    defaultCase?: SelectionData
-  ): SelectionData {
-    return {type: SelectionType.Case, expr, cases, defaultCase}
-  },
-  With(a: SelectionData, b: SelectionData): SelectionData {
-    return {type: SelectionType.With, a, b}
-  },
   Process(expr: ExprData, id: string, fn: (input: any) => any): SelectionData {
     return {type: SelectionType.Process, expr, id, fn}
   },
@@ -68,17 +39,7 @@ export const SelectionData = {
     // We're avoiding an `instanceof Collection` check here beause it would
     // cause a circular import
     if (input && typeof input.as === 'function') return input.fields.selection
-    if (input instanceof Cursor) return SelectionData.Cursor(input.cursor)
-    if (input && typeof input === 'object')
-      return SelectionData.Fields(
-        Object.fromEntries(
-          Object.entries(input).map(([key, value]) => [
-            key,
-            SelectionData.create(value)
-          ])
-        )
-      )
-    return SelectionData.Expr(Expr.value(input).expr)
+    return SelectionData.Expr(ExprData.create(input))
   }
 }
 
@@ -86,9 +47,17 @@ export class Selection<T> {
   constructor(public selection: SelectionData) {}
 
   with<X extends SelectionInput>(that: X): Selection.With<T, X> {
-    return new Selection(
-      SelectionData.With(this.selection, SelectionData.create(that))
-    )
+    switch (this.selection.type) {
+      case SelectionType.Expr:
+        const b = SelectionData.create(that)
+        if (b.type === SelectionType.Process)
+          throw new Error(`Cannot use with() on a processed value`)
+        return new Selection(
+          SelectionData.Expr(ExprData.Merge(this.selection.expr, b.expr))
+        )
+      case SelectionType.Process:
+        throw new Error(`Cannot use with() on a processed value`)
+    }
   }
 
   static create<T extends SelectionInput>(
@@ -106,26 +75,35 @@ export namespace Selection {
 
 type Mapper = [id: string, fn: (value: any) => any]
 
-export function postProcess(selection: SelectionData, value: any) {
-  function get(selection: SelectionData): Array<Mapper> {
-    switch (selection.type) {
-      case SelectionType.Fields:
-        return Object.values(selection.fields).map(get).flat()
-      case SelectionType.Case:
-        const selections = Object.values(selection.cases)
-        if (selection.defaultCase) selections.push(selection.defaultCase)
-        return selections.map(get).flat()
-      case SelectionType.With:
-        return [selection.a, selection.b].map(get).flat()
-      case SelectionType.Cursor:
-        return get(selection.cursor.selection)
-      case SelectionType.Process:
-        return [[selection.id, selection.fn]]
-      default:
-        return []
-    }
+function fromExpr(expr: ExprData): Array<Mapper> {
+  switch (expr.type) {
+    case ExprType.Record:
+      return Object.values(expr.fields).map(fromExpr).flat()
+    case ExprType.Case:
+      const selections = Object.values(expr.cases)
+      if (expr.defaultCase) selections.push(expr.defaultCase)
+      return selections.map(fromExpr).flat()
+    case ExprType.Merge:
+      return [expr.a, expr.b].map(fromExpr).flat()
+    case ExprType.Query:
+      return fromSelection(expr.cursor.selection)
+    default:
+      return []
   }
-  const toProcess = get(selection)
+}
+
+function fromSelection(selection: SelectionData): Array<Mapper> {
+  switch (selection.type) {
+    case SelectionType.Expr:
+      return fromExpr(selection.expr)
+    case SelectionType.Process:
+      return [[selection.id, selection.fn]]
+    default:
+      return []
+  }
+}
+export function postProcess(selection: SelectionData, value: any) {
+  const toProcess = fromSelection(selection)
   if (toProcess.length === 0) return value
   const fns = Object.fromEntries(toProcess)
   function process(value: any): any {

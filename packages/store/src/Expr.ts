@@ -38,45 +38,78 @@ export const enum ExprType {
   Field,
   Param,
   Call,
-  Access,
-  Query
+  Query,
+  Record,
+  Row,
+  Merge,
+  Case
 }
 
 export type ExprData =
   | {type: ExprType.UnOp; op: UnOp; expr: ExprData}
   | {type: ExprType.BinOp; op: BinOp; a: ExprData; b: ExprData}
-  | {type: ExprType.Field; from: From; field: string}
-  | {type: ExprType.Access; expr: ExprData; field: string}
+  | {type: ExprType.Field; expr: ExprData; field: string}
   | {type: ExprType.Param; param: ParamData}
   | {type: ExprType.Call; method: string; params: Array<ExprData>}
   | {type: ExprType.Query; cursor: CursorData}
+  | {type: ExprType.Record; fields: Record<string, ExprData>}
+  | {type: ExprType.Merge; a: ExprData; b: ExprData}
+  | {type: ExprType.Row; from: From}
+  | {
+      type: ExprType.Case
+      expr: ExprData
+      cases: Record<string, ExprData>
+      defaultCase?: ExprData
+    }
 
 export const ExprData = {
   UnOp(op: UnOp, expr: ExprData): ExprData {
-    return {type: ExprType.UnOp, op: op, expr: expr}
+    return {type: ExprType.UnOp, op, expr}
   },
   BinOp(op: BinOp, a: ExprData, b: ExprData): ExprData {
-    return {type: ExprType.BinOp, op: op, a: a, b: b}
+    return {type: ExprType.BinOp, op, a, b}
   },
-  Field(from: From, field: string): ExprData {
-    return {type: ExprType.Field, from, field}
+  Field(expr: ExprData, field: string): ExprData {
+    return {type: ExprType.Field, expr, field}
   },
   Param(param: ParamData): ExprData {
-    return {type: ExprType.Param, param: param}
+    return {type: ExprType.Param, param}
   },
   Call(method: string, params: Array<ExprData>): ExprData {
-    return {type: ExprType.Call, method: method, params: params}
-  },
-  Access(expr: ExprData, field: string): ExprData {
-    return {type: ExprType.Access, expr: expr, field: field}
+    return {type: ExprType.Call, method, params}
   },
   Query(cursor: CursorData): ExprData {
-    return {type: ExprType.Query, cursor: cursor}
+    return {type: ExprType.Query, cursor}
   },
-  create(input: any) {
+  Record(fields: Record<string, ExprData>): ExprData {
+    return {type: ExprType.Record, fields}
+  },
+  Merge(a: ExprData, b: ExprData): ExprData {
+    return {type: ExprType.Merge, a, b}
+  },
+  Row(from: From): ExprData {
+    return {type: ExprType.Row, from}
+  },
+  Case(
+    expr: ExprData,
+    cases: Record<string, ExprData>,
+    defaultCase?: ExprData
+  ): ExprData {
+    return {type: ExprType.Case, expr, cases, defaultCase}
+  },
+  create(input: any): ExprData {
     if (input == null) return ExprData.Param(ParamData.Value(null))
     if (input instanceof Expr) return input.expr
     if (input instanceof Cursor) return ExprData.Query(input.cursor)
+    if (input && typeof input === 'object')
+      return ExprData.Record(
+        Object.fromEntries(
+          Object.entries(input).map(([key, value]) => [
+            key,
+            ExprData.create(value)
+          ])
+        )
+      )
     return ExprData.Param(ParamData.Value(input))
   }
 }
@@ -220,7 +253,7 @@ export class Expr<T> {
     const from = From.Each(this.expr, this.__id())
     return new Cursor({
       from,
-      selection: SelectionData.Row(from)
+      selection: SelectionData.Expr(ExprData.Row(from))
     })
   }
   process<T, X>(this: Expr<T>, fn: (cursor: T) => X): Selection<X> {
@@ -241,20 +274,20 @@ export class Expr<T> {
     this: Expr<T>,
     cases: C,
     defaultCase?: DC
-  ): Selection<Store.TypeOf<C[keyof C]> | Store.TypeOf<DC>> {
-    return new Selection(
-      SelectionData.Case(
+  ): Expr<Store.TypeOf<C[keyof C]> | Store.TypeOf<DC>> {
+    return new Expr(
+      ExprData.Case(
         this.expr,
         Object.fromEntries(
-          Object.entries(cases).map(([k, v]) => [k, SelectionData.create(v)])
+          Object.entries(cases).map(([k, v]) => [k, ExprData.create(v)])
         ),
-        defaultCase && SelectionData.create(defaultCase)
+        defaultCase && ExprData.create(defaultCase)
       )
     )
   }
 
   get<K extends keyof T>(name: K): Expr<T[K]> {
-    return new Expr(ExprData.Access(this.expr, name as string))
+    return new Expr(ExprData.Field(this.expr, name as string))
   }
 
   static create<T>(input: EV<T>): Expr<T> {

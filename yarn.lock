@@ -45,7 +45,6 @@ __metadata:
     "@types/serve-handler": ^6.1.1
     "@types/ws": ^8.2.0
     auto-bind: ^5.0.1
-    better-sqlite3: ^7.5.0
     busboy: ^1.4.0
     compression: ^1.7.4
     content-type: ^1.0.4
@@ -306,7 +305,7 @@ __metadata:
   dependencies:
     "@types/better-sqlite3": ^5.4.1
     "@types/sql.js": ^1.4.2
-    better-sqlite3: ^7.5.0
+    better-sqlite3-multiple-ciphers: ^7.5.1-beta.3
   languageName: unknown
   linkType: soft
 
@@ -2604,14 +2603,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"better-sqlite3@npm:^7.5.0":
-  version: 7.5.0
-  resolution: "better-sqlite3@npm:7.5.0"
+"better-sqlite3-multiple-ciphers@npm:^7.5.1-beta.3":
+  version: 7.5.1-beta.3
+  resolution: "better-sqlite3-multiple-ciphers@npm:7.5.1-beta.3"
   dependencies:
     bindings: ^1.5.0
     node-gyp: latest
     prebuild-install: ^7.0.0
-  checksum: 049ab5de6b7c13f9957c6a93fe9a044f745b8b47672c8dc0bb8e0d1a9c846d0744be0f5e1f0f80903e010a07ee7a9eb52bf3e12124db214bab5989d0270d4ddc
+  checksum: baebb20b5ce3dd8c2ee98f4a7f26ee7ef9374ba6497eac732bf82a4f679f1ba1ae805cb53c0b827864d36fc3ec558efd662faeff935e450a87de91976910274a
   languageName: node
   linkType: hard
 

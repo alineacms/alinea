@@ -34,17 +34,12 @@ export class CursorImpl<Row> {
 
   get<K extends string>(name: K): Expr<K extends keyof Row ? Row[K] : any> {
     switch (this.cursor.selection.type) {
-      case SelectionType.Row:
+      case SelectionType.Expr:
         return new Expr(
-          ExprData.Field(this.cursor.selection.source, name as string)
+          ExprData.Field(this.cursor.selection.expr, name as string)
         )
-      case SelectionType.Cursor:
-        return new Expr(
-          ExprData.Field(this.cursor.selection.cursor.from, name as string)
-        )
-      // Todo: implement all
-      default:
-        return new Expr(ExprData.Field(this.cursor.from, name as string))
+      case SelectionType.Process:
+        throw new Error(`Cannot field access on processed value`)
     }
   }
 

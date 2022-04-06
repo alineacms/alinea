@@ -9,10 +9,15 @@ export class Statement {
     return new Statement(sql)
   }
 
-  static join(statements: Array<Statement>, separator: string) {
+  static join(statements: Array<Statement | undefined>, separator: string) {
+    const stmts = statements.filter(
+      (maybe: Statement | undefined): maybe is Statement => {
+        return Boolean(maybe && maybe.sql)
+      }
+    )
     return new Statement(
-      statements.map(s => s.sql).join(separator),
-      statements.flatMap(s => s.params)
+      stmts.map(s => s.sql).join(separator),
+      stmts.flatMap(s => s.params)
     )
   }
 
@@ -42,7 +47,7 @@ export function sql(
       buf += insert.sql
       params.push(...insert.params)
     } else if (insert instanceof Param) {
-      buf += ' ? '
+      buf += '?'
       params.push(insert.param)
     }
   })

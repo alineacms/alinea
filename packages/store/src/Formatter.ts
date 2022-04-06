@@ -35,7 +35,7 @@ export type FormatCursorOptions = {
 }
 
 export type FormatExprOptions = FormatCursorOptions & {
-  formatAsJsonValue?: boolean
+  formatAsJson?: boolean
   formatShallow?: boolean
 }
 
@@ -44,11 +44,12 @@ export abstract class Formatter {
 
   abstract escape(value: any): string
   abstract escapeId(id: string): string
-  abstract formatAccess(on: Statement, field: string): Statement
-  abstract formatField(from: From, field: string, shallow: boolean): Statement
+  abstract formatJsonAccess(on: Statement, field: string): Statement
+  abstract formatValueAccess(on: Statement, field: string): Statement
   abstract formatUnwrapArray(sql: Statement): Statement
 
-  format(value: any) {
+  format(value: any, asJson: boolean | undefined): Statement {
+    if (asJson) return sql`${this.format(JSON.stringify(value), false)}`
     return new Statement(this.escape(value))
   }
 
@@ -58,6 +59,74 @@ export abstract class Formatter {
 
   formatId(id: string) {
     return new Statement(this.escapeId(id))
+  }
+
+  formatAccess(asJson: boolean | undefined, on: Statement, field: string) {
+    return asJson
+      ? this.formatJsonAccess(on, field)
+      : this.formatValueAccess(on, field)
+  }
+
+  tryDirectFieldOf(
+    expr: ExprData,
+    field: string,
+    options: FormatExprOptions
+  ): Statement | undefined {
+    switch (expr.type) {
+      case ExprType.Row:
+        const {from} = expr
+        switch (from.type) {
+          case FromType.Each:
+            return this.formatAccess(
+              options.formatAsJson,
+              this.formatId(from.alias),
+              field
+            )
+          case FromType.Table:
+            if (options.formatShallow) return this.formatId(field)
+            return sql`${this.formatId(
+              from.alias || from.name
+            )}.${this.formatId(field)}`
+          case FromType.Column:
+            const origin = this.formatField(
+              ExprData.Row(from.of),
+              from.column,
+              options
+            )
+            return this.formatAccess(options.formatAsJson, origin, field)
+          case FromType.Join:
+            return undefined
+        }
+      case ExprType.Record:
+        return (
+          expr.fields[field] &&
+          this.formatAccess(
+            options.formatAsJson,
+            this.formatExpr(expr.fields[field], options),
+            field
+          )
+        )
+      case ExprType.Merge:
+        return (
+          this.tryDirectFieldOf(expr.b, field, options) ||
+          this.tryDirectFieldOf(expr.a, field, options)
+        )
+    }
+  }
+
+  formatField(
+    expr: ExprData,
+    field: string,
+    options: FormatExprOptions
+  ): Statement {
+    return (
+      this.tryDirectFieldOf(expr, field, options) ||
+      this.formatAccess(
+        options.formatAsJson,
+        this.formatExpr(expr, options),
+        field
+      )
+    )
   }
 
   formatFrom(from: From, options: FormatExprOptions): Statement {
@@ -128,65 +197,12 @@ export abstract class Formatter {
     options: FormatExprOptions
   ): Statement {
     switch (selection.type) {
-      case SelectionType.Row:
-        const {source} = selection
-        switch (source.type) {
-          case FromType.Each:
-            throw 'Not supported in current formatter: expr.each()'
-          case FromType.Column:
-            return sql`json(${this.formatId(
-              From.source(source)
-            )}.${this.formatId(source.column)})`
-          case FromType.Table:
-            return this.formatSelection(
-              SelectionData.Fields(
-                Object.fromEntries(
-                  source.columns.map(column => [
-                    column,
-                    SelectionData.Expr(ExprData.Field(source, column))
-                  ])
-                )
-              ),
-              options
-            )
-          case FromType.Join:
-            throw 'assert'
-        }
-      case SelectionType.Cursor:
-        const sub = this.formatCursor(selection.cursor, {
-          ...options,
-          formatSubject: subject => sql`${subject} as res`
-        })
-        // Todo: test this with scalar/object/array values
-        if (selection.cursor.singleResult) {
-          if (selection.cursor.selection.type === SelectionType.Expr)
-            return sql`(select ${sub})`
-          return sql`json((select ${sub}))`
-        }
-        return sql`(select json_group_array(json(res)) from (select ${sub}))`
       case SelectionType.Expr:
-        return this.formatExpr(selection.expr, options)
-      case SelectionType.With:
-        const a = this.formatSelection(selection.a, options)
-        const b = this.formatSelection(selection.b, options)
-        return sql`json_patch(${a}, ${b})`
-      case SelectionType.Fields:
-        let res = Statement.EMPTY
-        const keys = Object.keys(selection.fields)
-        Object.entries(selection.fields).forEach(([key, value], i) => {
-          res = sql`${res}${this.formatString(key)}, ${this.formatSelection(
-            value,
-            options
-          )}`
-          if (i < keys.length - 1) res = sql`${res}, `
-        })
-        return sql`json_object(${res})`
+        return this.formatExpr(selection.expr, {...options, formatAsJson: true})
       case SelectionType.Process:
         return sql`json_object('$__process', ${this.formatString(
           selection.id
         )}, '$__expr', ${this.formatExpr(selection.expr, options)})`
-      case SelectionType.Case:
-        throw `Not supported in current formatter: _.case(...)`
     }
   }
 
@@ -206,7 +222,7 @@ export abstract class Formatter {
       cursor.limit !== undefined || cursor.offset !== undefined
         ? sql`limit ${
             options.formatInline
-              ? this.format(cursor.limit || 0)
+              ? this.format(cursor.limit || 0, false)
               : Param.value(cursor.limit || 0)
           }`
         : undefined
@@ -214,31 +230,35 @@ export abstract class Formatter {
       cursor.offset !== undefined
         ? sql`offset ${
             options.formatInline
-              ? this.format(cursor.offset)
+              ? this.format(cursor.offset, false)
               : Param.value(cursor.offset)
           }`
         : undefined
-    return sql`${select} ${from} ${where} ${groupBy} ${having} ${order} ${limit} ${offset}`
+    return Statement.join(
+      [select, from, where, groupBy, having, order, limit, offset],
+      ' '
+    )
   }
 
   formatExpr(expr: ExprData, options: FormatExprOptions): Statement {
+    const asValue = {...options, formatAsJson: false}
     switch (expr.type) {
       case ExprType.UnOp:
         if (expr.op === UnOp.IsNull)
-          return sql`${this.formatExpr(expr.expr, options)} is null`
-        return sql`!(${this.formatExpr(expr.expr, options)})`
+          return sql`${this.formatExpr(expr.expr, asValue)} is null`
+        return sql`!(${this.formatExpr(expr.expr, asValue)})`
       case ExprType.BinOp:
         if (
           (expr.op === BinOp.In || expr.op === BinOp.NotIn) &&
           expr.b.type === ExprType.Field
         ) {
-          return sql`(${this.formatExpr(expr.a, options)} ${Statement.raw(
+          return sql`(${this.formatExpr(expr.a, asValue)} ${Statement.raw(
             binOps[expr.op]
-          )} ${this.formatUnwrapArray(this.formatExpr(expr.b, options))})`
+          )} ${this.formatUnwrapArray(this.formatExpr(expr.b, asValue))})`
         }
-        return sql`(${this.formatExpr(expr.a, options)} ${Statement.raw(
+        return sql`(${this.formatExpr(expr.a, asValue)} ${Statement.raw(
           binOps[expr.op]
-        )} ${this.formatExpr(expr.b, options)})`
+        )} ${this.formatExpr(expr.b, asValue)})`
       case ExprType.Param:
         switch (expr.param.type) {
           case ParamType.Named:
@@ -252,45 +272,97 @@ export abstract class Formatter {
                 return value ? sql`1` : sql`0`
               case Array.isArray(value):
                 const res = sql`(${Statement.join(
-                  value.map((v: any): Statement => this.format(v)),
+                  value.map((v: any): Statement => this.format(v, false)),
                   ', '
                 )})`
-                return options.formatAsJsonValue ? sql`json_array${res}` : res
+                return options.formatAsJson ? sql`json_array${res}` : res
               case typeof value === 'string' || typeof value === 'number':
-                if (options.formatInline) return this.format(value)
+                if (options.formatInline)
+                  return this.format(value, options.formatAsJson)
                 return new Statement('?', [expr.param])
               default:
-                return this.format(value)
+                return this.format(value, options.formatAsJson)
             }
         }
       case ExprType.Field:
-        return this.formatField(
-          expr.from,
-          expr.field,
-          Boolean(options.formatShallow)
-        )
+        return this.formatField(expr.expr, expr.field, options)
       case ExprType.Call: {
-        const params = expr.params.map(e => this.formatExpr(e, options))
+        const params = expr.params.map(e => this.formatExpr(e, asValue))
         const expressions = params.map(stmt => stmt.sql).join(', ')
         return new Statement(
           `${this.escapeId(expr.method)}(${expressions})`,
           params.flatMap(stmt => stmt.params)
         )
       }
-      case ExprType.Access:
-        return this.formatAccess(
-          this.formatExpr(expr.expr, options),
-          expr.field
-        )
       case ExprType.Query:
-        return sql`(select ${this.formatCursor(expr.cursor, options)})`
+        if (!options.formatAsJson)
+          return sql`(select ${this.formatCursor(expr.cursor, options)})`
+        const sub = this.formatCursor(expr.cursor, {
+          ...options,
+          formatSubject: subject => sql`${subject} as res`
+        })
+        // Todo: properly test if expr is expected to scalar
+        if (expr.cursor.singleResult) {
+          if (expr.cursor.selection.type === SelectionType.Expr)
+            return sql`(select ${sub})`
+          return sql`json((select ${sub}))`
+        }
+        return sql`(select json_group_array(json(res)) from (select ${sub}))`
+
+      case ExprType.Row:
+        switch (expr.from.type) {
+          case FromType.Each:
+            throw 'Not supported in current formatter: expr.each()'
+          case FromType.Column:
+            return sql`json(${this.formatId(
+              From.source(expr.from)
+            )}.${this.formatId(expr.from.column)})`
+          case FromType.Table:
+            return this.formatExpr(
+              ExprData.Record(
+                Object.fromEntries(
+                  expr.from.columns.map(column => [
+                    column,
+                    ExprData.Field(ExprData.Row(expr.from), column)
+                  ])
+                )
+              ),
+              options
+            )
+          case FromType.Join:
+            throw new Error(`Cannot format select of join "${expr.from}"`)
+        }
+      case ExprType.Merge:
+        const a = this.formatExpr(expr.a, {
+          ...options,
+          formatAsJson: true
+        })
+        const b = this.formatExpr(expr.b, {
+          ...options,
+          formatAsJson: true
+        })
+        return sql`json_patch(${a}, ${b})`
+      case ExprType.Record:
+        let res = Statement.EMPTY
+        const keys = Object.keys(expr.fields)
+        Object.entries(expr.fields).forEach(([key, value], i) => {
+          res = sql`${res}${this.formatString(key)}, ${this.formatExpr(value, {
+            ...options,
+            formatAsJson: true
+          })}`
+          if (i < keys.length - 1) res = sql`${res}, `
+        })
+        return sql`json_object(${res})`
+      case ExprType.Case:
+        throw `Not supported in current formatter: _.case(...)`
     }
   }
 
   formatSelect(cursor: CursorData, options: FormatCursorOptions = {}) {
     return sql`select ${this.formatCursor(cursor, {
       ...options,
-      includeSelection: true
+      includeSelection: true,
+      formatSubject: subject => sql`json_object('res', ${subject})`
     })}`
   }
 
@@ -310,9 +382,12 @@ export abstract class Formatter {
     for (const [key, value] of Object.entries(update)) {
       const expr = this.formatExpr(ExprData.create(value), {
         ...options,
-        formatAsJsonValue: true
+        formatAsJson: true
       })
-      source = sql`json_set(${source}, ${this.format(`$.${key}`)}, ${expr})`
+      source = sql`json_set(${source}, ${this.format(
+        `$.${key}`,
+        false
+      )}, ${expr})`
     }
     return sql`set \`data\` = ${source}`
   }
@@ -327,7 +402,7 @@ export abstract class Formatter {
       if (!(column in update)) continue
       const expr = this.formatExpr(ExprData.create(update[column]), {
         ...options,
-        formatAsJsonValue: true
+        formatAsJson: true
       })
       updates.push(sql`${this.formatId(column)} = ${expr}`)
     }

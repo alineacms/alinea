@@ -5,7 +5,7 @@ import {Cursor} from '../Cursor'
 import {Driver} from '../Driver'
 import {Expr} from '../Expr'
 import {From, FromType} from '../From'
-import {postProcess, SelectionType} from '../Selection'
+import {postProcess} from '../Selection'
 import {Document, IdLess, QueryOptions, Store} from '../Store'
 import type {Update} from '../Update'
 import {sqliteFormatter} from './SqliteFormatter'
@@ -39,14 +39,16 @@ export class SqliteStore implements Store {
 
   all<Row>(cursor: Cursor<Row>, options?: QueryOptions): Array<Row> {
     const stmt = f.formatSelect(cursor.cursor)
-    const isJson = cursor.cursor.selection.type !== SelectionType.Expr
     const prepared = this.prepare(stmt.sql)
     return this.debug(
-      stmt.sql,
+      f.formatSelect(cursor.cursor, {formatInline: true}).sql,
       () => prepared.all<string>(stmt.getParams()),
-      options?.debug
+      options?.debug || true
     )
-      .map((col: any) => (isJson ? JSON.parse(col) : col))
+      .map((col: any) => {
+        console.log(col)
+        return JSON.parse(col).res
+      })
       .map(res => postProcess(cursor.cursor.selection, res))
   }
 
@@ -119,7 +121,7 @@ export class SqliteStore implements Store {
     for (const expr of on) {
       const stmt = f.formatExpr(expr.expr, {
         formatInline: true,
-        formatAsJsonValue: false,
+        formatAsJson: false,
         formatShallow: true
       })
       if (stmt.params.length > 0) {
@@ -184,7 +186,7 @@ export class SqliteStore implements Store {
   ) {
     const options = {
       formatInline: true,
-      formatAsJsonValue: false,
+      formatAsJson: false,
       formatShallow: true
     }
     const table = f.formatFrom(collection.cursor.from, options)

@@ -2,7 +2,6 @@ import {ExprData, ExprType} from '../Expr'
 import {FormatExprOptions, Formatter} from '../Formatter'
 import {From, FromType} from '../From'
 import {ParamData, ParamType} from '../Param'
-import {SelectionData, SelectionType} from '../Selection'
 import {sql, Statement} from '../Statement'
 
 const SINGLE_QUOTE = "'"
@@ -45,69 +44,19 @@ export const sqliteFormatter = new (class extends Formatter {
         return super.formatFrom(from, options)
     }
   }
-  formatSelection(
-    selection: SelectionData,
-    options: FormatExprOptions
-  ): Statement {
-    switch (selection.type) {
-      case SelectionType.Row:
-        const {source} = selection
-        switch (source.type) {
-          case FromType.Each:
-            return sql`${this.formatId(source.alias)}.value`
-        }
-        break
-      case SelectionType.Case:
-        if (Object.keys(selection.cases).length === 0) {
-          if (selection.defaultCase)
-            return this.formatSelection(selection.defaultCase, options)
-          return sql`null`
-        }
-        let result = sql`case ${this.formatExpr(selection.expr, options)}`
-        for (const [when, select] of Object.entries(selection.cases))
-          result = sql`${result} when ${this.formatExpr(
-            ExprData.Param(ParamData.Value(when)),
-            options
-          )} then ${this.formatSelection(select, options)}`
-        if (selection.defaultCase)
-          result = sql`${result} else ${this.formatSelection(
-            selection.defaultCase,
-            options
-          )}`
-        return sql`${result} end`
-    }
-    return super.formatSelection(selection, options)
-  }
-  formatAccess(on: Statement, field: string): Statement {
+  formatValueAccess(on: Statement, field: string): Statement {
     const target = this.formatString(`$.${field}`)
-    return sql`json_extract(${on}, ${target})`
+    return sql`${on}->>${target}`
   }
-  formatField(from: From, field: string, shallow = false): Statement {
-    switch (from.type) {
-      case FromType.Each: {
-        const path = this.formatString(`$.${field}`)
-        return sql`json_extract(${this.formatId(from.alias)}.value, ${path})`
-      }
-      case FromType.Table: {
-        if (shallow) return this.formatId(field)
-        return sql`${this.formatId(from.alias || from.name)}.${this.formatId(
-          field
-        )}`
-      }
-      case FromType.Column: {
-        const origin = this.formatField(from.of, from.column, shallow)
-        const path = this.formatString(`$.${field}`)
-        return sql`json_extract(${origin}, ${path})`
-      }
-      case FromType.Join: {
-        throw 'assert'
-      }
-    }
+  formatJsonAccess(on: Statement, field: string): Statement {
+    const target = this.formatString(`$.${field}`)
+    return sql`${on}->${target}`
   }
   formatUnwrapArray(stmt: Statement): Statement {
     return sql`(select value from json_each(${stmt}))`
   }
   formatExpr(expr: ExprData, options: FormatExprOptions): Statement {
+    const asValue = {...options, formatAsJson: false}
     switch (expr.type) {
       case ExprType.Call:
         switch (expr.method) {
@@ -120,14 +69,39 @@ export const sqliteFormatter = new (class extends Formatter {
             if (!typeName) throw 'assert'
             return sql`cast(${this.formatExpr(
               expr.params[0],
-              options
+              asValue
             )} as ${this.formatString(typeName)})`
           case 'arrayLength':
             return this.formatExpr(
               ExprData.Call('json_array_length', expr.params),
-              options
+              asValue
             )
         }
+        break
+      case ExprType.Row:
+        switch (expr.from.type) {
+          case FromType.Each:
+            return sql`${this.formatId(expr.from.alias)}.value`
+        }
+        break
+      case ExprType.Case:
+        if (Object.keys(expr.cases).length === 0) {
+          if (expr.defaultCase)
+            return this.formatExpr(expr.defaultCase, asValue)
+          return sql`null`
+        }
+        let result = sql`case ${this.formatExpr(expr.expr, asValue)}`
+        for (const [when, select] of Object.entries(expr.cases))
+          result = sql`${result} when ${this.formatExpr(
+            ExprData.Param(ParamData.Value(when)),
+            asValue
+          )} then ${this.formatExpr(select, asValue)}`
+        if (expr.defaultCase)
+          result = sql`${result} else ${this.formatExpr(
+            expr.defaultCase,
+            asValue
+          )}`
+        return sql`${result} end`
     }
     return super.formatExpr(expr, options)
   }
