@@ -49,7 +49,7 @@ export abstract class Formatter {
   abstract formatUnwrapArray(sql: Statement): Statement
 
   format(value: any, asJson: boolean | undefined): Statement {
-    if (asJson) return sql`${this.format(JSON.stringify(value), false)}`
+    if (asJson) return sql`json(${this.format(JSON.stringify(value), false)})`
     return new Statement(this.escape(value))
   }
 
@@ -79,7 +79,7 @@ export abstract class Formatter {
           case FromType.Each:
             return this.formatAccess(
               options.formatAsJson,
-              this.formatId(from.alias),
+              sql`${this.formatId(from.alias)}.value`,
               field
             )
           case FromType.Table:
@@ -266,10 +266,6 @@ export abstract class Formatter {
           case ParamType.Value:
             const value = expr.param.value
             switch (true) {
-              case value === null:
-                return sql`null`
-              case typeof value === 'boolean':
-                return value ? sql`1` : sql`0`
               case Array.isArray(value):
                 const res = sql`(${Statement.join(
                   value.map((v: any): Statement => this.format(v, false)),

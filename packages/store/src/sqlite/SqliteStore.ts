@@ -39,6 +39,7 @@ export class SqliteStore implements Store {
 
   all<Row>(cursor: Cursor<Row>, options?: QueryOptions): Array<Row> {
     const stmt = f.formatSelect(cursor.cursor)
+    console.log(stmt.sql)
     const prepared = this.prepare(stmt.sql)
     return this.debug(
       f.formatSelect(cursor.cursor, {formatInline: true}).sql,

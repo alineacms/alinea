@@ -2,7 +2,12 @@ import {Cursor, CursorData, CursorSingleRow} from './Cursor'
 import {From} from './From'
 import {OrderBy, OrderDirection} from './OrderBy'
 import {ParamData, ParamType} from './Param'
-import {Selection, SelectionData, SelectionInput} from './Selection'
+import {
+  Selection,
+  SelectionData,
+  SelectionInput,
+  SelectionType
+} from './Selection'
 import type {Store} from './Store'
 
 export const enum UnOp {
@@ -101,6 +106,13 @@ export const ExprData = {
     if (input == null) return ExprData.Param(ParamData.Value(null))
     if (input instanceof Expr) return input.expr
     if (input instanceof Cursor) return ExprData.Query(input.cursor)
+    if (input instanceof Selection)
+      switch (input.selection.type) {
+        case SelectionType.Expr:
+          return input.selection.expr
+        default:
+          throw new Error(`Unsupported selection`)
+      }
     if (input && typeof input === 'object')
       return ExprData.Record(
         Object.fromEntries(
