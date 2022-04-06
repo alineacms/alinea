@@ -64,7 +64,7 @@ abstract class Base<P, T> extends Promise<T> {
 class Multiple<P, T> extends Base<P, Array<Page<P, T>>> {
   protected async execute() {
     const store = await this.pages.store
-    return store.all(this.cursor, {debug: true}).map(page => {
+    return store.all(this.cursor).map(page => {
       if (page && typeof page === 'object' && 'id' in page) {
         Object.defineProperty(page, 'tree', {
           value: new PageTree(this.pages, page.id),
