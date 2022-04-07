@@ -8,7 +8,7 @@ export async function getStaticProps(context: GetStaticPropsContext) {
   const pages = backend.loadPages('web', context.previewData as string)
   const paths = (context.params?.slug as Array<string>) || []
   const slug = '/' + paths.join('/')
-  const page = await pages.whereUrl(slug).select(pageViewQuery(Page))
+  const page = await pages.whereUrl(slug).select(pageViewQuery(pages, Page))
   if (!page) return {notFound: true}
   return {props: page}
 }

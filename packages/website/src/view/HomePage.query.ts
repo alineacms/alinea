@@ -1,7 +1,7 @@
 import {Collection, Store} from '@alinea/store'
-import {Home, Page} from '../../.alinea/web'
+import {Home, Page, Pages} from '../../.alinea/web'
 
-export function homePageQuery(Home: Collection<Home>) {
+export function homePageQuery(pages: Pages, Home: Collection<Home>) {
   const action = Home.action.each()
   const Action = Page.as('Action')
   return Home.fields.with({

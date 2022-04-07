@@ -1,20 +1,17 @@
 import {Expr, Store} from '@alinea/store'
+import {Pages} from '../../../.alinea/web'
 import {BlocksSchema} from './Blocks.schema'
+import {textBlockQuery} from './TextBlock.query'
+import {TextBlockSchema} from './TextBlock.schema'
 
-export function blocksQuery(blocks: Expr<BlocksSchema>) {
-  return blocks.process(blocks => {
-    return blocks.map(block => {
-      switch (block.type) {
-        case 'TextBlock':
-          const {text} = block
-          return {
-            ...block,
-            text: text
-          }
-        default:
-          return block
-      }
-    })
+export function blocksQuery(pages: Pages, blocks: Expr<BlocksSchema>) {
+  return blocks.map(block => {
+    return block.type.case(
+      {
+        TextBlock: textBlockQuery(pages, block as Expr<TextBlockSchema>)
+      },
+      block
+    )
   })
 }
 

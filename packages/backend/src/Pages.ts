@@ -1,10 +1,20 @@
-import {Config, Entry, Schema, Tree, TypesOf, Workspace} from '@alinea/core'
+import {
+  Config,
+  createId,
+  Entry,
+  Schema,
+  Tree,
+  TypesOf,
+  Workspace
+} from '@alinea/core'
 import {
   Collection,
   Cursor,
   EV,
   Expr,
+  ExprData,
   OrderBy,
+  Selection,
   SelectionInput,
   Store
 } from '@alinea/store'
@@ -62,7 +72,9 @@ abstract class Base<P, T> extends Promise<T> {
 class Multiple<P, T> extends Base<P, Array<Page<P, T>>> {
   protected async execute() {
     const store = await this.pages.store
-    return store.all(this.cursor).map(page => {
+    const rows = store.all(this.cursor)
+    const res = await Promise.all(rows.map(row => this.pages.postProcess(row)))
+    return res.map(page => {
       if (page && typeof page === 'object' && 'id' in page) {
         Object.defineProperty(page, 'tree', {
           value: new PageTree(this.pages, page.id),
@@ -90,6 +102,12 @@ class Multiple<P, T> extends Base<P, Array<Page<P, T>>> {
   }
   where(where: EV<boolean> | ((collection: Cursor<T>) => EV<boolean>)) {
     return new Multiple<P, T>(this.pages, this.cursor.where(where as any))
+  }
+  whereType<C>(type: Collection<C>) {
+    return new Multiple<P, C>(
+      this.pages,
+      this.cursor.where(Entry.type.is((type as any).__options.alias))
+    )
   }
   select<
     X extends SelectionInput | ((collection: Cursor<T>) => SelectionInput)
@@ -128,8 +146,9 @@ class Multiple<P, T> extends Base<P, Array<Page<P, T>>> {
 class Single<P, T> extends Base<P, Page<P, T> | null> {
   protected async execute() {
     const store = await this.pages.store
-    const page = store.first(this.cursor)
-    if (!page) return null
+    const row = store.first(this.cursor)
+    if (!row) return null
+    const page = await this.pages.postProcess(row)
     if (typeof page === 'object' && 'id' in page) {
       Object.defineProperty(page, 'tree', {
         value: new PageTree(this.pages, page.id),
@@ -230,7 +249,7 @@ class PagesImpl<T> {
     return new Multiple<T, C>(
       this as Pages<T>,
       type.cursor.where
-        ? this.collection.where(Entry.type.is(new Expr(type.cursor.where)))
+        ? this.collection.where(Entry.type.is((type as any).__options.alias))
         : this.collection
     )
   }
@@ -251,18 +270,112 @@ class PagesImpl<T> {
     return new Single<T, T>(this as Pages<T>, this.collection.where(where))
   }
 
-  /*preview(drafts: Drafts, id?: string): Pages<T> {
-    return new Pages(this.config, this.workspace, async () => {
-      const preview = previewStore(this.createCache, this.config, drafts)
-      if (id) {
-        await preview.fetchUpdate(id)
-      }
-      return preview.getStore()
-    })
-  }*/
-
   get root() {
     return this.findMany(Entry.parent.isNull())
+  }
+
+  processCallbacks = new Map<string, (value: any) => any>()
+  process<I extends SelectionInput, X>(
+    input: I,
+    fn: (value: Store.TypeOf<I>) => X | Promise<X>
+  ): Expr<X> {
+    const id = createId()
+    this.processCallbacks.set(id, fn)
+    return new Expr(
+      ExprData.Record({
+        $__process: Expr.value(id).expr,
+        $__expr: Selection.create(input)
+      })
+    )
+  }
+
+  processTypes<
+    I extends SelectionInput,
+    Transform extends Record<string, (value: any) => any>
+  >(
+    input: I,
+    transform: Transform
+  ): Expr<ProcessTypes<Store.TypeOf<I>, Transform>> {
+    return this.process(input, async function post(value: any): Promise<any> {
+      const tasks: Array<() => Promise<void>> = []
+      iter(value, (value, setValue) => {
+        const needsTransforming =
+          value &&
+          typeof value === 'object' &&
+          'type' in value &&
+          transform[value.type]
+        if (needsTransforming) {
+          tasks.push(async () => {
+            const result = await transform[value.type](value)
+            setValue(result)
+          })
+          return false
+        }
+        return true
+      })
+      await Promise.all(tasks.map(fn => fn()))
+      // we can keep processing results, but... it's too easy to return the same types?
+      // if (tasks.length > 0) return await post(value)
+      return value
+    }) as any
+  }
+
+  async postProcess(value: any): Promise<any> {
+    const tasks: Array<() => Promise<void>> = []
+    iter(value, (value, setValue) => {
+      const isProcessValue =
+        value &&
+        typeof value === 'object' &&
+        '$__process' in value &&
+        '$__expr' in value
+      if (isProcessValue) {
+        const id = value['$__process']
+        const expr = value['$__expr']
+        const fn = this.processCallbacks.get(id)
+        if (!fn) return true
+        tasks.push(async () => {
+          try {
+            const result = await fn(expr)
+            setValue(result)
+          } finally {
+            this.processCallbacks.delete(id)
+          }
+        })
+        return false
+      }
+      return true
+    })
+    await Promise.all(tasks.map(fn => fn()))
+    return value
+  }
+}
+
+type UnPromisify<T> = T extends Promise<infer U> ? U : T
+
+type ProcessTypes<
+  T,
+  F extends Record<string, (...args: any) => any>
+> = T extends Array<infer V>
+  ? Array<ProcessTypes<V, F>>
+  : T extends {type: keyof F}
+  ? UnPromisify<ReturnType<F[T['type']]>>
+  : T extends object
+  ? {[K in keyof T]: ProcessTypes<T[K], F>}
+  : T
+
+function iter(
+  value: any,
+  fn: (value: any, setValue: (value: any) => void) => boolean
+): void {
+  if (!value) return
+  if (Array.isArray(value))
+    return value.forEach((item, i) => {
+      if (item && fn(item, v => (value[i] = v))) iter(value[i], fn)
+    })
+  if (typeof value === 'object') {
+    for (const key of Object.keys(value))
+      if (value[key] && fn(value[key], v => (value[key] = v)))
+        iter(value[key], fn)
   }
 }
 

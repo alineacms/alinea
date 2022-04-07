@@ -1,3 +1,5 @@
+import {TypesOf} from './Schema'
+
 export namespace TextNode {
   export type Mark = {type: string; attrs?: Record<string, string>}
   export type Text = {
@@ -6,7 +8,14 @@ export namespace TextNode {
     marks?: Array<Mark>
   }
   export type Element<T = any> = {
-    type: string
+    type:
+      | 'paragraph'
+      | 'heading'
+      | 'bold'
+      | 'italic'
+      | 'bulletList'
+      | 'listItem'
+      | TypesOf<T>
     content?: TextDoc<T>
     [key: string]: any
   }

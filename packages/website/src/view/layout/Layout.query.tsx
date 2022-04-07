@@ -1,8 +1,8 @@
 import {Collection, Store} from '@alinea/store'
-import {Page} from '../../../.alinea/web'
+import {Page, Pages} from '../../../.alinea/web'
 import {headerQuery} from './Header.query'
 
-export function layoutQuery(Page: Collection<Page>) {
+export function layoutQuery(pages: Pages, Page: Collection<Page>) {
   return {
     meta: {
       title: Page.title,

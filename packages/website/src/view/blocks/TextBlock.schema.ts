@@ -12,4 +12,7 @@ export const TextBlockSchema = type('Text', {
   })
 })
 
-export type TextBlockSchema = Schema.TypeOf<typeof TextBlockSchema>
+export type TextBlockSchema = Schema.TypeOf<typeof TextBlockSchema> & {
+  id: string
+  type: 'TextBlock'
+}

@@ -1,9 +1,9 @@
 import {unreachable} from '@alinea/core'
-import {BlocksSchema} from './Blocks.schema'
+import {BlocksProps} from './Blocks.query'
 import {TextBlock} from './TextBlock'
 
 export type BlocksViewProps = {
-  blocks: BlocksSchema
+  blocks: BlocksProps
 }
 
 export function Blocks({blocks}: BlocksViewProps) {

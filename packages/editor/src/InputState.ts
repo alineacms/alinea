@@ -1,4 +1,4 @@
-import {RichTextMutator} from '@alinea/core/'
+import {RichTextMutator} from '@alinea/core'
 import {TextDoc} from '@alinea/core/TextDoc'
 import {ListMutator} from '@alinea/core/value/ListValue'
 

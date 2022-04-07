@@ -228,10 +228,6 @@ export abstract class Formatter {
   formatExpr(expr: ExprData, options: FormatExprOptions): Statement {
     const asValue = {...options, formatAsJson: false, formatSubject: undefined}
     switch (expr.type) {
-      case ExprType.Process:
-        return sql`json_object('$__process', ${this.formatString(
-          expr.id
-        )}, '$__expr', ${this.formatExpr(expr.expr, options)})`
       case ExprType.UnOp:
         if (expr.op === UnOp.IsNull)
           return sql`${this.formatExpr(expr.expr, asValue)} is null`

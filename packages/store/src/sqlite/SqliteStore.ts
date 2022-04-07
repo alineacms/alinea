@@ -5,7 +5,6 @@ import {Cursor} from '../Cursor'
 import {Driver} from '../Driver'
 import {Expr} from '../Expr'
 import {From, FromType} from '../From'
-import {postProcess} from '../Selection'
 import {sql} from '../Statement'
 import {Document, IdLess, QueryOptions, Store} from '../Store'
 import type {Update} from '../Update'
@@ -24,10 +23,9 @@ export class SqliteStore implements Store {
     // this.db.exec('PRAGMA synchronous = OFF')
   }
 
-  private debug<T>(query: string, run: () => T, log = false): T {
+  private debug<T>(run: () => T, log = false): T {
     if (!log) return run()
     const startTime = process.hrtime.bigint()
-    console.log(query)
     const result = run()
     const diff = process.hrtime.bigint() - startTime
     console.log(
@@ -43,16 +41,14 @@ export class SqliteStore implements Store {
       formatAsJson: true,
       formatSubject: subject => sql`json_object('result', ${subject})`
     })
+    if (options?.debug) console.log(stmt.sql)
     const prepared = this.prepare(stmt.sql)
     return this.debug(
-      stmt.sql,
       () => prepared.all<string>(stmt.getParams()),
       options?.debug
-    )
-      .map((col: any) => {
-        return JSON.parse(col).result
-      })
-      .map(res => postProcess(cursor.cursor.selection, res))
+    ).map((col: any) => {
+      return JSON.parse(col).result
+    })
   }
 
   first<Row>(cursor: Cursor<Row>, options?: QueryOptions): Row | null {

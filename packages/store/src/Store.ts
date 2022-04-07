@@ -52,5 +52,7 @@ export namespace Store {
     ? {[K in keyof T]: TypeOf<T[K]>}
     : T extends (cursor: any) => infer K
     ? TypeOf<K>
+    : T extends Promise<infer K>
+    ? K
     : T
 }

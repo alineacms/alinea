@@ -15,7 +15,7 @@ export type CollectionOptions = {
 
 export class CollectionImpl<Row extends {} = any> extends CursorImpl<Row> {
   private __options: CollectionOptions
-  constructor(name: string, private options: CollectionOptions = {}) {
+  constructor(name: string, options: CollectionOptions = {}) {
     const {flat, columns, where, alias, computed} = options
     const from = flat
       ? From.Table(name, columns || [], alias)

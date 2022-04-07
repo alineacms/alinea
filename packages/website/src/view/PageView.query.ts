@@ -1,16 +1,16 @@
 import {Collection, Store} from '@alinea/store'
-import {Doc, Home, Page} from '../../.alinea/web'
+import {Doc, Home, Page, Pages} from '../../.alinea/web'
 import {docPageQuery} from './DocPage.query'
 import {homePageQuery} from './HomePage.query'
 import {layoutQuery} from './layout/Layout.query'
 
-export function pageViewQuery(Page: Collection<Page>) {
+export function pageViewQuery(pages: Pages, Page: Collection<Page>) {
   return {
-    layout: layoutQuery(Page),
+    layout: layoutQuery(pages, Page),
     entry: Page.type.case(
       {
-        Home: homePageQuery(Page as Collection<Home>),
-        Doc: docPageQuery(Page as Collection<Doc>)
+        Home: homePageQuery(pages, Page as Collection<Home>),
+        Doc: docPageQuery(pages, Page as Collection<Doc>)
       },
       Page.fields
     )

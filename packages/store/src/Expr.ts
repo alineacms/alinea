@@ -1,5 +1,6 @@
 import {Cursor, CursorData, CursorSingleRow} from './Cursor'
-import {From} from './From'
+import {Fields} from './Fields'
+import {From, FromType} from './From'
 import {OrderBy, OrderDirection} from './OrderBy'
 import {ParamData, ParamType} from './Param'
 import {Selection, SelectionInput} from './Selection'
@@ -42,8 +43,7 @@ export const enum ExprType {
   Record,
   Row,
   Merge,
-  Case,
-  Process
+  Case
 }
 
 export type ExprData =
@@ -61,12 +61,6 @@ export type ExprData =
       expr: ExprData
       cases: Record<string, ExprData>
       defaultCase?: ExprData
-    }
-  | {
-      type: ExprType.Process
-      expr: ExprData
-      id: string
-      fn: (input: any) => any
     }
 
 export const ExprData = {
@@ -103,9 +97,6 @@ export const ExprData = {
     defaultCase?: ExprData
   ): ExprData {
     return {type: ExprType.Case, expr, cases, defaultCase}
-  },
-  Process(expr: ExprData, id: string, fn: (input: any) => any): ExprData {
-    return {type: ExprType.Process, expr, id, fn}
   },
   create(input: any): ExprData {
     if (input == null) return ExprData.Param(ParamData.Value(null))
@@ -267,15 +258,22 @@ export class Expr<T> {
       selection: ExprData.Row(from)
     })
   }
-  process<T, X>(this: Expr<T>, fn: (cursor: T) => X): Expr<X> {
-    return new Expr(ExprData.Process(this.expr, this.__id(), fn))
-  }
   map<T, X extends SelectionInput>(
     this: Expr<Array<T>>,
-    fn: (cursor: Cursor<T>) => X
+    fn: (cursor: Expr<T> & Fields<T>) => X
   ): Selection<Array<Store.TypeOf<X>>> {
     const row = this.each()
-    return row.select(fn(row)) as any
+    return row.select(
+      fn(
+        new Expr(
+          ExprData.Row({
+            type: FromType.Each,
+            expr: row.cursor.selection,
+            alias: (row.cursor.from as {alias: string}).alias
+          })
+        ) as any
+      )
+    ) as any
   }
   case<
     T extends string | number,

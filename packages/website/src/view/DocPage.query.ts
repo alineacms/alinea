@@ -1,5 +1,5 @@
 import {Collection, Store} from '@alinea/store'
-import {Doc, Page} from '../../.alinea/web'
+import {Doc, Page, Pages} from '../../.alinea/web'
 import {blocksQuery} from './blocks/Blocks.query'
 
 function menuQuery() {
@@ -15,7 +15,7 @@ function menuQuery() {
     .orderBy(Page.index.asc())
 }
 
-export function docPageQuery(doc: Collection<Doc>) {
+export function docPageQuery(pages: Pages, doc: Collection<Doc>) {
   const siblings = Doc.where(Doc.parent.is(doc.parent)).select({
     url: Doc.url,
     title: Doc.title
@@ -32,7 +32,7 @@ export function docPageQuery(doc: Collection<Doc>) {
     menu: menuQuery(),
     prev,
     next,
-    blocks: blocksQuery(doc.blocks)
+    blocks: blocksQuery(pages, doc.blocks)
   })
 }
 
