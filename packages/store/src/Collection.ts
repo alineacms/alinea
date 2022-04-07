@@ -10,19 +10,19 @@ export type CollectionOptions = {
   columns?: Array<string>
   where?: Expr<boolean>
   alias?: string
-  computed?: Record<string, Expr<any>>
+  computed?: (collection: Fields<any>) => Record<string, Expr<any>>
 }
 
 export class CollectionImpl<Row extends {} = any> extends CursorImpl<Row> {
   private __options: CollectionOptions
-  constructor(name: string, options: CollectionOptions = {}) {
+  constructor(name: string, private options: CollectionOptions = {}) {
     const {flat, columns, where, alias, computed} = options
     const from = flat
       ? From.Table(name, columns || [], alias)
       : From.Column(From.Table(name, ['data'], alias), 'data')
     const row = ExprData.Row(from)
     const selection = computed
-      ? ExprData.Merge(row, ExprData.create(computed))
+      ? ExprData.Merge(row, ExprData.create(computed(Fields.create(row))))
       : row
     super({
       from,
@@ -48,7 +48,6 @@ export class CollectionImpl<Row extends {} = any> extends CursorImpl<Row> {
   }
 
   get<K extends string>(name: K): Expr<K extends keyof Row ? Row[K] : any> {
-    if (this.__options.computed?.[name]) return this.__options.computed[name]
     return new Expr(ExprData.Field(this.cursor.selection, name as string))
   }
 
@@ -63,20 +62,20 @@ export class CollectionImpl<Row extends {} = any> extends CursorImpl<Row> {
     })
   }
 
-  static define<Row, F extends Record<string, Expr<any>>>(
+  static extend<Row, F extends Record<string, Expr<any>>>(
     collection: Collection<Row>,
     createFields: (current: Fields<Row>) => F
-  ): CollectionImpl<Row> & Fields<Row & Store.TypeOf<F>> {
+  ): Collection<Row & Store.TypeOf<F>> {
     return new Collection(From.source(collection.cursor.from), {
       ...collection.__options,
-      computed: createFields(collection)
+      computed: createFields as any
     })
   }
 }
 
 export interface CollectionConstructor {
   new <Row>(name: string, options?: CollectionOptions): Collection<Row>
-  define: typeof CollectionImpl.define
+  extend: typeof CollectionImpl.extend
 }
 
 export type Collection<T> = CollectionImpl<T> & Fields<T>

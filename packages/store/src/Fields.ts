@@ -1,4 +1,4 @@
-import {Expr} from './Expr'
+import {Expr, ExprData} from './Expr'
 
 // Source: https://stackoverflow.com/a/49279355/5872160
 type GetKeys<U> = U extends Record<infer K, any> ? K : never
@@ -31,3 +31,16 @@ type IsStrictlyAny<T> = (T extends never ? true : false) extends false
 export type Fields<T> = IsStrictlyAny<T> extends true
   ? unknown
   : FieldsOf<UnionToIntersection<RequiredKeepUndefined<T>>>
+
+export namespace Fields {
+  export function create(from: ExprData) {
+    return new Proxy(
+      {},
+      {
+        get(_, key: string) {
+          return new Expr(ExprData.Field(from, key))
+        }
+      }
+    )
+  }
+}

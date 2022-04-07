@@ -12,7 +12,8 @@ type Entry = {
 
 test('define', () => {
   const db = store()
-  const Entry = Collection.define(new Collection<Entry>('Entry'), fields => ({
+  const Entry = new Collection<Entry>('Entry')
+  const EntryWithPath = Collection.extend(Entry, fields => ({
     path: fields.type
       .concat('-')
       .concat(SqliteFunctions.cast(fields.num, 'text'))
@@ -22,8 +23,12 @@ test('define', () => {
     type: 'Entry',
     num: 123
   })
-  const res = db.first(Entry.select(Entry.path))
-  assert.is(res, 'Entry-123')
+  const res = db.first(EntryWithPath)!
+  assert.is(res.path, 'Entry-123')
+
+  const Aliased = EntryWithPath.as('Aliased')
+  const res2 = db.first(Aliased)!
+  assert.is(res2.path, 'Entry-123')
 })
 
 test.run()
