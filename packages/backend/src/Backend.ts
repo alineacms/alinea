@@ -172,27 +172,18 @@ export class Backend<T extends Workspaces = Workspaces> implements Hub<T> {
     return this.options.drafts
   }
 
-  pagesCache = new Map()
-  loadPages<K extends keyof T>(
-    workspaceKey: K,
-    previewToken?: string
-  ): Pages<T[K] extends Workspace<infer X> ? X : any> {
-    const cacheKey = `${String(workspaceKey)}/${previewToken}`
+  loadPages<K extends keyof T>(workspaceKey: K, previewToken?: string) {
     const workspace = this.config.workspaces[workspaceKey]
-    if (this.pagesCache.has(cacheKey)) return this.pagesCache.get(cacheKey)
-    const pages = new Pages(
+    return new Pages<T[K] extends Workspace<infer X> ? X : any>(
       this.config,
       workspace,
       previewToken
         ? async () => {
-            const {id} = await this.parsePreviewToken(previewToken)
-            if (id) await this.preview.fetchUpdate(id)
+            await this.parsePreviewToken(previewToken)
             return this.preview.getStore()
           }
-        : () => this.createStore()
+        : this.createStore
     )
-    this.pagesCache.set(cacheKey, pages)
-    return pages as any
   }
 
   async parsePreviewToken(token: string): Promise<{id: string; url: string}> {

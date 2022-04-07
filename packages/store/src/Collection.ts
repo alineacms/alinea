@@ -47,10 +47,6 @@ export class CollectionImpl<Row extends {} = any> extends CursorImpl<Row> {
     return this.get('id') as Expr<string>
   }
 
-  get<K extends string>(name: K): Expr<K extends keyof Row ? Row[K] : any> {
-    return new Expr(ExprData.Field(this.cursor.selection, name as string))
-  }
-
   with<X extends SelectionInput>(that: X): Selection.With<Row, X> {
     return this.fields.with(that)
   }

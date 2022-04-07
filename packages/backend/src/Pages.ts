@@ -8,8 +8,6 @@ import {
   SelectionInput,
   Store
 } from '@alinea/store'
-import {Drafts} from './Drafts'
-import {previewStore} from './PreviewStore'
 
 export class PageTree<P> {
   constructor(private pages: Pages<P>, private id: EV<string>) {}
@@ -253,13 +251,15 @@ class PagesImpl<T> {
     return new Single<T, T>(this as Pages<T>, this.collection.where(where))
   }
 
-  preview(drafts: Drafts, id?: string): Pages<T> {
+  /*preview(drafts: Drafts, id?: string): Pages<T> {
     return new Pages(this.config, this.workspace, async () => {
       const preview = previewStore(this.createCache, this.config, drafts)
-      if (id) await preview.fetchUpdate(id)
+      if (id) {
+        await preview.fetchUpdate(id)
+      }
       return preview.getStore()
     })
-  }
+  }*/
 
   get root() {
     return this.findMany(Entry.parent.isNull())

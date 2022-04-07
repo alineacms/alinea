@@ -5,17 +5,12 @@ import {Drafts} from './Drafts'
 
 type Cache = {lastFetched: number; store: Store}
 
-const instances = new WeakMap<Drafts, PreviewStore>()
-
 export function previewStore(
   createCache: () => Promise<Store>,
   config: Config,
   drafts: Drafts
 ) {
-  if (instances.has(drafts)) return instances.get(drafts)!
-  const instance = new PreviewStore(createCache, config, drafts)
-  instances.set(drafts, instance)
-  return instance
+  return new PreviewStore(createCache, config, drafts)
 }
 
 function isStale(timestamp: number, maxAge: number) {
@@ -55,9 +50,13 @@ export class PreviewStore {
 
   async fetchUpdate(id: string) {
     const lastFetched = this.lastFetched.get(id)
-    if (lastFetched && !isStale(lastFetched, 1)) return
+    if (lastFetched && !isStale(lastFetched, 1)) {
+      return
+    }
     const update = await this.drafts.get(id)
-    if (update) await this.applyUpdate({id, update})
+    if (update) {
+      await this.applyUpdate({id, update})
+    }
   }
 
   async applyUpdate(update: Drafts.Update) {
