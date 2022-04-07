@@ -76,7 +76,6 @@ test('Update array', () => {
   })
   assert.is(res.changes, 1)
   const user2 = db.first(User.where(User.id.is(user.id)))!
-  console.log(user2)
   assert.equal(user2.roles, ['a', 'b'])
 })
 

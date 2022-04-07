@@ -305,7 +305,7 @@ __metadata:
   dependencies:
     "@types/better-sqlite3": ^5.4.1
     "@types/sql.js": ^1.4.2
-    better-sqlite3-multiple-ciphers: ^7.5.1-beta.3
+    better-sqlite3: ^7.5.1
   languageName: unknown
   linkType: soft
 
@@ -2603,14 +2603,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"better-sqlite3-multiple-ciphers@npm:^7.5.1-beta.3":
-  version: 7.5.1-beta.3
-  resolution: "better-sqlite3-multiple-ciphers@npm:7.5.1-beta.3"
+"better-sqlite3@npm:^7.5.1":
+  version: 7.5.1
+  resolution: "better-sqlite3@npm:7.5.1"
   dependencies:
     bindings: ^1.5.0
     node-gyp: latest
     prebuild-install: ^7.0.0
-  checksum: baebb20b5ce3dd8c2ee98f4a7f26ee7ef9374ba6497eac732bf82a4f679f1ba1ae805cb53c0b827864d36fc3ec558efd662faeff935e450a87de91976910274a
+  checksum: 5788953f6cc87b22af94ab7d4f154e3d622a26984b62c463441257a6cb022b363809f60d6c3fbec9492a448cea2a06b86a049b9cfad34bdea3b81134ff42e25d
   languageName: node
   linkType: hard
 

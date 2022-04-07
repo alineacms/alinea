@@ -1,4 +1,5 @@
 import {test} from 'uvu'
+import * as assert from 'uvu/assert'
 import {Collection} from '../src/Collection'
 import {SqliteFunctions} from '../src/sqlite/SqliteFunctions'
 import {store} from './DbSuite'
@@ -11,7 +12,7 @@ type Entry = {
 
 test('define', () => {
   const db = store()
-  const Entry = new Collection<Entry>('Entry').define(fields => ({
+  const Entry = Collection.define(new Collection<Entry>('Entry'), fields => ({
     path: fields.type
       .concat('-')
       .concat(SqliteFunctions.cast(fields.num, 'text'))
@@ -21,7 +22,8 @@ test('define', () => {
     type: 'Entry',
     num: 123
   })
-  Entry.path
+  const res = db.first(Entry.select(Entry.path))
+  assert.is(res, 'Entry-123')
 })
 
 test.run()

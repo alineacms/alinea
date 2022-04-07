@@ -6,6 +6,7 @@ import {Driver} from '../Driver'
 import {Expr} from '../Expr'
 import {From, FromType} from '../From'
 import {postProcess} from '../Selection'
+import {sql} from '../Statement'
 import {Document, IdLess, QueryOptions, Store} from '../Store'
 import type {Update} from '../Update'
 import {sqliteFormatter} from './SqliteFormatter'
@@ -20,7 +21,7 @@ export class SqliteStore implements Store {
     this.createId = createId
     // this.db.exec('PRAGMA journal_mode = WAL')
     // this.db.exec('PRAGMA optimize')
-    this.db.exec('PRAGMA synchronous = OFF')
+    // this.db.exec('PRAGMA synchronous = OFF')
   }
 
   private debug<T>(query: string, run: () => T, log = false): T {
@@ -38,17 +39,18 @@ export class SqliteStore implements Store {
   }
 
   all<Row>(cursor: Cursor<Row>, options?: QueryOptions): Array<Row> {
-    const stmt = f.formatSelect(cursor.cursor)
-    console.log(stmt.sql)
+    const stmt = f.formatSelect(cursor.cursor, {
+      formatAsJson: true,
+      formatSubject: subject => sql`json_object('result', ${subject})`
+    })
     const prepared = this.prepare(stmt.sql)
     return this.debug(
-      f.formatSelect(cursor.cursor, {formatInline: true}).sql,
+      stmt.sql,
       () => prepared.all<string>(stmt.getParams()),
-      options?.debug || true
+      options?.debug
     )
       .map((col: any) => {
-        console.log(col)
-        return JSON.parse(col).res
+        return JSON.parse(col).result
       })
       .map(res => postProcess(cursor.cursor.selection, res))
   }
@@ -125,9 +127,6 @@ export class SqliteStore implements Store {
         formatAsJson: false,
         formatShallow: true
       })
-      if (stmt.params.length > 0) {
-        throw 'Parameters in index expressions are currently unsupported'
-      }
       exprs.push(stmt.sql)
     }
     const res = `create index if not exists ${f.escapeString(

@@ -2,12 +2,7 @@ import {Cursor, CursorData, CursorSingleRow} from './Cursor'
 import {From} from './From'
 import {OrderBy, OrderDirection} from './OrderBy'
 import {ParamData, ParamType} from './Param'
-import {
-  Selection,
-  SelectionData,
-  SelectionInput,
-  SelectionType
-} from './Selection'
+import {Selection, SelectionInput} from './Selection'
 import type {Store} from './Store'
 
 export const enum UnOp {
@@ -47,7 +42,8 @@ export const enum ExprType {
   Record,
   Row,
   Merge,
-  Case
+  Case,
+  Process
 }
 
 export type ExprData =
@@ -65,6 +61,12 @@ export type ExprData =
       expr: ExprData
       cases: Record<string, ExprData>
       defaultCase?: ExprData
+    }
+  | {
+      type: ExprType.Process
+      expr: ExprData
+      id: string
+      fn: (input: any) => any
     }
 
 export const ExprData = {
@@ -102,18 +104,15 @@ export const ExprData = {
   ): ExprData {
     return {type: ExprType.Case, expr, cases, defaultCase}
   },
+  Process(expr: ExprData, id: string, fn: (input: any) => any): ExprData {
+    return {type: ExprType.Process, expr, id, fn}
+  },
   create(input: any): ExprData {
     if (input == null) return ExprData.Param(ParamData.Value(null))
     if (input instanceof Expr) return input.expr
     if (input instanceof Cursor) return ExprData.Query(input.cursor)
-    if (input instanceof Selection)
-      switch (input.selection.type) {
-        case SelectionType.Expr:
-          return input.selection.expr
-        default:
-          throw new Error(`Unsupported selection`)
-      }
-    if (input && typeof input === 'object')
+    if (input instanceof Selection) return input.expr
+    if (input && typeof input === 'object' && !Array.isArray(input))
       return ExprData.Record(
         Object.fromEntries(
           Object.entries(input).map(([key, value]) => [
@@ -255,7 +254,7 @@ export class Expr<T> {
     this: Expr<Row>,
     that: X
   ): Selection.With<Row, X> {
-    return new Selection(SelectionData.Expr(this.expr)).with(that)
+    return new Selection(this.expr).with(that)
   }
   private static uniqueId = 0
   private __id() {
@@ -265,11 +264,11 @@ export class Expr<T> {
     const from = From.Each(this.expr, this.__id())
     return new Cursor({
       from,
-      selection: SelectionData.Expr(ExprData.Row(from))
+      selection: ExprData.Row(from)
     })
   }
-  process<T, X>(this: Expr<T>, fn: (cursor: T) => X): Selection<X> {
-    return new Selection(SelectionData.Process(this.expr, this.__id(), fn))
+  process<T, X>(this: Expr<T>, fn: (cursor: T) => X): Expr<X> {
+    return new Expr(ExprData.Process(this.expr, this.__id(), fn))
   }
   map<T, X extends SelectionInput>(
     this: Expr<Array<T>>,

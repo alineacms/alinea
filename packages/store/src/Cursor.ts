@@ -3,17 +3,12 @@ import {EV, Expr, ExprData} from './Expr'
 import {Fields} from './Fields'
 import {From} from './From'
 import type {OrderBy} from './OrderBy'
-import {
-  Selection,
-  SelectionData,
-  SelectionInput,
-  SelectionType
-} from './Selection'
+import {Selection, SelectionInput} from './Selection'
 import type {Store} from './Store'
 
 export type CursorData = {
   from: From
-  selection: SelectionData
+  selection: ExprData
   where?: ExprData
   having?: ExprData
   limit?: number
@@ -33,14 +28,7 @@ export class CursorImpl<Row> {
   }
 
   get<K extends string>(name: K): Expr<K extends keyof Row ? Row[K] : any> {
-    switch (this.cursor.selection.type) {
-      case SelectionType.Expr:
-        return new Expr(
-          ExprData.Field(this.cursor.selection.expr, name as string)
-        )
-      case SelectionType.Process:
-        throw new Error(`Cannot field access on processed value`)
-    }
+    return new Expr(ExprData.Field(this.cursor.selection, name as string))
   }
 
   get fields(): Selection<Row> {
@@ -111,8 +99,8 @@ export class CursorImpl<Row> {
       ...this.cursor,
       selection:
         typeof selection === 'function'
-          ? SelectionData.create(selection(this as any))
-          : SelectionData.create(selection)
+          ? Selection.create(selection(this as any))
+          : Selection.create(selection)
     })
   }
 

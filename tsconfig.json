@@ -5,7 +5,6 @@
     "preserveWatchOutput": true,
     "outDir": ".types",
     "incremental": true,
-    "assumeChangesOnlyAffectDirectDependencies": true,
     "emitDeclarationOnly": true,
     "skipLibCheck": true,
     "strict": true,

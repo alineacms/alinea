@@ -56,7 +56,7 @@ export const sqliteFormatter = new (class extends Formatter {
     return sql`(select value from json_each(${stmt}))`
   }
   formatExpr(expr: ExprData, options: FormatExprOptions): Statement {
-    const asValue = {...options, formatAsJson: false}
+    const asValue = {...options, formatAsJson: false, formatSubject: undefined}
     switch (expr.type) {
       case ExprType.Call:
         switch (expr.method) {
@@ -95,11 +95,11 @@ export const sqliteFormatter = new (class extends Formatter {
           result = sql`${result} when ${this.formatExpr(
             ExprData.Param(ParamData.Value(when)),
             asValue
-          )} then ${this.formatExpr(select, asValue)}`
+          )} then ${this.formatExpr(select, options)}`
         if (expr.defaultCase)
           result = sql`${result} else ${this.formatExpr(
             expr.defaultCase,
-            asValue
+            options
           )}`
         return sql`${result} end`
     }

@@ -3,7 +3,6 @@ import {BinOp, ExprData, ExprType, UnOp} from './Expr'
 import {From, FromType} from './From'
 import {OrderBy, OrderDirection} from './OrderBy'
 import {Param, ParamType} from './Param'
-import {SelectionData, SelectionType} from './Selection'
 import {sql, Statement} from './Statement'
 
 const binOps = {
@@ -29,13 +28,13 @@ const binOps = {
 }
 
 export type FormatCursorOptions = {
+  formatAsJson?: boolean
   formatInline?: boolean
   includeSelection?: boolean
   formatSubject?: (selection: Statement) => Statement
 }
 
 export type FormatExprOptions = FormatCursorOptions & {
-  formatAsJson?: boolean
   formatShallow?: boolean
 }
 
@@ -192,22 +191,8 @@ export abstract class Formatter {
       : Statement.EMPTY
   }
 
-  formatSelection(
-    selection: SelectionData,
-    options: FormatExprOptions
-  ): Statement {
-    switch (selection.type) {
-      case SelectionType.Expr:
-        return this.formatExpr(selection.expr, {...options, formatAsJson: true})
-      case SelectionType.Process:
-        return sql`json_object('$__process', ${this.formatString(
-          selection.id
-        )}, '$__expr', ${this.formatExpr(selection.expr, options)})`
-    }
-  }
-
   formatCursor(cursor: CursorData, options: FormatCursorOptions): Statement {
-    const subject = this.formatSelection(cursor.selection, options)
+    const subject = this.formatExpr(cursor.selection, options)
     const select = options.includeSelection
       ? options.formatSubject
         ? options.formatSubject(subject)
@@ -241,8 +226,12 @@ export abstract class Formatter {
   }
 
   formatExpr(expr: ExprData, options: FormatExprOptions): Statement {
-    const asValue = {...options, formatAsJson: false}
+    const asValue = {...options, formatAsJson: false, formatSubject: undefined}
     switch (expr.type) {
+      case ExprType.Process:
+        return sql`json_object('$__process', ${this.formatString(
+          expr.id
+        )}, '$__expr', ${this.formatExpr(expr.expr, options)})`
       case ExprType.UnOp:
         if (expr.op === UnOp.IsNull)
           return sql`${this.formatExpr(expr.expr, asValue)} is null`
@@ -297,10 +286,7 @@ export abstract class Formatter {
           ...options,
           formatSubject: subject => sql`${subject} as res`
         })
-        // Todo: properly test if expr is expected to scalar
         if (expr.cursor.singleResult) {
-          if (expr.cursor.selection.type === SelectionType.Expr)
-            return sql`(select ${sub})`
           return sql`json((select ${sub}))`
         }
         return sql`(select json_group_array(json(res)) from (select ${sub}))`
@@ -357,8 +343,7 @@ export abstract class Formatter {
   formatSelect(cursor: CursorData, options: FormatCursorOptions = {}) {
     return sql`select ${this.formatCursor(cursor, {
       ...options,
-      includeSelection: true,
-      formatSubject: subject => sql`json_object('res', ${subject})`
+      includeSelection: true
     })}`
   }
 

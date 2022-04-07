@@ -14,8 +14,10 @@ test('tree', async () => {
   assert.is(children.length, 1)
   const [sub] = children
   assert.is(sub.id, 'sub')
-  const parents = await sub.tree.parents()
+
+  const parents = await sub.tree.parents().select(parent => parent.id)
   assert.is(parents.length, 1)
+  assert.is(parents[0], 'root')
 
   const entry1 = await sub.tree.children().first()
   if (!entry1) throw new Error(`entry expected`)

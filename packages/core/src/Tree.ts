@@ -16,9 +16,10 @@ export namespace Tree {
 
   export function parents(id: EV<string>) {
     const Self = Entry.as('Self')
+    const Parent = Entry.as('Parent')
     return Self.where(Self.id.is(id))
-      .innerJoin(Entry, Entry.id.isIn(Self.parents.each()))
-      .select(Entry.fields)
+      .innerJoin(Parent, Parent.id.isIn(Self.parents.each()))
+      .select(Parent.fields)
   }
 
   export function nextSibling(id: EV<string>) {

@@ -1,16 +1,17 @@
-import {test} from 'uvu'
+import { test } from 'uvu'
 import * as assert from 'uvu/assert'
-import {Expr, ExprData} from '../src/Expr'
-import {Formatter} from '../src/Formatter'
-import {From} from '../src/From'
-import {sql, Statement} from '../src/Statement'
+import { FromType } from '../src'
+import { Expr, ExprData } from '../src/Expr'
+import { Formatter } from '../src/Formatter'
+import { sql, Statement } from '../src/Statement'
 
 class TestFormatter extends Formatter {
   escape = (value: any) => value
   escapeId = (id: string) => id
-  formatAccess = (on: Statement, field: string) =>
+  formatJsonAccess = (on: Statement, field: string) =>
     sql`${on}.${Statement.raw(field)}`
-  formatField = (from: From, field: string) => Statement.raw(`$.${field}`)
+  formatValueAccess = (on: Statement, field: string) =>
+    sql`${on}.${Statement.raw(field)}`
   formatUnwrapArray = (sql: Statement) => sql
 }
 
@@ -20,7 +21,12 @@ function f(expr: Expr<any>) {
   return formatter.formatExpr(expr.expr, {formatInline: true}).sql
 }
 function field(field: string) {
-  return new Expr(ExprData.Field(undefined!, field))
+  return new Expr(
+    ExprData.Field(
+      ExprData.Row({type: FromType.Table, name: '$', columns: []}),
+      field
+    )
+  )
 }
 
 test('basic', () => {

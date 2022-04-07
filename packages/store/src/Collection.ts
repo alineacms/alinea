@@ -2,7 +2,7 @@ import {CursorImpl} from './Cursor'
 import {Expr, ExprData} from './Expr'
 import {Fields} from './Fields'
 import {From} from './From'
-import {Selection, SelectionData} from './Selection'
+import {Selection, SelectionInput} from './Selection'
 import type {Store} from './Store'
 
 export type CollectionOptions = {
@@ -14,6 +14,7 @@ export type CollectionOptions = {
 }
 
 export class CollectionImpl<Row extends {} = any> extends CursorImpl<Row> {
+  private __options: CollectionOptions
   constructor(name: string, options: CollectionOptions = {}) {
     const {flat, columns, where, alias, computed} = options
     const from = flat
@@ -21,18 +22,14 @@ export class CollectionImpl<Row extends {} = any> extends CursorImpl<Row> {
       : From.Column(From.Table(name, ['data'], alias), 'data')
     const row = ExprData.Row(from)
     const selection = computed
-      ? SelectionData.Expr(ExprData.Merge(row, ExprData.create(computed)))
-      : SelectionData.Expr(row)
+      ? ExprData.Merge(row, ExprData.create(computed))
+      : row
     super({
       from,
       selection,
       where: where?.expr
     })
-    this.define = createFields =>
-      new Collection(name, {
-        ...options,
-        computed: createFields(this as Fields<Row>)
-      })
+    this.__options = options
   }
 
   pick<Props extends Array<keyof Row>>(
@@ -43,27 +40,43 @@ export class CollectionImpl<Row extends {} = any> extends CursorImpl<Row> {
     const fields: Record<string, ExprData> = {}
     for (const prop of properties)
       fields[prop as string] = this.get(prop as string).expr
-    return new Selection(SelectionData.Expr(ExprData.Record(fields)))
+    return new Selection(ExprData.Record(fields))
   }
 
   get id() {
     return this.get('id') as Expr<string>
   }
 
+  get<K extends string>(name: K): Expr<K extends keyof Row ? Row[K] : any> {
+    if (this.__options.computed?.[name]) return this.__options.computed[name]
+    return new Expr(ExprData.Field(this.cursor.selection, name as string))
+  }
+
+  with<X extends SelectionInput>(that: X): Selection.With<Row, X> {
+    return this.fields.with(that)
+  }
+
   as(name: string): Collection<Row> {
     return new Collection(From.source(this.cursor.from), {
-      alias: name,
-      where: this.cursor.where ? new Expr(this.cursor.where) : undefined
+      ...this.__options,
+      alias: name
     })
   }
 
-  define: <F extends Record<string, Expr<any>>>(
+  static define<Row, F extends Record<string, Expr<any>>>(
+    collection: Collection<Row>,
     createFields: (current: Fields<Row>) => F
-  ) => CollectionImpl<Row> & Fields<Row & Store.TypeOf<F>>
+  ): CollectionImpl<Row> & Fields<Row & Store.TypeOf<F>> {
+    return new Collection(From.source(collection.cursor.from), {
+      ...collection.__options,
+      computed: createFields(collection)
+    })
+  }
 }
 
 export interface CollectionConstructor {
   new <Row>(name: string, options?: CollectionOptions): Collection<Row>
+  define: typeof CollectionImpl.define
 }
 
 export type Collection<T> = CollectionImpl<T> & Fields<T>

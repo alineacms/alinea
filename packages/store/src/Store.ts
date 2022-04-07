@@ -40,13 +40,13 @@ export interface Store {
 }
 
 export namespace Store {
-  export type TypeOf<T> = T extends Selection<infer K>
-    ? K
-    : T extends CursorSingleRow<infer K>
+  export type TypeOf<T> = T extends CursorSingleRow<infer K>
     ? K
     : T extends Cursor<infer K>
     ? Array<K>
     : T extends Expr<infer K>
+    ? K
+    : T extends Selection<infer K>
     ? K
     : T extends Record<string, SelectionInput | Cursor<any>>
     ? {[K in keyof T]: TypeOf<T[K]>}
