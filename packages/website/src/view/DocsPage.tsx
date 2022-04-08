@@ -1,5 +1,5 @@
-import {Label} from '@alinea/core'
-import {TextLabel} from '@alinea/ui'
+import {Label} from '@alineacms/core'
+import {TextLabel} from '@alineacms/ui'
 import Link from 'next/link'
 import {Docs} from '../../.alinea/web'
 import {Container} from './layout/Container'

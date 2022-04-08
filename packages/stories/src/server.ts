@@ -1,20 +1,18 @@
-import {PasswordLessAuth} from '@alinea/auth.passwordless/PasswordLessAuth'
-import {JsonLoader, Server} from '@alinea/backend'
-import {FileData} from '@alinea/backend/data/FileData'
-import {GithubData} from '@alinea/backend/data/GithubData'
-import {FileDrafts} from '@alinea/backend/drafts/FileDrafts'
-import {GitDrafts} from '@alinea/backend/drafts/GitDrafts'
-import {RedisDrafts} from '@alinea/backend/drafts/RedisDrafts.js'
-import {JWTPreviews} from '@alinea/backend/util/JWTPreviews.js'
+import {PasswordLessAuth} from '@alineacms/auth.passwordless/PasswordLessAuth'
+import {JsonLoader, Server} from '@alineacms/backend'
+import {FileData} from '@alineacms/backend/data/FileData'
+import {GithubData} from '@alineacms/backend/data/GithubData'
+import {FileDrafts} from '@alineacms/backend/drafts/FileDrafts'
+import {RedisDrafts} from '@alineacms/backend/drafts/RedisDrafts.js'
+import {JWTPreviews} from '@alineacms/backend/util/JWTPreviews.js'
 // We import the global styles here so they're included in the bundle.
 // In the Next.js build these are imported in the _app view.
-import '@alinea/css/global.css'
+import '@alineacms/css/global.css'
 import compression from 'compression'
 import dotenv from 'dotenv'
 import express from 'express'
 import fs from 'fs/promises'
 import Redis from 'ioredis'
-import http from 'isomorphic-git/http/node/index.js'
 import {createTransport} from 'nodemailer'
 import {createElement} from 'react'
 import ReactDOMServer from 'react-dom/server.js'
@@ -56,7 +54,7 @@ const githubData = new GithubData({
   loader: JsonLoader,
   rootDir: 'packages/website',
   githubAuthToken: process.env.GITHUB_TOKEN!,
-  owner: 'codeurs',
+  owner: 'alineacms',
   repo: 'alinea',
   branch: 'main',
   author: {
@@ -66,19 +64,6 @@ const githubData = new GithubData({
 })
 
 const onAuth = () => ({username: process.env.GITHUB_TOKEN})
-
-const gitDrafts = new GitDrafts({
-  fs,
-  dir: './dist/drafts',
-  http,
-  onAuth,
-  url: 'https://github.com/benmerckx/content',
-  branch: 'drafts',
-  author: {
-    name: 'Ben',
-    email: 'ben@codeurs.be'
-  }
-})
 
 const fileDrafts = new FileDrafts({
   fs,

@@ -1,4 +1,4 @@
-import {Entry, Schema} from '@alinea/core'
+import {Entry, Schema} from '@alineacms/core'
 
 export interface Loader {
   extension: string

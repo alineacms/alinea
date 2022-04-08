@@ -1,6 +1,6 @@
 // Adapted from: https://github.com/vercel/micro/blob/9e0fbdaacd2681afda232308fdeb04fc8e87a05a/packages/micro/lib/index.js
 
-import {createError, ErrorCode} from '@alinea/core'
+import {createError, ErrorCode} from '@alineacms/core'
 import contentType from 'content-type'
 import {IncomingMessage} from 'http'
 import getRawBody from 'raw-body'

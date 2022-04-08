@@ -1,5 +1,5 @@
-import {Entry} from '@alinea/core/Entry'
-import {fromModule, Typo} from '@alinea/ui'
+import {Entry} from '@alineacms/core/Entry'
+import {fromModule, Typo} from '@alineacms/ui'
 import {Preview} from '../Preview'
 import css from './FieldsPreview.module.scss'
 

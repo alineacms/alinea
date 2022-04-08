@@ -1,5 +1,5 @@
-import {fromModule} from '@alinea/ui'
-import NextHead from 'next/head.js'
+import {fromModule} from '@alineacms/ui'
+import Head from 'next/head'
 import {PropsWithChildren} from 'react'
 import {FavIcon} from './branding/FavIcon'
 import {Footer} from './Footer'
@@ -14,8 +14,6 @@ export function Layout({
   children,
   header
 }: PropsWithChildren<LayoutProps>) {
-  // Todo: not sure why esbuild doesn't fix this for us in this case
-  const Head = (NextHead as any).default || NextHead
   return (
     <>
       <FavIcon color="#EF437C" />

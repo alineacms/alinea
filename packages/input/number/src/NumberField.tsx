@@ -1,4 +1,4 @@
-import {Field, Label, Value} from '@alinea/core'
+import {Field, Label, Value} from '@alineacms/core'
 
 export type NumberOptions = {
   help?: Label

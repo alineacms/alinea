@@ -1,5 +1,5 @@
-import {Entry, Tree, view} from '@alinea/core'
-import {Collection} from '@alinea/store'
+import {Entry, Tree, view} from '@alineacms/core'
+import {Collection} from '@alineacms/store'
 import {
   Chip,
   Ellipsis,
@@ -8,7 +8,7 @@ import {
   TextLabel,
   Typo,
   VStack
-} from '@alinea/ui'
+} from '@alineacms/ui'
 import {ReactNode} from 'react'
 import {MdKeyboardArrowRight} from 'react-icons/md'
 import {useWorkspace} from '../../hook/UseWorkspace'

@@ -5,11 +5,11 @@ import {
   IconButton,
   TextLabel,
   useColorScheme
-} from '@alinea/ui'
-import {LogoShape} from '@alinea/ui/branding/LogoShape'
-import {HStack} from '@alinea/ui/Stack'
-import {contrastColor} from '@alinea/ui/util/ContrastColor'
-import {createSlots} from '@alinea/ui/util/Slots'
+} from '@alineacms/ui'
+import {LogoShape} from '@alineacms/ui/branding/LogoShape'
+import {HStack} from '@alineacms/ui/Stack'
+import {contrastColor} from '@alineacms/ui/util/ContrastColor'
+import {createSlots} from '@alineacms/ui/util/Slots'
 import {MdBrightnessMedium, MdExpandMore, MdUnfoldMore} from 'react-icons/md'
 import {RiFlashlightFill} from 'react-icons/ri'
 import {useHistory} from 'react-router'

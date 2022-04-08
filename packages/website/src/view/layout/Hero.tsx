@@ -1,4 +1,4 @@
-import {fromModule, HStack} from '@alinea/ui'
+import {fromModule, HStack} from '@alineacms/ui'
 import Link, {LinkProps} from 'next/link'
 import {PropsWithChildren} from 'react'
 import {MdArrowForward} from 'react-icons/md'

@@ -1,4 +1,4 @@
-import {Collection} from '@alinea/store'
+import {Collection} from '@alineacms/store'
 import {Entry} from './Entry'
 
 export namespace Media {
@@ -19,6 +19,8 @@ export namespace Media {
     extension: string
     size: number
     hash: string
+    width?: number
+    height?: number
     preview?: string
     averageColor?: string
     blurHash?: string

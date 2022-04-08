@@ -1,4 +1,4 @@
-import {fromModule} from '@alinea/ui'
+import {fromModule} from '@alineacms/ui'
 import {HTMLProps, PropsWithChildren} from 'react'
 import {MdClose} from 'react-icons/md'
 import {IconButton} from './IconButton'

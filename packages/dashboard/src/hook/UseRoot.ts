@@ -1,4 +1,4 @@
-import {Root} from '@alinea/core/Root'
+import {Root} from '@alineacms/core/Root'
 import {useMemo} from 'react'
 import {useLocation} from 'react-router'
 import {useDashboard} from './UseDashboard'

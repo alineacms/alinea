@@ -1,5 +1,5 @@
-import {schema, Schema, type} from '@alinea/core'
-import {richText} from '@alinea/input.richtext'
+import {schema, Schema, type} from '@alineacms/core'
+import {richText} from '@alineacms/input.richtext'
 import {CodeBlockSchema} from './CodeBlock.schema'
 import {ImageBlockSchema} from './ImageBlock.schema'
 

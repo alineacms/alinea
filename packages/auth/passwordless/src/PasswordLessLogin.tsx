@@ -1,8 +1,8 @@
-import {Client} from '@alinea/client'
-import {Auth, createError, Session} from '@alinea/core'
-import {useDashboard} from '@alinea/dashboard'
-import {Button, fromModule, Loader, LogoShape, px, Typo} from '@alinea/ui'
-import {HStack, VStack} from '@alinea/ui/Stack'
+import {Client} from '@alineacms/client'
+import {Auth, createError, Session} from '@alineacms/core'
+import {useDashboard} from '@alineacms/dashboard'
+import {Button, fromModule, Loader, LogoShape, px, Typo} from '@alineacms/ui'
+import {HStack, VStack} from '@alineacms/ui/Stack'
 import jwtDecode from 'jwt-decode'
 import {FormEvent, PropsWithChildren, useLayoutEffect, useState} from 'react'
 import Helmet from 'react-helmet'
@@ -137,11 +137,12 @@ function useResolveToken(setSession: (session: Session | undefined) => void) {
     const params = new URLSearchParams(window.location.search)
     const isTokenFromUrl = params.has('token')
     const token =
-      params.get('token') || localStorage.getItem('@alinea/auth.passwordless')
+      params.get('token') ||
+      localStorage.getItem('@alineacms/auth.passwordless')
     if (token) {
       const user: any = token && jwtDecode(token)
       function logout() {
-        localStorage.removeItem('@alinea/auth.passwordless')
+        localStorage.removeItem('@alineacms/auth.passwordless')
         setSession(undefined)
       }
       function applyAuth(init?: RequestInit) {
@@ -158,7 +159,7 @@ function useResolveToken(setSession: (session: Session | undefined) => void) {
         end: async () => logout()
       })
       if (isTokenFromUrl) {
-        localStorage.setItem('@alinea/auth.passwordless', token)
+        localStorage.setItem('@alineacms/auth.passwordless', token)
         history.pushState(null, '', window.location.pathname)
       }
     }

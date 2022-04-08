@@ -1,4 +1,4 @@
-import {Collection} from '@alinea/store'
+import {Collection} from '@alineacms/store'
 import {Label} from './Label'
 
 export type Id<T> = string & {__t: T}

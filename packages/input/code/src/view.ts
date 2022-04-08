@@ -1,4 +1,4 @@
-import {Field} from '@alinea/core'
+import {Field} from '@alineacms/core'
 import {createCode} from './CodeField'
 import {CodeInput} from './CodeInput'
 export * from './CodeField'

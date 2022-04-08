@@ -1,6 +1,6 @@
 // Source: https://gist.github.com/ryanto/4a431d822a98770c4ca7905d9b7b07da
 
-import {useForceUpdate} from '@alinea/ui'
+import {useForceUpdate} from '@alineacms/ui'
 import {EditorOptions} from '@tiptap/core'
 import {Editor} from '@tiptap/react'
 import {DependencyList, useEffect, useState} from 'react'

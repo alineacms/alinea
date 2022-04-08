@@ -1,4 +1,4 @@
-import {fromModule} from '@alinea/ui'
+import {fromModule} from '@alineacms/ui'
 import {HTMLAttributes, PropsWithChildren} from 'react'
 import css from './Container.module.scss'
 

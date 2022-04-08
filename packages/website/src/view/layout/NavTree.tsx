@@ -1,4 +1,4 @@
-import {fromModule, HStack} from '@alinea/ui'
+import {fromModule, HStack} from '@alineacms/ui'
 import Link from 'next/link'
 import {Fragment, useMemo} from 'react'
 import {MdExpandMore} from 'react-icons/md'

@@ -6,14 +6,14 @@ import {
   EntryStatus,
   outcome,
   Schema
-} from '@alinea/core'
-import {Search} from '@alinea/core/Search'
+} from '@alineacms/core'
+import {Search} from '@alineacms/core/Search'
 import {
   generateKeyBetween,
   isValidOrderKey
-} from '@alinea/core/util/FractionalIndexing'
-import {Expr, Store} from '@alinea/store'
-import {SqliteStore} from '@alinea/store/sqlite/SqliteStore'
+} from '@alineacms/core/util/FractionalIndexing'
+import {Expr, Store} from '@alineacms/store'
+import {SqliteStore} from '@alineacms/store/sqlite/SqliteStore'
 import convertHrtime from 'convert-hrtime'
 import prettyMilliseconds from 'pretty-ms'
 import * as Y from 'yjs'

@@ -1,11 +1,11 @@
-import {Cache, Data, JsonLoader} from '@alinea/backend'
-import {FileData} from '@alinea/backend/data/FileData'
-import {outcome} from '@alinea/core'
-import {Config} from '@alinea/core/Config'
-import {createId} from '@alinea/core/Id'
-import {Schema} from '@alinea/core/Schema'
-import {BetterSqlite3Driver} from '@alinea/store/sqlite/drivers/BetterSqlite3Driver'
-import {SqliteStore} from '@alinea/store/sqlite/SqliteStore'
+import {Cache, Data, JsonLoader} from '@alineacms/backend'
+import {FileData} from '@alineacms/backend/data/FileData'
+import {outcome} from '@alineacms/core'
+import {Config} from '@alineacms/core/Config'
+import {createId} from '@alineacms/core/Id'
+import {Schema} from '@alineacms/core/Schema'
+import {BetterSqlite3Driver} from '@alineacms/store/sqlite/drivers/BetterSqlite3Driver'
+import {SqliteStore} from '@alineacms/store/sqlite/SqliteStore'
 import {EvalPlugin} from '@esbx/eval'
 import {ReactPlugin} from '@esbx/react'
 import {encode} from 'base64-arraybuffer'
@@ -127,8 +127,8 @@ function schemaTypes(workspace: string, schema: Schema) {
   const typeNames = Object.keys(types)
   return `
     import {config} from '../config.js'
-    import {DataOf, EntryOf} from '@alinea/core'
-    import {Collection} from '@alinea/store'
+    import {DataOf, EntryOf} from '@alineacms/core'
+    import {Collection} from '@alineacms/store'
     export const schema = config.workspaces['${workspace}'].schema
     export type Page = EntryOf<typeof schema>
     export const Page: Collection<Page>

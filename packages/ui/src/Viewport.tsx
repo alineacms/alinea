@@ -17,7 +17,7 @@ export function Viewport({children, color, contain, ...props}: ViewportProps) {
   const accentColor = color!
   const accentColorForeground = useContrastColor(accentColor)
   //const {scheme} = useColorScheme()
-  const persistenceId = `@alinea/ui/viewport`
+  const persistenceId = `@alineacms/ui/viewport`
   const [schemePreference, setSchemePreference] = useState<
     'light' | 'dark' | undefined
   >(

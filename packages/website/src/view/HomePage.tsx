@@ -1,4 +1,4 @@
-import {fromModule, HStack, px, Typo, VStack} from '@alinea/ui'
+import {fromModule, HStack, px, Typo, VStack} from '@alineacms/ui'
 import {MdOpenInNew} from 'react-icons/md'
 import css from './HomePage.module.scss'
 import {HomePageProps} from './HomePage.query'

@@ -1,4 +1,4 @@
-import {TextDoc, TextNode, TypesOf} from '@alinea/core'
+import {TextDoc, TextNode, TypesOf} from '@alineacms/core'
 import {ComponentType, Fragment} from 'react'
 
 function getTag(type: string, attributes: Record<string, any> | undefined) {

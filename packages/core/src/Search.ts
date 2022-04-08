@@ -1,4 +1,4 @@
-import {Collection} from '@alinea/store'
+import {Collection} from '@alineacms/store'
 
 export type Search = {id: string; title: string}
 

@@ -1,12 +1,11 @@
 {
-  "name": "@alinea/input.path",
+  "name": "@alineacms/input.path",
   "version": "0.0.0",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/codeurs/alinea.git"
+    "url": "https://github.com/alineacms/alinea.git"
   },
-  "types": "dist/index.d.ts",
   "type": "module",
   "exports": {
     ".": {
@@ -17,9 +16,20 @@
     "./view.js": "./dist/view.js",
     "./index.css": "./dist/index.css"
   },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "typesVersions": {
+    "*": {
+      "*": [
+        "./dist/*"
+      ]
+    }
+  },
   "dependencies": {
-    "@alinea/core": "0.0.0",
-    "@alinea/editor": "0.0.0",
-    "@alinea/ui": "0.0.0"
+    "@alineacms/core": "0.0.0",
+    "@alineacms/editor": "0.0.0",
+    "@alineacms/ui": "0.0.0"
   }
 }

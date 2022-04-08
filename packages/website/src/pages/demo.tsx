@@ -1,5 +1,5 @@
-import {Button, HStack, Loader, Typo, Viewport} from '@alinea/ui'
-import {Modal} from '@alinea/ui/Modal'
+import {Button, HStack, Loader, Typo, Viewport} from '@alineacms/ui'
+import {Modal} from '@alineacms/ui/Modal'
 import dynamic from 'next/dynamic'
 import {Suspense, useState} from 'react'
 

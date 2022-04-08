@@ -1,5 +1,5 @@
-import {Field, Label, Reference, Type, Value} from '@alinea/core'
-import {RecordValue} from '@alinea/core/value/RecordValue'
+import {Field, Label, Reference, Type, Value} from '@alineacms/core'
+import {RecordValue} from '@alineacms/core/value/RecordValue'
 
 export type LinkType = 'entry' | 'image' | 'file' | 'external'
 

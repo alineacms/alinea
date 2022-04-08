@@ -1,4 +1,4 @@
-import {createId, future} from '@alinea/core'
+import {createId, future} from '@alineacms/core'
 import {posix as path} from 'path'
 import * as Y from 'yjs'
 import {Drafts} from '../Drafts'

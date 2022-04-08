@@ -1,5 +1,5 @@
-import {Entry, Outcome} from '@alinea/core'
-import {Functions} from '@alinea/store'
+import {Entry, Outcome} from '@alineacms/core'
+import {Functions} from '@alineacms/store'
 import {useCallback, useEffect, useMemo, useState} from 'react'
 import {useQuery} from 'react-query'
 import {useDashboard} from '../hook/UseDashboard'
@@ -51,7 +51,7 @@ export function useContentTree({
   root,
   select
 }: UseContentTreeOptions) {
-  const persistenceId = `@alinea/dashboard/tree-${workspace}-${root}`
+  const persistenceId = `@alineacms/dashboard/tree-${workspace}-${root}`
   const {config} = useDashboard()
   const {hub} = useSession()
   const [open, setOpen] = useState(() => {

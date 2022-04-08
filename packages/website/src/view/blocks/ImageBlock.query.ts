@@ -1,5 +1,5 @@
-import {Media, Reference} from '@alinea/core'
-import {Store} from '@alinea/store/Store'
+import {Media, Reference} from '@alineacms/core'
+import {Store} from '@alineacms/store/Store'
 import {Pages} from '../../../.alinea/web'
 import {ImageBlockSchema} from './ImageBlock.schema'
 
@@ -13,8 +13,9 @@ export async function imageBlockQuery(pages: Pages, block: ImageBlockSchema) {
       .findMany(page => page.id.isIn(ids))
       .whereType(Media.File)
       .select(page => ({
-        url: page.url,
-        alt: page.title
+        src: page.location,
+        alt: page.title,
+        blurHash: page.blurHash
       }))
   }
 }

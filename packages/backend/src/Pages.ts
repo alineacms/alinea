@@ -6,7 +6,7 @@ import {
   Tree,
   TypesOf,
   Workspace
-} from '@alinea/core'
+} from '@alineacms/core'
 import {
   Collection,
   Cursor,
@@ -17,7 +17,7 @@ import {
   Selection,
   SelectionInput,
   Store
-} from '@alinea/store'
+} from '@alineacms/store'
 
 export class PageTree<P> {
   constructor(private pages: Pages<P>, private id: EV<string>) {}

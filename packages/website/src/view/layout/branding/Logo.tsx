@@ -1,4 +1,4 @@
-import {fromModule} from '@alinea/ui'
+import {fromModule} from '@alineacms/ui'
 import {HTMLAttributes} from 'react'
 import css from './Logo.module.scss'
 

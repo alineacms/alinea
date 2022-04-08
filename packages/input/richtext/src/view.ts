@@ -1,4 +1,4 @@
-import {Field} from '@alinea/core'
+import {Field} from '@alineacms/core'
 import {createRichText} from './RichTextField'
 import {RichTextInput} from './RichTextInput'
 export * from './RichTextField'

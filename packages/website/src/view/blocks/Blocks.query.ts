@@ -1,4 +1,4 @@
-import {Expr, Store} from '@alinea/store'
+import {Expr, Store} from '@alineacms/store'
 import {Pages} from '../../../.alinea/web'
 import {BlocksSchema} from './Blocks.schema'
 import {textBlockQuery} from './TextBlock.query'

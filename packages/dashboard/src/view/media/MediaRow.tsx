@@ -1,5 +1,5 @@
-import {Media, Outcome} from '@alinea/core'
-import {fromModule} from '@alinea/ui'
+import {Media, Outcome} from '@alineacms/core'
+import {fromModule} from '@alineacms/ui'
 import {useQuery} from 'react-query'
 import {useSession} from '../../hook/UseSession'
 import css from './MediaRow.module.scss'

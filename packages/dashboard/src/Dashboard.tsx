@@ -1,4 +1,4 @@
-import {Auth, Config, Hub, Workspaces} from '@alinea/core'
+import {Auth, Config, Hub, Workspaces} from '@alineacms/core'
 import {createRoot} from 'react-dom'
 import {App} from './App'
 

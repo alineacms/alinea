@@ -1,16 +1,20 @@
 {
-  "name": "@alinea/dashboard",
+  "name": "@alineacms/dashboard",
   "version": "0.0.0",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/codeurs/alinea.git"
+    "url": "https://github.com/alineacms/alinea.git"
   },
   "type": "module",
   "exports": {
     ".": "./dist/index.js",
     "./*": "./dist/*"
   },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
   "typesVersions": {
     "*": {
       "*": [
@@ -19,9 +23,9 @@
     }
   },
   "dependencies": {
-    "@alinea/client": "0.0.0",
-    "@alinea/core": "0.0.0",
-    "@alinea/editor": "0.0.0",
+    "@alineacms/client": "0.0.0",
+    "@alineacms/core": "0.0.0",
+    "@alineacms/editor": "0.0.0",
     "@react-hook/size": "^2.1.2",
     "blurhash": "^1.1.5",
     "fast-average-color": "^7.0.1",

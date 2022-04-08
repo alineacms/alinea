@@ -1,4 +1,4 @@
-import {unreachable} from '@alinea/core'
+import {unreachable} from '@alineacms/core'
 import {BlocksProps} from './Blocks.query'
 import {TextBlock} from './TextBlock'
 

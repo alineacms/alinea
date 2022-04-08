@@ -20,7 +20,7 @@ type FocusListParams = {
 }
 
 // This is a non-accesible prototype, see
-// https://github.com/codeurs/alinea/issues/27
+// https://github.com/alineacms/alinea/issues/27
 export function useFocusList({onClear}: FocusListParams) {
   const focusRef = useRef<HTMLElement>()
   const {reSelect, ...res} = useMemo(() => {

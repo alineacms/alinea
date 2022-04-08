@@ -1,11 +1,11 @@
-import {createId, Entry, slugify} from '@alinea/core'
+import {createId, Entry, slugify} from '@alineacms/core'
 import * as idb from 'lib0/indexeddb.js'
 import {posix as path} from 'path'
 import {Data} from '../Data'
 
 export type IndexedDBOptions = {}
 
-const DB_NAME = '@alinea/backend.data.idb'
+const DB_NAME = '@alineacms/backend.data.idb'
 const STORE_NAME = 'Data'
 
 export class IndexedDBData implements Data.Source, Data.Target, Data.Media {

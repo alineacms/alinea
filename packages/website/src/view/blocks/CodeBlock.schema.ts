@@ -1,5 +1,5 @@
-import {Schema, type} from '@alinea/core'
-import {code} from '@alinea/input.code'
+import {Schema, type} from '@alineacms/core'
+import {code} from '@alineacms/input.code'
 
 export const CodeBlockSchema = type('Code', {
   code: code('Code', {inline: true})

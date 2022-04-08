@@ -1,4 +1,4 @@
-import {Collection, Store} from '@alinea/store'
+import {Collection, Store} from '@alineacms/store'
 import {Doc, Home, Page, Pages} from '../../.alinea/web'
 import {docPageQuery} from './DocPage.query'
 import {homePageQuery} from './HomePage.query'

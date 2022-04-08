@@ -1,4 +1,4 @@
-import {Collection, Expr} from '@alinea/store'
+import {Collection, Expr} from '@alineacms/store'
 import type {ComponentType} from 'react'
 import {Entry} from './Entry'
 import {Field} from './Field'

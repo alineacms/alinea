@@ -156,7 +156,7 @@ const AnalyzePlugin: Plugin = {
 }
 
 const builder = BuildTask.configure({
-  exclude: ['@alinea/stories', '@alinea/website', '@alinea/css'],
+  exclude: ['@alineacms/stories', '@alineacms/website', '@alineacms/css'],
   buildOptions: {
     ...buildOptions,
     plugins: [
@@ -224,7 +224,7 @@ async function generate() {
       })
     ],
     stdin: {
-      contents: `import {generate} from '@alinea/cli/Generate'
+      contents: `import {generate} from '@alineacms/cli/Generate'
       export default generate({cwd: ${JSON.stringify(cwd)}})`,
       resolveDir: process.cwd(),
       sourcefile: 'gen.js'
@@ -250,7 +250,7 @@ const packages = fs.readdirSync('packages/input')
 const aliases = Object.fromEntries(
   packages.map(pkg => {
     return [
-      `@alinea/input.${pkg}`,
+      `@alineacms/input.${pkg}`,
       path.resolve(`packages/input/${pkg}/src/view.ts`)
     ]
   })
@@ -258,6 +258,7 @@ const aliases = Object.fromEntries(
 
 const devOptions: BuildOptions = {
   ...buildOptions,
+  ignoreAnnotations: true,
   watch: true,
   minify: true,
   splitting: true,
@@ -296,6 +297,7 @@ const modules = findNodeModules(process.cwd())
 
 const serverOptions: BuildOptions = {
   ...buildOptions,
+  ignoreAnnotations: true,
   watch: true,
   platform: 'node',
   entryPoints: ['packages/stories/src/server.ts'],
@@ -310,7 +312,9 @@ const serverOptions: BuildOptions = {
     RunPlugin.configure({cmd: 'node dist/server.js', cwd: 'packages/stories'}),
     InternalPackages,
     AliasPlugin.configure({
-      'next/link': path.resolve('./node_modules/next/link.js')
+      'next/head': path.resolve('./node_modules/next/head.js'),
+      'next/link': path.resolve('./node_modules/next/link.js'),
+      'next/image': path.resolve('./node_modules/next/image.js')
     }),
     FixReactIconsPlugin,
     GeneratePlugin,

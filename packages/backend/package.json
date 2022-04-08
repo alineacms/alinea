@@ -1,16 +1,20 @@
 {
-  "name": "@alinea/backend",
+  "name": "@alineacms/backend",
   "version": "0.0.0",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/codeurs/alinea.git"
+    "url": "https://github.com/alineacms/alinea.git"
   },
   "type": "module",
   "exports": {
     ".": "./dist/index.js",
     "./*": "./dist/*"
   },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
   "typesVersions": {
     "*": {
       "*": [
@@ -19,9 +23,9 @@
     }
   },
   "dependencies": {
-    "@alinea/core": "0.0.0",
+    "@alineacms/core": "0.0.0",
     "@alinea/sqlite-wasm": "^0.1.4",
-    "@alinea/store": "0.0.0",
+    "@alineacms/store": "0.0.0",
     "@octokit/rest": "^18.12.0",
     "auto-bind": "^5.0.1",
     "busboy": "^1.4.0",

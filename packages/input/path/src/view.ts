@@ -1,4 +1,4 @@
-import {Field} from '@alinea/core'
+import {Field} from '@alineacms/core'
 import {createPath} from './PathField'
 import {PathInput} from './PathInput'
 export * from './PathField'

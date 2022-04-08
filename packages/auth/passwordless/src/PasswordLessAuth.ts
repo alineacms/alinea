@@ -1,5 +1,5 @@
-import {Auth} from '@alinea/core'
-import {parseJson} from '@alinea/backend'
+import {parseJson} from '@alineacms/backend'
+import {Auth} from '@alineacms/core'
 import {Request, Response, Router} from 'express'
 import expressJwt, {UnauthorizedError} from 'express-jwt'
 import jwt from 'jsonwebtoken'

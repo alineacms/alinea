@@ -1,5 +1,5 @@
 {
-  "name": "@alinea/root",
+  "name": "@alineacms/root",
   "version": "0.0.0",
   "license": "MIT",
   "private": true,
@@ -20,6 +20,7 @@
   ],
   "devDependencies": {
     "@esbx/extension": "^0.0.16",
+    "@esbx/external": "^0.0.17",
     "@esbx/react": "^0.0.16",
     "@esbx/reload": "^0.0.16",
     "@esbx/reporter": "^0.0.16",

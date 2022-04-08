@@ -1,4 +1,4 @@
-import {generateKeyBetween} from '@alinea/core/util/FractionalIndexing'
+import {generateKeyBetween} from '@alineacms/core/util/FractionalIndexing'
 import * as Y from 'yjs'
 import {createError} from '../ErrorWithCode'
 import {createId} from '../Id'

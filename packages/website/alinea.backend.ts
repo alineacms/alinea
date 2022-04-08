@@ -1,8 +1,8 @@
-import {PasswordLessAuth} from '@alinea/auth.passwordless/PasswordLessAuth.js'
-import {JsonLoader, Server} from '@alinea/backend'
-import {GithubData} from '@alinea/backend/data/GithubData.js'
-import {RedisDrafts} from '@alinea/backend/drafts/RedisDrafts.js'
-import {JWTPreviews} from '@alinea/backend/util/JWTPreviews.js'
+import {PasswordLessAuth} from '@alineacms/auth.passwordless/PasswordLessAuth.js'
+import {JsonLoader, Server} from '@alineacms/backend'
+import {GithubData} from '@alineacms/backend/data/GithubData.js'
+import {RedisDrafts} from '@alineacms/backend/drafts/RedisDrafts.js'
+import {JWTPreviews} from '@alineacms/backend/util/JWTPreviews.js'
 import dotenv from 'dotenv'
 import findConfig from 'find-config'
 import Redis from 'ioredis'
@@ -26,7 +26,7 @@ const data = new GithubData({
   loader: JsonLoader,
   rootDir: 'packages/website',
   githubAuthToken: process.env.GITHUB_TOKEN!,
-  owner: 'codeurs',
+  owner: 'alineacms',
   repo: 'alinea',
   branch: 'main',
   author: {

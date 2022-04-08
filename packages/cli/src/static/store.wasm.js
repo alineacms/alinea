@@ -1,7 +1,7 @@
-import {createId} from '@alinea/core'
 import init from '@alinea/sqlite-wasm'
-import {SqlJsDriver} from '@alinea/store/sqlite/drivers/SqlJsDriver.js'
-import {SqliteStore} from '@alinea/store/sqlite/SqliteStore.js'
+import {createId} from '@alineacms/core'
+import {SqlJsDriver} from '@alineacms/store/sqlite/drivers/SqlJsDriver.js'
+import {SqliteStore} from '@alineacms/store/sqlite/SqliteStore.js'
 import * as storeExports from './store.wasm'
 
 function unpack(exports) {

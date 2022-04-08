@@ -1,4 +1,4 @@
-import {Label} from '@alinea/core'
+import {Label} from '@alineacms/core'
 import {HTMLProps} from 'react'
 
 export type TextLabelProps = {

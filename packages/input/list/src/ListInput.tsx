@@ -1,5 +1,5 @@
-import {InputForm, InputState, LabelHeader, useInput} from '@alinea/editor'
-import {Card, Create, fromModule, IconButton, TextLabel} from '@alinea/ui'
+import {InputForm, InputState, LabelHeader, useInput} from '@alineacms/editor'
+import {Card, Create, fromModule, IconButton, TextLabel} from '@alineacms/ui'
 import {
   closestCenter,
   defaultDropAnimation,

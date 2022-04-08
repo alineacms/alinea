@@ -1,5 +1,5 @@
-import {Schema, schema} from '@alinea/core'
-import {list} from '@alinea/input.list'
+import {Schema, schema} from '@alineacms/core'
+import {list} from '@alineacms/input.list'
 import {TextBlockSchema} from './TextBlock.schema'
 
 export const BlocksSchema = list('Body', {

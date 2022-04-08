@@ -1,6 +1,6 @@
-import {fromModule} from '@alinea/ui'
-import {Chip} from '@alinea/ui/Chip'
-import {HStack} from '@alinea/ui/Stack'
+import {fromModule} from '@alineacms/ui'
+import {Chip} from '@alineacms/ui/Chip'
+import {HStack} from '@alineacms/ui/Stack'
 import {
   ComponentType,
   forwardRef,

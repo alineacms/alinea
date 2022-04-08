@@ -1,4 +1,4 @@
-import {Cursor} from '@alinea/store'
+import {Cursor} from '@alineacms/store'
 import {encode} from 'base64-arraybuffer'
 import {Config} from './Config'
 import {Entry} from './Entry'

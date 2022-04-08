@@ -1,10 +1,10 @@
 {
-  "name": "@alinea/css",
+  "name": "@alineacms/css",
   "version": "0.0.0",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/codeurs/alinea.git"
+    "url": "https://github.com/alineacms/alinea.git"
   },
   "exports": {
     ".": "./src/index.css",
@@ -12,7 +12,6 @@
   },
   "files": [
     "fonts",
-    "global.css",
-    "index.css"
+    "src"
   ]
 }

@@ -1,25 +1,49 @@
 {
+  "bin": {
+    "alinea": "./dist/cli.js"
+  },
   "name": "alinea",
   "version": "0.0.0",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/codeurs/alinea.git"
+    "url": "https://github.com/alineacms/alinea.git"
   },
-  "types": "dist/index.d.ts",
   "type": "module",
   "exports": {
-    ".": "./dist/index.js"
+    ".": "./dist/index.js",
+    "./*": "./dist/*"
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": [
+    "./dist/cli.js"
+  ],
+  "typesVersions": {
+    "*": {
+      "*": [
+        "./dist/*"
+      ]
+    }
   },
   "dependencies": {
-    "@alinea/auth.passwordless": "0.0.0",
-    "@alinea/backend": "0.0.0",
-    "@alinea/cli": "0.0.0",
-    "@alinea/client": "0.0.0",
-    "@alinea/core": "0.0.0",
-    "@alinea/css": "0.0.0",
-    "@alinea/dashboard": "0.0.0",
-    "@alinea/editor": "0.0.0",
-    "@alinea/ui": "0.0.0"
+    "@alineacms/auth.passwordless": "0.0.0",
+    "@alineacms/backend": "0.0.0",
+    "@alineacms/cli": "0.0.0",
+    "@alineacms/client": "0.0.0",
+    "@alineacms/core": "0.0.0",
+    "@alineacms/css": "0.0.0",
+    "@alineacms/dashboard": "0.0.0",
+    "@alineacms/input.code": "0.0.0",
+    "@alineacms/input.link": "0.0.0",
+    "@alineacms/input.list": "0.0.0",
+    "@alineacms/input.number": "0.0.0",
+    "@alineacms/input.path": "0.0.0",
+    "@alineacms/input.richtext": "0.0.0",
+    "@alineacms/input.select": "0.0.0",
+    "@alineacms/input.tabs": "0.0.0",
+    "@alineacms/input.text": "0.0.0",
+    "@alineacms/store": "0.0.0"
   }
 }

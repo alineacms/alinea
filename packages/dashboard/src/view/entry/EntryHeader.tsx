@@ -1,5 +1,13 @@
-import {EntryStatus} from '@alinea/core'
-import {AppBar, Chip, HStack, px, Stack, Typo, useObservable} from '@alinea/ui'
+import {EntryStatus} from '@alineacms/core'
+import {
+  AppBar,
+  Chip,
+  HStack,
+  px,
+  Stack,
+  Typo,
+  useObservable
+} from '@alineacms/ui'
 import {useState} from 'react'
 import {
   MdArchive,

@@ -16,7 +16,7 @@ export function LogoShape({
   foreground = `var(--accent-foreground)`,
   background = `var(--accent)`
 }: LogoShapeProps) {
-  const id = useMemo(() => `@alinea/logo-${unique++}`, [])
+  const id = useMemo(() => `@alineacms/logo-${unique++}`, [])
   return (
     <div className={styles.root()} style={{color: foreground}}>
       <svg

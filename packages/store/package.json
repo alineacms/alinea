@@ -1,17 +1,20 @@
 {
-  "name": "@alinea/store",
+  "name": "@alineacms/store",
   "version": "0.0.0",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/codeurs/alinea.git"
+    "url": "https://github.com/alineacms/alinea.git"
   },
   "type": "module",
-  "sideEffects": false,
   "exports": {
     ".": "./dist/index.js",
     "./*": "./dist/*"
   },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
   "typesVersions": {
     "*": {
       "*": [

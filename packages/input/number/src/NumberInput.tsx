@@ -1,5 +1,5 @@
-import {InputLabel, InputState} from '@alinea/editor'
-import {fromModule} from '@alinea/ui'
+import {InputLabel, InputState} from '@alineacms/editor'
+import {fromModule} from '@alineacms/ui'
 import {NumberField} from './NumberField'
 import css from './NumberInput.module.scss'
 

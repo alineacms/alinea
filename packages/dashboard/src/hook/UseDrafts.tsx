@@ -4,9 +4,9 @@ import {
   EntryStatus,
   Outcome,
   ROOT_KEY
-} from '@alinea/core'
-import {Hub} from '@alinea/core/Hub'
-import {observable} from '@alinea/ui'
+} from '@alineacms/core'
+import {Hub} from '@alineacms/core/Hub'
+import {observable} from '@alineacms/ui'
 import {decode} from 'base64-arraybuffer'
 import {createContext, PropsWithChildren, useContext, useMemo} from 'react'
 import {Room, WebrtcProvider} from 'y-webrtc'
@@ -84,7 +84,7 @@ class Drafts {
   }
 
   connect(id: string, doc: Y.Doc) {
-    const provider = new WebrtcProvider('@alinea/entry-' + id, doc)
+    const provider = new WebrtcProvider('@alineacms/entry-' + id, doc)
     const save = async () => {
       this.saveTimeout = null
       this.status(DraftsStatus.Saving)

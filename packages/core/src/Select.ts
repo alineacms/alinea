@@ -1,4 +1,4 @@
-import {Collection, SelectionInput} from '@alinea/store'
+import {Collection, SelectionInput} from '@alineacms/store'
 import {Entry} from './Entry'
 
 export function select<T extends Entry>(

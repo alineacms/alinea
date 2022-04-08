@@ -1,8 +1,12 @@
-import {Entry, Media, Outcome, Reference, Type, View} from '@alinea/core'
-import {useReferencePicker, useSession, useWorkspace} from '@alinea/dashboard'
-import {EntrySummaryRow} from '@alinea/dashboard/view/entry/EntrySummary'
-import {Fields, InputLabel, InputState, useInput} from '@alinea/editor'
-import {Expr} from '@alinea/store'
+import {Entry, Media, Outcome, Reference, Type, View} from '@alineacms/core'
+import {
+  useReferencePicker,
+  useSession,
+  useWorkspace
+} from '@alineacms/dashboard'
+import {EntrySummaryRow} from '@alineacms/dashboard/view/entry/EntrySummary'
+import {Fields, InputLabel, InputState, useInput} from '@alineacms/editor'
+import {Expr} from '@alineacms/store'
 import {
   Card,
   Create,
@@ -11,7 +15,7 @@ import {
   IconButton,
   Typo,
   VStack
-} from '@alinea/ui'
+} from '@alineacms/ui'
 import {
   closestCenter,
   defaultDropAnimation,

@@ -1,5 +1,5 @@
-import {User} from '@alinea/core'
-import {getRandomColor} from '@alinea/core/util/GetRandomColor'
+import {User} from '@alineacms/core'
+import {getRandomColor} from '@alineacms/core/util/GetRandomColor'
 import {useContrastColor} from './hook/UseContrastColor'
 
 type AvatarProps = {user: User}

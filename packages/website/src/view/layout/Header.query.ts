@@ -1,5 +1,5 @@
-import {Entry} from '@alinea/core'
-import {Store} from '@alinea/store'
+import {Entry} from '@alineacms/core'
+import {Store} from '@alineacms/store'
 import {Home} from '../../../.alinea/web'
 
 export function headerQuery() {

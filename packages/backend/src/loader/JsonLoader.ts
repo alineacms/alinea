@@ -1,4 +1,4 @@
-import {Entry, Schema} from '@alinea/core'
+import {Entry, Schema} from '@alineacms/core'
 import {Loader} from '../Loader'
 
 export const JsonLoader: Loader = {

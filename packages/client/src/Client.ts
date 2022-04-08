@@ -6,8 +6,8 @@ import {
   Media,
   Outcome,
   Workspaces
-} from '@alinea/core'
-import {Cursor} from '@alinea/store'
+} from '@alineacms/core'
+import {Cursor} from '@alineacms/store'
 import fetch from 'isomorphic-fetch'
 
 async function toFuture<T = void>(res: Response): Future<T> {

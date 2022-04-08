@@ -1,8 +1,8 @@
-import {Entry} from '@alinea/core/Entry'
-import {Hub} from '@alinea/core/Hub'
-import {createId} from '@alinea/core/Id'
-import {Media} from '@alinea/core/Media'
-import {Outcome} from '@alinea/core/Outcome'
+import {Entry} from '@alineacms/core/Entry'
+import {Hub} from '@alineacms/core/Hub'
+import {createId} from '@alineacms/core/Id'
+import {Media} from '@alineacms/core/Media'
+import {Outcome} from '@alineacms/core/Outcome'
 import {encode} from 'blurhash'
 import FastAverageColor from 'fast-average-color'
 import pLimit from 'p-limit'
@@ -29,6 +29,8 @@ type Upload = {
   preview?: string
   averageColor?: string
   blurHash?: string
+  width?: number
+  height?: number
   result?: Media.File
 }
 
@@ -110,7 +112,13 @@ async function process(upload: Upload, hub: Hub): Promise<Upload> {
         4,
         4
       )
-      return {...upload, blurHash, status: UploadStatus.Uploading}
+      return {
+        ...upload,
+        blurHash,
+        width: imageData.width,
+        height: imageData.height,
+        status: UploadStatus.Uploading
+      }
     }
     case UploadStatus.Uploading: {
       const {to, file, preview, averageColor, blurHash} = upload
@@ -162,7 +170,6 @@ export function useUploads(onSelect: (entry: Entry.Minimal) => void) {
   }
 
   async function upload(files: FileList, to: Destination) {
-    const batch = createId()
     return Promise.all(Array.from(files).map(file => uploadFile(file, to)))
   }
 
