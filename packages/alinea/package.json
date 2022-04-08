@@ -1,7 +1,5 @@
 {
-  "bin": {
-    "alinea": "./dist/cli.js"
-  },
+  "bin": "./dist/cli.js",
   "name": "alinea",
   "version": "0.0.0",
   "license": "MIT",

@@ -5,6 +5,13 @@ __metadata:
   version: 5
   cacheKey: 8
 
+"@alinea/sqlite-wasm@npm:^0.1.4":
+  version: 0.1.4
+  resolution: "@alinea/sqlite-wasm@npm:0.1.4"
+  checksum: 963043cd3eaddb9c685ab2304de4c9397a9b8fef36d11c56c72e56af06aab0dd5f118aedf101ba2f15d085e836105291dab748f1e2c64ea9d427c92642b49d29
+  languageName: node
+  linkType: hard
+
 "@alineacms/auth.passwordless@0.0.0, @alineacms/auth.passwordless@workspace:packages/auth/passwordless":
   version: 0.0.0-use.local
   resolution: "@alineacms/auth.passwordless@workspace:packages/auth/passwordless"
@@ -31,8 +38,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@alineacms/backend@workspace:packages/backend"
   dependencies:
-    "@alineacms/core": 0.0.0
     "@alinea/sqlite-wasm": ^0.1.4
+    "@alineacms/core": 0.0.0
     "@alineacms/store": 0.0.0
     "@octokit/rest": ^18.12.0
     "@types/busboy": ^1.3.0
@@ -149,7 +156,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@alineacms/input.code@workspace:packages/input/code":
+"@alineacms/input.code@0.0.0, @alineacms/input.code@workspace:packages/input/code":
   version: 0.0.0-use.local
   resolution: "@alineacms/input.code@workspace:packages/input/code"
   dependencies:
@@ -160,7 +167,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@alineacms/input.link@workspace:packages/input/link":
+"@alineacms/input.link@0.0.0, @alineacms/input.link@workspace:packages/input/link":
   version: 0.0.0-use.local
   resolution: "@alineacms/input.link@workspace:packages/input/link"
   dependencies:
@@ -175,7 +182,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@alineacms/input.list@workspace:packages/input/list":
+"@alineacms/input.list@0.0.0, @alineacms/input.list@workspace:packages/input/list":
   version: 0.0.0-use.local
   resolution: "@alineacms/input.list@workspace:packages/input/list"
   dependencies:
@@ -190,7 +197,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@alineacms/input.number@workspace:packages/input/number":
+"@alineacms/input.number@0.0.0, @alineacms/input.number@workspace:packages/input/number":
   version: 0.0.0-use.local
   resolution: "@alineacms/input.number@workspace:packages/input/number"
   dependencies:
@@ -200,7 +207,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@alineacms/input.path@workspace:packages/input/path":
+"@alineacms/input.path@0.0.0, @alineacms/input.path@workspace:packages/input/path":
   version: 0.0.0-use.local
   resolution: "@alineacms/input.path@workspace:packages/input/path"
   dependencies:
@@ -210,7 +217,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@alineacms/input.richtext@workspace:packages/input/richtext":
+"@alineacms/input.richtext@0.0.0, @alineacms/input.richtext@workspace:packages/input/richtext":
   version: 0.0.0-use.local
   resolution: "@alineacms/input.richtext@workspace:packages/input/richtext"
   dependencies:
@@ -226,7 +233,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@alineacms/input.select@workspace:packages/input/select":
+"@alineacms/input.select@0.0.0, @alineacms/input.select@workspace:packages/input/select":
   version: 0.0.0-use.local
   resolution: "@alineacms/input.select@workspace:packages/input/select"
   dependencies:
@@ -236,7 +243,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@alineacms/input.tabs@workspace:packages/input/tabs":
+"@alineacms/input.tabs@0.0.0, @alineacms/input.tabs@workspace:packages/input/tabs":
   version: 0.0.0-use.local
   resolution: "@alineacms/input.tabs@workspace:packages/input/tabs"
   dependencies:
@@ -246,7 +253,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@alineacms/input.text@workspace:packages/input/text":
+"@alineacms/input.text@0.0.0, @alineacms/input.text@workspace:packages/input/text":
   version: 0.0.0-use.local
   resolution: "@alineacms/input.text@workspace:packages/input/text"
   dependencies:
@@ -292,13 +299,6 @@ __metadata:
     uvu: ^0.5.1
   languageName: unknown
   linkType: soft
-
-"@alinea/sqlite-wasm@npm:^0.1.4":
-  version: 0.1.4
-  resolution: "@alinea/sqlite-wasm@npm:0.1.4"
-  checksum: 963043cd3eaddb9c685ab2304de4c9397a9b8fef36d11c56c72e56af06aab0dd5f118aedf101ba2f15d085e836105291dab748f1e2c64ea9d427c92642b49d29
-  languageName: node
-  linkType: hard
 
 "@alineacms/store@0.0.0, @alineacms/store@workspace:packages/store":
   version: 0.0.0-use.local
@@ -2402,8 +2402,18 @@ __metadata:
     "@alineacms/core": 0.0.0
     "@alineacms/css": 0.0.0
     "@alineacms/dashboard": 0.0.0
-    "@alineacms/editor": 0.0.0
-    "@alineacms/ui": 0.0.0
+    "@alineacms/input.code": 0.0.0
+    "@alineacms/input.link": 0.0.0
+    "@alineacms/input.list": 0.0.0
+    "@alineacms/input.number": 0.0.0
+    "@alineacms/input.path": 0.0.0
+    "@alineacms/input.richtext": 0.0.0
+    "@alineacms/input.select": 0.0.0
+    "@alineacms/input.tabs": 0.0.0
+    "@alineacms/input.text": 0.0.0
+    "@alineacms/store": 0.0.0
+  bin:
+    alinea: ./dist/cli.js
   languageName: unknown
   linkType: soft
 
