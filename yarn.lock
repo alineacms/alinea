@@ -23,6 +23,7 @@ __metadata:
     express-jwt: ^6.1.0
     jsonwebtoken: ^8.5.1
     jwt-decode: ^3.1.2
+    nodemailer: ^6.6.5
     react-helmet: ^6.1.0
     react-icons: ^4.3.1
   peerDependencies:
@@ -6227,6 +6228,13 @@ fsevents@~2.3.2:
   version: 2.0.2
   resolution: "node-releases@npm:2.0.2"
   checksum: da858bf86b4d512842379749f5a5e4196ddab05ba18ffcf29f05bf460beceaca927f070f4430bb5046efec18941ddbc85e4c5fdbb83afc28a38dd6069a2f255e
+  languageName: node
+  linkType: hard
+
+"nodemailer@npm:^6.6.5":
+  version: 6.7.3
+  resolution: "nodemailer@npm:6.7.3"
+  checksum: b94d099f00f25666fc96a7cb498045e7428045b8cc0245ce10522190fd513b586d6e31305afd019f6878f1540d14d169d0dbe2e1f77385795c7054912d822ec0
   languageName: node
   linkType: hard
 

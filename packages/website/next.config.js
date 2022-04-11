@@ -9,7 +9,7 @@ module.exports = {
         fullySpecified: false
       }
     })
-    if (isServer) {
+    /*if (isServer) {
       config.externals = [
         ...config.externals,
         '@alinea/auth.passwordless',
@@ -28,7 +28,7 @@ module.exports = {
       ]
       config.externalsType = 'import'
       config.optimization.providedExports = true
-    }
+    }*/
     return config
   },
   experimental: {
