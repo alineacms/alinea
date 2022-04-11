@@ -17,6 +17,8 @@ import path from 'path'
 import pxToRem from 'postcss-pxtorem'
 import {createId} from './packages/core/src/Id'
 
+export {VersionTask} from '@esbx/workspaces'
+
 const FixReactIconsPlugin: Plugin = {
   name: 'FixReactIconsPlugin',
   setup(build) {
