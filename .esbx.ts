@@ -95,10 +95,11 @@ const ExtensionPlugin: Plugin = {
         if (
           !pkg.startsWith('node:') &&
           pkg !== 'react' &&
+          pkg !== 'react-icons' &&
           !dependencies.has(pkg) &&
           !seen.has(pkg)
         ) {
-          console.info(`WARNING: ${pkg} is not a dependency of ${info.name}`)
+          console.info(`warning: ${pkg} is not a dependency of ${info.name}`)
         }
         seen.add(pkg)
       }
@@ -110,7 +111,9 @@ const ExtensionPlugin: Plugin = {
     build.onEnd(() => {
       const unused = [...dependencies].filter(x => !seen.has(x))
       for (const pkg of unused) {
-        console.info(`WARNING: ${pkg} is defined, but unused in ${info.name}`)
+        console.info(
+          `info: ${pkg} is defined in dependencies, but appears unused in ${info.name}`
+        )
       }
     })
   }
@@ -195,7 +198,7 @@ const builder = BuildTask.configure({
     plugins: [
       ...buildOptions.plugins,
       BundleCSSPlugin,
-      // FixReactIconsPlugin,
+      FixReactIconsPlugin,
       ExtensionPlugin
     ]
   }
