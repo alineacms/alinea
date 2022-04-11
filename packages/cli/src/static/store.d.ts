@@ -1,2 +1,2 @@
-import {Store} from '@alineacms/store'
+import {Store} from '@alinea/store'
 export const createStore: () => Promise<Store>

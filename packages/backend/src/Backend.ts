@@ -10,9 +10,9 @@ import {
   outcome,
   Workspace,
   Workspaces
-} from '@alineacms/core'
-import {generateKeyBetween} from '@alineacms/core/util/FractionalIndexing'
-import {Cursor, Store} from '@alineacms/store'
+} from '@alinea/core'
+import {generateKeyBetween} from '@alinea/core/util/FractionalIndexing'
+import {Cursor, Store} from '@alinea/store'
 import {encode} from 'base64-arraybuffer'
 import md5 from 'md5'
 import {posix as path} from 'path'

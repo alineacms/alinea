@@ -1,4 +1,4 @@
-import {Entry, Reference} from '@alineacms/core'
+import {Entry, Reference} from '@alinea/core'
 import {createContext, useContext} from 'react'
 
 type ExplorerContext = {

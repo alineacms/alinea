@@ -1,4 +1,4 @@
-import {fromModule, HStack, Stack, Typo} from '@alineacms/ui'
+import {fromModule, HStack, Stack, Typo} from '@alinea/ui'
 import Link from 'next/link'
 import {MdArrowBack, MdArrowForward} from 'react-icons/md/index.js'
 import {Blocks} from './blocks/Blocks'

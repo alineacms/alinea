@@ -1,4 +1,4 @@
-import {Auth, Workspaces} from '@alineacms/core'
+import {Auth, Workspaces} from '@alinea/core'
 import express from 'express'
 import {
   createServer as createHttpServer,

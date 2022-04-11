@@ -1,10 +1,10 @@
-import {Backend} from '@alineacms/backend/Backend'
-import {Cache} from '@alineacms/backend/Cache'
-import {IndexedDBData} from '@alineacms/backend/data/IndexedDBData.js'
-import {IndexedDBDrafts} from '@alineacms/backend/drafts/IndexedDBDrafts.js'
-import {accumulate} from '@alineacms/core'
-import '@alineacms/css/global.css'
-import {renderDashboard} from '@alineacms/dashboard'
+import {Backend} from '@alinea/backend/Backend'
+import {Cache} from '@alinea/backend/Cache'
+import {IndexedDBData} from '@alinea/backend/data/IndexedDBData.js'
+import {IndexedDBDrafts} from '@alinea/backend/drafts/IndexedDBDrafts.js'
+import {accumulate} from '@alinea/core'
+import '@alinea/css/global.css'
+import {renderDashboard} from '@alinea/dashboard'
 import {config} from '../../website/.alinea/config'
 
 const data = new IndexedDBData()

@@ -6,7 +6,7 @@ import {
   px,
   Typo,
   useObservable
-} from '@alineacms/ui'
+} from '@alinea/ui'
 import {useEffect, useRef, useState} from 'react'
 import {
   MdArrowBack,

@@ -1,5 +1,5 @@
-import {InputLabel, InputState, useInput} from '@alineacms/editor'
-import {fromModule, HStack} from '@alineacms/ui'
+import {InputLabel, InputState, useInput} from '@alinea/editor'
+import {fromModule, HStack} from '@alinea/ui'
 import {MdArrowDropDownCircle, MdKeyboardArrowDown} from 'react-icons/md'
 import {SelectField} from './SelectField'
 import css from './SelectInput.module.scss'

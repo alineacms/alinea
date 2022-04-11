@@ -1,4 +1,4 @@
-import {Section, type} from '@alineacms/core'
+import {Section, type} from '@alinea/core'
 import {createTabs} from './TabsSection'
 import {TabsView} from './TabsView'
 export * from './TabsSection'

@@ -1,5 +1,5 @@
 {
-  "name": "@alineacms/editor",
+  "name": "@alinea/editor",
   "version": "0.0.0",
   "license": "MIT",
   "repository": {
@@ -23,7 +23,7 @@
     }
   },
   "dependencies": {
-    "@alineacms/core": "0.0.0",
+    "@alinea/core": "0.0.0",
     "y-webrtc": "^10.2.0",
     "yjs": "^13.5.16"
   }

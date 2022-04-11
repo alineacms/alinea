@@ -1,6 +1,6 @@
-import {JsonLoader, JWTPreviews, Server} from '@alineacms/backend'
-import {FileData} from '@alineacms/backend/data/FileData'
-import {FileDrafts} from '@alineacms/backend/drafts/FileDrafts'
+import {JsonLoader, JWTPreviews, Server} from '@alinea/backend'
+import {FileData} from '@alinea/backend/data/FileData'
+import {FileDrafts} from '@alinea/backend/drafts/FileDrafts'
 import compression from 'compression'
 import express from 'express'
 import {existsSync} from 'fs'
@@ -55,9 +55,9 @@ export async function serve(options: ServeOptions) {
       <meta name="viewport" content="width=device-width, initial-scale=1" />
       <body>
         <script type="module">
-        import {Client} from '@alineacms/client'
-        import '@alineacms/css/global.css'
-        import {renderDashboard} from '@alineacms/dashboard'
+        import {Client} from '@alinea/client'
+        import '@alinea/css/global.css'
+        import {renderDashboard} from '@alinea/dashboard'
         import {config} from '../../website/.alinea/config'
         renderDashboard({
           config,

@@ -1,4 +1,4 @@
-import {Entry} from '@alineacms/core'
+import {Entry} from '@alinea/core'
 
 export namespace Data {
   export interface Source {

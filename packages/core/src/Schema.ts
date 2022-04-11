@@ -1,4 +1,4 @@
-import {Collection, Cursor, Selection} from '@alineacms/store'
+import {Collection, Cursor, Selection} from '@alinea/store'
 import {Entry} from './Entry'
 import {Field} from './Field'
 import {Type} from './Type'

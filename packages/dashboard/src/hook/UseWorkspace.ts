@@ -1,4 +1,4 @@
-import {Workspace} from '@alineacms/core'
+import {Workspace} from '@alinea/core'
 import {useMemo} from 'react'
 import {useLocation} from 'react-router'
 import {useDashboard} from './UseDashboard'

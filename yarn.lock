@@ -5,18 +5,11 @@ __metadata:
   version: 5
   cacheKey: 8
 
-"@alinea/sqlite-wasm@npm:^0.1.4":
-  version: 0.1.4
-  resolution: "@alinea/sqlite-wasm@npm:0.1.4"
-  checksum: 963043cd3eaddb9c685ab2304de4c9397a9b8fef36d11c56c72e56af06aab0dd5f118aedf101ba2f15d085e836105291dab748f1e2c64ea9d427c92642b49d29
-  languageName: node
-  linkType: hard
-
-"@alineacms/auth.passwordless@0.0.0, @alineacms/auth.passwordless@workspace:packages/auth/passwordless":
+"@alinea/auth.passwordless@0.0.0, @alinea/auth.passwordless@workspace:packages/auth/passwordless":
   version: 0.0.0-use.local
-  resolution: "@alineacms/auth.passwordless@workspace:packages/auth/passwordless"
+  resolution: "@alinea/auth.passwordless@workspace:packages/auth/passwordless"
   dependencies:
-    "@alineacms/core": 0.0.0
+    "@alinea/core": 0.0.0
     "@types/cookie-parser": ^1.4.2
     "@types/express": ^4.17.13
     "@types/express-jwt": ^6.0.2
@@ -34,13 +27,13 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@alineacms/backend@0.0.0, @alineacms/backend@workspace:packages/backend":
+"@alinea/backend@0.0.0, @alinea/backend@workspace:packages/backend":
   version: 0.0.0-use.local
-  resolution: "@alineacms/backend@workspace:packages/backend"
+  resolution: "@alinea/backend@workspace:packages/backend"
   dependencies:
+    "@alinea/core": 0.0.0
     "@alinea/sqlite-wasm": ^0.1.4
-    "@alineacms/core": 0.0.0
-    "@alineacms/store": 0.0.0
+    "@alinea/store": 0.0.0
     "@octokit/rest": ^18.12.0
     "@types/busboy": ^1.3.0
     "@types/compression": ^1.7.2
@@ -72,12 +65,12 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@alineacms/cli@0.0.0, @alineacms/cli@workspace:packages/cli":
+"@alinea/cli@0.0.0, @alinea/cli@workspace:packages/cli":
   version: 0.0.0-use.local
-  resolution: "@alineacms/cli@workspace:packages/cli"
+  resolution: "@alinea/cli@workspace:packages/cli"
   dependencies:
-    "@alineacms/core": 0.0.0
-    "@alineacms/store": 0.0.0
+    "@alinea/core": 0.0.0
+    "@alinea/store": 0.0.0
     "@esbx/eval": ^0.0.16
     "@esbx/react": ^0.0.16
     "@types/fs-extra": ^9.0.13
@@ -91,19 +84,19 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@alineacms/client@0.0.0, @alineacms/client@workspace:packages/client":
+"@alinea/client@0.0.0, @alinea/client@workspace:packages/client":
   version: 0.0.0-use.local
-  resolution: "@alineacms/client@workspace:packages/client"
+  resolution: "@alinea/client@workspace:packages/client"
   dependencies:
-    "@alineacms/core": 0.0.0
+    "@alinea/core": 0.0.0
     "@types/isomorphic-fetch": ^0.0.35
     isomorphic-fetch: ^3.0.0
   languageName: unknown
   linkType: soft
 
-"@alineacms/core@0.0.0, @alineacms/core@workspace:packages/core":
+"@alinea/core@0.0.0, @alinea/core@workspace:packages/core":
   version: 0.0.0-use.local
-  resolution: "@alineacms/core@workspace:packages/core"
+  resolution: "@alinea/core@workspace:packages/core"
   dependencies:
     "@types/react": ^17.0.20
     base-x: ^3.0.8
@@ -113,19 +106,19 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@alineacms/css@0.0.0, @alineacms/css@workspace:packages/css":
+"@alinea/css@0.0.0, @alinea/css@workspace:packages/css":
   version: 0.0.0-use.local
-  resolution: "@alineacms/css@workspace:packages/css"
+  resolution: "@alinea/css@workspace:packages/css"
   languageName: unknown
   linkType: soft
 
-"@alineacms/dashboard@0.0.0, @alineacms/dashboard@workspace:packages/dashboard":
+"@alinea/dashboard@0.0.0, @alinea/dashboard@workspace:packages/dashboard":
   version: 0.0.0-use.local
-  resolution: "@alineacms/dashboard@workspace:packages/dashboard"
+  resolution: "@alinea/dashboard@workspace:packages/dashboard"
   dependencies:
-    "@alineacms/client": 0.0.0
-    "@alineacms/core": 0.0.0
-    "@alineacms/editor": 0.0.0
+    "@alinea/client": 0.0.0
+    "@alinea/core": 0.0.0
+    "@alinea/editor": 0.0.0
     "@react-hook/size": ^2.1.2
     "@types/react": ^17.0.20
     "@types/react-dom": ^17.0.9
@@ -146,34 +139,34 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@alineacms/editor@0.0.0, @alineacms/editor@workspace:packages/editor":
+"@alinea/editor@0.0.0, @alinea/editor@workspace:packages/editor":
   version: 0.0.0-use.local
-  resolution: "@alineacms/editor@workspace:packages/editor"
+  resolution: "@alinea/editor@workspace:packages/editor"
   dependencies:
-    "@alineacms/core": 0.0.0
+    "@alinea/core": 0.0.0
     y-webrtc: ^10.2.0
     yjs: ^13.5.16
   languageName: unknown
   linkType: soft
 
-"@alineacms/input.code@0.0.0, @alineacms/input.code@workspace:packages/input/code":
+"@alinea/input.code@0.0.0, @alinea/input.code@workspace:packages/input/code":
   version: 0.0.0-use.local
-  resolution: "@alineacms/input.code@workspace:packages/input/code"
+  resolution: "@alinea/input.code@workspace:packages/input/code"
   dependencies:
-    "@alineacms/core": 0.0.0
-    "@alineacms/editor": 0.0.0
-    "@alineacms/ui": 0.0.0
+    "@alinea/core": 0.0.0
+    "@alinea/editor": 0.0.0
+    "@alinea/ui": 0.0.0
     react-autosize-textarea: ^7.1.0
   languageName: unknown
   linkType: soft
 
-"@alineacms/input.link@0.0.0, @alineacms/input.link@workspace:packages/input/link":
+"@alinea/input.link@0.0.0, @alinea/input.link@workspace:packages/input/link":
   version: 0.0.0-use.local
-  resolution: "@alineacms/input.link@workspace:packages/input/link"
+  resolution: "@alinea/input.link@workspace:packages/input/link"
   dependencies:
-    "@alineacms/core": 0.0.0
-    "@alineacms/editor": 0.0.0
-    "@alineacms/ui": 0.0.0
+    "@alinea/core": 0.0.0
+    "@alinea/editor": 0.0.0
+    "@alinea/ui": 0.0.0
     "@dnd-kit/core": ^3.1.1
     "@dnd-kit/sortable": ^4.0.0
     "@dnd-kit/utilities": ^2.0.0
@@ -182,13 +175,13 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@alineacms/input.list@0.0.0, @alineacms/input.list@workspace:packages/input/list":
+"@alinea/input.list@0.0.0, @alinea/input.list@workspace:packages/input/list":
   version: 0.0.0-use.local
-  resolution: "@alineacms/input.list@workspace:packages/input/list"
+  resolution: "@alinea/input.list@workspace:packages/input/list"
   dependencies:
-    "@alineacms/core": 0.0.0
-    "@alineacms/editor": 0.0.0
-    "@alineacms/ui": 0.0.0
+    "@alinea/core": 0.0.0
+    "@alinea/editor": 0.0.0
+    "@alinea/ui": 0.0.0
     "@dnd-kit/core": ^3.1.1
     "@dnd-kit/sortable": ^4.0.0
     "@dnd-kit/utilities": ^2.0.0
@@ -197,33 +190,33 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@alineacms/input.number@0.0.0, @alineacms/input.number@workspace:packages/input/number":
+"@alinea/input.number@0.0.0, @alinea/input.number@workspace:packages/input/number":
   version: 0.0.0-use.local
-  resolution: "@alineacms/input.number@workspace:packages/input/number"
+  resolution: "@alinea/input.number@workspace:packages/input/number"
   dependencies:
-    "@alineacms/core": 0.0.0
-    "@alineacms/editor": 0.0.0
-    "@alineacms/ui": 0.0.0
+    "@alinea/core": 0.0.0
+    "@alinea/editor": 0.0.0
+    "@alinea/ui": 0.0.0
   languageName: unknown
   linkType: soft
 
-"@alineacms/input.path@0.0.0, @alineacms/input.path@workspace:packages/input/path":
+"@alinea/input.path@0.0.0, @alinea/input.path@workspace:packages/input/path":
   version: 0.0.0-use.local
-  resolution: "@alineacms/input.path@workspace:packages/input/path"
+  resolution: "@alinea/input.path@workspace:packages/input/path"
   dependencies:
-    "@alineacms/core": 0.0.0
-    "@alineacms/editor": 0.0.0
-    "@alineacms/ui": 0.0.0
+    "@alinea/core": 0.0.0
+    "@alinea/editor": 0.0.0
+    "@alinea/ui": 0.0.0
   languageName: unknown
   linkType: soft
 
-"@alineacms/input.richtext@0.0.0, @alineacms/input.richtext@workspace:packages/input/richtext":
+"@alinea/input.richtext@0.0.0, @alinea/input.richtext@workspace:packages/input/richtext":
   version: 0.0.0-use.local
-  resolution: "@alineacms/input.richtext@workspace:packages/input/richtext"
+  resolution: "@alinea/input.richtext@workspace:packages/input/richtext"
   dependencies:
-    "@alineacms/core": 0.0.0
-    "@alineacms/editor": 0.0.0
-    "@alineacms/ui": 0.0.0
+    "@alinea/core": 0.0.0
+    "@alinea/editor": 0.0.0
+    "@alinea/ui": 0.0.0
     "@tiptap/extension-bubble-menu": ^2.0.0-beta.42
     "@tiptap/extension-collaboration": ^2.0.0-beta.25
     "@tiptap/extension-collaboration-cursor": ^2.0.0-beta.25
@@ -233,40 +226,40 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@alineacms/input.select@0.0.0, @alineacms/input.select@workspace:packages/input/select":
+"@alinea/input.select@0.0.0, @alinea/input.select@workspace:packages/input/select":
   version: 0.0.0-use.local
-  resolution: "@alineacms/input.select@workspace:packages/input/select"
+  resolution: "@alinea/input.select@workspace:packages/input/select"
   dependencies:
-    "@alineacms/core": 0.0.0
-    "@alineacms/editor": 0.0.0
-    "@alineacms/ui": 0.0.0
+    "@alinea/core": 0.0.0
+    "@alinea/editor": 0.0.0
+    "@alinea/ui": 0.0.0
   languageName: unknown
   linkType: soft
 
-"@alineacms/input.tabs@0.0.0, @alineacms/input.tabs@workspace:packages/input/tabs":
+"@alinea/input.tabs@0.0.0, @alinea/input.tabs@workspace:packages/input/tabs":
   version: 0.0.0-use.local
-  resolution: "@alineacms/input.tabs@workspace:packages/input/tabs"
+  resolution: "@alinea/input.tabs@workspace:packages/input/tabs"
   dependencies:
-    "@alineacms/core": 0.0.0
-    "@alineacms/editor": 0.0.0
-    "@alineacms/ui": 0.0.0
+    "@alinea/core": 0.0.0
+    "@alinea/editor": 0.0.0
+    "@alinea/ui": 0.0.0
   languageName: unknown
   linkType: soft
 
-"@alineacms/input.text@0.0.0, @alineacms/input.text@workspace:packages/input/text":
+"@alinea/input.text@0.0.0, @alinea/input.text@workspace:packages/input/text":
   version: 0.0.0-use.local
-  resolution: "@alineacms/input.text@workspace:packages/input/text"
+  resolution: "@alinea/input.text@workspace:packages/input/text"
   dependencies:
-    "@alineacms/core": 0.0.0
-    "@alineacms/editor": 0.0.0
-    "@alineacms/ui": 0.0.0
+    "@alinea/core": 0.0.0
+    "@alinea/editor": 0.0.0
+    "@alinea/ui": 0.0.0
     react-autosize-textarea: ^7.1.0
   languageName: unknown
   linkType: soft
 
-"@alineacms/root@workspace:.":
+"@alinea/root@workspace:.":
   version: 0.0.0-use.local
-  resolution: "@alineacms/root@workspace:."
+  resolution: "@alinea/root@workspace:."
   dependencies:
     "@esbx/extension": ^0.0.16
     "@esbx/external": ^0.0.17
@@ -300,9 +293,16 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@alineacms/store@0.0.0, @alineacms/store@workspace:packages/store":
+"@alinea/sqlite-wasm@npm:^0.1.4":
+  version: 0.1.4
+  resolution: "@alinea/sqlite-wasm@npm:0.1.4"
+  checksum: 963043cd3eaddb9c685ab2304de4c9397a9b8fef36d11c56c72e56af06aab0dd5f118aedf101ba2f15d085e836105291dab748f1e2c64ea9d427c92642b49d29
+  languageName: node
+  linkType: hard
+
+"@alinea/store@0.0.0, @alinea/store@workspace:packages/store":
   version: 0.0.0-use.local
-  resolution: "@alineacms/store@workspace:packages/store"
+  resolution: "@alinea/store@workspace:packages/store"
   dependencies:
     "@types/better-sqlite3": ^5.4.1
     "@types/sql.js": ^1.4.2
@@ -310,9 +310,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@alineacms/stories@workspace:packages/stories":
+"@alinea/stories@workspace:packages/stories":
   version: 0.0.0-use.local
-  resolution: "@alineacms/stories@workspace:packages/stories"
+  resolution: "@alinea/stories@workspace:packages/stories"
   dependencies:
     dotenv: ^10.0.0
     npm-run-all: ^4.1.5
@@ -321,11 +321,11 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@alineacms/ui@0.0.0, @alineacms/ui@workspace:packages/ui":
+"@alinea/ui@0.0.0, @alinea/ui@workspace:packages/ui":
   version: 0.0.0-use.local
-  resolution: "@alineacms/ui@workspace:packages/ui"
+  resolution: "@alinea/ui@workspace:packages/ui"
   dependencies:
-    "@alineacms/core": 0.0.0
+    "@alinea/core": 0.0.0
     "@radix-ui/react-dropdown-menu": ^0.1.0
     "@radix-ui/react-tabs": ^0.1.0
     color2k: ^1.2.4
@@ -333,16 +333,16 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@alineacms/website@workspace:packages/website":
+"@alinea/website@workspace:packages/website":
   version: 0.0.0-use.local
-  resolution: "@alineacms/website@workspace:packages/website"
+  resolution: "@alinea/website@workspace:packages/website"
   dependencies:
-    "@alineacms/auth.passwordless": 0.0.0
-    "@alineacms/backend": 0.0.0
-    "@alineacms/cli": 0.0.0
-    "@alineacms/core": 0.0.0
-    "@alineacms/dashboard": 0.0.0
-    "@alineacms/ui": 0.0.0
+    "@alinea/auth.passwordless": 0.0.0
+    "@alinea/backend": 0.0.0
+    "@alinea/cli": 0.0.0
+    "@alinea/core": 0.0.0
+    "@alinea/dashboard": 0.0.0
+    "@alinea/ui": 0.0.0
     "@types/find-config": ^1.0.1
     cross-env: ^7.0.3
     find-config: ^1.0.0
@@ -2395,23 +2395,23 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "alinea@workspace:packages/alinea"
   dependencies:
-    "@alineacms/auth.passwordless": 0.0.0
-    "@alineacms/backend": 0.0.0
-    "@alineacms/cli": 0.0.0
-    "@alineacms/client": 0.0.0
-    "@alineacms/core": 0.0.0
-    "@alineacms/css": 0.0.0
-    "@alineacms/dashboard": 0.0.0
-    "@alineacms/input.code": 0.0.0
-    "@alineacms/input.link": 0.0.0
-    "@alineacms/input.list": 0.0.0
-    "@alineacms/input.number": 0.0.0
-    "@alineacms/input.path": 0.0.0
-    "@alineacms/input.richtext": 0.0.0
-    "@alineacms/input.select": 0.0.0
-    "@alineacms/input.tabs": 0.0.0
-    "@alineacms/input.text": 0.0.0
-    "@alineacms/store": 0.0.0
+    "@alinea/auth.passwordless": 0.0.0
+    "@alinea/backend": 0.0.0
+    "@alinea/cli": 0.0.0
+    "@alinea/client": 0.0.0
+    "@alinea/core": 0.0.0
+    "@alinea/css": 0.0.0
+    "@alinea/dashboard": 0.0.0
+    "@alinea/input.code": 0.0.0
+    "@alinea/input.link": 0.0.0
+    "@alinea/input.list": 0.0.0
+    "@alinea/input.number": 0.0.0
+    "@alinea/input.path": 0.0.0
+    "@alinea/input.richtext": 0.0.0
+    "@alinea/input.select": 0.0.0
+    "@alinea/input.tabs": 0.0.0
+    "@alinea/input.text": 0.0.0
+    "@alinea/store": 0.0.0
   bin:
     alinea: ./dist/cli.js
   languageName: unknown

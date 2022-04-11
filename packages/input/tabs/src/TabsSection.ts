@@ -1,5 +1,5 @@
-import {Section, Type, UnionToIntersection} from '@alineacms/core'
-import {Lazy} from '@alineacms/core/util/Lazy'
+import {Section, Type, UnionToIntersection} from '@alinea/core'
+import {Lazy} from '@alinea/core/util/Lazy'
 
 export class TabsSection<T> extends Section<T> {
   constructor(public types: Array<Type>) {

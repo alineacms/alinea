@@ -1,12 +1,5 @@
-import {useInput} from '@alineacms/editor'
-import {
-  Chip,
-  fromModule,
-  HStack,
-  IconButton,
-  IconLink,
-  Typo
-} from '@alineacms/ui'
+import {useInput} from '@alinea/editor'
+import {Chip, fromModule, HStack, IconButton, IconLink, Typo} from '@alinea/ui'
 import {PropsWithChildren} from 'react'
 import {Helmet} from 'react-helmet'
 import {MdArrowBack, MdOutlineMoreHoriz} from 'react-icons/md'

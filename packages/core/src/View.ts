@@ -1,4 +1,4 @@
-import {Collection, SelectionInput, Store} from '@alineacms/store'
+import {Collection, SelectionInput, Store} from '@alinea/store'
 import type {ComponentType} from 'react'
 import {Schema} from './Schema'
 

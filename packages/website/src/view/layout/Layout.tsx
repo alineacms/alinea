@@ -1,4 +1,4 @@
-import {fromModule} from '@alineacms/ui'
+import {fromModule} from '@alinea/ui'
 import Head from 'next/head'
 import {PropsWithChildren} from 'react'
 import {FavIcon} from './branding/FavIcon'

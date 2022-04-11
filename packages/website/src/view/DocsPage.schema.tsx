@@ -1,6 +1,6 @@
-import {Schema, type} from '@alineacms/core'
-import {path} from '@alineacms/input.path'
-import {text} from '@alineacms/input.text'
+import {Schema, type} from '@alinea/core'
+import {path} from '@alinea/input.path'
+import {text} from '@alinea/input.text'
 
 export const DocsPageSchema = type('Docs', {
   title: text('Title', {width: 0.5, multiline: true}),

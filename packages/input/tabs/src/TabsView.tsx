@@ -1,5 +1,5 @@
-import {InputForm, InputState} from '@alineacms/editor'
-import {fromModule, Tabs, TextLabel} from '@alineacms/ui'
+import {InputForm, InputState} from '@alinea/editor'
+import {fromModule, Tabs, TextLabel} from '@alinea/ui'
 import {TabsSection} from './TabsSection'
 import css from './TabsView.module.scss'
 

@@ -1,4 +1,4 @@
-import {Field} from '@alineacms/core'
+import {Field} from '@alinea/core'
 import {createNumber} from './NumberField'
 import {NumberInput} from './NumberInput'
 export * from './NumberField'

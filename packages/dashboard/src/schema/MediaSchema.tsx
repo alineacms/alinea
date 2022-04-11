@@ -1,5 +1,5 @@
-import {Media, type} from '@alineacms/core'
-import {text} from '@alineacms/input.text'
+import {Media, type} from '@alinea/core'
+import {text} from '@alinea/input.text'
 import {MdOutlinePermMedia} from 'react-icons/md'
 import {FileSummaryRow, FileSummaryThumb} from '../view/media/FileSummary'
 import {MediaExplorer} from '../view/MediaExplorer'

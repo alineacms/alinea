@@ -1,5 +1,5 @@
-import {InputLabel, InputState, useInput} from '@alineacms/editor'
-import {fromModule, HStack} from '@alineacms/ui'
+import {InputLabel, InputState, useInput} from '@alinea/editor'
+import {fromModule, HStack} from '@alinea/ui'
 import {useState} from 'react'
 import {TextareaAutosize} from 'react-autosize-textarea/lib/TextareaAutosize.js'
 import {MdTextFields} from 'react-icons/md'

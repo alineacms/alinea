@@ -1,4 +1,4 @@
-import {Collection, Store} from '@alineacms/store'
+import {Collection, Store} from '@alinea/store'
 import {Home, Page, Pages} from '../../.alinea/web'
 
 export function homePageQuery(pages: Pages, Home: Collection<Home>) {

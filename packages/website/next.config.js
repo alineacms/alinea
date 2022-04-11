@@ -12,18 +12,18 @@ module.exports = {
     if (isServer) {
       config.externals = [
         ...config.externals,
-        '@alineacms/auth.passwordless',
-        '@alineacms/auth.passwordless/PasswordLessAuth.js',
-        '@alineacms/cli',
-        '@alineacms/client',
-        '@alineacms/core',
-        '@alineacms/dashboard',
-        '@alineacms/editor',
-        '@alineacms/input.list',
-        '@alineacms/input.number',
-        '@alineacms/input.text',
-        '@alineacms/backend',
-        '@alineacms/ui',
+        '@alinea/auth.passwordless',
+        '@alinea/auth.passwordless/PasswordLessAuth.js',
+        '@alinea/cli',
+        '@alinea/client',
+        '@alinea/core',
+        '@alinea/dashboard',
+        '@alinea/editor',
+        '@alinea/input.list',
+        '@alinea/input.number',
+        '@alinea/input.text',
+        '@alinea/backend',
+        '@alinea/ui',
         'yjs'
       ]
       config.externalsType = 'import'

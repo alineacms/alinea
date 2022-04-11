@@ -1,5 +1,5 @@
 {
-  "name": "@alineacms/input.list",
+  "name": "@alinea/input.list",
   "version": "0.0.0",
   "license": "MIT",
   "repository": {
@@ -28,9 +28,9 @@
     }
   },
   "dependencies": {
-    "@alineacms/core": "0.0.0",
-    "@alineacms/editor": "0.0.0",
-    "@alineacms/ui": "0.0.0",
+    "@alinea/core": "0.0.0",
+    "@alinea/editor": "0.0.0",
+    "@alinea/ui": "0.0.0",
     "@dnd-kit/core": "^3.1.1",
     "@dnd-kit/sortable": "^4.0.0",
     "@dnd-kit/utilities": "^2.0.0",

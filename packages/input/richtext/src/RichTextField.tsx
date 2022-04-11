@@ -1,4 +1,4 @@
-import {Field, Label, Schema, Value} from '@alineacms/core'
+import {Field, Label, Schema, Value} from '@alinea/core'
 
 export type RichTextOptions<T> = {
   // Allow these blocks to be created between text fragments

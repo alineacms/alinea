@@ -1,4 +1,3 @@
-import sqlite from '@alinea/sqlite-wasm'
 import {
   createConfig,
   createId,
@@ -6,12 +5,13 @@ import {
   schema as createSchema,
   type,
   workspace
-} from '@alineacms/core'
-import {generateNKeysBetween} from '@alineacms/core/util/FractionalIndexing'
-import {text} from '@alineacms/input.text'
-import {BetterSqlite3Driver} from '@alineacms/store/sqlite/drivers/BetterSqlite3Driver'
-import {SqlJsDriver} from '@alineacms/store/sqlite/drivers/SqlJsDriver'
-import {SqliteStore} from '@alineacms/store/sqlite/SqliteStore'
+} from '@alinea/core'
+import {generateNKeysBetween} from '@alinea/core/util/FractionalIndexing'
+import {text} from '@alinea/input.text'
+import sqlite from '@alinea/sqlite-wasm'
+import {BetterSqlite3Driver} from '@alinea/store/sqlite/drivers/BetterSqlite3Driver'
+import {SqlJsDriver} from '@alinea/store/sqlite/drivers/SqlJsDriver'
+import {SqliteStore} from '@alinea/store/sqlite/SqliteStore'
 import Database from 'better-sqlite3'
 import {Cache} from '../../src/Cache'
 

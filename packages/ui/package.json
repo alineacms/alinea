@@ -1,5 +1,5 @@
 {
-  "name": "@alineacms/ui",
+  "name": "@alinea/ui",
   "version": "0.0.0",
   "license": "MIT",
   "repository": {
@@ -23,7 +23,7 @@
     }
   },
   "dependencies": {
-    "@alineacms/core": "0.0.0",
+    "@alinea/core": "0.0.0",
     "@radix-ui/react-dropdown-menu": "^0.1.0",
     "@radix-ui/react-tabs": "^0.1.0",
     "color2k": "^1.2.4",

@@ -1,5 +1,5 @@
 {
-  "name": "@alineacms/input.path",
+  "name": "@alinea/input.path",
   "version": "0.0.0",
   "license": "MIT",
   "repository": {
@@ -28,8 +28,8 @@
     }
   },
   "dependencies": {
-    "@alineacms/core": "0.0.0",
-    "@alineacms/editor": "0.0.0",
-    "@alineacms/ui": "0.0.0"
+    "@alinea/core": "0.0.0",
+    "@alinea/editor": "0.0.0",
+    "@alinea/ui": "0.0.0"
   }
 }

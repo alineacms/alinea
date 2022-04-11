@@ -6,7 +6,7 @@ import {
   EntryStatus,
   outcome,
   slugify
-} from '@alineacms/core'
+} from '@alinea/core'
 import {posix as path} from 'path'
 import {Data} from '../Data'
 import {FS} from '../FS'

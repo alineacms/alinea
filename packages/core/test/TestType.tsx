@@ -1,4 +1,4 @@
-import {text} from '@alineacms/input.text'
+import {text} from '@alinea/input.text'
 import {test} from 'uvu'
 import {type} from '../src'
 

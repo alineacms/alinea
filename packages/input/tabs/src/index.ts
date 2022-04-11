@@ -1,4 +1,4 @@
-import {type} from '@alineacms/core'
+import {type} from '@alinea/core'
 import {createTabs} from './TabsSection'
 export * from './TabsSection'
 export const tabs = createTabs

@@ -1,4 +1,3 @@
-import sqlite from '@alinea/sqlite-wasm'
 import {
   createConfig,
   createId,
@@ -6,10 +5,11 @@ import {
   schema as createSchema,
   type,
   workspace
-} from '@alineacms/core'
-import {text} from '@alineacms/input.text'
-import {SqlJsDriver} from '@alineacms/store/sqlite/drivers/SqlJsDriver'
-import {SqliteStore} from '@alineacms/store/sqlite/SqliteStore'
+} from '@alinea/core'
+import {text} from '@alinea/input.text'
+import sqlite from '@alinea/sqlite-wasm'
+import {SqlJsDriver} from '@alinea/store/sqlite/drivers/SqlJsDriver'
+import {SqliteStore} from '@alinea/store/sqlite/SqliteStore'
 import {Volume} from 'memfs'
 import {test} from 'uvu'
 import {Cache} from '../src'

@@ -1,6 +1,6 @@
-import {Media, Tree, view} from '@alineacms/core'
-import {Store} from '@alineacms/store'
-import {Collection} from '@alineacms/store/Collection'
+import {Media, Tree, view} from '@alinea/core'
+import {Store} from '@alinea/store'
+import {Collection} from '@alinea/store/Collection'
 import {
   Chip,
   Ellipsis,
@@ -9,7 +9,7 @@ import {
   TextLabel,
   Typo,
   VStack
-} from '@alineacms/ui'
+} from '@alinea/ui'
 import {ReactNode} from 'react'
 import {MdInsertDriveFile, MdKeyboardArrowRight} from 'react-icons/md'
 import css from './FileSummary.module.scss'

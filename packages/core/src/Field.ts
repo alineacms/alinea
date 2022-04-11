@@ -1,4 +1,4 @@
-import {InputState} from '@alineacms/editor'
+import {InputState} from '@alinea/editor'
 import type {ComponentType} from 'react'
 import {TextDoc} from './TextDoc'
 import {Value} from './Value'

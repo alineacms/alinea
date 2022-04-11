@@ -1,4 +1,4 @@
-import {ScalarValue} from '@alineacms/core/value/ScalarValue'
+import {ScalarValue} from '@alinea/core/value/ScalarValue'
 import {test} from 'uvu'
 import * as assert from 'uvu/assert'
 import * as Y from 'yjs'

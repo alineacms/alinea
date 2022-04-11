@@ -1,4 +1,4 @@
-import {createId, outcome} from '@alineacms/core'
+import {createId, outcome} from '@alinea/core'
 import git, {AuthCallback, HttpClient, PromiseFsClient} from 'isomorphic-git'
 import {posix as path} from 'path'
 import {Drafts} from '../Drafts'

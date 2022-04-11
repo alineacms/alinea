@@ -1,6 +1,6 @@
-import {Field} from '@alineacms/core'
-import {InputState} from '@alineacms/editor'
-import {HStack, px, Typo} from '@alineacms/ui'
+import {Field} from '@alinea/core'
+import {InputState} from '@alinea/editor'
+import {HStack, px, Typo} from '@alinea/ui'
 import {MdWarning} from 'react-icons/md'
 import useErrorBoundary from 'use-error-boundary'
 

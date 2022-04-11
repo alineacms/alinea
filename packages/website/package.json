@@ -1,22 +1,22 @@
 {
-  "name": "@alineacms/website",
+  "name": "@alinea/website",
   "version": "0.0.0",
   "license": "MIT",
   "private": true,
   "scripts": {
-    "dev": "yarn workspace @alineacms/root build && alinea generate && next dev",
+    "dev": "yarn workspace @alinea/root build && alinea generate && next dev",
     "build": "alinea generate && next build",
     "generate": "alinea generate",
     "start": "next start",
     "lint": "next lint"
   },
   "dependencies": {
-    "@alineacms/auth.passwordless": "0.0.0",
-    "@alineacms/backend": "0.0.0",
-    "@alineacms/cli": "0.0.0",
-    "@alineacms/core": "0.0.0",
-    "@alineacms/dashboard": "0.0.0",
-    "@alineacms/ui": "0.0.0",
+    "@alinea/auth.passwordless": "0.0.0",
+    "@alinea/backend": "0.0.0",
+    "@alinea/cli": "0.0.0",
+    "@alinea/core": "0.0.0",
+    "@alinea/dashboard": "0.0.0",
+    "@alinea/ui": "0.0.0",
     "next": "12.1.0"
   },
   "devDependencies": {

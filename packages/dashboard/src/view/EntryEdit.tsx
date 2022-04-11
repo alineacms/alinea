@@ -1,9 +1,9 @@
-import {docFromEntry, Entry, slugify} from '@alineacms/core'
-import {InputForm, InputState} from '@alineacms/editor'
-import {select} from '@alineacms/input.select'
-import {SelectInput} from '@alineacms/input.select/view'
-import {text} from '@alineacms/input.text'
-import {TextInput} from '@alineacms/input.text/view'
+import {docFromEntry, Entry, slugify} from '@alinea/core'
+import {InputForm, InputState} from '@alinea/editor'
+import {select} from '@alinea/input.select'
+import {SelectInput} from '@alinea/input.select/view'
+import {text} from '@alinea/input.text'
+import {TextInput} from '@alinea/input.text/view'
 import {
   Button,
   fromModule,
@@ -12,8 +12,8 @@ import {
   Loader,
   Typo,
   useObservable
-} from '@alineacms/ui'
-import {Modal} from '@alineacms/ui/Modal'
+} from '@alinea/ui'
+import {Modal} from '@alinea/ui/Modal'
 import {ComponentType, FormEvent, Suspense, useState} from 'react'
 import {MdArrowBack} from 'react-icons/md'
 import {useQuery, useQueryClient} from 'react-query'

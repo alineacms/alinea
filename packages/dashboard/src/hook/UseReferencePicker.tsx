@@ -1,5 +1,5 @@
-import {Reference} from '@alineacms/core/Reference'
-import {Expr} from '@alineacms/store/Expr'
+import {Reference} from '@alinea/core/Reference'
+import {Expr} from '@alinea/store/Expr'
 import {createContext, PropsWithChildren, useContext, useState} from 'react'
 import {ReferencePicker} from '../view/ReferencePicker'
 

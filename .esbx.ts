@@ -73,7 +73,7 @@ const ExtensionPlugin: Plugin = {
       const isLocal =
         path.startsWith('./') ||
         path.startsWith('../') ||
-        (path.startsWith('@alineacms') && path.split('/').length > 2)
+        (path.startsWith('@alinea') && path.split('/').length > 2)
       const hasOutExtension = path.endsWith(outExtension)
       const hasExtension = path.split('/').pop()?.includes('.')
       if (isLocal && hasExtension && !hasOutExtension) return
@@ -156,7 +156,7 @@ const AnalyzePlugin: Plugin = {
 }
 
 const builder = BuildTask.configure({
-  exclude: ['@alineacms/stories', '@alineacms/website', '@alineacms/css'],
+  exclude: ['@alinea/stories', '@alinea/website', '@alinea/css'],
   buildOptions: {
     ...buildOptions,
     plugins: [
@@ -185,7 +185,7 @@ const InternalPackages: Plugin = {
         return [meta.name, location]
       })
     )
-    build.onResolve({filter: /@alineacms\/.*/}, async args => {
+    build.onResolve({filter: /@alinea\/.*/}, async args => {
       const segments = args.path.split('/')
       const pkg = segments.slice(0, 2).join('/')
       const location = paths[pkg]
@@ -213,7 +213,7 @@ async function generate() {
     ...buildOptions,
     outfile,
     external: modules
-      .filter(m => !m.includes('@alineacms'))
+      .filter(m => !m.includes('@alinea'))
       .concat('@alinea/sqlite-wasm'),
     plugins: [
       ...buildOptions.plugins,
@@ -224,7 +224,7 @@ async function generate() {
       })
     ],
     stdin: {
-      contents: `import {generate} from '@alineacms/cli/Generate'
+      contents: `import {generate} from '@alinea/cli/Generate'
       export default generate({cwd: ${JSON.stringify(cwd)}})`,
       resolveDir: process.cwd(),
       sourcefile: 'gen.js'
@@ -250,7 +250,7 @@ const packages = fs.readdirSync('packages/input')
 const aliases = Object.fromEntries(
   packages.map(pkg => {
     return [
-      `@alineacms/input.${pkg}`,
+      `@alinea/input.${pkg}`,
       path.resolve(`packages/input/${pkg}/src/view.ts`)
     ]
   })
@@ -304,7 +304,7 @@ const serverOptions: BuildOptions = {
   bundle: true,
   outdir: 'packages/stories/dist',
   external: modules
-    .filter(m => !m.includes('@alineacms'))
+    .filter(m => !m.includes('@alinea'))
     .concat('@alinea/sqlite-wasm'),
   plugins: [
     ...buildOptions.plugins,
@@ -343,7 +343,7 @@ export const testTask = TestTask.configure({
     ...buildOptions,
     sourcemap: true,
     external: modules
-      .filter(m => !m.includes('@alineacms'))
+      .filter(m => !m.includes('@alinea'))
       .concat('@alinea/sqlite-wasm'),
     plugins: [...buildOptions.plugins, InternalPackages, FixReactIconsPlugin]
   }

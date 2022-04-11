@@ -1,4 +1,4 @@
-import {fromModule} from '@alineacms/ui'
+import {fromModule} from '@alinea/ui'
 import Link from 'next/link'
 import css from './Footer.module.scss'
 

@@ -1,6 +1,6 @@
-import {Entry} from '@alineacms/core/Entry'
-import {generateKeyBetween} from '@alineacms/core/util/FractionalIndexing'
-import {fromModule} from '@alineacms/ui'
+import {Entry} from '@alinea/core/Entry'
+import {generateKeyBetween} from '@alinea/core/util/FractionalIndexing'
+import {fromModule} from '@alinea/ui'
 import {
   closestCenter,
   defaultDropAnimation,

@@ -1,7 +1,7 @@
-//import {PasswordLessLogin} from '@alineacms/auth.passwordless/PasswordLessLogin'
-import {Client} from '@alineacms/client'
-import '@alineacms/css/global.css'
-import {renderDashboard} from '@alineacms/dashboard'
+//import {PasswordLessLogin} from '@alinea/auth.passwordless/PasswordLessLogin'
+import {Client} from '@alinea/client'
+import '@alinea/css/global.css'
+import {renderDashboard} from '@alinea/dashboard'
 import {config} from '../../website/.alinea/config'
 
 renderDashboard({

@@ -7,8 +7,8 @@ import {
   schema as createSchema,
   type,
   workspace
-} from '@alineacms/core'
-import {text} from '@alineacms/input.text'
+} from '@alinea/core'
+import {text} from '@alinea/input.text'
 import {Volume} from 'memfs'
 import {test} from 'uvu'
 import * as assert from 'uvu/assert'

@@ -1,4 +1,4 @@
-import type {InputState} from '@alineacms/editor/InputState'
+import type {InputState} from '@alinea/editor/InputState'
 import {ComponentType, createElement, isValidElement, ReactElement} from 'react'
 import {Field} from './Field'
 import {Lazy} from './util/Lazy'

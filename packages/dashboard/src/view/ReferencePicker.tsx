@@ -1,7 +1,7 @@
-import {createId} from '@alineacms/core'
-import {Entry} from '@alineacms/core/Entry'
-import {Reference} from '@alineacms/core/Reference'
-import {Search} from '@alineacms/core/Search'
+import {createId} from '@alinea/core'
+import {Entry} from '@alinea/core/Entry'
+import {Reference} from '@alinea/core/Reference'
+import {Search} from '@alinea/core/Search'
 import {
   Button,
   fromModule,
@@ -12,8 +12,8 @@ import {
   Stack,
   Typo,
   VStack
-} from '@alineacms/ui'
-import {Modal} from '@alineacms/ui/Modal'
+} from '@alinea/ui'
+import {Modal} from '@alinea/ui/Modal'
 import {Suspense, useCallback, useMemo, useState} from 'react'
 import {
   MdArrowBack,

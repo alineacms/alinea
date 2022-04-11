@@ -1,5 +1,5 @@
-import {Schema, type} from '@alineacms/core'
-import {link} from '@alineacms/input.link'
+import {Schema, type} from '@alinea/core'
+import {link} from '@alinea/input.link'
 
 export const ImageBlockSchema = type('Image', {
   image: link('Link', {type: 'image', max: 1, inline: true})

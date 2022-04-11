@@ -1,4 +1,4 @@
-import {Field} from '@alineacms/core'
+import {Field} from '@alinea/core'
 import {createLink} from './LinkField'
 import {LinkInput} from './LinkInput'
 export * from './LinkField'

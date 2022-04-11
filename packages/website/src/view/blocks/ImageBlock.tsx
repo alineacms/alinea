@@ -1,4 +1,4 @@
-import {fromModule} from '@alineacms/ui'
+import {fromModule} from '@alinea/ui'
 import {decode} from 'blurhash'
 import Image from 'next/image'
 import {useMemo} from 'react'

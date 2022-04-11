@@ -1,5 +1,5 @@
-import {InputState} from '@alineacms/editor'
-import {useForceUpdate} from '@alineacms/ui'
+import {InputState} from '@alinea/editor'
+import {useForceUpdate} from '@alinea/ui'
 import {useEffect, useMemo} from 'react'
 import {useCurrentDraft} from '../hook/UseCurrentDraft'
 

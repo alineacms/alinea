@@ -1,6 +1,6 @@
-import {RichTextMutator} from '@alineacms/core'
-import {TextDoc} from '@alineacms/core/TextDoc'
-import {ListMutator} from '@alineacms/core/value/ListValue'
+import {RichTextMutator} from '@alinea/core'
+import {TextDoc} from '@alinea/core/TextDoc'
+import {ListMutator} from '@alinea/core/value/ListValue'
 
 export interface InputState<T = any> {
   child(field: string): InputState<any>

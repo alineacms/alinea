@@ -7,8 +7,8 @@ import {
   ROOT_KEY,
   Type,
   Value
-} from '@alineacms/core'
-import {observable, Observable} from '@alineacms/ui'
+} from '@alinea/core'
+import {observable, Observable} from '@alinea/ui'
 import * as Y from 'yjs'
 import {EntryProperty} from './EntryProperty'
 

@@ -1,5 +1,5 @@
-import {Media, Reference} from '@alineacms/core'
-import {Store} from '@alineacms/store/Store'
+import {Media, Reference} from '@alinea/core'
+import {Store} from '@alinea/store/Store'
 import {Pages} from '../../../.alinea/web'
 import {ImageBlockSchema} from './ImageBlock.schema'
 

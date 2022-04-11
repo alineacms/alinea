@@ -1,1 +1,1 @@
-import '@alineacms/cli'
+import '@alinea/cli'

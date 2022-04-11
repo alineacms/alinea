@@ -1,4 +1,4 @@
-import {Field, Label, Schema, Value} from '@alineacms/core'
+import {Field, Label, Schema, Value} from '@alinea/core'
 
 export type ListOptions<T> = {
   schema: Schema<T>

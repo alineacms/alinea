@@ -2,7 +2,7 @@
   "bin": {
     "alinea": "./dist/index.js"
   },
-  "name": "@alineacms/cli",
+  "name": "@alinea/cli",
   "version": "0.0.0",
   "license": "MIT",
   "repository": {
@@ -28,8 +28,8 @@
     }
   },
   "dependencies": {
-    "@alineacms/core": "0.0.0",
-    "@alineacms/store": "0.0.0",
+    "@alinea/core": "0.0.0",
+    "@alinea/store": "0.0.0",
     "@esbx/eval": "^0.0.16",
     "@esbx/react": "^0.0.16",
     "base64-arraybuffer": "^1.0.1",

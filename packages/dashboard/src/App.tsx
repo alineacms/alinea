@@ -1,4 +1,4 @@
-import {Session, Workspaces} from '@alineacms/core'
+import {Session, Workspaces} from '@alinea/core'
 import {
   FavIcon,
   Loader,
@@ -6,8 +6,8 @@ import {
   Statusbar,
   useObservable,
   Viewport
-} from '@alineacms/ui'
-import {Sidebar} from '@alineacms/ui/Sidebar'
+} from '@alinea/ui'
+import {Sidebar} from '@alinea/ui/Sidebar'
 //import 'preact/debug'
 import {Fragment, Suspense, useState} from 'react'
 import {Helmet} from 'react-helmet'

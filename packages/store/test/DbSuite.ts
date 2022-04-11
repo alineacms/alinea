@@ -1,5 +1,5 @@
+import {createId} from '@alinea/core'
 import sqlite from '@alinea/sqlite-wasm'
-import {createId} from '@alineacms/core'
 import BetterSqlite3Database from 'better-sqlite3'
 import {BetterSqlite3Driver} from '../src/sqlite/drivers/BetterSqlite3Driver'
 import {SqlJsDriver} from '../src/sqlite/drivers/SqlJsDriver'

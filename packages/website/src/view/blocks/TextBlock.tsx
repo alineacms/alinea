@@ -1,4 +1,4 @@
-import {fromModule} from '@alineacms/ui'
+import {fromModule} from '@alinea/ui'
 import {RichText} from '../layout/RichText'
 import {CodeBlock} from './CodeBlock'
 import {ImageBlock} from './ImageBlock'

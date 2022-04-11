@@ -1,5 +1,5 @@
-import {accumulate, Config} from '@alineacms/core'
-import {Store} from '@alineacms/store'
+import {accumulate, Config} from '@alinea/core'
+import {Store} from '@alinea/store'
 import {Cache} from './Cache'
 import {Drafts} from './Drafts'
 

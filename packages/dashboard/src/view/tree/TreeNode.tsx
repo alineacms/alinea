@@ -1,6 +1,6 @@
-import {Entry} from '@alineacms/core'
-import {Create, fromModule, Stack, useInitialEffect} from '@alineacms/ui'
-import {HStack} from '@alineacms/ui/Stack'
+import {Entry} from '@alinea/core'
+import {Create, fromModule, Stack, useInitialEffect} from '@alinea/ui'
+import {HStack} from '@alinea/ui/Stack'
 import {
   AnimateLayoutChanges,
   defaultAnimateLayoutChanges,

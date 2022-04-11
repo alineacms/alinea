@@ -1,4 +1,4 @@
-import {fromModule, HStack, LogoShape, Stack} from '@alineacms/ui'
+import {fromModule, HStack, LogoShape, Stack} from '@alinea/ui'
 import Link from 'next/link'
 import {AiFillTwitterCircle} from 'react-icons/ai'
 import {FiLayers} from 'react-icons/fi'

@@ -1,8 +1,8 @@
-import {Schema, type} from '@alineacms/core'
-import {link} from '@alineacms/input.link'
-import {path} from '@alineacms/input.path'
-import {tab, tabs} from '@alineacms/input.tabs'
-import {text} from '@alineacms/input.text'
+import {Schema, type} from '@alinea/core'
+import {link} from '@alinea/input.link'
+import {path} from '@alinea/input.path'
+import {tab, tabs} from '@alinea/input.tabs'
+import {text} from '@alinea/input.text'
 
 export const HomePageSchema = type(
   'Home',

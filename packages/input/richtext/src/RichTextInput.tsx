@@ -1,6 +1,6 @@
-import {createId, Schema, Type} from '@alineacms/core'
-import {Toolbar} from '@alineacms/dashboard'
-import {InputForm, InputLabel, InputState, useInput} from '@alineacms/editor'
+import {createId, Schema, Type} from '@alinea/core'
+import {Toolbar} from '@alinea/dashboard'
+import {InputForm, InputLabel, InputState, useInput} from '@alinea/editor'
 import {
   Card,
   Create,
@@ -10,7 +10,7 @@ import {
   IconButton,
   px,
   TextLabel
-} from '@alineacms/ui'
+} from '@alinea/ui'
 import {mergeAttributes, Node} from '@tiptap/core'
 import Collaboration from '@tiptap/extension-collaboration'
 import FloatingMenuExtension from '@tiptap/extension-floating-menu'

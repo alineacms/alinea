@@ -71,7 +71,7 @@ export function Pane({
   ...props
 }: PaneProps) {
   const container = useRef<HTMLDivElement>(null)
-  const persistenceId = `@alineacms/ui/pane-${id}`
+  const persistenceId = `@alinea/ui/pane-${id}`
   const width =
     Number(window?.localStorage?.getItem(persistenceId)) || defaultWidth
   const divider = (

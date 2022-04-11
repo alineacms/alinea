@@ -1,4 +1,4 @@
-import {fromModule, Pane} from '@alineacms/ui'
+import {fromModule, Pane} from '@alinea/ui'
 import {PropsWithChildren} from 'react'
 import css from './Preview.module.scss'
 

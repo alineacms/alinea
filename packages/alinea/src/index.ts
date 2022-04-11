@@ -1,22 +1,22 @@
 // Config creation
 // Backend
-export {Backend, Server} from '@alineacms/backend'
-export {createConfig, schema, Tree, workspace} from '@alineacms/core'
-export type {Config, Schema, TextDoc, Type, Workspace} from '@alineacms/core'
+export {Backend, Server} from '@alinea/backend'
+export {createConfig, schema, Tree, workspace} from '@alinea/core'
+export type {Config, Schema, TextDoc, Type, Workspace} from '@alinea/core'
 // Dashboard
-export {MediaSchema} from '@alineacms/dashboard/schema/MediaSchema'
-export {BrowserPreview} from '@alineacms/dashboard/view/preview/BrowserPreview'
+export {MediaSchema} from '@alinea/dashboard/schema/MediaSchema'
+export {BrowserPreview} from '@alinea/dashboard/view/preview/BrowserPreview'
 // Included inputs
-export {code} from '@alineacms/input.code'
-export {link} from '@alineacms/input.link'
-export {list} from '@alineacms/input.list'
-export {number} from '@alineacms/input.number'
-export {path} from '@alineacms/input.path'
-export {richText} from '@alineacms/input.richtext'
-export {select} from '@alineacms/input.select'
-export {tab, tabs} from '@alineacms/input.tabs'
-export {text} from '@alineacms/input.text'
-export type {Collection, Cursor, Expr} from '@alineacms/store'
+export {code} from '@alinea/input.code'
+export {link} from '@alinea/input.link'
+export {list} from '@alinea/input.list'
+export {number} from '@alinea/input.number'
+export {path} from '@alinea/input.path'
+export {richText} from '@alinea/input.richtext'
+export {select} from '@alinea/input.select'
+export {tab, tabs} from '@alinea/input.tabs'
+export {text} from '@alinea/input.text'
+export type {Collection, Cursor, Expr} from '@alinea/store'
 
-import type {Store} from '@alineacms/store'
+import type {Store} from '@alinea/store'
 export type TypeOf<T> = Store.TypeOf<T>

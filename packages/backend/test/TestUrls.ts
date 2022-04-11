@@ -1,4 +1,4 @@
-import {parentUrl, walkUrl} from '@alineacms/backend/util/Urls'
+import {parentUrl, walkUrl} from '@alinea/backend/util/Urls'
 import {test} from 'uvu'
 import * as assert from 'uvu/assert'
 

@@ -1,4 +1,4 @@
-import {Type} from '@alineacms/core'
+import {Type} from '@alinea/core'
 import {InputState} from '../InputState'
 import {Fields} from './Fields'
 

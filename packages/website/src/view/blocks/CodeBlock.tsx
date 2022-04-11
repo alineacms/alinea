@@ -1,4 +1,4 @@
-import {fromModule, Typo} from '@alineacms/ui'
+import {fromModule, Typo} from '@alinea/ui'
 import css from './CodeBlock.module.scss'
 import {CodeBlockSchema} from './CodeBlock.schema'
 
