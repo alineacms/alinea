@@ -1,8 +1,8 @@
 {
+  "private": true,
   "name": "@alinea/website",
   "version": "0.0.0",
   "license": "MIT",
-  "private": true,
   "scripts": {
     "dev": "yarn workspace @alinea/root build && alinea generate && next dev",
     "build": "alinea generate && next build",

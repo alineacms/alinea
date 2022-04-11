@@ -1,8 +1,8 @@
 {
+  "private": true,
   "name": "@alinea/root",
   "version": "0.0.0",
   "license": "MIT",
-  "private": true,
   "scripts": {
     "dev": "run-p dev:compile dev:check",
     "dev:compile": "esbx dev",
@@ -10,6 +10,7 @@
     "build": "esbx build",
     "test": "esbx test",
     "clean": "esbx clean",
+    "bump": "esbx version",
     "publish:all": "yarn build && yarn workspaces foreach --no-private npm publish --tolerate-republish"
   },
   "files": [],
