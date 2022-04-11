@@ -87,18 +87,23 @@ const ExtensionPlugin: Plugin = {
         (path.startsWith('@alinea') && path.split('/').length > 2)
       const hasOutExtension = path.endsWith(outExtension)
       const hasExtension = path.split('/').pop()?.includes('.')
-      if (isLocal && hasExtension && !hasOutExtension) return
-      if (hasOutExtension || !isLocal) {
+      if (!path.startsWith('.')) {
         const segments = path.split('/')
         const pkg = path.startsWith('@')
           ? `${segments[0]}/${segments[1]}`
           : segments[0]
-        if (!dependencies.has(pkg) && !seen.has(pkg)) {
+        if (
+          !pkg.startsWith('node:') &&
+          pkg !== 'react' &&
+          !dependencies.has(pkg) &&
+          !seen.has(pkg)
+        ) {
           console.info(`WARNING: ${pkg} is not a dependency of ${info.name}`)
         }
         seen.add(pkg)
-        return {path, external: true}
       }
+      if (isLocal && hasExtension && !hasOutExtension) return
+      if (hasOutExtension || !isLocal) return {path, external: true}
       return {path: path + outExtension, external: true}
     })
 
@@ -190,7 +195,7 @@ const builder = BuildTask.configure({
     plugins: [
       ...buildOptions.plugins,
       BundleCSSPlugin,
-      FixReactIconsPlugin,
+      // FixReactIconsPlugin,
       ExtensionPlugin
     ]
   }

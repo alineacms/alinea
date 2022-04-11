@@ -1,10 +1,10 @@
 import {Entry, Schema, View} from '@alinea/core'
-import {useExplorer} from '@alinea/dashboard/hook/UseExplorer'
-import {useFocusListItem} from '@alinea/dashboard/hook/UseFocusList'
 import {fromModule} from '@alinea/ui'
 import {MdCheckBox, MdCheckBoxOutlineBlank} from 'react-icons/md'
 import {Link} from 'react-router-dom'
 import {useDashboard} from '../../hook/UseDashboard'
+import {useExplorer} from '../../hook/UseExplorer'
+import {useFocusListItem} from '../../hook/UseFocusList'
 import css from './ExplorerItem.module.scss'
 
 const styles = fromModule(css)

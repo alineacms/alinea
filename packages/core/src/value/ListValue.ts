@@ -1,7 +1,7 @@
-import {generateKeyBetween} from '@alinea/core/util/FractionalIndexing'
 import * as Y from 'yjs'
 import {createError} from '../ErrorWithCode'
 import {createId} from '../Id'
+import {generateKeyBetween} from '../util/FractionalIndexing'
 import {Value} from '../Value'
 import {RecordValue} from './RecordValue'
 

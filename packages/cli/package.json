@@ -28,12 +28,18 @@
     }
   },
   "dependencies": {
+    "@alinea/backend": "0.0.0",
     "@alinea/core": "0.0.0",
     "@alinea/store": "0.0.0",
     "@esbx/eval": "^0.0.16",
     "@esbx/react": "^0.0.16",
     "base64-arraybuffer": "^1.0.1",
+    "better-sqlite3": "^7.5.1",
+    "compression": "^1.7.4",
     "dirname-filename-esm": "^1.1.1",
+    "esbuild": "^0.14.11",
+    "express": "^4.17.1",
+    "fs-extra": "^10.0.0",
     "leb128": "^0.0.5",
     "sade": "^1.7.4"
   },

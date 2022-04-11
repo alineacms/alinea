@@ -1,7 +1,7 @@
 import {Config, createError, createId, Entry, slugify} from '@alinea/core'
 import {Octokit} from '@octokit/rest'
+import {posix as path} from 'node:path'
 import createOrUpdateFiles from 'octokit-commit-multiple-files/create-or-update-files.js'
-import {posix as path} from 'path'
 import {Data} from '../Data'
 import {Loader} from '../Loader'
 

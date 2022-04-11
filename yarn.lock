@@ -9,21 +9,24 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@alinea/auth.passwordless@workspace:packages/auth/passwordless"
   dependencies:
+    "@alinea/backend": 0.0.0
+    "@alinea/client": 0.0.0
     "@alinea/core": 0.0.0
+    "@alinea/dashboard": 0.0.0
+    "@alinea/ui": 0.0.0
     "@types/cookie-parser": ^1.4.2
     "@types/express": ^4.17.13
     "@types/express-jwt": ^6.0.2
     "@types/jsonwebtoken": ^8.5.5
     "@types/nodemailer": ^6.4.4
-    body-parser: ^1.19.0
-    cookie-parser: ^1.4.5
     express: ^4.17.1
     express-jwt: ^6.1.0
     jsonwebtoken: ^8.5.1
     jwt-decode: ^3.1.2
-    nodemailer: ^6.6.5
-    querystring: ^0.2.1
+    react-helmet: ^6.1.0
     react-icons: ^4.3.1
+  peerDependencies:
+    react: "*"
   languageName: unknown
   linkType: soft
 
@@ -44,24 +47,25 @@ __metadata:
     "@types/md5": ^2.3.2
     "@types/serve-handler": ^6.1.1
     "@types/ws": ^8.2.0
-    auto-bind: ^5.0.1
+    base64-arraybuffer: ^1.0.1
     busboy: ^1.4.0
     compression: ^1.7.4
     content-type: ^1.0.4
     convert-hrtime: ^5.0.0
     cors: ^2.8.5
+    express: ^4.17.1
     firebase-admin: ^10.0.2
     ioredis: ^4.28.5
     isomorphic-git: ^1.10.5
     js-yaml: ^4.1.0
     jsonwebtoken: ^8.5.1
+    lib0: ^0.2.42
     md5: ^2.3.0
     octokit-commit-multiple-files: ^3.2.1
-    p-limit: ^4.0.0
     pretty-ms: ^7.0.1
     raw-body: ^2.4.1
     server-timing: ^3.3.1
-    y-protocols: ^1.0.5
+    yjs: ^13.5.16
   languageName: unknown
   linkType: soft
 
@@ -69,6 +73,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@alinea/cli@workspace:packages/cli"
   dependencies:
+    "@alinea/backend": 0.0.0
     "@alinea/core": 0.0.0
     "@alinea/store": 0.0.0
     "@esbx/eval": ^0.0.16
@@ -76,7 +81,12 @@ __metadata:
     "@types/fs-extra": ^9.0.13
     "@types/sade": ^1.7.3
     base64-arraybuffer: ^1.0.1
+    better-sqlite3: ^7.5.1
+    compression: ^1.7.4
     dirname-filename-esm: ^1.1.1
+    esbuild: ^0.14.11
+    express: ^4.17.1
+    fs-extra: ^10.0.0
     leb128: ^0.0.5
     sade: ^1.7.4
   bin:
@@ -98,11 +108,16 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@alinea/core@workspace:packages/core"
   dependencies:
+    "@alinea/store": 0.0.0
     "@types/react": ^17.0.20
     base-x: ^3.0.8
+    base64-arraybuffer: ^1.0.1
+    buffer: ^6.0.3
     get-random-values: ^1.2.2
     serialize-error: ^9.0.0
     yjs: ^13.5.16
+  peerDependencies:
+    react: "*"
   languageName: unknown
   linkType: soft
 
@@ -116,15 +131,22 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@alinea/dashboard@workspace:packages/dashboard"
   dependencies:
-    "@alinea/client": 0.0.0
     "@alinea/core": 0.0.0
     "@alinea/editor": 0.0.0
+    "@alinea/input.select": 0.0.0
+    "@alinea/input.text": 0.0.0
+    "@alinea/store": 0.0.0
+    "@alinea/ui": 0.0.0
+    "@dnd-kit/core": ^3.1.1
+    "@dnd-kit/sortable": ^4.0.0
+    "@dnd-kit/utilities": ^2.0.0
     "@react-hook/size": ^2.1.2
     "@types/react": ^17.0.20
     "@types/react-dom": ^17.0.9
     "@types/react-helmet": ^6.1.2
     "@types/react-router": ^5.1.16
     "@types/react-router-dom": ^5.3.0
+    base64-arraybuffer: ^1.0.1
     blurhash: ^1.1.5
     fast-average-color: ^7.0.1
     image-blob-reduce: ^4.1.0
@@ -135,7 +157,11 @@ __metadata:
     react-router: ^5.2.1
     react-router-dom: ^5.3.0
     react-tiny-virtual-list: ^2.2.0
-    use-error-boundary: ^2.0.6
+    y-webrtc: ^10.2.0
+    yjs: ^13.5.16
+  peerDependencies:
+    react: "*"
+    react-dom: "*"
   languageName: unknown
   linkType: soft
 
@@ -144,8 +170,12 @@ __metadata:
   resolution: "@alinea/editor@workspace:packages/editor"
   dependencies:
     "@alinea/core": 0.0.0
-    y-webrtc: ^10.2.0
+    "@alinea/ui": 0.0.0
+    react-icons: ^4.3.1
+    use-error-boundary: ^2.0.6
     yjs: ^13.5.16
+  peerDependencies:
+    react: "*"
   languageName: unknown
   linkType: soft
 
@@ -157,6 +187,9 @@ __metadata:
     "@alinea/editor": 0.0.0
     "@alinea/ui": 0.0.0
     react-autosize-textarea: ^7.1.0
+    react-icons: ^4.3.1
+  peerDependencies:
+    react: "*"
   languageName: unknown
   linkType: soft
 
@@ -165,13 +198,17 @@ __metadata:
   resolution: "@alinea/input.link@workspace:packages/input/link"
   dependencies:
     "@alinea/core": 0.0.0
+    "@alinea/dashboard": 0.0.0
     "@alinea/editor": 0.0.0
+    "@alinea/store": 0.0.0
     "@alinea/ui": 0.0.0
     "@dnd-kit/core": ^3.1.1
     "@dnd-kit/sortable": ^4.0.0
     "@dnd-kit/utilities": ^2.0.0
     react-icons: ^4.3.1
-    yjs: ^13.5.16
+    react-query: ^3.34.12
+  peerDependencies:
+    react: "*"
   languageName: unknown
   linkType: soft
 
@@ -186,7 +223,8 @@ __metadata:
     "@dnd-kit/sortable": ^4.0.0
     "@dnd-kit/utilities": ^2.0.0
     react-icons: ^4.3.1
-    yjs: ^13.5.16
+  peerDependencies:
+    react: "*"
   languageName: unknown
   linkType: soft
 
@@ -197,6 +235,8 @@ __metadata:
     "@alinea/core": 0.0.0
     "@alinea/editor": 0.0.0
     "@alinea/ui": 0.0.0
+  peerDependencies:
+    react: "*"
   languageName: unknown
   linkType: soft
 
@@ -205,8 +245,12 @@ __metadata:
   resolution: "@alinea/input.path@workspace:packages/input/path"
   dependencies:
     "@alinea/core": 0.0.0
+    "@alinea/dashboard": 0.0.0
     "@alinea/editor": 0.0.0
     "@alinea/ui": 0.0.0
+    react-icons: ^4.3.1
+  peerDependencies:
+    react: "*"
   languageName: unknown
   linkType: soft
 
@@ -215,14 +259,17 @@ __metadata:
   resolution: "@alinea/input.richtext@workspace:packages/input/richtext"
   dependencies:
     "@alinea/core": 0.0.0
+    "@alinea/dashboard": 0.0.0
     "@alinea/editor": 0.0.0
     "@alinea/ui": 0.0.0
-    "@tiptap/extension-bubble-menu": ^2.0.0-beta.42
+    "@tiptap/core": ^2.0.0-beta.125
     "@tiptap/extension-collaboration": ^2.0.0-beta.25
-    "@tiptap/extension-collaboration-cursor": ^2.0.0-beta.25
     "@tiptap/extension-floating-menu": ^2.0.0-beta.36
     "@tiptap/react": ^2.0.0-beta.83
     "@tiptap/starter-kit": ^2.0.0-beta.127
+    react-icons: ^4.3.1
+  peerDependencies:
+    react: "*"
   languageName: unknown
   linkType: soft
 
@@ -233,6 +280,9 @@ __metadata:
     "@alinea/core": 0.0.0
     "@alinea/editor": 0.0.0
     "@alinea/ui": 0.0.0
+    react-icons: ^4.3.1
+  peerDependencies:
+    react: "*"
   languageName: unknown
   linkType: soft
 
@@ -243,6 +293,8 @@ __metadata:
     "@alinea/core": 0.0.0
     "@alinea/editor": 0.0.0
     "@alinea/ui": 0.0.0
+  peerDependencies:
+    react: "*"
   languageName: unknown
   linkType: soft
 
@@ -254,6 +306,9 @@ __metadata:
     "@alinea/editor": 0.0.0
     "@alinea/ui": 0.0.0
     react-autosize-textarea: ^7.1.0
+    react-icons: ^4.3.1
+  peerDependencies:
+    react: "*"
   languageName: unknown
   linkType: soft
 
@@ -307,6 +362,8 @@ __metadata:
     "@types/better-sqlite3": ^5.4.1
     "@types/sql.js": ^1.4.2
     better-sqlite3: ^7.5.1
+    convert-hrtime: ^5.0.0
+    pretty-ms: ^7.0.1
   languageName: unknown
   linkType: soft
 
@@ -329,7 +386,12 @@ __metadata:
     "@radix-ui/react-dropdown-menu": ^0.1.0
     "@radix-ui/react-tabs": ^0.1.0
     color2k: ^1.2.4
+    react-helmet: ^6.1.0
     react-icons: ^4.3.1
+  peerDependencies:
+    react: "*"
+    react-dom: "*"
+    react-router-dom: "*"
   languageName: unknown
   linkType: soft
 
@@ -1564,17 +1626,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@tiptap/extension-collaboration-cursor@npm:^2.0.0-beta.25":
-  version: 2.0.0-beta.25
-  resolution: "@tiptap/extension-collaboration-cursor@npm:2.0.0-beta.25"
-  dependencies:
-    y-prosemirror: ^1.0.9
-  peerDependencies:
-    "@tiptap/core": ^2.0.0-beta.1
-  checksum: 49a6556b4840084c23ef96d7126fca6b32e2c0e163498ac8a64c106d303f33d64917b97d59a4653007ac4052c2526a64f075474244cd94158d3901e445ba9256
-  languageName: node
-  linkType: hard
-
 "@tiptap/extension-collaboration@npm:^2.0.0-beta.25":
   version: 2.0.0-beta.25
   resolution: "@tiptap/extension-collaboration@npm:2.0.0-beta.25"
@@ -2395,10 +2446,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "alinea@workspace:packages/alinea"
   dependencies:
-    "@alinea/auth.passwordless": 0.0.0
     "@alinea/backend": 0.0.0
     "@alinea/cli": 0.0.0
-    "@alinea/client": 0.0.0
     "@alinea/core": 0.0.0
     "@alinea/css": 0.0.0
     "@alinea/dashboard": 0.0.0
@@ -2552,13 +2601,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"auto-bind@npm:^5.0.1":
-  version: 5.0.1
-  resolution: "auto-bind@npm:5.0.1"
-  checksum: 44a6d8d040c4382e761922f8fa1b044e18ddefbc855fecee0c76ec6b4e6fc74adda21026bc86e190833e05f52b4b6615372c2a83a734858f8395b1e2a98b253a
-  languageName: node
-  linkType: hard
-
 "autoprefixer@npm:^10.4.2":
   version: 10.4.2
   resolution: "autoprefixer@npm:10.4.2"
@@ -2694,7 +2736,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"body-parser@npm:1.19.0, body-parser@npm:^1.19.0":
+"body-parser@npm:1.19.0":
   version: 1.19.0
   resolution: "body-parser@npm:1.19.0"
   dependencies:
@@ -3100,16 +3142,6 @@ __metadata:
   version: 5.0.0
   resolution: "convert-hrtime@npm:5.0.0"
   checksum: 5245ad1ac6dd57b2d87624ae0eeac1d2a74812a6631208c09368bef787a28e7dbfa736cddaa9c8a0c425cb240437ea506afec7b9684ff617004d06a551f26c87
-  languageName: node
-  linkType: hard
-
-"cookie-parser@npm:^1.4.5":
-  version: 1.4.5
-  resolution: "cookie-parser@npm:1.4.5"
-  dependencies:
-    cookie: 0.4.0
-    cookie-signature: 1.0.6
-  checksum: 09b41e191af8e472229b53468b858a53f64a355b438ecb56a38be2a729b862b8233041e5af102115caebae534d399813ec7270b68a949bba3b987b38555c30b6
   languageName: node
   linkType: hard
 
@@ -6189,13 +6221,6 @@ fsevents@~2.3.2:
   languageName: node
   linkType: hard
 
-"nodemailer@npm:^6.6.5":
-  version: 6.6.5
-  resolution: "nodemailer@npm:6.6.5"
-  checksum: 17daaeced44e6cdf53527018986ed090e950448fbef89608220a236e1d3e081e76eb8264edbdf8b7bd5d26f096fb86044576015b5000c59dc83f3712282c46da
-  languageName: node
-  linkType: hard
-
 "nopt@npm:^5.0.0":
   version: 5.0.0
   resolution: "nopt@npm:5.0.0"
@@ -7082,13 +7107,6 @@ fsevents@~2.3.2:
   version: 6.7.0
   resolution: "qs@npm:6.7.0"
   checksum: dfd5f6adef50e36e908cfa70a6233871b5afe66fbaca37ecc1da352ba29eb2151a3797991948f158bb37fccde51bd57845cb619a8035287bfc24e4591172c347
-  languageName: node
-  linkType: hard
-
-"querystring@npm:^0.2.1":
-  version: 0.2.1
-  resolution: "querystring@npm:0.2.1"
-  checksum: 7b83b45d641e75fd39cd6625ddfd44e7618e741c61e95281b57bbae8fde0afcc12cf851924559e5cc1ef9baa3b1e06e22b164ea1397d65dd94b801f678d9c8ce
   languageName: node
   linkType: hard
 

@@ -36,7 +36,7 @@
     "@dnd-kit/utilities": "^2.0.0",
     "react-icons": "^4.3.1"
   },
-  "devDependencies": {
-    "yjs": "^13.5.16"
+  "peerDependencies": {
+    "react": "*"
   }
 }

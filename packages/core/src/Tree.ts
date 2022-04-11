@@ -1,5 +1,5 @@
-import {Entry} from '@alinea/core'
-import {EV} from '@alinea/store'
+import type {EV} from '@alinea/store'
+import {Entry} from './Entry'
 
 export namespace Tree {
   export function siblings(id: EV<string>) {

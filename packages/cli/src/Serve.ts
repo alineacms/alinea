@@ -3,9 +3,9 @@ import {FileData} from '@alinea/backend/data/FileData'
 import {FileDrafts} from '@alinea/backend/drafts/FileDrafts'
 import compression from 'compression'
 import express from 'express'
-import {existsSync} from 'fs'
-import fs from 'fs/promises'
-import path from 'path'
+import {existsSync} from 'node:fs'
+import fs from 'node:fs/promises'
+import path from 'node:path'
 import {generate} from './Generate'
 
 export type ServeOptions = {

@@ -22,6 +22,10 @@
       ]
     }
   },
+  "dependencies": {
+    "convert-hrtime": "^5.0.0",
+    "pretty-ms": "^7.0.1"
+  },
   "devDependencies": {
     "@types/better-sqlite3": "^5.4.1",
     "@types/sql.js": "^1.4.2",

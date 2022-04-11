@@ -14,7 +14,7 @@ import {dirname} from 'dirname-filename-esm'
 import {build, BuildResult, Plugin} from 'esbuild'
 import fs from 'fs-extra'
 import {signed, unsigned} from 'leb128'
-import path from 'path'
+import path from 'node:path'
 
 const __dirname = dirname(import.meta)
 

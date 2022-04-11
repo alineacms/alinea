@@ -18,15 +18,16 @@
     }
   },
   "dependencies": {
+    "@alinea/backend": "0.0.0",
+    "@alinea/client": "0.0.0",
     "@alinea/core": "0.0.0",
-    "body-parser": "^1.19.0",
-    "cookie-parser": "^1.4.5",
+    "@alinea/dashboard": "0.0.0",
+    "@alinea/ui": "0.0.0",
     "express": "^4.17.1",
     "express-jwt": "^6.1.0",
     "jsonwebtoken": "^8.5.1",
     "jwt-decode": "^3.1.2",
-    "nodemailer": "^6.6.5",
-    "querystring": "^0.2.1",
+    "react-helmet": "^6.1.0",
     "react-icons": "^4.3.1"
   },
   "devDependencies": {
@@ -35,5 +36,8 @@
     "@types/express-jwt": "^6.0.2",
     "@types/jsonwebtoken": "^8.5.5",
     "@types/nodemailer": "^6.4.4"
+  },
+  "peerDependencies": {
+    "react": "*"
   }
 }

@@ -29,7 +29,12 @@
   },
   "dependencies": {
     "@alinea/core": "0.0.0",
+    "@alinea/dashboard": "0.0.0",
     "@alinea/editor": "0.0.0",
-    "@alinea/ui": "0.0.0"
+    "@alinea/ui": "0.0.0",
+    "react-icons": "^4.3.1"
+  },
+  "peerDependencies": {
+    "react": "*"
   }
 }

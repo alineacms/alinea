@@ -1,5 +1,5 @@
 import {createId, future} from '@alinea/core'
-import {posix as path} from 'path'
+import {posix as path} from 'node:path'
 import * as Y from 'yjs'
 import {Drafts} from '../Drafts'
 import {FS} from '../FS'

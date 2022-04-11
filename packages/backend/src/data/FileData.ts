@@ -7,7 +7,7 @@ import {
   outcome,
   slugify
 } from '@alinea/core'
-import {posix as path} from 'path'
+import {posix as path} from 'node:path'
 import {Data} from '../Data'
 import {FS} from '../FS'
 import {Loader} from '../Loader'

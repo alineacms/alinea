@@ -4,7 +4,7 @@ import {
   createServer as createHttpServer,
   IncomingMessage,
   ServerResponse
-} from 'http'
+} from 'node:http'
 import {Backend, BackendOptions} from './Backend'
 import {createServerRouter} from './router/ServerRouter'
 import {finishResponse} from './util/FinishResponse'

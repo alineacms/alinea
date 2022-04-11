@@ -1,8 +1,8 @@
-import {fromModule} from '@alinea/ui'
 import {HTMLProps, PropsWithChildren} from 'react'
 import {MdClose} from 'react-icons/md'
 import {IconButton} from './IconButton'
 import css from './Modal.module.scss'
+import {fromModule} from './util/Styler'
 
 const styles = fromModule(css)
 
