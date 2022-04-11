@@ -67,6 +67,17 @@ const ExtensionPlugin: Plugin = {
   name: 'extension',
   setup(build) {
     build.initialOptions.bundle = true
+    const cwd = build.initialOptions.absWorkingDir
+    const info = getManifest(cwd)
+    function getDeps(from: Record<string, string> | undefined) {
+      return from ? Object.keys(from) : []
+    }
+    const dependencies = new Set(
+      getDeps(info.dependencies)
+        .concat(getDeps(info.peerDependencies))
+        .concat(getDeps(info.optionalDependencies))
+    )
+    const seen = new Set()
     const outExtension = build.initialOptions.outExtension?.['.js'] || '.js'
     build.onResolve({filter: /.*/}, ({kind, path}) => {
       if (kind === 'entry-point') return
@@ -77,8 +88,25 @@ const ExtensionPlugin: Plugin = {
       const hasOutExtension = path.endsWith(outExtension)
       const hasExtension = path.split('/').pop()?.includes('.')
       if (isLocal && hasExtension && !hasOutExtension) return
-      if (hasOutExtension || !isLocal) return {path, external: true}
+      if (hasOutExtension || !isLocal) {
+        const segments = path.split('/')
+        const pkg = path.startsWith('@')
+          ? `${segments[0]}/${segments[1]}`
+          : segments[0]
+        if (!dependencies.has(pkg) && !seen.has(pkg)) {
+          console.info(`WARNING: ${pkg} is not a dependency of ${info.name}`)
+        }
+        seen.add(pkg)
+        return {path, external: true}
+      }
       return {path: path + outExtension, external: true}
+    })
+
+    build.onEnd(() => {
+      const unused = [...dependencies].filter(x => !seen.has(x))
+      for (const pkg of unused) {
+        console.info(`WARNING: ${pkg} is defined, but unused in ${info.name}`)
+      }
     })
   }
 }
