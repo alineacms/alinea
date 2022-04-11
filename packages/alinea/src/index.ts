@@ -1,5 +1,5 @@
 // Config creation
-export {createConfig, schema, Tree, workspace} from '@alinea/core'
+export {createConfig, schema, type, Tree, workspace} from '@alinea/core'
 export type {Config, Schema, TextDoc, Type, Workspace} from '@alinea/core'
 
 // Backend
