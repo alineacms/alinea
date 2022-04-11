@@ -3,6 +3,7 @@
 import sade from 'sade'
 import {version} from '../package.json'
 import {generate} from './Generate'
+import {init} from './Init'
 import {ensureNodeResolution} from './util/EnsureNodeResolution'
 
 const prog = sade('alinea')
@@ -19,6 +20,11 @@ prog
   .action(args => {
     ensureNodeResolution()
     return generate({configFile: args.config, watch: args.watch})
+  })
+  .command('init <dir>')
+  .action((dir, args) => {
+    ensureNodeResolution()
+    return init({dir, ...args})
   })
 
 prog.parse(process.argv)

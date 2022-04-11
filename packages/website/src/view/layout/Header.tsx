@@ -16,7 +16,7 @@ export function Header({links}: HeaderProps) {
         <Link href="/">
           <a className={styles.root.logo()}>
             <HStack center gap={9}>
-              <LogoShape foreground="white" background="#EF437C">
+              <LogoShape foreground="white" background="#4a63e7">
                 <FiLayers />
               </LogoShape>
               <Logo className={styles.root.logo.text()} />

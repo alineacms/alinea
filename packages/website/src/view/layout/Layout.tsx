@@ -16,7 +16,7 @@ export function Layout({
 }: PropsWithChildren<LayoutProps>) {
   return (
     <>
-      <FavIcon color="#EF437C" />
+      <FavIcon color="#4a63e7" />
       <Head>
         <title>{meta.title}</title>
         <style key="f-size">
