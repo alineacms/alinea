@@ -302,9 +302,6 @@ const devOptions: BuildOptions = {
   plugins: [
     ...buildOptions.plugins,
     AliasPlugin.configure(aliases),
-    AliasPlugin.configure({
-      path: path.resolve('node_modules/path-browserify/index.js')
-    }),
     InternalPackages,
     ReporterPlugin.configure({name: 'Client'}),
     ReloadPlugin,

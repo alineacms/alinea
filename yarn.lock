@@ -57,6 +57,7 @@ __metadata:
     firebase-admin: ^10.0.2
     ioredis: ^4.28.5
     isomorphic-git: ^1.10.5
+    isomorphic-path: ^2.0.1
     js-yaml: ^4.1.0
     jsonwebtoken: ^8.5.1
     lib0: ^0.2.42
@@ -5167,6 +5168,15 @@ fsevents@~2.3.2:
   languageName: node
   linkType: hard
 
+"isomorphic-path@npm:^2.0.1":
+  version: 2.0.1
+  resolution: "isomorphic-path@npm:2.0.1"
+  dependencies:
+    path: ^0.12.7
+  checksum: 40d625e470d0361ef909f987227bc3f98bfc986426092064319cb45306d128d18a358f5a88db6e100dadabbba452eff73538b0a075661dbe43db17dbe5cb88f9
+  languageName: node
+  linkType: hard
+
 "isomorphic.js@npm:^0.2.4":
   version: 0.2.4
   resolution: "isomorphic.js@npm:0.2.4"
@@ -6539,6 +6549,16 @@ fsevents@~2.3.2:
   languageName: node
   linkType: hard
 
+"path@npm:^0.12.7":
+  version: 0.12.7
+  resolution: "path@npm:0.12.7"
+  dependencies:
+    process: ^0.11.1
+    util: ^0.10.3
+  checksum: 5dedb71e78fc008fcba797defc0b4e1cf06c1f18e0a631e03ba5bb505136f587ff017afc14f9a3d481cbe77aeedff7dc0c1d2ce4d820c1ebf3c4281ca49423a1
+  languageName: node
+  linkType: hard
+
 "pend@npm:~1.2.0":
   version: 1.2.0
   resolution: "pend@npm:1.2.0"
@@ -6841,7 +6861,7 @@ fsevents@~2.3.2:
   languageName: node
   linkType: hard
 
-"process@npm:^0.11.10":
+"process@npm:^0.11.1, process@npm:^0.11.10":
   version: 0.11.10
   resolution: "process@npm:0.11.10"
   checksum: bfcce49814f7d172a6e6a14d5fa3ac92cc3d0c3b9feb1279774708a719e19acd673995226351a082a9ae99978254e320ccda4240ddc474ba31a76c79491ca7c3
@@ -8698,6 +8718,15 @@ resolve@^1.10.0:
   version: 1.0.2
   resolution: "util-deprecate@npm:1.0.2"
   checksum: 474acf1146cb2701fe3b074892217553dfcf9a031280919ba1b8d651a068c9b15d863b7303cb15bd00a862b498e6cf4ad7b4a08fb134edd5a6f7641681cb54a2
+  languageName: node
+  linkType: hard
+
+"util@npm:^0.10.3":
+  version: 0.10.4
+  resolution: "util@npm:0.10.4"
+  dependencies:
+    inherits: 2.0.3
+  checksum: 913f9a90d05a60e91f91af01b8bd37e06bca4cc02d7b49e01089f9d5b78be2fffd61fb1a41b517de7238c5fc7337fa939c62d1fb4eb82e014894c7bee6637aaf
   languageName: node
   linkType: hard
 
