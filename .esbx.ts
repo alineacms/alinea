@@ -97,7 +97,6 @@ const ExtensionPlugin: Plugin = {
         if (
           !pkg.startsWith('node:') &&
           pkg !== 'react' &&
-          pkg !== 'react-icons' &&
           !dependencies.has(pkg) &&
           !seen.has(pkg)
         ) {
@@ -113,9 +112,10 @@ const ExtensionPlugin: Plugin = {
     build.onEnd(() => {
       const unused = [...dependencies].filter(x => !seen.has(x))
       for (const pkg of unused) {
-        console.info(
-          `info: ${pkg} is defined in dependencies, but appears unused in ${info.name}`
-        )
+        if (pkg !== 'react-icons')
+          console.info(
+            `info: ${pkg} is defined in dependencies, but appears unused in ${info.name}`
+          )
       }
     })
   }
