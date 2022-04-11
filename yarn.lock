@@ -78,8 +78,8 @@ __metadata:
     "@alinea/backend": 0.0.0
     "@alinea/core": 0.0.0
     "@alinea/store": 0.0.0
-    "@esbx/eval": ^0.0.16
-    "@esbx/react": ^0.0.16
+    "@esbx/eval": ^0.0.17
+    "@esbx/react": ^0.0.17
     "@types/fs-extra": ^9.0.13
     "@types/sade": ^1.7.3
     base64-arraybuffer: ^1.0.1
@@ -92,7 +92,7 @@ __metadata:
     leb128: ^0.0.5
     sade: ^1.7.4
   bin:
-    alinea: ./dist/index.js
+    alinea: ./dist/bin.js
   languageName: unknown
   linkType: soft
 
@@ -318,22 +318,22 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@alinea/root@workspace:."
   dependencies:
-    "@esbx/extension": ^0.0.16
+    "@esbx/extension": ^0.0.17
     "@esbx/external": ^0.0.17
-    "@esbx/react": ^0.0.16
-    "@esbx/reload": ^0.0.16
-    "@esbx/reporter": ^0.0.16
-    "@esbx/run": ^0.0.16
-    "@esbx/sass": ^0.0.16
-    "@esbx/static": ^0.0.16
-    "@esbx/workspaces": ^0.0.16
+    "@esbx/react": ^0.0.17
+    "@esbx/reload": ^0.0.17
+    "@esbx/reporter": ^0.0.17
+    "@esbx/run": ^0.0.17
+    "@esbx/sass": ^0.0.17
+    "@esbx/static": ^0.0.17
+    "@esbx/workspaces": ^0.0.17
     "@types/glob": ^7.1.4
     "@types/node": ^16.9.0
     autoprefixer: ^10.4.2
     cross-env: ^7.0.3
     esbuild: ^0.14.11
     esbuild-plugin-sass-modules: ^0.0.1
-    esbx: ^0.0.16
+    esbx: ^0.0.17
     fs-extra: ^10.0.0
     glob: ^7.2.0
     memfs: ^3.4.1
@@ -470,120 +470,148 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@esbx/alias@npm:0.0.16":
-  version: 0.0.16
-  resolution: "@esbx/alias@npm:0.0.16"
-  checksum: 2d2b9726710d0176332ecdcd01e6a4a720ece43dc932283ce085534e73882b14f45261815ccaa16244235bf3ed92df2d9809a09d2ce5fc5cd597e368b39b4110
+"@esbx/alias@npm:0.0.0":
+  version: 0.0.0
+  resolution: "@esbx/alias@npm:0.0.0"
+  checksum: 60a4595b3e9c9e31e7ca1b8ec451c1add921b229a2f26c5cbd27e0f24bec99903a226fbe9c0dfed3a6e2ba67decced35275707be7d97b36dc8479d0783da70e5
   languageName: node
   linkType: hard
 
-"@esbx/eval@npm:^0.0.16":
-  version: 0.0.16
-  resolution: "@esbx/eval@npm:0.0.16"
-  checksum: 94547c34acf420af33778512a5e2f727a7435449fa025fc5e030ce549edd55c3bdbba3a0127ece7f5a8344682dc303fb658b2671c233c348e797590be8b1a525
+"@esbx/eval@npm:^0.0.17":
+  version: 0.0.17
+  resolution: "@esbx/eval@npm:0.0.17"
+  dependencies:
+    "@esbx/external": 0.0.17
+    "@esbx/util": 0.0.17
+  checksum: b99881f0fe3beb9fc11234075302010177efb5c0d85cdb4ff3a87f812fe39470fb3d387dd11d30cd3d2ba3360d88d157fce3ff4cc2f280b4c9b1eab9df08d323
   languageName: node
   linkType: hard
 
-"@esbx/extension@npm:0.0.16, @esbx/extension@npm:^0.0.16":
-  version: 0.0.16
-  resolution: "@esbx/extension@npm:0.0.16"
-  checksum: ef24bf643584c379f76f9447d2adfdfb054f456aa1ba63a5630b085b492518ac4d27dac5a5e2e42c20702d00515ba95d571f5c6368be53e576a0c8293a632d32
+"@esbx/extension@npm:0.0.0":
+  version: 0.0.0
+  resolution: "@esbx/extension@npm:0.0.0"
+  checksum: 8495a26489794656a71820efbf24da14f1d074720cf648c19d068d805ad58815f834de4e4d10f2fabddcfaa0efdbd4efb04850f3d393a6958b61352a81a52fa9
   languageName: node
   linkType: hard
 
-"@esbx/external@npm:0.0.16":
-  version: 0.0.16
-  resolution: "@esbx/external@npm:0.0.16"
-  checksum: 78453f8ef1cdb414e2798012be3f813db297d83083e6b0045e9568ab1a8fe2d51bc2c28f962f31cf10a52ed69c46d99af84fdd4bd20c3e8cdc2190a0612740ac
+"@esbx/extension@npm:^0.0.17":
+  version: 0.0.17
+  resolution: "@esbx/extension@npm:0.0.17"
+  checksum: 156f53bd5e98e602ced610b4bfb3f3e6d5a68dbbd778e53398a58b87c2011907c4684ebe83be4be68017c223c36b8cfddf02fa27e7451c5535314b652e5d8285
   languageName: node
   linkType: hard
 
-"@esbx/external@npm:^0.0.17":
+"@esbx/external@npm:0.0.0":
+  version: 0.0.0
+  resolution: "@esbx/external@npm:0.0.0"
+  checksum: e36a8688da8ee73a0cea2f52638603b127d2296f2052c976ca94257bdb7e2410984bebcae3762af8fd60664f25c25cd7040fe8992779e861ea41bf9717736b05
+  languageName: node
+  linkType: hard
+
+"@esbx/external@npm:0.0.17, @esbx/external@npm:^0.0.17":
   version: 0.0.17
   resolution: "@esbx/external@npm:0.0.17"
   checksum: 7487c152b4488a939ceaa3fc4ecfb61328dd5d64dffbd75bb213eb41077a0f91b7e70e955dc28150ec0c1525683b628cbe78ed419cf8ccae2e5d1828b339c096
   languageName: node
   linkType: hard
 
-"@esbx/react@npm:^0.0.16":
-  version: 0.0.16
-  resolution: "@esbx/react@npm:0.0.16"
+"@esbx/react@npm:^0.0.17":
+  version: 0.0.17
+  resolution: "@esbx/react@npm:0.0.17"
   dependencies:
-    "@esbx/alias": 0.0.16
-    "@esbx/util": 0.0.16
+    "@esbx/alias": 0.0.0
+    "@esbx/util": 0.0.0
     dirname-filename-esm: ^1.1.1
-  checksum: 4e193b4ec3dce1f4ff35d0e77272997a8ad4abd21f416e4cde4f97df8afd926e2ddf541011e5c53822672ba213539eb1803ea59d4a5d40d78fc87dc7ab7cd241
+  checksum: 4fc1c7022e4be3bb721a4ec8fdf6853c897948f216ea1da31d4dbb4b4ffc09c5056a8e045c32e8d5caf46e9cc04ba6ae962f5928e7c39a098da7dae3e523174d
   languageName: node
   linkType: hard
 
-"@esbx/reload@npm:^0.0.16":
-  version: 0.0.16
-  resolution: "@esbx/reload@npm:0.0.16"
-  checksum: e5bf942e90d2d921216b6069a38dac66c29e35a05bd1c10b0e26fe4ec2f140b6a935b36dd1ddaf780b5541a9a4e5e40d11d7299df37dde98c5d0ed65ac118c91
+"@esbx/reload@npm:^0.0.17":
+  version: 0.0.17
+  resolution: "@esbx/reload@npm:0.0.17"
+  checksum: ba20d70372f604ff586c003c8897711b719d58dd8c17f12621e662b9baf3c0dfb29503d69681acc6951bd2a45af385c1b6c85453f6942a145948d34b7d93a6cd
   languageName: node
   linkType: hard
 
-"@esbx/reporter@npm:^0.0.16":
-  version: 0.0.16
-  resolution: "@esbx/reporter@npm:0.0.16"
+"@esbx/reporter@npm:^0.0.17":
+  version: 0.0.17
+  resolution: "@esbx/reporter@npm:0.0.17"
   dependencies:
-    "@esbx/util": 0.0.16
+    "@esbx/util": 0.0.0
     pretty-ms: ^7.0.1
-  checksum: 28463d0688a369c233b4cb6038af276304d624b98933300801493089eecb67c1ed7b4b29d508ede035b24d2730a38d8eaac1ad1633d575ee9e48cf386f8a6da3
+  checksum: 3c169c68b9ba6879fdf3778cbc1569823c4ed7d949f645bbd8936c470f307b0753b41bb7c8bd06d90395b07593b3cb66504b89eccd84288304a6b776e71331d4
   languageName: node
   linkType: hard
 
-"@esbx/run@npm:^0.0.16":
-  version: 0.0.16
-  resolution: "@esbx/run@npm:0.0.16"
+"@esbx/run@npm:^0.0.17":
+  version: 0.0.17
+  resolution: "@esbx/run@npm:0.0.17"
   dependencies:
     tree-kill: ^1.2.2
-  checksum: 77c57bd9a95c68c65c2284c02301f54ce18fe70e37965e8956822962df65e2922ed5c7a4ee2accba7e3d0b5d4c972b2983a333b1834cf6696858d63309ae5fda
+  checksum: bdd5e943982e964ae7e8e363de0d981dfa333b29b247114ebbffe05ef53a274fe71a6620400fd527c9b3eb23764889ff9be6946c906f8e953c12ae4f82d54a20
   languageName: node
   linkType: hard
 
-"@esbx/sass@npm:^0.0.16":
-  version: 0.0.16
-  resolution: "@esbx/sass@npm:0.0.16"
+"@esbx/sass@npm:^0.0.17":
+  version: 0.0.17
+  resolution: "@esbx/sass@npm:0.0.17"
   dependencies:
     postcss: ^8.4.5
     postcss-modules: ^4.2.2
     sass-embedded: ^1.49.7
-  checksum: 4c6934a8e0ede8d5fcfab3dc261ce10e5f8c99d8f6c08ec8beaa2a9f5faefe8a8df48c915421b98dba7471a962f1debcf7822a61d652bd3c75f323b6348df3cf
+  checksum: 6bd4b7c6afa055f80e2004808cf2c502fa16f4f60b05d519cb0b8d638d7c55b4559dcbf103cf25caef487135dc23eeb923c11821040fbedfb27ca752b9d14cb6
   languageName: node
   linkType: hard
 
-"@esbx/static@npm:0.0.16, @esbx/static@npm:^0.0.16":
-  version: 0.0.16
-  resolution: "@esbx/static@npm:0.0.16"
+"@esbx/static@npm:0.0.0":
+  version: 0.0.0
+  resolution: "@esbx/static@npm:0.0.0"
   dependencies:
     fs-extra: ^10.0.0
-  checksum: 06a1b3bc695315041de6a64a2395398dc891c2d4e6b93c886ed0c8f35e738a0680b1c98c65316127b905288a5d1294d07df9638bfdf00d558279c9461359a781
+  checksum: 629be08693f6f26c0520700f2248da1137dbf08c38f0a7a55615e23cc4afa1e9c66fb5e020fae07185e1254e97110a6a7dd7b3db6389096a507ddf248a2a9b7d
   languageName: node
   linkType: hard
 
-"@esbx/util@npm:0.0.16":
-  version: 0.0.16
-  resolution: "@esbx/util@npm:0.0.16"
+"@esbx/static@npm:^0.0.17":
+  version: 0.0.17
+  resolution: "@esbx/static@npm:0.0.17"
+  dependencies:
+    fs-extra: ^10.0.0
+  checksum: 39ac84527203c96e9a5ff0d958169b0b1ee35fcf48e268952c84c6773fbc170301069bb659c5764482a197668fc9d27c726fc9614b7ea378b88fb6e3b076fad6
+  languageName: node
+  linkType: hard
+
+"@esbx/util@npm:0.0.0":
+  version: 0.0.0
+  resolution: "@esbx/util@npm:0.0.0"
   dependencies:
     pretty-ms: ^7.0.1
-  checksum: 148447f29f3c7c541ad276f9ce2bbf1fcc3454cd8a19760646a27bc33926cf0ef6b5343b15e3e1a1975ebc95af46d6e6708641092778785d72eecbd97527a63e
+  checksum: 87796f97d69d3aade64cccbe6e03fc6c673cbbccd117464620038e0ba60ec74d9a8408c8e986ebecf47cf192df409880b2cbc1db48c7f2c154be202b1861c7f8
   languageName: node
   linkType: hard
 
-"@esbx/workspaces@npm:^0.0.16":
-  version: 0.0.16
-  resolution: "@esbx/workspaces@npm:0.0.16"
+"@esbx/util@npm:0.0.17":
+  version: 0.0.17
+  resolution: "@esbx/util@npm:0.0.17"
   dependencies:
-    "@esbx/extension": 0.0.16
-    "@esbx/external": 0.0.16
-    "@esbx/static": 0.0.16
-    "@esbx/util": 0.0.16
+    pretty-ms: ^7.0.1
+  checksum: 75379135a4266116280ee234a06b50eb7c102e47fe5b72bf4df2095a0e12a2313d0b184791f50bb7f12261da0d3d98120a34827fda16f5abc824c453170a2b06
+  languageName: node
+  linkType: hard
+
+"@esbx/workspaces@npm:^0.0.17":
+  version: 0.0.17
+  resolution: "@esbx/workspaces@npm:0.0.17"
+  dependencies:
+    "@esbx/extension": 0.0.0
+    "@esbx/external": 0.0.0
+    "@esbx/static": 0.0.0
+    "@esbx/util": 0.0.0
     fs-extra: ^10.0.0
     glob: ^7.2.0
     tsconfig-resolver: ^3.0.1
     which: ^2.0.2
-  checksum: 92230c8e7607fd941d3552b4499b697521091b50401d213f3052d03173c6a2785f15051bce3f87fb57a0587894c490b382bf5294b6871b1c4633da600e0084ac
+  checksum: 8bdacb3d8f614ee0c2f61c1fe596da651d8689363235668fff35ca522ae604fac10b0e29927d9d4247075f2da1de27a8aab752000abb34b0112d61e200103b44
   languageName: node
   linkType: hard
 
@@ -3889,15 +3917,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"esbx@npm:^0.0.16":
-  version: 0.0.16
-  resolution: "esbx@npm:0.0.16"
+"esbx@npm:^0.0.17":
+  version: 0.0.17
+  resolution: "esbx@npm:0.0.17"
   dependencies:
-    "@esbx/external": 0.0.16
+    "@esbx/external": 0.0.17
     sade: ^1.7.4
   bin:
     esbx: dist/bin.js
-  checksum: ad8746e06ba94baab1e699b9b7e70336dcc0049a5df6da792bf782ffe733a5a1b0abbaed563643767dd74aaa8c7e5078ef13cd2677112c62b5e9237c416c5890
+  checksum: 0ba76af307bc1cdacdcb7073d61de371cafbaee876d228a18ad95f0bfbbd7c3fae7bec397e847b4d37c4b3a844621a6566b6268ba098acd2cfa12c5128812c72
   languageName: node
   linkType: hard
 
