@@ -1,6 +1,6 @@
 import {createId, Entry, slugify} from '@alinea/core'
+import {posix as path} from 'isomorphic-path'
 import * as idb from 'lib0/indexeddb.js'
-import {posix as path} from 'node:path'
 import {Data} from '../Data'
 
 export type IndexedDBOptions = {}
