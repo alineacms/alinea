@@ -24,7 +24,7 @@ prog
   .command('init <dir>')
   .action((dir, args) => {
     ensureNodeResolution()
-    return init({dir, ...args})
+    return init({cwd: dir, ...args})
   })
 
 prog.parse(process.argv)
