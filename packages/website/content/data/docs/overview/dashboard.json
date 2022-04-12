@@ -46,36 +46,6 @@
           "code": "npx alinea serve"
         },
         {
-          "type": "paragraph",
-          "content": [
-            {
-              "type": "text",
-              "text": "If all goes well you see something like this:"
-            }
-          ]
-        },
-        {
-          "id": "25HTEiuZ1248vU6D4ar6EjACGkx",
-          "type": "ImageBlock",
-          "image": [
-            {
-              "id": "27Kx8Ex18dRyasgrAVoa2o8LkMG",
-              "index": "a0",
-              "type": "entry",
-              "entry": "263qHO7caJyUu7iLZpvQ8tCVpJs"
-            }
-          ]
-        },
-        {
-          "type": "paragraph",
-          "content": [
-            {
-              "type": "text",
-              "text": "If something went wrong, create an issue [here]."
-            }
-          ]
-        },
-        {
           "type": "heading",
           "level": 2,
           "content": [
@@ -110,22 +80,6 @@
             {
               "type": "text",
               "text": "You can create a page using the create page button in the left sidebar."
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "id": "27SXKUd41v1EmGdTfgovvHpv0FC",
-      "index": "a1",
-      "type": "TextBlock",
-      "text": [
-        {
-          "type": "paragraph",
-          "content": [
-            {
-              "type": "text",
-              "text": "sfdhfghfgh"
             }
           ]
         }
