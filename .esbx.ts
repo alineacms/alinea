@@ -176,7 +176,8 @@ const buildOptions: BuildOptions = {
   ],
   loader: {
     '.woff': 'file',
-    '.woff2': 'file'
+    '.woff2': 'file',
+    '.json': 'json'
   }
 }
 
