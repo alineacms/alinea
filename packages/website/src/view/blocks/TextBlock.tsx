@@ -10,7 +10,7 @@ const styles = fromModule(css)
 export function TextBlock({text}: TextBlockProps) {
   return (
     <div className={styles.root()}>
-      <RichText doc={text} view={{CodeBlock, ImageBlock}} />
+      <RichText doc={text as any} view={{CodeBlock, ImageBlock}} />
     </div>
   )
 }
