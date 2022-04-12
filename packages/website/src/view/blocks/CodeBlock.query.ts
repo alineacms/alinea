@@ -1,10 +1,10 @@
 import {Store} from '@alinea/store/Store'
-import shiki from 'shiki'
+import {getHighlighter} from 'shiki'
 import {Pages} from '../../../.alinea/web'
 import {CodeBlockSchema} from './CodeBlock.schema'
 
 export async function codeBlockQuery(pages: Pages, block: CodeBlockSchema) {
-  const highlighter = await shiki.getHighlighter({
+  const highlighter = await getHighlighter({
     theme: 'github-light' //'slack-ochin'
   })
   return {
