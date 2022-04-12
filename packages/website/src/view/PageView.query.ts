@@ -1,20 +1,30 @@
-import {Collection, Store} from '@alinea/store'
-import {Doc, Home, Page, Pages} from '../../.alinea/web'
+import {Store} from '@alinea/store'
+import {Page, Pages} from '../../.alinea/web'
 import {docPageQuery} from './DocPage.query'
 import {homePageQuery} from './HomePage.query'
 import {layoutQuery} from './layout/Layout.query'
 
-export function pageViewQuery(pages: Pages, Page: Collection<Page>) {
-  return {
-    layout: layoutQuery(pages, Page),
-    entry: Page.type.case(
-      {
-        Home: homePageQuery(pages, Page as Collection<Home>),
-        Doc: docPageQuery(pages, Page as Collection<Doc>)
-      },
-      Page.fields
-    )
+async function loadPage(pages: Pages, page: Page) {
+  switch (page.type) {
+    case 'Home':
+      return homePageQuery(pages, page)
+    case 'Doc':
+      return docPageQuery(pages, page)
+    default:
+      return page
   }
 }
 
-export type PageViewProps = Store.TypeOf<ReturnType<typeof pageViewQuery>>
+export async function pageViewQuery(pages: Pages, url: string) {
+  const page = await pages.whereUrl(url)
+  if (!page) return null
+  return {
+    layout: await layoutQuery(pages, page),
+    entry: await loadPage(pages, page)
+  }
+}
+
+export type PageViewProps = Exclude<
+  Store.TypeOf<ReturnType<typeof pageViewQuery>>,
+  null
+>

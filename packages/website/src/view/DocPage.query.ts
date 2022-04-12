@@ -1,9 +1,10 @@
-import {Collection, Store} from '@alinea/store'
+import {Cursor, Store} from '@alinea/store'
 import {Doc, Page, Pages} from '../../.alinea/web'
 import {blocksQuery} from './blocks/Blocks.query'
 
-function menuQuery() {
-  return Page.where(Page.type.is('Doc').or(Page.type.is('Docs')))
+function menuQuery(pages: Pages) {
+  return pages
+    .findMany(Page.type.is('Doc').or(Page.type.is('Docs')))
     .where(Page.id.isNot('docs'))
     .select({
       id: Page.id,
@@ -15,25 +16,37 @@ function menuQuery() {
     .orderBy(Page.index.asc())
 }
 
-export function docPageQuery(pages: Pages, doc: Collection<Doc>) {
-  const siblings = Doc.where(Doc.parent.is(doc.parent)).select({
-    url: Doc.url,
-    title: Doc.title
+export async function docPageQuery(pages: Pages, doc: Doc) {
+  const sibling = (doc: Cursor<Doc>) => ({
+    url: doc.url,
+    title: doc.title
   })
-  const prev = siblings
-    .orderBy(Doc.index.desc())
-    .where(Doc.index.less(doc.index))
-    .first()
-  const next = siblings
-    .orderBy(Doc.index.asc())
-    .where(Doc.index.greater(doc.index))
-    .first()
-  return doc.fields.with({
-    menu: menuQuery(),
+  const parent = await pages.tree(doc.id).parent()
+  const prev =
+    (await pages.tree(doc.id).prevSibling().whereType(Doc).select(sibling)) ||
+    (await parent?.tree
+      .prevSibling()
+      ?.children()
+      .orderBy(Page.index.desc())
+      .whereType(Doc)
+      .first()
+      .select(sibling))
+  const next =
+    (await pages.tree(doc.id).nextSibling().whereType(Doc).select(sibling)) ||
+    (await parent?.tree
+      .nextSibling()
+      ?.children()
+      .orderBy(Page.index.asc())
+      .whereType(Doc)
+      .first()
+      .select(sibling))
+  return {
+    ...doc,
+    menu: await menuQuery(pages),
     prev,
     next,
-    blocks: blocksQuery(pages, doc.blocks)
-  })
+    blocks: await blocksQuery(pages, doc.blocks)
+  }
 }
 
 export type DocPageProps = Store.TypeOf<ReturnType<typeof docPageQuery>>

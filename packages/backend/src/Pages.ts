@@ -38,6 +38,10 @@ export class PageTree<P> {
     return new Multiple(this.pages, Tree.parents(this.id))
   }
 
+  parent<Parent extends P>(): Single<P, Parent> {
+    return new Single(this.pages, Tree.parent(this.id))
+  }
+
   nextSibling(): Single<P, P> {
     return new Single(this.pages, Tree.nextSibling(this.id))
   }
@@ -169,6 +173,12 @@ class Single<P, T> extends Base<P, Page<P, T> | null> {
   where(where: EV<boolean> | ((collection: Cursor<T>) => EV<boolean>)) {
     return new Single<P, T>(this.pages, this.cursor.where(where as any))
   }
+  whereType<C>(type: Collection<C>) {
+    return new Single<P, C>(
+      this.pages,
+      this.cursor.where(Entry.type.is((type as any).__options.alias))
+    )
+  }
   select<
     X extends SelectionInput | ((collection: Cursor<T>) => SelectionInput)
   >(selection: X) {
@@ -272,6 +282,10 @@ class PagesImpl<T> {
 
   get root() {
     return this.findMany(Entry.parent.isNull())
+  }
+
+  tree(id: EV<string>) {
+    return new PageTree(this as Pages<T>, id)
   }
 
   processCallbacks = new Map<string, (value: any) => any>()

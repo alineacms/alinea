@@ -1,15 +1,18 @@
-import {Collection, Store} from '@alinea/store'
+import {Store} from '@alinea/store'
 import {Page, Pages} from '../../../.alinea/web'
 import {headerQuery} from './Header.query'
 
-export function layoutQuery(pages: Pages, Page: Collection<Page>) {
+export async function layoutQuery(pages: Pages, page: Page) {
   return {
     meta: {
-      title: Page.title,
-      url: Page.url
+      title: page.title,
+      url: page.url
     },
-    header: headerQuery()
+    header: (await headerQuery(pages))!
   }
 }
 
-export type LayoutProps = Store.TypeOf<ReturnType<typeof layoutQuery>>
+export type LayoutProps = Exclude<
+  Store.TypeOf<ReturnType<typeof layoutQuery>>,
+  null
+>

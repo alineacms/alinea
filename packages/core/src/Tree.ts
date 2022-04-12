@@ -22,6 +22,14 @@ export namespace Tree {
       .select(Parent.fields)
   }
 
+  export function parent(id: EV<string>) {
+    const Self = Entry.as('Self')
+    const Parent = Entry.as('Parent')
+    return Self.where(Self.id.is(id))
+      .innerJoin(Parent, Parent.id.is(Self.parent))
+      .select(Parent.fields)
+  }
+
   export function nextSibling(id: EV<string>) {
     const Self = Entry.as('Self')
     const self = Self.where(Self.id.is(id))
