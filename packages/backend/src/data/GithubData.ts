@@ -39,7 +39,7 @@ export class GithubData implements Data.Target, Data.Media {
       } = entry
       const {schema, source: contentDir} = config.workspaces[workspace]
       const file = entry.url + ($isContainer ? 'index' : '') + loader.extension
-      const location = path.join(rootDir, contentDir, file)
+      const location = path.join(rootDir, contentDir, entry.root, file)
       return [location, loader.format(schema, data)] as const
     })
     return createOrUpdateFiles(this.octokit, {
