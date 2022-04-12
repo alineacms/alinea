@@ -17,7 +17,8 @@
     "@alinea/core": "0.0.0",
     "@alinea/dashboard": "0.0.0",
     "@alinea/ui": "0.0.0",
-    "next": "12.1.0"
+    "next": "12.1.0",
+    "shiki": "^0.10.1"
   },
   "devDependencies": {
     "@types/find-config": "^1.0.1",

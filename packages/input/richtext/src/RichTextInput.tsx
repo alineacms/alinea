@@ -1,6 +1,6 @@
-import {createId, Schema, Type} from '@alinea/core'
-import {Toolbar} from '@alinea/dashboard'
-import {InputForm, InputLabel, InputState, useInput} from '@alinea/editor'
+import { createId, Schema, Type } from '@alinea/core'
+import { Toolbar } from '@alinea/dashboard'
+import { InputForm, InputLabel, InputState, useInput } from '@alinea/editor'
 import {
   Card,
   Create,
@@ -11,7 +11,7 @@ import {
   px,
   TextLabel
 } from '@alinea/ui'
-import {mergeAttributes, Node} from '@tiptap/core'
+import { mergeAttributes, Node } from '@tiptap/core'
 import Collaboration from '@tiptap/extension-collaboration'
 import FloatingMenuExtension from '@tiptap/extension-floating-menu'
 import {
@@ -22,7 +22,7 @@ import {
   ReactNodeViewRenderer
 } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
-import {forwardRef, Ref, useCallback, useRef, useState} from 'react'
+import { forwardRef, Ref, useCallback, useRef, useState } from 'react'
 import {
   MdDelete,
   MdDragHandle,
@@ -30,8 +30,8 @@ import {
   MdFormatItalic,
   MdNotes
 } from 'react-icons/md'
-import {useEditor} from './hook/UseEditor'
-import {RichTextField} from './RichTextField'
+import { useEditor } from './hook/UseEditor'
+import { RichTextField } from './RichTextField'
 import css from './RichTextInput.module.scss'
 
 const styles = fromModule(css)

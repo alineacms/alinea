@@ -14,7 +14,7 @@ export type CodeInputProps = {
 }
 
 // Todo: use @tiptap/extension-code-block-lowlight which would require an
-// extra value type "Text" which has no concept of blocks or formatting
+// extra value type "PlainText" which has no concept of blocks or formatting
 // and is stored as a simple string, but using an XMLFragment on the Yjs
 // side so we can have it be collaborative.
 export function CodeInput({state, field}: CodeInputProps) {

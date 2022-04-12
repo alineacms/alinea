@@ -1,7 +1,14 @@
 .root {
-  border-radius: 16px;
-  padding: 18px 25px;
-  background: #2c3138;
-  color: white;
-  margin: 20px 0 28px 0;
+  > pre {
+    border-radius: 16px;
+    padding: 22px 25px;
+    background: #fbf9f9 !important;
+    margin: 20px 0 28px 0;
+    overflow: auto;
+    box-shadow: 0px 10px 50px rgba(0, 0, 0, 0.08);
+
+    > code {
+      font-family: 'JetBrains Mono', monospace;
+    }
+  }
 }

@@ -18,7 +18,7 @@ export function DocPage({title, blocks, menu, next, prev}: DocPageProps) {
         <NavSidebar>
           <NavTree nav={nav} />
         </NavSidebar>
-        <div style={{flexGrow: 1}}>
+        <div style={{flexGrow: 1, minWidth: 0}}>
           <Blocks blocks={blocks} />
           <HStack center gap={20} className={styles.root.nav()}>
             {prev && (

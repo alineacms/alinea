@@ -12,6 +12,9 @@
     border-radius: 8px;
     line-height: 1.5;
     font-family: 'JetBrains Mono', monospace;
+    white-space: pre;
+    overflow-x: auto !important;
+    font-size: 13px;
 
     &:focus {
       background: var(--selected);

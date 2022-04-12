@@ -141,7 +141,7 @@ export class RichTextValue<T> implements Value<TextDoc<T>, RichTextMutator<T>> {
       fragment: map.get('$text'),
       insert: (id: string, block: string) => {
         if (!this.values) throw new Error('No types defined')
-        map.set(id, this.values[block].toY({type: block} as any))
+        map.set(id, this.values[block].toY({type: block, id} as any))
       }
     }
   }

@@ -13,9 +13,7 @@
       "text": [
         {
           "type": "heading",
-          "attrs": {
-            "level": 1
-          },
+          "level": 1,
           "content": [
             {
               "type": "text",
@@ -28,26 +26,13 @@
           "content": [
             {
               "type": "text",
-              "text": "Tabs help you structure the input fields in the admin panel. Tabs are a "
-            },
-            {
-              "type": "text",
-              "text": "section",
-              "marks": [
-                {
-                  "type": "italic"
-                }
-              ]
-            },
-            {
-              "type": "text",
-              "text": ", not a field. In themselves tabs do not hold data, but can declare underlying fields which do (or even more tabs). "
+              "text": "Tabs help you structure the input fields in the admin panel. Tabs do not hold data, but can declare underlying fields which do (or even more tabs). "
             }
           ]
         },
         {
-          "type": "CodeBlock",
           "id": "268hspT1GDy0ag8lya8m9dObKhX",
+          "type": "CodeBlock",
           "code": "tabs(\n  tab('Tab A', {\n    // ... fields\n  }),\n  tab('Tab B', {\n    // ... fields\n  })\n)"
         }
       ]

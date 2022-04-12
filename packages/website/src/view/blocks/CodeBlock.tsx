@@ -1,13 +1,15 @@
 import {fromModule, Typo} from '@alinea/ui'
 import css from './CodeBlock.module.scss'
-import {CodeBlockSchema} from './CodeBlock.schema'
+import {CodeBlockProps} from './CodeBlock.query'
 
 const styles = fromModule(css)
 
-export function CodeBlock({code}: CodeBlockSchema) {
+export function CodeBlock({code}: CodeBlockProps) {
   return (
-    <div className={styles.root()}>
-      <Typo.Monospace>{code}</Typo.Monospace>
-    </div>
+    <Typo.Monospace
+      as="div"
+      dangerouslySetInnerHTML={{__html: code}}
+      className={styles.root()}
+    />
   )
 }

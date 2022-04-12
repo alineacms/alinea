@@ -1,4 +1,4 @@
-import {forwardRef, HTMLAttributes, HTMLProps, Ref} from 'react'
+import {forwardRef, HTMLProps, Ref} from 'react'
 import css from './Typo.module.scss'
 import {forwardRefWithAs, PropsWithAs} from './util/PropsWithAs'
 import {fromModule} from './util/Styler'
@@ -87,8 +87,18 @@ export namespace Typo {
     )
   })
 
-  function MonospaceComponent(props: HTMLAttributes<HTMLSpanElement>) {
-    return <span {...props} className={styles.monospace.mergeProps(props)()} />
+  function MonospaceComponent(
+    props: PropsWithAs<{}, 'span'>,
+    ref: Ref<HTMLSpanElement>
+  ) {
+    const {as: Type = 'span', ...rest} = props
+    return (
+      <Type
+        {...props}
+        ref={ref}
+        className={styles.monospace.mergeProps(props)()}
+      />
+    )
   }
 
   function SmallComponent(
@@ -108,6 +118,6 @@ export namespace Typo {
   export const P = forwardRefWithAs<TypoProps, 'p'>(PComponent)
   export const Link = LinkComponent
   export const link = styles.link
-  export const Monospace = MonospaceComponent
+  export const Monospace = forwardRefWithAs<{}, 'span'>(MonospaceComponent)
   export const Small = forwardRefWithAs<TypoProps, 'span'>(SmallComponent)
 }
