@@ -198,6 +198,7 @@ export async function generate(options: GenerateOptions) {
         .join('/')
     )
   )
+  await fs.writeFile(path.join(outDir, '.gitignore'), `*`)
   const genConfigFile = path.join(outDir, 'config.js')
   const outFile = 'file://' + genConfigFile
   const exports = await import(outFile)
