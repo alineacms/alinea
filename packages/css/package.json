@@ -8,7 +8,8 @@
   },
   "exports": {
     ".": "./src/index.css",
-    "./global.css": "./src/global.css"
+    "./global.css": "./src/global.css",
+    "./generated.css": "./src/generated.css"
   },
   "files": [
     "fonts",

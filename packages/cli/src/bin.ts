@@ -4,6 +4,7 @@ import sade from 'sade'
 import {version} from '../package.json'
 import {generate} from './Generate'
 import {init} from './Init'
+import {serve} from './Serve'
 import {ensureNodeResolution} from './util/EnsureNodeResolution'
 
 const prog = sade('alinea')
@@ -21,10 +22,17 @@ prog
     ensureNodeResolution()
     return generate({configFile: args.config, watch: args.watch})
   })
-  .command('init <dir>')
+  .command('init [dir]')
+  .describe('Copy a sample config file to the current directory')
   .action((dir, args) => {
     ensureNodeResolution()
     return init({cwd: dir, ...args})
+  })
+  .command('serve [dir]')
+  .describe('Start a development dashboard')
+  .action((dir, args) => {
+    ensureNodeResolution()
+    return serve({cwd: dir, ...args})
   })
 
 prog.parse(process.argv)

@@ -2,9 +2,6 @@
 export {createConfig, schema, type, Tree, workspace} from '@alinea/core'
 export type {Config, Schema, TextDoc, Type, Workspace} from '@alinea/core'
 
-// Backend
-export {Backend, Server} from '@alinea/backend'
-
 // Dashboard
 export {MediaSchema} from '@alinea/dashboard/schema/MediaSchema'
 export {BrowserPreview} from '@alinea/dashboard/view/preview/BrowserPreview'

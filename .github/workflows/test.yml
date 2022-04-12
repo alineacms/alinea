@@ -23,11 +23,13 @@ jobs:
           key: ${{ runner.os }}-yarn
       - run: yarn
       - run: yarn test
+      - if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          yarn bump ${GITHUB_REF#refs/tags/v}
       - run: yarn build
       - run: cd packages/website && yarn generate
       - run: yarn tsc
       - if: startsWith(github.ref, 'refs/tags/v')
         run: |
-          yarn bump ${GITHUB_REF#refs/tags/v}
           npm config set //registry.npmjs.org/:_authToken ${{secrets.NPM_AUTH_TOKEN}}
           npm publish --access public --tolerate-republish -ws

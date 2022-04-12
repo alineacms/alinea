@@ -29,7 +29,9 @@
   },
   "dependencies": {
     "@alinea/backend": "0.0.0",
+    "@alinea/sqlite-wasm": "^0.1.4",
     "@alinea/core": "0.0.0",
+    "@alinea/client": "0.0.0",
     "@alinea/store": "0.0.0",
     "@esbx/eval": "^0.0.17",
     "@esbx/react": "^0.0.17",

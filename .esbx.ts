@@ -210,7 +210,10 @@ export const buildTask = {
   ...builder,
   async action(options) {
     await builder.action(options)
-    await fs.writeFile('packages/css/src/index.css', Buffer.concat(globalCss))
+    await fs.writeFile(
+      'packages/css/src/generated.css',
+      Buffer.concat(globalCss)
+    )
   }
 }
 
