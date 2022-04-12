@@ -19,13 +19,13 @@ export function Layout({
       <FavIcon color="#4a63e7" />
       <Head>
         <title>{meta.title}</title>
-        <style key="f-size">
-          {`
-          @media (max-width: 440px) {html {font-size: calc(4.4444vw + .00012px)}}
-          @media (min-width: 1024px) {html {font-size: calc(0.2564102564vw + 0.93269rem)}}
-        `}
-        </style>
       </Head>
+      <style>
+        {`
+          @media (max-width: 440px) {html {font-size: calc(4.4444vw + .00012px)}}
+          @media (min-width: 1024px) {html {font-size: calc(0.25vw + 0.85rem)}}
+        `}
+      </style>
       <div className={styles.root()}>
         <Header {...header} />
         <div className={styles.root.content()}>{children}</div>
