@@ -23,5 +23,9 @@
       text-decoration: underline;
       text-underline-offset: 0.3em;
     }
+
+    &.is-active {
+      font-weight: bold;
+    }
   }
 }

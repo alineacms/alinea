@@ -1,5 +1,6 @@
 import {fromModule, HStack} from '@alinea/ui'
 import Link from 'next/link'
+import {useRouter} from 'next/router'
 import {Fragment, useMemo} from 'react'
 import {MdExpandMore} from 'react-icons/md'
 import css from './NavTree.module.scss'
@@ -44,6 +45,7 @@ export type NavTreeProps = {
 }
 
 export function NavTree({nav, level = 0}: NavTreeProps) {
+  const router = useRouter()
   return (
     <div className={styles.root()}>
       {nav.map(page => {
@@ -65,7 +67,13 @@ export function NavTree({nav, level = 0}: NavTreeProps) {
             ) : (
               <div>
                 <Link href={page.url}>
-                  <a className={styles.root.link()}>{page.title}</a>
+                  <a
+                    className={styles.root.link({
+                      active: router.pathname === page.url
+                    })}
+                  >
+                    {page.title}
+                  </a>
                 </Link>
               </div>
             )}

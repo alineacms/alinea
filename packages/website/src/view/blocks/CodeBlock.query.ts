@@ -1,7 +1,7 @@
 import {Store} from '@alinea/store/Store'
 import {getHighlighter} from 'shiki'
 import tsxLanguage from 'shiki/languages/tsx.tmLanguage.json'
-import theme from 'shiki/themes/github-light.json'
+import theme from 'shiki/themes/slack-ochin.json'
 import {Pages} from '../../../.alinea/web'
 import {CodeBlockSchema} from './CodeBlock.schema'
 

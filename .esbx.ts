@@ -353,6 +353,7 @@ const serverOptions: BuildOptions = {
     InternalPackages,
     AliasPlugin.configure({
       'next/head': path.resolve('./node_modules/next/head.js'),
+      'next/router': path.resolve('./node_modules/next/router.js'),
       'next/link': path.resolve('./node_modules/next/link.js'),
       'next/image': path.resolve('./node_modules/next/image.js')
     }),
