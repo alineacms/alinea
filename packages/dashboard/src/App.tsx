@@ -129,16 +129,13 @@ function EntryRoute({id}: EntryRouteProps) {
         minWidth={200}
       >
         <SearchBox />
-        {/* Todo: ideally we'd use the parent suspense but this cause a race condition in the demo page in next.js which I have not figured out yet */}
-        <Suspense fallback={null}>
-          <ContentTree
-            key={workspace}
-            workspace={workspace}
-            root={root}
-            select={select}
-            redirectToRoot={!id}
-          />
-        </Suspense>
+        <ContentTree
+          key={workspace}
+          workspace={workspace}
+          root={root}
+          select={select}
+          redirectToRoot={!id}
+        />
       </Pane>
       <div style={{width: '100%', height: '100%'}}>
         <Route path={nav.create(':workspace', ':root', ':parent')}>
