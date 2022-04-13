@@ -21,6 +21,7 @@
       "@alinea/auth.*": ["./packages/input/*/src"],
       "@alinea/auth.passwordless/*": ["./packages/auth/passwordless/src/*"],
       "@alinea/core/*": ["./packages/core/src/*"],
+      "@alinea/cli/*": ["./packages/cli/src/*"],
       "@alinea/dashboard/*": ["./packages/dashboard/src/*"],
       "@alinea/backend/*": ["./packages/backend/src/*"],
       "@alinea/store/*": ["./packages/store/src/*"],

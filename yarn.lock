@@ -333,18 +333,16 @@ __metadata:
     "@types/glob": ^7.1.4
     "@types/node": ^16.9.0
     autoprefixer: ^10.4.2
+    copy-env-cli: 1.0.0
     cross-env: ^7.0.3
     esbuild: ^0.14.11
-    esbuild-plugin-sass-modules: ^0.0.1
     esbx: ^0.0.17
     fs-extra: ^10.0.0
     glob: ^7.2.0
     memfs: ^3.4.1
-    ncp: ^2.0.0
     npm-run-all: ^4.1.5
     postcss-pxtorem: ^6.0.0
     preact: ^10.6.4
-    pretty-bytes: ^5.6.0
     serve-handler: ^6.1.3
     typescript: ^4.5.5
     typescript-plugin-css-modules: ^3.4.0
@@ -413,7 +411,10 @@ __metadata:
     cross-env: ^7.0.3
     find-config: ^1.0.0
     next: 12.1.0
+    npm-run-all: ^4.1.5
     postcss-pxtorem: ^6.0.0
+    react: 18.0.0-rc.0
+    react-dom: 18.0.0-rc.0
     shiki: ^0.10.1
   languageName: unknown
   linkType: soft
@@ -823,15 +824,6 @@ __metadata:
   version: 3.3.1
   resolution: "@juggle/resize-observer@npm:3.3.1"
   checksum: ddabc4044276a2cb57d469c4917206c7e39f2463aa8e3430e33e4eda554412afe29c22afa40e6708b49dad5d56768dc83acd68a704b1dcd49a0906bb96b991b2
-  languageName: node
-  linkType: hard
-
-"@ms-cloudpack/get-package@npm:^0.0.1":
-  version: 0.0.1
-  resolution: "@ms-cloudpack/get-package@npm:0.0.1"
-  dependencies:
-    semver: ^7.3.5
-  checksum: 8fe2a6fb834bc10cce02abbc7fee635055e55798ce734d962c27ac7293a7e9a71a8adda2b333c75690394ee893d6ad68d39feefb909b567f2bc195ed6098e195
   languageName: node
   linkType: hard
 
@@ -2619,13 +2611,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"at-least-node@npm:^1.0.0":
-  version: 1.0.0
-  resolution: "at-least-node@npm:1.0.0"
-  checksum: 463e2f8e43384f1afb54bc68485c436d7622acec08b6fad269b421cb1d29cebb5af751426793d0961ed243146fe4dc983402f6d5a51b720b277818dbf6f2e49e
-  languageName: node
-  linkType: hard
-
 "atob@npm:^2.1.2":
   version: 2.1.2
   resolution: "atob@npm:2.1.2"
@@ -3221,6 +3206,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"copy-env-cli@npm:1.0.0":
+  version: 1.0.0
+  resolution: "copy-env-cli@npm:1.0.0"
+  bin:
+    copy-env-cli: bin.js
+  checksum: 86129251ef3f8b56382a7063b0ea162444a4a9f44ac37c62b2d70f63b77532285ba1a098d61852abef667e67da9deaf6edf99872ea002acf01c622b04d9d5f47
+  languageName: node
+  linkType: hard
+
 "core-util-is@npm:~1.0.0":
   version: 1.0.3
   resolution: "core-util-is@npm:1.0.3"
@@ -3316,16 +3310,6 @@ __metadata:
     cssesc: ^3.0.0
     fastparse: ^1.1.2
   checksum: 92560a9616a8bc073b88c678aa04f22c599ac23c5f8587e60f4861069e2d5aeb37b722af581ae3c5fbce453bed7a893d9c3e06830912e6d28badc3b8b99acd24
-  languageName: node
-  linkType: hard
-
-"css-tree@npm:^1.1.2":
-  version: 1.1.3
-  resolution: "css-tree@npm:1.1.3"
-  dependencies:
-    mdn-data: 2.0.14
-    source-map: ^0.6.1
-  checksum: 79f9b81803991b6977b7fcb1588799270438274d89066ce08f117f5cdb5e20019b446d766c61506dd772c839df84caa16042d6076f20c97187f5abe3b50e7d1f
   languageName: node
   linkType: hard
 
@@ -3836,18 +3820,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"esbuild-plugin-sass-modules@npm:^0.0.1":
-  version: 0.0.1
-  resolution: "esbuild-plugin-sass-modules@npm:0.0.1"
-  dependencies:
-    "@ms-cloudpack/get-package": ^0.0.1
-    css-tree: ^1.1.2
-    fs-extra: ^9.0.1
-    sass: ^1.34.1
-  checksum: 2484dfae08551fafb43244a16e935ba59749baf3cffe49a78c69acac98b9aebfc6960ee87b01ec890aa1a114eeed504e3e5d7a0b75f9cd76ec39f3a42c6a8fa5
-  languageName: node
-  linkType: hard
-
 "esbuild-sunos-64@npm:0.14.11":
   version: 0.14.11
   resolution: "esbuild-sunos-64@npm:0.14.11"
@@ -4238,18 +4210,6 @@ __metadata:
     jsonfile: ^6.0.1
     universalify: ^2.0.0
   checksum: 5285a3d8f34b917cf2b66af8c231a40c1623626e9d701a20051d3337be16c6d7cac94441c8b3732d47a92a2a027886ca93c69b6a4ae6aee3c89650d2a8880c0a
-  languageName: node
-  linkType: hard
-
-"fs-extra@npm:^9.0.1":
-  version: 9.1.0
-  resolution: "fs-extra@npm:9.1.0"
-  dependencies:
-    at-least-node: ^1.0.0
-    graceful-fs: ^4.2.0
-    jsonfile: ^6.0.1
-    universalify: ^2.0.0
-  checksum: ba71ba32e0faa74ab931b7a0031d1523c66a73e225de7426e275e238e312d07313d2da2d33e34a52aa406c8763ade5712eb3ec9ba4d9edce652bcacdc29e6b20
   languageName: node
   linkType: hard
 
@@ -5747,13 +5707,6 @@ fsevents@~2.3.2:
   languageName: node
   linkType: hard
 
-"mdn-data@npm:2.0.14":
-  version: 2.0.14
-  resolution: "mdn-data@npm:2.0.14"
-  checksum: 9d0128ed425a89f4cba8f787dca27ad9408b5cb1b220af2d938e2a0629d17d879a34d2cb19318bdb26c3f14c77dd5dfbae67211f5caaf07b61b1f2c5c8c7dc16
-  languageName: node
-  linkType: hard
-
 "media-typer@npm:0.3.0":
   version: 0.3.0
   resolution: "media-typer@npm:0.3.0"
@@ -6112,15 +6065,6 @@ fsevents@~2.3.2:
   version: 1.0.2
   resolution: "napi-build-utils@npm:1.0.2"
   checksum: 06c14271ee966e108d55ae109f340976a9556c8603e888037145d6522726aebe89dd0c861b4b83947feaf6d39e79e08817559e8693deedc2c94e82c5cbd090c7
-  languageName: node
-  linkType: hard
-
-"ncp@npm:^2.0.0":
-  version: 2.0.0
-  resolution: "ncp@npm:2.0.0"
-  bin:
-    ncp: ./bin/ncp
-  checksum: ea9b19221da1d1c5529bdb9f8e85c9d191d156bcaae408cce5e415b7fbfd8744c288e792bd7faf1fe3b70fd44c74e22f0d43c39b209bc7ac1fb8016f70793a16
   languageName: node
   linkType: hard
 
@@ -6885,13 +6829,6 @@ fsevents@~2.3.2:
   bin:
     prebuild-install: bin.js
   checksum: 117c8966f221242633bbf245755fb469dabc7085909f5e3db83359d6281a88dedbdada7e839315805a192c74b7cce3ed1a86c1382a8d950c1ea60a9d5d8e7bf0
-  languageName: node
-  linkType: hard
-
-"pretty-bytes@npm:^5.6.0":
-  version: 5.6.0
-  resolution: "pretty-bytes@npm:5.6.0"
-  checksum: 9c082500d1e93434b5b291bd651662936b8bd6204ec9fa17d563116a192d6d86b98f6d328526b4e8d783c07d5499e2614a807520249692da9ec81564b2f439cd
   languageName: node
   linkType: hard
 
@@ -7763,7 +7700,7 @@ resolve@^1.10.0:
   languageName: node
   linkType: hard
 
-"sass@npm:^1.32.13, sass@npm:^1.34.1":
+"sass@npm:^1.32.13":
   version: 1.42.1
   resolution: "sass@npm:1.42.1"
   dependencies:

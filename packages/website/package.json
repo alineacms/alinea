@@ -4,7 +4,10 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "dev": "yarn workspace @alinea/root build && alinea generate && next dev",
+    "dev": "yarn workspace @alinea/root build && run-p dev:compile dev:gen",
+    "dev:compile": "next dev",
+    "dev:gen": "alinea generate --watch",
+    "dev:check": "tsc -w",
     "build": "alinea generate && next build",
     "generate": "alinea generate",
     "start": "next start",
@@ -18,12 +21,15 @@
     "@alinea/dashboard": "0.0.0",
     "@alinea/ui": "0.0.0",
     "next": "12.1.0",
+    "react": "18.0.0-rc.0",
+    "react-dom": "18.0.0-rc.0",
     "shiki": "^0.10.1"
   },
   "devDependencies": {
     "@types/find-config": "^1.0.1",
     "cross-env": "^7.0.3",
     "find-config": "^1.0.0",
+    "npm-run-all": "^4.1.5",
     "postcss-pxtorem": "^6.0.0"
   }
 }

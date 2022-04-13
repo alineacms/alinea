@@ -1,8 +1,8 @@
-import {fromModule, HStack} from '@alinea/ui'
+import {fromModule, HStack, px} from '@alinea/ui'
 import Link from 'next/link'
 import {useRouter} from 'next/router'
-import {Fragment, useMemo} from 'react'
-import {MdExpandMore} from 'react-icons/md'
+import {Fragment, useMemo, useState} from 'react'
+import {MdKeyboardArrowDown, MdKeyboardArrowRight} from 'react-icons/md'
 import css from './NavTree.module.scss'
 
 const styles = fromModule(css)
@@ -42,35 +42,57 @@ type NavItem = {
 export type NavTreeProps = {
   nav: Array<NavItem>
   level?: number
+  open?: boolean
 }
 
-export function NavTree({nav, level = 0}: NavTreeProps) {
+export function NavTree({nav, level = 0, open = true}: NavTreeProps) {
   const router = useRouter()
+  const [showChildren, setShowChildren] = useState(level < 1)
   return (
-    <div className={styles.root()}>
+    <div className={styles.root({open})}>
       {nav.map(page => {
         const isContainer = page.children.length > 0
         return (
           <Fragment key={page.id}>
             {isContainer ? (
-              <>
+              <div className={styles.root.sub()}>
                 {level === 0 ? (
-                  <h2 className={styles.root.header()}>{page.title}</h2>
+                  <h2 className={styles.root.sub.header()}>{page.title}</h2>
                 ) : (
-                  <HStack center gap={8}>
-                    <MdExpandMore />
+                  <HStack
+                    center
+                    gap={8}
+                    className={styles.root.link({category: true})}
+                    onClick={e => {
+                      e.preventDefault()
+                      setShowChildren(!showChildren)
+                    }}
+                  >
                     <span>{page.title}</span>
+                    {showChildren ? (
+                      <MdKeyboardArrowDown />
+                    ) : (
+                      <MdKeyboardArrowRight />
+                    )}
                   </HStack>
                 )}
-                <NavTree nav={page.children} level={level + 1} />
-              </>
+                <div style={{paddingLeft: px(level * 10)}}>
+                  <NavTree
+                    nav={page.children}
+                    level={level + 1}
+                    open={showChildren}
+                  />
+                </div>
+              </div>
             ) : (
               <div>
                 <Link href={page.url}>
                   <a
-                    className={styles.root.link({
-                      active: router.pathname === page.url
-                    })}
+                    className={
+                      styles.root.link(/*{
+                      active: router.asPath === page.url
+                    }*/)
+                    }
                   >
                     {page.title}
                   </a>

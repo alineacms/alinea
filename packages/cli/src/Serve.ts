@@ -5,8 +5,8 @@ import {EvalPlugin} from '@esbx/eval'
 import {ReactPlugin} from '@esbx/react'
 import compression from 'compression'
 import {dirname} from 'dirname-filename-esm'
-import esbuild from 'esbuild'
-import express from 'express'
+import esbuild, {BuildOptions} from 'esbuild'
+import express, {RequestHandler} from 'express'
 import {existsSync} from 'node:fs'
 import fs from 'node:fs/promises'
 import http from 'node:http'
@@ -19,15 +19,16 @@ export type ServeOptions = {
   cwd?: string
   configFile?: string
   port?: number
+  previewHandler?: (server: Server) => RequestHandler
+  buildOptions?: BuildOptions
 }
 
 export async function serve(options: ServeOptions) {
-  const {cwd = process.cwd(), configFile = 'alinea.config'} = options
+  const {cwd = process.cwd(), previewHandler, buildOptions} = options
   const port = options.port || 4500
   const dashboardUrl = `http://localhost:${port}`
   const outDir = path.join(cwd, '.alinea')
   const storeLocation = path.join(outDir, 'store.js')
-  const configLocation = path.join(cwd, configFile)
   const genConfigFile = path.join(outDir, 'config.js')
   if (!existsSync(storeLocation)) await generate(options)
   const {createStore} = await import('file://' + storeLocation)
@@ -61,6 +62,7 @@ export async function serve(options: ServeOptions) {
       client: new Client(config, 'http://localhost:${port}')
     })
   `
+  console.log(__dirname)
   const esbuildServer = await esbuild.serve(
     {
       servedir: path.join(__dirname, 'static/serve')
@@ -71,7 +73,7 @@ export async function serve(options: ServeOptions) {
       treeShaking: true,
       minify: true,
       sourcemap: true,
-      outdir: path.join(__dirname, 'static/serve'),
+      outfile: path.join(__dirname, 'static/serve/dashboard.js'),
       bundle: true,
       stdin: {
         contents: entry,
@@ -79,10 +81,13 @@ export async function serve(options: ServeOptions) {
         sourcefile: 'dashboard.js'
       },
       platform: 'browser',
-      plugins: [EvalPlugin, ReactPlugin],
+      ...buildOptions,
+      plugins: [EvalPlugin, ReactPlugin, ...(buildOptions?.plugins || [])],
       loader: {
+        ...buildOptions?.loader,
         '.woff': 'file',
-        '.woff2': 'file'
+        '.woff2': 'file',
+        '.json': 'json'
       }
     }
   )
@@ -90,7 +95,7 @@ export async function serve(options: ServeOptions) {
   const app = express()
   app.use(server.app)
   app.use(compression())
-
+  if (previewHandler) app.get('/api/preview', previewHandler(server))
   app.use((req, res) => {
     const options = {
       hostname: esbuildServer.host,
@@ -112,7 +117,8 @@ export async function serve(options: ServeOptions) {
 
     req.pipe(proxyReq, {end: true})
   })
-  app.listen(4500)
+
+  app.listen(port)
 
   console.log(`> Alinea dashboard available on http://localhost:${port}`)
 }
