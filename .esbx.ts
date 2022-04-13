@@ -344,6 +344,7 @@ const serverOptions: BuildOptions = {
   outdir: 'packages/stories/dist',
   external: modules
     .filter(m => !m.includes('@alinea'))
+    .filter(m => !m.includes('shiki'))
     .concat('@alinea/sqlite-wasm'),
   plugins: [
     ...buildOptions.plugins,
