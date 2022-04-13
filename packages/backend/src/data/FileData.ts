@@ -61,7 +61,12 @@ export class FileData implements Data.Source, Data.Target, Data.Media {
               if (extension !== loader.extension) continue
               const name = path.basename(file, extension)
               const isIndex = name === 'index'
-              const entry = loader.parse(schema, await fs.readFile(location))
+              const buffer = await fs.readFile(location)
+              const [entry, err] = outcome(() => loader.parse(schema, buffer))
+              if (!entry) {
+                console.log(`\rCould not parse ${location}: ${err}`)
+                continue
+              }
               const type = schema.type(entry.type)
               const url = path.join(target, isIndex ? '' : name)
               const parentPath = isIndex ? parentUrl(target) : target
@@ -87,6 +92,20 @@ export class FileData implements Data.Source, Data.Target, Data.Media {
         }
       }
     }
+  }
+
+  async watchFiles() {
+    const {config, rootDir = '.'} = this.options
+    const paths = []
+    for (const {source: contentDir, roots} of Object.values(
+      config.workspaces
+    )) {
+      for (const root of Object.keys(roots)) {
+        const rootPath = path.join(rootDir, contentDir, root)
+        paths.push(rootPath)
+      }
+    }
+    return paths
   }
 
   async publish(entries: Array<Entry>): Promise<void> {

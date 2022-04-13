@@ -22,7 +22,7 @@
       "@alinea/auth.passwordless/*": ["./packages/auth/passwordless/src/*"],
       "@alinea/core/*": ["./packages/core/src/*"],
       "@alinea/dashboard/*": ["./packages/dashboard/src/*"],
-      "@alinea/backend/*": ["./packages/server/src/*"],
+      "@alinea/backend/*": ["./packages/backend/src/*"],
       "@alinea/store/*": ["./packages/store/src/*"],
       "@alinea/editor/*": ["./packages/editor/src/*"],
       "@alinea/ui": ["./packages/ui/src"],

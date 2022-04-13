@@ -10,6 +10,7 @@ import {EvalPlugin} from '@esbx/eval'
 import {ReactPlugin} from '@esbx/react'
 import {encode} from 'base64-arraybuffer'
 import Database from 'better-sqlite3'
+import {FSWatcher} from 'chokidar'
 import {dirname} from 'dirname-filename-esm'
 import {build, BuildResult, Plugin} from 'esbuild'
 import fs from 'fs-extra'
@@ -157,154 +158,220 @@ export async function generate(options: GenerateOptions) {
     cwd = process.cwd(),
     configFile = 'alinea.config'
   } = options
+  let cacheWatcher: Promise<{stop: () => void}> | undefined
   const configLocation = path.join(cwd, configFile)
   const outDir = path.join(cwd, '.alinea')
-  async function copy(...files: Array<string>) {
-    await Promise.all(
-      files.map(file =>
-        fs.copyFile(
-          path.join(__dirname, 'static', file),
-          path.join(outDir, file)
+
+  await Promise.all([copyStaticFiles(), compileConfig()])
+  await generatePackage()
+
+  async function copyStaticFiles() {
+    await fs.mkdirp(outDir)
+    async function copy(...files: Array<string>) {
+      await Promise.all(
+        files.map(file =>
+          fs.copyFile(
+            path.join(__dirname, 'static', file),
+            path.join(outDir, file)
+          )
         )
       )
-    )
-  }
-  await failOnBuildError(
-    build({
-      format: 'esm',
-      target: 'esnext',
-      treeShaking: true,
-      outdir: outDir,
-      entryPoints: {config: configLocation},
-      bundle: true,
-      platform: 'node',
-      plugins: [EvalPlugin, externalPlugin, ignorePlugin, ReactPlugin]
-    })
-  )
-  await copy(
-    'package.json',
-    'index.js',
-    'index.d.ts',
-    'client.js',
-    'client.d.ts',
-    'store.d.ts'
-  )
-  await fs.writeFile(
-    path.join(outDir, 'config.d.ts'),
-    configType(
-      path
-        .relative(path.join(cwd, outDir), path.join(cwd, configLocation))
-        .split(path.sep)
-        .join('/')
-    )
-  )
-  await fs.writeFile(path.join(outDir, '.gitignore'), `*`)
-  const genConfigFile = path.join(outDir, 'config.js')
-  const outFile = 'file://' + genConfigFile
-  const exports = await import(outFile)
-  const config: Config = exports.default || exports.config
-  if (!config) throw fail(`No config found in "${genConfigFile}"`)
-  const store = new SqliteStore(
-    new BetterSqlite3Driver(new Database(':memory:')),
-    createId
-  )
-  const sources = Object.values(config.workspaces).map(workspace => {
-    return workspace.source
-  })
-  const customSources: Array<Data.Source> = []
-  for (const sourceLocation of sources) {
-    const [stats, err] = await outcome(fs.stat(path.join(cwd, sourceLocation)))
-    if (err || !stats!.isDirectory()) {
-      // Attempt to build and extract source
-      const tmpFile = path.join(outDir, '_tmp', createId() + '.js')
-      await failOnBuildError(
-        build({
-          format: 'esm',
-          target: 'esnext',
-          treeShaking: true,
-          outfile: tmpFile,
-          entryPoints: [sourceLocation],
-          absWorkingDir: outDir,
-          bundle: true,
-          platform: 'node',
-          plugins: [externalPlugin, ignorePlugin, ReactPlugin]
-        })
-      )
-      const outFile = 'file://' + tmpFile
-      const exports = await import(outFile).finally(() => fs.unlink(tmpFile))
-      customSources.push(exports.default || exports.source)
     }
+    await copy(
+      'package.json',
+      'index.js',
+      'index.d.ts',
+      'client.js',
+      'client.d.ts',
+      'store.d.ts'
+    )
+    await fs.writeFile(
+      path.join(outDir, 'config.d.ts'),
+      configType(
+        path
+          .relative(path.join(cwd, outDir), path.join(cwd, configLocation))
+          .split(path.sep)
+          .join('/')
+      )
+    )
+    await fs.writeFile(path.join(outDir, '.gitignore'), `*`)
   }
-  const source = Data.Source.concat(
-    new FileData({
-      config,
-      fs: fs.promises,
-      loader: JsonLoader,
-      rootDir: cwd
-    }),
-    ...customSources
-  )
-  await Cache.create(store, config, source, true)
-  await fs.writeFile(
-    path.join(outDir, 'package.json'),
-    JSON.stringify(
-      {
-        type: 'module',
-        sideEffects: false,
-        exports: {
-          '.': {
-            browser: './client.js',
-            default: './index.js'
-          },
-          ...Object.fromEntries(
-            Object.keys(config.workspaces).map(key => [
-              `./${key}`,
-              `./${key}/index.js`
-            ])
-          )
+
+  async function compileConfig() {
+    return failOnBuildError(
+      build({
+        format: 'esm',
+        target: 'esnext',
+        treeShaking: true,
+        outdir: outDir,
+        entryPoints: {config: configLocation},
+        bundle: true,
+        platform: 'node',
+        plugins: [EvalPlugin, externalPlugin, ignorePlugin, ReactPlugin],
+        watch: options.watch && {
+          async onRebuild(error, result) {
+            if (error) console.error('watch build failed:', error)
+            else return generatePackage()
+          }
         }
-      },
-      null,
-      '  '
-    )
-  )
-  for (const [key, workspace] of Object.entries(config.workspaces)) {
-    await fs.mkdir(path.join(outDir, key), {recursive: true})
-    await fs.writeFile(
-      path.join(outDir, key, 'schema.js'),
-      schemaCollections(key, workspace.schema)
-    )
-    await fs.writeFile(
-      path.join(outDir, key, 'schema.d.ts'),
-      schemaTypes(key, workspace.schema)
-    )
-    await fs.copy(
-      path.join(__dirname, 'static/workspace'),
-      path.join(outDir, key),
-      {overwrite: true}
-    )
-    const workspaceIndex = await fs.readFile(
-      path.join(__dirname, 'static/workspace/index.js'),
-      'utf-8'
-    )
-    await fs.writeFile(
-      path.join(outDir, key, 'index.js'),
-      workspaceIndex.replace('$WORKSPACE', key)
+      })
     )
   }
-  const data = store.export()
-  if (!wasmCache) {
-    const source = await fs.readFile(
-      path.join(__dirname, 'static', 'store.embed.js'),
-      'utf-8'
-    )
-    await fs.writeFile(path.join(outDir, 'store.js'), embedInJs(source, data))
-  } else {
-    await fs.copyFile(
-      path.join(__dirname, 'static', 'store.wasm.js'),
-      path.join(outDir, 'store.js')
-    )
-    await fs.writeFile(path.join(outDir, 'store.wasm'), embedInWasm(data))
+
+  async function generatePackage() {
+    if (cacheWatcher) (await cacheWatcher).stop()
+    const config = await loadConfig()
+    return Promise.all([
+      generateWorkspaces(config),
+      (cacheWatcher = fillCache(config))
+    ])
   }
-  if (false) await fs.writeFile(path.join(outDir, 'store.db'), data)
+
+  async function loadConfig() {
+    const genConfigFile = path.join(outDir, 'config.js')
+    const outFile = 'file://' + genConfigFile
+    const exports = await import(outFile)
+    const config: Config = exports.default || exports.config
+    if (!config) throw fail(`No config found in "${genConfigFile}"`)
+    return config
+  }
+
+  async function generateWorkspaces(config: Config) {
+    for (const [key, workspace] of Object.entries(config.workspaces)) {
+      await fs.mkdir(path.join(outDir, key), {recursive: true})
+      await fs.writeFile(
+        path.join(outDir, key, 'schema.js'),
+        schemaCollections(key, workspace.schema)
+      )
+      await fs.writeFile(
+        path.join(outDir, key, 'schema.d.ts'),
+        schemaTypes(key, workspace.schema)
+      )
+      await fs.copy(
+        path.join(__dirname, 'static/workspace'),
+        path.join(outDir, key),
+        {overwrite: true}
+      )
+      const workspaceIndex = await fs.readFile(
+        path.join(__dirname, 'static/workspace/index.js'),
+        'utf-8'
+      )
+      await fs.writeFile(
+        path.join(outDir, key, 'index.js'),
+        workspaceIndex.replace('$WORKSPACE', key)
+      )
+    }
+    await fs.writeFile(
+      path.join(outDir, 'package.json'),
+      JSON.stringify(
+        {
+          type: 'module',
+          sideEffects: false,
+          exports: {
+            '.': {
+              browser: './client.js',
+              default: './index.js'
+            },
+            ...Object.fromEntries(
+              Object.keys(config.workspaces).map(key => [
+                `./${key}`,
+                `./${key}/index.js`
+              ])
+            )
+          }
+        },
+        null,
+        '  '
+      )
+    )
+  }
+
+  async function fillCache(config: Config) {
+    let watcher: FSWatcher | undefined
+    let caching: Promise<void> | undefined
+    const source = await createSource(config)
+    const files = await source.watchFiles?.()
+    async function cache() {
+      const store = await cacheEntries(config, source)
+      await createCache(store)
+    }
+    if (options.watch && files) {
+      watcher = new FSWatcher()
+      watcher.add(files).on('change', async () => {
+        if (caching) await caching
+        caching = cache()
+      })
+    }
+    caching = cache()
+    await caching
+    return {stop: () => watcher?.close()}
+  }
+
+  async function createSource(config: Config) {
+    const sources = Object.values(config.workspaces).map(workspace => {
+      return workspace.source
+    })
+    const customSources: Array<Data.Source> = []
+    for (const sourceLocation of sources) {
+      const [stats, err] = await outcome(
+        fs.stat(path.join(cwd, sourceLocation))
+      )
+      if (err || !stats!.isDirectory()) {
+        // Attempt to build and extract source
+        const tmpFile = path.join(outDir, '_tmp', createId() + '.js')
+        await failOnBuildError(
+          build({
+            format: 'esm',
+            target: 'esnext',
+            treeShaking: true,
+            outfile: tmpFile,
+            entryPoints: [sourceLocation],
+            absWorkingDir: outDir,
+            bundle: true,
+            platform: 'node',
+            plugins: [externalPlugin, ignorePlugin, ReactPlugin]
+          })
+        )
+        const outFile = 'file://' + tmpFile
+        const exports = await import(outFile).finally(() => fs.unlink(tmpFile))
+        customSources.push(exports.default || exports.source)
+      }
+    }
+    return Data.Source.concat(
+      new FileData({
+        config,
+        fs: fs.promises,
+        loader: JsonLoader,
+        rootDir: cwd
+      }),
+      ...customSources
+    )
+  }
+
+  async function cacheEntries(config: Config, source: Data.Source) {
+    const store = new SqliteStore(
+      new BetterSqlite3Driver(new Database(':memory:')),
+      createId
+    )
+    await Cache.create(store, config, source, true)
+    return store
+  }
+
+  async function createCache(store: SqliteStore) {
+    const data = store.export()
+    if (!wasmCache) {
+      const source = await fs.readFile(
+        path.join(__dirname, 'static', 'store.embed.js'),
+        'utf-8'
+      )
+      await fs.writeFile(path.join(outDir, 'store.js'), embedInJs(source, data))
+    } else {
+      await fs.copyFile(
+        path.join(__dirname, 'static', 'store.wasm.js'),
+        path.join(outDir, 'store.js')
+      )
+      await fs.writeFile(path.join(outDir, 'store.wasm'), embedInWasm(data))
+    }
+    if (false) await fs.writeFile(path.join(outDir, 'store.db'), data)
+  }
 }

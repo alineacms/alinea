@@ -37,6 +37,7 @@
     "@esbx/react": "^0.0.17",
     "base64-arraybuffer": "^1.0.1",
     "better-sqlite3": "^7.5.1",
+    "chokidar": "^3.5.3",
     "compression": "^1.7.4",
     "dirname-filename-esm": "^1.1.1",
     "esbuild": "^0.14.11",

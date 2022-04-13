@@ -3,6 +3,7 @@ import {Entry} from '@alinea/core'
 export namespace Data {
   export interface Source {
     entries(): AsyncGenerator<Entry>
+    watchFiles?: () => Promise<Array<string>>
   }
 
   export namespace Source {
@@ -14,6 +15,12 @@ export namespace Data {
               yield entry
             }
           }
+        },
+        async watchFiles() {
+          const res = await Promise.all(
+            sources.map(source => source.watchFiles?.() || [])
+          )
+          return res.flat()
         }
       }
     }
