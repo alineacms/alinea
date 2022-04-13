@@ -1,8 +1,9 @@
 import {useInput} from '@alinea/editor'
-import {Chip, fromModule, HStack, IconButton, IconLink, Typo} from '@alinea/ui'
+import {Chip, fromModule, HStack, IconLink, Typo} from '@alinea/ui'
 import {PropsWithChildren} from 'react'
 import {Helmet} from 'react-helmet'
-import {MdArrowBack, MdOutlineMoreHoriz} from 'react-icons/md'
+import {MdArrowBack} from 'react-icons/md'
+// import {MdOutlineMoreHoriz} from 'react-icons/md'
 import {EntryDraft} from '../../draft/EntryDraft'
 import {useCurrentDraft} from '../../hook/UseCurrentDraft'
 import css from './EntryTitle.module.scss'
@@ -29,7 +30,7 @@ export function EntryTitle({children, backLink}: EntryTitleProps) {
             {children}
           </Typo.H1>
           <Chip>{draft.channel.label}</Chip>
-          <IconButton icon={MdOutlineMoreHoriz} />
+          {/*<IconButton icon={MdOutlineMoreHoriz} />*/}
         </HStack>
       </div>
     </>
