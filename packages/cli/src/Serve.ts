@@ -6,8 +6,8 @@ import compression from 'compression'
 import {dirname} from 'dirname-filename-esm'
 import esbuild, {BuildOptions} from 'esbuild'
 import express, {RequestHandler} from 'express'
-import http from 'node:http'
 import path from 'node:path'
+import serveHandler from 'serve-handler'
 import {generate} from './Generate'
 
 const __dirname = dirname(import.meta)
@@ -41,6 +41,16 @@ export async function serve(options: ServeOptions) {
     port,
     cwd
   })
+  const app = express()
+  app.use(server.app)
+  app.use(compression())
+  app.use((req, res) =>
+    serveHandler(req, res, {public: path.join(staticDir, 'serve')})
+  )
+  app.listen(port)
+
+  console.log(`> Alinea dashboard available on http://localhost:${port}`)
+
   const entry = `
     import '@alinea/css'
     import {Client} from '@alinea/client'
@@ -51,67 +61,37 @@ export async function serve(options: ServeOptions) {
       client: new Client(config, 'http://localhost:${port}')
     })
   `
-  const esbuildServer = await esbuild.serve(
-    {
-      servedir: path.join(staticDir, 'serve')
+
+  await esbuild.build({
+    format: 'esm',
+    target: 'esnext',
+    treeShaking: true,
+    minify: true,
+    splitting: true,
+    sourcemap: true,
+    outdir: path.join(staticDir, 'serve'),
+    bundle: true,
+    watch: true,
+    stdin: {
+      contents: entry,
+      resolveDir: cwd
     },
-    {
-      format: 'esm',
-      target: 'esnext',
-      treeShaking: true,
-      minify: false,
-      splitting: true,
-      sourcemap: true,
-      outdir: path.join(staticDir, 'serve'),
-      bundle: true,
-      stdin: {
-        contents: entry,
-        resolveDir: cwd
-      },
-      platform: 'browser',
-      ...buildOptions,
-      plugins: [
-        EvalPlugin,
-        ReloadPlugin,
-        ReactPlugin,
-        ...(buildOptions?.plugins || [])
-      ],
-      loader: {
-        ...buildOptions?.loader,
-        '.woff': 'file',
-        '.woff2': 'file',
-        '.json': 'json'
-      }
+    platform: 'browser',
+    ...buildOptions,
+    plugins: [
+      ReloadPlugin,
+      EvalPlugin,
+      ReactPlugin,
+      ...(buildOptions?.plugins || [])
+    ],
+    define: {
+      'process.env.NODE_ENV': "'development'"
+    },
+    loader: {
+      ...buildOptions?.loader,
+      '.woff': 'file',
+      '.woff2': 'file',
+      '.json': 'json'
     }
-  )
-
-  const app = express()
-  app.use(server.app)
-  app.use(compression())
-  if (previewHandler) app.get('/api/preview', previewHandler(server))
-  app.use((req, res) => {
-    const options = {
-      hostname: esbuildServer.host,
-      port: esbuildServer.port,
-      path: req.url,
-      method: req.method,
-      headers: req.headers
-    }
-
-    const proxyReq = http.request(options, proxyRes => {
-      if (proxyRes.statusCode === 404) {
-        res.writeHead(404, {'Content-Type': 'text/plain'})
-        res.end('404: Not Found')
-      } else {
-        res.writeHead(proxyRes.statusCode || 200, proxyRes.headers)
-        proxyRes.pipe(res, {end: true})
-      }
-    })
-
-    req.pipe(proxyReq, {end: true})
   })
-
-  app.listen(port)
-
-  console.log(`> Alinea dashboard available on http://localhost:${port}`)
 }

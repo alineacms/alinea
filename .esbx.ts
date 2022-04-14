@@ -220,13 +220,17 @@ const serverOptions: BuildOptions = {
 }
 
 export const dev = {
-  action: () => build(serverOptions)
+  async action() {
+    await buildTask.action({watch: true})
+    return build(serverOptions)
+  }
 }
 
 export const clean = {
   action() {
     fs.removeSync('.types')
     fs.removeSync('dist')
+    fs.removeSync('packages/website/.alinea')
     for (const location of getWorkspaces(process.cwd())) {
       fs.removeSync(`${location}/dist`)
     }

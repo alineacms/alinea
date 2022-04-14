@@ -4,7 +4,7 @@ import {InternalPackages, InternalViews, sassPlugin} from './.esbx'
 
 serve({
   cwd: path.resolve('packages/website'),
-  staticDir: path.resolve('packages/cli/src/static'),
+  staticDir: path.resolve('packages/cli/dist/static'),
   port: 4500,
   buildOptions: {
     plugins: [InternalViews, InternalPackages, sassPlugin]
