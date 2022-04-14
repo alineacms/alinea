@@ -36,7 +36,7 @@ export function BrowserPreview({url, prettyUrl}: BrowserPreviewProps) {
   }, [url])
   useEffect(() => {
     if (status === DraftsStatus.Synced) {
-      ref.current?.contentWindow?.location.reload()
+      ref.current?.setAttribute('src', url)
     }
   }, [status])
   useEffect(() => {

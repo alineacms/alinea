@@ -80,8 +80,8 @@ __metadata:
     "@alinea/core": 0.0.0
     "@alinea/sqlite-wasm": ^0.1.4
     "@alinea/store": 0.0.0
-    "@esbx/eval": ^0.0.17
-    "@esbx/react": ^0.0.17
+    "@esbx/eval": ^0.0.18
+    "@esbx/react": ^0.0.18
     "@types/fs-extra": ^9.0.13
     "@types/sade": ^1.7.3
     base64-arraybuffer: ^1.0.1
@@ -321,22 +321,22 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@alinea/root@workspace:."
   dependencies:
-    "@esbx/extension": ^0.0.17
-    "@esbx/external": ^0.0.17
-    "@esbx/react": ^0.0.17
-    "@esbx/reload": ^0.0.17
-    "@esbx/reporter": ^0.0.17
-    "@esbx/run": ^0.0.17
-    "@esbx/sass": ^0.0.17
-    "@esbx/static": ^0.0.17
-    "@esbx/workspaces": ^0.0.17
+    "@esbx/extension": ^0.0.18
+    "@esbx/external": ^0.0.18
+    "@esbx/react": ^0.0.18
+    "@esbx/reload": ^0.0.18
+    "@esbx/reporter": ^0.0.18
+    "@esbx/run": ^0.0.18
+    "@esbx/sass": ^0.0.18
+    "@esbx/static": ^0.0.18
+    "@esbx/workspaces": ^0.0.18
     "@types/glob": ^7.1.4
     "@types/node": ^16.9.0
     autoprefixer: ^10.4.2
     copy-env-cli: 1.0.0
     cross-env: ^7.0.3
     esbuild: ^0.14.11
-    esbx: ^0.0.17
+    esbx: ^0.0.18
     fs-extra: ^10.0.0
     glob: ^7.2.0
     memfs: ^3.4.1
@@ -475,148 +475,116 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@esbx/alias@npm:0.0.0":
-  version: 0.0.0
-  resolution: "@esbx/alias@npm:0.0.0"
-  checksum: 60a4595b3e9c9e31e7ca1b8ec451c1add921b229a2f26c5cbd27e0f24bec99903a226fbe9c0dfed3a6e2ba67decced35275707be7d97b36dc8479d0783da70e5
+"@esbx/alias@npm:0.0.18":
+  version: 0.0.18
+  resolution: "@esbx/alias@npm:0.0.18"
+  checksum: 46ed48647235ce9d447eb0f45570255ddf2ba3a8c2feecc1e5e5027c316e64e2deafc46cd22bc23a69f0581e0d6eddaf41eed1a4a222043c4a91a4422b476fcb
   languageName: node
   linkType: hard
 
-"@esbx/eval@npm:^0.0.17":
-  version: 0.0.17
-  resolution: "@esbx/eval@npm:0.0.17"
+"@esbx/eval@npm:^0.0.18":
+  version: 0.0.18
+  resolution: "@esbx/eval@npm:0.0.18"
   dependencies:
-    "@esbx/external": 0.0.17
-    "@esbx/util": 0.0.17
-  checksum: b99881f0fe3beb9fc11234075302010177efb5c0d85cdb4ff3a87f812fe39470fb3d387dd11d30cd3d2ba3360d88d157fce3ff4cc2f280b4c9b1eab9df08d323
+    "@esbx/external": 0.0.18
+    "@esbx/util": 0.0.18
+  checksum: d35ce9c222bb42f0a0fe4d42d914a347d0fc21e95f04ea53940ae96f6a5771bea612f36e76f1da97668e274035ad7e34e63e481ff246f11c47d3db378fb22f83
   languageName: node
   linkType: hard
 
-"@esbx/extension@npm:0.0.0":
-  version: 0.0.0
-  resolution: "@esbx/extension@npm:0.0.0"
-  checksum: 8495a26489794656a71820efbf24da14f1d074720cf648c19d068d805ad58815f834de4e4d10f2fabddcfaa0efdbd4efb04850f3d393a6958b61352a81a52fa9
+"@esbx/extension@npm:0.0.18, @esbx/extension@npm:^0.0.18":
+  version: 0.0.18
+  resolution: "@esbx/extension@npm:0.0.18"
+  checksum: 60390c1b70762db0e42296d3b62dcaf5ed55829c363c9be96533d0779170a5e2e7be1bbf7ec6e9de105aba935b46bf58a30cad3b2b5c7930f587da57db8d9379
   languageName: node
   linkType: hard
 
-"@esbx/extension@npm:^0.0.17":
-  version: 0.0.17
-  resolution: "@esbx/extension@npm:0.0.17"
-  checksum: 156f53bd5e98e602ced610b4bfb3f3e6d5a68dbbd778e53398a58b87c2011907c4684ebe83be4be68017c223c36b8cfddf02fa27e7451c5535314b652e5d8285
+"@esbx/external@npm:0.0.18, @esbx/external@npm:^0.0.18":
+  version: 0.0.18
+  resolution: "@esbx/external@npm:0.0.18"
+  checksum: 9275b6ff721af2ce1a5e945e92caadf706bd1a09eb398631dcc0fe540f8bf6fe4315521c9f8b44c9a727cb2f31d7b3e8400c7a95e43f15b463b8a7e3234018a1
   languageName: node
   linkType: hard
 
-"@esbx/external@npm:0.0.0":
-  version: 0.0.0
-  resolution: "@esbx/external@npm:0.0.0"
-  checksum: e36a8688da8ee73a0cea2f52638603b127d2296f2052c976ca94257bdb7e2410984bebcae3762af8fd60664f25c25cd7040fe8992779e861ea41bf9717736b05
-  languageName: node
-  linkType: hard
-
-"@esbx/external@npm:0.0.17, @esbx/external@npm:^0.0.17":
-  version: 0.0.17
-  resolution: "@esbx/external@npm:0.0.17"
-  checksum: 7487c152b4488a939ceaa3fc4ecfb61328dd5d64dffbd75bb213eb41077a0f91b7e70e955dc28150ec0c1525683b628cbe78ed419cf8ccae2e5d1828b339c096
-  languageName: node
-  linkType: hard
-
-"@esbx/react@npm:^0.0.17":
-  version: 0.0.17
-  resolution: "@esbx/react@npm:0.0.17"
+"@esbx/react@npm:^0.0.18":
+  version: 0.0.18
+  resolution: "@esbx/react@npm:0.0.18"
   dependencies:
-    "@esbx/alias": 0.0.0
-    "@esbx/util": 0.0.0
+    "@esbx/alias": 0.0.18
+    "@esbx/util": 0.0.18
     dirname-filename-esm: ^1.1.1
-  checksum: 4fc1c7022e4be3bb721a4ec8fdf6853c897948f216ea1da31d4dbb4b4ffc09c5056a8e045c32e8d5caf46e9cc04ba6ae962f5928e7c39a098da7dae3e523174d
+  checksum: cb4215f0bff5b7525d0d9113189fa7c2501f6d64d9f6690deac4fdf06228090e3903d2aa27d4ac991c6f89e5c14b8df5c7f994511fffe9999145e5c327022347
   languageName: node
   linkType: hard
 
-"@esbx/reload@npm:^0.0.17":
-  version: 0.0.17
-  resolution: "@esbx/reload@npm:0.0.17"
-  checksum: ba20d70372f604ff586c003c8897711b719d58dd8c17f12621e662b9baf3c0dfb29503d69681acc6951bd2a45af385c1b6c85453f6942a145948d34b7d93a6cd
+"@esbx/reload@npm:^0.0.18":
+  version: 0.0.18
+  resolution: "@esbx/reload@npm:0.0.18"
+  checksum: fe616233f8f0c547fc85e3301cb9e7fb8308687f03e874e6d419f262d335ecc5831da1e5d983b54d3b64656d9bd89d3a0148b7af2e1eb39b82c76d13b7a38342
   languageName: node
   linkType: hard
 
-"@esbx/reporter@npm:^0.0.17":
-  version: 0.0.17
-  resolution: "@esbx/reporter@npm:0.0.17"
+"@esbx/reporter@npm:^0.0.18":
+  version: 0.0.18
+  resolution: "@esbx/reporter@npm:0.0.18"
   dependencies:
-    "@esbx/util": 0.0.0
+    "@esbx/util": 0.0.18
     pretty-ms: ^7.0.1
-  checksum: 3c169c68b9ba6879fdf3778cbc1569823c4ed7d949f645bbd8936c470f307b0753b41bb7c8bd06d90395b07593b3cb66504b89eccd84288304a6b776e71331d4
+  checksum: 278fc4fb10f08fba4d47ba428a6454cfc8786eb7b56c468e74d38a585327b1412b56aed19461cde225bc3c4e0957cd9502d0881eef235708f32350c091c735a2
   languageName: node
   linkType: hard
 
-"@esbx/run@npm:^0.0.17":
-  version: 0.0.17
-  resolution: "@esbx/run@npm:0.0.17"
+"@esbx/run@npm:^0.0.18":
+  version: 0.0.18
+  resolution: "@esbx/run@npm:0.0.18"
   dependencies:
     tree-kill: ^1.2.2
-  checksum: bdd5e943982e964ae7e8e363de0d981dfa333b29b247114ebbffe05ef53a274fe71a6620400fd527c9b3eb23764889ff9be6946c906f8e953c12ae4f82d54a20
+  checksum: 11e835fda75fdb191c91cf5a44a6527e9bc0372009dd2df1ee3db2f2895928a17c83e0715ff6a510504ff1d1b3c006142e598403c090f7b2947093c2a894a53c
   languageName: node
   linkType: hard
 
-"@esbx/sass@npm:^0.0.17":
-  version: 0.0.17
-  resolution: "@esbx/sass@npm:0.0.17"
+"@esbx/sass@npm:^0.0.18":
+  version: 0.0.18
+  resolution: "@esbx/sass@npm:0.0.18"
   dependencies:
     postcss: ^8.4.5
     postcss-modules: ^4.2.2
     sass-embedded: ^1.49.7
-  checksum: 6bd4b7c6afa055f80e2004808cf2c502fa16f4f60b05d519cb0b8d638d7c55b4559dcbf103cf25caef487135dc23eeb923c11821040fbedfb27ca752b9d14cb6
+  checksum: 5fe40f7402998cc7f207adfbbb3368021e6f93f99501e59ba48822406a1f56f07b6e6615d0c01f1fd378b69f938b76f95b018190456e4125c0b02ff2863163fb
   languageName: node
   linkType: hard
 
-"@esbx/static@npm:0.0.0":
-  version: 0.0.0
-  resolution: "@esbx/static@npm:0.0.0"
+"@esbx/static@npm:0.0.18, @esbx/static@npm:^0.0.18":
+  version: 0.0.18
+  resolution: "@esbx/static@npm:0.0.18"
   dependencies:
     fs-extra: ^10.0.0
-  checksum: 629be08693f6f26c0520700f2248da1137dbf08c38f0a7a55615e23cc4afa1e9c66fb5e020fae07185e1254e97110a6a7dd7b3db6389096a507ddf248a2a9b7d
+  checksum: 19c3f24c42e6e07abd05c1b3dfc6559447ae3ee411034d9f3d2eab7d2afaa47393a4189999b75e3138ec002a647cf35f32532789f371e423b9a400cabef4535a
   languageName: node
   linkType: hard
 
-"@esbx/static@npm:^0.0.17":
-  version: 0.0.17
-  resolution: "@esbx/static@npm:0.0.17"
-  dependencies:
-    fs-extra: ^10.0.0
-  checksum: 39ac84527203c96e9a5ff0d958169b0b1ee35fcf48e268952c84c6773fbc170301069bb659c5764482a197668fc9d27c726fc9614b7ea378b88fb6e3b076fad6
-  languageName: node
-  linkType: hard
-
-"@esbx/util@npm:0.0.0":
-  version: 0.0.0
-  resolution: "@esbx/util@npm:0.0.0"
+"@esbx/util@npm:0.0.18":
+  version: 0.0.18
+  resolution: "@esbx/util@npm:0.0.18"
   dependencies:
     pretty-ms: ^7.0.1
-  checksum: 87796f97d69d3aade64cccbe6e03fc6c673cbbccd117464620038e0ba60ec74d9a8408c8e986ebecf47cf192df409880b2cbc1db48c7f2c154be202b1861c7f8
+  checksum: 0aa83f140ce91fe1664a6919c2c42fb09d694683dbbfb18d02e21a49e10005146ed81fe67f587a6ed4d41e784e14eaeca7ffe68f966acb9be1d0da714ef04d6f
   languageName: node
   linkType: hard
 
-"@esbx/util@npm:0.0.17":
-  version: 0.0.17
-  resolution: "@esbx/util@npm:0.0.17"
+"@esbx/workspaces@npm:^0.0.18":
+  version: 0.0.18
+  resolution: "@esbx/workspaces@npm:0.0.18"
   dependencies:
-    pretty-ms: ^7.0.1
-  checksum: 75379135a4266116280ee234a06b50eb7c102e47fe5b72bf4df2095a0e12a2313d0b184791f50bb7f12261da0d3d98120a34827fda16f5abc824c453170a2b06
-  languageName: node
-  linkType: hard
-
-"@esbx/workspaces@npm:^0.0.17":
-  version: 0.0.17
-  resolution: "@esbx/workspaces@npm:0.0.17"
-  dependencies:
-    "@esbx/extension": 0.0.0
-    "@esbx/external": 0.0.0
-    "@esbx/static": 0.0.0
-    "@esbx/util": 0.0.0
+    "@esbx/extension": 0.0.18
+    "@esbx/external": 0.0.18
+    "@esbx/static": 0.0.18
+    "@esbx/util": 0.0.18
     fs-extra: ^10.0.0
     glob: ^7.2.0
     tsconfig-resolver: ^3.0.1
     which: ^2.0.2
-  checksum: 8bdacb3d8f614ee0c2f61c1fe596da651d8689363235668fff35ca522ae604fac10b0e29927d9d4247075f2da1de27a8aab752000abb34b0112d61e200103b44
+  checksum: 5e3edfc4509ddb6669e900808adce65b9f6671ff6661003a39b3694bb606c5299f0d2d8f1afae3db31e2ae7ccbb0af9d786e2eafe057a1b641cbfdd777eeafdd
   languageName: node
   linkType: hard
 
@@ -3913,15 +3881,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"esbx@npm:^0.0.17":
-  version: 0.0.17
-  resolution: "esbx@npm:0.0.17"
+"esbx@npm:^0.0.18":
+  version: 0.0.18
+  resolution: "esbx@npm:0.0.18"
   dependencies:
-    "@esbx/external": 0.0.17
+    "@esbx/external": 0.0.18
     sade: ^1.7.4
   bin:
     esbx: dist/bin.js
-  checksum: 0ba76af307bc1cdacdcb7073d61de371cafbaee876d228a18ad95f0bfbbd7c3fae7bec397e847b4d37c4b3a844621a6566b6268ba098acd2cfa12c5128812c72
+  checksum: 50ad875190c4edb6d33c03790871fb2c3d8c61ff73ee51bd9efd93ff1af09a2ab5cb4da3618359a98c7657df5622fcfa8b7fbdc471c86942dffef8fb0198aa03
   languageName: node
   linkType: hard
 

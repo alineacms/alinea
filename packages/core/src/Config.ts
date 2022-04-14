@@ -14,7 +14,7 @@ export class Config<T extends Workspaces = Workspaces> {
     return this.options.workspaces
   }
 
-  type(workspace: string, name: string): Type | undefined {
+  type = (workspace: string, name: string): Type | undefined => {
     const space = this.workspaces[workspace]
     if (!space) throw createError(404, `Workspace "${workspace}" not found`)
     return space.schema.type(name)

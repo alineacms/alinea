@@ -58,7 +58,9 @@ export class Backend<T extends Workspaces = Workspaces> implements Hub<T> {
     if (draft) {
       const doc = new Y.Doc()
       Y.applyUpdate(doc, draft)
-      const isValidDraft = outcome.succeeds(() => entryFromDoc(config, doc))
+      const isValidDraft = outcome.succeeds(() =>
+        entryFromDoc(doc, config.type)
+      )
       if (!isValidDraft) {
         console.log(`Removed invalid draft ${id}`)
         await drafts.delete([id])
@@ -104,7 +106,7 @@ export class Backend<T extends Workspaces = Workspaces> implements Hub<T> {
   publishEntries(entries: Array<Entry>): Future<void> {
     const {config, drafts, target} = this.options
     function applyPublish(store: Store) {
-      Cache.applyPublish(store, config, entries)
+      Cache.applyPublish(store, config.type, entries)
       return store
     }
     return outcome(async () => {

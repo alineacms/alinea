@@ -1,14 +1,11 @@
-import {JsonLoader, JWTPreviews, Server} from '@alinea/backend'
-import {FileData} from '@alinea/backend/data/FileData'
-import {FileDrafts} from '@alinea/backend/drafts/FileDrafts'
+import {DevServer, Server} from '@alinea/backend'
 import {EvalPlugin} from '@esbx/eval'
 import {ReactPlugin} from '@esbx/react'
+import {ReloadPlugin} from '@esbx/reload'
 import compression from 'compression'
 import {dirname} from 'dirname-filename-esm'
 import esbuild, {BuildOptions} from 'esbuild'
 import express, {RequestHandler} from 'express'
-import {existsSync} from 'node:fs'
-import fs from 'node:fs/promises'
 import http from 'node:http'
 import path from 'node:path'
 import {generate} from './Generate'
@@ -17,6 +14,7 @@ const __dirname = dirname(import.meta)
 
 export type ServeOptions = {
   cwd?: string
+  staticDir?: string
   configFile?: string
   port?: number
   previewHandler?: (server: Server) => RequestHandler
@@ -24,33 +22,24 @@ export type ServeOptions = {
 }
 
 export async function serve(options: ServeOptions) {
-  const {cwd = process.cwd(), previewHandler, buildOptions} = options
+  const {
+    cwd = process.cwd(),
+    previewHandler,
+    buildOptions,
+    staticDir = path.join(__dirname, 'static')
+  } = options
   const port = options.port || 4500
-  const dashboardUrl = `http://localhost:${port}`
   const outDir = path.join(cwd, '.alinea')
   const storeLocation = path.join(outDir, 'store.js')
   const genConfigFile = path.join(outDir, 'config.js')
-  if (!existsSync(storeLocation)) await generate(options)
+  await generate({...options, watch: true})
   const {createStore} = await import('file://' + storeLocation)
   const {config} = await import('file://' + genConfigFile)
-  const data = new FileData({
+  const server = new DevServer({
     config,
-    fs,
-    loader: JsonLoader,
-    rootDir: cwd
-  })
-  const drafts = new FileDrafts({
-    fs,
-    dir: path.join(outDir, '.drafts')
-  })
-  const server = new Server({
-    dashboardUrl,
     createStore,
-    config,
-    drafts: drafts,
-    media: data,
-    target: data,
-    previews: new JWTPreviews('local')
+    port,
+    cwd
   })
   const entry = `
     import '@alinea/css'
@@ -62,27 +51,31 @@ export async function serve(options: ServeOptions) {
       client: new Client(config, 'http://localhost:${port}')
     })
   `
-  console.log(__dirname)
   const esbuildServer = await esbuild.serve(
     {
-      servedir: path.join(__dirname, 'static/serve')
+      servedir: path.join(staticDir, 'serve')
     },
     {
       format: 'esm',
       target: 'esnext',
       treeShaking: true,
-      minify: true,
+      minify: false,
+      splitting: true,
       sourcemap: true,
-      outfile: path.join(__dirname, 'static/serve/dashboard.js'),
+      outdir: path.join(staticDir, 'serve'),
       bundle: true,
       stdin: {
         contents: entry,
-        resolveDir: cwd,
-        sourcefile: 'dashboard.js'
+        resolveDir: cwd
       },
       platform: 'browser',
       ...buildOptions,
-      plugins: [EvalPlugin, ReactPlugin, ...(buildOptions?.plugins || [])],
+      plugins: [
+        EvalPlugin,
+        ReloadPlugin,
+        ReactPlugin,
+        ...(buildOptions?.plugins || [])
+      ],
       loader: {
         ...buildOptions?.loader,
         '.woff': 'file',

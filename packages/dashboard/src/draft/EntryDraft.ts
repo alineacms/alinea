@@ -47,7 +47,7 @@ export class EntryDraft implements Entry {
   }
 
   getEntry(): Entry {
-    return entryFromDoc(this.channel, this.doc)
+    return entryFromDoc(this.doc, () => this.channel)
   }
 
   static get url() {

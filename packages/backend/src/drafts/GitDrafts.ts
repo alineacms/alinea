@@ -1,4 +1,4 @@
-import {createId, outcome} from '@alinea/core'
+/*import {createId, outcome} from '@alinea/core'
 import git, {AuthCallback, HttpClient, PromiseFsClient} from 'isomorphic-git'
 import {posix as path} from 'node:path'
 import {Drafts} from '../Drafts'
@@ -142,3 +142,4 @@ export class GitDrafts extends FileDrafts {
     }
   }
 }
+*/

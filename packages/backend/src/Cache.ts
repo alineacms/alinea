@@ -5,7 +5,7 @@ import {
   entryFromDoc,
   EntryStatus,
   outcome,
-  Schema
+  Type
 } from '@alinea/core'
 import {Search} from '@alinea/core/Search'
 import {
@@ -126,7 +126,7 @@ export namespace Cache {
     log = false
   ) {
     const startTime = process.hrtime.bigint()
-    if (log) process.stdout.write('> Start indexing...')
+    if (log) process.stdout.write('> Start indexing...\r')
     store.delete(Entry)
     store.createFts5Table(Search, 'Search', () => {
       return {title: Search.title}
@@ -145,14 +145,13 @@ export namespace Cache {
     for await (const entry of from.entries()) {
       total++
       if (log && total % 1000 === 0) {
-        process.stdout.write(`\r> Scanned ${total} entries`)
+        process.stdout.write(`> Scanned ${total} entries\r`)
         commitBatch()
       }
       batch.push(entry)
     }
     commitBatch()
-    if (log) process.stdout.write(`\r>                          `)
-    if (log) process.stdout.write(`\r> Indexing...`)
+    if (log) process.stdout.write(`> Indexing...\r`)
     store.createIndex(Entry, 'index', [Entry.index])
     store.createIndex(Entry, 'parent', [Entry.parent])
     store.createIndex(Entry, 'workspace.root.type', [
@@ -163,7 +162,7 @@ export namespace Cache {
     store.createIndex(Entry, 'root', [Entry.root])
     store.createIndex(Entry, 'type', [Entry.type])
     store.createIndex(Entry, 'url', [Entry.url])
-    if (log) process.stdout.write(`\r> Validating order...`)
+    if (log) process.stdout.write(`> Validating order...\r`)
     for (const [workspace, {schema}] of Object.entries(config.workspaces)) {
       for (const [key, type] of schema) {
         const {index} = type.options
@@ -180,7 +179,7 @@ export namespace Cache {
     const diff = process.hrtime.bigint() - startTime
     if (log)
       console.log(
-        `\r> Indexed ${total} entries in ${prettyMilliseconds(
+        `> Indexed ${total} entries in ${prettyMilliseconds(
           convertHrtime(diff).milliseconds
         )}`
       )
@@ -188,14 +187,11 @@ export namespace Cache {
 
   function computeEntry(
     store: Store,
-    config: Config | Schema,
+    getType: (workspace: string, typeKey: string) => Type | undefined,
     entry: Entry,
     status: EntryStatus
   ) {
-    const type =
-      config instanceof Config
-        ? config.type(entry.workspace, entry.type)
-        : config.type(entry.type)
+    const type = getType(entry.workspace, entry.type)
     if (!type) throw createError(400, 'Type not found')
     const parents = walkUrl(parentUrl(entry.url)).map(url => {
       const parent = store.first(
@@ -218,7 +214,7 @@ export namespace Cache {
 
   export function applyUpdates(
     store: Store,
-    config: Config | Schema,
+    getType: (workspace: string, typeKey: string) => Type | undefined,
     updates: IterableIterator<[string, Uint8Array]>
   ) {
     const changed = []
@@ -228,12 +224,12 @@ export namespace Cache {
       const doc = new Y.Doc()
       // if (existing) docFromEntry(config, existing, doc)
       Y.applyUpdate(doc, update)
-      const [data, err] = outcome(() => entryFromDoc(config, doc))
+      const [data, err] = outcome(() => entryFromDoc(doc, getType))
       if (err) {
         console.error(err)
         continue
       }
-      const entry = computeEntry(store, config, data!, EntryStatus.Draft)
+      const entry = computeEntry(store, getType, data!, EntryStatus.Draft)
       changed.push(id)
       if (existing) store.update(condition, entry)
       else store.insert(Entry, entry)
@@ -244,12 +240,12 @@ export namespace Cache {
 
   export function applyPublish(
     store: Store,
-    config: Config | Schema,
+    getType: (workspace: string, typeKey: string) => Type | undefined,
     entries: Array<Entry>
   ) {
     return store.transaction(() => {
       for (const data of entries) {
-        const entry = computeEntry(store, config, data, EntryStatus.Published)
+        const entry = computeEntry(store, getType, data, EntryStatus.Published)
         const condition = Entry.where(Entry.id.is(entry.id))
         const existing = store.first(condition)
         if (existing) store.update(condition, entry)

@@ -28,12 +28,11 @@
       "@alinea/editor/*": ["./packages/editor/src/*"],
       "@alinea/ui": ["./packages/ui/src"],
       "@alinea/ui/*": ["./packages/ui/src/*"],
-      "@alinea/*": ["./packages/*/src"],
-      ".alinea/*": ["./packages/website/.alinea/*"]
+      "@alinea/*": ["./packages/*/src"]
     },
     "plugins": [{"name": "typescript-plugin-css-modules"}],
     "types": ["react/next", "react-dom/next"]
   },
-  "include": ["packages"],
-  "exclude": ["node_modules"]
+  "include": ["packages", "dev.ts"],
+  "exclude": ["node_modules", "packages/website"]
 }

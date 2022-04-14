@@ -33,9 +33,11 @@ export const config = createConfig({
       preview({entry, previewToken}) {
         const noPreviews = new Set(['Docs', 'MediaLibrary'])
         if (noPreviews.has(entry.type)) return null
+        const location =
+          process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : ''
         return (
           <BrowserPreview
-            url={`/api/preview?${previewToken}`}
+            url={`${location}/api/preview?${previewToken}`}
             prettyUrl={entry.url}
           />
         )

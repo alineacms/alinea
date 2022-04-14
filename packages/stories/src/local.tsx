@@ -15,7 +15,7 @@ const backend = new Backend({
     const {createStore} = await import('../../website/.alinea')
     const store = await createStore()
     const entries = await accumulate(data.entries())
-    Cache.applyPublish(store, config, entries)
+    Cache.applyPublish(store, config.type, entries)
     return store
   },
   drafts: new IndexedDBDrafts(),

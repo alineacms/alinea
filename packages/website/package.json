@@ -4,12 +4,9 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "dev": "yarn workspace @alinea/root build && run-p dev:compile dev:gen",
-    "dev:compile": "next dev",
-    "dev:gen": "alinea generate --watch",
+    "dev": "next dev",
     "dev:check": "tsc -w",
     "build": "alinea generate && next build",
-    "generate": "alinea generate",
     "start": "next start",
     "lint": "next lint"
   },

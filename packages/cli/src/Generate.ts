@@ -147,6 +147,7 @@ function schemaTypes(workspace: string, schema: Schema) {
 
 export type GenerateOptions = {
   cwd?: string
+  staticDir?: string
   configFile?: string
   watch?: boolean
   wasmCache?: boolean
@@ -156,7 +157,8 @@ export async function generate(options: GenerateOptions) {
   const {
     wasmCache = false,
     cwd = process.cwd(),
-    configFile = 'alinea.config'
+    configFile = 'alinea.config',
+    staticDir = path.join(__dirname, 'static')
   } = options
   let cacheWatcher: Promise<{stop: () => void}> | undefined
   const configLocation = path.join(cwd, configFile)
@@ -166,14 +168,11 @@ export async function generate(options: GenerateOptions) {
   await generatePackage()
 
   async function copyStaticFiles() {
-    await fs.mkdirp(outDir)
+    await fs.mkdirp(outDir).catch(() => {})
     async function copy(...files: Array<string>) {
       await Promise.all(
         files.map(file =>
-          fs.copyFile(
-            path.join(__dirname, 'static', file),
-            path.join(outDir, file)
-          )
+          fs.copyFile(path.join(staticDir, file), path.join(outDir, file))
         )
       )
     }
@@ -247,13 +246,11 @@ export async function generate(options: GenerateOptions) {
         path.join(outDir, key, 'schema.d.ts'),
         schemaTypes(key, workspace.schema)
       )
-      await fs.copy(
-        path.join(__dirname, 'static/workspace'),
-        path.join(outDir, key),
-        {overwrite: true}
-      )
+      await fs.copy(path.join(staticDir, 'workspace'), path.join(outDir, key), {
+        overwrite: true
+      })
       const workspaceIndex = await fs.readFile(
-        path.join(__dirname, 'static/workspace/index.js'),
+        path.join(staticDir, 'workspace/index.js'),
         'utf-8'
       )
       await fs.writeFile(
@@ -361,13 +358,13 @@ export async function generate(options: GenerateOptions) {
     const data = store.export()
     if (!wasmCache) {
       const source = await fs.readFile(
-        path.join(__dirname, 'static', 'store.embed.js'),
+        path.join(staticDir, 'store.embed.js'),
         'utf-8'
       )
       await fs.writeFile(path.join(outDir, 'store.js'), embedInJs(source, data))
     } else {
       await fs.copyFile(
-        path.join(__dirname, 'static', 'store.wasm.js'),
+        path.join(staticDir, 'store.wasm.js'),
         path.join(outDir, 'store.js')
       )
       await fs.writeFile(path.join(outDir, 'store.wasm'), embedInWasm(data))
