@@ -53,7 +53,7 @@ export class FileDrafts implements Drafts {
     for (const file of files) {
       if (file.startsWith('.')) continue
       const [update, err] = await future(this.get(file))
-      if (update) yield {id: dir, update}
+      if (update) yield {id: file, update}
     }
   }
 }
