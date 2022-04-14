@@ -24,8 +24,8 @@
   },
   "dependencies": {
     "@alinea/core": "0.0.0",
-    "@radix-ui/react-dropdown-menu": "^0.1.0",
-    "@radix-ui/react-tabs": "^0.1.0",
+    "@radix-ui/react-dropdown-menu": "^0.1.6",
+    "@radix-ui/react-tabs": "^0.1.5",
     "color2k": "^1.2.4",
     "react-helmet": "^6.1.0",
     "react-icons": "^4.3.1"

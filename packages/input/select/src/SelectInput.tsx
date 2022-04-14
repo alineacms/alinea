@@ -1,3 +1,4 @@
+import {renderLabel} from '@alinea/core'
 import {InputLabel, InputState, useInput} from '@alinea/editor'
 import {fromModule, HStack} from '@alinea/ui'
 import {MdArrowDropDownCircle, MdKeyboardArrowDown} from 'react-icons/md'
@@ -33,7 +34,7 @@ export function SelectInput({state, field}: SelectInputProps) {
             {Object.entries(items).map(([key, label]) => {
               return (
                 <option key={key} value={key}>
-                  {label}
+                  {renderLabel(label)}
                 </option>
               )
             })}

@@ -9,6 +9,8 @@ declare module 'eval:*'
 declare module 'get-random-values'
 declare module 'leb128'
 declare module 'postcss-pxtorem'
+// @types/react-helmet depends on react < 18 types which breaks things
+declare module 'react-helmet'
 
 declare module 'image-blob-reduce' {
   type Options = {

@@ -12,7 +12,7 @@ import {contrastColor} from '@alinea/ui/util/ContrastColor'
 import {createSlots} from '@alinea/ui/util/Slots'
 import {MdBrightnessMedium, MdExpandMore, MdUnfoldMore} from 'react-icons/md'
 import {RiFlashlightFill} from 'react-icons/ri'
-import {useHistory} from 'react-router'
+import {useNavigate} from 'react-router'
 import {useDashboard} from '../hook/UseDashboard'
 import {useSession} from '../hook/UseSession'
 import {useWorkspace} from '../hook/UseWorkspace'
@@ -28,7 +28,7 @@ export namespace Toolbar {
     const {config, nav} = useDashboard()
     const [colorScheme, toggleColorScheme] = useColorScheme()
     const {name} = useWorkspace()
-    const history = useHistory()
+    const navigate = useNavigate()
     return (
       <HStack center className={styles.root()}>
         <HStack center gap={16}>
@@ -53,7 +53,7 @@ export namespace Toolbar {
                 return (
                   <DropdownMenu.Item
                     key={key}
-                    onClick={() => history.push(nav.entry(key, firstRoot))}
+                    onClick={() => navigate(nav.entry(key, firstRoot))}
                   >
                     <HStack center gap={16}>
                       <LogoShape

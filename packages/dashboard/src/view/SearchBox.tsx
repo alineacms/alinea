@@ -3,7 +3,7 @@ import {Search} from '@alinea/core/Search'
 import {fromModule, HStack, IconButton, Stack} from '@alinea/ui'
 import {useLayoutEffect, useMemo, useState} from 'react'
 import {MdOutlineGridView, MdOutlineList, MdSearch} from 'react-icons/md'
-import {useHistory, useLocation} from 'react-router'
+import {useLocation, useNavigate} from 'react-router'
 import {useDashboard} from '../hook/UseDashboard'
 import {useFocusList} from '../hook/UseFocusList'
 import {useRoot} from '../hook/UseRoot'
@@ -37,7 +37,7 @@ function query({workspace, search, root}: QueryParams) {
 
 export function SearchBox() {
   const {nav} = useDashboard()
-  const history = useHistory()
+  const navigate = useNavigate()
   const location = useLocation()
   const [search, setSearch] = useState('')
   const [isOpen, setIsOpen] = useState(false)
@@ -107,7 +107,7 @@ export function SearchBox() {
               cursor={cursor}
               type={explorerView}
               toggleSelect={entry =>
-                history.push(nav.entry(entry.workspace, entry.root, entry.id))
+                navigate(nav.entry(entry.workspace, entry.root, entry.id))
               }
               max={25}
             />

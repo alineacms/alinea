@@ -1,4 +1,4 @@
-import {Session, Workspaces} from '@alinea/core'
+import {renderLabel, Session, Workspaces} from '@alinea/core'
 import {
   FavIcon,
   Loader,
@@ -18,8 +18,11 @@ import {
   MdRotateLeft,
   MdWarning
 } from 'react-icons/md'
-import {QueryClient, QueryClientProvider} from 'react-query'
-import {Route, useLocation} from 'react-router'
+import {
+  QueryClient,
+  QueryClientProvider as ReactQueryClientProvider
+} from 'react-query'
+import {Route, Routes, useLocation, useParams} from 'react-router'
 import {HashRouter} from 'react-router-dom'
 import {DashboardOptions} from './Dashboard'
 import {nav} from './DashboardNav'
@@ -36,6 +39,21 @@ import {EntryEdit, NewEntry} from './view/EntryEdit'
 import {SearchBox} from './view/SearchBox'
 import {Toolbar} from './view/Toolbar'
 
+const Router = {
+  Entry() {
+    const {id} = useParams()
+    return <EntryRoute id={id} />
+  },
+  NewEntry() {
+    const {id} = useParams()
+    return (
+      <Suspense fallback={<Loader absolute />}>
+        <NewEntry parentId={id} />
+      </Suspense>
+    )
+  }
+}
+
 function AppAuthenticated() {
   const {auth, nav} = useDashboard()
   const location = useLocation()
@@ -47,7 +65,7 @@ function AppAuthenticated() {
           <Viewport contain color={color}>
             <FavIcon color={color} />
             <Helmet>
-              <title>{name}</title>
+              <title>{renderLabel(name)}</title>
             </Helmet>
             <Toolbar.Root />
             <div
@@ -81,11 +99,21 @@ function AppAuthenticated() {
                   </Sidebar.Menu>
                 </Sidebar.Root>
                 <Suspense fallback={<Loader absolute />}>
-                  <Route path={nav.entry(':workspace', ':root', ':id')}>
-                    {({match}) => {
-                      return <EntryRoute id={match?.params.id} />
-                    }}
-                  </Route>
+                  <Routes>
+                    <Route
+                      path={nav.entry(':workspace')}
+                      element={<Router.Entry />}
+                    />
+                    <Route
+                      path={nav.entry(':workspace', ':root')}
+                      element={<Router.Entry />}
+                    />
+                    <Route
+                      path={nav.entry(':workspace', ':root', ':id') + '/*'}
+                      element={<Router.Entry />}
+                    />
+                    <Route path="/*" element={<Router.Entry />} />
+                  </Routes>
                 </Suspense>
               </ReferencePickerProvider>
             </div>
@@ -138,18 +166,9 @@ function EntryRoute({id}: EntryRouteProps) {
         />
       </Pane>
       <div style={{width: '100%', height: '100%'}}>
-        <Route path={nav.create(':workspace', ':root', ':parent')}>
-          {({match}) => {
-            const matched = match?.params.parent
-            if (!matched) return null
-            const isEntry = matched === draft?.id
-            return (
-              <Suspense fallback={<Loader absolute />}>
-                <NewEntry parentId={isEntry ? id : undefined} />
-              </Suspense>
-            )
-          }}
-        </Route>
+        <Routes>
+          <Route path={'/new'} element={<Router.NewEntry />} />
+        </Routes>
         {draft && <View draft={draft} />}
       </div>
     </CurrentDraftProvider>
@@ -195,6 +214,9 @@ function localSession(options: DashboardOptions) {
   }
 }
 
+// facebook/react#24304
+const QueryClientProvider: any = ReactQueryClientProvider
+
 export function App<T extends Workspaces>(props: DashboardOptions<T>) {
   const [queryClient] = useState(() => new QueryClient())
   const [session, setSession] = useState<Session | undefined>(
@@ -202,7 +224,10 @@ export function App<T extends Workspaces>(props: DashboardOptions<T>) {
   )
   return (
     <DashboardProvider value={{...props, nav}}>
-      <HashRouter hashType="noslash">
+      {/* Todo: https://github.com/remix-run/react-router/issues/7703 */}
+      <HashRouter
+      //hashType="noslash"
+      >
         <SessionProvider value={session}>
           <QueryClientProvider client={queryClient}>
             <AppRoot session={session} setSession={setSession} />

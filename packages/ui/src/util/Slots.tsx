@@ -1,4 +1,5 @@
 import {
+  ComponentType,
   createContext,
   Dispatch,
   HTMLProps,
@@ -13,7 +14,13 @@ import {
 import {createPortal} from 'react-dom'
 import {useForceUpdate} from '../hook/UseForceUpdate'
 
-export function createSlots() {
+type Slots = {
+  Provider: ComponentType<PropsWithChildren<{}>>
+  Portal: ComponentType<HTMLProps<HTMLDivElement>>
+  Slot: ComponentType<PropsWithChildren<{}>>
+}
+
+export function createSlots(): Slots {
   const context = createContext<
     | [
         Array<Ref<HTMLDivElement>>,

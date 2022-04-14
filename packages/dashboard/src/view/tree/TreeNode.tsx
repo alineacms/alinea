@@ -1,4 +1,4 @@
-import {Entry} from '@alinea/core'
+import {Entry, renderLabel} from '@alinea/core'
 import {Create, fromModule, Stack, useInitialEffect} from '@alinea/ui'
 import {HStack} from '@alinea/ui/Stack'
 import {
@@ -124,7 +124,7 @@ const TreeNodeLink = memo(
                   overflow: 'hidden'
                 }}
               >
-                {entry.title}
+                {renderLabel(entry.title)}
               </span>
               {entry.$isContainer && entry.childrenCount > 0 && (
                 <div className={styles.root.link.badge()}>

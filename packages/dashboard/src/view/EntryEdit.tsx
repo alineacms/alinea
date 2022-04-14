@@ -17,7 +17,7 @@ import {Modal} from '@alinea/ui/Modal'
 import {ComponentType, FormEvent, Suspense, useState} from 'react'
 import {MdArrowBack} from 'react-icons/md'
 import {useQuery, useQueryClient} from 'react-query'
-import {useHistory} from 'react-router'
+import {useNavigate} from 'react-router'
 import {Link} from 'react-router-dom'
 import * as Y from 'yjs'
 import {EntryDraft} from '../draft/EntryDraft'
@@ -87,7 +87,7 @@ export type NewEntryProps = {parentId?: string}
 export function NewEntry({parentId}: NewEntryProps) {
   const {nav} = useDashboard()
   const queryClient = useQueryClient()
-  const history = useHistory()
+  const navigate = useNavigate()
   const {hub} = useSession()
   const {workspace, schema} = useWorkspace()
   const {root} = useRoot()
@@ -134,7 +134,7 @@ export function NewEntry({parentId}: NewEntryProps) {
             entry.root,
             entry.parent
           ])
-          history.push(nav.entry(entry.workspace, entry.root, entry.id))
+          navigate(nav.entry(entry.workspace, entry.root, entry.id))
         }
       })
       .finally(() => {
@@ -143,7 +143,7 @@ export function NewEntry({parentId}: NewEntryProps) {
   }
 
   function handleClose() {
-    history.push(nav.entry(workspace, parent?.root, parent?.id))
+    navigate(nav.entry(workspace, parent?.root, parent?.id))
   }
 
   if (!parentId) return null

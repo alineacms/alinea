@@ -64,6 +64,7 @@ const ExtensionPlugin: Plugin = {
     build.onEnd(() => {
       const knownWarnings = new Set([
         '@alinea/css', // As a convenience
+        '@alinea/client', // In generated code
         '@alinea/sqlite-wasm', // In generated code
         'nodemailer' // Using types
       ])
@@ -78,7 +79,7 @@ const ExtensionPlugin: Plugin = {
   }
 }
 
-const globalCss: Array<Buffer> = []
+const globalCss: Map<string, Buffer> = new Map()
 
 const BundleCSSPlugin: Plugin = {
   name: 'BundleCSSPlugin',
@@ -105,7 +106,7 @@ const BundleCSSPlugin: Plugin = {
           })
         )
       )
-      globalCss.push(contents)
+      globalCss.set(outputDir, contents)
       await fs.writeFile(path.join(outputDir, 'index.css'), contents)
     })
   }
@@ -144,15 +145,33 @@ const builder = BuildTask.configure({
   }
 })
 
+function writeCss() {
+  return fs.writeFile(
+    'packages/css/src/generated.css',
+    Buffer.concat([...globalCss.values()])
+  )
+}
+
 export const buildTask = {
   ...builder,
   async action(options: any) {
     const skipTypes = fs.existsSync('.types')
-    await builder.action({...options, 'skip-types': skipTypes})
-    await fs.writeFile(
-      'packages/css/src/generated.css',
-      Buffer.concat(globalCss)
-    )
+    await builder.action({
+      ...options,
+      'skip-types': skipTypes,
+      watch: options.watch && {
+        onRebuild() {
+          writeCss()
+        }
+      }
+    })
+    await writeCss()
+  }
+}
+
+export const prepare = {
+  async action() {
+    if (!fs.existsSync('.types')) await buildTask.action({})
   }
 }
 

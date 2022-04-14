@@ -1,5 +1,5 @@
 import {Auth, Config, Hub, Workspaces} from '@alinea/core'
-import {createRoot} from 'react-dom'
+import {createRoot} from 'react-dom/client'
 import {App} from './App'
 
 export interface DashboardOptions<T extends Workspaces = Workspaces> {

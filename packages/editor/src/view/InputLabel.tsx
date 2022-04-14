@@ -1,20 +1,15 @@
+import {Label, renderLabel} from '@alinea/core/Label'
 import {fromModule} from '@alinea/ui'
 import {Chip} from '@alinea/ui/Chip'
 import {HStack} from '@alinea/ui/Stack'
-import {
-  ComponentType,
-  forwardRef,
-  memo,
-  PropsWithChildren,
-  ReactNode
-} from 'react'
+import {ComponentType, forwardRef, memo, PropsWithChildren} from 'react'
 import css from './InputLabel.module.scss'
 
 const styles = fromModule(css)
 
 export type LabelHeaderProps = {
-  label: ReactNode
-  help?: ReactNode
+  label: Label
+  help?: Label
   optional?: boolean
   size?: 'small' | 'medium' | 'large'
   focused?: boolean
@@ -34,19 +29,21 @@ export const LabelHeader = memo(function LabelHeader({
       <HStack center wrap gap={8}>
         <HStack center gap={8} className={styles.header.title()}>
           {Icon && <Icon />}
-          <span>{label}</span>
+          <span>{renderLabel(label)}</span>
         </HStack>
         {optional && <Chip>Optional</Chip>}
-        {help && <div className={styles.header.help()}>{help}</div>}
+        {help && (
+          <div className={styles.header.help()}>{renderLabel(help)}</div>
+        )}
       </HStack>
     </header>
   )
 })
 
 export type LabelProps = PropsWithChildren<{
-  label: ReactNode
+  label: Label
   asLabel?: boolean
-  help?: ReactNode
+  help?: Label
   optional?: boolean
   width?: number
   inline?: boolean

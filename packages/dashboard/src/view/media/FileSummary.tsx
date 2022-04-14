@@ -1,4 +1,4 @@
-import {Media, Tree, view} from '@alinea/core'
+import {Media, renderLabel, Tree, view} from '@alinea/core'
 import {Store} from '@alinea/store'
 import {Collection} from '@alinea/store/Collection'
 import {
@@ -90,7 +90,9 @@ export const FileSummaryThumb = view(
           )}
         </div>
         <div className={styles.thumb.footer()}>
-          <span className={styles.thumb.footer.title()}>{file.title}</span>
+          <span className={styles.thumb.footer.title()}>
+            {renderLabel(file.title)}
+          </span>
           <Chip style={{marginLeft: 'auto'}}>{file.extension}</Chip>
         </div>
       </div>

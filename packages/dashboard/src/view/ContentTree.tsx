@@ -20,8 +20,8 @@ import {
   verticalListSortingStrategy
 } from '@dnd-kit/sortable'
 import useSize from '@react-hook/size'
-import {useLayoutEffect, useMemo, useRef, useState} from 'react'
-import {useHistory} from 'react-router'
+import {useEffect, useMemo, useRef, useState} from 'react'
+import {useNavigate} from 'react-router'
 import VirtualList from 'react-tiny-virtual-list'
 import {useContentTree} from '../hook/UseContentTree'
 import {useDashboard} from '../hook/UseDashboard'
@@ -158,13 +158,15 @@ export function ContentTree({
   }
 
   // Not sure if this should belong here but it's convenient for now
-  const history = useHistory()
+  const navigate = useNavigate()
   const {nav} = useDashboard()
-  useLayoutEffect(() => {
+  useEffect(() => {
     if (redirectToRoot && entries.length > 0) {
       const first = entries[0]
       if (first.workspace === workspace && first.root === root) {
-        history.replace(nav.entry(first.workspace, first.root, first.id))
+        navigate(nav.entry(first.workspace, first.root, first.id), {
+          replace: true
+        })
       }
     }
   }, [workspace, root, redirectToRoot, entries])

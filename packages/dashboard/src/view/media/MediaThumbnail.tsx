@@ -1,4 +1,4 @@
-import {Media} from '@alinea/core'
+import {Media, renderLabel} from '@alinea/core'
 import {fromModule} from '@alinea/ui'
 import {useContrastColor} from '@alinea/ui/hook/UseContrastColor'
 import {MdInsertDriveFile} from 'react-icons/md'
@@ -35,7 +35,9 @@ export function MediaThumbnail({file}: MediaThumbnailProps) {
           )}
         </div>
         <div className={styles.root.title()}>
-          <span className={styles.root.title.text()}>{file.title}</span>
+          <span className={styles.root.title.text()}>
+            {renderLabel(file.title)}
+          </span>
           <div className={styles.root.title.extension()}>{extension}</div>
         </div>
       </div>

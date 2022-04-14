@@ -1,3 +1,4 @@
+import {renderLabel} from '@alinea/core/Label'
 import {useInput} from '@alinea/editor'
 import {Chip, fromModule, HStack, IconLink, Typo} from '@alinea/ui'
 import {PropsWithChildren} from 'react'
@@ -29,7 +30,7 @@ export function EntryTitle({children, backLink}: EntryTitleProps) {
             <span>{title}</span>
             {children}
           </Typo.H1>
-          <Chip>{draft.channel.label}</Chip>
+          <Chip>{renderLabel(draft.channel.label)}</Chip>
           {/*<IconButton icon={MdOutlineMoreHoriz} />*/}
         </HStack>
       </div>

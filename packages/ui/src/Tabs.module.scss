@@ -5,6 +5,12 @@
 }
 
 .trigger {
+  appearance: none;
+  background: transparent;
+  display: block;
+  border: none;
+  color: inherit;
+  font: inherit;
   padding: 4px 0 8px 0;
   cursor: pointer;
 

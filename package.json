@@ -5,7 +5,7 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "dev": "run-p dev:compile dev:next",
+    "dev": "esbx prepare && run-p dev:compile dev:check dev:next",
     "dev:compile": "esbx dev",
     "dev:next": "yarn workspace @alinea/website dev",
     "dev:check": "tsc -w",
@@ -13,8 +13,7 @@
     "test": "esbx test",
     "clean": "esbx clean",
     "bump": "esbx version",
-    "publish:all": "yarn build && yarn workspaces foreach --no-private npm publish --tolerate-republish",
-    "postinstall": "copy-env-cli"
+    "prepare": "copy-env-cli"
   },
   "files": [],
   "workspaces": [
@@ -50,6 +49,7 @@
   },
   "packageManager": "yarn@3.2.0",
   "resolutions": {
-    "yjs": "13.5.14"
+    "yjs": "13.5.14",
+    "prosemirror-model": "1.16.1"
   }
 }

@@ -1,4 +1,4 @@
-import {PropsWithChildren, useMemo} from 'react'
+import {PropsWithChildren, useId} from 'react'
 import {fromModule} from '../util/Styler'
 import css from './LogoShape.module.scss'
 
@@ -16,7 +16,7 @@ export function LogoShape({
   foreground = `var(--accent-foreground)`,
   background = `var(--accent)`
 }: LogoShapeProps) {
-  const id = useMemo(() => `@alinea/logo-${unique++}`, [])
+  const id = useId()
   return (
     <div className={styles.root()} style={{color: foreground}}>
       <svg
