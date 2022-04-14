@@ -88,11 +88,9 @@ export function NavTree({nav, level = 0, open = true}: NavTreeProps) {
               <div>
                 <Link href={page.url}>
                   <a
-                    className={
-                      styles.root.link(/*{
+                    className={styles.root.link({
                       active: router.asPath === page.url
-                    }*/)
-                    }
+                    })}
                   >
                     {page.title}
                   </a>

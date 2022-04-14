@@ -137,7 +137,7 @@ const buildOptions: BuildOptions = {
 }
 
 const builder = BuildTask.configure({
-  exclude: ['@alinea/stories', '@alinea/website', '@alinea/css'],
+  exclude: ['@alinea/website', '@alinea/css'],
   buildOptions: {
     ...buildOptions,
     plugins: [...buildOptions.plugins!, BundleCSSPlugin, ExtensionPlugin]

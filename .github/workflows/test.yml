@@ -26,9 +26,8 @@ jobs:
       - if: startsWith(github.ref, 'refs/tags/v')
         run: |
           yarn bump ${GITHUB_REF#refs/tags/v}
-      - run: yarn build
-      - run: cd packages/website && yarn generate
       - run: yarn tsc
+      - run: yarn build --skip-types
       - if: startsWith(github.ref, 'refs/tags/v')
         run: |
           npm config set //registry.npmjs.org/:_authToken ${{secrets.NPM_AUTH_TOKEN}}
