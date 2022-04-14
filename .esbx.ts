@@ -222,6 +222,7 @@ const serverOptions: BuildOptions = {
   ignoreAnnotations: true,
   platform: 'node',
   entryPoints: ['dev.ts'],
+  outExtension: {'.js': '.mjs'},
   bundle: true,
   outdir: 'dist',
   external: modules
@@ -232,7 +233,7 @@ const serverOptions: BuildOptions = {
     ...buildOptions.plugins!,
     ReporterPlugin.configure({name: 'Server'}),
     RunPlugin.configure({
-      cmd: 'node --experimental-specifier-resolution=node dist/dev.js'
+      cmd: 'node --experimental-specifier-resolution=node dist/dev.mjs'
     })
     // InternalPackages
   ]

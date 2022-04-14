@@ -3,7 +3,6 @@
   "name": "@alinea/root",
   "version": "0.0.0",
   "license": "MIT",
-  "type": "module",
   "scripts": {
     "dev": "esbx prepare && run-p dev:compile dev:check dev:next",
     "dev:compile": "esbx dev",
