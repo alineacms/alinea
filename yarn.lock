@@ -76,12 +76,12 @@ __metadata:
   resolution: "@alinea/cli@workspace:packages/cli"
   dependencies:
     "@alinea/backend": 0.0.0
-    "@alinea/client": 0.0.0
     "@alinea/core": 0.0.0
     "@alinea/sqlite-wasm": ^0.1.4
     "@alinea/store": 0.0.0
     "@esbx/eval": ^0.0.18
     "@esbx/react": ^0.0.18
+    "@esbx/reload": ^0.0.18
     "@types/fs-extra": ^9.0.13
     "@types/sade": ^1.7.3
     base64-arraybuffer: ^1.0.1
