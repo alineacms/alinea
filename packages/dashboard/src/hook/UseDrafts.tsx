@@ -31,7 +31,7 @@ class Drafts {
   async save(id: string, doc: Y.Doc) {
     const {hub} = this
     const sv = Y.encodeStateVector(doc)
-    const update = Y.encodeStateAsUpdate(doc, this.stateVectors.get(doc))
+    const update = Y.encodeStateAsUpdate(doc) // , this.stateVectors.get(doc))
     await hub
       .updateDraft(id, update)
       .then(Outcome.unpack)
@@ -52,7 +52,7 @@ class Drafts {
       Y.applyUpdate(doc, new Uint8Array(decode(result.draft)))
       this.stateVectors.set(doc, Y.encodeStateVector(doc))
     } else {
-      docFromEntry(type, result.entry, doc)
+      docFromEntry(result.entry, () => type, doc)
     }
     return {...result, type, doc}
   }

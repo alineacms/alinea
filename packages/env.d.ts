@@ -8,6 +8,7 @@ declare module '*.module.scss' {
 declare module 'eval:*'
 declare module 'get-random-values'
 declare module 'leb128'
+declare module 'postcss-pxtorem'
 
 declare module 'image-blob-reduce' {
   type Options = {

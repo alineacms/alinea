@@ -1,6 +1,7 @@
 export * from './Backend'
 export * from './Cache'
 export * from './Data'
+export * from './DevServer'
 export * from './Drafts'
 export * from './FS'
 export * from './loader/JsonLoader'

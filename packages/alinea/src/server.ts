@@ -1,2 +1,2 @@
 // Backend
-export {Backend, Server} from '@alinea/backend'
+export {Backend, DevServer, Server} from '@alinea/backend'

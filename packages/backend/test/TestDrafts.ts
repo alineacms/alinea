@@ -28,7 +28,7 @@ const drafts = new FileDrafts({
 })
 
 test('update doc', async () => {
-  const yDoc = docFromEntry(Doc, entry)
+  const yDoc = docFromEntry(entry, () => Doc)
   const stateVector = Y.encodeStateVector(yDoc)
   await drafts.update(entry.id, Y.encodeStateAsUpdate(yDoc))
   yDoc.getMap(ROOT_KEY).set('title', 'Hello world')

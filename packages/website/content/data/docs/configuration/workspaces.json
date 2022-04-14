@@ -2,7 +2,7 @@
   "id": "259EzPfnSUaKOrNL1S2bpIpMdKl",
   "type": "Doc",
   "root": "data",
-  "index": "Zy",
+  "index": "Zw",
   "title": "Workspaces",
   "path": "workspaces",
   "blocks": [
@@ -26,7 +26,7 @@
           "content": [
             {
               "type": "text",
-              "text": "Workspaces allows you to separate content. A workspace can have its own schema, media files and other configuration and can be useful when the content has (mostly) no relation to the content in other workspaces."
+              "text": "Workspaces allow you to separate content. A workspace can have its own schema, media files and other configuration and can be useful when the content has (mostly) no relation to the content in other workspaces."
             }
           ]
         },

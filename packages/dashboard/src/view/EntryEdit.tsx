@@ -123,7 +123,7 @@ export function NewEntry({parentId}: NewEntryProps) {
       url: (parent?.url || '') + (parent?.url.endsWith('/') ? '' : '/') + path,
       title
     }
-    const doc = docFromEntry(type, entry)
+    const doc = docFromEntry(entry, () => type)
     return hub
       .updateDraft(entry.id, Y.encodeStateAsUpdate(doc))
       .then(result => {

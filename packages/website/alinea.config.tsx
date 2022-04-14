@@ -19,7 +19,7 @@ export const config = createConfig({
       schema: webSchema,
       source: './content',
       mediaDir: './public',
-      color: '#4a63e7', // '#FFBD67', // '#EF437C'
+      color: '#4a63e7', // '#FFBD67', // '#EF437C',
       roots: {
         data: {
           icon: MdInsertDriveFile,
@@ -33,9 +33,11 @@ export const config = createConfig({
       preview({entry, previewToken}) {
         const noPreviews = new Set(['Docs', 'MediaLibrary'])
         if (noPreviews.has(entry.type)) return null
+        const location =
+          process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : ''
         return (
           <BrowserPreview
-            url={`/api/preview?${previewToken}`}
+            url={`${location}/api/preview?${previewToken}`}
             prettyUrl={entry.url}
           />
         )

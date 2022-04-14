@@ -1,4 +1,4 @@
-import {createId, future} from '@alinea/core'
+import {future, outcome} from '@alinea/core'
 import {posix as path} from 'node:path'
 import * as Y from 'yjs'
 import {Drafts} from '../Drafts'
@@ -18,55 +18,42 @@ export class FileDrafts implements Drafts {
   ): Promise<Uint8Array | undefined> {
     const {fs, dir} = this.options
     const location = path.join(dir, id)
-    const [files] = await future(fs.readdir(location))
-    if (!files) return undefined
-    files.sort((a, b) => a.localeCompare(b))
+    const [draft, err] = await outcome(fs.readFile(location))
+    if (!(draft instanceof Uint8Array)) return undefined
+    if (!stateVector) return draft
     const doc = new Y.Doc()
-    for (const file of files) {
-      const update = await future(fs.readFile(path.join(location, file)))
-      try {
-        if (update.isSuccess()) Y.applyUpdate(doc, update.value)
-      } catch (e) {
-        // I ran into "Integer out of range!" which shouldn't happen
-        // Todo: find out why we ended up with an invalid update
-      }
-    }
+    Y.applyUpdate(doc, draft)
     return Y.encodeStateAsUpdate(doc, stateVector)
   }
 
-  async applyUpdate(
-    id: string,
-    update: Uint8Array,
-    updateId: string
-  ): Promise<void> {
-    const {fs, dir} = this.options
-    const filepath = path.join(id, updateId)
-    const location = path.join(dir, filepath)
-    await fs.mkdir(path.join(dir, id), {recursive: true})
-    await fs.writeFile(location, update)
-  }
-
   async update(id: string, update: Uint8Array): Promise<Drafts.Update> {
-    const updateId = createId()
-    this.applyUpdate(id, update, updateId)
-    return {id, update: (await this.get(id))!}
+    const {fs, dir} = this.options
+    const doc = new Y.Doc()
+    const current = await this.get(id)
+    if (current) Y.applyUpdate(doc, current)
+    Y.applyUpdate(doc, update)
+    const draft = Buffer.from(Y.encodeStateAsUpdate(doc))
+    const location = path.join(dir, id)
+    await outcome(fs.mkdir(dir, {recursive: true}))
+    await fs.writeFile(location, draft)
+    return {id, update: draft}
   }
 
   async delete(ids: Array<string>): Promise<void> {
     const {fs, dir} = this.options
     for (const id of ids) {
       const location = path.join(dir, id)
-      await fs.rm(location, {recursive: true, force: true})
+      await fs.rm(location, {force: true})
     }
   }
 
   async *updates(): AsyncGenerator<{id: string; update: Uint8Array}> {
     const {fs, dir} = this.options
-    const [directories = []] = await future(fs.readdir(dir))
-    for (const dir of directories) {
-      if (dir.startsWith('.')) continue
-      const [update, err] = await future(this.get(dir))
-      if (update) yield {id: dir, update}
+    const [files = []] = await future(fs.readdir(dir))
+    for (const file of files) {
+      if (file.startsWith('.')) continue
+      const [update, err] = await future(this.get(file))
+      if (update) yield {id: file, update}
     }
   }
 }
