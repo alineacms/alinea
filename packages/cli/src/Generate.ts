@@ -1,8 +1,8 @@
 import {Cache, Data, JsonLoader} from '@alinea/backend'
 import {FileData} from '@alinea/backend/data/FileData'
-import {outcome} from '@alinea/core'
 import {Config} from '@alinea/core/Config'
 import {createId} from '@alinea/core/Id'
+import {outcome} from '@alinea/core/Outcome'
 import {Schema} from '@alinea/core/Schema'
 import {BetterSqlite3Driver} from '@alinea/store/sqlite/drivers/BetterSqlite3Driver'
 import {SqlJsDriver} from '@alinea/store/sqlite/drivers/SqlJsDriver'
@@ -164,7 +164,8 @@ export async function generate(options: GenerateOptions) {
   const configLocation = path.join(cwd, configFile)
   const outDir = path.join(cwd, '.alinea')
 
-  await Promise.all([copyStaticFiles(), compileConfig()])
+  await compileConfig()
+  await copyStaticFiles()
   await generatePackage()
 
   async function copyStaticFiles() {
