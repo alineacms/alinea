@@ -35,21 +35,6 @@ export async function serve(options: ServeOptions) {
   await generate({...options, watch: true})
   const {createStore} = await import('file://' + storeLocation)
   const {config} = await import('file://' + genConfigFile)
-  const server = new DevServer({
-    config,
-    createStore,
-    port,
-    cwd
-  })
-  const app = express()
-  app.use(server.app)
-  app.use(compression())
-  app.use((req, res) =>
-    serveHandler(req, res, {public: path.join(staticDir, 'serve')})
-  )
-  app.listen(port)
-
-  console.log(`> Alinea dashboard available on http://localhost:${port}`)
 
   const entry = `
     import '@alinea/css'
@@ -94,4 +79,20 @@ export async function serve(options: ServeOptions) {
       '.json': 'json'
     }
   })
+
+  const server = new DevServer({
+    config,
+    createStore,
+    port,
+    cwd
+  })
+  const app = express()
+  app.use(server.app)
+  app.use(compression())
+  app.use((req, res) =>
+    serveHandler(req, res, {public: path.join(staticDir, 'serve')})
+  )
+  app.listen(port)
+
+  console.log(`> Alinea dashboard available on http://localhost:${port}`)
 }
