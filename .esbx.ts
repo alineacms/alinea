@@ -6,13 +6,14 @@ import {RunPlugin} from '@esbx/run'
 import {SassPlugin} from '@esbx/sass'
 import {StaticPlugin} from '@esbx/static'
 import {findNodeModules} from '@esbx/util'
-import {BuildTask, getManifest, getWorkspaces, TestTask} from '@esbx/workspaces'
+import {getManifest, getWorkspaces, TestTask} from '@esbx/workspaces'
 import autoprefixer from 'autoprefixer'
 import type {BuildOptions, Plugin} from 'esbuild'
 import {build} from 'esbuild'
 import fs from 'fs-extra'
 import path from 'path'
 import pxToRem from 'postcss-pxtorem'
+import {BuildTask} from './.esbx/build'
 import {createId} from './packages/core/src/Id'
 
 export {VersionTask} from '@esbx/workspaces'
@@ -21,44 +22,61 @@ const ExtensionPlugin: Plugin = {
   name: 'extension',
   setup(build) {
     build.initialOptions.bundle = true
-    const cwd = build.initialOptions.absWorkingDir
-    const info = getManifest(cwd!)
-    function getDeps(from: Record<string, string> | undefined) {
-      return from ? Object.keys(from) : []
-    }
-    const dependencies = new Set(
-      getDeps(info.dependencies)
-        .concat(getDeps(info.peerDependencies))
-        .concat(getDeps(info.optionalDependencies))
-    )
-    const seen = new Set()
+    const info = new Map()
     const outExtension = build.initialOptions.outExtension?.['.js'] || '.js'
-    build.onResolve({filter: /.*/}, ({kind, path}) => {
-      if (kind === 'entry-point') return
+    function workspaceInfo(workspace: string) {
+      if (!info.has(workspace)) {
+        const manifest = getManifest(workspace)
+        function getDeps(from: Record<string, string> | undefined) {
+          return from ? Object.keys(from) : []
+        }
+        const dependencies = new Set(
+          getDeps(manifest.dependencies)
+            .concat(getDeps(manifest.peerDependencies))
+            .concat(getDeps(manifest.optionalDependencies))
+        )
+        info.set(workspace, {
+          name: manifest.name,
+          dependencies,
+          seen: new Set()
+        })
+      }
+      return info.get(workspace)!
+    }
+    build.onResolve({filter: /.*/}, args => {
+      if (args.kind === 'entry-point') return
       const isLocal =
-        path.startsWith('./') ||
-        path.startsWith('../') ||
-        (path.startsWith('@alinea') && path.split('/').length > 2)
-      const hasOutExtension = path.endsWith(outExtension)
-      const hasExtension = path.split('/').pop()?.includes('.')
-      if (!path.startsWith('.')) {
-        const segments = path.split('/')
-        const pkg = path.startsWith('@')
+        args.path.startsWith('./') ||
+        args.path.startsWith('../') ||
+        (args.path.startsWith('@alinea') && args.path.split('/').length > 2)
+      const hasOutExtension = args.path.endsWith(outExtension)
+      const hasExtension = args.path.split('/').pop()?.includes('.')
+      if (!args.path.startsWith('.')) {
+        const segments = args.path.split('/')
+        const pkg = args.path.startsWith('@')
           ? `${segments[0]}/${segments[1]}`
           : segments[0]
-        if (
-          !pkg.startsWith('node:') &&
-          pkg !== 'react' &&
-          !dependencies.has(pkg) &&
-          !seen.has(pkg)
-        ) {
-          console.info(`warning: ${pkg} is not a dependency of ${info.name}`)
+
+        // From which package are we requesting this path?
+        if (args.resolveDir.includes('packages')) {
+          const paths = args.resolveDir.split(path.sep)
+          const workspace = path.join(
+            ...paths.slice(0, paths.lastIndexOf('src'))
+          )
+          const {name, seen, dependencies} = workspaceInfo(workspace)
+          if (
+            !pkg.startsWith('node:') &&
+            !dependencies.has(pkg) &&
+            !seen.has(pkg)
+          ) {
+            console.info(`warning: ${pkg} is not a dependency of ${name}`)
+          }
+          seen.add(pkg)
         }
-        seen.add(pkg)
       }
       if (isLocal && hasExtension && !hasOutExtension) return
-      if (hasOutExtension || !isLocal) return {path, external: true}
-      return {path: path + outExtension, external: true}
+      if (hasOutExtension || !isLocal) return {path: args.path, external: true}
+      return {path: args.path + outExtension, external: true}
     })
 
     build.onEnd(() => {
@@ -68,12 +86,14 @@ const ExtensionPlugin: Plugin = {
         '@alinea/sqlite-wasm', // In generated code
         'nodemailer' // Using types
       ])
-      const unused = [...dependencies].filter(x => !seen.has(x))
-      for (const pkg of unused) {
-        if (!knownWarnings.has(pkg))
-          console.info(
-            `info: ${pkg} is defined in dependencies, but appears unused in ${info.name}`
-          )
+      for (const {name, seen, dependencies} of info.values()) {
+        const unused = [...dependencies].filter(x => !seen.has(x))
+        for (const pkg of unused) {
+          if (!knownWarnings.has(pkg))
+            console.info(
+              `info: ${pkg} is defined in dependencies, but appears unused in ${name}`
+            )
+        }
       }
     })
   }
@@ -155,7 +175,8 @@ function writeCss() {
 export const buildTask = {
   ...builder,
   async action(options: any) {
-    const skipTypes = fs.existsSync('.types')
+    const skipTypes =
+      'skip-types' in options ? options['skip-types'] : fs.existsSync('dist')
     await builder.action({
       ...options,
       'skip-types': skipTypes,
@@ -171,7 +192,7 @@ export const buildTask = {
 
 export const prepare = {
   async action() {
-    if (!fs.existsSync('.types')) await buildTask.action({})
+    if (!fs.existsSync('dist')) await buildTask.action({})
   }
 }
 
@@ -221,7 +242,7 @@ const serverOptions: BuildOptions = {
   ...buildOptions,
   ignoreAnnotations: true,
   platform: 'node',
-  entryPoints: ['dev.ts'],
+  entryPoints: ['.esbx/dev.ts'],
   outExtension: {'.js': '.mjs'},
   bundle: true,
   outdir: 'dist',
@@ -248,7 +269,6 @@ export const dev = {
 
 export const clean = {
   action() {
-    fs.removeSync('.types')
     fs.removeSync('dist')
     fs.removeSync('packages/website/.alinea')
     for (const location of getWorkspaces(process.cwd())) {

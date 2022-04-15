@@ -3,7 +3,7 @@
     "module": "ESNext",
     "target": "ESNext",
     "preserveWatchOutput": true,
-    "outDir": ".types",
+    "outDir": "dist",
     "incremental": true,
     "emitDeclarationOnly": true,
     "skipLibCheck": true,
