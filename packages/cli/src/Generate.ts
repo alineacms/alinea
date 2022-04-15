@@ -5,11 +5,11 @@ import {Config} from '@alinea/core/Config'
 import {createId} from '@alinea/core/Id'
 import {Schema} from '@alinea/core/Schema'
 import {BetterSqlite3Driver} from '@alinea/store/sqlite/drivers/BetterSqlite3Driver'
+import {SqlJsDriver} from '@alinea/store/sqlite/drivers/SqlJsDriver'
 import {SqliteStore} from '@alinea/store/sqlite/SqliteStore'
 import {EvalPlugin} from '@esbx/eval'
 import {ReactPlugin} from '@esbx/react'
 import {encode} from 'base64-arraybuffer'
-import Database from 'better-sqlite3'
 import {FSWatcher} from 'chokidar'
 import {dirname} from 'dirname-filename-esm'
 import {build, BuildResult, Plugin} from 'esbuild'
@@ -346,10 +346,18 @@ export async function generate(options: GenerateOptions) {
   }
 
   async function cacheEntries(config: Config, source: Data.Source) {
-    const store = new SqliteStore(
-      new BetterSqlite3Driver(new Database(':memory:')),
-      createId
-    )
+    let store: SqliteStore
+    try {
+      const {default: Database} = await import('better-sqlite3')
+      store = new SqliteStore(
+        new BetterSqlite3Driver(new Database(':memory:')),
+        createId
+      )
+    } catch (e) {
+      const {default: sqlInit} = await import('@alinea/sqlite-wasm')
+      const {Database} = await sqlInit()
+      store = new SqliteStore(new SqlJsDriver(new Database()), createId)
+    }
     await Cache.create(store, config, source, true)
     return store
   }
