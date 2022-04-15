@@ -18,6 +18,7 @@ export const internalPlugin: Plugin = {
         ]
       })
     )
+
     AliasPlugin.configure(aliases).setup(build)
 
     const paths = Object.fromEntries(

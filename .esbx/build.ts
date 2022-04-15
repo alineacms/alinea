@@ -1,6 +1,6 @@
 import {ExtensionPlugin} from '@esbx/extension'
 import {ReporterPlugin} from '@esbx/reporter'
-import {reportTime} from '@esbx/util'
+import {list, reportTime} from '@esbx/util'
 import {getManifest, getWorkspaces} from '@esbx/workspaces'
 import {execSync} from 'child_process'
 import {build, BuildOptions} from 'esbuild'
@@ -21,6 +21,7 @@ export type BuildTaskConfig = {
 export type BuildTaskOptions = {
   watch?: boolean
   'skip-types'?: boolean
+  silent?: boolean
 }
 
 function createTypes() {
@@ -85,9 +86,10 @@ function task(
         entryPoints: entryPoints,
         watch: options.watch,
         ...config.buildOptions,
-        plugins: (config.buildOptions?.plugins || [ExtensionPlugin]).concat(
+        plugins: list(
+          config.buildOptions?.plugins || [ExtensionPlugin],
           distPlugin,
-          ReporterPlugin.configure({name: 'packages'})
+          !options.silent && ReporterPlugin.configure({name: 'packages'})
         )
       })
     }
