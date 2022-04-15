@@ -23,7 +23,7 @@ function createServer() {
   const data = new GithubData({
     config,
     loader: JsonLoader,
-    rootDir: 'packages/website',
+    rootDir: 'apps/web',
     githubAuthToken: process.env.GITHUB_TOKEN!,
     owner: 'alineacms',
     repo: 'alinea',

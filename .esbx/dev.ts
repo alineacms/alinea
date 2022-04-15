@@ -1,12 +1,13 @@
 import {serve} from '@alinea/cli/Serve.js'
 import path from 'node:path'
-import {InternalPackages, InternalViews, sassPlugin} from './.esbx'
+import {internalPlugin} from './plugin/internal'
+import {sassPlugin} from './plugin/sass'
 
 serve({
-  cwd: path.resolve('packages/website'),
+  cwd: path.resolve('apps/web'),
   staticDir: path.resolve('packages/cli/dist/static'),
   port: 4500,
   buildOptions: {
-    plugins: [InternalViews, InternalPackages, sassPlugin]
+    plugins: [internalPlugin, sassPlugin]
   }
 })

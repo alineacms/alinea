@@ -168,7 +168,7 @@ export async function generate(options: GenerateOptions) {
   await generatePackage()
 
   async function copyStaticFiles() {
-    await fs.mkdirp(outDir).catch(() => {})
+    await fs.mkdirp(outDir).catch(console.log)
     async function copy(...files: Array<string>) {
       await Promise.all(
         files.map(file =>

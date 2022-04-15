@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "esbx prepare && run-p dev:compile dev:check dev:next",
     "dev:compile": "esbx dev",
-    "dev:next": "yarn workspace @alinea/website dev",
+    "dev:next": "yarn workspace @alinea/web dev",
     "dev:check": "tsc -w",
     "build": "esbx build",
     "test": "esbx test",
@@ -16,9 +16,10 @@
   },
   "files": [],
   "workspaces": [
-    "packages/*",
+    "apps/*",
     "packages/input/*",
-    "packages/auth/*"
+    "packages/auth/*",
+    "packages/*"
   ],
   "devDependencies": {
     "@esbx/extension": "^0.0.19",
