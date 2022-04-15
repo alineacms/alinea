@@ -43,9 +43,10 @@ export const resolvePlugin: Plugin = {
         // From which package are we requesting this path?
         if (args.resolveDir.includes('packages')) {
           const paths = args.resolveDir.split(path.sep)
-          const workspace = path.join(
-            ...paths.slice(0, paths.lastIndexOf('src'))
-          )
+          const workspace = paths
+            .slice(0, paths.lastIndexOf('src'))
+            .join(path.sep)
+
           const {name, seen, dependencies} = workspaceInfo(workspace)
           if (
             !pkg.startsWith('node:') &&
