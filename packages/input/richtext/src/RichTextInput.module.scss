@@ -22,21 +22,49 @@
     outline: 2px solid var(--fields-focus);
   }
 
-  &-editor > * {
-    > :first-child {
+  &-editor {
+    * > :first-child {
       margin-top: 0;
     }
+    * + {
+      p,
+      ol,
+      ul {
+        margin-top: 20px;
+      }
+    }
     h1 {
-      margin-top: 3em;
       @extend .h1;
+      margin-top: 3em;
     }
     h2 {
-      margin-top: 2em;
       @extend .h2;
+      margin-top: 2em;
     }
     h3 {
-      margin-top: 1em;
       @extend .h3;
+      margin-top: 1em;
+    }
+    h1,
+    h2,
+    h3 {
+      & + p {
+        margin-top: 0;
+      }
+    }
+    ol,
+    ul {
+      li {
+        margin-left: 20px;
+
+        ul {
+          margin-top: 10px;
+        }
+      }
+
+      li + li {
+        margin-top: 10px;
+      }
     }
   }
 }
