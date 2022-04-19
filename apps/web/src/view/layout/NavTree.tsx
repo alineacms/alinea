@@ -47,11 +47,13 @@ export type NavTreeProps = {
 
 export function NavTree({nav, level = 0, open = true}: NavTreeProps) {
   const router = useRouter()
+  const pathname = router.asPath
   const [showChildren, setShowChildren] = useState(level < 1)
   return (
     <div className={styles.root({open})}>
       {nav.map(page => {
         const isContainer = page.children.length > 0
+        const childrenOpen = showChildren || pathname.startsWith(page.url)
         return (
           <Fragment key={page.id}>
             {isContainer ? (
@@ -69,7 +71,7 @@ export function NavTree({nav, level = 0, open = true}: NavTreeProps) {
                     }}
                   >
                     <span>{page.title}</span>
-                    {showChildren ? (
+                    {childrenOpen ? (
                       <MdKeyboardArrowDown />
                     ) : (
                       <MdKeyboardArrowRight />
@@ -80,7 +82,7 @@ export function NavTree({nav, level = 0, open = true}: NavTreeProps) {
                   <NavTree
                     nav={page.children}
                     level={level + 1}
-                    open={showChildren}
+                    open={childrenOpen}
                   />
                 </div>
               </div>
@@ -89,7 +91,7 @@ export function NavTree({nav, level = 0, open = true}: NavTreeProps) {
                 <Link href={page.url}>
                   <a
                     className={styles.root.link({
-                      active: router.asPath === page.url
+                      active: pathname === page.url
                     })}
                   >
                     {page.title}
