@@ -27,8 +27,13 @@ import {
   MdDelete,
   MdDragHandle,
   MdFormatBold,
+  MdFormatClear,
   MdFormatItalic,
-  MdNotes
+  MdFormatListBulleted,
+  MdFormatListNumbered,
+  MdNotes,
+  MdRedo,
+  MdUndo
 } from 'react-icons/md'
 import {useEditor} from './hook/UseEditor'
 import {RichTextField} from './RichTextField'
@@ -175,15 +180,16 @@ const ToolbarButtons = forwardRef(function ToolbarButtons(
         onFocus={e => focusToggle(e.currentTarget)}
         onBlur={e => focusToggle(e.relatedTarget)}
       >
-        <HStack center gap={20}>
+        <HStack center gap={10}>
           <DropdownMenu.Root>
-            <DropdownMenu.Trigger>{selectedStyle}</DropdownMenu.Trigger>
-
+            <DropdownMenu.Trigger title="Heading/paragraph">
+              {selectedStyle}
+            </DropdownMenu.Trigger>
             <DropdownMenu.Content>
               <DropdownMenu.Item
                 onSelect={() => editor.chain().focus().clearNodes().run()}
               >
-                Normal text
+                Paragraph (normal text)
               </DropdownMenu.Item>
               <DropdownMenu.Item
                 onSelect={() =>
@@ -209,7 +215,27 @@ const ToolbarButtons = forwardRef(function ToolbarButtons(
             </DropdownMenu.Content>
           </DropdownMenu.Root>
           <IconButton
+            icon={MdUndo}
+            size={17}
+            title="Undo"
+            onClick={e => {
+              e.preventDefault()
+              editor.chain().focus().undo().run()
+            }}
+          />
+          <IconButton
+            icon={MdRedo}
+            size={17}
+            title="Redo"
+            onClick={e => {
+              e.preventDefault()
+              editor.chain().focus().redo().run()
+            }}
+          />
+          <IconButton
             icon={MdFormatBold}
+            size={17}
+            title="Bold"
             onClick={e => {
               e.preventDefault()
               editor.chain().focus().toggleBold().run()
@@ -218,11 +244,49 @@ const ToolbarButtons = forwardRef(function ToolbarButtons(
           />
           <IconButton
             icon={MdFormatItalic}
+            size={17}
+            title="Italic"
             onClick={e => {
               e.preventDefault()
               editor.chain().focus().toggleItalic().run()
             }}
             active={editor.isActive('italic')}
+          />
+          <IconButton
+            icon={MdFormatClear}
+            size={17}
+            title="Clear format"
+            onClick={e => {
+              e.preventDefault()
+              editor.chain().focus().unsetAllMarks().run()
+            }}
+          />
+          <span
+            style={{
+              backgroundColor: '#eee',
+              width: '2px',
+              height: '1.25rem'
+            }}
+          />
+          <IconButton
+            icon={MdFormatListBulleted}
+            size={17}
+            title="Bullet list"
+            onClick={e => {
+              e.preventDefault()
+              editor.chain().focus().toggleBulletList().run()
+            }}
+            active={editor.isActive('bulletList')}
+          />
+          <IconButton
+            icon={MdFormatListNumbered}
+            size={17}
+            title="Ordered list"
+            onClick={e => {
+              e.preventDefault()
+              editor.chain().focus().toggleOrderedList().run()
+            }}
+            active={editor.isActive('orderedList')}
           />
         </HStack>
       </div>
