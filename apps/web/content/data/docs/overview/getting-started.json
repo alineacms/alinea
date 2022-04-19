@@ -25,20 +25,7 @@
           "content": [
             {
               "type": "text",
-              "text": "Alinea can be integrated in existing or new "
-            },
-            {
-              "type": "text",
-              "text": "projects",
-              "marks": [
-                {
-                  "type": "bold"
-                }
-              ]
-            },
-            {
-              "type": "text",
-              "text": ". There are no specific steps tied to the set up your favorite framework. If you're starting fresh now is a good time to setup your framework in your preferred way."
+              "text": "Alinea can be integrated in existing or new projects. There are no specific steps tied to the set up your favorite framework. If you're starting fresh now is a good time to setup your framework in your preferred way."
             }
           ]
         },

@@ -36,6 +36,13 @@
           "code": "workspace('My workspace', {\n  schema, color, roots\n})"
         }
       ]
+    },
+    {
+      "id": "281RszTCuaNOefU9bzIp6xHacz1",
+      "index": "a1",
+      "type": "TypesBlock",
+      "pkg": "@alinea/core",
+      "exports": "Workspace"
     }
   ]
 }

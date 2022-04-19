@@ -3,6 +3,8 @@ import {Pages} from '../../../.alinea/web'
 import {BlocksSchema} from './Blocks.schema'
 import {textBlockQuery} from './TextBlock.query'
 import {TextBlockSchema} from './TextBlock.schema'
+import {typesBlockQuery} from './TypesBlock.query'
+import {TypesBlockSchema} from './TypesBlock.schema'
 
 export async function blocksQuery(pages: Pages, blocks: BlocksSchema) {
   return Promise.all(
@@ -10,6 +12,8 @@ export async function blocksQuery(pages: Pages, blocks: BlocksSchema) {
       switch (block.type) {
         case 'TextBlock':
           return textBlockQuery(pages, block as TextBlockSchema)
+        case 'TypesBlock':
+          return typesBlockQuery(pages, block as TypesBlockSchema)
         default:
           return block
       }
