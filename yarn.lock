@@ -397,6 +397,7 @@ __metadata:
     react: ^18.0.0
     react-dom: ^18.0.0
     react-icons: ^4.3.1
+    react-string-replace: ^1.0.0
     shiki: ^0.10.1
   languageName: unknown
   linkType: soft
@@ -2466,6 +2467,7 @@ __metadata:
     "@alinea/input.text": 0.0.0
     "@alinea/sqlite-wasm": ^0.1.5
     "@alinea/store": 0.0.0
+    "@alinea/ui": 0.0.0
   bin:
     alinea: ./dist/cli.js
   languageName: unknown
@@ -7179,6 +7181,13 @@ fsevents@~2.3.2:
   peerDependencies:
     react: ^16.3.0 || ^17.0.0
   checksum: 324511ea8f6669555e166b4af280cdf46034bf0e33c486711e3ce17f88f6f21fed17055098408be1347657d0cbcd614bca944cf9f8e4ecfa96a21d13893fe9fc
+  languageName: node
+  linkType: hard
+
+"react-string-replace@npm:^1.0.0":
+  version: 1.0.0
+  resolution: "react-string-replace@npm:1.0.0"
+  checksum: ec5aa2049f1bfeea58f080138a149bc32307eaa0b310ff61afe14fe3dcf303a91cc201ed58665d908f84d4785ce9860b8b6264484986e788e27cf97d69cd668d
   languageName: node
   linkType: hard
 

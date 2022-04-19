@@ -1,5 +1,10 @@
 import {TextDoc, TextNode, TypesOf} from '@alinea/core'
+import {fromModule} from '@alinea/ui'
 import {ComponentType, Fragment} from 'react'
+import reactStringReplace from 'react-string-replace'
+import css from './RichText.module.scss'
+
+const styles = fromModule(css)
 
 function getTag(type: string, attributes: Record<string, any> | undefined) {
   switch (type) {
@@ -20,14 +25,20 @@ function getTag(type: string, attributes: Record<string, any> | undefined) {
 
 function RichTextNodeView<T>(node: TextNode<T>) {
   switch (node.type) {
-    case 'text':
+    case 'text': {
       const {text, marks} = node as TextNode.Text
+      const content = reactStringReplace(text, /\`(.+?)\`/g, (match, i) => (
+        <span className={styles.code()} key={i}>
+          {match}
+        </span>
+      ))
       const wrappers =
         marks?.map(mark => getTag(mark.type, mark.attrs) || Fragment) || []
       return wrappers.reduce((children, Tag) => {
         return <Tag>{children}</Tag>
-      }, <>{text}</>)
-    default:
+      }, <>{content}</>)
+    }
+    default: {
       const {type, content, ...attrs} = node as TextNode.Element
       const Tag = getTag(type, attrs) || Fragment
       return (
@@ -37,6 +48,7 @@ function RichTextNodeView<T>(node: TextNode<T>) {
           )) || <br />}
         </Tag>
       )
+    }
   }
 }
 

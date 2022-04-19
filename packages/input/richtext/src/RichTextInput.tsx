@@ -24,7 +24,7 @@ import {
 import StarterKit from '@tiptap/starter-kit'
 import {forwardRef, Ref, useCallback, useRef, useState} from 'react'
 import {
-  MdDelete,
+  MdClose,
   MdDragHandle,
   MdFormatBold,
   MdFormatClear,
@@ -69,7 +69,7 @@ function typeExtension(
               <TextLabel label={type.label} />
             </Card.Title>
             <Card.Options>
-              <IconButton icon={MdDelete} onClick={deleteNode} />
+              <IconButton icon={MdClose} onClick={deleteNode} />
             </Card.Options>
           </Card.Header>
           <Card.Content>
