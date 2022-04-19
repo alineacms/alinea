@@ -21,3 +21,6 @@ export {text} from '@alinea/input.text'
 export {Collection, Cursor, Expr} from '@alinea/store'
 import type {Store} from '@alinea/store'
 export type TypeOf<T> = Store.TypeOf<T>
+
+// Used in init template
+export {Welcome} from './Welcome'

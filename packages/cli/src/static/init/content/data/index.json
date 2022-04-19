@@ -1,6 +1,6 @@
 {
   "id": "home",
-  "type": "Home",
+  "type": "Page",
   "root": "data",
   "title": "Welcome"
 }

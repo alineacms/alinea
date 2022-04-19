@@ -60,7 +60,7 @@ function EntryEditDraft({draft}: EntryEditDraftProps) {
               nav.entry(draft.workspace, draft.root, draft.parent)
             }
           />
-          <div className={styles.root.draft.fields()}>
+          <div>
             <Suspense fallback={null}>
               {type ? (
                 <InputForm

@@ -1,5 +1,7 @@
 {
   "id": "docs",
   "type": "Docs",
+  "root": "data",
+  "index": "a0",
   "title": "Docs"
 }

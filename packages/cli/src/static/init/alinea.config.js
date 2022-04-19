@@ -1,4 +1,13 @@
-import {createConfig, MediaSchema, schema, text, type, workspace} from 'alinea'
+import {
+  createConfig,
+  MediaSchema,
+  path,
+  schema,
+  text,
+  type,
+  Welcome,
+  workspace
+} from 'alinea'
 import {MdInsertDriveFile, MdOutlinePermMedia} from 'react-icons/md'
 
 export const config = createConfig({
@@ -7,14 +16,19 @@ export const config = createConfig({
       source: './content',
       schema: schema({
         ...MediaSchema,
-        Home: type('Home', {
-          title: text('Title')
-        })
+        Page: type(
+          'Page',
+          {
+            title: text('Title'),
+            path: path('Path')
+          },
+          <Welcome />
+        ).configure({isContainer: true})
       }),
       roots: {
         data: {
           icon: MdInsertDriveFile,
-          contains: ['Home']
+          contains: ['Page']
         },
         media: {
           icon: MdOutlinePermMedia,
