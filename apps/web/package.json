@@ -20,6 +20,7 @@
     "next": "^12.1.5",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
+    "react-icons": "^4.3.1",
     "shiki": "^0.10.1"
   },
   "devDependencies": {

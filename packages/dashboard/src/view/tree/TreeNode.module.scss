@@ -58,7 +58,7 @@
       height: 20px;
       text-align: center;
       flex-shrink: 0;
-      color: rgba(var(--negative), 0.5);
+      color: hsla(var(--negative), 0.5);
 
       &:hover {
         color: var(--foreground);

@@ -17,13 +17,13 @@
       background: transparent; //var(--outline);
     }
     &::-webkit-scrollbar-thumb {
-      background: rgba(var(--negative), 0.2);
+      background: hsla(var(--negative), 0.2);
     }
     &::-webkit-scrollbar-thumb:hover {
-      background: rgba(var(--negative), 0.4);
+      background: hsla(var(--negative), 0.4);
     }
     &::-webkit-scrollbar-thumb:active {
-      background: rgba(var(--negative), 0.9);
+      background: hsla(var(--negative), 0.9);
     }
   }
 }
@@ -49,7 +49,7 @@
     }
 
     &:hover &-line {
-      // border-color: rgba(var(--negative), 0.2);
+      // border-color: hsla(var(--negative), 0.2);
       border-width: 2px;
     }
   }

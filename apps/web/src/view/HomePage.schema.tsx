@@ -3,6 +3,7 @@ import {link} from '@alinea/input.link'
 import {path} from '@alinea/input.path'
 import {tab, tabs} from '@alinea/input.tabs'
 import {text} from '@alinea/input.text'
+import {MdInsertDriveFile, MdLink} from 'react-icons/md'
 
 export const HomePageSchema = type(
   'Home',
@@ -21,7 +22,7 @@ export const HomePageSchema = type(
           label: text('Button label')
         })
       })
-    }),
+    }).configure({icon: MdInsertDriveFile}),
     tab('Top navigation', {
       links: link('Links', {
         type: 'entry',
@@ -29,7 +30,7 @@ export const HomePageSchema = type(
           title: text('Title')
         })
       })
-    })
+    }).configure({icon: MdLink})
   )
 ).configure({
   isContainer: true

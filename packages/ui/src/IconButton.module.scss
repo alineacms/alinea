@@ -14,7 +14,7 @@
   transition: 0.2s ease-out;
 
   &.is-active {
-    background: rgba(var(--negative), 0.1);
+    background: hsla(var(--negative), 0.1);
   }
 
   &:hover {
@@ -31,6 +31,6 @@
   }
 
   &:focus.is-active {
-    background: rgba(var(--negative), 0.1);
+    background: hsla(var(--negative), 0.1);
   }
 }

@@ -19,7 +19,7 @@
     align-items: center;
     justify-content: center;
     flex-direction: column;
-    background: rgba(var(--negative), 0.05);
+    background: hsla(var(--negative), 0.05);
     transition: background 0.25s ease-out;
 
     &-picture {
@@ -65,7 +65,7 @@
     padding: 8px 12px;
     padding-top: 6px;
     color: var(--foreground-faded);
-    // background: rgba(var(--negative), 0.05);
+    // background: hsla(var(--negative), 0.05);
 
     &-text {
       min-width: 0;
@@ -81,7 +81,7 @@
       padding: 3px 5px;
       flex-shrink: 0;
       font-size: 10px;
-      background: rgba(var(--negative), 0.05);
+      background: hsla(var(--negative), 0.05);
       border-radius: 6px;
     }
   }

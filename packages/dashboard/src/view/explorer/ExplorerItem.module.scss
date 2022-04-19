@@ -20,7 +20,7 @@
     height: 100%;
     width: 100%;
     min-width: 0;
-    background: rgba(var(--negative), 0.05);
+    background: hsla(var(--negative), 0.05);
     border-radius: 0.25rem;
     padding: 0 8px;
     display: flex;
@@ -44,7 +44,7 @@
   }
 
   &.is-selected &-inner {
-    background: rgba(var(--negative), 0.1);
+    background: hsla(var(--negative), 0.1);
   }
 
   &:hover &-inner {

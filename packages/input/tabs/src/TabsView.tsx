@@ -1,5 +1,5 @@
 import {InputForm, InputState} from '@alinea/editor'
-import {fromModule, Tabs, TextLabel} from '@alinea/ui'
+import {fromModule, HStack, Tabs, TextLabel} from '@alinea/ui'
 import {TabsSection} from './TabsSection'
 import css from './TabsView.module.scss'
 
@@ -15,9 +15,13 @@ export function TabsView({state, section}: TabsViewProps) {
     <Tabs.Root defaultValue={'0'}>
       <Tabs.List>
         {section.types.map((type, i) => {
+          const Icon = type.options?.icon
           return (
             <Tabs.Trigger key={i} value={String(i)}>
-              <TextLabel label={type.label} />
+              <HStack center gap={8}>
+                {Icon && <Icon />}
+                <TextLabel label={type.label} />
+              </HStack>
             </Tabs.Trigger>
           )
         })}

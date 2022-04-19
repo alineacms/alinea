@@ -5,7 +5,7 @@
   display: flex;
   align-items: center;
   // border-bottom: 1px solid var(--outline);
-  background-color: rgba(var(--positive), 0.6);
+  background-color: hsla(var(--positive), 0.6);
   backdrop-filter: blur(12px);
 }
 
