@@ -155,6 +155,13 @@ function InsertMenu({editor, schema, onInsert}: InsertMenuProps) {
   )
 }
 
+enum Styles {
+  paragraph = 'Normal text',
+  h1 = 'Heading 1',
+  h2 = 'Heading 2',
+  h3 = 'Heading 3'
+}
+
 type ToolbarButtonsProps = {
   editor: Editor
   focusToggle: (target: EventTarget | null) => void
@@ -183,13 +190,13 @@ const ToolbarButtons = forwardRef(function ToolbarButtons(
         <HStack center gap={10}>
           <DropdownMenu.Root>
             <DropdownMenu.Trigger title="Heading/paragraph">
-              {selectedStyle}
+              {Styles[selectedStyle]}
             </DropdownMenu.Trigger>
             <DropdownMenu.Content>
               <DropdownMenu.Item
                 onSelect={() => editor.chain().focus().clearNodes().run()}
               >
-                Paragraph (normal text)
+                Normal text
               </DropdownMenu.Item>
               <DropdownMenu.Item
                 onSelect={() =>
@@ -214,24 +221,7 @@ const ToolbarButtons = forwardRef(function ToolbarButtons(
               </DropdownMenu.Item>
             </DropdownMenu.Content>
           </DropdownMenu.Root>
-          <IconButton
-            icon={MdUndo}
-            size={17}
-            title="Undo"
-            onClick={e => {
-              e.preventDefault()
-              editor.chain().focus().undo().run()
-            }}
-          />
-          <IconButton
-            icon={MdRedo}
-            size={17}
-            title="Redo"
-            onClick={e => {
-              e.preventDefault()
-              editor.chain().focus().redo().run()
-            }}
-          />
+          <div className={styles.buttons.separator()} />
           <IconButton
             icon={MdFormatBold}
             size={17}
@@ -261,13 +251,7 @@ const ToolbarButtons = forwardRef(function ToolbarButtons(
               editor.chain().focus().unsetAllMarks().run()
             }}
           />
-          <span
-            style={{
-              backgroundColor: '#eee',
-              width: '2px',
-              height: '1.25rem'
-            }}
-          />
+          <div className={styles.buttons.separator()} />
           <IconButton
             icon={MdFormatListBulleted}
             size={17}
@@ -287,6 +271,25 @@ const ToolbarButtons = forwardRef(function ToolbarButtons(
               editor.chain().focus().toggleOrderedList().run()
             }}
             active={editor.isActive('orderedList')}
+          />
+          <div className={styles.buttons.separator()} />
+          <IconButton
+            icon={MdUndo}
+            size={17}
+            title="Undo"
+            onClick={e => {
+              e.preventDefault()
+              editor.chain().focus().undo().run()
+            }}
+          />
+          <IconButton
+            icon={MdRedo}
+            size={17}
+            title="Redo"
+            onClick={e => {
+              e.preventDefault()
+              editor.chain().focus().redo().run()
+            }}
           />
         </HStack>
       </div>
