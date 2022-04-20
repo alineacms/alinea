@@ -12,7 +12,8 @@
     "test": "esbx test",
     "clean": "esbx clean",
     "bump": "esbx version",
-    "prepare": "copy-env-cli"
+    "prepare": "copy-env-cli",
+    "gen:types": "typedoc --json apps/web/src/data/types.json"
   },
   "files": [],
   "workspaces": [
@@ -43,6 +44,7 @@
     "memfs": "^3.4.1",
     "npm-run-all": "^4.1.5",
     "postcss-pxtorem": "^6.0.0",
+    "typedoc": "^0.22.15",
     "typescript": "^4.5.5",
     "typescript-plugin-css-modules": "^3.4.0",
     "uvu": "^0.5.1"

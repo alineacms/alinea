@@ -16,6 +16,7 @@ import {staticPlugin} from './.esbx/plugin/static'
 import {createId} from './packages/core/src/Id'
 
 export {VersionTask} from '@esbx/workspaces'
+export * from './.esbx/types'
 
 const buildOptions: BuildOptions = {
   format: 'esm',

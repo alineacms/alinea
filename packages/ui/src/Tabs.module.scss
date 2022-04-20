@@ -11,7 +11,7 @@
   border: none;
   color: inherit;
   font: inherit;
-  padding: 0 12px 8px 12px;
+  padding: 0 14px 10px 14px;
   cursor: pointer;
   opacity: 0.8;
   border-bottom: 1px solid transparent;
@@ -21,6 +21,7 @@
 
   &:hover {
     opacity: 1;
+    border-color: currentColor;
   }
 
   &[data-state='active'] {
