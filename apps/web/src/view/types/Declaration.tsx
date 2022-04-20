@@ -283,7 +283,9 @@ function Signature({inline, signature}: SignatureProps) {
       {signature.parameters?.map((param, i, params) => {
         return (
           <Wrap key={i}>
-            <Param>{param.name}</Param>
+            <Param>
+              {param.name === '__namedParameters' ? 'props' : param.name}
+            </Param>
             {param.type && (
               <>
                 <Symbol>: </Symbol>
