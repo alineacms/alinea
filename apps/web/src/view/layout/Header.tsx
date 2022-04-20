@@ -23,7 +23,7 @@ export function Header({links}: HeaderProps) {
             </HStack>
           </a>
         </Link>
-        <HStack center gap={36}>
+        <HStack center gap={30}>
           {links.map(link => {
             return (
               <Link key={link.id} href={link.url}>
@@ -31,6 +31,9 @@ export function Header({links}: HeaderProps) {
               </Link>
             )
           })}
+          <a className={styles.root.link()} href="/types/alinea">
+            API
+          </a>
           <a className={styles.root.link()} href="/demo" target="_blank">
             Demo
           </a>

@@ -1,6 +1,5 @@
 import {Page} from '../../.alinea/web'
 import {backend} from '../../alinea.backend'
-import {PageView} from '../view/PageView'
 
 export async function getStaticPaths() {
   const pages = backend.loadPages('web')
@@ -11,6 +10,4 @@ export async function getStaticPaths() {
   }
 }
 
-export {getStaticProps} from '.'
-
-export default PageView
+export {default, getStaticProps} from '.'

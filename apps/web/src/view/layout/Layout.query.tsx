@@ -1,8 +1,13 @@
 import {Store} from '@alinea/store'
-import {Page, Pages} from '../../../.alinea/web'
+import {Pages} from '../../../.alinea/web'
 import {headerQuery} from './Header.query'
 
-export async function layoutQuery(pages: Pages, page: Page) {
+type PageDetails = {
+  title: string
+  url: string
+}
+
+export async function layoutQuery(pages: Pages, page: PageDetails) {
   return {
     meta: {
       title: page.title,

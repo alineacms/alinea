@@ -1,0 +1,54 @@
+.root {
+  font-family: 'JetBrains Mono', monospace;
+  padding: 0 20px;
+}
+
+.wrapperLabel {
+  display: block;
+  position: relative;
+  cursor: pointer;
+
+  &-icon {
+    position: absolute;
+    top: 0;
+    right: 0;
+  }
+}
+
+.wrapper {
+  &-checkbox {
+    position: absolute;
+    left: -9999px;
+  }
+  &-checkbox + div {
+    display: none;
+  }
+  &-checkbox:checked + div {
+    display: inline;
+  }
+}
+
+.type {
+  &-indent {
+    padding-left: 20px;
+  }
+  &-header {
+    font-size: 1.2em;
+  }
+  &-leaf {
+    color: #f8892e;
+  }
+  &-label {
+    font-weight: bold;
+    color: #8c2ef8;
+  }
+  &-param {
+    color: #5661e5;
+  }
+  &-symbol {
+    color: #949fa7;
+  }
+  &-tree {
+    color: #abb6bd;
+  }
+}

@@ -25,7 +25,7 @@ export const HomePageSchema = type(
     }).configure({icon: MdInsertDriveFile}),
     tab('Top navigation', {
       links: link('Links', {
-        type: 'entry',
+        type: ['entry', 'external'],
         fields: type('Fields', {
           title: text('Title')
         })

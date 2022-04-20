@@ -31,12 +31,12 @@ export function useNavTree(
   return useMemo(() => nestNav(nav), [nav])
 }
 
-type NavItem = {
+export type NavItem = {
   id: string
   url: string
-  type: string
+  // type: string
   title: string
-  children: Array<NavItem>
+  children?: Array<NavItem>
 }
 
 export type NavTreeProps = {
@@ -52,7 +52,7 @@ export function NavTree({nav, level = 0, open = true}: NavTreeProps) {
   return (
     <div className={styles.root({open})}>
       {nav.map(page => {
-        const isContainer = page.children.length > 0
+        const isContainer = page.children && page.children.length > 0
         const childrenOpen = showChildren || pathname.startsWith(page.url)
         return (
           <Fragment key={page.id}>
@@ -78,13 +78,15 @@ export function NavTree({nav, level = 0, open = true}: NavTreeProps) {
                     )}
                   </HStack>
                 )}
-                <div style={{paddingLeft: px(level * 10)}}>
-                  <NavTree
-                    nav={page.children}
-                    level={level + 1}
-                    open={childrenOpen}
-                  />
-                </div>
+                {page.children && (
+                  <div style={{paddingLeft: px(level * 10)}}>
+                    <NavTree
+                      nav={page.children}
+                      level={level + 1}
+                      open={childrenOpen}
+                    />
+                  </div>
+                )}
               </div>
             ) : (
               <div>

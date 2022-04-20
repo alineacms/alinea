@@ -36,7 +36,7 @@ import {
 } from '@dnd-kit/sortable'
 import {CSS, FirstArgument} from '@dnd-kit/utilities'
 import {CSSProperties, HTMLAttributes, Ref, useMemo, useState} from 'react'
-import {MdDelete, MdDragHandle, MdLink} from 'react-icons/md'
+import {MdClose, MdDragHandle, MdLink} from 'react-icons/md'
 import {useQuery} from 'react-query'
 import {LinkField, LinkType} from './LinkField'
 import css from './LinkInput.module.scss'
@@ -105,7 +105,7 @@ function LinkInputRow<T>({
               {entry && <LinkInputEntryRow key={entry.id} entry={entry} />}
             </div>
             <div style={{marginLeft: 'auto'}}>
-              <IconButton icon={MdDelete} onClick={onRemove} />
+              <IconButton icon={MdClose} onClick={onRemove} />
             </div>
           </HStack>
           {fields && (
@@ -267,6 +267,7 @@ export function LinkInput<T>({state, field}: LinkInputProps<T>) {
   }
 
   const showLinkPicker = max ? value.length < max : true
+  const showExternal = types.includes('external')
 
   return (
     <DndContext
@@ -325,6 +326,11 @@ export function LinkInput<T>({state, field}: LinkInputProps<T>) {
             {showLinkPicker && (
               <Create.Root>
                 <Create.Button onClick={handleCreate}>Pick link</Create.Button>
+                {showExternal && (
+                  <Create.Button onClick={handleCreate}>
+                    External url
+                  </Create.Button>
+                )}
               </Create.Root>
             )}
           </div>
