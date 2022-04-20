@@ -36,6 +36,7 @@ function ksuid(date?: Date) {
   return base62.encode(id)
 }
 
+/** Parse a ksuid into a Date of creation and a Buffer containing the random bits  */
 export function parseId(str: string) {
   const buffer = base62.decode(str)
   const id = buffer.length === ID_LENGTH ? buffer : buffer.slice(-ID_LENGTH)
@@ -46,4 +47,5 @@ export function parseId(str: string) {
   ] as const
 }
 
+/** Create a ksuid  */
 export const createId = (): string => ksuid()

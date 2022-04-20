@@ -1,4 +1,4 @@
-import {fromModule} from '@alinea/ui'
+import {fromModule, HStack, Stack} from '@alinea/ui'
 import {ComponentType, Fragment, PropsWithChildren, ReactNode} from 'react'
 import {MdOutlineExpandMore} from 'react-icons/md'
 import type {JSONOutput} from 'typedoc'
@@ -325,6 +325,22 @@ function MemberWrapperLabel({children}: PropsWithChildren<{}>) {
   )
 }
 
+type CommentProps = {
+  comment?: JSONOutput.Comment
+}
+
+function Comment({comment}: CommentProps) {
+  if (!comment) return null
+  return (
+    <div className={styles.comment()}>
+      <HStack>
+        /* <Indent>{comment.shortText || comment.text}</Indent>{' '}
+        <Stack.Right style={{alignSelf: 'flex-end'}}>*/</Stack.Right>
+      </HStack>
+    </div>
+  )
+}
+
 type MemberProps = {
   inline?: boolean
   member: JSONOutput.DeclarationReflection
@@ -339,6 +355,7 @@ function Member({member, inline}: MemberProps) {
     case ReflectionKind.Enum:
       return (
         <ContentLabel>
+          <Comment comment={member.comment} />
           enum
           <Indent>
             <Label>{member.name}</Label>
@@ -353,6 +370,7 @@ function Member({member, inline}: MemberProps) {
     case ReflectionKind.EnumMember:
       return (
         <>
+          <Comment comment={member.comment} />
           <Param>{member.name}</Param>
         </>
       )
@@ -362,6 +380,7 @@ function Member({member, inline}: MemberProps) {
         <>
           {member.signatures?.map((signature, i) => (
             <Wrap key={i}>
+              <Comment comment={signature.comment} />
               <Param>{member.name}</Param>
               <Signature signature={signature} />
             </Wrap>
@@ -373,6 +392,7 @@ function Member({member, inline}: MemberProps) {
         <>
           {member.signatures?.map((signature, i) => (
             <Wrap key={i}>
+              <Comment comment={signature.comment} />
               function
               <Indent>
                 <Label>{member.name}</Label>
@@ -387,6 +407,7 @@ function Member({member, inline}: MemberProps) {
     case ReflectionKind.Event:
       return (
         <>
+          <Comment comment={member.comment} />
           <Param>{member.name}</Param>
           {member.type && (
             <>
@@ -400,6 +421,7 @@ function Member({member, inline}: MemberProps) {
     case ReflectionKind.ObjectLiteral:
       return (
         <ContentLabel>
+          <Comment comment={member.comment} />
           <Tree>&#123;</Tree>
           <Content>
             <Declaration
@@ -414,6 +436,7 @@ function Member({member, inline}: MemberProps) {
     case ReflectionKind.Class:
       return (
         <ContentLabel>
+          <Comment comment={member.comment} />
           class
           <Indent>
             <Label>{member.name}</Label>
@@ -440,6 +463,7 @@ function Member({member, inline}: MemberProps) {
     case ReflectionKind.Interface:
       return (
         <ContentLabel>
+          <Comment comment={member.comment} />
           interface
           <Indent>
             <Label>{member.name}</Label>
@@ -466,6 +490,7 @@ function Member({member, inline}: MemberProps) {
     case ReflectionKind.Namespace:
       return (
         <ContentLabel>
+          <Comment comment={member.comment} />
           namespace
           <Indent>
             <Label>{member.name}</Label>
@@ -480,6 +505,7 @@ function Member({member, inline}: MemberProps) {
     case ReflectionKind.TypeAlias:
       return (
         <ContentLabel>
+          <Comment comment={member.comment} />
           type
           <Indent>
             <Label>{member.name}</Label>{' '}
@@ -493,6 +519,7 @@ function Member({member, inline}: MemberProps) {
     case ReflectionKind.Variable:
       return (
         <>
+          <Comment comment={member.comment} />
           const
           <Indent>
             <Label>{member.name}</Label>:{' '}

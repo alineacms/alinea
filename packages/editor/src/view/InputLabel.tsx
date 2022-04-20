@@ -54,6 +54,7 @@ export type LabelProps = PropsWithChildren<{
   empty?: boolean
 }>
 
+/** Label for an input */
 export const InputLabel = forwardRef<HTMLElement, LabelProps>(
   function InputLabel(
     {
