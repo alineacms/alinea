@@ -30,6 +30,18 @@
           ]
         },
         {
+          "type": "paragraph"
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "Node.js 14+ is required to run."
+            }
+          ]
+        },
+        {
           "type": "heading",
           "level": 2,
           "content": [
