@@ -115,7 +115,7 @@
       "id": "286C2IKcWw9PYcWgPIvXz1fP7Jz",
       "index": "a1",
       "type": "TypesBlock",
-      "types": "workspace, Workspace"
+      "types": "workspace, WorkspaceOptions"
     }
   ]
 }
