@@ -138,7 +138,6 @@ function Type({type, needsParens, inline}: TypeProps) {
         </>
       )
     case 'reflection':
-      console.log(type)
       if (type.declaration?.children) {
         return (
           <Declaration
@@ -154,7 +153,6 @@ function Type({type, needsParens, inline}: TypeProps) {
           />
         )
       } else if (type.declaration) {
-        console.log(type.declaration)
         return (
           <Declaration members={[type.declaration]} inline={inline} inner />
         )

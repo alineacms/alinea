@@ -145,15 +145,17 @@ type ListCreateRowProps<T> = {
 function ListCreateRow<T>({field, onCreate}: ListCreateRowProps<T>) {
   const types = Array.from(field.options.schema)
   return (
-    <Create.Root>
-      {types.map(([key, type]) => {
-        return (
-          <Create.Button key={key} onClick={() => onCreate(key)}>
-            <TextLabel label={type.label} />
-          </Create.Button>
-        )
-      })}
-    </Create.Root>
+    <div className={styles.create()}>
+      <Create.Root>
+        {types.map(([key, type]) => {
+          return (
+            <Create.Button key={key} onClick={() => onCreate(key)}>
+              <TextLabel label={type.label} />
+            </Create.Button>
+          )
+        })}
+      </Create.Root>
+    </div>
   )
 }
 
@@ -169,7 +171,7 @@ export function ListInput<T extends ListRow>({
   field
 }: ListInputProps<T>) {
   const [rows, list] = useInput(state)
-  const {help} = field.options
+  const {help, inline} = field.options
   const ids = rows.map(row => row.id)
   const [dragging, setDragging] = useState<T | null>(null)
   const sensors = useSensors(
@@ -193,10 +195,12 @@ export function ListInput<T extends ListRow>({
 
   return (
     <div className={styles.root()}>
-      <div className={styles.root.inner()}>
-        <div className={styles.root.title()}>
-          <LabelHeader label={field.label} icon={MdOutlineList} />
-        </div>
+      <div className={styles.root.inner({inline})}>
+        {!inline && (
+          <div className={styles.root.title()}>
+            <LabelHeader help={help} label={field.label} icon={MdOutlineList} />
+          </div>
+        )}
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
@@ -219,6 +223,12 @@ export function ListInput<T extends ListRow>({
                     />
                   )
                 })}
+                <ListCreateRow
+                  onCreate={(type: string) => {
+                    list.push({type} as any)
+                  }}
+                  field={field}
+                />
               </Card.Root>
             </SortableContext>
           </div>
@@ -240,12 +250,6 @@ export function ListInput<T extends ListRow>({
             ) : null}
           </DragOverlay>
         </DndContext>
-        <ListCreateRow
-          onCreate={(type: string) => {
-            list.push({type} as any)
-          }}
-          field={field}
-        />
       </div>
     </div>
   )

@@ -60,7 +60,7 @@ function typeExtension(
           <Card.Header>
             <Card.Options>
               <IconButton
-                icon={MdDragHandle}
+                icon={type.options.icon || MdDragHandle}
                 data-drag-handle
                 style={{cursor: 'grab'}}
               />
@@ -303,7 +303,7 @@ export type RichTextInputProps<T> = {
 }
 
 export function RichTextInput<T>({state, field}: RichTextInputProps<T>) {
-  const {blocks, optional, help} = field.options
+  const {blocks, optional, inline, help} = field.options
   const [focus, setFocus] = useState(false)
   const [value, {fragment, insert}] = useInput(state)
   const toolbarRef = useRef<HTMLDivElement>(null)
@@ -362,6 +362,7 @@ export function RichTextInput<T>({state, field}: RichTextInputProps<T>) {
         label={field.label}
         help={help}
         optional={optional}
+        inline={inline}
         focused={focus}
         icon={MdNotes}
         empty={editor.isEmpty}

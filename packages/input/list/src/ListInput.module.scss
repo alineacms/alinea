@@ -1,6 +1,14 @@
 .root {
   position: relative;
 
+  & & {
+    padding: 8px 0;
+  }
+
+  & &:first-child {
+    padding-top: 0;
+  }
+
   &-inner {
     border-radius: 12px;
     padding: 11px 6px;
@@ -15,12 +23,8 @@
     padding-bottom: 4px;
   }
 
-  & & {
-    padding: 8px 0;
-  }
-
   & & &-inner {
-    padding: 10px 15px 5px 15px;
+    padding: 15px;
   }
 
   &-header {
@@ -44,5 +48,12 @@
     border-radius: 12px;
     box-shadow: 0 2px 30px var(--shadow);
     overflow: hidden;
+  }
+}
+
+.create {
+  padding: 4px 0 5px 0;
+  .row + & {
+    border-top: 1px solid var(--outline);
   }
 }

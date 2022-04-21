@@ -13,6 +13,6 @@ export const CodeBlockSchema = type(
       language: text('Language', {width: 0.25})
     }).configure({icon: MdOutlineSettings})
   )
-)
+).configure({icon: MdCode})
 
 export type CodeBlockSchema = Schema.TypeOf<typeof CodeBlockSchema>
