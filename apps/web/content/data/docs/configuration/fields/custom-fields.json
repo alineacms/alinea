@@ -1,0 +1,54 @@
+{
+  "id": "286iEJsjhd8R9NxN6EVg59fELyd",
+  "type": "Doc",
+  "root": "data",
+  "index": "a4",
+  "title": "Custom fields",
+  "path": "custom-fields",
+  "blocks": [
+    {
+      "id": "286iEROjs6tj2n50gGnYat796yt",
+      "index": "a0",
+      "type": "TextBlock",
+      "text": [
+        {
+          "type": "heading",
+          "level": 1,
+          "content": [
+            {
+              "type": "text",
+              "text": "Custom fields"
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "It's possible to create custom views. All it takes is a configuration function and a view."
+            }
+          ]
+        },
+        {
+          "type": "paragraph"
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "TODO"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "286iGxzou0miObtDLwoxVssyAX7",
+      "index": "a1",
+      "type": "TypesBlock",
+      "types": "Field, Value, FieldRenderer"
+    }
+  ]
+}

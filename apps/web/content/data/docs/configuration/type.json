@@ -26,7 +26,7 @@
           "content": [
             {
               "type": "text",
-              "text": "A type holds fields. See different kind of fields [here]."
+              "text": "A type defines fields and presentational settings. Fields hold data which can easily be changed in the dashboard. Read on to discover the fields included with a default installation."
             }
           ]
         },

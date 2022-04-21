@@ -34,6 +34,80 @@
           "id": "267Q4Kyg9hOUVaJWolmaa1wOndr",
           "type": "CodeBlock",
           "code": "workspace('My workspace', {\n  schema, color, roots\n})"
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "content": [
+            {
+              "type": "text",
+              "text": "Example workspace"
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "The example below can be found in the configuration file after running the `alinea init` command. It has the following settings:"
+            }
+          ]
+        },
+        {
+          "type": "paragraph"
+        },
+        {
+          "type": "bulletList",
+          "content": [
+            {
+              "type": "listItem",
+              "content": [
+                {
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "`source`: content is stored in json files and can be found in the `content` directory"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "listItem",
+              "content": [
+                {
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "`schema`: the schema includes the default `Media` types, necessary for file uploads, and the `Page` type"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "listItem",
+              "content": [
+                {
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "`roots`: defines two separate web roots, one for data (our welcome page in this case), and one for media (file uploads)"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "286fXgUPgalGCxwGoPGuJxFISCi",
+          "type": "CodeBlock",
+          "code": "workspace('Example', {\n  source: './content',\n  schema: schema({\n    ...MediaSchema,\n    Page: type(\n      'Page',\n      {\n        title: text('Title'),\n        path: path('Path')\n      },\n      <Welcome />\n    ).configure({isContainer: true})\n  }),\n  roots: {\n    data: {\n      icon: MdInsertDriveFile,\n      contains: ['Page']\n    },\n    media: {\n      icon: MdOutlinePermMedia,\n      contains: ['MediaLibrary']\n    }\n  }\n})"
         }
       ]
     },

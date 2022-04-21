@@ -515,10 +515,10 @@ function Member({member, inline, inner}: MemberProps) {
           <Comment comment={member.comment} />
           <ContentLabel>
             <Keyword>export interface </Keyword>
+            <Label>{member.name}</Label>
             {member.typeParameter && (
               <TypeParams params={member.typeParameter} />
             )}
-            <Label>{member.name}</Label>
             {member.extendedTypes && (
               <>
                 {' '}

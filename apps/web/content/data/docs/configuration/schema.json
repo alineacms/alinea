@@ -34,6 +34,80 @@
           "id": "267QjRgoDq3nZ6Dth0o3MElJgzP",
           "type": "CodeBlock",
           "code": "schema('My schema', {\n  TypeA, TypeB, TypeC\n})"
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "content": [
+            {
+              "type": "text",
+              "text": "Example schema"
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "The example below can be found in the configuration file after running the `alinea init` command. It has the following settings:"
+            }
+          ]
+        },
+        {
+          "type": "paragraph"
+        },
+        {
+          "type": "bulletList",
+          "content": [
+            {
+              "type": "listItem",
+              "content": [
+                {
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "`...MediaSchema`: include types needed for file uploads"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "listItem",
+              "content": [
+                {
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "`type('Page', {...})`: a type with two fields: title and path. After the fields a `Welcome` component is displayed in the dashboard. JSX can be used anywhere inside the type configuration the create custom views."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "listItem",
+              "content": [
+                {
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "`configure({isContainer: true})`: mark the Page type as a container, which means it can contain sub pages"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "286gbW4zHgdrAHcGBLGRtixZguV",
+          "type": "CodeBlock",
+          "code": "schema({\n  ...MediaSchema,\n  Page: type('Page',\n    {\n      title: text('Title'),\n      path: path('Path')\n    },\n    <Welcome />\n  ).configure({isContainer: true})\n})"
         }
       ]
     },
