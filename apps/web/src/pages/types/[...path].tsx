@@ -32,4 +32,4 @@ export type TypePageProps = TypeOf<ReturnType<typeof getStaticProps>>['props']
 
 export {TypePage as default} from '../../view/TypePage'
 
-export const config = {unstable_runtimeJS: false}
+// export const config = {unstable_runtimeJS: false}

@@ -1,5 +1,6 @@
 import {Field, Label, Value} from '@alinea/core'
 
+/** A string record with option labels */
 export type SelectItems = {
   [key: string]: Label
 }

@@ -16,6 +16,7 @@
     padding-top: 3.5px;
     width: 18px;
     color: #9296c5;
+    flex-shrink: 0;
   }
 
   &:hover &-icon {
@@ -41,7 +42,7 @@
 }
 
 .comment {
-  padding: 5px 0 0 0;
+  padding-top: 10px;
   color: #227a56;
 }
 

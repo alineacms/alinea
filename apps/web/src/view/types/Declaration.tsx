@@ -138,6 +138,7 @@ function Type({type, needsParens, inline}: TypeProps) {
         </>
       )
     case 'reflection':
+      console.log(type)
       if (type.declaration?.children) {
         return (
           <Declaration
@@ -151,6 +152,11 @@ function Type({type, needsParens, inline}: TypeProps) {
             inline={inline}
             inner
           />
+        )
+      } else if (type.declaration) {
+        console.log(type.declaration)
+        return (
+          <Declaration members={[type.declaration]} inline={inline} inner />
         )
       } else {
         return <Tree>&#123;&#125;</Tree>
@@ -237,14 +243,15 @@ function TypeList({
 }
 
 type TypeParamsProps = {
+  wrap?: boolean
   params?: Array<JSONOutput.TypeParameterReflection>
 }
 
-function TypeParams({params}: TypeParamsProps) {
+function TypeParams({wrap = true, params}: TypeParamsProps) {
   if (!params) return null
   return (
     <>
-      <Symbol>&lt;</Symbol>
+      {wrap && <Symbol>&lt;</Symbol>}
       {params.map((param, i) => {
         return (
           <Fragment key={i}>
@@ -265,7 +272,7 @@ function TypeParams({params}: TypeParamsProps) {
           </Fragment>
         )
       })}
-      <Symbol>&gt;</Symbol>
+      {wrap && <Symbol>&gt;</Symbol>}
     </>
   )
 }
@@ -326,7 +333,7 @@ function MemberWrapperLabel({children}: PropsWithChildren<{}>) {
         <span className={styles.wrapperLabel.icon()}>
           <MdKeyboardArrowRight size={16} />
         </span>
-        <div>{children}</div>
+        <div style={{minWidth: 0}}>{children}</div>
       </HStack>
     </label>
   )
@@ -361,7 +368,6 @@ function Member({member, inline, inner}: MemberProps) {
   const Wrap = inline ? Fragment : 'div'
   const Content = inline || inner ? Fragment : MemberWrapper
   const ContentLabel = inline || inner ? Fragment : MemberWrapperLabel
-  if (member.name.startsWith('__')) return null
   switch (member.kind) {
     case ReflectionKind.Enum:
       return (
@@ -412,6 +418,7 @@ function Member({member, inline, inner}: MemberProps) {
         </>
       )
     case ReflectionKind.Accessor:
+      if (member.name.startsWith('__')) return null
       const [signature] = member.getSignature || []
       return (
         <>
@@ -427,6 +434,7 @@ function Member({member, inline, inner}: MemberProps) {
       )
     case ReflectionKind.Property:
     case ReflectionKind.Event:
+      if (member.name.startsWith('__')) return null
       return (
         <>
           <Comment comment={member.comment} />
@@ -447,12 +455,27 @@ function Member({member, inline, inner}: MemberProps) {
           <ContentLabel>
             <Tree>&#123;</Tree>
             <Content>
-              <Declaration
-                members={member.children}
-                join={inline ? <Symbol>, </Symbol> : undefined}
-                inline={inline}
-                inner
-              />
+              {member.indexSignature ? (
+                <Indent>
+                  <Comment comment={member.indexSignature.comment} />
+                  <Symbol>[</Symbol>
+                  <TypeParams
+                    wrap={false}
+                    params={member.indexSignature.parameters as any}
+                  />
+                  <Symbol>]: </Symbol>
+                  {member.indexSignature.type && (
+                    <Type type={member.indexSignature.type} inline={inline} />
+                  )}
+                </Indent>
+              ) : (
+                <Declaration
+                  members={member.children}
+                  join={inline ? <Symbol>, </Symbol> : undefined}
+                  inline={inline}
+                  inner
+                />
+              )}
             </Content>
             <Tree>&#125;</Tree>
           </ContentLabel>

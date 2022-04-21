@@ -229,8 +229,7 @@ export const theme = {
       name: 'Comment',
       scope: 'comment',
       settings: {
-        fontStyle: 'italic',
-        foreground: '#357b42'
+        foreground: '#227a56'
       }
     },
     {
@@ -244,28 +243,28 @@ export const theme = {
       name: 'Number',
       scope: 'constant.numeric',
       settings: {
-        foreground: '#174781'
+        foreground: '#cf8700'
       }
     },
     {
       name: 'Constant',
       scope: 'constant',
       settings: {
-        foreground: '#174781'
+        foreground: '#cf8700'
       }
     },
     {
       name: 'Built-in constant',
       scope: 'language.method',
       settings: {
-        foreground: '#174781'
+        foreground: '#cf8700'
       }
     },
     {
       name: 'User-defined constant',
       scope: ['constant.character', 'constant.other'],
       settings: {
-        foreground: '#174781'
+        foreground: '#cf8700'
       }
     },
     {
@@ -383,7 +382,7 @@ export const theme = {
       scope: 'support.constant',
       settings: {
         fontStyle: '',
-        foreground: '#174781'
+        foreground: '#cf8700'
       }
     },
     {
@@ -482,7 +481,7 @@ export const theme = {
       scope: ['markup.italic', 'punctuation.definition.italic'],
       settings: {
         fontStyle: 'italic',
-        foreground: '#174781'
+        foreground: '#cf8700'
       }
     },
     {

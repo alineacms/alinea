@@ -41,7 +41,7 @@
       "id": "286ITmvhna9jHs6Zqi1oB5Y4HO7",
       "index": "a1",
       "type": "TypesBlock",
-      "types": "select, SelectOptions, SelectField"
+      "types": "select, SelectItems, SelectOptions, SelectField"
     }
   ]
 }
