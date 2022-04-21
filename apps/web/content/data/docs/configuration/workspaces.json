@@ -26,14 +26,14 @@
           "content": [
             {
               "type": "text",
-              "text": "Workspaces allow you to separate content. A workspace can have its own schema, media files and other configuration and can be useful when the content has (mostly) no relation to the content in other workspaces."
+              "text": "Workspaces allow you to separate content. A workspace can have its own schema, media files and other configuration. It can be useful when the content has (mostly) no relation to the content in other workspaces."
             }
           ]
         },
         {
           "id": "267Q4Kyg9hOUVaJWolmaa1wOndr",
           "type": "CodeBlock",
-          "code": "workspace('My workspace', {\n  schema, color, roots\n})"
+          "code": "workspace('My workspace', {\n  source, schema, color, roots\n})"
         },
         {
           "type": "heading",
