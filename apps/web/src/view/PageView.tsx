@@ -1,4 +1,5 @@
 import {ComponentType, createElement} from 'react'
+import {CodeVariantsProvider} from '../view/blocks/CodeVariantsBlock'
 import {DocPage} from './DocPage'
 import {DocsPage} from './DocsPage'
 import {HomePage} from './HomePage'
@@ -20,7 +21,9 @@ function EntryView({entry}: PageViewProps) {
 export function PageView(props: PageViewProps) {
   return (
     <Layout {...props.layout}>
-      <EntryView {...props} />
+      <CodeVariantsProvider>
+        <EntryView {...props} />
+      </CodeVariantsProvider>
     </Layout>
   )
 }
