@@ -26,7 +26,7 @@
           "content": [
             {
               "type": "text",
-              "text": "The command (`alinea init`) we ran in Getting Started created an `alinea.config.tsx` file. This file contains an example workspace from which you can get started quickly. Continue to the next chapter to read more about the parts that make up a workspace."
+              "text": "The command (`alinea init`) we ran in Getting Started created an `alinea.config.tsx` file. This file contains an example workspace as a starting point. Continue to the next chapter to read more about the parts that make up a workspace."
             }
           ]
         },
