@@ -26,7 +26,7 @@
           "content": [
             {
               "type": "text",
-              "text": "The command (`alinea init`) we ran in Getting Started created an `alinea.config.tsx` file. This file contains settings and a schema."
+              "text": "The command (`alinea init`) we ran in Getting Started created an `alinea.config.tsx` file. This file contains settings and a schema. "
             }
           ]
         },
@@ -37,6 +37,12 @@
           "fileName": "alinea.config.tsx"
         }
       ]
+    },
+    {
+      "id": "286IgMfdAnN8vkiueXATw4McayL",
+      "index": "a1",
+      "type": "TypesBlock",
+      "types": "createConfig, Workspaces, ConfigOptions, Config"
     }
   ]
 }

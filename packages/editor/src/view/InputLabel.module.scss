@@ -6,6 +6,10 @@
     padding: 6px;
   }
 
+  &:first-child &-inner {
+    padding-top: 0;
+  }
+
   /*&.is-focused > &-inner {
     border-color: var(--outline);
   }*/

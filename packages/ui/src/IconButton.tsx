@@ -1,4 +1,4 @@
-import {forwardRef, HTMLAttributes, Ref} from 'react'
+import {ComponentType, forwardRef, HTMLAttributes, Ref} from 'react'
 import type {IconType} from 'react-icons'
 import {Link, LinkProps} from 'react-router-dom'
 import css from './IconButton.module.scss'
@@ -8,7 +8,7 @@ import {px} from './util/Units'
 const styles = fromModule(css)
 
 export type IconButtonProps = HTMLAttributes<HTMLButtonElement> & {
-  icon: IconType
+  icon: ComponentType
   size?: number
   active?: boolean
 }

@@ -116,7 +116,7 @@ function ListInputRow<T extends ListRow>({
       <Card.Header>
         <Card.Options>
           <IconButton
-            icon={MdDragHandle}
+            icon={type.options?.icon || MdDragHandle}
             {...handle}
             style={{cursor: handle ? 'grab' : 'grabbing'}}
           />

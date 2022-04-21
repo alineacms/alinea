@@ -15,6 +15,7 @@ type TypeToEntry<T> = T extends {[key: string]: any}
 export type DataOf<T> = T extends Collection<infer U> ? U : never
 export type EntryOf<T> = T extends Schema<infer U> ? U : never
 
+/** Create a schema, expects a string record of Type instances */
 export function schema<Types extends LazyRecord<Type>>(
   types: Types
 ): Schema<TypeToEntry<TypeToRows<Types>>> {
@@ -24,7 +25,7 @@ export function schema<Types extends LazyRecord<Type>>(
 export type TypesOf<T> = T extends HasType ? T['type'] : string
 
 export namespace Schema {
-  // Generic utility to get the type of a schema, type or field or any Store type
+  /** Utility to infer the type of a Schema, Type, Feld or any Store type */
   export type TypeOf<T> = T extends Schema<infer U>
     ? U
     : T extends Type<infer U>
@@ -38,6 +39,7 @@ export namespace Schema {
     : never
 }
 
+/** Describes the different types of entries */
 export class Schema<T = any> {
   private __types: LazyRecord<Type<T>>
 
@@ -61,16 +63,19 @@ export class Schema<T = any> {
     return LazyRecord.iterate(this.__types)[Symbol.iterator]()
   }
 
+  /** Get a type by name */
   type<K extends TypesOf<T>>(name: K): Type<Extract<T, {type: K}>> | undefined {
     return LazyRecord.get(this.__types, name) as unknown as Type<
       Extract<T, {type: K}>
     >
   }
 
+  /** Keys of every type */
   get keys() {
     return LazyRecord.keys(this.__types)
   }
 
+  /** A record containing a collection for every type */
   collections(workspace: string): {
     [K in TypesOf<T>]: Collection<Extract<T, {type: K}>>
   } {
@@ -81,6 +86,7 @@ export class Schema<T = any> {
     ) as any
   }
 
+  /** A collection for a given type, used in querying a store */
   collection<K extends TypesOf<T>>(
     workspace: string,
     type: K
@@ -93,5 +99,6 @@ export class Schema<T = any> {
     })
   }
 
+  /** A generic collection used to query any type in this schema */
   entry: Collection<T> = new Collection('Entry')
 }

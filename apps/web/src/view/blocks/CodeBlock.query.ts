@@ -1,8 +1,8 @@
 import {Store} from '@alinea/store/Store'
 import {getHighlighter} from 'shiki'
 import tsxLanguage from 'shiki/languages/tsx.tmLanguage.json'
-import theme from 'shiki/themes/slack-ochin.json'
 import {Pages} from '../../../.alinea/web'
+import {theme} from '../types/ShikiTheme'
 import {CodeBlockSchema} from './CodeBlock.schema'
 
 export async function codeBlockQuery(pages: Pages, block: CodeBlockSchema) {

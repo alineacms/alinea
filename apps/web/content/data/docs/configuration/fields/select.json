@@ -31,12 +31,17 @@
           ]
         },
         {
-          "type": "CodeBlock",
           "id": "268iVJXDY23EWvw51STlvnDU0eR",
-
+          "type": "CodeBlock",
           "code": "select('My select field', {\n  a: 'Option a',\n  b: 'Option b'\n})"
         }
       ]
+    },
+    {
+      "id": "286ITmvhna9jHs6Zqi1oB5Y4HO7",
+      "index": "a1",
+      "type": "TypesBlock",
+      "types": "select, SelectOptions, SelectField"
     }
   ]
 }

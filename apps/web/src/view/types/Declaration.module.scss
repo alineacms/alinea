@@ -7,11 +7,23 @@
   display: block;
   position: relative;
   cursor: pointer;
+  margin-left: -5px;
+  padding: 6px 5px 5px 5px;
+  border-radius: 8px;
 
   &-icon {
-    position: absolute;
-    top: 0;
-    right: 0;
+    position: relative;
+    padding-top: 3.5px;
+    width: 18px;
+    color: #9296c5;
+  }
+
+  &:hover &-icon {
+    color: #5661e5;
+  }
+
+  &:hover {
+    background: #f2eeee;
   }
 }
 
@@ -29,7 +41,7 @@
 }
 
 .comment {
-  padding: 5px 0 3px 0;
+  padding: 5px 0 0 0;
   color: #227a56;
 }
 
@@ -37,18 +49,18 @@
   &-indent {
     padding-left: 20px;
   }
-  &-header {
-    font-size: 1.2em;
+  &-keyword {
+    color: #74797e;
   }
   &-leaf {
-    color: #f8892e;
+    color: #c00c84;
   }
   &-label {
     font-weight: bold;
-    color: #8c2ef8;
+    color: #5661e5;
   }
   &-param {
-    color: #5661e5;
+    color: #2f86d2;
   }
   &-symbol {
     color: #949fa7;

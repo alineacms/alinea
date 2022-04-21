@@ -8,7 +8,7 @@ import {TypesBlockSchema} from './TypesBlock.schema'
 
 export async function blocksQuery(pages: Pages, blocks: BlocksSchema) {
   return Promise.all(
-    blocks.map(async block => {
+    (blocks || []).map(async block => {
       switch (block.type) {
         case 'TextBlock':
           return textBlockQuery(pages, block as TextBlockSchema)

@@ -12,7 +12,10 @@ import {RecordValue} from './value/RecordValue'
 import type {View} from './View'
 
 export namespace Type {
+  /** Infer the field types */
   export type Of<T> = T extends Type<infer U> ? U : never
+
+  /** Optional settings to configure a Type */
   export type Options<T> = {
     /** Entries can be created as children of this entry */
     isContainer?: boolean
@@ -20,13 +23,15 @@ export namespace Type {
     isHidden?: boolean
     /** Accepts entries of these types as children */
     contains?: Array<string>
+    /** An icon (React component) to represent this type in the dashboard */
     icon?: ComponentType
 
-    // Todo: there's a bunch of views here how should be approach naming?
-    // Todo: add a pageView
+    /** A React component used to view an entry of this type in the dashboard */
     view?: ComponentType
-    summaryRow?: View<any> // View<T>
-    summaryThumb?: View<any> // View<T>
+    /** A React component used to view a row of this type in the dashboard */
+    summaryRow?: View<any>
+    /** A React component used to view a thumbnail of this type in the dashboard */
+    summaryThumb?: View<any>
 
     /** Create indexes on fields of this type */
     index?: (fields: Collection<T>) => Record<string, Array<Expr<any>>>
@@ -35,6 +40,7 @@ export namespace Type {
 
 const reserved = new Set(['id', 'type'])
 
+/** Describes the structure of an entry by their fields and type */
 export class Type<T = any> {
   private __fields: Record<string, Lazy<Field<any, any>>> | undefined
 
@@ -78,6 +84,7 @@ export class Type<T = any> {
     return LazyRecord.iterate(this.fields)[Symbol.iterator]()
   }
 
+  /** Get a field by name */
   field(key: string) {
     const field = LazyRecord.get(this.fields, key)
     if (!field)
@@ -85,10 +92,12 @@ export class Type<T = any> {
     return field
   }
 
+  /** Create a new empty instance of this type's fields */
   empty() {
     return this.valueType.create()
   }
 
+  /** Create a new Entry instance this type */
   create(name: string) {
     return {
       ...this.empty(),
@@ -97,6 +106,7 @@ export class Type<T = any> {
     } as Entry & T
   }
 
+  /** Configure this type, returns a new instance */
   configure(options: Type.Options<T>): Type<T> {
     return new Type(this.label, this.sections, {
       ...this.options,
@@ -105,6 +115,7 @@ export class Type<T = any> {
   }
 }
 
+/** Create a new type */
 export function type<T extends Array<Section.Input>>(
   label: Label,
   ...sections: T

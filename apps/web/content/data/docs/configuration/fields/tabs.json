@@ -36,6 +36,12 @@
           "code": "tabs(\n  tab('Tab A', {\n    // ... fields\n  }),\n  tab('Tab B', {\n    // ... fields\n  })\n)"
         }
       ]
+    },
+    {
+      "id": "286IarApWyPuA0nfHtH38YLSWMg",
+      "index": "a1",
+      "type": "TypesBlock",
+      "types": "tabs, tab"
     }
   ]
 }

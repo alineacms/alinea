@@ -36,6 +36,12 @@
           "code": "schema('My schema', {\n  TypeA, TypeB, TypeC\n})"
         }
       ]
+    },
+    {
+      "id": "286HXzkmEaM4Er6WZewZvNPLQmX",
+      "index": "a1",
+      "type": "TypesBlock",
+      "types": "schema, Schema"
     }
   ]
 }

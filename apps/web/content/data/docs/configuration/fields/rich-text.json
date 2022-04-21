@@ -13,9 +13,7 @@
       "text": [
         {
           "type": "heading",
-          "attrs": {
-            "level": 1
-          },
+          "level": 1,
           "content": [
             {
               "type": "text",
@@ -33,11 +31,17 @@
           ]
         },
         {
-          "type": "CodeBlock",
           "id": "268iODr7pOAG2BeDXXfDEvDZYfr",
+          "type": "CodeBlock",
           "code": "richText('My rich text field', {\n  blocks: schema({\n    CodeBlock: CodeBlockSchema,\n    ImageBlock: ImageBlockSchema\n  })\n})"
         }
       ]
+    },
+    {
+      "id": "286I7hBcY5VqUapFgpXsYjwKSS8",
+      "index": "a1",
+      "type": "TypesBlock",
+      "types": "richText, RichTextOptions, RichTextField"
     }
   ]
 }

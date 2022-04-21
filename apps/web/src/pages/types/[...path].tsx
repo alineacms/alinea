@@ -1,14 +1,14 @@
 import {TypeOf} from 'alinea'
 import {GetStaticPropsContext} from 'next'
 import {backend} from '../../../alinea.backend'
-import {memberPath, types} from '../../data/Types'
+import {membersOf, packageName, packagePaths, typeNav} from '../../data/Types'
 import {layoutQuery} from '../../view/layout/Layout.query'
 
 export async function getStaticPaths() {
   return {
     fallback: 'blocking',
-    paths: types.children!.map(child => {
-      return {params: {path: memberPath(child.name).split('/')}}
+    paths: packagePaths().map(path => {
+      return {params: {path: path.split('/')}}
     })
   }
 }
@@ -16,10 +16,14 @@ export async function getStaticPaths() {
 export async function getStaticProps(context: GetStaticPropsContext) {
   const pages = backend.loadPages('web')
   const slug = context.params?.path as Array<string> | null
-  const selected = slug?.join('/')
+  const selected = slug?.join('/')!
+  const title = packageName(selected)
   const props = {
-    layout: await layoutQuery(pages, {title: 'Types', url: '/types'}),
-    selected
+    layout: await layoutQuery(pages, {title: `API - ${title}`, url: '/types'}),
+    selected,
+    title,
+    members: membersOf(selected),
+    nav: typeNav()
   }
   return {props}
 }

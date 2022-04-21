@@ -36,6 +36,12 @@
           "code": "text('My text field', {\n  help: 'This is an example field',\n  multiline: true\n})"
         }
       ]
+    },
+    {
+      "id": "286Htu5lEXpxa9TlpUBlEm9HHQt",
+      "index": "a1",
+      "type": "TypesBlock",
+      "types": "text, TextOptions, TextField"
     }
   ]
 }

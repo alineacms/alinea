@@ -4,6 +4,8 @@
   position: relative;
   padding-left: 35px;
   margin-left: -80px;
+  margin-top: -20px;
+  flex-shrink: 0;
   @media (max-width: 980px) {
     display: none;
   }

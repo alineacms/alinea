@@ -1,6 +1,6 @@
-import {fromModule, HStack, Stack} from '@alinea/ui'
+import {fromModule, HStack, px} from '@alinea/ui'
 import {ComponentType, Fragment, PropsWithChildren, ReactNode} from 'react'
-import {MdOutlineExpandMore} from 'react-icons/md'
+import {MdKeyboardArrowRight} from 'react-icons/md'
 import type {JSONOutput} from 'typedoc'
 import css from './Declaration.module.scss'
 
@@ -40,6 +40,7 @@ const Leaf = styles.type.leaf.toElement('span')
 const Label = styles.type.label.toElement('span')
 const Param = styles.type.param.toElement('span')
 const Indent = styles.type.indent.toElement('div')
+const Keyword = styles.type.keyword.toElement('span')
 
 type TypeProps = {
   type: JSONOutput.SomeType
@@ -89,7 +90,7 @@ function Type({type, needsParens, inline}: TypeProps) {
     case 'inferred':
       return (
         <>
-          <Symbol>infer </Symbol> {type.name}
+          <Symbol>infer </Symbol> <Leaf>{type.name}</Leaf>
         </>
       )
     case 'intersection':
@@ -148,6 +149,7 @@ function Type({type, needsParens, inline}: TypeProps) {
               } as any
             ]}
             inline={inline}
+            inner
           />
         )
       } else {
@@ -246,6 +248,7 @@ function TypeParams({params}: TypeParamsProps) {
       {params.map((param, i) => {
         return (
           <Fragment key={i}>
+            {i > 0 && <Symbol>, </Symbol>}
             <Leaf>{param.name}</Leaf>
             {param.type && (
               <>
@@ -319,10 +322,12 @@ function MemberWrapper({children}: PropsWithChildren<{}>) {
 function MemberWrapperLabel({children}: PropsWithChildren<{}>) {
   return (
     <label className={styles.wrapperLabel()}>
-      {children}
-      <span className={styles.wrapperLabel.icon()}>
-        <MdOutlineExpandMore size={20} />
-      </span>
+      <HStack>
+        <span className={styles.wrapperLabel.icon()}>
+          <MdKeyboardArrowRight size={16} />
+        </span>
+        <div>{children}</div>
+      </HStack>
     </label>
   )
 }
@@ -335,9 +340,12 @@ function Comment({comment}: CommentProps) {
   if (!comment) return null
   return (
     <div className={styles.comment()}>
-      <HStack>
-        /* <Indent>{comment.shortText || comment.text}</Indent>{' '}
-        <Stack.Right style={{alignSelf: 'flex-end'}}>*/</Stack.Right>
+      <HStack gap={12}>
+        <span>/**</span>{' '}
+        <div>
+          {comment.shortText || comment.text}{' '}
+          <span style={{display: 'inline-block', paddingLeft: px(4)}}>*/</span>
+        </div>
       </HStack>
     </div>
   )
@@ -345,29 +353,30 @@ function Comment({comment}: CommentProps) {
 
 type MemberProps = {
   inline?: boolean
+  inner?: boolean
   member: JSONOutput.DeclarationReflection
 }
 
-function Member({member, inline}: MemberProps) {
+function Member({member, inline, inner}: MemberProps) {
   const Wrap = inline ? Fragment : 'div'
-  const Content = inline ? Fragment : MemberWrapper
-  const ContentLabel = inline ? Fragment : MemberWrapperLabel
+  const Content = inline || inner ? Fragment : MemberWrapper
+  const ContentLabel = inline || inner ? Fragment : MemberWrapperLabel
   if (member.name.startsWith('__')) return null
   switch (member.kind) {
     case ReflectionKind.Enum:
       return (
-        <ContentLabel>
+        <>
           <Comment comment={member.comment} />
-          enum
-          <Indent>
+          <ContentLabel>
+            <Keyword>export enum </Keyword>
             <Label>{member.name}</Label>
             <Content>
               <Tree> &#123;</Tree>
-              <Declaration members={member.children} inline={inline} />
+              <Declaration members={member.children} inline={inline} inner />
               <Tree>&#125;</Tree>
             </Content>
-          </Indent>
-        </ContentLabel>
+          </ContentLabel>
+        </>
       )
     case ReflectionKind.EnumMember:
       return (
@@ -395,16 +404,27 @@ function Member({member, inline}: MemberProps) {
           {member.signatures?.map((signature, i) => (
             <Wrap key={i}>
               <Comment comment={signature.comment} />
-              function
-              <Indent>
-                <Label>{member.name}</Label>
-                <Signature signature={signature} />
-              </Indent>
+              <Keyword>export function </Keyword>
+              <Label>{member.name}</Label>
+              <Signature signature={signature} />
             </Wrap>
           ))}
         </>
       )
     case ReflectionKind.Accessor:
+      const [signature] = member.getSignature || []
+      return (
+        <>
+          {signature && <Comment comment={signature.comment} />}
+          <Keyword>get </Keyword>
+          <Param>{member.name}</Param>
+          {signature && (
+            <>
+              <Signature signature={signature} />
+            </>
+          )}
+        </>
+      )
     case ReflectionKind.Property:
     case ReflectionKind.Event:
       return (
@@ -422,52 +442,61 @@ function Member({member, inline}: MemberProps) {
     case ReflectionKind.TypeLiteral:
     case ReflectionKind.ObjectLiteral:
       return (
-        <ContentLabel>
+        <>
           <Comment comment={member.comment} />
-          <Tree>&#123;</Tree>
-          <Content>
-            <Declaration
-              members={member.children}
-              join={inline ? <Symbol>, </Symbol> : undefined}
-              inline={inline}
-            />
-          </Content>
-          <Tree>&#125;</Tree>
-        </ContentLabel>
+          <ContentLabel>
+            <Tree>&#123;</Tree>
+            <Content>
+              <Declaration
+                members={member.children}
+                join={inline ? <Symbol>, </Symbol> : undefined}
+                inline={inline}
+                inner
+              />
+            </Content>
+            <Tree>&#125;</Tree>
+          </ContentLabel>
+        </>
       )
     case ReflectionKind.Class:
       return (
-        <ContentLabel>
+        <>
           <Comment comment={member.comment} />
-          class
-          <Indent>
+          <ContentLabel>
+            <Keyword>export class </Keyword>
             <Label>{member.name}</Label>
+            {member.typeParameter && (
+              <TypeParams params={member.typeParameter} />
+            )}
             {member.extendedTypes && (
               <>
-                {' '}
-                extends <TypeList types={member.extendedTypes} inline />
+                <Keyword> extends </Keyword>
+                <TypeList types={member.extendedTypes} inline />
               </>
             )}
             {member.implementedTypes && (
               <>
-                {' '}
-                implements <TypeList types={member.implementedTypes} inline />
+                <Keyword> implements </Keyword>
+                <TypeList types={member.implementedTypes} inline />
               </>
             )}
             <Content>
               <Tree> &#123;</Tree>
-              <Declaration members={member.children} inline={inline} />
+              <Declaration members={member.children} inline={inline} inner />
               <Tree>&#125;</Tree>
             </Content>
-          </Indent>
-        </ContentLabel>
+          </ContentLabel>
+        </>
       )
     case ReflectionKind.Interface:
       return (
-        <ContentLabel>
+        <>
           <Comment comment={member.comment} />
-          interface
-          <Indent>
+          <ContentLabel>
+            <Keyword>export interface </Keyword>
+            {member.typeParameter && (
+              <TypeParams params={member.typeParameter} />
+            )}
             <Label>{member.name}</Label>
             {member.extendedTypes && (
               <>
@@ -483,50 +512,52 @@ function Member({member, inline}: MemberProps) {
             )}
             <Content>
               <Tree> &#123;</Tree>
-              <Declaration members={member.children} inline={inline} />
+              <Declaration members={member.children} inline={inline} inner />
               <Tree>&#125;</Tree>
             </Content>
-          </Indent>
-        </ContentLabel>
+          </ContentLabel>
+        </>
       )
     case ReflectionKind.Namespace:
       return (
-        <ContentLabel>
+        <>
           <Comment comment={member.comment} />
-          namespace
-          <Indent>
-            <Label>{member.name}</Label>
-            <Content>
-              <Tree> &#123;</Tree>
-              <Declaration members={member.children} inline={inline} />
-              <Tree>&#125;</Tree>
-            </Content>
-          </Indent>
-        </ContentLabel>
+          <Keyword>export namespace </Keyword>
+          <Label>{member.name}</Label>
+          <Tree> &#123;</Tree>
+          <Declaration
+            members={member.children}
+            inline={inline}
+            inner={inner}
+          />
+          <Tree>&#125;</Tree>
+        </>
       )
     case ReflectionKind.TypeAlias:
       return (
-        <ContentLabel>
+        <>
           <Comment comment={member.comment} />
-          type
-          <Indent>
-            <Label>{member.name}</Label>{' '}
+          <ContentLabel>
+            <Keyword>export type </Keyword>
+            <Label>{member.name}</Label>
+            {member.typeParameter && (
+              <TypeParams params={member.typeParameter} />
+            )}
             <Content>
+              {' '}
               ={' '}
               <Type type={member.type as JSONOutput.SomeType} inline={inline} />
             </Content>
-          </Indent>
-        </ContentLabel>
+          </ContentLabel>
+        </>
       )
     case ReflectionKind.Variable:
       return (
         <>
           <Comment comment={member.comment} />
-          const
-          <Indent>
-            <Label>{member.name}</Label>:{' '}
-            <Type type={member.type as JSONOutput.SomeType} inline={inline} />
-          </Indent>
+          <Keyword>export const </Keyword>
+          <Label>{member.name}</Label>:{' '}
+          <Type type={member.type as JSONOutput.SomeType} inline={inline} />
         </>
       )
     default:
@@ -538,12 +569,19 @@ export type DeclarationProps = {
   members?: Array<JSONOutput.DeclarationReflection>
   join?: ReactNode
   inline?: boolean
+  inner?: boolean
   wrap?: ComponentType
 }
 
-export function Declaration({members, join, wrap, inline}: DeclarationProps) {
+export function Declaration({
+  members,
+  join,
+  inner,
+  wrap,
+  inline
+}: DeclarationProps) {
   if (!members) return null
-  const Root = inline ? Fragment : Indent
+  const Root = wrap || inline ? Fragment : Indent
   const Wrap = wrap || (inline ? Fragment : 'div')
   return (
     <Root>
@@ -551,7 +589,7 @@ export function Declaration({members, join, wrap, inline}: DeclarationProps) {
         <Fragment key={i}>
           {i > 0 && join}
           <Wrap>
-            <Member member={child} inline={inline} />
+            <Member member={child} inline={inline} inner={inner} />
           </Wrap>
         </Fragment>
       ))}

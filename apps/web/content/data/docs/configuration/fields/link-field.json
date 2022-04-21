@@ -31,11 +31,17 @@
           ]
         },
         {
-          "type": "CodeBlock",
           "id": "268j43D4sYTv9i4LXKv8Isvwlzi",
+          "type": "CodeBlock",
           "code": "link('My link field', {\n  type: 'entry'\n})"
         }
       ]
+    },
+    {
+      "id": "286IWhDVAcsssijLTyBSRdbY9JF",
+      "index": "a1",
+      "type": "TypesBlock",
+      "types": "link, LinkOptions, LinkField"
     }
   ]
 }

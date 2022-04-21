@@ -36,6 +36,12 @@
           "code": "workspace('My workspace', {\n  schema, color, roots\n})"
         }
       ]
+    },
+    {
+      "id": "286C2IKcWw9PYcWgPIvXz1fP7Jz",
+      "index": "a1",
+      "type": "TypesBlock",
+      "types": "workspace, Workspace"
     }
   ]
 }

@@ -31,11 +31,17 @@
           ]
         },
         {
-          "type": "CodeBlock",
           "id": "267QyzM4851hQU1DihfoV3fSIFg",
+          "type": "CodeBlock",
           "code": "type('My type', {\n  title: text('Title', {width: 0.5}),\n  path: path('Path', {width: 0.5})\n})"
         }
       ]
+    },
+    {
+      "id": "286HsGRzFoyQsBZIUQgy23OyX9J",
+      "index": "a1",
+      "type": "TypesBlock",
+      "types": "type, Type"
     }
   ]
 }

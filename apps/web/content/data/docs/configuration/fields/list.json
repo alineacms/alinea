@@ -13,9 +13,7 @@
       "text": [
         {
           "type": "heading",
-          "attrs": {
-            "level": 1
-          },
+          "level": 1,
           "content": [
             {
               "type": "text",
@@ -33,11 +31,17 @@
           ]
         },
         {
-          "type": "CodeBlock",
           "id": "268j9BBXf8jwwZ427XxBT2O0snb",
+          "type": "CodeBlock",
           "code": "list('My list field', {\n  schema: schema({\n    // ... types\n  })\n})"
         }
       ]
+    },
+    {
+      "id": "286IYmoRMQcuVIU0Najc00OBfdR",
+      "index": "a1",
+      "type": "TypesBlock",
+      "types": "list, ListOptions, ListField"
     }
   ]
 }
