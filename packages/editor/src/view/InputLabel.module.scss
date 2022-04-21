@@ -6,14 +6,6 @@
     padding: 6px;
   }
 
-  &:first-child &-inner {
-    padding-top: 0;
-  }
-
-  /*&.is-focused > &-inner {
-    border-color: var(--outline);
-  }*/
-
   &-header {
     padding-top: 0;
   }
@@ -25,7 +17,6 @@
     font-size: 13px;
     font-weight: bold;
     color: var(--fields-foreground);
-    // background: var(--highlight);
     border-radius: 6px;
     padding: 6px 0;
   }
@@ -45,7 +36,5 @@
 
   &.is-focused &-title {
     color: var(--foreground);
-    /*background: var(--accent);
-    color: var(--accent-foreground);*/
   }
 }
