@@ -127,6 +127,7 @@ function InsertMenu({editor, schema, onInsert}: InsertMenuProps) {
     return (
       <Create.Button
         key={key}
+        icon={type.options.icon}
         onClick={() => {
           onInsert(id, key)
           editor.chain().focus().insertContent({type: key, attrs: {id}}).run()

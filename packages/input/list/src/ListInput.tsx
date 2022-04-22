@@ -149,7 +149,11 @@ function ListCreateRow<T>({field, onCreate}: ListCreateRowProps<T>) {
       <Create.Root>
         {types.map(([key, type]) => {
           return (
-            <Create.Button key={key} onClick={() => onCreate(key)}>
+            <Create.Button
+              icon={type.options.icon}
+              key={key}
+              onClick={() => onCreate(key)}
+            >
               <TextLabel label={type.label} />
             </Create.Button>
           )
