@@ -2,8 +2,9 @@ import {EvalPlugin} from '@esbx/eval'
 import {ReactPlugin} from '@esbx/react'
 import {ReporterPlugin} from '@esbx/reporter'
 import {RunPlugin} from '@esbx/run'
-import {findNodeModules} from '@esbx/util'
+import {findNodeModules, reportTime} from '@esbx/util'
 import {getWorkspaces, TestTask} from '@esbx/workspaces'
+import {execSync} from 'child_process'
 import type {BuildOptions, Plugin} from 'esbuild'
 import {build} from 'esbuild'
 import fs from 'fs-extra'
@@ -51,6 +52,20 @@ export const buildTask = {
 export const prepare = {
   async action() {
     if (!fs.existsSync('dist')) await buildTask.action({})
+    if (!fs.existsSync('apps/web/src/data/types.json')) {
+      reportTime(
+        async () => {
+          execSync(
+            `typedoc --json apps/web/src/data/types.json --logLevel Error`,
+            {
+              stdio: 'inherit'
+            }
+          )
+        },
+        'generating typedoc json...',
+        err => 'typedoc completed'
+      )
+    }
   }
 }
 
