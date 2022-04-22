@@ -110,7 +110,7 @@ export function NewEntry({parentId}: NewEntryProps) {
 
   function handleCreate(e: FormEvent) {
     e.preventDefault()
-    if (!selectedType) return
+    if (!selectedType || !title) return
     setIsCreating(true)
     const type = schema.type(selectedType)!
     const path = slugify(title)
