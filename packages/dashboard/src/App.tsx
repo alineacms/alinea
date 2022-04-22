@@ -1,5 +1,6 @@
 import {renderLabel, Session, Workspaces} from '@alinea/core'
 import {
+  ErrorBoundary,
   FavIcon,
   Loader,
   Pane,
@@ -42,7 +43,11 @@ import {Toolbar} from './view/Toolbar'
 const Router = {
   Entry() {
     const {id} = useParams()
-    return <EntryRoute id={id} />
+    return (
+      <ErrorBoundary>
+        <EntryRoute id={id} />
+      </ErrorBoundary>
+    )
   },
   NewEntry() {
     const {id} = useParams()
@@ -218,7 +223,9 @@ function localSession(options: DashboardOptions) {
 const QueryClientProvider: any = ReactQueryClientProvider
 
 export function App<T extends Workspaces>(props: DashboardOptions<T>) {
-  const [queryClient] = useState(() => new QueryClient())
+  const [queryClient] = useState(
+    () => new QueryClient({defaultOptions: {queries: {retry: false}}})
+  )
   const [session, setSession] = useState<Session | undefined>(
     !props.auth ? localSession(props) : undefined
   )

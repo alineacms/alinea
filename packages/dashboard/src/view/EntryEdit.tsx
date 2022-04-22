@@ -6,6 +6,7 @@ import {text} from '@alinea/input.text'
 import {TextInput} from '@alinea/input.text/view'
 import {
   Button,
+  ErrorMessage,
   fromModule,
   HStack,
   IconButton,
@@ -71,7 +72,7 @@ function EntryEditDraft({draft}: EntryEditDraftProps) {
                   state={EntryProperty.root}
                 />
               ) : (
-                'Channel not found'
+                <ErrorMessage error={new Error('Type not found')} />
               )}
             </Suspense>
           </div>

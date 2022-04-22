@@ -17,7 +17,8 @@ export function useDraft(id: string | undefined) {
     {
       suspense: true,
       keepPreviousData: true,
-      refetchOnWindowFocus: false
+      refetchOnWindowFocus: false,
+      retry: false
     }
   )
   useEffect(() => {
