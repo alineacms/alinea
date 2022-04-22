@@ -71,17 +71,18 @@ const TreeNodeLink = memo(
     const {schema} = useWorkspace()
     const type = schema.type(entry.type)!
     const isContainer = entry.$isContainer
-    const icon =
-      (type.options.icon && <type.options.icon />) ||
-      (isContainer ? (
-        isOpened ? (
-          <MdExpandMore size={20} />
-        ) : (
-          <MdChevronRight size={20} />
-        )
-      ) : (
-        <MdInsertDriveFile size={12} />
-      ))
+    const containerIcon = isOpened ? (
+      <MdExpandMore size={20} />
+    ) : (
+      <MdChevronRight size={20} />
+    )
+    const hasIcon = Boolean(type.options.icon)
+    const icon = type.options.icon ? (
+      <type.options.icon />
+    ) : (
+      <MdInsertDriveFile size={12} />
+    )
+
     return (
       <div
         className={styles.root({
@@ -105,17 +106,22 @@ const TreeNodeLink = memo(
               toggleOpen()
             }}
           >
-            <div
-              className={styles.root.link.icon()}
-              onClick={event => {
-                if (!entry.$isContainer) return
-                event.preventDefault()
-                event.stopPropagation()
-                toggleOpen()
-              }}
-            >
-              {icon}
-            </div>
+            {isContainer && (
+              <div
+                className={styles.root.link.icon()}
+                onClick={event => {
+                  if (!entry.$isContainer) return
+                  event.preventDefault()
+                  event.stopPropagation()
+                  toggleOpen()
+                }}
+              >
+                {containerIcon}
+              </div>
+            )}
+            {(hasIcon || !isContainer) && (
+              <div className={styles.root.link.icon()}>{icon}</div>
+            )}
             <HStack center gap={8} style={{width: '100%'}}>
               <span
                 style={{
@@ -126,11 +132,11 @@ const TreeNodeLink = memo(
               >
                 {renderLabel(entry.title)}
               </span>
-              {entry.$isContainer && entry.childrenCount > 0 && (
+              {/*entry.$isContainer && entry.childrenCount > 0 && (
                 <div className={styles.root.link.badge()}>
                   <div>{entry.childrenCount}</div>
                 </div>
-              )}
+              )*/}
             </HStack>
           </Link>
           {entry.$isContainer && (
