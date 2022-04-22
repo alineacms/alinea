@@ -5,6 +5,7 @@ import {RunPlugin} from '@esbx/run'
 import {findNodeModules, reportTime} from '@esbx/util'
 import {getWorkspaces, TestTask} from '@esbx/workspaces'
 import {execSync} from 'child_process'
+import semver from 'compare-versions'
 import type {BuildOptions, Plugin} from 'esbuild'
 import {build} from 'esbuild'
 import fs from 'fs-extra'
@@ -51,6 +52,18 @@ export const buildTask = {
 
 export const prepare = {
   async action() {
+    const minVersion = '14.18.0'
+    const nodeVersionWorks = semver.compare(
+      process.version.slice(1),
+      minVersion,
+      '>='
+    )
+    if (!nodeVersionWorks) {
+      console.error(
+        `Node version ${process.version} is not supported, at least ${minVersion} is required.`
+      )
+      process.exit(1)
+    }
     if (!fs.existsSync('dist')) await buildTask.action({})
     if (!fs.existsSync('apps/web/src/data/types.json')) {
       reportTime(

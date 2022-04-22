@@ -325,6 +325,7 @@ __metadata:
     "@types/glob": ^7.1.4
     "@types/node": ^16.9.0
     autoprefixer: ^10.4.2
+    compare-versions: ^4.1.3
     copy-env-cli: 1.0.0
     cross-env: ^7.0.3
     esbuild: ^0.14.11
@@ -3068,6 +3069,13 @@ __metadata:
   version: 1.2.4
   resolution: "color2k@npm:1.2.4"
   checksum: 9cde39430d9e4b7c03f1e572d9be76e17be3ce0c8cc1acd276eadc65d13a0e80f484220e3428cd53272d105369cae652b141ac03149e5738000b79a7fae1ba96
+  languageName: node
+  linkType: hard
+
+"compare-versions@npm:^4.1.3":
+  version: 4.1.3
+  resolution: "compare-versions@npm:4.1.3"
+  checksum: 54460756ab2d62f8a9d672db249b248fec7ca41c3e8ed242925e2f2257793ad3e83cecb2cdfd60b46a3aabc962a3a4cbf37a4b928c8f30517822d2bde937a3d1
   languageName: node
   linkType: hard
 
