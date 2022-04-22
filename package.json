@@ -52,7 +52,6 @@
   },
   "packageManager": "yarn@3.2.0",
   "resolutions": {
-    "yjs": "13.5.14",
     "prosemirror-model": "1.16.1"
   }
 }

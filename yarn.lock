@@ -66,7 +66,7 @@ __metadata:
     pretty-ms: ^7.0.1
     raw-body: ^2.4.1
     server-timing: ^3.3.1
-    yjs: ^13.5.16
+    yjs: ^13.5.34
   languageName: unknown
   linkType: soft
 
@@ -123,7 +123,7 @@ __metadata:
     buffer: ^6.0.3
     get-random-values: ^1.2.2
     serialize-error: ^9.0.0
-    yjs: ^13.5.16
+    yjs: ^13.5.34
   peerDependencies:
     react: "*"
   languageName: unknown
@@ -161,7 +161,7 @@ __metadata:
     react-router-dom: ^6.3.0
     react-tiny-virtual-list: ^2.2.0
     y-webrtc: ^10.2.0
-    yjs: ^13.5.16
+    yjs: ^13.5.34
   peerDependencies:
     react: "*"
     react-dom: "*"
@@ -174,9 +174,7 @@ __metadata:
   dependencies:
     "@alinea/core": 0.0.0
     "@alinea/ui": 0.0.0
-    react-icons: ^4.3.1
-    use-error-boundary: ^2.0.6
-    yjs: ^13.5.16
+    yjs: ^13.5.34
   peerDependencies:
     react: "*"
   languageName: unknown
@@ -371,6 +369,7 @@ __metadata:
     color2k: ^1.2.4
     react-helmet: ^6.1.0
     react-icons: ^4.3.1
+    use-error-boundary: ^2.0.6
   peerDependencies:
     react: "*"
     react-dom: "*"
@@ -5346,6 +5345,15 @@ fsevents@~2.3.2:
   languageName: node
   linkType: hard
 
+"lib0@npm:^0.2.49":
+  version: 0.2.51
+  resolution: "lib0@npm:0.2.51"
+  dependencies:
+    isomorphic.js: ^0.2.4
+  checksum: bdd00ba42b66d27d048fc169e7d472b9dfe9140e067daeb92db82f40209365d9399aaed679078cc440c496c43d429427b0e231dbaaf171793d98ea6f5476aa3a
+  languageName: node
+  linkType: hard
+
 "lilconfig@npm:^2.0.3":
   version: 2.0.3
   resolution: "lilconfig@npm:2.0.3"
@@ -8883,12 +8891,12 @@ resolve@^1.10.0:
   languageName: node
   linkType: hard
 
-"yjs@npm:13.5.14":
-  version: 13.5.14
-  resolution: "yjs@npm:13.5.14"
+"yjs@npm:^13.5.34":
+  version: 13.5.34
+  resolution: "yjs@npm:13.5.34"
   dependencies:
-    lib0: ^0.2.42
-  checksum: fece4c10dd6c2eb44947d9431f8da600bcd126f4514c569cd9b278e7b91c502c6f02b9aca23976bf41abb6dd9db2ba77c412e7974a2fc3b042474ced7d7a5cc6
+    lib0: ^0.2.49
+  checksum: 1d52c45f53d42db183162e5e576bc331122af80c6a4661d096de91469c6bf8611860f0dfaa2f5dce671a10c7a04ea49f9431188a1a018d7fa4271a02f1a4b6fa
   languageName: node
   linkType: hard
 
