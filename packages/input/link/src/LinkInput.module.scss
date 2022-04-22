@@ -2,23 +2,47 @@
   position: relative;
 
   &-inner {
+    padding: 15px;
     border-radius: 12px;
     background: var(--inner);
-    padding: 8px;
   }
 }
 
 .row {
-  height: 50px;
-  padding: 4px 16px;
+  position: relative;
+  background: var(--lift);
 
-  &.is-overlay {
-    background: var(--background);
-    border-radius: 6px;
-    box-shadow: 0 2px 30px var(--shadow);
+  & + & {
+    border-top: 1px solid var(--outline);
   }
 
   &.is-dragging {
     opacity: 0.5;
+  }
+
+  &.is-overlay {
+    border-radius: 12px;
+    box-shadow: 0 2px 30px var(--shadow);
+    overflow: hidden;
+  }
+
+  &-header {
+    padding: 8px 0;
+    flex-grow: 1;
+  }
+
+  &-staticHandle {
+    width: 1.8em;
+    height: 1.8em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+.create {
+  padding: 4px 0 5px 0;
+  .row + & {
+    border-top: 1px solid var(--outline);
   }
 }

@@ -1,4 +1,4 @@
-import {InputForm, InputState, LabelHeader, useInput} from '@alinea/editor'
+import {InputForm, InputLabel, InputState, useInput} from '@alinea/editor'
 import {Card, Create, fromModule, IconButton, TextLabel} from '@alinea/ui'
 import {
   closestCenter,
@@ -171,7 +171,7 @@ export function ListInput<T extends ListRow>({
   field
 }: ListInputProps<T>) {
   const [rows, list] = useInput(state)
-  const {help, inline} = field.options
+  const {help, inline, width, optional} = field.options
   const ids = rows.map(row => row.id)
   const [dragging, setDragging] = useState<T | null>(null)
   const sensors = useSensors(
@@ -194,21 +194,23 @@ export function ListInput<T extends ListRow>({
   }
 
   return (
-    <div className={styles.root()}>
-      <div className={styles.root.inner({inline})}>
-        {!inline && (
-          <div className={styles.root.title()}>
-            <LabelHeader help={help} label={field.label} icon={MdOutlineList} />
-          </div>
-        )}
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragStart={handleDragStart}
-          onDragEnd={handleDragEnd}
-          layoutMeasuring={layoutMeasuringConfig}
-        >
-          <div className={styles.root.rows()}>
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+      layoutMeasuring={layoutMeasuringConfig}
+    >
+      <InputLabel
+        label={field.label}
+        help={help}
+        optional={optional}
+        inline={inline}
+        width={width}
+        icon={MdOutlineList}
+      >
+        <div className={styles.root()}>
+          <div className={styles.root.inner({inline})}>
             <SortableContext items={ids} strategy={verticalListSortingStrategy}>
               <Card.Root>
                 {rows.map((row, i) => {
@@ -231,26 +233,26 @@ export function ListInput<T extends ListRow>({
                 />
               </Card.Root>
             </SortableContext>
-          </div>
 
-          <DragOverlay
-            dropAnimation={{
-              ...defaultDropAnimation,
-              dragSourceOpacity: 0.5
-            }}
-          >
-            {dragging ? (
-              <ListInputRow<T>
-                key="overlay"
-                row={dragging}
-                field={field}
-                path={state.child(dragging.id)}
-                isDragOverlay
-              />
-            ) : null}
-          </DragOverlay>
-        </DndContext>
-      </div>
-    </div>
+            <DragOverlay
+              dropAnimation={{
+                ...defaultDropAnimation,
+                dragSourceOpacity: 0.5
+              }}
+            >
+              {dragging ? (
+                <ListInputRow<T>
+                  key="overlay"
+                  row={dragging}
+                  field={field}
+                  path={state.child(dragging.id)}
+                  isDragOverlay
+                />
+              ) : null}
+            </DragOverlay>
+          </div>
+        </div>
+      </InputLabel>
+    </DndContext>
   )
 }

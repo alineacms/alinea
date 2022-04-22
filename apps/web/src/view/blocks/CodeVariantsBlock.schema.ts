@@ -1,8 +1,8 @@
-import { schema, Schema, type } from '@alinea/core'
-import { code } from '@alinea/input.code'
-import { list } from '@alinea/input.list'
-import { text } from '@alinea/input.text'
-import { MdCode } from 'react-icons/md'
+import {schema, Schema, type} from '@alinea/core'
+import {code} from '@alinea/input.code'
+import {list} from '@alinea/input.list'
+import {text} from '@alinea/input.text'
+import {MdCode} from 'react-icons/md'
 
 export const CodeVariantsBlockSchema = type('Code variants', {
   variants: list('Variants', {

@@ -1,34 +1,10 @@
 .root {
   position: relative;
 
-  & & {
-    padding: 8px 0;
-  }
-
-  & &:first-child {
-    padding-top: 0;
-  }
-
   &-inner {
-    border-radius: 12px;
-    padding: 11px 6px;
-    background: var(--inner);
-  }
-
-  &-title {
-    padding-bottom: 12px;
-  }
-
-  &-rows {
-    padding-bottom: 4px;
-  }
-
-  & & &-inner {
     padding: 15px;
-  }
-
-  &-header {
-    padding: 8px;
+    border-radius: 12px;
+    background: var(--inner);
   }
 }
 

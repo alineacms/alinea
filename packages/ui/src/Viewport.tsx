@@ -1,3 +1,4 @@
+import {parseToHsla} from 'color2k'
 import {HTMLProps, PropsWithChildren, useState} from 'react'
 import {ColorSchemeProvider} from './hook/UseColorScheme'
 import {useContrastColor} from './hook/UseContrastColor'
@@ -34,6 +35,7 @@ export function Viewport({children, color, contain, ...props}: ViewportProps) {
     setSchemePreference(next)
     window?.localStorage?.setItem(persistenceId, next)
   }
+  const [hue] = parseToHsla(accentColor)
   return (
     <ColorSchemeProvider value={[schemePreference, toggleSchemePreference]}>
       <main
@@ -41,6 +43,7 @@ export function Viewport({children, color, contain, ...props}: ViewportProps) {
           {
             '--accent': accentColor,
             '--accent-foreground': accentColorForeground
+            // '--hue': hue
           } as any
         }
         {...props}

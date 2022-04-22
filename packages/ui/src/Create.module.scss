@@ -1,7 +1,6 @@
 .root {
   padding: 3px 0;
   display: flex;
-  flex-wrap: wrap;
   gap: 10px;
   width: 100%;
   justify-content: center;
@@ -11,7 +10,6 @@
 .button {
   display: inline-block;
   font-weight: bold;
-  padding: 3px 0;
   // background: var(--highlight);
   background: transparent;
   border: none;
@@ -25,6 +23,7 @@
   white-space: nowrap;
   overflow: hidden;
   font-size: 12px;
+  flex-shrink: 0;
   // border-bottom: 1px solid var(--shadow);
 
   &:hover {

@@ -21,5 +21,4 @@ export namespace Sidebar {
   export const Menu = Object.assign(styles.root.menu.toElement('nav'), {
     Item
   })
-  export const List = styles.root.list.toElement('div')
 }

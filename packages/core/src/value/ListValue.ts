@@ -84,7 +84,7 @@ export class ListValue<T>
       ? parent.get(key)
       : parent.set(key, new Y.Map())
     return (fun: () => void) => {
-      function w(events: Array<Y.YEvent>, transaction: Y.Transaction) {
+      function w(events: Array<Y.YEvent<any>>, transaction: Y.Transaction) {
         for (const event of events) {
           if (event.target === record) fun()
           if (event instanceof Y.YMapEvent && event.keysChanged.has('index'))

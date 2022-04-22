@@ -5,15 +5,13 @@
   overflow: hidden;
   box-shadow: 0 2px 3.5px var(--shadow);
   cursor: default;
-  //box-shadow: 0 0 0 1px var(--outline);
-  // border: 1px solid var(--outline);
 }
 
 .header {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 10px 4px 10px;
+  padding: 8px 10px;
   background: var(--highlight);
   background: var(--header);
   color: var(--header-foreground);
@@ -32,6 +30,10 @@
 .content {
   flex-grow: 1;
   padding: 10px;
+
+  .header + & {
+    padding-top: 0;
+  }
 }
 
 .options {

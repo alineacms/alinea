@@ -1,17 +1,9 @@
 import {Entry, Media, Outcome, Reference, Type, View} from '@alinea/core'
 import {useReferencePicker, useSession, useWorkspace} from '@alinea/dashboard'
 import {EntrySummaryRow} from '@alinea/dashboard/view/entry/EntrySummary'
-import {Fields, InputLabel, InputState, useInput} from '@alinea/editor'
+import {InputForm, InputLabel, InputState, useInput} from '@alinea/editor'
 import {Expr} from '@alinea/store'
-import {
-  Card,
-  Create,
-  fromModule,
-  HStack,
-  IconButton,
-  Typo,
-  VStack
-} from '@alinea/ui'
+import {Card, Create, fromModule, IconButton, Typo} from '@alinea/ui'
 import {
   closestCenter,
   defaultDropAnimation,
@@ -84,36 +76,41 @@ function LinkInputRow<T>({
     case 'entry':
       const entry = entryData(reference.entry)
       return (
-        <Card.Root ref={rootRef} {...rest}>
-          <HStack
-            gap={8}
-            center
-            className={styles.row({
-              // dragging: isDragging,
-              // overlay: isDragOverlay
-            })}
-          >
-            {isSortable && (
-              <div {...handle}>
+        <div
+          className={styles.row({
+            dragging: isDragging,
+            overlay: isDragOverlay
+          })}
+          ref={rootRef}
+          {...rest}
+        >
+          <Card.Header>
+            <Card.Options>
+              {isSortable ? (
                 <IconButton
                   icon={MdDragHandle}
+                  {...handle}
                   style={{cursor: handle ? 'grab' : 'grabbing'}}
                 />
-              </div>
-            )}
-            <div>
+              ) : (
+                <div className={styles.row.staticHandle()}>
+                  <MdLink />
+                </div>
+              )}
+            </Card.Options>
+            <div style={{flexGrow: 1}}>
               {entry && <LinkInputEntryRow key={entry.id} entry={entry} />}
             </div>
-            <div style={{marginLeft: 'auto'}}>
+            <Card.Options>
               <IconButton icon={MdClose} onClick={onRemove} />
-            </div>
-          </HStack>
+            </Card.Options>
+          </Card.Header>
           {fields && (
-            <Card.Content style={{paddingTop: 0}}>
-              <Fields fields={fields.fields} state={state} />
+            <Card.Content>
+              <InputForm type={fields} state={state} />
             </Card.Content>
           )}
-        </Card.Root>
+        </div>
       )
 
     case 'url':
@@ -288,7 +285,7 @@ export function LinkInput<T>({state, field}: LinkInputProps<T>) {
         <div className={styles.root()}>
           <div className={styles.root.inner()}>
             <SortableContext items={ids} strategy={verticalListSortingStrategy}>
-              <VStack gap={8}>
+              <Card.Root>
                 {value.map(reference => {
                   return (
                     <LinkInputRowSortable<T>
@@ -302,7 +299,22 @@ export function LinkInput<T>({state, field}: LinkInputProps<T>) {
                     />
                   )
                 })}
-              </VStack>
+
+                {showLinkPicker && (
+                  <div className={styles.create()}>
+                    <Create.Root>
+                      <Create.Button onClick={handleCreate}>
+                        Pick link
+                      </Create.Button>
+                      {showExternal && (
+                        <Create.Button onClick={handleCreate}>
+                          External url
+                        </Create.Button>
+                      )}
+                    </Create.Root>
+                  </div>
+                )}
+              </Card.Root>
             </SortableContext>
 
             <DragOverlay
@@ -323,16 +335,6 @@ export function LinkInput<T>({state, field}: LinkInputProps<T>) {
                 />
               ) : null}
             </DragOverlay>
-            {showLinkPicker && (
-              <Create.Root>
-                <Create.Button onClick={handleCreate}>Pick link</Create.Button>
-                {showExternal && (
-                  <Create.Button onClick={handleCreate}>
-                    External url
-                  </Create.Button>
-                )}
-              </Create.Root>
-            )}
           </div>
         </div>
       </InputLabel>
