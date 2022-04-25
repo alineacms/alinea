@@ -6850,7 +6850,7 @@ fsevents@~2.3.2:
   languageName: node
   linkType: hard
 
-"prosemirror-model@npm:1.16.1":
+"prosemirror-model@npm:^1.0.0, prosemirror-model@npm:^1.14.3, prosemirror-model@npm:^1.16.1":
   version: 1.16.1
   resolution: "prosemirror-model@npm:1.16.1"
   dependencies:
@@ -6897,25 +6897,14 @@ fsevents@~2.3.2:
   languageName: node
   linkType: hard
 
-"prosemirror-view@npm:^1.0.0, prosemirror-view@npm:^1.1.0":
-  version: 1.20.1
-  resolution: "prosemirror-view@npm:1.20.1"
+"prosemirror-view@npm:1.20.3":
+  version: 1.20.3
+  resolution: "prosemirror-view@npm:1.20.3"
   dependencies:
     prosemirror-model: ^1.14.3
     prosemirror-state: ^1.0.0
     prosemirror-transform: ^1.1.0
-  checksum: 905d7679acd49c6f766433a0341cac28095ff96ba4e89b40678aae20d8b2920505ab38f3cf398a57e01a90013ca3eecd4a764a41a7877ba48da8763e30a58fd6
-  languageName: node
-  linkType: hard
-
-"prosemirror-view@npm:^1.23.6":
-  version: 1.23.12
-  resolution: "prosemirror-view@npm:1.23.12"
-  dependencies:
-    prosemirror-model: ^1.16.0
-    prosemirror-state: ^1.0.0
-    prosemirror-transform: ^1.1.0
-  checksum: a0e0787cd09fc319325244e9f901ccc6b1d2a13ed2b402ce742125f3daa2e73105d11dfc8bf3248432deff474a8316d264e5ac3cbc217947fcc948c31c11b7d8
+  checksum: ce5c84df68724ebfa4907abba5945f4af18f42150e2cb88eb682f623383046c97ab38bfbadb19e87d02a0c2c797cdf093362a4cdd1b4b7469a59f501ef78bb8d
   languageName: node
   linkType: hard
 
