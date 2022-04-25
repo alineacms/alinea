@@ -26,7 +26,7 @@ type FileUploaderProps = {
 
 export function FileUploader({max, toggleSelect}: FileUploaderProps) {
   const {hub} = useSession()
-  const {workspace} = useWorkspace()
+  const {name: workspace} = useWorkspace()
   const {upload, uploads} = useUploads(toggleSelect)
   const dropZone = useRef<HTMLDivElement>(null)
   const [isOver, setIsOver] = useState(false)

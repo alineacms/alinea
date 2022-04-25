@@ -1,0 +1,18 @@
+.root {
+  background: var(--selected);
+  padding: 10px;
+  color: inherit;
+  display: block;
+  text-decoration: none;
+  font: inherit;
+
+  &:hover {
+    background: var(--highlight);
+  }
+
+  &-title {
+    font-weight: bold;
+    text-transform: uppercase;
+    font-size: 11px;
+  }
+}

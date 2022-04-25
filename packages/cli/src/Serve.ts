@@ -1,11 +1,11 @@
-import {DevServer, Server} from '@alinea/backend'
+import {DevServer} from '@alinea/backend'
 import {EvalPlugin} from '@esbx/eval'
 import {ReactPlugin} from '@esbx/react'
 import {ReloadPlugin} from '@esbx/reload'
 import compression from 'compression'
 import {dirname} from 'dirname-filename-esm'
 import esbuild, {BuildOptions} from 'esbuild'
-import express, {RequestHandler} from 'express'
+import express from 'express'
 import path from 'node:path'
 import serveHandler from 'serve-handler'
 import {generate} from './Generate'
@@ -17,14 +17,12 @@ export type ServeOptions = {
   staticDir?: string
   configFile?: string
   port?: number
-  previewHandler?: (server: Server) => RequestHandler
   buildOptions?: BuildOptions
 }
 
 export async function serve(options: ServeOptions) {
   const {
     cwd = process.cwd(),
-    previewHandler,
     buildOptions,
     staticDir = path.join(__dirname, 'static')
   } = options

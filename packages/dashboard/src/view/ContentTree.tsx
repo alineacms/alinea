@@ -161,6 +161,7 @@ export function ContentTree({
   const navigate = useNavigate()
   const {nav} = useDashboard()
   useEffect(() => {
+    return
     if (redirectToRoot && entries.length > 0) {
       const first = entries[0]
       if (first.workspace === workspace && first.root === root) {

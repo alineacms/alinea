@@ -30,20 +30,21 @@ export namespace Entry {
     entry: Entry
     draft: string | undefined
     previewToken: string
+    parent?: Entry.Minimal
   }
   export type Minimal = Pick<
     Entry,
-    'id' | 'type' | 'workspace' | 'root' | 'url'
+    'id' | 'type' | 'title' | 'workspace' | 'root' | 'url' | 'parent'
   >
   export type Summary = Pick<
     Entry,
     | 'id'
     | 'type'
     | 'title'
-    | 'index'
     | 'workspace'
     | 'root'
     | 'url'
+    | 'index'
     | 'parent'
     | 'parents'
     | '$isContainer'

@@ -11,6 +11,7 @@
     background: var(--fields);
     border-radius: 8px;
     line-height: 1.5;
+    border: 1px solid var(--outline);
 
     &:focus {
       background: var(--selected);

@@ -4,6 +4,7 @@ import {
   Entry,
   ErrorWithCode,
   outcome,
+  root,
   schema as createSchema,
   type,
   workspace
@@ -34,9 +35,9 @@ const config = createConfig({
         })
       }),
       roots: {
-        data: {
+        data: root('Root', {
           contains: ['Type']
-        }
+        })
       }
     })
   }

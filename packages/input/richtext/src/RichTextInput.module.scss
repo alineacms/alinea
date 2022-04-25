@@ -15,6 +15,7 @@
     resize: none;
     cursor: text;
     line-height: 1.5;
+    border: 1px solid var(--outline);
   }
 
   &-editor.is-focus > * {

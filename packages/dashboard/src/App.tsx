@@ -36,6 +36,7 @@ import {useRoot} from './hook/UseRoot'
 import {SessionProvider} from './hook/UseSession'
 import {useWorkspace} from './hook/UseWorkspace'
 import {ContentTree} from './view/ContentTree'
+import {RootHeader} from './view/entry/RootHeader'
 import {EntryEdit, NewEntry} from './view/EntryEdit'
 import {SearchBox} from './view/SearchBox'
 import {Toolbar} from './view/Toolbar'
@@ -62,7 +63,7 @@ const Router = {
 function AppAuthenticated() {
   const {auth, nav} = useDashboard()
   const location = useLocation()
-  const {workspace, name, color, roots} = useWorkspace()
+  const {name: workspace, name, color, roots} = useWorkspace()
   return (
     <DraftsProvider>
       <Statusbar.Provider>
@@ -143,8 +144,8 @@ type EntryRouteProps = {
 
 function EntryRoute({id}: EntryRouteProps) {
   const {nav} = useDashboard()
-  const {workspace} = useWorkspace()
-  const {root} = useRoot()
+  const {name: workspace} = useWorkspace()
+  const {name: root} = useRoot()
   const {draft, isLoading} = useDraft(id)
   const type = draft?.channel
   const View = type?.options.view || EntryEdit
@@ -162,6 +163,7 @@ function EntryRoute({id}: EntryRouteProps) {
         minWidth={200}
       >
         <SearchBox />
+        <RootHeader />
         <ContentTree
           key={workspace}
           workspace={workspace}
@@ -200,7 +202,7 @@ type AppRootProps = {
 
 function AppRoot({session, setSession}: AppRootProps) {
   const {auth: Auth = Fragment, config} = useDashboard()
-  const {name, color} = config.defaultWorkspace
+  const {color} = config.defaultWorkspace
   if (!session)
     return (
       <Viewport contain color={color}>

@@ -75,8 +75,8 @@ export function ReferencePicker({
   const [selection, setSelection] = useState<Array<Reference>>(
     () => options.selection || []
   )
-  const {workspace, schema} = useWorkspace()
-  const {root} = useRoot()
+  const {name: workspace, schema} = useWorkspace()
+  const {name: root} = useRoot()
   const cursor = useMemo(
     () =>
       query({workspace, root, search})

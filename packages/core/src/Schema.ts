@@ -47,6 +47,10 @@ export class Schema<T = any> {
     this.__types = types
   }
 
+  concat<X>(that: Schema<X>): Schema<T & X> {
+    return new Schema<any>(LazyRecord.concat(this.__types, that.__types))
+  }
+
   get types() {
     return LazyRecord.resolve(this.__types)
   }
@@ -64,10 +68,10 @@ export class Schema<T = any> {
   }
 
   /** Get a type by name */
-  type<K extends TypesOf<T>>(name: K): Type<Extract<T, {type: K}>> | undefined {
-    return LazyRecord.get(this.__types, name) as unknown as Type<
-      Extract<T, {type: K}>
-    >
+  type<K extends TypesOf<T>>(name: K): Type<Extract<T, {type: K}>> | undefined
+  type(name: string): Type | undefined
+  type(name: any) {
+    return LazyRecord.get<any>(this.__types, name)
   }
 
   /** Keys of every type */

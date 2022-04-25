@@ -8,7 +8,7 @@ import {
   Hub,
   Media,
   outcome,
-  Workspace,
+  WorkspaceConfig,
   Workspaces
 } from '@alinea/core'
 import {generateKeyBetween} from '@alinea/core/util/FractionalIndexing'
@@ -69,12 +69,29 @@ export class Backend<T extends Workspaces = Workspaces> implements Hub<T> {
     }
     return outcome(async () => {
       const store = await this.preview.getStore()
-      const entry = store.first(Entry.where(Entry.id.is(id)))
+      const Parent = Entry.as('Parent')
+      const data = store.first(
+        Entry.where(Entry.id.is(id)).select({
+          entry: Entry.fields,
+          parent: Parent.where(Parent.id.is(Entry.parent))
+            .select({
+              id: Parent.id,
+              type: Parent.type,
+              title: Parent.title,
+              workspace: Parent.workspace,
+              root: Parent.root,
+              url: Parent.url,
+              parent: Parent.parent
+            })
+            .first()
+        })
+      )
       return (
-        entry && {
-          entry,
+        data && {
+          entry: data.entry,
           draft: draft && encode(draft),
-          previewToken: previews.sign({id})
+          previewToken: previews.sign({id}),
+          parent: data.parent
         }
       )
     })
@@ -176,7 +193,7 @@ export class Backend<T extends Workspaces = Workspaces> implements Hub<T> {
 
   loadPages<K extends keyof T>(workspaceKey: K, previewToken?: string) {
     const workspace = this.config.workspaces[workspaceKey]
-    return new Pages<T[K] extends Workspace<infer X> ? X : any>(
+    return new Pages<T[K] extends WorkspaceConfig<infer W> ? W : any>(
       this.config,
       workspace,
       previewToken

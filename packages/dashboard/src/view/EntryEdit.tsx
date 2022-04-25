@@ -90,8 +90,8 @@ export function NewEntry({parentId}: NewEntryProps) {
   const queryClient = useQueryClient()
   const navigate = useNavigate()
   const {hub} = useSession()
-  const {workspace, schema} = useWorkspace()
-  const {root} = useRoot()
+  const {name: workspace, schema} = useWorkspace()
+  const {name: root} = useRoot()
   const {data: parentEntry} = useQuery(
     ['parent', parentId],
     () => {

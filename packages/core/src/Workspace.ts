@@ -1,11 +1,11 @@
 import type {ComponentType} from 'react'
 import {Label} from './Label'
-import {Root} from './Root'
-import {Schema, TypesOf} from './Schema'
+import {Root, RootConfig} from './Root'
+import {Schema} from './Schema'
 import {getRandomColor} from './util/GetRandomColor'
 
 /** A record of multiple named workspaces */
-export type Workspaces = Record<string, Workspace>
+export type Workspaces = Record<string, WorkspaceConfig>
 
 export type WorkspaceOptions<T = any> = {
   /** The schema of the workspace */
@@ -17,7 +17,7 @@ export type WorkspaceOptions<T = any> = {
    */
   source: string
   /** Todo: remove or document */
-  roots: Record<string, Root<TypesOf<T>>>
+  roots: Record<string, RootConfig>
   /** The directory where media files are placed in case a file backend is used */
   mediaDir?: string
   /** The main theme color used in the dashboard */
@@ -26,25 +26,56 @@ export type WorkspaceOptions<T = any> = {
   preview?: ComponentType<{entry: T; previewToken: string}>
 }
 
+export type WorkspaceConfig<T = any> = {
+  label: Label
+} & WorkspaceOptions<T>
+
 /**
  * Use a workspace to divide content.
  * It is possible to create internal links between workspaces.
  **/
-export type Workspace<T = any> = Omit<WorkspaceOptions<T>, 'color'> & {
-  /** The name of the workspace */
-  name: Label
-  /** The main theme color used in the dashboard */
-  color: string
+export class Workspace<T = any> {
+  label: Label
+  roots: Record<string, Root>
+
+  constructor(public name: string, private config: WorkspaceConfig<T>) {
+    this.label = config.label
+    this.roots = Object.fromEntries(
+      Object.entries(this.config.roots).map(([rootKey, config]) => {
+        return [rootKey, new Root(rootKey, name, config)]
+      })
+    )
+  }
+
+  get schema(): Schema<T> {
+    return this.config.schema
+  }
+
+  get source(): string {
+    return this.config.source
+  }
+
+  get mediaDir() {
+    return this.config.mediaDir
+  }
+
+  get preview() {
+    return this.config.preview
+  }
+
+  get color() {
+    return this.config.color || getRandomColor(JSON.stringify(this.label))
+  }
 }
 
 /** Create a workspace */
 export function workspace<T>(
-  name: Label,
+  /** The name of the workspace */
+  label: Label,
   options: WorkspaceOptions<T>
-): Workspace<T> {
+): WorkspaceConfig<T> {
   return {
-    ...options,
-    name,
-    color: options.color || getRandomColor(JSON.stringify(name))
+    label,
+    ...options
   }
 }

@@ -2,6 +2,7 @@ import {
   createConfig,
   createId,
   Entry,
+  root,
   schema as createSchema,
   type,
   workspace
@@ -27,7 +28,7 @@ const config = createConfig({
           title: text('Title')
         })
       }),
-      roots: {data: {contains: ['Type']}}
+      roots: {data: root('Root', {contains: ['Type']})}
     })
   }
 })

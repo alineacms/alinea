@@ -27,7 +27,8 @@ export class EntryDraft implements Entry {
     public channel: Type,
     protected source: Entry,
     public doc: Y.Doc,
-    public previewToken: string
+    public previewToken: string,
+    public parentData?: Entry.Minimal
   ) {
     this.__root = doc.getMap(ROOT_KEY)
     this.entry = observable(this.getEntry())
@@ -68,6 +69,9 @@ export class EntryDraft implements Entry {
 
   get id(): string {
     return this.__root.get('id') || this.source.id
+  }
+  get $isContainer(): boolean | undefined {
+    return this.__root.get('$isContainer') || this.source.$isContainer
   }
 
   get workspace(): string {
