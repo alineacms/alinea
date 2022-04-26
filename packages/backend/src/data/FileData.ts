@@ -119,7 +119,6 @@ export class FileData implements Data.Source, Data.Target, Data.Media {
       } = entry
       const {schema, source: contentDir} = config.workspaces[workspace]
       const type = schema.type(entry.type)
-      console.log(entryPath)
       const isIndex = entryPath === '' || entryPath === 'index'
       const file = entry.url + (isIndex ? '/index' : '') + loader.extension
       const location = path.join(rootDir, contentDir, entry.root, file)
