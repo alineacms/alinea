@@ -92,7 +92,7 @@ export function NewEntry({parentId}: NewEntryProps) {
   const navigate = useNavigate()
   const {hub} = useSession()
   const {name: workspace, schema} = useWorkspace()
-  const {name: root} = useRoot()
+  const root = useRoot()
   const {data: parentEntry} = useQuery(
     ['parent', parentId],
     () => {
@@ -105,7 +105,9 @@ export function NewEntry({parentId}: NewEntryProps) {
   )
   const parent = parentEntry?.isSuccess() ? parentEntry.value?.entry : undefined
   const type = parent && schema.type(parent.type)
-  const types = type?.options.contains || schema.keys
+  const types: Array<string> = !parentId
+    ? root.contains
+    : type?.options.contains || schema.keys
   const [selectedType, setSelectedType] = useState<string | undefined>(types[0])
   const [title, setTitle] = useState('')
   const [isCreating, setIsCreating] = useState(false)
@@ -120,7 +122,7 @@ export function NewEntry({parentId}: NewEntryProps) {
       ...type.create(selectedType),
       path,
       workspace,
-      root,
+      root: root.name,
       parent: parent?.id,
       url: (parent?.url || '') + (parent?.url.endsWith('/') ? '' : '/') + path,
       title
