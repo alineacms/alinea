@@ -174,6 +174,7 @@ export class Backend<T extends Workspaces = Workspaces> implements Hub<T> {
         parents,
         title: path.basename(file.path, extension),
         url: file.path,
+        path: path.basename(file.path),
         location,
         extension: extension,
         size: file.buffer.byteLength,

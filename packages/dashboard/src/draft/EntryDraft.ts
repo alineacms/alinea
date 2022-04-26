@@ -98,6 +98,10 @@ export class EntryDraft implements Entry {
     return this.__root.get('url') || this.source.url
   }
 
+  get path(): string {
+    return this.__root.get('path') || this.source.path
+  }
+
   get $status(): EntryStatus {
     return (
       this.__root.get('$status') || this.source.$status || EntryStatus.Published

@@ -49,14 +49,6 @@ const Router = {
         <EntryRoute id={id} />
       </ErrorBoundary>
     )
-  },
-  NewEntry() {
-    const {id} = useParams()
-    return (
-      <Suspense fallback={<Loader absolute />}>
-        <NewEntry parentId={id} />
-      </Suspense>
-    )
   }
 }
 
@@ -147,6 +139,7 @@ function EntryRoute({id}: EntryRouteProps) {
   const {name: workspace} = useWorkspace()
   const {name: root} = useRoot()
   const {draft, isLoading} = useDraft(id)
+  const {search} = useLocation()
   const type = draft?.channel
   const View = type?.options.view || EntryEdit
   const select = ([] as Array<string | undefined>)
@@ -173,9 +166,11 @@ function EntryRoute({id}: EntryRouteProps) {
         />
       </Pane>
       <div style={{width: '100%', height: '100%'}}>
-        <Routes>
-          <Route path={'/new'} element={<Router.NewEntry />} />
-        </Routes>
+        {search === '?new' && (
+          <Suspense fallback={<Loader absolute />}>
+            <NewEntry parentId={id} />
+          </Suspense>
+        )}
         {draft && <View draft={draft} />}
       </div>
     </CurrentDraftProvider>

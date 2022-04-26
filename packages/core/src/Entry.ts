@@ -16,6 +16,7 @@ export interface Entry {
   title: Label
   index: string
   // Computed properties
+  path: string
   workspace: string
   root: string
   url: string
@@ -53,6 +54,7 @@ export namespace Entry {
   }
   export type Raw = Omit<
     Entry,
+    | 'path'
     | 'workspace'
     | 'root'
     | 'url'

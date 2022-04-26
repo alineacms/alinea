@@ -32,8 +32,6 @@ export const HomePageSchema = type(
       })
     }).configure({icon: MdLink})
   )
-).configure({
-  isContainer: true
-})
+)
 
 export type HomePageSchema = Schema.TypeOf<typeof HomePageSchema>

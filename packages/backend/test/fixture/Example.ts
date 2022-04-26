@@ -42,6 +42,7 @@ const entries: Array<Entry> = [
     workspace: 'main',
     root: 'main',
     url: '/',
+    path: 'index',
     parents: []
   },
   {
@@ -52,6 +53,7 @@ const entries: Array<Entry> = [
     workspace: 'main',
     root: 'main',
     url: '/sub',
+    path: 'sub',
     parent: 'root',
     parents: ['root']
   },
@@ -74,6 +76,7 @@ function sub(index: number, order: string) {
     workspace: 'main',
     root: 'main',
     url: `/sub/sub-entry-${index}`,
+    path: `sub-entry-${index}`,
     parent: 'sub',
     parents: ['root', 'sub']
   }

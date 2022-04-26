@@ -28,6 +28,7 @@ export function entryFromDoc(
     parents: docRoot.get('parents') as Array<string>,
     index: docRoot.get('index') as string,
     url: docRoot.get('url') as string,
+    path: docRoot.get('path') as string,
     title: docRoot.get('title') as Label,
     parent: docRoot.get('parent') as string,
     $isContainer: docRoot.get('$isContainer') as boolean,

@@ -11,6 +11,7 @@ import {
   HStack,
   IconButton,
   Loader,
+  TextLabel,
   Typo,
   useObservable
 } from '@alinea/ui'
@@ -147,18 +148,29 @@ export function NewEntry({parentId}: NewEntryProps) {
     navigate(nav.entry(workspace, parent?.root, parent?.id))
   }
 
-  if (!parentId) return null
+  /*const parentType = parent && schema.type(parent.type)
+  const ParentView: any =
+    parent && (parentType?.options.summaryRow || EntrySummaryRow)*/
+
   return (
     <Modal open onClose={handleClose}>
       <HStack center gap={18} className={styles.new.header()}>
         <IconButton icon={MdArrowBack} onClick={handleClose} />
-        <Typo.H1 flat>New entry</Typo.H1>
+        <Typo.H1 flat>
+          New entry{' '}
+          {parent && (
+            <>
+              in <TextLabel label={parent.title} />
+            </>
+          )}
+        </Typo.H1>
       </HStack>
       <form onSubmit={handleCreate}>
         {isCreating ? (
           <Loader absolute />
         ) : (
           <>
+            {/*parent && <ParentView {...parent} />*/}
             <TextInput
               state={new InputState.StatePair(title, setTitle)}
               field={text('Title')}

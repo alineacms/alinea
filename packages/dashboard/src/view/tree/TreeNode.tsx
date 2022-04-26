@@ -32,11 +32,7 @@ function TreeNodeChildrenCreator({entry}: TreeNodeChildrenCreator) {
   const {schema} = useWorkspace()
   const type = schema.type(entry.type)
   if (!type) return null
-  return (
-    <Create.Root>
-      <Create.Link to={nav.create(entry.workspace, entry.root, entry.id)} />
-    </Create.Root>
-  )
+  return <Create.Link to={nav.create(entry.workspace, entry.root, entry.id)} />
 }
 
 type TreeNodeLinkProps = {

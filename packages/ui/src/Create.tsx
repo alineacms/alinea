@@ -1,5 +1,5 @@
 import {ComponentType, HTMLAttributes} from 'react'
-import {MdAddCircle} from 'react-icons/md'
+import {MdAdd, MdAddCircle} from 'react-icons/md'
 import {Link as RRLink, LinkProps} from 'react-router-dom'
 import css from './Create.module.scss'
 import {HStack} from './Stack'
@@ -34,8 +34,16 @@ export namespace Create {
     return (
       <button {...props} className={styles.button.mergeProps(props)()}>
         <HStack center gap={8}>
-          <MdAddCircle style={{flexShrink: 0}} />
-          {Icon && <Icon />}
+          {Icon ? (
+            <div className={styles.button.add()}>
+              <Icon />
+            </div>
+          ) : (
+            <div className={styles.button.add()}>
+              <MdAdd />
+            </div>
+          )}
+
           {children && <span>{children}</span>}
         </HStack>
       </button>

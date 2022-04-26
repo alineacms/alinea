@@ -19,7 +19,7 @@ export const config = createConfig({
       schema: webSchema,
       source: './content',
       mediaDir: './public',
-      color: '#EF437C',
+      color: '#5661E5', // '#EF437C',
       roots: {
         data: root('Alinea website', {
           icon: MdInsertDriveFile,

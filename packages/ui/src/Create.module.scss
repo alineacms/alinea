@@ -4,6 +4,7 @@
   gap: 10px;
   width: 100%;
   align-items: center;
+  justify-content: center;
 }
 
 .button {
@@ -25,8 +26,26 @@
   flex-shrink: 0;
   // border-bottom: 1px solid var(--shadow);
 
+  &-add {
+    background: hsl(var(--negative));
+    width: 1em;
+    height: 1em;
+    font-size: 1em;
+    border-radius: 50%;
+    color: var(--lift);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+
   &:hover {
     color: var(--accent-foreground);
     background: var(--accent);
+  }
+
+  &:hover &-add {
+    background: var(--accent-foreground);
+    color: var(--accent);
   }
 }

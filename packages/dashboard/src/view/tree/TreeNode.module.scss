@@ -1,17 +1,18 @@
 .root {
   position: relative;
   z-index: 1;
-  height: 30px;
+  height: 32px;
   font-size: 13px;
   font-weight: 500;
   max-width: 100%;
-  padding: 1px 6px;
+  // padding: 1px 6px;
 
   &-inner {
     height: 100%;
     border-radius: 6px;
     display: flex;
     align-items: center;
+    justify-content: center;
   }
 
   &-loader {
@@ -66,6 +67,11 @@
     }
   }
 
+  &-create {
+    opacity: 0;
+    padding-right: 8px;
+  }
+
   &:hover &-inner {
     background: var(--highlight);
   }
@@ -81,11 +87,6 @@
   &:hover &-link,
   &.is-selected &-link {
     color: var(--foreground);
-  }
-
-  &-create {
-    opacity: 0;
-    padding-right: 10px;
   }
 
   &:hover &-create,

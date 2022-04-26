@@ -52,8 +52,8 @@ function applyMoves<T extends {id: string; index: string}>(
 function sortByIndex(entries: Array<Entry.Summary>) {
   const index = new Map(entries.map(entry => [entry.id, entry]))
   function parentIndex(id: string) {
-    const parent = index.get(id)!
-    return parent.index
+    const parent = index.get(id)
+    return parent?.index
   }
   function indexOf(entry: Entry.Summary) {
     return entry.parents.map(parentIndex).concat(entry.index).join('.')
@@ -171,7 +171,7 @@ export function ContentTree({
       }
     }
   }, [workspace, root, redirectToRoot, entries])
-
+  const height = 32
   return (
     <DndContext
       sensors={sensors}
@@ -188,7 +188,7 @@ export function ContentTree({
               width="100%"
               height={containerHeight}
               itemCount={entries.length}
-              itemSize={30}
+              itemSize={height}
               scrollOffset={scrollOffset}
               renderItem={({index, style}) => {
                 const entry = entries[index]
@@ -199,7 +199,7 @@ export function ContentTree({
                     level={entry.parents.length}
                     isOpen={isOpen}
                     toggleOpen={toggleOpen}
-                    style={{...style, height: 30}}
+                    style={{...style, height: height}}
                   />
                 )
               }}

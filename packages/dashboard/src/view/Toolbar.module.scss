@@ -1,13 +1,13 @@
 .root {
   position: relative;
-  z-index: 1;
+  z-index: 4;
   width: 100%;
   padding: 0 10px;
-  //box-shadow: 0 0 60px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 2px 3.5px var(--shadow);
   height: 44px;
   color: var(--foreground);
   border-bottom: 1px solid var(--outline);
-  // background: hsla(var(--negative), 0.04);
+  background: var(--toolbar);
 
   &-portal {
     flex-grow: 1;
