@@ -23,7 +23,8 @@ export function TextInput({state, field}: TextInputProps) {
     optional,
     help,
     iconLeft: IconLeft,
-    iconRight: IconRight
+    iconRight: IconRight,
+    autoFocus
   } = field.options
   const Input = multiline ? TextareaAutosize : 'input'
   // Todo: unlocalise
@@ -51,6 +52,7 @@ export function TextInput({state, field}: TextInputProps) {
           onFocus={() => setFocus(true)}
           onBlur={() => setFocus(false)}
           placeholder={placeholder}
+          autoFocus={autoFocus}
         />
         {IconRight && <IconRight />}
       </HStack>

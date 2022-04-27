@@ -67,7 +67,7 @@ export function MediaExplorer() {
   const queryClient = useQueryClient()
   const draft = useCurrentDraft()
   const {hub} = useSession()
-  const {workspace} = useWorkspace()
+  const {name: workspace} = useWorkspace()
   const {File} = Media
   const {data} = useQuery(
     ['media', 'total', draft.id],

@@ -1,9 +1,9 @@
-import {docFromEntry, Entry, slugify} from '@alinea/core'
-import {InputForm, InputState} from '@alinea/editor'
-import {select} from '@alinea/input.select'
-import {SelectInput} from '@alinea/input.select/view'
-import {text} from '@alinea/input.text'
-import {TextInput} from '@alinea/input.text/view'
+import { docFromEntry, Entry, slugify } from '@alinea/core'
+import { InputForm, InputState } from '@alinea/editor'
+import { select } from '@alinea/input.select'
+import { SelectInput } from '@alinea/input.select/view'
+import { text } from '@alinea/input.text'
+import { TextInput } from '@alinea/input.text/view'
 import {
   Button,
   ErrorMessage,
@@ -11,24 +11,25 @@ import {
   HStack,
   IconButton,
   Loader,
+  TextLabel,
   Typo,
   useObservable
 } from '@alinea/ui'
-import {Modal} from '@alinea/ui/Modal'
-import {ComponentType, FormEvent, Suspense, useState} from 'react'
-import {MdArrowBack} from 'react-icons/md'
-import {useQuery, useQueryClient} from 'react-query'
-import {useNavigate} from 'react-router'
-import {Link} from 'react-router-dom'
+import { Modal } from '@alinea/ui/Modal'
+import { ComponentType, FormEvent, Suspense, useState } from 'react'
+import { MdArrowBack } from 'react-icons/md'
+import { useQuery, useQueryClient } from 'react-query'
+import { useNavigate } from 'react-router'
+import { Link } from 'react-router-dom'
 import * as Y from 'yjs'
-import {EntryDraft} from '../draft/EntryDraft'
-import {EntryProperty} from '../draft/EntryProperty'
-import {useDashboard} from '../hook/UseDashboard'
-import {useRoot} from '../hook/UseRoot'
-import {useSession} from '../hook/UseSession'
-import {useWorkspace} from '../hook/UseWorkspace'
-import {EntryHeader} from './entry/EntryHeader'
-import {EntryTitle} from './entry/EntryTitle'
+import { EntryDraft } from '../draft/EntryDraft'
+import { EntryProperty } from '../draft/EntryProperty'
+import { useDashboard } from '../hook/UseDashboard'
+import { useRoot } from '../hook/UseRoot'
+import { useSession } from '../hook/UseSession'
+import { useWorkspace } from '../hook/UseWorkspace'
+import { EntryHeader } from './entry/EntryHeader'
+import { EntryTitle } from './entry/EntryTitle'
 import css from './EntryEdit.module.scss'
 
 const styles = fromModule(css)
@@ -61,21 +62,19 @@ function EntryEditDraft({draft}: EntryEditDraftProps) {
               nav.entry(draft.workspace, draft.root, draft.parent)
             }
           />
-          <div>
-            <Suspense fallback={null}>
-              {type ? (
-                <InputForm
-                  // We key here currently because the tiptap/yjs combination fails to register
-                  // changes when the fragment is changed while the editor is mounted.
-                  key={draft.doc.guid}
-                  type={type}
-                  state={EntryProperty.root}
-                />
-              ) : (
-                <ErrorMessage error={new Error('Type not found')} />
-              )}
-            </Suspense>
-          </div>
+          <Suspense fallback={null}>
+            {type ? (
+              <InputForm
+                // We key here currently because the tiptap/yjs combination fails to register
+                // changes when the fragment is changed while the editor is mounted.
+                key={draft.doc.guid}
+                type={type}
+                state={EntryProperty.root}
+              />
+            ) : (
+              <ErrorMessage error={new Error('Type not found')} />
+            )}
+          </Suspense>
         </div>
       </div>
       {preview && <EntryPreview preview={preview} draft={draft} />}
@@ -90,8 +89,8 @@ export function NewEntry({parentId}: NewEntryProps) {
   const queryClient = useQueryClient()
   const navigate = useNavigate()
   const {hub} = useSession()
-  const {workspace, schema} = useWorkspace()
-  const {root} = useRoot()
+  const {name: workspace, schema} = useWorkspace()
+  const root = useRoot()
   const {data: parentEntry} = useQuery(
     ['parent', parentId],
     () => {
@@ -104,7 +103,9 @@ export function NewEntry({parentId}: NewEntryProps) {
   )
   const parent = parentEntry?.isSuccess() ? parentEntry.value?.entry : undefined
   const type = parent && schema.type(parent.type)
-  const types = type?.options.contains || schema.keys
+  const types: Array<string> = !parentId
+    ? root.contains
+    : type?.options.contains || schema.keys
   const [selectedType, setSelectedType] = useState<string | undefined>(types[0])
   const [title, setTitle] = useState('')
   const [isCreating, setIsCreating] = useState(false)
@@ -119,7 +120,7 @@ export function NewEntry({parentId}: NewEntryProps) {
       ...type.create(selectedType),
       path,
       workspace,
-      root,
+      root: root.name,
       parent: parent?.id,
       url: (parent?.url || '') + (parent?.url.endsWith('/') ? '' : '/') + path,
       title
@@ -147,21 +148,32 @@ export function NewEntry({parentId}: NewEntryProps) {
     navigate(nav.entry(workspace, parent?.root, parent?.id))
   }
 
-  if (!parentId) return null
+  /*const parentType = parent && schema.type(parent.type)
+  const ParentView: any =
+    parent && (parentType?.options.summaryRow || EntrySummaryRow)*/
+
   return (
     <Modal open onClose={handleClose}>
       <HStack center gap={18} className={styles.new.header()}>
         <IconButton icon={MdArrowBack} onClick={handleClose} />
-        <Typo.H1 flat>New entry</Typo.H1>
+        <Typo.H1 flat>
+          New entry{' '}
+          {parent && (
+            <>
+              in <TextLabel label={parent.title} />
+            </>
+          )}
+        </Typo.H1>
       </HStack>
       <form onSubmit={handleCreate}>
         {isCreating ? (
           <Loader absolute />
         ) : (
           <>
+            {/*parent && <ParentView {...parent} />*/}
             <TextInput
               state={new InputState.StatePair(title, setTitle)}
-              field={text('Title')}
+              field={text('Title', {autoFocus: true})}
             />
             <SelectInput
               state={new InputState.StatePair(selectedType, setSelectedType)}

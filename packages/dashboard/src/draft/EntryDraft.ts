@@ -27,7 +27,8 @@ export class EntryDraft implements Entry {
     public channel: Type,
     protected source: Entry,
     public doc: Y.Doc,
-    public previewToken: string
+    public previewToken: string,
+    public parentData?: Entry.Minimal
   ) {
     this.__root = doc.getMap(ROOT_KEY)
     this.entry = observable(this.getEntry())
@@ -67,19 +68,23 @@ export class EntryDraft implements Entry {
   }
 
   get id(): string {
-    return this.__root.get('id') || this.source.id
+    return this.source.id
+  }
+
+  get $isContainer(): boolean | undefined {
+    return this.__root.get('$isContainer') || this.source.$isContainer
   }
 
   get workspace(): string {
-    return this.__root.get('workspace') || this.source.workspace
+    return this.source.workspace
   }
 
   get root(): string {
-    return this.__root.get('root') || this.source.root
+    return this.source.root
   }
 
   get parents(): Array<string> {
-    return this.__root.get('parents') || this.source.parents
+    return this.source.parents
   }
 
   get type(): string {
@@ -91,7 +96,11 @@ export class EntryDraft implements Entry {
   }
 
   get url(): string {
-    return this.__root.get('url') || this.source.url
+    return this.source.url
+  }
+
+  get path(): string {
+    return this.__root.get('path') || this.source.path
   }
 
   get $status(): EntryStatus {

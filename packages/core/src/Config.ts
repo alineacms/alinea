@@ -1,3 +1,4 @@
+import {WorkspaceConfig} from '.'
 import {Auth} from './Auth'
 import {createError} from './ErrorWithCode'
 import {Type} from './Type'
@@ -5,16 +6,22 @@ import {Workspace, Workspaces} from './Workspace'
 
 /** Configuration options for the dashboard */
 export class Config<T extends Workspaces = Workspaces> {
-  constructor(public options: ConfigOptions<T>) {}
+  workspaces: {
+    [K in keyof T]: Workspace<T[K] extends WorkspaceConfig<infer W> ? W : any>
+  }
+
+  constructor(public options: ConfigOptions<T>) {
+    this.workspaces = Object.fromEntries(
+      Object.entries(this.options.workspaces).map(([name, config]) => {
+        return [name, new Workspace(name, config)]
+      })
+    ) as any
+  }
 
   /** Get the first workspace */
   get defaultWorkspace(): Workspace {
-    return this.workspaces[Object.keys(this.workspaces)[0]]
-  }
-
-  /** All workspaces */
-  get workspaces(): T {
-    return this.options.workspaces
+    const key = Object.keys(this.workspaces)[0]
+    return this.workspaces[key]
   }
 
   /** Find a type by workspace and name */

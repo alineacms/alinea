@@ -70,7 +70,7 @@
         &:focus-within,
         &:active {
           background: var(--fields-focus);
-          color: white;
+          color: var(--focus-foreground);
         }
       }
     }

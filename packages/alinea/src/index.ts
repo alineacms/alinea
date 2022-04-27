@@ -1,6 +1,6 @@
 // Config creation
-export {createConfig, schema, type, Tree, workspace} from '@alinea/core'
-export type {Config, Schema, TextDoc, Type, Workspace} from '@alinea/core'
+export {createConfig, schema, type, Tree, workspace, Workspace, root, Root} from '@alinea/core'
+export type {Config, Schema, TextDoc, Type} from '@alinea/core'
 
 // Dashboard
 export {MediaSchema} from '@alinea/dashboard/schema/MediaSchema'

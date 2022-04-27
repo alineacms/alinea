@@ -6,6 +6,7 @@
   flex-direction: column;
   justify-content: center;
   flex-shrink: 0;
+  padding-top: 3px;
 
   &-label {
     position: relative;
@@ -100,6 +101,7 @@
 
       &[aria-selected] {
         background: var(--fields-focus);
+        color: var(--focus-foreground);
         color: white;
       }
     }

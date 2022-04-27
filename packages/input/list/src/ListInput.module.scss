@@ -2,18 +2,19 @@
   position: relative;
 
   &-inner {
-    padding: 15px;
+    position: relative;
+    /*padding: 15px;
     border-radius: 12px;
-    background: var(--inner);
+    background: var(--inner);*/
   }
 }
 
 .row {
   position: relative;
-  background: var(--lift);
+  // background: var(--lift);
 
   & + & {
-    border-top: 1px solid var(--outline);
+    box-shadow: var(--divider-top);
   }
 
   &.is-dragging {
@@ -28,8 +29,9 @@
 }
 
 .create {
+  position: relative;
   padding: 4px 0 5px 0;
   .row + & {
-    border-top: 1px solid var(--outline);
+    box-shadow: var(--divider-top);
   }
 }

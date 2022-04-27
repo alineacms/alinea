@@ -7,7 +7,7 @@ export const nav = {
     if (!id) return `/${workspace}/${root}`
     return `/${workspace}/${root}/${id}`
   },
-  create(workspace: string, root: string, parent: string) {
-    return `/${workspace}/${root}/${parent}/new`
+  create(workspace: string, root: string, parent?: string) {
+    return nav.entry(workspace, root, parent) + '?new'
   }
 }

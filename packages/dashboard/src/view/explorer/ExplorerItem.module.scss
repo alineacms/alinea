@@ -53,6 +53,6 @@
 
   &[aria-selected] &-inner {
     background: var(--fields-focus);
-    color: white;
+    color: var(--focus-foreground);
   }
 }

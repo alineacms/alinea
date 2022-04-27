@@ -44,8 +44,8 @@ export function SearchBox() {
   const list = useFocusList({
     onClear: () => setSearch('')
   })
-  const {workspace, schema} = useWorkspace()
-  const {root} = useRoot()
+  const {name: workspace, schema} = useWorkspace()
+  const {name: root} = useRoot()
   const cursor = useMemo(
     () => query({workspace, root, search}).select(Entry.fields),
     [workspace, root, search]

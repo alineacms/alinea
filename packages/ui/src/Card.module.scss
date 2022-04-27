@@ -3,8 +3,11 @@
   border-radius: 12px;
   background: var(--lift);
   overflow: hidden;
-  box-shadow: 0 2px 3.5px var(--shadow);
+  // box-shadow: 0 2px 3.5px var(--shadow);
+  box-shadow: 0 1px 0 var(--inner-outline);
+  // box-shadow: 0 1px 3.5px var(--shadow);
   cursor: default;
+  border: 1px solid var(--inner-outline);
 }
 
 .header {
@@ -12,9 +15,6 @@
   align-items: center;
   gap: 8px;
   padding: 8px 10px;
-  background: var(--highlight);
-  background: var(--header);
-  color: var(--header-foreground);
 }
 
 .title {

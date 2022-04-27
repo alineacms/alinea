@@ -1,4 +1,4 @@
-import {createConfig, schema, workspace} from '@alinea/core'
+import {createConfig, root, schema, workspace} from '@alinea/core'
 import {MediaSchema} from '@alinea/dashboard/schema/MediaSchema.js'
 import {BrowserPreview} from '@alinea/dashboard/view/preview/BrowserPreview.js'
 import {MdInsertDriveFile, MdOutlinePermMedia} from 'react-icons/md/index.js'
@@ -19,16 +19,16 @@ export const config = createConfig({
       schema: webSchema,
       source: './content',
       mediaDir: './public',
-      color: '#EF437C',
+      color: '#5661E5', // '#EF437C',
       roots: {
-        data: {
+        data: root('Alinea website', {
           icon: MdInsertDriveFile,
-          contains: ['Home']
-        },
-        media: {
+          contains: ['Home', 'Docs']
+        }),
+        media: root('Media', {
           icon: MdOutlinePermMedia,
           contains: ['MediaLibrary']
-        }
+        })
       },
       preview({entry, previewToken}) {
         const noPreviews = new Set(['Docs', 'MediaLibrary'])

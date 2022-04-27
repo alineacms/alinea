@@ -20,6 +20,12 @@ export enum DraftsStatus {
   Saving = 'saving'
 }
 
+type Move = {
+  id: string
+  parent: string | undefined
+  index: string
+}
+
 class Drafts {
   saveDelay = 1000
   saveTimeout: ReturnType<typeof setTimeout> | null = null
@@ -61,8 +67,10 @@ class Drafts {
     if (this.saveTimeout) clearTimeout(this.saveTimeout)
     draft.status(EntryStatus.Publishing)
     this.status(DraftsStatus.Saving)
-    return this.hub.deleteDraft(draft.id).then(() => {
-      draft.status(EntryStatus.Published)
+    return this.hub.deleteDraft(draft.id).then(result => {
+      if (result.isSuccess() && result.value)
+        draft.status(EntryStatus.Published)
+      return result
     })
   }
 
@@ -77,10 +85,11 @@ class Drafts {
     })
   }
 
-  async setIndex(entryId: string, index: string) {
-    const draft = await this.get(entryId)
-    draft.doc.getMap(ROOT_KEY).set('index', index)
-    await this.save(entryId, draft.doc)
+  async move(move: Move) {
+    const draft = await this.get(move.id)
+    draft.doc.getMap(ROOT_KEY).set('index', move.index)
+    draft.doc.getMap(ROOT_KEY).set('parent', move.parent)
+    await this.save(move.id, draft.doc)
   }
 
   connect(id: string, doc: Y.Doc) {

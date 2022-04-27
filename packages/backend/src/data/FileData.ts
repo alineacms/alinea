@@ -11,7 +11,7 @@ import {posix as path} from 'node:path'
 import {Data} from '../Data'
 import {FS} from '../FS'
 import {Loader} from '../Loader'
-import {parentUrl, walkUrl} from '../util/Urls'
+import {walkUrl} from '../util/Urls'
 
 export type FileDataOptions = {
   config: Config
@@ -46,11 +46,6 @@ export class FileData implements Data.Source, Data.Target, Data.Media {
             fs.readdir(path.join(rootDir, contentDir, root, target))
           )
           if (!files) continue
-          files.sort((a, b) => {
-            if (a.startsWith('index.')) return -1
-            if (b.startsWith('index.')) return 1
-            return a.localeCompare(b)
-          })
           for (const file of files) {
             const location = path.join(rootDir, contentDir, root, target, file)
             const stat = await fs.stat(location)
@@ -60,7 +55,7 @@ export class FileData implements Data.Source, Data.Target, Data.Media {
               const extension = path.extname(location)
               if (extension !== loader.extension) continue
               const name = path.basename(file, extension)
-              const isIndex = name === 'index'
+              const isIndex = name === 'index' || name === ''
               const buffer = await fs.readFile(location)
               const [entry, err] = outcome(() => loader.parse(schema, buffer))
               if (!entry) {
@@ -68,22 +63,24 @@ export class FileData implements Data.Source, Data.Target, Data.Media {
                 continue
               }
               const type = schema.type(entry.type)
-              const url = path.join(target, isIndex ? '' : name)
-              const parentPath = isIndex ? parentUrl(target) : target
-              const parents = walkUrl(parentPath).map(
-                url => parentIndex.get(url)!
-              )
-              if (isIndex) parentIndex.set(url, entry.id)
               if (!type) continue
+              const isContainer = Boolean(type?.options.isContainer)
+              const url = path.join(target, isIndex ? '' : name)
+              const parentPath = target
+              const parents = walkUrl(parentPath)
+                .map(url => parentIndex.get(url)!)
+                .filter(Boolean)
+              if (isContainer) parentIndex.set(url, entry.id)
               const res = {
                 ...entry,
                 workspace,
                 root,
                 url,
+                path: name,
                 index: entry.index || entry.id,
                 parent: parents[parents.length - 1],
                 parents,
-                $isContainer: type.options.isContainer,
+                $isContainer: isContainer,
                 $status: EntryStatus.Published
               }
               yield res
@@ -117,14 +114,13 @@ export class FileData implements Data.Source, Data.Target, Data.Media {
         parent: parent,
         $isContainer,
         $status,
+        path: entryPath,
         ...data
       } = entry
       const {schema, source: contentDir} = config.workspaces[workspace]
       const type = schema.type(entry.type)
-      const file =
-        entry.url +
-        (type?.options.isContainer ? '/index' : '') +
-        loader.extension
+      const isIndex = entryPath === '' || entryPath === 'index'
+      const file = entry.url + (isIndex ? '/index' : '') + loader.extension
       const location = path.join(rootDir, contentDir, entry.root, file)
       await fs.mkdir(path.dirname(location), {recursive: true})
       await fs.writeFile(location, loader.format(schema, data))

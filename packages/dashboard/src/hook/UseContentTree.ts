@@ -2,6 +2,7 @@ import {Entry, Outcome} from '@alinea/core'
 import {Functions} from '@alinea/store'
 import {useCallback, useEffect, useMemo, useState} from 'react'
 import {useQuery} from 'react-query'
+import {useRoot} from '..'
 import {useDashboard} from '../hook/UseDashboard'
 import {useSession} from '../hook/UseSession'
 
@@ -48,12 +49,13 @@ type UseContentTreeOptions = {
 
 export function useContentTree({
   workspace,
-  root,
+  root: rootKey,
   select
 }: UseContentTreeOptions) {
-  const persistenceId = `@alinea/dashboard/tree-${workspace}-${root}`
+  const persistenceId = `@alinea/dashboard/tree-${workspace}-${rootKey}`
   const {config} = useDashboard()
   const {hub} = useSession()
+  const root = useRoot()
   const [open, setOpen] = useState(() => {
     const stored = window?.localStorage?.getItem(persistenceId)
     const opened = stored && JSON.parse(stored)
@@ -83,10 +85,10 @@ export function useContentTree({
   }, [workspace])
   const ids = Array.from(new Set([...open, ...select])).sort()
   const {data, refetch} = useQuery(
-    ['tree', workspace, root, ids.join('.')],
+    ['tree', workspace, rootKey, ids.join('.')],
     () => {
       return hub
-        .query(query({workspace, root, open: ids, visible}))
+        .query(query({workspace, root: rootKey, open: ids, visible}))
         .then(Outcome.unpack)
     },
     {
@@ -96,6 +98,7 @@ export function useContentTree({
       refetchOnWindowFocus: false
     }
   )
+
   const entries = data!.filter(entry => {
     return entry.parents.reduce<boolean>(
       (acc, parent) => acc && open.has(parent),

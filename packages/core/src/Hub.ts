@@ -12,7 +12,7 @@ export interface Hub<T extends Workspaces = Workspaces> {
   entry(id: string, stateVector?: Uint8Array): Future<Entry.Detail | null>
   query<T>(cursor: Cursor<T>): Future<Array<T>>
   updateDraft(id: string, update: Uint8Array): Future
-  deleteDraft(id: string): Future
+  deleteDraft(id: string): Future<boolean>
   uploadFile(
     workspace: string,
     root: string,

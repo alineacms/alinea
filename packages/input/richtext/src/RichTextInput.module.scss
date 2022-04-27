@@ -11,6 +11,7 @@
     resize: none;
     padding: 9px 16px;
     background: var(--fields);
+    box-shadow: var(--fields-shadow);
     border-radius: 8px;
     resize: none;
     cursor: text;
@@ -18,7 +19,7 @@
   }
 
   &-editor.is-focus > * {
-    background: var(--selected);
+    background: var(--fields-selected);
     outline: 2px solid var(--fields-focus);
   }
 

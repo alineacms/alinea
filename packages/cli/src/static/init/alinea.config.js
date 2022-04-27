@@ -26,14 +26,14 @@ export const config = createConfig({
         ).configure({isContainer: true})
       }),
       roots: {
-        data: {
+        data: root('Example project', {
           icon: MdInsertDriveFile,
-          contains: ['Page']
-        },
-        media: {
+          contains: ['Home']
+        }),
+        media: root('Media', {
           icon: MdOutlinePermMedia,
           contains: ['MediaLibrary']
-        }
+        })
       }
     })
   }

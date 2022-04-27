@@ -49,10 +49,10 @@ export class Client<T extends Workspaces> implements Hub<T> {
     }).then(toFuture)
   }
 
-  deleteDraft(id: string): Future {
+  deleteDraft(id: string): Future<boolean> {
     return this.fetch(Hub.routes.draft(id), {
       method: 'DELETE'
-    }).then(toFuture)
+    }).then<Outcome<boolean>>(toFuture)
   }
 
   publishEntries(entries: Array<Entry>): Future {
@@ -99,10 +99,12 @@ export class Client<T extends Workspaces> implements Hub<T> {
     })
     const cancel = () => controller.abort()
     function cancelify<T>(promise: Promise<T>) {
-      const next = promise.then.bind(promise)
+      const t = promise.then.bind(promise)
+      const c = promise.catch.bind(promise)
       return Object.assign(promise, {
         cancel,
-        then: (...args: any[]) => cancelify(next(...args))
+        then: (...args: any[]) => cancelify(t(...args)),
+        catch: (...args: any[]) => cancelify(c(...args))
       })
     }
     return cancelify(promise)

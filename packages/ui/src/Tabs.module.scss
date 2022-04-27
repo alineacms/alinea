@@ -1,7 +1,8 @@
 .list {
   display: flex;
   margin: 0 6px 8px 6px;
-  border-bottom: 1px solid var(--outline);
+  // border-bottom: 1px solid var(--outline);
+  box-shadow: var(--divider-bottom);
 }
 
 .trigger {
@@ -13,15 +14,15 @@
   font: inherit;
   padding: 0 14px 10px 14px;
   cursor: pointer;
-  opacity: 0.8;
+  opacity: 0.6;
   border-bottom: 1px solid transparent;
-  margin-bottom: -1px;
+  // margin-bottom: -1px;
   font-size: 14px;
   line-height: 1.1;
 
   &:hover {
     opacity: 1;
-    border-color: currentColor;
+    border-color: var(--shadow);
   }
 
   &[data-state='active'] {

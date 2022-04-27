@@ -10,6 +10,6 @@ export function walkUrl(url: string | undefined): Array<string> {
 export function parentUrl(url: string): string | undefined {
   if (url === '/') return undefined
   const last = url.lastIndexOf('/')
-  if (last > -1) return url.substring(0, last) || '/'
+  if (last > -1) return url.substring(0, last) || undefined
   return undefined
 }

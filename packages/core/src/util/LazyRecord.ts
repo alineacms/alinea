@@ -10,6 +10,15 @@ export namespace LazyRecord {
     ])
   }
 
+  export function concat<A, B>(
+    a: LazyRecord<A>,
+    b: LazyRecord<B>
+  ): LazyRecord<A & B> {
+    return () => {
+      return Object.assign({}, resolve(a), resolve(b))
+    }
+  }
+
   export function resolve<V>(collection: LazyRecord<V>): {[key: string]: V} {
     return Object.fromEntries(LazyRecord.iterate(collection))
   }

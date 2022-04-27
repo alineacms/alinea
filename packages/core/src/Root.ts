@@ -1,10 +1,33 @@
 import type {ComponentType} from 'react'
+import {Label} from './Label'
 
-export type Root<T = string> = {
+export class Root<T = string> {
+  label: Label
+
+  constructor(
+    public name: string,
+    public workspace: string,
+    private config: RootConfig<T>
+  ) {
+    this.label = config.label
+  }
+
+  get contains() {
+    return this.config.contains
+  }
+
+  get icon() {
+    return this.config.icon
+  }
+}
+
+export type RootOptions<T = string> = {
   contains: Array<T>
   icon?: ComponentType
 }
 
-export function root<T>(options: Root<T>): Root<T> {
-  return options
+export type RootConfig<T = string> = {label: Label} & RootOptions<T>
+
+export function root<T>(label: Label, options: RootOptions<T>): RootConfig<T> {
+  return {label, ...options}
 }
