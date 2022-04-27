@@ -129,7 +129,6 @@ export function ContentTree({select = [], redirectToRoot}: ContentTreeProps) {
     setDragging(dragging)
   }
 
-  // Todo: this is not very pretty
   function handleDragEnd(event: DragEndEvent): void {
     const {active, over} = event
     setDragging(null)
@@ -137,13 +136,16 @@ export function ContentTree({select = [], redirectToRoot}: ContentTreeProps) {
     const aId = active.id
     const aIndex = entries.findIndex(entry => entry.id === aId)
     const a = entries[aIndex]
-    const bId = over.id
-    const bIndex = entries.findIndex(entry => entry.id === bId)
-    const b = entries[bIndex]
-    if (a?.parent !== b?.parent) {
+    let bId = over.id
+    let bIndex = entries.findIndex(entry => entry.id === bId)
+    let b = entries[bIndex]
+    // If b is a container and open, drop as a child
+    // Todo: this logic does not work if we're dragging up
+    const newParent = b.$isContainer && isOpen(b.id) ? b.id : b.parent
+    if (a?.parent !== newParent) {
       // Check if parent of b handles child of type a
-      if (b.parent) {
-        const parent = index.get(b.parent)
+      if (newParent) {
+        const parent = index.get(newParent)
         const type = schema.type(parent?.type)
         const contains = type?.options.contains
         if (contains && !contains.includes(a.type)) return
@@ -153,7 +155,7 @@ export function ContentTree({select = [], redirectToRoot}: ContentTreeProps) {
     }
     function sibling(direction: number) {
       const next = entries[bIndex + direction]
-      return next && next.parent === b.parent ? next : null
+      return next && next.parent === newParent ? next : null
     }
     const candidates = aIndex > bIndex ? [sibling(-1), b] : [b, sibling(1)]
     try {
@@ -164,8 +166,8 @@ export function ContentTree({select = [], redirectToRoot}: ContentTreeProps) {
       const move = {
         id: a.id,
         index: newIndex,
-        parent: b.parent,
-        parents: b.parents
+        parent: newParent,
+        parents: (newParent && index.get(newParent)!.parents) || []
       }
       setMoves(current => [...current, move])
       drafts

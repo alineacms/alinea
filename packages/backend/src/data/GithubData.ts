@@ -44,6 +44,7 @@ export class GithubData implements Data.Target, Data.Media {
       const location = path.join(rootDir, contentDir, entry.root, file)
       return [location, loader.format(schema, data)] as const
     })
+    // Todo: cleanup files that moved to a different location
     return createOrUpdateFiles(this.octokit, {
       owner: this.options.owner,
       repo: this.options.repo,
@@ -75,7 +76,7 @@ export class GithubData implements Data.Target, Data.Media {
       author,
       changes: [
         {
-          message: 'Upload files [skip ci]',
+          message: 'Upload files',
           files: changes
         }
       ]
