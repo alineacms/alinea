@@ -27,6 +27,9 @@ const config = createConfig({
       source: 'content',
       mediaDir: 'files',
       schema: createSchema({
+        Home: type('Home', {
+          title: text('Title')
+        }),
         Type: type('Type', {
           title: text('Title')
         }).configure({isContainer: true}),
@@ -49,7 +52,7 @@ const fs: FS = Volume.fromNestedJSON({
       '/index.json': entry({
         id: 'root',
         index: 'a',
-        type: 'Type',
+        type: 'Home',
         title: 'Test title'
       }),
       '/sub.json': entry({

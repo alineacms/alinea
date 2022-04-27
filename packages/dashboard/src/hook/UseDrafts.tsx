@@ -68,8 +68,7 @@ class Drafts {
     draft.status(EntryStatus.Publishing)
     this.status(DraftsStatus.Saving)
     return this.hub.deleteDraft(draft.id).then(result => {
-      if (result.isSuccess() && result.value)
-        draft.status(EntryStatus.Published)
+      draft.status(EntryStatus.Published)
       return result
     })
   }
