@@ -17,24 +17,24 @@ prog
     `Location of the config file, defaults to "alinea.config.tsx"`
   )
   .action(async args => {
-    ensureReact()
     ensureNodeResolution()
+    ensureReact()
     const {generate} = await import('./Generate')
     return generate({configFile: args.config, watch: args.watch})
   })
   .command('init [dir]')
   .describe('Copy a sample config file to the current directory')
   .action(async (dir, args) => {
-    ensureReact()
     ensureNodeResolution()
+    ensureReact()
     const {init} = await import('./Init')
     return init({cwd: dir, ...args})
   })
   .command('serve [dir]')
   .describe('Start a development dashboard')
   .action(async (dir, args) => {
-    ensureReact()
     ensureNodeResolution()
+    ensureReact()
     const {serve} = await import('./Serve')
     return serve({cwd: dir, ...args})
   })
