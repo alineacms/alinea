@@ -155,7 +155,6 @@ function EntryRoute({id}: EntryRouteProps) {
         resizable="right"
         defaultWidth={330}
         minWidth={200}
-        style={{paddingTop: px(3)}}
       >
         <SearchBox />
         <RootHeader />

@@ -1,15 +1,18 @@
 .root {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  height: 38px;
-  padding-right: 8px;
-  //box-shadow: 0 2px 3.5px var(--shadow);
-  // border-bottom: 1px solid var(--outline);
-  border-radius: 6px;
+  padding: 1px 6px;
+
+  &-inner {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    padding-right: 8px;
+    border-radius: 6px;
+    color: var(--foreground-faded);
+  }
 
   &-link {
+    height: 32px;
     text-decoration: none;
     font: inherit;
     color: inherit;
@@ -21,13 +24,15 @@
     overflow: hidden;
     white-space: nowrap;
     padding: 0 10px;
+    display: flex;
+    align-items: center;
   }
 
-  &.is-active {
+  &.is-active &-inner {
     background: var(--selected);
   }
 
-  &:hover {
+  &:hover &-inner {
     background: var(--highlight);
   }
 }

@@ -55,14 +55,14 @@ function EntryEditDraft({draft}: EntryEditDraftProps) {
     <HStack style={{height: '100%'}}>
       <div className={styles.root()}>
         <EntryHeader />
+        <EntryTitle
+          backLink={
+            draft.parent && nav.entry(draft.workspace, draft.root, draft.parent)
+          }
+        />
+        <div className={styles.root.shadow()} />
         <div className={styles.root.draft()}>
-          <EntryTitle
-            backLink={
-              draft.parent &&
-              nav.entry(draft.workspace, draft.root, draft.parent)
-            }
-          />
-          <div>
+          <div className={styles.root.draft.inner()}>
             <Suspense fallback={null}>
               {type ? (
                 <InputForm

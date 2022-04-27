@@ -5,6 +5,21 @@
   overflow: auto;
   height: 100%;
 
+  &-shadow {
+    display: block;
+    height: 1px;
+    flex-shrink: 0;
+    width: 100%;
+    position: sticky;
+    top: 47px;
+    z-index: 5;
+    border-bottom: 1px solid var(--outline);
+  }
+
+  &-header {
+    background: hsl(var(--header));
+  }
+
   &::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -24,18 +39,13 @@
 
   &-draft {
     padding: 35px 45px;
-    max-width: 1024px;
+    // max-width: 1024px;
     width: 100%;
     margin: 0 auto;
     flex-grow: 1;
 
-    &-fields {
-      //background: var(--fields);
-      //border-radius: 12px;
-      // box-shadow: 0 2px 3.5px var(--shadow);
-      // overflow: hidden;
-      // box-shadow: 0 2px 3.5px var(--shadow);
-      //box-shadow: 0 0 0 1px var(--outline), 0 2px 3.5px var(--shadow);
+    &-inner {
+      padding: 20px;
     }
   }
 }
