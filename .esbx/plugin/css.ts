@@ -1,6 +1,7 @@
 import type {Plugin} from 'esbuild'
-import fs from 'fs-extra'
+import fs from 'fs'
 import path from 'path'
+import {sassPlugin} from './sass'
 
 export const cssPlugin: Plugin = {
   name: 'css',
@@ -16,18 +17,34 @@ export const cssPlugin: Plugin = {
     build.initialOptions.metafile = true
     build.onEnd(async res => {
       const meta = res.metafile!
-      const files = Object.entries(meta.outputs).filter(entry =>
-        entry[0].endsWith('.css')
-      )
-      if (files.length === 0) return
-      const contents = Buffer.concat(
-        await Promise.all(
-          files.map(entry => {
-            return fs.readFile(path.join(absWorkingDir, entry[0]))
-          })
-        )
-      )
-      await fs.writeFile(path.join(outputDir, 'index.css'), contents)
+      const files = Object.keys(meta.inputs).filter(file => {
+        return file.endsWith('.scss')
+      })
+      const input = files
+        .filter(file => !file.startsWith('@esbx'))
+        .map(file => {
+          const loc = path
+            .relative(absWorkingDir, file)
+            .split(path.sep)
+            .join('/')
+          return `import './${loc}'`
+        })
+        .join('\n')
+      return build.esbuild
+        .build({
+          ignoreAnnotations: true,
+          outdir: 'dist',
+          stdin: {contents: input, resolveDir: absWorkingDir},
+          plugins: [sassPlugin],
+          write: false,
+          bundle: true,
+          absWorkingDir,
+          sourcemap: 'inline'
+        })
+        .then(res => {
+          const css = res.outputFiles.find(file => file.path.endsWith('.css'))
+          fs.writeFileSync(path.join(outputDir, 'index.css'), css.contents)
+        })
     })
   }
 }
