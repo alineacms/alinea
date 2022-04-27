@@ -11,8 +11,11 @@ import {
   MdRotateLeft
 } from 'react-icons/md'
 import {useQueryClient} from 'react-query'
+import {useNavigate} from 'react-router'
 import {useCurrentDraft} from '../../hook/UseCurrentDraft'
+import {useDashboard} from '../../hook/UseDashboard'
 import {DraftsStatus, useDrafts} from '../../hook/UseDrafts'
+import {useRoot} from '../../hook/UseRoot'
 import {useWorkspace} from '../../hook/UseWorkspace'
 
 function EntryStatusChip() {
@@ -46,16 +49,25 @@ function EntryStatusChip() {
 }
 
 export function EntryHeader() {
-  const {schema} = useWorkspace()
+  const {nav} = useDashboard()
+  const {name: workspace, schema} = useWorkspace()
+  const {name: root} = useRoot()
   const drafts = useDrafts()
   const draft = useCurrentDraft()
+  const navigate = useNavigate()
+  const parent = draft.parent
   const type = schema.type(draft.type)
   const status = useObservable(draft.status)
   const queryClient = useQueryClient()
   const [isPublishing, setPublishing] = useState(false)
   function handleDiscard() {
-    return drafts.discard(draft).then(() => {
+    return drafts.discard(draft).then(([entryRemains, err]) => {
       queryClient.invalidateQueries(['draft', draft.id])
+      if (!entryRemains) {
+        queryClient.invalidateQueries(['tree', workspace, root])
+        // Navigate to parent, otherwise we'll 404
+        navigate(nav.entry(workspace, root, parent))
+      }
     })
   }
   function handlePublish() {

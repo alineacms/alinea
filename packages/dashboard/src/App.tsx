@@ -4,7 +4,6 @@ import {
   FavIcon,
   Loader,
   Pane,
-  px,
   Statusbar,
   useObservable,
   Viewport
@@ -158,13 +157,7 @@ function EntryRoute({id}: EntryRouteProps) {
       >
         <SearchBox />
         <RootHeader />
-        <ContentTree
-          key={workspace}
-          workspace={workspace}
-          root={root}
-          select={select}
-          redirectToRoot={!id}
-        />
+        <ContentTree key={workspace} select={select} redirectToRoot={!id} />
       </Pane>
       <div style={{width: '100%', height: '100%'}}>
         {search === '?new' && (

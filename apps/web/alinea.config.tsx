@@ -23,7 +23,7 @@ export const config = createConfig({
       roots: {
         data: root('Alinea website', {
           icon: MdInsertDriveFile,
-          contains: ['Home']
+          contains: ['Home', 'Docs']
         }),
         media: root('Media', {
           icon: MdOutlinePermMedia,

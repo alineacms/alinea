@@ -18,7 +18,6 @@ import convertHrtime from 'convert-hrtime'
 import prettyMilliseconds from 'pretty-ms'
 import * as Y from 'yjs'
 import {Data} from './Data'
-import {parentUrl, walkUrl} from './util/Urls'
 
 export namespace Cache {
   function indexSearch(store: Store, entry: Entry, lookup = true) {
@@ -193,18 +192,26 @@ export namespace Cache {
   ) {
     const type = getType(entry.workspace, entry.type)
     if (!type) throw createError(400, 'Type not found')
-    const parents = walkUrl(parentUrl(entry.url)).map(url => {
+    const parents: Array<string> = []
+    let target = entry.parent,
+      url = entry.path
+    while (target) {
+      if (parents.includes(target))
+        throw createError(400, 'Circular parent reference')
+      parents.unshift(target)
       const parent = store.first(
-        Entry.where(Entry.workspace.is(entry.workspace))
-          .where(Entry.root.is(entry.root))
-          .where(Entry.url.is(url))
-          .select({id: Entry.id})
+        Entry.where(Entry.id.is(target)).select({
+          parent: Entry.parent,
+          path: Entry.path
+        })
       )
-      if (!parent) throw createError(400, 'Parent not found')
-      return parent.id
-    })
+      if (!parent) break
+      url = (parent.path === 'index' ? '' : parent.path) + '/' + url
+      target = parent.parent
+    }
     return {
       ...entry,
+      url: '/' + url,
       parent: parents[parents.length - 1],
       parents: parents,
       $isContainer: type!.options.isContainer,

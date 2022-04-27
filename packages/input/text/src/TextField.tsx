@@ -19,6 +19,8 @@ export type TextOptions = {
   iconLeft?: ComponentType
   /** An icon (React component) to display on the right side of the input */
   iconRight?: ComponentType
+  /** Focus this input automatically */
+  autoFocus?: boolean
 }
 
 /** Internal representation of a text field */

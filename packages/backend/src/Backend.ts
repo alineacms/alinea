@@ -112,11 +112,14 @@ export class Backend<T extends Workspaces = Workspaces> implements Hub<T> {
     })
   }
 
-  deleteDraft(id: string): Future<void> {
+  deleteDraft(id: string): Future<boolean> {
     const {drafts} = this.options
     return outcome(async () => {
       await this.preview.deleteUpdate(id)
-      return drafts.delete([id])
+      const store = await this.preview.getStore()
+      drafts.delete([id])
+      // Do we still have an entry after removing the draft?
+      return Boolean(store.first(Entry.where(Entry.id.is(id))))
     })
   }
 

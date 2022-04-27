@@ -8,7 +8,7 @@
   --foreground-faded: hsl(0, 3%, 85%);
   --toolbar: hsl(var(--hue), var(--saturation), 20%);
   --inner: hsl(var(--hue), var(--saturation), 12%);
-  --inner-outline: hsl(var(--hue), var(--saturation), 11.5%);
+  --inner-outline: hsl(var(--hue), var(--saturation), 13%);
   --highlight: hsl(var(--hue), var(--saturation), 18%);
   --lift: hsl(var(--hue), var(--saturation), 19%);
   --selected: hsl(var(--hue), var(--saturation), 22%);
@@ -30,9 +30,9 @@
 }
 
 @mixin light-theme {
-  --hue: 225;
-  --saturation: 17%;
-  --positive: var(--hue), var(--saturation), 100%;
+  --hue: 0;
+  --saturation: 11%;
+  --positive: var(--hue), var(--saturation), 95.5%;
   --negative: 212, 18%, 14%;
   --background: hsl(var(--positive));
   --foreground: hsl(197, 21%, 6%);
@@ -40,9 +40,9 @@
   --toolbar: hsl(var(--hue), var(--saturation), 98%);
   --inner: hsl(var(--hue), var(--saturation), 98.5%);
   --inner-outline: hsl(var(--hue), var(--saturation), 89%);
-  --highlight: hsl(var(--hue), var(--saturation), 97%);
+  --highlight: hsl(var(--hue), var(--saturation), 98%);
   --lift: hsl(var(--hue), var(--saturation), 95.5%);
-  --selected: hsl(var(--hue), var(--saturation), 96%);
+  --selected: hsl(var(--hue), var(--saturation), 100%);
   --outline: hsl(var(--hue), var(--saturation), 89%);
   // --outline: transparent;
   --header: var(--hue), var(--saturation), 100%;
@@ -50,7 +50,7 @@
   --shadow: rgba(0, 0, 0, 0.08);
   --fields: hsl(0, 0%, 100%);
   --fields-foreground: #1e282e;
-  --fields-shadow: 0 0px 0 1px #D1D1D1;
+  --fields-shadow: 0 0px 0 1px #ececec;
   --fields-selected: white;
   --fields-focus: hsl(var(--hue), 4%, 86%);
   --focus-foreground: hsl(var(--negative));

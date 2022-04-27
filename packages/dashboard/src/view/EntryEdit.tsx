@@ -1,9 +1,9 @@
-import {docFromEntry, Entry, slugify} from '@alinea/core'
-import {InputForm, InputState} from '@alinea/editor'
-import {select} from '@alinea/input.select'
-import {SelectInput} from '@alinea/input.select/view'
-import {text} from '@alinea/input.text'
-import {TextInput} from '@alinea/input.text/view'
+import { docFromEntry, Entry, slugify } from '@alinea/core'
+import { InputForm, InputState } from '@alinea/editor'
+import { select } from '@alinea/input.select'
+import { SelectInput } from '@alinea/input.select/view'
+import { text } from '@alinea/input.text'
+import { TextInput } from '@alinea/input.text/view'
 import {
   Button,
   ErrorMessage,
@@ -15,21 +15,21 @@ import {
   Typo,
   useObservable
 } from '@alinea/ui'
-import {Modal} from '@alinea/ui/Modal'
-import {ComponentType, FormEvent, Suspense, useState} from 'react'
-import {MdArrowBack} from 'react-icons/md'
-import {useQuery, useQueryClient} from 'react-query'
-import {useNavigate} from 'react-router'
-import {Link} from 'react-router-dom'
+import { Modal } from '@alinea/ui/Modal'
+import { ComponentType, FormEvent, Suspense, useState } from 'react'
+import { MdArrowBack } from 'react-icons/md'
+import { useQuery, useQueryClient } from 'react-query'
+import { useNavigate } from 'react-router'
+import { Link } from 'react-router-dom'
 import * as Y from 'yjs'
-import {EntryDraft} from '../draft/EntryDraft'
-import {EntryProperty} from '../draft/EntryProperty'
-import {useDashboard} from '../hook/UseDashboard'
-import {useRoot} from '../hook/UseRoot'
-import {useSession} from '../hook/UseSession'
-import {useWorkspace} from '../hook/UseWorkspace'
-import {EntryHeader} from './entry/EntryHeader'
-import {EntryTitle} from './entry/EntryTitle'
+import { EntryDraft } from '../draft/EntryDraft'
+import { EntryProperty } from '../draft/EntryProperty'
+import { useDashboard } from '../hook/UseDashboard'
+import { useRoot } from '../hook/UseRoot'
+import { useSession } from '../hook/UseSession'
+import { useWorkspace } from '../hook/UseWorkspace'
+import { EntryHeader } from './entry/EntryHeader'
+import { EntryTitle } from './entry/EntryTitle'
 import css from './EntryEdit.module.scss'
 
 const styles = fromModule(css)
@@ -55,28 +55,26 @@ function EntryEditDraft({draft}: EntryEditDraftProps) {
     <HStack style={{height: '100%'}}>
       <div className={styles.root()}>
         <EntryHeader />
-        <EntryTitle
-          backLink={
-            draft.parent && nav.entry(draft.workspace, draft.root, draft.parent)
-          }
-        />
-        <div className={styles.root.shadow()} />
         <div className={styles.root.draft()}>
-          <div className={styles.root.draft.inner()}>
-            <Suspense fallback={null}>
-              {type ? (
-                <InputForm
-                  // We key here currently because the tiptap/yjs combination fails to register
-                  // changes when the fragment is changed while the editor is mounted.
-                  key={draft.doc.guid}
-                  type={type}
-                  state={EntryProperty.root}
-                />
-              ) : (
-                <ErrorMessage error={new Error('Type not found')} />
-              )}
-            </Suspense>
-          </div>
+          <EntryTitle
+            backLink={
+              draft.parent &&
+              nav.entry(draft.workspace, draft.root, draft.parent)
+            }
+          />
+          <Suspense fallback={null}>
+            {type ? (
+              <InputForm
+                // We key here currently because the tiptap/yjs combination fails to register
+                // changes when the fragment is changed while the editor is mounted.
+                key={draft.doc.guid}
+                type={type}
+                state={EntryProperty.root}
+              />
+            ) : (
+              <ErrorMessage error={new Error('Type not found')} />
+            )}
+          </Suspense>
         </div>
       </div>
       {preview && <EntryPreview preview={preview} draft={draft} />}
@@ -175,7 +173,7 @@ export function NewEntry({parentId}: NewEntryProps) {
             {/*parent && <ParentView {...parent} />*/}
             <TextInput
               state={new InputState.StatePair(title, setTitle)}
-              field={text('Title')}
+              field={text('Title', {autoFocus: true})}
             />
             <SelectInput
               state={new InputState.StatePair(selectedType, setSelectedType)}
