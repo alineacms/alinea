@@ -1,10 +1,5 @@
 # alinea
 
-Roadmap
+<a href="https://npmjs.org/package/alinea" title="View this project on NPM"><img src="https://img.shields.io/npm/v/alinea.svg" alt="NPM version" /></a>
 
-- [x] Creating entries
-- [x] Preview => iframe + map data with server
-- [ ] Track publish status
-- [ ] Media management
-- [x] Sort entries
-- [ ] Move entries
+https://alinea.sh
