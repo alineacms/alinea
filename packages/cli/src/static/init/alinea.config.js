@@ -2,6 +2,7 @@ import {
   createConfig,
   MediaSchema,
   path,
+  root,
   schema,
   text,
   type,
