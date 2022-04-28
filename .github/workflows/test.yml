@@ -22,12 +22,12 @@ jobs:
           path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
           key: ${{ runner.os }}-yarn
       - run: yarn
-      - run: yarn test
+      - run: yarn tsc
       - if: startsWith(github.ref, 'refs/tags/v')
         run: |
           yarn bump ${GITHUB_REF#refs/tags/v}
-      - run: yarn tsc
       - run: yarn build
+      - run: yarn test
       - if: startsWith(github.ref, 'refs/tags/v')
         run: |
           npm config set //registry.npmjs.org/:_authToken ${{secrets.NPM_AUTH_TOKEN}}

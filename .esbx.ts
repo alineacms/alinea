@@ -148,8 +148,9 @@ const testTask = TestTask.configure({
 
 export const test = {
   ...testTask,
-  action(options: any) {
+  async action(options: any) {
     ensureNodeResolution()
+    await prepare.action()
     return testTask.action(options)
   }
 }
