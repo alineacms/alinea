@@ -53,7 +53,7 @@ export const buildTask = {
 }
 
 export const prepare = {
-  async action() {
+  async action({checkTypeDoc = true}) {
     const minVersion = '14.18.0'
     const nodeVersionWorks = semver.compare(
       process.version.slice(1),
@@ -67,7 +67,7 @@ export const prepare = {
       process.exit(1)
     }
     if (!fs.existsSync('dist')) await buildTask.action({})
-    if (!fs.existsSync('apps/web/src/data/types.json')) {
+    if (checkTypeDoc && !fs.existsSync('apps/web/src/data/types.json')) {
       reportTime(
         async () => {
           execSync(
@@ -150,7 +150,7 @@ export const test = {
   ...testTask,
   async action(options: any) {
     ensureNodeResolution()
-    await prepare.action()
+    await prepare.action({checkTypeDoc: false})
     return testTask.action(options)
   }
 }
