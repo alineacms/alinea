@@ -1,6 +1,7 @@
 import {Create, fromModule, TextLabel} from '@alinea/ui'
 import {Link, useNavigate} from 'react-router-dom'
 import {useCurrentDraft} from '../../hook/UseCurrentDraft'
+import {useLocale} from '../../hook/UseLocale'
 import {useNav} from '../../hook/UseNav'
 import {useRoot} from '../../hook/UseRoot'
 import {useWorkspace} from '../../hook/UseWorkspace'
@@ -12,6 +13,7 @@ export function RootHeader() {
   const navigate = useNavigate()
   const nav = useNav()
   const root = useRoot()
+  const currentLocale = useLocale()
   const {name: workspace} = useWorkspace()
   const draft = useCurrentDraft()
   return (
@@ -26,6 +28,7 @@ export function RootHeader() {
         {root.i18n && (
           <div>
             <select
+              value={currentLocale}
               onChange={e => {
                 const locale = e.target.value
                 const translation = draft.translation(locale)
