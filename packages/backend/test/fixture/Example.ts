@@ -95,6 +95,6 @@ export default async function createExample(wasm = false) {
       : new BetterSqlite3Driver(new Database(':memory:')),
     createId
   )
-  await Cache.create(store, config, source, true)
+  await Cache.create(store, config, source)
   return {config, store}
 }

@@ -110,8 +110,9 @@ function schemaCollections(workspace: string, schema: Schema) {
   const typeNames = Object.keys(types)
   return `
     import {config} from '../config.js'
-    export const schema = config.workspaces['${workspace}'].schema
-    export const Page = schema.entry
+    export const workspace = config.workspaces['${workspace}']
+    export const schema = workspace.schema
+    export const AnyPage = schema.entry
     ${typeNames
       .map(
         type =>
@@ -131,12 +132,12 @@ function schemaTypes(workspace: string, schema: Schema) {
     import {DataOf, EntryOf} from '@alinea/core'
     import {Collection} from '@alinea/store'
     export const schema = config.workspaces['${workspace}'].schema
-    export type Page = EntryOf<typeof schema>
-    export const Page: Collection<Page>
+    export type AnyPage = EntryOf<typeof schema>
+    export const AnyPage: Collection<AnyPage>
     ${typeNames
       .map(
         type =>
-          `export const ${type}: Collection<Extract<Page, {type: '${type}'}>>
+          `export const ${type}: Collection<Extract<AnyPage, {type: '${type}'}>>
           export type ${type} = DataOf<typeof ${type}>`
       )
       .join('\n')}
@@ -151,6 +152,7 @@ export type GenerateOptions = {
   configFile?: string
   watch?: boolean
   wasmCache?: boolean
+  quiet?: boolean
 }
 
 export async function generate(options: GenerateOptions) {
@@ -158,7 +160,8 @@ export async function generate(options: GenerateOptions) {
     wasmCache = false,
     cwd = process.cwd(),
     configFile = 'alinea.config',
-    staticDir = path.join(__dirname, 'static')
+    staticDir = path.join(__dirname, 'static'),
+    quiet = false
   } = options
   let cacheWatcher: Promise<{stop: () => void}> | undefined
   const configLocation = path.join(cwd, configFile)
@@ -250,14 +253,6 @@ export async function generate(options: GenerateOptions) {
       await fs.copy(path.join(staticDir, 'workspace'), path.join(outDir, key), {
         overwrite: true
       })
-      const workspaceIndex = await fs.readFile(
-        path.join(staticDir, 'workspace/index.js'),
-        'utf-8'
-      )
-      await fs.writeFile(
-        path.join(outDir, key, 'index.js'),
-        workspaceIndex.replace('$WORKSPACE', key)
-      )
     }
     await fs.writeFile(
       path.join(outDir, 'package.json'),
@@ -271,10 +266,14 @@ export async function generate(options: GenerateOptions) {
               default: './index.js'
             },
             ...Object.fromEntries(
-              Object.keys(config.workspaces).map(key => [
-                `./${key}`,
-                `./${key}/index.js`
-              ])
+              Object.keys(config.workspaces)
+                .map(key => [`./${key}`, `./${key}/index.js`])
+                .concat(
+                  Object.keys(config.workspaces).map(key => [
+                    `./${key}/pages`,
+                    `./${key}/pages.js`
+                  ])
+                )
             )
           }
         },
@@ -359,7 +358,7 @@ export async function generate(options: GenerateOptions) {
       const {Database} = await sqlInit()
       store = new SqliteStore(new SqlJsDriver(new Database()), createId)
     }
-    await Cache.create(store, config, source, true)
+    await Cache.create(store, config, source, !quiet)
     return store
   }
 

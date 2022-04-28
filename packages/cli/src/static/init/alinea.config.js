@@ -24,12 +24,12 @@ export const config = createConfig({
             path: path('Path')
           },
           <Welcome />
-        ).configure({isContainer: true})
+        )
       }),
       roots: {
         data: root('Example project', {
           icon: MdInsertDriveFile,
-          contains: ['Home']
+          contains: ['Page']
         }),
         media: root('Media', {
           icon: MdOutlinePermMedia,

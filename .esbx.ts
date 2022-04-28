@@ -2,6 +2,7 @@ import {EvalPlugin} from '@esbx/eval'
 import {ReactPlugin} from '@esbx/react'
 import {ReporterPlugin} from '@esbx/reporter'
 import {RunPlugin} from '@esbx/run'
+import {StaticPlugin} from '@esbx/static'
 import {findNodeModules, reportTime} from '@esbx/util'
 import {getWorkspaces, TestTask} from '@esbx/workspaces'
 import {execSync} from 'child_process'
@@ -15,6 +16,7 @@ import {internalPlugin} from './.esbx/plugin/internal'
 import {resolvePlugin} from './.esbx/plugin/resolve'
 import {sassPlugin} from './.esbx/plugin/sass'
 import {staticPlugin} from './.esbx/plugin/static'
+import {ensureNodeResolution} from './packages/cli/src/util/EnsureNodeResolution'
 import {createId} from './packages/core/src/Id'
 
 export {VersionTask} from '@esbx/workspaces'
@@ -129,16 +131,28 @@ const FixReactIconsPlugin: Plugin = {
   }
 }
 
-export const testTask = TestTask.configure({
+const testTask = TestTask.configure({
   buildOptions: {
     ...buildOptions,
-    sourcemap: true,
     external: modules
       .filter(m => !m.includes('@alinea'))
       .concat('@alinea/sqlite-wasm'),
-    plugins: [...buildOptions.plugins!, internalPlugin, FixReactIconsPlugin]
+    plugins: [
+      ...buildOptions.plugins!,
+      StaticPlugin.configure({sources: ['packages/cli/src/Init.ts']}),
+      internalPlugin,
+      FixReactIconsPlugin
+    ]
   }
 })
+
+export const test = {
+  ...testTask,
+  action(options: any) {
+    ensureNodeResolution()
+    return testTask.action(options)
+  }
+}
 
 export const mkid = {
   action() {
