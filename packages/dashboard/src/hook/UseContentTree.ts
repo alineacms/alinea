@@ -2,23 +2,26 @@ import {Entry, Outcome} from '@alinea/core'
 import {Functions} from '@alinea/store'
 import {useCallback, useEffect, useMemo, useState} from 'react'
 import {useQuery} from 'react-query'
-import {useRoot} from '..'
-import {useDashboard} from '../hook/UseDashboard'
+import {useRoot} from '../hook/UseRoot'
 import {useSession} from '../hook/UseSession'
+import {useWorkspace} from '../hook/UseWorkspace'
+import {useLocale} from './UseLocale'
 
 type QueryParams = {
   workspace: string
   root: string
+  locale?: string
   open: Array<string>
   visible: Array<string>
 }
 
-function query({workspace, root, open, visible}: QueryParams) {
+function query({workspace, root, locale, open, visible}: QueryParams) {
   const Parent = Entry.as('Parent')
-  const condition = Entry.parent
+  let condition = Entry.parent
     .isIn(open)
     .or(Entry.id.isIn(open))
     .or(Entry.parent.isNull())
+  if (locale) condition = condition.and(Entry.locale.is(locale))
   return Entry.where(condition)
     .where(Entry.workspace.is(workspace))
     .where(Entry.root.is(root))
@@ -47,15 +50,12 @@ type UseContentTreeOptions = {
   select: Array<string>
 }
 
-export function useContentTree({
-  workspace,
-  root: rootKey,
-  select
-}: UseContentTreeOptions) {
-  const persistenceId = `@alinea/dashboard/tree-${workspace}-${rootKey}`
-  const {config} = useDashboard()
-  const {hub} = useSession()
+export function useContentTree({select}: UseContentTreeOptions) {
+  const workspace = useWorkspace()
   const root = useRoot()
+  const locale = useLocale()
+  const {hub} = useSession()
+  const persistenceId = `@alinea/dashboard/tree-${workspace}-${root.name}`
   const [open, setOpen] = useState(() => {
     const stored = window?.localStorage?.getItem(persistenceId)
     const opened = stored && JSON.parse(stored)
@@ -78,23 +78,31 @@ export function useContentTree({
     [setOpen]
   )
   const visible = useMemo(() => {
-    const schema = config.workspaces[workspace].schema
+    const schema = workspace.schema
     return Array.from(schema)
       .filter(([, type]) => !type.options.isHidden)
       .map(([key]) => key)
   }, [workspace])
   const ids = Array.from(new Set([...open, ...select])).sort()
   const {data, refetch} = useQuery(
-    ['tree', workspace, rootKey, ids.join('.')],
+    ['tree', locale, workspace, root, ids.join('.')],
     () => {
       return hub
-        .query(query({workspace, root: rootKey, open: ids, visible}))
+        .query(
+          query({
+            locale,
+            workspace: workspace.name,
+            root: root.name,
+            open: ids,
+            visible
+          })
+        )
         .then(Outcome.unpack)
     },
     {
       keepPreviousData: true,
       suspense: true,
-      cacheTime: 1,
+      cacheTime: 10,
       refetchOnWindowFocus: false
     }
   )

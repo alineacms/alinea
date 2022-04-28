@@ -33,10 +33,11 @@ export namespace Entry {
     draft: string | undefined
     previewToken: string
     parent?: Entry.Minimal
+    translations?: Array<Entry.Minimal>
   }
   export type Minimal = Pick<
     Entry,
-    'id' | 'type' | 'title' | 'workspace' | 'root' | 'url' | 'parent'
+    'id' | 'type' | 'title' | 'workspace' | 'root' | 'url' | 'parent' | 'locale'
   >
   export type Summary = Pick<
     Entry,
@@ -48,6 +49,7 @@ export namespace Entry {
     | 'url'
     | 'index'
     | 'parent'
+    | 'locale'
     | 'parents'
     | '$isContainer'
   > & {

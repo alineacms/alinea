@@ -3,7 +3,7 @@ import {fromModule} from '@alinea/ui'
 import {useContrastColor} from '@alinea/ui/hook/UseContrastColor'
 import {MdInsertDriveFile} from 'react-icons/md'
 import {Link} from 'react-router-dom'
-import {useDashboard} from '../../hook/UseDashboard'
+import {useNav} from '../../hook/UseNav'
 import css from './MediaThumbnail.module.scss'
 
 const styles = fromModule(css)
@@ -13,14 +13,11 @@ export type MediaThumbnailProps = {
 }
 
 export function MediaThumbnail({file}: MediaThumbnailProps) {
-  const {nav} = useDashboard()
+  const nav = useNav()
   const {extension, preview, averageColor: color} = file
   const fontColor = useContrastColor(color)
   return (
-    <Link
-      to={nav.entry(file.workspace, file.root, file.id)}
-      className={styles.root()}
-    >
+    <Link to={nav.entry(file)} className={styles.root()}>
       <div className={styles.root.preview()}>
         <div className={styles.root.preview.picture()}>
           {preview ? (

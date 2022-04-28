@@ -26,11 +26,12 @@ import {
 import {Route, Routes, useLocation, useParams} from 'react-router'
 import {HashRouter} from 'react-router-dom'
 import {DashboardOptions} from './Dashboard'
-import {nav} from './DashboardNav'
 import {CurrentDraftProvider} from './hook/UseCurrentDraft'
 import {DashboardProvider, useDashboard} from './hook/UseDashboard'
 import {useDraft} from './hook/UseDraft'
 import {DraftsProvider, DraftsStatus, useDrafts} from './hook/UseDrafts'
+import {useLocale} from './hook/UseLocale'
+import {useNav} from './hook/UseNav'
 import {ReferencePickerProvider} from './hook/UseReferencePicker'
 import {useRoot} from './hook/UseRoot'
 import {SessionProvider} from './hook/UseSession'
@@ -53,7 +54,8 @@ const Router = {
 }
 
 function AppAuthenticated() {
-  const {auth, nav} = useDashboard()
+  const {auth} = useDashboard()
+  const nav = useNav()
   const location = useLocation()
   const {name: workspace, name, color, roots} = useWorkspace()
   return (
@@ -81,14 +83,14 @@ function AppAuthenticated() {
                       const isSelected =
                         location.pathname.length > 1
                           ? location.pathname.startsWith(
-                              nav.root(workspace, key)
+                              nav.root({workspace, root: key})
                             )
                           : i === 0
                       return (
                         <Sidebar.Menu.Item
                           key={key}
                           selected={isSelected}
-                          to={nav.root(workspace, key)}
+                          to={nav.root({workspace, root: key})}
                         >
                           {root.icon ? <root.icon /> : <MdInsertDriveFile />}
                         </Sidebar.Menu.Item>
@@ -99,15 +101,21 @@ function AppAuthenticated() {
                 <Suspense fallback={<Loader absolute />}>
                   <Routes>
                     <Route
-                      path={nav.entry(':workspace')}
+                      path={nav.entry({workspace: ':workspace'})}
                       element={<Router.Entry />}
                     />
                     <Route
-                      path={nav.entry(':workspace', ':root')}
+                      path={nav.entry({workspace: ':workspace', root: ':root'})}
                       element={<Router.Entry />}
                     />
                     <Route
-                      path={nav.entry(':workspace', ':root', ':id') + '/*'}
+                      path={
+                        nav.entry({
+                          workspace: ':workspace',
+                          root: ':root',
+                          id: ':id'
+                        }) + '/*'
+                      }
                       element={<Router.Entry />}
                     />
                     <Route path="/*" element={<Router.Entry />} />
@@ -135,10 +143,12 @@ type EntryRouteProps = {
 }
 
 function EntryRoute({id}: EntryRouteProps) {
-  const {nav} = useDashboard()
+  const nav = useNav()
   const {name: workspace} = useWorkspace()
   const {name: root} = useRoot()
-  const {draft, isLoading} = useDraft(id)
+  const {draft} = useDraft(id)
+  const locale = useLocale()
+  const isLoading = draft?.id !== id && draft?.locale !== locale
   const {search} = useLocation()
   const type = draft?.channel
   const View = type?.options.view || EntryEdit
@@ -146,7 +156,6 @@ function EntryRoute({id}: EntryRouteProps) {
     .concat(draft?.parents)
     .concat(draft?.id)
     .filter(Boolean) as Array<string>
-  if (isLoading) return <Loader absolute />
   return (
     <CurrentDraftProvider value={draft}>
       <Pane
@@ -165,7 +174,7 @@ function EntryRoute({id}: EntryRouteProps) {
             <NewEntry parentId={id} />
           </Suspense>
         )}
-        {draft && <View draft={draft} />}
+        {draft && <View draft={draft} isLoading={isLoading} />}
       </div>
     </CurrentDraftProvider>
   )
@@ -221,7 +230,7 @@ export function App<T extends Workspaces>(props: DashboardOptions<T>) {
     !props.auth ? localSession(props) : undefined
   )
   return (
-    <DashboardProvider value={{...props, nav}}>
+    <DashboardProvider value={{...props}}>
       {/* Todo: https://github.com/remix-run/react-router/issues/7703 */}
       <HashRouter
       //hashType="noslash"

@@ -25,14 +25,16 @@ export class EntryDraft implements Entry {
   constructor(
     protected hub: Hub,
     public channel: Type,
-    protected source: Entry,
-    public doc: Y.Doc,
-    public previewToken: string,
-    public parentData?: Entry.Minimal
+    public detail: Entry.Detail,
+    public doc: Y.Doc
   ) {
     this.__root = doc.getMap(ROOT_KEY)
     this.entry = observable(this.getEntry())
     this.status = observable(this.$status)
+  }
+
+  get source() {
+    return this.detail.entry
   }
 
   connect() {
@@ -113,8 +115,20 @@ export class EntryDraft implements Entry {
     return this.__root.get('parent') || this.source.parent
   }
 
+  get locale(): string | undefined {
+    return this.source.locale
+  }
+
+  get i18nId(): string | undefined {
+    return this.source.i18nId
+  }
+
   get title(): Label {
     return this.__root.get('title') || this.source.title
+  }
+
+  translation(locale: string): Entry.Minimal | undefined {
+    return this.detail.translations?.find(t => t.locale === locale)
   }
 
   private getLocation(location: Array<string>) {

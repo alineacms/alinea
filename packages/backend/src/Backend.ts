@@ -70,28 +70,33 @@ export class Backend<T extends Workspaces = Workspaces> implements Hub<T> {
     return outcome(async () => {
       const store = await this.preview.getStore()
       const Parent = Entry.as('Parent')
+      const Translation = Entry.as('Translation')
+      const minimal = (entry: Cursor<Entry>) => ({
+        id: entry.id,
+        type: entry.type,
+        title: entry.title,
+        workspace: entry.workspace,
+        root: entry.root,
+        url: entry.url,
+        parent: entry.parent,
+        locale: entry.locale
+      })
       const data = store.first(
         Entry.where(Entry.id.is(id)).select({
           entry: Entry.fields,
+          translations: Translation.where(t =>
+            t.i18nId.is(Entry.i18nId)
+          ).select(minimal),
           parent: Parent.where(Parent.id.is(Entry.parent))
-            .select({
-              id: Parent.id,
-              type: Parent.type,
-              title: Parent.title,
-              workspace: Parent.workspace,
-              root: Parent.root,
-              url: Parent.url,
-              parent: Parent.parent
-            })
+            .select(minimal)
             .first()
         })
       )
       return (
         data && {
-          entry: data.entry,
+          ...data,
           draft: draft && encode(draft),
-          previewToken: previews.sign({id}),
-          parent: data.parent
+          previewToken: previews.sign({id})
         }
       )
     })

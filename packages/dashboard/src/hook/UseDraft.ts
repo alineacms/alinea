@@ -11,8 +11,8 @@ export function useDraft(id: string | undefined) {
     ['draft', id],
     async () => {
       if (!id) return undefined
-      const {type, entry, parent, doc, previewToken} = await docs.get(id)
-      return new EntryDraft(hub, type, entry, doc, previewToken, parent)
+      const {type, doc, ...detail} = await docs.get(id)
+      return new EntryDraft(hub, type, detail, doc)
     },
     {
       suspense: true,

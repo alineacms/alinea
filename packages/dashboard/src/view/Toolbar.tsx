@@ -14,6 +14,7 @@ import {MdBrightnessMedium, MdExpandMore, MdUnfoldMore} from 'react-icons/md'
 import {RiFlashlightFill} from 'react-icons/ri'
 import {useNavigate} from 'react-router'
 import {useDashboard} from '../hook/UseDashboard'
+import {useNav} from '../hook/UseNav'
 import {useSession} from '../hook/UseSession'
 import {useWorkspace} from '../hook/UseWorkspace'
 import css from './Toolbar.module.scss'
@@ -25,9 +26,10 @@ export namespace Toolbar {
 
   export function Root() {
     const session = useSession()
-    const {config, nav} = useDashboard()
+    const {config} = useDashboard()
+    const nav = useNav()
     const [colorScheme, toggleColorScheme] = useColorScheme()
-    const {name} = useWorkspace()
+    const {label} = useWorkspace()
     const navigate = useNavigate()
     return (
       <HStack center className={styles.root()}>
@@ -40,7 +42,7 @@ export namespace Toolbar {
                 </LogoShape>
                 <HStack center gap={4}>
                   <div style={{fontSize: '13px'}}>
-                    <TextLabel label={name} />
+                    <TextLabel label={label} />
                   </div>
                   <MdUnfoldMore />
                 </HStack>
@@ -53,7 +55,9 @@ export namespace Toolbar {
                 return (
                   <DropdownMenu.Item
                     key={key}
-                    onClick={() => navigate(nav.entry(key, firstRoot))}
+                    onClick={() =>
+                      navigate(nav.entry({workspace: key, root: firstRoot}))
+                    }
                   >
                     <HStack center gap={16}>
                       <LogoShape
@@ -63,7 +67,7 @@ export namespace Toolbar {
                         <RiFlashlightFill />
                       </LogoShape>
                       <div>
-                        <TextLabel label={workspace.name} />
+                        <TextLabel label={workspace.label} />
                       </div>
                     </HStack>
                   </DropdownMenu.Item>

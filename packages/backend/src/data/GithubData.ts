@@ -103,22 +103,4 @@ export class GithubData implements Data.Target, Data.Media {
     if (!res.body) throw createError(404)
     return {type: 'buffer', buffer: await res.arrayBuffer()}
   }
-
-  /*async list(location?: string): Promise<Array<Media.DirEntry>> {
-    const {mediaDir, owner, repo, branch, author} = this.options
-    const contents = await this.octokit.repos.getContent({
-      owner,
-      repo,
-      ref: branch,
-      path: location ? path.join(mediaDir, location) : mediaDir
-    })
-    if (!Array.isArray(contents)) throw createError(404)
-    return contents.map(entry => {
-      return {
-        type: entry.type === 'dir' ? 'directory' : 'file',
-        path: entry.path,
-        stat: {size: entry.size}
-      }
-    })
-  }*/
 }

@@ -24,8 +24,8 @@ import {useEffect, useMemo, useRef, useState} from 'react'
 import {useNavigate} from 'react-router'
 import VirtualList from 'react-tiny-virtual-list'
 import {useContentTree} from '../hook/UseContentTree'
-import {useDashboard} from '../hook/UseDashboard'
 import {useDrafts} from '../hook/UseDrafts'
+import {useNav} from '../hook/UseNav'
 import {useRoot} from '../hook/UseRoot'
 import {useWorkspace} from '../hook/UseWorkspace'
 import css from './ContentTree.module.scss'
@@ -183,13 +183,13 @@ export function ContentTree({select = [], redirectToRoot}: ContentTreeProps) {
 
   // Not sure if this should belong here but it's convenient for now
   const navigate = useNavigate()
-  const {nav} = useDashboard()
+  const nav = useNav()
   useEffect(() => {
     return
     if (redirectToRoot && entries.length > 0) {
       const first = entries[0]
       if (first.workspace === workspace && first.root === root.name) {
-        navigate(nav.entry(first.workspace, first.root, first.id), {
+        navigate(nav.entry(first), {
           replace: true
         })
       }

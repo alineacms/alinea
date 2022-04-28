@@ -23,6 +23,10 @@ export class Root<T = string> {
   get i18n() {
     return this.config.i18n
   }
+
+  get defaultLocale() {
+    return this.config.i18n?.locales[0]
+  }
 }
 
 export type RootOptions<T = string> = {

@@ -1,9 +1,9 @@
-import { docFromEntry, Entry, slugify } from '@alinea/core'
-import { InputForm, InputState } from '@alinea/editor'
-import { select } from '@alinea/input.select'
-import { SelectInput } from '@alinea/input.select/view'
-import { text } from '@alinea/input.text'
-import { TextInput } from '@alinea/input.text/view'
+import {createId, docFromEntry, Entry, slugify} from '@alinea/core'
+import {InputForm, InputState} from '@alinea/editor'
+import {select} from '@alinea/input.select'
+import {SelectInput} from '@alinea/input.select/view'
+import {text} from '@alinea/input.text'
+import {TextInput} from '@alinea/input.text/view'
 import {
   Button,
   ErrorMessage,
@@ -15,21 +15,22 @@ import {
   Typo,
   useObservable
 } from '@alinea/ui'
-import { Modal } from '@alinea/ui/Modal'
-import { ComponentType, FormEvent, Suspense, useState } from 'react'
-import { MdArrowBack } from 'react-icons/md'
-import { useQuery, useQueryClient } from 'react-query'
-import { useNavigate } from 'react-router'
-import { Link } from 'react-router-dom'
+import {Modal} from '@alinea/ui/Modal'
+import {ComponentType, FormEvent, Suspense, useState} from 'react'
+import {MdArrowBack} from 'react-icons/md'
+import {useQuery, useQueryClient} from 'react-query'
+import {useNavigate} from 'react-router'
+import {Link} from 'react-router-dom'
 import * as Y from 'yjs'
-import { EntryDraft } from '../draft/EntryDraft'
-import { EntryProperty } from '../draft/EntryProperty'
-import { useDashboard } from '../hook/UseDashboard'
-import { useRoot } from '../hook/UseRoot'
-import { useSession } from '../hook/UseSession'
-import { useWorkspace } from '../hook/UseWorkspace'
-import { EntryHeader } from './entry/EntryHeader'
-import { EntryTitle } from './entry/EntryTitle'
+import {EntryDraft} from '../draft/EntryDraft'
+import {EntryProperty} from '../draft/EntryProperty'
+import {useLocale} from '../hook/UseLocale'
+import {useNav} from '../hook/UseNav'
+import {useRoot} from '../hook/UseRoot'
+import {useSession} from '../hook/UseSession'
+import {useWorkspace} from '../hook/UseWorkspace'
+import {EntryHeader} from './entry/EntryHeader'
+import {EntryTitle} from './entry/EntryTitle'
 import css from './EntryEdit.module.scss'
 
 const styles = fromModule(css)
@@ -41,40 +42,67 @@ type EntryPreviewProps = {
 
 function EntryPreview({draft, preview: Preview}: EntryPreviewProps) {
   const entry = useObservable(draft.entry)
-  return <Preview entry={entry} previewToken={draft.previewToken} />
+  return <Preview entry={entry} previewToken={draft.detail.previewToken} />
 }
 
-type EntryEditDraftProps = {draft: EntryDraft}
+type EntryEditDraftProps = {draft: EntryDraft; isLoading: boolean}
 
-function EntryEditDraft({draft}: EntryEditDraftProps) {
-  const {nav} = useDashboard()
+function EntryEditDraft({draft, isLoading}: EntryEditDraftProps) {
+  const nav = useNav()
+  const queryClient = useQueryClient()
+  const locale = useLocale()
   const {schema} = useWorkspace()
+  const {hub} = useSession()
+  const navigate = useNavigate()
   const type = schema.type(draft.type)
   const {preview} = useWorkspace()
+  const isTranslating = !isLoading && locale !== draft.locale
+  const [isCreating, setIsCreating] = useState(false)
+  function handleTranslation() {
+    if (isCreating) return
+    setIsCreating(true)
+    const entry = draft.getEntry()
+    entry.id = createId()
+    entry.locale = locale
+    const path = entry.url.split('/').slice(1).join('/')
+    entry.url = `/${locale}/${path}`
+    const doc = docFromEntry(entry, () => type)
+    return hub
+      .updateDraft(entry.id, Y.encodeStateAsUpdate(doc))
+      .then(result => {
+        if (!result.isFailure()) {
+          queryClient.invalidateQueries(['draft', draft.id])
+          navigate(nav.entry(entry))
+        } else {
+          throw result.error
+        }
+      })
+  }
   return (
     <HStack style={{height: '100%'}}>
       <div className={styles.root()}>
         <EntryHeader />
         <div className={styles.root.draft()}>
-          <EntryTitle
-            backLink={
-              draft.parent &&
-              nav.entry(draft.workspace, draft.root, draft.parent)
-            }
-          />
-          <Suspense fallback={null}>
-            {type ? (
-              <InputForm
-                // We key here currently because the tiptap/yjs combination fails to register
-                // changes when the fragment is changed while the editor is mounted.
-                key={draft.doc.guid}
-                type={type}
-                state={EntryProperty.root}
-              />
-            ) : (
-              <ErrorMessage error={new Error('Type not found')} />
-            )}
-          </Suspense>
+          <EntryTitle backLink={draft.parent && nav.entry(draft)} />
+          {isTranslating ? (
+            <Button onClick={() => handleTranslation()}>
+              Translate from {draft.locale?.toUpperCase()}
+            </Button>
+          ) : (
+            <Suspense fallback={null}>
+              {type ? (
+                <InputForm
+                  // We key here currently because the tiptap/yjs combination fails to register
+                  // changes when the fragment is changed while the editor is mounted.
+                  key={draft.doc.guid}
+                  type={type}
+                  state={EntryProperty.root}
+                />
+              ) : (
+                <ErrorMessage error={new Error('Type not found')} />
+              )}
+            </Suspense>
+          )}
         </div>
       </div>
       {preview && <EntryPreview preview={preview} draft={draft} />}
@@ -85,7 +113,8 @@ function EntryEditDraft({draft}: EntryEditDraftProps) {
 export type NewEntryProps = {parentId?: string}
 
 export function NewEntry({parentId}: NewEntryProps) {
-  const {nav} = useDashboard()
+  const nav = useNav()
+  const locale = useLocale()
   const queryClient = useQueryClient()
   const navigate = useNavigate()
   const {hub} = useSession()
@@ -125,6 +154,11 @@ export function NewEntry({parentId}: NewEntryProps) {
       url: (parent?.url || '') + (parent?.url.endsWith('/') ? '' : '/') + path,
       title
     }
+    if (root.i18n) {
+      entry.locale = locale
+      entry.i18nId = createId()
+      entry.url = `/${locale}/${entry.url}`
+    }
     const doc = docFromEntry(entry, () => type)
     return hub
       .updateDraft(entry.id, Y.encodeStateAsUpdate(doc))
@@ -136,7 +170,7 @@ export function NewEntry({parentId}: NewEntryProps) {
             entry.root,
             entry.parent
           ])
-          navigate(nav.entry(entry.workspace, entry.root, entry.id))
+          navigate(nav.entry(entry))
         }
       })
       .finally(() => {
@@ -145,7 +179,7 @@ export function NewEntry({parentId}: NewEntryProps) {
   }
 
   function handleClose() {
-    navigate(nav.entry(workspace, parent?.root, parent?.id))
+    navigate(nav.entry({workspace, ...parent}))
   }
 
   /*const parentType = parent && schema.type(parent.type)
@@ -187,9 +221,7 @@ export function NewEntry({parentId}: NewEntryProps) {
                 )
               )}
             />
-            <Link to={nav.entry(workspace, parent?.root, parent?.id)}>
-              Cancel
-            </Link>
+            <Link to={nav.entry({workspace, ...parent})}>Cancel</Link>
             <Button>Create</Button>
           </>
         )}
@@ -198,8 +230,8 @@ export function NewEntry({parentId}: NewEntryProps) {
   )
 }
 
-export type EntryEditProps = {draft: EntryDraft}
+export type EntryEditProps = {draft: EntryDraft; isLoading: boolean}
 
-export function EntryEdit({draft}: EntryEditProps) {
-  return <EntryEditDraft draft={draft} />
+export function EntryEdit({draft, isLoading}: EntryEditProps) {
+  return <EntryEditDraft draft={draft} isLoading={isLoading} />
 }

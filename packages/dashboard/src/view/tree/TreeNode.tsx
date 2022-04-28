@@ -18,8 +18,9 @@ import {
   useRef
 } from 'react'
 import {MdChevronRight, MdExpandMore, MdInsertDriveFile} from 'react-icons/md'
-import {Link, useLocation} from 'react-router-dom'
-import {useDashboard} from '../../hook/UseDashboard'
+import {Link} from 'react-router-dom'
+import {useCurrentDraft} from '../../hook/UseCurrentDraft'
+import {useNav} from '../../hook/UseNav'
 import {useWorkspace} from '../../hook/UseWorkspace'
 import css from './TreeNode.module.scss'
 
@@ -28,11 +29,11 @@ const styles = fromModule(css)
 type TreeNodeChildrenCreator = {entry: Entry.Summary}
 
 function TreeNodeChildrenCreator({entry}: TreeNodeChildrenCreator) {
-  const {nav} = useDashboard()
+  const nav = useNav()
   const {schema} = useWorkspace()
   const type = schema.type(entry.type)
   if (!type) return null
-  return <Create.Link to={nav.create(entry.workspace, entry.root, entry.id)} />
+  return <Create.Link to={nav.create(entry)} />
 }
 
 type TreeNodeLinkProps = {
@@ -63,7 +64,7 @@ const TreeNodeLink = memo(
     },
     ref
   ) {
-    const {nav} = useDashboard()
+    const nav = useNav()
     const {schema} = useWorkspace()
     const type = schema.type(entry.type)!
     const isContainer = entry.$isContainer
@@ -94,7 +95,7 @@ const TreeNodeLink = memo(
           <Link
             ref={ref}
             draggable={false}
-            to={nav.entry(entry.workspace, entry.root, entry.id)}
+            to={nav.entry(entry)}
             className={styles.root.link()}
             style={{paddingLeft: `${10 + level * 8}px`}}
             onClick={event => {
@@ -204,11 +205,10 @@ export function TreeNode({
   rootRef,
   ...props
 }: TreeNodeProps) {
-  const {nav} = useDashboard()
+  const nav = useNav()
   const ref = useRef<HTMLAnchorElement>(null)
-  const location = useLocation()
-  const isSelected =
-    location.pathname === nav.entry(entry.workspace, entry.root, entry.id)
+  const draft = useCurrentDraft()
+  const isSelected = draft?.id === entry.id
   const handleToggleOpen = useCallback(() => {
     if (entry.$isContainer) toggleOpen(entry.id)
   }, [toggleOpen])

@@ -115,6 +115,7 @@ export class FileData implements Data.Source, Data.Target, Data.Media {
 
   async publish(entries: Array<Entry>): Promise<void> {
     const {fs, config, loader, rootDir = '.'} = this.options
+    // Todo: use computeEntry here, requires a Store instance
     for (const entry of entries) {
       const {
         workspace,

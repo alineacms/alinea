@@ -23,7 +23,7 @@
 
   &:hover {
     opacity: 1;
-    border-color: var(--shadow);
+    border-color: currentColor;
   }
 
   &[data-state='active'] {

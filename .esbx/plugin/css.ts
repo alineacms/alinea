@@ -16,6 +16,7 @@ export const cssPlugin: Plugin = {
       : path.join(absWorkingDir, outdir)
     build.initialOptions.metafile = true
     build.onEnd(async res => {
+      if (res.errors.length > 0) return
       const meta = res.metafile!
       const files = Object.keys(meta.inputs).filter(file => {
         return file.endsWith('.scss')

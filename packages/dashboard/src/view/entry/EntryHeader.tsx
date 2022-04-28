@@ -12,9 +12,11 @@ import {
 } from 'react-icons/md'
 import {useQueryClient} from 'react-query'
 import {useNavigate} from 'react-router'
+import {Link} from 'react-router-dom'
 import {useCurrentDraft} from '../../hook/UseCurrentDraft'
-import {useDashboard} from '../../hook/UseDashboard'
 import {DraftsStatus, useDrafts} from '../../hook/UseDrafts'
+import {useLocale} from '../../hook/UseLocale'
+import {useNav} from '../../hook/UseNav'
 import {useRoot} from '../../hook/UseRoot'
 import {useWorkspace} from '../../hook/UseWorkspace'
 
@@ -49,11 +51,12 @@ function EntryStatusChip() {
 }
 
 export function EntryHeader() {
-  const {nav} = useDashboard()
+  const nav = useNav()
   const {name: workspace, schema} = useWorkspace()
-  const {name: root} = useRoot()
+  const root = useRoot()
   const drafts = useDrafts()
   const draft = useCurrentDraft()
+  const currentLocale = useLocale()
   const navigate = useNavigate()
   const parent = draft.parent
   const type = schema.type(draft.type)
@@ -64,9 +67,9 @@ export function EntryHeader() {
     return drafts.discard(draft).then(([entryRemains, err]) => {
       queryClient.invalidateQueries(['draft', draft.id])
       if (!entryRemains) {
-        queryClient.invalidateQueries(['tree', workspace, root])
+        queryClient.invalidateQueries(['tree'])
         // Navigate to parent, otherwise we'll 404
-        navigate(nav.entry(workspace, root, parent))
+        navigate(nav.entry({workspace, root: root.name, id: parent}))
       }
     })
   }
@@ -120,6 +123,33 @@ export function EntryHeader() {
           </HStack>
         </Typo.Monospace>
       </AppBar.Item>
+      {root.i18n && (
+        <HStack center gap={8}>
+          {root.i18n.locales.map(locale => {
+            const translation = draft.translation(locale)
+            const link = translation || draft
+            return (
+              <Link
+                key={locale}
+                to={nav.entry({
+                  workspace: link.workspace,
+                  root: link.root,
+                  id: link.id,
+                  locale
+                })}
+              >
+                <Chip accent={currentLocale === locale}>
+                  {translation ? (
+                    <>{locale.toUpperCase()}: ✅</>
+                  ) : (
+                    <>{locale.toUpperCase()}: ❌</>
+                  )}
+                </Chip>
+              </Link>
+            )
+          })}
+        </HStack>
+      )}
       <Stack.Right>
         <AppBar.Item>
           <EntryStatusChip />

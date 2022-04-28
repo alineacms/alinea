@@ -29,6 +29,8 @@ export function entryFromDoc(
     index: docRoot.get('index') as string,
     url: docRoot.get('url') as string,
     path: docRoot.get('path') as string,
+    locale: docRoot.get('locale') as string,
+    i18nId: docRoot.get('i18nId') as string,
     title: docRoot.get('title') as Label,
     parent: docRoot.get('parent') as string,
     $isContainer: docRoot.get('$isContainer') as boolean,
@@ -54,6 +56,8 @@ export function docFromEntry(
   docRoot.set('root', entry.root)
   docRoot.set('type', entry.type)
   docRoot.set('index', entry.index)
+  docRoot.set('locale', entry.locale)
+  docRoot.set('i18nId', entry.i18nId)
   docRoot.set('url', entry.url)
   docRoot.set('parent', entry.parent)
   docRoot.set('$isContainer', entry.$isContainer)

@@ -183,12 +183,7 @@ export namespace Cache {
       )
   }
 
-  export function computeEntry(
-    store: Store,
-    config: Config,
-    entry: Entry,
-    status: EntryStatus
-  ) {
+  export function computeEntry(store: Store, config: Config, entry: Entry) {
     const type = config.type(entry.workspace, entry.type)
     if (!type) throw createError(400, 'Type not found')
     const root = config.root(entry.workspace, entry.root)
@@ -222,8 +217,7 @@ export namespace Cache {
       url: '/' + url,
       parent: parents[parents.length - 1],
       parents: parents,
-      $isContainer: type!.options.isContainer,
-      $status: status
+      $isContainer: type!.options.isContainer
     }
   }
 
@@ -239,12 +233,19 @@ export namespace Cache {
       const doc = new Y.Doc()
       // if (existing) docFromEntry(config, existing, doc)
       Y.applyUpdate(doc, update)
-      const [data, err] = outcome(() => entryFromDoc(doc, config.type))
-      if (err) {
-        console.error(err)
+      const [entry, err] = outcome(() => {
+        const data = entryFromDoc(doc, config.type)
+        return {
+          ...computeEntry(store, config, data!),
+          $status: EntryStatus.Draft
+        }
+      })
+      if (!entry) {
+        console.log(
+          `Could not parse update for entry with id "${id}"\n  > ${err}`
+        )
         continue
       }
-      const entry = computeEntry(store, config, data!, EntryStatus.Draft)
       changed.push(id)
       if (existing) store.update(condition, entry)
       else store.insert(Entry, entry)
@@ -260,7 +261,7 @@ export namespace Cache {
   ) {
     return store.transaction(() => {
       for (const data of entries) {
-        const entry = computeEntry(store, config, data, EntryStatus.Published)
+        const entry = computeEntry(store, config, data)
         const condition = Entry.where(Entry.id.is(entry.id))
         const existing = store.first(condition)
         if (existing) store.update(condition, entry)

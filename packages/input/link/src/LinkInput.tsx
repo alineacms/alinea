@@ -203,6 +203,7 @@ export function LinkInput<T>({state, field}: LinkInputProps<T>) {
     ['explorer', schema, cursor],
     () => {
       const selection = View.getSelection(schema, 'summaryRow', Entry)
+      if (value.length === 0) return new Map()
       return hub
         .query(
           cursor.select(
