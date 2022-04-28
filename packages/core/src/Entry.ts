@@ -14,15 +14,16 @@ export interface Entry {
   id: string
   type: string
   title: Label
-  index: string
-  // Computed properties
   path: string
+  index: string
   workspace: string
   root: string
   url: string
-  $status?: EntryStatus
-  parent?: string
+  parent: string | undefined
   parents: Array<string>
+  i18nId?: string
+  locale?: string
+  $status?: EntryStatus
   $isContainer?: boolean
 }
 

@@ -10,7 +10,7 @@ import {config} from '../../.alinea/config'
 const demoConfig = createConfig({
   workspaces: {
     web: workspace('Demo', {
-      ...config.workspaces.web,
+      ...config.workspaces.web.config,
       preview({entry}) {
         return <FieldsPreview entry={entry} />
       }
@@ -26,7 +26,7 @@ function createLocalClient() {
       const {createStore} = await import('../../.alinea/store')
       const store = await createStore()
       const entries = await accumulate(data.entries())
-      Cache.applyPublish(store, config, entries)
+      Cache.applyPublish(store, config.type, entries)
       return store
     },
     drafts: new IndexedDBDrafts(),

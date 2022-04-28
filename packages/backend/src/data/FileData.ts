@@ -37,17 +37,25 @@ export class FileData implements Data.Source, Data.Target, Data.Media {
       workspace,
       {schema, source: contentDir, roots}
     ] of Object.entries(config.workspaces)) {
-      for (const root of Object.keys(roots)) {
-        const targets = ['/']
+      for (const root of Object.values(roots)) {
+        const targets = root.i18n
+          ? root.i18n.locales.map(locale => `/${locale}`)
+          : ['/']
         const parentIndex = new Map<string, string>()
         while (targets.length > 0) {
           const target = targets.shift()!
           const [files, err] = await outcome(
-            fs.readdir(path.join(rootDir, contentDir, root, target))
+            fs.readdir(path.join(rootDir, contentDir, root.name, target))
           )
           if (!files) continue
           for (const file of files) {
-            const location = path.join(rootDir, contentDir, root, target, file)
+            const location = path.join(
+              rootDir,
+              contentDir,
+              root.name,
+              target,
+              file
+            )
             const stat = await fs.stat(location)
             if (stat.isDirectory()) {
               targets.push(path.join(target, file))
@@ -74,7 +82,7 @@ export class FileData implements Data.Source, Data.Target, Data.Media {
               const res = {
                 ...entry,
                 workspace,
-                root,
+                root: root.name,
                 url,
                 path: name,
                 index: entry.index || entry.id,

@@ -126,7 +126,7 @@ export class Backend<T extends Workspaces = Workspaces> implements Hub<T> {
   publishEntries(entries: Array<Entry>): Future<void> {
     const {config, drafts, target} = this.options
     function applyPublish(store: Store) {
-      Cache.applyPublish(store, config.type, entries)
+      Cache.applyPublish(store, config, entries)
       return store
     }
     return outcome(async () => {

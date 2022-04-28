@@ -4,8 +4,7 @@ import {
   Entry,
   entryFromDoc,
   EntryStatus,
-  outcome,
-  Type
+  outcome
 } from '@alinea/core'
 import {Search} from '@alinea/core/Search'
 import {
@@ -184,14 +183,15 @@ export namespace Cache {
       )
   }
 
-  function computeEntry(
+  export function computeEntry(
     store: Store,
-    getType: (workspace: string, typeKey: string) => Type | undefined,
+    config: Config,
     entry: Entry,
     status: EntryStatus
   ) {
-    const type = getType(entry.workspace, entry.type)
+    const type = config.type(entry.workspace, entry.type)
     if (!type) throw createError(400, 'Type not found')
+    const root = config.root(entry.workspace, entry.root)
     const parents: Array<string> = []
     let target = entry.parent,
       url = entry.path
@@ -209,6 +209,14 @@ export namespace Cache {
       url = (parent.path === 'index' ? '' : parent.path) + '/' + url
       target = parent.parent
     }
+    if (root.i18n) {
+      if (!root.i18n.locales.includes(entry.locale!))
+        throw createError(
+          400,
+          `Invalid locale "${entry.locale}" in entry with url "${entry.url}"`
+        )
+      url = `${entry.locale}/${url}`
+    }
     return {
       ...entry,
       url: '/' + url,
@@ -221,7 +229,7 @@ export namespace Cache {
 
   export function applyUpdates(
     store: Store,
-    getType: (workspace: string, typeKey: string) => Type | undefined,
+    config: Config,
     updates: IterableIterator<[string, Uint8Array]>
   ) {
     const changed = []
@@ -231,12 +239,12 @@ export namespace Cache {
       const doc = new Y.Doc()
       // if (existing) docFromEntry(config, existing, doc)
       Y.applyUpdate(doc, update)
-      const [data, err] = outcome(() => entryFromDoc(doc, getType))
+      const [data, err] = outcome(() => entryFromDoc(doc, config.type))
       if (err) {
         console.error(err)
         continue
       }
-      const entry = computeEntry(store, getType, data!, EntryStatus.Draft)
+      const entry = computeEntry(store, config, data!, EntryStatus.Draft)
       changed.push(id)
       if (existing) store.update(condition, entry)
       else store.insert(Entry, entry)
@@ -247,12 +255,12 @@ export namespace Cache {
 
   export function applyPublish(
     store: Store,
-    getType: (workspace: string, typeKey: string) => Type | undefined,
+    config: Config,
     entries: Array<Entry>
   ) {
     return store.transaction(() => {
       for (const data of entries) {
-        const entry = computeEntry(store, getType, data, EntryStatus.Published)
+        const entry = computeEntry(store, config, data, EntryStatus.Published)
         const condition = Entry.where(Entry.id.is(entry.id))
         const existing = store.first(condition)
         if (existing) store.update(condition, entry)

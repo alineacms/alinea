@@ -43,6 +43,7 @@ const entries: Array<Entry> = [
     root: 'main',
     url: '/',
     path: 'index',
+    parent: undefined,
     parents: []
   },
   {

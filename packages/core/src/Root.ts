@@ -19,11 +19,18 @@ export class Root<T = string> {
   get icon() {
     return this.config.icon
   }
+
+  get i18n() {
+    return this.config.i18n
+  }
 }
 
 export type RootOptions<T = string> = {
   contains: Array<T>
   icon?: ComponentType
+  i18n?: {
+    locales: Array<string>
+  }
 }
 
 export type RootConfig<T = string> = {label: Label} & RootOptions<T>
