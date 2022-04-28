@@ -1,5 +1,5 @@
 import {Pages as AlineaPages} from '@alinea/backend'
-import {Page} from './schema.js'
+import {AnyPage} from './schema.js'
 export * from './schema.js'
 export * from './types.js'
-export type Pages = AlineaPages<Page>
+export type Pages = AlineaPages<AnyPage>
