@@ -17,31 +17,41 @@ type QueryParams = {
 
 function query({workspace, root, locale, open, visible}: QueryParams) {
   const Parent = Entry.as('Parent')
+  const selection = {
+    title: Entry.title,
+    id: Entry.id,
+    index: Entry.index,
+    workspace: Entry.workspace,
+    root: Entry.root,
+    type: Entry.type,
+    url: Entry.url,
+    parent: Entry.parent,
+    parents: Entry.parents,
+    $isContainer: Entry.$isContainer,
+    childrenCount: Parent.where(Parent.parent.is(Entry.id))
+      .select(Functions.count())
+      .first()
+  }
   let condition = Entry.parent
     .isIn(open)
     .or(Entry.id.isIn(open))
     .or(Entry.parent.isNull())
   if (locale) condition = condition.and(Entry.locale.is(locale))
-  return Entry.where(condition)
+  let query = Entry.where(condition)
     .where(Entry.workspace.is(workspace))
     .where(Entry.root.is(root))
     .where(Entry.type.isIn(visible))
-    .select({
-      title: Entry.title,
-      id: Entry.id,
-      index: Entry.index,
-      workspace: Entry.workspace,
-      root: Entry.root,
-      type: Entry.type,
-      url: Entry.url,
-      parent: Entry.parent,
-      parents: Entry.parents,
-      $isContainer: Entry.$isContainer,
-      childrenCount: Parent.where(Parent.parent.is(Entry.id))
-        .select(Functions.count())
-        .first()
-    })
-    .orderBy(Entry.index.asc())
+    .select(selection)
+  if (locale)
+    query = query.union(
+      Entry.where(Entry.workspace.is(workspace))
+        .where(Entry.root.is(root))
+        .where(Entry.type.isIn(visible))
+        .where(Entry.i18nId.isNotIn(query.select(Entry.i18nId)))
+        .select(selection)
+        .groupBy(Entry.i18nId)
+    )
+  return query
 }
 
 type UseContentTreeOptions = {

@@ -16,6 +16,7 @@ export type CursorData = {
   orderBy?: Array<OrderBy>
   groupBy?: Array<ExprData>
   singleResult?: boolean
+  union?: CursorData
 }
 
 export class CursorImpl<Row> {
@@ -122,6 +123,13 @@ export class CursorImpl<Row> {
     selection: I
   ): Cursor<Omit<Row, keyof Store.TypeOf<I>> & Store.TypeOf<I>> {
     return this.select(this.with(selection))
+  }
+
+  union(that: Cursor<Row>): Cursor<Row> {
+    return new Cursor({
+      ...this.cursor,
+      union: that.cursor
+    })
   }
 
   orderBy(...orderBy: Array<OrderBy>): Cursor<Row> {

@@ -336,11 +336,19 @@ export abstract class Formatter {
     }
   }
 
-  formatSelect(cursor: CursorData, options: FormatCursorOptions = {}) {
-    return sql`select ${this.formatCursor(cursor, {
+  formatSelect(
+    cursor: CursorData,
+    options: FormatCursorOptions = {}
+  ): Statement {
+    const res = sql`select ${this.formatCursor(cursor, {
       ...options,
       includeSelection: true
     })}`
+    if (!cursor.union) return res
+    return sql`select * from (${res}) union select * from (${this.formatSelect(
+      cursor.union,
+      options
+    )})`
   }
 
   formatDelete(cursor: CursorData, options: FormatCursorOptions = {}) {
