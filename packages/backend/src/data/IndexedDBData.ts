@@ -1,4 +1,5 @@
 import {createId, Entry, slugify} from '@alinea/core'
+import {Store} from '@alinea/store/Store'
 import {posix as path} from 'isomorphic-path'
 import * as idb from 'lib0/indexeddb.js'
 import {Data} from '../Data'
@@ -35,7 +36,7 @@ export class IndexedDBData implements Data.Source, Data.Target, Data.Media {
     }
   }
 
-  async publish(entries: Array<Entry>) {
+  async publish(current: Store, entries: Array<Entry>) {
     const db = await this.db
     const [store] = idb.transact(db, [STORE_NAME])
     for (const entry of entries) {

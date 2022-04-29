@@ -7,10 +7,12 @@ import {
   outcome,
   slugify
 } from '@alinea/core'
+import {Store} from '@alinea/store'
 import {posix as path} from 'node:path'
 import {Data} from '../Data'
 import {FS} from '../FS'
 import {Loader} from '../Loader'
+import {Storage} from '../Storage'
 import {walkUrl} from '../util/Urls'
 
 export type FileDataOptions = {
@@ -38,60 +40,62 @@ export class FileData implements Data.Source, Data.Target, Data.Media {
       {schema, source: contentDir, roots}
     ] of Object.entries(config.workspaces)) {
       for (const root of Object.values(roots)) {
-        const targets = root.i18n
-          ? root.i18n.locales.map(locale => `/${locale}`)
-          : ['/']
-        const parentIndex = new Map<string, string>()
-        while (targets.length > 0) {
-          const target = targets.shift()!
-          const [files, err] = await outcome(
-            fs.readdir(path.join(rootDir, contentDir, root.name, target))
-          )
-          if (!files) continue
-          for (const file of files) {
-            const location = path.join(
-              rootDir,
-              contentDir,
-              root.name,
-              target,
-              file
+        const locales = root.i18n?.locales || [undefined]
+        for (const locale of locales) {
+          const targets = [locale ? `/${locale}` : '/']
+          const parentIndex = new Map<string, string>()
+          while (targets.length > 0) {
+            const target = targets.shift()!
+            const [files, err] = await outcome(
+              fs.readdir(path.join(rootDir, contentDir, root.name, target))
             )
-            const stat = await fs.stat(location)
-            if (stat.isDirectory()) {
-              targets.push(path.join(target, file))
-            } else {
-              const extension = path.extname(location)
-              if (extension !== loader.extension) continue
-              const name = path.basename(file, extension)
-              const isIndex = name === 'index' || name === ''
-              const buffer = await fs.readFile(location)
-              const [entry, err] = outcome(() => loader.parse(schema, buffer))
-              if (!entry) {
-                console.log(`\rCould not parse ${location}: ${err}`)
-                continue
+            if (!files) continue
+            for (const file of files) {
+              const location = path.join(
+                rootDir,
+                contentDir,
+                root.name,
+                target,
+                file
+              )
+              const stat = await fs.stat(location)
+              if (stat.isDirectory()) {
+                targets.push(path.join(target, file))
+              } else {
+                const extension = path.extname(location)
+                if (extension !== loader.extension) continue
+                const name = path.basename(file, extension)
+                const isIndex = name === 'index' || name === ''
+                const buffer = await fs.readFile(location)
+                const [entry, err] = outcome(() => loader.parse(schema, buffer))
+                if (!entry) {
+                  console.log(`\rCould not parse ${location}: ${err}`)
+                  continue
+                }
+                const type = schema.type(entry.type)
+                if (!type) continue
+                const isContainer = Boolean(type?.options.isContainer)
+                const url = path.join(target, isIndex ? '' : name)
+                const parentPath = target
+                const parents = walkUrl(parentPath)
+                  .map(url => parentIndex.get(url)!)
+                  .filter(Boolean)
+                if (isContainer) parentIndex.set(url, entry.id)
+                const res = {
+                  ...entry,
+                  workspace,
+                  root: root.name,
+                  url,
+                  path: name,
+                  locale,
+                  index: entry.index || entry.id,
+                  parent: parents[parents.length - 1],
+                  parents,
+                  $isContainer: isContainer,
+                  $status: EntryStatus.Published
+                }
+                yield res
               }
-              const type = schema.type(entry.type)
-              if (!type) continue
-              const isContainer = Boolean(type?.options.isContainer)
-              const url = path.join(target, isIndex ? '' : name)
-              const parentPath = target
-              const parents = walkUrl(parentPath)
-                .map(url => parentIndex.get(url)!)
-                .filter(Boolean)
-              if (isContainer) parentIndex.set(url, entry.id)
-              const res = {
-                ...entry,
-                workspace,
-                root: root.name,
-                url,
-                path: name,
-                index: entry.index || entry.id,
-                parent: parents[parents.length - 1],
-                parents,
-                $isContainer: isContainer,
-                $status: EntryStatus.Published
-              }
-              yield res
             }
           }
         }
@@ -113,28 +117,35 @@ export class FileData implements Data.Source, Data.Target, Data.Media {
     return paths
   }
 
-  async publish(entries: Array<Entry>): Promise<void> {
+  async publish(current: Store, entries: Array<Entry>): Promise<void> {
     const {fs, config, loader, rootDir = '.'} = this.options
-    // Todo: use computeEntry here, requires a Store instance
-    for (const entry of entries) {
-      const {
-        workspace,
-        url,
-        parent: parent,
-        $isContainer,
-        $status,
-        path: entryPath,
-        ...data
-      } = entry
-      const {schema, source: contentDir} = config.workspaces[workspace]
-      const type = schema.type(entry.type)
-      const isIndex = entryPath === '' || entryPath === 'index'
-      const file = entry.url + (isIndex ? '/index' : '') + loader.extension
-      const location = path.join(rootDir, contentDir, entry.root, file)
-      await fs.mkdir(path.dirname(location), {recursive: true})
-      // Todo: cleanup files that moved to a different location
-      await fs.writeFile(location, loader.format(schema, data))
+    const changes = await Storage.publishChanges(
+      config,
+      current,
+      loader,
+      entries
+    )
+    const tasks = []
+    const noop = () => {}
+    for (const [file, contents] of changes.write) {
+      const location = path.join(rootDir, file)
+      tasks.push(
+        fs
+          .mkdir(path.dirname(location), {recursive: true})
+          .catch(noop)
+          .then(() => fs.writeFile(location, contents))
+      )
     }
+    for (const [a, b] of changes.rename) {
+      const location = path.join(rootDir, a)
+      const newLocation = path.join(rootDir, b)
+      tasks.push(fs.rename(location, newLocation).catch(noop))
+    }
+    for (const file of changes.delete) {
+      const location = path.join(rootDir, file)
+      tasks.push(fs.rm(location, {recursive: true, force: true}).catch(noop))
+    }
+    return Promise.all(tasks).then(() => void 0)
   }
 
   async upload(workspace: string, file: Data.Media.Upload): Promise<string> {

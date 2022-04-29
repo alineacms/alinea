@@ -50,7 +50,7 @@ const stories = workspace('Stories', {
   roots: {
     data: root('Stories', {
       icon: MdInsertDriveFile,
-      contains: ['Home'],
+      contains: ['Home', 'Docs'],
       i18n: {
         locales: ['nl', 'fr']
       }

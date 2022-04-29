@@ -11,9 +11,11 @@ import {text} from '@alinea/input.text'
 import {Volume} from 'memfs'
 import {test} from 'uvu'
 import * as assert from 'uvu/assert'
+import {Cache} from '../src'
 import {FileData} from '../src/data/FileData'
 import {FS} from '../src/FS'
 import {JsonLoader} from '../src/loader/JsonLoader'
+import {createMemoryStore} from './fixture/CreateMemoryStore'
 
 function entry(entry: Entry.Raw) {
   return JSON.stringify(entry)
@@ -89,13 +91,16 @@ const data = new FileData({
   loader: JsonLoader
 })
 
-async function getEntries() {
+const store = await createMemoryStore()
+
+async function index() {
   const entries = await accumulate(data.entries())
+  await Cache.create(store, config, data)
   return entries.sort((a, b) => a.url.localeCompare(b.url))
 }
 
 test('reading', async () => {
-  const [root, sub, subEntry] = await getEntries()
+  const [root, sub, subEntry] = await index()
   assert.is(root.id, 'root')
   assert.is(root.parent, undefined)
   assert.is(root.url, '/a')
@@ -108,9 +113,9 @@ test('reading', async () => {
 })
 
 test('inserting', async () => {
-  const [root] = await getEntries()
-  await data.publish([{...root, title: 'New root title'}])
-  const [newRoot] = await getEntries()
+  const [root] = await index()
+  await data.publish(store, [{...root, locale: 'a', title: 'New root title'}])
+  const [newRoot] = await index()
   assert.is(newRoot.id, 'root')
   assert.is(newRoot.title, 'New root title')
   assert.is(newRoot.url, '/a')

@@ -17,6 +17,7 @@ import convertHrtime from 'convert-hrtime'
 import prettyMilliseconds from 'pretty-ms'
 import * as Y from 'yjs'
 import {Data} from './Data'
+import {appendPath} from './util/Urls'
 
 export namespace Cache {
   function indexSearch(store: Store, entry: Entry, lookup = true) {
@@ -189,7 +190,7 @@ export namespace Cache {
     const root = config.root(entry.workspace, entry.root)
     const parents: Array<string> = []
     let target = entry.parent,
-      url = entry.path
+      url = entry.path === 'index' ? '' : entry.path
     while (target) {
       if (parents.includes(target))
         throw createError(400, 'Circular parent reference')
@@ -211,6 +212,8 @@ export namespace Cache {
           `Invalid locale "${entry.locale}" in entry with url "${entry.url}"`
         )
       url = `${entry.locale}/${url}`
+    } else {
+      delete entry.locale
     }
     return {
       ...entry,
@@ -218,6 +221,15 @@ export namespace Cache {
       parent: parents[parents.length - 1],
       parents: parents,
       $isContainer: type!.options.isContainer
+    }
+  }
+
+  function setChildrenUrl(store: Store, parentUrl: string, parentId: string) {
+    const children = store.all(Entry.where(Entry.parent.is(parentId)))
+    for (const child of children) {
+      const url = appendPath(parentUrl, child.path)
+      store.update(Entry.where(Entry.id.is(child.id)), {url})
+      setChildrenUrl(store, url, child.id)
     }
   }
 
@@ -247,8 +259,13 @@ export namespace Cache {
         continue
       }
       changed.push(id)
-      if (existing) store.update(condition, entry)
-      else store.insert(Entry, entry)
+      if (existing) {
+        if (existing.url !== entry.url)
+          setChildrenUrl(store, entry.url, entry.id)
+        store.update(condition, entry)
+      } else {
+        store.insert(Entry, entry)
+      }
       indexSearch(store, entry)
     }
     validateOrder(store, changed)
@@ -264,8 +281,13 @@ export namespace Cache {
         const entry = computeEntry(store, config, data)
         const condition = Entry.where(Entry.id.is(entry.id))
         const existing = store.first(condition)
-        if (existing) store.update(condition, entry)
-        else store.insert(Entry, entry)
+        if (existing) {
+          if (existing.url !== entry.url)
+            setChildrenUrl(store, entry.url, entry.id)
+          store.update(condition, entry)
+        } else {
+          store.insert(Entry, entry)
+        }
         indexSearch(store, entry)
       }
     })

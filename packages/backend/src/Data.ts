@@ -1,4 +1,5 @@
 import {Entry} from '@alinea/core'
+import {Store} from '@alinea/store'
 
 export namespace Data {
   export interface Source {
@@ -27,7 +28,7 @@ export namespace Data {
   }
 
   export interface Target {
-    publish(entries: Array<Entry>): Promise<void>
+    publish(current: Store, entries: Array<Entry>): Promise<void>
   }
 
   export interface Media {

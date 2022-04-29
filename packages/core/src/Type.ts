@@ -50,6 +50,10 @@ export class Type<T = any> {
     public options: Type.Options<T> = {}
   ) {}
 
+  get isContainer() {
+    return Boolean(this.options.isContainer)
+  }
+
   get fields() {
     if (this.__fields) return this.__fields
     const res = {}

@@ -77,6 +77,7 @@ function EntryEditDraft({draft, isLoading}: EntryEditDraftProps) {
           throw result.error
         }
       })
+      .finally(() => setIsCreating(false))
   }
   return (
     <HStack style={{height: '100%'}}>

@@ -1,9 +1,11 @@
 import {Config, createError, createId, Entry, slugify} from '@alinea/core'
+import {Store} from '@alinea/store'
 import {Octokit} from '@octokit/rest'
 import {posix as path} from 'node:path'
 import createOrUpdateFiles from 'octokit-commit-multiple-files/create-or-update-files.js'
 import {Data} from '../Data'
 import {Loader} from '../Loader'
+import {Storage} from '../Storage'
 
 export type GithubTargetOptions = {
   config: Config
@@ -26,25 +28,15 @@ export class GithubData implements Data.Target, Data.Media {
     this.octokit = new Octokit({auth: options.githubAuthToken})
   }
 
-  async publish(entries: Array<Entry>) {
+  async publish(current: Store, entries: Array<Entry>) {
     const {loader, config, rootDir = '.'} = this.options
-    const changes = entries.map(entry => {
-      const {
-        workspace,
-        url,
-        parent: parent,
-        $isContainer,
-        $status,
-        path: entryPath,
-        ...data
-      } = entry
-      const {schema, source: contentDir} = config.workspaces[workspace]
-      const isIndex = entryPath === '' || entryPath === 'index'
-      const file = entry.url + (isIndex ? '/index' : '') + loader.extension
-      const location = path.join(rootDir, contentDir, entry.root, file)
-      return [location, loader.format(schema, data)] as const
-    })
-    // Todo: cleanup files that moved to a different location
+    const changes = await Storage.publishChanges(
+      config,
+      current,
+      loader,
+      entries,
+      false
+    )
     return createOrUpdateFiles(this.octokit, {
       owner: this.options.owner,
       repo: this.options.repo,
@@ -53,7 +45,12 @@ export class GithubData implements Data.Target, Data.Media {
       changes: [
         {
           message: 'Update content',
-          files: Object.fromEntries(changes)
+          files: Object.fromEntries(
+            changes.write.map(([file, contents]) => {
+              return [path.join(rootDir, file), contents]
+            })
+          ),
+          filesToDelete: changes.delete.map(file => path.join(rootDir, file))
         }
       ]
     })

@@ -135,10 +135,11 @@ export class Backend<T extends Workspaces = Workspaces> implements Hub<T> {
       return store
     }
     return outcome(async () => {
-      await target.publish(entries)
+      const create = this.createStore
+      const current = await create()
+      await target.publish(current, entries)
       const ids = entries.map(entry => entry.id)
       await drafts.delete(ids)
-      const create = this.createStore
       this.createStore = () => create().then(applyPublish)
       await this.preview.deleteUpdates(ids)
     })

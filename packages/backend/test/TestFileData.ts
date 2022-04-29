@@ -16,6 +16,7 @@ import * as assert from 'uvu/assert'
 import {FileData} from '../src/data/FileData'
 import {FS} from '../src/FS'
 import {JsonLoader} from '../src/loader/JsonLoader'
+import {createMemoryStore} from './fixture/CreateMemoryStore'
 
 function entry(entry: Entry.Raw) {
   return JSON.stringify(entry)
@@ -86,6 +87,8 @@ const data = new FileData({
   loader: JsonLoader
 })
 
+const store = await createMemoryStore()
+
 test('reading', async () => {
   const entries = await accumulate(data.entries())
   entries.sort((a, b) => a.url.localeCompare(b.url))
@@ -103,7 +106,7 @@ test('reading', async () => {
 
 test('inserting', async () => {
   const [root] = await accumulate(data.entries())
-  await data.publish([{...root, title: 'New root title'}])
+  await data.publish(store, [{...root, title: 'New root title'}])
   const [newRoot] = await accumulate(data.entries())
   assert.is(newRoot.id, 'root')
   assert.is(newRoot.title, 'New root title')

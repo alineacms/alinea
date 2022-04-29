@@ -32,6 +32,6 @@
     "plugins": [{"name": "typescript-plugin-css-modules"}],
     "types": ["react/next", "react-dom/next"]
   },
-  "include": ["packages/**/*.ts", "packages/**/*.tsx"],
-  "exclude": ["node_modules", "packages/website"]
+  "include": ["packages"],
+  "exclude": ["node_modules", "packages/website", "packages/**/dist"]
 }
