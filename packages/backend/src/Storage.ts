@@ -63,7 +63,6 @@ export namespace Storage {
       // Cleanup old files
       if (previous) {
         const oldLocation = entryLocation(previous, loader.extension)
-        console.log({oldLocation, location})
         if (oldLocation !== location) {
           const oldFile = abs(previous.root, oldLocation)
           changes.delete.push(oldFile)
