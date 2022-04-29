@@ -1,15 +1,13 @@
 import {EntryStatus} from '@alinea/core'
 import {AppBar, Chip, HStack, px, Stack, Typo, useObservable} from '@alinea/ui'
+import {IcRoundArchive} from '@alinea/ui/icons/IcRoundArchive'
+import {IcRoundCheck} from '@alinea/ui/icons/IcRoundCheck'
+import {IcRoundDelete} from '@alinea/ui/icons/IcRoundDelete'
+import {IcRoundEdit} from '@alinea/ui/icons/IcRoundEdit'
+import {IcRoundInsertDriveFile} from '@alinea/ui/icons/IcRoundInsertDriveFile'
+import {IcRoundPublish} from '@alinea/ui/icons/IcRoundPublish'
+import {IcRoundRotateLeft} from '@alinea/ui/icons/IcRoundRotateLeft'
 import {useState} from 'react'
-import {
-  MdArchive,
-  MdCheck,
-  MdDelete,
-  MdEdit,
-  MdInsertDriveFile,
-  MdPublish,
-  MdRotateLeft
-} from 'react-icons/md'
 import {useQueryClient} from 'react-query'
 import {useNavigate} from 'react-router'
 import {Link} from 'react-router-dom'
@@ -27,26 +25,26 @@ function EntryStatusChip() {
   const status = useObservable(draft.status)
   switch (status) {
     case EntryStatus.Published:
-      return <Chip icon={MdCheck}>Published</Chip>
+      return <Chip icon={IcRoundCheck}>Published</Chip>
     case EntryStatus.Publishing:
-      return <Chip icon={MdRotateLeft}>Publishing</Chip>
+      return <Chip icon={IcRoundRotateLeft}>Publishing</Chip>
     case EntryStatus.Draft:
       return (
         <Chip
           accent
           icon={
             draftsStatus === DraftsStatus.Saving
-              ? MdRotateLeft
+              ? IcRoundRotateLeft
               : draftsStatus === DraftsStatus.Synced
-              ? MdCheck
-              : MdEdit
+              ? IcRoundCheck
+              : IcRoundEdit
           }
         >
           Draft
         </Chip>
       )
     case EntryStatus.Archived:
-      return <Chip icon={MdArchive}>Archived</Chip>
+      return <Chip icon={IcRoundArchive}>Archived</Chip>
   }
 }
 
@@ -107,7 +105,7 @@ export function EntryHeader() {
               {type?.options.icon ? (
                 <type.options.icon />
               ) : (
-                <MdInsertDriveFile size={12} style={{display: 'block'}} />
+                <IcRoundInsertDriveFile style={{display: 'block'}} />
               )}
             </div>
             <span
@@ -156,12 +154,12 @@ export function EntryHeader() {
         </AppBar.Item>
       </Stack.Right>
       {status === EntryStatus.Draft && (
-        <AppBar.Item as="button" icon={MdDelete} onClick={handleDiscard}>
+        <AppBar.Item as="button" icon={IcRoundDelete} onClick={handleDiscard}>
           <span>Discard</span>
         </AppBar.Item>
       )}
       {status !== EntryStatus.Published && !isPublishing && (
-        <AppBar.Item as="button" icon={MdPublish} onClick={handlePublish}>
+        <AppBar.Item as="button" icon={IcRoundPublish} onClick={handlePublish}>
           <span>Publish</span>
         </AppBar.Item>
       )}

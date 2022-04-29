@@ -1,6 +1,6 @@
 import {fromModule, HStack, px} from '@alinea/ui'
+import {IcRoundKeyboardArrowRight} from '@alinea/ui/icons/IcRoundKeyboardArrowRight'
 import {ComponentType, Fragment, PropsWithChildren, ReactNode} from 'react'
-import {MdKeyboardArrowRight} from 'react-icons/md'
 import type {JSONOutput} from 'typedoc'
 import css from './Declaration.module.scss'
 
@@ -329,7 +329,7 @@ function MemberWrapperLabel({children}: PropsWithChildren<{}>) {
     <label className={styles.wrapperLabel()}>
       <HStack>
         <span className={styles.wrapperLabel.icon()}>
-          <MdKeyboardArrowRight size={16} />
+          <IcRoundKeyboardArrowRight style={{fontSize: px(16)}} />
         </span>
         <div style={{minWidth: 0}}>{children}</div>
       </HStack>

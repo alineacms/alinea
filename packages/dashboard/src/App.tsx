@@ -10,15 +10,13 @@ import {
 } from '@alinea/ui'
 import {Sidebar} from '@alinea/ui/Sidebar'
 //import 'preact/debug'
+import {IcRoundCheck} from '@alinea/ui/icons/IcRoundCheck'
+import {IcRoundEdit} from '@alinea/ui/icons/IcRoundEdit'
+import {IcRoundInsertDriveFile} from '@alinea/ui/icons/IcRoundInsertDriveFile'
+import {IcRoundRotateLeft} from '@alinea/ui/icons/IcRoundRotateLeft'
+import {IcRoundWarning} from '@alinea/ui/icons/IcRoundWarning'
 import {Fragment, Suspense, useState} from 'react'
 import {Helmet} from 'react-helmet'
-import {
-  MdCheck,
-  MdEdit,
-  MdInsertDriveFile,
-  MdRotateLeft,
-  MdWarning
-} from 'react-icons/md'
 import {
   QueryClient,
   QueryClientProvider as ReactQueryClientProvider
@@ -92,7 +90,11 @@ function AppAuthenticated() {
                           selected={isSelected}
                           to={nav.root({workspace, root: key})}
                         >
-                          {root.icon ? <root.icon /> : <MdInsertDriveFile />}
+                          {root.icon ? (
+                            <root.icon />
+                          ) : (
+                            <IcRoundInsertDriveFile />
+                          )}
                         </Sidebar.Menu.Item>
                       )
                     })}
@@ -126,7 +128,7 @@ function AppAuthenticated() {
             <Statusbar.Root>
               <DraftsStatusSummary />
               {!auth && (
-                <Statusbar.Status icon={MdWarning}>
+                <Statusbar.Status icon={IcRoundWarning}>
                   Not using authentication
                 </Statusbar.Status>
               )}
@@ -185,11 +187,13 @@ function DraftsStatusSummary() {
   const status = useObservable(drafts.status)
   switch (status) {
     case DraftsStatus.Synced:
-      return <Statusbar.Status icon={MdCheck}>Synced</Statusbar.Status>
+      return <Statusbar.Status icon={IcRoundCheck}>Synced</Statusbar.Status>
     case DraftsStatus.Editing:
-      return <Statusbar.Status icon={MdEdit}>Editing</Statusbar.Status>
+      return <Statusbar.Status icon={IcRoundEdit}>Editing</Statusbar.Status>
     case DraftsStatus.Saving:
-      return <Statusbar.Status icon={MdRotateLeft}>Saving</Statusbar.Status>
+      return (
+        <Statusbar.Status icon={IcRoundRotateLeft}>Saving</Statusbar.Status>
+      )
   }
 }
 

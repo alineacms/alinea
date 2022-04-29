@@ -13,14 +13,12 @@ import {
   Typo,
   VStack
 } from '@alinea/ui'
+import {IcOutlineGridView} from '@alinea/ui/icons/IcOutlineGridView'
+import {IcOutlineList} from '@alinea/ui/icons/IcOutlineList'
+import {IcRoundArrowBack} from '@alinea/ui/icons/IcRoundArrowBack'
+import {IcRoundSearch} from '@alinea/ui/icons/IcRoundSearch'
 import {Modal} from '@alinea/ui/Modal'
 import {Suspense, useCallback, useMemo, useState} from 'react'
-import {
-  MdArrowBack,
-  MdOutlineGridView,
-  MdOutlineList,
-  MdSearch
-} from 'react-icons/md'
 import {useFocusList} from '../hook/UseFocusList'
 import {ReferencePickerOptions} from '../hook/UseReferencePicker'
 import {useRoot} from '../hook/UseRoot'
@@ -119,12 +117,12 @@ export function ReferencePicker({
     <Modal open onClose={onCancel}>
       <Suspense fallback={<Loader absolute />}>
         <HStack center gap={18} className={styles.root.header()}>
-          <IconButton icon={MdArrowBack} onClick={onCancel} />
+          <IconButton icon={IcRoundArrowBack} onClick={onCancel} />
           <Typo.H1 flat>Select a reference</Typo.H1>
         </HStack>
 
         <label className={styles.root.label()}>
-          <MdSearch size={15} className={styles.root.label.icon()} />
+          <IcRoundSearch className={styles.root.label.icon()} />
           <input
             autoFocus
             placeholder="Search"
@@ -136,12 +134,12 @@ export function ReferencePicker({
           <Stack.Right>
             <HStack gap={16}>
               <IconButton
-                icon={MdOutlineList}
+                icon={IcOutlineList}
                 active={view === 'row'}
                 onClick={() => setView('row')}
               />
               <IconButton
-                icon={MdOutlineGridView}
+                icon={IcOutlineGridView}
                 active={view === 'thumb'}
                 onClick={() => setView('thumb')}
               />

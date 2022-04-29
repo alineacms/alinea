@@ -25,7 +25,6 @@ __metadata:
     jwt-decode: ^3.1.2
     nodemailer: ^6.6.5
     react-helmet: ^6.1.0
-    react-icons: ^4.3.1
   peerDependencies:
     react: "*"
   languageName: unknown
@@ -156,7 +155,6 @@ __metadata:
     image-blob-reduce: ^4.1.0
     p-limit: ^4.0.0
     react-helmet: ^6.1.0
-    react-icons: ^4.3.1
     react-query: ^3.34.19
     react-router: ^6.3.0
     react-router-dom: ^6.3.0
@@ -189,7 +187,6 @@ __metadata:
     "@alinea/editor": 0.0.0
     "@alinea/ui": 0.0.0
     react-autosize-textarea: ^7.1.0
-    react-icons: ^4.3.1
   peerDependencies:
     react: "*"
   languageName: unknown
@@ -207,7 +204,6 @@ __metadata:
     "@dnd-kit/core": ^3.1.1
     "@dnd-kit/sortable": ^4.0.0
     "@dnd-kit/utilities": ^2.0.0
-    react-icons: ^4.3.1
     react-query: ^3.34.19
   peerDependencies:
     react: "*"
@@ -224,7 +220,6 @@ __metadata:
     "@dnd-kit/core": ^3.1.1
     "@dnd-kit/sortable": ^4.0.0
     "@dnd-kit/utilities": ^2.0.0
-    react-icons: ^4.3.1
   peerDependencies:
     react: "*"
   languageName: unknown
@@ -248,7 +243,6 @@ __metadata:
     "@alinea/dashboard": 0.0.0
     "@alinea/editor": 0.0.0
     "@alinea/ui": 0.0.0
-    react-icons: ^4.3.1
   peerDependencies:
     react: "*"
   languageName: unknown
@@ -267,7 +261,6 @@ __metadata:
     "@tiptap/extension-floating-menu": ^2.0.0-beta.50
     "@tiptap/react": ^2.0.0-beta.108
     "@tiptap/starter-kit": ^2.0.0-beta.183
-    react-icons: ^4.3.1
   peerDependencies:
     react: "*"
   languageName: unknown
@@ -280,7 +273,6 @@ __metadata:
     "@alinea/core": 0.0.0
     "@alinea/editor": 0.0.0
     "@alinea/ui": 0.0.0
-    react-icons: ^4.3.1
   languageName: unknown
   linkType: soft
 
@@ -302,7 +294,6 @@ __metadata:
     "@alinea/editor": 0.0.0
     "@alinea/ui": 0.0.0
     react-autosize-textarea: ^7.1.0
-    react-icons: ^4.3.1
   peerDependencies:
     react: "*"
   languageName: unknown
@@ -369,7 +360,6 @@ __metadata:
     "@radix-ui/react-tabs": ^0.1.5
     color2k: ^1.2.4
     react-helmet: ^6.1.0
-    react-icons: ^4.3.1
     use-error-boundary: ^2.0.6
   peerDependencies:
     react: "*"
@@ -398,7 +388,6 @@ __metadata:
     postcss-pxtorem: ^6.0.0
     react: ^18.0.0
     react-dom: ^18.0.0
-    react-icons: ^4.3.1
     react-string-replace: ^1.0.0
     shiki: ^0.10.1
   languageName: unknown
@@ -7120,15 +7109,6 @@ fsevents@~2.3.2:
   peerDependencies:
     react: ">=16.3.0"
   checksum: a4998479dab7fc1c2799eddefb1870a9d881b5f71cfdf97979a9882e42f4bb50402d55335f308f461e735e01a06f46b16cc7b4e6bcb22c7a4a6f85a753c5c106
-  languageName: node
-  linkType: hard
-
-"react-icons@npm:^4.3.1":
-  version: 4.3.1
-  resolution: "react-icons@npm:4.3.1"
-  peerDependencies:
-    react: "*"
-  checksum: 2cc608acdd3e906aa3aaee290b8398220639677c949382d86e554020e5dab6a9f1ed7484418aa5272cb5c5c018e1fc9a323d433d901697a76530029f9ecb1263
   languageName: node
   linkType: hard
 

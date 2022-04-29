@@ -3,7 +3,8 @@ import {link} from '@alinea/input.link'
 import {path} from '@alinea/input.path'
 import {tab, tabs} from '@alinea/input.tabs'
 import {text} from '@alinea/input.text'
-import {MdInsertDriveFile, MdLink} from 'react-icons/md'
+import {IcRoundInsertDriveFile} from '@alinea/ui/icons/IcRoundInsertDriveFile'
+import {IcRoundLink} from '@alinea/ui/icons/IcRoundLink'
 
 export const HomePageSchema = type(
   'Home',
@@ -22,7 +23,7 @@ export const HomePageSchema = type(
           label: text('Button label')
         })
       })
-    }).configure({icon: MdInsertDriveFile}),
+    }).configure({icon: IcRoundInsertDriveFile}),
     tab('Top navigation', {
       links: link('Links', {
         type: ['entry', 'external'],
@@ -30,7 +31,7 @@ export const HomePageSchema = type(
           title: text('Title')
         })
       })
-    }).configure({icon: MdLink})
+    }).configure({icon: IcRoundLink})
   )
 )
 

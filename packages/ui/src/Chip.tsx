@@ -1,4 +1,4 @@
-import type {IconType} from 'react-icons'
+import type {ComponentType} from 'react'
 import css from './Chip.module.scss'
 import {Icon} from './Icon'
 import {HStack, StackProps} from './Stack'
@@ -7,7 +7,7 @@ import {fromModule} from './util/Styler'
 const styles = fromModule(css)
 
 export type ChipProps = StackProps & {
-  icon?: IconType
+  icon?: ComponentType
   accent?: boolean
 }
 

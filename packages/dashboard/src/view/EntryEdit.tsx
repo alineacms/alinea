@@ -15,9 +15,9 @@ import {
   Typo,
   useObservable
 } from '@alinea/ui'
+import {IcRoundArrowBack} from '@alinea/ui/icons/IcRoundArrowBack'
 import {Modal} from '@alinea/ui/Modal'
 import {ComponentType, FormEvent, Suspense, useState} from 'react'
-import {MdArrowBack} from 'react-icons/md'
 import {useQuery, useQueryClient} from 'react-query'
 import {useNavigate} from 'react-router'
 import {Link} from 'react-router-dom'
@@ -190,7 +190,7 @@ export function NewEntry({parentId}: NewEntryProps) {
   return (
     <Modal open onClose={handleClose}>
       <HStack center gap={18} className={styles.new.header()}>
-        <IconButton icon={MdArrowBack} onClick={handleClose} />
+        <IconButton icon={IcRoundArrowBack} onClick={handleClose} />
         <Typo.H1 flat>
           New entry{' '}
           {parent && (

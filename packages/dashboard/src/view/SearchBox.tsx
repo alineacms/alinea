@@ -1,8 +1,10 @@
 import {Entry} from '@alinea/core/Entry'
 import {Search} from '@alinea/core/Search'
 import {fromModule, HStack, IconButton, Stack} from '@alinea/ui'
+import {IcOutlineGridView} from '@alinea/ui/icons/IcOutlineGridView'
+import {IcOutlineList} from '@alinea/ui/icons/IcOutlineList'
+import {IcRoundSearch} from '@alinea/ui/icons/IcRoundSearch'
 import {useLayoutEffect, useMemo, useState} from 'react'
-import {MdOutlineGridView, MdOutlineList, MdSearch} from 'react-icons/md'
 import {useLocation, useNavigate} from 'react-router'
 import {useFocusList} from '../hook/UseFocusList'
 import {useNav} from '../hook/UseNav'
@@ -71,7 +73,7 @@ export function SearchBox() {
     >
       <div>
         <label className={styles.root.label()} {...list.focusProps}>
-          <MdSearch size={15} className={styles.root.label.icon()} />
+          <IcRoundSearch className={styles.root.label.icon()} />
           <input
             autoFocus
             placeholder="Search"
@@ -84,13 +86,13 @@ export function SearchBox() {
               <HStack gap={10}>
                 <IconButton
                   size={12}
-                  icon={MdOutlineList}
+                  icon={IcOutlineList}
                   active={explorerView === 'row'}
                   onClick={() => setExplorerView('row')}
                 />
                 <IconButton
                   size={12}
-                  icon={MdOutlineGridView}
+                  icon={IcOutlineGridView}
                   active={explorerView === 'thumb'}
                   onClick={() => setExplorerView('thumb')}
                 />

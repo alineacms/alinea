@@ -1,6 +1,7 @@
 import {fromModule, HStack, Stack, Typo} from '@alinea/ui'
+import {IcRoundArrowBack} from '@alinea/ui/icons/IcRoundArrowBack'
+import {IcRoundArrowForward} from '@alinea/ui/icons/IcRoundArrowForward'
 import Link from 'next/link'
-import {MdArrowBack, MdArrowForward} from 'react-icons/md/index.js'
 import {Blocks} from './blocks/Blocks'
 import css from './DocPage.module.scss'
 import {DocPageProps} from './DocPage.query'
@@ -25,7 +26,7 @@ export function DocPage({title, blocks, menu, next, prev}: DocPageProps) {
               <Link href={prev.url} passHref>
                 <Typo.Link>
                   <HStack gap={8}>
-                    <MdArrowBack />
+                    <IcRoundArrowBack />
                     <span>{prev.title}</span>
                   </HStack>
                 </Typo.Link>
@@ -37,7 +38,7 @@ export function DocPage({title, blocks, menu, next, prev}: DocPageProps) {
                   <Typo.Link>
                     <HStack center gap={8}>
                       <span>{next.title}</span>
-                      <MdArrowForward />
+                      <IcRoundArrowForward />
                     </HStack>
                   </Typo.Link>
                 </Link>

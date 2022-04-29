@@ -11,6 +11,16 @@ import {
   px,
   TextLabel
 } from '@alinea/ui'
+import {IcRoundClose} from '@alinea/ui/icons/IcRoundClose'
+import {IcRoundDragHandle} from '@alinea/ui/icons/IcRoundDragHandle'
+import {IcRoundFormatBold} from '@alinea/ui/icons/IcRoundFormatBold'
+import {IcRoundFormatClear} from '@alinea/ui/icons/IcRoundFormatClear'
+import {IcRoundFormatItalic} from '@alinea/ui/icons/IcRoundFormatItalic'
+import {IcRoundFormatListBulleted} from '@alinea/ui/icons/IcRoundFormatListBulleted'
+import {IcRoundFormatListNumbered} from '@alinea/ui/icons/IcRoundFormatListNumbered'
+import {IcRoundNotes} from '@alinea/ui/icons/IcRoundNotes'
+import {IcRoundRedo} from '@alinea/ui/icons/IcRoundRedo'
+import {IcRoundUndo} from '@alinea/ui/icons/IcRoundUndo'
 import {mergeAttributes, Node} from '@tiptap/core'
 import Collaboration from '@tiptap/extension-collaboration'
 import FloatingMenuExtension from '@tiptap/extension-floating-menu'
@@ -23,18 +33,6 @@ import {
 } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import {forwardRef, Ref, useCallback, useRef, useState} from 'react'
-import {
-  MdClose,
-  MdDragHandle,
-  MdFormatBold,
-  MdFormatClear,
-  MdFormatItalic,
-  MdFormatListBulleted,
-  MdFormatListNumbered,
-  MdNotes,
-  MdRedo,
-  MdUndo
-} from 'react-icons/md'
 import {useEditor} from './hook/UseEditor'
 import {RichTextField} from './RichTextField'
 import css from './RichTextInput.module.scss'
@@ -60,7 +58,7 @@ function typeExtension(
           <Card.Header>
             <Card.Options>
               <IconButton
-                icon={type.options.icon || MdDragHandle}
+                icon={type.options.icon || IcRoundDragHandle}
                 data-drag-handle
                 style={{cursor: 'grab'}}
               />
@@ -69,7 +67,7 @@ function typeExtension(
               <TextLabel label={type.label} />
             </Card.Title>
             <Card.Options>
-              <IconButton icon={MdClose} onClick={deleteNode} />
+              <IconButton icon={IcRoundClose} onClick={deleteNode} />
             </Card.Options>
           </Card.Header>
           <Card.Content>
@@ -224,7 +222,7 @@ const ToolbarButtons = forwardRef(function ToolbarButtons(
           </DropdownMenu.Root>
           <div className={styles.buttons.separator()} />
           <IconButton
-            icon={MdFormatBold}
+            icon={IcRoundFormatBold}
             size={17}
             title="Bold"
             onClick={e => {
@@ -234,7 +232,7 @@ const ToolbarButtons = forwardRef(function ToolbarButtons(
             active={editor.isActive('bold')}
           />
           <IconButton
-            icon={MdFormatItalic}
+            icon={IcRoundFormatItalic}
             size={17}
             title="Italic"
             onClick={e => {
@@ -244,7 +242,7 @@ const ToolbarButtons = forwardRef(function ToolbarButtons(
             active={editor.isActive('italic')}
           />
           <IconButton
-            icon={MdFormatClear}
+            icon={IcRoundFormatClear}
             size={17}
             title="Clear format"
             onClick={e => {
@@ -254,7 +252,7 @@ const ToolbarButtons = forwardRef(function ToolbarButtons(
           />
           <div className={styles.buttons.separator()} />
           <IconButton
-            icon={MdFormatListBulleted}
+            icon={IcRoundFormatListBulleted}
             size={17}
             title="Bullet list"
             onClick={e => {
@@ -264,7 +262,7 @@ const ToolbarButtons = forwardRef(function ToolbarButtons(
             active={editor.isActive('bulletList')}
           />
           <IconButton
-            icon={MdFormatListNumbered}
+            icon={IcRoundFormatListNumbered}
             size={17}
             title="Ordered list"
             onClick={e => {
@@ -275,7 +273,7 @@ const ToolbarButtons = forwardRef(function ToolbarButtons(
           />
           <div className={styles.buttons.separator()} />
           <IconButton
-            icon={MdUndo}
+            icon={IcRoundUndo}
             size={17}
             title="Undo"
             onClick={e => {
@@ -284,7 +282,7 @@ const ToolbarButtons = forwardRef(function ToolbarButtons(
             }}
           />
           <IconButton
-            icon={MdRedo}
+            icon={IcRoundRedo}
             size={17}
             title="Redo"
             onClick={e => {
@@ -365,7 +363,7 @@ export function RichTextInput<T>({state, field}: RichTextInputProps<T>) {
         optional={optional}
         inline={inline}
         focused={focus}
-        icon={MdNotes}
+        icon={IcRoundNotes}
         empty={editor.isEmpty}
         ref={containerRef}
       >

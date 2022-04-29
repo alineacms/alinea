@@ -6,12 +6,14 @@ import {
   Ellipsis,
   fromModule,
   HStack,
+  px,
   TextLabel,
   Typo,
   VStack
 } from '@alinea/ui'
+import {IcRoundInsertDriveFile} from '@alinea/ui/icons/IcRoundInsertDriveFile'
+import {IcRoundKeyboardArrowRight} from '@alinea/ui/icons/IcRoundKeyboardArrowRight'
 import {ReactNode} from 'react'
-import {MdInsertDriveFile, MdKeyboardArrowRight} from 'react-icons/md'
 import css from './FileSummary.module.scss'
 
 const styles = fromModule(css)
@@ -45,7 +47,7 @@ export const FileSummaryRow = view(
             <img src={file.preview} className={styles.row.preview.image()} />
           ) : (
             <div className={styles.row.preview.icon()}>
-              <MdInsertDriveFile size={12} />
+              <IcRoundInsertDriveFile />
             </div>
           )}
         </div>
@@ -58,7 +60,7 @@ export const FileSummaryRow = view(
                     .map<ReactNode>(({title}) => <TextLabel label={title} />)
                     .reduce((prev, curr) => [
                       prev,
-                      <MdKeyboardArrowRight />,
+                      <IcRoundKeyboardArrowRight />,
                       curr
                     ])}
                 </HStack>
@@ -85,7 +87,7 @@ export const FileSummaryThumb = view(
             <img src={file.preview} className={styles.thumb.preview.image()} />
           ) : (
             <div className={styles.thumb.preview.icon()}>
-              <MdInsertDriveFile size={36} />
+              <IcRoundInsertDriveFile style={{fontSize: px(36)}} />
             </div>
           )}
         </div>

@@ -1,6 +1,6 @@
 import {HTMLProps, PropsWithChildren} from 'react'
-import {MdClose} from 'react-icons/md'
 import {IconButton} from './IconButton'
+import {IcRoundClose} from './icons/IcRoundClose'
 import css from './Modal.module.scss'
 import {fromModule} from './util/Styler'
 
@@ -26,7 +26,7 @@ export function Modal({children, open, onClose, ...props}: ModalProps) {
         <IconButton
           className={styles.root.inner.close()}
           size={18}
-          icon={MdClose}
+          icon={IcRoundClose}
           onClick={onClose}
         />
         {children}

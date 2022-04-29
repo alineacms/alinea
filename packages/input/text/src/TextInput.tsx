@@ -1,8 +1,8 @@
 import {InputLabel, InputState, useInput} from '@alinea/editor'
 import {fromModule, HStack} from '@alinea/ui'
+import {IcRoundTextFields} from '@alinea/ui/icons/IcRoundTextFields'
 import {useState} from 'react'
 import {TextareaAutosize} from 'react-autosize-textarea/lib/TextareaAutosize.js'
-import {MdTextFields} from 'react-icons/md'
 import {TextField} from './TextField'
 import css from './TextInput.module.scss'
 
@@ -39,7 +39,7 @@ export function TextInput({state, field}: TextInputProps) {
       inline={inline}
       width={width}
       focused={focus}
-      icon={MdTextFields}
+      icon={IcRoundTextFields}
       empty={empty}
     >
       <HStack center gap={8}>

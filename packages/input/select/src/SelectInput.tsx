@@ -1,7 +1,8 @@
 import {renderLabel} from '@alinea/core'
 import {InputLabel, InputState, useInput} from '@alinea/editor'
-import {fromModule, HStack} from '@alinea/ui'
-import {MdArrowDropDownCircle, MdKeyboardArrowDown} from 'react-icons/md'
+import {fromModule, HStack, px} from '@alinea/ui'
+import {IcRoundArrowDropDownCircle} from '@alinea/ui/icons/IcRoundArrowDropDownCircle'
+import {IcRoundKeyboardArrowDown} from '@alinea/ui/icons/IcRoundKeyboardArrowDown'
 import {SelectField} from './SelectField'
 import css from './SelectInput.module.scss'
 
@@ -23,7 +24,7 @@ export function SelectInput({state, field}: SelectInputProps) {
         label={field.label}
         help={help}
         optional={optional}
-        icon={MdArrowDropDownCircle}
+        icon={IcRoundArrowDropDownCircle}
       >
         <HStack center className={styles.root()}>
           <select
@@ -40,7 +41,7 @@ export function SelectInput({state, field}: SelectInputProps) {
             })}
           </select>
           <div className={styles.root.icon()}>
-            <MdKeyboardArrowDown size={18} />
+            <IcRoundKeyboardArrowDown style={{fontSize: px(18)}} />
           </div>
         </HStack>
       </InputLabel>

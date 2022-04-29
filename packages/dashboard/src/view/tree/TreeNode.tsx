@@ -1,5 +1,8 @@
 import {Entry, renderLabel} from '@alinea/core'
-import {Create, fromModule, Stack, useInitialEffect} from '@alinea/ui'
+import {Create, fromModule, px, Stack, useInitialEffect} from '@alinea/ui'
+import {IcRoundInsertDriveFile} from '@alinea/ui/icons/IcRoundInsertDriveFile'
+import {IcRoundKeyboardArrowDown} from '@alinea/ui/icons/IcRoundKeyboardArrowDown'
+import {IcRoundKeyboardArrowRight} from '@alinea/ui/icons/IcRoundKeyboardArrowRight'
 import {HStack} from '@alinea/ui/Stack'
 import {
   AnimateLayoutChanges,
@@ -17,7 +20,6 @@ import {
   useCallback,
   useRef
 } from 'react'
-import {MdChevronRight, MdExpandMore, MdInsertDriveFile} from 'react-icons/md'
 import {Link} from 'react-router-dom'
 import {useCurrentDraft} from '../../hook/UseCurrentDraft'
 import {useNav} from '../../hook/UseNav'
@@ -69,15 +71,15 @@ const TreeNodeLink = memo(
     const type = schema.type(entry.type)!
     const isContainer = entry.$isContainer
     const containerIcon = isOpened ? (
-      <MdExpandMore size={20} />
+      <IcRoundKeyboardArrowDown style={{fontSize: px(20)}} />
     ) : (
-      <MdChevronRight size={20} />
+      <IcRoundKeyboardArrowRight style={{fontSize: px(20)}} />
     )
     const hasIcon = Boolean(type.options.icon)
     const icon = type.options.icon ? (
       <type.options.icon />
     ) : (
-      <MdInsertDriveFile size={12} />
+      <IcRoundInsertDriveFile style={{fontSize: px(12)}} />
     )
 
     return (

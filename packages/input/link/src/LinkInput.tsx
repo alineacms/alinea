@@ -4,6 +4,9 @@ import {EntrySummaryRow} from '@alinea/dashboard/view/entry/EntrySummary'
 import {InputForm, InputLabel, InputState, useInput} from '@alinea/editor'
 import {Expr} from '@alinea/store'
 import {Card, Create, fromModule, IconButton, Typo} from '@alinea/ui'
+import {IcRoundClose} from '@alinea/ui/icons/IcRoundClose'
+import {IcRoundDragHandle} from '@alinea/ui/icons/IcRoundDragHandle'
+import {IcRoundLink} from '@alinea/ui/icons/IcRoundLink'
 import {
   closestCenter,
   defaultDropAnimation,
@@ -28,7 +31,6 @@ import {
 } from '@dnd-kit/sortable'
 import {CSS, FirstArgument} from '@dnd-kit/utilities'
 import {CSSProperties, HTMLAttributes, Ref, useMemo, useState} from 'react'
-import {MdClose, MdDragHandle, MdLink} from 'react-icons/md'
 import {useQuery} from 'react-query'
 import {LinkField, LinkType} from './LinkField'
 import css from './LinkInput.module.scss'
@@ -88,13 +90,13 @@ function LinkInputRow<T>({
             <Card.Options>
               {isSortable ? (
                 <IconButton
-                  icon={MdDragHandle}
+                  icon={IcRoundDragHandle}
                   {...handle}
                   style={{cursor: handle ? 'grab' : 'grabbing'}}
                 />
               ) : (
                 <div className={styles.row.staticHandle()}>
-                  <MdLink />
+                  <IcRoundLink />
                 </div>
               )}
             </Card.Options>
@@ -102,7 +104,7 @@ function LinkInputRow<T>({
               {entry && <LinkInputEntryRow key={entry.id} entry={entry} />}
             </div>
             <Card.Options>
-              <IconButton icon={MdClose} onClick={onRemove} />
+              <IconButton icon={IcRoundClose} onClick={onRemove} />
             </Card.Options>
           </Card.Header>
           {fields && (
@@ -281,7 +283,7 @@ export function LinkInput<T>({state, field}: LinkInputProps<T>) {
         optional={optional}
         inline={inline}
         width={width}
-        icon={MdLink}
+        icon={IcRoundLink}
       >
         <div className={styles.root()}>
           <div className={styles.root.inner()}>

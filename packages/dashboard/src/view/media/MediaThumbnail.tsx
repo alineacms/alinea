@@ -1,7 +1,7 @@
 import {Media, renderLabel} from '@alinea/core'
-import {fromModule} from '@alinea/ui'
+import {fromModule, px} from '@alinea/ui'
 import {useContrastColor} from '@alinea/ui/hook/UseContrastColor'
-import {MdInsertDriveFile} from 'react-icons/md'
+import {IcRoundInsertDriveFile} from '@alinea/ui/icons/IcRoundInsertDriveFile'
 import {Link} from 'react-router-dom'
 import {useNav} from '../../hook/UseNav'
 import css from './MediaThumbnail.module.scss'
@@ -27,7 +27,7 @@ export function MediaThumbnail({file}: MediaThumbnailProps) {
             />
           ) : (
             <div className={styles.root.preview.icon()}>
-              <MdInsertDriveFile size={36} />
+              <IcRoundInsertDriveFile style={{fontSize: px(36)}} />
             </div>
           )}
         </div>

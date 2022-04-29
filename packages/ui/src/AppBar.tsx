@@ -1,5 +1,4 @@
-import {HTMLAttributes} from 'react'
-import type {IconType} from 'react-icons'
+import {ComponentType, HTMLAttributes} from 'react'
 import css from './AppBar.module.scss'
 import {Icon} from './Icon'
 import {HStack} from './Stack'
@@ -13,7 +12,7 @@ export namespace AppBar {
 
   export type ItemProps = PropsWithAs<
     {
-      icon?: IconType
+      icon?: ComponentType
       full?: boolean
     } & HTMLAttributes<HTMLDivElement>
   >

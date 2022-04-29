@@ -1,6 +1,6 @@
 import {type} from '@alinea/core'
 import {text} from '@alinea/input.text'
-import {MdLanguage} from 'react-icons/md'
+import {IcRoundLanguage} from '@alinea/ui/icons/IcRoundLanguage'
 
 export const LocaleSchema = {
   Locale: type('Locale', {
@@ -11,6 +11,6 @@ export const LocaleSchema = {
     })
   }).configure({
     isContainer: true,
-    icon: MdLanguage
+    icon: IcRoundLanguage
   })
 }

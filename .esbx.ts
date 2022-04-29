@@ -7,7 +7,7 @@ import {findNodeModules, reportTime} from '@esbx/util'
 import {getWorkspaces, TestTask} from '@esbx/workspaces'
 import {execSync} from 'child_process'
 import semver from 'compare-versions'
-import type {BuildOptions, Plugin} from 'esbuild'
+import type {BuildOptions} from 'esbuild'
 import {build} from 'esbuild'
 import fs from 'fs-extra'
 import {BuildTask} from './.esbx/build'
@@ -121,16 +121,6 @@ export const clean = {
   }
 }
 
-const FixReactIconsPlugin: Plugin = {
-  name: 'FixReactIconsPlugin',
-  setup(build) {
-    build.onResolve({filter: /react-icons.*/}, ({path}) => {
-      if (!path.endsWith('index.js'))
-        return {path: path + '/index.js', external: true}
-    })
-  }
-}
-
 const testTask = TestTask.configure({
   buildOptions: {
     ...buildOptions,
@@ -140,8 +130,7 @@ const testTask = TestTask.configure({
     plugins: [
       ...buildOptions.plugins!,
       StaticPlugin.configure({sources: ['packages/cli/src/Init.ts']}),
-      internalPlugin,
-      FixReactIconsPlugin
+      internalPlugin
     ]
   }
 })

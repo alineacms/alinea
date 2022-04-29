@@ -5,9 +5,9 @@ import {Tree} from '@alinea/core/Tree'
 import {InputState} from '@alinea/editor/InputState'
 import {select} from '@alinea/input.select'
 import {SelectInput} from '@alinea/input.select/view'
-import {fromModule, Typo, VStack} from '@alinea/ui'
+import {fromModule, px, Typo, VStack} from '@alinea/ui'
+import {IcRoundUploadFile} from '@alinea/ui/icons/IcRoundUploadFile'
 import {ChangeEvent, DragEvent, useRef, useState} from 'react'
-import {MdUploadFile} from 'react-icons/md'
 import {useQuery} from 'react-query'
 import {useSession} from '../../hook/UseSession'
 import {useUploads} from '../../hook/UseUploads'
@@ -108,7 +108,7 @@ export function FileUploader({max, toggleSelect}: FileUploaderProps) {
         })}
       </div>
       <VStack center className={styles.root.desc()}>
-        <MdUploadFile size={30} />
+        <IcRoundUploadFile style={{fontSize: px(30)}} />
         <Typo.P as="label" className={styles.root.desc.label()}>
           <input
             type="file"

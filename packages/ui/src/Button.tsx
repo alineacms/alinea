@@ -1,5 +1,5 @@
+import type {ComponentType} from 'react'
 import {ButtonHTMLAttributes} from 'react'
-import type {IconType} from 'react-icons'
 import css from './Button.module.scss'
 import {Icon} from './Icon'
 import {HStack} from './Stack'
@@ -8,7 +8,7 @@ import {fromModule} from './util/Styler'
 const styles = fromModule(css)
 
 export type ButtonProps = {
-  icon?: IconType
+  icon?: ComponentType
   size?: 'small' | 'medium' | 'large'
 } & ButtonHTMLAttributes<HTMLButtonElement>
 

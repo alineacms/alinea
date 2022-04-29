@@ -7,14 +7,12 @@ import {
   Typo,
   useObservable
 } from '@alinea/ui'
+import {IcRoundArrowBack} from '@alinea/ui/icons/IcRoundArrowBack'
+import {IcRoundArrowForward} from '@alinea/ui/icons/IcRoundArrowForward'
+import {IcRoundLock} from '@alinea/ui/icons/IcRoundLock'
+import {IcRoundOpenInNew} from '@alinea/ui/icons/IcRoundOpenInNew'
+import {IcRoundRefresh} from '@alinea/ui/icons/IcRoundRefresh'
 import {useEffect, useRef, useState} from 'react'
-import {
-  MdArrowBack,
-  MdArrowForward,
-  MdLock,
-  MdOpenInNew,
-  MdRefresh
-} from 'react-icons/md'
 import {DraftsStatus, useDrafts} from '../../hook/UseDrafts'
 import {Preview} from '../Preview'
 import css from './BrowserPreview.module.scss'
@@ -51,21 +49,21 @@ export function BrowserPreview({url, prettyUrl}: BrowserPreviewProps) {
         <AppBar.Root>
           <AppBar.Item
             as="button"
-            icon={MdArrowBack}
+            icon={IcRoundArrowBack}
             onClick={() => {
               ref.current?.contentWindow?.history.back()
             }}
           />
           <AppBar.Item
             as="button"
-            icon={MdArrowForward}
+            icon={IcRoundArrowForward}
             onClick={() => {
               ref.current?.contentWindow?.history.forward()
             }}
           />
           <AppBar.Item
             as="button"
-            icon={MdRefresh}
+            icon={IcRoundRefresh}
             onClick={() => {
               ref.current?.contentWindow?.location.reload()
             }}
@@ -81,7 +79,7 @@ export function BrowserPreview({url, prettyUrl}: BrowserPreviewProps) {
               }}
             >
               <HStack gap={8} center>
-                <MdLock style={{flexShrink: 0}} />
+                <IcRoundLock style={{flexShrink: 0}} />
                 <span
                   style={{
                     display: 'block',
@@ -95,7 +93,12 @@ export function BrowserPreview({url, prettyUrl}: BrowserPreviewProps) {
               </HStack>
             </Typo.Monospace>
           </AppBar.Item>
-          <AppBar.Item as="a" icon={MdOpenInNew} href={url} target="_blank" />
+          <AppBar.Item
+            as="a"
+            icon={IcRoundOpenInNew}
+            href={url}
+            target="_blank"
+          />
         </AppBar.Root>
         <div style={{flexGrow: 1, position: 'relative'}}>
           <div className={styles.root.loader({loading})}>

@@ -7,11 +7,13 @@ import {
   useColorScheme
 } from '@alinea/ui'
 import {LogoShape} from '@alinea/ui/branding/LogoShape'
+import {IcRoundKeyboardArrowDown} from '@alinea/ui/icons/IcRoundKeyboardArrowDown'
+import {IcRoundUnfoldMore} from '@alinea/ui/icons/IcRoundUnfoldMore'
+import {IcSharpBrightnessMedium} from '@alinea/ui/icons/IcSharpBrightnessMedium'
+import {RiFlashlightFill} from '@alinea/ui/icons/RiFlashlightFill'
 import {HStack} from '@alinea/ui/Stack'
 import {contrastColor} from '@alinea/ui/util/ContrastColor'
 import {createSlots} from '@alinea/ui/util/Slots'
-import {MdBrightnessMedium, MdExpandMore, MdUnfoldMore} from 'react-icons/md'
-import {RiFlashlightFill} from 'react-icons/ri'
 import {useNavigate} from 'react-router'
 import {useDashboard} from '../hook/UseDashboard'
 import {useNav} from '../hook/UseNav'
@@ -44,7 +46,7 @@ export namespace Toolbar {
                   <div style={{fontSize: '13px'}}>
                     <TextLabel label={label} />
                   </div>
-                  <MdUnfoldMore />
+                  <IcRoundUnfoldMore />
                 </HStack>
               </HStack>
             </DropdownMenu.Trigger>
@@ -81,12 +83,15 @@ export namespace Toolbar {
         </div>
         <div>
           <HStack center gap={10}>
-            <IconButton icon={MdBrightnessMedium} onClick={toggleColorScheme} />
+            <IconButton
+              icon={IcSharpBrightnessMedium}
+              onClick={toggleColorScheme}
+            />
             <DropdownMenu.Root>
               <DropdownMenu.Trigger>
                 <HStack center gap={4}>
                   <Avatar user={session.user} />
-                  <MdExpandMore />
+                  <IcRoundKeyboardArrowDown />
                 </HStack>
               </DropdownMenu.Trigger>
 

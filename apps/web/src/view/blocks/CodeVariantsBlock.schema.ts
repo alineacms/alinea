@@ -2,7 +2,7 @@ import {schema, Schema, type} from '@alinea/core'
 import {code} from '@alinea/input.code'
 import {list} from '@alinea/input.list'
 import {text} from '@alinea/input.text'
-import {MdCode} from 'react-icons/md'
+import {IcRoundCode} from '@alinea/ui/icons/IcRoundCode'
 
 export const CodeVariantsBlockSchema = type('Code variants', {
   variants: list('Variants', {
@@ -14,7 +14,7 @@ export const CodeVariantsBlockSchema = type('Code variants', {
       })
     })
   })
-}).configure({icon: MdCode})
+}).configure({icon: IcRoundCode})
 
 export type CodeVariantsBlockSchema = Schema.TypeOf<
   typeof CodeVariantsBlockSchema
