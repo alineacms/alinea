@@ -1,11 +1,11 @@
-import {JSONOutput} from 'typedoc'
+import {JSONOutput, ReflectionKind} from 'typedoc'
 import type {NavItem} from '../view/layout/NavTree'
 import {types} from './types-data'
 
 export function memberPath(name: string) {
   return name
     .split('/')
-    .filter(segment => segment !== 'dist')
+    .filter(segment => segment !== 'src')
     .join('/')
 }
 
@@ -23,7 +23,7 @@ export function typeNav(): Array<NavItem> {
   const packages = Array.from(
     new Set(
       types.children!.map(child => {
-        const pkg = child.name.split('/dist')[0]
+        const pkg = child.name.split('/src')[0]
         return pkg
       })
     )
@@ -54,6 +54,7 @@ export function membersOf(packagePath: string) {
       )
     })
     .flatMap(child => child.children!)
+    .map(transformType)
     .sort((a, b) => {
       return a.name.localeCompare(b.name)
     })
@@ -77,6 +78,43 @@ function findDeclaration(
   return []
 }
 
+function fillReferences(
+  index: Map<number, JSONOutput.DeclarationReflection>,
+  ofMember?: JSONOutput.DeclarationReflection
+) {
+  const children = ofMember ? ofMember.children : types.children
+  if (!children) return
+  for (const member of children) {
+    index.set(member.id, member)
+    fillReferences(index, member)
+  }
+}
+
+function references() {
+  const index = new Map()
+  fillReferences(index)
+  return index
+}
+
+const index = references()
+
+function transformType(
+  type: JSONOutput.DeclarationReflection
+): JSONOutput.DeclarationReflection {
+  switch (type.kind) {
+    case ReflectionKind.Reference:
+      const ref = (type as any).target
+      const target = index.get(ref)
+      return target ? transformType(target) : type
+    default:
+      if (!type.children) return type
+      return {
+        ...type,
+        children: type.children.map(transformType)
+      }
+  }
+}
+
 export function typeInfo(types: Array<string>) {
-  return types.flatMap(name => findDeclaration(name))
+  return types.flatMap(name => findDeclaration(name)).map(transformType)
 }

@@ -521,14 +521,14 @@ function Member({member, inline, inner}: MemberProps) {
             )}
             {member.extendedTypes && (
               <>
-                {' '}
-                extends <TypeList types={member.extendedTypes} inline />
+                <Keyword> extends </Keyword>{' '}
+                <TypeList types={member.extendedTypes} inline />
               </>
             )}
             {member.implementedTypes && (
               <>
-                {' '}
-                implements <TypeList types={member.implementedTypes} inline />
+                <Keyword> implements </Keyword>{' '}
+                <TypeList types={member.implementedTypes} inline />
               </>
             )}
             <Content>
