@@ -53,12 +53,18 @@ export namespace Toolbar {
 
             <DropdownMenu.Content>
               {Object.entries(config.workspaces).map(([key, workspace]) => {
-                const firstRoot = Object.keys(workspace.roots)[0]
+                const root = Object.values(workspace.roots)[0]
                 return (
                   <DropdownMenu.Item
                     key={key}
                     onClick={() =>
-                      navigate(nav.entry({workspace: key, root: firstRoot}))
+                      navigate(
+                        nav.entry({
+                          workspace: key,
+                          root: root.name,
+                          locale: root.defaultLocale
+                        })
+                      )
                     }
                   >
                     <HStack center gap={16}>

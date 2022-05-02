@@ -79,13 +79,13 @@ export class Backend<T extends Workspaces = Workspaces> implements Hub<T> {
         root: entry.root,
         url: entry.url,
         parent: entry.parent,
-        locale: entry.locale
+        i18n: entry.i18n
       })
       const data = store.first(
         Entry.where(Entry.id.is(id)).select({
           entry: Entry.fields,
           translations: Translation.where(t =>
-            t.i18nId.is(Entry.i18nId)
+            t.i18n.id.is(Entry.i18n.id)
           ).select(minimal),
           parent: Parent.where(Parent.id.is(Entry.parent))
             .select(minimal)

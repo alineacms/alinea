@@ -17,7 +17,13 @@ import {
 } from '@alinea/ui'
 import {IcRoundArrowBack} from '@alinea/ui/icons/IcRoundArrowBack'
 import {Modal} from '@alinea/ui/Modal'
-import {ComponentType, FormEvent, Suspense, useState} from 'react'
+import {
+  ComponentType,
+  FormEvent,
+  Suspense,
+  useLayoutEffect,
+  useState
+} from 'react'
 import {useQuery, useQueryClient} from 'react-query'
 import {useNavigate} from 'react-router'
 import {Link} from 'react-router-dom'
@@ -56,14 +62,14 @@ function EntryEditDraft({draft, isLoading}: EntryEditDraftProps) {
   const navigate = useNavigate()
   const type = schema.type(draft.type)
   const {preview} = useWorkspace()
-  const isTranslating = !isLoading && locale !== draft.locale
+  const isTranslating = !isLoading && locale !== draft.i18n?.locale
   const [isCreating, setIsCreating] = useState(false)
   function handleTranslation() {
-    if (isCreating) return
+    if (!locale || isCreating) return
     setIsCreating(true)
     const entry = draft.getEntry()
     entry.id = createId()
-    entry.locale = locale
+    entry.i18n!.locale = locale
     const path = entry.url.split('/').slice(1).join('/')
     entry.url = `/${locale}/${path}`
     const doc = docFromEntry(entry, () => type)
@@ -79,15 +85,29 @@ function EntryEditDraft({draft, isLoading}: EntryEditDraftProps) {
       })
       .finally(() => setIsCreating(false))
   }
+  useLayoutEffect(() => {
+    const mightHaveTranslation = locale && isTranslating
+    if (!mightHaveTranslation) return
+    const translation = draft.translation(locale)
+    if (translation) navigate(nav.entry(translation))
+  }, [draft, isTranslating, locale])
   return (
     <HStack style={{height: '100%'}}>
       <div className={styles.root()}>
         <EntryHeader />
         <div className={styles.root.draft()}>
-          <EntryTitle backLink={draft.parent && nav.entry(draft)} />
+          <EntryTitle
+            backLink={
+              draft.parent &&
+              nav.entry({
+                id: draft.parent,
+                workspace: draft.workspace
+              })
+            }
+          />
           {isTranslating ? (
             <Button onClick={() => handleTranslation()}>
-              Translate from {draft.locale?.toUpperCase()}
+              Translate from {draft.i18n?.locale.toUpperCase()}
             </Button>
           ) : (
             <Suspense fallback={null}>
@@ -146,7 +166,7 @@ export function NewEntry({parentId}: NewEntryProps) {
     setIsCreating(true)
     const type = schema.type(selectedType)!
     const path = slugify(title)
-    const entry: Entry = {
+    const entry = {
       ...type.create(selectedType),
       path,
       workspace,
@@ -156,9 +176,11 @@ export function NewEntry({parentId}: NewEntryProps) {
       title
     }
     if (root.i18n) {
-      entry.locale = locale
-      entry.i18nId = createId()
-      entry.url = `/${locale}/${entry.url}`
+      entry.i18n = {
+        id: createId(),
+        locale
+      }
+      entry.url = `/${locale}${entry.url}`
     }
     const doc = docFromEntry(entry, () => type)
     return hub

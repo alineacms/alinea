@@ -31,10 +31,10 @@ export function RootHeader() {
               value={currentLocale}
               onChange={e => {
                 const locale = e.target.value
-                const translation = draft.translation(locale)
+                const translation = draft?.translation(locale)
                 navigate(
                   nav.entry({
-                    id: translation?.id || draft.id,
+                    id: translation?.id || draft?.id,
                     workspace,
                     root: root.name,
                     locale

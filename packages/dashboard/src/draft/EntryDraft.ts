@@ -115,12 +115,8 @@ export class EntryDraft implements Entry {
     return this.__root.get('parent') || this.source.parent
   }
 
-  get locale(): string | undefined {
-    return this.source.locale
-  }
-
-  get i18nId(): string | undefined {
-    return this.source.i18nId
+  get i18n(): Entry.I18N | undefined {
+    return this.source.i18n
   }
 
   get title(): Label {
@@ -128,7 +124,7 @@ export class EntryDraft implements Entry {
   }
 
   translation(locale: string): Entry.Minimal | undefined {
-    return this.detail.translations?.find(t => t.locale === locale)
+    return this.detail.translations?.find(t => t.i18n?.locale === locale)
   }
 
   private getLocation(location: Array<string>) {

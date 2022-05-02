@@ -152,6 +152,7 @@ export namespace Cache {
     commitBatch()
     if (log) process.stdout.write(`> Indexing...\r`)
     store.createIndex(Entry, 'index', [Entry.index])
+    store.createIndex(Entry, 'i18nId', [Entry.i18n.id])
     store.createIndex(Entry, 'parent', [Entry.parent])
     store.createIndex(Entry, 'workspace.root.type', [
       Entry.workspace,
@@ -206,14 +207,27 @@ export namespace Cache {
       target = parent.parent
     }
     if (root.i18n) {
-      if (!root.i18n.locales.includes(entry.locale!))
+      const locale = entry.i18n?.locale!
+      if (!root.i18n.locales.includes(locale))
         throw createError(
           400,
-          `Invalid locale "${entry.locale}" in entry with url "${entry.url}"`
+          `Invalid locale "${locale}" in entry with url "${entry.url}"`
         )
-      url = `${entry.locale}/${url}`
+      url = `${locale}/${url}`
+      const i18nParents =
+        parents.length > 0
+          ? store.all(
+              Entry.where(Entry.id.isIn(parents)).select(Entry.i18n.id.sure())
+            )
+          : parents
+      entry.i18n = {
+        id: entry.i18n!.id,
+        locale,
+        parent: i18nParents[i18nParents.length - 1],
+        parents: i18nParents
+      }
     } else {
-      delete entry.locale
+      delete entry.i18n
     }
     return {
       ...entry,
@@ -253,6 +267,7 @@ export namespace Cache {
         }
       })
       if (!entry) {
+        console.error(err)
         console.log(
           `Could not parse update for entry with id "${id}"\n  > ${err}`
         )

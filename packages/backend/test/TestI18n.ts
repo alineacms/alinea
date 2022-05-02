@@ -57,20 +57,23 @@ const fs: FS = Volume.fromNestedJSON({
           id: 'root',
           index: 'a',
           type: 'Home',
-          title: 'Test title'
+          title: 'Test title',
+          i18n: {id: 'root'}
         }),
         '/sub.json': entry({
           id: 'sub',
           index: 'a',
           type: 'Type',
-          title: 'Sub title'
+          title: 'Sub title',
+          i18n: {id: 'sub'}
         }),
         sub: {
           '/entry.json': entry({
             id: 'sub-entry',
             index: 'b',
             type: 'Sub',
-            title: 'Sub entry title'
+            title: 'Sub entry title',
+            i18n: {id: 'sub-entry'}
           })
         }
       }
@@ -114,7 +117,7 @@ test('reading', async () => {
 
 test('inserting', async () => {
   const [root] = await index()
-  await data.publish(store, [{...root, locale: 'a', title: 'New root title'}])
+  await data.publish(store, [{...root, title: 'New root title'}])
   const [newRoot] = await index()
   assert.is(newRoot.id, 'root')
   assert.is(newRoot.title, 'New root title')

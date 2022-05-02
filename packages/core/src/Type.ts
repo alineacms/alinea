@@ -65,21 +65,11 @@ export class Type<T = any> {
   get valueType(): RecordValue {
     return Value.Record(
       Object.fromEntries(
-        [
-          ['id', Value.Scalar as Value],
-          ['type', Value.Scalar as Value],
-          // Todo: builtins should passed in because we re-use type for non entry things too
-          ['workspace', Value.Scalar as Value],
-          ['root', Value.Scalar as Value],
-          // Todo: this should probably not be part of the schema but local state
-          ['$status', Value.Scalar as Value]
-        ].concat(
-          Array.from(this)
-            .filter(([, field]) => field.type)
-            .map(([key, field]) => {
-              return [key, field.type!]
-            })
-        )
+        Array.from(this)
+          .filter(([, field]) => field.type)
+          .map(([key, field]) => {
+            return [key, field.type!]
+          })
       )
     )
   }

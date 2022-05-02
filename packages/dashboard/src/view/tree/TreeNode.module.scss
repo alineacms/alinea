@@ -79,6 +79,10 @@
   &.is-selected &-inner {
     background: var(--selected);
   }
+  
+  &.is-untranslated &-inner {
+    opacity: .2;
+  }
 
   &.is-dragOverlay &-inner {
     background: var(--selected);

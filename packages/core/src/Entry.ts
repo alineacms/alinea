@@ -21,10 +21,9 @@ export interface Entry {
   url: string
   parent: string | undefined
   parents: Array<string>
-  i18nId?: string
-  locale?: string
   $status?: EntryStatus
   $isContainer?: boolean
+  i18n?: Entry.I18N
 }
 
 export namespace Entry {
@@ -35,9 +34,15 @@ export namespace Entry {
     parent?: Entry.Minimal
     translations?: Array<Entry.Minimal>
   }
+  export type I18N = {
+    id: string
+    locale: string
+    parent: string | undefined
+    parents: Array<string>
+  }
   export type Minimal = Pick<
     Entry,
-    'id' | 'type' | 'title' | 'workspace' | 'root' | 'url' | 'parent' | 'locale'
+    'id' | 'type' | 'title' | 'workspace' | 'root' | 'url' | 'parent' | 'i18n'
   >
   export type Summary = Pick<
     Entry,
@@ -49,7 +54,7 @@ export namespace Entry {
     | 'url'
     | 'index'
     | 'parent'
-    | 'locale'
+    | 'i18n'
     | 'parents'
     | '$isContainer'
   > & {
@@ -65,7 +70,9 @@ export namespace Entry {
     | 'parent'
     | 'parents'
     | '$isContainer'
-  >
+    | 'i18n'
+  > & {i18n?: {id: string}}
+  // & {[key: string]: any}
 }
 
 export const Entry = new Collection<Entry>('Entry')

@@ -12,12 +12,11 @@ export function dashboardNav(defaults: Partial<EntryLocation>) {
     return entry(location)
   }
   function entry(location: EntryLocation) {
-    const {
-      workspace = defaults.workspace,
-      root = defaults.root,
-      locale = defaults.locale,
-      id = defaults.id
-    } = location
+    const workspace =
+      'workspace' in location ? location.workspace : defaults.workspace
+    const root = 'root' in location ? location.root : defaults.root
+    const locale = 'locale' in location ? location.locale : defaults.locale
+    const id = 'id' in location ? location.id : defaults.id
     const rootLocation = locale ? `${root}:${locale}` : root
     if (!id && !root) return `/${workspace}`
     if (!id) return `/${workspace}/${rootLocation}`

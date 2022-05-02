@@ -43,7 +43,7 @@ export class FileData implements Data.Source, Data.Target, Data.Media {
         const locales = root.i18n?.locales || [undefined]
         for (const locale of locales) {
           const targets = [locale ? `/${locale}` : '/']
-          const parentIndex = new Map<string, string>()
+          const parentIndex = new Map<string, Entry>()
           while (targets.length > 0) {
             const target = targets.shift()!
             const [files, err] = await outcome(
@@ -72,6 +72,12 @@ export class FileData implements Data.Source, Data.Target, Data.Media {
                   console.log(`\rCould not parse ${location}: ${err}`)
                   continue
                 }
+                if (locale && !entry.i18n) {
+                  console.log(
+                    `\rNo i18n id found for entry with id ${entry.id}`
+                  )
+                  continue
+                }
                 const type = schema.type(entry.type)
                 if (!type) continue
                 const isContainer = Boolean(type?.options.isContainer)
@@ -80,20 +86,30 @@ export class FileData implements Data.Source, Data.Target, Data.Media {
                 const parents = walkUrl(parentPath)
                   .map(url => parentIndex.get(url)!)
                   .filter(Boolean)
-                if (isContainer) parentIndex.set(url, entry.id)
-                const res = {
+                const parent = parents[parents.length - 1]
+                const res: Entry = {
                   ...entry,
                   workspace,
                   root: root.name,
                   url,
                   path: name,
-                  locale,
                   index: entry.index || entry.id,
-                  parent: parents[parents.length - 1],
-                  parents,
+                  parent: parent?.id,
+                  parents: parents.map(parent => parent.id),
                   $isContainer: isContainer,
-                  $status: EntryStatus.Published
+                  $status: EntryStatus.Published,
+                  i18n: locale
+                    ? {
+                        id: entry.i18n?.id || entry.id,
+                        locale,
+                        parent: parent?.i18n?.id || parent?.id,
+                        parents: parents.map(
+                          parent => parent?.i18n?.id || parent?.id
+                        )
+                      }
+                    : undefined
                 }
+                if (isContainer) parentIndex.set(url, res)
                 yield res
               }
             }

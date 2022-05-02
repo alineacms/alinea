@@ -41,9 +41,11 @@ export namespace Storage {
         $isContainer,
         $status,
         path: entryPath,
-        locale,
+        i18n,
         ...data
       } = entry
+      const entryData: Entry.Raw = data
+      if (i18n) entryData.i18n = {id: i18n.id}
       const workspace = config.workspaces[workspaceKey]
       const {schema, source: contentDir} = workspace
       function abs(root: string, file: string) {
@@ -57,7 +59,7 @@ export namespace Storage {
         continue
       }
       const file = abs(entry.root, location)
-      changes.write.push([file, loader.format(schema, data)])
+      changes.write.push([file, loader.format(schema, entryData)])
       const previous = store.first(Entry.where(Entry.id.is(entry.id)))
 
       // Cleanup old files

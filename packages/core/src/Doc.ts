@@ -25,14 +25,13 @@ export function entryFromDoc(
     type: typeKey,
     workspace,
     root,
-    parents: docRoot.get('parents') as Array<string>,
     index: docRoot.get('index') as string,
     url: docRoot.get('url') as string,
-    path: docRoot.get('path') as string,
-    locale: docRoot.get('locale') as string,
-    i18nId: docRoot.get('i18nId') as string,
     title: docRoot.get('title') as Label,
+    path: docRoot.get('path') as string,
+    i18n: docRoot.get('i18n') as Entry.I18N | undefined,
     parent: docRoot.get('parent') as string,
+    parents: docRoot.get('parents') as Array<string>,
     $isContainer: docRoot.get('$isContainer') as boolean,
     ...type.valueType.fromY(docRoot)
   }
@@ -56,10 +55,11 @@ export function docFromEntry(
   docRoot.set('root', entry.root)
   docRoot.set('type', entry.type)
   docRoot.set('index', entry.index)
-  docRoot.set('locale', entry.locale)
-  docRoot.set('i18nId', entry.i18nId)
   docRoot.set('url', entry.url)
+  docRoot.set('path', entry.url)
+  if (entry.i18n) docRoot.set('i18n', entry.i18n)
   docRoot.set('parent', entry.parent)
+  docRoot.set('parents', entry.parents)
   docRoot.set('$isContainer', entry.$isContainer)
   for (const [key, field] of type) {
     const contents = entry[key]

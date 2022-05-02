@@ -56,6 +56,7 @@ function AppAuthenticated() {
   const nav = useNav()
   const location = useLocation()
   const {name: workspace, name, color, roots} = useWorkspace()
+  const {name: currentRoot} = useRoot()
   return (
     <DraftsProvider>
       <Statusbar.Provider>
@@ -78,12 +79,7 @@ function AppAuthenticated() {
                 <Sidebar.Root>
                   <Sidebar.Menu>
                     {Object.entries(roots).map(([key, root], i) => {
-                      const isSelected =
-                        location.pathname.length > 1
-                          ? location.pathname.startsWith(
-                              nav.root({workspace, root: key})
-                            )
-                          : i === 0
+                      const isSelected = key === currentRoot
                       return (
                         <Sidebar.Menu.Item
                           key={key}
@@ -145,12 +141,12 @@ type EntryRouteProps = {
 }
 
 function EntryRoute({id}: EntryRouteProps) {
-  const nav = useNav()
   const {name: workspace} = useWorkspace()
-  const {name: root} = useRoot()
   const {draft} = useDraft(id)
   const locale = useLocale()
-  const isLoading = draft?.id !== id && draft?.locale !== locale
+  const isLoading = Boolean(
+    draft?.id !== id && locale && draft?.i18n?.locale !== locale
+  )
   const {search} = useLocation()
   const type = draft?.channel
   const View = type?.options.view || EntryEdit
@@ -168,7 +164,12 @@ function EntryRoute({id}: EntryRouteProps) {
       >
         <SearchBox />
         <RootHeader />
-        <ContentTree key={workspace} select={select} redirectToRoot={!id} />
+        <ContentTree
+          key={workspace}
+          locale={locale}
+          select={select}
+          redirectToRoot={!id}
+        />
       </Pane>
       <div style={{width: '100%', height: '100%'}}>
         {search === '?new' && (
