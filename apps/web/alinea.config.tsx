@@ -59,6 +59,11 @@ const stories = workspace('Stories', {
   }
 })
 
+const workspaces = {web, stories}
+
 export const config = createConfig({
-  workspaces: process.env.NODE_ENV === 'development' ? {web, stories} : {web}
+  workspaces:
+    process.env.NODE_ENV === 'development'
+      ? workspaces
+      : ({web} as typeof workspaces)
 })
