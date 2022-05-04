@@ -4,6 +4,10 @@
   "root": "data",
   "index": "a1",
   "title": "Dashboard",
+  "parents": [
+    "docs",
+    "2596BztvXq5Fu9mzMLcpI4MyNZj"
+  ],
   "blocks": [
     {
       "id": "25HTEiuZ1248vU6D4ar6EjACGkg",
@@ -35,7 +39,7 @@
           "content": [
             {
               "type": "text",
-              "text": "The following command will start a local server and open it in your browser."
+              "text": "The following command will start a local server on `http://localhost:4500`"
             }
           ]
         },
@@ -75,25 +79,6 @@
             {
               "type": "text",
               "text": "Later on we'll see how to add authentication and expose this admin interface publicly."
-            }
-          ]
-        },
-        {
-          "type": "heading",
-          "level": 2,
-          "content": [
-            {
-              "type": "text",
-              "text": "Creating pages"
-            }
-          ]
-        },
-        {
-          "type": "paragraph",
-          "content": [
-            {
-              "type": "text",
-              "text": "You can create a page using the create page button in the left sidebar."
             }
           ]
         }

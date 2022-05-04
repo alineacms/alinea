@@ -4,7 +4,10 @@
   "root": "data",
   "index": "Zw",
   "title": "Workspaces",
-  "path": "workspaces",
+  "parents": [
+    "docs",
+    "259Ey7LXgqL7ZDGJ8XK1vBJmZrh"
+  ],
   "blocks": [
     {
       "id": "259FDszdsLTaK8UKjB6dWr0kKL3",
@@ -26,7 +29,7 @@
           "content": [
             {
               "type": "text",
-              "text": "Workspaces allow you to separate content. A workspace can have its own schema, media files and other configuration. It can be useful when the content has (mostly) no relation to the content in other workspaces."
+              "text": "Workspaces allow you to separate content. A workspace can have its own schema, media files and other configuration. It can be useful when the content has (mostly) no relation to the content in other workspaces. Editors can switch workspaces in the dashboard."
             }
           ]
         },
@@ -34,6 +37,102 @@
           "id": "267Q4Kyg9hOUVaJWolmaa1wOndr",
           "type": "CodeBlock",
           "code": "workspace('My workspace', {\n  source, schema, color, roots\n})"
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "content": [
+            {
+              "type": "text",
+              "text": "Configuration"
+            }
+          ]
+        },
+        {
+          "type": "heading",
+          "level": 3,
+          "content": [
+            {
+              "type": "text",
+              "text": "Source"
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "A string pointing to a directory in which published content is stored."
+            }
+          ]
+        },
+        {
+          "id": "28hgVxGUBKpMWwiKvfkoBZmYX15",
+          "type": "CodeBlock",
+          "code": "// content is stored in the `content` directory\nsource: './content'"
+        },
+        {
+          "type": "heading",
+          "level": 3,
+          "content": [
+            {
+              "type": "text",
+              "text": "Media directory"
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "A string pointing to a directory in which uploaded files are placed. In case your using alinea to manage web content this will often point to a directory that is made publicly available so an url can be created to download or display the file. "
+            }
+          ]
+        },
+        {
+          "id": "28hgYn07WY7s77bPgYhtBluKjAT",
+          "type": "CodeBlock",
+          "code": "// uploaded files are placed in the `public` folder\nmediaDir: './public'"
+        },
+        {
+          "type": "heading",
+          "level": 3,
+          "content": [
+            {
+              "type": "text",
+              "text": "Schema"
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "The `Schema` describing the content structure. Use the `schema` method to create one."
+            }
+          ]
+        },
+        {
+          "type": "heading",
+          "level": 3,
+          "content": [
+            {
+              "type": "text",
+              "text": "Roots"
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "An object containing `Root` configurations and their keys."
+            }
+          ]
         },
         {
           "type": "heading",
@@ -50,7 +149,7 @@
           "content": [
             {
               "type": "text",
-              "text": "The example below can be found in the configuration file after running the `alinea init` command. It has the following settings:"
+              "text": "The example workspace that is created with `alinea init` has the following settings:"
             }
           ]
         },
@@ -82,7 +181,21 @@
                   "content": [
                     {
                       "type": "text",
-                      "text": "`schema`: the schema includes the default `Media` types, necessary for file uploads, and the `Page` type"
+                      "text": "`mediaDir`: uploaded files are placed in the `public` folder"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "listItem",
+              "content": [
+                {
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "`schema`: the schema includes the default `MediaSchema`, necessary for file uploads, and a generic `Page` type"
                     }
                   ]
                 }
@@ -107,7 +220,7 @@
         {
           "id": "286fXgUPgalGCxwGoPGuJxFISCi",
           "type": "CodeBlock",
-          "code": "workspace('Example', {\n  source: './content',\n  schema: schema({\n    ...MediaSchema,\n    Page: type(\n      'Page',\n      {\n        title: text('Title'),\n        path: path('Path')\n      },\n      <Welcome />\n    ).configure({isContainer: true})\n  }),\n  roots: {\n    data: {\n      icon: MdInsertDriveFile,\n      contains: ['Page']\n    },\n    media: {\n      icon: MdOutlinePermMedia,\n      contains: ['MediaLibrary']\n    }\n  }\n})"
+          "code": "workspace('Example', {\n  source: './content',\n  mediaDir: './public',\n  schema: schema({\n    ...MediaSchema,\n    Page: type('Page',\n      {\n        title: text('Title'),\n        path: path('Path')\n      },\n      <Welcome />\n    ).configure({isContainer: true})\n  }),\n  roots: {\n    data: root('Example project', {\n      icon: IcRoundInsertDriveFile,\n      contains: ['Page']\n    }),\n    media: root('Media', {\n      icon: IcRoundPermMedia,\n      contains: ['MediaLibrary']\n    })\n  }\n})"
         }
       ]
     },
@@ -115,7 +228,7 @@
       "id": "286C2IKcWw9PYcWgPIvXz1fP7Jz",
       "index": "a1",
       "type": "TypesBlock",
-      "types": "workspace, WorkspaceOptions"
+      "types": "WorkspaceOptions"
     }
   ]
 }

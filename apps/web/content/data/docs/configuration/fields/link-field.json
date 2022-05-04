@@ -4,7 +4,11 @@
   "root": "data",
   "index": "a2G",
   "title": "Link",
-  "path": "link-field",
+  "parents": [
+    "docs",
+    "259Ey7LXgqL7ZDGJ8XK1vBJmZrh",
+    "24yE2mu6Xq959jrP135Sdb4e3lG"
+  ],
   "blocks": [
     {
       "id": "268i1KY3QKOP5OE6tyKcIe8OuIL",
@@ -41,7 +45,7 @@
       "id": "286IWhDVAcsssijLTyBSRdbY9JF",
       "index": "a1",
       "type": "TypesBlock",
-      "types": "link, LinkOptions, LinkField"
+      "types": "LinkOptions"
     }
   ]
 }

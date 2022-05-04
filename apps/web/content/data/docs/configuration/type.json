@@ -4,7 +4,10 @@
   "root": "data",
   "index": "Zx",
   "title": "Type",
-  "path": "type",
+  "parents": [
+    "docs",
+    "259Ey7LXgqL7ZDGJ8XK1vBJmZrh"
+  ],
   "blocks": [
     {
       "id": "267QuoR4fyaDqlC9Y4e5bnRYtfj",
@@ -34,6 +37,121 @@
           "id": "267QyzM4851hQU1DihfoV3fSIFg",
           "type": "CodeBlock",
           "code": "type('My type', {\n  title: text('Title', {width: 0.5}),\n  path: path('Path', {width: 0.5})\n})"
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "content": [
+            {
+              "type": "text",
+              "text": "Configuration"
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "A type can be configured further by using the `configure` method:"
+            }
+          ]
+        },
+        {
+          "id": "28hlt4OdKMFVCRzEf2TwQaUzbui",
+          "type": "CodeBlock",
+          "code": "type('Example type').configure({\n  ...configuration\n})"
+        },
+        {
+          "type": "heading",
+          "level": 3,
+          "content": [
+            {
+              "type": "text",
+              "text": "Container"
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "When a type is marked as a container it can contain subpages."
+            }
+          ]
+        },
+        {
+          "id": "28hm0oPtHKhLaCy81WA2kyAKIO2",
+          "type": "CodeBlock",
+          "code": "isContainer: true"
+        },
+        {
+          "type": "heading",
+          "level": 3,
+          "content": [
+            {
+              "type": "text",
+              "text": "Contains"
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "In case this type is a container the allowed sub types can be declared in an array."
+            }
+          ]
+        },
+        {
+          "id": "28hmFQwpEgifAOoOnxkUe2FtXDJ",
+          "type": "CodeBlock",
+          "code": "contains: ['PageA', 'PageB']"
+        },
+        {
+          "type": "heading",
+          "level": 3,
+          "content": [
+            {
+              "type": "text",
+              "text": "Hidden"
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "By marking a type as hidden it will not show up in the sidebar entry tree."
+            }
+          ]
+        },
+        {
+          "id": "28hmAEXUe1GuL27vBKjNYRARYWa",
+          "type": "CodeBlock",
+          "code": "isHidden: true"
+        },
+        {
+          "type": "heading",
+          "level": 3,
+          "content": [
+            {
+              "type": "text",
+              "text": "Icon"
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "An icon can be used to label a root in the sidebar. Must be a react component. You can find icons on https://icones.js.org or install a package such as react-icons (https://react-icons.github.io/react-icons)."
+            }
+          ]
         }
       ]
     },
@@ -41,7 +159,7 @@
       "id": "286HsGRzFoyQsBZIUQgy23OyX9J",
       "index": "a1",
       "type": "TypesBlock",
-      "types": "type, Type"
+      "types": "Type"
     }
   ]
 }

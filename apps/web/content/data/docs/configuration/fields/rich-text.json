@@ -4,7 +4,11 @@
   "root": "data",
   "index": "a1",
   "title": "Rich text",
-  "path": "rich-text",
+  "parents": [
+    "docs",
+    "259Ey7LXgqL7ZDGJ8XK1vBJmZrh",
+    "24yE2mu6Xq959jrP135Sdb4e3lG"
+  ],
   "blocks": [
     {
       "id": "268hzy1CCrx0N9PlycpZlqjx0R9",
@@ -41,7 +45,7 @@
       "id": "286I7hBcY5VqUapFgpXsYjwKSS8",
       "index": "a1",
       "type": "TypesBlock",
-      "types": "richText, RichTextOptions, RichTextField"
+      "types": "RichTextOptions"
     }
   ]
 }

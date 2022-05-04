@@ -4,6 +4,10 @@
   "root": "data",
   "index": "a2",
   "title": "Configuration",
+  "parents": [
+    "docs",
+    "2596BztvXq5Fu9mzMLcpI4MyNZj"
+  ],
   "blocks": [
     {
       "id": "25HWDVdhsKXsw9R0i0ImOmwE32h",
@@ -25,27 +29,17 @@
           "content": [
             {
               "type": "text",
-              "text": "The command (`alinea init`) we ran in Getting Started created an `alinea.config.tsx` file. This file contains an example workspace as a starting point. Continue to the next chapter to read more about the parts that make up a workspace."
+              "text": "The command (`alinea init`) we ran in Getting Started created an `alinea.config.tsx` file. This file contains an example workspace to get started from. "
             }
           ]
         },
         {
           "id": "25HWCBHEFdsLDtooZ4mzxeax3An",
           "type": "CodeBlock",
-          "code": "import {\n  createConfig, MediaSchema, schema, text, type, workspace\n} from 'alinea'\nimport {IcRoundInsertDriveFile} from '@alinea/ui/icons/IcRoundInsertDriveFile'\nimport {IcRoundPermMedia} from '@alinea/ui/icons/IcRoundPermMedia'\n\nexport const config = createConfig({\n  workspaces: {\n    main: workspace('Example', {\n      source: './content',\n      schema: schema({\n        ...MediaSchema,\n        Home: type('Home', {\n          title: text('Title')\n        })\n      }),\n      roots: {\n        data: {\n          icon: IcRoundInsertDriveFile,\n          contains: ['Home']\n        },\n        media: {\n          icon: IcRoundPermMedia,\n          contains: ['MediaLibrary']\n        }\n      }\n    })\n  }\n})",
+          "code": "import {\n  createConfig, MediaSchema, schema, text, type, workspace\n} from 'alinea'\nimport {IcRoundInsertDriveFile} from '@alinea/ui/icons/IcRoundInsertDriveFile'\nimport {IcRoundPermMedia} from '@alinea/ui/icons/IcRoundPermMedia'\n\nexport const config = createConfig({\n  workspaces: {\n    main: workspace('Example', {\n      source: './content',\n      mediaDir: './public',\n      schema: schema({\n        ...MediaSchema,\n        Page: type('Page', {\n          title: text('Title')\n        })\n      }),\n      roots: {\n        data: root('Example project', {\n          icon: IcRoundInsertDriveFile,\n          contains: ['Page']\n        }),\n        media: root('Media', {\n          icon: IcRoundPermMedia,\n          contains: ['MediaLibrary']\n        })\n      }\n    })\n  }\n})",
           "fileName": "alinea.config.tsx"
         }
       ]
-    },
-    {
-      "id": "286IgMfdAnN8vkiueXATw4McayL",
-      "index": "a1",
-      "type": "TypesBlock",
-      "types": "createConfig, Workspaces, ConfigOptions, Config"
     }
-  ],
-  "parents": [
-    "docs",
-    "2596BztvXq5Fu9mzMLcpI4MyNZj"
   ]
 }

@@ -4,7 +4,11 @@
   "root": "data",
   "index": "a2V",
   "title": "List",
-  "path": "list",
+  "parents": [
+    "docs",
+    "259Ey7LXgqL7ZDGJ8XK1vBJmZrh",
+    "24yE2mu6Xq959jrP135Sdb4e3lG"
+  ],
   "blocks": [
     {
       "id": "268i1rDJRNrTBVC4yDR7AfJoDpW",
@@ -41,7 +45,7 @@
       "id": "286IYmoRMQcuVIU0Najc00OBfdR",
       "index": "a1",
       "type": "TypesBlock",
-      "types": "list, ListOptions, ListField"
+      "types": "ListOptions"
     }
   ]
 }

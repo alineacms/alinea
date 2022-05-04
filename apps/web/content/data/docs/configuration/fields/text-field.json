@@ -4,6 +4,11 @@
   "root": "data",
   "index": "a0",
   "title": "Text",
+  "parents": [
+    "docs",
+    "259Ey7LXgqL7ZDGJ8XK1vBJmZrh",
+    "24yE2mu6Xq959jrP135Sdb4e3lG"
+  ],
   "blocks": [
     {
       "id": "267RMxlziMVH9T7XOhaqJGDpS7L",
@@ -40,7 +45,7 @@
       "id": "286Htu5lEXpxa9TlpUBlEm9HHQt",
       "index": "a1",
       "type": "TypesBlock",
-      "types": "text, TextOptions, TextField"
+      "types": "TextOptions"
     }
   ]
 }

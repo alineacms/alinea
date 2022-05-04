@@ -4,7 +4,11 @@
   "root": "data",
   "index": "a2",
   "title": "Select",
-  "path": "select",
+  "parents": [
+    "docs",
+    "259Ey7LXgqL7ZDGJ8XK1vBJmZrh",
+    "24yE2mu6Xq959jrP135Sdb4e3lG"
+  ],
   "blocks": [
     {
       "id": "268hz0MUyLATEWwXgRZzDQDyirO",
@@ -41,7 +45,7 @@
       "id": "286ITmvhna9jHs6Zqi1oB5Y4HO7",
       "index": "a1",
       "type": "TypesBlock",
-      "types": "select, SelectItems, SelectOptions, SelectField"
+      "types": "SelectOptions, SelectItems"
     }
   ]
 }
