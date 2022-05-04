@@ -140,7 +140,6 @@ const TreeNodeLink = memo(
               >
                 {renderLabel(entry.title)}
               </span>
-              {entry.index}
               {/*entry.$isContainer && entry.childrenCount > 0 && (
                 <div className={styles.root.link.badge()}>
                   <div>{entry.childrenCount}</div>
