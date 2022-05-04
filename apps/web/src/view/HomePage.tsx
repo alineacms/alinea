@@ -18,7 +18,7 @@ const exampleCode = `schema('Blog', {
 
 export function HomePage({headline, byline, action}: HomePageProps) {
   return (
-    <>
+    <div className={styles.root()}>
       <Hero>
         <VStack center>
           <Hero.Title>{headline}</Hero.Title>
@@ -47,6 +47,6 @@ export function HomePage({headline, byline, action}: HomePageProps) {
           <CodeBlock code={exampleCode} />
         </div>
   </Container>*/}
-    </>
+    </div>
   )
 }

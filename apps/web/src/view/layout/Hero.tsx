@@ -9,8 +9,8 @@ const styles = fromModule(css)
 
 export function Hero({children}: PropsWithChildren<{}>) {
   return (
-    <Container style={{margin: 'auto'}}>
-      <div className={styles.root()}>{children}</div>
+    <Container className={styles.root()}>
+      <div className={styles.root.inner()}>{children}</div>
     </Container>
   )
 }

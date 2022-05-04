@@ -2,7 +2,6 @@ import {fromModule} from '@alinea/ui'
 import Head from 'next/head'
 import {PropsWithChildren} from 'react'
 import {FavIcon} from './branding/FavIcon'
-import {Footer} from './Footer'
 import {Header} from './Header'
 import css from './Layout.module.scss'
 import {LayoutProps} from './Layout.query'
@@ -29,8 +28,14 @@ export function Layout({
       <div className={styles.root()}>
         <Header {...header} />
         <div className={styles.root.content()}>{children}</div>
-        <Footer />
+        {/*<Footer />*/}
       </div>
     </>
   )
+}
+
+export namespace Layout {
+  export function Content({children}: PropsWithChildren<{}>) {
+    return <div className={styles.content()}>{children}</div>
+  }
 }

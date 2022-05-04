@@ -11,17 +11,19 @@ export function TypePage({layout, title, members, nav}: TypePageProps) {
   if (!members.length) return null
   return (
     <Layout {...layout}>
-      <Container>
-        <HStack gap={80}>
-          <NavSidebar>
-            <NavTree nav={nav} />
-          </NavSidebar>
-          <div style={{flexGrow: 1, minWidth: 0}}>
-            <Typo.H1>{title}</Typo.H1>
-            <Declaration members={members} wrap={TypeRow} />
-          </div>
-        </HStack>
-      </Container>
+      <Layout.Content>
+        <Container>
+          <HStack gap={80}>
+            <NavSidebar>
+              <NavTree nav={nav} />
+            </NavSidebar>
+            <div style={{flexGrow: 1, minWidth: 0}}>
+              <Typo.H1>{title}</Typo.H1>
+              <Declaration members={members} wrap={TypeRow} />
+            </div>
+          </HStack>
+        </Container>
+      </Layout.Content>
     </Layout>
   )
 }
