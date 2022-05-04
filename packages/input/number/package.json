@@ -12,8 +12,7 @@
       "browser": "./dist/view.js",
       "default": "./dist/index.js"
     },
-    "./view": "./dist/view.js",
-    "./view.js": "./dist/view.js",
+    "./*": "./dist/*.js",
     "./index.css": "./dist/index.css"
   },
   "files": [

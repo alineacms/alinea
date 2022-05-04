@@ -1,7 +1,7 @@
 import {createId} from '@alinea/core'
 import init from '@alinea/sqlite-wasm'
-import {SqlJsDriver} from '@alinea/store/sqlite/drivers/SqlJsDriver.js'
-import {SqliteStore} from '@alinea/store/sqlite/SqliteStore.js'
+import {SqlJsDriver} from '@alinea/store/sqlite/drivers/SqlJsDriver'
+import {SqliteStore} from '@alinea/store/sqlite/SqliteStore'
 import {decode} from 'base64-arraybuffer'
 
 const buffer = decode('$DB')

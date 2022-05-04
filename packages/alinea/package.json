@@ -10,8 +10,7 @@
   "type": "module",
   "exports": {
     ".": "./dist/index.js",
-    "./*": "./dist/*",
-    "./server": "./dist/server.js"
+    "./*": "./dist/*.js"
   },
   "files": [
     "dist"

@@ -28,10 +28,7 @@ export const resolvePlugin: Plugin = {
     }
     build.onResolve({filter: /.*/}, args => {
       if (args.kind === 'entry-point') return
-      const isLocal =
-        args.path.startsWith('./') ||
-        args.path.startsWith('../') ||
-        (args.path.startsWith('@alinea') && args.path.split('/').length > 2)
+      const isLocal = args.path.startsWith('./') || args.path.startsWith('../')
       const hasOutExtension = args.path.endsWith(outExtension)
       const hasExtension = args.path.split('/').pop()?.includes('.')
       if (!args.path.startsWith('.')) {

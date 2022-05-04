@@ -9,7 +9,7 @@
   "type": "module",
   "exports": {
     ".": "./dist/index.js",
-    "./*": "./dist/*"
+    "./*": "./dist/*.js"
   },
   "files": [
     "dist"
