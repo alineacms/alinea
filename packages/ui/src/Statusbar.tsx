@@ -1,5 +1,5 @@
+import type {ComponentType} from 'react'
 import {PropsWithChildren} from 'react'
-import type {IconType} from 'react-icons'
 import {Icon} from './Icon'
 import {HStack} from './Stack'
 import css from './Statusbar.module.scss'
@@ -21,7 +21,7 @@ export namespace Statusbar {
   }
 
   export type StatusProps = PropsWithChildren<{
-    icon: IconType
+    icon: ComponentType
   }>
 
   export function Status({children, icon}: StatusProps) {

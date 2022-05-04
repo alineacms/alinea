@@ -1,10 +1,9 @@
-import {PropsWithChildren, useId} from 'react'
+import {PropsWithChildren} from 'react'
 import {fromModule} from '../util/Styler'
+import {useId} from '../util/UseId'
 import css from './LogoShape.module.scss'
 
 const styles = fromModule(css)
-
-let unique = 0
 
 export type LogoShapeProps = PropsWithChildren<{
   foreground?: string

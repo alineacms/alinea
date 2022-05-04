@@ -70,28 +70,33 @@ export class Backend<T extends Workspaces = Workspaces> implements Hub<T> {
     return outcome(async () => {
       const store = await this.preview.getStore()
       const Parent = Entry.as('Parent')
+      const Translation = Entry.as('Translation')
+      const minimal = (entry: Cursor<Entry>) => ({
+        id: entry.id,
+        type: entry.type,
+        title: entry.title,
+        workspace: entry.workspace,
+        root: entry.root,
+        url: entry.url,
+        parent: entry.parent,
+        i18n: entry.i18n
+      })
       const data = store.first(
         Entry.where(Entry.id.is(id)).select({
           entry: Entry.fields,
+          translations: Translation.where(t =>
+            t.i18n.id.is(Entry.i18n.id)
+          ).select(minimal),
           parent: Parent.where(Parent.id.is(Entry.parent))
-            .select({
-              id: Parent.id,
-              type: Parent.type,
-              title: Parent.title,
-              workspace: Parent.workspace,
-              root: Parent.root,
-              url: Parent.url,
-              parent: Parent.parent
-            })
+            .select(minimal)
             .first()
         })
       )
       return (
         data && {
-          entry: data.entry,
+          ...data,
           draft: draft && encode(draft),
-          previewToken: previews.sign({id}),
-          parent: data.parent
+          previewToken: previews.sign({id})
         }
       )
     })
@@ -126,14 +131,15 @@ export class Backend<T extends Workspaces = Workspaces> implements Hub<T> {
   publishEntries(entries: Array<Entry>): Future<void> {
     const {config, drafts, target} = this.options
     function applyPublish(store: Store) {
-      Cache.applyPublish(store, config.type, entries)
+      Cache.applyPublish(store, config, entries)
       return store
     }
     return outcome(async () => {
-      await target.publish(entries)
+      const create = this.createStore
+      const current = await create()
+      await target.publish(current, entries)
       const ids = entries.map(entry => entry.id)
       await drafts.delete(ids)
-      const create = this.createStore
       this.createStore = () => create().then(applyPublish)
       await this.preview.deleteUpdates(ids)
     })

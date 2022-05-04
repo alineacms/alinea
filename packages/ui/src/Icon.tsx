@@ -1,12 +1,11 @@
-import {HTMLAttributes, ReactNode} from 'react'
-import type {IconType} from 'react-icons'
+import {ComponentType, HTMLAttributes, ReactNode} from 'react'
 import css from './Icon.module.scss'
 import {fromModule} from './util/Styler'
 
 const styles = fromModule(css)
 
 export type IconProps = {
-  icon: IconType | ReactNode
+  icon: ComponentType | ReactNode
 } & HTMLAttributes<HTMLSpanElement>
 
 export function Icon({icon, ...props}: IconProps) {

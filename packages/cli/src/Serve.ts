@@ -2,13 +2,17 @@ import {DevServer} from '@alinea/backend'
 import {EvalPlugin} from '@esbx/eval'
 import {ReactPlugin} from '@esbx/react'
 import {ReloadPlugin} from '@esbx/reload'
+import semver from 'compare-versions'
 import compression from 'compression'
 import {dirname} from 'dirname-filename-esm'
 import esbuild, {BuildOptions} from 'esbuild'
 import express from 'express'
+import {createRequire} from 'node:module'
 import path from 'node:path'
 import serveHandler from 'serve-handler'
 import {generate} from './Generate'
+
+const require = createRequire(import.meta.url)
 
 const __dirname = dirname(import.meta)
 
@@ -33,18 +37,19 @@ export async function serve(options: ServeOptions) {
   await generate({...options, watch: true})
   const {createStore} = await import('file://' + storeLocation)
   const {config} = await import('file://' + genConfigFile)
-
+  const {version} = require('react/package.json')
+  const isReact18 = semver.compare(version, '18.0.0', '>=')
+  const entryPoint = isReact18 ? 'react18' : 'react'
   const entry = `
     import '@alinea/css'
     import {Client} from '@alinea/client'
-    import {renderDashboard} from '@alinea/dashboard'
+    import {renderDashboard} from '@alinea/dashboard/render/${entryPoint}'
     import {config} from ${JSON.stringify(genConfigFile)}
     renderDashboard({
       config,
       client: new Client(config, 'http://localhost:${port}')
     })
   `
-
   await esbuild.build({
     format: 'esm',
     target: 'esnext',

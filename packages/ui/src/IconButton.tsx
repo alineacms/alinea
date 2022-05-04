@@ -1,5 +1,4 @@
 import {ComponentType, forwardRef, HTMLAttributes, Ref} from 'react'
-import type {IconType} from 'react-icons'
 import {Link, LinkProps} from 'react-router-dom'
 import css from './IconButton.module.scss'
 import {fromModule} from './util/Styler'
@@ -30,7 +29,7 @@ export const IconButton = forwardRef(function IconButton(
 })
 
 export type IconLinkProps = LinkProps & {
-  icon: IconType
+  icon: ComponentType
   active?: boolean
 }
 

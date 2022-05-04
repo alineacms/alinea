@@ -2,17 +2,20 @@ import {Schema, type} from '@alinea/core'
 import {code} from '@alinea/input.code'
 import {tab, tabs} from '@alinea/input.tabs'
 import {text} from '@alinea/input.text'
-import {MdCode, MdOutlineSettings} from 'react-icons/md'
+import {IcOutlineSettings} from '@alinea/ui/icons/IcOutlineSettings'
+import {IcRoundCode} from '@alinea/ui/icons/IcRoundCode'
 
 export const CodeBlockSchema = type(
   'Code',
   tabs(
-    tab('Code', {code: code('Code', {inline: true})}).configure({icon: MdCode}),
+    tab('Code', {code: code('Code', {inline: true})}).configure({
+      icon: IcRoundCode
+    }),
     tab('Settings', {
       fileName: text('File name', {width: 0.75}),
       language: text('Language', {width: 0.25})
-    }).configure({icon: MdOutlineSettings})
+    }).configure({icon: IcRoundCode})
   )
-).configure({icon: MdCode})
+).configure({icon: IcOutlineSettings})
 
 export type CodeBlockSchema = Schema.TypeOf<typeof CodeBlockSchema>

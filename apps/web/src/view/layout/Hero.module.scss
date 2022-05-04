@@ -1,12 +1,16 @@
 @import '@alinea/web/src/style.scss';
 
 .root {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding-bottom: 60px;
-  flex-grow: 1;
+  margin: auto;
+
+  &-inner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding-bottom: 60px;
+    flex-grow: 1;
+  }
 }
 
 .title {
@@ -15,7 +19,7 @@
   margin-bottom: 24px;
   font-weight: bold;
   white-space: pre-line;
-  color: #090e24;
+  color: #141b43;
 
   @include s {
     font-size: 45px;

@@ -17,7 +17,7 @@ type FieldsOf<Row> = Row extends Record<string, any>
   ? {
       [K in keyof Row]-?: Row[K] extends Array<any>
         ? Expr<Row[K]>
-        : Row[K] extends object
+        : Row[K] extends object | undefined
         ? Fields<Row[K]>
         : Expr<Row[K]>
     }

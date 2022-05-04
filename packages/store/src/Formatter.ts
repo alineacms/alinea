@@ -336,11 +336,28 @@ export abstract class Formatter {
     }
   }
 
-  formatSelect(cursor: CursorData, options: FormatCursorOptions = {}) {
-    return sql`select ${this.formatCursor(cursor, {
+  formatSelect(
+    cursor: CursorData,
+    options: FormatCursorOptions = {}
+  ): Statement {
+    const res = sql`select ${this.formatCursor(cursor, {
       ...options,
       includeSelection: true
     })}`
+    if (!cursor.union) return res
+    const a = res,
+      b = this.formatSelect(cursor.union, options)
+    function wrap(stmt: Statement, needsWrap: boolean) {
+      if (!needsWrap) return stmt
+      return sql`select * from (${stmt})`
+    }
+    return Statement.join(
+      [
+        wrap(a, Boolean(cursor.orderBy || cursor.groupBy)),
+        wrap(b, Boolean(cursor.union.orderBy || cursor.union.groupBy))
+      ],
+      ' union '
+    )
   }
 
   formatDelete(cursor: CursorData, options: FormatCursorOptions = {}) {

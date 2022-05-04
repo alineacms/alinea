@@ -1,5 +1,5 @@
 import {fromModule, HStack, px, Typo, VStack} from '@alinea/ui'
-import {MdOpenInNew} from 'react-icons/md'
+import {IcRoundOpenInNew} from '@alinea/ui/icons/IcRoundOpenInNew'
 import css from './HomePage.module.scss'
 import {HomePageProps} from './HomePage.query'
 import {Hero} from './layout/Hero'
@@ -18,7 +18,7 @@ const exampleCode = `schema('Blog', {
 
 export function HomePage({headline, byline, action}: HomePageProps) {
   return (
-    <>
+    <div className={styles.root()}>
       <Hero>
         <VStack center>
           <Hero.Title>{headline}</Hero.Title>
@@ -36,7 +36,7 @@ export function HomePage({headline, byline, action}: HomePageProps) {
             <Typo.Link href="/demo" target="_blank">
               <HStack center gap={8}>
                 <span>Try the demo</span>
-                <MdOpenInNew />
+                <IcRoundOpenInNew />
               </HStack>
             </Typo.Link>
           </HStack>
@@ -47,6 +47,6 @@ export function HomePage({headline, byline, action}: HomePageProps) {
           <CodeBlock code={exampleCode} />
         </div>
   </Container>*/}
-    </>
+    </div>
   )
 }

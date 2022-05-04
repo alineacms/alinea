@@ -2,8 +2,8 @@ import {createError, isSeparator, slugify} from '@alinea/core'
 import {EntryProperty} from '@alinea/dashboard'
 import {InputLabel, InputState, useInput} from '@alinea/editor'
 import {fromModule} from '@alinea/ui'
+import {IcRoundLink} from '@alinea/ui/icons/IcRoundLink'
 import {useState} from 'react'
-import {MdLink} from 'react-icons/md'
 import {PathField} from './PathField'
 import css from './PathInput.module.scss'
 
@@ -35,7 +35,7 @@ export function PathInput({state, field}: PathInputProps) {
       optional={optional}
       width={width}
       focused={focus}
-      icon={MdLink}
+      icon={IcRoundLink}
       empty={empty}
     >
       <input

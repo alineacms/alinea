@@ -1,3 +1,5 @@
+import {IcRoundInsertDriveFile} from '@alinea/ui/icons/IcRoundInsertDriveFile'
+import {IcRoundPermMedia} from '@alinea/ui/icons/IcRoundPermMedia'
 import {
   createConfig,
   MediaSchema,
@@ -9,7 +11,6 @@ import {
   Welcome,
   workspace
 } from 'alinea'
-import {MdInsertDriveFile, MdOutlinePermMedia} from 'react-icons/md'
 
 export const config = createConfig({
   workspaces: {
@@ -28,11 +29,11 @@ export const config = createConfig({
       }),
       roots: {
         data: root('Example project', {
-          icon: MdInsertDriveFile,
+          icon: IcRoundInsertDriveFile,
           contains: ['Page']
         }),
         media: root('Media', {
-          icon: MdOutlinePermMedia,
+          icon: IcRoundPermMedia,
           contains: ['MediaLibrary']
         })
       }

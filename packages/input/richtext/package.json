@@ -36,8 +36,7 @@
     "@tiptap/extension-collaboration": "^2.0.0-beta.33",
     "@tiptap/extension-floating-menu": "^2.0.0-beta.50",
     "@tiptap/react": "^2.0.0-beta.108",
-    "@tiptap/starter-kit": "^2.0.0-beta.183",
-    "react-icons": "^4.3.1"
+    "@tiptap/starter-kit": "^2.0.0-beta.183"
   },
   "peerDependencies": {
     "react": "*"

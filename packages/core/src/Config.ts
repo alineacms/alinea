@@ -1,6 +1,7 @@
 import {WorkspaceConfig} from '.'
 import {Auth} from './Auth'
 import {createError} from './ErrorWithCode'
+import {Root} from './Root'
 import {Type} from './Type'
 import {Workspace, Workspaces} from './Workspace'
 
@@ -29,6 +30,19 @@ export class Config<T extends Workspaces = Workspaces> {
     const space = this.workspaces[workspace]
     if (!space) throw createError(404, `Workspace "${workspace}" not found`)
     return space.schema.type(name)
+  }
+
+  /** Get a root */
+  root = (workspace: string, root: string): Root => {
+    const space = this.workspaces[workspace]
+    if (!space) throw createError(404, `Workspace "${workspace}" not found`)
+    const maybeRoot = space.roots[root]
+    if (!maybeRoot)
+      throw createError(
+        404,
+        `Root "${root}" in workspace "${workspace}" not found`
+      )
+    return maybeRoot
   }
 }
 

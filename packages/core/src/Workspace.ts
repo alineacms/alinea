@@ -38,7 +38,7 @@ export class Workspace<T = any> {
   label: Label
   roots: Record<string, Root>
 
-  constructor(public name: string, private config: WorkspaceConfig<T>) {
+  constructor(public name: string, public config: WorkspaceConfig<T>) {
     this.label = config.label
     this.roots = Object.fromEntries(
       Object.entries(this.config.roots).map(([rootKey, config]) => {

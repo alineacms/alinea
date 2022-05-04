@@ -1,10 +1,9 @@
 import {renderLabel} from '@alinea/core/Label'
 import {useInput} from '@alinea/editor'
 import {Chip, fromModule, HStack, IconLink, Typo} from '@alinea/ui'
+import {IcRoundArrowBack} from '@alinea/ui/icons/IcRoundArrowBack'
 import {PropsWithChildren} from 'react'
 import {Helmet} from 'react-helmet'
-import {MdArrowBack} from 'react-icons/md'
-// import {MdOutlineMoreHoriz} from 'react-icons/md'
 import {EntryDraft} from '../../draft/EntryDraft'
 import {useCurrentDraft} from '../../hook/UseCurrentDraft'
 import css from './EntryTitle.module.scss'
@@ -25,7 +24,7 @@ export function EntryTitle({children, backLink}: EntryTitleProps) {
       </Helmet>
       <div className={styles.root()}>
         <HStack center gap={18}>
-          {backLink && <IconLink icon={MdArrowBack} to={backLink} />}
+          {backLink && <IconLink icon={IcRoundArrowBack} to={backLink} />}
           <Typo.H1 flat style={{position: 'relative'}}>
             <span>{title}</span>
             {children}

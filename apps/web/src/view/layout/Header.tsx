@@ -1,8 +1,8 @@
 import {fromModule, HStack, LogoShape, Stack} from '@alinea/ui'
+import {MdiGithub} from '@alinea/ui/icons/MdiGithub'
+import {MdiTwitterCircle} from '@alinea/ui/icons/MdiTwitterCircle'
+import {MiLayers} from '@alinea/ui/icons/MiLayers'
 import Link from 'next/link'
-import {AiFillTwitterCircle} from 'react-icons/ai'
-import {FiLayers} from 'react-icons/fi'
-import {IoLogoGithub} from 'react-icons/io'
 import {Logo} from './branding/Logo'
 import css from './Header.module.scss'
 import {HeaderProps} from './Header.query'
@@ -17,7 +17,7 @@ export function Header({links}: HeaderProps) {
           <a className={styles.root.logo()}>
             <HStack center gap={9}>
               <LogoShape foreground="white" background="#4a63e7">
-                <FiLayers />
+                <MiLayers />
               </LogoShape>
               <Logo className={styles.root.logo.text()} />
             </HStack>
@@ -45,14 +45,14 @@ export function Header({links}: HeaderProps) {
               href="https://github.com/alineacms/alinea"
               target="_blank"
             >
-              <IoLogoGithub className={styles.root.social.icon()} />
+              <MdiGithub className={styles.root.social.icon()} />
             </a>
             <a
               className={styles.root.social()}
               href="https://twitter.com/alineacms"
               target="_blank"
             >
-              <AiFillTwitterCircle className={styles.root.social.icon()} />
+              <MdiTwitterCircle className={styles.root.social.icon()} />
             </a>
           </HStack>
         </Stack.Right>

@@ -1,6 +1,6 @@
 import {Media, type} from '@alinea/core'
 import {text} from '@alinea/input.text'
-import {MdOutlinePermMedia} from 'react-icons/md'
+import {IcRoundPermMedia} from '@alinea/ui/icons/IcRoundPermMedia'
 import {FileSummaryRow, FileSummaryThumb} from '../view/media/FileSummary'
 import {MediaExplorer} from '../view/MediaExplorer'
 
@@ -11,7 +11,7 @@ export const MediaSchema = {
     isContainer: true,
     contains: [Media.Type.Libary],
     view: MediaExplorer,
-    icon: MdOutlinePermMedia
+    icon: IcRoundPermMedia
   }),
   File: type('File', {
     title: text('Title')

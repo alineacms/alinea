@@ -1,5 +1,10 @@
 import {InputForm, InputLabel, InputState, useInput} from '@alinea/editor'
 import {Card, Create, fromModule, IconButton, TextLabel} from '@alinea/ui'
+import {IcOutlineList} from '@alinea/ui/icons/IcOutlineList'
+import {IcRoundClose} from '@alinea/ui/icons/IcRoundClose'
+import {IcRoundDragHandle} from '@alinea/ui/icons/IcRoundDragHandle'
+import {IcRoundKeyboardArrowDown} from '@alinea/ui/icons/IcRoundKeyboardArrowDown'
+import {IcRoundKeyboardArrowUp} from '@alinea/ui/icons/IcRoundKeyboardArrowUp'
 import {
   closestCenter,
   defaultDropAnimation,
@@ -30,13 +35,6 @@ import {
   Ref,
   useState
 } from 'react'
-import {
-  MdClose,
-  MdDragHandle,
-  MdKeyboardArrowDown,
-  MdKeyboardArrowUp,
-  MdOutlineList
-} from 'react-icons/md'
 import {ListField} from './ListField'
 import css from './ListInput.module.scss'
 
@@ -116,7 +114,7 @@ function ListInputRow<T extends ListRow>({
       <Card.Header>
         <Card.Options>
           <IconButton
-            icon={type.options?.icon || MdDragHandle}
+            icon={type.options?.icon || IcRoundDragHandle}
             {...handle}
             style={{cursor: handle ? 'grab' : 'grabbing'}}
           />
@@ -125,9 +123,15 @@ function ListInputRow<T extends ListRow>({
           <TextLabel label={type.label} />
         </Card.Title>
         <Card.Options>
-          <IconButton icon={MdKeyboardArrowUp} onClick={() => onMove?.(-1)} />
-          <IconButton icon={MdKeyboardArrowDown} onClick={() => onMove?.(1)} />
-          <IconButton icon={MdClose} onClick={onDelete} />
+          <IconButton
+            icon={IcRoundKeyboardArrowUp}
+            onClick={() => onMove?.(-1)}
+          />
+          <IconButton
+            icon={IcRoundKeyboardArrowDown}
+            onClick={() => onMove?.(1)}
+          />
+          <IconButton icon={IcRoundClose} onClick={onDelete} />
         </Card.Options>
       </Card.Header>
       <Card.Content>
@@ -211,7 +215,7 @@ export function ListInput<T extends ListRow>({
         optional={optional}
         inline={inline}
         width={width}
-        icon={MdOutlineList}
+        icon={IcOutlineList}
       >
         <div className={styles.root()}>
           <div className={styles.root.inner({inline})}>

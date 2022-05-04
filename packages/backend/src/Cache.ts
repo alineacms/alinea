@@ -4,8 +4,7 @@ import {
   Entry,
   entryFromDoc,
   EntryStatus,
-  outcome,
-  Type
+  outcome
 } from '@alinea/core'
 import {Search} from '@alinea/core/Search'
 import {
@@ -18,6 +17,7 @@ import convertHrtime from 'convert-hrtime'
 import prettyMilliseconds from 'pretty-ms'
 import * as Y from 'yjs'
 import {Data} from './Data'
+import {appendPath} from './util/Urls'
 
 export namespace Cache {
   function indexSearch(store: Store, entry: Entry, lookup = true) {
@@ -152,6 +152,7 @@ export namespace Cache {
     commitBatch()
     if (log) process.stdout.write(`> Indexing...\r`)
     store.createIndex(Entry, 'index', [Entry.index])
+    store.createIndex(Entry, 'i18nId', [Entry.i18n.id])
     store.createIndex(Entry, 'parent', [Entry.parent])
     store.createIndex(Entry, 'workspace.root.type', [
       Entry.workspace,
@@ -184,17 +185,13 @@ export namespace Cache {
       )
   }
 
-  function computeEntry(
-    store: Store,
-    getType: (workspace: string, typeKey: string) => Type | undefined,
-    entry: Entry,
-    status: EntryStatus
-  ) {
-    const type = getType(entry.workspace, entry.type)
+  export function computeEntry(store: Store, config: Config, entry: Entry) {
+    const type = config.type(entry.workspace, entry.type)
     if (!type) throw createError(400, 'Type not found')
+    const root = config.root(entry.workspace, entry.root)
     const parents: Array<string> = []
     let target = entry.parent,
-      url = entry.path
+      url = entry.path === 'index' ? '' : entry.path
     while (target) {
       if (parents.includes(target))
         throw createError(400, 'Circular parent reference')
@@ -209,19 +206,50 @@ export namespace Cache {
       url = (parent.path === 'index' ? '' : parent.path) + '/' + url
       target = parent.parent
     }
+    if (root.i18n) {
+      const locale = entry.i18n?.locale!
+      if (!root.i18n.locales.includes(locale))
+        throw createError(
+          400,
+          `Invalid locale "${locale}" in entry with url "${entry.url}"`
+        )
+      url = `${locale}/${url}`
+      const i18nParents =
+        parents.length > 0
+          ? store.all(
+              Entry.where(Entry.id.isIn(parents)).select(Entry.i18n.id.sure())
+            )
+          : parents
+      entry.i18n = {
+        id: entry.i18n!.id,
+        locale,
+        parent: i18nParents[i18nParents.length - 1],
+        parents: i18nParents
+      }
+    } else {
+      delete entry.i18n
+    }
     return {
       ...entry,
       url: '/' + url,
       parent: parents[parents.length - 1],
       parents: parents,
-      $isContainer: type!.options.isContainer,
-      $status: status
+      $isContainer: type!.options.isContainer
+    }
+  }
+
+  function setChildrenUrl(store: Store, parentUrl: string, parentId: string) {
+    const children = store.all(Entry.where(Entry.parent.is(parentId)))
+    for (const child of children) {
+      const url = appendPath(parentUrl, child.path)
+      store.update(Entry.where(Entry.id.is(child.id)), {url})
+      setChildrenUrl(store, url, child.id)
     }
   }
 
   export function applyUpdates(
     store: Store,
-    getType: (workspace: string, typeKey: string) => Type | undefined,
+    config: Config,
     updates: IterableIterator<[string, Uint8Array]>
   ) {
     const changed = []
@@ -231,15 +259,28 @@ export namespace Cache {
       const doc = new Y.Doc()
       // if (existing) docFromEntry(config, existing, doc)
       Y.applyUpdate(doc, update)
-      const [data, err] = outcome(() => entryFromDoc(doc, getType))
-      if (err) {
+      const [entry, err] = outcome(() => {
+        const data = entryFromDoc(doc, config.type)
+        return {
+          ...computeEntry(store, config, data!),
+          $status: EntryStatus.Draft
+        }
+      })
+      if (!entry) {
         console.error(err)
+        console.log(
+          `Could not parse update for entry with id "${id}"\n  > ${err}`
+        )
         continue
       }
-      const entry = computeEntry(store, getType, data!, EntryStatus.Draft)
       changed.push(id)
-      if (existing) store.update(condition, entry)
-      else store.insert(Entry, entry)
+      if (existing) {
+        if (existing.url !== entry.url)
+          setChildrenUrl(store, entry.url, entry.id)
+        store.update(condition, entry)
+      } else {
+        store.insert(Entry, entry)
+      }
       indexSearch(store, entry)
     }
     validateOrder(store, changed)
@@ -247,16 +288,21 @@ export namespace Cache {
 
   export function applyPublish(
     store: Store,
-    getType: (workspace: string, typeKey: string) => Type | undefined,
+    config: Config,
     entries: Array<Entry>
   ) {
     return store.transaction(() => {
       for (const data of entries) {
-        const entry = computeEntry(store, getType, data, EntryStatus.Published)
+        const entry = computeEntry(store, config, data)
         const condition = Entry.where(Entry.id.is(entry.id))
         const existing = store.first(condition)
-        if (existing) store.update(condition, entry)
-        else store.insert(Entry, entry)
+        if (existing) {
+          if (existing.url !== entry.url)
+            setChildrenUrl(store, entry.url, entry.id)
+          store.update(condition, entry)
+        } else {
+          store.insert(Entry, entry)
+        }
         indexSearch(store, entry)
       }
     })

@@ -9,8 +9,8 @@ import {
   Typo,
   VStack
 } from '@alinea/ui'
+import {IcRoundKeyboardArrowRight} from '@alinea/ui/icons/IcRoundKeyboardArrowRight'
 import {ReactNode} from 'react'
-import {MdKeyboardArrowRight} from 'react-icons/md'
 import {useWorkspace} from '../../hook/UseWorkspace'
 import css from './EntrySummary.module.scss'
 
@@ -45,7 +45,7 @@ export const EntrySummaryRow = view(
                     ))
                     .reduce((prev, curr, i) => [
                       prev,
-                      <MdKeyboardArrowRight key={`s${i}`} />,
+                      <IcRoundKeyboardArrowRight key={`s${i}`} />,
                       curr
                     ])}
                 </HStack>
@@ -81,7 +81,7 @@ export const EntrySummaryThumb = view(
                   ))
                   .reduce((prev, curr, i) => [
                     prev,
-                    <MdKeyboardArrowRight key={`s${i}`} />,
+                    <IcRoundKeyboardArrowRight key={`s${i}`} />,
                     curr
                   ])}
               </HStack>

@@ -47,7 +47,7 @@ export class Schema<T = any> {
     this.__types = types
   }
 
-  concat<X>(that: Schema<X>): Schema<T & X> {
+  concat<X>(that: Schema<X>): Schema<T | X> {
     return new Schema<any>(LazyRecord.concat(this.__types, that.__types))
   }
 

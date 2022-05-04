@@ -1,20 +1,23 @@
 @import '@alinea/web/src/style.scss';
 
 .root {
+  --background: hsl(0, 12%, 98%);
   position: relative;
-  background: hsl(0, 12%, 98%);
+  background: var(--background);
+  color: white;
   height: 95px;
   display: flex;
   justify-content: center;
   flex-direction: column;
   padding: 0 30px;
+  //border-bottom: 1px solid #E9E8EA;
 
   @include ml {
     padding: 0 45px;
   }
 
   &-logo {
-    color: #44363b;
+    color: #141b43;
     margin-top: -3px;
 
     @include ml {
@@ -42,7 +45,7 @@
     position: absolute;
     top: 100%;
     margin-top: -1px;
-    fill: hsl(0, 12%, 98%);
+    fill: var(--background);
     left: 0;
     right: 0;
     z-index: 1;
@@ -52,7 +55,7 @@
   }
 
   &-social {
-    color: #44363b;
+    color: #141b43;
 
     &:hover {
       color: black;

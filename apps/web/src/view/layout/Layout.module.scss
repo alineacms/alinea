@@ -6,25 +6,29 @@
   background: white;
   min-height: 100vh;
   font-family: Inter, sans-serif;
-  font-size: 15px;
+    font-size: 15px;
   line-height: 1.4;
-  color: #1d232a;
-  background: linear-gradient(to bottom, hsl(0, 12%, 96%), hsl(0, 12%, 97%))
-    fixed;
+  color: #141b43;
+  background: linear-gradient(120deg, hsl(209 95.0% 90.1%), hsl(85 76.0% 92.3%));
+  background: linear-gradient(to bottom, hsl(0, 12%, 96%), hsl(0, 12%, 97%));
 
   &-content {
     position: relative;
     flex-grow: 1;
-    padding-top: 70px;
     display: flex;
     flex-direction: column;
+    
+  }
+}
 
-    @include m {
-      padding-top: 90px;
-    }
+.content {
+  padding: 70px 0;
 
-    @include l {
-      padding-top: 100px;
-    }
+  @include m {
+    padding: 90px 0;
+  }
+
+  @include l {
+    padding: 100px 0;
   }
 }

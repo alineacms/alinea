@@ -2,12 +2,13 @@ import {Client} from '@alinea/client'
 import {Auth, createError, Session} from '@alinea/core'
 import {useDashboard} from '@alinea/dashboard'
 import {Button, fromModule, Loader, LogoShape, px, Typo} from '@alinea/ui'
+import {IcRoundArrowBack} from '@alinea/ui/icons/IcRoundArrowBack'
+import {IcRoundArrowForward} from '@alinea/ui/icons/IcRoundArrowForward'
+import {RiFlashlightFill} from '@alinea/ui/icons/RiFlashlightFill'
 import {HStack, VStack} from '@alinea/ui/Stack'
 import jwtDecode from 'jwt-decode'
 import {FormEvent, PropsWithChildren, useLayoutEffect, useState} from 'react'
 import Helmet from 'react-helmet'
-import {MdArrowBack, MdArrowForward} from 'react-icons/md'
-import {RiFlashlightFill} from 'react-icons/ri'
 import css from './PasswordLessLogin.module.scss'
 
 const styles = fromModule(css)
@@ -76,7 +77,7 @@ function LoginForm({onSubmit, email, setEmail}: LoginFormProps) {
             <Button size="large" type="submit">
               <HStack center gap={8}>
                 <span>Sign in</span>
-                <MdArrowForward />
+                <IcRoundArrowForward />
               </HStack>
             </Button>
           </HStack>
@@ -114,7 +115,7 @@ function LoginScreen(props: LoginScreenProps) {
           <div>
             <Button onClick={() => props.setState(LoginState.Input)}>
               <HStack center gap={8}>
-                <MdArrowBack />
+                <IcRoundArrowBack />
                 <span>Try again</span>
               </HStack>
             </Button>

@@ -33,8 +33,7 @@
     "@alinea/ui": "0.0.0",
     "@dnd-kit/core": "^3.1.1",
     "@dnd-kit/sortable": "^4.0.0",
-    "@dnd-kit/utilities": "^2.0.0",
-    "react-icons": "^4.3.1"
+    "@dnd-kit/utilities": "^2.0.0"
   },
   "peerDependencies": {
     "react": "*"

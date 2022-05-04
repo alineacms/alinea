@@ -4,7 +4,6 @@
   "root": "data",
   "index": "a2",
   "title": "Configuration",
-  "path": "configuration",
   "blocks": [
     {
       "id": "25HWDVdhsKXsw9R0i0ImOmwE32h",
@@ -33,7 +32,7 @@
         {
           "id": "25HWCBHEFdsLDtooZ4mzxeax3An",
           "type": "CodeBlock",
-          "code": "import {\n  createConfig, MediaSchema, schema, text, type, workspace\n} from 'alinea'\nimport {MdInsertDriveFile, MdOutlinePermMedia} from 'react-icons/md'\n\nexport const config = createConfig({\n  workspaces: {\n    main: workspace('Example', {\n      source: './content',\n      schema: schema({\n        ...MediaSchema,\n        Home: type('Home', {\n          title: text('Title')\n        })\n      }),\n      roots: {\n        data: {\n          icon: MdInsertDriveFile,\n          contains: ['Home']\n        },\n        media: {\n          icon: MdOutlinePermMedia,\n          contains: ['MediaLibrary']\n        }\n      }\n    })\n  }\n})",
+          "code": "import {\n  createConfig, MediaSchema, schema, text, type, workspace\n} from 'alinea'\nimport {IcRoundInsertDriveFile} from '@alinea/ui/icons/IcRoundInsertDriveFile'\nimport {IcRoundPermMedia} from '@alinea/ui/icons/IcRoundPermMedia'\n\nexport const config = createConfig({\n  workspaces: {\n    main: workspace('Example', {\n      source: './content',\n      schema: schema({\n        ...MediaSchema,\n        Home: type('Home', {\n          title: text('Title')\n        })\n      }),\n      roots: {\n        data: {\n          icon: IcRoundInsertDriveFile,\n          contains: ['Home']\n        },\n        media: {\n          icon: IcRoundPermMedia,\n          contains: ['MediaLibrary']\n        }\n      }\n    })\n  }\n})",
           "fileName": "alinea.config.tsx"
         }
       ]
@@ -44,5 +43,9 @@
       "type": "TypesBlock",
       "types": "createConfig, Workspaces, ConfigOptions, Config"
     }
+  ],
+  "parents": [
+    "docs",
+    "2596BztvXq5Fu9mzMLcpI4MyNZj"
   ]
 }

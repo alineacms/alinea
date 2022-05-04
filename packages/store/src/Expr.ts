@@ -275,6 +275,9 @@ export class Expr<T> {
       )
     ) as any
   }
+  sure() {
+    return this as Expr<NonNullable<T>>
+  }
   case<
     T extends string | number,
     C extends {[K in T]?: SelectionInput},

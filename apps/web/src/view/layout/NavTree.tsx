@@ -1,8 +1,9 @@
 import {fromModule, HStack, px} from '@alinea/ui'
+import {IcRoundKeyboardArrowDown} from '@alinea/ui/icons/IcRoundKeyboardArrowDown'
+import {IcRoundKeyboardArrowRight} from '@alinea/ui/icons/IcRoundKeyboardArrowRight'
 import Link from 'next/link'
 import {useRouter} from 'next/router'
 import {Fragment, useMemo, useState} from 'react'
-import {MdKeyboardArrowDown, MdKeyboardArrowRight} from 'react-icons/md'
 import css from './NavTree.module.scss'
 
 const styles = fromModule(css)
@@ -72,9 +73,9 @@ export function NavTree({nav, level = 0, open = true}: NavTreeProps) {
                   >
                     <span>{page.title}</span>
                     {childrenOpen ? (
-                      <MdKeyboardArrowDown />
+                      <IcRoundKeyboardArrowDown />
                     ) : (
-                      <MdKeyboardArrowRight />
+                      <IcRoundKeyboardArrowRight />
                     )}
                   </HStack>
                 )}

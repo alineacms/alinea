@@ -13,3 +13,7 @@ export function parentUrl(url: string): string | undefined {
   if (last > -1) return url.substring(0, last) || undefined
   return undefined
 }
+
+export function appendPath(url: string, path: string) {
+  return url + '/' + (path === 'index' ? '' : path)
+}

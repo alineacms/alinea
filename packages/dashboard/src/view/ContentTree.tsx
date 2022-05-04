@@ -23,9 +23,9 @@ import useSize from '@react-hook/size'
 import {useEffect, useMemo, useRef, useState} from 'react'
 import {useNavigate} from 'react-router'
 import VirtualList from 'react-tiny-virtual-list'
-import {useContentTree} from '../hook/UseContentTree'
-import {useDashboard} from '../hook/UseDashboard'
+import {ContentTreeEntry, useContentTree} from '../hook/UseContentTree'
 import {useDrafts} from '../hook/UseDrafts'
+import {useNav} from '../hook/UseNav'
 import {useRoot} from '../hook/UseRoot'
 import {useWorkspace} from '../hook/UseWorkspace'
 import css from './ContentTree.module.scss'
@@ -44,10 +44,10 @@ const layoutMeasuringConfig = {
   strategy: LayoutMeasuringStrategy.Always
 }
 
-function applyMoves<T extends {id: string; index: string}>(
-  entries: Array<T>,
+function applyMoves(
+  entries: Array<ContentTreeEntry>,
   moves: Array<Move>
-): Array<T> {
+): Array<ContentTreeEntry> {
   const toMove = new Map(moves.map(m => [m.id, m]))
   return entries.map(entry => {
     if (toMove.has(entry.id)) {
@@ -59,9 +59,9 @@ function applyMoves<T extends {id: string; index: string}>(
 }
 
 function sortByIndex(
-  index: Map<string, Entry.Summary>,
-  entries: Array<Entry.Summary>
-) {
+  index: Map<string, ContentTreeEntry>,
+  entries: Array<ContentTreeEntry>
+): Array<ContentTreeEntry> {
   function parentIndex(id: string) {
     const parent = index.get(id)
     return parent?.index
@@ -77,28 +77,35 @@ function sortByIndex(
 }
 
 export type ContentTreeProps = {
+  locale: string | undefined
   select?: Array<string>
   redirectToRoot?: boolean
 }
 
-export function ContentTree({select = [], redirectToRoot}: ContentTreeProps) {
+export function ContentTree({
+  locale: currentLocale,
+  select = [],
+  redirectToRoot
+}: ContentTreeProps) {
   const {name: workspace, schema} = useWorkspace()
   const root = useRoot()
   const {
+    locale,
     entries: treeEntries,
     isOpen,
     toggleOpen,
-    refetch
+    refetch,
+    index
   } = useContentTree({
+    locale: currentLocale,
     workspace,
     root: root.name,
     select
   })
   const drafts = useDrafts()
   const [moves, setMoves] = useState<Array<Move>>([])
-  const index = new Map(treeEntries.map(entry => [entry.id, entry]))
   const entries = sortByIndex(index, applyMoves(treeEntries, moves))
-  const [dragging, setDragging] = useState<Entry.Summary | null>(null)
+  const [dragging, setDragging] = useState<ContentTreeEntry | null>(null)
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -141,11 +148,15 @@ export function ContentTree({select = [], redirectToRoot}: ContentTreeProps) {
     let b = entries[bIndex]
     // If b is a container and open, drop as a child
     // Todo: this logic does not work if we're dragging up
-    const newParent = b.$isContainer && isOpen(b.id) ? b.id : b.parent
-    if (a?.parent !== newParent) {
+    // ideally we can drop on top of the container
+    const parent =
+      b.$isContainer && isOpen(b.id)
+        ? index.get(b.source.id)
+        : index.get(b.parent!)
+
+    if (a?.parent !== parent?.id) {
       // Check if parent of b handles child of type a
-      if (newParent) {
-        const parent = index.get(newParent)
+      if (parent?.id) {
         const type = schema.type(parent?.type)
         const contains = type?.options.contains
         if (contains && !contains.includes(a.type)) return
@@ -153,10 +164,12 @@ export function ContentTree({select = [], redirectToRoot}: ContentTreeProps) {
         if (!root.contains.includes(a.type)) return
       }
     }
+
     function sibling(direction: number) {
       const next = entries[bIndex + direction]
-      return next && next.parent === newParent ? next : null
+      return next && next.parent === b.parent ? next : null
     }
+
     const candidates = aIndex > bIndex ? [sibling(-1), b] : [b, sibling(1)]
     try {
       const newIndex = generateKeyBetween(
@@ -166,12 +179,16 @@ export function ContentTree({select = [], redirectToRoot}: ContentTreeProps) {
       const move = {
         id: a.id,
         index: newIndex,
-        parent: newParent,
-        parents: (newParent && index.get(newParent)!.parents) || []
+        parent: parent?.id,
+        parents: (parent?.parents || []).concat(parent?.id!).filter(Boolean)
       }
       setMoves(current => [...current, move])
       drafts
-        .move(move)
+        .move({
+          id: a.source.id,
+          index: newIndex,
+          parent: parent?.source.id
+        })
         .then(() => refetch())
         .then(() => {
           setMoves(current => current.filter(m => m !== move))
@@ -183,13 +200,13 @@ export function ContentTree({select = [], redirectToRoot}: ContentTreeProps) {
 
   // Not sure if this should belong here but it's convenient for now
   const navigate = useNavigate()
-  const {nav} = useDashboard()
+  const nav = useNav()
   useEffect(() => {
     return
     if (redirectToRoot && entries.length > 0) {
       const first = entries[0]
       if (first.workspace === workspace && first.root === root.name) {
-        navigate(nav.entry(first.workspace, first.root, first.id), {
+        navigate(nav.entry(first), {
           replace: true
         })
       }
@@ -220,6 +237,7 @@ export function ContentTree({select = [], redirectToRoot}: ContentTreeProps) {
                   <TreeNodeSortable
                     key={entry.id}
                     entry={entry}
+                    locale={locale}
                     level={entry.parents.length}
                     isOpen={isOpen}
                     toggleOpen={toggleOpen}
@@ -241,6 +259,7 @@ export function ContentTree({select = [], redirectToRoot}: ContentTreeProps) {
         {dragging ? (
           <TreeNode
             key="overlay"
+            locale={locale}
             entry={dragging}
             level={dragging.parents.length}
             isOpen={isOpen}

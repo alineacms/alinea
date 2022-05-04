@@ -1,20 +1,20 @@
 import {EntryStatus} from '@alinea/core'
 import {AppBar, Chip, HStack, px, Stack, Typo, useObservable} from '@alinea/ui'
+import {IcRoundArchive} from '@alinea/ui/icons/IcRoundArchive'
+import {IcRoundCheck} from '@alinea/ui/icons/IcRoundCheck'
+import {IcRoundDelete} from '@alinea/ui/icons/IcRoundDelete'
+import {IcRoundEdit} from '@alinea/ui/icons/IcRoundEdit'
+import {IcRoundInsertDriveFile} from '@alinea/ui/icons/IcRoundInsertDriveFile'
+import {IcRoundPublish} from '@alinea/ui/icons/IcRoundPublish'
+import {IcRoundRotateLeft} from '@alinea/ui/icons/IcRoundRotateLeft'
 import {useState} from 'react'
-import {
-  MdArchive,
-  MdCheck,
-  MdDelete,
-  MdEdit,
-  MdInsertDriveFile,
-  MdPublish,
-  MdRotateLeft
-} from 'react-icons/md'
 import {useQueryClient} from 'react-query'
 import {useNavigate} from 'react-router'
+import {Link} from 'react-router-dom'
 import {useCurrentDraft} from '../../hook/UseCurrentDraft'
-import {useDashboard} from '../../hook/UseDashboard'
 import {DraftsStatus, useDrafts} from '../../hook/UseDrafts'
+import {useLocale} from '../../hook/UseLocale'
+import {useNav} from '../../hook/UseNav'
 import {useRoot} from '../../hook/UseRoot'
 import {useWorkspace} from '../../hook/UseWorkspace'
 
@@ -25,35 +25,36 @@ function EntryStatusChip() {
   const status = useObservable(draft.status)
   switch (status) {
     case EntryStatus.Published:
-      return <Chip icon={MdCheck}>Published</Chip>
+      return <Chip icon={IcRoundCheck}>Published</Chip>
     case EntryStatus.Publishing:
-      return <Chip icon={MdRotateLeft}>Publishing</Chip>
+      return <Chip icon={IcRoundRotateLeft}>Publishing</Chip>
     case EntryStatus.Draft:
       return (
         <Chip
           accent
           icon={
             draftsStatus === DraftsStatus.Saving
-              ? MdRotateLeft
+              ? IcRoundRotateLeft
               : draftsStatus === DraftsStatus.Synced
-              ? MdCheck
-              : MdEdit
+              ? IcRoundCheck
+              : IcRoundEdit
           }
         >
           Draft
         </Chip>
       )
     case EntryStatus.Archived:
-      return <Chip icon={MdArchive}>Archived</Chip>
+      return <Chip icon={IcRoundArchive}>Archived</Chip>
   }
 }
 
 export function EntryHeader() {
-  const {nav} = useDashboard()
+  const nav = useNav()
   const {name: workspace, schema} = useWorkspace()
-  const {name: root} = useRoot()
+  const root = useRoot()
   const drafts = useDrafts()
   const draft = useCurrentDraft()
+  const currentLocale = useLocale()
   const navigate = useNavigate()
   const parent = draft.parent
   const type = schema.type(draft.type)
@@ -64,9 +65,9 @@ export function EntryHeader() {
     return drafts.discard(draft).then(([entryRemains, err]) => {
       queryClient.invalidateQueries(['draft', draft.id])
       if (!entryRemains) {
-        queryClient.invalidateQueries(['tree', workspace, root])
+        queryClient.invalidateQueries(['tree'])
         // Navigate to parent, otherwise we'll 404
-        navigate(nav.entry(workspace, root, parent))
+        navigate(nav.entry({workspace, root: root.name, id: parent}))
       }
     })
   }
@@ -104,7 +105,7 @@ export function EntryHeader() {
               {type?.options.icon ? (
                 <type.options.icon />
               ) : (
-                <MdInsertDriveFile size={12} style={{display: 'block'}} />
+                <IcRoundInsertDriveFile style={{display: 'block'}} />
               )}
             </div>
             <span
@@ -120,18 +121,45 @@ export function EntryHeader() {
           </HStack>
         </Typo.Monospace>
       </AppBar.Item>
+      {root.i18n && (
+        <HStack center gap={8}>
+          {root.i18n.locales.map(locale => {
+            const translation = draft.translation(locale)
+            const link = translation || draft
+            return (
+              <Link
+                key={locale}
+                to={nav.entry({
+                  workspace: link.workspace,
+                  root: link.root,
+                  id: link.id,
+                  locale
+                })}
+              >
+                <Chip accent={currentLocale === locale}>
+                  {translation ? (
+                    <>{locale.toUpperCase()}: ✅</>
+                  ) : (
+                    <>{locale.toUpperCase()}: ❌</>
+                  )}
+                </Chip>
+              </Link>
+            )
+          })}
+        </HStack>
+      )}
       <Stack.Right>
         <AppBar.Item>
           <EntryStatusChip />
         </AppBar.Item>
       </Stack.Right>
       {status === EntryStatus.Draft && (
-        <AppBar.Item as="button" icon={MdDelete} onClick={handleDiscard}>
+        <AppBar.Item as="button" icon={IcRoundDelete} onClick={handleDiscard}>
           <span>Discard</span>
         </AppBar.Item>
       )}
       {status !== EntryStatus.Published && !isPublishing && (
-        <AppBar.Item as="button" icon={MdPublish} onClick={handlePublish}>
+        <AppBar.Item as="button" icon={IcRoundPublish} onClick={handlePublish}>
           <span>Publish</span>
         </AppBar.Item>
       )}
