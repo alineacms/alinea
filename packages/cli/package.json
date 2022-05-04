@@ -35,7 +35,6 @@
     "@alinea/store": "0.0.0",
     "@esbx/eval": "^0.0.19",
     "@esbx/react": "^0.0.19",
-    "@esbx/reload": "^0.0.19",
     "base64-arraybuffer": "^1.0.1",
     "chokidar": "^3.5.3",
     "compare-versions": "^4.1.3",

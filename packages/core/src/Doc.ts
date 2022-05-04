@@ -56,7 +56,7 @@ export function docFromEntry(
   docRoot.set('type', entry.type)
   docRoot.set('index', entry.index)
   docRoot.set('url', entry.url)
-  docRoot.set('path', entry.url)
+  docRoot.set('path', entry.path)
   if (entry.i18n) docRoot.set('i18n', entry.i18n)
   docRoot.set('parent', entry.parent)
   docRoot.set('parents', entry.parents)

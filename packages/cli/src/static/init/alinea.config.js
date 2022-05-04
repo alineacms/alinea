@@ -16,6 +16,7 @@ export const config = createConfig({
   workspaces: {
     main: workspace('Example', {
       source: './content',
+      mediaDir: './public',
       schema: schema({
         ...MediaSchema,
         Page: type(

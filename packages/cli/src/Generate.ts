@@ -12,7 +12,7 @@ import {ReactPlugin} from '@esbx/react'
 import {encode} from 'base64-arraybuffer'
 import {FSWatcher} from 'chokidar'
 import {dirname} from 'dirname-filename-esm'
-import {build, BuildResult, Plugin} from 'esbuild'
+import {build, BuildResult, Plugin, WatchMode} from 'esbuild'
 import fs from 'fs-extra'
 import {signed, unsigned} from 'leb128'
 import path from 'node:path'
@@ -150,7 +150,7 @@ export type GenerateOptions = {
   cwd?: string
   staticDir?: string
   configFile?: string
-  watch?: boolean
+  watch?: boolean | WatchMode
   wasmCache?: boolean
   quiet?: boolean
 }
@@ -166,6 +166,11 @@ export async function generate(options: GenerateOptions) {
   let cacheWatcher: Promise<{stop: () => void}> | undefined
   const configLocation = path.join(cwd, configFile)
   const outDir = path.join(cwd, '.alinea')
+  const onRebuild =
+    (typeof options.watch === 'object' &&
+      typeof options.watch.onRebuild === 'function' &&
+      options.watch.onRebuild) ||
+    undefined
 
   await compileConfig()
   await copyStaticFiles()
@@ -213,8 +218,8 @@ export async function generate(options: GenerateOptions) {
         plugins: [EvalPlugin, externalPlugin, ignorePlugin, ReactPlugin],
         watch: options.watch && {
           async onRebuild(error, result) {
-            if (error) console.error('watch build failed:', error)
-            else return generatePackage()
+            if (!error) await generatePackage()
+            if (onRebuild) return onRebuild(error, result)
           }
         }
       })
@@ -294,10 +299,12 @@ export async function generate(options: GenerateOptions) {
     }
     if (options.watch && files) {
       watcher = new FSWatcher()
-      watcher.add(files).on('change', async () => {
+      async function reload() {
         if (caching) await caching
-        caching = cache()
-      })
+        caching = cache().then(() => onRebuild?.(null, null))
+      }
+      watcher.add(files).on('change', reload)
+      watcher.add(files).on('unlink', reload)
     }
     caching = cache()
     await caching

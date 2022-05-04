@@ -31,6 +31,16 @@ export async function init(options: InitOptions) {
       title: 'Welcome'
     })
   )
+  await fs.mkdir(path.join(cwd, 'content/media'), {recursive: true})
+  await fs.writeFile(
+    path.join(cwd, 'content/media/media.json'),
+    JSON.stringify({
+      id: createId(),
+      type: 'MediaLibrary',
+      root: 'media',
+      title: 'Media library'
+    })
+  )
   await fs.copyFile(
     path.join(__dirname, 'static/init/alinea.config.js'),
     path.join(cwd, 'alinea.config.tsx')
