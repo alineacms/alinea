@@ -8,6 +8,7 @@ export {BrowserPreview} from '@alinea/dashboard/view/preview/BrowserPreview'
 
 // Included inputs
 export {code} from '@alinea/input.code'
+export {check} from '@alinea/input.check'
 export {link} from '@alinea/input.link'
 export {list} from '@alinea/input.list'
 export {number} from '@alinea/input.number'

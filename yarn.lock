@@ -80,7 +80,6 @@ __metadata:
     "@alinea/store": 0.0.0
     "@esbx/eval": ^0.0.19
     "@esbx/react": ^0.0.19
-    "@esbx/reload": ^0.0.19
     "@types/fs-extra": ^9.0.13
     "@types/sade": ^1.7.3
     base64-arraybuffer: ^1.0.1
@@ -174,6 +173,18 @@ __metadata:
     "@alinea/core": 0.0.0
     "@alinea/ui": 0.0.0
     yjs: ^13.5.34
+  peerDependencies:
+    react: "*"
+  languageName: unknown
+  linkType: soft
+
+"@alinea/input.check@workspace:packages/input/check":
+  version: 0.0.0-use.local
+  resolution: "@alinea/input.check@workspace:packages/input/check"
+  dependencies:
+    "@alinea/core": 0.0.0
+    "@alinea/editor": 0.0.0
+    "@alinea/ui": 0.0.0
   peerDependencies:
     react: "*"
   languageName: unknown

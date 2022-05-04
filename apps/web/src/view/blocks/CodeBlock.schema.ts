@@ -1,4 +1,5 @@
 import {Schema, type} from '@alinea/core'
+import {check} from '@alinea/input.check'
 import {code} from '@alinea/input.code'
 import {tab, tabs} from '@alinea/input.tabs'
 import {text} from '@alinea/input.text'
@@ -13,7 +14,8 @@ export const CodeBlockSchema = type(
     }),
     tab('Settings', {
       fileName: text('File name', {width: 0.75}),
-      language: text('Language', {width: 0.25})
+      language: text('Language', {width: 0.25}),
+      compact: check('Compact', {help: 'Decrease line height'})
     }).configure({icon: IcRoundCode})
   )
 ).configure({icon: IcOutlineSettings})

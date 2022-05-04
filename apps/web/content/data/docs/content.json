@@ -3,5 +3,8 @@
   "type": "Docs",
   "root": "data",
   "index": "ZoG",
-  "title": "Fetching data"
+  "title": "Content",
+  "parents": [
+    "docs"
+  ]
 }

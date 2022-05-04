@@ -20,11 +20,11 @@ export async function codeBlockQuery(pages: Pages, block: CodeBlockSchema) {
   try {
     return {
       ...block,
-      code:
-        block.code &&
-        (await highlighter).codeToHtml(block.code, {
-          lang: block.language || 'tsx'
-        })
+      code: block.code
+        ? (await highlighter).codeToHtml(block.code, {
+            lang: block.language || 'tsx'
+          })
+        : ''
     }
   } catch (e) {
     return block
