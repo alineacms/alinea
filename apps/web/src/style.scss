@@ -1,17 +1,17 @@
 @mixin s {
-  @media (max-width: 439.999px) {
+  @media (max-width: 439.9px) {
     @content;
   }
 }
 
 @mixin sm {
-  @media (max-width: 1023.999px) {
+  @media (max-width: 1023.9px) {
     @content;
   }
 }
 
 @mixin m {
-  @media (min-width: 440px) and (max-width: 1023.999px) {
+  @media (min-width: 440px) and (max-width: 1023.9px) {
     @content;
   }
 }
@@ -24,6 +24,12 @@
 
 @mixin l {
   @media (min-width: 1024px) {
+    @content;
+  }
+}
+
+@mixin xl {
+  @media (max-width: 1280px) {
     @content;
   }
 }

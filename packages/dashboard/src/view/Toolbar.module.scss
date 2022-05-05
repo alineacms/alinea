@@ -1,3 +1,4 @@
+@import '@alinea/web/src/style.scss';
 .root {
   position: relative;
   z-index: 4;
@@ -16,5 +17,20 @@
     &-slot {
       height: 100%;
     }
+  }
+
+  &-panes {
+    display: none;
+    @include sm {
+      display: block;
+      margin: 0 5px;
+    }
+    @include xl {
+      &.is-preview {
+        display: block;
+        margin: 0 5px;
+      }
+    }
+
   }
 }

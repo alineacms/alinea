@@ -38,6 +38,7 @@ import {useWorkspace} from '../hook/UseWorkspace'
 import {EntryHeader} from './entry/EntryHeader'
 import {EntryTitle} from './entry/EntryTitle'
 import css from './EntryEdit.module.scss'
+import {PaneControl} from './PaneControl'
 
 const styles = fromModule(css)
 
@@ -93,40 +94,46 @@ function EntryEditDraft({draft, isLoading}: EntryEditDraftProps) {
   }, [draft, isTranslating, locale])
   return (
     <HStack style={{height: '100%'}}>
-      <div className={styles.root()}>
-        <EntryHeader />
-        <div className={styles.root.draft()}>
-          <EntryTitle
-            backLink={
-              draft.parent &&
-              nav.entry({
-                id: draft.parent,
-                workspace: draft.workspace
-              })
-            }
-          />
-          {isTranslating ? (
-            <Button onClick={() => handleTranslation()}>
-              Translate from {draft.i18n?.locale.toUpperCase()}
-            </Button>
-          ) : (
-            <Suspense fallback={null}>
-              {type ? (
-                <InputForm
-                  // We key here currently because the tiptap/yjs combination fails to register
-                  // changes when the fragment is changed while the editor is mounted.
-                  key={draft.doc.guid}
-                  type={type}
-                  state={EntryProperty.root}
-                />
-              ) : (
-                <ErrorMessage error={new Error('Type not found')} />
-              )}
-            </Suspense>
-          )}
+      <PaneControl position={1}>
+        <div className={styles.root()}>
+          <EntryHeader />
+          <div className={styles.root.draft()}>
+            <EntryTitle
+              backLink={
+                draft.parent &&
+                nav.entry({
+                  id: draft.parent,
+                  workspace: draft.workspace
+                })
+              }
+            />
+            {isTranslating ? (
+              <Button onClick={() => handleTranslation()}>
+                Translate from {draft.i18n?.locale.toUpperCase()}
+              </Button>
+            ) : (
+              <Suspense fallback={null}>
+                {type ? (
+                  <InputForm
+                    // We key here currently because the tiptap/yjs combination fails to register
+                    // changes when the fragment is changed while the editor is mounted.
+                    key={draft.doc.guid}
+                    type={type}
+                    state={EntryProperty.root}
+                  />
+                ) : (
+                  <ErrorMessage error={new Error('Type not found')} />
+                )}
+              </Suspense>
+            )}
+          </div>
         </div>
-      </div>
-      {preview && <EntryPreview preview={preview} draft={draft} />}
+      </PaneControl>
+      {preview && (
+        <PaneControl position={2}>
+          <EntryPreview preview={preview} draft={draft} />
+        </PaneControl>
+      )}
     </HStack>
   )
 }

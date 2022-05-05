@@ -8,13 +8,13 @@ import {
   useObservable,
   Viewport
 } from '@alinea/ui'
-import {Sidebar} from '@alinea/ui/Sidebar'
 //import 'preact/debug'
 import {IcRoundCheck} from '@alinea/ui/icons/IcRoundCheck'
 import {IcRoundEdit} from '@alinea/ui/icons/IcRoundEdit'
 import {IcRoundInsertDriveFile} from '@alinea/ui/icons/IcRoundInsertDriveFile'
 import {IcRoundRotateLeft} from '@alinea/ui/icons/IcRoundRotateLeft'
 import {IcRoundWarning} from '@alinea/ui/icons/IcRoundWarning'
+import {Sidebar} from '@alinea/ui/Sidebar'
 import {Fragment, Suspense, useState} from 'react'
 import {Helmet} from 'react-helmet'
 import {
@@ -30,6 +30,7 @@ import {useDraft} from './hook/UseDraft'
 import {DraftsProvider, DraftsStatus, useDrafts} from './hook/UseDrafts'
 import {useLocale} from './hook/UseLocale'
 import {useNav} from './hook/UseNav'
+import {PaneIndexProvider} from './hook/UsePaneIndex'
 import {ReferencePickerProvider} from './hook/UseReferencePicker'
 import {useRoot} from './hook/UseRoot'
 import {SessionProvider} from './hook/UseSession'
@@ -37,6 +38,7 @@ import {useWorkspace} from './hook/UseWorkspace'
 import {ContentTree} from './view/ContentTree'
 import {RootHeader} from './view/entry/RootHeader'
 import {EntryEdit, NewEntry} from './view/EntryEdit'
+import {PaneControl} from './view/PaneControl'
 import {SearchBox} from './view/SearchBox'
 import {Toolbar} from './view/Toolbar'
 
@@ -77,24 +79,26 @@ function AppAuthenticated() {
             >
               <ReferencePickerProvider key={workspace}>
                 <Sidebar.Root>
-                  <Sidebar.Menu>
-                    {Object.entries(roots).map(([key, root], i) => {
-                      const isSelected = key === currentRoot
-                      return (
-                        <Sidebar.Menu.Item
-                          key={key}
-                          selected={isSelected}
-                          to={nav.root({workspace, root: key})}
-                        >
-                          {root.icon ? (
-                            <root.icon />
-                          ) : (
-                            <IcRoundInsertDriveFile />
-                          )}
-                        </Sidebar.Menu.Item>
-                      )
-                    })}
-                  </Sidebar.Menu>
+                  <PaneControl position={0} mod={{sidebar: true}}>
+                    <Sidebar.Menu>
+                      {Object.entries(roots).map(([key, root], i) => {
+                        const isSelected = key === currentRoot
+                        return (
+                          <Sidebar.Menu.Item
+                            key={key}
+                            selected={isSelected}
+                            to={nav.root({workspace, root: key})}
+                          >
+                            {root.icon ? (
+                              <root.icon />
+                            ) : (
+                              <IcRoundInsertDriveFile />
+                            )}
+                          </Sidebar.Menu.Item>
+                        )
+                      })}
+                    </Sidebar.Menu>
+                  </PaneControl>
                 </Sidebar.Root>
                 <Suspense fallback={<Loader absolute />}>
                   <Routes>
@@ -156,21 +160,23 @@ function EntryRoute({id}: EntryRouteProps) {
     .filter(Boolean) as Array<string>
   return (
     <CurrentDraftProvider value={draft}>
-      <Pane
-        id="content-tree"
-        resizable="right"
-        defaultWidth={330}
-        minWidth={200}
-      >
-        <SearchBox />
-        <RootHeader />
-        <ContentTree
-          key={workspace}
-          locale={locale}
-          select={select}
-          redirectToRoot={!id}
-        />
-      </Pane>
+      <PaneControl position={0} mod={{menu: true}} lastPane={!draft}>
+        <Pane
+          id="content-tree"
+          resizable="right"
+          defaultWidth={330}
+          minWidth={200}
+        >
+          <SearchBox />
+          <RootHeader />
+          <ContentTree
+            key={workspace}
+            locale={locale}
+            select={select}
+            redirectToRoot={!id}
+          />
+        </Pane>
+      </PaneControl>
       <div style={{width: '100%', height: '100%'}}>
         {search === '?new' && (
           <Suspense fallback={<Loader absolute />}>
@@ -234,6 +240,7 @@ export function App<T extends Workspaces>(props: DashboardOptions<T>) {
   const [session, setSession] = useState<Session | undefined>(
     !props.auth ? localSession(props) : undefined
   )
+  const [paneIndex, setPaneIndex] = useState<number>(1)
   return (
     <DashboardProvider value={{...props}}>
       {/* Todo: https://github.com/remix-run/react-router/issues/7703 */}
@@ -241,9 +248,11 @@ export function App<T extends Workspaces>(props: DashboardOptions<T>) {
       //hashType="noslash"
       >
         <SessionProvider value={session}>
-          <QueryClientProvider client={queryClient}>
-            <AppRoot session={session} setSession={setSession} />
-          </QueryClientProvider>
+          <PaneIndexProvider value={{index: paneIndex, setIndex: setPaneIndex}}>
+            <QueryClientProvider client={queryClient}>
+              <AppRoot session={session} setSession={setSession} />
+            </QueryClientProvider>
+          </PaneIndexProvider>
         </SessionProvider>
       </HashRouter>
     </DashboardProvider>

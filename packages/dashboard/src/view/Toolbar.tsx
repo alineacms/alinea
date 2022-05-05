@@ -7,7 +7,9 @@ import {
   useColorScheme
 } from '@alinea/ui'
 import {LogoShape} from '@alinea/ui/branding/LogoShape'
+import CodiconOpenPreview from '@alinea/ui/icons/CodiconOpenPreview'
 import {IcRoundKeyboardArrowDown} from '@alinea/ui/icons/IcRoundKeyboardArrowDown'
+import IcRoundSegment from '@alinea/ui/icons/IcRoundSegment'
 import {IcRoundUnfoldMore} from '@alinea/ui/icons/IcRoundUnfoldMore'
 import {IcSharpBrightnessMedium} from '@alinea/ui/icons/IcSharpBrightnessMedium'
 import {RiFlashlightFill} from '@alinea/ui/icons/RiFlashlightFill'
@@ -17,6 +19,7 @@ import {createSlots} from '@alinea/ui/util/Slots'
 import {useNavigate} from 'react-router'
 import {useDashboard} from '../hook/UseDashboard'
 import {useNav} from '../hook/UseNav'
+import {usePaneIndex} from '../hook/UsePaneIndex'
 import {useSession} from '../hook/UseSession'
 import {useWorkspace} from '../hook/UseWorkspace'
 import css from './Toolbar.module.scss'
@@ -33,6 +36,7 @@ export namespace Toolbar {
     const [colorScheme, toggleColorScheme] = useColorScheme()
     const {label} = useWorkspace()
     const navigate = useNavigate()
+    const paneIndex = usePaneIndex()
     return (
       <HStack center className={styles.root()}>
         <HStack center gap={16}>
@@ -84,8 +88,36 @@ export namespace Toolbar {
             </DropdownMenu.Content>
           </DropdownMenu.Root>
         </HStack>
+        <div className={styles.root.panes()}>
+          <IconButton
+            icon={IcRoundSegment}
+            onClick={() => {
+              if (!paneIndex) return
+              if (paneIndex.index === 0) {
+                paneIndex.setIndex(1)
+                return
+              }
+              paneIndex.setIndex(0)
+            }}
+            active={paneIndex?.index === 0}
+          />
+        </div>
         <div className={styles.root.portal()}>
           <Portal className={styles.root.portal.slot()} />
+        </div>
+        <div className={styles.root.panes({preview: true})}>
+          <IconButton
+            icon={CodiconOpenPreview}
+            onClick={() => {
+              if (!paneIndex) return
+              if (paneIndex.index === 2) {
+                paneIndex.setIndex(1)
+                return
+              }
+              paneIndex.setIndex(2)
+            }}
+            active={paneIndex?.index === 2}
+          />
         </div>
         <div>
           <HStack center gap={10}>
