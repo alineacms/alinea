@@ -1,4 +1,5 @@
 import {
+  accumulate,
   Config,
   createError,
   createId,
@@ -106,6 +107,13 @@ export class Backend<T extends Workspaces = Workspaces> implements Hub<T> {
     return outcome(async () => {
       const store = await this.preview.getStore()
       return store.all(cursor)
+    })
+  }
+
+  listDrafts() {
+    return outcome(async () => {
+      const drafts = await accumulate(this.drafts.updates())
+      return drafts.map(({id}) => ({id}))
     })
   }
 

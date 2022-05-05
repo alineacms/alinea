@@ -13,6 +13,7 @@ export interface Hub<T extends Workspaces = Workspaces> {
   query<T>(cursor: Cursor<T>): Future<Array<T>>
   updateDraft(id: string, update: Uint8Array): Future
   deleteDraft(id: string): Future<boolean>
+  listDrafts(): Future<Array<{id: string}>>
   uploadFile(
     workspace: string,
     root: string,
@@ -46,6 +47,9 @@ export namespace Hub {
     },
     draft(id: string) {
       return `/draft/${id}`
+    },
+    drafts() {
+      return '/draft'
     },
     publish() {
       return `/publish`

@@ -55,6 +55,12 @@ export class Client<T extends Workspaces> implements Hub<T> {
     }).then<Outcome<boolean>>(toFuture)
   }
 
+  listDrafts(): Future<Array<{id: string}>> {
+    return this.fetch(Hub.routes.drafts(), {
+      method: 'GET'
+    }).then<Outcome<Array<{id: string}>>>(toFuture)
+  }
+
   publishEntries(entries: Array<Entry>): Future {
     return this.fetchJson(Hub.routes.publish(), {
       method: 'POST',

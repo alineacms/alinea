@@ -8,20 +8,21 @@ import {
   useObservable,
   Viewport
 } from '@alinea/ui'
-import {Sidebar} from '@alinea/ui/Sidebar'
 //import 'preact/debug'
 import {IcRoundCheck} from '@alinea/ui/icons/IcRoundCheck'
 import {IcRoundEdit} from '@alinea/ui/icons/IcRoundEdit'
 import {IcRoundInsertDriveFile} from '@alinea/ui/icons/IcRoundInsertDriveFile'
 import {IcRoundRotateLeft} from '@alinea/ui/icons/IcRoundRotateLeft'
 import {IcRoundWarning} from '@alinea/ui/icons/IcRoundWarning'
+import {MdiSourceBranch} from '@alinea/ui/icons/MdiSourceBranch'
+import {Sidebar} from '@alinea/ui/Sidebar'
 import {Fragment, Suspense, useState} from 'react'
 import {Helmet} from 'react-helmet'
 import {
   QueryClient,
   QueryClientProvider as ReactQueryClientProvider
 } from 'react-query'
-import {Route, Routes, useLocation, useParams} from 'react-router'
+import {Route, Routes, useLocation, useMatch, useParams} from 'react-router'
 import {HashRouter} from 'react-router-dom'
 import {DashboardOptions} from './Dashboard'
 import {CurrentDraftProvider} from './hook/UseCurrentDraft'
@@ -35,6 +36,7 @@ import {useRoot} from './hook/UseRoot'
 import {SessionProvider} from './hook/UseSession'
 import {useWorkspace} from './hook/UseWorkspace'
 import {ContentTree} from './view/ContentTree'
+import {DraftsOverview} from './view/DraftsOverview'
 import {RootHeader} from './view/entry/RootHeader'
 import {EntryEdit, NewEntry} from './view/EntryEdit'
 import {SearchBox} from './view/SearchBox'
@@ -48,6 +50,9 @@ const Router = {
         <EntryRoute id={id} />
       </ErrorBoundary>
     )
+  },
+  Drafts() {
+    return <DraftsOverview />
   }
 }
 
@@ -55,6 +60,7 @@ function AppAuthenticated() {
   const {auth} = useDashboard()
   const nav = useNav()
   const location = useLocation()
+  const isEntry = useMatch(nav.matchEntry) || location.pathname === '/'
   const {name: workspace, name, color, roots} = useWorkspace()
   const {name: currentRoot} = useRoot()
   return (
@@ -83,7 +89,7 @@ function AppAuthenticated() {
                       return (
                         <Sidebar.Menu.Item
                           key={key}
-                          selected={isSelected}
+                          selected={isEntry && isSelected}
                           to={nav.root({workspace, root: key})}
                         >
                           {root.icon ? (
@@ -94,10 +100,20 @@ function AppAuthenticated() {
                         </Sidebar.Menu.Item>
                       )
                     })}
+                    <Sidebar.Menu.Item
+                      selected={location.pathname === nav.drafts({workspace})}
+                      to={nav.drafts({workspace})}
+                    >
+                      <MdiSourceBranch />
+                    </Sidebar.Menu.Item>
                   </Sidebar.Menu>
                 </Sidebar.Root>
                 <Suspense fallback={<Loader absolute />}>
                   <Routes>
+                    <Route
+                      path={nav.drafts({workspace: ':workspace'})}
+                      element={<Router.Drafts />}
+                    />
                     <Route
                       path={nav.entry({workspace: ':workspace'})}
                       element={<Router.Entry />}

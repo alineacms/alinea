@@ -70,6 +70,14 @@ export function createServerRouter(hub: Server) {
       return result
     })
   )
+  // Hub.listDrafts
+  router.get(
+    prefix + Hub.routes.drafts(),
+    handle(async (req, res) => {
+      const result = await hub.listDrafts()
+      return result
+    })
+  )
   // Hub.updateDraft
   router.put(
     prefix + Hub.routes.draft(':id'),
