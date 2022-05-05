@@ -178,7 +178,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@alinea/input.check@workspace:packages/input/check":
+"@alinea/input.check@0.0.0, @alinea/input.check@workspace:packages/input/check":
   version: 0.0.0-use.local
   resolution: "@alinea/input.check@workspace:packages/input/check"
   dependencies:
@@ -2458,6 +2458,7 @@ __metadata:
     "@alinea/core": 0.0.0
     "@alinea/css": 0.0.0
     "@alinea/dashboard": 0.0.0
+    "@alinea/input.check": 0.0.0
     "@alinea/input.code": 0.0.0
     "@alinea/input.link": 0.0.0
     "@alinea/input.list": 0.0.0
