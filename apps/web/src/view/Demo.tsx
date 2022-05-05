@@ -1,7 +1,7 @@
 import {Backend} from '@alinea/backend/Backend'
 import {Cache} from '@alinea/backend/Cache'
-import {IndexedDBData} from '@alinea/backend/data/IndexedDBData.js'
-import {IndexedDBDrafts} from '@alinea/backend/drafts/IndexedDBDrafts.js'
+import {IndexedDBData} from '@alinea/backend/data/IndexedDBData'
+import {IndexedDBDrafts} from '@alinea/backend/drafts/IndexedDBDrafts'
 import {accumulate, createConfig, workspace} from '@alinea/core'
 import {Dashboard, FieldsPreview} from '@alinea/dashboard'
 import {useMemo} from 'react'
@@ -26,7 +26,7 @@ function createLocalClient() {
       const {createStore} = await import('../../.alinea/store')
       const store = await createStore()
       const entries = await accumulate(data.entries())
-      Cache.applyPublish(store, config.type, entries)
+      Cache.applyPublish(store, config, entries)
       return store
     },
     drafts: new IndexedDBDrafts(),
