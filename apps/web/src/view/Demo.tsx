@@ -26,7 +26,7 @@ function createLocalClient() {
       const {createStore} = await import('../../.alinea/store')
       const store = await createStore()
       const entries = await accumulate(data.entries())
-      Cache.applyPublish(store, config.type, entries)
+      Cache.applyPublish(store, config, entries)
       return store
     },
     drafts: new IndexedDBDrafts(),
