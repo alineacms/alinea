@@ -148,10 +148,13 @@ __metadata:
     "@dnd-kit/sortable": ^4.0.0
     "@dnd-kit/utilities": ^2.0.0
     "@react-hook/size": ^2.1.2
+    "@types/diff-match-patch": ^1.0.32
     base64-arraybuffer: ^1.0.1
     blurhash: ^1.1.5
+    diff-match-patch: ^1.0.5
     fast-average-color: ^7.0.1
     image-blob-reduce: ^4.1.0
+    mdiff: ^1.4.2
     p-limit: ^4.0.0
     react-helmet: ^6.1.0
     react-query: ^3.34.19
@@ -1908,6 +1911,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/diff-match-patch@npm:^1.0.32":
+  version: 1.0.32
+  resolution: "@types/diff-match-patch@npm:1.0.32"
+  checksum: 8431ab2bf2f0e96ece30beddeae3bc8024429bd6071f1ab695c3f64112b2551446fc4a746a44a7a7d14e47ffce622333286c1c78869cfb510c775a9e8c47a1b1
+  languageName: node
+  linkType: hard
+
 "@types/emscripten@npm:*":
   version: 1.39.6
   resolution: "@types/emscripten@npm:1.39.6"
@@ -3481,6 +3491,13 @@ __metadata:
   dependencies:
     streamsearch: ^1.1.0
   checksum: 9f3b11f8b7965f47624a9b09f96ba05e3bad2a0f3957a7ede07ae032eda16739ffa665c260e3eba20bd9751abf83202803e29df0f30ef4cbb164eef749a2a84d
+  languageName: node
+  linkType: hard
+
+"diff-match-patch@npm:^1.0.5":
+  version: 1.0.5
+  resolution: "diff-match-patch@npm:1.0.5"
+  checksum: 841522d01b09cccbc4e4402cf61514a81b906349a7d97b67222390f2d35cf5df277cb23959eeed212d5e46afb5629cebab41b87918672c5a05c11c73688630e3
   languageName: node
   linkType: hard
 
@@ -5631,6 +5648,13 @@ fsevents@~2.3.2:
     crypt: 0.0.2
     is-buffer: ~1.1.6
   checksum: a63cacf4018dc9dee08c36e6f924a64ced735b37826116c905717c41cebeb41a522f7a526ba6ad578f9c80f02cb365033ccd67fe186ffbcc1a1faeb75daa9b6e
+  languageName: node
+  linkType: hard
+
+"mdiff@npm:^1.4.2":
+  version: 1.4.2
+  resolution: "mdiff@npm:1.4.2"
+  checksum: c2af08585c3426847deb02acba415d228e25c6ab3dffa721e1d7cb637450224f8fb8e216aaf065d388426142a7471ff8795f07f213d75394b74203c76e74cdc0
   languageName: node
   linkType: hard
 

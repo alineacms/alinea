@@ -3,10 +3,12 @@ import {ListValue} from './value/ListValue'
 import {RecordValue} from './value/RecordValue'
 import {RichTextValue} from './value/RichTextValue'
 import {ScalarValue} from './value/ScalarValue'
+import {ValueKind} from './ValueKind'
 
 type YType = Y.AbstractType<any>
 
 export interface Value<T = any, M = any> {
+  kind: ValueKind
   create(): T
   typeOfChild<C>(yValue: any, child: string): Value<C>
   toY(value: T): any

@@ -1,5 +1,6 @@
 import {renderLabel} from '@alinea/core'
 import {Create, fromModule, px, Stack, useInitialEffect} from '@alinea/ui'
+import {IcRoundEdit} from '@alinea/ui/icons/IcRoundEdit'
 import {IcRoundInsertDriveFile} from '@alinea/ui/icons/IcRoundInsertDriveFile'
 import {IcRoundKeyboardArrowDown} from '@alinea/ui/icons/IcRoundKeyboardArrowDown'
 import {IcRoundKeyboardArrowRight} from '@alinea/ui/icons/IcRoundKeyboardArrowRight'
@@ -23,6 +24,7 @@ import {
 import {Link} from 'react-router-dom'
 import {ContentTreeEntry} from '../../hook/UseContentTree'
 import {useCurrentDraft} from '../../hook/UseCurrentDraft'
+import {useDraftsList} from '../../hook/UseDraftsList'
 import {useNav} from '../../hook/UseNav'
 import {useWorkspace} from '../../hook/UseWorkspace'
 import css from './TreeNode.module.scss'
@@ -52,6 +54,7 @@ type TreeNodeLinkProps = {
   isOpened: boolean
   toggleOpen: () => void
   rootRef?: Ref<HTMLDivElement>
+  isDraft?: boolean
   isDragging?: boolean
   isDragOverlay?: boolean
   isDropContainer?: boolean
@@ -67,6 +70,7 @@ const TreeNodeLink = memo(
       isSelected,
       level,
       rootRef,
+      isDraft,
       isDragging,
       isDragOverlay,
       isDropContainer,
@@ -97,6 +101,7 @@ const TreeNodeLink = memo(
           dragging: isDragging,
           dragOverlay: isDragOverlay,
           dropContainer: isDropContainer,
+          draft: isDraft,
           untranslated: isUnTranslated
         })}
         ref={rootRef}
@@ -145,6 +150,11 @@ const TreeNodeLink = memo(
                   <div>{entry.childrenCount}</div>
                 </div>
               )*/}
+              {isDraft && (
+                <span className={styles.root.link.status()}>
+                  <IcRoundEdit />
+                </span>
+              )}
             </HStack>
           </Link>
           {entry.$isContainer && (
@@ -220,6 +230,9 @@ export function TreeNode({
   const nav = useNav()
   const ref = useRef<HTMLAnchorElement>(null)
   const draft = useCurrentDraft()
+  const workspace = useWorkspace()
+  const {ids: drafts} = useDraftsList(workspace.name)
+  const isDraft = drafts.includes(entry.source.id)
   const isSelected = draft?.id === entry.source.id
   const handleToggleOpen = useCallback(() => {
     if (entry.$isContainer) toggleOpen(entry.id)
@@ -236,6 +249,7 @@ export function TreeNode({
       level={level}
       isSelected={isSelected}
       isOpened={isOpened}
+      isDraft={isDraft}
       toggleOpen={handleToggleOpen}
       rootRef={rootRef}
       {...props}

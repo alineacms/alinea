@@ -1,0 +1,19 @@
+.root {
+  position: relative;
+
+  &-number {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--accent);
+    color: var(--accent-foreground);
+    border-radius: 15px;
+    height: 15px;
+    min-width: 15px;
+    padding: 0 3px;
+    white-space: nowrap;
+    font-size: 10.4px;
+    z-index: 1;
+  }
+}

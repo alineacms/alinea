@@ -59,13 +59,14 @@ export function createServerRouter(hub: Server) {
   router.post(
     prefix + Hub.routes.query(),
     handle(async (req, res) => {
+      const fromSource = 'source' in req.query
       const body = await parseJson(req)
       res.header(
         'x-query',
         sqliteFormatter.formatSelect(body, {formatInline: true}).sql
       )
       res.startTime('query', 'Query metric')
-      const result = await hub.query(new Cursor(body))
+      const result = await hub.query(new Cursor(body), {source: fromSource})
       res.endTime('query')
       return result
     })
@@ -74,7 +75,8 @@ export function createServerRouter(hub: Server) {
   router.get(
     prefix + Hub.routes.drafts(),
     handle(async (req, res) => {
-      const result = await hub.listDrafts()
+      const workspace = req.query.workspace as string
+      const result = await hub.listDrafts(workspace)
       return result
     })
   )

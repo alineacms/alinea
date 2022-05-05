@@ -3,15 +3,16 @@ import {createError} from '../ErrorWithCode'
 import {createId} from '../Id'
 import {generateKeyBetween} from '../util/FractionalIndexing'
 import {Value} from '../Value'
+import {ValueKind} from '../ValueKind'
 import {RecordValue} from './RecordValue'
 
-type Row = {
+export type ListRow = {
   id: string
   index: string
   type: string
 }
 
-function sort(a: Row, b: Row) {
+function sort(a: ListRow, b: ListRow) {
   if (a.index < b.index) return -1
   if (a.index > b.index) return 1
   return 0
@@ -24,9 +25,10 @@ export type ListMutator<T> = {
 }
 
 export class ListValue<T>
-  implements Value<Array<Row & T>, ListMutator<Row & T>>
+  implements Value<Array<ListRow & T>, ListMutator<ListRow & T>>
 {
-  values: Record<string, RecordValue<Row & T>>
+  kind = ValueKind.List
+  values: Record<string, RecordValue<ListRow & T>>
   constructor(shapes: Record<string, RecordValue<T>>) {
     this.values = Object.fromEntries(
       Object.entries(shapes).map(([key, type]) => {
@@ -43,7 +45,7 @@ export class ListValue<T>
     )
   }
   create() {
-    return [] as Array<Row & T>
+    return [] as Array<ListRow & T>
   }
   typeOfChild<C>(yValue: Y.Map<any>, child: string): Value<C> {
     const row = yValue.get(child)
@@ -52,7 +54,7 @@ export class ListValue<T>
     if (value) return value as unknown as Value<C>
     throw createError(`Could not determine type of child "${child}"`)
   }
-  toY(value: Array<Row & T>) {
+  toY(value: Array<ListRow & T>) {
     const map = new Y.Map()
     const rows = Array.isArray(value) ? value : []
     let currentIndex = null
@@ -66,15 +68,15 @@ export class ListValue<T>
     }
     return map
   }
-  fromY(map: Y.Map<any>): Array<Row & T> {
-    const rows: Array<Row & T> = []
+  fromY(map: Y.Map<any>): Array<ListRow & T> {
+    const rows: Array<ListRow & T> = []
     if (!map) return rows
     for (const key of map.keys()) {
       const row = map.get(key)
       if (!row || typeof row.get !== 'function') continue
       const type = row.get('type')
       const rowType = this.values[type]
-      if (rowType) rows.push(rowType.fromY(row) as Row & T)
+      if (rowType) rows.push(rowType.fromY(row) as ListRow & T)
     }
     rows.sort(sort)
     return rows
@@ -99,9 +101,9 @@ export class ListValue<T>
   }
   mutator(parent: Y.Map<any>, key: string) {
     return {
-      push: (row: Omit<Row & T, 'id' | 'index'>) => {
+      push: (row: Omit<ListRow & T, 'id' | 'index'>) => {
         const record = parent.get(key)
-        const rows: Array<Row> = this.fromY(record) as any
+        const rows: Array<ListRow> = this.fromY(record) as any
         const id = createId()
         record.set(
           id,
@@ -121,7 +123,7 @@ export class ListValue<T>
       },
       move: (oldIndex: number, newIndex: number) => {
         const record = parent.get(key)
-        const rows: Array<Row> = this.fromY(record) as any
+        const rows: Array<ListRow> = this.fromY(record) as any
         const from = rows[oldIndex]
         const into = rows.filter(row => row.id !== from.id)
         const prev = into[newIndex - 1]

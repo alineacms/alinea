@@ -38,6 +38,7 @@ export namespace Storage {
         workspace: workspaceKey,
         url,
         parent: parent,
+        parents,
         $isContainer,
         $status,
         path: entryPath,

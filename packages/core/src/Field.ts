@@ -1,5 +1,6 @@
 import {InputState} from '@alinea/editor'
 import type {ComponentType} from 'react'
+import {Label} from './Label'
 import {TextDoc} from './TextDoc'
 import {Value} from './Value'
 import {ListMutator} from './value/ListValue'
@@ -29,5 +30,6 @@ export namespace Field {
 
 export interface Field<V, M> {
   type: Value<V, M>
+  label: Label
   view?: FieldRenderer<V, M, Field<V, M>>
 }

@@ -63,6 +63,10 @@ class Drafts {
     return {...result, type, doc}
   }
 
+  async list(workspace: string) {
+    return this.hub.listDrafts(workspace).then(Outcome.unpack)
+  }
+
   async discard(draft: EntryDraft) {
     if (this.saveTimeout) clearTimeout(this.saveTimeout)
     draft.status(EntryStatus.Publishing)

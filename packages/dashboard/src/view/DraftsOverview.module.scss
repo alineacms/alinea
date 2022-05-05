@@ -1,3 +1,18 @@
 .root {
   width: 100%;
+  padding: 35px;
+  overflow: auto;
+
+  &-inner {
+    max-width: 768px;
+    margin: 0 auto;
+  }
+
+  &-header {
+    padding-bottom: 20px;
+  }
+
+  &-list {
+    position: relative;
+  }
 }

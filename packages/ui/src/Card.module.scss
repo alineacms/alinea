@@ -10,6 +10,12 @@
   border: 1px solid var(--inner-outline);
 }
 
+.row {
+  & + & {
+    box-shadow: var(--divider-top);
+  }
+}
+
 .header {
   display: flex;
   align-items: center;

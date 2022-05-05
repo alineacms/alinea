@@ -1,0 +1,15 @@
+.root {
+  cursor: text;
+  line-height: 1.4;
+
+  &-segment {
+    white-space: pre-line;
+    &.is-insert {
+      color: rgb(30, 131, 30);
+    }
+    &.is-delete {
+      text-decoration: line-through;
+      color: rgb(192, 11, 11);
+    }
+  }
+}

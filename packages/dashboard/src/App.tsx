@@ -29,6 +29,7 @@ import {CurrentDraftProvider} from './hook/UseCurrentDraft'
 import {DashboardProvider, useDashboard} from './hook/UseDashboard'
 import {useDraft} from './hook/UseDraft'
 import {DraftsProvider, DraftsStatus, useDrafts} from './hook/UseDrafts'
+import {useDraftsList} from './hook/UseDraftsList'
 import {useLocale} from './hook/UseLocale'
 import {useNav} from './hook/UseNav'
 import {ReferencePickerProvider} from './hook/UseReferencePicker'
@@ -54,6 +55,22 @@ const Router = {
   Drafts() {
     return <DraftsOverview />
   }
+}
+
+function DraftsButton() {
+  const location = useLocation()
+  const nav = useNav()
+  const {name: workspace} = useWorkspace()
+  const {total: draftsTotal} = useDraftsList(workspace)
+  return (
+    <Sidebar.Menu.Item
+      selected={location.pathname === nav.drafts({workspace})}
+      to={nav.drafts({workspace})}
+      badge={draftsTotal}
+    >
+      <MdiSourceBranch />
+    </Sidebar.Menu.Item>
+  )
 }
 
 function AppAuthenticated() {
@@ -100,12 +117,7 @@ function AppAuthenticated() {
                         </Sidebar.Menu.Item>
                       )
                     })}
-                    <Sidebar.Menu.Item
-                      selected={location.pathname === nav.drafts({workspace})}
-                      to={nav.drafts({workspace})}
-                    >
-                      <MdiSourceBranch />
-                    </Sidebar.Menu.Item>
+                    <DraftsButton />
                   </Sidebar.Menu>
                 </Sidebar.Root>
                 <Suspense fallback={<Loader absolute />}>

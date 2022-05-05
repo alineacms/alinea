@@ -10,10 +10,10 @@ import {Workspaces} from './Workspace'
 export interface Hub<T extends Workspaces = Workspaces> {
   config: Config<T>
   entry(id: string, stateVector?: Uint8Array): Future<Entry.Detail | null>
-  query<T>(cursor: Cursor<T>): Future<Array<T>>
+  query<T>(cursor: Cursor<T>, options?: Hub.QueryOptions): Future<Array<T>>
   updateDraft(id: string, update: Uint8Array): Future
   deleteDraft(id: string): Future<boolean>
-  listDrafts(): Future<Array<{id: string}>>
+  listDrafts(workspace: string): Future<Array<{id: string}>>
   uploadFile(
     workspace: string,
     root: string,
@@ -37,6 +37,10 @@ export namespace Hub {
     lastModified?: Date
   }
   export type DirEntry = {type: 'file' | 'directory'; path: string; stat: Stat}
+  export type QueryOptions = {
+    /** Query source data, not drafts */
+    source?: boolean
+  }
 
   export const routes = {
     entry(id: string, stateVector?: Uint8Array) {
@@ -49,7 +53,7 @@ export namespace Hub {
       return `/draft/${id}`
     },
     drafts() {
-      return '/draft'
+      return `/draft`
     },
     publish() {
       return `/publish`

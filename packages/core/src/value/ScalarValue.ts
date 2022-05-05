@@ -1,10 +1,12 @@
 import * as Y from 'yjs'
 import {createError} from '../ErrorWithCode'
 import {Value} from '../Value'
+import {ValueKind} from '../ValueKind'
 
 export type ScalarMutator<T> = (value: T) => void
 
 export class ScalarValue<T> implements Value<T, ScalarMutator<T>> {
+  kind = ValueKind.Scalar
   static inst = new ScalarValue()
   private constructor() {}
   create(): T {

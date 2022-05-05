@@ -34,8 +34,9 @@ export class Client<T extends Workspaces> implements Hub<T> {
     }).then<Outcome<Entry.Detail | null>>(toFuture)
   }
 
-  query<T>(cursor: Cursor<T>): Future<Array<T>> {
-    return this.fetchJson(Hub.routes.query(), {
+  query<T>(cursor: Cursor<T>, options?: Hub.QueryOptions): Future<Array<T>> {
+    const params = options?.source ? '?source' : ''
+    return this.fetchJson(Hub.routes.query() + params, {
       method: 'POST',
       body: JSON.stringify(cursor.toJSON())
     }).then<Outcome<Array<T>>>(toFuture)
@@ -55,8 +56,8 @@ export class Client<T extends Workspaces> implements Hub<T> {
     }).then<Outcome<boolean>>(toFuture)
   }
 
-  listDrafts(): Future<Array<{id: string}>> {
-    return this.fetch(Hub.routes.drafts(), {
+  listDrafts(workspace: string): Future<Array<{id: string}>> {
+    return this.fetch(Hub.routes.drafts() + `?workspace=${workspace}`, {
       method: 'GET'
     }).then<Outcome<Array<{id: string}>>>(toFuture)
   }
