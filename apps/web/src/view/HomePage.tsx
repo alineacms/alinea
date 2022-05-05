@@ -31,7 +31,9 @@ export function HomePage({headline, byline, action}: HomePageSchema) {
             style={{paddingTop: px(20)}}
           >
             {action && (
-              <Hero.Action href={action.url}>{action.label}</Hero.Action>
+              <Hero.Action href={action.url} color={action.color}>
+                {action.label}
+              </Hero.Action>
             )}
             <Typo.Link href="/demo" target="_blank">
               <HStack center gap={8}>
