@@ -23,7 +23,7 @@ export namespace Hero {
   export function Action({children, ...props}: PropsWithChildren<LinkProps>) {
     return (
       <Link {...props}>
-        <a className={styles.action()}>
+        <a className={styles.action()} style={{backgroundColor: props.color}}>
           <HStack center gap={8}>
             <span>{children}</span>
             <IcRoundArrowForward />

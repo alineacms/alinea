@@ -4,6 +4,7 @@
   "root": "data",
   "index": "Zy",
   "title": "Home",
+  "parents": [],
   "headline": "Structure\ncontent fast",
   "byline": "Structure, edit and query content with any web framework.\nFully typed and organized in your repository.",
   "action": [
@@ -12,16 +13,9 @@
       "index": "a0",
       "type": "entry",
       "entry": "20580nQzbOBR3Lt4kIdxyRGglc6",
-      "label": "Getting started"
+      "label": "Getting started",
+      "color": "#4cbe35"
     }
   ],
-  "links": [
-    {
-      "id": "263wlTQJl4GPVikrzGKCxRKuJTg",
-      "index": "a0",
-      "type": "entry",
-      "entry": "20580nQzbOBR3Lt4kIdxyRGglc6",
-      "title": "Docs"
-    }
-  ]
+  "links": []
 }

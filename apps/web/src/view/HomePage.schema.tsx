@@ -1,4 +1,5 @@
 import {Schema, type} from '@alinea/core'
+import {color} from '@alinea/input.color'
 import {link} from '@alinea/input.link'
 import {path} from '@alinea/input.path'
 import {tab, tabs} from '@alinea/input.tabs'
@@ -20,7 +21,12 @@ export const HomePageSchema = type(
       action: link('Action', {
         max: 1,
         fields: type('Fields', {
-          label: text('Button label')
+          label: text('Button label'),
+          color: color('Button color', {
+            help: 'Make the button pretty',
+            initialValue: '#4a63e7'
+            //, allowedColors: ['#4a63e7', '#e74a63', '#63e74a']
+          })
         })
       })
     }).configure({icon: IcRoundInsertDriveFile}),

@@ -9,7 +9,8 @@ export async function homePageQuery(pages: Pages, home: Home) {
       action?.type === 'entry'
         ? {
             url: (await pages.whereId(action.entry))!.url,
-            label: action.label
+            label: action.label,
+            color: action.color
           }
         : null
   }
