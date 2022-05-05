@@ -94,7 +94,7 @@ function EntryEditDraft({draft, isLoading}: EntryEditDraftProps) {
   }, [draft, isTranslating, locale])
   return (
     <HStack style={{height: '100%'}}>
-      <PaneControl position={1}>
+      <PaneControl position={1} lastPane={!preview}>
         <div className={styles.root()}>
           <EntryHeader />
           <div className={styles.root.draft()}>

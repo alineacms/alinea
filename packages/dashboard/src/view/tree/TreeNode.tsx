@@ -1,4 +1,5 @@
 import {renderLabel} from '@alinea/core'
+import {usePaneIndex} from '@alinea/dashboard/hook/UsePaneIndex'
 import {Create, fromModule, px, Stack, useInitialEffect} from '@alinea/ui'
 import {IcRoundInsertDriveFile} from '@alinea/ui/icons/IcRoundInsertDriveFile'
 import {IcRoundKeyboardArrowDown} from '@alinea/ui/icons/IcRoundKeyboardArrowDown'
@@ -76,6 +77,7 @@ const TreeNodeLink = memo(
   ) {
     const nav = useNav()
     const {schema} = useWorkspace()
+    const paneIndex = usePaneIndex()
     const type = schema.type(entry.type)!
     const isContainer = entry.$isContainer
     const containerIcon = isOpened ? (
@@ -110,7 +112,10 @@ const TreeNodeLink = memo(
             className={styles.root.link()}
             style={{paddingLeft: `${10 + level * 8}px`}}
             onClick={event => {
-              if (!entry.$isContainer || isOpened) return
+              if (!entry.$isContainer || isOpened) {
+                paneIndex?.setIndex(1)
+                return
+              }
               toggleOpen()
             }}
           >
