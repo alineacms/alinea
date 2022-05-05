@@ -270,6 +270,8 @@ __metadata:
     "@tiptap/core": ^2.0.0-beta.174
     "@tiptap/extension-collaboration": ^2.0.0-beta.33
     "@tiptap/extension-floating-menu": ^2.0.0-beta.50
+    "@tiptap/extension-history": ^2.0.0-beta.21
+    "@tiptap/extension-text-align": ^2.0.0-beta.29
     "@tiptap/react": ^2.0.0-beta.108
     "@tiptap/starter-kit": ^2.0.0-beta.183
   peerDependencies:
@@ -1771,6 +1773,15 @@ __metadata:
   peerDependencies:
     "@tiptap/core": ^2.0.0-beta.1
   checksum: 407d39dc6adbe9ff097e2805b899e011c06916ff3cf094f0d28fcd41bc00b89583a5bc942c507bffdfd06d65da6e6808d54d55e8fd781b05e3e612138062b47c
+  languageName: node
+  linkType: hard
+
+"@tiptap/extension-text-align@npm:^2.0.0-beta.29":
+  version: 2.0.0-beta.29
+  resolution: "@tiptap/extension-text-align@npm:2.0.0-beta.29"
+  peerDependencies:
+    "@tiptap/core": ^2.0.0-beta.1
+  checksum: 054427e60607a5603142efe6c99ff67eba207fa4cd765682a1c02c59af5167ee39f9ea31cf997713b3dacb926025ba05850d823495ee73cefc704994bbb6a083
   languageName: node
   linkType: hard
 

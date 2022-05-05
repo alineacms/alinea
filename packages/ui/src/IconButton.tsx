@@ -10,6 +10,7 @@ export type IconButtonProps = HTMLAttributes<HTMLButtonElement> & {
   icon: ComponentType
   size?: number
   active?: boolean
+  disabled?: boolean
 }
 
 export const IconButton = forwardRef(function IconButton(
