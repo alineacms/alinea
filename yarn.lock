@@ -310,6 +310,20 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@alinea/input.unsplash@workspace:packages/input/unsplash":
+  version: 0.0.0-use.local
+  resolution: "@alinea/input.unsplash@workspace:packages/input/unsplash"
+  dependencies:
+    "@alinea/core": 0.0.0
+    "@alinea/dashboard": 0.0.0
+    "@alinea/editor": 0.0.0
+    "@alinea/ui": 0.0.0
+    react-autosize-textarea: ^7.1.0
+  peerDependencies:
+    react: "*"
+  languageName: unknown
+  linkType: soft
+
 "@alinea/root@workspace:.":
   version: 0.0.0-use.local
   resolution: "@alinea/root@workspace:."

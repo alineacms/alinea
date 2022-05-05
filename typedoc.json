@@ -21,6 +21,7 @@
     "./packages/editor/src/index.ts",
     "./packages/input/code/src/index.ts",
     "./packages/input/link/src/index.ts",
+    "./packages/input/unsplash/src/index.ts",
     "./packages/input/list/src/index.ts",
     "./packages/input/number/src/index.ts",
     "./packages/input/path/src/index.ts",

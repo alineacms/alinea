@@ -1,0 +1,24 @@
+.root {
+  position: relative;
+
+  &-inner {
+    position: relative;
+  }
+}
+
+.content {
+  display: block;
+
+  & + .footer {
+    border-top: 1px solid var(--inner-outline);
+  }
+}
+
+.footer {
+  position: relative;
+  padding: 4px 0 5px 0;
+
+  .row + & {
+    box-shadow: var(--divider-top);
+  }
+}
