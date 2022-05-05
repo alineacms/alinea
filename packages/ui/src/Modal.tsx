@@ -1,36 +1,42 @@
 import {HTMLProps, PropsWithChildren} from 'react'
+import ReactModal from 'react-modal'
 import {IconButton} from './IconButton'
 import {IcRoundClose} from './icons/IcRoundClose'
 import css from './Modal.module.scss'
 import {fromModule} from './util/Styler'
+import {useViewport} from './Viewport'
 
 const styles = fromModule(css)
 
-export type ModalProps = PropsWithChildren<{
-  open: boolean
-  onClose: () => void
-}> &
-  HTMLProps<HTMLDivElement>
+export type ModalProps = HTMLProps<HTMLDivElement> &
+  PropsWithChildren<{
+    open: boolean
+    onClose: () => void
+  }>
 
 // Todo: for accessibility's sake we should use a tried and tested library here
-export function Modal({children, open, onClose, ...props}: ModalProps) {
+export function Modal({open, onClose, children}: ModalProps) {
+  const modalContainer = useViewport()
+  if (!modalContainer) return null
+
   return (
-    <div
-      role="dialog"
-      aria-modal
-      className={styles.root.mergeProps(props)({open})}
-      {...props}
+    <ReactModal
+      isOpen={open}
+      onRequestClose={onClose}
+      ariaHideApp={false}
+      closeTimeoutMS={150}
+      parentSelector={() => modalContainer}
+      portalClassName={styles.root()}
+      overlayClassName={styles.root.background()}
+      className={styles.root.inner()}
     >
-      <div className={styles.root.background()} onClick={onClose}></div>
-      <div className={styles.root.inner()}>
-        <IconButton
-          className={styles.root.inner.close()}
-          size={18}
-          icon={IcRoundClose}
-          onClick={onClose}
-        />
-        {children}
-      </div>
-    </div>
+      {children}
+      <IconButton
+        className={styles.root.inner.close()}
+        size={18}
+        icon={IcRoundClose}
+        onClick={onClose}
+      />
+    </ReactModal>
   )
 }
