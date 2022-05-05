@@ -203,6 +203,18 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@alinea/input.color@workspace:packages/input/color":
+  version: 0.0.0-use.local
+  resolution: "@alinea/input.color@workspace:packages/input/color"
+  dependencies:
+    "@alinea/core": 0.0.0
+    "@alinea/editor": 0.0.0
+    "@alinea/ui": 0.0.0
+  peerDependencies:
+    react: "*"
+  languageName: unknown
+  linkType: soft
+
 "@alinea/input.link@0.0.0, @alinea/input.link@workspace:packages/input/link":
   version: 0.0.0-use.local
   resolution: "@alinea/input.link@workspace:packages/input/link"
@@ -336,6 +348,7 @@ __metadata:
     memfs: ^3.4.1
     npm-run-all: ^4.1.5
     postcss-pxtorem: ^6.0.0
+    react-colorful: ^5.5.1
     typedoc: ^0.22.15
     typescript: ^4.5.5
     typescript-plugin-css-modules: ^3.4.0
@@ -7088,6 +7101,16 @@ fsevents@~2.3.2:
     react: ^0.14.0 || ^15.0.0 || ^16.0.0
     react-dom: ^0.14.0 || ^15.0.0 || ^16.0.0
   checksum: 1292d8867151f19ae8668b5bf93a3fa70dfd37d1888330d317b4e55fdace2696526d3fcf68581a06ec29e3601b992f6d23ec3cf271980877168441425abe7a5e
+  languageName: node
+  linkType: hard
+
+"react-colorful@npm:^5.5.1":
+  version: 5.5.1
+  resolution: "react-colorful@npm:5.5.1"
+  peerDependencies:
+    react: ">=16.8.0"
+    react-dom: ">=16.8.0"
+  checksum: e60811781716e57f0990379eff20d6f22d4d35b9e858c47ecf857c1dc1c1a2274c924ded7248bad5f1e2fbf2aab06e59b12852910c8dee5e6850f8e4df293670
   languageName: node
   linkType: hard
 
