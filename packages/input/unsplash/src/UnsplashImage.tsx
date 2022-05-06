@@ -2,7 +2,7 @@ import {useBlurData} from '@alinea/dashboard/hook/UseBlurData'
 import {fromModule, IconButton} from '@alinea/ui'
 import IcRoundClose from '@alinea/ui/icons/IcRoundClose'
 import IcRoundDragHandle from '@alinea/ui/icons/IcRoundDragHandle'
-import React, {useContext} from 'react'
+import React, {useContext, useState} from 'react'
 import css from './UnsplashImage.module.scss'
 import {UnsplashContext} from './UnsplashInput'
 const styles = fromModule(css)
@@ -187,6 +187,7 @@ const UnsplashImage: React.FC<{
   image: UnsplashImageProps
   onSelect?: (image: UnsplashImageProps) => void
 }> = ({remove, showDragIcon, image, onSelect}) => {
+  const [isSelected, setIsSelected] = useState(false)
   const unsplashConfig = useContext(UnsplashContext)
   const blurDataURL =
     image.blur_hash && image.blur_hash.length === 28
@@ -195,7 +196,7 @@ const UnsplashImage: React.FC<{
 
   return (
     <div
-      className={styles.unsplashImage()}
+      className={styles.unsplashImage({selected: isSelected})}
       style={{
         backgroundColor: image.color,
         backgroundImage: blurDataURL ? `url(${blurDataURL})` : 'none'
@@ -214,7 +215,13 @@ const UnsplashImage: React.FC<{
             />
           )}
           {onSelect && (
-            <input type="checkbox" onClick={() => onSelect(image)} />
+            <input
+              type="checkbox"
+              onClick={e => {
+                setIsSelected(!isSelected)
+                onSelect(image)
+              }}
+            />
           )}
         </span>
         {remove && (

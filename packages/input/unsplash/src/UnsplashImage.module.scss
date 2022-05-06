@@ -7,6 +7,10 @@
   cursor: default;
   background-size: cover;
 
+  &-is-isSelected {
+    border: 2px solid #000000;
+  }
+
   &-header {
     opacity: 0;
     transition: opacity 0.25s ease-out;
