@@ -1,6 +1,6 @@
 .root {
   padding: 8px;
-  border-left: 1px solid transparent;
+  border-left: 2px solid transparent;
 
   & + & {
     box-shadow: var(--divider-top);
@@ -14,16 +14,16 @@
   &.is-equal {
     & + & {
       // Ignore consecutive unchanged rows
-      display: none;
+      display: none !important;
     }
   }
 
   &.is-addition {
-    border-color: rgb(30, 131, 30);
+    border-color: rgba(10, 161, 10, 0.5);
   }
 
   &.is-removal {
-    border-color: rgb(192, 11, 11);
+    border-color: rgba(207, 0, 0, 0.5);
   }
 
   &-header {

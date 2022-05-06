@@ -27,6 +27,7 @@ export function ScalarDiff<T>({valueA, valueB}: ScalarDiffProps<T>) {
   }, [a, b])
   return (
     <div className={styles.root()}>
+      {diffs.length === 0 && <br />}
       {diffs.map(([op, text], i) => {
         return (
           <span

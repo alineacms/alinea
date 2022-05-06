@@ -9,6 +9,7 @@ import {Hub} from '@alinea/core/Hub'
 import {observable} from '@alinea/ui'
 import {decode} from 'base64-arraybuffer'
 import {createContext, PropsWithChildren, useContext, useMemo} from 'react'
+import {QueryClient, useQueryClient} from 'react-query'
 import {Room, WebrtcProvider} from 'y-webrtc'
 import * as Y from 'yjs'
 import {EntryDraft} from '../draft/EntryDraft'
@@ -32,7 +33,7 @@ class Drafts {
   status = observable<DraftsStatus>(DraftsStatus.Synced)
   stateVectors = new WeakMap<Y.Doc, Uint8Array>()
 
-  constructor(public hub: Hub) {}
+  constructor(public hub: Hub, protected queryClient: QueryClient) {}
 
   async save(id: string, doc: Y.Doc) {
     const {hub} = this
@@ -73,6 +74,7 @@ class Drafts {
     this.status(DraftsStatus.Saving)
     return this.hub.deleteDraft(draft.id).then(result => {
       draft.status(EntryStatus.Published)
+      this.queryClient.invalidateQueries('draft-list')
       return result
     })
   }
@@ -85,6 +87,7 @@ class Drafts {
       if (res.isFailure()) console.error(res.error)
       draft.status(res.isSuccess() ? EntryStatus.Published : EntryStatus.Draft)
       this.status(DraftsStatus.Synced)
+      this.queryClient.invalidateQueries('draft-list')
     })
   }
 
@@ -102,6 +105,8 @@ class Drafts {
       this.status(DraftsStatus.Saving)
       await this.save(id, doc)
       if (this.saveTimeout === null) this.status(DraftsStatus.Synced)
+      // Todo: this is only necessary if it is not already in the draft list
+      this.queryClient.invalidateQueries('draft-list')
     }
     const watch = (
       update?: Uint8Array,
@@ -130,8 +135,9 @@ class Drafts {
 const context = createContext<Drafts | undefined>(undefined)
 
 export function DraftsProvider({children}: PropsWithChildren<{}>) {
+  const queryClient = useQueryClient()
   const {hub} = useSession()
-  const instance = useMemo(() => new Drafts(hub), [hub])
+  const instance = useMemo(() => new Drafts(hub, queryClient), [hub])
   return <context.Provider value={instance}>{children}</context.Provider>
 }
 

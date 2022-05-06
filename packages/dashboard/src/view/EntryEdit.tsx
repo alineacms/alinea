@@ -1,4 +1,4 @@
-import {createId, docFromEntry, Entry, slugify} from '@alinea/core'
+import {createId, docFromEntry, Entry, Outcome, slugify} from '@alinea/core'
 import {InputForm, InputState} from '@alinea/editor'
 import {select} from '@alinea/input.select'
 import {SelectInput} from '@alinea/input.select/view'
@@ -12,18 +12,11 @@ import {
   IconButton,
   Loader,
   TextLabel,
-  Typo,
-  useObservable
+  Typo
 } from '@alinea/ui'
 import {IcRoundArrowBack} from '@alinea/ui/icons/IcRoundArrowBack'
 import {Modal} from '@alinea/ui/Modal'
-import {
-  ComponentType,
-  FormEvent,
-  Suspense,
-  useLayoutEffect,
-  useState
-} from 'react'
+import {FormEvent, Suspense, useLayoutEffect, useState} from 'react'
 import {useQuery, useQueryClient} from 'react-query'
 import {useNavigate} from 'react-router'
 import {Link} from 'react-router-dom'
@@ -35,25 +28,22 @@ import {useNav} from '../hook/UseNav'
 import {useRoot} from '../hook/UseRoot'
 import {useSession} from '../hook/UseSession'
 import {useWorkspace} from '../hook/UseWorkspace'
+import {EntryDiff} from './diff/EntryDiff'
+import {EditMode} from './entry/EditMode'
 import {EntryHeader} from './entry/EntryHeader'
+import {EntryPreview} from './entry/EntryPreview'
 import {EntryTitle} from './entry/EntryTitle'
 import css from './EntryEdit.module.scss'
 
 const styles = fromModule(css)
 
-type EntryPreviewProps = {
+type EntryEditDraftProps = {
+  initialMode: EditMode
   draft: EntryDraft
-  preview: ComponentType<{entry: Entry; previewToken: string}>
+  isLoading: boolean
 }
 
-function EntryPreview({draft, preview: Preview}: EntryPreviewProps) {
-  const entry = useObservable(draft.entry)
-  return <Preview entry={entry} previewToken={draft.detail.previewToken} />
-}
-
-type EntryEditDraftProps = {draft: EntryDraft; isLoading: boolean}
-
-function EntryEditDraft({draft, isLoading}: EntryEditDraftProps) {
+function EntryEditDraft({initialMode, draft, isLoading}: EntryEditDraftProps) {
   const nav = useNav()
   const queryClient = useQueryClient()
   const locale = useLocale()
@@ -64,6 +54,17 @@ function EntryEditDraft({draft, isLoading}: EntryEditDraftProps) {
   const {preview} = useWorkspace()
   const isTranslating = !isLoading && locale !== draft.i18n?.locale
   const [isCreating, setIsCreating] = useState(false)
+  const [mode, setMode] = useState<EditMode>(initialMode)
+  const {data: original} = useQuery(
+    ['original', draft.id],
+    () => {
+      return hub
+        .query(Entry.where(Entry.id.is(draft.id)), {source: true})
+        .then(Outcome.unpack)
+        .then(res => res[0])
+    },
+    {suspense: true}
+  )
   function handleTranslation() {
     if (!locale || isCreating) return
     setIsCreating(true)
@@ -94,7 +95,7 @@ function EntryEditDraft({draft, isLoading}: EntryEditDraftProps) {
   return (
     <HStack style={{height: '100%'}}>
       <div className={styles.root()}>
-        <EntryHeader />
+        <EntryHeader mode={mode} setMode={setMode} />
         <div className={styles.root.draft()}>
           <EntryTitle
             backLink={
@@ -105,24 +106,35 @@ function EntryEditDraft({draft, isLoading}: EntryEditDraftProps) {
               })
             }
           />
-          {isTranslating ? (
-            <Button onClick={() => handleTranslation()}>
-              Translate from {draft.i18n?.locale.toUpperCase()}
-            </Button>
-          ) : (
-            <Suspense fallback={null}>
-              {type ? (
-                <InputForm
-                  // We key here currently because the tiptap/yjs combination fails to register
-                  // changes when the fragment is changed while the editor is mounted.
-                  key={draft.doc.guid}
-                  type={type}
-                  state={EntryProperty.root}
-                />
-              ) : (
-                <ErrorMessage error={new Error('Type not found')} />
+          {mode === EditMode.Diff ? (
+            <>
+              {original && (
+                <EntryDiff entryA={original} entryB={draft.getEntry()} />
               )}
-            </Suspense>
+            </>
+          ) : (
+            <>
+              {' '}
+              {isTranslating ? (
+                <Button onClick={() => handleTranslation()}>
+                  Translate from {draft.i18n?.locale.toUpperCase()}
+                </Button>
+              ) : (
+                <Suspense fallback={null}>
+                  {type ? (
+                    <InputForm
+                      // We key here currently because the tiptap/yjs combination fails to register
+                      // changes when the fragment is changed while the editor is mounted.
+                      key={draft.doc.guid}
+                      type={type}
+                      state={EntryProperty.root}
+                    />
+                  ) : (
+                    <ErrorMessage error={new Error('Type not found')} />
+                  )}
+                </Suspense>
+              )}
+            </>
           )}
         </div>
       </div>
@@ -253,8 +265,18 @@ export function NewEntry({parentId}: NewEntryProps) {
   )
 }
 
-export type EntryEditProps = {draft: EntryDraft; isLoading: boolean}
+export type EntryEditProps = {
+  initialMode: EditMode
+  draft: EntryDraft
+  isLoading: boolean
+}
 
-export function EntryEdit({draft, isLoading}: EntryEditProps) {
-  return <EntryEditDraft draft={draft} isLoading={isLoading} />
+export function EntryEdit({initialMode, draft, isLoading}: EntryEditProps) {
+  return (
+    <EntryEditDraft
+      initialMode={initialMode}
+      draft={draft}
+      isLoading={isLoading}
+    />
+  )
 }

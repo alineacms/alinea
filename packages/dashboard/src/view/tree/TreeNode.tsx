@@ -49,6 +49,7 @@ function TreeNodeChildrenCreator({locale, entry}: TreeNodeChildrenCreator) {
 type TreeNodeLinkProps = {
   locale: string | undefined
   entry: ContentTreeEntry
+  link?: string
   isSelected: boolean
   level: number
   isOpened: boolean
@@ -65,6 +66,7 @@ const TreeNodeLink = memo(
     {
       locale,
       entry,
+      link,
       isOpened,
       toggleOpen,
       isSelected,
@@ -78,7 +80,6 @@ const TreeNodeLink = memo(
     },
     ref
   ) {
-    const nav = useNav()
     const {schema} = useWorkspace()
     const type = schema.type(entry.type)!
     const isContainer = entry.$isContainer
@@ -111,7 +112,7 @@ const TreeNodeLink = memo(
           <Link
             ref={ref}
             draggable={false}
-            to={nav.entry({...entry, locale, id: entry.source.id})}
+            to={link || ''}
             className={styles.root.link()}
             style={{paddingLeft: `${10 + level * 8}px`}}
             onClick={event => {
@@ -208,6 +209,7 @@ export function TreeNodeSortable(props: TreeNodeProps) {
 }
 
 export type TreeNodeProps = {
+  link?: string
   entry: ContentTreeEntry
   locale: string | undefined
   level: number

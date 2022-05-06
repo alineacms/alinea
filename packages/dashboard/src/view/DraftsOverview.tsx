@@ -1,125 +1,36 @@
 import {Entry, Outcome} from '@alinea/core'
 import {
   Button,
-  Card,
-  Chip,
   fromModule,
   HStack,
-  Icon,
-  IconButton,
-  IconLink,
+  Pane,
+  px,
   Stack,
-  TextLabel,
   Typo,
   VStack
 } from '@alinea/ui'
-import {Badge} from '@alinea/ui/Badge'
-import IcRoundAddCircleOutline from '@alinea/ui/icons/IcRoundAddCircleOutline'
 import IcRoundArrowForward from '@alinea/ui/icons/IcRoundArrowForward'
-import IcRoundClose from '@alinea/ui/icons/IcRoundClose'
-import {IcRoundEdit} from '@alinea/ui/icons/IcRoundEdit'
-import IcRoundKeyboardArrowDown from '@alinea/ui/icons/IcRoundKeyboardArrowDown'
-import {IcRoundKeyboardArrowRight} from '@alinea/ui/icons/IcRoundKeyboardArrowRight'
-import {memo, useState} from 'react'
 import {useQuery} from 'react-query'
+import {CurrentDraftProvider} from '..'
+import {useDraft} from '../hook/UseDraft'
 import {useDraftsList} from '../hook/UseDraftsList'
 import {useNav} from '../hook/UseNav'
 import {useSession} from '../hook/UseSession'
 import {useWorkspace} from '../hook/UseWorkspace'
-import {diffRecord} from './diff/DiffUtils'
-import {FieldsDiff} from './diff/FieldsDiff'
 import css from './DraftsOverview.module.scss'
+import {EditMode} from './entry/EditMode'
+import {EntryEdit} from './EntryEdit'
+import {TreeNode} from './tree/TreeNode'
 
 const styles = fromModule(css)
 
-type EntryDiffProps = {
-  entryA: Entry
-  entryB: Entry
+export type DraftsOverviewProps = {
+  id?: string
 }
 
-const EntryDiff = memo(function EntryDiff({entryA, entryB}: EntryDiffProps) {
-  const workspace = useWorkspace()
-  const typeA = workspace.schema.type(entryA.type)!
-  const typeB = workspace.schema.type(entryB.type)!
-  const typeChanged = typeA !== typeB
-  if (typeChanged)
-    return (
-      <div>
-        <Chip>
-          <TextLabel label={typeA.label} />
-        </Chip>{' '}
-        =&gt;
-        <Chip>
-          <TextLabel label={typeB.label} />
-        </Chip>
-      </div>
-    )
-  const changes = diffRecord(typeA.valueType, entryA, entryB)
-  return (
-    <div className={styles.diff()}>
-      <FieldsDiff changes={changes} targetA={entryA} targetB={entryB} />
-    </div>
-  )
-})
-
-type DraftDetailProps = {
-  original: Entry | undefined
-  draft: Entry
-}
-
-function DraftDetail({draft, original}: DraftDetailProps) {
-  const workspace = useWorkspace()
-  const nav = useNav()
-  const hasChanges = Boolean(original)
-  const [isOpen, setIsOpen] = useState(false)
-  const type = workspace.schema.type(draft.type)
-  const changes =
-    hasChanges && type && diffRecord(type.valueType, original, draft).length
-  return (
-    <Card.Root key={draft.id}>
-      <Card.Header>
-        <HStack
-          center
-          gap={6}
-          style={{flexGrow: 1, cursor: hasChanges ? 'pointer' : undefined}}
-          onClick={() => setIsOpen(!isOpen)}
-        >
-          <div>
-            {hasChanges ? (
-              <Icon
-                size={20}
-                icon={
-                  isOpen ? IcRoundKeyboardArrowDown : IcRoundKeyboardArrowRight
-                }
-              />
-            ) : (
-              <Icon size={20} icon={IcRoundAddCircleOutline} />
-            )}
-          </div>
-          <Badge amount={Number(changes)} right={-16} top={0}>
-            <Typo.H2 flat>
-              <TextLabel label={draft.title} />
-            </Typo.H2>
-          </Badge>
-        </HStack>
-        <Card.Options>
-          <IconLink to={nav.entry(draft)} icon={IcRoundEdit} />
-        </Card.Options>
-        <Card.Options>
-          <IconButton icon={IcRoundClose} />
-        </Card.Options>
-      </Card.Header>
-      {original && isOpen && (
-        <Card.Content>
-          <EntryDiff entryA={original} entryB={draft} />
-        </Card.Content>
-      )}
-    </Card.Root>
-  )
-}
-
-export function DraftsOverview() {
+export function DraftsOverview({id}: DraftsOverviewProps) {
   const {hub} = useSession()
+  const nav = useNav()
   const workspace = useWorkspace()
   const {ids} = useDraftsList(workspace.name)
   const {data} = useQuery(
@@ -129,31 +40,60 @@ export function DraftsOverview() {
         Entry.workspace.is(workspace.name)
       )
       const drafts = hub.query(criteria).then(Outcome.unpack)
-      const source = hub.query(criteria, {source: true}).then(Outcome.unpack)
-      return Promise.all([drafts, source]).then(([drafts, source]) => ({
-        drafts,
-        source
-      }))
+      return drafts
     },
     {suspense: true}
   )
-  const {drafts, source} = data!
+  const drafts = data!
+  const selected = id && drafts.find(d => d.id === id)
+  const {draft, isLoading} = useDraft(id)
   return (
-    <div className={styles.root()}>
-      <div className={styles.root.inner()}>
-        <HStack center full className={styles.root.header()}>
-          <Typo.H1 flat>Drafts</Typo.H1>
+    <CurrentDraftProvider value={draft}>
+      <Pane
+        id="content-tree"
+        resizable="right"
+        defaultWidth={330}
+        minWidth={200}
+      >
+        <HStack center style={{padding: `${px(10)} ${px(20)}`}}>
+          <Typo.H4 flat>DRAFTS</Typo.H4>
           <Stack.Right>
             <Button iconRight={IcRoundArrowForward}>Publish all</Button>
           </Stack.Right>
         </HStack>
-        <VStack gap={20} className={styles.root.list()}>
-          {drafts.map((draft, i) => {
-            const original = source.find(entry => entry.id === draft.id)
-            return <DraftDetail key={i} original={original} draft={draft} />
+        <VStack>
+          {drafts.map(draft => {
+            return (
+              <div key={draft.id}>
+                <TreeNode
+                  entry={{
+                    ...draft,
+                    locale: draft.i18n?.locale!,
+                    source: draft,
+                    $isContainer: false,
+                    childrenCount: 0,
+                    parents: []
+                  }}
+                  locale={draft.i18n?.locale!}
+                  level={0}
+                  link={nav.draft({...draft, id: draft.id})}
+                  isOpen={() => false}
+                  toggleOpen={() => {}}
+                />
+              </div>
+            )
           })}
         </VStack>
+      </Pane>
+      <div style={{width: '100%', height: '100%'}}>
+        {selected && draft && (
+          <EntryEdit
+            initialMode={EditMode.Diff}
+            draft={draft}
+            isLoading={isLoading}
+          />
+        )}
       </div>
-    </div>
+    </CurrentDraftProvider>
   )
 }
