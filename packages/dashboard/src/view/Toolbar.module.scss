@@ -23,12 +23,10 @@
     display: none;
     @include sm {
       display: block;
-      margin: 0 5px;
     }
     @include xl {
       &.is-preview {
         display: block;
-        margin: 0 5px;
       }
     }
 

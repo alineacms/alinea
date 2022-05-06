@@ -10,10 +10,11 @@ export type IconButtonProps = HTMLAttributes<HTMLButtonElement> & {
   icon: ComponentType
   size?: number
   active?: boolean
+  narrow?: boolean
 }
 
 export const IconButton = forwardRef(function IconButton(
-  {icon: Icon, active, size, ...props}: IconButtonProps,
+  {icon: Icon, active, size, narrow, ...props}: IconButtonProps,
   ref: Ref<HTMLButtonElement>
 ) {
   return (
@@ -21,7 +22,7 @@ export const IconButton = forwardRef(function IconButton(
       ref={ref}
       {...props}
       style={{...props.style, fontSize: size ? px(size) : undefined}}
-      className={styles.root.mergeProps(props)({active})}
+      className={styles.root.mergeProps(props)({active, narrow})}
     >
       <Icon />
     </button>

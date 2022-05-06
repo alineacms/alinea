@@ -7,8 +7,8 @@ import {
   useColorScheme
 } from '@alinea/ui'
 import {LogoShape} from '@alinea/ui/branding/LogoShape'
-import CodiconOpenPreview from '@alinea/ui/icons/CodiconOpenPreview'
 import {IcRoundKeyboardArrowDown} from '@alinea/ui/icons/IcRoundKeyboardArrowDown'
+import IcRoundPreview from '@alinea/ui/icons/IcRoundPreview'
 import IcRoundSegment from '@alinea/ui/icons/IcRoundSegment'
 import {IcRoundUnfoldMore} from '@alinea/ui/icons/IcRoundUnfoldMore'
 import {IcSharpBrightnessMedium} from '@alinea/ui/icons/IcSharpBrightnessMedium'
@@ -128,7 +128,7 @@ export namespace Toolbar {
             </DropdownMenu.Root>
             <div className={styles.root.panes({preview: true})}>
               <IconButton
-                icon={CodiconOpenPreview}
+                icon={IcRoundPreview}
                 onClick={() => {
                   if (!paneIndex) return
                   if (paneIndex.index === 2) {
@@ -137,6 +137,8 @@ export namespace Toolbar {
                   }
                   paneIndex.setIndex(2)
                 }}
+                size={20}
+                narrow={true}
                 active={paneIndex?.index === 2}
               />
             </div>

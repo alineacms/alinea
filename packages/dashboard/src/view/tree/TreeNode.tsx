@@ -113,7 +113,7 @@ const TreeNodeLink = memo(
             style={{paddingLeft: `${10 + level * 8}px`}}
             onClick={event => {
               if (!entry.$isContainer || isOpened) {
-                paneIndex?.setIndex(1)
+                if (paneIndex?.index !== 2) paneIndex?.setIndex(1)
                 return
               }
               toggleOpen()

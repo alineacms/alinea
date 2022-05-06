@@ -11,7 +11,7 @@
       bottom: 0;
       right: 0;
       transform: translateX(100%);
-      z-index: 3;
+      z-index: 4;
       transition: transform 0.5s;
       &.is-show {
         transform: translateX(0);
@@ -26,11 +26,18 @@
     bottom: 0;
     left: 0;
     right: 0;
-    transition: all 0.5s;
+    transition: transform 0.5s;
 
     &.is-sidebar {
       right: unset;
       width: 44px;
+      z-index: 2;
+      background: hsla(var(--positive), 1);
+    }
+
+    &.is-menu {
+      z-index: 1;
+      background: hsla(var(--positive), 1);
     }
 
 

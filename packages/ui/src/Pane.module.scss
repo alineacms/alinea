@@ -1,3 +1,5 @@
+@import '@alinea/web/src/style.scss';
+
 .root {
   display: flex;
   height: 100%;
@@ -30,6 +32,10 @@
 
 .divider {
   position: relative;
+
+  @include sm {
+    pointer-events: none;
+  }
 
   &-handle {
     position: absolute;

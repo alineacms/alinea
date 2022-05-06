@@ -17,6 +17,11 @@
     background: hsla(var(--negative), 0.1);
   }
 
+  &.is-narrow {
+    width: 1.55em;
+    height: 1.55em;
+  }
+
   &:hover {
     background: var(--fields-focus);
     color: var(--focus-foreground);
