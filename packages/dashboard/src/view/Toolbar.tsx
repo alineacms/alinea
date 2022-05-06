@@ -9,9 +9,9 @@ import {
 import {LogoShape} from '@alinea/ui/branding/LogoShape'
 import {IcRoundKeyboardArrowDown} from '@alinea/ui/icons/IcRoundKeyboardArrowDown'
 import IcRoundPreview from '@alinea/ui/icons/IcRoundPreview'
-import IcRoundSegment from '@alinea/ui/icons/IcRoundSegment'
 import {IcRoundUnfoldMore} from '@alinea/ui/icons/IcRoundUnfoldMore'
 import {IcSharpBrightnessMedium} from '@alinea/ui/icons/IcSharpBrightnessMedium'
+import PhSidebarBold from '@alinea/ui/icons/PhSidebarBold'
 import {RiFlashlightFill} from '@alinea/ui/icons/RiFlashlightFill'
 import {HStack} from '@alinea/ui/Stack'
 import {contrastColor} from '@alinea/ui/util/ContrastColor'
@@ -42,7 +42,7 @@ export namespace Toolbar {
         <HStack center gap={16}>
           <div className={styles.root.panes()}>
             <IconButton
-              icon={IcRoundSegment}
+              icon={PhSidebarBold}
               onClick={() => {
                 if (!paneIndex) return
                 if (paneIndex.index === 0) {
@@ -51,6 +51,8 @@ export namespace Toolbar {
                 }
                 paneIndex.setIndex(0)
               }}
+              size={18}
+              narrow={true}
               active={paneIndex?.index === 0}
             />
           </div>
