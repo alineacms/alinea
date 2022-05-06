@@ -37,6 +37,9 @@ export function Header({links}: HeaderProps) {
           <a className={styles.root.link()} href="/demo" target="_blank">
             Demo
           </a>
+          <a className={styles.root.link()} href="/changelog">
+            Changelog
+          </a>
         </HStack>
         <Stack.Right>
           <HStack gap={16} center>
