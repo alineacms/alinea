@@ -185,7 +185,8 @@ const UnsplashImage: React.FC<{
   remove?: (() => void) | null
   showDragIcon: boolean
   image: UnsplashImageProps
-}> = ({remove, showDragIcon, image}) => {
+  onSelect?: (image: UnsplashImageProps) => void
+}> = ({remove, showDragIcon, image, onSelect}) => {
   const unsplashConfig = useContext(UnsplashContext)
   const blurDataURL =
     image.blur_hash && image.blur_hash.length === 28
@@ -211,6 +212,9 @@ const UnsplashImage: React.FC<{
               }}
               filled={true}
             />
+          )}
+          {onSelect && (
+            <input type="checkbox" onClick={() => onSelect(image)} />
           )}
         </span>
         {remove && (

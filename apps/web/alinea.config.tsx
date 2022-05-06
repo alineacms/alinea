@@ -7,12 +7,14 @@ import {IcRoundPermMedia} from '@alinea/ui/icons/IcRoundPermMedia'
 import {DocPageSchema} from './src/view/DocPage.schema'
 import {DocsPageSchema} from './src/view/DocsPage.schema'
 import {HomePageSchema} from './src/view/HomePage.schema'
+import {UnsplashPageSchema} from './src/view/UnsplashPage.schema'
 
 export const webSchema = schema({
   ...MediaSchema,
   Home: HomePageSchema,
   Docs: DocsPageSchema,
-  Doc: DocPageSchema
+  Doc: DocPageSchema,
+  Unsplash: UnsplashPageSchema
 })
 
 const web = workspace('Alinea', {
@@ -23,7 +25,7 @@ const web = workspace('Alinea', {
   roots: {
     data: root('Alinea website', {
       icon: IcRoundInsertDriveFile,
-      contains: ['Home', 'Docs']
+      contains: ['Home', 'Docs', 'Unsplash']
     }),
     media: root('Media', {
       icon: IcRoundPermMedia,
@@ -31,7 +33,7 @@ const web = workspace('Alinea', {
     })
   },
   preview({entry, previewToken}) {
-    const noPreviews = new Set(['Docs', 'MediaLibrary'])
+    const noPreviews = new Set(['Docs', 'MediaLibrary', 'Unsplash'])
     if (noPreviews.has(entry.type)) return null
     const location =
       process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : ''

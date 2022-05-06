@@ -5590,6 +5590,9 @@ const UnsplashSearchModal: React.FC<{
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
   const [searchResults, setSearchResults] =
     useState<Array<UnsplashImageProps>>(data)
+  const [selectedImages, setSelectedImages] = useState<Set<UnsplashImageProps>>(
+    new Set()
+  )
   const disabled: boolean =
     typeof searchParams.query === 'undefined' ||
     searchParams.query.length === 0 ||
@@ -5633,7 +5636,11 @@ const UnsplashSearchModal: React.FC<{
   }
 
   return (
-    <Modal open={isOpen} onClose={handleClose}>
+    <Modal
+      open={isOpen}
+      onClose={handleClose}
+      style={{content: {minWidth: '826px'}}}
+    >
       <HStack center gap={18} className={styles.unsplashSearchModal.header()}>
         <IconButton icon={IcRoundArrowBack} onClick={handleClose} />
         <Typo.H1 flat>Unsplash</Typo.H1>
@@ -5726,7 +5733,12 @@ const UnsplashSearchModal: React.FC<{
 
         {!isSubmitting && (
           <div className={styles.unsplashSearchModal.results.overview()}>
-            <UnsplashOverview images={searchResults} />
+            <UnsplashOverview
+              images={searchResults}
+              onSelect={(image: UnsplashImageProps) =>
+                setSelectedImages(selectedImages.add(image))
+              }
+            />
             {/* Results here
               {JSON.stringify(searchResults)} */}
           </div>
@@ -5738,7 +5750,9 @@ const UnsplashSearchModal: React.FC<{
               <Button
                 disabled={disabled}
                 onClick={() => {
-                  handleAddImages(searchResults)
+                  console.log('selectedImages', [...selectedImages])
+                  handleAddImages([...selectedImages])
+                  setSelectedImages(new Set())
                   handleClose()
                 }}
               >

@@ -9,7 +9,7 @@ import {Hub} from '@alinea/core/Hub'
 import {observable} from '@alinea/ui'
 import {decode} from 'base64-arraybuffer'
 import {createContext, PropsWithChildren, useContext, useMemo} from 'react'
-import {Room, WebrtcProvider} from 'y-webrtc'
+import {Room} from 'y-webrtc'
 import * as Y from 'yjs'
 import {EntryDraft} from '../draft/EntryDraft'
 import {useSession} from './UseSession'
@@ -92,7 +92,7 @@ class Drafts {
   }
 
   connect(id: string, doc: Y.Doc) {
-    const provider = new WebrtcProvider('@alinea/entry-' + id, doc)
+    // const provider = new WebrtcProvider('@alinea/entry-' + id, doc)
     const save = async () => {
       this.saveTimeout = null
       this.status(DraftsStatus.Saving)
@@ -114,7 +114,7 @@ class Drafts {
     doc.on('update', watch)
     return () => {
       doc.off('update', watch)
-      provider.destroy()
+      // provider.destroy()
       if (this.saveTimeout) {
         clearTimeout(this.saveTimeout)
         save()
