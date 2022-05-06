@@ -219,6 +219,7 @@ __metadata:
     "@alinea/core": 0.0.0
     "@alinea/editor": 0.0.0
     "@alinea/ui": 0.0.0
+    react-colorful: ^5.5.1
   peerDependencies:
     react: "*"
   languageName: unknown
@@ -383,7 +384,6 @@ __metadata:
     memfs: ^3.4.1
     npm-run-all: ^4.1.5
     postcss-pxtorem: ^6.0.0
-    react-colorful: ^5.5.1
     typedoc: ^0.22.15
     typescript: ^4.5.5
     typescript-plugin-css-modules: ^3.4.0
