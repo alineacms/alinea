@@ -72,7 +72,10 @@ export function PaneControl({
       }}
       className={styles.root(mods)}
     >
-      <div className={styles.overlay(mods)}></div>
+      <div
+        className={styles.overlay(mods)}
+        onClick={() => paneIndex?.setIndex(1)}
+      ></div>
       {children}
     </div>
   )

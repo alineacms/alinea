@@ -47,7 +47,16 @@ function Divider({
     )
   }
   return (
-    <div className={styles.divider()}>
+    <div
+      className={styles.divider()}
+      onDoubleClick={e => {
+        e.preventDefault()
+        width.current = 330
+        persistWidth(330)
+        if (!container?.current) return
+        container.current.style.width = `${330}px`
+      }}
+    >
       <div className={styles.divider.handle()} onMouseDown={handleMouseDown}>
         <div className={styles.divider.handle.line()} />
       </div>

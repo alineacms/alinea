@@ -40,6 +40,20 @@ export namespace Toolbar {
     return (
       <HStack center className={styles.root()}>
         <HStack center gap={16}>
+          <div className={styles.root.panes()}>
+            <IconButton
+              icon={IcRoundSegment}
+              onClick={() => {
+                if (!paneIndex) return
+                if (paneIndex.index === 0) {
+                  paneIndex.setIndex(1)
+                  return
+                }
+                paneIndex.setIndex(0)
+              }}
+              active={paneIndex?.index === 0}
+            />
+          </div>
           <DropdownMenu.Root>
             <DropdownMenu.Trigger>
               <HStack center gap={16}>
@@ -88,37 +102,10 @@ export namespace Toolbar {
             </DropdownMenu.Content>
           </DropdownMenu.Root>
         </HStack>
-        <div className={styles.root.panes()}>
-          <IconButton
-            icon={IcRoundSegment}
-            onClick={() => {
-              if (!paneIndex) return
-              if (paneIndex.index === 0) {
-                paneIndex.setIndex(1)
-                return
-              }
-              paneIndex.setIndex(0)
-            }}
-            active={paneIndex?.index === 0}
-          />
-        </div>
         <div className={styles.root.portal()}>
           <Portal className={styles.root.portal.slot()} />
         </div>
-        <div className={styles.root.panes({preview: true})}>
-          <IconButton
-            icon={CodiconOpenPreview}
-            onClick={() => {
-              if (!paneIndex) return
-              if (paneIndex.index === 2) {
-                paneIndex.setIndex(1)
-                return
-              }
-              paneIndex.setIndex(2)
-            }}
-            active={paneIndex?.index === 2}
-          />
-        </div>
+
         <div>
           <HStack center gap={10}>
             <IconButton
@@ -139,6 +126,20 @@ export namespace Toolbar {
                 </DropdownMenu.Item>
               </DropdownMenu.Content>
             </DropdownMenu.Root>
+            <div className={styles.root.panes({preview: true})}>
+              <IconButton
+                icon={CodiconOpenPreview}
+                onClick={() => {
+                  if (!paneIndex) return
+                  if (paneIndex.index === 2) {
+                    paneIndex.setIndex(1)
+                    return
+                  }
+                  paneIndex.setIndex(2)
+                }}
+                active={paneIndex?.index === 2}
+              />
+            </div>
           </HStack>
         </div>
       </HStack>
