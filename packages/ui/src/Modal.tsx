@@ -1,4 +1,3 @@
-import {HTMLProps, PropsWithChildren} from 'react'
 import ReactModal from 'react-modal'
 import {IconButton} from './IconButton'
 import {IcRoundClose} from './icons/IcRoundClose'
@@ -8,19 +7,19 @@ import {useViewport} from './Viewport'
 
 const styles = fromModule(css)
 
-export type ModalProps = HTMLProps<HTMLDivElement> &
-  PropsWithChildren<{
-    open: boolean
-    onClose: () => void
-  }>
+export type ModalProps = Omit<ReactModal.Props, 'isOpen' | 'onRequestClose'> & {
+  open: boolean
+  onClose: () => void
+}
 
 // Todo: for accessibility's sake we should use a tried and tested library here
-export function Modal({open, onClose, children}: ModalProps) {
+export function Modal({open, onClose, children, ...props}: ModalProps) {
   const modalContainer = useViewport()
   if (!modalContainer) return null
 
   return (
     <ReactModal
+      {...props}
       isOpen={open}
       onRequestClose={onClose}
       ariaHideApp={false}
