@@ -7,16 +7,27 @@ const styles = fromModule(css)
 export type ChangelogViewProps = {content: string}
 
 export default function ChangelogView(props: ChangelogViewProps) {
-  const [scrollTop, setScrollTop] = useState(0)
   const [stickyHeading, setStickyHeading] = useState<number | undefined>(
     undefined
   )
 
   useEffect(() => {
-    const elements = document.getElementsByTagName('h2')
+    const links = document.getElementsByTagName('a')
+    Array.from(links)
+      .filter(
+        el =>
+          !el.classList.value.startsWith('Header') &&
+          !el.href.startsWith(
+            process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000/'
+          )
+      )
+      .map(el => el.setAttribute('target', '_blank'))
+  }, [])
+
+  useEffect(() => {
+    const headings = document.getElementsByTagName('h2')
     const onScroll = e => {
-      setScrollTop(e.currentTarget.scrollTop)
-      const topHeading = Array.from(elements)
+      const topHeading = Array.from(headings)
         .map((el, index) => ({id: index, top: el.getBoundingClientRect().top}))
         .filter(el => el.top >= 0 && el.top < 180)
       if (topHeading.length === 0) return
@@ -25,13 +36,13 @@ export default function ChangelogView(props: ChangelogViewProps) {
     window.addEventListener('scroll', onScroll)
 
     return () => window.removeEventListener('scroll', onScroll)
-  }, [scrollTop])
+  }, [])
 
   useEffect(() => {
-    const elements = document.getElementsByTagName('h2')
-    Array.from(elements).map(el => el.classList.remove('is-sticky'))
+    const headings = document.getElementsByTagName('h2')
+    Array.from(headings).map(el => el.classList.remove('is-sticky'))
     stickyHeading !== undefined &&
-      elements[stickyHeading].classList.add('is-sticky')
+      headings[stickyHeading].classList.add('is-sticky')
   }, [stickyHeading])
 
   return (
