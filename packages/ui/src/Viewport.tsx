@@ -1,5 +1,13 @@
 import {parseToHsla} from 'color2k'
-import {HTMLProps, PropsWithChildren, useState} from 'react'
+import {
+  createContext,
+  HTMLProps,
+  PropsWithChildren,
+  useContext,
+  useEffect,
+  useRef,
+  useState
+} from 'react'
 import {ColorSchemeProvider} from './hook/UseColorScheme'
 import {useContrastColor} from './hook/UseContrastColor'
 import {fromModule} from './util/Styler'
@@ -14,10 +22,25 @@ type ViewportProps = PropsWithChildren<
   } & HTMLProps<HTMLDivElement>
 >
 
+const ViewportContext = createContext<HTMLDivElement | null>(null)
+
+export function useViewport() {
+  return useContext(ViewportContext)
+}
+
 export function Viewport({children, color, contain, ...props}: ViewportProps) {
   const accentColor = color!
   const accentColorForeground = useContrastColor(accentColor)
+  const [modalContainer, setModalContainer] = useState<HTMLDivElement | null>(
+    null
+  )
+  const viewportRef = useRef<HTMLDivElement>(null)
   //const {scheme} = useColorScheme()
+
+  useEffect(() => {
+    setModalContainer(viewportRef?.current)
+  }, [])
+
   const persistenceId = `@alinea/ui/viewport`
   const [schemePreference, setSchemePreference] = useState<
     'light' | 'dark' | undefined
@@ -48,8 +71,11 @@ export function Viewport({children, color, contain, ...props}: ViewportProps) {
         }
         {...props}
         className={styles.root.mergeProps(props)(schemePreference, {contain})}
+        ref={viewportRef}
       >
-        {children}
+        <ViewportContext.Provider value={modalContainer}>
+          {children}
+        </ViewportContext.Provider>
       </main>
     </ColorSchemeProvider>
   )
