@@ -11,7 +11,9 @@ export namespace DropdownMenu {
   export const Item = styles.item.toElement(RadixDropdownMenu.Item)
   export const CheckboxItem = RadixDropdownMenu.CheckboxItem
   export const RadioGroup = RadixDropdownMenu.RadioGroup
-  export const RadioItem = RadixDropdownMenu.RadioItem
+  export const RadioItem = styles.radioitem.toElement(
+    RadixDropdownMenu.RadioItem
+  )
   export const ItemIndicator = RadixDropdownMenu.ItemIndicator
   export const TriggerItem = RadixDropdownMenu.TriggerItem
   export const Label = RadixDropdownMenu.Label

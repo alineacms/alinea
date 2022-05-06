@@ -17,7 +17,12 @@ export const UnsplashPageSchema = type(
         multiline: true
       }),
       path: path('Path', {width: 0.5}),
-      unsplash: unsplash('Unsplash', {multiple: {minimum: 2}}),
+      unsplash: unsplash('Unsplash', {
+        multiple: {minimum: 2},
+        query: 'dog',
+        color: 'purple',
+        per_page: 20
+      }),
       blocks: list('Blocks', {
         schema: schema({
           TextBlock: TextBlockSchema,

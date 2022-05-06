@@ -36,3 +36,39 @@
     background-color: #f7f6f6;
   }
 }
+
+.radioitem {
+  all: unset;
+  font: inherit;
+  font-size: 13px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  height: 25px;
+  position: relative;
+  user-select: none;
+  border-radius: 3px;
+  padding: 4px 8px 4px 26px;
+  cursor: pointer;
+
+  &[data-state='checked'],
+  &[data-state='checked']:focus {
+    padding: 4px 8px;
+
+    // Todo: make our css vars work with these portaled items (or somehow
+    // make radix portal these in our viewport)
+    // background-color: var(--accent);
+    background-color: #5661e5;
+    color: #ffffff;
+
+    > span {
+      margin-right: 5px;
+    }
+  }
+
+  &:focus {
+    // Todo: make our css vars work with these portaled items (or somehow
+    // make radix portal these in our viewport)
+    background-color: #f7f6f6;
+  }
+}

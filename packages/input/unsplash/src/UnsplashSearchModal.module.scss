@@ -1,0 +1,47 @@
+.unsplashSearchModal {
+  &-header {
+    padding-bottom: 20px;
+  }
+
+  &-label {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 9px 16px;
+    gap: 8px;
+    background: var(--fields);
+    border-radius: 8px;
+    line-height: 1.5;
+
+    &-icon {
+      flex-shrink: 0;
+    }
+
+    &:focus-within {
+      background: var(--selected);
+      outline: 2px solid var(--fields-focus);
+    }
+
+    &-input {
+      border: none;
+      outline: none;
+      background: transparent;
+      color: inherit;
+      font: inherit;
+      font-size: 13px;
+      width: 100%;
+    }
+  }
+
+  &-optionalFieldsContainer {
+    padding: 15px 0 0 0;
+  }
+
+  &-results {
+    padding-top: 20px;
+
+    &-overview {
+      display: block;
+    }
+  }
+}

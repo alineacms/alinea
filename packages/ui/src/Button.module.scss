@@ -43,4 +43,11 @@
     background: var(--fields-focus);
     color: var(--focus-foreground);
   }
+
+  &:disabled,
+  &:disabled:hover {
+    background: hsla(var(--negative), 0.3);
+    color: var(--background);
+    pointer-events: none;
+  }
 }

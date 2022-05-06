@@ -1,5 +1,23 @@
 import {Field, Label, Value} from '@alinea/core'
 import {UnsplashImageProps} from './UnsplashImage'
+import {Colors, ContentFilters, OrderBys, Orientations} from './UnsplashParams'
+
+export type UnsplashProperties = {
+  /** Search terms */
+  query?: string
+  /** Number of items per page */
+  per_page?: number
+  /** How to sort the photos */
+  order_by?: OrderBys
+  /** Collection ID(‘s) to narrow search */
+  collections?: number | Array<number>
+  /** Limit results by content safety (https://unsplash.com/documentation#content-safety) */
+  content_filter?: ContentFilters
+  /** Filter results by color */
+  color?: Colors
+  /** Filter by photo orientation */
+  orientation?: Orientations
+}
 
 /** Optional settings to configure an unsplash field */
 export type UnsplashOptions = {
@@ -17,32 +35,7 @@ export type UnsplashOptions = {
     minimum: number
     maximum?: number
   }
-  /** Search terms */
-  query?: string
-  /** Number of items per page */
-  per_page?: number
-  /** How to sort the photos */
-  order_by?: 'relevant' | 'latest'
-  /** Collection ID(‘s) to narrow search */
-  collections?: number | Array<number>
-  /** Limit results by content safety (https://unsplash.com/documentation#content-safety) */
-  content_filter?: 'low' | 'high'
-  /** Filter results by color */
-  color?:
-    | 'black_and_white'
-    | 'black'
-    | 'white'
-    | 'yellow'
-    | 'orange'
-    | 'red'
-    | 'purple'
-    | 'magenta'
-    | 'green'
-    | 'teal'
-    | 'blue'
-  /** Filter by photo orientation */
-  orientation?: 'landscape' | 'portrait' | 'squarish'
-}
+} & UnsplashProperties
 
 /** Internal representation of an unsplash field */
 export interface UnsplashField extends Field.Scalar<Array<UnsplashImageProps>> {

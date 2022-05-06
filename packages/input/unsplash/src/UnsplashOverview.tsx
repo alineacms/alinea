@@ -7,10 +7,10 @@ const styles = fromModule(css)
 
 const UnsplashOverview: React.FC<{
   images: UnsplashImageProps[]
-  onRemove: (id: string) => void
-}> = ({images, onRemove}) => {
+  showDragIcon?: boolean
+  onRemove?: ((id: string) => void) | null
+}> = ({images, onRemove, showDragIcon = false}) => {
   if (!images || images.length === 0) return null
-  const showDragIcon: boolean = images.length > 1
 
   return (
     <div className={styles.unsplashOverview()}>
@@ -19,8 +19,8 @@ const UnsplashOverview: React.FC<{
           <UnsplashImage
             key={image.id}
             image={image}
-            remove={() => onRemove(image.id)}
-            showDragIcon={false && showDragIcon} // todo: remove false => showDragIcon={showDragIcon}
+            remove={onRemove ? () => onRemove(image.id) : null}
+            showDragIcon={showDragIcon}
           />
         ))}
       </div>
