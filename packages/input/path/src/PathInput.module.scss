@@ -10,7 +10,7 @@
     padding: 9px 16px;
     background: var(--fields);
     box-shadow: var(--fields-shadow);
-    border-radius: 8px;
+    border-radius: var(--border-radius);
     line-height: 1.5;
 
     &:focus {
