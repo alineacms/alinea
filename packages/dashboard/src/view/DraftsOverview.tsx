@@ -5,19 +5,28 @@ import {
   Chip,
   fromModule,
   HStack,
+  Icon,
   IconButton,
+  IconLink,
   Stack,
   TextLabel,
-  Typo
+  Typo,
+  VStack
 } from '@alinea/ui'
-import IcRoundCheckBoxOutlineBlank from '@alinea/ui/icons/IcRoundCheckBoxOutlineBlank'
+import {Badge} from '@alinea/ui/Badge'
+import IcRoundAddCircleOutline from '@alinea/ui/icons/IcRoundAddCircleOutline'
+import IcRoundArrowForward from '@alinea/ui/icons/IcRoundArrowForward'
 import IcRoundClose from '@alinea/ui/icons/IcRoundClose'
 import {IcRoundEdit} from '@alinea/ui/icons/IcRoundEdit'
-import {memo} from 'react'
+import IcRoundKeyboardArrowDown from '@alinea/ui/icons/IcRoundKeyboardArrowDown'
+import {IcRoundKeyboardArrowRight} from '@alinea/ui/icons/IcRoundKeyboardArrowRight'
+import {memo, useState} from 'react'
 import {useQuery} from 'react-query'
 import {useDraftsList} from '../hook/UseDraftsList'
+import {useNav} from '../hook/UseNav'
 import {useSession} from '../hook/UseSession'
 import {useWorkspace} from '../hook/UseWorkspace'
+import {diffRecord} from './diff/DiffUtils'
 import {FieldsDiff} from './diff/FieldsDiff'
 import css from './DraftsOverview.module.scss'
 
@@ -45,16 +54,69 @@ const EntryDiff = memo(function EntryDiff({entryA, entryB}: EntryDiffProps) {
         </Chip>
       </div>
     )
+  const changes = diffRecord(typeA.valueType, entryA, entryB)
   return (
-    <div>
-      <FieldsDiff
-        types={Object.entries(typeA.valueType.shape)}
-        targetA={entryA}
-        targetB={entryB}
-      />
+    <div className={styles.diff()}>
+      <FieldsDiff changes={changes} targetA={entryA} targetB={entryB} />
     </div>
   )
 })
+
+type DraftDetailProps = {
+  original: Entry | undefined
+  draft: Entry
+}
+
+function DraftDetail({draft, original}: DraftDetailProps) {
+  const workspace = useWorkspace()
+  const nav = useNav()
+  const hasChanges = Boolean(original)
+  const [isOpen, setIsOpen] = useState(false)
+  const type = workspace.schema.type(draft.type)
+  const changes =
+    hasChanges && type && diffRecord(type.valueType, original, draft).length
+  return (
+    <Card.Root key={draft.id}>
+      <Card.Header>
+        <HStack
+          center
+          gap={6}
+          style={{flexGrow: 1, cursor: hasChanges ? 'pointer' : undefined}}
+          onClick={() => setIsOpen(!isOpen)}
+        >
+          <div>
+            {hasChanges ? (
+              <Icon
+                size={20}
+                icon={
+                  isOpen ? IcRoundKeyboardArrowDown : IcRoundKeyboardArrowRight
+                }
+              />
+            ) : (
+              <Icon size={20} icon={IcRoundAddCircleOutline} />
+            )}
+          </div>
+          <Badge amount={Number(changes)} right={-16} top={0}>
+            <Typo.H2 flat>
+              <TextLabel label={draft.title} />
+            </Typo.H2>
+          </Badge>
+        </HStack>
+        <Card.Options>
+          <IconLink to={nav.entry(draft)} icon={IcRoundEdit} />
+        </Card.Options>
+        <Card.Options>
+          <IconButton icon={IcRoundClose} />
+        </Card.Options>
+      </Card.Header>
+      {original && isOpen && (
+        <Card.Content>
+          <EntryDiff entryA={original} entryB={draft} />
+        </Card.Content>
+      )}
+    </Card.Root>
+  )
+}
 
 export function DraftsOverview() {
   const {hub} = useSession()
@@ -82,41 +144,15 @@ export function DraftsOverview() {
         <HStack center full className={styles.root.header()}>
           <Typo.H1 flat>Drafts</Typo.H1>
           <Stack.Right>
-            <Button>Publish all</Button>
+            <Button iconRight={IcRoundArrowForward}>Publish all</Button>
           </Stack.Right>
         </HStack>
-        <div className={styles.root.list()}>
-          <Card.Root>
-            {drafts.map((draft, i) => {
-              const original = source.find(entry => entry.id === draft.id)
-              return (
-                <Card.Row key={draft.id}>
-                  <Card.Header>
-                    <Card.Options>
-                      <IcRoundCheckBoxOutlineBlank />
-                    </Card.Options>
-                    <Card.Title>
-                      <TextLabel label={draft.title} />
-                    </Card.Title>
-                    <Card.Options>
-                      <IconButton icon={IcRoundEdit} />
-                    </Card.Options>
-                    <Card.Options>
-                      <IconButton icon={IcRoundClose} />
-                    </Card.Options>
-                  </Card.Header>
-                  <Card.Content>
-                    {original ? (
-                      <EntryDiff entryA={original} entryB={draft} />
-                    ) : (
-                      'created'
-                    )}
-                  </Card.Content>
-                </Card.Row>
-              )
-            })}
-          </Card.Root>
-        </div>
+        <VStack gap={20} className={styles.root.list()}>
+          {drafts.map((draft, i) => {
+            const original = source.find(entry => entry.id === draft.id)
+            return <DraftDetail key={i} original={original} draft={draft} />
+          })}
+        </VStack>
       </div>
     </div>
   )

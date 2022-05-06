@@ -1,8 +1,9 @@
 import {RichTextValue, TextDoc} from '@alinea/core'
+import {RecordValue} from '@alinea/core/value/RecordValue'
 import {Card, fromModule} from '@alinea/ui'
 import {ReactNode, useMemo} from 'react'
 import {ChangeBox} from './ChangeBox'
-import {Change, diffList} from './Equals'
+import {diffList, diffRecord} from './DiffUtils'
 import {FieldsDiff} from './FieldsDiff'
 import {ScalarDiff} from './ScalarDiff'
 import css from './ScalarDiff.module.scss'
@@ -16,16 +17,21 @@ type Block = {
 
 type Part = {type: 'text'; text: string} | {type: 'block'; block: Block}
 
-type TextContent = {content: Array<TextContent | {text: string}>}
+type TextContent = {type?: string; content: Array<TextContent | {text: string}>}
 
-function contentToString({content}: TextContent): string {
+const blockTypes = new Set(['heading', 'paragraph', 'listItem'])
+
+function contentToString({type, content}: TextContent): string {
+  const withNewLine = blockTypes.has(type!)
   if (!content || !Array.isArray(content)) return ''
-  return content
-    .map(block => {
-      if ('text' in block) return block.text + ' '
-      return contentToString(block)
-    })
-    .join('')
+  return (
+    content
+      .map(block => {
+        if ('text' in block) return block.text + ' '
+        return contentToString(block)
+      })
+      .join('') + (withNewLine ? '\n\n' : '')
+  )
 }
 
 function textDocParts(textDoc: TextDoc<any>): Array<Part> {
@@ -54,50 +60,6 @@ function textDocParts(textDoc: TextDoc<any>): Array<Part> {
   return parts
 }
 
-type RichTextChangeProps = {
-  type: RichTextValue<any>
-  change: Change<Part>
-}
-
-function RichTextChange({type, change}: RichTextChangeProps) {
-  switch (change.type) {
-    case 'unchanged':
-      if (change.value.type === 'text' && change.old.type === 'text') {
-        return (
-          <ScalarDiff valueA={change.old.text} valueB={change.value.text} />
-        )
-      } else if (change.value.type === 'block' && change.old.type === 'block') {
-        const name = change.value.block.type
-        const kind = type.values?.[name]
-        if (kind)
-          return (
-            <FieldsDiff
-              types={Object.entries(kind.shape)}
-              targetA={change.old.block}
-              targetB={change.value.block}
-            />
-          )
-      }
-    default:
-      if (change.value.type === 'block') {
-        const name = change.value.block.type
-        const kind = type.values?.[name]
-        if (!kind) return <div>No type found</div>
-        return (
-          <FieldsDiff
-            types={Object.entries(kind.shape)}
-            targetA={change.value.block}
-            targetB={change.value.block}
-          />
-        )
-      } else {
-        return (
-          <ScalarDiff valueA={change.value.text} valueB={change.value.text} />
-        )
-      }
-  }
-}
-
 export type RichTextDiffProps = {
   type: RichTextValue<any>
   valueA: TextDoc<any>
@@ -120,13 +82,52 @@ export function RichTextDiff({type, valueA, valueB}: RichTextDiffProps) {
   return (
     <Card.Root>
       {changes.map((change, i) => {
-        return (
-          <Card.Row key={i}>
-            <ChangeBox change={change.type}>
-              <RichTextChange type={type} change={change} />
-            </ChangeBox>
-          </Card.Row>
-        )
+        switch (change.value.type) {
+          case 'block': {
+            const name = change.value.block.type
+            const kind = type.values?.[name]
+            const compare =
+              change.type === 'unchanged'
+                ? [
+                    ('block' in change.old && change.old.block) || {},
+                    change.value.block
+                  ]
+                : change.type === 'removal'
+                ? [change.value.block, {}]
+                : [{}, change.value.block]
+            const changes = diffRecord(
+              kind as RecordValue,
+              compare[0],
+              compare[1]
+            )
+            if (changes.length === 0)
+              return <ChangeBox change="equal" key={i} />
+            return (
+              <ChangeBox change={change.type} key={i}>
+                <FieldsDiff
+                  changes={changes}
+                  targetA={compare[0]}
+                  targetB={compare[1]}
+                />
+              </ChangeBox>
+            )
+          }
+          case 'text': {
+            const compare =
+              change.type === 'unchanged'
+                ? ['text' in change.old && change.old.text, change.value.text]
+                : change.type === 'removal'
+                ? [change.value.text, '']
+                : ['', change.value.text]
+            if (compare[0] === compare[1])
+              return <ChangeBox change="equal" key={i} />
+            return (
+              <ChangeBox change={change.type} key={i}>
+                <ScalarDiff valueA={compare[0]} valueB={compare[1]} />
+              </ChangeBox>
+            )
+          }
+        }
       })}
     </Card.Root>
   )

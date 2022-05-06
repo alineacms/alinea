@@ -26,7 +26,7 @@ export function createList<T>(
   options: ListOptions<T>
 ): ListField<T> {
   return {
-    type: Value.List(options.schema.valueTypes),
+    type: Value.List(label, options.schema.valueTypes),
     label,
     options
   }

@@ -12,9 +12,14 @@ export type ScalarDiffProps<T> = {
   valueB: T
 }
 
+function toScalar(value: any) {
+  if (typeof value === 'number') return String(value)
+  return value ? String(value) : ''
+}
+
 export function ScalarDiff<T>({valueA, valueB}: ScalarDiffProps<T>) {
-  const a = String(valueA)
-  const b = String(valueB)
+  const a = toScalar(valueA)
+  const b = toScalar(valueB)
   const diffs = useMemo(() => {
     const res = matcher.diff_main(a, b)
     matcher.diff_cleanupSemantic(res)

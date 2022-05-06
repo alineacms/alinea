@@ -1,3 +1,6 @@
+import {RecordValue} from '@alinea/core/value/RecordValue'
+import {ValueKind} from '@alinea/core/ValueKind'
+
 export function equals(a: any, b: any) {
   if (a === b) return true
   if (!a || !b) return false
@@ -77,4 +80,15 @@ export function diffList<T>(
     }
   }
   return results.reverse()
+}
+
+export function diffRecord(kind: RecordValue, targetA: any, targetB: any) {
+  const types = Object.entries(kind.shape)
+  return types.filter(([key, type]) => {
+    if (type.kind === ValueKind.Scalar) {
+      return targetA[key] !== targetB[key]
+    } else {
+      return !equals(targetA[key], targetB[key])
+    }
+  })
 }

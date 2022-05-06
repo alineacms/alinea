@@ -1,3 +1,32 @@
 .root {
-  position: relative;
+  padding: 8px;
+  border-left: 1px solid transparent;
+
+  & + & {
+    box-shadow: var(--divider-top);
+  }
+
+  &-content {
+    flex-grow: 1;
+    padding: 10px;
+  }
+
+  &.is-equal {
+    & + & {
+      // Ignore consecutive unchanged rows
+      display: none;
+    }
+  }
+
+  &.is-addition {
+    border-color: rgb(30, 131, 30);
+  }
+
+  &.is-removal {
+    border-color: rgb(192, 11, 11);
+  }
+
+  &-header {
+    position: relative;
+  }
 }

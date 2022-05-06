@@ -31,7 +31,7 @@ export function createSelect(
   options: SelectOptions = {}
 ): SelectField {
   return {
-    type: Value.Scalar,
+    type: Value.Scalar(label),
     label,
     items,
     options

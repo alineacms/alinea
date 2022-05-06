@@ -19,7 +19,7 @@ export function createCode(
   options: CodeFieldOptions = {}
 ): CodeField {
   return {
-    type: Value.Scalar,
+    type: Value.Scalar(label),
     label,
     options
   }

@@ -1,4 +1,5 @@
 import * as Y from 'yjs'
+import {Label} from '../Label'
 import {Value} from '../Value'
 import {ValueKind} from '../ValueKind'
 
@@ -10,10 +11,10 @@ export class RecordValue<T extends Record<string, any> = {}>
   implements Value<T, RecordMutator<T>>
 {
   kind = ValueKind.Record
-  constructor(public shape: Record<string, Value>) {}
+  constructor(public label: Label, public shape: Record<string, Value>) {}
   concat<X>(that: RecordValue<X> | undefined): RecordValue<T & X> {
     if (!that) return this as RecordValue<T & X>
-    return new RecordValue({...this.shape, ...that.shape})
+    return new RecordValue(that.label, {...this.shape, ...that.shape})
   }
   create() {
     return Object.fromEntries(

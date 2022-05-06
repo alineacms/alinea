@@ -1,6 +1,7 @@
 import * as Y from 'yjs'
 import {createError} from '../ErrorWithCode'
 import {createId} from '../Id'
+import {Label} from '../Label'
 import {generateKeyBetween} from '../util/FractionalIndexing'
 import {Value} from '../Value'
 import {ValueKind} from '../ValueKind'
@@ -29,15 +30,15 @@ export class ListValue<T>
 {
   kind = ValueKind.List
   values: Record<string, RecordValue<ListRow & T>>
-  constructor(shapes: Record<string, RecordValue<T>>) {
+  constructor(public label: Label, shapes: Record<string, RecordValue<T>>) {
     this.values = Object.fromEntries(
       Object.entries(shapes).map(([key, type]) => {
         return [
           key,
-          new RecordValue({
-            id: Value.Scalar,
-            index: Value.Scalar,
-            type: Value.Scalar,
+          new RecordValue(label, {
+            id: Value.Scalar('Id'),
+            index: Value.Scalar('Index'),
+            type: Value.Scalar('Type'),
             ...type.shape
           })
         ]

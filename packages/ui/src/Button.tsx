@@ -9,6 +9,7 @@ const styles = fromModule(css)
 
 export type ButtonProps = {
   icon?: ComponentType
+  iconRight?: ComponentType
   size?: 'small' | 'medium' | 'large'
 } & ButtonHTMLAttributes<HTMLButtonElement>
 
@@ -16,6 +17,7 @@ export function Button({
   children,
   size = 'medium',
   icon,
+  iconRight,
   ...props
 }: ButtonProps) {
   return (
@@ -23,6 +25,7 @@ export function Button({
       <HStack center gap={8}>
         <Icon icon={icon} />
         <div>{children}</div>
+        <Icon icon={iconRight} />
       </HStack>
     </button>
   )

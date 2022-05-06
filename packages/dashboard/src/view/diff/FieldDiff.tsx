@@ -2,6 +2,7 @@ import {RichTextValue, Value} from '@alinea/core'
 import {ListValue} from '@alinea/core/value/ListValue'
 import {RecordValue} from '@alinea/core/value/RecordValue'
 import {ValueKind} from '@alinea/core/ValueKind'
+import {diffRecord} from './DiffUtils'
 import {FieldsDiff} from './FieldsDiff'
 import {ListDiff} from './ListDiff'
 import {RichTextDiff} from './RichTextDiff'
@@ -29,14 +30,8 @@ export function FieldDiff({type, valueA, valueB}: FieldDiffProps) {
       <ListDiff type={type as ListValue<any>} valueA={valueA} valueB={valueB} />
     )
   } else if (type.kind === ValueKind.Record) {
-    const shape = (type as RecordValue).shape
-    return (
-      <FieldsDiff
-        types={Object.entries(shape)}
-        targetA={valueA}
-        targetB={valueB}
-      />
-    )
+    const changes = diffRecord(type as RecordValue, valueA, valueB)
+    return <FieldsDiff changes={changes} targetA={valueA} targetB={valueB} />
   }
   return null
 }

@@ -154,7 +154,6 @@ __metadata:
     diff-match-patch: ^1.0.5
     fast-average-color: ^7.0.1
     image-blob-reduce: ^4.1.0
-    mdiff: ^1.4.2
     p-limit: ^4.0.0
     react-helmet: ^6.1.0
     react-query: ^3.34.19
@@ -5648,13 +5647,6 @@ fsevents@~2.3.2:
     crypt: 0.0.2
     is-buffer: ~1.1.6
   checksum: a63cacf4018dc9dee08c36e6f924a64ced735b37826116c905717c41cebeb41a522f7a526ba6ad578f9c80f02cb365033ccd67fe186ffbcc1a1faeb75daa9b6e
-  languageName: node
-  linkType: hard
-
-"mdiff@npm:^1.4.2":
-  version: 1.4.2
-  resolution: "mdiff@npm:1.4.2"
-  checksum: c2af08585c3426847deb02acba415d228e25c6ab3dffa721e1d7cb637450224f8fb8e216aaf065d388426142a7471ff8795f07f213d75394b74203c76e74cdc0
   languageName: node
   linkType: hard
 

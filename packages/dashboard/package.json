@@ -38,7 +38,6 @@
     "diff-match-patch": "^1.0.5",
     "fast-average-color": "^7.0.1",
     "image-blob-reduce": "^4.1.0",
-    "mdiff": "^1.4.2",
     "p-limit": "^4.0.0",
     "react-helmet": "^6.1.0",
     "react-query": "^3.34.19",

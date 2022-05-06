@@ -16,7 +16,7 @@ export function createNumber(
   options: NumberOptions = {}
 ): NumberField {
   return {
-    type: Value.Scalar,
+    type: Value.Scalar(label),
     label,
     options
   }

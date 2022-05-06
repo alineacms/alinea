@@ -26,7 +26,7 @@ export function createRichText<T>(
   options: RichTextOptions<T> = {}
 ): RichTextField<T> {
   return {
-    type: Value.RichText(options.blocks?.valueTypes),
+    type: Value.RichText(label, options.blocks?.valueTypes),
     label,
     options
   }
