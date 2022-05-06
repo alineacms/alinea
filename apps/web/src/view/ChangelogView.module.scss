@@ -9,7 +9,8 @@
   }
 
   h1,
-  h1 ~ p {
+  p,
+  ul {
     @media (min-width: 768px) {
       margin-left: 250px;
     }
@@ -45,8 +46,7 @@
     margin-bottom: 20px;
     @extend .h3;
 
-    &,
-    & + ul {
+    & {
       @media (min-width: 768px) {
         padding-left: 250px;
       }
