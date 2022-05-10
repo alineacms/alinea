@@ -1,0 +1,10 @@
+.root {
+  text-decoration: none;
+  color: hsla(var(--negative), 0.6);
+  border-bottom: 1px solid currentColor;
+  transition: 0.25s ease-out;
+
+  &:hover {
+    color: hsla(var(--negative), 1);
+  }
+}

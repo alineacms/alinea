@@ -16,6 +16,7 @@ import {
   useObservable
 } from '@alinea/ui'
 import {IcRoundArrowBack} from '@alinea/ui/icons/IcRoundArrowBack'
+import {Link} from '@alinea/ui/Link'
 import {Modal} from '@alinea/ui/Modal'
 import {
   ComponentType,
@@ -26,7 +27,6 @@ import {
 } from 'react'
 import {useQuery, useQueryClient} from 'react-query'
 import {useNavigate} from 'react-router'
-import {Link} from 'react-router-dom'
 import * as Y from 'yjs'
 import {EntryDraft} from '../draft/EntryDraft'
 import {EntryProperty} from '../draft/EntryProperty'
@@ -244,8 +244,15 @@ export function NewEntry({parentId}: NewEntryProps) {
                 )
               )}
             />
-            <Link to={nav.entry({workspace, ...parent})}>Cancel</Link>
-            <Button>Create</Button>
+            <div className={styles.new.footer()}>
+              <Link
+                href={nav.entry({workspace, ...parent})}
+                className={styles.new.footer.link()}
+              >
+                Cancel
+              </Link>
+              <Button>Create</Button>
+            </div>
           </>
         )}
       </form>

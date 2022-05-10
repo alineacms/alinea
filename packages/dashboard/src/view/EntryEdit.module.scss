@@ -39,4 +39,13 @@
   &-header {
     padding-bottom: 20px;
   }
+
+  &-footer {
+    margin-top: 20px;
+    text-align: right;
+
+    &-link {
+      margin-right: 20px;
+    }
+  }
 }

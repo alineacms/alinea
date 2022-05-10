@@ -8,7 +8,6 @@
   "typescript.tsserver.watchOptions": {
     "watchFile": "useFsEvents"
   },
-  "emmet.showExpandedAbbreviation": "never",
   "todo-tree.general.tags": ["Todo"],
   "search.useGlobalIgnoreFiles": true
 }
