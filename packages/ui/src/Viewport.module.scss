@@ -27,15 +27,14 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.08);
   --divider-bottom: 0 1px 0 rgba(255, 255, 255, 0.08),
     inset 0 -1px 0 rgba(0, 0, 0, 0.25);
-  --border-radius: 5px;
 }
 
 @mixin light-theme {
-  --hue: 0;
-  --saturation: 11%;
-  --positive: var(--hue), var(--saturation), 95.5%;
+  --hue: 240;
+  --saturation: 20%;
+  --positive: var(--hue), var(--saturation), 97%;
   --negative: 212, 18%, 14%;
-  --background: #f6f6f9;
+  --background: hsl(var(--positive));
   --foreground: hsl(197, 21%, 6%);
   --foreground-faded: hsl(203, 5%, 25%);
   --toolbar: hsl(var(--hue), var(--saturation), 98%);
@@ -58,37 +57,11 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.2);
   --divider-bottom: 0 1px 0 rgba(255, 255, 255, 0.2),
     inset 0 -1px 0 rgba(0, 0, 0, 0.06);
-  --border-radius: 5px;
 }
-
-/*@mixin light-theme {
-  --hue: 0;
-  --saturation: 8%;
-  --positive: var(--hue), var(--saturation), 100%;
-  --negative: 212, 18%, 14%;
-  --background: hsl(var(--positive));
-  --foreground: #0d1214;
-  --foreground-faded: #1e282e;
-  --inner: hsl(var(--hue), var(--saturation), 99%);
-  --highlight: hsl(var(--hue), calc(var(--saturation) - 2%), 96%);
-  --lift: hsl(var(--hue), calc(var(--saturation) - 2%), 90%);
-  --selected: hsl(var(--hue), 0%, 97%);
-  --outline: hsl(var(--hue), var(--saturation), 96%);
-  --header: hsl(var(--hue), calc(var(--saturation) - 4%), 90%);
-  --header-foreground: #0d1214;
-  --fields: hsl(var(--hue), calc(var(--saturation) - 2%), 97%);
-  --fields-foreground: #1e282e;
-  --fields-focus: hsl(204, 100%, 40%);
-  --focus-foreground: white;
-  --shadow: rgba(0, 0, 0, 0.1);
-  --divider-top: 0 -1px 0 rgba(0, 0, 0, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.25);
-  --divider-bottom: 0 1px 0 rgba(255, 255, 255, 0.25),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.08);
-}*/
 
 .root {
   @include dark-theme;
+  --border-radius: 8px;
 
   @media (prefers-color-scheme: light) {
     @include light-theme;
