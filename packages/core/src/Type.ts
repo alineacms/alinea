@@ -62,7 +62,7 @@ export class Type<T = any> {
     return (this.__fields = res)
   }
 
-  get valueType(): RecordValue {
+  get valueType(): RecordValue<T> {
     return Value.Record(
       this.label,
       Object.fromEntries(

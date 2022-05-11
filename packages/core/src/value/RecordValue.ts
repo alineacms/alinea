@@ -29,14 +29,14 @@ export class RecordValue<T extends Record<string, any> = {}>
   toY(value: T) {
     const map = new Y.Map()
     for (const key of Object.keys(this.shape)) {
-      map.set(key, this.shape[key].toY(value[key]))
+      map.set(key, this.shape[key].toY(value?.[key]))
     }
     return map
   }
   fromY(map: Y.Map<any>) {
     const res: Record<string, any> = {}
     for (const key of Object.keys(this.shape)) {
-      res[key] = this.shape[key].fromY(map.get(key))
+      res[key] = this.shape[key].fromY(map?.get(key))
     }
     return res as T
   }
