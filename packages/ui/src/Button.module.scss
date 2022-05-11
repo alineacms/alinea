@@ -5,13 +5,10 @@
   color: var(--background);
   font: inherit;
   cursor: pointer;
-  //border: 2px solid var(--background);
   overflow: hidden;
   z-index: 0;
   font-size: 13px;
-
-  &-label {
-  }
+  transition: 0.25s ease-out;
 
   &:after {
     position: absolute;
@@ -27,9 +24,8 @@
 
   &.is-medium {
     min-height: 22px;
-    font-size: 13px;
-    padding: 2px 8px;
-    border-radius: 10px;
+    padding: 8px 16px;
+    border-radius: 50px;
   }
 
   &.is-large {

@@ -239,6 +239,7 @@ export function ContentTree({
                     entry={entry}
                     locale={locale}
                     level={entry.parents.length}
+                    link={nav.entry({...entry, locale, id: entry.source.id})}
                     isOpen={isOpen}
                     toggleOpen={toggleOpen}
                     style={{...style, height: height}}

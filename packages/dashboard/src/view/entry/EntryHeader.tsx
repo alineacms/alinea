@@ -7,6 +7,7 @@ import {IcRoundEdit} from '@alinea/ui/icons/IcRoundEdit'
 import {IcRoundInsertDriveFile} from '@alinea/ui/icons/IcRoundInsertDriveFile'
 import {IcRoundPublish} from '@alinea/ui/icons/IcRoundPublish'
 import {IcRoundRotateLeft} from '@alinea/ui/icons/IcRoundRotateLeft'
+import {MdiSourceBranch} from '@alinea/ui/icons/MdiSourceBranch'
 import {useState} from 'react'
 import {useQueryClient} from 'react-query'
 import {useNavigate} from 'react-router'
@@ -17,8 +18,10 @@ import {useLocale} from '../../hook/UseLocale'
 import {useNav} from '../../hook/UseNav'
 import {useRoot} from '../../hook/UseRoot'
 import {useWorkspace} from '../../hook/UseWorkspace'
+import {EditMode} from './EditMode'
 
 function EntryStatusChip() {
+  const nav = useNav()
   const drafts = useDrafts()
   const draftsStatus = useObservable(drafts.status)
   const draft = useCurrentDraft()
@@ -30,25 +33,32 @@ function EntryStatusChip() {
       return <Chip icon={IcRoundRotateLeft}>Publishing</Chip>
     case EntryStatus.Draft:
       return (
-        <Chip
-          accent
-          icon={
-            draftsStatus === DraftsStatus.Saving
-              ? IcRoundRotateLeft
-              : draftsStatus === DraftsStatus.Synced
-              ? IcRoundCheck
-              : IcRoundEdit
-          }
-        >
-          Draft
-        </Chip>
+        <Link to={nav.draft(draft)} style={{textDecoration: 'none'}}>
+          <Chip
+            accent
+            icon={
+              draftsStatus === DraftsStatus.Saving
+                ? IcRoundRotateLeft
+                : draftsStatus === DraftsStatus.Synced
+                ? IcRoundCheck
+                : IcRoundEdit
+            }
+          >
+            Draft
+          </Chip>
+        </Link>
       )
     case EntryStatus.Archived:
       return <Chip icon={IcRoundArchive}>Archived</Chip>
   }
 }
 
-export function EntryHeader() {
+export type EntryHeaderProps = {
+  mode: EditMode
+  setMode?: (mode: EditMode) => void
+}
+
+export function EntryHeader({mode, setMode}: EntryHeaderProps) {
   const nav = useNav()
   const {name: workspace, schema} = useWorkspace()
   const root = useRoot()
@@ -95,9 +105,9 @@ export function EntryHeader() {
             display: 'flex',
             alignItems: 'center',
             width: '100%',
-            background: 'var(--highlight)',
+            background: 'var(--fields)',
             padding: `${px(6)} ${px(15)}`,
-            borderRadius: px(8)
+            borderRadius: 'var(--border-radius)'
           }}
         >
           <HStack gap={8} center>
@@ -153,6 +163,24 @@ export function EntryHeader() {
           <EntryStatusChip />
         </AppBar.Item>
       </Stack.Right>
+      {status === EntryStatus.Draft && mode === EditMode.Editing && setMode && (
+        <AppBar.Item
+          as="button"
+          icon={MdiSourceBranch}
+          onClick={() => setMode(EditMode.Diff)}
+        >
+          <span>View changes</span>
+        </AppBar.Item>
+      )}
+      {status === EntryStatus.Draft && mode === EditMode.Diff && setMode && (
+        <AppBar.Item
+          as="button"
+          icon={IcRoundEdit}
+          onClick={() => setMode(EditMode.Editing)}
+        >
+          <span>Edit entry</span>
+        </AppBar.Item>
+      )}
       {status === EntryStatus.Draft && (
         <AppBar.Item as="button" icon={IcRoundDelete} onClick={handleDiscard}>
           <span>Discard</span>

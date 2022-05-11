@@ -34,12 +34,12 @@ export function createLink<T = {}>(
 ): LinkField<T> {
   const extra = options.fields?.valueType
   return {
-    type: Value.List({
-      entry: new RecordValue({
-        entry: Value.Scalar
+    type: Value.List(label, {
+      entry: new RecordValue('Entry', {
+        entry: Value.Scalar('Entry')
       }).concat(extra),
-      url: new RecordValue({
-        url: Value.Scalar
+      url: new RecordValue('Url', {
+        url: Value.Scalar('Url')
       }).concat(extra)
     }),
     label,

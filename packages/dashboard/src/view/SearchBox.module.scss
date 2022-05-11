@@ -15,17 +15,18 @@
     align-items: center;
     width: 100%;
     height: 28px;
-    background: var(--highlight);
     padding: 6px 15px 6px 12px;
-    border-radius: 8px;
     line-height: 1.5;
+    border-radius: var(--border-radius);
+    background: var(--fields);
+    box-shadow: var(--fields-shadow);
 
     &-icon {
       flex-shrink: 0;
     }
 
     &:focus-within {
-      background: var(--selected);
+      background: var(--fields-selected);
       outline: 2px solid var(--fields-focus);
     }
 

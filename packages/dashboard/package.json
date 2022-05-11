@@ -35,6 +35,7 @@
     "@react-hook/size": "^2.1.2",
     "base64-arraybuffer": "^1.0.1",
     "blurhash": "^1.1.5",
+    "diff-match-patch": "^1.0.5",
     "fast-average-color": "^7.0.1",
     "image-blob-reduce": "^4.1.0",
     "p-limit": "^4.0.0",
@@ -49,5 +50,8 @@
   "peerDependencies": {
     "react": "*",
     "react-dom": "*"
+  },
+  "devDependencies": {
+    "@types/diff-match-patch": "^1.0.32"
   }
 }

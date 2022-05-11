@@ -1,4 +1,5 @@
 import {
+  accumulate,
   Config,
   createError,
   createId,
@@ -102,10 +103,30 @@ export class Backend<T extends Workspaces = Workspaces> implements Hub<T> {
     })
   }
 
-  async query<T>(cursor: Cursor<T>): Future<Array<T>> {
+  async query<T>(
+    cursor: Cursor<T>,
+    options?: Hub.QueryOptions
+  ): Future<Array<T>> {
+    return outcome(async () => {
+      const create = options?.source
+        ? this.createStore
+        : this.preview.getStore.bind(this.preview)
+      const store = await create()
+      return store.all(cursor)
+    })
+  }
+
+  listDrafts(workspace: string) {
     return outcome(async () => {
       const store = await this.preview.getStore()
-      return store.all(cursor)
+      const drafts = await accumulate(this.drafts.updates())
+      const ids = drafts.map(({id}) => id)
+      const inWorkspace = store.all(
+        Entry.where(Entry.workspace.is(workspace))
+          .where(Entry.id.isIn(ids))
+          .select(Entry.id)
+      )
+      return inWorkspace.map(id => ({id}))
     })
   }
 

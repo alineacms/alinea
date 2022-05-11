@@ -8,7 +8,7 @@
     width: 100%;
     resize: none;
     padding: 9px 16px;
-    border-radius: 8px;
+    border-radius: var(--border-radius);
     line-height: 1.5;
     font-family: 'JetBrains Mono', monospace;
     white-space: pre;
