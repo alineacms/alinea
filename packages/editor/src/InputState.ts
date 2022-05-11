@@ -1,6 +1,7 @@
 import {RichTextMutator} from '@alinea/core'
 import {TextDoc} from '@alinea/core/TextDoc'
 import {ListMutator} from '@alinea/core/value/ListValue'
+import {RecordMutator} from '@alinea/core/value/RecordValue'
 
 export interface InputState<T = any> {
   child(field: string): InputState<any>
@@ -10,6 +11,7 @@ export interface InputState<T = any> {
 /* eslint-disable */
 export namespace InputState {
   export type Scalar<T> = readonly [T, (value: T) => void]
+  export type Record<T> = readonly [T, RecordMutator<T>]
   export type List<T> = readonly [Array<T>, ListMutator<T>]
   export type Text<T> = readonly [TextDoc<T>, RichTextMutator<T>]
 
@@ -20,7 +22,7 @@ export namespace InputState {
       const {mutator} = this
       if (typeof mutator !== 'function')
         throw 'Cannot access child field of non-object'
-      const record = this.current as unknown as Record<string, V>
+      const record = this.current as unknown as {[key: string]: V}
       const current = record[field]
       const mutate = (state: V) => {
         mutator({...this.current, [field]: state})

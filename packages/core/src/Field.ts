@@ -3,6 +3,7 @@ import type {ComponentType} from 'react'
 import {TextDoc} from './TextDoc'
 import {Value} from './Value'
 import {ListMutator} from './value/ListValue'
+import {RecordMutator} from './value/RecordValue'
 import {RichTextMutator} from './value/RichTextValue'
 
 export type FieldRenderer<V, M, F> = ComponentType<{
@@ -24,6 +25,7 @@ export namespace Field {
 
   export type Scalar<T> = Field<T, (state: T) => void>
   export type List<T> = Field<Array<T>, ListMutator<T>>
+  export type Record<T> = Field<T, RecordMutator<T>>
   export type Text<T> = Field<TextDoc<T>, RichTextMutator<T>>
 }
 

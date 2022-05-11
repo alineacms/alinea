@@ -36,6 +36,7 @@
     "@alinea/input.link": "0.0.0",
     "@alinea/input.list": "0.0.0",
     "@alinea/input.number": "0.0.0",
+    "@alinea/input.object": "0.0.0",
     "@alinea/input.path": "0.0.0",
     "@alinea/input.richtext": "0.0.0",
     "@alinea/input.select": "0.0.0",
