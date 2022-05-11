@@ -1,10 +1,7 @@
 import {InputForm, InputLabel, InputState} from '@alinea/editor'
-import {Card, fromModule} from '@alinea/ui'
+import {Card} from '@alinea/ui'
 import {IcRoundFeed} from '@alinea/ui/icons/IcRoundFeed'
 import {ObjectField} from './ObjectField'
-import css from './ObjectInput.module.scss'
-
-const styles = fromModule(css)
 
 export type ObjectInputProps<T> = {
   state: InputState<InputState.Record<T>>
