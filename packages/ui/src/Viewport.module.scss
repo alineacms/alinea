@@ -41,7 +41,7 @@
   --inner: hsl(var(--hue), var(--saturation), 98.5%);
   --inner-outline: #dcdce4;
   --highlight: hsl(var(--hue), var(--saturation), 98%);
-  --lift: #f6f6f9;
+  --lift:  hsl(var(--hue), var(--saturation), 96%);
   --selected: hsl(var(--hue), var(--saturation), 100%);
   --outline: hsl(var(--hue), var(--saturation), 89%);
   --header: var(--hue), var(--saturation), 100%;
