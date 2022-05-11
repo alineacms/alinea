@@ -6,17 +6,17 @@ import {RichTextValue} from '../src'
 import {RecordValue} from '../src/value/RecordValue'
 
 test('serialize', () => {
-  const type = new RichTextValue({
-    Block1: new RecordValue({
-      field1: ScalarValue.inst,
-      blockInner: new RecordValue({
-        field3: ScalarValue.inst,
-        field4: ScalarValue.inst
+  const type = new RichTextValue('RichText', {
+    Block1: new RecordValue('Block1', {
+      field1: new ScalarValue('field1'),
+      blockInner: new RecordValue('Inner block', {
+        field3: new ScalarValue('field3'),
+        field4: new ScalarValue('field4')
       })
     }),
-    Block2: new RecordValue({
-      field3: ScalarValue.inst,
-      field4: ScalarValue.inst
+    Block2: new RecordValue('Block2', {
+      field3: new ScalarValue('field3'),
+      field4: new ScalarValue('field4')
     })
   })
 

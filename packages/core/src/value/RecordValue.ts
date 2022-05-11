@@ -1,5 +1,7 @@
 import * as Y from 'yjs'
+import {Label} from '../Label'
 import {Value} from '../Value'
+import {ValueKind} from '../ValueKind'
 
 export type RecordMutator<T> = {
   set: <K extends keyof T>(k: K, v: T[K]) => void
@@ -8,10 +10,11 @@ export type RecordMutator<T> = {
 export class RecordValue<T extends Record<string, any> = {}>
   implements Value<T, RecordMutator<T>>
 {
-  constructor(public shape: Record<string, Value>) {}
+  kind = ValueKind.Record
+  constructor(public label: Label, public shape: Record<string, Value>) {}
   concat<X>(that: RecordValue<X> | undefined): RecordValue<T & X> {
     if (!that) return this as RecordValue<T & X>
-    return new RecordValue({...this.shape, ...that.shape})
+    return new RecordValue(that.label, {...this.shape, ...that.shape})
   }
   create() {
     return Object.fromEntries(

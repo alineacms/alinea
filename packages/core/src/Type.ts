@@ -64,6 +64,7 @@ export class Type<T = any> {
 
   get valueType(): RecordValue<T> {
     return Value.Record(
+      this.label,
       Object.fromEntries(
         Array.from(this)
           .filter(([, field]) => field.type)

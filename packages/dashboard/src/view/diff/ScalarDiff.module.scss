@@ -1,0 +1,28 @@
+.root {
+  cursor: text;
+  display: block;
+  background: transparent;
+  border: none;
+  color: inherit;
+  font: inherit;
+  width: 100%;
+  resize: none;
+  padding: 9px 16px;
+  border-radius: 8px;
+  line-height: 1.5;
+  background: var(--fields);
+  box-shadow: var(--fields-shadow);
+
+  &-segment {
+    white-space: pre-line;
+    &.is-insert {
+      color: rgb(10, 161, 10);
+      background: rgba(30, 131, 30, 0.1);
+    }
+    &.is-delete {
+      text-decoration: line-through;
+      color: rgb(207, 0, 0);
+      background: rgba(192, 11, 11, 0.1);
+    }
+  }
+}
