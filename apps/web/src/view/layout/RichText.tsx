@@ -10,14 +10,16 @@ function getTag(type: string, attributes: Record<string, any> | undefined) {
   switch (type) {
     case 'heading':
       return `h${attributes?.level || 1}`
+    case 'paragraph':
+      return 'p'
     case 'bold':
       return 'b'
     case 'italic':
       return 'i'
-    case 'paragraph':
-      return 'p'
     case 'bulletList':
       return 'ul'
+    case 'orderedList':
+      return 'ol'
     case 'listItem':
       return 'li'
   }
