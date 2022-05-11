@@ -19,8 +19,8 @@ export function FieldsDiff({changes, targetA, targetB}: FieldsDiffProps) {
             </Typo.H4>
             <FieldDiff
               type={type}
-              valueA={targetA[key]}
-              valueB={targetB[key]}
+              valueA={targetA?.[key]}
+              valueB={targetB?.[key]}
             />
           </div>
         )

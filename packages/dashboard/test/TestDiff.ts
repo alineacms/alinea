@@ -1,4 +1,4 @@
-import {equals} from '@alinea/dashboard/view/diff/Equals'
+import {equals} from '@alinea/dashboard/view/diff/DiffUtils'
 import {test} from 'uvu'
 import * as assert from 'uvu/assert'
 

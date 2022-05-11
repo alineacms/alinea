@@ -10,6 +10,7 @@ import {
   VStack
 } from '@alinea/ui'
 import IcRoundArrowForward from '@alinea/ui/icons/IcRoundArrowForward'
+import {useState} from 'react'
 import {useQuery} from 'react-query'
 import {CurrentDraftProvider} from '..'
 import {useDraft} from '../hook/UseDraft'
@@ -33,7 +34,7 @@ export function DraftsOverview({id}: DraftsOverviewProps) {
   const nav = useNav()
   const workspace = useWorkspace()
   const {ids} = useDraftsList(workspace.name)
-  const {data} = useQuery(
+  const {data, refetch} = useQuery(
     ['drafts-overview', ids],
     () => {
       const criteria = Entry.where(Entry.id.isIn(ids)).where(
@@ -47,6 +48,16 @@ export function DraftsOverview({id}: DraftsOverviewProps) {
   const drafts = data!
   const selected = id && drafts.find(d => d.id === id)
   const {draft, isLoading} = useDraft(id)
+  const [publishing, setPublishing] = useState(false)
+  function handlePublish() {
+    if (publishing) return
+    setPublishing(true)
+    return hub
+      .publishEntries(drafts)
+      .then(Outcome.unpack)
+      .then(() => refetch())
+      .finally(() => setPublishing(false))
+  }
   return (
     <CurrentDraftProvider value={draft}>
       <Pane
@@ -58,7 +69,9 @@ export function DraftsOverview({id}: DraftsOverviewProps) {
         <HStack center style={{padding: `${px(10)} ${px(20)}`}}>
           <Typo.H4 flat>DRAFTS</Typo.H4>
           <Stack.Right>
-            <Button iconRight={IcRoundArrowForward}>Publish all</Button>
+            <Button iconRight={IcRoundArrowForward} onClick={handlePublish}>
+              Publish all
+            </Button>
           </Stack.Right>
         </HStack>
         <VStack>

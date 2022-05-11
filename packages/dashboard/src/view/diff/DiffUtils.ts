@@ -86,9 +86,9 @@ export function diffRecord(kind: RecordValue, targetA: any, targetB: any) {
   const types = Object.entries(kind.shape)
   return types.filter(([key, type]) => {
     if (type.kind === ValueKind.Scalar) {
-      return targetA[key] !== targetB[key]
+      return targetA?.[key] !== targetB?.[key]
     } else {
-      return !equals(targetA[key], targetB[key])
+      return !equals(targetA?.[key], targetB?.[key])
     }
   })
 }
