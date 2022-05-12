@@ -248,11 +248,17 @@ class PagesImpl<T> {
   }
 
   whereUrl(url: EV<string>) {
-    return new Single<T, T>(this as Pages<T>, Entry.where(Entry.url.is(url)))
+    return new Single<T, T>(
+      this as Pages<T>,
+      this.collection.where(Entry.url.is(url))
+    )
   }
 
   whereId(id: EV<string>) {
-    return new Single<T, T>(this as Pages<T>, Entry.where(Entry.id.is(id)))
+    return new Single<T, T>(
+      this as Pages<T>,
+      this.collection.where(Entry.id.is(id))
+    )
   }
 
   whereType<C>(type: Collection<C>) {
