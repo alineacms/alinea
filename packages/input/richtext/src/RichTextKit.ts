@@ -5,6 +5,7 @@ import Bold from '@tiptap/extension-bold'
 import BulletList from '@tiptap/extension-bullet-list'
 import Document from '@tiptap/extension-document'
 import Dropcursor from '@tiptap/extension-dropcursor'
+import FloatingMenu from '@tiptap/extension-floating-menu'
 import Gapcursor from '@tiptap/extension-gapcursor'
 import HardBreak from '@tiptap/extension-hard-break'
 import Heading from '@tiptap/extension-heading'
@@ -71,7 +72,8 @@ export const RichTextKit = Extension.create({
         HTMLAttributes: {
           class: styles.link()
         }
-      })
+      }),
+      FloatingMenu
     ]
   }
 })
