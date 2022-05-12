@@ -1,12 +1,4 @@
-.code {
-  font-family: 'JetBrains Mono', monospace;
-  background: #ecebeb;
-  border-radius: 6px;
-  padding: 0.2em 0.4em;
-  font-size: 13px;
-}
-
-@import '../../../../../packages/ui/src/Typo.module.scss';
+@import '@alinea/ui/src/Typo.module.scss';
 
 h1.heading {
   @extend .h1;

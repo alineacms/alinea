@@ -1,27 +1,31 @@
 import {TextDoc, TextNode, TypesOf} from '@alinea/core'
 import {fromModule} from '@alinea/ui'
-import {ComponentType, Fragment} from 'react'
+import {ComponentType, Fragment, ReactElement} from 'react'
 import reactStringReplace from 'react-string-replace'
 import css from './RichText.module.scss'
 
 const styles = fromModule(css)
 
-function getTag(type: string, attributes: Record<string, any> | undefined) {
+function getElement(
+  type: string,
+  attributes: Record<string, any> | undefined
+): ReactElement | undefined {
   switch (type) {
     case 'heading':
-      return `h${attributes?.level || 1}`
+      const Tag = `h${attributes?.level || 1}` as 'h1'
+      return <Tag className={styles.heading()} />
     case 'paragraph':
-      return 'p'
+      return <p className={styles.paragraph()} />
     case 'bold':
-      return 'b'
+      return <b />
     case 'italic':
-      return 'i'
+      return <i />
     case 'bulletList':
-      return 'ul'
+      return <ul className={styles.list()} />
     case 'orderedList':
-      return 'ol'
+      return <ol className={styles.list()} />
     case 'listItem':
-      return 'li'
+      return <li className={styles.listItem()} />
   }
 }
 
@@ -35,16 +39,18 @@ function RichTextNodeView<T>(node: TextNode<T>) {
         </span>
       ))
       const wrappers =
-        marks?.map(mark => getTag(mark.type, mark.attrs) || Fragment) || []
-      return wrappers.reduce((children, Tag) => {
-        return <Tag>{children}</Tag>
+        marks?.map(mark => getElement(mark.type, mark.attrs)) || []
+      return wrappers.reduce((children, element) => {
+        const Tag = element?.type || Fragment
+        return <Tag {...element?.props}>{children}</Tag>
       }, <>{content}</>)
     }
     default: {
       const {type, content, ...attrs} = node as TextNode.Element
-      const Tag = getTag(type, attrs) || Fragment
+      const element = getElement(type, attrs)
+      const Tag = element?.type || Fragment
       return (
-        <Tag>
+        <Tag {...element?.props}>
           {content?.map((node, i) => (
             <RichTextNodeView key={i} {...node} />
           )) || <br />}

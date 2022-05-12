@@ -1,3 +1,4 @@
+import {fromModule} from '@alinea/ui'
 import {Extension} from '@tiptap/core'
 import Blockquote from '@tiptap/extension-blockquote'
 import Bold from '@tiptap/extension-bold'
@@ -15,6 +16,9 @@ import Paragraph from '@tiptap/extension-paragraph'
 import Strike from '@tiptap/extension-strike'
 import Text from '@tiptap/extension-text'
 import TextAlign from '@tiptap/extension-text-align'
+import css from './RichTextKit.module.scss'
+
+const styles = fromModule(css)
 
 // These come from the tiptap starter kut, but we omit:
 // code, codeblock -> these can be achieved using a block
@@ -27,24 +31,46 @@ export const RichTextKit = Extension.create({
     return [
       Document,
       Text,
-      Paragraph,
+      Paragraph.configure({
+        HTMLAttributes: {
+          class: styles.paragraph()
+        }
+      }),
       Blockquote,
       Bold,
       Italic,
       Strike,
-      BulletList,
-      OrderedList,
-      ListItem,
+      BulletList.configure({
+        HTMLAttributes: {
+          class: styles.list()
+        }
+      }),
+      OrderedList.configure({
+        HTMLAttributes: {
+          class: styles.list()
+        }
+      }),
+      ListItem.configure({
+        HTMLAttributes: {
+          class: styles.listItem()
+        }
+      }),
       HardBreak,
-      Heading,
+      Heading.configure({
+        HTMLAttributes: {
+          class: styles.heading()
+        }
+      }),
       TextAlign.configure({
         types: ['heading', 'paragraph']
       }),
-
       Dropcursor,
       Gapcursor,
       Link.configure({
-        openOnClick: false
+        openOnClick: false,
+        HTMLAttributes: {
+          class: styles.link()
+        }
       })
     ]
   }
