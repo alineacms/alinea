@@ -122,13 +122,7 @@ function EntryEditDraft({initialMode, draft, isLoading}: EntryEditDraftProps) {
               ) : (
                 <Suspense fallback={null}>
                   {type ? (
-                    <InputForm
-                      // We key here currently because the tiptap/yjs combination fails to register
-                      // changes when the fragment is changed while the editor is mounted.
-                      key={draft.doc.guid}
-                      type={type}
-                      state={EntryProperty.root}
-                    />
+                    <InputForm type={type} state={EntryProperty.root} />
                   ) : (
                     <ErrorMessage error={new Error('Type not found')} />
                   )}

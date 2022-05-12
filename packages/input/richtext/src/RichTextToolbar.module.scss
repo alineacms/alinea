@@ -1,0 +1,38 @@
+.root {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+
+  &-separator {
+    background: var(--alinea-outline);
+    height: 1em;
+    width: 1px;
+  }
+
+  &-dropdown {
+    display: flex;
+    align-items: center;
+
+    &:hover {
+      .buttons-dropdown-icon.is-after {
+        background: var(--fields-focus);
+      }
+    }
+
+    &-icon {
+      flex: 0 0 auto;
+      line-height: 0;
+      border-radius: 50%;
+      transition: background 0.25s ease-out;
+
+      &.is-before {
+        margin-right: 5px;
+      }
+
+      &.is-after {
+        margin-left: 5px;
+      }
+    }
+  }
+}

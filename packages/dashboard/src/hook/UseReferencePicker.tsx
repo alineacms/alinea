@@ -3,6 +3,10 @@ import {Expr} from '@alinea/store/Expr'
 import {createContext, PropsWithChildren, useContext, useState} from 'react'
 import {ReferencePicker} from '../view/ReferencePicker'
 
+export type ReferencePickerFunc = (
+  options: ReferencePickerOptions
+) => Promise<Array<Reference> | undefined>
+
 export type ReferencePickerOptions = {
   selection: Array<Reference> | undefined
   defaultView?: 'row' | 'thumb'
@@ -12,9 +16,7 @@ export type ReferencePickerOptions = {
 }
 
 type ReferencePickerContext = {
-  pickLink: (
-    options: ReferencePickerOptions
-  ) => Promise<Array<Reference> | undefined>
+  pickLink: ReferencePickerFunc
 }
 
 const context = createContext<ReferencePickerContext | undefined>(undefined)

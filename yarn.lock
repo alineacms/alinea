@@ -282,9 +282,23 @@ __metadata:
     "@alinea/editor": 0.0.0
     "@alinea/ui": 0.0.0
     "@tiptap/core": ^2.0.0-beta.174
+    "@tiptap/extension-blockquote": ^2.0.0-beta.26
+    "@tiptap/extension-bold": ^2.0.0-beta.26
+    "@tiptap/extension-bullet-list": ^2.0.0-beta.26
     "@tiptap/extension-collaboration": ^2.0.0-beta.33
+    "@tiptap/extension-document": ^2.0.0-beta.15
+    "@tiptap/extension-dropcursor": ^2.0.0-beta.25
     "@tiptap/extension-floating-menu": ^2.0.0-beta.50
-    "@tiptap/extension-history": ^2.0.0-beta.21
+    "@tiptap/extension-gapcursor": ^2.0.0-beta.34
+    "@tiptap/extension-hard-break": ^2.0.0-beta.30
+    "@tiptap/extension-heading": ^2.0.0-beta.26
+    "@tiptap/extension-italic": ^2.0.0-beta.26
+    "@tiptap/extension-link": ^2.0.0-beta.37
+    "@tiptap/extension-list-item": ^2.0.0-beta.20
+    "@tiptap/extension-ordered-list": ^2.0.0-beta.27
+    "@tiptap/extension-paragraph": ^2.0.0-beta.23
+    "@tiptap/extension-strike": ^2.0.0-beta.27
+    "@tiptap/extension-text": ^2.0.0-beta.15
     "@tiptap/extension-text-align": ^2.0.0-beta.29
     "@tiptap/react": ^2.0.0-beta.108
     "@tiptap/starter-kit": ^2.0.0-beta.183
@@ -1751,6 +1765,19 @@ __metadata:
   peerDependencies:
     "@tiptap/core": ^2.0.0-beta.1
   checksum: 374d99f9b2bcaa398da11c8d514bc6c69c25bb95007b29de0da6d630424e95f7701032994bc762571e30f0b46f11839a5699d5ba64549b50e1ab516a20f91a6e
+  languageName: node
+  linkType: hard
+
+"@tiptap/extension-link@npm:^2.0.0-beta.37":
+  version: 2.0.0-beta.37
+  resolution: "@tiptap/extension-link@npm:2.0.0-beta.37"
+  dependencies:
+    linkifyjs: ^3.0.5
+    prosemirror-model: ^1.16.1
+    prosemirror-state: ^1.3.4
+  peerDependencies:
+    "@tiptap/core": ^2.0.0-beta.1
+  checksum: b1f3002238809aee0d25454cf1878df69b483143d22a0f2b750fc2e9dfe556d351ed42fa93db4751318270e76c85cfffaa2842f261b177bc1705ac431d9e5fc6
   languageName: node
   linkType: hard
 
@@ -5416,6 +5443,13 @@ fsevents@~2.3.2:
   dependencies:
     computed-style: ~0.1.3
   checksum: 99acec832fd29fe50bea7c5dd2fb56c53b9e60c8da93384f6e1780d68018440b952c62578f34168e78bacdd9c6c3fd4fb3b8989c7b9976b3d74c16563c9182a3
+  languageName: node
+  linkType: hard
+
+"linkifyjs@npm:^3.0.5":
+  version: 3.0.5
+  resolution: "linkifyjs@npm:3.0.5"
+  checksum: a926669022f41db6464071d3df2b2de71531d5a83db478e0e0b16617cbabde32c89ff0f46406927d53b31eb8f7501b7bb53410aedf05890c38900a55a1cc5283
   languageName: node
   linkType: hard
 
