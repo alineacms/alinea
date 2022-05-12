@@ -16,7 +16,7 @@ export function Icon({icon, size, ...props}: IconProps) {
   return (
     <i
       {...props}
-      style={{fontSize: size ? px(size) : undefined}}
+      style={{...props.style, fontSize: size ? px(size) : undefined}}
       className={styles.root.mergeProps(props)()}
     >
       {typeof IconView === 'function' ? <IconView /> : IconView}
