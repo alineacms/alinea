@@ -17,7 +17,7 @@
 
   &-loader {
     height: 26px;
-    background: var(--selected);
+    background: var(--alinea-selected);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -27,7 +27,7 @@
     display: flex;
     align-items: center;
     flex-grow: 1;
-    color: var(--foreground-faded);
+    color: var(--alinea-foreground-faded);
     cursor: pointer;
     text-decoration: none;
     padding-right: 15px;
@@ -40,8 +40,8 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      background: var(--accent);
-      color: var(--accent-foreground);
+      background: var(--alinea-accent);
+      color: var(--alinea-accent-foreground);
       border-radius: 15px;
       height: 15px;
       min-width: 15px;
@@ -59,17 +59,17 @@
       height: 20px;
       text-align: center;
       flex-shrink: 0;
-      color: hsla(var(--negative), 0.5);
+      color: hsla(var(--alinea-negative), 0.5);
 
       &:hover {
-        color: var(--foreground);
+        color: var(--alinea-foreground);
       }
     }
 
     &-status {
       flex-shrink: 0;
-      background: var(--accent);
-      color: var(--accent-foreground);
+      background: var(--alinea-accent);
+      color: var(--alinea-accent-foreground);
       border-radius: 50%;
       display: flex;
       align-items: center;
@@ -90,11 +90,11 @@
   }
 
   &:hover &-inner {
-    background: var(--highlight);
+    background: var(--alinea-highlight);
   }
 
   &.is-selected &-inner {
-    background: var(--selected);
+    background: var(--alinea-selected);
   }
 
   &.is-untranslated &-inner {
@@ -102,16 +102,16 @@
   }
 
   &.is-dragOverlay &-inner {
-    background: var(--selected);
+    background: var(--alinea-selected);
   }
 
   /*&.is-draft &-link {
-    color: var(--accent);
+    color: var(--alinea-accent);
   }*/
 
   &:hover &-link,
   &.is-selected &-link {
-    color: var(--foreground);
+    color: var(--alinea-foreground);
   }
 
   &:hover &-create,

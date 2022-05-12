@@ -41,9 +41,9 @@ export function Viewport({children, color, contain, ...props}: ViewportProps) {
       <main
         style={
           {
-            '--accent': accentColor,
-            '--accent-foreground': accentColorForeground
-            // '--hue': hue
+            '--alinea-accent': accentColor,
+            '--alinea-accent-foreground': accentColorForeground
+            // '--alinea-hue': hue
           } as any
         }
         {...props}

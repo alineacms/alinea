@@ -1,8 +1,8 @@
 .list {
   display: flex;
   margin: 0 6px 8px 6px;
-  // border-bottom: 1px solid var(--outline);
-  box-shadow: var(--divider-bottom);
+  // border-bottom: 1px solid var(--alinea-outline);
+  box-shadow: var(--alinea-divider-bottom);
 }
 
 .trigger {
@@ -28,6 +28,6 @@
 
   &[data-state='active'] {
     opacity: 1;
-    border-color: var(--accent);
+    border-color: var(--alinea-accent);
   }
 }

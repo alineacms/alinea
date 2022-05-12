@@ -105,9 +105,9 @@ export function EntryHeader({mode, setMode}: EntryHeaderProps) {
             display: 'flex',
             alignItems: 'center',
             width: '100%',
-            background: 'var(--fields)',
+            background: 'var(--alinea-fields)',
             padding: `${px(6)} ${px(15)}`,
-            borderRadius: 'var(--border-radius)'
+            borderRadius: 'var(--alinea-border-radius)'
           }}
         >
           <HStack gap={8} center>

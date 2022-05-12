@@ -1,67 +1,63 @@
 @mixin dark-theme {
-  --hue: 212;
-  --saturation: 18%;
-  --positive: var(--hue), var(--saturation), 14%;
-  --negative: 0, 8%, 92%;
-  --background: hsl(var(--positive));
-  --foreground: white;
-  --foreground-faded: hsl(0, 3%, 85%);
-  --toolbar: hsl(var(--hue), var(--saturation), 20%);
-  --inner: hsl(var(--hue), var(--saturation), 12%);
-  --inner-outline: hsl(var(--hue), var(--saturation), 13%);
-  --highlight: hsl(var(--hue), var(--saturation), 18%);
-  --lift: hsl(var(--hue), var(--saturation), 19%);
-  --selected: hsl(var(--hue), var(--saturation), 22%);
-  --outline: hsl(var(--hue), var(--saturation), 20%);
-  --header: var(--hue), var(--saturation), 18%;
-  --header-foreground: white;
-  --fields: hsl(var(--hue), var(--saturation), 11.5%);
-  --fields-foreground: #dee1e4;
-  --fields-shadow: hsl(var(--hue), var(--saturation), 30%);
-  --fields-outline: var(--inner-outline);
-  --fields-selected: var(--selected);
-  --fields-focus: hsl(var(--hue), var(--saturation), 30%);
-  --focus-foreground: hsl(var(--negative));
-  --shadow: rgba(0, 0, 0, 0.4);
-  --divider-top: 0 -1px 0 rgba(0, 0, 0, 0.25),
+  --alinea-hue: 212;
+  --alinea-saturation: 18%;
+  --alinea-positive: var(--alinea-hue), var(--alinea-saturation), 14%;
+  --alinea-negative: 0, 8%, 92%;
+  --alinea-background: hsl(var(--alinea-positive));
+  --alinea-foreground: white;
+  --alinea-foreground-faded: hsl(0, 3%, 85%);
+  --alinea-toolbar: hsl(var(--alinea-hue), var(--alinea-saturation), 20%);
+  --alinea-inner: hsl(var(--alinea-hue), var(--alinea-saturation), 12%);
+  --alinea-inner-outline: hsl(var(--alinea-hue), var(--alinea-saturation), 13%);
+  --alinea-highlight: hsl(var(--alinea-hue), var(--alinea-saturation), 18%);
+  --alinea-lift: hsl(var(--alinea-hue), var(--alinea-saturation), 19%);
+  --alinea-selected: hsl(var(--alinea-hue), var(--alinea-saturation), 22%);
+  --alinea-outline: hsl(var(--alinea-hue), var(--alinea-saturation), 20%);
+  --alinea-fields: hsl(var(--alinea-hue), var(--alinea-saturation), 11.5%);
+  --alinea-fields-foreground: #dee1e4;
+  --alinea-fields-shadow: hsl(var(--alinea-hue), var(--alinea-saturation), 30%);
+  --alinea-fields-outline: var(--alinea-inner-outline);
+  --alinea-fields-selected: var(--alinea-selected);
+  --alinea-fields-focus: hsl(var(--alinea-hue), var(--alinea-saturation), 30%);
+  --alinea-focus-foreground: hsl(var(--alinea-negative));
+  --alinea-shadow: rgba(0, 0, 0, 0.4);
+  --alinea-divider-top: 0 -1px 0 rgba(0, 0, 0, 0.25),
     inset 0 1px 0 rgba(255, 255, 255, 0.08);
-  --divider-bottom: 0 1px 0 rgba(255, 255, 255, 0.08),
+  --alinea-divider-bottom: 0 1px 0 rgba(255, 255, 255, 0.08),
     inset 0 -1px 0 rgba(0, 0, 0, 0.25);
 }
 
 @mixin light-theme {
-  --hue: 240;
-  --saturation: 20%;
-  --positive: var(--hue), var(--saturation), 97%;
-  --negative: 212, 18%, 14%;
-  --background: hsl(var(--positive));
-  --foreground: hsl(197, 21%, 6%);
-  --foreground-faded: hsl(203, 5%, 25%);
-  --toolbar: hsl(var(--hue), var(--saturation), 98%);
-  --inner: hsl(var(--hue), var(--saturation), 98.5%);
-  --inner-outline: #dcdce4;
-  --highlight: hsl(var(--hue), var(--saturation), 98%);
-  --lift:  hsl(var(--hue), var(--saturation), 96%);
-  --selected: hsl(var(--hue), var(--saturation), 100%);
-  --outline: hsl(var(--hue), var(--saturation), 89%);
-  --header: var(--hue), var(--saturation), 100%;
-  --header-foreground: #0d1214;
-  --shadow: rgba(0, 0, 0, 0.08);
-  --fields: hsl(0, 0%, 100%);
-  --fields-foreground: #1e282e;
-  --fields-shadow: 0 0px 0 1px #ececec;
-  --fields-selected: white;
-  --fields-focus: #dcdce4;
-  --focus-foreground: hsl(var(--negative));
-  --divider-top: 0 -1px 0 rgba(0, 0, 0, 0.06),
+  --alinea-hue: 240;
+  --alinea-saturation: 20%;
+  --alinea-positive: var(--alinea-hue), var(--alinea-saturation), 97%;
+  --alinea-negative: 212, 18%, 14%;
+  --alinea-background: hsl(var(--alinea-positive));
+  --alinea-foreground: hsl(197, 21%, 6%);
+  --alinea-foreground-faded: hsl(203, 5%, 25%);
+  --alinea-toolbar: hsl(var(--alinea-hue), var(--alinea-saturation), 98%);
+  --alinea-inner: hsl(var(--alinea-hue), var(--alinea-saturation), 98.5%);
+  --alinea-inner-outline: #dcdce4;
+  --alinea-highlight: hsl(var(--alinea-hue), var(--alinea-saturation), 98%);
+  --alinea-lift:  hsl(var(--alinea-hue), var(--alinea-saturation), 96%);
+  --alinea-selected: hsl(var(--alinea-hue), var(--alinea-saturation), 100%);
+  --alinea-outline: hsl(var(--alinea-hue), var(--alinea-saturation), 89%);
+  --alinea-shadow: rgba(0, 0, 0, 0.08);
+  --alinea-fields: hsl(0, 0%, 100%);
+  --alinea-fields-foreground: #1e282e;
+  --alinea-fields-shadow: 0 0px 0 1px #ececec;
+  --alinea-fields-selected: white;
+  --alinea-fields-focus: #dcdce4;
+  --alinea-focus-foreground: hsl(var(--alinea-negative));
+  --alinea-divider-top: 0 -1px 0 rgba(0, 0, 0, 0.06),
     inset 0 1px 0 rgba(255, 255, 255, 0.2);
-  --divider-bottom: 0 1px 0 rgba(255, 255, 255, 0.2),
+  --alinea-divider-bottom: 0 1px 0 rgba(255, 255, 255, 0.2),
     inset 0 -1px 0 rgba(0, 0, 0, 0.06);
 }
 
 .root {
   @include dark-theme;
-  --border-radius: 8px;
+  --alinea-border-radius: 8px;
 
   @media (prefers-color-scheme: light) {
     @include light-theme;
@@ -77,9 +73,9 @@
 
   display: flex;
   flex-direction: column;
-  color: var(--foreground-faded);
+  color: var(--alinea-foreground-faded);
   font-size: 14px;
-  background: var(--background);
+  background: var(--alinea-background);
   font-display: block;
   font-family: Inter, sans-serif;
   min-height: 100vh;

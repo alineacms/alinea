@@ -3,11 +3,11 @@
   z-index: 4;
   width: 100%;
   padding: 0 10px;
-  // box-shadow: 0 1px 0 var(--shadow);
+  // box-shadow: 0 1px 0 var(--alinea-shadow);
   height: 44px;
-  color: var(--foreground);
-  border-bottom: 1px solid var(--outline);
-  // background: var(--toolbar);
+  color: var(--alinea-foreground);
+  border-bottom: 1px solid var(--alinea-outline);
+  // background: var(--alinea-toolbar);
 
   &-portal {
     flex-grow: 1;

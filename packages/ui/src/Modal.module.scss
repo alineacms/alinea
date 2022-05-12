@@ -13,7 +13,7 @@
   }
 
   &-background {
-    background: hsla(var(--positive), 0.8);
+    background: hsla(var(--alinea-positive), 0.8);
     backdrop-filter: blur(5px);
     position: absolute;
     top: 0;
@@ -40,19 +40,19 @@
     position: relative;
     margin: auto;
     padding: 45px;
-    background: var(--background);
+    background: var(--alinea-background);
     border-radius: 16px;
     max-width: 1024px;
     max-height: 768px;
     width: 100%;
     height: 100%;
-    box-shadow: 0 2px 110px 10px var(--shadow);
+    box-shadow: 0 2px 110px 10px var(--alinea-shadow);
     display: flex;
     flex-direction: column;
-    border: 1px solid var(--highlight);
+    border: 1px solid var(--alinea-highlight);
 
     &-close {
-      background: var(--inner);
+      background: var(--alinea-inner);
       position: absolute;
       top: 12px;
       right: 12px;

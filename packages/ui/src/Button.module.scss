@@ -1,8 +1,8 @@
 .root {
   position: relative;
   border: none;
-  background: hsla(var(--negative), 1);
-  color: var(--background);
+  background: hsla(var(--alinea-negative), 1);
+  color: var(--alinea-background);
   font: inherit;
   cursor: pointer;
   overflow: hidden;
@@ -13,7 +13,7 @@
   &:after {
     position: absolute;
     content: '';
-    background: var(--background);
+    background: var(--alinea-background);
     opacity: 0;
     top: 0;
     left: 0;
@@ -36,7 +36,7 @@
   }
 
   &:hover {
-    background: var(--fields-focus);
-    color: var(--focus-foreground);
+    background: var(--alinea-fields-focus);
+    color: var(--alinea-focus-foreground);
   }
 }

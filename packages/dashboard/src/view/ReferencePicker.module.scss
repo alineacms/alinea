@@ -9,7 +9,7 @@
     width: 100%;
     padding: 9px 16px;
     gap: 8px;
-    background: var(--fields);
+    background: var(--alinea-fields);
     border-radius: 8px;
     line-height: 1.5;
 
@@ -18,8 +18,8 @@
     }
 
     &:focus-within {
-      background: var(--selected);
-      outline: 2px solid var(--fields-focus);
+      background: var(--alinea-selected);
+      outline: 2px solid var(--alinea-fields-focus);
     }
 
     &-input {
@@ -38,7 +38,7 @@
     display: flex;
     flex-direction: column;
     min-height: 0;
-    background: var(--lift);
+    background: var(--alinea-lift);
     border-radius: 8px;
     overflow: hidden;
 
@@ -64,13 +64,13 @@
         flex-shrink: 0;
 
         &:hover {
-          background: var(--selected);
+          background: var(--alinea-selected);
         }
 
         &:focus-within,
         &:active {
-          background: var(--fields-focus);
-          color: var(--focus-foreground);
+          background: var(--alinea-fields-focus);
+          color: var(--alinea-focus-foreground);
         }
       }
     }

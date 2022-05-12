@@ -6,8 +6,8 @@
   font-size: 11px;
   white-space: nowrap;
   flex-shrink: 0;
-  color: var(--foreground);
-  background: var(--selected);
+  color: var(--alinea-foreground);
+  background: var(--alinea-selected);
   padding-left: 4px;
 
   &-icon {
@@ -19,7 +19,7 @@
   }
 
   &.is-accent {
-    background: var(--accent);
-    color: var(--accent-foreground);
+    background: var(--alinea-accent);
+    color: var(--alinea-accent-foreground);
   }
 }

@@ -77,7 +77,7 @@
 
 .link {
   text-decoration: underline;
-  text-decoration-color: hsla(var(--negative), 0.4);
+  text-decoration-color: hsla(var(--alinea-negative), 0.4);
   text-underline-offset: 0.3em;
   @extend .hyphenate;
   cursor: pointer;

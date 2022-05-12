@@ -4,10 +4,10 @@
   z-index: 3;
   display: flex;
   align-items: center;
-  // border-bottom: 1px solid var(--outline);
-  background-color: hsla(var(--positive), 0.6);
+  // border-bottom: 1px solid var(--alinea-outline);
+  background-color: hsla(var(--alinea-positive), 0.6);
   backdrop-filter: blur(12px);
-  // box-shadow: 0 2px 3.5px var(--shadow);
+  // box-shadow: 0 2px 3.5px var(--alinea-shadow);
   padding-top: 3px;
 }
 
@@ -27,7 +27,7 @@
   &.is-interactive {
     cursor: pointer;
     &:hover {
-      background: var(--highlight);
+      background: var(--alinea-highlight);
     }
   }
 }

@@ -1,16 +1,16 @@
 .root {
   position: relative;
   border-radius: 12px;
-  background: var(--lift);
+  background: var(--alinea-lift);
   overflow: hidden;
-  box-shadow: 0 1px 0 var(--inner-outline);
+  box-shadow: 0 1px 0 var(--alinea-inner-outline);
   cursor: default;
-  border: 1px solid var(--inner-outline);
+  border: 1px solid var(--alinea-inner-outline);
 }
 
 .row {
   & + & {
-    box-shadow: var(--divider-top);
+    box-shadow: var(--alinea-divider-top);
   }
 }
 

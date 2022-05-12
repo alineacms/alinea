@@ -10,8 +10,8 @@
     width: 100%;
     resize: none;
     padding: 9px 16px;
-    background: var(--fields);
-    box-shadow: var(--fields-shadow);
+    background: var(--alinea-fields);
+    box-shadow: var(--alinea-fields-shadow);
     border-radius: 8px;
     resize: none;
     cursor: text;
@@ -19,8 +19,8 @@
   }
 
   &-editor.is-focus > * {
-    background: var(--fields-selected);
-    outline: 2px solid var(--fields-focus);
+    background: var(--alinea-fields-selected);
+    outline: 2px solid var(--alinea-fields-focus);
   }
 
   &-editor > * {
@@ -60,7 +60,7 @@
   height: 100%;
 
   &-separator {
-    background: var(--outline);
+    background: var(--alinea-outline);
     height: 1em;
     width: 1px;
   }

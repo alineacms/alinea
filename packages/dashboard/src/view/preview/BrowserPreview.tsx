@@ -73,7 +73,7 @@ export function BrowserPreview({url, prettyUrl}: BrowserPreviewProps) {
               style={{
                 display: 'block',
                 width: '100%',
-                background: 'var(--highlight)',
+                background: 'var(--alinea-highlight)',
                 padding: `${px(6)} ${px(15)}`,
                 borderRadius: px(8)
               }}

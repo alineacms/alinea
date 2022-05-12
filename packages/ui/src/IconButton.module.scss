@@ -14,23 +14,23 @@
   transition: 0.2s ease-out;
 
   &.is-active {
-    background: hsla(var(--negative), 0.1);
+    background: hsla(var(--alinea-negative), 0.1);
   }
 
   &:hover {
-    background: var(--fields-focus);
-    color: var(--focus-foreground);
-    box-shadow: 0 0 0 2px var(--fields-focus);
+    background: var(--alinea-fields-focus);
+    color: var(--alinea-focus-foreground);
+    box-shadow: 0 0 0 2px var(--alinea-fields-focus);
   }
 
   &:focus {
     outline: none;
     color: inherit;
-    background: var(--background);
-    box-shadow: 0 0 0 2px var(--fields-focus);
+    background: var(--alinea-background);
+    box-shadow: 0 0 0 2px var(--alinea-fields-focus);
   }
 
   &:focus.is-active {
-    background: hsla(var(--negative), 0.1);
+    background: hsla(var(--alinea-negative), 0.1);
   }
 }
