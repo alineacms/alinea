@@ -1,4 +1,5 @@
 import {fromModule, HStack, px, Typo, VStack} from '@alinea/ui'
+
 import {IcRoundOpenInNew} from '@alinea/ui/icons/IcRoundOpenInNew'
 import css from './HomePage.module.scss'
 import {HomePageSchema} from './HomePage.schema'
@@ -6,7 +7,7 @@ import {Hero} from './layout/Hero'
 
 const styles = fromModule(css)
 
-const exampleCode = `schema('Blog', {
+const exampleCode = `schema('Blog', {0
   BlogEntry: type('Blog entry', {
     title: text('Title'),
     author: link('Author', {type: 'entry'}),
@@ -31,9 +32,7 @@ export function HomePage({headline, byline, action}: HomePageSchema) {
             style={{paddingTop: px(20)}}
           >
             {action && (
-              <Hero.Action href={action.url} color={action.color}>
-                {action.label}
-              </Hero.Action>
+              <Hero.Action href={action.url}>{action.label}</Hero.Action>
             )}
             <Typo.Link href="/demo" target="_blank">
               <HStack center gap={8}>
