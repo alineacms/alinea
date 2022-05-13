@@ -39,6 +39,9 @@ h3.heading {
 
 .list {
   margin-left: 20px;
+  &:not(:last-child) {
+    margin-bottom: 14px;
+  }
 }
 
 .listItem {
