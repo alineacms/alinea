@@ -21,7 +21,7 @@ import css from './RichTextKit.module.scss'
 
 const styles = fromModule(css)
 
-// These come from the tiptap starter kut, but we omit:
+// These come from the tiptap starter kit, but we omit:
 // code, codeblock -> these can be achieved using a block
 // history -> needs to be configured on the yjs side
 // horizontal rule -> to be considered

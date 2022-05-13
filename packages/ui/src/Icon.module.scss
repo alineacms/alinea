@@ -3,8 +3,25 @@
   font-size: 1em;
   font-style: normal;
   flex-shrink: 0;
+  border: none;
+  color: inherit;
+  background: transparent;
 
   > svg {
     display: block;
+  }
+
+  &.is-round {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.8em;
+    height: 1.8em;
+    cursor: pointer;
+    border-radius: 50%;
+  }
+
+  &.is-active {
+    background: hsla(var(--alinea-negative), 0.1);
   }
 }

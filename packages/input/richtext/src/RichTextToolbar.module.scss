@@ -5,34 +5,14 @@
   height: 100%;
 
   &-separator {
-    background: var(--alinea-outline);
-    height: 1em;
+    border-right: 1px solid var(--alinea-outline);
+    height: 80%;
     width: 1px;
+    margin: auto 0;
   }
 
   &-dropdown {
-    display: flex;
-    align-items: center;
-
-    &:hover {
-      .buttons-dropdown-icon.is-after {
-        background: var(--fields-focus);
-      }
-    }
-
-    &-icon {
-      flex: 0 0 auto;
-      line-height: 0;
-      border-radius: 50%;
-      transition: background 0.25s ease-out;
-
-      &.is-before {
-        margin-right: 5px;
-      }
-
-      &.is-after {
-        margin-left: 5px;
-      }
-    }
+    padding: 8px;
+    font-size: 13px;
   }
 }

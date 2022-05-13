@@ -3,6 +3,8 @@
   display: flex;
   justify-content: flex-end;
   background: var(--alinea-outline);
+  position: relative;
+  z-index: 5;
   // background: var(--alinea-accent);
   // color: var(--alinea-accent-foreground);
 }
