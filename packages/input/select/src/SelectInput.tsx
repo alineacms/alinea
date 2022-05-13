@@ -22,19 +22,18 @@ export function SelectInput({state, field}: SelectInputProps) {
   return (
     <div>
       <InputLabel
-        asLabel
         label={field.label}
         help={help}
         optional={optional}
         icon={IcRoundArrowDropDownCircle}
       >
-        <HStack center className={styles.root()}>
+        <div className={styles.root()}>
           <Listbox value={value} onChange={setValue}>
             {({open}) => (
               <>
                 <Listbox.Button className={styles.root.input({open})}>
                   <span className={styles.root.input.label()}>
-                    {value ? <TextLabel label={items[value]} /> : '-Select-'}
+                    <TextLabel label={value ? items[value] : field.label} />
                   </span>
                   <Icon
                     icon={IcRoundUnfoldMore}
@@ -45,17 +44,16 @@ export function SelectInput({state, field}: SelectInputProps) {
                   {Object.entries(items).map(([key, label]) => (
                     <Listbox.Option key={key} value={key}>
                       {({active, selected}) => (
-                        <div className={styles.root.dropdown.option({active})}>
-                          <>
-                            {selected && (
-                              <Icon
-                                icon={IcRoundCheck}
-                                className={styles.root.dropdown.option.icon()}
-                              />
-                            )}
-                            <TextLabel label={label} />
-                          </>
-                        </div>
+                        <HStack
+                          center
+                          gap={4}
+                          className={styles.root.dropdown.option({active})}
+                        >
+                          <div className={styles.root.dropdown.option.icon()}>
+                            {selected && <Icon size={18} icon={IcRoundCheck} />}
+                          </div>
+                          <TextLabel label={label} />
+                        </HStack>
                       )}
                     </Listbox.Option>
                   ))}
@@ -63,7 +61,7 @@ export function SelectInput({state, field}: SelectInputProps) {
               </>
             )}
           </Listbox>
-        </HStack>
+        </div>
       </InputLabel>
     </div>
   )
