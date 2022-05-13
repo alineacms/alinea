@@ -210,12 +210,7 @@ function EntryRoute({id}: EntryRouteProps) {
     .filter(Boolean) as Array<string>
   return (
     <CurrentDraftProvider value={draft}>
-      <Pane
-        id="content-tree"
-        resizable="right"
-        defaultWidth={330}
-        minWidth={200}
-      >
+      <Pane id="content-tree" resizable="right">
         <SearchBox />
         <RootHeader />
         <ContentTree
@@ -225,20 +220,18 @@ function EntryRoute({id}: EntryRouteProps) {
           redirectToRoot={!id}
         />
       </Pane>
-      <div style={{width: '100%', height: '100%'}}>
-        {search === '?new' && (
-          <Suspense fallback={<Loader absolute />}>
-            <NewEntry parentId={id} />
-          </Suspense>
-        )}
-        {draft && (
-          <View
-            initialMode={EditMode.Editing}
-            draft={draft}
-            isLoading={isLoading}
-          />
-        )}
-      </div>
+      {search === '?new' && (
+        <Suspense fallback={<Loader absolute />}>
+          <NewEntry parentId={id} />
+        </Suspense>
+      )}
+      {draft && (
+        <View
+          initialMode={EditMode.Editing}
+          draft={draft}
+          isLoading={isLoading}
+        />
+      )}
     </CurrentDraftProvider>
   )
 }

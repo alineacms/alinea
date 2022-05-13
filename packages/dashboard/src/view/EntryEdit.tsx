@@ -16,6 +16,7 @@ import {
 } from '@alinea/ui'
 import {IcRoundArrowBack} from '@alinea/ui/icons/IcRoundArrowBack'
 import {Link} from '@alinea/ui/Link'
+import {Main} from '@alinea/ui/Main'
 import {Modal} from '@alinea/ui/Modal'
 import {FormEvent, Suspense, useLayoutEffect, useState} from 'react'
 import {useQuery, useQueryClient} from 'react-query'
@@ -93,8 +94,8 @@ function EntryEditDraft({initialMode, draft, isLoading}: EntryEditDraftProps) {
     if (translation) navigate(nav.entry(translation))
   }, [draft, isTranslating, locale])
   return (
-    <HStack style={{height: '100%'}}>
-      <div className={styles.root()}>
+    <>
+      <Main className={styles.root()}>
         <EntryHeader mode={mode} setMode={setMode} />
         <div className={styles.root.draft()}>
           <EntryTitle
@@ -131,9 +132,9 @@ function EntryEditDraft({initialMode, draft, isLoading}: EntryEditDraftProps) {
             </>
           )}
         </div>
-      </div>
+      </Main>
       {preview && <EntryPreview preview={preview} draft={draft} />}
-    </HStack>
+    </>
   )
 }
 

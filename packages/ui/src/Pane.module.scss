@@ -1,6 +1,8 @@
 .root {
   display: flex;
   height: 100%;
+  min-width: 0;
+  flex-shrink: 0;
 
   &-inner {
     flex-grow: 1;

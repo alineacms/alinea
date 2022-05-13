@@ -10,7 +10,7 @@ import {
   DragStartEvent,
   KeyboardSensor,
   LayoutMeasuringStrategy,
-  PointerSensor,
+  MouseSensor,
   useSensor,
   useSensors
 } from '@dnd-kit/core'
@@ -107,7 +107,7 @@ export function ContentTree({
   const entries = sortByIndex(index, applyMoves(treeEntries, moves))
   const [dragging, setDragging] = useState<ContentTreeEntry | null>(null)
   const sensors = useSensors(
-    useSensor(PointerSensor, {
+    useSensor(MouseSensor, {
       activationConstraint: {
         distance: 2
       }

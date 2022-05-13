@@ -60,12 +60,7 @@ export function DraftsOverview({id}: DraftsOverviewProps) {
   }
   return (
     <CurrentDraftProvider value={draft}>
-      <Pane
-        id="content-tree"
-        resizable="right"
-        defaultWidth={330}
-        minWidth={200}
-      >
+      <Pane id="content-tree" resizable="right">
         <HStack center style={{padding: `${px(10)} ${px(20)}`}}>
           <Typo.H4 flat>DRAFTS</Typo.H4>
           <Stack.Right>
@@ -98,15 +93,13 @@ export function DraftsOverview({id}: DraftsOverviewProps) {
           })}
         </VStack>
       </Pane>
-      <div style={{width: '100%', height: '100%'}}>
-        {selected && draft && (
-          <EntryEdit
-            initialMode={EditMode.Diff}
-            draft={draft}
-            isLoading={isLoading}
-          />
-        )}
-      </div>
+      {selected && draft && (
+        <EntryEdit
+          initialMode={EditMode.Diff}
+          draft={draft}
+          isLoading={isLoading}
+        />
+      )}
     </CurrentDraftProvider>
   )
 }
