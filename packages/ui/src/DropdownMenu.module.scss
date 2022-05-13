@@ -1,13 +1,5 @@
-.content {
-  padding: 5px;
-  margin-top: 5px;
-  min-width: 220px;
-  background-color: white;
-  border: 1px solid #e6e0e0;
-  border-radius: 6px;
-  box-shadow: 0px 10px 38px -10px rgba(9, 12, 15, 0.35),
-    0px 10px 20px -15px rgba(22, 23, 24, 0.2);
-  font-family: Inter, sans-serif;
+.root {
+  position: relative;
 }
 
 .trigger {
@@ -15,9 +7,35 @@
   cursor: pointer;
 }
 
+.items {
+  position: absolute;
+  top: 100%;
+  padding: 5px;
+  margin-top: 5px;
+  min-width: 220px;
+  border-radius: var(--alinea-border-radius);
+  background: var(--alinea-background);
+  border: 1px solid var(--alinea-outline);
+  box-shadow: 0 2px 10px var(--alinea-shadow);
+  outline: none;
+
+  &.is-left {
+    left: 0;
+  }
+  &.is-right {
+    right: 0;
+  }
+}
+
 .item {
-  all: unset;
+  border: none;
+  background: transparent;
+  appearance: none;
+  color: inherit;
   font: inherit;
+  display: block;
+  appearance: none;
+  width: 100%;
   font-size: 13px;
   line-height: 1;
   display: flex;
@@ -33,5 +51,9 @@
     // Todo: make our css vars work with these portaled items (or somehow
     // make radix portal these in our viewport)
     background-color: #f7f6f6;
+  }
+
+  &:hover, &.is-active {
+    background: var(--alinea-highlight);
   }
 }
