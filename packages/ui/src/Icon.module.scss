@@ -3,16 +3,11 @@
   font-size: 1em;
   font-style: normal;
   flex-shrink: 0;
-  width: 1.8em;
-  height: 1.8em;
-  border-radius: 50%;
-  font-size: 1em;
-  flex-shrink: 0;
 
   > svg {
     display: block;
   }
-  
+
   &.is-active {
     background: hsla(var(--alinea-negative), 0.1);
   }
