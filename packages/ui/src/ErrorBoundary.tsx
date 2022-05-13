@@ -18,7 +18,7 @@ export function ErrorBoundary({children}: PropsWithChildren<{}>) {
   const location = useLocation()
   useEffect(() => {
     // Let's retry once we navigate elsewhere
-    reset()
+    if (error) reset()
   }, [location])
   return (
     <>
