@@ -1,12 +1,13 @@
+import {HStack, VStack, fromModule} from '@alinea/ui'
+import {HexColorInput, HexColorPicker} from 'react-colorful'
 import {InputLabel, InputState, useInput} from '@alinea/editor'
-import {fromModule, HStack, VStack} from '@alinea/ui'
+
+import {ColorField} from './ColorField'
 import IcRoundArrowDropDown from '@alinea/ui/icons/IcRoundArrowDropDown'
 import IcRoundArrowDropUp from '@alinea/ui/icons/IcRoundArrowDropUp'
 import {IcRoundColorLens} from '@alinea/ui/icons/IcRoundColorLens'
-import {useState} from 'react'
-import {HexColorInput, HexColorPicker} from 'react-colorful'
-import {ColorField} from './ColorField'
 import css from './ColorInput.module.scss'
+import {useState} from 'react'
 
 const styles = fromModule(css)
 
@@ -48,6 +49,7 @@ function AllColorPicker({color, onChange}: AllColorPickerProps) {
         center
         onClick={() => setShowPicker(!showPicker)}
         className={styles.root.input()}
+        style={{width: 'min-content'}}
       >
         <div
           className={styles.root.input.choice()}
