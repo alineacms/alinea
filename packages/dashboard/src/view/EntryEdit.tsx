@@ -56,6 +56,7 @@ function EntryEditDraft({initialMode, draft, isLoading}: EntryEditDraftProps) {
   const isTranslating = !isLoading && locale !== draft.i18n?.locale
   const [isCreating, setIsCreating] = useState(false)
   const [mode, setMode] = useState<EditMode>(initialMode)
+  // Todo: bundle this Hub.entry
   const {data: original} = useQuery(
     ['original', draft.id],
     () => {
@@ -64,7 +65,7 @@ function EntryEditDraft({initialMode, draft, isLoading}: EntryEditDraftProps) {
         .then(Outcome.unpack)
         .then(res => res[0])
     },
-    {suspense: true}
+    {suspense: true, keepPreviousData: true}
   )
   function handleTranslation() {
     if (!locale || isCreating) return

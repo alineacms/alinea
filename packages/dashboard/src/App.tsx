@@ -231,11 +231,13 @@ function EntryRoute({id}: EntryRouteProps) {
         </Suspense>
       )}
       {draft && (
-        <View
-          initialMode={EditMode.Editing}
-          draft={draft}
-          isLoading={isLoading}
-        />
+        <Suspense fallback={<Loader absolute />}>
+          <View
+            initialMode={EditMode.Editing}
+            draft={draft}
+            isLoading={isLoading}
+          />
+        </Suspense>
       )}
     </CurrentDraftProvider>
   )
