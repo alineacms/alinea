@@ -165,26 +165,23 @@ function RichTextEditor<T>({state, field}: RichTextInputProps<T>) {
     RichTextKit,
     ...schemaToExtensions(state, blocks)
   ]
-  const editor = useEditor(
-    {
-      content: {
-        type: 'doc',
-        content: value.map(node => {
-          if (node.type === 'text') return node //
-          const {type, ...attrs} = node
-          return {
-            type,
-            content: 'content' in node ? node.content : undefined,
-            attrs
-          }
-        })
-      },
-      onFocus: ({event}) => focusToggle(event.currentTarget),
-      onBlur: ({event}) => focusToggle(event.relatedTarget),
-      extensions
+  const editor = useEditor({
+    content: {
+      type: 'doc',
+      content: value.map(node => {
+        if (node.type === 'text') return node //
+        const {type, ...attrs} = node
+        return {
+          type,
+          content: 'content' in node ? node.content : undefined,
+          attrs
+        }
+      })
     },
-    []
-  )
+    onFocus: ({event}) => focusToggle(event.currentTarget),
+    onBlur: ({event}) => focusToggle(event.relatedTarget),
+    extensions
+  })
   if (!editor) return null
   return (
     <>
