@@ -205,6 +205,16 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@alinea/input.date@workspace:packages/input/date":
+  version: 0.0.0-use.local
+  resolution: "@alinea/input.date@workspace:packages/input/date"
+  dependencies:
+    "@alinea/core": 0.0.0
+    "@alinea/editor": 0.0.0
+    "@alinea/ui": 0.0.0
+  languageName: unknown
+  linkType: soft
+
 "@alinea/input.link@0.0.0, @alinea/input.link@workspace:packages/input/link":
   version: 0.0.0-use.local
   resolution: "@alinea/input.link@workspace:packages/input/link"
