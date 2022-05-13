@@ -1,5 +1,5 @@
 import {Dialog} from '@headlessui/react'
-import {ComponentType, PropsWithChildren} from 'react'
+import {ComponentPropsWithoutRef, PropsWithChildren} from 'react'
 import {IconButton} from './IconButton'
 import {IcRoundClose} from './icons/IcRoundClose'
 import css from './Modal.module.scss'
@@ -7,13 +7,12 @@ import {fromModule} from './util/Styler'
 
 const styles = fromModule(css)
 
-type PropsOf<T> = T extends ComponentType<infer P> ? P : never
-
 export type ModalProps = PropsWithChildren<
   {
     open: boolean
     onClose: () => void
-  } & PropsOf<typeof Dialog>
+    className?: string
+  } & ComponentPropsWithoutRef<typeof Dialog>
 >
 export function Modal({children, ...props}: ModalProps) {
   return (
