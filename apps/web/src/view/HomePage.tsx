@@ -1,8 +1,9 @@
-import {fromModule, HStack, px, Typo, VStack} from '@alinea/ui'
+import {HStack, Typo, VStack, fromModule, px} from '@alinea/ui'
+
+import {Hero} from './layout/Hero'
+import {HomePageProps} from './HomePage.query'
 import {IcRoundOpenInNew} from '@alinea/ui/icons/IcRoundOpenInNew'
 import css from './HomePage.module.scss'
-import {HomePageProps} from './HomePage.query'
-import {Hero} from './layout/Hero'
 
 const styles = fromModule(css)
 
@@ -31,9 +32,7 @@ export function HomePage({headline, byline, action}: HomePageProps) {
             style={{paddingTop: px(20)}}
           >
             {action && (
-              <Hero.Action href={action.url} color={action.color}>
-                {action.label}
-              </Hero.Action>
+              <Hero.Action href={action.url}>{action.label}</Hero.Action>
             )}
             <Typo.Link href="/demo" target="_blank">
               <HStack center gap={8}>

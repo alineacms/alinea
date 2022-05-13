@@ -1,5 +1,6 @@
-import {Store} from '@alinea/store'
 import {Home, Pages} from '../../.alinea/web'
+
+import {Store} from '@alinea/store'
 
 export async function homePageQuery(pages: Pages, home: Home) {
   const action = home.action[0]
@@ -9,8 +10,7 @@ export async function homePageQuery(pages: Pages, home: Home) {
       action?.type === 'entry'
         ? {
             url: (await pages.whereId(action.entry))!.url,
-            label: action.label,
-            color: action.color
+            label: action.label
           }
         : null
   }

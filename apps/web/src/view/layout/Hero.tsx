@@ -1,8 +1,9 @@
-import {fromModule, HStack} from '@alinea/ui'
-import {IcRoundArrowForward} from '@alinea/ui/icons/IcRoundArrowForward'
+import {HStack, fromModule} from '@alinea/ui'
 import Link, {LinkProps} from 'next/link'
-import {PropsWithChildren} from 'react'
+
 import {Container} from './Container'
+import {IcRoundArrowForward} from '@alinea/ui/icons/IcRoundArrowForward'
+import {PropsWithChildren} from 'react'
 import css from './Hero.module.scss'
 
 const styles = fromModule(css)
@@ -23,7 +24,7 @@ export namespace Hero {
   export function Action({children, ...props}: PropsWithChildren<LinkProps>) {
     return (
       <Link {...props}>
-        <a className={styles.action()} style={{backgroundColor: props.color}}>
+        <a className={styles.action()}>
           <HStack center gap={8}>
             <span>{children}</span>
             <IcRoundArrowForward />
