@@ -25,8 +25,8 @@ function AllowedColorPicker({
   return (
     <HStack center gap={8}>
       {colors.map(color => (
-        <div
-          className={styles.root.input.choice({active: color === activeColor})}
+        <button
+          className={styles.root.button.choice({active: color === activeColor})}
           style={{backgroundColor: color}}
           onClick={() => onClick(color)}
         />
@@ -47,19 +47,17 @@ function AllColorPicker({color, onChange}: AllColorPickerProps) {
     <VStack gap={8}>
       <HStack
         center
+        as="button"
+        className={styles.root.button()}
         onClick={() => setShowPicker(!showPicker)}
-        className={styles.root.input()}
-        style={{width: 'min-content'}}
       >
         <div
-          className={styles.root.input.choice()}
+          className={styles.root.button.choice()}
           style={{backgroundColor: color}}
         />
-        {showPicker ? (
-          <IcRoundArrowDropUp className={styles.root.icon()} />
-        ) : (
-          <IcRoundArrowDropDown className={styles.root.icon()} />
-        )}
+        <div className={styles.root.button.icon()}>
+          {showPicker ? <IcRoundArrowDropUp /> : <IcRoundArrowDropDown />}
+        </div>
       </HStack>
       {showPicker && (
         <>

@@ -1,5 +1,7 @@
 .root {
-  &-input {
+  &-button {
+    border: none;
+    background-color: inherit;
     cursor: pointer;
 
     &-choice {
@@ -7,16 +9,17 @@
       height: 20px;
       width: 20px;
       border-radius: 50%;
+      border: none;
       cursor: pointer;
 
       &.is-active {
         border: 2px solid var(--fields-foreground);
       }
     }
-  }
 
-  &-icon {
-    font-size: 25px;
+    &-icon {
+      font-size: 25px;
+    }
   }
 
   &-text {
