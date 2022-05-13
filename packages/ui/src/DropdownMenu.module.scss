@@ -1,10 +1,17 @@
 .root {
   position: relative;
+  display: flex;
 }
 
 .trigger {
   all: unset;
   cursor: pointer;
+  border-radius: var(--alinea-border-radius);
+  padding: 4px;
+
+  &:hover {
+    background: var(--alinea-highlight);
+  }
 }
 
 .items {

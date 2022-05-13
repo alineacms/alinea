@@ -5,6 +5,7 @@ import {
   HStack,
   Icon,
   IconButton,
+  px,
   Typo
 } from '@alinea/ui'
 import IcAlignCenter from '@alinea/ui/icons/IcAlignCenter'
@@ -16,8 +17,8 @@ import {IcRoundFormatClear} from '@alinea/ui/icons/IcRoundFormatClear'
 import {IcRoundFormatItalic} from '@alinea/ui/icons/IcRoundFormatItalic'
 import {IcRoundFormatListBulleted} from '@alinea/ui/icons/IcRoundFormatListBulleted'
 import {IcRoundFormatListNumbered} from '@alinea/ui/icons/IcRoundFormatListNumbered'
-import IcRoundKeyboardArrowDown from '@alinea/ui/icons/IcRoundKeyboardArrowDown'
 import {IcRoundLink} from '@alinea/ui/icons/IcRoundLink'
+import {IcRoundUnfoldMore} from '@alinea/ui/icons/IcRoundUnfoldMore'
 /*import {IcRoundRedo} from '@alinea/ui/icons/IcRoundRedo'
 import {IcRoundUndo} from '@alinea/ui/icons/IcRoundUndo'*/
 import {Editor} from '@tiptap/react'
@@ -60,68 +61,45 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
         onFocus={e => focusToggle(e.currentTarget)}
         onBlur={e => focusToggle(e.relatedTarget)}
       >
-        <HStack center gap={10}>
-          {/*<IconButton
-            icon={IcRoundUndo}
-            size={18}
-            title="Undo"
-            onClick={e => {
-              e.preventDefault()
-              editor.chain().focus().undo().run()
-            }}
-            disabled={!editor.can().undo()}
-          />
-          <IconButton
-            icon={IcRoundRedo}
-            size={18}
-            title="Redo"
-            onClick={e => {
-              e.preventDefault()
-              editor.chain().focus().redo().run()
-            }}
-            disabled={!editor.can().redo()}
-          />
-          <div className={styles.root.separator()} />*/}
+        <HStack gap={10} center style={{height: '100%', padding: `${px(4)} 0`}}>
           <DropdownMenu.Root>
             <DropdownMenu.Trigger
               title="Heading/paragraph"
               className={styles.root.dropdown()}
             >
-              {Styles[selectedStyle]}
-              <Icon
-                icon={IcRoundKeyboardArrowDown}
-                size={20}
-                className={styles.root.dropdown.icon('after')}
-              />
+              <HStack gap={10} center>
+                <span>{Styles[selectedStyle]}</span>
+                <Icon icon={IcRoundUnfoldMore} />
+              </HStack>
             </DropdownMenu.Trigger>
-            <DropdownMenu.Content>
+            <DropdownMenu.Items>
               <DropdownMenu.Item
-                onSelect={() => editor.chain().focus().clearNodes().run()}
+                onClick={() => editor.chain().focus().clearNodes().run()}
               >
                 <Typo.P>Normal text</Typo.P>
               </DropdownMenu.Item>
               <DropdownMenu.Item
-                onSelect={() =>
+                onClick={() =>
                   editor.chain().focus().setHeading({level: 1}).run()
                 }
               >
                 <Typo.H1 flat>Heading 1</Typo.H1>
               </DropdownMenu.Item>
               <DropdownMenu.Item
-                onSelect={() =>
+                onClick={() =>
                   editor.chain().focus().setHeading({level: 2}).run()
                 }
               >
                 <Typo.H2 flat>Heading 2</Typo.H2>
               </DropdownMenu.Item>
               <DropdownMenu.Item
-                onSelect={() =>
+                onClick={() =>
                   editor.chain().focus().setHeading({level: 3}).run()
                 }
               >
                 <Typo.H3 flat>Heading 3</Typo.H3>
               </DropdownMenu.Item>
-            </DropdownMenu.Content>
+            </DropdownMenu.Items>
           </DropdownMenu.Root>
           <div className={styles.root.separator()} />
           <IconButton
@@ -149,33 +127,29 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
               title="Alignment"
               className={styles.root.dropdown()}
             >
-              <Icon
-                icon={
-                  editor.isActive({textAlign: 'center'})
-                    ? IcAlignCenter
-                    : editor.isActive({textAlign: 'right'})
-                    ? IcAlignRight
-                    : editor.isActive({textAlign: 'justify'})
-                    ? IcAlignJustify
-                    : IcAlignLeft
-                }
-                size={18}
-                className={styles.root.dropdown.icon('before')}
-              />
-              <Icon
-                icon={IcRoundKeyboardArrowDown}
-                size={20}
-                className={styles.root.dropdown.icon('after')}
-                style={{marginLeft: 0}}
-              />
+              <HStack gap={10} center>
+                <Icon
+                  icon={
+                    editor.isActive({textAlign: 'center'})
+                      ? IcAlignCenter
+                      : editor.isActive({textAlign: 'right'})
+                      ? IcAlignRight
+                      : editor.isActive({textAlign: 'justify'})
+                      ? IcAlignJustify
+                      : IcAlignLeft
+                  }
+                  size={18}
+                />
+                <Icon icon={IcRoundUnfoldMore} />
+              </HStack>
             </DropdownMenu.Trigger>
-            <DropdownMenu.Content>
+            <DropdownMenu.Items>
               <DropdownMenu.Item
-                onSelect={() =>
+                onClick={() =>
                   editor.chain().focus().setTextAlign('left').run()
                 }
               >
-                <IconButton
+                <Icon
                   icon={IcAlignLeft}
                   size={18}
                   title="Align left"
@@ -184,11 +158,11 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
                 Left
               </DropdownMenu.Item>
               <DropdownMenu.Item
-                onSelect={() =>
+                onClick={() =>
                   editor.chain().focus().setTextAlign('center').run()
                 }
               >
-                <IconButton
+                <Icon
                   icon={IcAlignCenter}
                   size={18}
                   title="Align center"
@@ -197,11 +171,11 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
                 Center
               </DropdownMenu.Item>
               <DropdownMenu.Item
-                onSelect={() =>
+                onClick={() =>
                   editor.chain().focus().setTextAlign('right').run()
                 }
               >
-                <IconButton
+                <Icon
                   icon={IcAlignRight}
                   size={18}
                   title="Align right"
@@ -210,11 +184,11 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
                 Right
               </DropdownMenu.Item>
               <DropdownMenu.Item
-                onSelect={() =>
+                onClick={() =>
                   editor.chain().focus().setTextAlign('justify').run()
                 }
               >
-                <IconButton
+                <Icon
                   icon={IcAlignJustify}
                   size={18}
                   title="Align justify"
@@ -222,7 +196,7 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
                 />
                 Justify
               </DropdownMenu.Item>
-            </DropdownMenu.Content>
+            </DropdownMenu.Items>
           </DropdownMenu.Root>
           <IconButton
             icon={IcRoundFormatClear}

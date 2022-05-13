@@ -3,8 +3,10 @@
   z-index: 5;
   width: 100%;
   padding: 0 10px;
+  padding-left: 6px;
   height: 44px;
   color: var(--alinea-foreground);
+  background: var(--alinea-background);
   border-bottom: 1px solid var(--alinea-outline);
 
   &-portal {

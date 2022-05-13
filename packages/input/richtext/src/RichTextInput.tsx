@@ -183,7 +183,7 @@ function RichTextEditor<T>({state, field}: RichTextInputProps<T>) {
       onBlur: ({event}) => focusToggle(event.relatedTarget),
       extensions
     },
-    [fragment]
+    []
   )
   if (!editor) return null
   return (
