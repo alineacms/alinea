@@ -1,0 +1,12 @@
+.root {
+  padding: 16px;
+  width: 100%;
+  margin: auto 0;
+
+  &-mesage {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.9em;
+    font-feature-settings: 'tnum' 1;
+    white-space: pre-line;
+  }
+}
