@@ -255,8 +255,6 @@ __metadata:
     "@alinea/core": 0.0.0
     "@alinea/editor": 0.0.0
     "@alinea/ui": 0.0.0
-  peerDependencies:
-    react: "*"
   languageName: unknown
   linkType: soft
 
@@ -396,6 +394,7 @@ __metadata:
   resolution: "@alinea/ui@workspace:packages/ui"
   dependencies:
     "@alinea/core": 0.0.0
+    "@headlessui/react": ^1.6.1
     "@radix-ui/react-dropdown-menu": ^0.1.6
     "@radix-ui/react-tabs": ^0.1.5
     color2k: ^1.2.4
@@ -816,6 +815,16 @@ __metadata:
   bin:
     proto-loader-gen-types: build/bin/proto-loader-gen-types.js
   checksum: 30081a5a6e866506d8e799ebed00367024a2710b9b990104d804fe23c60d81d5ccaa74ad14bd0bedfab6fb313eccbc18e0bbcf3bda7f3288d8eb31cab040255f
+  languageName: node
+  linkType: hard
+
+"@headlessui/react@npm:^1.6.1":
+  version: 1.6.1
+  resolution: "@headlessui/react@npm:1.6.1"
+  peerDependencies:
+    react: ^16 || ^17 || ^18
+    react-dom: ^16 || ^17 || ^18
+  checksum: e69ac75b71dae4960790ca985a4b1eff4ba0e4a7c9b9d31791a0a0ae618dc125b7decd8801d530b017de02b90150884eb17c1c3dedcf42afc2b42f137e17c870
   languageName: node
   linkType: hard
 

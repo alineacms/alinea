@@ -58,6 +58,10 @@
 .root {
   @include dark-theme;
   --alinea-border-radius: 8px;
+  color: var(--alinea-foreground-faded);
+  font-size: 14px;
+  font-display: block;
+  font-family: Inter, sans-serif;
 
   @media (prefers-color-scheme: light) {
     @include light-theme;
@@ -70,14 +74,12 @@
   &.is-dark {
     @include dark-theme;
   }
+}
 
+.main {
   display: flex;
   flex-direction: column;
-  color: var(--alinea-foreground-faded);
-  font-size: 14px;
   background: var(--alinea-background);
-  font-display: block;
-  font-family: Inter, sans-serif;
   min-height: 100vh;
 
   &.is-contain {
