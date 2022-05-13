@@ -12,12 +12,12 @@ export type TabsViewProps = {
 
 export function TabsView({state, section}: TabsViewProps) {
   return (
-    <Tabs.Root defaultValue={'0'}>
+    <Tabs.Root>
       <Tabs.List>
         {section.types.map((type, i) => {
           const Icon = type.options?.icon
           return (
-            <Tabs.Trigger key={i} value={String(i)}>
+            <Tabs.Trigger key={i}>
               <HStack center gap={8}>
                 {Icon && <Icon />}
                 <TextLabel label={type.label} />
@@ -26,13 +26,15 @@ export function TabsView({state, section}: TabsViewProps) {
           )
         })}
       </Tabs.List>
-      {section.types.map((type, i) => {
-        return (
-          <Tabs.Content key={i} value={String(i)} tabIndex={i}>
-            <InputForm type={type} state={state} />
-          </Tabs.Content>
-        )
-      })}
+      <Tabs.Panels>
+        {section.types.map((type, i) => {
+          return (
+            <Tabs.Panel key={i} tabIndex={i}>
+              <InputForm type={type} state={state} />
+            </Tabs.Panel>
+          )
+        })}
+      </Tabs.Panels>
     </Tabs.Root>
   )
 }

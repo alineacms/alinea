@@ -2,6 +2,7 @@ import {
   Avatar,
   DropdownMenu,
   fromModule,
+  Icon,
   IconButton,
   TextLabel,
   useColorScheme
@@ -35,7 +36,7 @@ export namespace Toolbar {
     const navigate = useNavigate()
     return (
       <HStack center className={styles.root()}>
-        <HStack center gap={16}>
+        <HStack gap={16}>
           <DropdownMenu.Root>
             <DropdownMenu.Trigger>
               <HStack center gap={16}>
@@ -46,12 +47,12 @@ export namespace Toolbar {
                   <div style={{fontSize: '13px'}}>
                     <TextLabel label={label} />
                   </div>
-                  <IcRoundUnfoldMore />
+                  <Icon icon={IcRoundUnfoldMore} />
                 </HStack>
               </HStack>
             </DropdownMenu.Trigger>
 
-            <DropdownMenu.Content>
+            <DropdownMenu.Items>
               {Object.entries(config.workspaces).map(([key, workspace]) => {
                 const root = Object.values(workspace.roots)[0]
                 return (
@@ -67,7 +68,7 @@ export namespace Toolbar {
                       )
                     }
                   >
-                    <HStack center gap={16}>
+                    <HStack center gap={16} full>
                       <LogoShape
                         foreground={contrastColor(workspace.color)}
                         background={workspace.color}
@@ -81,7 +82,7 @@ export namespace Toolbar {
                   </DropdownMenu.Item>
                 )
               })}
-            </DropdownMenu.Content>
+            </DropdownMenu.Items>
           </DropdownMenu.Root>
         </HStack>
         <div className={styles.root.portal()}>
@@ -101,11 +102,11 @@ export namespace Toolbar {
                 </HStack>
               </DropdownMenu.Trigger>
 
-              <DropdownMenu.Content>
-                <DropdownMenu.Item onSelect={session.end}>
+              <DropdownMenu.Items right>
+                <DropdownMenu.Item onClick={session.end}>
                   Logout
                 </DropdownMenu.Item>
-              </DropdownMenu.Content>
+              </DropdownMenu.Items>
             </DropdownMenu.Root>
           </HStack>
         </div>

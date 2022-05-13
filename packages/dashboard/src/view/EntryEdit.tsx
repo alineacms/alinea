@@ -216,7 +216,7 @@ export function NewEntry({parentId}: NewEntryProps) {
     parent && (parentType?.options.summaryRow || EntrySummaryRow)*/
 
   return (
-    <Modal open onClose={handleClose}>
+    <Modal open onClose={handleClose} className={styles.new()}>
       <HStack center gap={18} className={styles.new.header()}>
         <IconButton icon={IcRoundArrowBack} onClick={handleClose} />
         <Typo.H1 flat>

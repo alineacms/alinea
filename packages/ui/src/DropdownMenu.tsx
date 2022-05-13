@@ -1,20 +1,46 @@
-import * as RadixDropdownMenu from '@radix-ui/react-dropdown-menu'
+import {Menu} from '@headlessui/react'
+import {ButtonHTMLAttributes, HTMLAttributes} from 'react'
 import css from './DropdownMenu.module.scss'
 import {fromModule} from './util/Styler'
 
 const styles = fromModule(css)
 
 export namespace DropdownMenu {
-  export const Root = RadixDropdownMenu.Root
-  export const Trigger = styles.trigger.toElement(RadixDropdownMenu.Trigger)
-  export const Content = styles.content.toElement(RadixDropdownMenu.Content)
-  export const Item = styles.item.toElement(RadixDropdownMenu.Item)
-  export const CheckboxItem = RadixDropdownMenu.CheckboxItem
-  export const RadioGroup = RadixDropdownMenu.RadioGroup
-  export const RadioItem = RadixDropdownMenu.RadioItem
-  export const ItemIndicator = RadixDropdownMenu.ItemIndicator
-  export const TriggerItem = RadixDropdownMenu.TriggerItem
-  export const Label = RadixDropdownMenu.Label
-  export const Separator = RadixDropdownMenu.Separator
-  export const Arrow = RadixDropdownMenu.Arrow
+  export function Root(props: HTMLAttributes<HTMLDivElement>) {
+    return (
+      <Menu>
+        <div {...props} className={styles.root.mergeProps(props)()} />
+      </Menu>
+    )
+  }
+  export const Trigger: typeof Menu.Button = styles.trigger.toElement(
+    Menu.Button
+  ) as any
+
+  export function Items({
+    left,
+    right,
+    ...props
+  }: HTMLAttributes<HTMLDivElement> & {left?: boolean; right?: boolean}) {
+    return (
+      <Menu.Items
+        {...props}
+        className={styles.items.mergeProps(props)({left, right})}
+      />
+    )
+  }
+  export function Item(props: ButtonHTMLAttributes<HTMLButtonElement>) {
+    return (
+      <Menu.Item>
+        {({active}: {active: boolean}) => {
+          return (
+            <button
+              {...props}
+              className={styles.item.mergeProps(props)({active})}
+            />
+          )
+        }}
+      </Menu.Item>
+    )
+  }
 }
