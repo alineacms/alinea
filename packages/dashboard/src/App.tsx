@@ -210,7 +210,12 @@ function EntryRoute({id}: EntryRouteProps) {
     .filter(Boolean) as Array<string>
   return (
     <CurrentDraftProvider value={draft}>
-      <Pane id="content-tree" resizable="right">
+      <Pane
+        id="content-tree"
+        resizable="right"
+        defaultWidth={330}
+        minWidth={200}
+      >
         <SearchBox />
         <RootHeader />
         <ContentTree

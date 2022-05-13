@@ -42,10 +42,10 @@ function Divider({
     function move(moveEvent: MouseEvent) {
       moveEvent.preventDefault()
       if (!container?.current) return
-      const newWidth = width + (moveEvent.clientX - prevX) * direction
-      if (newWidth < minWidth) return
-      if (newWidth > maxWidth) return
-      prevX = moveEvent.clientX
+      let newWidth = width + (moveEvent.clientX - prevX) * direction
+      if (newWidth < minWidth) newWidth = minWidth
+      else if (newWidth > maxWidth) newWidth = maxWidth
+      else prevX = moveEvent.clientX
       width = newWidth
       container.current.style.width = `${newWidth}px`
       setWidth(newWidth)
