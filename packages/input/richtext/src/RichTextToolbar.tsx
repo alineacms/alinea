@@ -149,52 +149,60 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
                   editor.chain().focus().setTextAlign('left').run()
                 }
               >
-                <Icon
-                  icon={IcAlignLeft}
-                  size={18}
-                  title="Align left"
-                  active={editor.isActive({textAlign: 'left'})}
-                />
-                Left
+                <HStack gap={8} center>
+                  <Icon
+                    round
+                    icon={IcAlignLeft}
+                    title="Align left"
+                    active={editor.isActive({textAlign: 'left'})}
+                  />
+                  <span>Left</span>
+                </HStack>
               </DropdownMenu.Item>
               <DropdownMenu.Item
                 onClick={() =>
                   editor.chain().focus().setTextAlign('center').run()
                 }
               >
-                <Icon
-                  icon={IcAlignCenter}
-                  size={18}
-                  title="Align center"
-                  active={editor.isActive({textAlign: 'center'})}
-                />
-                Center
+                <HStack gap={8} center>
+                  <Icon
+                    round
+                    icon={IcAlignCenter}
+                    title="Align center"
+                    active={editor.isActive({textAlign: 'center'})}
+                  />
+                  <span>Center</span>
+                </HStack>
               </DropdownMenu.Item>
               <DropdownMenu.Item
                 onClick={() =>
                   editor.chain().focus().setTextAlign('right').run()
                 }
               >
-                <Icon
-                  icon={IcAlignRight}
-                  size={18}
-                  title="Align right"
-                  active={editor.isActive({textAlign: 'right'})}
-                />
-                Right
+                <HStack gap={8} center>
+                  <Icon
+                    round
+                    icon={IcAlignRight}
+                    title="Align right"
+                    active={editor.isActive({textAlign: 'right'})}
+                  />
+                  <span>Right</span>
+                </HStack>
               </DropdownMenu.Item>
               <DropdownMenu.Item
                 onClick={() =>
                   editor.chain().focus().setTextAlign('justify').run()
                 }
               >
-                <Icon
-                  icon={IcAlignJustify}
-                  size={18}
-                  title="Align justify"
-                  active={editor.isActive({textAlign: 'justify'})}
-                />
-                Justify
+                <HStack gap={8} center>
+                  <Icon
+                    round
+                    icon={IcAlignJustify}
+                    title="Align justify"
+                    active={editor.isActive({textAlign: 'justify'})}
+                  />
+                  <span>Justify</span>
+                </HStack>
               </DropdownMenu.Item>
             </DropdownMenu.Items>
           </DropdownMenu.Root>

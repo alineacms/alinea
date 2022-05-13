@@ -9,8 +9,8 @@
   --alinea-toolbar: hsl(var(--alinea-hue), var(--alinea-saturation), 20%);
   --alinea-inner: hsl(var(--alinea-hue), var(--alinea-saturation), 12%);
   --alinea-inner-outline: hsl(var(--alinea-hue), var(--alinea-saturation), 13%);
-  --alinea-highlight: hsl(var(--alinea-hue), var(--alinea-saturation), 18%);
-  --alinea-lift: hsl(var(--alinea-hue), var(--alinea-saturation), 19%);
+  --alinea-highlight: hsla(var(--alinea-positive), .06);
+  --alinea-lift: hsl(var(--alinea-hue), var(--alinea-saturation), 18%);
   --alinea-selected: hsl(var(--alinea-hue), var(--alinea-saturation), 22%);
   --alinea-outline: hsl(var(--alinea-hue), var(--alinea-saturation), 20%);
   --alinea-fields: hsl(var(--alinea-hue), var(--alinea-saturation), 11.5%);
@@ -38,7 +38,7 @@
   --alinea-toolbar: hsl(var(--alinea-hue), var(--alinea-saturation), 98%);
   --alinea-inner: hsl(var(--alinea-hue), var(--alinea-saturation), 98.5%);
   --alinea-inner-outline: #dcdce4;
-  --alinea-highlight: hsl(var(--alinea-hue), var(--alinea-saturation), 98%);
+  --alinea-highlight: hsla(var(--alinea-negative), .06);
   --alinea-lift:  hsl(var(--alinea-hue), var(--alinea-saturation), 96%);
   --alinea-selected: hsl(var(--alinea-hue), var(--alinea-saturation), 100%);
   --alinea-outline: hsl(var(--alinea-hue), var(--alinea-saturation), 89%);
