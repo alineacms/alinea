@@ -132,14 +132,22 @@ export class CursorImpl<Row> {
     })
   }
 
-  orderBy(...orderBy: Array<OrderBy>): Cursor<Row> {
+  orderBy(...orderBy: Array<OrderBy>): Cursor<Row>
+  orderBy(pick: (collection: Cursor<Row>) => Array<OrderBy>): Cursor<Row>
+  orderBy(...args: Array<any>): Cursor<Row> {
+    const orderBy: Array<OrderBy> =
+      args.length === 1 && typeof args[0] === 'function' ? args[0](this) : args
     return new Cursor({
       ...this.cursor,
       orderBy: orderBy
     })
   }
 
-  groupBy(...groupBy: Array<Expr<any>>): Cursor<Row> {
+  groupBy(...groupBy: Array<Expr<any>>): Cursor<Row>
+  groupBy(pick: (collection: Cursor<Row>) => Array<Expr<any>>): Cursor<Row>
+  groupBy(...args: Array<any>): Cursor<Row> {
+    const groupBy: Array<Expr<any>> =
+      args.length === 1 && typeof args[0] === 'function' ? args[0](this) : args
     const data = groupBy.map(e => e.expr)
     return new Cursor({
       ...this.cursor,

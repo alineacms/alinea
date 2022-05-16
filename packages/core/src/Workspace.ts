@@ -1,7 +1,7 @@
 import type {ComponentType} from 'react'
 import {Label} from './Label'
 import {Root, RootConfig} from './Root'
-import {Schema} from './Schema'
+import {Schema, SchemaConfig} from './Schema'
 import {getRandomColor} from './util/GetRandomColor'
 
 /** A record of multiple named workspaces */
@@ -9,7 +9,7 @@ export type Workspaces = Record<string, WorkspaceConfig>
 
 export type WorkspaceOptions<T = any> = {
   /** The schema of the workspace */
-  schema: Schema<T>
+  schema: SchemaConfig<T>
   /**
    * Points to a Data.Source either by passing a directory or a file.
    * - If the source is a directory, it will be scanned for files.
@@ -37,6 +37,7 @@ export type WorkspaceConfig<T = any> = {
 export class Workspace<T = any> {
   label: Label
   roots: Record<string, Root>
+  schema: Schema<T>
 
   constructor(public name: string, public config: WorkspaceConfig<T>) {
     this.label = config.label
@@ -45,10 +46,7 @@ export class Workspace<T = any> {
         return [rootKey, new Root(rootKey, name, config)]
       })
     )
-  }
-
-  get schema(): Schema<T> {
-    return this.config.schema
+    this.schema = new Schema(this, config.schema)
   }
 
   get source(): string {

@@ -1,8 +1,10 @@
 import {Collection, Cursor, Selection} from '@alinea/store'
 import {Entry} from './Entry'
 import {Field} from './Field'
+import type {TypeConfig} from './Type'
 import {Type} from './Type'
 import {LazyRecord} from './util/LazyRecord'
+import type {Workspace} from './Workspace'
 
 export type HasType = {type: string}
 
@@ -14,14 +16,6 @@ type TypeToEntry<T> = T extends {[key: string]: any}
 
 export type DataOf<T> = T extends Collection<infer U> ? U : never
 export type EntryOf<T> = T extends Schema<infer U> ? U : never
-
-/** Create a schema, expects a string record of Type instances */
-export function schema<Types extends LazyRecord<Type>>(
-  types: Types
-): Schema<TypeToEntry<TypeToRows<Types>>> {
-  return new Schema(types) as any
-}
-
 export type TypesOf<T> = T extends HasType ? T['type'] : string
 
 export namespace Schema {
@@ -41,68 +35,56 @@ export namespace Schema {
 
 /** Describes the different types of entries */
 export class Schema<T = any> {
-  private __types: LazyRecord<Type<T>>
+  typeMap = new Map<string, Type>()
 
-  constructor(types: LazyRecord<Type<T>>) {
-    this.__types = types
-  }
-
-  concat<X>(that: Schema<X>): Schema<T | X> {
-    return new Schema<any>(LazyRecord.concat(this.__types, that.__types))
+  constructor(public workspace: Workspace<T>, public config: SchemaConfig<T>) {
+    for (const [name, type] of LazyRecord.iterate(config.types)) {
+      this.typeMap.set(name, new Type(this, name, type))
+    }
   }
 
   get types() {
-    return LazyRecord.resolve(this.__types)
+    return this.typeMap.entries()
   }
 
   get valueTypes() {
     return Object.fromEntries(
-      Array.from(this).map(([key, channel]) => {
-        return [key, channel.valueType]
+      Array.from(this).map(([key, type]) => {
+        return [key, type.valueType]
       })
     )
   }
 
   [Symbol.iterator]() {
-    return LazyRecord.iterate(this.__types)[Symbol.iterator]()
+    return this.types[Symbol.iterator]()
   }
 
   /** Get a type by name */
   type<K extends TypesOf<T>>(name: K): Type<Extract<T, {type: K}>> | undefined
   type(name: string): Type | undefined
   type(name: any) {
-    return LazyRecord.get<any>(this.__types, name)
+    return this.typeMap.get(name)
   }
 
   /** Keys of every type */
   get keys() {
-    return LazyRecord.keys(this.__types)
+    return this.typeMap.keys()
   }
+}
 
-  /** A record containing a collection for every type */
-  collections(workspace: string): {
-    [K in TypesOf<T>]: Collection<Extract<T, {type: K}>>
-  } {
-    return Object.fromEntries(
-      Object.keys(this.__types).map(name => {
-        return [name, this.collection(workspace, name as any)]
-      })
-    ) as any
+export type SchemaConfig<T> = {
+  types: LazyRecord<TypeConfig>
+  concat<X>(that: SchemaConfig<X>): SchemaConfig<T | X>
+}
+
+/** Create a schema, expects a string record of Type instances */
+export function schema<Types extends LazyRecord<TypeConfig>>(
+  types: Types
+): SchemaConfig<TypeToEntry<TypeToRows<TypeConfig>>> {
+  return {
+    types,
+    concat(that) {
+      return schema(LazyRecord.concat(types, that.types))
+    }
   }
-
-  /** A collection for a given type, used in querying a store */
-  collection<K extends TypesOf<T>>(
-    workspace: string,
-    type: K
-  ): Collection<Extract<T, {type: K}>> {
-    const alias = type as string
-    const fields = Entry.as(alias)
-    return new Collection('Entry', {
-      where: fields.type.is(alias).and(fields.workspace.is(workspace)),
-      alias
-    })
-  }
-
-  /** A generic collection used to query any type in this schema */
-  entry: Collection<T> = new Collection('Entry')
 }

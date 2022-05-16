@@ -1,12 +1,4 @@
-import {
-  Config,
-  createId,
-  Entry,
-  Schema,
-  Tree,
-  TypesOf,
-  Workspace
-} from '@alinea/core'
+import {Config, createId, Entry, Schema, Tree, Workspace} from '@alinea/core'
 import {
   Collection,
   Cursor,
@@ -130,11 +122,15 @@ class Multiple<P, T> extends Base<P, Array<Page<P, T>>> {
       this.cursor.include(selection)
     )
   }
-  orderBy(...orderBy: Array<OrderBy>) {
-    return new Multiple<P, T>(this.pages, this.cursor.orderBy(...orderBy))
+  orderBy(...orderBy: Array<OrderBy>): Multiple<P, T>
+  orderBy(pick: (cursor: Cursor<T>) => Array<OrderBy>): Multiple<P, T>
+  orderBy(...args: any) {
+    return new Multiple<P, T>(this.pages, this.cursor.orderBy(...args))
   }
-  groupBy(...groupBy: Array<Expr<any>>) {
-    return new Multiple<P, T>(this.pages, this.cursor.groupBy(...groupBy))
+  groupBy(...groupBy: Array<Expr<any>>): Multiple<P, T>
+  groupBy(pick: (cursor: Cursor<T>) => Array<Expr<any>>): Multiple<P, T>
+  groupBy(...args: any) {
+    return new Multiple<P, T>(this.pages, this.cursor.groupBy(...args))
   }
   first() {
     return new Single<P, T>(this.pages, this.cursor.first() as any)
@@ -196,11 +192,15 @@ class Single<P, T> extends Base<P, Page<P, T> | null> {
       this.cursor.include(selection)
     )
   }
-  orderBy(...orderBy: Array<OrderBy>) {
-    return new Single<P, T>(this.pages, this.cursor.orderBy(...orderBy))
+  orderBy(...orderBy: Array<OrderBy>): Single<P, T>
+  orderBy(pick: (cursor: Cursor<T>) => Array<OrderBy>): Single<P, T>
+  orderBy(...args: any) {
+    return new Single<P, T>(this.pages, this.cursor.orderBy(...args))
   }
-  groupBy(...groupBy: Array<Expr<any>>) {
-    return new Single<P, T>(this.pages, this.cursor.groupBy(...groupBy))
+  groupBy(...groupBy: Array<Expr<any>>): Single<P, T>
+  groupBy(pick: (cursor: Cursor<T>) => Array<Expr<any>>): Single<P, T>
+  groupBy(...args: any) {
+    return new Single<P, T>(this.pages, this.cursor.groupBy(...args))
   }
   children<C = T>(depth = 1) {
     if (depth > 1) throw 'todo depth > 1'
@@ -227,24 +227,9 @@ class PagesImpl<T> {
   ) {
     this.schema = workspace.schema
     this.store = createCache()
-    const self = this
-    return new Proxy(this, {
-      get(target: any, key: string) {
-        if (key in target) return target[key]
-        const type = self.schema.type(key as TypesOf<T>)
-        if (type) {
-          const [workspaceKey] =
-            Object.entries(self.config.workspaces).find(
-              ([name, workspace]) => workspace === self.workspace
-            ) || []
-          if (workspaceKey)
-            return self.whereType(
-              self.schema.collection(workspaceKey, key as any)
-            )
-        }
-        return undefined
-      }
-    })
+    for (const [key, type] of workspace.schema.types) {
+      ;(this as any)[key] = this.whereType(type.collection())
+    }
   }
 
   whereUrl(url: EV<string>) {

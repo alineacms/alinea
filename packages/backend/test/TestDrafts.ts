@@ -1,4 +1,4 @@
-import {docFromEntry, Entry, ROOT_KEY, type} from '@alinea/core'
+import {docFromEntry, Entry, ROOT_KEY, Type, type} from '@alinea/core'
 import {path} from '@alinea/input.path'
 import {text} from '@alinea/input.text'
 import dotenv from 'dotenv'
@@ -22,13 +22,15 @@ const Doc = type('Doc', {
   path: path('Path')
 })
 
+const DocType = new Type(undefined!, 'Doc', Doc)
+
 const drafts = new FileDrafts({
   fs: fs.promises as any,
   dir: '/tmp'
 })
 
 test('update doc', async () => {
-  const yDoc = docFromEntry(entry, () => Doc)
+  const yDoc = docFromEntry(entry, () => DocType)
   const stateVector = Y.encodeStateVector(yDoc)
   await drafts.update(entry.id, Y.encodeStateAsUpdate(yDoc))
   yDoc.getMap(ROOT_KEY).set('title', 'Hello world')

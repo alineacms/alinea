@@ -58,6 +58,10 @@ export class CollectionImpl<Row extends {} = any> extends CursorImpl<Row> {
     })
   }
 
+  /*on() {
+    throw new Error('Not implemented')
+  }*/
+
   static extend<Row, F extends Record<string, Expr<any>>>(
     collection: Collection<Row>,
     createFields: (current: Fields<Row>) => F
