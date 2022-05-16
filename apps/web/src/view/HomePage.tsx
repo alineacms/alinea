@@ -30,9 +30,9 @@ export function HomePage({headline, byline, action}: HomePageProps) {
             justify="center"
             style={{paddingTop: px(20)}}
           >
-            {action && (
+            {/*action && (
               <Hero.Action href={action.url}>{action.label}</Hero.Action>
-            )}
+            )*/}
             <Typo.Link href="/demo" target="_blank">
               <HStack center gap={8}>
                 <span>Try the demo</span>

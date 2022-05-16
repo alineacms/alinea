@@ -183,7 +183,7 @@ function restrictByType(
 
 export type LinkInputProps<T> = {
   state: InputState<InputState.List<Reference & T>>
-  field: LinkField<T>
+  field: LinkField<T, any>
 }
 
 export function LinkInput<T>({state, field}: LinkInputProps<T>) {

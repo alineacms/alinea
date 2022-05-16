@@ -24,8 +24,8 @@ export namespace Schema {
     ? U
     : T extends Type<infer U>
     ? U
-    : T extends Field<infer U, infer M>
-    ? U
+    : T extends Field<infer U, infer M, infer Q>
+    ? Q
     : T extends Selection<infer U>
     ? U
     : T extends Cursor<infer U>
@@ -47,6 +47,10 @@ export class Schema<T = any> {
     return Object.fromEntries(this.typeMap.entries())
   }
 
+  entries() {
+    return this.typeMap.entries()
+  }
+
   static shape<T>(config: SchemaConfig<T>) {
     return Object.fromEntries(
       LazyRecord.iterate(config.types).map(([key, type]) => {
@@ -62,7 +66,7 @@ export class Schema<T = any> {
   /** Get a type by name */
   type<K extends TypesOf<T>>(name: K): Type<Extract<T, {type: K}>> | undefined
   type(name: string): Type | undefined
-  type(name: any) {
+  type(name: any): any {
     return this.typeMap.get(name)
   }
 

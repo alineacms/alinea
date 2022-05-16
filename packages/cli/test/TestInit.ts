@@ -14,7 +14,7 @@ test('init', async () => {
     `file://${path.resolve(cwd, '.alinea/main/pages')}`
   )
   const pages: Pages<Entry> = exports.pages
-  const welcome = await pages.findFirst(page => page.title.is('Welcome'))
+  const welcome = await pages.where(page => page.title.is('Welcome'))
   assert.ok(welcome)
 })
 

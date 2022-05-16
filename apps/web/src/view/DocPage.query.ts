@@ -4,7 +4,7 @@ import {blocksQuery} from './blocks/Blocks.query'
 
 function menuQuery(pages: Pages) {
   return pages
-    .findMany(AnyPage.type.is('Doc').or(AnyPage.type.is('Docs')))
+    .where(AnyPage.type.is('Doc').or(AnyPage.type.is('Docs')))
     .where(AnyPage.id.isNot('docs'))
     .select({
       id: AnyPage.id,

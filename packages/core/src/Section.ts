@@ -32,7 +32,9 @@ export namespace Section {
     : S extends Lazy<infer U>
     ? U extends {[key: string]: any}
       ? {
-          [K in keyof U]: U[K] extends Field<infer T, infer M> ? T : never
+          [K in keyof U]: U[K] extends Field<infer T, infer M, infer Q>
+            ? Q
+            : never
         }
       : never
     : never

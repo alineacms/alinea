@@ -1,4 +1,7 @@
-import {Collection, Expr} from '@alinea/store'
+// Todo: extract interface and place it in core
+import type {Pages} from '@alinea/backend/Pages'
+import type {Fields} from '@alinea/store'
+import {Collection, Expr, SelectionInput} from '@alinea/store'
 import type {ComponentType} from 'react'
 import {Entry} from './Entry'
 import {Field} from './Field'
@@ -90,19 +93,33 @@ export class Type<T = any> implements TypeConfig<T> {
     })
   }*/
 
-  collection(): Collection<T> {
-    const alias = this.name
-    const fields = Entry.as(alias)
-    return new Collection('Entry', {
-      where: fields.type
-        .is(alias)
-        .and(fields.workspace.is(this.schema.workspace.name)),
-      alias
-    })
+  selection(pages: Pages<any>) {
+    const collection = this.collection()
+    const computed: Record<string, SelectionInput> = {}
+    for (const [key, field] of this) {
+      if (!field.query) continue
+      computed[key] = field.query(collection.get(key), pages)
+    }
+    return collection.fields.with(computed)
   }
 
-  configure(options: TypeOptions<T>) {
-    return type(this.label, ...this.sections).configure(options)
+  collection(): Collection<T> {
+    const alias = this.name
+    const fields = Entry
+    const res = new Collection<T>('Entry', {
+      where: fields.type
+        .is(alias)
+        .and(fields.workspace.is(this.schema.workspace.name))
+    })
+    // Todo: this is used in Pages(Multiple).whereType() and needs a clean way
+    // of passing this option
+    ;(res as any).__options.alias = this.name
+    return res
+  }
+
+  configure(options: TypeOptions<T>): TypeConfig<T> {
+    const config: TypeConfig<T> = type(this.label, ...this.sections) as any
+    return {...config, options}
   }
 }
 
@@ -125,7 +142,8 @@ export type TypeOptions<T> = {
   summaryThumb?: View<any>
 
   /** Create indexes on fields of this type */
-  index?: (fields: Collection<T>) => Record<string, Array<Expr<any>>>
+  // Todo: solve infered type here
+  index?: <T>(fields: Fields<T>) => Record<string, Array<Expr<any>>>
 }
 
 export type TypeConfig<T = any> = {
