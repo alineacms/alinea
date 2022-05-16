@@ -1,4 +1,4 @@
-import {Field, Label, Reference, Type, Value} from '@alinea/core'
+import {Field, Label, Reference, Type, TypeConfig, Value} from '@alinea/core'
 import {RecordValue} from '@alinea/core/value/RecordValue'
 
 export type LinkType = 'entry' | 'image' | 'file' | 'external'
@@ -6,7 +6,7 @@ export type LinkType = 'entry' | 'image' | 'file' | 'external'
 /** Optional settings to configure a link field */
 export type LinkOptions<T> = {
   /** Add extra fields to each link */
-  fields?: Type<T>
+  fields?: TypeConfig<T>
   /** Width of the field in the dashboard UI (0-1) */
   width?: number
   /** Add instructional text to a field */
@@ -32,7 +32,7 @@ export function createLink<T = {}>(
   label: Label,
   options: LinkOptions<T> = {}
 ): LinkField<T> {
-  const extra = options.fields?.valueType
+  const extra = options.fields && Type.shape(options.fields)
   return {
     type: Value.List(label, {
       entry: new RecordValue('Entry', {

@@ -49,7 +49,7 @@ abstract class Base<P, T> extends Promise<T> {
   protected result: Promise<T> | undefined
 
   constructor(protected pages: Pages<P>, protected cursor: Cursor<any>) {
-    super(_ => _(undefined!))
+    super(function () {})
   }
 
   protected abstract execute(): Promise<T>
@@ -227,7 +227,7 @@ class PagesImpl<T> {
   ) {
     this.schema = workspace.schema
     this.store = createCache()
-    for (const [key, type] of workspace.schema.types) {
+    for (const [key, type] of Object.entries(workspace.schema.types)) {
       ;(this as any)[key] = this.whereType(type.collection())
     }
   }

@@ -112,12 +112,9 @@ function schemaCollections(workspace: string, schema: Schema) {
     import {config} from '../config.js'
     export const workspace = config.workspaces['${workspace}']
     export const schema = workspace.schema
-    export const AnyPage = schema.entry
+    export const AnyPage = schema.collection()
     ${typeNames
-      .map(
-        type =>
-          `export const ${type} = schema.collection('${workspace}', '${type}')`
-      )
+      .map(type => `export const ${type} = schema.type('${type}').collection()`)
       .join('\n')}
   `
     .replace(/  /g, '')

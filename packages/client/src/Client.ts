@@ -69,9 +69,9 @@ export class Client<T extends Workspaces> implements Hub<T> {
     }).then(toFuture)
   }
 
-  uploadFile<K extends keyof T>(
-    workspace: K,
-    root: keyof T[K]['roots'],
+  uploadFile(
+    workspace: string,
+    root: string,
     file: Hub.Upload
   ): Future<Media.File> {
     const form = new FormData()

@@ -1,9 +1,9 @@
-import {Field, Label, Schema, Value} from '@alinea/core'
+import {Field, Label, Schema, SchemaConfig, Value} from '@alinea/core'
 
 /** Optional settings to configure a rich text field */
 export type RichTextOptions<T> = {
   /** Allow these blocks to be created between text fragments */
-  blocks?: Schema<T>
+  blocks?: SchemaConfig<T>
   /** Add instructional text to a field */
   help?: Label
   /** Field is optional */
@@ -26,7 +26,7 @@ export function createRichText<T>(
   options: RichTextOptions<T> = {}
 ): RichTextField<T> {
   return {
-    type: Value.RichText(label, options.blocks?.valueTypes),
+    type: Value.RichText(label, options.blocks && Schema.shape(options.blocks)),
     label,
     options
   }

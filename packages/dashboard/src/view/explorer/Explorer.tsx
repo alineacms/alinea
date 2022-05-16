@@ -41,7 +41,7 @@ export function Explorer({
 }: ExplorerProps) {
   const {hub} = useSession()
   const {data, isLoading} = useQuery(
-    ['explorer', type, cursor, schema, max],
+    ['explorer', type, cursor, max],
     () => {
       const summaryView = type === 'row' ? 'summaryRow' : 'summaryThumb'
       const selection = View.getSelection(schema, summaryView, Entry)

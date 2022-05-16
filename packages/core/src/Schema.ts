@@ -44,19 +44,19 @@ export class Schema<T = any> {
   }
 
   get types() {
-    return this.typeMap.entries()
+    return Object.fromEntries(this.typeMap.entries())
   }
 
-  get valueTypes() {
+  static shape<T>(config: SchemaConfig<T>) {
     return Object.fromEntries(
-      Array.from(this).map(([key, type]) => {
-        return [key, type.valueType]
+      LazyRecord.iterate(config.types).map(([key, type]) => {
+        return [key, Type.shape(type)]
       })
     )
   }
 
   [Symbol.iterator]() {
-    return this.types[Symbol.iterator]()
+    return this.typeMap.entries()[Symbol.iterator]()
   }
 
   /** Get a type by name */
@@ -68,11 +68,16 @@ export class Schema<T = any> {
 
   /** Keys of every type */
   get keys() {
-    return this.typeMap.keys()
+    return Array.from(this.typeMap.keys())
+  }
+
+  /** A generic collection used to query any type in this schema */
+  collection(): Collection<T> {
+    return new Collection('Entry')
   }
 }
 
-export type SchemaConfig<T> = {
+export type SchemaConfig<T = any> = {
   types: LazyRecord<TypeConfig>
   concat<X>(that: SchemaConfig<X>): SchemaConfig<T | X>
 }
@@ -80,7 +85,7 @@ export type SchemaConfig<T> = {
 /** Create a schema, expects a string record of Type instances */
 export function schema<Types extends LazyRecord<TypeConfig>>(
   types: Types
-): SchemaConfig<TypeToEntry<TypeToRows<TypeConfig>>> {
+): SchemaConfig<TypeToEntry<TypeToRows<Types>>> {
   return {
     types,
     concat(that) {

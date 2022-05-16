@@ -1,4 +1,4 @@
-import {createId, Schema, Type} from '@alinea/core'
+import {createId, SchemaConfig, TypeConfig} from '@alinea/core'
 import {useReferencePicker} from '@alinea/dashboard'
 import {InputForm, InputLabel, InputState, useInput} from '@alinea/editor'
 import {Card, Create, fromModule, IconButton, px, TextLabel} from '@alinea/ui'
@@ -31,7 +31,7 @@ type NodeViewProps = {
 function typeExtension(
   parent: InputState<InputState.Text<any>>,
   name: string,
-  type: Type
+  type: TypeConfig
 ) {
   function View({node, deleteNode}: NodeViewProps) {
     const {id} = node.attrs
@@ -42,7 +42,7 @@ function typeExtension(
           <Card.Header>
             <Card.Options>
               <IconButton
-                icon={type.options.icon || IcRoundDragHandle}
+                icon={type.options?.icon || IcRoundDragHandle}
                 data-drag-handle
                 style={{cursor: 'grab'}}
               />
@@ -85,7 +85,7 @@ function typeExtension(
 
 function schemaToExtensions(
   path: InputState<InputState.Text<any>>,
-  schema: Schema | undefined
+  schema: SchemaConfig | undefined
 ) {
   if (!schema) return []
   const {types} = schema
@@ -96,7 +96,7 @@ function schemaToExtensions(
 
 type InsertMenuProps = {
   editor: Editor
-  schema: Schema | undefined
+  schema: SchemaConfig | undefined
   onInsert: (id: string, type: string) => void
 }
 

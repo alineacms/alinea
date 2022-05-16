@@ -28,41 +28,44 @@ export type WorkspaceOptions<T = any> = {
 
 export type WorkspaceConfig<T = any> = {
   label: Label
-} & WorkspaceOptions<T>
+  options: WorkspaceOptions<T>
+}
 
 /**
  * Use a workspace to divide content.
  * It is possible to create internal links between workspaces.
  **/
-export class Workspace<T = any> {
+export class Workspace<T = any> implements WorkspaceConfig<T> {
   label: Label
+  options: WorkspaceOptions<T>
   roots: Record<string, Root>
   schema: Schema<T>
 
   constructor(public name: string, public config: WorkspaceConfig<T>) {
     this.label = config.label
+    this.options = config.options
     this.roots = Object.fromEntries(
-      Object.entries(this.config.roots).map(([rootKey, config]) => {
+      Object.entries(this.options.roots).map(([rootKey, config]) => {
         return [rootKey, new Root(rootKey, name, config)]
       })
     )
-    this.schema = new Schema(this, config.schema)
+    this.schema = new Schema(this, this.options.schema)
   }
 
   get source(): string {
-    return this.config.source
+    return this.options.source
   }
 
   get mediaDir() {
-    return this.config.mediaDir
+    return this.options.mediaDir
   }
 
   get preview() {
-    return this.config.preview
+    return this.options.preview
   }
 
   get color() {
-    return this.config.color || getRandomColor(JSON.stringify(this.label))
+    return this.options.color || getRandomColor(JSON.stringify(this.label))
   }
 }
 
@@ -74,6 +77,6 @@ export function workspace<T>(
 ): WorkspaceConfig<T> {
   return {
     label,
-    ...options
+    options
   }
 }

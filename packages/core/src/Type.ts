@@ -18,11 +18,12 @@ export namespace Type {
 }
 
 /** Describes the structure of an entry by their fields and type */
-export class Type<T = any> {
+export class Type<T = any> implements TypeConfig<T> {
   label: Label
   sections: Array<Section>
   options: TypeOptions<T>
   fields: Record<string, Field<any, any>> = {}
+  shape: RecordValue<T>
 
   constructor(
     public schema: Schema,
@@ -31,7 +32,8 @@ export class Type<T = any> {
   ) {
     this.label = config.label
     this.options = config.options || {}
-    this.sections = config.sections.map(Section.from)
+    this.sections = config.sections
+    this.shape = Type.shape(config)
     for (const section of this.sections)
       if (section.fields) Object.assign(this.fields, Lazy.get(section.fields))
   }
@@ -40,11 +42,12 @@ export class Type<T = any> {
     return Boolean(this.options.isContainer)
   }
 
-  get valueType(): RecordValue<T> {
+  static shape<T>(config: TypeConfig<T>): RecordValue<T> {
     return Value.Record(
-      this.label,
+      config.label,
       Object.fromEntries(
-        Array.from(this)
+        config.sections
+          .flatMap(section => LazyRecord.iterate(section.fields || {}))
           .filter(([, field]) => field.type)
           .map(([key, field]) => {
             return [key, field.type!]
@@ -67,7 +70,7 @@ export class Type<T = any> {
 
   /** Create a new empty instance of this type's fields */
   empty() {
-    return this.valueType.create()
+    return this.shape.create()
   }
 
   /** Create a new Entry instance of this type */
@@ -97,6 +100,10 @@ export class Type<T = any> {
       alias
     })
   }
+
+  configure(options: TypeOptions<T>) {
+    return type(this.label, ...this.sections).configure(options)
+  }
 }
 
 /** Optional settings to configure a Type */
@@ -123,9 +130,9 @@ export type TypeOptions<T> = {
 
 export type TypeConfig<T = any> = {
   label: Label
-  sections: Array<Section.Input>
+  sections: Array<Section>
   configure: (options: TypeOptions<T>) => TypeConfig<T>
-  options?: TypeOptions<T>
+  options: TypeOptions<T>
 }
 
 /** Create a new type */
@@ -135,7 +142,8 @@ export function type<T extends Array<Section.Input>>(
 ): TypeConfig<Section.FieldsOf<T[number]>> {
   return {
     label,
-    sections,
+    sections: sections.map(Section.from),
+    options: {},
     configure(options) {
       return {...type(label, ...sections), options}
     }

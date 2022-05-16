@@ -1,4 +1,4 @@
-import {Entry, Media, Outcome, Reference, Type, View} from '@alinea/core'
+import {Entry, Media, Outcome, Reference, TypeConfig, View} from '@alinea/core'
 import {useReferencePicker, useSession, useWorkspace} from '@alinea/dashboard'
 import {EntrySummaryRow} from '@alinea/dashboard/view/entry/EntrySummary'
 import {InputForm, InputLabel, InputState, useInput} from '@alinea/editor'
@@ -49,7 +49,7 @@ function LinkInputEntryRow({entry}: LinkInputEntryRowProps) {
 }
 
 type LinkInputRowProps<T> = {
-  fields: Type<T> | undefined
+  fields: TypeConfig<T> | undefined
   state: InputState<T>
   reference: Reference
   entryData: (id: string) => Entry.Minimal | undefined
@@ -199,10 +199,10 @@ export function LinkInput<T>({state, field}: LinkInputProps<T>) {
       .filter((v): v is Reference.Entry => v.type === 'entry')
       .map(v => v.entry)
     return Entry.where(Entry.id.isIn(entries))
-  }, [value])
+  }, [value, schema])
 
   const {data, isLoading} = useQuery(
-    ['explorer', schema, cursor],
+    ['explorer', cursor],
     () => {
       const selection = View.getSelection(schema, 'summaryRow', Entry)
       if (value.length === 0) return new Map()

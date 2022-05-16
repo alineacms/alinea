@@ -113,7 +113,7 @@ export function useContentTree({
   }, [workspace])
   const ids = Array.from(new Set([...open, ...select])).sort()
   const {data, refetch} = useQuery(
-    ['tree', currentLocale, workspace, root, ids.join('.')],
+    ['tree', currentLocale, workspace.name, root.name, ids.join('.')],
     () => {
       return hub
         .query(

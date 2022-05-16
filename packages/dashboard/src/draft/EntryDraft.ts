@@ -130,7 +130,7 @@ export class EntryDraft implements Entry {
   private getLocation(location: Array<string>) {
     let target = this.__root
     let parent = target
-    let type: Value = this.channel.valueType
+    let type: Value = this.channel.shape
     for (const key of location) {
       parent = target
       if (!target) break

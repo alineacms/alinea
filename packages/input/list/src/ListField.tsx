@@ -1,9 +1,9 @@
-import {Field, Label, Schema, Value} from '@alinea/core'
+import {Field, Label, Schema, SchemaConfig, Value} from '@alinea/core'
 
 /** Optional settings to configure a list field */
 export type ListOptions<T> = {
   /** Allow these types of blocks to be created */
-  schema: Schema<T>
+  schema: SchemaConfig<T>
   /** Width of the field in the dashboard UI (0-1) */
   width?: number
   /** Add instructional text to a field */
@@ -26,7 +26,7 @@ export function createList<T>(
   options: ListOptions<T>
 ): ListField<T> {
   return {
-    type: Value.List(label, options.schema.valueTypes),
+    type: Value.List(label, Schema.shape(options.schema)),
     label,
     options
   }

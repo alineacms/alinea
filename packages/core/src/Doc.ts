@@ -33,7 +33,7 @@ export function entryFromDoc(
     parent: docRoot.get('parent') as string,
     parents: docRoot.get('parents') as Array<string>,
     $isContainer: docRoot.get('$isContainer') as boolean,
-    ...type.valueType.fromY(docRoot)
+    ...type.shape.fromY(docRoot)
   }
 }
 
