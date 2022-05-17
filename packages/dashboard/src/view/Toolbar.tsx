@@ -4,10 +4,11 @@ import {
   fromModule,
   IconButton,
   TextLabel,
-  useColorScheme
+  usePreferences
 } from '@alinea/ui'
 import {LogoShape} from '@alinea/ui/branding/LogoShape'
 import {IcRoundKeyboardArrowDown} from '@alinea/ui/icons/IcRoundKeyboardArrowDown'
+import IcRoundTextFields from '@alinea/ui/icons/IcRoundTextFields'
 import {IcRoundUnfoldMore} from '@alinea/ui/icons/IcRoundUnfoldMore'
 import {IcSharpBrightnessMedium} from '@alinea/ui/icons/IcSharpBrightnessMedium'
 import {RiFlashlightFill} from '@alinea/ui/icons/RiFlashlightFill'
@@ -30,7 +31,7 @@ export namespace Toolbar {
     const session = useSession()
     const {config} = useDashboard()
     const nav = useNav()
-    const [colorScheme, toggleColorScheme] = useColorScheme()
+    const [preferences, toggleColorScheme] = usePreferences()
     const {label} = useWorkspace()
     const navigate = useNavigate()
     return (
@@ -89,10 +90,10 @@ export namespace Toolbar {
         </div>
         <div>
           <HStack center gap={10}>
-            <IconButton
+            {/* <IconButton
               icon={IcSharpBrightnessMedium}
               onClick={toggleColorScheme}
-            />
+            /> */}
             <DropdownMenu.Root>
               <DropdownMenu.Trigger>
                 <HStack center gap={4}>
@@ -102,6 +103,29 @@ export namespace Toolbar {
               </DropdownMenu.Trigger>
 
               <DropdownMenu.Content>
+                <IconButton
+                  icon={IcSharpBrightnessMedium}
+                  onClick={toggleColorScheme}
+                />
+                <DropdownMenu.Root>
+                  <DropdownMenu.TriggerItem>
+                    <DropdownMenu.Label>
+                      <IcRoundTextFields /> Font size
+                    </DropdownMenu.Label>
+                  </DropdownMenu.TriggerItem>
+                  <DropdownMenu.Content>
+                    {/* <DropdownMenu.Item onSelect={toggleFontSize}>
+                      Small
+                    </DropdownMenu.Item> */}
+                    {/* <DropdownMenu.Item onClick={() => setFontSize('medium')}>
+                      Medium
+                    </DropdownMenu.Item>
+                    <DropdownMenu.Item onClick={() => setFontSize('large')}>
+                      Large
+                    </DropdownMenu.Item> */}
+                  </DropdownMenu.Content>
+                </DropdownMenu.Root>
+                <DropdownMenu.Separator />
                 <DropdownMenu.Item onSelect={session.end}>
                   Logout
                 </DropdownMenu.Item>
