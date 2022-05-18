@@ -152,6 +152,9 @@ abstract class Base<P, T> extends Promise<T> {
   }
 }
 
+// Todo: this should be eliminated - Selections need to be expanded to
+// allow separate properties for reading (select *) or filtering (where *)
+// so we can update the createSelection method below to
 function resolveWith<T, X>(
   input: X | ((cursor: Cursor<T>) => X),
   cursor: Cursor<T>
@@ -162,7 +165,7 @@ function resolveWith<T, X>(
 class Multiple<P, T> extends Base<P, Array<Page<P, T>>> {
   protected async execute() {
     const store = await this.resolver.store
-    const rows = store.all(this.cursor)
+    const rows = store.all(this.cursor, {debug: true})
     const res = await Promise.all(
       rows.map(row => this.resolver.postProcess(row))
     )
@@ -198,14 +201,14 @@ class Multiple<P, T> extends Base<P, Array<Page<P, T>>> {
       this.cursor.where(resolveWith(where as any, Entry))
     )
   }
-  whereUrl(url: EV<string>) {
-    return new Multiple<T, T>(
+  whereUrl<E = T>(url: EV<string>) {
+    return new Multiple<T, E>(
       this.resolver,
       this.cursor.where(Entry.url.is(url))
     )
   }
-  whereId(id: EV<string>) {
-    return new Multiple<T, T>(this.resolver, this.cursor.where(Entry.id.is(id)))
+  whereId<E = T>(id: EV<string>) {
+    return new Multiple<T, E>(this.resolver, this.cursor.where(Entry.id.is(id)))
   }
   whereType<C>(type: Collection<C>) {
     return new Multiple<P, C>(
@@ -213,11 +216,11 @@ class Multiple<P, T> extends Base<P, Array<Page<P, T>>> {
       this.cursor.where(Entry.get('type').is((type as any).__options.alias))
     )
   }
-  fetchUrl(url: EV<string>) {
-    return new Single<T, T>(this.resolver, this.cursor.where(Entry.url.is(url)))
+  fetchUrl<E = T>(url: EV<string>) {
+    return new Single<T, E>(this.resolver, this.cursor.where(Entry.url.is(url)))
   }
-  fetchId(id: EV<string>) {
-    return new Single<T, T>(this.resolver, this.cursor.where(Entry.id.is(id)))
+  fetchId<E = T>(id: EV<string>) {
+    return new Single<T, E>(this.resolver, this.cursor.where(Entry.id.is(id)))
   }
   fetchType<C>(type: Collection<C>) {
     return new Single<P, C>(
@@ -230,7 +233,7 @@ class Multiple<P, T> extends Base<P, Array<Page<P, T>>> {
   ) {
     return new Multiple<P, Store.TypeOf<X>>(
       this.resolver,
-      this.cursor.select(resolveWith(selection as any, Entry))
+      this.cursor.select(selection as any)
     )
   }
   having(having: Expr<boolean>) {

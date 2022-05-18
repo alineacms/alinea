@@ -1,5 +1,6 @@
 import {createConfig, Entry, root, schema, type, workspace} from '@alinea/core'
 import {generateNKeysBetween} from '@alinea/core/util/FractionalIndexing'
+import {link} from '@alinea/input.link'
 import {list} from '@alinea/input.list'
 import {text} from '@alinea/input.text'
 import {Cache} from '../../src/Cache'
@@ -15,7 +16,7 @@ const config = createConfig({
           list: list('List', {
             schema: schema({
               ListItem: type('ListItem', {
-                listItemProperty: text('List item prop')
+                link: link.entry('Link')
               })
             })
           })
@@ -31,7 +32,7 @@ const config = createConfig({
   }
 })
 
-const entries: Array<Entry> = [
+const entries: Array<Entry & Record<string, any>> = [
   {
     id: 'root',
     type: 'Type',
@@ -52,6 +53,13 @@ const entries: Array<Entry> = [
     workspace: 'main',
     root: 'main',
     url: '/sub',
+    list: [
+      {
+        id: 'list1',
+        type: 'ListItem',
+        link: [{id: 'link', type: 'entry', entry: 'root'}]
+      }
+    ],
     path: 'sub',
     parent: 'root',
     parents: ['root']
