@@ -4,10 +4,6 @@
   "root": "data",
   "index": "Zx",
   "title": "Type",
-  "parents": [
-    "docs",
-    "259Ey7LXgqL7ZDGJ8XK1vBJmZrh"
-  ],
   "blocks": [
     {
       "id": "267QuoR4fyaDqlC9Y4e5bnRYtfj",
@@ -16,6 +12,7 @@
       "text": [
         {
           "type": "heading",
+          "textAlign": "left",
           "level": 1,
           "content": [
             {
@@ -26,6 +23,7 @@
         },
         {
           "type": "paragraph",
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
@@ -41,6 +39,7 @@
         {
           "type": "heading",
           "level": 2,
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
@@ -50,6 +49,7 @@
         },
         {
           "type": "paragraph",
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
@@ -65,6 +65,7 @@
         {
           "type": "heading",
           "level": 3,
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
@@ -74,6 +75,7 @@
         },
         {
           "type": "paragraph",
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
@@ -89,6 +91,7 @@
         {
           "type": "heading",
           "level": 3,
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
@@ -98,6 +101,7 @@
         },
         {
           "type": "paragraph",
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
@@ -113,6 +117,7 @@
         {
           "type": "heading",
           "level": 3,
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
@@ -122,6 +127,7 @@
         },
         {
           "type": "paragraph",
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
@@ -137,6 +143,7 @@
         {
           "type": "heading",
           "level": 3,
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
@@ -146,6 +153,7 @@
         },
         {
           "type": "paragraph",
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
@@ -159,7 +167,7 @@
       "id": "286HsGRzFoyQsBZIUQgy23OyX9J",
       "index": "a1",
       "type": "TypesBlock",
-      "types": "Type"
+      "types": "TypeOptions"
     }
   ]
 }

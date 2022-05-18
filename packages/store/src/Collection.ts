@@ -51,7 +51,7 @@ export class CollectionImpl<Row extends {} = any> extends CursorImpl<Row> {
     return this.fields.with(that)
   }
 
-  as(name: string): Collection<Row> {
+  as<T = Row>(name: string): Collection<T> {
     return new Collection(From.source(this.cursor.from), {
       ...this.__options,
       alias: name

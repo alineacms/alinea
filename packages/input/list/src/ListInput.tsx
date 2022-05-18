@@ -36,16 +36,10 @@ import {
   Ref,
   useState
 } from 'react'
-import {ListField} from './ListField'
+import {ListField, ListRow} from './ListField'
 import css from './ListInput.module.scss'
 
 const styles = fromModule(css)
-
-export type ListRow = {
-  id: string
-  index: string
-  type: string
-}
 
 function animateLayoutChanges(args: FirstArgument<AnimateLayoutChanges>) {
   const {isSorting, wasSorting} = args

@@ -49,7 +49,7 @@ export class Workspace<T = any> implements WorkspaceConfig<T> {
         return [rootKey, new Root(rootKey, name, config)]
       })
     )
-    this.schema = new Schema(this, this.options.schema)
+    this.schema = this.options.schema.toSchema(this)
   }
 
   get source(): string {

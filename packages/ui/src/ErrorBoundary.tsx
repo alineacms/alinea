@@ -23,27 +23,29 @@ export function ErrorBoundary({children}: PropsWithChildren<{}>) {
   return (
     <>
       {didCatch ? (
-        <VStack gap={16} className={styles.root()}>
-          <HStack gap={8} center>
-            <Icon icon={IcRoundWarning} size={20} />
-            <Typo.H3 flat>Oops, something went wrong</Typo.H3>
-          </HStack>
-          <div className={styles.root.mesage()}>{error.message}</div>
-          <HStack gap={16} center>
-            <Button onClick={reset} icon={IcRoundClose}>
-              Close error
-            </Button>
-            <Typo.Link
-              href="https://github.com/alineacms/alinea/issues"
-              target="_blank"
-            >
-              <HStack gap={8} center>
-                <span>Create an issue</span>
-                <Icon icon={IcRoundOpenInNew} />
-              </HStack>
-            </Typo.Link>
-          </HStack>
-        </VStack>
+        <div className={styles.root()}>
+          <VStack gap={16} className={styles.root.inner()}>
+            <HStack gap={8} center>
+              <Icon icon={IcRoundWarning} size={20} />
+              <Typo.H3 flat>Oops, something went wrong</Typo.H3>
+            </HStack>
+            <div className={styles.root.mesage()}>{error.message}</div>
+            <HStack gap={16} center>
+              <Button onClick={reset} icon={IcRoundClose}>
+                Close error
+              </Button>
+              <Typo.Link
+                href="https://github.com/alineacms/alinea/issues"
+                target="_blank"
+              >
+                <HStack gap={8} center>
+                  <span>Create an issue</span>
+                  <Icon icon={IcRoundOpenInNew} />
+                </HStack>
+              </Typo.Link>
+            </HStack>
+          </VStack>
+        </div>
       ) : (
         <ErrorBoundary>{children}</ErrorBoundary>
       )}

@@ -16,7 +16,9 @@ export namespace Section {
 
   export type Fields = Lazy<
     {
-      [key: string]: Lazy<Field<any, any>>
+      // This used to be Lazy<Field<any, any, any>> but it seems the compiler
+      // would infer the third type param for Field to be any
+      [key: string]: any
     } & {
       id?: never
       workspace?: never
@@ -32,7 +34,9 @@ export namespace Section {
     : S extends Lazy<infer U>
     ? U extends {[key: string]: any}
       ? {
-          [K in keyof U]: U[K] extends Field<infer T, infer M> ? T : never
+          [K in keyof U]: U[K] extends Lazy<Field<infer T, infer M, infer Q>>
+            ? Q
+            : never
         }
       : never
     : never

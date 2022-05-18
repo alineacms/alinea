@@ -175,7 +175,7 @@ export function NewEntry({parentId}: NewEntryProps) {
     const type = schema.type(selectedType)!
     const path = slugify(title)
     const entry = {
-      ...type.create(selectedType),
+      ...type.create(),
       path,
       workspace,
       root: root.name,

@@ -28,7 +28,9 @@ export class CursorImpl<Row> {
     })
   }
 
-  get<K extends string>(name: K): Expr<K extends keyof Row ? Row[K] : any> {
+  get<K extends keyof Row>(name: K): Expr<Row[K]>
+  get(name: string): Expr<any>
+  get(name: string): Expr<any> {
     return new Expr(ExprData.Field(this.cursor.selection, name as string))
   }
 
@@ -153,6 +155,10 @@ export class CursorImpl<Row> {
       ...this.cursor,
       groupBy: data
     })
+  }
+
+  toExpr() {
+    return new Expr(ExprData.create(this))
   }
 
   toJSON() {

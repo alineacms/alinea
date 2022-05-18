@@ -56,7 +56,7 @@ export function Explorer({
             selection,
             cursor: cursor.select(
               Entry.type.case(selection, defaultView.selection(Entry))
-            ),
+            ) as Cursor<Entry.Minimal>,
             summaryView,
             defaultView
           } as const

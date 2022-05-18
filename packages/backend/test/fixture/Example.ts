@@ -1,12 +1,7 @@
-import {
-  createConfig,
-  Entry,
-  root,
-  schema as createSchema,
-  type,
-  workspace
-} from '@alinea/core'
+import {createConfig, Entry, root, schema, type, workspace} from '@alinea/core'
 import {generateNKeysBetween} from '@alinea/core/util/FractionalIndexing'
+import {link} from '@alinea/input.link'
+import {list} from '@alinea/input.list'
 import {text} from '@alinea/input.text'
 import {Cache} from '../../src/Cache'
 import {createMemoryStore} from './CreateMemoryStore'
@@ -15,8 +10,17 @@ const config = createConfig({
   workspaces: {
     main: workspace('Main', {
       source: 'content',
-      schema: createSchema({
-        Type: type('Type', {title: text('Title')}).configure({
+      schema: schema({
+        Type: type('Type', {
+          title: text('Title'),
+          list: list('List', {
+            schema: schema({
+              ListItem: type('ListItem', {
+                link: link.entry('Link')
+              })
+            })
+          })
+        }).configure({
           isContainer: true
         }),
         Sub: type('Sub', {
@@ -28,7 +32,7 @@ const config = createConfig({
   }
 })
 
-const entries: Array<Entry> = [
+const entries: Array<Entry & Record<string, any>> = [
   {
     id: 'root',
     type: 'Type',
@@ -49,6 +53,13 @@ const entries: Array<Entry> = [
     workspace: 'main',
     root: 'main',
     url: '/sub',
+    list: [
+      {
+        id: 'list1',
+        type: 'ListItem',
+        link: [{id: 'link', type: 'entry', entry: 'root'}]
+      }
+    ],
     path: 'sub',
     parent: 'root',
     parents: ['root']

@@ -37,6 +37,7 @@ function contentToString({type, content}: TextContent): string {
 function textDocParts(textDoc: TextDoc<any>): Array<Part> {
   const parts: Array<Part> = []
   let text = ''
+  if (!Array.isArray(textDoc)) return parts
   for (const block of textDoc) {
     switch (block.type) {
       case 'text':

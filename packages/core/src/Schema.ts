@@ -4,6 +4,7 @@ import {Field} from './Field'
 import type {TypeConfig} from './Type'
 import {Type} from './Type'
 import {LazyRecord} from './util/LazyRecord'
+import {RecordValue} from './value/RecordValue'
 import type {Workspace} from './Workspace'
 
 export type HasType = {type: string}
@@ -24,8 +25,10 @@ export namespace Schema {
     ? U
     : T extends Type<infer U>
     ? U
-    : T extends Field<infer U, infer M>
+    : T extends TypeConfig<infer U>
     ? U
+    : T extends Field<infer U, infer M, infer Q>
+    ? Q
     : T extends Selection<infer U>
     ? U
     : T extends Cursor<infer U>
@@ -33,26 +36,43 @@ export namespace Schema {
     : never
 }
 
+export class SchemaConfig<T = any> {
+  shape: Record<string, RecordValue<any>>
+
+  constructor(public types: LazyRecord<TypeConfig>) {
+    this.shape = Object.fromEntries(
+      LazyRecord.iterate(types).map(([key, type]) => {
+        return [key, type.shape]
+      })
+    )
+  }
+
+  configEntries() {
+    return LazyRecord.iterate(this.types)
+  }
+
+  concat<X>(that: SchemaConfig<X>): SchemaConfig<T | X> {
+    return schema(LazyRecord.concat(this.types, that.types))
+  }
+
+  toSchema(workspace: Workspace<T>): Schema<T> {
+    return new Schema(workspace, this)
+  }
+}
+
 /** Describes the different types of entries */
-export class Schema<T = any> {
+export class Schema<T = any> extends SchemaConfig<T> {
   typeMap = new Map<string, Type>()
 
-  constructor(public workspace: Workspace<T>, public config: SchemaConfig<T>) {
+  constructor(public workspace: Workspace<T>, config: SchemaConfig<T>) {
+    super(config.types)
     for (const [name, type] of LazyRecord.iterate(config.types)) {
-      this.typeMap.set(name, new Type(this, name, type))
+      this.typeMap.set(name, type.toType(this, name))
     }
   }
 
-  get types() {
-    return Object.fromEntries(this.typeMap.entries())
-  }
-
-  static shape<T>(config: SchemaConfig<T>) {
-    return Object.fromEntries(
-      LazyRecord.iterate(config.types).map(([key, type]) => {
-        return [key, Type.shape(type)]
-      })
-    )
+  entries() {
+    return this.typeMap.entries()
   }
 
   [Symbol.iterator]() {
@@ -62,7 +82,7 @@ export class Schema<T = any> {
   /** Get a type by name */
   type<K extends TypesOf<T>>(name: K): Type<Extract<T, {type: K}>> | undefined
   type(name: string): Type | undefined
-  type(name: any) {
+  type(name: any): any {
     return this.typeMap.get(name)
   }
 
@@ -77,19 +97,9 @@ export class Schema<T = any> {
   }
 }
 
-export type SchemaConfig<T = any> = {
-  types: LazyRecord<TypeConfig>
-  concat<X>(that: SchemaConfig<X>): SchemaConfig<T | X>
-}
-
 /** Create a schema, expects a string record of Type instances */
 export function schema<Types extends LazyRecord<TypeConfig>>(
   types: Types
 ): SchemaConfig<TypeToEntry<TypeToRows<Types>>> {
-  return {
-    types,
-    concat(that) {
-      return schema(LazyRecord.concat(types, that.types))
-    }
-  }
+  return new SchemaConfig(types)
 }

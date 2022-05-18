@@ -42,7 +42,7 @@
     "@alinea/input.select": "0.0.0",
     "@alinea/input.tabs": "0.0.0",
     "@alinea/input.text": "0.0.0",
-    "@alinea/sqlite-wasm": "^0.1.5",
+    "@alinea/sqlite-wasm": "^0.1.6",
     "@alinea/store": "0.0.0",
     "@alinea/ui": "0.0.0"
   }

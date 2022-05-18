@@ -1,7 +1,9 @@
-import {Field, Label, Schema, SchemaConfig, Value} from '@alinea/core'
+import type {Pages} from '@alinea/backend'
+import {Field, Label, SchemaConfig, Value} from '@alinea/core'
+import {Expr, SelectionInput} from '@alinea/store'
 
 /** Optional settings to configure a list field */
-export type ListOptions<T> = {
+export type ListOptions<T, Q> = {
   /** Allow these types of blocks to be created */
   schema: SchemaConfig<T>
   /** Width of the field in the dashboard UI (0-1) */
@@ -12,22 +14,49 @@ export type ListOptions<T> = {
   optional?: boolean
   /** Display a minimal version */
   inline?: boolean
+  /** Modify value returned when queried through `Pages` */
+  query?: <P>(field: Expr<Array<T>>, pages: Pages<P>) => Expr<Q> | undefined
+}
+
+export type ListRow = {
+  id: string
+  index: string
+  type: string
 }
 
 /** Internal representation of a list field */
-export interface ListField<T> extends Field.List<T> {
+export interface ListField<T, Q = Array<T & ListRow>>
+  extends Field.List<T & ListRow, Q> {
   label: Label
-  options: ListOptions<T>
+  options: ListOptions<T, Q>
+}
+
+function query<T, Q>(schema: SchemaConfig<T>) {
+  return (field: Expr<Array<T>>, pages: Pages<any>): Expr<Q> | undefined => {
+    const row = field.each()
+    const cases: Record<string, SelectionInput> = {}
+    let isComputed = false
+    for (const [key, type] of schema.configEntries()) {
+      const selection = type.selection(row, pages)
+      if (!selection) continue
+      cases[key] = selection
+      isComputed = true
+    }
+    if (!isComputed) return
+    return row.select(row.get('type').case(cases, row.fields)).toExpr()
+  }
 }
 
 /** Create a list field configuration */
-export function createList<T>(
+export function createList<T, Q = Array<T & ListRow>>(
   label: Label,
-  options: ListOptions<T>
-): ListField<T> {
+  options: ListOptions<T, Q>
+): ListField<T, Q> {
+  const {schema} = options
   return {
-    type: Value.List(label, Schema.shape(options.schema)),
+    type: Value.List(label, schema.shape),
     label,
-    options
+    options,
+    query: options.query || query<T, Q>(schema)
   }
 }

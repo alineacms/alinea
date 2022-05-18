@@ -88,8 +88,7 @@ function schemaToExtensions(
   schema: SchemaConfig | undefined
 ) {
   if (!schema) return []
-  const {types} = schema
-  return Object.entries(types).map(([name, type]) => {
+  return schema.configEntries().map(([name, type]) => {
     return typeExtension(path, name, type)
   })
 }
@@ -105,7 +104,7 @@ const FloatingMenu: any = TiptapFloatingMenu
 
 function InsertMenu({editor, schema, onInsert}: InsertMenuProps) {
   const id = createId()
-  const blocks = Object.entries(schema?.types || {}).map(([key, type]) => {
+  const blocks = schema?.configEntries().map(([key, type]) => {
     return (
       <Create.Button
         key={key}

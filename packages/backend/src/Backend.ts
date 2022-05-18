@@ -225,7 +225,6 @@ export class Backend<T extends Workspaces = Workspaces> implements Hub<T> {
   loadPages<K extends keyof T>(workspaceKey: K, previewToken?: string) {
     const workspace = this.config.workspaces[workspaceKey]
     return new Pages<T[K] extends WorkspaceConfig<infer W> ? W : any>(
-      this.config,
       workspace,
       previewToken
         ? async () => {
