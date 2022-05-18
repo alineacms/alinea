@@ -1,4 +1,4 @@
-import {Field, Label, Type, TypeConfig} from '@alinea/core'
+import {Field, Label, TypeConfig} from '@alinea/core'
 
 export type ObjectOptions<T> = {
   /** The fields */
@@ -18,7 +18,7 @@ export function createObject<T>(
   options: ObjectOptions<T>
 ): ObjectField<T> {
   return {
-    type: Type.shape(options.fields),
+    type: options.fields.shape,
     label,
     options
   }

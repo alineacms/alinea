@@ -1,19 +1,36 @@
-// Todo: extract interface and place it in core
-import type {Pages} from '@alinea/backend/Pages'
+import type {Pages} from '@alinea/backend'
 import {
   Entry,
   Field,
   Label,
+  Media,
   Reference,
-  Type,
   TypeConfig,
   Value
 } from '@alinea/core'
 import {RecordValue} from '@alinea/core/value/RecordValue'
-import {Expr, ExprData} from '@alinea/store/Expr'
-import {SelectionInput} from '@alinea/store/Selection'
+import {Cursor, Expr, Functions, SelectionInput} from '@alinea/store'
 
 export type LinkType = 'entry' | 'image' | 'file' | 'external'
+
+export namespace LinkType {
+  export function conditionOf(cursor: Cursor<Entry>, type: LinkType) {
+    switch (type) {
+      case 'entry':
+        return cursor.type.isNot(Media.Type.File)
+      case 'image':
+        return cursor.type
+          .is(Media.Type.File)
+          .and(cursor.get('extension').isIn(Media.imageExtensions))
+      case 'file':
+        return cursor.type
+          .is(Media.Type.File)
+          .and(cursor.get('extension').isNotIn(Media.imageExtensions))
+      case 'external':
+        return Expr.value(true)
+    }
+  }
+}
 
 /** Optional settings to configure a link field */
 export type LinkOptions<T, Q> = {
@@ -29,10 +46,15 @@ export type LinkOptions<T, Q> = {
   inline?: boolean
   /** The type of links, this will configure the options of the link picker */
   type?: LinkType | Array<LinkType>
+  /** Allow multiple links */
+  multiple?: boolean
   /** Maximum amount of links that can be selected */
   max?: number
-  /** Modify value returned when queried */
-  query?: <P>(field: Expr<Array<Reference & T>>, pages: Pages<P>) => Expr<Q>
+  /** Modify value returned when queried through `Pages` */
+  query?: <P>(
+    field: Expr<Array<Reference & T>>,
+    pages: Pages<P>
+  ) => Expr<Q> | undefined
 }
 
 /** Internal representation of a link field */
@@ -41,23 +63,37 @@ export interface LinkField<T, Q> extends Field.List<Reference & T, Q> {
   options: LinkOptions<T, Q>
 }
 
-type LinkData =
-  | {
-      id: string
-      type: 'entry'
-      entry: string
-      path: string
-      url: string
-      title: Label
-    }
-  | {id: string; type: 'url'; url: string}
+export type LinkData = LinkData.Entry | LinkData.Url
+
+export namespace LinkData {
+  export type Entry = {
+    id: string
+    type: 'entry'
+    entry: string
+    entryType: string
+    path: string
+    url: string
+    title: Label
+  }
+  export type Image = Entry & {
+    src: string
+    extension: string
+    size: number
+    hash: string
+    width: number
+    height: number
+    averageColor: string
+    blurHash: string
+  }
+  export type Url = {id: string; type: 'url'; url: string}
+}
 
 /** Create a link field configuration */
-export function createLink<T = {}, Q = Array<LinkData & T>>(
+export function createLink<T, Q>(
   label: Label,
   options: LinkOptions<T, Q> = {}
 ): LinkField<T, Q> {
-  const extra = options.fields && Type.shape(options.fields)
+  const extra = options.fields?.shape
   return {
     type: Value.List(label, {
       entry: new RecordValue('Entry', {
@@ -71,23 +107,40 @@ export function createLink<T = {}, Q = Array<LinkData & T>>(
     options,
     query(field, pages): Expr<Q> {
       const row = field.each()
-      const Link = Entry.as('Link')
+      const Link = Entry.as<Media.File>('Link')
       const cases: Record<string, SelectionInput> = {
         entry: Link.where(entry => entry.id.is(row.get('entry')))
           .first()
           .select(entry => {
-            return row.fields.with({
-              id: row.get('id'),
-              type: row.get('type'),
-              entry: entry.id,
-              path: entry.path,
-              url: entry.url,
-              title: entry.title
-            })
+            return row.fields
+              .with({
+                entryType: entry.type,
+                path: entry.path,
+                url: entry.url,
+                title: entry.title
+              })
+              .with(
+                Functions.iif(
+                  LinkType.conditionOf(entry, 'image'),
+                  {
+                    src: entry.location,
+                    extension: entry.extension,
+                    size: entry.size,
+                    hash: entry.hash,
+                    width: entry.width,
+                    height: entry.height,
+                    averageColor: entry.averageColor,
+                    blurHash: entry.blurHash
+                  },
+                  {}
+                )
+              )
           }),
         url: row
       }
-      return new Expr(ExprData.create(row.select(row.get('type').case(cases))))
+      const cursor = row.select(row.get('type').case(cases, row.fields))
+      if (!options.multiple) return cursor.first().toExpr()
+      return cursor.toExpr()
     }
   }
 }

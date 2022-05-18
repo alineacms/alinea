@@ -152,6 +152,13 @@ abstract class Base<P, T> extends Promise<T> {
   }
 }
 
+function resolveWith<T, X>(
+  input: X | ((cursor: Cursor<T>) => X),
+  cursor: Cursor<T>
+): X {
+  return typeof input === 'function' ? (input as Function)(cursor) : input
+}
+
 class Multiple<P, T> extends Base<P, Array<Page<P, T>>> {
   protected async execute() {
     const store = await this.resolver.store
@@ -186,28 +193,44 @@ class Multiple<P, T> extends Base<P, Array<Page<P, T>>> {
     return new Multiple<P, T>(this.resolver, this.cursor.skip(offset))
   }
   where(where: EV<boolean> | ((collection: Cursor<T>) => EV<boolean>)) {
-    return new Multiple<P, T>(this.resolver, this.cursor.where(where as any))
+    return new Multiple<P, T>(
+      this.resolver,
+      this.cursor.where(resolveWith(where as any, Entry))
+    )
   }
   whereUrl(url: EV<string>) {
-    return new Single<T, T>(this.resolver, this.cursor.where(Entry.url.is(url)))
+    return new Multiple<T, T>(
+      this.resolver,
+      this.cursor.where(Entry.url.is(url))
+    )
   }
   whereId(id: EV<string>) {
-    return new Single<T, T>(this.resolver, this.cursor.where(Entry.id.is(id)))
+    return new Multiple<T, T>(this.resolver, this.cursor.where(Entry.id.is(id)))
   }
   whereType<C>(type: Collection<C>) {
     return new Multiple<P, C>(
       this.resolver,
-      this.cursor.where(
-        this.cursor.get('type').is((type as any).__options.alias)
-      )
+      this.cursor.where(Entry.get('type').is((type as any).__options.alias))
     )
   }
-  select<
-    X extends SelectionInput | ((collection: Cursor<T>) => SelectionInput)
-  >(selection: X) {
+  fetchUrl(url: EV<string>) {
+    return new Single<T, T>(this.resolver, this.cursor.where(Entry.url.is(url)))
+  }
+  fetchId(id: EV<string>) {
+    return new Single<T, T>(this.resolver, this.cursor.where(Entry.id.is(id)))
+  }
+  fetchType<C>(type: Collection<C>) {
+    return new Single<P, C>(
+      this.resolver,
+      this.cursor.where(Entry.get('type').is((type as any).__options.alias))
+    )
+  }
+  select<X extends SelectionInput | ((cursor: Cursor<T>) => SelectionInput)>(
+    selection: X
+  ) {
     return new Multiple<P, Store.TypeOf<X>>(
       this.resolver,
-      this.cursor.select(selection as any)
+      this.cursor.select(resolveWith(selection as any, Entry))
     )
   }
   having(having: Expr<boolean>) {
@@ -222,17 +245,21 @@ class Multiple<P, T> extends Base<P, Array<Page<P, T>>> {
   orderBy(...orderBy: Array<OrderBy>): Multiple<P, T>
   orderBy(pick: (cursor: Cursor<T>) => Array<OrderBy>): Multiple<P, T>
   orderBy(...args: any) {
-    return new Multiple<P, T>(this.resolver, this.cursor.orderBy(...args))
+    const orderBy: Array<OrderBy> =
+      args.length === 1 && typeof args[0] === 'function' ? args[0](Entry) : args
+    return new Multiple<P, T>(this.resolver, this.cursor.orderBy(...orderBy))
   }
   groupBy(...groupBy: Array<Expr<any>>): Multiple<P, T>
   groupBy(pick: (cursor: Cursor<T>) => Array<Expr<any>>): Multiple<P, T>
   groupBy(...args: any) {
-    return new Multiple<P, T>(this.resolver, this.cursor.groupBy(...args))
+    const groupBy: Array<Expr<any>> =
+      args.length === 1 && typeof args[0] === 'function' ? args[0](Entry) : args
+    return new Multiple<P, T>(this.resolver, this.cursor.groupBy(...groupBy))
   }
   first(
-    where?: EV<boolean> | ((collection: Cursor<T>) => EV<boolean>)
+    where?: EV<boolean> | ((cursor: Cursor<T>) => EV<boolean>)
   ): Single<P, T> {
-    if (where) return this.where(where).first()
+    if (where) return this.where(resolveWith(where as any, Entry)).first()
     return new Single<P, T>(this.resolver, this.cursor.first())
   }
   /*on<
@@ -246,7 +273,7 @@ class Multiple<P, T> extends Base<P, Array<Page<P, T>>> {
 class Single<P, T> extends Base<P, Page<P, T> | null> {
   protected async execute() {
     const store = await this.resolver.store
-    const row = store.first(this.cursor, {debug: true})
+    const row = store.first(this.cursor)
     if (!row) return null
     const page = await this.resolver.postProcess(row)
     if (typeof page === 'object' && 'id' in page) {
@@ -320,10 +347,15 @@ function createSelection<T>(
   pages: PagesImpl<T>
 ): ExprData {
   const cases: Record<string, SelectionInput> = {}
+  let isComputed = false
   for (const [key, type] of workspace.schema.entries()) {
-    cases[key] = type.selection(pages as Pages<T>)
+    const selection = type.selection(type.collection(), pages as Pages<T>)
+    if (!selection) continue
+    cases[key] = selection
+    isComputed = true
   }
-  return Entry.type.case(cases).expr
+  if (!isComputed) return Entry.fields.expr
+  return Entry.type.case(cases, Entry.fields).expr
 }
 
 class PagesImpl<T> extends Multiple<T, T> {
@@ -343,7 +375,7 @@ class PagesImpl<T> extends Multiple<T, T> {
         : ExprData.Row(from)
     })
     super(new PageResolver(createCache()), cursor)
-    for (const [key, type] of Object.entries(workspace.schema.types)) {
+    for (const [key, type] of workspace.schema.entries()) {
       ;(this as any)[key] = this.whereType(type.collection())
     }
   }

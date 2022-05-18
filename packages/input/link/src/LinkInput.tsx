@@ -1,4 +1,4 @@
-import {Entry, Media, Outcome, Reference, TypeConfig, View} from '@alinea/core'
+import {Entry, Outcome, Reference, TypeConfig, View} from '@alinea/core'
 import {useReferencePicker, useSession, useWorkspace} from '@alinea/dashboard'
 import {EntrySummaryRow} from '@alinea/dashboard/view/entry/EntrySummary'
 import {InputForm, InputLabel, InputState, useInput} from '@alinea/editor'
@@ -153,30 +153,13 @@ const layoutMeasuringConfig = {
   strategy: LayoutMeasuringStrategy.Always
 }
 
-function conditionOfType(type: LinkType) {
-  switch (type) {
-    case 'entry':
-      return Entry.type.isNot(Media.Type.File)
-    case 'image':
-      return Entry.type
-        .is(Media.Type.File)
-        .and(Entry.get('extension').isIn(Media.imageExtensions))
-    case 'file':
-      return Entry.type
-        .is(Media.Type.File)
-        .and(Entry.get('extension').isNotIn(Media.imageExtensions))
-    case 'external':
-      return Expr.value(true)
-  }
-}
-
 function restrictByType(
   type: LinkType | Array<LinkType> | undefined
 ): Expr<boolean> | undefined {
   if (!type || (Array.isArray(type) && type.length === 0)) return undefined
   let condition = Expr.value(false)
   for (const t of Array.isArray(type) ? type : [type]) {
-    condition = condition.or(conditionOfType(t))
+    condition = condition.or(LinkType.conditionOf(Entry, t))
   }
   return condition
 }
@@ -191,12 +174,21 @@ export function LinkInput<T>({state, field}: LinkInputProps<T>) {
   const [value, {push, move, remove}] = useInput(state)
   const {schema} = useWorkspace()
   const {pickLink} = useReferencePicker()
-  const {fields, type, width, inline, optional, help, max} = field.options
+  const {
+    fields,
+    type,
+    width,
+    inline,
+    multiple,
+    optional,
+    help,
+    max = !multiple ? 1 : undefined
+  } = field.options
   const types = Array.isArray(type) ? type : type ? [type] : []
 
   const cursor = useMemo(() => {
     const entries = value
-      .filter((v): v is Reference.Entry => v.type === 'entry')
+      .filter((v: Reference): v is Reference.Entry => v.type === 'entry')
       .map(v => v.entry)
     return Entry.where(Entry.id.isIn(entries))
   }, [value, schema])

@@ -4,6 +4,7 @@ import {Field} from './Field'
 import type {TypeConfig} from './Type'
 import {Type} from './Type'
 import {LazyRecord} from './util/LazyRecord'
+import {RecordValue} from './value/RecordValue'
 import type {Workspace} from './Workspace'
 
 export type HasType = {type: string}
@@ -24,6 +25,8 @@ export namespace Schema {
     ? U
     : T extends Type<infer U>
     ? U
+    : T extends TypeConfig<infer U>
+    ? U
     : T extends Field<infer U, infer M, infer Q>
     ? Q
     : T extends Selection<infer U>
@@ -33,30 +36,43 @@ export namespace Schema {
     : never
 }
 
-/** Describes the different types of entries */
-export class Schema<T = any> {
-  typeMap = new Map<string, Type>()
+export class SchemaConfig<T = any> {
+  shape: Record<string, RecordValue<any>>
 
-  constructor(public workspace: Workspace<T>, public config: SchemaConfig<T>) {
-    for (const [name, type] of LazyRecord.iterate(config.types)) {
-      this.typeMap.set(name, new Type(this, name, type))
-    }
+  constructor(public types: LazyRecord<TypeConfig>) {
+    this.shape = Object.fromEntries(
+      LazyRecord.iterate(types).map(([key, type]) => {
+        return [key, type.shape]
+      })
+    )
   }
 
-  get types() {
-    return Object.fromEntries(this.typeMap.entries())
+  configEntries() {
+    return LazyRecord.iterate(this.types)
+  }
+
+  concat<X>(that: SchemaConfig<X>): SchemaConfig<T | X> {
+    return schema(LazyRecord.concat(this.types, that.types))
+  }
+
+  toSchema(workspace: Workspace<T>): Schema<T> {
+    return new Schema(workspace, this)
+  }
+}
+
+/** Describes the different types of entries */
+export class Schema<T = any> extends SchemaConfig<T> {
+  typeMap = new Map<string, Type>()
+
+  constructor(public workspace: Workspace<T>, config: SchemaConfig<T>) {
+    super(config.types)
+    for (const [name, type] of LazyRecord.iterate(config.types)) {
+      this.typeMap.set(name, type.toType(this, name))
+    }
   }
 
   entries() {
     return this.typeMap.entries()
-  }
-
-  static shape<T>(config: SchemaConfig<T>) {
-    return Object.fromEntries(
-      LazyRecord.iterate(config.types).map(([key, type]) => {
-        return [key, Type.shape(type)]
-      })
-    )
   }
 
   [Symbol.iterator]() {
@@ -81,19 +97,9 @@ export class Schema<T = any> {
   }
 }
 
-export type SchemaConfig<T = any> = {
-  types: LazyRecord<TypeConfig>
-  concat<X>(that: SchemaConfig<X>): SchemaConfig<T | X>
-}
-
 /** Create a schema, expects a string record of Type instances */
 export function schema<Types extends LazyRecord<TypeConfig>>(
   types: Types
 ): SchemaConfig<TypeToEntry<TypeToRows<Types>>> {
-  return {
-    types,
-    concat(that) {
-      return schema(LazyRecord.concat(types, that.types))
-    }
-  }
+  return new SchemaConfig(types)
 }

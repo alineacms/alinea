@@ -157,6 +157,10 @@ export class CursorImpl<Row> {
     })
   }
 
+  toExpr() {
+    return new Expr(ExprData.create(this))
+  }
+
   toJSON() {
     return this.cursor
   }

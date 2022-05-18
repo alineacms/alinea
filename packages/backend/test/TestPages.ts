@@ -7,8 +7,6 @@ test('tree', async () => {
   const {config, store} = await createExample()
   const pages = new Pages(config.workspaces.main, async () => store)
 
-  console.log(await pages)
-
   const root = await pages.first(page => page.id.is('root'))
   if (!root) throw new Error(`root expected`)
 

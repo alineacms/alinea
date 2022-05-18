@@ -38,5 +38,5 @@ export interface Field<V, M, Q = V> {
   type: Value<V, M>
   label: Label
   view?: FieldRenderer<V, M, Field<V, M, Q>>
-  query?: <P>(field: Expr<V>, pages: Pages<P>) => Expr<Q>
+  query?: <P>(field: Expr<V>, pages: Pages<P>) => Expr<Q> | undefined
 }

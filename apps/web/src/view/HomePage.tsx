@@ -1,7 +1,7 @@
 import {fromModule, HStack, px, Typo, VStack} from '@alinea/ui'
 import {IcRoundOpenInNew} from '@alinea/ui/icons/IcRoundOpenInNew'
 import css from './HomePage.module.scss'
-import {HomePageProps} from './HomePage.query'
+import {HomePageSchema} from './HomePage.schema'
 import {Hero} from './layout/Hero'
 
 const styles = fromModule(css)
@@ -16,7 +16,7 @@ const exampleCode = `schema('Blog', {
   })
 })`
 
-export function HomePage({headline, byline, action}: HomePageProps) {
+export function HomePage({headline, byline, action}: HomePageSchema) {
   return (
     <div className={styles.root()}>
       <Hero>
@@ -30,9 +30,9 @@ export function HomePage({headline, byline, action}: HomePageProps) {
             justify="center"
             style={{paddingTop: px(20)}}
           >
-            {/*action && (
+            {action && (
               <Hero.Action href={action.url}>{action.label}</Hero.Action>
-            )*/}
+            )}
             <Typo.Link href="/demo" target="_blank">
               <HStack center gap={8}>
                 <span>Try the demo</span>

@@ -1,5 +1,5 @@
+import {AnyPage, Doc, Docs, Pages} from '@alinea/content/web'
 import {Cursor, Store} from '@alinea/store'
-import {AnyPage, Doc, Docs, Pages} from '../../.alinea/web'
 import {blocksQuery} from './blocks/Blocks.query'
 
 function menuQuery(pages: Pages) {

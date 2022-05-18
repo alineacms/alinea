@@ -3,7 +3,6 @@ import {link} from '@alinea/input.link'
 import {path} from '@alinea/input.path'
 import {tab, tabs} from '@alinea/input.tabs'
 import {text} from '@alinea/input.text'
-import {Expr} from '@alinea/store'
 import {IcRoundInsertDriveFile} from '@alinea/ui/icons/IcRoundInsertDriveFile'
 import {IcRoundLink} from '@alinea/ui/icons/IcRoundLink'
 
@@ -19,17 +18,13 @@ export const HomePageSchema = type(
       headline: text('Headline', {multiline: true}),
       byline: text('Byline', {multiline: true}),
       action: link('Action', {
-        max: 1,
         fields: type('Fields', {
           label: text('Button label')
-        }),
-        query(field) {
-          return Expr.value('hallo')
-        }
+        })
       })
     }).configure({icon: IcRoundInsertDriveFile}),
     tab('Top navigation', {
-      links: link('Links', {
+      links: link.multiple('Links', {
         type: ['entry', 'external'],
         fields: type('Fields', {
           title: text('Title')

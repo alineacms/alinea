@@ -1,12 +1,6 @@
-import {
-  createConfig,
-  Entry,
-  root,
-  schema as createSchema,
-  type,
-  workspace
-} from '@alinea/core'
+import {createConfig, Entry, root, schema, type, workspace} from '@alinea/core'
 import {generateNKeysBetween} from '@alinea/core/util/FractionalIndexing'
+import {list} from '@alinea/input.list'
 import {text} from '@alinea/input.text'
 import {Cache} from '../../src/Cache'
 import {createMemoryStore} from './CreateMemoryStore'
@@ -15,8 +9,17 @@ const config = createConfig({
   workspaces: {
     main: workspace('Main', {
       source: 'content',
-      schema: createSchema({
-        Type: type('Type', {title: text('Title')}).configure({
+      schema: schema({
+        Type: type('Type', {
+          title: text('Title'),
+          list: list('List', {
+            schema: schema({
+              ListItem: type('ListItem', {
+                listItemProperty: text('List item prop')
+              })
+            })
+          })
+        }).configure({
           isContainer: true
         }),
         Sub: type('Sub', {

@@ -19,7 +19,7 @@ const web = workspace('Alinea', {
   schema: webSchema,
   source: './content',
   mediaDir: './public',
-  color: '#5661E5',
+  color: '#EF437C', // '#5661E5', //
   roots: {
     data: root('Alinea website', {
       icon: IcRoundInsertDriveFile,
