@@ -52,7 +52,7 @@ export async function init(options: InitOptions) {
       .readFile(path.join(cwd, 'package.json'), 'utf-8')
       .then(contents => JSON.parse(contents))
   )
-  const pm = await detect({cwd})
+  const [pm = 'npm'] = await outcome(detect({cwd}))
   if (pkg) {
     if (!pkg.dependencies) pkg.dependencies = {}
     pkg.dependencies['@alinea/content'] = `${
