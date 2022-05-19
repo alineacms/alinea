@@ -165,7 +165,7 @@ function resolveWith<T, X>(
 class Multiple<P, T> extends Base<P, Array<Page<P, T>>> {
   protected async execute() {
     const store = await this.resolver.store
-    const rows = store.all(this.cursor, {debug: true})
+    const rows = store.all(this.cursor)
     const res = await Promise.all(
       rows.map(row => this.resolver.postProcess(row))
     )
