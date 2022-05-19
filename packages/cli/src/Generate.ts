@@ -161,9 +161,11 @@ function schemaTypes(workspace: string, schema: Schema) {
     import {config} from '../config.js'
     import {DataOf, EntryOf} from '@alinea/core'
     import {Collection} from '@alinea/store'
+    import type {Pages as AlineaPages} from '@alinea/backend'
     export const schema = config.workspaces['${workspace}'].schema
     export type AnyPage = EntryOf<typeof schema>
     export const AnyPage: Collection<AnyPage>
+    export type Pages = AlineaPages<AnyPage>
     ${typeNames
       .map(
         type =>
@@ -309,14 +311,16 @@ export async function generate(options: GenerateOptions) {
           exports: {
             ...pkg.exports,
             ...Object.fromEntries(
-              Object.keys(config.workspaces)
-                .map(key => [`./${key}`, `./${key}/index.js`])
-                .concat(
-                  Object.keys(config.workspaces).map(key => [
-                    `./${key}/pages`,
-                    `./${key}/pages.js`
-                  ])
-                )
+              Object.keys(config.workspaces).flatMap(key => [
+                [
+                  `./${key}`,
+                  {
+                    browser: `./${key}/schema.js`,
+                    default: `./${key}/index.js`
+                  }
+                ],
+                [`./${key}/*`, `./${key}/*`]
+              ])
             )
           }
         },
