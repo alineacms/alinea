@@ -1,12 +1,12 @@
+import {content} from '@alinea/content/web'
 import {Store} from '@alinea/store'
-import {Pages} from '../../../.alinea/web'
 import {BlocksSchema} from './Blocks.schema'
 import {textBlockQuery} from './TextBlock.query'
 import {TextBlockSchema} from './TextBlock.schema'
 import {typesBlockQuery} from './TypesBlock.query'
 import {TypesBlockSchema} from './TypesBlock.schema'
 
-export async function blocksQuery(pages: Pages, blocks: BlocksSchema) {
+export async function blocksQuery(pages: content.Pages, blocks: BlocksSchema) {
   return Promise.all(
     (blocks || []).map(async block => {
       switch (block.type) {

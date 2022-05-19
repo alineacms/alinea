@@ -33,12 +33,7 @@ export function ImageBlock({image}: ImageBlockSchema) {
   const blurDataURL = useBlurData(image.blurHash!)
   return (
     <div className={styles.root()}>
-      <Image
-        src={image.src}
-        layout="fill"
-        blurDataURL={blurDataURL}
-        alt={String(image.alt)}
-      />
+      <Image src={image.src} layout="fill" blurDataURL={blurDataURL} />
     </div>
   )
 }

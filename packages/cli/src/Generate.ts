@@ -3,7 +3,7 @@ import {FileData} from '@alinea/backend/data/FileData'
 import {Config} from '@alinea/core/Config'
 import {createId} from '@alinea/core/Id'
 import {outcome} from '@alinea/core/Outcome'
-import {Schema} from '@alinea/core/Schema'
+import {Workspace} from '@alinea/core/Workspace'
 import {BetterSqlite3Driver} from '@alinea/store/sqlite/drivers/BetterSqlite3Driver'
 import {SqlJsDriver} from '@alinea/store/sqlite/drivers/SqlJsDriver'
 import {SqliteStore} from '@alinea/store/sqlite/SqliteStore'
@@ -140,39 +140,55 @@ function configType(location: string) {
   return `export * from ${JSON.stringify(file)}`
 }
 
-function schemaCollections(workspace: string, schema: Schema) {
-  const typeNames = schema.keys
-  return `
-    import {config} from '../config.js'
-    export const workspace = config.workspaces['${workspace}']
-    export const schema = workspace.schema
+function wrapNamespace(code: string, namespace: string | undefined) {
+  if (namespace) return `export namespace ${namespace} {\n${code}\n}`
+  return code
+}
+
+function schemaCollections(workspace: Workspace) {
+  const typeNames = workspace.schema.keys
+  const collections = workspace.typeNamespace
+    ? `export const ${workspace.typeNamespace} = {
+      AnyPage: schema.collection(),
+      ${typeNames
+        .map(type => `${type}: schema.type('${type}').collection()`)
+        .join(',\n')}
+    }`
+    : `
     export const AnyPage = schema.collection()
     ${typeNames
       .map(type => `export const ${type} = schema.type('${type}').collection()`)
       .join('\n')}
   `
+  return `
+    import {config} from '../config.js'
+    export const workspace = config.workspaces['${workspace.name}']
+    export const schema = workspace.schema
+    ${collections}
+  `
     .replace(/  /g, '')
     .trim()
 }
 
-function schemaTypes(workspace: string, schema: Schema) {
-  const typeNames = schema.keys
+function schemaTypes(workspace: Workspace) {
+  const typeNames = workspace.schema.keys
+  const collections = `export type AnyPage = EntryOf<Entry & typeof schema>
+  export const AnyPage: Collection<AnyPage>
+  export type Pages = AlineaPages<AnyPage>
+  ${typeNames
+    .map(
+      type =>
+        `export const ${type}: Collection<Extract<AnyPage, {type: '${type}'}>>
+        export type ${type} = DataOf<typeof ${type}>`
+    )
+    .join('\n')}`
   return `
     import {config} from '../config.js'
-    import {DataOf, EntryOf} from '@alinea/core'
+    import {DataOf, EntryOf, Entry} from '@alinea/core'
     import {Collection} from '@alinea/store'
     import type {Pages as AlineaPages} from '@alinea/backend'
-    export const schema = config.workspaces['${workspace}'].schema
-    export type AnyPage = EntryOf<typeof schema>
-    export const AnyPage: Collection<AnyPage>
-    export type Pages = AlineaPages<AnyPage>
-    ${typeNames
-      .map(
-        type =>
-          `export const ${type}: Collection<Extract<AnyPage, {type: '${type}'}>>
-          export type ${type} = DataOf<typeof ${type}>`
-      )
-      .join('\n')}
+    export const schema = config.workspaces['${workspace.name}'].schema
+    ${wrapNamespace(collections, workspace.typeNamespace)}
   `
     .replace(/  /g, '')
     .trim()
@@ -290,11 +306,11 @@ export async function generate(options: GenerateOptions) {
       await fs.mkdir(path.join(outDir, key), {recursive: true})
       await fs.writeFile(
         path.join(outDir, key, 'schema.js'),
-        schemaCollections(key, workspace.schema)
+        schemaCollections(workspace)
       )
       await fs.writeFile(
         path.join(outDir, key, 'schema.d.ts'),
-        schemaTypes(key, workspace.schema)
+        schemaTypes(workspace)
       )
       await fs.copy(path.join(staticDir, 'workspace'), path.join(outDir, key), {
         overwrite: true

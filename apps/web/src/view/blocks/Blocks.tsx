@@ -17,7 +17,7 @@ export function Blocks({blocks}: BlocksViewProps) {
           case 'TypesBlock':
             return <TypesBlock key={block.id} {...block} />
           default:
-            throw unreachable(block.type)
+            throw unreachable(block)
         }
       })}
     </div>

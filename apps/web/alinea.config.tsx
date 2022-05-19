@@ -17,6 +17,7 @@ export const webSchema = schema({
 
 const web = workspace('Alinea', {
   schema: webSchema,
+  typeNamespace: 'content',
   source: './content',
   mediaDir: './public',
   color: '#EF437C', // '#5661E5', //

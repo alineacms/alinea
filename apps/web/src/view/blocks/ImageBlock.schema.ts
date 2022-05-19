@@ -6,12 +6,3 @@ export const ImageBlockSchema = type('Image', {
 })
 
 export type ImageBlockSchema = Schema.TypeOf<typeof ImageBlockSchema>
-
-/*export function queryImageBlock(Entry: Collection<ImageBlockSchema>) {
-  return {
-    images: Entry.where(Entry.id.isIn(
-      Entry.image.i
-    ))
-  }
-}
-*/

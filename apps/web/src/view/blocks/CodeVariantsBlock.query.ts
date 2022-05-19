@@ -1,9 +1,9 @@
-import {Store} from '@alinea/store/Store'
-import {getHighlighter} from 'shiki'
+import { content } from '@alinea/content/web'
+import { Store } from '@alinea/store/Store'
+import { getHighlighter } from 'shiki'
 import tsxLanguage from 'shiki/languages/tsx.tmLanguage.json'
-import {Pages} from '../../../.alinea/web'
-import {theme} from '../types/ShikiTheme'
-import {CodeVariantsBlockSchema} from './CodeVariantsBlock.schema'
+import { theme } from '../types/ShikiTheme'
+import { CodeVariantsBlockSchema } from './CodeVariantsBlock.schema'
 
 const highlighter = getHighlighter({
   theme: {
@@ -17,7 +17,7 @@ const highlighter = getHighlighter({
 })
 
 export async function codeVariantsBlockQuery(
-  pages: Pages,
+  pages: content.Pages,
   block: CodeVariantsBlockSchema
 ) {
   return {

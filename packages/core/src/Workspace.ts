@@ -16,8 +16,9 @@ export type WorkspaceOptions<T = any> = {
    * - If the source is a file, it will be evaluated.
    */
   source: string
-  /** Todo: remove or document */
   roots: Record<string, RootConfig>
+  /** Generated types will be placed in this namespace  */
+  typeNamespace?: string
   /** The directory where media files are placed in case a file backend is used */
   mediaDir?: string
   /** The main theme color used in the dashboard */
@@ -50,6 +51,10 @@ export class Workspace<T = any> implements WorkspaceConfig<T> {
       })
     )
     this.schema = this.options.schema.toSchema(this)
+  }
+
+  get typeNamespace() {
+    return this.options.typeNamespace
   }
 
   get source(): string {
