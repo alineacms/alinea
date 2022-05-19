@@ -2,7 +2,6 @@ import {createId, outcome} from '@alinea/core'
 import {detect} from 'detect-package-manager'
 import {dirname} from 'dirname-filename-esm'
 import fs from 'fs-extra'
-import {execSync} from 'node:child_process'
 import path from 'node:path'
 import {generate} from './Generate'
 
@@ -26,22 +25,30 @@ export async function init(options: InitOptions) {
   await fs.mkdir(path.join(cwd, 'content/data'), {recursive: true})
   await fs.writeFile(
     path.join(cwd, 'content/data/index.json'),
-    JSON.stringify({
-      id: createId(),
-      type: 'Page',
-      root: 'data',
-      title: 'Welcome'
-    })
+    JSON.stringify(
+      {
+        id: createId(),
+        type: 'Page',
+        root: 'data',
+        title: 'Welcome'
+      },
+      null,
+      2
+    )
   )
   await fs.mkdir(path.join(cwd, 'content/media'), {recursive: true})
   await fs.writeFile(
     path.join(cwd, 'content/media/media.json'),
-    JSON.stringify({
-      id: createId(),
-      type: 'MediaLibrary',
-      root: 'media',
-      title: 'Media library'
-    })
+    JSON.stringify(
+      {
+        id: createId(),
+        type: 'MediaLibrary',
+        root: 'media',
+        title: 'Media library'
+      },
+      null,
+      2
+    )
   )
   await fs.copyFile(
     path.join(__dirname, 'static/init/alinea.config.js'),
@@ -58,10 +65,10 @@ export async function init(options: InitOptions) {
     pkg.dependencies['@alinea/content'] = `${
       pm !== 'npm' ? 'link' : 'file'
     }:./.alinea`
-    if (!pkg.scripts) pkg.scripts = {}
     /*
     // Not sure if a postinstall script is right, since it has the potential to 
     // fail during execution
+    if (!pkg.scripts) pkg.scripts = {}
     const currentPostinstall = pkg.scripts.postinstall
     const postinstall = currentPostinstall
       ? `${currentPostinstall} && alinea generate`
@@ -73,7 +80,18 @@ export async function init(options: InitOptions) {
       JSON.stringify(pkg, null, 2)
     )
     await fs.mkdir(path.join(cwd, '.alinea'))
-    execSync(`${pm} install`, {cwd, stdio: 'inherit'})
+    const IS_WINDOWS =
+      process.platform === 'win32' ||
+      /^(msys|cygwin)$/.test(process.env.OSTYPE as string)
+    const symlinkType = IS_WINDOWS ? 'junction' : 'dir'
+    await outcome(
+      fs.symlink(
+        path.join(cwd, 'node_modules/@alinea/content'),
+        path.join(cwd, '.alinea'),
+        symlinkType
+      )
+    )
+    // execSync(`${pm} install`, {cwd, stdio: 'inherit'})
   }
   await generate({cwd: path.resolve(cwd), quiet})
   const runner = pm === 'npm' ? 'npx' : pm
