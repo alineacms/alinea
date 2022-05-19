@@ -4,11 +4,11 @@ import {InputState} from '@alinea/editor'
 import {Expr} from '@alinea/store'
 import type {ComponentType} from 'react'
 import {Label} from './Label'
+import {Shape} from './Shape'
+import {ListMutator} from './shape/ListShape'
+import {RecordMutator} from './shape/RecordShape'
+import {RichTextMutator} from './shape/RichTextShape'
 import {TextDoc} from './TextDoc'
-import {Value} from './Value'
-import {ListMutator} from './value/ListValue'
-import {RecordMutator} from './value/RecordValue'
-import {RichTextMutator} from './value/RichTextValue'
 
 export type FieldRenderer<V, M, F> = ComponentType<{
   state: InputState<readonly [V, M]>
@@ -34,8 +34,8 @@ export namespace Field {
   export type Text<T, Q = T> = Field<TextDoc<T>, RichTextMutator<T>, Q>
 }
 
-export interface Field<V, M, Q = V> {
-  type: Value<V, M>
+export interface Field<V = any, M = any, Q = V> {
+  shape: Shape<V, M>
   label: Label
   view?: FieldRenderer<V, M, Field<V, M, Q>>
   query?: <P>(field: Expr<V>, pages: Pages<P>) => Expr<Q> | undefined

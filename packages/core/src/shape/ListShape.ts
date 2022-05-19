@@ -2,10 +2,9 @@ import * as Y from 'yjs'
 import {createError} from '../ErrorWithCode'
 import {createId} from '../Id'
 import {Label} from '../Label'
+import {Shape} from '../Shape'
 import {generateKeyBetween} from '../util/FractionalIndexing'
-import {Value} from '../Value'
-import {ValueKind} from '../ValueKind'
-import {RecordValue} from './RecordValue'
+import {RecordShape} from './RecordShape'
 
 export type ListRow = {
   id: string
@@ -25,20 +24,19 @@ export type ListMutator<T> = {
   move: (oldIndex: number, newIndex: number) => void
 }
 
-export class ListValue<T>
-  implements Value<Array<ListRow & T>, ListMutator<ListRow & T>>
+export class ListShape<T>
+  implements Shape<Array<ListRow & T>, ListMutator<ListRow & T>>
 {
-  kind = ValueKind.List
-  values: Record<string, RecordValue<ListRow & T>>
-  constructor(public label: Label, shapes: Record<string, RecordValue<T>>) {
+  values: Record<string, RecordShape<ListRow & T>>
+  constructor(public label: Label, shapes: Record<string, RecordShape<T>>) {
     this.values = Object.fromEntries(
       Object.entries(shapes).map(([key, type]) => {
         return [
           key,
-          new RecordValue(label, {
-            id: Value.Scalar('Id'),
-            index: Value.Scalar('Index'),
-            type: Value.Scalar('Type'),
+          new RecordShape(label, {
+            id: Shape.Scalar('Id'),
+            index: Shape.Scalar('Index'),
+            type: Shape.Scalar('Type'),
             ...type.shape
           })
         ]
@@ -48,11 +46,11 @@ export class ListValue<T>
   create() {
     return [] as Array<ListRow & T>
   }
-  typeOfChild<C>(yValue: Y.Map<any>, child: string): Value<C> {
+  typeOfChild<C>(yValue: Y.Map<any>, child: string): Shape<C> {
     const row = yValue.get(child)
     const type = row && row.get('type')
     const value = type && this.values[type]
-    if (value) return value as unknown as Value<C>
+    if (value) return value as unknown as Shape<C>
     throw createError(`Could not determine type of child "${child}"`)
   }
   toY(value: Array<ListRow & T>) {

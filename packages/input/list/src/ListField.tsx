@@ -1,5 +1,5 @@
 import type {Pages} from '@alinea/backend'
-import {Field, Label, SchemaConfig, Value} from '@alinea/core'
+import {Field, Label, SchemaConfig, Shape} from '@alinea/core'
 import {Expr, SelectionInput} from '@alinea/store'
 
 /** Optional settings to configure a list field */
@@ -54,7 +54,7 @@ export function createList<T, Q = Array<T & ListRow>>(
 ): ListField<T, Q> {
   const {schema} = options
   return {
-    type: Value.List(label, schema.shape),
+    shape: Shape.List(label, schema.shape),
     label,
     options,
     query: options.query || query<T, Q>(schema)

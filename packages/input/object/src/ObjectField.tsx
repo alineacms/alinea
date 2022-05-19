@@ -18,7 +18,7 @@ export function createObject<T>(
   options: ObjectOptions<T>
 ): ObjectField<T> {
   return {
-    type: options.fields.shape,
+    shape: options.fields.shape,
     label,
     options
   }

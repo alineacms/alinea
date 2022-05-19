@@ -5,10 +5,10 @@ import {
   Label,
   Media,
   Reference,
-  TypeConfig,
-  Value
+  Shape,
+  TypeConfig
 } from '@alinea/core'
-import {RecordValue} from '@alinea/core/value/RecordValue'
+import {RecordShape} from '@alinea/core/shape/RecordShape'
 import {Cursor, Expr, Functions, SelectionInput} from '@alinea/store'
 
 export type LinkType = 'entry' | 'image' | 'file' | 'external'
@@ -95,12 +95,12 @@ export function createLink<T, Q>(
 ): LinkField<T, Q> {
   const extra = options.fields?.shape
   return {
-    type: Value.List(label, {
-      entry: new RecordValue('Entry', {
-        entry: Value.Scalar('Entry')
+    shape: Shape.List(label, {
+      entry: new RecordShape('Entry', {
+        entry: Shape.Scalar('Entry')
       }).concat(extra),
-      url: new RecordValue('Url', {
-        url: Value.Scalar('Url')
+      url: new RecordShape('Url', {
+        url: Shape.Scalar('Url')
       }).concat(extra)
     }),
     label,

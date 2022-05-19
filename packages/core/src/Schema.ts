@@ -1,10 +1,10 @@
 import {Collection, Cursor, Selection} from '@alinea/store'
 import {Entry} from './Entry'
 import {Field} from './Field'
+import {RecordShape} from './shape/RecordShape'
 import type {TypeConfig} from './Type'
 import {Type} from './Type'
 import {LazyRecord} from './util/LazyRecord'
-import {RecordValue} from './value/RecordValue'
 import type {Workspace} from './Workspace'
 
 export type HasType = {type: string}
@@ -37,7 +37,7 @@ export namespace Schema {
 }
 
 export class SchemaConfig<T = any> {
-  shape: Record<string, RecordValue<any>>
+  shape: Record<string, RecordShape<any>>
 
   constructor(public types: LazyRecord<TypeConfig>) {
     this.shape = Object.fromEntries(

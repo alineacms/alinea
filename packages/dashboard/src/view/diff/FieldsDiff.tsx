@@ -1,9 +1,9 @@
-import {Value} from '@alinea/core'
+import {Shape} from '@alinea/core'
 import {TextLabel, Typo, VStack} from '@alinea/ui'
 import {FieldDiff} from './FieldDiff'
 
 export type FieldsDiffProps = {
-  changes: Array<[key: string, value: Value]>
+  changes: Array<[key: string, shape: Shape]>
   targetA: Record<string, any>
   targetB: Record<string, any>
 }
@@ -18,7 +18,7 @@ export function FieldsDiff({changes, targetA, targetB}: FieldsDiffProps) {
               <TextLabel label={type.label} />
             </Typo.H4>
             <FieldDiff
-              type={type}
+              shape={type}
               valueA={targetA?.[key]}
               valueB={targetB?.[key]}
             />

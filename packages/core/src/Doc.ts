@@ -63,7 +63,7 @@ export function docFromEntry(
   docRoot.set('$isContainer', entry.$isContainer)
   for (const [key, field] of type) {
     const contents = entry[key]
-    docRoot.set(key, field.type.toY(contents))
+    docRoot.set(key, field.shape.toY(contents))
   }
   doc.clientID = clientID
   return doc

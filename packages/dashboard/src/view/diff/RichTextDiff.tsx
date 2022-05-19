@@ -1,5 +1,5 @@
-import {RichTextValue, TextDoc} from '@alinea/core'
-import {RecordValue} from '@alinea/core/value/RecordValue'
+import {RichTextShape, TextDoc} from '@alinea/core'
+import {RecordShape} from '@alinea/core/shape/RecordShape'
 import {Card, fromModule} from '@alinea/ui'
 import {ReactNode, useMemo} from 'react'
 import {ChangeBox} from './ChangeBox'
@@ -62,12 +62,12 @@ function textDocParts(textDoc: TextDoc<any>): Array<Part> {
 }
 
 export type RichTextDiffProps = {
-  type: RichTextValue<any>
+  shape: RichTextShape<any>
   valueA: TextDoc<any>
   valueB: TextDoc<any>
 }
 
-export function RichTextDiff({type, valueA, valueB}: RichTextDiffProps) {
+export function RichTextDiff({shape, valueA, valueB}: RichTextDiffProps) {
   const parts = useMemo(() => {
     return {a: textDocParts(valueA), b: textDocParts(valueB)}
   }, [valueA, valueB])
@@ -86,7 +86,7 @@ export function RichTextDiff({type, valueA, valueB}: RichTextDiffProps) {
         switch (change.value.type) {
           case 'block': {
             const name = change.value.block.type
-            const kind = type.values?.[name]
+            const kind = shape.values?.[name]
             const compare =
               change.type === 'unchanged'
                 ? [
@@ -97,7 +97,7 @@ export function RichTextDiff({type, valueA, valueB}: RichTextDiffProps) {
                 ? [change.value.block, {}]
                 : [{}, change.value.block]
             const changes = diffRecord(
-              kind as RecordValue,
+              kind as RecordShape,
               compare[0],
               compare[1]
             )

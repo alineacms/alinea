@@ -1,5 +1,5 @@
 import type {Pages} from '@alinea/backend'
-import {Field, Label, SchemaConfig, TextDoc, Value} from '@alinea/core'
+import {Field, Label, SchemaConfig, Shape, TextDoc} from '@alinea/core'
 import {Expr, SelectionInput} from '@alinea/store'
 
 /** Optional settings to configure a rich text field */
@@ -46,7 +46,7 @@ export function createRichText<T, Q = TextDoc<T>>(
   options: RichTextOptions<T, Q> = {}
 ): RichTextField<T, Q> {
   return {
-    type: Value.RichText(label, options.blocks?.shape),
+    shape: Shape.RichText(label, options.blocks?.shape),
     label,
     options,
     query: options.query || (options.blocks && query<T, Q>(options.blocks))

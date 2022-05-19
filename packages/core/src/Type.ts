@@ -9,10 +9,10 @@ import {createId} from './Id'
 import {Label} from './Label'
 import type {Schema} from './Schema'
 import {Section} from './Section'
+import {Shape} from './Shape'
+import {RecordShape} from './shape/RecordShape'
 import {Lazy} from './util/Lazy'
 import {LazyRecord} from './util/LazyRecord'
-import {Value} from './Value'
-import {RecordValue} from './value/RecordValue'
 import type {View} from './View'
 
 export namespace Type {
@@ -45,21 +45,23 @@ export type TypeOptions<T> = {
 
 export class TypeConfig<T = any> {
   fields: Record<string, Field<any, any>> = {}
-  shape: RecordValue<T>
+  shape: RecordShape<T>
 
   constructor(
     public label: Label,
     public sections: Array<Section>,
     public options: TypeOptions<T>
   ) {
-    this.shape = Value.Record(
+    this.shape = Shape.Record(
       label,
       Object.fromEntries(
         sections
-          .flatMap(section => LazyRecord.iterate(section.fields || {}))
-          .filter(([, field]) => field.type)
+          .flatMap<[string, Field]>(section =>
+            LazyRecord.iterate(section.fields || {})
+          )
+          .filter(([, field]) => field.shape)
           .map(([key, field]) => {
-            return [key, field.type!]
+            return [key, field.shape!]
           })
       )
     )
