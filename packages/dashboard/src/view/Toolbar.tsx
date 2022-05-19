@@ -9,6 +9,7 @@ import {
 } from '@alinea/ui'
 import {LogoShape} from '@alinea/ui/branding/LogoShape'
 import {IcRoundKeyboardArrowDown} from '@alinea/ui/icons/IcRoundKeyboardArrowDown'
+import {IcRoundMenu} from '@alinea/ui/icons/IcRoundMenu'
 import {IcRoundUnfoldMore} from '@alinea/ui/icons/IcRoundUnfoldMore'
 import {IcSharpBrightnessMedium} from '@alinea/ui/icons/IcSharpBrightnessMedium'
 import {RiFlashlightFill} from '@alinea/ui/icons/RiFlashlightFill'
@@ -36,6 +37,7 @@ export namespace Toolbar {
     const navigate = useNavigate()
     return (
       <HStack center className={styles.root()}>
+        <IconButton icon={IcRoundMenu} />
         <HStack gap={16}>
           <DropdownMenu.Root>
             <DropdownMenu.Trigger>
