@@ -61,7 +61,8 @@
     background-color: #f7f6f6;
   }
 
-  &:hover, &.is-active {
+  &:hover,
+  &.is-active {
     background: var(--alinea-highlight);
   }
 }
