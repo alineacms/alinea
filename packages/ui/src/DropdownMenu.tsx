@@ -1,4 +1,5 @@
 import * as RadixDropdownMenu from '@radix-ui/react-dropdown-menu'
+
 import css from './DropdownMenu.module.scss'
 import {fromModule} from './util/Styler'
 
@@ -13,7 +14,9 @@ export namespace DropdownMenu {
   export const RadioGroup = RadixDropdownMenu.RadioGroup
   export const RadioItem = RadixDropdownMenu.RadioItem
   export const ItemIndicator = RadixDropdownMenu.ItemIndicator
-  export const TriggerItem = RadixDropdownMenu.TriggerItem
+  export const TriggerItem = styles.triggeritem.toElement(
+    RadixDropdownMenu.TriggerItem
+  )
   export const Label = RadixDropdownMenu.Label
   export const Separator = RadixDropdownMenu.Separator
   export const Arrow = RadixDropdownMenu.Arrow
