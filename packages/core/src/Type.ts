@@ -1,6 +1,6 @@
 // Todo: extract interface and place it in core
 import type {Pages} from '@alinea/backend/Pages'
-import type {Cursor, Fields, Selection} from '@alinea/store'
+import type {Cursor, Fields} from '@alinea/store'
 import {Collection, Expr, SelectionInput} from '@alinea/store'
 import type {ComponentType} from 'react'
 import {Entry} from './Entry'
@@ -21,7 +21,7 @@ export namespace Type {
 }
 
 /** Optional settings to configure a Type */
-export type TypeOptions<T> = {
+export type TypeOptions<T, Q = T> = {
   /** Entries can be created as children of this entry */
   isContainer?: boolean
   /** Entries do not show up in the sidebar content tree */
@@ -41,6 +41,8 @@ export type TypeOptions<T> = {
   /** Create indexes on fields of this type */
   // Todo: solve infered type here
   index?: <T>(fields: Fields<T>) => Record<string, Array<Expr<any>>>
+
+  transform?: <P>(field: Expr<T>, pages: Pages<P>) => Expr<Q> | undefined
 }
 
 export class TypeConfig<T = any> {
@@ -90,22 +92,27 @@ export class TypeConfig<T = any> {
     return Boolean(this.options.isContainer)
   }
 
-  selection(cursor: Cursor<T>, pages: Pages<any>): Selection<T> | undefined {
+  selection(cursor: Cursor<T>, pages: Pages<any>): Expr<T> | undefined {
     const computed: Record<string, SelectionInput> = {}
     let isComputed = false
     for (const [key, field] of this) {
-      if (!field.query) continue
-      const selection = field.query(cursor.get(key), pages)
+      if (!field.transform) continue
+      const selection = field.transform(cursor.get(key), pages)
       if (!selection) continue
       computed[key] = selection
       isComputed = true
     }
+    if (this.options.transform)
+      return this.options.transform(
+        cursor.fields.with(computed).toExpr(),
+        pages
+      )
     if (!isComputed) return
-    return cursor.fields.with(computed)
+    return cursor.fields.with(computed).toExpr()
   }
 
-  configure(options: TypeOptions<T>): TypeConfig<T> {
-    return new TypeConfig(this.label, this.sections, options)
+  configure<Q>(options: TypeOptions<T, Q>): TypeConfig<Q> {
+    return new TypeConfig(this.label, this.sections, options as any)
   }
 
   toType(schema: Schema, name: string): Type<T> {

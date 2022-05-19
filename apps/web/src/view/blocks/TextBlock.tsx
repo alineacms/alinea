@@ -4,11 +4,11 @@ import {CodeBlock} from './CodeBlock'
 import {CodeVariantsBlock} from './CodeVariantsBlock'
 import {ImageBlock} from './ImageBlock'
 import css from './TextBlock.module.scss'
-import {TextBlockProps} from './TextBlock.query'
+import {TextBlockSchema} from './TextBlock.schema'
 
 const styles = fromModule(css)
 
-export function TextBlock({text}: TextBlockProps) {
+export function TextBlock({text}: TextBlockSchema) {
   return (
     <div className={styles.root()}>
       <RichText

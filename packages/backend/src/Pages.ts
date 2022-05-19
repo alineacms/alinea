@@ -52,50 +52,6 @@ class PageResolver<T> {
   }
 
   processCallbacks = new Map<string, (value: any) => any>()
-  process<I extends SelectionInput, X>(
-    input: I,
-    fn: (value: Store.TypeOf<I>) => X | Promise<X>
-  ): Expr<X> {
-    const id = createId()
-    this.processCallbacks.set(id, fn)
-    return new Expr(
-      ExprData.Record({
-        $__process: Expr.value(id).expr,
-        $__expr: Selection.create(input)
-      })
-    )
-  }
-
-  processTypes<
-    I extends SelectionInput,
-    Transform extends Record<string, (value: any) => any>
-  >(
-    input: I,
-    transform: Transform
-  ): Expr<ProcessTypes<Store.TypeOf<I>, Transform>> {
-    return this.process(input, async function post(value: any): Promise<any> {
-      const tasks: Array<() => Promise<void>> = []
-      iter(value, (value, setValue) => {
-        const needsTransforming =
-          value &&
-          typeof value === 'object' &&
-          'type' in value &&
-          transform[value.type]
-        if (needsTransforming) {
-          tasks.push(async () => {
-            const result = await transform[value.type](value)
-            setValue(result)
-          })
-          return false
-        }
-        return true
-      })
-      await Promise.all(tasks.map(fn => fn()))
-      // we can keep processing results, but... it's too easy to return the same types?
-      // if (tasks.length > 0) return await post(value)
-      return value
-    }) as any
-  }
 
   async postProcess(value: any): Promise<any> {
     const tasks: Array<() => Promise<void>> = []
@@ -365,6 +321,7 @@ class PagesImpl<T> extends Multiple<T, T> {
   constructor(
     workspace: Workspace<T>,
     createCache: () => Promise<Store>,
+    resolver: PageResolver<T> = new PageResolver(createCache()),
     withComputed = true
   ) {
     const from = From.Column(From.Table('Entry', ['data']), 'data')
@@ -373,11 +330,11 @@ class PagesImpl<T> extends Multiple<T, T> {
       selection: withComputed
         ? createSelection(
             workspace,
-            new PagesImpl(workspace, createCache, false)
+            new PagesImpl(workspace, createCache, resolver, false)
           )
         : ExprData.Row(from)
     })
-    super(new PageResolver(createCache()), cursor)
+    super(resolver, cursor)
     for (const [key, type] of workspace.schema.entries()) {
       ;(this as any)[key] = this.whereType(type.collection())
     }
@@ -385,6 +342,51 @@ class PagesImpl<T> extends Multiple<T, T> {
 
   tree(id: EV<string>) {
     return new PageTree(this.resolver, id)
+  }
+
+  process<I extends SelectionInput, X>(
+    input: I,
+    fn: (value: Store.TypeOf<I>) => X | Promise<X>
+  ): Expr<X> {
+    const id = createId()
+    this.resolver.processCallbacks.set(id, fn)
+    return new Expr(
+      ExprData.Record({
+        $__process: Expr.value(id).expr,
+        $__expr: Selection.create(input)
+      })
+    )
+  }
+
+  processTypes<
+    I extends SelectionInput,
+    Transform extends Record<string, (value: any) => any>
+  >(
+    input: I,
+    transform: Transform
+  ): Expr<ProcessTypes<Store.TypeOf<I>, Transform>> {
+    return this.process(input, async function post(value: any): Promise<any> {
+      const tasks: Array<() => Promise<void>> = []
+      iter(value, (value, setValue) => {
+        const needsTransforming =
+          value &&
+          typeof value === 'object' &&
+          'type' in value &&
+          transform[value.type]
+        if (needsTransforming) {
+          tasks.push(async () => {
+            const result = await transform[value.type](value)
+            setValue(result)
+          })
+          return false
+        }
+        return true
+      })
+      await Promise.all(tasks.map(fn => fn()))
+      // we can keep processing results, but... it's too easy to return the same types?
+      // if (tasks.length > 0) return await post(value)
+      return value
+    }) as any
   }
 }
 

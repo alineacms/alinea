@@ -1,19 +1,18 @@
-import {content} from '@alinea/content/web'
-import {Store} from '@alinea/store'
+import {Pages} from '@alinea/backend'
+import {Expr} from '@alinea/store'
 import {typeInfo} from '../../data/Types'
-import {TypesBlockSchema} from './TypesBlock.schema'
 
-export async function typesBlockQuery(
-  pages: content.Pages,
-  block: TypesBlockSchema
+export function transformTypes(
+  block: Expr<{types: string}>,
+  pages: Pages<any>
 ) {
-  const types = String(block.types)
-    .split(',')
-    .map(type => type.trim())
-  return {
-    ...block,
-    members: typeInfo(types)
-  }
+  return pages.process(block, block => {
+    const types = String(block.types)
+      .split(',')
+      .map(type => type.trim())
+    return {
+      ...block,
+      members: typeInfo(types)
+    }
+  })
 }
-
-export type TypesBlockProps = Store.TypeOf<ReturnType<typeof typesBlockQuery>>

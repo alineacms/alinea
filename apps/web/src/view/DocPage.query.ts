@@ -1,6 +1,6 @@
 import {content} from '@alinea/content/web'
+import {Label} from '@alinea/core'
 import {Cursor, Store} from '@alinea/store'
-import {blocksQuery} from './blocks/Blocks.query'
 
 function menuQuery(pages: content.Pages) {
   return pages
@@ -17,7 +17,7 @@ function menuQuery(pages: content.Pages) {
 }
 
 export async function docPageQuery(pages: content.Pages, doc: content.Doc) {
-  type Sibling = {id: string; type: string; url: string; title: string}
+  type Sibling = {id: string; type: string; url: string; title: Label}
   const sibling = (doc: Cursor<content.Doc | content.Docs>) => ({
     id: doc.id,
     url: doc.url,
@@ -58,7 +58,7 @@ export async function docPageQuery(pages: content.Pages, doc: content.Doc) {
     menu: await menuQuery(pages),
     prev,
     next,
-    blocks: await blocksQuery(pages, doc.blocks)
+    blocks: doc.blocks
   }
 }
 

@@ -15,7 +15,10 @@ export type RichTextOptions<T, Q> = {
   /** A default value */
   initialValue?: string
   /** Modify value returned when queried through `Pages` */
-  query?: <P>(field: Expr<TextDoc<T>>, pages: Pages<P>) => Expr<Q> | undefined
+  transform?: <P>(
+    field: Expr<TextDoc<T>>,
+    pages: Pages<P>
+  ) => Expr<Q> | undefined
 }
 
 /** Internal representation of a rich text field */
@@ -49,6 +52,7 @@ export function createRichText<T, Q = TextDoc<T>>(
     shape: Shape.RichText(label, options.blocks?.shape),
     label,
     options,
-    query: options.query || (options.blocks && query<T, Q>(options.blocks))
+    transform:
+      options.transform || (options.blocks && query<T, Q>(options.blocks))
   }
 }

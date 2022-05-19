@@ -51,7 +51,7 @@ export type LinkOptions<T, Q> = {
   /** Maximum amount of links that can be selected */
   max?: number
   /** Modify value returned when queried through `Pages` */
-  query?: <P>(
+  transform?: <P>(
     field: Expr<Array<Reference & T>>,
     pages: Pages<P>
   ) => Expr<Q> | undefined
@@ -105,7 +105,7 @@ export function createLink<T, Q>(
     }),
     label,
     options,
-    query(field, pages): Expr<Q> {
+    transform(field, pages): Expr<Q> {
       const row = field.each()
       const Link = Entry.as<Media.File>('Link')
       const cases: Record<string, SelectionInput> = {

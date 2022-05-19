@@ -38,5 +38,5 @@ export interface Field<V = any, M = any, Q = V> {
   shape: Shape<V, M>
   label: Label
   view?: FieldRenderer<V, M, Field<V, M, Q>>
-  query?: <P>(field: Expr<V>, pages: Pages<P>) => Expr<Q> | undefined
+  transform?: <P>(field: Expr<V>, pages: Pages<P>) => Expr<Q> | undefined
 }
