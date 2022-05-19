@@ -1,26 +1,28 @@
 import {
   Avatar,
   DropdownMenu,
-  fromModule,
-  IconButton,
   TextLabel,
+  fromModule,
   usePreferences
 } from '@alinea/ui'
-import {LogoShape} from '@alinea/ui/branding/LogoShape'
-import {IcRoundKeyboardArrowDown} from '@alinea/ui/icons/IcRoundKeyboardArrowDown'
+
+import {HStack} from '@alinea/ui/Stack'
+import {IcRoundCheck} from '@alinea/ui/icons/IcRoundCheck'
+import IcRoundKeyboardArrowDown from '@alinea/ui/icons/IcRoundKeyboardArrowDown'
+import {IcRoundKeyboardArrowRight} from '@alinea/ui/icons/IcRoundKeyboardArrowRight'
 import IcRoundTextFields from '@alinea/ui/icons/IcRoundTextFields'
 import {IcRoundUnfoldMore} from '@alinea/ui/icons/IcRoundUnfoldMore'
 import {IcSharpBrightnessMedium} from '@alinea/ui/icons/IcSharpBrightnessMedium'
+import {LogoShape} from '@alinea/ui/branding/LogoShape'
 import {RiFlashlightFill} from '@alinea/ui/icons/RiFlashlightFill'
-import {HStack} from '@alinea/ui/Stack'
 import {contrastColor} from '@alinea/ui/util/ContrastColor'
 import {createSlots} from '@alinea/ui/util/Slots'
-import {useNavigate} from 'react-router'
+import css from './Toolbar.module.scss'
 import {useDashboard} from '../hook/UseDashboard'
 import {useNav} from '../hook/UseNav'
+import {useNavigate} from 'react-router'
 import {useSession} from '../hook/UseSession'
 import {useWorkspace} from '../hook/UseWorkspace'
-import css from './Toolbar.module.scss'
 
 const styles = fromModule(css)
 
@@ -31,7 +33,12 @@ export namespace Toolbar {
     const session = useSession()
     const {config} = useDashboard()
     const nav = useNav()
-    const [preferences, toggleColorScheme] = usePreferences()
+    const [
+      preferences,
+      toggleColorScheme,
+      updateWorkspacePreference,
+      updateFontSize
+    ] = usePreferences()
     const {label} = useWorkspace()
     const navigate = useNavigate()
     return (
@@ -58,7 +65,7 @@ export namespace Toolbar {
                 return (
                   <DropdownMenu.Item
                     key={key}
-                    onClick={() =>
+                    onSelect={() =>
                       navigate(
                         nav.entry({
                           workspace: key,
@@ -90,10 +97,6 @@ export namespace Toolbar {
         </div>
         <div>
           <HStack center gap={10}>
-            {/* <IconButton
-              icon={IcSharpBrightnessMedium}
-              onClick={toggleColorScheme}
-            /> */}
             <DropdownMenu.Root>
               <DropdownMenu.Trigger>
                 <HStack center gap={4}>
@@ -103,29 +106,79 @@ export namespace Toolbar {
               </DropdownMenu.Trigger>
 
               <DropdownMenu.Content>
-                <IconButton
-                  icon={IcSharpBrightnessMedium}
-                  onClick={toggleColorScheme}
-                />
+                <DropdownMenu.Item onSelect={toggleColorScheme}>
+                  <IcSharpBrightnessMedium />
+                </DropdownMenu.Item>
+
                 <DropdownMenu.Root>
                   <DropdownMenu.TriggerItem>
-                    <DropdownMenu.Label>
-                      <IcRoundTextFields /> Font size
-                    </DropdownMenu.Label>
+                    Default workspace
+                    <IcRoundKeyboardArrowRight />
                   </DropdownMenu.TriggerItem>
                   <DropdownMenu.Content>
-                    {/* <DropdownMenu.Item onSelect={toggleFontSize}>
-                      Small
-                    </DropdownMenu.Item> */}
-                    {/* <DropdownMenu.Item onClick={() => setFontSize('medium')}>
-                      Medium
-                    </DropdownMenu.Item>
-                    <DropdownMenu.Item onClick={() => setFontSize('large')}>
-                      Large
-                    </DropdownMenu.Item> */}
+                    {Object.entries(config.workspaces).map(
+                      ([key, workspace]) => {
+                        const root = Object.values(workspace.roots)[0]
+                        return (
+                          <DropdownMenu.Item
+                            key={key}
+                            onSelect={() => {
+                              updateWorkspacePreference(key)
+                              // Keep navigation?
+                              navigate(
+                                nav.entry({
+                                  workspace: key,
+                                  root: root.name,
+                                  locale: root.defaultLocale
+                                })
+                              )
+                            }}
+                          >
+                            <HStack center gap={16}>
+                              <LogoShape
+                                foreground={contrastColor(workspace.color)}
+                                background={workspace.color}
+                              >
+                                <RiFlashlightFill />
+                              </LogoShape>
+                              <div>
+                                <TextLabel label={workspace.label} />
+                              </div>
+                              {key === preferences.workspace && (
+                                <IcRoundCheck />
+                              )}
+                            </HStack>
+                          </DropdownMenu.Item>
+                        )
+                      }
+                    )}
                   </DropdownMenu.Content>
                 </DropdownMenu.Root>
-                <DropdownMenu.Separator />
+
+                <DropdownMenu.Root>
+                  <DropdownMenu.TriggerItem>
+                    <IcRoundTextFields />
+                    <IcRoundKeyboardArrowRight />
+                  </DropdownMenu.TriggerItem>
+                  <DropdownMenu.Content>
+                    <DropdownMenu.Item onSelect={() => updateFontSize('small')}>
+                      Small
+                    </DropdownMenu.Item>
+                    <DropdownMenu.Item
+                      style={{fontSize: '15px'}}
+                      onSelect={() => updateFontSize('medium')}
+                    >
+                      Medium
+                    </DropdownMenu.Item>
+                    <DropdownMenu.Item
+                      style={{fontSize: '18px'}}
+                      onSelect={() => updateFontSize('large')}
+                    >
+                      Large
+                    </DropdownMenu.Item>
+                  </DropdownMenu.Content>
+                </DropdownMenu.Root>
+
                 <DropdownMenu.Item onSelect={session.end}>
                   Logout
                 </DropdownMenu.Item>

@@ -1,9 +1,15 @@
-import {parseToHsla} from 'color2k'
+import {
+  ColorScheme,
+  FontSize,
+  Language,
+  PreferencesProvider
+} from './hook/UsePreferences'
 import {HTMLProps, PropsWithChildren, useState} from 'react'
-import {useContrastColor} from './hook/UseContrastColor'
-import {PreferencesProvider} from './hook/UsePreferences'
-import {fromModule} from './util/Styler'
+
 import css from './Viewport.module.scss'
+import {fromModule} from './util/Styler'
+import {parseToHsla} from 'color2k'
+import {useContrastColor} from './hook/UseContrastColor'
 
 const styles = fromModule(css)
 
@@ -18,19 +24,24 @@ export function Viewport({children, color, contain, ...props}: ViewportProps) {
   const accentColor = color!
   const accentColorForeground = useContrastColor(accentColor)
   const persistenceId = `@alinea/ui/viewport`
-  const [schemePreference, setSchemePreference] = useState<
-    'light' | 'dark' | undefined
-  >(
+  const preferences =
     typeof window !== 'undefined'
-      ? (window.localStorage?.getItem(persistenceId) as any)?.scheme ||
-          undefined
+      ? JSON.parse(window.localStorage?.getItem(persistenceId) as any) ||
+        undefined
       : undefined
+  const [schemePreference, setSchemePreference] = useState<ColorScheme>(
+    preferences?.scheme
+  )
+  const [workspacePreference, setWorkspacePreference] = useState<string>(
+    preferences?.workspace
+  )
+  const [sizePreference, setSizePreference] = useState<FontSize>(
+    preferences?.size
+  )
+  const [languagePreference, setLanguagePreference] = useState<Language>(
+    preferences?.language
   )
   function toggleSchemePreference() {
-    const prev =
-      typeof window !== 'undefined'
-        ? (window.localStorage?.getItem(persistenceId) as any) || undefined
-        : undefined
     const isLight =
       schemePreference === undefined
         ? window.matchMedia('(prefers-color-scheme: light)').matches
@@ -39,15 +50,44 @@ export function Viewport({children, color, contain, ...props}: ViewportProps) {
     setSchemePreference(next)
     window?.localStorage?.setItem(
       persistenceId,
-      JSON.stringify({...prev, scheme: next})
+      JSON.stringify({...preferences, scheme: next})
+    )
+  }
+  function updateWorkspacePreference(workspace: string) {
+    setWorkspacePreference(workspace)
+    window?.localStorage?.setItem(
+      persistenceId,
+      JSON.stringify({...preferences, workspace: workspace})
+    )
+  }
+  function updateSizePreference(size: FontSize) {
+    setSizePreference(size)
+    window?.localStorage?.setItem(
+      persistenceId,
+      JSON.stringify({...preferences, size: size})
+    )
+  }
+  function updateLanguagePreference(lang: Language) {
+    setLanguagePreference(lang)
+    window?.localStorage?.setItem(
+      persistenceId,
+      JSON.stringify({...preferences, language: lang})
     )
   }
   const [hue] = parseToHsla(accentColor)
   return (
     <PreferencesProvider
       value={[
-        {scheme: schemePreference, size: undefined, language: undefined},
-        toggleSchemePreference
+        {
+          scheme: schemePreference,
+          workspace: workspacePreference,
+          size: sizePreference,
+          language: languagePreference
+        },
+        toggleSchemePreference,
+        updateWorkspacePreference,
+        updateSizePreference,
+        updateLanguagePreference
       ]}
     >
       <main
