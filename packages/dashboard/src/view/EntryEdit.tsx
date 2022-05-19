@@ -1,4 +1,4 @@
-import {createId, docFromEntry, slugify} from '@alinea/core'
+import {createId, docFromEntry, EntryStatus, slugify} from '@alinea/core'
 import {InputForm, InputState} from '@alinea/editor'
 import {select} from '@alinea/input.select'
 import {SelectInput} from '@alinea/input.select/view'
@@ -12,7 +12,8 @@ import {
   IconButton,
   Loader,
   TextLabel,
-  Typo
+  Typo,
+  useObservable
 } from '@alinea/ui'
 import {IcRoundArrowBack} from '@alinea/ui/icons/IcRoundArrowBack'
 import {Link} from '@alinea/ui/Link'
@@ -56,6 +57,7 @@ function EntryEditDraft({initialMode, draft, isLoading}: EntryEditDraftProps) {
   const isTranslating = !isLoading && locale !== draft.i18n?.locale
   const [isCreating, setIsCreating] = useState(false)
   const [mode, setMode] = useState<EditMode>(initialMode)
+  const status = useObservable(draft.status)
   function handleTranslation() {
     if (!locale || isCreating) return
     setIsCreating(true)
@@ -97,7 +99,7 @@ function EntryEditDraft({initialMode, draft, isLoading}: EntryEditDraftProps) {
               })
             }
           />
-          {mode === EditMode.Diff ? (
+          {mode === EditMode.Diff && status !== EntryStatus.Published ? (
             <>
               {draft.detail.original && (
                 <EntryDiff
