@@ -75,7 +75,6 @@ export function SearchBox() {
         <label className={styles.root.label()} {...list.focusProps}>
           <IcRoundSearch className={styles.root.label.icon()} />
           <input
-            autoFocus
             placeholder="Search"
             value={search}
             onChange={event => setSearch(event.target.value)}

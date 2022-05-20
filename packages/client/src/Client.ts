@@ -34,8 +34,9 @@ export class Client<T extends Workspaces> implements Hub<T> {
     }).then<Outcome<Entry.Detail | null>>(toFuture)
   }
 
-  query<T>(cursor: Cursor<T>): Future<Array<T>> {
-    return this.fetchJson(Hub.routes.query(), {
+  query<T>(cursor: Cursor<T>, options?: Hub.QueryOptions): Future<Array<T>> {
+    const params = options?.source ? '?source' : ''
+    return this.fetchJson(Hub.routes.query() + params, {
       method: 'POST',
       body: JSON.stringify(cursor.toJSON())
     }).then<Outcome<Array<T>>>(toFuture)
@@ -55,6 +56,12 @@ export class Client<T extends Workspaces> implements Hub<T> {
     }).then<Outcome<boolean>>(toFuture)
   }
 
+  listDrafts(workspace: string): Future<Array<{id: string}>> {
+    return this.fetch(Hub.routes.drafts() + `?workspace=${workspace}`, {
+      method: 'GET'
+    }).then<Outcome<Array<{id: string}>>>(toFuture)
+  }
+
   publishEntries(entries: Array<Entry>): Future {
     return this.fetchJson(Hub.routes.publish(), {
       method: 'POST',
@@ -62,9 +69,9 @@ export class Client<T extends Workspaces> implements Hub<T> {
     }).then(toFuture)
   }
 
-  uploadFile<K extends keyof T>(
-    workspace: K,
-    root: keyof T[K]['roots'],
+  uploadFile(
+    workspace: string,
+    root: string,
     file: Hub.Upload
   ): Future<Media.File> {
     const form = new FormData()

@@ -1,4 +1,4 @@
-import {createId, docFromEntry, Entry, slugify} from '@alinea/core'
+import {createId, docFromEntry, EntryStatus, slugify} from '@alinea/core'
 import {InputForm, InputState} from '@alinea/editor'
 import {select} from '@alinea/input.select'
 import {SelectInput} from '@alinea/input.select/view'
@@ -16,17 +16,12 @@ import {
   useObservable
 } from '@alinea/ui'
 import {IcRoundArrowBack} from '@alinea/ui/icons/IcRoundArrowBack'
+import {Link} from '@alinea/ui/Link'
+import {Main} from '@alinea/ui/Main'
 import {Modal} from '@alinea/ui/Modal'
-import {
-  ComponentType,
-  FormEvent,
-  Suspense,
-  useLayoutEffect,
-  useState
-} from 'react'
+import {FormEvent, Suspense, useLayoutEffect, useState} from 'react'
 import {useQuery, useQueryClient} from 'react-query'
 import {useNavigate} from 'react-router'
-import {Link} from 'react-router-dom'
 import * as Y from 'yjs'
 import {EntryDraft} from '../draft/EntryDraft'
 import {EntryProperty} from '../draft/EntryProperty'
@@ -35,25 +30,22 @@ import {useNav} from '../hook/UseNav'
 import {useRoot} from '../hook/UseRoot'
 import {useSession} from '../hook/UseSession'
 import {useWorkspace} from '../hook/UseWorkspace'
+import {EntryDiff} from './diff/EntryDiff'
+import {EditMode} from './entry/EditMode'
 import {EntryHeader} from './entry/EntryHeader'
+import {EntryPreview} from './entry/EntryPreview'
 import {EntryTitle} from './entry/EntryTitle'
 import css from './EntryEdit.module.scss'
 
 const styles = fromModule(css)
 
-type EntryPreviewProps = {
+type EntryEditDraftProps = {
+  initialMode: EditMode
   draft: EntryDraft
-  preview: ComponentType<{entry: Entry; previewToken: string}>
+  isLoading: boolean
 }
 
-function EntryPreview({draft, preview: Preview}: EntryPreviewProps) {
-  const entry = useObservable(draft.entry)
-  return <Preview entry={entry} previewToken={draft.detail.previewToken} />
-}
-
-type EntryEditDraftProps = {draft: EntryDraft; isLoading: boolean}
-
-function EntryEditDraft({draft, isLoading}: EntryEditDraftProps) {
+function EntryEditDraft({initialMode, draft, isLoading}: EntryEditDraftProps) {
   const nav = useNav()
   const queryClient = useQueryClient()
   const locale = useLocale()
@@ -64,6 +56,8 @@ function EntryEditDraft({draft, isLoading}: EntryEditDraftProps) {
   const {preview} = useWorkspace()
   const isTranslating = !isLoading && locale !== draft.i18n?.locale
   const [isCreating, setIsCreating] = useState(false)
+  const [mode, setMode] = useState<EditMode>(initialMode)
+  const status = useObservable(draft.status)
   function handleTranslation() {
     if (!locale || isCreating) return
     setIsCreating(true)
@@ -92,9 +86,9 @@ function EntryEditDraft({draft, isLoading}: EntryEditDraftProps) {
     if (translation) navigate(nav.entry(translation))
   }, [draft, isTranslating, locale])
   return (
-    <HStack style={{height: '100%'}}>
-      <div className={styles.root()}>
-        <EntryHeader />
+    <>
+      <Main className={styles.root()}>
+        <EntryHeader mode={mode} setMode={setMode} />
         <div className={styles.root.draft()}>
           <EntryTitle
             backLink={
@@ -105,29 +99,36 @@ function EntryEditDraft({draft, isLoading}: EntryEditDraftProps) {
               })
             }
           />
-          {isTranslating ? (
-            <Button onClick={() => handleTranslation()}>
-              Translate from {draft.i18n?.locale.toUpperCase()}
-            </Button>
-          ) : (
-            <Suspense fallback={null}>
-              {type ? (
-                <InputForm
-                  // We key here currently because the tiptap/yjs combination fails to register
-                  // changes when the fragment is changed while the editor is mounted.
-                  key={draft.doc.guid}
-                  type={type}
-                  state={EntryProperty.root}
+          {mode === EditMode.Diff && status !== EntryStatus.Published ? (
+            <>
+              {draft.detail.original && (
+                <EntryDiff
+                  entryA={draft.detail.original}
+                  entryB={draft.getEntry()}
                 />
-              ) : (
-                <ErrorMessage error={new Error('Type not found')} />
               )}
-            </Suspense>
+            </>
+          ) : (
+            <>
+              {isTranslating ? (
+                <Button onClick={() => handleTranslation()}>
+                  Translate from {draft.i18n?.locale.toUpperCase()}
+                </Button>
+              ) : (
+                <Suspense fallback={null}>
+                  {type ? (
+                    <InputForm type={type} state={EntryProperty.root} />
+                  ) : (
+                    <ErrorMessage error={new Error('Type not found')} />
+                  )}
+                </Suspense>
+              )}
+            </>
           )}
         </div>
-      </div>
+      </Main>
       {preview && <EntryPreview preview={preview} draft={draft} />}
-    </HStack>
+    </>
   )
 }
 
@@ -167,7 +168,7 @@ export function NewEntry({parentId}: NewEntryProps) {
     const type = schema.type(selectedType)!
     const path = slugify(title)
     const entry = {
-      ...type.create(selectedType),
+      ...type.create(),
       path,
       workspace,
       root: root.name,
@@ -210,7 +211,7 @@ export function NewEntry({parentId}: NewEntryProps) {
     parent && (parentType?.options.summaryRow || EntrySummaryRow)*/
 
   return (
-    <Modal open onClose={handleClose}>
+    <Modal open onClose={handleClose} className={styles.new()}>
       <HStack center gap={18} className={styles.new.header()}>
         <IconButton icon={IcRoundArrowBack} onClick={handleClose} />
         <Typo.H1 flat>
@@ -244,8 +245,15 @@ export function NewEntry({parentId}: NewEntryProps) {
                 )
               )}
             />
-            <Link to={nav.entry({workspace, ...parent})}>Cancel</Link>
-            <Button>Create</Button>
+            <div className={styles.new.footer()}>
+              <Link
+                href={nav.entry({workspace, ...parent})}
+                className={styles.new.footer.link()}
+              >
+                Cancel
+              </Link>
+              <Button>Create</Button>
+            </div>
           </>
         )}
       </form>
@@ -253,8 +261,18 @@ export function NewEntry({parentId}: NewEntryProps) {
   )
 }
 
-export type EntryEditProps = {draft: EntryDraft; isLoading: boolean}
+export type EntryEditProps = {
+  initialMode: EditMode
+  draft: EntryDraft
+  isLoading: boolean
+}
 
-export function EntryEdit({draft, isLoading}: EntryEditProps) {
-  return <EntryEditDraft draft={draft} isLoading={isLoading} />
+export function EntryEdit({initialMode, draft, isLoading}: EntryEditProps) {
+  return (
+    <EntryEditDraft
+      initialMode={initialMode}
+      draft={draft}
+      isLoading={isLoading}
+    />
+  )
 }

@@ -8,7 +8,7 @@ export type PreviewProps = PropsWithChildren<{}>
 
 export function Preview({children}: PreviewProps) {
   return (
-    <Pane id="preview" resizable="left" defaultWidth={330} minWidth={320}>
+    <Pane id="preview" resizable="left">
       <div className={styles.root()}>{children}</div>
     </Pane>
   )

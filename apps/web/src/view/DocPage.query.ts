@@ -1,24 +1,24 @@
+import {content} from '@alinea/content/web'
 import {Cursor, Store} from '@alinea/store'
-import {AnyPage, Doc, Docs, Pages} from '../../.alinea/web'
 import {blocksQuery} from './blocks/Blocks.query'
 
-function menuQuery(pages: Pages) {
+function menuQuery(pages: content.Pages) {
   return pages
-    .findMany(AnyPage.type.is('Doc').or(AnyPage.type.is('Docs')))
-    .where(AnyPage.id.isNot('docs'))
-    .select({
-      id: AnyPage.id,
-      type: AnyPage.type,
-      url: AnyPage.url,
-      title: AnyPage.title,
-      parent: AnyPage.parent
-    })
-    .orderBy(AnyPage.index.asc())
+    .where(page => page.type.is('Doc').or(page.type.is('Docs')))
+    .where(page => page.id.isNot('docs'))
+    .orderBy(page => [page.index.asc()])
+    .select(page => ({
+      id: page.id,
+      type: page.type,
+      url: page.url,
+      title: page.title,
+      parent: page.parent
+    }))
 }
 
-export async function docPageQuery(pages: Pages, doc: Doc) {
+export async function docPageQuery(pages: content.Pages, doc: content.Doc) {
   type Sibling = {id: string; type: string; url: string; title: string}
-  const sibling = (doc: Cursor<Doc | Docs>) => ({
+  const sibling = (doc: Cursor<content.Doc | content.Docs>) => ({
     id: doc.id,
     url: doc.url,
     title: doc.title,
@@ -29,7 +29,7 @@ export async function docPageQuery(pages: Pages, doc: Doc) {
     direction: 1 | -1
   ): Promise<Sibling | null> {
     const method = direction === 1 ? 'nextSibling' : 'prevSibling'
-    const sort = AnyPage.index[direction === 1 ? 'asc' : 'desc']()
+    const sort = content.AnyPage.index[direction === 1 ? 'asc' : 'desc']()
     const fromTree = pages.tree(from)
     async function pickNext(next: Sibling | null): Promise<Sibling | null> {
       switch (next?.type) {

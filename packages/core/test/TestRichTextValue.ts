@@ -1,22 +1,22 @@
-import {ScalarValue} from '@alinea/core/value/ScalarValue'
+import {ScalarShape} from '@alinea/core/shape/ScalarShape'
 import {test} from 'uvu'
 import * as assert from 'uvu/assert'
 import * as Y from 'yjs'
-import {RichTextValue} from '../src'
-import {RecordValue} from '../src/value/RecordValue'
+import {RichTextShape} from '../src'
+import {RecordShape} from '../src/shape/RecordShape'
 
 test('serialize', () => {
-  const type = new RichTextValue({
-    Block1: new RecordValue({
-      field1: ScalarValue.inst,
-      blockInner: new RecordValue({
-        field3: ScalarValue.inst,
-        field4: ScalarValue.inst
+  const type = new RichTextShape('RichText', {
+    Block1: new RecordShape('Block1', {
+      field1: new ScalarShape('field1'),
+      blockInner: new RecordShape('Inner block', {
+        field3: new ScalarShape('field3'),
+        field4: new ScalarShape('field4')
       })
     }),
-    Block2: new RecordValue({
-      field3: ScalarValue.inst,
-      field4: ScalarValue.inst
+    Block2: new RecordShape('Block2', {
+      field3: new ScalarShape('field3'),
+      field4: new ScalarShape('field4')
     })
   })
 

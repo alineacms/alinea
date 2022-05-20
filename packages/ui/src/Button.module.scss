@@ -1,22 +1,19 @@
 .root {
   position: relative;
   border: none;
-  background: hsla(var(--negative), 1);
-  color: var(--background);
+  background: hsla(var(--alinea-negative), 1);
+  color: var(--alinea-background);
   font: inherit;
   cursor: pointer;
-  //border: 2px solid var(--background);
   overflow: hidden;
   z-index: 0;
   font-size: 13px;
-
-  &-label {
-  }
+  transition: 0.25s ease-out;
 
   &:after {
     position: absolute;
     content: '';
-    background: var(--background);
+    background: var(--alinea-background);
     opacity: 0;
     top: 0;
     left: 0;
@@ -27,9 +24,8 @@
 
   &.is-medium {
     min-height: 22px;
-    font-size: 13px;
-    padding: 2px 8px;
-    border-radius: 10px;
+    padding: 8px 16px;
+    border-radius: 50px;
   }
 
   &.is-large {
@@ -40,7 +36,7 @@
   }
 
   &:hover {
-    background: var(--fields-focus);
-    color: var(--focus-foreground);
+    background: var(--alinea-fields-focus);
+    color: var(--alinea-focus-foreground);
   }
 }

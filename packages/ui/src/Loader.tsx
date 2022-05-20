@@ -18,7 +18,7 @@ export function Loader({light, absolute, small, ...props}: LoaderProps) {
         className={styles.loader.inner()}
         style={{
           ...props.style,
-          borderColor: `var(--foreground) transparent transparent transparent`
+          borderColor: `var(--alinea-foreground) transparent transparent transparent`
         }}
       ></div>
     </div>

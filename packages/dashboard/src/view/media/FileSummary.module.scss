@@ -7,7 +7,7 @@
   &-preview {
     width: 34px;
     height: 34px;
-    background: hsla(var(--negative), 0.05);
+    background: hsla(var(--alinea-negative), 0.05);
     flex-shrink: 0;
     overflow: hidden;
     border-radius: 6px;
@@ -92,7 +92,7 @@
       padding: 3px 5px;
       flex-shrink: 0;
       font-size: 10px;
-      background: hsla(var(--negative), 0.05);
+      background: hsla(var(--alinea-negative), 0.05);
       border-radius: 6px;
     }
   }

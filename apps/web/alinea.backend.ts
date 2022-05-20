@@ -3,12 +3,11 @@ import {DevServer, JsonLoader, Server} from '@alinea/backend'
 import {GithubData} from '@alinea/backend/data/GithubData'
 import {RedisDrafts} from '@alinea/backend/drafts/RedisDrafts'
 import {JWTPreviews} from '@alinea/backend/util/JWTPreviews'
+import {config, createStore} from '@alinea/content'
 import dotenv from 'dotenv'
 import findConfig from 'find-config'
 import Redis from 'ioredis'
 import {createTransport} from 'nodemailer'
-import {createStore} from './.alinea'
-import {config} from './.alinea/config'
 
 function createServer() {
   dotenv.config({path: findConfig('.env')!})

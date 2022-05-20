@@ -14,7 +14,9 @@ type DividerProps = {
   container: RefObject<HTMLDivElement>
   defaultWidth: number
   minWidth: number
-  persistWidth: (width: number) => void
+  maxWidth: number
+  width: number
+  setWidth: (width: number) => void
 }
 
 function Divider({
@@ -22,32 +24,52 @@ function Divider({
   container,
   defaultWidth,
   minWidth,
-  persistWidth
+  maxWidth,
+  width,
+  setWidth
 }: DividerProps) {
-  const width = useRef(defaultWidth)
+  function ignoreIframes() {
+    const iframes = document.querySelectorAll('iframe')
+    for (const iframe of iframes) iframe.style.pointerEvents = 'none'
+    return () => {
+      for (const iframe of iframes) iframe.style.pointerEvents = ''
+    }
+  }
   function handleMouseDown(mouseDownEvent: ReactMouseEvent) {
     let prevX = mouseDownEvent.clientX
+    const fullWidth = window.innerWidth
+    const restoreIframes = ignoreIframes()
     function move(moveEvent: MouseEvent) {
       moveEvent.preventDefault()
-      const newWidth = width.current + (moveEvent.clientX - prevX) * direction
-      if (newWidth < minWidth) return
-      prevX = moveEvent.clientX
-      width.current = newWidth
-      persistWidth(newWidth)
       if (!container?.current) return
-      container.current.style.width = `${width.current}px`
+      let newWidth = width + (moveEvent.clientX - prevX) * direction
+      if (newWidth < minWidth) newWidth = minWidth
+      else if (newWidth > maxWidth) newWidth = maxWidth
+      else prevX = moveEvent.clientX
+      width = newWidth
+      container.current.style.width = `${newWidth}px`
+      setWidth(newWidth)
     }
     window.addEventListener('mousemove', move)
     window.addEventListener(
       'mouseup',
       function () {
         window.removeEventListener('mousemove', move)
+        restoreIframes()
       },
       {once: true}
     )
   }
   return (
-    <div className={styles.divider()}>
+    <div
+      className={styles.divider()}
+      onDoubleClick={e => {
+        e.preventDefault()
+        width = defaultWidth
+        setWidth(defaultWidth)
+        container.current!.style.width = `${defaultWidth}px`
+      }}
+    >
       <div className={styles.divider.handle()} onMouseDown={handleMouseDown}>
         <div className={styles.divider.handle.line()} />
       </div>
@@ -57,8 +79,9 @@ function Divider({
 
 export type PaneProps = {
   id: string
-  defaultWidth: number
+  defaultWidth?: number
   minWidth?: number
+  maxWidth?: number
   resizable: 'left' | 'right'
 } & HTMLAttributes<HTMLDivElement>
 
@@ -66,8 +89,9 @@ export function Pane({
   id,
   children,
   resizable,
-  defaultWidth,
-  minWidth = 100,
+  defaultWidth = 330,
+  minWidth = 320,
+  maxWidth = 700,
   ...props
 }: PaneProps) {
   const container = useRef<HTMLDivElement>(null)
@@ -78,23 +102,24 @@ export function Pane({
     <Divider
       container={container}
       minWidth={minWidth}
-      defaultWidth={width}
+      maxWidth={maxWidth}
+      defaultWidth={defaultWidth}
       direction={resizable === 'left' ? -1 : 1}
-      persistWidth={(width: number) => {
+      width={Math.max(width, minWidth)}
+      setWidth={(width: number) => {
         window?.localStorage?.setItem(persistenceId, String(width))
       }}
     />
   )
   return (
-    <div {...props} className={styles.root.mergeProps(props)()}>
+    <div
+      {...props}
+      className={styles.root.mergeProps(props)()}
+      ref={container}
+      style={{width, minWidth}}
+    >
       {resizable === 'left' && divider}
-      <div
-        ref={container}
-        style={{width, minWidth}}
-        className={styles.root.inner()}
-      >
-        {children}
-      </div>
+      <div className={styles.root.inner()}>{children}</div>
       {resizable === 'right' && divider}
     </div>
   )

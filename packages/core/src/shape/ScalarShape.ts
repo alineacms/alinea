@@ -1,16 +1,16 @@
 import * as Y from 'yjs'
 import {createError} from '../ErrorWithCode'
-import {Value} from '../Value'
+import {Label} from '../Label'
+import {Shape} from '../Shape'
 
 export type ScalarMutator<T> = (value: T) => void
 
-export class ScalarValue<T> implements Value<T, ScalarMutator<T>> {
-  static inst = new ScalarValue()
-  private constructor() {}
+export class ScalarShape<T> implements Shape<T, ScalarMutator<T>> {
+  constructor(public label: Label) {}
   create(): T {
     return undefined! as T
   }
-  typeOfChild<C>(yValue: T, child: string): Value<C> {
+  typeOfChild<C>(yValue: T, child: string): Shape<C> {
     throw createError(`No children in scalar values`)
   }
   toY(value: T) {

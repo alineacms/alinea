@@ -3,7 +3,7 @@ import {decode} from 'blurhash'
 import Image from 'next/image'
 import {useMemo} from 'react'
 import css from './ImageBlock.module.scss'
-import {ImageBlockProps} from './ImageBlock.query'
+import {ImageBlockSchema} from './ImageBlock.schema'
 
 const styles = fromModule(css)
 
@@ -28,18 +28,12 @@ function useBlurData(
   }, [blurHash, width, height, punch])
 }
 
-export function ImageBlock({image}: ImageBlockProps) {
-  const [link] = image
-  if (!link) return null
-  const blurDataURL = useBlurData(link.blurHash!)
+export function ImageBlock({image}: ImageBlockSchema) {
+  if (!image) return null
+  const blurDataURL = useBlurData(image.blurHash!)
   return (
     <div className={styles.root()}>
-      <Image
-        src={link.src}
-        layout="fill"
-        blurDataURL={blurDataURL}
-        alt={String(link.alt)}
-      />
+      <Image src={image.src} layout="fill" blurDataURL={blurDataURL} />
     </div>
   )
 }

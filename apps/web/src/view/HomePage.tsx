@@ -1,13 +1,13 @@
-import {HStack, Typo, VStack, fromModule, px} from '@alinea/ui'
+import {fromModule, HStack, px, Typo, VStack} from '@alinea/ui'
 
-import {Hero} from './layout/Hero'
-import {HomePageProps} from './HomePage.query'
 import {IcRoundOpenInNew} from '@alinea/ui/icons/IcRoundOpenInNew'
 import css from './HomePage.module.scss'
+import {HomePageSchema} from './HomePage.schema'
+import {Hero} from './layout/Hero'
 
 const styles = fromModule(css)
 
-const exampleCode = `schema('Blog', {
+const exampleCode = `schema('Blog', {0
   BlogEntry: type('Blog entry', {
     title: text('Title'),
     author: link('Author', {type: 'entry'}),
@@ -17,7 +17,7 @@ const exampleCode = `schema('Blog', {
   })
 })`
 
-export function HomePage({headline, byline, action}: HomePageProps) {
+export function HomePage({headline, byline, action}: HomePageSchema) {
   return (
     <div className={styles.root()}>
       <Hero>

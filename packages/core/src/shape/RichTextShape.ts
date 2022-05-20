@@ -1,8 +1,9 @@
 import * as Y from 'yjs'
 import {createError} from '../ErrorWithCode'
+import {Label} from '../Label'
+import {Shape} from '../Shape'
 import {TextDoc, TextNode} from '../TextDoc'
-import {Value} from '../Value'
-import {RecordValue} from './RecordValue'
+import {RecordShape} from './RecordShape'
 
 // Adapted from: https://github.com/yjs/y-prosemirror/blob/1c393fb3254cc1ed4933e8326b57c1316793122a/src/lib.js#L245
 function serialize(
@@ -72,17 +73,20 @@ export type RichTextMutator<R> = {
   insert: (id: string, block: string) => void
 }
 
-export class RichTextValue<T> implements Value<TextDoc<T>, RichTextMutator<T>> {
-  values?: Record<string, RecordValue<T>>
-  constructor(protected shapes?: Record<string, RecordValue<T>>) {
+export class RichTextShape<T> implements Shape<TextDoc<T>, RichTextMutator<T>> {
+  values?: Record<string, RecordShape<T>>
+  constructor(
+    public label: Label,
+    protected shapes?: Record<string, RecordShape<T>>
+  ) {
     this.values =
       shapes &&
       Object.fromEntries(
         Object.entries(shapes).map(([key, value]) => {
           return [
             key,
-            new RecordValue({
-              type: Value.Scalar,
+            new RecordShape(value.label, {
+              type: Shape.Scalar('Type'),
               ...value.shape
             })
           ]
@@ -92,11 +96,11 @@ export class RichTextValue<T> implements Value<TextDoc<T>, RichTextMutator<T>> {
   create() {
     return [] as TextDoc<T>
   }
-  typeOfChild<C>(yValue: Y.Map<any>, child: string): Value<C> {
+  typeOfChild<C>(yValue: Y.Map<any>, child: string): Shape<C> {
     const block = yValue.get(child)
     const type = block && block.get('type')
     const value = type && this.values && this.values[type]
-    if (value) return value as unknown as Value<C>
+    if (value) return value as unknown as Shape<C>
     throw createError(`Type of block "${child}" not found`)
   }
   toY(value: TextDoc<T>) {

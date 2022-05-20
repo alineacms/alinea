@@ -1,4 +1,4 @@
-import {JSONOutput, ReflectionKind} from 'typedoc'
+import type {JSONOutput} from 'typedoc'
 import type {NavItem} from '../view/layout/NavTree'
 import {types} from './types-data'
 
@@ -102,7 +102,7 @@ function transformType(
   type: JSONOutput.DeclarationReflection
 ): JSONOutput.DeclarationReflection {
   switch (type.kind) {
-    case ReflectionKind.Reference:
+    case 16777216 /* ReflectionKind.Reference */:
       const ref = (type as any).target
       const target = index.get(ref)
       return target ? transformType(target) : type

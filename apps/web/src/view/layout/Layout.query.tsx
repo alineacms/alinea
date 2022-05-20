@@ -1,5 +1,5 @@
+import {content} from '@alinea/content/web'
 import {Store} from '@alinea/store'
-import {Pages} from '../../../.alinea/web'
 import {headerQuery} from './Header.query'
 
 type PageDetails = {
@@ -7,7 +7,7 @@ type PageDetails = {
   url: string
 }
 
-export async function layoutQuery(pages: Pages, page: PageDetails) {
+export async function layoutQuery(pages: content.Pages, page: PageDetails) {
   return {
     meta: {
       title: page.title,

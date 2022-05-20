@@ -1,9 +1,12 @@
+import {content} from '@alinea/content/web'
 import {Store} from '@alinea/store'
-import {Pages} from '../../../.alinea/web'
 import {typeInfo} from '../../data/Types'
 import {TypesBlockSchema} from './TypesBlock.schema'
 
-export async function typesBlockQuery(pages: Pages, block: TypesBlockSchema) {
+export async function typesBlockQuery(
+  pages: content.Pages,
+  block: TypesBlockSchema
+) {
   const types = String(block.types)
     .split(',')
     .map(type => type.trim())

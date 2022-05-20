@@ -29,6 +29,7 @@ export interface Entry {
 export namespace Entry {
   export type Detail = {
     entry: Entry
+    original: Entry | null
     draft: string | undefined
     previewToken: string
     parent?: Entry.Minimal

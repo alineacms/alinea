@@ -1,4 +1,4 @@
-import {Field, Label, Value} from '@alinea/core'
+import {Field, Label, Shape} from '@alinea/core'
 
 export type CodeFieldOptions = {
   width?: number
@@ -19,7 +19,7 @@ export function createCode(
   options: CodeFieldOptions = {}
 ): CodeField {
   return {
-    type: Value.Scalar,
+    shape: Shape.Scalar(label),
     label,
     options
   }

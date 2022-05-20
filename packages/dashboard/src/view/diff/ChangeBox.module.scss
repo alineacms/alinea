@@ -1,0 +1,32 @@
+.root {
+  padding: 8px;
+  border-left: 2px solid transparent;
+
+  & + & {
+    box-shadow: var(--alinea-divider-top);
+  }
+
+  &-content {
+    flex-grow: 1;
+    padding: 10px;
+  }
+
+  &.is-equal {
+    & + & {
+      // Ignore consecutive unchanged rows
+      display: none !important;
+    }
+  }
+
+  &.is-addition {
+    border-color: rgba(10, 161, 10, 0.5);
+  }
+
+  &.is-removal {
+    border-color: rgba(207, 0, 0, 0.5);
+  }
+
+  &-header {
+    position: relative;
+  }
+}

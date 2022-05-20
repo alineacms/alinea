@@ -11,6 +11,7 @@ import VirtualList from 'react-tiny-virtual-list'
 import {useCurrentDraft} from '../hook/UseCurrentDraft'
 import {useSession} from '../hook/UseSession'
 import {useWorkspace} from '../hook/UseWorkspace'
+import {EditMode} from './entry/EditMode'
 import {EntryHeader} from './entry/EntryHeader'
 import {EntryTitle} from './entry/EntryTitle'
 import {MediaRow} from './media/MediaRow'
@@ -107,7 +108,7 @@ export function MediaExplorer() {
   const height = 200
   return (
     <div className={styles.root()}>
-      <EntryHeader />
+      <EntryHeader mode={EditMode.Editing} />
       <div className={styles.root.inner()}>
         <header className={styles.root.inner.header()}>
           <EntryTitle />

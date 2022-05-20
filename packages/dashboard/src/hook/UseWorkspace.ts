@@ -1,15 +1,17 @@
 import {Workspace} from '@alinea/core'
 import {useMemo} from 'react'
-import {useLocation} from 'react-router'
+import {useMatch} from 'react-router'
+import {dashboardNav} from '../DashboardNav'
 import {useDashboard} from './UseDashboard'
+
+const nav = dashboardNav({})
 
 export function useWorkspace(): Workspace {
   const {config} = useDashboard()
-  const location = useLocation()
+  const match = useMatch(nav.matchWorkspace)
   return useMemo(() => {
-    const key = location.pathname.split('/')[1]
-    if (key && config.workspaces[key]) return config.workspaces[key]
-    const first = Object.keys(config.workspaces)[0]
-    return config.workspaces[first]
-  }, [location.pathname])
+    const params: Record<string, string | undefined> = match?.params ?? {}
+    const {workspace = Object.keys(config.workspaces)[0]} = params
+    return config.workspaces[workspace]
+  }, [match])
 }

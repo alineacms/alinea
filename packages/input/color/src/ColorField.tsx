@@ -1,4 +1,4 @@
-import {Field, Label, Value} from '@alinea/core'
+import {Field, Label, Shape} from '@alinea/core'
 
 /** Optional settings to configure a color field */
 export type ColorOptions = {
@@ -28,7 +28,7 @@ export function createColor(
   options: ColorOptions = {}
 ): ColorField {
   return {
-    type: Value.Scalar,
+    shape: Shape.Scalar(label),
     label,
     options
   }

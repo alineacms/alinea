@@ -1,36 +1,39 @@
-import {Store} from '@alinea/store/Store'
-import {getHighlighter} from 'shiki'
+import { content } from '@alinea/content/web'
+import { Store } from '@alinea/store/Store'
+import { getHighlighter } from 'shiki'
 import tsxLanguage from 'shiki/languages/tsx.tmLanguage.json'
-import {Pages} from '../../../.alinea/web'
-import {theme} from '../types/ShikiTheme'
-import {CodeVariantsBlockSchema} from './CodeVariantsBlock.schema'
+import { theme } from '../types/ShikiTheme'
+import { CodeVariantsBlockSchema } from './CodeVariantsBlock.schema'
+
+const highlighter = getHighlighter({
+  theme: {
+    ...theme,
+    type: 'light',
+    settings: [],
+    fg: '#24292f',
+    bg: '#fbf9f9'
+  },
+  langs: [{id: 'tsx', scopeName: 'source.tsx', grammar: tsxLanguage as any}]
+})
 
 export async function codeVariantsBlockQuery(
-  pages: Pages,
+  pages: content.Pages,
   block: CodeVariantsBlockSchema
 ) {
-  const highlighter = await getHighlighter({
-    theme: {
-      ...theme,
-      type: 'light',
-      settings: [],
-      fg: '#24292f',
-      bg: '#fbf9f9'
-    },
-    langs: [{id: 'tsx', scopeName: 'source.tsx', grammar: tsxLanguage as any}]
-  })
   return {
     ...block,
-    variants: block.variants.map(variant => {
-      return {
-        ...variant,
-        code:
-          variant.code &&
-          highlighter.codeToHtml(variant.code, {
-            lang: /*variant.language ||*/ 'tsx'
-          })
-      }
-    })
+    variants: await Promise.all(
+      block.variants.map(async variant => {
+        return {
+          ...variant,
+          code:
+            variant.code &&
+            (await highlighter).codeToHtml(variant.code, {
+              lang: /*variant.language ||*/ 'tsx'
+            })
+        }
+      })
+    )
   }
 }
 

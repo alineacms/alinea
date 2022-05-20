@@ -80,7 +80,7 @@ export class FileData implements Data.Source, Data.Target, Data.Media {
                 }
                 const type = schema.type(entry.type)
                 if (!type) continue
-                const isContainer = Boolean(type?.options.isContainer)
+                const isContainer = Boolean(type.options.isContainer)
                 const url = path.join(target, isIndex ? '' : name)
                 const parentPath = target
                 const parents = walkUrl(parentPath)

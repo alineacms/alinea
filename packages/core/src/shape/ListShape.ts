@@ -1,17 +1,18 @@
 import * as Y from 'yjs'
 import {createError} from '../ErrorWithCode'
 import {createId} from '../Id'
+import {Label} from '../Label'
+import {Shape} from '../Shape'
 import {generateKeyBetween} from '../util/FractionalIndexing'
-import {Value} from '../Value'
-import {RecordValue} from './RecordValue'
+import {RecordShape} from './RecordShape'
 
-type Row = {
+export type ListRow = {
   id: string
   index: string
   type: string
 }
 
-function sort(a: Row, b: Row) {
+function sort(a: ListRow, b: ListRow) {
   if (a.index < b.index) return -1
   if (a.index > b.index) return 1
   return 0
@@ -23,19 +24,19 @@ export type ListMutator<T> = {
   move: (oldIndex: number, newIndex: number) => void
 }
 
-export class ListValue<T>
-  implements Value<Array<Row & T>, ListMutator<Row & T>>
+export class ListShape<T>
+  implements Shape<Array<ListRow & T>, ListMutator<ListRow & T>>
 {
-  values: Record<string, RecordValue<Row & T>>
-  constructor(shapes: Record<string, RecordValue<T>>) {
+  values: Record<string, RecordShape<ListRow & T>>
+  constructor(public label: Label, shapes: Record<string, RecordShape<T>>) {
     this.values = Object.fromEntries(
       Object.entries(shapes).map(([key, type]) => {
         return [
           key,
-          new RecordValue({
-            id: Value.Scalar,
-            index: Value.Scalar,
-            type: Value.Scalar,
+          new RecordShape(label, {
+            id: Shape.Scalar('Id'),
+            index: Shape.Scalar('Index'),
+            type: Shape.Scalar('Type'),
             ...type.shape
           })
         ]
@@ -43,16 +44,16 @@ export class ListValue<T>
     )
   }
   create() {
-    return [] as Array<Row & T>
+    return [] as Array<ListRow & T>
   }
-  typeOfChild<C>(yValue: Y.Map<any>, child: string): Value<C> {
+  typeOfChild<C>(yValue: Y.Map<any>, child: string): Shape<C> {
     const row = yValue.get(child)
     const type = row && row.get('type')
     const value = type && this.values[type]
-    if (value) return value as unknown as Value<C>
+    if (value) return value as unknown as Shape<C>
     throw createError(`Could not determine type of child "${child}"`)
   }
-  toY(value: Array<Row & T>) {
+  toY(value: Array<ListRow & T>) {
     const map = new Y.Map()
     const rows = Array.isArray(value) ? value : []
     let currentIndex = null
@@ -66,15 +67,15 @@ export class ListValue<T>
     }
     return map
   }
-  fromY(map: Y.Map<any>): Array<Row & T> {
-    const rows: Array<Row & T> = []
+  fromY(map: Y.Map<any>): Array<ListRow & T> {
+    const rows: Array<ListRow & T> = []
     if (!map) return rows
     for (const key of map.keys()) {
       const row = map.get(key)
       if (!row || typeof row.get !== 'function') continue
       const type = row.get('type')
       const rowType = this.values[type]
-      if (rowType) rows.push(rowType.fromY(row) as Row & T)
+      if (rowType) rows.push(rowType.fromY(row) as ListRow & T)
     }
     rows.sort(sort)
     return rows
@@ -99,9 +100,9 @@ export class ListValue<T>
   }
   mutator(parent: Y.Map<any>, key: string) {
     return {
-      push: (row: Omit<Row & T, 'id' | 'index'>) => {
+      push: (row: Omit<ListRow & T, 'id' | 'index'>) => {
         const record = parent.get(key)
-        const rows: Array<Row> = this.fromY(record) as any
+        const rows: Array<ListRow> = this.fromY(record) as any
         const id = createId()
         record.set(
           id,
@@ -121,7 +122,7 @@ export class ListValue<T>
       },
       move: (oldIndex: number, newIndex: number) => {
         const record = parent.get(key)
-        const rows: Array<Row> = this.fromY(record) as any
+        const rows: Array<ListRow> = this.fromY(record) as any
         const from = rows[oldIndex]
         const into = rows.filter(row => row.id !== from.id)
         const prev = into[newIndex - 1]
