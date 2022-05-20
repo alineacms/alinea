@@ -171,7 +171,7 @@ export type LinkInputProps<T> = {
 
 export function LinkInput<T>({state, field}: LinkInputProps<T>) {
   const {hub} = useSession()
-  const [value, {push, move, remove}] = useInput(state)
+  const [value = [], {push, move, remove}] = useInput(state)
   const {schema} = useWorkspace()
   const {pickLink} = useReferencePicker()
   const {
@@ -179,13 +179,13 @@ export function LinkInput<T>({state, field}: LinkInputProps<T>) {
     type,
     width,
     inline,
+    condition,
     multiple,
     optional,
     help,
     max = !multiple ? 1 : undefined
   } = field.options
   const types = Array.isArray(type) ? type : type ? [type] : []
-
   const cursor = useMemo(() => {
     const entries = value
       .filter((v: Reference): v is Reference.Entry => v.type === 'entry')
@@ -215,9 +215,12 @@ export function LinkInput<T>({state, field}: LinkInputProps<T>) {
   )
 
   function handleCreate() {
+    const conditions = [condition, restrictByType(type)]
+      .filter(Boolean)
+      .reduce((a, b) => a!.and(b!))
     return pickLink({
       selection: value,
-      condition: restrictByType(type),
+      condition: conditions,
       defaultView: type === 'image' ? 'thumb' : 'row',
       showUploader: types.includes('file') || types.includes('image'),
       max

@@ -319,6 +319,7 @@ __metadata:
     "@alinea/editor": 0.0.0
     "@alinea/ui": 0.0.0
     "@headlessui/react": ^1.6.1
+    headlessui-float-react: ^0.5.4
   languageName: unknown
   linkType: soft
 
@@ -707,6 +708,35 @@ __metadata:
   dependencies:
     tslib: ^2.1.0
   checksum: 411011976afd098918ad4fa277d496b01b176a78a50b418fbe331ebf6b8593d561ed6df1b632938bc7aae745a59bb31f1e234560def96392e6bd89a131ca9527
+  languageName: node
+  linkType: hard
+
+"@floating-ui/core@npm:^0.6.2":
+  version: 0.6.2
+  resolution: "@floating-ui/core@npm:0.6.2"
+  checksum: b3e1844da852fe141cfa4163026a7c5ffb4399a96105340dffdd5b76dcafea72c6221a06b4674c2b500bc776adc9d9e4ed39dba55e7d844d9507d994c0af743a
+  languageName: node
+  linkType: hard
+
+"@floating-ui/dom@npm:^0.4.5":
+  version: 0.4.5
+  resolution: "@floating-ui/dom@npm:0.4.5"
+  dependencies:
+    "@floating-ui/core": ^0.6.2
+  checksum: 3024aba55fe7ee78b429a6a5d61f5719a6bb2acc79c8a33304b9d30c443efba3a5288acaf9003402e31ee97a533eda97c30a0f2c97e9e54c697df9b80a23dad8
+  languageName: node
+  linkType: hard
+
+"@floating-ui/react-dom@npm:^0.6.3":
+  version: 0.6.3
+  resolution: "@floating-ui/react-dom@npm:0.6.3"
+  dependencies:
+    "@floating-ui/dom": ^0.4.5
+    use-isomorphic-layout-effect: ^1.1.1
+  peerDependencies:
+    react: ">=16.8.0"
+    react-dom: ">=16.8.0"
+  checksum: 1af930aac4e13ed9a25ea2cf70e629d36363034a70ea407a6f8d8d4bd62979c59d3748b58e1ef31c427fdf21a754f285aabba9f14b9e916ab69eb5212144ef6c
   languageName: node
   linkType: hard
 
@@ -4159,6 +4189,21 @@ fsevents@~2.3.2:
   version: 0.2.4
   resolution: "hash-stream-validation@npm:0.2.4"
   checksum: a5633e6ece2f729729d7061274900b10b035d6b011bfffc9503440c4279cacb53eb461ad96c8c90bb6b5368d896833a06b924a7a1abdbad46a8a5434e0c17a64
+  languageName: node
+  linkType: hard
+
+"headlessui-float-react@npm:^0.5.4":
+  version: 0.5.4
+  resolution: "headlessui-float-react@npm:0.5.4"
+  dependencies:
+    "@floating-ui/core": ^0.6.2
+    "@floating-ui/dom": ^0.4.5
+    "@floating-ui/react-dom": ^0.6.3
+  peerDependencies:
+    "@headlessui/react": ^1.0.0
+    react: ^16 || ^17 || ^18
+    react-dom: ^16 || ^17 || ^18
+  checksum: 70cc0f3474ebdd5bfcbb1ef40d5418d2b84cec82fdb88f5bfe619f23780b73d9a578faa463def714129d904c99b25e0bbfec748cc9c3282688c6490320cd2e4b
   languageName: node
   linkType: hard
 
@@ -8107,6 +8152,18 @@ resolve@^1.10.0:
     react-dom:
       optional: true
   checksum: 07c61f517954f718c241670eb69463c603fd6baf376a78c472570fb4332c008be22833335342fa261238d5172dea51e486466d6d584fefc82be15ec624715d6c
+  languageName: node
+  linkType: hard
+
+"use-isomorphic-layout-effect@npm:^1.1.1":
+  version: 1.1.2
+  resolution: "use-isomorphic-layout-effect@npm:1.1.2"
+  peerDependencies:
+    react: ^16.8.0 || ^17.0.0 || ^18.0.0
+  peerDependenciesMeta:
+    "@types/react":
+      optional: true
+  checksum: a6532f7fc9ae222c3725ff0308aaf1f1ddbd3c00d685ef9eee6714fd0684de5cb9741b432fbf51e61a784e2955424864f7ea9f99734a02f237b17ad3e18ea5cb
   languageName: node
   linkType: hard
 

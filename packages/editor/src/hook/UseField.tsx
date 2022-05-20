@@ -1,6 +1,6 @@
 import {createError, Field, ROOT_KEY, Shape} from '@alinea/core'
 import {useForceUpdate} from '@alinea/ui'
-import {useEffect, useMemo} from 'react'
+import {memo, useEffect, useMemo} from 'react'
 import * as Y from 'yjs'
 import {InputState} from '../InputState'
 
@@ -24,7 +24,7 @@ export class FieldState<V, M> implements InputState<readonly [V, M]> {
 
   use(): readonly [V, M] {
     const {current, mutator, observe} = useMemo(() => {
-      const current = (): V => this.root.get(this.key)
+      const current = (): V => this.shape.fromY(this.root.get(this.key))
       const mutator = this.shape.mutator(this.root, FIELD_KEY) as M
       const observe = this.shape.watch(this.root, FIELD_KEY)
       return {current, mutator, observe}
@@ -37,22 +37,34 @@ export class FieldState<V, M> implements InputState<readonly [V, M]> {
   }
 }
 
-export function useField<V, M>(field: Field<V, M>, initialValue?: V) {
+type InputProps<V, M> = {
+  value?: V
+  onChange?: M
+}
+
+export function useField<V, M, Q>(
+  field: Field<V, M, Q>,
+  deps: ReadonlyArray<unknown> = []
+) {
   const {input, state} = useMemo(() => {
     const doc = new Y.Doc()
     const root = doc.getMap(ROOT_KEY)
-    root.set(FIELD_KEY, initialValue)
     if (!field.shape) throw createError('Cannot use field without type')
+    root.set(FIELD_KEY, field.shape.toY(field.initialValue!))
     const state = new FieldState<V, M>(field.shape, root, FIELD_KEY)
     const Input = field.view!
-    function input() {
-      return <Input state={state} field={field} />
+    function input(props: InputProps<V, M>) {
+      const inputState =
+        'value' in props
+          ? new InputState.StatePair(props.value!, props.onChange!)
+          : state
+      return <Input state={inputState} field={field} />
     }
     return {
-      input,
+      input: memo(input),
       state
     }
-  }, [])
-  const [value] = state.use()
-  return {value, input}
+  }, deps)
+  const [value, mutator] = state.use()
+  return [input, value, mutator] as const
 }

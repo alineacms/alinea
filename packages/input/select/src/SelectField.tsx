@@ -1,12 +1,14 @@
 import {Field, Label, Shape} from '@alinea/core'
 
 /** A string record with option labels */
-export type SelectItems = {
-  [key: string]: Label
+export type SelectItems<T extends string> = {
+  [K in T]: Label
 }
 
 /** Optional settings to configure a select field */
-export type SelectOptions = {
+export type SelectOptions<T> = {
+  /** Width of the field in the dashboard UI (0-1) */
+  width?: number
   /** Add instructional text to a field */
   help?: Label
   /** Field is optional */
@@ -14,26 +16,28 @@ export type SelectOptions = {
   /** Display a minimal version */
   inline?: boolean
   /** A default value */
-  initialValue?: string
+  initialValue?: T
 }
 
 /** Internal representation of a select field */
-export interface SelectField extends Field.Scalar<string | undefined> {
+export interface SelectField<T extends string = string>
+  extends Field.Scalar<T> {
   label: Label
-  items: SelectItems
-  options: SelectOptions
+  items: SelectItems<T>
+  options: SelectOptions<T>
 }
 
 /** Create a select field configuration */
-export function createSelect(
+export function createSelect<T extends string>(
   label: Label,
-  items: SelectItems,
-  options: SelectOptions = {}
-): SelectField {
+  items: SelectItems<T>,
+  options: SelectOptions<T> = {}
+): SelectField<T> {
   return {
     shape: Shape.Scalar(label),
     label,
     items,
-    options
+    options,
+    initialValue: options.initialValue
   }
 }
