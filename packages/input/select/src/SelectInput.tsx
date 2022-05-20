@@ -4,7 +4,13 @@ import {fromModule, HStack, Icon, TextLabel} from '@alinea/ui'
 import {IcRoundArrowDropDownCircle} from '@alinea/ui/icons/IcRoundArrowDropDownCircle'
 import {IcRoundCheck} from '@alinea/ui/icons/IcRoundCheck'
 import {IcRoundUnfoldMore} from '@alinea/ui/icons/IcRoundUnfoldMore'
-import {flip, size, useFloating} from '@floating-ui/react-dom'
+import {
+  autoUpdate,
+  flip,
+  offset,
+  size,
+  useFloating
+} from '@floating-ui/react-dom'
 import {Listbox} from '@headlessui/react'
 import {SelectField} from './SelectField'
 import css from './SelectInput.module.scss'
@@ -23,9 +29,12 @@ export function SelectInput<T extends string>({
   const {width, optional, help, placeholder, initialValue} = field.options
   const [value = initialValue, setValue] = useInput(state)
   const items = field.items as Record<string, Label>
-  const {x, y, reference, floating, refs} = useFloating({
+  const {x, y, reference, floating, refs, strategy} = useFloating({
+    whileElementsMounted: autoUpdate,
+    strategy: 'fixed',
     placement: 'bottom-start',
     middleware: [
+      offset(4),
       flip(),
       size({
         apply({rects}) {
@@ -65,7 +74,11 @@ export function SelectInput<T extends string>({
               </Listbox.Button>
               <Listbox.Options
                 ref={floating}
-                style={{top: `${y || 0}px`, left: `${x || 0}px`}}
+                style={{
+                  position: strategy,
+                  top: `${y || 0}px`,
+                  left: `${x || 0}px`
+                }}
                 className={styles.root.dropdown()}
               >
                 <div className={styles.root.dropdown.inner()}>
