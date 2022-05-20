@@ -34,11 +34,11 @@ export function Header({links}: HeaderProps) {
           <a className={styles.root.link()} href="/types/alinea">
             API
           </a>
-          <a className={styles.root.link()} href="/demo" target="_blank">
-            Demo
-          </a>
           <a className={styles.root.link()} href="/changelog">
             Changelog
+          </a>
+          <a className={styles.root.link()} href="/demo" target="_blank">
+            Demo
           </a>
         </HStack>
         <Stack.Right>
