@@ -3,7 +3,7 @@ import {Lazy} from '@alinea/core/util/Lazy'
 
 /** Internal representation of tabs */
 export class TabsSection<T> extends Section<T> {
-  constructor(public types: Array<TypeConfig>) {
+  constructor(public types: Array<TypeConfig<any, any>>) {
     super(
       Object.fromEntries(
         types
@@ -15,8 +15,11 @@ export class TabsSection<T> extends Section<T> {
 }
 
 /** Create tabs configuration */
-export function createTabs<T extends Array<TypeConfig>>(
+export function createTabs<T extends Array<TypeConfig<any, any>>>(
   ...types: T
-): Section<UnionToIntersection<Type.Of<T[number]>>> {
+): Section<
+  UnionToIntersection<Type.Raw<T[number]>>,
+  UnionToIntersection<Type.Of<T[number]>>
+> {
   return new TabsSection(types)
 }

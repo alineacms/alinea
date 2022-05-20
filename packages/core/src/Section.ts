@@ -4,7 +4,7 @@ import {Field} from './Field'
 import {Lazy} from './util/Lazy'
 import {UnionToIntersection} from './util/Types'
 
-export class Section<T = any> {
+export class Section<R = any, T = R> {
   constructor(
     public fields: Section.Fields | undefined,
     public view?: ComponentType<{state: InputState}>
@@ -27,9 +27,23 @@ export namespace Section {
     }
   >
 
-  type InferFields<S> = S extends Presentational
+  type InferRawFields<S> = S extends Presentational
     ? never
-    : S extends Section<infer U>
+    : S extends Section<infer U, any>
+    ? U
+    : S extends Lazy<infer U>
+    ? U extends {[key: string]: any}
+      ? {
+          [K in keyof U]: U[K] extends Lazy<Field<infer T, infer M, infer Q>>
+            ? T
+            : never
+        }
+      : never
+    : never
+
+  type InferTransformedFields<S> = S extends Presentational
+    ? never
+    : S extends Section<any, infer U>
     ? U
     : S extends Lazy<infer U>
     ? U extends {[key: string]: any}
@@ -43,7 +57,10 @@ export namespace Section {
 
   export type Input<T = any> = Section<T> | Presentational | Fields
 
-  export type FieldsOf<T> = UnionToIntersection<InferFields<T>>
+  export type RawFieldsOf<T> = UnionToIntersection<InferRawFields<T>>
+  export type TransformedFieldsOf<T> = UnionToIntersection<
+    InferTransformedFields<T>
+  >
 
   export function from<T>(input: Input<T>): Section<T> {
     if (input instanceof Section) return input

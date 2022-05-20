@@ -28,7 +28,11 @@ export class FormState<V, M> implements InputState<readonly [V, M]> {
     const {current, mutator, observe} = useMemo(() => {
       const current = (): V => this.shape.fromY(this.root.get(this.key))
       const mutator = this.shape.mutator(this.root, this.key) as any
-      const observe = this.shape.watch(this.root, this.key)
+      const observe = (fun: () => void) => {
+        const record = this.root.get(this.key)
+        record.observeDeep(fun)
+        return () => record.unobserveDeep(fun)
+      }
       return {current, mutator, observe}
     }, [])
     const redraw = useForceUpdate()
@@ -39,25 +43,33 @@ export class FormState<V, M> implements InputState<readonly [V, M]> {
   }
 }
 
+export type UseFormOptions<T> = {
+  type: TypeConfig<T, any>
+  initialValue?: Partial<T>
+}
+
 export function useForm<T>(
-  type: TypeConfig<T>,
+  options: UseFormOptions<T>,
   deps: ReadonlyArray<unknown> = []
 ) {
-  const {input, state} = useMemo(() => {
+  const {type, initialValue = {}} = options
+  const initial: Record<string, any> = initialValue
+  const {input, current} = useMemo(() => {
     const doc = new Y.Doc()
     const root = doc.getMap(ROOT_KEY)
     for (const [key, field] of type) {
-      root.set(key, field.shape.toY(field.initialValue!))
+      root.set(key, field.shape.toY(initial[key] || field.initialValue!))
     }
-    const state = new FormState(type.shape, root, ROOT_KEY)
+    const state = new FormState(type.shape, doc as any, ROOT_KEY)
     function input() {
       return <InputForm state={state} type={type} />
     }
     return {
       input: memo(input),
-      state
+      current() {
+        return type.shape.fromY(root)
+      }
     }
   }, deps)
-  const [value, mutator] = state.use()
-  return [input, value, mutator] as const
+  return [input, current] as const
 }

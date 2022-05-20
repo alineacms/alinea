@@ -173,7 +173,7 @@ export function LinkInput<T>({state, field}: LinkInputProps<T>) {
   const {hub} = useSession()
   const [value = [], {push, move, remove}] = useInput(state)
   const {schema} = useWorkspace()
-  const {pickLink} = useReferencePicker()
+  const picker = useReferencePicker()
   const {
     fields,
     type,
@@ -217,26 +217,28 @@ export function LinkInput<T>({state, field}: LinkInputProps<T>) {
   function handleCreate() {
     const conditions = [condition, restrictByType(type)]
       .filter(Boolean)
-      .reduce((a, b) => a!.and(b!))
-    return pickLink({
-      selection: value,
-      condition: conditions,
-      defaultView: type === 'image' ? 'thumb' : 'row',
-      showUploader: types.includes('file') || types.includes('image'),
-      max
-    }).then(links => {
-      const seen = new Set()
-      if (!links) return
-      for (const link of links) {
-        seen.add(link.id)
-        if (value.find(v => v.id === link.id)) continue
-        push(link as Reference & T)
-      }
-      for (const link of value) {
-        if (seen.has(link.id)) continue
-        remove(link.id)
-      }
-    })
+      .reduce((a, b) => (a ? a.and(b!) : b), undefined)
+    return picker
+      .pickLink({
+        selection: value,
+        condition: conditions,
+        defaultView: type === 'image' ? 'thumb' : 'row',
+        showUploader: types.includes('file') || types.includes('image'),
+        max
+      })
+      .then(links => {
+        const seen = new Set()
+        if (!links) return
+        for (const link of links) {
+          seen.add(link.id)
+          if (value.find(v => v.id === link.id)) continue
+          push(link as Reference & T)
+        }
+        for (const link of value) {
+          if (seen.has(link.id)) continue
+          remove(link.id)
+        }
+      })
   }
 
   const ids = value.map(row => row.id)
@@ -265,77 +267,83 @@ export function LinkInput<T>({state, field}: LinkInputProps<T>) {
   const showExternal = types.includes('external')
 
   return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCenter}
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
-      layoutMeasuring={layoutMeasuringConfig}
-    >
-      <InputLabel
-        label={field.label}
-        help={help}
-        optional={optional}
-        inline={inline}
-        width={width}
-        icon={IcRoundLink}
+    <>
+      <picker.PickerSlot />
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+        layoutMeasuring={layoutMeasuringConfig}
       >
-        <div className={styles.root()}>
-          <div className={styles.root.inner()}>
-            <SortableContext items={ids} strategy={verticalListSortingStrategy}>
-              <Card.Root>
-                {value.map(reference => {
-                  return (
-                    <LinkInputRowSortable<T>
-                      key={reference.id}
-                      fields={fields}
-                      state={state.child(reference.id)}
-                      entryData={id => data?.get(id)}
-                      reference={reference}
-                      onRemove={() => remove(reference.id)}
-                      isSortable={max !== 1}
-                    />
-                  )
-                })}
+        <InputLabel
+          label={field.label}
+          help={help}
+          optional={optional}
+          inline={inline}
+          width={width}
+          icon={IcRoundLink}
+        >
+          <div className={styles.root()}>
+            <div className={styles.root.inner()}>
+              <SortableContext
+                items={ids}
+                strategy={verticalListSortingStrategy}
+              >
+                <Card.Root>
+                  {value.map(reference => {
+                    return (
+                      <LinkInputRowSortable<T>
+                        key={reference.id}
+                        fields={fields}
+                        state={state.child(reference.id)}
+                        entryData={id => data?.get(id)}
+                        reference={reference}
+                        onRemove={() => remove(reference.id)}
+                        isSortable={max !== 1}
+                      />
+                    )
+                  })}
 
-                {showLinkPicker && (
-                  <div className={styles.create()}>
-                    <Create.Root>
-                      <Create.Button onClick={handleCreate}>
-                        Pick link
-                      </Create.Button>
-                      {showExternal && (
+                  {showLinkPicker && (
+                    <div className={styles.create()}>
+                      <Create.Root>
                         <Create.Button onClick={handleCreate}>
-                          External url
+                          Pick link
                         </Create.Button>
-                      )}
-                    </Create.Root>
-                  </div>
-                )}
-              </Card.Root>
-            </SortableContext>
+                        {showExternal && (
+                          <Create.Button onClick={handleCreate}>
+                            External url
+                          </Create.Button>
+                        )}
+                      </Create.Root>
+                    </div>
+                  )}
+                </Card.Root>
+              </SortableContext>
 
-            <DragOverlay
-              dropAnimation={{
-                ...defaultDropAnimation,
-                dragSourceOpacity: 0.5
-              }}
-            >
-              {dragging ? (
-                <LinkInputRow<T>
-                  fields={fields}
-                  state={state.child(dragging.id)}
-                  entryData={id => data?.get(id)}
-                  reference={dragging}
-                  onRemove={() => remove(dragging.id)}
-                  isDragOverlay
-                  isSortable={max !== 1}
-                />
-              ) : null}
-            </DragOverlay>
+              <DragOverlay
+                dropAnimation={{
+                  ...defaultDropAnimation,
+                  dragSourceOpacity: 0.5
+                }}
+              >
+                {dragging ? (
+                  <LinkInputRow<T>
+                    fields={fields}
+                    state={state.child(dragging.id)}
+                    entryData={id => data?.get(id)}
+                    reference={dragging}
+                    onRemove={() => remove(dragging.id)}
+                    isDragOverlay
+                    isSortable={max !== 1}
+                  />
+                ) : null}
+              </DragOverlay>
+            </div>
           </div>
-        </div>
-      </InputLabel>
-    </DndContext>
+        </InputLabel>
+      </DndContext>
+    </>
   )
 }

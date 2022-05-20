@@ -25,8 +25,8 @@ export class FieldState<V, M> implements InputState<readonly [V, M]> {
   use(): readonly [V, M] {
     const {current, mutator, observe} = useMemo(() => {
       const current = (): V => this.shape.fromY(this.root.get(this.key))
-      const mutator = this.shape.mutator(this.root, FIELD_KEY) as M
-      const observe = this.shape.watch(this.root, FIELD_KEY)
+      const mutator = this.shape.mutator(this.root, this.key) as M
+      const observe = this.shape.watch(this.root, this.key)
       return {current, mutator, observe}
     }, [])
     const redraw = useForceUpdate()

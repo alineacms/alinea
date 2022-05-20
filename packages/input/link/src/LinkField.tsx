@@ -35,7 +35,7 @@ export namespace LinkType {
 /** Optional settings to configure a link field */
 export type LinkOptions<T, Q> = {
   /** Add extra fields to each link */
-  fields?: TypeConfig<T>
+  fields?: TypeConfig<any, T>
   /** Width of the field in the dashboard UI (0-1) */
   width?: number
   /** Add instructional text to a field */

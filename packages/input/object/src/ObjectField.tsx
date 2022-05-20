@@ -2,7 +2,7 @@ import {Field, Label, TypeConfig} from '@alinea/core'
 
 export type ObjectOptions<T> = {
   /** The fields */
-  fields: TypeConfig<T>
+  fields: TypeConfig<any, T>
   width?: number
   help?: Label
   inline?: boolean

@@ -1,4 +1,5 @@
-import {ReferencePickerFunc, Toolbar} from '@alinea/dashboard'
+import {Reference} from '@alinea/core/Reference'
+import {Toolbar} from '@alinea/dashboard'
 import {
   DropdownMenu,
   fromModule,
@@ -23,6 +24,7 @@ import {IcRoundUnfoldMore} from '@alinea/ui/icons/IcRoundUnfoldMore'
 import {IcRoundUndo} from '@alinea/ui/icons/IcRoundUndo'*/
 import {Editor} from '@tiptap/react'
 import {forwardRef, Ref} from 'react'
+import {PickTextLinkFunc} from './PickTextLink'
 import css from './RichTextToolbar.module.scss'
 
 const styles = fromModule(css)
@@ -37,7 +39,7 @@ enum Styles {
 export type RichTextToolbarProps = {
   editor: Editor
   focusToggle: (target: EventTarget | null) => void
-  pickLink: ReferencePickerFunc
+  pickLink: PickTextLinkFunc
 }
 
 export const RichTextToolbar = forwardRef(function RichTextToolbar(
@@ -51,7 +53,50 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
     : editor.isActive('heading', {level: 3})
     ? 'h3'
     : 'paragraph'
-
+  function parseLink(href: string): Reference | undefined {
+    try {
+      const url = new URL(href)
+      if (url.protocol === 'entry:') {
+        const entry = url.pathname
+        return {id: entry, type: 'entry', entry}
+      }
+      return {id: href, type: 'url', url: href}
+    } catch (e) {
+      return undefined
+    }
+  }
+  function handleLink() {
+    const attrs = editor.getAttributes('link')
+    const existing: Reference | undefined = attrs?.href && parseLink(attrs.href)
+    pickLink({link: existing ? [existing] : undefined}).then(picked => {
+      if (!picked) return
+      const link = picked.link && picked.link[0]
+      if (link?.type === 'entry') {
+        const command = editor.chain().focus()
+        const action = existing
+          ? command.extendMarkRange('link').setLink({
+              href: `entry:${link.entry}`,
+              target: picked.blank ? '_blank' : undefined
+            })
+          : command.insertContent({
+              type: 'text',
+              text: picked.description,
+              marks: [
+                {
+                  type: 'link',
+                  attrs: {
+                    href: `entry:${link.entry}`,
+                    target: picked.blank ? '_blank' : undefined
+                  }
+                }
+              ]
+            })
+        action.run()
+      } else {
+        editor.chain().focus().extendMarkRange('link').unsetLink().run()
+      }
+    })
+  }
   return (
     <Toolbar.Slot>
       <div
@@ -242,29 +287,7 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
             icon={IcRoundLink}
             size={18}
             title="Link"
-            onClick={e => {
-              e.preventDefault()
-              pickLink({
-                selection: [],
-                max: 1
-              }).then(links => {
-                if (links && links[0] && links[0].type === 'entry') {
-                  editor
-                    .chain()
-                    .focus()
-                    .extendMarkRange('link')
-                    .setLink({href: 'entry:' + links[0].id})
-                    .run()
-                } else {
-                  editor
-                    .chain()
-                    .focus()
-                    .extendMarkRange('link')
-                    .unsetLink()
-                    .run()
-                }
-              })
-            }}
+            onClick={handleLink}
             active={editor.isActive('link')}
           />
         </HStack>

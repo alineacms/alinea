@@ -4,7 +4,7 @@ import {Fields} from './Fields'
 
 export type InputFormProps = {
   state: InputState<any>
-  type: TypeConfig
+  type: TypeConfig<any, any>
 }
 
 export function InputForm({state, type}: InputFormProps) {
