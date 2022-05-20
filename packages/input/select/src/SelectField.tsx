@@ -7,12 +7,16 @@ export type SelectItems = {
 
 /** Optional settings to configure a select field */
 export type SelectOptions = {
+  /** Width of the field in the dashboard UI (0-1) */
+  width?: number
   /** Add instructional text to a field */
   help?: Label
   /** Field is optional */
   optional?: boolean
   /** Display a minimal version */
   inline?: boolean
+  /** Choose a custom placeholder (eg. 'Select an option')  */
+  placeholder?: string
   /** A default value */
   initialValue?: string
 }

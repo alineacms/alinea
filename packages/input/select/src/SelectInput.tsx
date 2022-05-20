@@ -15,54 +15,60 @@ export type SelectInputProps = {
 }
 
 export function SelectInput({state, field}: SelectInputProps) {
-  const {optional, help, initialValue} = field.options
+  const {help, optional, width, placeholder, initialValue} = field.options
   const [value = initialValue, setValue] = useInput(state)
   const {items} = field
 
   return (
-    <div>
-      <InputLabel
-        label={field.label}
-        help={help}
-        optional={optional}
-        icon={IcRoundArrowDropDownCircle}
-      >
-        <div className={styles.root()}>
-          <Listbox value={value} onChange={setValue}>
-            {({open}) => (
-              <>
-                <Listbox.Button className={styles.root.input({open})}>
-                  <span className={styles.root.input.label()}>
-                    <TextLabel label={value ? items[value] : field.label} />
-                  </span>
-                  <Icon
-                    icon={IcRoundUnfoldMore}
-                    className={styles.root.input.icon()}
+    <InputLabel
+      label={field.label}
+      help={help}
+      optional={optional}
+      width={width}
+      icon={IcRoundArrowDropDownCircle}
+    >
+      <div className={styles.root()}>
+        <Listbox value={value} onChange={setValue}>
+          {({open}) => (
+            <>
+              <Listbox.Button className={styles.root.input({open})}>
+                <span
+                  className={styles.root.input.label({placeholder: !value})}
+                >
+                  <TextLabel
+                    label={value ? items[value] : placeholder || field.label}
                   />
-                </Listbox.Button>
-                <Listbox.Options className={styles.root.dropdown()}>
-                  {Object.entries(items).map(([key, label]) => (
-                    <Listbox.Option key={key} value={key}>
-                      {({active, selected}) => (
-                        <HStack
-                          center
-                          gap={4}
-                          className={styles.root.dropdown.option({active})}
-                        >
-                          <div className={styles.root.dropdown.option.icon()}>
-                            {selected && <Icon size={18} icon={IcRoundCheck} />}
-                          </div>
-                          <TextLabel label={label} />
-                        </HStack>
-                      )}
-                    </Listbox.Option>
-                  ))}
-                </Listbox.Options>
-              </>
-            )}
-          </Listbox>
-        </div>
-      </InputLabel>
-    </div>
+                </span>
+                <Icon
+                  icon={IcRoundUnfoldMore}
+                  className={styles.root.input.icon()}
+                />
+              </Listbox.Button>
+              <Listbox.Options className={styles.root.dropdown()}>
+                {Object.entries(items).map(([key, label]) => (
+                  <Listbox.Option key={key} value={key}>
+                    {({active, selected}) => (
+                      <HStack
+                        center
+                        gap={4}
+                        className={styles.root.dropdown.option({
+                          active,
+                          selected
+                        })}
+                      >
+                        <div className={styles.root.dropdown.option.icon()}>
+                          {selected && <Icon size={20} icon={IcRoundCheck} />}
+                        </div>
+                        <TextLabel label={label} />
+                      </HStack>
+                    )}
+                  </Listbox.Option>
+                ))}
+              </Listbox.Options>
+            </>
+          )}
+        </Listbox>
+      </div>
+    </InputLabel>
   )
 }
