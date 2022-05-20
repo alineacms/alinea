@@ -147,6 +147,7 @@ __metadata:
   dependencies:
     "@alinea/core": 0.0.0
     "@alinea/editor": 0.0.0
+    "@alinea/input.link": 0.0.0
     "@alinea/input.select": 0.0.0
     "@alinea/input.text": 0.0.0
     "@alinea/store": 0.0.0
@@ -318,8 +319,8 @@ __metadata:
     "@alinea/core": 0.0.0
     "@alinea/editor": 0.0.0
     "@alinea/ui": 0.0.0
+    "@floating-ui/react-dom": ^0.7.1
     "@headlessui/react": ^1.6.1
-    headlessui-float-react: ^0.5.4
   peerDependencies:
     react: "*"
   languageName: unknown
@@ -713,32 +714,32 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@floating-ui/core@npm:^0.6.2":
-  version: 0.6.2
-  resolution: "@floating-ui/core@npm:0.6.2"
-  checksum: b3e1844da852fe141cfa4163026a7c5ffb4399a96105340dffdd5b76dcafea72c6221a06b4674c2b500bc776adc9d9e4ed39dba55e7d844d9507d994c0af743a
+"@floating-ui/core@npm:^0.7.1":
+  version: 0.7.1
+  resolution: "@floating-ui/core@npm:0.7.1"
+  checksum: e38ca88a318e17b48b5f891b1a61190c62fe15d7027aba4c9a6905883fdabe0318f9e16ce8a33b529e37f9d2560d60ea3ec6280231f5d5656fd4d87163b4d0ee
   languageName: node
   linkType: hard
 
-"@floating-ui/dom@npm:^0.4.5":
-  version: 0.4.5
-  resolution: "@floating-ui/dom@npm:0.4.5"
+"@floating-ui/dom@npm:^0.5.1":
+  version: 0.5.1
+  resolution: "@floating-ui/dom@npm:0.5.1"
   dependencies:
-    "@floating-ui/core": ^0.6.2
-  checksum: 3024aba55fe7ee78b429a6a5d61f5719a6bb2acc79c8a33304b9d30c443efba3a5288acaf9003402e31ee97a533eda97c30a0f2c97e9e54c697df9b80a23dad8
+    "@floating-ui/core": ^0.7.1
+  checksum: 436dfcc8906241b3466a95e9b5de448e708d91e516ccf7cee20a8e7b55e2616fd97c9f9a8a4ddb65c5fa50d3c3bb99aacf2c0899a57c6051c39be4358d5e9c81
   languageName: node
   linkType: hard
 
-"@floating-ui/react-dom@npm:^0.6.3":
-  version: 0.6.3
-  resolution: "@floating-ui/react-dom@npm:0.6.3"
+"@floating-ui/react-dom@npm:^0.7.1":
+  version: 0.7.1
+  resolution: "@floating-ui/react-dom@npm:0.7.1"
   dependencies:
-    "@floating-ui/dom": ^0.4.5
+    "@floating-ui/dom": ^0.5.1
     use-isomorphic-layout-effect: ^1.1.1
   peerDependencies:
     react: ">=16.8.0"
     react-dom: ">=16.8.0"
-  checksum: 1af930aac4e13ed9a25ea2cf70e629d36363034a70ea407a6f8d8d4bd62979c59d3748b58e1ef31c427fdf21a754f285aabba9f14b9e916ab69eb5212144ef6c
+  checksum: 3d3ad798e07131ad1d12c37f0475cc8ba091d753547115ec5cff0d8d4bdc28dee27e0fd6da39c8ca5b3066bcce30a97c50bda6ea7b45fc42fbc80c39f85499aa
   languageName: node
   linkType: hard
 
@@ -4191,21 +4192,6 @@ fsevents@~2.3.2:
   version: 0.2.4
   resolution: "hash-stream-validation@npm:0.2.4"
   checksum: a5633e6ece2f729729d7061274900b10b035d6b011bfffc9503440c4279cacb53eb461ad96c8c90bb6b5368d896833a06b924a7a1abdbad46a8a5434e0c17a64
-  languageName: node
-  linkType: hard
-
-"headlessui-float-react@npm:^0.5.4":
-  version: 0.5.4
-  resolution: "headlessui-float-react@npm:0.5.4"
-  dependencies:
-    "@floating-ui/core": ^0.6.2
-    "@floating-ui/dom": ^0.4.5
-    "@floating-ui/react-dom": ^0.6.3
-  peerDependencies:
-    "@headlessui/react": ^1.0.0
-    react: ^16 || ^17 || ^18
-    react-dom: ^16 || ^17 || ^18
-  checksum: 70cc0f3474ebdd5bfcbb1ef40d5418d2b84cec82fdb88f5bfe619f23780b73d9a578faa463def714129d904c99b25e0bbfec748cc9c3282688c6490320cd2e4b
   languageName: node
   linkType: hard
 

@@ -32,8 +32,5 @@
     "@alinea/ui": "0.0.0",
     "@floating-ui/react-dom": "^0.7.1",
     "@headlessui/react": "^1.6.1"
-  },
-  "peerDependencies": {
-    "react": "*"
   }
 }
