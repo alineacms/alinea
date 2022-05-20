@@ -1,5 +1,6 @@
 import {User} from '@alinea/core'
 import {getRandomColor} from '@alinea/core/util/GetRandomColor'
+import {px} from '@alinea/ui'
 import {useContrastColor} from './hook/UseContrastColor'
 
 type AvatarProps = {user: User}
@@ -14,12 +15,12 @@ export function Avatar({user}: AvatarProps) {
         borderRadius: '100%',
         background: background,
         color: color,
-        width: '24px',
-        height: '24px',
+        width: px(24),
+        height: px(24),
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        fontSize: '13px'
+        fontSize: px(13)
       }}
     >
       <span>{letter}</span>

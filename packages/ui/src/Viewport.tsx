@@ -1,15 +1,9 @@
-import {
-  ColorScheme,
-  FontSize,
-  Language,
-  PreferencesProvider
-} from './hook/UsePreferences'
-import {HTMLProps, PropsWithChildren, useState} from 'react'
-
-import css from './Viewport.module.scss'
-import {fromModule} from './util/Styler'
 import {parseToHsla} from 'color2k'
+import {PropsWithChildren, useEffect, useLayoutEffect, useState} from 'react'
 import {useContrastColor} from './hook/UseContrastColor'
+import {ColorScheme, Language, PreferencesProvider} from './hook/UsePreferences'
+import {fromModule} from './util/Styler'
+import css from './Viewport.module.scss'
 
 const styles = fromModule(css)
 
@@ -45,7 +39,7 @@ export function Viewport({
   const [workspacePreference, setWorkspacePreference] = useState<string>(
     preferences?.workspace
   )
-  const [sizePreference, setSizePreference] = useState<FontSize>(
+  const [sizePreference, setSizePreference] = useState<number>(
     preferences?.size
   )
   const [languagePreference, setLanguagePreference] = useState<Language>(
@@ -70,7 +64,8 @@ export function Viewport({
       JSON.stringify({...preferences, workspace: workspace})
     )
   }
-  function updateSizePreference(size: FontSize) {
+  function updateSizePreference(size: number) {
+    document.documentElement.style.fontSize = `${size}px`
     setSizePreference(size)
     window?.localStorage?.setItem(
       persistenceId,
