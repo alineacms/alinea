@@ -4,10 +4,8 @@ import {fromModule, HStack, Icon, TextLabel} from '@alinea/ui'
 import {IcRoundArrowDropDownCircle} from '@alinea/ui/icons/IcRoundArrowDropDownCircle'
 import {IcRoundCheck} from '@alinea/ui/icons/IcRoundCheck'
 import {IcRoundUnfoldMore} from '@alinea/ui/icons/IcRoundUnfoldMore'
-import {size} from '@floating-ui/dom'
+import {flip, size, useFloating} from '@floating-ui/react-dom'
 import {Listbox} from '@headlessui/react'
-import {Float} from 'headlessui-float-react'
-import {useRef} from 'react'
 import {SelectField} from './SelectField'
 import css from './SelectInput.module.scss'
 
@@ -25,17 +23,20 @@ export function SelectInput<T extends string>({
   const {width, optional, help, placeholder, initialValue} = field.options
   const [value = initialValue, setValue] = useInput(state)
   const items = field.items as Record<string, Label>
-  const box = useRef<HTMLDivElement>(null)
-  const sameSize = [
-    size({
-      apply(rects) {
-        if (box.current)
-          Object.assign(box.current.style, {
-            width: `${rects.reference.width}px`
-          })
-      }
-    })
-  ]
+  const {x, y, reference, floating, refs} = useFloating({
+    placement: 'bottom-start',
+    middleware: [
+      flip(),
+      size({
+        apply({rects}) {
+          if (refs.floating.current)
+            Object.assign(refs.floating.current.style, {
+              width: `${rects.reference.width}px`
+            })
+        }
+      })
+    ]
+  })
   return (
     <InputLabel
       width={width}
@@ -47,14 +48,11 @@ export function SelectInput<T extends string>({
       <div className={styles.root()}>
         <Listbox value={value} onChange={setValue}>
           {({open}) => (
-            <Float
-              placement="bottom-start"
-              flip
-              offset={4}
-              transform={false}
-              middleware={sameSize}
-            >
-              <Listbox.Button className={styles.root.input({open})}>
+            <div>
+              <Listbox.Button
+                ref={reference}
+                className={styles.root.input({open})}
+              >
                 <span className={styles.root.input.label()}>
                   <TextLabel
                     label={value ? items[value] : placeholder || field.label}
@@ -65,8 +63,12 @@ export function SelectInput<T extends string>({
                   className={styles.root.input.icon()}
                 />
               </Listbox.Button>
-              <Listbox.Options className={styles.root.dropdown()}>
-                <div ref={box} className={styles.root.dropdown.inner()}>
+              <Listbox.Options
+                ref={floating}
+                style={{top: `${y || 0}px`, left: `${x || 0}px`}}
+                className={styles.root.dropdown()}
+              >
+                <div className={styles.root.dropdown.inner()}>
                   {Object.entries(items).map(([key, label]) => (
                     <Listbox.Option key={key} value={key}>
                       {({active, selected}) => (
@@ -88,7 +90,7 @@ export function SelectInput<T extends string>({
                   ))}
                 </div>
               </Listbox.Options>
-            </Float>
+            </div>
           )}
         </Listbox>
       </div>

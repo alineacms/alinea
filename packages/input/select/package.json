@@ -30,8 +30,8 @@
     "@alinea/core": "0.0.0",
     "@alinea/editor": "0.0.0",
     "@alinea/ui": "0.0.0",
-    "@headlessui/react": "^1.6.1",
-    "headlessui-float-react": "^0.5.4"
+    "@floating-ui/react-dom": "^0.7.1",
+    "@headlessui/react": "^1.6.1"
   },
   "peerDependencies": {
     "react": "*"
