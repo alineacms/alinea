@@ -1,44 +1,82 @@
 .root {
   &-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 25px;
+    width: 25px;
+    border-radius: 50%;
     border: none;
-    background-color: inherit;
     cursor: pointer;
 
-    &-choice {
-      display: inline-block;
-      height: 20px;
-      width: 20px;
-      border-radius: 50%;
-      border: none;
-      cursor: pointer;
-
-      &.is-active {
-        border: 2px solid var(--alinea-fields-foreground);
-      }
-    }
-
-    &-icon {
-      font-size: 25px;
+    &-check {
+      height: 18px;
+      width: 18px;
     }
   }
 
-  &-text {
-    display: block;
-    background: transparent;
-    border: none;
-    color: inherit;
-    font: inherit;
-    width: 100%;
-    resize: none;
-    padding: 9px 16px;
-    border-radius: 8px;
-    line-height: 1.5;
-    background: var(--alinea-fields);
-    box-shadow: var(--alinea-fields-shadow);
+  &-popover {
+    position: relative;
 
-    &:focus {
-      background: var(--alinea-fields-selected);
-      outline: 2px solid var(--alinea-fields-focus);
+    &-button {
+      border: none;
+      background-color: var(--alinea-background);
+    }
+
+    &-clear {
+      margin-left: 8px;
+    }
+
+    &-panel {
+      position: absolute;
+      left: 38px;
+    }
+
+    &-color {
+      width: 38px;
+      height: 38px;
+      border-radius: 8px 0 0 8px;
+
+      &.is-empty {
+        box-shadow: var(--alinea-fields-shadow);
+        background: linear-gradient(
+            to top left,
+            rgba(0, 0, 0, 0) 0%,
+            rgba(0, 0, 0, 0) calc(50% - 0.8px),
+            var(--alinea-fields-foreground) 50%,
+            rgba(0, 0, 0, 0) calc(50% + 0.8px),
+            rgba(0, 0, 0, 0) 100%
+          ),
+          linear-gradient(
+            to top right,
+            rgba(0, 0, 0, 0) 0%,
+            rgba(0, 0, 0, 0) calc(50% - 0.8px),
+            var(--alinea-fields-foreground) 50%,
+            rgba(0, 0, 0, 0) calc(50% + 0.8px),
+            rgba(0, 0, 0, 0) 100%
+          );
+      }
+    }
+
+    &-input {
+      display: block;
+      background: transparent;
+      border: none;
+      color: inherit;
+      font: inherit;
+      width: 100%;
+      resize: none;
+      padding: 9px 16px;
+      border-radius: 0 8px 8px 0;
+      line-height: 1.5;
+      background: var(--alinea-fields);
+      box-shadow: var(--alinea-fields-shadow);
+
+      &.is-open,
+      &:focus {
+        background: var(--alinea-fields-selected);
+        outline: 2px solid var(--alinea-fields-focus);
+      }
     }
   }
 }

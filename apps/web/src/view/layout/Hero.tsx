@@ -1,9 +1,8 @@
-import {HStack, fromModule} from '@alinea/ui'
-import Link, {LinkProps} from 'next/link'
-
-import {Container} from './Container'
+import {fromModule, HStack} from '@alinea/ui'
 import {IcRoundArrowForward} from '@alinea/ui/icons/IcRoundArrowForward'
+import Link, {LinkProps} from 'next/link'
 import {PropsWithChildren} from 'react'
+import {Container} from './Container'
 import css from './Hero.module.scss'
 
 const styles = fromModule(css)

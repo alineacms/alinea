@@ -1,37 +1,51 @@
-import {HStack, VStack, fromModule} from '@alinea/ui'
-import {HexColorInput, HexColorPicker} from 'react-colorful'
 import {InputLabel, InputState, useInput} from '@alinea/editor'
-
-import {ColorField} from './ColorField'
-import IcRoundArrowDropDown from '@alinea/ui/icons/IcRoundArrowDropDown'
-import IcRoundArrowDropUp from '@alinea/ui/icons/IcRoundArrowDropUp'
+import {fromModule, HStack, IconButton} from '@alinea/ui'
+import {useContrastColor} from '@alinea/ui/hook/UseContrastColor'
+import {IcRoundCheck} from '@alinea/ui/icons/IcRoundCheck'
+import {IcRoundClear} from '@alinea/ui/icons/IcRoundClear'
 import {IcRoundColorLens} from '@alinea/ui/icons/IcRoundColorLens'
+import {Popover} from '@headlessui/react'
+import {HexColorInput, HexColorPicker} from 'react-colorful'
+import {ColorField} from './ColorField'
 import css from './ColorInput.module.scss'
-import {useState} from 'react'
 
 const styles = fromModule(css)
 
 type AllowedColorPickerProps = {
-  activeColor: string | undefined
+  selectedColor: string | undefined
   colors: Array<string>
   onClick: (color: string) => void
 }
 
 function AllowedColorPicker({
-  activeColor,
+  selectedColor,
   colors,
   onClick
 }: AllowedColorPickerProps) {
+  const contrastColor = useContrastColor(selectedColor)
   return (
-    <HStack center gap={8}>
-      {colors.map(color => (
-        <button
-          className={styles.root.button.choice({active: color === activeColor})}
-          style={{backgroundColor: color}}
-          onClick={() => onClick(color)}
-        />
-      ))}
-    </HStack>
+    <>
+      <HStack center gap={8}>
+        {colors.map(color => (
+          <button
+            key={color}
+            className={styles.root.button()}
+            style={{backgroundColor: color}}
+            onClick={() => onClick(color)}
+          >
+            {color === selectedColor && (
+              <IcRoundCheck
+                className={styles.root.button.check()}
+                style={{color: contrastColor}}
+              />
+            )}
+          </button>
+        ))}
+        {selectedColor && (
+          <IconButton icon={IcRoundClear} onClick={() => onClick('')} />
+        )}
+      </HStack>
+    </>
   )
 }
 
@@ -41,35 +55,36 @@ type AllColorPickerProps = {
 }
 
 function AllColorPicker({color, onChange}: AllColorPickerProps) {
-  const [showPicker, setShowPicker] = useState(false)
-
   return (
-    <VStack gap={8}>
-      <HStack
-        center
-        as="button"
-        className={styles.root.button()}
-        onClick={() => setShowPicker(!showPicker)}
-      >
-        <div
-          className={styles.root.button.choice()}
-          style={{backgroundColor: color}}
-        />
-        <div className={styles.root.button.icon()}>
-          {showPicker ? <IcRoundArrowDropUp /> : <IcRoundArrowDropDown />}
-        </div>
-      </HStack>
-      {showPicker && (
+    <Popover className={styles.root.popover()}>
+      {({open}) => (
         <>
-          <HexColorInput
-            color={color}
-            onChange={onChange}
-            className={styles.root.text()}
-          />
-          <HexColorPicker color={color} onChange={onChange} />
+          <Popover.Button className={styles.root.popover.button()}>
+            <HStack center>
+              <div
+                className={styles.root.popover.color({empty: !color})}
+                style={{backgroundColor: color}}
+              />
+              <HexColorInput
+                color={color}
+                onChange={onChange}
+                className={styles.root.popover.input({open: open})}
+              />
+              {color && (
+                <IconButton
+                  className={styles.root.popover.clear()}
+                  icon={IcRoundClear}
+                  onClick={() => onChange('')}
+                />
+              )}
+            </HStack>
+          </Popover.Button>
+          <Popover.Panel className={styles.root.popover.panel()}>
+            <HexColorPicker color={color} onChange={onChange} />
+          </Popover.Panel>
         </>
       )}
-    </VStack>
+    </Popover>
   )
 }
 
@@ -82,7 +97,6 @@ export function ColorInput({state, field}: ColorInputProps) {
   const {width, inline, optional, help, initialValue, allowedColors} =
     field.options
   const [value = initialValue, setValue] = useInput(state)
-
   return (
     <InputLabel
       asLabel
@@ -95,7 +109,7 @@ export function ColorInput({state, field}: ColorInputProps) {
     >
       {allowedColors ? (
         <AllowedColorPicker
-          activeColor={value}
+          selectedColor={value}
           colors={allowedColors}
           onClick={setValue}
         />
