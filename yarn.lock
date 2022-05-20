@@ -320,6 +320,8 @@ __metadata:
     "@alinea/ui": 0.0.0
     "@headlessui/react": ^1.6.1
     headlessui-float-react: ^0.5.4
+  peerDependencies:
+    react: "*"
   languageName: unknown
   linkType: soft
 
