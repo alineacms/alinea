@@ -34,7 +34,7 @@ export namespace Field {
   export type Text<T, Q = T> = Field<TextDoc<T>, RichTextMutator<T>, Q>
 }
 
-export interface Field<V = any, M = any, Q = V> {
+export interface Field<V, M, Q = V> {
   shape: Shape<V, M>
   label: Label
   view?: FieldRenderer<V, M, Field<V, M, Q>>

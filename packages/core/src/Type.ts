@@ -58,7 +58,7 @@ export class TypeConfig<T = any> {
       label,
       Object.fromEntries(
         sections
-          .flatMap<[string, Field]>(section =>
+          .flatMap<[string, Field<any, any>]>(section =>
             LazyRecord.iterate(section.fields || {})
           )
           .filter(([, field]) => field.shape)
