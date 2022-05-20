@@ -1,10 +1,10 @@
 import {unreachable} from '@alinea/core'
-import {BlocksProps} from './Blocks.query'
+import {BlocksSchema} from './Blocks.schema'
 import {TextBlock} from './TextBlock'
 import {TypesBlock} from './TypesBlock'
 
 export type BlocksViewProps = {
-  blocks: BlocksProps
+  blocks: BlocksSchema
 }
 
 export function Blocks({blocks}: BlocksViewProps) {
@@ -17,7 +17,7 @@ export function Blocks({blocks}: BlocksViewProps) {
           case 'TypesBlock':
             return <TypesBlock key={block.id} {...block} />
           default:
-            throw unreachable(block.type)
+            throw unreachable(block)
         }
       })}
     </div>

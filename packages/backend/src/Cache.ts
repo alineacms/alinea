@@ -167,7 +167,7 @@ export namespace Cache {
       for (const [key, type] of schema) {
         const {index} = type.options
         if (!index) continue
-        const collection = schema.collection(workspace, key)
+        const collection = type.collection()
         const indices = index(collection)
         for (const [name, fields] of Object.entries(indices)) {
           const indexName = `${workspace}.${key}.${name}`

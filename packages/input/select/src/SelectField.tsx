@@ -1,4 +1,4 @@
-import {Field, Label, Value} from '@alinea/core'
+import {Field, Label, Shape} from '@alinea/core'
 
 /** A string record with option labels */
 export type SelectItems = {
@@ -31,7 +31,7 @@ export function createSelect(
   options: SelectOptions = {}
 ): SelectField {
   return {
-    type: Value.Scalar(label),
+    shape: Shape.Scalar(label),
     label,
     items,
     options

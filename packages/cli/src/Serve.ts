@@ -157,8 +157,7 @@ export async function serve(options: ServeOptions) {
       loader: {
         ...buildOptions?.loader,
         '.woff': 'file',
-        '.woff2': 'file',
-        '.json': 'json'
+        '.woff2': 'file'
       }
     })
     return {

@@ -1,5 +1,5 @@
 import {parseToHsla} from 'color2k'
-import {PropsWithChildren, useLayoutEffect, useState} from 'react'
+import {PropsWithChildren, useEffect, useLayoutEffect, useState} from 'react'
 import {ColorSchemeProvider} from './hook/UseColorScheme'
 import {useContrastColor} from './hook/UseContrastColor'
 import {fromModule} from './util/Styler'
@@ -15,6 +15,9 @@ type ViewportProps = PropsWithChildren<{
   // to the body instead. Don't use this if you're server side rendering.
   attachToBody?: boolean
 }>
+
+const useIsomorphicEffect =
+  typeof window !== 'undefined' ? useLayoutEffect : useEffect
 
 export function Viewport({
   children,
@@ -54,7 +57,7 @@ export function Viewport({
       return `${key}: ${value}`
     })
     .join('; ')
-  useLayoutEffect(() => {
+  useIsomorphicEffect(() => {
     if (attachToBody) {
       document.body.className = className
       document.body.style.cssText = styleString

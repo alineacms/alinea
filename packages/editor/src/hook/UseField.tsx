@@ -1,7 +1,4 @@
-import {createError} from '@alinea/core'
-import {ROOT_KEY} from '@alinea/core/Doc'
-import {Field} from '@alinea/core/Field'
-import {Value} from '@alinea/core/Value'
+import {createError, Field, ROOT_KEY, Shape} from '@alinea/core'
 import {useForceUpdate} from '@alinea/ui'
 import {useEffect, useMemo} from 'react'
 import * as Y from 'yjs'
@@ -11,7 +8,7 @@ const FIELD_KEY = '#field'
 
 export class FieldState<V, M> implements InputState<readonly [V, M]> {
   constructor(
-    private value: Value<V>,
+    private shape: Shape<V>,
     private root: Y.Map<any>,
     private key: string
   ) {}
@@ -19,7 +16,7 @@ export class FieldState<V, M> implements InputState<readonly [V, M]> {
   child(field: string) {
     const current = this.root.get(this.key)
     return new FieldState(
-      this.value.typeOfChild(current, field),
+      this.shape.typeOfChild(current, field),
       current,
       field
     )
@@ -28,8 +25,8 @@ export class FieldState<V, M> implements InputState<readonly [V, M]> {
   use(): readonly [V, M] {
     const {current, mutator, observe} = useMemo(() => {
       const current = (): V => this.root.get(this.key)
-      const mutator = this.value.mutator(this.root, FIELD_KEY) as M
-      const observe = this.value.watch(this.root, FIELD_KEY)
+      const mutator = this.shape.mutator(this.root, FIELD_KEY) as M
+      const observe = this.shape.watch(this.root, FIELD_KEY)
       return {current, mutator, observe}
     }, [])
     const redraw = useForceUpdate()
@@ -45,8 +42,8 @@ export function useField<V, M>(field: Field<V, M>, initialValue?: V) {
     const doc = new Y.Doc()
     const root = doc.getMap(ROOT_KEY)
     root.set(FIELD_KEY, initialValue)
-    if (!field.type) throw createError('Cannot use field without type')
-    const state = new FieldState<V, M>(field.type, root, FIELD_KEY)
+    if (!field.shape) throw createError('Cannot use field without type')
+    const state = new FieldState<V, M>(field.shape, root, FIELD_KEY)
     const Input = field.view!
     function input() {
       return <Input state={state} field={field} />

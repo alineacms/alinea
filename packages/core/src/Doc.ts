@@ -33,7 +33,7 @@ export function entryFromDoc(
     parent: docRoot.get('parent') as string,
     parents: docRoot.get('parents') as Array<string>,
     $isContainer: docRoot.get('$isContainer') as boolean,
-    ...type.valueType.fromY(docRoot)
+    ...type.shape.fromY(docRoot)
   }
 }
 
@@ -63,7 +63,7 @@ export function docFromEntry(
   docRoot.set('$isContainer', entry.$isContainer)
   for (const [key, field] of type) {
     const contents = entry[key]
-    docRoot.set(key, field.type.toY(contents))
+    docRoot.set(key, field.shape.toY(contents))
   }
   doc.clientID = clientID
   return doc

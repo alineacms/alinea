@@ -35,7 +35,7 @@ __metadata:
   resolution: "@alinea/backend@workspace:packages/backend"
   dependencies:
     "@alinea/core": 0.0.0
-    "@alinea/sqlite-wasm": ^0.1.5
+    "@alinea/sqlite-wasm": ^0.1.6
     "@alinea/store": 0.0.0
     "@octokit/rest": ^18.12.0
     "@types/busboy": ^1.3.0
@@ -76,7 +76,7 @@ __metadata:
     "@alinea/backend": 0.0.0
     "@alinea/client": 0.0.0
     "@alinea/core": 0.0.0
-    "@alinea/sqlite-wasm": ^0.1.5
+    "@alinea/sqlite-wasm": ^0.1.6
     "@alinea/store": 0.0.0
     "@esbx/eval": ^0.0.19
     "@esbx/react": ^0.0.19
@@ -87,6 +87,7 @@ __metadata:
     chokidar: ^3.5.3
     compare-versions: ^4.1.3
     compression: ^1.7.4
+    detect-package-manager: ^2.0.1
     dirname-filename-esm: ^1.1.1
     esbuild: ^0.14.11
     express: ^4.17.1
@@ -110,6 +111,12 @@ __metadata:
     "@types/isomorphic-fetch": ^0.0.35
     isomorphic-fetch: ^3.0.0
   languageName: unknown
+  linkType: soft
+
+"@alinea/content@link:./.alinea::locator=%40alinea%2Fweb%40workspace%3Aapps%2Fweb":
+  version: 0.0.0-use.local
+  resolution: "@alinea/content@link:./.alinea::locator=%40alinea%2Fweb%40workspace%3Aapps%2Fweb"
+  languageName: node
   linkType: soft
 
 "@alinea/core@0.0.0, @alinea/core@workspace:packages/core":
@@ -311,6 +318,7 @@ __metadata:
     "@alinea/core": 0.0.0
     "@alinea/editor": 0.0.0
     "@alinea/ui": 0.0.0
+    "@headlessui/react": ^1.6.1
   languageName: unknown
   linkType: soft
 
@@ -370,10 +378,10 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@alinea/sqlite-wasm@npm:^0.1.5":
-  version: 0.1.5
-  resolution: "@alinea/sqlite-wasm@npm:0.1.5"
-  checksum: 5a44db0f7e7b827c467fc9cc52bbe166071f25439c481621624aa21d3ca07ddebebc05f11301ed5d19f71c392c64e5d9df7441c4b3a3b5d77abd78f6a5bfef19
+"@alinea/sqlite-wasm@npm:^0.1.6":
+  version: 0.1.6
+  resolution: "@alinea/sqlite-wasm@npm:0.1.6"
+  checksum: dd04c9c4204fcff511b1331a7e114255b273d2bbde5c3bb00ad58e5686d0ec184435d164615f6075f59aa67ef931d8014a9887431c68d80fbe3bd1b0728cb8e1
   languageName: node
   linkType: hard
 
@@ -412,6 +420,7 @@ __metadata:
     "@alinea/auth.passwordless": 0.0.0
     "@alinea/backend": 0.0.0
     "@alinea/cli": 0.0.0
+    "@alinea/content": "link:./.alinea"
     "@alinea/core": 0.0.0
     "@alinea/dashboard": 0.0.0
     "@alinea/ui": 0.0.0
@@ -2077,7 +2086,7 @@ __metadata:
     "@alinea/input.select": 0.0.0
     "@alinea/input.tabs": 0.0.0
     "@alinea/input.text": 0.0.0
-    "@alinea/sqlite-wasm": ^0.1.5
+    "@alinea/sqlite-wasm": ^0.1.6
     "@alinea/store": 0.0.0
     "@alinea/ui": 0.0.0
   bin:
@@ -2843,7 +2852,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cross-spawn@npm:^7.0.1":
+"cross-spawn@npm:^7.0.1, cross-spawn@npm:^7.0.3":
   version: 7.0.3
   resolution: "cross-spawn@npm:7.0.3"
   dependencies:
@@ -3058,6 +3067,15 @@ __metadata:
   version: 2.1.0
   resolution: "detect-node@npm:2.1.0"
   checksum: 832184ec458353e41533ac9c622f16c19f7c02d8b10c303dfd3a756f56be93e903616c0bb2d4226183c9351c15fc0b3dba41a17a2308262afabcfa3776e6ae6e
+  languageName: node
+  linkType: hard
+
+"detect-package-manager@npm:^2.0.1":
+  version: 2.0.1
+  resolution: "detect-package-manager@npm:2.0.1"
+  dependencies:
+    execa: ^5.1.1
+  checksum: e72b910182d5ad479198d4235be206ac64a479257b32201bb06f3c842cc34c65ea851d46f72cc1d4bf535bcc6c4b44b5b86bb29fe1192b8c9c07b46883672f28
   languageName: node
   linkType: hard
 
@@ -3508,6 +3526,23 @@ __metadata:
   version: 5.0.1
   resolution: "event-target-shim@npm:5.0.1"
   checksum: 1ffe3bb22a6d51bdeb6bf6f7cf97d2ff4a74b017ad12284cc9e6a279e727dc30a5de6bb613e5596ff4dc3e517841339ad09a7eec44266eccb1aa201a30448166
+  languageName: node
+  linkType: hard
+
+"execa@npm:^5.1.1":
+  version: 5.1.1
+  resolution: "execa@npm:5.1.1"
+  dependencies:
+    cross-spawn: ^7.0.3
+    get-stream: ^6.0.0
+    human-signals: ^2.1.0
+    is-stream: ^2.0.0
+    merge-stream: ^2.0.0
+    npm-run-path: ^4.0.1
+    onetime: ^5.1.2
+    signal-exit: ^3.0.3
+    strip-final-newline: ^2.0.0
+  checksum: fba9022c8c8c15ed862847e94c252b3d946036d7547af310e344a527e59021fd8b6bb0723883ea87044dc4f0201f949046993124a42ccb0855cae5bf8c786343
   languageName: node
   linkType: hard
 
@@ -4212,6 +4247,13 @@ fsevents@~2.3.2:
     agent-base: 6
     debug: 4
   checksum: 165bfb090bd26d47693597661298006841ab733d0c7383a8cb2f17373387a94c903a3ac687090aa739de05e379ab6f868bae84ab4eac288ad85c328cd1ec9e53
+  languageName: node
+  linkType: hard
+
+"human-signals@npm:^2.1.0":
+  version: 2.1.0
+  resolution: "human-signals@npm:2.1.0"
+  checksum: b87fd89fce72391625271454e70f67fe405277415b48bcc0117ca73d31fa23a4241787afdc8d67f5a116cf37258c052f59ea82daffa72364d61351423848e3b8
   languageName: node
   linkType: hard
 
@@ -5248,6 +5290,13 @@ fsevents@~2.3.2:
   languageName: node
   linkType: hard
 
+"merge-stream@npm:^2.0.0":
+  version: 2.0.0
+  resolution: "merge-stream@npm:2.0.0"
+  checksum: 6fa4dcc8d86629705cea944a4b88ef4cb0e07656ebf223fa287443256414283dd25d91c1cd84c77987f2aec5927af1a9db6085757cb43d90eb170ebf4b47f4f4
+  languageName: node
+  linkType: hard
+
 "methods@npm:~1.1.2":
   version: 1.1.2
   resolution: "methods@npm:1.1.2"
@@ -5332,6 +5381,13 @@ fsevents@~2.3.2:
   bin:
     mime: cli.js
   checksum: f43f9b7bfa64534e6b05bd6062961681aeb406a5b53673b53b683f27fcc4e739989941836a355eef831f4478923651ecc739f4a5f6e20a76487b432bfd4db928
+  languageName: node
+  linkType: hard
+
+"mimic-fn@npm:^2.1.0":
+  version: 2.1.0
+  resolution: "mimic-fn@npm:2.1.0"
+  checksum: d2421a3444848ce7f84bd49115ddacff29c15745db73f54041edc906c14b131a38d05298dae3081667627a59b2eb1ca4b436ff2e1b80f69679522410418b478a
   languageName: node
   linkType: hard
 
@@ -5792,6 +5848,15 @@ fsevents@~2.3.2:
   languageName: node
   linkType: hard
 
+"npm-run-path@npm:^4.0.1":
+  version: 4.0.1
+  resolution: "npm-run-path@npm:4.0.1"
+  dependencies:
+    path-key: ^3.0.0
+  checksum: 5374c0cea4b0bbfdfae62da7bbdf1e1558d338335f4cacf2515c282ff358ff27b2ecb91ffa5330a8b14390ac66a1e146e10700440c1ab868208430f56b5f4d23
+  languageName: node
+  linkType: hard
+
 "npmlog@npm:^4.0.1, npmlog@npm:^4.1.2":
   version: 4.1.2
   resolution: "npmlog@npm:4.1.2"
@@ -5889,6 +5954,15 @@ fsevents@~2.3.2:
   dependencies:
     wrappy: 1
   checksum: cd0a88501333edd640d95f0d2700fbde6bff20b3d4d9bdc521bdd31af0656b5706570d6c6afe532045a20bb8dc0849f8332d6f2a416e0ba6d3d3b98806c7db68
+  languageName: node
+  linkType: hard
+
+"onetime@npm:^5.1.2":
+  version: 5.1.2
+  resolution: "onetime@npm:5.1.2"
+  dependencies:
+    mimic-fn: ^2.1.0
+  checksum: 2478859ef817fc5d4e9c2f9e5728512ddd1dbc9fb7829ad263765bb6d3b91ce699d6e2332eef6b7dff183c2f490bd3349f1666427eaba4469fba0ac38dfd0d34
   languageName: node
   linkType: hard
 
@@ -5992,7 +6066,7 @@ fsevents@~2.3.2:
   languageName: node
   linkType: hard
 
-"path-key@npm:^3.1.0":
+"path-key@npm:^3.0.0, path-key@npm:^3.1.0":
   version: 3.1.1
   resolution: "path-key@npm:3.1.1"
   checksum: 55cd7a9dd4b343412a8386a743f9c746ef196e57c823d90ca3ab917f90ab9f13dd0ded27252ba49dbdfcab2b091d998bc446f6220cd3cea65db407502a740020
@@ -7294,6 +7368,13 @@ resolve@^1.10.0:
   languageName: node
   linkType: hard
 
+"signal-exit@npm:^3.0.3":
+  version: 3.0.7
+  resolution: "signal-exit@npm:3.0.7"
+  checksum: a2f098f247adc367dffc27845853e9959b9e88b01cb301658cfe4194352d8d2bb32e18467c786a7fe15f1d44b233ea35633d076d5e737870b7139949d1ab6318
+  languageName: node
+  linkType: hard
+
 "simple-concat@npm:^1.0.0":
   version: 1.0.1
   resolution: "simple-concat@npm:1.0.1"
@@ -7616,6 +7697,13 @@ resolve@^1.10.0:
   version: 4.0.0
   resolution: "strip-bom@npm:4.0.0"
   checksum: 9dbcfbaf503c57c06af15fe2c8176fb1bf3af5ff65003851a102749f875a6dbe0ab3b30115eccf6e805e9d756830d3e40ec508b62b3f1ddf3761a20ebe29d3f3
+  languageName: node
+  linkType: hard
+
+"strip-final-newline@npm:^2.0.0":
+  version: 2.0.0
+  resolution: "strip-final-newline@npm:2.0.0"
+  checksum: 69412b5e25731e1938184b5d489c32e340605bb611d6140344abc3421b7f3c6f9984b21dff296dfcf056681b82caa3bb4cc996a965ce37bcfad663e92eae9c64
   languageName: node
   linkType: hard
 

@@ -3,7 +3,7 @@ import {FileData} from '@alinea/backend/data/FileData'
 import {Config} from '@alinea/core/Config'
 import {createId} from '@alinea/core/Id'
 import {outcome} from '@alinea/core/Outcome'
-import {Schema} from '@alinea/core/Schema'
+import {Workspace} from '@alinea/core/Workspace'
 import {BetterSqlite3Driver} from '@alinea/store/sqlite/drivers/BetterSqlite3Driver'
 import {SqlJsDriver} from '@alinea/store/sqlite/drivers/SqlJsDriver'
 import {SqliteStore} from '@alinea/store/sqlite/SqliteStore'
@@ -15,6 +15,7 @@ import {dirname} from 'dirname-filename-esm'
 import {build, BuildResult, Plugin, WatchMode} from 'esbuild'
 import fs from 'fs-extra'
 import {signed, unsigned} from 'leb128'
+import crypto from 'node:crypto'
 import path from 'node:path'
 
 const __dirname = dirname(import.meta)
@@ -47,7 +48,6 @@ const ignorePlugin: Plugin = {
     const commonExtensions = [
       'css',
       'html',
-      'json',
       'css',
       'scss',
       'less',
@@ -62,6 +62,41 @@ const ignorePlugin: Plugin = {
     build.onLoad({filter}, args => {
       return {contents: 'export default null'}
     })
+  }
+}
+
+type ServerPluginOptions = {
+  outDir: string
+}
+
+function serverPlugin({outDir}: ServerPluginOptions): Plugin {
+  return {
+    name: 'server',
+    setup(build) {
+      // Hook into any import that ends in .query.(js/ts)
+      // compile and place the file in the server directory
+      build.onResolve({filter: /\.query(\.js|\.ts)?$/}, async args => {
+        const location = crypto
+          .createHash('md5')
+          .update(args.resolveDir)
+          .digest('hex')
+          .slice(0, 7)
+        let filename = location + '.' + path.basename(args.path)
+        if (filename.endsWith('.ts')) filename = filename.slice(0, -3) + '.js'
+        if (!filename.endsWith('.js')) filename += '.js'
+        await build.esbuild.build({
+          platform: 'node',
+          bundle: true,
+          format: 'esm',
+          target: 'esnext',
+          treeShaking: true,
+          entryPoints: [path.join(args.resolveDir, args.path)],
+          outfile: path.join(outDir, '.server/dist', filename),
+          plugins: [externalPlugin, ignorePlugin]
+        })
+        return {external: true, path: `@alinea/content/.server/${filename}`}
+      })
+    }
   }
 }
 
@@ -105,42 +140,55 @@ function configType(location: string) {
   return `export * from ${JSON.stringify(file)}`
 }
 
-function schemaCollections(workspace: string, schema: Schema) {
-  const types = schema.types
-  const typeNames = Object.keys(types)
+function wrapNamespace(code: string, namespace: string | undefined) {
+  if (namespace) return `export namespace ${namespace} {\n${code}\n}`
+  return code
+}
+
+function schemaCollections(workspace: Workspace) {
+  const typeNames = workspace.schema.keys
+  const collections = workspace.typeNamespace
+    ? `export const ${workspace.typeNamespace} = {
+      AnyPage: schema.collection(),
+      ${typeNames
+        .map(type => `${type}: schema.type('${type}').collection()`)
+        .join(',\n')}
+    }`
+    : `
+    export const AnyPage = schema.collection()
+    ${typeNames
+      .map(type => `export const ${type} = schema.type('${type}').collection()`)
+      .join('\n')}
+  `
   return `
     import {config} from '../config.js'
-    export const workspace = config.workspaces['${workspace}']
+    export const workspace = config.workspaces['${workspace.name}']
     export const schema = workspace.schema
-    export const AnyPage = schema.entry
-    ${typeNames
-      .map(
-        type =>
-          `export const ${type} = schema.collection('${workspace}', '${type}')`
-      )
-      .join('\n')}
+    ${collections}
   `
     .replace(/  /g, '')
     .trim()
 }
 
-function schemaTypes(workspace: string, schema: Schema) {
-  const types = schema.types
-  const typeNames = Object.keys(types)
+function schemaTypes(workspace: Workspace) {
+  const typeNames = workspace.schema.keys
+  const collections = `export type AnyPage = EntryOf<Entry & typeof schema>
+  export const AnyPage: Collection<AnyPage>
+  export type Pages = AlineaPages<AnyPage>
+  ${typeNames
+    .map(
+      type =>
+        `export const ${type}: Collection<Extract<AnyPage, {type: '${type}'}>>
+        export type ${type} = DataOf<typeof ${type}>`
+    )
+    .join('\n')}`
   return `
     import {config} from '../config.js'
-    import {DataOf, EntryOf} from '@alinea/core'
+    import {DataOf, EntryOf, Entry} from '@alinea/core'
     import {Collection} from '@alinea/store'
-    export const schema = config.workspaces['${workspace}'].schema
-    export type AnyPage = EntryOf<typeof schema>
-    export const AnyPage: Collection<AnyPage>
-    ${typeNames
-      .map(
-        type =>
-          `export const ${type}: Collection<Extract<AnyPage, {type: '${type}'}>>
-          export type ${type} = DataOf<typeof ${type}>`
-      )
-      .join('\n')}
+    import type {Pages as AlineaPages} from '@alinea/backend'
+    export const schema = config.workspaces['${workspace.name}'].schema
+    ${wrapNamespace(collections, workspace.typeNamespace)}
   `
     .replace(/  /g, '')
     .trim()
@@ -172,6 +220,10 @@ export async function generate(options: GenerateOptions) {
       options.watch.onRebuild) ||
     undefined
 
+  await fs.copy(path.join(staticDir, 'server'), path.join(outDir, '.server'), {
+    overwrite: true
+  })
+
   await compileConfig()
   await copyStaticFiles()
   await generatePackage()
@@ -195,14 +247,13 @@ export async function generate(options: GenerateOptions) {
     )
     await fs.writeFile(
       path.join(outDir, 'config.d.ts'),
-      configType(
-        path
-          .relative(path.join(cwd, outDir), path.join(cwd, configLocation))
-          .split(path.sep)
-          .join('/')
-      )
+      configType(path.resolve(configLocation))
     )
-    await fs.writeFile(path.join(outDir, '.gitignore'), `*`)
+    await fs.writeFile(path.join(outDir, '.gitignore'), `*\n!.keep`)
+    await fs.writeFile(
+      path.join(outDir, '.keep'),
+      '# Contents of this folder are autogenerated by alinea'
+    )
   }
 
   async function compileConfig() {
@@ -215,7 +266,13 @@ export async function generate(options: GenerateOptions) {
         entryPoints: {config: configLocation},
         bundle: true,
         platform: 'node',
-        plugins: [EvalPlugin, externalPlugin, ignorePlugin, ReactPlugin],
+        plugins: [
+          serverPlugin({outDir}),
+          EvalPlugin,
+          externalPlugin,
+          ignorePlugin,
+          ReactPlugin
+        ],
         watch: options.watch && {
           async onRebuild(error, result) {
             if (!error) await generatePackage()
@@ -249,36 +306,37 @@ export async function generate(options: GenerateOptions) {
       await fs.mkdir(path.join(outDir, key), {recursive: true})
       await fs.writeFile(
         path.join(outDir, key, 'schema.js'),
-        schemaCollections(key, workspace.schema)
+        schemaCollections(workspace)
       )
       await fs.writeFile(
         path.join(outDir, key, 'schema.d.ts'),
-        schemaTypes(key, workspace.schema)
+        schemaTypes(workspace)
       )
       await fs.copy(path.join(staticDir, 'workspace'), path.join(outDir, key), {
         overwrite: true
       })
     }
+    const pkg = JSON.parse(
+      await fs.readFile(path.join(staticDir, 'package.json'), 'utf8')
+    )
     await fs.writeFile(
       path.join(outDir, 'package.json'),
       JSON.stringify(
         {
-          type: 'module',
-          sideEffects: false,
+          ...pkg,
           exports: {
-            '.': {
-              browser: './client.js',
-              default: './index.js'
-            },
+            ...pkg.exports,
             ...Object.fromEntries(
-              Object.keys(config.workspaces)
-                .map(key => [`./${key}`, `./${key}/index.js`])
-                .concat(
-                  Object.keys(config.workspaces).map(key => [
-                    `./${key}/pages`,
-                    `./${key}/pages.js`
-                  ])
-                )
+              Object.keys(config.workspaces).flatMap(key => [
+                [
+                  `./${key}`,
+                  {
+                    browser: `./${key}/schema.js`,
+                    default: `./${key}/index.js`
+                  }
+                ],
+                [`./${key}/*`, `./${key}/*`]
+              ])
             )
           }
         },
@@ -325,14 +383,14 @@ export async function generate(options: GenerateOptions) {
         const tmpFile = path.join(outDir, '_tmp', createId() + '.js')
         await failOnBuildError(
           build({
+            platform: 'node',
+            bundle: true,
             format: 'esm',
             target: 'esnext',
             treeShaking: true,
             outfile: tmpFile,
             entryPoints: [sourceLocation],
             absWorkingDir: outDir,
-            bundle: true,
-            platform: 'node',
             plugins: [externalPlugin, ignorePlugin, ReactPlugin]
           })
         )
@@ -384,6 +442,6 @@ export async function generate(options: GenerateOptions) {
       )
       await fs.writeFile(path.join(outDir, 'store.wasm'), embedInWasm(data))
     }
-    if (false) await fs.writeFile(path.join(outDir, 'store.db'), data)
+    if (true) await fs.writeFile(path.join(outDir, 'store.db'), data)
   }
 }

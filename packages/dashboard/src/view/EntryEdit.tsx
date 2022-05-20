@@ -1,4 +1,4 @@
-import {createId, docFromEntry, Entry, Outcome, slugify} from '@alinea/core'
+import {createId, docFromEntry, EntryStatus, slugify} from '@alinea/core'
 import {InputForm, InputState} from '@alinea/editor'
 import {select} from '@alinea/input.select'
 import {SelectInput} from '@alinea/input.select/view'
@@ -12,10 +12,12 @@ import {
   IconButton,
   Loader,
   TextLabel,
-  Typo
+  Typo,
+  useObservable
 } from '@alinea/ui'
 import {IcRoundArrowBack} from '@alinea/ui/icons/IcRoundArrowBack'
 import {Link} from '@alinea/ui/Link'
+import {Main} from '@alinea/ui/Main'
 import {Modal} from '@alinea/ui/Modal'
 import {FormEvent, Suspense, useLayoutEffect, useState} from 'react'
 import {useQuery, useQueryClient} from 'react-query'
@@ -55,16 +57,7 @@ function EntryEditDraft({initialMode, draft, isLoading}: EntryEditDraftProps) {
   const isTranslating = !isLoading && locale !== draft.i18n?.locale
   const [isCreating, setIsCreating] = useState(false)
   const [mode, setMode] = useState<EditMode>(initialMode)
-  const {data: original} = useQuery(
-    ['original', draft.id],
-    () => {
-      return hub
-        .query(Entry.where(Entry.id.is(draft.id)), {source: true})
-        .then(Outcome.unpack)
-        .then(res => res[0])
-    },
-    {suspense: true}
-  )
+  const status = useObservable(draft.status)
   function handleTranslation() {
     if (!locale || isCreating) return
     setIsCreating(true)
@@ -93,8 +86,8 @@ function EntryEditDraft({initialMode, draft, isLoading}: EntryEditDraftProps) {
     if (translation) navigate(nav.entry(translation))
   }, [draft, isTranslating, locale])
   return (
-    <HStack style={{height: '100%'}}>
-      <div className={styles.root()}>
+    <>
+      <Main className={styles.root()}>
         <EntryHeader mode={mode} setMode={setMode} />
         <div className={styles.root.draft()}>
           <EntryTitle
@@ -106,15 +99,17 @@ function EntryEditDraft({initialMode, draft, isLoading}: EntryEditDraftProps) {
               })
             }
           />
-          {mode === EditMode.Diff ? (
+          {mode === EditMode.Diff && status !== EntryStatus.Published ? (
             <>
-              {original && (
-                <EntryDiff entryA={original} entryB={draft.getEntry()} />
+              {draft.detail.original && (
+                <EntryDiff
+                  entryA={draft.detail.original}
+                  entryB={draft.getEntry()}
+                />
               )}
             </>
           ) : (
             <>
-              {' '}
               {isTranslating ? (
                 <Button onClick={() => handleTranslation()}>
                   Translate from {draft.i18n?.locale.toUpperCase()}
@@ -131,9 +126,9 @@ function EntryEditDraft({initialMode, draft, isLoading}: EntryEditDraftProps) {
             </>
           )}
         </div>
-      </div>
+      </Main>
       {preview && <EntryPreview preview={preview} draft={draft} />}
-    </HStack>
+    </>
   )
 }
 
@@ -173,7 +168,7 @@ export function NewEntry({parentId}: NewEntryProps) {
     const type = schema.type(selectedType)!
     const path = slugify(title)
     const entry = {
-      ...type.create(selectedType),
+      ...type.create(),
       path,
       workspace,
       root: root.name,

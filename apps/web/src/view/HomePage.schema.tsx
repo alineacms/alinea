@@ -18,14 +18,13 @@ export const HomePageSchema = type(
       headline: text('Headline', {multiline: true}),
       byline: text('Byline', {multiline: true}),
       action: link('Action', {
-        max: 1,
         fields: type('Fields', {
           label: text('Button label')
         })
       })
     }).configure({icon: IcRoundInsertDriveFile}),
     tab('Top navigation', {
-      links: link('Links', {
+      links: link.multiple('Links', {
         type: ['entry', 'external'],
         fields: type('Fields', {
           title: text('Title')

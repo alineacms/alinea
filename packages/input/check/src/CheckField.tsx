@@ -1,4 +1,4 @@
-import {Field, Label, Value} from '@alinea/core'
+import {Field, Label, Shape} from '@alinea/core'
 
 /** Optional settings to configure a text field */
 export type CheckOptions = {
@@ -28,7 +28,7 @@ export function createCheck(
   options: CheckOptions = {}
 ): CheckField {
   return {
-    type: Value.Scalar(label),
+    shape: Shape.Scalar(label),
     label,
     options
   }

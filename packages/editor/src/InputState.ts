@@ -1,7 +1,7 @@
 import {RichTextMutator} from '@alinea/core'
+import {ListMutator} from '@alinea/core/shape/ListShape'
+import {RecordMutator} from '@alinea/core/shape/RecordShape'
 import {TextDoc} from '@alinea/core/TextDoc'
-import {ListMutator} from '@alinea/core/value/ListValue'
-import {RecordMutator} from '@alinea/core/value/RecordValue'
 
 export interface InputState<T = any> {
   child(field: string): InputState<any>

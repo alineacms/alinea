@@ -2,8 +2,6 @@
   display: flex;
   height: 100%;
   flex-shrink: 0;
-  flex: 1 0 0;
-  //box-shadow: 0 0 200px black;
 
   &-menu {
     position: relative;
@@ -13,8 +11,6 @@
     flex-shrink: 0;
     height: 100%;
     border-right: 1px solid var(--alinea-outline);
-    //box-shadow: 0 0 120px black;
-    padding-top: 3px;
 
     &-item {
       position: relative;
@@ -35,17 +31,6 @@
 
       &.is-selected {
         color: var(--alinea-foreground);
-        // background: var(--alinea-selected);
-
-        /*&:before {
-          position: absolute;
-          content: '';
-          width: 1.5px;
-          height: 100%;
-          background: var(--alinea-foreground);
-          right: 0;
-          top: 0;
-        }*/
       }
     }
   }

@@ -1,9 +1,8 @@
-import {Store} from '@alinea/store/Store'
+import type {Pages} from '@alinea/backend'
+import {Expr} from '@alinea/store'
 import {getHighlighter} from 'shiki'
 import tsxLanguage from 'shiki/languages/tsx.tmLanguage.json'
-import {Pages} from '../../../.alinea/web'
 import {theme} from '../types/ShikiTheme'
-import {CodeBlockSchema} from './CodeBlock.schema'
 
 const highlighter = getHighlighter({
   theme: {
@@ -16,19 +15,10 @@ const highlighter = getHighlighter({
   langs: [{id: 'tsx', scopeName: 'source.tsx', grammar: tsxLanguage as any}]
 })
 
-export async function codeBlockQuery(pages: Pages, block: CodeBlockSchema) {
-  try {
-    return {
-      ...block,
-      code: block.code
-        ? (await highlighter).codeToHtml(block.code, {
-            lang: block.language || 'tsx'
-          })
-        : ''
-    }
-  } catch (e) {
-    return block
-  }
+export function transformCode(field: Expr<string>, pages: Pages<any>) {
+  return pages.process(field, async code => {
+    if (!code) return ''
+    const {codeToHtml} = await highlighter
+    return codeToHtml(code, {lang: 'tsx'})
+  })
 }
-
-export type CodeBlockProps = Store.TypeOf<ReturnType<typeof codeBlockQuery>>

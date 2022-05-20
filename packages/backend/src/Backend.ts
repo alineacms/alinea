@@ -69,7 +69,10 @@ export class Backend<T extends Workspaces = Workspaces> implements Hub<T> {
       }
     }
     return outcome(async () => {
-      const store = await this.preview.getStore()
+      const [preview, source] = await Promise.all([
+        this.preview.getStore(),
+        this.createStore()
+      ])
       const Parent = Entry.as('Parent')
       const Translation = Entry.as('Translation')
       const minimal = (entry: Cursor<Entry>) => ({
@@ -82,7 +85,7 @@ export class Backend<T extends Workspaces = Workspaces> implements Hub<T> {
         parent: entry.parent,
         i18n: entry.i18n
       })
-      const data = store.first(
+      const data = preview.first(
         Entry.where(Entry.id.is(id)).select({
           entry: Entry.fields,
           translations: Translation.where(t =>
@@ -93,9 +96,11 @@ export class Backend<T extends Workspaces = Workspaces> implements Hub<T> {
             .first()
         })
       )
+      const original = source.first(Entry.where(Entry.id.is(id)))
       return (
         data && {
           ...data,
+          original,
           draft: draft && encode(draft),
           previewToken: previews.sign({id})
         }
@@ -225,7 +230,6 @@ export class Backend<T extends Workspaces = Workspaces> implements Hub<T> {
   loadPages<K extends keyof T>(workspaceKey: K, previewToken?: string) {
     const workspace = this.config.workspaces[workspaceKey]
     return new Pages<T[K] extends WorkspaceConfig<infer W> ? W : any>(
-      this.config,
       workspace,
       previewToken
         ? async () => {

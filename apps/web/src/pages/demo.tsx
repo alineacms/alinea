@@ -4,14 +4,13 @@ import dynamic from 'next/dynamic'
 import {Suspense, useState} from 'react'
 
 const DemoPage = dynamic(() => import('../view/Demo'), {
-  ssr: false,
-  suspense: true
+  ssr: false
 })
 
 export default function Demo() {
   const [reminderOpen, setReminderOpen] = useState(true)
   return (
-    <Viewport color="red">
+    <Viewport attachToBody color="#5661E5">
       <Modal open={reminderOpen} onClose={() => setReminderOpen(false)}>
         <Typo.H1>Demo</Typo.H1>
         <Typo.P>

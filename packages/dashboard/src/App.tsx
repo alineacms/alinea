@@ -225,20 +225,20 @@ function EntryRoute({id}: EntryRouteProps) {
           redirectToRoot={!id}
         />
       </Pane>
-      <div style={{width: '100%', height: '100%'}}>
-        {search === '?new' && (
-          <Suspense fallback={<Loader absolute />}>
-            <NewEntry parentId={id} />
-          </Suspense>
-        )}
-        {draft && (
+      {search === '?new' && (
+        <Suspense fallback={<Loader absolute />}>
+          <NewEntry parentId={id} />
+        </Suspense>
+      )}
+      {draft && (
+        <Suspense fallback={<Loader absolute />}>
           <View
             initialMode={EditMode.Editing}
             draft={draft}
             isLoading={isLoading}
           />
-        )}
-      </div>
+        </Suspense>
+      )}
     </CurrentDraftProvider>
   )
 }

@@ -1,10 +1,10 @@
 import {fromModule, Typo} from '@alinea/ui'
 import css from './CodeBlock.module.scss'
-import {CodeBlockProps} from './CodeBlock.query'
+import {CodeBlockSchema} from './CodeBlock.schema'
 
 const styles = fromModule(css)
 
-export function CodeBlock({code, compact, fileName}: CodeBlockProps) {
+export function CodeBlock({code, compact, fileName}: CodeBlockSchema) {
   return (
     <div className={styles.root({compact})}>
       {fileName && <div className={styles.root.fileName()}>{fileName}</div>}

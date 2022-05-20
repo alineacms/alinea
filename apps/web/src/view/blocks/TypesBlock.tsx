@@ -1,9 +1,9 @@
 import {px, Typo} from '@alinea/ui'
 import {Declaration} from '../types/Declaration'
 import {TypeRow} from '../types/TypeRow'
-import {TypesBlockProps} from './TypesBlock.query'
+import {TypesBlockSchema} from './TypesBlock.schema'
 
-export function TypesBlock({members}: TypesBlockProps) {
+export function TypesBlock({members}: TypesBlockSchema) {
   return (
     <div style={{paddingTop: px(20)}}>
       <Typo.H3 flat>Types</Typo.H3>
