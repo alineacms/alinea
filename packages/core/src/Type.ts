@@ -21,7 +21,7 @@ export namespace Type {
 }
 
 /** Optional settings to configure a Type */
-export type TypeOptions<T, Q = T> = {
+export type TypeOptions<T, Q> = {
   /** Entries can be created as children of this entry */
   isContainer?: boolean
   /** Entries do not show up in the sidebar content tree */
@@ -52,7 +52,7 @@ export class TypeConfig<T = any> {
   constructor(
     public label: Label,
     public sections: Array<Section>,
-    public options: TypeOptions<T>
+    public options: TypeOptions<any, T>
   ) {
     this.shape = Shape.Record(
       label,
@@ -111,8 +111,8 @@ export class TypeConfig<T = any> {
     return cursor.fields.with(computed).toExpr()
   }
 
-  configure<Q>(options: TypeOptions<T, Q>): TypeConfig<Q> {
-    return new TypeConfig(this.label, this.sections, options as any)
+  configure<Q = T>(options: TypeOptions<T, Q>): TypeConfig<Q> {
+    return new TypeConfig(this.label, this.sections, options)
   }
 
   toType(schema: Schema, name: string): Type<T> {
