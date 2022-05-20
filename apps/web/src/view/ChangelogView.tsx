@@ -17,9 +17,7 @@ export default function ChangelogView(props: ChangelogViewProps) {
       .filter(
         el =>
           !el.classList.value.startsWith('Header') &&
-          !el.href.startsWith(
-            process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000/'
-          )
+          !el.href.startsWith(window.location.origin)
       )
       .map(el => el.setAttribute('target', '_blank'))
   }, [])
