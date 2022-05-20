@@ -15,6 +15,8 @@ export type SelectOptions<T> = {
   optional?: boolean
   /** Display a minimal version */
   inline?: boolean
+  /** Choose a custom placeholder (eg. 'Select an option')  */
+  placeholder?: Label
   /** A default value */
   initialValue?: T
 }

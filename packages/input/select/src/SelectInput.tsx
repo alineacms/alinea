@@ -22,7 +22,7 @@ export function SelectInput<T extends string>({
   state,
   field
 }: SelectInputProps<T>) {
-  const {width, optional, help, initialValue} = field.options
+  const {width, optional, help, placeholder, initialValue} = field.options
   const [value = initialValue, setValue] = useInput(state)
   const items = field.items as Record<string, Label>
   const box = useRef<HTMLDivElement>(null)
@@ -37,60 +37,61 @@ export function SelectInput<T extends string>({
     })
   ]
   return (
-    <div>
-      <InputLabel
-        width={width}
-        label={field.label}
-        help={help}
-        optional={optional}
-        icon={IcRoundArrowDropDownCircle}
-      >
-        <div className={styles.root()}>
-          <Listbox value={value} onChange={setValue}>
-            {({open}) => (
-              <Float
-                placement="bottom-start"
-                flip
-                offset={4}
-                transform={false}
-                middleware={sameSize}
-              >
-                <Listbox.Button className={styles.root.input({open})}>
-                  <span className={styles.root.input.label()}>
-                    <TextLabel label={value ? items[value] : field.label} />
-                  </span>
-                  <Icon
-                    icon={IcRoundUnfoldMore}
-                    className={styles.root.input.icon()}
+    <InputLabel
+      width={width}
+      label={field.label}
+      help={help}
+      optional={optional}
+      icon={IcRoundArrowDropDownCircle}
+    >
+      <div className={styles.root()}>
+        <Listbox value={value} onChange={setValue}>
+          {({open}) => (
+            <Float
+              placement="bottom-start"
+              flip
+              offset={4}
+              transform={false}
+              middleware={sameSize}
+            >
+              <Listbox.Button className={styles.root.input({open})}>
+                <span className={styles.root.input.label()}>
+                  <TextLabel
+                    label={value ? items[value] : placeholder || field.label}
                   />
-                </Listbox.Button>
-                <Listbox.Options className={styles.root.dropdown()}>
-                  <div ref={box} className={styles.root.dropdown.inner()}>
-                    {Object.entries(items).map(([key, label]) => (
-                      <Listbox.Option key={key} value={key}>
-                        {({active, selected}) => (
-                          <HStack
-                            center
-                            gap={4}
-                            className={styles.root.dropdown.option({active})}
-                          >
-                            <div className={styles.root.dropdown.option.icon()}>
-                              {selected && (
-                                <Icon size={18} icon={IcRoundCheck} />
-                              )}
-                            </div>
-                            <TextLabel label={label} />
-                          </HStack>
-                        )}
-                      </Listbox.Option>
-                    ))}
-                  </div>
-                </Listbox.Options>
-              </Float>
-            )}
-          </Listbox>
-        </div>
-      </InputLabel>
-    </div>
+                </span>
+                <Icon
+                  icon={IcRoundUnfoldMore}
+                  className={styles.root.input.icon()}
+                />
+              </Listbox.Button>
+              <Listbox.Options className={styles.root.dropdown()}>
+                <div ref={box} className={styles.root.dropdown.inner()}>
+                  {Object.entries(items).map(([key, label]) => (
+                    <Listbox.Option key={key} value={key}>
+                      {({active, selected}) => (
+                        <HStack
+                          center
+                          gap={4}
+                          className={styles.root.dropdown.option({
+                            active,
+                            selected
+                          })}
+                        >
+                          <div className={styles.root.dropdown.option.icon()}>
+                            {selected && <Icon size={18} icon={IcRoundCheck} />}
+                          </div>
+                          <TextLabel label={label} />
+                        </HStack>
+                      )}
+                    </Listbox.Option>
+                  ))}
+                </div>
+              </Listbox.Options>
+            </Float>
+          )}
+        </Listbox>
+      </div>
+    </InputLabel>
   )
 }
