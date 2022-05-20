@@ -10,20 +10,3 @@
     flex-grow: 1;
   }
 }
-
-.new {
-  width: 600px;
-
-  &-header {
-    padding-bottom: 20px;
-  }
-
-  &-footer {
-    margin-top: 20px;
-    text-align: right;
-
-    &-link {
-      margin-right: 20px;
-    }
-  }
-}

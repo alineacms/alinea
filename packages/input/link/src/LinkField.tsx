@@ -44,8 +44,12 @@ export type LinkOptions<T, Q> = {
   optional?: boolean
   /** Display a minimal version */
   inline?: boolean
+  /** A default value */
+  initialValue?: Array<Reference & T>
   /** The type of links, this will configure the options of the link picker */
   type?: LinkType | Array<LinkType>
+  /** Show only entries matching this condition */
+  condition?: Expr<boolean>
   /** Allow multiple links */
   multiple?: boolean
   /** Maximum amount of links that can be selected */
@@ -105,6 +109,7 @@ export function createLink<T, Q>(
     }),
     label,
     options,
+    initialValue: options.initialValue,
     transform(field, pages): Expr<Q> {
       const row = field.each()
       const Link = Entry.as<Media.File>('Link')

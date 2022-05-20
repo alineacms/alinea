@@ -1,6 +1,13 @@
 import {Reference} from '@alinea/core/Reference'
 import {Expr} from '@alinea/store/Expr'
-import {createContext, PropsWithChildren, useContext, useState} from 'react'
+import {
+  ComponentType,
+  createContext,
+  PropsWithChildren,
+  useContext,
+  useEffect,
+  useState
+} from 'react'
 import {ReferencePicker} from '../view/ReferencePicker'
 
 export type ReferencePickerFunc = (
@@ -17,6 +24,8 @@ export type ReferencePickerOptions = {
 
 type ReferencePickerContext = {
   pickLink: ReferencePickerFunc
+  isOpen: boolean
+  PickerSlot: ComponentType
 }
 
 const context = createContext<ReferencePickerContext | undefined>(undefined)
@@ -32,6 +41,21 @@ export function ReferencePickerProvider({children}: PropsWithChildren<{}>) {
   const [options, setOptions] = useState<ReferencePickerOptions | undefined>(
     undefined
   )
+  const [hasSlot, setHasSlot] = useState(false)
+  const modal = options && (
+    <ReferencePicker
+      options={options}
+      onConfirm={trigger ? trigger[0] : () => {}}
+      onCancel={trigger ? trigger[1] : () => {}}
+    />
+  )
+  function PickerSlot() {
+    useEffect(() => {
+      setHasSlot(true)
+      return () => setHasSlot(false)
+    })
+    return <>{modal}</>
+  }
   return (
     <context.Provider
       value={{
@@ -52,16 +76,12 @@ export function ReferencePickerProvider({children}: PropsWithChildren<{}>) {
             .catch(() => {
               return undefined
             })
-        }
+        },
+        isOpen: Boolean(options),
+        PickerSlot
       }}
     >
-      {options && (
-        <ReferencePicker
-          options={options}
-          onConfirm={trigger ? trigger[0] : () => {}}
-          onCancel={trigger ? trigger[1] : () => {}}
-        />
-      )}
+      {!hasSlot && modal}
       {children}
     </context.Provider>
   )
