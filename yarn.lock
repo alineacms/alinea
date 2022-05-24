@@ -174,7 +174,6 @@ __metadata:
     yjs: ^13.5.34
   peerDependencies:
     react: "*"
-    react-dom: "*"
   languageName: unknown
   linkType: soft
 

@@ -1,16 +1,19 @@
 import {DevServer, Server} from '@alinea/backend'
 import {EvalPlugin} from '@esbx/eval'
 import {ReactPlugin} from '@esbx/react'
+import semver from 'compare-versions'
 import compression from 'compression'
 import {dirname} from 'dirname-filename-esm'
 import esbuild, {BuildOptions} from 'esbuild'
 import express from 'express'
 import http, {ServerResponse} from 'node:http'
+import {createRequire} from 'node:module'
 import path from 'node:path'
 import serveHandler from 'serve-handler'
 import {generate} from './Generate'
 
 const __dirname = dirname(import.meta)
+const require = createRequire(import.meta.url)
 
 export type ServeOptions = {
   cwd?: string
@@ -33,6 +36,9 @@ export async function serve(options: ServeOptions) {
   const storeLocation = path.join(outDir, 'store.js')
   const genConfigFile = path.join(outDir, 'config.js')
   const clients: Array<ServerResponse> = []
+  const {version} = require('react/package.json')
+  const isReact18 = semver.compare(version, '18.0.0', '>=')
+  const react = isReact18 ? 'react18' : 'react'
 
   function reload(type: 'refetch' | 'refresh' | 'reload') {
     for (const res of clients) res.write(`data: ${type}\n\n`)
@@ -97,16 +103,17 @@ export async function serve(options: ServeOptions) {
       format: 'esm',
       target: 'esnext',
       treeShaking: true,
-      minify: true,
+      // minify: true,
       splitting: true,
       sourcemap: true,
-      outdir: path.join(staticDir, 'serve'),
+      outdir: path.join(staticDir, 'dev'),
       bundle: true,
       absWorkingDir: cwd,
       entryPoints: {
         config: '@alinea/content/config.js',
         entry
       },
+      inject: [path.join(staticDir, `dev/render-${react}.js`)],
       platform: 'browser',
       ...buildOptions,
       plugins: [EvalPlugin, ReactPlugin, ...(buildOptions?.plugins || [])],
@@ -123,7 +130,7 @@ export async function serve(options: ServeOptions) {
 
   try {
     const staticServer = await esbuild.serve(
-      {servedir: path.join(staticDir, 'serve')},
+      {servedir: path.join(staticDir, 'dev')},
       browserBuild()
     )
     app.use((req, res) => {
@@ -144,10 +151,10 @@ export async function serve(options: ServeOptions) {
     if (e.message.includes('not supported')) {
       await esbuild.build({...browserBuild(), watch: true})
       app.use((req, res) =>
-        serveHandler(req, res, {public: path.join(staticDir, 'serve')})
+        serveHandler(req, res, {public: path.join(staticDir, 'dev')})
       )
     } else {
-      throw e
+      process.exit(1)
     }
   }
 
