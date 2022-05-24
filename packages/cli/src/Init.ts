@@ -2,6 +2,7 @@ import {createId, outcome} from '@alinea/core'
 import {detect} from 'detect-package-manager'
 import {dirname} from 'dirname-filename-esm'
 import fs from 'fs-extra'
+import {execSync} from 'node:child_process'
 import path from 'node:path'
 import {generate} from './Generate'
 
@@ -91,7 +92,10 @@ export async function init(options: InitOptions) {
         symlinkType
       )
     )
-    // execSync(`${pm} install`, {cwd, stdio: 'inherit'})
+    const installSucceeded = await outcome.succeeds(
+      fs.stat(path.join(cwd, 'node_modules/@alinea/content'))
+    )
+    if (!installSucceeded) execSync(`${pm} install`, {cwd, stdio: 'inherit'})
   }
   await generate({cwd: path.resolve(cwd), quiet})
   const runner = pm === 'npm' ? 'npx' : pm
