@@ -7,6 +7,7 @@ import esbuild, {BuildOptions} from 'esbuild'
 import express from 'express'
 import http, {ServerResponse} from 'node:http'
 import path from 'node:path'
+import serveHandler from 'serve-handler'
 import {generate} from './Generate'
 
 const __dirname = dirname(import.meta)
@@ -120,10 +121,35 @@ export async function serve(options: ServeOptions) {
     }
   }
 
-  const staticServer = await esbuild.serve(
-    {servedir: path.join(staticDir, 'serve')},
-    browserBuild()
-  )
+  try {
+    const staticServer = await esbuild.serve(
+      {servedir: path.join(staticDir, 'serve')},
+      browserBuild()
+    )
+    app.use((req, res) => {
+      const options = {
+        hostname: staticServer.host,
+        port: staticServer.port,
+        path: req.url,
+        method: req.method,
+        headers: req.headers
+      }
+      const proxyReq = http.request(options, proxyRes => {
+        res.writeHead(proxyRes.statusCode!, proxyRes.headers)
+        proxyRes.pipe(res, {end: true})
+      })
+      req.pipe(proxyReq, {end: true})
+    })
+  } catch (e: any) {
+    if (e.message.includes('not supported')) {
+      await esbuild.build({...browserBuild(), watch: true})
+      app.use((req, res) =>
+        serveHandler(req, res, {public: path.join(staticDir, 'serve')})
+      )
+    } else {
+      throw e
+    }
+  }
 
   if (dev) {
     await esbuild.build({
@@ -137,21 +163,6 @@ export async function serve(options: ServeOptions) {
       }
     })
   }
-
-  app.use((req, res) => {
-    const options = {
-      hostname: staticServer.host,
-      port: staticServer.port,
-      path: req.url,
-      method: req.method,
-      headers: req.headers
-    }
-    const proxyReq = http.request(options, proxyRes => {
-      res.writeHead(proxyRes.statusCode!, proxyRes.headers)
-      proxyRes.pipe(res, {end: true})
-    })
-    req.pipe(proxyReq, {end: true})
-  })
   app.listen(port)
   console.log(`> Alinea dashboard available on http://localhost:${port}`)
 
