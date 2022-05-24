@@ -10,5 +10,10 @@ const dashboard = () =>
 const Dashboard = dynamic(dashboard, {ssr: false})
 
 export default function Admin() {
-  return <Dashboard config={config} client={client} auth={PasswordLessLogin} />
+  return (
+    <>
+      <style>{`#__next {height: 100%}`}</style>
+      <Dashboard config={config} client={client} auth={PasswordLessLogin} />
+    </>
+  )
 }
