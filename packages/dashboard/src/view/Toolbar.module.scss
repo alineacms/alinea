@@ -9,6 +9,12 @@
   background: var(--alinea-background);
   border-bottom: 1px solid var(--alinea-outline);
 
+  &-menu {
+    display: flex;
+    justify-content: center;
+    width: 44px - 12px;
+  }
+
   &-portal {
     flex-grow: 1;
     height: 100%;
