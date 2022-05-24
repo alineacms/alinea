@@ -20,7 +20,7 @@ export class Config<T extends Workspaces = Workspaces> {
   }
 
   /** Get the first workspace */
-  get defaultWorkspace(): Workspace {
+  get firstWorkspace(): Workspace {
     const key = Object.keys(this.workspaces)[0]
     return this.workspaces[key]
   }

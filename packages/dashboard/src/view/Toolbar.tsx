@@ -22,6 +22,7 @@ import {HStack} from '@alinea/ui/Stack'
 import {contrastColor} from '@alinea/ui/util/ContrastColor'
 import {createSlots} from '@alinea/ui/util/Slots'
 import {Switch} from '@headlessui/react'
+import {parseToHsla} from 'color2k'
 import {useState} from 'react'
 import {useNavigate} from 'react-router'
 import {useDashboard} from '../hook/UseDashboard'
@@ -32,10 +33,15 @@ import css from './Toolbar.module.scss'
 
 const styles = fromModule(css)
 
+type ToolbarProps = {
+  color: string
+}
+
 export namespace Toolbar {
   export const {Provider, Portal, Slot} = createSlots()
 
-  export function Root() {
+  export function Root({color}: ToolbarProps) {
+    const accentColor = color!
     const session = useSession()
     const {config} = useDashboard()
     const nav = useNav()
@@ -50,9 +56,24 @@ export namespace Toolbar {
     const [workspace = preferences?.workspace, setWorkspace] = useState<
       string | undefined
     >()
+    const [language = preferences?.language, setLanguage] = useState<
+      string | undefined
+    >()
     const checked = preferences?.scheme === 'dark'
+    const [hue, saturation, lightness] = parseToHsla(accentColor)
+    const style: any = {
+      '--alinea-hue': hue,
+      '--alinea-saturation': `${saturation * 100}%`,
+      '--alinea-lightness': `${lightness * 100}%`
+    }
+    const className = styles.root()
+    const toolbarProps = {className, style}
     return (
-      <HStack center className={styles.root()}>
+      <HStack
+        {...toolbarProps}
+        center
+        className={styles.root.mergeProps(toolbarProps)()}
+      >
         <HStack gap={16}>
           <DropdownMenu.Root>
             <DropdownMenu.Trigger>
@@ -118,7 +139,7 @@ export namespace Toolbar {
 
               <PopoverMenu.Items right>
                 <VStack>
-                  <HStack center gap={8}>
+                  <HStack center gap={16}>
                     <Icon icon={IcSharpBrightnessMedium} size={20} />
                     <Switch
                       checked={checked}
@@ -134,31 +155,40 @@ export namespace Toolbar {
                       />
                     </Switch>
                   </HStack>
-                  <HStack center gap={8}>
+                  <HStack center gap={16}>
                     <Icon icon={IcRoundTextFields} size={20} />
                     <input
                       className={styles.root.range()}
                       type="range"
                       min={16}
                       max={41}
-                      step={5}
                       value={preferences.size || 16}
                       onChange={e =>
                         updateFontSize(Number(e.currentTarget.value))
                       }
                     ></input>
                   </HStack>
-                  {/* <SelectInput
-                    state={new InputState.StatePair(workspace, setWorkspace)}
+                  <SelectInput
+                    state={
+                      new InputState.StatePair(workspace || '', setWorkspace)
+                    }
                     field={select(
                       'Default workspace',
-                      Object.entries(config.workspaces).map(
-                        ([key, workspace]) => {
-                          // const root = Object.values(workspace.roots)[0]
-                          return key
-                        }
+                      Object.fromEntries(
+                        Object.entries(config.workspaces).map(
+                          ([key, workspace]) => {
+                            return [key, workspace.label || key]
+                          }
+                        )
+                      )
                     )}
-                  /> */}
+                  />
+                  <SelectInput
+                    state={
+                      new InputState.StatePair(language || '', setLanguage)
+                    }
+                    field={select('Default language', {en: 'EN'})}
+                  />
                   <DropdownMenu.Root>
                     <DropdownMenu.Item onSelect={session.end}>
                       Logout
@@ -167,93 +197,6 @@ export namespace Toolbar {
                 </VStack>
               </PopoverMenu.Items>
             </PopoverMenu.Root>
-            {/* <DropdownMenu.Root>
-              <DropdownMenu.Trigger>
-                <HStack center gap={4}>
-                  <Avatar user={session.user} />
-                  <IcRoundKeyboardArrowDown />
-                </HStack>
-              </DropdownMenu.Trigger>
-
-              <DropdownMenu.Content>
-                <DropdownMenu.Item onSelect={toggleColorScheme}>
-                  <IcSharpBrightnessMedium />
-                </DropdownMenu.Item>
-
-                <DropdownMenu.Root>
-                  <DropdownMenu.TriggerItem>
-                    Default workspace
-                    <IcRoundKeyboardArrowRight />
-                  </DropdownMenu.TriggerItem>
-                  <DropdownMenu.Content>
-                    {Object.entries(config.workspaces).map(
-                      ([key, workspace]) => {
-                        const root = Object.values(workspace.roots)[0]
-                        return (
-                          <DropdownMenu.Item
-                            key={key}
-                            onSelect={() => {
-                              updateWorkspacePreference(key)
-                              // Keep navigation?
-                              navigate(
-                                nav.entry({
-                                  workspace: key,
-                                  root: root.name,
-                                  locale: root.defaultLocale
-                                })
-                              )
-                            }}
-                          >
-                            <HStack center gap={16}>
-                              <LogoShape
-                                foreground={contrastColor(workspace.color)}
-                                background={workspace.color}
-                              >
-                                <RiFlashlightFill />
-                              </LogoShape>
-                              <div>
-                                <TextLabel label={workspace.label} />
-                              </div>
-                              {key === preferences.workspace && (
-                                <IcRoundCheck />
-                              )}
-                            </HStack>
-                          </DropdownMenu.Item>
-                        )
-                      }
-                    )}
-                  </DropdownMenu.Content>
-                </DropdownMenu.Root>
-
-                <DropdownMenu.Root>
-                  <DropdownMenu.TriggerItem>
-                    <IcRoundTextFields />
-                    <IcRoundKeyboardArrowRight />
-                  </DropdownMenu.TriggerItem>
-                  <DropdownMenu.Content>
-                    <DropdownMenu.Item onSelect={() => updateFontSize('small')}>
-                      Small
-                    </DropdownMenu.Item>
-                    <DropdownMenu.Item
-                      style={{fontSize: '15px'}}
-                      onSelect={() => updateFontSize('medium')}
-                    >
-                      Medium
-                    </DropdownMenu.Item>
-                    <DropdownMenu.Item
-                      style={{fontSize: '18px'}}
-                      onSelect={() => updateFontSize('large')}
-                    >
-                      Large
-                    </DropdownMenu.Item>
-                  </DropdownMenu.Content>
-                </DropdownMenu.Root>
-
-                <DropdownMenu.Item onSelect={session.end}>
-                  Logout
-                </DropdownMenu.Item>
-              </DropdownMenu.Items>
-            </DropdownMenu.Root> */}
           </HStack>
         </div>
       </HStack>

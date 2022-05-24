@@ -24,8 +24,15 @@
     align-items: center;
     height: 20px;
     width: 40px;
-    background-color: hsla(var(--alinea-accent), 0.6);
+    background-color: hsla(
+      var(--alinea-hue),
+      var(--alinea-saturation),
+      var(--alinea-lightness),
+      0.2
+    );
     border-radius: 25px;
+    border: none;
+    cursor: pointer;
 
     &.is-checked {
       background-color: var(--alinea-accent);
@@ -34,8 +41,9 @@
     &-slider {
       position: absolute;
       display: inline-block;
-      height: 18px;
-      width: 18px;
+      height: 16px;
+      width: 16px;
+      left: 2px;
       border-radius: 50%;
       background-color: var(--alinea-accent-foreground);
       transition: transform 0.2s ease-in;
@@ -61,7 +69,12 @@
       height: 8px;
       cursor: pointer;
       // box-shadow: var(--alinea-fields-shadow);
-      background: hsla(var(--alinea-accent), 0.6);
+      background: hsla(
+        var(--alinea-hue),
+        var(--alinea-saturation),
+        var(--alinea-lightness),
+        0.2
+      );
       border-radius: var(--alinea-border-radius);
       border: none;
     }
@@ -74,58 +87,6 @@
       cursor: pointer;
       -webkit-appearance: none;
       margin-top: -4px;
-    }
-    &::-moz-range-track {
-      width: 100%;
-      height: 8px;
-      cursor: pointer;
-      box-shadow: var(--alinea-fields-shadow);
-      background: var(--alinea-background);
-      border-radius: var(--alinea-border-radius);
-      border: 1px solid #000000;
-    }
-    &::-moz-range-thumb {
-      border: none;
-      height: 15px;
-      width: 15px;
-      border-radius: 50%;
-      background: var(--alinea-accent);
-      cursor: pointer;
-    }
-    &::-ms-track {
-      width: 100%;
-      height: 8px;
-      cursor: pointer;
-      box-shadow: var(--alinea-fields-shadow);
-      background: var(--alinea-background);
-      border-radius: var(--alinea-border-radius);
-      border: 1px solid #000000;
-    }
-    &::-ms-fill-lower {
-      background: #3071a9;
-      border: 1px solid #000000;
-      border-radius: 10px;
-      box-shadow: 1px 1px 1px #000000;
-    }
-    &::-ms-fill-upper {
-      background: #3071a9;
-      border: 1px solid #000000;
-      border-radius: 10px;
-      box-shadow: 1px 1px 1px #000000;
-    }
-    &::-ms-thumb {
-      border: none;
-      height: 15px;
-      width: 15px;
-      border-radius: 50%;
-      background: var(--alinea-accent);
-      cursor: pointer;
-    }
-    &:focus::-ms-fill-lower {
-      background: #3071a9;
-    }
-    &:focus::-ms-fill-upper {
-      background: #3071a9;
     }
   }
 }

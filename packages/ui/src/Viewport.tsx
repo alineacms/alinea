@@ -1,7 +1,7 @@
 import {parseToHsla} from 'color2k'
 import {PropsWithChildren, useEffect, useLayoutEffect, useState} from 'react'
 import {useContrastColor} from './hook/UseContrastColor'
-import {ColorScheme, Language, PreferencesProvider} from './hook/UsePreferences'
+import {Language, Preferences, PreferencesProvider} from './hook/UsePreferences'
 import {fromModule} from './util/Styler'
 import css from './Viewport.module.scss'
 
@@ -28,52 +28,46 @@ export function Viewport({
   const accentColor = color!
   const accentColorForeground = useContrastColor(accentColor)
   const persistenceId = `@alinea/ui/viewport`
-  const preferences =
+  const [preferences, setPreferences] = useState<Preferences>(
     typeof window !== 'undefined'
       ? JSON.parse(window.localStorage?.getItem(persistenceId) as any) ||
-        undefined
+          undefined
       : undefined
-  const [schemePreference, setSchemePreference] = useState<ColorScheme>(
-    preferences?.scheme
   )
-  const [workspacePreference, setWorkspacePreference] = useState<string>(
-    preferences?.workspace
-  )
-  const [sizePreference, setSizePreference] = useState<number>(
-    preferences?.size
-  )
-  const [languagePreference, setLanguagePreference] = useState<Language>(
-    preferences?.language
-  )
+  const {scheme, size, workspace, language} = preferences
+  useEffect(() => {
+    if (!size) return
+    document.documentElement.style.fontSize = `${size}px`
+  }, [size])
+
   function toggleSchemePreference() {
     const isLight =
-      schemePreference === undefined
+      scheme === undefined
         ? window.matchMedia('(prefers-color-scheme: light)').matches
-        : schemePreference === 'light'
+        : scheme === 'light'
     const next = isLight ? 'dark' : 'light'
-    setSchemePreference(next)
+    setPreferences({...preferences, scheme: next})
     window?.localStorage?.setItem(
       persistenceId,
       JSON.stringify({...preferences, scheme: next})
     )
   }
   function updateWorkspacePreference(workspace: string) {
-    setWorkspacePreference(workspace)
+    setPreferences({...preferences, workspace: workspace})
     window?.localStorage?.setItem(
       persistenceId,
       JSON.stringify({...preferences, workspace: workspace})
     )
   }
   function updateSizePreference(size: number) {
-    document.documentElement.style.fontSize = `${size}px`
-    setSizePreference(size)
+    setPreferences({...preferences, size: size})
     window?.localStorage?.setItem(
       persistenceId,
       JSON.stringify({...preferences, size: size})
     )
   }
   function updateLanguagePreference(lang: Language) {
-    setLanguagePreference(lang)
+    setPreferences({...preferences, language: lang})
     window?.localStorage?.setItem(
       persistenceId,
       JSON.stringify({...preferences, language: lang})
@@ -85,7 +79,7 @@ export function Viewport({
     '--alinea-accent-foreground': accentColorForeground
     // '--alinea-hue': hue
   }
-  const className = styles.root(schemePreference)
+  const className = styles.root(scheme)
   const styleString = Object.entries(style)
     .map(([key, value]) => {
       return `${key}: ${value}`
@@ -102,10 +96,10 @@ export function Viewport({
     <PreferencesProvider
       value={[
         {
-          scheme: schemePreference,
-          workspace: workspacePreference,
-          size: sizePreference,
-          language: languagePreference
+          scheme: scheme,
+          workspace: workspace,
+          size: size,
+          language: language
         },
         toggleSchemePreference,
         updateWorkspacePreference,

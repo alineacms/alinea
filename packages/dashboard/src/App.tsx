@@ -104,7 +104,7 @@ function AppAuthenticated() {
             <Helmet>
               <title>{renderLabel(name)}</title>
             </Helmet>
-            <Toolbar.Root />
+            <Toolbar.Root color={color} />
             <div
               style={{
                 flex: '1',
@@ -266,7 +266,7 @@ type AppRootProps = {
 
 function AppRoot({session, setSession}: AppRootProps) {
   const {auth: Auth = Fragment, config} = useDashboard()
-  const {color} = config.defaultWorkspace
+  const {color} = config.firstWorkspace
   if (!session)
     return (
       <Viewport attachToBody contain color={color}>
