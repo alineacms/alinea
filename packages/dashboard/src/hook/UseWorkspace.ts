@@ -13,5 +13,5 @@ export function useWorkspace(): Workspace {
     const params: Record<string, string | undefined> = match?.params ?? {}
     const {workspace = Object.keys(config.workspaces)[0]} = params
     return config.workspaces[workspace]
-  }, [match])
+  }, [config, match])
 }

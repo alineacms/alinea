@@ -1,18 +1,13 @@
 import {DevServer, Server} from '@alinea/backend'
 import {EvalPlugin} from '@esbx/eval'
 import {ReactPlugin} from '@esbx/react'
-import semver from 'compare-versions'
 import compression from 'compression'
 import {dirname} from 'dirname-filename-esm'
-import esbuild, {BuildOptions, Plugin} from 'esbuild'
+import esbuild, {BuildOptions} from 'esbuild'
 import express from 'express'
-import {createServer, ServerResponse} from 'node:http'
-import {createRequire} from 'node:module'
+import http, {ServerResponse} from 'node:http'
 import path from 'node:path'
-import serveHandler from 'serve-handler'
 import {generate} from './Generate'
-
-const require = createRequire(import.meta.url)
 
 const __dirname = dirname(import.meta)
 
@@ -22,23 +17,49 @@ export type ServeOptions = {
   configFile?: string
   port?: number
   buildOptions?: BuildOptions
+  dev?: boolean
 }
 
 export async function serve(options: ServeOptions) {
   const {
     cwd = process.cwd(),
     buildOptions,
-    staticDir = path.join(__dirname, 'static')
+    staticDir = path.join(__dirname, 'static'),
+    dev = false
   } = options
   const port = options.port || 4500
   const outDir = path.join(cwd, '.alinea')
   const storeLocation = path.join(outDir, 'store.js')
   const genConfigFile = path.join(outDir, 'config.js')
-  const {version} = require('react/package.json')
-  const isReact18 = semver.compare(version, '18.0.0', '>=')
   const clients: Array<ServerResponse> = []
-  let banner = ''
-  const reloadServer = createServer((req, res) => {
+
+  function reload(type: 'refetch' | 'refresh' | 'reload') {
+    for (const res of clients) res.write(`data: ${type}\n\n`)
+    if (type === 'reload') clients.length = 0
+  }
+
+  let server: Promise<Server> | undefined
+
+  async function reloadServer(error?: Error) {
+    await (server = error ? undefined : devServer())
+  }
+
+  await generate({
+    ...options,
+    onConfigRebuild: async error => {
+      await reloadServer(error)
+      reload('refresh')
+    },
+    onCacheRebuild: async error => {
+      await reloadServer(error)
+      reload('refetch')
+    }
+  })
+
+  server = devServer()
+
+  const app = express()
+  app.use('/~dev', (req, res) => {
     clients.push(
       res.writeHead(200, {
         'Content-Type': 'text/event-stream',
@@ -48,36 +69,10 @@ export async function serve(options: ServeOptions) {
       })
     )
   })
-
-  function reload() {
-    for (const res of clients) res.write('data: update\n\n')
-    clients.length = 0
-  }
-
-  await new Promise<void>(resolve => {
-    reloadServer.listen(0, function () {
-      const info = reloadServer.address()
-      if (info && typeof info === 'object')
-        banner = `(() => {if(typeof EventSource !== 'undefined') new EventSource('http://127.0.0.1:${info.port}').onmessage = () => location.reload()})();`
-      resolve()
-    })
-  })
-
-  const reloadPlugin: Plugin = {
-    name: 'reload',
-    setup(build) {
-      build.onEnd(reload)
-      build.initialOptions.banner = {js: banner}
-    }
-  }
-
-  let build: Promise<{server: Server; stop: () => void}> | undefined
-
-  const app = express()
   app.use((req, res, next) => {
     const unavailable = () =>
       res.status(503).end('An error occured, see your terminal for details')
-    if (build) build.then(({server}) => server.app(req, res, next), unavailable)
+    if (server) server.then(server => server.app(req, res, next), unavailable)
     else unavailable()
   })
   app.use(compression())
@@ -85,51 +80,17 @@ export async function serve(options: ServeOptions) {
     res.send(`<!DOCTYPE html>
     <meta charset="utf-8" />
     <title>Alinea</title>
-    <link href="./stdin.css" rel="stylesheet" />
+    <link href="./config.css" rel="stylesheet" />
+    <link href="./entry.css" rel="stylesheet" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <body>
-      <script type="module" src="./stdin.js"></script>
-    </body>
-  `)
-  })
-  app.use((req, res) =>
-    serveHandler(req, res, {public: path.join(staticDir, 'serve')})
-  )
-
-  await generate({
-    ...options,
-    watch: {
-      async onRebuild(error, result) {
-        if (build) (await build).stop()
-        await (build = error ? undefined : startServer())
-        reload()
-      }
-    }
+      <script type="module" src="./entry.js"></script>
+    </body>`)
   })
 
-  build = startServer()
-
-  app.listen(port)
-  console.log(`> Alinea dashboard available on http://localhost:${port}`)
-
-  async function startServer() {
-    const unique = Date.now()
-    // Todo: these should be imported in a worker since we can't reclaim memory
-    // used, see #nodejs/modules#307
-    const {config} = await import(`file://${genConfigFile}?${unique}`)
-    const {createStore} = await import(`file://${storeLocation}?${unique}`)
-    const entryPoint = isReact18 ? 'react18' : 'react'
-    const entry = `
-      import '@alinea/css'
-      import {Client} from '@alinea/client'
-      import {renderDashboard} from '@alinea/dashboard/render/${entryPoint}'
-      import {config} from ${JSON.stringify(genConfigFile)}
-      renderDashboard({
-        config,
-        client: new Client(config, 'http://localhost:${port}')
-      })
-    `
-    const result = await esbuild.build({
+  function browserBuild(): BuildOptions {
+    return {
+      ignoreAnnotations: dev,
       format: 'esm',
       target: 'esnext',
       treeShaking: true,
@@ -138,19 +99,14 @@ export async function serve(options: ServeOptions) {
       sourcemap: true,
       outdir: path.join(staticDir, 'serve'),
       bundle: true,
-      watch: true,
-      stdin: {
-        contents: entry,
-        resolveDir: cwd
+      absWorkingDir: cwd,
+      entryPoints: {
+        config: '@alinea/content/config.js',
+        entry: `@alinea/dashboard/dev/${dev ? 'Dev' : 'Lib'}Entry`
       },
       platform: 'browser',
       ...buildOptions,
-      plugins: [
-        reloadPlugin,
-        EvalPlugin,
-        ReactPlugin,
-        ...(buildOptions?.plugins || [])
-      ],
+      plugins: [EvalPlugin, ReactPlugin, ...(buildOptions?.plugins || [])],
       define: {
         'process.env.NODE_ENV': "'development'"
       },
@@ -159,15 +115,55 @@ export async function serve(options: ServeOptions) {
         '.woff': 'file',
         '.woff2': 'file'
       }
-    })
-    return {
-      server: new DevServer({
-        config,
-        createStore,
-        port,
-        cwd
-      }),
-      stop: result.stop!
     }
+  }
+
+  const staticServer = await esbuild.serve(
+    {servedir: path.join(staticDir, 'serve')},
+    browserBuild()
+  )
+
+  if (dev) {
+    await esbuild.build({
+      ...browserBuild(),
+      write: false,
+      logLevel: 'silent',
+      watch: {
+        onRebuild(error, result) {
+          if (!error) reload('reload')
+        }
+      }
+    })
+  }
+
+  app.use((req, res) => {
+    const options = {
+      hostname: staticServer.host,
+      port: staticServer.port,
+      path: req.url,
+      method: req.method,
+      headers: req.headers
+    }
+    const proxyReq = http.request(options, proxyRes => {
+      res.writeHead(proxyRes.statusCode!, proxyRes.headers)
+      proxyRes.pipe(res, {end: true})
+    })
+    req.pipe(proxyReq, {end: true})
+  })
+  app.listen(port)
+  console.log(`> Alinea dashboard available on http://localhost:${port}`)
+
+  async function devServer() {
+    const unique = Date.now()
+    // Todo: these should be imported in a worker since we can't reclaim memory
+    // used, see #nodejs/modules#307
+    const {config} = await import(`file://${genConfigFile}?${unique}`)
+    const {createStore} = await import(`file://${storeLocation}?${unique}`)
+    return new DevServer({
+      config,
+      createStore,
+      port,
+      cwd
+    })
   }
 }

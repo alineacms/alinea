@@ -62,7 +62,7 @@ export function Viewport({
       document.body.className = className
       document.body.style.cssText = styleString
     }
-  }, [styleString, className])
+  }, [attachToBody, styleString, className])
   const mainProps = attachToBody ? {} : {className, style}
   return (
     <ColorSchemeProvider value={[schemePreference, toggleSchemePreference]}>

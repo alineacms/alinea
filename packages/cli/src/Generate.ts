@@ -12,11 +12,12 @@ import {ReactPlugin} from '@esbx/react'
 import {encode} from 'base64-arraybuffer'
 import {FSWatcher} from 'chokidar'
 import {dirname} from 'dirname-filename-esm'
-import {build, BuildResult, Plugin, WatchMode} from 'esbuild'
+import {build, BuildResult, Plugin} from 'esbuild'
 import fs from 'fs-extra'
 import {signed, unsigned} from 'leb128'
 import crypto from 'node:crypto'
 import path from 'node:path'
+import {ignorePlugin} from './util/IgnorePlugin'
 
 const __dirname = dirname(import.meta)
 
@@ -38,29 +39,6 @@ const externalPlugin: Plugin = {
     build.onResolve({filter: /^[^\.].*/}, args => {
       if (args.kind === 'entry-point') return
       return {path: args.path, external: true}
-    })
-  }
-}
-
-const ignorePlugin: Plugin = {
-  name: 'ignore',
-  setup(build) {
-    const commonExtensions = [
-      'css',
-      'html',
-      'css',
-      'scss',
-      'less',
-      'png',
-      'jpg',
-      'gif',
-      'svg'
-    ]
-    const filter = new RegExp(
-      `(${commonExtensions.map(ext => `\\.${ext}`).join('|')})$`
-    )
-    build.onLoad({filter}, args => {
-      return {contents: 'export default null'}
     })
   }
 }
@@ -198,7 +176,9 @@ export type GenerateOptions = {
   cwd?: string
   staticDir?: string
   configFile?: string
-  watch?: boolean | WatchMode
+  watch?: boolean
+  onConfigRebuild?: (err?: Error) => void
+  onCacheRebuild?: (err?: Error) => void
   wasmCache?: boolean
   quiet?: boolean
 }
@@ -209,16 +189,14 @@ export async function generate(options: GenerateOptions) {
     cwd = process.cwd(),
     configFile = 'alinea.config',
     staticDir = path.join(__dirname, 'static'),
-    quiet = false
+    quiet = false,
+    onConfigRebuild,
+    onCacheRebuild
   } = options
   let cacheWatcher: Promise<{stop: () => void}> | undefined
   const configLocation = path.join(cwd, configFile)
   const outDir = path.join(cwd, '.alinea')
-  const onRebuild =
-    (typeof options.watch === 'object' &&
-      typeof options.watch.onRebuild === 'function' &&
-      options.watch.onRebuild) ||
-    undefined
+  const watch = options.watch || onConfigRebuild || onCacheRebuild
 
   await fs.copy(path.join(staticDir, 'server'), path.join(outDir, '.server'), {
     overwrite: true
@@ -273,10 +251,10 @@ export async function generate(options: GenerateOptions) {
           ignorePlugin,
           ReactPlugin
         ],
-        watch: options.watch && {
+        watch: watch && {
           async onRebuild(error, result) {
             if (!error) await generatePackage()
-            if (onRebuild) return onRebuild(error, result)
+            if (onConfigRebuild) return onConfigRebuild(error || undefined)
           }
         }
       })
@@ -355,11 +333,14 @@ export async function generate(options: GenerateOptions) {
       const store = await cacheEntries(config, source)
       await createCache(store)
     }
-    if (options.watch && files) {
+    if (watch && files) {
       watcher = new FSWatcher()
       async function reload() {
         if (caching) await caching
-        caching = cache().then(() => onRebuild?.(null, null))
+        caching = cache().then(
+          () => onCacheRebuild?.(),
+          err => onCacheRebuild?.(err)
+        )
       }
       watcher.add(files).on('change', reload)
       watcher.add(files).on('unlink', reload)

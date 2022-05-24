@@ -290,7 +290,9 @@ const QueryClientProvider: any = ReactQueryClientProvider
 
 export function App<T extends Workspaces>(props: DashboardOptions<T>) {
   const [queryClient] = useState(
-    () => new QueryClient({defaultOptions: {queries: {retry: false}}})
+    () =>
+      props.queryClient ||
+      new QueryClient({defaultOptions: {queries: {retry: false}}})
   )
   const [session, setSession] = useState<Session | undefined>(
     !props.auth ? localSession(props) : undefined
