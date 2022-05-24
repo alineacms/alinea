@@ -48,7 +48,7 @@ export async function serve(options: ServeOptions) {
     ...options,
     onConfigRebuild: async error => {
       await reloadServer(error)
-      reload('refresh')
+      if (!dev) reload('refresh')
     },
     onCacheRebuild: async error => {
       await reloadServer(error)
@@ -88,6 +88,8 @@ export async function serve(options: ServeOptions) {
     </body>`)
   })
 
+  const entry = `@alinea/dashboard/dev/${dev ? 'Dev' : 'Lib'}Entry`
+
   function browserBuild(): BuildOptions {
     return {
       ignoreAnnotations: dev,
@@ -102,7 +104,7 @@ export async function serve(options: ServeOptions) {
       absWorkingDir: cwd,
       entryPoints: {
         config: '@alinea/content/config.js',
-        entry: `@alinea/dashboard/dev/${dev ? 'Dev' : 'Lib'}Entry`
+        entry
       },
       platform: 'browser',
       ...buildOptions,
