@@ -1,3 +1,5 @@
+@use '@alinea/ui/style.scss' as *;
+
 .root {
   display: flex;
   height: 100%;
@@ -11,6 +13,12 @@
     flex-shrink: 0;
     height: 100%;
     border-right: 1px solid var(--alinea-outline);
+
+    @include s {
+      & + * {
+        width: 100%;
+      }
+    }
 
     &-item {
       position: relative;
@@ -32,6 +40,57 @@
       &.is-selected {
         color: var(--alinea-foreground);
       }
+    }
+  }
+}
+
+.collapse {
+  display: none;
+  height: 100%;
+  flex-shrink: 0;
+
+  @include s {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    display: flex;
+    transition: transform 0.15s ease-out;
+  }
+
+  @include s {
+    &.is-left {
+      padding-right: 25px;
+      transform: translateX(-100%);
+    }
+
+    &.is-right {
+      padding-left: 25px;
+      transform: translateX(100%);
+    }
+  }
+
+  &.is-open {
+    display: flex;
+    transform: none;
+  }
+
+  &-inner {
+    position: relative;
+    display: flex;
+    height: 100%;
+    width: 100%;
+    background: var(--alinea-background);
+  }
+
+  &-overlay {
+    @include s {
+      position: absolute;
+      inset: 0;
+      background: var(--alinea-shadow);
+    }
+
+    @include ml {
+      display: none;
     }
   }
 }

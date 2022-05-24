@@ -17,9 +17,11 @@ type DividerProps = {
   maxWidth: number
   width: number
   setWidth: (width: number) => void
+  position: 'left' | 'right'
 }
 
 function Divider({
+  position,
   direction,
   container,
   defaultWidth,
@@ -62,7 +64,7 @@ function Divider({
   }
   return (
     <div
-      className={styles.divider()}
+      className={styles.divider(position)}
       onDoubleClick={e => {
         e.preventDefault()
         width = defaultWidth
@@ -100,6 +102,7 @@ export function Pane({
     Number(window?.localStorage?.getItem(persistenceId)) || defaultWidth
   const divider = (
     <Divider
+      position={resizable}
       container={container}
       minWidth={minWidth}
       maxWidth={maxWidth}

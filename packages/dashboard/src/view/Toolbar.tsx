@@ -37,11 +37,11 @@ export namespace Toolbar {
     const [colorScheme, toggleColorScheme] = useColorScheme()
     const {label} = useWorkspace()
     const navigate = useNavigate()
-    const {toggleNav, togglePreview} = useSidebar()
+    const {isNavOpen, isPreviewOpen, toggleNav, togglePreview} = useSidebar()
     return (
       <HStack center gap={12} className={styles.root()}>
         <div className={styles.root.menu()} onClick={toggleNav}>
-          <IconButton icon={IcRoundMenu} />
+          <IconButton icon={IcRoundMenu} active={isNavOpen} />
         </div>
         <DropdownMenu.Root>
           <DropdownMenu.Trigger>
@@ -113,7 +113,11 @@ export namespace Toolbar {
                 </DropdownMenu.Item>
               </DropdownMenu.Items>
             </DropdownMenu.Root>
-            <IconButton icon={IcOutlineScreenshot} onClick={togglePreview} />
+            <IconButton
+              icon={IcOutlineScreenshot}
+              onClick={togglePreview}
+              active={isPreviewOpen}
+            />
           </HStack>
         </div>
       </HStack>

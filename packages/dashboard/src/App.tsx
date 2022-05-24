@@ -27,7 +27,7 @@ import {DashboardProvider, useDashboard} from './hook/UseDashboard'
 import {useDraft} from './hook/UseDraft'
 import {DraftsProvider, DraftsStatus, useDrafts} from './hook/UseDrafts'
 import {useDraftsList} from './hook/UseDraftsList'
-import {useEntryLocation} from './hook/UseEntryId'
+import {useEntryLocation} from './hook/UseEntryLocation'
 import {useLocale} from './hook/UseLocale'
 import {useNav} from './hook/UseNav'
 import {ReferencePickerProvider} from './hook/UseReferencePicker'
@@ -113,31 +113,29 @@ function AppAuthenticated() {
                 }}
               >
                 <ReferencePickerProvider key={workspace}>
-                  <Sidebar.Root>
-                    <Sidebar.Nav>
-                      {Object.entries(roots).map(([key, root], i) => {
-                        const isSelected = key === currentRoot
-                        const link =
-                          entryLocation && entryLocation.root === key
-                            ? nav.entry(entryLocation)
-                            : nav.root({workspace, root: key})
-                        return (
-                          <Sidebar.Nav.Item
-                            key={key}
-                            selected={isEntry && isSelected}
-                            to={link}
-                          >
-                            {root.icon ? (
-                              <root.icon />
-                            ) : (
-                              <IcRoundInsertDriveFile />
-                            )}
-                          </Sidebar.Nav.Item>
-                        )
-                      })}
-                      <DraftsButton />
-                    </Sidebar.Nav>
-                  </Sidebar.Root>
+                  <Sidebar.Nav>
+                    {Object.entries(roots).map(([key, root], i) => {
+                      const isSelected = key === currentRoot
+                      const link =
+                        entryLocation && entryLocation.root === key
+                          ? nav.entry(entryLocation)
+                          : nav.root({workspace, root: key})
+                      return (
+                        <Sidebar.Nav.Item
+                          key={key}
+                          selected={isEntry && isSelected}
+                          to={link}
+                        >
+                          {root.icon ? (
+                            <root.icon />
+                          ) : (
+                            <IcRoundInsertDriveFile />
+                          )}
+                        </Sidebar.Nav.Item>
+                      )
+                    })}
+                    <DraftsButton />
+                  </Sidebar.Nav>
                   <Suspense fallback={<Loader absolute />}>
                     <Routes>
                       <Route
