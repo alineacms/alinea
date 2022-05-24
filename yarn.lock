@@ -1574,7 +1574,7 @@ __metadata:
   checksum: 0a7b89d8ed72526858f0b61c6fd81f477853e8c4415bb97f48b1b5545248d2ae389931680b94b393b993a7cfe893537a200647d93defe6d87159b96812305adc
   languageName: node
   linkType: hard
-  
+
 "@types/diff-match-patch@npm:^1.0.32":
   version: 1.0.32
   resolution: "@types/diff-match-patch@npm:1.0.32"
@@ -5362,7 +5362,7 @@ fsevents@~2.3.2:
   languageName: node
   linkType: hard
 
-"loose-envify@npm:^1.0.0, loose-envify@npm:^1.1.0, loose-envify@npm:^1.4.0":
+"loose-envify@npm:^1.1.0, loose-envify@npm:^1.4.0":
   version: 1.4.0
   resolution: "loose-envify@npm:1.4.0"
   dependencies:
