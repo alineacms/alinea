@@ -10,8 +10,8 @@
     width: 100%;
     resize: none;
     padding: 9px 16px;
-    background: var(--fields);
-    box-shadow: var(--fields-shadow);
+    background: var(--alinea-fields);
+    box-shadow: var(--alinea-fields-shadow);
     border-radius: 8px;
     resize: none;
     cursor: text;
@@ -19,49 +19,7 @@
   }
 
   &-editor.is-focus > * {
-    background: var(--fields-selected);
-    outline: 2px solid var(--fields-focus);
-  }
-
-  &-editor > * {
-    > :first-child {
-      margin-top: 0;
-    }
-    > h1 {
-      margin-top: 3em;
-      @extend .h1;
-    }
-    > h2 {
-      margin-top: 2em;
-      @extend .h2;
-    }
-    > h3 {
-      margin-top: 1em;
-      @extend .h3;
-    }
-
-    > ol,
-    > ul {
-      li {
-        margin-left: 20px;
-
-        & + & {
-          margin-top: 10px;
-        }
-      }
-    }
-  }
-}
-
-.buttons {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100%;
-
-  &-separator {
-    background: var(--outline);
-    height: 1em;
-    width: 1px;
+    background: var(--alinea-fields-selected);
+    outline: 2px solid var(--alinea-fields-focus);
   }
 }

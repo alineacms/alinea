@@ -258,6 +258,9 @@ export class Expr<T> {
       selection: ExprData.Row(from)
     })
   }
+  at(this: Expr<Array<T>>, index: number): Expr<T | null> {
+    return this.get(`[${Number(index)}]` as any)
+  }
   map<T, X extends SelectionInput>(
     this: Expr<Array<T>>,
     fn: (cursor: Expr<T> & Fields<T>) => X

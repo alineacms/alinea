@@ -6,10 +6,11 @@ import {sassPlugin} from './plugin/sass'
 process.env.NODE_ENV = 'development'
 
 serve({
+  dev: true,
   cwd: path.resolve('apps/web'),
   staticDir: path.resolve('packages/cli/dist/static'),
   port: 4500,
   buildOptions: {
-    plugins: [internalPlugin, sassPlugin]
+    plugins: [sassPlugin, internalPlugin]
   }
 })

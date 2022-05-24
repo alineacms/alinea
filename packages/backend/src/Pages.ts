@@ -1,18 +1,11 @@
-import {
-  Config,
-  createId,
-  Entry,
-  Schema,
-  Tree,
-  TypesOf,
-  Workspace
-} from '@alinea/core'
+import {createId, Entry, Tree, Workspace} from '@alinea/core'
 import {
   Collection,
   Cursor,
   EV,
   Expr,
   ExprData,
+  From,
   OrderBy,
   Selection,
   SelectionInput,
@@ -20,34 +13,73 @@ import {
 } from '@alinea/store'
 
 export class PageTree<P> {
-  constructor(private pages: Pages<P>, private id: EV<string>) {}
+  constructor(private resolver: PageResolver<P>, private id: EV<string>) {}
 
-  get root(): Pages<P> {
-    return this.pages
+  get root(): Multiple<P, P> {
+    return this.resolver.root
   }
 
   siblings(): Multiple<P, P> {
-    return new Multiple(this.pages, Tree.siblings(this.id))
+    return new Multiple(this.resolver, Tree.siblings(this.id))
   }
 
   children<Child extends P>(depth = 1): Multiple<P, Child> {
-    return new Multiple(this.pages, Tree.children(this.id, depth))
+    return new Multiple(this.resolver, Tree.children(this.id, depth))
   }
 
   parents<Parent extends P>(): Multiple<P, Parent> {
-    return new Multiple(this.pages, Tree.parents(this.id))
+    return new Multiple(this.resolver, Tree.parents(this.id))
   }
 
   parent<Parent extends P>(): Single<P, Parent> {
-    return new Single(this.pages, Tree.parent(this.id))
+    return new Single(this.resolver, Tree.parent(this.id))
   }
 
   nextSibling(): Single<P, P> {
-    return new Single(this.pages, Tree.nextSibling(this.id))
+    return new Single(this.resolver, Tree.nextSibling(this.id))
   }
 
   prevSibling(): Single<P, P> {
-    return new Single(this.pages, Tree.prevSibling(this.id))
+    return new Single(this.resolver, Tree.prevSibling(this.id))
+  }
+}
+
+class PageResolver<T> {
+  root: Multiple<T, T>
+
+  constructor(public store: Promise<Store>) {
+    this.root = new Multiple(this, Entry)
+  }
+
+  processCallbacks = new Map<string, (value: any) => any>()
+
+  async postProcess(value: any): Promise<any> {
+    const tasks: Array<() => Promise<void>> = []
+    iter(value, (value, setValue) => {
+      const isProcessValue =
+        value &&
+        typeof value === 'object' &&
+        '$__process' in value &&
+        '$__expr' in value
+      if (isProcessValue) {
+        const id = value['$__process']
+        const expr = value['$__expr']
+        const fn = this.processCallbacks.get(id)
+        if (!fn) return true
+        tasks.push(async () => {
+          try {
+            const result = await fn(expr)
+            setValue(result)
+          } finally {
+            this.processCallbacks.delete(id)
+          }
+        })
+        return false
+      }
+      return true
+    })
+    await Promise.all(tasks.map(fn => fn()))
+    return value
   }
 }
 
@@ -56,8 +88,11 @@ export type Page<P, T> = T extends {id: string} ? T & {tree: PageTree<P>} : T
 abstract class Base<P, T> extends Promise<T> {
   protected result: Promise<T> | undefined
 
-  constructor(protected pages: Pages<P>, protected cursor: Cursor<any>) {
-    super(_ => _(undefined!))
+  constructor(
+    protected resolver: PageResolver<P>,
+    protected cursor: Cursor<any>
+  ) {
+    super(function () {})
   }
 
   protected abstract execute(): Promise<T>
@@ -73,15 +108,27 @@ abstract class Base<P, T> extends Promise<T> {
   }
 }
 
+// Todo: this should be eliminated - Selections need to be expanded to
+// allow separate properties for reading (select *) or filtering (where *)
+// so we can update the createSelection method below to
+function resolveWith<T, X>(
+  input: X | ((cursor: Cursor<T>) => X),
+  cursor: Cursor<T>
+): X {
+  return typeof input === 'function' ? (input as Function)(cursor) : input
+}
+
 class Multiple<P, T> extends Base<P, Array<Page<P, T>>> {
   protected async execute() {
-    const store = await this.pages.store
+    const store = await this.resolver.store
     const rows = store.all(this.cursor)
-    const res = await Promise.all(rows.map(row => this.pages.postProcess(row)))
+    const res = await Promise.all(
+      rows.map(row => this.resolver.postProcess(row))
+    )
     return res.map(page => {
       if (page && typeof page === 'object' && 'id' in page) {
         Object.defineProperty(page, 'tree', {
-          value: new PageTree(this.pages, page.id),
+          value: new PageTree(this.resolver, page.id),
           enumerable: false
         })
       }
@@ -89,55 +136,90 @@ class Multiple<P, T> extends Base<P, Array<Page<P, T>>> {
     })
   }
   async count(): Promise<number> {
-    const store = await this.pages.store
+    const store = await this.resolver.store
     return store.count(this.cursor)
   }
   leftJoin<T>(that: Collection<T>, on: Expr<boolean>) {
-    return new Multiple<P, T>(this.pages, this.cursor.leftJoin(that, on))
+    return new Multiple<P, T>(this.resolver, this.cursor.leftJoin(that, on))
   }
   innerJoin<T>(that: Collection<T>, on: Expr<boolean>) {
-    return new Multiple<P, T>(this.pages, this.cursor.innerJoin(that, on))
+    return new Multiple<P, T>(this.resolver, this.cursor.innerJoin(that, on))
   }
   take(limit: number | undefined) {
-    return new Multiple<P, T>(this.pages, this.cursor.take(limit))
+    return new Multiple<P, T>(this.resolver, this.cursor.take(limit))
   }
   skip(offset: number | undefined) {
-    return new Multiple<P, T>(this.pages, this.cursor.skip(offset))
+    return new Multiple<P, T>(this.resolver, this.cursor.skip(offset))
   }
   where(where: EV<boolean> | ((collection: Cursor<T>) => EV<boolean>)) {
-    return new Multiple<P, T>(this.pages, this.cursor.where(where as any))
+    return new Multiple<P, T>(
+      this.resolver,
+      this.cursor.where(resolveWith(where as any, Entry))
+    )
+  }
+  whereUrl<E = T>(url: EV<string>) {
+    return new Multiple<T, E>(
+      this.resolver,
+      this.cursor.where(Entry.url.is(url))
+    )
+  }
+  whereId<E = T>(id: EV<string>) {
+    return new Multiple<T, E>(this.resolver, this.cursor.where(Entry.id.is(id)))
   }
   whereType<C>(type: Collection<C>) {
     return new Multiple<P, C>(
-      this.pages,
-      this.cursor.where(Entry.type.is((type as any).__options.alias))
+      this.resolver,
+      this.cursor.where(Entry.get('type').is((type as any).__options.alias))
     )
   }
-  select<
-    X extends SelectionInput | ((collection: Cursor<T>) => SelectionInput)
-  >(selection: X) {
+  fetchUrl<E = T>(url: EV<string>) {
+    return new Single<T, E>(this.resolver, this.cursor.where(Entry.url.is(url)))
+  }
+  fetchId<E = T>(id: EV<string>) {
+    return new Single<T, E>(this.resolver, this.cursor.where(Entry.id.is(id)))
+  }
+  fetchType<C>(type: Collection<C>) {
+    return new Single<P, C>(
+      this.resolver,
+      this.cursor.where(Entry.get('type').is((type as any).__options.alias))
+    )
+  }
+  select<X extends SelectionInput | ((cursor: Cursor<T>) => SelectionInput)>(
+    selection: X
+  ) {
     return new Multiple<P, Store.TypeOf<X>>(
-      this.pages,
+      this.resolver,
       this.cursor.select(selection as any)
     )
   }
   having(having: Expr<boolean>) {
-    return new Multiple<P, T>(this.pages, this.cursor.having(having))
+    return new Multiple<P, T>(this.resolver, this.cursor.having(having))
   }
   include<I extends SelectionInput>(selection: I) {
     return new Multiple<P, Omit<T, keyof Store.TypeOf<I>> & Store.TypeOf<I>>(
-      this.pages,
+      this.resolver,
       this.cursor.include(selection)
     )
   }
-  orderBy(...orderBy: Array<OrderBy>) {
-    return new Multiple<P, T>(this.pages, this.cursor.orderBy(...orderBy))
+  orderBy(...orderBy: Array<OrderBy>): Multiple<P, T>
+  orderBy(pick: (cursor: Cursor<T>) => Array<OrderBy>): Multiple<P, T>
+  orderBy(...args: any) {
+    const orderBy: Array<OrderBy> =
+      args.length === 1 && typeof args[0] === 'function' ? args[0](Entry) : args
+    return new Multiple<P, T>(this.resolver, this.cursor.orderBy(...orderBy))
   }
-  groupBy(...groupBy: Array<Expr<any>>) {
-    return new Multiple<P, T>(this.pages, this.cursor.groupBy(...groupBy))
+  groupBy(...groupBy: Array<Expr<any>>): Multiple<P, T>
+  groupBy(pick: (cursor: Cursor<T>) => Array<Expr<any>>): Multiple<P, T>
+  groupBy(...args: any) {
+    const groupBy: Array<Expr<any>> =
+      args.length === 1 && typeof args[0] === 'function' ? args[0](Entry) : args
+    return new Multiple<P, T>(this.resolver, this.cursor.groupBy(...groupBy))
   }
-  first() {
-    return new Single<P, T>(this.pages, this.cursor.first() as any)
+  first(
+    where?: EV<boolean> | ((cursor: Cursor<T>) => EV<boolean>)
+  ): Single<P, T> {
+    if (where) return this.where(resolveWith(where as any, Entry)).first()
+    return new Single<P, T>(this.resolver, this.cursor.first())
   }
   /*on<
   K extends TypesOf<T>,
@@ -149,33 +231,33 @@ class Multiple<P, T> extends Base<P, Array<Page<P, T>>> {
 
 class Single<P, T> extends Base<P, Page<P, T> | null> {
   protected async execute() {
-    const store = await this.pages.store
+    const store = await this.resolver.store
     const row = store.first(this.cursor)
     if (!row) return null
-    const page = await this.pages.postProcess(row)
+    const page = await this.resolver.postProcess(row)
     if (typeof page === 'object' && 'id' in page) {
       Object.defineProperty(page, 'tree', {
-        value: new PageTree(this.pages, page.id),
+        value: new PageTree(this.resolver, page.id),
         enumerable: false
       })
     }
     return page
   }
   leftJoin<T>(that: Collection<T>, on: Expr<boolean>) {
-    return new Single<P, T>(this.pages, this.cursor.leftJoin(that, on))
+    return new Single<P, T>(this.resolver, this.cursor.leftJoin(that, on))
   }
   innerJoin<T>(that: Collection<T>, on: Expr<boolean>) {
-    return new Single<P, T>(this.pages, this.cursor.innerJoin(that, on))
+    return new Single<P, T>(this.resolver, this.cursor.innerJoin(that, on))
   }
   skip(offset: number | undefined) {
-    return new Single<P, T>(this.pages, this.cursor.skip(offset))
+    return new Single<P, T>(this.resolver, this.cursor.skip(offset))
   }
   where(where: EV<boolean> | ((collection: Cursor<T>) => EV<boolean>)) {
-    return new Single<P, T>(this.pages, this.cursor.where(where as any))
+    return new Single<P, T>(this.resolver, this.cursor.where(where as any))
   }
   whereType<C>(type: Collection<C>) {
     return new Single<P, C>(
-      this.pages,
+      this.resolver,
       this.cursor.where(Entry.type.is((type as any).__options.alias))
     )
   }
@@ -183,29 +265,33 @@ class Single<P, T> extends Base<P, Page<P, T> | null> {
     X extends SelectionInput | ((collection: Cursor<T>) => SelectionInput)
   >(selection: X) {
     return new Single<P, Store.TypeOf<X>>(
-      this.pages,
+      this.resolver,
       this.cursor.select(selection as any)
     )
   }
   having(having: Expr<boolean>) {
-    return new Single<P, T>(this.pages, this.cursor.having(having))
+    return new Single<P, T>(this.resolver, this.cursor.having(having))
   }
   include<I extends SelectionInput>(selection: I) {
     return new Single<P, Omit<T, keyof Store.TypeOf<I>> & Store.TypeOf<I>>(
-      this.pages,
+      this.resolver,
       this.cursor.include(selection)
     )
   }
-  orderBy(...orderBy: Array<OrderBy>) {
-    return new Single<P, T>(this.pages, this.cursor.orderBy(...orderBy))
+  orderBy(...orderBy: Array<OrderBy>): Single<P, T>
+  orderBy(pick: (cursor: Cursor<T>) => Array<OrderBy>): Single<P, T>
+  orderBy(...args: any) {
+    return new Single<P, T>(this.resolver, this.cursor.orderBy(...args))
   }
-  groupBy(...groupBy: Array<Expr<any>>) {
-    return new Single<P, T>(this.pages, this.cursor.groupBy(...groupBy))
+  groupBy(...groupBy: Array<Expr<any>>): Single<P, T>
+  groupBy(pick: (cursor: Cursor<T>) => Array<Expr<any>>): Single<P, T>
+  groupBy(...args: any) {
+    return new Single<P, T>(this.resolver, this.cursor.groupBy(...args))
   }
   children<C = T>(depth = 1) {
     if (depth > 1) throw 'todo depth > 1'
     return new Multiple<P, C>(
-      this.pages,
+      this.resolver,
       Entry.where(
         Entry.parent.isIn(
           this.cursor.select<Expr<string | undefined>>(Entry.id)
@@ -215,86 +301,55 @@ class Single<P, T> extends Base<P, Page<P, T> | null> {
   }
 }
 
-class PagesImpl<T> {
-  schema: Schema<T>
-  collection = new Collection<T>('Entry')
-  store: Promise<Store>
+function createSelection<T>(
+  workspace: Workspace<T>,
+  pages: PagesImpl<T>
+): ExprData {
+  const cases: Record<string, SelectionInput> = {}
+  let isComputed = false
+  for (const [key, type] of workspace.schema.entries()) {
+    const selection = type.selection(type.collection(), pages as Pages<T>)
+    if (!selection) continue
+    cases[key] = selection
+    isComputed = true
+  }
+  if (!isComputed) return Entry.fields.expr
+  return Entry.type.case(cases, Entry.fields).expr
+}
 
+class PagesImpl<T> extends Multiple<T, T> {
   constructor(
-    private config: Config,
-    private workspace: Workspace<T>,
-    private createCache: () => Promise<Store>
+    workspace: Workspace<T>,
+    createCache: () => Promise<Store>,
+    resolver: PageResolver<T> = new PageResolver(createCache()),
+    withComputed = true
   ) {
-    this.schema = workspace.schema
-    this.store = createCache()
-    const self = this
-    return new Proxy(this, {
-      get(target: any, key: string) {
-        if (key in target) return target[key]
-        const type = self.schema.type(key as TypesOf<T>)
-        if (type) {
-          const [workspaceKey] =
-            Object.entries(self.config.workspaces).find(
-              ([name, workspace]) => workspace === self.workspace
-            ) || []
-          if (workspaceKey)
-            return self.whereType(
-              self.schema.collection(workspaceKey, key as any)
-            )
-        }
-        return undefined
-      }
+    const from = From.Column(From.Table('Entry', ['data']), 'data')
+    const cursor = new Cursor<T>({
+      from,
+      selection: withComputed
+        ? createSelection(
+            workspace,
+            new PagesImpl(workspace, createCache, resolver, false)
+          )
+        : ExprData.Row(from)
     })
-  }
-
-  whereUrl(url: EV<string>) {
-    return new Single<T, T>(this as Pages<T>, Entry.where(Entry.url.is(url)))
-  }
-
-  whereId(id: EV<string>) {
-    return new Single<T, T>(this as Pages<T>, Entry.where(Entry.id.is(id)))
-  }
-
-  whereType<C>(type: Collection<C>) {
-    return new Multiple<T, C>(
-      this as Pages<T>,
-      type.cursor.where
-        ? this.collection.where(Entry.type.is((type as any).__options.alias))
-        : this.collection
-    )
-  }
-
-  all(): Multiple<T, T> {
-    return new Multiple(this as Pages<T>, this.collection)
-  }
-
-  findMany(
-    where: Expr<boolean> | ((collection: Cursor<T>) => Expr<boolean>)
-  ): Multiple<T, T> {
-    return new Multiple(this as Pages<T>, this.collection.where(where))
-  }
-
-  findFirst(
-    where: Expr<boolean> | ((collection: Cursor<T>) => Expr<boolean>)
-  ): Single<T, T> {
-    return new Single<T, T>(this as Pages<T>, this.collection.where(where))
-  }
-
-  get root() {
-    return this.findMany(Entry.parent.isNull())
+    super(resolver, cursor)
+    for (const [key, type] of workspace.schema.entries()) {
+      ;(this as any)[key] = this.whereType(type.collection())
+    }
   }
 
   tree(id: EV<string>) {
-    return new PageTree(this as Pages<T>, id)
+    return new PageTree(this.resolver, id)
   }
 
-  processCallbacks = new Map<string, (value: any) => any>()
   process<I extends SelectionInput, X>(
     input: I,
     fn: (value: Store.TypeOf<I>) => X | Promise<X>
   ): Expr<X> {
     const id = createId()
-    this.processCallbacks.set(id, fn)
+    this.resolver.processCallbacks.set(id, fn)
     return new Expr(
       ExprData.Record({
         $__process: Expr.value(id).expr,
@@ -333,35 +388,6 @@ class PagesImpl<T> {
       return value
     }) as any
   }
-
-  async postProcess(value: any): Promise<any> {
-    const tasks: Array<() => Promise<void>> = []
-    iter(value, (value, setValue) => {
-      const isProcessValue =
-        value &&
-        typeof value === 'object' &&
-        '$__process' in value &&
-        '$__expr' in value
-      if (isProcessValue) {
-        const id = value['$__process']
-        const expr = value['$__expr']
-        const fn = this.processCallbacks.get(id)
-        if (!fn) return true
-        tasks.push(async () => {
-          try {
-            const result = await fn(expr)
-            setValue(result)
-          } finally {
-            this.processCallbacks.delete(id)
-          }
-        })
-        return false
-      }
-      return true
-    })
-    await Promise.all(tasks.map(fn => fn()))
-    return value
-  }
 }
 
 type UnPromisify<T> = T extends Promise<infer U> ? U : T
@@ -394,11 +420,7 @@ function iter(
 }
 
 export interface PagesConstructor {
-  new <T>(
-    config: Config,
-    workspace: Workspace<T>,
-    createCache: () => Promise<Store>
-  ): Pages<T>
+  new <T>(workspace: Workspace<T>, createCache: () => Promise<Store>): Pages<T>
 }
 export type Pages<T> = PagesImpl<T> & {
   [K in T extends {type: string} ? T['type'] : string]: Multiple<
@@ -406,4 +428,4 @@ export type Pages<T> = PagesImpl<T> & {
     Extract<T, {type: K}>
   >
 }
-export const Pages = PagesImpl as PagesConstructor
+export const Pages = PagesImpl as any as PagesConstructor

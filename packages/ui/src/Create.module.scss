@@ -10,7 +10,7 @@
 .button {
   display: inline-block;
   font-weight: bold;
-  // background: var(--highlight);
+  // background: var(--alinea-highlight);
   background: transparent;
   border: none;
   font: inherit;
@@ -24,15 +24,15 @@
   overflow: hidden;
   font-size: 12px;
   flex-shrink: 0;
-  // border-bottom: 1px solid var(--shadow);
+  // border-bottom: 1px solid var(--alinea-shadow);
 
   &-add {
-    background: hsl(var(--negative));
+    background: hsl(var(--alinea-negative));
     width: 1em;
     height: 1em;
     font-size: 1em;
     border-radius: 50%;
-    color: var(--lift);
+    color: var(--alinea-lift);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -40,12 +40,12 @@
   }
 
   &:hover {
-    color: var(--accent-foreground);
-    background: var(--accent);
+    color: var(--alinea-accent-foreground);
+    background: var(--alinea-accent);
   }
 
   &:hover &-add {
-    background: var(--accent-foreground);
-    color: var(--accent);
+    background: var(--alinea-accent-foreground);
+    color: var(--alinea-accent);
   }
 }

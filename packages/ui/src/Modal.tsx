@@ -1,4 +1,5 @@
-import {HTMLProps, PropsWithChildren} from 'react'
+import {Dialog} from '@headlessui/react'
+import {ComponentPropsWithoutRef, PropsWithChildren} from 'react'
 import {IconButton} from './IconButton'
 import {IcRoundClose} from './icons/IcRoundClose'
 import css from './Modal.module.scss'
@@ -6,31 +7,26 @@ import {fromModule} from './util/Styler'
 
 const styles = fromModule(css)
 
-export type ModalProps = PropsWithChildren<{
-  open: boolean
-  onClose: () => void
-}> &
-  HTMLProps<HTMLDivElement>
-
-// Todo: for accessibility's sake we should use a tried and tested library here
-export function Modal({children, open, onClose, ...props}: ModalProps) {
+export type ModalProps = PropsWithChildren<
+  {
+    open: boolean
+    onClose: () => void
+    className?: string
+  } & ComponentPropsWithoutRef<typeof Dialog>
+>
+export function Modal({children, ...props}: ModalProps) {
   return (
-    <div
-      role="dialog"
-      aria-modal
-      className={styles.root.mergeProps(props)({open})}
-      {...props}
-    >
-      <div className={styles.root.background()} onClick={onClose}></div>
-      <div className={styles.root.inner()}>
+    <Dialog {...props} className={styles.root({open: props.open})}>
+      <div className={styles.root.background()} onClick={props.onClose}></div>
+      <Dialog.Panel className={styles.root.inner.mergeProps(props)()}>
         <IconButton
           className={styles.root.inner.close()}
           size={18}
           icon={IcRoundClose}
-          onClick={onClose}
+          onClick={props.onClose}
         />
         {children}
-      </div>
-    </div>
+      </Dialog.Panel>
+    </Dialog>
   )
 }

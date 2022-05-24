@@ -1,4 +1,4 @@
-import {Entry, Media, Outcome, Reference, Type, View} from '@alinea/core'
+import {Entry, Outcome, Reference, TypeConfig, View} from '@alinea/core'
 import {useReferencePicker, useSession, useWorkspace} from '@alinea/dashboard'
 import {EntrySummaryRow} from '@alinea/dashboard/view/entry/EntrySummary'
 import {InputForm, InputLabel, InputState, useInput} from '@alinea/editor'
@@ -49,7 +49,7 @@ function LinkInputEntryRow({entry}: LinkInputEntryRowProps) {
 }
 
 type LinkInputRowProps<T> = {
-  fields: Type<T> | undefined
+  fields: TypeConfig<T> | undefined
   state: InputState<T>
   reference: Reference
   entryData: (id: string) => Entry.Minimal | undefined
@@ -153,56 +153,48 @@ const layoutMeasuringConfig = {
   strategy: LayoutMeasuringStrategy.Always
 }
 
-function conditionOfType(type: LinkType) {
-  switch (type) {
-    case 'entry':
-      return Entry.type.isNot(Media.Type.File)
-    case 'image':
-      return Entry.type
-        .is(Media.Type.File)
-        .and(Entry.get('extension').isIn(Media.imageExtensions))
-    case 'file':
-      return Entry.type
-        .is(Media.Type.File)
-        .and(Entry.get('extension').isNotIn(Media.imageExtensions))
-    case 'external':
-      return Expr.value(true)
-  }
-}
-
 function restrictByType(
   type: LinkType | Array<LinkType> | undefined
 ): Expr<boolean> | undefined {
   if (!type || (Array.isArray(type) && type.length === 0)) return undefined
   let condition = Expr.value(false)
   for (const t of Array.isArray(type) ? type : [type]) {
-    condition = condition.or(conditionOfType(t))
+    condition = condition.or(LinkType.conditionOf(Entry, t))
   }
   return condition
 }
 
 export type LinkInputProps<T> = {
   state: InputState<InputState.List<Reference & T>>
-  field: LinkField<T>
+  field: LinkField<T, any>
 }
 
 export function LinkInput<T>({state, field}: LinkInputProps<T>) {
   const {hub} = useSession()
-  const [value, {push, move, remove}] = useInput(state)
+  const [value = [], {push, move, remove}] = useInput(state)
   const {schema} = useWorkspace()
-  const {pickLink} = useReferencePicker()
-  const {fields, type, width, inline, optional, help, max} = field.options
+  const picker = useReferencePicker()
+  const {
+    fields,
+    type,
+    width,
+    inline,
+    condition,
+    multiple,
+    optional,
+    help,
+    max = !multiple ? 1 : undefined
+  } = field.options
   const types = Array.isArray(type) ? type : type ? [type] : []
-
   const cursor = useMemo(() => {
     const entries = value
-      .filter((v): v is Reference.Entry => v.type === 'entry')
+      .filter((v: Reference): v is Reference.Entry => v.type === 'entry')
       .map(v => v.entry)
     return Entry.where(Entry.id.isIn(entries))
-  }, [value])
+  }, [value, schema])
 
   const {data, isLoading} = useQuery(
-    ['explorer', schema, cursor],
+    ['explorer', cursor],
     () => {
       const selection = View.getSelection(schema, 'summaryRow', Entry)
       if (value.length === 0) return new Map()
@@ -223,25 +215,30 @@ export function LinkInput<T>({state, field}: LinkInputProps<T>) {
   )
 
   function handleCreate() {
-    return pickLink({
-      selection: value,
-      condition: restrictByType(type),
-      defaultView: type === 'image' ? 'thumb' : 'row',
-      showUploader: types.includes('file') || types.includes('image'),
-      max
-    }).then(links => {
-      const seen = new Set()
-      if (!links) return
-      for (const link of links) {
-        seen.add(link.id)
-        if (value.find(v => v.id === link.id)) continue
-        push(link as Reference & T)
-      }
-      for (const link of value) {
-        if (seen.has(link.id)) continue
-        remove(link.id)
-      }
-    })
+    const conditions = [condition, restrictByType(type)]
+      .filter(Boolean)
+      .reduce((a, b) => (a ? a.and(b!) : b), undefined)
+    return picker
+      .pickLink({
+        selection: value,
+        condition: conditions,
+        defaultView: type === 'image' ? 'thumb' : 'row',
+        showUploader: types.includes('file') || types.includes('image'),
+        max
+      })
+      .then(links => {
+        const seen = new Set()
+        if (!links) return
+        for (const link of links) {
+          seen.add(link.id)
+          if (value.find(v => v.id === link.id)) continue
+          push(link as Reference & T)
+        }
+        for (const link of value) {
+          if (seen.has(link.id)) continue
+          remove(link.id)
+        }
+      })
   }
 
   const ids = value.map(row => row.id)
@@ -270,77 +267,83 @@ export function LinkInput<T>({state, field}: LinkInputProps<T>) {
   const showExternal = types.includes('external')
 
   return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCenter}
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
-      layoutMeasuring={layoutMeasuringConfig}
-    >
-      <InputLabel
-        label={field.label}
-        help={help}
-        optional={optional}
-        inline={inline}
-        width={width}
-        icon={IcRoundLink}
+    <>
+      <picker.PickerSlot />
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+        layoutMeasuring={layoutMeasuringConfig}
       >
-        <div className={styles.root()}>
-          <div className={styles.root.inner()}>
-            <SortableContext items={ids} strategy={verticalListSortingStrategy}>
-              <Card.Root>
-                {value.map(reference => {
-                  return (
-                    <LinkInputRowSortable<T>
-                      key={reference.id}
-                      fields={fields}
-                      state={state.child(reference.id)}
-                      entryData={id => data?.get(id)}
-                      reference={reference}
-                      onRemove={() => remove(reference.id)}
-                      isSortable={max !== 1}
-                    />
-                  )
-                })}
+        <InputLabel
+          label={field.label}
+          help={help}
+          optional={optional}
+          inline={inline}
+          width={width}
+          icon={IcRoundLink}
+        >
+          <div className={styles.root()}>
+            <div className={styles.root.inner()}>
+              <SortableContext
+                items={ids}
+                strategy={verticalListSortingStrategy}
+              >
+                <Card.Root>
+                  {value.map(reference => {
+                    return (
+                      <LinkInputRowSortable<T>
+                        key={reference.id}
+                        fields={fields}
+                        state={state.child(reference.id)}
+                        entryData={id => data?.get(id)}
+                        reference={reference}
+                        onRemove={() => remove(reference.id)}
+                        isSortable={max !== 1}
+                      />
+                    )
+                  })}
 
-                {showLinkPicker && (
-                  <div className={styles.create()}>
-                    <Create.Root>
-                      <Create.Button onClick={handleCreate}>
-                        Pick link
-                      </Create.Button>
-                      {showExternal && (
+                  {showLinkPicker && (
+                    <div className={styles.create()}>
+                      <Create.Root>
                         <Create.Button onClick={handleCreate}>
-                          External url
+                          Pick link
                         </Create.Button>
-                      )}
-                    </Create.Root>
-                  </div>
-                )}
-              </Card.Root>
-            </SortableContext>
+                        {showExternal && (
+                          <Create.Button onClick={handleCreate}>
+                            External url
+                          </Create.Button>
+                        )}
+                      </Create.Root>
+                    </div>
+                  )}
+                </Card.Root>
+              </SortableContext>
 
-            <DragOverlay
-              dropAnimation={{
-                ...defaultDropAnimation,
-                dragSourceOpacity: 0.5
-              }}
-            >
-              {dragging ? (
-                <LinkInputRow<T>
-                  fields={fields}
-                  state={state.child(dragging.id)}
-                  entryData={id => data?.get(id)}
-                  reference={dragging}
-                  onRemove={() => remove(dragging.id)}
-                  isDragOverlay
-                  isSortable={max !== 1}
-                />
-              ) : null}
-            </DragOverlay>
+              <DragOverlay
+                dropAnimation={{
+                  ...defaultDropAnimation,
+                  dragSourceOpacity: 0.5
+                }}
+              >
+                {dragging ? (
+                  <LinkInputRow<T>
+                    fields={fields}
+                    state={state.child(dragging.id)}
+                    entryData={id => data?.get(id)}
+                    reference={dragging}
+                    onRemove={() => remove(dragging.id)}
+                    isDragOverlay
+                    isSortable={max !== 1}
+                  />
+                ) : null}
+              </DragOverlay>
+            </div>
           </div>
-        </div>
-      </InputLabel>
-    </DndContext>
+        </InputLabel>
+      </DndContext>
+    </>
   )
 }

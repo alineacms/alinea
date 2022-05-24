@@ -1,0 +1,18 @@
+.root {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+
+  &-separator {
+    border-right: 1px solid var(--alinea-outline);
+    height: 80%;
+    width: 1px;
+    margin: auto 0;
+  }
+
+  &-dropdown {
+    padding: 8px;
+    font-size: 13px;
+  }
+}

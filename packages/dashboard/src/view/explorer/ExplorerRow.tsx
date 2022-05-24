@@ -1,17 +1,17 @@
-import {Entry, Outcome, Schema, View} from '@alinea/core'
-import {Cursor} from '@alinea/store'
-import {fromModule} from '@alinea/ui'
-import {memo} from 'react'
-import {useQuery} from 'react-query'
-import {useSession} from '../../hook/UseSession'
-import {ExplorerItem} from './ExplorerItem'
+import { Entry, Outcome, Schema, View } from '@alinea/core'
+import { Cursor } from '@alinea/store'
+import { fromModule } from '@alinea/ui'
+import { memo } from 'react'
+import { useQuery } from 'react-query'
+import { useSession } from '../../hook/UseSession'
+import { ExplorerItem } from './ExplorerItem'
 import css from './ExplorerRow.module.scss'
 
 const styles = fromModule(css)
 
-export type ExplorerRowProps<T extends Entry.Minimal> = {
+export type ExplorerRowProps = {
   schema: Schema
-  cursor: Cursor<T>
+  cursor: Cursor<Entry.Minimal>
   batchSize: number
   amount: number
   from: number
@@ -19,7 +19,7 @@ export type ExplorerRowProps<T extends Entry.Minimal> = {
   defaultView: View<Entry, any>
 }
 
-function ExplorerRowImpl<T extends Entry.Minimal>({
+export const ExplorerRow = memo(function ExplorerRow({
   schema,
   cursor,
   batchSize,
@@ -27,7 +27,7 @@ function ExplorerRowImpl<T extends Entry.Minimal>({
   from,
   summaryView,
   defaultView
-}: ExplorerRowProps<T>) {
+}: ExplorerRowProps) {
   const {hub} = useSession()
   const start = Math.floor(from / batchSize)
   const startAt = from % batchSize
@@ -64,6 +64,4 @@ function ExplorerRowImpl<T extends Entry.Minimal>({
       </div>
     </div>
   )
-}
-
-export const ExplorerRow = memo(ExplorerRowImpl) as typeof ExplorerRowImpl
+})

@@ -1,25 +1,53 @@
 import {TextDoc, TextNode, TypesOf} from '@alinea/core'
 import {fromModule} from '@alinea/ui'
-import {ComponentType, Fragment} from 'react'
+import {ComponentType, CSSProperties, Fragment, ReactElement} from 'react'
 import reactStringReplace from 'react-string-replace'
 import css from './RichText.module.scss'
 
 const styles = fromModule(css)
 
-function getTag(type: string, attributes: Record<string, any> | undefined) {
+function getElement(
+  type: string,
+  attributes: Record<string, any> | undefined
+): ReactElement | undefined {
   switch (type) {
     case 'heading':
-      return `h${attributes?.level || 1}`
-    case 'bold':
-      return 'b'
-    case 'italic':
-      return 'i'
+      const Tag = `h${attributes?.level || 1}` as 'h1'
+      return <Tag className={styles.heading()} />
     case 'paragraph':
-      return 'p'
+      return (
+        <p
+          className={styles.paragraph()}
+          style={richTextStyles(attributes as RichTextAttributes | undefined)}
+        />
+      )
+    case 'bold':
+      return <b />
+    case 'italic':
+      return <i />
     case 'bulletList':
-      return 'ul'
+      return <ul className={styles.list()} />
+    case 'orderedList':
+      return <ol className={styles.list()} />
     case 'listItem':
-      return 'li'
+      return <li className={styles.listItem()} />
+  }
+}
+
+type RichTextAttributes = {
+  textAlign: 'center' | 'right' | 'justify'
+}
+
+function richTextStyles(attrs: RichTextAttributes | undefined): CSSProperties {
+  switch (true) {
+    case attrs?.textAlign === 'center':
+      return {textAlign: 'center'}
+    case attrs?.textAlign === 'right':
+      return {textAlign: 'right'}
+    case attrs?.textAlign === 'justify':
+      return {textAlign: 'justify'}
+    default:
+      return {}
   }
 }
 
@@ -33,16 +61,18 @@ function RichTextNodeView<T>(node: TextNode<T>) {
         </span>
       ))
       const wrappers =
-        marks?.map(mark => getTag(mark.type, mark.attrs) || Fragment) || []
-      return wrappers.reduce((children, Tag) => {
-        return <Tag>{children}</Tag>
+        marks?.map(mark => getElement(mark.type, mark.attrs)) || []
+      return wrappers.reduce((children, element) => {
+        const Tag = element?.type || Fragment
+        return <Tag {...element?.props}>{children}</Tag>
       }, <>{content}</>)
     }
     default: {
       const {type, content, ...attrs} = node as TextNode.Element
-      const Tag = getTag(type, attrs) || Fragment
+      const element = getElement(type, attrs)
+      const Tag = element?.type || Fragment
       return (
-        <Tag>
+        <Tag {...element?.props}>
           {content?.map((node, i) => (
             <RichTextNodeView key={i} {...node} />
           )) || <br />}

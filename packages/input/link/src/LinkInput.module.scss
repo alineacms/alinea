@@ -5,16 +5,16 @@
     position: relative;
     /*padding: 15px;
     border-radius: 12px;
-    background: var(--inner);*/
+    background: var(--alinea-inner);*/
   }
 }
 
 .row {
   position: relative;
-  // background: var(--lift);
+  // background: var(--alinea-lift);
 
   & + & {
-    box-shadow: var(--divider-top);
+    box-shadow: var(--alinea-divider-top);
   }
 
   &.is-dragging {
@@ -23,7 +23,7 @@
 
   &.is-overlay {
     border-radius: 12px;
-    box-shadow: 0 2px 30px var(--shadow);
+    box-shadow: 0 2px 30px var(--alinea-shadow);
     overflow: hidden;
   }
 
@@ -45,6 +45,6 @@
   position: relative;
   padding: 4px 0 5px 0;
   .row + & {
-    box-shadow: var(--divider-top);
+    box-shadow: var(--alinea-divider-top);
   }
 }

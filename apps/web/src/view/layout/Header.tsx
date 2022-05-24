@@ -1,4 +1,4 @@
-import {fromModule, HStack, LogoShape, Stack} from '@alinea/ui'
+import {fromModule, HStack, LogoShape, Stack, TextLabel} from '@alinea/ui'
 import {MdiGithub} from '@alinea/ui/icons/MdiGithub'
 import {MdiTwitterCircle} from '@alinea/ui/icons/MdiTwitterCircle'
 import {MiLayers} from '@alinea/ui/icons/MiLayers'
@@ -25,11 +25,18 @@ export function Header({links}: HeaderProps) {
         </Link>
         <HStack center gap={30}>
           {links.map(link => {
-            return (
-              <Link key={link.id} href={link.url}>
-                <a className={styles.root.link()}>{link.title}</a>
-              </Link>
-            )
+            switch (link.type) {
+              case 'entry':
+                return (
+                  <Link key={link.id} href={link.url}>
+                    <a className={styles.root.link()}>
+                      <TextLabel label={link.title} />
+                    </a>
+                  </Link>
+                )
+              default:
+                return null
+            }
           })}
           <a className={styles.root.link()} href="/types/alinea">
             API

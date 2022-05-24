@@ -1,50 +1,112 @@
-import {renderLabel} from '@alinea/core'
+import {Label} from '@alinea/core'
 import {InputLabel, InputState, useInput} from '@alinea/editor'
-import {fromModule, HStack, px} from '@alinea/ui'
+import {fromModule, HStack, Icon, TextLabel} from '@alinea/ui'
 import {IcRoundArrowDropDownCircle} from '@alinea/ui/icons/IcRoundArrowDropDownCircle'
-import {IcRoundKeyboardArrowDown} from '@alinea/ui/icons/IcRoundKeyboardArrowDown'
+import {IcRoundCheck} from '@alinea/ui/icons/IcRoundCheck'
+import {IcRoundUnfoldMore} from '@alinea/ui/icons/IcRoundUnfoldMore'
+import {
+  autoUpdate,
+  flip,
+  offset,
+  size,
+  useFloating
+} from '@floating-ui/react-dom'
+import {Listbox} from '@headlessui/react'
 import {SelectField} from './SelectField'
 import css from './SelectInput.module.scss'
 
 const styles = fromModule(css)
 
-export type SelectInputProps = {
-  state: InputState<InputState.Scalar<string | undefined>>
-  field: SelectField
+export type SelectInputProps<T extends string> = {
+  state: InputState<InputState.Scalar<T>>
+  field: SelectField<T>
 }
 
-export function SelectInput({state, field}: SelectInputProps) {
-  const [value, setValue] = useInput(state)
-  const {optional, help} = field.options
-  const {items} = field
+export function SelectInput<T extends string>({
+  state,
+  field
+}: SelectInputProps<T>) {
+  const {width, optional, help, placeholder, initialValue} = field.options
+  const [value = initialValue, setValue] = useInput(state)
+  const items = field.items as Record<string, Label>
+  const {x, y, reference, floating, refs, strategy} = useFloating({
+    whileElementsMounted: autoUpdate,
+    strategy: 'fixed',
+    placement: 'bottom-start',
+    middleware: [
+      offset(4),
+      flip(),
+      size({
+        apply({rects}) {
+          if (refs.floating.current)
+            Object.assign(refs.floating.current.style, {
+              width: `${rects.reference.width}px`
+            })
+        }
+      })
+    ]
+  })
   return (
-    <div>
-      <InputLabel
-        asLabel
-        label={field.label}
-        help={help}
-        optional={optional}
-        icon={IcRoundArrowDropDownCircle}
-      >
-        <HStack center className={styles.root()}>
-          <select
-            value={value}
-            onChange={e => setValue(e.target.value)}
-            className={styles.root.input()}
-          >
-            {Object.entries(items).map(([key, label]) => {
-              return (
-                <option key={key} value={key}>
-                  {renderLabel(label)}
-                </option>
-              )
-            })}
-          </select>
-          <div className={styles.root.icon()}>
-            <IcRoundKeyboardArrowDown style={{fontSize: px(18)}} />
-          </div>
-        </HStack>
-      </InputLabel>
-    </div>
+    <InputLabel
+      width={width}
+      label={field.label}
+      help={help}
+      optional={optional}
+      icon={IcRoundArrowDropDownCircle}
+    >
+      <div className={styles.root()}>
+        <Listbox value={value} onChange={setValue}>
+          {({open}) => (
+            <div>
+              <Listbox.Button
+                ref={reference}
+                className={styles.root.input({open})}
+              >
+                <span className={styles.root.input.label()}>
+                  <TextLabel
+                    label={value ? items[value] : placeholder || field.label}
+                  />
+                </span>
+                <Icon
+                  icon={IcRoundUnfoldMore}
+                  className={styles.root.input.icon()}
+                />
+              </Listbox.Button>
+              <Listbox.Options
+                ref={floating}
+                style={{
+                  position: strategy,
+                  top: `${y || 0}px`,
+                  left: `${x || 0}px`
+                }}
+                className={styles.root.dropdown()}
+              >
+                <div className={styles.root.dropdown.inner()}>
+                  {Object.entries(items).map(([key, label]) => (
+                    <Listbox.Option key={key} value={key}>
+                      {({active, selected}) => (
+                        <HStack
+                          center
+                          gap={4}
+                          className={styles.root.dropdown.option({
+                            active,
+                            selected
+                          })}
+                        >
+                          <div className={styles.root.dropdown.option.icon()}>
+                            {selected && <Icon size={18} icon={IcRoundCheck} />}
+                          </div>
+                          <TextLabel label={label} />
+                        </HStack>
+                      )}
+                    </Listbox.Option>
+                  ))}
+                </div>
+              </Listbox.Options>
+            </div>
+          )}
+        </Listbox>
+      </div>
+    </InputLabel>
   )
 }

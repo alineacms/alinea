@@ -1,8 +1,8 @@
 .list {
   display: flex;
   margin: 0 6px 8px 6px;
-  // border-bottom: 1px solid var(--outline);
-  box-shadow: var(--divider-bottom);
+  // border-bottom: 1px solid var(--alinea-outline);
+  box-shadow: var(--alinea-divider-bottom);
 }
 
 .trigger {
@@ -20,14 +20,15 @@
   font-size: 12.5px;
   line-height: 1.1;
   font-weight: bold;
+  outline: none;
 
   &:hover {
     opacity: 1;
     border-color: currentColor;
   }
 
-  &[data-state='active'] {
+  &.is-selected {
     opacity: 1;
-    border-color: var(--accent);
+    border-color: var(--alinea-accent);
   }
 }

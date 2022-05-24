@@ -114,7 +114,7 @@ export function ReferencePicker({
     onConfirm(selection)
   }
   return (
-    <Modal open onClose={onCancel}>
+    <Modal open onClose={onCancel} className={styles.root()}>
       <Suspense fallback={<Loader absolute />}>
         <HStack center gap={18} className={styles.root.header()}>
           <IconButton icon={IcRoundArrowBack} onClick={onCancel} />
@@ -124,6 +124,7 @@ export function ReferencePicker({
         <label className={styles.root.label()}>
           <IcRoundSearch className={styles.root.label.icon()} />
           <input
+            type="text"
             autoFocus
             placeholder="Search"
             value={search}

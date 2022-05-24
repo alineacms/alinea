@@ -8,7 +8,7 @@
     align-items: center;
     padding-right: 8px;
     border-radius: 6px;
-    color: var(--foreground-faded);
+    color: var(--alinea-foreground-faded);
   }
 
   &-link {
@@ -29,10 +29,10 @@
   }
 
   &.is-active &-inner {
-    background: var(--selected);
+    background: var(--alinea-selected);
   }
 
   &:hover &-inner {
-    background: var(--highlight);
+    background: var(--alinea-highlight);
   }
 }

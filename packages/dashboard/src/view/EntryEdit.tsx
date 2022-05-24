@@ -1,59 +1,33 @@
-import {createId, docFromEntry, Entry, slugify} from '@alinea/core'
-import {InputForm, InputState} from '@alinea/editor'
-import {select} from '@alinea/input.select'
-import {SelectInput} from '@alinea/input.select/view'
-import {text} from '@alinea/input.text'
-import {TextInput} from '@alinea/input.text/view'
-import {
-  Button,
-  ErrorMessage,
-  fromModule,
-  HStack,
-  IconButton,
-  Loader,
-  TextLabel,
-  Typo,
-  useObservable
-} from '@alinea/ui'
-import {IcRoundArrowBack} from '@alinea/ui/icons/IcRoundArrowBack'
-import {Modal} from '@alinea/ui/Modal'
-import {
-  ComponentType,
-  FormEvent,
-  Suspense,
-  useLayoutEffect,
-  useState
-} from 'react'
-import {useQuery, useQueryClient} from 'react-query'
+import {createId, docFromEntry, EntryStatus} from '@alinea/core'
+import {InputForm} from '@alinea/editor'
+import {Button, ErrorMessage, fromModule, useObservable} from '@alinea/ui'
+import {Main} from '@alinea/ui/Main'
+import {Suspense, useLayoutEffect, useState} from 'react'
+import {useQueryClient} from 'react-query'
 import {useNavigate} from 'react-router'
-import {Link} from 'react-router-dom'
 import * as Y from 'yjs'
 import {EntryDraft} from '../draft/EntryDraft'
 import {EntryProperty} from '../draft/EntryProperty'
 import {useLocale} from '../hook/UseLocale'
 import {useNav} from '../hook/UseNav'
-import {useRoot} from '../hook/UseRoot'
 import {useSession} from '../hook/UseSession'
 import {useWorkspace} from '../hook/UseWorkspace'
+import {EntryDiff} from './diff/EntryDiff'
+import {EditMode} from './entry/EditMode'
 import {EntryHeader} from './entry/EntryHeader'
+import {EntryPreview} from './entry/EntryPreview'
 import {EntryTitle} from './entry/EntryTitle'
 import css from './EntryEdit.module.scss'
 
 const styles = fromModule(css)
 
-type EntryPreviewProps = {
+export type EntryEditProps = {
+  initialMode: EditMode
   draft: EntryDraft
-  preview: ComponentType<{entry: Entry; previewToken: string}>
+  isLoading: boolean
 }
 
-function EntryPreview({draft, preview: Preview}: EntryPreviewProps) {
-  const entry = useObservable(draft.entry)
-  return <Preview entry={entry} previewToken={draft.detail.previewToken} />
-}
-
-type EntryEditDraftProps = {draft: EntryDraft; isLoading: boolean}
-
-function EntryEditDraft({draft, isLoading}: EntryEditDraftProps) {
+export function EntryEdit({initialMode, draft, isLoading}: EntryEditProps) {
   const nav = useNav()
   const queryClient = useQueryClient()
   const locale = useLocale()
@@ -64,6 +38,8 @@ function EntryEditDraft({draft, isLoading}: EntryEditDraftProps) {
   const {preview} = useWorkspace()
   const isTranslating = !isLoading && locale !== draft.i18n?.locale
   const [isCreating, setIsCreating] = useState(false)
+  const [mode, setMode] = useState<EditMode>(initialMode)
+  const status = useObservable(draft.status)
   function handleTranslation() {
     if (!locale || isCreating) return
     setIsCreating(true)
@@ -92,9 +68,9 @@ function EntryEditDraft({draft, isLoading}: EntryEditDraftProps) {
     if (translation) navigate(nav.entry(translation))
   }, [draft, isTranslating, locale])
   return (
-    <HStack style={{height: '100%'}}>
-      <div className={styles.root()}>
-        <EntryHeader />
+    <>
+      <Main className={styles.root()}>
+        <EntryHeader mode={mode} setMode={setMode} />
         <div className={styles.root.draft()}>
           <EntryTitle
             backLink={
@@ -105,156 +81,35 @@ function EntryEditDraft({draft, isLoading}: EntryEditDraftProps) {
               })
             }
           />
-          {isTranslating ? (
-            <Button onClick={() => handleTranslation()}>
-              Translate from {draft.i18n?.locale.toUpperCase()}
-            </Button>
-          ) : (
-            <Suspense fallback={null}>
-              {type ? (
-                <InputForm
-                  // We key here currently because the tiptap/yjs combination fails to register
-                  // changes when the fragment is changed while the editor is mounted.
-                  key={draft.doc.guid}
-                  type={type}
-                  state={EntryProperty.root}
-                />
-              ) : (
-                <ErrorMessage error={new Error('Type not found')} />
-              )}
-            </Suspense>
-          )}
-        </div>
-      </div>
-      {preview && <EntryPreview preview={preview} draft={draft} />}
-    </HStack>
-  )
-}
-
-export type NewEntryProps = {parentId?: string}
-
-export function NewEntry({parentId}: NewEntryProps) {
-  const nav = useNav()
-  const locale = useLocale()
-  const queryClient = useQueryClient()
-  const navigate = useNavigate()
-  const {hub} = useSession()
-  const {name: workspace, schema} = useWorkspace()
-  const root = useRoot()
-  const {data: parentEntry} = useQuery(
-    ['parent', parentId],
-    () => {
-      return parentId ? hub.entry(parentId) : undefined
-    },
-    {
-      suspense: true,
-      refetchOnWindowFocus: false
-    }
-  )
-  const parent = parentEntry?.isSuccess() ? parentEntry.value?.entry : undefined
-  const type = parent && schema.type(parent.type)
-  const types: Array<string> = !parentId
-    ? root.contains
-    : type?.options.contains || schema.keys
-  const [selectedType, setSelectedType] = useState<string | undefined>(types[0])
-  const [title, setTitle] = useState('')
-  const [isCreating, setIsCreating] = useState(false)
-
-  function handleCreate(e: FormEvent) {
-    e.preventDefault()
-    if (!selectedType || !title) return
-    setIsCreating(true)
-    const type = schema.type(selectedType)!
-    const path = slugify(title)
-    const entry = {
-      ...type.create(selectedType),
-      path,
-      workspace,
-      root: root.name,
-      parent: parent?.id,
-      url: (parent?.url || '') + (parent?.url.endsWith('/') ? '' : '/') + path,
-      title
-    }
-    if (root.i18n) {
-      entry.i18n = {
-        id: createId(),
-        locale
-      }
-      entry.url = `/${locale}${entry.url}`
-    }
-    const doc = docFromEntry(entry, () => type)
-    return hub
-      .updateDraft(entry.id, Y.encodeStateAsUpdate(doc))
-      .then(result => {
-        if (result.isSuccess()) {
-          queryClient.invalidateQueries([
-            'children',
-            entry.workspace,
-            entry.root,
-            entry.parent
-          ])
-          navigate(nav.entry(entry))
-        }
-      })
-      .finally(() => {
-        setIsCreating(false)
-      })
-  }
-
-  function handleClose() {
-    navigate(nav.entry({workspace, ...parent}))
-  }
-
-  /*const parentType = parent && schema.type(parent.type)
-  const ParentView: any =
-    parent && (parentType?.options.summaryRow || EntrySummaryRow)*/
-
-  return (
-    <Modal open onClose={handleClose}>
-      <HStack center gap={18} className={styles.new.header()}>
-        <IconButton icon={IcRoundArrowBack} onClick={handleClose} />
-        <Typo.H1 flat>
-          New entry{' '}
-          {parent && (
+          {mode === EditMode.Diff && status !== EntryStatus.Published ? (
             <>
-              in <TextLabel label={parent.title} />
+              {draft.detail.original && (
+                <EntryDiff
+                  entryA={draft.detail.original}
+                  entryB={draft.getEntry()}
+                />
+              )}
+            </>
+          ) : (
+            <>
+              {isTranslating ? (
+                <Button onClick={() => handleTranslation()}>
+                  Translate from {draft.i18n?.locale.toUpperCase()}
+                </Button>
+              ) : (
+                <Suspense fallback={null}>
+                  {type ? (
+                    <InputForm type={type} state={EntryProperty.root} />
+                  ) : (
+                    <ErrorMessage error={new Error('Type not found')} />
+                  )}
+                </Suspense>
+              )}
             </>
           )}
-        </Typo.H1>
-      </HStack>
-      <form onSubmit={handleCreate}>
-        {isCreating ? (
-          <Loader absolute />
-        ) : (
-          <>
-            {/*parent && <ParentView {...parent} />*/}
-            <TextInput
-              state={new InputState.StatePair(title, setTitle)}
-              field={text('Title', {autoFocus: true})}
-            />
-            <SelectInput
-              state={new InputState.StatePair(selectedType, setSelectedType)}
-              field={select(
-                'Select type',
-                Object.fromEntries(
-                  types.map(typeKey => {
-                    const type = schema.type(typeKey)
-                    return [typeKey, type?.label || typeKey]
-                  })
-                )
-              )}
-            />
-            <Link to={nav.entry({workspace, ...parent})}>Cancel</Link>
-            <Button>Create</Button>
-          </>
-        )}
-      </form>
-    </Modal>
+        </div>
+      </Main>
+      {preview && <EntryPreview preview={preview} draft={draft} />}
+    </>
   )
-}
-
-export type EntryEditProps = {draft: EntryDraft; isLoading: boolean}
-
-export function EntryEdit({draft, isLoading}: EntryEditProps) {
-  return <EntryEditDraft draft={draft} isLoading={isLoading} />
 }

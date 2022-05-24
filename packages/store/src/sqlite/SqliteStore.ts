@@ -41,7 +41,9 @@ export class SqliteStore implements Store {
       formatAsJson: true,
       formatSubject: subject => sql`json_object('result', ${subject})`
     })
-    if (options?.debug) console.log(stmt.sql)
+    if (options?.debug) {
+      console.log(f.formatSelect(cursor.cursor, {formatInline: true}).sql)
+    }
     const prepared = this.prepare(stmt.sql)
     return this.debug(
       () => prepared.all<string>(stmt.getParams()),
@@ -140,11 +142,15 @@ export class SqliteStore implements Store {
   }
 
   prepared = new Map()
-  prepare(query: String): Driver.PreparedStatement {
+  prepare(query: string): Driver.PreparedStatement {
     if (this.prepared.has(query)) return this.prepared.get(query)
-    const result = this.createOnError(() => this.db.prepare(query))
-    this.prepared.set(query, result)
-    return result
+    try {
+      const result = this.createOnError(() => this.db.prepare(query))
+      this.prepared.set(query, result)
+      return result
+    } catch (e: any) {
+      throw new Error(`Could not prepare query:\n${query}\nCause: ${e}`)
+    }
   }
 
   createFts5<Row extends {}>(

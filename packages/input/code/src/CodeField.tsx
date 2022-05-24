@@ -1,26 +1,31 @@
-import {Field, Label, Value} from '@alinea/core'
+import {Expr} from '@alinea/alinea'
+import type {Pages} from '@alinea/backend'
+import {Field, Label, Shape} from '@alinea/core'
 
-export type CodeFieldOptions = {
+export type CodeFieldOptions<Q> = {
   width?: number
   help?: Label
   optional?: boolean
   inline?: boolean
   initialValue?: string
   language?: string
+  /** Modify value returned when queried through `Pages` */
+  transform?: <P>(field: Expr<string>, pages: Pages<P>) => Expr<Q> | undefined
 }
 
-export interface CodeField extends Field.Scalar<string> {
+export interface CodeField<Q = string> extends Field.Scalar<string, Q> {
   label: Label
-  options: CodeFieldOptions
+  options: CodeFieldOptions<Q>
 }
 
-export function createCode(
+export function createCode<Q = string>(
   label: Label,
-  options: CodeFieldOptions = {}
-): CodeField {
+  options: CodeFieldOptions<Q> = {}
+): CodeField<Q> {
   return {
-    type: Value.Scalar,
+    shape: Shape.Scalar(label),
     label,
-    options
+    options,
+    transform: options.transform
   }
 }

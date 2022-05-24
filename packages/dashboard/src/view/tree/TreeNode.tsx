@@ -1,5 +1,6 @@
 import {renderLabel} from '@alinea/core'
 import {Create, fromModule, px, Stack, useInitialEffect} from '@alinea/ui'
+import {IcRoundEdit} from '@alinea/ui/icons/IcRoundEdit'
 import {IcRoundInsertDriveFile} from '@alinea/ui/icons/IcRoundInsertDriveFile'
 import {IcRoundKeyboardArrowDown} from '@alinea/ui/icons/IcRoundKeyboardArrowDown'
 import {IcRoundKeyboardArrowRight} from '@alinea/ui/icons/IcRoundKeyboardArrowRight'
@@ -23,6 +24,7 @@ import {
 import {Link} from 'react-router-dom'
 import {ContentTreeEntry} from '../../hook/UseContentTree'
 import {useCurrentDraft} from '../../hook/UseCurrentDraft'
+import {useDraftsList} from '../../hook/UseDraftsList'
 import {useNav} from '../../hook/UseNav'
 import {useWorkspace} from '../../hook/UseWorkspace'
 import css from './TreeNode.module.scss'
@@ -47,11 +49,13 @@ function TreeNodeChildrenCreator({locale, entry}: TreeNodeChildrenCreator) {
 type TreeNodeLinkProps = {
   locale: string | undefined
   entry: ContentTreeEntry
+  link?: string
   isSelected: boolean
   level: number
   isOpened: boolean
   toggleOpen: () => void
   rootRef?: Ref<HTMLDivElement>
+  isDraft?: boolean
   isDragging?: boolean
   isDragOverlay?: boolean
   isDropContainer?: boolean
@@ -62,11 +66,13 @@ const TreeNodeLink = memo(
     {
       locale,
       entry,
+      link,
       isOpened,
       toggleOpen,
       isSelected,
       level,
       rootRef,
+      isDraft,
       isDragging,
       isDragOverlay,
       isDropContainer,
@@ -74,7 +80,6 @@ const TreeNodeLink = memo(
     },
     ref
   ) {
-    const nav = useNav()
     const {schema} = useWorkspace()
     const type = schema.type(entry.type)!
     const isContainer = entry.$isContainer
@@ -97,6 +102,7 @@ const TreeNodeLink = memo(
           dragging: isDragging,
           dragOverlay: isDragOverlay,
           dropContainer: isDropContainer,
+          draft: isDraft,
           untranslated: isUnTranslated
         })}
         ref={rootRef}
@@ -106,7 +112,7 @@ const TreeNodeLink = memo(
           <Link
             ref={ref}
             draggable={false}
-            to={nav.entry({...entry, locale, id: entry.source.id})}
+            to={link || ''}
             className={styles.root.link()}
             style={{paddingLeft: `${10 + level * 8}px`}}
             onClick={event => {
@@ -145,6 +151,11 @@ const TreeNodeLink = memo(
                   <div>{entry.childrenCount}</div>
                 </div>
               )*/}
+              {isDraft && (
+                <span className={styles.root.link.status()}>
+                  <IcRoundEdit />
+                </span>
+              )}
             </HStack>
           </Link>
           {entry.$isContainer && (
@@ -198,6 +209,7 @@ export function TreeNodeSortable(props: TreeNodeProps) {
 }
 
 export type TreeNodeProps = {
+  link?: string
   entry: ContentTreeEntry
   locale: string | undefined
   level: number
@@ -220,6 +232,9 @@ export function TreeNode({
   const nav = useNav()
   const ref = useRef<HTMLAnchorElement>(null)
   const draft = useCurrentDraft()
+  const workspace = useWorkspace()
+  const {ids: drafts} = useDraftsList(workspace.name)
+  const isDraft = drafts.includes(entry.source.id)
   const isSelected = draft?.id === entry.source.id
   const handleToggleOpen = useCallback(() => {
     if (entry.$isContainer) toggleOpen(entry.id)
@@ -236,6 +251,7 @@ export function TreeNode({
       level={level}
       isSelected={isSelected}
       isOpened={isOpened}
+      isDraft={isDraft}
       toggleOpen={handleToggleOpen}
       rootRef={rootRef}
       {...props}
