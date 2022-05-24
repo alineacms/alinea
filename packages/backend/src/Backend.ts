@@ -190,6 +190,7 @@ export class Backend<T extends Workspaces = Workspaces> implements Hub<T> {
         if (!parent) throw createError(400, `Parent not found: ${url}`)
         return parent.id
       })
+      console.log(parents)
       const parent = parents[parents.length - 1]
       if (!parent) throw createError(400, `Parent not found: "${file.path}"`)
       const location = await media.upload(workspace as string, file)
