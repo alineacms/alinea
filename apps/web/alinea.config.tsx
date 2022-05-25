@@ -20,7 +20,7 @@ const web = workspace('Alinea', {
   typeNamespace: 'content',
   source: './content',
   mediaDir: './public',
-  color: '#EF437C', // '#5661E5', //
+  color: '#5661E5',
   roots: {
     data: root('Alinea website', {
       icon: IcRoundInsertDriveFile,

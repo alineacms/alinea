@@ -1,6 +1,6 @@
 .root {
   position: relative;
-  z-index: 5;
+  z-index: 6;
   width: 100%;
   padding: 0 10px;
   padding-left: 6px;
@@ -8,6 +8,12 @@
   color: var(--alinea-foreground);
   background: var(--alinea-background);
   border-bottom: 1px solid var(--alinea-outline);
+
+  &-menu {
+    display: flex;
+    justify-content: center;
+    width: 44px - 12px;
+  }
 
   &-portal {
     flex-grow: 1;

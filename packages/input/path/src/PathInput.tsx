@@ -40,7 +40,7 @@ export function PathInput({state, field}: PathInputProps) {
     >
       <input
         className={styles.root.input()}
-        type="path"
+        type="text"
         value={inputValue}
         onChange={e => {
           const value = e.currentTarget.value

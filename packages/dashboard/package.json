@@ -23,10 +23,12 @@
     }
   },
   "dependencies": {
+    "@alinea/client": "0.0.0",
     "@alinea/core": "0.0.0",
+    "@alinea/css": "0.0.0",
     "@alinea/editor": "0.0.0",
-    "@alinea/input.select": "0.0.0",
     "@alinea/input.link": "0.0.0",
+    "@alinea/input.select": "0.0.0",
     "@alinea/input.text": "0.0.0",
     "@alinea/store": "0.0.0",
     "@alinea/ui": "0.0.0",
@@ -49,8 +51,7 @@
     "yjs": "^13.5.34"
   },
   "peerDependencies": {
-    "react": "*",
-    "react-dom": "*"
+    "react": "*"
   },
   "devDependencies": {
     "@types/diff-match-patch": "^1.0.32"

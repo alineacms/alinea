@@ -19,6 +19,7 @@ export const IconButton = forwardRef(function IconButton(
 ) {
   return (
     <button
+      type="button"
       ref={ref}
       {...props}
       style={{...props.style, fontSize: size ? px(size) : undefined}}

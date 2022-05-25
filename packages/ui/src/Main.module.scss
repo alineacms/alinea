@@ -1,4 +1,4 @@
-@import '@alinea/web/src/style.scss';
+@import '@alinea/ui/style.scss';
 
 .root {
   flex-grow: 1;
@@ -7,9 +7,11 @@
   width: 100%;
 
   &-inner {
-    height: 100%;
     width: 100%;
-    min-width: 560px;
+    min-width: 320px;
+    @mixin ml {
+      min-width: 560px;
+    }
   }
 
   &::-webkit-scrollbar {

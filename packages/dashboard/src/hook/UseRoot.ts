@@ -20,5 +20,5 @@ export function useRoot(): Root {
       root = Object.keys(config.workspaces[workspace].roots)[0]
     } = params
     return config.workspaces[workspace].roots[parseRootPath(root)[0]]
-  }, [match])
+  }, [config, match])
 }

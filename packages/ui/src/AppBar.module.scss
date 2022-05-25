@@ -6,6 +6,7 @@
   align-items: center;
   background-color: hsla(var(--alinea-positive), 0.6);
   backdrop-filter: blur(12px);
+  overflow-x: auto;
 }
 
 .item {
@@ -15,6 +16,7 @@
   padding: 0 10px;
   height: 44px;
   font-size: 13px;
+  white-space: nowrap;
 
   &-icon {
     display: flex;

@@ -38,9 +38,14 @@ export function Header({links}: HeaderProps) {
                 return null
             }
           })}
-          <a className={styles.root.link()} href="/types/alinea">
-            API
-          </a>
+          <Link href="/types/alinea">
+            <a className={styles.root.link()}>API</a>
+          </Link>
+          <Link href="/changelog">
+            <a className={styles.root.link()} href="/changelog">
+              Changelog
+            </a>
+          </Link>
           <a className={styles.root.link()} href="/demo" target="_blank">
             Demo
           </a>
