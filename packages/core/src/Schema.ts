@@ -1,11 +1,11 @@
-import { Collection, Cursor, Selection } from '@alinea/store'
-import { Entry } from './Entry'
-import { Field } from './Field'
-import { RecordShape } from './shape/RecordShape'
-import type { TypeConfig } from './Type'
-import { Type } from './Type'
-import { LazyRecord } from './util/LazyRecord'
-import type { Workspace } from './Workspace'
+import {Collection, Cursor, Selection} from '@alinea/store'
+import {Entry} from './Entry'
+import {Field} from './Field'
+import {RecordShape} from './shape/RecordShape'
+import type {TypeConfig} from './Type'
+import {Type} from './Type'
+import {LazyRecord} from './util/LazyRecord'
+import type {Workspace} from './Workspace'
 
 export type HasType = {type: string}
 
