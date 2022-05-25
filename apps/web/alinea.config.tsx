@@ -63,6 +63,7 @@ const stories = workspace('Stories', {
 const workspaces = {web, stories}
 
 export const config = createConfig({
+  backend: './alinea.backend',
   workspaces:
     process.env.NODE_ENV === 'development'
       ? workspaces

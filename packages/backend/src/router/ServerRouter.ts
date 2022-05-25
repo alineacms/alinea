@@ -14,9 +14,6 @@ import {parseBuffer, parseJson} from '../util/BodyParser'
 export function createServerRouter(hub: Server) {
   const {auth, dashboardUrl} = hub.options
   const router = Router()
-  // Use of compression here results in a failure in nextjs.
-  // api-utils apiRes.end is called with [undefined, undefined]
-  // for etag (empty body) responses.
   router.use(serverTiming())
   router.use(compression({filter: () => true}))
   router.use(cors({origin: dashboardUrl}))

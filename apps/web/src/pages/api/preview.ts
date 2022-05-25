@@ -1,5 +1,5 @@
+import {backend} from '@alinea/content/backend.js'
 import type {NextApiRequest, NextApiResponse} from 'next'
-import {backend} from '../../../alinea.backend'
 
 export default async function handler(
   req: NextApiRequest,

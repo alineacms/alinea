@@ -1,6 +1,6 @@
+import {backend} from '@alinea/content/backend.js'
 import {TypeOf} from 'alinea'
 import {GetStaticPropsContext} from 'next'
-import {backend} from '../../../alinea.backend'
 import {membersOf, packageName, packagePaths, typeNav} from '../../data/Types'
 import {layoutQuery} from '../../view/layout/Layout.query'
 

@@ -78,7 +78,7 @@ function serverPlugin({outDir}: ServerPluginOptions): Plugin {
   }
 }
 
-function bin(strings: ReadonlyArray<String>, ...inserts: Array<Buffer>) {
+function bin(strings: ReadonlyArray<string>, ...inserts: Array<Buffer>) {
   const res: Array<Buffer> = []
   strings.forEach(function (str, i) {
     res.push(
@@ -87,6 +87,15 @@ function bin(strings: ReadonlyArray<String>, ...inserts: Array<Buffer>) {
     if (inserts[i]) res.push(inserts[i])
   })
   return Buffer.concat(res)
+}
+
+function code(strings: ReadonlyArray<string>, ...inserts: Array<any>) {
+  const res: Array<string> = []
+  strings.forEach(function (str, i) {
+    res.push(str)
+    if (i in inserts) res.push(String(inserts[i]))
+  })
+  return res.join('').replace(/  /g, '').trim()
 }
 
 function embedInWasm(data: Uint8Array) {
@@ -138,14 +147,12 @@ function schemaCollections(workspace: Workspace) {
       .map(type => `export const ${type} = schema.type('${type}').collection()`)
       .join('\n')}
   `
-  return `
+  return code`
     import {config} from '../config.js'
     export const workspace = config.workspaces['${workspace.name}']
     export const schema = workspace.schema
     ${collections}
   `
-    .replace(/  /g, '')
-    .trim()
 }
 
 function schemaTypes(workspace: Workspace) {
@@ -160,7 +167,7 @@ function schemaTypes(workspace: Workspace) {
         export type ${type} = DataOf<typeof ${type}>`
     )
     .join('\n')}`
-  return `
+  return code`
     import {config} from '../config.js'
     import {DataOf, EntryOf, Entry} from '@alinea/core'
     import {Collection} from '@alinea/store'
@@ -168,8 +175,6 @@ function schemaTypes(workspace: Workspace) {
     export const schema = config.workspaces['${workspace.name}'].schema
     ${wrapNamespace(collections, workspace.typeNamespace)}
   `
-    .replace(/  /g, '')
-    .trim()
 }
 
 export type GenerateOptions = {
@@ -221,6 +226,7 @@ export async function generate(options: GenerateOptions) {
       'index.d.ts',
       'client.js',
       'client.d.ts',
+      'backend.d.ts',
       'store.d.ts'
     )
     await fs.writeFile(
@@ -265,6 +271,7 @@ export async function generate(options: GenerateOptions) {
     if (cacheWatcher) (await cacheWatcher).stop()
     const config = await loadConfig()
     return Promise.all([
+      generateBackend(config),
       generateWorkspaces(config),
       (cacheWatcher = fillCache(config))
     ])
@@ -277,6 +284,43 @@ export async function generate(options: GenerateOptions) {
     const config: Config = exports.default || exports.config
     if (!config) throw fail(`No config found in "${genConfigFile}"`)
     return config
+  }
+
+  async function generateBackend(config: Config) {
+    const entryPoint = config.backend || '@alinea/backend/DefaultBackend'
+    const isRelative = entryPoint.startsWith('.')
+    const location = isRelative
+      ? '@alinea/content/.server/backend.js'
+      : entryPoint
+    if (isRelative)
+      await build({
+        platform: 'node',
+        bundle: true,
+        format: 'esm',
+        target: 'esnext',
+        treeShaking: true,
+        absWorkingDir: cwd,
+        entryPoints: {backend: entryPoint},
+        outdir: path.join(outDir, '.server/dist'),
+        plugins: [externalPlugin, ignorePlugin]
+      })
+    await fs.writeFile(
+      path.join(outDir, 'backend.js'),
+      code`
+        import {config} from './config.js'
+        import {createStore} from './store.js'
+        import {DevServer} from '@alinea/backend'
+        import {createBackend} from ${JSON.stringify(location)}
+        import dotenv from 'dotenv'
+        import findConfig from 'find-config'
+        dotenv.config({path: findConfig('.env')})
+        const options = {config, createStore}
+        export const backend =
+          process.env.NODE_ENV === 'development'
+            ? new DevServer(options)
+            : createBackend(options)
+      `
+    )
   }
 
   async function generateWorkspaces(config: Config) {

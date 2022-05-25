@@ -1,6 +1,6 @@
+import {backend} from '@alinea/content/backend.js'
 import fs from 'fs'
 import path from 'path'
-import {backend} from '../../alinea.backend'
 import markdownToHtml from '../../lib/markdownToHtml'
 import ChangelogView from '../view/ChangelogView'
 import {Container} from '../view/layout/Container'

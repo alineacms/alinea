@@ -1,6 +1,6 @@
-import {backend} from '../../../../alinea.backend'
+import {backend} from '@alinea/content/backend.js'
 
-export default backend.respond
+export default (backend as any).respond
 
 // We disable the body parser that is added by Next.js as it incorrectly parses
 // application/octet-stream as string.

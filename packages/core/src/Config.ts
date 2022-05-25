@@ -19,6 +19,10 @@ export class Config<T extends Workspaces = Workspaces> {
     ) as any
   }
 
+  get backend() {
+    return this.options.backend
+  }
+
   /** Get the first workspace */
   get defaultWorkspace(): Workspace {
     const key = Object.keys(this.workspaces)[0]
@@ -46,8 +50,14 @@ export class Config<T extends Workspaces = Workspaces> {
   }
 }
 
+export namespace Config {
+  export type Infer<T> = T extends Config<infer U> ? U : never
+}
+
 /** Configuration options */
 export type ConfigOptions<T> = {
+  /** An entry point which exports a Backend instance */
+  backend?: string
   /** The client side authentication view */
   auth?: Auth.View
   /** A record containing workspace configurations */
