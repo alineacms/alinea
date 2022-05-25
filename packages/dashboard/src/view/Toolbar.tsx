@@ -107,7 +107,7 @@ export namespace Toolbar {
                 </HStack>
               </DropdownMenu.Trigger>
 
-              <DropdownMenu.Items right>
+              <DropdownMenu.Items>
                 <DropdownMenu.Item onClick={session.end}>
                   Logout
                 </DropdownMenu.Item>

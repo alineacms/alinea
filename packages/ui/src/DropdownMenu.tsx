@@ -43,11 +43,7 @@ export namespace DropdownMenu {
     )
   }
 
-  export function Items({
-    left,
-    right,
-    ...props
-  }: HTMLAttributes<HTMLDivElement> & {left?: boolean; right?: boolean}) {
+  export function Items(props: HTMLAttributes<HTMLDivElement>) {
     const floating = useContext(floatingContext)
     return (
       <Menu.Items
@@ -58,7 +54,7 @@ export namespace DropdownMenu {
           top: `${floating.y || 0}px`,
           left: `${floating.x || 0}px`
         }}
-        className={styles.items.mergeProps(props)({left, right})}
+        className={styles.items.mergeProps(props)()}
       />
     )
   }

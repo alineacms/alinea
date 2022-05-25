@@ -22,13 +22,6 @@
   border: 1px solid var(--alinea-outline);
   box-shadow: 0 2px 10px var(--alinea-shadow);
   outline: none;
-
-  &.is-left {
-    left: 0;
-  }
-  &.is-right {
-    right: 0;
-  }
 }
 
 .item {
