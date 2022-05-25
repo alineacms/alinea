@@ -46,6 +46,9 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
   {pickLink, editor, focusToggle}: RichTextToolbarProps,
   ref: Ref<HTMLDivElement>
 ) {
+  function exec() {
+    return editor.chain().focus(null, {scrollIntoView: false})
+  }
   const selectedStyle = editor.isActive('heading', {level: 1})
     ? 'h1'
     : editor.isActive('heading', {level: 2})
@@ -72,7 +75,7 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
       if (!picked) return
       const link = picked.link && picked.link[0]
       if (link?.type === 'entry') {
-        const command = editor.chain().focus()
+        const command = exec()
         const action = existing
           ? command.extendMarkRange('link').setLink({
               href: `entry:${link.entry}`,
@@ -93,7 +96,7 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
             })
         action.run()
       } else {
-        editor.chain().focus().extendMarkRange('link').unsetLink().run()
+        exec().extendMarkRange('link').unsetLink().run()
       }
     })
   }
@@ -118,29 +121,21 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
               </HStack>
             </DropdownMenu.Trigger>
             <DropdownMenu.Items>
-              <DropdownMenu.Item
-                onClick={() => editor.chain().focus().clearNodes().run()}
-              >
+              <DropdownMenu.Item onClick={() => exec().clearNodes().run()}>
                 <Typo.P>Normal text</Typo.P>
               </DropdownMenu.Item>
               <DropdownMenu.Item
-                onClick={() =>
-                  editor.chain().focus().setHeading({level: 1}).run()
-                }
+                onClick={() => exec().setHeading({level: 1}).run()}
               >
                 <Typo.H1 flat>Heading 1</Typo.H1>
               </DropdownMenu.Item>
               <DropdownMenu.Item
-                onClick={() =>
-                  editor.chain().focus().setHeading({level: 2}).run()
-                }
+                onClick={() => exec().setHeading({level: 2}).run()}
               >
                 <Typo.H2 flat>Heading 2</Typo.H2>
               </DropdownMenu.Item>
               <DropdownMenu.Item
-                onClick={() =>
-                  editor.chain().focus().setHeading({level: 3}).run()
-                }
+                onClick={() => exec().setHeading({level: 3}).run()}
               >
                 <Typo.H3 flat>Heading 3</Typo.H3>
               </DropdownMenu.Item>
@@ -153,7 +148,7 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
             title="Bold"
             onClick={e => {
               e.preventDefault()
-              editor.chain().focus().toggleBold().run()
+              exec().toggleBold().run()
             }}
             active={editor.isActive('bold')}
           />
@@ -163,7 +158,7 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
             title="Italic"
             onClick={e => {
               e.preventDefault()
-              editor.chain().focus().toggleItalic().run()
+              exec().toggleItalic().run()
             }}
             active={editor.isActive('italic')}
           />
@@ -190,9 +185,7 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
             </DropdownMenu.Trigger>
             <DropdownMenu.Items>
               <DropdownMenu.Item
-                onClick={() =>
-                  editor.chain().focus().setTextAlign('left').run()
-                }
+                onClick={() => exec().setTextAlign('left').run()}
               >
                 <HStack gap={8} center>
                   <Icon
@@ -205,9 +198,7 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
                 </HStack>
               </DropdownMenu.Item>
               <DropdownMenu.Item
-                onClick={() =>
-                  editor.chain().focus().setTextAlign('center').run()
-                }
+                onClick={() => exec().setTextAlign('center').run()}
               >
                 <HStack gap={8} center>
                   <Icon
@@ -220,9 +211,7 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
                 </HStack>
               </DropdownMenu.Item>
               <DropdownMenu.Item
-                onClick={() =>
-                  editor.chain().focus().setTextAlign('right').run()
-                }
+                onClick={() => exec().setTextAlign('right').run()}
               >
                 <HStack gap={8} center>
                   <Icon
@@ -235,9 +224,7 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
                 </HStack>
               </DropdownMenu.Item>
               <DropdownMenu.Item
-                onClick={() =>
-                  editor.chain().focus().setTextAlign('justify').run()
-                }
+                onClick={() => exec().setTextAlign('justify').run()}
               >
                 <HStack gap={8} center>
                   <Icon
@@ -257,8 +244,8 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
             title="Clear format"
             onClick={e => {
               e.preventDefault()
-              editor.chain().focus().unsetAllMarks().run()
-              editor.chain().focus().unsetTextAlign().run()
+              exec().unsetAllMarks().run()
+              exec().unsetTextAlign().run()
             }}
           />
           <div className={styles.root.separator()} />
@@ -268,7 +255,7 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
             title="Bullet list"
             onClick={e => {
               e.preventDefault()
-              editor.chain().focus().toggleBulletList().run()
+              exec().toggleBulletList().run()
             }}
             active={editor.isActive('bulletList')}
           />
@@ -278,7 +265,7 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
             title="Ordered list"
             onClick={e => {
               e.preventDefault()
-              editor.chain().focus().toggleOrderedList().run()
+              exec().toggleOrderedList().run()
             }}
             active={editor.isActive('orderedList')}
           />
