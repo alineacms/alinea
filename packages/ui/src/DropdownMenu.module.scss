@@ -15,10 +15,7 @@
 }
 
 .items {
-  position: absolute;
-  top: 100%;
   padding: 5px;
-  margin-top: 5px;
   min-width: 220px;
   border-radius: var(--alinea-border-radius);
   background: var(--alinea-background);
@@ -61,7 +58,8 @@
     background-color: #f7f6f6;
   }
 
-  &:hover, &.is-active {
+  &:hover,
+  &.is-active {
     background: var(--alinea-highlight);
   }
 }

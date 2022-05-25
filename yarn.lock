@@ -418,6 +418,7 @@ __metadata:
   resolution: "@alinea/ui@workspace:packages/ui"
   dependencies:
     "@alinea/core": 0.0.0
+    "@floating-ui/react-dom": ^0.7.1
     "@headlessui/react": ^1.6.1
     color2k: ^1.2.4
     react-helmet: ^6.1.0
