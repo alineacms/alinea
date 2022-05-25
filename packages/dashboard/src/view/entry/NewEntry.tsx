@@ -13,7 +13,6 @@ import {useNavigate} from 'react-router'
 import * as Y from 'yjs'
 import {useLocale} from '../../hook/UseLocale'
 import {useNav} from '../../hook/UseNav'
-import {useReferencePicker} from '../../hook/UseReferencePicker'
 import {useRoot} from '../../hook/UseRoot'
 import {useSession} from '../../hook/UseSession'
 import {useWorkspace} from '../../hook/UseWorkspace'
@@ -144,7 +143,6 @@ export type NewEntryProps = {parentId?: string}
 export function NewEntry({parentId}: NewEntryProps) {
   const nav = useNav()
   const navigate = useNavigate()
-  const picker = useReferencePicker()
   const {name: workspace} = useWorkspace()
 
   function handleClose() {
@@ -153,7 +151,6 @@ export function NewEntry({parentId}: NewEntryProps) {
 
   return (
     <Modal open onClose={handleClose} className={styles.root()}>
-      <picker.PickerSlot />
       <HStack center gap={18} className={styles.root.header()}>
         <IconButton icon={IcRoundArrowBack} onClick={handleClose} />
         <Typo.H1 flat>New entry</Typo.H1>
