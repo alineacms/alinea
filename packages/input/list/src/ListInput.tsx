@@ -1,7 +1,9 @@
 import {LazyRecord} from '@alinea/core/util/LazyRecord'
 import {InputForm, InputLabel, InputState, useInput} from '@alinea/editor'
-import {Card, Create, fromModule, IconButton, TextLabel} from '@alinea/ui'
+import {Card, Create, fromModule, Icon, IconButton, TextLabel} from '@alinea/ui'
+import {Accordion} from '@alinea/ui/Accordion'
 import {IcOutlineList} from '@alinea/ui/icons/IcOutlineList'
+import IcRoundAdd from '@alinea/ui/icons/IcRoundAdd'
 import {IcRoundClose} from '@alinea/ui/icons/IcRoundClose'
 import {IcRoundDragHandle} from '@alinea/ui/icons/IcRoundDragHandle'
 import {IcRoundKeyboardArrowDown} from '@alinea/ui/icons/IcRoundKeyboardArrowDown'
@@ -83,6 +85,7 @@ type ListInputRowProps<T extends ListRow> = PropsWithChildren<
     // There's probably an issue for this on DefinitelyTyped.
     rootRef?: Ref<HTMLDivElement>
     isDragOverlay?: boolean
+    onCreate?: (type: string) => void
   } & HTMLAttributes<HTMLDivElement>
 >
 
@@ -96,9 +99,11 @@ function ListInputRow<T extends ListRow>({
   rootRef,
   isDragging,
   isDragOverlay,
+  onCreate,
   ...rest
 }: ListInputRowProps<T>) {
-  const type = LazyRecord.get(field.options.schema.types, row.type)
+  const {types} = field.options.schema
+  const type = LazyRecord.get(types, row.type)
   if (!type) return null
   return (
     <div
@@ -132,6 +137,16 @@ function ListInputRow<T extends ListRow>({
       <Card.Content>
         <InputForm type={type} state={path} />
       </Card.Content>
+      <div className={styles.row.accordion()}>
+        <Accordion.Root center>
+          <Accordion.Item>
+            <ListCreateRow field={field} onCreate={onCreate!} />
+          </Accordion.Item>
+          <Accordion.Trigger round>
+            <Icon icon={IcRoundAdd} />
+          </Accordion.Trigger>
+        </Accordion.Root>
+      </div>
     </div>
   )
 }
@@ -250,6 +265,9 @@ export function ListInput<T extends ListRow>({
                   field={field}
                   path={state.child(dragging.id)}
                   isDragOverlay
+                  onCreate={(type: string) => {
+                    console.log(type)
+                  }}
                 />
               ) : null}
             </DragOverlay>

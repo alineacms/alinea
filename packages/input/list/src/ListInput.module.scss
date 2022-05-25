@@ -26,6 +26,14 @@
     box-shadow: 0 2px 30px var(--alinea-shadow);
     overflow: hidden;
   }
+
+  &:nth-last-child(2) > &-accordion {
+    display: none;
+  }
+
+  &-accordion {
+    margin-bottom: 2px;
+  }
 }
 
 .create {
