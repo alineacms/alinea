@@ -27,13 +27,29 @@
     overflow: hidden;
   }
 
-  &:nth-last-child(2) > &-accordion {
+  &:first-child > .accordion:first-child {
+    padding-bottom: 4px;
+    box-shadow: var(--alinea-divider-bottom);
+
+    & > * {
+      box-shadow: none !important;
+    }
+  }
+
+  &:nth-last-child(2) > .accordion:last-child,
+  &:not(:first-child) > .accordion:first-child {
     display: none;
   }
 
   &-accordion {
-    margin-bottom: 2px;
+    margin-top: 4px;
+    margin-bottom: 4px;
   }
+}
+
+.accordion {
+  margin-top: 4px;
+  margin-bottom: 4px;
 }
 
 .create {

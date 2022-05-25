@@ -50,6 +50,7 @@ function animateLayoutChanges(args: FirstArgument<AnimateLayoutChanges>) {
 }
 
 function ListInputRowSortable<T extends ListRow>(props: ListInputRowProps<T>) {
+  const {onCreate} = props
   const {attributes, listeners, setNodeRef, transform, transition, isDragging} =
     useSortable({
       animateLayoutChanges,
@@ -67,6 +68,7 @@ function ListInputRowSortable<T extends ListRow>(props: ListInputRowProps<T>) {
       handle={listeners}
       {...attributes}
       isDragging={isDragging}
+      onCreate={onCreate}
     />
   )
 }
@@ -111,6 +113,7 @@ function ListInputRow<T extends ListRow>({
       ref={rootRef}
       {...rest}
     >
+      <ListInsertRow field={field} top onCreate={onCreate!} />
       <Card.Header>
         <Card.Options>
           <IconButton
@@ -137,26 +140,18 @@ function ListInputRow<T extends ListRow>({
       <Card.Content>
         <InputForm type={type} state={path} />
       </Card.Content>
-      <div className={styles.row.accordion()}>
-        <Accordion.Root center>
-          <Accordion.Item>
-            <ListCreateRow field={field} onCreate={onCreate!} />
-          </Accordion.Item>
-          <Accordion.Trigger round>
-            <Icon icon={IcRoundAdd} />
-          </Accordion.Trigger>
-        </Accordion.Root>
-      </div>
+      <ListInsertRow field={field} onCreate={onCreate!} />
     </div>
   )
 }
 
 type ListCreateRowProps<T> = {
   field: ListField<T>
-  onCreate: (type: string) => void
+  top?: boolean
+  onCreate: (type: string, index?: number) => void
 }
 
-function ListCreateRow<T>({field, onCreate}: ListCreateRowProps<T>) {
+function ListCreateRow<T>({field, top, onCreate}: ListCreateRowProps<T>) {
   const {types} = field.options.schema
   return (
     <div className={styles.create()}>
@@ -166,13 +161,38 @@ function ListCreateRow<T>({field, onCreate}: ListCreateRowProps<T>) {
             <Create.Button
               icon={type.options.icon}
               key={key}
-              onClick={() => onCreate(key)}
+              onClick={() => onCreate(key, top ? 0 : +1)}
             >
               <TextLabel label={type.label} />
             </Create.Button>
           )
         })}
       </Create.Root>
+    </div>
+  )
+}
+
+type ListInsertRowProps<T> = {
+  field: ListField<T>
+  top?: boolean
+  onCreate: (type: string, index?: number) => void
+}
+
+function ListInsertRow<T>({field, top, onCreate}: ListInsertRowProps<T>) {
+  return (
+    <div className={styles.accordion()}>
+      <Accordion.Root center>
+        <Accordion.Item>
+          <ListCreateRow field={field} top={top} onCreate={onCreate!} />
+        </Accordion.Item>
+        <Accordion.AccordionContext.Consumer>
+          {open => (
+            <Accordion.Trigger round>
+              <Icon icon={open ? IcRoundKeyboardArrowUp : IcRoundAdd} />
+            </Accordion.Trigger>
+          )}
+        </Accordion.AccordionContext.Consumer>
+      </Accordion.Root>
     </div>
   )
 }
@@ -240,6 +260,11 @@ export function ListInput<T extends ListRow>({
                       path={state.child(row.id)}
                       onMove={direction => list.move(i, i + direction)}
                       onDelete={() => list.remove(row.id)}
+                      onCreate={(type: string, index?: number) => {
+                        console.log(type, i, index)
+                        list.push({type} as any)
+                        list.move(rows.length, i + index!)
+                      }}
                     />
                   )
                 })}
@@ -265,9 +290,6 @@ export function ListInput<T extends ListRow>({
                   field={field}
                   path={state.child(dragging.id)}
                   isDragOverlay
-                  onCreate={(type: string) => {
-                    console.log(type)
-                  }}
                 />
               ) : null}
             </DragOverlay>

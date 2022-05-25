@@ -1,11 +1,13 @@
 import {Disclosure} from '@headlessui/react'
-import {HTMLAttributes} from 'react'
+import {createContext, HTMLAttributes} from 'react'
 import css from './Accordion.module.scss'
 import {fromModule} from './util/Styler'
 
 const styles = fromModule(css)
 
 export namespace Accordion {
+  export const AccordionContext = createContext(false)
+
   export function Root({
     left,
     center,
@@ -18,17 +20,21 @@ export namespace Accordion {
   }) {
     return (
       <Disclosure>
-        {({open}) => (
-          <div
-            {...props}
-            className={styles.root.mergeProps(props)({
-              left,
-              center,
-              right,
-              open
-            })}
-          />
-        )}
+        {({open}) => {
+          return (
+            <AccordionContext.Provider value={open}>
+              <div
+                {...props}
+                className={styles.root.mergeProps(props)({
+                  left,
+                  center,
+                  right,
+                  open
+                })}
+              />
+            </AccordionContext.Provider>
+          )
+        }}
       </Disclosure>
     )
   }
