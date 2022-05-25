@@ -1,11 +1,11 @@
-import {Collection, Cursor, Selection} from '@alinea/store'
-import {Entry} from './Entry'
-import {Field} from './Field'
-import {RecordShape} from './shape/RecordShape'
-import type {TypeConfig} from './Type'
-import {Type} from './Type'
-import {LazyRecord} from './util/LazyRecord'
-import type {Workspace} from './Workspace'
+import { Collection, Cursor, Selection } from '@alinea/store'
+import { Entry } from './Entry'
+import { Field } from './Field'
+import { RecordShape } from './shape/RecordShape'
+import type { TypeConfig } from './Type'
+import { Type } from './Type'
+import { LazyRecord } from './util/LazyRecord'
+import type { Workspace } from './Workspace'
 
 export type HasType = {type: string}
 
@@ -23,11 +23,11 @@ export namespace Schema {
   /** Utility to infer the type of a Schema, Type, Field or any Store type */
   export type TypeOf<T> = T extends Schema<infer U>
     ? U
-    : T extends TypeConfig<infer U>
+    : T extends TypeConfig<any, infer U>
     ? U
-    : T extends Type<infer K, infer U>
+    : T extends Type<any, infer U>
     ? U
-    : T extends Field<infer U, infer M, infer Q>
+    : T extends Field<any, any, infer Q>
     ? Q
     : T extends Selection<infer U>
     ? U

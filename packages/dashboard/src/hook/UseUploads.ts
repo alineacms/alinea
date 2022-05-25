@@ -121,7 +121,7 @@ async function process(upload: Upload, hub: Hub): Promise<Upload> {
       }
     }
     case UploadStatus.Uploading: {
-      const {to, file, preview, averageColor, blurHash} = upload
+      const {to, file, preview, averageColor, blurHash, width, height} = upload
       const buffer = await file.arrayBuffer()
       const path = (to.url === '/' ? '' : to.url) + '/' + file.name
       const result = await hub
@@ -130,7 +130,9 @@ async function process(upload: Upload, hub: Hub): Promise<Upload> {
           buffer,
           preview,
           averageColor,
-          blurHash
+          blurHash,
+          width,
+          height
         })
         .then(Outcome.unpack)
       return {...upload, result, status: UploadStatus.Done}

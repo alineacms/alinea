@@ -1,5 +1,6 @@
 // Todo: extract interface and place it in core
 import type {Pages} from '@alinea/backend/Pages'
+import type {EntryEditProps} from '@alinea/dashboard/view/EntryEdit'
 import type {Cursor, Fields} from '@alinea/store'
 import {Collection, Expr, SelectionInput} from '@alinea/store'
 import type {ComponentType} from 'react'
@@ -33,7 +34,7 @@ export type TypeOptions<R, Q> = {
   icon?: ComponentType
 
   /** A React component used to view an entry of this type in the dashboard */
-  view?: ComponentType
+  view?: ComponentType<EntryEditProps>
   /** A React component used to view a row of this type in the dashboard */
   summaryRow?: View<any>
   /** A React component used to view a thumbnail of this type in the dashboard */

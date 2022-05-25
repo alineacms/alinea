@@ -31,6 +31,8 @@ export namespace Hub {
     preview?: string
     averageColor?: string
     blurHash?: string
+    width?: number
+    height?: number
   }
   export type Stat = {
     size?: number

@@ -120,31 +120,32 @@ export function createServerRouter(hub: Server) {
     handle(async (req, res) => {
       const bb = busboy({headers: req.headers})
       let workspace: string | undefined, root: string | undefined
-      const {path, buffer, preview, averageColor, blurHash} = await new Promise<
-        Partial<Hub.Upload>
-      >(resolve => {
-        const res: Partial<Hub.Upload> = {}
-        bb.on('file', (name, file) => {
-          if (name === 'buffer') {
-            const chunks: Array<Buffer> = []
-            file
-              .on('data', data => chunks.push(data))
-              .on('close', () => (res.buffer = Buffer.concat(chunks)))
-          } else {
-            file.resume()
-          }
+      const {path, buffer, preview, averageColor, blurHash, width, height} =
+        await new Promise<Partial<Hub.Upload>>(resolve => {
+          const res: Partial<Hub.Upload> = {}
+          bb.on('file', (name, file) => {
+            if (name === 'buffer') {
+              const chunks: Array<Buffer> = []
+              file
+                .on('data', data => chunks.push(data))
+                .on('close', () => (res.buffer = Buffer.concat(chunks)))
+            } else {
+              file.resume()
+            }
+          })
+          bb.on('field', (name, value) => {
+            if (name === 'workspace') workspace = value
+            if (name === 'root') root = value
+            if (name === 'path') res.path = value
+            if (name === 'preview') res.preview = value
+            if (name === 'averageColor') res.averageColor = value
+            if (name === 'blurHash') res.blurHash = value
+            if (name === 'width') res.width = Number(value)
+            if (name === 'height') res.height = Number(value)
+          })
+          bb.on('close', () => resolve(res))
+          req.pipe(bb)
         })
-        bb.on('field', (name, value) => {
-          if (name === 'workspace') workspace = value
-          if (name === 'root') root = value
-          if (name === 'path') res.path = value
-          if (name === 'preview') res.preview = value
-          if (name === 'averageColor') res.averageColor = value
-          if (name === 'blurHash') res.blurHash = value
-        })
-        bb.on('close', () => resolve(res))
-        req.pipe(bb)
-      })
       if (!workspace) throw createError(400, 'missing workspace')
       if (!root) throw createError(400, 'missing root')
       if (!path) throw createError(400, 'missing path')
@@ -155,7 +156,9 @@ export function createServerRouter(hub: Server) {
         path,
         preview,
         averageColor,
-        blurHash
+        blurHash,
+        width,
+        height
       })
       res.endTime('upload')
       return result

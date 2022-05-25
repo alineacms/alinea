@@ -114,7 +114,7 @@ export function MediaExplorer() {
     <Main className={styles.root()}>
       <EntryHeader mode={EditMode.Editing} />
       <div className={styles.root.inner()}>
-        <HStack style={{flexGrow: 1}}>
+        <HStack style={{flexGrow: 1, minHeight: 0}}>
           <FileUploader toggleSelect={() => {}} />
           <VStack style={{height: '100%', width: '100%'}}>
             <header className={styles.root.inner.header()}>

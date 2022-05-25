@@ -11,3 +11,7 @@ export function Main({children, ...props}: HTMLProps<HTMLDivElement>) {
     </div>
   )
 }
+
+export namespace Main {
+  export const Container = styles.container.toElement('div')
+}
