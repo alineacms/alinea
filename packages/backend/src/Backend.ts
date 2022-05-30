@@ -214,9 +214,11 @@ export class Backend<T extends Workspaces = Workspaces> implements Hub<T> {
         extension: extension,
         size: file.buffer.byteLength,
         hash: md5(new Uint8Array(file.buffer)),
-        preview: file.preview,
+        width: file.width,
+        height: file.height,
         averageColor: file.averageColor,
-        blurHash: file.blurHash
+        blurHash: file.blurHash,
+        preview: file.preview
       }
       await this.publishEntries([entry])
       return entry

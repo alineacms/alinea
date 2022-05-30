@@ -31,3 +31,14 @@
     background: hsla(var(--alinea-negative), 0.9);
   }
 }
+
+.container {
+  padding: 12px;
+  @include ml {
+    padding: 35px 45px;
+  }
+  max-width: 1024px;
+  width: 100%;
+  margin: 0 auto;
+  flex-grow: 1;
+}

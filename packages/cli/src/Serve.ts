@@ -87,6 +87,7 @@ export async function serve(options: ServeOptions) {
     res.send(`<!DOCTYPE html>
     <meta charset="utf-8" />
     <title>Alinea</title>
+    <link rel="icon" href="data:," />
     <link href="./config.css" rel="stylesheet" />
     <link href="./entry.css" rel="stylesheet" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />

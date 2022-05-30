@@ -268,7 +268,7 @@ export function LinkInput<T>({state, field}: LinkInputProps<T>) {
 
   return (
     <>
-      <picker.PickerSlot />
+      <picker.Modal />
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}

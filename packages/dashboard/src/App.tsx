@@ -30,7 +30,6 @@ import {useDraftsList} from './hook/UseDraftsList'
 import {useEntryLocation} from './hook/UseEntryLocation'
 import {useLocale} from './hook/UseLocale'
 import {useNav} from './hook/UseNav'
-import {ReferencePickerProvider} from './hook/UseReferencePicker'
 import {useRoot} from './hook/UseRoot'
 import {SessionProvider} from './hook/UseSession'
 import {useWorkspace} from './hook/UseWorkspace'
@@ -112,69 +111,63 @@ function AppAuthenticated() {
                   position: 'relative'
                 }}
               >
-                <ReferencePickerProvider key={workspace}>
-                  <Sidebar.Nav>
-                    {Object.entries(roots).map(([key, root], i) => {
-                      const isSelected = key === currentRoot
-                      const link =
-                        entryLocation && entryLocation.root === key
-                          ? nav.entry(entryLocation)
-                          : nav.root({workspace, root: key})
-                      return (
-                        <Sidebar.Nav.Item
-                          key={key}
-                          selected={isEntry && isSelected}
-                          to={link}
-                        >
-                          {root.icon ? (
-                            <root.icon />
-                          ) : (
-                            <IcRoundInsertDriveFile />
-                          )}
-                        </Sidebar.Nav.Item>
-                      )
-                    })}
-                    <DraftsButton />
-                  </Sidebar.Nav>
-                  <Suspense fallback={<Loader absolute />}>
-                    <Routes>
-                      <Route
-                        path={nav.draft({workspace: ':workspace'})}
-                        element={<Router.Drafts />}
-                      />
-                      <Route
-                        path={nav.draft({
+                <Sidebar.Nav>
+                  {Object.entries(roots).map(([key, root], i) => {
+                    const isSelected = key === currentRoot
+                    const link =
+                      entryLocation && entryLocation.root === key
+                        ? nav.entry(entryLocation)
+                        : nav.root({workspace, root: key})
+                    return (
+                      <Sidebar.Nav.Item
+                        key={key}
+                        selected={isEntry && isSelected}
+                        to={link}
+                      >
+                        {root.icon ? <root.icon /> : <IcRoundInsertDriveFile />}
+                      </Sidebar.Nav.Item>
+                    )
+                  })}
+                  <DraftsButton />
+                </Sidebar.Nav>
+                <Suspense fallback={<Loader absolute />}>
+                  <Routes>
+                    <Route
+                      path={nav.draft({workspace: ':workspace'})}
+                      element={<Router.Drafts />}
+                    />
+                    <Route
+                      path={nav.draft({
+                        workspace: ':workspace',
+                        root: ':root',
+                        id: ':id'
+                      })}
+                      element={<Router.Drafts />}
+                    />
+                    <Route
+                      path={nav.entry({workspace: ':workspace'})}
+                      element={<Router.Entry />}
+                    />
+                    <Route
+                      path={nav.entry({
+                        workspace: ':workspace',
+                        root: ':root'
+                      })}
+                      element={<Router.Entry />}
+                    />
+                    <Route
+                      path={
+                        nav.entry({
                           workspace: ':workspace',
                           root: ':root',
                           id: ':id'
-                        })}
-                        element={<Router.Drafts />}
-                      />
-                      <Route
-                        path={nav.entry({workspace: ':workspace'})}
-                        element={<Router.Entry />}
-                      />
-                      <Route
-                        path={nav.entry({
-                          workspace: ':workspace',
-                          root: ':root'
-                        })}
-                        element={<Router.Entry />}
-                      />
-                      <Route
-                        path={
-                          nav.entry({
-                            workspace: ':workspace',
-                            root: ':root',
-                            id: ':id'
-                          }) + '/*'
-                        }
-                        element={<Router.Entry />}
-                      />
-                      <Route path="/*" element={<Router.Entry />} />
-                    </Routes>
-                  </Suspense>
-                </ReferencePickerProvider>
+                        }) + '/*'
+                      }
+                      element={<Router.Entry />}
+                    />
+                    <Route path="/*" element={<Router.Entry />} />
+                  </Routes>
+                </Suspense>
               </div>
               <Statusbar.Root>
                 <DraftsStatusSummary />

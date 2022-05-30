@@ -149,6 +149,7 @@ __metadata:
     "@alinea/core": 0.0.0
     "@alinea/css": 0.0.0
     "@alinea/editor": 0.0.0
+    "@alinea/input.hidden": 0.0.0
     "@alinea/input.link": 0.0.0
     "@alinea/input.select": 0.0.0
     "@alinea/input.text": 0.0.0
@@ -165,6 +166,7 @@ __metadata:
     fast-average-color: ^7.0.1
     image-blob-reduce: ^4.1.0
     p-limit: ^4.0.0
+    pretty-bytes: ^6.0.0
     react-helmet: ^6.1.0
     react-query: ^3.34.19
     react-router: ^6.3.0
@@ -211,6 +213,14 @@ __metadata:
     react-autosize-textarea: ^7.1.0
   peerDependencies:
     react: "*"
+  languageName: unknown
+  linkType: soft
+
+"@alinea/input.hidden@0.0.0, @alinea/input.hidden@workspace:packages/input/hidden":
+  version: 0.0.0-use.local
+  resolution: "@alinea/input.hidden@workspace:packages/input/hidden"
+  dependencies:
+    "@alinea/core": 0.0.0
   languageName: unknown
   linkType: soft
 
@@ -408,6 +418,7 @@ __metadata:
   resolution: "@alinea/ui@workspace:packages/ui"
   dependencies:
     "@alinea/core": 0.0.0
+    "@floating-ui/react-dom": ^0.7.1
     "@headlessui/react": ^1.6.1
     color2k: ^1.2.4
     react-helmet: ^6.1.0
@@ -6908,6 +6919,13 @@ fsevents@~2.3.2:
   bin:
     prebuild-install: bin.js
   checksum: 117c8966f221242633bbf245755fb469dabc7085909f5e3db83359d6281a88dedbdada7e839315805a192c74b7cce3ed1a86c1382a8d950c1ea60a9d5d8e7bf0
+  languageName: node
+  linkType: hard
+
+"pretty-bytes@npm:^6.0.0":
+  version: 6.0.0
+  resolution: "pretty-bytes@npm:6.0.0"
+  checksum: 0bb9f95e617236404b29a8392c6efd82d65805f622f5e809ecd70068102be857d4e3276c86d2a32fa2ef851cc29472e380945dab7bec83ec79bd57a19a10faf7
   languageName: node
   linkType: hard
 

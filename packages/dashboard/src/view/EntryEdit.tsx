@@ -71,7 +71,7 @@ export function EntryEdit({initialMode, draft, isLoading}: EntryEditProps) {
     <>
       <Main className={styles.root()}>
         <EntryHeader mode={mode} setMode={setMode} />
-        <div className={styles.root.draft()}>
+        <Main.Container>
           <EntryTitle
             backLink={
               draft.parent &&
@@ -107,7 +107,7 @@ export function EntryEdit({initialMode, draft, isLoading}: EntryEditProps) {
               )}
             </>
           )}
-        </div>
+        </Main.Container>
       </Main>
       {preview && <EntryPreview preview={preview} draft={draft} />}
     </>
