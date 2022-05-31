@@ -2,16 +2,100 @@ import {createError, Hub, isError} from '@alinea/core'
 import {Outcome} from '@alinea/core/Outcome'
 import {Cursor} from '@alinea/store'
 import {sqliteFormatter} from '@alinea/store/sqlite/SqliteFormatter'
+import {Headers as WebHeaders, Request as WebRequest} from '@web-std/fetch'
 import {decode} from 'base64-arraybuffer'
 import busboy from 'busboy'
 import compression from 'compression'
 import cors from 'cors'
 import {Request, Response, Router} from 'express'
+import http from 'http'
+import {TLSSocket} from 'node:tls'
 import serverTiming from 'server-timing'
+import type {Writable} from 'stream'
 import type {Server} from '../Server'
 import {parseBuffer, parseJson} from '../util/BodyParser'
+import {createFetchRouter} from './FetchRouter'
+
+function fromNodeRequest(request: http.IncomingMessage) {
+  const headers = new WebHeaders()
+  for (const key of Object.keys(request.headers)) {
+    if (!(key in request.headers)) continue
+    const value = request.headers[key]
+    if (value === undefined) continue
+    if (Array.isArray(value)) {
+      for (const v of value) {
+        headers.append(key, v)
+      }
+    } else {
+      headers.set(key, value)
+    }
+  }
+  const init: RequestInit = {
+    method: request.method!,
+    headers
+  }
+  const protocol =
+    request.socket instanceof TLSSocket && request.socket.encrypted
+      ? 'https'
+      : 'http'
+  const url = `${protocol}://${request.headers.host}${request.url}`
+  if (request.method !== 'GET' && request.method !== 'HEAD')
+    init.body = request as any
+  return new WebRequest(url, init)
+}
+export async function writeReadableStreamToWritable(
+  stream: ReadableStream,
+  writable: Writable
+) {
+  let reader = stream.getReader()
+
+  async function read() {
+    let {done, value} = await reader.read()
+
+    if (done) {
+      writable.end()
+      return
+    }
+
+    writable.write(value)
+
+    await read()
+  }
+
+  try {
+    await read()
+  } catch (error: any) {
+    writable.destroy(error)
+    throw error
+  }
+}
+
+async function apply(response: globalThis.Response, to: http.ServerResponse) {
+  to.statusCode = response.status
+  response.headers.forEach((value, key) => to.setHeader(key, value))
+  if (response.body) await writeReadableStreamToWritable(response.body, to)
+  else to.end()
+}
 
 export function createServerRouter(hub: Server) {
+  const {auth, dashboardUrl} = hub.options
+  const router = Router()
+  router.use(serverTiming())
+  router.use(compression({filter: () => true}))
+  router.use(cors({origin: dashboardUrl}))
+  if (auth) router.use(auth.router())
+  const prefix = '(/*)?'
+  const {handle} = createFetchRouter(hub)
+  router.use(async (req, res, next) => {
+    const request = fromNodeRequest(req)
+    const result = await handle(request)
+    if (result) await apply(result, res)
+    else next()
+  })
+  return router
+}
+
+export function createServerRouter__(hub: Server) {
   const {auth, dashboardUrl} = hub.options
   const router = Router()
   router.use(serverTiming())

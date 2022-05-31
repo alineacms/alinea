@@ -99,7 +99,11 @@ export class Client<T extends Workspaces> implements Hub<T> {
   protected fetch(endpoint: string, init?: RequestInit) {
     const controller = new AbortController()
     const signal = controller.signal
-    const promise = fetch(this.url + endpoint, {
+    const url =
+      this.url.endsWith('/') && endpoint.startsWith('/')
+        ? this.url + endpoint.slice(1)
+        : this.url + endpoint
+    const promise = fetch(url, {
       ...this.applyAuth(init),
       signal
     }).then(res => {
