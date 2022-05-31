@@ -2,7 +2,9 @@ import {fromModule, HStack, LogoShape, Stack, TextLabel} from '@alinea/ui'
 import {MdiGithub} from '@alinea/ui/icons/MdiGithub'
 import {MdiTwitterCircle} from '@alinea/ui/icons/MdiTwitterCircle'
 import {MiLayers} from '@alinea/ui/icons/MiLayers'
+import {Modal} from '@alinea/ui/Modal'
 import Link from 'next/link'
+import {useState} from 'react'
 import {Logo} from './branding/Logo'
 import css from './Header.module.scss'
 import {HeaderProps} from './Header.query'
@@ -23,7 +25,7 @@ export function Header({links}: HeaderProps) {
             </HStack>
           </a>
         </Link>
-        <HStack center gap={30}>
+        <HStack as="nav" center gap={30} className={styles.root.nav()}>
           {links.map(link => {
             switch (link.type) {
               case 'entry':
@@ -66,6 +68,7 @@ export function Header({links}: HeaderProps) {
             >
               <MdiTwitterCircle className={styles.root.social.icon()} />
             </a>
+            <Hamburger links={links} />
           </HStack>
         </Stack.Right>
       </HStack>
@@ -78,5 +81,75 @@ export function Header({links}: HeaderProps) {
         <path d="M0 18C0 10.1116 0.340637 6.05976 3.19123 3.19123C6.05976 0.340637 10.1116 0 18 0H0V18Z" />
       </svg>
     </header>
+  )
+}
+
+const Hamburger: React.FC<HeaderProps> = ({links}) => {
+  const [isOpen, setIsOpen] = useState(false)
+  return (
+    <>
+      <button className={styles.hamburger()} onClick={() => setIsOpen(true)}>
+        <span className={styles.hamburger.bar()} />
+        <span className={styles.hamburger.bar()} />
+        <span className={styles.hamburger.bar()} />
+      </button>
+      <Modal
+        open={isOpen}
+        onClose={() => setIsOpen(false)}
+        className={styles.hamburger.mobilemenu()}
+      >
+        <Mobilemenu links={links} onClose={() => setIsOpen(false)} />
+      </Modal>
+    </>
+  )
+}
+
+const Mobilemenu: React.FC<HeaderProps & {onClose: () => void}> = ({
+  links,
+  onClose
+}) => {
+  return (
+    <HStack
+      as="nav"
+      center
+      direction="column"
+      align="center"
+      justify="center"
+      gap={30}
+      className={styles.mobilemenu()}
+    >
+      {links.map(link => {
+        switch (link.type) {
+          case 'entry':
+            return (
+              <Link key={link.id} href={link.url}>
+                <a className={styles.mobilemenu.link()} onClick={onClose}>
+                  <TextLabel label={link.title} />
+                </a>
+              </Link>
+            )
+          default:
+            return null
+        }
+      })}
+      <Link href="/types/alinea">
+        <a className={styles.mobilemenu.link()} onClick={onClose}>
+          API
+        </a>
+      </Link>
+      <Link href="/changelog">
+        <a className={styles.mobilemenu.link()} onClick={onClose}>
+          Changelog
+        </a>
+      </Link>
+      <a
+        className={styles.mobilemenu.link()}
+        href="/demo"
+        target="_blank"
+        onClick={onClose}
+      >
+        Demo
+      </a>
+    </HStack>
   )
 }

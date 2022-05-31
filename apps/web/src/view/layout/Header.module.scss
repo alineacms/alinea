@@ -30,6 +30,14 @@
     }
   }
 
+  &-nav {
+    display: none !important;
+
+    @include l {
+      display: flex !important;
+    }
+  }
+
   &-link {
     color: inherit;
     text-decoration: none;
@@ -61,7 +69,46 @@
     }
 
     &-icon {
+      display: block;
       font-size: 25px;
     }
+  }
+}
+
+.hamburger {
+  display: block;
+
+  @include l {
+    display: none;
+  }
+
+  &-bar {
+    display: block;
+    width: 20px;
+    height: 2px;
+    border-radius: 50px;
+    background-color: #141b43;
+
+    &:nth-child(2) {
+      margin: 4px 0;
+    }
+
+    &:hover {
+      background-color: black;
+    }
+  }
+
+  &-mobilemenu {
+    background-color: white;
+  }
+}
+
+.mobilemenu {
+  &-link {
+    cursor: pointer;
+    color: inherit;
+    font-family: 'Inter', sans-serif;
+    font-size: 16px;
+    text-decoration: none;
   }
 }
