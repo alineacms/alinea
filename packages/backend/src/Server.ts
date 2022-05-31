@@ -19,7 +19,9 @@ export class Server<T extends Workspaces = Workspaces> extends Backend<T> {
 
   constructor(public options: ServerOptions<T>) {
     super(options)
-    this.app.use(createServerRouter(this))
+    this.app.use(
+      createServerRouter(this, new URL(options.dashboardUrl).pathname)
+    )
   }
 
   respond = (req: IncomingMessage, res: ServerResponse): Promise<void> => {

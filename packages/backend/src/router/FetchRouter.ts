@@ -3,88 +3,89 @@ import {Hub} from '@alinea/core/Hub'
 import {Outcome} from '@alinea/core/Outcome'
 import {Cursor, CursorData} from '@alinea/store'
 import {decode} from 'base64-arraybuffer'
-import * as router from './Router'
+import {router} from './Router'
 
-const matcher = router.createMatcher()
+export function createFetchRouter(hub: Hub, base: string) {
+  const prefix = base.endsWith('/') ? base.slice(0, -1) : base
+  const matcher = router.matcher(({pathname}) => {
+    if (pathname.startsWith(prefix)) return pathname.slice(prefix.length)
+    return pathname
+  })
+  return router(
+    matcher
+      .get(Hub.routes.entry(':id'))
+      .map(({url, params}) => {
+        const id = params.id as string
+        const svParam = url.searchParams.get('stateVector')!
+        const stateVector =
+          typeof svParam === 'string'
+            ? new Uint8Array(decode(svParam))
+            : undefined
+        return hub.entry(id, stateVector)
+      })
+      .map(router.jsonResponse),
 
-export function createFetchRouter(hub: Hub) {
-  return router
-    .createRouter(
-      matcher
-        .get(Hub.routes.entry(':id'))
-        .map(({url, params}) => {
-          const id = params.id as string
-          const svParam = url.searchParams.get('stateVector')!
-          const stateVector =
-            typeof svParam === 'string'
-              ? new Uint8Array(decode(svParam))
-              : undefined
-          return hub.entry(id, stateVector)
+    matcher
+      .post(Hub.routes.query())
+      .map(router.parseJson)
+      .map(({url, body}) => {
+        const fromSource = url.searchParams.has('source')
+        return hub.query(new Cursor(body as CursorData), {source: fromSource})
+      })
+      .map(router.jsonResponse),
+
+    matcher
+      .get(Hub.routes.drafts())
+      .map(({url}) => {
+        const workspace = url.searchParams.get('workspace')
+        if (!workspace) return undefined
+        return hub.listDrafts(workspace)
+      })
+      .map(router.jsonResponse),
+
+    matcher
+      .put(Hub.routes.draft(':id'))
+      .map(router.parseBuffer)
+      .map(({params, body}) => {
+        const id = params.id as string
+        return hub.updateDraft(id, new Uint8Array(body))
+      })
+      .map(router.jsonResponse),
+
+    matcher
+      .delete(Hub.routes.draft(':id'))
+      .map(({params}) => {
+        const id = params.id as string
+        return hub.deleteDraft(id)
+      })
+      .map(router.jsonResponse),
+
+    matcher
+      .post(Hub.routes.publish())
+      .map(router.parseJson)
+      .map(({body}) => {
+        return hub.publishEntries(body as Array<Entry>)
+      })
+      .map(router.jsonResponse),
+
+    matcher
+      .post(Hub.routes.upload())
+      .map(router.parseFormData)
+      .map(async ({body}) => {
+        const workspace = String(body.get('workspace'))
+        const root = String(body.get('root'))
+        return hub.uploadFile(workspace, root, {
+          buffer: await (body.get('buffer') as File).arrayBuffer(),
+          path: String(body.get('path')),
+          preview: String(body.get('preview')),
+          averageColor: String(body.get('averageColor')),
+          blurHash: String(body.get('blurHash')),
+          width: Number(body.get('width')),
+          height: Number(body.get('height'))
         })
-        .map(router.jsonResponse),
-
-      matcher
-        .post(Hub.routes.query())
-        .map(router.parseJson)
-        .map(({url, body}) => {
-          const fromSource = url.searchParams.has('source')
-          return hub.query(new Cursor(body as CursorData), {source: fromSource})
-        })
-        .map(router.jsonResponse),
-
-      matcher
-        .get(Hub.routes.drafts())
-        .map(({url}) => {
-          const workspace = url.searchParams.get('workspace')
-          if (!workspace) return undefined
-          return hub.listDrafts(workspace)
-        })
-        .map(router.jsonResponse),
-
-      matcher
-        .put(Hub.routes.draft(':id'))
-        .map(router.parseBuffer)
-        .map(({params, body}) => {
-          const id = params.id as string
-          return hub.updateDraft(id, new Uint8Array(body))
-        })
-        .map(router.jsonResponse),
-
-      matcher
-        .delete(Hub.routes.draft(':id'))
-        .map(({params}) => {
-          const id = params.id as string
-          return hub.deleteDraft(id)
-        })
-        .map(router.jsonResponse),
-
-      matcher
-        .post(Hub.routes.publish())
-        .map(router.parseJson)
-        .map(({body}) => {
-          return hub.publishEntries(body as Array<Entry>)
-        })
-        .map(router.jsonResponse),
-
-      matcher
-        .post(Hub.routes.upload())
-        .map(router.parseFormData)
-        .map(async ({body}) => {
-          const workspace = String(body.get('workspace'))
-          const root = String(body.get('root'))
-          return hub.uploadFile(workspace, root, {
-            buffer: await (body.get('buffer') as File).arrayBuffer(),
-            path: String(body.get('path')),
-            preview: String(body.get('preview')),
-            averageColor: String(body.get('averageColor')),
-            blurHash: String(body.get('blurHash')),
-            width: Number(body.get('width')),
-            height: Number(body.get('height'))
-          })
-        })
-        .map(router.jsonResponse)
-    )
-    .recover(error => {
-      return router.jsonResponse(Outcome.Failure(error), {status: 500})
-    })
+      })
+      .map(router.jsonResponse)
+  ).recover(error => {
+    return router.jsonResponse(Outcome.Failure(error), {status: 500})
+  })
 }

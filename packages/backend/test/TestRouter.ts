@@ -1,11 +1,11 @@
-import {createMatcher, createRouter} from '@alinea/backend/router/Router'
+import {router} from '@alinea/backend/router/Router'
 import {Request, Response} from '@web-std/fetch'
 import {test} from 'uvu'
 import * as assert from 'uvu/assert'
 
-const matcher = createMatcher()
+const matcher = router.matcher()
 
-const {handle} = createRouter(
+const {handle} = router(
   matcher.get('/').map(() => undefined),
   matcher.get('/').map(() => new Response('root')),
   matcher.get('/param/:id').map(({params}) => new Response(params.id as string))

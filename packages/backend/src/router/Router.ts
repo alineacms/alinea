@@ -52,30 +52,7 @@ export class Route<In, Out> {
   }
 }
 
-function withMethod(method: string) {
-  return new Route((request: Request) => {
-    if (request.method !== method) return undefined
-    return request
-  })
-}
-
-function withPath(path: string, getPathname: (url: URL) => string) {
-  const matcher = parse(path)
-  return new Route((request: Request) => {
-    const url = new URL(request.url)
-    const match = matcher.pattern.exec(getPathname(url))
-    if (match === null) return undefined
-    const params: Record<string, unknown> = {}
-    if (matcher.keys)
-      for (let i = 0; i < matcher.keys.length; i++)
-        params[matcher.keys[i]] = match[i + 1]
-    return {request, url, params}
-  })
-}
-
-export function createRouter(
-  ...routes: Array<Route<Request, Response | undefined>>
-) {
+export function router(...routes: Array<Route<Request, Response | undefined>>) {
   return new Route(async (request: Request) => {
     for (const handler of routes) {
       let result = callHandler(handler, request)
@@ -85,50 +62,73 @@ export function createRouter(
   })
 }
 
-export function createMatcher(getPathname = (url: URL) => url.pathname) {
-  return {
-    get(path: string) {
-      return withMethod('GET').map(withPath(path, getPathname))
-    },
-    post(path: string) {
-      return withMethod('POST').map(withPath(path, getPathname))
-    },
-    put(path: string) {
-      return withMethod('PUT').map(withPath(path, getPathname))
-    },
-    delete(path: string) {
-      return withMethod('DELETE').map(withPath(path, getPathname))
-    },
-    all(path: string) {
-      return withPath(path, getPathname)
+export namespace router {
+  function withMethod(method: string) {
+    return new Route((request: Request) => {
+      if (request.method !== method) return undefined
+      return request
+    })
+  }
+
+  function withPath(path: string, getPathname: (url: URL) => string) {
+    const matcher = parse(path)
+    return new Route((request: Request) => {
+      const url = new URL(request.url)
+      const match = matcher.pattern.exec(getPathname(url))
+      if (match === null) return undefined
+      const params: Record<string, unknown> = {}
+      if (matcher.keys)
+        for (let i = 0; i < matcher.keys.length; i++)
+          params[matcher.keys[i]] = match[i + 1]
+      return {request, url, params}
+    })
+  }
+
+  export function matcher(getPathname = (url: URL) => url.pathname) {
+    return {
+      get(path: string) {
+        return withMethod('GET').map(withPath(path, getPathname))
+      },
+      post(path: string) {
+        return withMethod('POST').map(withPath(path, getPathname))
+      },
+      put(path: string) {
+        return withMethod('PUT').map(withPath(path, getPathname))
+      },
+      delete(path: string) {
+        return withMethod('DELETE').map(withPath(path, getPathname))
+      },
+      all(path: string) {
+        return withPath(path, getPathname)
+      }
     }
   }
-}
 
-export async function parseFormData<In extends {request: Request}>(
-  input: In
-): Promise<In & {body: FormData}> {
-  const body = await input.request.formData()
-  return {...input, body}
-}
+  export async function parseFormData<In extends {request: Request}>(
+    input: In
+  ): Promise<In & {body: FormData}> {
+    const body = await input.request.formData()
+    return {...input, body}
+  }
 
-export async function parseBuffer<In extends {request: Request}>(
-  input: In
-): Promise<In & {body: ArrayBuffer}> {
-  const body = await input.request.arrayBuffer()
-  return {...input, body}
-}
+  export async function parseBuffer<In extends {request: Request}>(
+    input: In
+  ): Promise<In & {body: ArrayBuffer}> {
+    const body = await input.request.arrayBuffer()
+    return {...input, body}
+  }
 
-export async function parseJson<In extends {request: Request}>(
-  input: In
-): Promise<In & {body: unknown}> {
-  const body = await input.request.json()
-  return {...input, body}
-}
+  export async function parseJson<In extends {request: Request}>(
+    input: In
+  ): Promise<In & {body: unknown}> {
+    const body = await input.request.json()
+    return {...input, body}
+  }
 
-export function jsonResponse<Out>(output: Out, init?: ResponseInit) {
-  return new Response(JSON.stringify(output), {
-    ...init,
-    headers: {'content-type': 'application/json', ...init?.headers}
-  })
+  export function jsonResponse<Out>(output: Out, init?: ResponseInit) {
+    return new Response(JSON.stringify(output), {
+      ...init,
+      headers: {'content-type': 'application/json', ...init?.headers}
+    })
+  }
 }
