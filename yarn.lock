@@ -371,6 +371,7 @@ __metadata:
     "@esbx/run": ^0.0.19
     "@esbx/sass": ^0.0.19
     "@esbx/static": ^0.0.19
+    "@esbx/target": ^0.0.20
     "@esbx/workspaces": ^0.0.19
     "@types/glob": ^7.1.4
     "@types/node": ^16.9.0
@@ -613,6 +614,13 @@ __metadata:
   dependencies:
     fs-extra: ^10.0.0
   checksum: 97dfe3dc808ba1292b5420614e54a45b8a4191918b26025137279f9c5e45a2ff1ee01da53b0444900d82e2a01fcbf8050f7ba1a11f406ca48cca5bd4c6d291b6
+  languageName: node
+  linkType: hard
+
+"@esbx/target@npm:^0.0.20":
+  version: 0.0.20
+  resolution: "@esbx/target@npm:0.0.20"
+  checksum: f33d000e7f06b4044da89e4ade1ae0b7131a91a30ea3d166343ee4e188e058ea596cf9f2b74150c9be9039cb2c1d1db8acc4ae60eb48bc07fc56dd1640d640f4
   languageName: node
   linkType: hard
 
