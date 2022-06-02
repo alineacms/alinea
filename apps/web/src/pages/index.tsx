@@ -1,7 +1,7 @@
 import {backend} from '@alinea/content/backend.js'
 import {GetStaticPropsContext} from 'next'
 import {PageView} from '../view/PageView'
-import {pageViewQuery} from '../view/PageView.query'
+import {pageViewQuery} from '../view/PageView.server'
 
 export async function getStaticProps(context: GetStaticPropsContext) {
   const pages = backend.loadPages('web', context.previewData as string)

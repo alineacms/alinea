@@ -12,12 +12,13 @@ import {ReactPlugin} from '@esbx/react'
 import {encode} from 'base64-arraybuffer'
 import {FSWatcher} from 'chokidar'
 import {dirname} from 'dirname-filename-esm'
-import {build, BuildResult, Plugin} from 'esbuild'
+import {build, BuildResult} from 'esbuild'
 import fs from 'fs-extra'
 import {signed, unsigned} from 'leb128'
-import crypto from 'node:crypto'
 import path from 'node:path'
+import {externalPlugin} from './util/ExternalPlugin'
 import {ignorePlugin} from './util/IgnorePlugin'
+import {targetPlugin} from './util/TargetPlugin'
 
 const __dirname = dirname(import.meta)
 
@@ -31,51 +32,6 @@ function failOnBuildError(build: Promise<BuildResult>) {
     // Ignore build error because esbuild reports it to stderr
     process.exit(1)
   })
-}
-
-const externalPlugin: Plugin = {
-  name: 'external',
-  setup(build) {
-    build.onResolve({filter: /^[^\.].*/}, args => {
-      if (args.kind === 'entry-point') return
-      return {path: args.path, external: true}
-    })
-  }
-}
-
-type ServerPluginOptions = {
-  outDir: string
-}
-
-function serverPlugin({outDir}: ServerPluginOptions): Plugin {
-  return {
-    name: 'server',
-    setup(build) {
-      // Hook into any import that ends in .query.(js/ts)
-      // compile and place the file in the server directory
-      build.onResolve({filter: /\.query(\.js|\.ts)?$/}, async args => {
-        const location = crypto
-          .createHash('md5')
-          .update(args.resolveDir)
-          .digest('hex')
-          .slice(0, 7)
-        let filename = location + '.' + path.basename(args.path)
-        if (filename.endsWith('.ts')) filename = filename.slice(0, -3) + '.js'
-        if (!filename.endsWith('.js')) filename += '.js'
-        await build.esbuild.build({
-          platform: 'node',
-          bundle: true,
-          format: 'esm',
-          target: 'esnext',
-          treeShaking: true,
-          entryPoints: [path.join(args.resolveDir, args.path)],
-          outfile: path.join(outDir, '.server/dist', filename),
-          plugins: [externalPlugin, ignorePlugin]
-        })
-        return {external: true, path: `@alinea/content/.server/${filename}`}
-      })
-    }
-  }
 }
 
 function bin(strings: ReadonlyArray<string>, ...inserts: Array<Buffer>) {
@@ -226,6 +182,7 @@ export async function generate(options: GenerateOptions) {
       'index.d.ts',
       'client.js',
       'client.d.ts',
+      'backend.js',
       'backend.d.ts',
       'store.d.ts'
     )
@@ -251,7 +208,12 @@ export async function generate(options: GenerateOptions) {
         bundle: true,
         platform: 'node',
         plugins: [
-          serverPlugin({outDir}),
+          targetPlugin(file => {
+            return {
+              packageName: '@alinea/content',
+              packageRoot: outDir
+            }
+          }),
           EvalPlugin,
           externalPlugin,
           ignorePlugin,
@@ -271,7 +233,6 @@ export async function generate(options: GenerateOptions) {
     if (cacheWatcher) (await cacheWatcher).stop()
     const config = await loadConfig()
     return Promise.all([
-      generateBackend(config),
       generateWorkspaces(config),
       (cacheWatcher = fillCache(config))
     ])
@@ -284,43 +245,6 @@ export async function generate(options: GenerateOptions) {
     const config: Config = exports.default || exports.config
     if (!config) throw fail(`No config found in "${genConfigFile}"`)
     return config
-  }
-
-  async function generateBackend(config: Config) {
-    const entryPoint = config.backend || '@alinea/backend/DefaultBackend'
-    const isRelative = entryPoint.startsWith('.')
-    const location = isRelative
-      ? '@alinea/content/.server/backend.js'
-      : entryPoint
-    if (isRelative)
-      await build({
-        platform: 'node',
-        bundle: true,
-        format: 'esm',
-        target: 'esnext',
-        treeShaking: true,
-        absWorkingDir: cwd,
-        entryPoints: {backend: entryPoint},
-        outdir: path.join(outDir, '.server/dist'),
-        plugins: [externalPlugin, ignorePlugin]
-      })
-    await fs.writeFile(
-      path.join(outDir, 'backend.js'),
-      code`
-        import {config} from './config.js'
-        import {createStore} from './store.js'
-        import {DevBackend} from '@alinea/backend'
-        import {createBackend} from ${JSON.stringify(location)}
-        import dotenv from 'dotenv'
-        import findConfig from 'find-config'
-        dotenv.config({path: findConfig('.env')})
-        const options = {config, createStore}
-        export const backend =
-          process.env.NODE_ENV === 'development'
-            ? new DevBackend(options)
-            : createBackend(options)
-      `
-    )
   }
 
   async function generateWorkspaces(config: Config) {

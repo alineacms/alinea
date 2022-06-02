@@ -3,7 +3,7 @@ import {code} from '@alinea/input.code'
 import {list} from '@alinea/input.list'
 import {text} from '@alinea/input.text'
 import {IcRoundCode} from '@alinea/ui/icons/IcRoundCode'
-import {transformCode} from './CodeBlock.query'
+import {transformCode} from './CodeBlock.server'
 
 export const CodeVariantsBlockSchema = type('Code variants', {
   variants: list('Variants', {

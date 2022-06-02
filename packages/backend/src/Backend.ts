@@ -1,4 +1,5 @@
-import {Auth, Workspaces} from '@alinea/core'
+import {Auth, Config, Workspaces} from '@alinea/core'
+import {Store} from '@alinea/store/Store'
 import {createFetchRouter} from './router/FetchRouter'
 import {Handle, router} from './router/Router'
 import {Server, ServerOptions} from './Server'
@@ -19,8 +20,13 @@ export class Backend<T extends Workspaces = Workspaces> extends Server<T> {
   }
 }
 
-export function createBackend<T extends Workspaces>(
-  options: BackendOptions<T>
-): Server<T> {
-  return new Backend(options)
+export type BackendCreateOptions = {
+  config: Config
+  createStore: () => Promise<Store>
+}
+
+export type BackendFactory = (options: BackendCreateOptions) => Backend
+
+export function backend(create: (options: BackendCreateOptions) => Backend) {
+  return create
 }

@@ -4,9 +4,9 @@ import path from 'path'
 import markdownToHtml from '../../lib/markdownToHtml'
 import ChangelogView from '../view/ChangelogView'
 import {Container} from '../view/layout/Container'
-import {headerQuery} from '../view/layout/Header.query'
+import {headerQuery} from '../view/layout/Header.server'
 import {Layout} from '../view/layout/Layout'
-import {LayoutProps} from '../view/layout/Layout.query'
+import {LayoutProps} from '../view/layout/Layout.server'
 
 export type ChangelogProps = {
   layout: LayoutProps

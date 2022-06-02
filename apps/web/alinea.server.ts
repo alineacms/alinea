@@ -1,12 +1,12 @@
 import {PasswordLessAuth} from '@alinea/auth.passwordless/PasswordLessAuth'
-import {JsonLoader, Server} from '@alinea/backend'
+import {backend, Backend, JsonLoader} from '@alinea/backend'
 import {GithubData} from '@alinea/backend/data/GithubData'
 import {RedisDrafts} from '@alinea/backend/drafts/RedisDrafts'
 import {JWTPreviews} from '@alinea/backend/util/JWTPreviews'
 import Redis from 'ioredis'
 import {createTransport} from 'nodemailer'
 
-export function createBackend({config, createStore}) {
+export const createBackend = backend(({config, createStore}) => {
   const drafts = new RedisDrafts({
     client: new Redis(process.env.REDIS_DSN)
   })
@@ -45,9 +45,9 @@ export function createBackend({config, createStore}) {
       return email.endsWith('@codeurs.be')
     }
   })
-  return new Server({
+  return new Backend({
     dashboardUrl,
-    auth,
+    // auth,
     config,
     createStore,
     drafts: drafts,
@@ -55,4 +55,4 @@ export function createBackend({config, createStore}) {
     media: data,
     previews: new JWTPreviews(process.env.JWT_SECRET!)
   })
-}
+})

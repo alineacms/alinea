@@ -5,7 +5,7 @@ import {tab, tabs} from '@alinea/input.tabs'
 import {text} from '@alinea/input.text'
 import {IcOutlineSettings} from '@alinea/ui/icons/IcOutlineSettings'
 import {IcRoundCode} from '@alinea/ui/icons/IcRoundCode'
-import {transformCode} from './CodeBlock.query'
+import {transformCode} from './CodeBlock.server'
 
 export const CodeBlockSchema = type(
   'Code',

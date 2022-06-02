@@ -1,3 +1,4 @@
+import type {BackendFactory} from '@alinea/backend'
 import {WorkspaceConfig} from '.'
 import {Auth} from './Auth'
 import {createError} from './ErrorWithCode'
@@ -19,8 +20,9 @@ export class Config<T extends Workspaces = Workspaces> {
     ) as any
   }
 
-  get backend() {
-    return this.options.backend
+  // Todo: supply a default for non-dev env
+  get createBackend() {
+    return this.options.createBackend
   }
 
   /** Get the first workspace */
@@ -55,9 +57,9 @@ export namespace Config {
 }
 
 /** Configuration options */
-export type ConfigOptions<T> = {
+export type ConfigOptions<T extends Workspaces> = {
   /** An entry point which exports a Backend instance */
-  backend?: string
+  createBackend?: BackendFactory
   /** The client side authentication view */
   auth?: Auth.View
   /** A record containing workspace configurations */

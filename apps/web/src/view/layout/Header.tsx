@@ -5,7 +5,7 @@ import {MiLayers} from '@alinea/ui/icons/MiLayers'
 import Link from 'next/link'
 import {Logo} from './branding/Logo'
 import css from './Header.module.scss'
-import {HeaderProps} from './Header.query'
+import {HeaderProps} from './Header.server'
 
 const styles = fromModule(css)
 
