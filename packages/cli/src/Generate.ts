@@ -309,7 +309,7 @@ export async function generate(options: GenerateOptions) {
       code`
         import {config} from './config.js'
         import {createStore} from './store.js'
-        import {DevServer} from '@alinea/backend'
+        import {DevBackend} from '@alinea/backend'
         import {createBackend} from ${JSON.stringify(location)}
         import dotenv from 'dotenv'
         import findConfig from 'find-config'
@@ -317,7 +317,7 @@ export async function generate(options: GenerateOptions) {
         const options = {config, createStore}
         export const backend =
           process.env.NODE_ENV === 'development'
-            ? new DevServer(options)
+            ? new DevBackend(options)
             : createBackend(options)
       `
     )

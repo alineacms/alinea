@@ -5,7 +5,8 @@ import {Cursor, CursorData} from '@alinea/store'
 import {decode} from 'base64-arraybuffer'
 import {router} from './Router'
 
-export function createFetchRouter(hub: Hub, base: string) {
+export function createFetchRouter(hub: Hub, url: string) {
+  const base = new URL(url).pathname
   const prefix = base.endsWith('/') ? base.slice(0, -1) : base
   const matcher = router.matcher(({pathname}) => {
     if (pathname.startsWith(prefix)) return pathname.slice(prefix.length)

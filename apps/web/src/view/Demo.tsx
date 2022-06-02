@@ -1,7 +1,7 @@
-import {Backend} from '@alinea/backend/Backend'
 import {Cache} from '@alinea/backend/Cache'
 import {IndexedDBData} from '@alinea/backend/data/IndexedDBData'
 import {IndexedDBDrafts} from '@alinea/backend/drafts/IndexedDBDrafts'
+import {Server} from '@alinea/backend/Server'
 import {config} from '@alinea/content/config.js'
 import {accumulate, createConfig, workspace} from '@alinea/core'
 import {Dashboard, FieldsPreview} from '@alinea/dashboard'
@@ -20,7 +20,7 @@ const demoConfig = createConfig({
 
 function createLocalClient() {
   const data = new IndexedDBData()
-  return new Backend({
+  return new Server({
     config: demoConfig,
     createStore: async () => {
       const {createStore} = await import('@alinea/content/store.js')

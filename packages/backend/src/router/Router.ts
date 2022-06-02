@@ -5,15 +5,17 @@ import {parse} from 'regexparam'
 // web-std/io#63
 globalThis.File = File
 
-type Handle<In, Out> = {
+export type Handle<In, Out> = {
   (input: In): Out | undefined | Promise<Out | undefined>
 }
 
-type Handler<In, Out> = Handle<In, Out> | Route<In, Out>
+export type Handler<In, Out> = Handle<In, Out> | Route<In, Out>
 
 function callHandler<In, Out>(handler: Handler<In, Out>, input: In) {
   return typeof handler === 'function' ? handler(input) : handler.handle(input)
 }
+
+export type Router = Route<Request, Response>
 
 export class Route<In, Out> {
   constructor(public handle: Handle<In, Out>) {}
@@ -52,7 +54,9 @@ export class Route<In, Out> {
   }
 }
 
-export function router(...routes: Array<Route<Request, Response | undefined>>) {
+export function router(
+  ...routes: Array<Handler<Request, Response | undefined>>
+) {
   return new Route(async (request: Request) => {
     for (const handler of routes) {
       let result = callHandler(handler, request)

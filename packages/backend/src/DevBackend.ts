@@ -2,10 +2,10 @@ import {Config, Workspaces} from '@alinea/core'
 import {Store} from '@alinea/store'
 import fs from 'node:fs/promises'
 import path from 'node:path'
+import {Backend} from './Backend'
 import {FileData} from './data/FileData'
 import {FileDrafts} from './drafts/FileDrafts'
 import {JsonLoader} from './loader/JsonLoader'
-import {Server} from './Server'
 import {JWTPreviews} from './util/JWTPreviews'
 
 export interface DevServerOptions<T extends Workspaces> {
@@ -15,7 +15,7 @@ export interface DevServerOptions<T extends Workspaces> {
   createStore: () => Promise<Store>
 }
 
-export class DevServer<T extends Workspaces = Workspaces> extends Server<T> {
+export class DevBackend<T extends Workspaces = Workspaces> extends Backend<T> {
   constructor({
     cwd = process.cwd(),
     port = 4500,

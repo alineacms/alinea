@@ -4,7 +4,7 @@ import {TLSSocket} from 'node:tls'
 import type {Writable} from 'stream'
 
 // Source: https://github.com/remix-run/remix/blob/4b11c6d12309ba5a1f3be4f716739f3240f21c35/packages/remix-node/stream.ts#L4
-export async function writeReadableStreamToWritable(
+async function writeReadableStreamToWritable(
   stream: ReadableStream,
   writable: Writable
 ) {
@@ -58,7 +58,7 @@ function fromNodeRequest(request: http.IncomingMessage) {
   return new fetch.Request(url, init)
 }
 
-export function createNodeHandler(
+export function nodeHandler(
   handler: (
     request: Request
   ) => Promise<Response | undefined> | Response | undefined

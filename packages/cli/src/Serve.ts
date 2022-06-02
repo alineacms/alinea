@@ -1,4 +1,5 @@
-import {DevServer, Server} from '@alinea/backend'
+import {DevBackend} from '@alinea/backend'
+import {nodeHandler} from '@alinea/backend/router/NodeHandler'
 import {EvalPlugin} from '@esbx/eval'
 import {ReactPlugin} from '@esbx/react'
 import semver from 'compare-versions'
@@ -45,7 +46,15 @@ export async function serve(options: ServeOptions) {
     if (type === 'reload') clients.length = 0
   }
 
-  let server: Promise<Server> | undefined
+  let server:
+    | Promise<
+        (
+          req: http.IncomingMessage,
+          res: http.ServerResponse,
+          next: () => void
+        ) => Promise<void>
+      >
+    | undefined
 
   async function reloadServer(error?: Error) {
     await (server = error ? undefined : devServer())
@@ -79,7 +88,7 @@ export async function serve(options: ServeOptions) {
   app.use((req, res, next) => {
     const unavailable = () =>
       res.status(503).end('An error occured, see your terminal for details')
-    if (server) server.then(server => server.app(req, res, next), unavailable)
+    if (server) server.then(server => server(req, res, next), unavailable)
     else unavailable()
   })
   app.use(compression())
@@ -180,11 +189,13 @@ export async function serve(options: ServeOptions) {
     // used, see #nodejs/modules#307
     const {config} = await import(`file://${genConfigFile}?${unique}`)
     const {createStore} = await import(`file://${storeLocation}?${unique}`)
-    return new DevServer({
-      config,
-      createStore,
-      port,
-      cwd
-    })
+    return nodeHandler(
+      new DevBackend({
+        config,
+        createStore,
+        port,
+        cwd
+      }).handle
+    )
   }
 }
