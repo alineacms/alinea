@@ -29,12 +29,8 @@
     "@web-std/fetch": "^4.1.0",
     "@web-std/file": "^3.0.2",
     "base64-arraybuffer": "^1.0.1",
-    "busboy": "^1.4.0",
-    "compression": "^1.7.4",
     "content-type": "^1.0.4",
     "convert-hrtime": "^5.0.0",
-    "cors": "^2.8.5",
-    "express": "^4.17.1",
     "isomorphic-path": "^2.0.1",
     "js-yaml": "^4.1.0",
     "jsonwebtoken": "^8.5.1",
@@ -44,7 +40,6 @@
     "pretty-ms": "^7.0.1",
     "raw-body": "^2.4.1",
     "regexparam": "^2.0.0",
-    "server-timing": "^3.3.1",
     "yjs": "^13.5.34"
   },
   "devDependencies": {

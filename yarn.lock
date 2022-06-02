@@ -50,12 +50,8 @@ __metadata:
     "@web-std/fetch": ^4.1.0
     "@web-std/file": ^3.0.2
     base64-arraybuffer: ^1.0.1
-    busboy: ^1.4.0
-    compression: ^1.7.4
     content-type: ^1.0.4
     convert-hrtime: ^5.0.0
-    cors: ^2.8.5
-    express: ^4.17.1
     firebase-admin: ^10.0.2
     ioredis: ^4.28.5
     isomorphic-path: ^2.0.1
@@ -67,7 +63,6 @@ __metadata:
     pretty-ms: ^7.0.1
     raw-body: ^2.4.1
     regexparam: ^2.0.0
-    server-timing: ^3.3.1
     yjs: ^13.5.34
   languageName: unknown
   linkType: soft
@@ -1642,7 +1637,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/express@npm:*, @types/express@npm:^4.17.13, @types/express@npm:^4.17.3":
+"@types/express@npm:*, @types/express@npm:^4.17.13":
   version: 4.17.13
   resolution: "@types/express@npm:4.17.13"
   dependencies:
@@ -1811,13 +1806,6 @@ __metadata:
   version: 17.0.13
   resolution: "@types/node@npm:17.0.13"
   checksum: 8b87c850c1604c65e3474bd03d122914464b7970caed20f65f4a7706ab429353b896a3916be4d2581164eccda9e3dd95c338fbccf686ff85a824c40d15e8f3fa
-  languageName: node
-  linkType: hard
-
-"@types/node@npm:^12.12.30":
-  version: 12.20.46
-  resolution: "@types/node@npm:12.20.46"
-  checksum: 5326c3b5a576e041e522670d642aa17f92d833fa33ff6a6619d7d9fbac54c6a29f329905a7ccd7642a3aac79c80f9cc6887f45e2afa2c24dcf81269c296121a8
   languageName: node
   linkType: hard
 
@@ -2655,15 +2643,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"busboy@npm:^1.4.0":
-  version: 1.4.0
-  resolution: "busboy@npm:1.4.0"
-  dependencies:
-    streamsearch: ^1.1.0
-  checksum: 1970853fd390f62df0db15d44ee8c0fbb3bca84e0c3083531f955e31dbc3ec9e77faa4d5a47d520ff5ec7a79596af9b957741383b0cd4d9513b71f8524096442
-  languageName: node
-  linkType: hard
-
 "bytes@npm:3.0.0":
   version: 3.0.0
   resolution: "bytes@npm:3.0.0"
@@ -3036,16 +3015,6 @@ __metadata:
   version: 1.0.3
   resolution: "core-util-is@npm:1.0.3"
   checksum: 9de8597363a8e9b9952491ebe18167e3b36e7707569eed0ebf14f8bba773611376466ae34575bca8cfe3c767890c859c74056084738f09d4e4a6f902b2ad7d99
-  languageName: node
-  linkType: hard
-
-"cors@npm:^2.8.5":
-  version: 2.8.5
-  resolution: "cors@npm:2.8.5"
-  dependencies:
-    object-assign: ^4
-    vary: ^1
-  checksum: ced838404ccd184f61ab4fdc5847035b681c90db7ac17e428f3d81d69e2989d2b680cc254da0e2554f5ed4f8a341820a1ce3d1c16b499f6e2f47a1b9b07b5006
   languageName: node
   linkType: hard
 
@@ -6669,7 +6638,7 @@ fsevents@~2.3.2:
   languageName: node
   linkType: hard
 
-"object-assign@npm:^4, object-assign@npm:^4.0.1, object-assign@npm:^4.1.0, object-assign@npm:^4.1.1":
+"object-assign@npm:^4.0.1, object-assign@npm:^4.1.0, object-assign@npm:^4.1.1":
   version: 4.1.1
   resolution: "object-assign@npm:4.1.1"
   checksum: fcc6e4ea8c7fe48abfbb552578b1c53e0d194086e2e6bbbf59e0a536381a292f39943c6e9628af05b5528aa5e3318bb30d6b2e53cadaf5b8fe9e12c4b69af23f
@@ -6741,7 +6710,7 @@ fsevents@~2.3.2:
   languageName: node
   linkType: hard
 
-"on-headers@npm:^1.0.2, on-headers@npm:~1.0.2":
+"on-headers@npm:~1.0.2":
   version: 1.0.2
   resolution: "on-headers@npm:1.0.2"
   checksum: 2bf13467215d1e540a62a75021e8b318a6cfc5d4fc53af8e8f84ad98dbcea02d506c6d24180cd62e1d769c44721ba542f3154effc1f7579a8288c9f7873ed8e5
@@ -8133,18 +8102,6 @@ resolve@^1.10.0:
   languageName: node
   linkType: hard
 
-"server-timing@npm:^3.3.1":
-  version: 3.3.1
-  resolution: "server-timing@npm:3.3.1"
-  dependencies:
-    "@types/express": ^4.17.3
-    "@types/node": ^12.12.30
-    minimist: ^1.2.5
-    on-headers: ^1.0.2
-  checksum: 628bb5d2dc814fbecc4559d4faffb85797a2864a65bceedc8ffbf15ac454a4d39f57df8826819f18bd0ee9d102128648fa0602e53efa278bd783040b40f7c781
-  languageName: node
-  linkType: hard
-
 "set-blocking@npm:~2.0.0":
   version: 2.0.0
   resolution: "set-blocking@npm:2.0.0"
@@ -9251,7 +9208,7 @@ resolve@^1.10.0:
   languageName: node
   linkType: hard
 
-"vary@npm:^1, vary@npm:~1.1.2":
+"vary@npm:~1.1.2":
   version: 1.1.2
   resolution: "vary@npm:1.1.2"
   checksum: ae0123222c6df65b437669d63dfa8c36cee20a504101b2fcd97b8bf76f91259c17f9f2b4d70a1e3c6bbcee7f51b28392833adb6b2770b23b01abec84e369660b
