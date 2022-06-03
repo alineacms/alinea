@@ -6,7 +6,7 @@ import {decode} from 'base64-arraybuffer'
 import {router} from './Router'
 
 export function createFetchRouter(hub: Hub, url: string) {
-  const matcher = router.base(url)
+  const matcher = router.startAt(Hub.routes.base)
   return router(
     matcher
       .get(Hub.routes.entry(':id'))

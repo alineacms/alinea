@@ -1,6 +1,6 @@
 import {Handler, router} from '@alinea/backend/router/Router'
 import {sign, verify} from '@alinea/backend/util/JWT'
-import {Auth, createError, Outcome, User} from '@alinea/core'
+import {Auth, createError, Hub, Outcome, User} from '@alinea/core'
 import {Transporter} from 'nodemailer'
 import {assert, object, string} from 'superstruct'
 
@@ -27,10 +27,10 @@ export class PasswordLessAuth implements Auth.Server {
   users = new WeakMap<Request, User>()
 
   constructor(protected options: PasswordLessAuthOptions) {
-    const matcher = router.base(options.dashboardUrl)
+    const matcher = router.startAt(Hub.routes.base)
     this.handler = router(
       matcher
-        .post('/hub/auth.passwordless')
+        .post(Hub.routes.base + '/auth.passwordless')
         .map(router.parseJson)
         .map(async ({body}) => {
           assert(body, LoginBody)

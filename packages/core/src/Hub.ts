@@ -44,30 +44,32 @@ export namespace Hub {
     source?: boolean
   }
 
+  const base = '/hub'
   export const routes = {
+    base,
     entry(id: string, stateVector?: Uint8Array) {
-      const route = `/hub/entry/${id}`
+      const route = base + `/entry/${id}`
       if (stateVector)
         return route + '?stateVector=' + encode(stateVector.buffer)
       return route
     },
     draft(id: string) {
-      return `/hub/draft/${id}`
+      return base + `/draft/${id}`
     },
     drafts() {
-      return `/hub/draft`
+      return base + `/draft`
     },
     publish() {
-      return `/hub/publish`
+      return base + `/publish`
     },
     upload() {
-      return `/hub/upload`
+      return base + `/upload`
     },
     query() {
-      return `/hub/query`
+      return base + `/query`
     },
     files(location?: string) {
-      return `/hub/files${location ? '/' + location : ''}`
+      return base + `/files${location ? '/' + location : ''}`
     }
   }
 }

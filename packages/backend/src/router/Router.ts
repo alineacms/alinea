@@ -133,6 +133,14 @@ export namespace router {
     })
   }
 
+  export function startAt(base: string) {
+    return matcher(({pathname}) => {
+      const start = pathname.indexOf(base)
+      if (start > -1) return pathname.slice(start)
+      return pathname
+    })
+  }
+
   export async function parseFormData<In extends {request: Request}>(
     input: In
   ): Promise<In & {body: FormData}> {
