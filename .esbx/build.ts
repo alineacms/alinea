@@ -103,6 +103,9 @@ function task(
                 packageName: `@alinea/${pkg.join('.')}`,
                 packageRoot: `./dist/${pkg.join('/')}/src`
               }
+            },
+            buildOptions: {
+              plugins: [ExtensionPlugin]
             }
           }),
           config.buildOptions?.plugins || [ExtensionPlugin],

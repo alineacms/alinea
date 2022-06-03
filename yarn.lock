@@ -19,12 +19,10 @@ __metadata:
     "@types/express-jwt": ^6.0.2
     "@types/jsonwebtoken": ^8.5.5
     "@types/nodemailer": ^6.4.4
-    express: ^4.17.1
-    express-jwt: ^6.1.0
-    jsonwebtoken: ^8.5.1
     jwt-decode: ^3.1.2
     nodemailer: ^6.6.5
     react-helmet: ^6.1.0
+    superstruct: ^0.15.4
   peerDependencies:
     react: "*"
   languageName: unknown
@@ -56,7 +54,6 @@ __metadata:
     ioredis: ^4.28.5
     isomorphic-path: ^2.0.1
     js-yaml: ^4.1.0
-    jsonwebtoken: ^8.5.1
     lib0: ^0.2.42
     md5: ^2.3.0
     octokit-commit-multiple-files: ^3.2.1
@@ -2359,13 +2356,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"async@npm:^1.5.0":
-  version: 1.5.2
-  resolution: "async@npm:1.5.2"
-  checksum: fe5d6214d8f15bd51eee5ae8ec5079b228b86d2d595f47b16369dec2e11b3ff75a567bb5f70d12d79006665fbbb7ee0a7ec0e388524eefd454ecbe651c124ebd
-  languageName: node
-  linkType: hard
-
 "atob@npm:^2.1.2":
   version: 2.1.2
   resolution: "atob@npm:2.1.2"
@@ -3821,25 +3811,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"express-jwt@npm:^6.1.0":
-  version: 6.1.0
-  resolution: "express-jwt@npm:6.1.0"
-  dependencies:
-    async: ^1.5.0
-    express-unless: ^1.0.0
-    jsonwebtoken: ^8.1.0
-    lodash.set: ^4.0.0
-  checksum: 0c5a4ee4aa3f9917fdb672f7e556a68eb5c69db47dee622b88050ff75eac75bbe5a8ae8d8da06ca50f6b9ad8c5992375b319ec2ecd630f900694c961488c0070
-  languageName: node
-  linkType: hard
-
-"express-unless@npm:^1.0.0":
-  version: 1.0.0
-  resolution: "express-unless@npm:1.0.0"
-  checksum: 0f27f8eae1ecb3ad41d65da903c855879f529412545e06f9df28bc6712b03460f79b74ffe3c51c9bfafa685dbdac11217c505e54d48f2f58e6d6928b7dbbad37
-  languageName: node
-  linkType: hard
-
 "express@npm:^4.17.1":
   version: 4.17.1
   resolution: "express@npm:4.17.1"
@@ -5266,7 +5237,7 @@ fsevents@~2.3.2:
   languageName: node
   linkType: hard
 
-"jsonwebtoken@npm:^8.1.0, jsonwebtoken@npm:^8.5.1":
+"jsonwebtoken@npm:^8.5.1":
   version: 8.5.1
   resolution: "jsonwebtoken@npm:8.5.1"
   dependencies:
@@ -5558,13 +5529,6 @@ fsevents@~2.3.2:
   version: 4.1.1
   resolution: "lodash.once@npm:4.1.1"
   checksum: d768fa9f9b4e1dc6453be99b753906f58990e0c45e7b2ca5a3b40a33111e5d17f6edf2f768786e2716af90a8e78f8f91431ab8435f761fef00f9b0c256f6d245
-  languageName: node
-  linkType: hard
-
-"lodash.set@npm:^4.0.0":
-  version: 4.3.2
-  resolution: "lodash.set@npm:4.3.2"
-  checksum: a9122f49eef9f2d0fc9061a33d87f8e5b8c6b23d46e8b9e9ce1529d3588d79741bd1145a3abdfa3b13082703e65af27ff18d8a07bfc22b9be32f3fc36f763f70
   languageName: node
   linkType: hard
 
@@ -8633,6 +8597,13 @@ resolve@^1.10.0:
   bin:
     stylus: bin/stylus
   checksum: 5b8fe13af9da74f6ef6e9b9e977d93c1ad3113eba807c7cc91445c6a111bbbab4e43542f4356e1a32ae5ae774b549da66932a259fb533b73a421ff0085906111
+  languageName: node
+  linkType: hard
+
+"superstruct@npm:^0.15.4":
+  version: 0.15.4
+  resolution: "superstruct@npm:0.15.4"
+  checksum: aac38eecda2c0d3aace2fe95baac042d39bfdd50dda480d3f70b8bacb87fe7ba228ede4869537dfb64f1d32a1fe3d794052e7765ed6c3f7bc156795fd761fdfd
   languageName: node
   linkType: hard
 

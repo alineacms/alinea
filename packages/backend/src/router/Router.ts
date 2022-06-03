@@ -1,3 +1,4 @@
+import {Outcome} from '@alinea/core/Outcome'
 import {Response} from '@web-std/fetch'
 import {File} from '@web-std/file'
 import {parse} from 'regexparam'
@@ -67,8 +68,12 @@ export function router(
 }
 
 export namespace router {
+  export function use<In, Out>(handle: Handle<In, Out>) {
+    return new Route(handle)
+  }
+
   function withMethod(method: string) {
-    return new Route((request: Request) => {
+    return use((request: Request) => {
       if (request.method !== method) return undefined
       return request
     })
@@ -76,7 +81,7 @@ export namespace router {
 
   function withPath(path: string, getPathname: (url: URL) => string) {
     const matcher = parse(path)
-    return new Route((request: Request) => {
+    return use((request: Request) => {
       const url = new URL(request.url)
       const match = matcher.pattern.exec(getPathname(url))
       if (match === null) return undefined
@@ -108,6 +113,15 @@ export namespace router {
     }
   }
 
+  export function base(url: string) {
+    const base = new URL(url).pathname
+    const prefix = base.endsWith('/') ? base.slice(0, -1) : base
+    return matcher(({pathname}) => {
+      if (pathname.startsWith(prefix)) return pathname.slice(prefix.length)
+      return pathname
+    })
+  }
+
   export async function parseFormData<In extends {request: Request}>(
     input: In
   ): Promise<In & {body: FormData}> {
@@ -132,7 +146,8 @@ export namespace router {
   export function jsonResponse<Out>(output: Out, init?: ResponseInit) {
     return new Response(JSON.stringify(output), {
       ...init,
-      headers: {'content-type': 'application/json', ...init?.headers}
+      headers: {'content-type': 'application/json', ...init?.headers},
+      status: Outcome.isOutcome(output) ? output.status : 200
     })
   }
 }

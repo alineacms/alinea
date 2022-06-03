@@ -33,7 +33,6 @@
     "convert-hrtime": "^5.0.0",
     "isomorphic-path": "^2.0.1",
     "js-yaml": "^4.1.0",
-    "jsonwebtoken": "^8.5.1",
     "lib0": "^0.2.42",
     "md5": "^2.3.0",
     "octokit-commit-multiple-files": "^3.2.1",

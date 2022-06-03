@@ -1,8 +1,8 @@
 import type {Pages} from '@alinea/backend'
 import {Expr} from '@alinea/store'
 import {getHighlighter} from 'shiki'
-import tsxLanguage from 'shiki/languages/tsx.tmLanguage.json'
 import {theme} from '../types/ShikiTheme'
+import {language} from '../types/ShikiTsxLanguage'
 
 const highlighter = getHighlighter({
   theme: {
@@ -12,7 +12,7 @@ const highlighter = getHighlighter({
     fg: '#24292f',
     bg: '#fbf9f9'
   },
-  langs: [{id: 'tsx', scopeName: 'source.tsx', grammar: tsxLanguage as any}]
+  langs: [{id: 'tsx', scopeName: 'source.tsx', grammar: language}]
 })
 
 export function transformCode(field: Expr<string>, pages: Pages<any>) {

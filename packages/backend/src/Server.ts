@@ -24,7 +24,7 @@ import {Drafts} from './Drafts'
 import {Pages} from './Pages'
 import {Previews} from './Previews'
 import {PreviewStore, previewStore} from './PreviewStore'
-import {parentUrl, walkUrl} from './util/Urls'
+import {parentUrl, walkUrl} from './util/Paths'
 
 export type ServerOptions<T extends Workspaces> = {
   config: Config<T>
@@ -102,7 +102,7 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
           ...data,
           original,
           draft: draft && encode(draft),
-          previewToken: previews.sign({id})
+          previewToken: await previews.sign({id})
         }
       )
     })
@@ -244,8 +244,8 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
 
   async parsePreviewToken(token: string): Promise<{id: string; url: string}> {
     const {previews} = this.options
-    const [tokenData, err] = outcome(() => previews.verify(token))
-    if (!tokenData) throw createError(400, 'Incorrect token')
+    const [tokenData, err] = await outcome(() => previews.verify(token))
+    if (!tokenData) throw createError(400, `Incorrect token: ${err}`)
     const {id} = tokenData
     const store = await this.preview.getStore()
     await this.preview.fetchUpdate(id)

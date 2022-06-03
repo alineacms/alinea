@@ -1,10 +1,9 @@
-import type {BackendFactory} from '@alinea/backend'
-import {WorkspaceConfig} from '.'
 import {Auth} from './Auth'
+import {BackendConfig, BackendProps} from './BackendConfig'
 import {createError} from './ErrorWithCode'
 import {Root} from './Root'
 import {Type} from './Type'
-import {Workspace, Workspaces} from './Workspace'
+import {Workspace, WorkspaceConfig, Workspaces} from './Workspace'
 
 /** Configuration options for the dashboard */
 export class Config<T extends Workspaces = Workspaces> {
@@ -20,9 +19,19 @@ export class Config<T extends Workspaces = Workspaces> {
     ) as any
   }
 
+  get hasAuth() {
+    return Boolean(this.options.backend?.auth)
+  }
+
+  get authView() {
+    return this.options.backend?.auth.view
+  }
+
   // Todo: supply a default for non-dev env
-  get createBackend() {
-    return this.options.createBackend
+  createBackend(options: BackendProps) {
+    const backendConfig = this.options.backend
+    if (!backendConfig) throw createError('No backend config found')
+    return backendConfig.configureBackend({...backendConfig, ...options})
   }
 
   /** Get the first workspace */
@@ -58,8 +67,7 @@ export namespace Config {
 
 /** Configuration options */
 export type ConfigOptions<T extends Workspaces> = {
-  /** An entry point which exports a Backend instance */
-  createBackend?: BackendFactory
+  backend?: BackendConfig<any>
   /** The client side authentication view */
   auth?: Auth.View
   /** A record containing workspace configurations */

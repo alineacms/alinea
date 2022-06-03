@@ -1,5 +1,6 @@
 import {Client} from '@alinea/client'
-import type {Config} from '@alinea/core'
+import {Config} from '@alinea/core'
+import {joinPaths} from '@alinea/core/util/Urls'
 import {useEffect, useMemo, useState} from 'react'
 import {QueryClient} from 'react-query'
 import {Dashboard} from '../Dashboard'
@@ -37,10 +38,17 @@ export function DevDashboard({loadConfig}: DevDashboardOptions) {
   const [config, setConfig] = useState<Config>()
   const client = useMemo(() => {
     if (!config) return null
-    return new Client(config, location.origin + location.pathname)
+    return new Client(config, joinPaths(location.origin, location.pathname))
   }, [config])
   function getConfig() {
-    return loadConfig().then(setConfig)
+    return loadConfig()
+      .then(config => {
+        // Strip any backend or authentication specifics in dev
+        if (process.env.NODE_ENV === 'development')
+          return new Config({...config.options, backend: undefined})
+        return config
+      })
+      .then(setConfig)
   }
   function refetch() {
     return queryClient.refetchQueries()

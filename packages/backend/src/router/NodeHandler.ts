@@ -52,7 +52,9 @@ function fromNodeRequest(request: http.IncomingMessage) {
     request.socket instanceof TLSSocket && request.socket.encrypted
       ? 'https'
       : 'http'
-  const url = `${protocol}://${request.headers.host}${request.url}`
+  const url = `${protocol}://${request.headers.host}${
+    (request as any).originalUrl || request.url
+  }`
   if (request.method !== 'GET' && request.method !== 'HEAD')
     init.body = request as any
   return new fetch.Request(url, init)
@@ -66,11 +68,17 @@ export function nodeHandler(
   return async (
     req: http.IncomingMessage,
     res: http.ServerResponse,
-    next: () => void
+    next?: () => void
   ) => {
     const request = fromNodeRequest(req)
     const result = await handler(request)
-    if (result) await apply(result, res)
-    else next()
+    if (result) {
+      await apply(result, res)
+    } else if (next) {
+      next()
+    } else {
+      res.statusCode = 404
+      res.end('Not found')
+    }
   }
 }
