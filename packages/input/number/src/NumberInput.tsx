@@ -1,9 +1,8 @@
 import {InputLabel, InputState, useInput} from '@alinea/editor'
-
-import IcRoundNumbers from '@alinea/ui/icons/IcRoundNumbers'
+import {fromModule} from '@alinea/ui'
+import {IcRoundNumbers} from '@alinea/ui/icons/IcRoundNumbers'
 import {NumberField} from './NumberField'
 import css from './NumberInput.module.scss'
-import {fromModule} from '@alinea/ui'
 
 const styles = fromModule(css)
 
@@ -30,6 +29,7 @@ export function NumberInput({state, field}: NumberInputProps) {
         <input
           type="number"
           className={styles.root.input()}
+          value={value}
           onChange={e => setValue(Number(e.currentTarget.value))}
           min={minValue}
           max={maxValue}
