@@ -69,9 +69,7 @@ export class PasswordLessAuth implements Auth.Server {
     const [scheme, token] = authHeader.split(' ')
     if (scheme !== 'Bearer')
       throw createError(400, 'Invalid Authorization header')
-    const user = (await verify<User>(token, this.options.jwtSecret, {
-      algorithm: 'HS256'
-    })) as User
+    const user = await verify<User>(token, this.options.jwtSecret)
     this.users.set(request, user)
     return user
   }
