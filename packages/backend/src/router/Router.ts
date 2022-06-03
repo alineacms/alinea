@@ -1,7 +1,18 @@
 import {Outcome} from '@alinea/core/Outcome'
-import {Response} from '@web-std/fetch'
-import {File} from '@web-std/file'
+import {
+  Headers as WebHeaders,
+  Request as WebRequest,
+  Response as WebResponse
+} from '@remix-run/web-fetch'
+import {File} from '@remix-run/web-file'
 import {parse} from 'regexparam'
+
+export type Request = globalThis.Request
+export const Request = WebRequest
+export type Response = globalThis.Response
+export const Response = WebResponse
+export type Headers = globalThis.Headers
+export const Headers = WebHeaders
 
 // web-std/io#63
 globalThis.File = File

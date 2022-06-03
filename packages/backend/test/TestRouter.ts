@@ -1,5 +1,4 @@
-import {router} from '@alinea/backend/router/Router'
-import {Request, Response} from '@web-std/fetch'
+import {Request, Response, router} from '@alinea/backend/router/Router'
 import {test} from 'uvu'
 import * as assert from 'uvu/assert'
 

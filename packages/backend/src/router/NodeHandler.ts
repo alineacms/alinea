@@ -1,7 +1,7 @@
-import * as fetch from '@web-std/fetch'
 import http from 'http'
 import {TLSSocket} from 'node:tls'
 import type {Writable} from 'stream'
+import {Headers, Request, Response} from './Router'
 
 // Source: https://github.com/remix-run/remix/blob/4b11c6d12309ba5a1f3be4f716739f3240f21c35/packages/remix-node/stream.ts#L4
 async function writeReadableStreamToWritable(
@@ -31,7 +31,7 @@ async function apply(response: Response, to: http.ServerResponse) {
 }
 
 function fromNodeRequest(request: http.IncomingMessage) {
-  const headers = new fetch.Headers()
+  const headers = new Headers()
   for (const key of Object.keys(request.headers)) {
     if (!(key in request.headers)) continue
     const value = request.headers[key]
@@ -57,7 +57,7 @@ function fromNodeRequest(request: http.IncomingMessage) {
   }`
   if (request.method !== 'GET' && request.method !== 'HEAD')
     init.body = request as any
-  return new fetch.Request(url, init)
+  return new Request(url, init)
 }
 
 export function nodeHandler(
