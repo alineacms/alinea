@@ -1,6 +1,6 @@
 import {content} from '@alinea/content/web'
 import {Store} from '@alinea/store'
-import {headerQuery} from './Header.query'
+import {headerQuery} from './Header.server'
 
 type PageDetails = {
   title: string

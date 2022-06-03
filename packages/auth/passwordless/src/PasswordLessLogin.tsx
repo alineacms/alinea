@@ -1,5 +1,6 @@
 import {Client} from '@alinea/client'
 import {Auth, createError, Session} from '@alinea/core'
+import {joinPaths} from '@alinea/core/util/Urls'
 import {useDashboard} from '@alinea/dashboard'
 import {Button, fromModule, Loader, LogoShape, px, Typo} from '@alinea/ui'
 import {IcRoundArrowBack} from '@alinea/ui/icons/IcRoundArrowBack'
@@ -177,7 +178,7 @@ export function PasswordLessLogin({setSession}: Auth.ViewProps) {
     setState(LoginState.Loading)
     if (!(client instanceof Client))
       throw createError(`Cannot authenticate with non http client`)
-    fetch(`${client.url}/auth.passwordless`, {
+    fetch(joinPaths(client.url, `/hub/auth.passwordless`), {
       headers: {'content-type': 'application/json'},
       method: 'POST',
       body: JSON.stringify({email})

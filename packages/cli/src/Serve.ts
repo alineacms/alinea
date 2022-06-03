@@ -1,4 +1,5 @@
-import {DevServer, Server} from '@alinea/backend'
+import {DevBackend} from '@alinea/backend/DevBackend'
+import {nodeHandler} from '@alinea/backend/router/NodeHandler'
 import {EvalPlugin} from '@esbx/eval'
 import {ReactPlugin} from '@esbx/react'
 import semver from 'compare-versions'
@@ -21,7 +22,8 @@ export type ServeOptions = {
   configFile?: string
   port?: number
   buildOptions?: BuildOptions
-  dev?: boolean
+  alineaDev?: boolean
+  production?: boolean
 }
 
 export async function serve(options: ServeOptions) {
@@ -29,12 +31,14 @@ export async function serve(options: ServeOptions) {
     cwd = process.cwd(),
     buildOptions,
     staticDir = path.join(__dirname, 'static'),
-    dev = false
+    alineaDev = false,
+    production = false
   } = options
   const port = options.port || 4500
   const outDir = path.join(cwd, '.alinea')
   const storeLocation = path.join(outDir, 'store.js')
   const genConfigFile = path.join(outDir, 'config.js')
+  const backendFile = path.join(outDir, 'backend.js')
   const clients: Array<ServerResponse> = []
   const {version} = require('react/package.json')
   const isReact18 = semver.compare(version, '18.0.0', '>=')
@@ -45,7 +49,15 @@ export async function serve(options: ServeOptions) {
     if (type === 'reload') clients.length = 0
   }
 
-  let server: Promise<Server> | undefined
+  let server:
+    | Promise<
+        (
+          req: http.IncomingMessage,
+          res: http.ServerResponse,
+          next: () => void
+        ) => Promise<void>
+      >
+    | undefined
 
   async function reloadServer(error?: Error) {
     await (server = error ? undefined : devServer())
@@ -55,7 +67,7 @@ export async function serve(options: ServeOptions) {
     ...options,
     onConfigRebuild: async error => {
       await reloadServer(error)
-      if (!dev) reload('refresh')
+      if (!alineaDev) reload('refresh')
     },
     onCacheRebuild: async error => {
       await reloadServer(error)
@@ -76,12 +88,6 @@ export async function serve(options: ServeOptions) {
       })
     )
   })
-  app.use((req, res, next) => {
-    const unavailable = () =>
-      res.status(503).end('An error occured, see your terminal for details')
-    if (server) server.then(server => server.app(req, res, next), unavailable)
-    else unavailable()
-  })
   app.use(compression())
   app.get('/', (req, res) => {
     res.send(`<!DOCTYPE html>
@@ -96,11 +102,18 @@ export async function serve(options: ServeOptions) {
     </body>`)
   })
 
-  const entry = `@alinea/dashboard/dev/${dev ? 'Dev' : 'Lib'}Entry`
+  app.use('/hub', (req, res, next) => {
+    const unavailable = () =>
+      res.status(503).end('An error occured, see your terminal for details')
+    if (server) server.then(server => server(req, res, next), unavailable)
+    else unavailable()
+  })
+
+  const entry = `@alinea/dashboard/dev/${alineaDev ? 'Dev' : 'Lib'}Entry`
 
   function browserBuild(): BuildOptions {
     return {
-      ignoreAnnotations: dev,
+      ignoreAnnotations: alineaDev,
       format: 'esm',
       target: 'esnext',
       treeShaking: true,
@@ -119,7 +132,7 @@ export async function serve(options: ServeOptions) {
       ...buildOptions,
       plugins: [EvalPlugin, ReactPlugin, ...(buildOptions?.plugins || [])],
       define: {
-        'process.env.NODE_ENV': "'development'"
+        'process.env.NODE_ENV': production ? "'production'" : "'development'"
       },
       loader: {
         ...buildOptions?.loader,
@@ -159,7 +172,7 @@ export async function serve(options: ServeOptions) {
     }
   }
 
-  if (dev) {
+  if (alineaDev) {
     await esbuild.build({
       ...browserBuild(),
       write: false,
@@ -172,19 +185,29 @@ export async function serve(options: ServeOptions) {
     })
   }
   app.listen(port)
-  console.log(`> Alinea dashboard available on http://localhost:${port}`)
+  console.log(
+    `> Alinea ${
+      production ? '(production) ' : ''
+    }dashboard available on http://localhost:${port}`
+  )
 
   async function devServer() {
     const unique = Date.now()
-    // Todo: these should be imported in a worker since we can't reclaim memory
-    // used, see #nodejs/modules#307
-    const {config} = await import(`file://${genConfigFile}?${unique}`)
-    const {createStore} = await import(`file://${storeLocation}?${unique}`)
-    return new DevServer({
-      config,
-      createStore,
-      port,
-      cwd
-    })
+    let backend
+    if (production) {
+      backend = (await import(`file://${backendFile}`)).backend
+    } else {
+      // Todo: these should be imported in a worker since we can't reclaim memory
+      // used, see #nodejs/modules#307
+      const {config} = await import(`file://${genConfigFile}?${unique}`)
+      const {createStore} = await import(`file://${storeLocation}?${unique}`)
+      backend = new DevBackend({
+        config,
+        createStore,
+        port,
+        cwd
+      })
+    }
+    return nodeHandler(backend.handle)
   }
 }

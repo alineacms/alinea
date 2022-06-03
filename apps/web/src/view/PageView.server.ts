@@ -1,7 +1,7 @@
 import {content} from '@alinea/content/web'
 import {Store} from '@alinea/store'
-import {docPageQuery} from './DocPage.query'
-import {layoutQuery} from './layout/Layout.query'
+import {docPageQuery} from './DocPage.server'
+import {layoutQuery} from './layout/Layout.server'
 
 async function loadPage(pages: content.Pages, page: content.AnyPage) {
   switch (page.type) {

@@ -86,27 +86,28 @@ export const prepare = {
 
 const modules = findNodeModules(process.cwd())
 
-const serverOptions: BuildOptions = {
-  ...buildOptions,
-  ignoreAnnotations: true,
-  platform: 'node',
-  entryPoints: ['.esbx/dev.ts'],
-  outExtension: {'.js': '.mjs'},
-  bundle: true,
-  outdir: 'dist',
-  external: modules,
-  plugins: [
-    ...buildOptions.plugins!,
-    ReporterPlugin.configure({name: 'server'}),
-    RunPlugin.configure({
-      cmd: 'node --experimental-specifier-resolution=node dist/dev.mjs'
-    })
-  ]
-}
-
 export const dev = {
-  async action() {
+  options: [['-p, --production', 'Use production backend']],
+  async action(options) {
     await buildTask.action({watch: true, silent: true})
+    const serverOptions: BuildOptions = {
+      ...buildOptions,
+      ignoreAnnotations: true,
+      platform: 'node',
+      entryPoints: ['.esbx/dev.ts'],
+      outExtension: {'.js': '.mjs'},
+      bundle: true,
+      outdir: 'dist',
+      external: modules,
+      plugins: [
+        ...buildOptions.plugins!,
+        ReporterPlugin.configure({name: 'server'}),
+        // --experimental-specifier-resolution=node
+        RunPlugin.configure({
+          cmd: 'node dist/dev.mjs' + (options.production ? ' --production' : '')
+        })
+      ]
+    }
     return build(serverOptions)
   }
 }

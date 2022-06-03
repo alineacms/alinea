@@ -32,6 +32,7 @@ prog
   })
   .command('serve [dir]')
   .describe('Start a development dashboard')
+  .option('-p, --production', `Use production backend`)
   .action(async (dir, args) => {
     ensureNodeResolution()
     ensureReact()

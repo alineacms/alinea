@@ -1,6 +1,6 @@
+import {btoa} from '@alinea/core/util/Base64'
 import {Helmet} from 'react-helmet'
 import {useContrastColor} from '../hook/UseContrastColor'
-import {btoa} from '../util/Base64'
 
 type FavIconProps = {
   color: string

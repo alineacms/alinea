@@ -17,7 +17,7 @@ import convertHrtime from 'convert-hrtime'
 import prettyMilliseconds from 'pretty-ms'
 import * as Y from 'yjs'
 import {Data} from './Data'
-import {appendPath} from './util/Urls'
+import {appendPath} from './util/Paths'
 
 export namespace Cache {
   function indexSearch(store: Store, entry: Entry, lookup = true) {

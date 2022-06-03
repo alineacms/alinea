@@ -2,6 +2,7 @@ import {Media} from '@alinea/core/Media'
 import {fromModule, Property, useObservable} from '@alinea/ui'
 import {Main} from '@alinea/ui/Main'
 import prettyBytes from 'pretty-bytes'
+import {useNav} from '../../hook/UseNav'
 import {EditMode} from '../entry/EditMode'
 import {EntryHeader} from '../entry/EntryHeader'
 import {EntryTitle} from '../entry/EntryTitle'
@@ -36,12 +37,22 @@ function FileView({draft}: EntryEditProps) {
 }
 
 export function FileEntry(props: EntryEditProps) {
-  const isImage = Media.isImage(props.draft.url)
+  const nav = useNav()
+  const {draft} = props
+  const isImage = Media.isImage(draft.url)
   return (
     <Main className={styles.root()}>
       <EntryHeader mode={EditMode.Editing} />
       <Main.Container>
-        <EntryTitle />
+        <EntryTitle
+          backLink={
+            draft.parent &&
+            nav.entry({
+              id: draft.parent,
+              workspace: draft.workspace
+            })
+          }
+        />
         {isImage ? <ImageView {...props} /> : <FileView {...props} />}
       </Main.Container>
     </Main>

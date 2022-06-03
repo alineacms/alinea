@@ -1,3 +1,5 @@
+import {joinPaths} from '@alinea/core/util/Urls'
+
 export function walkUrl(url: string | undefined): Array<string> {
   const res = []
   while (true) {
@@ -15,5 +17,5 @@ export function parentUrl(url: string): string | undefined {
 }
 
 export function appendPath(url: string, path: string) {
-  return url + '/' + (path === 'index' ? '' : path)
+  return joinPaths(url, path === 'index' ? '' : path)
 }

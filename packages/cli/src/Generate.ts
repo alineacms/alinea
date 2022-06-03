@@ -12,12 +12,13 @@ import {ReactPlugin} from '@esbx/react'
 import {encode} from 'base64-arraybuffer'
 import {FSWatcher} from 'chokidar'
 import {dirname} from 'dirname-filename-esm'
-import {build, BuildResult, Plugin} from 'esbuild'
+import {build, BuildResult} from 'esbuild'
 import fs from 'fs-extra'
 import {signed, unsigned} from 'leb128'
-import crypto from 'node:crypto'
 import path from 'node:path'
+import {externalPlugin} from './util/ExternalPlugin'
 import {ignorePlugin} from './util/IgnorePlugin'
+import {targetPlugin} from './util/TargetPlugin'
 
 const __dirname = dirname(import.meta)
 
@@ -33,52 +34,7 @@ function failOnBuildError(build: Promise<BuildResult>) {
   })
 }
 
-const externalPlugin: Plugin = {
-  name: 'external',
-  setup(build) {
-    build.onResolve({filter: /^[^\.].*/}, args => {
-      if (args.kind === 'entry-point') return
-      return {path: args.path, external: true}
-    })
-  }
-}
-
-type ServerPluginOptions = {
-  outDir: string
-}
-
-function serverPlugin({outDir}: ServerPluginOptions): Plugin {
-  return {
-    name: 'server',
-    setup(build) {
-      // Hook into any import that ends in .query.(js/ts)
-      // compile and place the file in the server directory
-      build.onResolve({filter: /\.query(\.js|\.ts)?$/}, async args => {
-        const location = crypto
-          .createHash('md5')
-          .update(args.resolveDir)
-          .digest('hex')
-          .slice(0, 7)
-        let filename = location + '.' + path.basename(args.path)
-        if (filename.endsWith('.ts')) filename = filename.slice(0, -3) + '.js'
-        if (!filename.endsWith('.js')) filename += '.js'
-        await build.esbuild.build({
-          platform: 'node',
-          bundle: true,
-          format: 'esm',
-          target: 'esnext',
-          treeShaking: true,
-          entryPoints: [path.join(args.resolveDir, args.path)],
-          outfile: path.join(outDir, '.server/dist', filename),
-          plugins: [externalPlugin, ignorePlugin]
-        })
-        return {external: true, path: `@alinea/content/.server/${filename}`}
-      })
-    }
-  }
-}
-
-function bin(strings: ReadonlyArray<String>, ...inserts: Array<Buffer>) {
+function bin(strings: ReadonlyArray<string>, ...inserts: Array<Buffer>) {
   const res: Array<Buffer> = []
   strings.forEach(function (str, i) {
     res.push(
@@ -87,6 +43,15 @@ function bin(strings: ReadonlyArray<String>, ...inserts: Array<Buffer>) {
     if (inserts[i]) res.push(inserts[i])
   })
   return Buffer.concat(res)
+}
+
+function code(strings: ReadonlyArray<string>, ...inserts: Array<any>) {
+  const res: Array<string> = []
+  strings.forEach(function (str, i) {
+    res.push(str)
+    if (i in inserts) res.push(String(inserts[i]))
+  })
+  return res.join('').replace(/  /g, '').trim()
 }
 
 function embedInWasm(data: Uint8Array) {
@@ -138,14 +103,12 @@ function schemaCollections(workspace: Workspace) {
       .map(type => `export const ${type} = schema.type('${type}').collection()`)
       .join('\n')}
   `
-  return `
+  return code`
     import {config} from '../config.js'
     export const workspace = config.workspaces['${workspace.name}']
     export const schema = workspace.schema
     ${collections}
   `
-    .replace(/  /g, '')
-    .trim()
 }
 
 function schemaTypes(workspace: Workspace) {
@@ -160,7 +123,7 @@ function schemaTypes(workspace: Workspace) {
         export type ${type} = DataOf<typeof ${type}>`
     )
     .join('\n')}`
-  return `
+  return code`
     import {config} from '../config.js'
     import {DataOf, EntryOf, Entry} from '@alinea/core'
     import {Collection} from '@alinea/store'
@@ -168,8 +131,6 @@ function schemaTypes(workspace: Workspace) {
     export const schema = config.workspaces['${workspace.name}'].schema
     ${wrapNamespace(collections, workspace.typeNamespace)}
   `
-    .replace(/  /g, '')
-    .trim()
 }
 
 export type GenerateOptions = {
@@ -221,6 +182,8 @@ export async function generate(options: GenerateOptions) {
       'index.d.ts',
       'client.js',
       'client.d.ts',
+      'backend.js',
+      'backend.d.ts',
       'store.d.ts'
     )
     await fs.writeFile(
@@ -245,7 +208,12 @@ export async function generate(options: GenerateOptions) {
         bundle: true,
         platform: 'node',
         plugins: [
-          serverPlugin({outDir}),
+          targetPlugin(file => {
+            return {
+              packageName: '@alinea/content',
+              packageRoot: outDir
+            }
+          }),
           EvalPlugin,
           externalPlugin,
           ignorePlugin,

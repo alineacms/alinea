@@ -85,7 +85,7 @@ function DraftsButton() {
 }
 
 function AppAuthenticated() {
-  const {auth} = useDashboard()
+  const {config} = useDashboard()
   const nav = useNav()
   const location = useLocation()
   const isEntry = useMatch(nav.matchEntry) || location.pathname === '/'
@@ -171,7 +171,7 @@ function AppAuthenticated() {
               </div>
               <Statusbar.Root>
                 <DraftsStatusSummary />
-                {!auth && (
+                {!config.hasAuth && (
                   <Statusbar.Status icon={IcRoundWarning}>
                     Not using authentication
                   </Statusbar.Status>
@@ -254,8 +254,9 @@ type AppRootProps = {
 }
 
 function AppRoot({session, setSession}: AppRootProps) {
-  const {auth: Auth = Fragment, config} = useDashboard()
+  const {config} = useDashboard()
   const {color} = config.defaultWorkspace
+  const Auth = config.authView || Fragment
   if (!session)
     return (
       <Viewport attachToBody contain color={color}>
@@ -278,13 +279,14 @@ function localSession(options: DashboardOptions) {
 const QueryClientProvider: any = ReactQueryClientProvider
 
 export function App<T extends Workspaces>(props: DashboardOptions<T>) {
+  const auth = props.config.authView
   const [queryClient] = useState(
     () =>
       props.queryClient ||
       new QueryClient({defaultOptions: {queries: {retry: false}}})
   )
   const [session, setSession] = useState<Session | undefined>(
-    !props.auth ? localSession(props) : undefined
+    !auth ? localSession(props) : undefined
   )
   return (
     <DashboardProvider value={{...props}}>
