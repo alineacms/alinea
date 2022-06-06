@@ -17,7 +17,6 @@ export function DateInput({state, field}: DateInputProps) {
   const {width, inline, optional, help, autoFocus, initialValue} = field.options
   const [value = initialValue, setValue] = useInput(state)
   const [focus, setFocus] = useState(false)
-  console.log(value, value === '')
   return (
     <InputLabel
       asLabel
