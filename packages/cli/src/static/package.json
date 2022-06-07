@@ -1,5 +1,6 @@
 {
   "private": true,
+  "version": "0.0.0",
   "name": "@alinea/content",
   "type": "module",
   "sideEffects": false,
