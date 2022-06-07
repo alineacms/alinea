@@ -3,6 +3,17 @@
 ## [Unreleased]
 
 - Update number field styles to use updated css variable names
+- Select fields configuration can now be set using the `configure` method. This
+  helps type inference for the initial value.
+
+  ```ts
+  select('Level', {
+    info: 'Info',
+    warning: 'Warning'
+  }).configure({
+    initialValue: 'info'
+  })
+  ```
 
 ## [0.1.1]
 

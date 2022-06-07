@@ -27,6 +27,7 @@ export interface SelectField<T extends string = string>
   label: Label
   items: SelectItems<T>
   options: SelectOptions<T>
+  configure: (options: SelectOptions<T>) => SelectField<T>
 }
 
 /** Create a select field configuration */
@@ -40,6 +41,9 @@ export function createSelect<T extends string>(
     label,
     items,
     options,
-    initialValue: options.initialValue
+    initialValue: options.initialValue,
+    configure(options: SelectOptions<T>) {
+      return createSelect<T>(label, items, options)
+    }
   }
 }
