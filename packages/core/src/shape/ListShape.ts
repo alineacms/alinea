@@ -110,8 +110,6 @@ export class ListShape<T>
         const record = parent.get(key)
         const rows: Array<ListRow> = this.fromY(record) as any
         const id = createId()
-        console.log(row)
-        console.log(shape.create())
         const item = shape.toY({
           ...shape.create(),
           ...row,
