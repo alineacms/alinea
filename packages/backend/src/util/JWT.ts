@@ -24,8 +24,11 @@ let subtle =
 if (!subtle)
   subtle = import('node:crypto')
     .then((c: any) => c.webcrypto.subtle)
-    .catch(() => import('@peculiar/webcrypto'))
-    .then(c => new c.Crypto().subtle as any)
+    .catch(() => {
+      return import('@peculiar/webcrypto').then(
+        c => new c.Crypto().subtle as any
+      )
+    })
     .catch(() => undefined)
 
 const algorithms = {

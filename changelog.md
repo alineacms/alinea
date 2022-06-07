@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Fix subtle crypto import for node versions that ship it natively (> v15)
+
 ## [0.1.0]
 
 - The backend implementation now uses the web fetch api instead of relying on
