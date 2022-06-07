@@ -4,10 +4,6 @@
   "root": "data",
   "index": "a1",
   "title": "Dashboard",
-  "parents": [
-    "docs",
-    "2596BztvXq5Fu9mzMLcpI4MyNZj"
-  ],
   "blocks": [
     {
       "id": "25HTEiuZ1248vU6D4ar6EjACGkg",
@@ -16,6 +12,7 @@
       "text": [
         {
           "type": "heading",
+          "textAlign": "left",
           "level": 1,
           "content": [
             {
@@ -26,6 +23,7 @@
         },
         {
           "type": "heading",
+          "textAlign": "left",
           "level": 2,
           "content": [
             {
@@ -36,6 +34,7 @@
         },
         {
           "type": "paragraph",
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
@@ -65,6 +64,7 @@
         },
         {
           "type": "heading",
+          "textAlign": "left",
           "level": 2,
           "content": [
             {
@@ -75,10 +75,23 @@
         },
         {
           "type": "paragraph",
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
-              "text": "Later on we'll see how to add authentication and expose this admin interface publicly."
+              "text": "To serve the dashboard publicly we'll need to add a backend with authentication. This is outlined in the backends chapter."
+            }
+          ]
+        },
+        {
+          "id": "2AFfIJ4pjzOrn6teBbtEbEZQ2Tx",
+          "type": "ChapterLinkBlock",
+          "link": [
+            {
+              "id": "2AFfPIZmzQA4eZclfF2dq7e5f6V",
+              "index": "a0",
+              "type": "entry",
+              "entry": "28NgU841OXMyHZX4EU1GRqxZaB0"
             }
           ]
         }

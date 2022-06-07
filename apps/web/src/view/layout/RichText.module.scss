@@ -30,6 +30,7 @@ h3.heading {
 }
 
 .paragraph {
+  display: block;
   font-size: 14px;
   line-height: 1.6;
   &:not(:last-child) {

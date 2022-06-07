@@ -1,0 +1,22 @@
+.root {
+  display: inline-block;
+  border-radius: 12px;
+  padding: 10px 16px;
+  line-height: 1.2;
+  font-size: 14px;
+  box-shadow: 0 1px 0 #ecebeb;
+  border: 1px solid #ecebeb;
+  margin-bottom: 18px;
+
+  &-icon {
+    display: block;
+    font-size: 18px;
+    flex-shrink: 0;
+    color: #a1a0a0;
+    margin-top: 1px;
+  }
+
+  &.is-info {
+    background: white;
+  }
+}

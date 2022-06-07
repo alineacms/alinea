@@ -4,7 +4,6 @@
   "root": "data",
   "index": "ZwV",
   "title": "Schema",
-  "path": "schema",
   "blocks": [
     {
       "id": "267KUArMsLoytOeNGlQGAf4v4tt",
@@ -14,6 +13,7 @@
         {
           "type": "heading",
           "level": 1,
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
@@ -23,10 +23,11 @@
         },
         {
           "type": "paragraph",
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
-              "text": "A schema describes multiple types. Every type contains fields and in many instances can be thought of as describing all of the data on a page."
+              "text": "A schema describes multiple types which are composed of fields that contain the data of a page."
             }
           ]
         },
@@ -38,6 +39,7 @@
         {
           "type": "heading",
           "level": 2,
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
@@ -47,15 +49,13 @@
         },
         {
           "type": "paragraph",
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
               "text": "The example below can be found in the configuration file after running the `alinea init` command. It has the following settings:"
             }
           ]
-        },
-        {
-          "type": "paragraph"
         },
         {
           "type": "bulletList",
@@ -65,6 +65,7 @@
               "content": [
                 {
                   "type": "paragraph",
+                  "textAlign": "left",
                   "content": [
                     {
                       "type": "text",
@@ -79,6 +80,7 @@
               "content": [
                 {
                   "type": "paragraph",
+                  "textAlign": "left",
                   "content": [
                     {
                       "type": "text",
@@ -93,6 +95,7 @@
               "content": [
                 {
                   "type": "paragraph",
+                  "textAlign": "left",
                   "content": [
                     {
                       "type": "text",
@@ -110,12 +113,6 @@
           "code": "schema({\n  ...MediaSchema,\n  Page: type('Page',\n    {\n      title: text('Title'),\n      path: path('Path')\n    },\n    <Welcome />\n  ).configure({isContainer: true})\n})"
         }
       ]
-    },
-    {
-      "id": "286HXzkmEaM4Er6WZewZvNPLQmX",
-      "index": "a1",
-      "type": "TypesBlock",
-      "types": "schema, Schema"
     }
   ]
 }

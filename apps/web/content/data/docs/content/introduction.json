@@ -4,10 +4,6 @@
   "root": "data",
   "index": "a0",
   "title": "Introduction",
-  "parents": [
-    "docs",
-    "28Ng5RzmZ2fHUVlVbAEv1l1oUUS"
-  ],
   "blocks": [
     {
       "id": "28Ng8SpEKCBCaddO8Zeiy3CSUHl",
@@ -17,6 +13,7 @@
         {
           "type": "heading",
           "level": 1,
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
@@ -27,6 +24,7 @@
         {
           "type": "heading",
           "level": 2,
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
@@ -36,46 +34,50 @@
         },
         {
           "type": "paragraph",
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
-              "text": "Alinea generates files on your file system in two places. First content will be placed in a directory as `json` files. Second a library is generated inside the `.alinea` folder which allows us to interact with the content in JavaScript."
+              "text": "Alinea generates files on your file system in two places. Content is published into in a directory as `json` files. A Javascript library is generated inside the `.alinea` folder which allows us to interact with the content in JavaScript."
             }
           ]
         },
         {
           "id": "28hnf59Rd5Gbite3NVvsvobRTZz",
           "type": "CodeBlock",
-          "code": "// Published content is stored in json files \n// inside the content directory\ncontent\n├ data // data root\n│ ├ index.json\n│ ├ blog.json\n│ ╰ blog\n│   ├ blog-post.json\n│   ╰ another-blog-post.json\n╰ media // media root\n  ├ image.png.json\n  ╰ file.pdf.json\n\n// The alinea directory exports a javascript library\n// per workspace\n.alinea\n╰ web",
+          "code": "// Published content is stored in json files \n// inside the content directory\ncontent\n├ data // data root\n│ ├ index.json\n│ ├ blog.json\n│ ╰ blog\n│   ├ blog-post.json\n│   ╰ another-blog-post.json\n╰ media // media root\n  ├ image.png.json\n  ╰ file.pdf.json\n\n// The alinea directory exports a javascript library\n// per workspace which can be imported from @alinea/content\n.alinea\n╰ web",
           "compact": true
         },
         {
           "type": "heading",
           "level": 2,
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
-              "text": "The .alinea package"
+              "text": "The @alinea/content package"
             }
           ]
         },
         {
           "type": "paragraph",
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
-              "text": "For each workspace a few exports can be found under `.alinea/$workspace`. In the example above we can query pages of the web workspace by importing its `Pages` instance."
+              "text": "For each workspace a few exports can be found under `'@alinea/content/$workspace`. In the example above we can query pages of the web workspace by importing its `Pages` instance."
             }
           ]
         },
         {
           "id": "28hwTlSifcft8pjRXYWoRGYMMMA",
           "type": "CodeBlock",
-          "code": "import {pages} from '.alinea/web/pages'\n\nconst blog = await pages.findFirst(page => page.type.is('BlogOverview'))\nconst posts = await blog.tree.children()"
+          "code": "import {pages} from '@alinea/content/web'\n\nconst blog = await pages.findFirst(page => page.type.is('BlogOverview'))\nconst posts = await blog.tree.children()"
         },
         {
           "type": "heading",
           "level": 3,
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
@@ -85,6 +87,7 @@
         },
         {
           "type": "paragraph",
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
@@ -95,7 +98,7 @@
         {
           "id": "28i0o6Hkw7J6px87T32tPA5vUNB",
           "type": "CodeBlock",
-          "code": "import {pages} from '.alinea/web/pages'\nimport {Animal, Fruit} from '.alinea/web'\n\nconst page = await pages.findFirst(\n  Animal.age.greater(10)\n)\nconst pages = await pages.findMany(\n  Fruit.title.isIn(['apple', 'orange'])\n)"
+          "code": "import {pages, Animal, Fruit} from '@alinea/content/web'\n\nconst page = await pages.findFirst(\n  Animal.age.greater(10)\n)\nconst pages = await pages.findMany(\n  Fruit.title.isIn(['apple', 'orange'])\n)"
         }
       ]
     }

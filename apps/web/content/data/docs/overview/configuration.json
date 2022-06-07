@@ -4,10 +4,6 @@
   "root": "data",
   "index": "a2",
   "title": "Configuration",
-  "parents": [
-    "docs",
-    "2596BztvXq5Fu9mzMLcpI4MyNZj"
-  ],
   "blocks": [
     {
       "id": "25HWDVdhsKXsw9R0i0ImOmwE32h",
@@ -17,6 +13,7 @@
         {
           "type": "heading",
           "level": 1,
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
@@ -26,10 +23,11 @@
         },
         {
           "type": "paragraph",
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
-              "text": "The command (`alinea init`) we ran in Getting Started created an `alinea.config.tsx` file. This file contains an example workspace to get started from. "
+              "text": "The init command (`alinea init`) creates an `alinea.config.tsx` file. This file contains an example workspace to get started from. "
             }
           ]
         },

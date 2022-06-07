@@ -4,11 +4,6 @@
   "root": "data",
   "index": "a2",
   "title": "Select",
-  "parents": [
-    "docs",
-    "259Ey7LXgqL7ZDGJ8XK1vBJmZrh",
-    "24yE2mu6Xq959jrP135Sdb4e3lG"
-  ],
   "blocks": [
     {
       "id": "268hz0MUyLATEWwXgRZzDQDyirO",
@@ -18,6 +13,7 @@
         {
           "type": "heading",
           "level": 1,
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
@@ -27,6 +23,7 @@
         },
         {
           "type": "paragraph",
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
@@ -45,7 +42,7 @@
       "id": "286ITmvhna9jHs6Zqi1oB5Y4HO7",
       "index": "a1",
       "type": "TypesBlock",
-      "types": "SelectOptions, SelectItems"
+      "types": "SelectOptions"
     }
   ]
 }
