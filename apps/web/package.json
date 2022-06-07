@@ -20,6 +20,7 @@
     "@alinea/ui": "0.0.0",
     "next": "^12.1.5",
     "react": "^18.1.0",
+    "react-animate-height": "^3.0.3",
     "react-dom": "^18.1.0",
     "react-string-replace": "^1.0.0",
     "remark": "^14.0.2",
