@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.1.1]
+
 - Fix subtle crypto import for node versions that ship it natively (> v15)
 
 ## [0.1.0]
