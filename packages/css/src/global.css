@@ -11,6 +11,14 @@ body,
   box-sizing: border-box;
 }
 
+button {
+	background: none;
+	border: none;
+	color: inherit;
+	cursor: pointer;
+  font: inherit;
+}
+
 @font-face {
   font-family: 'Inter';
   font-style: normal;

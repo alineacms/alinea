@@ -49,6 +49,10 @@
       position: absolute;
       top: 12px;
       right: 12px;
+
+      &:focus-visible {
+        outline: -webkit-focus-ring-color auto 1px;
+      }
     }
   }
 }

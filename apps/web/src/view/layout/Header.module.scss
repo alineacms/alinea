@@ -4,19 +4,21 @@
   --background: hsl(0, 12%, 98%);
   position: relative;
   background: var(--background);
-  height: 95px;
   display: flex;
-  justify-content: center;
   flex-direction: column;
-  padding: 0 30px;
-  //border-bottom: 1px solid #E9E8EA;
+  justify-content: center;
+  padding: 20px 30px;
 
   @include ml {
-    padding: 0 45px;
+    padding: 20px 45px;
+  }
+
+  &-top {
+    position: relative;
   }
 
   &-logo {
-    color: #141b43;
+    color: var(--website-heading);
     margin-top: -3px;
 
     @include ml {
@@ -30,13 +32,21 @@
     }
   }
 
-  &-link {
-    color: inherit;
-    text-decoration: none;
-    font-size: 13px;
+  &-nav {
+    display: none !important;
 
-    @include ml {
-      font-size: 14px;
+    @include l {
+      display: flex !important;
+    }
+
+    &-link {
+      color: inherit;
+      text-decoration: none;
+      font-size: 13px;
+
+      @include ml {
+        font-size: 14px;
+      }
     }
   }
 
@@ -54,14 +64,46 @@
   }
 
   &-social {
-    color: #141b43;
+    color: var(--website-heading);
 
     &:hover {
       color: black;
     }
 
     &-icon {
+      display: block;
       font-size: 25px;
     }
+  }
+
+  &-hamburger {
+    display: block;
+    color: var(--website-heading);
+    font-size: 25px;
+
+    @include l {
+      display: none !important;
+    }
+
+    > svg {
+      display: block;
+    }
+  }
+}
+
+.mobilemenu {
+  display: block;
+  padding-top: 20px;
+
+  @include l {
+    display: none !important;
+  }
+
+  &-link {
+    cursor: pointer;
+    color: inherit;
+    font-family: 'Inter', sans-serif;
+    font-size: 16px;
+    text-decoration: none;
   }
 }

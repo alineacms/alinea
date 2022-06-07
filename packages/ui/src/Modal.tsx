@@ -19,13 +19,13 @@ export function Modal({children, ...props}: ModalProps) {
     <Dialog {...props} className={styles.root({open: props.open})}>
       <div className={styles.root.background()} onClick={props.onClose}></div>
       <Dialog.Panel className={styles.root.inner.mergeProps(props)()}>
+        {children}
         <IconButton
           className={styles.root.inner.close()}
           size={18}
           icon={IcRoundClose}
           onClick={props.onClose}
         />
-        {children}
       </Dialog.Panel>
     </Dialog>
   )
