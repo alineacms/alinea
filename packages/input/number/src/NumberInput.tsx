@@ -29,7 +29,7 @@ export function NumberInput({state, field}: NumberInputProps) {
         <input
           type="number"
           className={styles.root.input()}
-          value={value}
+          value={String(value ?? '')}
           onChange={e => setValue(Number(e.currentTarget.value))}
           min={minValue}
           max={maxValue}
