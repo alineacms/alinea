@@ -146,7 +146,9 @@ export class RichTextShape<T> implements Shape<TextDoc<T>, RichTextMutator<T>> {
       fragment: map.get('$text'),
       insert: (id: string, block: string) => {
         if (!this.values) throw new Error('No types defined')
-        map.set(id, this.values[block].toY({type: block, id} as any))
+        const shape = this.values[block]
+        const row = {...shape.create(), id, type: block}
+        map.set(id, shape.toY(row))
       }
     }
   }
