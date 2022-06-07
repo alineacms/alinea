@@ -213,7 +213,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@alinea/input.date@workspace:packages/input/date":
+"@alinea/input.date@0.0.0, @alinea/input.date@workspace:packages/input/date":
   version: 0.0.0-use.local
   resolution: "@alinea/input.date@workspace:packages/input/date"
   dependencies:
@@ -2323,6 +2323,7 @@ __metadata:
     "@alinea/dashboard": 0.0.0
     "@alinea/input.check": 0.0.0
     "@alinea/input.code": 0.0.0
+    "@alinea/input.date": 0.0.0
     "@alinea/input.link": 0.0.0
     "@alinea/input.list": 0.0.0
     "@alinea/input.number": 0.0.0
