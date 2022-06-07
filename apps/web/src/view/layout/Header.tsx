@@ -8,7 +8,7 @@ import {useState} from 'react'
 import AnimateHeight from 'react-animate-height'
 import {Logo} from './branding/Logo'
 import css from './Header.module.scss'
-import {HeaderProps} from './Header.query'
+import {HeaderProps} from './Header.server'
 
 const styles = fromModule(css)
 

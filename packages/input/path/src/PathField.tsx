@@ -6,6 +6,7 @@ export type PathOptions = {
   help?: Label
   inline?: boolean
   optional?: boolean
+  hidden?: boolean
 }
 
 export interface PathField extends Field.Scalar<string> {

@@ -1,6 +1,7 @@
 import {fromModule, Pane, useNonInitialEffect} from '@alinea/ui'
 import {Badge} from '@alinea/ui/Badge'
 import {createSlots} from '@alinea/ui/util/Slots'
+import {useWindowWidth} from '@react-hook/window-size'
 import {
   createContext,
   Dispatch,
@@ -52,7 +53,9 @@ export namespace Sidebar {
   }
 
   export function Provider({children}: PropsWithChildren<{}>) {
-    const isLarge = window.innerWidth >= 1024
+    const innerWidth = useWindowWidth()
+    const isLarge = innerWidth >= 1024
+    const isSmall = innerWidth < 768
     const [open, dispatchOpen] = useReducer(
       isLarge ? simpleToggle : uniqueToggle,
       {nav: isLarge, preview: isLarge}
@@ -60,14 +63,14 @@ export namespace Sidebar {
     const {id} = useEntryLocation() || {}
     const {name: workspace} = useWorkspace()
     useNonInitialEffect(() => {
-      if (isLarge) return
+      if (!isSmall) return
       if (id) dispatchOpen({nav: false})
-    }, [isLarge, id])
+    }, [isSmall, id])
 
     useNonInitialEffect(() => {
-      if (isLarge) return
+      if (!isSmall) return
       dispatchOpen({nav: true})
-    }, [isLarge, workspace])
+    }, [isSmall, workspace])
     return (
       <slots.Provider>
         <opened.Provider value={[open, dispatchOpen]}>

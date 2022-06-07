@@ -6,6 +6,8 @@ import {Expr, SelectionInput} from '@alinea/store'
 export type RichTextOptions<T, Q> = {
   /** Allow these blocks to be created between text fragments */
   blocks?: SchemaConfig<T>
+  /** Width of the field in the dashboard UI (0-1) */
+  width?: number
   /** Add instructional text to a field */
   help?: Label
   /** Field is optional */

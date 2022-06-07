@@ -4,7 +4,12 @@
   "license": "MIT",
   "type": "module",
   "exports": {
-    "./*": "./dist/*.js"
+    ".": "./dist/index.js",
+    "./*": "./dist/*.js",
+    "./server/PasswordLessAuth": {
+      "browser": "./dist/static/noop.cjs",
+      "default": "./dist/server/PasswordLessAuth.js"
+    }
   },
   "files": [
     "dist"
@@ -23,12 +28,10 @@
     "@alinea/core": "0.0.0",
     "@alinea/dashboard": "0.0.0",
     "@alinea/ui": "0.0.0",
-    "express": "^4.17.1",
-    "express-jwt": "^6.1.0",
-    "jsonwebtoken": "^8.5.1",
     "jwt-decode": "^3.1.2",
     "nodemailer": "^6.6.5",
-    "react-helmet": "^6.1.0"
+    "react-helmet": "^6.1.0",
+    "superstruct": "^0.15.4"
   },
   "devDependencies": {
     "@types/cookie-parser": "^1.4.2",

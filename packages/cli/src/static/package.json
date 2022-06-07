@@ -1,5 +1,6 @@
 {
   "private": true,
+  "version": "0.0.0",
   "name": "@alinea/content",
   "type": "module",
   "sideEffects": false,
@@ -10,6 +11,7 @@
     },
     "./store.js": "./store.js",
     "./config.js": "./config.js",
+    "./backend.js": "./backend.js",
     "./.server/*": {
       "browser": "./.server/client.cjs",
       "default": "./.server/dist/*"

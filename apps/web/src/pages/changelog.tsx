@@ -1,12 +1,12 @@
+import {backend} from '@alinea/content/backend.js'
 import fs from 'fs'
 import path from 'path'
-import {backend} from '../../alinea.backend'
 import markdownToHtml from '../../lib/markdownToHtml'
 import ChangelogView from '../view/ChangelogView'
 import {Container} from '../view/layout/Container'
-import {headerQuery} from '../view/layout/Header.query'
+import {headerQuery} from '../view/layout/Header.server'
 import {Layout} from '../view/layout/Layout'
-import {LayoutProps} from '../view/layout/Layout.query'
+import {LayoutProps} from '../view/layout/Layout.server'
 
 export type ChangelogProps = {
   layout: LayoutProps

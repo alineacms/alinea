@@ -3,7 +3,7 @@ import {Store} from '@alinea/store'
 import {posix as path} from 'node:path'
 import {Cache} from './Cache'
 import {Loader} from './Loader'
-import {appendPath} from './util/Urls'
+import {appendPath} from './util/Paths'
 
 type Changes = {
   write: Array<[file: string, contents: Buffer]>

@@ -2,8 +2,7 @@
   "$schema": "https://typedoc.org/schema.json",
   "entryPoints": [
     "./packages/alinea/src/index.ts",
-    "./packages/auth/passwordless/src/PasswordLessAuth.ts",
-    "./packages/auth/passwordless/src/PasswordLessLogin.tsx",
+    "./packages/auth/passwordless/src/index.ts",
     "./packages/backend/src/index.ts",
     "./packages/backend/src/data/FileData.ts",
     "./packages/backend/src/data/GithubData.ts",

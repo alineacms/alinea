@@ -26,7 +26,8 @@ export function SelectInput<T extends string>({
   state,
   field
 }: SelectInputProps<T>) {
-  const {width, optional, help, placeholder, initialValue} = field.options
+  const {width, optional, help, placeholder, inline, initialValue} =
+    field.options
   const [value = initialValue, setValue] = useInput(state)
   const items = field.items as Record<string, Label>
   const {x, y, reference, floating, refs, strategy} = useFloating({
@@ -48,10 +49,11 @@ export function SelectInput<T extends string>({
   })
   return (
     <InputLabel
-      width={width}
       label={field.label}
       help={help}
       optional={optional}
+      inline={inline}
+      width={width}
       icon={IcRoundArrowDropDownCircle}
     >
       <div className={styles.root()}>
