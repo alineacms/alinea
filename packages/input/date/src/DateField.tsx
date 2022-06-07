@@ -1,4 +1,4 @@
-import {Field, Label, Value} from '@alinea/core'
+import {Field, Label, Shape} from '@alinea/core'
 
 /** Optional settings to configure a text field */
 export type DateOptions = {
@@ -16,16 +16,16 @@ export type DateOptions = {
   autoFocus?: boolean
 }
 
-/** Internal representation of a text field */
+/** Internal representation of a date field */
 export interface DateField extends Field.Scalar<string> {
   label: Label
   options: DateOptions
 }
 
-/** Create a text field configuration */
+/** Create a date field configuration */
 export function createDate(label: Label, options: DateOptions = {}): DateField {
   return {
-    type: Value.Scalar(label),
+    shape: Shape.Scalar(label),
     label,
     options
   }

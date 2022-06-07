@@ -49,11 +49,11 @@ export function SelectInput<T extends string>({
   })
   return (
     <InputLabel
-      width={width}
       label={field.label}
       help={help}
       optional={optional}
       inline={inline}
+      width={width}
       icon={IcRoundArrowDropDownCircle}
     >
       <div className={styles.root()}>
