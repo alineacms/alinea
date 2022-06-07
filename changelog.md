@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- Auto-close navigation sidebar only for small screens (< 768px)
 - Update number field styles to use updated css variable names
 - Select fields configuration can now be set using the `configure` method. This
   helps type inference for the initial value.
