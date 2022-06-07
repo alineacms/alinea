@@ -28,7 +28,11 @@ export class ListShape<T>
   implements Shape<Array<ListRow & T>, ListMutator<ListRow & T>>
 {
   values: Record<string, RecordShape<ListRow & T>>
-  constructor(public label: Label, shapes: Record<string, RecordShape<T>>) {
+  constructor(
+    public label: Label,
+    shapes: Record<string, RecordShape<T>>,
+    public initialValue?: Array<ListRow & T>
+  ) {
     this.values = Object.fromEntries(
       Object.entries(shapes).map(([key, type]) => {
         return [
@@ -44,7 +48,7 @@ export class ListShape<T>
     )
   }
   create() {
-    return [] as Array<ListRow & T>
+    return this.initialValue || ([] as Array<ListRow & T>)
   }
   typeOfChild<C>(yValue: Y.Map<any>, child: string): Shape<C> {
     const row = yValue.get(child)

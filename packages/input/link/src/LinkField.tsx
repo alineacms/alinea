@@ -99,14 +99,18 @@ export function createLink<T, Q>(
 ): LinkField<T, Q> {
   const extra = options.fields?.shape
   return {
-    shape: Shape.List(label, {
-      entry: new RecordShape('Entry', {
-        entry: Shape.Scalar('Entry')
-      }).concat(extra),
-      url: new RecordShape('Url', {
-        url: Shape.Scalar('Url')
-      }).concat(extra)
-    }),
+    shape: Shape.List(
+      label,
+      {
+        entry: new RecordShape('Entry', {
+          entry: Shape.Scalar('Entry')
+        }).concat(extra),
+        url: new RecordShape('Url', {
+          url: Shape.Scalar('Url')
+        }).concat(extra)
+      },
+      options.initialValue
+    ),
     label,
     options,
     initialValue: options.initialValue,

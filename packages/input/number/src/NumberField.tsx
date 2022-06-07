@@ -27,7 +27,7 @@ export function createNumber(
   options: NumberOptions = {}
 ): NumberField {
   return {
-    shape: Shape.Scalar(label),
+    shape: Shape.Scalar(label, options.initialValue),
     label,
     options
   }

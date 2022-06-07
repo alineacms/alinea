@@ -28,7 +28,7 @@ export function createCheck(
   options: CheckOptions = {}
 ): CheckField {
   return {
-    shape: Shape.Scalar(label),
+    shape: Shape.Scalar(label, options.initialValue),
     label,
     options
   }

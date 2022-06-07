@@ -15,7 +15,7 @@ export type RichTextOptions<T, Q> = {
   /** Display a minimal version */
   inline?: boolean
   /** A default value */
-  initialValue?: string
+  initialValue?: TextDoc<T>
   /** Modify value returned when queried through `Pages` */
   transform?: <P>(
     field: Expr<TextDoc<T>>,
@@ -51,7 +51,7 @@ export function createRichText<T, Q = TextDoc<T>>(
   options: RichTextOptions<T, Q> = {}
 ): RichTextField<T, Q> {
   return {
-    shape: Shape.RichText(label, options.blocks?.shape),
+    shape: Shape.RichText(label, options.blocks?.shape, options.initialValue),
     label,
     options,
     transform:

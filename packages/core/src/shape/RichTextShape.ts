@@ -77,7 +77,8 @@ export class RichTextShape<T> implements Shape<TextDoc<T>, RichTextMutator<T>> {
   values?: Record<string, RecordShape<T>>
   constructor(
     public label: Label,
-    protected shapes?: Record<string, RecordShape<T>>
+    protected shapes?: Record<string, RecordShape<T>>,
+    public initialValue?: TextDoc<T>
   ) {
     this.values =
       shapes &&
@@ -94,7 +95,7 @@ export class RichTextShape<T> implements Shape<TextDoc<T>, RichTextMutator<T>> {
       )
   }
   create() {
-    return [] as TextDoc<T>
+    return this.initialValue || ([] as TextDoc<T>)
   }
   typeOfChild<C>(yValue: Y.Map<any>, child: string): Shape<C> {
     const block = yValue.get(child)

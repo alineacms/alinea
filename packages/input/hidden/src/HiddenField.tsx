@@ -17,7 +17,7 @@ export function createHidden<T>(
   options: HiddenOptions<T> = {}
 ): HiddenField<T> {
   return {
-    shape: Shape.Scalar(label),
+    shape: Shape.Scalar(label, options.initialValue),
     label,
     initialValue: options.initialValue,
     view: () => null
