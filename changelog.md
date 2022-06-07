@@ -4,11 +4,7 @@
 
 - Auto-close navigation sidebar only for small screens (< 768px)
 - Update number field styles to use updated css variable names
-<<<<<<< HEAD
 - Select fields configuration can now be set using the `configure` method. This
-=======
-- Select fields configuration can now be set using the 'configure' method. This
->>>>>>> d6affaf3fe307b320e493ee87ef8c8f0486b8ad7
   helps type inference for the initial value.
 
   ```ts
