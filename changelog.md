@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Update number field styles to use updated css variable names
+
 ## [0.1.1]
 
 - Fix subtle crypto import for node versions that ship it natively (> v15)
