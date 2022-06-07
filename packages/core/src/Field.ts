@@ -23,9 +23,18 @@ export namespace Field {
     F extends Field<V, M, Q>,
     C extends (...args: Array<any>) => F
   >(create: C, view: FieldRenderer<V, M, F>): C {
-    return ((...args: Parameters<C>) => {
-      return {...create(...args), view}
-    }) as any
+    const factory = (...args: Parameters<C>) => {
+      const field: any = create(...args)
+      if ('configure' in field) {
+        const configure = field.configure
+        // Todo: make this recursive
+        field.configure = (...args: Array<any>) => {
+          return {...configure(...args), view}
+        }
+      }
+      return {...field, view}
+    }
+    return factory as any
   }
 
   export type Scalar<T, Q = T> = Field<T, (state: T) => void, Q>
