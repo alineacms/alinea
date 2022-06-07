@@ -1,10 +1,11 @@
-import {fromModule, HStack, LogoShape, Stack, TextLabel} from '@alinea/ui'
+import {fromModule, HStack, Stack, TextLabel} from '@alinea/ui'
+import {IcRoundClose} from '@alinea/ui/icons/IcRoundClose'
+import {IcRoundHamburger} from '@alinea/ui/icons/IcRoundHamburger'
 import {MdiGithub} from '@alinea/ui/icons/MdiGithub'
 import {MdiTwitterCircle} from '@alinea/ui/icons/MdiTwitterCircle'
-import {MiLayers} from '@alinea/ui/icons/MiLayers'
-import {Modal} from '@alinea/ui/Modal'
 import Link from 'next/link'
 import {useState} from 'react'
+import AnimateHeight from 'react-animate-height'
 import {Logo} from './branding/Logo'
 import css from './Header.module.scss'
 import {HeaderProps} from './Header.query'
@@ -12,15 +13,14 @@ import {HeaderProps} from './Header.query'
 const styles = fromModule(css)
 
 export function Header({links}: HeaderProps) {
+  const [openMobilemenu, setOpenMobilemenu] = useState<boolean>(false)
+
   return (
     <header className={styles.root()}>
-      <HStack center gap={36}>
+      <HStack center gap={36} className={styles.root.top()}>
         <Link href="/">
           <a className={styles.root.logo()}>
             <HStack center gap={9}>
-              <LogoShape foreground="white" background="#4a63e7">
-                <MiLayers />
-              </LogoShape>
               <Logo className={styles.root.logo.text()} />
             </HStack>
           </a>
@@ -30,8 +30,8 @@ export function Header({links}: HeaderProps) {
             switch (link.type) {
               case 'entry':
                 return (
-                  <Link key={link.id} href={link.url}>
-                    <a className={styles.root.link()}>
+                  <Link href={link.url} key={link.id}>
+                    <a className={styles.root.nav.link()}>
                       <TextLabel label={link.title} />
                     </a>
                   </Link>
@@ -41,37 +41,43 @@ export function Header({links}: HeaderProps) {
             }
           })}
           <Link href="/types/alinea">
-            <a className={styles.root.link()}>API</a>
+            <a className={styles.root.nav.link()}>API</a>
           </Link>
           <Link href="/changelog">
-            <a className={styles.root.link()} href="/changelog">
-              Changelog
-            </a>
+            <a className={styles.root.nav.link()}>Changelog</a>
           </Link>
-          <a className={styles.root.link()} href="/demo" target="_blank">
+          <a href="/demo" target="_blank" className={styles.root.nav.link()}>
             Demo
           </a>
         </HStack>
         <Stack.Right>
           <HStack gap={16} center>
             <a
-              className={styles.root.social()}
               href="https://github.com/alineacms/alinea"
               target="_blank"
+              className={styles.root.social()}
             >
               <MdiGithub className={styles.root.social.icon()} />
             </a>
             <a
-              className={styles.root.social()}
               href="https://twitter.com/alineacms"
               target="_blank"
+              className={styles.root.social()}
             >
               <MdiTwitterCircle className={styles.root.social.icon()} />
             </a>
-            <Hamburger links={links} />
+            <button
+              onClick={() => setOpenMobilemenu(!openMobilemenu)}
+              className={styles.root.hamburger()}
+            >
+              {openMobilemenu ? <IcRoundClose /> : <IcRoundHamburger />}
+            </button>
           </HStack>
         </Stack.Right>
       </HStack>
+      <AnimateHeight height={openMobilemenu ? 'auto' : 0}>
+        <Mobilemenu links={links} onClose={() => setOpenMobilemenu(false)} />
+      </AnimateHeight>
       <svg
         viewBox="0 0 36 18"
         preserveAspectRatio="none"
@@ -81,26 +87,6 @@ export function Header({links}: HeaderProps) {
         <path d="M0 18C0 10.1116 0.340637 6.05976 3.19123 3.19123C6.05976 0.340637 10.1116 0 18 0H0V18Z" />
       </svg>
     </header>
-  )
-}
-
-const Hamburger: React.FC<HeaderProps> = ({links}) => {
-  const [isOpen, setIsOpen] = useState(false)
-  return (
-    <>
-      <button className={styles.hamburger()} onClick={() => setIsOpen(true)}>
-        <span className={styles.hamburger.bar()} />
-        <span className={styles.hamburger.bar()} />
-        <span className={styles.hamburger.bar()} />
-      </button>
-      <Modal
-        open={isOpen}
-        onClose={() => setIsOpen(false)}
-        className={styles.hamburger.mobilemenu()}
-      >
-        <Mobilemenu links={links} onClose={() => setIsOpen(false)} />
-      </Modal>
-    </>
   )
 }
 
@@ -115,15 +101,15 @@ const Mobilemenu: React.FC<HeaderProps & {onClose: () => void}> = ({
       direction="column"
       align="center"
       justify="center"
-      gap={30}
+      gap={20}
       className={styles.mobilemenu()}
     >
       {links.map(link => {
         switch (link.type) {
           case 'entry':
             return (
-              <Link key={link.id} href={link.url}>
-                <a className={styles.mobilemenu.link()} onClick={onClose}>
+              <Link href={link.url} key={link.id}>
+                <a onClick={onClose} className={styles.mobilemenu.link()}>
                   <TextLabel label={link.title} />
                 </a>
               </Link>
@@ -133,20 +119,20 @@ const Mobilemenu: React.FC<HeaderProps & {onClose: () => void}> = ({
         }
       })}
       <Link href="/types/alinea">
-        <a className={styles.mobilemenu.link()} onClick={onClose}>
+        <a onClick={onClose} className={styles.mobilemenu.link()}>
           API
         </a>
       </Link>
       <Link href="/changelog">
-        <a className={styles.mobilemenu.link()} onClick={onClose}>
+        <a onClick={onClose} className={styles.mobilemenu.link()}>
           Changelog
         </a>
       </Link>
       <a
-        className={styles.mobilemenu.link()}
         href="/demo"
         target="_blank"
         onClick={onClose}
+        className={styles.mobilemenu.link()}
       >
         Demo
       </a>

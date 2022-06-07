@@ -387,6 +387,7 @@ __metadata:
     memfs: ^3.4.1
     npm-run-all: ^4.1.5
     postcss-pxtorem: ^6.0.0
+    react-animate-height: ^3.0.3
     typedoc: ^0.22.15
     typescript: ^4.5.5
     typescript-plugin-css-modules: ^3.4.0
@@ -2739,6 +2740,13 @@ __metadata:
   version: 2.0.0
   resolution: "chownr@npm:2.0.0"
   checksum: c57cf9dd0791e2f18a5ee9c1a299ae6e801ff58fee96dc8bfd0dcb4738a6ce58dd252a3605b1c93c6418fe4f9d5093b28ffbf4d66648cb2a9c67eaef9679be2f
+  languageName: node
+  linkType: hard
+
+"classnames@npm:^2.3.1":
+  version: 2.3.1
+  resolution: "classnames@npm:2.3.1"
+  checksum: 14db8889d56c267a591f08b0834989fe542d47fac659af5a539e110cc4266694e8de86e4e3bbd271157dbd831361310a8293e0167141e80b0f03a0f175c80960
   languageName: node
   linkType: hard
 
@@ -7281,6 +7289,18 @@ fsevents@~2.3.2:
   bin:
     rc: ./cli.js
   checksum: 2e26e052f8be2abd64e6d1dabfbd7be03f80ec18ccbc49562d31f617d0015fbdbcf0f9eed30346ea6ab789e0fdfe4337f033f8016efdbee0df5354751842080e
+  languageName: node
+  linkType: hard
+
+"react-animate-height@npm:^3.0.3":
+  version: 3.0.3
+  resolution: "react-animate-height@npm:3.0.3"
+  dependencies:
+    classnames: ^2.3.1
+  peerDependencies:
+    react: ">=16.8.0"
+    react-dom: ">=16.8.0"
+  checksum: d82b756e0920870d9c15027abe41d28432758d5976766121269625e2bab66306898388fe2b701c4aa598bded917430a99ec38ded3d12e08944526c552a024147
   languageName: node
   linkType: hard
 
