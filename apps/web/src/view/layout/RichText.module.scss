@@ -1,9 +1,12 @@
 .code {
+  display: inline-block;
+  vertical-align: middle;
   font-family: 'JetBrains Mono', monospace;
   background: #ecebeb;
   border-radius: 6px;
-  padding: 0.2em 0.4em;
-  font-size: 13px;
+  padding: 0.1em 0.4em;
+  font-size: 0.9em;
+  font-weight: normal;
 }
 
 @import '../../../../../packages/ui/src/Typo.module.scss';

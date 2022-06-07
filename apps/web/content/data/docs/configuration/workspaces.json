@@ -143,6 +143,32 @@
         },
         {
           "type": "heading",
+          "textAlign": "left",
+          "level": 3,
+          "content": [
+            {
+              "type": "text",
+              "text": "Types namespace `(optional)`"
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "textAlign": "left",
+          "content": [
+            {
+              "type": "text",
+              "text": "Generated types will be available from this namespace."
+            }
+          ]
+        },
+        {
+          "id": "2AFmWaKSpFE6EzL3jLgdpPZDSsy",
+          "type": "CodeBlock",
+          "code": "// Configuration\nworkspace('My workspace', {typeNamespace: 'myWorkspaceTypes'})\n// Usage:\nimport {myWorkspaceTypes} from '@alinea/content/myworkspace'\nconsole.log(myWorkspaceTypes.MyType)"
+        },
+        {
+          "type": "heading",
           "level": 2,
           "textAlign": "left",
           "content": [

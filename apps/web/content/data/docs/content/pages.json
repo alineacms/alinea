@@ -4,10 +4,6 @@
   "root": "data",
   "index": "a1",
   "title": "Pages",
-  "parents": [
-    "docs",
-    "28Ng5RzmZ2fHUVlVbAEv1l1oUUS"
-  ],
   "blocks": [
     {
       "id": "28hxdvUqGndCClRgqppvMox36da",
@@ -17,6 +13,7 @@
         {
           "type": "heading",
           "level": 1,
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
@@ -26,16 +23,18 @@
         },
         {
           "type": "paragraph",
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
-              "text": "A pages instance is used to query the data stored in the cms."
+              "text": "A pages instance is used to query the data stored in the CMS."
             }
           ]
         },
         {
           "type": "heading",
           "level": 2,
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
@@ -45,6 +44,7 @@
         },
         {
           "type": "paragraph",
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
@@ -60,6 +60,7 @@
         {
           "type": "heading",
           "level": 2,
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
@@ -69,6 +70,7 @@
         },
         {
           "type": "paragraph",
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
@@ -84,6 +86,7 @@
         {
           "type": "heading",
           "level": 3,
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
@@ -93,6 +96,7 @@
         },
         {
           "type": "paragraph",
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
@@ -108,6 +112,7 @@
         {
           "type": "heading",
           "level": 3,
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
@@ -117,6 +122,7 @@
         },
         {
           "type": "paragraph",
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
@@ -127,11 +133,12 @@
         {
           "id": "28hzjFJi5kuByP0j3ZX79ATIyyS",
           "type": "CodeBlock",
-          "code": "const ordered = await pages\n  .all()\n  .orderBy(Type.foo.asc(), Type.bar.desc())"
+          "code": "import {Type} from '@alinea/content/myworkspace'\nconst ordered = await pages\n  .all()\n  .orderBy(Type.foo.asc(), Type.bar.desc())"
         },
         {
           "type": "heading",
           "level": 2,
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
@@ -141,6 +148,7 @@
         },
         {
           "type": "paragraph",
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
@@ -151,11 +159,12 @@
         {
           "id": "28i0B7nRFUqmGWdCmchhzy21bkt",
           "type": "CodeBlock",
-          "code": "const grouped = await pages\n  .all()\n  .groupBy(Type.foo, Type.bar)"
+          "code": "import {Type} from '@alinea/content/myworkspace'\nconst grouped = await pages\n  .all()\n  .groupBy(Type.foo, Type.bar)"
         },
         {
           "type": "heading",
           "level": 2,
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
@@ -165,6 +174,7 @@
         },
         {
           "type": "paragraph",
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
@@ -180,6 +190,7 @@
         {
           "type": "heading",
           "level": 2,
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
@@ -189,6 +200,7 @@
         },
         {
           "type": "paragraph",
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
@@ -202,12 +214,6 @@
           "code": "const row = await pages\n  .findFirst()\n  .select(page => ({\n    title: \n      page.title.process(title => `process title ${title}`)\n  })"
         }
       ]
-    },
-    {
-      "id": "28hxVjJYEVPAinTI27Fzx2OHRWK",
-      "index": "a1",
-      "type": "TypesBlock",
-      "types": "PageTree"
     }
   ]
 }

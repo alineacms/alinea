@@ -1,6 +1,6 @@
 import {Entry, Outcome} from '@alinea/core'
 import {Button, fromModule, HStack, px, Stack, Typo, VStack} from '@alinea/ui'
-import IcRoundArrowForward from '@alinea/ui/icons/IcRoundArrowForward'
+import {IcRoundArrowForward} from '@alinea/ui/icons/IcRoundArrowForward'
 import {useState} from 'react'
 import {useQuery} from 'react-query'
 import {CurrentDraftProvider} from '../hook/UseCurrentDraft'
