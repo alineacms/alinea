@@ -3,6 +3,7 @@ import {code} from '@alinea/input.code'
 import {list} from '@alinea/input.list'
 import {text} from '@alinea/input.text'
 import {IcRoundCode} from '@alinea/ui/icons/IcRoundCode'
+import {transformCode} from './CodeBlock.server'
 
 export const CodeVariantsBlockSchema = type('Code variants', {
   variants: list('Variants', {
@@ -10,7 +11,7 @@ export const CodeVariantsBlockSchema = type('Code variants', {
     schema: schema({
       Variant: type('Variant', {
         name: text('Variant name', {inline: true, width: 0.5}),
-        code: code('Code', {inline: true})
+        code: code('Code', {inline: true, transform: transformCode})
       })
     })
   })

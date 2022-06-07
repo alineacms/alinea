@@ -50,7 +50,8 @@ export const resolvePlugin: Plugin = {
             !dependencies.has(pkg) &&
             !seen.has(pkg)
           ) {
-            console.info(`warning: ${pkg} is not a dependency of ${name}`)
+            if (pkg !== name)
+              console.info(`warning: ${pkg} is not a dependency of ${name}`)
           }
           seen.add(pkg)
         }

@@ -33,7 +33,11 @@ export namespace Create {
     ...props
   }: HTMLAttributes<HTMLButtonElement> & Props) {
     return (
-      <button {...props} className={styles.button.mergeProps(props)()}>
+      <button
+        type="button"
+        {...props}
+        className={styles.button.mergeProps(props)()}
+      >
         <HStack center gap={8}>
           {Icon ? (
             <div className={styles.button.add()}>

@@ -17,7 +17,7 @@ import convertHrtime from 'convert-hrtime'
 import prettyMilliseconds from 'pretty-ms'
 import * as Y from 'yjs'
 import {Data} from './Data'
-import {appendPath} from './util/Urls'
+import {appendPath} from './util/Paths'
 
 export namespace Cache {
   function indexSearch(store: Store, entry: Entry, lookup = true) {
@@ -167,7 +167,7 @@ export namespace Cache {
       for (const [key, type] of schema) {
         const {index} = type.options
         if (!index) continue
-        const collection = schema.collection(workspace, key)
+        const collection = type.collection()
         const indices = index(collection)
         for (const [name, fields] of Object.entries(indices)) {
           const indexName = `${workspace}.${key}.${name}`

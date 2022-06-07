@@ -31,6 +31,7 @@
     "@esbx/run": "^0.0.19",
     "@esbx/sass": "^0.0.19",
     "@esbx/static": "^0.0.19",
+    "@esbx/target": "^0.0.20",
     "@esbx/workspaces": "^0.0.19",
     "@types/glob": "^7.1.4",
     "@types/node": "^16.9.0",

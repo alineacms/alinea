@@ -31,6 +31,8 @@ export namespace Hub {
     preview?: string
     averageColor?: string
     blurHash?: string
+    width?: number
+    height?: number
   }
   export type Stat = {
     size?: number
@@ -42,30 +44,32 @@ export namespace Hub {
     source?: boolean
   }
 
+  const base = '/hub'
   export const routes = {
+    base,
     entry(id: string, stateVector?: Uint8Array) {
-      const route = `/entry/${id}`
+      const route = base + `/entry/${id}`
       if (stateVector)
         return route + '?stateVector=' + encode(stateVector.buffer)
       return route
     },
     draft(id: string) {
-      return `/draft/${id}`
+      return base + `/draft/${id}`
     },
     drafts() {
-      return `/draft`
+      return base + `/draft`
     },
     publish() {
-      return `/publish`
+      return base + `/publish`
     },
     upload() {
-      return `/upload`
+      return base + `/upload`
     },
     query() {
-      return `/query`
+      return base + `/query`
     },
     files(location?: string) {
-      return `/files${location ? '/' + location : ''}`
+      return base + `/files${location ? '/' + location : ''}`
     }
   }
 }

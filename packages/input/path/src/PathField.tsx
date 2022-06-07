@@ -1,4 +1,4 @@
-import {Field, Label, Value} from '@alinea/core'
+import {Field, Label, Shape} from '@alinea/core'
 
 export type PathOptions = {
   width?: number
@@ -6,6 +6,7 @@ export type PathOptions = {
   help?: Label
   inline?: boolean
   optional?: boolean
+  hidden?: boolean
 }
 
 export interface PathField extends Field.Scalar<string> {
@@ -15,7 +16,7 @@ export interface PathField extends Field.Scalar<string> {
 
 export function createPath(label: Label, options: PathOptions = {}): PathField {
   return {
-    type: Value.Scalar(label),
+    shape: Shape.Scalar(label),
     label,
     options
   }

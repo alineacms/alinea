@@ -124,6 +124,7 @@ export function ReferencePicker({
         <label className={styles.root.label()}>
           <IcRoundSearch className={styles.root.label.icon()} />
           <input
+            type="text"
             autoFocus
             placeholder="Search"
             value={search}

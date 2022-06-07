@@ -33,7 +33,7 @@ export const EntryDiff = memo(function EntryDiff({
         </Chip>
       </div>
     )
-  const changes = diffRecord(typeA.valueType, entryA, entryB)
+  const changes = diffRecord(typeA.shape, entryA, entryB)
   return (
     <div className={styles.root()}>
       <FieldsDiff changes={changes} targetA={entryA} targetB={entryB} />

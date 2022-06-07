@@ -14,6 +14,7 @@
     "@alinea/auth.passwordless": "0.0.0",
     "@alinea/backend": "0.0.0",
     "@alinea/cli": "0.0.0",
+    "@alinea/content": "link:./.alinea",
     "@alinea/core": "0.0.0",
     "@alinea/dashboard": "0.0.0",
     "@alinea/ui": "0.0.0",
@@ -21,6 +22,8 @@
     "react": "^18.1.0",
     "react-dom": "^18.1.0",
     "react-string-replace": "^1.0.0",
+    "remark": "^14.0.2",
+    "remark-html": "^15.0.1",
     "shiki": "^0.10.1"
   },
   "devDependencies": {

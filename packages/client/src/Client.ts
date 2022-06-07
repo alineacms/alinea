@@ -69,9 +69,9 @@ export class Client<T extends Workspaces> implements Hub<T> {
     }).then(toFuture)
   }
 
-  uploadFile<K extends keyof T>(
-    workspace: K,
-    root: keyof T[K]['roots'],
+  uploadFile(
+    workspace: string,
+    root: string,
     file: Hub.Upload
   ): Future<Media.File> {
     const form = new FormData()
@@ -80,6 +80,8 @@ export class Client<T extends Workspaces> implements Hub<T> {
     form.append('path', file.path)
     if (file.averageColor) form.append('averageColor', file.averageColor)
     if (file.blurHash) form.append('blurHash', file.blurHash)
+    if ('width' in file) form.append('width', String(file.width))
+    if ('height' in file) form.append('height', String(file.height))
     form.append('buffer', new Blob([file.buffer]))
     if (file.preview) form.append('preview', file.preview)
     return this.fetch(Hub.routes.upload(), {
@@ -97,7 +99,11 @@ export class Client<T extends Workspaces> implements Hub<T> {
   protected fetch(endpoint: string, init?: RequestInit) {
     const controller = new AbortController()
     const signal = controller.signal
-    const promise = fetch(this.url + endpoint, {
+    const url =
+      this.url.endsWith('/') && endpoint.startsWith('/')
+        ? this.url + endpoint.slice(1)
+        : this.url + endpoint
+    const promise = fetch(url, {
       ...this.applyAuth(init),
       signal
     }).then(res => {

@@ -1,6 +1,6 @@
 import {Reference} from '@alinea/core/Reference'
 import {Expr} from '@alinea/store/Expr'
-import {createContext, PropsWithChildren, useContext, useState} from 'react'
+import {ComponentType, useMemo, useState} from 'react'
 import {ReferencePicker} from '../view/ReferencePicker'
 
 export type ReferencePickerFunc = (
@@ -15,54 +15,52 @@ export type ReferencePickerOptions = {
   showUploader?: boolean
 }
 
+type PickerTrigger = [(value: Array<Reference> | undefined) => void, () => void]
 type ReferencePickerContext = {
   pickLink: ReferencePickerFunc
+  isOpen: boolean
+  Modal: ComponentType
 }
 
-const context = createContext<ReferencePickerContext | undefined>(undefined)
-
-export function useReferencePicker() {
-  return useContext(context)!
-}
-
-type PickerTrigger = [(value: Array<Reference> | undefined) => void, () => void]
-
-export function ReferencePickerProvider({children}: PropsWithChildren<{}>) {
+export function useReferencePicker(): ReferencePickerContext {
   const [trigger, setTrigger] = useState<PickerTrigger | undefined>(undefined)
   const [options, setOptions] = useState<ReferencePickerOptions | undefined>(
     undefined
   )
-  return (
-    <context.Provider
-      value={{
-        pickLink(options): Promise<Array<Reference> | undefined> {
-          return new Promise(
-            (
-              resolve: (value: Array<Reference> | undefined) => void,
-              reject: () => void
-            ) => {
-              setOptions(options)
-              setTrigger([resolve, reject])
-            }
-          )
-            .finally(() => {
-              setOptions(undefined)
-              setTrigger(undefined)
-            })
-            .catch(() => {
-              return undefined
-            })
-        }
-      }}
-    >
-      {options && (
+  return useMemo(() => {
+    function Modal() {
+      if (!options) return null
+      return (
         <ReferencePicker
           options={options}
           onConfirm={trigger ? trigger[0] : () => {}}
           onCancel={trigger ? trigger[1] : () => {}}
         />
-      )}
-      {children}
-    </context.Provider>
-  )
+      )
+    }
+    return {
+      Modal,
+      pickLink(
+        options: ReferencePickerOptions
+      ): Promise<Array<Reference> | undefined> {
+        return new Promise(
+          (
+            resolve: (value: Array<Reference> | undefined) => void,
+            reject: () => void
+          ) => {
+            setOptions(options)
+            setTrigger([resolve, reject])
+          }
+        )
+          .finally(() => {
+            setOptions(undefined)
+            setTrigger(undefined)
+          })
+          .catch(() => {
+            return undefined
+          })
+      },
+      isOpen: Boolean(options)
+    }
+  }, [options, trigger])
 }

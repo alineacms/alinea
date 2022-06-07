@@ -5,8 +5,8 @@ import {
   Hub,
   Label,
   ROOT_KEY,
-  Type,
-  Value
+  Shape,
+  Type
 } from '@alinea/core'
 import {observable, Observable} from '@alinea/ui'
 import * as Y from 'yjs'
@@ -130,25 +130,25 @@ export class EntryDraft implements Entry {
   private getLocation(location: Array<string>) {
     let target = this.__root
     let parent = target
-    let type: Value = this.channel.valueType
+    let shape: Shape = this.channel.shape
     for (const key of location) {
       parent = target
       if (!target) break
-      type = type.typeOfChild(target, key)
+      shape = shape.typeOfChild(target, key)
       target = target.get(key)
     }
-    return {type, parent, target}
+    return {shape, parent, target}
   }
 
   getInput<V, M>(location: Array<string>) {
     const key = location[location.length - 1]
-    const {type, parent} = this.getLocation(location)
+    const {shape, parent} = this.getLocation(location)
     return {
-      mutator: type.mutator(parent, key) as M,
+      mutator: shape.mutator(parent, key) as M,
       get value(): V {
-        return type.fromY(parent.get(key))
+        return shape.fromY(parent.get(key))
       },
-      observe: type.watch(parent, key)
+      observe: shape.watch(parent, key)
     }
   }
 }

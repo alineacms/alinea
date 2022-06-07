@@ -4,7 +4,7 @@ import {PropsWithChildren} from 'react'
 import {FavIcon} from './branding/FavIcon'
 import {Header} from './Header'
 import css from './Layout.module.scss'
-import {LayoutProps} from './Layout.query'
+import {LayoutProps} from './Layout.server'
 
 const styles = fromModule(css)
 

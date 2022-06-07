@@ -1,0 +1,11 @@
+export function joinPaths(...paths: Array<string>) {
+  return paths
+    .map((part, i) => {
+      let start = 0,
+        end = undefined
+      if (i < paths.length - 1 && part.endsWith('/')) end = -1
+      if (i > 0 && part.startsWith('/')) start = 1
+      return part.slice(start, end)
+    })
+    .join('/')
+}

@@ -1,5 +1,6 @@
 import {ExtensionPlugin} from '@esbx/extension'
 import {ReporterPlugin} from '@esbx/reporter'
+import {TargetPlugin} from '@esbx/target'
 import {list, reportTime} from '@esbx/util'
 import {getManifest, getWorkspaces} from '@esbx/workspaces'
 import {execSync} from 'child_process'
@@ -64,7 +65,12 @@ function task(
         const cwd = path.join(root, location)
         const entryPoints = glob.sync('src/**/*.{ts,tsx}', {cwd})
         return entryPoints
-          .filter(entry => !entry.endsWith('.d.ts'))
+          .filter(entry => {
+            if (entry.endsWith('.d.ts')) return false
+            if (entry.endsWith('.server.ts')) return false
+            if (entry.endsWith('.client.tsx')) return false
+            return true
+          })
           .map(entry => path.join(cwd, entry))
       }
       for (const workspace of workspaces) {
@@ -87,6 +93,21 @@ function task(
         watch: options.watch,
         ...config.buildOptions,
         plugins: list(
+          TargetPlugin.configure({
+            info: file => {
+              const parts = file.split(path.sep)
+              const packagesPart = parts.findIndex(part => part === 'packages')
+              const srcPart = parts.findIndex(part => part === 'src')
+              const pkg = parts.slice(packagesPart + 1, srcPart)
+              return {
+                packageName: `@alinea/${pkg.join('.')}`,
+                packageRoot: `./dist/${pkg.join('/')}/src`
+              }
+            },
+            buildOptions: {
+              plugins: [ExtensionPlugin]
+            }
+          }),
           config.buildOptions?.plugins || [ExtensionPlugin],
           distPlugin,
           !options.silent && ReporterPlugin.configure({name: 'packages'})

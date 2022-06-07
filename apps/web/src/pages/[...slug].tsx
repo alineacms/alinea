@@ -1,9 +1,9 @@
-import {backend} from '../../alinea.backend'
+import {backend} from '@alinea/content/backend.js'
 
 export async function getStaticPaths() {
   const pages = backend.loadPages('web')
   const urls = await pages
-    .findMany(page => page.type.isIn(['Doc']))
+    .where(page => page.type.isIn(['Doc']))
     .select(page => page.url)
   return {
     fallback: 'blocking',
@@ -11,4 +11,4 @@ export async function getStaticPaths() {
   }
 }
 
-export {default, getStaticProps} from '.'
+export {default, getStaticProps} from './index'

@@ -1,3 +1,4 @@
+import {LazyRecord} from '@alinea/core/util/LazyRecord'
 import {InputForm, InputLabel, InputState, useInput} from '@alinea/editor'
 import {Card, Create, fromModule, IconButton, TextLabel} from '@alinea/ui'
 import {IcOutlineList} from '@alinea/ui/icons/IcOutlineList'
@@ -35,16 +36,10 @@ import {
   Ref,
   useState
 } from 'react'
-import {ListField} from './ListField'
+import {ListField, ListRow} from './ListField'
 import css from './ListInput.module.scss'
 
 const styles = fromModule(css)
-
-export type ListRow = {
-  id: string
-  index: string
-  type: string
-}
 
 function animateLayoutChanges(args: FirstArgument<AnimateLayoutChanges>) {
   const {isSorting, wasSorting} = args
@@ -103,7 +98,7 @@ function ListInputRow<T extends ListRow>({
   isDragOverlay,
   ...rest
 }: ListInputRowProps<T>) {
-  const type = field.options.schema.type(row.type as any)
+  const type = LazyRecord.get(field.options.schema.types, row.type)
   if (!type) return null
   return (
     <div
@@ -114,7 +109,7 @@ function ListInputRow<T extends ListRow>({
       <Card.Header>
         <Card.Options>
           <IconButton
-            icon={type.options?.icon || IcRoundDragHandle}
+            icon={type.options.icon || IcRoundDragHandle}
             {...handle}
             style={{cursor: handle ? 'grab' : 'grabbing'}}
           />
@@ -135,7 +130,7 @@ function ListInputRow<T extends ListRow>({
         </Card.Options>
       </Card.Header>
       <Card.Content>
-        <InputForm type={type as any} state={path} />
+        <InputForm type={type} state={path} />
       </Card.Content>
     </div>
   )
@@ -147,11 +142,11 @@ type ListCreateRowProps<T> = {
 }
 
 function ListCreateRow<T>({field, onCreate}: ListCreateRowProps<T>) {
-  const types = Array.from(field.options.schema)
+  const {types} = field.options.schema
   return (
     <div className={styles.create()}>
       <Create.Root>
-        {types.map(([key, type]) => {
+        {LazyRecord.iterate(types).map(([key, type]) => {
           return (
             <Create.Button
               icon={type.options.icon}

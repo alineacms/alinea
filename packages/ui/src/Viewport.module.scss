@@ -9,7 +9,7 @@
   --alinea-toolbar: hsl(var(--alinea-hue), var(--alinea-saturation), 20%);
   --alinea-inner: hsl(var(--alinea-hue), var(--alinea-saturation), 12%);
   --alinea-inner-outline: hsl(var(--alinea-hue), var(--alinea-saturation), 13%);
-  --alinea-highlight: hsla(var(--alinea-negative), .06);
+  --alinea-highlight: hsla(var(--alinea-negative), 0.06);
   --alinea-lift: hsl(var(--alinea-hue), var(--alinea-saturation), 18%);
   --alinea-selected: hsl(var(--alinea-hue), var(--alinea-saturation), 22%);
   --alinea-outline: hsl(var(--alinea-hue), var(--alinea-saturation), 20%);
@@ -38,8 +38,8 @@
   --alinea-toolbar: hsl(var(--alinea-hue), var(--alinea-saturation), 98%);
   --alinea-inner: hsl(var(--alinea-hue), var(--alinea-saturation), 98.5%);
   --alinea-inner-outline: #dcdce4;
-  --alinea-highlight: hsla(var(--alinea-negative), .06);
-  --alinea-lift:  hsl(var(--alinea-hue), var(--alinea-saturation), 96%);
+  --alinea-highlight: hsla(var(--alinea-negative), 0.06);
+  --alinea-lift: hsl(var(--alinea-hue), var(--alinea-saturation), 96%);
   --alinea-selected: hsl(var(--alinea-hue), var(--alinea-saturation), 100%);
   --alinea-outline: hsl(var(--alinea-hue), var(--alinea-saturation), 89%);
   --alinea-shadow: rgba(0, 0, 0, 0.08);
@@ -80,10 +80,10 @@
   display: flex;
   flex-direction: column;
   background: var(--alinea-background);
-  min-height: 100vh;
+  min-height: 100%;
 
   &.is-contain {
-    height: 100vh;
+    height: 100%;
     overflow: hidden;
   }
 }

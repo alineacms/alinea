@@ -28,7 +28,9 @@ export class CursorImpl<Row> {
     })
   }
 
-  get<K extends string>(name: K): Expr<K extends keyof Row ? Row[K] : any> {
+  get<K extends keyof Row>(name: K): Expr<Row[K]>
+  get(name: string): Expr<any>
+  get(name: string): Expr<any> {
     return new Expr(ExprData.Field(this.cursor.selection, name as string))
   }
 
@@ -132,19 +134,31 @@ export class CursorImpl<Row> {
     })
   }
 
-  orderBy(...orderBy: Array<OrderBy>): Cursor<Row> {
+  orderBy(...orderBy: Array<OrderBy>): Cursor<Row>
+  orderBy(pick: (collection: Cursor<Row>) => Array<OrderBy>): Cursor<Row>
+  orderBy(...args: Array<any>): Cursor<Row> {
+    const orderBy: Array<OrderBy> =
+      args.length === 1 && typeof args[0] === 'function' ? args[0](this) : args
     return new Cursor({
       ...this.cursor,
       orderBy: orderBy
     })
   }
 
-  groupBy(...groupBy: Array<Expr<any>>): Cursor<Row> {
+  groupBy(...groupBy: Array<Expr<any>>): Cursor<Row>
+  groupBy(pick: (collection: Cursor<Row>) => Array<Expr<any>>): Cursor<Row>
+  groupBy(...args: Array<any>): Cursor<Row> {
+    const groupBy: Array<Expr<any>> =
+      args.length === 1 && typeof args[0] === 'function' ? args[0](this) : args
     const data = groupBy.map(e => e.expr)
     return new Cursor({
       ...this.cursor,
       groupBy: data
     })
+  }
+
+  toExpr() {
+    return new Expr(ExprData.create(this))
   }
 
   toJSON() {

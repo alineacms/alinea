@@ -1,5 +1,4 @@
-import {createId, Schema, Type} from '@alinea/core'
-import {useReferencePicker} from '@alinea/dashboard'
+import {createId, SchemaConfig, TypeConfig} from '@alinea/core'
 import {InputForm, InputLabel, InputState, useInput} from '@alinea/editor'
 import {Card, Create, fromModule, IconButton, px, TextLabel} from '@alinea/ui'
 import {IcRoundClose} from '@alinea/ui/icons/IcRoundClose'
@@ -10,12 +9,13 @@ import Collaboration from '@tiptap/extension-collaboration'
 import {
   Editor,
   EditorContent,
-  FloatingMenu as TiptapFloatingMenu,
+  FloatingMenu,
   NodeViewWrapper,
   ReactNodeViewRenderer
 } from '@tiptap/react'
 import {useCallback, useRef, useState} from 'react'
 import {useEditor} from './hook/UseEditor'
+import {PickTextLink, usePickTextLink} from './PickTextLink'
 import {RichTextField} from './RichTextField'
 import css from './RichTextInput.module.scss'
 import {RichTextKit} from './RichTextKit'
@@ -31,7 +31,7 @@ type NodeViewProps = {
 function typeExtension(
   parent: InputState<InputState.Text<any>>,
   name: string,
-  type: Type
+  type: TypeConfig
 ) {
   function View({node, deleteNode}: NodeViewProps) {
     const {id} = node.attrs
@@ -42,7 +42,7 @@ function typeExtension(
           <Card.Header>
             <Card.Options>
               <IconButton
-                icon={type.options.icon || IcRoundDragHandle}
+                icon={type.options?.icon || IcRoundDragHandle}
                 data-drag-handle
                 style={{cursor: 'grab'}}
               />
@@ -85,27 +85,23 @@ function typeExtension(
 
 function schemaToExtensions(
   path: InputState<InputState.Text<any>>,
-  schema: Schema | undefined
+  schema: SchemaConfig | undefined
 ) {
   if (!schema) return []
-  const {types} = schema
-  return Object.entries(types).map(([name, type]) => {
+  return schema.configEntries().map(([name, type]) => {
     return typeExtension(path, name, type)
   })
 }
 
 type InsertMenuProps = {
   editor: Editor
-  schema: Schema | undefined
+  schema: SchemaConfig | undefined
   onInsert: (id: string, type: string) => void
 }
 
-// facebook/react#24304
-const FloatingMenu: any = TiptapFloatingMenu
-
 function InsertMenu({editor, schema, onInsert}: InsertMenuProps) {
   const id = createId()
-  const blocks = Object.entries(schema?.types || {}).map(([key, type]) => {
+  const blocks = schema?.configEntries().map(([key, type]) => {
     return (
       <Create.Button
         key={key}
@@ -120,7 +116,13 @@ function InsertMenu({editor, schema, onInsert}: InsertMenuProps) {
     )
   })
   return (
-    <FloatingMenu editor={editor}>
+    <FloatingMenu
+      editor={editor}
+      tippyOptions={{
+        zIndex: 4,
+        maxWidth: 'none'
+      }}
+    >
       <Create.Root>
         <Create.Button
           onClick={() => editor.chain().focus().toggleHeading({level: 1}).run()}
@@ -139,7 +141,7 @@ function InsertMenu({editor, schema, onInsert}: InsertMenuProps) {
 }
 
 function RichTextEditor<T>({state, field}: RichTextInputProps<T>) {
-  const {pickLink} = useReferencePicker()
+  const picker = usePickTextLink()
   const {blocks, optional, inline, help} = field.options
   const [focus, setFocus] = useState(false)
   const [value, {fragment, insert}] = useInput(state)
@@ -190,9 +192,10 @@ function RichTextEditor<T>({state, field}: RichTextInputProps<T>) {
           ref={toolbarRef}
           editor={editor}
           focusToggle={focusToggle}
-          pickLink={pickLink}
+          pickLink={picker.pickLink}
         />
       )}
+      <PickTextLink picker={picker} />
       <InputLabel
         label={field.label}
         help={help}

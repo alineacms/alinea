@@ -1,16 +1,16 @@
-import {ListRow, ListValue} from '@alinea/core/value/ListValue'
+import {ListRow, ListShape} from '@alinea/core/shape/ListShape'
 import {Card} from '@alinea/ui'
 import {ChangeBox} from './ChangeBox'
 import {diffList, diffRecord} from './DiffUtils'
 import {FieldsDiff} from './FieldsDiff'
 
 export type ListDiffProps = {
-  type: ListValue<any>
+  shape: ListShape<any>
   valueA: Array<ListRow>
   valueB: Array<ListRow>
 }
 
-export function ListDiff({type, valueA, valueB}: ListDiffProps) {
+export function ListDiff({shape, valueA, valueB}: ListDiffProps) {
   const equals = (itemA: ListRow, itemB: ListRow) => {
     return itemA.id === itemB.id
   }
@@ -19,7 +19,7 @@ export function ListDiff({type, valueA, valueB}: ListDiffProps) {
     <Card.Root>
       {changes.map((change, i) => {
         const block = change.value
-        const kind = type.values[block.type]
+        const kind = shape.values[block.type]
         const compare =
           change.type === 'unchanged'
             ? [change.old, change.value]

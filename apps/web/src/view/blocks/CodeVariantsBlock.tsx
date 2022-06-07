@@ -1,7 +1,7 @@
 import {fromModule, HStack, Typo} from '@alinea/ui'
 import {createContext, PropsWithChildren, useContext, useState} from 'react'
 import css from './CodeVariantsBlock.module.scss'
-import {CodeVariantsBlockProps} from './CodeVariantsBlock.query'
+import {CodeVariantsBlockSchema} from './CodeVariantsBlock.schema'
 
 const styles = fromModule(css)
 
@@ -25,7 +25,7 @@ export function CodeVariantsProvider({children}: PropsWithChildren<{}>) {
 }
 
 // Todo: fix accessibility when picking a component framework
-export function CodeVariantsBlock({variants}: CodeVariantsBlockProps) {
+export function CodeVariantsBlock({variants}: CodeVariantsBlockSchema) {
   const [preferences, togglePreference] = useContext(context)!
   const names = variants.map(variant => variant.name)
   let selected = names[0]

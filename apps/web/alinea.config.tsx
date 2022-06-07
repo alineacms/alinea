@@ -1,9 +1,11 @@
-import {createConfig, root, schema, workspace} from '@alinea/core'
+import {passwordLess} from '@alinea/auth.passwordless'
+import {backend, createConfig, root, schema, workspace} from '@alinea/core'
 import {LocaleSchema} from '@alinea/dashboard/schema/LocaleSchema'
 import {MediaSchema} from '@alinea/dashboard/schema/MediaSchema'
 import {BrowserPreview} from '@alinea/dashboard/view/preview/BrowserPreview'
 import {IcRoundInsertDriveFile} from '@alinea/ui/icons/IcRoundInsertDriveFile'
 import {IcRoundPermMedia} from '@alinea/ui/icons/IcRoundPermMedia'
+import {configureBackend} from './alinea.server'
 import {DocPageSchema} from './src/view/DocPage.schema'
 import {DocsPageSchema} from './src/view/DocsPage.schema'
 import {HomePageSchema} from './src/view/HomePage.schema'
@@ -17,6 +19,7 @@ export const webSchema = schema({
 
 const web = workspace('Alinea', {
   schema: webSchema,
+  typeNamespace: 'content',
   source: './content',
   mediaDir: './public',
   color: '#5661E5',
@@ -62,6 +65,9 @@ const stories = workspace('Stories', {
 const workspaces = {web, stories}
 
 export const config = createConfig({
+  backend: backend({
+    auth: passwordLess
+  }).configure(configureBackend),
   workspaces:
     process.env.NODE_ENV === 'development'
       ? workspaces

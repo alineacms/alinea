@@ -1,49 +1,17 @@
+@import '@alinea/ui/style.scss';
+
 .root {
-  flex-grow: 1;
   display: flex;
   flex-direction: column;
-  overflow: auto;
-  height: 100%;
-
-  &::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-  &::-webkit-scrollbar-track {
-    background: transparent; //var(--alinea-outline);
-  }
-  &::-webkit-scrollbar-thumb {
-    background: hsla(var(--alinea-negative), 0.2);
-  }
-  &::-webkit-scrollbar-thumb:hover {
-    background: hsla(var(--alinea-negative), 0.4);
-  }
-  &::-webkit-scrollbar-thumb:active {
-    background: hsla(var(--alinea-negative), 0.9);
-  }
 
   &-draft {
-    padding: 35px 45px;
+    padding: 12px;
+    @include ml {
+      padding: 35px 45px;
+    }
     max-width: 1024px;
     width: 100%;
     margin: 0 auto;
     flex-grow: 1;
-  }
-}
-
-.new {
-  width: 600px;
-
-  &-header {
-    padding-bottom: 20px;
-  }
-
-  &-footer {
-    margin-top: 20px;
-    text-align: right;
-
-    &-link {
-      margin-right: 20px;
-    }
   }
 }

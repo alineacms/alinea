@@ -1,18 +1,9 @@
 import {Entry, Outcome} from '@alinea/core'
-import {
-  Button,
-  fromModule,
-  HStack,
-  Pane,
-  px,
-  Stack,
-  Typo,
-  VStack
-} from '@alinea/ui'
+import {Button, fromModule, HStack, px, Stack, Typo, VStack} from '@alinea/ui'
 import IcRoundArrowForward from '@alinea/ui/icons/IcRoundArrowForward'
 import {useState} from 'react'
 import {useQuery} from 'react-query'
-import {CurrentDraftProvider} from '..'
+import {CurrentDraftProvider} from '../hook/UseCurrentDraft'
 import {useDraft} from '../hook/UseDraft'
 import {useDraftsList} from '../hook/UseDraftsList'
 import {useNav} from '../hook/UseNav'
@@ -21,6 +12,7 @@ import {useWorkspace} from '../hook/UseWorkspace'
 import css from './DraftsOverview.module.scss'
 import {EditMode} from './entry/EditMode'
 import {EntryEdit} from './EntryEdit'
+import {Sidebar} from './Sidebar'
 import {TreeNode} from './tree/TreeNode'
 
 const styles = fromModule(css)
@@ -60,12 +52,7 @@ export function DraftsOverview({id}: DraftsOverviewProps) {
   }
   return (
     <CurrentDraftProvider value={draft}>
-      <Pane
-        id="content-tree"
-        resizable="right"
-        defaultWidth={330}
-        minWidth={200}
-      >
+      <Sidebar.Tree>
         <HStack center style={{padding: `${px(10)} ${px(20)}`}}>
           <Typo.H4 flat>DRAFTS</Typo.H4>
           <Stack.Right>
@@ -97,16 +84,14 @@ export function DraftsOverview({id}: DraftsOverviewProps) {
             )
           })}
         </VStack>
-      </Pane>
-      <div style={{width: '100%', height: '100%'}}>
-        {selected && draft && (
-          <EntryEdit
-            initialMode={EditMode.Diff}
-            draft={draft}
-            isLoading={isLoading}
-          />
-        )}
-      </div>
+      </Sidebar.Tree>
+      {selected && draft && (
+        <EntryEdit
+          initialMode={EditMode.Diff}
+          draft={draft}
+          isLoading={isLoading}
+        />
+      )}
     </CurrentDraftProvider>
   )
 }

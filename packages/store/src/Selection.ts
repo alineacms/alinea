@@ -21,6 +21,10 @@ export class Selection<T> {
   with<X extends SelectionInput>(that: X): Selection.With<T, X> {
     return new Selection(ExprData.Merge(this.expr, Selection.create(that)))
   }
+
+  toExpr(): Expr<T> {
+    return new Expr(this.expr)
+  }
 }
 
 export namespace Selection {

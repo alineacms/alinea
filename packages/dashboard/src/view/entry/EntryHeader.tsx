@@ -1,5 +1,13 @@
 import {EntryStatus} from '@alinea/core'
-import {AppBar, Chip, HStack, px, Stack, Typo, useObservable} from '@alinea/ui'
+import {
+  AppBar,
+  Chip,
+  fromModule,
+  HStack,
+  Stack,
+  Typo,
+  useObservable
+} from '@alinea/ui'
 import {IcRoundArchive} from '@alinea/ui/icons/IcRoundArchive'
 import {IcRoundCheck} from '@alinea/ui/icons/IcRoundCheck'
 import {IcRoundDelete} from '@alinea/ui/icons/IcRoundDelete'
@@ -19,6 +27,9 @@ import {useNav} from '../../hook/UseNav'
 import {useRoot} from '../../hook/UseRoot'
 import {useWorkspace} from '../../hook/UseWorkspace'
 import {EditMode} from './EditMode'
+import css from './EntryHeader.module.scss'
+
+const styles = fromModule(css)
 
 function EntryStatusChip() {
   const nav = useNav()
@@ -100,16 +111,7 @@ export function EntryHeader({mode, setMode}: EntryHeaderProps) {
   return (
     <AppBar.Root>
       <AppBar.Item full style={{flexGrow: 1}}>
-        <Typo.Monospace
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            width: '100%',
-            background: 'var(--alinea-fields)',
-            padding: `${px(6)} ${px(15)}`,
-            borderRadius: 'var(--alinea-border-radius)'
-          }}
-        >
+        <Typo.Monospace className={styles.root.url()}>
           <HStack gap={8} center>
             <div style={{flexShrink: 0}}>
               {type?.options.icon ? (

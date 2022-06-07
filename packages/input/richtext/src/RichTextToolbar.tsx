@@ -1,4 +1,5 @@
-import {ReferencePickerFunc, Toolbar} from '@alinea/dashboard'
+import {Reference} from '@alinea/core/Reference'
+import {Toolbar} from '@alinea/dashboard'
 import {
   DropdownMenu,
   fromModule,
@@ -23,6 +24,7 @@ import {IcRoundUnfoldMore} from '@alinea/ui/icons/IcRoundUnfoldMore'
 import {IcRoundUndo} from '@alinea/ui/icons/IcRoundUndo'*/
 import {Editor} from '@tiptap/react'
 import {forwardRef, Ref} from 'react'
+import {PickTextLinkFunc} from './PickTextLink'
 import css from './RichTextToolbar.module.scss'
 
 const styles = fromModule(css)
@@ -37,13 +39,16 @@ enum Styles {
 export type RichTextToolbarProps = {
   editor: Editor
   focusToggle: (target: EventTarget | null) => void
-  pickLink: ReferencePickerFunc
+  pickLink: PickTextLinkFunc
 }
 
 export const RichTextToolbar = forwardRef(function RichTextToolbar(
   {pickLink, editor, focusToggle}: RichTextToolbarProps,
   ref: Ref<HTMLDivElement>
 ) {
+  function exec() {
+    return editor.chain().focus(null, {scrollIntoView: false})
+  }
   const selectedStyle = editor.isActive('heading', {level: 1})
     ? 'h1'
     : editor.isActive('heading', {level: 2})
@@ -51,7 +56,50 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
     : editor.isActive('heading', {level: 3})
     ? 'h3'
     : 'paragraph'
-
+  function parseLink(href: string): Reference | undefined {
+    try {
+      const url = new URL(href)
+      if (url.protocol === 'entry:') {
+        const entry = url.pathname
+        return {id: entry, type: 'entry', entry}
+      }
+      return {id: href, type: 'url', url: href}
+    } catch (e) {
+      return undefined
+    }
+  }
+  function handleLink() {
+    const attrs = editor.getAttributes('link')
+    const existing: Reference | undefined = attrs?.href && parseLink(attrs.href)
+    pickLink({link: existing ? [existing] : undefined}).then(picked => {
+      if (!picked) return
+      const link = picked.link && picked.link[0]
+      if (link?.type === 'entry') {
+        const command = exec()
+        const action = existing
+          ? command.extendMarkRange('link').setLink({
+              href: `entry:${link.entry}`,
+              target: picked.blank ? '_blank' : undefined
+            })
+          : command.insertContent({
+              type: 'text',
+              text: picked.description,
+              marks: [
+                {
+                  type: 'link',
+                  attrs: {
+                    href: `entry:${link.entry}`,
+                    target: picked.blank ? '_blank' : undefined
+                  }
+                }
+              ]
+            })
+        action.run()
+      } else {
+        exec().extendMarkRange('link').unsetLink().run()
+      }
+    })
+  }
   return (
     <Toolbar.Slot>
       <div
@@ -73,29 +121,21 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
               </HStack>
             </DropdownMenu.Trigger>
             <DropdownMenu.Items>
-              <DropdownMenu.Item
-                onClick={() => editor.chain().focus().clearNodes().run()}
-              >
+              <DropdownMenu.Item onClick={() => exec().clearNodes().run()}>
                 <Typo.P>Normal text</Typo.P>
               </DropdownMenu.Item>
               <DropdownMenu.Item
-                onClick={() =>
-                  editor.chain().focus().setHeading({level: 1}).run()
-                }
+                onClick={() => exec().setHeading({level: 1}).run()}
               >
                 <Typo.H1 flat>Heading 1</Typo.H1>
               </DropdownMenu.Item>
               <DropdownMenu.Item
-                onClick={() =>
-                  editor.chain().focus().setHeading({level: 2}).run()
-                }
+                onClick={() => exec().setHeading({level: 2}).run()}
               >
                 <Typo.H2 flat>Heading 2</Typo.H2>
               </DropdownMenu.Item>
               <DropdownMenu.Item
-                onClick={() =>
-                  editor.chain().focus().setHeading({level: 3}).run()
-                }
+                onClick={() => exec().setHeading({level: 3}).run()}
               >
                 <Typo.H3 flat>Heading 3</Typo.H3>
               </DropdownMenu.Item>
@@ -108,7 +148,7 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
             title="Bold"
             onClick={e => {
               e.preventDefault()
-              editor.chain().focus().toggleBold().run()
+              exec().toggleBold().run()
             }}
             active={editor.isActive('bold')}
           />
@@ -118,7 +158,7 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
             title="Italic"
             onClick={e => {
               e.preventDefault()
-              editor.chain().focus().toggleItalic().run()
+              exec().toggleItalic().run()
             }}
             active={editor.isActive('italic')}
           />
@@ -145,9 +185,7 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
             </DropdownMenu.Trigger>
             <DropdownMenu.Items>
               <DropdownMenu.Item
-                onClick={() =>
-                  editor.chain().focus().setTextAlign('left').run()
-                }
+                onClick={() => exec().setTextAlign('left').run()}
               >
                 <HStack gap={8} center>
                   <Icon
@@ -160,9 +198,7 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
                 </HStack>
               </DropdownMenu.Item>
               <DropdownMenu.Item
-                onClick={() =>
-                  editor.chain().focus().setTextAlign('center').run()
-                }
+                onClick={() => exec().setTextAlign('center').run()}
               >
                 <HStack gap={8} center>
                   <Icon
@@ -175,9 +211,7 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
                 </HStack>
               </DropdownMenu.Item>
               <DropdownMenu.Item
-                onClick={() =>
-                  editor.chain().focus().setTextAlign('right').run()
-                }
+                onClick={() => exec().setTextAlign('right').run()}
               >
                 <HStack gap={8} center>
                   <Icon
@@ -190,9 +224,7 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
                 </HStack>
               </DropdownMenu.Item>
               <DropdownMenu.Item
-                onClick={() =>
-                  editor.chain().focus().setTextAlign('justify').run()
-                }
+                onClick={() => exec().setTextAlign('justify').run()}
               >
                 <HStack gap={8} center>
                   <Icon
@@ -212,8 +244,8 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
             title="Clear format"
             onClick={e => {
               e.preventDefault()
-              editor.chain().focus().unsetAllMarks().run()
-              editor.chain().focus().unsetTextAlign().run()
+              exec().unsetAllMarks().run()
+              exec().unsetTextAlign().run()
             }}
           />
           <div className={styles.root.separator()} />
@@ -223,7 +255,7 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
             title="Bullet list"
             onClick={e => {
               e.preventDefault()
-              editor.chain().focus().toggleBulletList().run()
+              exec().toggleBulletList().run()
             }}
             active={editor.isActive('bulletList')}
           />
@@ -233,7 +265,7 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
             title="Ordered list"
             onClick={e => {
               e.preventDefault()
-              editor.chain().focus().toggleOrderedList().run()
+              exec().toggleOrderedList().run()
             }}
             active={editor.isActive('orderedList')}
           />
@@ -242,29 +274,7 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
             icon={IcRoundLink}
             size={18}
             title="Link"
-            onClick={e => {
-              e.preventDefault()
-              pickLink({
-                selection: [],
-                max: 1
-              }).then(links => {
-                if (links && links[0] && links[0].type === 'entry') {
-                  editor
-                    .chain()
-                    .focus()
-                    .extendMarkRange('link')
-                    .setLink({href: 'entry:' + links[0].id})
-                    .run()
-                } else {
-                  editor
-                    .chain()
-                    .focus()
-                    .extendMarkRange('link')
-                    .unsetLink()
-                    .run()
-                }
-              })
-            }}
+            onClick={handleLink}
             active={editor.isActive('link')}
           />
         </HStack>

@@ -5,13 +5,13 @@
 
   &-inner {
     flex-grow: 1;
-    padding-top: 35px;
     display: flex;
     flex-direction: column;
     min-height: 0;
 
     &-header {
       padding: 0 35px;
+      padding-top: 35px;
     }
   }
 

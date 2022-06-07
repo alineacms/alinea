@@ -19,6 +19,7 @@
       "@alinea/input.*/view": ["./packages/input/*/src/view.ts"],
       "@alinea/input.*": ["./packages/input/*/src/index.ts"],
       "@alinea/auth.passwordless/*": ["./packages/auth/passwordless/src/*"],
+      "@alinea/auth.*": ["./packages/auth/*/src/index.ts"],
       "@alinea/core/*": ["./packages/core/src/*"],
       "@alinea/cli/*": ["./packages/cli/src/*"],
       "@alinea/dashboard/*": ["./packages/dashboard/src/*"],
