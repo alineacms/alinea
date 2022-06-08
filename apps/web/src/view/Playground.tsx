@@ -149,7 +149,9 @@ export default function Playground() {
         platform: 'browser',
         bundle: true,
         write: false,
-        format: 'cjs',
+        format: 'iife',
+        globalName: '_contentScriptReturn',
+        footer: {js: '_contentScriptReturn.default'},
         stdin: {
           contents: code,
           sourcefile: 'alinea.config.tsx',
@@ -161,7 +163,7 @@ export default function Playground() {
     if (!result) return
     try {
       setErrors([])
-      setType(eval(result.outputFiles[0].text).default)
+      setType(eval(result.outputFiles[0].text))
     } catch (e) {
       setErrors([{text: String(e)} as any])
     }
