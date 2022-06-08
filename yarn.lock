@@ -289,7 +289,6 @@ __metadata:
   resolution: "@alinea/input.path@workspace:packages/input/path"
   dependencies:
     "@alinea/core": 0.0.0
-    "@alinea/dashboard": 0.0.0
     "@alinea/editor": 0.0.0
     "@alinea/ui": 0.0.0
   peerDependencies:
@@ -466,6 +465,7 @@ __metadata:
     remark: ^14.0.2
     remark-html: ^15.0.1
     shiki: ^0.10.1
+    use-clipboard-copy: ^0.2.0
   languageName: unknown
   linkType: soft
 
@@ -2934,6 +2934,13 @@ __metadata:
   version: 2.2.0
   resolution: "clean-stack@npm:2.2.0"
   checksum: 2ac8cd2b2f5ec986a3c743935ec85b07bc174d5421a5efc8017e1f146a1cf5f781ae962618f416352103b32c9cd7e203276e8c28241bbe946160cab16149fb68
+  languageName: node
+  linkType: hard
+
+"clipboard-copy@npm:^3.0.0":
+  version: 3.2.0
+  resolution: "clipboard-copy@npm:3.2.0"
+  checksum: f908842945a0c6b38fe513f559e8905519f24c1f287fc8d5f03fcf79d52172a09b6fdaf760377c84ad22b587b95060ebb782344e2c526490935db295398572bd
   languageName: node
   linkType: hard
 
@@ -9243,6 +9250,17 @@ resolve@^1.10.0:
   version: 0.1.0
   resolution: "urix@npm:0.1.0"
   checksum: 4c076ecfbf3411e888547fe844e52378ab5ada2d2f27625139011eada79925e77f7fbf0e4016d45e6a9e9adb6b7e64981bd49b22700c7c401c5fc15f423303b3
+  languageName: node
+  linkType: hard
+
+"use-clipboard-copy@npm:^0.2.0":
+  version: 0.2.0
+  resolution: "use-clipboard-copy@npm:0.2.0"
+  dependencies:
+    clipboard-copy: ^3.0.0
+  peerDependencies:
+    react: ">=16.8.0"
+  checksum: 412c42b5e6ec58737915669b4687437736152af61cce6434883890211928cb84a3072a9cd3305d42f5ec2b162f444a2a781d8f88f89a0ced976882a5cdc7c123
   languageName: node
   linkType: hard
 

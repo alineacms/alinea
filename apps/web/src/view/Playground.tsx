@@ -1,22 +1,30 @@
-import {TypeConfig} from '@alinea/core'
-import {createId} from '@alinea/core/Id'
+import {outcome, TypeConfig} from '@alinea/core'
 import {useForm} from '@alinea/editor/hook/UseForm'
 import {
+  AppBar,
   ErrorBoundary,
+  fromModule,
   HStack,
   Pane,
   px,
+  Stack,
   TextLabel,
   Typo,
   Viewport,
   VStack
 } from '@alinea/ui'
+import {IcRoundClose} from '@alinea/ui/icons/IcRoundClose'
+import {IcRoundShare} from '@alinea/ui/icons/IcRoundShare'
 import {Main} from '@alinea/ui/Main'
 import Editor, {Monaco} from '@monaco-editor/react'
 import * as alinea from 'alinea'
 import esbuild, {BuildFailure, Message, Plugin} from 'esbuild-wasm'
 import Head from 'next/head'
-import {useMemo, useRef, useState} from 'react'
+import {useEffect, useRef, useState} from 'react'
+import {useClipboard} from 'use-clipboard-copy'
+import css from './Playground.module.scss'
+
+const styles = fromModule(css)
 
 const defaultValue = `import {
   path,
@@ -75,53 +83,83 @@ function PreviewType({type}: PreviewTypeProps) {
   )
 }
 
+// Source: https://stackoverflow.com/a/30106551
+function b64EncodeUnicode(str: string) {
+  return btoa(
+    encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, function (match, p1) {
+      return String.fromCharCode(parseInt(p1, 16))
+    })
+  )
+}
+function b64DecodeUnicode(str: string) {
+  return decodeURIComponent(
+    Array.prototype.map
+      .call(atob(str), function (c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+      })
+      .join('')
+  )
+}
+
 export default function Playground() {
+  const [code, setCode] = useState(() => {
+    const [code] = outcome(() =>
+      b64DecodeUnicode(window.location.hash.slice('#code/'.length))
+    )
+    return code || defaultValue
+  })
   const [errors, setErrors] = useState<Array<Message>>([])
   const [config, setConfig] = useState<TypeConfig | undefined>()
-  const api = useMemo(() => {
-    let script: HTMLScriptElement | undefined
-    function handleBuildErrors(failure: BuildFailure) {
-      setErrors(failure.errors)
+  const clipboard = useClipboard({
+    copiedTimeout: 1200
+  })
+  function handleBuildErrors(failure: BuildFailure) {
+    setErrors(failure.errors)
+  }
+  function editorConfig(monaco: Monaco) {
+    monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
+      jsx: 'preserve'
+    })
+    monaco.languages.typescript.typescriptDefaults.addExtraLib(
+      `declare module 'alinea'`,
+      '@types/alinea/index.d.ts'
+    )
+  }
+  async function compile(value: string | undefined) {
+    if (!value) return
+    setCode(value)
+    const result = await esbuild
+      .build({
+        platform: 'browser',
+        bundle: true,
+        write: false,
+        format: 'cjs',
+        stdin: {
+          contents: value,
+          sourcefile: 'alinea.config.tsx',
+          loader: 'ts'
+        },
+        plugins: [alineaPlugin]
+      })
+      .catch(handleBuildErrors)
+    if (!result) return
+    try {
+      setErrors([])
+      setConfig(eval(result.outputFiles[0].text).default)
+    } catch (e) {
+      setErrors([{text: String(e)} as any])
     }
-    const api = {
-      config(monaco: Monaco) {
-        monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
-          jsx: 'preserve'
-        })
-        monaco.languages.typescript.typescriptDefaults.addExtraLib(
-          `declare module 'alinea'`,
-          '@types/alinea/index.d.ts'
-        )
-      },
-      async compile(value: string | undefined) {
-        if (!value) return
-        const revision = 'cb_' + createId()
-        const global = window as any
-        const result = await esbuild
-          .build({
-            platform: 'browser',
-            bundle: true,
-            write: false,
-            format: 'cjs',
-            stdin: {
-              contents: value,
-              sourcefile: 'alinea.config.tsx',
-              loader: 'ts'
-            },
-            plugins: [alineaPlugin]
-          })
-          .catch(handleBuildErrors)
-        if (!result) return
-        try {
-          setErrors([])
-          setConfig(eval(result.outputFiles[0].text).default)
-        } catch (e) {
-          setErrors([{text: String(e)} as any])
-        }
-      }
-    }
-    init.then(() => api.compile(defaultValue))
-    return api
+  }
+  function handleShare() {
+    window.location.hash = '#code/' + b64EncodeUnicode(code)
+    clipboard.copy(window.location.href)
+  }
+  function handleReset() {
+    setCode(defaultValue)
+    window.location.hash = ''
+  }
+  useEffect(() => {
+    init.then(() => compile(code))
   }, [])
   return (
     <>
@@ -129,6 +167,11 @@ export default function Playground() {
         <style>{`#__next {height: 100%}`}</style>
       </Head>
       <Viewport attachToBody color="#5661E5" contain>
+        {clipboard.copied && (
+          <div className={styles.root.flash()}>
+            <p className={styles.root.flash.msg()}>URL copied to clipboard</p>
+          </div>
+        )}
         <HStack style={{height: '100%'}}>
           <Pane
             id="editor"
@@ -140,29 +183,36 @@ export default function Playground() {
               height="100%"
               path="alinea.config.tsx"
               defaultLanguage="typescript"
-              defaultValue={defaultValue}
-              beforeMount={api.config}
-              onChange={api.compile}
+              value={code}
+              beforeMount={editorConfig}
+              onChange={compile}
             />
           </Pane>
           <div style={{flex: '1 0 auto'}}>
             <VStack style={{height: '100%'}}>
+              <AppBar.Root>
+                <Stack.Right>
+                  <AppBar.Item
+                    as="button"
+                    icon={IcRoundClose}
+                    onClick={handleReset}
+                  >
+                    Reset
+                  </AppBar.Item>
+                </Stack.Right>
+                <AppBar.Item
+                  as="button"
+                  icon={IcRoundShare}
+                  onClick={handleShare}
+                >
+                  Share
+                </AppBar.Item>
+              </AppBar.Root>
               <ErrorBoundary dependencies={[config]}>
                 {config && <PreviewType type={config} />}
               </ErrorBoundary>
               {errors.length > 0 && (
-                <div
-                  style={{
-                    maxHeight: px(300),
-                    padding: px(30),
-                    overflow: 'auto',
-                    flexShrink: 0,
-                    marginTop: 'auto',
-                    background: 'white',
-                    borderTop: '1px solid #dddde9',
-                    lineHeight: 1.6
-                  }}
-                >
+                <div className={styles.root.errors()}>
                   <VStack gap={20}>
                     {errors.map(error => {
                       return (
