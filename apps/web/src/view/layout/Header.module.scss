@@ -18,17 +18,12 @@
   }
 
   &-logo {
+    display: block;
     color: var(--website-heading);
     margin-top: -3px;
 
     @include ml {
       margin-top: -2px;
-    }
-
-    &-text {
-      @include s {
-        display: none;
-      }
     }
   }
 
@@ -64,6 +59,7 @@
   }
 
   &-social {
+    display: block;
     color: var(--website-heading);
 
     &:hover {
