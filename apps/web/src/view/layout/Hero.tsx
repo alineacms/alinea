@@ -9,9 +9,11 @@ const styles = fromModule(css)
 
 export function Hero({children}: PropsWithChildren<{}>) {
   return (
-    <Container className={styles.root()}>
-      <div className={styles.root.inner()}>{children}</div>
-    </Container>
+    <div className={styles.root()}>
+      <Container>
+        <div className={styles.root.inner()}>{children}</div>
+      </Container>
+    </div>
   )
 }
 

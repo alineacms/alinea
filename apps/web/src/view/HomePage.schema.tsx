@@ -5,6 +5,7 @@ import {tab, tabs} from '@alinea/input.tabs'
 import {text} from '@alinea/input.text'
 import {IcRoundInsertDriveFile} from '@alinea/ui/icons/IcRoundInsertDriveFile'
 import {IcRoundLink} from '@alinea/ui/icons/IcRoundLink'
+import {BlocksSchema} from './blocks/Blocks.schema'
 
 export const HomePageSchema = type(
   'Home',
@@ -21,7 +22,8 @@ export const HomePageSchema = type(
         fields: type('Fields', {
           label: text('Button label')
         })
-      })
+      }),
+      blocks: BlocksSchema
     }).configure({icon: IcRoundInsertDriveFile}),
     tab('Top navigation', {
       links: link.multiple('Links', {

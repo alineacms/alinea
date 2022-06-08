@@ -1,12 +1,14 @@
-import {Schema, schema} from '@alinea/core'
-import {list} from '@alinea/input.list'
-import {TextBlockSchema} from './TextBlock.schema'
-import {TypesBlockSchema} from './TypesBlock.schema'
+import { Schema, schema } from '@alinea/core'
+import { list } from '@alinea/input.list'
+import { ImagetextBlockSchema } from './ImagetextBlock.schema'
+import { TextBlockSchema } from './TextBlock.schema'
+import { TypesBlockSchema } from './TypesBlock.schema'
 
 export const BlocksSchema = list('Body', {
   schema: schema({
     TextBlock: TextBlockSchema,
-    TypesBlock: TypesBlockSchema
+    TypesBlock: TypesBlockSchema,
+    ImagetextBlock: ImagetextBlockSchema
   })
 })
 

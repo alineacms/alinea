@@ -1,5 +1,6 @@
 import {unreachable} from '@alinea/core'
 import {BlocksSchema} from './Blocks.schema'
+import {ImagetextBlock} from './ImagetextBlock'
 import {TextBlock} from './TextBlock'
 import {TypesBlock} from './TypesBlock'
 
@@ -16,6 +17,8 @@ export function Blocks({blocks}: BlocksViewProps) {
             return <TextBlock key={block.id} {...block} />
           case 'TypesBlock':
             return <TypesBlock key={block.id} {...block} />
+          case 'ImagetextBlock':
+            return <ImagetextBlock key={block.id} {...block} />
           default:
             throw unreachable(block)
         }

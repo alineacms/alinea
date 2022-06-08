@@ -2,13 +2,13 @@
 
 .root {
   margin: auto;
+  padding: 75px 0;
 
   &-inner {
     display: flex;
     align-items: center;
     justify-content: center;
     text-align: center;
-    padding-bottom: 60px;
     flex-grow: 1;
   }
 }
