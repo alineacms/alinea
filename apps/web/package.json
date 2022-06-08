@@ -18,6 +18,7 @@
     "@alinea/core": "0.0.0",
     "@alinea/dashboard": "0.0.0",
     "@alinea/ui": "0.0.0",
+    "@monaco-editor/react": "^4.4.5",
     "next": "^12.1.5",
     "react": "^18.1.0",
     "react-animate-height": "^3.0.3",
