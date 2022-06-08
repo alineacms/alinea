@@ -15,11 +15,13 @@ const styles = fromModule(css)
 
 export function ErrorBoundary({children}: PropsWithChildren<{}>) {
   const {ErrorBoundary, didCatch, error, reset} = useErrorBoundary()
-  const location = useLocation()
-  useEffect(() => {
-    // Let's retry once we navigate elsewhere
-    if (error) reset()
-  }, [location])
+  try {
+    const location = useLocation()
+    useEffect(() => {
+      // Let's retry once we navigate elsewhere
+      if (error) reset()
+    }, [location])
+  } catch (e) {}
   return (
     <>
       {didCatch ? (
