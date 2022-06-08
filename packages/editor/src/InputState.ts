@@ -4,6 +4,7 @@ import {RecordMutator} from '@alinea/core/shape/RecordShape'
 import {TextDoc} from '@alinea/core/TextDoc'
 
 export interface InputState<T = any> {
+  parent(): InputState<any> | undefined
   child(field: string): InputState<any>
   use(): T
 }
@@ -16,9 +17,17 @@ export namespace InputState {
   export type Text<T> = readonly [TextDoc<T>, RichTextMutator<T>]
 
   export class StatePair<V, M> implements InputState<readonly [V, M]> {
-    constructor(public current: V, public mutator: M) {}
+    constructor(
+      public current: V,
+      public mutator: M,
+      private _parent?: InputState<any>
+    ) {}
 
-    child(field: string) {
+    parent() {
+      return this._parent
+    }
+
+    child(field: string): InputState<any> {
       const {mutator} = this
       if (typeof mutator !== 'function')
         throw 'Cannot access child field of non-object'
@@ -31,7 +40,7 @@ export namespace InputState {
       // we're dealing with a scalar value. If not this will result in
       // confusing runtime errors. Maybe we could always use Y types below the
       // surface?
-      return new StatePair(current, mutate as any)
+      return new StatePair(current, mutate as any, this)
     }
 
     use() {
