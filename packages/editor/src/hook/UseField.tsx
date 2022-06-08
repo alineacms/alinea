@@ -11,7 +11,7 @@ export class FieldState<V, M> implements InputState<readonly [V, M]> {
     private shape: Shape<V>,
     private root: Y.Map<any>,
     private key: string,
-    private _parent: InputState<any>
+    private _parent?: InputState<any>
   ) {}
 
   parent() {

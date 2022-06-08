@@ -1,4 +1,5 @@
 import {outcome, TypeConfig} from '@alinea/core'
+import {DashboardProvider, SessionProvider, Toolbar} from '@alinea/dashboard'
 import {useForm} from '@alinea/editor/hook/UseForm'
 import {
   AppBar,
@@ -20,8 +21,11 @@ import Editor, {Monaco} from '@monaco-editor/react'
 import * as alinea from 'alinea'
 import esbuild, {BuildFailure, Message, Plugin} from 'esbuild-wasm'
 import Head from 'next/head'
-import {useEffect, useRef, useState} from 'react'
+import * as React from 'react'
+import {useEffect, useMemo, useRef, useState} from 'react'
+import {QueryClient, QueryClientProvider} from 'react-query'
 import {useClipboard} from 'use-clipboard-copy'
+import {createDemo} from './Demo'
 import css from './Playground.module.scss'
 
 const styles = fromModule(css)
@@ -43,6 +47,7 @@ const init = esbuild.initialize({
 
 const global: any = window
 global['alinea'] = alinea
+global['React'] = React
 
 const alineaPlugin: Plugin = {
   name: 'alinea',
@@ -101,15 +106,28 @@ function b64DecodeUnicode(str: string) {
   )
 }
 
+const queryClient = new QueryClient({defaultOptions: {queries: {retry: false}}})
+
 export default function Playground() {
-  const [code, setCode] = useState(() => {
-    const [code] = outcome(() =>
+  const persistenceId = '@alinea/web/playground'
+  const {client, config, session} = useMemo(createDemo, [])
+  const [code, storeCode] = useState(() => {
+    const [fromUrl] = outcome(() =>
       b64DecodeUnicode(window.location.hash.slice('#code/'.length))
     )
-    return code || defaultValue
+    if (fromUrl) return fromUrl
+    const [fromStorage] = outcome(() =>
+      window.localStorage.getItem(persistenceId)
+    )
+    if (fromStorage) return fromStorage
+    return defaultValue
   })
+  function setCode(code: string) {
+    outcome(() => window.localStorage.setItem(persistenceId, code))
+    storeCode(code)
+  }
   const [errors, setErrors] = useState<Array<Message>>([])
-  const [config, setConfig] = useState<TypeConfig | undefined>()
+  const [type, setType] = useState<TypeConfig | undefined>()
   const clipboard = useClipboard({
     copiedTimeout: 1200
   })
@@ -125,9 +143,7 @@ export default function Playground() {
       '@types/alinea/index.d.ts'
     )
   }
-  async function compile(value: string | undefined) {
-    if (!value) return
-    setCode(value)
+  async function compile(code: string) {
     const result = await esbuild
       .build({
         platform: 'browser',
@@ -135,9 +151,9 @@ export default function Playground() {
         write: false,
         format: 'cjs',
         stdin: {
-          contents: value,
+          contents: code,
           sourcefile: 'alinea.config.tsx',
-          loader: 'ts'
+          loader: 'tsx'
         },
         plugins: [alineaPlugin]
       })
@@ -145,7 +161,7 @@ export default function Playground() {
     if (!result) return
     try {
       setErrors([])
-      setConfig(eval(result.outputFiles[0].text).default)
+      setType(eval(result.outputFiles[0].text).default)
     } catch (e) {
       setErrors([{text: String(e)} as any])
     }
@@ -160,83 +176,99 @@ export default function Playground() {
   }
   useEffect(() => {
     init.then(() => compile(code))
-  }, [])
+  }, [code])
   return (
     <>
       <Head>
         <style>{`#__next {height: 100%}`}</style>
       </Head>
       <Viewport attachToBody color="#5661E5" contain>
-        {clipboard.copied && (
-          <div className={styles.root.flash()}>
-            <p className={styles.root.flash.msg()}>URL copied to clipboard</p>
-          </div>
-        )}
-        <HStack style={{height: '100%'}}>
-          <Pane
-            id="editor"
-            resizable="right"
-            defaultWidth={window.innerWidth * 0.5}
-            maxWidth={window.innerWidth * 0.8}
-          >
-            <Editor
-              height="100%"
-              path="alinea.config.tsx"
-              defaultLanguage="typescript"
-              value={code}
-              beforeMount={editorConfig}
-              onChange={compile}
-            />
-          </Pane>
-          <div style={{flex: '1 0 auto'}}>
-            <VStack style={{height: '100%'}}>
-              <AppBar.Root>
-                <Stack.Right>
-                  <AppBar.Item
-                    as="button"
-                    icon={IcRoundClose}
-                    onClick={handleReset}
+        <DashboardProvider value={{client, config}}>
+          <SessionProvider value={session}>
+            <QueryClientProvider client={queryClient}>
+              <Toolbar.Provider>
+                {clipboard.copied && (
+                  <div className={styles.root.flash()}>
+                    <p className={styles.root.flash.msg()}>
+                      URL copied to clipboard
+                    </p>
+                  </div>
+                )}
+                <HStack style={{height: '100%'}}>
+                  <Pane
+                    id="editor"
+                    resizable="right"
+                    defaultWidth={window.innerWidth * 0.5}
+                    maxWidth={window.innerWidth * 0.8}
                   >
-                    Reset
-                  </AppBar.Item>
-                </Stack.Right>
-                <AppBar.Item
-                  as="button"
-                  icon={IcRoundShare}
-                  onClick={handleShare}
-                >
-                  Share
-                </AppBar.Item>
-              </AppBar.Root>
-              <ErrorBoundary dependencies={[config]}>
-                {config && <PreviewType type={config} />}
-              </ErrorBoundary>
-              {errors.length > 0 && (
-                <div className={styles.root.errors()}>
-                  <VStack gap={20}>
-                    {errors.map(error => {
-                      return (
-                        <Typo.Monospace as="div">
-                          <p>{error.text}</p>
-                          {error.location && (
-                            <div style={{paddingLeft: px(10)}}>
-                              <>
-                                <b>
-                                  [{error.location.file}: {error.location.line}]
-                                </b>
-                                <div>{error.location.lineText}</div>
-                              </>
-                            </div>
-                          )}
-                        </Typo.Monospace>
-                      )
-                    })}
-                  </VStack>
-                </div>
-              )}
-            </VStack>
-          </div>
-        </HStack>
+                    <Editor
+                      height="100%"
+                      path="alinea.config.tsx"
+                      defaultLanguage="typescript"
+                      value={code}
+                      beforeMount={editorConfig}
+                      onChange={value => {
+                        if (value) setCode(value)
+                      }}
+                    />
+                  </Pane>
+                  <div style={{flex: '1 0 0'}}>
+                    <VStack style={{height: '100%'}}>
+                      <HStack>
+                        <div style={{paddingLeft: px(18)}}>
+                          <Toolbar.Portal />
+                        </div>
+                        <Stack.Right>
+                          <AppBar.Item
+                            as="button"
+                            icon={IcRoundClose}
+                            onClick={handleReset}
+                          >
+                            Reset
+                          </AppBar.Item>
+                        </Stack.Right>
+                        <AppBar.Item
+                          as="button"
+                          icon={IcRoundShare}
+                          onClick={handleShare}
+                        >
+                          Share
+                        </AppBar.Item>
+                      </HStack>
+                      <ErrorBoundary dependencies={[type]}>
+                        {type && <PreviewType type={type} />}
+                      </ErrorBoundary>
+                      {errors.length > 0 && (
+                        <div className={styles.root.errors()}>
+                          <VStack gap={20}>
+                            {errors.map(error => {
+                              return (
+                                <Typo.Monospace as="div">
+                                  <p>{error.text}</p>
+                                  {error.location && (
+                                    <div style={{paddingLeft: px(10)}}>
+                                      <>
+                                        <b>
+                                          [{error.location.file}:{' '}
+                                          {error.location.line}]
+                                        </b>
+                                        <div>{error.location.lineText}</div>
+                                      </>
+                                    </div>
+                                  )}
+                                </Typo.Monospace>
+                              )
+                            })}
+                          </VStack>
+                        </div>
+                      )}
+                    </VStack>
+                  </div>
+                </HStack>
+              </Toolbar.Provider>
+            </QueryClientProvider>
+          </SessionProvider>
+        </DashboardProvider>
       </Viewport>
     </>
   )
