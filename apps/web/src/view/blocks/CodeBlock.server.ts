@@ -9,8 +9,9 @@ const highlighter = getHighlighter({
     ...theme,
     type: 'light',
     settings: [],
-    fg: '#24292f',
-    bg: '#fbf9f9'
+    fg: '#1E232A',
+    bg: 'white',
+    colors: {...theme.colors, 'editor.background': '#1E232A'}
   },
   langs: [{id: 'tsx', scopeName: 'source.tsx', grammar: language}]
 })

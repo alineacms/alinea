@@ -1,15 +1,15 @@
 .root {
   margin: 20px 0 28px 0;
-  background: #ecebeb;
-  box-shadow: 0px 10px 50px rgba(0, 0, 0, 0.08);
-  border-radius: 16px;
+  background: var(--web-code-background);
+  color: var(--web-code-foreground);
+  border-radius: 10px;
   overflow: hidden;
 
   &-fileName {
     font-family: 'JetBrains Mono', monospace;
-    padding: 12px 20px;
-    font-size: 13px;
-    background: #fcfbfb;
+    padding: 8px 15px;
+    font-size: 12px;
+    background: var(--web-code-highlight);
   }
 
   &-code {
