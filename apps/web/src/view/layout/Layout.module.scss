@@ -33,7 +33,17 @@
   height: 100%;
   overflow-y: auto;
   @include scrollbar;
-  padding: 40px 60px;
   display: flex;
   flex-direction: column;
+  padding: 30px 30px;
+
+  @include ml {
+    padding: 40px 60px;
+  }
+
+  &-inner {
+    max-width: 900px;
+    width: 100%;
+    margin: 0 auto;
+  }
 }

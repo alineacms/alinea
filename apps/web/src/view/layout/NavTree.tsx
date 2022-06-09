@@ -97,7 +97,10 @@ export function NavTree({nav, level = 0, open = true}: NavTreeProps) {
                       active: pathname === page.url
                     })}
                   >
-                    {page.title}
+                    <IcRoundKeyboardArrowRight
+                      className={styles.root.link.icon()}
+                    />
+                    <span>{page.title}</span>
                   </a>
                 </Link>
               </div>

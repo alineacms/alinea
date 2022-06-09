@@ -11,8 +11,8 @@
       font-family: var(--web-title-font);
       font-size: 12px;
       text-transform: uppercase;
-      font-weight: 700;
-      padding: 16px 10px 6px 10px;
+      font-weight: 600;
+      padding: 23px 10px 4px 10px;
     }
     &:first-child &-header {
       padding-top: 0;
@@ -29,28 +29,26 @@
     margin: 1px;
     cursor: pointer;
 
-    &:after {
-      content: '';
+    &-icon {
+      display: block;
       position: absolute;
       top: 50%;
-      left: -5px;
-      width: 2px;
-      background: var(--web-accent);
-      height: 70%;
-      opacity: 0;
-      pointer-events: none;
+      left: -12px;
       transform: translateY(-50%);
-    }
-
-    &:hover:after {
-      opacity: 0.5;
+      font-size: 18px;
+      color: var(--web-accent);
+      opacity: 0;
     }
 
     &.is-active {
       font-weight: 500;
     }
 
-    &.is-active:after {
+    &:hover &-icon {
+      opacity: 0.5;
+    }
+
+    &.is-active &-icon {
       opacity: 1;
     }
   }

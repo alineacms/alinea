@@ -49,7 +49,7 @@ export namespace Layout {
     }, [path])
     return (
       <div ref={ref} className={styles.scrollable()}>
-        {children}
+        <div className={styles.scrollable.inner()}>{children}</div>
       </div>
     )
   }
