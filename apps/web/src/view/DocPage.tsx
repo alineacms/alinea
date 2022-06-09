@@ -1,4 +1,4 @@
-import {fromModule, HStack, Stack, Typo} from '@alinea/ui'
+import {fromModule, HStack, Stack, TextLabel, Typo} from '@alinea/ui'
 import {IcRoundArrowBack} from '@alinea/ui/icons/IcRoundArrowBack'
 import {IcRoundArrowForward} from '@alinea/ui/icons/IcRoundArrowForward'
 import Link from 'next/link'
@@ -9,6 +9,7 @@ import {Container} from './layout/Container'
 import {Layout} from './layout/Layout'
 import {NavSidebar} from './layout/NavSidebar'
 import {NavTree, useNavTree} from './layout/NavTree'
+import {WebTypo} from './layout/WebTypo'
 
 const styles = fromModule(css)
 
@@ -26,12 +27,14 @@ export function DocPage({title, blocks, menu, next, prev}: DocPageProps) {
             <HStack center gap={20} className={styles.root.nav()}>
               {prev && (
                 <Link href={prev.url} passHref>
-                  <Typo.Link>
+                  <WebTypo.Link>
                     <HStack gap={8}>
                       <IcRoundArrowBack />
-                      <span>{prev.title}</span>
+                      <span>
+                        <TextLabel label={prev.title} />
+                      </span>
                     </HStack>
-                  </Typo.Link>
+                  </WebTypo.Link>
                 </Link>
               )}
               <Stack.Right>
@@ -39,7 +42,9 @@ export function DocPage({title, blocks, menu, next, prev}: DocPageProps) {
                   <Link href={next.url} passHref>
                     <Typo.Link>
                       <HStack center gap={8}>
-                        <span>{next.title}</span>
+                        <span>
+                          <TextLabel label={next.title} />
+                        </span>
                         <IcRoundArrowForward />
                       </HStack>
                     </Typo.Link>

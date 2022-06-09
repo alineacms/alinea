@@ -115,8 +115,8 @@ async function process(upload: Upload, hub: Hub): Promise<Upload> {
       return {
         ...upload,
         blurHash,
-        width: imageData.width,
-        height: imageData.height,
+        width: image.naturalWidth,
+        height: image.naturalHeight,
         status: UploadStatus.Uploading
       }
     }

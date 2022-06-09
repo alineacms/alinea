@@ -1,9 +1,9 @@
 @import '@alinea/web/src/style.scss';
 
 .root {
-  --background: hsl(0, 12%, 98%);
   position: relative;
-  background: var(--background);
+  background: var(--web-hero-background);
+  color: var(--web-header-foreground);
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -19,7 +19,6 @@
 
   &-logo {
     display: block;
-    color: var(--website-heading);
     margin-top: -3px;
 
     @include ml {
@@ -28,10 +27,10 @@
   }
 
   &-nav {
-    display: none !important;
+    font-family: var(--web-title-font);
 
-    @include l {
-      display: flex !important;
+    @include sm {
+      display: none !important;
     }
 
     &-link {
@@ -45,22 +44,8 @@
     }
   }
 
-  &-bg {
-    position: absolute;
-    top: 100%;
-    margin-top: -1px;
-    fill: var(--background);
-    left: 0;
-    right: 0;
-    z-index: 1;
-    pointer-events: none;
-    max-height: calc(100vh - 95px);
-    width: 100%;
-  }
-
   &-social {
     display: block;
-    color: var(--website-heading);
 
     &:hover {
       color: black;
@@ -74,7 +59,6 @@
 
   &-hamburger {
     display: block;
-    color: var(--website-heading);
     font-size: 25px;
 
     @include l {
@@ -90,6 +74,7 @@
 .mobilemenu {
   display: block;
   padding-top: 20px;
+  font-family: var(--web-title-font);
 
   @include l {
     display: none !important;

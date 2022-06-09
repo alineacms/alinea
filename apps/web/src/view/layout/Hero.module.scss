@@ -1,25 +1,31 @@
 @import '@alinea/web/src/style.scss';
 
 .root {
-  margin: auto;
+  padding: 60px 0;
 
   &-inner {
+    position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
     text-align: center;
-    padding-bottom: 60px;
     flex-grow: 1;
+  }
+
+  &-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    fill: var(--web-hero-background);
   }
 }
 
 .title {
-  font-size: 60px;
+  font-size: 48px;
   line-height: 1;
   margin-bottom: 24px;
-  font-weight: bold;
-  white-space: pre-line;
-  color: #141b43;
 
   @include s {
     font-size: 45px;
@@ -31,6 +37,7 @@
 }
 
 .action {
+  font-family: var(--web-title-font);
   display: inline-block;
   text-decoration: none;
   background: #4a63e7;
@@ -38,16 +45,14 @@
   padding: 10px 16px;
   border-radius: 25px;
   font-size: 14px;
-
-  @include ml {
-    font-size: 16px;
-  }
+  font-weight: 500;
 }
 
 .byLine {
   font-size: 14px;
   line-height: 1.4;
   max-width: 50ch;
+  color: var(--web-foreground-faded);
 
   @include ml {
     font-size: 16px;

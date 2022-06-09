@@ -7,4 +7,16 @@
   &-example {
     padding-top: 30px;
   }
+
+  &-demo {
+    font-family: var(--web-title-font);
+    font-size: 14px;
+  }
+
+  &-screenshot {
+    max-width: 700px;
+    margin: 0 auto;
+    border-radius: 10px;
+    overflow: hidden;
+  }
 }

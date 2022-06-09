@@ -1,4 +1,4 @@
-import {fromModule, HStack, Typo} from '@alinea/ui'
+import {fromModule, HStack} from '@alinea/ui'
 import {
   createContext,
   PropsWithChildren,
@@ -6,6 +6,7 @@ import {
   useEffect,
   useState
 } from 'react'
+import {WebTypo} from '../layout/WebTypo'
 import css from './CodeVariantsBlock.module.scss'
 import {CodeVariantsBlockSchema} from './CodeVariantsBlock.schema'
 
@@ -72,7 +73,7 @@ export function CodeVariantsBlock({variants}: CodeVariantsBlockSchema) {
         return (
           <div className={styles.root.code()} key={variant.id}>
             {variant.code && (
-              <Typo.Monospace
+              <WebTypo.Monospace
                 as="div"
                 dangerouslySetInnerHTML={{__html: variant.code}}
                 className={styles.root.code()}

@@ -1,8 +1,10 @@
-import {fromModule, HStack, px, Typo, VStack} from '@alinea/ui'
+import {fromModule, HStack, px, VStack} from '@alinea/ui'
 import {IcRoundOpenInNew} from '@alinea/ui/icons/IcRoundOpenInNew'
+import Image from 'next/image'
 import css from './HomePage.module.scss'
 import {HomePageSchema} from './HomePage.schema'
 import {Hero} from './layout/Hero'
+import {WebTypo} from './layout/WebTypo'
 
 const styles = fromModule(css)
 
@@ -16,7 +18,12 @@ const exampleCode = `schema('Blog', {
   })
 })`
 
-export function HomePage({headline, byline, action}: HomePageSchema) {
+export function HomePage({
+  headline,
+  byline,
+  action,
+  screenshot
+}: HomePageSchema) {
   return (
     <div className={styles.root()}>
       <Hero>
@@ -33,20 +40,28 @@ export function HomePage({headline, byline, action}: HomePageSchema) {
             {action && (
               <Hero.Action href={action.url}>{action.label}</Hero.Action>
             )}
-            <Typo.Link href="/demo" target="_blank">
+            <WebTypo.Link
+              className={styles.root.demo()}
+              href="/demo"
+              target="_blank"
+            >
               <HStack center gap={8}>
                 <span>Try the demo</span>
                 <IcRoundOpenInNew />
               </HStack>
-            </Typo.Link>
+            </WebTypo.Link>
           </HStack>
         </VStack>
       </Hero>
-      {/*<Container className={styles.root.example()}>
-        <div style={{display: 'inline-block'}}>
-          <CodeBlock code={exampleCode} />
+      {screenshot && (
+        <div className={styles.root.screenshot()}>
+          <Image
+            src={screenshot.src}
+            width={screenshot.width}
+            height={screenshot.height}
+          />
         </div>
-  </Container>*/}
+      )}
     </div>
   )
 }

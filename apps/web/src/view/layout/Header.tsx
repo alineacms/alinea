@@ -97,14 +97,6 @@ export function Header({links}: HeaderProps) {
           <Links links={links} style={styles.mobilemenu.link} />
         </VStack>
       </AnimateHeight>
-      <svg
-        viewBox="0 0 36 18"
-        preserveAspectRatio="none"
-        className={styles.root.bg()}
-      >
-        <path d="M18 0C25.8884 0 29.9402 0.340637 32.8088 3.19123C35.6773 6.05976 36 10.1116 36 18V0H18Z" />
-        <path d="M0 18C0 10.1116 0.340637 6.05976 3.19123 3.19123C6.05976 0.340637 10.1116 0 18 0H0V18Z" />
-      </svg>
     </header>
   )
 }

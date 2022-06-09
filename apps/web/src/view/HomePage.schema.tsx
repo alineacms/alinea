@@ -21,7 +21,8 @@ export const HomePageSchema = type(
         fields: type('Fields', {
           label: text('Button label')
         })
-      })
+      }),
+      screenshot: link.image('Screenshot')
     }).configure({icon: IcRoundInsertDriveFile}),
     tab('Top navigation', {
       links: link.multiple('Links', {
