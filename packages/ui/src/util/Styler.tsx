@@ -15,7 +15,7 @@ export type Styler = {
 }
 
 type GenericStyler = Styler & {[key: string]: GenericStyler}
-type GenericStyles = {[key: string]: GenericStyler}
+export type GenericStyles = {[key: string]: GenericStyler}
 
 type Style<State> = string extends State
   ? GenericStyles
