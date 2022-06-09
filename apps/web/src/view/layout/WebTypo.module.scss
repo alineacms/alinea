@@ -12,12 +12,12 @@
   font-size: 26px;
   font-weight: 700;
   line-height: 1.25;
-  margin-bottom: 20px;
+  margin: 35px 0 20px 0;
   white-space: pre-line;
   text-rendering: optimizeLegibility;
   @extend .hyphenate;
   &.is-flat {
-    margin-bottom: 0;
+    margin: 0;
   }
 }
 
@@ -27,12 +27,12 @@
   font-size: 18px;
   font-weight: 700;
   line-height: 1.33;
-  margin-bottom: 9px;
+  margin: 32px 0 6px 0;
   white-space: pre-line;
   text-rendering: optimizeLegibility;
   @extend .hyphenate;
   &.is-flat {
-    margin-bottom: 0;
+    margin: 0;
   }
 }
 
@@ -42,12 +42,12 @@
   font-size: 16px;
   font-weight: 700;
   line-height: 1.2;
-  margin-bottom: 5px;
+  margin: 18px 0 4px 0;
   white-space: pre-line;
   text-rendering: optimizeLegibility;
   @extend .hyphenate;
   &.is-flat {
-    margin-bottom: 0;
+    margin: 0;
   }
 }
 
@@ -61,7 +61,7 @@
   text-rendering: optimizeLegibility;
   @extend .hyphenate;
   &.is-flat {
-    margin-bottom: 0;
+    margin: 0;
   }
 }
 
@@ -69,7 +69,7 @@
   font-size: 14px;
   line-height: 1.6;
   margin-bottom: 14px;
-  max-width: 50ch;
+  max-width: 60ch;
   text-rendering: optimizeLegibility;
   white-space: pre-line;
   @extend .hyphenate;

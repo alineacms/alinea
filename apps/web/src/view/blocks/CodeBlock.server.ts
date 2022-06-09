@@ -11,7 +11,7 @@ const highlighter = getHighlighter({
     settings: [],
     fg: '#1E232A',
     bg: 'white',
-    colors: {...theme.colors, 'editor.background': '#1E232A'}
+    colors: {...theme.colors, 'editor.background': 'var(--web-code-background)'}
   },
   langs: [{id: 'tsx', scopeName: 'source.tsx', grammar: language}]
 })

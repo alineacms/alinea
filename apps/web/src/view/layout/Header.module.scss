@@ -6,7 +6,7 @@
   top: 0;
   left: 0;
   right: 0;
-  height: 60px;
+  height: 55px;
 
   &.is-negative {
     --bg: var(--web-header-foreground);
@@ -14,11 +14,11 @@
 }
 
 .root {
-  --bg-faded: hsla(var(--web-header-background-hsl), 0.6);
+  --bg-faded: hsla(var(--web-header-background-hsl), 0.9);
   --fg: var(--web-header-foreground);
 
   &.is-negative {
-    --bg-faded: hsla(var(--web-header-foreground-hsl), 0.8);
+    --bg-faded: hsla(var(--web-header-foreground-hsl), 0.9);
     --fg: var(--web-header-background);
   }
 
@@ -28,7 +28,7 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  height: 60px;
+  height: 55px;
   z-index: 1;
   background-color: var(--bg-faded);
   backdrop-filter: blur(12px);
@@ -67,10 +67,6 @@
       color: inherit;
       text-decoration: none;
       font-size: 13px;
-
-      @include ml {
-        font-size: 14px;
-      }
     }
   }
 

@@ -18,7 +18,7 @@ export function TypePage({layout, title, members, nav}: TypePageProps) {
 
         <Layout.Scrollable>
           <div style={{flexGrow: 1, minWidth: 0}}>
-            <WebTypo.H1>{title}</WebTypo.H1>
+            <WebTypo.H1 flat>{title}</WebTypo.H1>
             <Declaration members={members} wrap={TypeRow} />
           </div>
         </Layout.Scrollable>
