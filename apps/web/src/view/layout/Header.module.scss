@@ -1,16 +1,46 @@
 @import '@alinea/web/src/style.scss';
 
+.placeholder {
+  position: absolute;
+  background: var(--web-header-background);
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+
+  &.is-negative {
+    --bg: var(--web-header-foreground);
+  }
+}
+
 .root {
-  position: relative;
-  background: var(--web-hero-background);
-  color: var(--web-header-foreground);
+  --bg-faded: hsla(var(--web-header-background-hsl), 0.6);
+  --fg: var(--web-header-foreground);
+
+  &.is-negative {
+    --bg-faded: hsla(var(--web-header-foreground-hsl), 0.8);
+    --fg: var(--web-header-background);
+  }
+
+  position: sticky;
+  top: 0;
+  color: var(--fg);
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: 20px 30px;
+  height: 60px;
+  z-index: 1;
+  background-color: var(--bg-faded);
+  backdrop-filter: blur(12px);
+  flex-shrink: 0;
 
-  @include ml {
-    padding: 20px 45px;
+  &-inner {
+    position: relative;
+    width: 100%;
+    padding: 0 60px;
+    @include s {
+      padding: 0 30px;
+    }
   }
 
   &-top {

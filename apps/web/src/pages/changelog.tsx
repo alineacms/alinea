@@ -4,9 +4,8 @@ import path from 'path'
 import markdownToHtml from '../../lib/markdownToHtml'
 import ChangelogView from '../view/ChangelogView'
 import {Container} from '../view/layout/Container'
-import {headerQuery} from '../view/layout/Header.server'
 import {Layout} from '../view/layout/Layout'
-import {LayoutProps} from '../view/layout/Layout.server'
+import {LayoutProps, layoutQuery} from '../view/layout/Layout.server'
 
 export type ChangelogProps = {
   layout: LayoutProps
@@ -33,13 +32,11 @@ export async function getStaticProps() {
 
   return {
     props: {
-      layout: {
-        meta: {
-          title: 'Changelog',
-          url: '/changelog'
-        },
-        header: (await headerQuery(pages))!
-      },
+      layout: await layoutQuery(pages, {
+        type: '',
+        title: 'Changelog',
+        url: '/changelog'
+      }),
       content
     }
   }

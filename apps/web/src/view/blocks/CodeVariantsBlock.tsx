@@ -45,6 +45,7 @@ export function CodeVariantsProvider({children}: PropsWithChildren<{}>) {
 // Todo: fix accessibility when picking a component framework
 export function CodeVariantsBlock({variants}: CodeVariantsBlockSchema) {
   const [preferences, togglePreference] = useContext(context)!
+  if (!variants) return null
   const names = variants.map(variant => variant.name)
   let selected = names[0]
   for (const name of names) {

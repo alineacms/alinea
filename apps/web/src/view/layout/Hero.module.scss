@@ -14,11 +14,11 @@
 
   &-bg {
     position: absolute;
-    top: 0;
+    top: -60px;
     left: 0;
     right: 0;
     width: 100%;
-    fill: var(--web-hero-background);
+    fill: var(--web-background-variant);
   }
 }
 

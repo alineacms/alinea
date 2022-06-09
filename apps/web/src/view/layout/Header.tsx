@@ -45,58 +45,63 @@ function Links({links, style}: LinksProps) {
   )
 }
 
-export function Header({links}: HeaderProps) {
+export function Header({links, negative}: HeaderProps & {negative: boolean}) {
   const [openMobilemenu, setOpenMobilemenu] = useState<boolean>(false)
 
   return (
-    <header className={styles.root()}>
-      <HStack center gap={36} className={styles.root.top()}>
-        <Link href="/">
-          <a className={styles.root.logo()}>
-            <Logo />
-          </a>
-        </Link>
-        <HStack as="nav" center gap={30} className={styles.root.nav()}>
-          <Links links={links} style={styles.root.nav.link} />
-        </HStack>
-        <Stack.Right>
-          <HStack gap={16} center>
-            <a
-              href="https://github.com/alineacms/alinea"
-              target="_blank"
-              className={styles.root.social()}
-            >
-              <MdiGithub className={styles.root.social.icon()} />
-            </a>
-            <a
-              href="https://twitter.com/alineacms"
-              target="_blank"
-              className={styles.root.social()}
-            >
-              <MdiTwitterCircle className={styles.root.social.icon()} />
-            </a>
-            <button
-              onClick={() => setOpenMobilemenu(!openMobilemenu)}
-              className={styles.root.hamburger()}
-            >
-              {openMobilemenu ? <IcRoundClose /> : <IcRoundHamburger />}
-            </button>
+    <>
+      <div className={styles.placeholder({negative})} />
+      <header className={styles.root({negative})}>
+        <div className={styles.root.inner()}>
+          <HStack center gap={36} className={styles.root.top()}>
+            <Link href="/">
+              <a className={styles.root.logo()}>
+                <Logo />
+              </a>
+            </Link>
+            <HStack as="nav" center gap={30} className={styles.root.nav()}>
+              <Links links={links} style={styles.root.nav.link} />
+            </HStack>
+            <Stack.Right>
+              <HStack gap={16} center>
+                <a
+                  href="https://github.com/alineacms/alinea"
+                  target="_blank"
+                  className={styles.root.social()}
+                >
+                  <MdiGithub className={styles.root.social.icon()} />
+                </a>
+                <a
+                  href="https://twitter.com/alineacms"
+                  target="_blank"
+                  className={styles.root.social()}
+                >
+                  <MdiTwitterCircle className={styles.root.social.icon()} />
+                </a>
+                <button
+                  onClick={() => setOpenMobilemenu(!openMobilemenu)}
+                  className={styles.root.hamburger()}
+                >
+                  {openMobilemenu ? <IcRoundClose /> : <IcRoundHamburger />}
+                </button>
+              </HStack>
+            </Stack.Right>
           </HStack>
-        </Stack.Right>
-      </HStack>
-      <AnimateHeight height={openMobilemenu ? 'auto' : 0} duration={200}>
-        <VStack
-          as="nav"
-          center
-          gap={20}
-          className={styles.mobilemenu()}
-          onClick={(e: MouseEvent<HTMLDivElement>) => {
-            if (e.currentTarget.nodeName === 'A') setOpenMobilemenu(false)
-          }}
-        >
-          <Links links={links} style={styles.mobilemenu.link} />
-        </VStack>
-      </AnimateHeight>
-    </header>
+          <AnimateHeight height={openMobilemenu ? 'auto' : 0} duration={200}>
+            <VStack
+              as="nav"
+              center
+              gap={20}
+              className={styles.mobilemenu()}
+              onClick={(e: MouseEvent<HTMLDivElement>) => {
+                if (e.currentTarget.nodeName === 'A') setOpenMobilemenu(false)
+              }}
+            >
+              <Links links={links} style={styles.mobilemenu.link} />
+            </VStack>
+          </AnimateHeight>
+        </div>
+      </header>
+    </>
   )
 }

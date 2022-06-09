@@ -154,6 +154,7 @@ __metadata:
     "@dnd-kit/core": ^3.1.1
     "@dnd-kit/sortable": ^4.0.0
     "@dnd-kit/utilities": ^2.0.0
+    "@headlessui/react": ^1.6.1
     "@react-hook/size": ^2.1.2
     "@react-hook/window-size": ^3.0.7
     "@types/diff-match-patch": ^1.0.32
