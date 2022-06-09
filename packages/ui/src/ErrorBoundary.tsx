@@ -27,8 +27,6 @@ export function ErrorBoundary({children, dependencies}: ErrorBoundaryProps) {
     }, [location])
   } catch (e) {}
   useEffect(() => {
-    console.log(error)
-    console.log(dependencies)
     if (error) reset()
   }, dependencies || [])
   return (
