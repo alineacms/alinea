@@ -34,7 +34,7 @@ export async function serve(options: ServeOptions) {
     alineaDev = false,
     production = false
   } = options
-  const port = options.port || 4500
+  const port = options.port ? Number(options.port) : 4500
   const outDir = path.join(cwd, '.alinea')
   const storeLocation = path.join(outDir, 'store.js')
   const genConfigFile = path.join(outDir, 'config.js')

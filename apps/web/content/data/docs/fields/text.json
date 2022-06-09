@@ -4,11 +4,6 @@
   "root": "data",
   "index": "a0",
   "title": "Text",
-  "parents": [
-    "docs",
-    "259Ey7LXgqL7ZDGJ8XK1vBJmZrh",
-    "24yE2mu6Xq959jrP135Sdb4e3lG"
-  ],
   "blocks": [
     {
       "id": "267RMxlziMVH9T7XOhaqJGDpS7L",
@@ -18,6 +13,7 @@
         {
           "type": "heading",
           "level": 1,
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
@@ -27,6 +23,7 @@
         },
         {
           "type": "paragraph",
+          "textAlign": "left",
           "content": [
             {
               "type": "text",

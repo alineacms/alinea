@@ -29,7 +29,7 @@ export const HomePageSchema = type(
       links: link.multiple('Links', {
         type: ['entry', 'external'],
         fields: type('Fields', {
-          title: text('Title')
+          label: text('Label')
         })
       })
     }).configure({icon: IcRoundLink})

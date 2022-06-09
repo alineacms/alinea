@@ -31,7 +31,7 @@ function outcomeRunner<Run extends OutcomeRunner>(
   try {
     if (typeof run === 'function') {
       const result = run()
-      if (result instanceof Promise) return outcome(result) as any
+      if (result instanceof Promise) return outcomeRunner(result) as any
       return Outcome.Success(result) as any
     }
     if (run instanceof Promise)

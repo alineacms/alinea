@@ -1,4 +1,10 @@
+@import '../../../style.scss';
+
 .root {
   display: block;
   width: 75px;
+
+  @include s {
+    width: 60px;
+  }
 }

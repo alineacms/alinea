@@ -1,0 +1,84 @@
+{
+  "id": "2AFn42lqIU86a9MI0I4rX3qMJQv",
+  "type": "Doc",
+  "root": "data",
+  "index": "Zx",
+  "title": "Conventions",
+  "blocks": [
+    {
+      "id": "2AFn4vK8HBK4Kc3e9aQ1t6bN26l",
+      "index": "a0",
+      "type": "TextBlock",
+      "text": [
+        {
+          "type": "heading",
+          "textAlign": "left",
+          "level": 1,
+          "content": [
+            {
+              "type": "text",
+              "text": "Conventions"
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "textAlign": "left",
+          "content": [
+            {
+              "type": "text",
+              "text": "Alinea is created using current technology. The cli, dashboard and backends are compatible with recent browsers and Javascript runtimes. A few choices were made that make the code base compatible with today's standards."
+            }
+          ]
+        },
+        {
+          "type": "heading",
+          "textAlign": "left",
+          "level": 2,
+          "content": [
+            {
+              "type": "text",
+              "text": "ESM",
+              "marks": [
+                {
+                  "type": "bold"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "textAlign": "left",
+          "content": [
+            {
+              "type": "text",
+              "text": "All published packages are pure ESM."
+            }
+          ]
+        },
+        {
+          "type": "heading",
+          "textAlign": "left",
+          "level": 2,
+          "content": [
+            {
+              "type": "text",
+              "text": "Conditional exports"
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "textAlign": "left",
+          "content": [
+            {
+              "type": "text",
+              "text": "To cleanly separate server and client code we use conditional exports. These are available natively in Node.js and for the browser using any modern bundler (webpack, rollup, esbuild, ...). "
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,5 +1,11 @@
 import {fromModule, HStack, Typo} from '@alinea/ui'
-import {createContext, PropsWithChildren, useContext, useState} from 'react'
+import {
+  createContext,
+  PropsWithChildren,
+  useContext,
+  useEffect,
+  useState
+} from 'react'
 import css from './CodeVariantsBlock.module.scss'
 import {CodeVariantsBlockSchema} from './CodeVariantsBlock.schema'
 
@@ -13,10 +19,21 @@ type CodeVariantsState = [
 const context = createContext<CodeVariantsState | undefined>(undefined)
 
 export function CodeVariantsProvider({children}: PropsWithChildren<{}>) {
+  const persistenceId = `@alinea/web/variants`
   const [preferences, setPreferences] = useState<Array<string>>([])
   function togglePreference(previous: string, variant: string) {
-    setPreferences(preferences.filter(v => v !== previous).concat(variant))
+    const res = preferences.filter(v => v !== previous).concat(variant)
+    setPreferences(res)
+    try {
+      window.localStorage.setItem(persistenceId, JSON.stringify(res))
+    } catch (e) {}
   }
+  useEffect(() => {
+    try {
+      const stored = window.localStorage.getItem(persistenceId)
+      if (stored) setPreferences(JSON.parse(stored))
+    } catch (e) {}
+  }, [])
   return (
     <context.Provider value={[preferences, togglePreference]}>
       {children}

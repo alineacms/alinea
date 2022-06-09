@@ -2,7 +2,7 @@ import {Cache} from '@alinea/backend/Cache'
 import {IndexedDBData} from '@alinea/backend/data/IndexedDBData'
 import {IndexedDBDrafts} from '@alinea/backend/drafts/IndexedDBDrafts'
 import {Server} from '@alinea/backend/Server'
-import {config} from '@alinea/content/config.js'
+import {config} from '@alinea/content'
 import {accumulate, createConfig, workspace} from '@alinea/core'
 import {Dashboard, FieldsPreview} from '@alinea/dashboard'
 import {useMemo} from 'react'
@@ -39,7 +39,20 @@ function createLocalClient() {
   })
 }
 
+export function createDemo() {
+  const client = createLocalClient()
+  return {
+    config: demoConfig,
+    client: client,
+    session: {
+      user: {sub: 'anonymous'},
+      hub: client,
+      end: async () => {}
+    }
+  }
+}
+
 export default function Demo() {
-  const client = useMemo(createLocalClient, [])
+  const {client, config} = useMemo(createDemo, [])
   return <Dashboard config={demoConfig} client={client} />
 }

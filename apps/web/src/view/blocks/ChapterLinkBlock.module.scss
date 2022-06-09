@@ -1,0 +1,19 @@
+.root {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  font: inherit;
+  border-radius: 12px;
+  padding: 10px 16px;
+  line-height: 1.2;
+  font-size: 14px;
+  box-shadow: 0 1px 0 #ecebeb;
+  border: 1px solid #ecebeb;
+  margin-bottom: 18px;
+  background: white;
+
+  &-title {
+    font-weight: bold;
+    font-size: 15px;
+  }
+}

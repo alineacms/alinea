@@ -8,19 +8,26 @@ import {InputState} from '../InputState'
 import {InputForm} from '../view/InputForm'
 import {FieldState} from './UseField'
 
-export class FormState<V, M> implements InputState<readonly [V, M]> {
+export class FormState<V extends Record<string, any>, M>
+  implements InputState<readonly [V, M]>
+{
   constructor(
     private shape: RecordShape<V>,
     private root: Y.Map<any>,
     private key: string
   ) {}
 
-  child(field: string) {
+  parent() {
+    return undefined
+  }
+
+  child(field: string): InputState<any> {
     const current = this.root.get(this.key)
     return new FieldState(
       this.shape.typeOfChild(current, field),
       current,
-      field
+      field,
+      this
     )
   }
 
@@ -54,7 +61,8 @@ export function useForm<T>(
 ) {
   const {type, initialValue = {}} = options
   const initial: Record<string, any> = initialValue
-  const {input, current} = useMemo(() => {
+  const redraw = useForceUpdate()
+  const {input, current, watch} = useMemo(() => {
     const doc = new Y.Doc()
     const root = doc.getMap(ROOT_KEY)
     for (const [key, field] of type) {
@@ -68,8 +76,13 @@ export function useForm<T>(
       input: memo(input),
       current() {
         return type.shape.fromY(root)
+      },
+      watch() {
+        root.observeDeep(redraw)
+        return () => root.unobserveDeep(redraw)
       }
     }
   }, deps)
-  return [input, current] as const
+  useEffect(watch, deps)
+  return [input, current()] as const
 }

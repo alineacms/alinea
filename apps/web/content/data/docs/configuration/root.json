@@ -4,10 +4,6 @@
   "root": "data",
   "index": "ZwG",
   "title": "Root",
-  "parents": [
-    "docs",
-    "259Ey7LXgqL7ZDGJ8XK1vBJmZrh"
-  ],
   "blocks": [
     {
       "id": "28hceGrb2J5s9SSlpfoYOOgR3KC",
@@ -17,6 +13,7 @@
         {
           "type": "heading",
           "level": 1,
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
@@ -26,10 +23,11 @@
         },
         {
           "type": "paragraph",
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
-              "text": "Roots provide the means to organize content hierarchically in a tree. Pages can have subpages, subpages can have subsubpages, etc. A root is where the hierarchy starts."
+              "text": "Roots provide the means to organize content hierarchically in a tree. Pages can have subpages, subpages can have sub-subpages and so on. The hierarchy starts at a `root`."
             }
           ]
         },
@@ -41,6 +39,7 @@
         {
           "type": "heading",
           "level": 2,
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
@@ -51,6 +50,7 @@
         {
           "type": "heading",
           "level": 3,
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
@@ -60,6 +60,7 @@
         },
         {
           "type": "paragraph",
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
@@ -70,6 +71,7 @@
         {
           "type": "heading",
           "level": 3,
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
@@ -79,6 +81,7 @@
         },
         {
           "type": "paragraph",
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
@@ -94,6 +97,7 @@
         {
           "type": "heading",
           "level": 3,
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
@@ -103,6 +107,7 @@
         },
         {
           "type": "paragraph",
+          "textAlign": "left",
           "content": [
             {
               "type": "text",

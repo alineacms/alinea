@@ -4,11 +4,6 @@
   "root": "data",
   "index": "a2G",
   "title": "Link",
-  "parents": [
-    "docs",
-    "259Ey7LXgqL7ZDGJ8XK1vBJmZrh",
-    "24yE2mu6Xq959jrP135Sdb4e3lG"
-  ],
   "blocks": [
     {
       "id": "268i1KY3QKOP5OE6tyKcIe8OuIL",
@@ -18,6 +13,7 @@
         {
           "type": "heading",
           "level": 1,
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
@@ -27,6 +23,7 @@
         },
         {
           "type": "paragraph",
+          "textAlign": "left",
           "content": [
             {
               "type": "text",

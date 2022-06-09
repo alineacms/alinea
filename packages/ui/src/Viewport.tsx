@@ -1,5 +1,11 @@
 import {parseToHsla} from 'color2k'
-import {PropsWithChildren, useEffect, useLayoutEffect, useState} from 'react'
+import {
+  HTMLProps,
+  PropsWithChildren,
+  useEffect,
+  useLayoutEffect,
+  useState
+} from 'react'
 import Helmet from 'react-helmet'
 import {ColorSchemeProvider} from './hook/UseColorScheme'
 import {useContrastColor} from './hook/UseContrastColor'
@@ -8,14 +14,16 @@ import css from './Viewport.module.scss'
 
 const styles = fromModule(css)
 
-type ViewportProps = PropsWithChildren<{
-  color: string
-  contain?: boolean
-  // Some UI frameworks insist on helping you by rendering components to the
-  // body element directly. To style these we can apply our global styles
-  // to the body instead. Don't use this if you're server side rendering.
-  attachToBody?: boolean
-}>
+type ViewportProps = PropsWithChildren<
+  {
+    color: string
+    contain?: boolean
+    // Some UI frameworks insist on helping you by rendering components to the
+    // body element directly. To style these we can apply our global styles
+    // to the body instead. Don't use this if you're server side rendering.
+    attachToBody?: boolean
+  } & HTMLProps<HTMLDivElement>
+>
 
 const useIsomorphicEffect =
   typeof window !== 'undefined' ? useLayoutEffect : useEffect
@@ -24,7 +32,8 @@ export function Viewport({
   children,
   color,
   contain,
-  attachToBody
+  attachToBody,
+  ...props
 }: ViewportProps) {
   const accentColor = color!
   const accentColorForeground = useContrastColor(accentColor)
@@ -72,7 +81,9 @@ export function Viewport({
       </Helmet>
       <main
         {...mainProps}
-        className={styles.main.mergeProps(mainProps)({contain})}
+        className={styles.main.mergeProps(mainProps).mergeProps(props)({
+          contain
+        })}
       >
         {children}
       </main>

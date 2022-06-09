@@ -1,5 +1,4 @@
-import {createError, isSeparator, slugify} from '@alinea/core'
-import {EntryProperty} from '@alinea/dashboard'
+import {isSeparator, slugify} from '@alinea/core'
 import {InputLabel, InputState, useInput} from '@alinea/editor'
 import {fromModule} from '@alinea/ui'
 import {IcRoundLink} from '@alinea/ui/icons/IcRoundLink'
@@ -15,12 +14,12 @@ export type PathInputProps = {
 }
 
 export function PathInput({state, field}: PathInputProps) {
-  if (!(state instanceof EntryProperty))
-    throw createError('State must be an Entry property')
   const {width, from = 'title', help, optional} = field.options
   const [focus, setFocus] = useState(false)
+  const parentState = state.parent()
+  if (!parentState) throw 'Parent state not found'
   const [source = ''] = useInput<InputState.Scalar<string>>(
-    new EntryProperty(state.location.slice(0, -1).concat(from))
+    parentState.child(from)
   )
   const [value = slugify(source), setValue] =
     useInput<InputState.Scalar<string>>(state)

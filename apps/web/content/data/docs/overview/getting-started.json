@@ -13,6 +13,7 @@
         {
           "type": "heading",
           "level": 1,
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
@@ -22,27 +23,34 @@
         },
         {
           "type": "paragraph",
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
-              "text": "Alinea can be integrated in existing or new projects. There are no specific steps tied to the set up your favorite framework. If you're starting fresh now is a good time to setup your framework in your preferred way."
+              "text": "Alinea can be integrated in existing or new projects. In this setup guide we assume you run the commands below from the directory of your project. In case you want to use a specific web framework you can set it up before starting, but it's not required."
             }
           ]
         },
         {
-          "type": "paragraph"
-        },
-        {
-          "type": "paragraph",
-          "content": [
+          "id": "2AF9aFBkzjV4wUsEa0MAqhybHc8",
+          "type": "NoticeBlock",
+          "level": "info",
+          "body": [
             {
-              "type": "text",
-              "text": "Node.js 14+ is required to run."
+              "type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Alinea runs on Node.js 14+"
+                }
+              ]
             }
           ]
         },
         {
           "type": "heading",
+          "textAlign": "left",
           "level": 2,
           "content": [
             {
@@ -53,6 +61,7 @@
         },
         {
           "type": "paragraph",
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
@@ -81,7 +90,25 @@
           ]
         },
         {
+          "id": "2AFaBbGA2f9JvMFTBXFGlkpPbdI",
+          "type": "NoticeBlock",
+          "level": "info",
+          "body": [
+            {
+              "type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "The alinea dashboard uses react to render. If react is not already included in your project you can install it now."
+                }
+              ]
+            }
+          ]
+        },
+        {
           "type": "heading",
+          "textAlign": "left",
           "level": 2,
           "content": [
             {
@@ -92,6 +119,7 @@
         },
         {
           "type": "paragraph",
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
