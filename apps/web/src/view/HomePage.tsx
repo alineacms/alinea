@@ -59,6 +59,7 @@ export function HomePage({
             src={screenshot.src}
             width={screenshot.width}
             height={screenshot.height}
+            className={styles.root.screenshot.inner()}
           />
         </div>
       )}

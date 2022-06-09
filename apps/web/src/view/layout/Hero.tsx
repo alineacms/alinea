@@ -1,12 +1,14 @@
-import { fromModule, HStack } from '@alinea/ui'
-import { IcRoundArrowForward } from '@alinea/ui/icons/IcRoundArrowForward'
-import Link, { LinkProps } from 'next/link'
-import { PropsWithChildren } from 'react'
-import { Container } from './Container'
+import {fromModule, HStack} from '@alinea/ui'
+import {IcRoundArrowForward} from '@alinea/ui/icons/IcRoundArrowForward'
+import Link, {LinkProps} from 'next/link'
+import {PropsWithChildren} from 'react'
+import {Container} from './Container'
 import css from './Hero.module.scss'
-import { WebTypo } from './WebTypo'
+import {WebTypo} from './WebTypo'
 
 const styles = fromModule(css)
+
+const BG_HEIGHT = 600
 
 export function Hero({children}: PropsWithChildren<{}>) {
   return (
@@ -14,11 +16,11 @@ export function Hero({children}: PropsWithChildren<{}>) {
       <svg
         className={styles.root.bg()}
         width="1440"
-        height="814"
-        viewBox="0 0 1440 814"
+        height={BG_HEIGHT}
+        viewBox={`0 0 1440 ${BG_HEIGHT}`}
         preserveAspectRatio="none"
       >
-        <path d="M0 0H1440V689L0 814V0Z" />
+        <path d={`M0 0H1440V${BG_HEIGHT - 125}L0 ${BG_HEIGHT}V0Z`} />
       </svg>
       <div className={styles.root.inner()}>{children}</div>
     </Container>
