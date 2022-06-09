@@ -1,6 +1,7 @@
 import {fromModule} from '@alinea/ui'
 import Head from 'next/head'
-import {PropsWithChildren} from 'react'
+import {useRouter} from 'next/router'
+import {PropsWithChildren, useEffect, useRef} from 'react'
 import {FavIcon} from './branding/FavIcon'
 import {Header} from './Header'
 import css from './Layout.module.scss'
@@ -41,6 +42,16 @@ export namespace Layout {
   }
 
   export function Scrollable({children}: PropsWithChildren<{}>) {
-    return <div className={styles.scrollable()}>{children}</div>
+    const router = useRouter()
+    const ref = useRef<HTMLDivElement>(null)
+    const path = JSON.stringify(router.query)
+    useEffect(() => {
+      ref.current?.scrollTo(0, 0)
+    }, [path])
+    return (
+      <div ref={ref} className={styles.scrollable()}>
+        {children}
+      </div>
+    )
   }
 }
