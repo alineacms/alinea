@@ -3,8 +3,8 @@
   "type": "Home",
   "root": "data",
   "index": "Zy",
-  "title": "Home",
-  "headline": "Structure\ncontent fast",
+  "title": "Alinea CMS",
+  "headline": "Structure content fast",
   "byline": "Structure, edit and query content with any web framework.\nFully typed and organized in your repository.",
   "action": [
     {
@@ -13,6 +13,14 @@
       "type": "entry",
       "entry": "20580nQzbOBR3Lt4kIdxyRGglc6",
       "label": "Getting started"
+    }
+  ],
+  "screenshot": [
+    {
+      "id": "2AKlt1RVaS9P6a7D0lvIPoHmNPK",
+      "index": "a0",
+      "type": "entry",
+      "entry": "2AKlsMwiF5NvBhkVZXWQVsNBPP6"
     }
   ],
   "blocks": [

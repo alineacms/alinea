@@ -1,16 +1,46 @@
 @import '@alinea/web/src/style.scss';
 
+.placeholder {
+  position: absolute;
+  background: var(--web-header-background);
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+
+  &.is-negative {
+    --bg: var(--web-header-foreground);
+  }
+}
+
 .root {
-  --background: hsl(0, 12%, 98%);
-  position: relative;
-  background: var(--background);
+  --bg-faded: hsla(var(--web-header-background-hsl), 0.6);
+  --fg: var(--web-header-foreground);
+
+  &.is-negative {
+    --bg-faded: hsla(var(--web-header-foreground-hsl), 0.8);
+    --fg: var(--web-header-background);
+  }
+
+  position: sticky;
+  top: 0;
+  color: var(--fg);
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: 20px 30px;
+  height: 60px;
+  z-index: 1;
+  background-color: var(--bg-faded);
+  backdrop-filter: blur(12px);
+  flex-shrink: 0;
 
-  @include ml {
-    padding: 20px 45px;
+  &-inner {
+    position: relative;
+    width: 100%;
+    padding: 0 60px;
+    @include s {
+      padding: 0 30px;
+    }
   }
 
   &-top {
@@ -19,7 +49,6 @@
 
   &-logo {
     display: block;
-    color: var(--website-heading);
     margin-top: -3px;
 
     @include ml {
@@ -28,10 +57,10 @@
   }
 
   &-nav {
-    display: none !important;
+    font-family: var(--web-title-font);
 
-    @include l {
-      display: flex !important;
+    @include sm {
+      display: none !important;
     }
 
     &-link {
@@ -45,22 +74,8 @@
     }
   }
 
-  &-bg {
-    position: absolute;
-    top: 100%;
-    margin-top: -1px;
-    fill: var(--background);
-    left: 0;
-    right: 0;
-    z-index: 1;
-    pointer-events: none;
-    max-height: calc(100vh - 95px);
-    width: 100%;
-  }
-
   &-social {
     display: block;
-    color: var(--website-heading);
 
     &:hover {
       color: black;
@@ -74,7 +89,6 @@
 
   &-hamburger {
     display: block;
-    color: var(--website-heading);
     font-size: 25px;
 
     @include l {
@@ -90,6 +104,7 @@
 .mobilemenu {
   display: block;
   padding-top: 20px;
+  font-family: var(--web-title-font);
 
   @include l {
     display: none !important;

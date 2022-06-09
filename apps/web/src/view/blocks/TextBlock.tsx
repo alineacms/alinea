@@ -1,5 +1,5 @@
 import {fromModule} from '@alinea/ui'
-import {RichText} from '../layout/RichText'
+import {WebText} from '../layout/WebText'
 import {ChapterLinkBlock} from './ChapterLinkBlock'
 import {CodeBlock} from './CodeBlock'
 import {CodeVariantsBlock} from './CodeVariantsBlock'
@@ -13,15 +13,13 @@ const styles = fromModule(css)
 export function TextBlock({text}: TextBlockSchema) {
   return (
     <div className={styles.root()}>
-      <RichText
+      <WebText
         doc={text}
-        view={{
-          CodeBlock,
-          CodeVariantsBlock,
-          ImageBlock,
-          NoticeBlock,
-          ChapterLinkBlock
-        }}
+        CodeBlock={CodeBlock}
+        CodeVariantsBlock={CodeVariantsBlock}
+        ImageBlock={ImageBlock}
+        NoticeBlock={NoticeBlock}
+        ChapterLinkBlock={ChapterLinkBlock}
       />
     </div>
   )

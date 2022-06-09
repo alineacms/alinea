@@ -27,3 +27,22 @@
     @content;
   }
 }
+
+@mixin scrollbar {
+  &::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: hsla(var(--web-negative-hsl), 0.2);
+  }
+  &::-webkit-scrollbar-thumb:hover {
+    background: hsla(var(--web-negative-hsl), 0.4);
+  }
+  &::-webkit-scrollbar-thumb:active {
+    background: hsla(var(--web-negative-hsl), 0.9);
+  }
+}

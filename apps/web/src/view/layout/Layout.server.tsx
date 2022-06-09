@@ -5,7 +5,10 @@ import {headerQuery} from './Header.server'
 type PageDetails = {
   title: string
   url: string
+  type: string
 }
+
+const fullLayout = new Set(['API', 'Doc'])
 
 export async function layoutQuery(pages: content.Pages, page: PageDetails) {
   return {
@@ -13,6 +16,7 @@ export async function layoutQuery(pages: content.Pages, page: PageDetails) {
       title: page.title,
       url: page.url
     },
+    is: {home: page.type === 'Home', full: fullLayout.has(page.type)},
     header: (await headerQuery(pages))!
   }
 }

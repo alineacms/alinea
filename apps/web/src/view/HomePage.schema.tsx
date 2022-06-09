@@ -23,6 +23,7 @@ export const HomePageSchema = type(
           label: text('Button label')
         })
       }),
+      screenshot: link.image('Screenshot'),
       blocks: BlocksSchema
     }).configure({icon: IcRoundInsertDriveFile}),
     tab('Top navigation', {

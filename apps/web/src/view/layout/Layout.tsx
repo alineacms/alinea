@@ -11,6 +11,7 @@ const styles = fromModule(css)
 export function Layout({
   meta,
   children,
+  is,
   header
 }: PropsWithChildren<LayoutProps>) {
   return (
@@ -18,15 +19,15 @@ export function Layout({
       <FavIcon color="#4a63e7" />
       <Head>
         <title>{meta.title}</title>
+        <style>
+          {`
+            @media (max-width: 440px) {html {font-size: calc(4.4444vw + .00012px)}}
+            @media (min-width: 1024px) {html {font-size: calc(0.25vw + 0.85rem)}}
+          `}
+        </style>
       </Head>
-      <style>
-        {`
-          @media (max-width: 440px) {html {font-size: calc(4.4444vw + .00012px)}}
-          @media (min-width: 1024px) {html {font-size: calc(0.25vw + 0.85rem)}}
-        `}
-      </style>
-      <div className={styles.root()}>
-        <Header {...header} />
+      <div className={styles.root(is)}>
+        <Header negative={is.home} {...header} />
         <div className={styles.root.content()}>{children}</div>
         {/*<Footer />*/}
       </div>
@@ -37,5 +38,9 @@ export function Layout({
 export namespace Layout {
   export function Content({children}: PropsWithChildren<{}>) {
     return <div className={styles.content()}>{children}</div>
+  }
+
+  export function Scrollable({children}: PropsWithChildren<{}>) {
+    return <div className={styles.scrollable()}>{children}</div>
   }
 }

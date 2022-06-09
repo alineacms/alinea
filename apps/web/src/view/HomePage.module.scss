@@ -7,4 +7,20 @@
 
 .hero {
   position: relative;
+
+  &-demo {
+    font-family: var(--web-title-font);
+    font-size: 14px;
+  }
+
+  &-screenshot {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 0 20px;
+
+    &-inner {
+      border-radius: 10px;
+      overflow: hidden;
+    }
+  }
 }

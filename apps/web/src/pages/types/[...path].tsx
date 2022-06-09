@@ -19,7 +19,11 @@ export async function getStaticProps(context: GetStaticPropsContext) {
   const selected = slug?.join('/')!
   const title = packageName(selected)
   const props = {
-    layout: await layoutQuery(pages, {title: `API - ${title}`, url: '/types'}),
+    layout: await layoutQuery(pages, {
+      type: 'API',
+      title: `API - ${title}`,
+      url: '/types'
+    }),
     selected,
     title,
     members: membersOf(selected),
