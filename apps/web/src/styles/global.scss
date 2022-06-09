@@ -1,0 +1,98 @@
+@mixin light-theme {
+  --web-background: white;
+  --web-hero-background: #f9fafe;
+  --web-foreground-faded: #667587;
+  --web-header-foreground: #141b43;
+}
+
+@mixin dark-theme {
+  // todo
+  @include light-theme;
+}
+
+:root {
+  --web-title-font: 'Poppins', sans-serif;
+  @include dark-theme;
+
+  @media (prefers-color-scheme: light) {
+    @include light-theme;
+  }
+}
+
+a {
+  color: inherit;
+  font: inherit;
+  text-decoration: none;
+}
+
+@font-face {
+  font-family: 'Poppins';
+  font-style: normal;
+  font-display: block;
+  font-weight: 100;
+  src: url('./fonts/poppins-v20-latin-100.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Poppins';
+  font-style: normal;
+  font-display: block;
+  font-weight: 200;
+  src: url('./fonts/poppins-v20-latin-200.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Poppins';
+  font-style: normal;
+  font-display: block;
+  font-weight: 300;
+  src: url('./fonts/poppins-v20-latin-300.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Poppins';
+  font-style: normal;
+  font-display: block;
+  font-weight: 400;
+  src: url('./fonts/poppins-v20-latin-regular.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Poppins';
+  font-style: normal;
+  font-display: block;
+  font-weight: 500;
+  src: url('./fonts/poppins-v20-latin-500.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Poppins';
+  font-style: normal;
+  font-display: block;
+  font-weight: 600;
+  src: url('./fonts/poppins-v20-latin-600.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Poppins';
+  font-style: normal;
+  font-display: block;
+  font-weight: 700;
+  src: url('./fonts/poppins-v20-latin-700.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Poppins';
+  font-style: normal;
+  font-display: block;
+  font-weight: 800;
+  src: url('./fonts/poppins-v20-latin-800.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Poppins';
+  font-style: normal;
+  font-display: block;
+  font-weight: 900;
+  src: url('./fonts/poppins-v20-latin-900.woff2') format('woff2');
+}

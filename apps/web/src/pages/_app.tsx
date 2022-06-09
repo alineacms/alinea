@@ -1,6 +1,6 @@
 import '@alinea/css'
+import '@alinea/web/src/styles/global.scss'
 import type {AppProps} from 'next/app'
-import '../../src/global.scss'
 import type {PageViewProps} from '../view/PageView.server'
 
 export function App({Component, pageProps}: AppProps<PageViewProps>) {
