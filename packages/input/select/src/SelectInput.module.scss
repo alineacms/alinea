@@ -33,14 +33,19 @@
       margin-right: 16px;
 
       &.is-placeholder {
-        color: #9fa6b2;
+        color: hsla(var(--alinea-negative), 0.25);
       }
     }
 
     &-icon {
       flex: 0 0 auto;
-      color: #9fa6b2;
+      color: hsla(var(--alinea-negative), 0.25);
       font-size: 18px;
+    }
+
+    &-delete {
+      flex: 0 0 auto;
+      margin-left: 8px;
     }
   }
 

@@ -1,8 +1,9 @@
 import {Label} from '@alinea/core'
 import {InputLabel, InputState, useInput} from '@alinea/editor'
-import {fromModule, HStack, Icon, TextLabel} from '@alinea/ui'
+import {fromModule, HStack, Icon, IconButton, TextLabel} from '@alinea/ui'
 import {IcRoundArrowDropDownCircle} from '@alinea/ui/icons/IcRoundArrowDropDownCircle'
 import {IcRoundCheck} from '@alinea/ui/icons/IcRoundCheck'
+import IcRoundClose from '@alinea/ui/icons/IcRoundClose'
 import {IcRoundUnfoldMore} from '@alinea/ui/icons/IcRoundUnfoldMore'
 import {
   autoUpdate,
@@ -64,7 +65,9 @@ export function SelectInput<T extends string>({
                 ref={reference}
                 className={styles.root.input({open})}
               >
-                <span className={styles.root.input.label()}>
+                <span
+                  className={styles.root.input.label({placeholder: !value})}
+                >
                   <TextLabel
                     label={value ? items[value] : placeholder || field.label}
                   />
@@ -73,6 +76,13 @@ export function SelectInput<T extends string>({
                   icon={IcRoundUnfoldMore}
                   className={styles.root.input.icon()}
                 />
+                {value && optional && (
+                  <IconButton
+                    icon={IcRoundClose}
+                    onClick={() => setValue(undefined!)}
+                    className={styles.root.input.delete()}
+                  />
+                )}
               </Listbox.Button>
               <Listbox.Options
                 ref={floating}
