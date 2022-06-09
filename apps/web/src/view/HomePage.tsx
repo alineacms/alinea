@@ -1,10 +1,10 @@
 import {fromModule, HStack, px, VStack} from '@alinea/ui'
 import {IcRoundOpenInNew} from '@alinea/ui/icons/IcRoundOpenInNew'
-import Image from 'next/image'
 import {Blocks} from './blocks/Blocks'
 import css from './HomePage.module.scss'
 import {HomePageSchema} from './HomePage.schema'
 import {Hero} from './layout/Hero'
+import {Image} from './layout/Image'
 import {WebTypo} from './layout/WebTypo'
 
 const styles = fromModule(css)
@@ -86,6 +86,7 @@ function HomePageHero({
             src={screenshot.src}
             width={screenshot.width}
             height={screenshot.height}
+            sizes="700px"
             className={styles.hero.screenshot.inner()}
           />
         </div>
