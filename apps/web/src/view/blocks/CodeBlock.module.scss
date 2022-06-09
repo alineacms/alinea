@@ -2,6 +2,8 @@
   margin: 20px 0 28px 0;
   background: var(--web-code-background);
   color: var(--web-code-foreground);
+  box-shadow: 0 1px 0 var(--web-outline);
+  border: 1px solid var(--web-outline);
   border-radius: 10px;
   overflow: hidden;
 

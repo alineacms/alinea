@@ -7,29 +7,29 @@
   left: 0;
   right: 0;
   height: 55px;
+  z-index: 1;
 
   &.is-negative {
-    --bg: var(--web-header-foreground);
+    background: var(--web-header-foreground);
   }
 }
 
 .root {
   --bg-faded: hsla(var(--web-header-background-hsl), 0.9);
+  --bg: var(--web-header-background);
   --fg: var(--web-header-foreground);
 
   &.is-negative {
     --bg-faded: hsla(var(--web-header-foreground-hsl), 0.9);
+    --bg: var(--web-header-foreground);
     --fg: var(--web-header-background);
   }
 
   position: sticky;
   top: 0;
   color: var(--fg);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
   height: 55px;
-  z-index: 1;
+  z-index: 2;
   background-color: var(--bg-faded);
   backdrop-filter: blur(12px);
   flex-shrink: 0;
@@ -37,6 +37,10 @@
   &-inner {
     position: relative;
     width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
     padding: 0 60px;
     @include s {
       padding: 0 30px;
@@ -57,16 +61,32 @@
   }
 
   &-nav {
-    font-family: var(--web-title-font);
+    height: 100%;
 
     @include sm {
       display: none !important;
     }
 
     &-link {
+      height: 100%;
       color: inherit;
       text-decoration: none;
-      font-size: 13px;
+      font-size: 14px;
+      font-weight: 500;
+      border-bottom: 3px solid transparent;
+      padding-top: 3px;
+      display: flex;
+      align-items: center;
+      padding: 3px 20px 0 20px;
+      opacity: 0.8;
+
+      &.is-active {
+        opacity: 1;
+      }
+
+      &:hover {
+        opacity: 1;
+      }
     }
   }
 

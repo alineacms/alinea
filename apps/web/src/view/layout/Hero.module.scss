@@ -40,8 +40,8 @@
   font-family: var(--web-title-font);
   display: inline-block;
   text-decoration: none;
-  background: #4a63e7;
-  color: white;
+  background: var(--web-accent);
+  color: var(--web-accent-foreground);
   padding: 10px 16px;
   border-radius: 25px;
   font-size: 14px;

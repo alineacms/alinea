@@ -23,7 +23,6 @@ export function Layout({
         <style>
           {`
             @media (max-width: 440px) {html {font-size: calc(4.4444vw + .00012px)}}
-            @media (min-width: 1024px) {html {font-size: calc(0.25vw + 0.85rem)}}
           `}
         </style>
       </Head>

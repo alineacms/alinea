@@ -4,6 +4,8 @@
   color: var(--web-code-foreground);
   border-radius: 10px;
   overflow: hidden;
+  box-shadow: 0 1px 0 var(--web-outline);
+  border: 1px solid var(--web-outline);
 
   &-trigger {
     appearance: none;

@@ -3,14 +3,12 @@
 .root {
   display: flex;
   flex-direction: column;
-  background: white;
-  min-height: 100vh;
   font-family: Inter, sans-serif;
   font-size: 15px;
   line-height: 1.4;
-  color: #141b43;
+  color: var(--web-foreground);
   background: var(--web-background);
-  min-height: 0;
+  min-height: 100vh;
 
   &-content {
     position: relative;
