@@ -1,3 +1,5 @@
+@import './WebTypo.module.scss';
+
 .code {
   display: inline-block;
   vertical-align: middle;
@@ -8,8 +10,6 @@
   font-size: 0.9em;
   font-weight: normal;
 }
-
-@import '../../../../../packages/ui/src/Typo.module.scss';
 
 h1.heading {
   @extend .h1;
