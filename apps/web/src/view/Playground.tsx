@@ -6,6 +6,7 @@ import {
   ErrorBoundary,
   fromModule,
   HStack,
+  Loader,
   Pane,
   px,
   Stack,
@@ -14,18 +15,23 @@ import {
   Viewport,
   VStack
 } from '@alinea/ui'
+import {IcOutlineScreenshot} from '@alinea/ui/icons/IcOutlineScreenshot'
 import {IcRoundClose} from '@alinea/ui/icons/IcRoundClose'
+import {IcRoundCode} from '@alinea/ui/icons/IcRoundCode'
 import {IcRoundShare} from '@alinea/ui/icons/IcRoundShare'
 import {Main} from '@alinea/ui/Main'
 import Editor, {Monaco} from '@monaco-editor/react'
 import * as alinea from 'alinea'
 import esbuild, {BuildFailure, Message, Plugin} from 'esbuild-wasm'
+import esbuildPkg from 'esbuild-wasm/package.json'
 import Head from 'next/head'
+import Link from 'next/link'
 import * as React from 'react'
 import {useEffect, useMemo, useRef, useState} from 'react'
 import {QueryClient, QueryClientProvider} from 'react-query'
 import {useClipboard} from 'use-clipboard-copy'
 import {createDemo} from './Demo'
+import {Logo} from './layout/branding/Logo'
 import css from './Playground.module.scss'
 
 const styles = fromModule(css)
@@ -40,10 +46,6 @@ export default type('Type', {
   title: text('Title', {width: 0.5}),
   path: path('Path', {width: 0.5})
 })`
-
-const init = esbuild.initialize({
-  wasmURL: 'https://esm.sh/esbuild-wasm@0.14.43/esbuild.wasm'
-})
 
 const global: any = window
 global['alinea'] = alinea
@@ -76,15 +78,13 @@ function PreviewType({type}: PreviewTypeProps) {
   const [Form, data] = useForm({type, initialValue: state.current}, [type])
   state.current = data
   return (
-    <Main>
-      <Main.Container>
-        <Typo.H1>
-          <TextLabel label={type.label} />
-        </Typo.H1>
+    <>
+      <Typo.H1>
+        <TextLabel label={type.label} />
+      </Typo.H1>
 
-        <Form />
-      </Main.Container>
-    </Main>
+      <Form />
+    </>
   )
 }
 
@@ -110,6 +110,18 @@ const queryClient = new QueryClient({defaultOptions: {queries: {retry: false}}})
 
 export default function Playground() {
   const persistenceId = '@alinea/web/playground'
+  const init = useMemo(async () => {
+    // This fails during development when we hot reload
+    return outcome(() =>
+      esbuild.initialize({
+        wasmURL: `https://cdn.jsdelivr.net/npm/esbuild-wasm@${esbuildPkg.version}/esbuild.wasm`
+      })
+    )
+  }, [])
+  const [previewing, setPreviewing] = useState(true)
+  function togglePreview() {
+    setPreviewing(!previewing)
+  }
   const {client, config, session} = useMemo(createDemo, [])
   const [code, storeCode] = useState(() => {
     const [fromUrl] = outcome(() =>
@@ -144,6 +156,8 @@ export default function Playground() {
     )
   }
   async function compile(code: string) {
+    // Todo: we could use the monaco typescript worker to compile code and
+    // save 2-3MB but we'd have to figure out how to rewrite the imports
     const result = await esbuild
       .build({
         platform: 'browser',
@@ -184,7 +198,12 @@ export default function Playground() {
       <Head>
         <style>{`#__next {height: 100%}`}</style>
       </Head>
-      <Viewport attachToBody color="#5661E5" contain>
+      <Viewport
+        attachToBody
+        color="#5661E5"
+        contain
+        className={styles.root({previewing})}
+      >
         <DashboardProvider value={{client, config}}>
           <SessionProvider value={session}>
             <QueryClientProvider client={queryClient}>
@@ -196,77 +215,111 @@ export default function Playground() {
                     </p>
                   </div>
                 )}
-                <HStack style={{height: '100%'}}>
-                  <Pane
-                    id="editor"
-                    resizable="right"
-                    defaultWidth={window.innerWidth * 0.5}
-                    maxWidth={window.innerWidth * 0.8}
+                <VStack style={{height: '100%'}}>
+                  <AppBar.Root
+                    style={{
+                      borderBottom: `1px solid var(--alinea-outline)`
+                    }}
                   >
-                    <Editor
-                      height="100%"
-                      path="alinea.config.tsx"
-                      defaultLanguage="typescript"
-                      value={code}
-                      beforeMount={editorConfig}
-                      onChange={value => {
-                        if (value) setCode(value)
-                      }}
-                    />
-                  </Pane>
-                  <div style={{flex: '1 0 0'}}>
-                    <VStack style={{height: '100%'}}>
-                      <HStack>
-                        <div style={{paddingLeft: px(18)}}>
-                          <Toolbar.Portal />
+                    <div className={styles.root.logo()}>
+                      <Link href="/">
+                        <a>
+                          <Logo />
+                        </a>
+                      </Link>
+                    </div>
+
+                    <Stack.Center style={{paddingLeft: px(18)}}>
+                      <Toolbar.Portal />
+                    </Stack.Center>
+                    <AppBar.Item
+                      as="button"
+                      icon={IcRoundClose}
+                      onClick={handleReset}
+                    >
+                      Reset
+                    </AppBar.Item>
+                    <AppBar.Item
+                      as="button"
+                      icon={IcRoundShare}
+                      onClick={handleShare}
+                    >
+                      Share
+                    </AppBar.Item>
+                    <div className={styles.root.mobileMenu()}>
+                      <AppBar.Item
+                        as="button"
+                        icon={previewing ? IcRoundCode : IcOutlineScreenshot}
+                        onClick={togglePreview}
+                      >
+                        <div style={{width: px(50)}}>
+                          {previewing ? 'Source' : 'Preview'}
                         </div>
-                        <Stack.Right>
-                          <AppBar.Item
-                            as="button"
-                            icon={IcRoundClose}
-                            onClick={handleReset}
-                          >
-                            Reset
-                          </AppBar.Item>
-                        </Stack.Right>
-                        <AppBar.Item
-                          as="button"
-                          icon={IcRoundShare}
-                          onClick={handleShare}
-                        >
-                          Share
-                        </AppBar.Item>
-                      </HStack>
-                      <ErrorBoundary dependencies={[type]}>
-                        {type && <PreviewType type={type} />}
-                      </ErrorBoundary>
-                      {errors.length > 0 && (
-                        <div className={styles.root.errors()}>
-                          <VStack gap={20}>
-                            {errors.map(error => {
-                              return (
-                                <Typo.Monospace as="div">
-                                  <p>{error.text}</p>
-                                  {error.location && (
-                                    <div style={{paddingLeft: px(10)}}>
-                                      <>
-                                        <b>
-                                          [{error.location.file}:{' '}
-                                          {error.location.line}]
-                                        </b>
-                                        <div>{error.location.lineText}</div>
-                                      </>
-                                    </div>
-                                  )}
-                                </Typo.Monospace>
-                              )
-                            })}
-                          </VStack>
-                        </div>
-                      )}
-                    </VStack>
-                  </div>
-                </HStack>
+                      </AppBar.Item>
+                    </div>
+                  </AppBar.Root>
+                  <HStack style={{height: '100%', minHeight: 0}}>
+                    <Pane
+                      id="editor"
+                      resizable="right"
+                      defaultWidth={window.innerWidth * 0.5}
+                      maxWidth={window.innerWidth * 0.8}
+                      className={styles.root.editor()}
+                    >
+                      <Editor
+                        height="100%"
+                        theme="vs-dark"
+                        path="alinea.config.tsx"
+                        defaultLanguage="typescript"
+                        value={code}
+                        beforeMount={editorConfig}
+                        onChange={value => {
+                          if (value) setCode(value)
+                        }}
+                        loading={<Loader absolute />}
+                      />
+                    </Pane>
+                    <div style={{flex: '1 0 0'}}>
+                      <VStack style={{height: '100%'}}>
+                        <ErrorBoundary dependencies={[type]}>
+                          <Main>
+                            <Main.Container>
+                              {type ? (
+                                <PreviewType type={type} />
+                              ) : (
+                                errors.length === 0 && <Loader absolute />
+                              )}
+                            </Main.Container>
+                          </Main>
+                        </ErrorBoundary>
+                        {errors.length > 0 && (
+                          <div className={styles.root.errors()}>
+                            <VStack gap={20}>
+                              {errors.map(error => {
+                                return (
+                                  <Typo.Monospace as="div">
+                                    <p>{error.text}</p>
+                                    {error.location && (
+                                      <div style={{paddingLeft: px(10)}}>
+                                        <>
+                                          <b>
+                                            [{error.location.file}:{' '}
+                                            {error.location.line}]
+                                          </b>
+                                          <div>{error.location.lineText}</div>
+                                        </>
+                                      </div>
+                                    )}
+                                  </Typo.Monospace>
+                                )
+                              })}
+                            </VStack>
+                          </div>
+                        )}
+                      </VStack>
+                    </div>
+                  </HStack>
+                </VStack>
               </Toolbar.Provider>
             </QueryClientProvider>
           </SessionProvider>

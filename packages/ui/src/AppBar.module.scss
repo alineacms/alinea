@@ -1,3 +1,5 @@
+@import '@alinea/ui/style.scss';
+
 .root {
   position: sticky;
   top: 0;
@@ -6,8 +8,11 @@
   align-items: center;
   background-color: hsla(var(--alinea-positive), 0.6);
   backdrop-filter: blur(12px);
-  overflow-x: auto;
   flex-shrink: 0;
+
+  @include s {
+    overflow-x: auto;
+  }
 }
 
 .item {

@@ -1,4 +1,22 @@
+@import '../style.scss';
+
 .root {
+  &.is-previewing &-editor {
+    @include sm {
+      display: none;
+    }
+  }
+
+  &-logo {
+    padding-left: 20px;
+  }
+
+  &-mobileMenu {
+    @include l {
+      display: none;
+    }
+  }
+
   &-flash {
     position: fixed;
     display: flex;
@@ -24,8 +42,9 @@
     overflow: auto;
     flex-shrink: 0;
     margin-top: auto;
-    background: white;
-    border-top: 1px solid #dddde9;
+    background: var(--alinea-background);
+    border-top: 1px solid var(--alinea-outline);
     line-height: 1.6;
+    color: var(--alinea-foreground);
   }
 }
