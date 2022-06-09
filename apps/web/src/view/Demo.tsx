@@ -39,7 +39,20 @@ function createLocalClient() {
   })
 }
 
+export function createDemo() {
+  const client = createLocalClient()
+  return {
+    config: demoConfig,
+    client: client,
+    session: {
+      user: {sub: 'anonymous'},
+      hub: client,
+      end: async () => {}
+    }
+  }
+}
+
 export default function Demo() {
-  const client = useMemo(createLocalClient, [])
+  const {client, config} = useMemo(createDemo, [])
   return <Dashboard config={demoConfig} client={client} />
 }

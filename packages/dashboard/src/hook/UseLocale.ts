@@ -1,14 +1,14 @@
+import {outcome} from '@alinea/core'
 import {useMemo} from 'react'
-import {useLocation, useMatch} from 'react-router'
+import {useMatch} from 'react-router'
 import {dashboardNav} from '../DashboardNav'
 import {parseRootPath, useRoot} from './UseRoot'
 
 const nav = dashboardNav({})
 
 export function useLocale(): string | undefined {
-  const location = useLocation()
   const root = useRoot()
-  const match = useMatch(nav.matchRoot)
+  const [match] = outcome(() => useMatch(nav.matchRoot))
   return useMemo(() => {
     const {i18n} = root
     if (!i18n) return
@@ -19,5 +19,5 @@ export function useLocale(): string | undefined {
       if (fromUrl && i18n.locales.includes(fromUrl)) return fromUrl
     }
     return root.defaultLocale
-  }, [root, location.pathname])
+  }, [root, match])
 }

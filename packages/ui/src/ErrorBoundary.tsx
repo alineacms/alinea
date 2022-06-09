@@ -13,13 +13,24 @@ import {fromModule} from './util/Styler'
 
 const styles = fromModule(css)
 
-export function ErrorBoundary({children}: PropsWithChildren<{}>) {
+type ErrorBoundaryProps = PropsWithChildren<{
+  dependencies?: ReadonlyArray<any>
+}>
+
+export function ErrorBoundary({children, dependencies}: ErrorBoundaryProps) {
   const {ErrorBoundary, didCatch, error, reset} = useErrorBoundary()
-  const location = useLocation()
+  try {
+    const location = useLocation()
+    useEffect(() => {
+      // Let's retry once we navigate elsewhere
+      if (error) reset()
+    }, [location])
+  } catch (e) {}
   useEffect(() => {
-    // Let's retry once we navigate elsewhere
+    console.log(error)
+    console.log(dependencies)
     if (error) reset()
-  }, [location])
+  }, dependencies || [])
   return (
     <>
       {didCatch ? (
