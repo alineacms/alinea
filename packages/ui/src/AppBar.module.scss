@@ -26,6 +26,7 @@
 
   &.is-interactive {
     cursor: pointer;
+    &:focus,
     &:hover {
       background: var(--alinea-highlight);
     }
