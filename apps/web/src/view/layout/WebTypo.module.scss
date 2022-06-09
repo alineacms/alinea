@@ -1,0 +1,100 @@
+.hyphenate {
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-all;
+  word-break: break-word;
+  hyphens: auto;
+}
+
+.h1 {
+  font-family: var(--web-title-font);
+  min-width: 0;
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.25;
+  margin-bottom: 20px;
+  white-space: pre-line;
+  text-rendering: optimizeLegibility;
+  @extend .hyphenate;
+  &.is-flat {
+    margin-bottom: 0;
+  }
+}
+
+.h2 {
+  font-family: var(--web-title-font);
+  min-width: 0;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.33;
+  margin-bottom: 9px;
+  white-space: pre-line;
+  text-rendering: optimizeLegibility;
+  @extend .hyphenate;
+  &.is-flat {
+    margin-bottom: 0;
+  }
+}
+
+.h3 {
+  font-family: var(--web-title-font);
+  min-width: 0;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.2;
+  margin-bottom: 5px;
+  white-space: pre-line;
+  text-rendering: optimizeLegibility;
+  @extend .hyphenate;
+  &.is-flat {
+    margin-bottom: 0;
+  }
+}
+
+.h4 {
+  font-family: var(--web-title-font);
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 4px;
+  white-space: pre-line;
+  text-rendering: optimizeLegibility;
+  @extend .hyphenate;
+  &.is-flat {
+    margin-bottom: 0;
+  }
+}
+
+.p {
+  font-size: 14px;
+  line-height: 1.6;
+  margin-bottom: 14px;
+  max-width: 50ch;
+  text-rendering: optimizeLegibility;
+  white-space: pre-line;
+  @extend .hyphenate;
+  &.is-flat,
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.link {
+  text-decoration: underline;
+  text-underline-offset: 0.3em;
+  @extend .hyphenate;
+  cursor: pointer;
+  color: inherit;
+}
+
+.monospace {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.9em;
+  white-space: nowrap;
+  font-feature-settings: 'tnum' 1;
+  white-space: pre;
+}
+
+.small {
+  font-size: 0.8em;
+}
