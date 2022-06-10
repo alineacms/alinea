@@ -1,8 +1,9 @@
 import {fromModule} from '@alinea/ui'
 import Head from 'next/head'
 import {useRouter} from 'next/router'
-import {PropsWithChildren, useEffect, useRef} from 'react'
+import {HTMLAttributes, PropsWithChildren, useEffect, useRef} from 'react'
 import {FavIcon} from './branding/FavIcon'
+import {Footer} from './Footer'
 import {Header} from './Header'
 import css from './Layout.module.scss'
 import {LayoutProps} from './Layout.server'
@@ -13,7 +14,8 @@ export function Layout({
   meta,
   children,
   is,
-  header
+  header,
+  footer
 }: PropsWithChildren<LayoutProps>) {
   return (
     <>
@@ -27,9 +29,9 @@ export function Layout({
         </style>
       </Head>
       <div className={styles.root(is)}>
-        <Header negative={is.home} {...header} />
+        <Header transparent={is.home} {...header} />
         <div className={styles.root.content()}>{children}</div>
-        {/*<Footer />*/}
+        <Footer footer={footer} />
       </div>
     </>
   )
@@ -52,5 +54,11 @@ export namespace Layout {
         <div className={styles.scrollable.inner()}>{children}</div>
       </div>
     )
+  }
+
+  export function Container(
+    props: PropsWithChildren<HTMLAttributes<HTMLDivElement>>
+  ) {
+    return <div {...props} className={styles.container.mergeProps(props)()} />
   }
 }

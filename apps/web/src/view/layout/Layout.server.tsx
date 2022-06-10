@@ -1,6 +1,5 @@
 import {content} from '@alinea/content/web'
 import {Store} from '@alinea/store'
-import {headerQuery} from './Header.server'
 
 type PageDetails = {
   title: string
@@ -11,13 +10,19 @@ type PageDetails = {
 const fullLayout = new Set(['API', 'Doc'])
 
 export async function layoutQuery(pages: content.Pages, page: PageDetails) {
+  const data = await pages.fetchType(content.Home).select(home => ({
+    header: {
+      links: home.links
+    },
+    footer: home.footer
+  }))
   return {
     meta: {
       title: page.title,
       url: page.url
     },
     is: {home: page.type === 'Home', full: fullLayout.has(page.type)},
-    header: (await headerQuery(pages))!
+    ...data
   }
 }
 

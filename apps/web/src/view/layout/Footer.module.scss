@@ -2,15 +2,15 @@
 
 .root {
   position: relative;
-  padding: 30px 45px;
+  padding: 80px 0;
+  background: var(--web-background-variant);
 
-  @include ml {
-    padding: 40px 45px;
-  }
-
-  &-link {
-    font-size: 13px;
-    text-underline-offset: 0.3em;
-    color: inherit;
+  &-bg {
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    right: 0;
+    width: 100%;
+    fill: var(--web-background-variant);
   }
 }

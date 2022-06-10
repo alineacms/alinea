@@ -1,38 +1,25 @@
 @import '@alinea/web/src/style.scss';
 
-.placeholder {
-  position: absolute;
-  background: var(--web-header-background);
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 55px;
-  z-index: 1;
-
-  &.is-negative {
-    background: var(--web-header-foreground);
-  }
-}
-
 .root {
   --bg-faded: hsla(var(--web-header-background-hsl), 0.9);
   --bg: var(--web-header-background);
-  --fg: var(--web-header-foreground);
-
-  &.is-negative {
-    --bg-faded: hsla(var(--web-header-foreground-hsl), 0.9);
-    --bg: var(--web-header-foreground);
-    --fg: var(--web-header-background);
-  }
 
   position: sticky;
   top: 0;
-  color: var(--fg);
-  height: 55px;
+  color: var(--web-foreground-faded);
+  height: var(--web-header-height);
   z-index: 2;
   background-color: var(--bg-faded);
   backdrop-filter: blur(12px);
   flex-shrink: 0;
+  // box-shadow: 0 2px 4px rgb(0 0 0 / 2%), inset 0 -1px 0 rgb(0 0 0 / 6%);
+  border-bottom: 1px solid hsla(var(--web-negative-hsl), 0.09);
+
+  &.is-transparent {
+    background-color: hsla(var(--web-background-variant-hsl), 0.9);
+    box-shadow: none;
+    border-bottom: none;
+  }
 
   &-inner {
     position: relative;
@@ -41,10 +28,6 @@
     display: flex;
     flex-direction: column;
     justify-content: center;
-    padding: 0 60px;
-    @include s {
-      padding: 0 30px;
-    }
   }
 
   &-top {
@@ -57,6 +40,10 @@
 
     @include ml {
       margin-top: -2px;
+    }
+
+    &:hover {
+      color: var(--web-foreground);
     }
   }
 
@@ -78,14 +65,14 @@
       display: flex;
       align-items: center;
       padding: 3px 20px 0 20px;
-      opacity: 0.8;
-
-      &.is-active {
-        opacity: 1;
-      }
 
       &:hover {
-        opacity: 1;
+        color: var(--web-foreground);
+      }
+
+      &.is-active {
+        color: var(--web-selected-foreground);
+        font-weight: 600;
       }
     }
   }

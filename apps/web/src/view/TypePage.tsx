@@ -11,18 +11,20 @@ export function TypePage({layout, title, members, nav}: TypePageProps) {
   if (!members.length) return null
   return (
     <Layout {...layout}>
-      <HStack style={{height: '100%'}}>
-        <NavSidebar>
-          <NavTree nav={nav} />
-        </NavSidebar>
+      <Layout.Container>
+        <HStack>
+          <NavSidebar>
+            <NavTree nav={nav} />
+          </NavSidebar>
 
-        <Layout.Scrollable>
-          <div style={{flexGrow: 1, minWidth: 0}}>
-            <WebTypo.H1 flat>{title}</WebTypo.H1>
-            <Declaration members={members} wrap={TypeRow} />
-          </div>
-        </Layout.Scrollable>
-      </HStack>
+          <Layout.Scrollable>
+            <div style={{flexGrow: 1, minWidth: 0}}>
+              <WebTypo.H1 flat>{title}</WebTypo.H1>
+              <Declaration members={members} wrap={TypeRow} />
+            </div>
+          </Layout.Scrollable>
+        </HStack>
+      </Layout.Container>
     </Layout>
   )
 }

@@ -56,6 +56,16 @@ export async function docPageQuery(pages: content.Pages, doc: content.Doc) {
   return {
     ...doc,
     menu: await menuQuery(pages),
+    parents: (
+      await pages
+        .tree(doc.id)
+        .parents()
+        .select(parent => ({
+          id: parent.id,
+          title: parent.title,
+          url: parent.url
+        }))
+    ).reverse(),
     prev,
     next,
     blocks: doc.blocks
