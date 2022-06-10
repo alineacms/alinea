@@ -34,7 +34,7 @@ export function Footer({footer}: FooterProps) {
                 <nav>
                   {section.links.map(link => {
                     return (
-                      <Link href={link.url}>
+                      <Link key={link.id} href={link.url}>
                         <a key={link.id}>{link.label}</a>
                       </Link>
                     )

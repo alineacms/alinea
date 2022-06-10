@@ -31,7 +31,17 @@
   flex: 1 0 0;
   display: flex;
   flex-direction: column;
-  padding: 20px 45px 45px 45px;
+  padding-top: 20px;
+  padding-bottom: 45px;
+  min-width: 0;
+
+  @media (min-width: 980px) {
+    padding-left: 20px;
+  }
+
+  @include l {
+    padding-left: 45px;
+  }
 
   &-inner {
     width: 100%;

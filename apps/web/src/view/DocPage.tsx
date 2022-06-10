@@ -30,7 +30,7 @@ export function DocPage({
         <Layout.Scrollable>
           <Breadcrumbs parents={parents.concat(doc)} />
           <Blocks blocks={blocks} />
-          <HStack center gap={20} className={styles.root.nav()}>
+          <HStack gap={20} className={styles.root.nav()}>
             {prev && (
               <Link href={prev.url} passHref>
                 <a className={styles.root.nav.link()}>

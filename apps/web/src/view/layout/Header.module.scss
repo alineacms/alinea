@@ -3,7 +3,6 @@
 .root {
   --bg-faded: hsla(var(--web-header-background-hsl), 0.9);
   --bg: var(--web-header-background);
-
   position: sticky;
   top: 0;
   color: var(--web-foreground-faded);
@@ -12,7 +11,6 @@
   background-color: var(--bg-faded);
   backdrop-filter: blur(12px);
   flex-shrink: 0;
-  // box-shadow: 0 2px 4px rgb(0 0 0 / 2%), inset 0 -1px 0 rgb(0 0 0 / 6%);
   border-bottom: 1px solid hsla(var(--web-negative-hsl), 0.09);
 
   &.is-transparent {
