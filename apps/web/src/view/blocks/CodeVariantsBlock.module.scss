@@ -1,9 +1,11 @@
 .root {
   margin: 20px 0 28px 0;
-  background: #ecebeb;
-  box-shadow: 0px 10px 50px rgba(0, 0, 0, 0.08);
-  border-radius: 16px;
+  background: var(--web-code-highlight);
+  color: var(--web-code-foreground);
+  border-radius: 10px;
   overflow: hidden;
+  box-shadow: 0 1px 0 var(--web-outline);
+  border: 1px solid var(--web-outline);
 
   &-trigger {
     appearance: none;
@@ -17,19 +19,12 @@
     font-size: 12px;
 
     &:hover {
-      background: rgb(245, 244, 244);
+      background: var(--web-code-background);
     }
 
     &.is-selected {
-      background: white;
+      background: var(--web-code-background);
     }
-  }
-
-  &-fileName {
-    font-family: 'JetBrains Mono', monospace;
-    padding: 12px 20px;
-    font-size: 13px;
-    background: #fcfbfb;
   }
 
   &-code {

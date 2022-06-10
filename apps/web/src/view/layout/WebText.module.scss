@@ -1,44 +1,13 @@
-@import './WebTypo.module.scss';
-
 .code {
   display: inline-block;
   vertical-align: middle;
   font-family: 'JetBrains Mono', monospace;
-  background: #ecebeb;
+  background: var(--web-code-inline-background);
+  color: var(--web-code-inline-foreground);
   border-radius: 6px;
   padding: 0.1em 0.4em;
   font-size: 0.9em;
   font-weight: normal;
-}
-
-h1.heading {
-  @extend .h1;
-  &:not(:last-child) {
-    margin-bottom: 20px;
-  }
-}
-
-h2.heading {
-  @extend .h2;
-  &:not(:last-child) {
-    margin-bottom: 9px;
-  }
-}
-
-h3.heading {
-  @extend .h3;
-  &:not(:last-child) {
-    margin-bottom: 5px;
-  }
-}
-
-.paragraph {
-  display: block;
-  font-size: 14px;
-  line-height: 1.6;
-  &:not(:last-child) {
-    margin-bottom: 14px;
-  }
 }
 
 .list {

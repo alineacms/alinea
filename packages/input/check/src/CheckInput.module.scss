@@ -1,5 +1,34 @@
 .root {
   &-input {
     accent-color: var(--alinea-accent);
+    position: absolute;
+    width: 0;
+    height: 0;
+    opacity: 0;
+  }
+
+  &-checkmark {
+    cursor: pointer;
+    width: 24px;
+    height: 24px;
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--alinea-accent);
+    background: var(--alinea-fields);
+    box-shadow: var(--alinea-fields-shadow);
+    border-radius: 4px;
+  }
+
+  &-input:focus-visible ~ .root-checkmark {
+    background: var(--alinea-fields-selected);
+    outline: 2px solid var(--alinea-fields-focus);
+  }
+
+  &-label {
+    cursor: pointer;
+    align-self: center;
+    user-select: none;
   }
 }

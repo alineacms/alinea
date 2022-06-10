@@ -48,7 +48,8 @@ export function targetPlugin(info: FileInfo): Plugin {
           outputs.set(outDir, output)
           return {
             external: true,
-            path: `${packageName}/.${target}/${outputFile}${extension}`
+            path: `${packageName}/.${target}/${outputFile}${extension}`,
+            watchFiles: [entryPoint]
           }
         }
       )

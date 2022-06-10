@@ -30,7 +30,8 @@ export const HomePageSchema = type(
       links: link.multiple('Links', {
         type: ['entry', 'external'],
         fields: type('Fields', {
-          label: text('Label')
+          label: text('Label'),
+          active: text('Active url', {help: 'Active when this url is active'})
         })
       })
     }).configure({icon: IcRoundLink})

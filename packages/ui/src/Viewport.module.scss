@@ -29,7 +29,7 @@
 
 @mixin light-theme {
   --alinea-hue: 240;
-  --alinea-saturation: 20%;
+  --alinea-saturation: 30%;
   --alinea-positive: var(--alinea-hue), var(--alinea-saturation), 97%;
   --alinea-negative: 212, 18%, 14%;
   --alinea-background: hsl(var(--alinea-positive));

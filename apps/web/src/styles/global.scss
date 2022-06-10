@@ -1,20 +1,39 @@
 @mixin light-theme {
+  --web-accent-hsl: 230, 77%, 60%;
+  --web-accent: #4a63e7;
+  --web-accent-foreground: white;
   --web-background: white;
-  --web-background-variant-hsl: 228, 71%, 99%;
-  --web-background-variant: hsl(var(--web-background-variant-hsl));
+  --web-background-variant: #fbfbfe;
   --web-foreground-faded: #667587;
-  --web-header-foreground-hsl: 231, 54%, 17%;
-  --web-header-foreground: hsl(var(--web-header-foreground-hsl));
-  --web-header-background-hsl: 212, 18%, 14%;
+  --web-header-background-hsl: 215, 17%, 14%;
   --web-header-background: hsl(var(--web-header-background-hsl));
   --web-header-foreground-hsl: 228, 71%, 99%;
   --web-header-foreground: hsl(var(--web-header-foreground-hsl));
-  --web-negative-hsl: 212, 18%, 14%;
+  --web-negative-hsl: 215, 17%, 14%;
+  --web-code-background: #1e232a;
+  --web-code-highlight: #292c3d;
+  --web-code-foreground: #fbfbfe;
+  --web-outline: #ecebeb;
 }
 
 @mixin dark-theme {
-  // todo
-  @include light-theme;
+  --web-accent-hsl: 230, 77%, 60%;
+  --web-accent: #4a63e7;
+  --web-accent-foreground: white;
+  --web-background: #1e232a;
+  --web-background-variant: #181d22;
+  --web-foreground-faded: #eee;
+  --web-header-background-hsl: 228, 71%, 99%;
+  --web-header-background: hsl(var(--web-header-background-hsl));
+  --web-header-foreground-hsl: 210, 17%, 11%;
+  --web-header-foreground: hsl(var(--web-header-foreground-hsl));
+  --web-negative-hsl: 0, 0%, 100%;
+  --web-code-background: #1e232a;
+  --web-code-highlight: #292c3d;
+  --web-code-foreground: #fbfbfe;
+  --web-outline: #424242;
+  --web-code-inline-background: #ecebeb;
+  --web-code-inline-foreground: #1e232a;
 }
 
 :root {
@@ -23,6 +42,10 @@
 
   @media (prefers-color-scheme: light) {
     @include light-theme;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    color-scheme: dark;
   }
 }
 

@@ -1,6 +1,8 @@
-@import '../../../../../packages/ui/src/Typo.module.scss';
-
 .root {
-  line-height: 1.625;
-  max-width: 65ch;
+  font-size: 15px;
+  line-height: 1.6;
+
+  > *:first-child {
+    margin-top: 0;
+  }
 }

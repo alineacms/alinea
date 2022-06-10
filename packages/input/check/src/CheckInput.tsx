@@ -1,5 +1,6 @@
 import {InputLabel, InputState, useInput} from '@alinea/editor'
-import {fromModule, HStack, TextLabel} from '@alinea/ui'
+import {fromModule, HStack, Icon, TextLabel} from '@alinea/ui'
+import {IcRoundCheck} from '@alinea/ui/icons/IcRoundCheck'
 import {IcRoundTextFields} from '@alinea/ui/icons/IcRoundTextFields'
 import {useState} from 'react'
 import {CheckField} from './CheckField'
@@ -27,7 +28,7 @@ export function CheckInput({state, field}: CheckInputProps) {
       focused={focus}
       icon={IcRoundTextFields}
     >
-      <HStack center gap={8}>
+      <HStack gap={8} style={{display: 'inline-flex'}}>
         <input
           className={styles.root.input()}
           type="checkbox"
@@ -37,7 +38,13 @@ export function CheckInput({state, field}: CheckInputProps) {
           onBlur={() => setFocus(false)}
           autoFocus={autoFocus}
         />
-        <TextLabel label={help || field.label} />
+        <span className={styles.root.checkmark()}>
+          {value && <Icon size={20} icon={IcRoundCheck} />}
+        </span>
+        <TextLabel
+          label={help || field.label}
+          className={styles.root.label()}
+        />
       </HStack>
     </InputLabel>
   )

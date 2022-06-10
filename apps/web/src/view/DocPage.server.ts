@@ -1,5 +1,5 @@
 import {content} from '@alinea/content/web'
-import {Label} from '@alinea/core'
+import {Entry, Label} from '@alinea/core'
 import {Cursor, Store} from '@alinea/store'
 
 function menuQuery(pages: content.Pages) {
@@ -18,7 +18,7 @@ function menuQuery(pages: content.Pages) {
 
 export async function docPageQuery(pages: content.Pages, doc: content.Doc) {
   type Sibling = {id: string; type: string; url: string; title: Label}
-  const sibling = (doc: Cursor<content.Doc | content.Docs>) => ({
+  const sibling = (doc: Cursor<Entry>) => ({
     id: doc.id,
     url: doc.url,
     title: doc.title,
