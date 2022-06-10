@@ -1,0 +1,28 @@
+@import '@alinea/web/src/style.scss';
+
+.root {
+  position: relative;
+
+  &-items {
+    margin-top: -30px;
+
+    @include l {
+      display: flex;
+      flex-wrap: wrap;
+      margin-left: -60px;
+    }
+
+    &-item {
+      margin-top: 30px;
+
+      @include l {
+        width: 50%;
+        padding-left: 60px;
+      }
+
+      > *:first-child {
+        margin-top: 0;
+      }
+    }
+  }
+}

@@ -1,5 +1,6 @@
 import {unreachable} from '@alinea/core'
 import {BlocksSchema} from './Blocks.schema'
+import {ColumnsBlock} from './ColumnsBlock'
 import {FeaturesBlock} from './FeaturesBlock'
 import {ImagetextBlock} from './ImagetextBlock'
 import {TextBlock} from './TextBlock'
@@ -18,6 +19,8 @@ export function Blocks({blocks}: BlocksViewProps) {
             return <TextBlock key={block.id} {...block} />
           case 'TypesBlock':
             return <TypesBlock key={block.id} {...block} />
+          case 'ColumnsBlock':
+            return <ColumnsBlock key={block.id} {...block} />
           case 'ImagetextBlock':
             return <ImagetextBlock key={block.id} {...block} />
           case 'FeaturesBlock':
