@@ -1,5 +1,6 @@
 import {Schema, type} from '@alinea/core'
 import {link} from '@alinea/input.link'
+import {richText} from '@alinea/input.richtext'
 import {select} from '@alinea/input.select'
 import {text} from '@alinea/input.text'
 
@@ -9,11 +10,7 @@ export const ImagetextBlockSchema = type('Image & text', {
     left: 'Left',
     right: 'Right'
   }).configure({width: 0.25, initialValue: 'left'}),
-  text: text('Text', {
-    multiline: true
-  }),
-  //TODO: richText without other blocks
-  // text: richText('Text'),
+  text: richText('Text'),
   button: link('Button', {
     fields: type('Fields', {
       label: text('Button label')

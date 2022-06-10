@@ -1,6 +1,7 @@
 @mixin light-theme {
   --web-accent-hsl: 230, 77%, 60%;
   --web-accent: #4a63e7;
+  --web-accent-light: hsl(230, 77%, 65%);
   --web-accent-foreground: white;
   --web-background: white;
   --web-background-variant: #fbfbfe;
@@ -19,6 +20,7 @@
 @mixin dark-theme {
   --web-accent-hsl: 230, 77%, 60%;
   --web-accent: #4a63e7;
+  --web-accent-light: hsl(230, 77%, 65%);
   --web-accent-foreground: white;
   --web-background: #1e232a;
   --web-background-variant: #181d22;

@@ -26,9 +26,36 @@
     }
   }
 
+  &-image {
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
   &-content {
     @include l {
-      padding: 75px 0;
+      padding: 60px 0;
     }
+
+    > *:first-child {
+      margin-top: 0;
+    }
+  }
+}
+
+.button {
+  cursor: pointer;
+  font: inherit;
+  color: var(--web-accent-foreground);
+  position: relative;
+  display: inline-block;
+  vertical-align: top;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 50px;
+  background-color: var(--web-accent);
+  transition: 0.25s ease-out;
+
+  &:hover {
+    background-color: var(--web-accent-light);
   }
 }
