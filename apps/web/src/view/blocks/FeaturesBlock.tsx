@@ -1,5 +1,5 @@
 import {fromModule} from '@alinea/ui'
-import {Container} from '../layout/Container'
+import {Layout} from '../layout/Layout'
 import {WebText} from '../layout/WebText'
 import css from './FeaturesBlock.module.scss'
 import {FeaturesBlockSchema} from './FeaturesBlock.schema'
@@ -11,7 +11,7 @@ export function FeaturesBlock({intro, items}: FeaturesBlockSchema) {
 
   return (
     <div className={styles.root()}>
-      <Container>
+      <Layout.Container>
         {intro && (
           <div className={styles.root.intro()}>
             <WebText doc={intro} />
@@ -24,7 +24,7 @@ export function FeaturesBlock({intro, items}: FeaturesBlockSchema) {
             </div>
           ))}
         </div>
-      </Container>
+      </Layout.Container>
     </div>
   )
 }
