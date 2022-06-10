@@ -1,6 +1,6 @@
 import {InputLabel, InputState, useInput} from '@alinea/editor'
 import {fromModule, HStack} from '@alinea/ui'
-import {IcRoundTextFields} from '@alinea/ui/icons/IcRoundTextFields'
+import {IcRoundCode} from '@alinea/ui/icons/IcRoundCode'
 import {useState} from 'react'
 import {TextareaAutosize} from 'react-autosize-textarea/lib/TextareaAutosize.js'
 import {CodeField} from './CodeField'
@@ -33,7 +33,7 @@ export function CodeInput({state, field}: CodeInputProps) {
       inline={inline}
       width={width}
       focused={focus}
-      icon={IcRoundTextFields}
+      icon={IcRoundCode}
       empty={empty}
     >
       <HStack center gap={8}>
