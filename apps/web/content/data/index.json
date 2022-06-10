@@ -83,12 +83,29 @@
   ],
   "links": [
     {
-      "id": "263wlTQJl4GPVikrzGKCxRKuJTg",
+      "id": "2ANM58T7xeVpLbcGCefZ5VX6nZq",
       "index": "a0",
       "type": "entry",
-      "entry": "20580nQzbOBR3Lt4kIdxyRGglc6",
+      "entry": "2AFn42lqIU86a9MI0I4rX3qMJQv",
       "label": "Docs",
       "active": "/docs"
+    }
+  ],
+  "footer": [
+    {
+      "id": "2ANVIUDmjNddF0QO8aB0gwXcRq8",
+      "index": "a0",
+      "type": "Section",
+      "label": "Developer",
+      "links": [
+        {
+          "id": "2ANVLD5olNHL82kExSypIXaVndL",
+          "index": "a0",
+          "type": "entry",
+          "entry": "2AFn42lqIU86a9MI0I4rX3qMJQv",
+          "label": "Docs"
+        }
+      ]
     }
   ]
 }

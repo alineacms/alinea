@@ -1,3 +1,5 @@
+@import '@alinea/web/src/style.scss';
+
 .hyphenate {
   overflow-wrap: break-word;
   word-wrap: break-word;
@@ -9,15 +11,19 @@
 .h1 {
   font-family: var(--web-title-font);
   min-width: 0;
-  font-size: 26px;
+  font-size: 45px;
   font-weight: 700;
-  line-height: 1.25;
+  line-height: 1;
   margin: 35px 0 20px 0;
   white-space: pre-line;
   text-rendering: optimizeLegibility;
   @extend .hyphenate;
   &.is-flat {
     margin: 0;
+  }
+
+  @include s {
+    font-size: 30px;
   }
 }
 

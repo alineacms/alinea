@@ -2,7 +2,7 @@ import {Docs} from '@alinea/content/web'
 import {Label} from '@alinea/core'
 import {TextLabel} from '@alinea/ui'
 import Link from 'next/link'
-import {Container} from './layout/Container'
+import {Layout} from './layout/Layout'
 
 type DocsPageProps = Docs & {
   children: Array<{url: string; title: Label}>
@@ -10,7 +10,7 @@ type DocsPageProps = Docs & {
 
 export function DocsPage({children, title}: DocsPageProps) {
   return (
-    <Container>
+    <Layout.Container>
       <h1>{title}</h1>
       <div>
         {children?.map(child => {
@@ -23,6 +23,6 @@ export function DocsPage({children, title}: DocsPageProps) {
           )
         })}
       </div>
-    </Container>
+    </Layout.Container>
   )
 }

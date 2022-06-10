@@ -19,7 +19,6 @@
   }
 
   &.is-full {
-    height: 100%;
   }
 }
 
@@ -30,20 +29,32 @@
 
 .scrollable {
   flex: 1 0 0;
-  height: 100%;
-  overflow-y: auto;
-  @include scrollbar;
   display: flex;
   flex-direction: column;
-  padding: 30px 30px;
+  padding-top: 20px;
+  padding-bottom: 45px;
+  min-width: 0;
 
-  @include ml {
-    padding: 40px 60px;
+  @media (min-width: 980px) {
+    padding-left: 20px;
+  }
+
+  @include l {
+    padding-left: 45px;
   }
 
   &-inner {
-    max-width: 900px;
     width: 100%;
     margin: 0 auto;
+  }
+}
+
+.container {
+  padding: 0 30px;
+  margin: 0 auto;
+  width: 100%;
+
+  @include l {
+    max-width: 1200px;
   }
 }

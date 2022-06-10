@@ -1,13 +1,16 @@
 @import '@alinea/web/src/style.scss';
 
 .root {
-  height: 100%;
+  height: calc(100vh - var(--web-header-height));
+  position: sticky;
+  top: var(--web-header-height);
   overflow: auto;
-  background: var(--web-background-variant);
-  position: relative;
-  padding: 35px 60px;
   flex-shrink: 0;
-  width: 360px;
+  width: 256px;
+  padding: 20px 0;
+  margin-left: -6px;
+  padding-right: 6px;
+
   @media (max-width: 980px) {
     display: none;
   }

@@ -3,7 +3,6 @@ import fs from 'fs'
 import path from 'path'
 import markdownToHtml from '../../lib/markdownToHtml'
 import ChangelogView from '../view/ChangelogView'
-import {Container} from '../view/layout/Container'
 import {Layout} from '../view/layout/Layout'
 import {LayoutProps, layoutQuery} from '../view/layout/Layout.server'
 
@@ -16,9 +15,9 @@ export default function Changelog({layout, content}: ChangelogProps) {
   return (
     <Layout {...layout}>
       <Layout.Content>
-        <Container>
+        <Layout.Container>
           <ChangelogView content={content} />
-        </Container>
+        </Layout.Container>
       </Layout.Content>
     </Layout>
   )
