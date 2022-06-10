@@ -1,7 +1,7 @@
-import {InputLabel, InputState, useInput} from '@alinea/editor'
-import {fromModule} from '@alinea/ui'
-import {IcRoundDateRange} from '@alinea/ui/icons/IcRoundDateRange'
-import {DateField} from './DateField'
+import { InputLabel, InputState, useInput } from '@alinea/editor'
+import { fromModule } from '@alinea/ui'
+import { IcRoundDateRange } from '@alinea/ui/icons/IcRoundDateRange'
+import { DateField } from './DateField'
 import css from './DateInput.module.scss'
 
 const styles = fromModule(css)
@@ -27,7 +27,7 @@ export function DateInput({state, field}: DateInputProps) {
       <input
         className={styles.root.input()}
         type="date"
-        value={value}
+        value={value || ''}
         onChange={e => setValue(e.currentTarget.value)}
         autoFocus={autoFocus}
       />
