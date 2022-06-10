@@ -16,25 +16,23 @@ export function NumberInput({state, field}: NumberInputProps) {
     field.options
   const [value = initialValue, setValue] = useInput(state)
   return (
-    <div>
-      <InputLabel
-        asLabel
-        label={field.label}
-        inline={inline}
-        help={help}
-        optional={optional}
-        width={width}
-        icon={IcRoundNumbers}
-      >
-        <input
-          type="number"
-          className={styles.root.input()}
-          value={String(value ?? '')}
-          onChange={e => setValue(Number(e.currentTarget.value))}
-          min={minValue}
-          max={maxValue}
-        />
-      </InputLabel>
-    </div>
+    <InputLabel
+      asLabel
+      label={field.label}
+      inline={inline}
+      help={help}
+      optional={optional}
+      width={width}
+      icon={IcRoundNumbers}
+    >
+      <input
+        type="number"
+        className={styles.root.input()}
+        value={String(value ?? '')}
+        onChange={e => setValue(Number(e.currentTarget.value))}
+        min={minValue}
+        max={maxValue}
+      />
+    </InputLabel>
   )
 }
