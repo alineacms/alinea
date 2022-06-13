@@ -32,17 +32,17 @@
     "base64-arraybuffer": "^1.0.1",
     "content-type": "^1.0.4",
     "convert-hrtime": "^5.0.0",
+    "fs-extra": "^10.0.0",
     "isomorphic-path": "^2.0.1",
     "js-yaml": "^4.1.0",
+    "leb128": "^0.0.5",
     "lib0": "^0.2.42",
     "md5": "^2.3.0",
     "octokit-commit-multiple-files": "^3.2.1",
     "pretty-ms": "^7.0.1",
     "raw-body": "^2.4.1",
     "regexparam": "^2.0.0",
-    "yjs": "^13.5.34",
-    "fs-extra": "^10.0.0",
-    "leb128": "^0.0.5"
+    "yjs": "^13.5.34"
   },
   "devDependencies": {
     "@alinea/sqlite-wasm": "^0.1.6",
