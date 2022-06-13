@@ -56,10 +56,7 @@ export function DocPage({
             )}
             {next && (
               <Link href={next.url} passHref>
-                <a
-                  className={styles.root.nav.link()}
-                  style={{textAlign: 'right'}}
-                >
+                <a className={styles.root.nav.link('right')}>
                   <VStack gap={8}>
                     <HStack gap={8} justify="right">
                       <span className={styles.root.nav.link.label()}>Next</span>
