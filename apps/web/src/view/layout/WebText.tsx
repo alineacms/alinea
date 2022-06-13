@@ -15,17 +15,19 @@ function Text({children}: {children: string}) {
 
 export function WebText<T>(props: RichTextProps<T>) {
   return (
-    <RichText
-      text={Text}
-      p={WebTypo.P}
-      h1={WebTypo.H1}
-      h2={WebTypo.H2}
-      h3={WebTypo.H3}
-      h4={WebTypo.H4}
-      ul={<ul className={styles.list()} />}
-      ol={<ol className={styles.list()} />}
-      li={<li className={styles.listItem()} />}
-      {...props}
-    />
+    <div className={styles.root()}>
+      <RichText
+        text={Text}
+        p={WebTypo.P}
+        h1={WebTypo.H1}
+        h2={WebTypo.H2}
+        h3={WebTypo.H3}
+        h4={WebTypo.H4}
+        ul={<ul className={styles.list()} />}
+        ol={<ol className={styles.list()} />}
+        li={<li className={styles.listItem()} />}
+        {...props}
+      />
+    </div>
   )
 }

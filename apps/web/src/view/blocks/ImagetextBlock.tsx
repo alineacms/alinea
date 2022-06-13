@@ -1,9 +1,8 @@
 import {fromModule, HStack, Icon} from '@alinea/ui'
 import Link, {LinkProps} from 'next/link'
 import type {ComponentType} from 'react'
-import {PropsWithChildren} from 'react'
+import {Fragment, PropsWithChildren} from 'react'
 import {Image} from '../layout/Image'
-import {Layout} from '../layout/Layout'
 import {WebText} from '../layout/WebText'
 import css from './ImagetextBlock.module.scss'
 import {ImagetextBlockSchema} from './ImagetextBlock.schema'
@@ -14,13 +13,15 @@ export function ImagetextBlock({
   image,
   image_position,
   text,
-  button
+  button,
+  container
 }: ImagetextBlockSchema) {
+  const Wrapper = container || Fragment
   if (!image?.src && !text && !button) return null
 
   return (
     <div className={styles.root()}>
-      <Layout.Container>
+      <Wrapper>
         <div className={styles.root.row({right: image_position === 'right'})}>
           {image?.src && (
             <div className={styles.root.image()}>
@@ -39,7 +40,7 @@ export function ImagetextBlock({
             </div>
           )}
         </div>
-      </Layout.Container>
+      </Wrapper>
     </div>
   )
 }

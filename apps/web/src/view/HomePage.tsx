@@ -5,6 +5,7 @@ import css from './HomePage.module.scss'
 import {HomePageSchema} from './HomePage.schema'
 import {Hero} from './layout/Hero'
 import {Image} from './layout/Image'
+import {Layout} from './layout/Layout'
 import {WebTypo} from './layout/WebTypo'
 
 const styles = fromModule(css)
@@ -34,7 +35,7 @@ export function HomePage({
         action={action}
         screenshot={screenshot}
       />
-      <Blocks blocks={blocks} />
+      <Blocks blocks={blocks} container={Layout.Container} />
     </div>
   )
 }

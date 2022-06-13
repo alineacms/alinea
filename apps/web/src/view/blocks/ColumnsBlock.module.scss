@@ -2,6 +2,7 @@
 
 .root {
   position: relative;
+  margin: 60px 0;
 
   &-items {
     margin-top: -30px;
@@ -18,10 +19,6 @@
       @include l {
         width: 50%;
         padding-left: 60px;
-      }
-
-      > *:first-child {
-        margin-top: 0;
       }
     }
   }

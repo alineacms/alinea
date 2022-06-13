@@ -1,4 +1,5 @@
 import {fromModule} from '@alinea/ui'
+import {Fragment} from 'react'
 import {WebText} from '../layout/WebText'
 import {ChapterLinkBlock} from './ChapterLinkBlock'
 import {CodeBlock} from './CodeBlock'
@@ -10,17 +11,21 @@ import {TextBlockSchema} from './TextBlock.schema'
 
 const styles = fromModule(css)
 
-export function TextBlock({text}: TextBlockSchema) {
+export function TextBlock({text, container}: TextBlockSchema) {
+  const Wrapper = container || Fragment
+
   return (
     <div className={styles.root()}>
-      <WebText
-        doc={text}
-        CodeBlock={CodeBlock}
-        CodeVariantsBlock={CodeVariantsBlock}
-        ImageBlock={ImageBlock}
-        NoticeBlock={NoticeBlock}
-        ChapterLinkBlock={ChapterLinkBlock}
-      />
+      <Wrapper>
+        <WebText
+          doc={text}
+          CodeBlock={CodeBlock}
+          CodeVariantsBlock={CodeVariantsBlock}
+          ImageBlock={ImageBlock}
+          NoticeBlock={NoticeBlock}
+          ChapterLinkBlock={ChapterLinkBlock}
+        />
+      </Wrapper>
     </div>
   )
 }

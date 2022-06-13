@@ -1,17 +1,18 @@
 import {fromModule} from '@alinea/ui'
-import {Layout} from '../layout/Layout'
+import {Fragment} from 'react'
 import {WebText} from '../layout/WebText'
 import css from './FeaturesBlock.module.scss'
 import {FeaturesBlockSchema} from './FeaturesBlock.schema'
 
 const styles = fromModule(css)
 
-export function FeaturesBlock({intro, items}: FeaturesBlockSchema) {
+export function FeaturesBlock({intro, items, container}: FeaturesBlockSchema) {
+  const Wrapper = container || Fragment
   if (!intro && items?.length <= 0) return null
 
   return (
     <div className={styles.root()}>
-      <Layout.Container>
+      <Wrapper>
         {intro && (
           <div className={styles.root.intro()}>
             <WebText doc={intro} />
@@ -24,7 +25,7 @@ export function FeaturesBlock({intro, items}: FeaturesBlockSchema) {
             </div>
           ))}
         </div>
-      </Layout.Container>
+      </Wrapper>
     </div>
   )
 }
