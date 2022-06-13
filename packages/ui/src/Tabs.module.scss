@@ -1,5 +1,6 @@
 .list {
   display: flex;
+  flex-wrap: wrap;
   margin: 0 6px 10px 6px;
   gap: 8px;
   // border-bottom: 1px solid var(--alinea-outline);
