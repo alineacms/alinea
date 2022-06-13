@@ -1,4 +1,4 @@
-import {fromModule, HStack, Stack, TextLabel} from '@alinea/ui'
+import {fromModule, HStack, TextLabel, VStack} from '@alinea/ui'
 import {IcRoundArrowBack} from '@alinea/ui/icons/IcRoundArrowBack'
 import {IcRoundArrowForward} from '@alinea/ui/icons/IcRoundArrowForward'
 import Link from 'next/link'
@@ -30,33 +30,50 @@ export function DocPage({
         <Layout.Scrollable>
           <Breadcrumbs parents={parents.concat(doc)} />
           <Blocks blocks={blocks} />
-          <HStack gap={20} className={styles.root.nav()}>
+          <HStack
+            gap={20}
+            justify="space-between"
+            className={styles.root.nav()}
+          >
             {prev && (
               <Link href={prev.url} passHref>
                 <a className={styles.root.nav.link()}>
-                  <HStack gap={8}>
-                    <IcRoundArrowBack />
+                  <VStack gap={8}>
+                    <HStack gap={8}>
+                      <span className={styles.root.nav.link.icon()}>
+                        <IcRoundArrowBack />
+                      </span>
+                      <span className={styles.root.nav.link.label()}>
+                        Previous
+                      </span>
+                    </HStack>
                     <span>
                       <TextLabel label={prev.title} />
                     </span>
-                  </HStack>
+                  </VStack>
                 </a>
               </Link>
             )}
-            <Stack.Right>
-              {next && (
-                <Link href={next.url} passHref>
-                  <a className={styles.root.nav.link()}>
-                    <HStack center gap={8}>
-                      <span>
-                        <TextLabel label={next.title} />
+            {next && (
+              <Link href={next.url} passHref>
+                <a
+                  className={styles.root.nav.link()}
+                  style={{textAlign: 'right'}}
+                >
+                  <VStack gap={8}>
+                    <HStack gap={8} justify="right">
+                      <span className={styles.root.nav.link.label()}>Next</span>
+                      <span className={styles.root.nav.link.icon()}>
+                        <IcRoundArrowForward />
                       </span>
-                      <IcRoundArrowForward />
                     </HStack>
-                  </a>
-                </Link>
-              )}
-            </Stack.Right>
+                    <span>
+                      <TextLabel label={next.title} />
+                    </span>
+                  </VStack>
+                </a>
+              </Link>
+            )}
           </HStack>
         </Layout.Scrollable>
       </HStack>
