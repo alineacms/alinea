@@ -19,9 +19,10 @@ export function Layout({
 }: PropsWithChildren<LayoutProps>) {
   return (
     <>
-      <FavIcon color="#4a63e7" />
+      <FavIcon color="#4a65e8" />
       <Head>
         <title>{meta.title}</title>
+        <meta name="theme-color" content="#4a65e8" />
         <style>
           {`
             @media (max-width: 440px) {html {font-size: calc(4.4444vw + .00012px)}}

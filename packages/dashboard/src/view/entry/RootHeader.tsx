@@ -26,7 +26,7 @@ export function RootHeader() {
         >
           <TextLabel label={root.label} />
         </Link>
-        <Langswitch />
+        {root.i18n && <Langswitch />}
         <Create.Link to={nav.create({workspace, root: root.name})} />
       </div>
     </div>
@@ -41,8 +41,6 @@ function Langswitch() {
   const [selectedLang, setSelectedLang] = useState(currentLocale)
   const {name: workspace} = useWorkspace()
   const draft = useCurrentDraft()
-  if (!root?.i18n) return null
-
   return (
     <div className={styles.langswitch()}>
       <Listbox
@@ -73,7 +71,7 @@ function Langswitch() {
           </Listbox.Button>
           <Listbox.Options className={styles.langswitch.dropdown()}>
             <div className={styles.langswitch.dropdown.inner()}>
-              {root.i18n.locales.map(locale => (
+              {root.i18n!.locales.map(locale => (
                 <Listbox.Option key={locale} value={locale}>
                   {({active, selected}) => (
                     <HStack

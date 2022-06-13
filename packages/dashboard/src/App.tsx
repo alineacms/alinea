@@ -89,7 +89,7 @@ function AppAuthenticated() {
   const nav = useNav()
   const location = useLocation()
   const isEntry = useMatch(nav.matchEntry) || location.pathname === '/'
-  const {name: workspace, name, color, roots} = useWorkspace()
+  const {name: workspace, label, name, color, roots} = useWorkspace()
   const {name: currentRoot} = useRoot()
   const entryLocation = useEntryLocation()
   return (
@@ -100,7 +100,7 @@ function AppAuthenticated() {
             <Viewport attachToBody contain color={color}>
               <FavIcon color={color} />
               <Helmet>
-                <title>{renderLabel(name)}</title>
+                <title key="workspace-title">{renderLabel(label)}</title>
               </Helmet>
               <Toolbar.Root />
               <div

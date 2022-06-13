@@ -6,6 +6,7 @@ import {PropsWithChildren} from 'react'
 import {Helmet} from 'react-helmet'
 import {EntryDraft} from '../../draft/EntryDraft'
 import {useCurrentDraft} from '../../hook/UseCurrentDraft'
+import {useWorkspace} from '../../hook/UseWorkspace'
 import css from './EntryTitle.module.scss'
 
 const styles = fromModule(css)
@@ -17,10 +18,13 @@ export type EntryTitleProps = PropsWithChildren<{
 export function EntryTitle({children, backLink}: EntryTitleProps) {
   const draft = useCurrentDraft()
   const [title] = useInput(EntryDraft.title)
+  const {label} = useWorkspace()
   return (
     <>
       <Helmet>
-        <title>{title}</title>
+        <title key="entry-title">
+          {title} - {renderLabel(label)}
+        </title>
       </Helmet>
       <div className={styles.root()}>
         <HStack center gap={18}>
