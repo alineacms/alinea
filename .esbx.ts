@@ -130,7 +130,12 @@ const testTask = TestTask.configure({
       .concat('@alinea/sqlite-wasm'),
     plugins: [
       ...buildOptions.plugins!,
-      StaticPlugin.configure({sources: ['packages/cli/src/Init.ts']}),
+      StaticPlugin.configure({
+        sources: [
+          'packages/cli/src/Init.ts',
+          'packages/backend/src/export/ExportStore.ts'
+        ]
+      }),
       internalPlugin
     ]
   }
