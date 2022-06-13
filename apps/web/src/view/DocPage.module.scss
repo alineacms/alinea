@@ -19,6 +19,11 @@
         background: hsla(var(--web-negative-hsl), 0.05);
       }
 
+      &.is-right {
+        text-align: right;
+        margin-left: auto;
+      }
+
       &-icon,
       &-label {
         color: var(--web-accent);
