@@ -75,6 +75,13 @@ function schemaCollections(workspace: Workspace) {
   `
 }
 
+function pagesOf(workspace: Workspace) {
+  return code`
+    import {backend} from '../backend.js'
+    export const pages = backend.loadPages('${workspace.name}')
+  `
+}
+
 function schemaTypes(workspace: Workspace) {
   const typeNames = workspace.schema.keys
   const collections = `export type AnyPage = EntryOf<Entry & typeof schema>
@@ -133,8 +140,8 @@ export async function generate(options: GenerateOptions) {
 
   async function copyStaticFiles() {
     await fs.mkdirp(outDir).catch(console.log)
-    async function copy(...files: Array<string>) {
-      await Promise.all(
+    function copy(...files: Array<string>) {
+      return Promise.all(
         files.map(file =>
           fs.copyFile(path.join(staticDir, file), path.join(outDir, file))
         )
@@ -221,18 +228,29 @@ export async function generate(options: GenerateOptions) {
 
   async function generateWorkspaces(config: Config) {
     for (const [key, workspace] of Object.entries(config.workspaces)) {
-      await fs.mkdir(path.join(outDir, key), {recursive: true})
-      await fs.writeFile(
-        path.join(outDir, key, 'schema.js'),
-        schemaCollections(workspace)
-      )
-      await fs.writeFile(
-        path.join(outDir, key, 'schema.d.ts'),
-        schemaTypes(workspace)
-      )
-      await fs.copy(path.join(staticDir, 'workspace'), path.join(outDir, key), {
-        overwrite: true
-      })
+      function copy(...files: Array<string>) {
+        return Promise.all(
+          files.map(file =>
+            fs.copyFile(
+              path.join(staticDir, 'workspace', file),
+              path.join(outDir, key, file)
+            )
+          )
+        )
+      }
+      await Promise.all([
+        fs.mkdir(path.join(outDir, key), {recursive: true}),
+        fs.writeFile(
+          path.join(outDir, key, 'schema.js'),
+          schemaCollections(workspace)
+        ),
+        fs.writeFile(
+          path.join(outDir, key, 'schema.d.ts'),
+          schemaTypes(workspace)
+        ),
+        copy('index.d.ts', 'index.js', 'pages.d.ts'),
+        fs.writeFile(path.join(outDir, key, 'pages.js'), pagesOf(workspace))
+      ])
     }
     const pkg = JSON.parse(
       await fs.readFile(path.join(staticDir, 'package.json'), 'utf8')

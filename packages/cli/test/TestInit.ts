@@ -14,6 +14,7 @@ async function setup(cwd: string) {
 }
 
 async function run(cwd: string) {
+  process.env.NODE_ENV = 'development'
   await init({cwd, quiet: true})
   const exports = await import(
     `file://${path.resolve(cwd, '.alinea/main/pages')}`

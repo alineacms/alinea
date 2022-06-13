@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+- The drafts of the default development backend are now placed with the
+  generated code which means draft changes will result in browser reloads.
+
 ## [0.1.2]
 
 - A RichText react component is exposed from @alinea/ui to render rich text
