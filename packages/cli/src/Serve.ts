@@ -39,6 +39,7 @@ export async function serve(options: ServeOptions) {
   const storeLocation = path.join(outDir, 'store.js')
   const genConfigFile = path.join(outDir, 'config.js')
   const backendFile = path.join(outDir, 'backend.js')
+  const draftsFile = path.join(outDir, 'drafts.js')
   const clients: Array<ServerResponse> = []
   const {version} = require('react/package.json')
   const isReact18 = semver.compare(version, '18.0.0', '>=')
@@ -193,6 +194,7 @@ export async function serve(options: ServeOptions) {
 
   async function devServer() {
     const unique = Date.now()
+    const {createStore: createDraftStore} = await import(`file://${draftsFile}`)
     let backend
     if (production) {
       backend = (await import(`file://${backendFile}`)).backend
@@ -205,7 +207,8 @@ export async function serve(options: ServeOptions) {
         config,
         createStore,
         port,
-        cwd
+        cwd,
+        createDraftStore
       })
     }
     return nodeHandler(backend.handle)

@@ -1,10 +1,11 @@
 import {Config, Workspaces} from '@alinea/core'
 import {Store} from '@alinea/store'
+import {SqliteStore} from '@alinea/store/sqlite/SqliteStore'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import {Backend} from './Backend'
 import {FileData} from './data/FileData'
-import {FileDrafts} from './drafts/FileDrafts'
+import {DevDrafts} from './drafts/DevDrafts'
 import {JsonLoader} from './loader/JsonLoader'
 import {JWTPreviews} from './util/JWTPreviews'
 
@@ -13,6 +14,7 @@ export interface DevServerOptions<T extends Workspaces> {
   port?: number
   config: Config<T>
   createStore: () => Promise<Store>
+  createDraftStore: () => Promise<SqliteStore>
 }
 
 export class DevBackend<T extends Workspaces = Workspaces> extends Backend<T> {
@@ -20,7 +22,8 @@ export class DevBackend<T extends Workspaces = Workspaces> extends Backend<T> {
     cwd = process.cwd(),
     port = 4500,
     config,
-    createStore
+    createStore,
+    createDraftStore
   }: DevServerOptions<T>) {
     const dashboardUrl = `http://localhost:${port}`
     const outDir = path.join(cwd, '.alinea')
@@ -30,9 +33,9 @@ export class DevBackend<T extends Workspaces = Workspaces> extends Backend<T> {
       loader: JsonLoader,
       rootDir: cwd
     })
-    const drafts = new FileDrafts({
-      fs,
-      dir: path.join(outDir, '.drafts')
+    const drafts = new DevDrafts({
+      outDir,
+      createStore: createDraftStore
     })
     super({
       dashboardUrl,
