@@ -3,6 +3,14 @@
 .root {
   position: relative;
 
+  &-intro {
+    text-align: center;
+
+    &-text {
+      margin: 0 auto;
+    }
+  }
+
   &-intro + &-items {
     margin-top: 0;
   }
