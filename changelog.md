@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.1.3]
+
 - The drafts of the default development backend are now placed with the
   generated code which means draft changes will result in browser reloads.
 
