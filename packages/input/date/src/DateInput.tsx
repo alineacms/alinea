@@ -27,7 +27,7 @@ export function DateInput({state, field}: DateInputProps) {
       <input
         className={styles.root.input()}
         type="date"
-        value={value}
+        value={value || ''}
         onChange={e => setValue(e.currentTarget.value)}
         autoFocus={autoFocus}
       />

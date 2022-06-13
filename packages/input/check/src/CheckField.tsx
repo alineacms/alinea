@@ -2,6 +2,8 @@ import {Field, Label, Shape} from '@alinea/core'
 
 /** Optional settings to configure a text field */
 export type CheckOptions = {
+  /** Label displayed next to the checkbox  */
+  label: Label
   /** Width of the field in the dashboard UI (0-1) */
   width?: number
   /** Add instructional text to a field */
@@ -25,7 +27,7 @@ export interface CheckField extends Field.Scalar<boolean> {
 /** Create a text field configuration */
 export function createCheck(
   label: Label,
-  options: CheckOptions = {}
+  options: CheckOptions = {label}
 ): CheckField {
   return {
     shape: Shape.Scalar(label, options.initialValue),

@@ -18,7 +18,7 @@ const linkForm = type('Link', {
   }),
   title: text('Title', {help: 'Extra information that describes the link'}),
   blank: check('Target', {
-    help: 'Open link in new tab'
+    label: 'Open link in new tab'
   })
 })
 

@@ -14,7 +14,8 @@ export type CheckInputProps = {
 }
 
 export function CheckInput({state, field}: CheckInputProps) {
-  const {width, inline, optional, help, autoFocus, initialValue} = field.options
+  const {label, width, inline, optional, help, autoFocus, initialValue} =
+    field.options
   const [value = initialValue, setValue] = useInput(state)
   const [focus, setFocus] = useState(false)
   // Todo: unlocalise
@@ -22,6 +23,7 @@ export function CheckInput({state, field}: CheckInputProps) {
     <InputLabel
       asLabel
       label={field.label}
+      help={help}
       optional={optional}
       inline={inline}
       width={width}
@@ -41,10 +43,7 @@ export function CheckInput({state, field}: CheckInputProps) {
         <span className={styles.root.checkmark()}>
           {value && <Icon size={20} icon={IcRoundCheck} />}
         </span>
-        <TextLabel
-          label={help || field.label}
-          className={styles.root.label()}
-        />
+        <TextLabel label={label} className={styles.root.label()} />
       </HStack>
     </InputLabel>
   )

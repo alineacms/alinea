@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [0.1.2]
+
+- A RichText react component is exposed from @alinea/ui to render rich text
+  values
 - Auto-close navigation sidebar only for small screens (< 768px)
 - Update number field styles to use updated css variable names
 - Select fields configuration can now be set using the `configure` method. This
