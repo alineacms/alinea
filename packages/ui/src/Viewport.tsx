@@ -76,8 +76,8 @@ export function Viewport({
   const mainProps = attachToBody ? {} : {className, style}
   return (
     <ColorSchemeProvider value={[schemePreference, toggleSchemePreference]}>
-      <Helmet key="theme-color">
-        <meta name="theme-color" content={accentColor} />
+      <Helmet>
+        <meta name="theme-color" content={accentColor} key="theme-color" />
       </Helmet>
       <main
         {...mainProps}

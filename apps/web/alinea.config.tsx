@@ -9,6 +9,7 @@ import {configureBackend} from './alinea.server'
 import {DocPageSchema} from './src/view/DocPage.schema'
 import {DocsPageSchema} from './src/view/DocsPage.schema'
 import {HomePageSchema} from './src/view/HomePage.schema'
+import {LogoChar} from './src/view/layout/branding/LogoChar'
 
 export const webSchema = schema({
   ...MediaSchema,
@@ -18,11 +19,12 @@ export const webSchema = schema({
 })
 
 const web = workspace('Alinea', {
+  icon: LogoChar,
   schema: webSchema,
   typeNamespace: 'content',
   source: './content',
   mediaDir: './public',
-  color: '#5661E5',
+  color: '#4a65e8',
   roots: {
     data: root('Alinea website', {
       icon: IcRoundInsertDriveFile,
