@@ -70,7 +70,7 @@ export function Footer({footer, theme, setTheme}: FooterProps) {
             className={styles.root.theme()}
           >
             <ThemeIcon />
-            <span>{theme}</span>
+            <span>{theme.charAt(0).toUpperCase() + theme.slice(1)}</span>
           </HStack>
         </HStack>
       </Layout.Container>
