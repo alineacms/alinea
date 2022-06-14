@@ -6,6 +6,10 @@ const inline = new Set([
   'leb128',
   '@peculiar/webcrypto',
   '@peculiar/asn1-schema',
+  '@peculiar/json-schema',
+  'pvtsutils',
+  'webcrypto-core',
+  'tslib',
   'safe-buffer',
   'base64-js',
   'ieee754',
@@ -24,7 +28,7 @@ function packageOf(filePath: string) {
 export const resolvePlugin: Plugin = {
   name: 'resolve',
   setup(build) {
-    build.initialOptions.external = ['crypto']
+    build.initialOptions.external = ['crypto', 'process']
     const info = new Map()
     const outExtension = build.initialOptions.outExtension?.['.js'] || '.js'
     function workspaceInfo(workspace: string) {
@@ -56,7 +60,8 @@ export const resolvePlugin: Plugin = {
       if (isInline) return
       const isLocal = args.path.startsWith('./') || args.path.startsWith('../')
       const hasOutExtension = args.path.endsWith(outExtension)
-      const hasExtension = args.path.split('/').pop()?.includes('.')
+      const base = path.basename(args.path)
+      const hasExtension = base.includes('.') && !base.includes('.node')
       if (!args.path.startsWith('.')) {
         const segments = args.path.split('/')
         const pkg = args.path.startsWith('@')
