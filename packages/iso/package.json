@@ -1,0 +1,27 @@
+{
+  "name": "@alinea/iso",
+  "version": "0.0.0",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/alineacms/alinea.git"
+  },
+  "type": "module",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "node": "./dist/index.node.js",
+      "default": "./dist/index.js"
+    },
+    "./*": "./dist/*.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "dependencies": {
+    "fetch-blob": "^3.1.5",
+    "formdata-polyfill": "^4.0.10",
+    "node-fetch": "^3.2.6"
+  }
+}

@@ -1,0 +1,9 @@
+export const fetch = globalThis.fetch
+export type Request = globalThis.Request
+export const Request = globalThis.Request
+export type Response = globalThis.Response
+export const Response = globalThis.Response
+export type Headers = globalThis.Headers
+export const Headers = globalThis.Headers
+export type FormData = globalThis.FormData
+export const FormData = globalThis.FormData

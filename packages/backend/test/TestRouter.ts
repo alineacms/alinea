@@ -1,4 +1,5 @@
-import {Request, Response, router} from '@alinea/backend/router/Router'
+import {router} from '@alinea/backend/router/Router'
+import {Request, Response} from '@alinea/iso'
 import {test} from 'uvu'
 import * as assert from 'uvu/assert'
 
