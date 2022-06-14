@@ -24,9 +24,6 @@
   },
   "dependencies": {
     "@alinea/core": "0.0.0",
-    "isomorphic-fetch": "^3.0.0"
-  },
-  "devDependencies": {
-    "@types/isomorphic-fetch": "^0.0.35"
+    "@alinea/iso": "0.0.0"
   }
 }

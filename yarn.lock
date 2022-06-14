@@ -38,15 +38,10 @@ __metadata:
     "@alinea/store": 0.0.0
     "@octokit/rest": ^18.12.0
     "@peculiar/webcrypto": ^1.4.0
-    "@types/busboy": ^1.3.0
-    "@types/compression": ^1.7.2
-    "@types/content-type": ^1.1.5
-    "@types/cors": ^2.8.12
     "@types/ioredis": ^4.28.8
     "@types/js-yaml": ^4.0.5
     "@types/md5": ^2.3.2
     "@types/serve-handler": ^6.1.1
-    "@types/ws": ^8.2.0
     base64-arraybuffer: ^1.0.1
     convert-hrtime: ^5.0.0
     firebase-admin: ^10.0.2
@@ -75,6 +70,7 @@ __metadata:
     "@alinea/store": 0.0.0
     "@esbx/eval": ^0.0.19
     "@esbx/react": ^0.0.19
+    "@types/compression": ^1.7.2
     "@types/fs-extra": ^9.0.13
     "@types/sade": ^1.7.3
     better-sqlite3: ^7.5.1
@@ -101,8 +97,7 @@ __metadata:
   resolution: "@alinea/client@workspace:packages/client"
   dependencies:
     "@alinea/core": 0.0.0
-    "@types/isomorphic-fetch": ^0.0.35
-    isomorphic-fetch: ^3.0.0
+    "@alinea/iso": 0.0.0
   languageName: unknown
   linkType: soft
 
@@ -1654,15 +1649,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/busboy@npm:^1.3.0":
-  version: 1.3.0
-  resolution: "@types/busboy@npm:1.3.0"
-  dependencies:
-    "@types/node": "*"
-  checksum: 6438cf56ab1f957017a408b6e375265ee18be181449bf5227736508b2b673c6fa6a2f843beed2cd95e697f15b7c2020673cba2cd2fa0f1fd198598e630b79657
-  languageName: node
-  linkType: hard
-
 "@types/compression@npm:^1.7.2":
   version: 1.7.2
   resolution: "@types/compression@npm:1.7.2"
@@ -1681,26 +1667,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/content-type@npm:^1.1.5":
-  version: 1.1.5
-  resolution: "@types/content-type@npm:1.1.5"
-  checksum: 77d0a88003c18c4d75f8344c678545aa1f1a4c163420c38bf669ba05eb9e0a243ecd022b2c83fbd01def608c275743000c0bf37e9ac95e16f2c3af16ec70534b
-  languageName: node
-  linkType: hard
-
 "@types/cookie-parser@npm:^1.4.2":
   version: 1.4.2
   resolution: "@types/cookie-parser@npm:1.4.2"
   dependencies:
     "@types/express": "*"
   checksum: d5b3c0e193cc95289444306ad396b27b92c9ff1ffd0769268b374d09315c8df1ae94de5fe2a81a79c0629560646763136e15c8a4069d3dc5ba5cb6bc185eaccd
-  languageName: node
-  linkType: hard
-
-"@types/cors@npm:^2.8.12":
-  version: 2.8.12
-  resolution: "@types/cors@npm:2.8.12"
-  checksum: 8c45f112c7d1d2d831b4b266f2e6ed33a1887a35dcbfe2a18b28370751fababb7cd045e745ef84a523c33a25932678097bf79afaa367c6cb3fa0daa7a6438257
   languageName: node
   linkType: hard
 
@@ -1827,13 +1799,6 @@ __metadata:
   dependencies:
     "@types/node": "*"
   checksum: 6082208a2a05767bef8dcbeeb33db713f2aef00eddd7466463246bc48ad6960cc110a82704e4e36cf11be50fcac905c1371322f177fc50b68896541c444ac3e5
-  languageName: node
-  linkType: hard
-
-"@types/isomorphic-fetch@npm:^0.0.35":
-  version: 0.0.35
-  resolution: "@types/isomorphic-fetch@npm:0.0.35"
-  checksum: ae57d2605d24f799fd3d838d59986e88e8a345c65c1751122f6b39b62de504e0a61cd62f04e6e157406c84cba60a6a39eb6d5d2c0a9e9ac153759d5354b5e7e9
   languageName: node
   linkType: hard
 
@@ -2206,15 +2171,6 @@ __metadata:
   version: 2.0.6
   resolution: "@types/unist@npm:2.0.6"
   checksum: 25cb860ff10dde48b54622d58b23e66214211a61c84c0f15f88d38b61aa1b53d4d46e42b557924a93178c501c166aa37e28d7f6d994aba13d24685326272d5db
-  languageName: node
-  linkType: hard
-
-"@types/ws@npm:^8.2.0":
-  version: 8.2.0
-  resolution: "@types/ws@npm:8.2.0"
-  dependencies:
-    "@types/node": "*"
-  checksum: fb2f1cc1bc294607cf737a998a04d4eaca78b0a183905b879849c0e009f47ff4adaa6cbc7d9ac2d2ecc61652c8367e0f8bb02aab0af67a82e8c922746e96434b
   languageName: node
   linkType: hard
 
@@ -5049,16 +5005,6 @@ fsevents@~2.3.2:
   version: 2.0.0
   resolution: "isexe@npm:2.0.0"
   checksum: 26bf6c5480dda5161c820c5b5c751ae1e766c587b1f951ea3fcfc973bafb7831ae5b54a31a69bd670220e42e99ec154475025a468eae58ea262f813fdc8d1c62
-  languageName: node
-  linkType: hard
-
-"isomorphic-fetch@npm:^3.0.0":
-  version: 3.0.0
-  resolution: "isomorphic-fetch@npm:3.0.0"
-  dependencies:
-    node-fetch: ^2.6.1
-    whatwg-fetch: ^3.4.1
-  checksum: e5ab79a56ce5af6ddd21265f59312ad9a4bc5a72cebc98b54797b42cb30441d5c5f8d17c5cd84a99e18101c8af6f90c081ecb8d12fd79e332be1778d58486d75
   languageName: node
   linkType: hard
 
@@ -9237,13 +9183,6 @@ resolve@^1.10.0:
   version: 1.5.0
   resolution: "webworkify@npm:1.5.0"
   checksum: 426c10e0b94cac0678aed05fdf1abce98e8e11a523380537bab99fcd63df7c4b71b3630e61ab8052fdbd8d6e55e53700523b423cd475b258f95be5189d8cde49
-  languageName: node
-  linkType: hard
-
-"whatwg-fetch@npm:^3.4.1":
-  version: 3.6.2
-  resolution: "whatwg-fetch@npm:3.6.2"
-  checksum: ee976b7249e7791edb0d0a62cd806b29006ad7ec3a3d89145921ad8c00a3a67e4be8f3fb3ec6bc7b58498724fd568d11aeeeea1f7827e7e1e5eae6c8a275afed
   languageName: node
   linkType: hard
 

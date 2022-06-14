@@ -50,6 +50,7 @@
     "better-sqlite3": "^7.5.1"
   },
   "devDependencies": {
+    "@types/compression": "^1.7.2",
     "@types/fs-extra": "^9.0.13",
     "@types/sade": "^1.7.3"
   }

@@ -7,11 +7,11 @@
     "url": "https://github.com/alineacms/alinea.git"
   },
   "type": "module",
-  "types": "./dist/index.d.ts",
   "exports": {
-    ".": {
-      "node": "./dist/index.node.js",
-      "default": "./dist/index.js"
+    "./fetch": {
+      "node": "./dist/fetch.node.js",
+      "default": "./dist/fetch.js",
+      "types": "./dist/fetch.d.ts"
     },
     "./*": "./dist/*.js"
   },
