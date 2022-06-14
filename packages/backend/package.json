@@ -38,7 +38,7 @@
     "lib0": "^0.2.42",
     "md5": "^2.3.0",
     "octokit-commit-multiple-files": "^3.2.1",
-    "pretty-ms": "^7.0.1",
+    "pretty-ms": "^8.0.0",
     "regexparam": "^2.0.0",
     "yjs": "^13.5.34"
   },

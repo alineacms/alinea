@@ -24,7 +24,7 @@
   },
   "dependencies": {
     "convert-hrtime": "^5.0.0",
-    "pretty-ms": "^7.0.1"
+    "pretty-ms": "^8.0.0"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^5.4.1",
