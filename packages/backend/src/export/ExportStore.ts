@@ -1,6 +1,6 @@
 import {SqliteStore} from '@alinea/store/sqlite/SqliteStore'
 import {encode} from 'base64-arraybuffer'
-import fs from 'fs-extra'
+import {promises as fs} from 'node:fs'
 import {signed, unsigned} from 'leb128'
 import path, {dirname} from 'node:path'
 import {fileURLToPath} from 'node:url'

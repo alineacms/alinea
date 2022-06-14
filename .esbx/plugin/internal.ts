@@ -1,7 +1,7 @@
 import {AliasPlugin} from '@esbx/alias'
 import {getManifest, getWorkspaces} from '@esbx/workspaces'
 import type {Plugin} from 'esbuild'
-import fs from 'fs-extra'
+import fs from 'fs'
 import path from 'path'
 
 export const internalPlugin: Plugin = {

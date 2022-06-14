@@ -30,7 +30,6 @@
     "@peculiar/webcrypto": "^1.4.0",
     "base64-arraybuffer": "^1.0.1",
     "convert-hrtime": "^5.0.0",
-    "fs-extra": "^10.0.0",
     "isomorphic-path": "^2.0.1",
     "js-yaml": "^4.1.0",
     "leb128": "^0.0.5",

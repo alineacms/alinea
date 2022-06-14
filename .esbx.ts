@@ -9,7 +9,7 @@ import {execSync} from 'child_process'
 import semver from 'compare-versions'
 import type {BuildOptions} from 'esbuild'
 import {build} from 'esbuild'
-import fs from 'fs-extra'
+import fs from 'fs'
 import {BuildTask} from './.esbx/build'
 import {cssPlugin} from './.esbx/plugin/css'
 import {internalPlugin} from './.esbx/plugin/internal'
@@ -125,6 +125,7 @@ export const clean = {
 const testTask = TestTask.configure({
   buildOptions: {
     ...buildOptions,
+    platform: 'node',
     external: modules
       .filter(m => !m.includes('@alinea'))
       .concat('@alinea/sqlite-wasm'),
@@ -135,8 +136,7 @@ const testTask = TestTask.configure({
           'packages/cli/src/Init.ts',
           'packages/backend/src/export/ExportStore.ts'
         ]
-      }),
-      internalPlugin
+      })
     ]
   }
 })
