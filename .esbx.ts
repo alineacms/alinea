@@ -136,7 +136,8 @@ const testTask = TestTask.configure({
           'packages/cli/src/Init.ts',
           'packages/backend/src/export/ExportStore.ts'
         ]
-      })
+      }),
+      internalPlugin
     ]
   }
 })

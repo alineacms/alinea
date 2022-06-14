@@ -45,7 +45,6 @@ __metadata:
     base64-arraybuffer: ^1.0.1
     convert-hrtime: ^5.0.0
     firebase-admin: ^10.0.2
-    fs-extra: ^10.0.0
     ioredis: ^4.28.5
     isomorphic-path: ^2.0.1
     js-yaml: ^4.1.0
