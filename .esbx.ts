@@ -1,3 +1,4 @@
+import {AliasPlugin} from '@esbx/alias'
 import {EvalPlugin} from '@esbx/eval'
 import {ReactPlugin} from '@esbx/react'
 import {ReporterPlugin} from '@esbx/reporter'
@@ -9,7 +10,8 @@ import {execSync} from 'child_process'
 import semver from 'compare-versions'
 import type {BuildOptions} from 'esbuild'
 import {build} from 'esbuild'
-import fs from 'fs'
+import fs from 'fs-extra'
+import path from 'path'
 import {BuildTask} from './.esbx/build'
 import {cssPlugin} from './.esbx/plugin/css'
 import {internalPlugin} from './.esbx/plugin/internal'
@@ -17,7 +19,6 @@ import {resolvePlugin} from './.esbx/plugin/resolve'
 import {sassPlugin} from './.esbx/plugin/sass'
 import {staticPlugin} from './.esbx/plugin/static'
 import {ensureNodeResolution} from './packages/cli/src/util/EnsureNodeResolution'
-import {createId} from './packages/core/src/Id'
 
 export {VersionTask} from '@esbx/workspaces'
 
@@ -137,6 +138,9 @@ const testTask = TestTask.configure({
           'packages/backend/src/export/ExportStore.ts'
         ]
       }),
+      AliasPlugin.configure({
+        '@alinea/iso': path.resolve('./packages/iso/src/index.node.ts')
+      }),
       internalPlugin
     ]
   }
@@ -148,11 +152,5 @@ export const test = {
     ensureNodeResolution()
     await prepare.action({checkTypeDoc: false})
     return testTask.action(options)
-  }
-}
-
-export const mkid = {
-  action() {
-    console.log(createId())
   }
 }

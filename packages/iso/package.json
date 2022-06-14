@@ -8,10 +8,20 @@
   },
   "type": "module",
   "exports": {
+    ".": {
+      "node": "./dist/index.node.js",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
     "./fetch": {
       "node": "./dist/fetch.node.js",
-      "default": "./dist/fetch.js",
-      "types": "./dist/fetch.d.ts"
+      "types": "./dist/fetch.d.ts",
+      "default": "./dist/fetch.js"
+    },
+    "./crypto": {
+      "node": "./dist/crypto.node.js",
+      "types": "./dist/crypto.d.ts",
+      "default": "./dist/crypto.js"
     },
     "./*": "./dist/*.js"
   },
@@ -23,5 +33,8 @@
     "fetch-blob": "^3.1.5",
     "formdata-polyfill": "^4.0.10",
     "node-fetch": "^3.2.6"
+  },
+  "devDependencies": {
+    "@peculiar/webcrypto": "^1.4.0"
   }
 }

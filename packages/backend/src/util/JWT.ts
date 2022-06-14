@@ -1,6 +1,7 @@
 // Source: https://github.com/tsndr/cloudflare-worker-jwt/blob/e7964b63c2cb128bb4ef6b267405c27243819540/index.js
 
 import {atob, btoa} from '@alinea/core/util/Base64'
+import {crypto} from '@alinea/iso'
 
 class Base64URL {
   static parse(s: string) {
@@ -17,19 +18,6 @@ class Base64URL {
       .replace(/\//g, '_')
   }
 }
-
-let subtle =
-  typeof crypto === 'undefined' ? undefined : Promise.resolve(crypto.subtle)
-
-if (!subtle)
-  subtle = import('node:crypto')
-    .then((c: any) => c.webcrypto.subtle)
-    .catch(() => {
-      return import('@peculiar/webcrypto').then(
-        c => new c.Crypto().subtle as any
-      )
-    })
-    .catch(() => undefined)
 
 const algorithms = {
   ES256: {name: 'ECDSA', namedCurve: 'P-256', hash: {name: 'SHA-256'}},
@@ -100,8 +88,6 @@ class JWT {
     secret: string,
     options: SignOptions = {algorithm: 'HS256', header: {typ: 'JWT'}}
   ): Promise<string> => {
-    const crypto = await subtle
-    if (!crypto) throw new Error('Crypto not supported')
     if (typeof options === 'string')
       options = {algorithm: options, header: {typ: 'JWT'}}
     if (payload === null || typeof payload !== 'object')
@@ -135,14 +121,14 @@ class JWT {
         )
       )
     } else keyData = this._utf8ToUint8Array(secret)
-    const key = await crypto.importKey(
+    const key = await crypto.subtle.importKey(
       keyFormat,
       keyData,
       importAlgorithm,
       false,
       ['sign']
     )
-    const signature = await crypto.sign(
+    const signature = await crypto.subtle.sign(
       importAlgorithm,
       key,
       this._utf8ToUint8Array(partialToken)
@@ -164,8 +150,6 @@ class JWT {
     secret: string,
     options: VerifyOptions = {algorithm: 'HS256'}
   ): Promise<T> => {
-    const crypto = await subtle
-    if (!crypto) throw new Error('Crypto not supported')
     if (typeof token !== 'string') throw new Error('token must be a string')
     if (typeof secret !== 'string') throw new Error('secret must be a string')
     if (typeof options.algorithm !== 'string')
@@ -195,14 +179,14 @@ class JWT {
         )
       )
     } else keyData = this._utf8ToUint8Array(secret)
-    const key = await crypto.importKey(
+    const key = await crypto.subtle.importKey(
       keyFormat,
       keyData,
       importAlgorithm,
       false,
       ['sign']
     )
-    const res = await crypto.sign(
+    const res = await crypto.subtle.sign(
       importAlgorithm,
       key,
       this._utf8ToUint8Array(tokenParts.slice(0, 2).join('.'))

@@ -1,4 +1,5 @@
 import {promises as fs} from 'fs'
+import path from 'path'
 
 // Source: https://stackoverflow.com/a/52562541
 export async function copyDir(src, dest) {

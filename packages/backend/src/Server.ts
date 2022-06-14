@@ -12,11 +12,12 @@ import {
   WorkspaceConfig,
   Workspaces
 } from '@alinea/core'
+import {arrayBufferToHex} from '@alinea/core/util/ArrayBuffers'
 import {generateKeyBetween} from '@alinea/core/util/FractionalIndexing'
+import {basename, extname} from '@alinea/core/util/Paths'
+import {crypto} from '@alinea/iso'
 import {Cursor, Store} from '@alinea/store'
 import {encode} from 'base64-arraybuffer'
-import {posix as path} from 'isomorphic-path'
-import md5 from 'md5'
 import * as Y from 'yjs'
 import {Cache} from './Cache'
 import {Data} from './Data'
@@ -193,7 +194,7 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
       const parent = parents[parents.length - 1]
       if (!parent) throw createError(400, `Parent not found: "${file.path}"`)
       const location = await media.upload(workspace as string, file)
-      const extension = path.extname(location)
+      const extension = extname(location)
       const prev = store.first(
         Entry.where(Entry.workspace.is(workspace))
           .where(Entry.root.is(root))
@@ -207,13 +208,15 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
         root: root as string,
         parent: parent,
         parents,
-        title: path.basename(file.path, extension),
+        title: basename(file.path, extension),
         url: file.path,
-        path: path.basename(file.path),
+        path: basename(file.path),
         location,
         extension: extension,
         size: file.buffer.byteLength,
-        hash: md5(new Uint8Array(file.buffer)),
+        hash: arrayBufferToHex(
+          await crypto.subtle.digest('SHA-256', file.buffer)
+        ),
         width: file.width,
         height: file.height,
         averageColor: file.averageColor,

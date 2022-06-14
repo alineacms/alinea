@@ -1,4 +1,4 @@
-import {Headers, Request, Response} from '@alinea/iso/fetch'
+import {Headers, Request, Response} from '@alinea/iso'
 import http from 'node:http'
 import type {Writable} from 'node:stream'
 import stream from 'node:stream'

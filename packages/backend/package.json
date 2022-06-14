@@ -27,14 +27,10 @@
     "@alinea/iso": "0.0.0",
     "@alinea/store": "0.0.0",
     "@octokit/rest": "^18.12.0",
-    "@peculiar/webcrypto": "^1.4.0",
     "base64-arraybuffer": "^1.0.1",
     "convert-hrtime": "^5.0.0",
-    "isomorphic-path": "^2.0.1",
     "js-yaml": "^4.1.0",
-    "leb128": "^0.0.5",
     "lib0": "^0.2.42",
-    "md5": "^2.3.0",
     "octokit-commit-multiple-files": "^3.2.1",
     "pretty-ms": "^8.0.0",
     "regexparam": "^2.0.0",
@@ -47,6 +43,7 @@
     "@types/md5": "^2.3.2",
     "@types/serve-handler": "^6.1.1",
     "firebase-admin": "^10.0.2",
-    "ioredis": "^4.28.5"
+    "ioredis": "^4.28.5",
+    "leb128": "^0.0.5"
   }
 }

@@ -1,5 +1,5 @@
 import {router} from '@alinea/backend/router/Router'
-import {Request, Response} from '@alinea/iso/fetch.node'
+import {Request, Response} from '@alinea/iso'
 import {test} from 'uvu'
 import * as assert from 'uvu/assert'
 

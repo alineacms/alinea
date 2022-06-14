@@ -1,6 +1,6 @@
 import {createId, Entry, slugify} from '@alinea/core'
+import {basename, dirname, extname, join} from '@alinea/core/util/Paths'
 import {Store} from '@alinea/store/Store'
-import {posix as path} from 'isomorphic-path'
 import * as idb from 'lib0/indexeddb.js'
 import {Data} from '../Data'
 
@@ -47,11 +47,11 @@ export class IndexedDBData implements Data.Source, Data.Target, Data.Media {
   async upload(workspace: string, file: Data.Media.Upload): Promise<string> {
     const db = await this.db
     const [store] = idb.transact(db, [STORE_NAME])
-    const dir = path.dirname(file.path)
-    const extension = path.extname(file.path)
-    const name = path.basename(file.path, extension)
+    const dir = dirname(file.path)
+    const extension = extname(file.path)
+    const name = basename(file.path, extension)
     const fileName = `${slugify(name)}.${createId()}${extension}`
-    const location = path.join(dir, fileName)
+    const location = join(dir, fileName)
     await idb.put(store, file.buffer, 'file:' + location)
     return location
   }

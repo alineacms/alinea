@@ -1,5 +1,5 @@
 import {Outcome} from '@alinea/core/Outcome'
-import {Request, Response} from '@alinea/iso/fetch'
+import {Request, Response} from '@alinea/iso'
 import {parse} from 'regexparam'
 
 export type Handle<In, Out> = {
