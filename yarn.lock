@@ -49,7 +49,6 @@ __metadata:
     "@types/serve-handler": ^6.1.1
     "@types/ws": ^8.2.0
     base64-arraybuffer: ^1.0.1
-    content-type: ^1.0.4
     convert-hrtime: ^5.0.0
     firebase-admin: ^10.0.2
     fs-extra: ^10.0.0
@@ -61,7 +60,6 @@ __metadata:
     md5: ^2.3.0
     octokit-commit-multiple-files: ^3.2.1
     pretty-ms: ^7.0.1
-    raw-body: ^2.4.1
     regexparam: ^2.0.0
     yjs: ^13.5.34
   languageName: unknown
@@ -3098,7 +3096,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"content-type@npm:^1.0.4, content-type@npm:~1.0.4":
+"content-type@npm:~1.0.4":
   version: 1.0.4
   resolution: "content-type@npm:1.0.4"
   checksum: 3d93585fda985d1554eca5ebd251994327608d2e200978fdbfba21c0c679914d5faf266d17027de44b34a72c7b0745b18584ecccaa7e1fdfb6a68ac7114f12e0
@@ -4683,7 +4681,7 @@ fsevents@~2.3.2:
   languageName: node
   linkType: hard
 
-"http-errors@npm:1.7.3, http-errors@npm:~1.7.2":
+"http-errors@npm:~1.7.2":
   version: 1.7.3
   resolution: "http-errors@npm:1.7.3"
   dependencies:
@@ -7610,18 +7608,6 @@ fsevents@~2.3.2:
     iconv-lite: 0.4.24
     unpipe: 1.0.0
   checksum: 6343906939e018c6e633a34a938a5d6d1e93ffcfa48646e00207d53b418e941953b521473950c079347220944dc75ba10e7b3c08bf97e3ac72c7624882db09bb
-  languageName: node
-  linkType: hard
-
-"raw-body@npm:^2.4.1":
-  version: 2.4.1
-  resolution: "raw-body@npm:2.4.1"
-  dependencies:
-    bytes: 3.1.0
-    http-errors: 1.7.3
-    iconv-lite: 0.4.24
-    unpipe: 1.0.0
-  checksum: d5e9179d2f1f0a652cd107c080f25d165c724f546124d620c8df7fb80322df42bff547a8b310e55e1f7952556d013716a21b30162192eb0b3332d7efcba75883
   languageName: node
   linkType: hard
 

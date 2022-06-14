@@ -30,7 +30,6 @@
     "@remix-run/web-fetch": "^4.1.1",
     "@remix-run/web-file": "^3.0.2",
     "base64-arraybuffer": "^1.0.1",
-    "content-type": "^1.0.4",
     "convert-hrtime": "^5.0.0",
     "fs-extra": "^10.0.0",
     "isomorphic-path": "^2.0.1",
@@ -40,7 +39,6 @@
     "md5": "^2.3.0",
     "octokit-commit-multiple-files": "^3.2.1",
     "pretty-ms": "^7.0.1",
-    "raw-body": "^2.4.1",
     "regexparam": "^2.0.0",
     "yjs": "^13.5.34"
   },
