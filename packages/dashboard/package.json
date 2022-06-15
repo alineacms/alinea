@@ -52,7 +52,7 @@
     "react-router-dom": "^6.3.0",
     "react-tiny-virtual-list": "^2.2.0",
     "y-webrtc": "^10.2.0",
-    "yjs": "^13.5.34"
+    "yjs": "^13.5.39"
   },
   "peerDependencies": {
     "react": "*"
