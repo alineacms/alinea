@@ -1,9 +1,52 @@
 import {SqliteStore} from '@alinea/store/sqlite/SqliteStore'
 import {encode} from 'base64-arraybuffer'
 import {promises as fs} from 'node:fs'
-import {signed, unsigned} from 'leb128'
 import path, {dirname} from 'node:path'
 import {fileURLToPath} from 'node:url'
+
+// Source: https://gist.github.com/miklund/79c1f3eb129ea5689c03c41d17922c14
+
+function signedLEB128(value: number) {
+  var v = [],
+    size = Math.ceil(Math.log2(Math.abs(value))),
+    more = true,
+    isNegative = value < 0,
+    b = 0
+  while (more) {
+    b = value & 127
+    value = value >> 7
+
+    if (isNegative) {
+      value = value | -(1 << (size - 7))
+    }
+    if (
+      (value == 0 && (b & 0x40) == 0) ||
+      (value == -1 && (b & 0x40) == 0x40)
+    ) {
+      more = false
+    } else {
+      b = b | 128
+    }
+    v.push(b)
+  }
+  return Buffer.from(v)
+}
+
+function unsignedLEB128(value: number, padding?: number) {
+  var v = [],
+    b = 0
+  padding = padding || 0
+  do {
+    b = value & 127
+    value = value >> 7
+    if (value != 0 || padding > 0) {
+      b = b | 128
+    }
+    v.push(b)
+    padding--
+  } while (value != 0 || padding > -1)
+  return Buffer.from(v)
+}
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
@@ -19,12 +62,12 @@ function bin(strings: ReadonlyArray<string>, ...inserts: Array<Buffer>) {
 }
 
 function embedInWasm(data: Uint8Array) {
-  const size = unsigned.encode(data.length)
-  const length = signed.encode(data.length)
-  const globalL = unsigned.encode(5 + length.length)
-  const dataL = unsigned.encode(5 + size.length + data.length)
-  const memoryPages = unsigned.encode(Math.ceil(data.length / 65536))
-  const memoryL = unsigned.encode(2 + memoryPages.length)
+  const size = unsignedLEB128(data.length)
+  const length = signedLEB128(data.length)
+  const globalL = unsignedLEB128(5 + length.length)
+  const dataL = unsignedLEB128(5 + size.length + data.length)
+  const memoryPages = unsignedLEB128(Math.ceil(data.length / 65536))
+  const memoryL = unsignedLEB128(2 + memoryPages.length)
   return bin`
     00 61 73 6d                                         // WASM_BINARY_MAGIC
     01 00 00 00                                         // WASM_BINARY_VERSION
