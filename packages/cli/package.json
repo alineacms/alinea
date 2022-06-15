@@ -40,8 +40,10 @@
     "compression": "^1.7.4",
     "detect-package-manager": "^2.0.1",
     "dirname-filename-esm": "^1.1.1",
+    "dotenv": "^16.0.1",
     "esbuild": "^0.14.11",
     "express": "^4.17.1",
+    "find-config": "^1.0.0",
     "fs-extra": "^10.0.0",
     "sade": "^1.7.4",
     "serve-handler": "^6.1.3"
