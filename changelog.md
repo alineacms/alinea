@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Replace CJS dependencies to pure ESM (#161)
+
 ## [0.1.3]
 
 - The drafts of the default development backend are now placed with the
