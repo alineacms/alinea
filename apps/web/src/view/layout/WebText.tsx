@@ -25,6 +25,7 @@ export function WebText<T>(props: RichTextProps<T>) {
       ul={<ul className={styles.list()} />}
       ol={<ol className={styles.list()} />}
       li={<li className={styles.listItem()} />}
+      blockquote={<blockquote className={styles.blockquote()} />}
       {...props}
     />
   )

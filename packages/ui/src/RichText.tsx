@@ -43,6 +43,8 @@ function nodeElement(
       return <ol style={style} />
     case 'listItem':
       return <li />
+    case 'blockquote':
+      return <blockquote style={style} />
   }
 }
 
