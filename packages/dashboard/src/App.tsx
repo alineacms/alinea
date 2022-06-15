@@ -14,7 +14,6 @@ import {IcRoundRotateLeft} from '@alinea/ui/icons/IcRoundRotateLeft'
 import {IcRoundWarning} from '@alinea/ui/icons/IcRoundWarning'
 import {MdiSourceBranch} from '@alinea/ui/icons/MdiSourceBranch'
 import {Fragment, Suspense, useState} from 'react'
-import {Helmet} from 'react-helmet'
 import {
   QueryClient,
   QueryClientProvider as ReactQueryClientProvider
@@ -33,6 +32,7 @@ import {useNav} from './hook/UseNav'
 import {useRoot} from './hook/UseRoot'
 import {SessionProvider} from './hook/UseSession'
 import {useWorkspace} from './hook/UseWorkspace'
+import {Head} from './util/Head'
 import {ContentTree} from './view/ContentTree'
 import {DraftsOverview} from './view/DraftsOverview'
 import {EditMode} from './view/entry/EditMode'
@@ -98,10 +98,9 @@ function AppAuthenticated() {
         <Toolbar.Provider>
           <Sidebar.Provider>
             <Viewport attachToBody contain color={color}>
-              <FavIcon color={color} />
-              <Helmet>
-                <title key="workspace-title">{renderLabel(label)}</title>
-              </Helmet>
+              <Head>
+                <FavIcon color={color} />
+              </Head>
               <Toolbar.Root />
               <div
                 style={{
@@ -190,7 +189,7 @@ type EntryRouteProps = {
 }
 
 function EntryRoute({id}: EntryRouteProps) {
-  const {name: workspace} = useWorkspace()
+  const workspace = useWorkspace()
   const {draft} = useDraft(id)
   const locale = useLocale()
   const isLoading = Boolean(
@@ -209,7 +208,7 @@ function EntryRoute({id}: EntryRouteProps) {
         <SearchBox />
         <RootHeader />
         <ContentTree
-          key={workspace}
+          key={workspace.name}
           locale={locale}
           select={select}
           redirectToRoot={!id}
@@ -220,7 +219,7 @@ function EntryRoute({id}: EntryRouteProps) {
           <NewEntry parentId={id} />
         </Suspense>
       )}
-      {draft && (
+      {draft ? (
         <Suspense fallback={<Loader absolute />}>
           <View
             initialMode={EditMode.Editing}
@@ -228,6 +227,10 @@ function EntryRoute({id}: EntryRouteProps) {
             isLoading={isLoading}
           />
         </Suspense>
+      ) : (
+        <Head>
+          <title>{renderLabel(workspace.label)}</title>
+        </Head>
       )}
     </CurrentDraftProvider>
   )
