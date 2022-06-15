@@ -1,4 +1,3 @@
-import {AliasPlugin} from '@esbx/alias'
 import {EvalPlugin} from '@esbx/eval'
 import {ReactPlugin} from '@esbx/react'
 import {ReporterPlugin} from '@esbx/reporter'
@@ -11,7 +10,6 @@ import semver from 'compare-versions'
 import type {BuildOptions} from 'esbuild'
 import {build} from 'esbuild'
 import fs from 'fs-extra'
-import path from 'path'
 import {BuildTask} from './.esbx/build'
 import {cssPlugin} from './.esbx/plugin/css'
 import {internalPlugin} from './.esbx/plugin/internal'
@@ -137,9 +135,6 @@ const testTask = TestTask.configure({
           'packages/cli/src/Init.ts',
           'packages/backend/src/export/ExportStore.ts'
         ]
-      }),
-      AliasPlugin.configure({
-        '@alinea/iso': path.resolve('./packages/iso/src/index.node.ts')
       }),
       internalPlugin
     ]

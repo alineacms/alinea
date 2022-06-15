@@ -2,19 +2,7 @@ import {getManifest} from '@esbx/workspaces'
 import type {Plugin} from 'esbuild'
 import path from 'path'
 
-const inline = new Set([
-  'leb128',
-  '@peculiar/webcrypto',
-  '@peculiar/asn1-schema',
-  '@peculiar/json-schema',
-  'pvtsutils',
-  'webcrypto-core',
-  'tslib',
-  'safe-buffer',
-  'base64-js',
-  'ieee754',
-  'bn.js'
-])
+const inline = new Set([])
 
 function packageOf(filePath: string) {
   if (filePath.includes('node_modules'))

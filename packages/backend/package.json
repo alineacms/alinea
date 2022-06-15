@@ -24,7 +24,7 @@
   },
   "dependencies": {
     "@alinea/core": "0.0.0",
-    "@alinea/iso": "0.0.0",
+    "@alinea/iso": "0.1.6",
     "@alinea/store": "0.0.0",
     "@octokit/rest": "^18.12.0",
     "base64-arraybuffer": "^1.0.1",
@@ -37,13 +37,12 @@
     "yjs": "^13.5.34"
   },
   "devDependencies": {
-    "@alinea/sqlite-wasm": "^0.1.6",
+    "@alinea/sqlite-wasm": "^0.1.7",
     "@types/ioredis": "^4.28.8",
     "@types/js-yaml": "^4.0.5",
     "@types/md5": "^2.3.2",
     "@types/serve-handler": "^6.1.1",
     "firebase-admin": "^10.0.2",
-    "ioredis": "^4.28.5",
-    "leb128": "^0.0.5"
+    "ioredis": "^4.28.5"
   }
 }
