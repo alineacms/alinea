@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.1.4]
+
 - Replace CJS dependencies to pure ESM (#161)
 - Added blockquote option to the rich text field
 
