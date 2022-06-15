@@ -1,6 +1,6 @@
 import {fromModule, Typo} from '@alinea/ui'
 import {IcRoundCheck} from '@alinea/ui/icons/IcRoundCheck'
-import {useState} from 'react'
+import {useRef, useState} from 'react'
 import MdiContentCopy from '../../icons/MdiContentCopy'
 import css from './CodeBlock.module.scss'
 import {CodeBlockSchema} from './CodeBlock.schema'
@@ -8,12 +8,13 @@ import {CodeBlockSchema} from './CodeBlock.schema'
 const styles = fromModule(css)
 
 export function CodeBlock({code, compact, fileName}: CodeBlockSchema) {
+  const codeRef = useRef<HTMLDivElement>(null)
   const [isCopied, setIsCopied] = useState(false)
 
-  function handleCopyToClipboard(content) {
+  function handleCopyToClipboard(content: string) {
     navigator.clipboard.writeText(content)
     setIsCopied(true)
-    setTimeout(() => setIsCopied(false), 2500)
+    setTimeout(() => setIsCopied(false), 1250)
   }
 
   return (
@@ -21,11 +22,12 @@ export function CodeBlock({code, compact, fileName}: CodeBlockSchema) {
       {fileName && <div className={styles.root.fileName()}>{fileName}</div>}
       <Typo.Monospace
         as="div"
+        ref={codeRef}
         dangerouslySetInnerHTML={{__html: code}}
         className={styles.root.code()}
       />
       <button
-        onClick={() => handleCopyToClipboard(code)}
+        onClick={() => handleCopyToClipboard(codeRef?.current?.innerText)}
         className={styles.root.copy()}
       >
         {!isCopied && <MdiContentCopy style={{fontSize: '18px'}} />}

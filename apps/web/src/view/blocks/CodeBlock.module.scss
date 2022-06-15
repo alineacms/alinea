@@ -67,12 +67,12 @@
     transition: 0.25s ease-out;
 
     &:hover {
-      color: hsla(var(--web-negative-hsl), 0.4);
       background: hsla(var(--web-negative-hsl), 0.1);
     }
 
     .is-copied & {
-      color: var(--web-accent);
+      color: #347d39;
+      border-color: #347d39;
     }
   }
 
