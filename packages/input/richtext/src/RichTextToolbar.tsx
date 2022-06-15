@@ -19,7 +19,7 @@ import {IcRoundFormatItalic} from '@alinea/ui/icons/IcRoundFormatItalic'
 import {IcRoundFormatListBulleted} from '@alinea/ui/icons/IcRoundFormatListBulleted'
 import {IcRoundFormatListNumbered} from '@alinea/ui/icons/IcRoundFormatListNumbered'
 import {IcRoundLink} from '@alinea/ui/icons/IcRoundLink'
-import IcRoundQuote from '@alinea/ui/icons/IcRoundQuote'
+import {IcRoundQuote} from '@alinea/ui/icons/IcRoundQuote'
 import {IcRoundUnfoldMore} from '@alinea/ui/icons/IcRoundUnfoldMore'
 /*import {IcRoundRedo} from '@alinea/ui/icons/IcRoundRedo'
 import {IcRoundUndo} from '@alinea/ui/icons/IcRoundUndo'*/

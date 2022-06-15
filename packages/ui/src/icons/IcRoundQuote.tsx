@@ -10,4 +10,3 @@ export function IcRoundQuote(props: SVGProps<SVGSVGElement>) {
     </svg>
   )
 }
-export default IcRoundQuote
