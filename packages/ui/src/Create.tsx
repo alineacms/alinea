@@ -1,7 +1,6 @@
 import {ComponentType, HTMLAttributes} from 'react'
 import {Link as RRLink, LinkProps} from 'react-router-dom'
 import css from './Create.module.scss'
-import {IcRoundAdd} from './icons/IcRoundAdd'
 import {IcRoundAddCircle} from './icons/IcRoundAddCircle'
 import {HStack} from './Stack'
 import {fromModule} from './util/Styler'
@@ -45,7 +44,7 @@ export namespace Create {
             </div>
           ) : (
             <div className={styles.button.add()}>
-              <IcRoundAdd />
+              <IcRoundAddCircle />
             </div>
           )}
 
