@@ -29,7 +29,13 @@ export function NumberInput({state, field}: NumberInputProps) {
         type="number"
         className={styles.root.input()}
         value={String(value ?? '')}
-        onChange={e => setValue(Number(e.currentTarget.value))}
+        onChange={e =>
+          setValue(
+            e.currentTarget.value === ''
+              ? undefined!
+              : Number(e.currentTarget.value)
+          )
+        }
         min={minValue}
         max={maxValue}
       />
