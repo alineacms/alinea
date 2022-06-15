@@ -27,6 +27,11 @@ import {Previews} from './Previews'
 import {PreviewStore, previewStore} from './PreviewStore'
 import {parentUrl, walkUrl} from './util/Paths'
 
+type PagesOptions = {
+  preview?: boolean
+  previewToken?: string
+}
+
 export type ServerOptions<T extends Workspaces> = {
   config: Config<T>
   createStore: () => Promise<Store>
@@ -232,16 +237,19 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
     return this.options.drafts
   }
 
-  loadPages<K extends keyof T>(workspaceKey: K, previewToken?: string) {
+  loadPages<K extends keyof T>(workspaceKey: K, options: PagesOptions = {}) {
     const workspace = this.config.workspaces[workspaceKey]
+    const store = options.previewToken
+      ? async () => {
+          await this.parsePreviewToken(options.previewToken!)
+          return this.preview.getStore()
+        }
+      : options.preview
+      ? () => this.preview.getStore()
+      : this.createStore
     return new Pages<T[K] extends WorkspaceConfig<infer W> ? W : any>(
       workspace,
-      previewToken
-        ? async () => {
-            await this.parsePreviewToken(previewToken)
-            return this.preview.getStore()
-          }
-        : this.createStore
+      store
     )
   }
 

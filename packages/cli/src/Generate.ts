@@ -78,7 +78,9 @@ function schemaCollections(workspace: Workspace) {
 function pagesOf(workspace: Workspace) {
   return code`
     import {backend} from '../backend.js'
-    export const pages = backend.loadPages('${workspace.name}')
+    export const pages = backend.loadPages('${workspace.name}', {
+      preview: process.env.NODE_ENV === 'development'
+    })
   `
 }
 
