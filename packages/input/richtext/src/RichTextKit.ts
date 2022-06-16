@@ -37,7 +37,6 @@ export const RichTextKit = Extension.create({
           class: styles.paragraph()
         }
       }),
-      Blockquote,
       Bold,
       Italic,
       Strike,
@@ -54,6 +53,11 @@ export const RichTextKit = Extension.create({
       ListItem.configure({
         HTMLAttributes: {
           class: styles.listItem()
+        }
+      }),
+      Blockquote.configure({
+        HTMLAttributes: {
+          class: styles.blockquote()
         }
       }),
       HardBreak,

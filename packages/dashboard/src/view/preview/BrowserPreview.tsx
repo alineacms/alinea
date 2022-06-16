@@ -22,9 +22,10 @@ const styles = fromModule(css)
 export type BrowserPreviewProps = {
   url: string
   prettyUrl?: string
+  reload?: boolean
 }
 
-export function BrowserPreview({url, prettyUrl}: BrowserPreviewProps) {
+export function BrowserPreview({url, prettyUrl, reload}: BrowserPreviewProps) {
   const ref = useRef<HTMLIFrameElement>(null)
   const drafts = useDrafts()
   const status = useObservable(drafts.status)
@@ -33,7 +34,7 @@ export function BrowserPreview({url, prettyUrl}: BrowserPreviewProps) {
     setLoading(true)
   }, [url])
   useEffect(() => {
-    if (status === DraftsStatus.Synced) {
+    if (reload && status === DraftsStatus.Synced) {
       ref.current?.setAttribute('src', url)
     }
   }, [status])

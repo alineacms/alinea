@@ -3,10 +3,10 @@ import {useInput} from '@alinea/editor'
 import {Chip, fromModule, HStack, IconLink, Typo} from '@alinea/ui'
 import {IcRoundArrowBack} from '@alinea/ui/icons/IcRoundArrowBack'
 import {PropsWithChildren} from 'react'
-import {Helmet} from 'react-helmet'
 import {EntryDraft} from '../../draft/EntryDraft'
 import {useCurrentDraft} from '../../hook/UseCurrentDraft'
 import {useWorkspace} from '../../hook/UseWorkspace'
+import {Head} from '../../util/Head'
 import css from './EntryTitle.module.scss'
 
 const styles = fromModule(css)
@@ -21,11 +21,11 @@ export function EntryTitle({children, backLink}: EntryTitleProps) {
   const {label} = useWorkspace()
   return (
     <>
-      <Helmet>
-        <title key="entry-title">
+      <Head>
+        <title>
           {title} - {renderLabel(label)}
         </title>
-      </Helmet>
+      </Head>
       <div className={styles.root()}>
         <HStack center gap={18}>
           {backLink && <IconLink icon={IcRoundArrowBack} to={backLink} />}

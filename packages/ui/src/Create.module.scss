@@ -28,12 +28,11 @@
   // border-bottom: 1px solid var(--alinea-shadow);
 
   &-add {
-    background: hsl(var(--alinea-negative));
+    //background: hsl(var(--alinea-negative));
     width: 1em;
     height: 1em;
     font-size: 1em;
-    border-radius: 50%;
-    color: var(--alinea-lift);
+    color: hsl(var(--alinea-negative));
     display: flex;
     align-items: center;
     justify-content: center;
@@ -46,7 +45,6 @@
   }
 
   &:hover &-add {
-    background: var(--alinea-accent-foreground);
-    color: var(--alinea-accent);
+    color: var(--alinea-accent-foreground);
   }
 }

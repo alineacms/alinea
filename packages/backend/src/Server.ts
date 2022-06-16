@@ -12,11 +12,12 @@ import {
   WorkspaceConfig,
   Workspaces
 } from '@alinea/core'
+import {arrayBufferToHex} from '@alinea/core/util/ArrayBuffers'
 import {generateKeyBetween} from '@alinea/core/util/FractionalIndexing'
+import {basename, extname} from '@alinea/core/util/Paths'
+import {crypto} from '@alinea/iso'
 import {Cursor, Store} from '@alinea/store'
 import {encode} from 'base64-arraybuffer'
-import {posix as path} from 'isomorphic-path'
-import md5 from 'md5'
 import * as Y from 'yjs'
 import {Cache} from './Cache'
 import {Data} from './Data'
@@ -25,6 +26,11 @@ import {Pages} from './Pages'
 import {Previews} from './Previews'
 import {PreviewStore, previewStore} from './PreviewStore'
 import {parentUrl, walkUrl} from './util/Paths'
+
+type PagesOptions = {
+  preview?: boolean
+  previewToken?: string
+}
 
 export type ServerOptions<T extends Workspaces> = {
   config: Config<T>
@@ -193,7 +199,7 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
       const parent = parents[parents.length - 1]
       if (!parent) throw createError(400, `Parent not found: "${file.path}"`)
       const location = await media.upload(workspace as string, file)
-      const extension = path.extname(location)
+      const extension = extname(location)
       const prev = store.first(
         Entry.where(Entry.workspace.is(workspace))
           .where(Entry.root.is(root))
@@ -207,13 +213,15 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
         root: root as string,
         parent: parent,
         parents,
-        title: path.basename(file.path, extension),
+        title: basename(file.path, extension),
         url: file.path,
-        path: path.basename(file.path),
+        path: basename(file.path),
         location,
         extension: extension,
         size: file.buffer.byteLength,
-        hash: md5(new Uint8Array(file.buffer)),
+        hash: arrayBufferToHex(
+          await crypto.subtle.digest('SHA-256', file.buffer)
+        ),
         width: file.width,
         height: file.height,
         averageColor: file.averageColor,
@@ -229,16 +237,19 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
     return this.options.drafts
   }
 
-  loadPages<K extends keyof T>(workspaceKey: K, previewToken?: string) {
+  loadPages<K extends keyof T>(workspaceKey: K, options: PagesOptions = {}) {
     const workspace = this.config.workspaces[workspaceKey]
+    const store = options.previewToken
+      ? async () => {
+          await this.parsePreviewToken(options.previewToken!)
+          return this.preview.getStore()
+        }
+      : options.preview
+      ? () => this.preview.getStore()
+      : this.createStore
     return new Pages<T[K] extends WorkspaceConfig<infer W> ? W : any>(
       workspace,
-      previewToken
-        ? async () => {
-            await this.parsePreviewToken(previewToken)
-            return this.preview.getStore()
-          }
-        : this.createStore
+      store
     )
   }
 

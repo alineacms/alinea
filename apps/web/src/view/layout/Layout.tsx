@@ -1,7 +1,13 @@
 import {fromModule} from '@alinea/ui'
 import Head from 'next/head'
 import {useRouter} from 'next/router'
-import {HTMLAttributes, PropsWithChildren, useEffect, useRef} from 'react'
+import {
+  HTMLAttributes,
+  PropsWithChildren,
+  useEffect,
+  useRef,
+  useState
+} from 'react'
 import {FavIcon} from './branding/FavIcon'
 import {Footer} from './Footer'
 import {Header} from './Header'
@@ -17,6 +23,14 @@ export function Layout({
   header,
   footer
 }: PropsWithChildren<LayoutProps>) {
+  const [theme, setTheme] = useState<Layout.Theme>('system')
+  useEffect(() => {
+    const name = theme.toLowerCase()
+    document.body.classList.add(`is-${name}`)
+    return () => {
+      document.body.classList.remove(`is-${name}`)
+    }
+  }, [theme])
   return (
     <>
       <FavIcon color="#4a65e8" />
@@ -32,13 +46,15 @@ export function Layout({
       <div className={styles.root(is)}>
         <Header transparent={is.home} {...header} />
         <div className={styles.root.content()}>{children}</div>
-        <Footer footer={footer} />
+        <Footer footer={footer} theme={theme} setTheme={setTheme} />
       </div>
     </>
   )
 }
 
 export namespace Layout {
+  export type Theme = 'system' | 'dark' | 'light'
+
   export function Content({children}: PropsWithChildren<{}>) {
     return <div className={styles.content()}>{children}</div>
   }

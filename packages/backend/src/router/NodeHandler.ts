@@ -1,7 +1,11 @@
-import http from 'http'
+import {Headers, Request, Response} from '@alinea/iso'
+import http from 'node:http'
+import type {Writable} from 'node:stream'
+import stream from 'node:stream'
 import {TLSSocket} from 'node:tls'
-import type {Writable} from 'stream'
-import {Headers, Request, Response} from './Router'
+import util from 'node:util'
+
+const finished = util.promisify(stream.finished)
 
 // Source: https://github.com/remix-run/remix/blob/4b11c6d12309ba5a1f3be4f716739f3240f21c35/packages/remix-node/stream.ts#L4
 async function writeReadableStreamToWritable(
@@ -26,8 +30,14 @@ async function writeReadableStreamToWritable(
 async function apply(response: Response, to: http.ServerResponse) {
   to.statusCode = response.status
   response.headers.forEach((value, key) => to.setHeader(key, value))
-  if (response.body) await writeReadableStreamToWritable(response.body, to)
-  else to.end()
+  if (response.body) {
+    // Body of node-fetch is actually a ReadableStream, if we ever move to
+    // a more complete polyfill we'll need the above
+    // writeReadableStreamToWritable
+    await finished((response.body as any).pipe(to))
+  } else {
+    to.end()
+  }
 }
 
 function fromNodeRequest(request: http.IncomingMessage) {

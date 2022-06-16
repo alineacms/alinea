@@ -2,9 +2,21 @@ import {getManifest} from '@esbx/workspaces'
 import type {Plugin} from 'esbuild'
 import path from 'path'
 
+const inline = new Set([])
+
+function packageOf(filePath: string) {
+  if (filePath.includes('node_modules'))
+    filePath = filePath.split('node_modules')[1].slice(1)
+  const segments = filePath.split(/\/|\\/)
+  return filePath.startsWith('@')
+    ? `${segments[0]}/${segments[1]}`
+    : segments[0]
+}
+
 export const resolvePlugin: Plugin = {
   name: 'resolve',
   setup(build) {
+    build.initialOptions.external = ['crypto', 'process']
     const info = new Map()
     const outExtension = build.initialOptions.outExtension?.['.js'] || '.js'
     function workspaceInfo(workspace: string) {
@@ -28,9 +40,16 @@ export const resolvePlugin: Plugin = {
     }
     build.onResolve({filter: /.*/}, args => {
       if (args.kind === 'entry-point') return
+      const isNodeModule = args.resolveDir.includes(`node_modules`)
+      const fromPackage = isNodeModule
+        ? packageOf(args.resolveDir)
+        : packageOf(args.path)
+      const isInline = inline.has(args.path) || inline.has(fromPackage)
+      if (isInline) return
       const isLocal = args.path.startsWith('./') || args.path.startsWith('../')
       const hasOutExtension = args.path.endsWith(outExtension)
-      const hasExtension = args.path.split('/').pop()?.includes('.')
+      const base = path.basename(args.path)
+      const hasExtension = base.includes('.') && !base.includes('.node')
       if (!args.path.startsWith('.')) {
         const segments = args.path.split('/')
         const pkg = args.path.startsWith('@')

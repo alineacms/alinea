@@ -1,5 +1,6 @@
 import {Cache, Data, JsonLoader} from '@alinea/backend'
 import {FileData} from '@alinea/backend/data/FileData'
+import {exportStore} from '@alinea/backend/export/ExportStore'
 import {Config} from '@alinea/core/Config'
 import {createId} from '@alinea/core/Id'
 import {outcome} from '@alinea/core/Outcome'
@@ -9,12 +10,10 @@ import {SqlJsDriver} from '@alinea/store/sqlite/drivers/SqlJsDriver'
 import {SqliteStore} from '@alinea/store/sqlite/SqliteStore'
 import {EvalPlugin} from '@esbx/eval'
 import {ReactPlugin} from '@esbx/react'
-import {encode} from 'base64-arraybuffer'
 import {FSWatcher} from 'chokidar'
 import {dirname} from 'dirname-filename-esm'
 import {build, BuildResult} from 'esbuild'
 import fs from 'fs-extra'
-import {signed, unsigned} from 'leb128'
 import path from 'node:path'
 import {externalPlugin} from './util/ExternalPlugin'
 import {ignorePlugin} from './util/IgnorePlugin'
@@ -34,17 +33,6 @@ function failOnBuildError(build: Promise<BuildResult>) {
   })
 }
 
-function bin(strings: ReadonlyArray<string>, ...inserts: Array<Buffer>) {
-  const res: Array<Buffer> = []
-  strings.forEach(function (str, i) {
-    res.push(
-      Buffer.from(str.replace(/\/\/(.*?)\n/g, '').replace(/\s/g, ''), 'hex')
-    )
-    if (inserts[i]) res.push(inserts[i])
-  })
-  return Buffer.concat(res)
-}
-
 function code(strings: ReadonlyArray<string>, ...inserts: Array<any>) {
   const res: Array<string> = []
   strings.forEach(function (str, i) {
@@ -52,30 +40,6 @@ function code(strings: ReadonlyArray<string>, ...inserts: Array<any>) {
     if (i in inserts) res.push(String(inserts[i]))
   })
   return res.join('').replace(/  /g, '').trim()
-}
-
-function embedInWasm(data: Uint8Array) {
-  const size = unsigned.encode(data.length)
-  const length = signed.encode(data.length)
-  const globalL = unsigned.encode(5 + length.length)
-  const dataL = unsigned.encode(5 + size.length + data.length)
-  const memoryPages = unsigned.encode(Math.ceil(data.length / 65536))
-  const memoryL = unsigned.encode(2 + memoryPages.length)
-  return bin`
-    00 61 73 6d                                         // WASM_BINARY_MAGIC
-    01 00 00 00                                         // WASM_BINARY_VERSION
-    05 ${memoryL} 01                                    // section "Memory" (5)
-    00 ${memoryPages}                                   // memory 0
-    06 ${globalL} 01 7f 00 41 ${length} 0b              // section "Global" (6)
-    07 11 02 04 6461 7461 02 00 06 6c65 6e67 7468 03 00 // section "Export" (7)
-    0b ${dataL} 01                                      // section "Data" (11)
-    00 41 00 0b ${size}                                 // data segment header 0
-    ${Buffer.from(data)}                                // data
-  `
-}
-
-function embedInJs(source: string, data: Uint8Array) {
-  return source.replace('$DB', encode(data))
 }
 
 function configType(location: string) {
@@ -108,6 +72,15 @@ function schemaCollections(workspace: Workspace) {
     export const workspace = config.workspaces['${workspace.name}']
     export const schema = workspace.schema
     ${collections}
+  `
+}
+
+function pagesOf(workspace: Workspace) {
+  return code`
+    import {backend} from '../backend.js'
+    export const pages = backend.loadPages('${workspace.name}', {
+      preview: process.env.NODE_ENV === 'development'
+    })
   `
 }
 
@@ -169,8 +142,8 @@ export async function generate(options: GenerateOptions) {
 
   async function copyStaticFiles() {
     await fs.mkdirp(outDir).catch(console.log)
-    async function copy(...files: Array<string>) {
-      await Promise.all(
+    function copy(...files: Array<string>) {
+      return Promise.all(
         files.map(file =>
           fs.copyFile(path.join(staticDir, file), path.join(outDir, file))
         )
@@ -186,6 +159,14 @@ export async function generate(options: GenerateOptions) {
       'backend.d.ts',
       'store.d.ts'
     )
+    await outcome(
+      fs.copyFile(
+        path.join(staticDir, 'drafts.js'),
+        path.join(outDir, 'drafts.js'),
+        fs.constants.COPYFILE_EXCL
+      )
+    )
+
     await fs.writeFile(
       path.join(outDir, 'config.d.ts'),
       configType(path.resolve(configLocation))
@@ -249,18 +230,29 @@ export async function generate(options: GenerateOptions) {
 
   async function generateWorkspaces(config: Config) {
     for (const [key, workspace] of Object.entries(config.workspaces)) {
-      await fs.mkdir(path.join(outDir, key), {recursive: true})
-      await fs.writeFile(
-        path.join(outDir, key, 'schema.js'),
-        schemaCollections(workspace)
-      )
-      await fs.writeFile(
-        path.join(outDir, key, 'schema.d.ts'),
-        schemaTypes(workspace)
-      )
-      await fs.copy(path.join(staticDir, 'workspace'), path.join(outDir, key), {
-        overwrite: true
-      })
+      function copy(...files: Array<string>) {
+        return Promise.all(
+          files.map(file =>
+            fs.copyFile(
+              path.join(staticDir, 'workspace', file),
+              path.join(outDir, key, file)
+            )
+          )
+        )
+      }
+      await Promise.all([
+        fs.mkdir(path.join(outDir, key), {recursive: true}),
+        fs.writeFile(
+          path.join(outDir, key, 'schema.js'),
+          schemaCollections(workspace)
+        ),
+        fs.writeFile(
+          path.join(outDir, key, 'schema.d.ts'),
+          schemaTypes(workspace)
+        ),
+        copy('index.d.ts', 'index.js', 'pages.d.ts'),
+        fs.writeFile(path.join(outDir, key, 'pages.js'), pagesOf(workspace))
+      ])
     }
     const pkg = JSON.parse(
       await fs.readFile(path.join(staticDir, 'package.json'), 'utf8')
@@ -376,21 +368,7 @@ export async function generate(options: GenerateOptions) {
     return store
   }
 
-  async function createCache(store: SqliteStore) {
-    const data = store.export()
-    if (!wasmCache) {
-      const source = await fs.readFile(
-        path.join(staticDir, 'store.embed.js'),
-        'utf-8'
-      )
-      await fs.writeFile(path.join(outDir, 'store.js'), embedInJs(source, data))
-    } else {
-      await fs.copyFile(
-        path.join(staticDir, 'store.wasm.js'),
-        path.join(outDir, 'store.js')
-      )
-      await fs.writeFile(path.join(outDir, 'store.wasm'), embedInWasm(data))
-    }
-    if (true) await fs.writeFile(path.join(outDir, 'store.db'), data)
+  function createCache(store: SqliteStore) {
+    return exportStore(store, path.join(outDir, 'store.js'), wasmCache)
   }
 }

@@ -2,7 +2,7 @@ import {createId} from '@alinea/core'
 import init from '@alinea/sqlite-wasm'
 import {SqlJsDriver} from '@alinea/store/sqlite/drivers/SqlJsDriver'
 import {SqliteStore} from '@alinea/store/sqlite/SqliteStore'
-import * as storeExports from './store.wasm'
+import * as storeExports from './$WASM'
 
 function unpack(exports) {
   return new Uint8Array(exports.data.buffer, 0, exports.length.value)

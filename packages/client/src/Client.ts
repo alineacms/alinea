@@ -7,8 +7,8 @@ import {
   Outcome,
   Workspaces
 } from '@alinea/core'
+import {fetch} from '@alinea/iso'
 import {Cursor} from '@alinea/store'
-import fetch from 'isomorphic-fetch'
 
 async function toFuture<T = void>(res: Response): Future<T> {
   return Outcome.fromJSON<T>(await res.json())

@@ -1,5 +1,5 @@
 import {Dialog} from '@headlessui/react'
-import {ComponentPropsWithoutRef, PropsWithChildren} from 'react'
+import {ComponentPropsWithoutRef, PropsWithChildren, useRef} from 'react'
 import {IconButton} from './IconButton'
 import {IcRoundClose} from './icons/IcRoundClose'
 import css from './Modal.module.scss'
@@ -15,8 +15,15 @@ export type ModalProps = PropsWithChildren<
   } & ComponentPropsWithoutRef<typeof Dialog>
 >
 export function Modal({children, ...props}: ModalProps) {
+  const modalRef = useRef(null)
+
   return (
-    <Dialog {...props} className={styles.root({open: props.open})}>
+    <Dialog
+      {...props}
+      ref={modalRef}
+      initialFocus={modalRef}
+      className={styles.root({open: props.open})}
+    >
       <div className={styles.root.background()} onClick={props.onClose}></div>
       <Dialog.Panel className={styles.root.inner.mergeProps(props)()}>
         {children}

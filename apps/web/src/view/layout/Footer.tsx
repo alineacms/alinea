@@ -1,4 +1,7 @@
 import {fromModule, HStack} from '@alinea/ui'
+import {IcOutlineDarkMode} from '@alinea/ui/icons/IcOutlineDarkMode'
+import {IcOutlineLightMode} from '@alinea/ui/icons/IcOutlineLightMode'
+import {IcSharpBrightnessMedium} from '@alinea/ui/icons/IcSharpBrightnessMedium'
 import Link from 'next/link'
 import css from './Footer.module.scss'
 import {Layout} from './Layout'
@@ -9,11 +12,25 @@ const styles = fromModule(css)
 
 export type FooterProps = {
   footer: LayoutProps['footer']
+  theme: Layout.Theme
+  setTheme: (theme: Layout.Theme) => void
 }
 
 const BG_HEIGHT = 80
 
-export function Footer({footer}: FooterProps) {
+const themeIcons = {
+  system: IcSharpBrightnessMedium,
+  dark: IcOutlineDarkMode,
+  light: IcOutlineLightMode
+}
+
+export function Footer({footer, theme, setTheme}: FooterProps) {
+  const ThemeIcon = themeIcons[theme]
+  function handleThemeToggle() {
+    setTheme(
+      theme === 'system' ? 'light' : theme === 'light' ? 'dark' : 'system'
+    )
+  }
   return (
     <footer className={styles.root()}>
       {/*<svg
@@ -43,6 +60,18 @@ export function Footer({footer}: FooterProps) {
               </div>
             )
           })}
+
+          <HStack
+            center
+            gap={8}
+            as="button"
+            type="button"
+            onClick={handleThemeToggle}
+            className={styles.root.theme()}
+          >
+            <ThemeIcon />
+            <span>{theme.charAt(0).toUpperCase() + theme.slice(1)}</span>
+          </HStack>
         </HStack>
       </Layout.Container>
     </footer>

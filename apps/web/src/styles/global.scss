@@ -1,4 +1,5 @@
 @mixin light-theme {
+  color-scheme: light;
   --web-accent-hsl: 230, 77%, 60%;
   --web-accent: #4a65e8;
   --web-accent-light: hsl(230, 77%, 65%);
@@ -21,6 +22,7 @@
 }
 
 @mixin dark-theme {
+  color-scheme: dark;
   --web-accent-hsl: 230, 77%, 60%;
   --web-accent: #4a65e8;
   --web-accent-light: hsl(230, 77%, 65%);
@@ -52,10 +54,6 @@
   @media (prefers-color-scheme: light) {
     @include light-theme;
   }
-
-  @media (prefers-color-scheme: dark) {
-    color-scheme: dark;
-  }
 }
 
 html,
@@ -67,6 +65,14 @@ body,
 body {
   color: var(--web-foreground);
   font-size: 15px;
+
+  &.is-light {
+    @include light-theme;
+  }
+
+  &.is-dark {
+    @include dark-theme;
+  }
 }
 
 a {

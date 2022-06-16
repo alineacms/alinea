@@ -28,3 +28,11 @@
     margin-bottom: 5px;
   }
 }
+
+.blockquote {
+  padding: 4px 16px;
+  border-left: 2px solid hsla(var(--web-negative-hsl), 0.5);
+  &:not(:last-child) {
+    margin-bottom: 14px;
+  }
+}

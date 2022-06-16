@@ -17,7 +17,6 @@ import {resolvePlugin} from './.esbx/plugin/resolve'
 import {sassPlugin} from './.esbx/plugin/sass'
 import {staticPlugin} from './.esbx/plugin/static'
 import {ensureNodeResolution} from './packages/cli/src/util/EnsureNodeResolution'
-import {createId} from './packages/core/src/Id'
 
 export {VersionTask} from '@esbx/workspaces'
 
@@ -125,12 +124,18 @@ export const clean = {
 const testTask = TestTask.configure({
   buildOptions: {
     ...buildOptions,
+    platform: 'node',
     external: modules
       .filter(m => !m.includes('@alinea'))
       .concat('@alinea/sqlite-wasm'),
     plugins: [
       ...buildOptions.plugins!,
-      StaticPlugin.configure({sources: ['packages/cli/src/Init.ts']}),
+      StaticPlugin.configure({
+        sources: [
+          'packages/cli/src/Init.ts',
+          'packages/backend/src/export/ExportStore.ts'
+        ]
+      }),
       internalPlugin
     ]
   }
@@ -142,11 +147,5 @@ export const test = {
     ensureNodeResolution()
     await prepare.action({checkTypeDoc: false})
     return testTask.action(options)
-  }
-}
-
-export const mkid = {
-  action() {
-    console.log(createId())
   }
 }

@@ -1,5 +1,4 @@
 import {btoa} from '@alinea/core/util/Base64'
-import {Helmet} from 'react-helmet'
 import {useContrastColor} from '../hook/UseContrastColor'
 
 type FavIconProps = {
@@ -43,13 +42,10 @@ export function FavIcon({color}: FavIconProps) {
   )
 
   return (
-    <Helmet>
-      <link
-        rel="icon"
-        type="image/svg"
-        href={`data:image/svg+xml;base64,${favicon}`}
-        key="favicon"
-      />
-    </Helmet>
+    <link
+      rel="icon"
+      type="image/svg"
+      href={`data:image/svg+xml;base64,${favicon}`}
+    />
   )
 }

@@ -2,6 +2,7 @@
 
 import sade from 'sade'
 import {version} from '../package.json'
+import {ensureEnv} from './util/EnsureEnv'
 import {ensureNodeResolution} from './util/EnsureNodeResolution'
 import {ensureReact} from './util/EnsureReact'
 
@@ -37,6 +38,7 @@ prog
   .action(async (dir, args) => {
     ensureNodeResolution()
     ensureReact()
+    ensureEnv(dir || process.cwd())
     const {serve} = await import('./Serve')
     return serve({cwd: dir, ...args})
   })
