@@ -14,6 +14,8 @@ export type DateOptions = {
   initialValue?: string
   /** Focus this input automatically */
   autoFocus?: boolean
+  /** Hide this date field */
+  hidden?: boolean
 }
 
 /** Internal representation of a date field */

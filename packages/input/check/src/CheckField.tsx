@@ -16,6 +16,8 @@ export type CheckOptions = {
   initialValue?: boolean
   /** Focus this input automatically */
   autoFocus?: boolean
+  /** Hide this check field */
+  hidden?: boolean
 }
 
 /** Internal representation of a text field */

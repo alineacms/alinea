@@ -14,11 +14,21 @@ export type CheckInputProps = {
 }
 
 export function CheckInput({state, field}: CheckInputProps) {
-  const {label, width, inline, optional, help, autoFocus, initialValue} =
-    field.options
+  const {
+    label,
+    width,
+    inline,
+    optional,
+    help,
+    autoFocus,
+    initialValue,
+    hidden
+  } = field.options
   const [value = initialValue, setValue] = useInput(state)
   const [focus, setFocus] = useState(false)
   // Todo: unlocalise
+  if (hidden) return null
+
   return (
     <InputLabel
       asLabel

@@ -11,10 +11,13 @@ export type TabsViewProps = {
 }
 
 export function TabsView({state, section}: TabsViewProps) {
+  const visibleTypes = section.types.filter(type => !type.options?.isHidden)
+  if (!visibleTypes.length) return null
+
   return (
     <Tabs.Root>
       <Tabs.List>
-        {section.types.map((type, i) => {
+        {visibleTypes.map((type, i) => {
           const Icon = type.options?.icon
           return (
             <Tabs.Trigger key={i}>
@@ -27,7 +30,7 @@ export function TabsView({state, section}: TabsViewProps) {
         })}
       </Tabs.List>
       <Tabs.Panels>
-        {section.types.map((type, i) => {
+        {visibleTypes.map((type, i) => {
           return (
             <Tabs.Panel key={i} tabIndex={i}>
               <InputForm type={type} state={state} />

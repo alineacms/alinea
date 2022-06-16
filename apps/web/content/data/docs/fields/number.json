@@ -1,23 +1,23 @@
 {
-  "id": "268hnUNLntD1TbeY1WPh34VFVcM",
+  "id": "GyPkhJLrxgmfXYtYFOq9x",
   "type": "Doc",
   "root": "data",
-  "index": "a5",
-  "title": "Tabs",
+  "index": "a26",
+  "title": "Number",
   "blocks": [
     {
-      "id": "268hqZiiT9sF3zQX1DZdHSJ6Ri3",
+      "id": "L24H4EWRt4E_INjRwSams",
       "index": "a0",
       "type": "TextBlock",
       "text": [
         {
           "type": "heading",
-          "level": 1,
           "textAlign": "left",
+          "level": 1,
           "content": [
             {
               "type": "text",
-              "text": "Tabs"
+              "text": "Number"
             }
           ]
         },
@@ -27,22 +27,22 @@
           "content": [
             {
               "type": "text",
-              "text": "Tabs help you structure the input fields in the admin panel. Tabs do not hold data, but can declare underlying fields which do (or even more tabs). "
+              "text": "A number field is used to input numeric data."
             }
           ]
         },
         {
-          "id": "268hspT1GDy0ag8lya8m9dObKhX",
+          "id": "g4S5QLIWCAxleuIDzwNpk",
           "type": "CodeBlock",
-          "code": "tabs(\n  tab('Tab A', {\n    // ... fields\n  }),\n  tab('Tab B', {\n    // ... fields\n  })\n)"
+          "code": "number('My number field', {\n  minValue: 0,\n  maxValue: 10\n})"
         }
       ]
     },
     {
-      "id": "286IarApWyPuA0nfHtH38YLSWMg",
+      "id": "dvsUcqX__87TLlnI6j6Fd",
       "index": "a1",
       "type": "TypesBlock",
-      "types": "tabs, tab"
+      "types": "NumberOptions"
     }
   ]
 }

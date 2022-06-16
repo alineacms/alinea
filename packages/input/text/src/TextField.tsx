@@ -21,6 +21,8 @@ export type TextOptions = {
   iconRight?: ComponentType
   /** Focus this input automatically */
   autoFocus?: boolean
+  /** Hide this text field */
+  hidden?: boolean
 }
 
 /** Internal representation of a text field */

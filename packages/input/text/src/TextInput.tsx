@@ -24,8 +24,11 @@ export function TextInput({state, field}: TextInputProps) {
     help,
     iconLeft: IconLeft,
     iconRight: IconRight,
-    autoFocus
+    autoFocus,
+    hidden
   } = field.options
+  if (hidden) return null
+
   const Input = multiline ? TextareaAutosize : 'input'
   // Todo: unlocalise
   const placeholder = inline ? String(field.label) : ''

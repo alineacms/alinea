@@ -15,6 +15,8 @@ export type NumberOptions = {
   minValue?: number
   /** A maximum value */
   maxValue?: number
+  /** Hide this number field */
+  hidden?: boolean
 }
 
 export interface NumberField extends Field.Scalar<number> {

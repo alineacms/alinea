@@ -11,6 +11,8 @@ export type CodeFieldOptions<Q> = {
   language?: string
   /** Modify value returned when queried through `Pages` */
   transform?: <P>(field: Expr<string>, pages: Pages<P>) => Expr<Q> | undefined
+  /** Hide this code field */
+  hidden?: boolean
 }
 
 export interface CodeField<Q = string> extends Field.Scalar<string, Q> {

@@ -2,7 +2,7 @@
   "id": "28htwzY7qMeaV15j276Myvpek8y",
   "type": "Doc",
   "root": "data",
-  "index": "a3V",
+  "index": "a29",
   "title": "Check",
   "blocks": [
     {
@@ -13,6 +13,7 @@
         {
           "type": "heading",
           "level": 1,
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
@@ -22,6 +23,7 @@
         },
         {
           "type": "paragraph",
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
@@ -43,10 +45,5 @@
       "type": "TypesBlock",
       "types": "CheckOptions"
     }
-  ],
-  "parents": [
-    "docs",
-    "259Ey7LXgqL7ZDGJ8XK1vBJmZrh",
-    "24yE2mu6Xq959jrP135Sdb4e3lG"
   ]
 }

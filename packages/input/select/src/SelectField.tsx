@@ -19,6 +19,8 @@ export type SelectOptions<T> = {
   placeholder?: Label
   /** A default value */
   initialValue?: T
+  /** Hide this select field */
+  hidden?: boolean
 }
 
 /** Internal representation of a select field */

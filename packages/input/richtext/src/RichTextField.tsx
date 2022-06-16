@@ -21,6 +21,8 @@ export type RichTextOptions<T, Q> = {
     field: Expr<TextDoc<T>>,
     pages: Pages<P>
   ) => Expr<Q> | undefined
+  /** Hide this rich text field */
+  hidden?: boolean
 }
 
 /** Internal representation of a rich text field */

@@ -12,9 +12,19 @@ export type NumberInputProps = {
 }
 
 export function NumberInput({state, field}: NumberInputProps) {
-  const {inline, help, optional, initialValue, width, minValue, maxValue} =
-    field.options
+  const {
+    inline,
+    help,
+    optional,
+    initialValue,
+    width,
+    minValue,
+    maxValue,
+    hidden
+  } = field.options
   const [value = initialValue, setValue] = useInput(state)
+  if (hidden) return null
+
   return (
     <InputLabel
       asLabel
