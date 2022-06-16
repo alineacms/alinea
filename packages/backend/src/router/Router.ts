@@ -147,11 +147,50 @@ export namespace router {
     return {...input, body}
   }
 
-  export function jsonResponse<Out>(output: Out, init?: ResponseInit) {
+  export function jsonResponse<Out>(output: Out, init: ResponseInit = {}) {
     return new Response(JSON.stringify(output), {
       ...init,
-      headers: {'content-type': 'application/json', ...init?.headers},
+      headers: {'content-type': 'application/json', ...init.headers},
       status: Outcome.isOutcome(output) ? output.status : 200
     })
+  }
+
+  export function reportError(error: any) {
+    return router.jsonResponse(Outcome.Failure(error))
+  }
+
+  export function redirect(url: string, init: ResponseInit = {}) {
+    return new Response('', {
+      ...init,
+      headers: {location: url, ...init.headers},
+      status: init.status || 301
+    })
+  }
+
+  export type Cookie = {
+    name: string
+    value: string
+    expires?: string
+    maxAge?: number
+    domain?: string
+    path?: string
+    secure?: boolean
+    httpOnly?: boolean
+    sameSite?: 'strict' | 'lax' | 'none'
+  }
+
+  export function cookie(...cookies: Array<Cookie>) {
+    return cookies
+      .map(cookie => {
+        const {name, value, ...rest} = cookie
+        return (
+          `${name}=${value}` +
+          Object.entries(rest)
+            .filter(([, v]) => v || v === '')
+            .map(([k, v]) => (v !== true ? `; ${k}=${v}` : `; ${k}`))
+            .join('')
+        )
+      })
+      .join(', ')
   }
 }

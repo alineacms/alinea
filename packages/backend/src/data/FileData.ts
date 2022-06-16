@@ -13,7 +13,7 @@ import {Data} from '../Data'
 import {FS} from '../FS'
 import {Loader} from '../Loader'
 import {Storage} from '../Storage'
-import {walkUrl} from '../util/Paths'
+import {walkUrl} from '../util/EntryPaths'
 
 export type FileDataOptions = {
   config: Config

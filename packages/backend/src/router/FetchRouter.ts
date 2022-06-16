@@ -1,6 +1,5 @@
 import {Entry} from '@alinea/core/Entry'
 import {Hub} from '@alinea/core/Hub'
-import {Outcome} from '@alinea/core/Outcome'
 import {Cursor, CursorData} from '@alinea/store'
 import {decode} from 'base64-arraybuffer'
 import {router} from './Router'
@@ -81,7 +80,5 @@ export function createFetchRouter(hub: Hub, url: string) {
         })
       })
       .map(router.jsonResponse)
-  ).recover(error => {
-    return router.jsonResponse(Outcome.Failure(error), {status: 500})
-  })
+  ).recover(router.reportError)
 }

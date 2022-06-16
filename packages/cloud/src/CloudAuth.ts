@@ -1,8 +1,8 @@
 import {Auth} from '@alinea/core'
-import {CloudAuthServer} from './server/CloudAuthServer'
+import {CloudAuthServer, CloudAuthServerOptions} from './server/CloudAuthServer'
 import {CloudAuthView} from './view/CloudAuthView'
 
-export const cloudAuth: Auth<{}> = {
+export const cloudAuth: Auth<CloudAuthServerOptions> = {
   view: CloudAuthView,
-  configure: () => new CloudAuthServer()
+  configure: options => new CloudAuthServer(options)
 }

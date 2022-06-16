@@ -14,14 +14,9 @@ __metadata:
     "@alinea/core": 0.0.0
     "@alinea/dashboard": 0.0.0
     "@alinea/ui": 0.0.0
-    "@types/cookie-parser": ^1.4.2
-    "@types/express": ^4.17.13
-    "@types/express-jwt": ^6.0.2
-    "@types/jsonwebtoken": ^8.5.5
     "@types/nodemailer": ^6.4.4
     jwt-decode: ^3.1.2
     nodemailer: ^6.6.5
-    react-helmet: ^6.1.0
     superstruct: ^0.15.4
   peerDependencies:
     react: "*"
@@ -50,6 +45,7 @@ __metadata:
     octokit-commit-multiple-files: ^3.2.1
     pretty-ms: ^8.0.0
     regexparam: ^2.0.0
+    rfc4648: ^1.5.2
     yjs: ^13.5.39
   languageName: unknown
   linkType: soft
@@ -95,6 +91,16 @@ __metadata:
   dependencies:
     "@alinea/core": 0.0.0
     "@alinea/iso": 0.1.6
+  languageName: unknown
+  linkType: soft
+
+"@alinea/cloud@workspace:packages/cloud":
+  version: 0.0.0-use.local
+  resolution: "@alinea/cloud@workspace:packages/cloud"
+  dependencies:
+    "@alinea/core": 0.0.0
+  peerDependencies:
+    react: "*"
   languageName: unknown
   linkType: soft
 
@@ -160,6 +166,7 @@ __metadata:
     yjs: ^13.5.39
   peerDependencies:
     react: "*"
+    react-dom: "*"
   languageName: unknown
   linkType: soft
 
@@ -1627,15 +1634,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/cookie-parser@npm:^1.4.2":
-  version: 1.4.2
-  resolution: "@types/cookie-parser@npm:1.4.2"
-  dependencies:
-    "@types/express": "*"
-  checksum: d5b3c0e193cc95289444306ad396b27b92c9ff1ffd0769268b374d09315c8df1ae94de5fe2a81a79c0629560646763136e15c8a4069d3dc5ba5cb6bc185eaccd
-  languageName: node
-  linkType: hard
-
 "@types/debug@npm:^4.0.0":
   version: 4.1.7
   resolution: "@types/debug@npm:4.1.7"
@@ -1669,16 +1667,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/express-jwt@npm:^6.0.2":
-  version: 6.0.2
-  resolution: "@types/express-jwt@npm:6.0.2"
-  dependencies:
-    "@types/express": "*"
-    "@types/express-unless": "*"
-  checksum: 0fffb222216173342ba9fa53878153012563827645ccc59e3ed46b9facd1249ba3967fd38a28417a40fb669d5b5182c75b7992813e516adc6be9b95a0559e807
-  languageName: node
-  linkType: hard
-
 "@types/express-serve-static-core@npm:^4.17.18":
   version: 4.17.24
   resolution: "@types/express-serve-static-core@npm:4.17.24"
@@ -1699,7 +1687,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/express@npm:*, @types/express@npm:^4.17.13":
+"@types/express@npm:*":
   version: 4.17.13
   resolution: "@types/express@npm:4.17.13"
   dependencies:
@@ -1780,15 +1768,6 @@ __metadata:
   version: 0.0.30
   resolution: "@types/json5@npm:0.0.30"
   checksum: 8802648fa736801264fde08da7c08b57be8845bd75ecf50c1eee980245f6d2c10a00f0768d0979c7ec2e4ff7e1417226e527bfb045e7e1a6e6afcaf11706a5f0
-  languageName: node
-  linkType: hard
-
-"@types/jsonwebtoken@npm:^8.5.5":
-  version: 8.5.5
-  resolution: "@types/jsonwebtoken@npm:8.5.5"
-  dependencies:
-    "@types/node": "*"
-  checksum: 33c30354641bc7849be7507e9f48685b1f487e944321a932650eac6c247c85184667f5e207ccfcab0da8cb24bde93a8372c09cacf1849e976bbf2cb90b26ce90
   languageName: node
   linkType: hard
 
@@ -7577,6 +7556,13 @@ resolve@^1.10.0:
   version: 0.12.0
   resolution: "retry@npm:0.12.0"
   checksum: 623bd7d2e5119467ba66202d733ec3c2e2e26568074923bc0585b6b99db14f357e79bdedb63cab56cec47491c4a0da7e6021a7465ca6dc4f481d3898fdd3158c
+  languageName: node
+  linkType: hard
+
+"rfc4648@npm:^1.5.2":
+  version: 1.5.2
+  resolution: "rfc4648@npm:1.5.2"
+  checksum: bc3d9c4fbfdbbb363c640f9cb56fc01d2e1ca64305b2b6409aaf59cb85c1adecb2545c03deee8889cce2685e15fb7dd47581665c288e4f45068ffece2642f2e8
   languageName: node
   linkType: hard
 

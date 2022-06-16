@@ -83,7 +83,8 @@ function task(
             : true)
         if (isSelected) entryPoints.push(...packageEntryPoints(cwd, workspace))
       }
-      await build({
+      const buildOptions: BuildOptions = {
+        platform: 'neutral',
         format: 'esm',
         outdir: 'dist',
         bundle: true,
@@ -112,7 +113,8 @@ function task(
           distPlugin,
           !options.silent && ReporterPlugin.configure({name: 'packages'})
         )
-      })
+      }
+      await build(buildOptions)
     }
   }
 }

@@ -143,7 +143,13 @@ export namespace Outcome {
     }
 
     toJSON(): JSONRep<T> {
-      return {success: false, error: serializeError(this.error)}
+      return {
+        success: false,
+        error:
+          process.env.NODE_ENV === 'development'
+            ? serializeError(this.error)
+            : {message: String(this.error)}
+      }
     }
   }
 }

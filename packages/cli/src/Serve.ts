@@ -117,7 +117,7 @@ export async function serve(options: ServeOptions) {
       format: 'esm',
       target: 'esnext',
       treeShaking: true,
-      // minify: true,
+      minify: true,
       splitting: true,
       sourcemap: true,
       outdir: path.join(staticDir, 'dev'),
@@ -131,9 +131,6 @@ export async function serve(options: ServeOptions) {
       platform: 'browser',
       ...buildOptions,
       plugins: [EvalPlugin, ReactPlugin, ...(buildOptions?.plugins || [])],
-      define: {
-        'process.env.NODE_ENV': production ? "'production'" : "'development'"
-      },
       loader: {
         ...buildOptions?.loader,
         '.woff': 'file',

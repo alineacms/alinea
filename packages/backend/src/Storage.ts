@@ -1,11 +1,11 @@
 import {Config, Entry} from '@alinea/core'
+import {join} from '@alinea/core/util/Paths'
 import {Store} from '@alinea/store'
-import {posix as path} from 'node:path'
 import {Cache} from './Cache'
 import {Loader} from './Loader'
-import {appendPath} from './util/Paths'
+import {appendPath} from './util/EntryPaths'
 
-type Changes = {
+export type Changes = {
   write: Array<[file: string, contents: Buffer]>
   rename: Array<[file: string, to: string]>
   delete: Array<string>
@@ -50,7 +50,7 @@ export namespace Storage {
       const workspace = config.workspaces[workspaceKey]
       const {schema, source: contentDir} = workspace
       function abs(root: string, file: string) {
-        return path.join(contentDir, root, file)
+        return join(contentDir, root, file)
       }
       const type = schema.type(entry.type)
       const location = entryLocation(entry, loader.extension)

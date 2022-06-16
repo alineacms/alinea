@@ -1,23 +1,12 @@
-// Source: https://github.com/tsndr/cloudflare-worker-jwt/blob/e7964b63c2cb128bb4ef6b267405c27243819540/index.js
+// Based on: https://github.com/tsndr/cloudflare-worker-jwt/blob/e7964b63c2cb128bb4ef6b267405c27243819540/index.js
+// Which seems to be based on https://github.com/pose/webcrypto-jwt/blob/d417595d85d993fe2b15d3730683a3836ef0741b/index.js
+// And: https://github.com/auth0/node-jsonwebtoken
 
-import {atob, btoa} from '@alinea/core/util/Base64'
 import {crypto} from '@alinea/iso'
+import {base64url} from 'rfc4648'
 
-class Base64URL {
-  static parse(s: string) {
-    return new Uint8Array(
-      [...atob(s.replace(/-/g, '+').replace(/_/g, '/').replace(/\s/g, ''))].map(
-        c => c.charCodeAt(0)
-      )
-    )
-  }
-  static stringify(a: Uint8Array) {
-    return btoa(String.fromCharCode.apply(0, [...a]))
-      .replace(/=/g, '')
-      .replace(/\+/g, '-')
-      .replace(/\//g, '_')
-  }
-}
+const textDecoder = new TextDecoder()
+const textEncoder = new TextEncoder()
 
 const algorithms = {
   ES256: {name: 'ECDSA', namedCurve: 'P-256', hash: {name: 'SHA-256'}},
@@ -31,176 +20,182 @@ const algorithms = {
   RS512: {name: 'RSASSA-PKCS1-v1_5', hash: {name: 'SHA-512'}}
 }
 
-type SignOptions = {
-  algorithm: keyof typeof algorithms
-  keyid?: string
-  header: Record<string, any>
+type Algorithm = keyof typeof algorithms
+
+type JWTHeader = {
+  alg: Algorithm
+  kid?: string
+  typ?: string
+  cty?: string
+  crit?: string[]
+  [key: string]: any
 }
 
-type VerifyOptions = {
-  algorithm: keyof typeof algorithms
+type JWTPayload = Record<string, any>
+
+type JWT = {
+  header: JWTHeader
+  payload: JWTPayload
+  signature: Uint8Array
 }
 
-class JWT {
-  constructor() {}
-  _utf8ToUint8Array(str: string) {
-    return Base64URL.parse(btoa(unescape(encodeURIComponent(str))))
+function defaultAlgorithms(
+  secretOrPublicKey: string | JsonWebKey
+): Array<Algorithm> {
+  if (typeof secretOrPublicKey === 'string') {
+    if (
+      secretOrPublicKey.includes('BEGIN CERTIFICATE') ||
+      secretOrPublicKey.includes('BEGIN PUBLIC KEY')
+    )
+      return ['RS256', 'RS384', 'RS512', 'ES256', 'ES384', 'ES512']
+    if (secretOrPublicKey.includes('BEGIN RSA PUBLIC KEY'))
+      return ['RS256', 'RS384', 'RS512']
+    return ['HS256', 'HS384', 'HS512']
   }
-  _str2ab(str: string) {
-    const buf = new ArrayBuffer(str.length)
-    const bufView = new Uint8Array(buf)
-    for (let i = 0, strLen = str.length; i < strLen; i++) {
-      bufView[i] = str.charCodeAt(i)
-    }
-    return buf
-  }
-  _decodePayload(raw: string) {
-    switch (raw.length % 4) {
-      case 0:
-        break
-      case 2:
-        raw += '=='
-        break
-      case 3:
-        raw += '='
-        break
-      default:
-        throw new Error('Illegal base64url string!')
-    }
-    try {
-      return JSON.parse(decodeURIComponent(escape(atob(raw))))
-    } catch {
-      return null
-    }
-  }
+  return ['RS256', 'RS384', 'RS512', 'ES256', 'ES384', 'ES512']
+}
 
-  /**
-   * Signs a payload and returns the token
-   *
-   * @param {object} payload The payload object. To use `nbf` (Not Before) and/or `exp` (Expiration Time) add `nbf` and/or `exp` to the payload.
-   * @param {string} secret A string which is used to sign the payload.
-   * @param {JWTSignOptions | JWTAlgorithm} options The options object or the algorithm.
-   * @throws {Error} If there's a validation issue.
-   * @returns {Promise<string>} Returns token as a `string`.
-   */
-  sign = async (
-    payload: Record<string, any>,
-    secret: string,
-    options: SignOptions = {algorithm: 'HS256', header: {typ: 'JWT'}}
-  ): Promise<string> => {
-    if (typeof options === 'string')
-      options = {algorithm: options, header: {typ: 'JWT'}}
-    if (payload === null || typeof payload !== 'object')
-      throw new Error('payload must be an object')
-    if (typeof secret !== 'string') throw new Error('secret must be a string')
-    if (typeof options.algorithm !== 'string')
-      throw new Error('options.algorithm must be a string')
-    const importAlgorithm = algorithms[options.algorithm]
-    if (!importAlgorithm) throw new Error('algorithm not found')
-    payload.iat = Math.floor(Date.now() / 1000)
-    const payloadAsJSON = JSON.stringify(payload)
-    const partialToken = `${Base64URL.stringify(
-      this._utf8ToUint8Array(
-        JSON.stringify({
-          ...options.header,
-          alg: options.algorithm,
-          kid: options.keyid
-        })
-      )
-    )}.${Base64URL.stringify(this._utf8ToUint8Array(payloadAsJSON))}`
-    let keyFormat: 'raw' | 'pkcs8' = 'raw'
-    let keyData
-    if (secret.startsWith('-----BEGIN')) {
-      keyFormat = 'pkcs8'
-      keyData = this._str2ab(
-        atob(
-          secret
-            .replace(/-----BEGIN.*?-----/g, '')
-            .replace(/-----END.*?-----/g, '')
-            .replace(/\s/g, '')
-        )
-      )
-    } else keyData = this._utf8ToUint8Array(secret)
-    const key = await crypto.subtle.importKey(
-      keyFormat,
-      keyData,
-      importAlgorithm,
+function importKey(
+  secret: string | JsonWebKey,
+  algorithm: typeof algorithms[Algorithm],
+  use: 'sign' | 'verify'
+): Promise<CryptoKey> {
+  if (typeof secret !== 'string')
+    return crypto.subtle.importKey('jwk', secret, algorithm, false, [use])
+  if (secret.startsWith('-----BEGIN'))
+    return crypto.subtle.importKey(
+      'pkcs8',
+      base64url.parse(
+        secret
+          .replace(/-----BEGIN.*?-----/g, '')
+          .replace(/-----END.*?-----/g, '')
+          .replace(/\s/g, '')
+      ),
+      algorithm,
       false,
-      ['sign']
+      [use]
     )
-    const signature = await crypto.subtle.sign(
-      importAlgorithm,
-      key,
-      this._utf8ToUint8Array(partialToken)
-    )
-    return `${partialToken}.${Base64URL.stringify(new Uint8Array(signature))}`
-  }
-
-  /**
-   * Verifies the integrity of the token and returns a boolean value.
-   *
-   * @param {string} token The token string generated by `jwt.sign()`.
-   * @param {string} secret The string which was used to sign the payload.
-   * @param {JWTVerifyOptions | JWTAlgorithm} options The options object or the algorithm.
-   * @throws {Error | string} Throws an error `string` if the token is invalid or an `Error-Object` if there's a validation issue.
-   * @returns {Promise<boolean>} Returns `true` if signature, `nbf` (if set) and `exp` (if set) are valid, otherwise returns `false`.
-   */
-  verify = async <T>(
-    token: string,
-    secret: string,
-    options: VerifyOptions = {algorithm: 'HS256'}
-  ): Promise<T> => {
-    if (typeof token !== 'string') throw new Error('token must be a string')
-    if (typeof secret !== 'string') throw new Error('secret must be a string')
-    if (typeof options.algorithm !== 'string')
-      throw new Error('options.algorithm must be a string')
-    const tokenParts = token.split('.')
-    if (tokenParts.length !== 3)
-      throw new Error('token must consist of 3 parts')
-    const importAlgorithm = algorithms[options.algorithm]
-    if (!importAlgorithm) throw new Error('algorithm not found')
-    const payload = this.decode(token)
-    if (payload.nbf && payload.nbf > Math.floor(Date.now() / 1000)) {
-      throw 'NOT_YET_VALID'
-    }
-    if (payload.exp && payload.exp <= Math.floor(Date.now() / 1000)) {
-      throw 'EXPIRED'
-    }
-    let keyFormat: 'raw' | 'pkcs8' = 'raw'
-    let keyData
-    if (secret.startsWith('-----BEGIN')) {
-      keyFormat = 'pkcs8'
-      keyData = this._str2ab(
-        atob(
-          secret
-            .replace(/-----BEGIN.*?-----/g, '')
-            .replace(/-----END.*?-----/g, '')
-            .replace(/\s/g, '')
-        )
-      )
-    } else keyData = this._utf8ToUint8Array(secret)
-    const key = await crypto.subtle.importKey(
-      keyFormat,
-      keyData,
-      importAlgorithm,
-      false,
-      ['sign']
-    )
-    const res = await crypto.subtle.sign(
-      importAlgorithm,
-      key,
-      this._utf8ToUint8Array(tokenParts.slice(0, 2).join('.'))
-    )
-    const isValid = Base64URL.stringify(new Uint8Array(res)) === tokenParts[2]
-    if (!isValid) throw 'INVALID'
-    return payload
-  }
-
-  private decode(token: string) {
-    return this._decodePayload(
-      token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')
-    )
-  }
+  return crypto.subtle.importKey(
+    'raw',
+    textEncoder.encode(secret),
+    algorithm,
+    false,
+    [use]
+  )
 }
 
-export const {sign, verify} = new JWT()
+export type SignOptions = {
+  algorithm: Algorithm
+  header?: Record<string, any>
+}
+
+export async function sign(
+  payload: JWTPayload,
+  secret: string | JsonWebKey,
+  options: SignOptions = {algorithm: 'HS256'}
+): Promise<string> {
+  if (payload === null || typeof payload !== 'object')
+    throw new Error('payload must be an object')
+  if (typeof options.algorithm !== 'string')
+    throw new Error('options.algorithm must be a string')
+  const algorithm = algorithms[options.algorithm]
+  if (!algorithm) throw new Error('algorithm not found')
+  const payloadAsJSON = JSON.stringify(payload)
+  const partialToken = `${base64url.stringify(
+    textEncoder.encode(
+      JSON.stringify(
+        options.header || {
+          typ: 'JWT',
+          alg: options.algorithm
+        }
+      )
+    ),
+    {pad: false}
+  )}.${base64url.stringify(textEncoder.encode(payloadAsJSON), {pad: false})}`
+  const key = await importKey(secret, algorithm, 'sign')
+  const signature = await crypto.subtle.sign(
+    algorithm,
+    key,
+    textEncoder.encode(partialToken)
+  )
+  return [
+    partialToken,
+    base64url.stringify(new Uint8Array(signature), {
+      pad: false
+    })
+  ].join('.')
+}
+
+export type VerifyOptions = {
+  algorithms?: Array<Algorithm>
+  clockTolerance?: number
+  clockTimestamp?: number
+}
+
+export function verify<T = JWTPayload>(
+  token: string,
+  secret: string,
+  options?: VerifyOptions
+): Promise<T>
+export function verify<T = JWTPayload>(
+  token: string,
+  publicKey: JsonWebKey,
+  options?: VerifyOptions
+): Promise<T>
+export async function verify(
+  token: string,
+  secretOrPublicKey: string | JsonWebKey,
+  options: VerifyOptions = {}
+) {
+  if (typeof token !== 'string') throw new Error('Token must be string')
+  if (
+    typeof secretOrPublicKey !== 'string' &&
+    typeof secretOrPublicKey !== 'object'
+  )
+    throw new Error('Invalid secret')
+  if (typeof options !== 'object') throw new Error('Options must be object')
+  const allowedAlgorithms =
+    options.algorithms || defaultAlgorithms(secretOrPublicKey)
+  const {header, payload, signature} = decode(token)
+  if (!(header.alg in algorithms)) throw new Error('Unsupported algorithm')
+  if (!allowedAlgorithms.includes(header.alg))
+    throw new Error('Unsupported algorithm')
+  const algorithm = algorithms[header.alg]
+  const key = await importKey(secretOrPublicKey, algorithm, 'verify')
+  const isValid = await crypto.subtle.verify(
+    algorithm,
+    key,
+    signature,
+    new TextEncoder().encode(token.slice(0, token.lastIndexOf('.')))
+  )
+  if (!isValid) throw new Error('Invalid signature')
+
+  const clockTimestamp = options.clockTimestamp || Math.floor(Date.now() / 1000)
+  const clockTolerance = options.clockTolerance || 0
+
+  const nbf = payload.nbf
+  if (nbf && typeof nbf !== 'number') throw new Error('Invalid nbf value')
+  if (payload.nbf > clockTimestamp + clockTolerance)
+    throw new Error('Token not yet valid')
+
+  const exp = payload.exp
+  if (exp && typeof payload.exp !== 'number')
+    throw new Error('Invalid exp value')
+  if (clockTimestamp >= payload.exp + clockTolerance)
+    throw new Error('Token expired')
+
+  return payload
+}
+
+export function decode(token: string): JWT {
+  const parts = token.split('.')
+  if (parts.length !== 3) throw new Error('Invalid token')
+  const header = JSON.parse(
+    textDecoder.decode(base64url.parse(parts[0], {loose: true}))
+  )
+  const payload = JSON.parse(
+    textDecoder.decode(base64url.parse(parts[1], {loose: true}))
+  )
+  const signature = base64url.parse(parts[2], {loose: true})
+  return {header, payload, signature}
+}

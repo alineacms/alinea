@@ -25,7 +25,7 @@ import {Drafts} from './Drafts'
 import {Pages} from './Pages'
 import {Previews} from './Previews'
 import {PreviewStore, previewStore} from './PreviewStore'
-import {parentUrl, walkUrl} from './util/Paths'
+import {parentUrl, walkUrl} from './util/EntryPaths'
 
 type PagesOptions = {
   preview?: boolean

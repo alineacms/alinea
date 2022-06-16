@@ -59,7 +59,7 @@ export class PasswordLessAuth implements Auth.Server {
           }
         })
         .map(router.jsonResponse)
-    )
+    ).recover(router.reportError)
   }
 
   async userFor(request: Request) {
