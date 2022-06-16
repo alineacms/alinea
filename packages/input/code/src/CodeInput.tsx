@@ -20,8 +20,7 @@ export type CodeInputProps = {
 export function CodeInput({state, field}: CodeInputProps) {
   const [value, setValue] = useInput(state)
   const [focus, setFocus] = useState(false)
-  const {width, inline, optional, help, language, hidden} = field.options
-  if (hidden) return null
+  const {width, inline, optional, help, language} = field.options
 
   // Todo: unlocalise
   const placeholder = inline ? String(field.label) : ''

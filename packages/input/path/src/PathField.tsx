@@ -18,6 +18,7 @@ export function createPath(label: Label, options: PathOptions = {}): PathField {
   return {
     shape: Shape.Scalar(label),
     label,
-    options
+    options,
+    hidden: options.hidden
   }
 }

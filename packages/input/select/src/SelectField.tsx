@@ -46,6 +46,7 @@ export function createSelect<T extends string>(
     initialValue: options.initialValue,
     configure(options: SelectOptions<T>) {
       return createSelect<T>(label, items, options)
-    }
+    },
+    hidden: options.hidden
   }
 }

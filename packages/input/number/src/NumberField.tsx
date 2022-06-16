@@ -31,6 +31,7 @@ export function createNumber(
   return {
     shape: Shape.Scalar(label, options.initialValue),
     label,
-    options
+    options,
+    hidden: options.hidden
   }
 }

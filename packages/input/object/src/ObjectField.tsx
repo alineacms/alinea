@@ -23,6 +23,7 @@ export function createObject<T>(
   return {
     shape,
     label,
-    options
+    options,
+    hidden: options.hidden
   }
 }

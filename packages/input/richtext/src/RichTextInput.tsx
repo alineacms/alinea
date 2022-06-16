@@ -142,7 +142,7 @@ function InsertMenu({editor, schema, onInsert}: InsertMenuProps) {
 
 function RichTextEditor<T>({state, field}: RichTextInputProps<T>) {
   const picker = usePickTextLink()
-  const {blocks, optional, inline, help, width, hidden} = field.options
+  const {blocks, optional, inline, help, width} = field.options
   const [focus, setFocus] = useState(false)
   const [value, {fragment, insert}] = useInput(state)
   const toolbarRef = useRef<HTMLDivElement>(null)
@@ -184,7 +184,7 @@ function RichTextEditor<T>({state, field}: RichTextInputProps<T>) {
     onBlur: ({event}) => focusToggle(event.relatedTarget),
     extensions
   })
-  if (!editor || hidden) return null
+  if (!editor) return null
   return (
     <>
       {focus && (

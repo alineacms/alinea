@@ -174,7 +174,7 @@ export function ListInput<T extends ListRow>({
   field
 }: ListInputProps<T>) {
   const [rows, list] = useInput(state)
-  const {help, inline, width, optional, hidden} = field.options
+  const {help, inline, width, optional} = field.options
   const ids = rows.map(row => row.id)
   const [dragging, setDragging] = useState<T | null>(null)
   const sensors = useSensors(
@@ -183,8 +183,6 @@ export function ListInput<T extends ListRow>({
       coordinateGetter: sortableKeyboardCoordinates
     })
   )
-
-  if (hidden) return null
 
   function handleDragStart(event: DragStartEvent) {
     const {active} = event

@@ -49,4 +49,5 @@ export interface Field<V, M, Q = V> {
   initialValue?: V
   view?: FieldRenderer<V, M, Field<V, M, Q>>
   transform?: <P>(field: Expr<V>, pages: Pages<P>) => Expr<Q> | undefined
+  hidden?: boolean
 }

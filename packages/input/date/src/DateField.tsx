@@ -29,6 +29,7 @@ export function createDate(label: Label, options: DateOptions = {}): DateField {
   return {
     shape: Shape.Scalar(label, options.initialValue),
     label,
-    options
+    options,
+    hidden: options.hidden
   }
 }

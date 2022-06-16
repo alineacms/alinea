@@ -59,6 +59,7 @@ export function createList<T, Q = Array<T & ListRow>>(
     shape: Shape.List(label, schema.shape),
     label,
     options,
-    transform: options.transform || query<T, Q>(schema)
+    transform: options.transform || query<T, Q>(schema),
+    hidden: options.hidden
   }
 }

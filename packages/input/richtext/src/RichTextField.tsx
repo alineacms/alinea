@@ -57,6 +57,7 @@ export function createRichText<T, Q = TextDoc<T>>(
     label,
     options,
     transform:
-      options.transform || (options.blocks && query<T, Q>(options.blocks))
+      options.transform || (options.blocks && query<T, Q>(options.blocks)),
+    hidden: options.hidden
   }
 }

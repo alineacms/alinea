@@ -183,8 +183,7 @@ export function LinkInput<T>({state, field}: LinkInputProps<T>) {
     multiple,
     optional,
     help,
-    max = !multiple ? 1 : undefined,
-    hidden
+    max = !multiple ? 1 : undefined
   } = field.options
   const types = Array.isArray(type) ? type : type ? [type] : []
   const cursor = useMemo(() => {
@@ -263,8 +262,6 @@ export function LinkInput<T>({state, field}: LinkInputProps<T>) {
     move(ids.indexOf(active.id), ids.indexOf(over.id))
     setDragging(null)
   }
-
-  if (hidden) return null
 
   const showLinkPicker = max ? value.length < max : true
   const showExternal = types.includes('external')

@@ -13,7 +13,9 @@ export type FieldsProps = {
 }
 
 export function Fields({state, fields}: FieldsProps) {
-  const list = LazyRecord.iterate(fields)
+  const list = LazyRecord.iterate(fields).filter(
+    ([key, field]) => !field.hidden
+  )
   return (
     <div className={styles.root()}>
       {list.map(([name, field]) => {

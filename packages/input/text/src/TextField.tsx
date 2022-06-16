@@ -36,6 +36,7 @@ export function createText(label: Label, options: TextOptions = {}): TextField {
   return {
     shape: Shape.Scalar(label, options.initialValue),
     label,
-    options
+    options,
+    hidden: options.hidden
   }
 }

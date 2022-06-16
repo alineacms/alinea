@@ -26,7 +26,7 @@ export function SelectInput<T extends string>({
   state,
   field
 }: SelectInputProps<T>) {
-  const {width, optional, help, placeholder, inline, initialValue, hidden} =
+  const {width, optional, help, placeholder, inline, initialValue} =
     field.options
   const [value = initialValue, setValue] = useInput(state)
   const items = field.items as Record<string, Label>
@@ -47,7 +47,6 @@ export function SelectInput<T extends string>({
       })
     ]
   })
-  if (hidden) return null
 
   return (
     <InputLabel

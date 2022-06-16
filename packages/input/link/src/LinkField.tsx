@@ -115,6 +115,7 @@ export function createLink<T, Q>(
     ),
     label,
     options,
+    hidden: options.hidden,
     initialValue: options.initialValue,
     transform(field, pages): Expr<Q> {
       const row = field.each()

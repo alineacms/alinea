@@ -9,8 +9,7 @@ export type ObjectInputProps<T> = {
 }
 
 export function ObjectInput<T>({state, field}: ObjectInputProps<T>) {
-  const {width, help, hidden} = field.options
-  if (hidden) return null
+  const {width, help} = field.options
 
   return (
     <InputLabel

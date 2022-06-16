@@ -26,7 +26,6 @@ export function PathInput({state, field}: PathInputProps) {
   const [endsWithSeparator, setEndsWithSeparator] = useState(false)
   const inputValue = (value || '') + (endsWithSeparator ? '-' : '')
   const empty = value === ''
-  if (field.options.hidden) return null
   return (
     <InputLabel
       asLabel

@@ -28,6 +28,7 @@ export function createCode<Q = string>(
     shape: Shape.Scalar(label, options.initialValue),
     label,
     options,
-    transform: options.transform
+    transform: options.transform,
+    hidden: options.hidden
   }
 }
