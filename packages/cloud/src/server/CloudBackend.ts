@@ -3,7 +3,7 @@ import {BackendCreateOptions} from '@alinea/core/BackendConfig'
 import {Config} from '@alinea/core/Config'
 import {createError} from '@alinea/core/ErrorWithCode'
 import {Hub} from '@alinea/core/Hub'
-import {fetch} from '@alinea/iso'
+import {Blob, fetch, FormData} from '@alinea/iso'
 import {encode} from 'base64-arraybuffer'
 import {CloudAuthServerOptions} from './CloudAuthServer'
 import {cloudConfig} from './CloudConfig'
@@ -65,30 +65,44 @@ export class CloudApi implements CloudConnection {
       .then(failOnHttpError)
       .then<void>(json)
   }
-  async upload({workspace, ...file}: Hub.UploadParams): Promise<string> {
-    throw new Error('Method not implemented.')
+  async upload({workspace, root, ...file}: Hub.UploadParams): Promise<string> {
+    const form = new FormData()
+    form.append('workspace', workspace as string)
+    form.append('root', root as string)
+    form.append('path', file.path)
+    if (file.averageColor) form.append('averageColor', file.averageColor)
+    if (file.blurHash) form.append('blurHash', file.blurHash)
+    if ('width' in file) form.append('width', String(file.width))
+    if ('height' in file) form.append('height', String(file.height))
+    form.append('buffer', new Blob([file.buffer]))
+    if (file.preview) form.append('preview', file.preview)
+    return fetch(cloudConfig.media, {
+      method: 'POST',
+      body: form
+    })
+      .then<{location: string}>(json)
+      .then(({location}) => location)
   }
   async download({
     workspace,
     location
   }: Hub.DownloadParams): Promise<Hub.Download> {
-    throw new Error('Method not implemented.')
+    return fetch(
+      cloudConfig.media + '?' + new URLSearchParams({workspace, location})
+    )
+      .then(failOnHttpError)
+      .then(async res => ({type: 'buffer', buffer: await res.arrayBuffer()}))
   }
   get(
     {id, stateVector}: Hub.EntryParams,
     ctx: Hub.Context
   ): Promise<Uint8Array | undefined> {
-    const params = new URLSearchParams()
-    params.append('id', id)
-    if (stateVector) params.append('stateVector', encode(stateVector))
+    const params = stateVector
+      ? '?' + new URLSearchParams({stateVector: encode(stateVector)})
+      : ''
     return fetch(
-      cloudConfig.draft + '?' + params.toString(),
-      withAuth(
-        {
-          method: 'GET'
-        },
-        ctx
-      )
+      cloudConfig.draft + `/${id}` + params,
+      withAuth({method: 'GET'}, ctx)
     )
       .then(failOnHttpError)
       .then(res => res.arrayBuffer())
@@ -99,7 +113,7 @@ export class CloudApi implements CloudConnection {
     ctx: Hub.Context
   ): Promise<Drafts.Update> {
     return fetch(
-      cloudConfig.draft,
+      cloudConfig.draft + `/${id}`,
       withAuth(
         {
           method: 'PUT',
@@ -115,15 +129,7 @@ export class CloudApi implements CloudConnection {
   delete({ids}: Hub.DeleteMultipleParams, ctx: Hub.Context): Promise<void> {
     return fetch(
       cloudConfig.draft,
-      asJson(
-        withAuth(
-          {
-            method: 'DELETE',
-            body: JSON.stringify({ids})
-          },
-          ctx
-        )
-      )
+      asJson(withAuth({method: 'DELETE', body: JSON.stringify({ids})}, ctx))
     )
       .then(failOnHttpError)
       .then(() => void 0)
@@ -131,14 +137,7 @@ export class CloudApi implements CloudConnection {
   async *updates({}, ctx: Hub.Context): AsyncGenerator<Drafts.Update> {
     const updates = await fetch(
       cloudConfig.draft,
-      asJson(
-        withAuth(
-          {
-            method: 'GET'
-          },
-          ctx
-        )
-      )
+      asJson(withAuth({method: 'GET'}, ctx))
     )
       .then(failOnHttpError)
       .then<Array<Drafts.Update>>(json)

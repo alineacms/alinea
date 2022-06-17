@@ -7,7 +7,7 @@ import {
   Outcome,
   Workspaces
 } from '@alinea/core'
-import {fetch} from '@alinea/iso'
+import {fetch, FormData} from '@alinea/iso'
 
 async function toFuture<T = void>(res: Response): Future<T> {
   return Outcome.fromJSON<T>(await res.json())

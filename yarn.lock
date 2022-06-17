@@ -28,7 +28,7 @@ __metadata:
   resolution: "@alinea/backend@workspace:packages/backend"
   dependencies:
     "@alinea/core": 0.0.0
-    "@alinea/iso": 0.1.6
+    "@alinea/iso": ^0.1.8
     "@alinea/sqlite-wasm": ^0.1.7
     "@alinea/store": 0.0.0
     "@octokit/rest": ^18.12.0
@@ -90,7 +90,7 @@ __metadata:
   resolution: "@alinea/client@workspace:packages/client"
   dependencies:
     "@alinea/core": 0.0.0
-    "@alinea/iso": 0.1.6
+    "@alinea/iso": ^0.1.8
   languageName: unknown
   linkType: soft
 
@@ -102,7 +102,7 @@ __metadata:
     "@alinea/client": 0.0.0
     "@alinea/core": 0.0.0
     "@alinea/dashboard": 0.0.0
-    "@alinea/iso": 0.1.6
+    "@alinea/iso": ^0.1.8
     "@alinea/ui": 0.0.0
     base64-arraybuffer: ^1.0.1
     react-query: ^3.39.1
@@ -119,7 +119,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@alinea/core@workspace:packages/core"
   dependencies:
-    "@alinea/iso": 0.1.6
+    "@alinea/iso": ^0.1.8
     "@alinea/store": 0.0.0
     base64-arraybuffer: ^1.0.1
     serialize-error: ^9.0.0
@@ -366,10 +366,17 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@alinea/iso@npm:0.1.6, @alinea/iso@npm:^0.1.6":
+"@alinea/iso@npm:^0.1.6":
   version: 0.1.6
   resolution: "@alinea/iso@npm:0.1.6"
   checksum: 2da951fc29490a2f6455d5ca3d51514ace9151744fe80afb82dd93a607c9f4cf261f748f80796bcb32cef9de2895a1546f669e97108684394ef9109e8ac5361c
+  languageName: node
+  linkType: hard
+
+"@alinea/iso@npm:^0.1.8":
+  version: 0.1.8
+  resolution: "@alinea/iso@npm:0.1.8"
+  checksum: 827d11ba17b70df65ba59f554a61aa7ecc547c0a9734b506161d07adadb26797bbfdb804cdae0c724528c446f68fa10169247133c71bacbaeae9b84376e1c4d6
   languageName: node
   linkType: hard
 
