@@ -131,6 +131,9 @@ export async function serve(options: ServeOptions) {
       platform: 'browser',
       ...buildOptions,
       plugins: [EvalPlugin, ReactPlugin, ...(buildOptions?.plugins || [])],
+      define: {
+        'process.env.NODE_ENV': production ? "'production'" : "'development'"
+      },
       loader: {
         ...buildOptions?.loader,
         '.woff': 'file',
