@@ -1,7 +1,6 @@
-import {PasswordLessLogin} from '@alinea/auth.passwordless/PasswordLessLogin'
 import {Client} from '@alinea/client'
+import {config} from '@alinea/content'
 import dynamic from 'next/dynamic'
-import {config} from '../../.alinea'
 
 const client = new Client(config, '/api/cms')
 
@@ -13,7 +12,7 @@ export default function Admin() {
   return (
     <>
       <style>{`#__next {height: 100%}`}</style>
-      <Dashboard config={config} client={client} auth={PasswordLessLogin} />
+      <Dashboard config={config} client={client} />
     </>
   )
 }
