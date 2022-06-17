@@ -116,15 +116,15 @@ export function useContentTree({
     ['tree', currentLocale, workspace.name, root.name, ids.join('.')],
     () => {
       return hub
-        .query(
-          query({
+        .query({
+          cursor: query({
             locale: currentLocale,
             workspace: workspace.name,
             root: root.name,
             open: ids,
             visible
           })
-        )
+        })
         .then(Outcome.unpack)
         .then(results => {
           return {locale: currentLocale, results}

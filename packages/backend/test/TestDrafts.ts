@@ -12,6 +12,7 @@ dotenv.config()
 
 const entry: Entry.Raw = {
   id: '20580nQzc',
+  root: 'data',
   type: 'Doc',
   title: 'Getting started',
   index: 'a0'
@@ -32,15 +33,18 @@ const drafts = new FileDrafts({
 test('update doc', async () => {
   const yDoc = docFromEntry(entry, () => DocType)
   const stateVector = Y.encodeStateVector(yDoc)
-  await drafts.update(entry.id, Y.encodeStateAsUpdate(yDoc))
+  await drafts.update({id: entry.id, update: Y.encodeStateAsUpdate(yDoc)})
   yDoc.getMap(ROOT_KEY).set('title', 'Hello world')
-  await drafts.update(entry.id, Y.encodeStateAsUpdate(yDoc, stateVector))
-  const updateValue = await drafts.get(entry.id)
+  await drafts.update({
+    id: entry.id,
+    update: Y.encodeStateAsUpdate(yDoc, stateVector)
+  })
+  const updateValue = await drafts.get({id: entry.id})
   const retrieved = new Y.Doc()
   if (updateValue) Y.applyUpdate(retrieved, updateValue)
   const result = retrieved.getMap(ROOT_KEY).toJSON()
   assert.is(result.title, 'Hello world')
-  const value = await drafts.get(entry.id, stateVector)
+  const value = await drafts.get({id: entry.id, stateVector})
   if (value) Y.applyUpdate(yDoc, value)
   assert.is(result.title, 'Hello world')
 })

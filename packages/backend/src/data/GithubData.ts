@@ -1,11 +1,9 @@
-import {Config, createError, createId, Entry, slugify} from '@alinea/core'
-import {Store} from '@alinea/store'
+import {Config, createError, createId, Hub, slugify} from '@alinea/core'
 import {Octokit} from '@octokit/rest'
 import {posix as path} from 'node:path'
 import createOrUpdateFiles from 'octokit-commit-multiple-files/create-or-update-files.js'
 import {Data} from '../Data'
 import {Loader} from '../Loader'
-import {Storage} from '../Storage'
 
 export type GithubTargetOptions = {
   config: Config
@@ -22,21 +20,15 @@ export type GithubTargetOptions = {
 }
 
 export class GithubData implements Data.Target, Data.Media {
+  canRename = false
   octokit: Octokit
 
   constructor(protected options: GithubTargetOptions) {
     this.octokit = new Octokit({auth: options.githubAuthToken})
   }
 
-  async publish(current: Store, entries: Array<Entry>) {
-    const {loader, config, rootDir = '.'} = this.options
-    const changes = await Storage.publishChanges(
-      config,
-      current,
-      loader,
-      entries,
-      false
-    )
+  async publish({changes}: Hub.ChangesParams, ctx: Hub.Context) {
+    const {rootDir = '.'} = this.options
     return createOrUpdateFiles(this.octokit, {
       owner: this.options.owner,
       repo: this.options.repo,
@@ -46,17 +38,19 @@ export class GithubData implements Data.Target, Data.Media {
         {
           message: 'Update content',
           files: Object.fromEntries(
-            changes.write.map(([file, contents]) => {
+            changes.write.map(({file, contents}) => {
               return [path.join(rootDir, file), contents]
             })
           ),
-          filesToDelete: changes.delete.map(file => path.join(rootDir, file))
+          filesToDelete: changes.delete.map(({file}) =>
+            path.join(rootDir, file)
+          )
         }
       ]
     })
   }
 
-  async upload(workspace: string, file: Data.Media.Upload): Promise<string> {
+  async upload({workspace, ...file}: Hub.UploadParams): Promise<string> {
     const {config, rootDir = '.', owner, repo, branch, author} = this.options
     const {mediaDir} = config.workspaces[workspace]
     if (!mediaDir) throw createError(500, 'Media directory not configured')
@@ -81,10 +75,10 @@ export class GithubData implements Data.Target, Data.Media {
     return location
   }
 
-  async download(
-    workspace: string,
-    location: string
-  ): Promise<Data.Media.Download> {
+  async download({
+    workspace,
+    location
+  }: Hub.DownloadParams): Promise<Hub.Download> {
     const {config, rootDir = '.', owner, repo, branch} = this.options
     const {mediaDir} = config.workspaces[workspace]
     if (!mediaDir) throw createError(500, 'Media directory not configured')

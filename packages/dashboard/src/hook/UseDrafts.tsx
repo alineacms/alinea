@@ -40,7 +40,7 @@ class Drafts {
     const sv = Y.encodeStateVector(doc)
     const update = Y.encodeStateAsUpdate(doc) // , this.stateVectors.get(doc))
     await hub
-      .updateDraft(id, update)
+      .updateDraft({id, update})
       .then(Outcome.unpack)
       .then(() => {
         this.stateVectors.set(doc, sv)
@@ -50,7 +50,7 @@ class Drafts {
   async get(id: string) {
     const {hub} = this
     const doc = new Y.Doc()
-    const [result, error] = await hub.entry(id)
+    const [result, error] = await hub.entry({id})
     if (error) throw error
     if (!result) throw createError(404, `Entry not found`)
     const type = hub.config.type(result.entry.workspace, result.entry.type)
@@ -65,14 +65,14 @@ class Drafts {
   }
 
   async list(workspace: string) {
-    return this.hub.listDrafts(workspace).then(Outcome.unpack)
+    return this.hub.listDrafts({workspace}).then(Outcome.unpack)
   }
 
   async discard(draft: EntryDraft) {
     if (this.saveTimeout) clearTimeout(this.saveTimeout)
     draft.status(EntryStatus.Publishing)
     this.status(DraftsStatus.Saving)
-    return this.hub.deleteDraft(draft.id).then(result => {
+    return this.hub.deleteDraft({id: draft.id}).then(result => {
       draft.status(EntryStatus.Published)
       this.queryClient.invalidateQueries('draft-list')
       return result
@@ -83,7 +83,7 @@ class Drafts {
     if (this.saveTimeout) clearTimeout(this.saveTimeout)
     draft.status(EntryStatus.Publishing)
     this.status(DraftsStatus.Saving)
-    return this.hub.publishEntries([draft.getEntry()]).then(res => {
+    return this.hub.publishEntries({entries: [draft.getEntry()]}).then(res => {
       if (res.isFailure()) console.error(res.error)
       draft.status(res.isSuccess() ? EntryStatus.Published : EntryStatus.Draft)
       this.status(DraftsStatus.Synced)

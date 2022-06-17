@@ -263,8 +263,12 @@ function AppRoot({session, setSession}: AppRootProps) {
   if (!session)
     return (
       <Viewport attachToBody contain color={color}>
-        <FavIcon color={color} />
-        <Auth setSession={setSession} />
+        <Head>
+          <FavIcon color={color} />
+        </Head>
+        <Suspense fallback={<Loader absolute />}>
+          <Auth setSession={setSession} />
+        </Suspense>
       </Viewport>
     )
   return <AppAuthenticated />

@@ -58,7 +58,9 @@ async function uploadFile(
     color = res.hex
   }
   const buffer = await file.arrayBuffer()
-  return hub.uploadFile(workspace, root, {
+  return hub.uploadFile({
+    workspace,
+    root,
     path,
     buffer,
     preview,
@@ -78,11 +80,11 @@ export function MediaExplorer() {
     ['media', 'total', draft.id],
     () => {
       return hub
-        .query(
-          File.where(File.parent.is(draft.id)).select({
+        .query({
+          cursor: File.where(File.parent.is(draft.id)).select({
             total: Functions.count()
           })
-        )
+        })
         .then(Outcome.unpack)
     },
     {suspense: true}

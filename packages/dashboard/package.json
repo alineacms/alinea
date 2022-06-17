@@ -54,7 +54,8 @@
     "yjs": "^13.5.39"
   },
   "peerDependencies": {
-    "react": "*"
+    "react": "*",
+    "react-dom": "*"
   },
   "devDependencies": {
     "@types/diff-match-patch": "^1.0.32"

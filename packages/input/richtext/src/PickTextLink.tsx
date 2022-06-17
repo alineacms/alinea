@@ -12,7 +12,9 @@ import css from './PickLink.module.scss'
 const styles = fromModule(css)
 
 const linkForm = type('Link', {
-  link: link('Link'),
+  link: link('Link', {
+    type: ['entry', 'external']
+  }),
   description: text('Description', {
     help: 'Text to display inside the link element'
   }),

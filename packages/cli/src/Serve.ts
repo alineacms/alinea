@@ -117,7 +117,7 @@ export async function serve(options: ServeOptions) {
       format: 'esm',
       target: 'esnext',
       treeShaking: true,
-      // minify: true,
+      minify: true,
       splitting: true,
       sourcemap: true,
       outdir: path.join(staticDir, 'dev'),

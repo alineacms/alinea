@@ -1,15 +1,15 @@
 {
-  "name": "@alinea/auth.passwordless",
+  "name": "@alinea/cloud",
   "version": "0.0.0",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/alineacms/alinea.git"
+  },
   "type": "module",
   "exports": {
     ".": "./dist/index.js",
-    "./*": "./dist/*.js",
-    "./server/PasswordLessAuth": {
-      "browser": "./dist/static/noop.cjs",
-      "default": "./dist/server/PasswordLessAuth.js"
-    }
+    "./*": "./dist/*.js"
   },
   "files": [
     "dist"
@@ -27,15 +27,9 @@
     "@alinea/client": "0.0.0",
     "@alinea/core": "0.0.0",
     "@alinea/dashboard": "0.0.0",
+    "@alinea/iso": "^0.1.8",
     "@alinea/ui": "0.0.0",
-    "jwt-decode": "^3.1.2",
-    "nodemailer": "^6.6.5",
-    "superstruct": "^0.15.4"
-  },
-  "devDependencies": {
-    "@types/nodemailer": "^6.4.4"
-  },
-  "peerDependencies": {
-    "react": "*"
+    "base64-arraybuffer": "^1.0.1",
+    "react-query": "^3.39.1"
   }
 }

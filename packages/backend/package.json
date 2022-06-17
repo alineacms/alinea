@@ -24,7 +24,7 @@
   },
   "dependencies": {
     "@alinea/core": "0.0.0",
-    "@alinea/iso": "0.1.6",
+    "@alinea/iso": "^0.1.8",
     "@alinea/store": "0.0.0",
     "@octokit/rest": "^18.12.0",
     "base64-arraybuffer": "^1.0.1",
@@ -34,6 +34,7 @@
     "octokit-commit-multiple-files": "^3.2.1",
     "pretty-ms": "^8.0.0",
     "regexparam": "^2.0.0",
+    "rfc4648": "^1.5.2",
     "yjs": "^13.5.39"
   },
   "devDependencies": {

@@ -1,3 +1,4 @@
+import {Changes} from '@alinea/backend/Storage'
 import {Cursor} from '@alinea/store'
 import {encode} from 'base64-arraybuffer'
 import {Config} from './Config'
@@ -9,23 +10,52 @@ import {Workspaces} from './Workspace'
 
 export interface Hub<T extends Workspaces = Workspaces> {
   config: Config<T>
-  entry(id: string, stateVector?: Uint8Array): Future<Entry.Detail | null>
-  query<T>(cursor: Cursor<T>, options?: Hub.QueryOptions): Future<Array<T>>
-  updateDraft(id: string, update: Uint8Array): Future
-  deleteDraft(id: string): Future<boolean>
-  listDrafts(workspace: string): Future<Array<{id: string}>>
-  uploadFile(
-    workspace: string,
-    root: string,
-    file: Hub.Upload
-  ): Future<Media.File>
-  publishEntries(entries: Array<Entry>): Future
+  entry(params: Hub.EntryParams, ctx?: Hub.Context): Future<Entry.Detail | null>
+  query<T>(params: Hub.QueryParams<T>, ctx?: Hub.Context): Future<Array<T>>
+  updateDraft(params: Hub.UpdateParams, ctx?: Hub.Context): Future
+  deleteDraft(params: Hub.DeleteParams, ctx?: Hub.Context): Future<boolean>
+  listDrafts(
+    params: Hub.ListParams,
+    ctx?: Hub.Context
+  ): Future<Array<{id: string}>>
+  uploadFile(params: Hub.UploadParams, ctx?: Hub.Context): Future<Media.File>
+  publishEntries(params: Hub.PublishParams, ctx?: Hub.Context): Future
 }
 
 export namespace Hub {
-  export type Context = {user?: User}
-
-  export type Upload = {
+  export type Context = {
+    user?: User
+    token?: string
+    // Eventually we'll probably want to enable preview hashes that specify
+    // exactly which drafts we'd like to see. For now we'll just add in the
+    // entry id we're previewing.
+    preview?: string
+  }
+  export type EntryParams = {
+    id: string
+    stateVector?: Uint8Array
+  }
+  export type QueryParams<T> = {
+    cursor: Cursor<T>
+    /** Query source data, not drafts */
+    source?: boolean
+  }
+  export type UpdateParams = {
+    id: string
+    update: Uint8Array
+  }
+  export type DeleteParams = {
+    id: string
+  }
+  export type DeleteMultipleParams = {
+    ids: Array<string>
+  }
+  export type ListParams = {
+    workspace: string
+  }
+  export type UploadParams = {
+    workspace: string
+    root: string
     path: string
     buffer: ArrayBuffer
     preview?: string
@@ -34,14 +64,18 @@ export namespace Hub {
     width?: number
     height?: number
   }
-  export type Stat = {
-    size?: number
-    lastModified?: Date
+  export type DownloadParams = {
+    workspace: string
+    location: string
   }
-  export type DirEntry = {type: 'file' | 'directory'; path: string; stat: Stat}
-  export type QueryOptions = {
-    /** Query source data, not drafts */
-    source?: boolean
+  export type Download =
+    | {type: 'buffer'; buffer: ArrayBuffer}
+    | {type: 'url'; url: string}
+  export type PublishParams = {
+    entries: Array<Entry>
+  }
+  export type ChangesParams = {
+    changes: Changes
   }
 
   const base = '/hub'

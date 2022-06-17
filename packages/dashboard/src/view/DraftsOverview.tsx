@@ -32,7 +32,7 @@ export function DraftsOverview({id}: DraftsOverviewProps) {
       const criteria = Entry.where(Entry.id.isIn(ids)).where(
         Entry.workspace.is(workspace.name)
       )
-      const drafts = hub.query(criteria).then(Outcome.unpack)
+      const drafts = hub.query({cursor: criteria}).then(Outcome.unpack)
       return drafts
     },
     {suspense: true}
@@ -45,7 +45,7 @@ export function DraftsOverview({id}: DraftsOverviewProps) {
     if (publishing) return
     setPublishing(true)
     return hub
-      .publishEntries(drafts)
+      .publishEntries({entries: drafts})
       .then(Outcome.unpack)
       .then(() => refetch())
       .finally(() => setPublishing(false))

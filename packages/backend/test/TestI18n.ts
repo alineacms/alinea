@@ -1,3 +1,4 @@
+import {Storage} from '@alinea/backend/Storage'
 import {
   accumulate,
   createConfig,
@@ -55,6 +56,7 @@ const fs: FS = Volume.fromNestedJSON({
       a: {
         '/index.json': entry({
           id: 'root',
+          root: 'data',
           index: 'a',
           type: 'Home',
           title: 'Test title',
@@ -62,6 +64,7 @@ const fs: FS = Volume.fromNestedJSON({
         }),
         '/sub.json': entry({
           id: 'sub',
+          root: 'data',
           index: 'a',
           type: 'Type',
           title: 'Sub title',
@@ -70,6 +73,7 @@ const fs: FS = Volume.fromNestedJSON({
         sub: {
           '/entry.json': entry({
             id: 'sub-entry',
+            root: 'data',
             index: 'b',
             type: 'Sub',
             title: 'Sub entry title',
@@ -117,7 +121,10 @@ test('reading', async () => {
 
 test('inserting', async () => {
   const [root] = await index()
-  await data.publish(store, [{...root, title: 'New root title'}])
+  const changes = await Storage.publishChanges(config, store, JsonLoader, [
+    {...root, title: 'New root title'}
+  ])
+  await data.publish({changes})
   const [newRoot] = await index()
   assert.is(newRoot.id, 'root')
   assert.is(newRoot.title, 'New root title')

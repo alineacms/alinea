@@ -1,7 +1,8 @@
 import {Client} from '@alinea/client'
-import {Auth, createError, Session} from '@alinea/core'
+import {Auth, createError, Hub, Session} from '@alinea/core'
 import {joinPaths} from '@alinea/core/util/Urls'
 import {useDashboard} from '@alinea/dashboard'
+import {Head} from '@alinea/dashboard/util/Head'
 import {Button, fromModule, Loader, LogoShape, px, Typo} from '@alinea/ui'
 import {IcRoundArrowBack} from '@alinea/ui/icons/IcRoundArrowBack'
 import {IcRoundArrowForward} from '@alinea/ui/icons/IcRoundArrowForward'
@@ -9,7 +10,6 @@ import {RiFlashlightFill} from '@alinea/ui/icons/RiFlashlightFill'
 import {HStack, VStack} from '@alinea/ui/Stack'
 import jwtDecode from 'jwt-decode'
 import {FormEvent, PropsWithChildren, useLayoutEffect, useState} from 'react'
-import Helmet from 'react-helmet'
 import css from './PasswordLessLogin.module.scss'
 
 const styles = fromModule(css)
@@ -178,7 +178,7 @@ export function PasswordLessLogin({setSession}: Auth.ViewProps) {
     setState(LoginState.Loading)
     if (!(client instanceof Client))
       throw createError(`Cannot authenticate with non http client`)
-    fetch(joinPaths(client.url, `/hub/auth.passwordless`), {
+    fetch(joinPaths(client.url, Hub.routes.base, `/auth.passwordless`), {
       headers: {'content-type': 'application/json'},
       method: 'POST',
       body: JSON.stringify({email})
@@ -200,9 +200,9 @@ export function PasswordLessLogin({setSession}: Auth.ViewProps) {
 
   return (
     <>
-      <Helmet>
+      <Head>
         <title>Log in</title>
-      </Helmet>
+      </Head>
       <div style={{display: 'flex', height: '100%', width: '100%'}}>
         <div style={{margin: 'auto', padding: px(20)}}>
           <LoginScreen

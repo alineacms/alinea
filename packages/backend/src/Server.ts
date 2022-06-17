@@ -22,10 +22,12 @@ import * as Y from 'yjs'
 import {Cache} from './Cache'
 import {Data} from './Data'
 import {Drafts} from './Drafts'
+import {JsonLoader} from './loader/JsonLoader'
 import {Pages} from './Pages'
 import {Previews} from './Previews'
 import {PreviewStore, previewStore} from './PreviewStore'
-import {parentUrl, walkUrl} from './util/Paths'
+import {Storage} from './Storage'
+import {parentUrl, walkUrl} from './util/EntryPaths'
 
 type PagesOptions = {
   preview?: boolean
@@ -57,11 +59,11 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
   }
 
   async entry(
-    id: string,
-    stateVector?: Uint8Array
+    {id, stateVector}: Hub.EntryParams,
+    ctx: Hub.Context
   ): Future<Entry.Detail | null> {
     const {config, drafts, previews} = this.options
-    let draft = await drafts.get(id, stateVector)
+    let draft = await drafts.get({id, stateVector}, ctx)
     if (draft) {
       const doc = new Y.Doc()
       Y.applyUpdate(doc, draft)
@@ -70,13 +72,13 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
       )
       if (!isValidDraft) {
         console.log(`Removed invalid draft ${id}`)
-        await drafts.delete([id])
+        await drafts.delete({ids: [id]}, ctx)
         draft = undefined
       }
     }
     return outcome(async () => {
       const [preview, source] = await Promise.all([
-        this.preview.getStore(),
+        this.preview.getStore(ctx),
         this.createStore()
       ])
       const Parent = Entry.as('Parent')
@@ -115,22 +117,41 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
   }
 
   async query<T>(
-    cursor: Cursor<T>,
-    options?: Hub.QueryOptions
+    {cursor, source}: Hub.QueryParams<T>,
+    ctx: Hub.Context
   ): Future<Array<T>> {
     return outcome(async () => {
-      const create = options?.source
+      const create = source
         ? this.createStore
         : this.preview.getStore.bind(this.preview)
-      const store = await create()
+      const store = await create(ctx)
       return store.all(cursor)
     })
   }
 
-  listDrafts(workspace: string) {
+  updateDraft({id, update}: Hub.UpdateParams, ctx: Hub.Context): Future<void> {
+    const {drafts} = this.options
     return outcome(async () => {
-      const store = await this.preview.getStore()
-      const drafts = await accumulate(this.drafts.updates())
+      const instruction = await drafts.update({id, update}, ctx)
+      await this.preview.applyUpdate(instruction)
+    })
+  }
+
+  deleteDraft({id}: Hub.DeleteParams, ctx: Hub.Context): Future<boolean> {
+    const {drafts} = this.options
+    return outcome(async () => {
+      await this.preview.deleteUpdate(id)
+      const store = await this.preview.getStore(ctx)
+      drafts.delete({ids: [id]}, ctx)
+      // Do we still have an entry after removing the draft?
+      return Boolean(store.first(Entry.where(Entry.id.is(id))))
+    })
+  }
+
+  listDrafts({workspace}: Hub.ListParams, ctx: Hub.Context) {
+    return outcome(async () => {
+      const store = await this.preview.getStore(ctx)
+      const drafts = await accumulate(this.drafts.updates({}, ctx))
       const ids = drafts.map(({id}) => id)
       const inWorkspace = store.all(
         Entry.where(Entry.workspace.is(workspace))
@@ -141,26 +162,7 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
     })
   }
 
-  updateDraft(id: string, update: Uint8Array): Future<void> {
-    const {drafts} = this.options
-    return outcome(async () => {
-      const instruction = await drafts.update(id, update)
-      await this.preview.applyUpdate(instruction)
-    })
-  }
-
-  deleteDraft(id: string): Future<boolean> {
-    const {drafts} = this.options
-    return outcome(async () => {
-      await this.preview.deleteUpdate(id)
-      const store = await this.preview.getStore()
-      drafts.delete([id])
-      // Do we still have an entry after removing the draft?
-      return Boolean(store.first(Entry.where(Entry.id.is(id))))
-    })
-  }
-
-  publishEntries(entries: Array<Entry>): Future<void> {
+  publishEntries({entries}: Hub.PublishParams, ctx: Hub.Context): Future<void> {
     const {config, drafts, target} = this.options
     function applyPublish(store: Store) {
       Cache.applyPublish(store, config, entries)
@@ -169,21 +171,27 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
     return outcome(async () => {
       const create = this.createStore
       const current = await create()
-      await target.publish(current, entries)
+      const changes = await Storage.publishChanges(
+        config,
+        current,
+        JsonLoader,
+        entries,
+        false
+      )
+      await target.publish({changes}, ctx)
       const ids = entries.map(entry => entry.id)
-      await drafts.delete(ids)
+      await drafts.delete({ids}, ctx)
       this.createStore = () => create().then(applyPublish)
       await this.preview.deleteUpdates(ids)
     })
   }
 
   uploadFile(
-    workspace: string,
-    root: string,
-    file: Hub.Upload
+    {workspace, root, ...file}: Hub.UploadParams,
+    ctx: Hub.Context
   ): Future<Media.File> {
     return outcome(async () => {
-      const store = await this.preview.getStore()
+      const store = await this.preview.getStore(ctx)
       const id = createId()
       const {media} = this.options
       const parents = walkUrl(parentUrl(file.path)).map(url => {
@@ -198,7 +206,7 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
       })
       const parent = parents[parents.length - 1]
       if (!parent) throw createError(400, `Parent not found: "${file.path}"`)
-      const location = await media.upload(workspace as string, file)
+      const location = await media.upload({workspace, root, ...file}, ctx)
       const extension = extname(location)
       const prev = store.first(
         Entry.where(Entry.workspace.is(workspace))
@@ -228,7 +236,7 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
         blurHash: file.blurHash,
         preview: file.preview
       }
-      await this.publishEntries([entry])
+      await this.publishEntries({entries: [entry]}, ctx)
       return entry
     })
   }
@@ -241,11 +249,11 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
     const workspace = this.config.workspaces[workspaceKey]
     const store = options.previewToken
       ? async () => {
-          await this.parsePreviewToken(options.previewToken!)
-          return this.preview.getStore()
+          const {id} = await this.parsePreviewToken(options.previewToken!)
+          return this.preview.getStore({preview: id})
         }
       : options.preview
-      ? () => this.preview.getStore()
+      ? () => this.preview.getStore({})
       : this.createStore
     return new Pages<T[K] extends WorkspaceConfig<infer W> ? W : any>(
       workspace,
@@ -258,8 +266,8 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
     const [tokenData, err] = await outcome(() => previews.verify(token))
     if (!tokenData) throw createError(400, `Incorrect token: ${err}`)
     const {id} = tokenData
-    const store = await this.preview.getStore()
-    await this.preview.fetchUpdate(id)
+    const store = await this.preview.getStore({preview: id})
+    await this.preview.fetchUpdate(id, {preview: id})
     const entry = store.first(
       Entry.where(Entry.id.is(id)).select({id: Entry.id, url: Entry.url})
     )

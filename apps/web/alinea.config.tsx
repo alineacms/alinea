@@ -1,4 +1,5 @@
 import {passwordLess} from '@alinea/auth.passwordless'
+import {createCloudBackend} from '@alinea/cloud'
 import {backend, createConfig, root, schema, workspace} from '@alinea/core'
 import {LocaleSchema} from '@alinea/dashboard/schema/LocaleSchema'
 import {MediaSchema} from '@alinea/dashboard/schema/MediaSchema'
@@ -66,10 +67,14 @@ const stories = workspace('Stories', {
 
 const workspaces = {web, stories}
 
+const customBackend = backend({
+  auth: passwordLess
+}).configure(configureBackend)
+
+const cloudBackend = createCloudBackend()
+
 export const config = createConfig({
-  backend: backend({
-    auth: passwordLess
-  }).configure(configureBackend),
+  backend: cloudBackend,
   workspaces:
     process.env.NODE_ENV === 'development'
       ? workspaces

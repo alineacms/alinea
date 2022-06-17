@@ -20,7 +20,7 @@ export type BackendOptions<AuthOptions> = {
   auth: Auth<AuthOptions>
 }
 
-export type BackendConfig<AuthOptions> = BackendOptions<AuthOptions> & {
+export type BackendConfig<AuthOptions = {}> = BackendOptions<AuthOptions> & {
   configureBackend: BackendFactory<AuthOptions>
 }
 

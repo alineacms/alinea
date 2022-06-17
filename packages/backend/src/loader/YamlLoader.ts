@@ -2,12 +2,15 @@ import {Entry, Schema} from '@alinea/core'
 import yaml from 'js-yaml'
 import {Loader} from '../Loader'
 
+const encoder = new TextEncoder()
+const decoder = new TextDecoder()
+
 export const YamlLoader: Loader = {
   extension: '.yml',
-  parse(schema: Schema, input: Buffer) {
-    return yaml.load(input.toString()) as Entry.Raw
+  parse(schema: Schema, input: Uint8Array) {
+    return yaml.load(decoder.decode(input)) as Entry.Raw
   },
   format(schema: Schema, entry: Entry.Raw) {
-    return Buffer.from(yaml.dump(entry, {indent: 2, skipInvalid: true}))
+    return encoder.encode(yaml.dump(entry, {indent: 2, skipInvalid: true}))
   }
 }
