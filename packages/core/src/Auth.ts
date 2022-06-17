@@ -1,11 +1,12 @@
 import type {Handler} from '@alinea/backend/router/Router'
 import type {ComponentType} from 'react'
+import {Hub} from './Hub'
 import {Session} from './Session'
 
 export namespace Auth {
   export type Server = {
-    // userFor: (request: Request) => User | undefined
     handler: Handler<Request, Response>
+    contextFor(request: Request): Promise<Hub.Context>
   }
   export type ViewProps = {setSession: (session: Session | undefined) => void}
   export type View = ComponentType<ViewProps>

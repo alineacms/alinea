@@ -1,4 +1,4 @@
-import {parentUrl, walkUrl} from '@alinea/backend/util/Paths'
+import {parentUrl, walkUrl} from '@alinea/backend/util/EntryPaths'
 import {test} from 'uvu'
 import * as assert from 'uvu/assert'
 

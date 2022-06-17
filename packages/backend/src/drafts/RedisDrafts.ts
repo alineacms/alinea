@@ -1,3 +1,4 @@
+import {Hub} from '@alinea/core/Hub'
 import type {Redis} from 'ioredis'
 import * as Y from 'yjs'
 import {Drafts} from '../Drafts'
@@ -16,10 +17,10 @@ export class RedisDrafts implements Drafts {
     this.options = {prefix: PREFIX, ...options}
   }
 
-  async get(
-    id: string,
-    stateVector?: Uint8Array
-  ): Promise<Uint8Array | undefined> {
+  async get({
+    id,
+    stateVector
+  }: Hub.EntryParams): Promise<Uint8Array | undefined> {
     const {prefix, client} = this.options
     const draft = await client.getBuffer(prefix + id)
     if (!(draft instanceof Uint8Array)) return undefined
@@ -29,10 +30,10 @@ export class RedisDrafts implements Drafts {
     return Y.encodeStateAsUpdate(doc, stateVector)
   }
 
-  async update(id: string, update: Uint8Array): Promise<Drafts.Update> {
+  async update({id, update}: Hub.UpdateParams): Promise<Drafts.Update> {
     const {prefix, client} = this.options
     const doc = new Y.Doc()
-    const current = await this.get(id)
+    const current = await this.get({id})
     if (current) Y.applyUpdate(doc, current)
     Y.applyUpdate(doc, update)
     const draft = Buffer.from(Y.encodeStateAsUpdate(doc))
@@ -40,7 +41,7 @@ export class RedisDrafts implements Drafts {
     return {id, update: draft}
   }
 
-  async delete(ids: string[]): Promise<void> {
+  async delete({ids}: Hub.DeleteMultipleParams): Promise<void> {
     const {prefix, client} = this.options
     for (const id of ids) await client.del(prefix + id)
   }

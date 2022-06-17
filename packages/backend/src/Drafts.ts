@@ -1,8 +1,13 @@
+import {Hub} from '@alinea/core/Hub'
+
 export interface Drafts {
-  get(id: string, stateVector?: Uint8Array): Promise<Uint8Array | undefined>
-  update(id: string, update: Uint8Array): Promise<Drafts.Update>
-  delete(ids: Array<string>): Promise<void>
-  updates(): AsyncGenerator<Drafts.Update>
+  get(
+    params: Hub.EntryParams,
+    ctx: Hub.Context
+  ): Promise<Uint8Array | undefined>
+  update(params: Hub.UpdateParams, ctx: Hub.Context): Promise<Drafts.Update>
+  delete(params: Hub.DeleteMultipleParams, ctx: Hub.Context): Promise<void>
+  updates(params: {}, ctx: Hub.Context): AsyncGenerator<Drafts.Update>
 }
 
 export namespace Drafts {

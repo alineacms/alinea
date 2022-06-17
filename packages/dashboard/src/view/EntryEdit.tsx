@@ -50,7 +50,7 @@ export function EntryEdit({initialMode, draft, isLoading}: EntryEditProps) {
     entry.url = `/${locale}/${path}`
     const doc = docFromEntry(entry, () => type)
     return hub
-      .updateDraft(entry.id, Y.encodeStateAsUpdate(doc))
+      .updateDraft({id: entry.id, update: Y.encodeStateAsUpdate(doc)})
       .then(result => {
         if (!result.isFailure()) {
           queryClient.invalidateQueries(['draft', draft.id])

@@ -199,11 +199,11 @@ export function LinkInput<T>({state, field}: LinkInputProps<T>) {
       const selection = View.getSelection(schema, 'summaryRow', Entry)
       if (value.length === 0) return new Map()
       return hub
-        .query(
-          cursor.select(
+        .query({
+          cursor: cursor.select(
             Entry.type.case(selection, EntrySummaryRow.selection(Entry))
           )
-        )
+        })
         .then(Outcome.unpack)
         .then(entries => {
           const res = new Map()

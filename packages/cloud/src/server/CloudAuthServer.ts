@@ -2,7 +2,7 @@ import {Handler, router} from '@alinea/backend/router/Router'
 import {verify} from '@alinea/backend/util/JWT'
 import {Auth, createError, Hub, outcome, User} from '@alinea/core'
 import {fetch, Request, Response} from '@alinea/iso'
-import {API_DSN, JWKS_URL} from './CloudConfig'
+import {cloudConfig} from './CloudConfig'
 
 export enum AuthResultType {
   Authenticated,
@@ -21,7 +21,7 @@ type JWKS = {keys: Array<JsonWebKey>}
 
 function getPublicKey(): Promise<JsonWebKey> {
   // Todo: some retries before we give up
-  return fetch(JWKS_URL)
+  return fetch(cloudConfig.jwks)
     .then<JWKS>(res => res.json())
     .then(jwks => {
       const key = jwks.keys[0] // .find(key => key.use === 'sig')
@@ -34,7 +34,7 @@ const COOKIE_NAME = 'alinea.cloud'
 
 export class CloudAuthServer implements Auth.Server {
   handler: Handler<Request, Response>
-  users = new WeakMap<Request, User>()
+  context = new WeakMap<Request, {token: string; user: User}>()
   key = getPublicKey()
 
   constructor(private options: CloudAuthServerOptions) {
@@ -81,7 +81,7 @@ export class CloudAuthServer implements Auth.Server {
       router
         .use(async (request: Request) => {
           try {
-            const user = await this.userFor(request)
+            const {user} = await this.contextFor(request)
           } catch (e) {
             throw createError(401, 'Unauthorized')
           }
@@ -97,17 +97,17 @@ export class CloudAuthServer implements Auth.Server {
 
   async authResult(request: Request): Promise<AuthResult> {
     if (!this.options.apiKey) return {type: AuthResultType.MissingApiKey}
-    const [user, err] = await outcome(this.userFor(request))
-    if (user) return {type: AuthResultType.Authenticated, user}
+    const [ctx, err] = await outcome(this.contextFor(request))
+    if (ctx) return {type: AuthResultType.Authenticated, user: ctx.user}
     const dashboardUrl = this.baseUrl(request)
     return {
       type: AuthResultType.UnAuthenticated,
-      redirect: `${API_DSN}/login?from=${dashboardUrl}`
+      redirect: `${cloudConfig.login}?from=${dashboardUrl}`
     }
   }
 
-  async userFor(request: Request) {
-    if (this.users.has(request)) return this.users.get(request)!
+  async contextFor(request: Request): Promise<{token: string; user: User}> {
+    if (this.context.has(request)) return this.context.get(request)!
     const cookies = request.headers.get('cookie')
     if (!cookies) throw createError(401, 'Unauthorized')
     const token = cookies
@@ -116,6 +116,6 @@ export class CloudAuthServer implements Auth.Server {
       .find(c => c.startsWith(`${COOKIE_NAME}=`))
     if (!token) throw createError(401, 'Unauthorized')
     const jwt = token.slice(`${COOKIE_NAME}=`.length)
-    return verify<User>(jwt, await this.key)
+    return {token, user: await verify<User>(jwt, await this.key)}
   }
 }

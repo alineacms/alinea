@@ -4,15 +4,14 @@ import {
   createId,
   Entry,
   EntryStatus,
+  Hub,
   outcome,
   slugify
 } from '@alinea/core'
-import {Store} from '@alinea/store'
 import {posix as path} from 'node:path'
 import {Data} from '../Data'
 import {FS} from '../FS'
 import {Loader} from '../Loader'
-import {Storage} from '../Storage'
 import {walkUrl} from '../util/EntryPaths'
 
 export type FileDataOptions = {
@@ -31,6 +30,8 @@ function isChildOf(child: string, parent: string) {
 }
 
 export class FileData implements Data.Source, Data.Target, Data.Media {
+  canRename = true
+
   constructor(protected options: FileDataOptions) {}
 
   async *entries(): AsyncGenerator<Entry> {
@@ -133,17 +134,11 @@ export class FileData implements Data.Source, Data.Target, Data.Media {
     return paths
   }
 
-  async publish(current: Store, entries: Array<Entry>): Promise<void> {
-    const {fs, config, loader, rootDir = '.'} = this.options
-    const changes = await Storage.publishChanges(
-      config,
-      current,
-      loader,
-      entries
-    )
+  async publish({changes}: Hub.ChangesParams, ctx: Hub.Context) {
+    const {fs, rootDir = '.'} = this.options
     const tasks = []
     const noop = () => {}
-    for (const [file, contents] of changes.write) {
+    for (const {file, contents} of changes.write) {
       const location = path.join(rootDir, file)
       tasks.push(
         fs
@@ -152,19 +147,19 @@ export class FileData implements Data.Source, Data.Target, Data.Media {
           .then(() => fs.writeFile(location, contents))
       )
     }
-    for (const [a, b] of changes.rename) {
+    for (const {file: a, to: b} of changes.rename) {
       const location = path.join(rootDir, a)
       const newLocation = path.join(rootDir, b)
       tasks.push(fs.rename(location, newLocation).catch(noop))
     }
-    for (const file of changes.delete) {
+    for (const {file} of changes.delete) {
       const location = path.join(rootDir, file)
       tasks.push(fs.rm(location, {recursive: true, force: true}).catch(noop))
     }
     return Promise.all(tasks).then(() => void 0)
   }
 
-  async upload(workspace: string, file: Data.Media.Upload): Promise<string> {
+  async upload({workspace, ...file}: Hub.UploadParams): Promise<string> {
     const {fs, config, rootDir = '.'} = this.options
     const {mediaDir} = config.workspaces[workspace]
     if (!mediaDir) throw createError(500, 'Media directory not configured')
@@ -178,10 +173,10 @@ export class FileData implements Data.Source, Data.Target, Data.Media {
     return path.join(dir, fileName)
   }
 
-  async download(
-    workspace: string,
-    location: string
-  ): Promise<Data.Media.Download> {
+  async download({
+    workspace,
+    location
+  }: Hub.DownloadParams): Promise<Hub.Download> {
     const {fs, config, rootDir = '.'} = this.options
     const {mediaDir} = config.workspaces[workspace]
     if (!mediaDir) throw createError(500, 'Media directory not configured')

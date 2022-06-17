@@ -46,7 +46,7 @@ export function Explorer({
       const summaryView = type === 'row' ? 'summaryRow' : 'summaryThumb'
       const selection = View.getSelection(schema, summaryView, Entry)
       return hub
-        .query(cursor.select(Functions.count()))
+        .query({cursor: cursor.select(Functions.count())})
         .then(Outcome.unpack)
         .then(([total]) => {
           const defaultView = defaultSummaryView[summaryView]

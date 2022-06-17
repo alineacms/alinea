@@ -1,6 +1,5 @@
-import {createId, Entry, slugify} from '@alinea/core'
+import {createId, Entry, Hub, slugify} from '@alinea/core'
 import {basename, dirname, extname, join} from '@alinea/core/util/Paths'
-import {Store} from '@alinea/store/Store'
 import * as idb from 'lib0/indexeddb.js'
 import {Data} from '../Data'
 
@@ -10,6 +9,7 @@ const DB_NAME = '@alinea/backend.data.idb'
 const STORE_NAME = 'Data'
 
 export class IndexedDBData implements Data.Source, Data.Target, Data.Media {
+  canRename = false
   db: Promise<IDBDatabase>
 
   constructor(public options: IndexedDBOptions = {}) {
@@ -36,15 +36,15 @@ export class IndexedDBData implements Data.Source, Data.Target, Data.Media {
     }
   }
 
-  async publish(current: Store, entries: Array<Entry>) {
+  async publish({changes}: Hub.ChangesParams, ctx: Hub.Context) {
     const db = await this.db
     const [store] = idb.transact(db, [STORE_NAME])
-    for (const entry of entries) {
-      await idb.put(store, JSON.stringify(entry), 'entry:' + entry.id)
-    }
+    for (const {id, contents} of changes.write)
+      await idb.put(store, contents, 'entry:' + id)
+    for (const {id} of changes.delete) await idb.del(store, 'entry:' + id)
   }
 
-  async upload(workspace: string, file: Data.Media.Upload): Promise<string> {
+  async upload({workspace, ...file}: Hub.UploadParams): Promise<string> {
     const db = await this.db
     const [store] = idb.transact(db, [STORE_NAME])
     const dir = dirname(file.path)
@@ -56,10 +56,10 @@ export class IndexedDBData implements Data.Source, Data.Target, Data.Media {
     return location
   }
 
-  async download(
-    workspace: string,
-    location: string
-  ): Promise<Data.Media.Download> {
+  async download({
+    workspace,
+    location
+  }: Hub.DownloadParams): Promise<Hub.Download> {
     const db = await this.db
     const [store] = idb.transact(db, [STORE_NAME], 'readonly')
     const buffer = await idb.get(store, 'file:' + location)

@@ -125,7 +125,8 @@ async function process(upload: Upload, hub: Hub): Promise<Upload> {
       const buffer = await file.arrayBuffer()
       const path = (to.url === '/' ? '' : to.url) + '/' + file.name
       const result = await hub
-        .uploadFile(to.workspace, to.root, {
+        .uploadFile({
+          ...to,
           path,
           buffer,
           preview,

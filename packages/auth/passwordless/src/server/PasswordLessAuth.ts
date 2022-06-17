@@ -62,6 +62,10 @@ export class PasswordLessAuth implements Auth.Server {
     ).recover(router.reportError)
   }
 
+  async contextFor(request: Request): Promise<Hub.Context> {
+    return {user: await this.userFor(request)}
+  }
+
   async userFor(request: Request) {
     if (this.users.has(request)) return this.users.get(request)!
     const authHeader = request.headers.get('Authorization')

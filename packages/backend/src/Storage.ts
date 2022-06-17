@@ -6,10 +6,12 @@ import {Loader} from './Loader'
 import {appendPath} from './util/EntryPaths'
 
 export type Changes = {
-  write: Array<[file: string, contents: Buffer]>
-  rename: Array<[file: string, to: string]>
-  delete: Array<string>
+  write: Array<{id: string; file: string; contents: string}>
+  rename: Array<{id: string; file: string; to: string}>
+  delete: Array<{id: string; file: string}>
 }
+
+const decoder = new TextDecoder()
 
 export namespace Storage {
   export function entryLocation(
@@ -60,7 +62,11 @@ export namespace Storage {
         continue
       }
       const file = abs(entry.root, location)
-      changes.write.push([file, loader.format(schema, entryData)])
+      changes.write.push({
+        id: entry.id,
+        file,
+        contents: decoder.decode(loader.format(schema, entryData))
+      })
       const previous = store.first(Entry.where(Entry.id.is(entry.id)))
 
       // Cleanup old files
@@ -68,17 +74,22 @@ export namespace Storage {
         const oldLocation = entryLocation(previous, loader.extension)
         if (oldLocation !== location) {
           const oldFile = abs(previous.root, oldLocation)
-          changes.delete.push(oldFile)
+          changes.delete.push({id: entry.id, file: oldFile})
           if (type.isContainer) {
             if (canRename) {
               const oldFolder = abs(previous.root, entryLocation(previous, ''))
               const newFolder = abs(previous.root, entryLocation(entry, ''))
-              changes.rename.push([oldFolder, newFolder])
+              changes.rename.push({
+                id: entry.id,
+                file: oldFolder,
+                to: newFolder
+              })
             } else {
               renameChildren(url, entry.id)
-              changes.delete.push(
-                abs(previous.root, entryLocation(previous, ''))
-              )
+              changes.delete.push({
+                id: entry.id,
+                file: abs(previous.root, entryLocation(previous, ''))
+              })
             }
           }
         }
@@ -92,13 +103,17 @@ export namespace Storage {
             child.root,
             entryLocation(child, loader.extension)
           )
-          changes.delete.push(childFile)
+          changes.delete.push({id: child.id, file: childFile})
           const newUrl = appendPath(parentUrl, child.path)
           const newLocation = abs(
             entry.root,
             entryLocation({path: child.path, url: newUrl}, loader.extension)
           )
-          changes.write.push([newLocation, loader.format(schema, child)])
+          changes.write.push({
+            id: child.id,
+            file: newLocation,
+            contents: decoder.decode(loader.format(schema, child))
+          })
           renameChildren(newUrl, child.id)
         }
       }

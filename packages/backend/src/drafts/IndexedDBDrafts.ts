@@ -1,3 +1,4 @@
+import {Hub} from '@alinea/core/Hub'
 import * as idb from 'lib0/indexeddb.js'
 import * as Y from 'yjs'
 import {Drafts} from '../Drafts'
@@ -16,10 +17,10 @@ export class IndexedDBDrafts implements Drafts {
     )
   }
 
-  async get(
-    id: string,
-    stateVector?: Uint8Array
-  ): Promise<Uint8Array | undefined> {
+  async get({
+    id,
+    stateVector
+  }: Hub.EntryParams): Promise<Uint8Array | undefined> {
     const db = await this.db
     const [store] = idb.transact(db, [STORE_NAME], 'readonly')
     const draft = await idb.get(store, id)
@@ -31,10 +32,10 @@ export class IndexedDBDrafts implements Drafts {
     return Y.encodeStateAsUpdate(doc, stateVector)
   }
 
-  async update(id: string, update: Uint8Array): Promise<Drafts.Update> {
+  async update({id, update}: Hub.UpdateParams): Promise<Drafts.Update> {
     const db = await this.db
     const doc = new Y.Doc()
-    const current = await this.get(id)
+    const current = await this.get({id})
     if (current) Y.applyUpdate(doc, current)
     Y.applyUpdate(doc, update)
     const draft = Y.encodeStateAsUpdate(doc)
@@ -43,7 +44,7 @@ export class IndexedDBDrafts implements Drafts {
     return {id, update: draft}
   }
 
-  async delete(ids: string[]): Promise<void> {
+  async delete({ids}: Hub.DeleteMultipleParams): Promise<void> {
     const db = await this.db
     const [store] = idb.transact(db, [STORE_NAME])
     for (const id of ids) await idb.del(store, id)

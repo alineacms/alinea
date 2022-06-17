@@ -1,4 +1,4 @@
-import {future, outcome} from '@alinea/core'
+import {future, Hub, outcome} from '@alinea/core'
 import {posix as path} from 'node:path'
 import * as Y from 'yjs'
 import {Drafts} from '../Drafts'
@@ -12,10 +12,10 @@ export type FileDraftsOptions = {
 export class FileDrafts implements Drafts {
   constructor(protected options: FileDraftsOptions) {}
 
-  async get(
-    id: string,
-    stateVector?: Uint8Array
-  ): Promise<Uint8Array | undefined> {
+  async get({
+    id,
+    stateVector
+  }: Hub.EntryParams): Promise<Uint8Array | undefined> {
     const {fs, dir} = this.options
     const location = path.join(dir, id)
     const [draft, err] = await outcome(fs.readFile(location))
@@ -26,10 +26,10 @@ export class FileDrafts implements Drafts {
     return Y.encodeStateAsUpdate(doc, stateVector)
   }
 
-  async update(id: string, update: Uint8Array): Promise<Drafts.Update> {
+  async update({id, update}: Hub.UpdateParams): Promise<Drafts.Update> {
     const {fs, dir} = this.options
     const doc = new Y.Doc()
-    const current = await this.get(id)
+    const current = await this.get({id})
     if (current) Y.applyUpdate(doc, current)
     Y.applyUpdate(doc, update)
     const draft = Buffer.from(Y.encodeStateAsUpdate(doc))
@@ -39,7 +39,7 @@ export class FileDrafts implements Drafts {
     return {id, update: draft}
   }
 
-  async delete(ids: Array<string>): Promise<void> {
+  async delete({ids}: Hub.DeleteMultipleParams): Promise<void> {
     const {fs, dir} = this.options
     for (const id of ids) {
       const location = path.join(dir, id)
@@ -52,7 +52,7 @@ export class FileDrafts implements Drafts {
     const [files = []] = await future(fs.readdir(dir))
     for (const file of files) {
       if (file.startsWith('.')) continue
-      const [update, err] = await future(this.get(file))
+      const [update, err] = await future(this.get({id: file}))
       if (update) yield {id: file, update}
     }
   }

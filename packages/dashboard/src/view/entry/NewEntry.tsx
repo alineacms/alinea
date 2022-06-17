@@ -48,7 +48,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
     ['parent', parentSelection],
     () => {
       const parentId = (parentSelection?.[0] as Reference.Entry)?.entry
-      return parentId ? hub.entry(parentId) : undefined
+      return parentId ? hub.entry({id: parentId}) : undefined
     },
     {suspense: true, keepPreviousData: true}
   )
@@ -97,7 +97,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
     }
     const doc = docFromEntry(entry, () => type)
     return hub
-      .updateDraft(entry.id, Y.encodeStateAsUpdate(doc))
+      .updateDraft({id: entry.id, update: Y.encodeStateAsUpdate(doc)})
       .then(result => {
         if (result.isSuccess()) {
           queryClient.invalidateQueries([
