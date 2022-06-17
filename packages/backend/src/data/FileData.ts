@@ -134,7 +134,7 @@ export class FileData implements Data.Source, Data.Target, Data.Media {
     return paths
   }
 
-  async publish({changes}: Hub.ChangesParams, ctx: Hub.Context) {
+  async publish({changes}: Hub.ChangesParams) {
     const {fs, rootDir = '.'} = this.options
     const tasks = []
     const noop = () => {}
