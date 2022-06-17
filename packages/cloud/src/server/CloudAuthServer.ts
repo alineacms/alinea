@@ -102,7 +102,7 @@ export class CloudAuthServer implements Auth.Server {
     const dashboardUrl = this.baseUrl(request)
     return {
       type: AuthResultType.UnAuthenticated,
-      redirect: `${cloudConfig.login}?from=${dashboardUrl}`
+      redirect: `${cloudConfig.auth}?from=${dashboardUrl}`
     }
   }
 
