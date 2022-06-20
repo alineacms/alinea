@@ -28,6 +28,8 @@
       "@alinea/editor/*": ["./packages/editor/src/*"],
       "@alinea/ui": ["./packages/ui/src"],
       "@alinea/ui/*": ["./packages/ui/src/*"],
+      "@alinea/content/*": ["./apps/web/.alinea/*"],
+      "@alinea/content": ["./apps/web/.alinea"],
       "@alinea/*": ["./packages/*/src"]
     },
     "plugins": [{"name": "typescript-plugin-css-modules"}],

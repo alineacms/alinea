@@ -65,7 +65,7 @@ export async function docPageQuery(pages: content.Pages, doc: content.Doc) {
           title: parent.title,
           url: parent.url
         }))
-    ).reverse(),
+    ).reverse() as Array<{id: string; title: string; url: string}>,
     prev,
     next,
     blocks: doc.blocks

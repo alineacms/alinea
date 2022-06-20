@@ -17,6 +17,6 @@
     "moduleResolution": "node",
     "incremental": true
   },
-  "include": ["next-env.d.ts", "src"],
+  "include": ["next-env.d.ts", "src", "../../packages/env.d.ts"],
   "exclude": []
 }
