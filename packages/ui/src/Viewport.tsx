@@ -1,4 +1,5 @@
 import {parseToHsla} from 'color2k'
+import Head from 'next/head'
 import {
   HTMLProps,
   PropsWithChildren,
@@ -6,7 +7,6 @@ import {
   useLayoutEffect,
   useState
 } from 'react'
-import Helmet from 'react-helmet'
 import {ColorSchemeProvider} from './hook/UseColorScheme'
 import {useContrastColor} from './hook/UseContrastColor'
 import {fromModule} from './util/Styler'
@@ -76,9 +76,9 @@ export function Viewport({
   const mainProps = attachToBody ? {} : {className, style}
   return (
     <ColorSchemeProvider value={[schemePreference, toggleSchemePreference]}>
-      <Helmet>
+      <Head>
         <meta name="theme-color" content={accentColor} key="theme-color" />
-      </Helmet>
+      </Head>
       <main
         {...mainProps}
         className={styles.main.mergeProps(mainProps).mergeProps(props)({

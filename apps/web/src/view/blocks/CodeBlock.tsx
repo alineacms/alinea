@@ -27,7 +27,7 @@ export function CodeBlock({code, compact, fileName}: CodeBlockSchema) {
         className={styles.root.code()}
       />
       <button
-        onClick={() => handleCopyToClipboard(codeRef?.current?.innerText)}
+        onClick={() => handleCopyToClipboard(codeRef.current!.innerText!)}
         className={styles.root.copy()}
       >
         {!isCopied && <MdiContentCopy style={{fontSize: '18px'}} />}

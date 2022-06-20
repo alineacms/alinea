@@ -1,3 +1,4 @@
+import {JWTPreviews} from '@alinea/backend'
 import {Cache} from '@alinea/backend/Cache'
 import {IndexedDBData} from '@alinea/backend/data/IndexedDBData'
 import {IndexedDBDrafts} from '@alinea/backend/drafts/IndexedDBDrafts'
@@ -32,10 +33,7 @@ function createLocalClient() {
     drafts: new IndexedDBDrafts(),
     target: data,
     media: data,
-    previews: {
-      sign: JSON.stringify,
-      verify: JSON.parse
-    }
+    previews: new JWTPreviews('demo')
   })
 }
 

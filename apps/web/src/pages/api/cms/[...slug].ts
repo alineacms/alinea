@@ -1,4 +1,4 @@
-import {nodeHandler} from '@alinea/backend'
+import {nodeHandler} from '@alinea/backend/router/NodeHandler'
 import {backend} from '@alinea/content/backend.js'
 
 export default nodeHandler(backend.handle)

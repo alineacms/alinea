@@ -43,7 +43,10 @@ export function CheckInput({state, field}: CheckInputProps) {
         <span className={styles.root.checkmark()}>
           {value && <Icon size={20} icon={IcRoundCheck} />}
         </span>
-        <TextLabel label={label} className={styles.root.label()} />
+        <TextLabel
+          label={label || field.label}
+          className={styles.root.label()}
+        />
       </HStack>
     </InputLabel>
   )

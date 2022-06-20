@@ -5,8 +5,6 @@ declare module '*.module.scss' {
 
 declare module 'eval:*'
 declare module 'postcss-pxtorem'
-// @types/react-helmet depends on react < 18 types which breaks things
-declare module 'react-helmet'
 
 declare module 'image-blob-reduce' {
   type Options = {
