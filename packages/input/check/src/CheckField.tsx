@@ -3,7 +3,7 @@ import {Field, Label, Shape} from '@alinea/core'
 /** Optional settings to configure a text field */
 export type CheckOptions = {
   /** Label displayed next to the checkbox  */
-  label: Label
+  label?: Label
   /** Width of the field in the dashboard UI (0-1) */
   width?: number
   /** Add instructional text to a field */
