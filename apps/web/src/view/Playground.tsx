@@ -1,4 +1,5 @@
 import {outcome, TypeConfig} from '@alinea/core'
+import {base64url} from '@alinea/core/util/Encoding'
 import {DashboardProvider, SessionProvider, Toolbar} from '@alinea/dashboard'
 import {useForm} from '@alinea/editor/hook/UseForm'
 import {
@@ -88,24 +89,6 @@ function PreviewType({type}: PreviewTypeProps) {
   )
 }
 
-// Source: https://stackoverflow.com/a/30106551
-function b64EncodeUnicode(str: string) {
-  return btoa(
-    encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, function (match, p1) {
-      return String.fromCharCode(parseInt(p1, 16))
-    })
-  )
-}
-function b64DecodeUnicode(str: string) {
-  return decodeURIComponent(
-    Array.prototype.map
-      .call(atob(str), function (c) {
-        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
-      })
-      .join('')
-  )
-}
-
 const queryClient = new QueryClient({defaultOptions: {queries: {retry: false}}})
 
 export default function Playground() {
@@ -123,9 +106,11 @@ export default function Playground() {
     setPreviewing(!previewing)
   }
   const {client, config, session} = useMemo(createDemo, [])
-  const [code, storeCode] = useState(() => {
+  const [code, storeCode] = useState<string>(() => {
     const [fromUrl] = outcome(() =>
-      b64DecodeUnicode(window.location.hash.slice('#code/'.length))
+      new TextDecoder().decode(
+        base64url.parse(window.location.hash.slice('#code/'.length))
+      )
     )
     if (fromUrl) return fromUrl
     const [fromStorage] = outcome(() =>
@@ -183,7 +168,8 @@ export default function Playground() {
     }
   }
   function handleShare() {
-    window.location.hash = '#code/' + b64EncodeUnicode(code)
+    window.location.hash =
+      '#code/' + base64url.stringify(new TextEncoder().encode(code))
     clipboard.copy(window.location.href)
   }
   function handleReset() {

@@ -1,4 +1,4 @@
-import {DevBackend} from '@alinea/backend/DevBackend'
+import {DevBackend} from '@alinea/cli/serve/DevBackend'
 import {config} from './config.js'
 import {createStore as createDraftStore} from './drafts.js'
 import {createStore} from './store.js'

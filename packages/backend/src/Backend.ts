@@ -1,8 +1,8 @@
 import {Auth, Workspaces} from '@alinea/core'
 import {Entry} from '@alinea/core/Entry'
 import {Hub} from '@alinea/core/Hub'
+import {base64url} from '@alinea/core/util/Encoding'
 import {Cursor, CursorData} from '@alinea/store'
-import {decode} from 'base64-arraybuffer'
 import {Handle, router} from './router/Router'
 import {Server, ServerOptions} from './Server'
 
@@ -38,7 +38,7 @@ function createRouter(hub: Server, auth: Auth.Server) {
         const svParam = url.searchParams.get('stateVector')!
         const stateVector =
           typeof svParam === 'string'
-            ? new Uint8Array(decode(svParam))
+            ? new Uint8Array(base64url.parse(svParam))
             : undefined
         return hub.entry({id, stateVector}, ctx)
       })

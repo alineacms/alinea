@@ -29,7 +29,6 @@
     "@alinea/dashboard": "0.0.0",
     "@alinea/iso": "^0.1.8",
     "@alinea/ui": "0.0.0",
-    "base64-arraybuffer": "^1.0.1",
     "react-query": "^3.39.1"
   }
 }

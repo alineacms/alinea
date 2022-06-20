@@ -1,5 +1,5 @@
+import {base64} from '@alinea/core/util/Encoding'
 import {SqliteStore} from '@alinea/store/sqlite/SqliteStore'
-import {encode} from 'base64-arraybuffer'
 import {promises as fs} from 'node:fs'
 import path, {dirname} from 'node:path'
 import {fileURLToPath} from 'node:url'
@@ -82,7 +82,7 @@ function embedInWasm(data: Uint8Array) {
 }
 
 function embedInJs(source: string, data: Uint8Array) {
-  return source.replace('$DB', encode(data))
+  return source.replace('$DB', base64.stringify(data))
 }
 
 export async function exportStore(

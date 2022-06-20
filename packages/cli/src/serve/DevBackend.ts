@@ -1,6 +1,5 @@
 import {Backend} from '@alinea/backend/Backend'
 import {FileData} from '@alinea/backend/data/FileData'
-import {DevDrafts} from '@alinea/backend/drafts/DevDrafts'
 import {JsonLoader} from '@alinea/backend/loader/JsonLoader'
 import {JWTPreviews} from '@alinea/backend/util/JWTPreviews'
 import {Config, Workspaces} from '@alinea/core'
@@ -8,6 +7,7 @@ import {Store} from '@alinea/store'
 import {SqliteStore} from '@alinea/store/sqlite/SqliteStore'
 import fs from 'node:fs/promises'
 import path from 'node:path'
+import {DevDrafts} from './DevDrafts'
 
 export interface DevServerOptions<T extends Workspaces> {
   cwd?: string

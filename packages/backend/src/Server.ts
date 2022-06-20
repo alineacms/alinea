@@ -13,11 +13,11 @@ import {
   Workspaces
 } from '@alinea/core'
 import {arrayBufferToHex} from '@alinea/core/util/ArrayBuffers'
+import {base64} from '@alinea/core/util/Encoding'
 import {generateKeyBetween} from '@alinea/core/util/FractionalIndexing'
 import {basename, extname} from '@alinea/core/util/Paths'
 import {crypto} from '@alinea/iso'
 import {Cursor, Store} from '@alinea/store'
-import {encode} from 'base64-arraybuffer'
 import * as Y from 'yjs'
 import {Cache} from './Cache'
 import {Data} from './Data'
@@ -109,7 +109,7 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
         data && {
           ...data,
           original,
-          draft: draft && encode(draft),
+          draft: draft && base64.stringify(draft),
           previewToken: await previews.sign({id})
         }
       )

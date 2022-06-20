@@ -1,9 +1,9 @@
+import {Drafts} from '@alinea/backend/Drafts'
 import {Hub} from '@alinea/core/Hub'
 import {Collection} from '@alinea/store/Collection'
 import {SqliteStore} from '@alinea/store/sqlite/SqliteStore'
 import path from 'node:path'
 import * as Y from 'yjs'
-import {Drafts} from '../Drafts'
 import {exportStore} from '../export/ExportStore'
 
 export type DevDraftsOptions = {

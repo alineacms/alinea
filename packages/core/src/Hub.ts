@@ -1,6 +1,6 @@
 import {Changes} from '@alinea/backend/Storage'
+import {base64url} from '@alinea/core/util/Encoding'
 import {Cursor} from '@alinea/store'
-import {encode} from 'base64-arraybuffer'
 import {Config} from './Config'
 import {Entry} from './Entry'
 import {Future} from './Future'
@@ -84,7 +84,7 @@ export namespace Hub {
     entry(id: string, stateVector?: Uint8Array) {
       const route = base + `/entry/${id}`
       if (stateVector)
-        return route + '?stateVector=' + encode(stateVector.buffer)
+        return route + '?stateVector=' + base64url.stringify(stateVector)
       return route
     },
     draft(id: string) {

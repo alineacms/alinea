@@ -3,8 +3,8 @@ import {BackendCreateOptions} from '@alinea/core/BackendConfig'
 import {Config} from '@alinea/core/Config'
 import {createError} from '@alinea/core/ErrorWithCode'
 import {Hub} from '@alinea/core/Hub'
+import {base64url} from '@alinea/core/util/Encoding'
 import {Blob, fetch, FormData} from '@alinea/iso'
-import {encode} from 'base64-arraybuffer'
 import {CloudAuthServerOptions} from './CloudAuthServer'
 import {cloudConfig} from './CloudConfig'
 
@@ -98,7 +98,8 @@ export class CloudApi implements CloudConnection {
     ctx: Hub.Context
   ): Promise<Uint8Array | undefined> {
     const params = stateVector
-      ? '?' + new URLSearchParams({stateVector: encode(stateVector)})
+      ? '?' +
+        new URLSearchParams({stateVector: base64url.stringify(stateVector)})
       : ''
     return fetch(
       cloudConfig.draft + `/${id}` + params,

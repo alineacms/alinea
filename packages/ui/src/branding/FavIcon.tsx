@@ -1,4 +1,4 @@
-import {btoa} from '@alinea/core/util/Base64'
+import {btoa} from '@alinea/core/util/Encoding'
 import {useContrastColor} from '../hook/UseContrastColor'
 
 type FavIconProps = {

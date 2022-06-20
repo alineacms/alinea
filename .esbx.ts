@@ -133,7 +133,7 @@ const testTask = TestTask.configure({
       StaticPlugin.configure({
         sources: [
           'packages/cli/src/Init.ts',
-          'packages/backend/src/export/ExportStore.ts'
+          'packages/cli/src/export/ExportStore.ts'
         ]
       }),
       internalPlugin

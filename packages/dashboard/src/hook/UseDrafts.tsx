@@ -6,8 +6,8 @@ import {
   ROOT_KEY
 } from '@alinea/core'
 import {Hub} from '@alinea/core/Hub'
+import {base64} from '@alinea/core/util/Encoding'
 import {observable} from '@alinea/ui'
-import {decode} from 'base64-arraybuffer'
 import {createContext, PropsWithChildren, useContext, useMemo} from 'react'
 import {QueryClient, useQueryClient} from 'react-query'
 import {Room} from 'y-webrtc'
@@ -56,7 +56,7 @@ class Drafts {
     const type = hub.config.type(result.entry.workspace, result.entry.type)
     if (!type) throw createError(404, `Type not found`)
     if (result.draft) {
-      Y.applyUpdate(doc, new Uint8Array(decode(result.draft)))
+      Y.applyUpdate(doc, base64.parse(result.draft))
       this.stateVectors.set(doc, Y.encodeStateVector(doc))
     } else {
       docFromEntry(result.entry, () => type, doc)
