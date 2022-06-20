@@ -1,4 +1,3 @@
-import {DevBackend} from '@alinea/backend/DevBackend'
 import {nodeHandler} from '@alinea/backend/router/NodeHandler'
 import {EvalPlugin} from '@esbx/eval'
 import {ReactPlugin} from '@esbx/react'
@@ -12,6 +11,7 @@ import {createRequire} from 'node:module'
 import path from 'node:path'
 import serveHandler from 'serve-handler'
 import {generate} from './Generate'
+import {DevBackend} from './serve/DevBackend'
 
 const __dirname = dirname(import.meta)
 const require = createRequire(import.meta.url)
