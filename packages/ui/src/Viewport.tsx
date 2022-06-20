@@ -1,5 +1,4 @@
 import {parseToHsla} from 'color2k'
-import Head from 'next/head'
 import {
   HTMLProps,
   PropsWithChildren,
@@ -73,12 +72,18 @@ export function Viewport({
       document.body.style.cssText = styleString
     }
   }, [attachToBody, styleString, className])
+  useIsomorphicEffect(() => {
+    const meta = document.createElement('meta')
+    meta.setAttribute('content', accentColor)
+    meta.setAttribute('name', 'theme-color')
+    document.head.appendChild(meta)
+    return () => {
+      document.head.removeChild(meta)
+    }
+  }, [accentColor])
   const mainProps = attachToBody ? {} : {className, style}
   return (
     <ColorSchemeProvider value={[schemePreference, toggleSchemePreference]}>
-      <Head>
-        <meta name="theme-color" content={accentColor} key="theme-color" />
-      </Head>
       <main
         {...mainProps}
         className={styles.main.mergeProps(mainProps).mergeProps(props)({
