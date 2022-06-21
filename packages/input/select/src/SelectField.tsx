@@ -19,6 +19,8 @@ export type SelectOptions<T> = {
   placeholder?: Label
   /** A default value */
   initialValue?: T
+  /** Hide this select field */
+  hidden?: boolean
 }
 
 /** Internal representation of a select field */
@@ -44,6 +46,7 @@ export function createSelect<T extends string>(
     initialValue: options.initialValue,
     configure(options: SelectOptions<T>) {
       return createSelect<T>(label, items, options)
-    }
+    },
+    hidden: options.hidden
   }
 }

@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+- Added hidden option to fields
+- Hide tabs when the option isHidden was set to true
+
 ## [0.1.4]
 
 - Replace CJS dependencies to pure ESM (#161)

@@ -21,6 +21,8 @@ export type TextOptions = {
   iconRight?: ComponentType
   /** Focus this input automatically */
   autoFocus?: boolean
+  /** Hide this text field */
+  hidden?: boolean
 }
 
 /** Internal representation of a text field */
@@ -34,6 +36,7 @@ export function createText(label: Label, options: TextOptions = {}): TextField {
   return {
     shape: Shape.Scalar(label, options.initialValue),
     label,
-    options
+    options,
+    hidden: options.hidden
   }
 }

@@ -2,9 +2,8 @@
   "id": "286iEJsjhd8R9NxN6EVg59fELyd",
   "type": "Doc",
   "root": "data",
-  "index": "a4",
+  "index": "a6",
   "title": "Custom fields",
-  "path": "custom-fields",
   "blocks": [
     {
       "id": "286iEROjs6tj2n50gGnYat796yt",
@@ -14,6 +13,7 @@
         {
           "type": "heading",
           "level": 1,
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
@@ -23,6 +23,7 @@
         },
         {
           "type": "paragraph",
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
@@ -31,10 +32,12 @@
           ]
         },
         {
-          "type": "paragraph"
+          "type": "paragraph",
+          "textAlign": "left"
         },
         {
           "type": "paragraph",
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
