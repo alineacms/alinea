@@ -6910,12 +6910,12 @@ fsevents@~2.3.2:
   languageName: node
   linkType: hard
 
-"prosemirror-model@npm:^1.0.0, prosemirror-model@npm:^1.14.3, prosemirror-model@npm:^1.16.1":
-  version: 1.16.1
-  resolution: "prosemirror-model@npm:1.16.1"
+"prosemirror-model@npm:1.14.3":
+  version: 1.14.3
+  resolution: "prosemirror-model@npm:1.14.3"
   dependencies:
     orderedmap: ^1.1.0
-  checksum: 76718aafbfad0639393e127b3b1b95f9d99b0fb9ec72c2f207e445d175f06a2711ea10b6035075c4ed9cd5e00f4a72aec01e1439c954ecfee19897fa3584fa11
+  checksum: fec7f91044244aff5ebd5df9878bfe833ee8f8a1aa6c0afb380905f8bb04f3ec30dbb4b4f9ff7138fc2c919cf284b0ed8c5e7155aaa7e2c27b5c8942a713a72f
   languageName: node
   linkType: hard
 

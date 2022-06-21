@@ -40,12 +40,21 @@ export const resolvePlugin: Plugin = {
     }
     const outDir = build.initialOptions.outdir
     const toVendor = new Map<string, Set<string>>()
-    build.onStart(() => toVendor.clear())
-    build.onResolve({filter: /.*/}, args => {
+    let sharedDependencies = new Set()
+    build.onStart(() => {
+      toVendor.clear()
       const shared = workspaceInfo('./packages/shared')
-      const sharedDependencies = shared.devDependencies
+      sharedDependencies = shared.devDependencies
+    })
+    build.onResolve({filter: /.*/}, args => {
       if (args.kind === 'entry-point') return
       const isNodeModule = args.resolveDir.includes(`node_modules`)
+      if (
+        sharedDependencies.has(args.path) &&
+        !args.resolveDir.includes('shared')
+      ) {
+        return {path: `@alinea/shared/${args.path}`, external: true}
+      }
       if (isNodeModule && !args.resolveDir.includes('@esbx')) return
       const pkg = isNodeModule
         ? packageOf(args.resolveDir)
@@ -61,9 +70,6 @@ export const resolvePlugin: Plugin = {
           const workspace = paths
             .slice(0, paths.lastIndexOf('src'))
             .join(path.sep)
-          if (sharedDependencies.has(pkg) && !workspace.includes('shared')) {
-            return {path: `@alinea/shared/${pkg}`, external: true}
-          }
           const {name, seen, dependencies, devDependencies} =
             workspaceInfo(workspace)
           if (devDependencies.has(pkg)) {
@@ -99,6 +105,18 @@ export const resolvePlugin: Plugin = {
       return {path: args.path + outExtension, external: true}
     })
 
+    const shared = {
+      name: 'shared',
+      setup(build) {
+        build.onResolve({filter: /.*/}, args => {
+          if (args.kind === 'entry-point') return
+          if (sharedDependencies.has(args.path)) {
+            return {path: `@alinea/shared/${args.path}`, external: true}
+          }
+        })
+      }
+    }
+
     build.onEnd(async () => {
       for (const [workspace, pkgs] of toVendor) {
         const {dependencies} = workspaceInfo(workspace)
@@ -115,7 +133,8 @@ export const resolvePlugin: Plugin = {
           conditions: ['import'],
           splitting: !isNode,
           treeShaking: true,
-          external: [...dependencies]
+          external: [...dependencies],
+          plugins: [shared]
         })
       }
       const knownWarnings = new Set([
@@ -125,8 +144,10 @@ export const resolvePlugin: Plugin = {
         'nodemailer', // Using types,
         'mime-db', // Avoid copies of this lib in vendor,
         // Make sure these are not inlined
+        'react',
         'react-dom',
-        'yjs'
+        'yjs',
+        '@alinea/shared'
       ])
       for (const {name, seen, dependencies} of info.values()) {
         const unused = [...dependencies].filter(x => !seen.has(x))

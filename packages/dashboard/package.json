@@ -33,7 +33,9 @@
     "@alinea/input.text": "0.0.0",
     "@alinea/shared": "0.0.0",
     "@alinea/store": "0.0.0",
-    "@alinea/ui": "0.0.0"
+    "@alinea/ui": "0.0.0",
+    "react-router": "^6.3.0",
+    "react-router-dom": "^6.3.0"
   },
   "peerDependencies": {
     "react": "*",
@@ -49,8 +51,6 @@
     "image-blob-reduce": "^4.1.0",
     "p-limit": "^4.0.0",
     "pretty-bytes": "^6.0.0",
-    "react-router": "^6.3.0",
-    "react-router-dom": "^6.3.0",
     "react-tiny-virtual-list": "^2.2.0",
     "y-webrtc": "^10.2.0"
   }
