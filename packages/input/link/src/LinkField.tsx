@@ -59,6 +59,8 @@ export type LinkOptions<T, Q> = {
     field: Expr<Array<Reference & T>>,
     pages: Pages<P>
   ) => Expr<Q> | undefined
+  /** Hide this link field */
+  hidden?: boolean
 }
 
 /** Internal representation of a link field */
@@ -113,6 +115,7 @@ export function createLink<T, Q>(
     ),
     label,
     options,
+    hidden: options.hidden,
     initialValue: options.initialValue,
     transform(field, pages): Expr<Q> {
       const row = field.each()

@@ -2,7 +2,7 @@
   "id": "24yE79dE2ssYPDQQHFFgT0eg2tH",
   "type": "Doc",
   "root": "data",
-  "index": "a2G",
+  "index": "a2BV",
   "title": "Link",
   "blocks": [
     {
@@ -34,7 +34,8 @@
         {
           "id": "268j43D4sYTv9i4LXKv8Isvwlzi",
           "type": "CodeBlock",
-          "code": "link('My link field', {\n  type: 'entry'\n})"
+          "code": "link('My link field', {\n  type: 'entry',\n  condition: Entry.type.is('MyAllowedType')\n})",
+          "compact": false
         }
       ]
     },

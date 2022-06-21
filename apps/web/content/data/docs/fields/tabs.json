@@ -2,9 +2,8 @@
   "id": "268hnUNLntD1TbeY1WPh34VFVcM",
   "type": "Doc",
   "root": "data",
-  "index": "a3",
+  "index": "a5",
   "title": "Tabs",
-  "path": "tabs",
   "blocks": [
     {
       "id": "268hqZiiT9sF3zQX1DZdHSJ6Ri3",
@@ -14,6 +13,7 @@
         {
           "type": "heading",
           "level": 1,
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
@@ -23,6 +23,7 @@
         },
         {
           "type": "paragraph",
+          "textAlign": "left",
           "content": [
             {
               "type": "text",

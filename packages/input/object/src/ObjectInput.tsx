@@ -10,6 +10,7 @@ export type ObjectInputProps<T> = {
 
 export function ObjectInput<T>({state, field}: ObjectInputProps<T>) {
   const {width, help} = field.options
+
   return (
     <InputLabel
       label={field.label}

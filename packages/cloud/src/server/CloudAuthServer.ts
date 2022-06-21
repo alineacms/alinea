@@ -1,5 +1,5 @@
 import {Handler, router} from '@alinea/backend/router/Router'
-import {verify} from '@alinea/backend/util/JWT'
+import {verify} from '@alinea/core/util/JWT'
 import {Auth, createError, Hub, outcome, User} from '@alinea/core'
 import {fetch, Request, Response} from '@alinea/iso'
 import {cloudConfig} from './CloudConfig'

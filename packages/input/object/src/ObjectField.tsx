@@ -6,6 +6,8 @@ export type ObjectOptions<T> = {
   width?: number
   help?: Label
   inline?: boolean
+  /** Hide this object field */
+  hidden?: boolean
 }
 
 export interface ObjectField<T> extends Field.Record<T> {
@@ -21,6 +23,7 @@ export function createObject<T>(
   return {
     shape,
     label,
-    options
+    options,
+    hidden: options.hidden
   }
 }

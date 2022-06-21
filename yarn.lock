@@ -15,7 +15,6 @@ __metadata:
     "@alinea/dashboard": 0.0.0
     "@alinea/ui": 0.0.0
     "@types/nodemailer": ^6.4.4
-    jwt-decode: ^3.1.2
     nodemailer: ^6.6.5
     superstruct: ^0.15.4
   peerDependencies:
@@ -40,7 +39,7 @@ __metadata:
     firebase-admin: ^10.0.2
     ioredis: ^4.28.5
     js-yaml: ^4.1.0
-    lib0: ^0.2.42
+    lib0: ^0.2.51
     octokit-commit-multiple-files: ^3.2.1
     pretty-ms: ^8.0.0
     regexparam: ^2.0.0
@@ -73,6 +72,7 @@ __metadata:
     express: ^4.17.1
     find-config: ^1.0.0
     fs-extra: ^10.0.0
+    mime-db: ^1.51.0
     sade: ^1.7.4
     serve-handler: ^6.1.3
     yjs: ^13.5.39
@@ -102,8 +102,8 @@ __metadata:
     "@alinea/core": 0.0.0
     "@alinea/dashboard": 0.0.0
     "@alinea/iso": ^0.1.8
+    "@alinea/shared": 0.0.0
     "@alinea/ui": 0.0.0
-    react-query: ^3.39.1
   languageName: unknown
   linkType: soft
 
@@ -144,12 +144,9 @@ __metadata:
     "@alinea/input.link": 0.0.0
     "@alinea/input.select": 0.0.0
     "@alinea/input.text": 0.0.0
+    "@alinea/shared": 0.0.0
     "@alinea/store": 0.0.0
     "@alinea/ui": 0.0.0
-    "@dnd-kit/core": ^3.1.1
-    "@dnd-kit/sortable": ^4.0.0
-    "@dnd-kit/utilities": ^2.0.0
-    "@headlessui/react": ^1.6.1
     "@react-hook/size": ^2.1.2
     "@react-hook/window-size": ^3.0.7
     "@types/diff-match-patch": ^1.0.32
@@ -159,12 +156,10 @@ __metadata:
     image-blob-reduce: ^4.1.0
     p-limit: ^4.0.0
     pretty-bytes: ^6.0.0
-    react-query: ^3.39.1
     react-router: ^6.3.0
     react-router-dom: ^6.3.0
     react-tiny-virtual-list: ^2.2.0
     y-webrtc: ^10.2.0
-    yjs: ^13.5.39
   peerDependencies:
     react: "*"
     react-dom: "*"
@@ -233,12 +228,9 @@ __metadata:
     "@alinea/core": 0.0.0
     "@alinea/dashboard": 0.0.0
     "@alinea/editor": 0.0.0
+    "@alinea/shared": 0.0.0
     "@alinea/store": 0.0.0
     "@alinea/ui": 0.0.0
-    "@dnd-kit/core": ^3.1.1
-    "@dnd-kit/sortable": ^4.0.0
-    "@dnd-kit/utilities": ^2.0.0
-    react-query: ^3.39.1
   peerDependencies:
     react: "*"
   languageName: unknown
@@ -250,10 +242,8 @@ __metadata:
   dependencies:
     "@alinea/core": 0.0.0
     "@alinea/editor": 0.0.0
+    "@alinea/shared": 0.0.0
     "@alinea/ui": 0.0.0
-    "@dnd-kit/core": ^3.1.1
-    "@dnd-kit/sortable": ^4.0.0
-    "@dnd-kit/utilities": ^2.0.0
   peerDependencies:
     react: "*"
   languageName: unknown
@@ -322,8 +312,10 @@ __metadata:
     "@tiptap/extension-text": ^2.0.0-beta.15
     "@tiptap/extension-text-align": ^2.0.0-beta.29
     "@tiptap/react": ^2.0.0-beta.109
+    yjs: ^13.5.39
   peerDependencies:
     react: "*"
+    react-dom: "*"
   languageName: unknown
   linkType: soft
 
@@ -333,9 +325,8 @@ __metadata:
   dependencies:
     "@alinea/core": 0.0.0
     "@alinea/editor": 0.0.0
+    "@alinea/shared": 0.0.0
     "@alinea/ui": 0.0.0
-    "@floating-ui/react-dom": ^0.7.1
-    "@headlessui/react": ^1.6.1
   languageName: unknown
   linkType: soft
 
@@ -410,6 +401,23 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@alinea/shared@0.0.0, @alinea/shared@workspace:packages/shared":
+  version: 0.0.0-use.local
+  resolution: "@alinea/shared@workspace:packages/shared"
+  dependencies:
+    "@dnd-kit/core": ^3.1.1
+    "@dnd-kit/sortable": ^4.0.0
+    "@dnd-kit/utilities": ^2.0.0
+    "@floating-ui/react-dom": ^0.7.1
+    "@headlessui/react": ^1.6.1
+    react-query: ^3.39.1
+    yjs: ^13.5.39
+  peerDependencies:
+    react: "*"
+    react-dom: "*"
+  languageName: unknown
+  linkType: soft
+
 "@alinea/sqlite-wasm@npm:^0.1.7":
   version: 0.1.7
   resolution: "@alinea/sqlite-wasm@npm:0.1.7"
@@ -436,8 +444,7 @@ __metadata:
   resolution: "@alinea/ui@workspace:packages/ui"
   dependencies:
     "@alinea/core": 0.0.0
-    "@floating-ui/react-dom": ^0.7.1
-    "@headlessui/react": ^1.6.1
+    "@alinea/shared": 0.0.0
     color2k: ^1.2.4
     use-error-boundary: ^2.0.6
   peerDependencies:
@@ -5032,13 +5039,6 @@ fsevents@~2.3.2:
   languageName: node
   linkType: hard
 
-"jwt-decode@npm:^3.1.2":
-  version: 3.1.2
-  resolution: "jwt-decode@npm:3.1.2"
-  checksum: 20a4b072d44ce3479f42d0d2c8d3dabeb353081ba4982e40b83a779f2459a70be26441be6c160bfc8c3c6eadf9f6380a036fbb06ac5406b5674e35d8c4205eeb
-  languageName: node
-  linkType: hard
-
 "kleur@npm:^4.0.3":
   version: 4.1.4
   resolution: "kleur@npm:4.1.4"
@@ -5090,7 +5090,7 @@ fsevents@~2.3.2:
   languageName: node
   linkType: hard
 
-"lib0@npm:^0.2.49":
+"lib0@npm:^0.2.49, lib0@npm:^0.2.51":
   version: 0.2.51
   resolution: "lib0@npm:0.2.51"
   dependencies:
@@ -5739,31 +5739,10 @@ fsevents@~2.3.2:
   languageName: node
   linkType: hard
 
-"mime-db@npm:1.49.0":
-  version: 1.49.0
-  resolution: "mime-db@npm:1.49.0"
-  checksum: 3744efc45b17896ff8a5934a761c434d5ffe3c7816662002d799ca9934347e00f99ae4d9b4ddf1c48d391cc9e522cc4523a6e77e7701f8e27c426e3e1d6e215a
-  languageName: node
-  linkType: hard
-
 "mime-db@npm:1.51.0":
   version: 1.51.0
   resolution: "mime-db@npm:1.51.0"
   checksum: 613b1ac9d6e725cc24444600b124a7f1ce6c60b1baa654f39a3e260d0995a6dffc5693190217e271af7e2a5612dae19f2a73f3e316707d797a7391165f7ef423
-  languageName: node
-  linkType: hard
-
-"mime-db@npm:>= 1.43.0 < 2":
-  version: 1.50.0
-  resolution: "mime-db@npm:1.50.0"
-  checksum: 95fcc19c3664ae72391c8a7e4015dde7fb6817c98c951493ca3a1d48050feb8ee08810a372ce7d9e16310042d26e5bda168916f600583a9a583655eeea8ff5f5
-  languageName: node
-  linkType: hard
-
-"mime-db@npm:~1.33.0":
-  version: 1.33.0
-  resolution: "mime-db@npm:1.33.0"
-  checksum: 281a0772187c9b8f6096976cb193ac639c6007ac85acdbb8dc1617ed7b0f4777fa001d1b4f1b634532815e60717c84b2f280201d55677fb850c9d45015b50084
   languageName: node
   linkType: hard
 

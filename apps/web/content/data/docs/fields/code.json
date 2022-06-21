@@ -1,23 +1,23 @@
 {
-  "id": "28htwzY7qMeaV15j276Myvpek8y",
+  "id": "BUQj_NQqEq7YYO1nevx1o",
   "type": "Doc",
   "root": "data",
-  "index": "a29",
-  "title": "Check",
+  "index": "a2C",
+  "title": "Code",
   "blocks": [
     {
-      "id": "28htxzGsXQK0zKnFg9SC9JziC80",
+      "id": "Yl201LibHIv6_gSa8sQ_g",
       "index": "a0",
       "type": "TextBlock",
       "text": [
         {
           "type": "heading",
-          "level": 1,
           "textAlign": "left",
+          "level": 1,
           "content": [
             {
               "type": "text",
-              "text": "Check"
+              "text": "Code"
             }
           ]
         },
@@ -27,23 +27,22 @@
           "content": [
             {
               "type": "text",
-              "text": "A check field is used to input boolean data."
+              "text": "A code field is used to input code."
             }
           ]
         },
         {
-          "id": "28hu0MbpUcAOhWTWi954kRRNHcM",
+          "id": "itHNQSxP3U_KYZ77Q3vIC",
           "type": "CodeBlock",
-          "code": "check('My check field', {\n  label: 'This is an example check field'\n})",
-          "compact": true
+          "code": "code('My code field', {\n  help: 'Paste your code here'\n})"
         }
       ]
     },
     {
-      "id": "28hu4zpW1YdyW9MM76mD627dl6n",
+      "id": "EkNlUZGHv6wapzMxYVMSl",
       "index": "a1",
       "type": "TypesBlock",
-      "types": "CheckOptions"
+      "types": "CodeFieldOptions"
     }
   ]
 }

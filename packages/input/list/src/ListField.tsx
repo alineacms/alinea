@@ -16,6 +16,8 @@ export type ListOptions<T, Q> = {
   inline?: boolean
   /** Modify value returned when queried through `Pages` */
   transform?: <P>(field: Expr<Array<T>>, pages: Pages<P>) => Expr<Q> | undefined
+  /** Hide this list field */
+  hidden?: boolean
 }
 
 export type ListRow = {
@@ -57,6 +59,7 @@ export function createList<T, Q = Array<T & ListRow>>(
     shape: Shape.List(label, schema.shape),
     label,
     options,
-    transform: options.transform || query<T, Q>(schema)
+    transform: options.transform || query<T, Q>(schema),
+    hidden: options.hidden
   }
 }

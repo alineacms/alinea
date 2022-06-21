@@ -15,6 +15,7 @@ export function NumberInput({state, field}: NumberInputProps) {
   const {inline, help, optional, initialValue, width, minValue, maxValue} =
     field.options
   const [value = initialValue, setValue] = useInput(state)
+
   return (
     <InputLabel
       asLabel

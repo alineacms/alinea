@@ -48,6 +48,7 @@ export function SelectInput<T extends string>({
       })
     ]
   })
+
   return (
     <InputLabel
       label={field.label}

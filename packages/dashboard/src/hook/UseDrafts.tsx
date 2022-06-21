@@ -10,7 +10,7 @@ import {base64} from '@alinea/core/util/Encoding'
 import {observable} from '@alinea/ui'
 import {createContext, PropsWithChildren, useContext, useMemo} from 'react'
 import {QueryClient, useQueryClient} from 'react-query'
-import {Room} from 'y-webrtc'
+// import {Room} from 'y-webrtc'
 import * as Y from 'yjs'
 import {EntryDraft} from '../draft/EntryDraft'
 import {useSession} from './UseSession'
@@ -111,12 +111,12 @@ class Drafts {
     }
     const watch = (
       update?: Uint8Array,
-      origin?: Room | undefined,
+      origin?: undefined, // Room | undefined,
       doc?: Y.Doc,
       transaction?: Y.Transaction
     ) => {
       // This update did not originate from us
-      if (origin instanceof Room) return
+      // if (origin instanceof Room) return
       this.status(DraftsStatus.Editing)
       if (this.saveTimeout) clearTimeout(this.saveTimeout)
       this.saveTimeout = setTimeout(save, this.saveDelay)

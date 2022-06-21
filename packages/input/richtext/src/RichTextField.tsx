@@ -21,6 +21,8 @@ export type RichTextOptions<T, Q> = {
     field: Expr<TextDoc<T>>,
     pages: Pages<P>
   ) => Expr<Q> | undefined
+  /** Hide this rich text field */
+  hidden?: boolean
 }
 
 /** Internal representation of a rich text field */
@@ -55,6 +57,7 @@ export function createRichText<T, Q = TextDoc<T>>(
     label,
     options,
     transform:
-      options.transform || (options.blocks && query<T, Q>(options.blocks))
+      options.transform || (options.blocks && query<T, Q>(options.blocks)),
+    hidden: options.hidden
   }
 }
