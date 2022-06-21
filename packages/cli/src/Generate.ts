@@ -353,17 +353,9 @@ export async function generate(options: GenerateOptions) {
 
   async function cacheEntries(config: Config, source: Data.Source) {
     let store: SqliteStore
-    try {
-      const {default: Database} = await import('better-sqlite3')
-      store = new SqliteStore(
-        new BetterSqlite3Driver(new Database(':memory:')),
-        createId
-      )
-    } catch (e) {
-      const {default: sqlInit} = await import('@alinea/sqlite-wasm')
-      const {Database} = await sqlInit()
-      store = new SqliteStore(new SqlJsDriver(new Database()), createId)
-    }
+    const {default: sqlInit} = await import('@alinea/sqlite-wasm')
+    const {Database} = await sqlInit()
+    store = new SqliteStore(new SqlJsDriver(new Database()), createId)
     await Cache.create(store, config, source, !quiet)
     return store
   }
