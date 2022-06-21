@@ -37,7 +37,7 @@
     "@esbx/react": "^0.0.19",
     "dirname-filename-esm": "^1.1.1",
     "esbuild": "^0.14.11",
-    "mime-db": "^1.51.0",,
+    "mime-db": "^1.51.0",
     "@alinea/shared": "0.0.0"
   },
   "optionalDependencies": {
