@@ -19,7 +19,7 @@ export class Route<In, Out> {
   map<T>(next: Handle<Out, T>): Route<In, T>
   map<T>(next: Route<Out, T>): Route<In, T>
   map<T>(next: Handler<Out, T>): Route<In, T> {
-    return new Route(input => {
+    return new Route<In, T>(input => {
       const result = this.handle(input)
       if (result instanceof Promise)
         return result.then(v => {
@@ -28,16 +28,16 @@ export class Route<In, Out> {
       if (result !== undefined) return callHandler(next, result)
     })
   }
-  notFound(handler: (input: In) => Out | Promise<Out>) {
-    return new Route(async (input: In) => {
+  notFound(handler: (input: In) => Out | Promise<Out>): Route<In, Out> {
+    return new Route<In, Out>(async (input: In) => {
       let result = this.handle(input)
       if (result instanceof Promise) result = await result
       if (result === undefined) return handler(input)
       return result
     })
   }
-  recover(handler: (error: Error) => Out | Promise<Out>) {
-    return new Route(async (input: In) => {
+  recover(handler: (error: Error) => Out | Promise<Out>): Route<In, Out> {
+    return new Route<In, Out>(async (input: In) => {
       try {
         let result = this.handle(input)
         if (result instanceof Promise) result = await result
@@ -53,8 +53,8 @@ export class Route<In, Out> {
 
 export function router(
   ...routes: Array<Handler<Request, Response | undefined>>
-) {
-  return new Route(async (request: Request) => {
+): Route<Request, Response | undefined> {
+  return new Route<Request, Response | undefined>(async (request: Request) => {
     for (const handler of routes) {
       let result = callHandler(handler, request)
       if (result instanceof Promise) result = await result

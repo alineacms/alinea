@@ -1,6 +1,6 @@
 import {Handler, router} from '@alinea/backend/router/Router'
-import {sign, verify} from '@alinea/core/util/JWT'
 import {Auth, createError, Hub, Outcome, User} from '@alinea/core'
+import {sign, verify} from '@alinea/core/util/JWT'
 import type {Transporter} from 'nodemailer'
 import {assert, object, string} from 'superstruct'
 
@@ -23,7 +23,7 @@ const LoginBody = object({
 // provided in the options to keep state.
 
 export class PasswordLessAuth implements Auth.Server {
-  handler: Handler<Request, Response>
+  handler: Handler<Request, Response | undefined>
   users = new WeakMap<Request, User>()
 
   constructor(protected options: PasswordLessAuthOptions) {

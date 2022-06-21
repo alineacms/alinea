@@ -1,4 +1,4 @@
-import { createId, Entry, Tree, TypesOf, Workspace } from '@alinea/core'
+import {createId, Entry, ExtractType, Tree, Workspace} from '@alinea/core'
 import {
   Collection,
   Cursor,
@@ -20,27 +20,27 @@ export class PageTree<P> {
   }
 
   siblings(): Multiple<P, P> {
-    return new Multiple(this.resolver, Tree.siblings(this.id))
+    return new Multiple<P, P>(this.resolver, Tree.siblings(this.id))
   }
 
   children<Child extends P>(depth = 1): Multiple<P, Child> {
-    return new Multiple(this.resolver, Tree.children(this.id, depth))
+    return new Multiple<P, Child>(this.resolver, Tree.children(this.id, depth))
   }
 
   parents<Parent extends P>(): Multiple<P, Parent> {
-    return new Multiple(this.resolver, Tree.parents(this.id))
+    return new Multiple<P, Parent>(this.resolver, Tree.parents(this.id))
   }
 
   parent<Parent extends P>(): Single<P, Parent> {
-    return new Single(this.resolver, Tree.parent(this.id))
+    return new Single<P, Parent>(this.resolver, Tree.parent(this.id))
   }
 
   nextSibling(): Single<P, P> {
-    return new Single(this.resolver, Tree.nextSibling(this.id))
+    return new Single<P, P>(this.resolver, Tree.nextSibling(this.id))
   }
 
   prevSibling(): Single<P, P> {
-    return new Single(this.resolver, Tree.prevSibling(this.id))
+    return new Single<P, P>(this.resolver, Tree.prevSibling(this.id))
   }
 }
 
@@ -48,7 +48,7 @@ class PageResolver<T> {
   root: Multiple<T, T>
 
   constructor(public store: Promise<Store>) {
-    this.root = new Multiple(this, Entry)
+    this.root = new Multiple<T, T>(this, Entry)
   }
 
   processCallbacks = new Map<string, (value: any) => any>()
@@ -128,7 +128,7 @@ class Multiple<P, T> extends Base<P, Array<Page<P, T>>> {
     return res.map(page => {
       if (page && typeof page === 'object' && 'id' in page) {
         Object.defineProperty(page, 'tree', {
-          value: new PageTree(this.resolver, page.id),
+          value: new PageTree<P>(this.resolver, page.id),
           enumerable: false
         })
       }
@@ -158,16 +158,16 @@ class Multiple<P, T> extends Base<P, Array<Page<P, T>>> {
     )
   }
   whereUrl<E = T>(url: EV<string>) {
-    return new Multiple<T, E>(
+    return new Multiple<P, E>(
       this.resolver,
       this.cursor.where(Entry.url.is(url))
     )
   }
   whereId<E = T>(id: EV<string>) {
-    return new Multiple<T, E>(this.resolver, this.cursor.where(Entry.id.is(id)))
+    return new Multiple<P, E>(this.resolver, this.cursor.where(Entry.id.is(id)))
   }
-  whereType<K extends TypesOf<T>>(type: K) {
-    return new Multiple<P, Extract<T, {type: K}>>(
+  whereType<K extends string>(type: K) {
+    return new Multiple<P, ExtractType<T, K>>(
       this.resolver,
       this.cursor.where(Entry.get('type').is(type as string))
     )
@@ -179,10 +179,10 @@ class Multiple<P, T> extends Base<P, Array<Page<P, T>>> {
     )
   }
   fetchUrl<E = T>(url: EV<string>) {
-    return new Single<T, E>(this.resolver, this.cursor.where(Entry.url.is(url)))
+    return new Single<P, E>(this.resolver, this.cursor.where(Entry.url.is(url)))
   }
   fetchId<E = T>(id: EV<string>) {
-    return new Single<T, E>(this.resolver, this.cursor.where(Entry.id.is(id)))
+    return new Single<P, E>(this.resolver, this.cursor.where(Entry.id.is(id)))
   }
   fetchType<C>(type: Collection<C>) {
     return new Single<P, C>(
@@ -243,7 +243,7 @@ class Single<P, T> extends Base<P, Page<P, T> | null> {
     const page = await this.resolver.postProcess(row)
     if (typeof page === 'object' && 'id' in page) {
       Object.defineProperty(page, 'tree', {
-        value: new PageTree(this.resolver, page.id),
+        value: new PageTree<P>(this.resolver, page.id),
         enumerable: false
       })
     }
@@ -261,8 +261,8 @@ class Single<P, T> extends Base<P, Page<P, T> | null> {
   where(where: EV<boolean> | ((collection: Cursor<T>) => EV<boolean>)) {
     return new Single<P, T>(this.resolver, this.cursor.where(where as any))
   }
-  whereType<K extends TypesOf<T>>(type: K) {
-    return new Single<P, Extract<T, {type: K}>>(
+  whereType<K extends string>(type: K) {
+    return new Single<P, ExtractType<T, K>>(
       this.resolver,
       this.cursor.where(Entry.type.is((type as any).__options.alias))
     )
@@ -313,14 +313,11 @@ class Single<P, T> extends Base<P, Page<P, T> | null> {
   }
 }
 
-function createSelection<T>(
-  workspace: Workspace<T>,
-  pages: Pages<any>
-): ExprData {
+function createSelection<T>(workspace: Workspace, pages: Pages<T>): ExprData {
   const cases: Record<string, SelectionInput> = {}
   let isComputed = false
   for (const [key, type] of workspace.schema.entries()) {
-    const selection = type.selection(type.collection(), pages)
+    const selection = type.selection<T>(type.collection(), pages)
     if (!selection) continue
     cases[key] = selection
     isComputed = true
@@ -333,19 +330,17 @@ export class Pages<T> extends Multiple<T, T> {
   constructor(
     workspace: Workspace<T>,
     createCache: () => Promise<Store>,
-    resolver: PageResolver<T> = new PageResolver(createCache()),
+    resolver: PageResolver<T> = new PageResolver<T>(createCache()),
     withComputed = true
   ) {
     const from = From.Column(From.Table('Entry', ['data']), 'data')
-    const raw = new Pages<any>(workspace, createCache, resolver, false)
+    const raw = new Pages<T>(workspace, createCache, resolver, false)
+    const selection: ExprData = withComputed
+      ? createSelection<T>(workspace, raw)
+      : ExprData.Row(from)
     const cursor = new Cursor<T>({
       from,
-      selection: withComputed
-        ? createSelection(
-            workspace,
-            raw
-          )
-        : ExprData.Row(from)
+      selection
     })
     super(resolver, cursor)
     /*for (const [key, type] of workspace.schema.entries()) {
@@ -356,7 +351,7 @@ export class Pages<T> extends Multiple<T, T> {
   }
 
   tree(id: EV<string>) {
-    return new PageTree(this.resolver, id)
+    return new PageTree<T>(this.resolver, id)
   }
 
   process<I extends SelectionInput, X>(

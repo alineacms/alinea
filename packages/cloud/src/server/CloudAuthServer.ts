@@ -1,6 +1,6 @@
 import {Handler, router} from '@alinea/backend/router/Router'
-import {verify} from '@alinea/core/util/JWT'
 import {Auth, createError, Hub, outcome, User} from '@alinea/core'
+import {verify} from '@alinea/core/util/JWT'
 import {fetch, Request, Response} from '@alinea/iso'
 import {cloudConfig} from './CloudConfig'
 
@@ -33,7 +33,7 @@ function getPublicKey(): Promise<JsonWebKey> {
 const COOKIE_NAME = 'alinea.cloud'
 
 export class CloudAuthServer implements Auth.Server {
-  handler: Handler<Request, Response>
+  handler: Handler<Request, Response | undefined>
   context = new WeakMap<Request, {token: string; user: User}>()
   key = getPublicKey()
 

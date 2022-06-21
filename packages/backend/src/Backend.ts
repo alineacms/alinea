@@ -2,8 +2,9 @@ import {Auth, Workspaces} from '@alinea/core'
 import {Entry} from '@alinea/core/Entry'
 import {Hub} from '@alinea/core/Hub'
 import {base64url} from '@alinea/core/util/Encoding'
+import type {Request, Response} from '@alinea/iso'
 import {Cursor, CursorData} from '@alinea/store'
-import {Handle, router} from './router/Router'
+import {Handle, Route, router} from './router/Router'
 import {Server, ServerOptions} from './Server'
 
 export type BackendOptions<T extends Workspaces> = {
@@ -22,7 +23,10 @@ function anonymous(): Auth.Server {
   }
 }
 
-function createRouter(hub: Server, auth: Auth.Server) {
+function createRouter<T extends Workspaces>(
+  hub: Backend<T>,
+  auth: Auth.Server
+): Route<Request, Response | undefined> {
   const matcher = router.startAt(Hub.routes.base)
   async function context<T extends {request: Request}>(
     input: T
@@ -125,12 +129,12 @@ function createRouter(hub: Server, auth: Auth.Server) {
 }
 
 export class Backend<T extends Workspaces = Workspaces> extends Server<T> {
-  handle: Handle<Request, Response>
+  handle: Handle<Request, Response | undefined>
 
   constructor(public options: BackendOptions<T>) {
     super(options)
-    const auth = options.auth || anonymous()
-    const api = createRouter(this, auth)
+    const auth: Auth.Server = options.auth || anonymous()
+    const api = createRouter<T>(this, auth)
     const {handle} = options.auth ? router(options.auth.handler, api) : api
     this.handle = handle
   }

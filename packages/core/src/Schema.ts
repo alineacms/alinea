@@ -18,6 +18,9 @@ type TypeToEntry<T> = T extends {[key: string]: any}
 export type DataOf<T> = T extends Collection<infer U> ? U : never
 export type EntryOf<T> = T extends Schema<infer U> ? U : never
 export type TypesOf<T> = T extends HasType ? T['type'] : string
+export type ExtractType<T, K extends string> = T extends {type: K}
+  ? Extract<T, {type: K}>
+  : any
 
 export namespace Schema {
   /** Utility to infer the type of a Schema, Type, Field or any Store type */

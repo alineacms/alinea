@@ -94,19 +94,19 @@ export class TypeConfig<R = any, T = R> {
     return Boolean(this.options.isContainer)
   }
 
-  selection(cursor: Cursor<R>, pages: Pages<any>): Expr<any> | undefined {
+  selection<T>(cursor: Cursor<R>, pages: Pages<T>): Expr<any> | undefined {
     const computed: Record<string, SelectionInput> = {}
     let isComputed = false
     for (const [key, field] of this) {
       if (!field.transform) continue
-      const selection = field.transform(cursor.get(key), pages)
+      const selection = field.transform<T>(cursor.get<any>(key), pages)
       if (!selection) continue
       computed[key] = selection
       isComputed = true
     }
     if (this.options.transform)
-      return this.options.transform(
-        cursor.fields.with(computed).toExpr(),
+      return this.options.transform<T>(
+        (cursor.fields.with(computed) as any).toExpr(),
         pages
       )
     if (!isComputed) return

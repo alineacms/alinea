@@ -245,7 +245,8 @@ export class Expr<T> {
     this: Expr<Row>,
     that: X
   ): Selection.With<Row, X> {
-    return new Selection(this.expr).with(that)
+    // Typescript spends too much time here otherwise
+    return new (Selection as any)(this.expr).with(that)
   }
   private static uniqueId = 0
   private __id() {
@@ -253,7 +254,7 @@ export class Expr<T> {
   }
   each<T>(this: Expr<Array<T>>): Cursor<T> {
     const from = From.Each(this.expr, this.__id())
-    return new Cursor({
+    return new Cursor<T>({
       from,
       selection: ExprData.Row(from)
     })
