@@ -100,7 +100,6 @@ export const resolvePlugin: Plugin = {
       for (const [workspace, pkgs] of toVendor) {
         const {dependencies} = workspaceInfo(workspace)
         const isNode = workspace.endsWith('cli')
-        console.log(pkgs)
         await build.esbuild.build({
           format: isNode ? 'cjs' : 'esm',
           platform: isNode ? 'node' : undefined,
@@ -120,7 +119,11 @@ export const resolvePlugin: Plugin = {
         '@alinea/css', // As a convenience, maybe we should re-export in alinea?
         '@alinea/client', // In generated code
         '@alinea/sqlite-wasm', // In generated code
-        'nodemailer' // Using types
+        'nodemailer' // Using types,
+        'mime-db' // Avoid copies of this lib in vendor,
+        // Make sure these are not inlined
+        'react-dom',
+        'yjs'
       ])
       for (const {name, seen, dependencies} of info.values()) {
         const unused = [...dependencies].filter(x => !seen.has(x))
