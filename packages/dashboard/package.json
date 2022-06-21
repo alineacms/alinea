@@ -31,15 +31,9 @@
     "@alinea/input.link": "0.0.0",
     "@alinea/input.select": "0.0.0",
     "@alinea/input.text": "0.0.0",
+    "@alinea/shared": "0.0.0",
     "@alinea/store": "0.0.0",
-    "@alinea/ui": "0.0.0",
-    "@dnd-kit/core": "^3.1.1",
-    "@dnd-kit/sortable": "^4.0.0",
-    "@dnd-kit/utilities": "^2.0.0",
-    "@headlessui/react": "^1.6.1",
-    "react-query": "^3.39.1",
-    "y-webrtc": "^10.2.0",
-    "yjs": "^13.5.39"
+    "@alinea/ui": "0.0.0"
   },
   "peerDependencies": {
     "react": "*",
@@ -57,6 +51,7 @@
     "pretty-bytes": "^6.0.0",
     "react-router": "^6.3.0",
     "react-router-dom": "^6.3.0",
-    "react-tiny-virtual-list": "^2.2.0"
+    "react-tiny-virtual-list": "^2.2.0",
+    "y-webrtc": "^10.2.0"
   }
 }

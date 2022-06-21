@@ -1,4 +1,3 @@
-import {AliasPlugin} from '@esbx/alias'
 import {getManifest} from '@esbx/workspaces'
 import type {Plugin} from 'esbuild'
 import path from 'path'
@@ -43,6 +42,8 @@ export const resolvePlugin: Plugin = {
     const toVendor = new Map<string, Set<string>>()
     build.onStart(() => toVendor.clear())
     build.onResolve({filter: /.*/}, args => {
+      const shared = workspaceInfo('./packages/shared')
+      const sharedDependencies = shared.devDependencies
       if (args.kind === 'entry-point') return
       const isNodeModule = args.resolveDir.includes(`node_modules`)
       if (isNodeModule && !args.resolveDir.includes('@esbx')) return
@@ -60,7 +61,9 @@ export const resolvePlugin: Plugin = {
           const workspace = paths
             .slice(0, paths.lastIndexOf('src'))
             .join(path.sep)
-
+          if (sharedDependencies.has(pkg) && !workspace.includes('shared')) {
+            return {path: `@alinea/shared/${pkg}`, external: true}
+          }
           const {name, seen, dependencies, devDependencies} =
             workspaceInfo(workspace)
           if (devDependencies.has(pkg)) {

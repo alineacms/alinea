@@ -1,6 +1,6 @@
-import {Expr} from '@alinea/alinea'
 import type {Pages} from '@alinea/backend'
 import {Field, Label, Shape} from '@alinea/core'
+import {Expr} from '@alinea/store'
 
 export type CodeFieldOptions<Q> = {
   width?: number

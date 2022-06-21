@@ -102,8 +102,8 @@ __metadata:
     "@alinea/core": 0.0.0
     "@alinea/dashboard": 0.0.0
     "@alinea/iso": ^0.1.8
+    "@alinea/shared": 0.0.0
     "@alinea/ui": 0.0.0
-    react-query: ^3.39.1
   languageName: unknown
   linkType: soft
 
@@ -144,12 +144,9 @@ __metadata:
     "@alinea/input.link": 0.0.0
     "@alinea/input.select": 0.0.0
     "@alinea/input.text": 0.0.0
+    "@alinea/shared": 0.0.0
     "@alinea/store": 0.0.0
     "@alinea/ui": 0.0.0
-    "@dnd-kit/core": ^3.1.1
-    "@dnd-kit/sortable": ^4.0.0
-    "@dnd-kit/utilities": ^2.0.0
-    "@headlessui/react": ^1.6.1
     "@react-hook/size": ^2.1.2
     "@react-hook/window-size": ^3.0.7
     "@types/diff-match-patch": ^1.0.32
@@ -159,12 +156,10 @@ __metadata:
     image-blob-reduce: ^4.1.0
     p-limit: ^4.0.0
     pretty-bytes: ^6.0.0
-    react-query: ^3.39.1
     react-router: ^6.3.0
     react-router-dom: ^6.3.0
     react-tiny-virtual-list: ^2.2.0
     y-webrtc: ^10.2.0
-    yjs: ^13.5.39
   peerDependencies:
     react: "*"
     react-dom: "*"
@@ -233,12 +228,9 @@ __metadata:
     "@alinea/core": 0.0.0
     "@alinea/dashboard": 0.0.0
     "@alinea/editor": 0.0.0
+    "@alinea/shared": 0.0.0
     "@alinea/store": 0.0.0
     "@alinea/ui": 0.0.0
-    "@dnd-kit/core": ^3.1.1
-    "@dnd-kit/sortable": ^4.0.0
-    "@dnd-kit/utilities": ^2.0.0
-    react-query: ^3.39.1
   peerDependencies:
     react: "*"
   languageName: unknown
@@ -250,10 +242,8 @@ __metadata:
   dependencies:
     "@alinea/core": 0.0.0
     "@alinea/editor": 0.0.0
+    "@alinea/shared": 0.0.0
     "@alinea/ui": 0.0.0
-    "@dnd-kit/core": ^3.1.1
-    "@dnd-kit/sortable": ^4.0.0
-    "@dnd-kit/utilities": ^2.0.0
   peerDependencies:
     react: "*"
   languageName: unknown
@@ -335,9 +325,8 @@ __metadata:
   dependencies:
     "@alinea/core": 0.0.0
     "@alinea/editor": 0.0.0
+    "@alinea/shared": 0.0.0
     "@alinea/ui": 0.0.0
-    "@floating-ui/react-dom": ^0.7.1
-    "@headlessui/react": ^1.6.1
   languageName: unknown
   linkType: soft
 
@@ -412,6 +401,23 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@alinea/shared@0.0.0, @alinea/shared@workspace:packages/shared":
+  version: 0.0.0-use.local
+  resolution: "@alinea/shared@workspace:packages/shared"
+  dependencies:
+    "@dnd-kit/core": ^3.1.1
+    "@dnd-kit/sortable": ^4.0.0
+    "@dnd-kit/utilities": ^2.0.0
+    "@floating-ui/react-dom": ^0.7.1
+    "@headlessui/react": ^1.6.1
+    react-query: ^3.39.1
+    yjs: ^13.5.39
+  peerDependencies:
+    react: "*"
+    react-dom: "*"
+  languageName: unknown
+  linkType: soft
+
 "@alinea/sqlite-wasm@npm:^0.1.7":
   version: 0.1.7
   resolution: "@alinea/sqlite-wasm@npm:0.1.7"
@@ -438,8 +444,7 @@ __metadata:
   resolution: "@alinea/ui@workspace:packages/ui"
   dependencies:
     "@alinea/core": 0.0.0
-    "@floating-ui/react-dom": ^0.7.1
-    "@headlessui/react": ^1.6.1
+    "@alinea/shared": 0.0.0
     color2k: ^1.2.4
     use-error-boundary: ^2.0.6
   peerDependencies:
