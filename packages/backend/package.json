@@ -25,11 +25,11 @@
   "dependencies": {
     "@alinea/core": "0.0.0",
     "@alinea/iso": "^0.1.8",
+    "@alinea/shared": "0.0.0",
     "@alinea/store": "0.0.0",
     "@octokit/rest": "^18.12.0",
     "lib0": "^0.2.51",
-    "octokit-commit-multiple-files": "^3.2.1",
-    "@alinea/shared": "0.0.0"
+    "octokit-commit-multiple-files": "^3.2.1"
   },
   "devDependencies": {
     "@alinea/sqlite-wasm": "^0.1.7",
