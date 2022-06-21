@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.1.5]
+
 - The alinea package now export an `alinea` object that bundles the previously
   exported config functions.
 - Vendor in selected dependencies (#175). Selected dependencies will be compiled
