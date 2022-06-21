@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+- The alinea package now export an `alinea` object that bundles the previously
+  exported config functions.
+- Vendor in selected dependencies (#175). Selected dependencies will be compiled
+  and packaged with the alinea packages. This reduces install size and amount of
+  dependencies which would typically not be shared with any userland code.
+- Added a hidden option to fields, which hides the field in the dashboard UI (#169)
+
 ## [0.1.4]
 
 - Replace CJS dependencies to pure ESM (#161)
