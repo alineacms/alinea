@@ -334,9 +334,11 @@ export class Pages<T> extends Multiple<T, T> {
     withComputed = true
   ) {
     const from = From.Column(From.Table('Entry', ['data']), 'data')
-    const raw = new Pages<T>(workspace, createCache, resolver, false)
     const selection: ExprData = withComputed
-      ? createSelection<T>(workspace, raw)
+      ? createSelection<T>(
+          workspace,
+          new Pages<T>(workspace, createCache, resolver, false)
+        )
       : ExprData.Row(from)
     const cursor = new Cursor<T>({
       from,
