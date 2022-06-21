@@ -29,7 +29,7 @@
     "@octokit/rest": "^18.12.0",
     "lib0": "^0.2.51",
     "octokit-commit-multiple-files": "^3.2.1",
-    "yjs": "^13.5.39"
+    "@alinea/shared": "0.0.0"
   },
   "devDependencies": {
     "@alinea/sqlite-wasm": "^0.1.7",

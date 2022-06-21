@@ -34,7 +34,7 @@
     "@alinea/input.link": "0.0.0",
     "@alinea/input.text": "0.0.0",
     "@alinea/ui": "0.0.0",
-    "yjs": "^13.5.39"
+    "@alinea/shared": "0.0.0"
   },
   "devDependencies": {
     "@tiptap/core": "^2.0.0-beta.175",

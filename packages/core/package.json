@@ -25,7 +25,7 @@
   "dependencies": {
     "@alinea/iso": "^0.1.8",
     "@alinea/store": "0.0.0",
-    "yjs": "^13.5.39"
+    "@alinea/shared": "0.0.0"
   },
   "devDependencies": {
     "serialize-error": "^9.0.0"
