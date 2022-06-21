@@ -67,6 +67,7 @@ export const resolvePlugin: Plugin = {
             const segmentsFromPkg = args.resolveDir
               .split(path.sep)
               .slice(paths.lastIndexOf('src') + 1)
+            const isNode = workspace.endsWith('cli')
             const relativePath =
               (segmentsFromPkg.length === 0
                 ? ['.']
@@ -74,7 +75,7 @@ export const resolvePlugin: Plugin = {
               )
                 .concat('vendor')
                 .concat(pkg)
-                .join('/') + '.js'
+                .join('/') + (isNode ? '.cjs' : '.js')
             if (!toVendor.has(workspace)) toVendor.set(workspace, new Set())
             toVendor.get(workspace)!.add(pkg)
             return {path: relativePath, external: true}
@@ -98,34 +99,18 @@ export const resolvePlugin: Plugin = {
     build.onEnd(async () => {
       for (const [workspace, pkgs] of toVendor) {
         const {dependencies} = workspaceInfo(workspace)
+        const isNode = workspace.endsWith('cli')
         await build.esbuild.build({
-          format: 'esm',
+          format: isNode ? 'cjs' : 'esm',
+          platform: isNode ? 'node' : undefined,
           bundle: true,
           entryPoints: [...pkgs],
           outdir: workspace + '/dist/vendor',
+          outExtension: {'.js': isNode ? '.cjs' : '.js'},
           conditions: ['import'],
-          splitting: true,
+          splitting: !isNode,
           treeShaking: true,
-          external: [
-            ...dependencies,
-            'zlib',
-            'path',
-            'crypto',
-            'http',
-            'os',
-            'url',
-            'assert',
-            'stream',
-            'fs',
-            'child_process',
-            'querystring',
-            'qs',
-            'net',
-            'util',
-            'constants',
-            'events',
-            'buffer'
-          ]
+          external: [...dependencies]
         })
       }
       const knownWarnings = new Set([
