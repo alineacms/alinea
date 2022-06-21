@@ -100,11 +100,14 @@ export const resolvePlugin: Plugin = {
       for (const [workspace, pkgs] of toVendor) {
         const {dependencies} = workspaceInfo(workspace)
         const isNode = workspace.endsWith('cli')
+        console.log(pkgs)
         await build.esbuild.build({
           format: isNode ? 'cjs' : 'esm',
           platform: isNode ? 'node' : undefined,
           bundle: true,
-          entryPoints: [...pkgs],
+          entryPoints: Object.fromEntries(
+            Array.from(pkgs).map(pkg => [pkg, pkg])
+          ),
           outdir: workspace + '/dist/vendor',
           outExtension: {'.js': isNode ? '.cjs' : '.js'},
           conditions: ['import'],
