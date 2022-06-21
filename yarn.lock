@@ -39,7 +39,7 @@ __metadata:
     firebase-admin: ^10.0.2
     ioredis: ^4.28.5
     js-yaml: ^4.1.0
-    lib0: ^0.2.42
+    lib0: ^0.2.51
     octokit-commit-multiple-files: ^3.2.1
     pretty-ms: ^8.0.0
     regexparam: ^2.0.0
@@ -5085,7 +5085,7 @@ fsevents@~2.3.2:
   languageName: node
   linkType: hard
 
-"lib0@npm:^0.2.49":
+"lib0@npm:^0.2.49, lib0@npm:^0.2.51":
   version: 0.2.51
   resolution: "lib0@npm:0.2.51"
   dependencies:

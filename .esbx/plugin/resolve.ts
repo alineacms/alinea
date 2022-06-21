@@ -119,7 +119,7 @@ export const resolvePlugin: Plugin = {
         '@alinea/css', // As a convenience, maybe we should re-export in alinea?
         '@alinea/client', // In generated code
         '@alinea/sqlite-wasm', // In generated code
-        'nodemailer' // Using types,
+        'nodemailer', // Using types,
         'mime-db', // Avoid copies of this lib in vendor,
         // Make sure these are not inlined
         'react-dom',
