@@ -1,5 +1,6 @@
 import {IcRoundInsertDriveFile} from '@alinea/ui/icons/IcRoundInsertDriveFile'
 import {IcRoundPermMedia} from '@alinea/ui/icons/IcRoundPermMedia'
+import {Welcome} from '@alinea/dashboard/Welcome'
 import {
   createConfig,
   MediaSchema,
@@ -8,7 +9,6 @@ import {
   schema,
   text,
   type,
-  Welcome,
   workspace
 } from 'alinea'
 

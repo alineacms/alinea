@@ -1,7 +1,7 @@
 import {Handler, router} from '@alinea/backend/router/Router'
-import {sign, verify} from '@alinea/backend/util/JWT'
+import {sign, verify} from '@alinea/core/util/JWT'
 import {Auth, createError, Hub, Outcome, User} from '@alinea/core'
-import {Transporter} from 'nodemailer'
+import type {Transporter} from 'nodemailer'
 import {assert, object, string} from 'superstruct'
 
 export type PasswordLessAuthOptions = {

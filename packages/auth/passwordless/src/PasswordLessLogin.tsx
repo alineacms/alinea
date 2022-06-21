@@ -8,7 +8,7 @@ import {IcRoundArrowBack} from '@alinea/ui/icons/IcRoundArrowBack'
 import {IcRoundArrowForward} from '@alinea/ui/icons/IcRoundArrowForward'
 import {RiFlashlightFill} from '@alinea/ui/icons/RiFlashlightFill'
 import {HStack, VStack} from '@alinea/ui/Stack'
-import jwtDecode from 'jwt-decode'
+import {decode} from '@alinea/core/util/JWT'
 import {FormEvent, PropsWithChildren, useLayoutEffect, useState} from 'react'
 import css from './PasswordLessLogin.module.scss'
 
@@ -141,7 +141,7 @@ function useResolveToken(setSession: (session: Session | undefined) => void) {
     const token =
       params.get('token') || localStorage.getItem('@alinea/auth.passwordless')
     if (token) {
-      const user: any = token && jwtDecode(token)
+      const user: any = token && decode(token)
       function logout() {
         localStorage.removeItem('@alinea/auth.passwordless')
         setSession(undefined)

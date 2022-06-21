@@ -60,7 +60,7 @@ function task(
         tsConfig = tsconfigResolverSync()
         await createTypes()
       }
-      const entryPoints = []
+      const entryPoints: Array<string> = []
       function packageEntryPoints(root: string, location: string) {
         const cwd = path.join(root, location)
         const entryPoints = glob.sync('src/**/*.{ts,tsx}', {cwd})
@@ -92,6 +92,7 @@ function task(
         absWorkingDir: cwd,
         entryPoints: entryPoints,
         watch: options.watch,
+        mainFields: ['module', 'main'],
         ...config.buildOptions,
         plugins: list(
           TargetPlugin.configure({

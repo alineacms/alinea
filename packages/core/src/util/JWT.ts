@@ -2,7 +2,7 @@
 // Which seems to be based on https://github.com/pose/webcrypto-jwt/blob/d417595d85d993fe2b15d3730683a3836ef0741b/index.js
 // And: https://github.com/auth0/node-jsonwebtoken
 
-import {base64url} from '@alinea/core/util/Encoding'
+import {base64url} from './Encoding'
 import {crypto} from '@alinea/iso'
 
 const textDecoder = new TextDecoder()
