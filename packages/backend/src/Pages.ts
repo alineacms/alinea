@@ -1,4 +1,4 @@
-import {createId, Entry, Tree, Workspace} from '@alinea/core'
+import { createId, Entry, Tree, TypesOf, Workspace } from '@alinea/core'
 import {
   Collection,
   Cursor,
@@ -166,10 +166,16 @@ class Multiple<P, T> extends Base<P, Array<Page<P, T>>> {
   whereId<E = T>(id: EV<string>) {
     return new Multiple<T, E>(this.resolver, this.cursor.where(Entry.id.is(id)))
   }
-  whereType<C>(type: Collection<C>) {
-    return new Multiple<P, C>(
+  whereType<K extends TypesOf<T>>(type: K) {
+    return new Multiple<P, Extract<T, {type: K}>>(
       this.resolver,
-      this.cursor.where(Entry.get('type').is((type as any).__options.alias))
+      this.cursor.where(Entry.get('type').is(type as string))
+    )
+  }
+  whereRoot(root: string) {
+    return new Multiple<P, T>(
+      this.resolver,
+      this.cursor.where(Entry.get('root').is(root))
     )
   }
   fetchUrl<E = T>(url: EV<string>) {
@@ -255,10 +261,16 @@ class Single<P, T> extends Base<P, Page<P, T> | null> {
   where(where: EV<boolean> | ((collection: Cursor<T>) => EV<boolean>)) {
     return new Single<P, T>(this.resolver, this.cursor.where(where as any))
   }
-  whereType<C>(type: Collection<C>) {
-    return new Single<P, C>(
+  whereType<K extends TypesOf<T>>(type: K) {
+    return new Single<P, Extract<T, {type: K}>>(
       this.resolver,
       this.cursor.where(Entry.type.is((type as any).__options.alias))
+    )
+  }
+  whereRoot(root: string) {
+    return new Single<P, T>(
+      this.resolver,
+      this.cursor.where(Entry.get('root').is(root))
     )
   }
   select<
@@ -303,12 +315,12 @@ class Single<P, T> extends Base<P, Page<P, T> | null> {
 
 function createSelection<T>(
   workspace: Workspace<T>,
-  pages: PagesImpl<T>
+  pages: Pages<any>
 ): ExprData {
   const cases: Record<string, SelectionInput> = {}
   let isComputed = false
   for (const [key, type] of workspace.schema.entries()) {
-    const selection = type.selection(type.collection(), pages as Pages<T>)
+    const selection = type.selection(type.collection(), pages)
     if (!selection) continue
     cases[key] = selection
     isComputed = true
@@ -317,7 +329,7 @@ function createSelection<T>(
   return Entry.type.case(cases, Entry.fields).expr
 }
 
-class PagesImpl<T> extends Multiple<T, T> {
+export class Pages<T> extends Multiple<T, T> {
   constructor(
     workspace: Workspace<T>,
     createCache: () => Promise<Store>,
@@ -325,19 +337,22 @@ class PagesImpl<T> extends Multiple<T, T> {
     withComputed = true
   ) {
     const from = From.Column(From.Table('Entry', ['data']), 'data')
+    const raw = new Pages<any>(workspace, createCache, resolver, false)
     const cursor = new Cursor<T>({
       from,
       selection: withComputed
         ? createSelection(
             workspace,
-            new PagesImpl(workspace, createCache, resolver, false)
+            raw
           )
         : ExprData.Row(from)
     })
     super(resolver, cursor)
-    for (const [key, type] of workspace.schema.entries()) {
-      ;(this as any)[key] = this.whereType(type.collection())
-    }
+    /*for (const [key, type] of workspace.schema.entries()) {
+      ;(this as any)[key] = this.whereType(
+        (type.collection() as any).__options.alias
+      )
+    }*/
   }
 
   tree(id: EV<string>) {
@@ -418,14 +433,3 @@ function iter(
         iter(value[key], fn)
   }
 }
-
-export interface PagesConstructor {
-  new <T>(workspace: Workspace<T>, createCache: () => Promise<Store>): Pages<T>
-}
-export type Pages<T> = PagesImpl<T> & {
-  [K in T extends {type: string} ? T['type'] : string]: Multiple<
-    T,
-    Extract<T, {type: K}>
-  >
-}
-export const Pages = PagesImpl as any as PagesConstructor
