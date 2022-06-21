@@ -122,16 +122,9 @@ export const resolvePlugin: Plugin = {
             'qs',
             'net',
             'util',
-            'constants'
-          ],
-          plugins: [
-            /*AliasPlugin.configure({
-              'simple-peer/simplepeer.min.js': path.resolve(
-                './node_modules/simple-peer/index.js'
-              ),
-              events: path.resolve('./node_modules/events/events.js'),
-              util: path.resolve('./packages/cli/src/static/server/client.cjs')
-            })*/
+            'constants',
+            'events',
+            'buffer'
           ]
         })
       }
