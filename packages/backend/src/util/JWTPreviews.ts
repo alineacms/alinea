@@ -1,5 +1,5 @@
 import {Previews} from '../Previews'
-import {sign, verify} from './JWT'
+import {sign, verify} from '@alinea/core/util/JWT'
 
 export class JWTPreviews implements Previews {
   constructor(private secret: string) {}

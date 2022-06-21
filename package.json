@@ -5,7 +5,7 @@
   "license": "MIT",
   "scripts": {
     "dev": "esbx prepare && run-p dev:check dev:next dev:compile",
-    "dev:compile": "esbx dev --production",
+    "dev:compile": "esbx dev",
     "dev:next": "yarn workspace @alinea/web dev",
     "dev:check": "tsc -w",
     "build": "esbx build",
@@ -53,6 +53,7 @@
   },
   "packageManager": "yarn@3.2.0",
   "resolutions": {
-    "prosemirror-view": "1.20.3"
+    "prosemirror-view": "1.20.3",
+    "mime-db": "1.51.0"
   }
 }

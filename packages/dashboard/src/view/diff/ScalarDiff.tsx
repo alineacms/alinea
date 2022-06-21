@@ -1,11 +1,11 @@
 import {fromModule} from '@alinea/ui'
-import {diff_match_patch} from 'diff-match-patch'
+import dmp from 'diff-match-patch'
 import {useMemo} from 'react'
 import css from './ScalarDiff.module.scss'
 
 const styles = fromModule(css)
 
-const matcher = new diff_match_patch()
+const matcher = new dmp.diff_match_patch()
 
 export type ScalarDiffProps<T> = {
   valueA: T

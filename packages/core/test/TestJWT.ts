@@ -1,4 +1,4 @@
-import {sign, verify} from '@alinea/backend/util/JWT'
+import {sign, verify} from '@alinea/core/util/JWT'
 import {outcome} from '@alinea/core/Outcome'
 import {test} from 'uvu'
 import * as assert from 'uvu/assert'

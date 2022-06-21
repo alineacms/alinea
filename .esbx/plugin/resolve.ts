@@ -1,8 +1,7 @@
+import {AliasPlugin} from '@esbx/alias'
 import {getManifest} from '@esbx/workspaces'
 import type {Plugin} from 'esbuild'
 import path from 'path'
-
-const inline = new Set([])
 
 function packageOf(filePath: string) {
   if (filePath.includes('node_modules'))
@@ -30,32 +29,31 @@ export const resolvePlugin: Plugin = {
             .concat(getDeps(manifest.peerDependencies))
             .concat(getDeps(manifest.optionalDependencies))
         )
+        const devDependencies = new Set(getDeps(manifest.devDependencies))
         info.set(workspace, {
           name: manifest.name,
           dependencies,
+          devDependencies,
           seen: new Set()
         })
       }
       return info.get(workspace)!
     }
+    const outDir = build.initialOptions.outdir
+    const toVendor = new Map<string, Set<string>>()
+    build.onStart(() => toVendor.clear())
     build.onResolve({filter: /.*/}, args => {
       if (args.kind === 'entry-point') return
       const isNodeModule = args.resolveDir.includes(`node_modules`)
-      const fromPackage = isNodeModule
+      if (isNodeModule && !args.resolveDir.includes('@esbx')) return
+      const pkg = isNodeModule
         ? packageOf(args.resolveDir)
         : packageOf(args.path)
-      const isInline = inline.has(args.path) || inline.has(fromPackage)
-      if (isInline) return
       const isLocal = args.path.startsWith('./') || args.path.startsWith('../')
       const hasOutExtension = args.path.endsWith(outExtension)
       const base = path.basename(args.path)
       const hasExtension = base.includes('.') && !base.includes('.node')
       if (!args.path.startsWith('.')) {
-        const segments = args.path.split('/')
-        const pkg = args.path.startsWith('@')
-          ? `${segments[0]}/${segments[1]}`
-          : segments[0]
-
         // From which package are we requesting this path?
         if (args.resolveDir.includes('packages')) {
           const paths = args.resolveDir.split(path.sep)
@@ -63,7 +61,24 @@ export const resolvePlugin: Plugin = {
             .slice(0, paths.lastIndexOf('src'))
             .join(path.sep)
 
-          const {name, seen, dependencies} = workspaceInfo(workspace)
+          const {name, seen, dependencies, devDependencies} =
+            workspaceInfo(workspace)
+          if (devDependencies.has(pkg)) {
+            const segmentsFromPkg = args.resolveDir
+              .split(path.sep)
+              .slice(paths.lastIndexOf('src') + 1)
+            const relativePath =
+              (segmentsFromPkg.length === 0
+                ? ['.']
+                : segmentsFromPkg.map(() => '..')
+              )
+                .concat('vendor')
+                .concat(pkg)
+                .join('/') + '.js'
+            if (!toVendor.has(workspace)) toVendor.set(workspace, new Set())
+            toVendor.get(workspace)!.add(pkg)
+            return {path: relativePath, external: true}
+          }
           if (
             !pkg.startsWith('node:') &&
             !dependencies.has(pkg) &&
@@ -80,7 +95,46 @@ export const resolvePlugin: Plugin = {
       return {path: args.path + outExtension, external: true}
     })
 
-    build.onEnd(() => {
+    build.onEnd(async () => {
+      for (const [workspace, pkgs] of toVendor) {
+        const {dependencies} = workspaceInfo(workspace)
+        await build.esbuild.build({
+          format: 'esm',
+          bundle: true,
+          entryPoints: [...pkgs],
+          outdir: workspace + '/dist/vendor',
+          conditions: ['import'],
+          splitting: true,
+          treeShaking: true,
+          external: [
+            ...dependencies,
+            'zlib',
+            'path',
+            'crypto',
+            'http',
+            'os',
+            'url',
+            'assert',
+            'stream',
+            'fs',
+            'child_process',
+            'querystring',
+            'qs',
+            'net',
+            'util',
+            'constants'
+          ],
+          plugins: [
+            /*AliasPlugin.configure({
+              'simple-peer/simplepeer.min.js': path.resolve(
+                './node_modules/simple-peer/index.js'
+              ),
+              events: path.resolve('./node_modules/events/events.js'),
+              util: path.resolve('./packages/cli/src/static/server/client.cjs')
+            })*/
+          ]
+        })
+      }
       const knownWarnings = new Set([
         '@alinea/css', // As a convenience, maybe we should re-export in alinea?
         '@alinea/client', // In generated code
