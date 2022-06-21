@@ -212,10 +212,12 @@ export async function generate(options: GenerateOptions) {
   async function generatePackage() {
     if (cacheWatcher) (await cacheWatcher).stop()
     const config = await loadConfig()
-    return Promise.all([
+    await Promise.all([
       generateWorkspaces(config),
       (cacheWatcher = fillCache(config))
     ])
+    if (config.buildDashboardAt)
+      await generateDashboard(config.buildDashboardAt)
   }
 
   async function loadConfig() {
@@ -361,5 +363,9 @@ export async function generate(options: GenerateOptions) {
 
   function createCache(store: SqliteStore) {
     return exportStore(store, path.join(outDir, 'store.js'), wasmCache)
+  }
+
+  async function generateDashboard(outputDir: string) {
+    // const entry = `@alinea/dashboard/dev/LibEntry`
   }
 }

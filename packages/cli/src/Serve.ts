@@ -127,7 +127,7 @@ export async function serve(options: ServeOptions) {
         config: '@alinea/content/config.js',
         entry
       },
-      inject: [path.join(staticDir, `dev/render-${react}.js`)],
+      inject: [path.join(staticDir, `render/render-${react}.js`)],
       platform: 'browser',
       ...buildOptions,
       plugins: [EvalPlugin, ReactPlugin, ...(buildOptions?.plugins || [])],
