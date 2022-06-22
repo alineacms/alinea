@@ -99,11 +99,11 @@
 }
 
 .mobilemenu {
+  font-family: var(--web-title-font);
   display: block;
   padding: 20px 0;
   margin-top: 1px;
   background-color: var(--web-header-background);
-  font-family: var(--web-title-font);
 
   @include l {
     display: none !important;
