@@ -20,19 +20,21 @@ export function CodeBlock({code, compact, fileName}: CodeBlockSchema) {
   return (
     <div className={styles.root({compact, copied: isCopied})}>
       {fileName && <div className={styles.root.fileName()}>{fileName}</div>}
-      <Typo.Monospace
-        as="div"
-        ref={codeRef}
-        dangerouslySetInnerHTML={{__html: code}}
-        className={styles.root.code()}
-      />
-      <button
-        onClick={() => handleCopyToClipboard(codeRef.current!.innerText!)}
-        className={styles.root.copy()}
-      >
-        {!isCopied && <MdiContentCopy style={{fontSize: '18px'}} />}
-        {isCopied && <IcRoundCheck style={{fontSize: '24px'}} />}
-      </button>
+      <div style={{position: 'relative'}}>
+        <Typo.Monospace
+          as="div"
+          ref={codeRef}
+          dangerouslySetInnerHTML={{__html: code}}
+          className={styles.root.code()}
+        />
+        <button
+          onClick={() => handleCopyToClipboard(codeRef.current!.innerText!)}
+          className={styles.root.copy()}
+        >
+          {!isCopied && <MdiContentCopy style={{fontSize: '18px'}} />}
+          {isCopied && <IcRoundCheck style={{fontSize: '24px'}} />}
+        </button>
+      </div>
     </div>
   )
 }
