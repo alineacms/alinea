@@ -31,13 +31,13 @@
     "@alinea/backend": "0.0.0",
     "@alinea/client": "0.0.0",
     "@alinea/core": "0.0.0",
-    "@alinea/shared": "0.0.0",
     "@alinea/sqlite-wasm": "^0.1.7",
     "@alinea/store": "0.0.0",
     "@esbx/eval": "^0.0.19",
     "@esbx/react": "^0.0.19",
     "esbuild": "^0.14.11",
-    "mime-db": "^1.51.0"
+    "mime-db": "^1.51.0",
+    "yjs": "^13.5.39"
   },
   "devDependencies": {
     "@types/compression": "^1.7.2",
