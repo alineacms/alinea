@@ -99,9 +99,11 @@
 }
 
 .mobilemenu {
-  display: block;
-  padding-top: 20px;
   font-family: var(--web-title-font);
+  display: block;
+  padding: 20px 0;
+  margin-top: 1px;
+  background-color: var(--web-header-background);
 
   @include l {
     display: none !important;
