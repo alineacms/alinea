@@ -12,7 +12,7 @@
   --web-selected-foreground: hsl(230, 77%, 60%);
   --web-highlight: #f3f4f6;
   --web-header-background-hsl: 0, 0%, 100%;
-  --web-header-background: hsl(var(--web-header-foreground-hsl));
+  --web-header-background: hsl(var(--web-header-background-hsl));
   --web-negative-hsl: 215, 17%, 14%;
   --web-code-background: #1e232a;
   --web-code-highlight: #292c3d;
@@ -31,6 +31,7 @@
   --web-foreground: white;
   --web-foreground-faded: #eee;
   --web-selected: #383d44;
+  --web-selected-foreground: hsl(0, 0%, 100%);
   --web-highlight: #444548;
   --web-header-background-hsl: 215, 17%, 14%;
   --web-header-background: hsl(var(--web-header-background-hsl));
