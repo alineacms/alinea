@@ -414,13 +414,13 @@ export async function generate(options: GenerateOptions) {
         <!DOCTYPE html>
         <meta charset="utf-8" />
         <link rel="icon" href="data:," />
-        <link href="${basename}/entry.css" rel="stylesheet" />
+        <link href="./${basename}/entry.css" rel="stylesheet" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="handshake_url" value="${handlerUrl}/hub/auth/handshake" />
         <meta name="redirect_url" value="${handlerUrl}/hub/auth" />
         <body>
           <script type="module">
-            import {boot} from '${basename}/entry.js'
+            import {boot} from './${basename}/entry.js'
             boot('${handlerUrl}')
           </script>
         </body>
