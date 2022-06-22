@@ -1,6 +1,4 @@
 import {nodeHandler} from '@alinea/backend/router/NodeHandler'
-import {EvalPlugin} from '@esbx/eval'
-import {ReactPlugin} from '@esbx/react'
 import semver from 'compare-versions'
 import compression from 'compression'
 import esbuild, {BuildOptions} from 'esbuild'
@@ -9,6 +7,7 @@ import http, {ServerResponse} from 'node:http'
 import {createRequire} from 'node:module'
 import path from 'node:path'
 import serveHandler from 'serve-handler'
+import {buildOptions} from './build/BuildOptions'
 import {generate} from './Generate'
 import {DevBackend} from './serve/DevBackend'
 import {dirname} from './util/Dirname'
@@ -29,7 +28,6 @@ export type ServeOptions = {
 export async function serve(options: ServeOptions) {
   const {
     cwd = process.cwd(),
-    buildOptions,
     staticDir = path.join(__dirname, 'static'),
     alineaDev = false,
     production = false
@@ -129,15 +127,13 @@ export async function serve(options: ServeOptions) {
       },
       inject: [path.join(staticDir, `render/render-${react}.js`)],
       platform: 'browser',
+      ...options.buildOptions,
       ...buildOptions,
-      plugins: [EvalPlugin, ReactPlugin, ...(buildOptions?.plugins || [])],
+      plugins: buildOptions.plugins!.concat(
+        options.buildOptions?.plugins || []
+      ),
       define: {
         'process.env.NODE_ENV': production ? "'production'" : "'development'"
-      },
-      loader: {
-        ...buildOptions?.loader,
-        '.woff': 'file',
-        '.woff2': 'file'
       }
     }
   }

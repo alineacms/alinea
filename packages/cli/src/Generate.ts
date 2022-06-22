@@ -9,9 +9,11 @@ import {SqliteStore} from '@alinea/store/sqlite/SqliteStore'
 import {EvalPlugin} from '@esbx/eval'
 import {ReactPlugin} from '@esbx/react'
 import {FSWatcher} from 'chokidar'
+import semver from 'compare-versions'
 import {build, BuildResult} from 'esbuild'
 import fs from 'fs-extra'
 import path from 'node:path'
+import {buildOptions} from './build/BuildOptions'
 import {exportStore} from './export/ExportStore'
 import {dirname} from './util/Dirname'
 import {externalPlugin} from './util/ExternalPlugin'
@@ -216,8 +218,7 @@ export async function generate(options: GenerateOptions) {
       generateWorkspaces(config),
       (cacheWatcher = fillCache(config))
     ])
-    if (config.buildDashboardAt)
-      await generateDashboard(config.buildDashboardAt)
+    if (config.dashboard) await generateDashboard(config.dashboard)
   }
 
   async function loadConfig() {
@@ -365,7 +366,49 @@ export async function generate(options: GenerateOptions) {
     return exportStore(store, path.join(outDir, 'store.js'), wasmCache)
   }
 
-  async function generateDashboard(outputDir: string) {
-    // const entry = `@alinea/dashboard/dev/LibEntry`
+  type GenerateDashboardOptions = {handlerUrl: string; staticFiles: string}
+
+  async function generateDashboard(options: GenerateDashboardOptions) {
+    const {staticFiles, handlerUrl} = options
+    const {version} = require('react/package.json')
+    const isReact18 = semver.compare(version, '18.0.0', '>=')
+    const react = isReact18 ? 'react18' : 'react'
+    const entryPoints = {
+      entry: '@alinea/dashboard/EntryPoint',
+      config: '@alinea/content/config.js'
+    }
+    await build({
+      format: 'esm',
+      target: 'esnext',
+      treeShaking: true,
+      minify: true,
+      splitting: true,
+      sourcemap: true,
+      outdir: staticFiles,
+      bundle: true,
+      absWorkingDir: cwd,
+      entryPoints,
+      inject: [path.join(staticDir, `render/render-${react}.js`)],
+      platform: 'browser',
+      define: {
+        'process.env.NODE_ENV': "'production'"
+      },
+      ...buildOptions
+    })
+    await fs.writeFile(
+      path.join(staticFiles, 'index.html'),
+      code`
+        <!DOCTYPE html>
+        <meta charset="utf-8" />
+        <link rel="icon" href="data:," />
+        <link href="./entry.css" rel="stylesheet" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="handshake_url" value="${handlerUrl}" />
+        <meta name="redirect_url" value="${handlerUrl}" />
+        <body>
+          <script type="module" src="./entry.js"></script>
+        </body>
+      `
+    )
   }
 }
