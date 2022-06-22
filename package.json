@@ -19,8 +19,6 @@
   "files": [],
   "workspaces": [
     "apps/*",
-    "packages/input/*",
-    "packages/auth/*",
     "packages/*"
   ],
   "devDependencies": {

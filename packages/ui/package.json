@@ -27,7 +27,10 @@
     "@alinea/shared": "0.0.0"
   },
   "devDependencies": {
+    "@types/autosize": "^4.0.1",
+    "autosize": "^5.0.1",
     "color2k": "^1.2.4",
+    "line-height": "^0.3.1",
     "use-error-boundary": "^2.0.6"
   },
   "peerDependencies": {

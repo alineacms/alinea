@@ -2,6 +2,7 @@ import {outcome, TypeConfig} from '@alinea/core'
 import {base64url} from '@alinea/core/util/Encoding'
 import {DashboardProvider, SessionProvider, Toolbar} from '@alinea/dashboard'
 import {useForm} from '@alinea/editor/hook/UseForm'
+import {QueryClient, QueryClientProvider} from '@alinea/shared/react-query'
 import {
   AppBar,
   ErrorBoundary,
@@ -29,7 +30,6 @@ import Head from 'next/head'
 import Link from 'next/link'
 import * as React from 'react'
 import {useEffect, useMemo, useRef, useState} from 'react'
-import {QueryClient, QueryClientProvider} from '@alinea/shared/react-query'
 import {useClipboard} from 'use-clipboard-copy'
 import {createDemo} from './Demo'
 import {Logo} from './layout/branding/Logo'
@@ -37,15 +37,11 @@ import css from './Playground.module.scss'
 
 const styles = fromModule(css)
 
-const defaultValue = `import {
-  path,
-  text,
-  type
-} from 'alinea'
+const defaultValue = `import {alinea} from 'alinea'
 
-export default type('Type', {
-  title: text('Title', {width: 0.5}),
-  path: path('Path', {width: 0.5})
+export default alinea.type('Type', {
+  title: alinea.text('Title', {width: 0.5}),
+  path: alinea.path('Path', {width: 0.5})
 })`
 
 const global: any = window

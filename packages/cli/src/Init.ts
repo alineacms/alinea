@@ -1,10 +1,10 @@
 import {createId, outcome} from '@alinea/core'
 import {detect} from 'detect-package-manager'
-import {dirname} from 'dirname-filename-esm'
 import fs from 'fs-extra'
 import {execSync} from 'node:child_process'
 import path from 'node:path'
 import {generate} from './Generate'
+import {dirname} from './util/Dirname'
 
 const __dirname = dirname(import.meta)
 

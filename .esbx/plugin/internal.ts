@@ -9,13 +9,12 @@ export const internalPlugin: Plugin = {
   setup(build) {
     // These should be resolved using the conditional exports, but before
     // building those are not available so we point at the source directly.
-    const packages = fs.readdirSync('packages/input')
+    const packages = fs
+      .readdirSync('packages')
+      .filter(pkg => pkg.startsWith('input.'))
     const aliases = Object.fromEntries(
       packages.map(pkg => {
-        return [
-          `@alinea/input.${pkg}`,
-          path.resolve(`packages/input/${pkg}/src/view.ts`)
-        ]
+        return [`@alinea/${pkg}`, path.resolve(`packages/${pkg}/src/view.ts`)]
       })
     )
 

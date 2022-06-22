@@ -3,7 +3,6 @@ import {EvalPlugin} from '@esbx/eval'
 import {ReactPlugin} from '@esbx/react'
 import semver from 'compare-versions'
 import compression from 'compression'
-import {dirname} from 'dirname-filename-esm'
 import esbuild, {BuildOptions} from 'esbuild'
 import express from 'express'
 import http, {ServerResponse} from 'node:http'
@@ -12,6 +11,7 @@ import path from 'node:path'
 import serveHandler from 'serve-handler'
 import {generate} from './Generate'
 import {DevBackend} from './serve/DevBackend'
+import {dirname} from './util/Dirname'
 
 const __dirname = dirname(import.meta)
 const require = createRequire(import.meta.url)

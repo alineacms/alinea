@@ -1,5 +1,5 @@
 {
-  "name": "@alinea/shared",
+  "name": "@alinea/backend.github",
   "version": "0.0.0",
   "license": "MIT",
   "repository": {
@@ -22,16 +22,12 @@
       ]
     }
   },
-  "devDependencies": {
-    "@dnd-kit/core": "^3.1.1",
-    "@dnd-kit/sortable": "^4.0.0",
-    "@dnd-kit/utilities": "^2.0.0",
-    "@floating-ui/react-dom": "^0.7.1",
-    "@headlessui/react": "^1.6.1",
-    "react-query": "^3.39.1"
+  "dependencies": {
+    "@alinea/core": "0.0.0",
+    "@alinea/iso": "^0.1.8",
+    "@octokit/rest": "^18.12.0"
   },
-  "peerDependencies": {
-    "react": "*",
-    "react-dom": "*"
+  "devDependencies": {
+    "octokit-commit-multiple-files": "^3.2.1"
   }
 }

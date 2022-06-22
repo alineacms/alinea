@@ -1,82 +1,51 @@
 .root {
-  padding: 1px 6px;
-
-  &-inner {
-    position: relative;
-    z-index: 1;
-    display: flex;
-    align-items: center;
-    padding-right: 8px;
-    border-radius: 6px;
-    color: var(--alinea-foreground-faded);
-  }
-
-  &-link {
-    height: 32px;
-    text-decoration: none;
-    font: inherit;
-    color: inherit;
-    font-weight: bold;
-    text-transform: uppercase;
-    font-size: 11px;
-    flex-grow: 1;
-    text-overflow: ellipsis;
-    overflow: hidden;
-    white-space: nowrap;
-    padding: 0 10px;
-    display: flex;
-    align-items: center;
-  }
-
-  &.is-active &-inner {
-    background: var(--alinea-selected);
-  }
-
-  &:hover &-inner {
-    background: var(--alinea-highlight);
-  }
-}
-
-.langswitch {
   position: relative;
   background: var(--alinea-fields);
   box-shadow: var(--alinea-fields-shadow);
   border-radius: var(--alinea-border-radius);
-  margin: 6px 0;
-  margin-right: 10px;
+
+  &.is-open {
+    z-index: 3;
+  }
+
+  &:focus-within {
+    background: var(--alinea-fields-selected);
+    outline: 2px solid var(--alinea-fields-focus);
+  }
 
   &-input {
     cursor: pointer;
     appearance: none;
-    outline: none;
-    font: inherit;
-    color: inherit;
     background: transparent;
-    border: none;
-    width: 100%;
     display: flex;
     align-items: center;
+    border: none;
+    color: inherit;
+    font: inherit;
+    width: 100%;
     text-align: left;
-    padding: 4px 0;
-    padding-left: 8px;
+    padding: 9px 16px;
+    line-height: 1.5;
+    outline: none;
 
     &-label {
-      font-size: 11px;
-      line-height: 1.5;
-      font-weight: bold;
-      text-transform: uppercase;
       flex: 1 0 auto;
-      margin-right: 4px;
+      margin-right: 16px;
 
       &.is-placeholder {
-        color: #9fa6b2;
+        color: hsla(var(--alinea-negative), 0.25);
       }
     }
 
     &-icon {
       flex: 0 0 auto;
-      color: #9fa6b2;
+      color: hsla(var(--alinea-negative), 0.25);
       font-size: 18px;
+    }
+
+    &-delete {
+      flex: 0 0 auto;
+      margin-left: 8px;
     }
   }
 
@@ -93,7 +62,6 @@
     border: 1px solid var(--alinea-outline);
     box-shadow: 0 2px 10px var(--alinea-shadow);
     outline: none;
-    margin-top: 2px;
 
     &-inner {
       padding: 4px;
@@ -105,7 +73,8 @@
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
-      padding: 6px 8px;
+      height: 36px;
+      padding: 8px;
       border-radius: var(--alinea-border-radius);
 
       &.is-active {
