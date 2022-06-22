@@ -76,7 +76,7 @@ const cloudBackend = createCloudBackend()
 export const config = createConfig({
   dashboard: {
     handlerUrl: '/api/cms',
-    staticFiles: './public/admin'
+    staticFile: './public/admin.html'
   },
   backend: cloudBackend,
   workspaces:

@@ -1,6 +1,7 @@
 import {Cache, Data, JsonLoader} from '@alinea/backend'
 import {FileData} from '@alinea/backend/data/FileData'
 import {Config} from '@alinea/core/Config'
+import {createError} from '@alinea/core/ErrorWithCode'
 import {createId} from '@alinea/core/Id'
 import {outcome} from '@alinea/core/Outcome'
 import {Workspace} from '@alinea/core/Workspace'
@@ -12,6 +13,7 @@ import {FSWatcher} from 'chokidar'
 import semver from 'compare-versions'
 import {build, BuildResult} from 'esbuild'
 import fs from 'fs-extra'
+import {createRequire} from 'node:module'
 import path from 'node:path'
 import {buildOptions} from './build/BuildOptions'
 import {exportStore} from './export/ExportStore'
@@ -21,6 +23,7 @@ import {ignorePlugin} from './util/IgnorePlugin'
 import {targetPlugin} from './util/TargetPlugin'
 
 const __dirname = dirname(import.meta)
+const require = createRequire(import.meta.url)
 
 function fail(message: string) {
   console.error(message)
@@ -366,10 +369,14 @@ export async function generate(options: GenerateOptions) {
     return exportStore(store, path.join(outDir, 'store.js'), wasmCache)
   }
 
-  type GenerateDashboardOptions = {handlerUrl: string; staticFiles: string}
+  type GenerateDashboardOptions = {handlerUrl: string; staticFile: string}
 
   async function generateDashboard(options: GenerateDashboardOptions) {
-    const {staticFiles, handlerUrl} = options
+    const {staticFile, handlerUrl} = options
+    if (!staticFile.endsWith('.html'))
+      throw createError(
+        `The staticFile option in config.dashboard must point to an .html file (include the extension)`
+      )
     const {version} = require('react/package.json')
     const isReact18 = semver.compare(version, '18.0.0', '>=')
     const react = isReact18 ? 'react18' : 'react'
@@ -377,14 +384,17 @@ export async function generate(options: GenerateOptions) {
       entry: '@alinea/dashboard/EntryPoint',
       config: '@alinea/content/config.js'
     }
+    const assetsFolder = path.join(
+      path.dirname(staticFile),
+      path.basename(staticFile, '.html')
+    )
     await build({
       format: 'esm',
       target: 'esnext',
       treeShaking: true,
       minify: true,
       splitting: true,
-      sourcemap: true,
-      outdir: staticFiles,
+      outdir: assetsFolder,
       bundle: true,
       absWorkingDir: cwd,
       entryPoints,
@@ -393,20 +403,28 @@ export async function generate(options: GenerateOptions) {
       define: {
         'process.env.NODE_ENV': "'production'"
       },
-      ...buildOptions
+      ...buildOptions,
+      // Todo: this is only needed during dev
+      tsconfig: path.join(staticDir, 'tsconfig.json'),
+      logLevel: 'error'
+    }).catch(e => {
+      throw 'Could not compile entrypoint'
     })
     await fs.writeFile(
-      path.join(staticFiles, 'index.html'),
+      path.join(cwd, staticFile),
       code`
         <!DOCTYPE html>
         <meta charset="utf-8" />
         <link rel="icon" href="data:," />
         <link href="./entry.css" rel="stylesheet" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta name="handshake_url" value="${handlerUrl}" />
-        <meta name="redirect_url" value="${handlerUrl}" />
+        <meta name="handshake_url" value="${handlerUrl}/hub/auth/handshake" />
+        <meta name="redirect_url" value="${handlerUrl}/hub/auth" />
         <body>
-          <script type="module" src="./entry.js"></script>
+          <script type="module">
+            import {boot} from './entry.js'
+            boot('${handlerUrl}')
+          </script>
         </body>
       `
     )
