@@ -23,10 +23,10 @@
     }
   },
   "devDependencies": {
-    "convert-hrtime": "^5.0.0",
-    "pretty-ms": "^8.0.0",
     "@types/better-sqlite3": "^5.4.1",
     "@types/sql.js": "^1.4.2",
-    "better-sqlite3": "^7.5.1"
+    "better-sqlite3": "^7.5.1",
+    "convert-hrtime": "^5.0.0",
+    "pretty-ms": "^8.0.0"
   }
 }
