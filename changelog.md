@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [0.1.6]
+
+- Externalized backend implementation packages.
+
 ## [0.1.5]
 
 - The alinea package now export an `alinea` object that bundles the previously
