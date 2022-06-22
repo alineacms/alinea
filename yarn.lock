@@ -344,6 +344,7 @@ __metadata:
     "@tiptap/extension-text": ^2.0.0-beta.15
     "@tiptap/extension-text-align": ^2.0.0-beta.29
     "@tiptap/react": ^2.0.0-beta.109
+    yjs: ^13.5.39
   peerDependencies:
     react: "*"
     react-dom: "*"
