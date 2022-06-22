@@ -22,7 +22,6 @@ export {VersionTask} from '@esbx/workspaces'
 
 const buildOptions: BuildOptions = {
   format: 'esm',
-  sourcemap: true,
   plugins: [EvalPlugin, staticPlugin, ReactPlugin, sassPlugin],
   loader: {
     '.woff': 'file',
@@ -97,6 +96,7 @@ export const dev = {
       outExtension: {'.js': '.mjs'},
       bundle: true,
       outdir: 'dist',
+      sourcemap: true,
       external: modules,
       plugins: [
         ...buildOptions.plugins!,

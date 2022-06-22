@@ -5,9 +5,9 @@ __metadata:
   version: 6
   cacheKey: 8
 
-"@alinea/auth.passwordless@0.0.0, @alinea/auth.passwordless@workspace:packages/auth/passwordless":
+"@alinea/auth.passwordless@0.0.0, @alinea/auth.passwordless@workspace:packages/auth.passwordless":
   version: 0.0.0-use.local
-  resolution: "@alinea/auth.passwordless@workspace:packages/auth/passwordless"
+  resolution: "@alinea/auth.passwordless@workspace:packages/auth.passwordless"
   dependencies:
     "@alinea/backend": 0.0.0
     "@alinea/client": 0.0.0
@@ -22,6 +22,47 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@alinea/backend.firestore@workspace:packages/backend.firestore":
+  version: 0.0.0-use.local
+  resolution: "@alinea/backend.firestore@workspace:packages/backend.firestore"
+  dependencies:
+    "@alinea/core": 0.0.0
+    firebase-admin: ^10.0.2
+  languageName: unknown
+  linkType: soft
+
+"@alinea/backend.github@workspace:packages/backend.github":
+  version: 0.0.0-use.local
+  resolution: "@alinea/backend.github@workspace:packages/backend.github"
+  dependencies:
+    "@alinea/core": 0.0.0
+    "@alinea/iso": ^0.1.8
+    "@octokit/rest": ^18.12.0
+    octokit-commit-multiple-files: ^3.2.1
+  languageName: unknown
+  linkType: soft
+
+"@alinea/backend.indexeddb@workspace:packages/backend.indexeddb":
+  version: 0.0.0-use.local
+  resolution: "@alinea/backend.indexeddb@workspace:packages/backend.indexeddb"
+  dependencies:
+    "@alinea/core": 0.0.0
+    "@alinea/shared": 0.0.0
+    firebase-admin: ^10.0.2
+  languageName: unknown
+  linkType: soft
+
+"@alinea/backend.redis@workspace:packages/backend.redis":
+  version: 0.0.0-use.local
+  resolution: "@alinea/backend.redis@workspace:packages/backend.redis"
+  dependencies:
+    "@alinea/core": 0.0.0
+    "@alinea/shared": 0.0.0
+    "@types/ioredis": ^4.28.8
+    ioredis: ^4.28.5
+  languageName: unknown
+  linkType: soft
+
 "@alinea/backend@0.0.0, @alinea/backend@workspace:packages/backend":
   version: 0.0.0-use.local
   resolution: "@alinea/backend@workspace:packages/backend"
@@ -31,17 +72,10 @@ __metadata:
     "@alinea/shared": 0.0.0
     "@alinea/sqlite-wasm": ^0.1.7
     "@alinea/store": 0.0.0
-    "@octokit/rest": ^18.12.0
-    "@types/ioredis": ^4.28.8
     "@types/js-yaml": ^4.0.5
     "@types/md5": ^2.3.2
-    "@types/serve-handler": ^6.1.1
     convert-hrtime: ^5.0.0
-    firebase-admin: ^10.0.2
-    ioredis: ^4.28.5
     js-yaml: ^4.1.0
-    lib0: ^0.2.51
-    octokit-commit-multiple-files: ^3.2.1
     pretty-ms: ^8.0.0
     regexparam: ^2.0.0
   languageName: unknown
@@ -62,11 +96,11 @@ __metadata:
     "@types/compression": ^1.7.2
     "@types/fs-extra": ^9.0.13
     "@types/sade": ^1.7.3
+    "@types/serve-handler": ^6.1.1
     chokidar: ^3.5.3
     compare-versions: ^4.1.3
     compression: ^1.7.4
     detect-package-manager: ^2.0.1
-    dirname-filename-esm: ^1.1.1
     dotenv: ^16.0.1
     esbuild: ^0.14.11
     express: ^4.17.1
@@ -174,9 +208,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@alinea/input.check@0.0.0, @alinea/input.check@workspace:packages/input/check":
+"@alinea/input.check@0.0.0, @alinea/input.check@workspace:packages/input.check":
   version: 0.0.0-use.local
-  resolution: "@alinea/input.check@workspace:packages/input/check"
+  resolution: "@alinea/input.check@workspace:packages/input.check"
   dependencies:
     "@alinea/core": 0.0.0
     "@alinea/editor": 0.0.0
@@ -186,22 +220,22 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@alinea/input.code@0.0.0, @alinea/input.code@workspace:packages/input/code":
+"@alinea/input.code@0.0.0, @alinea/input.code@workspace:packages/input.code":
   version: 0.0.0-use.local
-  resolution: "@alinea/input.code@workspace:packages/input/code"
+  resolution: "@alinea/input.code@workspace:packages/input.code"
   dependencies:
     "@alinea/core": 0.0.0
     "@alinea/editor": 0.0.0
+    "@alinea/shared": 0.0.0
     "@alinea/ui": 0.0.0
-    react-autosize-textarea: ^7.1.0
   peerDependencies:
     react: "*"
   languageName: unknown
   linkType: soft
 
-"@alinea/input.date@0.0.0, @alinea/input.date@workspace:packages/input/date":
+"@alinea/input.date@0.0.0, @alinea/input.date@workspace:packages/input.date":
   version: 0.0.0-use.local
-  resolution: "@alinea/input.date@workspace:packages/input/date"
+  resolution: "@alinea/input.date@workspace:packages/input.date"
   dependencies:
     "@alinea/core": 0.0.0
     "@alinea/editor": 0.0.0
@@ -209,17 +243,17 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@alinea/input.hidden@0.0.0, @alinea/input.hidden@workspace:packages/input/hidden":
+"@alinea/input.hidden@0.0.0, @alinea/input.hidden@workspace:packages/input.hidden":
   version: 0.0.0-use.local
-  resolution: "@alinea/input.hidden@workspace:packages/input/hidden"
+  resolution: "@alinea/input.hidden@workspace:packages/input.hidden"
   dependencies:
     "@alinea/core": 0.0.0
   languageName: unknown
   linkType: soft
 
-"@alinea/input.link@0.0.0, @alinea/input.link@workspace:packages/input/link":
+"@alinea/input.link@0.0.0, @alinea/input.link@workspace:packages/input.link":
   version: 0.0.0-use.local
-  resolution: "@alinea/input.link@workspace:packages/input/link"
+  resolution: "@alinea/input.link@workspace:packages/input.link"
   dependencies:
     "@alinea/core": 0.0.0
     "@alinea/dashboard": 0.0.0
@@ -232,9 +266,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@alinea/input.list@0.0.0, @alinea/input.list@workspace:packages/input/list":
+"@alinea/input.list@0.0.0, @alinea/input.list@workspace:packages/input.list":
   version: 0.0.0-use.local
-  resolution: "@alinea/input.list@workspace:packages/input/list"
+  resolution: "@alinea/input.list@workspace:packages/input.list"
   dependencies:
     "@alinea/core": 0.0.0
     "@alinea/editor": 0.0.0
@@ -245,9 +279,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@alinea/input.number@0.0.0, @alinea/input.number@workspace:packages/input/number":
+"@alinea/input.number@0.0.0, @alinea/input.number@workspace:packages/input.number":
   version: 0.0.0-use.local
-  resolution: "@alinea/input.number@workspace:packages/input/number"
+  resolution: "@alinea/input.number@workspace:packages/input.number"
   dependencies:
     "@alinea/core": 0.0.0
     "@alinea/editor": 0.0.0
@@ -255,9 +289,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@alinea/input.object@0.0.0, @alinea/input.object@workspace:packages/input/object":
+"@alinea/input.object@0.0.0, @alinea/input.object@workspace:packages/input.object":
   version: 0.0.0-use.local
-  resolution: "@alinea/input.object@workspace:packages/input/object"
+  resolution: "@alinea/input.object@workspace:packages/input.object"
   dependencies:
     "@alinea/core": 0.0.0
     "@alinea/editor": 0.0.0
@@ -265,9 +299,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@alinea/input.path@0.0.0, @alinea/input.path@workspace:packages/input/path":
+"@alinea/input.path@0.0.0, @alinea/input.path@workspace:packages/input.path":
   version: 0.0.0-use.local
-  resolution: "@alinea/input.path@workspace:packages/input/path"
+  resolution: "@alinea/input.path@workspace:packages/input.path"
   dependencies:
     "@alinea/core": 0.0.0
     "@alinea/editor": 0.0.0
@@ -277,9 +311,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@alinea/input.richtext@0.0.0, @alinea/input.richtext@workspace:packages/input/richtext":
+"@alinea/input.richtext@0.0.0, @alinea/input.richtext@workspace:packages/input.richtext":
   version: 0.0.0-use.local
-  resolution: "@alinea/input.richtext@workspace:packages/input/richtext"
+  resolution: "@alinea/input.richtext@workspace:packages/input.richtext"
   dependencies:
     "@alinea/core": 0.0.0
     "@alinea/dashboard": 0.0.0
@@ -315,9 +349,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@alinea/input.select@0.0.0, @alinea/input.select@workspace:packages/input/select":
+"@alinea/input.select@0.0.0, @alinea/input.select@workspace:packages/input.select":
   version: 0.0.0-use.local
-  resolution: "@alinea/input.select@workspace:packages/input/select"
+  resolution: "@alinea/input.select@workspace:packages/input.select"
   dependencies:
     "@alinea/core": 0.0.0
     "@alinea/editor": 0.0.0
@@ -326,9 +360,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@alinea/input.tabs@0.0.0, @alinea/input.tabs@workspace:packages/input/tabs":
+"@alinea/input.tabs@0.0.0, @alinea/input.tabs@workspace:packages/input.tabs":
   version: 0.0.0-use.local
-  resolution: "@alinea/input.tabs@workspace:packages/input/tabs"
+  resolution: "@alinea/input.tabs@workspace:packages/input.tabs"
   dependencies:
     "@alinea/core": 0.0.0
     "@alinea/editor": 0.0.0
@@ -336,14 +370,14 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@alinea/input.text@0.0.0, @alinea/input.text@workspace:packages/input/text":
+"@alinea/input.text@0.0.0, @alinea/input.text@workspace:packages/input.text":
   version: 0.0.0-use.local
-  resolution: "@alinea/input.text@workspace:packages/input/text"
+  resolution: "@alinea/input.text@workspace:packages/input.text"
   dependencies:
     "@alinea/core": 0.0.0
     "@alinea/editor": 0.0.0
+    "@alinea/shared": 0.0.0
     "@alinea/ui": 0.0.0
-    react-autosize-textarea: ^7.1.0
   peerDependencies:
     react: "*"
   languageName: unknown
@@ -406,6 +440,7 @@ __metadata:
     "@dnd-kit/utilities": ^2.0.0
     "@floating-ui/react-dom": ^0.7.1
     "@headlessui/react": ^1.6.1
+    react-autosize-textarea: ^7.1.0
     react-query: ^3.39.1
     yjs: ^13.5.39
   peerDependencies:
@@ -441,7 +476,10 @@ __metadata:
   dependencies:
     "@alinea/core": 0.0.0
     "@alinea/shared": 0.0.0
+    "@types/autosize": ^4.0.1
+    autosize: ^5.0.1
     color2k: ^1.2.4
+    line-height: ^0.3.1
     use-error-boundary: ^2.0.6
   peerDependencies:
     react: "*"
@@ -1607,6 +1645,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/autosize@npm:^4.0.1":
+  version: 4.0.1
+  resolution: "@types/autosize@npm:4.0.1"
+  checksum: 190d5ef27cab78a8d1dc5271528905da9971a44668cdc705d96c8412cbc710a5e377429f11e16139d4f06120726d1a65732f1f5d4a7c6793fb15c89978d814f8
+  languageName: node
+  linkType: hard
+
 "@types/better-sqlite3@npm:^5.4.1":
   version: 5.4.3
   resolution: "@types/better-sqlite3@npm:5.4.3"
@@ -2343,6 +2388,13 @@ __metadata:
   version: 4.0.4
   resolution: "autosize@npm:4.0.4"
   checksum: da3a53a699ef8a4cfea8f0eea2303459b3986754278d506f60c08084b3a0a34bd6fa525becaf1edcffe4eb9517b67a6442aacf6b02aee1d406e5a794ec47d4ce
+  languageName: node
+  linkType: hard
+
+"autosize@npm:^5.0.1":
+  version: 5.0.1
+  resolution: "autosize@npm:5.0.1"
+  checksum: 18e8aec2ab5f628c70a38019512357004c59dd03f7dd86616d628326f5ef7aab532dce13939d5b6640e5793db3b27c9630d1d07c8ca4a545d189ab23f1b5b8f0
   languageName: node
   linkType: hard
 
@@ -5086,7 +5138,7 @@ fsevents@~2.3.2:
   languageName: node
   linkType: hard
 
-"lib0@npm:^0.2.49, lib0@npm:^0.2.51":
+"lib0@npm:^0.2.49":
   version: 0.2.51
   resolution: "lib0@npm:0.2.51"
   dependencies:

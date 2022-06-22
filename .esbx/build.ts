@@ -88,7 +88,7 @@ function task(
         format: 'esm',
         outdir: 'dist',
         bundle: true,
-        sourcemap: true,
+        // sourcemap: true,
         absWorkingDir: cwd,
         entryPoints: entryPoints,
         watch: options.watch,

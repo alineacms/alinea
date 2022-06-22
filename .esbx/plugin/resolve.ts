@@ -48,6 +48,7 @@ export const resolvePlugin: Plugin = {
     })
     build.onResolve({filter: /.*/}, args => {
       if (args.kind === 'entry-point') return
+      if (args.path.startsWith('lib0')) return
       const isNodeModule = args.resolveDir.includes(`node_modules`)
       if (
         sharedDependencies.has(args.path) &&
