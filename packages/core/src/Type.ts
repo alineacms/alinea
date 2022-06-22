@@ -44,7 +44,7 @@ export type TypeOptions<R, Q> = {
   // Todo: solve infered type here
   index?: <T>(fields: Fields<T>) => Record<string, Array<Expr<any>>>
 
-  transform?: <P>(field: Expr<R>, pages: Pages<P>) => Expr<Q> | undefined
+  transform?: (field: Expr<R>, pages: Pages<any>) => Expr<Q> | undefined
 }
 
 export class TypeConfig<R = any, T = R> {
@@ -99,13 +99,13 @@ export class TypeConfig<R = any, T = R> {
     let isComputed = false
     for (const [key, field] of this) {
       if (!field.transform) continue
-      const selection = field.transform<T>(cursor.get<any>(key), pages)
+      const selection = field.transform(cursor.get<any>(key), pages)
       if (!selection) continue
       computed[key] = selection
       isComputed = true
     }
     if (this.options.transform)
-      return this.options.transform<T>(
+      return this.options.transform(
         (cursor.fields.with(computed) as any).toExpr(),
         pages
       )

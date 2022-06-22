@@ -1,4 +1,4 @@
-import type {Pages} from '@alinea/backend'
+import type {Pages} from '@alinea/backend/Pages'
 import {Field, Label, Shape} from '@alinea/core'
 import {Expr} from '@alinea/store'
 
@@ -10,7 +10,7 @@ export type CodeFieldOptions<Q> = {
   initialValue?: string
   language?: string
   /** Modify value returned when queried through `Pages` */
-  transform?: <P>(field: Expr<string>, pages: Pages<P>) => Expr<Q> | undefined
+  transform?: (field: Expr<string>, pages: Pages<any>) => Expr<Q> | undefined
   /** Hide this code field */
   hidden?: boolean
 }
