@@ -150,7 +150,7 @@ export type CloudBackendOptions = BackendCreateOptions<CloudAuthServerOptions>
 
 export class CloudBackend extends Backend {
   constructor(options: CloudBackendOptions) {
-    const apiKey = 'abc' // process.env.ALINEA_API_KEY
+    const apiKey = process.env.ALINEA_API_KEY
     const api = new CloudApi(options.config, apiKey)
     super({
       dashboardUrl: undefined!, // Do we need this configured? Probably
