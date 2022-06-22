@@ -4,8 +4,8 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "dev": "esbx prepare && run-p dev:check dev:next dev:compile",
-    "dev:compile": "esbx dev",
+    "dev": "esbx prepare && run-p dev:next dev:compile",
+    "dev:compile": "esbx dev --production",
     "dev:next": "yarn workspace @alinea/web dev",
     "dev:check": "tsc -w",
     "trace": "tsc --generateTrace private/trace",

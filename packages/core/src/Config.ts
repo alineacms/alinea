@@ -27,6 +27,10 @@ export class Config<T extends Workspaces = Workspaces> {
     return this.options.backend?.auth.view
   }
 
+  get dashboard() {
+    return this.options.dashboard
+  }
+
   // Todo: supply a default for non-dev env
   createBackend(options: BackendProps) {
     const backendConfig = this.options.backend
@@ -72,6 +76,11 @@ export type ConfigOptions<T extends Workspaces> = {
   auth?: Auth.View
   /** A record containing workspace configurations */
   workspaces: T
+  dashboard?: {
+    handlerUrl: string
+    /** Compile all static assets for the dashboard to this dir */
+    staticFile: string
+  }
 }
 
 /** Create a new config instance */
