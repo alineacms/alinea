@@ -71,6 +71,7 @@
       &.is-active {
         color: var(--web-selected-foreground);
         font-weight: 600;
+        border-color: var(--web-accent);
       }
     }
   }
