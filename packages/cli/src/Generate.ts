@@ -384,10 +384,8 @@ export async function generate(options: GenerateOptions) {
       entry: '@alinea/dashboard/EntryPoint',
       config: '@alinea/content/config.js'
     }
-    const assetsFolder = path.join(
-      path.dirname(staticFile),
-      path.basename(staticFile, '.html')
-    )
+    const basename = path.basename(staticFile, '.html')
+    const assetsFolder = path.join(path.dirname(staticFile), basename)
     await build({
       format: 'esm',
       target: 'esnext',
@@ -416,13 +414,13 @@ export async function generate(options: GenerateOptions) {
         <!DOCTYPE html>
         <meta charset="utf-8" />
         <link rel="icon" href="data:," />
-        <link href="./entry.css" rel="stylesheet" />
+        <link href="${basename}/entry.css" rel="stylesheet" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="handshake_url" value="${handlerUrl}/hub/auth/handshake" />
         <meta name="redirect_url" value="${handlerUrl}/hub/auth" />
         <body>
           <script type="module">
-            import {boot} from './entry.js'
+            import {boot} from '${basename}/entry.js'
             boot('${handlerUrl}')
           </script>
         </body>
