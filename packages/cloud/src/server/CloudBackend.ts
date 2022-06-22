@@ -156,7 +156,7 @@ export class CloudBackend extends Backend {
       dashboardUrl: undefined!, // Do we need this configured? Probably
       config: options.config,
       createStore: options.createStore,
-      auth: options.auth.configure({apiKey}),
+      auth: options.auth.configure({apiKey, config: options.config}),
       drafts: api,
       target: api,
       media: api,

@@ -1,7 +1,8 @@
 import {Handler, router} from '@alinea/backend/router/Router'
-import {Auth, createError, Hub, outcome, User} from '@alinea/core'
+import {Auth, Config, createError, Hub, outcome, User} from '@alinea/core'
 import {verify} from '@alinea/core/util/JWT'
 import {fetch, Request, Response} from '@alinea/iso'
+import {version} from '../../package.json'
 import {cloudConfig} from './CloudConfig'
 
 export enum AuthResultType {
@@ -15,7 +16,10 @@ export type AuthResult =
   | {type: AuthResultType.UnAuthenticated; redirect: string}
   | {type: AuthResultType.MissingApiKey}
 
-export type CloudAuthServerOptions = {apiKey: string | undefined}
+export type CloudAuthServerOptions = {
+  config: Config
+  apiKey: string | undefined
+}
 
 type JWKS = {keys: Array<JsonWebKey>}
 
@@ -38,6 +42,7 @@ export class CloudAuthServer implements Auth.Server {
   key = getPublicKey()
 
   constructor(private options: CloudAuthServerOptions) {
+    const {apiKey, config} = options
     const matcher = router.startAt(Hub.routes.base)
     this.handler = router(
       // We start by asking our backend whether we have:
@@ -51,32 +56,67 @@ export class CloudAuthServer implements Auth.Server {
         })
         .map(router.jsonResponse),
 
+      // The cloud server will request a handshake confirmation on this route
+      matcher.get(Hub.routes.base + '/auth/handshake').map(async ({url}) => {
+        const handShakeId = url.searchParams.get('handshake_id')
+        if (!handShakeId)
+          throw createError(
+            400,
+            'Provide a valid handshake id to initiate handshake'
+          )
+        const body = {
+          handshake_id: handShakeId,
+          status: {
+            version,
+            roles: [
+              {
+                key: 'editor',
+                label: 'Editor',
+                description: 'Can view and edit all pages'
+              }
+            ],
+            sourceDirectories: Object.values(config.workspaces).map(
+              workspace => {
+                return workspace.source
+              }
+            )
+          }
+        }
+        // We submit the handshake id, our status and
+        await fetch(cloudConfig.handshake, {
+          method: 'POST',
+          body: JSON.stringify(body),
+          headers: {Authorization: `Bearer ${apiKey}`}
+        }).catch(e => {
+          throw createError(500, `Could not reach handshake api: ${e}`)
+        })
+        return new Response('alinea cloud handshake')
+      }),
+
       // If the user followed through to the cloud login page it should
       // redirect us here with a token
-      matcher
-        .get(Hub.routes.base + '/auth.cloud/login')
-        .map(async ({request, url}) => {
-          const token: string | null = url.searchParams.get('token')
-          if (!token) throw createError(400, 'Token required')
-          const user = await verify<User>(token, await this.key)
-          // Store the token in a cookie and redirect to the dashboard
-          // Todo: add expires and max-age based on token expiration
-          const dashboardUrl: URL = new URL(this.baseUrl(request))
-          return router.redirect(dashboardUrl.toString(), {
-            status: 302,
-            headers: {
-              'set-cookie': router.cookie({
-                name: COOKIE_NAME,
-                value: token,
-                domain: dashboardUrl.hostname,
-                path: dashboardUrl.pathname,
-                secure: dashboardUrl.protocol === 'https:',
-                httpOnly: true,
-                sameSite: 'strict'
-              })
-            }
-          })
-        }),
+      matcher.get(Hub.routes.base + '/auth').map(async ({request, url}) => {
+        const token: string | null = url.searchParams.get('token')
+        if (!token) throw createError(400, 'Token required')
+        const user = await verify<User>(token, await this.key)
+        // Store the token in a cookie and redirect to the dashboard
+        // Todo: add expires and max-age based on token expiration
+        const dashboardUrl: URL = new URL(this.baseUrl(request))
+        return router.redirect(dashboardUrl.toString(), {
+          status: 302,
+          headers: {
+            'set-cookie': router.cookie({
+              name: COOKIE_NAME,
+              value: token,
+              domain: dashboardUrl.hostname,
+              path: dashboardUrl.pathname,
+              secure: dashboardUrl.protocol === 'https:',
+              httpOnly: true,
+              sameSite: 'strict'
+            })
+          }
+        })
+      }),
 
       router
         .use(async (request: Request) => {
