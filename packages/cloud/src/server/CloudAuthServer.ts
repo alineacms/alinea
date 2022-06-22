@@ -83,13 +83,19 @@ export class CloudAuthServer implements Auth.Server {
           }
         }
         // We submit the handshake id, our status and
-        await fetch(cloudConfig.handshake, {
+        const res = await fetch(cloudConfig.handshake, {
           method: 'POST',
           body: JSON.stringify(body),
-          headers: {Authorization: `Bearer ${apiKey}`}
+          headers: {
+            'content-type': 'application/json',
+            accept: 'application/json',
+            authorization: `Bearer ${apiKey}`
+          }
         }).catch(e => {
           throw createError(500, `Could not reach handshake api: ${e}`)
         })
+        if (res.status !== 200)
+          throw createError(res.status, `Handshake failed: ${await res.text()}`)
         return new Response('alinea cloud handshake')
       }),
 
