@@ -28,6 +28,7 @@ __metadata:
   dependencies:
     "@alinea/core": 0.0.0
     firebase-admin: ^10.0.2
+    yjs: ^13.5.39
   languageName: unknown
   linkType: soft
 
@@ -47,8 +48,8 @@ __metadata:
   resolution: "@alinea/backend.indexeddb@workspace:packages/backend.indexeddb"
   dependencies:
     "@alinea/core": 0.0.0
-    "@alinea/shared": 0.0.0
     firebase-admin: ^10.0.2
+    yjs: ^13.5.39
   languageName: unknown
   linkType: soft
 
@@ -57,9 +58,9 @@ __metadata:
   resolution: "@alinea/backend.redis@workspace:packages/backend.redis"
   dependencies:
     "@alinea/core": 0.0.0
-    "@alinea/shared": 0.0.0
     "@types/ioredis": ^4.28.8
     ioredis: ^4.28.5
+    yjs: ^13.5.39
   languageName: unknown
   linkType: soft
 
@@ -69,7 +70,6 @@ __metadata:
   dependencies:
     "@alinea/core": 0.0.0
     "@alinea/iso": ^0.1.8
-    "@alinea/shared": 0.0.0
     "@alinea/sqlite-wasm": ^0.1.7
     "@alinea/store": 0.0.0
     "@types/js-yaml": ^4.0.5
@@ -78,6 +78,7 @@ __metadata:
     js-yaml: ^4.1.0
     pretty-ms: ^8.0.0
     regexparam: ^2.0.0
+    yjs: ^13.5.39
   languageName: unknown
   linkType: soft
 
@@ -148,9 +149,9 @@ __metadata:
   resolution: "@alinea/core@workspace:packages/core"
   dependencies:
     "@alinea/iso": ^0.1.8
-    "@alinea/shared": 0.0.0
     "@alinea/store": 0.0.0
     serialize-error: ^9.0.0
+    yjs: ^13.5.39
   peerDependencies:
     react: "*"
   languageName: unknown
@@ -190,6 +191,7 @@ __metadata:
     react-router-dom: ^6.3.0
     react-tiny-virtual-list: ^2.2.0
     y-webrtc: ^10.2.0
+    yjs: ^13.5.39
   peerDependencies:
     react: "*"
     react-dom: "*"
@@ -201,8 +203,8 @@ __metadata:
   resolution: "@alinea/editor@workspace:packages/editor"
   dependencies:
     "@alinea/core": 0.0.0
-    "@alinea/shared": 0.0.0
     "@alinea/ui": 0.0.0
+    yjs: ^13.5.39
   peerDependencies:
     react: "*"
   languageName: unknown
@@ -439,7 +441,6 @@ __metadata:
     "@floating-ui/react-dom": ^0.7.1
     "@headlessui/react": ^1.6.1
     react-query: ^3.39.1
-    yjs: ^13.5.39
   peerDependencies:
     react: "*"
     react-dom: "*"

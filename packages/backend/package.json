@@ -25,8 +25,8 @@
   "dependencies": {
     "@alinea/core": "0.0.0",
     "@alinea/iso": "^0.1.8",
-    "@alinea/shared": "0.0.0",
-    "@alinea/store": "0.0.0"
+    "@alinea/store": "0.0.0",
+    "yjs": "^13.5.39"
   },
   "devDependencies": {
     "@alinea/sqlite-wasm": "^0.1.7",

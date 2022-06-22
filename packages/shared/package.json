@@ -28,8 +28,7 @@
     "@dnd-kit/utilities": "^2.0.0",
     "@floating-ui/react-dom": "^0.7.1",
     "@headlessui/react": "^1.6.1",
-    "react-query": "^3.39.1",
-    "yjs": "^13.5.39"
+    "react-query": "^3.39.1"
   },
   "peerDependencies": {
     "react": "*",
