@@ -110,7 +110,7 @@ export class CloudAuthServer implements Auth.Server {
               value: token,
               domain: dashboardUrl.hostname,
               path: dashboardUrl.pathname,
-              secure: dashboardUrl.protocol === 'https:',
+              secure: true, // dashboardUrl.protocol === 'https:',
               httpOnly: true,
               sameSite: 'strict'
             })
@@ -139,10 +139,10 @@ export class CloudAuthServer implements Auth.Server {
     if (!this.options.apiKey) return {type: AuthResultType.MissingApiKey}
     const [ctx, err] = await outcome(this.contextFor(request))
     if (ctx) return {type: AuthResultType.Authenticated, user: ctx.user}
-    const dashboardUrl = this.baseUrl(request)
+    // const dashboardUrl = this.baseUrl(request)
     return {
       type: AuthResultType.UnAuthenticated,
-      redirect: `${cloudConfig.auth}?from=${dashboardUrl}`
+      redirect: `${cloudConfig.auth}`
     }
   }
 

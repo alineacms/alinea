@@ -41,7 +41,12 @@ export function CloudAuthView({setSession}: Auth.ViewProps) {
       })
       return null
     case AuthResultType.UnAuthenticated:
-      window.location.href = result.redirect
+      const {location} = window
+      location.href =
+        result.redirect +
+        `?from=${encodeURIComponent(
+          location.protocol + '//' + location.host + location.pathname
+        )}`
       return null
     case AuthResultType.MissingApiKey:
       return (
