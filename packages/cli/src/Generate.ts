@@ -5,6 +5,7 @@ import {createError} from '@alinea/core/ErrorWithCode'
 import {createId} from '@alinea/core/Id'
 import {outcome} from '@alinea/core/Outcome'
 import {Workspace} from '@alinea/core/Workspace'
+import {BetterSqlite3Driver} from '@alinea/store/sqlite/drivers/BetterSqlite3Driver'
 import {SqlJsDriver} from '@alinea/store/sqlite/drivers/SqlJsDriver'
 import {SqliteStore} from '@alinea/store/sqlite/SqliteStore'
 import {EvalPlugin} from '@esbx/eval'
@@ -358,9 +359,17 @@ export async function generate(options: GenerateOptions) {
 
   async function cacheEntries(config: Config, source: Data.Source) {
     let store: SqliteStore
-    const {default: sqlInit} = await import('@alinea/sqlite-wasm')
-    const {Database} = await sqlInit()
-    store = new SqliteStore(new SqlJsDriver(new Database()), createId)
+    try {
+      const {default: Database} = await import('better-sqlite3')
+      store = new SqliteStore(
+        new BetterSqlite3Driver(new Database(':memory:')),
+        createId
+      )
+    } catch (e) {
+      const {default: sqlInit} = await import('@alinea/sqlite-wasm')
+      const {Database} = await sqlInit()
+      store = new SqliteStore(new SqlJsDriver(new Database()), createId)
+    }
     await Cache.create(store, config, source, !quiet)
     return store
   }
