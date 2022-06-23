@@ -153,7 +153,7 @@ export class CloudBackend extends Backend {
     const apiKey = process.env.ALINEA_API_KEY
     const api = new CloudApi(options.config, apiKey)
     super({
-      dashboardUrl: undefined!, // Do we need this configured? Probably
+      dashboardUrl: options.config.dashboard?.dashboardUrl!,
       config: options.config,
       createStore: options.createStore,
       auth: options.auth.configure({apiKey, config: options.config}),

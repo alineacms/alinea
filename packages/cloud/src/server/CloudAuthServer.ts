@@ -40,9 +40,11 @@ export class CloudAuthServer implements Auth.Server {
   handler: Handler<Request, Response | undefined>
   context = new WeakMap<Request, {token: string; user: User}>()
   key = getPublicKey()
+  dashboardUrl: string
 
   constructor(private options: CloudAuthServerOptions) {
     const {apiKey, config} = options
+    this.dashboardUrl = config.dashboard?.dashboardUrl!
     const matcher = router.startAt(Hub.routes.base)
     this.handler = router(
       // We start by asking our backend whether we have:
@@ -83,7 +85,8 @@ export class CloudAuthServer implements Auth.Server {
             )
           }
         }
-        // We submit the handshake id, our status and
+        // We submit the handshake id, our status and authorize using the
+        // private key
         const res = await fetch(cloudConfig.handshake, {
           method: 'POST',
           body: JSON.stringify(body),
@@ -109,16 +112,16 @@ export class CloudAuthServer implements Auth.Server {
         const user = await verify<User>(token, await this.key)
         // Store the token in a cookie and redirect to the dashboard
         // Todo: add expires and max-age based on token expiration
-        const dashboardUrl: URL = new URL(this.baseUrl(request))
-        return router.redirect(dashboardUrl.toString(), {
+        const target = new URL(this.dashboardUrl)
+        return router.redirect(this.dashboardUrl, {
           status: 302,
           headers: {
             'set-cookie': router.cookie({
               name: COOKIE_NAME,
               value: token,
-              domain: dashboardUrl.hostname,
-              path: dashboardUrl.pathname,
-              secure: true, // dashboardUrl.protocol === 'https:',
+              domain: target.hostname,
+              path: target.pathname,
+              secure: target.protocol === 'https:',
               httpOnly: true,
               sameSite: 'strict'
             })
@@ -138,16 +141,10 @@ export class CloudAuthServer implements Auth.Server {
     ).recover(router.reportError)
   }
 
-  baseUrl(request: Request) {
-    const index = request.url.indexOf(Hub.routes.base)
-    return request.url.slice(0, index)
-  }
-
   async authResult(request: Request): Promise<AuthResult> {
     if (!this.options.apiKey) return {type: AuthResultType.MissingApiKey}
     const [ctx, err] = await outcome(this.contextFor(request))
     if (ctx) return {type: AuthResultType.Authenticated, user: ctx.user}
-    // const dashboardUrl = this.baseUrl(request)
     return {
       type: AuthResultType.UnAuthenticated,
       redirect: `${cloudConfig.auth}`

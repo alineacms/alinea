@@ -78,8 +78,9 @@ export type ConfigOptions<T extends Workspaces> = {
   workspaces: T
   dashboard?: {
     handlerUrl: string
+    dashboardUrl: string
     /** Compile all static assets for the dashboard to this dir */
-    staticFile: string
+    staticFile?: string
   }
 }
 

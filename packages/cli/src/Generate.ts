@@ -222,7 +222,9 @@ export async function generate(options: GenerateOptions) {
       generateWorkspaces(config),
       (cacheWatcher = fillCache(config))
     ])
-    if (config.dashboard) await generateDashboard(config.dashboard)
+    const dashboard = config.dashboard
+    if (dashboard?.staticFile)
+      await generateDashboard(dashboard.handlerUrl, dashboard.staticFile!)
   }
 
   async function loadConfig() {
@@ -378,10 +380,7 @@ export async function generate(options: GenerateOptions) {
     return exportStore(store, path.join(outDir, 'store.js'), wasmCache)
   }
 
-  type GenerateDashboardOptions = {handlerUrl: string; staticFile: string}
-
-  async function generateDashboard(options: GenerateDashboardOptions) {
-    const {staticFile, handlerUrl} = options
+  async function generateDashboard(handlerUrl: string, staticFile: string) {
     if (!staticFile.endsWith('.html'))
       throw createError(
         `The staticFile option in config.dashboard must point to an .html file (include the extension)`
