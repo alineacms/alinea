@@ -1,3 +1,9 @@
+.root {
+  > *:first-child {
+    margin-top: 0;
+  }
+}
+
 .code {
   display: inline-block;
   vertical-align: middle;
