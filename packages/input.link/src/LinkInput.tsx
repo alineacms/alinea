@@ -100,7 +100,7 @@ function LinkInputRow<T>({
                 </div>
               )}
             </Card.Options>
-            <div style={{flexGrow: 1}}>
+            <div style={{flexGrow: 1, minWidth: 0}}>
               {entry && <LinkInputEntryRow key={entry.id} entry={entry} />}
             </div>
             <Card.Options>
