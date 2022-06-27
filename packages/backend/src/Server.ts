@@ -222,7 +222,7 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
         parent: parent,
         parents,
         title: basename(file.path, extension),
-        url: file.path,
+        url: file.path.toLowerCase(),
         path: basename(file.path),
         location,
         extension: extension,
