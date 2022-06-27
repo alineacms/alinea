@@ -23,7 +23,6 @@
     }
   },
   "dependencies": {
-    "@alinea/core": "0.0.0",
     "yjs": "^13.5.39"
   },
   "devDependencies": {

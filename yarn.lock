@@ -26,7 +26,6 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@alinea/backend.firestore@workspace:packages/backend.firestore"
   dependencies:
-    "@alinea/core": 0.0.0
     firebase-admin: ^10.0.2
     yjs: ^13.5.39
   languageName: unknown
@@ -37,7 +36,7 @@ __metadata:
   resolution: "@alinea/backend.github@workspace:packages/backend.github"
   dependencies:
     "@alinea/core": 0.0.0
-    "@alinea/iso": ^0.1.8
+    "@alinea/iso": ^0.1.15
     "@octokit/rest": ^18.12.0
     octokit-commit-multiple-files: ^3.2.1
   languageName: unknown
@@ -57,7 +56,6 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@alinea/backend.redis@workspace:packages/backend.redis"
   dependencies:
-    "@alinea/core": 0.0.0
     "@types/ioredis": ^4.28.8
     ioredis: ^4.28.5
     yjs: ^13.5.39
@@ -69,7 +67,7 @@ __metadata:
   resolution: "@alinea/backend@workspace:packages/backend"
   dependencies:
     "@alinea/core": 0.0.0
-    "@alinea/iso": ^0.1.8
+    "@alinea/iso": ^0.1.15
     "@alinea/sqlite-wasm": ^0.1.7
     "@alinea/store": 0.0.0
     "@types/js-yaml": ^4.0.5
@@ -120,7 +118,7 @@ __metadata:
   resolution: "@alinea/client@workspace:packages/client"
   dependencies:
     "@alinea/core": 0.0.0
-    "@alinea/iso": ^0.1.8
+    "@alinea/iso": ^0.1.15
   languageName: unknown
   linkType: soft
 
@@ -132,7 +130,7 @@ __metadata:
     "@alinea/client": 0.0.0
     "@alinea/core": 0.0.0
     "@alinea/dashboard": 0.0.0
-    "@alinea/iso": ^0.1.8
+    "@alinea/iso": ^0.1.15
     "@alinea/shared": 0.0.0
     "@alinea/ui": 0.0.0
   languageName: unknown
@@ -148,7 +146,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@alinea/core@workspace:packages/core"
   dependencies:
-    "@alinea/iso": ^0.1.8
+    "@alinea/iso": ^0.1.15
     "@alinea/store": 0.0.0
     serialize-error: ^9.0.0
     yjs: ^13.5.39
@@ -384,17 +382,17 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@alinea/iso@npm:^0.1.15":
+  version: 0.1.15
+  resolution: "@alinea/iso@npm:0.1.15"
+  checksum: 263bb8ed4a8d5d12affb6b463dd591c640dfcb19fbe35bc756fc87de64f5acdd6c982e5a58a94592ecb9e91ac367885295322f52869a7ffa496d68c5ef98e0f3
+  languageName: node
+  linkType: hard
+
 "@alinea/iso@npm:^0.1.6":
   version: 0.1.6
   resolution: "@alinea/iso@npm:0.1.6"
   checksum: 2da951fc29490a2f6455d5ca3d51514ace9151744fe80afb82dd93a607c9f4cf261f748f80796bcb32cef9de2895a1546f669e97108684394ef9109e8ac5361c
-  languageName: node
-  linkType: hard
-
-"@alinea/iso@npm:^0.1.8":
-  version: 0.1.8
-  resolution: "@alinea/iso@npm:0.1.8"
-  checksum: 827d11ba17b70df65ba59f554a61aa7ecc547c0a9734b506161d07adadb26797bbfdb804cdae0c724528c446f68fa10169247133c71bacbaeae9b84376e1c4d6
   languageName: node
   linkType: hard
 
