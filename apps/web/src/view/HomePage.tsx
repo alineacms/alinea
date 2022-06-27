@@ -1,9 +1,11 @@
 import {fromModule, HStack, px, VStack} from '@alinea/ui'
 import {IcRoundOpenInNew} from '@alinea/ui/icons/IcRoundOpenInNew'
-import Image from 'next/image'
+import {Blocks} from './blocks/Blocks'
 import css from './HomePage.module.scss'
 import {HomePageSchema} from './HomePage.schema'
 import {Hero} from './layout/Hero'
+import {Image} from './layout/Image'
+import {Layout} from './layout/Layout'
 import {WebTypo} from './layout/WebTypo'
 
 const styles = fromModule(css)
@@ -22,10 +24,36 @@ export function HomePage({
   headline,
   byline,
   action,
-  screenshot
+  screenshot,
+  blocks
 }: HomePageSchema) {
   return (
     <div className={styles.root()}>
+      <HomePageHero
+        headline={headline}
+        byline={byline}
+        action={action}
+        screenshot={screenshot}
+      />
+      <Blocks blocks={blocks} container={Layout.Container} />
+    </div>
+  )
+}
+
+function HomePageHero({
+  headline,
+  byline,
+  action,
+  screenshot
+}: {
+  headline: string
+  byline?: string
+  //TODO: typescript alinea link
+  action?: any
+  screenshot?: any
+}) {
+  return (
+    <div className={styles.hero()}>
       <Hero>
         <VStack center>
           <Hero.Title>{headline}</Hero.Title>
@@ -37,11 +65,11 @@ export function HomePage({
             justify="center"
             style={{paddingTop: px(20)}}
           >
-            {action && (
+            {action?.url && (
               <Hero.Action href={action.url}>{action.label}</Hero.Action>
             )}
             <WebTypo.Link
-              className={styles.root.demo()}
+              className={styles.hero.demo()}
               href="/demo"
               target="_blank"
             >
@@ -54,12 +82,13 @@ export function HomePage({
         </VStack>
       </Hero>
       {screenshot && (
-        <div className={styles.root.screenshot()}>
+        <div className={styles.hero.screenshot()}>
           <Image
             src={screenshot.src}
             width={screenshot.width}
             height={screenshot.height}
-            className={styles.root.screenshot.inner()}
+            sizes="700px"
+            className={styles.hero.screenshot.inner()}
           />
         </div>
       )}

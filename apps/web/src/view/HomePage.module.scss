@@ -3,10 +3,10 @@
   flex-grow: 1;
   display: flex;
   flex-direction: column;
+}
 
-  &-example {
-    padding-top: 30px;
-  }
+.hero {
+  position: relative;
 
   &-demo {
     font-family: var(--web-title-font);
