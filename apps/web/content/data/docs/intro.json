@@ -27,79 +27,57 @@
           "content": [
             {
               "type": "text",
-              "text": "TODO"
+              "text": "Alinea is a modern content management system written in Typescript. "
             }
           ]
         },
         {
-          "type": "paragraph",
-          "textAlign": "left"
-        },
-        {
-          "type": "heading",
-          "textAlign": "left",
-          "level": 2,
+          "type": "bulletList",
           "content": [
             {
-              "type": "text",
-              "text": "Conventions"
-            }
-          ]
-        },
-        {
-          "type": "paragraph",
-          "textAlign": "left",
-          "content": [
-            {
-              "type": "text",
-              "text": "Alinea is created using current technology. The cli, dashboard and backends are compatible with recent browsers and Javascript runtimes. A few choices were made that make the code base compatible with today's standards."
-            }
-          ]
-        },
-        {
-          "type": "heading",
-          "textAlign": "left",
-          "level": 3,
-          "content": [
-            {
-              "type": "text",
-              "text": "ESM",
-              "marks": [
+              "type": "listItem",
+              "content": [
                 {
-                  "type": "bold"
+                  "type": "paragraph",
+                  "textAlign": "left",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Content is stored in flat files and can be committed to a git repository"
+                    }
+                  ]
                 }
               ]
-            }
-          ]
-        },
-        {
-          "type": "paragraph",
-          "textAlign": "left",
-          "content": [
+            },
             {
-              "type": "text",
-              "text": "All published packages are pure ESM."
-            }
-          ]
-        },
-        {
-          "type": "heading",
-          "textAlign": "left",
-          "level": 3,
-          "content": [
+              "type": "listItem",
+              "content": [
+                {
+                  "type": "paragraph",
+                  "textAlign": "left",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Content is easily queryable through an in-memory SQLite database"
+                    }
+                  ]
+                }
+              ]
+            },
             {
-              "type": "text",
-              "text": "Conditional exports"
-            }
-          ]
-        },
-        {
-          "type": "paragraph",
-          "textAlign": "left",
-          "content": [
-            {
-              "type": "text",
-              "text": "To cleanly separate server and client code we use conditional exports. These are available natively in Node.js and for the browser using any modern bundler (webpack, rollup, esbuild, ...). "
+              "type": "listItem",
+              "content": [
+                {
+                  "type": "paragraph",
+                  "textAlign": "left",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Content is fully typed when using Typescript"
+                    }
+                  ]
+                }
+              ]
             }
           ]
         }
