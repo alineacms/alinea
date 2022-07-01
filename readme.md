@@ -34,7 +34,7 @@ npx alinea serve
 
 ## Configure
 
-Easily configure alinea using code
+Configure alinea in `alinea.config.tsx`
 
 ````tsx
 const BlogPost = alinea.type('Blog post', {
