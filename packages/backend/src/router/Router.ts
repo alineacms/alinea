@@ -1,5 +1,5 @@
 import {Outcome} from '@alinea/core/Outcome'
-import {Request, Response} from '@alinea/iso'
+import {CompressionStream, Headers, Request, Response} from '@alinea/iso'
 import {parse} from 'regexparam'
 
 export type Handle<In, Out> = {
@@ -192,5 +192,31 @@ export namespace router {
         )
       })
       .join(', ')
+  }
+
+  export function compress(
+    ...routes: Array<Handler<Request, Response | undefined>>
+  ): Route<Request, Response | undefined> {
+    const route = router(...routes)
+    return new Route<Request, Response | undefined>(
+      async (request: Request) => {
+        const response = await route.handle(request)
+        if (response === undefined) return undefined
+        const body = response.body
+        if (!body) return response
+        const accept = request.headers.get('accept-encoding')
+        const method = accept?.includes('gzip')
+          ? 'gzip'
+          : accept?.includes('deflate')
+          ? 'deflate'
+          : undefined
+        if (method === undefined) return response
+        const stream = body.pipeThrough(new CompressionStream(method))
+        const headers = new Headers(response.headers)
+        headers.set('content-encoding', method)
+        headers.delete('content-length')
+        return new Response(stream, {headers, status: response.status})
+      }
+    )
   }
 }

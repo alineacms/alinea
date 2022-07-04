@@ -2,9 +2,6 @@
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "editor.formatOnSave": true,
   "editor.tabSize": 2,
-  "editor.codeActionsOnSave": {
-    "source.organizeImports": true
-  },
   "search.useGlobalIgnoreFiles": true,
   "todo-tree.general.tags": ["Todo"],
   "typescript.tsdk": "./node_modules/typescript/lib",

@@ -36,7 +36,7 @@ __metadata:
   resolution: "@alinea/backend.github@workspace:packages/backend.github"
   dependencies:
     "@alinea/core": 0.0.0
-    "@alinea/iso": ^0.1.15
+    "@alinea/iso": ^0.1.16
     "@octokit/rest": ^18.12.0
     octokit-commit-multiple-files: ^3.2.1
   languageName: unknown
@@ -67,7 +67,7 @@ __metadata:
   resolution: "@alinea/backend@workspace:packages/backend"
   dependencies:
     "@alinea/core": 0.0.0
-    "@alinea/iso": ^0.1.15
+    "@alinea/iso": ^0.1.16
     "@alinea/sqlite-wasm": ^0.1.7
     "@alinea/store": 0.0.0
     "@types/js-yaml": ^4.0.5
@@ -118,7 +118,7 @@ __metadata:
   resolution: "@alinea/client@workspace:packages/client"
   dependencies:
     "@alinea/core": 0.0.0
-    "@alinea/iso": ^0.1.15
+    "@alinea/iso": ^0.1.16
   languageName: unknown
   linkType: soft
 
@@ -130,7 +130,7 @@ __metadata:
     "@alinea/client": 0.0.0
     "@alinea/core": 0.0.0
     "@alinea/dashboard": 0.0.0
-    "@alinea/iso": ^0.1.15
+    "@alinea/iso": ^0.1.16
     "@alinea/shared": 0.0.0
     "@alinea/ui": 0.0.0
   languageName: unknown
@@ -146,7 +146,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@alinea/core@workspace:packages/core"
   dependencies:
-    "@alinea/iso": ^0.1.15
+    "@alinea/iso": ^0.1.16
     "@alinea/store": 0.0.0
     serialize-error: ^9.0.0
     yjs: ^13.5.39
@@ -382,10 +382,10 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@alinea/iso@npm:^0.1.15":
-  version: 0.1.15
-  resolution: "@alinea/iso@npm:0.1.15"
-  checksum: 263bb8ed4a8d5d12affb6b463dd591c640dfcb19fbe35bc756fc87de64f5acdd6c982e5a58a94592ecb9e91ac367885295322f52869a7ffa496d68c5ef98e0f3
+"@alinea/iso@npm:^0.1.16":
+  version: 0.1.16
+  resolution: "@alinea/iso@npm:0.1.16"
+  checksum: 17a59cb03206344a58abd5cf123db2c0cc3d45bf69e6f3a6d44356462ab923603c1aea2ec2b235eb5eb23390886e583282eb10ddb7a68dc28dc74561e29f4bb1
   languageName: node
   linkType: hard
 

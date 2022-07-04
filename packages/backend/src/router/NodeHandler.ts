@@ -33,9 +33,12 @@ async function apply(response: Response, to: http.ServerResponse) {
   }
 }
 
+const skipHeaders = new Set(['transfer-encoding', 'connection', 'keep-alive'])
+
 function fromNodeRequest(request: http.IncomingMessage) {
   const headers = new Headers()
   for (const key of Object.keys(request.headers)) {
+    if (skipHeaders.has(key)) continue
     if (!(key in request.headers)) continue
     const value = request.headers[key]
     if (value === undefined) continue
