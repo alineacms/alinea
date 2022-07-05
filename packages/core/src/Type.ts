@@ -1,20 +1,20 @@
 // Todo: extract interface and place it in core
-import type {Pages} from '@alinea/backend/Pages'
-import type {EntryEditProps} from '@alinea/dashboard/view/EntryEdit'
-import type {Cursor, Fields} from '@alinea/store'
-import {Collection, Expr, SelectionInput} from '@alinea/store'
-import type {ComponentType} from 'react'
-import {Entry} from './Entry'
-import {Field} from './Field'
-import {createId} from './Id'
-import {Label} from './Label'
-import type {Schema} from './Schema'
-import {Section} from './Section'
-import {Shape} from './Shape'
-import {RecordShape} from './shape/RecordShape'
-import {Lazy} from './util/Lazy'
-import {LazyRecord} from './util/LazyRecord'
-import type {View} from './View'
+import type { Pages } from '@alinea/backend/Pages'
+import type { EntryEditProps } from '@alinea/dashboard/view/EntryEdit'
+import type { Cursor, Fields } from '@alinea/store'
+import { Collection, Expr, SelectionInput } from '@alinea/store'
+import type { ComponentType } from 'react'
+import { Entry } from './Entry'
+import { Field } from './Field'
+import { createId } from './Id'
+import { Label } from './Label'
+import type { Schema } from './Schema'
+import { Section } from './Section'
+import { Shape } from './Shape'
+import { RecordShape } from './shape/RecordShape'
+import { Lazy } from './util/Lazy'
+import { LazyRecord } from './util/LazyRecord'
+import type { View } from './View'
 
 export namespace Type {
   export type Raw<T> = T extends TypeConfig<infer U, any> ? U : never
@@ -49,7 +49,7 @@ export type TypeOptions<R, Q> = {
 
 export class TypeConfig<R = any, T = R> {
   fields: Record<string, Field<any, any>> = {}
-  shape: RecordShape<T>
+  shape: RecordShape<any>
 
   constructor(
     public label: Label,
@@ -94,7 +94,7 @@ export class TypeConfig<R = any, T = R> {
     return Boolean(this.options.isContainer)
   }
 
-  selection<T>(cursor: Cursor<R>, pages: Pages<T>): Expr<any> | undefined {
+  selection(cursor: Cursor<R>, pages: Pages<any>): Expr<any> | undefined {
     const computed: Record<string, SelectionInput> = {}
     let isComputed = false
     for (const [key, field] of this) {

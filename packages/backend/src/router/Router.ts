@@ -12,8 +12,6 @@ function callHandler<In, Out>(handler: Handler<In, Out>, input: In) {
   return typeof handler === 'function' ? handler(input) : handler.handle(input)
 }
 
-export type Router = Route<Request, Response>
-
 export class Route<In, Out> {
   constructor(public handle: Handle<In, Out>) {}
   map<T>(next: Handle<Out, T>): Route<In, T>

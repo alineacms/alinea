@@ -59,7 +59,9 @@ type BuildDetails = {
   files: Map<string, Uint8Array>
 }
 
-function browserBuild(options: BuildOptions) {
+function browserBuild(
+  options: BuildOptions
+): (request: Request) => Promise<Response> {
   let frontend: Promise<BuildDetails> = esbuild
     .build({
       ...options,
@@ -166,7 +168,7 @@ export async function serve(options: ServeOptions): Promise<void> {
   const matcher = router.matcher()
   const entry = `@alinea/dashboard/dev/${alineaDev ? 'Dev' : 'Lib'}Entry`
   const app = router(
-    matcher.get('/~dev').map(() => {
+    matcher.get('/~dev').map((): Response => {
       const stream = new ReadableStream({
         start(controller) {
           clients.push({
@@ -185,7 +187,7 @@ export async function serve(options: ServeOptions): Promise<void> {
       })
     }),
     router.compress(
-      matcher.get('/').map(() => {
+      matcher.get('/').map((): Response => {
         return new Response(
           `<!DOCTYPE html>
           <meta charset="utf-8" />
@@ -201,15 +203,19 @@ export async function serve(options: ServeOptions): Promise<void> {
           }
         )
       }),
-      matcher.all('/hub/*').map(({request}) => {
-        const unavailable = () =>
-          new Response('An error occured, see your terminal for details', {
-            status: 503
-          })
-        if (server)
-          return server.then(server => server.handle(request), unavailable)
-        return unavailable()
-      }),
+      matcher
+        .all('/hub/*')
+        .map(async ({request}): Promise<Response | undefined> => {
+          const unavailable = () =>
+            new Response('An error occured, see your terminal for details', {
+              status: 503
+            })
+          if (server) {
+            const backend = await server
+            return backend.handle(request)
+          }
+          return unavailable()
+        }),
       browserBuild({
         ignoreAnnotations: alineaDev,
         format: 'esm',

@@ -15,7 +15,7 @@ export type ListOptions<T, Q> = {
   /** Display a minimal version */
   inline?: boolean
   /** Modify value returned when queried through `Pages` */
-  transform?: <P>(field: Expr<Array<T>>, pages: Pages<P>) => Expr<Q> | undefined
+  transform?: (field: Expr<Array<T>>, pages: Pages<any>) => Expr<Q> | undefined
   /** Hide this list field */
   hidden?: boolean
 }

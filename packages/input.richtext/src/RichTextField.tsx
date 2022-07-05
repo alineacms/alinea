@@ -17,9 +17,9 @@ export type RichTextOptions<T, Q> = {
   /** A default value */
   initialValue?: TextDoc<T>
   /** Modify value returned when queried through `Pages` */
-  transform?: <P>(
+  transform?: (
     field: Expr<TextDoc<T>>,
-    pages: Pages<P>
+    pages: Pages<any>
   ) => Expr<Q> | undefined
   /** Hide this rich text field */
   hidden?: boolean

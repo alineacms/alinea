@@ -45,11 +45,9 @@ export class PageTree<P> {
 }
 
 class PageResolver<T> {
-  root: Multiple<T, T>
+  root: Multiple<T, T> = new Multiple<T, T>(this as any, Entry as any)
 
-  constructor(public store: Promise<Store>) {
-    this.root = new Multiple<T, T>(this, Entry)
-  }
+  constructor(public store: Promise<Store>) {}
 
   processCallbacks = new Map<string, (value: any) => any>()
 
@@ -317,7 +315,7 @@ function createSelection<T>(workspace: Workspace, pages: Pages<T>): ExprData {
   const cases: Record<string, SelectionInput> = {}
   let isComputed = false
   for (const [key, type] of workspace.schema.entries()) {
-    const selection = type.selection<T>(type.collection(), pages)
+    const selection = type.selection(type.collection(), pages as any)
     if (!selection) continue
     cases[key] = selection
     isComputed = true

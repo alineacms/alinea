@@ -14,7 +14,9 @@ export class RecordShape<T extends Record<string, any> = {}>
     public shape: Record<string, Shape>,
     public initialValue?: T
   ) {}
-  concat<X>(that: RecordShape<X> | undefined): RecordShape<T & X> {
+  concat<X extends Record<string, any>>(
+    that: RecordShape<X> | undefined
+  ): RecordShape<T & X> {
     if (!that) return this as RecordShape<T & X>
     return new RecordShape(that.label, {...this.shape, ...that.shape})
   }
