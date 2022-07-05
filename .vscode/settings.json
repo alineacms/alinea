@@ -5,6 +5,9 @@
   "search.useGlobalIgnoreFiles": true,
   "todo-tree.general.tags": ["Todo"],
   "typescript.tsdk": "./node_modules/typescript/lib",
+  "editor.codeActionsOnSave": {
+    "source.organizeImports": true
+  },
   "typescript.tsserver.watchOptions": {
     "watchFile": "useFsEvents"
   }
