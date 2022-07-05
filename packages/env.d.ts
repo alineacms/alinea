@@ -6,6 +6,7 @@ declare module '*.module.scss' {
 declare module 'eval:*'
 declare module 'postcss-pxtorem'
 declare module 'line-height'
+declare module 'dts-bundle'
 
 declare module 'image-blob-reduce' {
   type Options = {
