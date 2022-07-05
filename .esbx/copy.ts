@@ -1,7 +1,7 @@
 import {promises as fs} from 'fs'
 import path from 'path'
 
-async function copyIfContentsDifferent(source: string, destination: string) {
+async function copyIfContentsDiffer(source: string, destination: string) {
   try {
     const [a, b] = await Promise.all([
       fs.readFile(source),
@@ -25,7 +25,7 @@ export async function copyDir(src, dest): Promise<void> {
     if (entry.isDirectory()) {
       tasks.push(copyDir(srcPath, destPath))
     } else {
-      tasks.push(copyIfContentsDifferent(srcPath, destPath))
+      tasks.push(copyIfContentsDiffer(srcPath, destPath))
     }
   }
   return Promise.all(tasks) as Promise<any>
