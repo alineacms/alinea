@@ -49,6 +49,43 @@ const mimeTypes = new Map(
   })
 )
 
+type Client = {
+  write(value: string): void
+  close(): void
+}
+
+function browserBuild(options: BuildOptions) {
+  let frontend: Promise<BuildResult> = esbuild.build({
+    ...options,
+    write: false,
+    incremental: true
+  })
+  let frontendBuilt = Date.now()
+  return async function serveBrowserBuild(request: Request): Promise<Response> {
+    let result = await frontend
+    const isResultStale = Date.now() - frontendBuilt > 1000
+    if (isResultStale) {
+      frontend = result.rebuild!()
+      frontendBuilt = Date.now()
+      result = await frontend
+    }
+    const url = new URL(request.url)
+    const file = result.outputFiles!.find(file => {
+      return file.path
+        .replaceAll('\\', '/')
+        .toLowerCase()
+        .endsWith(url.pathname.toLowerCase())
+    })
+    if (!file) return new Response('Not found', {status: 404})
+    const extension = path.extname(file.path)
+    return new Response(file.contents, {
+      headers: {
+        'content-type': mimeTypes.get(extension) || 'application/octet-stream'
+      }
+    })
+  }
+}
+
 export type ServeOptions = {
   cwd?: string
   staticDir?: string
@@ -57,11 +94,6 @@ export type ServeOptions = {
   buildOptions?: BuildOptions
   alineaDev?: boolean
   production?: boolean
-}
-
-type Client = {
-  write(value: string): void
-  close(): void
 }
 
 export async function serve(options: ServeOptions): Promise<void> {
@@ -110,38 +142,10 @@ export async function serve(options: ServeOptions): Promise<void> {
 
   server = devServer()
 
-  let frontend: Promise<BuildResult> = esbuild.build(
-    Object.assign(browserBuild(), {
-      write: false,
-      incremental: true,
-      outdir: '/'
-    })
-  )
-  let frontendBuilt = Date.now()
-
-  async function serveStatic(request: Request): Promise<Response> {
-    let result = await frontend
-    const isResultStale = Date.now() - frontendBuilt > 1000
-    if (isResultStale) {
-      frontend = result.rebuild!()
-      frontendBuilt = Date.now()
-      result = await frontend
-    }
-    const url = new URL(request.url)
-    const file = result.outputFiles!.find(file => {
-      // Todo: check with windows sep
-      return file.path.endsWith(url.pathname)
-    })
-    if (!file) return new Response('Not found', {status: 404})
-    const extension = path.extname(file.path)
-    return new Response(file.contents, {
-      headers: {
-        'content-type': mimeTypes.get(extension) || 'application/octet-stream'
-      }
-    })
-  }
+  const devDir = path.join(staticDir, 'dev')
 
   const matcher = router.matcher()
+  const entry = `@alinea/dashboard/dev/${alineaDev ? 'Dev' : 'Lib'}Entry`
   const app = router(
     matcher.get('/~dev').map(() => {
       const stream = new ReadableStream({
@@ -161,9 +165,10 @@ export async function serve(options: ServeOptions): Promise<void> {
         }
       })
     }),
-    matcher.get('/').map(() => {
-      return new Response(
-        `<!DOCTYPE html>
+    router.compress(
+      matcher.get('/').map(() => {
+        return new Response(
+          `<!DOCTYPE html>
           <meta charset="utf-8" />
           <link rel="icon" href="data:," />
           <link href="./config.css" rel="stylesheet" />
@@ -172,65 +177,55 @@ export async function serve(options: ServeOptions): Promise<void> {
           <body>
             <script type="module" src="./entry.js"></script>
           </body>`,
-        {
-          headers: {'content-type': 'text/html'}
-        }
-      )
-    }),
-    matcher.all('/hub/*').map(({request}) => {
-      const unavailable = () =>
-        new Response('An error occured, see your terminal for details', {
-          status: 503
-        })
-      if (server)
-        return server.then(server => server.handle(request), unavailable)
-      return unavailable()
-    }),
-    serveStatic
+          {
+            headers: {'content-type': 'text/html'}
+          }
+        )
+      }),
+      matcher.all('/hub/*').map(({request}) => {
+        const unavailable = () =>
+          new Response('An error occured, see your terminal for details', {
+            status: 503
+          })
+        if (server)
+          return server.then(server => server.handle(request), unavailable)
+        return unavailable()
+      }),
+      browserBuild({
+        ignoreAnnotations: alineaDev,
+        format: 'esm',
+        target: 'esnext',
+        treeShaking: true,
+        minify: true,
+        splitting: true,
+        sourcemap: true,
+        outdir: devDir,
+        bundle: true,
+        absWorkingDir: cwd,
+        entryPoints: {
+          config: '@alinea/content/config.js',
+          entry
+        },
+        inject: [path.join(staticDir, `render/render-${react}.js`)],
+        platform: 'browser',
+        ...options.buildOptions,
+        ...buildOptions,
+        plugins: buildOptions.plugins!.concat(
+          options.buildOptions?.plugins || []
+        ),
+        define: {
+          'process.env.NODE_ENV': production ? "'production'" : "'development'"
+        },
+        watch: alineaDev
+          ? {
+              onRebuild(error, result) {
+                if (!error) reload('reload')
+              }
+            }
+          : undefined
+      })
+    )
   )
-
-  function browserBuild(): BuildOptions {
-    const entry = `@alinea/dashboard/dev/${alineaDev ? 'Dev' : 'Lib'}Entry`
-    return {
-      ignoreAnnotations: alineaDev,
-      format: 'esm',
-      target: 'esnext',
-      treeShaking: true,
-      minify: true,
-      splitting: true,
-      sourcemap: true,
-      outdir: path.join(staticDir, 'dev'),
-      bundle: true,
-      absWorkingDir: cwd,
-      entryPoints: {
-        config: '@alinea/content/config.js',
-        entry
-      },
-      inject: [path.join(staticDir, `render/render-${react}.js`)],
-      platform: 'browser',
-      ...options.buildOptions,
-      ...buildOptions,
-      plugins: buildOptions.plugins!.concat(
-        options.buildOptions?.plugins || []
-      ),
-      define: {
-        'process.env.NODE_ENV': production ? "'production'" : "'development'"
-      }
-    }
-  }
-
-  if (alineaDev) {
-    await esbuild.build({
-      ...browserBuild(),
-      write: false,
-      logLevel: 'silent',
-      watch: {
-        onRebuild(error, result) {
-          if (!error) reload('reload')
-        }
-      }
-    })
-  }
 
   http.createServer(nodeHandler(app.handle)).listen(port, () => {
     console.log(
@@ -243,22 +238,18 @@ export async function serve(options: ServeOptions): Promise<void> {
   async function devServer() {
     const unique = Date.now()
     const {createStore: createDraftStore} = await import(`file://${draftsFile}`)
-    let backend
-    if (production) {
-      backend = (await import(`file://${backendFile}`)).backend
-    } else {
-      // Todo: these should be imported in a worker since we can't reclaim memory
-      // used, see #nodejs/modules#307
-      const {config} = await import(`file://${genConfigFile}?${unique}`)
-      const {createStore} = await import(`file://${storeLocation}?${unique}`)
-      backend = new DevBackend({
-        config,
-        createStore,
-        port,
-        cwd,
-        createDraftStore
-      })
-    }
-    return backend
+    if (production) return (await import(`file://${backendFile}`)).backend
+
+    // Todo: these should be imported in a worker since we can't reclaim memory
+    // used, see #nodejs/modules#307
+    const {config} = await import(`file://${genConfigFile}?${unique}`)
+    const {createStore} = await import(`file://${storeLocation}?${unique}`)
+    return new DevBackend({
+      config,
+      createStore,
+      port,
+      cwd,
+      createDraftStore
+    })
   }
 }
