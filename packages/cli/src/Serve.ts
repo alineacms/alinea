@@ -54,13 +54,36 @@ type Client = {
   close(): void
 }
 
+type BuildDetails = {
+  rebuild: () => Promise<BuildDetails>
+  files: Map<string, Uint8Array>
+}
+
 function browserBuild(options: BuildOptions) {
-  let frontend: Promise<BuildResult> = esbuild.build({
-    ...options,
-    write: false,
-    incremental: true
-  })
+  let frontend: Promise<BuildDetails> = esbuild
+    .build({
+      ...options,
+      write: false,
+      incremental: true
+    })
+    .then(buildFiles)
   let frontendBuilt = Date.now()
+  function buildFiles(result: BuildResult) {
+    return {
+      rebuild: () => result.rebuild!().then(buildFiles),
+      files: new Map(
+        result.outputFiles!.map(file => {
+          return [
+            file.path
+              .slice(options.outdir!.length)
+              .replaceAll('\\', '/')
+              .toLowerCase(),
+            file.contents
+          ]
+        })
+      )
+    }
+  }
   return async function serveBrowserBuild(request: Request): Promise<Response> {
     let result = await frontend
     const isResultStale = Date.now() - frontendBuilt > 1000
@@ -70,15 +93,11 @@ function browserBuild(options: BuildOptions) {
       result = await frontend
     }
     const url = new URL(request.url)
-    const file = result.outputFiles!.find(file => {
-      return file.path
-        .replaceAll('\\', '/')
-        .toLowerCase()
-        .endsWith(url.pathname.toLowerCase())
-    })
-    if (!file) return new Response('Not found', {status: 404})
-    const extension = path.extname(file.path)
-    return new Response(file.contents, {
+    const fileName = url.pathname.toLowerCase()
+    const contents = result.files.get(fileName)
+    if (!contents) return new Response('Not found', {status: 404})
+    const extension = path.extname(fileName)
+    return new Response(contents, {
       headers: {
         'content-type': mimeTypes.get(extension) || 'application/octet-stream'
       }
