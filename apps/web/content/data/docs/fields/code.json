@@ -34,7 +34,7 @@
         {
           "id": "itHNQSxP3U_KYZ77Q3vIC",
           "type": "CodeBlock",
-          "code": "code('My code field', {\n  help: 'Paste your code here'\n})"
+          "code": "alinea.code('My code field', {\n  help: 'Paste your code here'\n})"
         }
       ]
     },

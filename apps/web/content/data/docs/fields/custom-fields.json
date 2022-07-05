@@ -41,17 +41,11 @@
           "content": [
             {
               "type": "text",
-              "text": "TODO"
+              "text": "[TODO]"
             }
           ]
         }
       ]
-    },
-    {
-      "id": "286iGxzou0miObtDLwoxVssyAX7",
-      "index": "a1",
-      "type": "TypesBlock",
-      "types": "Field, Value, FieldRenderer"
     }
   ]
 }

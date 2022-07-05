@@ -13,6 +13,7 @@
         {
           "type": "heading",
           "level": 1,
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
@@ -22,6 +23,7 @@
         },
         {
           "type": "paragraph",
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
@@ -32,7 +34,7 @@
         {
           "id": "290iDwpZVR0wrW2N3JaIHxtxc0I",
           "type": "CodeBlock",
-          "code": "object('My object field', {\n  fields: type('Object fields', {\n    fieldA: text('A'),\n    fieldB: text('B')\n  })\n})"
+          "code": "alinea.object('My object field', {\n  fields: alinea.type('Object fields', {\n    fieldA: alinea.text('A'),\n    fieldB: alinea.text('B')\n  })\n})"
         }
       ]
     }

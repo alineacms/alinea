@@ -43,7 +43,20 @@
                   "content": [
                     {
                       "type": "text",
-                      "text": "Content is published into in a directory as `json` files. "
+                      "text": "Content is published into in a directory as `json` files. Note that we're considering making these files more human editable in the future too: "
+                    },
+                    {
+                      "type": "text",
+                      "text": "https://github.com/alineacms/alinea/issues/10",
+                      "marks": [
+                        {
+                          "type": "link",
+                          "attrs": {
+                            "href": "https://github.com/alineacms/alinea/issues/10",
+                            "target": "_blank"
+                          }
+                        }
+                      ]
                     }
                   ]
                 }
@@ -58,7 +71,7 @@
                   "content": [
                     {
                       "type": "text",
-                      "text": "A Javascript library is generated inside the `.alinea` folder which allows us to interact with the content in JavaScript."
+                      "text": "A Javascript library is generated inside the `.alinea` folder which allows us to interact with the content in JavaScript. It is linked via the `@alinea/content` package name."
                     }
                   ]
                 }

@@ -58,7 +58,7 @@
                   "content": [
                     {
                       "type": "text",
-                      "text": "Content is easily queryable through an in-memory SQLite database"
+                      "text": "Content is queryable through an in-memory SQLite database, zero network overhead"
                     }
                   ]
                 }

@@ -27,14 +27,14 @@
           "content": [
             {
               "type": "text",
-              "text": "Workspaces allow you to separate content. A workspace can have its own schema, media files and other configuration. It can be useful when the content has little relation to other workspaces. Editors can easily switch workspaces in the dashboard."
+              "text": "Workspaces allow you to separate content. A workspace can have its own schema, media files and other configuration. Editors can easily switch workspaces in the dashboard."
             }
           ]
         },
         {
           "id": "267Q4Kyg9hOUVaJWolmaa1wOndr",
           "type": "CodeBlock",
-          "code": "workspace('My workspace', {\n  source, schema, color, roots\n})"
+          "code": "alinea.workspace('My workspace', {\n  source, schema, color, roots\n})"
         },
         {
           "type": "heading",
@@ -166,97 +166,6 @@
           "id": "2AFmWaKSpFE6EzL3jLgdpPZDSsy",
           "type": "CodeBlock",
           "code": "// Configuration\nworkspace('My workspace', {typeNamespace: 'myWorkspaceTypes'})\n// Usage:\nimport {myWorkspaceTypes} from '@alinea/content/myworkspace'\nconsole.log(myWorkspaceTypes.MyType)"
-        },
-        {
-          "type": "heading",
-          "level": 2,
-          "textAlign": "left",
-          "content": [
-            {
-              "type": "text",
-              "text": "Example workspace"
-            }
-          ]
-        },
-        {
-          "type": "paragraph",
-          "textAlign": "left",
-          "content": [
-            {
-              "type": "text",
-              "text": "The example workspace that is created with `alinea init` has the following settings:"
-            }
-          ]
-        },
-        {
-          "type": "bulletList",
-          "content": [
-            {
-              "type": "listItem",
-              "content": [
-                {
-                  "type": "paragraph",
-                  "textAlign": "left",
-                  "content": [
-                    {
-                      "type": "text",
-                      "text": "`source`: content is stored in json files and can be found in the `content` directory"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "type": "listItem",
-              "content": [
-                {
-                  "type": "paragraph",
-                  "textAlign": "left",
-                  "content": [
-                    {
-                      "type": "text",
-                      "text": "`mediaDir`: uploaded files are placed in the `public` folder"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "type": "listItem",
-              "content": [
-                {
-                  "type": "paragraph",
-                  "textAlign": "left",
-                  "content": [
-                    {
-                      "type": "text",
-                      "text": "`schema`: the schema includes the default `MediaSchema`, necessary for file uploads, and a generic `Page` type"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "type": "listItem",
-              "content": [
-                {
-                  "type": "paragraph",
-                  "textAlign": "left",
-                  "content": [
-                    {
-                      "type": "text",
-                      "text": "`roots`: defines two separate web roots, one for data (our welcome page in this case), and one for media (file uploads)"
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "id": "286fXgUPgalGCxwGoPGuJxFISCi",
-          "type": "CodeBlock",
-          "code": "workspace('Example', {\n  source: './content',\n  mediaDir: './public',\n  schema: schema({\n    ...MediaSchema,\n    Page: type('Page',\n      {\n        title: text('Title'),\n        path: path('Path')\n      },\n      <Welcome />\n    ).configure({isContainer: true})\n  }),\n  roots: {\n    data: root('Example project', {\n      icon: IcRoundInsertDriveFile,\n      contains: ['Page']\n    }),\n    media: root('Media', {\n      icon: IcRoundPermMedia,\n      contains: ['MediaLibrary']\n    })\n  }\n})"
         }
       ]
     },

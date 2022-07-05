@@ -34,7 +34,7 @@
         {
           "id": "268iVJXDY23EWvw51STlvnDU0eR",
           "type": "CodeBlock",
-          "code": "select('My select field', {\n  a: 'Option a',\n  b: 'Option b'\n})"
+          "code": "alinea.select('My select field', {\n  a: 'Option a',\n  b: 'Option b'\n})"
         }
       ]
     },

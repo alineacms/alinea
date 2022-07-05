@@ -27,7 +27,69 @@
           "content": [
             {
               "type": "text",
-              "text": "Alinea can be integrated in existing or new projects. In this setup guide we assume you run the commands below from the directory of your project. In case you want to use a specific web framework you can set it up before starting, but it's not required."
+              "text": "Alinea can be integrated in existing or new projects."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "textAlign": "left",
+          "content": [
+            {
+              "type": "text",
+              "text": "If you're starting from scratch you can either:"
+            }
+          ]
+        },
+        {
+          "type": "bulletList",
+          "content": [
+            {
+              "type": "listItem",
+              "content": [
+                {
+                  "type": "paragraph",
+                  "textAlign": "left",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Use a framework to get started (for example Next.js)"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "listItem",
+              "content": [
+                {
+                  "type": "paragraph",
+                  "textAlign": "left",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Start blank with a new directory  "
+                    },
+                    {
+                      "type": "hardBreak"
+                    },
+                    {
+                      "type": "text",
+                      "text": "`mkdir alinea-example && cd alinea-example`"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "textAlign": "left",
+          "content": [
+            {
+              "type": "text",
+              "text": "In the rest of the guide we assume you run the commands from the directory of your project."
             }
           ]
         },
@@ -42,7 +104,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Alinea runs on Node.js 14+"
+                  "text": "Alinea requires Node.js 14+"
                 }
               ]
             }

@@ -34,7 +34,7 @@
         {
           "id": "28hu0MbpUcAOhWTWi954kRRNHcM",
           "type": "CodeBlock",
-          "code": "check('My check field', {\n  label: 'This is an example check field'\n})",
+          "code": "alinea.check('My check field', {\n  label: 'This is an example check field'\n})",
           "compact": true
         }
       ]

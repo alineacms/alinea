@@ -34,7 +34,7 @@
         {
           "id": "267RNY6ruMlaKYh8ADfzxtq0jnA",
           "type": "CodeBlock",
-          "code": "text('My text field', {\n  help: 'This is an example field',\n  multiline: true\n})"
+          "code": "alinea.text('My text field', {\n  help: 'This is an example field',\n  multiline: true\n})"
         }
       ]
     },

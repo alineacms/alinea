@@ -34,7 +34,7 @@
         {
           "id": "28hkhm5hPbTobb7YrlwX7qCuNJE",
           "type": "CodeBlock",
-          "code": "workspace('My root', {\n  icon, contains, i18n\n})"
+          "code": "alinea.root('My root', {\n  icon, contains, i18n\n})"
         },
         {
           "type": "heading",

@@ -34,7 +34,28 @@
         {
           "id": "267QjRgoDq3nZ6Dth0o3MElJgzP",
           "type": "CodeBlock",
-          "code": "schema('My schema', {\n  TypeA, TypeB, TypeC\n})"
+          "code": "alinea.schema('My schema', {\n  TypeA, TypeB, TypeC\n})"
+        },
+        {
+          "type": "heading",
+          "textAlign": "left",
+          "level": 2,
+          "content": [
+            {
+              "type": "text",
+              "text": "Configuration"
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "textAlign": "left",
+          "content": [
+            {
+              "type": "text",
+              "text": "Schemas currently have no configuration options, other than the types."
+            }
+          ]
         },
         {
           "type": "heading",
@@ -53,64 +74,14 @@
           "content": [
             {
               "type": "text",
-              "text": "The example below can be found in the configuration file after running the `alinea init` command. It has the following settings:"
-            }
-          ]
-        },
-        {
-          "type": "bulletList",
-          "content": [
-            {
-              "type": "listItem",
-              "content": [
-                {
-                  "type": "paragraph",
-                  "textAlign": "left",
-                  "content": [
-                    {
-                      "type": "text",
-                      "text": "`...MediaSchema`: include types needed for file uploads"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "type": "listItem",
-              "content": [
-                {
-                  "type": "paragraph",
-                  "textAlign": "left",
-                  "content": [
-                    {
-                      "type": "text",
-                      "text": "`type('Page', {...})`: a type with two fields: title and path. After the fields a `Welcome` component is displayed in the dashboard. JSX can be used anywhere inside the type configuration the create custom views."
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "type": "listItem",
-              "content": [
-                {
-                  "type": "paragraph",
-                  "textAlign": "left",
-                  "content": [
-                    {
-                      "type": "text",
-                      "text": "`configure({isContainer: true})`: mark the Page type as a container, which means it can contain sub pages"
-                    }
-                  ]
-                }
-              ]
+              "text": "The schema below is a minimal example of a blog setup. It is comprised of two types: `BlogOverview` and `BlogPost`. The overview type corresponds to a page that lists the posts. To achieve that it is configured as a container which can hold blog posts as children."
             }
           ]
         },
         {
           "id": "286gbW4zHgdrAHcGBLGRtixZguV",
           "type": "CodeBlock",
-          "code": "schema({\n  ...MediaSchema,\n  Page: type('Page',\n    {\n      title: text('Title'),\n      path: path('Path')\n    },\n    <Welcome />\n  ).configure({isContainer: true})\n})"
+          "code": "alinea.schema({\n  BlogOverview: alinea.type('Blog overview', {\n    title: alinea.text('Title'),\n    path: alinea.path('Path')\n  }).configure({\n    isContainer: true,\n    contains: ['BlogPost']\n  }),\n  BlogPost: alinea.type('Blog post', {\n    title: alinea.text('Title'),\n    path: alinea.path('Path'),\n    body: alinea.richText('Body')\n  })\n})"
         }
       ]
     }

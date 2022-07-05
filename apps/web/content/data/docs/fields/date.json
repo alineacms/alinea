@@ -34,7 +34,7 @@
         {
           "id": "utmfOtYpwki29ZXEW5QPX",
           "type": "CodeBlock",
-          "code": "date('Date', {\n  inline: true\n})"
+          "code": "alinea.date('Date', {\n  inline: true\n})"
         }
       ]
     },

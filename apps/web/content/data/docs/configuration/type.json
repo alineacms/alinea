@@ -34,7 +34,7 @@
         {
           "id": "267QyzM4851hQU1DihfoV3fSIFg",
           "type": "CodeBlock",
-          "code": "type('My type', {\n  title: text('Title', {width: 0.5}),\n  path: path('Path', {width: 0.5})\n})"
+          "code": "alinea.type('My type', {\n  title: alinea.text('Title', {width: 0.5}),\n  path: alinea.path('Path', {width: 0.5})\n})"
         },
         {
           "type": "paragraph",
@@ -42,7 +42,7 @@
           "content": [
             {
               "type": "text",
-              "text": "Alinea ships with a number of useful fields but it is also possible to create new custom fields."
+              "text": "Alinea ships with a number of useful fields but it is also possible to create custom fields."
             }
           ]
         },
@@ -82,7 +82,7 @@
         {
           "id": "28hlt4OdKMFVCRzEf2TwQaUzbui",
           "type": "CodeBlock",
-          "code": "type('Example type').configure({\n  ...configuration\n})"
+          "code": "alinea.type('Example type').configure({\n  ...configuration\n})"
         },
         {
           "type": "heading",
