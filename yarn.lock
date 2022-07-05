@@ -419,6 +419,7 @@ __metadata:
     memfs: ^3.4.1
     npm-run-all: ^4.1.5
     postcss-pxtorem: ^6.0.0
+    speedscope: ^1.14.0
     typedoc: ^0.22.15
     typescript: ^4.7.3
     typescript-plugin-css-modules: ^3.4.0
@@ -4455,6 +4456,15 @@ fsevents@~2.3.2:
   languageName: node
   linkType: hard
 
+"is-docker@npm:^2.0.0":
+  version: 2.2.1
+  resolution: "is-docker@npm:2.2.1"
+  bin:
+    is-docker: cli.js
+  checksum: 3fef7ddbf0be25958e8991ad941901bf5922ab2753c46980b60b05c1bf9c9c2402d35e6dc32e4380b980ef5e1970a5d9d5e5aa2e02d77727c3b6b5e918474c56
+  languageName: node
+  linkType: hard
+
 "is-extglob@npm:^2.1.1":
   version: 2.1.1
   resolution: "is-extglob@npm:2.1.1"
@@ -4598,6 +4608,15 @@ fsevents@~2.3.2:
   version: 3.14.1
   resolution: "is-what@npm:3.14.1"
   checksum: a9a6ce92d33799f1ae0916c7afb6f8128a23ce9d28bd69d9ec3ec88910e7a1f68432e6236c3c8a4d544cf0b864675e5d828437efde60ee0cf8102061d395c1df
+  languageName: node
+  linkType: hard
+
+"is-wsl@npm:^2.1.1":
+  version: 2.2.0
+  resolution: "is-wsl@npm:2.2.0"
+  dependencies:
+    is-docker: ^2.0.0
+  checksum: 20849846ae414997d290b75e16868e5261e86ff5047f104027026fd61d8b5a9b0b3ade16239f35e1a067b3c7cc02f70183cb661010ed16f4b6c7c93dad1b19d8
   languageName: node
   linkType: hard
 
@@ -6059,6 +6078,16 @@ fsevents@~2.3.2:
   languageName: node
   linkType: hard
 
+"open@npm:7.2.0":
+  version: 7.2.0
+  resolution: "open@npm:7.2.0"
+  dependencies:
+    is-docker: ^2.0.0
+    is-wsl: ^2.1.1
+  checksum: 9926becba5e1f2e581afd4afe5a0ce3ae9fcaf5d3f6c08765fc9838a5e85e6f24bfd22a3008218c3bb7c0e668616191350cb2ff6c2bc36a9d82c3713ca4152b5
+  languageName: node
+  linkType: hard
+
 "orderedmap@npm:^1.1.0":
   version: 1.1.1
   resolution: "orderedmap@npm:1.1.1"
@@ -7499,6 +7528,17 @@ resolve@^1.10.0:
   version: 3.0.10
   resolution: "spdx-license-ids@npm:3.0.10"
   checksum: 94fde6f558941f82c737433000e20678eccad448fe5e87cbb98ba1d811a120ddf7fbc4a7a3ebfcd2f49c8c4541ba6537af07750ca5cb54900a064d53f68b888d
+  languageName: node
+  linkType: hard
+
+"speedscope@npm:^1.14.0":
+  version: 1.14.0
+  resolution: "speedscope@npm:1.14.0"
+  dependencies:
+    open: 7.2.0
+  bin:
+    speedscope: bin/cli.js
+  checksum: c51aa30044badc25961e19fe965f0aa76557acae6cdfa903ce8b05438a2fa82991ec09ebfaa31aed6fa42a33a8b069bed9bb8e96279d04827173d7c751b03153
   languageName: node
   linkType: hard
 
