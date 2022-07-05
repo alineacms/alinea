@@ -112,7 +112,9 @@ function task(
           }),
           config.buildOptions?.plugins || [ExtensionPlugin],
           distPlugin,
-          !options.silent && ReporterPlugin.configure({name: 'packages'})
+          options.silent
+            ? undefined
+            : ReporterPlugin.configure({name: 'packages'})
         )
       }
       await build(buildOptions)

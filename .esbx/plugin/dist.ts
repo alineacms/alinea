@@ -1,7 +1,6 @@
 import type {Plugin} from 'esbuild'
 import {promises as fs} from 'fs'
 import glob from 'glob'
-import path from 'path'
 import {copyDir} from '../copy'
 
 export const distPlugin: Plugin = {

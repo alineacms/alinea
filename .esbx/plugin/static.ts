@@ -26,7 +26,7 @@ export const staticPlugin: Plugin = {
     if (!outputDir) throw new Error('StaticPlugin requires outfile or outdir')
     let trigger: Promise<any>
     build.onStart(() => {
-      const tasks = []
+      const tasks: Array<Promise<void>> = []
       for (const location of locations) {
         const source = path.join(makeAbs(location), dir)
         const output = source.replace('packages' + path.sep, 'dist' + path.sep)
