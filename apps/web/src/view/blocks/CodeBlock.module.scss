@@ -52,15 +52,15 @@
 
   &-copy {
     cursor: pointer;
-    color: hsla(var(--web-negative-hsl), 0.4);
+    color: hsla(0, 0%, 100%, 0.4);
     width: 44px;
     height: 44px;
     display: flex;
     align-items: center;
     justify-content: center;
     border-radius: 5px;
-    border: 1px solid var(--web-outline);
-    background: hsla(var(--web-negative-hsl), 0.05);
+    border: 1px solid #424242;
+    background: hsla(0, 0%, 100%, 0.05);
     position: absolute;
     top: 10px;
     right: 10px;
@@ -68,12 +68,7 @@
     transition: 0.25s ease-out;
 
     &:hover {
-      background: hsla(var(--web-negative-hsl), 0.1);
-    }
-
-    .is-copied & {
-      color: #347d39;
-      border-color: #347d39;
+      background: hsla(0, 0%, 100%, 0.1);
     }
   }
 
