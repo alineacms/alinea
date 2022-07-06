@@ -1,5 +1,11 @@
 @import '@alinea/web/src/style.scss';
 
+.root {
+  > *:first-child {
+    margin-top: 0;
+  }
+}
+
 .hyphenate {
   overflow-wrap: break-word;
   word-wrap: break-word;

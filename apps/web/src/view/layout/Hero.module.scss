@@ -1,7 +1,12 @@
 @import '@alinea/web/src/style.scss';
 
 .root {
-  padding: 60px 0;
+  padding: 80px 0;
+  background: var(--web-background-variant);
+
+  @include ml {
+    padding: 130px 0;
+  }
 
   &-inner {
     position: relative;
@@ -14,24 +19,23 @@
 
   &-bg {
     position: absolute;
-    top: -60px;
     left: 0;
     right: 0;
+    bottom: -80px;
     width: 100%;
     fill: var(--web-background-variant);
   }
 }
 
 .title {
-  font-size: 48px;
+  font-size: 45px;
   line-height: 1;
   margin-bottom: 24px;
-
-  @include s {
-    font-size: 45px;
+  @include m {
+    font-size: 52px;
   }
 
-  @include m {
+  @include l {
     font-size: 60px;
   }
 }

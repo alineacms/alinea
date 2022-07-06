@@ -3,6 +3,15 @@
   flex-grow: 1;
   display: flex;
   flex-direction: column;
+
+  &-features {
+    padding: 30px 0;
+    //background: var(--web-section1-background);
+
+    &-desc {
+      font-size: 16px;
+    }
+  }
 }
 
 .hero {

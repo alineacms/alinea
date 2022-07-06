@@ -1,9 +1,10 @@
-import {forwardRef, HTMLProps, Ref} from 'react'
+import {forwardRef, HTMLProps, PropsWithChildren, Ref} from 'react'
 import {forwardRefWithAs, PropsWithAs} from './PropsWithAs'
 import {GenericStyles, Styler} from './Styler'
 
 type TypoStyles =
   | {
+      root: Styler
       h1: Styler
       link: Styler
       small: Styler
@@ -18,6 +19,10 @@ type TypoStyles =
 
 export function createTypo(styles: TypoStyles) {
   type TypoProps = {flat?: boolean; light?: boolean}
+
+  function Typo({children}: PropsWithChildren<{}>) {
+    return <div className={styles.root()}>{children}</div>
+  }
 
   function H1Component(
     props: PropsWithAs<TypoProps, 'h1'>,
@@ -122,7 +127,7 @@ export function createTypo(styles: TypoStyles) {
     )
   }
 
-  return {
+  return Object.assign(Typo, {
     H1: forwardRefWithAs<TypoProps, 'h1'>(H1Component),
     H2: forwardRefWithAs<TypoProps, 'h2'>(H2Component),
     H3: forwardRefWithAs<TypoProps, 'h3'>(H3Component),
@@ -132,5 +137,5 @@ export function createTypo(styles: TypoStyles) {
     link: styles.link,
     Monospace: forwardRefWithAs<{}, 'span'>(MonospaceComponent),
     Small: forwardRefWithAs<TypoProps, 'span'>(SmallComponent)
-  }
+  })
 }

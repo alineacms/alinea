@@ -34,7 +34,7 @@ export function Footer({footer, theme, setTheme}: FooterProps) {
   return (
     <footer className={styles.root()}>
       <Layout.Container>
-        <HStack>
+        <HStack align="flex-start">
           <VStack gap={15}>
             <WebTypo.H4>Developer</WebTypo.H4>
             <VStack gap={10} as="nav">
@@ -87,6 +87,7 @@ export function Footer({footer, theme, setTheme}: FooterProps) {
           })*/}
 
           <HStack
+            style={{marginTop: 'auto'}}
             center
             gap={8}
             as="button"

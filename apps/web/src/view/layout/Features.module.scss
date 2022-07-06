@@ -1,0 +1,36 @@
+@import '@alinea/web/src/style.scss';
+
+.features {
+  --cols: 1;
+  display: grid;
+  gap: 30px;
+  grid-template-columns: repeat(var(--cols), 1fr);
+  @include m {
+    --cols: 2;
+  }
+  @include l {
+    --cols: 3;
+  }
+}
+
+.feature {
+  position: relative;
+  border-radius: 16px;
+  background-color: var(--web-background);
+  padding: 30px;
+  outline: 1px solid var(--web-outline);
+
+  @media l {
+    padding: 40px;
+  }
+
+  > *:first-child {
+    margin-top: 0;
+  }
+
+  &-icon {
+    font-size: 30px;
+    color: var(--web-accent);
+    margin-bottom: 4px;
+  }
+}

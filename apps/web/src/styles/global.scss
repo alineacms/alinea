@@ -9,7 +9,7 @@
   --web-background-variant: #fbfbfe;
   --web-foreground: #1e232a;
   --web-foreground-faded: #333a43;
-  --web-selected: hsl(230, 77%, 97%);
+  --web-selected: #f1f3fd;
   --web-selected-foreground: hsl(230, 77%, 60%);
   --web-highlight: #f3f4f6;
   --web-header-background-hsl: 0, 0%, 100%;
@@ -19,6 +19,7 @@
   --web-code-highlight: #292c3d;
   --web-code-foreground: #fbfbfe;
   --web-outline: #ecebeb;
+  --web-section1-background: #f1f3fd;
 }
 
 @mixin dark-theme {
@@ -32,9 +33,9 @@
   --web-background-variant: #181d22;
   --web-foreground: white;
   --web-foreground-faded: #eee;
-  --web-selected: #383d44;
-  --web-selected-foreground: hsl(0, 0%, 100%);
-  --web-highlight: #444548;
+  --web-selected: hsl(230, 17%, 25%);
+  --web-selected-foreground: white;
+  --web-highlight: #3b4358;
   --web-header-background-hsl: 215, 17%, 14%;
   --web-header-background: hsl(var(--web-header-background-hsl));
   --web-negative-hsl: 0, 0%, 100%;
@@ -44,6 +45,7 @@
   --web-outline: #424242;
   --web-code-inline-background: #ecebeb;
   --web-code-inline-foreground: #1e232a;
+  --web-section1-background: #302f34;
 }
 
 :root {

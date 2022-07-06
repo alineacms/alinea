@@ -4,7 +4,6 @@ import {richText} from '@alinea/input.richtext'
 import {ComponentType} from 'react'
 
 export const FeaturesBlockSchema = type('Features', {
-  intro: richText('Intro'),
   items: list('Items', {
     schema: schema({
       Item: type('Item', {
