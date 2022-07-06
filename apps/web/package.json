@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "next dev",
     "dev:check": "tsc -w",
-    "build": "yarn gen:types && alinea generate && next build",
+    "build": "yarn gen:types && yarn gen:bundle && alinea generate && next build",
     "start": "next start",
     "lint": "next lint"
   },
