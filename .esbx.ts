@@ -11,6 +11,7 @@ import type {BuildOptions} from 'esbuild'
 import {build} from 'esbuild'
 import fs from 'fs-extra'
 import {BuildTask} from './.esbx/build'
+import {bundleTs} from './.esbx/bundle-ts'
 import {cssPlugin} from './.esbx/plugin/css'
 import {internalPlugin} from './.esbx/plugin/internal'
 import {resolvePlugin} from './.esbx/plugin/resolve'
@@ -19,6 +20,7 @@ import {staticPlugin} from './.esbx/plugin/static'
 import {ensureNodeResolution} from './packages/cli/src/util/EnsureNodeResolution'
 
 export {VersionTask} from '@esbx/workspaces'
+export * from './.esbx/bundle-ts'
 
 const buildOptions: BuildOptions = {
   format: 'esm',
@@ -78,6 +80,9 @@ export const prepare = {
         'generating typedoc json...',
         err => 'typedoc completed'
       )
+    }
+    if (!fs.existsSync('dist/alinea.d.ts')) {
+      await bundleTs.action()
     }
   }
 }

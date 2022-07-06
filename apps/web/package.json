@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "next dev",
     "dev:check": "tsc -w",
-    "build": "yarn gen:types && alinea generate && next build",
+    "build": "yarn gen:types && yarn gen:bundle && alinea generate && next build",
     "start": "next start",
     "lint": "next lint"
   },
@@ -35,8 +35,10 @@
     "@types/react": "^18.0.5",
     "@types/react-dom": "^18.0.0",
     "cross-env": "^7.0.3",
+    "dts-bundle": "^0.7.3",
     "find-config": "^1.0.0",
     "npm-run-all": "^4.1.5",
-    "postcss-pxtorem": "^6.0.0"
+    "postcss-pxtorem": "^6.0.0",
+    "raw-loader": "^4.0.2"
   }
 }

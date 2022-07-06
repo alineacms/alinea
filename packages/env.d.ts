@@ -3,9 +3,15 @@ declare module '*.module.scss' {
   export default classes
 }
 
+declare module 'raw-loader!*' {
+  const content: string
+  export default content
+}
+
 declare module 'eval:*'
 declare module 'postcss-pxtorem'
 declare module 'line-height'
+declare module 'dts-bundle'
 
 declare module 'image-blob-reduce' {
   type Options = {

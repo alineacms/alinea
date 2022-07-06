@@ -1,3 +1,4 @@
+import type {Backend} from '@alinea/backend/Backend'
 import {Auth} from './Auth'
 import {BackendConfig, BackendProps} from './BackendConfig'
 import {createError} from './ErrorWithCode'
@@ -32,7 +33,7 @@ export class Config<T extends Workspaces = Workspaces> {
   }
 
   // Todo: supply a default for non-dev env
-  createBackend(options: BackendProps) {
+  createBackend(options: BackendProps): Backend {
     const backendConfig = this.options.backend
     if (!backendConfig) throw createError('No backend config found')
     return backendConfig.configureBackend({...backendConfig, ...options})
