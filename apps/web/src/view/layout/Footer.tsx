@@ -1,4 +1,4 @@
-import {fromModule, HStack} from '@alinea/ui'
+import {fromModule, HStack, VStack} from '@alinea/ui'
 import {IcOutlineDarkMode} from '@alinea/ui/icons/IcOutlineDarkMode'
 import {IcOutlineLightMode} from '@alinea/ui/icons/IcOutlineLightMode'
 import {IcSharpBrightnessMedium} from '@alinea/ui/icons/IcSharpBrightnessMedium'
@@ -33,18 +33,43 @@ export function Footer({footer, theme, setTheme}: FooterProps) {
   }
   return (
     <footer className={styles.root()}>
-      {/*<svg
-        className={styles.root.bg()}
-        width="1440"
-        height={BG_HEIGHT}
-        viewBox={`0 0 1440 ${BG_HEIGHT}`}
-        preserveAspectRatio="none"
-      >
-        <path d={`M0 ${BG_HEIGHT}L1440 0V${BG_HEIGHT}H0Z`} />
-      </svg>*/}
       <Layout.Container>
         <HStack>
-          {footer?.map(section => {
+          <VStack gap={15}>
+            <WebTypo.H4>Developer</WebTypo.H4>
+            <VStack gap={10} as="nav">
+              <div>
+                <Link href="/docs/intro">
+                  <a className={styles.root.link()}>Docs</a>
+                </Link>
+              </div>
+              <div>
+                <Link href="/changelog">
+                  <a className={styles.root.link()}>Changelog</a>
+                </Link>
+              </div>
+              <div>
+                <Link href="/types/alinea">
+                  <a className={styles.root.link()}>API</a>
+                </Link>
+              </div>
+              <div>
+                <Link href="/playground">
+                  <a className={styles.root.link()}>Playground</a>
+                </Link>
+              </div>
+              <div>
+                <a
+                  className={styles.root.link()}
+                  href="https://github.com/alineacms/alinea"
+                  target="_blank"
+                >
+                  Source
+                </a>
+              </div>
+            </VStack>
+          </VStack>
+          {/*footer?.map(section => {
             return (
               <div key={section.id}>
                 <WebTypo.H4>{section.label}</WebTypo.H4>
@@ -59,7 +84,7 @@ export function Footer({footer, theme, setTheme}: FooterProps) {
                 </nav>
               </div>
             )
-          })}
+          })*/}
 
           <HStack
             center

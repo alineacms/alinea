@@ -23,4 +23,12 @@
     font-size: 12px;
     margin-left: auto;
   }
+
+  &-link {
+    display: inline-block;
+    text-decoration: none;
+    &:hover {
+      text-decoration: underline;
+    }
+  }
 }

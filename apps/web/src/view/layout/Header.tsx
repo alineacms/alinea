@@ -40,11 +40,6 @@ function Links({links, style}: LinksProps) {
             return null
         }
       })}
-      <Link href="/types/alinea">
-        <a className={style({active: router.asPath.startsWith('/types')})}>
-          API
-        </a>
-      </Link>
       <Link href="/changelog">
         <a className={style({active: router.asPath.startsWith('/changelog')})}>
           Changelog
@@ -53,11 +48,6 @@ function Links({links, style}: LinksProps) {
       <a href="/demo" target="_blank" className={style()}>
         Demo
       </a>
-      <Link href="/playground">
-        <a className={style({active: router.asPath.startsWith('/playground')})}>
-          Playground
-        </a>
-      </Link>
     </>
   )
 }

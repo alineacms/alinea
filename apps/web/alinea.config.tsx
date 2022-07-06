@@ -43,6 +43,7 @@ const web = workspace('Alinea', {
       process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : ''
     return (
       <BrowserPreview
+        reload
         url={`${location}/api/preview?${previewToken}`}
         prettyUrl={entry.url}
       />
