@@ -87,6 +87,7 @@ __metadata:
     "@alinea/backend": 0.0.0
     "@alinea/client": 0.0.0
     "@alinea/core": 0.0.0
+    "@alinea/iso": ^0.1.17
     "@alinea/sqlite-wasm": ^0.1.7
     "@alinea/store": 0.0.0
     "@esbx/eval": ^0.0.19
