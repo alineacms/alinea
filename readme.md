@@ -62,8 +62,8 @@ console.log(
 
 [See the full api →](https://alinea.sh/docs/content/pages)
 
-It's available during static site generation or for server side querying.  
-Content is bundled with your code and instantly available without any network latency.  
+Content is available during static site generation and when server side querying.  
+Content is bundled with your code and can be queried with zero network overhead.  
 
 [How alinea bundles content →](https://alinea.sh/docs/content/introduction)
 
