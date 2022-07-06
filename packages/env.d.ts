@@ -3,6 +3,11 @@ declare module '*.module.scss' {
   export default classes
 }
 
+declare module 'raw-loader!*' {
+  const content: string
+  export default content
+}
+
 declare module 'eval:*'
 declare module 'postcss-pxtorem'
 declare module 'line-height'

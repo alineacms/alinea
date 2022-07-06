@@ -14,7 +14,8 @@
     "clean": "esbx clean",
     "bump": "esbx version",
     "prepare": "copy-env-cli",
-    "gen:types": "typedoc --json apps/web/src/data/types.json"
+    "gen:types": "typedoc --json apps/web/src/data/types.json",
+    "gen:bundle": "esbx bundleTs"
   },
   "files": [],
   "workspaces": [

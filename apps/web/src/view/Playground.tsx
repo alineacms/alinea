@@ -28,6 +28,7 @@ import esbuild, {BuildFailure, Message, Plugin} from 'esbuild-wasm'
 import esbuildPkg from 'esbuild-wasm/package.json'
 import Head from 'next/head'
 import Link from 'next/link'
+import declarations from 'raw-loader!../../../../dist/alinea.d.ts'
 import * as React from 'react'
 import {useEffect, useMemo, useRef, useState} from 'react'
 import {useClipboard} from 'use-clipboard-copy'
@@ -132,7 +133,7 @@ export default function Playground() {
       jsx: 'preserve'
     })
     monaco.languages.typescript.typescriptDefaults.addExtraLib(
-      `declare module 'alinea'`,
+      declarations,
       '@types/alinea/index.d.ts'
     )
   }
