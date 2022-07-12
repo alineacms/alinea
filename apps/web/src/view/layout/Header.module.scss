@@ -16,7 +16,7 @@
   &.is-transparent {
     background-color: hsla(var(--web-background-variant-hsl), 0.9);
     box-shadow: none;
-    border-bottom: none;
+    border-bottom: transparent;
   }
 
   &-inner {

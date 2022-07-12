@@ -28,8 +28,8 @@ export function HomePage(props: HomePageSchema) {
               <WebTypo>
                 <WebTypo.H2>Git-based</WebTypo.H2>
                 <WebTypo.P className={styles.root.features.desc()}>
-                  Content is version controlled in git, without editors needing
-                  any git knowledge
+                  Content is version controlled in git, remain in control and
+                  own your data.
                 </WebTypo.P>
               </WebTypo>
             </Feature>
@@ -82,13 +82,59 @@ export function HomePage(props: HomePageSchema) {
       {/*
 
         I think below we should highlight in separate (interactive) sections:
-        - config as code => preview how to build a schema
-        - live previews
-        - query engine
-        - custom fields
-        - the editing/dashboard experience
-        - deploy "anywhere": node or edge deploys
+        - [x] config as code => preview how to build a schema
+        - [x] live previews
+        - [x] query engine
+        - [ ] custom fields
+        - [ ] the editing/dashboard experience
+        - [ ] deploy "anywhere": node or edge deploys
 
+        
+      <section className={styles.root.section()}>
+        <Layout.Container>
+          <WebTypo.H2>Code your schema</WebTypo.H2>
+          <WebTypo.P>
+            Configuration as code saves you from clicking endlessly through a UI
+            to define fields. Easily branch and feature test schema changes.
+          </WebTypo.P>
+        </Layout.Container>
+      </section>
+
+      <section className={styles.root.section()}>
+        <Layout.Container>
+          <WebTypo.H2>Live previews</WebTypo.H2>
+          <WebTypo.P>
+            React to dashboard changes by previewing a live page view.
+          </WebTypo.P>
+        </Layout.Container>
+      </section>
+
+      <section className={styles.root.section()}>
+        <Layout.Container>
+          <WebTypo.H2>Query content</WebTypo.H2>
+          <WebTypo.P>
+            Use an ORM like API to query field contents. Content is bundled with
+            your code and directly available without network roundtrips.
+          </WebTypo.P>
+        </Layout.Container>
+      </section>
+
+      <section className={styles.root.section()}>
+        <Layout.Container>
+          <WebTypo.H2>Works with any framework</WebTypo.H2>
+          <WebTypo.P>Pick your favorite and get started.</WebTypo.P>
+        </Layout.Container>
+      </section>
+
+      <section className={styles.root.section()}>
+        <Layout.Container>
+          <WebTypo.H2>Powerful fields</WebTypo.H2>
+          <WebTypo.P>
+            Alinea ships with a comprehensive set of fields that allow you to
+            structure complex web apps.
+          </WebTypo.P>
+        </Layout.Container>
+      </section>
        */}
 
       <Blocks blocks={props.blocks} container={Layout.Container} />
