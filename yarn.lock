@@ -302,6 +302,7 @@ __metadata:
     "@alinea/core": 0.0.0
     "@alinea/editor": 0.0.0
     "@alinea/ui": 0.0.0
+    react-query: ^3.39.1
   peerDependencies:
     react: "*"
   languageName: unknown
