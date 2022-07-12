@@ -17,5 +17,25 @@
       background: var(--alinea-fields-selected);
       outline: 2px solid var(--alinea-fields-focus);
     }
+
+    &-container {
+      position: relative;
+    }
+  }
+  &-suffix {
+    position: absolute;
+    top: 1px;
+    bottom: 1px;
+    white-space: nowrap;
+    line-height: 1.5;
+    padding: 9px 0;
+    display: flex;
+    opacity: 0.4;
+  }
+  &-hidden {
+    font: inherit;
+    position: absolute;
+    z-index: -1;
+    opacity: 0;
   }
 }

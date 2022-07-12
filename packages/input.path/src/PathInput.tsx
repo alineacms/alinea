@@ -1,9 +1,9 @@
 import {Entry, isSeparator, Outcome, slugify} from '@alinea/core'
 import {useCurrentDraft, useSession} from '@alinea/dashboard'
 import {InputLabel, InputState, useInput} from '@alinea/editor'
-import {fromModule, HStack} from '@alinea/ui'
+import {fromModule} from '@alinea/ui'
 import {IcRoundLink} from '@alinea/ui/icons/IcRoundLink'
-import {useState} from 'react'
+import {useRef, useState} from 'react'
 import {useQuery} from 'react-query'
 import {PathField} from './PathField'
 import css from './PathInput.module.scss'
@@ -18,6 +18,8 @@ export type PathInputProps = {
 export function PathInput({state, field}: PathInputProps) {
   const {width, from = 'title', help, optional} = field.options
   const [focus, setFocus] = useState(false)
+  const hiddenRef = useRef<HTMLSpanElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
   const parentState = state.parent()
   if (!parentState) throw 'Parent state not found'
   const [source = ''] = useInput<InputState.Scalar<string>>(
@@ -75,6 +77,18 @@ export function PathInput({state, field}: PathInputProps) {
 
   const currentSuffix = data && getSuffix(data)
 
+  if (hiddenRef.current) {
+    console.log(hiddenRef.current.clientWidth)
+  }
+
+  function getSuffixPosition(): number {
+    if (!currentSuffix) return 0
+    if (!hiddenRef.current || !inputRef.current) return 0
+    if (hiddenRef.current.clientWidth + 16 + 16 >= inputRef.current.clientWidth)
+      return inputRef.current.clientWidth - 16
+    return hiddenRef.current.clientWidth + 16
+  }
+
   return (
     <InputLabel
       asLabel
@@ -86,8 +100,9 @@ export function PathInput({state, field}: PathInputProps) {
       icon={IcRoundLink}
       empty={empty}
     >
-      <HStack center gap={15}>
+      <div className={styles.root.input.container()}>
         <input
+          ref={inputRef}
           className={styles.root.input()}
           type="text"
           value={inputValue}
@@ -103,8 +118,16 @@ export function PathInput({state, field}: PathInputProps) {
           }}
           placeholder={' '}
         />
-        <div>{currentSuffix ? `-${currentSuffix}` : null}</div>
-      </HStack>
+        <div
+          className={styles.root.suffix()}
+          style={{left: getSuffixPosition() + 'px'}}
+        >
+          {currentSuffix ? `-${currentSuffix}` : null}
+        </div>
+      </div>
+      <span ref={hiddenRef} className={styles.root.hidden()}>
+        {inputValue}
+      </span>
     </InputLabel>
   )
 }
