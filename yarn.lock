@@ -509,6 +509,7 @@ __metadata:
     react: ^18.1.0
     react-animate-height: ^3.0.3
     react-dom: ^18.1.0
+    react-frame-component: ^5.2.3
     react-string-replace: ^1.0.0
     remark: ^14.0.2
     remark-html: ^15.0.1
@@ -6992,6 +6993,17 @@ fsevents@~2.3.2:
   peerDependencies:
     react: ^18.1.0
   checksum: bb0d48eeb0b297c79c2a03978baa29f5b3ff7ba3d070b21e34c9af1a6e7fdf0ca8b8d73e41f9214d91ad40eeb6d1f3559f884cbbc338713374a51320637c23df
+  languageName: node
+  linkType: hard
+
+"react-frame-component@npm:^5.2.3":
+  version: 5.2.3
+  resolution: "react-frame-component@npm:5.2.3"
+  peerDependencies:
+    prop-types: ^15.5.9
+    react: ">= 16.3"
+    react-dom: ">= 16.3"
+  checksum: 1843c48dce41a0af03590dd7351baaf8a68ecac4e850d9819d093517a34d1097668c2b2cd809a8f5cd70791c011c6f2dcaf90d43b6e773b33c212f1f4cf17f55
   languageName: node
   linkType: hard
 

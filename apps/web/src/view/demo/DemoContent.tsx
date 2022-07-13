@@ -4,20 +4,7 @@ import {IndexedDBDrafts} from '@alinea/backend.indexeddb/IndexedDBDrafts'
 import {Cache} from '@alinea/backend/Cache'
 import {Server} from '@alinea/backend/Server'
 import {config} from '@alinea/content'
-import {accumulate, createConfig, workspace} from '@alinea/core'
-import {Dashboard, FieldsPreview} from '@alinea/dashboard'
-import {useMemo} from 'react'
-
-const demoConfig = createConfig({
-  workspaces: {
-    web: workspace('Demo', {
-      ...config.workspaces.web.config.options,
-      preview({entry}) {
-        return <FieldsPreview entry={entry} />
-      }
-    })
-  }
-})
+import {accumulate} from '@alinea/core'
 
 function createLocalClient() {
   const data = new IndexedDBData()
@@ -48,13 +35,4 @@ export function createDemo() {
       end: async () => {}
     }
   }
-}
-
-export type DemoProps = {
-  fullPage?: boolean
-}
-
-export default function Demo({fullPage}: DemoProps) {
-  const {client, config} = useMemo(createDemo, [])
-  return <Dashboard fullPage={fullPage} config={demoConfig} client={client} />
 }

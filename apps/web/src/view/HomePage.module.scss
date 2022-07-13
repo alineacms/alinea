@@ -1,3 +1,5 @@
+@import '@alinea/web/src/style.scss';
+
 .root {
   position: relative;
   flex-grow: 1;
@@ -6,6 +8,28 @@
 
   &-section {
     padding: 50px 0;
+  }
+
+  &-demo {
+    padding: 50px 20px;
+    @include ml {
+      padding: 50px 45px;
+    }
+
+    &-inner {
+      display: block;
+      margin: 0 auto;
+      border-radius: 18px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+      overflow: hidden;
+      height: 80vh;
+      border: none;
+      width: 100%;
+
+      @include l {
+        max-width: 1300px;
+      }
+    }
   }
 
   &-features {
@@ -20,6 +44,25 @@
 
 .hero {
   position: relative;
+
+  &-focus {
+    display: block;
+    background-image: linear-gradient(45deg, #5269e7, #008cb6, #b126cd);
+    line-height: 1.25;
+
+    /* Set the background size and repeat properties. */
+    background-size: 100%;
+    background-repeat: repeat;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  &-sub {
+    display: block;
+    font-weight: normal;
+    font-size: 0.85em;
+    margin-top: -1px;
+  }
 
   &-demo {
     font-family: var(--web-title-font);

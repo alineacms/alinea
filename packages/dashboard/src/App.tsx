@@ -85,7 +85,7 @@ function DraftsButton() {
 }
 
 function AppAuthenticated() {
-  const {config} = useDashboard()
+  const {fullPage, config} = useDashboard()
   const nav = useNav()
   const location = useLocation()
   const isEntry = useMatch(nav.matchEntry) || location.pathname === '/'
@@ -97,7 +97,7 @@ function AppAuthenticated() {
       <Statusbar.Provider>
         <Toolbar.Provider>
           <Sidebar.Provider>
-            <Viewport attachToBody contain color={color}>
+            <Viewport attachToBody={fullPage} contain color={color}>
               <Head>
                 <FavIcon color={color} />
               </Head>
@@ -257,12 +257,12 @@ type AppRootProps = {
 }
 
 function AppRoot({session, setSession}: AppRootProps) {
-  const {config} = useDashboard()
+  const {fullPage, config} = useDashboard()
   const {color} = config.defaultWorkspace
   const Auth = config.authView || Fragment
   if (!session)
     return (
-      <Viewport attachToBody contain color={color}>
+      <Viewport attachToBody={fullPage} contain color={color}>
         <Head>
           <FavIcon color={color} />
         </Head>
@@ -285,7 +285,10 @@ function localSession(options: DashboardOptions) {
 // facebook/react#24304
 const QueryClientProvider: any = ReactQueryClientProvider
 
-export function App<T extends Workspaces>(props: DashboardOptions<T>) {
+export function App<T extends Workspaces>({
+  fullPage = true,
+  ...props
+}: DashboardOptions<T>) {
   const auth = props.config.authView
   const [queryClient] = useState(
     () =>

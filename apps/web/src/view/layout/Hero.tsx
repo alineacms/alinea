@@ -1,7 +1,7 @@
 import {fromModule, HStack} from '@alinea/ui'
 import {IcRoundArrowForward} from '@alinea/ui/icons/IcRoundArrowForward'
 import Link, {LinkProps} from 'next/link'
-import {PropsWithChildren} from 'react'
+import {HTMLProps, PropsWithChildren} from 'react'
 import css from './Hero.module.scss'
 import {Layout} from './Layout'
 import {WebTypo} from './WebTypo'
@@ -32,10 +32,14 @@ export namespace Hero {
     return <WebTypo.H1 className={styles.title()}>{children}</WebTypo.H1>
   }
   export const ByLine = styles.byLine.toElement('p')
-  export function Action({children, ...props}: PropsWithChildren<LinkProps>) {
+  export function Action({
+    children,
+    href,
+    ...props
+  }: PropsWithChildren<LinkProps & HTMLProps<HTMLAnchorElement>>) {
     return (
-      <Link {...props}>
-        <a className={styles.action()}>
+      <Link href={href}>
+        <a {...props} className={styles.action.mergeProps(props)()}>
           <HStack center gap={8}>
             <span>{children}</span>
             <IcRoundArrowForward />

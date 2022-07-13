@@ -3,6 +3,7 @@ import {IcRoundLanguage} from '@alinea/ui/icons/IcRoundLanguage'
 import {IcRoundOpenInNew} from '@alinea/ui/icons/IcRoundOpenInNew'
 import {IcRoundSearch} from '@alinea/ui/icons/IcRoundSearch'
 import {MdiSourceBranch} from '@alinea/ui/icons/MdiSourceBranch'
+import dynamic from 'next/dynamic'
 import {IcRoundFastForward} from '../icons/IcRoundFastForward'
 import {IcRoundPeopleOutline} from '../icons/IcRoundPeopleOutline'
 import {MdiLanguageTypescript} from '../icons/MdiLanguageTypescript'
@@ -15,6 +16,10 @@ import {Layout} from './layout/Layout'
 import {WebTypo} from './layout/WebTypo'
 
 const styles = fromModule(css)
+
+const DemoPage = dynamic(() => import('../view/Demo'), {
+  ssr: false
+})
 
 export function HomePage(props: HomePageSchema) {
   return (
@@ -43,10 +48,10 @@ export function HomePage(props: HomePageSchema) {
             </Feature>
             <Feature icon={IcRoundFastForward}>
               <WebTypo>
-                <WebTypo.H2>Zero network overhead</WebTypo.H2>
+                <WebTypo.H2>Zero latency</WebTypo.H2>
                 <WebTypo.P className={styles.root.features.desc()}>
                   Content is easily queryable through an in-memory SQLite
-                  database
+                  database, avoiding network overhead
                 </WebTypo.P>
               </WebTypo>
             </Feature>
@@ -76,6 +81,40 @@ export function HomePage(props: HomePageSchema) {
               </WebTypo>
             </Feature>
           </Features>
+        </Layout.Container>
+      </section>
+
+      <section className={styles.root.demo()}>
+        <VStack gap={30}>
+          <Layout.Container>
+            <WebTypo>
+              <WebTypo.H2>Polished dashboard</WebTypo.H2>
+              <WebTypo.P>
+                The dashboard presents a user friendly editing experience that
+                requires no training. Content is can be navigated
+                hierarchically, much like the website you're structuring, making
+                it easy to find what you're looking for.
+              </WebTypo.P>
+            </WebTypo>
+          </Layout.Container>
+          <iframe src="/demo" className={styles.root.demo.inner()} />
+        </VStack>
+      </section>
+
+      <section id="demo" className={styles.root.section()}>
+        <Layout.Container>
+          <WebTypo.H2>Build with us</WebTypo.H2>
+          <WebTypo.P>
+            Alinea is open source under the MIT license and publicly available
+            right now. It's new and needs some work before it's
+            production-ready.
+          </WebTypo.P>
+          <Hero.Action
+            href="https://github.com/alineacms/alinea"
+            target="_blank"
+          >
+            Fork on Github
+          </Hero.Action>
         </Layout.Container>
       </section>
 
@@ -148,7 +187,11 @@ function HomePageHero({headline, byline, action, screenshot}: HomePageSchema) {
       <Hero>
         <Layout.Container>
           <VStack center>
-            <Hero.Title>{headline}</Hero.Title>
+            <Hero.Title>
+              <span className={styles.hero.focus()}>Content management</span>
+              <span className={styles.hero.sub()}>for the modern web</span>
+              {/*headline*/}
+            </Hero.Title>
             <Hero.ByLine>{byline}</Hero.ByLine>
             <HStack
               wrap

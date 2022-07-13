@@ -1,7 +1,7 @@
 import {Reference} from '@alinea/core/Reference'
 import {Expr} from '@alinea/store/Expr'
 import {ComponentType, useMemo, useState} from 'react'
-import {ReferencePicker} from '../view/ReferencePicker'
+import {ReferencePicker} from '../view/picker/ReferencePicker'
 
 export type ReferencePickerFunc = (
   options: ReferencePickerOptions

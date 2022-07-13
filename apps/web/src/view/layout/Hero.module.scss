@@ -1,11 +1,11 @@
 @import '@alinea/web/src/style.scss';
 
 .root {
-  padding: 80px 0;
+  padding: 40px 0;
   background: var(--web-background-variant);
 
   @include ml {
-    padding: 130px 0;
+    padding: 100px 0;
   }
 
   &-inner {
@@ -28,7 +28,7 @@
 }
 
 .title {
-  font-size: 45px;
+  font-size: 40px;
   line-height: 1;
   margin-bottom: 24px;
   @include m {
