@@ -6,7 +6,13 @@
   --web-accent-foreground: white;
   --web-background: white;
   --web-background-variant-hsl: 240, 60%, 99%;
-  --web-background-variant: hsl(214, 51%, 95%);
+  --web-background-variant: linear-gradient(
+    to right,
+    hsl(110, 67%, 98%),
+    hsl(217, 59%, 98%),
+    hsl(217, 85%, 98%),
+    hsl(191, 61%, 98%)
+  );
   --web-foreground: #1e232a;
   --web-foreground-faded: #333a43;
   --web-selected: #f1f3fd;
@@ -27,7 +33,27 @@
   --web-accent-foreground: white;
   --web-background: #1e232a;
   --web-background-variant-hsl: 210, 17%, 11%;
-  --web-background-variant: #191d23;
+  --web-background-variant: radial-gradient(
+      circle 800px at 700px 200px,
+      rgba(11, 73, 131, 0.05),
+      transparent
+    ),
+    radial-gradient(
+      circle 600px at calc(100% - 300px) 300px,
+      rgba(4, 49, 44, 0.205),
+      transparent
+    ),
+    radial-gradient(
+      circle 800px at right bottom,
+      hsl(205 45% 8.6%),
+      transparent
+    ),
+    radial-gradient(
+      circle 800px at calc(50% - 600px) calc(100% - 100px),
+      hsl(211, 68%, 6%),
+      rgb(30, 18, 31),
+      transparent
+    );
   --web-foreground: white;
   --web-foreground-faded: #eee;
   --web-selected: hsl(230, 17%, 25%);

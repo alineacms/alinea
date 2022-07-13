@@ -16,6 +16,11 @@
     &.is-highlight {
       background: var(--web-background-variant);
     }
+
+    &.is-accent {
+      background: var(--web-accent);
+      color: var(--web-accent-foreground);
+    }
   }
 
   &-intro {
@@ -38,7 +43,7 @@
     padding: 0 20px;
 
     @include ml {
-      padding: 0 30px;
+      padding: 0 40px;
     }
 
     &-inner {
@@ -52,7 +57,7 @@
       border: none;
 
       @include l {
-        max-width: 1300px;
+        max-width: 1200px;
       }
     }
   }

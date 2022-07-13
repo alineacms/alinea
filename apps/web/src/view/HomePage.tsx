@@ -85,7 +85,7 @@ export function HomePage(props: HomePageSchema) {
         </Features>
       </section>
 
-      <section className={styles.root.section({highlight: true})}>
+      <section className={styles.root.section('highlight')}>
         <Layout.Container>
           <div className={styles.root.intro()}>
             <WebText doc={props.introduction.text} />
@@ -115,22 +115,24 @@ export function HomePage(props: HomePageSchema) {
         </VStack>
       </section>
 
-      <section className={styles.root.section({highlight: true})}>
+      <section className={styles.root.section('highlight')}>
         <Layout.Container>
-          <WebTypo>
-            <WebTypo.H2>Build with us</WebTypo.H2>
-            <WebTypo.P>
-              Alinea is open source under the MIT license.
-              <br />
-              It needs some work before it's production-ready.
-            </WebTypo.P>
+          <VStack align="flex-start" gap={30}>
+            <WebTypo>
+              <WebTypo.H2>Build with us</WebTypo.H2>
+              <WebTypo.P>
+                Alinea is open source under the MIT license.
+                <br />
+                It needs some work before it's production-ready.
+              </WebTypo.P>
+            </WebTypo>
             <Hero.Action
               href="https://github.com/alineacms/alinea"
               target="_blank"
             >
               Fork on Github
             </Hero.Action>
-          </WebTypo>
+          </VStack>
         </Layout.Container>
       </section>
 

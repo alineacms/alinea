@@ -52,6 +52,14 @@
   border-radius: 25px;
   font-size: 14px;
   font-weight: 500;
+
+  &.is-outline {
+    border: 1px solid var(--web-accent-foreground);
+  }
+
+  &:hover {
+    background: var(--web-accent-light);
+  }
 }
 
 .byLine {

@@ -35,11 +35,14 @@ export namespace Hero {
   export function Action({
     children,
     href,
+    outline,
     ...props
-  }: PropsWithChildren<LinkProps & HTMLProps<HTMLAnchorElement>>) {
+  }: PropsWithChildren<
+    LinkProps & HTMLProps<HTMLAnchorElement> & {outline?: boolean}
+  >) {
     return (
       <Link href={href}>
-        <a {...props} className={styles.action.mergeProps(props)()}>
+        <a {...props} className={styles.action.mergeProps(props)({outline})}>
           <HStack center gap={8}>
             <span>{children}</span>
             <IcRoundArrowForward />
