@@ -32,10 +32,10 @@ export function HomePage(props: HomePageSchema) {
           <Features>
             <Feature icon={MdiSourceBranch}>
               <WebTypo>
-                <Feature.Title>Git-based</Feature.Title>
+                <Feature.Title>Git based</Feature.Title>
                 <WebTypo.P className={styles.root.features.desc()}>
-                  Content is version controlled in git. Remain in control and
-                  own your data.
+                  Content is version controlled in git. Easily branch and
+                  feature test content changes.
                 </WebTypo.P>
               </WebTypo>
             </Feature>
