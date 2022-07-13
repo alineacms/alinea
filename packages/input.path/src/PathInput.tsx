@@ -1,7 +1,7 @@
 import {Entry, isSeparator, Outcome, slugify} from '@alinea/core'
 import {useCurrentDraft, useSession} from '@alinea/dashboard'
 import {InputLabel, InputState, useInput} from '@alinea/editor'
-import {fromModule} from '@alinea/ui'
+import {fromModule, px} from '@alinea/ui'
 import {IcRoundLink} from '@alinea/ui/icons/IcRoundLink'
 import {useRef, useState} from 'react'
 import {useQuery} from 'react-query'
@@ -9,6 +9,8 @@ import {PathField} from './PathField'
 import css from './PathInput.module.scss'
 
 const styles = fromModule(css)
+const INPUT_OFFSET_LEFT = 16
+const INPUT_OFFSET_RIGHT = 26
 
 export type PathInputProps = {
   state: InputState<InputState.Scalar<string>>
@@ -71,22 +73,23 @@ export function PathInput({state, field}: PathInputProps) {
 
   /* Todo:
       - Server side
-      - Looks
-      - On create new (path field)
+      - On create new (path field, via server side)
+      - lange suffix supporten (nice to have)
+      - right to left written languages (nice to have)
   */
 
   const currentSuffix = data && getSuffix(data)
 
-  if (hiddenRef.current) {
-    console.log(hiddenRef.current.clientWidth)
-  }
-
   function getSuffixPosition(): number {
     if (!currentSuffix) return 0
     if (!hiddenRef.current || !inputRef.current) return 0
-    if (hiddenRef.current.clientWidth + 16 + 16 >= inputRef.current.clientWidth)
-      return inputRef.current.clientWidth - 16
-    return hiddenRef.current.clientWidth + 16
+    // Check if text overflows input field width
+    if (
+      hiddenRef.current.clientWidth + INPUT_OFFSET_LEFT + INPUT_OFFSET_RIGHT >=
+      inputRef.current.clientWidth
+    )
+      return inputRef.current.clientWidth - INPUT_OFFSET_RIGHT
+    return hiddenRef.current.clientWidth + INPUT_OFFSET_LEFT
   }
 
   return (
@@ -116,11 +119,10 @@ export function PathInput({state, field}: PathInputProps) {
             setFocus(false)
             applySuffix()
           }}
-          placeholder={' '}
         />
         <div
           className={styles.root.suffix()}
-          style={{left: getSuffixPosition() + 'px'}}
+          style={{left: px(getSuffixPosition())}}
         >
           {currentSuffix ? `-${currentSuffix}` : null}
         </div>
