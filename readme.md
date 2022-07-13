@@ -1,4 +1,4 @@
-[![GitHub license](https://img.shields.io/github/license/alineacms/alinea)](https://github.com/alineacms/alinea/blob/main/LICENSE) <a href="https://npmjs.org/package/alinea" title="View this project on NPM"><img src="https://img.shields.io/npm/v/alinea.svg" alt="NPM version" /></a>
+<a href="https://npmjs.org/package/alinea" title="View this project on NPM"><img src="https://img.shields.io/npm/v/alinea.svg" alt="NPM version" /></a>
 
 # [![Alinea CMS logo](https://github.com/alineacms/alinea/raw/HEAD/apps/web/public/logo.svg)](https://alinea.sh)
 
