@@ -77,7 +77,7 @@ export function HomePage(props: HomePageSchema) {
               <WebTypo>
                 <Feature.Title>Full text search</Feature.Title>
                 <WebTypo.P className={styles.root.features.desc()}>
-                  Search through content using SQlite's FTS5
+                  Search through content using SQlite's FTS5.
                 </WebTypo.P>
               </WebTypo>
             </Feature>
@@ -108,8 +108,7 @@ export function HomePage(props: HomePageSchema) {
         <Layout.Container>
           <WebTypo.H2>Build with us</WebTypo.H2>
           <WebTypo.P>
-            Alinea is open source under the MIT license and publicly available
-            right now.
+            Alinea is open source under the MIT license.
             <br />
             It needs some work before it's production-ready.
           </WebTypo.P>

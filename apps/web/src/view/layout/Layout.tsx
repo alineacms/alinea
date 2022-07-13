@@ -1,13 +1,8 @@
 import {fromModule} from '@alinea/ui'
+import {useLocalStorage} from '@alinea/ui/hook/UseLocalStorage'
 import Head from 'next/head'
 import {useRouter} from 'next/router'
-import {
-  HTMLAttributes,
-  PropsWithChildren,
-  useEffect,
-  useRef,
-  useState
-} from 'react'
+import {HTMLAttributes, PropsWithChildren, useEffect, useRef} from 'react'
 import {FavIcon} from './branding/FavIcon'
 import {Footer} from './Footer'
 import {Header} from './Header'
@@ -23,7 +18,10 @@ export function Layout({
   header,
   footer
 }: PropsWithChildren<LayoutProps>) {
-  const [theme, setTheme] = useState<Layout.Theme>('system')
+  const [theme, setTheme] = useLocalStorage<Layout.Theme>(
+    '@alinea/web/theme',
+    'system'
+  )
   useEffect(() => {
     const name = theme.toLowerCase()
     document.body.classList.add(`is-${name}`)

@@ -27,8 +27,8 @@
       box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
       overflow: hidden;
       height: 80vh;
-      border: none;
       width: 100%;
+      border: none;
 
       @include l {
         max-width: 1300px;
@@ -48,6 +48,7 @@
 
 .hero {
   position: relative;
+  background-color: #e0e9f5;
   background-position: center;
   background-size: cover;
   padding-bottom: 60px;

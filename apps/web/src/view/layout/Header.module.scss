@@ -47,6 +47,9 @@
     &:hover {
       color: var(--web-foreground);
     }
+    .is-transparent &:hover {
+      color: black;
+    }
   }
 
   &-nav {
@@ -72,6 +75,10 @@
         color: var(--web-foreground);
       }
 
+      .is-transparent &:hover {
+        color: black;
+      }
+
       &.is-active {
         color: var(--web-selected-foreground);
         font-weight: 600;
@@ -86,6 +93,14 @@
     &-icon {
       display: block;
       font-size: 25px;
+    }
+
+    &:hover {
+      color: var(--web-foreground);
+    }
+
+    .is-transparent &:hover {
+      color: black;
     }
   }
 
