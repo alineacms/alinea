@@ -15,9 +15,6 @@
   --web-header-background-hsl: 0, 0%, 100%;
   --web-header-background: hsl(var(--web-header-background-hsl));
   --web-negative-hsl: 215, 17%, 14%;
-  --web-code-background: #1e232a;
-  --web-code-highlight: #292c3d;
-  --web-code-foreground: #fbfbfe;
   --web-outline: #ecebeb;
   --web-section1-background: #f1f3fd;
 }
@@ -39,9 +36,6 @@
   --web-header-background-hsl: 215, 17%, 14%;
   --web-header-background: hsl(var(--web-header-background-hsl));
   --web-negative-hsl: 0, 0%, 100%;
-  --web-code-background: #1e232a;
-  --web-code-highlight: #292c3d;
-  --web-code-foreground: #fbfbfe;
   --web-outline: #424242;
   --web-code-inline-background: #ecebeb;
   --web-code-inline-foreground: #1e232a;
@@ -51,6 +45,9 @@
 :root {
   --web-title-font: 'Poppins', sans-serif;
   --web-header-height: 60px;
+  --web-code-background: #1e232a;
+  --web-code-highlight: #464a61;
+  --web-code-foreground: #fbfbfe;
 
   @include dark-theme;
 

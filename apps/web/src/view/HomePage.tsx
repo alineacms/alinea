@@ -9,11 +9,13 @@ import {IcRoundPeopleOutline} from '../icons/IcRoundPeopleOutline'
 import {MdiLanguageTypescript} from '../icons/MdiLanguageTypescript'
 import heroBg from '../media/hero.jpg'
 import {Blocks} from './blocks/Blocks'
+import {CodeVariantsBlock} from './blocks/CodeVariantsBlock'
 import css from './HomePage.module.scss'
 import {HomePageSchema} from './HomePage.schema'
 import {Feature, Features} from './layout/Features'
 import {Hero} from './layout/Hero'
 import {Layout} from './layout/Layout'
+import {WebText} from './layout/WebText'
 import {WebTypo} from './layout/WebTypo'
 
 const styles = fromModule(css)
@@ -28,65 +30,74 @@ export function HomePage(props: HomePageSchema) {
       <HomePageHero {...props} />
 
       <section className={styles.root.features()}>
+        <Features>
+          <Feature icon={MdiSourceBranch}>
+            <WebTypo>
+              <Feature.Title>Git based</Feature.Title>
+              <WebTypo.P className={styles.root.features.desc()}>
+                Content is version controlled in git. Easily branch and feature
+                test content changes.
+              </WebTypo.P>
+            </WebTypo>
+          </Feature>
+          <Feature icon={MdiLanguageTypescript}>
+            <WebTypo>
+              <Feature.Title>Fully typed</Feature.Title>
+              <WebTypo.P className={styles.root.features.desc()}>
+                Typescript users get a type-safe experience.
+              </WebTypo.P>
+            </WebTypo>
+          </Feature>
+          <Feature icon={IcRoundFastForward}>
+            <WebTypo>
+              <Feature.Title>Zero latency</Feature.Title>
+              <WebTypo.P className={styles.root.features.desc()}>
+                Content is easily queryable through an in-memory SQLite
+                database, avoiding network overhead.
+              </WebTypo.P>
+            </WebTypo>
+          </Feature>
+          <Feature icon={IcRoundPeopleOutline}>
+            <WebTypo>
+              <Feature.Title>Collaborative</Feature.Title>
+              <WebTypo.P className={styles.root.features.desc()}>
+                The editing experience is built on Y.js primitives, allowing
+                multiple editors to collaborate without merge conflicts.
+              </WebTypo.P>
+            </WebTypo>
+          </Feature>
+          <Feature icon={IcRoundLanguage}>
+            <WebTypo>
+              <Feature.Title>Internationalization</Feature.Title>
+              <WebTypo.P className={styles.root.features.desc()}>
+                Publish content in multiple languages and regions.
+              </WebTypo.P>
+            </WebTypo>
+          </Feature>
+          <Feature icon={IcRoundSearch}>
+            <WebTypo>
+              <Feature.Title>Full text search</Feature.Title>
+              <WebTypo.P className={styles.root.features.desc()}>
+                Search through content using SQlite's FTS5.
+              </WebTypo.P>
+            </WebTypo>
+          </Feature>
+        </Features>
+      </section>
+
+      <section className={styles.root.section({highlight: true})}>
         <Layout.Container>
-          <Features>
-            <Feature icon={MdiSourceBranch}>
-              <WebTypo>
-                <Feature.Title>Git based</Feature.Title>
-                <WebTypo.P className={styles.root.features.desc()}>
-                  Content is version controlled in git. Easily branch and
-                  feature test content changes.
-                </WebTypo.P>
-              </WebTypo>
-            </Feature>
-            <Feature icon={MdiLanguageTypescript}>
-              <WebTypo>
-                <Feature.Title>Fully typed</Feature.Title>
-                <WebTypo.P className={styles.root.features.desc()}>
-                  Typescript users get a type-safe experience.
-                </WebTypo.P>
-              </WebTypo>
-            </Feature>
-            <Feature icon={IcRoundFastForward}>
-              <WebTypo>
-                <Feature.Title>Zero latency</Feature.Title>
-                <WebTypo.P className={styles.root.features.desc()}>
-                  Content is easily queryable through an in-memory SQLite
-                  database, avoiding network overhead.
-                </WebTypo.P>
-              </WebTypo>
-            </Feature>
-            <Feature icon={IcRoundPeopleOutline}>
-              <WebTypo>
-                <Feature.Title>Collaborative</Feature.Title>
-                <WebTypo.P className={styles.root.features.desc()}>
-                  The editing experience is built on Y.js primitives, allowing
-                  multiple editors to collaborate without merge conflicts.
-                </WebTypo.P>
-              </WebTypo>
-            </Feature>
-            <Feature icon={IcRoundLanguage}>
-              <WebTypo>
-                <Feature.Title>Internationalization</Feature.Title>
-                <WebTypo.P className={styles.root.features.desc()}>
-                  Publish content in multiple languages and regions.
-                </WebTypo.P>
-              </WebTypo>
-            </Feature>
-            <Feature icon={IcRoundSearch}>
-              <WebTypo>
-                <Feature.Title>Full text search</Feature.Title>
-                <WebTypo.P className={styles.root.features.desc()}>
-                  Search through content using SQlite's FTS5.
-                </WebTypo.P>
-              </WebTypo>
-            </Feature>
-          </Features>
+          <div className={styles.root.intro()}>
+            <WebText doc={props.introduction.text} />
+            <div className={styles.root.intro.code()}>
+              <CodeVariantsBlock variants={props.introduction.code} />
+            </div>
+          </div>
         </Layout.Container>
       </section>
 
       <section className={styles.root.section()}>
-        <VStack gap={40}>
+        <VStack gap={50}>
           <Layout.Container>
             <WebTypo>
               <WebTypo.H2>Polished dashboard</WebTypo.H2>
@@ -104,20 +115,22 @@ export function HomePage(props: HomePageSchema) {
         </VStack>
       </section>
 
-      <section className={styles.root.section()}>
+      <section className={styles.root.section({highlight: true})}>
         <Layout.Container>
-          <WebTypo.H2>Build with us</WebTypo.H2>
-          <WebTypo.P>
-            Alinea is open source under the MIT license.
-            <br />
-            It needs some work before it's production-ready.
-          </WebTypo.P>
-          <Hero.Action
-            href="https://github.com/alineacms/alinea"
-            target="_blank"
-          >
-            Fork on Github
-          </Hero.Action>
+          <WebTypo>
+            <WebTypo.H2>Build with us</WebTypo.H2>
+            <WebTypo.P>
+              Alinea is open source under the MIT license.
+              <br />
+              It needs some work before it's production-ready.
+            </WebTypo.P>
+            <Hero.Action
+              href="https://github.com/alineacms/alinea"
+              target="_blank"
+            >
+              Fork on Github
+            </Hero.Action>
+          </WebTypo>
         </Layout.Container>
       </section>
 

@@ -22,8 +22,10 @@ export type FeatureProps = PropsWithChildren<{
 export function Feature({icon: Icon, children}: FeatureProps) {
   return (
     <div className={styles.feature()}>
-      {Icon && <Icon className={styles.feature.icon()} />}
-      {children}
+      <div className={styles.feature.inner()}>
+        {Icon && <Icon className={styles.feature.icon()} />}
+        {children}
+      </div>
     </div>
   )
 }

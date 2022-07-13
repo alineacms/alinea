@@ -1,13 +1,30 @@
 @import '@alinea/web/src/style.scss';
 
 .features {
-  --cols: 1;
+  --cols: 2;
   display: grid;
-  gap: 30px;
-  grid-template-columns: repeat(var(--cols), 1fr);
-  @include m {
-    --cols: 2;
+  gap: 30px 0;
+  padding: 2px 0;
+
+  @media (max-width: 600px) {
+    padding-right: 30px;
+    overflow-x: scroll;
+    grid-auto-flow: column;
+    grid-auto-columns: calc(100% - 25px);
+    scroll-snap-type: x proximity;
+    &::-webkit-scrollbar {
+      width: 0px;
+      background: transparent; /* make scrollbar transparent */
+    }
   }
+
+  @media (min-width: 600px) {
+    grid-template-columns: repeat(var(--cols), 1fr);
+    padding: 0 45px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
   @include l {
     --cols: 3;
   }
@@ -15,17 +32,23 @@
 
 .feature {
   position: relative;
-  border-radius: 16px;
-  background-color: var(--web-background);
-  padding: 30px;
-  outline: 1px solid var(--web-outline);
+  scroll-snap-align: start;
+  padding-left: 30px;
 
-  @media l {
-    padding: 40px;
-  }
+  &-inner {
+    height: 100%;
+    padding: 30px;
+    outline: 1px solid var(--web-outline);
+    border-radius: 16px;
+    background-color: var(--web-background);
 
-  > *:first-child {
-    margin-top: 0;
+    @media l {
+      padding: 40px;
+    }
+
+    > *:first-child {
+      margin-top: 0;
+    }
   }
 
   &-icon {
@@ -42,5 +65,9 @@
     white-space: pre-line;
     text-rendering: optimizeLegibility;
     padding: 4px 0 8px 0;
+
+    @include s {
+      font-size: 16px;
+    }
   }
 }

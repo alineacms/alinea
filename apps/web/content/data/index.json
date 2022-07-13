@@ -23,6 +23,78 @@
       "entry": "2AKlsMwiF5NvBhkVZXWQVsNBPP6"
     }
   ],
+  "introduction": {
+    "text": [
+      {
+        "type": "heading",
+        "textAlign": "left",
+        "level": 2,
+        "content": [
+          {
+            "type": "text",
+            "text": "Alinea CMS"
+          }
+        ]
+      },
+      {
+        "type": "paragraph",
+        "textAlign": "left",
+        "content": [
+          {
+            "type": "text",
+            "text": "Alinea is an open source content management system written in TypeScript. The dashboard boots locally with a single command. Web projects are embedded in a live preview pane. Published content changes persist on the file system in json format, allowing content to be version controlled with git."
+          }
+        ]
+      },
+      {
+        "type": "paragraph",
+        "textAlign": "left",
+        "content": [
+          {
+            "type": "text",
+            "text": "The content schema is created using code which eliminates repetitive clicking through a UI setting up every field. Custom fields can be created and distributed without hassle."
+          },
+          {
+            "type": "hardBreak"
+          },
+          {
+            "type": "hardBreak"
+          },
+          {
+            "type": "text",
+            "text": "Content is indexed in an embedded SQLite database. This allows fast querying and full text search. The database is shipped with your code using WebAssembly making it available everywhere(including edge deploys)."
+          },
+          {
+            "type": "hardBreak"
+          }
+        ]
+      }
+    ],
+    "code": [
+      {
+        "id": "iaPXpt5wncvScFUOisACx",
+        "index": "a0",
+        "type": "Variant",
+        "name": "Getting started",
+        "language": "bash",
+        "code": "# Install alinea in your project directory\nnpm install alinea\n# Initialize alinea's config file\nnpx alinea init\n# Open the dashboard to have a look around\nnpx alinea serve"
+      },
+      {
+        "id": "a86NIPs3RI0qFdRbItqmm",
+        "index": "a1",
+        "type": "Variant",
+        "name": "Configure fields",
+        "code": "import {alinea} from 'alinea'\n\nconst BlogPost = alinea.type('Blog post', {\n  title: alinea.text('Blog entry title'),\n  body: alinea.richText('Body text')\n})"
+      },
+      {
+        "id": "ZCapLFBYLA2c5Qsdz_dqs",
+        "index": "a2",
+        "type": "Variant",
+        "name": "Query content",
+        "code": "import {pages} from '@alinea/content/myWorkspace'\n\nconsole.log(\n  await pages\n    .whereType('BlogPost')\n    .where(post => post.author.is('Me'))\n    .select(post => ({title: post.title}))\n)"
+      }
+    ]
+  },
   "blocks": [],
   "links": [
     {

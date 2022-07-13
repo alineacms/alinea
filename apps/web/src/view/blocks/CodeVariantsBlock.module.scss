@@ -7,6 +7,10 @@
   box-shadow: 0 1px 0 var(--web-outline);
   border: 1px solid var(--web-outline);
 
+  &-triggers {
+    overflow: auto;
+  }
+
   &-trigger {
     appearance: none;
     background: transparent;
@@ -15,8 +19,8 @@
     color: inherit;
     border: none;
     cursor: pointer;
-    font-weight: bold;
-    font-size: 12px;
+    // font-weight: bold;
+    font-size: 13px;
 
     &:hover {
       background: var(--web-code-background);

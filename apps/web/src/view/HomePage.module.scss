@@ -8,8 +8,29 @@
 
   &-section {
     padding: 40px 0;
-    & + & {
-      padding-top: 0;
+
+    @include l {
+      padding: 90px 0;
+    }
+
+    &.is-highlight {
+      background: var(--web-background-variant);
+    }
+  }
+
+  &-intro {
+    display: grid;
+    gap: 20px 60px;
+    grid-template-columns: 1fr 1fr;
+
+    @media (max-width: 600px) {
+      grid-template-columns: 1fr;
+    }
+
+    &-code {
+      min-width: 0;
+      width: 100%;
+      padding-top: 20px;
     }
   }
 
@@ -42,6 +63,10 @@
 
     &-desc {
       font-size: 16px;
+
+      @include s {
+        font-size: 14px;
+      }
     }
   }
 }

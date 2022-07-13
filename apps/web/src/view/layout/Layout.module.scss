@@ -54,6 +54,10 @@
   margin: 0 auto;
   width: 100%;
 
+  @include ml {
+    padding: 0 45px;
+  }
+
   @include l {
     max-width: 1200px;
   }

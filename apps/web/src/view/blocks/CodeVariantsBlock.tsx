@@ -54,7 +54,7 @@ export function CodeVariantsBlock({variants}: CodeVariantsBlockSchema) {
   }
   return (
     <div className={styles.root()}>
-      <HStack>
+      <HStack className={styles.root.triggers()}>
         {variants.map(variant => {
           return (
             <button
