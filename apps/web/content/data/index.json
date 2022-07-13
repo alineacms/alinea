@@ -96,7 +96,7 @@
         "type": "Variant",
         "name": "Getting started",
         "language": "bash",
-        "code": "# Install alinea in your project directory\nnpm install alinea\n# Initialize alinea's config file\nnpx alinea init\n# Open the dashboard to have a look around\nnpx alinea serve"
+        "code": "# Install alinea in your project directory\nnpm install alinea\n\n# Initialize alinea's config file\nnpx alinea init\n\n# Open the dashboard to have a look around\nnpx alinea serve"
       },
       {
         "id": "a86NIPs3RI0qFdRbItqmm",
