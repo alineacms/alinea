@@ -33,4 +33,14 @@
     color: var(--web-accent);
     margin-bottom: 4px;
   }
+
+  &-title {
+    font-family: var(--web-title-font);
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1.33;
+    white-space: pre-line;
+    text-rendering: optimizeLegibility;
+    padding: 4px 0 8px 0;
+  }
 }

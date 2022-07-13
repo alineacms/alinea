@@ -8,11 +8,12 @@ import {WebTypo} from './WebTypo'
 
 const styles = fromModule(css)
 
-const BG_HEIGHT = 600
+const BG_HEIGHT = 80
 
 export function Hero({children}: PropsWithChildren<{}>) {
   return (
     <Layout.Container className={styles.root()}>
+      <div className={styles.root.inner()}>{children}</div>
       <svg
         className={styles.root.bg()}
         width="1440"
@@ -20,9 +21,8 @@ export function Hero({children}: PropsWithChildren<{}>) {
         viewBox={`0 0 1440 ${BG_HEIGHT}`}
         preserveAspectRatio="none"
       >
-        <path d={`M0 0H1440V${BG_HEIGHT - 80}L0 ${BG_HEIGHT}V0Z`} />
+        <path d={`M0 ${BG_HEIGHT}L1440 0V${BG_HEIGHT}H0Z`} />
       </svg>
-      <div className={styles.root.inner()}>{children}</div>
     </Layout.Container>
   )
 }

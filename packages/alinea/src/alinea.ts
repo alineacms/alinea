@@ -12,6 +12,7 @@ export {
 export type {Config, Schema, TextDoc, Type} from '@alinea/core'
 // Dashboard
 export {MediaSchema} from '@alinea/dashboard/schema/MediaSchema'
+export {Preview} from '@alinea/dashboard/view/Preview'
 export {BrowserPreview} from '@alinea/dashboard/view/preview/BrowserPreview'
 // Included inputs
 export {check} from '@alinea/input.check'

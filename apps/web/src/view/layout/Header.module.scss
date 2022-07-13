@@ -15,8 +15,12 @@
 
   &.is-transparent {
     background-color: hsla(var(--web-background-variant-hsl), 0.9);
-    box-shadow: none;
     border-bottom: transparent;
+    position: absolute;
+    width: 100%;
+    background: none;
+    backdrop-filter: none;
+    color: #041d40;
   }
 
   &-inner {

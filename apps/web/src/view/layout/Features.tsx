@@ -27,3 +27,9 @@ export function Feature({icon: Icon, children}: FeatureProps) {
     </div>
   )
 }
+
+export namespace Feature {
+  export function Title({children}: PropsWithChildren<{}>) {
+    return <h2 className={styles.feature.title()}>{children}</h2>
+  }
+}

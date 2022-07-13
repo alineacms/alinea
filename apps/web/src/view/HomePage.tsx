@@ -7,6 +7,7 @@ import dynamic from 'next/dynamic'
 import {IcRoundFastForward} from '../icons/IcRoundFastForward'
 import {IcRoundPeopleOutline} from '../icons/IcRoundPeopleOutline'
 import {MdiLanguageTypescript} from '../icons/MdiLanguageTypescript'
+import heroBg from '../media/hero.jpg'
 import {Blocks} from './blocks/Blocks'
 import css from './HomePage.module.scss'
 import {HomePageSchema} from './HomePage.schema'
@@ -31,50 +32,50 @@ export function HomePage(props: HomePageSchema) {
           <Features>
             <Feature icon={MdiSourceBranch}>
               <WebTypo>
-                <WebTypo.H2>Git-based</WebTypo.H2>
+                <Feature.Title>Git-based</Feature.Title>
                 <WebTypo.P className={styles.root.features.desc()}>
-                  Content is version controlled in git, remain in control and
+                  Content is version controlled in git. Remain in control and
                   own your data.
                 </WebTypo.P>
               </WebTypo>
             </Feature>
             <Feature icon={MdiLanguageTypescript}>
               <WebTypo>
-                <WebTypo.H2>Fully typed</WebTypo.H2>
+                <Feature.Title>Fully typed</Feature.Title>
                 <WebTypo.P className={styles.root.features.desc()}>
-                  Typescript users get a type-safe experience working with data
+                  Typescript users get a type-safe experience.
                 </WebTypo.P>
               </WebTypo>
             </Feature>
             <Feature icon={IcRoundFastForward}>
               <WebTypo>
-                <WebTypo.H2>Zero latency</WebTypo.H2>
+                <Feature.Title>Zero latency</Feature.Title>
                 <WebTypo.P className={styles.root.features.desc()}>
                   Content is easily queryable through an in-memory SQLite
-                  database, avoiding network overhead
+                  database, avoiding network overhead.
                 </WebTypo.P>
               </WebTypo>
             </Feature>
             <Feature icon={IcRoundPeopleOutline}>
               <WebTypo>
-                <WebTypo.H2>Collaborative</WebTypo.H2>
+                <Feature.Title>Collaborative</Feature.Title>
                 <WebTypo.P className={styles.root.features.desc()}>
                   The editing experience is built on Y.js primitives, allowing
-                  multiple editors to collaborate without merge conflicts
+                  multiple editors to collaborate without merge conflicts.
                 </WebTypo.P>
               </WebTypo>
             </Feature>
             <Feature icon={IcRoundLanguage}>
               <WebTypo>
-                <WebTypo.H2>Internationalization</WebTypo.H2>
+                <Feature.Title>Internationalization</Feature.Title>
                 <WebTypo.P className={styles.root.features.desc()}>
-                  Publish content in multiple languages and regions
+                  Publish content in multiple languages and regions.
                 </WebTypo.P>
               </WebTypo>
             </Feature>
             <Feature icon={IcRoundSearch}>
               <WebTypo>
-                <WebTypo.H2>Full text search</WebTypo.H2>
+                <Feature.Title>Full text search</Feature.Title>
                 <WebTypo.P className={styles.root.features.desc()}>
                   Search through content using SQlite's FTS5
                 </WebTypo.P>
@@ -84,30 +85,33 @@ export function HomePage(props: HomePageSchema) {
         </Layout.Container>
       </section>
 
-      <section className={styles.root.demo()}>
-        <VStack gap={30}>
+      <section className={styles.root.section()}>
+        <VStack gap={40}>
           <Layout.Container>
             <WebTypo>
               <WebTypo.H2>Polished dashboard</WebTypo.H2>
               <WebTypo.P>
-                The dashboard presents a user friendly editing experience that
-                requires no training. Content is can be navigated
-                hierarchically, much like the website you're structuring, making
-                it easy to find what you're looking for.
+                Content can be navigated hierarchically, much like the website
+                you're structuring, making it easy to find what you're looking
+                for. A live preview of the page shows exactly what changes look
+                like.
               </WebTypo.P>
             </WebTypo>
           </Layout.Container>
-          <iframe src="/demo" className={styles.root.demo.inner()} />
+          <div className={styles.root.demo()}>
+            <iframe src="/demo" className={styles.root.demo.inner()} />
+          </div>
         </VStack>
       </section>
 
-      <section id="demo" className={styles.root.section()}>
+      <section className={styles.root.section()}>
         <Layout.Container>
           <WebTypo.H2>Build with us</WebTypo.H2>
           <WebTypo.P>
             Alinea is open source under the MIT license and publicly available
-            right now. It's new and needs some work before it's
-            production-ready.
+            right now.
+            <br />
+            It needs some work before it's production-ready.
           </WebTypo.P>
           <Hero.Action
             href="https://github.com/alineacms/alinea"
@@ -128,7 +132,8 @@ export function HomePage(props: HomePageSchema) {
         - [ ] the editing/dashboard experience
         - [ ] deploy "anywhere": node or edge deploys
 
-        
+      
+
       <section className={styles.root.section()}>
         <Layout.Container>
           <WebTypo.H2>Code your schema</WebTypo.H2>
@@ -173,8 +178,7 @@ export function HomePage(props: HomePageSchema) {
             structure complex web apps.
           </WebTypo.P>
         </Layout.Container>
-      </section>
-       */}
+      </section>*/}
 
       <Blocks blocks={props.blocks} container={Layout.Container} />
     </div>
@@ -183,15 +187,14 @@ export function HomePage(props: HomePageSchema) {
 
 function HomePageHero({headline, byline, action, screenshot}: HomePageSchema) {
   return (
-    <div className={styles.hero()}>
+    <div
+      className={styles.hero()}
+      style={{backgroundImage: `url(${heroBg.src})`}}
+    >
       <Hero>
         <Layout.Container>
           <VStack center>
-            <Hero.Title>
-              <span className={styles.hero.focus()}>Content management</span>
-              <span className={styles.hero.sub()}>for the modern web</span>
-              {/*headline*/}
-            </Hero.Title>
+            <Hero.Title>{headline}</Hero.Title>
             <Hero.ByLine>{byline}</Hero.ByLine>
             <HStack
               wrap

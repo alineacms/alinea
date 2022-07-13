@@ -2,10 +2,10 @@
 
 .root {
   padding: 40px 0;
-  background: var(--web-background-variant);
+  // background: var(--web-background-variant);
 
   @include ml {
-    padding: 100px 0;
+    padding: 120px 0;
   }
 
   &-inner {
@@ -19,11 +19,12 @@
 
   &-bg {
     position: absolute;
+    top: 100%;
     left: 0;
     right: 0;
-    bottom: -80px;
     width: 100%;
-    fill: var(--web-background-variant);
+    fill: var(--web-background);
+    transform: translateY(-100%);
   }
 }
 
@@ -36,7 +37,7 @@
   }
 
   @include l {
-    font-size: 60px;
+    font-size: 55px;
   }
 }
 
@@ -56,7 +57,6 @@
   font-size: 14px;
   line-height: 1.4;
   max-width: 50ch;
-  color: var(--web-foreground-faded);
 
   @include ml {
     font-size: 16px;
