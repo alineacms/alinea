@@ -100,7 +100,7 @@ export function HomePage(props: HomePageSchema) {
         <VStack gap={50}>
           <Layout.Container>
             <WebTypo>
-              <WebTypo.H2>Polished dashboard</WebTypo.H2>
+              <WebTypo.H2>User friendly dashboard</WebTypo.H2>
               <WebTypo.P>
                 Content can be navigated hierarchically, much like the website
                 you're structuring, making it easy to find what you're looking

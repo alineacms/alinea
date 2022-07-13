@@ -6,7 +6,7 @@
   --web-accent-foreground: white;
   --web-background: white;
   --web-background-variant-hsl: 240, 60%, 99%;
-  --web-background-variant: #fbfbfe;
+  --web-background-variant: hsl(214, 51%, 95%);
   --web-foreground: #1e232a;
   --web-foreground-faded: #333a43;
   --web-selected: #f1f3fd;
@@ -27,7 +27,7 @@
   --web-accent-foreground: white;
   --web-background: #1e232a;
   --web-background-variant-hsl: 210, 17%, 11%;
-  --web-background-variant: #181d22;
+  --web-background-variant: #191d23;
   --web-foreground: white;
   --web-foreground-faded: #eee;
   --web-selected: hsl(230, 17%, 25%);
@@ -62,10 +62,7 @@ body,
   height: 100%;
 }
 
-body {
-  color: var(--web-foreground);
-  font-size: 15px;
-
+html {
   &.is-light {
     @include light-theme;
   }
@@ -73,6 +70,11 @@ body {
   &.is-dark {
     @include dark-theme;
   }
+}
+
+body {
+  color: var(--web-foreground);
+  font-size: 15px;
 }
 
 a {

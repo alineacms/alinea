@@ -5,7 +5,8 @@ import {Cache} from '@alinea/backend/Cache'
 import {Server} from '@alinea/backend/Server'
 import {config} from '@alinea/content'
 import {accumulate, createConfig, workspace} from '@alinea/core'
-import {Dashboard, FieldsPreview} from '@alinea/dashboard'
+import {Dashboard, Preview} from '@alinea/dashboard'
+import {px, Typo} from '@alinea/ui'
 import {useMemo} from 'react'
 
 const demoConfig = createConfig({
@@ -13,7 +14,18 @@ const demoConfig = createConfig({
     web: workspace('Demo', {
       ...config.workspaces.web.config.options,
       preview({entry}) {
-        return <FieldsPreview entry={entry} />
+        return (
+          <Preview>
+            <div style={{padding: px(20)}}>
+              <Typo.H2>Preview</Typo.H2>
+              <Typo.P>
+                This pane will show a live preview of the current page. It is
+                currently not enabled as we don't have any suitable demo content
+                yet.
+              </Typo.P>
+            </div>
+          </Preview>
+        )
       }
     })
   }

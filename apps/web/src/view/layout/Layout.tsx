@@ -24,9 +24,9 @@ export function Layout({
   )
   useEffect(() => {
     const name = theme.toLowerCase()
-    document.body.classList.add(`is-${name}`)
+    document.documentElement.classList.add(`is-${name}`)
     return () => {
-      document.body.classList.remove(`is-${name}`)
+      document.documentElement.classList.remove(`is-${name}`)
     }
   }, [theme])
   return (

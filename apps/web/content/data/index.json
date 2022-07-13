@@ -42,7 +42,7 @@
         "content": [
           {
             "type": "text",
-            "text": "Alinea is an open source content management system written in TypeScript. The dashboard boots locally with a single command. Web projects are embedded in a live preview pane. Published content changes persist on the file system in json format, allowing content to be version controlled with git."
+            "text": "Alinea is an open source content management system written in TypeScript. The dashboard boots locally with a single command without setup. Web projects can be embedded in a live preview pane. Published content changes persist on the file system in json format, allowing content to be version controlled with git."
           }
         ]
       },
@@ -62,7 +62,7 @@
           },
           {
             "type": "text",
-            "text": "Content is indexed in an embedded SQLite database. This allows fast querying and full text search. The database is shipped with your code using WebAssembly making it available everywhere(including edge deploys)."
+            "text": "Content is indexed in an embedded SQLite database. This allows fast querying and full text search. The database is shipped with your code using WebAssembly making it available everywhere (including edge deploys)."
           },
           {
             "type": "hardBreak"
