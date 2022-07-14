@@ -1,4 +1,4 @@
-export const language: any = {
+export default {
   information_for_contributors: [
     'This file has been converted from https://github.com/microsoft/TypeScript-TmLanguage/blob/master/TypeScriptReact.tmLanguage',
     'If you want to provide a fix or improvement, please create a pull request against the original repository.',
@@ -6078,4 +6078,4 @@ export const language: any = {
       match: '\\S+'
     }
   }
-}
+} as any

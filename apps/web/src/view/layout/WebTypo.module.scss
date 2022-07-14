@@ -36,10 +36,10 @@
 .h2 {
   font-family: var(--web-title-font);
   min-width: 0;
-  font-size: 18px;
+  font-size: 22px;
   font-weight: 700;
   line-height: 1.33;
-  margin: 32px 0 6px 0;
+  margin: 32px 0 14px 0;
   white-space: pre-line;
   text-rendering: optimizeLegibility;
   @extend .hyphenate;
@@ -78,7 +78,7 @@
 }
 
 .p {
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1.6;
   margin-bottom: 14px;
   max-width: 60ch;

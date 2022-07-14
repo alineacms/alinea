@@ -20,8 +20,17 @@ type TypoStyles =
 export function createTypo(styles: TypoStyles) {
   type TypoProps = {flat?: boolean; light?: boolean}
 
-  function Typo({children}: PropsWithChildren<{}>) {
-    return <div className={styles.root()}>{children}</div>
+  function Typo({
+    children,
+    align
+  }: PropsWithChildren<{
+    align?: 'left' | 'right' | 'center'
+  }>) {
+    return (
+      <div style={{textAlign: align}} className={styles.root()}>
+        {children}
+      </div>
+    )
   }
 
   function H1Component(

@@ -91,6 +91,10 @@ export function Viewport({
         })}
       >
         {children}
+        {/* See: https://github.com/tailwindlabs/headlessui/discussions/666#discussioncomment-2197931 */}
+        <div id="headlessui-portal-root">
+          <div />
+        </div>
       </main>
     </ColorSchemeProvider>
   )

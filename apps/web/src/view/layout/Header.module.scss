@@ -7,7 +7,7 @@
   top: 0;
   color: var(--web-foreground-faded);
   height: var(--web-header-height);
-  z-index: 2;
+  z-index: 7;
   background-color: var(--bg-faded);
   backdrop-filter: blur(12px);
   flex-shrink: 0;
@@ -15,8 +15,12 @@
 
   &.is-transparent {
     background-color: hsla(var(--web-background-variant-hsl), 0.9);
-    box-shadow: none;
     border-bottom: transparent;
+    position: absolute;
+    width: 100%;
+    background: none;
+    backdrop-filter: none;
+    color: #041d40;
   }
 
   &-inner {
@@ -43,6 +47,9 @@
     &:hover {
       color: var(--web-foreground);
     }
+    .is-transparent &:hover {
+      color: black;
+    }
   }
 
   &-nav {
@@ -68,6 +75,10 @@
         color: var(--web-foreground);
       }
 
+      .is-transparent &:hover {
+        color: black;
+      }
+
       &.is-active {
         color: var(--web-selected-foreground);
         font-weight: 600;
@@ -82,6 +93,14 @@
     &-icon {
       display: block;
       font-size: 25px;
+    }
+
+    &:hover {
+      color: var(--web-foreground);
+    }
+
+    .is-transparent &:hover {
+      color: black;
     }
   }
 

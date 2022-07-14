@@ -6,7 +6,13 @@
   --web-accent-foreground: white;
   --web-background: white;
   --web-background-variant-hsl: 240, 60%, 99%;
-  --web-background-variant: #fbfbfe;
+  --web-background-variant: linear-gradient(
+    to right,
+    hsl(110, 67%, 98%),
+    hsl(217, 59%, 98%),
+    hsl(217, 85%, 98%),
+    hsl(191, 61%, 98%)
+  );
   --web-foreground: #1e232a;
   --web-foreground-faded: #333a43;
   --web-selected: #f1f3fd;
@@ -15,9 +21,6 @@
   --web-header-background-hsl: 0, 0%, 100%;
   --web-header-background: hsl(var(--web-header-background-hsl));
   --web-negative-hsl: 215, 17%, 14%;
-  --web-code-background: #1e232a;
-  --web-code-highlight: #292c3d;
-  --web-code-foreground: #fbfbfe;
   --web-outline: #ecebeb;
   --web-section1-background: #f1f3fd;
 }
@@ -25,12 +28,32 @@
 @mixin dark-theme {
   color-scheme: dark;
   --web-accent-hsl: 230, 77%, 60%;
-  --web-accent: #4a65e8;
+  --web-accent: #5975ff;
   --web-accent-light: hsl(230, 77%, 65%);
   --web-accent-foreground: white;
   --web-background: #1e232a;
   --web-background-variant-hsl: 210, 17%, 11%;
-  --web-background-variant: #181d22;
+  --web-background-variant: radial-gradient(
+      circle 800px at 700px 200px,
+      rgba(11, 73, 131, 0.05),
+      transparent
+    ),
+    radial-gradient(
+      circle 600px at calc(100% - 300px) 300px,
+      rgba(4, 49, 44, 0.205),
+      transparent
+    ),
+    radial-gradient(
+      circle 800px at right bottom,
+      hsl(205 45% 8.6%),
+      transparent
+    ),
+    radial-gradient(
+      circle 800px at calc(50% - 600px) calc(100% - 100px),
+      hsla(239, 60%, 40%, 0.096),
+      rgb(18, 27, 31),
+      transparent
+    );
   --web-foreground: white;
   --web-foreground-faded: #eee;
   --web-selected: hsl(230, 17%, 25%);
@@ -39,9 +62,6 @@
   --web-header-background-hsl: 215, 17%, 14%;
   --web-header-background: hsl(var(--web-header-background-hsl));
   --web-negative-hsl: 0, 0%, 100%;
-  --web-code-background: #1e232a;
-  --web-code-highlight: #292c3d;
-  --web-code-foreground: #fbfbfe;
   --web-outline: #424242;
   --web-code-inline-background: #ecebeb;
   --web-code-inline-foreground: #1e232a;
@@ -51,6 +71,9 @@
 :root {
   --web-title-font: 'Poppins', sans-serif;
   --web-header-height: 60px;
+  --web-code-background: #1e232a;
+  --web-code-highlight: #464a61;
+  --web-code-foreground: #fbfbfe;
 
   @include dark-theme;
 
@@ -65,10 +88,7 @@ body,
   height: 100%;
 }
 
-body {
-  color: var(--web-foreground);
-  font-size: 15px;
-
+html {
   &.is-light {
     @include light-theme;
   }
@@ -76,6 +96,11 @@ body {
   &.is-dark {
     @include dark-theme;
   }
+}
+
+body {
+  color: var(--web-foreground);
+  font-size: 15px;
 }
 
 a {

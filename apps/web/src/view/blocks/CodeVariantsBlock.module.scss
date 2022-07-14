@@ -2,24 +2,27 @@
   margin: 20px 0 28px 0;
   background: var(--web-code-highlight);
   color: var(--web-code-foreground);
-  border-radius: 10px;
+  border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 1px 0 var(--web-outline);
-  border: 1px solid var(--web-outline);
+  border: 1px solid #424242;
+
+  &-triggers {
+    overflow: auto;
+  }
 
   &-trigger {
     appearance: none;
     background: transparent;
-    padding: 8px 15px;
+    padding: 9px 18px;
     font: inherit;
     color: inherit;
     border: none;
     cursor: pointer;
-    font-weight: bold;
-    font-size: 12px;
+    // font-weight: bold;
+    font-size: 13px;
 
     &:hover {
-      background: var(--web-code-background);
+      background: #2a313a;
     }
 
     &.is-selected {

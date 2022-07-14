@@ -16,8 +16,6 @@ export type FooterProps = {
   setTheme: (theme: Layout.Theme) => void
 }
 
-const BG_HEIGHT = 80
-
 const themeIcons = {
   system: IcSharpBrightnessMedium,
   dark: IcOutlineDarkMode,

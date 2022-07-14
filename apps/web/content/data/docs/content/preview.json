@@ -55,7 +55,7 @@
         {
           "id": "ka2apLC9O0Vmg50j9M2Zz",
           "type": "CodeBlock",
-          "code": "import {Preview} from '@alinea/dashboard'\nworkspace('My workspace', {\n  // ... workspace options\n  preview({entry}) {\n    return (\n      <Preview>\n        <h1>{entry.title}</h1>\n      </Preview>\n    )\n  }\n})"
+          "code": "import {Preview} from 'alinea'\nworkspace('My workspace', {\n  // ... workspace options\n  preview({entry}) {\n    return (\n      <Preview>\n        <h1>{entry.title}</h1>\n      </Preview>\n    )\n  }\n})"
         },
         {
           "type": "heading",
@@ -91,7 +91,7 @@
         {
           "id": "MP6gNDkdn7IOauBddwK5Q",
           "type": "CodeBlock",
-          "code": "import {Preview} from '@alinea/dashboard'\nworkspace('My workspace', {\n  // ... workspace options\n  preview({previewToken}) {\n    return (\n      <BrowserPreview\n        url={`http://localhost:3000/api/preview?${previewToken}`}\n      />\n    )\n  }\n})"
+          "code": "import {BrowserPreview} from 'alinea'\nworkspace('My workspace', {\n  // ... workspace options\n  preview({previewToken}) {\n    return (\n      <BrowserPreview\n        url={`http://localhost:3000/api/preview?${previewToken}`}\n      />\n    )\n  }\n})"
         },
         {
           "type": "paragraph",

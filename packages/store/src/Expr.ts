@@ -302,7 +302,9 @@ export class Expr<T> {
     )
   }
 
-  get<K extends keyof T>(name: K): Expr<T[K]> {
+  get<K extends keyof T>(name: K): Expr<T[K]>
+  get(name: string): Expr<any>
+  get(name: string): Expr<any> {
     return new Expr(ExprData.Field(this.expr, name as string))
   }
 

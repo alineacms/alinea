@@ -1,11 +1,11 @@
 @import '@alinea/web/src/style.scss';
 
 .root {
-  padding: 80px 0;
-  background: var(--web-background-variant);
+  padding: 60px 0;
+  // background: var(--web-background-variant);
 
   @include ml {
-    padding: 130px 0;
+    padding: 120px 0;
   }
 
   &-inner {
@@ -19,24 +19,26 @@
 
   &-bg {
     position: absolute;
+    top: 100%;
     left: 0;
     right: 0;
-    bottom: -80px;
     width: 100%;
-    fill: var(--web-background-variant);
+    fill: var(--web-background);
+    transform: translateY(-100%);
   }
 }
 
 .title {
-  font-size: 45px;
+  font-size: 35px;
   line-height: 1;
   margin-bottom: 24px;
+
   @include m {
-    font-size: 52px;
+    font-size: 45px;
   }
 
   @include l {
-    font-size: 60px;
+    font-size: 50px;
   }
 }
 
@@ -50,13 +52,24 @@
   border-radius: 25px;
   font-size: 14px;
   font-weight: 500;
+
+  &.is-outline {
+    border: 1px solid var(--web-accent-foreground);
+  }
+
+  &:hover {
+    background: var(--web-accent-light);
+  }
 }
 
 .byLine {
   font-size: 14px;
   line-height: 1.4;
   max-width: 50ch;
-  color: var(--web-foreground-faded);
+
+  @include s {
+    padding: 0 10px;
+  }
 
   @include ml {
     font-size: 16px;

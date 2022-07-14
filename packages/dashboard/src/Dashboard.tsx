@@ -6,6 +6,7 @@ export interface DashboardOptions<T extends Workspaces = Workspaces> {
   config: Config<T>
   client: Hub<T>
   queryClient?: QueryClient
+  fullPage?: boolean
 }
 
 export const Dashboard = App
