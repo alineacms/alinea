@@ -30,8 +30,10 @@
     white-space: nowrap;
     line-height: 1.5;
     padding: 9px 0;
-    display: flex;
     opacity: 0.4;
+    max-width: 50%;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   &-hidden {
     font: inherit;

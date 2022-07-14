@@ -22,6 +22,7 @@ export function PathInput({state, field}: PathInputProps) {
   const [focus, setFocus] = useState(false)
   const hiddenRef = useRef<HTMLSpanElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const suffixRef = useRef<HTMLDivElement>(null)
   const parentState = state.parent()
   if (!parentState) throw 'Parent state not found'
   const [source = ''] = useInput<InputState.Scalar<string>>(
@@ -74,7 +75,6 @@ export function PathInput({state, field}: PathInputProps) {
   /* Todo:
       - Server side
       - On create new (path field, via server side)
-      - lange suffix supporten (nice to have)
       - right to left written languages (nice to have)
   */
 
@@ -82,14 +82,24 @@ export function PathInput({state, field}: PathInputProps) {
 
   function getSuffixPosition(): number {
     if (!currentSuffix) return 0
-    if (!hiddenRef.current || !inputRef.current) return 0
+    if (!hiddenRef.current || !inputRef.current || !suffixRef.current) return 0
     // Check if text overflows input field width
     if (
-      hiddenRef.current.clientWidth + INPUT_OFFSET_LEFT + INPUT_OFFSET_RIGHT >=
+      hiddenRef.current.clientWidth +
+        INPUT_OFFSET_LEFT +
+        getRightInputPadding() >=
       inputRef.current.clientWidth
     )
-      return inputRef.current.clientWidth - INPUT_OFFSET_RIGHT
+      return inputRef.current.clientWidth - getRightInputPadding()
     return hiddenRef.current.clientWidth + INPUT_OFFSET_LEFT
+  }
+
+  function getRightInputPadding(): number {
+    if (!currentSuffix) return INPUT_OFFSET_RIGHT
+    if (!suffixRef.current) return INPUT_OFFSET_RIGHT
+    if (suffixRef.current.clientWidth + 10 > INPUT_OFFSET_RIGHT)
+      return suffixRef.current.clientWidth + 10
+    return INPUT_OFFSET_RIGHT
   }
 
   return (
@@ -119,8 +129,10 @@ export function PathInput({state, field}: PathInputProps) {
             setFocus(false)
             applySuffix()
           }}
+          style={{paddingRight: px(getRightInputPadding())}}
         />
         <div
+          ref={suffixRef}
           className={styles.root.suffix()}
           style={{left: px(getSuffixPosition())}}
         >
