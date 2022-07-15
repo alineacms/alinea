@@ -17,9 +17,9 @@
 .items {
   position: absolute;
   top: 100%;
-  padding: 5px;
+  padding: 20px;
   margin-top: 5px;
-  min-width: 220px;
+  min-width: 240px;
   border-radius: var(--alinea-border-radius);
   background: var(--alinea-background);
   border: 1px solid var(--alinea-outline);
@@ -32,4 +32,14 @@
   &.is-right {
     right: 0;
   }
+}
+
+.header {
+  padding-bottom: 10px;
+  box-shadow: var(--alinea-divider-bottom);
+}
+
+.footer {
+  padding-top: 10px;
+  box-shadow: var(--alinea-divider-top);
 }

@@ -1,5 +1,5 @@
 import {Menu, Popover} from '@headlessui/react'
-import {ButtonHTMLAttributes, HTMLAttributes} from 'react'
+import {ButtonHTMLAttributes, HTMLAttributes, PropsWithChildren} from 'react'
 import css from './PopoverMenu.module.scss'
 import {fromModule} from './util/Styler'
 
@@ -27,6 +27,22 @@ export namespace PopoverMenu {
         {...props}
         className={styles.items.mergeProps(props)({left, right})}
       />
+    )
+  }
+
+  export function Header({children}: PropsWithChildren<{}>) {
+    return (
+      <div className={styles.header()}>
+        <header>{children}</header>
+      </div>
+    )
+  }
+
+  export function Footer({children}: PropsWithChildren<{}>) {
+    return (
+      <div className={styles.footer()}>
+        <footer>{children}</footer>
+      </div>
     )
   }
 }

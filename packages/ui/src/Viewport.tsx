@@ -34,12 +34,20 @@ export function Viewport({
           undefined
       : undefined
   )
+  // ERROR: Cannot destructure property 'scheme' of 'preferences' as it is undefined (when localStorage is empty)
   const {scheme, size, workspace, language} = preferences
   useEffect(() => {
     if (!size) return
     document.documentElement.style.fontSize = `${size}px`
   }, [size])
-
+  // TODO: Make one general function to update preferences
+  // function updatePreferences({key, value}) {
+  //   setPreferences({...preferences, [key]: value})
+  //   window?.localStorage?.setItem(
+  //     persistenceId,
+  //     JSON.stringify({...preferences, [key]: value})
+  //   )
+  // }
   function toggleSchemePreference() {
     const isLight =
       scheme === undefined

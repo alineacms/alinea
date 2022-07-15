@@ -6,6 +6,8 @@ import {
   DropdownMenu,
   fromModule,
   Icon,
+  IconButton,
+  Language,
   px,
   TextLabel,
   usePreferences,
@@ -13,6 +15,7 @@ import {
 } from '@alinea/ui'
 import {LogoShape} from '@alinea/ui/branding/LogoShape'
 import IcRoundKeyboardArrowDown from '@alinea/ui/icons/IcRoundKeyboardArrowDown'
+import IcRoundKeyboardArrowUp from '@alinea/ui/icons/IcRoundKeyboardArrowUp'
 import IcRoundTextFields from '@alinea/ui/icons/IcRoundTextFields'
 import {IcRoundUnfoldMore} from '@alinea/ui/icons/IcRoundUnfoldMore'
 import {IcSharpBrightnessMedium} from '@alinea/ui/icons/IcSharpBrightnessMedium'
@@ -57,8 +60,8 @@ export namespace Toolbar {
       string | undefined
     >()
     const [language = preferences?.language, setLanguage] = useState<
-      string | undefined
-    >()
+      Language | undefined
+    >('en')
     const checked = preferences?.scheme === 'dark'
     const [hue, saturation, lightness] = parseToHsla(accentColor)
     const style: any = {
@@ -132,68 +135,88 @@ export namespace Toolbar {
               <PopoverMenu.Trigger>
                 <HStack center gap={4}>
                   <Avatar user={session.user} />
-                  <Icon icon={IcRoundKeyboardArrowDown} />
-                  {/* <IcRoundKeyboardArrowDown /> */}
+                  <IcRoundKeyboardArrowDown />
                 </HStack>
               </PopoverMenu.Trigger>
 
               <PopoverMenu.Items right>
-                <VStack>
-                  <HStack center gap={16}>
-                    <Icon icon={IcSharpBrightnessMedium} size={20} />
-                    <Switch
-                      checked={checked}
-                      onChange={toggleColorScheme}
-                      className={styles.root.switch({
-                        checked
-                      })}
-                    >
-                      <span
-                        className={styles.root.switch.slider({
-                          checked
-                        })}
-                      />
-                    </Switch>
-                  </HStack>
-                  <HStack center gap={16}>
-                    <Icon icon={IcRoundTextFields} size={20} />
-                    <input
-                      className={styles.root.range()}
-                      type="range"
-                      min={16}
-                      max={41}
-                      value={preferences.size || 16}
-                      onChange={e =>
-                        updateFontSize(Number(e.currentTarget.value))
-                      }
-                    ></input>
-                  </HStack>
-                  <SelectInput
-                    state={
-                      new InputState.StatePair(workspace || '', setWorkspace)
-                    }
-                    field={select(
-                      'Default workspace',
-                      Object.fromEntries(
-                        Object.entries(config.workspaces).map(
-                          ([key, workspace]) => {
-                            return [key, workspace.label || key]
-                          }
+                <VStack gap={25}>
+                  <PopoverMenu.Header>
+                    <p>
+                      {session.user.sub.charAt(0).toUpperCase() +
+                        session.user.sub.slice(1)}
+                    </p>
+                  </PopoverMenu.Header>
+
+                  <VStack gap={15}>
+                    <HStack justify={'space-between'} style={{padding: px(6)}}>
+                      <HStack center gap={16}>
+                        <Icon icon={IcSharpBrightnessMedium} size={20} />
+                        <Switch
+                          checked={checked}
+                          onChange={toggleColorScheme}
+                          className={styles.root.switch({
+                            checked
+                          })}
+                        >
+                          <span
+                            className={styles.root.switch.slider({
+                              checked
+                            })}
+                          />
+                        </Switch>
+                      </HStack>
+                      <HStack gap={4}>
+                        <Icon
+                          icon={IcRoundTextFields}
+                          size={20}
+                          style={{marginRight: px(12)}}
+                        />
+                        <IconButton
+                          icon={IcRoundKeyboardArrowDown}
+                          onClick={() => updateFontSize(preferences.size - 1)}
+                          disabled={preferences.size <= 16}
+                        />
+                        <IconButton
+                          icon={IcRoundKeyboardArrowUp}
+                          onClick={() => updateFontSize(preferences.size + 1)}
+                          disabled={preferences.size >= 40}
+                        />
+                      </HStack>
+                    </HStack>
+                    <SelectInput
+                      state={
+                        new InputState.StatePair(
+                          workspace || '',
+                          updateWorkspacePreference
                         )
-                      )
-                    )}
-                  />
-                  <SelectInput
+                      }
+                      field={select(
+                        'Default workspace',
+                        Object.fromEntries(
+                          Object.entries(config.workspaces).map(
+                            ([key, workspace]) => {
+                              return [key, workspace.label || key]
+                            }
+                          )
+                        )
+                      )}
+                    />
+                    {/* <SelectInput
                     state={
                       new InputState.StatePair(language || '', setLanguage)
                     }
-                    field={select('Default language', {en: 'EN'})}
-                  />
-                  <DropdownMenu.Root>
-                    <DropdownMenu.Item onSelect={session.end}>
-                      Logout
-                    </DropdownMenu.Item>
-                  </DropdownMenu.Root>
+                    field={select<string>('Default language', {en: 'EN'})}
+                  /> */}
+                  </VStack>
+
+                  <PopoverMenu.Footer>
+                    <DropdownMenu.Root>
+                      <DropdownMenu.Item onSelect={session.end}>
+                        Logout
+                      </DropdownMenu.Item>
+                    </DropdownMenu.Root>
+                  </PopoverMenu.Footer>
                 </VStack>
               </PopoverMenu.Items>
             </PopoverMenu.Root>
