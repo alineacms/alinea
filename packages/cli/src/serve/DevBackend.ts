@@ -1,5 +1,6 @@
 import {Backend} from '@alinea/backend/Backend'
 import {FileData} from '@alinea/backend/data/FileData'
+import {FileDrafts} from '@alinea/backend/drafts/FileDrafts'
 import {JsonLoader} from '@alinea/backend/loader/JsonLoader'
 import {JWTPreviews} from '@alinea/backend/util/JWTPreviews'
 import {Config, Workspaces} from '@alinea/core'
@@ -7,7 +8,6 @@ import {Store} from '@alinea/store'
 import {SqliteStore} from '@alinea/store/sqlite/SqliteStore'
 import fs from 'node:fs/promises'
 import path from 'node:path'
-import {DevDrafts} from './DevDrafts'
 
 export interface DevServerOptions<T extends Workspaces> {
   cwd?: string
@@ -33,9 +33,13 @@ export class DevBackend<T extends Workspaces = Workspaces> extends Backend<T> {
       loader: JsonLoader,
       rootDir: cwd
     })
-    const drafts = new DevDrafts({
+    /*const drafts = new DevDrafts({
       outDir,
       createStore: createDraftStore
+    })*/
+    const drafts = new FileDrafts({
+      fs,
+      dir: path.join(outDir, '.drafts')
     })
     super({
       dashboardUrl,

@@ -25,7 +25,11 @@ export type BrowserPreviewProps = {
   reload?: boolean
 }
 
-export function BrowserPreview({url, prettyUrl, reload}: BrowserPreviewProps) {
+export function BrowserPreview({
+  url,
+  prettyUrl,
+  reload = true
+}: BrowserPreviewProps) {
   const ref = useRef<HTMLIFrameElement>(null)
   const drafts = useDrafts()
   const status = useObservable(drafts.status)
