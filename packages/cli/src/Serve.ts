@@ -146,6 +146,7 @@ export async function serve(options: ServeOptions): Promise<void> {
   let server: Promise<Backend> | undefined
 
   async function reloadServer(error?: Error) {
+    if (error) console.error(error)
     await (server = error ? undefined : devServer())
   }
 
