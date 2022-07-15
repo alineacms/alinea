@@ -126,6 +126,7 @@ export function BrowserPreview({
               setLoading(false)
               try {
                 ref.current?.contentWindow?.history
+                setHasHistory(true)
               } catch (e) {
                 setHasHistory(false)
               }
