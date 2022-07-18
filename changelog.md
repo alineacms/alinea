@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+- Avoid errors during the serve command that would stop the process with
+  "memory access out of bounds".
+- Detect if we're serving a preview cross origin and cannot use the iframe's
+  history. If so we adjust the UI to hide the back/forward buttons and change
+  the reload button to refresh the iframe source instead of a history reload.
+
 ## [0.1.9]
 
 - Log errors during CLI builds
