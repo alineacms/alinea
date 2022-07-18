@@ -57,6 +57,10 @@ export class SqliteStore implements Store {
     return this.all(cursor.take(1), options)[0] || null
   }
 
+  sure<Row>(cursor: Cursor<Row>, options?: QueryOptions): Row {
+    return this.first(cursor, options)!
+  }
+
   delete<Row>(cursor: Cursor<Row>, options?: QueryOptions): {changes: number} {
     const stmt = f.formatDelete(cursor.cursor)
     return this.prepare(stmt.sql).run(stmt.getParams())
@@ -170,11 +174,16 @@ export class SqliteStore implements Store {
   ): boolean {
     const newFields = fields(collection.as('new'))
     const keys = Object.keys(newFields).map(key => f.escapeId(key))
-    const instruction = `create virtual table if not exists ${f.escapeId(
-      name
-    )} using fts5(id unindexed, ${keys.join(', ')})`
-    this.db.exec(instruction)
-    return true
+    try {
+      const instruction = `create virtual table ${f.escapeId(
+        name
+      )} using fts5(id unindexed, ${keys.join(', ')})`
+      this.db.exec(instruction)
+      return true
+    } catch (e: any) {
+      if (e.message.includes('already exists')) return false
+      else throw e
+    }
   }
 
   createFts5Triggers<Row extends {}>(
