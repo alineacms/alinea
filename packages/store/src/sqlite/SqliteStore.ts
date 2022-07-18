@@ -168,13 +168,9 @@ export class SqliteStore implements Store {
     name: string,
     fields: (collection: Collection<Row>) => Record<string, Expr<string>>
   ): boolean {
-    const exists = this.db
-      .prepare('select distinct tbl_name from sqlite_master where tbl_name = ?')
-      .get([name])
-    if (exists) return false
     const newFields = fields(collection.as('new'))
     const keys = Object.keys(newFields).map(key => f.escapeId(key))
-    const instruction = `create virtual table ${f.escapeId(
+    const instruction = `create virtual table if not exists ${f.escapeId(
       name
     )} using fts5(id unindexed, ${keys.join(', ')})`
     this.db.exec(instruction)
