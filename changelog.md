@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.1.10]
+
 - Avoid errors during the serve command that would stop the process with
   "memory access out of bounds".
 - Detect if we're serving a preview cross origin and cannot use the iframe's
