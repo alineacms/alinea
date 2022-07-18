@@ -27,22 +27,31 @@ export namespace Section {
     }
   >
 
-  type InferRawFields<S> = S extends Presentational
-    ? never
-    : S extends Section<infer U, any>
-    ? U
-    : S extends Lazy<infer U>
-    ? U extends {[key: string]: any}
-      ? {
-          [K in keyof U]: U[K] extends Lazy<Field<infer T, infer M, infer Q>>
-            ? T
-            : never
-        }
-      : never
-    : never
+  type InferRawFields<S> =
+    // There's no fields in this type
+    [S] extends [never]
+      ? {}
+      : // React element, like <p>Some jsx</p>
+      S extends Presentational
+      ? {}
+      : // A section of fields or tabs
+      S extends Section<infer U, any>
+      ? U
+      : // Lazy section
+      S extends Lazy<infer U>
+      ? U extends {[key: string]: any}
+        ? {
+            [K in keyof U]: U[K] extends Lazy<Field<infer T, infer M, infer Q>>
+              ? T
+              : {}
+          }
+        : {}
+      : {}
 
-  type InferTransformedFields<S> = S extends Presentational
-    ? never
+  type InferTransformedFields<S> = [S] extends [never]
+    ? {}
+    : S extends Presentational
+    ? {}
     : S extends Section<any, infer U>
     ? U
     : S extends Lazy<infer U>
@@ -50,10 +59,10 @@ export namespace Section {
       ? {
           [K in keyof U]: U[K] extends Lazy<Field<infer T, infer M, infer Q>>
             ? Q
-            : never
+            : {}
         }
-      : never
-    : never
+      : {}
+    : {}
 
   export type Input<T = any> = Section<T> | Presentational | Fields
 
