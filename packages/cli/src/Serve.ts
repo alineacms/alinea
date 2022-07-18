@@ -4,6 +4,7 @@ import {router} from '@alinea/backend/router/Router'
 import {ReadableStream, Request, Response, TextEncoderStream} from '@alinea/iso'
 import semver from 'compare-versions'
 import esbuild, {BuildOptions, BuildResult} from 'esbuild'
+import fs from 'node:fs'
 import http from 'node:http'
 import {createRequire} from 'node:module'
 import path from 'node:path'
@@ -168,6 +169,9 @@ export async function serve(options: ServeOptions): Promise<void> {
 
   const matcher = router.matcher()
   const entry = `@alinea/dashboard/dev/${alineaDev ? 'Dev' : 'Lib'}Entry`
+  // This could be determined during the build process using esbuild metadata
+  // but for now this will do
+  const hasCss = fs.existsSync(path.join(cwd, 'config.css'))
   const app = router(
     matcher.get('/~dev').map((): Response => {
       const stream = new ReadableStream({
@@ -193,7 +197,7 @@ export async function serve(options: ServeOptions): Promise<void> {
           `<!DOCTYPE html>
           <meta charset="utf-8" />
           <link rel="icon" href="data:," />
-          <link href="./config.css" rel="stylesheet" />
+          ${hasCss ? '<link href="./config.css" rel="stylesheet" />' : ''}
           <link href="./entry.css" rel="stylesheet" />
           <meta name="viewport" content="width=device-width, initial-scale=1" />
           <body>
