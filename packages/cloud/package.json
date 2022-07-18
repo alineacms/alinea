@@ -27,7 +27,7 @@
     "@alinea/client": "0.0.0",
     "@alinea/core": "0.0.0",
     "@alinea/dashboard": "0.0.0",
-    "@alinea/iso": "^0.1.17",
+    "@alinea/iso": "^0.1.18",
     "@alinea/shared": "0.0.0",
     "@alinea/ui": "0.0.0"
   }

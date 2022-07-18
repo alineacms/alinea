@@ -36,7 +36,7 @@ __metadata:
   resolution: "@alinea/backend.github@workspace:packages/backend.github"
   dependencies:
     "@alinea/core": 0.0.0
-    "@alinea/iso": ^0.1.17
+    "@alinea/iso": ^0.1.18
     "@octokit/rest": ^18.12.0
     octokit-commit-multiple-files: ^3.2.1
   languageName: unknown
@@ -67,7 +67,7 @@ __metadata:
   resolution: "@alinea/backend@workspace:packages/backend"
   dependencies:
     "@alinea/core": 0.0.0
-    "@alinea/iso": ^0.1.17
+    "@alinea/iso": ^0.1.18
     "@alinea/sqlite-wasm": ^0.1.7
     "@alinea/store": 0.0.0
     "@types/js-yaml": ^4.0.5
@@ -87,7 +87,7 @@ __metadata:
     "@alinea/backend": 0.0.0
     "@alinea/client": 0.0.0
     "@alinea/core": 0.0.0
-    "@alinea/iso": ^0.1.17
+    "@alinea/iso": ^0.1.18
     "@alinea/sqlite-wasm": ^0.1.7
     "@alinea/store": 0.0.0
     "@esbx/eval": ^0.0.19
@@ -115,7 +115,7 @@ __metadata:
   resolution: "@alinea/client@workspace:packages/client"
   dependencies:
     "@alinea/core": 0.0.0
-    "@alinea/iso": ^0.1.17
+    "@alinea/iso": ^0.1.18
   languageName: unknown
   linkType: soft
 
@@ -127,7 +127,7 @@ __metadata:
     "@alinea/client": 0.0.0
     "@alinea/core": 0.0.0
     "@alinea/dashboard": 0.0.0
-    "@alinea/iso": ^0.1.17
+    "@alinea/iso": ^0.1.18
     "@alinea/shared": 0.0.0
     "@alinea/ui": 0.0.0
   languageName: unknown
@@ -143,7 +143,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@alinea/core@workspace:packages/core"
   dependencies:
-    "@alinea/iso": ^0.1.17
+    "@alinea/iso": ^0.1.18
     "@alinea/store": 0.0.0
     serialize-error: ^9.0.0
     yjs: ^13.5.39
@@ -379,10 +379,10 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@alinea/iso@npm:^0.1.17":
-  version: 0.1.17
-  resolution: "@alinea/iso@npm:0.1.17"
-  checksum: 38100177441351b5f05bec1c3d1cbc157ede2de429dcceabd1268eeaca9fe737bbbb2da3cd2912643c3b9d6cd3ae42ba1f060278993a83fb83b63df890075c65
+"@alinea/iso@npm:^0.1.18":
+  version: 0.1.18
+  resolution: "@alinea/iso@npm:0.1.18"
+  checksum: 98fa55d191c4bcf2adaf7a1aaaf448d3559decdbfee824397c91591e7dc22ce090846fd3b353c0422132d11b618799dfff47e391b33b17fee5c603e7a4a1b01d
   languageName: node
   linkType: hard
 

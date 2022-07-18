@@ -24,6 +24,6 @@
   },
   "dependencies": {
     "@alinea/core": "0.0.0",
-    "@alinea/iso": "^0.1.17"
+    "@alinea/iso": "^0.1.18"
   }
 }
