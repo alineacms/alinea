@@ -129,7 +129,7 @@ export function FileUploader({max, toggleSelect}: FileUploaderProps) {
             'Upload to',
             Object.fromEntries(
               libraries!.map(library => {
-                return [library.id, library.title]
+                return [library.id, library.title as string]
               })
             )
           )}

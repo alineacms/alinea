@@ -1,9 +1,7 @@
 import {Field, Label, Shape} from '@alinea/core'
 
 /** A string record with option labels */
-export type SelectItems<T extends string> = {
-  [K in T]: Label
-}
+export type SelectItems<T extends string> = Record<T, Label>
 
 /** Optional settings to configure a select field */
 export type SelectOptions<T> = {
@@ -27,25 +25,25 @@ export type SelectOptions<T> = {
 export interface SelectField<T extends string = string>
   extends Field.Scalar<T> {
   label: Label
-  items: SelectItems<T>
+  items: Record<T, Label>
   options: SelectOptions<T>
   configure: (options: SelectOptions<T>) => SelectField<T>
 }
 
 /** Create a select field configuration */
-export function createSelect<T extends string>(
+export function createSelect<T extends string, Items extends Record<T, string>>(
   label: Label,
-  items: SelectItems<T>,
-  options: SelectOptions<T> = {}
+  items: Items,
+  options: SelectOptions<keyof Items> = {}
 ): SelectField<T> {
   return {
-    shape: Shape.Scalar(label, options.initialValue),
+    shape: Shape.Scalar(label, options.initialValue as T),
     label,
     items,
-    options,
-    initialValue: options.initialValue,
+    options: options as SelectOptions<T>,
+    initialValue: options.initialValue as T,
     configure(options: SelectOptions<T>) {
-      return createSelect<T>(label, items, options)
+      return createSelect<T, Items>(label, items, options)
     },
     hidden: options.hidden
   }

@@ -63,7 +63,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
       Object.fromEntries(
         types.map(typeKey => {
           const type = schema.type(typeKey)
-          return [typeKey, type?.label || typeKey]
+          return [typeKey, (type?.label || typeKey) as string]
         })
       ),
       {initialValue: types[0]}
