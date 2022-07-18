@@ -2,6 +2,23 @@
 
 ## [Unreleased]
 
+## [0.1.9]
+
+- Log errors during CLI builds
+- Use a more stable local drafts implementation
+
+## [0.1.8]
+
+- Add the MIT license
+- Use internal router, removing the Express.js dependency for the CLI, reducing
+  the overall install size
+
+## [0.1.7]
+
+- Backend can be compiled to a static html file, using the dashboard.staticFile
+  config setting
+- For uploaded images the correct width and height is saved in metadata
+
 ## [0.1.6]
 
 - Externalized backend implementation packages.
