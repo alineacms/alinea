@@ -123,6 +123,11 @@ export class RichTextShape<T> implements Shape<TextDoc<T>, RichTextMutator<T>> {
     const text: Y.XmlFragment = value.get('$text')
     const types = this.values || {}
     const content = text?.toArray()?.map(serialize)?.flat() || []
+    const isEmpty =
+      content.length === 1 &&
+      content[0].type === 'paragraph' &&
+      !content[0].content
+    if (isEmpty) return []
     return content.map((node): TextNode<T> => {
       const type = types[node.type]
       if (type && 'id' in node) {
