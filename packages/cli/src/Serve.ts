@@ -79,7 +79,7 @@ function browserBuild(
           return [
             file.path
               .slice(options.outdir!.length)
-              .replaceAll('\\', '/')
+              .replace(/\\/g, '/')
               .toLowerCase(),
             file.contents
           ]
