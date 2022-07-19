@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Added a button to mark text as small within the WYSIWYG editor
+
 ## [0.1.10]
 
 - Avoid errors during the serve command that would stop the process with
