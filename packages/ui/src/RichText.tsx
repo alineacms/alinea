@@ -14,7 +14,8 @@ export enum Elements {
   ul = 'ul',
   ol = 'ol',
   li = 'li',
-  a = 'a'
+  a = 'a',
+  hr = 'hr'
 }
 
 type Element = keyof typeof Elements
@@ -45,6 +46,8 @@ function nodeElement(
       return <li />
     case 'blockquote':
       return <blockquote style={style} />
+    case 'horizontalRule':
+      return <hr />
   }
 }
 
@@ -84,9 +87,10 @@ function RichTextNodeView<T>({views, node}: RichTextNodeViewProps<T>) {
       const {type, content, ...attrs} = node as TextNode.Element
       const element = nodeElement(type, attrs)
       const View = views[element?.type || type]
-      const inner = content?.map((node, i) => (
-        <RichTextNodeView key={i} views={views} node={node} />
-      )) || <br />
+      const inner =
+        content?.map((node, i) => (
+          <RichTextNodeView key={i} views={views} node={node} />
+        )) || null
       if (View && !isValidElement(View)) {
         return <View {...(element?.props || attrs)}>{inner}</View>
       } else {
