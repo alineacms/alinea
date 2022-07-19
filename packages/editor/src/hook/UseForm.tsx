@@ -2,7 +2,7 @@ import {ROOT_KEY} from '@alinea/core/Doc'
 import {RecordShape} from '@alinea/core/shape/RecordShape'
 import {TypeConfig} from '@alinea/core/Type'
 import {useForceUpdate} from '@alinea/ui'
-import {memo, useEffect, useMemo} from 'react'
+import {ComponentType, memo, useEffect, useMemo} from 'react'
 import * as Y from 'yjs'
 import {InputState} from '../InputState'
 import {InputForm} from '../view/InputForm'
@@ -58,7 +58,7 @@ export type UseFormOptions<T> = {
 export function useForm<T>(
   options: UseFormOptions<T>,
   deps: ReadonlyArray<unknown> = []
-) {
+): readonly [ComponentType, () => T] {
   const {type, initialValue = {}} = options
   const initial: Record<string, any> = initialValue
   const redraw = useForceUpdate()

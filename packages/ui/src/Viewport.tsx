@@ -15,7 +15,7 @@ const styles = fromModule(css)
 
 type ViewportProps = PropsWithChildren<
   {
-    color: string
+    color?: string
     contain?: boolean
     // Some UI frameworks insist on helping you by rendering components to the
     // body element directly. To style these we can apply our global styles
@@ -29,7 +29,7 @@ const useIsomorphicEffect =
 
 export function Viewport({
   children,
-  color,
+  color = '#6673FC',
   contain,
   attachToBody,
   ...props
