@@ -330,6 +330,7 @@ __metadata:
     "@tiptap/extension-gapcursor": ^2.0.0-beta.34
     "@tiptap/extension-hard-break": ^2.0.0-beta.30
     "@tiptap/extension-heading": ^2.0.0-beta.26
+    "@tiptap/extension-horizontal-rule": ^2.0.0-beta.36
     "@tiptap/extension-italic": ^2.0.0-beta.26
     "@tiptap/extension-link": ^2.0.0-beta.37
     "@tiptap/extension-list-item": ^2.0.0-beta.20
@@ -3054,6 +3055,17 @@ __metadata:
   peerDependencies:
     "@tiptap/core": ^2.0.0-beta.1
   checksum: f867124a7dd841be85b72805577bc14e3edbe55d862e3325a422e06c7eacf31f8a1985bba965d2913c5e604647e437801b9a589420a2f1072025cece1c86dd06
+  languageName: node
+  linkType: hard
+
+"@tiptap/extension-horizontal-rule@npm:^2.0.0-beta.36":
+  version: 2.0.0-beta.36
+  resolution: "@tiptap/extension-horizontal-rule@npm:2.0.0-beta.36"
+  dependencies:
+    prosemirror-state: 1.4.1
+  peerDependencies:
+    "@tiptap/core": ^2.0.0-beta.1
+  checksum: 210475a22fcfb742550da32fb76c26594b507c5453b1aa3591260dfe80726929d4f6a0b5382cab4ffd97054815202691b0b81c4ba57825c10ea7ede0e49f91b5
   languageName: node
   linkType: hard
 
@@ -9057,6 +9069,16 @@ fsevents@~2.3.2:
     prosemirror-model: ^1.0.0
     prosemirror-transform: ^1.0.0
   checksum: 755314d9291859685a469683600590604c67953febc6f027a34cefd03352fe86b931cf4634ae105038c9c5a601b88776d88477a5b7f509a1d4a9efa8b2452131
+  languageName: node
+  linkType: hard
+
+"prosemirror-state@npm:1.4.1":
+  version: 1.4.1
+  resolution: "prosemirror-state@npm:1.4.1"
+  dependencies:
+    prosemirror-model: ^1.0.0
+    prosemirror-transform: ^1.0.0
+  checksum: d094a48c3087e5b13cadf9a7416ea65efa14372953b0058eb9c695346cabfe56c85d0281348fb97720d4c941046e159ef282f2aa168abd8b6c4862e59845ef18
   languageName: node
   linkType: hard
 
