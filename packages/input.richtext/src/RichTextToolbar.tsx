@@ -18,6 +18,7 @@ import {IcRoundFormatClear} from '@alinea/ui/icons/IcRoundFormatClear'
 import {IcRoundFormatItalic} from '@alinea/ui/icons/IcRoundFormatItalic'
 import {IcRoundFormatListBulleted} from '@alinea/ui/icons/IcRoundFormatListBulleted'
 import {IcRoundFormatListNumbered} from '@alinea/ui/icons/IcRoundFormatListNumbered'
+import {IcRoundHorizontalRule} from '@alinea/ui/icons/IcRoundHorizontalRule'
 import {IcRoundLink} from '@alinea/ui/icons/IcRoundLink'
 import {IcRoundQuote} from '@alinea/ui/icons/IcRoundQuote'
 import {IcRoundUnfoldMore} from '@alinea/ui/icons/IcRoundUnfoldMore'
@@ -288,6 +289,15 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
               exec().toggleBlockquote().run()
             }}
             active={editor.isActive('blockquote')}
+          />
+          <IconButton
+            icon={IcRoundHorizontalRule}
+            size={18}
+            title="Horizontal Rule"
+            onClick={e => {
+              e.preventDefault()
+              exec().setHorizontalRule().run()
+            }}
           />
         </HStack>
       </div>
