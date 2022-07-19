@@ -6,7 +6,7 @@ import path from 'node:path'
 import {generate} from './Generate'
 import {dirname} from './util/Dirname'
 
-const __dirname = dirname(import.meta)
+const __dirname = dirname(import.meta.url)
 
 export type InitOptions = {
   cwd?: string
