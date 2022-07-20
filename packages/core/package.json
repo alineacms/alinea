@@ -23,13 +23,12 @@
     }
   },
   "dependencies": {
+    "@alinea/iso": "^0.1.18",
     "@alinea/store": "0.0.0",
-    "base-x": "^3.0.8",
-    "base64-arraybuffer": "^1.0.1",
-    "buffer": "^6.0.3",
-    "get-random-values": "^1.2.2",
-    "serialize-error": "^9.0.0",
-    "yjs": "^13.5.34"
+    "yjs": "^13.5.39"
+  },
+  "devDependencies": {
+    "serialize-error": "^9.0.0"
   },
   "peerDependencies": {
     "react": "*"

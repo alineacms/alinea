@@ -21,6 +21,6 @@ export namespace TextNode {
   }
 }
 
-export type TextNode<T = any> = TextNode.Text | TextNode.Element<T>
+export type TextNode<T = {}> = TextNode.Text | TextNode.Element<T>
 
-export type TextDoc<T> = Array<TextNode<T>>
+export type TextDoc<T = {}> = Array<TextNode<T>>

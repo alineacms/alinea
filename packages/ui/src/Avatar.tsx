@@ -20,7 +20,8 @@ export function Avatar({user}: AvatarProps) {
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        fontSize: px(13)
+        fontSize: px(13),
+        fontWeight: 'bold'
       }}
     >
       <span>{letter}</span>

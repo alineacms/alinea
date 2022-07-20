@@ -18,16 +18,19 @@ type TypeToEntry<T> = T extends {[key: string]: any}
 export type DataOf<T> = T extends Collection<infer U> ? U : never
 export type EntryOf<T> = T extends Schema<infer U> ? U : never
 export type TypesOf<T> = T extends HasType ? T['type'] : string
+export type ExtractType<T, K extends string> = T extends {type: K}
+  ? Extract<T, {type: K}>
+  : any
 
 export namespace Schema {
   /** Utility to infer the type of a Schema, Type, Field or any Store type */
   export type TypeOf<T> = T extends Schema<infer U>
     ? U
-    : T extends TypeConfig<infer U>
+    : T extends TypeConfig<any, infer U>
     ? U
-    : T extends Type<infer U>
+    : T extends Type<any, infer U>
     ? U
-    : T extends Field<infer U, infer M, infer Q>
+    : T extends Field<any, any, infer Q>
     ? Q
     : T extends Selection<infer U>
     ? U
@@ -39,7 +42,7 @@ export namespace Schema {
 export class SchemaConfig<T = any> {
   shape: Record<string, RecordShape<any>>
 
-  constructor(public types: LazyRecord<TypeConfig>) {
+  constructor(public types: LazyRecord<TypeConfig<any>>) {
     this.shape = Object.fromEntries(
       LazyRecord.iterate(types).map(([key, type]) => {
         return [key, type.shape]
@@ -62,7 +65,7 @@ export class SchemaConfig<T = any> {
 
 /** Describes the different types of entries */
 export class Schema<T = any> extends SchemaConfig<T> {
-  typeMap = new Map<string, Type>()
+  typeMap = new Map<string, Type<any>>()
 
   constructor(public workspace: Workspace<T>, config: SchemaConfig<T>) {
     super(config.types)
@@ -81,7 +84,7 @@ export class Schema<T = any> extends SchemaConfig<T> {
 
   /** Get a type by name */
   type<K extends TypesOf<T>>(name: K): Type<Extract<T, {type: K}>> | undefined
-  type(name: string): Type | undefined
+  type(name: string): Type<any> | undefined
   type(name: any): any {
     return this.typeMap.get(name)
   }

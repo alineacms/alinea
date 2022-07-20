@@ -22,18 +22,24 @@ const styles = fromModule(css)
 export type BrowserPreviewProps = {
   url: string
   prettyUrl?: string
+  reload?: boolean
 }
 
-export function BrowserPreview({url, prettyUrl}: BrowserPreviewProps) {
+export function BrowserPreview({
+  url,
+  prettyUrl,
+  reload = true
+}: BrowserPreviewProps) {
   const ref = useRef<HTMLIFrameElement>(null)
   const drafts = useDrafts()
   const status = useObservable(drafts.status)
   const [loading, setLoading] = useState(true)
+  const [hasHistory, setHasHistory] = useState(true)
   useEffect(() => {
     setLoading(true)
   }, [url])
   useEffect(() => {
-    if (status === DraftsStatus.Synced) {
+    if (reload && status === DraftsStatus.Synced) {
       ref.current?.setAttribute('src', url)
     }
   }, [status])
@@ -47,25 +53,30 @@ export function BrowserPreview({url, prettyUrl}: BrowserPreviewProps) {
     <Preview>
       <div className={styles.root()}>
         <AppBar.Root>
-          <AppBar.Item
-            as="button"
-            icon={IcRoundArrowBack}
-            onClick={() => {
-              ref.current?.contentWindow?.history.back()
-            }}
-          />
-          <AppBar.Item
-            as="button"
-            icon={IcRoundArrowForward}
-            onClick={() => {
-              ref.current?.contentWindow?.history.forward()
-            }}
-          />
+          {hasHistory && (
+            <>
+              <AppBar.Item
+                as="button"
+                icon={IcRoundArrowBack}
+                onClick={() => {
+                  ref.current?.contentWindow?.history.back()
+                }}
+              />
+              <AppBar.Item
+                as="button"
+                icon={IcRoundArrowForward}
+                onClick={() => {
+                  ref.current?.contentWindow?.history.forward()
+                }}
+              />
+            </>
+          )}
           <AppBar.Item
             as="button"
             icon={IcRoundRefresh}
             onClick={() => {
-              ref.current?.contentWindow?.location.reload()
+              if (hasHistory) ref.current?.contentWindow?.location.reload()
+              else ref.current?.setAttribute('src', url)
             }}
           />
           <AppBar.Item full style={{flexGrow: 1, minWidth: 0}}>
@@ -111,7 +122,15 @@ export function BrowserPreview({url, prettyUrl}: BrowserPreviewProps) {
             allow="accelerometer; ambient-light-sensor; camera; encrypted-media; geolocation; gyroscope; hid; microphone; midi; payment; usb; vr; xr-spatial-tracking"
             sandbox="allow-forms allow-modals allow-popups allow-presentation allow-same-origin allow-scripts allow-downloads allow-pointer-lock"
             src={url}
-            onLoad={() => setLoading(false)}
+            onLoad={() => {
+              setLoading(false)
+              try {
+                ref.current?.contentWindow?.history
+                setHasHistory(true)
+              } catch (e) {
+                setHasHistory(false)
+              }
+            }}
           />
         </div>
       </div>

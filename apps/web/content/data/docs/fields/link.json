@@ -1,0 +1,49 @@
+{
+  "id": "24yE79dE2ssYPDQQHFFgT0eg2tH",
+  "type": "Doc",
+  "root": "data",
+  "index": "a2BV",
+  "title": "Link",
+  "blocks": [
+    {
+      "id": "268i1KY3QKOP5OE6tyKcIe8OuIL",
+      "index": "a0",
+      "type": "TextBlock",
+      "text": [
+        {
+          "type": "heading",
+          "level": 1,
+          "textAlign": "left",
+          "content": [
+            {
+              "type": "text",
+              "text": "Link"
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "textAlign": "left",
+          "content": [
+            {
+              "type": "text",
+              "text": "The link field can be used to create a reference to other entries, or a an external resource (like a webpage or an email address)."
+            }
+          ]
+        },
+        {
+          "id": "268j43D4sYTv9i4LXKv8Isvwlzi",
+          "type": "CodeBlock",
+          "code": "alinea.link('My link field', {\n  type: 'entry'\n})",
+          "compact": false
+        }
+      ]
+    },
+    {
+      "id": "286IWhDVAcsssijLTyBSRdbY9JF",
+      "index": "a1",
+      "type": "TypesBlock",
+      "types": "LinkOptions"
+    }
+  ]
+}

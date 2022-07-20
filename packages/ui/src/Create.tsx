@@ -1,7 +1,6 @@
 import {ComponentType, HTMLAttributes} from 'react'
 import {Link as RRLink, LinkProps} from 'react-router-dom'
 import css from './Create.module.scss'
-import {IcRoundAdd} from './icons/IcRoundAdd'
 import {IcRoundAddCircle} from './icons/IcRoundAddCircle'
 import {HStack} from './Stack'
 import {fromModule} from './util/Styler'
@@ -33,7 +32,11 @@ export namespace Create {
     ...props
   }: HTMLAttributes<HTMLButtonElement> & Props) {
     return (
-      <button {...props} className={styles.button.mergeProps(props)()}>
+      <button
+        type="button"
+        {...props}
+        className={styles.button.mergeProps(props)()}
+      >
         <HStack center gap={8}>
           {Icon ? (
             <div className={styles.button.add()}>
@@ -41,7 +44,7 @@ export namespace Create {
             </div>
           ) : (
             <div className={styles.button.add()}>
-              <IcRoundAdd />
+              <IcRoundAddCircle />
             </div>
           )}
 

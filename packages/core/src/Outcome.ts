@@ -1,5 +1,5 @@
 import {deserializeError, ErrorObject, serializeError} from 'serialize-error'
-import {createError} from './ErrorWithCode'
+import {createError, ErrorWithCode} from './ErrorWithCode'
 
 type JSONRep<D> =
   | {success: true; data: D}
@@ -31,7 +31,7 @@ function outcomeRunner<Run extends OutcomeRunner>(
   try {
     if (typeof run === 'function') {
       const result = run()
-      if (result instanceof Promise) return outcome(result) as any
+      if (result instanceof Promise) return outcomeRunner(result) as any
       return Outcome.Success(result) as any
     }
     if (run instanceof Promise)
@@ -74,6 +74,10 @@ export namespace Outcome {
     throw (outcome as any).error
   }
 
+  export function isOutcome(value: any): value is Outcome {
+    return value instanceof OutcomeImpl
+  }
+
   export function Success<T>(data: T): Outcome<T> {
     return new SuccessOutcome(data) as any
   }
@@ -85,6 +89,7 @@ export namespace Outcome {
   }
 
   export abstract class OutcomeImpl<T> {
+    abstract status: number
     constructor(public success: boolean) {}
 
     isSuccess(): this is SuccessOutcome<T> {
@@ -100,6 +105,7 @@ export namespace Outcome {
   }
 
   class SuccessOutcome<T> extends OutcomeImpl<T> {
+    status = 200
     error = undefined
     constructor(public value: T) {
       super(true)
@@ -120,9 +126,11 @@ export namespace Outcome {
   }
 
   class FailureOutcome<T> extends OutcomeImpl<T> {
+    status
     value = undefined
     constructor(public error: Error) {
       super(false)
+      this.status = error instanceof ErrorWithCode ? error.code : 500
     }
 
     *[Symbol.iterator]() {
@@ -135,7 +143,13 @@ export namespace Outcome {
     }
 
     toJSON(): JSONRep<T> {
-      return {success: false, error: serializeError(this.error)}
+      return {
+        success: false,
+        error:
+          process.env.NODE_ENV === 'development'
+            ? serializeError(this.error)
+            : {message: String(this.error)}
+      }
     }
   }
 }

@@ -1,4 +1,4 @@
 export interface Previews {
-  sign(data: {id: string}): string
-  verify(token: string): {id: string}
+  sign(data: {id: string}): Promise<string>
+  verify(token: string): Promise<{id: string}>
 }

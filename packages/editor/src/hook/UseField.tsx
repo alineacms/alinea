@@ -10,23 +10,29 @@ export class FieldState<V, M> implements InputState<readonly [V, M]> {
   constructor(
     private shape: Shape<V>,
     private root: Y.Map<any>,
-    private key: string
+    private key: string,
+    private _parent?: InputState<any>
   ) {}
 
-  child(field: string) {
+  parent() {
+    return this._parent
+  }
+
+  child(field: string): InputState<any> {
     const current = this.root.get(this.key)
     return new FieldState(
       this.shape.typeOfChild(current, field),
       current,
-      field
+      field,
+      this
     )
   }
 
   use(): readonly [V, M] {
     const {current, mutator, observe} = useMemo(() => {
       const current = (): V => this.shape.fromY(this.root.get(this.key))
-      const mutator = this.shape.mutator(this.root, FIELD_KEY) as M
-      const observe = this.shape.watch(this.root, FIELD_KEY)
+      const mutator = this.shape.mutator(this.root, this.key) as M
+      const observe = this.shape.watch(this.root, this.key)
       return {current, mutator, observe}
     }, [])
     const redraw = useForceUpdate()

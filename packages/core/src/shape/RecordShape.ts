@@ -6,28 +6,34 @@ export type RecordMutator<T> = {
   set: <K extends keyof T>(k: K, v: T[K]) => void
 }
 
-export class RecordShape<T extends Record<string, any> = {}>
-  implements Shape<T, RecordMutator<T>>
-{
-  constructor(public label: Label, public shape: Record<string, Shape>) {}
+export class RecordShape<T = {}> implements Shape<T, RecordMutator<T>> {
+  constructor(
+    public label: Label,
+    public shape: Record<string, Shape>,
+    public initialValue?: T
+  ) {}
   concat<X>(that: RecordShape<X> | undefined): RecordShape<T & X> {
-    if (!that) return this as RecordShape<T & X>
-    return new RecordShape(that.label, {...this.shape, ...that.shape})
+    if (!that) return this as any
+    return new RecordShape<T & X>(that.label, {...this.shape, ...that.shape})
   }
   create() {
-    return Object.fromEntries(
-      Object.entries(this.shape).map(([key, field]) => {
-        return [key, field.create()]
-      })
-    ) as T
+    return (
+      this.initialValue ||
+      (Object.fromEntries(
+        Object.entries(this.shape).map(([key, field]) => {
+          return [key, field.create()]
+        })
+      ) as T)
+    )
   }
   typeOfChild<C>(yValue: T, child: string): Shape<C> {
     return this.shape[child]
   }
   toY(value: T) {
+    const self: Record<string, any> = value || {}
     const map = new Y.Map()
     for (const key of Object.keys(this.shape)) {
-      map.set(key, this.shape[key].toY(value?.[key]))
+      map.set(key, this.shape[key].toY(self[key]))
     }
     return map
   }

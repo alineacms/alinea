@@ -1,19 +1,23 @@
 import {Hub} from '@alinea/core/Hub'
 import {Media} from '@alinea/core/Media'
 import {Outcome} from '@alinea/core/Outcome'
+import {InputForm} from '@alinea/editor'
 import {Functions} from '@alinea/store'
-import {fromModule} from '@alinea/ui'
+import {fromModule, HStack, VStack} from '@alinea/ui'
+import {Main} from '@alinea/ui/Main'
 import useSize from '@react-hook/size'
 import FastAverageColor from 'fast-average-color'
-import {ChangeEvent, useRef} from 'react'
+import {ChangeEvent, Suspense, useRef} from 'react'
 import {useQuery, useQueryClient} from 'react-query'
 import VirtualList from 'react-tiny-virtual-list'
+import {EntryProperty} from '../draft/EntryProperty'
 import {useCurrentDraft} from '../hook/UseCurrentDraft'
 import {useSession} from '../hook/UseSession'
 import {useWorkspace} from '../hook/UseWorkspace'
 import {EditMode} from './entry/EditMode'
 import {EntryHeader} from './entry/EntryHeader'
 import {EntryTitle} from './entry/EntryTitle'
+import {FileUploader} from './media/FileUploader'
 import {MediaRow} from './media/MediaRow'
 import css from './MediaExplorer.module.scss'
 
@@ -54,7 +58,9 @@ async function uploadFile(
     color = res.hex
   }
   const buffer = await file.arrayBuffer()
-  return hub.uploadFile(workspace, root, {
+  return hub.uploadFile({
+    workspace,
+    root,
     path,
     buffer,
     preview,
@@ -74,11 +80,11 @@ export function MediaExplorer() {
     ['media', 'total', draft.id],
     () => {
       return hub
-        .query(
-          File.where(File.parent.is(draft.id)).select({
+        .query({
+          cursor: File.where(File.parent.is(draft.id)).select({
             total: Functions.count()
           })
-        )
+        })
         .then(Outcome.unpack)
     },
     {suspense: true}
@@ -107,53 +113,55 @@ export function MediaExplorer() {
   const perRow = Math.round(containerWidth / 240)
   const height = 200
   return (
-    <div className={styles.root()}>
+    <Main className={styles.root()}>
       <EntryHeader mode={EditMode.Editing} />
       <div className={styles.root.inner()}>
-        <header className={styles.root.inner.header()}>
-          <EntryTitle />
-
-          {/*<Suspense fallback={null}>
-            <Fields type={type} />
-          </Suspense>*/}
-          <div>
-            <input
-              ref={inputRef}
-              type="file"
-              multiple
-              onChange={handleFileUpload}
-            />
-          </div>
-        </header>
-        <div ref={containerRef} style={{flexGrow: 1, overflow: 'hidden'}}>
-          {containerHeight > 0 && (
-            <VirtualList
-              className={styles.root.list()}
-              width="100%"
-              height={containerHeight}
-              itemCount={Math.ceil(total / perRow)}
-              itemSize={height}
-              renderItem={({index, style}) => {
-                const from = index * perRow
-                return (
-                  <div key={index} style={{...style, height}}>
-                    <MediaRow
-                      amount={perRow}
-                      parentId={draft.id}
-                      from={from}
-                      batchSize={perRow * 5}
-                    />
-                  </div>
-                )
-              }}
-              scrollOffset={scrollOffsets.get(draft.id) || 0}
-              onScroll={scrollTop => {
-                scrollOffsets.set(draft.id, scrollTop)
-              }}
-            />
-          )}
-        </div>
+        <HStack style={{flexGrow: 1, minHeight: 0}}>
+          <FileUploader toggleSelect={() => {}} />
+          <VStack style={{height: '100%', width: '100%'}}>
+            <header className={styles.root.inner.header()}>
+              <EntryTitle />
+              {/* Todo: hide this in a tab interface */}
+              <div style={{display: 'none'}}>
+                <Suspense fallback={null}>
+                  <InputForm state={EntryProperty.root} type={draft.channel} />
+                </Suspense>
+              </div>
+            </header>
+            <div
+              ref={containerRef}
+              style={{flexGrow: 1, minHeight: 0, overflow: 'hidden'}}
+            >
+              {containerHeight > 0 && (
+                <VirtualList
+                  className={styles.root.list()}
+                  width="100%"
+                  height={containerHeight}
+                  itemCount={Math.ceil(total / perRow)}
+                  itemSize={height}
+                  renderItem={({index, style}) => {
+                    const from = index * perRow
+                    return (
+                      <div key={index} style={{...style, height}}>
+                        <MediaRow
+                          amount={perRow}
+                          parentId={draft.id}
+                          from={from}
+                          batchSize={perRow * 5}
+                        />
+                      </div>
+                    )
+                  }}
+                  scrollOffset={scrollOffsets.get(draft.id) || 0}
+                  onScroll={scrollTop => {
+                    scrollOffsets.set(draft.id, scrollTop)
+                  }}
+                />
+              )}
+            </div>
+          </VStack>
+        </HStack>
       </div>
-    </div>
+    </Main>
   )
 }

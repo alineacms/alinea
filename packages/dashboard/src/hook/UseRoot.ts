@@ -1,4 +1,4 @@
-import {Root} from '@alinea/core/Root'
+import {outcome, Root} from '@alinea/core'
 import {useMemo} from 'react'
 import {useMatch} from 'react-router'
 import {dashboardNav} from '../DashboardNav'
@@ -12,7 +12,7 @@ export function parseRootPath(path: string) {
 
 export function useRoot(): Root {
   const {config} = useDashboard()
-  const match = useMatch(nav.matchRoot)
+  const [match] = outcome(() => useMatch(nav.matchRoot))
   return useMemo(() => {
     const params: Record<string, string | undefined> = match?.params ?? {}
     const {
@@ -20,5 +20,5 @@ export function useRoot(): Root {
       root = Object.keys(config.workspaces[workspace].roots)[0]
     } = params
     return config.workspaces[workspace].roots[parseRootPath(root)[0]]
-  }, [match])
+  }, [config, match])
 }

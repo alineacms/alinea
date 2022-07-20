@@ -1,3 +1,5 @@
+@import '@alinea/ui/style.scss';
+
 .root {
   position: sticky;
   top: 0;
@@ -6,6 +8,11 @@
   align-items: center;
   background-color: hsla(var(--alinea-positive), 0.6);
   backdrop-filter: blur(12px);
+  flex-shrink: 0;
+
+  @include s {
+    overflow-x: auto;
+  }
 }
 
 .item {
@@ -15,6 +22,7 @@
   padding: 0 10px;
   height: 44px;
   font-size: 13px;
+  white-space: nowrap;
 
   &-icon {
     display: flex;
@@ -23,6 +31,7 @@
 
   &.is-interactive {
     cursor: pointer;
+    &:focus,
     &:hover {
       background: var(--alinea-highlight);
     }

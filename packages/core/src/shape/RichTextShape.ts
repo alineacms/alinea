@@ -77,7 +77,8 @@ export class RichTextShape<T> implements Shape<TextDoc<T>, RichTextMutator<T>> {
   values?: Record<string, RecordShape<T>>
   constructor(
     public label: Label,
-    protected shapes?: Record<string, RecordShape<T>>
+    protected shapes?: Record<string, RecordShape<T>>,
+    public initialValue?: TextDoc<T>
   ) {
     this.values =
       shapes &&
@@ -94,7 +95,7 @@ export class RichTextShape<T> implements Shape<TextDoc<T>, RichTextMutator<T>> {
       )
   }
   create() {
-    return [] as TextDoc<T>
+    return this.initialValue || ([] as TextDoc<T>)
   }
   typeOfChild<C>(yValue: Y.Map<any>, child: string): Shape<C> {
     const block = yValue.get(child)
@@ -122,16 +123,21 @@ export class RichTextShape<T> implements Shape<TextDoc<T>, RichTextMutator<T>> {
     const text: Y.XmlFragment = value.get('$text')
     const types = this.values || {}
     const content = text?.toArray()?.map(serialize)?.flat() || []
-    return content.map(node => {
+    const isEmpty =
+      content.length === 1 &&
+      content[0].type === 'paragraph' &&
+      !content[0].content
+    if (isEmpty) return []
+    return content.map((node): TextNode<T> => {
       const type = types[node.type]
       if (type && 'id' in node) {
         return {
           id: node.id,
           type: node.type,
           ...type.fromY(value.get(node.id))
-        }
+        } as TextNode.Element<T>
       }
-      return node
+      return node as TextNode<T>
     })
   }
   watch(parent: Y.Map<any>, key: string) {
@@ -145,7 +151,9 @@ export class RichTextShape<T> implements Shape<TextDoc<T>, RichTextMutator<T>> {
       fragment: map.get('$text'),
       insert: (id: string, block: string) => {
         if (!this.values) throw new Error('No types defined')
-        map.set(id, this.values[block].toY({type: block, id} as any))
+        const shape = this.values[block]
+        const row = {...shape.create(), id, type: block}
+        map.set(id, shape.toY(row))
       }
     }
   }

@@ -57,6 +57,10 @@ export class SqliteStore implements Store {
     return this.all(cursor.take(1), options)[0] || null
   }
 
+  sure<Row>(cursor: Cursor<Row>, options?: QueryOptions): Row {
+    return this.first(cursor, options)!
+  }
+
   delete<Row>(cursor: Cursor<Row>, options?: QueryOptions): {changes: number} {
     const stmt = f.formatDelete(cursor.cursor)
     return this.prepare(stmt.sql).run(stmt.getParams())
@@ -143,10 +147,10 @@ export class SqliteStore implements Store {
 
   prepared = new Map()
   prepare(query: string): Driver.PreparedStatement {
-    if (this.prepared.has(query)) return this.prepared.get(query)
+    //if (this.prepared.has(query)) return this.prepared.get(query)
     try {
       const result = this.createOnError(() => this.db.prepare(query))
-      this.prepared.set(query, result)
+      //this.prepared.set(query, result)
       return result
     } catch (e: any) {
       throw new Error(`Could not prepare query:\n${query}\nCause: ${e}`)
@@ -168,17 +172,18 @@ export class SqliteStore implements Store {
     name: string,
     fields: (collection: Collection<Row>) => Record<string, Expr<string>>
   ): boolean {
-    const exists = this.db
-      .prepare('select distinct tbl_name from sqlite_master where tbl_name = ?')
-      .get([name])
-    if (exists) return false
     const newFields = fields(collection.as('new'))
     const keys = Object.keys(newFields).map(key => f.escapeId(key))
-    const instruction = `create virtual table ${f.escapeId(
-      name
-    )} using fts5(id unindexed, ${keys.join(', ')})`
-    this.db.exec(instruction)
-    return true
+    try {
+      const instruction = `create virtual table ${f.escapeId(
+        name
+      )} using fts5(id unindexed, ${keys.join(', ')})`
+      this.db.exec(instruction)
+      return true
+    } catch (e: any) {
+      if (e.message.includes('already exists')) return false
+      else throw e
+    }
   }
 
   createFts5Triggers<Row extends {}>(

@@ -6,6 +6,10 @@ import {useCurrentDraft} from '../hook/UseCurrentDraft'
 export class EntryProperty<V, M> implements InputState<readonly [V, M]> {
   constructor(public readonly location: Array<string>) {}
 
+  parent() {
+    return new EntryProperty(this.location.slice(0, -1))
+  }
+
   child<V, M>(field: string) {
     return new EntryProperty<V, M>([...this.location, field])
   }

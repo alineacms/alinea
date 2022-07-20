@@ -1,9 +1,10 @@
-import {WorkspaceConfig} from '.'
+import type {Backend} from '@alinea/backend/Backend'
 import {Auth} from './Auth'
+import {BackendConfig, BackendProps} from './BackendConfig'
 import {createError} from './ErrorWithCode'
 import {Root} from './Root'
 import {Type} from './Type'
-import {Workspace, Workspaces} from './Workspace'
+import {Workspace, WorkspaceConfig, Workspaces} from './Workspace'
 
 /** Configuration options for the dashboard */
 export class Config<T extends Workspaces = Workspaces> {
@@ -17,6 +18,25 @@ export class Config<T extends Workspaces = Workspaces> {
         return [name, new Workspace(name, config)]
       })
     ) as any
+  }
+
+  get hasAuth() {
+    return Boolean(this.options.backend?.auth)
+  }
+
+  get authView() {
+    return this.options.backend?.auth.view
+  }
+
+  get dashboard() {
+    return this.options.dashboard
+  }
+
+  // Todo: supply a default for non-dev env
+  createBackend(options: BackendProps): Backend {
+    const backendConfig = this.options.backend
+    if (!backendConfig) throw createError('No backend config found')
+    return backendConfig.configureBackend({...backendConfig, ...options})
   }
 
   /** Get the first workspace */
@@ -46,12 +66,23 @@ export class Config<T extends Workspaces = Workspaces> {
   }
 }
 
+export namespace Config {
+  export type Infer<T> = T extends Config<infer U> ? U : never
+}
+
 /** Configuration options */
-export type ConfigOptions<T> = {
+export type ConfigOptions<T extends Workspaces> = {
+  backend?: BackendConfig<any>
   /** The client side authentication view */
   auth?: Auth.View
   /** A record containing workspace configurations */
   workspaces: T
+  dashboard?: {
+    handlerUrl: string
+    dashboardUrl: string
+    /** Compile all static assets for the dashboard to this dir */
+    staticFile?: string
+  }
 }
 
 /** Create a new config instance */

@@ -1,0 +1,215 @@
+{
+  "id": "20580nQzbOBR3Lt4kIdxyRGglc6",
+  "type": "Doc",
+  "root": "data",
+  "index": "ZlV",
+  "title": "Getting started",
+  "blocks": [
+    {
+      "id": "258h6WzHYus17B6W3ypGfui7STP",
+      "index": "a0",
+      "type": "TextBlock",
+      "text": [
+        {
+          "type": "heading",
+          "level": 1,
+          "textAlign": "left",
+          "content": [
+            {
+              "type": "text",
+              "text": "Getting started"
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "textAlign": "left",
+          "content": [
+            {
+              "type": "text",
+              "text": "Alinea can be integrated in existing or new projects."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "textAlign": "left",
+          "content": [
+            {
+              "type": "text",
+              "text": "If you're starting from scratch you can either:"
+            }
+          ]
+        },
+        {
+          "type": "bulletList",
+          "content": [
+            {
+              "type": "listItem",
+              "content": [
+                {
+                  "type": "paragraph",
+                  "textAlign": "left",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Use a framework to get started (for example Next.js)"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "listItem",
+              "content": [
+                {
+                  "type": "paragraph",
+                  "textAlign": "left",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Start blank with a new directory  "
+                    },
+                    {
+                      "type": "hardBreak"
+                    },
+                    {
+                      "type": "text",
+                      "text": "`mkdir alinea-example && cd alinea-example`"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "textAlign": "left",
+          "content": [
+            {
+              "type": "text",
+              "text": "In the rest of the guide we assume you run the commands from the directory of your project."
+            }
+          ]
+        },
+        {
+          "id": "2AF9aFBkzjV4wUsEa0MAqhybHc8",
+          "type": "NoticeBlock",
+          "level": "info",
+          "body": [
+            {
+              "type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Alinea requires Node.js 14+"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "heading",
+          "textAlign": "left",
+          "level": 2,
+          "content": [
+            {
+              "type": "text",
+              "text": "Install dependencies"
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "textAlign": "left",
+          "content": [
+            {
+              "type": "text",
+              "text": "Let's install the alinea package from NPM:"
+            }
+          ]
+        },
+        {
+          "id": "286VznLATfdsYV8ch7GMg7fIgyU",
+          "type": "CodeVariantsBlock",
+          "variants": [
+            {
+              "id": "286W0CPVQP985fqSjCYbM714ClP",
+              "index": "a0",
+              "type": "Variant",
+              "name": "npm",
+              "code": "npm install alinea"
+            },
+            {
+              "id": "286W3w5UazNW3hNi9KjzmGlzGR4",
+              "index": "a1",
+              "type": "Variant",
+              "name": "yarn",
+              "code": "yarn add alinea"
+            }
+          ]
+        },
+        {
+          "id": "2AFaBbGA2f9JvMFTBXFGlkpPbdI",
+          "type": "NoticeBlock",
+          "level": "info",
+          "body": [
+            {
+              "type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "The alinea dashboard uses react to render. If react is not already included in your project you can install it now."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "heading",
+          "textAlign": "left",
+          "level": 2,
+          "content": [
+            {
+              "type": "text",
+              "text": "Initialize the project"
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "textAlign": "left",
+          "content": [
+            {
+              "type": "text",
+              "text": "With the following command we'll create the necessary config file."
+            }
+          ]
+        },
+        {
+          "id": "286ZMh7zpMPVm42HJoaT9ENGYEs",
+          "type": "CodeVariantsBlock",
+          "variants": [
+            {
+              "id": "286ZN53uI47dgayZ703HHchWKmo",
+              "index": "a0",
+              "type": "Variant",
+              "name": "npm",
+              "code": "npx alinea init"
+            },
+            {
+              "id": "286ZOAv4FODNyn7lsUG4lqhXloV",
+              "index": "a1",
+              "type": "Variant",
+              "name": "yarn",
+              "code": "yarn alinea init"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

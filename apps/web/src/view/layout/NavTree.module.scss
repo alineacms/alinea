@@ -1,17 +1,21 @@
 .root {
   position: relative;
   display: none;
+  color: var(--web-foreground-faded);
 
   &.is-open {
     display: block;
   }
 
   &-sub {
+    width: 100%;
+
     &-header {
-      font-size: 12px;
+      font-family: var(--web-title-font);
+      font-size: 13px;
       text-transform: uppercase;
-      font-weight: bold;
-      padding: 16px 10px 6px 10px;
+      font-weight: 700;
+      padding: 35px 10px 5px 10px;
     }
     &:first-child &-header {
       padding-top: 0;
@@ -19,21 +23,36 @@
   }
 
   &-link {
+    position: relative;
     display: block;
-    font-size: 13px;
+    font-size: 14px;
     color: inherit;
     text-decoration: none;
-    padding: 4px 10px;
-    border-radius: 6px;
+    padding: 6px 10px;
     margin: 1px;
     cursor: pointer;
+    border-radius: 8px;
 
-    &:hover {
-      background: #f4f1f1;
+    &-icon {
+      display: block;
+      position: absolute;
+      top: 50%;
+      left: -12px;
+      transform: translateY(-50%);
+      font-size: 18px;
+      color: var(--web-accent);
+      opacity: 0;
     }
 
     &.is-active {
-      background: #f4f1f1;
+      color: var(--web-foreground);
+      font-weight: 600;
+      background: var(--web-selected);
+      color: var(--web-selected-foreground);
+    }
+
+    &:hover {
+      background: var(--web-highlight);
     }
   }
 }

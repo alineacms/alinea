@@ -1,15 +1,18 @@
 .root {
+  position: relative;
   margin: 20px 0 28px 0;
-  background: #ecebeb;
-  box-shadow: 0px 10px 50px rgba(0, 0, 0, 0.08);
-  border-radius: 16px;
+  background: var(--web-code-background);
+  color: var(--web-code-foreground);
+  box-shadow: 0 1px 0 var(--web-outline);
+  border: 1px solid var(--web-outline);
+  border-radius: 10px;
   overflow: hidden;
 
   &-fileName {
     font-family: 'JetBrains Mono', monospace;
-    padding: 12px 20px;
-    font-size: 13px;
-    background: #fcfbfb;
+    padding: 8px 15px;
+    font-size: 12px;
+    background: var(--web-code-highlight);
   }
 
   &-code {
@@ -45,5 +48,34 @@
 
   &.is-compact {
     line-height: 1.2;
+  }
+
+  &-copy {
+    cursor: pointer;
+    color: hsla(0, 0%, 100%, 0.4);
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 5px;
+    border: 1px solid #424242;
+    background: hsla(0, 0%, 100%, 0.05);
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    opacity: 0;
+    transition: 0.25s ease-out;
+
+    &:hover {
+      background: hsla(0, 0%, 100%, 0.1);
+    }
+  }
+
+  &:hover,
+  &.is-copied {
+    .root-copy {
+      opacity: 1;
+    }
   }
 }

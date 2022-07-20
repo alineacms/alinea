@@ -1,6 +1,6 @@
 .root {
   position: relative;
-  z-index: 5;
+  z-index: 6;
   width: 100%;
   padding: 0 10px;
   padding-left: 6px;
@@ -8,6 +8,12 @@
   color: var(--alinea-foreground);
   background: var(--alinea-background);
   border-bottom: 1px solid var(--alinea-outline);
+
+  &-menu {
+    display: flex;
+    justify-content: center;
+    width: 44px - 12px;
+  }
 
   &-portal {
     flex-grow: 1;
@@ -54,39 +60,18 @@
     }
   }
 
-  &-range {
-    height: 20px;
-    -webkit-appearance: none;
-    margin: 10px 0;
-    width: 100%;
-    background: var(--alinea-background);
+  &-workspace {
+    display: block;
+    color: inherit;
+    font: inherit;
+    text-decoration: none;
+    border-radius: var(--alinea-border-radius);
+    padding: 4px;
+    padding-right: 8px;
 
-    &:focus {
-      outline: none;
-    }
-    &::-webkit-slider-runnable-track {
-      width: 100%;
-      height: 8px;
-      cursor: pointer;
-      // box-shadow: var(--alinea-fields-shadow);
-      background: hsla(
-        var(--alinea-hue),
-        var(--alinea-saturation),
-        var(--alinea-lightness),
-        0.2
-      );
-      border-radius: var(--alinea-border-radius);
-      border: none;
-    }
-    &::-webkit-slider-thumb {
-      border: none;
-      height: 15px;
-      width: 15px;
-      border-radius: 50%;
-      background: var(--alinea-accent);
-      cursor: pointer;
-      -webkit-appearance: none;
-      margin-top: -4px;
+    &:focus,
+    &:hover {
+      background: var(--alinea-highlight);
     }
   }
 }

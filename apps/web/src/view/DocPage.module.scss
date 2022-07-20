@@ -1,5 +1,41 @@
 .root {
+  border-bottom: 1px solid hsla(var(--web-negative-hsl), 0.09);
   &-nav {
-    padding-top: 40px;
+    margin-top: auto;
+    padding-top: 30px;
+
+    &-link {
+      display: block;
+      width: 100%;
+      max-width: 300px;
+      border-radius: 12px;
+      padding: 15px 20px;
+      line-height: 1.2;
+      font-size: 14px;
+      box-shadow: 0 1px 0 var(--web-outline);
+      border: 1px solid var(--web-outline);
+      transition: background 0.25s ease-out;
+
+      &:hover {
+        background: hsla(var(--web-negative-hsl), 0.05);
+      }
+
+      &.is-right {
+        text-align: right;
+        margin-left: auto;
+      }
+
+      &-icon,
+      &-label {
+        color: var(--web-accent);
+      }
+
+      &-label {
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+      }
+    }
   }
 }

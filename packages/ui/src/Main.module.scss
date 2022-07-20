@@ -1,15 +1,18 @@
-@import '@alinea/web/src/style.scss';
+@import '@alinea/ui/style.scss';
 
 .root {
+  position: relative;
   flex-grow: 1;
   overflow: auto;
   height: 100%;
   width: 100%;
 
   &-inner {
-    height: 100%;
     width: 100%;
-    min-width: 560px;
+    min-width: 320px;
+    @mixin ml {
+      min-width: 560px;
+    }
   }
 
   &::-webkit-scrollbar {
@@ -28,4 +31,15 @@
   &::-webkit-scrollbar-thumb:active {
     background: hsla(var(--alinea-negative), 0.9);
   }
+}
+
+.container {
+  padding: 12px;
+  @include ml {
+    padding: 35px 45px;
+  }
+  max-width: 1024px;
+  width: 100%;
+  margin: 0 auto;
+  flex-grow: 1;
 }

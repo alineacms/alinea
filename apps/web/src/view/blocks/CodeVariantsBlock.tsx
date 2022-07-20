@@ -1,5 +1,12 @@
-import {fromModule, HStack, Typo} from '@alinea/ui'
-import {createContext, PropsWithChildren, useContext, useState} from 'react'
+import {fromModule, HStack} from '@alinea/ui'
+import {
+  createContext,
+  PropsWithChildren,
+  useContext,
+  useEffect,
+  useState
+} from 'react'
+import {WebTypo} from '../layout/WebTypo'
 import css from './CodeVariantsBlock.module.scss'
 import {CodeVariantsBlockSchema} from './CodeVariantsBlock.schema'
 
@@ -13,10 +20,21 @@ type CodeVariantsState = [
 const context = createContext<CodeVariantsState | undefined>(undefined)
 
 export function CodeVariantsProvider({children}: PropsWithChildren<{}>) {
+  const persistenceId = `@alinea/web/variants`
   const [preferences, setPreferences] = useState<Array<string>>([])
   function togglePreference(previous: string, variant: string) {
-    setPreferences(preferences.filter(v => v !== previous).concat(variant))
+    const res = preferences.filter(v => v !== previous).concat(variant)
+    setPreferences(res)
+    try {
+      window.localStorage.setItem(persistenceId, JSON.stringify(res))
+    } catch (e) {}
   }
+  useEffect(() => {
+    try {
+      const stored = window.localStorage.getItem(persistenceId)
+      if (stored) setPreferences(JSON.parse(stored))
+    } catch (e) {}
+  }, [])
   return (
     <context.Provider value={[preferences, togglePreference]}>
       {children}
@@ -27,6 +45,7 @@ export function CodeVariantsProvider({children}: PropsWithChildren<{}>) {
 // Todo: fix accessibility when picking a component framework
 export function CodeVariantsBlock({variants}: CodeVariantsBlockSchema) {
   const [preferences, togglePreference] = useContext(context)!
+  if (!variants) return null
   const names = variants.map(variant => variant.name)
   let selected = names[0]
   for (const name of names) {
@@ -35,7 +54,7 @@ export function CodeVariantsBlock({variants}: CodeVariantsBlockSchema) {
   }
   return (
     <div className={styles.root()}>
-      <HStack>
+      <HStack className={styles.root.triggers()}>
         {variants.map(variant => {
           return (
             <button
@@ -55,7 +74,7 @@ export function CodeVariantsBlock({variants}: CodeVariantsBlockSchema) {
         return (
           <div className={styles.root.code()} key={variant.id}>
             {variant.code && (
-              <Typo.Monospace
+              <WebTypo.Monospace
                 as="div"
                 dangerouslySetInnerHTML={{__html: variant.code}}
                 className={styles.root.code()}

@@ -1,6 +1,7 @@
 import {Cache, Data, JsonLoader} from '@alinea/backend'
 import {FileData} from '@alinea/backend/data/FileData'
 import {Config} from '@alinea/core/Config'
+import {createError} from '@alinea/core/ErrorWithCode'
 import {createId} from '@alinea/core/Id'
 import {outcome} from '@alinea/core/Outcome'
 import {Workspace} from '@alinea/core/Workspace'
@@ -9,16 +10,33 @@ import {SqlJsDriver} from '@alinea/store/sqlite/drivers/SqlJsDriver'
 import {SqliteStore} from '@alinea/store/sqlite/SqliteStore'
 import {EvalPlugin} from '@esbx/eval'
 import {ReactPlugin} from '@esbx/react'
-import {encode} from 'base64-arraybuffer'
 import {FSWatcher} from 'chokidar'
-import {dirname} from 'dirname-filename-esm'
-import {build, BuildResult, Plugin, WatchMode} from 'esbuild'
+import semver from 'compare-versions'
+import {build, BuildResult} from 'esbuild'
 import fs from 'fs-extra'
-import {signed, unsigned} from 'leb128'
-import crypto from 'node:crypto'
+import {createRequire} from 'node:module'
 import path from 'node:path'
+import {buildOptions} from './build/BuildOptions'
+import {exportStore} from './ExportStore'
+import {dirname} from './util/Dirname'
+import {externalPlugin} from './util/ExternalPlugin'
+import {ignorePlugin} from './util/IgnorePlugin'
+import {targetPlugin} from './util/TargetPlugin'
 
-const __dirname = dirname(import.meta)
+const __dirname = dirname(import.meta.url)
+const require = createRequire(import.meta.url)
+
+async function writeFileIfContentsDiffer(
+  destination: string,
+  contents: string | Buffer
+) {
+  const data = Buffer.from(contents)
+  try {
+    const current = await fs.readFile(destination)
+    if (current.equals(data)) return
+  } catch (e) {}
+  return fs.writeFile(destination, data)
+}
 
 function fail(message: string) {
   console.error(message)
@@ -32,107 +50,13 @@ function failOnBuildError(build: Promise<BuildResult>) {
   })
 }
 
-const externalPlugin: Plugin = {
-  name: 'external',
-  setup(build) {
-    build.onResolve({filter: /^[^\.].*/}, args => {
-      if (args.kind === 'entry-point') return
-      return {path: args.path, external: true}
-    })
-  }
-}
-
-const ignorePlugin: Plugin = {
-  name: 'ignore',
-  setup(build) {
-    const commonExtensions = [
-      'css',
-      'html',
-      'css',
-      'scss',
-      'less',
-      'png',
-      'jpg',
-      'gif',
-      'svg'
-    ]
-    const filter = new RegExp(
-      `(${commonExtensions.map(ext => `\\.${ext}`).join('|')})$`
-    )
-    build.onLoad({filter}, args => {
-      return {contents: 'export default null'}
-    })
-  }
-}
-
-type ServerPluginOptions = {
-  outDir: string
-}
-
-function serverPlugin({outDir}: ServerPluginOptions): Plugin {
-  return {
-    name: 'server',
-    setup(build) {
-      // Hook into any import that ends in .query.(js/ts)
-      // compile and place the file in the server directory
-      build.onResolve({filter: /\.query(\.js|\.ts)?$/}, async args => {
-        const location = crypto
-          .createHash('md5')
-          .update(args.resolveDir)
-          .digest('hex')
-          .slice(0, 7)
-        let filename = location + '.' + path.basename(args.path)
-        if (filename.endsWith('.ts')) filename = filename.slice(0, -3) + '.js'
-        if (!filename.endsWith('.js')) filename += '.js'
-        await build.esbuild.build({
-          platform: 'node',
-          bundle: true,
-          format: 'esm',
-          target: 'esnext',
-          treeShaking: true,
-          entryPoints: [path.join(args.resolveDir, args.path)],
-          outfile: path.join(outDir, '.server/dist', filename),
-          plugins: [externalPlugin, ignorePlugin]
-        })
-        return {external: true, path: `@alinea/content/.server/${filename}`}
-      })
-    }
-  }
-}
-
-function bin(strings: ReadonlyArray<String>, ...inserts: Array<Buffer>) {
-  const res: Array<Buffer> = []
+function code(strings: ReadonlyArray<string>, ...inserts: Array<any>) {
+  const res: Array<string> = []
   strings.forEach(function (str, i) {
-    res.push(
-      Buffer.from(str.replace(/\/\/(.*?)\n/g, '').replace(/\s/g, ''), 'hex')
-    )
-    if (inserts[i]) res.push(inserts[i])
+    res.push(str)
+    if (i in inserts) res.push(String(inserts[i]))
   })
-  return Buffer.concat(res)
-}
-
-function embedInWasm(data: Uint8Array) {
-  const size = unsigned.encode(data.length)
-  const length = signed.encode(data.length)
-  const globalL = unsigned.encode(5 + length.length)
-  const dataL = unsigned.encode(5 + size.length + data.length)
-  const memoryPages = unsigned.encode(Math.ceil(data.length / 65536))
-  const memoryL = unsigned.encode(2 + memoryPages.length)
-  return bin`
-    00 61 73 6d                                         // WASM_BINARY_MAGIC
-    01 00 00 00                                         // WASM_BINARY_VERSION
-    05 ${memoryL} 01                                    // section "Memory" (5)
-    00 ${memoryPages}                                   // memory 0
-    06 ${globalL} 01 7f 00 41 ${length} 0b              // section "Global" (6)
-    07 11 02 04 6461 7461 02 00 06 6c65 6e67 7468 03 00 // section "Export" (7)
-    0b ${dataL} 01                                      // section "Data" (11)
-    00 41 00 0b ${size}                                 // data segment header 0
-    ${Buffer.from(data)}                                // data
-  `
-}
-
-function embedInJs(source: string, data: Uint8Array) {
-  return source.replace('$DB', encode(data))
+  return res.join('').replace(/  /g, '').trim()
 }
 
 function configType(location: string) {
@@ -160,14 +84,21 @@ function schemaCollections(workspace: Workspace) {
       .map(type => `export const ${type} = schema.type('${type}').collection()`)
       .join('\n')}
   `
-  return `
+  return code`
     import {config} from '../config.js'
     export const workspace = config.workspaces['${workspace.name}']
     export const schema = workspace.schema
     ${collections}
   `
-    .replace(/  /g, '')
-    .trim()
+}
+
+function pagesOf(workspace: Workspace) {
+  return code`
+    import {backend} from '../backend.js'
+    export const pages = backend.loadPages('${workspace.name}', {
+      preview: process.env.NODE_ENV === 'development'
+    })
+  `
 }
 
 function schemaTypes(workspace: Workspace) {
@@ -182,7 +113,7 @@ function schemaTypes(workspace: Workspace) {
         export type ${type} = DataOf<typeof ${type}>`
     )
     .join('\n')}`
-  return `
+  return code`
     import {config} from '../config.js'
     import {DataOf, EntryOf, Entry} from '@alinea/core'
     import {Collection} from '@alinea/store'
@@ -190,15 +121,15 @@ function schemaTypes(workspace: Workspace) {
     export const schema = config.workspaces['${workspace.name}'].schema
     ${wrapNamespace(collections, workspace.typeNamespace)}
   `
-    .replace(/  /g, '')
-    .trim()
 }
 
 export type GenerateOptions = {
   cwd?: string
   staticDir?: string
   configFile?: string
-  watch?: boolean | WatchMode
+  watch?: boolean
+  onConfigRebuild?: (err?: Error) => void
+  onCacheRebuild?: (err?: Error) => void
   wasmCache?: boolean
   quiet?: boolean
 }
@@ -209,16 +140,14 @@ export async function generate(options: GenerateOptions) {
     cwd = process.cwd(),
     configFile = 'alinea.config',
     staticDir = path.join(__dirname, 'static'),
-    quiet = false
+    quiet = false,
+    onConfigRebuild,
+    onCacheRebuild
   } = options
   let cacheWatcher: Promise<{stop: () => void}> | undefined
   const configLocation = path.join(cwd, configFile)
   const outDir = path.join(cwd, '.alinea')
-  const onRebuild =
-    (typeof options.watch === 'object' &&
-      typeof options.watch.onRebuild === 'function' &&
-      options.watch.onRebuild) ||
-    undefined
+  const watch = options.watch || onConfigRebuild || onCacheRebuild
 
   await fs.copy(path.join(staticDir, 'server'), path.join(outDir, '.server'), {
     overwrite: true
@@ -230,8 +159,8 @@ export async function generate(options: GenerateOptions) {
 
   async function copyStaticFiles() {
     await fs.mkdirp(outDir).catch(console.log)
-    async function copy(...files: Array<string>) {
-      await Promise.all(
+    function copy(...files: Array<string>) {
+      return Promise.all(
         files.map(file =>
           fs.copyFile(path.join(staticDir, file), path.join(outDir, file))
         )
@@ -243,14 +172,27 @@ export async function generate(options: GenerateOptions) {
       'index.d.ts',
       'client.js',
       'client.d.ts',
+      'backend.js',
+      'backend.d.ts',
       'store.d.ts'
     )
-    await fs.writeFile(
+    await outcome(
+      fs.copyFile(
+        path.join(staticDir, 'drafts.js'),
+        path.join(outDir, 'drafts.js'),
+        fs.constants.COPYFILE_EXCL
+      )
+    )
+
+    await writeFileIfContentsDiffer(
       path.join(outDir, 'config.d.ts'),
       configType(path.resolve(configLocation))
     )
-    await fs.writeFile(path.join(outDir, '.gitignore'), `*\n!.keep`)
-    await fs.writeFile(
+    await writeFileIfContentsDiffer(
+      path.join(outDir, '.gitignore'),
+      `*\n!.keep`
+    )
+    await writeFileIfContentsDiffer(
       path.join(outDir, '.keep'),
       '# Contents of this folder are autogenerated by alinea'
     )
@@ -267,16 +209,21 @@ export async function generate(options: GenerateOptions) {
         bundle: true,
         platform: 'node',
         plugins: [
-          serverPlugin({outDir}),
+          targetPlugin(file => {
+            return {
+              packageName: '@alinea/content',
+              packageRoot: outDir
+            }
+          }),
           EvalPlugin,
           externalPlugin,
           ignorePlugin,
           ReactPlugin
         ],
-        watch: options.watch && {
+        watch: watch && {
           async onRebuild(error, result) {
             if (!error) await generatePackage()
-            if (onRebuild) return onRebuild(error, result)
+            if (onConfigRebuild) return onConfigRebuild(error || undefined)
           }
         }
       })
@@ -286,10 +233,13 @@ export async function generate(options: GenerateOptions) {
   async function generatePackage() {
     if (cacheWatcher) (await cacheWatcher).stop()
     const config = await loadConfig()
-    return Promise.all([
+    await Promise.all([
       generateWorkspaces(config),
       (cacheWatcher = fillCache(config))
     ])
+    const dashboard = config.dashboard
+    if (dashboard?.staticFile)
+      await generateDashboard(dashboard.handlerUrl, dashboard.staticFile!)
   }
 
   async function loadConfig() {
@@ -303,23 +253,37 @@ export async function generate(options: GenerateOptions) {
 
   async function generateWorkspaces(config: Config) {
     for (const [key, workspace] of Object.entries(config.workspaces)) {
-      await fs.mkdir(path.join(outDir, key), {recursive: true})
-      await fs.writeFile(
-        path.join(outDir, key, 'schema.js'),
-        schemaCollections(workspace)
-      )
-      await fs.writeFile(
-        path.join(outDir, key, 'schema.d.ts'),
-        schemaTypes(workspace)
-      )
-      await fs.copy(path.join(staticDir, 'workspace'), path.join(outDir, key), {
-        overwrite: true
-      })
+      function copy(...files: Array<string>) {
+        return Promise.all(
+          files.map(file =>
+            fs.copyFile(
+              path.join(staticDir, 'workspace', file),
+              path.join(outDir, key, file)
+            )
+          )
+        )
+      }
+      await Promise.all([
+        fs.mkdir(path.join(outDir, key), {recursive: true}),
+        writeFileIfContentsDiffer(
+          path.join(outDir, key, 'schema.js'),
+          schemaCollections(workspace)
+        ),
+        writeFileIfContentsDiffer(
+          path.join(outDir, key, 'schema.d.ts'),
+          schemaTypes(workspace)
+        ),
+        copy('index.d.ts', 'index.js', 'pages.d.ts'),
+        writeFileIfContentsDiffer(
+          path.join(outDir, key, 'pages.js'),
+          pagesOf(workspace)
+        )
+      ])
     }
     const pkg = JSON.parse(
       await fs.readFile(path.join(staticDir, 'package.json'), 'utf8')
     )
-    await fs.writeFile(
+    await writeFileIfContentsDiffer(
       path.join(outDir, 'package.json'),
       JSON.stringify(
         {
@@ -355,11 +319,14 @@ export async function generate(options: GenerateOptions) {
       const store = await cacheEntries(config, source)
       await createCache(store)
     }
-    if (options.watch && files) {
+    if (watch && files) {
       watcher = new FSWatcher()
       async function reload() {
         if (caching) await caching
-        caching = cache().then(() => onRebuild?.(null, null))
+        caching = cache().then(
+          () => onCacheRebuild?.(),
+          err => onCacheRebuild?.(err)
+        )
       }
       watcher.add(files).on('change', reload)
       watcher.add(files).on('unlink', reload)
@@ -427,21 +394,63 @@ export async function generate(options: GenerateOptions) {
     return store
   }
 
-  async function createCache(store: SqliteStore) {
-    const data = store.export()
-    if (!wasmCache) {
-      const source = await fs.readFile(
-        path.join(staticDir, 'store.embed.js'),
-        'utf-8'
+  function createCache(store: SqliteStore) {
+    return exportStore(store, path.join(outDir, 'store.js'), wasmCache)
+  }
+
+  async function generateDashboard(handlerUrl: string, staticFile: string) {
+    if (!staticFile.endsWith('.html'))
+      throw createError(
+        `The staticFile option in config.dashboard must point to an .html file (include the extension)`
       )
-      await fs.writeFile(path.join(outDir, 'store.js'), embedInJs(source, data))
-    } else {
-      await fs.copyFile(
-        path.join(staticDir, 'store.wasm.js'),
-        path.join(outDir, 'store.js')
-      )
-      await fs.writeFile(path.join(outDir, 'store.wasm'), embedInWasm(data))
+    const {version} = require('react/package.json')
+    const isReact18 = semver.compare(version, '18.0.0', '>=')
+    const react = isReact18 ? 'react18' : 'react'
+    const entryPoints = {
+      entry: '@alinea/dashboard/EntryPoint',
+      config: '@alinea/content/config.js'
     }
-    if (true) await fs.writeFile(path.join(outDir, 'store.db'), data)
+    const basename = path.basename(staticFile, '.html')
+    const assetsFolder = path.join(path.dirname(staticFile), basename)
+    await build({
+      format: 'esm',
+      target: 'esnext',
+      treeShaking: true,
+      minify: true,
+      splitting: true,
+      outdir: assetsFolder,
+      bundle: true,
+      absWorkingDir: cwd,
+      entryPoints,
+      inject: [path.join(staticDir, `render/render-${react}.js`)],
+      platform: 'browser',
+      define: {
+        'process.env.NODE_ENV': "'production'"
+      },
+      ...buildOptions,
+      // Todo: this is only needed during dev
+      tsconfig: path.join(staticDir, 'tsconfig.json'),
+      logLevel: 'error'
+    }).catch(e => {
+      throw 'Could not compile entrypoint'
+    })
+    await writeFileIfContentsDiffer(
+      path.join(cwd, staticFile),
+      code`
+        <!DOCTYPE html>
+        <meta charset="utf-8" />
+        <link rel="icon" href="data:," />
+        <link href="./${basename}/entry.css" rel="stylesheet" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="handshake_url" value="${handlerUrl}/hub/auth/handshake" />
+        <meta name="redirect_url" value="${handlerUrl}/hub/auth" />
+        <body>
+          <script type="module">
+            import {boot} from './${basename}/entry.js'
+            boot('${handlerUrl}')
+          </script>
+        </body>
+      `
+    )
   }
 }

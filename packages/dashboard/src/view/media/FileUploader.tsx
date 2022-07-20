@@ -34,8 +34,8 @@ export function FileUploader({max, toggleSelect}: FileUploaderProps) {
     ['media-libraries', workspace],
     () => {
       return hub
-        .query(
-          Library.where(Library.workspace.is(workspace)).select({
+        .query({
+          cursor: Library.where(Library.workspace.is(workspace)).select({
             id: Library.id,
             title: Library.title,
             workspace: Library.workspace,
@@ -45,7 +45,7 @@ export function FileUploader({max, toggleSelect}: FileUploaderProps) {
               title: parent.title
             }))
           })
-        )
+        })
         .then(Outcome.unpack)
     }
   )
@@ -129,7 +129,7 @@ export function FileUploader({max, toggleSelect}: FileUploaderProps) {
             'Upload to',
             Object.fromEntries(
               libraries!.map(library => {
-                return [library.id, library.title]
+                return [library.id, library.title as string]
               })
             )
           )}

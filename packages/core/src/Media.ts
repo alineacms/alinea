@@ -14,17 +14,24 @@ export namespace Media {
     alias: Media.Type.Libary
   })
 
-  export type File = Entry & {
+  type FileProperties = {
     location: string
     extension: string
     size: number
     hash: string
-    width?: number
-    height?: number
-    preview?: string
-    averageColor?: string
-    blurHash?: string
   }
+
+  type ImageProperties = {
+    width: number
+    height: number
+    preview: string
+    averageColor: string
+    blurHash: string
+  }
+
+  export type File = Entry & FileProperties & Partial<ImageProperties>
+
+  export type Image = Entry & FileProperties & ImageProperties
 
   export const File = new Collection<File>('Entry', {
     where: Entry.as(Media.Type.File).type.is(Media.Type.File),

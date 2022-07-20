@@ -25,6 +25,7 @@ export type WorkspaceOptions<T = any> = {
   color?: string
   /** A react component used to preview an entry in the dashboard */
   preview?: ComponentType<{entry: T; previewToken: string}>
+  icon?: ComponentType
 }
 
 export type WorkspaceConfig<T = any> = {
@@ -71,6 +72,10 @@ export class Workspace<T = any> implements WorkspaceConfig<T> {
 
   get color() {
     return this.options.color || getRandomColor(JSON.stringify(this.label))
+  }
+
+  get icon() {
+    return this.options.icon
   }
 }
 

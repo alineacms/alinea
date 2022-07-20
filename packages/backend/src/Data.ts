@@ -1,5 +1,4 @@
-import {Entry} from '@alinea/core'
-import {Store} from '@alinea/store'
+import {Entry, Hub} from '@alinea/core'
 
 export namespace Data {
   export interface Source {
@@ -28,23 +27,15 @@ export namespace Data {
   }
 
   export interface Target {
-    publish(current: Store, entries: Array<Entry>): Promise<void>
+    canRename: boolean
+    publish(params: Hub.ChangesParams, ctx: Hub.Context): Promise<void>
   }
 
   export interface Media {
-    upload(workspace: string, file: Media.Upload): Promise<string>
-    download(workspace: string, location: string): Promise<Media.Download>
-  }
-
-  export namespace Media {
-    export type Upload = {
-      path: string
-      buffer: ArrayBuffer
-      preview?: string
-      color?: string
-    }
-    export type Download =
-      | {type: 'buffer'; buffer: ArrayBuffer}
-      | {type: 'url'; url: string}
+    upload(params: Hub.UploadParams, ctx: Hub.Context): Promise<string>
+    download(
+      params: Hub.DownloadParams,
+      ctx: Hub.Context
+    ): Promise<Hub.Download>
   }
 }

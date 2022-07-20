@@ -10,20 +10,21 @@ import semver from 'compare-versions'
 import type {BuildOptions} from 'esbuild'
 import {build} from 'esbuild'
 import fs from 'fs-extra'
+import path from 'node:path'
 import {BuildTask} from './.esbx/build'
+import {bundleTs} from './.esbx/bundle-ts'
 import {cssPlugin} from './.esbx/plugin/css'
 import {internalPlugin} from './.esbx/plugin/internal'
 import {resolvePlugin} from './.esbx/plugin/resolve'
 import {sassPlugin} from './.esbx/plugin/sass'
 import {staticPlugin} from './.esbx/plugin/static'
 import {ensureNodeResolution} from './packages/cli/src/util/EnsureNodeResolution'
-import {createId} from './packages/core/src/Id'
 
 export {VersionTask} from '@esbx/workspaces'
+export * from './.esbx/bundle-ts'
 
 const buildOptions: BuildOptions = {
   format: 'esm',
-  sourcemap: true,
   plugins: [EvalPlugin, staticPlugin, ReactPlugin, sassPlugin],
   loader: {
     '.woff': 'file',
@@ -81,32 +82,43 @@ export const prepare = {
         err => 'typedoc completed'
       )
     }
+    if (!fs.existsSync('dist/alinea.d.ts')) {
+      await bundleTs.action()
+    }
   }
 }
 
 const modules = findNodeModules(process.cwd())
 
-const serverOptions: BuildOptions = {
-  ...buildOptions,
-  ignoreAnnotations: true,
-  platform: 'node',
-  entryPoints: ['.esbx/dev.ts'],
-  outExtension: {'.js': '.mjs'},
-  bundle: true,
-  outdir: 'dist',
-  external: modules,
-  plugins: [
-    ...buildOptions.plugins!,
-    ReporterPlugin.configure({name: 'server'}),
-    RunPlugin.configure({
-      cmd: 'node --experimental-specifier-resolution=node dist/dev.mjs'
-    })
-  ]
-}
-
 export const dev = {
-  async action() {
+  options: [['-p, --production', 'Use production backend']],
+  async action(options) {
     await buildTask.action({watch: true, silent: true})
+    const out = 'file://' + path.resolve('dist/cli/src/bin.js')
+    const serverOptions: BuildOptions = {
+      ...buildOptions,
+      ignoreAnnotations: true,
+      platform: 'node',
+      entryPoints: ['.esbx/dev.ts'],
+      outExtension: {'.js': '.mjs'},
+      bundle: true,
+      outdir: 'dist',
+      sourcemap: true,
+      external: modules,
+      watch: true,
+      plugins: [
+        ...buildOptions.plugins!,
+        ReporterPlugin.configure({name: 'server'}),
+        // --experimental-specifier-resolution=node
+        RunPlugin.configure({
+          cmd: 'node dist/dev.mjs' + (options.production ? ' --production' : '')
+        }),
+        internalPlugin
+      ],
+      define: {
+        'import.meta.url': JSON.stringify(out)
+      }
+    }
     return build(serverOptions)
   }
 }
@@ -124,12 +136,18 @@ export const clean = {
 const testTask = TestTask.configure({
   buildOptions: {
     ...buildOptions,
+    platform: 'node',
     external: modules
       .filter(m => !m.includes('@alinea'))
       .concat('@alinea/sqlite-wasm'),
     plugins: [
       ...buildOptions.plugins!,
-      StaticPlugin.configure({sources: ['packages/cli/src/Init.ts']}),
+      StaticPlugin.configure({
+        sources: [
+          'packages/cli/src/Init.ts',
+          'packages/cli/src/export/ExportStore.ts'
+        ]
+      }),
       internalPlugin
     ]
   }
@@ -141,11 +159,5 @@ export const test = {
     ensureNodeResolution()
     await prepare.action({checkTypeDoc: false})
     return testTask.action(options)
-  }
-}
-
-export const mkid = {
-  action() {
-    console.log(createId())
   }
 }

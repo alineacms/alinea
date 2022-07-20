@@ -1,11 +1,12 @@
 import {ExtensionPlugin} from '@esbx/extension'
 import {ReporterPlugin} from '@esbx/reporter'
+import {TargetPlugin} from '@esbx/target'
 import {list, reportTime} from '@esbx/util'
 import {getManifest, getWorkspaces} from '@esbx/workspaces'
 import {execSync} from 'child_process'
 import {build, BuildOptions} from 'esbuild'
 import {Task} from 'esbx'
-import fs from 'fs-extra'
+import fs from 'fs'
 import glob from 'glob'
 import path from 'path'
 import {tsconfigResolverSync, TsConfigResult} from 'tsconfig-resolver'
@@ -59,12 +60,17 @@ function task(
         tsConfig = tsconfigResolverSync()
         await createTypes()
       }
-      const entryPoints = []
+      const entryPoints: Array<string> = []
       function packageEntryPoints(root: string, location: string) {
         const cwd = path.join(root, location)
         const entryPoints = glob.sync('src/**/*.{ts,tsx}', {cwd})
         return entryPoints
-          .filter(entry => !entry.endsWith('.d.ts'))
+          .filter(entry => {
+            if (entry.endsWith('.d.ts')) return false
+            if (entry.endsWith('.server.ts')) return false
+            if (entry.endsWith('.client.tsx')) return false
+            return true
+          })
           .map(entry => path.join(cwd, entry))
       }
       for (const workspace of workspaces) {
@@ -77,21 +83,41 @@ function task(
             : true)
         if (isSelected) entryPoints.push(...packageEntryPoints(cwd, workspace))
       }
-      await build({
+      const buildOptions: BuildOptions = {
+        platform: 'neutral',
         format: 'esm',
         outdir: 'dist',
         bundle: true,
-        sourcemap: true,
+        // sourcemap: true,
         absWorkingDir: cwd,
         entryPoints: entryPoints,
         watch: options.watch,
+        mainFields: ['module', 'main'],
         ...config.buildOptions,
         plugins: list(
+          TargetPlugin.configure({
+            info: file => {
+              const parts = file.split(path.sep)
+              const packagesPart = parts.findIndex(part => part === 'packages')
+              const srcPart = parts.findIndex(part => part === 'src')
+              const pkg = parts.slice(packagesPart + 1, srcPart)
+              return {
+                packageName: `@alinea/${pkg.join('.')}`,
+                packageRoot: `./dist/${pkg.join('/')}/src`
+              }
+            },
+            buildOptions: {
+              plugins: [ExtensionPlugin]
+            }
+          }),
           config.buildOptions?.plugins || [ExtensionPlugin],
           distPlugin,
-          !options.silent && ReporterPlugin.configure({name: 'packages'})
+          options.silent
+            ? undefined
+            : ReporterPlugin.configure({name: 'packages'})
         )
-      })
+      }
+      await build(buildOptions)
     }
   }
 }

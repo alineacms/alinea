@@ -1,0 +1,10 @@
+.root {
+  font-size: 13.5px;
+  color: var(--web-foreground-faded);
+  padding-top: 6px;
+  padding-bottom: 10px;
+
+  &-separator {
+    opacity: 0.5;
+  }
+}
