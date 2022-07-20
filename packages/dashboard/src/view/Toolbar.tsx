@@ -111,7 +111,7 @@ export namespace Toolbar {
                 return (
                   <DropdownMenu.Item
                     key={key}
-                    onSelect={() =>
+                    onClick={() =>
                       navigate(
                         nav.entry({
                           workspace: key,
