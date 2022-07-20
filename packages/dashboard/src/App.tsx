@@ -102,7 +102,7 @@ function AppAuthenticated() {
               <Head>
                 <FavIcon color={color} />
               </Head>
-              <Toolbar.Root />
+              <Toolbar.Root color={color} />
               <div
                 style={{
                   flex: '1',
@@ -259,7 +259,7 @@ type AppRootProps = {
 
 function AppRoot({session, setSession}: AppRootProps) {
   const {fullPage, config} = useDashboard()
-  const {color} = config.defaultWorkspace
+  const {color} = config.firstWorkspace
   const Auth = config.authView || Fragment
   if (!session)
     return (

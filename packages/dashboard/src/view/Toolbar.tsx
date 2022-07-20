@@ -25,6 +25,7 @@ import {HStack} from '@alinea/ui/Stack'
 import {contrastColor} from '@alinea/ui/util/ContrastColor'
 import {createSlots} from '@alinea/ui/util/Slots'
 import {Switch} from '@headlessui/react'
+import {parseToHsla} from 'color2k'
 import {ComponentType} from 'react'
 import {useNavigate} from 'react-router'
 import {Link} from 'react-router-dom'
@@ -79,8 +80,14 @@ export namespace Toolbar {
     const navigate = useNavigate()
     const {isNavOpen, isPreviewOpen, toggleNav, togglePreview} = useSidebar()
     const workspaces = Object.entries(config.workspaces)
+    const [hue, saturation, lightness] = parseToHsla(accentColor)
+    const style: any = {
+      '--alinea-hue': hue,
+      '--alinea-saturation': `${saturation * 100}%`,
+      '--alinea-lightness': `${lightness * 100}%`
+    }
     return (
-      <HStack center gap={12} className={styles.root()}>
+      <HStack center gap={12} className={styles.root()} style={style}>
         <div className={styles.root.menu()} onClick={toggleNav}>
           <IconButton icon={IcRoundMenu} active={isNavOpen} />
         </div>
