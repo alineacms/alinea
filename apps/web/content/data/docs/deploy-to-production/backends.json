@@ -51,6 +51,20 @@
               "text": "We are working on Alinea Cloud to provide a seamless experience when deploying your project into production."
             }
           ]
+        },
+        {
+          "type": "paragraph",
+          "textAlign": "left"
+        },
+        {
+          "type": "paragraph",
+          "textAlign": "left",
+          "content": [
+            {
+              "type": "text",
+              "text": "Test without author."
+            }
+          ]
         }
       ]
     }
