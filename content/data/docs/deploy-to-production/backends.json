@@ -62,7 +62,7 @@
           "content": [
             {
               "type": "text",
-              "text": "Test without author. Test with correct rootDir field."
+              "text": "Test without author. Test 2 with correct rootDir field."
             }
           ]
         }
