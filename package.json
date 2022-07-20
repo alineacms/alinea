@@ -5,7 +5,7 @@
   "license": "MIT",
   "scripts": {
     "dev": "esbx prepare && run-p dev:check dev:next dev:compile",
-    "dev:compile": "esbx dev",
+    "dev:compile": "esbx dev --production",
     "dev:next": "yarn workspace @alinea/web dev",
     "dev:check": "tsc -w",
     "trace": "tsc --noEmit --incremental false --emitDeclarationOnly false --diagnostics --generateTrace private/trace && speedscope private/trace/trace.json",

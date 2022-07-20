@@ -9,7 +9,7 @@ import {createTransport} from 'nodemailer'
 
 export const configureBackend = backend.configure<PasswordLess>(
   ({auth, config, createStore}) => {
-    const dashboardUrl = 'https://alinea.sh/admin'
+    const dashboardUrl = 'http://localhost:4500'
     const drafts = new RedisDrafts({
       client: new Redis(process.env.REDIS_DSN)
     })

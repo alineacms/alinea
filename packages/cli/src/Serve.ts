@@ -192,7 +192,8 @@ export async function serve(options: ServeOptions): Promise<void> {
       })
     }),
     router.compress(
-      matcher.get('/').map((): Response => {
+      matcher.get('/').map(({url}): Response => {
+        const handlerUrl = `${url.protocol}//${url.host}`
         return new Response(
           `<!DOCTYPE html>
           <meta charset="utf-8" />
@@ -200,6 +201,8 @@ export async function serve(options: ServeOptions): Promise<void> {
           ${hasCss ? '<link href="./config.css" rel="stylesheet" />' : ''}
           <link href="./entry.css" rel="stylesheet" />
           <meta name="viewport" content="width=device-width, initial-scale=1" />
+          <meta name="handshake_url" value="${handlerUrl}/hub/auth/handshake" />
+          <meta name="redirect_url" value="${handlerUrl}/hub/auth" />
           <body>
             <script type="module" src="./entry.js"></script>
           </body>`,
