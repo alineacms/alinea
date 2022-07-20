@@ -1,7 +1,7 @@
 import {parseToHsla} from 'color2k'
-import {PropsWithChildren, useEffect, useLayoutEffect, useState} from 'react'
+import {PropsWithChildren, useEffect, useLayoutEffect} from 'react'
 import {useContrastColor} from './hook/UseContrastColor'
-import {Language, Preferences, PreferencesProvider} from './hook/UsePreferences'
+import {usePreferences} from './hook/UsePreferences'
 import {fromModule} from './util/Styler'
 import css from './Viewport.module.scss'
 
@@ -27,60 +27,12 @@ export function Viewport({
 }: ViewportProps) {
   const accentColor = color!
   const accentColorForeground = useContrastColor(accentColor)
-  const persistenceId = `@alinea/ui/viewport`
-  const [preferences, setPreferences] = useState<Preferences>(
-    typeof window !== 'undefined'
-      ? JSON.parse(window.localStorage?.getItem(persistenceId) as any) ||
-          undefined
-      : undefined
-  )
   // ERROR: Cannot destructure property 'scheme' of 'preferences' as it is undefined (when localStorage is empty)
-  const {scheme, size, workspace, language} = preferences
+  const {scheme, size} = usePreferences()
   useEffect(() => {
     if (!size) return
     document.documentElement.style.fontSize = `${size}px`
   }, [size])
-  // TODO: Make one general function to update preferences
-  // function updatePreferences({key, value}) {
-  //   setPreferences({...preferences, [key]: value})
-  //   window?.localStorage?.setItem(
-  //     persistenceId,
-  //     JSON.stringify({...preferences, [key]: value})
-  //   )
-  // }
-  function toggleSchemePreference() {
-    const isLight =
-      scheme === undefined
-        ? window.matchMedia('(prefers-color-scheme: light)').matches
-        : scheme === 'light'
-    const next = isLight ? 'dark' : 'light'
-    setPreferences({...preferences, scheme: next})
-    window?.localStorage?.setItem(
-      persistenceId,
-      JSON.stringify({...preferences, scheme: next})
-    )
-  }
-  function updateWorkspacePreference(workspace: string) {
-    setPreferences({...preferences, workspace: workspace})
-    window?.localStorage?.setItem(
-      persistenceId,
-      JSON.stringify({...preferences, workspace: workspace})
-    )
-  }
-  function updateSizePreference(size: number) {
-    setPreferences({...preferences, size: size})
-    window?.localStorage?.setItem(
-      persistenceId,
-      JSON.stringify({...preferences, size: size})
-    )
-  }
-  function updateLanguagePreference(lang: Language) {
-    setPreferences({...preferences, language: lang})
-    window?.localStorage?.setItem(
-      persistenceId,
-      JSON.stringify({...preferences, language: lang})
-    )
-  }
   const [hue] = parseToHsla(accentColor)
   const style: any = {
     '--alinea-accent': accentColor,
@@ -101,26 +53,11 @@ export function Viewport({
   }, [styleString, className])
   const mainProps = attachToBody ? {} : {className, style}
   return (
-    <PreferencesProvider
-      value={[
-        {
-          scheme: scheme,
-          workspace: workspace,
-          size: size,
-          language: language
-        },
-        toggleSchemePreference,
-        updateWorkspacePreference,
-        updateSizePreference,
-        updateLanguagePreference
-      ]}
+    <main
+      {...mainProps}
+      className={styles.main.mergeProps(mainProps)({contain})}
     >
-      <main
-        {...mainProps}
-        className={styles.main.mergeProps(mainProps)({contain})}
-      >
-        {children}
-      </main>
-    </PreferencesProvider>
+      {children}
+    </main>
   )
 }

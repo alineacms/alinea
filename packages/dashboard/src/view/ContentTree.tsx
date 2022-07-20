@@ -116,7 +116,7 @@ export function ContentTree({
       coordinateGetter: sortableKeyboardCoordinates
     })
   )
-  const [preferences] = usePreferences()
+  const preferences = usePreferences()
   const containerRef = useRef(null)
   const [containerWidth, containerHeight] = useSize(containerRef)
   const itemSize = (30 / 16) * preferences.size

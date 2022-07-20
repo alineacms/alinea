@@ -7,7 +7,6 @@ import {
   fromModule,
   Icon,
   IconButton,
-  Language,
   px,
   TextLabel,
   usePreferences,
@@ -26,7 +25,6 @@ import {contrastColor} from '@alinea/ui/util/ContrastColor'
 import {createSlots} from '@alinea/ui/util/Slots'
 import {Switch} from '@headlessui/react'
 import {parseToHsla} from 'color2k'
-import {useState} from 'react'
 import {useNavigate} from 'react-router'
 import {useDashboard} from '../hook/UseDashboard'
 import {useNav} from '../hook/UseNav'
@@ -48,20 +46,10 @@ export namespace Toolbar {
     const session = useSession()
     const {config} = useDashboard()
     const nav = useNav()
-    const [
-      preferences,
-      toggleColorScheme,
-      updateWorkspacePreference,
-      updateFontSize
-    ] = usePreferences()
+    const preferences = usePreferences()
     const {label} = useWorkspace()
     const navigate = useNavigate()
-    const [workspace = preferences?.workspace, setWorkspace] = useState<
-      string | undefined
-    >()
-    const [language = preferences?.language, setLanguage] = useState<
-      Language | undefined
-    >('en')
+    const size = preferences.size || 16
     const checked = preferences?.scheme === 'dark'
     const [hue, saturation, lightness] = parseToHsla(accentColor)
     const style: any = {
@@ -154,7 +142,7 @@ export namespace Toolbar {
                         <Icon icon={IcSharpBrightnessMedium} size={20} />
                         <Switch
                           checked={checked}
-                          onChange={toggleColorScheme}
+                          onChange={preferences.toggleColorScheme}
                           className={styles.root.switch({
                             checked
                           })}
@@ -174,21 +162,21 @@ export namespace Toolbar {
                         />
                         <IconButton
                           icon={IcRoundKeyboardArrowDown}
-                          onClick={() => updateFontSize(preferences.size - 1)}
-                          disabled={preferences.size <= 16}
+                          onClick={() => preferences.updateFontSize(size - 1)}
+                          disabled={size <= 16}
                         />
                         <IconButton
                           icon={IcRoundKeyboardArrowUp}
-                          onClick={() => updateFontSize(preferences.size + 1)}
-                          disabled={preferences.size >= 40}
+                          onClick={() => preferences.updateFontSize(size + 1)}
+                          disabled={size >= 40}
                         />
                       </HStack>
                     </HStack>
                     <SelectInput
                       state={
                         new InputState.StatePair(
-                          workspace || '',
-                          updateWorkspacePreference
+                          preferences.workspace || '',
+                          preferences.setWorkspace
                         )
                       }
                       field={select(
@@ -204,7 +192,7 @@ export namespace Toolbar {
                     />
                     {/* <SelectInput
                     state={
-                      new InputState.StatePair(language || '', setLanguage)
+                      new InputState.StatePair(preferences.language || '', setLanguage)
                     }
                     field={select<string>('Default language', {en: 'EN'})}
                   /> */}

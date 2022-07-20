@@ -4,6 +4,7 @@ import {
   FavIcon,
   Loader,
   Pane,
+  PreferencesProvider,
   Statusbar,
   useObservable,
   Viewport
@@ -158,7 +159,10 @@ function AppAuthenticated() {
                       element={<Router.Entry />}
                     />
                     <Route
-                      path={nav.entry({workspace: ':workspace', root: ':root'})}
+                      path={nav.entry({
+                        workspace: ':workspace',
+                        root: ':root'
+                      })}
                       element={<Router.Entry />}
                     />
                     <Route
@@ -303,7 +307,9 @@ export function App<T extends Workspaces>(props: DashboardOptions<T>) {
       >
         <SessionProvider value={session}>
           <QueryClientProvider client={queryClient}>
-            <AppRoot session={session} setSession={setSession} />
+            <PreferencesProvider>
+              <AppRoot session={session} setSession={setSession} />
+            </PreferencesProvider>
           </QueryClientProvider>
         </SessionProvider>
       </HashRouter>
