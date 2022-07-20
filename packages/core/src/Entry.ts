@@ -65,7 +65,6 @@ export namespace Entry {
     Entry,
     | 'path'
     | 'workspace'
-    | 'root'
     | 'url'
     | '$status'
     | 'parent'

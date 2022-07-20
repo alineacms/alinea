@@ -6,6 +6,14 @@ import {text} from '@alinea/input.text'
 import {Cache} from '../../src/Cache'
 import {createMemoryStore} from './CreateMemoryStore'
 
+const listField = list('List', {
+  schema: schema({
+    ListItem: type('ListItem', {
+      link: link.entry('Link')
+    })
+  })
+})
+
 const config = createConfig({
   workspaces: {
     main: workspace('Main', {
@@ -13,13 +21,7 @@ const config = createConfig({
       schema: schema({
         Type: type('Type', {
           title: text('Title'),
-          list: list('List', {
-            schema: schema({
-              ListItem: type('ListItem', {
-                link: link.entry('Link')
-              })
-            })
-          })
+          list: listField
         }).configure({
           isContainer: true
         }),

@@ -1,12 +1,16 @@
-import {createConfig, root, schema, workspace} from '@alinea/core'
+import {passwordLess} from '@alinea/auth.passwordless'
+import {createCloudBackend} from '@alinea/cloud'
+import {backend, createConfig, root, schema, workspace} from '@alinea/core'
 import {LocaleSchema} from '@alinea/dashboard/schema/LocaleSchema'
 import {MediaSchema} from '@alinea/dashboard/schema/MediaSchema'
 import {BrowserPreview} from '@alinea/dashboard/view/preview/BrowserPreview'
 import {IcRoundInsertDriveFile} from '@alinea/ui/icons/IcRoundInsertDriveFile'
 import {IcRoundPermMedia} from '@alinea/ui/icons/IcRoundPermMedia'
+import {configureBackend} from './alinea.server'
 import {DocPageSchema} from './src/view/DocPage.schema'
 import {DocsPageSchema} from './src/view/DocsPage.schema'
 import {HomePageSchema} from './src/view/HomePage.schema'
+import {LogoChar} from './src/view/layout/branding/LogoChar'
 
 export const webSchema = schema({
   ...MediaSchema,
@@ -16,11 +20,12 @@ export const webSchema = schema({
 })
 
 const web = workspace('Alinea', {
+  icon: LogoChar,
   schema: webSchema,
   typeNamespace: 'content',
   source: './content',
   mediaDir: './public',
-  color: '#5661E5',
+  color: '#4a65e8',
   roots: {
     data: root('Alinea website', {
       icon: IcRoundInsertDriveFile,
@@ -38,6 +43,7 @@ const web = workspace('Alinea', {
       process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : ''
     return (
       <BrowserPreview
+        reload
         url={`${location}/api/preview?${previewToken}`}
         prettyUrl={entry.url}
       />
@@ -62,7 +68,19 @@ const stories = workspace('Stories', {
 
 const workspaces = {web, stories}
 
+const customBackend = backend({
+  auth: passwordLess
+}).configure(configureBackend)
+
+const cloudBackend = createCloudBackend()
+
 export const config = createConfig({
+  dashboard: {
+    dashboardUrl: 'https://alinea.sh/admin.html',
+    handlerUrl: 'https://alinea.sh/api/cms',
+    staticFile: './public/admin.html'
+  },
+  backend: cloudBackend,
   workspaces:
     process.env.NODE_ENV === 'development'
       ? workspaces

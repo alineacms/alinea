@@ -39,7 +39,9 @@ export function MediaRow({amount, parentId, from, batchSize}: MediaRowProps) {
   const {data} = useQuery(
     ['media', 'batch', batchSize, parentId, start],
     () => {
-      return hub.query(query(parentId, start, batchSize)).then(Outcome.unpack)
+      return hub
+        .query({cursor: query(parentId, start, batchSize)})
+        .then(Outcome.unpack)
     },
     {
       staleTime: 10000,

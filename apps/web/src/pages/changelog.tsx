@@ -1,12 +1,11 @@
+import {backend} from '@alinea/content/backend.js'
 import fs from 'fs'
 import path from 'path'
-import {backend} from '../../alinea.backend'
-import markdownToHtml from '../../lib/markdownToHtml'
+import {remark} from 'remark'
+import html from 'remark-html'
 import ChangelogView from '../view/ChangelogView'
-import {Container} from '../view/layout/Container'
-import {headerQuery} from '../view/layout/Header.query'
 import {Layout} from '../view/layout/Layout'
-import {LayoutProps} from '../view/layout/Layout.query'
+import {LayoutProps, layoutQuery} from '../view/layout/Layout.server'
 
 export type ChangelogProps = {
   layout: LayoutProps
@@ -17,15 +16,20 @@ export default function Changelog({layout, content}: ChangelogProps) {
   return (
     <Layout {...layout}>
       <Layout.Content>
-        <Container>
+        <Layout.Container>
           <ChangelogView content={content} />
-        </Container>
+        </Layout.Container>
       </Layout.Content>
     </Layout>
   )
 }
 
 export async function getStaticProps() {
+  async function markdownToHtml(markdown: Buffer) {
+    const result = await remark().use(html).process(markdown)
+    return result.toString()
+  }
+
   const pages = backend.loadPages('web')
   const filePath = path.join(process.cwd(), '../../changelog.md')
   const doc = fs.readFileSync(filePath)
@@ -33,13 +37,11 @@ export async function getStaticProps() {
 
   return {
     props: {
-      layout: {
-        meta: {
-          title: 'Changelog',
-          url: '/changelog'
-        },
-        header: (await headerQuery(pages))!
-      },
+      layout: await layoutQuery(pages, {
+        type: '',
+        title: 'Changelog',
+        url: '/changelog'
+      }),
       content
     }
   }

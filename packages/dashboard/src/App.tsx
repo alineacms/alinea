@@ -14,7 +14,6 @@ import {IcRoundRotateLeft} from '@alinea/ui/icons/IcRoundRotateLeft'
 import {IcRoundWarning} from '@alinea/ui/icons/IcRoundWarning'
 import {MdiSourceBranch} from '@alinea/ui/icons/MdiSourceBranch'
 import {Fragment, Suspense, useState} from 'react'
-import {Helmet} from 'react-helmet'
 import {
   QueryClient,
   QueryClientProvider as ReactQueryClientProvider
@@ -30,10 +29,10 @@ import {useDraftsList} from './hook/UseDraftsList'
 import {useEntryLocation} from './hook/UseEntryLocation'
 import {useLocale} from './hook/UseLocale'
 import {useNav} from './hook/UseNav'
-import {ReferencePickerProvider} from './hook/UseReferencePicker'
 import {useRoot} from './hook/UseRoot'
 import {SessionProvider} from './hook/UseSession'
 import {useWorkspace} from './hook/UseWorkspace'
+import {Head} from './util/Head'
 import {ContentTree} from './view/ContentTree'
 import {DraftsOverview} from './view/DraftsOverview'
 import {EditMode} from './view/entry/EditMode'
@@ -86,11 +85,11 @@ function DraftsButton() {
 }
 
 function AppAuthenticated() {
-  const {auth} = useDashboard()
+  const {fullPage, config} = useDashboard()
   const nav = useNav()
   const location = useLocation()
   const isEntry = useMatch(nav.matchEntry) || location.pathname === '/'
-  const {name: workspace, name, color, roots} = useWorkspace()
+  const {name: workspace, label, name, color, roots} = useWorkspace()
   const {name: currentRoot} = useRoot()
   const entryLocation = useEntryLocation()
   return (
@@ -98,11 +97,10 @@ function AppAuthenticated() {
       <Statusbar.Provider>
         <Toolbar.Provider>
           <Sidebar.Provider>
-            <Viewport attachToBody contain color={color}>
-              <FavIcon color={color} />
-              <Helmet>
-                <title>{renderLabel(name)}</title>
-              </Helmet>
+            <Viewport attachToBody={fullPage} contain color={color}>
+              <Head>
+                <FavIcon color={color} />
+              </Head>
               <Toolbar.Root />
               <div
                 style={{
@@ -112,73 +110,67 @@ function AppAuthenticated() {
                   position: 'relative'
                 }}
               >
-                <ReferencePickerProvider key={workspace}>
-                  <Sidebar.Nav>
-                    {Object.entries(roots).map(([key, root], i) => {
-                      const isSelected = key === currentRoot
-                      const link =
-                        entryLocation && entryLocation.root === key
-                          ? nav.entry(entryLocation)
-                          : nav.root({workspace, root: key})
-                      return (
-                        <Sidebar.Nav.Item
-                          key={key}
-                          selected={isEntry && isSelected}
-                          to={link}
-                        >
-                          {root.icon ? (
-                            <root.icon />
-                          ) : (
-                            <IcRoundInsertDriveFile />
-                          )}
-                        </Sidebar.Nav.Item>
-                      )
-                    })}
-                    <DraftsButton />
-                  </Sidebar.Nav>
-                  <Suspense fallback={<Loader absolute />}>
-                    <Routes>
-                      <Route
-                        path={nav.draft({workspace: ':workspace'})}
-                        element={<Router.Drafts />}
-                      />
-                      <Route
-                        path={nav.draft({
+                <Sidebar.Nav>
+                  {Object.entries(roots).map(([key, root], i) => {
+                    const isSelected = key === currentRoot
+                    const link =
+                      entryLocation && entryLocation.root === key
+                        ? nav.entry(entryLocation)
+                        : nav.root({workspace, root: key})
+                    return (
+                      <Sidebar.Nav.Item
+                        key={key}
+                        selected={isEntry && isSelected}
+                        to={link}
+                      >
+                        {root.icon ? <root.icon /> : <IcRoundInsertDriveFile />}
+                      </Sidebar.Nav.Item>
+                    )
+                  })}
+                  <DraftsButton />
+                </Sidebar.Nav>
+                <Suspense fallback={<Loader absolute />}>
+                  <Routes>
+                    <Route
+                      path={nav.draft({workspace: ':workspace'})}
+                      element={<Router.Drafts />}
+                    />
+                    <Route
+                      path={nav.draft({
+                        workspace: ':workspace',
+                        root: ':root',
+                        id: ':id'
+                      })}
+                      element={<Router.Drafts />}
+                    />
+                    <Route
+                      path={nav.entry({workspace: ':workspace'})}
+                      element={<Router.Entry />}
+                    />
+                    <Route
+                      path={nav.entry({
+                        workspace: ':workspace',
+                        root: ':root'
+                      })}
+                      element={<Router.Entry />}
+                    />
+                    <Route
+                      path={
+                        nav.entry({
                           workspace: ':workspace',
                           root: ':root',
                           id: ':id'
-                        })}
-                        element={<Router.Drafts />}
-                      />
-                      <Route
-                        path={nav.entry({workspace: ':workspace'})}
-                        element={<Router.Entry />}
-                      />
-                      <Route
-                        path={nav.entry({
-                          workspace: ':workspace',
-                          root: ':root'
-                        })}
-                        element={<Router.Entry />}
-                      />
-                      <Route
-                        path={
-                          nav.entry({
-                            workspace: ':workspace',
-                            root: ':root',
-                            id: ':id'
-                          }) + '/*'
-                        }
-                        element={<Router.Entry />}
-                      />
-                      <Route path="/*" element={<Router.Entry />} />
-                    </Routes>
-                  </Suspense>
-                </ReferencePickerProvider>
+                        }) + '/*'
+                      }
+                      element={<Router.Entry />}
+                    />
+                    <Route path="/*" element={<Router.Entry />} />
+                  </Routes>
+                </Suspense>
               </div>
               <Statusbar.Root>
                 <DraftsStatusSummary />
-                {!auth && (
+                {!config.hasAuth && (
                   <Statusbar.Status icon={IcRoundWarning}>
                     Not using authentication
                   </Statusbar.Status>
@@ -197,7 +189,7 @@ type EntryRouteProps = {
 }
 
 function EntryRoute({id}: EntryRouteProps) {
-  const {name: workspace} = useWorkspace()
+  const workspace = useWorkspace()
   const {draft} = useDraft(id)
   const locale = useLocale()
   const isLoading = Boolean(
@@ -216,7 +208,7 @@ function EntryRoute({id}: EntryRouteProps) {
         <SearchBox />
         <RootHeader />
         <ContentTree
-          key={workspace}
+          key={workspace.name}
           locale={locale}
           select={select}
           redirectToRoot={!id}
@@ -227,7 +219,7 @@ function EntryRoute({id}: EntryRouteProps) {
           <NewEntry parentId={id} />
         </Suspense>
       )}
-      {draft && (
+      {draft ? (
         <Suspense fallback={<Loader absolute />}>
           <View
             initialMode={EditMode.Editing}
@@ -235,6 +227,10 @@ function EntryRoute({id}: EntryRouteProps) {
             isLoading={isLoading}
           />
         </Suspense>
+      ) : (
+        <Head>
+          <title>{renderLabel(workspace.label)}</title>
+        </Head>
       )}
     </CurrentDraftProvider>
   )
@@ -261,13 +257,18 @@ type AppRootProps = {
 }
 
 function AppRoot({session, setSession}: AppRootProps) {
-  const {auth: Auth = Fragment, config} = useDashboard()
+  const {fullPage, config} = useDashboard()
   const {color} = config.defaultWorkspace
+  const Auth = config.authView || Fragment
   if (!session)
     return (
-      <Viewport attachToBody contain color={color}>
-        <FavIcon color={color} />
-        <Auth setSession={setSession} />
+      <Viewport attachToBody={fullPage} contain color={color}>
+        <Head>
+          <FavIcon color={color} />
+        </Head>
+        <Suspense fallback={<Loader absolute />}>
+          <Auth setSession={setSession} />
+        </Suspense>
       </Viewport>
     )
   return <AppAuthenticated />
@@ -284,14 +285,18 @@ function localSession(options: DashboardOptions) {
 // facebook/react#24304
 const QueryClientProvider: any = ReactQueryClientProvider
 
-export function App<T extends Workspaces>(props: DashboardOptions<T>) {
+export function App<T extends Workspaces>({
+  fullPage = true,
+  ...props
+}: DashboardOptions<T>) {
+  const auth = props.config.authView
   const [queryClient] = useState(
     () =>
       props.queryClient ||
       new QueryClient({defaultOptions: {queries: {retry: false}}})
   )
   const [session, setSession] = useState<Session | undefined>(
-    !props.auth ? localSession(props) : undefined
+    !auth ? localSession(props) : undefined
   )
   return (
     <DashboardProvider value={{...props}}>

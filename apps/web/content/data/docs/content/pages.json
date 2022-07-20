@@ -4,10 +4,6 @@
   "root": "data",
   "index": "a1",
   "title": "Pages",
-  "parents": [
-    "docs",
-    "28Ng5RzmZ2fHUVlVbAEv1l1oUUS"
-  ],
   "blocks": [
     {
       "id": "28hxdvUqGndCClRgqppvMox36da",
@@ -17,6 +13,7 @@
         {
           "type": "heading",
           "level": 1,
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
@@ -26,16 +23,18 @@
         },
         {
           "type": "paragraph",
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
-              "text": "A pages instance is used to query the data stored in the cms."
+              "text": "A pages instance is used to query the data stored in the CMS."
             }
           ]
         },
         {
           "type": "heading",
           "level": 2,
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
@@ -45,21 +44,23 @@
         },
         {
           "type": "paragraph",
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
-              "text": "A single page can be fetched using the `findFirst` method. Criteria can be passed to filter entries."
+              "text": "A single page can be fetched using the `first` method. Criteria can be passed to filter entries."
             }
           ]
         },
         {
           "id": "28hy8mAMZJiFhtaajix2fKGBKBE",
           "type": "CodeBlock",
-          "code": "// Fetch the first page where field equals the string 'value'\nconst page: AnyPage | undefined = await pages\n  .findFirst(page => page.field.is('value'))"
+          "code": "// Fetch the first page where field equals the string 'value'\nconst page: AnyPage | undefined = await pages\n  .first(page => page.field.is('value'))"
         },
         {
           "type": "heading",
           "level": 2,
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
@@ -69,21 +70,23 @@
         },
         {
           "type": "paragraph",
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
-              "text": "Multiple pages can be fetched using the `findMany` method."
+              "text": "Multiple pages can be fetched using the `where` method."
             }
           ]
         },
         {
           "id": "28hyQUttn286uRfAArTKdMWNJVb",
           "type": "CodeBlock",
-          "code": "// Fetch all pages where field equals the string 'value'\nconst pages: Array<AnyPage> = await pages\n  .findMany(page => page.field.is('value'))"
+          "code": "// Fetch all pages where field equals the string 'value'\nconst pages: Array<AnyPage> = await pages\n  .where(page => page.field.is('value'))"
         },
         {
           "type": "heading",
           "level": 3,
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
@@ -93,6 +96,7 @@
         },
         {
           "type": "paragraph",
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
@@ -103,11 +107,12 @@
         {
           "id": "28hyZtRcyC7fXKRHUiqhjA5O7iA",
           "type": "CodeBlock",
-          "code": "// Skip the first 10 pages and return a maximum of 10\nconst limited = await pages\n  .all()\n  .skip(10)\n  .take(10)"
+          "code": "// Skip the first 10 pages and return a maximum of 10\nconst limited = await pages.skip(10).take(10)"
         },
         {
           "type": "heading",
           "level": 3,
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
@@ -117,6 +122,7 @@
         },
         {
           "type": "paragraph",
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
@@ -127,11 +133,12 @@
         {
           "id": "28hzjFJi5kuByP0j3ZX79ATIyyS",
           "type": "CodeBlock",
-          "code": "const ordered = await pages\n  .all()\n  .orderBy(Type.foo.asc(), Type.bar.desc())"
+          "code": "import {Type} from '@alinea/content/myworkspace'\nconst ordered = await pages\n  .orderBy(Type.foo.asc(), Type.bar.desc())"
         },
         {
           "type": "heading",
           "level": 2,
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
@@ -141,6 +148,7 @@
         },
         {
           "type": "paragraph",
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
@@ -151,11 +159,12 @@
         {
           "id": "28i0B7nRFUqmGWdCmchhzy21bkt",
           "type": "CodeBlock",
-          "code": "const grouped = await pages\n  .all()\n  .groupBy(Type.foo, Type.bar)"
+          "code": "import {Type} from '@alinea/content/myworkspace'\nconst grouped = await pages\n  .groupBy(Type.foo, Type.bar)"
         },
         {
           "type": "heading",
           "level": 2,
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
@@ -165,6 +174,7 @@
         },
         {
           "type": "paragraph",
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
@@ -175,11 +185,12 @@
         {
           "id": "28hywuwvVMmRT7zhyZEumjM19tI",
           "type": "CodeBlock",
-          "code": "// Return only titles\nconst rows = await pages\n  .all()\n  .select(page => ({\n    title: page.title\n  })"
+          "code": "// Return only titles\nconst rows = await pages\n  .select(page => ({\n    title: page.title\n  })"
         },
         {
           "type": "heading",
           "level": 2,
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
@@ -189,6 +200,7 @@
         },
         {
           "type": "paragraph",
+          "textAlign": "left",
           "content": [
             {
               "type": "text",
@@ -199,15 +211,9 @@
         {
           "id": "28hzx0owdbqFdAaJg0H31HP9OpI",
           "type": "CodeBlock",
-          "code": "const row = await pages\n  .findFirst()\n  .select(page => ({\n    title: \n      page.title.process(title => `process title ${title}`)\n  })"
+          "code": "const row = await pages\n  .first()\n  .select(page => ({\n    title: \n      page.title.process(title => `process title ${title}`)\n  })"
         }
       ]
-    },
-    {
-      "id": "28hxVjJYEVPAinTI27Fzx2OHRWK",
-      "index": "a1",
-      "type": "TypesBlock",
-      "types": "PageTree"
     }
   ]
 }

@@ -35,14 +35,14 @@ export class CursorImpl<Row> {
   }
 
   get fields(): Selection<Row> {
-    return new Selection(this.cursor.selection)
+    return new Selection<Row>(this.cursor.selection)
   }
 
   leftJoin<T>(that: Collection<T>, on: Expr<boolean>): Cursor<Row> {
     const condition = that.cursor.where
       ? on.and(new Expr(that.cursor.where))
       : on
-    return new Cursor({
+    return new Cursor<Row>({
       ...this.cursor,
       from: From.Join(
         this.cursor.from,
@@ -57,7 +57,7 @@ export class CursorImpl<Row> {
     const condition = that.cursor.where
       ? on.and(new Expr(that.cursor.where))
       : on
-    return new Cursor({
+    return new Cursor<Row>({
       ...this.cursor,
       from: From.Join(
         this.cursor.from,
@@ -69,15 +69,15 @@ export class CursorImpl<Row> {
   }
 
   take(limit: number | undefined): Cursor<Row> {
-    return new Cursor({...this.cursor, limit})
+    return new Cursor<Row>({...this.cursor, limit})
   }
 
   skip(offset: number | undefined): Cursor<Row> {
-    return new Cursor({...this.cursor, offset})
+    return new Cursor<Row>({...this.cursor, offset})
   }
 
   first(): CursorSingleRow<Row> {
-    return new CursorSingleRow(this.take(1).cursor)
+    return new CursorSingleRow<Row>(this.take(1).cursor)
   }
 
   where(
@@ -86,7 +86,7 @@ export class CursorImpl<Row> {
     const condition = Expr.create(
       typeof where === 'function' ? where(this as any) : where
     )
-    return new Cursor({
+    return new Cursor<Row>({
       ...this.cursor,
       where: (this.cursor.where
         ? condition.and(new Expr(this.cursor.where))
@@ -108,7 +108,7 @@ export class CursorImpl<Row> {
   }
 
   having(having: Expr<boolean>): Cursor<Row> {
-    return new Cursor({
+    return new Cursor<Row>({
       ...this.cursor,
       having: (this.cursor.having
         ? having.and(new Expr(this.cursor.having))
@@ -118,7 +118,7 @@ export class CursorImpl<Row> {
   }
 
   with<S extends SelectionInput>(selection: S): Selection.With<Row, S> {
-    return new Selection(this.cursor.selection).with(selection)
+    return new Selection<Row>(this.cursor.selection).with<S>(selection)
   }
 
   include<I extends SelectionInput>(
@@ -128,7 +128,7 @@ export class CursorImpl<Row> {
   }
 
   union(that: Cursor<Row>): Cursor<Row> {
-    return new Cursor({
+    return new Cursor<Row>({
       ...this.cursor,
       union: that.cursor
     })
@@ -139,7 +139,7 @@ export class CursorImpl<Row> {
   orderBy(...args: Array<any>): Cursor<Row> {
     const orderBy: Array<OrderBy> =
       args.length === 1 && typeof args[0] === 'function' ? args[0](this) : args
-    return new Cursor({
+    return new Cursor<Row>({
       ...this.cursor,
       orderBy: orderBy
     })
@@ -151,7 +151,7 @@ export class CursorImpl<Row> {
     const groupBy: Array<Expr<any>> =
       args.length === 1 && typeof args[0] === 'function' ? args[0](this) : args
     const data = groupBy.map(e => e.expr)
-    return new Cursor({
+    return new Cursor<Row>({
       ...this.cursor,
       groupBy: data
     })

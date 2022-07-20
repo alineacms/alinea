@@ -1,0 +1,40 @@
+{
+  "name": "@alinea/auth.passwordless",
+  "version": "0.0.0",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": "./dist/index.js",
+    "./*": "./dist/*.js",
+    "./server/PasswordLessAuth": {
+      "browser": "./dist/static/noop.cjs",
+      "default": "./dist/server/PasswordLessAuth.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "typesVersions": {
+    "*": {
+      "*": [
+        "./dist/*"
+      ]
+    }
+  },
+  "dependencies": {
+    "@alinea/backend": "0.0.0",
+    "@alinea/client": "0.0.0",
+    "@alinea/core": "0.0.0",
+    "@alinea/dashboard": "0.0.0",
+    "@alinea/ui": "0.0.0",
+    "superstruct": "^0.15.4"
+  },
+  "devDependencies": {
+    "@types/nodemailer": "^6.4.4",
+    "nodemailer": "^6.6.5"
+  },
+  "peerDependencies": {
+    "react": "*"
+  }
+}

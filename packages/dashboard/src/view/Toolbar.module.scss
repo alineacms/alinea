@@ -23,4 +23,19 @@
       height: 100%;
     }
   }
+
+  &-workspace {
+    display: block;
+    color: inherit;
+    font: inherit;
+    text-decoration: none;
+    border-radius: var(--alinea-border-radius);
+    padding: 4px;
+    padding-right: 8px;
+
+    &:focus,
+    &:hover {
+      background: var(--alinea-highlight);
+    }
+  }
 }

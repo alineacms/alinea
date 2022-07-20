@@ -1,10 +1,10 @@
-import { Entry, Outcome, Schema, View } from '@alinea/core'
-import { Cursor } from '@alinea/store'
-import { fromModule } from '@alinea/ui'
-import { memo } from 'react'
-import { useQuery } from 'react-query'
-import { useSession } from '../../hook/UseSession'
-import { ExplorerItem } from './ExplorerItem'
+import {Entry, Outcome, Schema, View} from '@alinea/core'
+import {Cursor} from '@alinea/store'
+import {fromModule} from '@alinea/ui'
+import {memo} from 'react'
+import {useQuery} from 'react-query'
+import {useSession} from '../../hook/UseSession'
+import {ExplorerItem} from './ExplorerItem'
 import css from './ExplorerRow.module.scss'
 
 const styles = fromModule(css)
@@ -35,7 +35,7 @@ export const ExplorerRow = memo(function ExplorerRow({
     ['explorer', 'batch', cursor, batchSize, start],
     () => {
       return hub
-        .query(cursor.skip(start * batchSize).take(batchSize))
+        .query({cursor: cursor.skip(start * batchSize).take(batchSize)})
         .then(Outcome.unpack)
     },
     {refetchOnWindowFocus: false, keepPreviousData: true, staleTime: 10000}

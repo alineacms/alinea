@@ -1,6 +1,7 @@
 import type {Plugin} from 'esbuild'
-import fs from 'fs-extra'
+import fs from 'fs'
 import path from 'path'
+import {copyDir} from '../copy'
 
 export const staticPlugin: Plugin = {
   name: '@esbx/static',
@@ -25,13 +26,13 @@ export const staticPlugin: Plugin = {
     if (!outputDir) throw new Error('StaticPlugin requires outfile or outdir')
     let trigger: Promise<any>
     build.onStart(() => {
-      const tasks = []
+      const tasks: Array<Promise<void>> = []
       for (const location of locations) {
         const source = path.join(makeAbs(location), dir)
         const output = source.replace('packages' + path.sep, 'dist' + path.sep)
         if (fs.existsSync(source)) {
           if (!fs.existsSync(output)) fs.mkdirSync(output, {recursive: true})
-          const task = fs.copy(source, output, {overwrite: true})
+          const task = copyDir(source, output)
           tasks.push(task)
         }
       }

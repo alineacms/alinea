@@ -1,14 +1,12 @@
 import {ComponentType, createElement} from 'react'
 import {CodeVariantsProvider} from '../view/blocks/CodeVariantsBlock'
 import {DocPage} from './DocPage'
-import {DocsPage} from './DocsPage'
 import {HomePage} from './HomePage'
 import {Layout} from './layout/Layout'
-import {PageViewProps} from './PageView.query'
+import {PageViewProps} from './PageView.server'
 
 const views: {[key: string]: ComponentType<any>} = {
   Home: HomePage,
-  Docs: DocsPage,
   Doc: DocPage
 }
 

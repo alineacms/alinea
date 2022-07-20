@@ -1,6 +1,11 @@
 import {parseToHsla} from 'color2k'
-import {PropsWithChildren, useEffect, useLayoutEffect, useState} from 'react'
-import Helmet from 'react-helmet'
+import {
+  HTMLProps,
+  PropsWithChildren,
+  useEffect,
+  useLayoutEffect,
+  useState
+} from 'react'
 import {ColorSchemeProvider} from './hook/UseColorScheme'
 import {useContrastColor} from './hook/UseContrastColor'
 import {fromModule} from './util/Styler'
@@ -8,14 +13,16 @@ import css from './Viewport.module.scss'
 
 const styles = fromModule(css)
 
-type ViewportProps = PropsWithChildren<{
-  color: string
-  contain?: boolean
-  // Some UI frameworks insist on helping you by rendering components to the
-  // body element directly. To style these we can apply our global styles
-  // to the body instead. Don't use this if you're server side rendering.
-  attachToBody?: boolean
-}>
+type ViewportProps = PropsWithChildren<
+  {
+    color: string
+    contain?: boolean
+    // Some UI frameworks insist on helping you by rendering components to the
+    // body element directly. To style these we can apply our global styles
+    // to the body instead. Don't use this if you're server side rendering.
+    attachToBody?: boolean
+  } & HTMLProps<HTMLDivElement>
+>
 
 const useIsomorphicEffect =
   typeof window !== 'undefined' ? useLayoutEffect : useEffect
@@ -24,7 +31,8 @@ export function Viewport({
   children,
   color,
   contain,
-  attachToBody
+  attachToBody,
+  ...props
 }: ViewportProps) {
   const accentColor = color!
   const accentColorForeground = useContrastColor(accentColor)
@@ -64,17 +72,29 @@ export function Viewport({
       document.body.style.cssText = styleString
     }
   }, [attachToBody, styleString, className])
+  useIsomorphicEffect(() => {
+    const meta = document.createElement('meta')
+    meta.setAttribute('content', accentColor)
+    meta.setAttribute('name', 'theme-color')
+    document.head.appendChild(meta)
+    return () => {
+      document.head.removeChild(meta)
+    }
+  }, [accentColor])
   const mainProps = attachToBody ? {} : {className, style}
   return (
     <ColorSchemeProvider value={[schemePreference, toggleSchemePreference]}>
-      <Helmet key="theme-color">
-        <meta name="theme-color" content={accentColor} />
-      </Helmet>
       <main
         {...mainProps}
-        className={styles.main.mergeProps(mainProps)({contain})}
+        className={styles.main.mergeProps(mainProps).mergeProps(props)({
+          contain
+        })}
       >
         {children}
+        {/* See: https://github.com/tailwindlabs/headlessui/discussions/666#discussioncomment-2197931 */}
+        <div id="headlessui-portal-root">
+          <div />
+        </div>
       </main>
     </ColorSchemeProvider>
   )

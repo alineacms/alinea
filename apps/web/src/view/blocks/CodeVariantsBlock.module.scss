@@ -1,35 +1,33 @@
 .root {
   margin: 20px 0 28px 0;
-  background: #ecebeb;
-  box-shadow: 0px 10px 50px rgba(0, 0, 0, 0.08);
+  background: var(--web-code-highlight);
+  color: var(--web-code-foreground);
   border-radius: 16px;
   overflow: hidden;
+  border: 1px solid #424242;
+
+  &-triggers {
+    overflow: auto;
+  }
 
   &-trigger {
     appearance: none;
     background: transparent;
-    padding: 8px 15px;
+    padding: 9px 18px;
     font: inherit;
     color: inherit;
     border: none;
     cursor: pointer;
-    font-weight: bold;
-    font-size: 12px;
+    // font-weight: bold;
+    font-size: 13px;
 
     &:hover {
-      background: rgb(245, 244, 244);
+      background: #2a313a;
     }
 
     &.is-selected {
-      background: white;
+      background: var(--web-code-background);
     }
-  }
-
-  &-fileName {
-    font-family: 'JetBrains Mono', monospace;
-    padding: 12px 20px;
-    font-size: 13px;
-    background: #fcfbfb;
   }
 
   &-code {

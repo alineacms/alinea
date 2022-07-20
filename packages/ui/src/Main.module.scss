@@ -1,6 +1,7 @@
 @import '@alinea/ui/style.scss';
 
 .root {
+  position: relative;
   flex-grow: 1;
   overflow: auto;
   height: 100%;
@@ -30,4 +31,15 @@
   &::-webkit-scrollbar-thumb:active {
     background: hsla(var(--alinea-negative), 0.9);
   }
+}
+
+.container {
+  padding: 12px;
+  @include ml {
+    padding: 35px 45px;
+  }
+  max-width: 1024px;
+  width: 100%;
+  margin: 0 auto;
+  flex-grow: 1;
 }

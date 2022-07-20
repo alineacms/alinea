@@ -25,7 +25,7 @@
   "dependencies": {
     "@alinea/core": "0.0.0",
     "@alinea/ui": "0.0.0",
-    "yjs": "^13.5.34"
+    "yjs": "^13.5.39"
   },
   "peerDependencies": {
     "react": "*"

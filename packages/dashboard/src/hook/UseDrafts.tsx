@@ -6,11 +6,11 @@ import {
   ROOT_KEY
 } from '@alinea/core'
 import {Hub} from '@alinea/core/Hub'
+import {base64} from '@alinea/core/util/Encoding'
 import {observable} from '@alinea/ui'
-import {decode} from 'base64-arraybuffer'
 import {createContext, PropsWithChildren, useContext, useMemo} from 'react'
 import {QueryClient, useQueryClient} from 'react-query'
-import {Room} from 'y-webrtc'
+// import {Room} from 'y-webrtc'
 import * as Y from 'yjs'
 import {EntryDraft} from '../draft/EntryDraft'
 import {useSession} from './UseSession'
@@ -40,7 +40,7 @@ class Drafts {
     const sv = Y.encodeStateVector(doc)
     const update = Y.encodeStateAsUpdate(doc) // , this.stateVectors.get(doc))
     await hub
-      .updateDraft(id, update)
+      .updateDraft({id, update})
       .then(Outcome.unpack)
       .then(() => {
         this.stateVectors.set(doc, sv)
@@ -50,13 +50,13 @@ class Drafts {
   async get(id: string) {
     const {hub} = this
     const doc = new Y.Doc()
-    const [result, error] = await hub.entry(id)
+    const [result, error] = await hub.entry({id})
     if (error) throw error
     if (!result) throw createError(404, `Entry not found`)
     const type = hub.config.type(result.entry.workspace, result.entry.type)
     if (!type) throw createError(404, `Type not found`)
     if (result.draft) {
-      Y.applyUpdate(doc, new Uint8Array(decode(result.draft)))
+      Y.applyUpdate(doc, base64.parse(result.draft))
       this.stateVectors.set(doc, Y.encodeStateVector(doc))
     } else {
       docFromEntry(result.entry, () => type, doc)
@@ -65,14 +65,14 @@ class Drafts {
   }
 
   async list(workspace: string) {
-    return this.hub.listDrafts(workspace).then(Outcome.unpack)
+    return this.hub.listDrafts({workspace}).then(Outcome.unpack)
   }
 
   async discard(draft: EntryDraft) {
     if (this.saveTimeout) clearTimeout(this.saveTimeout)
     draft.status(EntryStatus.Publishing)
     this.status(DraftsStatus.Saving)
-    return this.hub.deleteDraft(draft.id).then(result => {
+    return this.hub.deleteDraft({id: draft.id}).then(result => {
       draft.status(EntryStatus.Published)
       this.queryClient.invalidateQueries('draft-list')
       return result
@@ -83,7 +83,7 @@ class Drafts {
     if (this.saveTimeout) clearTimeout(this.saveTimeout)
     draft.status(EntryStatus.Publishing)
     this.status(DraftsStatus.Saving)
-    return this.hub.publishEntries([draft.getEntry()]).then(res => {
+    return this.hub.publishEntries({entries: [draft.getEntry()]}).then(res => {
       if (res.isFailure()) console.error(res.error)
       draft.status(res.isSuccess() ? EntryStatus.Published : EntryStatus.Draft)
       this.status(DraftsStatus.Synced)
@@ -111,12 +111,12 @@ class Drafts {
     }
     const watch = (
       update?: Uint8Array,
-      origin?: Room | undefined,
+      origin?: undefined, // Room | undefined,
       doc?: Y.Doc,
       transaction?: Y.Transaction
     ) => {
       // This update did not originate from us
-      if (origin instanceof Room) return
+      // if (origin instanceof Room) return
       this.status(DraftsStatus.Editing)
       if (this.saveTimeout) clearTimeout(this.saveTimeout)
       this.saveTimeout = setTimeout(save, this.saveDelay)

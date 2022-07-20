@@ -28,7 +28,11 @@ export class ListShape<T>
   implements Shape<Array<ListRow & T>, ListMutator<ListRow & T>>
 {
   values: Record<string, RecordShape<ListRow & T>>
-  constructor(public label: Label, shapes: Record<string, RecordShape<T>>) {
+  constructor(
+    public label: Label,
+    shapes: Record<string, RecordShape<T>>,
+    public initialValue?: Array<ListRow & T>
+  ) {
     this.values = Object.fromEntries(
       Object.entries(shapes).map(([key, type]) => {
         return [
@@ -44,7 +48,7 @@ export class ListShape<T>
     )
   }
   create() {
-    return [] as Array<ListRow & T>
+    return this.initialValue || ([] as Array<ListRow & T>)
   }
   typeOfChild<C>(yValue: Y.Map<any>, child: string): Shape<C> {
     const row = yValue.get(child)
@@ -101,20 +105,18 @@ export class ListShape<T>
   mutator(parent: Y.Map<any>, key: string) {
     return {
       push: (row: Omit<ListRow & T, 'id' | 'index'>) => {
+        const type = row.type
+        const shape = this.values[type]
         const record = parent.get(key)
         const rows: Array<ListRow> = this.fromY(record) as any
         const id = createId()
-        record.set(
+        const item = shape.toY({
+          ...shape.create(),
+          ...row,
           id,
-          this.values[row.type].toY({
-            ...row,
-            id,
-            index: generateKeyBetween(
-              rows[rows.length - 1]?.index || null,
-              null
-            )
-          } as any)
-        )
+          index: generateKeyBetween(rows[rows.length - 1]?.index || null, null)
+        })
+        record.set(id, item)
       },
       remove(id: string) {
         const record = parent.get(key)

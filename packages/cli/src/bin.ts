@@ -2,6 +2,7 @@
 
 import sade from 'sade'
 import {version} from '../package.json'
+import {ensureEnv} from './util/EnsureEnv'
 import {ensureNodeResolution} from './util/EnsureNodeResolution'
 import {ensureReact} from './util/EnsureReact'
 
@@ -32,9 +33,12 @@ prog
   })
   .command('serve [dir]')
   .describe('Start a development dashboard')
+  .option('-p, --port', `Port to listen on`)
+  .option('--production', `Use production backend`)
   .action(async (dir, args) => {
     ensureNodeResolution()
     ensureReact()
+    ensureEnv(dir || process.cwd())
     const {serve} = await import('./Serve')
     return serve({cwd: dir, ...args})
   })

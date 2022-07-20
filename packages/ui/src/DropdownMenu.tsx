@@ -1,34 +1,64 @@
+import {autoUpdate, flip, offset, useFloating} from '@floating-ui/react-dom'
 import {Menu} from '@headlessui/react'
-import {ButtonHTMLAttributes, HTMLAttributes} from 'react'
+import {
+  ButtonHTMLAttributes,
+  createContext,
+  HTMLAttributes,
+  useContext
+} from 'react'
 import css from './DropdownMenu.module.scss'
 import {fromModule} from './util/Styler'
 
 const styles = fromModule(css)
 
 export namespace DropdownMenu {
+  const floatingContext = createContext<ReturnType<typeof useFloating>>(
+    undefined!
+  )
+
   export function Root(props: HTMLAttributes<HTMLDivElement>) {
+    const floating = useFloating({
+      whileElementsMounted: autoUpdate,
+      strategy: 'fixed',
+      placement: 'bottom-start',
+      middleware: [offset(4), flip()]
+    })
     return (
-      <Menu>
-        <div {...props} className={styles.root.mergeProps(props)()} />
-      </Menu>
+      <floatingContext.Provider value={floating}>
+        <Menu>
+          <div {...props} className={styles.root.mergeProps(props)()} />
+        </Menu>
+      </floatingContext.Provider>
     )
   }
-  export const Trigger: typeof Menu.Button = styles.trigger.toElement(
-    Menu.Button
-  ) as any
 
-  export function Items({
-    left,
-    right,
-    ...props
-  }: HTMLAttributes<HTMLDivElement> & {left?: boolean; right?: boolean}) {
+  export function Trigger(props: HTMLAttributes<HTMLButtonElement>) {
+    const floating = useContext(floatingContext)
     return (
-      <Menu.Items
+      <Menu.Button
+        ref={floating.reference}
         {...props}
-        className={styles.items.mergeProps(props)({left, right})}
+        className={styles.trigger.mergeProps(props)()}
       />
     )
   }
+
+  export function Items(props: HTMLAttributes<HTMLDivElement>) {
+    const floating = useContext(floatingContext)
+    return (
+      <Menu.Items
+        {...props}
+        ref={floating.floating}
+        style={{
+          position: floating.strategy,
+          top: `${floating.y || 0}px`,
+          left: `${floating.x || 0}px`
+        }}
+        className={styles.items.mergeProps(props)()}
+      />
+    )
+  }
+
   export function Item(props: ButtonHTMLAttributes<HTMLButtonElement>) {
     return (
       <Menu.Item>

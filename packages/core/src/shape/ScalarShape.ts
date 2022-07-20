@@ -6,9 +6,9 @@ import {Shape} from '../Shape'
 export type ScalarMutator<T> = (value: T) => void
 
 export class ScalarShape<T> implements Shape<T, ScalarMutator<T>> {
-  constructor(public label: Label) {}
+  constructor(public label: Label, private initialValue?: T) {}
   create(): T {
-    return undefined! as T
+    return this.initialValue as T
   }
   typeOfChild<C>(yValue: T, child: string): Shape<C> {
     throw createError(`No children in scalar values`)

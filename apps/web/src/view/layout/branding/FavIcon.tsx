@@ -1,5 +1,5 @@
+import {btoa} from '@alinea/core/util/Encoding'
 import {useContrastColor} from '@alinea/ui/hook/UseContrastColor'
-import {btoa} from '@alinea/ui/util/Base64'
 import NextHead from 'next/head.js'
 
 type FavIconProps = {
@@ -10,40 +10,9 @@ export function FavIcon({color}: FavIconProps) {
   const accentColorForeground = useContrastColor(color)
 
   const favicon = btoa(`
-    <svg
-      width="36"
-      height="36"
-      view-box="0 0 36 36"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      
-    >
-      <defs>
-        <linearGradient
-          id="grad1"
-          x1="0%"
-          y1="0%"
-          x2="100%"
-          y2="0%"
-          gradient-transform="rotate(65)"
-        >
-          <stop offset="0%" style="stop-color: ${color}; stop-opacity: 1" />
-          <stop
-            offset="100%"
-            style="stop-color: ${color}; stop-opacity: 1"
-          />
-        </linearGradient>
-      </defs>
-      <path
-        d="M18 36C25.884 36 29.9427 36 32.8047 33.138C35.6667 30.276 36 25.884 36 18C36 10.116 35.6667 6.05733 32.8047 3.19533C29.9427 0.333333 25.884 0 18 0C10.116 0 6.05733 0.333333 3.19533 3.19533C0.333333 6.05733 0 10.116 0 18C0 25.884 0.333333 29.9427 3.19533 32.8047C6.05733 35.6667 10.116 36 18 36Z"
-        fill="url(#grad1)"
-      ></path>
-      <g transform="translate(7.5 6.5) scale(.9 .9)">
-        <polygon stroke="${accentColorForeground}" stroke-width="2" points="12 2 2 7 12 12 22 7 12 2"></polygon>
-        <polyline stroke="${accentColorForeground}" stroke-width="2" points="2 17 12 22 22 17"></polyline>
-        <polyline stroke="${accentColorForeground}" stroke-width="2" points="2 12 12 17 22 12"></polyline>
-      </g>
-    </svg>
+  <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M20.145 6.55682V8.42614C18.8569 6.91477 16.9442 6 14.329 6C9.21561 6 5 10.5739 5 16.5C5 22.4261 9.21561 27 14.329 27C16.9442 27 18.8569 26.0852 20.145 24.5739V26.4432H26V6.55682H20.145ZM15.5 21.3523C12.8067 21.3523 10.855 19.483 10.855 16.5C10.855 13.517 12.8067 11.6477 15.5 11.6477C18.1933 11.6477 20.145 13.517 20.145 16.5C20.145 19.483 18.1933 21.3523 15.5 21.3523Z" fill="#343A43"/>
+  </svg>  
   `)
 
   const Head = (NextHead as any).default || NextHead

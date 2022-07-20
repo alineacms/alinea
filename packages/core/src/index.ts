@@ -1,4 +1,5 @@
 export * from './Auth'
+export * from './BackendConfig'
 export * from './Config'
 export * from './Doc'
 export * from './Entry'

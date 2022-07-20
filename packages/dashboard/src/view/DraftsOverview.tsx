@@ -1,9 +1,9 @@
 import {Entry, Outcome} from '@alinea/core'
 import {Button, fromModule, HStack, px, Stack, Typo, VStack} from '@alinea/ui'
-import IcRoundArrowForward from '@alinea/ui/icons/IcRoundArrowForward'
+import {IcRoundArrowForward} from '@alinea/ui/icons/IcRoundArrowForward'
 import {useState} from 'react'
 import {useQuery} from 'react-query'
-import {CurrentDraftProvider} from '..'
+import {CurrentDraftProvider} from '../hook/UseCurrentDraft'
 import {useDraft} from '../hook/UseDraft'
 import {useDraftsList} from '../hook/UseDraftsList'
 import {useNav} from '../hook/UseNav'
@@ -32,7 +32,7 @@ export function DraftsOverview({id}: DraftsOverviewProps) {
       const criteria = Entry.where(Entry.id.isIn(ids)).where(
         Entry.workspace.is(workspace.name)
       )
-      const drafts = hub.query(criteria).then(Outcome.unpack)
+      const drafts = hub.query({cursor: criteria}).then(Outcome.unpack)
       return drafts
     },
     {suspense: true}
@@ -45,7 +45,7 @@ export function DraftsOverview({id}: DraftsOverviewProps) {
     if (publishing) return
     setPublishing(true)
     return hub
-      .publishEntries(drafts)
+      .publishEntries({entries: drafts})
       .then(Outcome.unpack)
       .then(() => refetch())
       .finally(() => setPublishing(false))

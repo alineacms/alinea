@@ -1,55 +1,83 @@
-import {fromModule, HStack, Stack, Typo} from '@alinea/ui'
+import {fromModule, HStack, TextLabel, VStack} from '@alinea/ui'
 import {IcRoundArrowBack} from '@alinea/ui/icons/IcRoundArrowBack'
 import {IcRoundArrowForward} from '@alinea/ui/icons/IcRoundArrowForward'
 import Link from 'next/link'
 import {Blocks} from './blocks/Blocks'
 import css from './DocPage.module.scss'
-import {DocPageProps} from './DocPage.query'
-import {Container} from './layout/Container'
+import {DocPageProps} from './DocPage.server'
+import {Breadcrumbs} from './layout/Breadcrumbs'
 import {Layout} from './layout/Layout'
 import {NavSidebar} from './layout/NavSidebar'
 import {NavTree, useNavTree} from './layout/NavTree'
 
 const styles = fromModule(css)
 
-export function DocPage({title, blocks, menu, next, prev}: DocPageProps) {
+export function DocPage({
+  blocks,
+  menu,
+  next,
+  prev,
+  parents,
+  ...doc
+}: DocPageProps) {
   const nav = useNavTree(menu)
   return (
-    <Layout.Content>
-      <Container>
-        <HStack gap={80}>
+    <div className={styles.root()}>
+      <Layout.Container>
+        <HStack>
           <NavSidebar>
             <NavTree nav={nav} />
           </NavSidebar>
-          <div style={{flexGrow: 1, minWidth: 0}}>
+          <Layout.Scrollable>
+            <Breadcrumbs parents={parents.concat(doc)} />
             <Blocks blocks={blocks} />
-            <HStack center gap={20} className={styles.root.nav()}>
+            <HStack
+              gap={20}
+              justify="space-between"
+              className={styles.root.nav()}
+            >
               {prev && (
                 <Link href={prev.url} passHref>
-                  <Typo.Link>
-                    <HStack gap={8}>
-                      <IcRoundArrowBack />
-                      <span>{prev.title}</span>
-                    </HStack>
-                  </Typo.Link>
+                  <a className={styles.root.nav.link()}>
+                    <VStack gap={8}>
+                      <HStack gap={8}>
+                        <span className={styles.root.nav.link.icon()}>
+                          <IcRoundArrowBack />
+                        </span>
+                        <span className={styles.root.nav.link.label()}>
+                          Previous
+                        </span>
+                      </HStack>
+                      <span>
+                        <TextLabel label={prev.title} />
+                      </span>
+                    </VStack>
+                  </a>
                 </Link>
               )}
-              <Stack.Right>
-                {next && (
-                  <Link href={next.url} passHref>
-                    <Typo.Link>
-                      <HStack center gap={8}>
-                        <span>{next.title}</span>
-                        <IcRoundArrowForward />
+              {next && (
+                <Link href={next.url} passHref>
+                  <a className={styles.root.nav.link('right')}>
+                    <VStack gap={8}>
+                      <HStack gap={8} justify="right">
+                        <span className={styles.root.nav.link.label()}>
+                          Next
+                        </span>
+                        <span className={styles.root.nav.link.icon()}>
+                          <IcRoundArrowForward />
+                        </span>
                       </HStack>
-                    </Typo.Link>
-                  </Link>
-                )}
-              </Stack.Right>
+                      <span>
+                        <TextLabel label={next.title} />
+                      </span>
+                    </VStack>
+                  </a>
+                </Link>
+              )}
             </HStack>
-          </div>
+          </Layout.Scrollable>
         </HStack>
-      </Container>
-    </Layout.Content>
+      </Layout.Container>
+    </div>
   )
 }

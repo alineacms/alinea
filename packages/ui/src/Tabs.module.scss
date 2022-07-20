@@ -1,8 +1,11 @@
 .list {
   display: flex;
-  margin: 0 6px 8px 6px;
+  flex-wrap: wrap;
+  margin: 0 6px 10px 6px;
+  gap: 8px;
   // border-bottom: 1px solid var(--alinea-outline);
-  box-shadow: var(--alinea-divider-bottom);
+  // padding-bottom: 8px;
+  //box-shadow: var(--alinea-divider-bottom);
 }
 
 .trigger {
@@ -12,23 +15,27 @@
   border: none;
   color: inherit;
   font: inherit;
-  padding: 0 14px 10px 14px;
+  padding: 8px 14px;
   cursor: pointer;
-  opacity: 0.6;
-  border-bottom: 2px solid transparent;
-  // margin-bottom: -1px;
+  opacity: 0.9;
+  //border-bottom: 1px solid transparent;
+  margin-bottom: -1px;
   font-size: 12.5px;
   line-height: 1.1;
   font-weight: bold;
   outline: none;
+  border-radius: var(--alinea-border-radius);
+  //border-top-left-radius: var(--alinea-border-radius);
+  //border-top-right-radius: var(--alinea-border-radius);
 
   &:hover {
     opacity: 1;
-    border-color: currentColor;
+    background: var(--alinea-highlight);
   }
 
   &.is-selected {
     opacity: 1;
-    border-color: var(--alinea-accent);
+    //border-color: var(--alinea-accent);
+    background: var(--alinea-selected);
   }
 }

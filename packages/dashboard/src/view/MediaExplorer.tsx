@@ -58,7 +58,9 @@ async function uploadFile(
     color = res.hex
   }
   const buffer = await file.arrayBuffer()
-  return hub.uploadFile(workspace, root, {
+  return hub.uploadFile({
+    workspace,
+    root,
     path,
     buffer,
     preview,
@@ -78,11 +80,11 @@ export function MediaExplorer() {
     ['media', 'total', draft.id],
     () => {
       return hub
-        .query(
-          File.where(File.parent.is(draft.id)).select({
+        .query({
+          cursor: File.where(File.parent.is(draft.id)).select({
             total: Functions.count()
           })
-        )
+        })
         .then(Outcome.unpack)
     },
     {suspense: true}
@@ -114,7 +116,7 @@ export function MediaExplorer() {
     <Main className={styles.root()}>
       <EntryHeader mode={EditMode.Editing} />
       <div className={styles.root.inner()}>
-        <HStack style={{flexGrow: 1}}>
+        <HStack style={{flexGrow: 1, minHeight: 0}}>
           <FileUploader toggleSelect={() => {}} />
           <VStack style={{height: '100%', width: '100%'}}>
             <header className={styles.root.inner.header()}>

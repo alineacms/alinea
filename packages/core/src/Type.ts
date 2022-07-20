@@ -1,19 +1,20 @@
 // Todo: extract interface and place it in core
-import type {Pages} from '@alinea/backend/Pages'
-import type {Cursor, Fields} from '@alinea/store'
-import {Collection, Expr, SelectionInput} from '@alinea/store'
-import type {ComponentType} from 'react'
-import {Entry} from './Entry'
-import {Field} from './Field'
-import {createId} from './Id'
-import {Label} from './Label'
-import type {Schema} from './Schema'
-import {Section} from './Section'
-import {Shape} from './Shape'
-import {RecordShape} from './shape/RecordShape'
-import {Lazy} from './util/Lazy'
-import {LazyRecord} from './util/LazyRecord'
-import type {View} from './View'
+import type { Pages } from '@alinea/backend/Pages'
+import type { EntryEditProps } from '@alinea/dashboard/view/EntryEdit'
+import type { Cursor, Fields } from '@alinea/store'
+import { Collection, Expr, SelectionInput } from '@alinea/store'
+import type { ComponentType } from 'react'
+import { Entry } from './Entry'
+import { Field } from './Field'
+import { createId } from './Id'
+import { Label } from './Label'
+import type { Schema } from './Schema'
+import { Section } from './Section'
+import { Shape } from './Shape'
+import { RecordShape } from './shape/RecordShape'
+import { Lazy } from './util/Lazy'
+import { LazyRecord } from './util/LazyRecord'
+import type { View } from './View'
 
 export namespace Type {
   export type Raw<T> = T extends TypeConfig<infer U, any> ? U : never
@@ -33,7 +34,7 @@ export type TypeOptions<R, Q> = {
   icon?: ComponentType
 
   /** A React component used to view an entry of this type in the dashboard */
-  view?: ComponentType
+  view?: ComponentType<EntryEditProps>
   /** A React component used to view a row of this type in the dashboard */
   summaryRow?: View<any>
   /** A React component used to view a thumbnail of this type in the dashboard */
@@ -43,12 +44,12 @@ export type TypeOptions<R, Q> = {
   // Todo: solve infered type here
   index?: <T>(fields: Fields<T>) => Record<string, Array<Expr<any>>>
 
-  transform?: <P>(field: Expr<R>, pages: Pages<P>) => Expr<Q> | undefined
+  transform?: (field: Expr<R>, pages: Pages<any>) => Expr<Q> | undefined
 }
 
 export class TypeConfig<R = any, T = R> {
   fields: Record<string, Field<any, any>> = {}
-  shape: RecordShape<T>
+  shape: RecordShape<any>
 
   constructor(
     public label: Label,
@@ -93,23 +94,23 @@ export class TypeConfig<R = any, T = R> {
     return Boolean(this.options.isContainer)
   }
 
-  selection(cursor: Cursor<R>, pages: Pages<any>): Expr<T> | undefined {
+  selection(cursor: Cursor<R>, pages: Pages<any>): Expr<any> | undefined {
     const computed: Record<string, SelectionInput> = {}
     let isComputed = false
     for (const [key, field] of this) {
       if (!field.transform) continue
-      const selection = field.transform(cursor.get(key), pages)
+      const selection = field.transform(cursor.get<any>(key), pages)
       if (!selection) continue
       computed[key] = selection
       isComputed = true
     }
     if (this.options.transform)
       return this.options.transform(
-        cursor.fields.with(computed).toExpr(),
+        (cursor.fields.with(computed) as any).toExpr(),
         pages
       )
     if (!isComputed) return
-    return cursor.fields.with(computed).toExpr() as Expr<T>
+    return cursor.fields.with(computed).toExpr()
   }
 
   configure<Q = T>(options: TypeOptions<R, Q>): TypeConfig<R, Q> {

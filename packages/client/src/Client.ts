@@ -7,8 +7,7 @@ import {
   Outcome,
   Workspaces
 } from '@alinea/core'
-import {Cursor} from '@alinea/store'
-import fetch from 'isomorphic-fetch'
+import {fetch, FormData} from '@alinea/iso'
 
 async function toFuture<T = void>(res: Response): Future<T> {
   return Outcome.fromJSON<T>(await res.json())
@@ -28,21 +27,21 @@ export class Client<T extends Workspaces> implements Hub<T> {
     return new Client(this.config, this.url, applyAuth, unauthorized)
   }
 
-  entry(id: string, stateVector?: Uint8Array): Future<Entry.Detail | null> {
+  entry({id, stateVector}: Hub.EntryParams): Future<Entry.Detail | null> {
     return this.fetchJson(Hub.routes.entry(id, stateVector), {
       method: 'GET'
     }).then<Outcome<Entry.Detail | null>>(toFuture)
   }
 
-  query<T>(cursor: Cursor<T>, options?: Hub.QueryOptions): Future<Array<T>> {
-    const params = options?.source ? '?source' : ''
+  query<T>({cursor, source}: Hub.QueryParams<T>): Future<Array<T>> {
+    const params = source ? '?source' : ''
     return this.fetchJson(Hub.routes.query() + params, {
       method: 'POST',
       body: JSON.stringify(cursor.toJSON())
     }).then<Outcome<Array<T>>>(toFuture)
   }
 
-  updateDraft(id: string, update: Uint8Array): Future {
+  updateDraft({id, update}: Hub.UpdateParams): Future {
     return this.fetch(Hub.routes.draft(id), {
       method: 'PUT',
       headers: {'content-type': 'application/octet-stream'},
@@ -50,36 +49,34 @@ export class Client<T extends Workspaces> implements Hub<T> {
     }).then(toFuture)
   }
 
-  deleteDraft(id: string): Future<boolean> {
+  deleteDraft({id}: Hub.DeleteParams): Future<boolean> {
     return this.fetch(Hub.routes.draft(id), {
       method: 'DELETE'
     }).then<Outcome<boolean>>(toFuture)
   }
 
-  listDrafts(workspace: string): Future<Array<{id: string}>> {
+  listDrafts({workspace}: Hub.ListParams): Future<Array<{id: string}>> {
     return this.fetch(Hub.routes.drafts() + `?workspace=${workspace}`, {
       method: 'GET'
     }).then<Outcome<Array<{id: string}>>>(toFuture)
   }
 
-  publishEntries(entries: Array<Entry>): Future {
+  publishEntries({entries}: Hub.PublishParams): Future {
     return this.fetchJson(Hub.routes.publish(), {
       method: 'POST',
       body: JSON.stringify(entries)
     }).then(toFuture)
   }
 
-  uploadFile(
-    workspace: string,
-    root: string,
-    file: Hub.Upload
-  ): Future<Media.File> {
+  uploadFile({workspace, root, ...file}: Hub.UploadParams): Future<Media.File> {
     const form = new FormData()
     form.append('workspace', workspace as string)
     form.append('root', root as string)
     form.append('path', file.path)
     if (file.averageColor) form.append('averageColor', file.averageColor)
     if (file.blurHash) form.append('blurHash', file.blurHash)
+    if ('width' in file) form.append('width', String(file.width))
+    if ('height' in file) form.append('height', String(file.height))
     form.append('buffer', new Blob([file.buffer]))
     if (file.preview) form.append('preview', file.preview)
     return this.fetch(Hub.routes.upload(), {
@@ -88,16 +85,20 @@ export class Client<T extends Workspaces> implements Hub<T> {
     }).then<Outcome<Media.File>>(toFuture)
   }
 
-  listFiles(location?: string): Future<Array<Hub.DirEntry>> {
+  /*listFiles(location?: string): Future<Array<Hub.DirEntry>> {
     return this.fetch(Hub.routes.files(location), {
       method: 'GET'
     }).then<Outcome<Array<Hub.DirEntry>>>(toFuture)
-  }
+  }*/
 
   protected fetch(endpoint: string, init?: RequestInit) {
     const controller = new AbortController()
     const signal = controller.signal
-    const promise = fetch(this.url + endpoint, {
+    const url =
+      this.url.endsWith('/') && endpoint.startsWith('/')
+        ? this.url + endpoint.slice(1)
+        : this.url + endpoint
+    const promise = fetch(url, {
       ...this.applyAuth(init),
       signal
     }).then(res => {

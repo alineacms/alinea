@@ -16,9 +16,8 @@
     "esModuleInterop": true,
     "importHelpers": true,
     "paths": {
-      "@alinea/input.*/view": ["./packages/input/*/src/view.ts"],
-      "@alinea/input.*": ["./packages/input/*/src/index.ts"],
-      "@alinea/auth.passwordless/*": ["./packages/auth/passwordless/src/*"],
+      "@alinea/input.*/view": ["./packages/input.*/src/view.ts"],
+      "@alinea/auth.passwordless/*": ["./packages/auth.passwordless/src/*"],
       "@alinea/core/*": ["./packages/core/src/*"],
       "@alinea/cli/*": ["./packages/cli/src/*"],
       "@alinea/dashboard/*": ["./packages/dashboard/src/*"],
@@ -27,6 +26,8 @@
       "@alinea/editor/*": ["./packages/editor/src/*"],
       "@alinea/ui": ["./packages/ui/src"],
       "@alinea/ui/*": ["./packages/ui/src/*"],
+      "@alinea/content/*": ["./apps/web/.alinea/*"],
+      "@alinea/content": ["./apps/web/.alinea"],
       "@alinea/*": ["./packages/*/src"]
     },
     "plugins": [{"name": "typescript-plugin-css-modules"}],

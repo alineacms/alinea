@@ -1,3 +1,4 @@
+import {Storage} from '@alinea/backend/Storage'
 import {
   accumulate,
   createConfig,
@@ -52,12 +53,14 @@ const fs: FS = Volume.fromNestedJSON({
     data: {
       '/index.json': entry({
         id: 'root',
+        root: 'data',
         index: 'a',
         type: 'Home',
         title: 'Test title'
       }),
       '/sub.json': entry({
         id: 'sub',
+        root: 'data',
         index: 'a',
         type: 'Type',
         title: 'Sub title'
@@ -65,6 +68,7 @@ const fs: FS = Volume.fromNestedJSON({
       sub: {
         '/entry.json': entry({
           id: 'sub-entry',
+          root: 'data',
           index: 'b',
           type: 'Sub',
           title: 'Sub entry title'
@@ -106,24 +110,34 @@ test('reading', async () => {
 
 test('inserting', async () => {
   const [root] = await accumulate(data.entries())
-  await data.publish(store, [{...root, title: 'New root title'}])
+  const changes = await Storage.publishChanges(config, store, JsonLoader, [
+    {...root, title: 'New root title'}
+  ])
+  await data.publish({changes})
   const [newRoot] = await accumulate(data.entries())
   assert.is(newRoot.id, 'root')
   assert.is(newRoot.title, 'New root title')
 })
 
 test('file media', async () => {
-  const file01 = await data.download('main', 'file01.txt')
+  const file01 = await data.download({
+    workspace: 'main',
+    location: 'file01.txt'
+  })
   if (file01.type !== 'buffer') throw 'Buffer expected'
   assert.is(file01.buffer.toString(), 'content01')
-  const uploadPath = await data.upload('main', {
+  const uploadPath = await data.upload({
+    workspace: 'main',
+    root: 'data',
     path: 'file04.txt',
     buffer: Buffer.from('content04')
   })
-  const file04 = await data.download('main', uploadPath)
+  const file04 = await data.download({workspace: 'main', location: uploadPath})
   if (file04.type !== 'buffer') throw 'Buffer expected'
   assert.is(file04.buffer.toString(), 'content04')
-  const [, err1] = await outcome(data.download('main', '../out.txt'))
+  const [, err1] = await outcome(
+    data.download({workspace: 'main', location: '../out.txt'})
+  )
   assert.is((err1 as ErrorWithCode).code, 401)
 })
 

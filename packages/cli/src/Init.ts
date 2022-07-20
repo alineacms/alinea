@@ -1,10 +1,10 @@
 import {createId, outcome} from '@alinea/core'
 import {detect} from 'detect-package-manager'
-import {dirname} from 'dirname-filename-esm'
 import fs from 'fs-extra'
 import {execSync} from 'node:child_process'
 import path from 'node:path'
 import {generate} from './Generate'
+import {dirname} from './util/Dirname'
 
 const __dirname = dirname(import.meta)
 
@@ -66,16 +66,6 @@ export async function init(options: InitOptions) {
     pkg.dependencies['@alinea/content'] = `${
       pm !== 'npm' ? 'link' : 'file'
     }:./.alinea`
-    /*
-    // Not sure if a postinstall script is right, since it has the potential to 
-    // fail during execution
-    if (!pkg.scripts) pkg.scripts = {}
-    const currentPostinstall = pkg.scripts.postinstall
-    const postinstall = currentPostinstall
-      ? `${currentPostinstall} && alinea generate`
-      : 'alinea generate'
-    pkg.scripts.postinstall = postinstall
-    */
     await fs.writeFile(
       path.join(cwd, 'package.json'),
       JSON.stringify(pkg, null, 2)
@@ -87,8 +77,8 @@ export async function init(options: InitOptions) {
     const symlinkType = IS_WINDOWS ? 'junction' : 'dir'
     await outcome(
       fs.symlink(
-        path.join(cwd, 'node_modules/@alinea/content'),
         path.join(cwd, '.alinea'),
+        path.join(cwd, 'node_modules/@alinea/content'),
         symlinkType
       )
     )

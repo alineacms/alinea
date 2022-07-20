@@ -143,10 +143,10 @@ export class SqliteStore implements Store {
 
   prepared = new Map()
   prepare(query: string): Driver.PreparedStatement {
-    if (this.prepared.has(query)) return this.prepared.get(query)
+    //if (this.prepared.has(query)) return this.prepared.get(query)
     try {
       const result = this.createOnError(() => this.db.prepare(query))
-      this.prepared.set(query, result)
+      //this.prepared.set(query, result)
       return result
     } catch (e: any) {
       throw new Error(`Could not prepare query:\n${query}\nCause: ${e}`)

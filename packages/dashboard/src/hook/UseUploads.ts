@@ -80,6 +80,15 @@ async function process(upload: Upload, hub: Hub): Promise<Upload> {
       const next = isImage
         ? UploadStatus.CreatingPreview
         : UploadStatus.Uploading
+      if (isImage) {
+        const {width, height} = await new Promise((resolve, reject) => {
+          const image = new Image()
+          image.onload = () => resolve(image)
+          image.onerror = err => reject(err)
+          image.src = URL.createObjectURL(upload.file)
+        })
+        return {...upload, width, height, status: next}
+      }
       return {...upload, status: next}
     case UploadStatus.CreatingPreview:
       const {default: reduce} = await import('image-blob-reduce')
@@ -115,22 +124,23 @@ async function process(upload: Upload, hub: Hub): Promise<Upload> {
       return {
         ...upload,
         blurHash,
-        width: imageData.width,
-        height: imageData.height,
         status: UploadStatus.Uploading
       }
     }
     case UploadStatus.Uploading: {
-      const {to, file, preview, averageColor, blurHash} = upload
+      const {to, file, preview, averageColor, blurHash, width, height} = upload
       const buffer = await file.arrayBuffer()
       const path = (to.url === '/' ? '' : to.url) + '/' + file.name
       const result = await hub
-        .uploadFile(to.workspace, to.root, {
+        .uploadFile({
+          ...to,
           path,
           buffer,
           preview,
           averageColor,
-          blurHash
+          blurHash,
+          width,
+          height
         })
         .then(Outcome.unpack)
       return {...upload, result, status: UploadStatus.Done}
