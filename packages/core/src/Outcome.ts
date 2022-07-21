@@ -83,6 +83,8 @@ export namespace Outcome {
   }
 
   export function Failure<T>(error: Error | any): Outcome<T> {
+    console.error(error)
+
     return new FailureOutcome(
       error instanceof Error ? error : createError(error)
     ) as any
