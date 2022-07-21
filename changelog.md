@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Tested and fixed the integration with Alinea Cloud for drafts and publishing content.
+
 ## [0.1.10]
 
 - Avoid errors during the serve command that would stop the process with

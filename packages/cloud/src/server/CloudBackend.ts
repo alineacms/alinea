@@ -3,7 +3,7 @@ import {BackendCreateOptions} from '@alinea/core/BackendConfig'
 import {Config} from '@alinea/core/Config'
 import {createError} from '@alinea/core/ErrorWithCode'
 import {Hub} from '@alinea/core/Hub'
-import {base64url} from '@alinea/core/util/Encoding'
+import {base64, base64url} from '@alinea/core/util/Encoding'
 import {Blob, fetch, FormData} from '@alinea/iso'
 import {CloudAuthServerOptions} from './CloudAuthServer'
 import {cloudConfig} from './CloudConfig'
@@ -24,7 +24,7 @@ function withAuth(init: RequestInit, ctx: Hub.Context) {
     ...init,
     headers: {
       ...init.headers,
-      authorization: `Bearer: ${ctx.token}`
+      authorization: `Bearer ${ctx.token}`
     }
   }
 }
@@ -47,7 +47,7 @@ export class CloudApi implements CloudConnection {
 
   auth(ctx: Hub.Context) {
     return {
-      authorization: `Bearer: ${ctx.token!}`
+      authorization: `Bearer ${ctx.token!}`
     }
   }
 
@@ -104,10 +104,12 @@ export class CloudApi implements CloudConnection {
     return fetch(
       cloudConfig.draft + `/${id}` + params,
       withAuth({method: 'GET'}, ctx)
-    )
-      .then(failOnHttpError)
-      .then(res => res.arrayBuffer())
-      .then(buffer => new Uint8Array(buffer))
+    ).then(res => {
+      if (res.status === 404) return undefined
+      return failOnHttpError(res)
+        .then(res => res.arrayBuffer())
+        .then(buffer => new Uint8Array(buffer))
+    })
   }
   update(
     {id, update}: Hub.UpdateParams,
@@ -141,8 +143,20 @@ export class CloudApi implements CloudConnection {
       asJson(withAuth({method: 'GET'}, ctx))
     )
       .then(failOnHttpError)
-      .then<Array<Drafts.Update>>(json)
-    for (const update of updates) yield update
+      .then<{
+        success: boolean
+        data: Array<{
+          id: string
+          update: string
+        }>
+      }>(json)
+
+    for (const update of updates.data) {
+      yield {
+        id: update.id,
+        update: base64.parse(update.update)
+      }
+    }
   }
 }
 

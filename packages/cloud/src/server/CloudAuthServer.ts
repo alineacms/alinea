@@ -44,6 +44,7 @@ export class CloudAuthServer implements Auth.Server {
 
   constructor(private options: CloudAuthServerOptions) {
     const {apiKey, config} = options
+
     this.dashboardUrl = config.dashboard?.dashboardUrl!
     const matcher = router.startAt(Hub.routes.base)
     this.handler = router(
@@ -161,6 +162,6 @@ export class CloudAuthServer implements Auth.Server {
       .find(c => c.startsWith(`${COOKIE_NAME}=`))
     if (!token) throw createError(401, 'Unauthorized')
     const jwt = token.slice(`${COOKIE_NAME}=`.length)
-    return {token, user: await verify<User>(jwt, await this.key)}
+    return {token: jwt, user: await verify<User>(jwt, await this.key)}
   }
 }

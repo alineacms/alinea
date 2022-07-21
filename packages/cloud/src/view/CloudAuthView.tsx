@@ -11,6 +11,7 @@ import {IcRoundArrowForward} from '@alinea/ui/icons/IcRoundArrowForward'
 import {IcRoundPublish} from '@alinea/ui/icons/IcRoundPublish'
 import {useQuery} from 'react-query'
 import {AuthResult, AuthResultType} from '../server/CloudAuthServer'
+import {cloudConfig} from '../server/CloudConfig'
 
 export function CloudAuthView({setSession}: Auth.ViewProps) {
   const {client} = useDashboard()
@@ -80,7 +81,7 @@ export function CloudAuthView({setSession}: Auth.ViewProps) {
                 <div>
                   <Button
                     as="a"
-                    href="https://alinea.cloud"
+                    href={cloudConfig.url}
                     target="_blank"
                     iconRight={IcRoundArrowForward}
                   >
