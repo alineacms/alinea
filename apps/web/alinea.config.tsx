@@ -73,6 +73,7 @@ const customBackend = backend({
 }).configure(configureBackend)
 
 const cloudBackend = createCloudBackend()
+
 export const config = createConfig({
   dashboard: {
     dashboardUrl: 'https://alinea.sh/admin.html',
