@@ -157,7 +157,6 @@ export class CloudAuthServer implements Auth.Server {
     const cookies = request.headers.get('cookie')
     if (!cookies) {
       console.info(request.headers)
-      console.info(request)
       throw createError(401, 'Unauthorized - no cookies')
     }
     const token = cookies
