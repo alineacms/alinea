@@ -3,10 +3,10 @@
 import {dirname as pathDirname} from 'node:path'
 import {fileURLToPath} from 'node:url'
 
-export function dirname(importMeta: {url?: string}) {
-  return pathDirname(filename(importMeta))
+export function dirname(url?: string) {
+  return pathDirname(filename(url))
 }
 
-export function filename(importMeta: {url?: string}) {
-  return importMeta.url ? fileURLToPath(importMeta.url) : ''
+export function filename(url?: string) {
+  return url ? fileURLToPath(url) : ''
 }

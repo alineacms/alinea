@@ -10,6 +10,7 @@ import semver from 'compare-versions'
 import type {BuildOptions} from 'esbuild'
 import {build} from 'esbuild'
 import fs from 'fs-extra'
+import path from 'node:path'
 import {BuildTask} from './.esbx/build'
 import {bundleTs} from './.esbx/bundle-ts'
 import {cssPlugin} from './.esbx/plugin/css'
@@ -93,6 +94,7 @@ export const dev = {
   options: [['-p, --production', 'Use production backend']],
   async action(options) {
     await buildTask.action({watch: true, silent: true})
+    const out = 'file://' + path.resolve('dist/cli/src/bin.js')
     const serverOptions: BuildOptions = {
       ...buildOptions,
       ignoreAnnotations: true,
@@ -103,14 +105,19 @@ export const dev = {
       outdir: 'dist',
       sourcemap: true,
       external: modules,
+      watch: true,
       plugins: [
         ...buildOptions.plugins!,
         ReporterPlugin.configure({name: 'server'}),
         // --experimental-specifier-resolution=node
         RunPlugin.configure({
           cmd: 'node dist/dev.mjs' + (options.production ? ' --production' : '')
-        })
-      ]
+        }),
+        internalPlugin
+      ],
+      define: {
+        'import.meta.url': JSON.stringify(out)
+      }
     }
     return build(serverOptions)
   }

@@ -9,6 +9,7 @@ import FloatingMenu from '@tiptap/extension-floating-menu'
 import Gapcursor from '@tiptap/extension-gapcursor'
 import HardBreak from '@tiptap/extension-hard-break'
 import Heading from '@tiptap/extension-heading'
+import HorizontalRule from '@tiptap/extension-horizontal-rule'
 import Italic from '@tiptap/extension-italic'
 import Link from '@tiptap/extension-link'
 import ListItem from '@tiptap/extension-list-item'
@@ -40,6 +41,7 @@ export const RichTextKit = Extension.create({
       Bold,
       Italic,
       Strike,
+      HorizontalRule,
       BulletList.configure({
         HTMLAttributes: {
           class: styles.list()

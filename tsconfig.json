@@ -17,6 +17,7 @@
     "importHelpers": true,
     "paths": {
       "@alinea/input.*/view": ["./packages/input.*/src/view.ts"],
+      "@alinea/input.*": ["./packages/input.*/src/view.ts"],
       "@alinea/auth.passwordless/*": ["./packages/auth.passwordless/src/*"],
       "@alinea/core/*": ["./packages/core/src/*"],
       "@alinea/cli/*": ["./packages/cli/src/*"],
