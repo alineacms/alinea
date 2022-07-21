@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [0.1.11]
 
 - Tested and fixed the integration with Alinea Cloud for drafts and publishing content.
 
