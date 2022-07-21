@@ -145,6 +145,8 @@ export class CloudAuthServer implements Auth.Server {
   async authResult(request: Request): Promise<AuthResult> {
     if (!this.options.apiKey) return {type: AuthResultType.MissingApiKey}
     const [ctx, err] = await outcome(this.contextFor(request))
+    console.log(ctx, err)
+    if (err) throw err
     if (ctx) return {type: AuthResultType.Authenticated, user: ctx.user}
     return {
       type: AuthResultType.UnAuthenticated,
