@@ -1,5 +1,7 @@
 # Changelog
 
+- Fixed newlines within the RichText component.
+
 ## [0.1.11]
 
 - Tested and fixed the integration with Alinea Cloud for drafts and publishing content.
