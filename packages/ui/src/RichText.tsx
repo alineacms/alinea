@@ -15,7 +15,8 @@ export enum Elements {
   ol = 'ol',
   li = 'li',
   a = 'a',
-  hr = 'hr'
+  hr = 'hr',
+  br = 'br'
 }
 
 type Element = keyof typeof Elements
@@ -48,6 +49,8 @@ function nodeElement(
       return <blockquote style={style} />
     case 'horizontalRule':
       return <hr />
+    case 'hardBreak':
+      return <br />
   }
 }
 
