@@ -44,7 +44,7 @@ export function ExternalLinkPickerForm({
         url: data.url,
         description: data.description,
         target: data.blank ? '_blank' : '_self'
-      }
+      } as Reference.Url
     ])
   }
   return (

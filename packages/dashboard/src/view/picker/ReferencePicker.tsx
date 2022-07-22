@@ -87,7 +87,7 @@ export function ReferencePicker({
     (entry: Entry.Minimal) => {
       setSelection(selected => {
         const index = selected.findIndex(
-          v => v.type === 'entry' && v.entry === entry.id
+          v => Reference.isEntry(v) && v.entry === entry.id
         )
         let res = selected.slice()
         if (index === -1) {
@@ -96,7 +96,7 @@ export function ReferencePicker({
               id: createId(),
               type: 'entry',
               entry: entry.id
-            })
+            } as Reference.Entry)
             .slice(-(max || 0))
         } else {
           res.splice(index, 1)

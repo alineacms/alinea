@@ -64,9 +64,9 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
       const url = new URL(href)
       if (url.protocol === 'entry:') {
         const entry = url.pathname
-        return {id: entry, type: 'entry', entry}
+        return {id: entry, type: 'entry', entry} as Reference.Entry
       }
-      return {id: href, type: 'url', url: href}
+      return {id: href, type: 'url', url: href} as Reference.Url
     } catch (e) {
       return undefined
     }
@@ -77,7 +77,7 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
     pickLink({link: existing ? [existing] : undefined}).then(picked => {
       if (!picked) return
       const link = picked.link && picked.link[0]
-      if (link?.type === 'entry') {
+      if (Reference.isEntry(link)) {
         const command = exec()
         const action = existing
           ? command.extendMarkRange('link').setLink({

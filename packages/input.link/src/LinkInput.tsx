@@ -74,50 +74,47 @@ function LinkInputRow<T>({
   isSortable,
   ...rest
 }: LinkInputRowProps<T>) {
-  switch (reference.type) {
-    case 'entry':
-      const entry = entryData(reference.entry)
-      return (
-        <div
-          className={styles.row({
-            dragging: isDragging,
-            overlay: isDragOverlay
-          })}
-          ref={rootRef}
-          {...rest}
-        >
-          <Card.Header>
-            <Card.Options>
-              {isSortable ? (
-                <IconButton
-                  icon={IcRoundDragHandle}
-                  {...handle}
-                  style={{cursor: handle ? 'grab' : 'grabbing'}}
-                />
-              ) : (
-                <div className={styles.row.staticHandle()}>
-                  <IcRoundLink />
-                </div>
-              )}
-            </Card.Options>
-            <div style={{flexGrow: 1, minWidth: 0}}>
-              {entry && <LinkInputEntryRow key={entry.id} entry={entry} />}
-            </div>
-            <Card.Options>
-              <IconButton icon={IcRoundClose} onClick={onRemove} />
-            </Card.Options>
-          </Card.Header>
-          {fields && (
-            <Card.Content>
-              <InputForm type={fields} state={state} />
-            </Card.Content>
-          )}
-        </div>
-      )
-
-    case 'url':
-      return <Typo.Monospace>Todo: url preview</Typo.Monospace>
+  if (Reference.isEntry(reference)) {
+    const entry = entryData(reference.entry)
+    return (
+      <div
+        className={styles.row({
+          dragging: isDragging,
+          overlay: isDragOverlay
+        })}
+        ref={rootRef}
+        {...rest}
+      >
+        <Card.Header>
+          <Card.Options>
+            {isSortable ? (
+              <IconButton
+                icon={IcRoundDragHandle}
+                {...handle}
+                style={{cursor: handle ? 'grab' : 'grabbing'}}
+              />
+            ) : (
+              <div className={styles.row.staticHandle()}>
+                <IcRoundLink />
+              </div>
+            )}
+          </Card.Options>
+          <div style={{flexGrow: 1, minWidth: 0}}>
+            {entry && <LinkInputEntryRow key={entry.id} entry={entry} />}
+          </div>
+          <Card.Options>
+            <IconButton icon={IcRoundClose} onClick={onRemove} />
+          </Card.Options>
+        </Card.Header>
+        {fields && (
+          <Card.Content>
+            <InputForm type={fields} state={state} />
+          </Card.Content>
+        )}
+      </div>
+    )
   }
+  return <Typo.Monospace>Todo: preview</Typo.Monospace>
 }
 
 function animateLayoutChanges(args: FirstArgument<AnimateLayoutChanges>) {
@@ -188,8 +185,9 @@ export function LinkInput<T>({state, field}: LinkInputProps<T>) {
   const types = Array.isArray(type) ? type : type ? [type] : []
   const cursor = useMemo(() => {
     const entries = value
-      .filter((v: Reference): v is Reference.Entry => v.type === 'entry')
-      .map(v => v.entry)
+      .filter(Reference.isEntry)
+      // Unfortunately typescript does not narrow to the correct type here
+      .map((v: unknown) => (v as Reference.Entry).entry)
     return Entry.where(Entry.id.isIn(entries))
   }, [value, schema])
 

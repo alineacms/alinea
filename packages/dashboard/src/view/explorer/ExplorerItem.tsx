@@ -1,4 +1,4 @@
-import {Entry, Schema, View} from '@alinea/core'
+import {Entry, Reference, Schema, View} from '@alinea/core'
 import {fromModule} from '@alinea/ui'
 import {IcRoundCheckBox} from '@alinea/ui/icons/IcRoundCheckBox'
 import {IcRoundCheckBoxOutlineBlank} from '@alinea/ui/icons/IcRoundCheckBoxOutlineBlank'
@@ -30,7 +30,7 @@ export function ExplorerItem({
   const Tag: any = explorer?.selectable ? 'label' : Link
   const props = explorer?.selectable ? {} : {to: nav.entry(entry)}
   const isSelected = Boolean(
-    explorer?.selection.find(v => v.type === 'entry' && v.entry === entry.id)
+    explorer?.selection.find(v => Reference.isEntry(v) && v.entry === entry.id)
   )
   return (
     <Tag
