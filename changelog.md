@@ -1,6 +1,9 @@
 # Changelog
 
-- Fixed newlines within the RichText component.
+## [0.1.12]
+
+- Previous release contained a few debug logs which are removed.
+- Hard breaks (shift + enter) will be rendered as break in the RichText component.
 
 ## [0.1.11]
 
