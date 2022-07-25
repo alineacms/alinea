@@ -204,24 +204,26 @@ export namespace Toolbar {
                         />
                       </HStack>
                     </HStack>
-                    <SelectInput
-                      state={
-                        new InputState.StatePair(
-                          preferences.workspace || '',
-                          preferences.setWorkspace
-                        )
-                      }
-                      field={select(
-                        'Default workspace',
-                        Object.fromEntries(
-                          Object.entries(config.workspaces).map(
-                            ([key, workspace]) => {
-                              return [key, (workspace.label as string) || key]
-                            }
+                    {workspaces.length > 1 && (
+                      <SelectInput
+                        state={
+                          new InputState.StatePair(
+                            preferences.workspace || '',
+                            preferences.setWorkspace
                           )
-                        )
-                      )}
-                    />
+                        }
+                        field={select(
+                          'Default workspace',
+                          Object.fromEntries(
+                            Object.entries(config.workspaces).map(
+                              ([key, workspace]) => {
+                                return [key, (workspace.label as string) || key]
+                              }
+                            )
+                          )
+                        )}
+                      />
+                    )}
                     {/* <SelectInput
                     state={
                       new InputState.StatePair(preferences.language || '', setLanguage)
