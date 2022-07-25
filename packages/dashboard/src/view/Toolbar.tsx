@@ -159,12 +159,14 @@ export namespace Toolbar {
 
               <PopoverMenu.Items right>
                 <VStack gap={25}>
-                  <PopoverMenu.Header>
-                    <p>
-                      {session.user.sub.charAt(0).toUpperCase() +
-                        session.user.sub.slice(1)}
-                    </p>
-                  </PopoverMenu.Header>
+                  {config.hasAuth && (
+                    <PopoverMenu.Header>
+                      <p>
+                        {session.user.sub.charAt(0).toUpperCase() +
+                          session.user.sub.slice(1)}
+                      </p>
+                    </PopoverMenu.Header>
+                  )}
 
                   <VStack gap={15}>
                     <HStack justify={'space-between'} style={{padding: px(6)}}>
@@ -228,13 +230,15 @@ export namespace Toolbar {
                   /> */}
                   </VStack>
 
-                  <PopoverMenu.Footer>
-                    <DropdownMenu.Root>
-                      <DropdownMenu.Item onSelect={session.end}>
-                        Logout
-                      </DropdownMenu.Item>
-                    </DropdownMenu.Root>
-                  </PopoverMenu.Footer>
+                  {config.hasAuth && (
+                    <PopoverMenu.Footer>
+                      <DropdownMenu.Root>
+                        <DropdownMenu.Item onSelect={session.end}>
+                          Logout
+                        </DropdownMenu.Item>
+                      </DropdownMenu.Root>
+                    </PopoverMenu.Footer>
+                  )}
                 </VStack>
               </PopoverMenu.Items>
             </PopoverMenu.Root>
