@@ -30,7 +30,6 @@ export function Viewport({
 }: ViewportProps) {
   const accentColor = color!
   const accentColorForeground = useContrastColor(accentColor)
-  // ERROR: Cannot destructure property 'scheme' of 'preferences' as it is undefined (when localStorage is empty)
   const {scheme, size} = usePreferences()
   useEffect(() => {
     if (!size) return
