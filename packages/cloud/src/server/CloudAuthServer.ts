@@ -23,14 +23,20 @@ export type CloudAuthServerOptions = {
 
 type JWKS = {keys: Array<JsonWebKey>}
 
-function getPublicKey(): Promise<JsonWebKey> {
-  // Todo: some retries before we give up
+function getPublicKey(retry = 0): Promise<JsonWebKey> {
   return fetch(cloudConfig.jwks)
-    .then<JWKS>(res => res.json())
+    .then<JWKS>(async res => {
+      if (res.status !== 200) throw createError(res.status, await res.text())
+      return res.json()
+    })
     .then(jwks => {
       const key = jwks.keys[0] // .find(key => key.use === 'sig')
       if (!key) throw createError(500, 'No signature key found')
       return key
+    })
+    .catch(err => {
+      if (retry < 3) return getPublicKey(retry + 1)
+      throw err
     })
 }
 
