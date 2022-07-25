@@ -1,8 +1,15 @@
 # Changelog
 
-## [Unreleased]
-
 - Added a button to mark text as small within the WYSIWYG editor
+
+## [0.1.12]
+
+- Previous release contained a few debug logs which are removed.
+- Hard breaks (shift + enter) will be rendered as break in the RichText component.
+
+## [0.1.11]
+
+- Tested and fixed the integration with Alinea Cloud for drafts and publishing content.
 
 ## [0.1.10]
 

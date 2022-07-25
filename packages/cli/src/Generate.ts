@@ -17,13 +17,13 @@ import fs from 'fs-extra'
 import {createRequire} from 'node:module'
 import path from 'node:path'
 import {buildOptions} from './build/BuildOptions'
-import {exportStore} from './export/ExportStore'
+import {exportStore} from './ExportStore'
 import {dirname} from './util/Dirname'
 import {externalPlugin} from './util/ExternalPlugin'
 import {ignorePlugin} from './util/IgnorePlugin'
 import {targetPlugin} from './util/TargetPlugin'
 
-const __dirname = dirname(import.meta)
+const __dirname = dirname(import.meta.url)
 const require = createRequire(import.meta.url)
 
 async function writeFileIfContentsDiffer(

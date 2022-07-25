@@ -1,5 +1,5 @@
+import {ComponentType, Fragment, ReactElement, isValidElement} from 'react'
 import {HasType, TextDoc, TextNode, TypesOf} from '@alinea/core'
-import {ComponentType, Fragment, isValidElement, ReactElement} from 'react'
 
 export enum Elements {
   h1 = 'h1',
@@ -16,6 +16,7 @@ export enum Elements {
   li = 'li',
   a = 'a',
   hr = 'hr',
+  br = 'br',
   small = 'small'
 }
 
@@ -49,6 +50,8 @@ function nodeElement(
       return <blockquote style={style} />
     case 'horizontalRule':
       return <hr />
+    case 'hardBreak':
+      return <br />
     case 'small':
       return <small />
   }

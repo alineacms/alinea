@@ -4,7 +4,7 @@ import {Collection} from '@alinea/store/Collection'
 import {SqliteStore} from '@alinea/store/sqlite/SqliteStore'
 import path from 'node:path'
 import * as Y from 'yjs'
-import {exportStore} from '../export/ExportStore'
+import {exportStore} from '../ExportStore'
 
 export type DevDraftsOptions = {
   outDir: string

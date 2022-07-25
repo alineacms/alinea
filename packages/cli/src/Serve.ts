@@ -4,7 +4,6 @@ import {router} from '@alinea/backend/router/Router'
 import {ReadableStream, Request, Response, TextEncoderStream} from '@alinea/iso'
 import semver from 'compare-versions'
 import esbuild, {BuildOptions, BuildResult} from 'esbuild'
-import fs from 'node:fs'
 import http from 'node:http'
 import {createRequire} from 'node:module'
 import path from 'node:path'
@@ -13,7 +12,7 @@ import {generate} from './Generate'
 import {DevBackend} from './serve/DevBackend'
 import {dirname} from './util/Dirname'
 
-const __dirname = dirname(import.meta)
+const __dirname = dirname(import.meta.url)
 const require = createRequire(import.meta.url)
 
 // Source: https://github.com/evanw/esbuild/blob/71be8bc24e70609ab50a80e90a17a1f5770c89b5/internal/helpers/mime.go#L5
@@ -59,6 +58,8 @@ type BuildDetails = {
   rebuild: () => Promise<BuildDetails>
   files: Map<string, Uint8Array>
 }
+
+// restart server pls 132
 
 function browserBuild(
   options: BuildOptions
@@ -169,9 +170,6 @@ export async function serve(options: ServeOptions): Promise<void> {
 
   const matcher = router.matcher()
   const entry = `@alinea/dashboard/dev/${alineaDev ? 'Dev' : 'Lib'}Entry`
-  // This could be determined during the build process using esbuild metadata
-  // but for now this will do
-  const hasCss = fs.existsSync(path.join(cwd, 'config.css'))
   const app = router(
     matcher.get('/~dev').map((): Response => {
       const stream = new ReadableStream({
@@ -192,14 +190,17 @@ export async function serve(options: ServeOptions): Promise<void> {
       })
     }),
     router.compress(
-      matcher.get('/').map((): Response => {
+      matcher.get('/').map(({url}): Response => {
+        const handlerUrl = `${url.protocol}//${url.host}`
         return new Response(
           `<!DOCTYPE html>
           <meta charset="utf-8" />
           <link rel="icon" href="data:," />
-          ${hasCss ? '<link href="./config.css" rel="stylesheet" />' : ''}
+          <link href="./config.css" rel="stylesheet" />
           <link href="./entry.css" rel="stylesheet" />
           <meta name="viewport" content="width=device-width, initial-scale=1" />
+          <meta name="handshake_url" value="${handlerUrl}/hub/auth/handshake" />
+          <meta name="redirect_url" value="${handlerUrl}/hub/auth" />
           <body>
             <script type="module" src="./entry.js"></script>
           </body>`,
