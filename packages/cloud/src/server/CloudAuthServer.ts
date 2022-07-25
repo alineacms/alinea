@@ -127,7 +127,7 @@ export class CloudAuthServer implements Auth.Server {
               name: COOKIE_NAME,
               value: token,
               domain: target.hostname,
-              path: target.pathname,
+              // path: target.pathname,
               secure: target.protocol === 'https:',
               httpOnly: true,
               sameSite: 'strict'
@@ -161,10 +161,7 @@ export class CloudAuthServer implements Auth.Server {
   async contextFor(request: Request): Promise<{token: string; user: User}> {
     if (this.context.has(request)) return this.context.get(request)!
     const cookies = request.headers.get('cookie')
-    if (!cookies) {
-      console.info(request.headers)
-      throw createError(401, 'Unauthorized - no cookies')
-    }
+    if (!cookies) throw createError(401, 'Unauthorized - no cookies')
     const token = cookies
       .split(';')
       .map(c => c.trim())
