@@ -30,6 +30,27 @@
               "text": "Check back soon, we're still working on this part of the documentation."
             }
           ]
+        },
+        {
+          "type": "heading",
+          "textAlign": "left",
+          "level": 2,
+          "content": [
+            {
+              "type": "text",
+              "text": "Alinea Cloud"
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "textAlign": "left",
+          "content": [
+            {
+              "type": "text",
+              "text": "Our most seamless way of deploying content is via Alinea Cloud. "
+            }
+          ]
         }
       ]
     }
