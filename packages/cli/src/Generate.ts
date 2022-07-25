@@ -118,7 +118,9 @@ function schemaTypes(workspace: Workspace) {
     import {DataOf, EntryOf, Entry} from '@alinea/core'
     import {Collection} from '@alinea/store'
     import type {Pages as AlineaPages} from '@alinea/backend'
-    export const schema = config.workspaces['${workspace.name}'].schema
+    export const schema: (typeof config)['workspaces']['${
+      workspace.name
+    }']['schema']
     ${wrapNamespace(collections, workspace.typeNamespace)}
   `
 }
@@ -170,8 +172,6 @@ export async function generate(options: GenerateOptions) {
       'package.json',
       'index.js',
       'index.d.ts',
-      'client.js',
-      'client.d.ts',
       'backend.js',
       'backend.d.ts',
       'store.d.ts'

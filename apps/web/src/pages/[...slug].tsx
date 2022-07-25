@@ -1,4 +1,4 @@
-import {backend} from '@alinea/content'
+import {backend} from '@alinea/content/backend.js'
 
 export async function getStaticPaths() {
   const pages = backend.loadPages('web')
