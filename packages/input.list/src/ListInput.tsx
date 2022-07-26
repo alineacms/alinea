@@ -1,7 +1,8 @@
 import {LazyRecord} from '@alinea/core/util/LazyRecord'
 import {InputForm, InputLabel, InputState, useInput} from '@alinea/editor'
-import {Card, Create, fromModule, IconButton, TextLabel} from '@alinea/ui'
+import {Card, Create, fromModule, Icon, IconButton, TextLabel} from '@alinea/ui'
 import {IcOutlineList} from '@alinea/ui/icons/IcOutlineList'
+import IcRoundAdd from '@alinea/ui/icons/IcRoundAdd'
 import {IcRoundClose} from '@alinea/ui/icons/IcRoundClose'
 import {IcRoundDragHandle} from '@alinea/ui/icons/IcRoundDragHandle'
 import {IcRoundKeyboardArrowDown} from '@alinea/ui/icons/IcRoundKeyboardArrowDown'
@@ -48,6 +49,7 @@ function animateLayoutChanges(args: FirstArgument<AnimateLayoutChanges>) {
 }
 
 function ListInputRowSortable<T extends ListRow>(props: ListInputRowProps<T>) {
+  const {onCreate} = props
   const {attributes, listeners, setNodeRef, transform, transition, isDragging} =
     useSortable({
       animateLayoutChanges,
@@ -65,6 +67,7 @@ function ListInputRowSortable<T extends ListRow>(props: ListInputRowProps<T>) {
       handle={listeners}
       {...attributes}
       isDragging={isDragging}
+      onCreate={onCreate}
     />
   )
 }
@@ -83,6 +86,8 @@ type ListInputRowProps<T extends ListRow> = PropsWithChildren<
     // There's probably an issue for this on DefinitelyTyped.
     rootRef?: Ref<HTMLDivElement>
     isDragOverlay?: boolean
+    onCreate?: (type: string) => void
+    firstRow?: boolean
   } & HTMLAttributes<HTMLDivElement>
 >
 
@@ -96,17 +101,28 @@ function ListInputRow<T extends ListRow>({
   rootRef,
   isDragging,
   isDragOverlay,
+  onCreate,
+  firstRow,
   ...rest
 }: ListInputRowProps<T>) {
-  const type = LazyRecord.get(field.options.schema.types, row.type)
+  const {types} = field.options.schema
+  const type = LazyRecord.get(types, row.type)
+  const [open, setOpen] = useState(false)
   if (!type) return null
+
   return (
     <div
       className={styles.row({dragging: isDragging, overlay: isDragOverlay})}
       ref={rootRef}
       {...rest}
     >
-      <Card.Header>
+      {open && <ListCreateRow field={field} onCreate={onCreate!} />}
+      <Card.Header className={styles.row.header()}>
+        <ListInsertRow
+          open={open}
+          first={!!firstRow}
+          onInsert={() => setOpen(!open)}
+        />
         <Card.Options>
           <IconButton
             icon={type.options.icon || IcRoundDragHandle}
@@ -138,20 +154,21 @@ function ListInputRow<T extends ListRow>({
 
 type ListCreateRowProps<T> = {
   field: ListField<T>
-  onCreate: (type: string) => void
+  bottom?: boolean
+  onCreate: (type: string, index?: number) => void
 }
 
-function ListCreateRow<T>({field, onCreate}: ListCreateRowProps<T>) {
+function ListCreateRow<T>({field, bottom, onCreate}: ListCreateRowProps<T>) {
   const {types} = field.options.schema
   return (
-    <div className={styles.create()}>
+    <div className={styles.create({bottom: bottom})}>
       <Create.Root>
         {LazyRecord.iterate(types).map(([key, type]) => {
           return (
             <Create.Button
               icon={type.options.icon}
               key={key}
-              onClick={() => onCreate(key)}
+              onClick={() => onCreate(key, bottom ? +1 : 0)}
             >
               <TextLabel label={type.label} />
             </Create.Button>
@@ -159,6 +176,24 @@ function ListCreateRow<T>({field, onCreate}: ListCreateRowProps<T>) {
         })}
       </Create.Root>
     </div>
+  )
+}
+
+type ListInsertRowProps<T> = {
+  first: boolean
+  open: boolean
+  onInsert: () => void
+}
+
+function ListInsertRow<T>({first, open, onInsert}: ListInsertRowProps<T>) {
+  return (
+    <>
+      <div className={styles.insert({open: open, first: first})}>
+        <a className={styles.insert.icon()} onClick={onInsert}>
+          <Icon icon={open ? IcRoundKeyboardArrowUp : IcRoundAdd} />
+        </a>
+      </div>
+    </>
   )
 }
 
@@ -215,7 +250,7 @@ export function ListInput<T extends ListRow>({
         <div className={styles.root()}>
           <div className={styles.root.inner({inline})}>
             <SortableContext items={ids} strategy={verticalListSortingStrategy}>
-              <Card.Root>
+              <Card.Root style={{overflow: 'visible'}}>
                 {rows.map((row, i) => {
                   return (
                     <ListInputRowSortable<T>
@@ -225,6 +260,11 @@ export function ListInput<T extends ListRow>({
                       path={state.child(row.id)}
                       onMove={direction => list.move(i, i + direction)}
                       onDelete={() => list.remove(row.id)}
+                      onCreate={(type: string, index?: number) => {
+                        list.push({type} as any)
+                        list.move(rows.length, i + index!)
+                      }}
+                      firstRow={i === 0}
                     />
                   )
                 })}
@@ -232,6 +272,7 @@ export function ListInput<T extends ListRow>({
                   onCreate={(type: string) => {
                     list.push({type} as any)
                   }}
+                  bottom
                   field={field}
                 />
               </Card.Root>
