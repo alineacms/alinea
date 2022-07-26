@@ -29,6 +29,7 @@ export function TextInput({state, field}: TextInputProps) {
 
   const Input = multiline ? TextareaAutosize : 'input'
   // Todo: unlocalise
+  // Todo: redraw textarea on fontSize change
   const placeholder = inline ? String(field.label) : ''
   const empty = value === ''
   return (

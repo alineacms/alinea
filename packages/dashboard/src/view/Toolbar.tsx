@@ -1,22 +1,31 @@
 import {Label} from '@alinea/core/Label'
+import {InputState} from '@alinea/editor/InputState'
+import {select} from '@alinea/input.select'
+import {SelectInput} from '@alinea/input.select/view'
 import {
   Avatar,
   DropdownMenu,
   fromModule,
   Icon,
   IconButton,
+  LogoShape,
+  px,
   TextLabel,
-  useColorScheme
+  usePreferences,
+  VStack
 } from '@alinea/ui'
-import {LogoShape} from '@alinea/ui/branding/LogoShape'
-import {IcOutlineScreenshot} from '@alinea/ui/icons/IcOutlineScreenshot'
-import {IcRoundKeyboardArrowDown} from '@alinea/ui/icons/IcRoundKeyboardArrowDown'
+import IcRoundKeyboardArrowDown from '@alinea/ui/icons/IcRoundKeyboardArrowDown'
+import IcRoundKeyboardArrowUp from '@alinea/ui/icons/IcRoundKeyboardArrowUp'
 import {IcRoundMenu} from '@alinea/ui/icons/IcRoundMenu'
+import IcRoundTextFields from '@alinea/ui/icons/IcRoundTextFields'
 import {IcRoundUnfoldMore} from '@alinea/ui/icons/IcRoundUnfoldMore'
 import {IcSharpBrightnessMedium} from '@alinea/ui/icons/IcSharpBrightnessMedium'
+import {PopoverMenu} from '@alinea/ui/PopoverMenu'
 import {HStack} from '@alinea/ui/Stack'
 import {contrastColor} from '@alinea/ui/util/ContrastColor'
 import {createSlots} from '@alinea/ui/util/Slots'
+import {Switch} from '@headlessui/react'
+import {parseToHsla} from 'color2k'
 import {ComponentType} from 'react'
 import {useNavigate} from 'react-router'
 import {Link} from 'react-router-dom'
@@ -29,6 +38,9 @@ import css from './Toolbar.module.scss'
 
 const styles = fromModule(css)
 
+type ToolbarProps = {
+  color: string
+}
 type WorkspaceLabelProps = {
   color?: string
   label: Label
@@ -56,17 +68,26 @@ function WorkspaceLabel({label, color, icon: Icon}: WorkspaceLabelProps) {
 export namespace Toolbar {
   export const {Provider, Portal, Slot} = createSlots()
 
-  export function Root() {
+  export function Root({color}: ToolbarProps) {
+    const accentColor = color!
     const session = useSession()
     const {config} = useDashboard()
     const nav = useNav()
-    const [colorScheme, toggleColorScheme] = useColorScheme()
+    const preferences = usePreferences()
+    const size = preferences.size || 16
+    const checked = preferences?.scheme === 'dark'
     const workspace = useWorkspace()
     const navigate = useNavigate()
     const {isNavOpen, isPreviewOpen, toggleNav, togglePreview} = useSidebar()
     const workspaces = Object.entries(config.workspaces)
+    const [hue, saturation, lightness] = parseToHsla(accentColor)
+    const style: any = {
+      '--alinea-hue': hue,
+      '--alinea-saturation': `${saturation * 100}%`,
+      '--alinea-lightness': `${lightness * 100}%`
+    }
     return (
-      <HStack center gap={12} className={styles.root()}>
+      <HStack center gap={12} className={styles.root()} style={style}>
         <div className={styles.root.menu()} onClick={toggleNav}>
           <IconButton icon={IcRoundMenu} active={isNavOpen} />
         </div>
@@ -127,30 +148,102 @@ export namespace Toolbar {
           <Portal className={styles.root.portal.slot()} />
         </div>
         <div>
-          <HStack center gap={8}>
-            <IconButton
-              icon={IcSharpBrightnessMedium}
-              onClick={toggleColorScheme}
-            />
-            <DropdownMenu.Root>
-              <DropdownMenu.Trigger>
+          <HStack center gap={10}>
+            <PopoverMenu.Root>
+              <PopoverMenu.Trigger>
                 <HStack center gap={4}>
                   <Avatar user={session.user} />
                   <IcRoundKeyboardArrowDown />
                 </HStack>
-              </DropdownMenu.Trigger>
+              </PopoverMenu.Trigger>
 
-              <DropdownMenu.Items>
-                <DropdownMenu.Item onClick={session.end}>
-                  Logout
-                </DropdownMenu.Item>
-              </DropdownMenu.Items>
-            </DropdownMenu.Root>
-            <IconButton
-              icon={IcOutlineScreenshot}
-              onClick={togglePreview}
-              active={isPreviewOpen}
-            />
+              <PopoverMenu.Items right>
+                <VStack gap={25}>
+                  {config.hasAuth && (
+                    <PopoverMenu.Header>
+                      <p>
+                        {session.user.sub.charAt(0).toUpperCase() +
+                          session.user.sub.slice(1)}
+                      </p>
+                    </PopoverMenu.Header>
+                  )}
+
+                  <VStack gap={15}>
+                    <HStack justify={'space-between'} style={{padding: px(6)}}>
+                      <HStack center gap={16}>
+                        <Icon icon={IcSharpBrightnessMedium} size={20} />
+                        <Switch
+                          checked={checked}
+                          onChange={preferences.toggleColorScheme}
+                          className={styles.root.switch({
+                            checked
+                          })}
+                        >
+                          <span
+                            className={styles.root.switch.slider({
+                              checked
+                            })}
+                          />
+                        </Switch>
+                      </HStack>
+                      <HStack gap={4}>
+                        <Icon
+                          icon={IcRoundTextFields}
+                          size={20}
+                          style={{marginRight: px(12)}}
+                        />
+                        <IconButton
+                          icon={IcRoundKeyboardArrowDown}
+                          onClick={() => preferences.updateFontSize(size - 1)}
+                          disabled={size <= 16}
+                        />
+                        <IconButton
+                          icon={IcRoundKeyboardArrowUp}
+                          onClick={() => preferences.updateFontSize(size + 1)}
+                          disabled={size >= 40}
+                        />
+                      </HStack>
+                    </HStack>
+                    {workspaces.length > 1 && (
+                      <SelectInput
+                        state={
+                          new InputState.StatePair(
+                            preferences.workspace || '',
+                            preferences.setWorkspace
+                          )
+                        }
+                        field={select(
+                          'Default workspace',
+                          Object.fromEntries(
+                            Object.entries(config.workspaces).map(
+                              ([key, workspace]) => {
+                                return [key, (workspace.label as string) || key]
+                              }
+                            )
+                          )
+                        )}
+                      />
+                    )}
+                    {/* <SelectInput
+                    state={
+                      new InputState.StatePair(preferences.language || '', setLanguage)
+                    }
+                    field={select<string>('Default language', {en: 'EN'})}
+                  /> */}
+                  </VStack>
+
+                  {config.hasAuth && (
+                    <PopoverMenu.Footer>
+                      <DropdownMenu.Root>
+                        <DropdownMenu.Item onSelect={session.end}>
+                          Logout
+                        </DropdownMenu.Item>
+                      </DropdownMenu.Root>
+                    </PopoverMenu.Footer>
+                  )}
+                </VStack>
+              </PopoverMenu.Items>
+            </PopoverMenu.Root>
           </HStack>
         </div>
       </HStack>
