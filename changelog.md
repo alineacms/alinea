@@ -2,7 +2,9 @@
 
 ## [Unreleased]
 
-- Added a button to mark text as small within the WYSIWYG editor
+- Added a button to mark text as small within the rich text editor
+- New UI buttons to insert rows in any position in a list field
+- User preferences get a dedicated popover
 
 ## [0.1.12]
 
