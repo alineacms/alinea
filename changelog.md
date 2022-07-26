@@ -1,5 +1,7 @@
 # Changelog
 
+## [Unreleased]
+
 - Added a button to mark text as small within the WYSIWYG editor
 
 ## [0.1.12]

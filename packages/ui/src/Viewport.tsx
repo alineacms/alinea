@@ -1,4 +1,3 @@
-import {parseToHsla} from 'color2k'
 import {HTMLProps, PropsWithChildren, useEffect, useLayoutEffect} from 'react'
 import {useContrastColor} from './hook/UseContrastColor'
 import {usePreferences} from './hook/UsePreferences'
@@ -35,11 +34,9 @@ export function Viewport({
     if (!size) return
     document.documentElement.style.fontSize = `${size}px`
   }, [size])
-  const [hue] = parseToHsla(accentColor)
   const style: any = {
     '--alinea-accent': accentColor,
     '--alinea-accent-foreground': accentColorForeground
-    // '--alinea-hue': hue
   }
   const className = styles.root(scheme)
   const styleString = Object.entries(style)

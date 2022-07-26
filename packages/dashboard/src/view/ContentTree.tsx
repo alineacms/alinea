@@ -213,7 +213,7 @@ export function ContentTree({
       }
     }
   }, [workspace, root, redirectToRoot, entries])
-  const height = (32 / 16) * preferences.size || 32
+  const height = (32 / 16) * preferences.size
   return (
     <DndContext
       sensors={sensors}

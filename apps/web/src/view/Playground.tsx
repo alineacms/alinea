@@ -10,6 +10,7 @@ import {
   HStack,
   Loader,
   Pane,
+  PreferencesProvider,
   px,
   Stack,
   TextLabel,
@@ -181,133 +182,135 @@ export default function Playground() {
       <Head>
         <style>{`#__next {height: 100%}`}</style>
       </Head>
-      <Viewport
-        attachToBody
-        color="#5661E5"
-        contain
-        className={styles.root({previewing})}
-      >
-        <DashboardProvider value={{client, config}}>
-          <SessionProvider value={session}>
-            <QueryClientProvider client={queryClient}>
-              <Toolbar.Provider>
-                {clipboard.copied && (
-                  <div className={styles.root.flash()}>
-                    <p className={styles.root.flash.msg()}>
-                      URL copied to clipboard
-                    </p>
-                  </div>
-                )}
-                <VStack style={{height: '100%'}}>
-                  <AppBar.Root
-                    style={{
-                      borderBottom: `1px solid var(--alinea-outline)`
-                    }}
-                  >
-                    <div className={styles.root.logo()}>
-                      <Link href="/">
-                        <a>
-                          <Logo />
-                        </a>
-                      </Link>
+      <PreferencesProvider>
+        <Viewport
+          attachToBody
+          color="#5661E5"
+          contain
+          className={styles.root({previewing})}
+        >
+          <DashboardProvider value={{client, config}}>
+            <SessionProvider value={session}>
+              <QueryClientProvider client={queryClient}>
+                <Toolbar.Provider>
+                  {clipboard.copied && (
+                    <div className={styles.root.flash()}>
+                      <p className={styles.root.flash.msg()}>
+                        URL copied to clipboard
+                      </p>
                     </div>
+                  )}
+                  <VStack style={{height: '100%'}}>
+                    <AppBar.Root
+                      style={{
+                        borderBottom: `1px solid var(--alinea-outline)`
+                      }}
+                    >
+                      <div className={styles.root.logo()}>
+                        <Link href="/">
+                          <a>
+                            <Logo />
+                          </a>
+                        </Link>
+                      </div>
 
-                    <Stack.Center style={{paddingLeft: px(18)}}>
-                      <Toolbar.Portal />
-                    </Stack.Center>
-                    <AppBar.Item
-                      as="button"
-                      icon={IcRoundClose}
-                      onClick={handleReset}
-                    >
-                      Reset
-                    </AppBar.Item>
-                    <AppBar.Item
-                      as="button"
-                      icon={IcRoundShare}
-                      onClick={handleShare}
-                    >
-                      Share
-                    </AppBar.Item>
-                    <div className={styles.root.mobileMenu()}>
+                      <Stack.Center style={{paddingLeft: px(18)}}>
+                        <Toolbar.Portal />
+                      </Stack.Center>
                       <AppBar.Item
                         as="button"
-                        icon={previewing ? IcRoundCode : IcOutlineScreenshot}
-                        onClick={togglePreview}
+                        icon={IcRoundClose}
+                        onClick={handleReset}
                       >
-                        <div style={{width: px(50)}}>
-                          {previewing ? 'Source' : 'Preview'}
-                        </div>
+                        Reset
                       </AppBar.Item>
-                    </div>
-                  </AppBar.Root>
-                  <HStack style={{height: '100%', minHeight: 0}}>
-                    <Pane
-                      id="editor"
-                      resizable="right"
-                      defaultWidth={window.innerWidth * 0.5}
-                      maxWidth={window.innerWidth * 0.8}
-                      className={styles.root.editor()}
-                    >
-                      <Editor
-                        height="100%"
-                        theme="vs-dark"
-                        path="alinea.config.tsx"
-                        defaultLanguage="typescript"
-                        value={code}
-                        beforeMount={editorConfig}
-                        onChange={value => {
-                          if (value) setCode(value)
-                        }}
-                        loading={<Loader absolute />}
-                      />
-                    </Pane>
-                    <div style={{flex: '1 0 0'}}>
-                      <VStack style={{height: '100%'}}>
-                        <ErrorBoundary dependencies={[type]}>
-                          <Main>
-                            <Main.Container>
-                              {type ? (
-                                <PreviewType type={type} />
-                              ) : (
-                                errors.length === 0 && <Loader absolute />
-                              )}
-                            </Main.Container>
-                          </Main>
-                        </ErrorBoundary>
-                        {errors.length > 0 && (
-                          <div className={styles.root.errors()}>
-                            <VStack gap={20}>
-                              {errors.map(error => {
-                                return (
-                                  <Typo.Monospace as="div">
-                                    <p>{error.text}</p>
-                                    {error.location && (
-                                      <div style={{paddingLeft: px(10)}}>
-                                        <>
-                                          <b>
-                                            [{error.location.file}:{' '}
-                                            {error.location.line}]
-                                          </b>
-                                          <div>{error.location.lineText}</div>
-                                        </>
-                                      </div>
-                                    )}
-                                  </Typo.Monospace>
-                                )
-                              })}
-                            </VStack>
+                      <AppBar.Item
+                        as="button"
+                        icon={IcRoundShare}
+                        onClick={handleShare}
+                      >
+                        Share
+                      </AppBar.Item>
+                      <div className={styles.root.mobileMenu()}>
+                        <AppBar.Item
+                          as="button"
+                          icon={previewing ? IcRoundCode : IcOutlineScreenshot}
+                          onClick={togglePreview}
+                        >
+                          <div style={{width: px(50)}}>
+                            {previewing ? 'Source' : 'Preview'}
                           </div>
-                        )}
-                      </VStack>
-                    </div>
-                  </HStack>
-                </VStack>
-              </Toolbar.Provider>
-            </QueryClientProvider>
-          </SessionProvider>
-        </DashboardProvider>
-      </Viewport>
+                        </AppBar.Item>
+                      </div>
+                    </AppBar.Root>
+                    <HStack style={{height: '100%', minHeight: 0}}>
+                      <Pane
+                        id="editor"
+                        resizable="right"
+                        defaultWidth={window.innerWidth * 0.5}
+                        maxWidth={window.innerWidth * 0.8}
+                        className={styles.root.editor()}
+                      >
+                        <Editor
+                          height="100%"
+                          theme="vs-dark"
+                          path="alinea.config.tsx"
+                          defaultLanguage="typescript"
+                          value={code}
+                          beforeMount={editorConfig}
+                          onChange={value => {
+                            if (value) setCode(value)
+                          }}
+                          loading={<Loader absolute />}
+                        />
+                      </Pane>
+                      <div style={{flex: '1 0 0'}}>
+                        <VStack style={{height: '100%'}}>
+                          <ErrorBoundary dependencies={[type]}>
+                            <Main>
+                              <Main.Container>
+                                {type ? (
+                                  <PreviewType type={type} />
+                                ) : (
+                                  errors.length === 0 && <Loader absolute />
+                                )}
+                              </Main.Container>
+                            </Main>
+                          </ErrorBoundary>
+                          {errors.length > 0 && (
+                            <div className={styles.root.errors()}>
+                              <VStack gap={20}>
+                                {errors.map(error => {
+                                  return (
+                                    <Typo.Monospace as="div">
+                                      <p>{error.text}</p>
+                                      {error.location && (
+                                        <div style={{paddingLeft: px(10)}}>
+                                          <>
+                                            <b>
+                                              [{error.location.file}:{' '}
+                                              {error.location.line}]
+                                            </b>
+                                            <div>{error.location.lineText}</div>
+                                          </>
+                                        </div>
+                                      )}
+                                    </Typo.Monospace>
+                                  )
+                                })}
+                              </VStack>
+                            </div>
+                          )}
+                        </VStack>
+                      </div>
+                    </HStack>
+                  </VStack>
+                </Toolbar.Provider>
+              </QueryClientProvider>
+            </SessionProvider>
+          </DashboardProvider>
+        </Viewport>
+      </PreferencesProvider>
     </>
   )
 }

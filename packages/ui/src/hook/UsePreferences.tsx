@@ -1,6 +1,6 @@
 import {
-  PropsWithChildren,
   createContext,
+  PropsWithChildren,
   useCallback,
   useContext,
   useState
@@ -23,10 +23,15 @@ export type PreferencesState = Preferences & {
   setLanguage(language: Language): void
 }
 
+const defaultSize = 16
+
 const context = createContext<PreferencesState | undefined>(undefined)
 
-export function usePreferences() {
-  return useContext(context)!
+export function usePreferences(): PreferencesState {
+  const ctx = useContext(context)
+  if (!ctx)
+    throw new Error(`usePreferences must be used within a PreferencesProvider`)
+  return ctx
 }
 
 function usePreferencesState(): PreferencesState {
@@ -54,6 +59,7 @@ function usePreferencesState(): PreferencesState {
   )
   return {
     ...preferences,
+    size: preferences.size || defaultSize,
     toggleColorScheme() {
       const isLight =
         preferences.scheme === undefined
