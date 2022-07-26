@@ -18,6 +18,7 @@ import Paragraph from '@tiptap/extension-paragraph'
 import Strike from '@tiptap/extension-strike'
 import Text from '@tiptap/extension-text'
 import TextAlign from '@tiptap/extension-text-align'
+import Small from './extensions/Small'
 import css from './RichTextKit.module.scss'
 
 const styles = fromModule(css)
@@ -38,6 +39,7 @@ export const RichTextKit = Extension.create({
           class: styles.paragraph()
         }
       }),
+      Small,
       Bold,
       Italic,
       Strike,
