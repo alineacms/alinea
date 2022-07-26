@@ -107,7 +107,7 @@ function ListInputRow<T extends ListRow>({
 }: ListInputRowProps<T>) {
   const {types} = field.options.schema
   const type = LazyRecord.get(types, row.type)
-  const [open, setOpen] = useState(false)
+  const [showInsert, setShowInsert] = useState(false)
   if (!type) return null
 
   return (
@@ -116,14 +116,25 @@ function ListInputRow<T extends ListRow>({
       ref={rootRef}
       {...rest}
     >
-      {open && <ListCreateRow field={field} onCreate={onCreate!} />}
-      <Card.Header className={styles.row.header()}>
+      {!isDragOverlay && (
         <ListInsertRow
-          open={open}
-          first={!!firstRow}
-          onInsert={() => setOpen(!open)}
+          open={showInsert}
+          first={Boolean(firstRow)}
+          onInsert={() => setShowInsert(!showInsert)}
         />
-        <Card.Options>
+      )}
+      {showInsert && (
+        <ListCreateRow
+          inline
+          field={field}
+          onCreate={(type: string) => {
+            onCreate!(type)
+            setShowInsert(false)
+          }}
+        />
+      )}
+      <Card.Header>
+        <Card.Options style={{zIndex: 1}}>
           <IconButton
             icon={type.options.icon || IcRoundDragHandle}
             {...handle}
@@ -154,21 +165,21 @@ function ListInputRow<T extends ListRow>({
 
 type ListCreateRowProps<T> = {
   field: ListField<T>
-  bottom?: boolean
-  onCreate: (type: string, index?: number) => void
+  inline?: boolean
+  onCreate: (type: string) => void
 }
 
-function ListCreateRow<T>({field, bottom, onCreate}: ListCreateRowProps<T>) {
+function ListCreateRow<T>({field, inline, onCreate}: ListCreateRowProps<T>) {
   const {types} = field.options.schema
   return (
-    <div className={styles.create({bottom: bottom})}>
+    <div className={styles.create({inline})}>
       <Create.Root>
         {LazyRecord.iterate(types).map(([key, type]) => {
           return (
             <Create.Button
               icon={type.options.icon}
               key={key}
-              onClick={() => onCreate(key, bottom ? +1 : 0)}
+              onClick={() => onCreate(key)}
             >
               <TextLabel label={type.label} />
             </Create.Button>
@@ -188,10 +199,10 @@ type ListInsertRowProps<T> = {
 function ListInsertRow<T>({first, open, onInsert}: ListInsertRowProps<T>) {
   return (
     <>
-      <div className={styles.insert({open: open, first: first})}>
-        <a className={styles.insert.icon()} onClick={onInsert}>
+      <div className={styles.insert({open, first})}>
+        <button className={styles.insert.icon()} onClick={onInsert}>
           <Icon icon={open ? IcRoundKeyboardArrowUp : IcRoundAdd} />
-        </a>
+        </button>
       </div>
     </>
   )
@@ -250,7 +261,7 @@ export function ListInput<T extends ListRow>({
         <div className={styles.root()}>
           <div className={styles.root.inner({inline})}>
             <SortableContext items={ids} strategy={verticalListSortingStrategy}>
-              <Card.Root style={{overflow: 'visible'}}>
+              <Card.Root>
                 {rows.map((row, i) => {
                   return (
                     <ListInputRowSortable<T>
@@ -260,20 +271,18 @@ export function ListInput<T extends ListRow>({
                       path={state.child(row.id)}
                       onMove={direction => list.move(i, i + direction)}
                       onDelete={() => list.remove(row.id)}
-                      onCreate={(type: string, index?: number) => {
-                        list.push({type} as any)
-                        list.move(rows.length, i + index!)
+                      onCreate={(type: string) => {
+                        list.push({type} as any, i)
                       }}
                       firstRow={i === 0}
                     />
                   )
                 })}
                 <ListCreateRow
+                  field={field}
                   onCreate={(type: string) => {
                     list.push({type} as any)
                   }}
-                  bottom
-                  field={field}
                 />
               </Card.Root>
             </SortableContext>

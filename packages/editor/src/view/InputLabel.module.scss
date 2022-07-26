@@ -12,6 +12,9 @@
 }
 
 .header {
+  position: relative;
+  z-index: 1;
+
   &-title {
     display: inline-block;
     font-size: 13px;

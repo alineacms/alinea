@@ -19,7 +19,7 @@ function sort(a: ListRow, b: ListRow) {
 }
 
 export type ListMutator<T> = {
-  push: (row: Omit<T, 'id' | 'index'>) => void
+  push: (row: Omit<T, 'id' | 'index'>, insertAt?: number) => void
   remove: (id: string) => void
   move: (oldIndex: number, newIndex: number) => void
 }
@@ -104,17 +104,21 @@ export class ListShape<T>
   }
   mutator(parent: Y.Map<any>, key: string) {
     return {
-      push: (row: Omit<ListRow & T, 'id' | 'index'>) => {
+      push: (row: Omit<ListRow & T, 'id' | 'index'>, insertAt?: number) => {
         const type = row.type
         const shape = this.values[type]
         const record = parent.get(key)
         const rows: Array<ListRow> = this.fromY(record) as any
         const id = createId()
+        const before = insertAt === undefined ? rows.length - 1 : insertAt - 1
+        const after = before + 1
+        const keyA = rows[before]?.index || null
+        const keyB = rows[after]?.index || null
         const item = shape.toY({
           ...shape.create(),
           ...row,
           id,
-          index: generateKeyBetween(rows[rows.length - 1]?.index || null, null)
+          index: generateKeyBetween(keyA, keyB)
         })
         record.set(id, item)
       },
