@@ -1,4 +1,3 @@
-import {Backend} from '@alinea/backend/Backend'
 import {nodeHandler} from '@alinea/backend/router/NodeHandler'
 import {router} from '@alinea/backend/router/Router'
 import {ReadableStream, Request, Response, TextEncoderStream} from '@alinea/iso'
@@ -9,7 +8,8 @@ import {createRequire} from 'node:module'
 import path from 'node:path'
 import {buildOptions} from './build/BuildOptions'
 import {generate} from './Generate'
-import {DevBackend} from './serve/DevBackend'
+import {ServeBackend} from './serve/ServeBackend'
+import {createDb} from './util/CreateDb'
 import {dirname} from './util/Dirname'
 
 const __dirname = dirname(import.meta.url)
@@ -58,8 +58,6 @@ type BuildDetails = {
   rebuild: () => Promise<BuildDetails>
   files: Map<string, Uint8Array>
 }
-
-// restart server pls 132
 
 function browserBuild(
   options: BuildOptions
@@ -128,6 +126,7 @@ export async function serve(options: ServeOptions): Promise<void> {
   } = options
   const port = options.port ? Number(options.port) : 4500
   const outDir = path.join(cwd, '.alinea')
+  const store = await createDb()
   const storeLocation = path.join(outDir, 'store.js')
   const genConfigFile = path.join(outDir, 'config.js')
   const backendFile = path.join(outDir, 'backend.js')
@@ -145,26 +144,27 @@ export async function serve(options: ServeOptions): Promise<void> {
     if (type === 'reload') clients.length = 0
   }
 
-  let server: Promise<Backend> | undefined
+  let server: ServeBackend
 
-  async function reloadServer(error?: Error) {
-    if (error) console.error(error)
-    await (server = error ? undefined : devServer())
-  }
-
-  await generate({
+  let config = await generate({
     ...options,
-    onConfigRebuild: async error => {
-      await reloadServer(error)
+    store,
+    onConfigRebuild: async (error, newConfig) => {
+      config = newConfig
+      server.reload(newConfig)
       if (!alineaDev) reload('refresh')
     },
     onCacheRebuild: async error => {
-      await reloadServer(error)
       reload('refetch')
     }
   })
 
-  server = devServer()
+  server = new ServeBackend({
+    cwd,
+    port,
+    config,
+    store
+  })
 
   const devDir = path.join(staticDir, 'dev')
 
@@ -266,7 +266,7 @@ export async function serve(options: ServeOptions): Promise<void> {
     )
   })
 
-  async function devServer() {
+  /*async function devServer() {
     const unique = Date.now()
     const {createStore: createDraftStore} = await import(`file://${draftsFile}`)
     if (production) return (await import(`file://${backendFile}`)).backend
@@ -282,5 +282,5 @@ export async function serve(options: ServeOptions): Promise<void> {
       cwd,
       createDraftStore
     })
-  }
+  }*/
 }

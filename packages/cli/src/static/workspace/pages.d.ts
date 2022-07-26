@@ -1,4 +1,4 @@
 import {Pages} from '@alinea/backend'
 import {AnyPage} from './schema.js'
 
-export const pages: Pages<AnyPage>
+export const initPages: (previewToken?: string) => Pages<AnyPage>

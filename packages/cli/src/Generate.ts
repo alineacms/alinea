@@ -5,8 +5,6 @@ import {createError} from '@alinea/core/ErrorWithCode'
 import {createId} from '@alinea/core/Id'
 import {outcome} from '@alinea/core/Outcome'
 import {Workspace} from '@alinea/core/Workspace'
-import {BetterSqlite3Driver} from '@alinea/store/sqlite/drivers/BetterSqlite3Driver'
-import {SqlJsDriver} from '@alinea/store/sqlite/drivers/SqlJsDriver'
 import {SqliteStore} from '@alinea/store/sqlite/SqliteStore'
 import {EvalPlugin} from '@esbx/eval'
 import {ReactPlugin} from '@esbx/react'
@@ -18,6 +16,7 @@ import {createRequire} from 'node:module'
 import path from 'node:path'
 import {buildOptions} from './build/BuildOptions'
 import {exportStore} from './ExportStore'
+import {createDb} from './util/CreateDb'
 import {dirname} from './util/Dirname'
 import {externalPlugin} from './util/ExternalPlugin'
 import {ignorePlugin} from './util/IgnorePlugin'
@@ -118,9 +117,7 @@ function schemaTypes(workspace: Workspace) {
     import {DataOf, EntryOf, Entry} from '@alinea/core'
     import {Collection} from '@alinea/store'
     import type {Pages as AlineaPages} from '@alinea/backend'
-    export const schema: (typeof config)['workspaces']['${
-      workspace.name
-    }']['schema']
+    export const schema = config.workspaces['${workspace.name}'].schema
     ${wrapNamespace(collections, workspace.typeNamespace)}
   `
 }
@@ -130,13 +127,14 @@ export type GenerateOptions = {
   staticDir?: string
   configFile?: string
   watch?: boolean
-  onConfigRebuild?: (err?: Error) => void
+  onConfigRebuild?: (err: Error | undefined, config: Config) => void
   onCacheRebuild?: (err?: Error) => void
   wasmCache?: boolean
   quiet?: boolean
+  store?: SqliteStore
 }
 
-export async function generate(options: GenerateOptions) {
+export async function generate(options: GenerateOptions): Promise<Config> {
   const {
     wasmCache = false,
     cwd = process.cwd(),
@@ -146,18 +144,28 @@ export async function generate(options: GenerateOptions) {
     onConfigRebuild,
     onCacheRebuild
   } = options
+  const store = options.store || (await createDb())
   let cacheWatcher: Promise<{stop: () => void}> | undefined
   const configLocation = path.join(cwd, configFile)
   const outDir = path.join(cwd, '.alinea')
   const watch = options.watch || onConfigRebuild || onCacheRebuild
 
-  await fs.copy(path.join(staticDir, 'server'), path.join(outDir, '.server'), {
-    overwrite: true
-  })
-
+  await copyBoilerplate()
   await compileConfig()
+  let {config, reloadConfig} = await loadConfig()
   await copyStaticFiles()
   await generatePackage()
+  return config
+
+  async function copyBoilerplate() {
+    await fs.copy(
+      path.join(staticDir, 'server'),
+      path.join(outDir, '.server'),
+      {
+        overwrite: true
+      }
+    )
+  }
 
   async function copyStaticFiles() {
     await fs.mkdirp(outDir).catch(console.log)
@@ -172,6 +180,8 @@ export async function generate(options: GenerateOptions) {
       'package.json',
       'index.js',
       'index.d.ts',
+      'client.js',
+      'client.d.ts',
       'backend.js',
       'backend.d.ts',
       'store.d.ts'
@@ -222,17 +232,39 @@ export async function generate(options: GenerateOptions) {
         ],
         watch: watch && {
           async onRebuild(error, result) {
+            await reloadConfig()
             if (!error) await generatePackage()
-            if (onConfigRebuild) return onConfigRebuild(error || undefined)
+            if (onConfigRebuild)
+              return onConfigRebuild(error || undefined, config)
           }
         }
       })
     )
   }
 
+  async function loadConfig() {
+    const unique = Date.now()
+    const genConfigFile = path.join(outDir, 'config.js')
+    const outFile = `file://${genConfigFile}?${unique}`
+    const exports = await import(outFile)
+    const newConfig: Config = exports.config
+    if (!newConfig) throw fail(`No config found in "${genConfigFile}"`)
+    return {
+      config: newConfig,
+      reloadConfig: async () => {
+        // An attempt at having the previous config garbage collected,
+        // no clue if this will work.
+        // See: nodejs/tooling#51
+        // exports.config = null
+        const reloaded = await loadConfig()
+        config = reloaded.config
+        reloadConfig = reloaded.reloadConfig
+      }
+    }
+  }
+
   async function generatePackage() {
     if (cacheWatcher) (await cacheWatcher).stop()
-    const config = await loadConfig()
     await Promise.all([
       generateWorkspaces(config),
       (cacheWatcher = fillCache(config))
@@ -240,15 +272,6 @@ export async function generate(options: GenerateOptions) {
     const dashboard = config.dashboard
     if (dashboard?.staticFile)
       await generateDashboard(dashboard.handlerUrl, dashboard.staticFile!)
-  }
-
-  async function loadConfig() {
-    const genConfigFile = path.join(outDir, 'config.js')
-    const outFile = 'file://' + genConfigFile
-    const exports = await import(outFile)
-    const config: Config = exports.default || exports.config
-    if (!config) throw fail(`No config found in "${genConfigFile}"`)
-    return config
   }
 
   async function generateWorkspaces(config: Config) {
@@ -378,18 +401,6 @@ export async function generate(options: GenerateOptions) {
   }
 
   async function cacheEntries(config: Config, source: Data.Source) {
-    let store: SqliteStore
-    try {
-      const {default: Database} = await import('better-sqlite3')
-      store = new SqliteStore(
-        new BetterSqlite3Driver(new Database(':memory:')),
-        createId
-      )
-    } catch (e) {
-      const {default: sqlInit} = await import('@alinea/sqlite-wasm')
-      const {Database} = await sqlInit()
-      store = new SqliteStore(new SqlJsDriver(new Database()), createId)
-    }
     await Cache.create(store, config, source, !quiet)
     return store
   }

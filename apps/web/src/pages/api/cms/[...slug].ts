@@ -1,8 +1,15 @@
-import {nodeHandler} from '@alinea/backend/router/NodeHandler'
 import {backend} from '@alinea/content/backend.js'
+import {Request, Response} from '@alinea/iso'
 
-export default nodeHandler(backend.handle)
+export default async (req: Request) => {
+  const response = await backend.handle(req)
+  if (response === undefined) return new Response('Not found', {status: 404})
+  return response
+}
 
-// We disable the body parser that is added by Next.js as it incorrectly parses
-// application/octet-stream as string.
-export const config = {api: {bodyParser: false}}
+export const config = {
+  runtime: 'experimental-edge',
+  // We disable the body parser that is added by Next.js as it incorrectly parses
+  // application/octet-stream as string.
+  api: {bodyParser: false}
+}

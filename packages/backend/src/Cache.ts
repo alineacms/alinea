@@ -250,7 +250,7 @@ export namespace Cache {
   export function applyUpdates(
     store: Store,
     config: Config,
-    updates: IterableIterator<[string, Uint8Array]>
+    updates: Array<readonly [string, Uint8Array]>
   ) {
     const changed = []
     for (const [id, update] of updates) {

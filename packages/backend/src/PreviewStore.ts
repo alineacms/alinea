@@ -76,6 +76,10 @@ export class PreviewStore {
 
   private async syncUpdates() {
     if (!this.store) this.store = await this.createCache()
-    Cache.applyUpdates(this.store, this.config, this.updates.entries())
+    Cache.applyUpdates(
+      this.store,
+      this.config,
+      Array.from(this.updates.entries())
+    )
   }
 }

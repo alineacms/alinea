@@ -44,18 +44,20 @@ export type ServerOptions<T extends Workspaces> = {
 }
 
 export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
-  config: Config<T>
   preview: PreviewStore
   createStore: () => Promise<Store>
 
   constructor(public options: ServerOptions<T>) {
-    this.config = options.config
     this.createStore = options.createStore
     this.preview = previewStore(
       () => this.createStore(),
       options.config,
       options.drafts
     )
+  }
+
+  get config(): Config<T> {
+    return this.options.config
   }
 
   async entry(
