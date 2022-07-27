@@ -125,12 +125,7 @@ export async function serve(options: ServeOptions): Promise<void> {
     production = false
   } = options
   const port = options.port ? Number(options.port) : 4500
-  const outDir = path.join(cwd, '.alinea')
   const store = await createDb()
-  const storeLocation = path.join(outDir, 'store.js')
-  const genConfigFile = path.join(outDir, 'config.js')
-  const backendFile = path.join(outDir, 'backend.js')
-  const draftsFile = path.join(outDir, 'drafts.js')
   const clients: Array<Client> = []
   const {version} = require('react/package.json')
   const isReact18 = semver.compare(version, '18.0.0', '>=')
@@ -189,11 +184,11 @@ export async function serve(options: ServeOptions): Promise<void> {
         }
       })
     }),
-    router.compress(
-      matcher.get('/').map(({url}): Response => {
-        const handlerUrl = `${url.protocol}//${url.host}`
-        return new Response(
-          `<!DOCTYPE html>
+    //router.compress(
+    matcher.get('/').map(({url}): Response => {
+      const handlerUrl = `${url.protocol}//${url.host}`
+      return new Response(
+        `<!DOCTYPE html>
           <meta charset="utf-8" />
           <link rel="icon" href="data:," />
           <link href="./config.css" rel="stylesheet" />
@@ -204,58 +199,50 @@ export async function serve(options: ServeOptions): Promise<void> {
           <body>
             <script type="module" src="./entry.js"></script>
           </body>`,
-          {
-            headers: {'content-type': 'text/html'}
-          }
-        )
+        {
+          headers: {'content-type': 'text/html'}
+        }
+      )
+    }),
+    matcher
+      .all('/hub/*')
+      .map(async ({request}): Promise<Response | undefined> => {
+        return server.handle(request)
       }),
-      matcher
-        .all('/hub/*')
-        .map(async ({request}): Promise<Response | undefined> => {
-          const unavailable = () =>
-            new Response('An error occured, see your terminal for details', {
-              status: 503
-            })
-          if (server) {
-            const backend = await server
-            return backend.handle(request)
-          }
-          return unavailable()
-        }),
-      browserBuild({
-        ignoreAnnotations: alineaDev,
-        format: 'esm',
-        target: 'esnext',
-        treeShaking: true,
-        minify: true,
-        splitting: true,
-        sourcemap: true,
-        outdir: devDir,
-        bundle: true,
-        absWorkingDir: cwd,
-        entryPoints: {
-          config: '@alinea/content/config.js',
-          entry
-        },
-        inject: [path.join(staticDir, `render/render-${react}.js`)],
-        platform: 'browser',
-        ...options.buildOptions,
-        ...buildOptions,
-        plugins: buildOptions.plugins!.concat(
-          options.buildOptions?.plugins || []
-        ),
-        define: {
-          'process.env.NODE_ENV': production ? "'production'" : "'development'"
-        },
-        watch: alineaDev
-          ? {
-              onRebuild(error, result) {
-                if (!error) reload('reload')
-              }
+    browserBuild({
+      ignoreAnnotations: alineaDev,
+      format: 'esm',
+      target: 'esnext',
+      treeShaking: true,
+      minify: true,
+      splitting: true,
+      sourcemap: true,
+      outdir: devDir,
+      bundle: true,
+      absWorkingDir: cwd,
+      entryPoints: {
+        config: '@alinea/content/config.js',
+        entry
+      },
+      inject: [path.join(staticDir, `render/render-${react}.js`)],
+      platform: 'browser',
+      ...options.buildOptions,
+      ...buildOptions,
+      plugins: buildOptions.plugins!.concat(
+        options.buildOptions?.plugins || []
+      ),
+      define: {
+        'process.env.NODE_ENV': production ? "'production'" : "'development'"
+      },
+      watch: alineaDev
+        ? {
+            onRebuild(error, result) {
+              if (!error) reload('reload')
             }
-          : undefined
-      })
-    )
+          }
+        : undefined
+    })
+    //)
   )
 
   http.createServer(nodeHandler(app.handle)).listen(port, () => {

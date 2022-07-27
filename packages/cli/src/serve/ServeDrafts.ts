@@ -1,9 +1,8 @@
-import {Cache} from '@alinea/backend/Cache'
 import {Drafts} from '@alinea/backend/Drafts'
 import {FileDrafts, FileDraftsOptions} from '@alinea/backend/drafts/FileDrafts'
-import {accumulate} from '@alinea/core/'
 import {Config} from '@alinea/core/Config'
 import {Hub} from '@alinea/core/Hub'
+import {base64} from '@alinea/core/util/Encoding'
 import {Collection} from '@alinea/store/Collection'
 import {SqliteStore} from '@alinea/store/sqlite/SqliteStore'
 import path from 'node:path'
@@ -30,15 +29,14 @@ export class ServeDrafts extends FileDrafts {
   }
 
   private async write() {
-    const data = this.options.store.export()
-    const clone = await createDb(data)
-    const updates = await accumulate(this.updates())
-    Cache.applyUpdates(
-      clone,
-      this.options.config,
-      updates.map(u => [u.id, u.update] as const)
-    )
-    await exportStore(clone, this.location)
+    const store = await createDb()
+    for await (const update of this.updates()) {
+      store.insert(Draft, {
+        id: update.id,
+        draft: base64.stringify(update.update)
+      })
+    }
+    await exportStore(store, this.location)
   }
 
   async update({id, update}: Hub.UpdateParams): Promise<Drafts.Update> {

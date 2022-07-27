@@ -146,6 +146,7 @@ export async function generate(options: GenerateOptions): Promise<Config> {
   } = options
   const store = options.store || (await createDb())
   let cacheWatcher: Promise<{stop: () => void}> | undefined
+  let generating: Promise<void> | undefined
   const configLocation = path.join(cwd, configFile)
   const outDir = path.join(cwd, '.alinea')
   const watch = options.watch || onConfigRebuild || onCacheRebuild
@@ -154,7 +155,7 @@ export async function generate(options: GenerateOptions): Promise<Config> {
   await compileConfig()
   let {config, reloadConfig} = await loadConfig()
   await copyStaticFiles()
-  await generatePackage()
+  await (generating = generatePackage())
   return config
 
   async function copyBoilerplate() {
@@ -182,16 +183,10 @@ export async function generate(options: GenerateOptions): Promise<Config> {
       'index.d.ts',
       'client.js',
       'client.d.ts',
+      'drafts.js',
       'backend.js',
       'backend.d.ts',
       'store.d.ts'
-    )
-    await outcome(
-      fs.copyFile(
-        path.join(staticDir, 'drafts.js'),
-        path.join(outDir, 'drafts.js'),
-        fs.constants.COPYFILE_EXCL
-      )
     )
 
     await writeFileIfContentsDiffer(
@@ -233,7 +228,10 @@ export async function generate(options: GenerateOptions): Promise<Config> {
         watch: watch && {
           async onRebuild(error, result) {
             await reloadConfig()
-            if (!error) await generatePackage()
+            if (!error) {
+              if (generating) await generating
+              await (generating = generatePackage())
+            }
             if (onConfigRebuild)
               return onConfigRebuild(error || undefined, config)
           }
@@ -339,6 +337,7 @@ export async function generate(options: GenerateOptions): Promise<Config> {
     const source = await createSource(config)
     const files = await source.watchFiles?.()
     async function cache() {
+      console.log('Caching entries')
       const store = await cacheEntries(config, source)
       await createCache(store)
     }

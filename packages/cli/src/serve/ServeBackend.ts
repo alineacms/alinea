@@ -1,12 +1,15 @@
 import {Backend} from '@alinea/backend/Backend'
 import {FileData} from '@alinea/backend/data/FileData'
+import {FileDrafts} from '@alinea/backend/drafts/FileDrafts'
 import {JsonLoader} from '@alinea/backend/loader/JsonLoader'
+import {router} from '@alinea/backend/router/Router'
 import {JWTPreviews} from '@alinea/backend/util/JWTPreviews'
-import {Config, Workspaces} from '@alinea/core'
+import {accumulate, Config, Hub, Workspaces} from '@alinea/core'
+import {base64, base64url} from '@alinea/core/util/Encoding'
+import {Response} from '@alinea/iso'
 import {SqliteStore} from '@alinea/store/sqlite/SqliteStore'
 import fs from 'node:fs/promises'
 import path from 'node:path'
-import {ServeDrafts} from './ServeDrafts'
 
 export interface ServeBackendOptions<T extends Workspaces> {
   cwd?: string
@@ -33,13 +36,17 @@ export class ServeBackend<
       loader: JsonLoader,
       rootDir: cwd
     })
-    const drafts = new ServeDrafts({
+    const drafts = new FileDrafts({
+      fs,
+      dir: path.join(outDir, '.drafts')
+    })
+    /*const drafts = new ServeDrafts({
       config,
       fs,
       dir: path.join(outDir, '.drafts'),
       outDir,
       store
-    })
+    })*/
     const options = {
       dashboardUrl,
       createStore: async () => store,
@@ -53,7 +60,30 @@ export class ServeBackend<
     this.reload = config => {
       data.options.config = config
       this.options.config = config
-      drafts.options.config = config
     }
+    const api = this.handle
+    const matcher = router.matcher()
+    this.handle = router(
+      matcher
+        .get(Hub.routes.base + '/~draft')
+        .map(async () => {
+          const updates = await accumulate(drafts.updates())
+          return updates.map(u => {
+            return {id: u.id, update: base64.stringify(u.update)}
+          })
+        })
+        .map(router.jsonResponse),
+      matcher
+        .get(Hub.routes.base + '/~draft/:id')
+        .map(async ({params, url}) => {
+          const id = params.id as string
+          const svParam = url.searchParams.get('stateVector')
+          const stateVector = svParam ? base64url.parse(svParam) : undefined
+          return new Response(await drafts.get({id, stateVector}), {
+            headers: {'content-type': 'application/octet-stream'}
+          })
+        }),
+      api
+    ).recover(router.reportError).handle
   }
 }

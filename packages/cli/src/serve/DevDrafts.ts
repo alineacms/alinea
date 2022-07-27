@@ -1,43 +1,71 @@
 import {Drafts} from '@alinea/backend/Drafts'
+import {createError} from '@alinea/core/ErrorWithCode'
 import {Hub} from '@alinea/core/Hub'
-import {Collection} from '@alinea/store/Collection'
-import {SqliteStore} from '@alinea/store/sqlite/SqliteStore'
+import {base64, base64url} from '@alinea/core/util/Encoding'
+import {fetch} from '@alinea/iso'
 
 export type DevDraftsOptions = {
-  createStore: () => Promise<SqliteStore>
+  serverLocation: string
 }
 
-type Draft = {id: string; draft: string}
-const Draft = new Collection<Draft>('Draft')
+async function failOnHttpError(res: Response): Promise<Response> {
+  if (res.status >= 400) throw createError(res.status, await res.text())
+  return res
+}
+
+function json<T>(res: Response): Promise<T> {
+  return res.json()
+}
 
 export class DevDrafts implements Drafts {
-  store: Promise<SqliteStore>
+  constructor(public options: DevDraftsOptions) {}
 
-  constructor(protected options: DevDraftsOptions) {
-    this.store = options.createStore()
-  }
-
-  async get({
-    id,
-    stateVector
-  }: Hub.EntryParams): Promise<Uint8Array | undefined> {
-    const store = await this.store
-    const draft = store.first(Draft.where(Draft.id.is(id)))
-    if (!draft) return undefined
-    return Buffer.from(draft.draft, 'base64')
-  }
-
+  // We never need to mutate from the preview side
   async update(params: Hub.UpdateParams): Promise<Drafts.Update> {
     return params
   }
-
   async delete({ids}: Hub.DeleteMultipleParams): Promise<void> {}
 
-  async *updates(): AsyncGenerator<{id: string; update: Uint8Array}> {
-    const store = await this.store
-    const drafts = store.all(Draft)
-    for (const draft of drafts) {
-      yield {id: draft.id, update: Buffer.from(draft.draft, 'base64')}
+  // Forward draft requests to the running alinea server
+  get(
+    {id, stateVector}: Hub.EntryParams,
+    ctx: Hub.Context
+  ): Promise<Uint8Array | undefined> {
+    const {serverLocation} = this.options
+    const params = stateVector
+      ? '?' +
+        new URLSearchParams({stateVector: base64url.stringify(stateVector)})
+      : ''
+    const url = `${serverLocation}${Hub.routes.base}/~draft/${id}${params}`
+    return fetch(url, {
+      headers: {accept: 'application/json'}
+    }).then(res => {
+      if (res.status === 404) return undefined
+      return failOnHttpError(res)
+        .then(res => res.arrayBuffer())
+        .then(buffer => new Uint8Array(buffer))
+    })
+  }
+
+  async *updates({}, ctx: Hub.Context): AsyncGenerator<Drafts.Update> {
+    const {serverLocation} = this.options
+    const url = `${serverLocation}${Hub.routes.base}/~draft`
+    const updates = await fetch(url, {
+      headers: {accept: 'application/json'}
+    })
+      .then(failOnHttpError)
+      .then<
+        Array<{
+          id: string
+          update: string
+        }>
+      >(json)
+
+    for (const update of updates) {
+      yield {
+        id: update.id,
+        update: base64.parse(update.update)
+      }
     }
   }
 }

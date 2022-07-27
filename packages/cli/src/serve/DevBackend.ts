@@ -8,16 +8,16 @@ import {DevDrafts} from './DevDrafts'
 export interface DevServerOptions<T extends Workspaces> {
   config: Config<T>
   createStore: () => Promise<Store>
-  createDraftStore: () => Promise<SqliteStore>
+  serverLocation: string
 }
 
 export class DevBackend<T extends Workspaces = Workspaces> extends Backend<T> {
-  constructor({config, createStore, createDraftStore}: DevServerOptions<T>) {
+  constructor({config, createStore, serverLocation}: DevServerOptions<T>) {
     const drafts = new DevDrafts({
-      createStore: createDraftStore
+      serverLocation
     })
     super({
-      dashboardUrl: undefined!,
+      dashboardUrl: serverLocation,
       createStore,
       config,
       drafts: drafts,
