@@ -31,15 +31,14 @@ export function BrowserPreview({url, prettyUrl, reload}: BrowserPreviewProps) {
   const drafts = useDrafts()
   const status = useObservable(drafts.status)
   const [loading, setLoading] = useState(true)
-  const [hasHistory, setHasHistory] = useState(true)
+  const hasPreviewListener = useRef(false)
   useEffect(() => {
     setLoading(true)
   }, [url])
   useEffect(() => {
-    if (status === DraftsStatus.Synced)
-      ref.current?.contentWindow?.postMessage(PreviewAction.Refetch, url)
-    if (reload && status === DraftsStatus.Synced) {
-      ref.current?.setAttribute('src', url)
+    if (status === DraftsStatus.Synced) {
+      if (!reload && hasPreviewListener.current) handleRefetch()
+      else handleReload()
     }
   }, [status])
   useEffect(() => {
@@ -48,35 +47,48 @@ export function BrowserPreview({url, prettyUrl, reload}: BrowserPreviewProps) {
       return () => clearTimeout(timeout)
     }
   }, [loading])
+
+  function post(action: PreviewAction) {
+    ref.current?.contentWindow?.postMessage(action, url)
+  }
+
+  function handlePrevious() {
+    post(PreviewAction.Previous)
+  }
+
+  function handleNext() {
+    post(PreviewAction.Next)
+  }
+
+  function handleReload() {
+    if (hasPreviewListener.current) post(PreviewAction.Reload)
+    else ref.current?.setAttribute('src', url)
+    setLoading(true)
+  }
+
+  function handleRefetch() {
+    post(PreviewAction.Refetch)
+  }
   return (
     <Preview>
       <div className={styles.root()}>
         <AppBar.Root>
-          {hasHistory && (
-            <>
-              <AppBar.Item
-                as="button"
-                icon={IcRoundArrowBack}
-                onClick={() => {
-                  ref.current?.contentWindow?.history.back()
-                }}
-              />
-              <AppBar.Item
-                as="button"
-                icon={IcRoundArrowForward}
-                onClick={() => {
-                  ref.current?.contentWindow?.history.forward()
-                }}
-              />
-            </>
-          )}
+          <>
+            <AppBar.Item
+              as="button"
+              icon={IcRoundArrowBack}
+              onClick={handlePrevious}
+            />
+            <AppBar.Item
+              as="button"
+              icon={IcRoundArrowForward}
+              onClick={handleNext}
+            />
+          </>
           <AppBar.Item
             as="button"
             icon={IcRoundRefresh}
-            onClick={() => {
-              if (hasHistory) ref.current?.contentWindow?.location.reload()
-              else ref.current?.setAttribute('src', url)
-            }}
+            onClick={handleReload}
           />
           <AppBar.Item full style={{flexGrow: 1, minWidth: 0}}>
             <Typo.Monospace
@@ -124,10 +136,15 @@ export function BrowserPreview({url, prettyUrl, reload}: BrowserPreviewProps) {
             onLoad={() => {
               setLoading(false)
               try {
-                ref.current?.contentWindow?.history
-                setHasHistory(true)
+                const contentWindow = ref.current?.contentWindow
+                addEventListener('message', event => {
+                  if (event.data === PreviewAction.Pong)
+                    hasPreviewListener.current = true
+                })
+                if (contentWindow)
+                  contentWindow.postMessage(PreviewAction.Ping, url)
               } catch (e) {
-                setHasHistory(false)
+                hasPreviewListener.current = false
               }
             }}
           />

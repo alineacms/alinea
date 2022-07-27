@@ -1,5 +1,6 @@
 export enum PreviewAction {
   Ping = '[alinea-ping]',
+  Pong = '[alinea-pong]',
   Reload = '[alinea-reload]',
   Refetch = '[alinea-refetch]',
   Previous = '[alinea-previous]',
@@ -8,6 +9,7 @@ export enum PreviewAction {
 
 export type PreviewApi = {
   refetch?: () => void
+  setIsPreviewing?: (isPreviewing: boolean) => void
 }
 
 export function registerPreview(api: PreviewApi = {}) {
@@ -28,7 +30,8 @@ export function registerPreview(api: PreviewApi = {}) {
         return history.forward()
       case PreviewAction.Ping:
         console.log('[Alinea preview ping received]')
-        return postMessage('pong', event.origin)
+        api.setIsPreviewing?.(true)
+        return window.top!.postMessage(PreviewAction.Pong, event.origin)
     }
   }
   addEventListener('message', handleMessage)
