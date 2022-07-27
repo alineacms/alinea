@@ -6,9 +6,15 @@ body,
 }
 
 * {
+  box-sizing: border-box;
   padding: 0;
   margin: 0;
-  box-sizing: border-box;
+}
+
+a {
+  color: inherit;
+  font: inherit;
+  text-decoration: none;
 }
 
 button {
