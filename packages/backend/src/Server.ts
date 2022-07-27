@@ -153,9 +153,9 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
   deleteDraft({id}: Hub.DeleteParams, ctx: Hub.Context): Future<boolean> {
     const {drafts} = this.options
     return outcome(async () => {
+      await drafts.delete({ids: [id]}, ctx)
       await this.preview.deleteUpdate(id)
       const store = await this.preview.getStore(ctx)
-      drafts.delete({ids: [id]}, ctx)
       // Do we still have an entry after removing the draft?
       return Boolean(store.first(Entry.where(Entry.id.is(id))))
     })
