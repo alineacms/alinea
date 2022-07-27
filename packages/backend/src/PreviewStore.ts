@@ -27,9 +27,7 @@ export class PreviewStore {
   lastFetched: Map<string, number> = new Map()
   updates: Map<string, Uint8Array> = new Map()
 
-  constructor(public options: PreviewStoreOptions) {
-    console.log(`Created ${options.name}`)
-  }
+  constructor(public options: PreviewStoreOptions) {}
 
   async getStore(ctx: Hub.Context) {
     if (this.lastFetchedAll && this.store) {
@@ -69,7 +67,6 @@ export class PreviewStore {
 
   async applyPublish(entries: Array<Entry>) {
     const {config} = this.options
-    console.log(`Clearing ${this.options.name}`)
     for (const {id} of entries) this.updates.delete(id)
     if (this.store) Cache.applyPublish(this.store, config, entries)
   }
@@ -82,7 +79,6 @@ export class PreviewStore {
   private async syncUpdates() {
     const {config, createCache} = this.options
     if (!this.store) {
-      console.log(`Re-creating ${this.options.name}`)
       this.store = await createCache()
     }
     const updates = Array.from(this.updates.entries())

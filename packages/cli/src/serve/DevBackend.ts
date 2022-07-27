@@ -2,7 +2,6 @@ import {Backend} from '@alinea/backend/Backend'
 import {JWTPreviews} from '@alinea/backend/util/JWTPreviews'
 import {Config, Workspaces} from '@alinea/core'
 import {Store} from '@alinea/store'
-import {SqliteStore} from '@alinea/store/sqlite/SqliteStore'
 import {DevDrafts} from './DevDrafts'
 
 export interface DevServerOptions<T extends Workspaces> {

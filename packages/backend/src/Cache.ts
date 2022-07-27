@@ -279,7 +279,6 @@ export namespace Cache {
           setChildrenUrl(store, entry.url, entry.id)
         store.update(condition, entry)
       } else {
-        console.log(`Inserting ${entry.id} via update`)
         store.insert(Entry, entry)
       }
       indexSearch(store, entry)
