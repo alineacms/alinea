@@ -40,6 +40,7 @@ export function EntryEdit({initialMode, draft, isLoading}: EntryEditProps) {
   const [isCreating, setIsCreating] = useState(false)
   const [mode, setMode] = useState<EditMode>(initialMode)
   const status = useObservable(draft.status)
+  console.log(status)
   function handleTranslation() {
     if (!locale || isCreating) return
     setIsCreating(true)

@@ -234,7 +234,8 @@ export namespace Cache {
       url: '/' + url,
       parent: parents[parents.length - 1],
       parents: parents,
-      $isContainer: type!.options.isContainer
+      $isContainer: type!.options.isContainer,
+      $status: EntryStatus.Published
     }
   }
 
@@ -278,6 +279,7 @@ export namespace Cache {
           setChildrenUrl(store, entry.url, entry.id)
         store.update(condition, entry)
       } else {
+        console.log(`Inserting ${entry.id} via update`)
         store.insert(Entry, entry)
       }
       indexSearch(store, entry)

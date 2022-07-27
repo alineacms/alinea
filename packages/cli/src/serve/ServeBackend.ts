@@ -79,6 +79,8 @@ export class ServeBackend<
           const id = params.id as string
           const svParam = url.searchParams.get('stateVector')
           const stateVector = svParam ? base64url.parse(svParam) : undefined
+          const update = await drafts.get({id, stateVector})
+          if (!update) return new Response('Not found', {status: 404})
           return new Response(await drafts.get({id, stateVector}), {
             headers: {'content-type': 'application/octet-stream'}
           })

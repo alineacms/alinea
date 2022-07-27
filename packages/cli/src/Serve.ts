@@ -252,22 +252,4 @@ export async function serve(options: ServeOptions): Promise<void> {
       }dashboard available on http://localhost:${port}`
     )
   })
-
-  /*async function devServer() {
-    const unique = Date.now()
-    const {createStore: createDraftStore} = await import(`file://${draftsFile}`)
-    if (production) return (await import(`file://${backendFile}`)).backend
-
-    // Todo: these should be imported in a worker since we can't reclaim memory
-    // used, see #nodejs/modules#307
-    const {config} = await import(`file://${genConfigFile}?${unique}`)
-    const {createStore} = await import(`file://${storeLocation}?${unique}`)
-    return new DevBackend({
-      config,
-      createStore,
-      port,
-      cwd,
-      createDraftStore
-    })
-  }*/
 }

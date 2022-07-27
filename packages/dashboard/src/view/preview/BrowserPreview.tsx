@@ -1,3 +1,4 @@
+import {PreviewAction} from '@alinea/preview/RegisterPreview'
 import {
   AppBar,
   fromModule,
@@ -25,11 +26,7 @@ export type BrowserPreviewProps = {
   reload?: boolean
 }
 
-export function BrowserPreview({
-  url,
-  prettyUrl,
-  reload = true
-}: BrowserPreviewProps) {
+export function BrowserPreview({url, prettyUrl, reload}: BrowserPreviewProps) {
   const ref = useRef<HTMLIFrameElement>(null)
   const drafts = useDrafts()
   const status = useObservable(drafts.status)
@@ -39,6 +36,8 @@ export function BrowserPreview({
     setLoading(true)
   }, [url])
   useEffect(() => {
+    if (status === DraftsStatus.Synced)
+      ref.current?.contentWindow?.postMessage(PreviewAction.Refetch, url)
     if (reload && status === DraftsStatus.Synced) {
       ref.current?.setAttribute('src', url)
     }
