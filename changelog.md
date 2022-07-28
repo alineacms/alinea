@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.1.15]
+
+- The alinea cli will now forward commands places after the serve or generate
+  commands. It will wait until the alinea package is generated before doing so
+  to make sure userland code can always depend on the package being available.
+  It also simplifies running the dashboard and development server without
+  requiring tools like npm-run-all. In practice, for a next.js website, this
+  means one can configure scripts like so:
+
+  ```js
+  {
+    "scripts": {
+      "dev": "alinea serve -- next dev",
+      "build": "alinea generate -- next build"
+    }
+  }
+  ```
+
 ## [0.1.14]
 
 - Fix missing dependencies in the dashboard package
