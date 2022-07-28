@@ -5,6 +5,7 @@ import {version} from '../package.json'
 import {ensureEnv} from './util/EnsureEnv'
 import {ensureNodeResolution} from './util/EnsureNodeResolution'
 import {ensureReact} from './util/EnsureReact'
+import {forwardCommand} from './util/ForwardCommand'
 
 const prog = sade('alinea')
 
@@ -21,26 +22,30 @@ prog
     ensureNodeResolution()
     ensureReact()
     const {generate} = await import('./Generate')
-    return generate({configFile: args.config, watch: args.watch})
+    return generate({
+      configFile: args.config,
+      watch: args.watch,
+      onAfterGenerate: forwardCommand
+    })
   })
-  .command('init [dir]')
+  .command('init')
   .describe('Copy a sample config file to the current directory')
-  .action(async (dir, args) => {
+  .action(async args => {
     ensureNodeResolution()
     ensureReact()
     const {init} = await import('./Init')
-    return init({cwd: dir, ...args})
+    return init(args)
   })
-  .command('serve [dir]')
+  .command('serve')
   .describe('Start a development dashboard')
   .option('-p, --port', `Port to listen on`)
   .option('--production', `Use production backend`)
-  .action(async (dir, args) => {
+  .action(async args => {
     ensureNodeResolution()
     ensureReact()
-    ensureEnv(dir || process.cwd())
+    ensureEnv(process.cwd())
     const {serve} = await import('./Serve')
-    return serve({cwd: dir, ...args})
+    return serve({...args, onAfterGenerate: forwardCommand})
   })
 
 prog.parse(process.argv)

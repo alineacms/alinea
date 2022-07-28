@@ -115,6 +115,7 @@ export type ServeOptions = {
   buildOptions?: BuildOptions
   alineaDev?: boolean
   production?: boolean
+  onAfterGenerate?: () => void
 }
 
 export async function serve(options: ServeOptions): Promise<void> {
@@ -150,6 +151,7 @@ export async function serve(options: ServeOptions): Promise<void> {
       if (!alineaDev) reload('refresh')
     },
     onCacheRebuild: async error => {
+      await server.reloadPreviewStore()
       reload('refetch')
     }
   })
@@ -162,7 +164,6 @@ export async function serve(options: ServeOptions): Promise<void> {
   })
 
   const devDir = path.join(staticDir, 'dev')
-
   const matcher = router.matcher()
   const entry = `@alinea/dashboard/dev/${alineaDev ? 'Dev' : 'Lib'}Entry`
   const app = router(
@@ -221,7 +222,7 @@ export async function serve(options: ServeOptions): Promise<void> {
       bundle: true,
       absWorkingDir: cwd,
       entryPoints: {
-        config: '@alinea/content/config.js',
+        config: path.join(cwd, '.alinea/config.js'),
         entry
       },
       inject: [path.join(staticDir, `render/render-${react}.js`)],
@@ -240,7 +241,10 @@ export async function serve(options: ServeOptions): Promise<void> {
               if (!error) reload('reload')
             }
           }
-        : undefined
+        : undefined,
+      // Todo: this is only needed during dev
+      tsconfig: path.join(staticDir, 'tsconfig.json'),
+      logLevel: 'error'
     })
     //)
   )

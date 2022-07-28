@@ -34,7 +34,7 @@ const buildOptions: BuildOptions = {
 }
 
 const builder = BuildTask.configure({
-  exclude: ['@alinea/web', '@alinea/css'],
+  exclude: ['@alinea/web', '@alinea/demo', '@alinea/css'],
   buildOptions: {
     ...buildOptions,
     plugins: [...buildOptions.plugins!, cssPlugin, resolvePlugin]
@@ -127,6 +127,7 @@ export const clean = {
   action() {
     fs.removeSync('dist')
     fs.removeSync('apps/web/.alinea')
+    fs.removeSync('apps/demo/.alinea')
     for (const location of getWorkspaces(process.cwd())) {
       fs.removeSync(`${location}/dist`)
     }

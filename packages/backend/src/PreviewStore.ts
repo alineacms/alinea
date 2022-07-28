@@ -84,4 +84,9 @@ export class PreviewStore {
     const updates = Array.from(this.updates.entries())
     Cache.applyUpdates(this.store, config, updates)
   }
+
+  reload() {
+    this.store = undefined
+    return this.syncUpdates()
+  }
 }

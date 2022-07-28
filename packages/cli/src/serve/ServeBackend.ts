@@ -88,4 +88,8 @@ export class ServeBackend<
       api
     ).recover(router.reportError).handle
   }
+
+  reloadPreviewStore() {
+    return this.preview.reload()
+  }
 }

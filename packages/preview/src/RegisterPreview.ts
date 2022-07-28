@@ -34,6 +34,8 @@ export function registerPreview(api: PreviewApi = {}) {
         return window.top!.postMessage(PreviewAction.Pong, event.origin)
     }
   }
+  if (window.location != window.parent.location)
+    window.top!.postMessage(PreviewAction.Pong, document.referrer)
   addEventListener('message', handleMessage)
   console.log('[Alinea preview listener attached]')
   return () => {

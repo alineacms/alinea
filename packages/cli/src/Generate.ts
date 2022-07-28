@@ -134,6 +134,7 @@ export type GenerateOptions = {
   wasmCache?: boolean
   quiet?: boolean
   store?: SqliteStore
+  onAfterGenerate?: () => void
 }
 
 export async function generate(options: GenerateOptions): Promise<Config> {
@@ -158,6 +159,7 @@ export async function generate(options: GenerateOptions): Promise<Config> {
   await copyStaticFiles()
   let {config, reloadConfig} = await loadConfig()
   await (generating = generatePackage())
+  if (options.onAfterGenerate) options.onAfterGenerate()
   return config
 
   async function copyBoilerplate() {
@@ -331,7 +333,6 @@ export async function generate(options: GenerateOptions): Promise<Config> {
     const source = await createSource(config)
     const files = await source.watchFiles?.()
     async function cache() {
-      console.log('Caching entries')
       const store = await cacheEntries(config, source)
       await createCache(store)
     }
