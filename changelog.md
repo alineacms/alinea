@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.1.14]
+
+- Fix missing dependencies in the dashboard package
+
 ## [0.1.13]
 
 - Added a button to mark text as small within the rich text editor
