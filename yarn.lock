@@ -133,6 +133,12 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@alinea/content@link:./.alinea::locator=%40alinea%2Fdemo%40workspace%3Aapps%2Fdemo":
+  version: 0.0.0-use.local
+  resolution: "@alinea/content@link:./.alinea::locator=%40alinea%2Fdemo%40workspace%3Aapps%2Fdemo"
+  languageName: node
+  linkType: soft
+
 "@alinea/content@link:./.alinea::locator=%40alinea%2Fweb%40workspace%3Aapps%2Fweb":
   version: 0.0.0-use.local
   resolution: "@alinea/content@link:./.alinea::locator=%40alinea%2Fweb%40workspace%3Aapps%2Fweb"
@@ -192,6 +198,20 @@ __metadata:
   peerDependencies:
     react: "*"
     react-dom: "*"
+  languageName: unknown
+  linkType: soft
+
+"@alinea/demo@workspace:apps/demo":
+  version: 0.0.0-use.local
+  resolution: "@alinea/demo@workspace:apps/demo"
+  dependencies:
+    "@alinea/cli": 0.0.0
+    "@alinea/content": "link:./.alinea"
+    "@types/react": ^18.0.5
+    "@types/react-dom": ^18.0.0
+    next: ^12.2.3
+    react: ^18.1.0
+    react-dom: ^18.1.0
   languageName: unknown
   linkType: soft
 
