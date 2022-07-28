@@ -1,5 +1,6 @@
 import {createConfig, root, schema, type, workspace} from '@alinea/core'
 import {MediaSchema} from '@alinea/dashboard/schema/MediaSchema'
+import {BrowserPreview} from '@alinea/dashboard/view/preview/BrowserPreview'
 import {path} from '@alinea/input.path'
 import {richText} from '@alinea/input.richtext'
 import {text} from '@alinea/input.text'
@@ -32,6 +33,16 @@ const demo = workspace('Demo', {
       icon: IcRoundPermMedia,
       contains: ['MediaLibrary']
     })
+  },
+  preview({entry, previewToken}) {
+    const location =
+      process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : ''
+    return (
+      <BrowserPreview
+        url={`${location}/api/preview?${previewToken}`}
+        prettyUrl={entry.url}
+      />
+    )
   }
 })
 
