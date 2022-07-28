@@ -153,8 +153,8 @@ export async function generate(options: GenerateOptions): Promise<Config> {
 
   await copyBoilerplate()
   await compileConfig()
-  let {config, reloadConfig} = await loadConfig()
   await copyStaticFiles()
+  let {config, reloadConfig} = await loadConfig()
   await (generating = generatePackage())
   return config
 
