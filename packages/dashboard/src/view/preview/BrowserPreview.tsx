@@ -34,6 +34,13 @@ export function BrowserPreview({url, prettyUrl, reload}: BrowserPreviewProps) {
   const hasPreviewListener = useRef(false)
   useEffect(() => {
     setLoading(true)
+
+    function handleMessage(event: MessageEvent) {
+      if (event.data === PreviewAction.Pong) hasPreviewListener.current = true
+    }
+
+    addEventListener('message', handleMessage)
+    return () => removeEventListener('message', handleMessage)
   }, [url])
   useEffect(() => {
     if (status === DraftsStatus.Synced) {
@@ -137,10 +144,6 @@ export function BrowserPreview({url, prettyUrl, reload}: BrowserPreviewProps) {
               setLoading(false)
               try {
                 const contentWindow = ref.current?.contentWindow
-                addEventListener('message', event => {
-                  if (event.data === PreviewAction.Pong)
-                    hasPreviewListener.current = true
-                })
                 if (contentWindow)
                   contentWindow.postMessage(PreviewAction.Ping, url)
               } catch (e) {
