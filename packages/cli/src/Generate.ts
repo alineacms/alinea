@@ -94,9 +94,11 @@ function schemaCollections(workspace: Workspace) {
 function pagesOf(workspace: Workspace) {
   return code`
     import {backend} from '../backend.js'
-    export const pages = backend.loadPages('${workspace.name}', {
-      preview: process.env.NODE_ENV === 'development'
-    })
+    export function initPages(previewToken) {
+      return backend.loadPages('${workspace.name}', {
+        previewToken
+      })
+    }
   `
 }
 
@@ -311,13 +313,7 @@ export async function generate(options: GenerateOptions): Promise<Config> {
             ...pkg.exports,
             ...Object.fromEntries(
               Object.keys(config.workspaces).flatMap(key => [
-                [
-                  `./${key}`,
-                  {
-                    browser: `./${key}/schema.js`,
-                    default: `./${key}/index.js`
-                  }
-                ],
+                [`./${key}`, `./${key}/index.js`],
                 [`./${key}/*`, `./${key}/*`]
               ])
             )
