@@ -34,7 +34,7 @@
         {
           "id": "2AFlgElcaPswP8OLDeRfE1qK6qh",
           "type": "CodeBlock",
-          "code": "import {pages} from '@alinea/content/web'\n\nconst blog = await pages.findFirst(page => page.type.is('BlogOverview'))\nconst posts = await blog.tree.children()"
+          "code": "import {initPages} from '@alinea/content/web/pages.js'\n\nconst pages = initPages()\nconst blog = await pages.findFirst(page => page.type.is('BlogOverview'))\nconst posts = await blog.tree.children()"
         },
         {
           "type": "heading",
@@ -60,7 +60,7 @@
         {
           "id": "2AFlhLmbMg0zNLBjirm6ZTc167d",
           "type": "CodeBlock",
-          "code": "import {pages, Animal, Fruit} from '@alinea/content/web'\n\nconst page = await pages.findFirst(\n  Animal.age.greater(10)\n)\nconst pages = await pages.findMany(\n  Fruit.title.isIn(['apple', 'orange'])\n)"
+          "code": "import {Animal, Fruit} from '@alinea/content/web'\nimport {initPages} from '@alinea/content/web/pages.js'\n\nconst pages = initPages()\nconst page = await pages.findFirst(\n  Animal.age.greater(10)\n)\nconst pages = await pages.findMany(\n  Fruit.title.isIn(['apple', 'orange'])\n)"
         }
       ]
     }
