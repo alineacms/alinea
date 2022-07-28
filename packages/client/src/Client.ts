@@ -7,7 +7,7 @@ import {
   Outcome,
   Workspaces
 } from '@alinea/core'
-import {fetch, FormData} from '@alinea/iso'
+import {AbortController, fetch, FormData} from '@alinea/iso'
 
 async function toFuture<T = void>(res: Response): Future<T> {
   return Outcome.fromJSON<T>(await res.json())

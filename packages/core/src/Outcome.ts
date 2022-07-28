@@ -1,5 +1,10 @@
-import {deserializeError, ErrorObject, serializeError} from 'serialize-error'
 import {createError, ErrorWithCode} from './ErrorWithCode'
+
+type ErrorObject = {
+  stack?: string
+  message?: string
+  status?: number
+}
 
 type JSONRep<D> =
   | {success: true; data: D}
@@ -66,7 +71,9 @@ export type Outcome<T = void> = Outcome.OutcomeImpl<T> & Pair<T>
 export namespace Outcome {
   export function fromJSON<T>(json: JSONRep<T>): Outcome<T> {
     if (json.success) return Success(json.data)
-    return Failure(deserializeError(json.error))
+    const error = new ErrorWithCode(json.error.status!, json.error.message!)
+    error.stack = json.error.stack
+    return Failure(error)
   }
 
   export function unpack<T>(outcome: Outcome<T>): T {
@@ -145,10 +152,11 @@ export namespace Outcome {
     toJSON(): JSONRep<T> {
       return {
         success: false,
-        error:
-          process.env.NODE_ENV === 'development'
-            ? serializeError(this.error)
-            : {message: String(this.error)}
+        error: {
+          message: String(this.error),
+          stack: this.error instanceof Error ? this.error.stack : undefined,
+          status: this.status
+        }
       }
     }
   }

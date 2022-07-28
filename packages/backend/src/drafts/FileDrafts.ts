@@ -10,7 +10,7 @@ export type FileDraftsOptions = {
 }
 
 export class FileDrafts implements Drafts {
-  constructor(protected options: FileDraftsOptions) {}
+  constructor(public options: FileDraftsOptions) {}
 
   async get({
     id,

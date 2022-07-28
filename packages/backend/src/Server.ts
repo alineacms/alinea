@@ -17,7 +17,10 @@ import {base64} from '@alinea/core/util/Encoding'
 import {generateKeyBetween} from '@alinea/core/util/FractionalIndexing'
 import {basename, extname} from '@alinea/core/util/Paths'
 import {crypto} from '@alinea/iso'
+import sqlite from '@alinea/sqlite-wasm'
 import {Cursor, Store} from '@alinea/store'
+import {SqlJsDriver} from '@alinea/store/sqlite/drivers/SqlJsDriver'
+import {SqliteStore} from '@alinea/store/sqlite/SqliteStore'
 import * as Y from 'yjs'
 import {Cache} from './Cache'
 import {Data} from './Data'
@@ -44,18 +47,28 @@ export type ServerOptions<T extends Workspaces> = {
 }
 
 export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
-  config: Config<T>
   preview: PreviewStore
   createStore: () => Promise<Store>
 
   constructor(public options: ServerOptions<T>) {
-    this.config = options.config
     this.createStore = options.createStore
-    this.preview = previewStore(
-      () => this.createStore(),
-      options.config,
-      options.drafts
-    )
+    this.preview = previewStore({
+      name: `preview for ${this.constructor.name}`,
+      createCache: async () => {
+        const {Database} = await sqlite()
+        const original = await this.createStore()
+        return new SqliteStore(
+          new SqlJsDriver(new Database(original.export())),
+          createId
+        )
+      },
+      config: options.config,
+      drafts: options.drafts
+    })
+  }
+
+  get config(): Config<T> {
+    return this.options.config
   }
 
   async entry(
@@ -140,9 +153,9 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
   deleteDraft({id}: Hub.DeleteParams, ctx: Hub.Context): Future<boolean> {
     const {drafts} = this.options
     return outcome(async () => {
+      await drafts.delete({ids: [id]}, ctx)
       await this.preview.deleteUpdate(id)
       const store = await this.preview.getStore(ctx)
-      drafts.delete({ids: [id]}, ctx)
       // Do we still have an entry after removing the draft?
       return Boolean(store.first(Entry.where(Entry.id.is(id))))
     })
@@ -168,6 +181,7 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
       Cache.applyPublish(store, config, entries)
       return store
     }
+    console.log(`Publishing ${entries.map(e => e.id).join(', ')}`)
     return outcome(async () => {
       const create = this.createStore
       const current = await create()
@@ -181,8 +195,9 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
       await target.publish({changes}, ctx)
       const ids = entries.map(entry => entry.id)
       await drafts.delete({ids}, ctx)
-      this.createStore = () => create().then(applyPublish)
-      await this.preview.deleteUpdates(ids)
+      if (process.env.NODE_ENV !== 'development') applyPublish(current)
+      // this.createStore = () => create().then(applyPublish)
+      await this.preview.applyPublish(entries)
     })
   }
 

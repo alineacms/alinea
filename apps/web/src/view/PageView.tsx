@@ -1,3 +1,4 @@
+import {useNextPreview} from '@alinea/preview/next'
 import {ComponentType, createElement} from 'react'
 import {CodeVariantsProvider} from '../view/blocks/CodeVariantsBlock'
 import {DocPage} from './DocPage'
@@ -17,6 +18,7 @@ function EntryView({entry}: PageViewProps) {
 }
 
 export function PageView(props: PageViewProps) {
+  useNextPreview()
   return (
     <Layout {...props.layout}>
       <CodeVariantsProvider>

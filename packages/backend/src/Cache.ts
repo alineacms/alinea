@@ -234,7 +234,8 @@ export namespace Cache {
       url: '/' + url,
       parent: parents[parents.length - 1],
       parents: parents,
-      $isContainer: type!.options.isContainer
+      $isContainer: type!.options.isContainer,
+      $status: EntryStatus.Published
     }
   }
 
@@ -250,16 +251,15 @@ export namespace Cache {
   export function applyUpdates(
     store: Store,
     config: Config,
-    updates: IterableIterator<[string, Uint8Array]>
+    updates: Array<readonly [string, Uint8Array]>
   ) {
     const changed = []
     for (const [id, update] of updates) {
       const condition = Entry.where(Entry.id.is(id))
       const existing = store.first(condition)
-      const doc = new Y.Doc()
-      // if (existing) docFromEntry(config, existing, doc)
-      Y.applyUpdate(doc, update)
       const [entry, err] = outcome(() => {
+        const doc = new Y.Doc()
+        Y.applyUpdate(doc, update)
         const data = entryFromDoc(doc, config.type)
         return {
           ...computeEntry(store, config, data!),

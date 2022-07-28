@@ -28,9 +28,8 @@ async function apply(response: Response, to: http.ServerResponse) {
   response.headers.forEach((value, key) => to.setHeader(key, value))
   if (response.body) {
     await writeReadableStreamToWritable(response.body, to)
-  } else {
-    to.end()
   }
+  to.end()
 }
 
 const skipHeaders = new Set(['transfer-encoding', 'connection', 'keep-alive'])

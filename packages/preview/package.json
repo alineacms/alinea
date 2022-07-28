@@ -1,5 +1,5 @@
 {
-  "name": "@alinea/core",
+  "name": "@alinea/preview",
   "version": "0.0.0",
   "license": "MIT",
   "repository": {
@@ -21,11 +21,6 @@
         "./dist/*"
       ]
     }
-  },
-  "dependencies": {
-    "@alinea/iso": "^0.1.18",
-    "@alinea/store": "0.0.0",
-    "yjs": "^13.5.39"
   },
   "peerDependencies": {
     "react": "*"
