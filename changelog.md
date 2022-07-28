@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [0.1.13]
 
 - Added a button to mark text as small within the rich text editor
 - New UI buttons to insert rows in any position in a list field
