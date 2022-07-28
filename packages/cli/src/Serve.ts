@@ -115,6 +115,7 @@ export type ServeOptions = {
   buildOptions?: BuildOptions
   alineaDev?: boolean
   production?: boolean
+  onAfterGenerate?: () => void
 }
 
 export async function serve(options: ServeOptions): Promise<void> {
@@ -150,6 +151,7 @@ export async function serve(options: ServeOptions): Promise<void> {
       if (!alineaDev) reload('refresh')
     },
     onCacheRebuild: async error => {
+      await server.reloadPreviewStore()
       reload('refetch')
     }
   })
