@@ -19,7 +19,7 @@ async function run(cwd: string) {
   const exports = await import(
     `file://${path.resolve(cwd, '.alinea/main/pages')}`
   )
-  const pages: Pages<Entry> = exports.pages
+  const pages: Pages<Entry> = exports.initPages()
   const welcome = await pages.where(page => page.title.is('Welcome'))
   assert.ok(welcome)
 }

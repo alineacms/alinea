@@ -37,6 +37,7 @@ export interface Store {
     on: Array<Expr<any>>
   ): void
   transaction<T>(run: () => T): T
+  export(): Uint8Array
 }
 
 export namespace Store {

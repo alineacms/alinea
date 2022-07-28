@@ -27,9 +27,6 @@
     "@alinea/store": "0.0.0",
     "yjs": "^13.5.39"
   },
-  "devDependencies": {
-    "serialize-error": "^9.0.0"
-  },
   "peerDependencies": {
     "react": "*"
   }

@@ -11,7 +11,7 @@ import {cloudConfig} from './CloudConfig'
 export interface CloudConnection extends Drafts, Data.Media, Data.Target {}
 
 async function failOnHttpError(res: Response): Promise<Response> {
-  if (res.status >= 400) throw createError(res.status, await res.json())
+  if (res.status >= 400) throw createError(res.status, await res.text())
   return res
 }
 

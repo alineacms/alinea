@@ -1,0 +1,10 @@
+import {useMemo, useState} from 'react'
+import {PreviewApi, registerPreview} from './RegisterPreview'
+
+export function usePreview(api: PreviewApi = {}) {
+  const [isPreviewing, setIsPreviewing] = useState(false)
+  useMemo(() => {
+    return registerPreview({...api, setIsPreviewing})
+  }, [])
+  return {isPreviewing}
+}

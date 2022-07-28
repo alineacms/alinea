@@ -1,72 +1,71 @@
 import {Drafts} from '@alinea/backend/Drafts'
+import {createError} from '@alinea/core/ErrorWithCode'
 import {Hub} from '@alinea/core/Hub'
-import {Collection} from '@alinea/store/Collection'
-import {SqliteStore} from '@alinea/store/sqlite/SqliteStore'
-import path from 'node:path'
-import * as Y from 'yjs'
-import {exportStore} from '../ExportStore'
+import {base64, base64url} from '@alinea/core/util/Encoding'
+import {fetch} from '@alinea/iso'
 
 export type DevDraftsOptions = {
-  outDir: string
-  createStore: () => Promise<SqliteStore>
+  serverLocation: string
 }
 
-type Draft = {id: string; draft: string}
-const Draft = new Collection<Draft>('Draft')
+async function failOnHttpError(res: Response): Promise<Response> {
+  if (res.status >= 400) throw createError(res.status, await res.text())
+  return res
+}
 
-const FILENAME = 'drafts.js'
+function json<T>(res: Response): Promise<T> {
+  return res.json()
+}
 
 export class DevDrafts implements Drafts {
-  location: string
-  store: Promise<SqliteStore>
+  constructor(public options: DevDraftsOptions) {}
 
-  constructor(protected options: DevDraftsOptions) {
-    this.location = path.join(this.options.outDir, FILENAME)
-    this.store = options.createStore()
+  // We never need to mutate from the preview side
+  async update(params: Hub.UpdateParams): Promise<Drafts.Update> {
+    return params
+  }
+  async delete({ids}: Hub.DeleteMultipleParams): Promise<void> {}
+
+  // Forward draft requests to the running alinea server
+  get(
+    {id, stateVector}: Hub.EntryParams,
+    ctx: Hub.Context
+  ): Promise<Uint8Array | undefined> {
+    const {serverLocation} = this.options
+    const params = stateVector
+      ? '?' +
+        new URLSearchParams({stateVector: base64url.stringify(stateVector)})
+      : ''
+    const url = `${serverLocation}${Hub.routes.base}/~draft/${id}${params}`
+    return fetch(url, {
+      headers: {accept: 'application/json'}
+    }).then(res => {
+      if (res.status === 404) return undefined
+      return failOnHttpError(res)
+        .then(res => res.arrayBuffer())
+        .then(buffer => new Uint8Array(buffer))
+    })
   }
 
-  private async write() {
-    const store = await this.store
-    await exportStore(store, this.location)
-  }
+  async *updates({}, ctx: Hub.Context): AsyncGenerator<Drafts.Update> {
+    const {serverLocation} = this.options
+    const url = `${serverLocation}${Hub.routes.base}/~draft`
+    const updates = await fetch(url, {
+      headers: {accept: 'application/json'}
+    })
+      .then(failOnHttpError)
+      .then<
+        Array<{
+          id: string
+          update: string
+        }>
+      >(json)
 
-  async get({
-    id,
-    stateVector
-  }: Hub.EntryParams): Promise<Uint8Array | undefined> {
-    const store = await this.store
-    const draft = store.first(Draft.where(Draft.id.is(id)))
-    if (!draft) return undefined
-    return Buffer.from(draft.draft, 'base64')
-  }
-
-  async update({id, update}: Hub.UpdateParams): Promise<Drafts.Update> {
-    const store = await this.store
-    const doc = new Y.Doc()
-    const current = await this.get({id})
-    if (current) Y.applyUpdate(doc, current)
-    Y.applyUpdate(doc, update)
-    const draft = Buffer.from(Y.encodeStateAsUpdate(doc))
-    if (current)
-      store.update(Draft.where(Draft.id.is(id)), {
-        draft: draft.toString('base64')
-      })
-    else store.insert(Draft, {id, draft: draft.toString('base64')})
-    await this.write()
-    return {id, update: draft}
-  }
-
-  async delete({ids}: Hub.DeleteMultipleParams): Promise<void> {
-    const store = await this.store
-    store.delete(Draft.where(Draft.id.isIn(ids)))
-    await this.write()
-  }
-
-  async *updates(): AsyncGenerator<{id: string; update: Uint8Array}> {
-    const store = await this.store
-    const drafts = store.all(Draft)
-    for (const draft of drafts) {
-      yield {id: draft.id, update: Buffer.from(draft.draft, 'base64')}
+    for (const update of updates) {
+      yield {
+        id: update.id,
+        update: base64.parse(update.update)
+      }
     }
   }
 }

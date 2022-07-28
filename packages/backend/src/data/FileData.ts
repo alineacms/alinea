@@ -32,7 +32,7 @@ function isChildOf(child: string, parent: string) {
 export class FileData implements Data.Source, Data.Target, Data.Media {
   canRename = true
 
-  constructor(protected options: FileDataOptions) {}
+  constructor(public options: FileDataOptions) {}
 
   async *entries(): AsyncGenerator<Entry> {
     const {config, fs, loader, rootDir = '.'} = this.options
