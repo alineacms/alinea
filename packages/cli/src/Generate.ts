@@ -181,8 +181,6 @@ export async function generate(options: GenerateOptions): Promise<Config> {
       'package.json',
       'index.js',
       'index.d.ts',
-      'client.js',
-      'client.d.ts',
       'drafts.js',
       'backend.js',
       'backend.d.ts',
