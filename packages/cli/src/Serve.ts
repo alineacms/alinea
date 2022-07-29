@@ -242,7 +242,6 @@ export async function serve(options: ServeOptions): Promise<void> {
             }
           }
         : undefined,
-      // Todo: this is only needed during dev
       tsconfig: path.join(staticDir, 'tsconfig.json'),
       logLevel: 'error'
     })

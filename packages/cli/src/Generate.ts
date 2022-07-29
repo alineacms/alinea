@@ -7,7 +7,6 @@ import {outcome} from '@alinea/core/Outcome'
 import {Workspace} from '@alinea/core/Workspace'
 import {SqliteStore} from '@alinea/store/sqlite/SqliteStore'
 import {EvalPlugin} from '@esbx/eval'
-import {ReactPlugin} from '@esbx/react'
 import {FSWatcher} from 'chokidar'
 import semver from 'compare-versions'
 import {build, BuildResult} from 'esbuild'
@@ -215,6 +214,7 @@ export async function generate(options: GenerateOptions): Promise<Config> {
         entryPoints: {config: configLocation},
         bundle: true,
         platform: 'node',
+        jsx: 'automatic',
         plugins: [
           targetPlugin(file => {
             return {
@@ -224,8 +224,7 @@ export async function generate(options: GenerateOptions): Promise<Config> {
           }),
           EvalPlugin,
           externalPlugin,
-          ignorePlugin,
-          ReactPlugin
+          ignorePlugin
         ],
         watch: watch && {
           async onRebuild(error, result) {
@@ -237,7 +236,8 @@ export async function generate(options: GenerateOptions): Promise<Config> {
             if (onConfigRebuild)
               return onConfigRebuild(error || undefined, config)
           }
-        }
+        },
+        tsconfig: path.join(staticDir, 'tsconfig.json')
       })
     )
   }
@@ -375,7 +375,8 @@ export async function generate(options: GenerateOptions): Promise<Config> {
             outfile: tmpFile,
             entryPoints: [sourceLocation],
             absWorkingDir: outDir,
-            plugins: [externalPlugin, ignorePlugin, ReactPlugin]
+            jsx: 'automatic',
+            plugins: [externalPlugin, ignorePlugin]
           })
         )
         const outFile = 'file://' + tmpFile
@@ -433,7 +434,6 @@ export async function generate(options: GenerateOptions): Promise<Config> {
         'process.env.NODE_ENV': "'production'"
       },
       ...buildOptions,
-      // Todo: this is only needed during dev
       tsconfig: path.join(staticDir, 'tsconfig.json'),
       logLevel: 'error'
     }).catch(e => {
