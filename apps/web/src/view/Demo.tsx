@@ -3,16 +3,16 @@ import {IndexedDBData} from '@alinea/backend.indexeddb/IndexedDBData'
 import {IndexedDBDrafts} from '@alinea/backend.indexeddb/IndexedDBDrafts'
 import {Cache} from '@alinea/backend/Cache'
 import {Server} from '@alinea/backend/Server'
-import {config} from '@alinea/content'
 import {accumulate, createConfig, workspace} from '@alinea/core'
 import {Dashboard, Preview} from '@alinea/dashboard'
 import {px, Typo} from '@alinea/ui'
 import {useMemo} from 'react'
+import {config} from '../../../demo/.alinea/config.js'
 
 const demoConfig = createConfig({
   workspaces: {
-    web: workspace('Demo', {
-      ...config.workspaces.web.config.options,
+    demo: workspace('Demo', {
+      ...config.workspaces.demo.config.options,
       preview({entry}) {
         return (
           <Preview>
@@ -36,7 +36,7 @@ function createLocalClient() {
   return new Server({
     config: demoConfig,
     createStore: async () => {
-      const {createStore} = await import('@alinea/content/store.js')
+      const {createStore} = await import('../../../demo/.alinea/store.js')
       const store = await createStore()
       const entries = await accumulate(data.entries())
       Cache.applyPublish(store, config, entries)

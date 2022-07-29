@@ -450,7 +450,7 @@ __metadata:
     "@esbx/static": ^0.0.19
     "@esbx/target": ^0.0.20
     "@esbx/workspaces": ^0.0.19
-    "@ladle/react": ^2.0.0
+    "@ladle/react": ^2.0.2
     "@types/glob": ^7.1.4
     "@types/node": ^16.9.0
     autoprefixer: ^10.4.2
@@ -2435,9 +2435,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@ladle/react@npm:^2.0.0":
-  version: 2.0.0
-  resolution: "@ladle/react@npm:2.0.0"
+"@ladle/react@npm:^2.0.2":
+  version: 2.0.2
+  resolution: "@ladle/react@npm:2.0.2"
   dependencies:
     "@babel/code-frame": ^7.18.6
     "@babel/core": ^7.18.9
@@ -2477,7 +2477,7 @@ __metadata:
     react-dom: ">=16.14.0"
   bin:
     ladle: lib/cli/cli.js
-  checksum: 0b07725a518c9cc3534ed1fe272da6ca5404312bb57f4738d9d5cb677e299fb0629a264e001a21bd1a55586265bd7a313cd5e59c7c8b26788aa1206e93524ad8
+  checksum: 3e81de6b32b8553730113706660406d29e9f43cff801a70354131cfb95e544a9b4c0e2f808fe25af96095e397fcc04b526079fcbce5ba1e6cfa4031fdedea6b5
   languageName: node
   linkType: hard
 

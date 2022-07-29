@@ -1,3 +1,4 @@
 /.next
 /src/data/types.json
 /public/admin*
+/public/stories*

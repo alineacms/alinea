@@ -1,23 +1,24 @@
-import {Viewport} from '@alinea/ui'
-import {createDemo} from '@alinea/web/view/Demo'
-import {PropsWithChildren, useMemo} from 'react'
-import {DashboardProvider} from './hook/DashboardProvider'
+import {ErrorBoundary} from '@alinea/ui'
+import {UIStory, UIStoryProps} from '@alinea/ui/UIStory'
+import {useMemo} from 'react'
+import {QueryClient, QueryClientProvider} from 'react-query'
+import {createDemo} from '../../../apps/web/src/view/Demo'
+import {DashboardProvider} from './hook/UseDashboard'
+import {SessionProvider} from './hook/UseSession'
 
-export function DashboardStory({children}: PropsWithChildren<{}>) {
+const queryClient = new QueryClient({defaultOptions: {queries: {retry: false}}})
+
+export function DashboardStory({children, ...props}: UIStoryProps) {
   const {client, config, session} = useMemo(createDemo, [])
   return (
-    <Viewport attachToBody>
-      <DashboardProvider value={{client, config}}>
-        <SessionProvider value={session}>
-          <div
-            style={{
-              margin: 'auto'
-            }}
-          >
-            {children}
-          </div>
-        </SessionProvider>
-      </DashboardProvider>
-    </Viewport>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <DashboardProvider value={{client, config}}>
+          <SessionProvider value={session}>
+            <UIStory {...props}>{children}</UIStory>
+          </SessionProvider>
+        </DashboardProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   )
 }
