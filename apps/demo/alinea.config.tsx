@@ -1,21 +1,13 @@
-import {createConfig, root, schema, type, workspace} from '@alinea/core'
+import {createConfig, root, schema, workspace} from '@alinea/core'
 import {MediaSchema} from '@alinea/dashboard/schema/MediaSchema'
 import {BrowserPreview} from '@alinea/dashboard/view/preview/BrowserPreview'
-import {path} from '@alinea/input.path'
-import {richText} from '@alinea/input.richtext'
-import {text} from '@alinea/input.text'
 import {IcRoundInsertDriveFile} from '@alinea/ui/icons/IcRoundInsertDriveFile'
 import {IcRoundPermMedia} from '@alinea/ui/icons/IcRoundPermMedia'
-
-const HomePageSchema = type('Home page', {
-  title: text('Title'),
-  path: path('Path'),
-  content: richText('Content')
-})
+import {DemoHomeSchema} from './src/view/channels/home/DemoHome.schema'
 
 const demoSchema = schema({
   ...MediaSchema,
-  Home: HomePageSchema
+  Home: DemoHomeSchema
 })
 
 const demo = workspace('Demo', {
@@ -23,11 +15,11 @@ const demo = workspace('Demo', {
   typeNamespace: 'content',
   source: './content',
   mediaDir: './public',
-  color: 'yellow',
+  color: '#17b179',
   roots: {
     data: root('Demo website', {
       icon: IcRoundInsertDriveFile,
-      contains: ['Home', 'Docs']
+      contains: ['Home']
     }),
     media: root('Media', {
       icon: IcRoundPermMedia,

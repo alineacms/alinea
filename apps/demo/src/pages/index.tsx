@@ -1,5 +1,7 @@
 import {initPages} from '@alinea/content/demo/pages.js'
 import {GetStaticPropsContext} from 'next'
+import {DemoHome} from '../view/channels/home/DemoHome'
+import {DemoHomeSchema} from '../view/channels/home/DemoHome.schema'
 
 export async function getStaticProps(context: GetStaticPropsContext) {
   const pages = initPages(context.previewData as string)
@@ -8,10 +10,6 @@ export async function getStaticProps(context: GetStaticPropsContext) {
   }
 }
 
-export default function IndexPage(props) {
-  return (
-    <div>
-      <h1>{props.title}</h1>
-    </div>
-  )
+export default function IndexPage(props: DemoHomeSchema) {
+  return <DemoHome {...props} />
 }

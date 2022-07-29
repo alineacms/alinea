@@ -1,0 +1,23 @@
+@import '../../../style.scss';
+
+.root {
+  background-color: $black;
+  padding: 20px 0;
+  color: white;
+
+  &-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.logo {
+  display: inline-block;
+  vertical-align: middle;
+
+  svg {
+    height: 40px;
+    display: block;
+  }
+}
