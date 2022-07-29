@@ -428,6 +428,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@alinea/root@workspace:."
   dependencies:
+    "@esbx/alias": ^0.0.20
     "@esbx/extension": ^0.0.19
     "@esbx/external": ^0.0.19
     "@esbx/reload": ^0.0.19
@@ -1994,6 +1995,13 @@ __metadata:
   dependencies:
     tslib: ^2.0.0
   checksum: 10173fc8d6fa8e46394ac2b739e443a3254e31854cbdbe810782bb7b6f4b4dd948752c3114479827c0da757e6616dd44a70394b6e8524d807514db0be192b18d
+  languageName: node
+  linkType: hard
+
+"@esbx/alias@npm:^0.0.20":
+  version: 0.0.20
+  resolution: "@esbx/alias@npm:0.0.20"
+  checksum: 06fee5d27617f9fc54d1dc3ff22c0372dc7af2bb2a65df341926e025371838f228146c4d8b962a064fa4a1ac540fb730a2debebebf1e8df0dc2de740662edc58
   languageName: node
   linkType: hard
 
