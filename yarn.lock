@@ -130,6 +130,8 @@ __metadata:
     "@alinea/iso": ^0.1.18
     "@alinea/shared": 0.0.0
     "@alinea/ui": 0.0.0
+  peerDependencies:
+    react: "*"
   languageName: unknown
   linkType: soft
 
@@ -258,6 +260,8 @@ __metadata:
     "@alinea/core": 0.0.0
     "@alinea/editor": 0.0.0
     "@alinea/ui": 0.0.0
+  peerDependencies:
+    react: "*"
   languageName: unknown
   linkType: soft
 
@@ -304,6 +308,8 @@ __metadata:
     "@alinea/core": 0.0.0
     "@alinea/editor": 0.0.0
     "@alinea/ui": 0.0.0
+  peerDependencies:
+    react: "*"
   languageName: unknown
   linkType: soft
 
@@ -314,6 +320,8 @@ __metadata:
     "@alinea/core": 0.0.0
     "@alinea/editor": 0.0.0
     "@alinea/ui": 0.0.0
+  peerDependencies:
+    react: "*"
   languageName: unknown
   linkType: soft
 
@@ -377,6 +385,8 @@ __metadata:
     "@alinea/editor": 0.0.0
     "@alinea/shared": 0.0.0
     "@alinea/ui": 0.0.0
+  peerDependencies:
+    react: "*"
   languageName: unknown
   linkType: soft
 
@@ -387,6 +397,8 @@ __metadata:
     "@alinea/core": 0.0.0
     "@alinea/editor": 0.0.0
     "@alinea/ui": 0.0.0
+  peerDependencies:
+    react: "*"
   languageName: unknown
   linkType: soft
 
