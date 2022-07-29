@@ -1,4 +1,4 @@
-import {backend} from '@alinea/content'
+import {backend} from '@alinea/content/backend.js'
 import {GetStaticPropsContext} from 'next'
 import {PageView} from '../view/PageView'
 import {pageViewQuery} from '../view/PageView.server'

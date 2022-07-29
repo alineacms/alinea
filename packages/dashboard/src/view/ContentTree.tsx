@@ -1,6 +1,6 @@
 import {Entry} from '@alinea/core/Entry'
 import {generateKeyBetween} from '@alinea/core/util/FractionalIndexing'
-import {fromModule} from '@alinea/ui'
+import {fromModule, usePreferences} from '@alinea/ui'
 import {
   closestCenter,
   defaultDropAnimation,
@@ -116,9 +116,10 @@ export function ContentTree({
       coordinateGetter: sortableKeyboardCoordinates
     })
   )
+  const preferences = usePreferences()
   const containerRef = useRef(null)
   const [containerWidth, containerHeight] = useSize(containerRef)
-  const itemSize = 30
+  const itemSize = (30 / 16) * preferences.size
   const offset = useMemo(() => {
     const selected = select[select.length - 1]
     return selected
@@ -212,7 +213,7 @@ export function ContentTree({
       }
     }
   }, [workspace, root, redirectToRoot, entries])
-  const height = 32
+  const height = (32 / 16) * preferences.size
   return (
     <DndContext
       sensors={sensors}

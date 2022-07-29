@@ -1,5 +1,4 @@
 import {EvalPlugin} from '@esbx/eval'
-import {ReactPlugin} from '@esbx/react'
 import {ReporterPlugin} from '@esbx/reporter'
 import {RunPlugin} from '@esbx/run'
 import {StaticPlugin} from '@esbx/static'
@@ -24,8 +23,9 @@ export {VersionTask} from '@esbx/workspaces'
 export * from './.esbx/bundle-ts'
 
 const buildOptions: BuildOptions = {
+  jsx: 'automatic',
   format: 'esm',
-  plugins: [EvalPlugin, staticPlugin, ReactPlugin, sassPlugin],
+  plugins: [EvalPlugin, staticPlugin, sassPlugin],
   loader: {
     '.woff': 'file',
     '.woff2': 'file',
@@ -34,7 +34,7 @@ const buildOptions: BuildOptions = {
 }
 
 const builder = BuildTask.configure({
-  exclude: ['@alinea/web', '@alinea/css'],
+  exclude: ['@alinea/web', '@alinea/demo', '@alinea/css'],
   buildOptions: {
     ...buildOptions,
     plugins: [...buildOptions.plugins!, cssPlugin, resolvePlugin]
@@ -127,6 +127,7 @@ export const clean = {
   action() {
     fs.removeSync('dist')
     fs.removeSync('apps/web/.alinea')
+    fs.removeSync('apps/demo/.alinea')
     for (const location of getWorkspaces(process.cwd())) {
       fs.removeSync(`${location}/dist`)
     }

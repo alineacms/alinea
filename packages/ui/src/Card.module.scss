@@ -1,10 +1,9 @@
 .root {
+  cursor: default;
   position: relative;
   border-radius: 12px;
   background: var(--alinea-lift);
-  overflow: hidden;
   box-shadow: 0 1px 0 var(--alinea-inner-outline);
-  cursor: default;
   border: 1px solid var(--alinea-inner-outline);
 }
 
@@ -41,6 +40,7 @@
 }
 
 .options {
+  position: relative;
   padding: 0;
   display: flex;
   gap: 8px;

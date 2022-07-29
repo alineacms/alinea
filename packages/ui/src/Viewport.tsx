@@ -1,13 +1,6 @@
-import {parseToHsla} from 'color2k'
-import {
-  HTMLProps,
-  PropsWithChildren,
-  useEffect,
-  useLayoutEffect,
-  useState
-} from 'react'
-import {ColorSchemeProvider} from './hook/UseColorScheme'
+import {HTMLProps, PropsWithChildren, useEffect, useLayoutEffect} from 'react'
 import {useContrastColor} from './hook/UseContrastColor'
+import {usePreferences} from './hook/UsePreferences'
 import {fromModule} from './util/Styler'
 import css from './Viewport.module.scss'
 
@@ -36,31 +29,16 @@ export function Viewport({
 }: ViewportProps) {
   const accentColor = color!
   const accentColorForeground = useContrastColor(accentColor)
-  //const {scheme} = useColorScheme()
-  const persistenceId = `@alinea/ui/viewport`
-  const [schemePreference, setSchemePreference] = useState<
-    'light' | 'dark' | undefined
-  >(
-    typeof window !== 'undefined'
-      ? (window.localStorage?.getItem(persistenceId) as any) || undefined
-      : undefined
-  )
-  function toggleSchemePreference() {
-    const isLight =
-      schemePreference === undefined
-        ? window.matchMedia('(prefers-color-scheme: light)').matches
-        : schemePreference === 'light'
-    const next = isLight ? 'dark' : 'light'
-    setSchemePreference(next)
-    window?.localStorage?.setItem(persistenceId, next)
-  }
-  const [hue] = parseToHsla(accentColor)
+  const {scheme, size} = usePreferences()
+  useEffect(() => {
+    if (!size) return
+    document.documentElement.style.fontSize = `${size}px`
+  }, [size])
   const style: any = {
     '--alinea-accent': accentColor,
     '--alinea-accent-foreground': accentColorForeground
-    // '--alinea-hue': hue
   }
-  const className = styles.root(schemePreference)
+  const className = styles.root(scheme)
   const styleString = Object.entries(style)
     .map(([key, value]) => {
       return `${key}: ${value}`
@@ -83,19 +61,15 @@ export function Viewport({
   }, [accentColor])
   const mainProps = attachToBody ? {} : {className, style}
   return (
-    <ColorSchemeProvider value={[schemePreference, toggleSchemePreference]}>
-      <main
-        {...mainProps}
-        className={styles.main.mergeProps(mainProps).mergeProps(props)({
-          contain
-        })}
-      >
-        {children}
-        {/* See: https://github.com/tailwindlabs/headlessui/discussions/666#discussioncomment-2197931 */}
-        <div id="headlessui-portal-root">
-          <div />
-        </div>
-      </main>
-    </ColorSchemeProvider>
+    <main
+      {...mainProps}
+      className={styles.main.mergeProps(mainProps)({contain})}
+    >
+      {children}
+      {/* See: https://github.com/tailwindlabs/headlessui/discussions/666#discussioncomment-2197931 */}
+      <div id="headlessui-portal-root">
+        <div />
+      </div>
+    </main>
   )
 }

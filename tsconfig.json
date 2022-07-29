@@ -24,6 +24,7 @@
       "@alinea/dashboard/*": ["./packages/dashboard/src/*"],
       "@alinea/backend/*": ["./packages/backend/src/*"],
       "@alinea/store/*": ["./packages/store/src/*"],
+      "@alinea/preview/*": ["./packages/preview/src/*"],
       "@alinea/editor/*": ["./packages/editor/src/*"],
       "@alinea/ui": ["./packages/ui/src"],
       "@alinea/ui/*": ["./packages/ui/src/*"],

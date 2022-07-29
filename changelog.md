@@ -1,6 +1,67 @@
 # Changelog
 
-## [Unreleased]
+## [0.1.15]
+
+- The alinea cli will now forward commands places after the serve or generate
+  commands. It will wait until the alinea package is generated before doing so
+  to make sure userland code can always depend on the package being available.
+  It also simplifies running the dashboard and development server without
+  requiring tools like npm-run-all. In practice, for a next.js website, this
+  means one can configure scripts like so:
+
+  ```js
+  {
+    "scripts": {
+      "dev": "alinea serve -- next dev",
+      "build": "alinea generate -- next build"
+    }
+  }
+  ```
+
+## [0.1.14]
+
+- Fix missing dependencies in the dashboard package
+
+## [0.1.13]
+
+- Added a button to mark text as small within the rich text editor
+- New UI buttons to insert rows in any position in a list field
+- User preferences get a dedicated popover
+- Previews can register a listener and implement their own refetch mechanism.
+  The communication happens via messages which work cross-origin.
+
+  ```ts
+  // For any environment
+  import {registerPreview} from '@alinea/preview'
+  registerPreview({
+    refetch() {
+      // Reload server data
+    }
+  })
+  ```
+
+  ```ts
+  // A react hook is available
+  import {usePreview} from '@alinea/preview/react'
+  const {isPreviewing} = usePreview({
+    refetch() {
+      // Reload server data & redraw
+    }
+  })
+  ```
+
+  ```ts
+  // A hook specifically for next.js, which refetches static/server props
+  import {useNextPreview} from '@alinea/preview/next'
+  const {isPreviewing} = useNextPreview()
+  ```
+
+## [0.1.12]
+
+- Previous release contained a few debug logs which are removed.
+- Hard breaks (shift + enter) will be rendered as break in the RichText component.
+
+## [0.1.11]
 
 - Tested and fixed the integration with Alinea Cloud for drafts and publishing content.
 

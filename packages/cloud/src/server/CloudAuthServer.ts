@@ -23,14 +23,20 @@ export type CloudAuthServerOptions = {
 
 type JWKS = {keys: Array<JsonWebKey>}
 
-function getPublicKey(): Promise<JsonWebKey> {
-  // Todo: some retries before we give up
+function getPublicKey(retry = 0): Promise<JsonWebKey> {
   return fetch(cloudConfig.jwks)
-    .then<JWKS>(res => res.json())
+    .then<JWKS>(async res => {
+      if (res.status !== 200) throw createError(res.status, await res.text())
+      return res.json()
+    })
     .then(jwks => {
       const key = jwks.keys[0] // .find(key => key.use === 'sig')
       if (!key) throw createError(500, 'No signature key found')
       return key
+    })
+    .catch(err => {
+      if (retry < 3) return getPublicKey(retry + 1)
+      throw err
     })
 }
 
@@ -121,7 +127,7 @@ export class CloudAuthServer implements Auth.Server {
               name: COOKIE_NAME,
               value: token,
               domain: target.hostname,
-              path: target.pathname,
+              // path: target.pathname,
               secure: target.protocol === 'https:',
               httpOnly: true,
               sameSite: 'strict'
@@ -157,12 +163,12 @@ export class CloudAuthServer implements Auth.Server {
   async contextFor(request: Request): Promise<{token: string; user: User}> {
     if (this.context.has(request)) return this.context.get(request)!
     const cookies = request.headers.get('cookie')
-    if (!cookies) throw createError(401, 'Unauthorized')
+    if (!cookies) throw createError(401, 'Unauthorized - no cookies')
     const token = cookies
       .split(';')
       .map(c => c.trim())
       .find(c => c.startsWith(`${COOKIE_NAME}=`))
-    if (!token) throw createError(401, 'Unauthorized')
+    if (!token) throw createError(401, `Unauthorized - no ${COOKIE_NAME}`)
     const jwt = token.slice(`${COOKIE_NAME}=`.length)
     return {token: jwt, user: await verify<User>(jwt, await this.key)}
   }

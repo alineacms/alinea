@@ -1,9 +1,9 @@
 import {EvalPlugin} from '@esbx/eval'
-import {ReactPlugin} from '@esbx/react'
 import {BuildOptions} from 'esbuild'
 
 export const buildOptions: BuildOptions = {
-  plugins: [EvalPlugin, ReactPlugin],
+  plugins: [EvalPlugin],
+  jsx: 'automatic',
   loader: {
     // Images
     '.png': 'file',

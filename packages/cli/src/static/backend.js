@@ -1,9 +1,9 @@
 import {DevBackend} from '@alinea/cli/serve/DevBackend'
 import {config} from './config.js'
-import {createStore as createDraftStore} from './drafts.js'
+import {serverLocation} from './drafts.js'
 import {createStore} from './store.js'
 const options = {config, createStore}
 export const backend =
   process.env.NODE_ENV === 'development'
-    ? new DevBackend({...options, createDraftStore})
+    ? new DevBackend({...options, serverLocation})
     : config.createBackend(options)

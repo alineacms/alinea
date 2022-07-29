@@ -21,6 +21,7 @@ import {IcRoundFormatListNumbered} from '@alinea/ui/icons/IcRoundFormatListNumbe
 import {IcRoundHorizontalRule} from '@alinea/ui/icons/IcRoundHorizontalRule'
 import {IcRoundLink} from '@alinea/ui/icons/IcRoundLink'
 import {IcRoundQuote} from '@alinea/ui/icons/IcRoundQuote'
+import IcRoundTextFields from '@alinea/ui/icons/IcRoundTextFields'
 import {IcRoundUnfoldMore} from '@alinea/ui/icons/IcRoundUnfoldMore'
 /*import {IcRoundRedo} from '@alinea/ui/icons/IcRoundRedo'
 import {IcRoundUndo} from '@alinea/ui/icons/IcRoundUndo'*/
@@ -163,6 +164,16 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
               exec().toggleItalic().run()
             }}
             active={editor.isActive('italic')}
+          />
+          <IconButton
+            icon={IcRoundTextFields}
+            size={18}
+            title="Small"
+            onClick={e => {
+              e.preventDefault()
+              exec().toggleSmall().run()
+            }}
+            active={editor.isActive('small')}
           />
           <DropdownMenu.Root>
             <DropdownMenu.Trigger
