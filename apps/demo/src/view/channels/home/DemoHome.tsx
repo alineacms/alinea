@@ -1,6 +1,7 @@
 import {fromModule, RichText} from '@alinea/ui'
 import {DemoButton} from '../../layout/DemoButton'
 import {DemoContainer} from '../../layout/DemoContainer'
+import {DemoImage} from '../../layout/DemoImage'
 import {DemoTitle} from '../../layout/DemoTitle'
 import css from './DemoHome.module.scss'
 import {DemoHomeSchema} from './DemoHome.schema'
@@ -21,7 +22,13 @@ export function DemoHome(props: DemoHomeSchema) {
 
 function Hero({image, title, text, button}: HeroProps) {
   return (
-    <div className={styles.hero()}>
+    <div className={styles.hero({image: image?.src})}>
+      {image?.src && (
+        <>
+          <DemoImage {...image} layout="fill" className={styles.hero.image()} />
+          <span className={styles.hero.overlay()} />
+        </>
+      )}
       <DemoContainer>
         <div className={styles.hero.content()}>
           <DemoTitle.H1>{title}</DemoTitle.H1>

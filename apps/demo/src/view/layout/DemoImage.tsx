@@ -1,83 +1,30 @@
-import NextImage, {ImageProps} from 'next/image'
-import {CSSProperties, Fragment} from 'react'
-
 import {fromModule} from '@alinea/ui'
-import css from './Image.module.scss'
+import NextImage, {ImageProps as NextImageProps} from 'next/image'
+import css from './DemoImage.module.scss'
 
 const styles = fromModule(css)
 
-declare type ImgElementStyle = NonNullable<
-  JSX.IntrinsicElements['img']['style']
->
-
-export function Image({
-  layout,
-  sizes,
-  priority = false,
-  objectFit,
-  objectPosition,
-  className,
-  onLoadingComplete = () => {},
-  ...image
-}: ImageProps & {
+type ImageProps = Omit<NextImageProps, 'sizes'> & {
   sizes: string
-  objectFit?: 'cover' | ImgElementStyle['objectFit']
-  objectPosition?: ImgElementStyle['objectPosition']
-  className?: string
-}) {
-  if (!image?.src) return null
-  const BackgroundTag = layout === 'fill' ? 'div' : Fragment
-  const backgroundProps =
-    layout === 'fill'
-      ? ({style: {position: 'absolute', inset: 0}} as CSSProperties)
-      : ({} as any)
+}
 
+export function DemoImage(props: ImageProps) {
+  if (!props.src) return null
   return (
-    <BackgroundTag {...backgroundProps}>
-      <div className={styles.root.with(className)(layout)}>
-        <NextImage
-          sizes={sizes}
-          priority={priority}
-          {...switchProps(image, layout, objectFit, objectPosition)}
-          src={image.src}
-          alt={image?.alt || image?.title}
-          onLoadingComplete={onLoadingComplete}
-        />
-      </div>
-    </BackgroundTag>
+    <div className={styles.root.with(props.className)(props.layout)}>
+      <NextImage priority {...props} {...imageProps(props)} />
+    </div>
   )
 }
 
-export const getImageRatio = (image: any, width: number) => {
-  if (image.height > image.width) return (image.height / image.width) * width
-  return width / (image.width / image.height)
-}
-
-const switchProps = (
-  image: any,
-  layout?: 'fill' | 'responsive' | 'fixed' | 'intrinsic',
-  objectFit?: 'cover' | ImgElementStyle['objectFit'],
-  objectPosition?: ImgElementStyle['objectPosition']
-) => {
-  if (layout === 'responsive' && image?.width && !image?.height)
-    image.height = getImageRatio(image, image?.width)
-
-  const focus = image?.focus
-    ? `${image.focus?.x * 100}% ${image.focus?.y * 100}%`
-    : 'center center'
-
-  switch (layout) {
-    case 'responsive':
-      return {layout: 'responsive', width: image?.width, height: image?.height}
-
+function imageProps(image: ImageProps): Partial<ImageProps> {
+  switch (image.layout) {
     case 'fill':
       return {
-        layout: 'fill',
-        objectFit: objectFit || 'cover',
-        objectPosition: objectPosition || focus
+        objectFit: image.objectFit || 'cover',
+        objectPosition: image.objectPosition
       }
-
     default:
-      return {...image}
+      return {layout: 'responsive'}
   }
 }
