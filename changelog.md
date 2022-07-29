@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.1.16]
+
 - Alinea Cloud can now handle relative urls & authentication is automatically redirected
 
 ## [0.1.15]
