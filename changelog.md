@@ -1,5 +1,9 @@
 # Changelog
 
+## [Unreleased]
+
+- Alinea Cloud can now handle relative urls & authentication is automatically redirected
+
 ## [0.1.15]
 
 - The alinea cli will now forward commands places after the serve or generate

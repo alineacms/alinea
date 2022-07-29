@@ -42,40 +42,13 @@ export function CloudAuthView({setSession}: Auth.ViewProps) {
       })
       return null
     case AuthResultType.UnAuthenticated:
-      return (
-        <>
-          <Head>
-            <title>Alinea</title>
-          </Head>
-          <div style={{display: 'flex', height: '100%', width: '100%'}}>
-            <div style={{margin: 'auto', padding: px(20)}}>
-              <VStack gap={20}>
-                <HStack center gap={16}>
-                  <LogoShape>
-                    <IcRoundPublish />
-                  </LogoShape>
-                  <Typo.H1 flat>Unauthenticated</Typo.H1>
-                </HStack>
-                <Typo.P>Please login to use the Alinea dashboard.</Typo.P>
-                <div>
-                  <Button
-                    as="button"
-                    onClick={() => {
-                      const from = encodeURIComponent(
-                        `${location.protocol}//${location.host}${location.pathname}`
-                      )
-                      window.location.href = `${result.redirect}?from=${from}`
-                    }}
-                    iconRight={IcRoundArrowForward}
-                  >
-                    Login to alinea.cloud
-                  </Button>
-                </div>
-              </VStack>
-            </div>
-          </div>
-        </>
-      )
+      const {location} = window
+      location.href =
+        result.redirect +
+        `?from=${encodeURIComponent(
+          location.protocol + '//' + location.host + location.pathname
+        )}`
+      return null
     case AuthResultType.MissingApiKey:
       return (
         <>

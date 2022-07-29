@@ -119,7 +119,7 @@ export class CloudAuthServer implements Auth.Server {
         const user = await verify<User>(token, await this.key)
         // Store the token in a cookie and redirect to the dashboard
         // Todo: add expires and max-age based on token expiration
-        const target = new URL(this.dashboardUrl)
+        const target = new URL(this.dashboardUrl, url)
         return router.redirect(this.dashboardUrl, {
           status: 302,
           headers: {
@@ -151,8 +151,6 @@ export class CloudAuthServer implements Auth.Server {
   async authResult(request: Request): Promise<AuthResult> {
     if (!this.options.apiKey) return {type: AuthResultType.MissingApiKey}
     const [ctx, err] = await outcome(this.contextFor(request))
-    console.log(ctx, err)
-    if (err) throw err
     if (ctx) return {type: AuthResultType.Authenticated, user: ctx.user}
     return {
       type: AuthResultType.UnAuthenticated,
