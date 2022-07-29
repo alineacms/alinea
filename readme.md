@@ -52,7 +52,8 @@ Retrieve content fully-typed and filter, order, limit and join as needed.
 Select only the fields you need.
 
 ````tsx
-import {pages} from '@alinea/content/myWorkspace'
+import {initPages} from '@alinea/content/myWorkspace/pages.js'
+const pages = initPages()
 console.log(
   await pages
     .whereType('BlogPost')
