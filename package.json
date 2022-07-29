@@ -24,6 +24,7 @@
     "packages/*"
   ],
   "devDependencies": {
+    "@esbx/alias": "^0.0.20",
     "@esbx/extension": "^0.0.19",
     "@esbx/external": "^0.0.19",
     "@esbx/reload": "^0.0.19",
