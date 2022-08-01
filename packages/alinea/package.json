@@ -28,6 +28,7 @@
   "dependencies": {
     "@alinea/cli": "0.0.0",
     "@alinea/core": "0.0.0",
+    "@alinea/cloud": "0.0.0",
     "@alinea/css": "0.0.0",
     "@alinea/dashboard": "0.0.0",
     "@alinea/input.check": "0.0.0",
