@@ -24,6 +24,15 @@ import {targetPlugin} from './util/TargetPlugin'
 const __dirname = dirname(import.meta.url)
 const require = createRequire(import.meta.url)
 
+async function copyFileIfContentsDiffer(source: string, target: string) {
+  const data = await fs.readFile(source)
+  try {
+    const current = await fs.readFile(target)
+    if (current.equals(data)) return
+  } catch (e) {}
+  return fs.copyFile(source, target)
+}
+
 async function writeFileIfContentsDiffer(
   destination: string,
   contents: string | Buffer
@@ -279,7 +288,7 @@ export async function generate(options: GenerateOptions): Promise<Config> {
       function copy(...files: Array<string>) {
         return Promise.all(
           files.map(file =>
-            fs.copyFile(
+            copyFileIfContentsDiffer(
               path.join(staticDir, 'workspace', file),
               path.join(outDir, key, file)
             )
