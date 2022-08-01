@@ -99,6 +99,15 @@ function schemaCollections(workspace: Workspace) {
   `
 }
 
+function pagesType(workspace: Workspace) {
+  return code`
+    import {${workspace.typeNamespace || 'Pages'}} from './schema.js'
+    export const initPages: (previewToken?: string) => ${
+      workspace.typeNamespace ? `${workspace.typeNamespace}.` : ''
+    }Pages
+  `
+}
+
 function pagesOf(workspace: Workspace) {
   return code`
     import {backend} from '../backend.js'
@@ -127,7 +136,9 @@ function schemaTypes(workspace: Workspace) {
     import {DataOf, EntryOf, Entry} from '@alinea/core'
     import {Collection} from '@alinea/store'
     import type {Pages as AlineaPages} from '@alinea/backend'
-    export const schema = config.workspaces['${workspace.name}'].schema
+    export const schema: (typeof config)['workspaces']['${
+      workspace.name
+    }']['schema']
     ${wrapNamespace(collections, workspace.typeNamespace)}
   `
 }
@@ -305,10 +316,14 @@ export async function generate(options: GenerateOptions): Promise<Config> {
           path.join(outDir, key, 'schema.d.ts'),
           schemaTypes(workspace)
         ),
-        copy('index.d.ts', 'index.js', 'pages.d.ts'),
+        copy('index.d.ts', 'index.js'),
         writeFileIfContentsDiffer(
           path.join(outDir, key, 'pages.js'),
           pagesOf(workspace)
+        ),
+        writeFileIfContentsDiffer(
+          path.join(outDir, key, 'pages.d.ts'),
+          pagesType(workspace)
         )
       ])
     }
