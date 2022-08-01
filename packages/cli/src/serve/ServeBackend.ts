@@ -54,7 +54,8 @@ export class ServeBackend<
       drafts: drafts,
       media: data,
       target: data,
-      previews: new JWTPreviews('@alinea/backend/devserver')
+      previews: new JWTPreviews('@alinea/backend/devserver'),
+      applyPublish: false
     }
     super(options)
     this.reload = config => {

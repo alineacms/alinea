@@ -44,6 +44,10 @@ export type ServerOptions<T extends Workspaces> = {
   target: Data.Target
   media: Data.Media
   previews: Previews
+  // After publishing entries, also apply that change to the memory db
+  // this is to be avoided during development as the publish changes will
+  // be picked up by the file watcher
+  applyPublish?: boolean
 }
 
 export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
@@ -176,12 +180,11 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
   }
 
   publishEntries({entries}: Hub.PublishParams, ctx: Hub.Context): Future<void> {
-    const {config, drafts, target} = this.options
-    function applyPublish(store: Store) {
+    const {config, drafts, target, applyPublish = true} = this.options
+    function applyEntriesTo(store: Store) {
       Cache.applyPublish(store, config, entries)
       return store
     }
-    console.log(`Publishing ${entries.map(e => e.id).join(', ')}`)
     return outcome(async () => {
       const create = this.createStore
       const current = await create()
@@ -195,8 +198,10 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
       await target.publish({changes}, ctx)
       const ids = entries.map(entry => entry.id)
       await drafts.delete({ids}, ctx)
-      if (process.env.NODE_ENV !== 'development') applyPublish(current)
-      // this.createStore = () => create().then(applyPublish)
+      if (applyPublish) {
+        applyEntriesTo(current)
+        this.createStore = () => create().then(applyEntriesTo)
+      }
       await this.preview.applyPublish(entries)
     })
   }
