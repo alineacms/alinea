@@ -244,6 +244,9 @@ export async function serve(options: ServeOptions): Promise<void> {
         : undefined,
       tsconfig: path.join(staticDir, 'tsconfig.json'),
       logLevel: 'error'
+    }),
+    matcher.get('/config.css').map((): Response => {
+      return new Response('', {headers: {'content-type': 'text/css'}})
     })
     //)
   )
