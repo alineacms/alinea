@@ -40,7 +40,9 @@ export class CollectionImpl<Row extends {} = any> extends CursorImpl<Row> {
     const fields: Record<string, ExprData> = {}
     for (const prop of properties)
       fields[prop as string] = this.get(prop as string).expr
-    return new Selection(ExprData.Record(fields))
+    return new Selection<{
+      [K in Props[number]]: Row[K]
+    }>(ExprData.Record(fields))
   }
 
   get id() {
@@ -52,7 +54,7 @@ export class CollectionImpl<Row extends {} = any> extends CursorImpl<Row> {
   }
 
   as<T = Row>(name: string): Collection<T> {
-    return new Collection(From.source(this.cursor.from), {
+    return new Collection<T>(From.source(this.cursor.from), {
       ...this.__options,
       alias: name
     })
@@ -66,10 +68,13 @@ export class CollectionImpl<Row extends {} = any> extends CursorImpl<Row> {
     collection: Collection<Row>,
     createFields: (current: Fields<Row>) => F
   ): Collection<Row & Store.TypeOf<F>> {
-    return new Collection(From.source(collection.cursor.from), {
-      ...collection.__options,
-      computed: createFields as any
-    })
+    return new Collection<Row & Store.TypeOf<F>>(
+      From.source(collection.cursor.from),
+      {
+        ...collection.__options,
+        computed: createFields as any
+      }
+    )
   }
 }
 
