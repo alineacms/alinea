@@ -119,7 +119,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@alinea/cloud@workspace:packages/cloud":
+"@alinea/cloud@0.0.0, @alinea/cloud@workspace:packages/cloud":
   version: 0.0.0-use.local
   resolution: "@alinea/cloud@workspace:packages/cloud"
   dependencies:
@@ -3881,6 +3881,7 @@ __metadata:
   resolution: "alinea@workspace:packages/alinea"
   dependencies:
     "@alinea/cli": 0.0.0
+    "@alinea/cloud": 0.0.0
     "@alinea/core": 0.0.0
     "@alinea/css": 0.0.0
     "@alinea/dashboard": 0.0.0
