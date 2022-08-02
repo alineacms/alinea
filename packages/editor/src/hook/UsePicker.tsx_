@@ -1,10 +1,12 @@
 import {Reference} from '@alinea/core'
 import {useTrigger} from '@alinea/ui/hook/UseTrigger'
 import {useMemo} from 'react'
-import {Picker, PickerOptions} from '../Picker'
+import {Picker} from '../Picker'
 
-export function usePicker(pickers: Record<string, Picker>) {
-  const trigger = useTrigger<Array<Reference> | undefined, PickerOptions>()
+export function usePicker<R extends Reference, O extends {}>(
+  pickers: Record<string, Picker<R, O>>
+) {
+  const trigger = useTrigger<Array<Reference> | undefined, O>()
   return useMemo(() => {
     function Modal() {
       if (!trigger.options) return null

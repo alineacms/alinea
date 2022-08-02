@@ -4,6 +4,7 @@ import {useMemo} from 'react'
 import {QueryClient, QueryClientProvider} from 'react-query'
 import {createDemo} from '../../../apps/web/src/view/Demo'
 import {DashboardProvider} from './hook/UseDashboard'
+import {EntrySummaryProvider} from './hook/UseEntrySummary'
 import {SessionProvider} from './hook/UseSession'
 
 const queryClient = new QueryClient({defaultOptions: {queries: {retry: false}}})
@@ -15,7 +16,9 @@ export function DashboardStory({children, ...props}: UIStoryProps) {
       <QueryClientProvider client={queryClient}>
         <DashboardProvider value={{client, config}}>
           <SessionProvider value={session}>
-            <UIStory {...props}>{children}</UIStory>
+            <UIStory {...props}>
+              <EntrySummaryProvider>{children}</EntrySummaryProvider>
+            </UIStory>
           </SessionProvider>
         </DashboardProvider>
       </QueryClientProvider>

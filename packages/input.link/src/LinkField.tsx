@@ -35,13 +35,13 @@ export namespace LinkType {
   }
 }
 
-// /** The type of links, this will configure the options of the link picker */
-// type?: LinkType | Array<LinkType>
-// /** Show only entries matching this condition */
-// condition?: Expr<boolean>
-
 /** Optional settings to configure a link field */
 export type LinkOptions<T, Q> = {
+  /** The type of links, this will configure the options of the link picker */
+  type?: LinkType | Array<LinkType>
+  /** Show only entries matching this condition */
+  condition?: Expr<boolean>
+
   /** Add extra fields to each link */
   fields?: TypeConfig<any, T>
   /** Width of the field in the dashboard UI (0-1) */

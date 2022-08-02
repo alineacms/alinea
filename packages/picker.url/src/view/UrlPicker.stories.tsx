@@ -7,6 +7,8 @@ export function Picker() {
   return (
     <UIStory>
       <UrlPickerForm
+        type="url"
+        selection={[]}
         options={{}}
         onConfirm={console.log}
         onCancel={() => setOpen(false)}

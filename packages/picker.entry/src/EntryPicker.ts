@@ -5,6 +5,7 @@ import {Expr} from '../../alinea/src/alinea'
 
 export interface EntryReference extends Reference {
   type: 'entry'
+  entry: string
 }
 
 export interface EntryPickerOptions {
