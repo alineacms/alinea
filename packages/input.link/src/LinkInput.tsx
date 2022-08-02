@@ -1,9 +1,10 @@
-import {Entry, Outcome, Reference, TypeConfig, View} from '@alinea/core'
-import {useReferencePicker, useSession, useWorkspace} from '@alinea/dashboard'
+import {Entry, Reference, TypeConfig} from '@alinea/core'
+import {useWorkspace} from '@alinea/dashboard'
 import {EntrySummaryRow} from '@alinea/dashboard/view/entry/EntrySummary'
 import {InputForm, InputLabel, InputState, useInput} from '@alinea/editor'
+import {Picker} from '@alinea/editor/Picker'
 import {Expr} from '@alinea/store'
-import {Card, Create, fromModule, IconButton, Typo} from '@alinea/ui'
+import {Card, Create, fromModule, IconButton, TextLabel} from '@alinea/ui'
 import {IcRoundClose} from '@alinea/ui/icons/IcRoundClose'
 import {IcRoundDragHandle} from '@alinea/ui/icons/IcRoundDragHandle'
 import {IcRoundLink} from '@alinea/ui/icons/IcRoundLink'
@@ -31,13 +32,12 @@ import {
 } from '@dnd-kit/sortable'
 import {CSS, FirstArgument} from '@dnd-kit/utilities'
 import {CSSProperties, HTMLAttributes, Ref, useMemo, useState} from 'react'
-import {useQuery} from 'react-query'
 import {LinkField, LinkType} from './LinkField'
 import css from './LinkInput.module.scss'
 
 const styles = fromModule(css)
 
-type LinkInputEntryRowProps = {
+interface LinkInputEntryRowProps {
   entry: Entry.Minimal
 }
 
@@ -48,24 +48,24 @@ function LinkInputEntryRow({entry}: LinkInputEntryRowProps) {
   return <View key={entry.id} {...entry} />
 }
 
-type LinkInputRowProps<T> = {
+interface LinkInputRowProps<T> extends HTMLAttributes<HTMLDivElement> {
+  picker: Picker
   fields: TypeConfig<T> | undefined
   state: InputState<T>
   reference: Reference
-  entryData: (id: string) => Entry.Minimal | undefined
   onRemove: () => void
   isDragging?: boolean
   isDragOverlay?: boolean
   isSortable?: boolean
   handle?: DraggableSyntheticListeners
   rootRef?: Ref<HTMLDivElement>
-} & HTMLAttributes<HTMLDivElement>
+}
 
 function LinkInputRow<T>({
+  picker,
   fields,
   state,
   reference,
-  entryData,
   onRemove,
   handle,
   rootRef,
@@ -74,7 +74,45 @@ function LinkInputRow<T>({
   isSortable,
   ...rest
 }: LinkInputRowProps<T>) {
-  if (Reference.isEntry(reference)) {
+  const RowView = picker.viewRow!
+  return (
+    <div
+      className={styles.row({
+        dragging: isDragging,
+        overlay: isDragOverlay
+      })}
+      ref={rootRef}
+      {...rest}
+    >
+      <Card.Header>
+        <Card.Options>
+          {isSortable ? (
+            <IconButton
+              icon={IcRoundDragHandle}
+              {...handle}
+              style={{cursor: handle ? 'grab' : 'grabbing'}}
+            />
+          ) : (
+            <div className={styles.row.staticHandle()}>
+              <IcRoundLink />
+            </div>
+          )}
+        </Card.Options>
+        <div style={{flexGrow: 1, minWidth: 0}}>
+          <RowView reference={reference} />
+        </div>
+        <Card.Options>
+          <IconButton icon={IcRoundClose} onClick={onRemove} />
+        </Card.Options>
+      </Card.Header>
+      {fields && (
+        <Card.Content>
+          <InputForm type={fields} state={state} />
+        </Card.Content>
+      )}
+    </div>
+  )
+  /*if (Reference.isEntry(reference)) {
     const entry = entryData(reference.entry)
     return (
       <div
@@ -114,7 +152,7 @@ function LinkInputRow<T>({
       </div>
     )
   }
-  return <Typo.Monospace>Todo: preview</Typo.Monospace>
+  return <Typo.Monospace>Todo: preview</Typo.Monospace>*/
 }
 
 function animateLayoutChanges(args: FirstArgument<AnimateLayoutChanges>) {
@@ -161,28 +199,29 @@ function restrictByType(
   return condition
 }
 
-export type LinkInputProps<T> = {
-  state: InputState<InputState.List<Reference & T>>
+export interface LinkInputProps<T> {
+  state: InputState<InputState.List<Reference>>
   field: LinkField<T, any>
 }
 
 export function LinkInput<T>({state, field}: LinkInputProps<T>) {
-  const {hub} = useSession()
-  const [value = [], {push, move, remove}] = useInput(state)
-  const {schema} = useWorkspace()
-  const picker = useReferencePicker()
+  const [value = [], list] = useInput(state)
   const {
     fields,
-    type,
     width,
     inline,
-    condition,
     multiple,
     optional,
     help,
     max = !multiple ? 1 : undefined
   } = field.options
-  const types = Array.isArray(type) ? type : type ? [type] : []
+  const pickers = field.options.pickers || []
+  const picker = useMemo(() => {
+    const res = new Map()
+    for (const p of pickers) res.set(p.type, p)
+    return res
+  }, [pickers])
+  /*const types = Array.isArray(type) ? type : type ? [type] : []
   const cursor = useMemo(() => {
     const entries = value
       .filter(Reference.isEntry)
@@ -210,9 +249,11 @@ export function LinkInput<T>({state, field}: LinkInputProps<T>) {
         })
     },
     {keepPreviousData: true}
-  )
+  )*/
 
-  function handleCreate() {
+  const [pickFrom, setPickFrom] = useState<Picker | undefined>()
+
+  /*function handleCreate() {
     const conditions = [condition, restrictByType(type)]
       .filter(Boolean)
       .reduce((a, b) => (a ? a.and(b!) : b), undefined)
@@ -237,6 +278,29 @@ export function LinkInput<T>({state, field}: LinkInputProps<T>) {
           remove(link.id)
         }
       })
+  }*/
+
+  function handleConfirm(links: Array<Reference>) {
+    if (!pickFrom || !links) return
+    const seen = new Set()
+    for (const link of links) {
+      if (link.type !== pickFrom.type) continue
+      seen.add(link.id)
+      if (pickFrom.handlesMultiple) {
+        const index = value.findIndex(v => v.id === link.id)
+        if (index > -1) list.replace(link.id, link)
+        else list.push(link)
+      } else {
+        list.push(link)
+      }
+    }
+    if (pickFrom.handlesMultiple)
+      for (const link of value) {
+        if (link.type !== pickFrom.type) continue
+        if (seen.has(link.id)) continue
+        list.remove(link.id)
+      }
+    setPickFrom(undefined)
   }
 
   const ids = value.map(row => row.id)
@@ -257,16 +321,26 @@ export function LinkInput<T>({state, field}: LinkInputProps<T>) {
   function handleDragEnd(event: DragEndEvent) {
     const {active, over} = event
     if (!over || active.id === over.id) return
-    move(ids.indexOf(active.id), ids.indexOf(over.id))
+    list.move(ids.indexOf(active.id), ids.indexOf(over.id))
     setDragging(null)
   }
 
-  const showLinkPicker = max ? value.length < max : true
-  const showExternal = types.includes('external')
+  /*const showLinkPicker = max ? value.length < max : true
+  const showExternal = types.includes('external')*/
+
+  const PickerView = pickFrom && pickFrom.view!
 
   return (
     <>
-      <picker.Modal />
+      {PickerView && (
+        <PickerView
+          type={pickFrom.type}
+          options={pickFrom.options}
+          selection={value.filter(ref => ref.type === pickFrom.type)}
+          onConfirm={handleConfirm}
+          onCancel={() => setPickFrom(undefined)}
+        />
+      )}
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
@@ -295,28 +369,28 @@ export function LinkInput<T>({state, field}: LinkInputProps<T>) {
                         key={reference.id}
                         fields={fields}
                         state={state.child(reference.id)}
-                        entryData={id => data?.get(id)}
+                        picker={picker.get(reference.type)}
                         reference={reference}
-                        onRemove={() => remove(reference.id)}
+                        onRemove={() => list.remove(reference.id)}
                         isSortable={max !== 1}
                       />
                     )
                   })}
 
-                  {showLinkPicker && (
-                    <div className={styles.create()}>
-                      <Create.Root>
-                        <Create.Button onClick={handleCreate}>
-                          Pick link
-                        </Create.Button>
-                        {showExternal && (
-                          <Create.Button onClick={handleCreate}>
-                            External url
+                  <div className={styles.create()}>
+                    <Create.Root>
+                      {pickers.map((picker, i) => {
+                        return (
+                          <Create.Button
+                            key={i}
+                            onClick={() => setPickFrom(picker)}
+                          >
+                            <TextLabel label={picker.label} />
                           </Create.Button>
-                        )}
-                      </Create.Root>
-                    </div>
-                  )}
+                        )
+                      })}
+                    </Create.Root>
+                  </div>
                 </Card.Root>
               </SortableContext>
 
@@ -330,9 +404,9 @@ export function LinkInput<T>({state, field}: LinkInputProps<T>) {
                   <LinkInputRow<T>
                     fields={fields}
                     state={state.child(dragging.id)}
-                    entryData={id => data?.get(id)}
+                    picker={picker.get(dragging.type)}
                     reference={dragging}
-                    onRemove={() => remove(dragging.id)}
+                    onRemove={() => list.remove(dragging.id)}
                     isDragOverlay
                     isSortable={max !== 1}
                   />

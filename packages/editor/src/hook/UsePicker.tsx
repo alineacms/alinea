@@ -9,7 +9,7 @@ export function usePicker(pickers: Record<string, Picker>) {
     function Modal() {
       if (!trigger.options) return null
       const picker = pickers[trigger.options.type]
-      const View = picker.view
+      const View = picker.view!
       return (
         <View
           options={trigger.options}

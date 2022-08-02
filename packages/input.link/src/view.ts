@@ -1,4 +1,5 @@
-import {Field, Label} from '@alinea/core'
+import {Entry, Field, Label, Media} from '@alinea/core'
+import {entryPicker} from '@alinea/picker.entry'
 import {createLink, LinkData, LinkField, LinkOptions} from './LinkField'
 import {LinkInput} from './LinkInput'
 export * from './LinkField'
@@ -27,7 +28,16 @@ export namespace link {
     label: Label,
     options: LinkOptions<T, Q> = {}
   ): LinkField<T, Q> {
-    return createLinkInput(label, {...options, type: 'entry', multiple: false})
+    return createLinkInput(label, {
+      ...options,
+      pickers: [
+        entryPicker({
+          title: 'Select a page',
+          max: 1
+        })
+      ],
+      multiple: false
+    })
   }
 
   export namespace entry {
@@ -35,15 +45,35 @@ export namespace link {
       label: Label,
       options: LinkOptions<T, Q> = {}
     ): LinkField<T, Q> {
-      return createLinkInput(label, {...options, type: 'entry', multiple: true})
+      return createLinkInput(label, {
+        ...options,
+        pickers: [entryPicker({title: 'Select pages'})],
+        multiple: true
+      })
     }
   }
+
+  const imageCondition = Entry.type
+    .is(Media.Type.File)
+    .and(Entry.get('extension').isIn(Media.imageExtensions))
 
   export function image<T = {}, Q = Array<LinkData.Image & T>>(
     label: Label,
     options: LinkOptions<T, Q> = {}
   ): LinkField<T, Q> {
-    return createLinkInput(label, {...options, type: 'image', multiple: false})
+    return createLinkInput(label, {
+      ...options,
+      pickers: [
+        entryPicker({
+          max: 1,
+          label: 'Image',
+          title: 'Select an image',
+          condition: imageCondition,
+          showUploader: true
+        })
+      ],
+      multiple: false
+    })
   }
 
   export namespace image {
@@ -51,7 +81,18 @@ export namespace link {
       label: Label,
       options: LinkOptions<T, Q> = {}
     ): LinkField<T, Q> {
-      return createLinkInput(label, {...options, type: 'image', multiple: true})
+      return createLinkInput(label, {
+        ...options,
+        pickers: [
+          entryPicker({
+            label: 'Images',
+            title: 'Select images',
+            condition: imageCondition,
+            showUploader: true
+          })
+        ],
+        multiple: true
+      })
     }
   }
 }

@@ -22,7 +22,7 @@ const linkForm = type('Link', {
   })
 })
 
-export function ExternalLinkPickerForm({options, onConfirm}: PickerProps) {
+export function UrlPickerForm({options, onConfirm}: PickerProps) {
   const [Form, formData] = useForm(
     {
       type: linkForm,
@@ -55,10 +55,10 @@ export function ExternalLinkPickerForm({options, onConfirm}: PickerProps) {
   )
 }
 
-export function ExternalLinkPicker(props: PickerProps) {
+export function UrlPickerModal(props: PickerProps) {
   return (
     <Modal open onClose={props.onCancel}>
-      <ExternalLinkPickerForm {...props} />
+      <UrlPickerForm {...props} />
     </Modal>
   )
 }

@@ -74,8 +74,11 @@ type PreviewTypeProps = {
 
 function PreviewType({type}: PreviewTypeProps) {
   const state = useRef<any>()
-  const [Form, data] = useForm({type, initialValue: state.current}, [type])
-  state.current = data
+  const [Form, formData] = useForm(
+    {type, initialValue: state.current, watch: true},
+    [type]
+  )
+  state.current = formData()
   return (
     <>
       <Typo.H1>

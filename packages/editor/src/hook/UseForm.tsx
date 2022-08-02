@@ -53,6 +53,7 @@ export class FormState<V extends Record<string, any>, M>
 export type UseFormOptions<T> = {
   type: TypeConfig<T, any>
   initialValue?: Partial<T>
+  watch?: boolean
 }
 
 export function useForm<T>(
@@ -83,6 +84,9 @@ export function useForm<T>(
       }
     }
   }, deps)
-  useEffect(watch, deps)
-  return [input, current()] as const
+
+  useEffect(() => {
+    if (options.watch) return watch()
+  }, deps)
+  return [input, current] as const
 }

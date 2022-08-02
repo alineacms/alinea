@@ -1,31 +1,41 @@
 import {Label, Reference} from '@alinea/core'
 import {ComponentType} from 'react'
 
-export interface PickerOptions {
-  type: string
-  selection: Array<Reference> | undefined
-}
-
 export interface PickerProps<T = {}> {
+  type: string
   options: T
+  selection: Array<Reference> | undefined
   onConfirm(value: Array<Reference> | undefined): void
   onCancel(): void
 }
 
-export interface Picker<T extends PickerOptions = PickerOptions> {
+export interface Picker<
+  Ref extends Reference = Reference,
+  Options extends {} = {}
+> {
   type: string
   label: Label
-  view?: ComponentType<PickerProps<T>>
+  handlesMultiple: boolean
+  options: Options
+  view?: ComponentType<PickerProps<Options>>
+  viewRow?: ComponentType<{reference: Ref}>
 }
 
 export namespace Picker {
   export function withView<
-    T extends PickerOptions,
-    C extends (...args: Array<any>) => Picker<T>
-  >(create: C, view: ComponentType<PickerProps<T>>): C {
+    R extends Reference,
+    T extends {},
+    C extends (...args: Array<any>) => Picker<R, T>
+  >(
+    create: C,
+    views: {
+      view: ComponentType<PickerProps<T>>
+      viewRow: ComponentType<{reference: R}>
+    }
+  ): C {
     const factory = (...args: Array<any>) => {
       const field: any = create(...args)
-      return {...field, view}
+      return {...field, ...views}
     }
     return factory as any
   }

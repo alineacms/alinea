@@ -1,12 +1,12 @@
 import {UIStory} from '@alinea/ui/UIStory'
 import {useState} from 'react'
-import {ExternalLinkPickerForm} from './ExternalLinkPicker'
+import {UrlPickerForm} from './UrlPickerModal'
 
 export function Picker() {
   const [open, setOpen] = useState(true)
   return (
     <UIStory>
-      <ExternalLinkPickerForm
+      <UrlPickerForm
         options={{}}
         onConfirm={console.log}
         onCancel={() => setOpen(false)}

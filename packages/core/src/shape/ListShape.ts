@@ -19,6 +19,7 @@ function sort(a: ListRow, b: ListRow) {
 }
 
 export type ListMutator<T> = {
+  replace: (id: string, row: T) => void
   push: (row: Omit<T, 'id' | 'index'>, insertAt?: number) => void
   remove: (id: string) => void
   move: (oldIndex: number, newIndex: number) => void
@@ -103,7 +104,14 @@ export class ListShape<T>
     }
   }
   mutator(parent: Y.Map<any>, key: string) {
-    return {
+    const res = {
+      replace: (id: string, row: ListRow & T) => {
+        const record = parent.get(key)
+        const rows: Array<ListRow> = this.fromY(record) as any
+        const index = rows.findIndex(r => r.id === id)
+        res.remove(id)
+        res.push(row, index)
+      },
       push: (row: Omit<ListRow & T, 'id' | 'index'>, insertAt?: number) => {
         const type = row.type
         const shape = this.values[type]
@@ -140,5 +148,6 @@ export class ListShape<T>
         row.set('index', index)
       }
     }
+    return res
   }
 }

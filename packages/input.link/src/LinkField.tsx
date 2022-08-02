@@ -10,6 +10,8 @@ import {
 } from '@alinea/core'
 import {RecordShape} from '@alinea/core/shape/RecordShape'
 import type {Picker} from '@alinea/editor/Picker'
+import {entryPicker} from '@alinea/picker.entry'
+import {urlPicker} from '@alinea/picker.url'
 import {Cursor, Expr, Functions, SelectionInput} from '@alinea/store'
 
 export type LinkType = 'entry' | 'image' | 'file' | 'external'
@@ -33,6 +35,11 @@ export namespace LinkType {
   }
 }
 
+// /** The type of links, this will configure the options of the link picker */
+// type?: LinkType | Array<LinkType>
+// /** Show only entries matching this condition */
+// condition?: Expr<boolean>
+
 /** Optional settings to configure a link field */
 export type LinkOptions<T, Q> = {
   /** Add extra fields to each link */
@@ -45,16 +52,12 @@ export type LinkOptions<T, Q> = {
   optional?: boolean
   /** Display a minimal version */
   inline?: boolean
-  /** A default value */
-  initialValue?: Array<Reference & T>
-  /** The type of links, this will configure the options of the link picker */
-  type?: LinkType | Array<LinkType>
-  /** Show only entries matching this condition */
-  condition?: Expr<boolean>
   /** Allow multiple links */
   multiple?: boolean
   /** Maximum amount of links that can be selected */
   max?: number
+  /** A default value */
+  initialValue?: Array<Reference & T>
   /** Modify value returned when queried through `Pages` */
   transform?: <P>(
     field: Expr<Array<Reference & T>>,
@@ -62,7 +65,7 @@ export type LinkOptions<T, Q> = {
   ) => Expr<Q> | undefined
   /** Hide this link field */
   hidden?: boolean
-  pickers?: Array<Picker>
+  pickers?: Array<Picker<any, any>>
 }
 
 /** Internal representation of a link field */
@@ -74,8 +77,7 @@ export interface LinkField<T, Q> extends Field.List<Reference & T, Q> {
 export type LinkData = LinkData.Entry | LinkData.Url
 
 export namespace LinkData {
-  export type Entry = {
-    id: string
+  export interface Entry extends Reference {
     type: 'entry'
     entry: string
     entryType: string
@@ -83,7 +85,7 @@ export namespace LinkData {
     url: string
     title: Label
   }
-  export type Image = Entry & {
+  export interface Image extends Entry {
     src: string
     extension: string
     size: number
@@ -93,8 +95,19 @@ export namespace LinkData {
     averageColor: string
     blurHash: string
   }
-  export type Url = {id: string; type: 'url'; url: string}
+  export interface Url extends Reference {
+    type: 'url'
+    url: string
+    description: string
+    target: string
+  }
+  export interface File extends Reference {}
 }
+
+const defaultPickers = [
+  entryPicker({max: 1}) as unknown,
+  urlPicker() as unknown
+] as Array<Picker>
 
 /** Create a link field configuration */
 export function createLink<T, Q>(
@@ -116,7 +129,10 @@ export function createLink<T, Q>(
       options.initialValue
     ),
     label,
-    options,
+    options: {
+      ...options,
+      pickers: options.pickers || defaultPickers
+    },
     hidden: options.hidden,
     initialValue: options.initialValue,
     transform(field, pages): Expr<Q> {
