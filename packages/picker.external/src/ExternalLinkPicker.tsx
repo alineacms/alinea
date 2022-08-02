@@ -1,6 +1,7 @@
 import {createId, type} from '@alinea/core'
 import {Reference} from '@alinea/core/Reference'
 import {useForm} from '@alinea/editor/hook/UseForm'
+import {PickerProps} from '@alinea/editor/Picker'
 import {check} from '@alinea/input.check'
 import {text} from '@alinea/input.text'
 import {Button, HStack, Stack} from '@alinea/ui'
@@ -21,12 +22,7 @@ const linkForm = type('Link', {
   })
 })
 
-export type ExternalLinkPickerOptions = {}
-
-export function ExternalLinkPickerForm({
-  options,
-  onConfirm
-}: ExternalLinkPickerProps) {
+export function ExternalLinkPickerForm({options, onConfirm}: PickerProps) {
   const [Form, formData] = useForm(
     {
       type: linkForm,
@@ -59,13 +55,7 @@ export function ExternalLinkPickerForm({
   )
 }
 
-export type ExternalLinkPickerProps = {
-  options: ExternalLinkPickerOptions
-  onConfirm: (value: Array<Reference> | undefined) => void
-  onCancel: () => void
-}
-
-export function ExternalLinkPicker(props: ExternalLinkPickerProps) {
+export function ExternalLinkPicker(props: PickerProps) {
   return (
     <Modal open onClose={props.onCancel}>
       <ExternalLinkPickerForm {...props} />

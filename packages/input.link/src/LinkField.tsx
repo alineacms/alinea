@@ -9,6 +9,7 @@ import {
   TypeConfig
 } from '@alinea/core'
 import {RecordShape} from '@alinea/core/shape/RecordShape'
+import type {Picker} from '@alinea/editor/Picker'
 import {Cursor, Expr, Functions, SelectionInput} from '@alinea/store'
 
 export type LinkType = 'entry' | 'image' | 'file' | 'external'
@@ -61,6 +62,7 @@ export type LinkOptions<T, Q> = {
   ) => Expr<Q> | undefined
   /** Hide this link field */
   hidden?: boolean
+  pickers?: Array<Picker>
 }
 
 /** Internal representation of a link field */

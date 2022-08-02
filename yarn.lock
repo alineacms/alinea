@@ -428,6 +428,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@alinea/picker.external@workspace:packages/picker.external":
+  version: 0.0.0-use.local
+  resolution: "@alinea/picker.external@workspace:packages/picker.external"
+  dependencies:
+    "@alinea/core": 0.0.0
+    "@alinea/editor": 0.0.0
+    "@alinea/ui": 0.0.0
+  peerDependencies:
+    react: "*"
+  languageName: unknown
+  linkType: soft
+
 "@alinea/preview@0.0.0, @alinea/preview@workspace:packages/preview":
   version: 0.0.0-use.local
   resolution: "@alinea/preview@workspace:packages/preview"
