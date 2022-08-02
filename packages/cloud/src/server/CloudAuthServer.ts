@@ -113,7 +113,6 @@ export class CloudAuthServer implements Auth.Server {
       // If the user followed through to the cloud login page it should
       // redirect us here with a token
       matcher.get(Hub.routes.base + '/auth').map(async ({request, url}) => {
-        if (!apiKey) throw createError(500, 'No api key set')
         const token: string | null = url.searchParams.get('token')
         if (!token) throw createError(400, 'Token required')
         const user = await verify<User>(token, await this.key)
