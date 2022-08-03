@@ -1,7 +1,6 @@
 import {Label} from '@alinea/core/Label'
 import {InputState} from '@alinea/editor/InputState'
-import {select} from '@alinea/input.select'
-import {SelectInput} from '@alinea/input.select/view'
+import {select, SelectInput} from '@alinea/input.select'
 import {
   Avatar,
   DropdownMenu,
