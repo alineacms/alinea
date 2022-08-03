@@ -28,7 +28,7 @@ type Move = {
 }
 
 class Drafts {
-  saveDelay = 1000
+  saveDelay = 500
   saveTimeout: ReturnType<typeof setTimeout> | null = null
   status = observable<DraftsStatus>(DraftsStatus.Synced)
   stateVectors = new WeakMap<Y.Doc, Uint8Array>()
