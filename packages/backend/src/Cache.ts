@@ -124,8 +124,12 @@ export namespace Cache {
     from: Data.Source,
     log = false
   ) {
-    const startTime = process.hrtime.bigint()
-    if (log) process.stdout.write('> Start indexing...\r')
+    const isServer = typeof process !== 'undefined'
+    const logger = isServer
+      ? (msg: string) => process.stdout.write(`${msg}\r`)
+      : console.log
+    const startTime = isServer && process.hrtime.bigint()
+    if (log) logger('> Start indexing...')
     store.delete(Entry)
     store.createFts5Table(Search, 'Search', () => {
       return {title: Search.title}
@@ -144,13 +148,13 @@ export namespace Cache {
     for await (const entry of from.entries()) {
       total++
       if (log && total % 1000 === 0) {
-        process.stdout.write(`> Scanned ${total} entries\r`)
+        logger(`> Scanned ${total} entries`)
         commitBatch()
       }
       batch.push(entry)
     }
     commitBatch()
-    if (log) process.stdout.write(`> Indexing...\r`)
+    if (log) logger(`> Indexing...`)
     store.createIndex(Entry, 'index', [Entry.index])
     store.createIndex(Entry, 'i18nId', [Entry.i18n.id])
     store.createIndex(Entry, 'parent', [Entry.parent])
@@ -162,7 +166,7 @@ export namespace Cache {
     store.createIndex(Entry, 'root', [Entry.root])
     store.createIndex(Entry, 'type', [Entry.type])
     store.createIndex(Entry, 'url', [Entry.url])
-    if (log) process.stdout.write(`> Validating order...\r`)
+    if (log) logger(`> Validating order...`)
     for (const [workspace, {schema}] of Object.entries(config.workspaces)) {
       for (const [key, type] of schema) {
         const {index} = type.options
@@ -176,13 +180,15 @@ export namespace Cache {
       }
     }
     validateOrder(store)
-    const diff = process.hrtime.bigint() - startTime
-    if (log)
+    if (log && isServer) {
+      const diff =
+        typeof startTime === 'bigint' && process.hrtime.bigint() - startTime
       console.log(
         `> Indexed ${total} entries in ${prettyMilliseconds(
-          convertHrtime(diff).milliseconds
+          convertHrtime(diff as bigint).milliseconds
         )}`
       )
+    }
   }
 
   export function computeEntry(store: Store, config: Config, entry: Entry) {

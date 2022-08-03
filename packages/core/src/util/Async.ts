@@ -4,3 +4,9 @@ export async function accumulate<T>(gen: AsyncGenerator<T>): Promise<Array<T>> {
   for await (const item of gen) acc.push(item)
   return acc
 }
+
+export async function* toGenerator<T>(
+  iterable: Iterable<T>
+): AsyncGenerator<T> {
+  for (const item of iterable) yield item
+}
