@@ -32,11 +32,17 @@ export function BrowserPreview({url, prettyUrl, reload}: BrowserPreviewProps) {
   const status = useObservable(drafts.status)
   const [loading, setLoading] = useState(true)
   const hasPreviewListener = useRef(false)
+  const origin = new URL(url, window.location.href)
+  const target = `${origin.protocol}//${origin.host}`
+
   useEffect(() => {
     setLoading(true)
 
     function handleMessage(event: MessageEvent) {
-      if (event.data === PreviewAction.Pong) hasPreviewListener.current = true
+      if (event.data === PreviewAction.Pong) {
+        console.log('[Alinea preview window detected]')
+        hasPreviewListener.current = true
+      }
     }
 
     addEventListener('message', handleMessage)
@@ -56,7 +62,7 @@ export function BrowserPreview({url, prettyUrl, reload}: BrowserPreviewProps) {
   }, [loading])
 
   function post(action: PreviewAction) {
-    ref.current?.contentWindow?.postMessage(action, url)
+    ref.current?.contentWindow?.postMessage(action, target)
   }
 
   function handlePrevious() {
@@ -145,7 +151,7 @@ export function BrowserPreview({url, prettyUrl, reload}: BrowserPreviewProps) {
               try {
                 const contentWindow = ref.current?.contentWindow
                 if (contentWindow)
-                  contentWindow.postMessage(PreviewAction.Ping, url)
+                  contentWindow.postMessage(PreviewAction.Ping, target)
               } catch (e) {
                 hasPreviewListener.current = false
               }
