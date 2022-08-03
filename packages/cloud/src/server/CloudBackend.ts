@@ -101,9 +101,12 @@ export class CloudApi implements CloudConnection {
       ? '?' +
         new URLSearchParams({stateVector: base64url.stringify(stateVector)})
       : ''
+    // We use the api key to fetch a draft here which was requested during
+    // previewing. The preview token has been validated in Server.loadPages.
+    const token = ctx.preview ? this.apiKey : ctx.token
     return fetch(
       cloudConfig.draft + `/${id}` + params,
-      withAuth({method: 'GET'}, ctx)
+      withAuth({method: 'GET'}, {token})
     ).then(res => {
       if (res.status === 404) return undefined
       return failOnHttpError(res)
@@ -138,9 +141,12 @@ export class CloudApi implements CloudConnection {
       .then(() => void 0)
   }
   async *updates({}, ctx: Hub.Context): AsyncGenerator<Drafts.Update> {
+    // We use the api key to fetch a draft here which was requested during
+    // previewing. The preview token has been validated in Server.loadPages.
+    const token = ctx.preview ? this.apiKey : ctx.token
     const updates = await fetch(
       cloudConfig.draft,
-      asJson(withAuth({method: 'GET'}, ctx))
+      asJson(withAuth({method: 'GET'}, {token}))
     )
       .then(failOnHttpError)
       .then<{
