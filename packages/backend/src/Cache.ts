@@ -13,8 +13,6 @@ import {
 } from '@alinea/core/util/FractionalIndexing'
 import {Expr, Store} from '@alinea/store'
 import {SqliteStore} from '@alinea/store/sqlite/SqliteStore'
-import convertHrtime from 'convert-hrtime'
-import prettyMilliseconds from 'pretty-ms'
 import * as Y from 'yjs'
 import {Data} from './Data'
 import {appendPath} from './util/EntryPaths'
@@ -124,11 +122,7 @@ export namespace Cache {
     from: Data.Source,
     log = false
   ) {
-    const isServer = typeof process !== 'undefined'
-    const logger = isServer
-      ? (msg: string) => process.stdout.write(`${msg}\r`)
-      : console.log
-    const startTime = isServer && process.hrtime.bigint()
+    const logger = console.log
     if (log) logger('> Start indexing...')
     store.delete(Entry)
     store.createFts5Table(Search, 'Search', () => {
@@ -180,14 +174,8 @@ export namespace Cache {
       }
     }
     validateOrder(store)
-    if (log && isServer) {
-      const diff =
-        typeof startTime === 'bigint' && process.hrtime.bigint() - startTime
-      console.log(
-        `> Indexed ${total} entries in ${prettyMilliseconds(
-          convertHrtime(diff as bigint).milliseconds
-        )}`
-      )
+    if (log) {
+      console.log(`> Indexed ${total} entries`)
     }
   }
 
