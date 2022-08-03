@@ -1,6 +1,7 @@
 import {outcome, TypeConfig} from '@alinea/core'
 import {base64url} from '@alinea/core/util/Encoding'
 import {DashboardProvider, SessionProvider, Toolbar} from '@alinea/dashboard'
+import {createDemo} from '@alinea/dashboard/demo/DemoData'
 import {useForm} from '@alinea/editor/hook/UseForm'
 import {QueryClient, QueryClientProvider} from '@alinea/shared/react-query'
 import {
@@ -33,7 +34,6 @@ import declarations from 'raw-loader!../../../../dist/alinea.d.ts'
 import * as React from 'react'
 import {useEffect, useMemo, useRef, useState} from 'react'
 import {useClipboard} from 'use-clipboard-copy'
-import {createDemo} from './Demo'
 import {Logo} from './layout/branding/Logo'
 import css from './Playground.module.scss'
 
