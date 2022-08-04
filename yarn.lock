@@ -273,6 +273,18 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@alinea/input.json@0.0.0, @alinea/input.json@workspace:packages/input.json":
+  version: 0.0.0-use.local
+  resolution: "@alinea/input.json@workspace:packages/input.json"
+  dependencies:
+    "@alinea/core": 0.0.0
+    "@alinea/editor": 0.0.0
+    "@alinea/ui": 0.0.0
+  peerDependencies:
+    react: "*"
+  languageName: unknown
+  linkType: soft
+
 "@alinea/input.link@0.0.0, @alinea/input.link@workspace:packages/input.link":
   version: 0.0.0-use.local
   resolution: "@alinea/input.link@workspace:packages/input.link"
@@ -3888,6 +3900,7 @@ __metadata:
     "@alinea/input.check": 0.0.0
     "@alinea/input.code": 0.0.0
     "@alinea/input.date": 0.0.0
+    "@alinea/input.json": 0.0.0
     "@alinea/input.link": 0.0.0
     "@alinea/input.list": 0.0.0
     "@alinea/input.number": 0.0.0
