@@ -1,6 +1,12 @@
 # Changelog
 
-## [Unreleased]
+## [0.1.19]
+
+- Added a new field type for raw json data
+
+## [0.1.18]
+
+- Minor fix in the handshake procedure between Alinea and Alinea cloud
 
 ## [0.1.17]
 
