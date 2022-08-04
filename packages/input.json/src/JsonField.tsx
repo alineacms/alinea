@@ -24,7 +24,7 @@ export type JsonOptions = {
 }
 
 /** Internal representation of a text field */
-export interface JsonField extends Field.Scalar<string> {
+export interface JsonField extends Field.Scalar<any> {
   label: Label
   options: JsonOptions
 }
