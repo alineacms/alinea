@@ -77,6 +77,12 @@ export interface LinkField<T, Q> extends Field.List<Reference & T, Q> {
 export type LinkData = LinkData.Entry | LinkData.Url
 
 export namespace LinkData {
+  export interface Url extends Reference {
+    type: 'url'
+    url: string
+    description: string
+    target: string
+  }
   export interface Entry extends Reference {
     type: 'entry'
     entry: string
@@ -85,23 +91,18 @@ export namespace LinkData {
     url: string
     title: Label
   }
-  export interface Image extends Entry {
+  export interface File extends Reference {
     src: string
     extension: string
     size: number
+  }
+  export interface Image extends File {
     hash: string
     width: number
     height: number
     averageColor: string
     blurHash: string
   }
-  export interface Url extends Reference {
-    type: 'url'
-    url: string
-    description: string
-    target: string
-  }
-  export interface File extends Reference {}
 }
 
 const defaultPickers = [
@@ -149,6 +150,17 @@ export function createLink<T, Q>(
                 url: entry.url,
                 title: entry.title
               })
+              .with(
+                Functions.iif(
+                  LinkType.conditionOf(entry, 'file'),
+                  {
+                    src: entry.location,
+                    extension: entry.extension,
+                    size: entry.size
+                  },
+                  {}
+                )
+              )
               .with(
                 Functions.iif(
                   LinkType.conditionOf(entry, 'image'),
