@@ -10,7 +10,7 @@ export interface EntryReference extends Reference {
   entry: string
 }
 
-export interface EntryPickerOptions<T> {
+export interface EntryPickerOptions<T = {}> {
   defaultView?: 'row' | 'thumb'
   condition?: Expr<boolean>
   max?: number
