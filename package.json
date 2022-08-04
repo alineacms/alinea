@@ -9,7 +9,7 @@
     "dev:next": "yarn workspace @alinea/web dev",
     "dev:check": "tsc -w",
     "dev:stories": "ladle serve --stories \"packages/**/*.stories.tsx\"",
-    "build:stories": "ladle build --base /stories --stories  \"packages/**/*.stories.tsx\" --outDir apps/web/public/stories",
+    "build:stories": "ladle --stories  \"packages/**/*.stories.tsx\" --outDir apps/web/public/stories",
     "trace": "tsc --noEmit --incremental false --emitDeclarationOnly false --diagnostics --generateTrace private/trace && speedscope private/trace/trace.json",
     "build": "esbx build",
     "test": "esbx test",
