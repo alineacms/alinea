@@ -10,6 +10,12 @@ export interface EntryReference extends Reference {
   entry: string
 }
 
+export namespace EntryReference {
+  export function isEntry(value: any): value is EntryReference {
+    return value && value.type === 'entry'
+  }
+}
+
 export interface EntryPickerOptions<T = {}> {
   defaultView?: 'row' | 'thumb'
   condition?: Expr<boolean>

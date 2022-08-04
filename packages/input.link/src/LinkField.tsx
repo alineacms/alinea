@@ -9,8 +9,6 @@ import {
   TypeConfig
 } from '@alinea/core'
 import type {Picker} from '@alinea/editor/Picker'
-import {entryPicker} from '@alinea/picker.entry'
-import {urlPicker} from '@alinea/picker.url'
 import {Cursor, Expr, Functions, SelectionInput} from '@alinea/store'
 
 export type LinkType = 'entry' | 'image' | 'file' | 'external'
@@ -104,17 +102,12 @@ export namespace LinkData {
   }
 }
 
-const defaultPickers = [
-  entryPicker({max: 1}) as unknown,
-  urlPicker({}) as unknown
-] as Array<Picker>
-
 /** Create a link field configuration */
 export function createLink<T, Q>(
   label: Label,
   options: LinkOptions<T, Q> = {}
 ): LinkField<T, Q> {
-  const pickers = options.pickers || defaultPickers
+  const pickers = options.pickers || []
   const blocks = Object.fromEntries(
     pickers.map(picker => [picker.type, picker.shape])
   )

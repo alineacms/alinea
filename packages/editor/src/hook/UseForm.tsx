@@ -1,48 +1,56 @@
 import {ROOT_KEY} from '@alinea/core/Doc'
-import {RecordShape} from '@alinea/core/shape/RecordShape'
+import {RecordMutator, RecordShape} from '@alinea/core/shape/RecordShape'
 import {TypeConfig} from '@alinea/core/Type'
-import {useForceUpdate} from '@alinea/ui'
-import {ComponentType, memo, useEffect, useMemo} from 'react'
+import {Observable, observable} from '@alinea/ui'
+import {useEffect, useMemo} from 'react'
 import * as Y from 'yjs'
 import {InputState} from '../InputState'
-import {InputForm} from '../view/InputForm'
 import {FieldState} from './UseField'
+
+interface FormStateOptions<V, M> {
+  shape: RecordShape<V>
+  root: Y.Map<any>
+  key: string
+  attach?: (v: V) => void
+}
 
 export class FormState<V extends Record<string, any>, M>
   implements InputState<readonly [V, M]>
 {
-  constructor(
-    private shape: RecordShape<V>,
-    private root: Y.Map<any>,
-    private key: string
-  ) {}
+  constructor(private options: FormStateOptions<V, M>) {}
 
   parent() {
     return undefined
   }
 
   child(field: string): InputState<any> {
-    const current = this.root.get(this.key)
-    return new FieldState(
-      this.shape.typeOfChild(current, field),
-      current,
-      field,
-      this
-    )
+    // Todo: cache these
+    const {root, shape, key} = this.options
+    const current = root.get(key)
+    return new FieldState({
+      shape: shape.typeOfChild(current, field),
+      root: current,
+      key: field,
+      parent: this
+    })
   }
 
   use(): readonly [V, M] {
+    const {root, shape, key, attach} = this.options
     const {current, mutator, observe} = useMemo(() => {
-      const current = (): V => this.shape.fromY(this.root.get(this.key))
-      const mutator = this.shape.mutator(this.root, this.key) as any
+      const current = (): V => shape.fromY(root.get(key))
+      const mutator = shape.mutator(root, key) as any
       const observe = (fun: () => void) => {
-        const record = this.root.get(this.key)
+        const record = root.get(key)
         record.observeDeep(fun)
         return () => record.unobserveDeep(fun)
       }
       return {current, mutator, observe}
     }, [])
-    const redraw = useForceUpdate()
+    const redraw = () => {
+      if (attach) attach(current())
+      // useForceUpdate()
+    }
     useEffect(() => {
       return observe(redraw)
     }, [observe, redraw])
@@ -50,43 +58,63 @@ export class FormState<V extends Record<string, any>, M>
   }
 }
 
-export type UseFormOptions<T> = {
-  type: TypeConfig<T, any>
-  initialValue?: Partial<T>
-  watch?: boolean
+export interface ObservableForm<T extends Record<string, any>>
+  extends Observable.Writable<T> {
+  type: TypeConfig<any, T>
+  state: FormState<T, RecordMutator<T>>
+  field<K extends keyof T>(name: K): Observable<T[K]>
 }
 
-export function useForm<T>(
-  options: UseFormOptions<T>,
-  deps: ReadonlyArray<unknown> = []
-): readonly [ComponentType, () => T] {
+export type FormOptions<T> = {
+  type: TypeConfig<T, any>
+  initialValue?: Partial<T>
+}
+
+function createFormInput<T extends Record<string, any>>(
+  options: FormOptions<T>
+): ObservableForm<T> {
   const {type, initialValue = {}} = options
   const initial: Record<string, any> = initialValue
-  const redraw = useForceUpdate()
-  const {input, current, watch} = useMemo(() => {
-    const doc = new Y.Doc()
-    const root = doc.getMap(ROOT_KEY)
-    for (const [key, field] of type) {
-      root.set(key, field.shape.toY(initial[key] || field.initialValue!))
+  const doc = new Y.Doc()
+  const root = doc.getMap(ROOT_KEY)
+  for (const [key, field] of type) {
+    if (!initial[key]) initial[key] = field.shape.create()
+    root.set(key, field.shape.toY(initial[key]!))
+  }
+  function setValue(data: T) {
+    for (const [key, value] of Object.entries(data)) {
+      const field = type.field(key)
+      root.set(key, field.shape.toY(value))
     }
-    const state = new FormState(type.shape, doc as any, ROOT_KEY)
-    function input() {
-      return <InputForm state={state} type={type} />
-    }
-    return {
-      input: memo(input),
-      current() {
-        return type.shape.fromY(root)
-      },
-      watch() {
-        root.observeDeep(redraw)
-        return () => root.unobserveDeep(redraw)
-      }
-    }
-  }, deps)
+  }
+  const input = observable<T>(initial as T)
+  const state = new FormState({
+    shape: type.shape,
+    root: doc as any,
+    key: ROOT_KEY,
+    attach: input
+  })
+  const fields = new Map<string, any>()
+  function field(name: string) {
+    if (fields.has(name)) return fields.get(name)
+    const fieldInput = input.select(data => {
+      return data[name]
+    })
+    fields.set(name, fieldInput)
+    return fieldInput
+  }
+  return Object.assign(
+    function () {
+      if (arguments.length === 1) return setValue(arguments[0])
+      return input()
+    },
+    {type, state, field}
+  ) as ObservableForm<T>
+}
 
-  useEffect(() => {
-    if (options.watch) return watch()
-  }, deps)
-  return [input, current] as const
+export function useForm<T extends Record<string, any>>(
+  options: FormOptions<T>,
+  deps: ReadonlyArray<unknown> = []
+): ObservableForm<T> {
+  return useMemo(() => createFormInput(options), deps)
 }

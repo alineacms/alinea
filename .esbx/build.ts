@@ -69,6 +69,7 @@ function task(
             if (entry.endsWith('.d.ts')) return false
             if (entry.endsWith('.server.ts')) return false
             if (entry.endsWith('.client.tsx')) return false
+            if (entry.endsWith('.stories.tsx')) return false
             return true
           })
           .map(entry => path.join(cwd, entry))

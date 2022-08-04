@@ -1,1 +1,1 @@
-export {createUrlPicker as urlPicker} from './UrlPicker'
+export {createUrlPicker as urlPicker, UrlReference} from './UrlPicker'

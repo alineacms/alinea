@@ -18,8 +18,8 @@ export enum PublishStatus {
 }
 
 export class EntryDraft implements Entry {
-  public entry: Observable<Entry>
-  public status: Observable<EntryStatus>
+  public entry: Observable.Writable<Entry>
+  public status: Observable.Writable<EntryStatus>
   private __root: Y.Map<any>
 
   constructor(

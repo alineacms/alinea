@@ -11,7 +11,7 @@ const imageCondition = Entry.type
   .is(Media.Type.File)
   .and(Entry.get('extension').isIn(Media.imageExtensions))
 
-function imagePicker(multiple: boolean) {
+export function imagePicker(multiple: boolean) {
   return entryPicker({
     max: multiple ? undefined : 1,
     label: 'Image',
@@ -26,7 +26,7 @@ const fileCondition = Entry.type
   .is(Media.Type.File)
   .and(Entry.get('extension').isNotIn(Media.imageExtensions))
 
-function filePicker(multiple: boolean) {
+export function filePicker(multiple: boolean) {
   return entryPicker({
     max: multiple ? undefined : 1,
     label: 'File',
@@ -41,8 +41,9 @@ export function linkConstructors(createLink: CreateLink) {
   /** Create a link field configuration */
   function link<T = {}, Q = LinkData & T>(
     label: Label,
-    options: LinkOptions<T, Q>
+    options: LinkOptions<T, Q> = {}
   ): LinkField<T, Q> {
+    const pickerOptions = {fields: options.fields, condition: options.condition}
     const types = Array.isArray(options.type)
       ? options.type
       : options.type
@@ -50,17 +51,21 @@ export function linkConstructors(createLink: CreateLink) {
       : []
     const pickers =
       types.length === 0
-        ? [entryPicker({...options, max: 1}), urlPicker(options)]
+        ? [
+            entryPicker({...pickerOptions, title: 'Select a page', max: 1}),
+            urlPicker(pickerOptions),
+            filePicker(false)
+          ]
         : types.map(type => {
             switch (type) {
               case 'entry':
                 return entryPicker({
                   title: 'Select a page',
                   max: 1,
-                  fields: options.fields
+                  ...pickerOptions
                 })
               case 'external':
-                return urlPicker(options)
+                return urlPicker(pickerOptions)
               case 'image':
                 return imagePicker(false)
               case 'file':
@@ -74,6 +79,7 @@ export function linkConstructors(createLink: CreateLink) {
     label: Label,
     options: LinkOptions<T, Q> = {}
   ): LinkField<T, Q> {
+    const pickerOptions = {fields: options.fields, condition: options.condition}
     const types = Array.isArray(options.type)
       ? options.type
       : options.type
@@ -81,13 +87,13 @@ export function linkConstructors(createLink: CreateLink) {
       : []
     const pickers =
       types.length === 0
-        ? [entryPicker(options), urlPicker(options)]
+        ? [entryPicker(pickerOptions), urlPicker(pickerOptions)]
         : types.map(type => {
             switch (type) {
               case 'entry':
-                return entryPicker({...options, title: 'Select pages'})
+                return entryPicker({...pickerOptions, title: 'Select pages'})
               case 'external':
-                return urlPicker(options)
+                return urlPicker(pickerOptions)
               case 'image':
                 return imagePicker(true)
               case 'file':

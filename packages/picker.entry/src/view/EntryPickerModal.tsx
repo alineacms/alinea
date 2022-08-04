@@ -8,6 +8,7 @@ import {useWorkspace} from '@alinea/dashboard/hook/UseWorkspace'
 import {Explorer} from '@alinea/dashboard/view/explorer/Explorer'
 import {FileUploader} from '@alinea/dashboard/view/media/FileUploader'
 import {PickerProps} from '@alinea/editor/Picker'
+import {EntryReference} from '@alinea/picker.entry'
 import {
   Button,
   fromModule,
@@ -88,7 +89,7 @@ export function EntryPickerModal({
     (entry: Entry.Minimal) => {
       setSelected(selected => {
         const index = selected.findIndex(
-          v => Reference.isEntry(v) && v.entry === entry.id
+          v => EntryReference.isEntry(v) && v.entry === entry.id
         )
         let res = selected.slice()
         if (index === -1) {
@@ -97,7 +98,7 @@ export function EntryPickerModal({
               id: createId(),
               type,
               entry: entry.id
-            } as Reference.Entry)
+            } as EntryReference)
             .slice(-(max || 0))
         } else {
           res.splice(index, 1)
@@ -175,9 +176,12 @@ export function EntryPickerModal({
         </HStack>
         <HStack as="footer">
           <Stack.Right>
-            <Button size="large" onClick={handleConfirm}>
-              Confirm
-            </Button>
+            <HStack gap={16}>
+              <Button outline type="button" onClick={onCancel}>
+                Cancel
+              </Button>
+              <Button onClick={handleConfirm}>Confirm</Button>
+            </HStack>
           </Stack.Right>
         </HStack>
       </Suspense>

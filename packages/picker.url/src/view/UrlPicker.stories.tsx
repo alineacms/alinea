@@ -1,8 +1,8 @@
-import {UIStory} from '@alinea/ui/UIStory'
+import {uiDecorator, UIStory} from '@alinea/ui/UIStory'
 import {useState} from 'react'
 import {UrlPickerForm} from './UrlPickerModal'
 
-export function Picker() {
+export function PickerForm() {
   const [open, setOpen] = useState(true)
   return (
     <UIStory>
@@ -15,4 +15,9 @@ export function Picker() {
       />
     </UIStory>
   )
+}
+
+export default {
+  title: 'Pickers / Url',
+  decorators: uiDecorator()
 }

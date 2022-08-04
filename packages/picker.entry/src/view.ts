@@ -7,3 +7,5 @@ export const entryPicker = Picker.withView(createEntryPicker, {
   view: EntryPickerModal,
   viewRow: EntryPickerRow
 })
+
+export {EntryReference} from './EntryPicker'

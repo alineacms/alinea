@@ -1,32 +1,47 @@
-import {type, TypeConfig} from '@alinea/core'
+import {Reference, type} from '@alinea/core'
+import {InputForm, useField} from '@alinea/editor'
 import {useForm} from '@alinea/editor/hook/UseForm'
+import {InputField} from '@alinea/editor/view/InputField'
 import {check} from '@alinea/input.check'
-import {link} from '@alinea/input.link'
+import {link as createLink} from '@alinea/input.link'
 import {text} from '@alinea/input.text'
-import {Button, fromModule, HStack, Stack} from '@alinea/ui'
+import {
+  Button,
+  fromModule,
+  HStack,
+  Stack,
+  useObservable,
+  VStack
+} from '@alinea/ui'
 import {useTrigger} from '@alinea/ui/hook/UseTrigger'
 import {Modal} from '@alinea/ui/Modal'
-import {FormEvent} from 'react'
+import {FormEvent, useMemo} from 'react'
 import css from './PickLink.module.scss'
 
 const styles = fromModule(css)
 
-const linkForm = type('Link', {
-  link: link('Link', {
-    type: ['entry', 'external']
-  }),
-  description: text('Description', {
-    help: 'Text to display inside the link element'
-  }),
-  title: text('Title', {help: 'Extra information that describes the link'}),
-  blank: check('Target', {
-    label: 'Open link in new tab'
+function linkForm({showDescription = true, showBlank = true}) {
+  return type('Link', {
+    description: text('Description', {
+      hidden: !showDescription,
+      help: 'Text to display inside the link element'
+    }),
+    title: text('Tooltip', {
+      help: 'Extra information that describes the link'
+    }),
+    blank: check('Target', {
+      hidden: !showBlank,
+      label: 'Open link in new tab'
+    })
   })
-})
+}
 
-export type PickerValue = typeof linkForm extends TypeConfig<infer K, any>
-  ? K
-  : never
+export type PickerValue = {
+  link?: Reference
+  description?: string
+  title?: string
+  blank?: boolean
+}
 
 export function usePickTextLink() {
   const trigger = useTrigger<PickerValue, Partial<PickerValue>>()
@@ -43,29 +58,74 @@ export type PickTextLinkState = ReturnType<typeof usePickTextLink>
 export type PickTextLinkFunc = PickTextLinkState['pickLink']
 export type PickTextLinkProps = {picker: PickTextLinkState}
 
-export function PickTextLink({picker}: PickTextLinkProps) {
-  const {open, onClose, resolve, options} = picker
-  const [Form, formData] = useForm(
+export function PickTextLinkForm({
+  open,
+  onClose,
+  resolve,
+  options = {}
+}: PickTextLinkState) {
+  const isExistingLink = Boolean(options.link)
+  const link = useField(
+    createLink('Link', {
+      initialValue: options.link && [options.link]
+    })
+  )
+  const [selected] = useObservable(link)
+  const isUrl = selected?.type === 'url'
+  const descriptionRequired = !(isExistingLink || isUrl)
+  const formType = useMemo(
+    () =>
+      linkForm({
+        showDescription: descriptionRequired,
+        showBlank: !isUrl
+      }),
+    [descriptionRequired, isUrl]
+  )
+  const form = useForm(
     {
-      type: linkForm,
+      type: formType,
       initialValue: options
     },
-    [options]
+    [formType]
   )
   function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
-    return resolve(formData())
+    e.stopPropagation()
+    const result = {...form(), link: selected}
+    if (descriptionRequired && !result.description) return
+    return resolve(result)
   }
   return (
-    <Modal open={open} onClose={onClose} className={styles.root()}>
-      <form onSubmit={handleSubmit}>
-        <Form />
-        <HStack>
-          <Stack.Right>
-            <Button>Confirm</Button>
-          </Stack.Right>
-        </HStack>
-      </form>
+    <>
+      {open && (
+        <form onSubmit={handleSubmit}>
+          <VStack gap={18}>
+            <div>
+              <InputField {...link} />
+              {selected && <InputForm {...form} />}
+            </div>
+            <HStack>
+              <Stack.Right>
+                <HStack gap={16}>
+                  <Button outline type="button" onClick={onClose}>
+                    Cancel
+                  </Button>
+                  <Button>Confirm</Button>
+                </HStack>
+              </Stack.Right>
+            </HStack>
+          </VStack>
+        </form>
+      )}
+    </>
+  )
+}
+
+export function PickTextLink({picker}: PickTextLinkProps) {
+  if (!picker.open) return null
+  return (
+    <Modal open onClose={picker.onClose} className={styles.root()}>
+      <PickTextLinkForm {...picker} />
     </Modal>
   )
 }

@@ -10,6 +10,12 @@ export interface UrlReference extends Reference {
   target: string
 }
 
+export namespace UrlReference {
+  export function isUrl(value: any): value is UrlReference {
+    return value && value.type === 'url'
+  }
+}
+
 export interface UrlPickerOptions<T> {
   fields?: TypeConfig<any, T>
 }
@@ -20,7 +26,7 @@ export function createUrlPicker<T>(
   const extra = options.fields?.shape
   return {
     type: 'url',
-    label: 'Website link',
+    label: 'External website',
     handlesMultiple: false,
     shape: Shape.Record('Url', {
       url: Shape.Scalar('Url'),

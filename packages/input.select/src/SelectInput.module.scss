@@ -29,8 +29,11 @@
     outline: none;
 
     &-label {
-      flex: 1 0 auto;
+      flex: 1 0 0;
       margin-right: 16px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
 
       &.is-placeholder {
         color: hsla(var(--alinea-negative), 0.25);
@@ -87,6 +90,7 @@
 
       &-icon {
         width: 24px;
+        margin-left: auto;
 
         .is-selected & {
           color: var(--alinea-accent);

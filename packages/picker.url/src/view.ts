@@ -7,3 +7,5 @@ export const urlPicker = Picker.withView(createUrlPicker, {
   view: UrlPickerModal,
   viewRow: UrlPickerRow
 })
+
+export {UrlReference} from './UrlPicker'

@@ -1,1 +1,1 @@
-export {createEntryPicker as entryPicker} from './EntryPicker'
+export {createEntryPicker as entryPicker, EntryReference} from './EntryPicker'

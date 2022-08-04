@@ -1,7 +1,7 @@
-import { fromModule, Pane, useNonInitialEffect } from '@alinea/ui'
-import { Badge } from '@alinea/ui/Badge'
-import { createSlots } from '@alinea/ui/util/Slots'
-import { useWindowWidth } from '@react-hook/window-size'
+import {fromModule, Pane, useNonInitialEffect} from '@alinea/ui'
+import {Badge} from '@alinea/ui/Badge'
+import {createSlots} from '@alinea/ui/util/Slots'
+import {useWindowWidth} from '@react-hook/window-size'
 import {
   createContext,
   Dispatch,
@@ -9,9 +9,9 @@ import {
   useContext,
   useReducer
 } from 'react'
-import { Link, LinkProps } from 'react-router-dom'
-import { useEntryLocation } from '../hook/UseEntryLocation'
-import { useWorkspace } from '../hook/UseWorkspace'
+import {Link, LinkProps} from 'react-router-dom'
+import {useEntryLocation} from '../hook/UseEntryLocation'
+import {useWorkspace} from '../hook/UseWorkspace'
 import css from './Sidebar.module.scss'
 
 const styles = fromModule(css)
@@ -86,7 +86,7 @@ export namespace Sidebar {
         <Pane
           id="content-tree"
           resizable="right"
-          defaultWidth={330}
+          defaultWidth={300}
           minWidth={200}
         >
           {children}

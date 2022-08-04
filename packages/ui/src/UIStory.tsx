@@ -1,5 +1,5 @@
 import '@alinea/css'
-import {PropsWithChildren} from 'react'
+import {FunctionComponent, PropsWithChildren} from 'react'
 import {PreferencesProvider} from './hook/UsePreferences'
 import {px} from './util/Units'
 import {Viewport} from './Viewport'
@@ -15,10 +15,11 @@ export function UIStory({fullWidth, fullHeight, children}: UIStoryProps) {
       <Viewport attachToBody>
         <div
           style={{
-            marginTop: fullHeight ? px(20) : 'auto',
-            marginBottom: fullHeight ? px(20) : 'auto',
-            marginLeft: fullWidth ? px(20) : 'auto',
-            marginRight: fullWidth ? px(20) : 'auto'
+            zIndex: 0,
+            marginTop: fullHeight ? px(30) : 'auto',
+            marginBottom: fullHeight ? px(30) : 'auto',
+            marginLeft: fullWidth ? px(30) : 'auto',
+            marginRight: fullWidth ? px(30) : 'auto'
           }}
         >
           {children}
@@ -26,4 +27,14 @@ export function UIStory({fullWidth, fullHeight, children}: UIStoryProps) {
       </Viewport>
     </PreferencesProvider>
   )
+}
+
+export function uiDecorator(props: UIStoryProps = {}) {
+  return [
+    (Story: FunctionComponent) => (
+      <UIStory {...props}>
+        <Story />
+      </UIStory>
+    )
+  ]
 }

@@ -23,7 +23,7 @@
     }
   },
   "dependencies": {
-    "@alinea/iso": "^0.1.18",
+    "@alinea/iso": "^0.1.19",
     "@alinea/store": "0.0.0",
     "yjs": "^13.5.39"
   },
