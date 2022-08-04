@@ -1,9 +1,12 @@
+import {type} from '@alinea/core/Type'
 import {DashboardStory} from '@alinea/dashboard/DashboardStory'
 import {useField} from '@alinea/editor'
+import {text} from '@alinea/input.text'
 import {VStack} from '@alinea/ui'
+import {FunctionComponent} from 'react'
 import {link} from './view'
 
-function InputStory() {
+export function InputStory() {
   const [EntryLink] = useField(link('Entry link', {}))
   const [MultipleEntryLink] = useField(
     link.multiple('Multiple entry links', {})
@@ -22,10 +25,23 @@ function InputStory() {
   )
 }
 
-export function Example() {
-  return (
-    <DashboardStory fullWidth>
-      <InputStory />
-    </DashboardStory>
+export function WithExtraFields() {
+  const [EntryLink] = useField(
+    link.multiple('Entry link', {
+      fields: type('Fields', {
+        field1: text('Field 1')
+      })
+    })
   )
+  return <EntryLink />
+}
+
+export default {
+  decorators: [
+    (Story: FunctionComponent) => (
+      <DashboardStory fullWidth>
+        <Story />
+      </DashboardStory>
+    )
+  ]
 }

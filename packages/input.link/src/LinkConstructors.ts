@@ -50,20 +50,21 @@ export function linkConstructors(createLink: CreateLink) {
       : []
     const pickers =
       types.length === 0
-        ? [entryPicker({max: 1}), urlPicker()]
+        ? [entryPicker({...options, max: 1}), urlPicker(options)]
         : types.map(type => {
             switch (type) {
               case 'entry':
                 return entryPicker({
                   title: 'Select a page',
-                  max: 1
+                  max: 1,
+                  fields: options.fields
                 })
               case 'external':
-                return urlPicker()
+                return urlPicker(options)
               case 'image':
                 return imagePicker(false)
               case 'file':
-                throw 'todo'
+                return filePicker(false)
             }
           })
     return createLink(label, {...options, pickers, multiple: false})
@@ -80,13 +81,13 @@ export function linkConstructors(createLink: CreateLink) {
       : []
     const pickers =
       types.length === 0
-        ? [entryPicker({}), urlPicker()]
+        ? [entryPicker(options), urlPicker(options)]
         : types.map(type => {
             switch (type) {
               case 'entry':
-                return entryPicker({title: 'Select pages'})
+                return entryPicker({...options, title: 'Select pages'})
               case 'external':
-                return urlPicker()
+                return urlPicker(options)
               case 'image':
                 return imagePicker(true)
               case 'file':
@@ -104,6 +105,7 @@ export function linkConstructors(createLink: CreateLink) {
       ...options,
       pickers: [
         entryPicker({
+          ...options,
           title: 'Select a page',
           max: 1
         })
@@ -118,7 +120,7 @@ export function linkConstructors(createLink: CreateLink) {
   ): LinkField<T, Q> {
     return createLink(label, {
       ...options,
-      pickers: [entryPicker({title: 'Select pages'})],
+      pickers: [entryPicker({...options, title: 'Select pages'})],
       multiple: true
     })
   }

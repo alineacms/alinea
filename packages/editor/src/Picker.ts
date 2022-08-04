@@ -1,4 +1,5 @@
 import {Label, Reference} from '@alinea/core'
+import {RecordShape} from '@alinea/core/shape/RecordShape'
 import {ComponentType} from 'react'
 
 export interface PickerProps<T = {}> {
@@ -14,6 +15,7 @@ export interface Picker<
   Options extends {} = {}
 > {
   type: string
+  shape: RecordShape
   label: Label
   handlesMultiple: boolean
   options: Options

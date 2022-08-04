@@ -8,7 +8,6 @@ import {
   Shape,
   TypeConfig
 } from '@alinea/core'
-import {RecordShape} from '@alinea/core/shape/RecordShape'
 import type {Picker} from '@alinea/editor/Picker'
 import {entryPicker} from '@alinea/picker.entry'
 import {urlPicker} from '@alinea/picker.url'
@@ -107,7 +106,7 @@ export namespace LinkData {
 
 const defaultPickers = [
   entryPicker({max: 1}) as unknown,
-  urlPicker() as unknown
+  urlPicker({}) as unknown
 ] as Array<Picker>
 
 /** Create a link field configuration */
@@ -115,27 +114,20 @@ export function createLink<T, Q>(
   label: Label,
   options: LinkOptions<T, Q> = {}
 ): LinkField<T, Q> {
-  const extra = options.fields?.shape
+  const pickers = options.pickers || defaultPickers
+  const blocks = Object.fromEntries(
+    pickers.map(picker => [picker.type, picker.shape])
+  )
   return {
-    shape: Shape.List(
-      label,
-      {
-        entry: new RecordShape('Entry', {
-          entry: Shape.Scalar('Entry')
-        }).concat(extra),
-        url: new RecordShape('Url', {
-          url: Shape.Scalar('Url')
-        }).concat(extra)
-      },
-      options.initialValue
-    ),
+    shape: Shape.List(label, blocks, options.initialValue),
     label,
     options: {
       ...options,
-      pickers: options.pickers || defaultPickers
+      pickers
     },
     hidden: options.hidden,
     initialValue: options.initialValue,
+    // Todo: move transform to the picker instances
     transform(field, pages): Expr<Q> {
       const row = field.each()
       const Link = Entry.as<Media.File>('Link')

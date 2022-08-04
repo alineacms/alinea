@@ -1,4 +1,8 @@
+import {fromModule, HStack} from '@alinea/ui'
 import {UrlReference} from '../UrlPicker'
+import css from './UrlPickerRow.module.scss'
+
+const styles = fromModule(css)
 
 export interface UrlPickerRowProps {
   reference: UrlReference
@@ -6,10 +10,9 @@ export interface UrlPickerRowProps {
 
 export function UrlPickerRow({reference}: UrlPickerRowProps) {
   return (
-    <div>
-      url: {reference.url}
-      desc: {reference.description}
-      target: {reference.target}
-    </div>
+    <HStack gap={15} className={styles.root()}>
+      <span className={styles.root.url()}>{reference.url}</span>
+      <span className={styles.root.desc()}>{reference.description}</span>
+    </HStack>
   )
 }
