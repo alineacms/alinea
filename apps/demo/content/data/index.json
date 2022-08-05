@@ -3,11 +3,11 @@
   "type": "Home",
   "root": "data",
   "index": "a1",
-  "title": "Home page",
+  "title": "Home",
   "hero": {
     "image": [
       {
-        "id": "pEZjVhMddyJiDq1jW4O0y",
+        "id": "ToaXbDsPfqgpOpWyhLM8M",
         "index": "a0",
         "type": "entry",
         "entry": "zZg8QUVWOmGTbv_ljhBKa"
@@ -21,11 +21,12 @@
         "content": [
           {
             "type": "text",
-            "text": "Sed ut dictum risus. Curabitur fermentum convallis libero, et tristique magna tempus in. Nulla nulla eros, tincidunt non nulla id, hendrerit bibendum urna. Aliquam dictum, est sit amet dignissim vehicula, metus augue ultrices tortor, nec lacinia tellus sapien vitae lacus."
+            "text": "Suspendisse id mi iaculis, tristique ex in, commodo nisi. Duis at elit nunc. Praesent finibus in enim id gravida. In aliquam ut lacus dapibus condimentum. Integer eu lectus vel ipsum aliquam porta."
           }
         ]
       }
-    ]
+    ],
+    "button": []
   },
   "links": [],
   "footer": []

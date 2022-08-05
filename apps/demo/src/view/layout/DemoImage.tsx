@@ -10,10 +10,6 @@ type ImageProps = Omit<NextImageProps, 'sizes'> & {
 
 export function DemoImage(props: ImageProps) {
   if (!props.src) return null
-  if (props?.layout === 'fill') {
-    delete props.width
-    delete props.height
-  }
 
   return (
     <div className={styles.root.with(props.className)(props.layout)}>

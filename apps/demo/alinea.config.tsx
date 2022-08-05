@@ -4,10 +4,14 @@ import {BrowserPreview} from '@alinea/dashboard/view/preview/BrowserPreview'
 import {IcRoundInsertDriveFile} from '@alinea/ui/icons/IcRoundInsertDriveFile'
 import {IcRoundPermMedia} from '@alinea/ui/icons/IcRoundPermMedia'
 import {DemoHomeSchema} from './src/view/channels/home/DemoHome.schema'
+import {DemoRecipedetailSchema} from './src/view/channels/recipedetail/DemoRecipedetail.schema'
+import {DemoRecipesSchema} from './src/view/channels/recipes/DemoRecipes.schema'
 
 const demoSchema = schema({
   ...MediaSchema,
-  Home: DemoHomeSchema
+  Home: DemoHomeSchema,
+  Recipes: DemoRecipesSchema,
+  Recipedetail: DemoRecipedetailSchema
 })
 
 const demo = workspace('Demo', {
@@ -19,7 +23,7 @@ const demo = workspace('Demo', {
   roots: {
     data: root('Demo website', {
       icon: IcRoundInsertDriveFile,
-      contains: ['Home']
+      contains: ['Home', 'Recipes']
     }),
     media: root('Media', {
       icon: IcRoundPermMedia,

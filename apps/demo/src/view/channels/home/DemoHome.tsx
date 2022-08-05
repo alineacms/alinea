@@ -1,9 +1,10 @@
+import css from './DemoHome.module.scss'
+
 import {fromModule, RichText} from '@alinea/ui'
 import {DemoButton} from '../../layout/DemoButton'
 import {DemoContainer} from '../../layout/DemoContainer'
 import {DemoImage} from '../../layout/DemoImage'
 import {DemoTitle} from '../../layout/DemoTitle'
-import css from './DemoHome.module.scss'
 import {DemoHomeSchema} from './DemoHome.schema'
 
 const styles = fromModule(css)
@@ -31,7 +32,7 @@ function Hero({image, title, text, button}: HeroProps) {
       )}
       <DemoContainer>
         <div className={styles.hero.content()}>
-          <DemoTitle.H1>{title}</DemoTitle.H1>
+          <DemoTitle.H1 mod="inherit">{title}</DemoTitle.H1>
           {text && (
             <div className={styles.hero.content.text()}>
               <RichText doc={text} />

@@ -1,0 +1,28 @@
+{
+  "id": "thX1i3Ezl_gMudRd37XR9",
+  "type": "Recipedetail",
+  "root": "data",
+  "index": "thX1i3Ezl_gMudRd37XRB",
+  "title": "Recipe detail 1",
+  "image": [
+    {
+      "id": "-zJ_jFVp_hc0OhCKHpkks",
+      "index": "a0",
+      "type": "entry",
+      "entry": "zZg8QUVWOmGTbv_ljhBKa"
+    }
+  ],
+  "category": "main_course",
+  "intro": [
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris non ligula cursus, lacinia enim fermentum, mattis purus. Nulla facilisi. Donec pellentesque augue eget dignissim bibendum."
+        }
+      ]
+    }
+  ]
+}

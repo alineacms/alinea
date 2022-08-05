@@ -1,4 +1,4 @@
-@import url('https://rsms.me/inter/inter.css');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;700&display=swap');
 
 * {
   margin: 0;
@@ -14,10 +14,11 @@ html {
 }
 
 body {
-  font-family: 'Inter', Arial, Helvetica, sans-serif;
+  font-family: 'Poppins', Arial, Helvetica, sans-serif;
   font-size: 16px;
   line-height: 1.5;
-  color: #222;
+  font-weight: 400;
+  color: #424242;
 }
 
 a {
