@@ -15,6 +15,7 @@ import {
 import {arrayBufferToHex} from '@alinea/core/util/ArrayBuffers'
 import {base64} from '@alinea/core/util/Encoding'
 import {generateKeyBetween} from '@alinea/core/util/FractionalIndexing'
+import {Logger} from '@alinea/core/util/Logger'
 import {basename, extname} from '@alinea/core/util/Paths'
 import {crypto} from '@alinea/iso'
 import sqlite from '@alinea/sqlite-wasm'
@@ -71,13 +72,19 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
     })
   }
 
+  createContext() {
+    return {
+      logger: new Logger(this.constructor.name)
+    }
+  }
+
   get config(): Config<T> {
     return this.options.config
   }
 
   async entry(
     {id, stateVector}: Hub.EntryParams,
-    ctx: Hub.Context
+    ctx: Hub.Context = this.createContext()
   ): Future<Entry.Detail | null> {
     const {config, drafts, previews} = this.options
     let draft = await drafts.get({id, stateVector}, ctx)
@@ -135,7 +142,7 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
 
   async query<T>(
     {cursor, source}: Hub.QueryParams<T>,
-    ctx: Hub.Context
+    ctx: Hub.Context = this.createContext()
   ): Future<Array<T>> {
     return outcome(async () => {
       const create = source
@@ -146,7 +153,10 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
     })
   }
 
-  updateDraft({id, update}: Hub.UpdateParams, ctx: Hub.Context): Future<void> {
+  updateDraft(
+    {id, update}: Hub.UpdateParams,
+    ctx: Hub.Context = this.createContext()
+  ): Future<void> {
     const {drafts} = this.options
     return outcome(async () => {
       const instruction = await drafts.update({id, update}, ctx)
@@ -154,7 +164,10 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
     })
   }
 
-  deleteDraft({id}: Hub.DeleteParams, ctx: Hub.Context): Future<boolean> {
+  deleteDraft(
+    {id}: Hub.DeleteParams,
+    ctx: Hub.Context = this.createContext()
+  ): Future<boolean> {
     const {drafts} = this.options
     return outcome(async () => {
       await drafts.delete({ids: [id]}, ctx)
@@ -165,7 +178,10 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
     })
   }
 
-  listDrafts({workspace}: Hub.ListParams, ctx: Hub.Context) {
+  listDrafts(
+    {workspace}: Hub.ListParams,
+    ctx: Hub.Context = this.createContext()
+  ) {
     return outcome(async () => {
       const store = await this.preview.getStore(ctx)
       const drafts = await accumulate(this.drafts.updates({}, ctx))
@@ -179,7 +195,10 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
     })
   }
 
-  publishEntries({entries}: Hub.PublishParams, ctx: Hub.Context): Future<void> {
+  publishEntries(
+    {entries}: Hub.PublishParams,
+    ctx: Hub.Context = this.createContext()
+  ): Future<void> {
     const {config, drafts, target, applyPublish = true} = this.options
     function applyEntriesTo(store: Store) {
       Cache.applyPublish(store, config, entries)
@@ -208,7 +227,7 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
 
   uploadFile(
     {workspace, root, ...file}: Hub.UploadParams,
-    ctx: Hub.Context
+    ctx: Hub.Context = this.createContext()
   ): Future<Media.File> {
     return outcome(async () => {
       const store = await this.preview.getStore(ctx)
@@ -266,14 +285,18 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
   }
 
   loadPages<K extends keyof T>(workspaceKey: K, options: PagesOptions = {}) {
+    const logger = new Logger('Load pages')
     const workspace = this.config.workspaces[workspaceKey]
     const store = options.previewToken
       ? async () => {
-          const {id} = await this.parsePreviewToken(options.previewToken!)
-          return this.preview.getStore({preview: id})
+          const {id} = await this.parsePreviewToken(
+            options.previewToken!,
+            logger
+          )
+          return this.preview.getStore({preview: id, logger})
         }
       : options.preview
-      ? () => this.preview.getStore({})
+      ? () => this.preview.getStore({logger})
       : this.createStore
     return new Pages<T[K] extends WorkspaceConfig<infer W> ? W : any>(
       workspace,
@@ -281,13 +304,16 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
     )
   }
 
-  async parsePreviewToken(token: string): Promise<{id: string; url: string}> {
+  async parsePreviewToken(
+    token: string,
+    logger: Logger = new Logger('Parse preview token')
+  ): Promise<{id: string; url: string}> {
     const {previews} = this.options
     const [tokenData, err] = await outcome(() => previews.verify(token))
     if (!tokenData) throw createError(400, `Incorrect token: ${err}`)
     const {id} = tokenData
-    const store = await this.preview.getStore({preview: id})
-    await this.preview.fetchUpdate(id, {preview: id})
+    const store = await this.preview.getStore({preview: id, logger})
+    await this.preview.fetchUpdate(id, {preview: id, logger})
     const entry = store.first(
       Entry.where(Entry.id.is(id)).select({id: Entry.id, url: Entry.url})
     )
