@@ -3,6 +3,7 @@ import css from './DemoRecipedetail.module.scss'
 import {fromModule, RichText} from '@alinea/ui'
 import {MdiChefHat} from '../../../icons/MdiChefHat'
 import {MdiClock} from '../../../icons/MdiClock'
+import {DemoBlocks} from '../../blocks/DemoBlocks'
 import {DemoHero} from '../../components/hero/DemoHero'
 import {DemoContainer} from '../../layout/DemoContainer'
 import {DemoImage} from '../../layout/DemoImage'
@@ -11,11 +12,13 @@ import {DemoRecipedetailSchema} from '../recipedetail/DemoRecipedetail.schema'
 const styles = fromModule(css)
 
 export function DemoRecipedetail(props: DemoRecipedetailSchema) {
-  const {title, image, category, intro} = props
+  const {title, image, category, intro, blocks} = props
+
   return (
     <div className={styles.root()}>
       <DemoHero image={image} title={title} />
       <Intro image={image} category={category} intro={intro} />
+      <DemoBlocks blocks={blocks} container={DemoContainer} />
     </div>
   )
 }

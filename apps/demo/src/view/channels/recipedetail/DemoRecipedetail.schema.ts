@@ -4,6 +4,7 @@ import {path} from '@alinea/input.path'
 import {richText} from '@alinea/input.richtext'
 import {select} from '@alinea/input.select'
 import {text} from '@alinea/input.text'
+import {DemoBlocksSchema} from '../../blocks/DemoBlocks.schema'
 
 export const DemoRecipedetailSchema = type('Recipedetail', {
   title: text('Title', {width: 0.5, multiline: true}),
@@ -16,7 +17,8 @@ export const DemoRecipedetailSchema = type('Recipedetail', {
     main_course: 'Main course',
     dessert: 'Dessert'
   }),
-  intro: richText('Intro')
+  intro: richText('Intro'),
+  blocks: DemoBlocksSchema
 })
 
 export type DemoRecipedetailSchema = Schema.TypeOf<
