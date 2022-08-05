@@ -8,7 +8,6 @@ export type InputFormProps = {
 }
 
 export function InputForm({state, type}: InputFormProps) {
-  state.use()
   return (
     <>
       {type.sections.map((section, i) => {
