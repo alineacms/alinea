@@ -94,19 +94,30 @@
           "code": "import {BrowserPreview} from 'alinea'\nworkspace('My workspace', {\n  // ... workspace options\n  preview({previewToken}) {\n    return (\n      <BrowserPreview\n        url={`http://localhost:3000/api/preview?${previewToken}`}\n      />\n    )\n  }\n})"
         },
         {
-          "type": "paragraph",
-          "textAlign": "left"
-        },
-        {
           "type": "heading",
           "textAlign": "left",
-          "level": 2,
+          "level": 3,
           "content": [
             {
               "type": "text",
-              "text": " "
+              "text": "Reacting to content changes"
             }
           ]
+        },
+        {
+          "type": "paragraph",
+          "textAlign": "left",
+          "content": [
+            {
+              "type": "text",
+              "text": "By default alinea will reload the iframe source when content changes, after a certain delay. If your framework has ways to refetch content without a full page reload those can be used instead. A utility function is provided in `@alinea/preview` to register a listener."
+            }
+          ]
+        },
+        {
+          "id": "RGmhqrq5tppp1RAbSCB2X",
+          "type": "CodeBlock",
+          "code": "// For any environment\nimport {registerPreview} from '@alinea/preview'\nregisterPreview({\n  refetch() {\n    // Reload server data\n  }\n})\n\n// A react hook is available\nimport {usePreview} from '@alinea/preview/react'\nconst {isPreviewing} = usePreview({\n  refetch() {\n    // Reload server data & redraw\n  }\n})\n\n// A hook specifically for next.js, which refetches static/server props\nimport {useNextPreview} from '@alinea/preview/next'\nconst {isPreviewing} = useNextPreview()"
         }
       ]
     }
