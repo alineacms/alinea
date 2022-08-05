@@ -30,13 +30,13 @@ type OutcomeResult<T> = T extends () => Promise<any>
   ? Promise<boolean>
   : boolean
 
-function outcomeRunner<Run extends OutcomeRunner>(
+export function outcome<Run extends OutcomeRunner>(
   run: Run
 ): OutcomeReturn<Run> {
   try {
     if (typeof run === 'function') {
       const result = run()
-      if (result instanceof Promise) return outcomeRunner(result) as any
+      if (result instanceof Promise) return outcome(result) as any
       return Outcome.Success(result) as any
     }
     if (run instanceof Promise)
@@ -47,24 +47,24 @@ function outcomeRunner<Run extends OutcomeRunner>(
   }
 }
 
-export const outcome = Object.assign(outcomeRunner, {
-  succeeds<Run extends OutcomeRunner>(run: OutcomeRunner): OutcomeResult<Run> {
-    const result: Promise<Outcome<any>> | Outcome<any> = outcomeRunner(
-      run
-    ) as any
+export namespace outcome {
+  export function succeeds<Run extends OutcomeRunner>(
+    run: OutcomeRunner
+  ): OutcomeResult<Run> {
+    const result: Promise<Outcome<any>> | Outcome<any> = outcome(run) as any
     if (result instanceof Promise)
       return result.then(outcome => outcome.isSuccess()) as any
     return result.isSuccess() as any
-  },
-  fails<Run extends OutcomeRunner>(run: OutcomeRunner): OutcomeResult<Run> {
-    const result: Promise<Outcome<any>> | Outcome<any> = outcomeRunner(
-      run
-    ) as any
+  }
+  export function fails<Run extends OutcomeRunner>(
+    run: OutcomeRunner
+  ): OutcomeResult<Run> {
+    const result: Promise<Outcome<any>> | Outcome<any> = outcome(run) as any
     if (result instanceof Promise)
       return result.then(outcome => outcome.isFailure()) as any
     return result.isFailure() as any
   }
-})
+}
 
 export type Outcome<T = void> = Outcome.OutcomeImpl<T> & Pair<T>
 
