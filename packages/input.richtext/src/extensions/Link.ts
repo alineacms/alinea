@@ -1,5 +1,13 @@
 import {Mark, mergeAttributes} from '@tiptap/core'
 
+interface LinkAttributes {
+  'data-id'?: string
+  'data-entry'?: string
+  href?: string
+  target?: string
+  title?: string
+}
+
 export interface LinkOptions {
   /**
    * A list of HTML attributes to be rendered.
@@ -13,11 +21,11 @@ declare module '@tiptap/core' {
       /**
        * Set a link mark
        */
-      setLink: (attributes: {href: string; target?: string}) => ReturnType
+      setLink: (attributes: LinkAttributes) => ReturnType
       /**
        * Toggle a link mark
        */
-      toggleLink: (attributes: {href: string; target?: string}) => ReturnType
+      toggleLink: (attributes: LinkAttributes) => ReturnType
       /**
        * Unset a link mark
        */
@@ -96,23 +104,4 @@ export const Link = Mark.create<LinkOptions>({
         }
     }
   }
-
-  /*addPasteRules() {
-    return [
-      markPasteRule({
-        find: text =>
-          find(text)
-            .filter(link => link.isLink)
-            .map(link => ({
-              text: link.value,
-              index: link.start,
-              data: link
-            })),
-        type: this.type,
-        getAttributes: match => ({
-          href: match.data?.href
-        })
-      })
-    ]
-  }*/
 })
