@@ -115,9 +115,34 @@
           ]
         },
         {
-          "id": "RGmhqrq5tppp1RAbSCB2X",
-          "type": "CodeBlock",
-          "code": "// For any environment\nimport {registerPreview} from '@alinea/preview'\nregisterPreview({\n  refetch() {\n    // Reload server data\n  }\n})\n\n// A react hook is available\nimport {usePreview} from '@alinea/preview/react'\nconst {isPreviewing} = usePreview({\n  refetch() {\n    // Reload server data & redraw\n  }\n})\n\n// A hook specifically for next.js, which refetches static/server props\nimport {useNextPreview} from '@alinea/preview/next'\nconst {isPreviewing} = useNextPreview()"
+          "id": "7V4Ajn0wMli04FxHqpn_B",
+          "type": "CodeVariantsBlock",
+          "variants": [
+            {
+              "id": "sp2OOzH2vnVf3XxZceV12",
+              "index": "a0",
+              "type": "Variant",
+              "name": "Any environment",
+              "language": "tsx",
+              "code": "import {registerPreview} from '@alinea/preview'\nregisterPreview({\n  refetch() {\n    // Reload server data\n  }\n})"
+            },
+            {
+              "id": "gMGQTyeA0jJlLrh84mE5D",
+              "index": "a1",
+              "type": "Variant",
+              "name": "React",
+              "language": "tsx",
+              "code": "// A react hook is available\nimport {usePreview} from '@alinea/preview/react'\n// Use this hook once to listen and react to preview changes\nconst {isPreviewing} = usePreview({\n  refetch() {\n    // Reload server data & redraw\n  }\n})"
+            },
+            {
+              "id": "SGf3OFtdZchhCZJvO8XwJ",
+              "index": "a2",
+              "type": "Variant",
+              "name": "Next.js",
+              "language": "tsx",
+              "code": "// A hook specifically for next.js\nimport {useNextPreview} from '@alinea/preview/next'\n// Use this hook once to automatically reload static/server props\nconst {isPreviewing} = useNextPreview()"
+            }
+          ]
         }
       ]
     }
