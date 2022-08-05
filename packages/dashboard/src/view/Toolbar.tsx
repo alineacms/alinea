@@ -13,6 +13,7 @@ import {
   usePreferences,
   VStack
 } from '@alinea/ui'
+import {IcOutlineScreenshot} from '@alinea/ui/icons/IcOutlineScreenshot'
 import IcRoundKeyboardArrowDown from '@alinea/ui/icons/IcRoundKeyboardArrowDown'
 import IcRoundKeyboardArrowUp from '@alinea/ui/icons/IcRoundKeyboardArrowUp'
 import {IcRoundMenu} from '@alinea/ui/icons/IcRoundMenu'
@@ -233,6 +234,11 @@ export namespace Toolbar {
                 </VStack>
               </PopoverMenu.Items>
             </PopoverMenu.Root>
+            <IconButton
+              icon={IcOutlineScreenshot}
+              onClick={togglePreview}
+              active={isPreviewOpen}
+            />
           </HStack>
         </div>
       </HStack>
