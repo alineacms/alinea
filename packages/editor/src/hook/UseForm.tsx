@@ -116,5 +116,7 @@ export function useForm<T extends Record<string, any>>(
   options: FormOptions<T>,
   deps: ReadonlyArray<unknown> = []
 ): ObservableForm<T> {
-  return useMemo(() => createFormInput(options), deps)
+  const form = useMemo(() => createFormInput(options), deps)
+  form.state.use()
+  return form
 }

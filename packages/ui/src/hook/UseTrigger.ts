@@ -16,13 +16,9 @@ export function useTrigger<T, O = undefined>() {
         (resolve: (value: T | undefined) => void, reject: () => void) => {
           setTrigger({options, resolve, reject})
         }
-      )
-        .finally(() => {
-          setTrigger(undefined)
-        })
-        .catch(() => {
-          return undefined
-        })
+      ).finally(() => {
+        setTrigger(undefined)
+      })
     },
     resolve(value: T | undefined) {
       if (trigger) trigger.resolve(value)

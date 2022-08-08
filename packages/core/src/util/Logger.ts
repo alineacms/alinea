@@ -1,3 +1,5 @@
+import prettyMilliseconds from 'pretty-ms'
+
 type Run<T> = (logger: Logger) => T
 interface Log {
   args: Array<any>
@@ -9,14 +11,24 @@ export interface Report {
   logs: Array<Log | Report>
 }
 
+const consoleLog = console.log.bind(console)
+const output =
+  (typeof process !== 'undefined' &&
+    process.stdout?.write.bind(process.stdout)) ||
+  consoleLog
+const isConsole = output === consoleLog
+
 export namespace Report {
   export function toConsole(report: Report, prefix = '') {
-    console.groupCollapsed(report.name, report.duration, 'ms')
+    if (prefix && !isConsole) output(prefix)
+    console.log(`${report.name} in ${prettyMilliseconds(report.duration)}`)
     for (const log of report.logs) {
-      if ('name' in log) toConsole(log, '└ ')
-      else console.log(prefix, ...log.args)
+      if ('name' in log) toConsole(log, ' '.repeat(prefix.length) + '└ ')
+      else {
+        if (prefix && !isConsole) output(prefix)
+        console.log(...log.args)
+      }
     }
-    console.groupEnd()
   }
 
   export function toServerTiming(report: Report, index = 0) {
@@ -33,10 +45,15 @@ export interface LoggerResult<T> {
   logger: Logger
 }
 
+function durationSince(time: number) {
+  return performance.now() - time
+}
+
 export class Logger {
   logs: Array<Log | Report> = []
-  started = Date.now()
+  started = performance.now()
   operations: Array<Logger> = []
+  startProgress: number | undefined = undefined
 
   constructor(public name: string) {}
 
@@ -46,13 +63,32 @@ export class Logger {
     const report = () => {
       this.logs.push(op.report())
     }
+    this.progress(name)
     if (result instanceof Promise) return result.finally(report)
     report()
     return result
   }
 
   log(...args: Array<any>) {
-    this.logs.push({args, time: Date.now()})
+    this.logs.push({args, time: performance.now()})
+  }
+
+  progress(message: string) {
+    if (!this.startProgress) {
+      this.startProgress = performance.now()
+    }
+    output(`> ${message}\r`)
+  }
+
+  summary(message: string) {
+    if (this.startProgress) {
+      const duration = durationSince(this.startProgress)
+      output(`> ${message} in ${prettyMilliseconds(duration)}\n`)
+      this.startProgress = undefined
+      Report.toConsole(this.report(), '└ ')
+    } else {
+      console.log(`> ${message}`)
+    }
   }
 
   result<T>(result: Promise<T>): Promise<LoggerResult<T>> {
@@ -60,7 +96,7 @@ export class Logger {
   }
 
   report() {
-    const current = Date.now()
+    const current = performance.now()
     const duration = current - this.started
     return {
       name: this.name,

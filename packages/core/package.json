@@ -27,6 +27,9 @@
     "@alinea/store": "0.0.0",
     "yjs": "^13.5.39"
   },
+  "devDependencies": {
+    "pretty-ms": "^8.0.0"
+  },
   "peerDependencies": {
     "react": "*"
   }

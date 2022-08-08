@@ -1,6 +1,7 @@
 import {createId, slugify, toGenerator} from '@alinea/core'
 import {Config} from '@alinea/core/Config'
 import {Entry} from '@alinea/core/Entry'
+import {Logger} from '@alinea/core/util/Logger'
 import {Workspaces} from '@alinea/core/Workspace'
 import {Cache} from '../Cache'
 import {Data} from '../Data'
@@ -41,7 +42,7 @@ export function demoStore<T extends Workspaces>(
   }
   return async function createStore() {
     const store = await createDb()
-    await Cache.create(store, config, source, true)
+    await Cache.create(store, config, source, new Logger('Demo store'))
     return store
   }
 }

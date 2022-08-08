@@ -65,14 +65,22 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
   function handleLink() {
     const attrs = editor.getAttributes('link')
     const existing: Reference | undefined = attributesToReference(attrs)
+    const {view, state} = editor
+    const {from, to} = view.state.selection
+    const isSelection = from !== to
     pickLink({
       link: existing,
       title: attrs.title,
-      blank: attrs.target === '_blank'
-    }).then(picked => {
-      if (!picked) return
-      const link = picked.link
-      if (link) {
+      blank: attrs.target === '_blank',
+      hasLink: Boolean(existing),
+      requireDescription: !isSelection
+    })
+      .then(picked => {
+        if (!picked || !picked.link) {
+          exec().unsetLink().run()
+          return
+        }
+        const link = picked.link
         const attrs = {
           target:
             (link as UrlReference).target ||
@@ -80,25 +88,26 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
           title: picked.title,
           ...referenceToAttributes(link)
         }
-        const command = exec()
-        const action = existing
-          ? command.extendMarkRange('link').setLink(attrs as any)
-          : command.insertContent({
+        if (isSelection) {
+          // Try creating a link on selected text
+          exec()
+            .setLink(attrs as any)
+            .run()
+        } else {
+          exec()
+            .insertContent({
               type: 'text',
               text:
-                picked.description || (link as UrlReference).description || '',
-              marks: [
-                {
-                  type: 'link',
-                  attrs
-                }
-              ]
+                picked.description ||
+                (link as UrlReference).description ||
+                (link as UrlReference).url ||
+                '',
+              marks: [{type: 'link', attrs}]
             })
-        action.run()
-      } else {
-        exec().extendMarkRange('link').unsetLink().run()
-      }
-    })
+            .run()
+        }
+      })
+      .catch(() => {})
   }
   return (
     <Toolbar.Slot>

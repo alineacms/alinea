@@ -5,6 +5,7 @@ import {Config} from '@alinea/core/Config'
 import {createError} from '@alinea/core/ErrorWithCode'
 import {createId} from '@alinea/core/Id'
 import {outcome} from '@alinea/core/Outcome'
+import {Logger} from '@alinea/core/util/Logger'
 import {Workspace} from '@alinea/core/Workspace'
 import {SqliteStore} from '@alinea/store/sqlite/SqliteStore'
 import {EvalPlugin} from '@esbx/eval'
@@ -420,7 +421,12 @@ export async function generate(options: GenerateOptions): Promise<Config> {
   }
 
   async function cacheEntries(config: Config, source: Data.Source) {
-    await Cache.create(store, config, source, !quiet)
+    await Cache.create(
+      store,
+      config,
+      source,
+      quiet ? undefined : new Logger('Generate')
+    )
     return store
   }
 

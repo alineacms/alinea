@@ -14,6 +14,7 @@ import {
   VStack
 } from '@alinea/ui'
 import {useTrigger} from '@alinea/ui/hook/UseTrigger'
+import IcRoundClose from '@alinea/ui/icons/IcRoundClose'
 import {Modal} from '@alinea/ui/Modal'
 import {FormEvent, useMemo} from 'react'
 import css from './PickLink.module.scss'
@@ -27,6 +28,7 @@ function linkForm({showDescription = true, showBlank = true}) {
       help: 'Text to display inside the link element'
     }),
     title: text('Tooltip', {
+      optional: true,
       help: 'Extra information that describes the link'
     }),
     blank: check('Target', {
@@ -43,8 +45,13 @@ export type PickerValue = {
   blank?: boolean
 }
 
+export type PickerOptions = PickerValue & {
+  requireDescription?: boolean
+  hasLink?: boolean
+}
+
 export function usePickTextLink() {
-  const trigger = useTrigger<PickerValue, Partial<PickerValue>>()
+  const trigger = useTrigger<PickerValue, Partial<PickerOptions>>()
   return {
     options: trigger.options,
     open: trigger.isActive,
@@ -72,7 +79,8 @@ export function PickTextLinkForm({
   )
   const [selected] = useObservable(link)
   const isUrl = selected?.type === 'url'
-  const descriptionRequired = !(isExistingLink || isUrl)
+  const descriptionRequired =
+    options.requireDescription && !(isExistingLink || isUrl)
   const formType = useMemo(
     () =>
       linkForm({
@@ -105,6 +113,16 @@ export function PickTextLinkForm({
               {selected && <InputForm {...form} />}
             </div>
             <HStack>
+              {options.hasLink && (
+                <Button
+                  icon={IcRoundClose}
+                  outline
+                  type="button"
+                  onClick={() => resolve(undefined)}
+                >
+                  Remove link
+                </Button>
+              )}
               <Stack.Right>
                 <HStack gap={16}>
                   <Button outline type="button" onClick={onClose}>
