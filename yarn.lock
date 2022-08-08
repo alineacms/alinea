@@ -169,6 +169,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@alinea/dashboard@workspace:packages/dashboard"
   dependencies:
+    "@alinea/backend": 0.0.0
     "@alinea/client": 0.0.0
     "@alinea/core": 0.0.0
     "@alinea/css": 0.0.0
@@ -177,6 +178,7 @@ __metadata:
     "@alinea/input.link": 0.0.0
     "@alinea/input.select": 0.0.0
     "@alinea/input.text": 0.0.0
+    "@alinea/picker.entry": 0.0.0
     "@alinea/preview": 0.0.0
     "@alinea/shared": 0.0.0
     "@alinea/store": 0.0.0
