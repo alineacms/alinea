@@ -114,7 +114,10 @@ export class TypeConfig<R = any, T = R> {
   }
 
   configure<Q = T>(options: TypeOptions<R, Q>): TypeConfig<R, Q> {
-    return new TypeConfig(this.label, this.sections, options)
+    return new TypeConfig<R, Q>(this.label, this.sections, {
+      ...this.options,
+      ...options
+    } as TypeOptions<R, Q>)
   }
 
   toType(schema: Schema, name: string): Type<R, T> {
