@@ -1,11 +1,10 @@
-import {passwordLess} from '@alinea/auth.passwordless'
 import {createCloudBackend} from '@alinea/cloud'
-import {backend, createConfig, root, schema, workspace} from '@alinea/core'
+import {createConfig, root, schema, workspace} from '@alinea/core'
 import {MediaSchema} from '@alinea/dashboard/schema/MediaSchema'
 import {BrowserPreview} from '@alinea/dashboard/view/preview/BrowserPreview'
 import {IcRoundInsertDriveFile} from '@alinea/ui/icons/IcRoundInsertDriveFile'
 import {IcRoundPermMedia} from '@alinea/ui/icons/IcRoundPermMedia'
-import {configureBackend} from './alinea.server'
+//import {configureBackend} from './alinea.server'
 import {DocPageSchema} from './src/view/DocPage.schema'
 import {DocsPageSchema} from './src/view/DocsPage.schema'
 import {HomePageSchema} from './src/view/HomePage.schema'
@@ -67,9 +66,9 @@ const stories = workspace('Stories', {
 
 const workspaces = {web, stories}
 
-const customBackend = backend({
+/*const customBackend = backend({
   auth: passwordLess
-}).configure(configureBackend)
+}).configure(configureBackend)*/
 
 const cloudBackend = createCloudBackend()
 
