@@ -8,7 +8,11 @@
   },
   "type": "module",
   "exports": {
-    ".": "./dist/index.js",
+    ".": {
+      "worker": "./dist/view.js",
+      "browser": "./dist/view.js",
+      "default": "./dist/index.js"
+    },
     "./*": "./dist/*.js"
   },
   "files": [
