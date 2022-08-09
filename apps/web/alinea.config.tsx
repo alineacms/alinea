@@ -1,7 +1,6 @@
 import {passwordLess} from '@alinea/auth.passwordless'
 import {createCloudBackend} from '@alinea/cloud'
 import {backend, createConfig, root, schema, workspace} from '@alinea/core'
-import {LocaleSchema} from '@alinea/dashboard/schema/LocaleSchema'
 import {MediaSchema} from '@alinea/dashboard/schema/MediaSchema'
 import {BrowserPreview} from '@alinea/dashboard/view/preview/BrowserPreview'
 import {IcRoundInsertDriveFile} from '@alinea/ui/icons/IcRoundInsertDriveFile'
@@ -52,7 +51,7 @@ const web = workspace('Alinea', {
 })
 
 const stories = workspace('Stories', {
-  schema: webSchema.concat(schema(LocaleSchema)),
+  schema: webSchema,
   source: './content/stories',
   color: '#EF437C',
   roots: {
