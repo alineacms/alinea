@@ -10,6 +10,7 @@
     "./config.js": "./config.js",
     "./backend.js": "./backend.js",
     "./.server/*": {
+      "worker": "./.server/dist/*",
       "browser": "./.server/client.cjs",
       "default": "./.server/dist/*"
     }

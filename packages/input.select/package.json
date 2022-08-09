@@ -9,6 +9,7 @@
   "type": "module",
   "exports": {
     ".": {
+      "worker": "./dist/index.js",
       "browser": "./dist/view.js",
       "default": "./dist/index.js"
     },
