@@ -3,7 +3,7 @@ import {Reference} from '@alinea/core/Reference'
 import {Shape} from '@alinea/core/Shape'
 import {TypeConfig} from '@alinea/core/Type'
 import {Picker} from '@alinea/editor/Picker'
-import {Expr} from '../../alinea/src/alinea'
+import {Expr} from '@alinea/store'
 
 export interface EntryReference extends Reference {
   type: 'entry'
