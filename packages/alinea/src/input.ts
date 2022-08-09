@@ -1,6 +1,6 @@
 // Included inputs
-export {code} from '@alinea/input.code'
 export {check} from '@alinea/input.check'
+export {code} from '@alinea/input.code'
 export {date} from '@alinea/input.date'
 export {link} from '@alinea/input.link'
 export {list} from '@alinea/input.list'
