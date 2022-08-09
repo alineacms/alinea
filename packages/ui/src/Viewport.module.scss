@@ -67,16 +67,19 @@
     @include light-theme;
   }
 
-  &.is-light {
+  &.is-light,
+  html[data-theme='light'] & {
     @include light-theme;
   }
 
-  &.is-dark {
+  &.is-dark,
+  html[data-theme='dark'] & {
     @include dark-theme;
   }
 }
 
 .main {
+  position: relative;
   display: flex;
   flex-direction: column;
   background: var(--alinea-background);

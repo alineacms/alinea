@@ -19,7 +19,7 @@ function json<T>(res: Response): Promise<T> {
   return res.json()
 }
 
-function withAuth(init: RequestInit, ctx: Hub.Context) {
+function withAuth(init: RequestInit, ctx: Hub.AuthContext) {
   return {
     ...init,
     headers: {

@@ -11,7 +11,7 @@ export const internalPlugin: Plugin = {
     // building those are not available so we point at the source directly.
     const packages = fs
       .readdirSync('packages')
-      .filter(pkg => pkg.startsWith('input.'))
+      .filter(pkg => pkg.startsWith('input.') || pkg.startsWith('picker.'))
     const aliases = Object.fromEntries(
       packages.map(pkg => {
         return [`@alinea/${pkg}`, path.resolve(`packages/${pkg}/src/view.ts`)]

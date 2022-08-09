@@ -18,6 +18,7 @@ serve({
   staticDir: path.resolve('packages/cli/dist/static'),
   port: 4500,
   buildOptions: {
+    minify: false,
     plugins: [sassPlugin, internalPlugin]
   }
 })

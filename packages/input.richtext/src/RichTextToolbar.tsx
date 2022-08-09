@@ -1,5 +1,6 @@
 import {Reference} from '@alinea/core/Reference'
 import {Toolbar} from '@alinea/dashboard'
+import {UrlReference} from '@alinea/picker.url'
 import {
   DropdownMenu,
   fromModule,
@@ -28,6 +29,7 @@ import {IcRoundUndo} from '@alinea/ui/icons/IcRoundUndo'*/
 import {Editor} from '@tiptap/react'
 import {forwardRef, Ref} from 'react'
 import {PickTextLinkFunc} from './PickTextLink'
+import {attributesToReference, referenceToAttributes} from './ReferenceLink'
 import css from './RichTextToolbar.module.scss'
 
 const styles = fromModule(css)
@@ -59,49 +61,53 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
     : editor.isActive('heading', {level: 3})
     ? 'h3'
     : 'paragraph'
-  function parseLink(href: string): Reference | undefined {
-    try {
-      const url = new URL(href)
-      if (url.protocol === 'entry:') {
-        const entry = url.pathname
-        return {id: entry, type: 'entry', entry}
-      }
-      return {id: href, type: 'url', url: href}
-    } catch (e) {
-      return undefined
-    }
-  }
+
   function handleLink() {
     const attrs = editor.getAttributes('link')
-    const existing: Reference | undefined = attrs?.href && parseLink(attrs.href)
-    pickLink({link: existing ? [existing] : undefined}).then(picked => {
-      if (!picked) return
-      const link = picked.link && picked.link[0]
-      if (link?.type === 'entry') {
-        const command = exec()
-        const action = existing
-          ? command.extendMarkRange('link').setLink({
-              href: `entry:${link.entry}`,
-              target: picked.blank ? '_blank' : undefined
-            })
-          : command.insertContent({
-              type: 'text',
-              text: picked.description,
-              marks: [
-                {
-                  type: 'link',
-                  attrs: {
-                    href: `entry:${link.entry}`,
-                    target: picked.blank ? '_blank' : undefined
-                  }
-                }
-              ]
-            })
-        action.run()
-      } else {
-        exec().extendMarkRange('link').unsetLink().run()
-      }
+    const existing: Reference | undefined = attributesToReference(attrs)
+    const {view, state} = editor
+    const {from, to} = view.state.selection
+    const isSelection = from !== to
+    pickLink({
+      link: existing,
+      title: attrs.title,
+      blank: attrs.target === '_blank',
+      hasLink: Boolean(existing),
+      requireDescription: !isSelection
     })
+      .then(picked => {
+        if (!picked || !picked.link) {
+          exec().unsetLink().run()
+          return
+        }
+        const link = picked.link
+        const attrs = {
+          target:
+            (link as UrlReference).target ||
+            (picked.blank ? '_blank' : undefined),
+          title: picked.title,
+          ...referenceToAttributes(link)
+        }
+        if (isSelection) {
+          // Try creating a link on selected text
+          exec()
+            .setLink(attrs as any)
+            .run()
+        } else {
+          exec()
+            .insertContent({
+              type: 'text',
+              text:
+                picked.description ||
+                (link as UrlReference).description ||
+                (link as UrlReference).url ||
+                '',
+              marks: [{type: 'link', attrs}]
+            })
+            .run()
+        }
+      })
+      .catch(() => {})
   }
   return (
     <Toolbar.Slot>

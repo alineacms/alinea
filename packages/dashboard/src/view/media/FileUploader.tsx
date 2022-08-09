@@ -2,9 +2,8 @@ import {Entry} from '@alinea/core/Entry'
 import {Media} from '@alinea/core/Media'
 import {Outcome} from '@alinea/core/Outcome'
 import {Tree} from '@alinea/core/Tree'
-import {InputState} from '@alinea/editor/InputState'
+import {InputField} from '@alinea/editor/view/InputField'
 import {select} from '@alinea/input.select'
-import {SelectInput} from '@alinea/input.select/view'
 import {fromModule, px, Typo, VStack} from '@alinea/ui'
 import {IcRoundUploadFile} from '@alinea/ui/icons/IcRoundUploadFile'
 import {ChangeEvent, DragEvent, useRef, useState} from 'react'
@@ -123,8 +122,9 @@ export function FileUploader({max, toggleSelect}: FileUploaderProps) {
         </Typo.P>
       </VStack>
       <footer className={styles.root.footer()}>
-        <SelectInput
-          state={new InputState.StatePair(uploadTo, setUploadTo)}
+        <InputField
+          value={uploadTo}
+          onChange={setUploadTo}
           field={select(
             'Upload to',
             Object.fromEntries(

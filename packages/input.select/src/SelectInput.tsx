@@ -70,7 +70,7 @@ export function SelectInput<T extends string>({
                   className={styles.root.input.label({placeholder: !value})}
                 >
                   <TextLabel
-                    label={value ? items[value] : placeholder || field.label}
+                    label={(value ? items[value] : placeholder) || field.label}
                   />
                 </span>
                 <Icon
@@ -106,10 +106,10 @@ export function SelectInput<T extends string>({
                             selected
                           })}
                         >
+                          <TextLabel label={label} />
                           <div className={styles.root.dropdown.option.icon()}>
                             {selected && <Icon size={18} icon={IcRoundCheck} />}
                           </div>
-                          <TextLabel label={label} />
                         </HStack>
                       )}
                     </Listbox.Option>

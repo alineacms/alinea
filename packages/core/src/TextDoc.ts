@@ -1,7 +1,10 @@
 import {TypesOf} from './Schema'
 
 export namespace TextNode {
-  export type Mark = {type: string; attrs?: Record<string, string>}
+  export type Mark = {
+    type: string
+    attrs?: Record<string, string>
+  }
   export type Text = {
     type: 'text'
     text?: string
@@ -18,6 +21,12 @@ export namespace TextNode {
       | TypesOf<T>
     content?: TextDoc<T>
     [key: string]: any
+  }
+  export function isText(node: any): node is Text {
+    return node.type === 'text'
+  }
+  export function isElement(node: any): node is Element {
+    return node.type !== 'text'
   }
 }
 

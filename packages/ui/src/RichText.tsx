@@ -1,5 +1,5 @@
-import {ComponentType, Fragment, ReactElement, isValidElement} from 'react'
 import {HasType, TextDoc, TextNode, TypesOf} from '@alinea/core'
+import {ComponentType, Fragment, isValidElement, ReactElement} from 'react'
 
 export enum Elements {
   h1 = 'h1',
@@ -54,6 +54,8 @@ function nodeElement(
       return <br />
     case 'small':
       return <small />
+    case 'link':
+      return <a {...attributes} />
   }
 }
 

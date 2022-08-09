@@ -11,10 +11,9 @@ import {
   generateKeyBetween,
   isValidOrderKey
 } from '@alinea/core/util/FractionalIndexing'
+import {Logger} from '@alinea/core/util/Logger'
 import {Expr, Store} from '@alinea/store'
 import {SqliteStore} from '@alinea/store/sqlite/SqliteStore'
-import convertHrtime from 'convert-hrtime'
-import prettyMilliseconds from 'pretty-ms'
 import * as Y from 'yjs'
 import {Data} from './Data'
 import {appendPath} from './util/EntryPaths'
@@ -118,71 +117,75 @@ export namespace Cache {
     }
   }
 
+  const indexing = new WeakMap()
+
   export async function create(
     store: SqliteStore,
     config: Config,
     from: Data.Source,
-    log = false
+    logger: Logger = new Logger('Create cache')
   ) {
-    const startTime = process.hrtime.bigint()
-    if (log) process.stdout.write('> Start indexing...\r')
-    store.delete(Entry)
-    store.createFts5Table(Search, 'Search', () => {
-      return {title: Search.title}
-    })
+    if (indexing.has(store)) throw 'Already indexing'
+    indexing.set(store, true)
     let total = 0
     const batch: Array<Entry> = []
-    function commitBatch() {
+    function commitBatch(logger: Logger) {
       store.transaction(() => {
-        for (const entry of batch) {
-          store.insert(Entry, entry)
-          indexSearch(store, entry, false)
-        }
+        const inserted = store.insertAll(Entry, batch)
+
+        logger.operation('Index search', async () => {
+          for (const entry of inserted) indexSearch(store, entry, false)
+        })
       })
       batch.length = 0
     }
-    for await (const entry of from.entries()) {
-      total++
-      if (log && total % 1000 === 0) {
-        process.stdout.write(`> Scanned ${total} entries\r`)
-        commitBatch()
+    await logger.operation('Database setup', async () => {
+      store.delete(Entry)
+      store.createFts5Table(Search, 'Search', () => {
+        return {title: Search.title}
+      })
+    })
+    await logger.operation('Scan entries', async logger => {
+      for await (const entry of from.entries()) {
+        total++
+        if (total % 1000 === 0) {
+          logger.progress(`Scanned ${total} entries`)
+          commitBatch(logger)
+        }
+        batch.push(entry)
       }
-      batch.push(entry)
-    }
-    commitBatch()
-    if (log) process.stdout.write(`> Indexing...\r`)
-    store.createIndex(Entry, 'index', [Entry.index])
-    store.createIndex(Entry, 'i18nId', [Entry.i18n.id])
-    store.createIndex(Entry, 'parent', [Entry.parent])
-    store.createIndex(Entry, 'workspace.root.type', [
-      Entry.workspace,
-      Entry.root,
-      Entry.type
-    ])
-    store.createIndex(Entry, 'root', [Entry.root])
-    store.createIndex(Entry, 'type', [Entry.type])
-    store.createIndex(Entry, 'url', [Entry.url])
-    if (log) process.stdout.write(`> Validating order...\r`)
-    for (const [workspace, {schema}] of Object.entries(config.workspaces)) {
-      for (const [key, type] of schema) {
-        const {index} = type.options
-        if (!index) continue
-        const collection = type.collection()
-        const indices = index(collection)
-        for (const [name, fields] of Object.entries(indices)) {
-          const indexName = `${workspace}.${key}.${name}`
-          store.createIndex(collection, indexName, fields)
+      commitBatch(logger)
+    })
+    await logger.operation('Index entries', async () => {
+      store.createIndex(Entry, 'index', [Entry.index])
+      store.createIndex(Entry, 'i18nId', [Entry.i18n.id])
+      store.createIndex(Entry, 'parent', [Entry.parent])
+      store.createIndex(Entry, 'workspace.root.type', [
+        Entry.workspace,
+        Entry.root,
+        Entry.type
+      ])
+      store.createIndex(Entry, 'root', [Entry.root])
+      store.createIndex(Entry, 'type', [Entry.type])
+      store.createIndex(Entry, 'url', [Entry.url])
+    })
+    await logger.operation('Validate order', async () => {
+      for (const [workspace, {schema}] of Object.entries(config.workspaces)) {
+        for (const [key, type] of schema) {
+          const {index} = type.options
+          if (!index) continue
+          const collection = type.collection()
+          const indices = index(collection)
+          for (const [name, fields] of Object.entries(indices)) {
+            const indexName = `${workspace}.${key}.${name}`
+            store.createIndex(collection, indexName, fields)
+          }
         }
       }
-    }
-    validateOrder(store)
-    const diff = process.hrtime.bigint() - startTime
-    if (log)
-      console.log(
-        `> Indexed ${total} entries in ${prettyMilliseconds(
-          convertHrtime(diff).milliseconds
-        )}`
-      )
+      validateOrder(store)
+    })
+    logger.summary(`Indexed ${total} entries`)
+    indexing.delete(store)
   }
 
   export function computeEntry(store: Store, config: Config, entry: Entry) {

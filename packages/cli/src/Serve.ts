@@ -1,5 +1,6 @@
 import {nodeHandler} from '@alinea/backend/router/NodeHandler'
 import {router} from '@alinea/backend/router/Router'
+import {createDb} from '@alinea/backend/util/CreateDb'
 import {ReadableStream, Request, Response, TextEncoderStream} from '@alinea/iso'
 import semver from 'compare-versions'
 import esbuild, {BuildOptions, BuildResult} from 'esbuild'
@@ -10,7 +11,6 @@ import path from 'node:path'
 import {buildOptions} from './build/BuildOptions'
 import {generate} from './Generate'
 import {ServeBackend} from './serve/ServeBackend'
-import {createDb} from './util/CreateDb'
 import {dirname} from './util/Dirname'
 
 const __dirname = dirname(import.meta.url)

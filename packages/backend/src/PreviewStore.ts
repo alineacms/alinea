@@ -42,8 +42,13 @@ export class PreviewStore {
   private async fetchAllUpdates(ctx: Hub.Context) {
     const {drafts} = this.options
     const updates: Map<string, Uint8Array> = new Map()
-    for (const update of await accumulate(drafts.updates({}, ctx)))
-      updates.set(update.id, update.update)
+    await ctx.logger.operation(
+      'Fetch draft updates for preview store',
+      async () => {
+        for (const update of await accumulate(drafts.updates({}, ctx)))
+          updates.set(update.id, update.update)
+      }
+    )
     this.updates = updates
     this.lastFetchedAll = Date.now()
   }
@@ -54,10 +59,12 @@ export class PreviewStore {
     if (lastFetched && !isStale(lastFetched, 1)) {
       return
     }
-    const update = await drafts.get({id}, ctx)
-    if (update) {
-      await this.applyUpdate({id, update})
-    }
+    await ctx.logger.operation('Fetch draft update', async () => {
+      const update = await drafts.get({id}, ctx)
+      if (update) {
+        await this.applyUpdate({id, update})
+      }
+    })
   }
 
   async applyUpdate(update: Drafts.Update) {

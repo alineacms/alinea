@@ -7,7 +7,7 @@ import {FileSummaryRow, FileSummaryThumb} from '../view/media/FileSummary'
 import {MediaExplorer} from '../view/MediaExplorer'
 
 export const MediaSchema = {
-  MediaLibrary: type('Media directory', {
+  [Media.Type.Libary]: type('Media directory', {
     title: text('Title')
   }).configure({
     isContainer: true,
@@ -15,7 +15,7 @@ export const MediaSchema = {
     view: MediaExplorer,
     icon: IcRoundPermMedia
   }),
-  File: type('File', {
+  [Media.Type.File]: type('File', {
     title: text('Title'),
     location: hidden<string>('Location'),
     extension: hidden<string>('Extension'),

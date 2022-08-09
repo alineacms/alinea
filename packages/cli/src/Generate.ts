@@ -1,9 +1,11 @@
 import {Cache, Data, JsonLoader} from '@alinea/backend'
 import {FileData} from '@alinea/backend/data/FileData'
+import {createDb} from '@alinea/backend/util/CreateDb'
 import {Config} from '@alinea/core/Config'
 import {createError} from '@alinea/core/ErrorWithCode'
 import {createId} from '@alinea/core/Id'
 import {outcome} from '@alinea/core/Outcome'
+import {Logger} from '@alinea/core/util/Logger'
 import {Workspace} from '@alinea/core/Workspace'
 import {SqliteStore} from '@alinea/store/sqlite/SqliteStore'
 import {EvalPlugin} from '@esbx/eval'
@@ -15,7 +17,6 @@ import {createRequire} from 'node:module'
 import path from 'node:path'
 import {buildOptions} from './build/BuildOptions'
 import {exportStore} from './ExportStore'
-import {createDb} from './util/CreateDb'
 import {dirname} from './util/Dirname'
 import {externalPlugin} from './util/ExternalPlugin'
 import {ignorePlugin} from './util/IgnorePlugin'
@@ -420,7 +421,12 @@ export async function generate(options: GenerateOptions): Promise<Config> {
   }
 
   async function cacheEntries(config: Config, source: Data.Source) {
-    await Cache.create(store, config, source, !quiet)
+    await Cache.create(
+      store,
+      config,
+      source,
+      quiet ? undefined : new Logger('Generate')
+    )
     return store
   }
 

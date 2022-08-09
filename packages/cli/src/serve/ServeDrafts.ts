@@ -1,5 +1,6 @@
 import {Drafts} from '@alinea/backend/Drafts'
 import {FileDrafts, FileDraftsOptions} from '@alinea/backend/drafts/FileDrafts'
+import {createDb} from '@alinea/backend/util/CreateDb'
 import {Config} from '@alinea/core/Config'
 import {Hub} from '@alinea/core/Hub'
 import {base64} from '@alinea/core/util/Encoding'
@@ -7,7 +8,6 @@ import {Collection} from '@alinea/store/Collection'
 import {SqliteStore} from '@alinea/store/sqlite/SqliteStore'
 import path from 'node:path'
 import {exportStore} from '../ExportStore'
-import {createDb} from '../util/CreateDb'
 
 export interface ServeDraftsOptions extends FileDraftsOptions {
   config: Config

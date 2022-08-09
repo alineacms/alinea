@@ -31,7 +31,8 @@ export const EntrySummaryRow = view(
   entrySummaryQuery,
   function EntrySummaryRow({id, title, type: typeName, parents}) {
     const {schema} = useWorkspace()
-    const type = schema.type(typeName)!
+    const type = schema.type(typeName)
+    if (!type) return null
     return (
       <HStack center full gap={10} className={styles.row()}>
         <VStack>

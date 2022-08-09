@@ -6,7 +6,7 @@ import {Session} from './Session'
 export namespace Auth {
   export type Server = {
     handler: Handler<Request, Response | undefined>
-    contextFor(request: Request): Promise<Hub.Context>
+    contextFor(request: Request): Promise<Hub.AuthContext>
   }
   export type ViewProps = {setSession: (session: Session | undefined) => void}
   export type View = ComponentType<ViewProps>

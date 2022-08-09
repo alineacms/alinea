@@ -196,10 +196,16 @@ export class Expr<T> {
   }
   // We redeclare T as generic to this method because because TypeScript gets
   // very loopy if we don't
-  isIn<T>(this: Expr<T>, that: EV<Array<T>> | Cursor<T>): Expr<boolean> {
+  isIn<T>(
+    this: Expr<T>,
+    that: EV<ReadonlyArray<T>> | Cursor<T>
+  ): Expr<boolean> {
     return binop(this, BinOp.In, that)
   }
-  isNotIn<T>(this: Expr<T>, that: EV<Array<T>> | Cursor<T>): Expr<boolean> {
+  isNotIn<T>(
+    this: Expr<T>,
+    that: EV<ReadonlyArray<T>> | Cursor<T>
+  ): Expr<boolean> {
     return binop(this, BinOp.NotIn, that)
   }
   add(this: Expr<number>, that: EV<number>): Expr<number> {
