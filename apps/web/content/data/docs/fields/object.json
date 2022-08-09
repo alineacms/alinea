@@ -34,7 +34,7 @@
         {
           "id": "290iDwpZVR0wrW2N3JaIHxtxc0I",
           "type": "CodeBlock",
-          "code": "alinea.object('My object field', {\n  fields: alinea.type('Object fields', {\n    fieldA: alinea.text('A'),\n    fieldB: alinea.text('B')\n  })\n})"
+          "code": "import {alinea} from 'alinea'\nalinea.object('My object field', {\n  fields: alinea.type('Object fields', {\n    fieldA: alinea.text('A'),\n    fieldB: alinea.text('B')\n  })\n})"
         }
       ]
     }

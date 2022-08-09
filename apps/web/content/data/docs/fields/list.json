@@ -34,7 +34,7 @@
         {
           "id": "268j9BBXf8jwwZ427XxBT2O0snb",
           "type": "CodeBlock",
-          "code": "alinea.list('My list field', {\n  schema: alinea.schema({\n    // ... types\n  })\n})"
+          "code": "import {alinea} from 'alinea'\nalinea.list('My list field', {\n  schema: alinea.schema({\n    // ... types\n  })\n})"
         }
       ]
     },

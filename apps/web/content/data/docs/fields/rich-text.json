@@ -34,7 +34,7 @@
         {
           "id": "268iODr7pOAG2BeDXXfDEvDZYfr",
           "type": "CodeBlock",
-          "code": "alinea.richText('My rich text field', {\n  blocks: alinea.schema({\n    CodeBlock: CodeBlockSchema,\n    ImageBlock: ImageBlockSchema\n  })\n})"
+          "code": "import {alinea} from 'alinea'\nalinea.richText('My rich text field', {\n  blocks: alinea.schema({\n    CodeBlock: CodeBlockSchema,\n    ImageBlock: ImageBlockSchema\n  })\n})"
         }
       ]
     },
