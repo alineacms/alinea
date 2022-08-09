@@ -2,6 +2,7 @@ import {outcome, TypeConfig} from '@alinea/core'
 import {base64url} from '@alinea/core/util/Encoding'
 import {DashboardProvider, SessionProvider, Toolbar} from '@alinea/dashboard'
 import {createDemo} from '@alinea/dashboard/demo/DemoData'
+import {InputForm} from '@alinea/editor'
 import {useForm} from '@alinea/editor/hook/UseForm'
 import {QueryClient, QueryClientProvider} from '@alinea/shared/react-query'
 import {
@@ -130,6 +131,7 @@ export default function Playground() {
     setErrors(failure.errors)
   }
   function editorConfig(monaco: Monaco) {
+    console.log('config')
     monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
       jsx: 'preserve'
     })
