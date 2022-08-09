@@ -18,6 +18,10 @@ const output =
   consoleLog
 const isConsole = output === consoleLog
 
+function now() {
+  return typeof performance !== 'undefined' ? performance.now() : Date.now()
+}
+
 export namespace Report {
   export function toConsole(report: Report, prefix = '') {
     if (prefix && !isConsole) output(prefix)
@@ -46,12 +50,12 @@ export interface LoggerResult<T> {
 }
 
 function durationSince(time: number) {
-  return performance.now() - time
+  return now() - time
 }
 
 export class Logger {
   logs: Array<Log | Report> = []
-  started = performance.now()
+  started = now()
   operations: Array<Logger> = []
   startProgress: number | undefined = undefined
 
@@ -70,12 +74,12 @@ export class Logger {
   }
 
   log(...args: Array<any>) {
-    this.logs.push({args, time: performance.now()})
+    this.logs.push({args, time: now()})
   }
 
   progress(message: string) {
     if (!this.startProgress) {
-      this.startProgress = performance.now()
+      this.startProgress = now()
     }
     output(`> ${message}\r`)
   }
@@ -96,7 +100,7 @@ export class Logger {
   }
 
   report() {
-    const current = performance.now()
+    const current = now()
     const duration = current - this.started
     return {
       name: this.name,
