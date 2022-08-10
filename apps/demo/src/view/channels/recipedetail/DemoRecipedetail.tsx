@@ -4,26 +4,35 @@ import {fromModule, RichText} from '@alinea/ui'
 import {MdiChefHat} from '../../../icons/MdiChefHat'
 import {MdiClock} from '../../../icons/MdiClock'
 import {DemoBlocks} from '../../blocks/DemoBlocks'
+import {DemoRecipeCard} from '../../components/cards/DemoRecipeCard'
 import {DemoHero} from '../../components/hero/DemoHero'
 import {DemoContainer, DemoSmallContainer} from '../../layout/DemoContainer'
 import {DemoImage} from '../../layout/DemoImage'
+import {DemoTitle} from '../../layout/DemoTitle'
 import {DemoRecipedetailSchema} from '../recipedetail/DemoRecipedetail.schema'
 
 const styles = fromModule(css)
 
-export function DemoRecipedetail(props: DemoRecipedetailSchema) {
-  const {title, image, category, intro, blocks} = props
+type RelatedProps = {
+  related: DemoRecipedetailSchema[]
+  category: string
+}
+
+export function DemoRecipedetail(props: DemoRecipedetailSchema & RelatedProps) {
+  const {title, image, category, intro, blocks, related} = props
 
   return (
     <div className={styles.root()}>
       <DemoHero image={image} title={title} />
       <Intro image={image} category={category} intro={intro} />
       <DemoBlocks blocks={blocks} container={DemoSmallContainer} />
+      <Related related={related} category={category} />
     </div>
   )
 }
 
 function Intro({image, category, intro}: any) {
+  console.log(intro)
   return (
     <div className={styles.intro()}>
       <DemoContainer>
@@ -50,12 +59,34 @@ function Intro({image, category, intro}: any) {
                 <p>50 mins</p>
               </div>
             </div>
-            {intro && (
+            {intro && intro?.length > 0 && (
               <div className={styles.intro.text()}>
                 <RichText doc={intro} />
               </div>
             )}
           </div>
+        </div>
+      </DemoContainer>
+    </div>
+  )
+}
+
+function Related({related, category}: RelatedProps) {
+  if (!related || related?.length < 1) return null
+
+  return (
+    <div className={styles.related()}>
+      <DemoContainer>
+        {category && (
+          <DemoTitle.H2>Related by category: {category}</DemoTitle.H2>
+        )}
+        {!category && <DemoTitle.H2>Latest recipes</DemoTitle.H2>}
+        <div className={styles.related.items()}>
+          {related.map((item, i) => (
+            <div className={styles.related.items.item()} key={i}>
+              <DemoRecipeCard {...item} />
+            </div>
+          ))}
         </div>
       </DemoContainer>
     </div>

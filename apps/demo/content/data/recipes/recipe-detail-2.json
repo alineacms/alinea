@@ -2,10 +2,10 @@
   "id": "MQu7tBnLbfaXIzQmUp4jZ",
   "type": "Recipedetail",
   "root": "data",
+  "index": "MQu7tBnLbfaXIzR",
   "title": "Recipe detail 2",
-  "hero": {
-    "image": [],
-    "text": [],
-    "button": []
-  }
+  "image": [],
+  "category": "main_course",
+  "intro": [],
+  "blocks": []
 }

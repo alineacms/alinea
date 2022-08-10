@@ -14,7 +14,7 @@ export const DemoRecipedetailSchema = type('Recipedetail', {
   }),
   category: select('Type', {
     appetizer: 'Appetizer',
-    main_course: 'Main course',
+    main_cours: 'Main course',
     dessert: 'Dessert'
   }),
   intro: richText('Intro'),
