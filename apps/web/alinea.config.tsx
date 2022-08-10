@@ -1,7 +1,10 @@
 import {createCloudBackend} from '@alinea/cloud'
-import {createConfig, root, schema, workspace} from '@alinea/core'
+import {createConfig, root, schema, type, workspace} from '@alinea/core'
 import {MediaSchema} from '@alinea/dashboard/schema/MediaSchema'
 import {BrowserPreview} from '@alinea/dashboard/view/preview/BrowserPreview'
+import {path} from '@alinea/input.path'
+import {richText} from '@alinea/input.richtext'
+import {text} from '@alinea/input.text'
 import {IcRoundInsertDriveFile} from '@alinea/ui/icons/IcRoundInsertDriveFile'
 import {IcRoundPermMedia} from '@alinea/ui/icons/IcRoundPermMedia'
 //import {configureBackend} from './alinea.server'
@@ -14,7 +17,12 @@ export const webSchema = schema({
   ...MediaSchema,
   Home: HomePageSchema,
   Docs: DocsPageSchema,
-  Doc: DocPageSchema
+  Doc: DocPageSchema,
+  Page: type('Page', {
+    title: text('Title'),
+    path: path('Path'),
+    content: richText('Content')
+  })
 })
 
 const web = workspace('Alinea', {

@@ -133,9 +133,7 @@ export namespace Cache {
       store.transaction(() => {
         const inserted = store.insertAll(Entry, batch)
 
-        logger.operation('Index search', async () => {
-          for (const entry of inserted) indexSearch(store, entry, false)
-        })
+        for (const entry of inserted) indexSearch(store, entry, false)
       })
       batch.length = 0
     }
