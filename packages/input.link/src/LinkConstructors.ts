@@ -131,6 +131,32 @@ export function linkConstructors(createLink: CreateLink) {
     })
   }
 
+  function url<T = {}, Q = LinkData.Url & T>(
+    label: Label,
+    options: LinkOptions<T, Q> = {}
+  ): LinkField<T, Q> {
+    return createLink(label, {
+      ...options,
+      pickers: [
+        urlPicker({
+          ...options
+        })
+      ],
+      multiple: false
+    })
+  }
+
+  function multipleUrls<T = {}, Q = Array<LinkData.Url & T>>(
+    label: Label,
+    options: LinkOptions<T, Q> = {}
+  ): LinkField<T, Q> {
+    return createLink(label, {
+      ...options,
+      pickers: [urlPicker({...options})],
+      multiple: true
+    })
+  }
+
   function image<T = {}, Q = LinkData.Image & T>(
     label: Label,
     options: LinkOptions<T, Q> = {}
@@ -178,6 +204,7 @@ export function linkConstructors(createLink: CreateLink) {
   return Object.assign(link, {
     multiple,
     entry: Object.assign(entry, {multiple: multipleEntries}),
+    url: Object.assign(url, {multiple: multipleUrls}),
     image: Object.assign(image, {multiple: multipleImages}),
     file: Object.assign(file, {multiple: multipleFiles})
   })
