@@ -12,3 +12,9 @@ export {richText} from '@alinea/input.richtext'
 export {select} from '@alinea/input.select'
 export {tab, tabs} from '@alinea/input.tabs'
 export {text} from '@alinea/input.text'
+
+import {link} from '@alinea/input.link'
+export const entry = link.entry
+export const image = link.image
+export const file = link.file
+export const url = link.url
