@@ -127,6 +127,7 @@ export namespace Cache {
   ) {
     if (indexing.has(store)) throw 'Already indexing'
     indexing.set(store, true)
+    const endDbSetup = logger.time('Database setup')
     let total = 0
     const batch: Array<Entry> = []
     function commitBatch(logger: Logger) {
@@ -137,51 +138,50 @@ export namespace Cache {
       })
       batch.length = 0
     }
-    await logger.operation('Database setup', async () => {
-      store.delete(Entry)
-      store.createFts5Table(Search, 'Search', () => {
-        return {title: Search.title}
-      })
+    store.delete(Entry)
+    store.createFts5Table(Search, 'Search', () => {
+      return {title: Search.title}
     })
-    await logger.operation('Scan entries', async logger => {
-      for await (const entry of from.entries()) {
-        total++
-        if (total % 1000 === 0) {
-          logger.progress(`Scanned ${total} entries`)
-          commitBatch(logger)
-        }
-        batch.push(entry)
+    endDbSetup()
+    const endScan = logger.time('Scanning entries')
+    for await (const entry of from.entries()) {
+      total++
+      if (total % 1000 === 0) {
+        logger.progress(`Scanned ${total} entries`)
+        commitBatch(logger)
       }
-      commitBatch(logger)
-    })
-    await logger.operation('Index entries', async () => {
-      store.createIndex(Entry, 'index', [Entry.index])
-      store.createIndex(Entry, 'i18nId', [Entry.i18n.id])
-      store.createIndex(Entry, 'parent', [Entry.parent])
-      store.createIndex(Entry, 'workspace.root.type', [
-        Entry.workspace,
-        Entry.root,
-        Entry.type
-      ])
-      store.createIndex(Entry, 'root', [Entry.root])
-      store.createIndex(Entry, 'type', [Entry.type])
-      store.createIndex(Entry, 'url', [Entry.url])
-    })
-    await logger.operation('Validate order', async () => {
-      for (const [workspace, {schema}] of Object.entries(config.workspaces)) {
-        for (const [key, type] of schema) {
-          const {index} = type.options
-          if (!index) continue
-          const collection = type.collection()
-          const indices = index(collection)
-          for (const [name, fields] of Object.entries(indices)) {
-            const indexName = `${workspace}.${key}.${name}`
-            store.createIndex(collection, indexName, fields)
-          }
+      batch.push(entry)
+    }
+    commitBatch(logger)
+    endScan()
+    const endIndex = logger.time('Indexing entries')
+    store.createIndex(Entry, 'index', [Entry.index])
+    store.createIndex(Entry, 'i18nId', [Entry.i18n.id])
+    store.createIndex(Entry, 'parent', [Entry.parent])
+    store.createIndex(Entry, 'workspace.root.type', [
+      Entry.workspace,
+      Entry.root,
+      Entry.type
+    ])
+    store.createIndex(Entry, 'root', [Entry.root])
+    store.createIndex(Entry, 'type', [Entry.type])
+    store.createIndex(Entry, 'url', [Entry.url])
+    endIndex()
+    const endValidate = logger.time('Validating orders')
+    for (const [workspace, {schema}] of Object.entries(config.workspaces)) {
+      for (const [key, type] of schema) {
+        const {index} = type.options
+        if (!index) continue
+        const collection = type.collection()
+        const indices = index(collection)
+        for (const [name, fields] of Object.entries(indices)) {
+          const indexName = `${workspace}.${key}.${name}`
+          store.createIndex(collection, indexName, fields)
         }
       }
-      validateOrder(store)
-    })
+    }
+    validateOrder(store)
+    endValidate()
     logger.summary(`Indexed ${total} entries`)
     indexing.delete(store)
   }

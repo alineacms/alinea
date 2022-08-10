@@ -87,7 +87,9 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
     ctx: Hub.Context = this.createContext()
   ): Future<Entry.Detail | null> {
     const {config, drafts, previews} = this.options
+    const end = ctx.logger.time('Get draft', true)
     let draft = await drafts.get({id, stateVector}, ctx)
+    end()
     if (draft) {
       const doc = new Y.Doc()
       Y.applyUpdate(doc, draft)
@@ -159,7 +161,9 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
   ): Future<void> {
     const {drafts} = this.options
     return outcome(async () => {
+      const end = ctx.logger.time('Update draft', true)
       const instruction = await drafts.update({id, update}, ctx)
+      end()
       await this.preview.applyUpdate(instruction)
     })
   }
@@ -170,7 +174,9 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
   ): Future<boolean> {
     const {drafts} = this.options
     return outcome(async () => {
+      const end = ctx.logger.time('Delete draft', true)
       await drafts.delete({ids: [id]}, ctx)
+      end()
       await this.preview.deleteUpdate(id)
       const store = await this.preview.getStore(ctx)
       // Do we still have an entry after removing the draft?
@@ -184,7 +190,9 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
   ) {
     return outcome(async () => {
       const store = await this.preview.getStore(ctx)
+      const end = ctx.logger.time('Fetch draft updates', true)
       const drafts = await accumulate(this.drafts.updates({}, ctx))
+      end()
       const ids = drafts.map(({id}) => id)
       const inWorkspace = store.all(
         Entry.where(Entry.workspace.is(workspace))

@@ -61,16 +61,12 @@ export class Logger {
 
   constructor(public name: string) {}
 
-  operation<T>(name: string, run: Run<T>) {
+  time(name: string, justTime = false) {
     const op = new Logger(name)
-    const result = run(op)
-    const report = () => {
+    if (!justTime) this.progress(name)
+    return () => {
       this.logs.push(op.report())
     }
-    this.progress(name)
-    if (result instanceof Promise) return result.finally(report)
-    report()
-    return result
   }
 
   log(...args: Array<any>) {
