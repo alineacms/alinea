@@ -10,3 +10,7 @@ type DemoContainerProps = PropsWithChildren<HTMLAttributes<HTMLDivElement>>
 export function DemoContainer(props: DemoContainerProps) {
   return <div {...props} className={styles.root.mergeProps(props)()} />
 }
+
+export function DemoSmallContainer(props: DemoContainerProps) {
+  return <div {...props} className={styles.root('small')} />
+}

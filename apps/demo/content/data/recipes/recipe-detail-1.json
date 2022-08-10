@@ -2,7 +2,7 @@
   "id": "thX1i3Ezl_gMudRd37XR9",
   "type": "Recipedetail",
   "root": "data",
-  "index": "thX1i3Ezl_gMudRd37XRB",
+  "index": "thX1i3Ezl_gMudRd37XRD",
   "title": "Recipe detail 1",
   "image": [
     {
@@ -130,6 +130,108 @@
                   ]
                 }
               ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "G-iZdmzY3lTwIGARO4DM3",
+      "index": "a1",
+      "type": "DemoColumnsBlock",
+      "text_left": [
+        {
+          "type": "heading",
+          "textAlign": "left",
+          "level": 3,
+          "content": [
+            {
+              "type": "text",
+              "text": "Heading 3"
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "textAlign": "left",
+          "content": [
+            {
+              "type": "text",
+              "text": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas at leo orci. Praesent finibus sem in urna malesuada tincidunt. Aenean nisl nulla, sodales facilisis libero vitae, semper auctor eros."
+            }
+          ]
+        }
+      ],
+      "text_right": [
+        {
+          "type": "paragraph",
+          "textAlign": "left",
+          "content": [
+            {
+              "type": "text",
+              "text": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas at leo orci. Praesent finibus sem in urna malesuada tincidunt. Aenean nisl nulla, sodales facilisis libero vitae, semper auctor eros."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "dIDzvcckSyjDH9v01VMNY",
+      "index": "a2",
+      "type": "DemoImagetextBlock",
+      "image": [
+        {
+          "id": "Vr6Us6CQDFMqjpvbtOUhX",
+          "index": "a0",
+          "type": "entry",
+          "entry": "zZg8QUVWOmGTbv_ljhBKa"
+        }
+      ],
+      "text": [
+        {
+          "type": "heading",
+          "textAlign": "left",
+          "level": 3,
+          "content": [
+            {
+              "type": "text",
+              "text": "Heading 3"
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "textAlign": "left",
+          "content": [
+            {
+              "type": "text",
+              "text": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas at leo orci. Praesent finibus sem in urna malesuada tincidunt. Aenean nisl nulla, sodales facilisis libero vitae, semper auctor eros."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "K3zLPFflFyqlkue1Jpu18",
+      "index": "a3",
+      "type": "DemoImagetextBlock",
+      "image": [
+        {
+          "id": "d-ZTqivb-08MAdNI5NQVA",
+          "index": "a0",
+          "type": "entry",
+          "entry": "zZg8QUVWOmGTbv_ljhBKa"
+        }
+      ],
+      "image_position": "right",
+      "text": [
+        {
+          "type": "paragraph",
+          "textAlign": "left",
+          "content": [
+            {
+              "type": "text",
+              "text": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas at leo orci. Praesent finibus sem in urna malesuada tincidunt. Aenean nisl nulla, sodales facilisis libero vitae, semper auctor eros."
             }
           ]
         }

@@ -31,6 +31,10 @@
     padding: 30px;
 
     &-text {
+      display: -webkit-box;
+      -webkit-line-clamp: 5;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
       margin-top: 10px;
     }
   }

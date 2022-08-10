@@ -5,4 +5,8 @@
   margin: 0 auto;
   padding: 0 30px;
   max-width: 1140px + (2 * 30px);
+
+  &.is-small {
+    max-width: 900px + (2 * 30px);
+  }
 }
