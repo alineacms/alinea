@@ -10,20 +10,26 @@ export enum EntryStatus {
   Archived = 'archived'
 }
 
-export interface Entry {
+export interface EntryMeta {
+  // These fields are stored when using file data
   id: string
   type: string
-  title: Label
-  path: string
-  index: string
-  workspace: string
-  root: string
   url: string
+  index: string
+  root: string
+  i18n?: Entry.I18N
+  // These are computed during generation
+  workspace: string
   parent: string | undefined
   parents: Array<string>
   $status?: EntryStatus
   $isContainer?: boolean
-  i18n?: Entry.I18N
+}
+
+export interface Entry {
+  title: Label
+  path: string
+  alinea: EntryMeta
 }
 
 export namespace Entry {
@@ -41,38 +47,31 @@ export namespace Entry {
     parent: string | undefined
     parents: Array<string>
   }
-  export type Minimal = Pick<
-    Entry,
-    'id' | 'type' | 'title' | 'workspace' | 'root' | 'url' | 'parent' | 'i18n'
-  >
-  export type Summary = Pick<
-    Entry,
-    | 'id'
-    | 'type'
-    | 'title'
-    | 'workspace'
-    | 'root'
-    | 'url'
-    | 'index'
-    | 'parent'
-    | 'i18n'
-    | 'parents'
-    | '$isContainer'
-  > & {
+  export type Minimal = Pick<Entry, 'title' | 'alinea'>
+  export type Summary = Pick<Entry, 'title' | 'alinea'> & {
     childrenCount: number
   }
-  export type Raw = Omit<
-    Entry,
-    | 'path'
-    | 'workspace'
-    | 'url'
-    | '$status'
-    | 'parent'
-    | 'parents'
-    | '$isContainer'
-    | 'i18n'
-  > & {i18n?: {id: string}}
-  // & {[key: string]: any}
+  export interface Raw {
+    title: Label
+    alinea: {
+      id: string
+      type: string
+      index: string
+      root: string
+      i18n?: {id: string}
+    }
+  }
 }
 
-export const Entry = new Collection<Entry>('Entry')
+const collection = new Collection<Entry>('Entry')
+export const Entry = Object.assign(collection, {
+  id: collection.alinea.id,
+  type: collection.alinea.type,
+  url: collection.alinea.url,
+  index: collection.alinea.index,
+  root: collection.alinea.root,
+  workspace: collection.alinea.workspace,
+  i18n: collection.alinea.i18n,
+  parent: collection.alinea.parent,
+  parents: collection.alinea.parents
+})

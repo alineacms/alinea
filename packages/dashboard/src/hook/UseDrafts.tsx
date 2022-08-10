@@ -53,7 +53,10 @@ class Drafts {
     const [result, error] = await hub.entry({id})
     if (error) throw error
     if (!result) throw createError(404, `Entry not found`)
-    const type = hub.config.type(result.entry.workspace, result.entry.type)
+    const type = hub.config.type(
+      result.entry.alinea.workspace,
+      result.entry.alinea.type
+    )
     if (!type) throw createError(404, `Type not found`)
     if (result.draft) {
       Y.applyUpdate(doc, base64.parse(result.draft))
@@ -72,7 +75,7 @@ class Drafts {
     if (this.saveTimeout) clearTimeout(this.saveTimeout)
     draft.status(EntryStatus.Publishing)
     this.status(DraftsStatus.Saving)
-    return this.hub.deleteDraft({id: draft.id}).then(result => {
+    return this.hub.deleteDraft({id: draft.alinea.id}).then(result => {
       draft.status(EntryStatus.Published)
       this.queryClient.invalidateQueries('draft-list')
       return result

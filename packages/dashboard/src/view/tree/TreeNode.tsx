@@ -39,10 +39,12 @@ type TreeNodeChildrenCreator = {
 function TreeNodeChildrenCreator({locale, entry}: TreeNodeChildrenCreator) {
   const nav = useNav()
   const {schema} = useWorkspace()
-  const type = schema.type(entry.type)
+  const type = schema.type(entry.alinea.type)
   if (!type) return null
   return (
-    <Create.Link to={nav.create({...entry, locale, id: entry.source.id})} />
+    <Create.Link
+      to={nav.create({...entry.alinea, locale, id: entry.source.id})}
+    />
   )
 }
 
@@ -81,8 +83,8 @@ const TreeNodeLink = memo(
     ref
   ) {
     const {schema} = useWorkspace()
-    const type = schema.type(entry.type)!
-    const isContainer = entry.$isContainer
+    const type = schema.type(entry.alinea.type)!
+    const isContainer = entry.alinea.$isContainer
     const containerIcon = isOpened ? (
       <IcRoundKeyboardArrowDown style={{fontSize: px(20)}} />
     ) : (
@@ -116,7 +118,7 @@ const TreeNodeLink = memo(
             className={styles.root.link()}
             style={{paddingLeft: `${10 + level * 8}px`}}
             onClick={event => {
-              if (!entry.$isContainer || isOpened) return
+              if (!entry.alinea.$isContainer || isOpened) return
               toggleOpen()
             }}
           >
@@ -124,7 +126,7 @@ const TreeNodeLink = memo(
               <div
                 className={styles.root.link.icon()}
                 onClick={event => {
-                  if (!entry.$isContainer) return
+                  if (!entry.alinea.$isContainer) return
                   event.preventDefault()
                   event.stopPropagation()
                   toggleOpen()
@@ -158,7 +160,7 @@ const TreeNodeLink = memo(
               )}
             </HStack>
           </Link>
-          {entry.$isContainer && (
+          {entry.alinea.$isContainer && (
             <Stack.Right className={styles.root.create()}>
               <TreeNodeChildrenCreator locale={locale} entry={entry} />
             </Stack.Right>
@@ -189,7 +191,7 @@ export function TreeNodeSortable(props: TreeNodeProps) {
     over
   } = useSortable({
     animateLayoutChanges: () => false,
-    id: props.entry.id
+    id: props.entry.alinea.id
   })
   const style: CSSProperties = {
     transform: CSS.Transform.toString(transform),
@@ -203,7 +205,7 @@ export function TreeNodeSortable(props: TreeNodeProps) {
       {...listeners}
       {...attributes}
       isDragging={isDragging}
-      isDropContainer={over?.id === props.entry.id}
+      isDropContainer={over?.id === props.entry.alinea.id}
     />
   )
 }
@@ -235,11 +237,11 @@ export function TreeNode({
   const workspace = useWorkspace()
   const {ids: drafts} = useDraftsList(workspace.name)
   const isDraft = drafts.includes(entry.source.id)
-  const isSelected = draft?.id === entry.source.id
+  const isSelected = draft?.alinea.id === entry.source.id
   const handleToggleOpen = useCallback(() => {
-    if (entry.$isContainer) toggleOpen(entry.id)
+    if (entry.alinea.$isContainer) toggleOpen(entry.alinea.id)
   }, [toggleOpen])
-  const isOpened = isOpen(entry.id)
+  const isOpened = isOpen(entry.alinea.id)
   useInitialEffect(() => {
     if (isSelected)
       ref.current!.scrollIntoView({/*behavior: 'smooth',*/ block: 'center'})

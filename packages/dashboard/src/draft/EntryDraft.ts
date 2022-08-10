@@ -1,6 +1,7 @@
 import {
   Entry,
   entryFromDoc,
+  EntryMeta,
   EntryStatus,
   Hub,
   Label,
@@ -30,7 +31,7 @@ export class EntryDraft implements Entry {
   ) {
     this.__root = doc.getMap(ROOT_KEY)
     this.entry = observable(this.getEntry())
-    this.status = observable(this.$status)
+    this.status = observable(this.alinea.$status)
   }
 
   get source() {
@@ -69,62 +70,29 @@ export class EntryDraft implements Entry {
     return new EntryProperty<string, (state: string) => string>(['title'])
   }
 
-  get id(): string {
-    return this.source.id
-  }
-
-  get $isContainer(): boolean | undefined {
-    return this.__root.get('$isContainer') || this.source.$isContainer
-  }
-
-  get workspace(): string {
-    return this.source.workspace
-  }
-
-  get root(): string {
-    return this.source.root
-  }
-
-  get parents(): Array<string> {
-    return this.source.parents
-  }
-
-  get type(): string {
-    return this.__root.get('type') || this.source.type
-  }
-
-  get index(): string {
-    return this.__root.get('index') || this.source.index
-  }
-
-  get url(): string {
-    return this.source.url
-  }
-
-  get path(): string {
-    return this.__root.get('path') || this.source.path
-  }
-
-  get $status(): EntryStatus {
-    return (
-      this.__root.get('$status') || this.source.$status || EntryStatus.Published
-    )
-  }
-
-  get parent(): string | undefined {
-    return this.__root.get('parent') || this.source.parent
-  }
-
-  get i18n(): Entry.I18N | undefined {
-    return this.source.i18n
+  get alinea() {
+    const meta = this.source.alinea
+    const draftMeta = this.__root.get('alinea') as EntryMeta
+    return {
+      ...meta,
+      $isContainer: draftMeta.$isContainer || meta.$isContainer,
+      type: draftMeta.type || meta.type,
+      index: draftMeta.index || meta.index,
+      $status: draftMeta.$status || meta.$status || EntryStatus.Published,
+      parent: draftMeta.parent || meta.parent
+    }
   }
 
   get title(): Label {
     return this.__root.get('title') || this.source.title
   }
 
+  get path(): string {
+    return this.__root.get('path') || this.source.path
+  }
+
   translation(locale: string): Entry.Minimal | undefined {
-    return this.detail.translations?.find(t => t.i18n?.locale === locale)
+    return this.detail.translations?.find(t => t.alinea.i18n?.locale === locale)
   }
 
   private getLocation(location: Array<string>) {

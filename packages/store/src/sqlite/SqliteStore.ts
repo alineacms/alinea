@@ -80,17 +80,20 @@ export class SqliteStore implements Store {
   ): Array<Row> {
     const res = []
     for (let object of objects) {
-      if (!object.id) object = {...object, id: this.createId()}
+      const id = collection.__collectionId.getFromRow(object)
+      if (!id) collection.__collectionId.addToRow(object, this.createId())
       const from = collection.cursor.from
       if (from.type === FromType.Column) {
         this.prepare(
-          `insert into ${f.escapeId(From.source(from.of))} values (?)`
+          `insert into ${f.escapeId(From.source(from.of))} values (?)`,
+          collection
         ).run([JSON.stringify(object)])
       } else if (from.type === FromType.Table) {
         this.prepare(
           `insert into ${f.escapeId(from.name)} values (${from.columns
             .map(_ => '?')
-            .join(', ')})`
+            .join(', ')})`,
+          collection
         ).run(from.columns.map(col => (object as any)[col]))
       }
       res.push(object)
@@ -146,10 +149,16 @@ export class SqliteStore implements Store {
   }
 
   prepared = new Map()
-  prepare(query: string): Driver.PreparedStatement {
+  prepare(
+    query: string,
+    collection?: Collection<any>
+  ): Driver.PreparedStatement {
     //if (this.prepared.has(query)) return this.prepared.get(query)
     try {
-      const result = this.createOnError(() => this.db.prepare(query))
+      const result = this.createOnError(
+        () => this.db.prepare(query),
+        collection
+      )
       //this.prepared.set(query, result)
       return result
     } catch (e: any) {
@@ -233,7 +242,11 @@ export class SqliteStore implements Store {
     this.db.exec(instruction)
   }
 
-  createOnError<T>(run: () => T, retry?: string): T {
+  createOnError<T>(
+    run: () => T,
+    collection: Collection<any>,
+    retry?: string
+  ): T {
     try {
       return run()
     } catch (e) {
@@ -246,16 +259,15 @@ export class SqliteStore implements Store {
           .split('.')
           .pop()
         if (retry != table && table != null) {
-          this.createTable(table)
-          return this.createOnError(run, table)
+          this.createTable(table, collection)
+          return this.createOnError(run, collection, table)
         }
       }
       throw e
     }
   }
 
-  createTable(name: string) {
-    const collection = new Collection<{id: string}>(name)
+  createTable(name: string, collection: Collection<any>) {
     this.db.exec(`create table if not exists ${f.escapeId(name)}(data json);`)
     this.createIndex(collection, 'id', [collection.id])
   }

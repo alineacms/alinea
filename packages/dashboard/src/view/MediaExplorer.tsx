@@ -77,11 +77,11 @@ export function MediaExplorer() {
   const {name: workspace} = useWorkspace()
   const {File} = Media
   const {data} = useQuery(
-    ['media', 'total', draft.id],
+    ['media', 'total', draft.alinea.id],
     () => {
       return hub
         .query({
-          cursor: File.where(File.parent.is(draft.id)).select({
+          cursor: File.where(File.alinea.parent.is(draft.alinea.id)).select({
             total: Functions.count()
           })
         })
@@ -99,8 +99,8 @@ export function MediaExplorer() {
         uploadFile(
           hub,
           workspace,
-          draft.root,
-          draft.url + '/' + file.name,
+          draft.alinea.root,
+          draft.alinea.url + '/' + file.name,
           file
         ).then(console.log)
       )
@@ -145,16 +145,16 @@ export function MediaExplorer() {
                       <div key={index} style={{...style, height}}>
                         <MediaRow
                           amount={perRow}
-                          parentId={draft.id}
+                          parentId={draft.alinea.id}
                           from={from}
                           batchSize={perRow * 5}
                         />
                       </div>
                     )
                   }}
-                  scrollOffset={scrollOffsets.get(draft.id) || 0}
+                  scrollOffset={scrollOffsets.get(draft.alinea.id) || 0}
                   onScroll={scrollTop => {
-                    scrollOffsets.set(draft.id, scrollTop)
+                    scrollOffsets.set(draft.alinea.id, scrollTop)
                   }}
                 />
               )}

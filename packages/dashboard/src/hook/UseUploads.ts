@@ -19,7 +19,12 @@ const enum UploadStatus {
   Done
 }
 
-type Destination = Pick<Entry, 'id' | 'workspace' | 'root' | 'url' | 'title'>
+type Destination = {
+  id: string
+  workspace: string
+  root: string
+  url: string
+}
 
 type Upload = {
   id: string

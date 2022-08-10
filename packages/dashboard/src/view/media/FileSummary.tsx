@@ -21,9 +21,9 @@ const styles = fromModule(css)
 function fileSummarySelect(File: Collection<Media.File>) {
   return {
     id: File.id,
-    type: File.type,
-    workspace: File.workspace,
-    root: File.root,
+    type: File.alinea.type,
+    workspace: File.alinea.workspace,
+    root: File.alinea.root,
     title: File.title,
     extension: File.extension,
     size: File.size,

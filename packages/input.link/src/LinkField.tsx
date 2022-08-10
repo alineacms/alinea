@@ -1,6 +1,7 @@
 import type {Pages} from '@alinea/backend'
 import {
   Entry,
+  EntryMeta,
   Field,
   Label,
   Media,
@@ -17,13 +18,13 @@ export namespace LinkType {
   export function conditionOf(cursor: Cursor<Entry>, type: LinkType) {
     switch (type) {
       case 'entry':
-        return cursor.type.isNot(Media.Type.File)
+        return cursor.alinea.type.isNot(Media.Type.File)
       case 'image':
-        return cursor.type
+        return cursor.alinea.type
           .is(Media.Type.File)
           .and(cursor.get('extension').isIn(Media.imageExtensions))
       case 'file':
-        return cursor.type
+        return cursor.alinea.type
           .is(Media.Type.File)
           .and(cursor.get('extension').isNotIn(Media.imageExtensions))
       case 'external':
@@ -81,19 +82,20 @@ export namespace LinkData {
     target: string
   }
   export interface Entry extends Reference {
+    alinea: EntryMeta
     type: 'entry'
     entry: string
-    entryType: string
     path: string
-    url: string
     title: Label
   }
   export interface File extends Reference {
+    alinea: EntryMeta
     src: string
     extension: string
     size: number
   }
   export interface Image extends File {
+    alinea: EntryMeta
     hash: string
     width: number
     height: number
@@ -125,15 +127,14 @@ export function createLink<T, Q>(
       const row = field.each()
       const Link = Entry.as<Media.File>('Link')
       const cases: Record<string, SelectionInput> = {
-        entry: Link.where(entry => entry.id.is(row.get('entry')))
+        entry: Link.where(entry => entry.alinea.id.is(row.get('entry')))
           .first()
           .select(entry => {
             return row.fields
               .with({
-                entryType: entry.type,
                 path: entry.path,
-                url: entry.url,
-                title: entry.title
+                title: entry.title,
+                alinea: entry.alinea
               })
               .with(
                 Functions.iif(

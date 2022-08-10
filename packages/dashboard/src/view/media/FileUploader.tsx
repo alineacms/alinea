@@ -34,12 +34,12 @@ export function FileUploader({max, toggleSelect}: FileUploaderProps) {
     () => {
       return hub
         .query({
-          cursor: Library.where(Library.workspace.is(workspace)).select({
+          cursor: Library.where(Library.alinea.workspace.is(workspace)).select({
             id: Library.id,
             title: Library.title,
-            workspace: Library.workspace,
-            root: Library.root,
-            url: Library.url,
+            workspace: Library.alinea.workspace,
+            root: Library.alinea.root,
+            url: Library.alinea.url,
             parents: Tree.parents(Library.id).select(parent => ({
               title: parent.title
             }))

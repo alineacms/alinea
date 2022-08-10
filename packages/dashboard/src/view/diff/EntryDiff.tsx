@@ -18,8 +18,8 @@ export const EntryDiff = memo(function EntryDiff({
   entryB
 }: EntryDiffProps) {
   const workspace = useWorkspace()
-  const typeA = workspace.schema.type(entryA.type)!
-  const typeB = workspace.schema.type(entryB.type)!
+  const typeA = workspace.schema.type(entryA.alinea.type)!
+  const typeB = workspace.schema.type(entryB.alinea.type)!
   const typeChanged = typeA !== typeB
   if (typeChanged)
     return (

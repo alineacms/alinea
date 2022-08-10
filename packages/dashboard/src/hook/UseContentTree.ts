@@ -21,24 +21,16 @@ function query({workspace, root, locale, open, visible}: QueryParams) {
   const id = locale ? Entry.i18n.id : Entry.id
   const parent = locale ? Entry.i18n.parent : Entry.parent
   const summary = {
-    id,
+    title: Entry.title,
+    locale: Entry.i18n.locale,
+    alinea: Entry.alinea,
     source: {
       id: Entry.id,
       parent: Entry.parent,
       parents: Entry.parents
     },
-    locale: Entry.i18n.locale,
-    title: Entry.title,
-    index: Entry.index,
-    workspace: Entry.workspace,
-    root: Entry.root,
-    type: Entry.type,
-    url: Entry.url,
-    parent,
-    parents: locale ? Entry.i18n.parents : Entry.parents,
-    $isContainer: Entry.$isContainer,
     childrenCount: Parent.where(
-      (locale ? Parent.i18n.parent : Parent.parent).is(Entry.id)
+      (locale ? Parent.alinea.i18n.parent : Parent.alinea.parent).is(Entry.id)
     )
       .select(Functions.count())
       .first()
@@ -140,10 +132,10 @@ export function useContentTree({
 
   const {locale, results} = data!
 
-  const index = new Map(results.map(entry => [entry.id, entry]))
+  const index = new Map(results.map(entry => [entry.alinea.id, entry]))
 
   const entries = results.filter(entry => {
-    return entry.parents.reduce<boolean>(
+    return entry.alinea.parents.reduce<boolean>(
       (acc, parent) => acc && open.has(parent),
       true
     )

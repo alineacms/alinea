@@ -36,25 +36,22 @@ const config = createConfig({
 
 const entries: Array<Entry & Record<string, any>> = [
   {
-    id: 'root',
-    type: 'Type',
     title: 'Test title',
-    index: 'a0',
-    workspace: 'main',
-    root: 'main',
-    url: '/',
     path: 'index',
-    parent: undefined,
-    parents: []
+    alinea: {
+      id: 'root',
+      type: 'Type',
+      url: '/',
+      parent: undefined,
+      parents: [],
+      index: 'a0',
+      workspace: 'main',
+      root: 'main'
+    }
   },
   {
-    id: 'sub',
-    type: 'Type',
     title: 'Sub title',
-    index: 'a0',
-    workspace: 'main',
-    root: 'main',
-    url: '/sub',
+    path: 'sub',
     list: [
       {
         id: 'list1',
@@ -62,9 +59,16 @@ const entries: Array<Entry & Record<string, any>> = [
         link: [{id: 'link', type: 'entry', entry: 'root'}]
       }
     ],
-    path: 'sub',
-    parent: 'root',
-    parents: ['root']
+    alinea: {
+      id: 'sub',
+      type: 'Type',
+      url: '/sub',
+      parent: 'root',
+      parents: ['root'],
+      index: 'a0',
+      workspace: 'main',
+      root: 'main'
+    }
   },
   ...subs(20)
 ]
@@ -78,16 +82,18 @@ function subs(amount: number) {
 
 function sub(index: number, order: string) {
   return {
-    id: `sub-entry-${index}`,
-    type: 'Sub',
     title: `Sub entry title ${index}`,
-    index: order,
-    workspace: 'main',
-    root: 'main',
-    url: `/sub/sub-entry-${index}`,
     path: `sub-entry-${index}`,
-    parent: 'sub',
-    parents: ['root', 'sub']
+    alinea: {
+      id: `sub-entry-${index}`,
+      type: 'Sub',
+      url: `/sub/sub-entry-${index}`,
+      index: order,
+      workspace: 'main',
+      root: 'main',
+      parent: 'sub',
+      parents: ['root', 'sub']
+    }
   }
 }
 

@@ -51,7 +51,7 @@ function Langswitch() {
           const translation = draft?.translation(value)
           navigate(
             nav.entry({
-              id: translation?.id || draft?.id,
+              id: translation?.alinea.id || draft?.alinea.id,
               workspace,
               root: root.name,
               locale: value

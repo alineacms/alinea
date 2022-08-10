@@ -15,15 +15,19 @@ interface DemoEntry extends Partial<Entry> {
 function toEntry(workspace: string, data: DemoEntry): Entry {
   const path = data.path || slugify(data.title as string)
   return {
-    id: data.id || createId(),
-    root: 'data',
-    index: 'a0',
     path,
-    url: `/${path}`,
-    workspace,
-    parent: undefined,
-    parents: [],
-    i18n: undefined,
+    alinea: {
+      id: data.alinea?.id || createId(),
+      type: data.type,
+      url: `/${path}`,
+      workspace,
+      root: 'data',
+      index: 'a0',
+      parent: undefined,
+      parents: [],
+      i18n: undefined,
+      ...data.alinea
+    },
     ...data
   }
 }

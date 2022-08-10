@@ -10,7 +10,7 @@ export namespace Media {
   export type Library = Entry
 
   export const Library = new Collection<Library>('Entry', {
-    where: Entry.as(Media.Type.Libary).type.is(Media.Type.Libary),
+    where: Entry.as(Media.Type.Libary).alinea.type.is(Media.Type.Libary),
     alias: Media.Type.Libary
   })
 
@@ -34,16 +34,14 @@ export namespace Media {
   export type Image = Entry & FileProperties & ImageProperties
 
   export const File = new Collection<File>('Entry', {
-    where: Entry.as(Media.Type.File).type.is(Media.Type.File),
+    where: Entry.as(Media.Type.File).alinea.type.is(Media.Type.File),
     alias: Media.Type.File
   })
 
   export namespace File {
     export type Preview = Pick<
       File,
-      | 'id'
-      | 'workspace'
-      | 'root'
+      | 'alinea'
       | 'title'
       | 'extension'
       | 'size'

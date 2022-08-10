@@ -34,9 +34,9 @@ export function EntryEdit({initialMode, draft, isLoading}: EntryEditProps) {
   const {schema} = useWorkspace()
   const {hub} = useSession()
   const navigate = useNavigate()
-  const type = schema.type(draft.type)
+  const type = schema.type(draft.alinea.type)
   const {preview} = useWorkspace()
-  const isTranslating = !isLoading && locale !== draft.i18n?.locale
+  const isTranslating = !isLoading && locale !== draft.alinea.i18n?.locale
   const [isCreating, setIsCreating] = useState(false)
   const [mode, setMode] = useState<EditMode>(initialMode)
   const status = useObservable(draft.status)
@@ -44,17 +44,17 @@ export function EntryEdit({initialMode, draft, isLoading}: EntryEditProps) {
     if (!locale || isCreating) return
     setIsCreating(true)
     const entry = draft.getEntry()
-    entry.id = createId()
-    entry.i18n!.locale = locale
-    const path = entry.url.split('/').slice(1).join('/')
-    entry.url = `/${locale}/${path}`
+    entry.alinea.id = createId()
+    entry.alinea.i18n!.locale = locale
+    const path = entry.alinea.url.split('/').slice(1).join('/')
+    entry.alinea.url = `/${locale}/${path}`
     const doc = docFromEntry(entry, () => type)
     return hub
-      .updateDraft({id: entry.id, update: Y.encodeStateAsUpdate(doc)})
+      .updateDraft({id: entry.alinea.id, update: Y.encodeStateAsUpdate(doc)})
       .then(result => {
         if (!result.isFailure()) {
-          queryClient.invalidateQueries(['draft', draft.id])
-          navigate(nav.entry(entry))
+          queryClient.invalidateQueries(['draft', draft.alinea.id])
+          navigate(nav.entry(entry.alinea))
         } else {
           throw result.error
         }
@@ -65,7 +65,7 @@ export function EntryEdit({initialMode, draft, isLoading}: EntryEditProps) {
     const mightHaveTranslation = locale && isTranslating
     if (!mightHaveTranslation) return
     const translation = draft.translation(locale)
-    if (translation) navigate(nav.entry(translation))
+    if (translation) navigate(nav.entry(translation.alinea))
   }, [draft, isTranslating, locale])
   return (
     <>
@@ -74,10 +74,10 @@ export function EntryEdit({initialMode, draft, isLoading}: EntryEditProps) {
         <Main.Container>
           <EntryTitle
             backLink={
-              draft.parent &&
+              draft.alinea.parent &&
               nav.entry({
-                id: draft.parent,
-                workspace: draft.workspace
+                id: draft.alinea.parent,
+                workspace: draft.alinea.workspace
               })
             }
           />
@@ -94,7 +94,7 @@ export function EntryEdit({initialMode, draft, isLoading}: EntryEditProps) {
             <>
               {isTranslating ? (
                 <Button onClick={() => handleTranslation()}>
-                  Translate from {draft.i18n?.locale.toUpperCase()}
+                  Translate from {draft.alinea.i18n?.locale.toUpperCase()}
                 </Button>
               ) : (
                 <Suspense fallback={null}>

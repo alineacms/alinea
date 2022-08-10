@@ -39,17 +39,17 @@ function FileView({draft}: EntryEditProps) {
 export function FileEntry(props: EntryEditProps) {
   const nav = useNav()
   const {draft} = props
-  const isImage = Media.isImage(draft.url)
+  const isImage = Media.isImage(draft.alinea.url)
   return (
     <Main className={styles.root()}>
       <EntryHeader mode={EditMode.Editing} />
       <Main.Container>
         <EntryTitle
           backLink={
-            draft.parent &&
+            draft.alinea.parent &&
             nav.entry({
-              id: draft.parent,
-              workspace: draft.workspace
+              id: draft.alinea.parent,
+              workspace: draft.alinea.workspace
             })
           }
         />

@@ -73,13 +73,13 @@ export class FileData implements Data.Source, Data.Target, Data.Media {
                   console.log(`\rCould not parse ${location}: ${err}`)
                   continue
                 }
-                if (locale && !entry.i18n) {
+                if (locale && !entry.alinea.i18n) {
                   console.log(
-                    `\rNo i18n id found for entry with id ${entry.id}`
+                    `\rNo i18n id found for entry with id ${entry.alinea.id}`
                   )
                   continue
                 }
-                const type = schema.type(entry.type)
+                const type = schema.type(entry.alinea.type)
                 if (!type) continue
                 const isContainer = Boolean(type.options.isContainer)
                 const url = path.join(target, isIndex ? '' : name)
@@ -90,25 +90,30 @@ export class FileData implements Data.Source, Data.Target, Data.Media {
                 const parent = parents[parents.length - 1]
                 const res: Entry = {
                   ...entry,
-                  workspace,
-                  root: root.name,
-                  url,
                   path: name,
-                  index: entry.index || entry.id,
-                  parent: parent?.id,
-                  parents: parents.map(parent => parent.id),
-                  $isContainer: isContainer,
-                  $status: EntryStatus.Published,
-                  i18n: locale
-                    ? {
-                        id: entry.i18n?.id || entry.id,
-                        locale,
-                        parent: parent?.i18n?.id || parent?.id,
-                        parents: parents.map(
-                          parent => parent?.i18n?.id || parent?.id
-                        )
-                      }
-                    : undefined
+                  alinea: {
+                    url,
+                    id: entry.alinea.id,
+                    type: entry.alinea.type,
+                    workspace,
+                    root: root.name,
+                    index: entry.alinea.index || entry.alinea.id,
+                    parent: parent?.alinea.id,
+                    parents: parents.map(parent => parent.alinea.id),
+                    $status: EntryStatus.Published,
+                    $isContainer: isContainer,
+                    i18n: locale
+                      ? {
+                          id: entry.alinea.i18n?.id || entry.alinea.id,
+                          locale,
+                          parent: parent?.alinea.i18n?.id || parent?.alinea.id,
+                          parents: parents.map(
+                            parent =>
+                              parent?.alinea.i18n?.id || parent?.alinea.id
+                          )
+                        }
+                      : undefined
+                  }
                 }
                 if (isContainer) parentIndex.set(url, res)
                 yield res

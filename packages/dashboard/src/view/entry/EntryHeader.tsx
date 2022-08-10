@@ -44,7 +44,7 @@ function EntryStatusChip() {
       return <Chip icon={IcRoundRotateLeft}>Publishing</Chip>
     case EntryStatus.Draft:
       return (
-        <Link to={nav.draft(draft)} style={{textDecoration: 'none'}}>
+        <Link to={nav.draft(draft.alinea)} style={{textDecoration: 'none'}}>
           <Chip
             accent
             icon={
@@ -77,14 +77,14 @@ export function EntryHeader({mode, setMode}: EntryHeaderProps) {
   const draft = useCurrentDraft()
   const currentLocale = useLocale()
   const navigate = useNavigate()
-  const parent = draft.parent
-  const type = schema.type(draft.type)
+  const parent = draft.alinea.parent
+  const type = schema.type(draft.alinea.type)
   const status = useObservable(draft.status)
   const queryClient = useQueryClient()
   const [isPublishing, setPublishing] = useState(false)
   function handleDiscard() {
     return drafts.discard(draft).then(([entryRemains, err]) => {
-      queryClient.invalidateQueries(['draft', draft.id])
+      queryClient.invalidateQueries(['draft', draft.alinea.id])
       if (!entryRemains) {
         queryClient.invalidateQueries(['tree'])
         // Navigate to parent, otherwise we'll 404
@@ -99,9 +99,9 @@ export function EntryHeader({mode, setMode}: EntryHeaderProps) {
       .then(() => {
         queryClient.invalidateQueries([
           'children',
-          draft.workspace,
-          draft.root,
-          draft.parent
+          draft.alinea.workspace,
+          draft.alinea.root,
+          draft.alinea.parent
         ])
       })
       .finally(() => {
@@ -128,7 +128,7 @@ export function EntryHeader({mode, setMode}: EntryHeaderProps) {
                 whiteSpace: 'nowrap'
               }}
             >
-              {draft.url}
+              {draft.alinea.url}
             </span>
           </HStack>
         </Typo.Monospace>
@@ -142,9 +142,9 @@ export function EntryHeader({mode, setMode}: EntryHeaderProps) {
               <Link
                 key={locale}
                 to={nav.entry({
-                  workspace: link.workspace,
-                  root: link.root,
-                  id: link.id,
+                  workspace: link.alinea.workspace,
+                  root: link.alinea.root,
+                  id: link.alinea.id,
                   locale
                 })}
               >

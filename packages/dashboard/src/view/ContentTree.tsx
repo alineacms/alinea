@@ -50,8 +50,8 @@ function applyMoves(
 ): Array<ContentTreeEntry> {
   const toMove = new Map(moves.map(m => [m.id, m]))
   return entries.map(entry => {
-    if (toMove.has(entry.id)) {
-      const move = toMove.get(entry.id)!
+    if (toMove.has(entry.alinea.id)) {
+      const move = toMove.get(entry.alinea.id)!
       return {...entry, ...move}
     }
     return entry
@@ -64,10 +64,13 @@ function sortByIndex(
 ): Array<ContentTreeEntry> {
   function parentIndex(id: string) {
     const parent = index.get(id)
-    return parent?.index
+    return parent?.alinea.index
   }
   function indexOf(entry: Entry.Summary) {
-    return entry.parents.map(parentIndex).concat(entry.index).join('.')
+    return entry.alinea.parents
+      .map(parentIndex)
+      .concat(entry.alinea.index)
+      .join('.')
   }
   return entries.sort((a, b) => {
     const indexA = indexOf(a)
@@ -123,16 +126,17 @@ export function ContentTree({
   const offset = useMemo(() => {
     const selected = select[select.length - 1]
     return selected
-      ? entries.findIndex(entry => entry.id === selected) * itemSize
+      ? entries.findIndex(entry => entry.alinea.id === selected) * itemSize
       : undefined
   }, [])
   const scrollOffset = offset && offset < containerHeight ? 0 : offset
 
   function handleDragStart(event: DragStartEvent) {
     const {active} = event
-    const dragging = entries.find(entry => entry.id === active.id) || null
-    if (dragging?.$isContainer && isOpen(dragging.id)) {
-      toggleOpen(dragging.id)
+    const dragging =
+      entries.find(entry => entry.alinea.id === active.id) || null
+    if (dragging?.alinea.$isContainer && isOpen(dragging.alinea.id)) {
+      toggleOpen(dragging.alinea.id)
     }
     setDragging(dragging)
   }
@@ -142,46 +146,48 @@ export function ContentTree({
     setDragging(null)
     if (!over || active.id === over.id) return
     const aId = active.id
-    const aIndex = entries.findIndex(entry => entry.id === aId)
+    const aIndex = entries.findIndex(entry => entry.alinea.id === aId)
     const a = entries[aIndex]
     let bId = over.id
-    let bIndex = entries.findIndex(entry => entry.id === bId)
+    let bIndex = entries.findIndex(entry => entry.alinea.id === bId)
     let b = entries[bIndex]
     // If b is a container and open, drop as a child
     // Todo: this logic does not work if we're dragging up
     // ideally we can drop on top of the container
     const parent =
-      b.$isContainer && isOpen(b.id)
+      b.alinea.$isContainer && isOpen(b.alinea.id)
         ? index.get(b.source.id)
-        : index.get(b.parent!)
+        : index.get(b.alinea.parent!)
 
-    if (a?.parent !== parent?.id) {
+    if (a?.alinea.parent !== parent?.alinea.id) {
       // Check if parent of b handles child of type a
-      if (parent?.id) {
-        const type = schema.type(parent?.type)
+      if (parent?.alinea.id) {
+        const type = schema.type(parent?.alinea.type)
         const contains = type?.options.contains
-        if (contains && !contains.includes(a.type)) return
+        if (contains && !contains.includes(a.alinea.type)) return
       } else {
-        if (!root.contains.includes(a.type)) return
+        if (!root.contains.includes(a.alinea.type)) return
       }
     }
 
     function sibling(direction: number) {
       const next = entries[bIndex + direction]
-      return next && next.parent === b.parent ? next : null
+      return next && next.alinea.parent === b.alinea.parent ? next : null
     }
 
     const candidates = aIndex > bIndex ? [sibling(-1), b] : [b, sibling(1)]
     try {
       const newIndex = generateKeyBetween(
-        candidates[0]?.index || null,
-        candidates[1]?.index || null
+        candidates[0]?.alinea.index || null,
+        candidates[1]?.alinea.index || null
       )
       const move = {
-        id: a.id,
+        id: a.alinea.id,
         index: newIndex,
-        parent: parent?.id,
-        parents: (parent?.parents || []).concat(parent?.id!).filter(Boolean)
+        parent: parent?.alinea.id,
+        parents: (parent?.alinea.parents || [])
+          .concat(parent?.alinea.id!)
+          .filter(Boolean)
       }
       setMoves(current => [...current, move])
       drafts
@@ -206,8 +212,11 @@ export function ContentTree({
     return
     if (redirectToRoot && entries.length > 0) {
       const first = entries[0]
-      if (first.workspace === workspace && first.root === root.name) {
-        navigate(nav.entry(first), {
+      if (
+        first.alinea.workspace === workspace &&
+        first.alinea.root === root.name
+      ) {
+        navigate(nav.entry(first.alinea), {
           replace: true
         })
       }
@@ -222,7 +231,10 @@ export function ContentTree({
       onDragEnd={handleDragEnd}
       layoutMeasuring={layoutMeasuringConfig}
     >
-      <SortableContext items={entries} strategy={verticalListSortingStrategy}>
+      <SortableContext
+        items={entries.map(entry => entry.alinea.id)}
+        strategy={verticalListSortingStrategy}
+      >
         <div ref={containerRef} style={{height: '100%', overflow: 'hidden'}}>
           {containerHeight > 0 && (
             <VirtualList
@@ -236,11 +248,15 @@ export function ContentTree({
                 const entry = entries[index]
                 return (
                   <TreeNodeSortable
-                    key={entry.id}
+                    key={entry.alinea.id}
                     entry={entry}
                     locale={locale}
-                    level={entry.parents.length}
-                    link={nav.entry({...entry, locale, id: entry.source.id})}
+                    level={entry.alinea.parents.length}
+                    link={nav.entry({
+                      ...entry.alinea,
+                      locale,
+                      id: entry.source.id
+                    })}
                     isOpen={isOpen}
                     toggleOpen={toggleOpen}
                     style={{...style, height: height}}
@@ -263,7 +279,7 @@ export function ContentTree({
             key="overlay"
             locale={locale}
             entry={dragging}
-            level={dragging.parents.length}
+            level={dragging.alinea.parents.length}
             isOpen={isOpen}
             toggleOpen={toggleOpen}
             isDragOverlay
