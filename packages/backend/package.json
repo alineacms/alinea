@@ -24,8 +24,8 @@
   },
   "dependencies": {
     "@alinea/core": "0.0.0",
-    "@alinea/iso": "^0.1.19",
-    "@alinea/sqlite-wasm": "^0.1.7",
+    "@alinea/iso": "^0.1.21",
+    "@alinea/sqlite-wasm": "^0.1.10",
     "@alinea/store": "0.0.0",
     "yjs": "^13.5.39"
   },
