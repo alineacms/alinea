@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.2.0]
+
+- The exports of the alinea package are restructed. This is a breaking change
+  because the input fields are no longer exposed directly but bundled in the
+  "alinea" namespace. A few less used exports were removed and can be
+  found in the @alinea packages.
+- Client code is shielded from being included server side when compiling with
+  the "worker" condition enabled.
+- Initial support for selecting external links in the link field. The RichText
+  ui component is adjusted to correctly render links. A custom component or tag
+  can be passed to render links.
+
+  ```tsx
+  <RichText a={<a className="custom-link" />} doc={doc} />
+  <RichText a={CustomLinkComponent} doc={doc} />
+  ```
+
 ## [0.1.19]
 
 - Added a new field type for raw json data
