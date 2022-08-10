@@ -34,6 +34,8 @@
     "@alinea/input.check": "0.0.0",
     "@alinea/input.link": "0.0.0",
     "@alinea/input.text": "0.0.0",
+    "@alinea/picker.entry": "0.0.0",
+    "@alinea/picker.url": "0.0.0",
     "@alinea/shared": "0.0.0",
     "@alinea/ui": "0.0.0",
     "yjs": "^13.5.39"
