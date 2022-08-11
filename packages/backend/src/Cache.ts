@@ -132,10 +132,9 @@ export namespace Cache {
     const endDbSetup = logger.time('Database setup')
     let total = 0
     const batch: Array<Entry> = []
-    function commitBatch(logger: Logger) {
+    function commitBatch() {
       store.transaction(() => {
         const inserted = store.insertAll(Entry, batch)
-
         for (const entry of inserted) indexSearch(store, entry, false)
       })
       batch.length = 0
@@ -150,39 +149,43 @@ export namespace Cache {
       total++
       if (total % 1000 === 0) {
         logger.progress(`Scanned ${total} entries`)
-        commitBatch(logger)
+        commitBatch()
       }
       batch.push(entry)
     }
-    commitBatch(logger)
+    commitBatch()
     endScan()
     const endIndex = logger.time('Indexing entries')
-    store.createIndex(Entry, 'index', [Entry.alinea.index])
-    store.createIndex(Entry, 'i18nId', [Entry.alinea.i18n.id])
-    store.createIndex(Entry, 'parent', [Entry.alinea.parent])
-    store.createIndex(Entry, 'workspace.root.type', [
-      Entry.workspace,
-      Entry.root,
-      Entry.type
-    ])
-    store.createIndex(Entry, 'root', [Entry.alinea.root])
-    store.createIndex(Entry, 'type', [Entry.type])
-    store.createIndex(Entry, 'url', [Entry.url])
-    endIndex()
-    const endValidate = logger.time('Validating orders')
-    for (const [workspace, {schema}] of Object.entries(config.workspaces)) {
-      for (const [key, type] of schema) {
-        const {index} = type.options
-        if (!index) continue
-        const collection = type.collection()
-        const indices = index(collection)
-        for (const [name, fields] of Object.entries(indices)) {
-          const indexName = `${workspace}.${key}.${name}`
-          store.createIndex(collection, indexName, fields)
+    store.transaction(() => {
+      store.createIndex(Entry, 'index', [Entry.alinea.index])
+      store.createIndex(Entry, 'i18nId', [Entry.alinea.i18n.id])
+      store.createIndex(Entry, 'parent', [Entry.alinea.parent])
+      store.createIndex(Entry, 'workspace.root.type', [
+        Entry.workspace,
+        Entry.root,
+        Entry.type
+      ])
+      store.createIndex(Entry, 'root', [Entry.alinea.root])
+      store.createIndex(Entry, 'type', [Entry.type])
+      store.createIndex(Entry, 'url', [Entry.url])
+      for (const [workspace, {schema}] of Object.entries(config.workspaces)) {
+        for (const [key, type] of schema) {
+          const {index} = type.options
+          if (!index) continue
+          const collection = type.collection()
+          const indices = index(collection)
+          for (const [name, fields] of Object.entries(indices)) {
+            const indexName = `${workspace}.${key}.${name}`
+            store.createIndex(collection, indexName, fields)
+          }
         }
       }
-    }
-    validateOrder(store)
+    })
+    endIndex()
+    const endValidate = logger.time('Validating orders')
+    store.transaction(() => {
+      validateOrder(store)
+    })
     endValidate()
     logger.summary(`Indexed ${total} entries`)
     indexing.delete(store)
@@ -268,36 +271,38 @@ export namespace Cache {
     config: Config,
     updates: Array<readonly [string, Uint8Array]>
   ) {
-    const changed = []
-    for (const [id, update] of updates) {
-      const condition = Entry.where(Entry.id.is(id))
-      const existing = store.first(condition)
-      const [entry, err] = outcome(() => {
-        const doc = new Y.Doc()
-        Y.applyUpdate(doc, update)
-        const data = entryFromDoc(doc, config.type)
-        return {
-          ...computeEntry(store, config, data!, EntryStatus.Draft)
+    store.transaction(() => {
+      const changed = []
+      for (const [id, update] of updates) {
+        const condition = Entry.where(Entry.id.is(id))
+        const existing = store.first(condition)
+        const [entry, err] = outcome(() => {
+          const doc = new Y.Doc()
+          Y.applyUpdate(doc, update)
+          const data = entryFromDoc(doc, config.type)
+          return {
+            ...computeEntry(store, config, data!, EntryStatus.Draft)
+          }
+        })
+        if (!entry) {
+          console.error(err)
+          console.log(
+            `Could not parse update for entry with id "${id}"\n  > ${err}`
+          )
+          continue
         }
-      })
-      if (!entry) {
-        console.error(err)
-        console.log(
-          `Could not parse update for entry with id "${id}"\n  > ${err}`
-        )
-        continue
+        changed.push(id)
+        if (existing) {
+          if (existing.url !== entry.url)
+            setChildrenUrl(store, entry.url, entry.id)
+          store.update(condition, entry)
+        } else {
+          store.insert(Entry, entry)
+        }
+        indexSearch(store, entry)
       }
-      changed.push(id)
-      if (existing) {
-        if (existing.url !== entry.url)
-          setChildrenUrl(store, entry.url, entry.id)
-        store.update(condition, entry)
-      } else {
-        store.insert(Entry, entry)
-      }
-      indexSearch(store, entry)
-    }
-    validateOrder(store, changed)
+      validateOrder(store, changed)
+    })
   }
 
   export function applyPublish(
