@@ -85,7 +85,7 @@ export class Logger {
       const duration = durationSince(this.startProgress)
       output(`> ${message} in ${prettyMilliseconds(duration)}\n`)
       this.startProgress = undefined
-      Report.toConsole(this.report(), '└ ')
+      // Report.toConsole(this.report(), '└ ')
     } else {
       console.log(`> ${message}`)
     }
