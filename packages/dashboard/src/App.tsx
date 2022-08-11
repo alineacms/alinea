@@ -41,6 +41,7 @@ import {EditMode} from './view/entry/EditMode'
 import {NewEntry} from './view/entry/NewEntry'
 import {RootHeader} from './view/entry/RootHeader'
 import {EntryEdit} from './view/EntryEdit'
+import {RootOverview} from './view/RootOverview'
 import {SearchBox} from './view/SearchBox'
 import {Sidebar} from './view/Sidebar'
 import {Toolbar} from './view/Toolbar'
@@ -198,6 +199,7 @@ type EntryRouteProps = {
 
 function EntryRoute({id}: EntryRouteProps) {
   const workspace = useWorkspace()
+  const root = useRoot()
   const {draft} = useDraft(id)
   const locale = useLocale()
   const isLoading = Boolean(
@@ -236,9 +238,12 @@ function EntryRoute({id}: EntryRouteProps) {
           />
         </Suspense>
       ) : (
-        <Head>
-          <title>{renderLabel(workspace.label)}</title>
-        </Head>
+        <>
+          <Head>
+            <title>{renderLabel(workspace.label)}</title>
+          </Head>
+          <RootOverview workspace={workspace} root={root} />
+        </>
       )}
     </CurrentDraftProvider>
   )
