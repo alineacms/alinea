@@ -27,6 +27,7 @@ export function CloudAuthView({setSession}: Auth.ViewProps) {
     {suspense: true}
   )
   const result = data!
+  const {location} = window
   switch (result.type) {
     case AuthResultType.Authenticated:
       setSession({
@@ -41,7 +42,6 @@ export function CloudAuthView({setSession}: Auth.ViewProps) {
       })
       return null
     case AuthResultType.UnAuthenticated:
-      const {location} = window
       location.href =
         result.redirect +
         `?from=${encodeURIComponent(
