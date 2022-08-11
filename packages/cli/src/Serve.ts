@@ -181,12 +181,16 @@ export async function serve(options: ServeOptions): Promise<void> {
   let config = await generate({
     ...options,
     store,
-    onConfigRebuild: async (error, newConfig) => {
+    onConfigRebuild: async outcome => {
+      const [newConfig, error] = outcome
+      if (error) return
       config = newConfig
       server.reload(newConfig)
       if (!alineaDev) reload('refresh')
     },
-    onCacheRebuild: async error => {
+    onCacheRebuild: async outcome => {
+      const [store, error] = outcome
+      if (error) return
       await server.reloadPreviewStore()
       reload('refetch')
     }

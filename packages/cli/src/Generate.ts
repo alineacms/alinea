@@ -4,7 +4,7 @@ import {createDb} from '@alinea/backend/util/CreateDb'
 import {Config} from '@alinea/core/Config'
 import {createError} from '@alinea/core/ErrorWithCode'
 import {createId} from '@alinea/core/Id'
-import {outcome} from '@alinea/core/Outcome'
+import {Outcome, outcome} from '@alinea/core/Outcome'
 import {Logger} from '@alinea/core/util/Logger'
 import {Workspace} from '@alinea/core/Workspace'
 import {SqliteStore} from '@alinea/store/sqlite/SqliteStore'
@@ -149,8 +149,8 @@ export type GenerateOptions = {
   staticDir?: string
   configFile?: string
   watch?: boolean
-  onConfigRebuild?: (err: Error | undefined, config: Config) => void
-  onCacheRebuild?: (err?: Error) => void
+  onConfigRebuild?: (outcome: Outcome<Config>) => void
+  onCacheRebuild?: (outcome: Outcome<SqliteStore>) => void
   wasmCache?: boolean
   quiet?: boolean
   store?: SqliteStore
@@ -255,7 +255,9 @@ export async function generate(options: GenerateOptions): Promise<Config> {
               await (generating = generatePackage())
             }
             if (onConfigRebuild)
-              return onConfigRebuild(error || undefined, config)
+              return onConfigRebuild(
+                error ? Outcome.Failure(error) : Outcome.Success(config)
+              )
           }
         },
         tsconfig: path.join(staticDir, 'tsconfig.json')
@@ -360,20 +362,21 @@ export async function generate(options: GenerateOptions): Promise<Config> {
     async function cache() {
       const store = await cacheEntries(config, source)
       await createCache(store)
+      return store
     }
     if (watch && files) {
       watcher = new FSWatcher()
       async function reload() {
         if (caching) await caching
         caching = cache().then(
-          () => onCacheRebuild?.(),
-          err => onCacheRebuild?.(err)
+          store => onCacheRebuild?.(Outcome.Success(store)),
+          err => onCacheRebuild?.(Outcome.Failure(err))
         )
       }
       watcher.add(files).on('change', reload)
       watcher.add(files).on('unlink', reload)
     }
-    caching = cache()
+    caching = cache().then(() => void 0)
     await caching
     return {stop: () => watcher?.close()}
   }
@@ -421,13 +424,14 @@ export async function generate(options: GenerateOptions): Promise<Config> {
   }
 
   async function cacheEntries(config: Config, source: Data.Source) {
+    const db = await createDb(store)
     await Cache.create(
-      store,
+      db,
       config,
       source,
       quiet ? undefined : new Logger('Generate')
     )
-    return store
+    return db
   }
 
   function createCache(store: SqliteStore) {
