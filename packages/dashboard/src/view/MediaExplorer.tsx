@@ -81,7 +81,7 @@ export function MediaExplorer() {
     () => {
       return hub
         .query({
-          cursor: File.where(File.parent.is(draft.id)).select({
+          cursor: File.where(File.alinea.parent.is(draft.id)).select({
             total: Functions.count()
           })
         })
@@ -99,7 +99,7 @@ export function MediaExplorer() {
         uploadFile(
           hub,
           workspace,
-          draft.root,
+          draft.alinea.root,
           draft.url + '/' + file.name,
           file
         ).then(console.log)

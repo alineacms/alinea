@@ -1,15 +1,19 @@
 export type EntryLocation = {
-  workspace: string
+  id?: string
+  workspace?: string
   root?: string
   locale?: string
-  id?: string
+  alinea?: {
+    workspace?: string
+    root?: string
+  }
 }
 
 export function dashboardNav(defaults: Partial<EntryLocation>) {
   function loc(location: EntryLocation) {
     const workspace =
-      'workspace' in location ? location.workspace : defaults.workspace
-    const root = 'root' in location ? location.root : defaults.root
+      location.workspace ?? location.alinea?.workspace ?? defaults.workspace
+    const root = location.root ?? location.alinea?.root ?? defaults.root
     const locale = 'locale' in location ? location.locale : defaults.locale
     const id = 'id' in location ? location.id : defaults.id
     const rootLocation = locale ? `${root}:${locale}` : root
@@ -17,9 +21,7 @@ export function dashboardNav(defaults: Partial<EntryLocation>) {
     if (!id) return `/${workspace}/${rootLocation}`
     return `/${workspace}/${rootLocation}/${id}`
   }
-  function root(
-    location: Pick<EntryLocation, 'workspace' | 'root' | 'locale'>
-  ) {
+  function root(location: EntryLocation) {
     return entry(location)
   }
   function entry(location: EntryLocation) {

@@ -1,5 +1,5 @@
-import {Entry, Outcome} from '@alinea/core'
-import {Functions, Store} from '@alinea/store'
+import {Entry, EntryMeta, Label, Outcome} from '@alinea/core'
+import {Cursor, Functions} from '@alinea/store'
 import {useCallback, useEffect, useMemo, useState} from 'react'
 import {useQuery} from 'react-query'
 import {useRoot} from '../hook/UseRoot'
@@ -14,31 +14,33 @@ type QueryParams = {
   visible: Array<string>
 }
 
-export type ContentTreeEntry = Store.TypeOf<ReturnType<typeof query>>[0]
+export interface ContentTreeEntry {
+  id: string
+  type: string
+  locale: string
+  title: Label
+  source: {id: string; parent?: string; parents: Array<string>}
+  childrenCount: number
+  alinea: EntryMeta
+}
 
 function query({workspace, root, locale, open, visible}: QueryParams) {
   const Parent = Entry.as('Parent')
   const id = locale ? Entry.i18n.id : Entry.id
   const parent = locale ? Entry.i18n.parent : Entry.parent
   const summary = {
-    id,
+    id: Entry.id,
+    type: Entry.type,
+    title: Entry.title,
+    locale: Entry.i18n.locale,
+    alinea: Entry.alinea,
     source: {
       id: Entry.id,
       parent: Entry.parent,
       parents: Entry.parents
     },
-    locale: Entry.i18n.locale,
-    title: Entry.title,
-    index: Entry.index,
-    workspace: Entry.workspace,
-    root: Entry.root,
-    type: Entry.type,
-    url: Entry.url,
-    parent,
-    parents: locale ? Entry.i18n.parents : Entry.parents,
-    $isContainer: Entry.$isContainer,
     childrenCount: Parent.where(
-      (locale ? Parent.i18n.parent : Parent.parent).is(Entry.id)
+      (locale ? Parent.alinea.i18n.parent : Parent.alinea.parent).is(Entry.id)
     )
       .select(Functions.count())
       .first()
@@ -66,7 +68,7 @@ function query({workspace, root, locale, open, visible}: QueryParams) {
         .groupBy(Entry.i18n.id)
     )
   }
-  return query
+  return query as Cursor<ContentTreeEntry>
 }
 
 type UseContentTreeOptions = {
@@ -143,7 +145,7 @@ export function useContentTree({
   const index = new Map(results.map(entry => [entry.id, entry]))
 
   const entries = results.filter(entry => {
-    return entry.parents.reduce<boolean>(
+    return entry.alinea.parents.reduce<boolean>(
       (acc, parent) => acc && open.has(parent),
       true
     )

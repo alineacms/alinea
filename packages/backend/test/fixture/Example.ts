@@ -38,22 +38,22 @@ const entries: Array<Entry & Record<string, any>> = [
   {
     id: 'root',
     type: 'Type',
-    title: 'Test title',
-    index: 'a0',
-    workspace: 'main',
-    root: 'main',
     url: '/',
+    title: 'Test title',
     path: 'index',
-    parent: undefined,
-    parents: []
+    alinea: {
+      parent: undefined,
+      parents: [],
+      index: 'a0',
+      workspace: 'main',
+      root: 'main'
+    }
   },
   {
     id: 'sub',
     type: 'Type',
     title: 'Sub title',
-    index: 'a0',
-    workspace: 'main',
-    root: 'main',
+    path: 'sub',
     url: '/sub',
     list: [
       {
@@ -62,9 +62,13 @@ const entries: Array<Entry & Record<string, any>> = [
         link: [{id: 'link', type: 'entry', entry: 'root'}]
       }
     ],
-    path: 'sub',
-    parent: 'root',
-    parents: ['root']
+    alinea: {
+      parent: 'root',
+      parents: ['root'],
+      index: 'a0',
+      workspace: 'main',
+      root: 'main'
+    }
   },
   ...subs(20)
 ]
@@ -80,14 +84,16 @@ function sub(index: number, order: string) {
   return {
     id: `sub-entry-${index}`,
     type: 'Sub',
-    title: `Sub entry title ${index}`,
-    index: order,
-    workspace: 'main',
-    root: 'main',
     url: `/sub/sub-entry-${index}`,
+    title: `Sub entry title ${index}`,
     path: `sub-entry-${index}`,
-    parent: 'sub',
-    parents: ['root', 'sub']
+    alinea: {
+      index: order,
+      workspace: 'main',
+      root: 'main',
+      parent: 'sub',
+      parents: ['root', 'sub']
+    }
   }
 }
 

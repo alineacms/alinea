@@ -11,10 +11,12 @@ interface LinkProps {
 }
 
 function Link({href, ...props}: LinkProps) {
-  return (
+  return href ? (
     <NextLink href={href!}>
       <a {...props} />
     </NextLink>
+  ) : (
+    <a {...props} />
   )
 }
 

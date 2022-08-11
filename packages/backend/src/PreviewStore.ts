@@ -71,7 +71,7 @@ export class PreviewStore {
 
   async applyPublish(entries: Array<Entry>) {
     const {config} = this.options
-    for (const {id} of entries) this.updates.delete(id)
+    for (const entry of entries) this.updates.delete(entry.id)
     if (this.store) Cache.applyPublish(this.store, config, entries)
   }
 

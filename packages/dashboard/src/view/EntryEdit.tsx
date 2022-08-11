@@ -36,7 +36,7 @@ export function EntryEdit({initialMode, draft, isLoading}: EntryEditProps) {
   const navigate = useNavigate()
   const type = schema.type(draft.type)
   const {preview} = useWorkspace()
-  const isTranslating = !isLoading && locale !== draft.i18n?.locale
+  const isTranslating = !isLoading && locale !== draft.alinea.i18n?.locale
   const [isCreating, setIsCreating] = useState(false)
   const [mode, setMode] = useState<EditMode>(initialMode)
   const status = useObservable(draft.status)
@@ -45,7 +45,7 @@ export function EntryEdit({initialMode, draft, isLoading}: EntryEditProps) {
     setIsCreating(true)
     const entry = draft.getEntry()
     entry.id = createId()
-    entry.i18n!.locale = locale
+    entry.alinea.i18n!.locale = locale
     const path = entry.url.split('/').slice(1).join('/')
     entry.url = `/${locale}/${path}`
     const doc = docFromEntry(entry, () => type)
@@ -74,10 +74,10 @@ export function EntryEdit({initialMode, draft, isLoading}: EntryEditProps) {
         <Main.Container>
           <EntryTitle
             backLink={
-              draft.parent &&
+              draft.alinea.parent &&
               nav.entry({
-                id: draft.parent,
-                workspace: draft.workspace
+                id: draft.alinea.parent,
+                workspace: draft.alinea.workspace
               })
             }
           />
@@ -94,7 +94,7 @@ export function EntryEdit({initialMode, draft, isLoading}: EntryEditProps) {
             <>
               {isTranslating ? (
                 <Button onClick={() => handleTranslation()}>
-                  Translate from {draft.i18n?.locale.toUpperCase()}
+                  Translate from {draft.alinea.i18n?.locale.toUpperCase()}
                 </Button>
               ) : (
                 <Suspense fallback={null}>

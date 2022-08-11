@@ -20,8 +20,8 @@ function entrySummaryQuery(Entry: Collection<Entry>) {
   return {
     id: Entry.id,
     type: Entry.type,
-    workspace: Entry.workspace,
-    root: Entry.root,
+    workspace: Entry.alinea.workspace,
+    root: Entry.alinea.root,
     title: Entry.title,
     parents: Tree.parents(Entry.id).select(parent => ({title: parent.title}))
   }

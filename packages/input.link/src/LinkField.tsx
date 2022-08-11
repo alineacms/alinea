@@ -1,6 +1,7 @@
 import type {Pages} from '@alinea/backend'
 import {
   Entry,
+  EntryMeta,
   Field,
   Label,
   Media,
@@ -81,19 +82,22 @@ export namespace LinkData {
     target: string
   }
   export interface Entry extends Reference {
+    alinea: EntryMeta
     type: 'entry'
     entry: string
     entryType: string
     path: string
-    url: string
     title: Label
+    url: string
   }
   export interface File extends Reference {
+    alinea: EntryMeta
     src: string
     extension: string
     size: number
   }
   export interface Image extends File {
+    alinea: EntryMeta
     hash: string
     width: number
     height: number
@@ -131,9 +135,10 @@ export function createLink<T, Q>(
             return row.fields
               .with({
                 entryType: entry.type,
-                path: entry.path,
                 url: entry.url,
-                title: entry.title
+                path: entry.path,
+                title: entry.title,
+                alinea: entry.alinea
               })
               .with(
                 Functions.iif(

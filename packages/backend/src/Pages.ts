@@ -305,7 +305,7 @@ class Single<P, T> extends Base<P, Page<P, T> | null> {
     return new Multiple<P, C>(
       this.resolver,
       Entry.where(
-        Entry.parent.isIn(
+        Entry.alinea.parent.isIn(
           this.cursor.select<Expr<string | undefined>>(Entry.id)
         )
       )

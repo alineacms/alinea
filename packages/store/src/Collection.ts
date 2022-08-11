@@ -11,10 +11,18 @@ export type CollectionOptions = {
   where?: Expr<boolean>
   alias?: string
   computed?: (collection: Fields<any>) => Record<string, Expr<any>>
+  id?: CollectionId
 }
 
-export class CollectionImpl<Row extends {} = any> extends CursorImpl<Row> {
+interface CollectionId {
+  property: string
+  addToRow: (row: any, id: string) => any
+  getFromRow: (row: any) => string
+}
+
+export class CollectionImpl<Row = any> extends CursorImpl<Row> {
   private __options: CollectionOptions
+  __collectionId: CollectionId
   constructor(name: string, options: CollectionOptions = {}) {
     const {flat, columns, where, alias, computed} = options
     const from = flat
@@ -30,6 +38,11 @@ export class CollectionImpl<Row extends {} = any> extends CursorImpl<Row> {
       where: where?.expr
     })
     this.__options = options
+    this.__collectionId = options?.id || {
+      property: 'id',
+      addToRow: (row, id) => Object.assign({id}, row),
+      getFromRow: row => row.id
+    }
   }
 
   pick<Props extends Array<keyof Row>>(
@@ -46,7 +59,7 @@ export class CollectionImpl<Row extends {} = any> extends CursorImpl<Row> {
   }
 
   get id() {
-    return this.get('id') as Expr<string>
+    return this.get(this.__collectionId.property) as Expr<string>
   }
 
   with<X extends SelectionInput>(that: X): Selection.With<Row, X> {

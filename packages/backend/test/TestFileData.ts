@@ -53,25 +53,28 @@ const fs: FS = Volume.fromNestedJSON({
     data: {
       '/index.json': entry({
         id: 'root',
-        root: 'data',
-        index: 'a',
         type: 'Home',
-        title: 'Test title'
+        title: 'Test title',
+        alinea: {
+          index: 'a0'
+        }
       }),
       '/sub.json': entry({
         id: 'sub',
-        root: 'data',
-        index: 'a',
         type: 'Type',
-        title: 'Sub title'
+        title: 'Sub title',
+        alinea: {
+          index: 'a0'
+        }
       }),
       sub: {
         '/entry.json': entry({
           id: 'sub-entry',
-          root: 'data',
-          index: 'b',
           type: 'Sub',
-          title: 'Sub entry title'
+          title: 'Sub entry title',
+          alinea: {
+            index: 'a0'
+          }
         })
       }
     }
@@ -98,13 +101,13 @@ test('reading', async () => {
   entries.sort((a, b) => a.url.localeCompare(b.url))
   const [root, sub, subEntry] = entries
   assert.is(root.id, 'root')
-  assert.is(root.parent, undefined)
+  assert.is(root.alinea.parent, undefined)
   assert.is(root.url, '/')
   assert.is(sub.id, 'sub')
-  assert.is(sub.parent, undefined)
+  assert.is(sub.alinea.parent, undefined)
   assert.is(sub.url, '/sub')
   assert.is(subEntry.id, 'sub-entry')
-  assert.is(subEntry.parent, 'sub')
+  assert.is(subEntry.alinea.parent, 'sub')
   assert.is(subEntry.url, '/sub/entry')
 })
 

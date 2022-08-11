@@ -29,12 +29,12 @@ export namespace Cache {
   }
 
   function nextValidIndex(
-    entries: Array<{id: string; index: string | null}>,
+    entries: Array<{id: string; alinea: {index: string | null}}>,
     from: number
   ) {
     while (from++ < entries.length - 1) {
       const entry = entries[from]
-      if (entry.index) return entry.index
+      if (entry.alinea.index) return entry.alinea.index
     }
     return null
   }
@@ -49,28 +49,30 @@ export namespace Cache {
       .all(
         Entry.select({
           id: Entry.id,
-          index: Entry.index,
-          $isContainer: Entry.$isContainer
+          alinea: Entry.alinea
         })
           .where(condition)
-          .orderBy(Entry.index.asc())
+          .orderBy(Entry.alinea.index.asc())
       )
       .map(entry => {
-        const isValid = isValidOrderKey(entry.index) && !seen.has(entry.index)
-        seen.add(entry.index)
+        const isValid =
+          isValidOrderKey(entry.alinea.index) && !seen.has(entry.alinea.index)
+        seen.add(entry.alinea.index)
         return isValid ? entry : {...entry, index: null}
       })
     let prev: string | null = null
     entries.forEach((entry, i) => {
-      if (!entry.index) {
+      if (!entry.alinea.index) {
         const next = nextValidIndex(entries, i)
-        entry.index = generateKeyBetween(prev, next)
-        store.update(Entry.where(Entry.id.is(entry.id)), {index: entry.index})
+        entry.alinea.index = generateKeyBetween(prev, next)
+        store.update(Entry.where(Entry.id.is(entry.id)), {
+          alinea: {...entry.alinea, index: entry.alinea.index}
+        })
       }
-      seen.add(entry.index)
-      prev = entry.index
-      if (includeChildren && entry.$isContainer)
-        validateOrdersFor(store, Entry.parent.is(entry.id))
+      seen.add(entry.alinea.index)
+      prev = entry.alinea.index
+      if (includeChildren && entry.alinea.isContainer)
+        validateOrdersFor(store, Entry.alinea.parent.is(entry.id))
     })
   }
 
@@ -78,40 +80,40 @@ export namespace Cache {
     if (only) {
       const entries = store.all(
         Entry.where(Entry.id.isIn([...new Set(only)])).select({
-          parent: Entry.parent,
-          workspace: Entry.workspace,
-          root: Entry.root
+          parent: Entry.alinea.parent,
+          workspace: Entry.alinea.workspace,
+          root: Entry.alinea.root
         })
       )
       for (const entry of entries) {
         if (entry.parent)
-          validateOrdersFor(store, Entry.parent.is(entry.parent), false)
+          validateOrdersFor(store, Entry.alinea.parent.is(entry.parent), false)
         else
           validateOrdersFor(
             store,
-            Entry.workspace
+            Entry.alinea.workspace
               .is(entry.workspace)
-              .and(Entry.root.is(entry.root))
-              .and(Entry.parent.isNull()),
+              .and(Entry.alinea.root.is(entry.root))
+              .and(Entry.alinea.parent.isNull()),
             false
           )
       }
     } else {
       const roots = store.all(
         Entry.select({
-          workspace: Entry.workspace,
-          root: Entry.root
+          workspace: Entry.alinea.workspace,
+          root: Entry.alinea.root
         })
-          .where(Entry.parent.isNull())
-          .groupBy(Entry.workspace, Entry.root)
+          .where(Entry.alinea.parent.isNull())
+          .groupBy(Entry.alinea.workspace, Entry.alinea.root)
       )
       for (const root of roots) {
         validateOrdersFor(
           store,
-          Entry.workspace
+          Entry.alinea.workspace
             .is(root.workspace)
-            .and(Entry.root.is(root.root))
-            .and(Entry.parent.isNull())
+            .and(Entry.alinea.root.is(root.root))
+            .and(Entry.alinea.parent.isNull())
         )
       }
     }
@@ -155,15 +157,15 @@ export namespace Cache {
     commitBatch(logger)
     endScan()
     const endIndex = logger.time('Indexing entries')
-    store.createIndex(Entry, 'index', [Entry.index])
-    store.createIndex(Entry, 'i18nId', [Entry.i18n.id])
-    store.createIndex(Entry, 'parent', [Entry.parent])
+    store.createIndex(Entry, 'index', [Entry.alinea.index])
+    store.createIndex(Entry, 'i18nId', [Entry.alinea.i18n.id])
+    store.createIndex(Entry, 'parent', [Entry.alinea.parent])
     store.createIndex(Entry, 'workspace.root.type', [
       Entry.workspace,
       Entry.root,
       Entry.type
     ])
-    store.createIndex(Entry, 'root', [Entry.root])
+    store.createIndex(Entry, 'root', [Entry.alinea.root])
     store.createIndex(Entry, 'type', [Entry.type])
     store.createIndex(Entry, 'url', [Entry.url])
     endIndex()
@@ -186,12 +188,17 @@ export namespace Cache {
     indexing.delete(store)
   }
 
-  export function computeEntry(store: Store, config: Config, entry: Entry) {
-    const type = config.type(entry.workspace, entry.type)
+  export function computeEntry(
+    store: Store,
+    config: Config,
+    entry: Entry,
+    status: EntryStatus = EntryStatus.Published
+  ): Entry {
+    const type = config.type(entry.alinea.workspace, entry.type)
     if (!type) throw createError(400, 'Type not found')
-    const root = config.root(entry.workspace, entry.root)
+    const root = config.root(entry.alinea.workspace, entry.alinea.root)
     const parents: Array<string> = []
-    let target = entry.parent,
+    let target = entry.alinea.parent,
       url = entry.path === 'index' ? '' : entry.path
     while (target) {
       if (parents.includes(target))
@@ -199,7 +206,7 @@ export namespace Cache {
       parents.unshift(target)
       const parent = store.first(
         Entry.where(Entry.id.is(target)).select({
-          parent: Entry.parent,
+          parent: Entry.alinea.parent,
           path: Entry.path
         })
       )
@@ -208,7 +215,7 @@ export namespace Cache {
       target = parent.parent
     }
     if (root.i18n) {
-      const locale = entry.i18n?.locale!
+      const locale = entry.alinea.i18n?.locale!
       if (!root.i18n.locales.includes(locale))
         throw createError(
           400,
@@ -218,33 +225,40 @@ export namespace Cache {
       const i18nParents =
         parents.length > 0
           ? store.all(
-              Entry.where(Entry.id.isIn(parents)).select(Entry.i18n.id.sure())
+              Entry.where(Entry.id.isIn(parents)).select(
+                Entry.alinea.i18n.id.sure()
+              )
             )
           : parents
-      entry.i18n = {
-        id: entry.i18n!.id,
+      entry.alinea.i18n = {
+        id: entry.alinea.i18n!.id,
         locale,
         parent: i18nParents[i18nParents.length - 1],
         parents: i18nParents
       }
     } else {
-      delete entry.i18n
+      delete entry.alinea.i18n
     }
     return {
       ...entry,
       url: '/' + url,
-      parent: parents[parents.length - 1],
-      parents: parents,
-      $isContainer: type!.options.isContainer,
-      $status: EntryStatus.Published
+      alinea: {
+        ...entry.alinea,
+        parent: parents[parents.length - 1],
+        parents: parents,
+        isContainer: type!.options.isContainer,
+        status
+      }
     }
   }
 
   function setChildrenUrl(store: Store, parentUrl: string, parentId: string) {
-    const children = store.all(Entry.where(Entry.parent.is(parentId)))
+    const children = store.all(Entry.where(Entry.alinea.parent.is(parentId)))
     for (const child of children) {
       const url = appendPath(parentUrl, child.path)
-      store.update(Entry.where(Entry.id.is(child.id)), {url})
+      store.update(Entry.where(Entry.id.is(child.id)), {
+        'alinea.url': url
+      } as any)
       setChildrenUrl(store, url, child.id)
     }
   }
@@ -263,8 +277,7 @@ export namespace Cache {
         Y.applyUpdate(doc, update)
         const data = entryFromDoc(doc, config.type)
         return {
-          ...computeEntry(store, config, data!),
-          $status: EntryStatus.Draft
+          ...computeEntry(store, config, data!, EntryStatus.Draft)
         }
       })
       if (!entry) {

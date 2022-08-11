@@ -82,7 +82,7 @@ const TreeNodeLink = memo(
   ) {
     const {schema} = useWorkspace()
     const type = schema.type(entry.type)!
-    const isContainer = entry.$isContainer
+    const isContainer = entry.alinea.isContainer
     const containerIcon = isOpened ? (
       <IcRoundKeyboardArrowDown style={{fontSize: px(20)}} />
     ) : (
@@ -116,7 +116,7 @@ const TreeNodeLink = memo(
             className={styles.root.link()}
             style={{paddingLeft: `${10 + level * 8}px`}}
             onClick={event => {
-              if (!entry.$isContainer || isOpened) return
+              if (!entry.alinea.isContainer || isOpened) return
               toggleOpen()
             }}
           >
@@ -124,7 +124,7 @@ const TreeNodeLink = memo(
               <div
                 className={styles.root.link.icon()}
                 onClick={event => {
-                  if (!entry.$isContainer) return
+                  if (!entry.alinea.isContainer) return
                   event.preventDefault()
                   event.stopPropagation()
                   toggleOpen()
@@ -146,7 +146,7 @@ const TreeNodeLink = memo(
               >
                 {renderLabel(entry.title)}
               </span>
-              {/*entry.$isContainer && entry.childrenCount > 0 && (
+              {/*entry.isContainer && entry.childrenCount > 0 && (
                 <div className={styles.root.link.badge()}>
                   <div>{entry.childrenCount}</div>
                 </div>
@@ -158,7 +158,7 @@ const TreeNodeLink = memo(
               )}
             </HStack>
           </Link>
-          {entry.$isContainer && (
+          {entry.alinea.isContainer && (
             <Stack.Right className={styles.root.create()}>
               <TreeNodeChildrenCreator locale={locale} entry={entry} />
             </Stack.Right>
@@ -237,7 +237,7 @@ export function TreeNode({
   const isDraft = drafts.includes(entry.source.id)
   const isSelected = draft?.id === entry.source.id
   const handleToggleOpen = useCallback(() => {
-    if (entry.$isContainer) toggleOpen(entry.id)
+    if (entry.alinea.isContainer) toggleOpen(entry.id)
   }, [toggleOpen])
   const isOpened = isOpen(entry.id)
   useInitialEffect(() => {

@@ -150,7 +150,7 @@ export class Type<R = any, T = R> extends TypeConfig<R, T> {
     const res = new Collection<T>('Entry', {
       where: fields.type
         .is(alias)
-        .and(fields.workspace.is(this.schema.workspace.name))
+        .and(fields.alinea.workspace.is(this.schema.workspace.name))
     })
     // Todo: this is used in Pages(Multiple).whereType() and needs a clean way
     // of passing this option

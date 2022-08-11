@@ -8,22 +8,26 @@ import {Data} from '../Data'
 import {createDb} from './CreateDb'
 
 interface DemoEntry extends Partial<Entry> {
-  title: string
+  id?: string
   type: string
+  title: string
 }
 
 function toEntry(workspace: string, data: DemoEntry): Entry {
   const path = data.path || slugify(data.title as string)
   return {
     id: data.id || createId(),
-    root: 'data',
-    index: 'a0',
     path,
     url: `/${path}`,
-    workspace,
-    parent: undefined,
-    parents: [],
-    i18n: undefined,
+    alinea: {
+      workspace,
+      root: 'data',
+      index: 'a0',
+      parent: undefined,
+      parents: [],
+      i18n: undefined,
+      ...data.alinea
+    },
     ...data
   }
 }

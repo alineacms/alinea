@@ -1,5 +1,5 @@
 import * as Y from 'yjs'
-import {Entry} from './Entry'
+import {Entry, EntryMeta} from './Entry'
 import {createError} from './ErrorWithCode'
 import {Label} from './Label'
 import {Type} from './Type'
@@ -11,9 +11,10 @@ export function entryFromDoc(
   getType: (workspace: string, typeKey: string) => Type | undefined
 ): Entry {
   const docRoot = doc.getMap(ROOT_KEY)
-  const workspace = docRoot.get('workspace') as string | undefined
-  const root = docRoot.get('root') as string | undefined
   const typeKey = docRoot.get('type') as string | undefined
+  const meta = docRoot.get('alinea') as EntryMeta
+  const workspace = meta.workspace as string | undefined
+  const root = meta.root as string | undefined
   const type = workspace && typeKey && getType(workspace, typeKey)
   if (!type)
     throw new Error(
@@ -23,17 +24,10 @@ export function entryFromDoc(
   return {
     id: docRoot.get('id') as string,
     type: typeKey,
-    workspace,
-    root,
-    index: docRoot.get('index') as string,
-    url: docRoot.get('url') as string,
     title: docRoot.get('title') as Label,
     path: docRoot.get('path') as string,
-    i18n: docRoot.get('i18n') as Entry.I18N | undefined,
-    parent: docRoot.get('parent') as string,
-    parents: docRoot.get('parents') as Array<string>,
-    $isContainer: docRoot.get('$isContainer') as boolean,
-    ...type.shape.fromY(docRoot)
+    ...type.shape.fromY(docRoot),
+    alinea: meta
   }
 }
 
@@ -51,16 +45,8 @@ export function docFromEntry(
   doc.clientID = 1
   const docRoot = doc.getMap(ROOT_KEY)
   docRoot.set('id', entry.id)
-  docRoot.set('workspace', entry.workspace)
-  docRoot.set('root', entry.root)
   docRoot.set('type', entry.type)
-  docRoot.set('index', entry.index)
-  docRoot.set('url', entry.url)
-  docRoot.set('path', entry.path)
-  if (entry.i18n) docRoot.set('i18n', entry.i18n)
-  docRoot.set('parent', entry.parent)
-  docRoot.set('parents', entry.parents)
-  docRoot.set('$isContainer', entry.$isContainer)
+  docRoot.set('alinea', entry.alinea)
   for (const [key, field] of type) {
     const contents = entry[key]
     docRoot.set(key, field.shape.toY(contents))

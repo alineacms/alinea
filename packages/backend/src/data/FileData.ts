@@ -73,7 +73,7 @@ export class FileData implements Data.Source, Data.Target, Data.Media {
                   console.log(`\rCould not parse ${location}: ${err}`)
                   continue
                 }
-                if (locale && !entry.i18n) {
+                if (locale && !entry.alinea.i18n) {
                   console.log(
                     `\rNo i18n id found for entry with id ${entry.id}`
                   )
@@ -90,25 +90,37 @@ export class FileData implements Data.Source, Data.Target, Data.Media {
                 const parent = parents[parents.length - 1]
                 const res: Entry = {
                   ...entry,
-                  workspace,
-                  root: root.name,
-                  url,
                   path: name,
-                  index: entry.index || entry.id,
-                  parent: parent?.id,
-                  parents: parents.map(parent => parent.id),
-                  $isContainer: isContainer,
-                  $status: EntryStatus.Published,
-                  i18n: locale
-                    ? {
-                        id: entry.i18n?.id || entry.id,
-                        locale,
-                        parent: parent?.i18n?.id || parent?.id,
-                        parents: parents.map(
-                          parent => parent?.i18n?.id || parent?.id
-                        )
-                      }
-                    : undefined
+                  url,
+                  alinea: {
+                    workspace,
+                    root: root.name,
+                    index:
+                      entry.alinea?.index ||
+                      // Todo: this is for backwards compatibility, should
+                      // deprecate next major version
+                      (entry as any).index ||
+                      entry.id,
+                    parent: parent?.id,
+                    parents: parents.map(parent => parent.id),
+                    status: EntryStatus.Published,
+                    isContainer: isContainer,
+                    i18n: locale
+                      ? {
+                          id:
+                            entry.alinea.i18n?.id ||
+                            // Todo: this is for backwards compatibility, should
+                            // deprecate next major version
+                            (entry as any).i18n?.id ||
+                            entry.id,
+                          locale,
+                          parent: parent?.alinea.i18n?.id || parent?.id,
+                          parents: parents.map(
+                            parent => parent?.alinea.i18n?.id || parent?.id
+                          )
+                        }
+                      : undefined
+                  }
                 }
                 if (isContainer) parentIndex.set(url, res)
                 yield res

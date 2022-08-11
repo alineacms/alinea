@@ -84,7 +84,7 @@ function RichTextNodeView<T>({views, node}: RichTextNodeViewProps<T>) {
         } else {
           const node = View ?? element
           return (
-            <node.type {...element?.props} {...node.props}>
+            <node.type {...element?.props} {...(node.props as object)}>
               {children}
             </node.type>
           )
@@ -104,7 +104,7 @@ function RichTextNodeView<T>({views, node}: RichTextNodeViewProps<T>) {
       } else {
         const node = View ?? element ?? {type: Fragment}
         return (
-          <node.type {...element?.props} {...node.props}>
+          <node.type {...element?.props} {...(node.props as object)}>
             {inner}
           </node.type>
         )

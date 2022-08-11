@@ -113,19 +113,15 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
         id: entry.id,
         type: entry.type,
         title: entry.title,
-        workspace: entry.workspace,
-        root: entry.root,
-        url: entry.url,
-        parent: entry.parent,
-        i18n: entry.i18n
+        alinea: entry.alinea
       })
       const data = preview.first(
         Entry.where(Entry.id.is(id)).select({
           entry: Entry.fields,
           translations: Translation.where(t =>
-            t.i18n.id.is(Entry.i18n.id)
+            t.alinea.i18n.id.is(Entry.alinea.i18n.id)
           ).select(minimal),
-          parent: Parent.where(Parent.id.is(Entry.parent))
+          parent: Parent.where(Parent.id.is(Entry.alinea.parent))
             .select(minimal)
             .first()
         })
@@ -195,7 +191,7 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
       end()
       const ids = drafts.map(({id}) => id)
       const inWorkspace = store.all(
-        Entry.where(Entry.workspace.is(workspace))
+        Entry.where(Entry.alinea.workspace.is(workspace))
           .where(Entry.id.isIn(ids))
           .select(Entry.id)
       )
@@ -243,8 +239,8 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
       const {media} = this.options
       const parents = walkUrl(parentUrl(file.path)).map(url => {
         const parent = store.first(
-          Entry.where(Entry.workspace.is(workspace))
-            .where(Entry.root.is(root))
+          Entry.where(Entry.alinea.workspace.is(workspace))
+            .where(Entry.alinea.root.is(root))
             .where(Entry.url.is(url))
             .select({id: Entry.id})
         )
@@ -256,20 +252,15 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
       const location = await media.upload({workspace, root, ...file}, ctx)
       const extension = extname(location)
       const prev = store.first(
-        Entry.where(Entry.workspace.is(workspace))
-          .where(Entry.root.is(root))
-          .where(Entry.parent.is(parent))
+        Entry.where(Entry.alinea.workspace.is(workspace))
+          .where(Entry.alinea.root.is(root))
+          .where(Entry.alinea.parent.is(parent))
       )
       const entry: Media.File = {
         id,
         type: 'File',
-        index: generateKeyBetween(null, prev?.index || null),
-        workspace: workspace as string,
-        root: root as string,
-        parent: parent,
-        parents,
-        title: basename(file.path, extension),
         url: file.path.toLowerCase(),
+        title: basename(file.path, extension),
         path: basename(file.path),
         location,
         extension: extension,
@@ -281,7 +272,14 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
         height: file.height,
         averageColor: file.averageColor,
         blurHash: file.blurHash,
-        preview: file.preview
+        preview: file.preview,
+        alinea: {
+          index: generateKeyBetween(null, prev?.alinea.index || null),
+          workspace: workspace as string,
+          root: root as string,
+          parent: parent,
+          parents
+        }
       }
       await this.publishEntries({entries: [entry]}, ctx)
       return entry

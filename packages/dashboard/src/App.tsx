@@ -201,13 +201,13 @@ function EntryRoute({id}: EntryRouteProps) {
   const {draft} = useDraft(id)
   const locale = useLocale()
   const isLoading = Boolean(
-    draft?.id !== id && locale && draft?.i18n?.locale !== locale
+    draft?.id !== id && locale && draft?.alinea.i18n?.locale !== locale
   )
   const {search} = useLocation()
   const type = draft?.channel
   const View = type?.options.view || EntryEdit
   const select = ([] as Array<string | undefined>)
-    .concat(draft?.parents)
+    .concat(draft?.alinea.parents)
     .concat(draft?.id)
     .filter(Boolean) as Array<string>
   return (
