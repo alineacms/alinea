@@ -36,7 +36,7 @@ export namespace Storage {
     }
     for (const todo of entries) {
       const entry = Cache.computeEntry(store, config, todo)
-      const {alinea, path: entryPath, ...data} = entry
+      const {alinea, path: entryPath, url, ...data} = entry
       const entryData = data
       const workspace = config.workspaces[alinea.workspace]
       const {schema, source: contentDir} = workspace
