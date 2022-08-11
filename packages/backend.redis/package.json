@@ -23,7 +23,7 @@
     }
   },
   "dependencies": {
-    "yjs": "^13.5.39"
+    "yjs": "^13.5.41"
   },
   "devDependencies": {
     "@types/ioredis": "^4.28.8",

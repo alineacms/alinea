@@ -23,7 +23,7 @@
     }
   },
   "dependencies": {
-    "yjs": "^13.5.39"
+    "yjs": "^13.5.41"
   },
   "devDependencies": {
     "firebase-admin": "^10.0.2"

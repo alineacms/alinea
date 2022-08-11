@@ -27,7 +27,7 @@
     "@alinea/iso": "^0.1.21",
     "@alinea/sqlite-wasm": "^0.1.10",
     "@alinea/store": "0.0.0",
-    "yjs": "^13.5.39"
+    "yjs": "^13.5.41"
   },
   "devDependencies": {
     "@types/js-yaml": "^4.0.5",

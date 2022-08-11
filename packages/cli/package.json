@@ -38,7 +38,7 @@
     "chokidar": "^3.5.3",
     "esbuild": "^0.14.51",
     "mime-db": "^1.51.0",
-    "yjs": "^13.5.39"
+    "yjs": "^13.5.41"
   },
   "devDependencies": {
     "@types/compression": "^1.7.2",

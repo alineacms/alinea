@@ -46,7 +46,7 @@
     "@alinea/ui": "0.0.0",
     "react-router": "^6.3.0",
     "react-router-dom": "^6.3.0",
-    "yjs": "^13.5.39"
+    "yjs": "^13.5.41"
   },
   "peerDependencies": {
     "react": "*",
