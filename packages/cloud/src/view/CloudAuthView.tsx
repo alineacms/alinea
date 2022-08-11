@@ -29,16 +29,15 @@ export function CloudAuthView({setSession}: Auth.ViewProps) {
   const result = data!
   switch (result.type) {
     case AuthResultType.Authenticated:
-      function logout() {
-        console.log('redirect to logout url')
-      }
       setSession({
         user: result.user,
         hub: client.authenticate(
           options => ({...options, credentials: 'same-origin'}),
           () => setSession(undefined)
         ),
-        end: async () => logout()
+        end: async () => {
+          location.href = joinPaths(client.url, Hub.routes.base, `/auth/logout`)
+        }
       })
       return null
     case AuthResultType.UnAuthenticated:
