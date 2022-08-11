@@ -26,18 +26,19 @@ export function entryFromDoc(
     type: typeKey,
     title: docRoot.get('title') as Label,
     path: docRoot.get('path') as string,
+    url: docRoot.get('url') as string,
     ...type.shape.fromY(docRoot),
     alinea: meta
   }
 }
 
 export function docFromEntry(
-  entry: Entry.Raw & {[key: string]: any},
+  entry: Entry & {[key: string]: any},
   getType: (workspace: string, typeKey: string) => Type | undefined,
   doc = new Y.Doc()
 ) {
   const typeKey = entry.type
-  const type = typeKey && getType(entry.workspace, typeKey)
+  const type = typeKey && getType(entry.alinea.workspace, typeKey)
   if (!type) throw createError(`Type "${typeKey}" not found`)
   const {clientID} = doc
   // By setting a consistent clientID, we can ensure that this call is more or
@@ -46,6 +47,9 @@ export function docFromEntry(
   const docRoot = doc.getMap(ROOT_KEY)
   docRoot.set('id', entry.id)
   docRoot.set('type', entry.type)
+  docRoot.set('url', entry.url)
+  docRoot.set('title', entry.title)
+  docRoot.set('path', entry.path)
   docRoot.set('alinea', entry.alinea)
   for (const [key, field] of type) {
     const contents = entry[key]

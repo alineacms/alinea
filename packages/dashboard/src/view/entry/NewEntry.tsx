@@ -92,19 +92,27 @@ function NewEntryForm({parentId}: NewEntryProps) {
     setIsCreating(true)
     const type = schema.type(selected)!
     const path = slugify(title)
-    const entry = {
+    const entry: Entry = {
       ...type.create(),
       path,
-      workspace,
-      root: root.name,
-      parent: parent?.id,
+      title,
       url: (parent?.url || '') + (parent?.url.endsWith('/') ? '' : '/') + path,
-      title
+      alinea: {
+        index: 'a0',
+        workspace,
+        root: root.name,
+        parent: parent?.id
+      }
     }
     if (root.i18n) {
-      entry.i18n = {
+      entry.alinea.i18n = {
         id: createId(),
-        locale
+        locale: locale!,
+        parent: parent?.id,
+        parents: ([] as Array<string | undefined>)
+          .concat(parent?.alinea.i18n?.parents)
+          .concat(parent?.id)
+          .filter(Boolean) as Array<string>
       }
       entry.url = `/${locale}${entry.url}`
     }
@@ -115,9 +123,9 @@ function NewEntryForm({parentId}: NewEntryProps) {
         if (result.isSuccess()) {
           queryClient.invalidateQueries([
             'children',
-            entry.workspace,
-            entry.root,
-            entry.parent
+            entry.alinea.workspace,
+            entry.alinea.root,
+            entry.alinea.parent
           ])
           navigate(nav.entry(entry))
         }

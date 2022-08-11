@@ -10,12 +10,18 @@ import {FileDrafts} from '../src/drafts/FileDrafts'
 
 dotenv.config()
 
-const entry: Entry.Raw = {
+const entry: Entry = {
   id: '20580nQzc',
   type: 'Doc',
   title: 'Getting started',
+  url: '/',
+  path: 'getting-started',
   alinea: {
-    index: 'a0'
+    root: 'data',
+    workspace: 'main',
+    index: 'a0',
+    parent: undefined,
+    parents: []
   }
 }
 
