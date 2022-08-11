@@ -55,7 +55,7 @@ class Drafts {
     if (!result) throw createError(404, `Entry not found`)
     const type = hub.config.type(
       result.entry.alinea.workspace,
-      result.entry.alinea.type
+      result.entry.type
     )
     if (!type) throw createError(404, `Type not found`)
     if (result.draft) {
@@ -75,7 +75,7 @@ class Drafts {
     if (this.saveTimeout) clearTimeout(this.saveTimeout)
     draft.status(EntryStatus.Publishing)
     this.status(DraftsStatus.Saving)
-    return this.hub.deleteDraft({id: draft.alinea.id}).then(result => {
+    return this.hub.deleteDraft({id: draft.id}).then(result => {
       draft.status(EntryStatus.Published)
       this.queryClient.invalidateQueries('draft-list')
       return result

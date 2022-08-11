@@ -19,7 +19,7 @@ const styles = fromModule(css)
 function entrySummaryQuery(Entry: Collection<Entry>) {
   return {
     id: Entry.id,
-    type: Entry.alinea.type,
+    type: Entry.type,
     workspace: Entry.alinea.workspace,
     root: Entry.alinea.root,
     title: Entry.title,

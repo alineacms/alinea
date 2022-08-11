@@ -38,7 +38,7 @@ export function DraftsOverview({id}: DraftsOverviewProps) {
     {suspense: true}
   )
   const drafts = data!
-  const selected = id && drafts.find(d => d.alinea.id === id)
+  const selected = id && drafts.find(d => d.id === id)
   const {draft, isLoading} = useDraft(id)
   const [publishing, setPublishing] = useState(false)
   function handlePublish() {
@@ -64,22 +64,27 @@ export function DraftsOverview({id}: DraftsOverviewProps) {
         <VStack>
           {drafts.map(draft => {
             return (
-              <div key={draft.alinea.id}>
+              <div key={draft.id}>
                 <TreeNode
                   entry={{
                     ...draft,
                     locale: draft.alinea.i18n?.locale!,
-                    source: draft.alinea,
+                    source: {
+                      id: draft.id,
+                      parent: draft.alinea.parent,
+                      parents: draft.alinea.parents
+                    },
                     alinea: {
                       ...draft.alinea,
-                      $isContainer: false,
+                      i18n: draft.alinea.i18n!,
+                      isContainer: false,
                       parents: []
                     },
                     childrenCount: 0
                   }}
                   locale={draft.alinea.i18n?.locale!}
                   level={0}
-                  link={nav.draft({...draft.alinea, id: draft.alinea.id})}
+                  link={nav.draft({...draft.alinea, id: draft.id})}
                   isOpen={() => false}
                   toggleOpen={() => {}}
                 />

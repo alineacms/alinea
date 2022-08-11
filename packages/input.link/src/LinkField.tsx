@@ -18,13 +18,13 @@ export namespace LinkType {
   export function conditionOf(cursor: Cursor<Entry>, type: LinkType) {
     switch (type) {
       case 'entry':
-        return cursor.alinea.type.isNot(Media.Type.File)
+        return cursor.type.isNot(Media.Type.File)
       case 'image':
-        return cursor.alinea.type
+        return cursor.type
           .is(Media.Type.File)
           .and(cursor.get('extension').isIn(Media.imageExtensions))
       case 'file':
-        return cursor.alinea.type
+        return cursor.type
           .is(Media.Type.File)
           .and(cursor.get('extension').isNotIn(Media.imageExtensions))
       case 'external':
@@ -85,8 +85,10 @@ export namespace LinkData {
     alinea: EntryMeta
     type: 'entry'
     entry: string
+    entryType: string
     path: string
     title: Label
+    url: string
   }
   export interface File extends Reference {
     alinea: EntryMeta
@@ -127,11 +129,13 @@ export function createLink<T, Q>(
       const row = field.each()
       const Link = Entry.as<Media.File>('Link')
       const cases: Record<string, SelectionInput> = {
-        entry: Link.where(entry => entry.alinea.id.is(row.get('entry')))
+        entry: Link.where(entry => entry.id.is(row.get('entry')))
           .first()
           .select(entry => {
             return row.fields
               .with({
+                entryType: entry.type,
+                url: entry.url,
                 path: entry.path,
                 title: entry.title,
                 alinea: entry.alinea

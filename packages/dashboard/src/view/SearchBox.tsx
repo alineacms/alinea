@@ -107,7 +107,7 @@ export function SearchBox() {
               schema={schema}
               cursor={cursor}
               type={explorerView}
-              toggleSelect={entry => navigate(nav.entry(entry.alinea))}
+              toggleSelect={entry => navigate(nav.entry(entry))}
               max={25}
             />
           </div>

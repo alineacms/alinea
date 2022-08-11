@@ -53,7 +53,7 @@ export const ExplorerRow = memo(function ExplorerRow({
         {entries?.map(entry => {
           return (
             <ExplorerItem
-              key={entry.alinea.id}
+              key={entry.id}
               schema={schema}
               entry={entry}
               summaryView={summaryView}

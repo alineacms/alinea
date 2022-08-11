@@ -6,13 +6,13 @@ function menuQuery(pages: content.Pages) {
   return pages
     .where(page => page.type.is('Doc').or(page.type.is('Docs')))
     .where(page => page.id.isNot('docs'))
-    .orderBy(page => [page.index.asc()])
+    .orderBy(page => [page.alinea.index.asc()])
     .select(page => ({
       id: page.id,
       type: page.type,
       url: page.url,
       title: page.title,
-      parent: page.parent
+      parent: page.alinea.parent
     }))
 }
 
@@ -29,7 +29,8 @@ export async function docPageQuery(pages: content.Pages, doc: content.Doc) {
     direction: 1 | -1
   ): Promise<Sibling | null> {
     const method = direction === 1 ? 'nextSibling' : 'prevSibling'
-    const sort = content.AnyPage.index[direction === 1 ? 'asc' : 'desc']()
+    const sort =
+      content.AnyPage.alinea.index[direction === 1 ? 'asc' : 'desc']()
     const fromTree = pages.tree(from)
     async function pickNext(next: Sibling | null): Promise<Sibling | null> {
       switch (next?.type) {

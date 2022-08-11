@@ -17,7 +17,7 @@ export function MediaThumbnail({file}: MediaThumbnailProps) {
   const {extension, preview, averageColor: color} = file
   const fontColor = useContrastColor(color)
   return (
-    <Link to={nav.entry(file.alinea)} className={styles.root()}>
+    <Link to={nav.entry(file)} className={styles.root()}>
       <div className={styles.root.preview()}>
         <div className={styles.root.preview.picture()}>
           {preview ? (

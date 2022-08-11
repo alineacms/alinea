@@ -64,7 +64,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
     {suspense: true, keepPreviousData: true}
   )
   const parent = parentEntry?.isSuccess() ? parentEntry.value?.entry : undefined
-  const type = parent && schema.type(parent.alinea.type)
+  const type = parent && schema.type(parent.type)
   const types: Array<string> = !parent
     ? root.contains
     : type?.options.contains || schema.keys
@@ -97,11 +97,8 @@ function NewEntryForm({parentId}: NewEntryProps) {
       path,
       workspace,
       root: root.name,
-      parent: parent?.alinea.id,
-      url:
-        (parent?.alinea.url || '') +
-        (parent?.alinea.url.endsWith('/') ? '' : '/') +
-        path,
+      parent: parent?.id,
+      url: (parent?.url || '') + (parent?.url.endsWith('/') ? '' : '/') + path,
       title
     }
     if (root.i18n) {

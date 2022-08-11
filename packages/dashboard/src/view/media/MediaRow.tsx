@@ -21,6 +21,7 @@ function query(parentId: string, start: number, batchSize: number) {
     .skip(start * batchSize)
     .take(batchSize)
     .select({
+      id: File.id,
       alinea: File.alinea,
       title: File.title,
       extension: File.extension,
@@ -58,7 +59,7 @@ export function MediaRow({amount, parentId, from, batchSize}: MediaRowProps) {
         }}
       >
         {files?.map(file => (
-          <MediaThumbnail key={file.alinea.id} file={file} />
+          <MediaThumbnail key={file.id} file={file} />
         ))}
       </div>
     </div>

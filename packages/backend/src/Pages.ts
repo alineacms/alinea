@@ -83,9 +83,7 @@ class PageResolver<T> {
   }
 }
 
-export type Page<P, T> = T extends {alinea: {id: string}}
-  ? T & {tree: PageTree<P>}
-  : T
+export type Page<P, T> = T extends {id: string} ? T & {tree: PageTree<P>} : T
 
 abstract class Base<P, T> extends Promise<T> {
   protected result: Promise<T> | undefined
@@ -128,14 +126,9 @@ class Multiple<P, T> extends Base<P, Array<Page<P, T>>> {
       rows.map(row => this.resolver.postProcess(row))
     )
     return res.map(page => {
-      if (
-        page &&
-        typeof page === 'object' &&
-        'alinea' in page &&
-        page.alinea.id
-      ) {
+      if (page && typeof page === 'object' && 'id' in page) {
         Object.defineProperty(page, 'tree', {
-          value: new PageTree<P>(this.resolver, page.alinea.id),
+          value: new PageTree<P>(this.resolver, page.id),
           enumerable: false
         })
       }
@@ -248,9 +241,9 @@ class Single<P, T> extends Base<P, Page<P, T> | null> {
     const row = store.first(this.cursor)
     if (!row) return null
     const page = await this.resolver.postProcess(row)
-    if (typeof page === 'object' && 'alinea' in page && page.alinea.id) {
+    if (typeof page === 'object' && 'id' in page) {
       Object.defineProperty(page, 'tree', {
-        value: new PageTree<P>(this.resolver, page.alinea.id),
+        value: new PageTree<P>(this.resolver, page.id),
         enumerable: false
       })
     }

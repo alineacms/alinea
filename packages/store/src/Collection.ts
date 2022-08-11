@@ -16,11 +16,11 @@ export type CollectionOptions = {
 
 interface CollectionId {
   property: string
-  addToRow: (row: any, id: string) => void
+  addToRow: (row: any, id: string) => any
   getFromRow: (row: any) => string
 }
 
-export class CollectionImpl<Row extends {} = any> extends CursorImpl<Row> {
+export class CollectionImpl<Row = any> extends CursorImpl<Row> {
   private __options: CollectionOptions
   __collectionId: CollectionId
   constructor(name: string, options: CollectionOptions = {}) {
@@ -40,7 +40,7 @@ export class CollectionImpl<Row extends {} = any> extends CursorImpl<Row> {
     this.__options = options
     this.__collectionId = options?.id || {
       property: 'id',
-      addToRow: (row, id) => (row.id = id),
+      addToRow: (row, id) => Object.assign({id}, row),
       getFromRow: row => row.id
     }
   }

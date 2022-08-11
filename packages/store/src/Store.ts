@@ -8,7 +8,9 @@ export type QueryOptions = {
   debug?: boolean
 }
 
-export type IdLess<Row> = Omit<Row, 'id'> & {id?: string}
+export type IdLess<Row> = Row extends {id: string}
+  ? Omit<Row, 'id'> & {id?: string}
+  : Row
 export type Document = {id: string}
 
 export interface Store {
@@ -16,12 +18,12 @@ export interface Store {
   first<Row>(cursor: Cursor<Row>, options?: QueryOptions): Row | null
   count<Row>(cursor: Cursor<Row>, options?: QueryOptions): number
   delete<Row>(cursor: Cursor<Row>, options?: QueryOptions): {changes: number}
-  insert<Row extends Document>(
+  insert<Row>(
     collection: Collection<Row>,
     object: IdLess<Row>,
     options?: QueryOptions
   ): Row
-  insertAll<Row extends Document>(
+  insertAll<Row>(
     collection: Collection<Row>,
     objects: Array<IdLess<Row>>,
     options?: QueryOptions
@@ -31,7 +33,7 @@ export interface Store {
     update: Update<Row>,
     options?: QueryOptions
   ): {changes: number}
-  createIndex<Row extends Document>(
+  createIndex<Row>(
     collection: Collection<Row>,
     name: String,
     on: Array<Expr<any>>

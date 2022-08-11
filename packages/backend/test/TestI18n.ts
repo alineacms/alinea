@@ -55,32 +55,29 @@ const fs: FS = Volume.fromNestedJSON({
     data: {
       a: {
         '/index.json': entry({
+          id: 'root',
+          type: 'Home',
           title: 'Test title',
           alinea: {
-            id: 'root',
-            type: 'Home',
-            root: 'data',
             index: 'a',
             i18n: {id: 'root'}
           }
         }),
         '/sub.json': entry({
+          id: 'sub',
+          type: 'Type',
           title: 'Sub title',
           alinea: {
-            id: 'sub',
-            type: 'Type',
-            root: 'data',
             index: 'a',
             i18n: {id: 'sub'}
           }
         }),
         sub: {
           '/entry.json': entry({
+            id: 'sub-entry',
+            type: 'Sub',
             title: 'Sub entry title',
             alinea: {
-              id: 'sub-entry',
-              type: 'Sub',
-              root: 'data',
               index: 'b',
               i18n: {id: 'sub-entry'}
             }
@@ -109,20 +106,20 @@ const store = await createMemoryStore()
 async function index() {
   const entries = await accumulate(data.entries())
   await Cache.create(store, config, data)
-  return entries.sort((a, b) => a.alinea.url.localeCompare(b.alinea.url))
+  return entries.sort((a, b) => a.url.localeCompare(b.url))
 }
 
 test('reading', async () => {
   const [root, sub, subEntry] = await index()
-  assert.is(root.alinea.id, 'root')
+  assert.is(root.id, 'root')
   assert.is(root.alinea.parent, undefined)
-  assert.is(root.alinea.url, '/a')
-  assert.is(sub.alinea.id, 'sub')
+  assert.is(root.url, '/a')
+  assert.is(sub.id, 'sub')
   assert.is(sub.alinea.parent, undefined)
-  assert.is(sub.alinea.url, '/a/sub')
-  assert.is(subEntry.alinea.id, 'sub-entry')
+  assert.is(sub.url, '/a/sub')
+  assert.is(subEntry.id, 'sub-entry')
   assert.is(subEntry.alinea.parent, 'sub')
-  assert.is(subEntry.alinea.url, '/a/sub/entry')
+  assert.is(subEntry.url, '/a/sub/entry')
 })
 
 test('inserting', async () => {
@@ -132,9 +129,9 @@ test('inserting', async () => {
   ])
   await data.publish({changes})
   const [newRoot] = await index()
-  assert.is(newRoot.alinea.id, 'root')
+  assert.is(newRoot.id, 'root')
   assert.is(newRoot.title, 'New root title')
-  assert.is(newRoot.alinea.url, '/a')
+  assert.is(newRoot.url, '/a')
 })
 
 test.run()

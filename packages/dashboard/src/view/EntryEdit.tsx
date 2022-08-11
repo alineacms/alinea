@@ -34,7 +34,7 @@ export function EntryEdit({initialMode, draft, isLoading}: EntryEditProps) {
   const {schema} = useWorkspace()
   const {hub} = useSession()
   const navigate = useNavigate()
-  const type = schema.type(draft.alinea.type)
+  const type = schema.type(draft.type)
   const {preview} = useWorkspace()
   const isTranslating = !isLoading && locale !== draft.alinea.i18n?.locale
   const [isCreating, setIsCreating] = useState(false)
@@ -44,17 +44,17 @@ export function EntryEdit({initialMode, draft, isLoading}: EntryEditProps) {
     if (!locale || isCreating) return
     setIsCreating(true)
     const entry = draft.getEntry()
-    entry.alinea.id = createId()
+    entry.id = createId()
     entry.alinea.i18n!.locale = locale
-    const path = entry.alinea.url.split('/').slice(1).join('/')
-    entry.alinea.url = `/${locale}/${path}`
+    const path = entry.url.split('/').slice(1).join('/')
+    entry.url = `/${locale}/${path}`
     const doc = docFromEntry(entry, () => type)
     return hub
-      .updateDraft({id: entry.alinea.id, update: Y.encodeStateAsUpdate(doc)})
+      .updateDraft({id: entry.id, update: Y.encodeStateAsUpdate(doc)})
       .then(result => {
         if (!result.isFailure()) {
-          queryClient.invalidateQueries(['draft', draft.alinea.id])
-          navigate(nav.entry(entry.alinea))
+          queryClient.invalidateQueries(['draft', draft.id])
+          navigate(nav.entry(entry))
         } else {
           throw result.error
         }
@@ -65,7 +65,7 @@ export function EntryEdit({initialMode, draft, isLoading}: EntryEditProps) {
     const mightHaveTranslation = locale && isTranslating
     if (!mightHaveTranslation) return
     const translation = draft.translation(locale)
-    if (translation) navigate(nav.entry(translation.alinea))
+    if (translation) navigate(nav.entry(translation))
   }, [draft, isTranslating, locale])
   return (
     <>

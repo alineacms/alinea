@@ -44,7 +44,7 @@ function EntryStatusChip() {
       return <Chip icon={IcRoundRotateLeft}>Publishing</Chip>
     case EntryStatus.Draft:
       return (
-        <Link to={nav.draft(draft.alinea)} style={{textDecoration: 'none'}}>
+        <Link to={nav.draft(draft)} style={{textDecoration: 'none'}}>
           <Chip
             accent
             icon={
@@ -78,13 +78,13 @@ export function EntryHeader({mode, setMode}: EntryHeaderProps) {
   const currentLocale = useLocale()
   const navigate = useNavigate()
   const parent = draft.alinea.parent
-  const type = schema.type(draft.alinea.type)
+  const type = schema.type(draft.type)
   const status = useObservable(draft.status)
   const queryClient = useQueryClient()
   const [isPublishing, setPublishing] = useState(false)
   function handleDiscard() {
     return drafts.discard(draft).then(([entryRemains, err]) => {
-      queryClient.invalidateQueries(['draft', draft.alinea.id])
+      queryClient.invalidateQueries(['draft', draft.id])
       if (!entryRemains) {
         queryClient.invalidateQueries(['tree'])
         // Navigate to parent, otherwise we'll 404
@@ -128,7 +128,7 @@ export function EntryHeader({mode, setMode}: EntryHeaderProps) {
                 whiteSpace: 'nowrap'
               }}
             >
-              {draft.alinea.url}
+              {draft.url}
             </span>
           </HStack>
         </Typo.Monospace>
@@ -144,7 +144,7 @@ export function EntryHeader({mode, setMode}: EntryHeaderProps) {
                 to={nav.entry({
                   workspace: link.alinea.workspace,
                   root: link.alinea.root,
-                  id: link.alinea.id,
+                  id: link.id,
                   locale
                 })}
               >

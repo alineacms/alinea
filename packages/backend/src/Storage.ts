@@ -1,4 +1,4 @@
-import {Config, Entry} from '@alinea/core'
+import {Config, Entry, EntryMetaRaw} from '@alinea/core'
 import {join} from '@alinea/core/util/Paths'
 import {Store} from '@alinea/store'
 import {Cache} from './Cache'
@@ -15,11 +15,11 @@ const decoder = new TextDecoder()
 
 export namespace Storage {
   export function entryLocation(
-    entry: {path: string; alinea: {url: string}},
+    entry: {path: string; url: string},
     extension: string
   ) {
     const isIndex = entry.path === '' || entry.path === 'index'
-    return entry.alinea.url + (isIndex ? '/index' : '') + extension
+    return entry.url + (isIndex ? '/index' : '') + extension
   }
 
   export async function publishChanges(
@@ -43,39 +43,33 @@ export namespace Storage {
       function abs(root: string, file: string) {
         return join(contentDir, root, file)
       }
-      const type = schema.type(entry.alinea.type)
+      const type = schema.type(entry.type)
       const location = entryLocation(entry, loader.extension)
       if (!type) {
         // Todo: some logging solution so these can end up in the UI
-        console.log(
-          `Cannot publish entry of unknown type: ${entry.alinea.type}`
-        )
+        console.log(`Cannot publish entry of unknown type: ${entry.type}`)
         continue
       }
       const file = abs(alinea.root, location)
-      const meta = {
-        id: entry.alinea.id,
-        type: entry.alinea.type,
+      const meta: EntryMetaRaw = {
         index: alinea.index,
-        workspace: alinea.workspace,
-        root: alinea.root,
         i18n: alinea.i18n
       }
       changes.write.push({
-        id: entry.alinea.id,
+        id: entry.id,
         file,
         contents: decoder.decode(
           loader.format(schema, {...entryData, alinea: meta})
         )
       })
-      const previous = store.first(Entry.where(Entry.id.is(entry.alinea.id)))
+      const previous = store.first(Entry.where(Entry.id.is(entry.id)))
 
       // Cleanup old files
       if (previous) {
         const oldLocation = entryLocation(previous, loader.extension)
         if (oldLocation !== location) {
           const oldFile = abs(previous.alinea.root, oldLocation)
-          changes.delete.push({id: entry.alinea.id, file: oldFile})
+          changes.delete.push({id: entry.id, file: oldFile})
           if (type.isContainer) {
             if (canRename) {
               const oldFolder = abs(
@@ -87,14 +81,14 @@ export namespace Storage {
                 entryLocation(entry, '')
               )
               changes.rename.push({
-                id: entry.alinea.id,
+                id: entry.id,
                 file: oldFolder,
                 to: newFolder
               })
             } else {
-              renameChildren(entry.alinea.url, entry.alinea.id)
+              renameChildren(entry.url, entry.id)
               changes.delete.push({
-                id: entry.alinea.id,
+                id: entry.id,
                 file: abs(previous.alinea.root, entryLocation(previous, ''))
               })
             }
@@ -112,21 +106,18 @@ export namespace Storage {
             child.alinea.root,
             entryLocation(child, loader.extension)
           )
-          changes.delete.push({id: child.alinea.id, file: childFile})
+          changes.delete.push({id: child.id, file: childFile})
           const newUrl = appendPath(parentUrl, child.path)
           const newLocation = abs(
             entry.alinea.root,
-            entryLocation(
-              {path: child.path, alinea: {url: newUrl}},
-              loader.extension
-            )
+            entryLocation({path: child.path, url: newUrl}, loader.extension)
           )
           changes.write.push({
-            id: child.alinea.id,
+            id: child.id,
             file: newLocation,
             contents: decoder.decode(loader.format(schema, child))
           })
-          renameChildren(newUrl, child.alinea.id)
+          renameChildren(newUrl, child.id)
         }
       }
     }

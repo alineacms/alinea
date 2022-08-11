@@ -21,8 +21,8 @@ import {appendPath} from './util/EntryPaths'
 export namespace Cache {
   function indexSearch(store: Store, entry: Entry, lookup = true) {
     // Todo: unroll languages
-    const row = {id: entry.alinea.id, title: String(entry.title)}
-    const condition = Search.where(Search.id.is(entry.alinea.id))
+    const row = {id: entry.id, title: String(entry.title)}
+    const condition = Search.where(Search.id.is(entry.id))
     const existing = lookup && store.first(condition)
     if (existing) store.update(condition, row)
     else store.insert(Search, row)
@@ -71,7 +71,7 @@ export namespace Cache {
       }
       seen.add(entry.alinea.index)
       prev = entry.alinea.index
-      if (includeChildren && entry.alinea.$isContainer)
+      if (includeChildren && entry.alinea.isContainer)
         validateOrdersFor(store, Entry.alinea.parent.is(entry.id))
     })
   }
@@ -166,7 +166,7 @@ export namespace Cache {
       Entry.type
     ])
     store.createIndex(Entry, 'root', [Entry.alinea.root])
-    store.createIndex(Entry, 'type', [Entry.alinea.type])
+    store.createIndex(Entry, 'type', [Entry.type])
     store.createIndex(Entry, 'url', [Entry.url])
     endIndex()
     const endValidate = logger.time('Validating orders')
@@ -191,7 +191,8 @@ export namespace Cache {
   export function computeEntry(
     store: Store,
     config: Config,
-    entry: Entry
+    entry: Entry,
+    status: EntryStatus = EntryStatus.Published
   ): Entry {
     const type = config.type(entry.alinea.workspace, entry.type)
     if (!type) throw createError(400, 'Type not found')
@@ -245,8 +246,8 @@ export namespace Cache {
         ...entry.alinea,
         parent: parents[parents.length - 1],
         parents: parents,
-        $isContainer: type!.options.isContainer,
-        $status: EntryStatus.Published
+        isContainer: type!.options.isContainer,
+        status
       }
     }
   }
@@ -255,7 +256,9 @@ export namespace Cache {
     const children = store.all(Entry.where(Entry.alinea.parent.is(parentId)))
     for (const child of children) {
       const url = appendPath(parentUrl, child.path)
-      store.update(Entry.where(Entry.id.is(child.id)), {url})
+      store.update(Entry.where(Entry.id.is(child.id)), {
+        'alinea.url': url
+      } as any)
       setChildrenUrl(store, url, child.id)
     }
   }
@@ -274,8 +277,7 @@ export namespace Cache {
         Y.applyUpdate(doc, update)
         const data = entryFromDoc(doc, config.type)
         return {
-          ...computeEntry(store, config, data!),
-          $status: EntryStatus.Draft
+          ...computeEntry(store, config, data!, EntryStatus.Draft)
         }
       })
       if (!entry) {

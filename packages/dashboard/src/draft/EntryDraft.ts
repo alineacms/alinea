@@ -31,7 +31,7 @@ export class EntryDraft implements Entry {
   ) {
     this.__root = doc.getMap(ROOT_KEY)
     this.entry = observable(this.getEntry())
-    this.status = observable(this.alinea.$status)
+    this.status = observable(this.alinea.status)
   }
 
   get source() {
@@ -54,31 +54,27 @@ export class EntryDraft implements Entry {
     return entryFromDoc(this.doc, () => this.channel)
   }
 
-  static get url() {
-    return new EntryProperty<string, (state: string) => string>(['url'])
-  }
-  static get type() {
-    return new EntryProperty<string, (state: string) => string>(['type'])
-  }
-  static get $status() {
-    return new EntryProperty<
-      EntryStatus | undefined,
-      (status: EntryStatus | undefined) => void
-    >(['$status'])
-  }
   static get title() {
     return new EntryProperty<string, (state: string) => string>(['title'])
   }
 
+  get id() {
+    return this.source.id
+  }
+  get type() {
+    return this.source.type
+  }
+  get url() {
+    return this.source.url
+  }
   get alinea() {
     const meta = this.source.alinea
     const draftMeta = this.__root.get('alinea') as EntryMeta
     return {
       ...meta,
-      $isContainer: draftMeta.$isContainer || meta.$isContainer,
-      type: draftMeta.type || meta.type,
+      isContainer: draftMeta.isContainer || meta.isContainer,
       index: draftMeta.index || meta.index,
-      $status: draftMeta.$status || meta.$status || EntryStatus.Published,
+      status: draftMeta.status || meta.status || EntryStatus.Published,
       parent: draftMeta.parent || meta.parent
     }
   }

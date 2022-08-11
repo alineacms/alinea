@@ -39,7 +39,7 @@ function FileView({draft}: EntryEditProps) {
 export function FileEntry(props: EntryEditProps) {
   const nav = useNav()
   const {draft} = props
-  const isImage = Media.isImage(draft.alinea.url)
+  const isImage = Media.isImage(draft.url)
   return (
     <Main className={styles.root()}>
       <EntryHeader mode={EditMode.Editing} />

@@ -39,7 +39,7 @@ export function FileUploader({max, toggleSelect}: FileUploaderProps) {
             title: Library.title,
             workspace: Library.alinea.workspace,
             root: Library.alinea.root,
-            url: Library.alinea.url,
+            url: Library.url,
             parents: Tree.parents(Library.id).select(parent => ({
               title: parent.title
             }))

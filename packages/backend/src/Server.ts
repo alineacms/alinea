@@ -110,6 +110,8 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
       const Parent = Entry.as('Parent')
       const Translation = Entry.as('Translation')
       const minimal = (entry: Cursor<Entry>) => ({
+        id: entry.id,
+        type: entry.type,
         title: entry.title,
         alinea: entry.alinea
       })
@@ -217,7 +219,7 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
         false
       )
       await target.publish({changes}, ctx)
-      const ids = entries.map(entry => entry.alinea.id)
+      const ids = entries.map(entry => entry.id)
       await drafts.delete({ids}, ctx)
       if (applyPublish) {
         applyEntriesTo(current)
@@ -255,6 +257,9 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
           .where(Entry.alinea.parent.is(parent))
       )
       const entry: Media.File = {
+        id,
+        type: 'File',
+        url: file.path.toLowerCase(),
         title: basename(file.path, extension),
         path: basename(file.path),
         location,
@@ -269,9 +274,6 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
         blurHash: file.blurHash,
         preview: file.preview,
         alinea: {
-          id,
-          type: 'File',
-          url: file.path.toLowerCase(),
           index: generateKeyBetween(null, prev?.alinea.index || null),
           workspace: workspace as string,
           root: root as string,

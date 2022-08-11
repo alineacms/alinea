@@ -50,8 +50,8 @@ function applyMoves(
 ): Array<ContentTreeEntry> {
   const toMove = new Map(moves.map(m => [m.id, m]))
   return entries.map(entry => {
-    if (toMove.has(entry.alinea.id)) {
-      const move = toMove.get(entry.alinea.id)!
+    if (toMove.has(entry.id)) {
+      const move = toMove.get(entry.id)!
       return {...entry, ...move}
     }
     return entry
@@ -126,17 +126,16 @@ export function ContentTree({
   const offset = useMemo(() => {
     const selected = select[select.length - 1]
     return selected
-      ? entries.findIndex(entry => entry.alinea.id === selected) * itemSize
+      ? entries.findIndex(entry => entry.id === selected) * itemSize
       : undefined
   }, [])
   const scrollOffset = offset && offset < containerHeight ? 0 : offset
 
   function handleDragStart(event: DragStartEvent) {
     const {active} = event
-    const dragging =
-      entries.find(entry => entry.alinea.id === active.id) || null
-    if (dragging?.alinea.$isContainer && isOpen(dragging.alinea.id)) {
-      toggleOpen(dragging.alinea.id)
+    const dragging = entries.find(entry => entry.id === active.id) || null
+    if (dragging?.alinea.isContainer && isOpen(dragging.id)) {
+      toggleOpen(dragging.id)
     }
     setDragging(dragging)
   }
@@ -146,27 +145,27 @@ export function ContentTree({
     setDragging(null)
     if (!over || active.id === over.id) return
     const aId = active.id
-    const aIndex = entries.findIndex(entry => entry.alinea.id === aId)
+    const aIndex = entries.findIndex(entry => entry.id === aId)
     const a = entries[aIndex]
     let bId = over.id
-    let bIndex = entries.findIndex(entry => entry.alinea.id === bId)
+    let bIndex = entries.findIndex(entry => entry.id === bId)
     let b = entries[bIndex]
     // If b is a container and open, drop as a child
     // Todo: this logic does not work if we're dragging up
     // ideally we can drop on top of the container
     const parent =
-      b.alinea.$isContainer && isOpen(b.alinea.id)
+      b.alinea.isContainer && isOpen(b.id)
         ? index.get(b.source.id)
         : index.get(b.alinea.parent!)
 
-    if (a?.alinea.parent !== parent?.alinea.id) {
+    if (a?.alinea.parent !== parent?.id) {
       // Check if parent of b handles child of type a
-      if (parent?.alinea.id) {
-        const type = schema.type(parent?.alinea.type)
+      if (parent?.id) {
+        const type = schema.type(parent?.type)
         const contains = type?.options.contains
-        if (contains && !contains.includes(a.alinea.type)) return
+        if (contains && !contains.includes(a.type)) return
       } else {
-        if (!root.contains.includes(a.alinea.type)) return
+        if (!root.contains.includes(a.type)) return
       }
     }
 
@@ -182,11 +181,11 @@ export function ContentTree({
         candidates[1]?.alinea.index || null
       )
       const move = {
-        id: a.alinea.id,
+        id: a.id,
         index: newIndex,
-        parent: parent?.alinea.id,
+        parent: parent?.id,
         parents: (parent?.alinea.parents || [])
-          .concat(parent?.alinea.id!)
+          .concat(parent?.id!)
           .filter(Boolean)
       }
       setMoves(current => [...current, move])
@@ -216,7 +215,7 @@ export function ContentTree({
         first.alinea.workspace === workspace &&
         first.alinea.root === root.name
       ) {
-        navigate(nav.entry(first.alinea), {
+        navigate(nav.entry(first), {
           replace: true
         })
       }
@@ -232,7 +231,7 @@ export function ContentTree({
       layoutMeasuring={layoutMeasuringConfig}
     >
       <SortableContext
-        items={entries.map(entry => entry.alinea.id)}
+        items={entries.map(entry => entry.id)}
         strategy={verticalListSortingStrategy}
       >
         <div ref={containerRef} style={{height: '100%', overflow: 'hidden'}}>
@@ -248,7 +247,7 @@ export function ContentTree({
                 const entry = entries[index]
                 return (
                   <TreeNodeSortable
-                    key={entry.alinea.id}
+                    key={entry.id}
                     entry={entry}
                     locale={locale}
                     level={entry.alinea.parents.length}

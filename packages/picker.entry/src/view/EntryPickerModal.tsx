@@ -89,7 +89,7 @@ export function EntryPickerModal({
     (entry: Entry.Minimal) => {
       setSelected(selected => {
         const index = selected.findIndex(
-          v => EntryReference.isEntry(v) && v.entry === entry.alinea.id
+          v => EntryReference.isEntry(v) && v.entry === entry.id
         )
         let res = selected.slice()
         if (index === -1) {
@@ -97,7 +97,7 @@ export function EntryPickerModal({
             .concat({
               id: createId(),
               type,
-              entry: entry.alinea.id
+              entry: entry.id
             } as EntryReference)
             .slice(-(max || 0))
         } else {

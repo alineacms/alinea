@@ -75,11 +75,11 @@ export class FileData implements Data.Source, Data.Target, Data.Media {
                 }
                 if (locale && !entry.alinea.i18n) {
                   console.log(
-                    `\rNo i18n id found for entry with id ${entry.alinea.id}`
+                    `\rNo i18n id found for entry with id ${entry.id}`
                   )
                   continue
                 }
-                const type = schema.type(entry.alinea.type)
+                const type = schema.type(entry.type)
                 if (!type) continue
                 const isContainer = Boolean(type.options.isContainer)
                 const url = path.join(target, isIndex ? '' : name)
@@ -91,25 +91,32 @@ export class FileData implements Data.Source, Data.Target, Data.Media {
                 const res: Entry = {
                   ...entry,
                   path: name,
+                  url,
                   alinea: {
-                    url,
-                    id: entry.alinea.id,
-                    type: entry.alinea.type,
                     workspace,
                     root: root.name,
-                    index: entry.alinea.index || entry.alinea.id,
-                    parent: parent?.alinea.id,
-                    parents: parents.map(parent => parent.alinea.id),
-                    $status: EntryStatus.Published,
-                    $isContainer: isContainer,
+                    index:
+                      entry.alinea?.index ||
+                      // Todo: this is for backwards compatibility, should
+                      // deprecate next major version
+                      (entry as any).index ||
+                      entry.id,
+                    parent: parent?.id,
+                    parents: parents.map(parent => parent.id),
+                    status: EntryStatus.Published,
+                    isContainer: isContainer,
                     i18n: locale
                       ? {
-                          id: entry.alinea.i18n?.id || entry.alinea.id,
+                          id:
+                            entry.alinea.i18n?.id ||
+                            // Todo: this is for backwards compatibility, should
+                            // deprecate next major version
+                            (entry as any).i18n?.id ||
+                            entry.id,
                           locale,
-                          parent: parent?.alinea.i18n?.id || parent?.alinea.id,
+                          parent: parent?.alinea.i18n?.id || parent?.id,
                           parents: parents.map(
-                            parent =>
-                              parent?.alinea.i18n?.id || parent?.alinea.id
+                            parent => parent?.alinea.i18n?.id || parent?.id
                           )
                         }
                       : undefined

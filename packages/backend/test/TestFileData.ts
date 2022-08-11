@@ -52,30 +52,27 @@ const fs: FS = Volume.fromNestedJSON({
   content: {
     data: {
       '/index.json': entry({
+        id: 'root',
+        type: 'Home',
         title: 'Test title',
         alinea: {
-          id: 'root',
-          type: 'Home',
-          root: 'data',
           index: 'a0'
         }
       }),
       '/sub.json': entry({
+        id: 'sub',
+        type: 'Type',
         title: 'Sub title',
         alinea: {
-          id: 'sub',
-          type: 'Type',
-          root: 'data',
           index: 'a0'
         }
       }),
       sub: {
         '/entry.json': entry({
+          id: 'sub-entry',
+          type: 'Sub',
           title: 'Sub entry title',
           alinea: {
-            id: 'sub-entry',
-            type: 'Sub',
-            root: 'data',
             index: 'a0'
           }
         })
@@ -101,17 +98,17 @@ const store = await createMemoryStore()
 
 test('reading', async () => {
   const entries = await accumulate(data.entries())
-  entries.sort((a, b) => a.alinea.url.localeCompare(b.alinea.url))
+  entries.sort((a, b) => a.url.localeCompare(b.url))
   const [root, sub, subEntry] = entries
-  assert.is(root.alinea.id, 'root')
+  assert.is(root.id, 'root')
   assert.is(root.alinea.parent, undefined)
-  assert.is(root.alinea.url, '/')
-  assert.is(sub.alinea.id, 'sub')
+  assert.is(root.url, '/')
+  assert.is(sub.id, 'sub')
   assert.is(sub.alinea.parent, undefined)
-  assert.is(sub.alinea.url, '/sub')
-  assert.is(subEntry.alinea.id, 'sub-entry')
+  assert.is(sub.url, '/sub')
+  assert.is(subEntry.id, 'sub-entry')
   assert.is(subEntry.alinea.parent, 'sub')
-  assert.is(subEntry.alinea.url, '/sub/entry')
+  assert.is(subEntry.url, '/sub/entry')
 })
 
 test('inserting', async () => {
@@ -121,7 +118,7 @@ test('inserting', async () => {
   ])
   await data.publish({changes})
   const [newRoot] = await accumulate(data.entries())
-  assert.is(newRoot.alinea.id, 'root')
+  assert.is(newRoot.id, 'root')
   assert.is(newRoot.title, 'New root title')
 })
 

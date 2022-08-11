@@ -36,12 +36,12 @@ const config = createConfig({
 
 const entries: Array<Entry & Record<string, any>> = [
   {
+    id: 'root',
+    type: 'Type',
+    url: '/',
     title: 'Test title',
     path: 'index',
     alinea: {
-      id: 'root',
-      type: 'Type',
-      url: '/',
       parent: undefined,
       parents: [],
       index: 'a0',
@@ -50,8 +50,11 @@ const entries: Array<Entry & Record<string, any>> = [
     }
   },
   {
+    id: 'sub',
+    type: 'Type',
     title: 'Sub title',
     path: 'sub',
+    url: '/sub',
     list: [
       {
         id: 'list1',
@@ -60,9 +63,6 @@ const entries: Array<Entry & Record<string, any>> = [
       }
     ],
     alinea: {
-      id: 'sub',
-      type: 'Type',
-      url: '/sub',
       parent: 'root',
       parents: ['root'],
       index: 'a0',
@@ -82,12 +82,12 @@ function subs(amount: number) {
 
 function sub(index: number, order: string) {
   return {
+    id: `sub-entry-${index}`,
+    type: 'Sub',
+    url: `/sub/sub-entry-${index}`,
     title: `Sub entry title ${index}`,
     path: `sub-entry-${index}`,
     alinea: {
-      id: `sub-entry-${index}`,
-      type: 'Sub',
-      url: `/sub/sub-entry-${index}`,
       index: order,
       workspace: 'main',
       root: 'main',

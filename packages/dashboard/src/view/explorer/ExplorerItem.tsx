@@ -27,18 +27,17 @@ export function ExplorerItem({
   const nav = useNav()
   const explorer = useExplorer()
   const itemRef = useFocusListItem(() => explorer?.onSelect(entry))
-  const View: any =
-    schema.type(entry.alinea.type)?.options[summaryView] || defaultView
+  const View: any = schema.type(entry.type)?.options[summaryView] || defaultView
   const Tag: any = explorer?.selectable ? 'label' : Link
-  const props = explorer?.selectable ? {} : {to: nav.entry(entry.alinea)}
+  const props = explorer?.selectable ? {} : {to: nav.entry(entry)}
   const isSelected = Boolean(
     explorer?.selection.find(
-      v => EntryReference.isEntry(v) && v.entry === entry.alinea.id
+      v => EntryReference.isEntry(v) && v.entry === entry.id
     )
   )
   return (
     <Tag
-      key={entry.alinea.id}
+      key={entry.id}
       className={styles.root(summaryView === 'summaryRow' ? 'row' : 'thumb', {
         selected: isSelected
       })}
