@@ -74,7 +74,7 @@ export class EntryDraft implements Entry {
       ...meta,
       isContainer: draftMeta.isContainer || meta.isContainer,
       index: draftMeta.index || meta.index,
-      status: draftMeta.status || meta.status || EntryStatus.Published,
+      status: meta.status || EntryStatus.Published,
       parent: draftMeta.parent || meta.parent
     }
   }
