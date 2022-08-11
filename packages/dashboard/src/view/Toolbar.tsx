@@ -225,7 +225,7 @@ export namespace Toolbar {
                   {config.hasAuth && (
                     <PopoverMenu.Footer>
                       <DropdownMenu.Root>
-                        <DropdownMenu.Item onSelect={session.end}>
+                        <DropdownMenu.Item onClick={session.end}>
                           Logout
                         </DropdownMenu.Item>
                       </DropdownMenu.Root>
