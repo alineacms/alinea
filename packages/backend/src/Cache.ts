@@ -257,8 +257,8 @@ export namespace Cache {
     for (const child of children) {
       const url = appendPath(parentUrl, child.path)
       store.update(Entry.where(Entry.id.is(child.id)), {
-        'alinea.url': url
-      } as any)
+        url
+      })
       setChildrenUrl(store, url, child.id)
     }
   }
