@@ -168,7 +168,7 @@ export namespace router {
   export type Cookie = {
     name: string
     value: string
-    expires?: string
+    expires?: Date
     maxAge?: number
     domain?: string
     path?: string
@@ -177,16 +177,21 @@ export namespace router {
     sameSite?: 'strict' | 'lax' | 'none'
   }
 
+  type CookieValue = [key: string, value: boolean | string | number | Date]
+
+  function cookieValue([key, value]: CookieValue) {
+    if (value === true) return `; ${key}`
+    if (value === false) return ''
+    if (value instanceof Date) return `; ${key}=${value.toUTCString()}`
+    return `; ${key}=${String(value)}`
+  }
+
   export function cookie(...cookies: Array<Cookie>) {
     return cookies
       .map(cookie => {
         const {name, value, ...rest} = cookie
         return (
-          `${name}=${value}` +
-          Object.entries(rest)
-            .filter(([, v]) => v || v === '')
-            .map(([k, v]) => (v !== true ? `; ${k}=${v}` : `; ${k}`))
-            .join('')
+          `${name}=${value}` + Object.entries(rest).map(cookieValue).join('')
         )
       })
       .join(', ')
