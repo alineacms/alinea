@@ -126,7 +126,7 @@ export class CloudAuthServer implements Auth.Server {
               name: COOKIE_NAME,
               value: token,
               domain: target.hostname,
-              // path: target.pathname,
+              path: '/',
               secure: target.protocol === 'https:',
               httpOnly: true,
               sameSite: 'strict'
@@ -145,7 +145,7 @@ export class CloudAuthServer implements Auth.Server {
               name: COOKIE_NAME,
               value: '',
               domain: target.hostname,
-              // path: target.pathname,
+              path: '/',
               secure: target.protocol === 'https:',
               httpOnly: true,
               sameSite: 'strict',
