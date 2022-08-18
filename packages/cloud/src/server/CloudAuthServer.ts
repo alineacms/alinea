@@ -144,10 +144,9 @@ export class CloudAuthServer implements Auth.Server {
           try {
             const {token} = await this.contextFor(request)
             if (token) {
-              console.log(token)
               await fetch(cloudConfig.logout, {
                 method: 'POST',
-                headers: {authorization: `Bearer ${apiKey}`}
+                headers: {authorization: `Bearer ${token}`}
               })
             }
           } catch (e) {
