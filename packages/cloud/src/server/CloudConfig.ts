@@ -1,4 +1,4 @@
-const baseUrl = 'https://www.alinea.cloud'
+const baseUrl = 'http://localhost:3000'
 
 export const cloudConfig = {
   url: baseUrl,
