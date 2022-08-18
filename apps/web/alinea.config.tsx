@@ -82,8 +82,8 @@ const cloudBackend = createCloudBackend()
 
 export const config = createConfig({
   dashboard: {
-    dashboardUrl: 'https://alinea.sh/admin.html',
-    handlerUrl: 'https://alinea.sh/api/cms',
+    dashboardUrl: '/admin.html',
+    handlerUrl: '/api/cms',
     staticFile: './public/admin.html'
   },
   backend: cloudBackend,
