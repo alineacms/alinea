@@ -136,24 +136,40 @@ export class CloudAuthServer implements Auth.Server {
       }),
 
       // The logout route unsets our cookies
-      matcher.get(Hub.routes.base + '/auth/logout').map(async ({url}) => {
-        const target = new URL(this.dashboardUrl, url)
-        return router.redirect(this.dashboardUrl, {
-          status: 302,
-          headers: {
-            'set-cookie': router.cookie({
-              name: COOKIE_NAME,
-              value: '',
-              domain: target.hostname,
-              path: '/',
-              secure: target.protocol === 'https:',
-              httpOnly: true,
-              sameSite: 'strict',
-              expires: new Date(0)
-            })
+      matcher
+        .get(Hub.routes.base + '/auth/logout')
+        .map(async ({url, request}) => {
+          const target = new URL(this.dashboardUrl, url)
+
+          try {
+            const {token} = await this.contextFor(request)
+            if (token) {
+              console.log(token)
+              await fetch(cloudConfig.logout, {
+                method: 'POST',
+                headers: {authorization: `Bearer ${apiKey}`}
+              })
+            }
+          } catch (e) {
+            console.error(e)
           }
-        })
-      }),
+
+          return router.redirect(this.dashboardUrl, {
+            status: 302,
+            headers: {
+              'set-cookie': router.cookie({
+                name: COOKIE_NAME,
+                value: '',
+                domain: target.hostname,
+                path: '/',
+                secure: target.protocol === 'https:',
+                httpOnly: true,
+                sameSite: 'strict',
+                expires: new Date(0)
+              })
+            }
+          })
+        }),
 
       router
         .use(async (request: Request) => {
