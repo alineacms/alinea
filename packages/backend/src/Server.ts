@@ -9,6 +9,7 @@ import {
   Hub,
   Media,
   outcome,
+  slugify,
   WorkspaceConfig,
   Workspaces
 } from '@alinea/core'
@@ -16,7 +17,7 @@ import {arrayBufferToHex} from '@alinea/core/util/ArrayBuffers'
 import {base64} from '@alinea/core/util/Encoding'
 import {generateKeyBetween} from '@alinea/core/util/FractionalIndexing'
 import {Logger} from '@alinea/core/util/Logger'
-import {basename, extname} from '@alinea/core/util/Paths'
+import {basename, dirname, extname, join} from '@alinea/core/util/Paths'
 import {crypto} from '@alinea/iso'
 import sqlite from '@alinea/sqlite-wasm'
 import {Cursor, Store} from '@alinea/store'
@@ -233,6 +234,7 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
     {workspace, root, ...file}: Hub.UploadParams,
     ctx: Hub.Context = this.createContext()
   ): Future<Media.File> {
+    const {config} = this.options
     return outcome(async () => {
       const store = await this.preview.getStore(ctx)
       const id = createId()
@@ -249,8 +251,18 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
       })
       const parent = parents[parents.length - 1]
       if (!parent) throw createError(400, `Parent not found: "${file.path}"`)
-      const location = await media.upload({workspace, root, ...file}, ctx)
-      const extension = extname(location)
+
+      const dir = dirname(file.path)
+      const extension = extname(file.path)
+      const name = basename(file.path, extension)
+      const fileName = `${slugify(name)}.${createId()}${extension}`
+      const {mediaDir} = config.workspaces[workspace]
+      const fileLocation = join(mediaDir, dir, fileName)
+
+      const location = await media.upload(
+        {fileLocation, buffer: file.buffer},
+        ctx
+      )
       const prev = store.first(
         Entry.where(Entry.alinea.workspace.is(workspace))
           .where(Entry.alinea.root.is(root))

@@ -124,23 +124,18 @@ test('inserting', async () => {
 
 test('file media', async () => {
   const file01 = await data.download({
-    workspace: 'main',
     location: 'file01.txt'
   })
   if (file01.type !== 'buffer') throw 'Buffer expected'
   assert.is(file01.buffer.toString(), 'content01')
   const uploadPath = await data.upload({
-    workspace: 'main',
-    root: 'data',
-    path: 'file04.txt',
+    fileLocation: 'file04.txt',
     buffer: Buffer.from('content04')
   })
-  const file04 = await data.download({workspace: 'main', location: uploadPath})
+  const file04 = await data.download({location: uploadPath})
   if (file04.type !== 'buffer') throw 'Buffer expected'
   assert.is(file04.buffer.toString(), 'content04')
-  const [, err1] = await outcome(
-    data.download({workspace: 'main', location: '../out.txt'})
-  )
+  const [, err1] = await outcome(data.download({location: '../out.txt'}))
   assert.is((err1 as ErrorWithCode).code, 401)
 })
 

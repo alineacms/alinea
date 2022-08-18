@@ -21,6 +21,8 @@ export type WorkspaceOptions<T = any> = {
   typeNamespace?: string
   /** The directory where media files are placed in case a file backend is used */
   mediaDir?: string
+  /* Rewrite media urls based on their location */
+  mediaUrl?: (location: string) => string
   /** The main theme color used in the dashboard */
   color?: string
   /** A react component used to preview an entry in the dashboard */

@@ -1,9 +1,9 @@
 import type {Data} from '@alinea/backend/Data'
 import type {Loader} from '@alinea/backend/Loader'
-import {Config, createError, createId, Hub, slugify} from '@alinea/core'
+import {Config, createError, Hub} from '@alinea/core'
+import {join} from '@alinea/core/util/Paths'
 import {fetch} from '@alinea/iso'
 import {Octokit} from '@octokit/rest'
-import {posix as path} from 'node:path'
 import createOrUpdateFiles from 'octokit-commit-multiple-files/create-or-update-files.js'
 
 export type GithubTargetOptions = {
@@ -40,27 +40,19 @@ export class GithubData implements Data.Target, Data.Media {
           message: 'Update content',
           files: Object.fromEntries(
             changes.write.map(({file, contents}) => {
-              return [path.join(rootDir, file), contents]
+              return [join(rootDir, file), contents]
             })
           ),
-          filesToDelete: changes.delete.map(({file}) =>
-            path.join(rootDir, file)
-          )
+          filesToDelete: changes.delete.map(({file}) => join(rootDir, file))
         }
       ]
     })
   }
 
-  async upload({workspace, ...file}: Hub.UploadParams): Promise<string> {
-    const {config, rootDir = '.', owner, repo, branch, author} = this.options
-    const {mediaDir} = config.workspaces[workspace]
-    if (!mediaDir) throw createError(500, 'Media directory not configured')
-    const dir = path.dirname(file.path)
-    const extension = path.extname(file.path)
-    const name = path.basename(file.path, extension)
-    const fileName = `${slugify(name)}.${createId()}${extension}`
-    const location = path.join(rootDir, mediaDir, dir, fileName)
-    const changes = {[location]: file.buffer}
+  async upload({fileLocation, buffer}: Hub.MediaUploadParams): Promise<string> {
+    const {rootDir = '.', owner, repo, branch, author} = this.options
+    const location = join(rootDir, fileLocation)
+    const changes = {[location]: buffer}
     await createOrUpdateFiles(this.octokit, {
       owner,
       repo,
@@ -76,15 +68,9 @@ export class GithubData implements Data.Target, Data.Media {
     return location
   }
 
-  async download({
-    workspace,
-    location
-  }: Hub.DownloadParams): Promise<Hub.Download> {
-    const {config, rootDir = '.', owner, repo, branch} = this.options
-    const {mediaDir} = config.workspaces[workspace]
-    if (!mediaDir) throw createError(500, 'Media directory not configured')
-    const file = path.join(mediaDir, location)
-    const pathname = path.join(rootDir, owner, repo, branch, file)
+  async download({location}: Hub.DownloadParams): Promise<Hub.Download> {
+    const {rootDir = '.', owner, repo, branch} = this.options
+    const pathname = join(rootDir, owner, repo, branch, location)
     const url = `https://raw.githubusercontent.com/${pathname}`
     const res = await fetch(url, {
       headers: {

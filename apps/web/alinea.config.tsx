@@ -31,6 +31,7 @@ const web = workspace('Alinea', {
   typeNamespace: 'content',
   source: './content',
   mediaDir: './public',
+  mediaUrl: (location: string) => location.slice('public'.length),
   color: '#4a65e8',
   roots: {
     data: root('Alinea website', {

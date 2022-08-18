@@ -32,7 +32,7 @@ export namespace Data {
   }
 
   export interface Media {
-    upload(params: Hub.UploadParams, ctx: Hub.Context): Promise<string>
+    upload(params: Hub.MediaUploadParams, ctx: Hub.Context): Promise<string>
     download(
       params: Hub.DownloadParams,
       ctx: Hub.Context

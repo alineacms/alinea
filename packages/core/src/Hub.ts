@@ -68,8 +68,11 @@ export namespace Hub {
     width?: number
     height?: number
   }
+  export type MediaUploadParams = {
+    buffer: ArrayBuffer
+    fileLocation: string
+  }
   export type DownloadParams = {
-    workspace: string
     location: string
   }
   export type Download =
