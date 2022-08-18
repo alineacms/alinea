@@ -186,9 +186,10 @@ export class CloudAuthServer implements Auth.Server {
     if (!this.options.apiKey) return {type: AuthResultType.MissingApiKey}
     const [ctx, err] = await outcome(this.contextFor(request))
     if (ctx) return {type: AuthResultType.Authenticated, user: ctx.user}
+    const token = this.options.apiKey.split('_')[1]
     return {
       type: AuthResultType.UnAuthenticated,
-      redirect: `${cloudConfig.auth}`
+      redirect: `${cloudConfig.auth}?token=${token}`
     }
   }
 

@@ -44,7 +44,7 @@ export function CloudAuthView({setSession}: Auth.ViewProps) {
     case AuthResultType.UnAuthenticated:
       location.href =
         result.redirect +
-        `?from=${encodeURIComponent(
+        `&from=${encodeURIComponent(
           location.protocol + '//' + location.host + location.pathname
         )}`
       return null
@@ -80,7 +80,12 @@ export function CloudAuthView({setSession}: Auth.ViewProps) {
                 <div>
                   <Button
                     as="a"
-                    href={cloudConfig.url}
+                    href={`${cloudConfig.url}/setup?from=${encodeURIComponent(
+                      location.protocol +
+                        '//' +
+                        location.host +
+                        location.pathname
+                    )}`}
                     target="_blank"
                     iconRight={IcRoundArrowForward}
                   >
