@@ -2,7 +2,7 @@ const baseUrl = 'http://localhost:3000'
 
 export const cloudConfig = {
   url: baseUrl,
-  jwks: `${baseUrl}/.well-known/jwks.json`,
+  jwks: `https://www.alinea.cloud/.well-known/jwks.json`,
   auth: `${baseUrl}/auth`,
   handshake: `${baseUrl}/api/v1/handshake`,
   publish: `${baseUrl}/api/v1/publish`,
