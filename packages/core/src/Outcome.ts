@@ -6,7 +6,7 @@ type ErrorObject = {
   status?: number
 }
 
-type JSONRep<D> =
+export type OutcomeJSON<D> =
   | {success: true; data: D}
   | {success: false; error: ErrorObject}
 
@@ -69,7 +69,7 @@ export namespace outcome {
 export type Outcome<T = void> = Outcome.OutcomeImpl<T> & Pair<T>
 
 export namespace Outcome {
-  export function fromJSON<T>(json: JSONRep<T>): Outcome<T> {
+  export function fromJSON<T>(json: OutcomeJSON<T>): Outcome<T> {
     if (json.success) return Success(json.data)
     const error = new ErrorWithCode(json.error.status!, json.error.message!)
     error.stack = json.error.stack
@@ -108,7 +108,7 @@ export namespace Outcome {
     }
 
     abstract map<U>(fn: (data: T) => U): Outcome<U>
-    abstract toJSON(): JSONRep<T>
+    abstract toJSON(): OutcomeJSON<T>
   }
 
   class SuccessOutcome<T> extends OutcomeImpl<T> {
@@ -127,7 +127,7 @@ export namespace Outcome {
       return Success(fn(this.value))
     }
 
-    toJSON(): JSONRep<T> {
+    toJSON(): OutcomeJSON<T> {
       return {success: true, data: this.value}
     }
   }
@@ -149,7 +149,7 @@ export namespace Outcome {
       return this as any as Outcome<U>
     }
 
-    toJSON(): JSONRep<T> {
+    toJSON(): OutcomeJSON<T> {
       return {
         success: false,
         error: {

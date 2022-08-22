@@ -3,6 +3,7 @@ import {BackendCreateOptions} from '@alinea/core/BackendConfig'
 import {Config} from '@alinea/core/Config'
 import {createError} from '@alinea/core/ErrorWithCode'
 import {Hub} from '@alinea/core/Hub'
+import {Outcome, OutcomeJSON} from '@alinea/core/Outcome'
 import {base64, base64url} from '@alinea/core/util/Encoding'
 import {fetch} from '@alinea/iso'
 import {CloudAuthServerOptions} from './CloudAuthServer'
@@ -82,8 +83,9 @@ export class CloudApi implements CloudConnection {
       })
     )
       .then(failOnHttpError)
-      .then<{location: string}>(json)
-      .then(({location}) => location)
+      .then<OutcomeJSON<string>>(json)
+      .then<Outcome<string>>(Outcome.fromJSON)
+      .then(Outcome.unpack)
   }
   async download(
     {location}: Hub.DownloadParams,
