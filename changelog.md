@@ -1,5 +1,9 @@
 # Changelog
 
+## [Unreleased]
+
+- Alinea cloud connection now sends the shortKey part of API key during authentication to uniquely identify project
+
 ## [0.2.0]
 
 - The exports of the alinea package are restructed. This is a breaking change
