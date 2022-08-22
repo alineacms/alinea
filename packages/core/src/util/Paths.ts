@@ -35,11 +35,11 @@ function normalizeArray(parts: Array<string>, allowAboveRoot: boolean) {
   return res
 }
 
-function isAbsolute(path: string) {
+export function isAbsolute(path: string) {
   return path.charAt(0) === '/'
 }
 
-function normalize(path: string) {
+export function normalize(path: string) {
   var absolute = isAbsolute(path),
     trailingSlash = path && path[path.length - 1] === '/'
 

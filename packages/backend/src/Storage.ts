@@ -19,7 +19,7 @@ export namespace Storage {
     extension: string
   ) {
     const isIndex = entry.path === '' || entry.path === 'index'
-    return entry.url + (isIndex ? '/index' : '') + extension
+    return (entry.url + (isIndex ? '/index' : '') + extension).toLowerCase()
   }
 
   export async function publishChanges(

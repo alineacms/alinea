@@ -17,7 +17,13 @@ import {arrayBufferToHex} from '@alinea/core/util/ArrayBuffers'
 import {base64} from '@alinea/core/util/Encoding'
 import {generateKeyBetween} from '@alinea/core/util/FractionalIndexing'
 import {Logger} from '@alinea/core/util/Logger'
-import {basename, dirname, extname, join} from '@alinea/core/util/Paths'
+import {
+  basename,
+  dirname,
+  extname,
+  join,
+  normalize
+} from '@alinea/core/util/Paths'
 import {crypto} from '@alinea/iso'
 import sqlite from '@alinea/sqlite-wasm'
 import {Cursor, Store} from '@alinea/store'
@@ -257,12 +263,20 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
       const name = basename(file.path, extension)
       const fileName = `${slugify(name)}.${createId()}${extension}`
       const {mediaDir} = config.workspaces[workspace]
-      const fileLocation = join(mediaDir, dir, fileName)
+      const prefix = mediaDir && normalize(mediaDir)
+      const fileLocation = join(prefix, dir, fileName)
 
-      const location = await media.upload(
+      let location = await media.upload(
         {fileLocation, buffer: file.buffer},
         ctx
       )
+
+      // We'll strip the media dir off the location we received. We don't want
+      // this information to be saved to disk because it would be impractical
+      // to ever refactor to another directory.
+      if (prefix && location.startsWith(prefix))
+        location = location.slice(prefix.length)
+
       const prev = store.first(
         Entry.where(Entry.alinea.workspace.is(workspace))
           .where(Entry.alinea.root.is(root))
