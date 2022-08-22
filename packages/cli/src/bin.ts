@@ -44,8 +44,9 @@ prog
     ensureNodeResolution()
     ensureReact()
     ensureEnv(process.cwd())
+    process.env.NODE_ENV = args.production ? 'production' : 'development'
     const {serve} = await import('./Serve')
-    return serve({...args, onAfterGenerate: forwardCommand})
+    return serve({...args, onAfterGenerate: () => forwardCommand(true)})
   })
 
 prog.parse(process.argv)
