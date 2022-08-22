@@ -75,6 +75,7 @@ export class CloudApi implements CloudConnection {
       },
       body: buffer
     })
+      .then(failOnHttpError)
       .then<{location: string}>(json)
       .then(({location}) => location)
   }
