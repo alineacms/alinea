@@ -124,12 +124,12 @@ test('inserting', async () => {
 
 test('file media', async () => {
   const file01 = await data.download({
-    location: 'file01.txt'
+    location: 'files/file01.txt'
   })
   if (file01.type !== 'buffer') throw 'Buffer expected'
   assert.is(file01.buffer.toString(), 'content01')
   const uploadPath = await data.upload({
-    fileLocation: 'file04.txt',
+    fileLocation: 'files/file04.txt',
     buffer: Buffer.from('content04')
   })
   const file04 = await data.download({location: uploadPath})
