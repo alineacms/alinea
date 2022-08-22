@@ -1,12 +1,10 @@
 import {
   Config,
   createError,
-  createId,
   Entry,
   EntryStatus,
   Hub,
-  outcome,
-  slugify
+  outcome
 } from '@alinea/core'
 import {posix as path} from 'node:path'
 import {Data} from '../Data'
@@ -171,29 +169,22 @@ export class FileData implements Data.Source, Data.Target, Data.Media {
     return Promise.all(tasks).then(() => void 0)
   }
 
-  async upload({workspace, ...file}: Hub.UploadParams): Promise<string> {
-    const {fs, config, rootDir = '.'} = this.options
-    const {mediaDir} = config.workspaces[workspace]
-    if (!mediaDir) throw createError(500, 'Media directory not configured')
-    const dir = path.dirname(file.path)
-    const extension = path.extname(file.path)
-    const name = path.basename(file.path, extension)
-    const fileName = `${slugify(name)}.${createId()}${extension}`
-    const location = path.join(rootDir, mediaDir, dir, fileName)
-    await fs.mkdir(path.join(rootDir, mediaDir, dir), {recursive: true})
-    await fs.writeFile(location, Buffer.from(file.buffer))
-    return path.join(dir, fileName)
+  async upload({fileLocation, buffer}: Hub.MediaUploadParams): Promise<string> {
+    const {fs, rootDir = '.'} = this.options
+    await fs.writeFile(path.join(rootDir, fileLocation), Buffer.from(buffer))
+    return fileLocation
   }
 
-  async download({
-    workspace,
-    location
-  }: Hub.DownloadParams): Promise<Hub.Download> {
+  async download({location}: Hub.DownloadParams): Promise<Hub.Download> {
     const {fs, config, rootDir = '.'} = this.options
-    const {mediaDir} = config.workspaces[workspace]
-    if (!mediaDir) throw createError(500, 'Media directory not configured')
-    const file = path.join(rootDir, mediaDir, location)
-    if (!isChildOf(file, path.join(rootDir, mediaDir))) throw createError(401)
+    const mediaDirs: Array<string> = Object.values(config.workspaces)
+      .map(workspace => workspace.mediaDir!)
+      .filter(Boolean)
+    const file = path.join(rootDir, location)
+    const isInMediaLocation = mediaDirs.some(dir =>
+      isChildOf(file, path.join(rootDir, dir))
+    )
+    if (!isInMediaLocation) throw createError(401)
     return {type: 'buffer', buffer: await fs.readFile(file)}
   }
 }

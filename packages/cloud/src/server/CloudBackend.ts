@@ -4,7 +4,7 @@ import {Config} from '@alinea/core/Config'
 import {createError} from '@alinea/core/ErrorWithCode'
 import {Hub} from '@alinea/core/Hub'
 import {base64, base64url} from '@alinea/core/util/Encoding'
-import {Blob, fetch, FormData} from '@alinea/iso'
+import {fetch} from '@alinea/iso'
 import {CloudAuthServerOptions} from './CloudAuthServer'
 import {cloudConfig} from './CloudConfig'
 
@@ -65,31 +65,21 @@ export class CloudApi implements CloudConnection {
       .then(failOnHttpError)
       .then<void>(json)
   }
-  async upload({workspace, root, ...file}: Hub.UploadParams): Promise<string> {
-    const form = new FormData()
-    form.append('workspace', workspace as string)
-    form.append('root', root as string)
-    form.append('path', file.path)
-    if (file.averageColor) form.append('averageColor', file.averageColor)
-    if (file.blurHash) form.append('blurHash', file.blurHash)
-    if ('width' in file) form.append('width', String(file.width))
-    if ('height' in file) form.append('height', String(file.height))
-    form.append('buffer', new Blob([file.buffer]))
-    if (file.preview) form.append('preview', file.preview)
+  async upload({fileLocation, buffer}: Hub.MediaUploadParams): Promise<string> {
     return fetch(cloudConfig.media, {
       method: 'POST',
-      body: form
+      headers: {
+        accept: 'application/json',
+        'content-type': 'application/octet-stream',
+        'x-file-location': fileLocation
+      },
+      body: buffer
     })
       .then<{location: string}>(json)
       .then(({location}) => location)
   }
-  async download({
-    workspace,
-    location
-  }: Hub.DownloadParams): Promise<Hub.Download> {
-    return fetch(
-      cloudConfig.media + '?' + new URLSearchParams({workspace, location})
-    )
+  async download({location}: Hub.DownloadParams): Promise<Hub.Download> {
+    return fetch(cloudConfig.media + '?' + new URLSearchParams({location}))
       .then(failOnHttpError)
       .then(async res => ({type: 'buffer', buffer: await res.arrayBuffer()}))
   }
