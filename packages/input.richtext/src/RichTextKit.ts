@@ -11,13 +11,13 @@ import HardBreak from '@tiptap/extension-hard-break'
 import Heading from '@tiptap/extension-heading'
 import HorizontalRule from '@tiptap/extension-horizontal-rule'
 import Italic from '@tiptap/extension-italic'
-import Link from '@tiptap/extension-link'
 import ListItem from '@tiptap/extension-list-item'
 import OrderedList from '@tiptap/extension-ordered-list'
 import Paragraph from '@tiptap/extension-paragraph'
 import Strike from '@tiptap/extension-strike'
 import Text from '@tiptap/extension-text'
 import TextAlign from '@tiptap/extension-text-align'
+import {Link} from './extensions/Link'
 import Small from './extensions/Small'
 import css from './RichTextKit.module.scss'
 
@@ -26,7 +26,6 @@ const styles = fromModule(css)
 // These come from the tiptap starter kit, but we omit:
 // code, codeblock -> these can be achieved using a block
 // history -> needs to be configured on the yjs side
-// horizontal rule -> to be considered
 
 export const RichTextKit = Extension.create({
   name: 'richTextKit',
@@ -76,7 +75,6 @@ export const RichTextKit = Extension.create({
       Dropcursor,
       Gapcursor,
       Link.configure({
-        openOnClick: false,
         HTMLAttributes: {
           class: styles.link()
         }

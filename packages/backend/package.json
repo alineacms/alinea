@@ -24,12 +24,12 @@
   },
   "dependencies": {
     "@alinea/core": "0.0.0",
-    "@alinea/iso": "^0.1.18",
+    "@alinea/iso": "^0.1.21",
+    "@alinea/sqlite-wasm": "^0.1.10",
     "@alinea/store": "0.0.0",
-    "yjs": "^13.5.39"
+    "yjs": "^13.5.41"
   },
   "devDependencies": {
-    "@alinea/sqlite-wasm": "^0.1.7",
     "@types/js-yaml": "^4.0.5",
     "@types/md5": "^2.3.2",
     "convert-hrtime": "^5.0.0",

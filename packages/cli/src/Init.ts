@@ -30,7 +30,6 @@ export async function init(options: InitOptions) {
       {
         id: createId(),
         type: 'Page',
-        root: 'data',
         title: 'Welcome'
       },
       null,
@@ -44,7 +43,6 @@ export async function init(options: InitOptions) {
       {
         id: createId(),
         type: 'MediaLibrary',
-        root: 'media',
         title: 'Media library'
       },
       null,

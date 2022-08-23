@@ -3,8 +3,9 @@ import {BackendCreateOptions} from '@alinea/core/BackendConfig'
 import {Config} from '@alinea/core/Config'
 import {createError} from '@alinea/core/ErrorWithCode'
 import {Hub} from '@alinea/core/Hub'
+import {Outcome, OutcomeJSON} from '@alinea/core/Outcome'
 import {base64, base64url} from '@alinea/core/util/Encoding'
-import {Blob, fetch, FormData} from '@alinea/iso'
+import {fetch} from '@alinea/iso'
 import {CloudAuthServerOptions} from './CloudAuthServer'
 import {cloudConfig} from './CloudConfig'
 
@@ -19,7 +20,7 @@ function json<T>(res: Response): Promise<T> {
   return res.json()
 }
 
-function withAuth(init: RequestInit, ctx: Hub.Context) {
+function withAuth(ctx: Hub.AuthContext, init: RequestInit = {}) {
   return {
     ...init,
     headers: {
@@ -55,40 +56,44 @@ export class CloudApi implements CloudConnection {
     return fetch(
       cloudConfig.publish,
       withAuth(
+        ctx,
         asJson({
           method: 'POST',
           body: JSON.stringify(changes)
-        }),
-        ctx
+        })
       )
     )
       .then(failOnHttpError)
       .then<void>(json)
   }
-  async upload({workspace, root, ...file}: Hub.UploadParams): Promise<string> {
-    const form = new FormData()
-    form.append('workspace', workspace as string)
-    form.append('root', root as string)
-    form.append('path', file.path)
-    if (file.averageColor) form.append('averageColor', file.averageColor)
-    if (file.blurHash) form.append('blurHash', file.blurHash)
-    if ('width' in file) form.append('width', String(file.width))
-    if ('height' in file) form.append('height', String(file.height))
-    form.append('buffer', new Blob([file.buffer]))
-    if (file.preview) form.append('preview', file.preview)
-    return fetch(cloudConfig.media, {
-      method: 'POST',
-      body: form
-    })
-      .then<{location: string}>(json)
-      .then(({location}) => location)
-  }
-  async download({
-    workspace,
-    location
-  }: Hub.DownloadParams): Promise<Hub.Download> {
+  async upload(
+    {fileLocation, buffer}: Hub.MediaUploadParams,
+    ctx: Hub.Context
+  ): Promise<string> {
     return fetch(
-      cloudConfig.media + '?' + new URLSearchParams({workspace, location})
+      cloudConfig.media,
+      withAuth(ctx, {
+        method: 'POST',
+        headers: {
+          accept: 'application/json',
+          'content-type': 'application/octet-stream',
+          'x-file-location': fileLocation
+        },
+        body: buffer
+      })
+    )
+      .then(failOnHttpError)
+      .then<OutcomeJSON<string>>(json)
+      .then<Outcome<string>>(Outcome.fromJSON)
+      .then(Outcome.unpack)
+  }
+  async download(
+    {location}: Hub.DownloadParams,
+    ctx: Hub.Context
+  ): Promise<Hub.Download> {
+    return fetch(
+      cloudConfig.media + '?' + new URLSearchParams({location}),
+      withAuth(ctx)
     )
       .then(failOnHttpError)
       .then(async res => ({type: 'buffer', buffer: await res.arrayBuffer()}))
@@ -101,15 +106,17 @@ export class CloudApi implements CloudConnection {
       ? '?' +
         new URLSearchParams({stateVector: base64url.stringify(stateVector)})
       : ''
-    return fetch(
-      cloudConfig.draft + `/${id}` + params,
-      withAuth({method: 'GET'}, ctx)
-    ).then(res => {
-      if (res.status === 404) return undefined
-      return failOnHttpError(res)
-        .then(res => res.arrayBuffer())
-        .then(buffer => new Uint8Array(buffer))
-    })
+    // We use the api key to fetch a draft here which was requested during
+    // previewing. The preview token has been validated in Server.loadPages.
+    const token = ctx.preview ? this.apiKey : ctx.token
+    return fetch(cloudConfig.draft + `/${id}` + params, withAuth({token})).then(
+      res => {
+        if (res.status === 404) return undefined
+        return failOnHttpError(res)
+          .then(res => res.arrayBuffer())
+          .then(buffer => new Uint8Array(buffer))
+      }
+    )
   }
   update(
     {id, update}: Hub.UpdateParams,
@@ -117,14 +124,11 @@ export class CloudApi implements CloudConnection {
   ): Promise<Drafts.Update> {
     return fetch(
       cloudConfig.draft + `/${id}`,
-      withAuth(
-        {
-          method: 'PUT',
-          headers: {'content-type': 'application/octet-stream'},
-          body: update
-        },
-        ctx
-      )
+      withAuth(ctx, {
+        method: 'PUT',
+        headers: {'content-type': 'application/octet-stream'},
+        body: update
+      })
     )
       .then(failOnHttpError)
       .then(() => ({id, update}))
@@ -132,16 +136,16 @@ export class CloudApi implements CloudConnection {
   delete({ids}: Hub.DeleteMultipleParams, ctx: Hub.Context): Promise<void> {
     return fetch(
       cloudConfig.draft,
-      asJson(withAuth({method: 'DELETE', body: JSON.stringify({ids})}, ctx))
+      asJson(withAuth(ctx, {method: 'DELETE', body: JSON.stringify({ids})}))
     )
       .then(failOnHttpError)
       .then(() => void 0)
   }
   async *updates({}, ctx: Hub.Context): AsyncGenerator<Drafts.Update> {
-    const updates = await fetch(
-      cloudConfig.draft,
-      asJson(withAuth({method: 'GET'}, ctx))
-    )
+    // We use the api key to fetch a draft here which was requested during
+    // previewing. The preview token has been validated in Server.loadPages.
+    const token = ctx.preview ? this.apiKey : ctx.token
+    const updates = await fetch(cloudConfig.draft, asJson(withAuth({token})))
       .then(failOnHttpError)
       .then<{
         success: boolean

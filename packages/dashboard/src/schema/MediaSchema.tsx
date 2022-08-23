@@ -1,33 +1,18 @@
-import {Media, type} from '@alinea/core'
-import {hidden} from '@alinea/input.hidden'
-import {text} from '@alinea/input.text'
+import {Media} from '@alinea/core/Media'
 import {IcRoundPermMedia} from '@alinea/ui/icons/IcRoundPermMedia'
 import {FileEntry} from '../view/media/FileEntry'
 import {FileSummaryRow, FileSummaryThumb} from '../view/media/FileSummary'
 import {MediaExplorer} from '../view/MediaExplorer'
+import {MediaSchema as MediaSchemaConfig} from './MediaSchemaConfig'
+
+const {Libary, File} = Media.Type
 
 export const MediaSchema = {
-  MediaLibrary: type('Media directory', {
-    title: text('Title')
-  }).configure({
-    isContainer: true,
-    contains: [Media.Type.Libary],
+  [Libary]: MediaSchemaConfig[Libary].configure({
     view: MediaExplorer,
     icon: IcRoundPermMedia
   }),
-  File: type('File', {
-    title: text('Title'),
-    location: hidden<string>('Location'),
-    extension: hidden<string>('Extension'),
-    size: hidden<number>('File size'),
-    hash: hidden<string>('Hash'),
-    width: hidden<number>('Image width'),
-    height: hidden<number>('Image height'),
-    preview: hidden<string>('Preview'),
-    averageColor: hidden<string>('Average color'),
-    blurHash: hidden<string>('Blur hash')
-  }).configure({
-    isHidden: true,
+  [File]: MediaSchemaConfig[File].configure({
     summaryRow: FileSummaryRow,
     summaryThumb: FileSummaryThumb,
     view: FileEntry

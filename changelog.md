@@ -1,8 +1,53 @@
 # Changelog
 
+## [Unreleased]
+
+- Alinea cloud connection now sends the shortKey part of API key during authentication to uniquely identify project
+
+## [0.2.0]
+
+- The exports of the alinea package are restructed. This is a breaking change
+  because the input fields are no longer exposed directly but bundled in the
+  "alinea" namespace. A few less used exports were removed and can be
+  found in the @alinea packages.
+- Client code is shielded from being included server side when compiling with
+  the "worker" condition enabled.
+- Initial support for selecting external links in the link field. The RichText
+  ui component is adjusted to correctly render links. A custom component or tag
+  can be passed to render links.
+
+  ```tsx
+  <RichText a={<a className="custom-link" />} doc={doc} />
+  <RichText a={CustomLinkComponent} doc={doc} />
+  ```
+
+## [0.1.19]
+
+- Added a new field type for raw json data
+
+## [0.1.18]
+
+- Minor fix in the handshake procedure between Alinea and Alinea cloud
+
+## [0.1.17]
+
+- The alinea serve command will try another port if the chosen port is in use
+  (#179)
+- Avoid duplicate entries after publishing in the development server (#214)
+- The generated types for pages depended on a type that would be namespaced
+  when using `typeNamespace`. It did not take the namespace into account, but
+  does now.
+- The connection with Alinea Cloud should now handle previewing drafts
+  correctly.
+
+## [0.1.16]
+
+- Alinea Cloud can now handle relative urls & authentication is automatically
+  redirected.
+
 ## [0.1.15]
 
-- The alinea cli will now forward commands places after the serve or generate
+- The alinea cli will now forward commands placed after the serve or generate
   commands. It will wait until the alinea package is generated before doing so
   to make sure userland code can always depend on the package being available.
   It also simplifies running the dashboard and development server without
@@ -59,11 +104,13 @@
 ## [0.1.12]
 
 - Previous release contained a few debug logs which are removed.
-- Hard breaks (shift + enter) will be rendered as break in the RichText component.
+- Hard breaks (shift + enter) will be rendered as break in the RichText
+  component.
 
 ## [0.1.11]
 
-- Tested and fixed the integration with Alinea Cloud for drafts and publishing content.
+- Tested and fixed the integration with Alinea Cloud for drafts and publishing
+  content.
 
 ## [0.1.10]
 
@@ -101,7 +148,8 @@
 - Vendor in selected dependencies (#175). Selected dependencies will be compiled
   and packaged with the alinea packages. This reduces install size and amount of
   dependencies which would typically not be shared with any userland code.
-- Added a hidden option to fields, which hides the field in the dashboard UI (#169)
+- Added a hidden option to fields, which hides the field in the dashboard UI
+  (#169)
 
 ## [0.1.4]
 

@@ -53,25 +53,28 @@ const fs: FS = Volume.fromNestedJSON({
     data: {
       '/index.json': entry({
         id: 'root',
-        root: 'data',
-        index: 'a',
         type: 'Home',
-        title: 'Test title'
+        title: 'Test title',
+        alinea: {
+          index: 'a0'
+        }
       }),
       '/sub.json': entry({
         id: 'sub',
-        root: 'data',
-        index: 'a',
         type: 'Type',
-        title: 'Sub title'
+        title: 'Sub title',
+        alinea: {
+          index: 'a0'
+        }
       }),
       sub: {
         '/entry.json': entry({
           id: 'sub-entry',
-          root: 'data',
-          index: 'b',
           type: 'Sub',
-          title: 'Sub entry title'
+          title: 'Sub entry title',
+          alinea: {
+            index: 'a0'
+          }
         })
       }
     }
@@ -98,13 +101,13 @@ test('reading', async () => {
   entries.sort((a, b) => a.url.localeCompare(b.url))
   const [root, sub, subEntry] = entries
   assert.is(root.id, 'root')
-  assert.is(root.parent, undefined)
+  assert.is(root.alinea.parent, undefined)
   assert.is(root.url, '/')
   assert.is(sub.id, 'sub')
-  assert.is(sub.parent, undefined)
+  assert.is(sub.alinea.parent, undefined)
   assert.is(sub.url, '/sub')
   assert.is(subEntry.id, 'sub-entry')
-  assert.is(subEntry.parent, 'sub')
+  assert.is(subEntry.alinea.parent, 'sub')
   assert.is(subEntry.url, '/sub/entry')
 })
 
@@ -121,23 +124,18 @@ test('inserting', async () => {
 
 test('file media', async () => {
   const file01 = await data.download({
-    workspace: 'main',
-    location: 'file01.txt'
+    location: 'files/file01.txt'
   })
   if (file01.type !== 'buffer') throw 'Buffer expected'
   assert.is(file01.buffer.toString(), 'content01')
   const uploadPath = await data.upload({
-    workspace: 'main',
-    root: 'data',
-    path: 'file04.txt',
+    fileLocation: 'files/file04.txt',
     buffer: Buffer.from('content04')
   })
-  const file04 = await data.download({workspace: 'main', location: uploadPath})
+  const file04 = await data.download({location: uploadPath})
   if (file04.type !== 'buffer') throw 'Buffer expected'
   assert.is(file04.buffer.toString(), 'content04')
-  const [, err1] = await outcome(
-    data.download({workspace: 'main', location: '../out.txt'})
-  )
+  const [, err1] = await outcome(data.download({location: '../out.txt'}))
   assert.is((err1 as ErrorWithCode).code, 401)
 })
 

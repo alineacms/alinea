@@ -16,12 +16,13 @@
     "esModuleInterop": true,
     "importHelpers": true,
     "paths": {
-      "@alinea/input.*/view": ["./packages/input.*/src/view.ts"],
       "@alinea/input.*": ["./packages/input.*/src/view.ts"],
+      "@alinea/picker.*": ["./packages/picker.*/src/view.ts"],
       "@alinea/auth.passwordless/*": ["./packages/auth.passwordless/src/*"],
       "@alinea/core/*": ["./packages/core/src/*"],
       "@alinea/cli/*": ["./packages/cli/src/*"],
       "@alinea/dashboard/*": ["./packages/dashboard/src/*"],
+      "@alinea/backend.*": ["./packages/backend.*/src/index.ts"],
       "@alinea/backend/*": ["./packages/backend/src/*"],
       "@alinea/store/*": ["./packages/store/src/*"],
       "@alinea/preview/*": ["./packages/preview/src/*"],
@@ -36,5 +37,5 @@
     "types": ["react/next", "react-dom/next"]
   },
   "include": ["packages"],
-  "exclude": ["node_modules", "packages/website", "packages/**/dist"]
+  "exclude": ["node_modules", "packages/**/dist"]
 }

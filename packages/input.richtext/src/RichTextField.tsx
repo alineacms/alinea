@@ -1,5 +1,13 @@
 import type {Pages} from '@alinea/backend'
-import {Field, Label, SchemaConfig, Shape, TextDoc} from '@alinea/core'
+import {
+  Entry,
+  Field,
+  Label,
+  SchemaConfig,
+  Shape,
+  TextDoc,
+  TextNode
+} from '@alinea/core'
 import {Expr, SelectionInput} from '@alinea/store'
 
 /** Optional settings to configure a rich text field */
@@ -47,6 +55,54 @@ function query<T, Q>(schema: SchemaConfig<T>) {
   }
 }
 
+function iterMarks(doc: TextDoc<any>, fn: (mark: TextNode.Mark) => void) {
+  for (const row of doc) {
+    if (row.marks) row.marks.forEach(fn)
+    if (!TextNode.isElement(row)) continue
+    if (row.content) iterMarks(row.content, fn)
+  }
+}
+
+interface LinkMark {
+  attrs: {
+    'data-id'?: string
+    'data-entry'?: string
+    [key: string]: any
+  }
+}
+
+function transform<T, Q>(options: RichTextOptions<T, Q>) {
+  return (field: Expr<TextDoc<T>>, pages: Pages<any>): Expr<Q> | undefined => {
+    const blocks = options.blocks
+    const expr: Expr<TextDoc<any>> =
+      (blocks && query(blocks)(field, pages)) || field
+    return pages.process(expr, (doc): Q | Promise<Q> => {
+      const links: Map<string, LinkMark> = new Map()
+      iterMarks(doc, mark => {
+        if (mark.type !== 'link') return
+        const id = mark.attrs!['data-entry']
+        if (id) links.set(id, mark as LinkMark)
+      })
+      const ids = Array.from(links.keys())
+      if (ids.length === 0) return doc as any
+      return pages
+        .where(Entry.id.isIn(ids))
+        .select({
+          id: Entry.id,
+          url: Entry.url
+        })
+        .then(entries => {
+          for (const entry of entries) {
+            const link = links.get(entry.id)
+            if (!link) continue
+            link.attrs['href'] = entry.url
+          }
+          return doc as any
+        })
+    })
+  }
+}
+
 /** Create a rich text field configuration */
 export function createRichText<T, Q = TextDoc<T>>(
   label: Label,
@@ -56,8 +112,7 @@ export function createRichText<T, Q = TextDoc<T>>(
     shape: Shape.RichText(label, options.blocks?.shape, options.initialValue),
     label,
     options,
-    transform:
-      options.transform || (options.blocks && query<T, Q>(options.blocks)),
+    transform: options.transform || transform<T, Q>(options),
     hidden: options.hidden
   }
 }

@@ -6,7 +6,7 @@ type ErrorObject = {
   status?: number
 }
 
-type JSONRep<D> =
+export type OutcomeJSON<D> =
   | {success: true; data: D}
   | {success: false; error: ErrorObject}
 
@@ -30,13 +30,13 @@ type OutcomeResult<T> = T extends () => Promise<any>
   ? Promise<boolean>
   : boolean
 
-function outcomeRunner<Run extends OutcomeRunner>(
+export function outcome<Run extends OutcomeRunner>(
   run: Run
 ): OutcomeReturn<Run> {
   try {
     if (typeof run === 'function') {
       const result = run()
-      if (result instanceof Promise) return outcomeRunner(result) as any
+      if (result instanceof Promise) return outcome(result) as any
       return Outcome.Success(result) as any
     }
     if (run instanceof Promise)
@@ -47,29 +47,29 @@ function outcomeRunner<Run extends OutcomeRunner>(
   }
 }
 
-export const outcome = Object.assign(outcomeRunner, {
-  succeeds<Run extends OutcomeRunner>(run: OutcomeRunner): OutcomeResult<Run> {
-    const result: Promise<Outcome<any>> | Outcome<any> = outcomeRunner(
-      run
-    ) as any
+export namespace outcome {
+  export function succeeds<Run extends OutcomeRunner>(
+    run: OutcomeRunner
+  ): OutcomeResult<Run> {
+    const result: Promise<Outcome<any>> | Outcome<any> = outcome(run) as any
     if (result instanceof Promise)
       return result.then(outcome => outcome.isSuccess()) as any
     return result.isSuccess() as any
-  },
-  fails<Run extends OutcomeRunner>(run: OutcomeRunner): OutcomeResult<Run> {
-    const result: Promise<Outcome<any>> | Outcome<any> = outcomeRunner(
-      run
-    ) as any
+  }
+  export function fails<Run extends OutcomeRunner>(
+    run: OutcomeRunner
+  ): OutcomeResult<Run> {
+    const result: Promise<Outcome<any>> | Outcome<any> = outcome(run) as any
     if (result instanceof Promise)
       return result.then(outcome => outcome.isFailure()) as any
     return result.isFailure() as any
   }
-})
+}
 
 export type Outcome<T = void> = Outcome.OutcomeImpl<T> & Pair<T>
 
 export namespace Outcome {
-  export function fromJSON<T>(json: JSONRep<T>): Outcome<T> {
+  export function fromJSON<T>(json: OutcomeJSON<T>): Outcome<T> {
     if (json.success) return Success(json.data)
     const error = new ErrorWithCode(json.error.status!, json.error.message!)
     error.stack = json.error.stack
@@ -108,7 +108,7 @@ export namespace Outcome {
     }
 
     abstract map<U>(fn: (data: T) => U): Outcome<U>
-    abstract toJSON(): JSONRep<T>
+    abstract toJSON(): OutcomeJSON<T>
   }
 
   class SuccessOutcome<T> extends OutcomeImpl<T> {
@@ -127,7 +127,7 @@ export namespace Outcome {
       return Success(fn(this.value))
     }
 
-    toJSON(): JSONRep<T> {
+    toJSON(): OutcomeJSON<T> {
       return {success: true, data: this.value}
     }
   }
@@ -149,7 +149,7 @@ export namespace Outcome {
       return this as any as Outcome<U>
     }
 
-    toJSON(): JSONRep<T> {
+    toJSON(): OutcomeJSON<T> {
       return {
         success: false,
         error: {

@@ -46,10 +46,10 @@ export function FileEntry(props: EntryEditProps) {
       <Main.Container>
         <EntryTitle
           backLink={
-            draft.parent &&
+            draft.alinea.parent &&
             nav.entry({
-              id: draft.parent,
-              workspace: draft.workspace
+              id: draft.alinea.parent,
+              workspace: draft.alinea.workspace
             })
           }
         />

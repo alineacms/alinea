@@ -34,7 +34,7 @@
         {
           "id": "g4S5QLIWCAxleuIDzwNpk",
           "type": "CodeBlock",
-          "code": "alinea.number('My number field', {\n  minValue: 0,\n  maxValue: 10\n})"
+          "code": "import {alinea} from 'alinea'\nalinea.number('My number field', {\n  minValue: 0,\n  maxValue: 10\n})"
         }
       ]
     },

@@ -1,11 +1,13 @@
 import {createId, type} from '@alinea/core'
-import {Reference} from '@alinea/core/Reference'
+import {InputForm} from '@alinea/editor'
 import {useForm} from '@alinea/editor/hook/UseForm'
+import {PickerProps} from '@alinea/editor/Picker'
 import {check} from '@alinea/input.check'
 import {text} from '@alinea/input.text'
 import {Button, HStack, Stack} from '@alinea/ui'
 import {Modal} from '@alinea/ui/Modal'
 import {FormEvent} from 'react'
+import {UrlReference} from '../UrlPicker'
 
 const linkForm = type('Link', {
   url: text('Url', {
@@ -21,13 +23,8 @@ const linkForm = type('Link', {
   })
 })
 
-export type ExternalLinkPickerOptions = {}
-
-export function ExternalLinkPickerForm({
-  options,
-  onConfirm
-}: ExternalLinkPickerProps) {
-  const [Form, formData] = useForm(
+export function UrlPickerForm({options, onConfirm, onCancel}: PickerProps) {
+  const form = useForm(
     {
       type: linkForm,
       initialValue: options
@@ -36,39 +33,39 @@ export function ExternalLinkPickerForm({
   )
   function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
-    const data = formData()
-    onConfirm([
-      {
-        id: createId(),
-        type: 'url',
-        url: data.url,
-        description: data.description,
-        target: data.blank ? '_blank' : '_self'
-      }
-    ])
+    e.stopPropagation()
+    const data = form()
+    const reference: UrlReference = {
+      id: createId(),
+      type: 'url',
+      url: data.url,
+      description: data.description || '',
+      target: data.blank ? '_blank' : '_self'
+    }
+    if (!data.url) return
+    onConfirm([reference])
   }
   return (
     <form onSubmit={handleSubmit}>
-      <Form />
+      <InputForm {...form} />
       <HStack>
         <Stack.Right>
-          <Button>Confirm</Button>
+          <HStack gap={16}>
+            <Button outline type="button" onClick={onCancel}>
+              Cancel
+            </Button>
+            <Button>Confirm</Button>
+          </HStack>
         </Stack.Right>
       </HStack>
     </form>
   )
 }
 
-export type ExternalLinkPickerProps = {
-  options: ExternalLinkPickerOptions
-  onConfirm: (value: Array<Reference> | undefined) => void
-  onCancel: () => void
-}
-
-export function ExternalLinkPicker(props: ExternalLinkPickerProps) {
+export function UrlPickerModal(props: PickerProps) {
   return (
     <Modal open onClose={props.onCancel}>
-      <ExternalLinkPickerForm {...props} />
+      <UrlPickerForm {...props} />
     </Modal>
   )
 }

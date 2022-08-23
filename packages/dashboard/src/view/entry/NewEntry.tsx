@@ -1,9 +1,19 @@
-import {createId, docFromEntry, Entry, Reference, slugify} from '@alinea/core'
+import {createId, docFromEntry, Entry, slugify} from '@alinea/core'
 import {useField} from '@alinea/editor'
+import {InputField} from '@alinea/editor/view/InputField'
 import {link} from '@alinea/input.link'
 import {select} from '@alinea/input.select'
 import {text} from '@alinea/input.text'
-import {Button, fromModule, HStack, IconButton, Loader, Typo} from '@alinea/ui'
+import {EntryReference} from '@alinea/picker.entry'
+import {
+  Button,
+  fromModule,
+  HStack,
+  IconButton,
+  Loader,
+  Typo,
+  useObservable
+} from '@alinea/ui'
 import {IcRoundArrowBack} from '@alinea/ui/icons/IcRoundArrowBack'
 import {Link} from '@alinea/ui/Link'
 import {Modal} from '@alinea/ui/Modal'
@@ -33,7 +43,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
     })
     .map(pair => pair[0])
   const root = useRoot()
-  const [ParentField, parentSelection] = useField(
+  const parentField = useField(
     link.entry('Parent', {
       condition: Entry.type
         .isIn(containerTypes)
@@ -44,10 +54,11 @@ function NewEntryForm({parentId}: NewEntryProps) {
         : undefined
     })
   )
+  const selectedParent = useObservable(parentField)
   const {data: parentEntry} = useQuery(
-    ['parent', parentSelection],
+    ['parent', selectedParent],
     () => {
-      const parentId = (parentSelection?.[0] as Reference.Entry)?.entry
+      const parentId = (selectedParent?.[0] as EntryReference)?.entry
       return parentId ? hub.entry({id: parentId}) : undefined
     },
     {suspense: true, keepPreviousData: true}
@@ -57,7 +68,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
   const types: Array<string> = !parent
     ? root.contains
     : type?.options.contains || schema.keys
-  const [SelectField, selectedType] = useField(
+  const selectedType = useField(
     select(
       'Select type',
       Object.fromEntries(
@@ -70,28 +81,38 @@ function NewEntryForm({parentId}: NewEntryProps) {
     ),
     [type]
   )
-  const [TitleField, title] = useField(text('Title', {autoFocus: true}))
+  const titleField = useField(text('Title', {autoFocus: true}))
   const [isCreating, setIsCreating] = useState(false)
 
   function handleCreate(e: FormEvent) {
     e.preventDefault()
-    if (!selectedType || !title) return
+    const title = titleField()
+    const selected = selectedType()
+    if (!selected || !title) return
     setIsCreating(true)
-    const type = schema.type(selectedType)!
+    const type = schema.type(selected)!
     const path = slugify(title)
-    const entry = {
+    const entry: Entry = {
       ...type.create(),
       path,
-      workspace,
-      root: root.name,
-      parent: parent?.id,
+      title,
       url: (parent?.url || '') + (parent?.url.endsWith('/') ? '' : '/') + path,
-      title
+      alinea: {
+        index: 'a0',
+        workspace,
+        root: root.name,
+        parent: parent?.id
+      }
     }
     if (root.i18n) {
-      entry.i18n = {
+      entry.alinea.i18n = {
         id: createId(),
-        locale
+        locale: locale!,
+        parent: parent?.id,
+        parents: ([] as Array<string | undefined>)
+          .concat(parent?.alinea.i18n?.parents)
+          .concat(parent?.id)
+          .filter(Boolean) as Array<string>
       }
       entry.url = `/${locale}${entry.url}`
     }
@@ -102,9 +123,9 @@ function NewEntryForm({parentId}: NewEntryProps) {
         if (result.isSuccess()) {
           queryClient.invalidateQueries([
             'children',
-            entry.workspace,
-            entry.root,
-            entry.parent
+            entry.alinea.workspace,
+            entry.alinea.root,
+            entry.alinea.parent
           ])
           navigate(nav.entry(entry))
         }
@@ -120,9 +141,9 @@ function NewEntryForm({parentId}: NewEntryProps) {
       ) : (
         <>
           {/*parent && <ParentView {...parent} />*/}
-          <ParentField />
-          <TitleField />
-          <SelectField />
+          <InputField {...parentField} />
+          <InputField {...titleField} />
+          <InputField {...selectedType} />
           <div className={styles.root.footer()}>
             <Link
               href={nav.entry({workspace, ...parent})}

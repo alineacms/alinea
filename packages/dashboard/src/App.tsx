@@ -28,6 +28,7 @@ import {useDraft} from './hook/UseDraft'
 import {DraftsProvider, DraftsStatus, useDrafts} from './hook/UseDrafts'
 import {useDraftsList} from './hook/UseDraftsList'
 import {useEntryLocation} from './hook/UseEntryLocation'
+import {EntrySummaryProvider} from './hook/UseEntrySummary'
 import {useLocale} from './hook/UseLocale'
 import {useNav} from './hook/UseNav'
 import {useRoot} from './hook/UseRoot'
@@ -40,6 +41,7 @@ import {EditMode} from './view/entry/EditMode'
 import {NewEntry} from './view/entry/NewEntry'
 import {RootHeader} from './view/entry/RootHeader'
 import {EntryEdit} from './view/EntryEdit'
+import {RootOverview} from './view/RootOverview'
 import {SearchBox} from './view/SearchBox'
 import {Sidebar} from './view/Sidebar'
 import {Toolbar} from './view/Toolbar'
@@ -94,94 +96,100 @@ function AppAuthenticated() {
   const {name: currentRoot} = useRoot()
   const entryLocation = useEntryLocation()
   return (
-    <DraftsProvider>
-      <Statusbar.Provider>
-        <Toolbar.Provider>
-          <Sidebar.Provider>
-            <Viewport attachToBody={fullPage} contain color={color}>
-              <Head>
-                <FavIcon color={color} />
-              </Head>
-              <Toolbar.Root color={color} />
-              <div
-                style={{
-                  flex: '1',
-                  display: 'flex',
-                  minHeight: 0,
-                  position: 'relative'
-                }}
-              >
-                <Sidebar.Nav>
-                  {Object.entries(roots).map(([key, root], i) => {
-                    const isSelected = key === currentRoot
-                    const link =
-                      entryLocation && entryLocation.root === key
-                        ? nav.entry(entryLocation)
-                        : nav.root({workspace, root: key})
-                    return (
-                      <Sidebar.Nav.Item
-                        key={key}
-                        selected={isEntry && isSelected}
-                        to={link}
-                      >
-                        {root.icon ? <root.icon /> : <IcRoundInsertDriveFile />}
-                      </Sidebar.Nav.Item>
-                    )
-                  })}
-                  <DraftsButton />
-                </Sidebar.Nav>
-                <Suspense fallback={<Loader absolute />}>
-                  <Routes>
-                    <Route
-                      path={nav.draft({workspace: ':workspace'})}
-                      element={<Router.Drafts />}
-                    />
-                    <Route
-                      path={nav.draft({
-                        workspace: ':workspace',
-                        root: ':root',
-                        id: ':id'
-                      })}
-                      element={<Router.Drafts />}
-                    />
-                    <Route
-                      path={nav.entry({workspace: ':workspace'})}
-                      element={<Router.Entry />}
-                    />
-                    <Route
-                      path={nav.entry({
-                        workspace: ':workspace',
-                        root: ':root'
-                      })}
-                      element={<Router.Entry />}
-                    />
-                    <Route
-                      path={
-                        nav.entry({
+    <EntrySummaryProvider>
+      <DraftsProvider>
+        <Statusbar.Provider>
+          <Toolbar.Provider>
+            <Sidebar.Provider>
+              <Viewport attachToBody={fullPage} contain color={color}>
+                <Head>
+                  <FavIcon color={color} />
+                </Head>
+                <Toolbar.Root color={color} />
+                <div
+                  style={{
+                    flex: '1',
+                    display: 'flex',
+                    minHeight: 0,
+                    position: 'relative'
+                  }}
+                >
+                  <Sidebar.Nav>
+                    {Object.entries(roots).map(([key, root], i) => {
+                      const isSelected = key === currentRoot
+                      const link =
+                        entryLocation && entryLocation.root === key
+                          ? nav.entry(entryLocation)
+                          : nav.root({workspace, root: key})
+                      return (
+                        <Sidebar.Nav.Item
+                          key={key}
+                          selected={isEntry && isSelected}
+                          to={link}
+                        >
+                          {root.icon ? (
+                            <root.icon />
+                          ) : (
+                            <IcRoundInsertDriveFile />
+                          )}
+                        </Sidebar.Nav.Item>
+                      )
+                    })}
+                    <DraftsButton />
+                  </Sidebar.Nav>
+                  <Suspense fallback={<Loader absolute />}>
+                    <Routes>
+                      <Route
+                        path={nav.draft({workspace: ':workspace'})}
+                        element={<Router.Drafts />}
+                      />
+                      <Route
+                        path={nav.draft({
                           workspace: ':workspace',
                           root: ':root',
                           id: ':id'
-                        }) + '/*'
-                      }
-                      element={<Router.Entry />}
-                    />
-                    <Route path="/*" element={<Router.Entry />} />
-                  </Routes>
-                </Suspense>
-              </div>
-              <Statusbar.Root>
-                <DraftsStatusSummary />
-                {!config.hasAuth && (
-                  <Statusbar.Status icon={IcRoundWarning}>
-                    Not using authentication
-                  </Statusbar.Status>
-                )}
-              </Statusbar.Root>
-            </Viewport>
-          </Sidebar.Provider>
-        </Toolbar.Provider>
-      </Statusbar.Provider>
-    </DraftsProvider>
+                        })}
+                        element={<Router.Drafts />}
+                      />
+                      <Route
+                        path={nav.entry({workspace: ':workspace'})}
+                        element={<Router.Entry />}
+                      />
+                      <Route
+                        path={nav.entry({
+                          workspace: ':workspace',
+                          root: ':root'
+                        })}
+                        element={<Router.Entry />}
+                      />
+                      <Route
+                        path={
+                          nav.entry({
+                            workspace: ':workspace',
+                            root: ':root',
+                            id: ':id'
+                          }) + '/*'
+                        }
+                        element={<Router.Entry />}
+                      />
+                      <Route path="/*" element={<Router.Entry />} />
+                    </Routes>
+                  </Suspense>
+                </div>
+                <Statusbar.Root>
+                  <DraftsStatusSummary />
+                  {!config.hasAuth && (
+                    <Statusbar.Status icon={IcRoundWarning}>
+                      Not using authentication
+                    </Statusbar.Status>
+                  )}
+                </Statusbar.Root>
+              </Viewport>
+            </Sidebar.Provider>
+          </Toolbar.Provider>
+        </Statusbar.Provider>
+      </DraftsProvider>
+    </EntrySummaryProvider>
   )
 }
 
@@ -191,16 +199,17 @@ type EntryRouteProps = {
 
 function EntryRoute({id}: EntryRouteProps) {
   const workspace = useWorkspace()
+  const root = useRoot()
   const {draft} = useDraft(id)
   const locale = useLocale()
   const isLoading = Boolean(
-    draft?.id !== id && locale && draft?.i18n?.locale !== locale
+    draft?.id !== id && locale && draft?.alinea.i18n?.locale !== locale
   )
   const {search} = useLocation()
   const type = draft?.channel
   const View = type?.options.view || EntryEdit
   const select = ([] as Array<string | undefined>)
-    .concat(draft?.parents)
+    .concat(draft?.alinea.parents)
     .concat(draft?.id)
     .filter(Boolean) as Array<string>
   return (
@@ -229,9 +238,12 @@ function EntryRoute({id}: EntryRouteProps) {
           />
         </Suspense>
       ) : (
-        <Head>
-          <title>{renderLabel(workspace.label)}</title>
-        </Head>
+        <>
+          <Head>
+            <title>{renderLabel(workspace.label)}</title>
+          </Head>
+          <RootOverview workspace={workspace} root={root} />
+        </>
       )}
     </CurrentDraftProvider>
   )

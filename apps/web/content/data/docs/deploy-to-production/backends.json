@@ -1,8 +1,6 @@
 {
   "id": "28NgU841OXMyHZX4EU1GRqxZaB0",
   "type": "Doc",
-  "root": "data",
-  "index": "Zo",
   "title": "Backends",
   "blocks": [
     {
@@ -48,11 +46,14 @@
           "content": [
             {
               "type": "text",
-              "text": "Our most seamless way of deploying content is via Alinea Cloud. "
+              "text": "Our most seamless way of deploying content is via Alinea Cloud."
             }
           ]
         }
       ]
     }
-  ]
+  ],
+  "alinea": {
+    "index": "Zo"
+  }
 }

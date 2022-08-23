@@ -37,6 +37,12 @@
     border-radius: 16px;
   }
 
+  &.is-outline {
+    background: transparent;
+    border: 1px solid var(--alinea-fields-focus);
+    color: var(--alinea-focus-foreground);
+  }
+
   &:hover {
     background: var(--alinea-fields-focus);
     color: var(--alinea-focus-foreground);

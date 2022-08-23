@@ -28,7 +28,7 @@ type Move = {
 }
 
 class Drafts {
-  saveDelay = 1000
+  saveDelay = 500
   saveTimeout: ReturnType<typeof setTimeout> | null = null
   status = observable<DraftsStatus>(DraftsStatus.Synced)
   stateVectors = new WeakMap<Y.Doc, Uint8Array>()
@@ -53,7 +53,10 @@ class Drafts {
     const [result, error] = await hub.entry({id})
     if (error) throw error
     if (!result) throw createError(404, `Entry not found`)
-    const type = hub.config.type(result.entry.workspace, result.entry.type)
+    const type = hub.config.type(
+      result.entry.alinea.workspace,
+      result.entry.type
+    )
     if (!type) throw createError(404, `Type not found`)
     if (result.draft) {
       Y.applyUpdate(doc, base64.parse(result.draft))

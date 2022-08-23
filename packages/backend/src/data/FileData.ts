@@ -1,12 +1,10 @@
 import {
   Config,
   createError,
-  createId,
   Entry,
   EntryStatus,
   Hub,
-  outcome,
-  slugify
+  outcome
 } from '@alinea/core'
 import {posix as path} from 'node:path'
 import {Data} from '../Data'
@@ -73,7 +71,7 @@ export class FileData implements Data.Source, Data.Target, Data.Media {
                   console.log(`\rCould not parse ${location}: ${err}`)
                   continue
                 }
-                if (locale && !entry.i18n) {
+                if (locale && !entry.alinea.i18n) {
                   console.log(
                     `\rNo i18n id found for entry with id ${entry.id}`
                   )
@@ -90,25 +88,37 @@ export class FileData implements Data.Source, Data.Target, Data.Media {
                 const parent = parents[parents.length - 1]
                 const res: Entry = {
                   ...entry,
-                  workspace,
-                  root: root.name,
-                  url,
                   path: name,
-                  index: entry.index || entry.id,
-                  parent: parent?.id,
-                  parents: parents.map(parent => parent.id),
-                  $isContainer: isContainer,
-                  $status: EntryStatus.Published,
-                  i18n: locale
-                    ? {
-                        id: entry.i18n?.id || entry.id,
-                        locale,
-                        parent: parent?.i18n?.id || parent?.id,
-                        parents: parents.map(
-                          parent => parent?.i18n?.id || parent?.id
-                        )
-                      }
-                    : undefined
+                  url,
+                  alinea: {
+                    workspace,
+                    root: root.name,
+                    index:
+                      entry.alinea?.index ||
+                      // Todo: this is for backwards compatibility, should
+                      // deprecate next major version
+                      (entry as any).index ||
+                      entry.id,
+                    parent: parent?.id,
+                    parents: parents.map(parent => parent.id),
+                    status: EntryStatus.Published,
+                    isContainer: isContainer,
+                    i18n: locale
+                      ? {
+                          id:
+                            entry.alinea.i18n?.id ||
+                            // Todo: this is for backwards compatibility, should
+                            // deprecate next major version
+                            (entry as any).i18n?.id ||
+                            entry.id,
+                          locale,
+                          parent: parent?.alinea.i18n?.id || parent?.id,
+                          parents: parents.map(
+                            parent => parent?.alinea.i18n?.id || parent?.id
+                          )
+                        }
+                      : undefined
+                  }
                 }
                 if (isContainer) parentIndex.set(url, res)
                 yield res
@@ -159,29 +169,22 @@ export class FileData implements Data.Source, Data.Target, Data.Media {
     return Promise.all(tasks).then(() => void 0)
   }
 
-  async upload({workspace, ...file}: Hub.UploadParams): Promise<string> {
-    const {fs, config, rootDir = '.'} = this.options
-    const {mediaDir} = config.workspaces[workspace]
-    if (!mediaDir) throw createError(500, 'Media directory not configured')
-    const dir = path.dirname(file.path)
-    const extension = path.extname(file.path)
-    const name = path.basename(file.path, extension)
-    const fileName = `${slugify(name)}.${createId()}${extension}`
-    const location = path.join(rootDir, mediaDir, dir, fileName)
-    await fs.mkdir(path.join(rootDir, mediaDir, dir), {recursive: true})
-    await fs.writeFile(location, Buffer.from(file.buffer))
-    return path.join(dir, fileName)
+  async upload({fileLocation, buffer}: Hub.MediaUploadParams): Promise<string> {
+    const {fs, rootDir = '.'} = this.options
+    await fs.writeFile(path.join(rootDir, fileLocation), Buffer.from(buffer))
+    return fileLocation
   }
 
-  async download({
-    workspace,
-    location
-  }: Hub.DownloadParams): Promise<Hub.Download> {
+  async download({location}: Hub.DownloadParams): Promise<Hub.Download> {
     const {fs, config, rootDir = '.'} = this.options
-    const {mediaDir} = config.workspaces[workspace]
-    if (!mediaDir) throw createError(500, 'Media directory not configured')
-    const file = path.join(rootDir, mediaDir, location)
-    if (!isChildOf(file, path.join(rootDir, mediaDir))) throw createError(401)
+    const mediaDirs: Array<string> = Object.values(config.workspaces)
+      .map(workspace => workspace.mediaDir!)
+      .filter(Boolean)
+    const file = path.join(rootDir, location)
+    const isInMediaLocation = mediaDirs.some(dir =>
+      isChildOf(file, path.join(rootDir, dir))
+    )
+    if (!isInMediaLocation) throw createError(401)
     return {type: 'buffer', buffer: await fs.readFile(file)}
   }
 }

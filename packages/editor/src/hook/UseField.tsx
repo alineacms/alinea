@@ -1,41 +1,50 @@
-import {createError, Field, ROOT_KEY, Shape} from '@alinea/core'
-import {useForceUpdate} from '@alinea/ui'
-import {memo, useEffect, useMemo} from 'react'
+import {createError, createId, Field, Shape} from '@alinea/core'
+import {Observable, observable, useForceUpdate} from '@alinea/ui'
+import {useEffect, useMemo} from 'react'
 import * as Y from 'yjs'
 import {InputState} from '../InputState'
 
 const FIELD_KEY = '#field'
 
+interface FieldStateOptions<V, M> {
+  shape: Shape<V>
+  root: Y.Map<any>
+  key: string
+  attach?: (v: V) => void
+  parent?: InputState<any>
+}
+
 export class FieldState<V, M> implements InputState<readonly [V, M]> {
-  constructor(
-    private shape: Shape<V>,
-    private root: Y.Map<any>,
-    private key: string,
-    private _parent?: InputState<any>
-  ) {}
+  constructor(private options: FieldStateOptions<V, M>) {}
 
   parent() {
-    return this._parent
+    return this.options.parent
   }
 
   child(field: string): InputState<any> {
-    const current = this.root.get(this.key)
-    return new FieldState(
-      this.shape.typeOfChild(current, field),
-      current,
-      field,
-      this
-    )
+    const {key, root, shape} = this.options
+    const current = root.get(key)
+    return new FieldState({
+      shape: shape.typeOfChild(current, field),
+      root: current,
+      key: field,
+      parent: this
+    })
   }
 
   use(): readonly [V, M] {
+    const {key, root, shape, attach} = this.options
     const {current, mutator, observe} = useMemo(() => {
-      const current = (): V => this.shape.fromY(this.root.get(this.key))
-      const mutator = this.shape.mutator(this.root, this.key) as M
-      const observe = this.shape.watch(this.root, this.key)
+      const current = (): V => shape.fromY(root.get(key))
+      const mutator = shape.mutator(root, key) as M
+      const observe = shape.watch(root, key)
       return {current, mutator, observe}
     }, [])
-    const redraw = useForceUpdate()
+    const update = useForceUpdate()
+    const redraw = () => {
+      if (attach) attach(current())
+      update()
+    }
     useEffect(() => {
       return observe(redraw)
     }, [observe, redraw])
@@ -43,34 +52,33 @@ export class FieldState<V, M> implements InputState<readonly [V, M]> {
   }
 }
 
-type InputProps<V, M> = {
-  value?: V
-  onChange?: M
+export interface ObservableField<V, M> extends Observable.Writable<V> {
+  field: Field<V, M>
+  state: FieldState<V, M>
+}
+
+export function createFieldInput<V, M, Q>(
+  field: Field<V, M, Q>
+): ObservableField<V, M> {
+  if (!field.shape) throw createError('Cannot use field without shape')
+  const doc = new Y.Doc()
+  const rootKey = createId()
+  const root = doc.getMap(rootKey)
+  const initial = field.shape.create()
+  root.set(FIELD_KEY, field.shape.toY(initial))
+  const input = observable<V>(initial)
+  const state = new FieldState<V, M>({
+    shape: field.shape,
+    root,
+    key: FIELD_KEY,
+    attach: input
+  })
+  return Object.assign(input, {field, state}) as ObservableField<V, M>
 }
 
 export function useField<V, M, Q>(
   field: Field<V, M, Q>,
   deps: ReadonlyArray<unknown> = []
-) {
-  const {input, state} = useMemo(() => {
-    const doc = new Y.Doc()
-    const root = doc.getMap(ROOT_KEY)
-    if (!field.shape) throw createError('Cannot use field without type')
-    root.set(FIELD_KEY, field.shape.toY(field.initialValue!))
-    const state = new FieldState<V, M>(field.shape, root, FIELD_KEY)
-    const Input = field.view!
-    function input(props: InputProps<V, M>) {
-      const inputState =
-        'value' in props
-          ? new InputState.StatePair(props.value!, props.onChange!)
-          : state
-      return <Input state={inputState} field={field} />
-    }
-    return {
-      input: memo(input),
-      state
-    }
-  }, deps)
-  const [value, mutator] = state.use()
-  return [input, value, mutator] as const
+): ObservableField<V, M> {
+  return useMemo(() => createFieldInput(field), deps)
 }

@@ -1,7 +1,7 @@
-import {backend} from '@alinea/content/backend.js'
+import {initPages} from '@alinea/content/web/pages.js'
 
 export async function getStaticPaths() {
-  const pages = backend.loadPages('web')
+  const pages = initPages()
   const urls = await pages
     .where(page => page.type.isIn(['Doc']))
     .select(page => page.url)

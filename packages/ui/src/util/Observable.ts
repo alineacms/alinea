@@ -1,50 +1,51 @@
-import {useEffect, useState} from 'react'
+import {
+  observable as microObservable,
+  Observable as MicroObservable,
+  useObservable as useMicroObservable,
+  WritableObservable as MicroWritableObservable
+} from 'micro-observables'
 
-type Listener<T> = (value: T) => void
-
-export type Observable<T> = {
+export interface Observable<T> {
   (): T
-  (value: T): T
-  map<X>(mapping: (value: T) => X): Observable<X>
-  subscribe(listener: Listener<T>): void
-  destroy(): void
+  micro: MicroObservable<T>
+  select<U>(selector: (val: T) => U | Observable<U>): Observable<U>
 }
 
-export function observable<T>(value: T): Observable<T> {
-  const listeners = new Set<Listener<T>>()
-  function subscribe(listener: (value: T) => void) {
-    listeners.add(listener)
-    return () => listeners.delete(listener)
+export namespace Observable {
+  export interface Writable<T> extends Observable<T> {
+    (value: T): void
   }
-  function destroy() {
-    listeners.clear()
-  }
-  function map<X>(mapping: (value: T) => X): Observable<X> {
-    const res = observable(mapping(value))
-    subscribe(value => res(mapping(value)))
-    return res
-  }
+}
+
+function wrap<T>(micro: MicroObservable<T>): Observable<T> {
   return Object.assign(
     function () {
-      if (arguments.length === 0) return value
-      value = arguments[0]
-      for (const listener of listeners) listener(value)
-      return value
+      if (arguments.length === 1)
+        return (micro as MicroWritableObservable<T>).set(arguments[0])
+      return micro.get()
     },
     {
-      subscribe,
-      destroy,
-      map
+      micro,
+      select<U>(selector: (val: T) => U | Observable<U>): Observable<U> {
+        return wrap(
+          micro.select(val => {
+            const res = selector(val)
+            return 'micro' in res ? res.micro : res
+          })
+        )
+      }
     }
-  )
+  ) as Observable<T>
 }
 
-// Todo: use some reactive state lib?
-export function useObservable<T>(observable: Observable<T>) {
-  const [state, setState] = useState<T>(observable)
-  useEffect(() => {
-    setState(observable())
-    return observable.subscribe(setState)
-  }, [observable])
-  return state
+export function observable<T>(value: T) {
+  return wrap(microObservable<T>(value)) as Observable.Writable<T>
+}
+
+export function useObservable<T>(
+  observable: Observable<T> | MicroObservable<T>
+) {
+  return useMicroObservable(
+    'micro' in observable ? observable.micro : observable
+  )
 }

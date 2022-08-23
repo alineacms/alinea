@@ -4,7 +4,7 @@ import {FileDrafts} from '@alinea/backend/drafts/FileDrafts'
 import {JsonLoader} from '@alinea/backend/loader/JsonLoader'
 import {router} from '@alinea/backend/router/Router'
 import {JWTPreviews} from '@alinea/backend/util/JWTPreviews'
-import {accumulate, Config, Hub, Workspaces} from '@alinea/core'
+import {accumulate, Config, Hub, outcome, Workspaces} from '@alinea/core'
 import {base64, base64url} from '@alinea/core/util/Encoding'
 import {Response} from '@alinea/iso'
 import {SqliteStore} from '@alinea/store/sqlite/SqliteStore'
@@ -40,13 +40,6 @@ export class ServeBackend<
       fs,
       dir: path.join(outDir, '.drafts')
     })
-    /*const drafts = new ServeDrafts({
-      config,
-      fs,
-      dir: path.join(outDir, '.drafts'),
-      outDir,
-      store
-    })*/
     const options = {
       dashboardUrl,
       createStore: async () => store,
@@ -54,7 +47,8 @@ export class ServeBackend<
       drafts: drafts,
       media: data,
       target: data,
-      previews: new JWTPreviews('@alinea/backend/devserver')
+      previews: new JWTPreviews('@alinea/backend/devserver'),
+      applyPublish: false
     }
     super(options)
     this.reload = config => {
@@ -85,6 +79,24 @@ export class ServeBackend<
             headers: {'content-type': 'application/octet-stream'}
           })
         }),
+      matcher
+        .get(Hub.routes.base + '/~publish')
+        .map(router.parseJson)
+        .map(({body}) => {
+          return outcome(data.publish({changes: body as any}))
+        })
+        .map(router.jsonResponse),
+      matcher
+        .post(Hub.routes.base + '/~media')
+        .map(router.parseBuffer)
+        .map(({request, body}) => {
+          const fileLocation = request.headers.get('x-file-location') as string
+          return outcome(data.upload({fileLocation, buffer: body}))
+        })
+        .map(router.jsonResponse),
+      matcher.get(Hub.routes.base + '/~media').map(({}) => {
+        return new Response('Not implemented', {status: 500})
+      }),
       api
     ).recover(router.reportError).handle
   }

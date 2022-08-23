@@ -1,6 +1,7 @@
 import type {Pages} from '@alinea/backend'
 import {
   Entry,
+  EntryMeta,
   Field,
   Label,
   Media,
@@ -8,7 +9,7 @@ import {
   Shape,
   TypeConfig
 } from '@alinea/core'
-import {RecordShape} from '@alinea/core/shape/RecordShape'
+import type {Picker} from '@alinea/editor/Picker'
 import {Cursor, Expr, Functions, SelectionInput} from '@alinea/store'
 
 export type LinkType = 'entry' | 'image' | 'file' | 'external'
@@ -34,6 +35,11 @@ export namespace LinkType {
 
 /** Optional settings to configure a link field */
 export type LinkOptions<T, Q> = {
+  /** The type of links, this will configure the options of the link picker */
+  type?: LinkType | Array<LinkType>
+  /** Show only entries matching this condition */
+  condition?: Expr<boolean>
+
   /** Add extra fields to each link */
   fields?: TypeConfig<any, T>
   /** Width of the field in the dashboard UI (0-1) */
@@ -44,16 +50,12 @@ export type LinkOptions<T, Q> = {
   optional?: boolean
   /** Display a minimal version */
   inline?: boolean
-  /** A default value */
-  initialValue?: Array<Reference & T>
-  /** The type of links, this will configure the options of the link picker */
-  type?: LinkType | Array<LinkType>
-  /** Show only entries matching this condition */
-  condition?: Expr<boolean>
   /** Allow multiple links */
   multiple?: boolean
   /** Maximum amount of links that can be selected */
   max?: number
+  /** A default value */
+  initialValue?: Array<Reference & T>
   /** Modify value returned when queried through `Pages` */
   transform?: <P>(
     field: Expr<Array<Reference & T>>,
@@ -61,6 +63,7 @@ export type LinkOptions<T, Q> = {
   ) => Expr<Q> | undefined
   /** Hide this link field */
   hidden?: boolean
+  pickers?: Array<Picker<any, any>>
 }
 
 /** Internal representation of a link field */
@@ -72,26 +75,35 @@ export interface LinkField<T, Q> extends Field.List<Reference & T, Q> {
 export type LinkData = LinkData.Entry | LinkData.Url
 
 export namespace LinkData {
-  export type Entry = {
-    id: string
+  export interface Url extends Reference {
+    type: 'url'
+    url: string
+    description: string
+    target: string
+  }
+  export interface Entry extends Reference {
+    alinea: EntryMeta
     type: 'entry'
     entry: string
     entryType: string
     path: string
-    url: string
     title: Label
+    url: string
   }
-  export type Image = Entry & {
+  export interface File extends Reference {
+    alinea: EntryMeta
     src: string
     extension: string
     size: number
+  }
+  export interface Image extends File {
+    alinea: EntryMeta
     hash: string
     width: number
     height: number
     averageColor: string
     blurHash: string
   }
-  export type Url = {id: string; type: 'url'; url: string}
 }
 
 /** Create a link field configuration */
@@ -99,24 +111,20 @@ export function createLink<T, Q>(
   label: Label,
   options: LinkOptions<T, Q> = {}
 ): LinkField<T, Q> {
-  const extra = options.fields?.shape
+  const pickers = options.pickers || []
+  const blocks = Object.fromEntries(
+    pickers.map(picker => [picker.type, picker.shape])
+  )
   return {
-    shape: Shape.List(
-      label,
-      {
-        entry: new RecordShape('Entry', {
-          entry: Shape.Scalar('Entry')
-        }).concat(extra),
-        url: new RecordShape('Url', {
-          url: Shape.Scalar('Url')
-        }).concat(extra)
-      },
-      options.initialValue
-    ),
+    shape: Shape.List(label, blocks, options.initialValue),
     label,
-    options,
+    options: {
+      ...options,
+      pickers
+    },
     hidden: options.hidden,
     initialValue: options.initialValue,
+    // Todo: move transform to the picker instances
     transform(field, pages): Expr<Q> {
       const row = field.each()
       const Link = Entry.as<Media.File>('Link')
@@ -127,10 +135,22 @@ export function createLink<T, Q>(
             return row.fields
               .with({
                 entryType: entry.type,
-                path: entry.path,
                 url: entry.url,
-                title: entry.title
+                path: entry.path,
+                title: entry.title,
+                alinea: entry.alinea
               })
+              .with(
+                Functions.iif(
+                  LinkType.conditionOf(entry, 'file'),
+                  {
+                    src: entry.location,
+                    extension: entry.extension,
+                    size: entry.size
+                  },
+                  {}
+                )
+              )
               .with(
                 Functions.iif(
                   LinkType.conditionOf(entry, 'image'),

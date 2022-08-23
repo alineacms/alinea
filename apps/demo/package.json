@@ -13,7 +13,7 @@
     "@alinea/content": "link:./.alinea",
     "alinea": "0.0.0",
     "include-media": "^1.4.10",
-    "next": "^12.2.3",
+    "next": "^12.2.4-canary.11",
     "react": "^18.1.0",
     "react-dom": "^18.1.0"
   },

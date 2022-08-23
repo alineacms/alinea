@@ -5,20 +5,24 @@ export namespace Tree {
   export function siblings(id: EV<string>) {
     const Self = Entry.as('Self')
     return Entry.where(Entry.id.isNot(id)).where(
-      Entry.parent.is(Self.where(Self.id.is(id)).select(Self.parent).first())
+      Entry.alinea.parent.is(
+        Self.where(Self.id.is(id)).select(Self.alinea.parent).first()
+      )
     )
   }
 
   export function children(id: EV<string>, depth = 1) {
     if (depth > 1) throw 'todo depth > 1'
-    return Entry.where(Entry.parent.is(id)).orderBy(Entry.index.asc())
+    return Entry.where(Entry.alinea.parent.is(id)).orderBy(
+      Entry.alinea.index.asc()
+    )
   }
 
   export function parents(id: EV<string>) {
     const Self = Entry.as('Self')
     const Parent = Entry.as('Parent')
     return Self.where(Self.id.is(id))
-      .innerJoin(Parent, Parent.id.isIn(Self.parents.each()))
+      .innerJoin(Parent, Parent.id.isIn(Self.alinea.parents.each()))
       .select(Parent.fields)
   }
 
@@ -26,25 +30,29 @@ export namespace Tree {
     const Self = Entry.as('Self')
     const Parent = Entry.as('Parent')
     return Self.where(Self.id.is(id))
-      .innerJoin(Parent, Parent.id.is(Self.parent))
+      .innerJoin(Parent, Parent.id.is(Self.alinea.parent))
       .select(Parent.fields)
   }
 
   export function nextSibling(id: EV<string>) {
     const Self = Entry.as('Self')
     const self = Self.where(Self.id.is(id))
-    return Entry.where(Entry.parent.is(self.select(Self.parent).first()))
-      .orderBy(Entry.index.asc())
-      .where(Entry.index.greater(self.select(Self.index).first()))
+    return Entry.where(
+      Entry.alinea.parent.is(self.select(Self.alinea.parent).first())
+    )
+      .orderBy(Entry.alinea.index.asc())
+      .where(Entry.alinea.index.greater(self.select(Self.alinea.index).first()))
       .first()
   }
 
   export function prevSibling(id: EV<string>) {
     const Self = Entry.as('Self')
     const self = Self.where(Self.id.is(id))
-    return Entry.where(Entry.parent.is(self.select(Self.parent).first()))
-      .orderBy(Entry.index.desc())
-      .where(Entry.index.less(self.select(Self.index).first()))
+    return Entry.where(
+      Entry.alinea.parent.is(self.select(Self.alinea.parent).first())
+    )
+      .orderBy(Entry.alinea.index.desc())
+      .where(Entry.alinea.index.less(self.select(Self.alinea.index).first()))
       .first()
   }
 }

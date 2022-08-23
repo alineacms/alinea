@@ -1,15 +1,16 @@
 import {nodeHandler} from '@alinea/backend/router/NodeHandler'
 import {router} from '@alinea/backend/router/Router'
+import {createDb} from '@alinea/backend/util/CreateDb'
 import {ReadableStream, Request, Response, TextEncoderStream} from '@alinea/iso'
 import semver from 'compare-versions'
 import esbuild, {BuildOptions, BuildResult} from 'esbuild'
-import http from 'node:http'
+import fs from 'node:fs'
+import http, {IncomingMessage, RequestListener, ServerResponse} from 'node:http'
 import {createRequire} from 'node:module'
 import path from 'node:path'
 import {buildOptions} from './build/BuildOptions'
 import {generate} from './Generate'
 import {ServeBackend} from './serve/ServeBackend'
-import {createDb} from './util/CreateDb'
 import {dirname} from './util/Dirname'
 
 const __dirname = dirname(import.meta.url)
@@ -107,6 +108,29 @@ function browserBuild(
   }
 }
 
+async function startServer(
+  handler: RequestListener,
+  preferredPort = 4500
+): Promise<number> {
+  return new Promise((resolve, reject) => {
+    const server = http.createServer(handler)
+    server.on('error', reject)
+    server.on('listening', () => resolve(server))
+    server.listen(preferredPort)
+  })
+    .then(() => preferredPort)
+    .catch(err => {
+      const incrementedPort = preferredPort + 1
+      if (err.code === 'EADDRINUSE' && incrementedPort < 65535) {
+        console.log(
+          `> Port ${preferredPort} is in use, attempting ${incrementedPort} instead`
+        )
+        return startServer(handler, incrementedPort)
+      }
+      throw err
+    })
+}
+
 export type ServeOptions = {
   cwd?: string
   staticDir?: string
@@ -125,7 +149,19 @@ export async function serve(options: ServeOptions): Promise<void> {
     alineaDev = false,
     production = false
   } = options
-  const port = options.port ? Number(options.port) : 4500
+  const preferredPort = options.port ? Number(options.port) : 4500
+  const port = await startServer(serve, preferredPort)
+  const dashboardName = production ? '(production) dashboard' : 'dashboard'
+  console.log(`> Alinea ${dashboardName} available on http://localhost:${port}`)
+  let setHandler: (handler: RequestListener) => void | undefined
+  const handler = new Promise<RequestListener>(
+    resolve => (setHandler = resolve)
+  )
+
+  function serve(req: IncomingMessage, res: ServerResponse) {
+    handler.then(handler => handler(req, res))
+  }
+
   const store = await createDb()
   const clients: Array<Client> = []
   const {version} = require('react/package.json')
@@ -145,16 +181,25 @@ export async function serve(options: ServeOptions): Promise<void> {
   let config = await generate({
     ...options,
     store,
-    onConfigRebuild: async (error, newConfig) => {
+    onConfigRebuild: async outcome => {
+      const [newConfig, error] = outcome
+      if (error) return
       config = newConfig
       server.reload(newConfig)
       if (!alineaDev) reload('refresh')
     },
-    onCacheRebuild: async error => {
+    onCacheRebuild: async outcome => {
+      const [store, error] = outcome
+      if (error) return
       await server.reloadPreviewStore()
       reload('refetch')
     }
   })
+
+  fs.writeFileSync(
+    path.join(cwd, '.alinea/drafts.js'),
+    `export const serverLocation = 'http://localhost:${port}'`
+  )
 
   server = new ServeBackend({
     cwd,
@@ -242,18 +287,14 @@ export async function serve(options: ServeOptions): Promise<void> {
             }
           }
         : undefined,
-      // Todo: this is only needed during dev
       tsconfig: path.join(staticDir, 'tsconfig.json'),
       logLevel: 'error'
+    }),
+    matcher.get('/config.css').map((): Response => {
+      return new Response('', {headers: {'content-type': 'text/css'}})
     })
     //)
   )
 
-  http.createServer(nodeHandler(app.handle)).listen(port, () => {
-    console.log(
-      `> Alinea ${
-        production ? '(production) ' : ''
-      }dashboard available on http://localhost:${port}`
-    )
-  })
+  setHandler!(nodeHandler(app.handle))
 }

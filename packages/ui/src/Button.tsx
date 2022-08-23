@@ -17,6 +17,7 @@ export type ButtonProps<T extends ElementType> = PropsWithChildren<
     icon?: ComponentType
     iconRight?: ComponentType
     size?: 'small' | 'medium' | 'large'
+    outline?: boolean
   } & Omit<ComponentProps<T>, 'as'>
 >
 
@@ -26,11 +27,12 @@ export function Button<T extends ElementType = 'button'>({
   size = 'medium',
   icon,
   iconRight,
+  outline,
   ...props
 }: ButtonProps<T>) {
   const Tag: any = as
   return (
-    <Tag {...props} className={styles.root.mergeProps(props)(size)}>
+    <Tag {...props} className={styles.root.mergeProps(props)(size, {outline})}>
       <HStack center gap={8}>
         <Icon icon={icon} />
         <span>{children}</span>

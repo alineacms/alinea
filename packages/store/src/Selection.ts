@@ -18,8 +18,10 @@ export class Selection<T> {
     return ExprData.create(input)
   }
 
-  with<X extends SelectionInput>(that: X): Selection.With<T, X> {
-    return new Selection(ExprData.Merge(this.expr, Selection.create(that)))
+  with<X extends SelectionInput>(that: X): Selection<Selection.Combine<T, X>> {
+    return new Selection<Selection.Combine<T, X>>(
+      ExprData.Merge(this.expr, Selection.create(that))
+    )
   }
 
   toExpr(): Expr<T> {
@@ -28,7 +30,6 @@ export class Selection<T> {
 }
 
 export namespace Selection {
-  export type With<A, B> = Selection<
-    Omit<A, keyof Store.TypeOf<B>> & Store.TypeOf<B>
-  >
+  export type With<A, B> = Selection<Combine<A, B>>
+  export type Combine<A, B> = Omit<A, keyof Store.TypeOf<B>> & Store.TypeOf<B>
 }

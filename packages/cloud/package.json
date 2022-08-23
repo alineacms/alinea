@@ -8,7 +8,11 @@
   },
   "type": "module",
   "exports": {
-    ".": "./dist/index.js",
+    ".": {
+      "worker": "./dist/index.js",
+      "browser": "./dist/view.js",
+      "default": "./dist/index.js"
+    },
     "./*": "./dist/*.js"
   },
   "files": [
@@ -27,8 +31,11 @@
     "@alinea/client": "0.0.0",
     "@alinea/core": "0.0.0",
     "@alinea/dashboard": "0.0.0",
-    "@alinea/iso": "^0.1.18",
+    "@alinea/iso": "^0.1.21",
     "@alinea/shared": "0.0.0",
     "@alinea/ui": "0.0.0"
+  },
+  "peerDependencies": {
+    "react": "*"
   }
 }

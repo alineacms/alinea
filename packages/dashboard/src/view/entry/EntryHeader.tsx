@@ -77,7 +77,7 @@ export function EntryHeader({mode, setMode}: EntryHeaderProps) {
   const draft = useCurrentDraft()
   const currentLocale = useLocale()
   const navigate = useNavigate()
-  const parent = draft.parent
+  const parent = draft.alinea.parent
   const type = schema.type(draft.type)
   const status = useObservable(draft.status)
   const queryClient = useQueryClient()
@@ -99,9 +99,9 @@ export function EntryHeader({mode, setMode}: EntryHeaderProps) {
       .then(() => {
         queryClient.invalidateQueries([
           'children',
-          draft.workspace,
-          draft.root,
-          draft.parent
+          draft.alinea.workspace,
+          draft.alinea.root,
+          draft.alinea.parent
         ])
       })
       .finally(() => {
@@ -142,8 +142,8 @@ export function EntryHeader({mode, setMode}: EntryHeaderProps) {
               <Link
                 key={locale}
                 to={nav.entry({
-                  workspace: link.workspace,
-                  root: link.root,
+                  workspace: link.alinea.workspace,
+                  root: link.alinea.root,
                   id: link.id,
                   locale
                 })}

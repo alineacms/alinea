@@ -20,8 +20,8 @@ function entrySummaryQuery(Entry: Collection<Entry>) {
   return {
     id: Entry.id,
     type: Entry.type,
-    workspace: Entry.workspace,
-    root: Entry.root,
+    workspace: Entry.alinea.workspace,
+    root: Entry.alinea.root,
     title: Entry.title,
     parents: Tree.parents(Entry.id).select(parent => ({title: parent.title}))
   }
@@ -31,7 +31,8 @@ export const EntrySummaryRow = view(
   entrySummaryQuery,
   function EntrySummaryRow({id, title, type: typeName, parents}) {
     const {schema} = useWorkspace()
-    const type = schema.type(typeName)!
+    const type = schema.type(typeName)
+    if (!type) return null
     return (
       <HStack center full gap={10} className={styles.row()}>
         <VStack>

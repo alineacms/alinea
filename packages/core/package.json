@@ -23,9 +23,12 @@
     }
   },
   "dependencies": {
-    "@alinea/iso": "^0.1.18",
+    "@alinea/iso": "^0.1.21",
     "@alinea/store": "0.0.0",
-    "yjs": "^13.5.39"
+    "yjs": "^13.5.41"
+  },
+  "devDependencies": {
+    "pretty-ms": "^8.0.0"
   },
   "peerDependencies": {
     "react": "*"

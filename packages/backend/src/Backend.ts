@@ -2,6 +2,7 @@ import {Auth, Workspaces} from '@alinea/core'
 import {Entry} from '@alinea/core/Entry'
 import {Hub} from '@alinea/core/Hub'
 import {base64url} from '@alinea/core/util/Encoding'
+import {Logger, LoggerResult, Report} from '@alinea/core/util/Logger'
 import type {Request, Response} from '@alinea/iso'
 import {Cursor, CursorData} from '@alinea/store'
 import {Handle, Route, router} from './router/Router'
@@ -23,15 +24,26 @@ function anonymous(): Auth.Server {
   }
 }
 
+function respond<T>({result, logger}: LoggerResult<T>) {
+  return router.jsonResponse(result, {
+    headers: {'server-timing': Report.toServerTiming(logger.report())}
+  })
+}
+
 function createRouter<T extends Workspaces>(
   hub: Backend<T>,
   auth: Auth.Server
 ): Route<Request, Response | undefined> {
   const matcher = router.startAt(Hub.routes.base)
-  async function context<T extends {request: Request}>(
+  async function context<T extends {request: Request; url: URL}>(
     input: T
-  ): Promise<T & {ctx: Hub.Context}> {
-    return {...input, ctx: await auth.contextFor(input.request)}
+  ): Promise<T & {ctx: Hub.Context; logger: Logger}> {
+    const logger = new Logger(`${input.request.method} ${input.url.pathname}`)
+    return {
+      ...input,
+      ctx: {...(await auth.contextFor(input.request)), logger},
+      logger
+    }
   }
   return router(
     matcher
@@ -44,9 +56,9 @@ function createRouter<T extends Workspaces>(
           typeof svParam === 'string'
             ? new Uint8Array(base64url.parse(svParam))
             : undefined
-        return hub.entry({id, stateVector}, ctx)
+        return ctx.logger.result(hub.entry({id, stateVector}, ctx))
       })
-      .map(router.jsonResponse),
+      .map(respond),
 
     matcher
       .post(Hub.routes.query())
@@ -54,15 +66,17 @@ function createRouter<T extends Workspaces>(
       .map(router.parseJson)
       .map(({ctx, url, body}) => {
         const fromSource = url.searchParams.has('source')
-        return hub.query(
-          {
-            cursor: new Cursor(body as CursorData),
-            source: fromSource
-          },
-          ctx
+        return ctx.logger.result(
+          hub.query(
+            {
+              cursor: new Cursor(body as CursorData),
+              source: fromSource
+            },
+            ctx
+          )
         )
       })
-      .map(router.jsonResponse),
+      .map(respond),
 
     matcher
       .get(Hub.routes.drafts())
@@ -70,9 +84,9 @@ function createRouter<T extends Workspaces>(
       .map(({ctx, url}) => {
         const workspace = url.searchParams.get('workspace')
         if (!workspace) return undefined
-        return hub.listDrafts({workspace}, ctx)
+        return ctx.logger.result(hub.listDrafts({workspace}, ctx))
       })
-      .map(router.jsonResponse),
+      .map(respond),
 
     matcher
       .put(Hub.routes.draft(':id'))
@@ -80,27 +94,31 @@ function createRouter<T extends Workspaces>(
       .map(router.parseBuffer)
       .map(({ctx, params, body}) => {
         const id = params.id as string
-        return hub.updateDraft({id, update: new Uint8Array(body)}, ctx)
+        return ctx.logger.result(
+          hub.updateDraft({id, update: new Uint8Array(body)}, ctx)
+        )
       })
-      .map(router.jsonResponse),
+      .map(respond),
 
     matcher
       .delete(Hub.routes.draft(':id'))
       .map(context)
       .map(({ctx, params}) => {
         const id = params.id as string
-        return hub.deleteDraft({id}, ctx)
+        return ctx.logger.result(hub.deleteDraft({id}, ctx))
       })
-      .map(router.jsonResponse),
+      .map(respond),
 
     matcher
       .post(Hub.routes.publish())
       .map(context)
       .map(router.parseJson)
       .map(({ctx, body}) => {
-        return hub.publishEntries({entries: body as Array<Entry>}, ctx)
+        return ctx.logger.result(
+          hub.publishEntries({entries: body as Array<Entry>}, ctx)
+        )
       })
-      .map(router.jsonResponse),
+      .map(respond),
 
     matcher
       .post(Hub.routes.upload())
@@ -109,22 +127,24 @@ function createRouter<T extends Workspaces>(
       .map(async ({ctx, body}) => {
         const workspace = String(body.get('workspace'))
         const root = String(body.get('root'))
-        return hub.uploadFile(
-          {
-            workspace,
-            root,
-            buffer: await (body.get('buffer') as File).arrayBuffer(),
-            path: String(body.get('path')),
-            preview: String(body.get('preview')),
-            averageColor: String(body.get('averageColor')),
-            blurHash: String(body.get('blurHash')),
-            width: Number(body.get('width')),
-            height: Number(body.get('height'))
-          },
-          ctx
+        return ctx.logger.result(
+          hub.uploadFile(
+            {
+              workspace,
+              root,
+              buffer: await (body.get('buffer') as File).arrayBuffer(),
+              path: String(body.get('path')),
+              preview: String(body.get('preview')),
+              averageColor: String(body.get('averageColor')),
+              blurHash: String(body.get('blurHash')),
+              width: Number(body.get('width')),
+              height: Number(body.get('height'))
+            },
+            ctx
+          )
         )
       })
-      .map(router.jsonResponse)
+      .map(respond)
   ).recover(router.reportError)
 }
 

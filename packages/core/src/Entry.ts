@@ -10,20 +10,30 @@ export enum EntryStatus {
   Archived = 'archived'
 }
 
+export interface EntryMetaRaw {
+  // These fields are stored on disk when using file data
+  index: string
+  i18n?: {id: string}
+}
+
+export interface EntryMeta extends EntryMetaRaw {
+  // These are computed during generation
+  root: string
+  workspace: string
+  parent: string | undefined
+  parents: Array<string>
+  status?: EntryStatus
+  isContainer?: boolean
+  i18n?: Entry.I18N
+}
+
 export interface Entry {
   id: string
   type: string
+  url: string
   title: Label
   path: string
-  index: string
-  workspace: string
-  root: string
-  url: string
-  parent: string | undefined
-  parents: Array<string>
-  $status?: EntryStatus
-  $isContainer?: boolean
-  i18n?: Entry.I18N
+  alinea: EntryMeta
 }
 
 export namespace Entry {
@@ -41,38 +51,27 @@ export namespace Entry {
     parent: string | undefined
     parents: Array<string>
   }
-  export type Minimal = Pick<
-    Entry,
-    'id' | 'type' | 'title' | 'workspace' | 'root' | 'url' | 'parent' | 'i18n'
-  >
-  export type Summary = Pick<
-    Entry,
-    | 'id'
-    | 'type'
-    | 'title'
-    | 'workspace'
-    | 'root'
-    | 'url'
-    | 'index'
-    | 'parent'
-    | 'i18n'
-    | 'parents'
-    | '$isContainer'
-  > & {
+  export type Minimal = Pick<Entry, 'id' | 'type' | 'title' | 'alinea'>
+  export type Summary = Pick<Entry, 'id' | 'type' | 'title' | 'alinea'> & {
     childrenCount: number
   }
-  export type Raw = Omit<
-    Entry,
-    | 'path'
-    | 'workspace'
-    | 'url'
-    | '$status'
-    | 'parent'
-    | 'parents'
-    | '$isContainer'
-    | 'i18n'
-  > & {i18n?: {id: string}}
-  // & {[key: string]: any}
+  export interface Raw {
+    id: string
+    type: string
+    title: Label
+    alinea: EntryMetaRaw
+  }
 }
 
-export const Entry = new Collection<Entry>('Entry')
+class EntryCollection extends Collection<Entry> {
+  constructor() {
+    super('Entry')
+  }
+  index = this.alinea.index
+  root = this.alinea.root
+  workspace = this.alinea.workspace
+  i18n = this.alinea.i18n
+  parent = this.alinea.parent
+  parents = this.alinea.parents
+}
+export const Entry = new EntryCollection()

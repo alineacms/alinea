@@ -67,7 +67,6 @@ export class CloudAuthServer implements Auth.Server {
 
       // The cloud server will request a handshake confirmation on this route
       matcher.get(Hub.routes.base + '/auth/handshake').map(async ({url}) => {
-        if (!apiKey) throw createError(500, 'No api key set')
         const handShakeId = url.searchParams.get('handshake_id')
         if (!handShakeId)
           throw createError(
@@ -119,7 +118,7 @@ export class CloudAuthServer implements Auth.Server {
         const user = await verify<User>(token, await this.key)
         // Store the token in a cookie and redirect to the dashboard
         // Todo: add expires and max-age based on token expiration
-        const target = new URL(this.dashboardUrl)
+        const target = new URL(this.dashboardUrl, url)
         return router.redirect(this.dashboardUrl, {
           status: 302,
           headers: {
@@ -127,7 +126,7 @@ export class CloudAuthServer implements Auth.Server {
               name: COOKIE_NAME,
               value: token,
               domain: target.hostname,
-              // path: target.pathname,
+              path: '/',
               secure: target.protocol === 'https:',
               httpOnly: true,
               sameSite: 'strict'
@@ -135,6 +134,41 @@ export class CloudAuthServer implements Auth.Server {
           }
         })
       }),
+
+      // The logout route unsets our cookies
+      matcher
+        .get(Hub.routes.base + '/auth/logout')
+        .map(async ({url, request}) => {
+          const target = new URL(this.dashboardUrl, url)
+
+          try {
+            const {token} = await this.contextFor(request)
+            if (token) {
+              await fetch(cloudConfig.logout, {
+                method: 'POST',
+                headers: {authorization: `Bearer ${token}`}
+              })
+            }
+          } catch (e) {
+            console.error(e)
+          }
+
+          return router.redirect(this.dashboardUrl, {
+            status: 302,
+            headers: {
+              'set-cookie': router.cookie({
+                name: COOKIE_NAME,
+                value: '',
+                domain: target.hostname,
+                path: '/',
+                secure: target.protocol === 'https:',
+                httpOnly: true,
+                sameSite: 'strict',
+                expires: new Date(0)
+              })
+            }
+          })
+        }),
 
       router
         .use(async (request: Request) => {
@@ -152,9 +186,10 @@ export class CloudAuthServer implements Auth.Server {
     if (!this.options.apiKey) return {type: AuthResultType.MissingApiKey}
     const [ctx, err] = await outcome(this.contextFor(request))
     if (ctx) return {type: AuthResultType.Authenticated, user: ctx.user}
+    const token = this.options.apiKey.split('_')[1]
     return {
       type: AuthResultType.UnAuthenticated,
-      redirect: `${cloudConfig.auth}`
+      redirect: `${cloudConfig.auth}?token=${token}`
     }
   }
 

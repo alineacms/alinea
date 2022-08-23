@@ -1,4 +1,10 @@
-import {forwardRef, HTMLProps, PropsWithChildren, Ref} from 'react'
+import {
+  ComponentType,
+  forwardRef,
+  HTMLProps,
+  PropsWithChildren,
+  Ref
+} from 'react'
 import {forwardRefWithAs, PropsWithAs} from './PropsWithAs'
 import {GenericStyles, Styler} from './Styler'
 
@@ -17,7 +23,10 @@ type TypoStyles =
     }
   | GenericStyles
 
-export function createTypo(styles: TypoStyles) {
+export function createTypo(
+  styles: TypoStyles,
+  InternalLink?: ComponentType<any>
+) {
   type TypoProps = {flat?: boolean; light?: boolean}
 
   function Typo({
@@ -107,6 +116,15 @@ export function createTypo(styles: TypoStyles) {
     props: HTMLProps<HTMLAnchorElement>,
     ref: Ref<HTMLAnchorElement>
   ) {
+    if (InternalLink) {
+      return (
+        <InternalLink
+          {...props}
+          ref={ref}
+          className={styles.link.mergeProps(props)()}
+        />
+      )
+    }
     return (
       <a {...props} ref={ref} className={styles.link.mergeProps(props)()} />
     )

@@ -34,7 +34,7 @@
         {
           "id": "itHNQSxP3U_KYZ77Q3vIC",
           "type": "CodeBlock",
-          "code": "alinea.code('My code field', {\n  help: 'Paste your code here'\n})"
+          "code": "import {alinea} from 'alinea'\nalinea.code('My code field', {\n  help: 'Paste your code here'\n})"
         }
       ]
     },

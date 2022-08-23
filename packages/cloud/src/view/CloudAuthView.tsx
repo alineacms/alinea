@@ -27,55 +27,27 @@ export function CloudAuthView({setSession}: Auth.ViewProps) {
     {suspense: true}
   )
   const result = data!
+  const {location} = window
   switch (result.type) {
     case AuthResultType.Authenticated:
-      function logout() {
-        console.log('redirect to logout url')
-      }
       setSession({
         user: result.user,
         hub: client.authenticate(
           options => ({...options, credentials: 'same-origin'}),
           () => setSession(undefined)
         ),
-        end: async () => logout()
+        end: async () => {
+          location.href = joinPaths(client.url, Hub.routes.base, `/auth/logout`)
+        }
       })
       return null
     case AuthResultType.UnAuthenticated:
-      return (
-        <>
-          <Head>
-            <title>Alinea</title>
-          </Head>
-          <div style={{display: 'flex', height: '100%', width: '100%'}}>
-            <div style={{margin: 'auto', padding: px(20)}}>
-              <VStack gap={20}>
-                <HStack center gap={16}>
-                  <LogoShape>
-                    <IcRoundPublish />
-                  </LogoShape>
-                  <Typo.H1 flat>Unauthenticated</Typo.H1>
-                </HStack>
-                <Typo.P>Please login to use the Alinea dashboard.</Typo.P>
-                <div>
-                  <Button
-                    as="button"
-                    onClick={() => {
-                      const from = encodeURIComponent(
-                        `${location.protocol}//${location.host}${location.pathname}`
-                      )
-                      window.location.href = `${result.redirect}?from=${from}`
-                    }}
-                    iconRight={IcRoundArrowForward}
-                  >
-                    Login to alinea.cloud
-                  </Button>
-                </div>
-              </VStack>
-            </div>
-          </div>
-        </>
-      )
+      location.href =
+        result.redirect +
+        `&from=${encodeURIComponent(
+          location.protocol + '//' + location.host + location.pathname
+        )}`
+      return null
     case AuthResultType.MissingApiKey:
       return (
         <>
@@ -108,7 +80,12 @@ export function CloudAuthView({setSession}: Auth.ViewProps) {
                 <div>
                   <Button
                     as="a"
-                    href={cloudConfig.url}
+                    href={`${cloudConfig.url}/setup?from=${encodeURIComponent(
+                      location.protocol +
+                        '//' +
+                        location.host +
+                        location.pathname
+                    )}`}
                     target="_blank"
                     iconRight={IcRoundArrowForward}
                   >

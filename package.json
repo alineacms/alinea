@@ -8,7 +8,8 @@
     "dev:compile": "esbx dev",
     "dev:next": "yarn workspace @alinea/web dev",
     "dev:check": "tsc -w",
-    "stories": "ladle serve \"--stories=packages/**/*.stories.tsx\"",
+    "dev:stories": "ladle serve --stories \"packages/**/*.stories.tsx\"",
+    "build:stories": "ladle build --base /stories --stories  \"packages/**/*.stories.tsx\" --outDir apps/web/public/stories",
     "trace": "tsc --noEmit --incremental false --emitDeclarationOnly false --diagnostics --generateTrace private/trace && speedscope private/trace/trace.json",
     "build": "esbx build",
     "test": "esbx test",
@@ -24,9 +25,9 @@
     "packages/*"
   ],
   "devDependencies": {
+    "@esbx/alias": "^0.0.20",
     "@esbx/extension": "^0.0.19",
     "@esbx/external": "^0.0.19",
-    "@esbx/react": "^0.0.19",
     "@esbx/reload": "^0.0.19",
     "@esbx/reporter": "^0.0.19",
     "@esbx/run": "^0.0.19",
@@ -34,14 +35,14 @@
     "@esbx/static": "^0.0.19",
     "@esbx/target": "^0.0.20",
     "@esbx/workspaces": "^0.0.19",
-    "@ladle/react": "^2.0.0",
+    "@ladle/react": "^2.0.2",
     "@types/glob": "^7.1.4",
     "@types/node": "^16.9.0",
     "autoprefixer": "^10.4.2",
     "compare-versions": "^4.1.3",
     "copy-env-cli": "1.0.0",
     "cross-env": "^7.0.3",
-    "esbuild": "^0.14.49",
+    "esbuild": "^0.14.51",
     "esbx": "^0.0.18",
     "fs-extra": "^10.0.0",
     "glob": "^7.2.0",
@@ -56,8 +57,13 @@
   },
   "packageManager": "yarn@3.2.0",
   "resolutions": {
-    "prosemirror-model": "1.14.3",
-    "prosemirror-view": "1.20.3",
-    "mime-db": "1.51.0"
+    "y-prosemirror": "1.1.2",
+    "mime-db": "1.51.0",
+    "yjs": "13.5.41",
+    "prosemirror-model": "1.18.1",
+    "prosemirror-schema-list": "1.2.0",
+    "prosemirror-state": "1.4.1",
+    "prosemirror-transform": "1.6.0",
+    "prosemirror-view": "1.26.2"
   }
 }

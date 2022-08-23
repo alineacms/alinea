@@ -34,7 +34,7 @@
         {
           "id": "268hspT1GDy0ag8lya8m9dObKhX",
           "type": "CodeBlock",
-          "code": "alinea.tabs(\n  alinea.tab('Tab A', {\n    // ... fields\n  }),\n  alinea.tab('Tab B', {\n    // ... fields\n  })\n)"
+          "code": "import {alinea} from 'alinea'\nalinea.tabs(\n  alinea.tab('Tab A', {\n    // ... fields\n  }),\n  alinea.tab('Tab B', {\n    // ... fields\n  })\n)"
         }
       ]
     },

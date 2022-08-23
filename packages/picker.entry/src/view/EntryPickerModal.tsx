@@ -2,6 +2,13 @@ import {createId} from '@alinea/core'
 import {Entry} from '@alinea/core/Entry'
 import {Reference} from '@alinea/core/Reference'
 import {Search} from '@alinea/core/Search'
+import {useFocusList} from '@alinea/dashboard/hook/UseFocusList'
+import {useRoot} from '@alinea/dashboard/hook/UseRoot'
+import {useWorkspace} from '@alinea/dashboard/hook/UseWorkspace'
+import {Explorer} from '@alinea/dashboard/view/explorer/Explorer'
+import {FileUploader} from '@alinea/dashboard/view/media/FileUploader'
+import {PickerProps} from '@alinea/editor/Picker'
+import {EntryReference} from '@alinea/picker.entry'
 import {
   Button,
   fromModule,
@@ -10,6 +17,7 @@ import {
   Loader,
   px,
   Stack,
+  TextLabel,
   Typo,
   VStack
 } from '@alinea/ui'
@@ -19,13 +27,8 @@ import {IcRoundArrowBack} from '@alinea/ui/icons/IcRoundArrowBack'
 import {IcRoundSearch} from '@alinea/ui/icons/IcRoundSearch'
 import {Modal} from '@alinea/ui/Modal'
 import {Suspense, useCallback, useMemo, useState} from 'react'
-import {useFocusList} from '../../hook/UseFocusList'
-import {ReferencePickerOptions} from '../../hook/UseReferencePicker'
-import {useRoot} from '../../hook/UseRoot'
-import {useWorkspace} from '../../hook/UseWorkspace'
-import {Explorer} from '../explorer/Explorer'
-import {FileUploader} from '../media/FileUploader'
-import css from './ReferencePicker.module.scss'
+import {EntryPickerOptions} from '../EntryPicker'
+import css from './EntryPicker.module.scss'
 
 const styles = fromModule(css)
 
@@ -54,24 +57,23 @@ function query({workspace, search, root}: QueryParams) {
     .orderBy(...orderBy)
 }
 
-export type ReferencePickerProps = {
-  options: ReferencePickerOptions
-  onConfirm: (value: Array<Reference> | undefined) => void
-  onCancel: () => void
-}
+export interface EntryPickerModalProps
+  extends PickerProps<EntryPickerOptions> {}
 
-export function ReferencePicker({
+export function EntryPickerModal({
+  type,
   options,
+  selection,
   onConfirm,
   onCancel
-}: ReferencePickerProps) {
-  const {defaultView, max, condition, showUploader} = options
+}: EntryPickerModalProps) {
+  const {title, defaultView, max, condition, showUploader} = options
   const [search, setSearch] = useState('')
   const list = useFocusList({
     onClear: () => setSearch('')
   })
-  const [selection, setSelection] = useState<Array<Reference>>(
-    () => options.selection || []
+  const [selected, setSelected] = useState<Array<Reference>>(
+    () => selection || []
   )
   const {name: workspace, schema} = useWorkspace()
   const {name: root} = useRoot()
@@ -85,18 +87,18 @@ export function ReferencePicker({
   const [view, setView] = useState<'row' | 'thumb'>(defaultView || 'row')
   const handleSelect = useCallback(
     (entry: Entry.Minimal) => {
-      setSelection(selected => {
+      setSelected(selected => {
         const index = selected.findIndex(
-          v => v.type === 'entry' && v.entry === entry.id
+          v => EntryReference.isEntry(v) && v.entry === entry.id
         )
         let res = selected.slice()
         if (index === -1) {
           res = res
             .concat({
               id: createId(),
-              type: 'entry',
+              type,
               entry: entry.id
-            })
+            } as EntryReference)
             .slice(-(max || 0))
         } else {
           res.splice(index, 1)
@@ -108,17 +110,19 @@ export function ReferencePicker({
         return res
       })
     },
-    [setSelection, max]
+    [setSelected, max]
   )
   function handleConfirm() {
-    onConfirm(selection)
+    onConfirm(selected)
   }
   return (
     <Modal open onClose={onCancel} className={styles.root()}>
       <Suspense fallback={<Loader absolute />}>
         <HStack center gap={18} className={styles.root.header()}>
           <IconButton icon={IcRoundArrowBack} onClick={onCancel} />
-          <Typo.H1 flat>Select a reference</Typo.H1>
+          <Typo.H1 flat>
+            {title ? <TextLabel label={title} /> : 'Select a reference'}
+          </Typo.H1>
         </HStack>
 
         <label className={styles.root.label()}>
@@ -163,7 +167,7 @@ export function ReferencePicker({
                   cursor={cursor}
                   type={view}
                   selectable
-                  selection={selection}
+                  selection={selected}
                   toggleSelect={handleSelect}
                 />
               </div>
@@ -172,9 +176,12 @@ export function ReferencePicker({
         </HStack>
         <HStack as="footer">
           <Stack.Right>
-            <Button size="large" onClick={handleConfirm}>
-              Confirm
-            </Button>
+            <HStack gap={16}>
+              <Button outline type="button" onClick={onCancel}>
+                Cancel
+              </Button>
+              <Button onClick={handleConfirm}>Confirm</Button>
+            </HStack>
           </Stack.Right>
         </HStack>
       </Suspense>

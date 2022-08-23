@@ -1,13 +1,14 @@
 import {Cache, Data, JsonLoader} from '@alinea/backend'
 import {FileData} from '@alinea/backend/data/FileData'
+import {createDb} from '@alinea/backend/util/CreateDb'
 import {Config} from '@alinea/core/Config'
 import {createError} from '@alinea/core/ErrorWithCode'
 import {createId} from '@alinea/core/Id'
-import {outcome} from '@alinea/core/Outcome'
+import {Outcome, outcome} from '@alinea/core/Outcome'
+import {Logger} from '@alinea/core/util/Logger'
 import {Workspace} from '@alinea/core/Workspace'
 import {SqliteStore} from '@alinea/store/sqlite/SqliteStore'
 import {EvalPlugin} from '@esbx/eval'
-import {ReactPlugin} from '@esbx/react'
 import {FSWatcher} from 'chokidar'
 import semver from 'compare-versions'
 import {build, BuildResult} from 'esbuild'
@@ -16,7 +17,6 @@ import {createRequire} from 'node:module'
 import path from 'node:path'
 import {buildOptions} from './build/BuildOptions'
 import {exportStore} from './ExportStore'
-import {createDb} from './util/CreateDb'
 import {dirname} from './util/Dirname'
 import {externalPlugin} from './util/ExternalPlugin'
 import {ignorePlugin} from './util/IgnorePlugin'
@@ -24,6 +24,15 @@ import {targetPlugin} from './util/TargetPlugin'
 
 const __dirname = dirname(import.meta.url)
 const require = createRequire(import.meta.url)
+
+async function copyFileIfContentsDiffer(source: string, target: string) {
+  const data = await fs.readFile(source)
+  try {
+    const current = await fs.readFile(target)
+    if (current.equals(data)) return
+  } catch (e) {}
+  return fs.copyFile(source, target)
+}
 
 async function writeFileIfContentsDiffer(
   destination: string,
@@ -91,6 +100,15 @@ function schemaCollections(workspace: Workspace) {
   `
 }
 
+function pagesType(workspace: Workspace) {
+  return code`
+    import {${workspace.typeNamespace || 'Pages'}} from './schema.js'
+    export const initPages: (previewToken?: string) => ${
+      workspace.typeNamespace ? `${workspace.typeNamespace}.` : ''
+    }Pages
+  `
+}
+
 function pagesOf(workspace: Workspace) {
   return code`
     import {backend} from '../backend.js'
@@ -119,7 +137,9 @@ function schemaTypes(workspace: Workspace) {
     import {DataOf, EntryOf, Entry} from '@alinea/core'
     import {Collection} from '@alinea/store'
     import type {Pages as AlineaPages} from '@alinea/backend'
-    export const schema = config.workspaces['${workspace.name}'].schema
+    export const schema: (typeof config)['workspaces']['${
+      workspace.name
+    }']['schema']
     ${wrapNamespace(collections, workspace.typeNamespace)}
   `
 }
@@ -129,8 +149,8 @@ export type GenerateOptions = {
   staticDir?: string
   configFile?: string
   watch?: boolean
-  onConfigRebuild?: (err: Error | undefined, config: Config) => void
-  onCacheRebuild?: (err?: Error) => void
+  onConfigRebuild?: (outcome: Outcome<Config>) => void
+  onCacheRebuild?: (outcome: Outcome<SqliteStore>) => void
   wasmCache?: boolean
   quiet?: boolean
   store?: SqliteStore
@@ -215,6 +235,7 @@ export async function generate(options: GenerateOptions): Promise<Config> {
         entryPoints: {config: configLocation},
         bundle: true,
         platform: 'node',
+        jsx: 'automatic',
         plugins: [
           targetPlugin(file => {
             return {
@@ -224,8 +245,7 @@ export async function generate(options: GenerateOptions): Promise<Config> {
           }),
           EvalPlugin,
           externalPlugin,
-          ignorePlugin,
-          ReactPlugin
+          ignorePlugin
         ],
         watch: watch && {
           async onRebuild(error, result) {
@@ -235,9 +255,12 @@ export async function generate(options: GenerateOptions): Promise<Config> {
               await (generating = generatePackage())
             }
             if (onConfigRebuild)
-              return onConfigRebuild(error || undefined, config)
+              return onConfigRebuild(
+                error ? Outcome.Failure(error) : Outcome.Success(config)
+              )
           }
-        }
+        },
+        tsconfig: path.join(staticDir, 'tsconfig.json')
       })
     )
   }
@@ -279,7 +302,7 @@ export async function generate(options: GenerateOptions): Promise<Config> {
       function copy(...files: Array<string>) {
         return Promise.all(
           files.map(file =>
-            fs.copyFile(
+            copyFileIfContentsDiffer(
               path.join(staticDir, 'workspace', file),
               path.join(outDir, key, file)
             )
@@ -296,10 +319,14 @@ export async function generate(options: GenerateOptions): Promise<Config> {
           path.join(outDir, key, 'schema.d.ts'),
           schemaTypes(workspace)
         ),
-        copy('index.d.ts', 'index.js', 'pages.d.ts'),
+        copy('index.d.ts', 'index.js'),
         writeFileIfContentsDiffer(
           path.join(outDir, key, 'pages.js'),
           pagesOf(workspace)
+        ),
+        writeFileIfContentsDiffer(
+          path.join(outDir, key, 'pages.d.ts'),
+          pagesType(workspace)
         )
       ])
     }
@@ -335,20 +362,21 @@ export async function generate(options: GenerateOptions): Promise<Config> {
     async function cache() {
       const store = await cacheEntries(config, source)
       await createCache(store)
+      return store
     }
     if (watch && files) {
       watcher = new FSWatcher()
       async function reload() {
         if (caching) await caching
         caching = cache().then(
-          () => onCacheRebuild?.(),
-          err => onCacheRebuild?.(err)
+          store => onCacheRebuild?.(Outcome.Success(store)),
+          err => onCacheRebuild?.(Outcome.Failure(err))
         )
       }
       watcher.add(files).on('change', reload)
       watcher.add(files).on('unlink', reload)
     }
-    caching = cache()
+    caching = cache().then(() => void 0)
     await caching
     return {stop: () => watcher?.close()}
   }
@@ -375,7 +403,8 @@ export async function generate(options: GenerateOptions): Promise<Config> {
             outfile: tmpFile,
             entryPoints: [sourceLocation],
             absWorkingDir: outDir,
-            plugins: [externalPlugin, ignorePlugin, ReactPlugin]
+            jsx: 'automatic',
+            plugins: [externalPlugin, ignorePlugin]
           })
         )
         const outFile = 'file://' + tmpFile
@@ -395,8 +424,14 @@ export async function generate(options: GenerateOptions): Promise<Config> {
   }
 
   async function cacheEntries(config: Config, source: Data.Source) {
-    await Cache.create(store, config, source, !quiet)
-    return store
+    const db = await createDb(store)
+    await Cache.create(
+      db,
+      config,
+      source,
+      quiet ? undefined : new Logger('Generate')
+    )
+    return db
   }
 
   function createCache(store: SqliteStore) {
@@ -433,7 +468,6 @@ export async function generate(options: GenerateOptions): Promise<Config> {
         'process.env.NODE_ENV': "'production'"
       },
       ...buildOptions,
-      // Todo: this is only needed during dev
       tsconfig: path.join(staticDir, 'tsconfig.json'),
       logLevel: 'error'
     }).catch(e => {

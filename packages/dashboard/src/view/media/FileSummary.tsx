@@ -22,8 +22,8 @@ function fileSummarySelect(File: Collection<Media.File>) {
   return {
     id: File.id,
     type: File.type,
-    workspace: File.workspace,
-    root: File.root,
+    workspace: File.alinea.workspace,
+    root: File.alinea.root,
     title: File.title,
     extension: File.extension,
     size: File.size,

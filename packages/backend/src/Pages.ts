@@ -52,31 +52,33 @@ class PageResolver<T> {
   processCallbacks = new Map<string, (value: any) => any>()
 
   async postProcess(value: any): Promise<any> {
-    const tasks: Array<() => Promise<void>> = []
-    iter(value, (value, setValue) => {
-      const isProcessValue =
-        value &&
-        typeof value === 'object' &&
-        '$__process' in value &&
-        '$__expr' in value
-      if (isProcessValue) {
-        const id = value['$__process']
-        const expr = value['$__expr']
-        const fn = this.processCallbacks.get(id)
-        if (!fn) return true
-        tasks.push(async () => {
-          try {
-            const result = await fn(expr)
-            setValue(result)
-          } finally {
-            this.processCallbacks.delete(id)
-          }
-        })
-        return false
+    const tasks = iter<Promise<void> | undefined>(
+      value,
+      (value, setValue, inner) => {
+        const isProcessValue =
+          value &&
+          typeof value === 'object' &&
+          '$__process' in value &&
+          '$__expr' in value
+        if (isProcessValue) {
+          const id = value['$__process']
+          const expr = value['$__expr']
+          const fn = this.processCallbacks.get(id)
+          if (!fn) return undefined
+          return Promise.all(inner.filter(Boolean))
+            .then(() => {
+              return Promise.resolve(fn(expr)).then((result: any) =>
+                setValue(result)
+              )
+            })
+            .finally(() => {
+              this.processCallbacks.delete(id)
+            })
+        }
+        return undefined
       }
-      return true
-    })
-    await Promise.all(tasks.map(fn => fn()))
+    )
+    await Promise.all(tasks.filter(Boolean))
     return value
   }
 }
@@ -303,7 +305,7 @@ class Single<P, T> extends Base<P, Page<P, T> | null> {
     return new Multiple<P, C>(
       this.resolver,
       Entry.where(
-        Entry.parent.isIn(
+        Entry.alinea.parent.isIn(
           this.cursor.select<Expr<string | undefined>>(Entry.id)
         )
       )
@@ -368,7 +370,7 @@ export class Pages<T> extends Multiple<T, T> {
     )
   }
 
-  processTypes<
+  /*processTypes<
     I extends SelectionInput,
     Transform extends Record<string, (value: any) => any>
   >(
@@ -388,16 +390,14 @@ export class Pages<T> extends Multiple<T, T> {
             const result = await transform[value.type](value)
             setValue(result)
           })
-          return false
         }
-        return true
       })
       await Promise.all(tasks.map(fn => fn()))
       // we can keep processing results, but... it's too easy to return the same types?
       // if (tasks.length > 0) return await post(value)
       return value
     }) as any
-  }
+  }*/
 }
 
 type UnPromisify<T> = T extends Promise<infer U> ? U : T
@@ -413,18 +413,26 @@ type ProcessTypes<
   ? {[K in keyof T]: ProcessTypes<T[K], F>}
   : T
 
-function iter(
+function iter<T>(
   value: any,
-  fn: (value: any, setValue: (value: any) => void) => boolean
-): void {
-  if (!value) return
-  if (Array.isArray(value))
-    return value.forEach((item, i) => {
-      if (item && fn(item, v => (value[i] = v))) iter(value[i], fn)
+  fn: (value: any, setValue: (value: any) => void, inner: Array<T>) => T
+): Array<T> {
+  if (!value) return []
+  if (Array.isArray(value)) {
+    const deps: Array<T> = []
+    value.forEach((item, i) => {
+      if (!item) return
+      deps.push(fn(item, v => (value[i] = v), iter(item, fn)))
     })
-  if (typeof value === 'object') {
-    for (const key of Object.keys(value))
-      if (value[key] && fn(value[key], v => (value[key] = v)))
-        iter(value[key], fn)
+    return deps
   }
+  if (typeof value === 'object') {
+    const deps: Array<T> = []
+    for (const key of Object.keys(value)) {
+      if (!value[key]) continue
+      deps.push(fn(value[key], v => (value[key] = v), iter(value[key], fn)))
+    }
+    return deps
+  }
+  return []
 }

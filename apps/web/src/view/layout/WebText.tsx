@@ -23,6 +23,7 @@ export function WebText<T>(props: RichTextProps<T>) {
         h2={WebTypo.H2}
         h3={WebTypo.H3}
         h4={WebTypo.H4}
+        a={WebTypo.Link}
         ul={<ul className={styles.list()} />}
         ol={<ol className={styles.list()} />}
         li={<li className={styles.listItem()} />}

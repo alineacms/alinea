@@ -6,7 +6,7 @@ import {Driver} from '../Driver'
 import {Expr} from '../Expr'
 import {From, FromType} from '../From'
 import {sql} from '../Statement'
-import {Document, IdLess, QueryOptions, Store} from '../Store'
+import {IdLess, QueryOptions, Store} from '../Store'
 import type {Update} from '../Update'
 import {sqliteFormatter} from './SqliteFormatter'
 
@@ -14,13 +14,36 @@ const f = sqliteFormatter
 
 type CreateId = () => string
 
+const NO_TABLE = 'no such table: '
+function isMissingTable(error: any): string | undefined {
+  const e = String(error)
+  const index = e.indexOf(NO_TABLE)
+  if (index === -1) return
+  return e
+    .slice(index + NO_TABLE.length)
+    .split('.')
+    .pop()
+}
+
+function ifMissing<T>(defaultValue: T, run: () => T) {
+  try {
+    return run()
+  } catch (e) {
+    if (isMissingTable(e)) return defaultValue
+    throw e
+  }
+}
+
 export class SqliteStore implements Store {
   constructor(private db: Driver, private createId: CreateId) {
     this.db = db
     this.createId = createId
     // this.db.exec('PRAGMA journal_mode = WAL')
     // this.db.exec('PRAGMA optimize')
-    // this.db.exec('PRAGMA synchronous = OFF')
+    // Since we're only using the db in memory and they're computed from a
+    // source we don't need acid guarantees
+    this.db.exec('PRAGMA synchronous = OFF')
+    this.db.exec('PRAGMA journal_mode = MEMORY')
   }
 
   private debug<T>(run: () => T, log = false): T {
@@ -44,17 +67,21 @@ export class SqliteStore implements Store {
     if (options?.debug) {
       console.log(f.formatSelect(cursor.cursor, {formatInline: true}).sql)
     }
-    const prepared = this.prepare(stmt.sql)
-    return this.debug(
-      () => prepared.all<string>(stmt.getParams()),
-      options?.debug
-    ).map((col: any) => {
-      return JSON.parse(col).result
+    return ifMissing([], () => {
+      const prepared = this.prepare(stmt.sql)
+      return this.debug(
+        () => prepared.all<string>(stmt.getParams()),
+        options?.debug
+      ).map((col: any) => {
+        return JSON.parse(col).result
+      })
     })
   }
 
   first<Row>(cursor: Cursor<Row>, options?: QueryOptions): Row | null {
-    return this.all(cursor.take(1), options)[0] || null
+    return ifMissing(null, () => {
+      return this.all(cursor.take(1), options)[0] || null
+    })
   }
 
   sure<Row>(cursor: Cursor<Row>, options?: QueryOptions): Row {
@@ -62,43 +89,52 @@ export class SqliteStore implements Store {
   }
 
   delete<Row>(cursor: Cursor<Row>, options?: QueryOptions): {changes: number} {
-    const stmt = f.formatDelete(cursor.cursor)
-    return this.prepare(stmt.sql).run(stmt.getParams())
+    return ifMissing({changes: 0}, () => {
+      const stmt = f.formatDelete(cursor.cursor)
+      return this.prepare(stmt.sql).run(stmt.getParams())
+    })
   }
 
   count<Row>(cursor: Cursor<Row>, options?: QueryOptions): number {
-    const stmt = f.formatSelect(cursor.cursor)
-    return this.prepare(`select count() from (${stmt.sql})`).get(
-      stmt.getParams()
-    )
+    return ifMissing(0, () => {
+      const stmt = f.formatSelect(cursor.cursor)
+      return this.prepare(`select count() from (${stmt.sql})`).get(
+        stmt.getParams()
+      )
+    })
   }
 
-  insertAll<Row extends Document>(
+  insertAll<Row>(
     collection: Collection<Row>,
     objects: Array<IdLess<Row>>,
     options?: QueryOptions
   ): Array<Row> {
     const res = []
     for (let object of objects) {
-      if (!object.id) object = {...object, id: this.createId()}
+      const id = collection.__collectionId.getFromRow(object)
+      const row = !id
+        ? collection.__collectionId.addToRow(object, this.createId())
+        : object
       const from = collection.cursor.from
       if (from.type === FromType.Column) {
         this.prepare(
-          `insert into ${f.escapeId(From.source(from.of))} values (?)`
-        ).run([JSON.stringify(object)])
+          `insert into ${f.escapeId(From.source(from.of))} values (?)`,
+          collection
+        ).run([JSON.stringify(row)])
       } else if (from.type === FromType.Table) {
         this.prepare(
           `insert into ${f.escapeId(from.name)} values (${from.columns
             .map(_ => '?')
-            .join(', ')})`
-        ).run(from.columns.map(col => (object as any)[col]))
+            .join(', ')})`,
+          collection
+        ).run(from.columns.map(col => (row as any)[col]))
       }
-      res.push(object)
+      res.push(row)
     }
     return res as Array<Row>
   }
 
-  insert<Row extends Document>(
+  insert<Row>(
     collection: Collection<Row>,
     object: IdLess<Row>,
     options?: QueryOptions
@@ -111,11 +147,13 @@ export class SqliteStore implements Store {
     update: Update<Row>,
     options?: QueryOptions
   ): {changes: number} {
-    const stmt = f.formatUpdate(cursor.cursor, update)
-    return this.prepare(stmt.sql).run(stmt.getParams())
+    return ifMissing({changes: 0}, () => {
+      const stmt = f.formatUpdate(cursor.cursor, update)
+      return this.prepare(stmt.sql).run(stmt.getParams())
+    })
   }
 
-  createIndex<Row extends Document>(
+  createIndex<Row>(
     collection: Collection<Row>,
     name: string,
     on: Array<Expr<any>>
@@ -134,7 +172,7 @@ export class SqliteStore implements Store {
     const res = `create index if not exists ${f.escapeString(
       [tableName, name].join('.')
     )} on ${table}(${exprs.join(', ')});`
-    return this.createOnError(() => this.db.exec(res))
+    return this.createOnMissing(() => this.db.exec(res), collection)
   }
 
   transaction<T>(run: () => T): T {
@@ -146,10 +184,15 @@ export class SqliteStore implements Store {
   }
 
   prepared = new Map()
-  prepare(query: string): Driver.PreparedStatement {
+  prepare(
+    query: string,
+    collection?: Collection<any>
+  ): Driver.PreparedStatement {
     //if (this.prepared.has(query)) return this.prepared.get(query)
     try {
-      const result = this.createOnError(() => this.db.prepare(query))
+      const result = collection
+        ? this.createOnMissing(() => this.db.prepare(query), collection)
+        : this.db.prepare(query)
       //this.prepared.set(query, result)
       return result
     } catch (e: any) {
@@ -212,51 +255,52 @@ export class SqliteStore implements Store {
     const setters = keys.map((key, i) => {
       return `${key}=${newValues[i]}`
     })
+    const id = f.formatExpr(collection.id.expr, {
+      formatInline: true,
+      formatAsJson: false,
+      formatShallow: true
+    })
     const instruction = `
       create trigger ${f.escapeId(`${name}_ai`)} after insert on ${table} begin
         insert into ${idx}(id, ${keys.join(
       ', '
-    )}) values (json_extract(new.data, '$.id'), ${newValues.join(', ')});
+    )}) values (${id}, ${newValues.join(', ')});
       end;
       create trigger ${f.escapeId(`${name}_ad`)} after delete on ${table} begin
-        delete from ${idx} where id=json_extract(old.data, '$.id');
+        delete from ${idx} where id=json_extract(old.data, ${id});
       end;
       create trigger ${f.escapeId(`${name}_au`)} after update on ${table} begin
-        update ${idx} set ${setters} where id=json_extract(new.data, '$.id');
+        update ${idx} set ${setters} where id=json_extract(new.data, ${id});
       end;
       insert into ${f.escapeId(name)}(id, ${keys.join(', ')})
-        select ${f.formatExpr(collection.id.expr, {
-          formatShallow: true
-        })}, ${originValues}
+        select ${id}, ${originValues}
         from ${table};
     `
     this.db.exec(instruction)
   }
 
-  createOnError<T>(run: () => T, retry?: string): T {
+  createOnMissing<T>(
+    run: () => T,
+    collection: Collection<any>,
+    retry?: string
+  ): T {
     try {
       return run()
     } catch (e) {
-      const error = String(e)
-      const NO_TABLE = 'no such table: '
-      const index = error.indexOf(NO_TABLE)
-      if (index > -1) {
-        const table = error
-          .substr(index + NO_TABLE.length)
-          .split('.')
-          .pop()
-        if (retry != table && table != null) {
-          this.createTable(table)
-          return this.createOnError(run, table)
-        }
+      const table = isMissingTable(e)
+      if (table && retry != table) {
+        this.createTable(collection)
+        return this.createOnMissing(run, collection, table)
       }
       throw e
     }
   }
 
-  createTable(name: string) {
-    const collection = new Collection<{id: string}>(name)
-    this.db.exec(`create table if not exists ${f.escapeId(name)}(data json);`)
+  createTable(collection: Collection<any>) {
+    const tableName = From.source(collection.cursor.from)
+    this.db.exec(
+      `create table if not exists ${f.escapeId(tableName)}(data json);`
+    )
     this.createIndex(collection, 'id', [collection.id])
   }
 }

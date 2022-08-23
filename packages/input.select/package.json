@@ -9,6 +9,7 @@
   "type": "module",
   "exports": {
     ".": {
+      "worker": "./dist/index.js",
       "browser": "./dist/view.js",
       "default": "./dist/index.js"
     },
@@ -31,5 +32,8 @@
     "@alinea/editor": "0.0.0",
     "@alinea/shared": "0.0.0",
     "@alinea/ui": "0.0.0"
+  },
+  "peerDependencies": {
+    "react": "*"
   }
 }

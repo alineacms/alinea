@@ -1,4 +1,5 @@
-<a href="https://npmjs.org/package/alinea" title="View this project on NPM"><img src="https://img.shields.io/npm/v/alinea.svg" alt="NPM version" /></a>
+[![npm](https://img.shields.io/npm/v/alinea.svg)](https://npmjs.org/package/alinea)
+[![install size](https://packagephobia.com/badge?p=alinea)](https://packagephobia.com/result?p=alinea)
 
 # [![Alinea CMS logo](https://github.com/alineacms/alinea/raw/HEAD/apps/web/public/logo.svg)](https://alinea.sh)
 
@@ -51,7 +52,8 @@ Retrieve content fully-typed and filter, order, limit and join as needed.
 Select only the fields you need.
 
 ````tsx
-import {pages} from '@alinea/content/myWorkspace'
+import {initPages} from '@alinea/content/myWorkspace/pages.js'
+const pages = initPages()
 console.log(
   await pages
     .whereType('BlogPost')

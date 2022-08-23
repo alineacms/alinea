@@ -10,8 +10,9 @@ test('basic', () => {
   const amount = 10
   const objects = Array.from({length: amount}).map((_, index) => ({index}))
   assert.equal(objects.length, amount)
-  const stored = db.insertAll(Node, objects)
+  db.insertAll(Node, objects)
   assert.equal(db.count(Node), amount)
+  const stored = db.all(Node)
   const id = stored[amount - 1].id
   assert.equal(
     db.first(
@@ -82,9 +83,9 @@ test('update', () => {
 
 test('case', () => {
   const db = store()
-  type Test = {id: string; type: 'A'; x: number} | {id: string; type: 'B'}
+  type Test = {id: string} & ({type: 'A'; x: number} | {type: 'B'})
   const Test = new Collection<Test>('test')
-  const a = {type: 'A'} as const
+  const a = {type: 'A', x: 1} as const
   const b = {type: 'B'} as const
   db.insertAll(Test, [a, b])
   assert.equal(
@@ -146,6 +147,24 @@ test('each', () => {
     {id: 'b', title: 'Entry B'},
     {id: 'c', title: 'Entry C'}
   ])
+})
+
+test('custom id', () => {
+  const db = store()
+  type Entry = {title: string; alinea?: {id: string}}
+  const Entry = new Collection<Entry>('test', {
+    id: {
+      property: 'alinea.id',
+      addToRow: (row: any, id: string) => {
+        return {...row, alinea: {...row.alinea, id}}
+      },
+      getFromRow: (row: any) => row.alinea?.id
+    }
+  })
+  const entries = [{title: 'a'}, {title: 'b'}]
+  db.insertAll(Entry, entries)
+  const withIds = db.all(Entry)
+  assert.ok(withIds.every(e => e.alinea!.id))
 })
 
 test.run()

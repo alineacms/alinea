@@ -4,10 +4,6 @@ import {Hub} from '@alinea/core/Hub'
 import {base64, base64url} from '@alinea/core/util/Encoding'
 import {fetch} from '@alinea/iso'
 
-export type DevDraftsOptions = {
-  serverLocation: string
-}
-
 async function failOnHttpError(res: Response): Promise<Response> {
   if (res.status >= 400) throw createError(res.status, await res.text())
   return res
@@ -15,6 +11,10 @@ async function failOnHttpError(res: Response): Promise<Response> {
 
 function json<T>(res: Response): Promise<T> {
   return res.json()
+}
+
+export type DevDraftsOptions = {
+  serverLocation: string
 }
 
 export class DevDrafts implements Drafts {

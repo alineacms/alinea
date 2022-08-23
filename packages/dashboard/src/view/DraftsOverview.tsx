@@ -68,15 +68,23 @@ export function DraftsOverview({id}: DraftsOverviewProps) {
                 <TreeNode
                   entry={{
                     ...draft,
-                    locale: draft.i18n?.locale!,
-                    source: draft,
-                    $isContainer: false,
-                    childrenCount: 0,
-                    parents: []
+                    locale: draft.alinea.i18n?.locale!,
+                    source: {
+                      id: draft.id,
+                      parent: draft.alinea.parent,
+                      parents: draft.alinea.parents
+                    },
+                    alinea: {
+                      ...draft.alinea,
+                      i18n: draft.alinea.i18n!,
+                      isContainer: false,
+                      parents: []
+                    },
+                    childrenCount: 0
                   }}
-                  locale={draft.i18n?.locale!}
+                  locale={draft.alinea.i18n?.locale!}
                   level={0}
-                  link={nav.draft({...draft, id: draft.id})}
+                  link={nav.draft({...draft.alinea, id: draft.id})}
                   isOpen={() => false}
                   toggleOpen={() => {}}
                 />

@@ -91,7 +91,7 @@ export function Pane({
   id,
   children,
   resizable,
-  defaultWidth = 330,
+  defaultWidth = 320,
   minWidth = 320,
   maxWidth = 700,
   ...props

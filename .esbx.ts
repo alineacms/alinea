@@ -1,5 +1,4 @@
 import {EvalPlugin} from '@esbx/eval'
-import {ReactPlugin} from '@esbx/react'
 import {ReporterPlugin} from '@esbx/reporter'
 import {RunPlugin} from '@esbx/run'
 import {StaticPlugin} from '@esbx/static'
@@ -24,8 +23,9 @@ export {VersionTask} from '@esbx/workspaces'
 export * from './.esbx/bundle-ts'
 
 const buildOptions: BuildOptions = {
+  jsx: 'automatic',
   format: 'esm',
-  plugins: [EvalPlugin, staticPlugin, ReactPlugin, sassPlugin],
+  plugins: [EvalPlugin, staticPlugin, sassPlugin],
   loader: {
     '.woff': 'file',
     '.woff2': 'file',

@@ -22,7 +22,7 @@ jobs:
           path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
           key: ${{ runner.os }}-yarn
       - run: yarn
-      - run: yarn tsc
+      - run: yarn tsc --diagnostics
       - if: startsWith(github.ref, 'refs/tags/v')
         run: |
           yarn bump ${GITHUB_REF#refs/tags/v}
