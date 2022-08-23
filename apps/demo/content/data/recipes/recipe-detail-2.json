@@ -1,11 +1,12 @@
 {
   "id": "MQu7tBnLbfaXIzQmUp4jZ",
   "type": "Recipedetail",
-  "root": "data",
-  "index": "MQu7tBnLbfaXIzR",
   "title": "Recipe detail 2",
   "image": [],
   "category": "main_course",
   "intro": [],
-  "blocks": []
+  "blocks": [],
+  "alinea": {
+    "index": "a1"
+  }
 }

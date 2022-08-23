@@ -1,8 +1,6 @@
 {
   "id": "thX1i3Ezl_gMudRd37XR9",
   "type": "Recipedetail",
-  "root": "data",
-  "index": "thX1i3Ezl_gMudRd37XRD",
   "title": "Recipe detail 1",
   "image": [
     {
@@ -237,5 +235,8 @@
         }
       ]
     }
-  ]
+  ],
+  "alinea": {
+    "index": "a0"
+  }
 }
