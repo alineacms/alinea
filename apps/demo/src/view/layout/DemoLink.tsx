@@ -47,7 +47,6 @@ export function DemoLink({as, to, target, children, ...props}: IProps) {
   const isExternal = checkIsExternal(href)
   const isFile = checkIsFile(href)
   if (href && (isExternal || isFile)) {
-    console.log('test')
     return (
       <Comp
         {...(props as any)}
@@ -71,7 +70,6 @@ export function DemoLink({as, to, target, children, ...props}: IProps) {
         {...(props as any)}
         target={'_self'}
         onClick={(e: any) => {
-          console.log(anchor)
           e.preventDefault()
           scrollToHash(anchor)
         }}

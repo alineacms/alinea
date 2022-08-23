@@ -32,7 +32,6 @@ export function DemoRecipedetail(props: DemoRecipedetailSchema & RelatedProps) {
 }
 
 function Intro({image, category, intro}: any) {
-  console.log(intro)
   return (
     <div className={styles.intro()}>
       <DemoContainer>

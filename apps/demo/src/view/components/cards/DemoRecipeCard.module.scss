@@ -22,7 +22,7 @@
     padding-bottom: calc(100% / (16 / 9));
 
     &-bg {
-      position: absolute;
+      position: absolute !important;
       top: 0;
       left: 0;
     }

@@ -18,7 +18,7 @@ export function DemoRecipeCard({
     <DemoLink to={url} className={styles.root()}>
       <div className={styles.root.image()}>
         <DemoImage
-          {...image}
+          src={image.src}
           layout="fill"
           className={styles.root.image.bg()}
         />

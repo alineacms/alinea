@@ -26,7 +26,13 @@ export function DemoHero({title, image}: DemoHeroProps) {
     <div className={styles.root()}>
       {image?.src && (
         <Fragment>
-          <DemoImage {...image} layout="fill" className={styles.root.image()} />
+          <DemoImage
+            src={image.src}
+            width={image.width}
+            height={image.height}
+            layout="fill"
+            className={styles.root.image()}
+          />
           <span className={styles.root.overlay()} />
         </Fragment>
       )}
@@ -54,7 +60,7 @@ function Breadcrumbs({
   return (
     <div className={styles.breadcrumbs()}>
       {parents.map((page, i) => (
-        <Fragment>
+        <Fragment key={i}>
           {i > 0 && <span className={styles.breadcrumbs.divider()}>/</span>}
           <DemoLink to={page.url} key={i}>
             {page.title}
