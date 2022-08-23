@@ -1,6 +1,6 @@
 import css from './DemoHome.module.scss'
 
-import {fromModule, RichText} from '@alinea/ui'
+import {fromModule, RichText, TextLabel} from '@alinea/ui'
 import {DemoButton} from '../../layout/DemoButton'
 import {DemoContainer} from '../../layout/DemoContainer'
 import {DemoImage} from '../../layout/DemoImage'
@@ -26,7 +26,13 @@ function Hero({image, title, text, button}: HeroProps) {
     <div className={styles.hero({image: image?.src})}>
       {image?.src && (
         <>
-          <DemoImage {...image} layout="fill" className={styles.hero.image()} />
+          <DemoImage
+            src={image.src}
+            width={image.width}
+            height={image.height}
+            layout="fill"
+            className={styles.hero.image()}
+          />
           <span className={styles.hero.overlay()} />
         </>
       )}
@@ -43,7 +49,7 @@ function Hero({image, title, text, button}: HeroProps) {
               to={button.url}
               className={styles.hero.content.button()}
             >
-              {button.title}
+              <TextLabel label={button.title} />
             </DemoButton>
           )}
         </div>

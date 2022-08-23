@@ -1,10 +1,9 @@
-import {schema, Schema, type} from '@alinea/core'
+import {Schema, type} from '@alinea/core'
 import {richText} from '@alinea/input.richtext'
 import {ComponentType} from 'react'
 
 export const DemoTextBlockSchema = type('Text', {
   text: richText('Text', {
-    blocks: schema({}),
     inline: true
   })
 })

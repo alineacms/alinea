@@ -5,7 +5,7 @@ import css from './DemoImage.module.scss'
 const styles = fromModule(css)
 
 type ImageProps = Omit<NextImageProps, 'sizes'> & {
-  sizes: string
+  sizes?: string
 }
 
 export function DemoImage(props: ImageProps) {

@@ -20,7 +20,7 @@ export const DemoHomeSchema = type(
           }),
           title: text('Title'),
           text: richText('Text'),
-          button: link('Button', {type: ['entry', 'external']})
+          button: link.entry('Button')
         })
       })
     }),
