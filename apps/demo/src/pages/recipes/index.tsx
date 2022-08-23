@@ -4,9 +4,8 @@ import {DemoRecipes} from '../../view/channels/recipes/DemoRecipes'
 
 export async function getStaticProps(context: GetStaticPropsContext) {
   const pages = initPages(context.previewData as string)
-  const parent = await pages.whereType('Recipes').first()
+  const parent = await pages.whereType('Recipes').sure()
   const children = await parent.tree.children()
-
   return {props: {...parent, children}}
 }
 

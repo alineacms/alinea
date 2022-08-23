@@ -4,9 +4,8 @@ import {DemoHome} from '../view/channels/home/DemoHome'
 
 export async function getStaticProps(context: GetStaticPropsContext) {
   const pages = initPages(context.previewData as string)
-
   return {
-    props: await pages.whereType('Home').first()
+    props: await pages.whereType('Home').sure()
   }
 }
 

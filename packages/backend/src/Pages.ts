@@ -1,4 +1,4 @@
-import {createId, Entry, ExtractType, Tree, Workspace} from '@alinea/core'
+import {createId, Entry, Tree, Workspace} from '@alinea/core'
 import {
   Collection,
   Cursor,
@@ -167,7 +167,7 @@ class Multiple<P, T> extends Base<P, Array<Page<P, T>>> {
     return new Multiple<P, E>(this.resolver, this.cursor.where(Entry.id.is(id)))
   }
   whereType<K extends string>(type: K) {
-    return new Multiple<P, ExtractType<T, K>>(
+    return new Multiple<P, Extract<T, {type: K}>>(
       this.resolver,
       this.cursor.where(Entry.get('type').is(type as string))
     )
@@ -227,12 +227,9 @@ class Multiple<P, T> extends Base<P, Array<Page<P, T>>> {
     if (where) return this.where(resolveWith(where as any, Entry)).first()
     return new Single<P, T>(this.resolver, this.cursor.first())
   }
-  /*on<
-  K extends TypesOf<T>,
-  X extends SelectionInput | ((collection: Cursor<Extract<T, {type: K}>>) => SelectionInput)
-  >(type: K, select: X) {
-    return new Multiple
-  }*/
+  sure(where?: EV<boolean> | ((cursor: Cursor<T>) => EV<boolean>)) {
+    return this.first(where) as Base<P, Page<P, T>>
+  }
 }
 
 class Single<P, T> extends Base<P, Page<P, T> | null> {
@@ -262,7 +259,7 @@ class Single<P, T> extends Base<P, Page<P, T> | null> {
     return new Single<P, T>(this.resolver, this.cursor.where(where as any))
   }
   whereType<K extends string>(type: K) {
-    return new Single<P, ExtractType<T, K>>(
+    return new Single<P, Extract<T, {type: K}>>(
       this.resolver,
       this.cursor.where(Entry.type.is((type as any).__options.alias))
     )
@@ -345,11 +342,6 @@ export class Pages<T> extends Multiple<T, T> {
       selection
     })
     super(resolver, cursor)
-    /*for (const [key, type] of workspace.schema.entries()) {
-      ;(this as any)[key] = this.whereType(
-        (type.collection() as any).__options.alias
-      )
-    }*/
   }
 
   tree(id: EV<string>) {
