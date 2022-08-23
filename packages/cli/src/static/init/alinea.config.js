@@ -1,7 +1,7 @@
 import {Welcome} from '@alinea/dashboard/Welcome'
 import {IcRoundInsertDriveFile} from '@alinea/ui/icons/IcRoundInsertDriveFile'
 import {IcRoundPermMedia} from '@alinea/ui/icons/IcRoundPermMedia'
-import {alinea} from 'alinea'
+import {alinea, MediaSchema} from 'alinea'
 
 export const config = alinea.createConfig({
   workspaces: {
@@ -9,7 +9,7 @@ export const config = alinea.createConfig({
       source: './content',
       mediaDir: './public',
       schema: alinea.schema({
-        ...alinea.MediaSchema,
+        ...MediaSchema,
         Page: alinea.type(
           'Page',
           {
