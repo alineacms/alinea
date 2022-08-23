@@ -62,7 +62,7 @@ type BuildDetails = {
 
 function browserBuild(
   options: BuildOptions
-): (request: Request) => Promise<Response> {
+): (request: Request) => Promise<Response | undefined> {
   let frontend: Promise<BuildDetails> = esbuild
     .build({
       ...options,
@@ -70,7 +70,7 @@ function browserBuild(
       incremental: true
     })
     .then(buildFiles)
-  let frontendBuilt = Date.now()
+  let frontendBuilt: undefined | number
   function buildFiles(result: BuildResult) {
     return {
       rebuild: () => result.rebuild!().then(buildFiles),
@@ -87,9 +87,12 @@ function browserBuild(
       )
     }
   }
-  return async function serveBrowserBuild(request: Request): Promise<Response> {
+  return async function serveBrowserBuild(
+    request: Request
+  ): Promise<Response | undefined> {
     let result = await frontend
-    const isResultStale = Date.now() - frontendBuilt > 1000
+    if (!frontendBuilt) frontendBuilt = Date.now()
+    const isResultStale = Date.now() - frontendBuilt > 2000
     if (isResultStale) {
       frontend = result.rebuild!()
       frontendBuilt = Date.now()
@@ -98,7 +101,7 @@ function browserBuild(
     const url = new URL(request.url)
     const fileName = url.pathname.toLowerCase()
     const contents = result.files.get(fileName)
-    if (!contents) return new Response('Not found', {status: 404})
+    if (!contents) return undefined
     const extension = path.extname(fileName)
     return new Response(contents, {
       headers: {
@@ -230,7 +233,7 @@ export async function serve(options: ServeOptions): Promise<void> {
         }
       })
     }),
-    //router.compress(
+    // router.compress(
     matcher.get('/').map(({url}): Response => {
       const handlerUrl = `${url.protocol}//${url.host}`
       return new Response(
@@ -293,8 +296,8 @@ export async function serve(options: ServeOptions): Promise<void> {
     matcher.get('/config.css').map((): Response => {
       return new Response('', {headers: {'content-type': 'text/css'}})
     })
-    //)
-  )
+    // )
+  ).notFound(() => new Response('Not found', {status: 404}))
 
   setHandler!(nodeHandler(app.handle))
 }
