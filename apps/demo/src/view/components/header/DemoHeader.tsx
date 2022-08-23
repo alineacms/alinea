@@ -1,6 +1,6 @@
 import {fromModule} from '@alinea/ui'
 import {useRouter} from 'next/router'
-import Logo from '../../../../public/logo.svg'
+import Logo from '../../../assets/logo.svg'
 import {DemoContainer} from '../../layout/DemoContainer'
 import {DemoLink} from '../../layout/DemoLink'
 import css from './DemoHeader.module.scss'
