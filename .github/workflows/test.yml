@@ -41,6 +41,8 @@ jobs:
       - name: Extract release notes
         id: extract-release-notes
         uses: ffurrer2/extract-release-notes@v1
+        with:
+          changelog_file: changelog.md
       - name: Create release
         uses: actions/create-release@v1
         env:
