@@ -1,0 +1,242 @@
+{
+  "id": "thX1i3Ezl_gMudRd37XR9",
+  "type": "Recipedetail",
+  "title": "Recipe detail 1",
+  "image": [
+    {
+      "id": "-zJ_jFVp_hc0OhCKHpkks",
+      "index": "a0",
+      "type": "entry",
+      "entry": "zZg8QUVWOmGTbv_ljhBKa"
+    }
+  ],
+  "category": "main_course",
+  "intro": [
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris non ligula cursus, lacinia enim fermentum, mattis purus. Nulla facilisi. Donec pellentesque augue eget dignissim bibendum."
+        }
+      ]
+    }
+  ],
+  "blocks": [
+    {
+      "id": "YVShgWrs4-TbxT-YAFDWv",
+      "index": "a0",
+      "type": "DemoTextBlock",
+      "text": [
+        {
+          "type": "heading",
+          "textAlign": "left",
+          "level": 2,
+          "content": [
+            {
+              "type": "text",
+              "text": "Heading 2"
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "textAlign": "left",
+          "content": [
+            {
+              "type": "text",
+              "text": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas at leo orci. Praesent finibus sem in urna malesuada tincidunt. Aenean nisl nulla, sodales facilisis libero vitae, semper auctor eros."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "textAlign": "left",
+          "content": [
+            {
+              "type": "text",
+              "text": "Proin aliquam convallis lorem, sed efficitur massa molestie vitae. Phasellus quis efficitur ex. Nunc volutpat sit amet magna in bibendum. Maecenas sed nisl lorem. Vivamus ac sapien sit amet erat bibendum tristique. Etiam lobortis tristique mauris nec aliquam. Nulla facilisi."
+            }
+          ]
+        },
+        {
+          "type": "heading",
+          "textAlign": "left",
+          "level": 3,
+          "content": [
+            {
+              "type": "text",
+              "text": "Heading 3"
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "textAlign": "left",
+          "content": [
+            {
+              "type": "text",
+              "text": "Morbi feugiat semper est finibus sagittis. Mauris sodales consectetur ex, vitae luctus libero suscipit nec. Etiam rhoncus massa id maximus ultrices."
+            }
+          ]
+        },
+        {
+          "type": "bulletList",
+          "content": [
+            {
+              "type": "listItem",
+              "content": [
+                {
+                  "type": "paragraph",
+                  "textAlign": "left",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Donec vel tellus nec sapien posuere auctor et sed ipsum"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "listItem",
+              "content": [
+                {
+                  "type": "paragraph",
+                  "textAlign": "left",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Curabitur sit amet semper odio"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "listItem",
+              "content": [
+                {
+                  "type": "paragraph",
+                  "textAlign": "left",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Duis viverra eros id posuere aliquet."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "G-iZdmzY3lTwIGARO4DM3",
+      "index": "a1",
+      "type": "DemoColumnsBlock",
+      "text_left": [
+        {
+          "type": "heading",
+          "textAlign": "left",
+          "level": 3,
+          "content": [
+            {
+              "type": "text",
+              "text": "Heading 3"
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "textAlign": "left",
+          "content": [
+            {
+              "type": "text",
+              "text": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas at leo orci. Praesent finibus sem in urna malesuada tincidunt. Aenean nisl nulla, sodales facilisis libero vitae, semper auctor eros."
+            }
+          ]
+        }
+      ],
+      "text_right": [
+        {
+          "type": "paragraph",
+          "textAlign": "left",
+          "content": [
+            {
+              "type": "text",
+              "text": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas at leo orci. Praesent finibus sem in urna malesuada tincidunt. Aenean nisl nulla, sodales facilisis libero vitae, semper auctor eros."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "dIDzvcckSyjDH9v01VMNY",
+      "index": "a2",
+      "type": "DemoImagetextBlock",
+      "image": [
+        {
+          "id": "Vr6Us6CQDFMqjpvbtOUhX",
+          "index": "a0",
+          "type": "entry",
+          "entry": "zZg8QUVWOmGTbv_ljhBKa"
+        }
+      ],
+      "text": [
+        {
+          "type": "heading",
+          "textAlign": "left",
+          "level": 3,
+          "content": [
+            {
+              "type": "text",
+              "text": "Heading 3"
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "textAlign": "left",
+          "content": [
+            {
+              "type": "text",
+              "text": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas at leo orci. Praesent finibus sem in urna malesuada tincidunt. Aenean nisl nulla, sodales facilisis libero vitae, semper auctor eros."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "K3zLPFflFyqlkue1Jpu18",
+      "index": "a3",
+      "type": "DemoImagetextBlock",
+      "image": [
+        {
+          "id": "d-ZTqivb-08MAdNI5NQVA",
+          "index": "a0",
+          "type": "entry",
+          "entry": "zZg8QUVWOmGTbv_ljhBKa"
+        }
+      ],
+      "image_position": "right",
+      "text": [
+        {
+          "type": "paragraph",
+          "textAlign": "left",
+          "content": [
+            {
+              "type": "text",
+              "text": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas at leo orci. Praesent finibus sem in urna malesuada tincidunt. Aenean nisl nulla, sodales facilisis libero vitae, semper auctor eros."
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "alinea": {
+    "index": "a0"
+  }
+}

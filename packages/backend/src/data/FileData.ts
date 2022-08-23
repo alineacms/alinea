@@ -98,7 +98,7 @@ export class FileData implements Data.Source, Data.Target, Data.Media {
                       // Todo: this is for backwards compatibility, should
                       // deprecate next major version
                       (entry as any).index ||
-                      entry.id,
+                      undefined,
                     parent: parent?.id,
                     parents: parents.map(parent => parent.id),
                     status: EntryStatus.Published,

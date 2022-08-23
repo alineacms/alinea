@@ -1,0 +1,38 @@
+@import '../../style.scss';
+
+.root {
+  position: relative;
+  cursor: pointer;
+  color: white;
+  font-size: 16px;
+  line-height: 24px;
+  display: inline-flex;
+  vertical-align: middle;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 30px;
+  border-radius: 50px;
+  background-color: $primary;
+  border: 1px solid transparent;
+  transition: all 0.25s ease-out;
+
+  &:hover {
+    background-color: lighten($primary, 7.5%);
+  }
+
+  &.is-outline {
+    color: $primary;
+    border-color: $primary;
+    background-color: transparent;
+
+    &:hover {
+      color: white;
+      border-color: transparent;
+      background-color: $primary;
+    }
+  }
+
+  &:disabled {
+    pointer-events: none;
+  }
+}

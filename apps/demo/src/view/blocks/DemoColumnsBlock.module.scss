@@ -1,0 +1,23 @@
+@import '../../style.scss';
+
+.root {
+  position: relative;
+
+  &-left,
+  &-right {
+    @include media($ipad-land) {
+      display: inline-block;
+      vertical-align: top;
+      width: calc(50% - 30px);
+    }
+  }
+
+  &-left + &-right {
+    margin-top: 30px;
+
+    @include media($ipad-land) {
+      margin-top: 0;
+      margin-left: 60px;
+    }
+  }
+}

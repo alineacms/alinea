@@ -1,0 +1,42 @@
+@import '../../../style.scss';
+
+.root {
+  overflow: hidden;
+  position: relative;
+  height: 100%;
+  display: block;
+  border-radius: 15px;
+  background-color: white;
+  border: 2px solid $grey;
+  transition: transform 0.25s ease-out;
+
+  &:hover {
+    transform: translateY(-15px);
+  }
+
+  &-image {
+    background-color: $grey;
+    position: relative;
+    height: 0;
+    width: 100%;
+    padding-bottom: calc(100% / (16 / 9));
+
+    &-bg {
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+  }
+
+  &-content {
+    padding: 30px;
+
+    &-text {
+      display: -webkit-box;
+      -webkit-line-clamp: 5;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      margin-top: 10px;
+    }
+  }
+}

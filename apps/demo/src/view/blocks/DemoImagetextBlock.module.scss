@@ -1,0 +1,39 @@
+@import '../../style.scss';
+
+.root {
+  position: relative;
+
+  &-row {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+
+    @include media($ipad-land) {
+      flex-direction: row;
+      align-items: center;
+      gap: 60px;
+
+      &.is-right {
+        flex-direction: row-reverse;
+      }
+    }
+  }
+
+  &-image,
+  &-content {
+    @include media($ipad-land) {
+      flex: 0 1 50%;
+    }
+  }
+
+  &-image {
+    overflow: hidden;
+    border-radius: 15px;
+  }
+
+  &-content {
+    @include media($ipad-land) {
+      padding: 30px 0;
+    }
+  }
+}

@@ -1,0 +1,11 @@
+.root {
+  margin: 60px 0;
+
+  > div {
+    margin: 60px 0;
+  }
+
+  > *:first-child {
+    margin-top: 0;
+  }
+}

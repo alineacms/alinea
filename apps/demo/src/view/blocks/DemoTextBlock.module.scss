@@ -1,0 +1,69 @@
+@import '../../style.scss';
+
+.root {
+  position: relative;
+  word-break: break-word;
+
+  * + * {
+    margin-top: 20px;
+  }
+
+  * + {
+    h2,
+    h3,
+    h4,
+    h5 {
+      margin-top: 30px;
+    }
+  }
+
+  h2,
+  h3,
+  h4,
+  h5 {
+    color: $secondary;
+
+    & + p {
+      margin-top: 5px;
+    }
+  }
+
+  b,
+  strong {
+    font-weight: 700;
+  }
+
+  a {
+    color: $primary;
+    display: inline;
+    border-bottom: 1px solid currentColor;
+    transition: border 0.25s ease-out;
+
+    &:hover {
+      border-color: transparent;
+    }
+  }
+
+  ol,
+  ul {
+    padding-left: 15px;
+
+    li {
+      position: relative;
+
+      &::marker {
+        color: $primary;
+      }
+    }
+
+    li + li {
+      margin-top: 5px;
+    }
+  }
+
+  blockquote {
+    padding: 15px 0;
+    padding-left: 30px;
+    border-left: 3px solid $primary;
+  }
+}
