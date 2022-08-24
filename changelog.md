@@ -2,11 +2,15 @@
 
 ## [Unreleased]
 
-- Alinea cloud handshake now automatically includes git information when hosted on Vercel, to allow for a prefilled project setup
+## [0.2.2]
+
+- Alinea cloud handshake now automatically includes git information when hosted
+  on Vercel, to allow for a prefilled project setup
 
 ## [0.2.1]
 
-- Alinea cloud connection now sends the shortKey part of API key during authentication to uniquely identify project
+- Alinea cloud connection now sends the shortKey part of API key during
+  authentication to uniquely identify project
 
 ## [0.2.0]
 
