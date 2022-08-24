@@ -73,7 +73,7 @@ export class CloudAuthServer implements Auth.Server {
             400,
             'Provide a valid handshake id to initiate handshake'
           )
-        const body = {
+        const body: any = {
           handshake_id: handShakeId,
           status: {
             version,
@@ -89,6 +89,17 @@ export class CloudAuthServer implements Auth.Server {
                 return workspace.source
               }
             )
+          }
+        }
+        if (process.env.VERCEL) {
+          body.git = {
+            hosting: 'vercel',
+            env: process.env.VERCEL_ENV,
+            url: process.env.VERCEL_URL,
+            provider: process.env.VERCEL_GIT_PROVIDER,
+            repo: process.env.VERCEL_GIT_REPO_SLUG,
+            owner: process.env.VERCEL_GIT_REPO_OWNER,
+            branch: process.env.VERCEL_GIT_COMMIT_REF
           }
         }
         // We submit the handshake id, our status and authorize using the
