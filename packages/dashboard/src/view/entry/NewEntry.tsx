@@ -1,4 +1,5 @@
-import {createId, docFromEntry, Entry, slugify} from '@alinea/core'
+import {createId, docFromEntry, Entry, Outcome, slugify} from '@alinea/core'
+import {generateKeyBetween} from '@alinea/core/util/FractionalIndexing'
 import {useField} from '@alinea/editor'
 import {InputField} from '@alinea/editor/view/InputField'
 import {link} from '@alinea/input.link'
@@ -55,15 +56,30 @@ function NewEntryForm({parentId}: NewEntryProps) {
     })
   )
   const selectedParent = useObservable(parentField)
-  const {data: parentEntry} = useQuery(
+  const {data: parent} = useQuery(
     ['parent', selectedParent],
     () => {
       const parentId = (selectedParent?.[0] as EntryReference)?.entry
-      return parentId ? hub.entry({id: parentId}) : undefined
+      if (!parentId) return
+      const Child = Entry.as('Child')
+      return hub
+        .query({
+          cursor: Entry.where(Entry.id.is(parentId)).select({
+            id: Entry.id,
+            type: Entry.type,
+            url: Entry.url,
+            alinea: Entry.alinea,
+            childrenIndex: Child.where(Child.alinea.parent.is(Entry.id))
+              .select(Child.alinea.index)
+              .orderBy(Child.alinea.index.asc())
+              .first()
+          })
+        })
+        .then(Outcome.unpack)
+        .then(res => res[0])
     },
     {suspense: true, keepPreviousData: true}
   )
-  const parent = parentEntry?.isSuccess() ? parentEntry.value?.entry : undefined
   const type = parent && schema.type(parent.type)
   const types: Array<string> = !parent
     ? root.contains
@@ -98,7 +114,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
       title,
       url: (parent?.url || '') + (parent?.url.endsWith('/') ? '' : '/') + path,
       alinea: {
-        index: 'a0',
+        index: generateKeyBetween(null, parent?.childrenIndex || null),
         workspace,
         root: root.name,
         parent: parent?.id

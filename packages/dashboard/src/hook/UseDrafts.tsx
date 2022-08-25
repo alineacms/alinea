@@ -1,6 +1,7 @@
 import {
   createError,
   docFromEntry,
+  EntryMeta,
   EntryStatus,
   Outcome,
   ROOT_KEY
@@ -96,8 +97,10 @@ class Drafts {
 
   async move(move: Move) {
     const draft = await this.get(move.id)
-    draft.doc.getMap(ROOT_KEY).set('index', move.index)
-    draft.doc.getMap(ROOT_KEY).set('parent', move.parent)
+    const meta = draft.doc.getMap(ROOT_KEY).get('alinea') as EntryMeta
+    draft.doc
+      .getMap(ROOT_KEY)
+      .set('alinea', {...meta, index: move.index, parent: move.parent})
     await this.save(move.id, draft.doc)
   }
 

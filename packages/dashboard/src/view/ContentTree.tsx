@@ -52,7 +52,7 @@ function applyMoves(
   return entries.map(entry => {
     if (toMove.has(entry.id)) {
       const move = toMove.get(entry.id)!
-      return {...entry, ...move}
+      return {...entry, alinea: {...entry.alinea, ...move}}
     }
     return entry
   })
@@ -175,6 +175,7 @@ export function ContentTree({
     }
 
     const candidates = aIndex > bIndex ? [sibling(-1), b] : [b, sibling(1)]
+
     try {
       const newIndex = generateKeyBetween(
         candidates[0]?.alinea.index || null,
