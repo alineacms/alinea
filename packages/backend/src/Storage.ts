@@ -55,6 +55,7 @@ export namespace Storage {
         index: alinea.index,
         i18n: alinea.i18n
       }
+      if (!entry.alinea.parent) meta.root = entry.alinea.root
       changes.write.push({
         id: entry.id,
         file,

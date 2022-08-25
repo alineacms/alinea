@@ -11,6 +11,9 @@ export enum EntryStatus {
 }
 
 export interface EntryMetaRaw {
+  // In case this entry has no parent we'll keep a reference to which root it
+  // belongs to
+  root?: string
   // These fields are stored on disk when using file data
   index: string
   i18n?: {id: string}
