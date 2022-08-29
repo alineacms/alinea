@@ -106,7 +106,7 @@ export function HomePage(props: HomePageSchema) {
           </Layout.Container>
           <div className={styles.root.demo()}>
             <iframe
-              src="https://demo.alinea.sh"
+              src="https://demo.alinea.sh/#/entry/demo/data/vTCpgsHfAjZtHabyjb8RG"
               className={styles.root.demo.inner()}
             />
           </div>
