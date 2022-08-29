@@ -29,7 +29,10 @@ export const staticPlugin: Plugin = {
       const tasks: Array<Promise<void>> = []
       for (const location of locations) {
         const source = path.join(makeAbs(location), dir)
-        const output = source.replace('packages' + path.sep, 'dist' + path.sep)
+        const output = source.replace(
+          'packages' + path.sep,
+          'dist/out' + path.sep
+        )
         if (fs.existsSync(source)) {
           if (!fs.existsSync(output)) fs.mkdirSync(output, {recursive: true})
           const task = copyDir(source, output)

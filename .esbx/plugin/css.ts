@@ -34,7 +34,7 @@ export const cssPlugin: Plugin = {
       return build.esbuild
         .build({
           ignoreAnnotations: true,
-          outdir: 'dist',
+          outdir: 'dist/out',
           stdin: {contents: input, resolveDir: absWorkingDir},
           plugins: [sassPlugin],
           write: false,
@@ -43,7 +43,7 @@ export const cssPlugin: Plugin = {
           sourcemap: 'inline'
         })
         .then(res => {
-          const css = res.outputFiles.find(file => file.path.endsWith('.css'))
+          const css = res.outputFiles.find(file => file.path.endsWith('.css'))!
           fs.writeFileSync(path.join(outputDir, 'index.css'), css.contents)
         })
     })

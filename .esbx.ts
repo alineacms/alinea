@@ -2,16 +2,13 @@ import {EvalPlugin} from '@esbx/eval'
 import {ReporterPlugin} from '@esbx/reporter'
 import {RunPlugin} from '@esbx/run'
 import {StaticPlugin} from '@esbx/static'
-import {findNodeModules, reportTime} from '@esbx/util'
+import {findNodeModules} from '@esbx/util'
 import {getWorkspaces, TestTask} from '@esbx/workspaces'
-import {execSync} from 'child_process'
-import semver from 'compare-versions'
 import type {BuildOptions} from 'esbuild'
 import {build} from 'esbuild'
 import fs from 'fs-extra'
 import path from 'node:path'
 import {BuildTask} from './.esbx/build'
-import {bundleTs} from './.esbx/bundle-ts'
 import {cssPlugin} from './.esbx/plugin/css'
 import {internalPlugin} from './.esbx/plugin/internal'
 import {resolvePlugin} from './.esbx/plugin/resolve'
@@ -53,48 +50,13 @@ export const buildTask = {
   }
 }
 
-export const prepare = {
-  async action({checkTypeDoc = true}) {
-    const minVersion = '14.18.0'
-    const nodeVersionWorks = semver.compare(
-      process.version.slice(1),
-      minVersion,
-      '>='
-    )
-    if (!nodeVersionWorks) {
-      console.error(
-        `Node version ${process.version} is not supported, at least ${minVersion} is required.`
-      )
-      process.exit(1)
-    }
-    if (!fs.existsSync('dist')) await buildTask.action({})
-    if (checkTypeDoc && !fs.existsSync('apps/web/src/data/types.json')) {
-      reportTime(
-        async () => {
-          execSync(
-            `typedoc --json apps/web/src/data/types.json --logLevel Error`,
-            {
-              stdio: 'inherit'
-            }
-          )
-        },
-        'generating typedoc json...',
-        err => 'typedoc completed'
-      )
-    }
-    if (!fs.existsSync('dist/alinea.d.ts')) {
-      await bundleTs.action()
-    }
-  }
-}
-
 const modules = findNodeModules(process.cwd())
 
 export const dev = {
   options: [['-p, --production', 'Use production backend']],
   async action(options) {
-    await buildTask.action({watch: true, silent: true})
-    const out = 'file://' + path.resolve('dist/cli/src/bin.js')
+    // await buildTask.action({watch: true, silent: true})
+    const out = 'file://' + path.resolve('dist/out/cli/src/bin.js')
     const serverOptions: BuildOptions = {
       ...buildOptions,
       ignoreAnnotations: true,
@@ -126,6 +88,7 @@ export const dev = {
 export const clean = {
   action() {
     fs.removeSync('dist')
+    fs.removeSync('.wireit')
     fs.removeSync('apps/web/.alinea')
     fs.removeSync('apps/demo/.alinea')
     for (const location of getWorkspaces(process.cwd())) {
@@ -158,7 +121,6 @@ export const test = {
   ...testTask,
   async action(options: any) {
     ensureNodeResolution()
-    await prepare.action({checkTypeDoc: false})
     return testTask.action(options)
   }
 }

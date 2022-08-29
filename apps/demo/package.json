@@ -4,10 +4,23 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "dev": "alinea serve -- next dev",
-    "build": "alinea generate -- next build",
-    "start": "next start",
-    "lint": "next lint"
+    "build": "wireit",
+    "generate": "wireit",
+    "dev": "alinea serve -- next dev"
+  },
+  "wireit": {
+    "build": {
+      "command": "next build",
+      "dependencies": [
+        "generate"
+      ]
+    },
+    "generate": {
+      "command": "alinea generate",
+      "dependencies": [
+        "../..:build"
+      ]
+    }
   },
   "dependencies": {
     "@alinea/content": "link:./.alinea",

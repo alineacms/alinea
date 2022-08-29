@@ -87,7 +87,7 @@ function task(
       const buildOptions: BuildOptions = {
         platform: 'neutral',
         format: 'esm',
-        outdir: 'dist',
+        outdir: 'dist/out',
         bundle: true,
         // sourcemap: true,
         absWorkingDir: cwd,
@@ -104,7 +104,7 @@ function task(
               const pkg = parts.slice(packagesPart + 1, srcPart)
               return {
                 packageName: `@alinea/${pkg.join('.')}`,
-                packageRoot: `./dist/${pkg.join('/')}/src`
+                packageRoot: `./dist/out/${pkg.join('/')}/src`
               }
             },
             buildOptions: {

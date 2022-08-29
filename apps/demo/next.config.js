@@ -4,7 +4,6 @@ module.exports = {
       test: /\.svg$/,
       use: ['@svgr/webpack']
     })
-
     return config
   },
   images: {
@@ -13,7 +12,7 @@ module.exports = {
     formats: ['image/avif', 'image/webp']
   },
   swcMinify: true,
-  eslint: {
-    dirs: ['src']
+  typescript: {
+    ignoreBuildErrors: true
   }
 }

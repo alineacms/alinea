@@ -4,20 +4,49 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "dev": "esbx prepare && run-p dev:check dev:next dev:compile",
-    "dev:compile": "esbx dev",
-    "dev:next": "yarn workspace @alinea/web dev",
+    "dev": "run-p dev:check dev:next dev:compile",
+    "build": "wireit",
+    "type": "wireit",
+    "test": "wireit",
     "dev:check": "tsc -w",
+    "dev:next": "yarn workspace @alinea/web dev",
+    "dev:compile": "esbx dev",
     "dev:stories": "ladle serve --stories \"packages/**/*.stories.tsx\"",
     "build:stories": "ladle build --base /stories --stories  \"packages/**/*.stories.tsx\" --outDir apps/web/public/stories",
     "trace": "tsc --noEmit --incremental false --emitDeclarationOnly false --diagnostics --generateTrace private/trace && speedscope private/trace/trace.json",
-    "build": "esbx build",
-    "test": "esbx test",
     "clean": "esbx clean",
     "bump": "esbx version",
-    "prepare": "copy-env-cli",
-    "gen:types": "typedoc --json apps/web/src/data/types.json",
-    "gen:bundle": "esbx bundleTs"
+    "prepare": "copy-env-cli"
+  },
+  "wireit": {
+    "build": {
+      "command": "esbx build",
+      "dependencies": [
+        "type"
+      ],
+      "files": [
+        "packages/**/*.{ts,tsx}"
+      ],
+      "output": [
+        "dist/out"
+      ]
+    },
+    "type": {
+      "command": "tsc --diagnostics",
+      "files": [
+        "tsconfig.json",
+        "packages/*/src/**/*.{ts,tsx}"
+      ],
+      "output": [
+        "dist/types"
+      ]
+    },
+    "test": {
+      "command": "cross-env FORCE_COLOR=1 esbx test",
+      "dependencies": [
+        "build"
+      ]
+    }
   },
   "files": [],
   "workspaces": [
@@ -53,7 +82,8 @@
     "typedoc": "^0.22.15",
     "typescript": "^4.7.3",
     "typescript-plugin-css-modules": "^3.4.0",
-    "uvu": "^0.5.1"
+    "uvu": "^0.5.1",
+    "wireit": "^0.7.1"
   },
   "packageManager": "yarn@3.2.0",
   "resolutions": {
