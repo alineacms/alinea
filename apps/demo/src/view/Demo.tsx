@@ -7,6 +7,7 @@ import {Dashboard, Preview} from '@alinea/dashboard'
 import {DraftsStatus, useDrafts} from '@alinea/dashboard/hook/UseDrafts'
 import {useQuery} from '@alinea/shared/react-query'
 import {Loader, useObservable} from '@alinea/ui'
+import Head from 'next/head'
 import {ComponentType, useEffect, useMemo, useState} from 'react'
 import Frame, {useFrame} from 'react-frame-component'
 import DemoHome, {queryHome} from '../pages/home'
@@ -21,7 +22,14 @@ export default function Demo({fullPage}: DemoProps) {
   const {client, config} = useMemo(createDemo, [])
   const preview = useMemo(() => createPreview(client, config), [])
   config.options.workspaces.demo.options.preview = preview
-  return <Dashboard fullPage={fullPage} config={config} client={client} />
+  return (
+    <>
+      <Head>
+        <title>Alinea CMS demo</title>
+      </Head>
+      <Dashboard fullPage={fullPage} config={config} client={client} />
+    </>
+  )
 }
 
 interface DemoPreviewProps {
