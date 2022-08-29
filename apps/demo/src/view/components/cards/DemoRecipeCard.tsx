@@ -17,11 +17,13 @@ export function DemoRecipeCard({
   return (
     <DemoLink to={url} className={styles.root()}>
       <div className={styles.root.image()}>
-        <DemoImage
-          src={image.src}
-          layout="fill"
-          className={styles.root.image.bg()}
-        />
+        {image?.src && (
+          <DemoImage
+            src={image.src}
+            layout="fill"
+            className={styles.root.image.bg()}
+          />
+        )}
       </div>
       <div className={styles.root.content()}>
         <DemoTitle.H3>{title}</DemoTitle.H3>

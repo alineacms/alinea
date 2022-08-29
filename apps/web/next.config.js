@@ -17,6 +17,7 @@ module.exports = {
   // https://github.com/vercel/next.js/issues/37142#issuecomment-1135206523
   experimental: {
     legacyBrowsers: false,
-    browsersListForSwc: true
+    browsersListForSwc: true,
+    externalDir: true
   }
 }

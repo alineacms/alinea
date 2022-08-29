@@ -25,7 +25,7 @@ export class Config<T extends Workspaces = Workspaces> {
   }
 
   get authView() {
-    return this.options.backend?.auth.view
+    return this.options.backend?.auth?.view
   }
 
   get dashboard() {

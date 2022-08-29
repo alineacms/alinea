@@ -1,3 +1,4 @@
+import {ReadonlyBackend} from '@alinea/backend/ReadonlyBackend'
 import {createConfig, root, schema, workspace} from '@alinea/core'
 import {MediaSchema} from '@alinea/dashboard/schema/MediaSchema'
 import {BrowserPreview} from '@alinea/dashboard/view/preview/BrowserPreview'
@@ -43,5 +44,10 @@ const demo = workspace('Demo', {
 })
 
 export const config = createConfig({
-  workspaces: {demo}
+  workspaces: {demo},
+  backend: {
+    configureBackend({config, createStore}) {
+      return new ReadonlyBackend({config, createStore})
+    }
+  }
 })

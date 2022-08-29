@@ -3,7 +3,6 @@ import {IcRoundLanguage} from '@alinea/ui/icons/IcRoundLanguage'
 import {IcRoundOpenInNew} from '@alinea/ui/icons/IcRoundOpenInNew'
 import {IcRoundSearch} from '@alinea/ui/icons/IcRoundSearch'
 import {MdiSourceBranch} from '@alinea/ui/icons/MdiSourceBranch'
-import dynamic from 'next/dynamic'
 import {IcRoundFastForward} from '../icons/IcRoundFastForward'
 import {IcRoundPeopleOutline} from '../icons/IcRoundPeopleOutline'
 import {MdiLanguageTypescript} from '../icons/MdiLanguageTypescript'
@@ -19,10 +18,6 @@ import {WebText} from './layout/WebText'
 import {WebTypo} from './layout/WebTypo'
 
 const styles = fromModule(css)
-
-const DemoPage = dynamic(() => import('../view/Demo'), {
-  ssr: false
-})
 
 export function HomePage(props: HomePageSchema) {
   return (
@@ -110,7 +105,10 @@ export function HomePage(props: HomePageSchema) {
             </WebTypo>
           </Layout.Container>
           <div className={styles.root.demo()}>
-            <iframe src="/demo" className={styles.root.demo.inner()} />
+            <iframe
+              src="https://demo.alinea.sh"
+              className={styles.root.demo.inner()}
+            />
           </div>
         </VStack>
       </section>

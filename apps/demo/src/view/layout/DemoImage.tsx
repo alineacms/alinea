@@ -10,10 +10,15 @@ type ImageProps = Omit<NextImageProps, 'sizes'> & {
 
 export function DemoImage(props: ImageProps) {
   if (!props.src) return null
-
   return (
     <div className={styles.root.with(props.className)(props.layout)}>
-      <NextImage priority {...props} {...imageProps(props)} />
+      <NextImage
+        priority
+        src={props.src}
+        width={props.width}
+        height={props.height}
+        {...imageProps(props)}
+      />
     </div>
   )
 }

@@ -45,7 +45,7 @@ function Links({links, style}: LinksProps) {
           Changelog
         </a>
       </Link>
-      <a href="/demo" target="_blank" className={style()}>
+      <a href="https://demo.alinea.sh" target="_blank" className={style()}>
         Demo
       </a>
     </>

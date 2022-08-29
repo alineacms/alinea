@@ -9,7 +9,7 @@ export type BackendProps = {
 }
 
 export type BackendCreateOptions<AuthOptions> = {
-  auth: Auth<AuthOptions>
+  auth?: Auth<AuthOptions>
 } & BackendProps
 
 export type BackendFactory<AuthOptions> = (
@@ -17,7 +17,7 @@ export type BackendFactory<AuthOptions> = (
 ) => Backend
 
 export type BackendOptions<AuthOptions> = {
-  auth: Auth<AuthOptions>
+  auth?: Auth<AuthOptions>
 }
 
 export type BackendConfig<AuthOptions = {}> = BackendOptions<AuthOptions> & {

@@ -174,7 +174,7 @@ export class CloudBackend extends Backend {
       dashboardUrl: options.config.dashboard?.dashboardUrl!,
       config: options.config,
       createStore: options.createStore,
-      auth: options.auth.configure({apiKey, config: options.config}),
+      auth: options.auth?.configure({apiKey, config: options.config}),
       drafts: api,
       target: api,
       media: api,

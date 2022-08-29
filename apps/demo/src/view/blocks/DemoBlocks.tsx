@@ -18,7 +18,7 @@ export type DemoBlocksViewProps = {
 export function DemoBlocks({blocks, container}: DemoBlocksViewProps) {
   return (
     <div className={styles.root()}>
-      {blocks.map(block => {
+      {blocks?.map(block => {
         switch (block.type) {
           case 'DemoTextBlock':
             return (

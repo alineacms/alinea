@@ -1,8 +1,6 @@
 {
   "id": "vTCpgsHfAjZtHabyjb8RG",
   "type": "Home",
-  "root": "data",
-  "index": "He8hfze6W35ZPztcqouk",
   "title": "Home",
   "hero": {
     "image": [
@@ -29,5 +27,9 @@
     "button": []
   },
   "links": [],
-  "footer": []
+  "footer": [],
+  "alinea": {
+    "index": "He8hfze6W35ZPztcqouk",
+    "root": "data"
+  }
 }

@@ -4,21 +4,34 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "build": "wireit",
+    "dev": "wireit",
     "generate": "wireit",
-    "dev": "alinea serve -- next dev"
+    "build": "wireit",
+    "start": "wireit"
   },
   "wireit": {
-    "build": {
-      "command": "next build",
+    "dev": {
+      "command": "alinea serve -- next dev",
       "dependencies": [
-        "generate"
+        "../..:build"
       ]
     },
     "generate": {
       "command": "alinea generate",
       "dependencies": [
         "../..:build"
+      ]
+    },
+    "build": {
+      "command": "next build",
+      "dependencies": [
+        "generate"
+      ]
+    },
+    "start": {
+      "command": "next start",
+      "dependencies": [
+        "build"
       ]
     }
   },
@@ -28,11 +41,13 @@
     "include-media": "^1.4.10",
     "next": "^12.2.4-canary.11",
     "react": "^18.1.0",
-    "react-dom": "^18.1.0"
+    "react-dom": "^18.1.0",
+    "react-frame-component": "^5.2.3"
   },
   "devDependencies": {
     "@svgr/webpack": "^6.3.1",
     "@types/react": "^18.0.5",
-    "@types/react-dom": "^18.0.0"
+    "@types/react-dom": "^18.0.0",
+    "wireit": "^0.7.1"
   }
 }

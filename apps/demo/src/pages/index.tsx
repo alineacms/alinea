@@ -1,12 +1,44 @@
-import {initPages} from '@alinea/content/demo/pages.js'
-import {GetStaticPropsContext} from 'next'
-import {DemoHome} from '../view/channels/home/DemoHome'
+import {
+  Button,
+  HStack,
+  Loader,
+  PreferencesProvider,
+  Typo,
+  Viewport
+} from '@alinea/ui'
+import {Modal} from '@alinea/ui/Modal'
+import dynamic from 'next/dynamic'
+import {Suspense, useState} from 'react'
 
-export async function getStaticProps(context: GetStaticPropsContext) {
-  const pages = initPages(context.previewData as string)
-  return {
-    props: await pages.whereType('Home').sure()
-  }
+const DemoPage = dynamic(() => import('../view/Demo'), {
+  ssr: false
+})
+
+export default function Demo() {
+  const [reminderOpen, setReminderOpen] = useState(true)
+  return (
+    <>
+      <style>{`#__next {height: 100%}`}</style>
+      <PreferencesProvider>
+        <Viewport attachToBody color="#5661E5" contain>
+          <Modal open={reminderOpen} onClose={() => setReminderOpen(false)}>
+            <Typo.H1>Demo</Typo.H1>
+            <Typo.P>
+              This is a demo showcasing the{' '}
+              <Typo.Link href="/">Alinea CMS</Typo.Link> dashboard. It is not
+              connected to a server, any changes you make are persisted locally.
+            </Typo.P>
+            <HStack>
+              <Button size="large" onClick={() => setReminderOpen(false)}>
+                Let's see it
+              </Button>
+            </HStack>
+          </Modal>
+          <Suspense fallback={<Loader absolute />}>
+            <DemoPage />
+          </Suspense>
+        </Viewport>
+      </PreferencesProvider>
+    </>
+  )
 }
-
-export default DemoHome

@@ -8,6 +8,7 @@ import {DemoRecipeCard} from '../../components/cards/DemoRecipeCard'
 import {DemoHero} from '../../components/hero/DemoHero'
 import {DemoContainer, DemoSmallContainer} from '../../layout/DemoContainer'
 import {DemoImage} from '../../layout/DemoImage'
+import {DemoLayout} from '../../layout/DemoLayout'
 import {DemoTitle} from '../../layout/DemoTitle'
 import {DemoRecipedetailSchema} from '../recipedetail/DemoRecipedetail.schema'
 
@@ -22,12 +23,14 @@ export function DemoRecipedetail(props: DemoRecipedetailSchema & RelatedProps) {
   const {title, image, category, intro, blocks, related} = props
 
   return (
-    <div className={styles.root()}>
-      <DemoHero image={image} title={title} />
-      <Intro image={image} category={category} intro={intro} />
-      <DemoBlocks blocks={blocks} container={DemoSmallContainer} />
-      <Related related={related} category={category} />
-    </div>
+    <DemoLayout>
+      <div className={styles.root()}>
+        <DemoHero image={image} title={title} />
+        <Intro image={image} category={category} intro={intro} />
+        <DemoBlocks blocks={blocks} container={DemoSmallContainer} />
+        <Related related={related} category={category} />
+      </div>
+    </DemoLayout>
   )
 }
 

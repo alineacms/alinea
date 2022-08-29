@@ -22,8 +22,7 @@ export const HomePageSchema = type(
       path: path('Path', {width: 0.5}),
       headline: text('Headline', {multiline: true}),
       byline: text('Byline', {multiline: true}),
-      action: link('Action', {
-        type: ['external', 'entry'],
+      action: link.entry('Action', {
         fields: type('Fields', {
           label: text('Button label')
         })

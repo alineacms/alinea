@@ -1,8 +1,8 @@
 import {DashboardProvider, SessionProvider, Toolbar} from '@alinea/dashboard'
+import {createDemo} from '@alinea/dashboard/demo/DemoData'
 import {QueryClient, QueryClientProvider} from '@alinea/shared/react-query'
 import {fromModule, PreferencesProvider, Viewport} from '@alinea/ui'
 import {PropsWithChildren, useMemo} from 'react'
-import {createDemo} from '../Demo'
 import css from './CodeSample.module.scss'
 
 const styles = fromModule(css)

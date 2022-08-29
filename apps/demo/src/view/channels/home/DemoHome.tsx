@@ -4,6 +4,7 @@ import {fromModule, RichText, TextLabel} from '@alinea/ui'
 import {DemoButton} from '../../layout/DemoButton'
 import {DemoContainer} from '../../layout/DemoContainer'
 import {DemoImage} from '../../layout/DemoImage'
+import {DemoLayout} from '../../layout/DemoLayout'
 import {DemoTitle} from '../../layout/DemoTitle'
 import {DemoHomeSchema} from './DemoHome.schema'
 
@@ -15,9 +16,11 @@ export function DemoHome(props: DemoHomeSchema) {
   const {title, hero} = props
 
   return (
-    <div className={styles.root()}>
-      <Hero {...hero} title={hero?.title || title} />
-    </div>
+    <DemoLayout>
+      <div className={styles.root()}>
+        <Hero {...hero} title={hero?.title || title} />
+      </div>
+    </DemoLayout>
   )
 }
 
