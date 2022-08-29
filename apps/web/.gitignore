@@ -1,4 +1,5 @@
 /.next
 /src/data/types.json
+/src/data/alinea.d.ts
 /public/admin*
 /public/stories*
