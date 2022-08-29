@@ -25,10 +25,11 @@
         "type"
       ],
       "files": [
-        "packages/**/src/*.{ts,tsx}"
+        "packages/*/src/**/*.{ts,tsx}"
       ],
       "output": [
-        "dist/out"
+        "dist/out",
+        "packages/**/dist/*"
       ]
     },
     "type": {
