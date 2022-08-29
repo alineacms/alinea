@@ -25,7 +25,7 @@
         "type"
       ],
       "files": [
-        "packages/**/*.{ts,tsx}"
+        "packages/**/src/*.{ts,tsx}"
       ],
       "output": [
         "dist/out"
