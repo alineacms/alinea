@@ -132,6 +132,9 @@ export const resolvePlugin: Plugin = {
           outdir: workspace + '/dist/vendor',
           outExtension: {'.js': isNode ? '.cjs' : '.js'},
           conditions: ['import'],
+          define: {
+            'process.env.NODE_ENV': "'production'"
+          },
           splitting: !isNode,
           treeShaking: true,
           external: [...dependencies],
