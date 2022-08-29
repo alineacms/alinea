@@ -16,16 +16,12 @@ jobs:
         with:
           node-version: '16'
       - uses: google/wireit@setup-github-actions-caching/v1
-      - id: yarn-cache-dir-path
-        run: echo "::set-output name=dir::$(yarn config get cacheFolder)"
       - uses: actions/cache@v2
         with:
-          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+          path: |
+            ./.yarn
+            '**/node_modules'
           key: ${{ runner.os }}-yarn
-      - uses: actions/cache@v2
-        with:
-          path: '**/node_modules'
-          key: ${{ runner.os }}-nm
       - run: yarn
       - run: yarn type
       - if: startsWith(github.ref, 'refs/tags/v')
