@@ -144,7 +144,7 @@ export function BrowserPreview({url, prettyUrl, reload}: BrowserPreviewProps) {
             key={url}
             className={styles.root.iframe()}
             allow="accelerometer; ambient-light-sensor; camera; encrypted-media; geolocation; gyroscope; hid; microphone; midi; payment; usb; vr; xr-spatial-tracking"
-            sandbox="allow-forms allow-modals allow-popups allow-presentation allow-same-origin allow-scripts allow-downloads allow-pointer-lock"
+            sandbox="allow-top-navigation allow-forms allow-modals allow-popups allow-presentation allow-same-origin allow-scripts allow-downloads allow-pointer-lock"
             src={url}
             onLoad={() => {
               setLoading(false)
