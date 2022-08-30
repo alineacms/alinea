@@ -38,7 +38,6 @@ import {Pages} from './Pages'
 import {Previews} from './Previews'
 import {PreviewStore, previewStore} from './PreviewStore'
 import {Storage} from './Storage'
-import {parentUrl, walkUrl} from './util/EntryPaths'
 
 type PagesOptions = {
   preview?: boolean
@@ -237,7 +236,7 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
   }
 
   uploadFile(
-    {workspace, root, ...file}: Hub.UploadParams,
+    {workspace, root, parentId, ...file}: Hub.UploadParams,
     ctx: Hub.Context = this.createContext()
   ): Future<Media.File> {
     const {config} = this.options
@@ -245,19 +244,11 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
       const store = await this.preview.getStore(ctx)
       const id = createId()
       const {media} = this.options
-      const parents = walkUrl(parentUrl(file.path)).map(url => {
-        const parent = store.first(
-          Entry.where(Entry.alinea.workspace.is(workspace))
-            .where(Entry.alinea.root.is(root))
-            .where(Entry.url.is(url))
-            .select({id: Entry.id})
-        )
-        if (!parent) throw createError(400, `Parent not found: ${url}`)
-        return parent.id
-      })
-      const parent = parents[parents.length - 1]
-      if (!parent) throw createError(400, `Parent not found: "${file.path}"`)
-
+      const parents = !parentId
+        ? []
+        : store
+            .first(Entry.where(Entry.id.is(parentId)).select(Entry.parents))!
+            .concat(parentId)
       const dir = dirname(file.path)
       const extension = extname(file.path)
       const name = basename(file.path, extension)
@@ -280,7 +271,7 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
       const prev = store.first(
         Entry.where(Entry.alinea.workspace.is(workspace))
           .where(Entry.alinea.root.is(root))
-          .where(Entry.alinea.parent.is(parent))
+          .where(Entry.alinea.parent.is(parentId))
       )
       const entry: Media.File = {
         id,
@@ -303,7 +294,7 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
           index: generateKeyBetween(null, prev?.alinea.index || null),
           workspace: workspace as string,
           root: root as string,
-          parent: parent,
+          parent: parentId,
           parents
         }
       }

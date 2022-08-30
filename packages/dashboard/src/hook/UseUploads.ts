@@ -86,12 +86,14 @@ async function process(upload: Upload, hub: Hub): Promise<Upload> {
         ? UploadStatus.CreatingPreview
         : UploadStatus.Uploading
       if (isImage) {
-        const {width, height} = await new Promise((resolve, reject) => {
-          const image = new Image()
-          image.onload = () => resolve(image)
-          image.onerror = err => reject(err)
-          image.src = URL.createObjectURL(upload.file)
-        })
+        const {width, height} = await new Promise<HTMLImageElement>(
+          (resolve, reject) => {
+            const image = new Image()
+            image.onload = () => resolve(image)
+            image.onerror = err => reject(err)
+            image.src = URL.createObjectURL(upload.file)
+          }
+        )
         return {...upload, width, height, status: next}
       }
       return {...upload, status: next}
@@ -139,6 +141,7 @@ async function process(upload: Upload, hub: Hub): Promise<Upload> {
       const result = await hub
         .uploadFile({
           ...to,
+          parentId: to.id,
           path,
           buffer,
           preview,

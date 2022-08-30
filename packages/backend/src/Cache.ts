@@ -4,7 +4,9 @@ import {
   Entry,
   entryFromDoc,
   EntryStatus,
-  outcome
+  EntryUrlMeta,
+  outcome,
+  Type
 } from '@alinea/core'
 import {Search} from '@alinea/core/Search'
 import {
@@ -16,7 +18,6 @@ import {Expr, Store} from '@alinea/store'
 import {SqliteStore} from '@alinea/store/sqlite/SqliteStore'
 import * as Y from 'yjs'
 import {Data} from './Data'
-import {appendPath} from './util/EntryPaths'
 
 export namespace Cache {
   function indexSearch(store: Store, entry: Entry, lookup = true) {
@@ -191,6 +192,25 @@ export namespace Cache {
     indexing.delete(store)
   }
 
+  export function createUrl(type: Type, meta: EntryUrlMeta) {
+    if (type.entryUrl) {
+      const res = type.entryUrl(meta)
+      // Todo: check if valid url?
+      return res
+    }
+    const segments = meta.locale ? [meta.locale] : []
+    return (
+      '/' +
+      segments
+        .concat(
+          meta.parentPaths
+            .concat(meta.path)
+            .map(segment => (segment === 'index' ? '' : segment))
+        )
+        .join('/')
+    )
+  }
+
   export function computeEntry(
     store: Store,
     config: Config,
@@ -201,8 +221,9 @@ export namespace Cache {
     if (!type) throw createError(400, 'Type not found')
     const root = config.root(entry.alinea.workspace, entry.alinea.root)
     const parents: Array<string> = []
-    let target = entry.alinea.parent,
-      url = entry.path === 'index' ? '' : entry.path
+    const parentPaths: Array<string> = []
+    let target = entry.alinea.parent
+    //url = entry.path === 'index' ? '' : entry.path
     while (target) {
       if (parents.includes(target))
         throw createError(400, 'Circular parent reference')
@@ -214,17 +235,18 @@ export namespace Cache {
         })
       )
       if (!parent) break
-      url = (parent.path === 'index' ? '' : parent.path) + '/' + url
+      // url = (parent.path === 'index' ? '' : parent.path) + '/' + url
+      parentPaths.push(parent.path === 'index' ? '' : parent.path)
       target = parent.parent
     }
+    const locale = entry.alinea.i18n?.locale!
     if (root.i18n) {
-      const locale = entry.alinea.i18n?.locale!
       if (!root.i18n.locales.includes(locale))
         throw createError(
           400,
           `Invalid locale "${locale}" in entry with url "${entry.url}"`
         )
-      url = `${locale}/${url}`
+      // url = `${locale}/${url}`
       const i18nParents =
         parents.length > 0
           ? store.all(
@@ -242,9 +264,16 @@ export namespace Cache {
     } else {
       delete entry.alinea.i18n
     }
+
+    const urlMeta = {
+      path: entry.path,
+      parentPaths,
+      locale
+    }
+
     return {
       ...entry,
-      url: '/' + url,
+      url: createUrl(type, urlMeta),
       alinea: {
         ...entry.alinea,
         parent: parents[parents.length - 1],
@@ -255,14 +284,31 @@ export namespace Cache {
     }
   }
 
-  function setChildrenUrl(store: Store, parentUrl: string, parentId: string) {
-    const children = store.all(Entry.where(Entry.alinea.parent.is(parentId)))
-    for (const child of children) {
-      const url = appendPath(parentUrl, child.path)
-      store.update(Entry.where(Entry.id.is(child.id)), {
-        url
+  const Parent = Entry.as('Parent')
+
+  function setChildrenUrl(store: Store, config: Config, parentId: string) {
+    const children = store.all(
+      Entry.where(Entry.alinea.parent.is(parentId)).select({
+        id: Entry.id,
+        path: Entry.path,
+        type: Entry.type,
+        alinea: Entry.alinea,
+        parentPaths: Parent.where(Parent.id.isIn(Entry.parents)).select(
+          Parent.path
+        )
       })
-      setChildrenUrl(store, url, child.id)
+    )
+    for (const child of children) {
+      const type = config.type(child.alinea.workspace, child.type)
+      if (!type) continue
+      const meta = {
+        path: child.path,
+        parentPaths: child.parentPaths,
+        locale: child.alinea.i18n?.locale
+      }
+      const url = createUrl(type, meta)
+      store.update(Entry.where(Entry.id.is(child.id)), {url})
+      setChildrenUrl(store, config, child.id)
     }
   }
 
@@ -293,8 +339,8 @@ export namespace Cache {
         }
         changed.push(id)
         if (existing) {
-          if (existing.url !== entry.url)
-            setChildrenUrl(store, entry.url, entry.id)
+          if (existing.path !== entry.path)
+            setChildrenUrl(store, config, entry.id)
           store.update(condition, entry)
         } else {
           store.insert(Entry, entry)
@@ -316,8 +362,8 @@ export namespace Cache {
         const condition = Entry.where(Entry.id.is(entry.id))
         const existing = store.first(condition)
         if (existing) {
-          if (existing.url !== entry.url)
-            setChildrenUrl(store, entry.url, entry.id)
+          if (existing.path !== entry.path)
+            setChildrenUrl(store, config, entry.id)
           store.update(condition, entry)
         } else {
           store.insert(Entry, entry)

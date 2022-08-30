@@ -20,17 +20,12 @@
         "../..:build",
         "gen:types",
         "gen:bundleTs"
-      ],
-      "files": [
-        "src/**/*.{ts,tsx}"
-      ],
-      "output": [
-        ".next"
       ]
     },
     "dev": {
       "command": "cross-env FORCE_COLOR=1 next dev",
       "dependencies": [
+        "../..:build",
         "gen:types",
         "gen:bundleTs"
       ]

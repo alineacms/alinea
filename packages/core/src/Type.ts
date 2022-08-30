@@ -22,6 +22,12 @@ export namespace Type {
   export type Of<T> = T extends TypeConfig<any, infer U> ? U : never
 }
 
+export interface EntryUrlMeta {
+  path: string
+  parentPaths: Array<string>
+  locale?: string
+}
+
 /** Optional settings to configure a Type */
 export type TypeOptions<R, Q> = {
   /** Entries can be created as children of this entry */
@@ -43,6 +49,8 @@ export type TypeOptions<R, Q> = {
   /** Create indexes on fields of this type */
   // Todo: solve infered type here
   index?: <T>(fields: Fields<T>) => Record<string, Array<Expr<any>>>
+
+  entryUrl?: (meta: EntryUrlMeta) => string
 
   transform?: (field: Expr<R>, pages: Pages<any>) => Expr<Q> | undefined
 }
@@ -92,6 +100,10 @@ export class TypeConfig<R = any, T = R> {
 
   get isContainer() {
     return Boolean(this.options.isContainer)
+  }
+
+  get entryUrl() {
+    return this.options.entryUrl
   }
 
   selection(cursor: Cursor<R>, pages: Pages<any>): Expr<any> | undefined {
