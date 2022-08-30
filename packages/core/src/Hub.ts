@@ -58,6 +58,7 @@ export namespace Hub {
     workspace: string
   }
   export type UploadParams = {
+    parentId: string | undefined
     workspace: string
     root: string
     path: string

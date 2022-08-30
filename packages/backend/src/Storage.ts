@@ -1,9 +1,8 @@
-import {Config, Entry, EntryMetaRaw} from '@alinea/core'
+import {Config, Entry, EntryMetaRaw, EntryUrlMeta} from '@alinea/core'
 import {join} from '@alinea/core/util/Paths'
 import {Store} from '@alinea/store'
 import {Cache} from './Cache'
 import {Loader} from './Loader'
-import {appendPath} from './util/EntryPaths'
 
 export type Changes = {
   write: Array<{id: string; file: string; contents: string}>
@@ -15,12 +14,20 @@ const decoder = new TextDecoder()
 
 export namespace Storage {
   export function entryLocation(
-    entry: {path: string; url: string},
+    {locale, parentPaths, path}: EntryUrlMeta,
     extension: string
   ) {
-    const isIndex = entry.path === '' || entry.path === 'index'
-    return (entry.url + (isIndex ? '/index' : '') + extension).toLowerCase()
+    const segments = (locale ? [locale] : [])
+      .concat(
+        parentPaths
+          .concat(path)
+          .map(segment => (segment === '' ? 'index' : segment))
+      )
+      .join('/')
+    return (segments + extension).toLowerCase()
   }
+
+  const Parent = Entry.as('Parent')
 
   export async function publishChanges(
     config: Config,
@@ -44,7 +51,15 @@ export namespace Storage {
         return join(contentDir, root, file)
       }
       const type = schema.type(entry.type)
-      const location = entryLocation(entry, loader.extension)
+      const parentPaths = store.all(
+        Entry.where(Entry.id.isIn(alinea.parents)).select(Entry.path)
+      )
+      const entryMeta = {
+        path: entryPath,
+        parentPaths,
+        locale: alinea.i18n?.locale
+      }
+      const location = entryLocation(entryMeta, loader.extension)
       if (!type) {
         // Todo: some logging solution so these can end up in the UI
         console.log(`Cannot publish entry of unknown type: ${entry.type}`)
@@ -63,62 +78,86 @@ export namespace Storage {
           loader.format(schema, {...entryData, alinea: meta})
         )
       })
-      const previous = store.first(Entry.where(Entry.id.is(entry.id)))
+      const previous = store.first(
+        Entry.where(Entry.id.is(entry.id)).select({
+          path: Entry.path,
+          parentPaths: Parent.where(Parent.id.isIn(Entry.parents)).select(
+            Parent.path
+          ),
+          locale: Entry.alinea.i18n.locale,
+          root: Entry.root
+        })
+      )
 
       // Cleanup old files
       if (previous) {
         const oldLocation = entryLocation(previous, loader.extension)
         if (oldLocation !== location) {
-          const oldFile = abs(previous.alinea.root, oldLocation)
+          const oldFile = abs(previous.root, oldLocation)
           changes.delete.push({id: entry.id, file: oldFile})
           if (type.isContainer) {
             if (canRename) {
-              const oldFolder = abs(
-                previous.alinea.root,
-                entryLocation(previous, '')
-              )
-              const newFolder = abs(
-                previous.alinea.root,
-                entryLocation(entry, '')
-              )
+              const oldFolder = abs(previous.root, entryLocation(previous, ''))
+              const newFolder = abs(previous.root, entryLocation(entryMeta, ''))
               changes.rename.push({
                 id: entry.id,
                 file: oldFolder,
                 to: newFolder
               })
             } else {
-              renameChildren(entry.url, entry.id)
+              renameChildren(
+                entryMeta.parentPaths.concat(entryMeta.path),
+                entry.id
+              )
               changes.delete.push({
                 id: entry.id,
-                file: abs(previous.alinea.root, entryLocation(previous, ''))
+                file: abs(previous.root, entryLocation(previous, ''))
               })
             }
           }
         }
       }
 
-      function renameChildren(parentUrl: string, parentId: string) {
+      function renameChildren(newPaths: Array<string>, parentId: string) {
         // List every child as write + delete
         const children = store.all(
-          Entry.where(Entry.alinea.parent.is(parentId))
+          Entry.where(Entry.alinea.parent.is(parentId)).select({
+            child: Entry.fields,
+            oldPaths: Parent.where(Parent.id.isIn(Entry.parents)).select(
+              Parent.path
+            )
+          })
         )
-        for (const child of children) {
+        for (const {child, oldPaths} of children) {
           const childFile = abs(
             child.alinea.root,
-            entryLocation(child, loader.extension)
+            entryLocation(
+              {
+                path: child.path,
+                parentPaths: oldPaths,
+                locale: child.alinea.i18n?.locale
+              },
+              loader.extension
+            )
           )
           changes.delete.push({id: child.id, file: childFile})
-          const newUrl = appendPath(parentUrl, child.path)
           const newLocation = abs(
             entry.alinea.root,
-            entryLocation({path: child.path, url: newUrl}, loader.extension)
+            entryLocation(
+              {
+                path: child.path,
+                parentPaths: newPaths,
+                locale: child.alinea.i18n?.locale
+              },
+              loader.extension
+            )
           )
           changes.write.push({
             id: child.id,
             file: newLocation,
             contents: decoder.decode(loader.format(schema, child))
           })
-          renameChildren(newUrl, child.id)
+          renameChildren(newPaths.concat(child.path), child.id)
         }
       }
     }

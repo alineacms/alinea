@@ -133,6 +133,7 @@ function createRouter<T extends Workspaces>(
               workspace,
               root,
               buffer: await (body.get('buffer') as File).arrayBuffer(),
+              parentId: String(body.get('parentId')) || undefined,
               path: String(body.get('path')),
               preview: String(body.get('preview')),
               averageColor: String(body.get('averageColor')),

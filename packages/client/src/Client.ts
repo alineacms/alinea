@@ -73,6 +73,7 @@ export class Client<T extends Workspaces> implements Hub<T> {
     form.append('workspace', workspace as string)
     form.append('root', root as string)
     form.append('path', file.path)
+    form.append('parentId', file.parentId || '')
     if (file.averageColor) form.append('averageColor', file.averageColor)
     if (file.blurHash) form.append('blurHash', file.blurHash)
     if ('width' in file) form.append('width', String(file.width))

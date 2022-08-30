@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "dev": "run-p dev:check dev:next dev:compile",
+    "dev": "wireit",
     "build": "wireit",
     "type": "wireit",
     "test": "wireit",
@@ -19,6 +19,12 @@
     "prepare": "copy-env-cli"
   },
   "wireit": {
+    "dev": {
+      "command": "run-p dev:check dev:next dev:compile",
+      "dependencies": [
+        "./apps/web:gen:types"
+      ]
+    },
     "build": {
       "command": "esbx build",
       "dependencies": [
@@ -29,7 +35,7 @@
       ],
       "output": [
         "dist/out",
-        "packages/**/dist/*"
+        "packages/*/dist/**/*"
       ]
     },
     "type": {

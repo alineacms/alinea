@@ -7,6 +7,7 @@ import {
   outcome
 } from '@alinea/core'
 import {posix as path} from 'node:path'
+import {Cache} from '../Cache'
 import {Data} from '../Data'
 import {FS} from '../FS'
 import {Loader} from '../Loader'
@@ -82,14 +83,20 @@ export class FileData implements Data.Source, Data.Target, Data.Media {
                 const isContainer = Boolean(type.options.isContainer)
                 const url = path.join(target, isIndex ? '' : name)
                 const parentPath = target
+                // Todo: just keep a list of parent ids while we iterate
                 const parents = walkUrl(parentPath)
                   .map(url => parentIndex.get(url)!)
                   .filter(Boolean)
                 const parent = parents[parents.length - 1]
+                const entryUrl = Cache.createUrl(type, {
+                  path: name,
+                  parentPaths: parents.map(parent => parent.path),
+                  locale
+                })
                 const res: Entry = {
                   ...entry,
                   path: name,
-                  url,
+                  url: entryUrl,
                   alinea: {
                     workspace,
                     root: root.name,
