@@ -205,7 +205,7 @@ export namespace Cache {
         .concat(
           meta.parentPaths
             .concat(meta.path)
-            .map(segment => (segment === 'index' ? '' : segment))
+            .filter(segment => segment !== 'index')
         )
         .join('/')
     )
