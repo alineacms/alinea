@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [0.2.6]
+
+- Fix the `Pages.whereRoot` method which did not use the new `alinea.root`
+  location
+
 ## [0.2.5]
 
 - Add a `--fix` option to the generate command, which will write back any
