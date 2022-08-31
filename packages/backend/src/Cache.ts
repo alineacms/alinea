@@ -59,7 +59,9 @@ export namespace Cache {
         const isValid =
           isValidOrderKey(entry.alinea.index) && !seen.has(entry.alinea.index)
         seen.add(entry.alinea.index)
-        return isValid ? entry : {...entry, index: null}
+        return isValid
+          ? entry
+          : {...entry, alinea: {...entry.alinea, index: null}}
       })
     let prev: string | null = null
     entries.forEach((entry, i) => {
@@ -122,12 +124,21 @@ export namespace Cache {
 
   const indexing = new WeakMap()
 
-  export async function create(
-    store: SqliteStore,
-    config: Config,
-    from: Data.Source,
-    logger: Logger = new Logger('Create cache')
-  ) {
+  export interface CacheOptions {
+    store: SqliteStore
+    config: Config
+    from: Data.Source
+    logger?: Logger
+    fix?: boolean
+  }
+
+  export async function create({
+    store,
+    config,
+    from,
+    logger = new Logger('Create cache'),
+    fix
+  }: CacheOptions) {
     if (indexing.has(store)) throw 'Already indexing'
     indexing.set(store, true)
     const endDbSetup = logger.time('Database setup')
