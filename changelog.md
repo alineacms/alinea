@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [0.2.4]
+
+- The previous release was missing the generated css file in the `@alinea/css`
+  package. Build outputs are now cached in the ci step using wireit but this
+  file was not included.
+
 ## [0.2.3]
 
 - The `url` property of entries can now be controlled using the `entryUrl`
