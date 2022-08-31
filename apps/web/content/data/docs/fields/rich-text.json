@@ -44,5 +44,8 @@
       "type": "TypesBlock",
       "types": "RichTextOptions"
     }
-  ]
+  ],
+  "alinea": {
+    "index": "a1"
+  }
 }

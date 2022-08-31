@@ -44,5 +44,8 @@
       "type": "TypesBlock",
       "types": "TextOptions"
     }
-  ]
+  ],
+  "alinea": {
+    "index": "a0"
+  }
 }

@@ -44,5 +44,8 @@
       "type": "TypesBlock",
       "types": "tabs, tab"
     }
-  ]
+  ],
+  "alinea": {
+    "index": "a5"
+  }
 }

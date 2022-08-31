@@ -3,5 +3,9 @@
   "type": "Docs",
   "root": "data",
   "index": "a0",
-  "title": "Docs"
+  "title": "Docs",
+  "alinea": {
+    "index": "a0",
+    "root": "data"
+  }
 }

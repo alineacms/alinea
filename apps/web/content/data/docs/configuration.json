@@ -4,5 +4,7 @@
   "root": "data",
   "index": "Zm4",
   "title": "Configuration",
-  "path": "configuration"
+  "alinea": {
+    "index": "Zm4"
+  }
 }

@@ -6,5 +6,8 @@
   "title": "Content",
   "parents": [
     "docs"
-  ]
+  ],
+  "alinea": {
+    "index": "ZoG"
+  }
 }

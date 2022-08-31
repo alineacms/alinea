@@ -3,5 +3,8 @@
   "type": "Docs",
   "root": "data",
   "index": "Zp",
-  "title": "Deploy to production"
+  "title": "Deploy to production",
+  "alinea": {
+    "index": "Zp"
+  }
 }
