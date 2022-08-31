@@ -35,7 +35,8 @@
       ],
       "output": [
         "dist/out",
-        "packages/*/dist/**/*"
+        "packages/*/dist/**/*",
+        "packages/css/src/generated.css"
       ]
     },
     "type": {
