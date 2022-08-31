@@ -235,7 +235,6 @@ export namespace Cache {
     const parents: Array<string> = []
     const parentPaths: Array<string> = []
     let target = entry.alinea.parent
-    //url = entry.path === 'index' ? '' : entry.path
     while (target) {
       if (parents.includes(target))
         throw createError(400, 'Circular parent reference')
@@ -247,8 +246,7 @@ export namespace Cache {
         })
       )
       if (!parent) break
-      // url = (parent.path === 'index' ? '' : parent.path) + '/' + url
-      parentPaths.push(parent.path === 'index' ? '' : parent.path)
+      parentPaths.unshift(parent.path === 'index' ? '' : parent.path)
       target = parent.parent
     }
     const locale = entry.alinea.i18n?.locale!
