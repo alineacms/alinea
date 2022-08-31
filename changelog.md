@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [0.2.5]
+
+- Add a `--fix` option to the generate command, which will write back any
+  missing or incorrect properties to disk.
+
 ## [0.2.4]
 
 - The previous release was missing the generated css file in the `@alinea/css`
