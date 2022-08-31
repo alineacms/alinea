@@ -29,6 +29,7 @@ prog
     return generate({
       configFile: args.config,
       watch: args.watch,
+      fix: args.fix,
       onAfterGenerate: forwardCommand
     })
   })

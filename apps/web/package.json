@@ -6,6 +6,7 @@
   "scripts": {
     "build": "wireit",
     "dev": "wireit",
+    "generate": "wireit",
     "gen:types": "wireit",
     "gen:bundleTs": "wireit",
     "dev:check": "tsc -w",
@@ -20,6 +21,12 @@
         "../..:build",
         "gen:types",
         "gen:bundleTs"
+      ]
+    },
+    "generate": {
+      "command": "alinea generate --fix",
+      "dependencies": [
+        "../..:build"
       ]
     },
     "dev": {
