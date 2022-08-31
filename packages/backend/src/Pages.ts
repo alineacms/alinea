@@ -169,13 +169,13 @@ class Multiple<P, T> extends Base<P, Array<Page<P, T>>> {
   whereType<K extends string>(type: K) {
     return new Multiple<P, Extract<T, {type: K}>>(
       this.resolver,
-      this.cursor.where(Entry.get('type').is(type as string))
+      this.cursor.where(Entry.type.is(type as string))
     )
   }
   whereRoot(root: string) {
     return new Multiple<P, T>(
       this.resolver,
-      this.cursor.where(Entry.get('root').is(root))
+      this.cursor.where(Entry.alinea.root.is(root))
     )
   }
   fetchUrl<E = T>(url: EV<string>) {
@@ -187,7 +187,7 @@ class Multiple<P, T> extends Base<P, Array<Page<P, T>>> {
   fetchType<C>(type: Collection<C>) {
     return new Single<P, C>(
       this.resolver,
-      this.cursor.where(Entry.get('type').is((type as any).__options.alias))
+      this.cursor.where(Entry.type.is((type as any).__options.alias))
     )
   }
   select<X extends SelectionInput | ((cursor: Cursor<T>) => SelectionInput)>(
@@ -267,7 +267,7 @@ class Single<P, T> extends Base<P, Page<P, T> | null> {
   whereRoot(root: string) {
     return new Single<P, T>(
       this.resolver,
-      this.cursor.where(Entry.get('root').is(root))
+      this.cursor.where(Entry.alinea.root.is(root))
     )
   }
   select<
