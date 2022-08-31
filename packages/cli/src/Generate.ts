@@ -1,7 +1,9 @@
 import {Cache, Data, JsonLoader} from '@alinea/backend'
 import {FileData} from '@alinea/backend/data/FileData'
+import {Storage} from '@alinea/backend/Storage'
 import {createDb} from '@alinea/backend/util/CreateDb'
 import {Config} from '@alinea/core/Config'
+import {Entry} from '@alinea/core/Entry'
 import {createError} from '@alinea/core/ErrorWithCode'
 import {createId} from '@alinea/core/Id'
 import {Outcome, outcome} from '@alinea/core/Outcome'
@@ -149,6 +151,7 @@ export type GenerateOptions = {
   staticDir?: string
   configFile?: string
   watch?: boolean
+  fix?: boolean
   onConfigRebuild?: (outcome: Outcome<Config>) => void
   onCacheRebuild?: (outcome: Outcome<SqliteStore>) => void
   wasmCache?: boolean
@@ -376,7 +379,23 @@ export async function generate(options: GenerateOptions): Promise<Config> {
       watcher.add(files).on('change', reload)
       watcher.add(files).on('unlink', reload)
     }
-    caching = cache().then(() => void 0)
+    caching = cache().then(async store => {
+      if (options.fix) {
+        // Publish computed entries back
+        if (!(source instanceof FileData)) {
+          throw createError(`Cannot fix custom sources`)
+        } else {
+          const changes = await Storage.publishChanges(
+            config,
+            store,
+            JsonLoader,
+            store.all(Entry),
+            true
+          )
+          source.publish({changes})
+        }
+      }
+    })
     await caching
     return {stop: () => watcher?.close()}
   }
@@ -412,25 +431,26 @@ export async function generate(options: GenerateOptions): Promise<Config> {
         customSources.push(exports.default || exports.source)
       }
     }
-    return Data.Source.concat(
-      new FileData({
-        config,
-        fs: fs.promises,
-        loader: JsonLoader,
-        rootDir: cwd
-      }),
-      ...customSources
-    )
+    const files = new FileData({
+      config,
+      fs: fs.promises,
+      loader: JsonLoader,
+      rootDir: cwd
+    })
+    return customSources.length > 0
+      ? Data.Source.concat(files, ...customSources)
+      : files
   }
 
   async function cacheEntries(config: Config, source: Data.Source) {
     const db = await createDb(store)
-    await Cache.create(
-      db,
+    await Cache.create({
+      store: db,
       config,
-      source,
-      quiet ? undefined : new Logger('Generate')
-    )
+      from: source,
+      logger: quiet ? undefined : new Logger('Generate'),
+      fix: options.fix
+    })
     return db
   }
 

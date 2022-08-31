@@ -18,6 +18,10 @@ prog
     '-c, --config',
     `Location of the config file, defaults to "alinea.config.tsx"`
   )
+  .option(
+    '--fix',
+    `Any missing or incorrect properties will be overwritten by their default`
+  )
   .action(async args => {
     ensureNodeResolution()
     ensureReact()
