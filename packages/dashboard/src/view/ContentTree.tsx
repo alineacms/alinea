@@ -150,13 +150,14 @@ export function ContentTree({
     let bId = over.id
     let bIndex = entries.findIndex(entry => entry.id === bId)
     let b = entries[bIndex]
-    // If b is a container and open, drop as a child
-    // Todo: this logic does not work if we're dragging up
-    // ideally we can drop on top of the container
-    const parent =
-      b.alinea.isContainer && isOpen(b.id)
+
+    // Todo:
+    // Currently disabled below: if b is a container and open, drop as a child
+    // This logic also does not work if we're dragging up.
+    // Ideally we can drop on top of the container.
+    const parent = /*b.alinea.isContainer && isOpen(b.id)
         ? index.get(b.source.id)
-        : index.get(b.alinea.parent!)
+        :*/ index.get(b.alinea.parent!)
 
     if (a?.alinea.parent !== parent?.id) {
       // Check if parent of b handles child of type a
