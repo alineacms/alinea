@@ -2,6 +2,31 @@
 
 ## [Unreleased]
 
+## [0.2.3]
+
+- The `url` property of entries can now be controlled using the `entryUrl`
+  function in the type options. Urls are computed during generation and this can
+  help to keep them constant if you're using a web framework that does file
+  system routing. The available paramters are `path`, `parentPaths` and
+  `locale`.
+  For example: making sure a doc page always has an url in
+  the form of `/doc/$path` you can specify `entryUrl` as the following:
+
+  ```tsx
+  type('Doc', {...fields}).configure({
+    entryUrl({path}) {
+      return `/doc/${path}`
+    }
+  })
+  ```
+
+- The iframe used in the `BrowserPreview` component now supports top level
+  navigation so it becomes possible to link the user to a cms route from within.
+  (#246)
+
+- The index of newly created entries will be based on the first child of parent.
+  This makes them consistently sortable when published. (#241)
+
 ## [0.2.2]
 
 - Alinea cloud handshake now automatically includes git information when hosted
