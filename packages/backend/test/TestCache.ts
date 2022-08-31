@@ -84,7 +84,7 @@ const data = new FileData({config, fs, loader: JsonLoader})
 test('create', async () => {
   const {Database} = await sqlite()
   const store = new SqliteStore(new SqlJsDriver(new Database()), createId)
-  await Cache.create(store, config, data)
+  await Cache.create({store, config, from: data})
 })
 
 test.run()

@@ -46,7 +46,12 @@ export function demoStore<T extends Workspaces>(
   }
   return async function createStore() {
     const store = await createDb()
-    await Cache.create(store, config, source, new Logger('Demo store'))
+    await Cache.create({
+      store,
+      config,
+      from: source,
+      logger: new Logger('Demo store')
+    })
     return store
   }
 }

@@ -105,6 +105,6 @@ const source = {
 
 export default async function createExample(wasm = false) {
   const store = await createMemoryStore(wasm)
-  await Cache.create(store, config, source)
+  await Cache.create({store, config, from: source})
   return {config, store}
 }

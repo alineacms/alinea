@@ -105,7 +105,7 @@ const store = await createMemoryStore()
 
 async function index() {
   const entries = await accumulate(data.entries())
-  await Cache.create(store, config, data)
+  await Cache.create({store, config, from: data})
   return entries.sort((a, b) => a.url.localeCompare(b.url))
 }
 
