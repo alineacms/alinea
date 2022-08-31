@@ -72,7 +72,7 @@ export class FileData implements Data.Source, Data.Target, Data.Media {
                   console.log(`\rCould not parse ${location}: ${err}`)
                   continue
                 }
-                if (locale && !entry.alinea.i18n) {
+                if (locale && !entry.alinea?.i18n) {
                   console.log(
                     `\rNo i18n id found for entry with id ${entry.id}`
                   )
@@ -81,8 +81,8 @@ export class FileData implements Data.Source, Data.Target, Data.Media {
                 // Multiple roots in the same source folder can happen
                 if (
                   entry &&
-                  entry.alinea.root &&
-                  entry.alinea.root !== root.name
+                  entry.alinea?.root &&
+                  entry.alinea?.root !== root.name
                 ) {
                   continue
                 }
