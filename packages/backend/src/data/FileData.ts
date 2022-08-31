@@ -78,6 +78,14 @@ export class FileData implements Data.Source, Data.Target, Data.Media {
                   )
                   continue
                 }
+                // Multiple roots in the same source folder can happen
+                if (
+                  entry &&
+                  entry.alinea.root &&
+                  entry.alinea.root !== root.name
+                ) {
+                  continue
+                }
                 const type = schema.type(entry.type)
                 if (!type) continue
                 const isContainer = Boolean(type.options.isContainer)
