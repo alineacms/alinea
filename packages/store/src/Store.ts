@@ -16,6 +16,7 @@ export type Document = {id: string}
 export interface Store {
   all<Row>(cursor: Cursor<Row>, options?: QueryOptions): Array<Row>
   first<Row>(cursor: Cursor<Row>, options?: QueryOptions): Row | null
+  sure<Row>(cursor: Cursor<Row>, options?: QueryOptions): Row
   count<Row>(cursor: Cursor<Row>, options?: QueryOptions): number
   delete<Row>(cursor: Cursor<Row>, options?: QueryOptions): {changes: number}
   insert<Row>(

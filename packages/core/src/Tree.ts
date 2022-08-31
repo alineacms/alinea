@@ -21,9 +21,17 @@ export namespace Tree {
   export function parents(id: EV<string>) {
     const Self = Entry.as('Self')
     const Parent = Entry.as('Parent')
+    const parentIds = Self.alinea.parents.each()
+    const parentId = parentIds.fields.toExpr()
     return Self.where(Self.id.is(id))
-      .innerJoin(Parent, Parent.id.isIn(Self.alinea.parents.each()))
-      .select(Parent.fields)
+      .select(
+        parentIds
+          .innerJoin(Parent, Parent.id.is(parentId))
+          .select(Parent.fields)
+      )
+      .first()
+      .toExpr()
+      .each()
   }
 
   export function parent(id: EV<string>) {

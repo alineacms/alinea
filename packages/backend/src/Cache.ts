@@ -6,6 +6,7 @@ import {
   EntryStatus,
   EntryUrlMeta,
   outcome,
+  Tree,
   Type
 } from '@alinea/core'
 import {Search} from '@alinea/core/Search'
@@ -304,9 +305,7 @@ export namespace Cache {
         path: Entry.path,
         type: Entry.type,
         alinea: Entry.alinea,
-        parentPaths: Parent.where(Parent.id.isIn(Entry.parents)).select(
-          Parent.path
-        )
+        parentPaths: Tree.parents(Entry.id).select(Parent.path)
       })
     )
     for (const child of children) {

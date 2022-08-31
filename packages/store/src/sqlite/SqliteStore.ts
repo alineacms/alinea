@@ -85,7 +85,9 @@ export class SqliteStore implements Store {
   }
 
   sure<Row>(cursor: Cursor<Row>, options?: QueryOptions): Row {
-    return this.first(cursor, options)!
+    const res = this.first(cursor, options)
+    if (!res) throw new Error(`Not found`)
+    return res
   }
 
   delete<Row>(cursor: Cursor<Row>, options?: QueryOptions): {changes: number} {

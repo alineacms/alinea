@@ -157,8 +157,8 @@ export class CursorImpl<Row> {
     })
   }
 
-  toExpr() {
-    return new Expr(ExprData.create(this))
+  toExpr(): Expr<Row> {
+    return new Expr<Row>(ExprData.create(this))
   }
 
   toJSON() {

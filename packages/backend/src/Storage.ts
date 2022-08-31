@@ -1,4 +1,4 @@
-import {Config, Entry, EntryMetaRaw, EntryUrlMeta} from '@alinea/core'
+import {Config, Entry, EntryMetaRaw, EntryUrlMeta, Tree} from '@alinea/core'
 import {join} from '@alinea/core/util/Paths'
 import {Store} from '@alinea/store'
 import {Cache} from './Cache'
@@ -51,8 +51,13 @@ export namespace Storage {
         return join(contentDir, root, file)
       }
       const type = schema.type(entry.type)
-      const parentPaths = store.all(
-        Entry.where(Entry.id.isIn(alinea.parents)).select(Entry.path)
+      if (!type) {
+        // Todo: some logging solution so these can end up in the UI
+        console.log(`Cannot publish entry of unknown type: ${entry.type}`)
+        continue
+      }
+      const parentPaths = alinea.parents.map(parentId =>
+        store.sure(Entry.where(Entry.id.is(parentId)).select(Entry.path))
       )
       const entryMeta = {
         path: entryPath,
@@ -60,11 +65,6 @@ export namespace Storage {
         locale: alinea.i18n?.locale
       }
       const location = entryLocation(entryMeta, loader.extension)
-      if (!type) {
-        // Todo: some logging solution so these can end up in the UI
-        console.log(`Cannot publish entry of unknown type: ${entry.type}`)
-        continue
-      }
       const file = abs(alinea.root, location)
       const meta: EntryMetaRaw = {
         index: alinea.index,
@@ -81,9 +81,7 @@ export namespace Storage {
       const previous = store.first(
         Entry.where(Entry.id.is(entry.id)).select({
           path: Entry.path,
-          parentPaths: Parent.where(Parent.id.isIn(Entry.parents)).select(
-            Parent.path
-          ),
+          parentPaths: Tree.parents(Entry.id).select(parent => parent.path),
           locale: Entry.alinea.i18n.locale,
           root: Entry.root
         })
