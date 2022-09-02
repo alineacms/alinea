@@ -1,10 +1,10 @@
 .root {
   cursor: default;
   position: relative;
-  border-radius: 12px;
+  border-radius: 8px;
   background: var(--alinea-lift);
-  box-shadow: 0 1px 0 var(--alinea-inner-outline);
-  border: 1px solid var(--alinea-inner-outline);
+  box-shadow: 0 2px 3.5px var(--alinea-shadow);
+  // border: 1px solid var(--alinea-inner-outline);
 }
 
 .row {

@@ -30,25 +30,25 @@
 @mixin light-theme {
   --alinea-hue: 240;
   --alinea-saturation: 30%;
-  --alinea-positive: var(--alinea-hue), var(--alinea-saturation), 97%;
+  --alinea-positive: var(--alinea-hue), var(--alinea-saturation), 100%;
   --alinea-negative: 212, 18%, 14%;
   --alinea-background: hsl(var(--alinea-positive));
   --alinea-foreground: hsl(197, 21%, 6%);
-  --alinea-foreground-faded: hsl(203, 5%, 25%);
+  --alinea-foreground-faded: #1a1a1b;
   --alinea-toolbar: hsl(var(--alinea-hue), var(--alinea-saturation), 98%);
   --alinea-inner: hsl(var(--alinea-hue), var(--alinea-saturation), 98.5%);
   --alinea-inner-outline: #dcdce4;
   --alinea-highlight: hsla(var(--alinea-negative), 0.06);
-  --alinea-lift: hsl(var(--alinea-hue), var(--alinea-saturation), 96%);
-  --alinea-selected: hsl(var(--alinea-hue), var(--alinea-saturation), 100%);
-  --alinea-outline: hsl(var(--alinea-hue), var(--alinea-saturation), 89%);
+  --alinea-lift: white;
+  --alinea-selected: hsl(0, 0%, 94%);
+  --alinea-outline: #f4f4f4;
   --alinea-shadow: rgba(0, 0, 0, 0.08);
-  --alinea-fields: hsl(0, 0%, 100%);
-  --alinea-fields-foreground: #1e282e;
-  --alinea-fields-shadow: 0 0px 0 1px #ececec;
-  --alinea-fields-selected: white;
-  --alinea-fields-focus: #dcdce4;
-  --alinea-focus-foreground: hsl(var(--alinea-negative));
+  --alinea-fields: hsl(0, 0%, 97%);
+  --alinea-fields-foreground: #aaa9aa;
+  --alinea-fields-shadow: 0 0px 0 1px hsl(0, 0%, 97%);
+  --alinea-fields-selected: #f3f3f3;
+  --alinea-fields-focus: var(--alinea-accent);
+  --alinea-focus-foreground: var(--alinea-accent);
   --alinea-divider-top: 0 -1px 0 rgba(0, 0, 0, 0.06),
     inset 0 1px 0 rgba(255, 255, 255, 0.2);
   --alinea-divider-bottom: 0 1px 0 rgba(255, 255, 255, 0.2),
@@ -60,6 +60,7 @@
   --alinea-border-radius: 8px;
   color: var(--alinea-foreground-faded);
   font-size: 14px;
+  font-weight: 500;
   font-display: block;
   font-family: Inter, sans-serif;
 

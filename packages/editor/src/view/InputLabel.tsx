@@ -28,7 +28,7 @@ export const LabelHeader = memo(function LabelHeader({
     <header className={styles.header(size, {focused})}>
       <HStack center wrap gap={8}>
         <HStack center gap={8} className={styles.header.title()}>
-          {Icon && <Icon />}
+          {/*Icon && <Icon />*/}
           <span>{renderLabel(label)}</span>
         </HStack>
         {optional && <Chip>Optional</Chip>}
