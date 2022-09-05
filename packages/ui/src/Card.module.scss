@@ -3,8 +3,7 @@
   position: relative;
   border-radius: 8px;
   background: var(--alinea-lift);
-  box-shadow: 0 2px 3.5px var(--alinea-shadow);
-  // border: 1px solid var(--alinea-inner-outline);
+  box-shadow: 0 2px 4px var(--alinea-shadow), var(--alinea-divider-top);
 }
 
 .row {
@@ -17,12 +16,12 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 10px;
+  padding: 10px;
 }
 
 .title {
-  font-size: 12.5px;
-  font-weight: bold;
+  font-size: 13px;
+  font-weight: 600;
   height: 26px;
   display: flex;
   align-items: center;
@@ -32,10 +31,10 @@
 
 .content {
   flex-grow: 1;
-  padding: 10px;
+  padding: 14px 10px;
 
   .header + & {
-    padding-top: 0;
+    padding-top: 4px;
   }
 }
 

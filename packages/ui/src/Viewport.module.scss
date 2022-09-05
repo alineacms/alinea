@@ -25,6 +25,7 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.08);
   --alinea-divider-bottom: 0 1px 0 rgba(255, 255, 255, 0.08),
     inset 0 -1px 0 rgba(0, 0, 0, 0.25);
+  --alinea-title-foreground: #ffffff;
 }
 
 @mixin light-theme {
@@ -42,7 +43,7 @@
   --alinea-lift: white;
   --alinea-selected: hsl(0, 0%, 94%);
   --alinea-outline: #f4f4f4;
-  --alinea-shadow: rgba(0, 0, 0, 0.08);
+  --alinea-shadow: rgba(0, 0, 0, 0.1);
   --alinea-fields: hsl(0, 0%, 97%);
   --alinea-fields-foreground: #aaa9aa;
   --alinea-fields-shadow: 0 0px 0 1px hsl(0, 0%, 97%);
@@ -53,6 +54,7 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.2);
   --alinea-divider-bottom: 0 1px 0 rgba(255, 255, 255, 0.2),
     inset 0 -1px 0 rgba(0, 0, 0, 0.06);
+  --alinea-title-foreground: rgb(62, 64, 67);
 }
 
 .root {
@@ -60,8 +62,6 @@
   --alinea-border-radius: 8px;
   color: var(--alinea-foreground-faded);
   font-size: 14px;
-  font-weight: 500;
-  font-display: block;
   font-family: Inter, sans-serif;
 
   @media (prefers-color-scheme: light) {

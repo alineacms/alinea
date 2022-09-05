@@ -3,9 +3,9 @@
   flex-wrap: wrap;
   margin: 0 6px 10px 6px;
   gap: 8px;
-  // border-bottom: 1px solid var(--alinea-outline);
-  // padding-bottom: 8px;
-  //box-shadow: var(--alinea-divider-bottom);
+  background: var(--alinea-selected);
+  border-radius: var(--alinea-border-radius);
+  padding: 1.5px;
 }
 
 .trigger {
@@ -17,16 +17,13 @@
   font: inherit;
   padding: 8px 14px;
   cursor: pointer;
-  opacity: 0.9;
-  //border-bottom: 1px solid transparent;
-  margin-bottom: -1px;
-  font-size: 12.5px;
+  opacity: 0.7;
+  font-size: 13px;
   line-height: 1.1;
-  font-weight: bold;
   outline: none;
-  border-radius: var(--alinea-border-radius);
-  //border-top-left-radius: var(--alinea-border-radius);
-  //border-top-right-radius: var(--alinea-border-radius);
+  border-radius: calc(var(--alinea-border-radius) - 2.5px);
+  font-weight: 600;
+  transition: 0.25s ease-out;
 
   &:hover {
     opacity: 1;
@@ -35,7 +32,7 @@
 
   &.is-selected {
     opacity: 1;
-    //border-color: var(--alinea-accent);
-    background: var(--alinea-selected);
+    background: var(--alinea-background);
+    box-shadow: 0 2px 3.5px var(--alinea-shadow), var(--alinea-divider-top);
   }
 }
