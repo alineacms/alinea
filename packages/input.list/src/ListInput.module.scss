@@ -21,7 +21,7 @@
   }
 
   &.is-overlay {
-    border-radius: 12px;
+    border-radius: 8px;
     box-shadow: 0 2px 30px var(--alinea-shadow);
     overflow: hidden;
     background: var(--alinea-lift);
@@ -33,18 +33,18 @@
   top: 0;
   left: 0;
   width: 100%;
-  height: 12px;
-  border-top: 1px solid var(--alinea-accent);
+  height: 8px;
+  border-top: 2px solid var(--alinea-accent);
   opacity: 0;
   transition: opacity 0.25s ease-out;
 
   &:before {
     content: '';
     position: absolute;
-    top: -12px;
+    top: -8px;
     left: 0;
     width: 100%;
-    height: 12px;
+    height: 8px;
   }
 
   &.is-first {
@@ -55,6 +55,7 @@
   &:hover,
   &.is-open {
     opacity: 1;
+    transition-delay: 0.1s;
     z-index: 1;
   }
 
