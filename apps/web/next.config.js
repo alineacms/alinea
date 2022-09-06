@@ -5,11 +5,12 @@ module.exports = {
   ) => {
     if (config.name === 'edge-server') {
       config.resolve.conditionNames = ['worker', 'import', 'require']
-      config.experiments = {...config.experiments, outputModule: true}
-      config.externalsType = 'module'
-      config.externals = '@alinea/sqlite-wasm'
+      config.module.rules.unshift({
+        test: /\.wasm$/,
+        loader: 'next-middleware-wasm-loader',
+        type: 'javascript/auto'
+      })
     }
-    // Important: return the modified config
     return config
   },
   productionBrowserSourceMaps: true,
