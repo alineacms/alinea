@@ -5,18 +5,9 @@ module.exports = {
   ) => {
     if (config.name === 'edge-server') {
       config.resolve.conditionNames = ['worker', 'import', 'require']
-      config.module.rules.push({
-        test: /\.wasm$/,
-        type: 'javascript/auto',
-        use: [
-          {
-            loader: 'webassembly-loader',
-            options: {
-              export: 'async-instance'
-            }
-          }
-        ]
-      })
+      config.experiments = {...config.experiments, outputModule: true}
+      config.externalsType = 'module'
+      config.externals = '@alinea/sqlite-wasm'
     }
     // Important: return the modified config
     return config
