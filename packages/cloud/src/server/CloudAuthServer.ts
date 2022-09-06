@@ -130,7 +130,7 @@ export class CloudAuthServer implements Auth.Server {
         // Store the token in a cookie and redirect to the dashboard
         // Todo: add expires and max-age based on token expiration
         const target = new URL(this.dashboardUrl, url)
-        return router.redirect(this.dashboardUrl, {
+        return router.redirect(target.href, {
           status: 302,
           headers: {
             'set-cookie': router.cookie({
@@ -164,7 +164,7 @@ export class CloudAuthServer implements Auth.Server {
             console.error(e)
           }
 
-          return router.redirect(this.dashboardUrl, {
+          return router.redirect(target.href, {
             status: 302,
             headers: {
               'set-cookie': router.cookie({
