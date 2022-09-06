@@ -31,8 +31,8 @@
 }
 
 @mixin light-theme {
-  --alinea-hue: 240;
-  --alinea-saturation: 30%;
+  --alinea-hue: 200;
+  --alinea-saturation: 12%;
   --alinea-positive: var(--alinea-hue), var(--alinea-saturation), 100%;
   --alinea-negative: 212, 18%, 14%;
   --alinea-background: hsl(var(--alinea-positive));
@@ -43,10 +43,10 @@
   --alinea-inner-outline: #dcdce4;
   --alinea-highlight: hsla(var(--alinea-negative), 0.06);
   --alinea-lift: white;
-  --alinea-selected: hsl(0, 0%, 94%);
+  --alinea-selected: hsl(200, 12%, 93.5%);
   --alinea-outline: #f4f4f4;
   --alinea-shadow: rgba(0, 0, 0, 0.1);
-  --alinea-fields: hsl(0, 0%, 97%);
+  --alinea-fields: hsl(200, 12%, 96.5%);
   --alinea-fields-foreground: #696969;
   --alinea-fields-shadow: 0 0px 0 1px hsl(0, 0%, 97%);
   --alinea-fields-selected: #f3f3f3;

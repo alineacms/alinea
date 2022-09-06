@@ -52,7 +52,7 @@
   }
 
   &[aria-selected] &-inner {
-    background: var(--alinea-fields-focus);
+    background: var(--alinea-inner-outline);
     color: var(--alinea-focus-foreground);
   }
 }
