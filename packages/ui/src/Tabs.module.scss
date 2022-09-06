@@ -1,11 +1,12 @@
 .list {
   display: flex;
-  flex-wrap: wrap;
   margin: 0 6px 10px 6px;
   gap: 8px;
   background: var(--alinea-selected);
   border-radius: var(--alinea-border-radius);
-  padding: 1.5px;
+  padding: 2px;
+  overflow: auto;
+  max-width: 100%;
 }
 
 .trigger {
@@ -24,6 +25,8 @@
   border-radius: calc(var(--alinea-border-radius) - 2.5px);
   font-weight: 600;
   transition: 0.25s ease-out;
+  white-space: nowrap;
+  color: var(--alinea-tabs-trigger-foreground);
 
   &:hover {
     opacity: 1;
@@ -32,7 +35,7 @@
 
   &.is-selected {
     opacity: 1;
-    background: var(--alinea-background);
+    background: var(--alinea-tabs-trigger-background);
     box-shadow: 0 2px 3.5px var(--alinea-shadow), var(--alinea-divider-top);
   }
 }

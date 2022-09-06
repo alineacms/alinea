@@ -12,7 +12,6 @@ import {IcRoundCheck} from '@alinea/ui/icons/IcRoundCheck'
 import {IcRoundEdit} from '@alinea/ui/icons/IcRoundEdit'
 import {IcRoundInsertDriveFile} from '@alinea/ui/icons/IcRoundInsertDriveFile'
 import {IcRoundRotateLeft} from '@alinea/ui/icons/IcRoundRotateLeft'
-import {IcRoundWarning} from '@alinea/ui/icons/IcRoundWarning'
 import {MdiSourceBranch} from '@alinea/ui/icons/MdiSourceBranch'
 import {Fragment, Suspense, useState} from 'react'
 import {
@@ -176,14 +175,14 @@ function AppAuthenticated() {
                     </Routes>
                   </Suspense>
                 </div>
-                <Statusbar.Root>
+                {/*<Statusbar.Root>
                   <DraftsStatusSummary />
                   {!config.hasAuth && (
                     <Statusbar.Status icon={IcRoundWarning}>
                       Not using authentication
                     </Statusbar.Status>
                   )}
-                </Statusbar.Root>
+                  </Statusbar.Root>*/}
               </Viewport>
             </Sidebar.Provider>
           </Toolbar.Provider>
@@ -232,6 +231,7 @@ function EntryRoute({id}: EntryRouteProps) {
       {draft ? (
         <Suspense fallback={<Loader absolute />}>
           <View
+            key={draft.id}
             initialMode={EditMode.Editing}
             draft={draft}
             isLoading={isLoading}

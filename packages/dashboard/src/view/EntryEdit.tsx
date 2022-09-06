@@ -69,8 +69,10 @@ export function EntryEdit({initialMode, draft, isLoading}: EntryEditProps) {
   }, [draft, isTranslating, locale])
   return (
     <>
-      <Main className={styles.root()}>
-        <EntryHeader mode={mode} setMode={setMode} />
+      <Main
+        className={styles.root()}
+        head={<EntryHeader mode={mode} setMode={setMode} />}
+      >
         <Main.Container>
           <EntryTitle
             backLink={

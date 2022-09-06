@@ -3,7 +3,8 @@
   position: relative;
   border-radius: 8px;
   background: var(--alinea-lift);
-  box-shadow: 0 2px 4px var(--alinea-shadow), var(--alinea-divider-top);
+  box-shadow: 0 2px 4px var(--alinea-shadow);
+  border: 1px solid var(--alinea-shadow);
 }
 
 .row {

@@ -26,6 +26,8 @@
   --alinea-divider-bottom: 0 1px 0 rgba(255, 255, 255, 0.08),
     inset 0 -1px 0 rgba(0, 0, 0, 0.25);
   --alinea-title-foreground: #ffffff;
+  --alinea-tabs-trigger-foreground: white;
+  --alinea-tabs-trigger-background: hsl(215, 17%, 35%);
 }
 
 @mixin light-theme {
@@ -45,7 +47,7 @@
   --alinea-outline: #f4f4f4;
   --alinea-shadow: rgba(0, 0, 0, 0.1);
   --alinea-fields: hsl(0, 0%, 97%);
-  --alinea-fields-foreground: #aaa9aa;
+  --alinea-fields-foreground: #696969;
   --alinea-fields-shadow: 0 0px 0 1px hsl(0, 0%, 97%);
   --alinea-fields-selected: #f3f3f3;
   --alinea-fields-focus: var(--alinea-accent);
@@ -55,6 +57,8 @@
   --alinea-divider-bottom: 0 1px 0 rgba(255, 255, 255, 0.2),
     inset 0 -1px 0 rgba(0, 0, 0, 0.06);
   --alinea-title-foreground: rgb(62, 64, 67);
+  --alinea-tabs-trigger-foreground: inherit;
+  --alinea-tabs-trigger-background: white;
 }
 
 .root {
