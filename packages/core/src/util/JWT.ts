@@ -2,8 +2,8 @@
 // Which seems to be based on https://github.com/pose/webcrypto-jwt/blob/d417595d85d993fe2b15d3730683a3836ef0741b/index.js
 // And: https://github.com/auth0/node-jsonwebtoken
 
-import {base64url} from './Encoding'
 import {crypto} from '@alinea/iso'
+import {base64, base64url} from './Encoding'
 
 const textDecoder = new TextDecoder()
 const textEncoder = new TextEncoder()
@@ -65,7 +65,7 @@ function importKey(
   if (secret.startsWith('-----BEGIN'))
     return crypto.subtle.importKey(
       'pkcs8',
-      base64url.parse(
+      base64.parse(
         secret
           .replace(/-----BEGIN.*?-----/g, '')
           .replace(/-----END.*?-----/g, '')
