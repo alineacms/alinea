@@ -32,7 +32,7 @@
     "@alinea/client": "0.0.0",
     "@alinea/core": "0.0.0",
     "@alinea/iso": "^0.1.21",
-    "@alinea/sqlite-wasm": "^0.1.10",
+    "@alinea/sqlite-wasm": "^0.1.11",
     "@alinea/store": "0.0.0",
     "@esbx/eval": "^0.0.19",
     "chokidar": "^3.5.3",

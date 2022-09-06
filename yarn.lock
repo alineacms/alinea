@@ -68,7 +68,7 @@ __metadata:
   dependencies:
     "@alinea/core": 0.0.0
     "@alinea/iso": ^0.1.21
-    "@alinea/sqlite-wasm": ^0.1.10
+    "@alinea/sqlite-wasm": ^0.1.11
     "@alinea/store": 0.0.0
     "@types/js-yaml": ^4.0.5
     "@types/md5": ^2.3.2
@@ -88,7 +88,7 @@ __metadata:
     "@alinea/client": 0.0.0
     "@alinea/core": 0.0.0
     "@alinea/iso": ^0.1.21
-    "@alinea/sqlite-wasm": ^0.1.10
+    "@alinea/sqlite-wasm": ^0.1.11
     "@alinea/store": 0.0.0
     "@esbx/eval": ^0.0.19
     "@types/compression": ^1.7.2
@@ -534,12 +534,12 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@alinea/sqlite-wasm@npm:^0.1.10":
-  version: 0.1.10
-  resolution: "@alinea/sqlite-wasm@npm:0.1.10"
+"@alinea/sqlite-wasm@npm:^0.1.11":
+  version: 0.1.11
+  resolution: "@alinea/sqlite-wasm@npm:0.1.11"
   dependencies:
     "@alinea/iso": "*"
-  checksum: ea5c5137008a95f7d251713f84b747cda9ef677823e0d262f4d319658b5dc36ef953c4a21b297f0b4549733b93a985b3cd42c9f3536666e13051c40be98dd80d
+  checksum: 2ae1c3878e77c1d1b6172f63f217e4c135c68d329070c98e5f55eacfb4e5d35770f32a1c7692be747636ac02d6e568ee3e76f764ef90017aadd71ed9657d01f6
   languageName: node
   linkType: hard
 
@@ -4131,7 +4131,7 @@ __metadata:
     "@alinea/input.select": 0.0.0
     "@alinea/input.tabs": 0.0.0
     "@alinea/input.text": 0.0.0
-    "@alinea/sqlite-wasm": ^0.1.10
+    "@alinea/sqlite-wasm": ^0.1.11
     "@alinea/ui": 0.0.0
   bin:
     alinea: ./dist/cli.js
