@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [0.2.7]
+
+- UI tweaks
+
 ## [0.2.6]
 
 - Fix the `Pages.whereRoot` method which did not use the new `alinea.root`
