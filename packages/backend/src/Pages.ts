@@ -75,7 +75,7 @@ class PageResolver<T> {
               this.processCallbacks.delete(id)
             })
         }
-        return undefined
+        return inner ? Promise.all(inner).then(() => void 0) : undefined
       }
     )
     await Promise.all(tasks.filter(Boolean))
