@@ -125,9 +125,7 @@ export function Header({links, menu, transparent}: HeaderProps) {
             />
           </Layout.Container>
           <div className={styles.mobilemenu.nav()}>
-            <Layout.Container>
-              <NavTree nav={nav} />
-            </Layout.Container>
+            <NavTree nav={nav} />
           </div>
         </div>
       </div>
