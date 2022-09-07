@@ -5,7 +5,7 @@ import {MdiGithub} from '@alinea/ui/icons/MdiGithub'
 import {MdiTwitterCircle} from '@alinea/ui/icons/MdiTwitterCircle'
 import Link from 'next/link'
 import {useRouter} from 'next/router'
-import {MouseEvent, useEffect, useMemo, useState} from 'react'
+import {useEffect, useMemo, useState} from 'react'
 import {Logo} from './branding/Logo'
 import css from './Header.module.scss'
 import {Layout} from './Layout'
@@ -67,6 +67,7 @@ export type HeaderProps = {
 }
 
 export function Header({links, menu, transparent}: HeaderProps) {
+  const router = useRouter()
   const [isMobileOpen, setIsMobileOpen] = useState<boolean>(false)
   function toggleMobileMenu() {
     setIsMobileOpen(!isMobileOpen)
@@ -100,6 +101,9 @@ export function Header({links, menu, transparent}: HeaderProps) {
     if (isMobileOpen) document.body.style.overflow = 'hidden'
     else document.body.style.overflow = ''
   }, [isMobileOpen])
+  useEffect(() => {
+    if (isMobileOpen) setIsMobileOpen(false)
+  }, [router.asPath])
   return (
     <>
       <header className={styles.root({transparent})}>
@@ -111,20 +115,7 @@ export function Header({links, menu, transparent}: HeaderProps) {
           />
         </Layout.Container>
       </header>
-      <div
-        className={styles.mobilemenu({open: isMobileOpen})}
-        onClick={(e: MouseEvent<HTMLDivElement>) => {
-          let target: Node | null = e.target as Node
-          while (target) {
-            if (target.nodeName !== 'A') {
-              target = target.parentNode
-            } else {
-              setIsMobileOpen(false)
-              break
-            }
-          }
-        }}
-      >
+      <div className={styles.mobilemenu({open: isMobileOpen})}>
         <div className={styles.mobilemenu.container()}>
           <Layout.Container className={styles.mobilemenu.top()}>
             <Menu
