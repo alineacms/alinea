@@ -220,7 +220,7 @@ function HomePageHero({headline, byline, action, screenshot}: HomePageSchema) {
               )}
               <WebTypo.Link
                 className={styles.hero.demo()}
-                href="/demo"
+                href="https://demo.alinea.sh"
                 target="_blank"
               >
                 <HStack center gap={8}>
