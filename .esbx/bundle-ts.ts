@@ -4,7 +4,7 @@ import path from 'path'
 
 export const bundleTs = {
   async action() {
-    const root = './dist'
+    const root = './dist/types'
     const bundleRoot = './node_modules/.cache/bundle'
     await fs.mkdirp(bundleRoot)
     const pkgs = await fs.readdir(root)

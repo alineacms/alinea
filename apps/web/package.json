@@ -52,7 +52,6 @@
       "dependencies": [
         "../..:type"
       ],
-      "files": [],
       "output": [
         "src/data/alinea.d.ts"
       ]
