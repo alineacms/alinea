@@ -25,8 +25,9 @@ export default function Demo() {
             <Typo.H1>Demo</Typo.H1>
             <Typo.P>
               This is a demo showcasing the{' '}
-              <Typo.Link href="/">Alinea CMS</Typo.Link> dashboard. It is not
-              connected to a server, any changes you make are persisted locally.
+              <Typo.Link href="https://alinea.sh">Alinea CMS</Typo.Link>{' '}
+              dashboard. It is not connected to a server, any changes you make
+              are persisted locally.
             </Typo.P>
             <HStack>
               <Button size="large" onClick={() => setReminderOpen(false)}>
