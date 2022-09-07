@@ -1,8 +1,6 @@
 {
   "id": "25HTEDPlYoRaZkCuSnix0fnYQdZ",
   "type": "Doc",
-  "root": "data",
-  "index": "Zll",
   "title": "Dashboard",
   "blocks": [
     {
@@ -99,6 +97,6 @@
     }
   ],
   "alinea": {
-    "index": "Zll"
+    "index": "Zh"
   }
 }

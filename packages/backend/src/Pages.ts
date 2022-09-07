@@ -55,6 +55,9 @@ class PageResolver<T> {
     const tasks = iter<Promise<void> | undefined>(
       value,
       (value, setValue, inner) => {
+        const depends = inner
+          ? Promise.all(inner.filter(Boolean)).then(() => void 0)
+          : undefined
         const isProcessValue =
           value &&
           typeof value === 'object' &&
@@ -64,18 +67,18 @@ class PageResolver<T> {
           const id = value['$__process']
           const expr = value['$__expr']
           const fn = this.processCallbacks.get(id)
-          if (!fn) return undefined
-          return Promise.all(inner.filter(Boolean))
-            .then(() => {
-              return Promise.resolve(fn(expr)).then((result: any) =>
-                setValue(result)
-              )
-            })
-            .finally(() => {
-              this.processCallbacks.delete(id)
-            })
+          if (fn)
+            return Promise.resolve(depends)
+              .then(() => {
+                return Promise.resolve(fn(expr)).then((result: any) =>
+                  setValue(result)
+                )
+              })
+              .finally(() => {
+                this.processCallbacks.delete(id)
+              })
         }
-        return inner ? Promise.all(inner).then(() => void 0) : undefined
+        return depends
       }
     )
     await Promise.all(tasks.filter(Boolean))
@@ -414,7 +417,8 @@ function iter<T>(
     const deps: Array<T> = []
     value.forEach((item, i) => {
       if (!item) return
-      deps.push(fn(item, v => (value[i] = v), iter(item, fn)))
+      const dep = fn(item, v => (value[i] = v), iter(item, fn))
+      if (dep) deps.push(dep)
     })
     return deps
   }
@@ -422,7 +426,8 @@ function iter<T>(
     const deps: Array<T> = []
     for (const key of Object.keys(value)) {
       if (!value[key]) continue
-      deps.push(fn(value[key], v => (value[key] = v), iter(value[key], fn)))
+      const dep = fn(value[key], v => (value[key] = v), iter(value[key], fn))
+      if (dep) deps.push(dep)
     }
     return deps
   }

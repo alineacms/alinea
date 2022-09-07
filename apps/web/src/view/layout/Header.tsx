@@ -1,15 +1,15 @@
-import {fromModule, HStack, Stack, Styler, VStack} from '@alinea/ui'
+import {fromModule, HStack, Stack, Styler} from '@alinea/ui'
 import {IcRoundClose} from '@alinea/ui/icons/IcRoundClose'
 import {IcRoundHamburger} from '@alinea/ui/icons/IcRoundHamburger'
 import {MdiGithub} from '@alinea/ui/icons/MdiGithub'
 import {MdiTwitterCircle} from '@alinea/ui/icons/MdiTwitterCircle'
 import Link from 'next/link'
 import {useRouter} from 'next/router'
-import {MouseEvent, useState} from 'react'
-import AnimateHeight from 'react-animate-height'
+import {MouseEvent, useEffect, useMemo, useState} from 'react'
 import {Logo} from './branding/Logo'
 import css from './Header.module.scss'
 import {Layout} from './Layout'
+import {Nav, NavTree, useNavTree} from './NavTree'
 
 const styles = fromModule(css)
 
@@ -52,72 +52,136 @@ function Links({links, style}: LinksProps) {
   )
 }
 
+type Link = {
+  id: string
+  type: string
+  url: string
+  active?: string
+  label: string
+}
+
 export type HeaderProps = {
-  links?: Array<{
-    id: string
-    type: string
-    url: string
-    active?: string
-    label: string
-  }>
+  links?: Array<Link>
+  menu: Nav
   transparent: boolean
 }
 
-export function Header({links, transparent}: HeaderProps) {
-  const [openMobilemenu, setOpenMobilemenu] = useState<boolean>(false)
+export function Header({links, menu, transparent}: HeaderProps) {
+  const [isMobileOpen, setIsMobileOpen] = useState<boolean>(false)
+  function toggleMobileMenu() {
+    setIsMobileOpen(!isMobileOpen)
+  }
+  const mobileTree: Nav = useMemo(() => {
+    return [
+      {id: 'home', url: '/', title: 'Home'},
+      {id: 'docs', url: '/docs', title: 'Docs'},
+      ...menu.map(page => {
+        if (page.parent) return page
+        return {...page, parent: 'docs'}
+      }),
+      {id: 'developer', title: 'Developer'},
+      {
+        parent: 'developer',
+        id: 'changelog',
+        url: '/changelog',
+        title: 'Changelog'
+      },
+      {parent: 'developer', id: 'api', url: '/types/alinea', title: 'API'},
+      {
+        parent: 'developer',
+        id: 'playground',
+        url: '/playground',
+        title: 'Playground'
+      }
+    ]
+  }, [links, menu])
+  const nav = useNavTree(mobileTree)
+  useEffect(() => {
+    if (isMobileOpen) document.body.style.overflow = 'hidden'
+    else document.body.style.overflow = ''
+  }, [isMobileOpen])
   return (
     <>
       <header className={styles.root({transparent})}>
         <Layout.Container style={{height: '100%'}}>
-          <HStack center gap={36} className={styles.root.inner()}>
-            <Link href="/">
-              <a className={styles.root.logo()}>
-                <Logo />
-              </a>
-            </Link>
-            <Stack.Center style={{height: '100%'}}>
-              <HStack as="nav" center className={styles.root.nav()}>
-                <Links links={links} style={styles.root.nav.link} />
-              </HStack>
-            </Stack.Center>
-            <HStack gap={16} center>
-              <a
-                href="https://github.com/alineacms/alinea"
-                target="_blank"
-                className={styles.root.social()}
-              >
-                <MdiGithub className={styles.root.social.icon()} />
-              </a>
-              <a
-                href="https://twitter.com/alineacms"
-                target="_blank"
-                className={styles.root.social()}
-              >
-                <MdiTwitterCircle className={styles.root.social.icon()} />
-              </a>
-              <button
-                onClick={() => setOpenMobilemenu(!openMobilemenu)}
-                className={styles.root.hamburger()}
-              >
-                {openMobilemenu ? <IcRoundClose /> : <IcRoundHamburger />}
-              </button>
-            </HStack>
-          </HStack>
-          <AnimateHeight height={openMobilemenu ? 'auto' : 0} duration={200}>
-            <VStack
-              as="nav"
-              center
-              gap={20}
-              className={styles.mobilemenu()}
-              onClick={(e: MouseEvent<HTMLDivElement>) => {
-                if (e.currentTarget.nodeName === 'A') setOpenMobilemenu(false)
-              }}
-            >
-              <Links links={links} style={styles.mobilemenu.link} />
-            </VStack>
-          </AnimateHeight>
+          <Menu
+            links={links}
+            isMobileOpen={isMobileOpen}
+            toggleMobileMenu={toggleMobileMenu}
+          />
         </Layout.Container>
       </header>
+      <div
+        className={styles.mobilemenu({open: isMobileOpen})}
+        onClick={(e: MouseEvent<HTMLDivElement>) => {
+          let target: Node | null = e.target as Node
+          while (target) {
+            if (target.nodeName !== 'A') {
+              target = target.parentNode
+            } else {
+              setIsMobileOpen(false)
+              break
+            }
+          }
+        }}
+      >
+        <div className={styles.mobilemenu.container()}>
+          <Layout.Container className={styles.mobilemenu.top()}>
+            <Menu
+              links={links}
+              isMobileOpen={isMobileOpen}
+              toggleMobileMenu={toggleMobileMenu}
+            />
+          </Layout.Container>
+          <div className={styles.mobilemenu.nav()}>
+            <Layout.Container>
+              <NavTree nav={nav} />
+            </Layout.Container>
+          </div>
+        </div>
+      </div>
     </>
+  )
+}
+
+interface MenuProps {
+  links?: Array<Link>
+  isMobileOpen: boolean
+  toggleMobileMenu: () => void
+}
+
+function Menu({links, isMobileOpen, toggleMobileMenu}: MenuProps) {
+  return (
+    <HStack center gap={36} className={styles.root.inner()}>
+      <Link href="/">
+        <a className={styles.root.logo()}>
+          <Logo />
+        </a>
+      </Link>
+      <Stack.Center style={{height: '100%'}}>
+        <HStack as="nav" center className={styles.root.nav()}>
+          <Links links={links} style={styles.root.nav.link} />
+        </HStack>
+      </Stack.Center>
+      <HStack gap={16} center>
+        <a
+          href="https://github.com/alineacms/alinea"
+          target="_blank"
+          className={styles.root.social()}
+        >
+          <MdiGithub className={styles.root.social.icon()} />
+        </a>
+        <a
+          href="https://twitter.com/alineacms"
+          target="_blank"
+          className={styles.root.social()}
+        >
+          <MdiTwitterCircle className={styles.root.social.icon()} />
+        </a>
+        <button onClick={toggleMobileMenu} className={styles.root.hamburger()}>
+          {isMobileOpen ? <IcRoundClose /> : <IcRoundHamburger />}
+        </button>
+      </HStack>
+    </HStack>
   )
 }

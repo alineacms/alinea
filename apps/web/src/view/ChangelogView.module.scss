@@ -1,6 +1,7 @@
 @import './layout/WebTypo.module.scss';
 
 .root {
+  min-width: 0;
   max-width: 700px;
   margin: 0 auto;
 
@@ -46,5 +47,11 @@
     background-repeat: no-repeat;
     background-position: 0px 0.8em;
     padding-left: 28px;
+  }
+
+  pre code {
+    display: block;
+    max-width: 100%;
+    overflow: auto;
   }
 }

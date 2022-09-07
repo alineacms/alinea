@@ -1,9 +1,9 @@
-import {fromModule, HStack, px} from '@alinea/ui'
+import {fromModule, HStack} from '@alinea/ui'
 import {IcRoundKeyboardArrowDown} from '@alinea/ui/icons/IcRoundKeyboardArrowDown'
 import {IcRoundKeyboardArrowRight} from '@alinea/ui/icons/IcRoundKeyboardArrowRight'
 import Link from 'next/link'
 import {useRouter} from 'next/router'
-import {Fragment, useMemo, useState} from 'react'
+import {useMemo, useState} from 'react'
 import css from './NavTree.module.scss'
 
 const styles = fromModule(css)
@@ -26,18 +26,83 @@ function nestNav<T extends {id: string; parent: string | undefined}>(
   return res
 }
 
-export function useNavTree(
-  nav: Array<Omit<NavItem, 'children'> & {parent: string | undefined}>
-) {
+export function useNavTree(nav: Nav) {
   return useMemo(() => nestNav(nav), [nav])
 }
 
+export type Nav = Array<Omit<NavItem, 'children'> & {parent?: string}>
+
 export type NavItem = {
   id: string
-  url: string
+  url?: string
   // type: string
-  title: string
+  title?: string
+  label?: string
   children?: Array<NavItem>
+}
+
+interface NavTreeItemProps {
+  level: number
+  page: NavItem
+}
+
+function NavTreeItem({level, page}: NavTreeItemProps) {
+  const router = useRouter()
+  const pathname = router.asPath
+  const selected = pathname.startsWith(page.url)
+  const [showChildren, setShowChildren] = useState(selected)
+  const isContainer = page.children && page.children.length > 0
+  const childrenOpen = showChildren
+  return (
+    <>
+      {isContainer ? (
+        <div className={styles.root.sub()}>
+          <HStack
+            center
+            gap={8}
+            className={styles.root.link({selected, category: true})}
+            onClick={e => {
+              e.preventDefault()
+              setShowChildren(!showChildren)
+            }}
+          >
+            {childrenOpen ? (
+              <IcRoundKeyboardArrowDown className={styles.root.link.icon()} />
+            ) : (
+              <IcRoundKeyboardArrowRight className={styles.root.link.icon()} />
+            )}
+            <span>{page.label || page.title}</span>
+          </HStack>
+          {page.children && (
+            <NavTree
+              nav={page.children}
+              level={level + 1}
+              open={childrenOpen}
+            />
+          )}
+        </div>
+      ) : (
+        <div>
+          <Link href={page.url}>
+            <a
+              className={styles.root.link({
+                active: pathname === page.url
+              })}
+            >
+              <HStack center gap={8}>
+                {/*level === 0 && (
+                  <IcRoundKeyboardArrowRight
+                    className={styles.root.link.icon()}
+                  />
+                )*/}
+                <span>{page.label || page.title}</span>
+              </HStack>
+            </a>
+          </Link>
+        </div>
+      )}
+    </>
+  )
 }
 
 export type NavTreeProps = {
@@ -47,63 +112,10 @@ export type NavTreeProps = {
 }
 
 export function NavTree({nav, level = 0, open = true}: NavTreeProps) {
-  const router = useRouter()
-  const pathname = router.asPath
-  const [showChildren, setShowChildren] = useState(level < 1)
   return (
-    <div className={styles.root({open})}>
+    <div className={styles.root(`level-${level}`, {open})}>
       {nav.map(page => {
-        const isContainer = page.children && page.children.length > 0
-        const childrenOpen = showChildren || pathname.startsWith(page.url)
-        return (
-          <Fragment key={page.id}>
-            {isContainer ? (
-              <div className={styles.root.sub()}>
-                {level === 0 ? (
-                  <h2 className={styles.root.sub.header()}>{page.title}</h2>
-                ) : (
-                  <HStack
-                    center
-                    gap={8}
-                    className={styles.root.link({category: true})}
-                    onClick={e => {
-                      e.preventDefault()
-                      setShowChildren(!showChildren)
-                    }}
-                  >
-                    <span>{page.title}</span>
-                    {childrenOpen ? (
-                      <IcRoundKeyboardArrowDown />
-                    ) : (
-                      <IcRoundKeyboardArrowRight />
-                    )}
-                  </HStack>
-                )}
-                {page.children && (
-                  <div style={{paddingLeft: px(level * 10)}}>
-                    <NavTree
-                      nav={page.children}
-                      level={level + 1}
-                      open={childrenOpen}
-                    />
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div>
-                <Link href={page.url}>
-                  <a
-                    className={styles.root.link({
-                      active: pathname === page.url
-                    })}
-                  >
-                    {page.title}
-                  </a>
-                </Link>
-              </div>
-            )}
-          </Fragment>
-        )
+        return <NavTreeItem key={page.id} level={level} page={page} />
       })}
     </div>
   )

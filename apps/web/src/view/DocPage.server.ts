@@ -2,7 +2,7 @@ import {content} from '@alinea/content/web'
 import {Entry, Label} from '@alinea/core'
 import {Cursor, Store} from '@alinea/store'
 
-function menuQuery(pages: content.Pages) {
+export function menuQuery(pages: content.Pages) {
   return pages
     .where(page => page.type.is('Doc').or(page.type.is('Docs')))
     .where(page => page.id.isNot('docs'))
@@ -57,16 +57,14 @@ export async function docPageQuery(pages: content.Pages, doc: content.Doc) {
   return {
     ...doc,
     menu: await menuQuery(pages),
-    parents: (
-      await pages
-        .tree(doc.id)
-        .parents()
-        .select(parent => ({
-          id: parent.id,
-          title: parent.title,
-          url: parent.url
-        }))
-    ).reverse() as Array<{id: string; title: string; url: string}>,
+    parents: (await pages
+      .tree(doc.id)
+      .parents()
+      .select(parent => ({
+        id: parent.id,
+        title: parent.title,
+        url: parent.url
+      }))) as Array<{id: string; title: string; url: string}>,
     prev,
     next,
     blocks: doc.blocks

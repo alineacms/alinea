@@ -1,5 +1,6 @@
 import {content} from '@alinea/content/web'
 import {Store} from '@alinea/store'
+import {menuQuery} from '../DocPage.server'
 
 type PageDetails = {
   title: string
@@ -22,7 +23,8 @@ export async function layoutQuery(pages: content.Pages, page: PageDetails) {
       url: page.url
     },
     is: {home: page.type === 'Home', full: fullLayout.has(page.type)},
-    ...data
+    ...data,
+    header: {...data.header, menu: await menuQuery(pages)}
   }
 }
 

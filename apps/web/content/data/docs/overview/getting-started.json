@@ -1,8 +1,6 @@
 {
   "id": "20580nQzbOBR3Lt4kIdxyRGglc6",
   "type": "Doc",
-  "root": "data",
-  "index": "ZlV",
   "title": "Getting started",
   "blocks": [
     {
@@ -213,6 +211,6 @@
     }
   ],
   "alinea": {
-    "index": "ZlV"
+    "index": "ZgV"
   }
 }

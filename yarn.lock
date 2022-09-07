@@ -598,7 +598,6 @@ __metadata:
     postcss-pxtorem: ^6.0.0
     raw-loader: ^4.0.2
     react: ^18.1.0
-    react-animate-height: ^3.0.3
     react-dom: ^18.1.0
     react-string-replace: ^1.0.0
     remark: ^14.0.2
@@ -10373,18 +10372,6 @@ fsevents@~2.3.2:
   bin:
     rc: ./cli.js
   checksum: 2e26e052f8be2abd64e6d1dabfbd7be03f80ec18ccbc49562d31f617d0015fbdbcf0f9eed30346ea6ab789e0fdfe4337f033f8016efdbee0df5354751842080e
-  languageName: node
-  linkType: hard
-
-"react-animate-height@npm:^3.0.3":
-  version: 3.0.3
-  resolution: "react-animate-height@npm:3.0.3"
-  dependencies:
-    classnames: ^2.3.1
-  peerDependencies:
-    react: ">=16.8.0"
-    react-dom: ">=16.8.0"
-  checksum: d82b756e0920870d9c15027abe41d28432758d5976766121269625e2bab66306898388fe2b701c4aa598bded917430a99ec38ded3d12e08944526c552a024147
   languageName: node
   linkType: hard
 

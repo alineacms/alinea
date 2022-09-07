@@ -1,8 +1,6 @@
 {
   "id": "2AFn42lqIU86a9MI0I4rX3qMJQv",
   "type": "Doc",
-  "root": "data",
-  "index": "Zl",
   "title": "Introduction",
   "blocks": [
     {
@@ -85,6 +83,6 @@
     }
   ],
   "alinea": {
-    "index": "Zl"
+    "index": "Zg"
   }
 }

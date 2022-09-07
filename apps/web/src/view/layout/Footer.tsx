@@ -37,7 +37,7 @@ export function Footer({footer, theme, setTheme}: FooterProps) {
             <WebTypo.H4>Developer</WebTypo.H4>
             <VStack gap={10} as="nav">
               <div>
-                <Link href="/docs/intro">
+                <Link href="/docs/overview/intro">
                   <a className={styles.root.link()}>Docs</a>
                 </Link>
               </div>

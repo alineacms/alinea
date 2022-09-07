@@ -7,6 +7,12 @@
     display: block;
   }
 
+  &:not(.is-level-0) {
+    padding-left: 10px;
+    margin-left: 18px;
+    border-left: 1px solid var(--web-outline);
+  }
+
   &-sub {
     width: 100%;
 
@@ -35,17 +41,15 @@
 
     &-icon {
       display: block;
-      position: absolute;
-      top: 50%;
-      left: -12px;
-      transform: translateY(-50%);
-      font-size: 18px;
-      color: var(--web-accent);
-      opacity: 0;
+      font-size: 15px;
+    }
+
+    &.is-selected &-icon,
+    &:hover &-icon {
+      color: var(--web-selected-foreground);
     }
 
     &.is-active {
-      color: var(--web-foreground);
       font-weight: 600;
       background: var(--web-selected);
       color: var(--web-selected-foreground);
