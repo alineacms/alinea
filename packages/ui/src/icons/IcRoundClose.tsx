@@ -10,4 +10,3 @@ export function IcRoundClose(props: SVGProps<SVGSVGElement>) {
     </svg>
   )
 }
-export default IcRoundClose

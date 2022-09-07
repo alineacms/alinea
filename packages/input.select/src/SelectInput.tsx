@@ -3,7 +3,7 @@ import {InputLabel, InputState, useInput} from '@alinea/editor'
 import {fromModule, HStack, Icon, IconButton, TextLabel} from '@alinea/ui'
 import {IcRoundArrowDropDownCircle} from '@alinea/ui/icons/IcRoundArrowDropDownCircle'
 import {IcRoundCheck} from '@alinea/ui/icons/IcRoundCheck'
-import IcRoundClose from '@alinea/ui/icons/IcRoundClose'
+import {IcRoundClose} from '@alinea/ui/icons/IcRoundClose'
 import {IcRoundUnfoldMore} from '@alinea/ui/icons/IcRoundUnfoldMore'
 import {
   autoUpdate,

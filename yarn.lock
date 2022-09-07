@@ -200,6 +200,7 @@ __metadata:
     react-router: ^6.3.0
     react-router-dom: ^6.3.0
     react-tiny-virtual-list: ^2.2.0
+    use-element-dimensions: ^2.1.3
     y-webrtc: ^10.2.0
     yjs: ^13.5.41
   peerDependencies:
@@ -12290,6 +12291,16 @@ resolve@^1.10.0:
   peerDependencies:
     react: ">=16.8.0"
   checksum: 412c42b5e6ec58737915669b4687437736152af61cce6434883890211928cb84a3072a9cd3305d42f5ec2b162f444a2a781d8f88f89a0ced976882a5cdc7c123
+  languageName: node
+  linkType: hard
+
+"use-element-dimensions@npm:^2.1.3":
+  version: 2.1.3
+  resolution: "use-element-dimensions@npm:2.1.3"
+  peerDependencies:
+    react: ^16.8.0
+    react-dom: ^16.8.0
+  checksum: 0e4c61d5f39b720a9a8c7b30bc331d74aad30db6d42126f26c81c9d7a10c8210f038509f231f030a03220397eaa8ba8ada6917869d70848568cf6251d4e0b12a
   languageName: node
   linkType: hard
 

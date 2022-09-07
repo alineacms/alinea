@@ -14,6 +14,7 @@ export namespace AppBar {
     {
       icon?: ComponentType
       full?: boolean
+      active?: boolean
     } & HTMLAttributes<HTMLDivElement>
   >
 
@@ -22,11 +23,15 @@ export namespace AppBar {
     as: Tag = 'div',
     full,
     icon,
+    active,
     ...props
   }: ItemProps) {
     const interactive = Tag === 'button' || Tag === 'a'
     return (
-      <Tag {...props} className={styles.item.mergeProps(props)({interactive})}>
+      <Tag
+        {...props}
+        className={styles.item.mergeProps(props)({interactive, active})}
+      >
         <HStack center gap={8} full>
           {icon && (
             <div className={styles.item.icon()}>

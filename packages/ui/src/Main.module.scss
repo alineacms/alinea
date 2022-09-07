@@ -6,10 +6,12 @@
   overflow: auto;
   height: 100%;
   width: 100%;
+  display: flex;
+  flex-direction: column;
 
   &-inner {
     width: 100%;
-    height: 100%;
+    flex-grow: 1;
     min-width: 320px;
     @mixin ml {
       min-width: 560px;
@@ -39,8 +41,8 @@
   @include ml {
     padding: 35px 45px;
   }
-  max-width: 1024px;
+  max-width: 960px;
   width: 100%;
-  margin: 0 auto;
+  // margin: 0 auto;
   flex-grow: 1;
 }

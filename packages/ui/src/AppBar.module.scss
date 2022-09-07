@@ -37,4 +37,8 @@
       background: var(--alinea-highlight);
     }
   }
+
+  &.is-active {
+    background: var(--alinea-selected);
+  }
 }

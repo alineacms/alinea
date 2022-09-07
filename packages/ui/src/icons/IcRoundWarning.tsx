@@ -10,4 +10,3 @@ export function IcRoundWarning(props: SVGProps<SVGSVGElement>) {
     </svg>
   )
 }
-export default IcRoundWarning

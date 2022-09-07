@@ -10,4 +10,3 @@ export function IcRoundOpenInNew(props: SVGProps<SVGSVGElement>) {
     </svg>
   )
 }
-export default IcRoundOpenInNew

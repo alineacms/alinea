@@ -30,3 +30,32 @@
     }
   }
 }
+
+.mini {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  width: 220px;
+  height: 220px;
+  background: var(--alinea-background);
+  border-radius: var(--alinea-border-radius);
+  box-shadow: 0 2px 15px var(--alinea-shadow);
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+
+  &-footer {
+    position: absolute !important;
+    top: auto !important;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    opacity: 0;
+    transition: 0.25s ease-out;
+  }
+
+  &:hover &-footer {
+    opacity: 1;
+  }
+}

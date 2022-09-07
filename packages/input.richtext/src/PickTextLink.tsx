@@ -14,7 +14,7 @@ import {
   VStack
 } from '@alinea/ui'
 import {useTrigger} from '@alinea/ui/hook/UseTrigger'
-import IcRoundClose from '@alinea/ui/icons/IcRoundClose'
+import {IcRoundClose} from '@alinea/ui/icons/IcRoundClose'
 import {Modal} from '@alinea/ui/Modal'
 import {FormEvent, useMemo} from 'react'
 import css from './PickLink.module.scss'
