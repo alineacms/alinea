@@ -30,6 +30,42 @@
           ]
         },
         {
+          "id": "EV4vvLbPH96bn200K0r4q",
+          "type": "NoticeBlock",
+          "level": "info",
+          "body": [
+            {
+              "type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Make sure you've "
+                },
+                {
+                  "type": "text",
+                  "text": "exported the dashboard",
+                  "marks": [
+                    {
+                      "type": "link",
+                      "attrs": {
+                        "data-id": "YVO300iu-cu47Ejqf2NoB",
+                        "data-entry": "lMnYxNx4Xk2ui-wclAHwG",
+                        "href": null,
+                        "title": null
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "text": " first"
+                }
+              ]
+            }
+          ]
+        },
+        {
           "id": "9Sk_Fp5CiUTJXyPAFLL8x",
           "type": "CodeBlock",
           "code": "import {alinea} from 'alinea'\nimport {backend} from '@alinea/core'\nimport {passwordLess} from '@alinea/auth.passwordless'\nimport {configureBackend} from './alinea.server'\nexport const config = alinea.createConfig({\n  backend: backend({\n    auth: passwordLess\n  }).configure(configureBackend),\n  ...config\n})",
@@ -258,7 +294,27 @@
           "content": [
             {
               "type": "text",
-              "text": "To publish content back to the git repository and store uploaded files we need a service that can handle that. Currently there is one package available to publish to Github hosted repositories."
+              "text": "To publish content back to the git repository and store uploaded files we need a service that can handle that. Currently there is one package available to publish to Github hosted repositories. You'll have to "
+            },
+            {
+              "type": "text",
+              "text": "create a token",
+              "marks": [
+                {
+                  "type": "link",
+                  "attrs": {
+                    "data-id": "OciIryjJiAMSjDMXXIQBT",
+                    "data-entry": null,
+                    "href": "https://github.com/settings/tokens",
+                    "target": "_blank",
+                    "title": null
+                  }
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "text": " with read and write access to your repository."
             }
           ]
         },
