@@ -1,9 +1,7 @@
 {
   "id": "28hcdyq0sGJdgY6kM24NZd1XP5S",
   "type": "Doc",
-  "root": "data",
-  "index": "ZwG",
-  "title": "Root",
+  "title": "Roots",
   "blocks": [
     {
       "id": "28hceGrb2J5s9SSlpfoYOOgR3KC",
@@ -17,7 +15,7 @@
           "content": [
             {
               "type": "text",
-              "text": "Root"
+              "text": "Roots"
             }
           ]
         },
@@ -27,7 +25,7 @@
           "content": [
             {
               "type": "text",
-              "text": "Roots provide the means to organize content hierarchically in a tree. Pages can have subpages, subpages can have sub-subpages and so on. The hierarchy starts at a `root`."
+              "text": "Roots provide the means to organize content hierarchically in a tree. Pages can have subpages, subpages can have sub-subpages and so on. This hierarchy starts at a `root`."
             }
           ]
         },
@@ -64,7 +62,47 @@
           "content": [
             {
               "type": "text",
-              "text": "An icon can be used to label a root in the sidebar. Must be a react component. You can find icons on https://icones.js.org or install a package such as react-icons (https://react-icons.github.io/react-icons)."
+              "text": "An icon can be used to label a root in the sidebar. Icons are implemented as a React component. You can find icons on "
+            },
+            {
+              "type": "text",
+              "text": "Icones",
+              "marks": [
+                {
+                  "type": "link",
+                  "attrs": {
+                    "data-id": "qvoK8kMv_e7gV6hhapAn5",
+                    "data-entry": null,
+                    "href": "https://icones.js.org",
+                    "target": "_blank",
+                    "title": null
+                  }
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "text": " or install a package such as "
+            },
+            {
+              "type": "text",
+              "text": "react-icons",
+              "marks": [
+                {
+                  "type": "link",
+                  "attrs": {
+                    "data-id": "toXRTK13MpBaa1ijN3COj",
+                    "data-entry": null,
+                    "href": "https://react-icons.github.io/react-icons",
+                    "target": "_blank",
+                    "title": null
+                  }
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "text": "."
             }
           ]
         },
@@ -111,7 +149,7 @@
           "content": [
             {
               "type": "text",
-              "text": "An object with internationalization configuration. Locales is an array of strings, containing locales described by a key that will show up in the url structure as well."
+              "text": "An object with internationalization configuration. Locales is an array of strings, containing locales described by a key that will, by default, show up in the url structure as well."
             }
           ]
         },
@@ -119,6 +157,18 @@
           "id": "28hlSdI7ooykir1ldfHW4lLtIUL",
           "type": "CodeBlock",
           "code": "i18: {\n  locales: ['en', 'fr', 'de']\n}"
+        },
+        {
+          "id": "cD4t19x1eBJYat1SFKTMa",
+          "type": "ChapterLinkBlock",
+          "link": [
+            {
+              "id": "F_HNgyK20PQE5sQpI12oz",
+              "index": "a0",
+              "type": "entry",
+              "entry": "Gmy-svwmNKtK2as89D0hJ"
+            }
+          ]
         }
       ]
     },

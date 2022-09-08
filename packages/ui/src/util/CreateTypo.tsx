@@ -1,8 +1,10 @@
+import {slugify} from '@alinea/core/index'
 import {
   ComponentType,
   forwardRef,
   HTMLProps,
   PropsWithChildren,
+  ReactNode,
   Ref
 } from 'react'
 import {forwardRefWithAs, PropsWithAs} from './PropsWithAs'
@@ -22,6 +24,10 @@ type TypoStyles =
       monospace: Styler
     }
   | GenericStyles
+
+function idFor(children: ReactNode): string | undefined {
+  return typeof children === 'string' ? slugify(children) : undefined
+}
 
 export function createTypo(
   styles: TypoStyles,
@@ -50,6 +56,7 @@ export function createTypo(
     return (
       <Type
         ref={ref}
+        id={idFor(rest.children)}
         {...rest}
         className={styles.h1.mergeProps(rest)({flat, light})}
       />
@@ -64,6 +71,7 @@ export function createTypo(
     return (
       <Type
         ref={ref}
+        id={idFor(rest.children)}
         {...rest}
         className={styles.h2.mergeProps(rest)({flat, light})}
       />
@@ -78,6 +86,7 @@ export function createTypo(
     return (
       <Type
         ref={ref}
+        id={idFor(rest.children)}
         {...rest}
         className={styles.h3.mergeProps(rest)({flat, light})}
       />
@@ -92,6 +101,7 @@ export function createTypo(
     return (
       <Type
         ref={ref}
+        id={idFor(rest.children)}
         {...rest}
         className={styles.h4.mergeProps(rest)({flat, light})}
       />

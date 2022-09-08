@@ -1,8 +1,6 @@
 {
   "id": "267KTV8uPHIdZgFUQvJf06sfm4h",
   "type": "Doc",
-  "root": "data",
-  "index": "ZwV",
   "title": "Schema",
   "blocks": [
     {
@@ -27,7 +25,26 @@
           "content": [
             {
               "type": "text",
-              "text": "A schema describes multiple types which are composed of fields that contain the data of a page."
+              "text": "A schema is a collection of "
+            },
+            {
+              "type": "text",
+              "text": "types",
+              "marks": [
+                {
+                  "type": "link",
+                  "attrs": {
+                    "data-id": "L5f7XuNlknTxxICB7sxMu",
+                    "data-entry": "267QuOShP41WnFxQFOcHZQoCsla",
+                    "href": null,
+                    "title": null
+                  }
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "text": "."
             }
           ]
         },
@@ -84,6 +101,12 @@
           "code": "alinea.schema({\n  BlogOverview: alinea.type('Blog overview', {\n    title: alinea.text('Title'),\n    path: alinea.path('Path')\n  }).configure({\n    isContainer: true,\n    contains: ['BlogPost']\n  }),\n  BlogPost: alinea.type('Blog post', {\n    title: alinea.text('Title'),\n    path: alinea.path('Path'),\n    body: alinea.richText('Body')\n  })\n})"
         }
       ]
+    },
+    {
+      "id": "lrqOEzylZzL6IYVYP2v6D",
+      "index": "a1",
+      "type": "TextBlock",
+      "text": []
     }
   ],
   "alinea": {

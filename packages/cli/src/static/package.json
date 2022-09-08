@@ -7,7 +7,6 @@
   "exports": {
     ".": "./index.js",
     "./store.js": "./store.js",
-    "./pages.js": "./pages.js",
     "./config.js": "./config.js",
     "./backend.js": "./backend.js",
     "./.server/*": {

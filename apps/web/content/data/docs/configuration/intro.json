@@ -1,9 +1,7 @@
 {
   "id": "25HWCBHEFdsLDtooZ4mzxeax3An",
   "type": "Doc",
-  "root": "data",
-  "index": "Zn",
-  "title": "alinea.config.tsx",
+  "title": "The config file",
   "blocks": [
     {
       "id": "25HWDVdhsKXsw9R0i0ImOmwE32h",
@@ -17,7 +15,7 @@
           "content": [
             {
               "type": "text",
-              "text": "Configuration"
+              "text": "The config file"
             }
           ]
         },

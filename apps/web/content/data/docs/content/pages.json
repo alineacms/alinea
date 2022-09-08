@@ -1,8 +1,6 @@
 {
   "id": "28hxVNf3JO9raYJ1HVQ6XgDX9pW",
   "type": "Doc",
-  "root": "data",
-  "index": "a1",
   "title": "Pages",
   "blocks": [
     {
@@ -27,9 +25,14 @@
           "content": [
             {
               "type": "text",
-              "text": "A pages instance is used to query the data stored in the CMS."
+              "text": "A pages instance is used to query the data stored in the CMS. To create an instance use the `initPages` function."
             }
           ]
+        },
+        {
+          "id": "KSTSIoTMXMiTf6PYZeqZ6",
+          "type": "CodeBlock",
+          "code": "import {initPages} from '@alinea/content/web/pages.js'\n\nconst pages = initPages()"
         },
         {
           "type": "heading",
@@ -111,7 +114,7 @@
         },
         {
           "type": "heading",
-          "level": 3,
+          "level": 2,
           "textAlign": "left",
           "content": [
             {

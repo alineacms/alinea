@@ -5,6 +5,7 @@ const separate = new Set([
   ']',
   ',',
   '.',
+  ':',
   '/',
   '\\',
   ';',
@@ -37,17 +38,15 @@ export function isSeparator(char: string) {
 
 export function slugify(input: string, separator = '-'): string {
   let buffer = ''
-  const result: Array<string> = []
-  function push() {
-    if (buffer.length === 0) return
-    result.push(buffer)
-    buffer = ''
-  }
   for (const char of input) {
     if (char.charCodeAt(0) < space) continue
-    if (isSeparator(char)) push()
-    else buffer += char
+    if (isSeparator(char)) {
+      if (buffer === '') continue
+      if (!buffer.endsWith(separator)) buffer += separator
+      continue
+    }
+    buffer += char
   }
-  push()
-  return result.join(separator).toLowerCase()
+  if (buffer.endsWith(separator)) buffer = buffer.slice(0, -separator.length)
+  return buffer.toLowerCase()
 }

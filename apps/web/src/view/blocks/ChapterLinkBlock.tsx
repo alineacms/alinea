@@ -12,7 +12,9 @@ export function ChapterLinkBlock({link}: ChapterLinkBlockSchema) {
     <Link href={link.url}>
       <a className={styles.root()}>
         <HStack center gap={8}>
-          <span className={styles.root.title()}>{link.title as string}</span>
+          <span className={styles.root.title()}>
+            {(link.description || link.title) as string}
+          </span>
           <Stack.Right>
             <IcRoundArrowForward />
           </Stack.Right>

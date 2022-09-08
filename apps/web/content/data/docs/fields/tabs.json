@@ -1,8 +1,6 @@
 {
   "id": "268hnUNLntD1TbeY1WPh34VFVcM",
   "type": "Doc",
-  "root": "data",
-  "index": "a5",
   "title": "Tabs",
   "blocks": [
     {
@@ -27,7 +25,7 @@
           "content": [
             {
               "type": "text",
-              "text": "Tabs help you structure the input fields in the admin panel. Tabs do not hold data, but can declare underlying fields which do (or even more tabs). "
+              "text": "Tabs help you structure the input fields in the admin panel. Tabs do not hold data, but can declare underlying fields which do (or hold more tabs). "
             }
           ]
         },

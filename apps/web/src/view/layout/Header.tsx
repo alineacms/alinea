@@ -147,12 +147,22 @@ function Menu({links, isMobileOpen, toggleMobileMenu}: MenuProps) {
           <Logo />
         </a>
       </Link>
-      <Stack.Center style={{height: '100%'}}>
+      <Stack.Center>
         <HStack as="nav" center className={styles.root.nav()}>
           <Links links={links} style={styles.root.nav.link} />
         </HStack>
       </Stack.Center>
       <HStack gap={16} center>
+        {/*<a
+          href="https://www.npmjs.com/package/alinea"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <img
+            style={{display: 'block'}}
+            src="https://img.shields.io/npm/v/alinea.svg?style=flat-square"
+          />
+        </a>*/}
         <a
           href="https://github.com/alineacms/alinea"
           target="_blank"

@@ -1,8 +1,6 @@
 {
   "id": "259EzPfnSUaKOrNL1S2bpIpMdKl",
   "type": "Doc",
-  "root": "data",
-  "index": "Zw",
   "title": "Workspaces",
   "blocks": [
     {
@@ -27,7 +25,7 @@
           "content": [
             {
               "type": "text",
-              "text": "Workspaces allow you to separate content. A workspace can have its own schema, media files and other configuration. Editors can easily switch workspaces in the dashboard."
+              "text": "Workspaces allow you to structure content into logical categories. A workspace can have its own schema, media files and other configuration. Editors can easily switch workspaces in the dashboard."
             }
           ]
         },
@@ -64,7 +62,7 @@
           "content": [
             {
               "type": "text",
-              "text": "A string pointing to a directory in which published content is stored."
+              "text": "A directory in which published content is stored."
             }
           ]
         },
@@ -90,7 +88,7 @@
           "content": [
             {
               "type": "text",
-              "text": "A string pointing to a directory in which uploaded files are placed. In case your using alinea to manage web content this will often point to a directory that is made publicly available so an url can be created to download or display the file. "
+              "text": "A directory in which uploaded files are placed. In case you'r using alinea to manage web content this will often point to a directory that is made publicly available so an url can be created to download or display the file. "
             }
           ]
         },
@@ -116,7 +114,7 @@
           "content": [
             {
               "type": "text",
-              "text": "The `Schema` describing the content structure. Use the `schema` method to create one."
+              "text": "The `Schema` describing the content structure. Use the `alinea.schema` function to create one."
             }
           ]
         },
@@ -137,7 +135,7 @@
           "content": [
             {
               "type": "text",
-              "text": "An object containing `Root` configurations and their keys."
+              "text": "An object containing `Root` configurations and their keys. Use the `alinea.root` function to create one."
             }
           ]
         },
@@ -165,7 +163,7 @@
         {
           "id": "2AFmWaKSpFE6EzL3jLgdpPZDSsy",
           "type": "CodeBlock",
-          "code": "// Configuration\nworkspace('My workspace', {typeNamespace: 'myWorkspaceTypes'})\n// Usage:\nimport {myWorkspaceTypes} from '@alinea/content/myworkspace'\nconsole.log(myWorkspaceTypes.MyType)"
+          "code": "// Configuration\nimport {alinea} from 'alinea'\nalinea.workspace('My workspace', {typeNamespace: 'myWorkspaceTypes'})\n// Usage:\nimport {myWorkspaceTypes} from '@alinea/content/myworkspace'\nconsole.log(myWorkspaceTypes.MyType)"
         }
       ]
     },

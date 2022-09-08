@@ -22,7 +22,7 @@ export async function layoutQuery(pages: content.Pages, page: PageDetails) {
       title: page.title,
       url: page.url
     },
-    is: {home: page.type === 'Home', full: fullLayout.has(page.type)},
+    is: {home: page.type === 'Home'},
     ...data,
     header: {...data.header, menu: await menuQuery(pages)}
   }

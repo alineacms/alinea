@@ -1,15 +1,28 @@
 @import '@alinea/web/src/style.scss';
 
 .root {
-  height: calc(100vh - var(--web-header-height));
-  position: sticky;
-  top: var(--web-header-height);
-  overflow: auto;
+  position: relative;
+  // height: calc(100vh - var(--web-header-height));
+  // position: sticky;
+  // top: var(--web-header-height);
+  // overflow: auto;
   flex-shrink: 0;
-  width: 256px;
+  width: 300px;
   padding: 30px 0;
   margin-left: -6px;
-  padding-right: 6px;
+  padding-right: 25px;
+  //background: #f8f9fa;
+  border-right: 1px solid hsla(var(--web-negative-hsl), 0.09);
+
+  &:before {
+    //content: '';
+    position: absolute;
+    top: 0;
+    right: 100%;
+    width: 1800px;
+    height: 100%;
+    background: #f8f9fa;
+  }
 
   @media (max-width: 980px) {
     display: none;

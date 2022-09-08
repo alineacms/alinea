@@ -1,8 +1,6 @@
 {
   "id": "28Ng6ZnpyhafrKdGMOO7BUUKP4S",
   "type": "Doc",
-  "root": "data",
-  "index": "a0",
   "title": "Content structure",
   "blocks": [
     {
@@ -43,20 +41,27 @@
                   "content": [
                     {
                       "type": "text",
-                      "text": "Content is published into in a directory as `json` files. Note that we're considering making these files more human editable in the future too: "
+                      "text": "Content is published into in a directory as JSON files. Note that "
                     },
                     {
                       "type": "text",
-                      "text": "https://github.com/alineacms/alinea/issues/10",
+                      "text": "we're considering",
                       "marks": [
                         {
                           "type": "link",
                           "attrs": {
+                            "data-id": "auApxINUu9KWCeMkWjA6S",
+                            "data-entry": null,
                             "href": "https://github.com/alineacms/alinea/issues/10",
-                            "target": "_blank"
+                            "target": "_blank",
+                            "title": null
                           }
                         }
                       ]
+                    },
+                    {
+                      "type": "text",
+                      "text": " making these files more human editable in the future too."
                     }
                   ]
                 }
@@ -82,7 +87,7 @@
         {
           "id": "28hnf59Rd5Gbite3NVvsvobRTZz",
           "type": "CodeBlock",
-          "code": "// Published content is stored in json files \n// inside the content directory\ncontent\n├ data // data root\n│ ├ index.json\n│ ├ blog.json\n│ ╰ blog\n│   ├ blog-post.json\n│   ╰ another-blog-post.json\n╰ media // media root\n  ├ image.png.json\n  ╰ file.pdf.json\n\n// The alinea directory exports a Javascript library\n// which can be imported from @alinea/content\n.alinea\n╰ web",
+          "code": "// Published content is stored in json files \n// inside the content directory\ncontent\n├ data // data root\n│ ├ index.json\n│ ├ blog.json\n│ ╰ blog\n│   ├ blog-post.json\n│   ╰ another-blog-post.json\n╰ media // media root\n  ├ image.png.json\n  ╰ file.pdf.json\n\n// The alinea directory exports a Javascript library\n// which can be imported from @alinea/content\n.alinea\n├ web\n│ ├ pages.js\n│ ╰ schema.js\n╰ backend.js",
           "compact": true
         }
       ]

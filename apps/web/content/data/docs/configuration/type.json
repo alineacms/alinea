@@ -1,8 +1,6 @@
 {
   "id": "267QuOShP41WnFxQFOcHZQoCsla",
   "type": "Doc",
-  "root": "data",
-  "index": "Zx",
   "title": "Type",
   "blocks": [
     {
@@ -27,7 +25,26 @@
           "content": [
             {
               "type": "text",
-              "text": "A type defines fields and presentational settings. Fields hold data which can be changed in the dashboard. "
+              "text": "A type defines fields and presentational settings. Fields hold data that can be edited in the dashboard. Top level types which are used in a "
+            },
+            {
+              "type": "text",
+              "text": "schema",
+              "marks": [
+                {
+                  "type": "link",
+                  "attrs": {
+                    "data-id": "a75tGMS2KoV50oYz5NOYQ",
+                    "data-entry": "267KTV8uPHIdZgFUQvJf06sfm4h",
+                    "href": null,
+                    "title": null
+                  }
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "text": " need to define both a title and path field."
             }
           ]
         },
@@ -42,7 +59,7 @@
           "content": [
             {
               "type": "text",
-              "text": "Alinea ships with a number of useful fields but it is also possible to create custom fields."
+              "text": "Alinea ships with a number of useful fields that can be added to by creating custom fields."
             }
           ]
         },
@@ -75,7 +92,7 @@
           "content": [
             {
               "type": "text",
-              "text": "A type can be configured further by using the `configure` method:"
+              "text": "A type can be configured by using the `configure` function:"
             }
           ]
         },
@@ -179,7 +196,47 @@
           "content": [
             {
               "type": "text",
-              "text": "An icon can be used to label a root in the sidebar. Must be a react component. You can find icons on https://icones.js.org or install a package such as react-icons (https://react-icons.github.io/react-icons)."
+              "text": "An icon can be used to label a root in the sidebar. Icons are implemented as a React component. You can find icons on "
+            },
+            {
+              "type": "text",
+              "text": "Icones",
+              "marks": [
+                {
+                  "type": "link",
+                  "attrs": {
+                    "data-id": "qvoK8kMv_e7gV6hhapAn5",
+                    "data-entry": null,
+                    "href": "https://icones.js.org",
+                    "target": "_blank",
+                    "title": null
+                  }
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "text": " or install a package such as "
+            },
+            {
+              "type": "text",
+              "text": "react-icons",
+              "marks": [
+                {
+                  "type": "link",
+                  "attrs": {
+                    "data-id": "toXRTK13MpBaa1ijN3COj",
+                    "data-entry": null,
+                    "href": "https://react-icons.github.io/react-icons",
+                    "target": "_blank",
+                    "title": null
+                  }
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "text": "."
             }
           ]
         }

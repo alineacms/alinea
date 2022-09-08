@@ -34,7 +34,7 @@
   --alinea-hue: 200;
   --alinea-saturation: 12%;
   --alinea-positive: var(--alinea-hue), var(--alinea-saturation), 100%;
-  --alinea-negative: 212, 18%, 14%;
+  --alinea-negative: 200, 12%, 14%;
   --alinea-background: hsl(var(--alinea-positive));
   --alinea-foreground: hsl(197, 21%, 6%);
   --alinea-foreground-faded: #1a1a1b;
@@ -49,7 +49,7 @@
   --alinea-fields: hsl(200, 12%, 96.5%);
   --alinea-fields-foreground: #696969;
   --alinea-fields-shadow: 0 0px 0 1px hsl(0, 0%, 97%);
-  --alinea-fields-selected: #f3f3f3;
+  --alinea-fields-selected: hsl(200, 12%, 97%);
   --alinea-fields-focus: var(--alinea-accent);
   --alinea-focus-foreground: var(--alinea-accent);
   --alinea-divider-top: 0 -1px 0 rgba(0, 0, 0, 0.06),

@@ -11,6 +11,7 @@
   background-color: var(--bg-faded);
   backdrop-filter: blur(12px);
   flex-shrink: 0;
+  border-bottom: 1px solid hsla(var(--web-negative-hsl), 0.09);
 
   &.is-transparent {
     border-bottom: transparent;
@@ -67,7 +68,7 @@
       padding-top: 3px;
       display: flex;
       align-items: center;
-      padding: 3px 20px 0 20px;
+      padding: 3px 26px 0 26px;
 
       &:hover {
         color: var(--web-foreground);

@@ -1,9 +1,7 @@
 {
   "id": "cifCRcc3FmFxJKqjRsTtv",
   "type": "Doc",
-  "root": "data",
-  "index": "a2",
-  "title": "Previews",
+  "title": "Live previews",
   "blocks": [
     {
       "id": "WcJ7Qiq0MVMXIXSulcit0",
@@ -17,7 +15,7 @@
           "content": [
             {
               "type": "text",
-              "text": "Previews"
+              "text": "Live previews"
             }
           ]
         },
@@ -27,7 +25,7 @@
           "content": [
             {
               "type": "text",
-              "text": "You can set up a live preview of your website inside the dashboard. Previews are implemented as a React component. This does not mean React is required for developing your project as we'll see below."
+              "text": "You can set up a live preview of your website inside the dashboard. Previews are implemented as a React component. It does not mean React is required for developing your project."
             }
           ]
         },
@@ -74,7 +72,7 @@
           "content": [
             {
               "type": "text",
-              "text": "The `BrowserPreview` component can be used to preview externally by rendering an iframe. This can be useful to take full advantage of web frameworks that have different ways of compiling your views. "
+              "text": "The `BrowserPreview` component can be used to preview external sources by rendering an iframe. This can be useful to take full advantage of web frameworks that expose their own server with a `dev` command (or similar). "
             }
           ]
         },
@@ -148,6 +146,6 @@
     }
   ],
   "alinea": {
-    "index": "a2"
+    "index": "Ze"
   }
 }

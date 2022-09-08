@@ -89,5 +89,12 @@
     "tsx": "^3.8.1",
     "webassembly-loader": "^1.1.0",
     "wireit": "^0.7.1"
-  }
+  },
+  "browserslist": [
+    "chrome 61",
+    "edge 16",
+    "firefox 60",
+    "opera 48",
+    "safari 11"
+  ]
 }
