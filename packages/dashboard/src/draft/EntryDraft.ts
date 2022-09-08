@@ -107,6 +107,7 @@ export class EntryDraft implements Entry {
   getInput<V, M>(location: Array<string>) {
     const key = location[location.length - 1]
     const {shape, parent} = this.getLocation(location)
+    if (!shape) console.log({location, parent, key, shape})
     return {
       mutator: shape.mutator(parent, key) as M,
       get value(): V {

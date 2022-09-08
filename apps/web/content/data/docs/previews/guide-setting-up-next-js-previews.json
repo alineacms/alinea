@@ -25,7 +25,7 @@
           "content": [
             {
               "type": "text",
-              "text": "We can serve up the dashboard while developing a Next.js website by tweaking our `dev` command in our `package.json` just a little bit."
+              "text": "We can serve up the dashboard while developing a Next.js website by tweaking the `dev` command in our `package.json` just a little bit."
             }
           ]
         },
@@ -163,7 +163,7 @@
           "content": [
             {
               "type": "text",
-              "text": "With the above changes we can now see a live preview during editing. It reloads the iframe a short time after content changes. We can do much better however by asking Next.js to reload our props and rerender the page instead of doing a full page reload. Alinea exports a hook in the `@alinea/preview` package (< 1kB) which can be used in `_app.tsx` or a similar high level component."
+              "text": "With the above changes we can now see a live preview during editing. It reloads the iframe a short time after content changes. However, we can do much better by asking Next.js to reload our props and rerender the page instead of doing a full page reload. Alinea exports a hook in the `@alinea/preview` package (< 1kB) which can be used in `_app.tsx` or a similar high level component."
             }
           ]
         },

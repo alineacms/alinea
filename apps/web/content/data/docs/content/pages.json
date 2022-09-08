@@ -1,7 +1,7 @@
 {
   "id": "28hxVNf3JO9raYJ1HVQ6XgDX9pW",
   "type": "Doc",
-  "title": "Pages",
+  "title": "Quering content",
   "blocks": [
     {
       "id": "28hxdvUqGndCClRgqppvMox36da",
@@ -15,7 +15,7 @@
           "content": [
             {
               "type": "text",
-              "text": "Pages"
+              "text": "Quering content"
             }
           ]
         },
@@ -32,7 +32,7 @@
         {
           "id": "KSTSIoTMXMiTf6PYZeqZ6",
           "type": "CodeBlock",
-          "code": "import {initPages} from '@alinea/content/web/pages.js'\n\nconst pages = initPages()"
+          "code": "import {initPages} from '@alinea/content/$workspace/pages.js'\n\nconst pages = initPages()"
         },
         {
           "type": "heading",
@@ -114,6 +114,32 @@
         },
         {
           "type": "heading",
+          "textAlign": "left",
+          "level": 2,
+          "content": [
+            {
+              "type": "text",
+              "text": "Querying specific pages"
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "textAlign": "left",
+          "content": [
+            {
+              "type": "text",
+              "text": "For each type defined in the workspace schema a `Collection` is exported under the same name. Collections can be used to point at specific fields when querying."
+            }
+          ]
+        },
+        {
+          "id": "IEmT75lZgxznL9v7Zq9mW",
+          "type": "CodeBlock",
+          "code": "import {initPages} from '@alinea/content/$workspace/pages.js'\nimport {Animal, Fruit} from '@alinea/content/$workspace'\n\nconst old = await pages.first(\n  Animal.age.greater(10)\n)\nconst applesOrOranges = await pages.where(\n  Fruit.title.isIn(['apple', 'orange'])\n)"
+        },
+        {
+          "type": "heading",
           "level": 2,
           "textAlign": "left",
           "content": [
@@ -136,7 +162,7 @@
         {
           "id": "28hzjFJi5kuByP0j3ZX79ATIyyS",
           "type": "CodeBlock",
-          "code": "import {Type} from '@alinea/content/myworkspace'\nconst ordered = await pages\n  .orderBy(Type.foo.asc(), Type.bar.desc())"
+          "code": "import {Type} from '@alinea/content/$workspace'\nconst ordered = await pages\n  .orderBy(Type.foo.asc(), Type.bar.desc())"
         },
         {
           "type": "heading",
@@ -162,7 +188,7 @@
         {
           "id": "28i0B7nRFUqmGWdCmchhzy21bkt",
           "type": "CodeBlock",
-          "code": "import {Type} from '@alinea/content/myworkspace'\nconst grouped = await pages\n  .groupBy(Type.foo, Type.bar)"
+          "code": "import {Type} from '@alinea/content/$workspace'\nconst grouped = await pages\n  .groupBy(Type.foo, Type.bar)"
         },
         {
           "type": "heading",

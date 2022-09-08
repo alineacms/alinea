@@ -1,4 +1,4 @@
-import declarations from '!!raw-loader!../data/alinea.d.ts'
+import declarations from '!!raw-loader!../data/alinea.d.ts.txt'
 import {outcome, TypeConfig} from '@alinea/core'
 import {base64url} from '@alinea/core/util/Encoding'
 import {DashboardProvider, SessionProvider, Toolbar} from '@alinea/dashboard'

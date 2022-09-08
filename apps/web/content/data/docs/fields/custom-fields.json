@@ -1,7 +1,7 @@
 {
   "id": "286iEJsjhd8R9NxN6EVg59fELyd",
   "type": "Doc",
-  "title": "Custom fields",
+  "title": "Guide: creating custom fields",
   "blocks": [
     {
       "id": "286iEROjs6tj2n50gGnYat796yt",
@@ -15,7 +15,7 @@
           "content": [
             {
               "type": "text",
-              "text": "Custom fields"
+              "text": "Guide: creating custom fields"
             }
           ]
         },

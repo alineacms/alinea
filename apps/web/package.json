@@ -53,7 +53,7 @@
         "../..:type"
       ],
       "output": [
-        "src/data/alinea.d.ts"
+        "src/data/alinea.d.ts.txt"
       ]
     }
   },

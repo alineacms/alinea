@@ -7,10 +7,14 @@ import {ChapterLinkBlockSchema} from './ChapterLinkBlock.schema'
 const styles = fromModule(css)
 
 export function ChapterLinkBlock({link}: ChapterLinkBlockSchema) {
-  if (!link) return null
+  if (!link || !link.url) return null
   return (
     <Link href={link.url}>
-      <a className={styles.root()}>
+      <a
+        className={styles.root()}
+        target={link.type === 'url' ? '_blank' : undefined}
+        rel={link.type === 'url' ? 'nofollow noopener' : undefined}
+      >
         <HStack center gap={8}>
           <span className={styles.root.title()}>
             {(link.description || link.title) as string}

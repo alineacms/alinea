@@ -1,0 +1,110 @@
+{
+  "id": "c1qjY2L4hq8JWfscRb_dD",
+  "type": "Doc",
+  "title": "Guide: connecting to alinea.cloud",
+  "blocks": [
+    {
+      "id": "gQbhM3ABpceXNYvpnchl_",
+      "index": "a0",
+      "type": "TextBlock",
+      "text": [
+        {
+          "type": "heading",
+          "textAlign": "left",
+          "level": 1,
+          "content": [
+            {
+              "type": "text",
+              "text": "Guide: connecting to alinea.cloud"
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "textAlign": "left",
+          "content": [
+            {
+              "type": "text",
+              "text": "Alinea.cloud",
+              "marks": [
+                {
+                  "type": "link",
+                  "attrs": {
+                    "data-id": "4RHJhMZXGQ13vbHvC7egE",
+                    "data-entry": null,
+                    "href": "https://www.alinea.cloud",
+                    "target": "_blank",
+                    "title": null
+                  }
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "text": " provides a cloud service to setup a backend in a few clicks. It takes care of authentication, inviting other users to collaborate, and pushing changes to your git repository. Add the following to your `alinea.config.tsx` config file. After a deploy you can continue the full setup inside the dashboard (`/admin.html`) itself."
+            }
+          ]
+        },
+        {
+          "id": "6Lxirgc1VSbX0uM5BaVr2",
+          "type": "NoticeBlock",
+          "level": "info",
+          "body": [
+            {
+              "type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Make sure you've "
+                },
+                {
+                  "type": "text",
+                  "text": "exported the dashboard",
+                  "marks": [
+                    {
+                      "type": "link",
+                      "attrs": {
+                        "data-id": "wUKOrIsSsR8aYNcRf8Lvh",
+                        "data-entry": "lMnYxNx4Xk2ui-wclAHwG",
+                        "href": null,
+                        "title": null
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "text": " first"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "dtl8cR9u7s98X_1erIweC",
+          "type": "CodeBlock",
+          "code": "import {createCloudBackend} from '@alinea/cloud'\nexport const config = createConfig({\n  backend: createCloudBackend(),\n  ...config\n})",
+          "fileName": "alinea.config.tsx"
+        },
+        {
+          "id": "5S4c9KAMt9cqPXKYAzNae",
+          "type": "ChapterLinkBlock",
+          "link": [
+            {
+              "id": "n1Kms3lPQJZJUnGO6bY6g",
+              "index": "a0",
+              "type": "url",
+              "url": "https://www.alinea.cloud",
+              "description": "Explore more features on alinea.cloud",
+              "target": "_blank"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "alinea": {
+    "index": "ZoV"
+  }
+}

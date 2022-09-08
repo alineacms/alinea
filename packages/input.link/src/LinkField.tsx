@@ -112,8 +112,12 @@ export function createLink<T, Q>(
   options: LinkOptions<T, Q> = {}
 ): LinkField<T, Q> {
   const pickers = options.pickers || []
+
   const blocks = Object.fromEntries(
-    pickers.map(picker => [picker.type, picker.shape])
+    pickers.map(picker => [
+      picker.type,
+      options.fields ? picker.shape.concat(options.fields.shape) : picker.shape
+    ])
   )
   return {
     shape: Shape.List(label, blocks, options.initialValue),
@@ -168,7 +172,7 @@ export function createLink<T, Q>(
                 )
               )
           }),
-        url: row
+        url: row.fields
       }
       const cursor = row.select(row.get('type').case(cases, row.fields))
       if (!options.multiple) return cursor.first().toExpr()

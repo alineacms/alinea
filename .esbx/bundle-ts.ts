@@ -23,7 +23,7 @@ export const bundleTs = {
       contents.push(content)
     }
     await fs.writeFile(
-      './apps/web/src/data/alinea.d.ts',
+      './apps/web/src/data/alinea.d.ts.txt',
       Buffer.concat(contents)
     )
   }
