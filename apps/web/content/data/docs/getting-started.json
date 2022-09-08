@@ -314,7 +314,7 @@
         {
           "type": "heading",
           "textAlign": "left",
-          "level": 1,
+          "level": 2,
           "content": [
             {
               "type": "text",
@@ -325,7 +325,7 @@
         {
           "type": "heading",
           "textAlign": "left",
-          "level": 2,
+          "level": 3,
           "content": [
             {
               "type": "text",
@@ -376,7 +376,7 @@
         {
           "type": "heading",
           "textAlign": "left",
-          "level": 2,
+          "level": 3,
           "content": [
             {
               "type": "text",

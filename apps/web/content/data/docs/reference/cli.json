@@ -1,0 +1,49 @@
+{
+  "id": "m5KGP-I5smg2S8o4A-j15",
+  "type": "Doc",
+  "title": "CLI",
+  "blocks": [
+    {
+      "id": "m6YfFMWgla_Oa456yHmEC",
+      "index": "a0",
+      "type": "TextBlock",
+      "text": [
+        {
+          "type": "heading",
+          "textAlign": "left",
+          "level": 1,
+          "content": [
+            {
+              "type": "text",
+              "text": "CLI"
+            }
+          ]
+        },
+        {
+          "id": "-DXbyOqvbfbUVwbH8CNuJ",
+          "type": "CodeBlock",
+          "code": "Usage\n  $ alinea <command> [options]\nAvailable Commands\n  generate    Generate types and content cache\n  init        Copy a sample config file to the current directory\n  serve       Start a development dashboard\nFor more info, run any command with the `--help` flag\n  $ alinea generate --help\n  $ alinea init --help\nOptions\n  -v, --version    Displays current version\n  -h, --help       Displays this message"
+        },
+        {
+          "type": "heading",
+          "textAlign": "left",
+          "level": 2,
+          "content": [
+            {
+              "type": "text",
+              "text": "$ alinea generate [options]"
+            }
+          ]
+        },
+        {
+          "id": "KipDFk3xI6h94TjE3Mhc_",
+          "type": "CodeBlock",
+          "code": "Options\n  -w, --watch     Watch for changes to source files\n  -c, --config    Location of the config file, defaults to \"alinea.config.tsx\"\n  --fix           Any missing or incorrect properties will be overwritten by their default\n  -h, --help      Displays this message"
+        }
+      ]
+    }
+  ],
+  "alinea": {
+    "index": "a0"
+  }
+}
