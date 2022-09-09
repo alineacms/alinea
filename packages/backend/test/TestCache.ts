@@ -27,11 +27,15 @@ const config = createConfig({
     main: workspace('Main', {
       source: 'content',
       schema: createSchema({
-        Type: type('Type', {title: text('Title')}).configure({
+        Type: type('Type', {
+          title: text('Title'),
+          path: text('path')
+        }).configure({
           isContainer: true
         }),
         Sub: type('Sub', {
-          title: text('Title')
+          title: text('Title'),
+          path: text('path')
         })
       }),
       roots: {data: root('Root', {contains: ['Type']})}

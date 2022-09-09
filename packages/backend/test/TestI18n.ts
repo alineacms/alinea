@@ -29,13 +29,16 @@ const config = createConfig({
       mediaDir: 'files',
       schema: createSchema({
         Home: type('Home', {
-          title: text('Title')
+          title: text('Title'),
+          path: text('path')
         }),
         Type: type('Type', {
-          title: text('Title')
+          title: text('Title'),
+          path: text('path')
         }).configure({isContainer: true}),
         Sub: type('Sub', {
-          title: text('Title')
+          title: text('Title'),
+          path: text('path')
         })
       }),
       roots: {

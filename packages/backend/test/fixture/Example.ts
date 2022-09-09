@@ -21,12 +21,14 @@ const config = createConfig({
       schema: schema({
         Type: type('Type', {
           title: text('Title'),
+          path: text('path'),
           list: listField
         }).configure({
           isContainer: true
         }),
         Sub: type('Sub', {
-          title: text('Title')
+          title: text('Title'),
+          path: text('path')
         })
       }),
       roots: {data: root('Root', {contains: ['Type']})}
