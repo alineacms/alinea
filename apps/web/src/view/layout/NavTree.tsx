@@ -3,24 +3,21 @@ import {IcRoundKeyboardArrowDown} from '@alinea/ui/icons/IcRoundKeyboardArrowDow
 import {IcRoundKeyboardArrowRight} from '@alinea/ui/icons/IcRoundKeyboardArrowRight'
 import Link from 'next/link'
 import {useRouter} from 'next/router'
-import {useMemo, useState} from 'react'
+import {useEffect, useMemo, useState} from 'react'
 import css from './NavTree.module.scss'
 
 const styles = fromModule(css)
 
-function nestNav<T extends {id: string; parent: string | undefined}>(
-  pages: Array<T>
-) {
-  type Page = T & {children: Array<Page>}
-  const res: Array<Page> = []
-  const root = new Map<string, Page>(
+function nestNav(pages: Nav) {
+  const res: Array<NavItem> = []
+  const root = new Map<string, NavItem>(
     pages.map(page => [page.id, {...page, children: []}])
   )
   for (const page of pages) {
     if (!root.has(page.parent!)) {
       res.push(root.get(page.id)!)
     } else {
-      root.get(page.parent!)!.children.push(root.get(page.id)!)
+      root.get(page.parent!)!.children!.push(root.get(page.id)!)
     }
   }
   return res
@@ -49,10 +46,14 @@ interface NavTreeItemProps {
 function NavTreeItem({level, page}: NavTreeItemProps) {
   const router = useRouter()
   const pathname = router.asPath
-  const selected = pathname.startsWith(page.url)
-  const [showChildren, setShowChildren] = useState(selected)
+  const [showChildren, setShowChildren] = useState<boolean | undefined>(
+    undefined
+  )
+  const isOpen = showChildren ?? pathname.startsWith(page.url!)
   const isContainer = page.children && page.children.length > 0
-  const childrenOpen = showChildren
+  useEffect(() => {
+    setShowChildren(undefined)
+  }, [pathname])
   return (
     <>
       {isContainer ? (
@@ -60,13 +61,13 @@ function NavTreeItem({level, page}: NavTreeItemProps) {
           <HStack
             center
             gap={8}
-            className={styles.root.link({selected, category: true})}
+            className={styles.root.link({selected: isOpen, category: true})}
             onClick={e => {
               e.preventDefault()
               setShowChildren(!showChildren)
             }}
           >
-            {childrenOpen ? (
+            {isOpen ? (
               <IcRoundKeyboardArrowDown className={styles.root.link.icon()} />
             ) : (
               <IcRoundKeyboardArrowRight className={styles.root.link.icon()} />
@@ -74,16 +75,12 @@ function NavTreeItem({level, page}: NavTreeItemProps) {
             <span>{page.label || page.title}</span>
           </HStack>
           {page.children && (
-            <NavTree
-              nav={page.children}
-              level={level + 1}
-              open={childrenOpen}
-            />
+            <NavTree nav={page.children} level={level + 1} open={isOpen} />
           )}
         </div>
       ) : (
         <div>
-          <Link href={page.url}>
+          <Link href={page.url!}>
             <a
               className={styles.root.link({
                 active: pathname === page.url
