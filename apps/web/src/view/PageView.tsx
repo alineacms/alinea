@@ -4,11 +4,13 @@ import {CodeVariantsProvider} from '../view/blocks/CodeVariantsBlock'
 import {DocPage} from './DocPage'
 import {HomePage} from './HomePage'
 import {Layout} from './layout/Layout'
+import {Page} from './Page'
 import {PageViewProps} from './PageView.server'
 
 const views: {[key: string]: ComponentType<any>} = {
   Home: HomePage,
-  Doc: DocPage
+  Doc: DocPage,
+  Page: Page
 }
 
 function EntryView({entry}: PageViewProps) {

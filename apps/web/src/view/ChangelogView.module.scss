@@ -1,10 +1,6 @@
 @import './layout/WebTypo.module.scss';
 
 .root {
-  min-width: 0;
-  max-width: 700px;
-  margin: 0 auto;
-
   h1 {
     margin-top: 0;
     @extend .h1;
@@ -26,8 +22,10 @@
   }
 
   p {
+    font-size: 14px;
     white-space: pre-line;
     @extend .p;
+    max-width: 80ch;
   }
 
   a {
@@ -47,6 +45,7 @@
     background-repeat: no-repeat;
     background-position: 0px 0.8em;
     padding-left: 28px;
+    max-width: 80ch;
   }
 
   pre code {

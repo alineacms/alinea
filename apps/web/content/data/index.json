@@ -1,8 +1,6 @@
 {
   "id": "home",
   "type": "Home",
-  "root": "data",
-  "index": "Zy",
   "title": "Alinea CMS",
   "headline": "Content management\nfor the modern web",
   "byline": "Structure, edit and query content with any web framework.\nFully typed and organized in your repository.",
@@ -117,12 +115,19 @@
   "blocks": [],
   "links": [
     {
-      "id": "2ANM58T7xeVpLbcGCefZ5VX6nZq",
+      "id": "KKqM8U3JhAD_H66jV5ywk",
       "index": "a0",
       "type": "entry",
       "entry": "2AFn42lqIU86a9MI0I4rX3qMJQv",
       "label": "Docs",
       "active": "/docs"
+    },
+    {
+      "id": "5UivYaMU9yycVhsQcQxYH",
+      "index": "a1",
+      "type": "entry",
+      "entry": "CC8aJ6-2U3s31micAzTLU",
+      "label": "Roadmap"
     }
   ],
   "footer": [
