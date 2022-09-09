@@ -1,12 +1,13 @@
 import {fromModule} from '@alinea/ui'
 import {useLocalStorage} from '@alinea/ui/hook/UseLocalStorage'
 import Head from 'next/head'
-import {HTMLAttributes, PropsWithChildren, useEffect} from 'react'
+import {HTMLAttributes, PropsWithChildren, ReactNode, useEffect} from 'react'
 import {FavIcon} from './branding/FavIcon'
 import {Footer} from './Footer'
 import {Header} from './Header'
 import css from './Layout.module.scss'
 import {LayoutProps} from './Layout.server'
+import {NavSidebar} from './NavSidebar'
 
 const styles = fromModule(css)
 
@@ -61,6 +62,24 @@ export namespace Layout {
       <div className={styles.scrollable()}>
         <div className={styles.scrollable.inner()}>{children}</div>
       </div>
+    )
+  }
+
+  interface WithSidebarProps {
+    sidebar?: ReactNode
+  }
+
+  export function WithSidebar({
+    children,
+    sidebar
+  }: PropsWithChildren<WithSidebarProps>) {
+    return (
+      <Container>
+        <div className={styles.withSidebar()}>
+          <NavSidebar>{sidebar}</NavSidebar>
+          <Scrollable>{children}</Scrollable>
+        </div>
+      </Container>
     )
   }
 

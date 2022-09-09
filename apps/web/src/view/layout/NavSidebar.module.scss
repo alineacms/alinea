@@ -16,6 +16,10 @@
   display: flex;
   flex-direction: column;
 
+  &.is-fluid {
+    width: auto;
+  }
+
   &:before {
     //content: '';
     position: absolute;

@@ -1,5 +1,6 @@
 import {content} from '@alinea/content/web'
 import {Store} from '@alinea/store'
+import {blogOverviewQuery} from './BlogOverview.server'
 import {docPageQuery} from './DocPage.server'
 import {layoutQuery} from './layout/Layout.server'
 
@@ -7,6 +8,8 @@ async function loadPage(pages: content.Pages, page: content.AnyPage) {
   switch (page.type) {
     case 'Doc':
       return docPageQuery(pages, page)
+    case 'BlogOverview':
+      return blogOverviewQuery(pages, page)
     default:
       return page
   }

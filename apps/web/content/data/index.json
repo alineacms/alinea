@@ -115,7 +115,7 @@
   "blocks": [],
   "links": [
     {
-      "id": "KKqM8U3JhAD_H66jV5ywk",
+      "id": "EWgvSk13pO7egOpA_Oyc-",
       "index": "a0",
       "type": "entry",
       "entry": "2AFn42lqIU86a9MI0I4rX3qMJQv",
@@ -123,11 +123,19 @@
       "active": "/docs"
     },
     {
-      "id": "5UivYaMU9yycVhsQcQxYH",
+      "id": "GQeXYvTPjqof9gqIh1kK0",
       "index": "a1",
       "type": "entry",
       "entry": "CC8aJ6-2U3s31micAzTLU",
       "label": "Roadmap"
+    },
+    {
+      "id": "5-FoR64mWNitf3IAgA7MK",
+      "index": "a2",
+      "type": "entry",
+      "entry": "gx3H52whBKO_DdfcMNI3I",
+      "label": "Blog",
+      "active": "/blog"
     }
   ],
   "footer": [

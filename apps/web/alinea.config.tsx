@@ -4,7 +4,9 @@ import {MediaSchema} from '@alinea/dashboard/schema/MediaSchema'
 import {BrowserPreview} from '@alinea/dashboard/view/preview/BrowserPreview'
 import {IcRoundInsertDriveFile} from '@alinea/ui/icons/IcRoundInsertDriveFile'
 import {IcRoundPermMedia} from '@alinea/ui/icons/IcRoundPermMedia'
+import {BlogOverviewSchema} from './src/view/BlogOverview.schema'
 //import {configureBackend} from './alinea.server'
+import {BlogPostSchema} from './src/view/BlogPost.schema'
 import {DocPageSchema} from './src/view/DocPage.schema'
 import {DocsPageSchema} from './src/view/DocsPage.schema'
 import {HomePageSchema} from './src/view/HomePage.schema'
@@ -16,7 +18,9 @@ export const webSchema = schema({
   Home: HomePageSchema,
   Docs: DocsPageSchema,
   Doc: DocPageSchema,
-  Page: PageSchema
+  Page: PageSchema,
+  BlogOverview: BlogOverviewSchema,
+  BlogPost: BlogPostSchema
 })
 
 const web = workspace('Alinea', {
@@ -30,7 +34,7 @@ const web = workspace('Alinea', {
   roots: {
     data: root('Alinea website', {
       icon: IcRoundInsertDriveFile,
-      contains: ['Page', 'Home', 'Docs']
+      contains: ['Page', 'BlogOverview', 'Home', 'Docs']
     }),
     media: root('Media', {
       icon: IcRoundPermMedia,

@@ -15,7 +15,7 @@ serve({
   alineaDev: true,
   production,
   cwd: path.resolve('apps/web'),
-  staticDir: path.resolve('packages/cli/dist/static'),
+  staticDir: path.resolve('packages/cli/src/static'),
   port: 4500,
   buildOptions: {
     minify: false,

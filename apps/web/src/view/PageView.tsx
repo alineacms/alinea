@@ -1,6 +1,8 @@
 import {useNextPreview} from '@alinea/preview/next'
 import {ComponentType, createElement} from 'react'
 import {CodeVariantsProvider} from '../view/blocks/CodeVariantsBlock'
+import {BlogOverview} from './BlogOverview'
+import {BlogPost} from './BlogPost'
 import {DocPage} from './DocPage'
 import {HomePage} from './HomePage'
 import {Layout} from './layout/Layout'
@@ -10,7 +12,9 @@ import {PageViewProps} from './PageView.server'
 const views: {[key: string]: ComponentType<any>} = {
   Home: HomePage,
   Doc: DocPage,
-  Page: Page
+  Page: Page,
+  BlogPost: BlogPost,
+  BlogOverview: BlogOverview
 }
 
 function EntryView({entry}: PageViewProps) {

@@ -75,11 +75,13 @@ export function Header({links, menu, transparent}: HeaderProps) {
   const mobileTree: Nav = useMemo(() => {
     return [
       {id: 'home', url: '/', title: 'Home'},
-      {id: 'docs', url: '/docs', title: 'Docs'},
+      {id: 'roadmap', url: '/roadmap', title: 'Roadmap'},
+      {id: 'blog', url: '/blog', title: 'Blog'},
       ...menu.map(page => {
         if (page.parent) return page
         return {...page, parent: 'docs'}
       }),
+      {id: 'docs', url: '/docs', title: 'Docs'},
       {id: 'developer', title: 'Developer'},
       {
         parent: 'developer',

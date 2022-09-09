@@ -376,8 +376,9 @@ export async function generate(options: GenerateOptions): Promise<Config> {
           err => onCacheRebuild?.(Outcome.Failure(err))
         )
       }
-      watcher.add(files).on('change', reload)
-      watcher.add(files).on('unlink', reload)
+      watcher.add(files)
+      watcher.on('change', reload)
+      watcher.on('unlink', reload)
     }
     caching = cache().then(async store => {
       if (options.fix) {
