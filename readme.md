@@ -3,7 +3,7 @@
 
 # [![Alinea CMS logo](https://github.com/alineacms/alinea/raw/HEAD/apps/web/public/logo.svg)](https://alinea.sh)
 
-> *Current status*: expect alpha software and out of date docs.
+> _Current status_: expect alpha software and out of date docs.
 
 Alinea is a modern content management system.
 
@@ -37,12 +37,12 @@ npx alinea serve
 
 Configure alinea in `alinea.config.tsx`
 
-````tsx
+```tsx
 const BlogPost = alinea.type('Blog post', {
   title: alinea.text('Blog entry title'),
   body: alinea.richText('Body text')
 })
-````
+```
 
 [Type options and fields →](https://alinea.sh/docs/configuration/type)
 
@@ -51,7 +51,7 @@ const BlogPost = alinea.type('Blog post', {
 Retrieve content fully-typed and filter, order, limit and join as needed.  
 Select only the fields you need.
 
-````tsx
+```tsx
 import {initPages} from '@alinea/content/myWorkspace/pages.js'
 const pages = initPages()
 console.log(
@@ -60,12 +60,12 @@ console.log(
     .where(post => post.author.is('Me'))
     .select(post => ({title: post.title}))
 )
-````
+```
 
 [See the full api →](https://alinea.sh/docs/content/pages)
 
 Content is available during static site generation and when server side querying.  
-Content is bundled with your code and can be queried with zero network overhead.  
+Content is bundled with your code and can be queried with zero network overhead.
 
 [How alinea bundles content →](https://alinea.sh/docs/content/introduction)
 
@@ -73,4 +73,4 @@ Content is bundled with your code and can be queried with zero network overhead.
 
 Alinea supports custom backends that can be hosted as a simple Node.js process or on serverless runtimes.
 
-[Setup your backend →](https://alinea.sh/docs/deploy/backends)
+[Setup your backend →](https://alinea.sh/docs/deploy/intro)
