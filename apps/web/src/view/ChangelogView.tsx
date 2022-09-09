@@ -1,12 +1,19 @@
-import {fromModule} from '@alinea/ui'
+import {fromModule, HStack} from '@alinea/ui'
 import {useEffect, useRef} from 'react'
 import css from './ChangelogView.module.scss'
+import {InformationBar} from './layout/InformationBar'
+import {Layout} from './layout/Layout'
+import {LayoutProps} from './layout/Layout.server'
+import {NavSidebar} from './layout/NavSidebar'
 
 const styles = fromModule(css)
 
-export type ChangelogViewProps = {content: string}
+export interface ChangelogProps {
+  layout: LayoutProps
+  content: string
+}
 
-export default function ChangelogView(props: ChangelogViewProps) {
+export function ChangelogView({layout, content}: ChangelogProps) {
   const divRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -19,10 +26,21 @@ export default function ChangelogView(props: ChangelogViewProps) {
   }, [divRef])
 
   return (
-    <div
-      ref={divRef}
-      className={styles.root()}
-      dangerouslySetInnerHTML={{__html: props.content}}
-    />
+    <Layout {...layout}>
+      <Layout.Container>
+        <HStack>
+          <NavSidebar>
+            <InformationBar />
+          </NavSidebar>
+          <Layout.Scrollable>
+            <div
+              ref={divRef}
+              className={styles.root()}
+              dangerouslySetInnerHTML={{__html: content}}
+            />
+          </Layout.Scrollable>
+        </HStack>
+      </Layout.Container>
+    </Layout>
   )
 }

@@ -11,6 +11,7 @@ import {Blocks} from './blocks/Blocks'
 import {CodeVariantsBlock} from './blocks/CodeVariantsBlock'
 import css from './HomePage.module.scss'
 import {HomePageSchema} from './HomePage.schema'
+import {Newsletter} from './layout/engage/Newsletter'
 import {Feature, Features} from './layout/Features'
 import {Hero} from './layout/Hero'
 import {Layout} from './layout/Layout'
@@ -115,22 +116,25 @@ export function HomePage(props: HomePageSchema) {
 
       <section className={styles.root.section('highlight')}>
         <Layout.Container>
-          <VStack align="flex-start" gap={30}>
-            <WebTypo>
-              <WebTypo.H2>Build with us</WebTypo.H2>
-              <WebTypo.P>
-                Alinea is open source under the MIT license.
-                <br />
-                It needs some work before it's production-ready.
-              </WebTypo.P>
-            </WebTypo>
-            <Hero.Action
-              href="https://github.com/alineacms/alinea"
-              target="_blank"
-            >
-              Fork on Github
-            </Hero.Action>
-          </VStack>
+          <HStack gap={30} wrap center>
+            <VStack align="flex-start" gap={30} style={{flexGrow: 1}}>
+              <WebTypo>
+                <WebTypo.H2>Build with us</WebTypo.H2>
+                <WebTypo.P>
+                  Alinea is open source under the MIT license.
+                  <br />
+                  It needs some work before it's production-ready.
+                </WebTypo.P>
+              </WebTypo>
+              <Hero.Action
+                href="https://github.com/alineacms/alinea"
+                target="_blank"
+              >
+                Fork on Github
+              </Hero.Action>
+            </VStack>
+            <Newsletter style={{flexGrow: 1}} />
+          </HStack>
         </Layout.Container>
       </section>
 

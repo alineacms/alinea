@@ -20,16 +20,6 @@
           ]
         },
         {
-          "type": "paragraph",
-          "textAlign": "left",
-          "content": [
-            {
-              "type": "text",
-              "text": "Alinea is currently considered alpha software. Below are some of the features we're working towards."
-            }
-          ]
-        },
-        {
           "type": "heading",
           "textAlign": "left",
           "level": 2,
