@@ -323,23 +323,12 @@
           ]
         },
         {
-          "type": "heading",
-          "textAlign": "left",
-          "level": 3,
-          "content": [
-            {
-              "type": "text",
-              "text": "Running locally"
-            }
-          ]
-        },
-        {
           "type": "paragraph",
           "textAlign": "left",
           "content": [
             {
               "type": "text",
-              "text": "The following command will start a local server on `http://localhost:4500`"
+              "text": "The following command start a local server on `http://localhost:4500`"
             }
           ]
         },
@@ -374,6 +363,22 @@
           ]
         },
         {
+          "type": "paragraph",
+          "textAlign": "left",
+          "content": [
+            {
+              "type": "text",
+              "text": "If you're using a framework with its own development server it's possible to prepend the serve command to it. This will wait until the alinea package is generated before starting the dev server make sure userland code can always depend on the package being available. It also simplifies running the dashboard and development server without requiring tools like npm-run-all. "
+            }
+          ]
+        },
+        {
+          "id": "5EX0WWSSfvfk3Tf24UVPq",
+          "type": "CodeBlock",
+          "code": "{\n  \"scripts\": {\n    \"dev\": \"alinea serve -- next dev\",\n    \"build\": \"alinea generate -- next build\"\n  }\n}",
+          "fileName": "package.json"
+        },
+        {
           "type": "heading",
           "textAlign": "left",
           "level": 3,
@@ -390,7 +395,7 @@
           "content": [
             {
               "type": "text",
-              "text": "To serve the dashboard publicly we'll need to add a backend with authentication. This is outlined in the backends chapter."
+              "text": "To serve the dashboard publicly we'll need to add a backend with authentication. This is outlined in the deploy chapter."
             }
           ]
         },
