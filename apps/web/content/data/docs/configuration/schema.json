@@ -101,12 +101,6 @@
           "code": "alinea.schema({\n  BlogOverview: alinea.type('Blog overview', {\n    title: alinea.text('Title'),\n    path: alinea.path('Path')\n  }).configure({\n    isContainer: true,\n    contains: ['BlogPost']\n  }),\n  BlogPost: alinea.type('Blog post', {\n    title: alinea.text('Title'),\n    path: alinea.path('Path'),\n    body: alinea.richText('Body')\n  })\n})"
         }
       ]
-    },
-    {
-      "id": "lrqOEzylZzL6IYVYP2v6D",
-      "index": "a1",
-      "type": "TextBlock",
-      "text": []
     }
   ],
   "alinea": {

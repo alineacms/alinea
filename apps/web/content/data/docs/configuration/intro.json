@@ -30,6 +30,23 @@
           ]
         },
         {
+          "id": "tcDzW-tnYPRST5jAp3IoQ",
+          "type": "NoticeBlock",
+          "level": "info",
+          "body": [
+            {
+              "type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "If you prefer plain Javascript over Typescript, just rename the file to `alinea.config.js`"
+                }
+              ]
+            }
+          ]
+        },
+        {
           "type": "heading",
           "textAlign": "left",
           "level": 2,
