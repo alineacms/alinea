@@ -86,6 +86,14 @@ export class TypeConfig<R = any, T = R> {
     return this.shape.create()
   }
 
+  hasField(key: string) {
+    try {
+      return this.field(key), true
+    } catch (e) {
+      return false
+    }
+  }
+
   /** Get a field by name */
   field(key: string) {
     const field = LazyRecord.get(this.fields, key)

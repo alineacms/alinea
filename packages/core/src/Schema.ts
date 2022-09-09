@@ -1,5 +1,6 @@
 import {Collection, Cursor, Selection} from '@alinea/store'
 import {Entry} from './Entry'
+import {createError} from './ErrorWithCode'
 import {Field} from './Field'
 import {RecordShape} from './shape/RecordShape'
 import type {TypeConfig} from './Type'
@@ -70,6 +71,10 @@ export class Schema<T = any> extends SchemaConfig<T> {
   constructor(public workspace: Workspace<T>, config: SchemaConfig<T>) {
     super(config.types)
     for (const [name, type] of LazyRecord.iterate(config.types)) {
+      if (!type.hasField('title') || !type.hasField('path'))
+        throw createError(
+          `Missing title or path field in type ${name}, see https://alinea.sh//docs/reference/titles`
+        )
       this.typeMap.set(name, type.toType(this, name))
     }
   }
