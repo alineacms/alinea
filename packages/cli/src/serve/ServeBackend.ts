@@ -4,7 +4,14 @@ import {FileDrafts} from '@alinea/backend/drafts/FileDrafts'
 import {JsonLoader} from '@alinea/backend/loader/JsonLoader'
 import {router} from '@alinea/backend/router/Router'
 import {JWTPreviews} from '@alinea/backend/util/JWTPreviews'
-import {accumulate, Config, Hub, outcome, Workspaces} from '@alinea/core'
+import {
+  accumulate,
+  Config,
+  Future,
+  Hub,
+  outcome,
+  Workspaces
+} from '@alinea/core'
 import {base64, base64url} from '@alinea/core/util/Encoding'
 import {Response} from '@alinea/iso'
 import {SqliteStore} from '@alinea/store/sqlite/SqliteStore'
@@ -21,6 +28,7 @@ export interface ServeBackendOptions<T extends Workspaces> {
 export class ServeBackend<
   T extends Workspaces = Workspaces
 > extends Backend<T> {
+  publishing = false
   reload: (config: Config<T>) => void
   constructor({
     cwd = process.cwd(),
@@ -47,8 +55,7 @@ export class ServeBackend<
       drafts: drafts,
       media: data,
       target: data,
-      previews: new JWTPreviews('@alinea/backend/devserver'),
-      applyPublish: false
+      previews: new JWTPreviews('@alinea/backend/devserver')
     }
     super(options)
     this.reload = config => {
@@ -99,6 +106,17 @@ export class ServeBackend<
       }),
       api
     ).recover(router.reportError).handle
+  }
+
+  // Todo: this needs a proper lock
+  async publishEntries(
+    params: Hub.PublishParams,
+    ctx: Hub.Context
+  ): Future<void> {
+    this.publishing = true
+    return super.publishEntries(params, ctx).finally(() => {
+      this.publishing = false
+    })
   }
 
   reloadPreviewStore() {

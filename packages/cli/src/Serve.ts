@@ -184,6 +184,9 @@ export async function serve(options: ServeOptions): Promise<void> {
   let config = await generate({
     ...options,
     store,
+    canReIndex() {
+      return !server.publishing
+    },
     onConfigRebuild: async outcome => {
       const [newConfig, error] = outcome
       if (error) return

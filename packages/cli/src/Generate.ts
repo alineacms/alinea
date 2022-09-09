@@ -152,6 +152,7 @@ export type GenerateOptions = {
   configFile?: string
   watch?: boolean
   fix?: boolean
+  canReIndex?: () => boolean
   onConfigRebuild?: (outcome: Outcome<Config>) => void
   onCacheRebuild?: (outcome: Outcome<SqliteStore>) => void
   wasmCache?: boolean
@@ -370,6 +371,7 @@ export async function generate(options: GenerateOptions): Promise<Config> {
     if (watch && files) {
       watcher = new FSWatcher()
       async function reload() {
+        if (options.canReIndex && !options.canReIndex()) return
         if (caching) await caching
         caching = cache().then(
           store => onCacheRebuild?.(Outcome.Success(store)),
