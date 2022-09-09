@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [0.2.8]
+
+- Fix rich text undo/redo [yjs/y-prosemirror#114](https://github.com/yjs/y-prosemirror/issues/114)
+
 ## [0.2.7]
 
 - UI tweaks
