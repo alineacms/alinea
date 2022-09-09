@@ -64,7 +64,7 @@ function NavTreeItem({level, page}: NavTreeItemProps) {
             className={styles.root.link({selected: isOpen, category: true})}
             onClick={e => {
               e.preventDefault()
-              setShowChildren(!showChildren)
+              setShowChildren(!isOpen)
             }}
           >
             {isOpen ? (
