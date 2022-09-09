@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [0.2.9]
+
+- The `alinea serve` command will apply publish actions directly to the memory
+  store instead of relying on the file watcher. This should result in better
+  performance.
+
 ## [0.2.8]
 
 - Fix rich text undo/redo [yjs/y-prosemirror#114](https://github.com/yjs/y-prosemirror/issues/114)
