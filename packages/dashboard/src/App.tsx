@@ -79,6 +79,8 @@ function DraftsButton() {
     <Sidebar.Nav.Item
       selected={location.pathname.startsWith(nav.draft({workspace}))}
       to={link}
+      title="Drafts"
+      aria-label="Drafts"
       badge={draftsTotal}
     >
       <MdiSourceBranch />
@@ -120,11 +122,14 @@ function AppAuthenticated() {
                         entryLocation && entryLocation.root === key
                           ? nav.entry(entryLocation)
                           : nav.root({workspace, root: key})
+                      const title = key.charAt(0).toUpperCase() + key.slice(1)
                       return (
                         <Sidebar.Nav.Item
                           key={key}
                           selected={isEntry && isSelected}
                           to={link}
+                          title={title}
+                          aria-label={title}
                         >
                           {root.icon ? (
                             <root.icon />
