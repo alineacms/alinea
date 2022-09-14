@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.2.10]
+
 - Workaround [evanw/esbuild#2460](https://github.com/evanw/esbuild/issues/2460).
   Newer esbuild versions support the new "automatic" react jsx feature. This can
   be enabled from the build options, but also overwritten in tsconfig.json.
