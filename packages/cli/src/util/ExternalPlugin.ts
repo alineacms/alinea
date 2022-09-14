@@ -7,7 +7,7 @@ export function externalPlugin(cwd: string): Plugin {
     setup(build) {
       build.onResolve({filter: /^[^\.].*/}, args => {
         if (args.kind === 'entry-point') return
-        if (args.path.startsWith('@alinea/'))
+        if (args.path === 'alinea' || args.path.startsWith('@alinea/'))
           return {path: args.path, external: true}
         return build
           .resolve(args.path, {
