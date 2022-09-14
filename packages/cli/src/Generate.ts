@@ -281,7 +281,7 @@ export async function generate(options: GenerateOptions): Promise<Config> {
             }
           }),
           EvalPlugin,
-          externalPlugin,
+          externalPlugin(cwd),
           ignorePlugin
         ],
         watch: watch && {
@@ -459,7 +459,7 @@ export async function generate(options: GenerateOptions): Promise<Config> {
             entryPoints: [sourceLocation],
             absWorkingDir: outDir,
             jsx: 'automatic',
-            plugins: [externalPlugin, ignorePlugin]
+            plugins: [externalPlugin(cwd), ignorePlugin]
           })
         )
         const outFile = 'file://' + tmpFile

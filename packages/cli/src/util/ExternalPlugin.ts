@@ -1,18 +1,24 @@
+import * as path from '@alinea/core/util/Paths'
 import type {Plugin} from 'esbuild'
 
-export const externalPlugin: Plugin = {
-  name: 'external',
-  setup(build) {
-    build.onResolve({filter: /^[^\.].*/}, async args => {
-      if (args.kind === 'entry-point') return
-      const res = await build.resolve(args.path, {
-        resolveDir: args.resolveDir
+export function externalPlugin(cwd: string): Plugin {
+  return {
+    name: 'external',
+    setup(build) {
+      build.onResolve({filter: /^[^\.].*/}, args => {
+        if (args.kind === 'entry-point') return
+        return build
+          .resolve(args.path, {
+            resolveDir: args.resolveDir
+          })
+          .then(res => {
+            const isRelative = path.contains(
+              cwd.replace(/\\/g, '/'),
+              res.path.replace(/\\/g, '/')
+            )
+            if (!isRelative) return {path: args.path, external: true}
+          })
       })
-      const isPackage =
-        res.path.includes('node_modules') ||
-        // Todo: his should only trigger during development
-        res.path.replaceAll('\\', '/').includes('/alinea/packages')
-      if (isPackage) return {path: args.path, external: true}
-    })
+    }
   }
 }
