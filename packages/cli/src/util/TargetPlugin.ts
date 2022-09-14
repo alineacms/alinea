@@ -16,6 +16,7 @@ export function targetPlugin(info: FileInfo): Plugin {
     name: 'target',
     setup(build) {
       const outputs = new Map<string, Array<EntryPoint>>()
+      const cwd = build.initialOptions.absWorkingDir || process.cwd()
       const extension = build.initialOptions.outExtension?.['.js'] || '.js'
       build.onStart(() => {
         outputs.clear()
@@ -70,7 +71,7 @@ export function targetPlugin(info: FileInfo): Plugin {
                 output.map(entry => [entry.outputFile, entry.entryPoint])
               ),
               outdir: outDir,
-              plugins: [externalPlugin, ignorePlugin]
+              plugins: [externalPlugin(cwd), ignorePlugin]
             })
           )
         }

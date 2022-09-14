@@ -6,7 +6,7 @@ import {
   Hub,
   outcome
 } from '@alinea/core'
-import {posix as path} from 'node:path'
+import * as path from '@alinea/core/util/Paths'
 import {Cache} from '../Cache'
 import {Data} from '../Data'
 import {FS} from '../FS'
@@ -18,14 +18,6 @@ export type FileDataOptions = {
   fs: FS
   loader: Loader
   rootDir?: string
-}
-
-// https://stackoverflow.com/a/45242825
-function isChildOf(child: string, parent: string) {
-  const relative = path.relative(parent, child)
-  const isSubdir =
-    relative && !relative.startsWith('..') && !path.isAbsolute(relative)
-  return isSubdir
 }
 
 export class FileData implements Data.Source, Data.Target, Data.Media {
@@ -197,7 +189,7 @@ export class FileData implements Data.Source, Data.Target, Data.Media {
       .filter(Boolean)
     const file = path.join(rootDir, location)
     const isInMediaLocation = mediaDirs.some(dir =>
-      isChildOf(file, path.join(rootDir, dir))
+      path.contains(path.join(rootDir, dir), file)
     )
     if (!isInMediaLocation) throw createError(401)
     return {type: 'buffer', buffer: await fs.readFile(file)}
