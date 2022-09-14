@@ -29,6 +29,7 @@ export function DemoHeader({image, backLink, credit}: DemoHeaderProps) {
           </a>
         </Link>
       )}
+
       {hasImage && (
         <div className={styles.root.image()}>
           <Image layout="fill" objectFit="cover" src={image.src} />
@@ -39,7 +40,8 @@ export function DemoHeader({image, backLink, credit}: DemoHeaderProps) {
         Milk &<br />
         Cookies
       </div>
-      {credit && (
+
+      {hasImage && credit && (
         <div className={styles.root.credit()}>
           <DemoText doc={credit} />
         </div>
