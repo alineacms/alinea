@@ -1,7 +1,7 @@
 import {content} from '@alinea/content/demo'
 import {initPages} from '@alinea/content/demo/pages.js'
 import {GetStaticPropsContext} from 'next'
-import {DemoRecipes} from '../../view/channels/recipes/DemoRecipes'
+import {DemoRecipes} from '../../view/recipes/DemoRecipes'
 
 export async function getStaticProps(context: GetStaticPropsContext) {
   const pages = initPages(context.previewData as string)

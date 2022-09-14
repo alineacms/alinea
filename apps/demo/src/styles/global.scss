@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;700&display=swap');
-
 * {
   margin: 0;
   padding: 0;
@@ -14,7 +12,7 @@ html {
 }
 
 body {
-  font-family: 'Poppins', Arial, Helvetica, sans-serif;
+  font-family: 'Poppins', sans-serif;
   font-size: 16px;
   line-height: 1.5;
   font-weight: 400;
@@ -43,4 +41,76 @@ button {
   border: none;
   border-radius: 0;
   background: none;
+}
+
+@font-face {
+  font-family: 'Poppins';
+  font-style: normal;
+  font-display: block;
+  font-weight: 100;
+  src: url('./fonts/poppins-v20-latin-100.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Poppins';
+  font-style: normal;
+  font-display: block;
+  font-weight: 200;
+  src: url('./fonts/poppins-v20-latin-200.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Poppins';
+  font-style: normal;
+  font-display: block;
+  font-weight: 300;
+  src: url('./fonts/poppins-v20-latin-300.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Poppins';
+  font-style: normal;
+  font-display: block;
+  font-weight: 400;
+  src: url('./fonts/poppins-v20-latin-regular.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Poppins';
+  font-style: normal;
+  font-display: block;
+  font-weight: 500;
+  src: url('./fonts/poppins-v20-latin-500.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Poppins';
+  font-style: normal;
+  font-display: block;
+  font-weight: 600;
+  src: url('./fonts/poppins-v20-latin-600.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Poppins';
+  font-style: normal;
+  font-display: block;
+  font-weight: 700;
+  src: url('./fonts/poppins-v20-latin-700.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Poppins';
+  font-style: normal;
+  font-display: block;
+  font-weight: 800;
+  src: url('./fonts/poppins-v20-latin-800.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Poppins';
+  font-style: normal;
+  font-display: block;
+  font-weight: 900;
+  src: url('./fonts/poppins-v20-latin-900.woff2') format('woff2');
 }
