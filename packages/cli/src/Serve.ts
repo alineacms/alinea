@@ -63,13 +63,14 @@ type BuildDetails = {
 function browserBuild(
   options: BuildOptions
 ): (request: Request) => Promise<Response | undefined> {
-  let frontend: Promise<BuildDetails> = esbuild
+  let frontend: Promise<BuildDetails | undefined> = esbuild
     .build({
       ...options,
       write: false,
       incremental: true
     })
     .then(buildFiles)
+    .catch(() => undefined)
   let frontendBuilt: undefined | number
   function buildFiles(result: BuildResult) {
     return {
@@ -91,6 +92,7 @@ function browserBuild(
     request: Request
   ): Promise<Response | undefined> {
     let result = await frontend
+    if (!result) return new Response('Build failed', {status: 500})
     if (!frontendBuilt) frontendBuilt = Date.now()
     const isResultStale = Date.now() - frontendBuilt > 2000
     if (isResultStale) {
@@ -98,6 +100,7 @@ function browserBuild(
       frontendBuilt = Date.now()
       result = await frontend
     }
+    if (!result) return new Response('Build failed', {status: 500})
     const url = new URL(request.url)
     const fileName = url.pathname.toLowerCase()
     const contents = result.files.get(fileName)
@@ -293,8 +296,10 @@ export async function serve(options: ServeOptions): Promise<void> {
             }
           }
         : undefined,
-      tsconfig: path.join(staticDir, 'tsconfig.json'),
-      logLevel: 'error'
+      logOverride: {
+        'ignored-bare-import': 'silent'
+      },
+      tsconfig: path.join(staticDir, 'tsconfig.json')
     }),
     matcher.get('/config.css').map((): Response => {
       return new Response('', {headers: {'content-type': 'text/css'}})

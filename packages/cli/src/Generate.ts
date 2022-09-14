@@ -229,7 +229,36 @@ export async function generate(options: GenerateOptions): Promise<Config> {
     )
   }
 
+  // Workaround evanw/esbuild#2460
+  function overrideTsConfig(): string | undefined {
+    const overrideLocation = path.join(cwd, 'tsconfig.alinea.json')
+    // Did we already extend?
+    if (fs.existsSync(overrideLocation)) return overrideLocation
+    // Do we have an existing tsconfig to extend?
+    const tsConfig = path.join(cwd, 'tsconfig.json')
+    const hasTsConfig = fs.existsSync(tsConfig)
+    if (hasTsConfig) {
+      // Unfortunately the only way to overwrite the jsx setting is to provide
+      // esbuild with a path to another tsconfig file within the same dir
+      const source = fs.readJSONSync(tsConfig)
+      // This is not entirely correct as it could be extending another tsconfig
+      // that has this setting but we'll fix that if anyone every runs into it
+      if (source.compilerOptions?.jsx !== 'react-jsx') {
+        const extendedConfig = {
+          extends: './tsconfig.json',
+          compilerOptions: {jsx: 'react-jsx'}
+        }
+        fs.writeFileSync(
+          overrideLocation,
+          JSON.stringify(extendedConfig, null, 2)
+        )
+        return overrideLocation
+      }
+    }
+  }
+
   async function compileConfig() {
+    const tsconfig = process.env.ALINEA_DEV ? undefined : overrideTsConfig()
     return failOnBuildError(
       build({
         format: 'esm',
@@ -237,7 +266,11 @@ export async function generate(options: GenerateOptions): Promise<Config> {
         treeShaking: true,
         outdir: outDir,
         entryPoints: {config: configLocation},
+        absWorkingDir: cwd,
         bundle: true,
+        logOverride: {
+          'ignored-bare-import': 'silent'
+        },
         platform: 'node',
         jsx: 'automatic',
         plugins: [
@@ -264,7 +297,7 @@ export async function generate(options: GenerateOptions): Promise<Config> {
               )
           }
         },
-        tsconfig: path.join(staticDir, 'tsconfig.json')
+        tsconfig
       })
     )
   }

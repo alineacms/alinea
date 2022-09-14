@@ -2,6 +2,17 @@
 
 ## [Unreleased]
 
+- Workaround [evanw/esbuild#2460](https://github.com/evanw/esbuild/issues/2460).
+  Newer esbuild versions support the new "automatic" react jsx feature. This can
+  be enabled from the build options, but also overwritten in tsconfig.json.
+  Alinea depends on this feature but had problems generating correct output
+  when the tsconfig has another jsx setting.
+  Previously the workaround was supplying a blank tsconfig file.
+  However other directives such as paths that the user might supply in their own
+  tsconfig were ignored. With this change alinea will write out a
+  tsconfig.alinea.json that extends the user supplied tsconfig.json
+  and overrides the jsx property.
+
 ## [0.2.9]
 
 - The `alinea serve` command will apply publish actions directly to the memory
