@@ -258,7 +258,7 @@ export async function generate(options: GenerateOptions): Promise<Config> {
   }
 
   async function compileConfig() {
-    const tsconfig = process.env.ALINEA_DEV ? undefined : overrideTsConfig()
+    const tsconfig = overrideTsConfig()
     return failOnBuildError(
       build({
         format: 'esm',

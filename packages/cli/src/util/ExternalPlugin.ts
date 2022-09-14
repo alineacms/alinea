@@ -12,11 +12,10 @@ export function externalPlugin(cwd: string): Plugin {
             resolveDir: args.resolveDir
           })
           .then(res => {
-            const isRelative = path.contains(
-              cwd.replace(/\\/g, '/'),
-              res.path.replace(/\\/g, '/')
-            )
-            if (!isRelative) return {path: args.path, external: true}
+            const isNodeModule =
+              path.normalize(res.path).split('/').includes('node_modules') ||
+              res.path.startsWith('@alinea')
+            if (isNodeModule) return {path: args.path, external: true}
           })
       })
     }

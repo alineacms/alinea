@@ -40,6 +40,8 @@ export function isAbsolute(path: string) {
 }
 
 export function normalize(path: string) {
+  path = path.replace(/\\/g, '/')
+
   var absolute = isAbsolute(path),
     trailingSlash = path && path[path.length - 1] === '/'
 
@@ -182,6 +184,8 @@ export function relative(from: string, to: string) {
 
 // https://stackoverflow.com/a/45242825
 export function contains(parent: string, child: string): boolean {
+  parent = normalize(parent)
+  child = normalize(child)
   const asRelative = relative(parent, child)
   const isSubdir =
     asRelative && !asRelative.startsWith('..') && !isAbsolute(asRelative)
