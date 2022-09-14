@@ -1,0 +1,51 @@
+.root {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  background: #f3d6ec;
+  color: white;
+  min-height: 180px;
+
+  &.is-open {
+    height: 45vh;
+  }
+
+  &-back {
+    font-weight: bold;
+    position: absolute;
+    z-index: 1;
+    padding: 8px;
+  }
+
+  &-image {
+    position: absolute;
+    inset: 0;
+  }
+
+  &-credit {
+    position: absolute;
+    bottom: -33px;
+    left: 0;
+    width: 290px;
+    height: 40px;
+    padding: 8px 30px;
+    background: white;
+    color: #424242;
+    transform: rotate(90deg) translate(-290px, -40px);
+    transform-origin: 0 0;
+    font-size: 12px;
+    line-height: 1;
+  }
+
+  &-title {
+    position: absolute;
+    bottom: 0;
+    height: 120px;
+    font-size: 75px;
+    font-weight: bold;
+    color: white;
+    line-height: 0.8;
+    margin-top: -30px;
+    margin-left: -10px;
+  }
+}

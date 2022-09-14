@@ -1,11 +1,11 @@
 import {content} from '@alinea/content/demo'
 import {initPages} from '@alinea/content/demo/pages.js'
 import {GetStaticPropsContext} from 'next'
-import {DemoRecipedetail} from '../../view/channels/recipedetail/DemoRecipedetail'
+import {Recipe} from '../../view/recipe/Recipe'
 
 export async function getStaticPaths(context: GetStaticPropsContext) {
   const pages = initPages(context.previewData as string)
-  const paths = await pages.whereType('Recipedetail').select(page => page.path)
+  const paths = await pages.whereType('Recipe').select(page => page.path)
   return {
     paths: paths.map((slug: string) => ({params: {slug}})),
     fallback: true
@@ -22,15 +22,15 @@ export async function getStaticProps(context: GetStaticPropsContext) {
 
 export async function queryRecipe(pages: content.Pages, slug: string) {
   const detail = await pages
-    .whereType('Recipedetail')
+    .whereType('Recipe')
     .where(page => page.path.is(slug))
     .sure()
   const related = await pages
-    .whereType('Recipedetail')
+    .whereType('Recipe')
     .where(related => related.id.isNot(detail.id))
     .where(related => related.category.is(detail.category))
     .take(3)
   return {...detail, related}
 }
 
-export default DemoRecipedetail
+export default Recipe

@@ -1,17 +1,46 @@
 {
   "id": "vTCpgsHfAjZtHabyjb8RG",
   "type": "Home",
-  "title": "Home",
+  "title": "Milk & Cookies",
   "hero": {
-    "image": [
-      {
-        "id": "ToaXbDsPfqgpOpWyhLM8M",
-        "index": "a0",
-        "type": "entry",
-        "entry": "zZg8QUVWOmGTbv_ljhBKa"
-      }
-    ],
-    "title": "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+    "header": {
+      "image": [
+        {
+          "id": "NhJJw8_v4t1fnD2s5Rzak",
+          "index": "a0",
+          "type": "entry",
+          "entry": "Lr282L3627dmnIWfsuOJG"
+        }
+      ],
+      "credit": [
+        {
+          "type": "paragraph",
+          "textAlign": "left",
+          "content": [
+            {
+              "type": "text",
+              "text": "Photo by "
+            },
+            {
+              "type": "text",
+              "text": "Julissa Capdevilla",
+              "marks": [
+                {
+                  "type": "link",
+                  "attrs": {
+                    "data-id": null,
+                    "data-entry": null,
+                    "href": "https://unsplash.com/es/@juliedroz?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText",
+                    "title": null
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "title": "Milk &\nCookies",
     "text": [
       {
         "type": "paragraph",
@@ -19,12 +48,11 @@
         "content": [
           {
             "type": "text",
-            "text": "Suspendisse id mi iaculis, tristique ex in, commodo nisi. Duis at elit nunc. Praesent finibus in enim id gravida. In aliquam ut lacus dapibus condimentum. Integer eu lectus vel ipsum aliquam porta."
+            "text": "Grab a glass of milk, find your favorite recipe, and enjoy! Classic cookie recipes that are sure to satisfy your sweet tooth."
           }
         ]
       }
-    ],
-    "button": []
+    ]
   },
   "links": [],
   "footer": [],

@@ -1,7 +1,8 @@
 import {content} from '@alinea/content/demo'
 import {initPages} from '@alinea/content/demo/pages.js'
+import {Store} from '@alinea/store'
 import {GetStaticPropsContext} from 'next'
-import {DemoHome} from '../view/channels/home/DemoHome'
+import {DemoHome} from '../view/home/DemoHome'
 
 export async function getStaticProps(context: GetStaticPropsContext) {
   const pages = initPages(context.previewData as string)
@@ -10,8 +11,21 @@ export async function getStaticProps(context: GetStaticPropsContext) {
   }
 }
 
-export function queryHome(pages: content.Pages) {
-  return pages.whereType('Home').sure()
+export async function queryHome(pages: content.Pages) {
+  const home = await pages.whereType('Home').sure()
+  const recipes = await pages
+    .whereType('Recipe')
+    .select(page => ({
+      id: page.id,
+      title: page.title,
+      url: page.url,
+      header: page.header,
+      intro: page.intro
+    }))
+    .take(10)
+  return {...home, recipes}
 }
+
+export type HomeProps = Store.TypeOf<ReturnType<typeof queryHome>>
 
 export default DemoHome
