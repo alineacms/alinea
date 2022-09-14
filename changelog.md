@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [0.2.11]
+
+- The workaround released in 0.2.10 was not stable. Node modules ended up being
+  bundled in the generated Javascript.
+
 ## [0.2.10]
 
 - Workaround [evanw/esbuild#2460](https://github.com/evanw/esbuild/issues/2460).
