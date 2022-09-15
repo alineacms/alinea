@@ -474,6 +474,30 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@alinea/playground@workspace:apps/playground":
+  version: 0.0.0-use.local
+  resolution: "@alinea/playground@workspace:apps/playground"
+  dependencies:
+    "@alinea/core": 0.0.0
+    "@alinea/dashboard": 0.0.0
+    "@alinea/editor": 0.0.0
+    "@alinea/shared": 0.0.0
+    "@alinea/ui": 0.0.0
+    "@monaco-editor/react": ^4.4.5
+    "@types/lz-string": ^1.3.34
+    "@types/react": ^18.0.5
+    "@types/react-dom": ^18.0.0
+    alinea: 0.0.0
+    esbuild-wasm: ^0.14.43
+    lz-string: ^1.4.4
+    next: ^12.2.5
+    react: ^18.1.0
+    react-dom: ^18.1.0
+    use-clipboard-copy: ^0.2.0
+    wireit: ^0.7.1
+  languageName: unknown
+  linkType: soft
+
 "@alinea/preview@0.0.0, @alinea/preview@workspace:packages/preview":
   version: 0.0.0-use.local
   resolution: "@alinea/preview@workspace:packages/preview"
@@ -586,13 +610,11 @@ __metadata:
     "@alinea/core": 0.0.0
     "@alinea/dashboard": 0.0.0
     "@alinea/ui": 0.0.0
-    "@monaco-editor/react": ^4.4.5
     "@types/find-config": ^1.0.1
     "@types/react": ^18.0.5
     "@types/react-dom": ^18.0.0
     cross-env: ^7.0.3
     dts-bundle: ^0.7.3
-    esbuild-wasm: ^0.14.43
     find-config: ^1.0.0
     next: ^v12.2.6-canary.10
     npm-run-all: ^4.1.5
@@ -605,7 +627,6 @@ __metadata:
     remark-html: ^15.0.1
     shiki: ^0.10.1
     tsx: ^3.8.1
-    use-clipboard-copy: ^0.2.0
     webassembly-loader: ^1.1.0
     wireit: ^0.7.1
   languageName: unknown
@@ -3787,6 +3808,13 @@ __metadata:
   version: 4.0.1
   resolution: "@types/long@npm:4.0.1"
   checksum: ff9653c33f5000d0f131fd98a950a0343e2e33107dd067a97ac4a3b9678e1a2e39ea44772ad920f54ef6e8f107f76bc92c2584ba905a0dc4253282a4101166d0
+  languageName: node
+  linkType: hard
+
+"@types/lz-string@npm:^1.3.34":
+  version: 1.3.34
+  resolution: "@types/lz-string@npm:1.3.34"
+  checksum: e5c5ec0b9b9bfb0a64ca883152ce753244f53a6f12d8d3ba1a363262bea07fed1cd04c399a33a5d600a665d15a39a58bf5fd1ad9c52a98bccf7511f7a42e82f7
   languageName: node
   linkType: hard
 
@@ -8303,6 +8331,15 @@ fsevents@~2.3.2:
   version: 2.3.9
   resolution: "lunr@npm:2.3.9"
   checksum: 176719e24fcce7d3cf1baccce9dd5633cd8bdc1f41ebe6a180112e5ee99d80373fe2454f5d4624d437e5a8319698ca6837b9950566e15d2cae5f2a543a3db4b8
+  languageName: node
+  linkType: hard
+
+"lz-string@npm:^1.4.4":
+  version: 1.4.4
+  resolution: "lz-string@npm:1.4.4"
+  bin:
+    lz-string: bin/bin.js
+  checksum: 54e31238a61a84d8f664d9860a9fba7310c5b97a52c444f80543069bc084815eff40b8d4474ae1d93992fdf6c252dca37cf27f6adbeb4dbc3df2f3ac773d0e61
   languageName: node
   linkType: hard
 

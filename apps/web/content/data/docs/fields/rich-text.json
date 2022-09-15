@@ -35,6 +35,11 @@
           "code": "import {alinea} from 'alinea'\nalinea.richText('My rich text field', {\n  blocks: alinea.schema({\n    CodeBlock: CodeBlockSchema,\n    ImageBlock: ImageBlockSchema\n  })\n})"
         },
         {
+          "id": "EuUkPtwTcHiQweiT_zZZI",
+          "type": "ExampleBlock",
+          "code": "import {alinea} from 'alinea'\nexport default alinea.richText('My rich text field')"
+        },
+        {
           "type": "heading",
           "textAlign": "left",
           "level": 2,

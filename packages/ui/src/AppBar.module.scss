@@ -10,6 +10,7 @@
   backdrop-filter: blur(12px);
   flex-shrink: 0;
   box-shadow: 0 1px 4px var(--alinea-shadow);
+  height: 44px;
 
   @include s {
     overflow-x: auto;
@@ -21,7 +22,7 @@
   display: flex;
   align-items: center;
   padding: 0 10px;
-  height: 44px;
+  height: 100%;
   font-size: 13px;
   white-space: nowrap;
 

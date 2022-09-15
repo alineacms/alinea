@@ -1,8 +1,6 @@
 {
   "id": "24yE79dE2ssYPDQQHFFgT0eg2tH",
   "type": "Doc",
-  "root": "data",
-  "index": "a2BV",
   "title": "Link",
   "blocks": [
     {
@@ -34,8 +32,13 @@
         {
           "id": "268j43D4sYTv9i4LXKv8Isvwlzi",
           "type": "CodeBlock",
-          "code": "import {alinea} from 'alinea'\nalinea.link('My link field', {\n  type: 'entry'\n})",
+          "code": "import {alinea} from 'alinea'\nalinea.link('My link field')",
           "compact": false
+        },
+        {
+          "id": "7JteCOtZTREVRHMMcZqMR",
+          "type": "ExampleBlock",
+          "code": "import {alinea} from 'alinea'\nexport default alinea.link('My link field')"
         }
       ]
     },

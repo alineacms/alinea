@@ -1,8 +1,6 @@
 {
   "id": "BUQj_NQqEq7YYO1nevx1o",
   "type": "Doc",
-  "root": "data",
-  "index": "a2C",
   "title": "Code",
   "blocks": [
     {
@@ -35,6 +33,11 @@
           "id": "itHNQSxP3U_KYZ77Q3vIC",
           "type": "CodeBlock",
           "code": "import {alinea} from 'alinea'\nalinea.code('My code field', {\n  help: 'Paste your code here'\n})"
+        },
+        {
+          "id": "qsJHS5HxiYf1Hs8eUOG6M",
+          "type": "ExampleBlock",
+          "code": "import {alinea} from 'alinea'\nexport default alinea.code('My code field', {\n  help: 'Paste your code here'\n})"
         }
       ]
     },

@@ -4,6 +4,7 @@ import {WebText} from '../layout/WebText'
 import {ChapterLinkBlock} from './ChapterLinkBlock'
 import {CodeBlock} from './CodeBlock'
 import {CodeVariantsBlock} from './CodeVariantsBlock'
+import {ExampleBlock} from './ExampleBlock'
 import {ImageBlock} from './ImageBlock'
 import {NoticeBlock} from './NoticeBlock'
 import css from './TextBlock.module.scss'
@@ -24,6 +25,7 @@ export function TextBlock({text, container}: TextBlockSchema) {
           ImageBlock={ImageBlock}
           NoticeBlock={NoticeBlock}
           ChapterLinkBlock={ChapterLinkBlock}
+          ExampleBlock={ExampleBlock}
         />
       </Wrapper>
     </div>

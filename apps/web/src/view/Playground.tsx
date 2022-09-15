@@ -1,14 +1,16 @@
+// @ts-ignore
 import declarations from '!!raw-loader!../data/alinea.d.ts.txt'
-import {outcome, TypeConfig} from '@alinea/core'
-import {base64url} from '@alinea/core/util/Encoding'
+import * as core from '@alinea/core'
+import {Field, outcome, TypeConfig} from '@alinea/core'
 import {DashboardProvider, SessionProvider, Toolbar} from '@alinea/dashboard'
 import {createDemo} from '@alinea/dashboard/demo/DemoData'
 import {EntrySummaryProvider} from '@alinea/dashboard/hook/UseEntrySummary'
-import {InputForm} from '@alinea/editor'
+import * as editor from '@alinea/editor'
+import {InputForm, useField} from '@alinea/editor'
 import {useForm} from '@alinea/editor/hook/UseForm'
+import {InputField} from '@alinea/editor/view/InputField'
 import {QueryClient, QueryClientProvider} from '@alinea/shared/react-query'
 import {
-  AppBar,
   ErrorBoundary,
   fromModule,
   HStack,
@@ -22,20 +24,18 @@ import {
   Viewport,
   VStack
 } from '@alinea/ui'
-import {IcOutlineScreenshot} from '@alinea/ui/icons/IcOutlineScreenshot'
-import {IcRoundClose} from '@alinea/ui/icons/IcRoundClose'
-import {IcRoundCode} from '@alinea/ui/icons/IcRoundCode'
-import {IcRoundShare} from '@alinea/ui/icons/IcRoundShare'
 import {Main} from '@alinea/ui/Main'
 import Editor, {Monaco} from '@monaco-editor/react'
 import * as alinea from 'alinea'
 import esbuild, {BuildFailure, Message, Plugin} from 'esbuild-wasm'
 import esbuildPkg from 'esbuild-wasm/package.json'
+import lzstring from 'lz-string'
 import Head from 'next/head'
 import Link from 'next/link'
 import * as React from 'react'
 import {useEffect, useMemo, useRef, useState} from 'react'
 import {useClipboard} from 'use-clipboard-copy'
+import {FavIcon} from './layout/branding/FavIcon'
 import {Logo} from './layout/branding/Logo'
 import css from './Playground.module.scss'
 
@@ -49,21 +49,26 @@ export default alinea.type('Type', {
 })`
 
 const global: any = window
-global['alinea'] = alinea
-global['React'] = React
+Object.assign(global, {
+  alinea,
+  React,
+  '@alinea/core': core,
+  '@alinea/editor': editor
+})
 
 const alineaPlugin: Plugin = {
   name: 'alinea',
   setup(build) {
-    build.onResolve({filter: /^alinea$/}, args => {
+    build.onResolve({filter: /.*/}, args => {
       return {
         path: args.path,
         namespace: 'alinea'
       }
     })
-    build.onLoad({filter: /^alinea$/, namespace: 'alinea'}, args => {
+    build.onLoad({filter: /.*/, namespace: 'alinea'}, args => {
+      const pkg = args.path
       return {
-        contents: 'module.exports = window.alinea',
+        contents: `module.exports = global['${pkg}']`,
         loader: 'js'
       }
     })
@@ -89,9 +94,70 @@ function PreviewType({type}: PreviewTypeProps) {
   )
 }
 
+type PreviewFieldProps = {
+  field: Field<any, any>
+}
+
+function PreviewField({field}: PreviewFieldProps) {
+  const input = useField(field, [field])
+  return (
+    <div style={{margin: 'auto', width: '100%'}}>
+      <InputField {...input} />
+    </div>
+  )
+}
+
 const queryClient = new QueryClient({defaultOptions: {queries: {retry: false}}})
 
+function editorConfig(monaco: Monaco) {
+  monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
+    jsx: 'preserve'
+  })
+  monaco.languages.typescript.typescriptDefaults.addExtraLib(
+    declarations,
+    '@types/alinea/index.d.ts'
+  )
+}
+
+interface SourceEditorProps {
+  resizeable: boolean
+  code: string
+  setCode: (code: string) => void
+}
+
+function SourceEditor({resizeable, code, setCode}: SourceEditorProps) {
+  const inner = (
+    <Editor
+      // theme="vs-dark"
+      path="alinea.config.tsx"
+      defaultLanguage="typescript"
+      value={code}
+      beforeMount={editorConfig}
+      onChange={value => {
+        if (value) setCode(value)
+      }}
+      loading={<Loader absolute />}
+    />
+  )
+  if (!resizeable) return inner
+  return (
+    <Pane
+      id="editor"
+      resizable="right"
+      defaultWidth={window.innerWidth * 0.5}
+      maxWidth={window.innerWidth * 0.8}
+      className={styles.root.editor()}
+    >
+      {inner}
+    </Pane>
+  )
+}
+
 export default function Playground() {
+  const [view, setView] = useState<'both' | 'preview' | 'source'>(() => {
+    const url = new URL(location.href)
+    return (url.searchParams.get('view') as any) || 'both'
+  })
   const persistenceId = '@alinea/web/playground'
   const init = useMemo(async () => {
     // This fails during development when we hot reload
@@ -101,15 +167,11 @@ export default function Playground() {
       })
     )
   }, [])
-  const [previewing, setPreviewing] = useState(true)
-  function togglePreview() {
-    setPreviewing(!previewing)
-  }
   const {client, config, session} = useMemo(createDemo, [])
   const [code, storeCode] = useState<string>(() => {
     const [fromUrl] = outcome(() =>
-      new TextDecoder().decode(
-        base64url.parse(window.location.hash.slice('#code/'.length))
+      lzstring.decompressFromEncodedURIComponent(
+        location.hash.slice('#code/'.length)
       )
     )
     if (fromUrl) return fromUrl
@@ -124,27 +186,21 @@ export default function Playground() {
     storeCode(code)
   }
   const [errors, setErrors] = useState<Array<Message>>([])
-  const [type, setType] = useState<TypeConfig | undefined>()
+  const [result, setResult] = useState<
+    TypeConfig | Field<any, any> | undefined
+  >()
   const clipboard = useClipboard({
     copiedTimeout: 1200
   })
   function handleBuildErrors(failure: BuildFailure) {
     setErrors(failure.errors)
   }
-  function editorConfig(monaco: Monaco) {
-    console.log('config')
-    monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
-      jsx: 'preserve'
-    })
-    monaco.languages.typescript.typescriptDefaults.addExtraLib(
-      declarations,
-      '@types/alinea/index.d.ts'
-    )
-  }
   async function compile(code: string) {
     // Todo: we could use the monaco typescript worker to compile code and
     // save 2-3MB but we'd have to figure out how to rewrite the imports
-    const result = await esbuild
+    // Or, use babel standalone which seems to be around 300kb:
+    // Example: https://github.com/ariakit/ariakit/blob/3c74257c9eaa35b8e21c26718ac8be670087d390/packages/ariakit-playground/src/__utils/compile-module.ts
+    const compiled = await esbuild
       .build({
         platform: 'browser',
         bundle: true,
@@ -160,17 +216,17 @@ export default function Playground() {
         plugins: [alineaPlugin]
       })
       .catch(handleBuildErrors)
-    if (!result) return
+    if (!compiled) return
     try {
       setErrors([])
-      setType(eval(result.outputFiles[0].text))
+      setResult(eval(compiled.outputFiles[0].text))
     } catch (e) {
       setErrors([{text: String(e)} as any])
     }
   }
   function handleShare() {
     window.location.hash =
-      '#code/' + base64url.stringify(new TextEncoder().encode(code))
+      '#code/' + lzstring.compressToEncodedURIComponent(code)
     clipboard.copy(window.location.href)
   }
   function handleReset() {
@@ -182,7 +238,10 @@ export default function Playground() {
   }, [code])
   return (
     <>
+      <FavIcon color="#4a65e8" />
       <Head>
+        <title>Alinea CMS playground</title>
+        <meta name="theme-color" content="#4a65e8" />
         <style>{`#__next {height: 100%}`}</style>
       </Head>
       <PreferencesProvider>
@@ -190,7 +249,7 @@ export default function Playground() {
           attachToBody
           color="#5661E5"
           contain
-          className={styles.root({previewing})}
+          className={styles.root(view)}
         >
           <DashboardProvider value={{client, config}}>
             <SessionProvider value={session}>
@@ -205,80 +264,42 @@ export default function Playground() {
                       </div>
                     )}
                     <VStack style={{height: '100%'}}>
-                      <AppBar.Root
-                        style={{
-                          borderBottom: `1px solid var(--alinea-outline)`
-                        }}
-                      >
-                        <div className={styles.root.logo()}>
-                          <Link href="/">
-                            <a>
-                              <Logo />
-                            </a>
-                          </Link>
-                        </div>
-
-                        <Stack.Center style={{paddingLeft: px(18)}}>
-                          <Toolbar.Portal />
-                        </Stack.Center>
-                        <AppBar.Item
-                          as="button"
-                          icon={IcRoundClose}
-                          onClick={handleReset}
-                        >
-                          Reset
-                        </AppBar.Item>
-                        <AppBar.Item
-                          as="button"
-                          icon={IcRoundShare}
-                          onClick={handleShare}
-                        >
-                          Share
-                        </AppBar.Item>
-                        <div className={styles.root.mobileMenu()}>
-                          <AppBar.Item
-                            as="button"
-                            icon={
-                              previewing ? IcRoundCode : IcOutlineScreenshot
-                            }
-                            onClick={togglePreview}
-                          >
-                            <div style={{width: px(50)}}>
-                              {previewing ? 'Source' : 'Preview'}
-                            </div>
-                          </AppBar.Item>
-                        </div>
-                      </AppBar.Root>
                       <HStack style={{height: '100%', minHeight: 0}}>
-                        <Pane
-                          id="editor"
-                          resizable="right"
-                          defaultWidth={window.innerWidth * 0.5}
-                          maxWidth={window.innerWidth * 0.8}
-                          className={styles.root.editor()}
-                        >
-                          <Editor
-                            height="100%"
-                            theme="vs-dark"
-                            path="alinea.config.tsx"
-                            defaultLanguage="typescript"
-                            value={code}
-                            beforeMount={editorConfig}
-                            onChange={value => {
-                              if (value) setCode(value)
-                            }}
-                            loading={<Loader absolute />}
+                        {view !== 'preview' && (
+                          <SourceEditor
+                            code={code}
+                            setCode={setCode}
+                            resizeable={view === 'both'}
                           />
-                        </Pane>
-                        <div style={{flex: '1 0 0'}}>
+                        )}
+
+                        <div
+                          style={{
+                            position: 'relative',
+                            flex: '1 0 0',
+                            display: view === 'source' ? 'none' : 'block',
+                            overflow: 'auto'
+                          }}
+                        >
+                          <div className={styles.root.header()}>
+                            <Toolbar.Portal />
+                          </div>
                           <VStack style={{height: '100%'}}>
-                            <ErrorBoundary dependencies={[type]}>
+                            <ErrorBoundary dependencies={[result]}>
                               <Main>
-                                <Main.Container>
-                                  {type ? (
-                                    <PreviewType type={type} />
-                                  ) : (
+                                <Main.Container
+                                  style={{
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    height: '100%'
+                                  }}
+                                >
+                                  {!result ? (
                                     errors.length === 0 && <Loader absolute />
+                                  ) : result instanceof TypeConfig ? (
+                                    <PreviewType type={result} />
+                                  ) : (
+                                    <PreviewField field={result} />
                                   )}
                                 </Main.Container>
                               </Main>
@@ -312,6 +333,61 @@ export default function Playground() {
                           </VStack>
                         </div>
                       </HStack>
+
+                      <footer className={styles.root.footer()}>
+                        <Link href="/">
+                          <a className={styles.root.logo()}>
+                            <Logo />
+                          </a>
+                        </Link>
+                        <button
+                          className={styles.root.footer.button({
+                            active: view === 'source'
+                          })}
+                          onClick={() => setView('source')}
+                        >
+                          Editor
+                        </button>
+                        <button
+                          className={styles.root.footer.button({
+                            active: view === 'preview'
+                          })}
+                          onClick={() => setView('preview')}
+                        >
+                          Preview
+                        </button>
+                        <button
+                          className={styles.root.footer.button({
+                            active: view === 'both'
+                          })}
+                          onClick={() => setView('both')}
+                        >
+                          Both
+                        </button>
+                        <Stack.Center />
+                        <button
+                          className={styles.root.footer.button()}
+                          onClick={handleShare}
+                        >
+                          Copy url
+                        </button>
+                        {window.top === window.self ? (
+                          <button
+                            className={styles.root.footer.button()}
+                            onClick={handleReset}
+                          >
+                            Reset
+                          </button>
+                        ) : (
+                          <a
+                            className={styles.root.footer.button()}
+                            href={location.href}
+                            target="_blank"
+                          >
+                            Open in new tab
+                          </a>
+                        )}
+                      </footer>
                     </VStack>
                   </Toolbar.Provider>
                 </EntrySummaryProvider>

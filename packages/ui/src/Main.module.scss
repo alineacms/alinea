@@ -12,7 +12,8 @@
   &-inner {
     width: 100%;
     flex-grow: 1;
-    min-width: 320px;
+    min-width: 0;
+
     @mixin ml {
       min-width: 560px;
     }

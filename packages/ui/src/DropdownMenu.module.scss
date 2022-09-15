@@ -8,6 +8,7 @@
   cursor: pointer;
   border-radius: var(--alinea-border-radius);
   padding: 4px;
+  white-space: nowrap;
 
   &:focus,
   &:hover {

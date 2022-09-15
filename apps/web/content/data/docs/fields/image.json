@@ -1,10 +1,10 @@
 {
-  "id": "A4UA9D0tJn2aanMDjODOj",
+  "id": "Xu4-sW6S0ynehY5zKR1VZ",
   "type": "Doc",
-  "title": "Date",
+  "title": "Image",
   "blocks": [
     {
-      "id": "rZbeRryCwbK9553na3E9Q",
+      "id": "Vs_ErtgQbgcIJr5IV0Yg-",
       "index": "a0",
       "type": "TextBlock",
       "text": [
@@ -15,7 +15,7 @@
           "content": [
             {
               "type": "text",
-              "text": "Date"
+              "text": "Image"
             }
           ]
         },
@@ -25,30 +25,24 @@
           "content": [
             {
               "type": "text",
-              "text": "A date field is used to input a date."
+              "text": "The image field can be used to select an image."
             }
           ]
         },
         {
-          "id": "utmfOtYpwki29ZXEW5QPX",
+          "id": "YCDn4dBOi-_bHy32PAqzU",
           "type": "CodeBlock",
-          "code": "import {alinea} from 'alinea'\nalinea.date('My date field')"
+          "code": "import {alinea} from 'alinea'\nalinea.image('My image field')"
         },
         {
-          "id": "RHKsNdTj50LX0TFLU2_QH",
+          "id": "D6afYJyRzrcvfZy1mTq5L",
           "type": "ExampleBlock",
-          "code": "import {alinea} from 'alinea'\nexport default alinea.date('My date field')"
+          "code": "import {alinea} from 'alinea'\nexport default alinea.image('My image field')"
         }
       ]
-    },
-    {
-      "id": "gLIFBQGtPfglqVbV0QxgV",
-      "index": "a1",
-      "type": "TypesBlock",
-      "types": "DateOptions"
     }
   ],
   "alinea": {
-    "index": "a2B"
+    "index": "a2Bl"
   }
 }

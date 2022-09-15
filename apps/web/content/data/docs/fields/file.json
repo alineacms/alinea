@@ -1,10 +1,10 @@
 {
-  "id": "A4UA9D0tJn2aanMDjODOj",
+  "id": "tlhZ01MHUjv3Od172Ew6w",
   "type": "Doc",
-  "title": "Date",
+  "title": "File",
   "blocks": [
     {
-      "id": "rZbeRryCwbK9553na3E9Q",
+      "id": "nZxz-GrQm-eYh4Kefvcf6",
       "index": "a0",
       "type": "TextBlock",
       "text": [
@@ -15,7 +15,7 @@
           "content": [
             {
               "type": "text",
-              "text": "Date"
+              "text": "File"
             }
           ]
         },
@@ -25,30 +25,24 @@
           "content": [
             {
               "type": "text",
-              "text": "A date field is used to input a date."
+              "text": "The file field can be used to link to a file."
             }
           ]
         },
         {
-          "id": "utmfOtYpwki29ZXEW5QPX",
+          "id": "tYljidhFDZXvLGHPdOUyj",
           "type": "CodeBlock",
-          "code": "import {alinea} from 'alinea'\nalinea.date('My date field')"
+          "code": "import {alinea} from 'alinea'\nalinea.file('My file field')"
         },
         {
-          "id": "RHKsNdTj50LX0TFLU2_QH",
+          "id": "3eoB38V86C426MvZT08Ww",
           "type": "ExampleBlock",
-          "code": "import {alinea} from 'alinea'\nexport default alinea.date('My date field')"
+          "code": "import {alinea} from 'alinea'\nexport default alinea.file('My file field')"
         }
       ]
-    },
-    {
-      "id": "gLIFBQGtPfglqVbV0QxgV",
-      "index": "a1",
-      "type": "TypesBlock",
-      "types": "DateOptions"
     }
   ],
   "alinea": {
-    "index": "a2B"
+    "index": "a2Bd"
   }
 }
