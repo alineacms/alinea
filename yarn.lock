@@ -474,30 +474,6 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@alinea/playground@workspace:apps/playground":
-  version: 0.0.0-use.local
-  resolution: "@alinea/playground@workspace:apps/playground"
-  dependencies:
-    "@alinea/core": 0.0.0
-    "@alinea/dashboard": 0.0.0
-    "@alinea/editor": 0.0.0
-    "@alinea/shared": 0.0.0
-    "@alinea/ui": 0.0.0
-    "@monaco-editor/react": ^4.4.5
-    "@types/lz-string": ^1.3.34
-    "@types/react": ^18.0.5
-    "@types/react-dom": ^18.0.0
-    alinea: 0.0.0
-    esbuild-wasm: ^0.14.43
-    lz-string: ^1.4.4
-    next: ^12.2.5
-    react: ^18.1.0
-    react-dom: ^18.1.0
-    use-clipboard-copy: ^0.2.0
-    wireit: ^0.7.1
-  languageName: unknown
-  linkType: soft
-
 "@alinea/preview@0.0.0, @alinea/preview@workspace:packages/preview":
   version: 0.0.0-use.local
   resolution: "@alinea/preview@workspace:packages/preview"
@@ -616,6 +592,7 @@ __metadata:
     cross-env: ^7.0.3
     dts-bundle: ^0.7.3
     find-config: ^1.0.0
+    lz-string: ^1.4.4
     next: ^v12.2.6-canary.10
     npm-run-all: ^4.1.5
     postcss-pxtorem: ^6.0.0
@@ -2600,31 +2577,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@monaco-editor/loader@npm:^1.3.2":
-  version: 1.3.2
-  resolution: "@monaco-editor/loader@npm:1.3.2"
-  dependencies:
-    state-local: ^1.0.6
-  peerDependencies:
-    monaco-editor: ">= 0.21.0 < 1"
-  checksum: 7a1b65052bbaf4ef826392687bd7cfaf839509611034d2d616783b5d3fee91ed304d9086517c3b5f9099707828c57c855ff43407b3c2f5ae480faebb104d4343
-  languageName: node
-  linkType: hard
-
-"@monaco-editor/react@npm:^4.4.5":
-  version: 4.4.5
-  resolution: "@monaco-editor/react@npm:4.4.5"
-  dependencies:
-    "@monaco-editor/loader": ^1.3.2
-    prop-types: ^15.7.2
-  peerDependencies:
-    monaco-editor: ">= 0.25.0 < 1"
-    react: ^16.8.0 || ^17.0.0 || ^18.0.0
-    react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
-  checksum: 7a9568e3c6c27ecb7b4e07803a85554a6decbf0ad789b98fe5cb3d65b3a3682356e7553475b3eaeed5376a963bdc60d94ceb79ed6c3dd212d72a5122164590f2
-  languageName: node
-  linkType: hard
-
 "@next/env@npm:12.2.5":
   version: 12.2.5
   resolution: "@next/env@npm:12.2.5"
@@ -3811,13 +3763,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/lz-string@npm:^1.3.34":
-  version: 1.3.34
-  resolution: "@types/lz-string@npm:1.3.34"
-  checksum: e5c5ec0b9b9bfb0a64ca883152ce753244f53a6f12d8d3ba1a363262bea07fed1cd04c399a33a5d600a665d15a39a58bf5fd1ad9c52a98bccf7511f7a42e82f7
-  languageName: node
-  linkType: hard
-
 "@types/md5@npm:^2.3.2":
   version: 2.3.2
   resolution: "@types/md5@npm:2.3.2"
@@ -4823,13 +4768,6 @@ __metadata:
   version: 3.0.0
   resolution: "cli-boxes@npm:3.0.0"
   checksum: 637d84419d293a9eac40a1c8c96a2859e7d98b24a1a317788e13c8f441be052fc899480c6acab3acc82eaf1bccda6b7542d7cdcf5c9c3cc39227175dc098d5b2
-  languageName: node
-  linkType: hard
-
-"clipboard-copy@npm:^3.0.0":
-  version: 3.2.0
-  resolution: "clipboard-copy@npm:3.2.0"
-  checksum: f908842945a0c6b38fe513f559e8905519f24c1f287fc8d5f03fcf79d52172a09b6fdaf760377c84ad22b587b95060ebb782344e2c526490935db295398572bd
   languageName: node
   linkType: hard
 
@@ -6081,15 +6019,6 @@ __metadata:
   version: 0.14.54
   resolution: "esbuild-sunos-64@npm:0.14.54"
   conditions: os=sunos & cpu=x64
-  languageName: node
-  linkType: hard
-
-"esbuild-wasm@npm:^0.14.43":
-  version: 0.14.43
-  resolution: "esbuild-wasm@npm:0.14.43"
-  bin:
-    esbuild: bin/esbuild
-  checksum: b7f316b3950c7dba04074a936bf62fa81afc9ffb79dfd2335d451210f606c555b67b9e608f679802375ec40202a8ab83a856c10afeb9bad32ec66eec2c48962e
   languageName: node
   linkType: hard
 
@@ -10099,17 +10028,6 @@ fsevents@~2.3.2:
   languageName: node
   linkType: hard
 
-"prop-types@npm:^15.7.2":
-  version: 15.7.2
-  resolution: "prop-types@npm:15.7.2"
-  dependencies:
-    loose-envify: ^1.4.0
-    object-assign: ^4.1.1
-    react-is: ^16.8.1
-  checksum: 5eef82fdda64252c7e75aa5c8cc28a24bbdece0f540adb60ce67c205cf978a5bd56b83e4f269f91c6e4dcfd80b36f2a2dec24d362e278913db2086ca9c6f9430
-  languageName: node
-  linkType: hard
-
 "propagate@npm:^2.0.0":
   version: 2.0.1
   resolution: "propagate@npm:2.0.1"
@@ -10436,7 +10354,7 @@ fsevents@~2.3.2:
   languageName: node
   linkType: hard
 
-"react-is@npm:^16.13.1, react-is@npm:^16.7.0, react-is@npm:^16.8.1":
+"react-is@npm:^16.13.1, react-is@npm:^16.7.0":
   version: 16.13.1
   resolution: "react-is@npm:16.13.1"
   checksum: f7a19ac3496de32ca9ae12aa030f00f14a3d45374f1ceca0af707c831b2a6098ef0d6bdae51bd437b0a306d7f01d4677fcc8de7c0d331eb47ad0f46130e53c5f
@@ -11454,13 +11372,6 @@ resolve@^1.10.0:
   languageName: node
   linkType: hard
 
-"state-local@npm:^1.0.6":
-  version: 1.0.7
-  resolution: "state-local@npm:1.0.7"
-  checksum: d1afcf1429e7e6eb08685b3a94be8797db847369316d4776fd51f3962b15b984dacc7f8e401ad20968e5798c9565b4b377afedf4e4c4d60fe7495e1cbe14a251
-  languageName: node
-  linkType: hard
-
 "statuses@npm:2.0.1":
   version: 2.0.1
   resolution: "statuses@npm:2.0.1"
@@ -12304,17 +12215,6 @@ resolve@^1.10.0:
   version: 0.1.0
   resolution: "urix@npm:0.1.0"
   checksum: 4c076ecfbf3411e888547fe844e52378ab5ada2d2f27625139011eada79925e77f7fbf0e4016d45e6a9e9adb6b7e64981bd49b22700c7c401c5fc15f423303b3
-  languageName: node
-  linkType: hard
-
-"use-clipboard-copy@npm:^0.2.0":
-  version: 0.2.0
-  resolution: "use-clipboard-copy@npm:0.2.0"
-  dependencies:
-    clipboard-copy: ^3.0.0
-  peerDependencies:
-    react: ">=16.8.0"
-  checksum: 412c42b5e6ec58737915669b4687437736152af61cce6434883890211928cb84a3072a9cd3305d42f5ec2b162f444a2a781d8f88f89a0ced976882a5cdc7c123
   languageName: node
   linkType: hard
 
