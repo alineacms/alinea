@@ -52,7 +52,7 @@
           "content": [
             {
               "type": "text",
-              "text": "Icon"
+              "text": "`icon`"
             }
           ]
         },
@@ -113,7 +113,7 @@
           "content": [
             {
               "type": "text",
-              "text": "Contains"
+              "text": "`contains`"
             }
           ]
         },
@@ -139,7 +139,7 @@
           "content": [
             {
               "type": "text",
-              "text": "I18n"
+              "text": "`i18n`"
             }
           ]
         },

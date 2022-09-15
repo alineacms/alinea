@@ -281,17 +281,18 @@ export default function Playground() {
                             overflow: 'auto'
                           }}
                         >
-                          <div className={styles.root.header()}>
-                            <Toolbar.Portal />
-                          </div>
                           <VStack style={{height: '100%'}}>
+                            <div className={styles.root.header()}>
+                              <Toolbar.Portal />
+                            </div>
                             <ErrorBoundary dependencies={[result]}>
                               <Main>
                                 <Main.Container
                                   style={{
                                     display: 'flex',
                                     flexDirection: 'column',
-                                    height: '100%'
+                                    height: '100%',
+                                    paddingTop: 0
                                   }}
                                 >
                                   {!result ? (
