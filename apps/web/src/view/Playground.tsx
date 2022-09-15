@@ -337,7 +337,7 @@ export default function Playground() {
 
                       <footer className={styles.root.footer()}>
                         <Link href="/">
-                          <a className={styles.root.logo()}>
+                          <a className={styles.root.logo()} target="_top">
                             <Logo />
                           </a>
                         </Link>
