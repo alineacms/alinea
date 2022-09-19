@@ -254,7 +254,7 @@
           "content": [
             {
               "type": "text",
-              "text": "Alinea indexes the JSON files into an in-memory SQLite database. Having a database with indexed fields means querying content is fast and simple. The database and tools to query content are packaged into a Javascript library that sits next to your code and is aliased to `@alinea/content`."
+              "text": "Alinea indexes the JSON files into an embedded SQLite database. Having a database with indexed fields means querying content is fast and simple. The database and tools to query content are packaged into a Javascript library that sits next to your code and is aliased to `@alinea/content`."
             }
           ]
         },
