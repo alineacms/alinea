@@ -10,7 +10,7 @@ This is the existing [blog-starter](https://github.com/vercel/next.js/tree/canar
 
 Deploy the example using [Vercel](https://vercel.com)
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/git/external?repository-url=https://github.com/alinea/tree/main/examples/framework-next&project-name=alinea-blog&repository-name=alinea-blog)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/git/external?repository-url=https://github.com/alineacms/alinea/tree/main/examples/framework-next&project-name=alinea-blog&repository-name=alinea-blog)
 
 ## How to use
 
