@@ -12,3 +12,4 @@ node_modules
 /.types
 /private
 .wireit
+.DS_Store
