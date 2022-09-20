@@ -18,7 +18,8 @@ const MoreStories = ({posts}: Props) => {
             title={post.title}
             coverImage={post.coverImage?.src}
             date={post.date}
-            author={post.author}
+            // Todo: pass picture
+            author={post.author as any}
             slug={post.path}
             excerpt={post.excerpt}
           />

@@ -41,7 +41,8 @@ export default function Post({post, morePosts, preview}: Props) {
                 title={post.title}
                 coverImage={post.coverImage?.src}
                 date={post.date}
-                author={post.author}
+                // Todo: pass picture
+                author={post.author as any}
               />
               <PostBody content={post.content} />
             </article>

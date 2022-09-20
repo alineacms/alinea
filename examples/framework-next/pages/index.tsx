@@ -28,7 +28,8 @@ export default function Index({home, allPosts}: Props) {
               title={heroPost.title}
               coverImage={heroPost.coverImage?.src}
               date={heroPost.date}
-              author={heroPost.author}
+              // Todo: pass picture
+              author={heroPost.author as any}
               slug={heroPost.path}
               excerpt={heroPost.excerpt}
             />
