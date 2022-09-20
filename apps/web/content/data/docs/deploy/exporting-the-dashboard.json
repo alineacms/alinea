@@ -80,7 +80,7 @@
               "type": "Variant",
               "name": "Next.js serverless",
               "language": "tsx",
-              "code": "// pages/api/cms/[slug].ts\n\n// The nodeHandler utility exports the backend handle as a Node.js http handler\nimport {nodeHandler} from '@alinea/backend/router/NodeHandler'\n// The generated backend file will connect to the backend we'll configure next\nimport {backend} from '@alinea/content/backend.js'\n// Handle cms API routes at /api/cms/[slug]\nexport default nodeHandler(backend.handle)"
+              "code": "// pages/api/cms/[...slug].ts\n\n// The nodeHandler utility exports the backend handle as a Node.js http handler\nimport {nodeHandler} from '@alinea/backend/router/NodeHandler'\n// The generated backend file will connect to the backend we'll configure next\nimport {backend} from '@alinea/content/backend.js'\n// Handle cms API routes at /api/cms/[...slug]\nexport default nodeHandler(backend.handle)"
             }
           ]
         },
@@ -280,17 +280,6 @@
     }
   ],
   "alinea": {
-    "workspace": "web",
-    "root": "data",
-    "index": "Zo8",
-    "parent": "28NgMpMQkmTy4uyFhPj8z4XVqml",
-    "parents": [
-      "docs",
-      "28NgMpMQkmTy4uyFhPj8z4XVqml"
-    ],
-    "status": "published",
-    "isContainer": false
-  },
-  "path": "exporting-the-dashboard",
-  "url": "/docs/deploy-to-production/exporting-the-dashboard"
+    "index": "Zo8"
+  }
 }
