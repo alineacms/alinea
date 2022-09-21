@@ -22,9 +22,8 @@ import {exportStore} from './ExportStore'
 import {dirname} from './util/Dirname'
 import {externalPlugin} from './util/ExternalPlugin'
 import {ignorePlugin} from './util/IgnorePlugin'
+import {publicDefines} from './util/PublicDefines'
 import {targetPlugin} from './util/TargetPlugin'
-
-const publicEnvKeys = ['NEXT_PUBLIC_', 'PUBLIC_', 'VITE_', 'GATSBY_']
 
 const __dirname = dirname(import.meta.url)
 const require = createRequire(import.meta.url)
@@ -261,18 +260,7 @@ export async function generate(options: GenerateOptions): Promise<Config> {
 
   async function compileConfig() {
     const tsconfig = overrideTsConfig()
-    const environment = process.env
-    const define = Object.fromEntries(
-      Object.entries(environment)
-        .filter(([key, value]) => {
-          for (const prefix of publicEnvKeys)
-            if (key.startsWith(prefix)) return true
-          return false
-        })
-        .map(([key, value]) => {
-          return [`process.env.${key}`, JSON.stringify(value)]
-        })
-    )
+    const define = publicDefines(process.env)
     return failOnBuildError(
       build({
         format: 'esm',
@@ -536,7 +524,8 @@ export async function generate(options: GenerateOptions): Promise<Config> {
       inject: [path.join(staticDir, `render/render-${react}.js`)],
       platform: 'browser',
       define: {
-        'process.env.NODE_ENV': "'production'"
+        'process.env.NODE_ENV': "'production'",
+        ...publicDefines(process.env)
       },
       ...buildOptions,
       tsconfig: path.join(staticDir, 'tsconfig.json'),

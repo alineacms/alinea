@@ -12,6 +12,7 @@ import {buildOptions} from './build/BuildOptions'
 import {generate} from './Generate'
 import {ServeBackend} from './serve/ServeBackend'
 import {dirname} from './util/Dirname'
+import {publicDefines} from './util/PublicDefines'
 
 const __dirname = dirname(import.meta.url)
 const require = createRequire(import.meta.url)
@@ -220,6 +221,43 @@ export async function serve(options: ServeOptions): Promise<void> {
   const devDir = path.join(staticDir, 'dev')
   const matcher = router.matcher()
   const entry = `@alinea/dashboard/dev/${alineaDev ? 'Dev' : 'Lib'}Entry`
+  const buildHandler = browserBuild({
+    ignoreAnnotations: alineaDev,
+    format: 'esm',
+    target: 'esnext',
+    treeShaking: true,
+    minify: true,
+    splitting: true,
+    sourcemap: true,
+    outdir: devDir,
+    bundle: true,
+    absWorkingDir: cwd,
+    entryPoints: {
+      config: path.join(cwd, '.alinea/config.js'),
+      entry
+    },
+    inject: [path.join(staticDir, `render/render-${react}.js`)],
+    platform: 'browser',
+
+    ...options.buildOptions,
+    ...buildOptions,
+    plugins: buildOptions.plugins!.concat(options.buildOptions?.plugins || []),
+    define: {
+      'process.env.NODE_ENV': production ? "'production'" : "'development'",
+      ...publicDefines(process.env)
+    },
+    watch: alineaDev
+      ? {
+          onRebuild(error, result) {
+            if (!error) reload('reload')
+          }
+        }
+      : undefined,
+    logOverride: {
+      'ignored-bare-import': 'silent'
+    },
+    tsconfig: path.join(staticDir, 'tsconfig.json')
+  })
   const app = router(
     matcher.get('/~dev').map((): Response => {
       const stream = new ReadableStream({
@@ -264,43 +302,7 @@ export async function serve(options: ServeOptions): Promise<void> {
       .map(async ({request}): Promise<Response | undefined> => {
         return server.handle(request)
       }),
-    browserBuild({
-      ignoreAnnotations: alineaDev,
-      format: 'esm',
-      target: 'esnext',
-      treeShaking: true,
-      minify: true,
-      splitting: true,
-      sourcemap: true,
-      outdir: devDir,
-      bundle: true,
-      absWorkingDir: cwd,
-      entryPoints: {
-        config: path.join(cwd, '.alinea/config.js'),
-        entry
-      },
-      inject: [path.join(staticDir, `render/render-${react}.js`)],
-      platform: 'browser',
-      ...options.buildOptions,
-      ...buildOptions,
-      plugins: buildOptions.plugins!.concat(
-        options.buildOptions?.plugins || []
-      ),
-      define: {
-        'process.env.NODE_ENV': production ? "'production'" : "'development'"
-      },
-      watch: alineaDev
-        ? {
-            onRebuild(error, result) {
-              if (!error) reload('reload')
-            }
-          }
-        : undefined,
-      logOverride: {
-        'ignored-bare-import': 'silent'
-      },
-      tsconfig: path.join(staticDir, 'tsconfig.json')
-    }),
+    buildHandler,
     matcher.get('/config.css').map((): Response => {
       return new Response('', {headers: {'content-type': 'text/css'}})
     })
