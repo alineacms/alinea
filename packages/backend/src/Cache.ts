@@ -9,16 +9,16 @@ import {
   Tree,
   Type
 } from '@alinea/core'
-import {Search} from '@alinea/core/Search'
+import { Search } from '@alinea/core/Search'
 import {
   generateKeyBetween,
   isValidOrderKey
 } from '@alinea/core/util/FractionalIndexing'
-import {Logger} from '@alinea/core/util/Logger'
-import {Expr, Store} from '@alinea/store'
-import {SqliteStore} from '@alinea/store/sqlite/SqliteStore'
+import { Logger } from '@alinea/core/util/Logger'
+import { Expr, Store } from '@alinea/store'
+import { SqliteStore } from '@alinea/store/sqlite/SqliteStore'
 import * as Y from 'yjs'
-import {Data} from './Data'
+import { Data } from './Data'
 
 export namespace Cache {
   function indexSearch(store: Store, entry: Entry, lookup = true) {
@@ -130,15 +130,13 @@ export namespace Cache {
     config: Config
     from: Data.Source
     logger?: Logger
-    fix?: boolean
   }
 
   export async function create({
     store,
     config,
     from,
-    logger = new Logger('Create cache'),
-    fix
+    logger = new Logger('Create cache')
   }: CacheOptions) {
     if (indexing.has(store)) throw 'Already indexing'
     indexing.set(store, true)

@@ -201,8 +201,7 @@ export async function serve(options: ServeOptions): Promise<void> {
     onCacheRebuild: async outcome => {
       const [store, error] = outcome
       if (error) return
-      await server.reloadPreviewStore()
-      reload('refetch')
+      afterPublish()
     }
   })
 
@@ -211,11 +210,17 @@ export async function serve(options: ServeOptions): Promise<void> {
     `export const serverLocation = 'http://localhost:${port}'`
   )
 
+  async function afterPublish() {
+    await server.reloadPreviewStore()
+    reload('refetch')
+  }
+
   server = new ServeBackend({
     cwd,
     port,
     config,
-    store
+    store,
+    afterPublish
   })
 
   const devDir = path.join(staticDir, 'dev')

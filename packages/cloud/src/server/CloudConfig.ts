@@ -1,4 +1,6 @@
-const baseUrl = process?.env?.ALINEA_CLOUD_URL || 'https://www.alinea.cloud'
+const baseUrl =
+  (typeof process !== 'undefined' && process.env?.ALINEA_CLOUD_URL) ||
+  'https://www.alinea.cloud'
 
 export const cloudConfig = {
   url: baseUrl,

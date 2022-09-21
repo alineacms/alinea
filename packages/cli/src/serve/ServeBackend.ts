@@ -23,6 +23,7 @@ export interface ServeBackendOptions<T extends Workspaces> {
   port?: number
   config: Config<T>
   store: SqliteStore
+  afterPublish?: () => void
 }
 
 export class ServeBackend<
@@ -30,11 +31,13 @@ export class ServeBackend<
 > extends Backend<T> {
   publishing = false
   reload: (config: Config<T>) => void
+  afterPublish?: () => void
   constructor({
     cwd = process.cwd(),
     port = 4500,
     config,
-    store
+    store,
+    afterPublish
   }: ServeBackendOptions<T>) {
     const dashboardUrl = `http://localhost:${port}`
     const outDir = path.join(cwd, '.alinea')
@@ -58,6 +61,7 @@ export class ServeBackend<
       previews: new JWTPreviews('@alinea/backend/devserver')
     }
     super(options)
+    this.afterPublish = afterPublish
     this.reload = config => {
       data.options.config = config
       this.options.config = config
@@ -109,13 +113,13 @@ export class ServeBackend<
   }
 
   // Todo: this needs a proper lock
-  async publishEntries(
-    params: Hub.PublishParams,
-    ctx: Hub.Context
-  ): Future<void> {
+  publishEntries(params: Hub.PublishParams, ctx: Hub.Context): Future<void> {
     this.publishing = true
+    console.log('--publishing--')
     return super.publishEntries(params, ctx).finally(() => {
+      if (this.afterPublish) this.afterPublish()
       this.publishing = false
+      console.log('--after publish--')
     })
   }
 
