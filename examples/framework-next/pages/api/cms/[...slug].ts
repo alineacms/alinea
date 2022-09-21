@@ -4,3 +4,6 @@ import {nodeHandler} from '@alinea/backend/router/NodeHandler'
 import {backend} from '@alinea/content/backend.js'
 // Handle cms API routes at /api/cms/[...slug]
 export default nodeHandler(backend.handle)
+// Disable the body parser middleware that next.js injects,
+// we'll let the handler deal with it
+export const config = {api: {bodyParser: false}}
