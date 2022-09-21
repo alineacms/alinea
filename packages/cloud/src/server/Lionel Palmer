@@ -1,4 +1,9 @@
-const baseUrl = 'https://www.alinea.cloud'
+const baseUrl =
+      process.env.NEXT_PUBLIC_ALINEA_CLOUD_URL || 
+      process.env.PUBLIC_ALINEA_CLOUD_URL || 
+      process.env.VITE_CLOUD_URL || 
+      process.env.GATSBY_CLOUD_URL || 
+      'https://www.alinea.cloud'
 
 export const cloudConfig = {
   url: baseUrl,
