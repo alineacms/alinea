@@ -24,6 +24,8 @@ import {externalPlugin} from './util/ExternalPlugin'
 import {ignorePlugin} from './util/IgnorePlugin'
 import {targetPlugin} from './util/TargetPlugin'
 
+const publicEnvKeys = ['NEXT_PUBLIC_', 'PUBLIC_', 'VITE_', 'GATSBY_']
+
 const __dirname = dirname(import.meta.url)
 const require = createRequire(import.meta.url)
 
@@ -259,6 +261,18 @@ export async function generate(options: GenerateOptions): Promise<Config> {
 
   async function compileConfig() {
     const tsconfig = overrideTsConfig()
+    const environment = process.env
+    const define = Object.fromEntries(
+      Object.entries(environment)
+        .filter(([key, value]) => {
+          for (const prefix of publicEnvKeys)
+            if (key.startsWith(prefix)) return true
+          return false
+        })
+        .map(([key, value]) => {
+          return [`process.env.${key}`, JSON.stringify(value)]
+        })
+    )
     return failOnBuildError(
       build({
         format: 'esm',
@@ -273,6 +287,7 @@ export async function generate(options: GenerateOptions): Promise<Config> {
         },
         platform: 'node',
         jsx: 'automatic',
+        define,
         plugins: [
           targetPlugin(file => {
             return {
