@@ -73,12 +73,16 @@ export function DevDashboard({loadConfig}: DevDashboardOptions) {
   if (!connected)
     return (
       <Viewport color="#5763E6">
-        <Main>
+        <Main
+          style={{display: 'flex', flexDirection: 'column', height: '100%'}}
+        >
           <div style={{margin: 'auto', padding: '20px'}}>
             <VStack gap={20}>
               <Typo.H1 flat>Disconnected</Typo.H1>
-              <Typo.P>The Alinea server was disconnected</Typo.P>
-              <Button onClick={() => window.location.reload()}>Reload</Button>
+              <Typo.P flat>The Alinea server was disconnected</Typo.P>
+              <div>
+                <Button onClick={() => window.location.reload()}>Reload</Button>
+              </div>
             </VStack>
           </div>
         </Main>
