@@ -85,7 +85,8 @@ export async function init(options: InitOptions) {
     )
     if (!installSucceeded) execSync(`${pm} install`, {cwd, stdio: 'inherit'})
   }
-  await generate({cwd: path.resolve(cwd), quiet})
+  for await (const _ of generate({cwd: path.resolve(cwd), quiet})) {
+  }
   const runner = pm === 'npm' ? 'npx' : pm
   const command = `${runner} alinea serve`
   if (!quiet)

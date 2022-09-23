@@ -4,6 +4,7 @@ import {BuildResult} from 'esbuild'
 import path from 'node:path'
 import {compileConfig} from './generate/CompileConfig'
 import {copyBoilerplate} from './generate/CopyBoilerplate'
+import {copyStaticFiles} from './generate/CopyStaticFiles'
 import {fillCache} from './generate/FillCache'
 import {GenerateContext} from './generate/GenerateContext'
 import {generateDashboard} from './generate/GenerateDashboard'
@@ -59,10 +60,10 @@ export async function* generate(options: GenerateOptions) {
   }
 
   await copyBoilerplate(context)
-
   const builds = compileConfig(context)[Symbol.asyncIterator]()
   let nextBuild: Promise<{value: BuildResult; done?: boolean}> = builds.next()
   let afterGenerateCalled = false
+  await copyStaticFiles(context)
   while (true) {
     const {done} = await nextBuild
     if (done) break
