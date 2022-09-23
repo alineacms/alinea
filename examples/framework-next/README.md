@@ -4,7 +4,7 @@ This is the existing [blog-starter](https://github.com/vercel/next.js/tree/canar
 
 ## Demo
 
-[Open in StackBlitz](https://stackblitz.com/github/alineacms/alinea/tree/main/examples/framework-next)
+[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/alineacms/alinea/tree/main/examples/framework-next)
 
 ## Deploy your own
 
@@ -27,7 +27,7 @@ Start developing:
 yarn dev
 ```
 
-If you're using a different package manager than `yarn` update the
+If you're using a different package manager than yarn update the
 `@alinea/content` package link to `file:.alinea`
 ([more info](https://alinea.sh/docs/reference/@alinea-content)).
 
