@@ -33,6 +33,10 @@ npx alinea serve
 
 [Start configuring types and fields →](https://alinea.sh/docs/configuration/intro)
 
+## Examples
+
+- [Next.js Blog Starter](https://github.com/alineacms/alinea/tree/main/examples/framework-next)
+
 ## Configure
 
 Configure alinea in `alinea.config.tsx`
