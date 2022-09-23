@@ -14,10 +14,7 @@ prog
   .command('generate')
   .describe('Generate types and content cache')
   .option('-w, --watch', `Watch for changes to source files`)
-  .option(
-    '-c, --config',
-    `Location of the config file, defaults to "alinea.config.tsx"`
-  )
+  .option('-d, --dir', `Directory containing the alinea config file`)
   .option(
     '--fix',
     `Any missing or incorrect properties will be overwritten by their default`
@@ -26,12 +23,13 @@ prog
     ensureNodeResolution()
     ensureReact()
     const {generate} = await import('./Generate')
-    return generate({
-      configFile: args.config,
+    for await (const _ of generate({
+      cwd: args.dir,
       watch: args.watch,
       fix: args.fix,
       onAfterGenerate: forwardCommand
-    })
+    })) {
+    }
   })
   .command('init')
   .describe('Copy a sample config file to the current directory')

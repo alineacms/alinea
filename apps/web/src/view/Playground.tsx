@@ -16,7 +16,6 @@ import {
   HStack,
   Loader,
   Pane,
-  PreferencesProvider,
   px,
   Stack,
   TextLabel,
@@ -244,159 +243,155 @@ export default function Playground() {
         <meta name="theme-color" content="#4a65e8" />
         <style>{`#__next {height: 100%}`}</style>
       </Head>
-      <PreferencesProvider>
-        <Viewport
-          attachToBody
-          color="#5661E5"
-          contain
-          className={styles.root(view)}
-        >
-          <DashboardProvider value={{client, config}}>
-            <SessionProvider value={session}>
-              <QueryClientProvider client={queryClient}>
-                <EntrySummaryProvider>
-                  <Toolbar.Provider>
-                    {clipboard.copied && (
-                      <div className={styles.root.flash()}>
-                        <p className={styles.root.flash.msg()}>
-                          URL copied to clipboard
-                        </p>
-                      </div>
-                    )}
-                    <VStack style={{height: '100%'}}>
-                      <HStack style={{height: '100%', minHeight: 0}}>
-                        {view !== 'preview' && (
-                          <SourceEditor
-                            code={code}
-                            setCode={setCode}
-                            resizeable={view === 'both'}
-                          />
-                        )}
+      <Viewport
+        attachToBody
+        color="#5661E5"
+        contain
+        className={styles.root(view)}
+      >
+        <DashboardProvider value={{client, config}}>
+          <SessionProvider value={session}>
+            <QueryClientProvider client={queryClient}>
+              <EntrySummaryProvider>
+                <Toolbar.Provider>
+                  {clipboard.copied && (
+                    <div className={styles.root.flash()}>
+                      <p className={styles.root.flash.msg()}>
+                        URL copied to clipboard
+                      </p>
+                    </div>
+                  )}
+                  <VStack style={{height: '100%'}}>
+                    <HStack style={{height: '100%', minHeight: 0}}>
+                      {view !== 'preview' && (
+                        <SourceEditor
+                          code={code}
+                          setCode={setCode}
+                          resizeable={view === 'both'}
+                        />
+                      )}
 
-                        <div
-                          style={{
-                            position: 'relative',
-                            flex: '1 0 0',
-                            display: view === 'source' ? 'none' : 'block',
-                            overflow: 'auto'
-                          }}
-                        >
-                          <VStack style={{height: '100%'}}>
-                            <div className={styles.root.header()}>
-                              <Toolbar.Portal />
+                      <div
+                        style={{
+                          position: 'relative',
+                          flex: '1 0 0',
+                          display: view === 'source' ? 'none' : 'block',
+                          overflow: 'auto'
+                        }}
+                      >
+                        <VStack style={{height: '100%'}}>
+                          <div className={styles.root.header()}>
+                            <Toolbar.Portal />
+                          </div>
+                          <ErrorBoundary dependencies={[result]}>
+                            <Main>
+                              <Main.Container
+                                style={{
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  height: '100%',
+                                  paddingTop: 0
+                                }}
+                              >
+                                {!result ? (
+                                  errors.length === 0 && <Loader absolute />
+                                ) : result instanceof TypeConfig ? (
+                                  <PreviewType type={result} />
+                                ) : (
+                                  <PreviewField field={result} />
+                                )}
+                              </Main.Container>
+                            </Main>
+                          </ErrorBoundary>
+                          {errors.length > 0 && (
+                            <div className={styles.root.errors()}>
+                              <VStack gap={20}>
+                                {errors.map(error => {
+                                  return (
+                                    <Typo.Monospace as="div">
+                                      <p>{error.text}</p>
+                                      {error.location && (
+                                        <div style={{paddingLeft: px(10)}}>
+                                          <>
+                                            <b>
+                                              [{error.location.file}:{' '}
+                                              {error.location.line}]
+                                            </b>
+                                            <div>{error.location.lineText}</div>
+                                          </>
+                                        </div>
+                                      )}
+                                    </Typo.Monospace>
+                                  )
+                                })}
+                              </VStack>
                             </div>
-                            <ErrorBoundary dependencies={[result]}>
-                              <Main>
-                                <Main.Container
-                                  style={{
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    height: '100%',
-                                    paddingTop: 0
-                                  }}
-                                >
-                                  {!result ? (
-                                    errors.length === 0 && <Loader absolute />
-                                  ) : result instanceof TypeConfig ? (
-                                    <PreviewType type={result} />
-                                  ) : (
-                                    <PreviewField field={result} />
-                                  )}
-                                </Main.Container>
-                              </Main>
-                            </ErrorBoundary>
-                            {errors.length > 0 && (
-                              <div className={styles.root.errors()}>
-                                <VStack gap={20}>
-                                  {errors.map(error => {
-                                    return (
-                                      <Typo.Monospace as="div">
-                                        <p>{error.text}</p>
-                                        {error.location && (
-                                          <div style={{paddingLeft: px(10)}}>
-                                            <>
-                                              <b>
-                                                [{error.location.file}:{' '}
-                                                {error.location.line}]
-                                              </b>
-                                              <div>
-                                                {error.location.lineText}
-                                              </div>
-                                            </>
-                                          </div>
-                                        )}
-                                      </Typo.Monospace>
-                                    )
-                                  })}
-                                </VStack>
-                              </div>
-                            )}
-                          </VStack>
-                        </div>
-                      </HStack>
+                          )}
+                        </VStack>
+                      </div>
+                    </HStack>
 
-                      <footer className={styles.root.footer()}>
-                        <Link href="/">
-                          <a className={styles.root.logo()} target="_top">
-                            <Logo />
-                          </a>
-                        </Link>
-                        <button
-                          className={styles.root.footer.button({
-                            active: view === 'source'
-                          })}
-                          onClick={() => setView('source')}
-                        >
-                          Editor
-                        </button>
-                        <button
-                          className={styles.root.footer.button({
-                            active: view === 'preview'
-                          })}
-                          onClick={() => setView('preview')}
-                        >
-                          Preview
-                        </button>
-                        <button
-                          className={styles.root.footer.button({
-                            active: view === 'both'
-                          })}
-                          onClick={() => setView('both')}
-                        >
-                          Both
-                        </button>
-                        <Stack.Center />
+                    <footer className={styles.root.footer()}>
+                      <Link href="/">
+                        <a className={styles.root.logo()} target="_top">
+                          <Logo />
+                        </a>
+                      </Link>
+                      <button
+                        className={styles.root.footer.button({
+                          active: view === 'source'
+                        })}
+                        onClick={() => setView('source')}
+                      >
+                        Editor
+                      </button>
+                      <button
+                        className={styles.root.footer.button({
+                          active: view === 'preview'
+                        })}
+                        onClick={() => setView('preview')}
+                      >
+                        Preview
+                      </button>
+                      <button
+                        className={styles.root.footer.button({
+                          active: view === 'both'
+                        })}
+                        onClick={() => setView('both')}
+                      >
+                        Both
+                      </button>
+                      <Stack.Center />
+                      <button
+                        className={styles.root.footer.button()}
+                        onClick={handleShare}
+                      >
+                        Copy url
+                      </button>
+                      {window.top === window.self ? (
                         <button
                           className={styles.root.footer.button()}
-                          onClick={handleShare}
+                          onClick={handleReset}
                         >
-                          Copy url
+                          Reset
                         </button>
-                        {window.top === window.self ? (
-                          <button
-                            className={styles.root.footer.button()}
-                            onClick={handleReset}
-                          >
-                            Reset
-                          </button>
-                        ) : (
-                          <a
-                            className={styles.root.footer.button()}
-                            href={location.href}
-                            target="_blank"
-                          >
-                            Open in new tab
-                          </a>
-                        )}
-                      </footer>
-                    </VStack>
-                  </Toolbar.Provider>
-                </EntrySummaryProvider>
-              </QueryClientProvider>
-            </SessionProvider>
-          </DashboardProvider>
-        </Viewport>
-      </PreferencesProvider>
+                      ) : (
+                        <a
+                          className={styles.root.footer.button()}
+                          href={location.href}
+                          target="_blank"
+                        >
+                          Open in new tab
+                        </a>
+                      )}
+                    </footer>
+                  </VStack>
+                </Toolbar.Provider>
+              </EntrySummaryProvider>
+            </QueryClientProvider>
+          </SessionProvider>
+        </DashboardProvider>
+      </Viewport>
     </>
   )
 }

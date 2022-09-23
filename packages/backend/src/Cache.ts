@@ -123,25 +123,19 @@ export namespace Cache {
     }
   }
 
-  const indexing = new WeakMap()
-
   export interface CacheOptions {
     store: SqliteStore
     config: Config
     from: Data.Source
     logger?: Logger
-    fix?: boolean
   }
 
   export async function create({
     store,
     config,
     from,
-    logger = new Logger('Create cache'),
-    fix
+    logger = new Logger('Create cache')
   }: CacheOptions) {
-    if (indexing.has(store)) throw 'Already indexing'
-    indexing.set(store, true)
     const endDbSetup = logger.time('Database setup')
     let total = 0
     const batch: Array<Entry> = []
@@ -201,7 +195,6 @@ export namespace Cache {
     })
     endValidate()
     logger.summary(`Indexed ${total} entries`)
-    indexing.delete(store)
   }
 
   export function createUrl(type: Type, meta: EntryUrlMeta) {
