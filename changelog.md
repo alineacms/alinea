@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [0.2.12]
+
+- Public env variables may be used in alinea.config. Currently supported are
+  variables with a key prefix of either `NEXT\_PUBLIC\_`, `PUBLIC\_`, `VITE\_`
+  or `GATSBY\_`.
+
 ## [0.2.11]
 
 - The workaround released in 0.2.10 was not stable. Node modules ended up being
