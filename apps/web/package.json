@@ -5,7 +5,7 @@
   "license": "MIT",
   "scripts": {
     "build": "wireit",
-    "dev": "wireit",
+    "dev": "cross-env FORCE_COLOR=1 next dev",
     "generate": "wireit",
     "gen:types": "wireit",
     "gen:bundleTs": "wireit",
@@ -27,14 +27,6 @@
       "command": "alinea generate --fix",
       "dependencies": [
         "../..:build"
-      ]
-    },
-    "dev": {
-      "command": "cross-env FORCE_COLOR=1 next dev",
-      "dependencies": [
-        "../..:build",
-        "gen:types",
-        "gen:bundleTs"
       ]
     },
     "gen:types": {
