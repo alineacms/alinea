@@ -5,39 +5,39 @@ __metadata:
   version: 6
   cacheKey: 8
 
-"@alinea/backend.indexeddb@npm:0.2.11":
-  version: 0.2.11
-  resolution: "@alinea/backend.indexeddb@npm:0.2.11"
+"@alinea/backend.indexeddb@npm:0.2.12":
+  version: 0.2.12
+  resolution: "@alinea/backend.indexeddb@npm:0.2.12"
   dependencies:
-    "@alinea/core": 0.2.11
+    "@alinea/core": 0.2.12
     yjs: ^13.5.41
-  checksum: a9b7e20934237a84cc3d8cc22150eb34c8b1c86b283742fe87237832520494359cb04a6a941a36a4c38113afb4613ae572a02ea62ecfc300b5fca118f16930cb
+  checksum: 17c0f3f224d3e47db4913512dc44bb7b122601bc72b9c555568a90756a13ac2ea6e8c01c7ac9c3f6ddd0cd09f0ee045e39368f45fd0c952110569aa8952a1782
   languageName: node
   linkType: hard
 
-"@alinea/backend@npm:0.2.11":
-  version: 0.2.11
-  resolution: "@alinea/backend@npm:0.2.11"
+"@alinea/backend@npm:0.2.12":
+  version: 0.2.12
+  resolution: "@alinea/backend@npm:0.2.12"
   dependencies:
-    "@alinea/core": 0.2.11
+    "@alinea/core": 0.2.12
     "@alinea/iso": ^0.1.21
     "@alinea/sqlite-wasm": ^0.1.11
-    "@alinea/store": 0.2.11
+    "@alinea/store": 0.2.12
     yjs: ^13.5.41
-  checksum: 84ecc676282916555c852dc1fbaef4e17980a41d03da9830ac3d55a98686da1b627575729296605beb30191899877c766b9ae5b0d3d0b170249404c9eff0678b
+  checksum: 1c54aed1f0a8ed0f22348f52001b834b2970fcc3f6cd81f8a0f53d728ebb4f3770067a50dcbcf865665d0b14073a6c7b80acd6d4ca2a55051e1fa387d996e4c9
   languageName: node
   linkType: hard
 
-"@alinea/cli@npm:0.2.11":
-  version: 0.2.11
-  resolution: "@alinea/cli@npm:0.2.11"
+"@alinea/cli@npm:0.2.12":
+  version: 0.2.12
+  resolution: "@alinea/cli@npm:0.2.12"
   dependencies:
-    "@alinea/backend": 0.2.11
-    "@alinea/client": 0.2.11
-    "@alinea/core": 0.2.11
+    "@alinea/backend": 0.2.12
+    "@alinea/client": 0.2.12
+    "@alinea/core": 0.2.12
     "@alinea/iso": ^0.1.21
     "@alinea/sqlite-wasm": ^0.1.11
-    "@alinea/store": 0.2.11
+    "@alinea/store": 0.2.12
     "@esbx/eval": ^0.0.19
     chokidar: ^3.5.3
     esbuild: ^0.14.51
@@ -45,34 +45,34 @@ __metadata:
     yjs: ^13.5.41
   bin:
     alinea: dist/bin.js
-  checksum: 120efbcd58ff8ce244ea7132fa2e39f03f83a9c875ae7154dfe813c8741bd61d01060528a4d0bf563b01a31807a70c4cb67232d201f90e2934151878fa25ce47
+  checksum: fb3252eaa3edc282c65ea5c779bcda4185bfb7554578bb35aa989f4c05d38e8af56f794b2ab102f1ccf168a18e1ea4186bb6cb44aa45ba0e38ac32426feaeaea
   languageName: node
   linkType: hard
 
-"@alinea/client@npm:0.2.11":
-  version: 0.2.11
-  resolution: "@alinea/client@npm:0.2.11"
+"@alinea/client@npm:0.2.12":
+  version: 0.2.12
+  resolution: "@alinea/client@npm:0.2.12"
   dependencies:
-    "@alinea/core": 0.2.11
+    "@alinea/core": 0.2.12
     "@alinea/iso": ^0.1.21
-  checksum: 2eef00e168903ef2d7c85454e690fb8816ddd2b2f1b37f73aea5951a38dcbcdf012f2345809ddf0a7df612e49f35c31af6b77769a088587e16a9c01f833b6cb7
+  checksum: 9eff159556506a2a38a068b9258627ed5d526cda6484a4e70824d8ff5bfc227be6629366b8c2422809a342289446849956517204e85f693b2b0968dc770de9a5
   languageName: node
   linkType: hard
 
-"@alinea/cloud@npm:0.2.11":
-  version: 0.2.11
-  resolution: "@alinea/cloud@npm:0.2.11"
+"@alinea/cloud@npm:0.2.12":
+  version: 0.2.12
+  resolution: "@alinea/cloud@npm:0.2.12"
   dependencies:
-    "@alinea/backend": 0.2.11
-    "@alinea/client": 0.2.11
-    "@alinea/core": 0.2.11
-    "@alinea/dashboard": 0.2.11
+    "@alinea/backend": 0.2.12
+    "@alinea/client": 0.2.12
+    "@alinea/core": 0.2.12
+    "@alinea/dashboard": 0.2.12
     "@alinea/iso": ^0.1.21
-    "@alinea/shared": 0.2.11
-    "@alinea/ui": 0.2.11
+    "@alinea/shared": 0.2.12
+    "@alinea/ui": 0.2.12
   peerDependencies:
     react: "*"
-  checksum: cbe3c2243f41f8cc38be4c83febc5ef00f90677e8109ffd9a2cf87d17bc2889ad11c5eec226c5d00c5ce433296ea0df12a004ab28f6eb45175744f706378e5a9
+  checksum: 4419fbd83cecc5c6df573d72f397002e339ee24d790cf587f811fb417ec4ecee716928c2c4ac15a8c4432ad63664782a455f7b9b089daf2b2531c7884e76e4f6
   languageName: node
   linkType: hard
 
@@ -82,260 +82,260 @@ __metadata:
   languageName: node
   linkType: soft
 
-"@alinea/core@npm:0.2.11":
-  version: 0.2.11
-  resolution: "@alinea/core@npm:0.2.11"
+"@alinea/core@npm:0.2.12":
+  version: 0.2.12
+  resolution: "@alinea/core@npm:0.2.12"
   dependencies:
     "@alinea/iso": ^0.1.21
-    "@alinea/store": 0.2.11
+    "@alinea/store": 0.2.12
     yjs: ^13.5.41
   peerDependencies:
     react: "*"
-  checksum: c23940d46090ed2f266f61d709358543505f7b3cb4f720e5db790bfb695a7847b7d5d9bb6f5b6ecd1adaa6d7750313feffa4c7b59f76c363696886fb4e65343c
+  checksum: 85b55b457d241a7f12a13f5079f4c960c3bf6aed0d6c2d56b8f9b8853fb4eee2a5fc59cea5bf80e02aacbf79db9d61689b34fa87cf85776b28e40a26ee391092
   languageName: node
   linkType: hard
 
-"@alinea/css@npm:0.2.11":
-  version: 0.2.11
-  resolution: "@alinea/css@npm:0.2.11"
-  checksum: 58acc5f5726848c61d3b23e415007101500c9aa72c127e5a82ac233caa800f682d005b7129494e03f81117dbeb89ef5fc962639cdd377da07748d998159ba926
+"@alinea/css@npm:0.2.12":
+  version: 0.2.12
+  resolution: "@alinea/css@npm:0.2.12"
+  checksum: 26e7b012252672a6bc2f392aeae57edb57ba84dea9324571bafaa5fd97ff6ed4492d647e2fa63eca6c40037967b93a6877709349d8797d1b7be97dd25be37549
   languageName: node
   linkType: hard
 
-"@alinea/dashboard@npm:0.2.11":
-  version: 0.2.11
-  resolution: "@alinea/dashboard@npm:0.2.11"
+"@alinea/dashboard@npm:0.2.12":
+  version: 0.2.12
+  resolution: "@alinea/dashboard@npm:0.2.12"
   dependencies:
-    "@alinea/backend": 0.2.11
-    "@alinea/backend.indexeddb": 0.2.11
-    "@alinea/client": 0.2.11
-    "@alinea/core": 0.2.11
-    "@alinea/css": 0.2.11
-    "@alinea/editor": 0.2.11
-    "@alinea/input.hidden": 0.2.11
-    "@alinea/input.link": 0.2.11
-    "@alinea/input.path": 0.2.11
-    "@alinea/input.select": 0.2.11
-    "@alinea/input.text": 0.2.11
-    "@alinea/picker.entry": 0.2.11
-    "@alinea/preview": 0.2.11
-    "@alinea/shared": 0.2.11
-    "@alinea/store": 0.2.11
-    "@alinea/ui": 0.2.11
+    "@alinea/backend": 0.2.12
+    "@alinea/backend.indexeddb": 0.2.12
+    "@alinea/client": 0.2.12
+    "@alinea/core": 0.2.12
+    "@alinea/css": 0.2.12
+    "@alinea/editor": 0.2.12
+    "@alinea/input.hidden": 0.2.12
+    "@alinea/input.link": 0.2.12
+    "@alinea/input.path": 0.2.12
+    "@alinea/input.select": 0.2.12
+    "@alinea/input.text": 0.2.12
+    "@alinea/picker.entry": 0.2.12
+    "@alinea/preview": 0.2.12
+    "@alinea/shared": 0.2.12
+    "@alinea/store": 0.2.12
+    "@alinea/ui": 0.2.12
     react-router: ^6.3.0
     react-router-dom: ^6.3.0
     yjs: ^13.5.41
   peerDependencies:
     react: "*"
     react-dom: "*"
-  checksum: 5917b88186bd995447a3d61db1d1d9e55b51db6fb9fdc2df2c82f348f204ae8510e74fbbf3c3ef928511dffadd22e2a22711e96568399b3c28b7f1cf8ce98171
+  checksum: f00a9df93f935d7ad76876cf6003fa50aff66578dda51a5435389212d97982ca66d891c164cbb687acb742fc8b0ab9c25b0be04c9242f9a03c66014ec0614735
   languageName: node
   linkType: hard
 
-"@alinea/editor@npm:0.2.11":
-  version: 0.2.11
-  resolution: "@alinea/editor@npm:0.2.11"
+"@alinea/editor@npm:0.2.12":
+  version: 0.2.12
+  resolution: "@alinea/editor@npm:0.2.12"
   dependencies:
-    "@alinea/core": 0.2.11
-    "@alinea/shared": 0.2.11
-    "@alinea/ui": 0.2.11
+    "@alinea/core": 0.2.12
+    "@alinea/shared": 0.2.12
+    "@alinea/ui": 0.2.12
     yjs: ^13.5.41
   peerDependencies:
     react: "*"
-  checksum: 0240d714cd26c894a0247ad9049af0f5b0fdc62c526f3b11399334500a718d34137b101cba74a4ade13075e7403f2b6397bb05fa581063989828f0418dd18af8
+  checksum: 20e75fa4f8a1242176f06c999e755b404146b8472c25974b1fbe7b9e5f5671d6aeb6a4d4dba5aa1f3119043ad85c68803456d37bbebce2aa4a80c4b38064e38a
   languageName: node
   linkType: hard
 
-"@alinea/input.check@npm:0.2.11":
-  version: 0.2.11
-  resolution: "@alinea/input.check@npm:0.2.11"
+"@alinea/input.check@npm:0.2.12":
+  version: 0.2.12
+  resolution: "@alinea/input.check@npm:0.2.12"
   dependencies:
-    "@alinea/core": 0.2.11
-    "@alinea/editor": 0.2.11
-    "@alinea/ui": 0.2.11
+    "@alinea/core": 0.2.12
+    "@alinea/editor": 0.2.12
+    "@alinea/ui": 0.2.12
   peerDependencies:
     react: "*"
-  checksum: 7e8c245fcd8f8df352d90415bfd0d4070bdb2305131e88712e6e779902699868b13775d41d3341d689363596d44264a04a3d9c3b6e60236efa808873e49755a1
+  checksum: 20ea64e0cd147e27333bd0094b5fe5c5ebe9208f35568c2c5c36e6b60f749535ca70fdfff97cf8e7dfdd1811435b9d54ceec22d11d51877aae6b72342e4f3e3e
   languageName: node
   linkType: hard
 
-"@alinea/input.code@npm:0.2.11":
-  version: 0.2.11
-  resolution: "@alinea/input.code@npm:0.2.11"
+"@alinea/input.code@npm:0.2.12":
+  version: 0.2.12
+  resolution: "@alinea/input.code@npm:0.2.12"
   dependencies:
-    "@alinea/core": 0.2.11
-    "@alinea/editor": 0.2.11
-    "@alinea/ui": 0.2.11
+    "@alinea/core": 0.2.12
+    "@alinea/editor": 0.2.12
+    "@alinea/ui": 0.2.12
   peerDependencies:
     react: "*"
-  checksum: 3a8885f0a3ac738510ea4921af624624aa34c882238d0f5f29ac2acd72dcd5a018abcb17c13526f6ca556188be07f50561a7584824d5b353cf2b457bf2090f44
+  checksum: b47d3111cb37a2c627d72ffb9059b1a240a599df62576044d29eab19bfe3e00ed4983a0aea992aca75715f1aa4705434b888f080894bfbfd55b92bcf06b2b869
   languageName: node
   linkType: hard
 
-"@alinea/input.date@npm:0.2.11":
-  version: 0.2.11
-  resolution: "@alinea/input.date@npm:0.2.11"
+"@alinea/input.date@npm:0.2.12":
+  version: 0.2.12
+  resolution: "@alinea/input.date@npm:0.2.12"
   dependencies:
-    "@alinea/core": 0.2.11
-    "@alinea/editor": 0.2.11
-    "@alinea/ui": 0.2.11
+    "@alinea/core": 0.2.12
+    "@alinea/editor": 0.2.12
+    "@alinea/ui": 0.2.12
   peerDependencies:
     react: "*"
-  checksum: b6a00f8c895c3dedd7125525b9087816f8d10cfd45dd3673580d95d6be95b863e640dfcc379a1b6d45dcc6d0b81883608e09ec5e743f28e199bb98cd4a8908f3
+  checksum: 4faff2d211e8d29b01c889e75160c91deec4fe1a0b430fa93725f4be2a7246eceb35bdec51e64c114c22167f462860631c1a944359331a068b2e7ea42cb797ab
   languageName: node
   linkType: hard
 
-"@alinea/input.hidden@npm:0.2.11":
-  version: 0.2.11
-  resolution: "@alinea/input.hidden@npm:0.2.11"
+"@alinea/input.hidden@npm:0.2.12":
+  version: 0.2.12
+  resolution: "@alinea/input.hidden@npm:0.2.12"
   dependencies:
-    "@alinea/core": 0.2.11
-  checksum: e0b399538c197165d11920e8c4acdcd3bd7d4be9d7d9fa8e8f29d17b12dba9efc9492b0dc30d137f56227326855e1c886f8e2d002fe3b7eb93188ead7fcaa8d6
+    "@alinea/core": 0.2.12
+  checksum: 43982074d83b78c1313fd16003dbb77b017a22e01256593d8baf588b6b8cb53542ab6074d860a473782da3f6a1f0935ed8d1f23929190167c4fe4ac61b464e16
   languageName: node
   linkType: hard
 
-"@alinea/input.json@npm:0.2.11":
-  version: 0.2.11
-  resolution: "@alinea/input.json@npm:0.2.11"
+"@alinea/input.json@npm:0.2.12":
+  version: 0.2.12
+  resolution: "@alinea/input.json@npm:0.2.12"
   dependencies:
-    "@alinea/core": 0.2.11
-    "@alinea/editor": 0.2.11
-    "@alinea/ui": 0.2.11
+    "@alinea/core": 0.2.12
+    "@alinea/editor": 0.2.12
+    "@alinea/ui": 0.2.12
   peerDependencies:
     react: "*"
-  checksum: 52c64e970300582b13ce22818df5335a5c90c78a3c5dca7726c2a1c17e3da3725637ff10e5393fca69f7455bb12d7cfc6e601c9fb9063f7f782b0eba2ef876c4
+  checksum: c8d04ad31f6bb1ae71fd649c46e728321414367804c2803e6e99e2a445d2bb3223e7b5bd5694d5c255318daebab80d9d456a6926f94f1cc640c2d5dc13d600dc
   languageName: node
   linkType: hard
 
-"@alinea/input.link@npm:0.2.11":
-  version: 0.2.11
-  resolution: "@alinea/input.link@npm:0.2.11"
+"@alinea/input.link@npm:0.2.12":
+  version: 0.2.12
+  resolution: "@alinea/input.link@npm:0.2.12"
   dependencies:
-    "@alinea/core": 0.2.11
-    "@alinea/editor": 0.2.11
-    "@alinea/picker.entry": 0.2.11
-    "@alinea/picker.url": 0.2.11
-    "@alinea/shared": 0.2.11
-    "@alinea/store": 0.2.11
-    "@alinea/ui": 0.2.11
+    "@alinea/core": 0.2.12
+    "@alinea/editor": 0.2.12
+    "@alinea/picker.entry": 0.2.12
+    "@alinea/picker.url": 0.2.12
+    "@alinea/shared": 0.2.12
+    "@alinea/store": 0.2.12
+    "@alinea/ui": 0.2.12
   peerDependencies:
     react: "*"
-  checksum: 35292b3e1e833498a2a43d64a79ed4afc1388b8ec2e7ae019ef28e8123fac2c0e62561813d869d7f85a5ac0da980840d40972d3606bbf7260efd6306a5df25f3
+  checksum: b17c85960e712556cb0ecd4ca865156a263547904ffb6b753d4904136fb49196411e238b26a1fa72a845a45f0a389552d16c41def296fc23e8f037dea9f26260
   languageName: node
   linkType: hard
 
-"@alinea/input.list@npm:0.2.11":
-  version: 0.2.11
-  resolution: "@alinea/input.list@npm:0.2.11"
+"@alinea/input.list@npm:0.2.12":
+  version: 0.2.12
+  resolution: "@alinea/input.list@npm:0.2.12"
   dependencies:
-    "@alinea/core": 0.2.11
-    "@alinea/editor": 0.2.11
-    "@alinea/shared": 0.2.11
-    "@alinea/ui": 0.2.11
+    "@alinea/core": 0.2.12
+    "@alinea/editor": 0.2.12
+    "@alinea/shared": 0.2.12
+    "@alinea/ui": 0.2.12
   peerDependencies:
     react: "*"
-  checksum: a27355edaca4180fadbcb248b6fc99a311a7ffef3a872079346cd24a798a367a63a124c2c870c44e08a09a9ab2cdc4061e497b9160dc223c375bb6c0ca72fc2a
+  checksum: 904caedc25f015577c27c843de4e2750f846dc6feaec1ff09def1dc1ffee9d6b13728b392761efeef502e14eaee6ebd1f7a1b3abe072820a94150953414b3f47
   languageName: node
   linkType: hard
 
-"@alinea/input.number@npm:0.2.11":
-  version: 0.2.11
-  resolution: "@alinea/input.number@npm:0.2.11"
+"@alinea/input.number@npm:0.2.12":
+  version: 0.2.12
+  resolution: "@alinea/input.number@npm:0.2.12"
   dependencies:
-    "@alinea/core": 0.2.11
-    "@alinea/editor": 0.2.11
-    "@alinea/ui": 0.2.11
+    "@alinea/core": 0.2.12
+    "@alinea/editor": 0.2.12
+    "@alinea/ui": 0.2.12
   peerDependencies:
     react: "*"
-  checksum: a6d94c4b91ec92867facb57b72c8d4f730aa365a9b19689e3e0a298c5e3aee356fbdedf2c72ddcb9625b2d5d1bb8c0e5cef2d041d555bf250217acb63afa467d
+  checksum: cde538489454d7c5ad496aa023446d0d45ba9466bb32bafd45fe53ef16d631d4974df70a70b35a600a0f804dddcaeada5e9eff4ca9c848b2437179c9de703942
   languageName: node
   linkType: hard
 
-"@alinea/input.object@npm:0.2.11":
-  version: 0.2.11
-  resolution: "@alinea/input.object@npm:0.2.11"
+"@alinea/input.object@npm:0.2.12":
+  version: 0.2.12
+  resolution: "@alinea/input.object@npm:0.2.12"
   dependencies:
-    "@alinea/core": 0.2.11
-    "@alinea/editor": 0.2.11
-    "@alinea/ui": 0.2.11
+    "@alinea/core": 0.2.12
+    "@alinea/editor": 0.2.12
+    "@alinea/ui": 0.2.12
   peerDependencies:
     react: "*"
-  checksum: 3e6635dd2479da531473ab2b37162d0f5998f667e4fb7a46e7227fe8e301ba8f8bcc04d0c40523a29395099ae9a9bd9cea30a606f7573098000be8be0ff113dd
+  checksum: f30f4a33422bd9e1885b1be31bacd5811e0b61a1a94aabe8c57d0b54bd7edcae0380a9ad75a399a96ab881f0afef42c68d6c9eadd59481dc05aa4c77586abf06
   languageName: node
   linkType: hard
 
-"@alinea/input.path@npm:0.2.11":
-  version: 0.2.11
-  resolution: "@alinea/input.path@npm:0.2.11"
+"@alinea/input.path@npm:0.2.12":
+  version: 0.2.12
+  resolution: "@alinea/input.path@npm:0.2.12"
   dependencies:
-    "@alinea/core": 0.2.11
-    "@alinea/editor": 0.2.11
-    "@alinea/ui": 0.2.11
+    "@alinea/core": 0.2.12
+    "@alinea/editor": 0.2.12
+    "@alinea/ui": 0.2.12
   peerDependencies:
     react: "*"
-  checksum: c3e6bdd96a8ce80fa58a3f4cf40ffed184d053319e20ff1ed32ad52a2ced1e6588a8613cef16b067c4ec4c663fd300554a50c3b27320c6976816770e7552eea5
+  checksum: 4f045c1043f04cd954115823a4c714b51ed8e70e38b7837ad270126cc8d78132d5cab41bab9b62556eeff142d5e0cf78e931c980830fd1717d74b2cd70603f01
   languageName: node
   linkType: hard
 
-"@alinea/input.richtext@npm:0.2.11":
-  version: 0.2.11
-  resolution: "@alinea/input.richtext@npm:0.2.11"
+"@alinea/input.richtext@npm:0.2.12":
+  version: 0.2.12
+  resolution: "@alinea/input.richtext@npm:0.2.12"
   dependencies:
-    "@alinea/core": 0.2.11
-    "@alinea/dashboard": 0.2.11
-    "@alinea/editor": 0.2.11
-    "@alinea/input.check": 0.2.11
-    "@alinea/input.link": 0.2.11
-    "@alinea/input.text": 0.2.11
-    "@alinea/picker.entry": 0.2.11
-    "@alinea/picker.url": 0.2.11
-    "@alinea/shared": 0.2.11
-    "@alinea/ui": 0.2.11
+    "@alinea/core": 0.2.12
+    "@alinea/dashboard": 0.2.12
+    "@alinea/editor": 0.2.12
+    "@alinea/input.check": 0.2.12
+    "@alinea/input.link": 0.2.12
+    "@alinea/input.text": 0.2.12
+    "@alinea/picker.entry": 0.2.12
+    "@alinea/picker.url": 0.2.12
+    "@alinea/shared": 0.2.12
+    "@alinea/ui": 0.2.12
     yjs: ^13.5.41
   peerDependencies:
     react: "*"
     react-dom: "*"
-  checksum: 5cc26cc96a1df04b2455cf1f9c65a1cf08f9958148c37faf8df43d10a9333582f2094f64ea3811a7f01589a4e93a685e6204b1022155a44a7ac2194d0a549f8f
+  checksum: 3e5de95986fcb53cd2ab6baa424aba74181a70a2cb8cc52f1d0250b77e03b49a8ba5a909042ce63176c893057e4358aab2f2acd1c898cbc597fddd2479bb8aaa
   languageName: node
   linkType: hard
 
-"@alinea/input.select@npm:0.2.11":
-  version: 0.2.11
-  resolution: "@alinea/input.select@npm:0.2.11"
+"@alinea/input.select@npm:0.2.12":
+  version: 0.2.12
+  resolution: "@alinea/input.select@npm:0.2.12"
   dependencies:
-    "@alinea/core": 0.2.11
-    "@alinea/editor": 0.2.11
-    "@alinea/shared": 0.2.11
-    "@alinea/ui": 0.2.11
+    "@alinea/core": 0.2.12
+    "@alinea/editor": 0.2.12
+    "@alinea/shared": 0.2.12
+    "@alinea/ui": 0.2.12
   peerDependencies:
     react: "*"
-  checksum: 077db66f42bba1f3a3e1d22b297c0e62ead6e893ae76fbbd80c36ca5ebdf1527b14ba7a2a72a29dc3f71cab378a3ad7c9587590abcf127441c38868d57b0f75d
+  checksum: 109f8046213569d593ff501c82eb73943b6e7259b405ee51f43c49705e888ee1336e7d19f0560bb7a5688704a797d50d4bcff96344d8d5f4e4df397c761189cf
   languageName: node
   linkType: hard
 
-"@alinea/input.tabs@npm:0.2.11":
-  version: 0.2.11
-  resolution: "@alinea/input.tabs@npm:0.2.11"
+"@alinea/input.tabs@npm:0.2.12":
+  version: 0.2.12
+  resolution: "@alinea/input.tabs@npm:0.2.12"
   dependencies:
-    "@alinea/core": 0.2.11
-    "@alinea/editor": 0.2.11
-    "@alinea/ui": 0.2.11
+    "@alinea/core": 0.2.12
+    "@alinea/editor": 0.2.12
+    "@alinea/ui": 0.2.12
   peerDependencies:
     react: "*"
-  checksum: c3f04b987c65bc587d8c595c4e10990b82e9cdc53457980f06b4ff6f28864c2d1b21b6aff124d0509f7422834671aa95cfe8318073c29012d33cecca64591b8f
+  checksum: a7491f58717d892c259b30f25bcb0949fc4dba94260f6174485ef1fc4a1d008251ded5e2df511e321b100b7716a853230c1de557332016a49a482e7286739f62
   languageName: node
   linkType: hard
 
-"@alinea/input.text@npm:0.2.11":
-  version: 0.2.11
-  resolution: "@alinea/input.text@npm:0.2.11"
+"@alinea/input.text@npm:0.2.12":
+  version: 0.2.12
+  resolution: "@alinea/input.text@npm:0.2.12"
   dependencies:
-    "@alinea/core": 0.2.11
-    "@alinea/editor": 0.2.11
-    "@alinea/ui": 0.2.11
+    "@alinea/core": 0.2.12
+    "@alinea/editor": 0.2.12
+    "@alinea/ui": 0.2.12
   peerDependencies:
     react: "*"
-  checksum: 60b8ff05e5ec625761a913f21484897767340bcaccfc4ffac06b52addc1d499211eeb1cf95107881d47b37ad0388701d40cac29a668ac77a9bd05e49976de212
+  checksum: 01638eef908b8423fee7cfe75fbe63143b19a76b5c0c33729875146b81f96f3663468e86a071bf41f80d81cb3f896e42d5ae111e596c682bba52fdb64f25b8c5
   languageName: node
   linkType: hard
 
@@ -346,51 +346,51 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@alinea/picker.entry@npm:0.2.11":
-  version: 0.2.11
-  resolution: "@alinea/picker.entry@npm:0.2.11"
+"@alinea/picker.entry@npm:0.2.12":
+  version: 0.2.12
+  resolution: "@alinea/picker.entry@npm:0.2.12"
   dependencies:
-    "@alinea/core": 0.2.11
-    "@alinea/dashboard": 0.2.11
-    "@alinea/editor": 0.2.11
-    "@alinea/ui": 0.2.11
+    "@alinea/core": 0.2.12
+    "@alinea/dashboard": 0.2.12
+    "@alinea/editor": 0.2.12
+    "@alinea/ui": 0.2.12
   peerDependencies:
     react: "*"
-  checksum: b722e4e324d1e6288693a8712018097d9fe180487bb1b9ca5cfacebf031fa991feb286cb583ae6a75073014f38cba53f237da4ca5f48faa65861e7f510e1e957
+  checksum: b5130a2a126e4c822601903685b2235a59a0119f820c6e4795c2aacc3ea3880e77927d6161119539364e6cc2a157fcf9e16b2d260beaf023c7f1cf41afc9ff63
   languageName: node
   linkType: hard
 
-"@alinea/picker.url@npm:0.2.11":
-  version: 0.2.11
-  resolution: "@alinea/picker.url@npm:0.2.11"
+"@alinea/picker.url@npm:0.2.12":
+  version: 0.2.12
+  resolution: "@alinea/picker.url@npm:0.2.12"
   dependencies:
-    "@alinea/core": 0.2.11
-    "@alinea/editor": 0.2.11
-    "@alinea/input.check": 0.2.11
-    "@alinea/input.text": 0.2.11
-    "@alinea/ui": 0.2.11
+    "@alinea/core": 0.2.12
+    "@alinea/editor": 0.2.12
+    "@alinea/input.check": 0.2.12
+    "@alinea/input.text": 0.2.12
+    "@alinea/ui": 0.2.12
   peerDependencies:
     react: "*"
-  checksum: 9379197cc82991070d912883bbddcb9818dde9442b09841fd387d3096e355b9919abde82338b91f449523319ebf2f4cc308c83b988afe552d5e557736c89d6d3
+  checksum: 5a30c74a435bb78722685cc306f235c14885535925dbbed444f1e4523348340ddf0b487c3b4910530ba2fc049f20fb135514c4dda804eb0ef8077ff0b69db276
   languageName: node
   linkType: hard
 
-"@alinea/preview@npm:0.2.11":
-  version: 0.2.11
-  resolution: "@alinea/preview@npm:0.2.11"
+"@alinea/preview@npm:0.2.12":
+  version: 0.2.12
+  resolution: "@alinea/preview@npm:0.2.12"
   peerDependencies:
     react: "*"
-  checksum: 09b5d305e22eb84a786ea8ca73d547517c1d0c96bf404c0b9a3fb04b2bb3a30d6238f7409e78636c81a55c1d6d0ef531d694233233542d84579e61e9e1691810
+  checksum: 67f1a3c2dcac70723bb10f2e884a10013e7210ed004beb59c5e9f32e218c3c2861ccda6cd372f80464c6b3a606e09b65408a3c6f73f5de31fe3d1a07d04fee82
   languageName: node
   linkType: hard
 
-"@alinea/shared@npm:0.2.11":
-  version: 0.2.11
-  resolution: "@alinea/shared@npm:0.2.11"
+"@alinea/shared@npm:0.2.12":
+  version: 0.2.12
+  resolution: "@alinea/shared@npm:0.2.12"
   peerDependencies:
     react: "*"
     react-dom: "*"
-  checksum: e8934fda3d1f6e55e38c0f749026e73757132a7ff3b08247af07a11ac8f3756447518e97cfecffa77004bcd546334f3e3c1ef0fe9559e45e21316f4a4de610c9
+  checksum: b03a4571a411bc1e7885f2585f28249fe03c27312e256c767efeab0067241ddee7aae5517c89200eeaee49e0fb0b7e5b6cb6168dd541ac4914d4288975b302b8
   languageName: node
   linkType: hard
 
@@ -403,24 +403,24 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@alinea/store@npm:0.2.11":
-  version: 0.2.11
-  resolution: "@alinea/store@npm:0.2.11"
-  checksum: dfa86a9d89b32770db288c3ab9bb01c710abdf6429045be96556202704fe323c2961331c78845dc3efd53a7eec8d8ed9049686062c3087961eb23660ac4c49a5
+"@alinea/store@npm:0.2.12":
+  version: 0.2.12
+  resolution: "@alinea/store@npm:0.2.12"
+  checksum: a17da58a738021f1b88bd45e1af7033046f4bb251104648ff98ae722846e0326675bdd91c006f704ce695d3e9fd2e11d5ee4f00cc9da918119ab2f602724fdc8
   languageName: node
   linkType: hard
 
-"@alinea/ui@npm:0.2.11":
-  version: 0.2.11
-  resolution: "@alinea/ui@npm:0.2.11"
+"@alinea/ui@npm:0.2.12":
+  version: 0.2.12
+  resolution: "@alinea/ui@npm:0.2.12"
   dependencies:
-    "@alinea/core": 0.2.11
-    "@alinea/shared": 0.2.11
+    "@alinea/core": 0.2.12
+    "@alinea/shared": 0.2.12
   peerDependencies:
     react: "*"
     react-dom: "*"
     react-router-dom: "*"
-  checksum: b7d38d83d9332031011ecaa8c0df8e75689c17151757453ce619a26620333d862d45b656baf8de44c3ef3f9425ad01c9bffa65fc19cd1e0d9e00340fabdee314
+  checksum: 3bae3d82cbf9ba1bc6e8631ec10202ced5ec74c0497d4f3f72dbbfc1e022e78a2fa5a8469f266aa59ac6859629c9bbba0e97a199a65c73ba4e523b27ff2d37c2
   languageName: node
   linkType: hard
 
@@ -737,33 +737,33 @@ __metadata:
   languageName: node
   linkType: hard
 
-"alinea@npm:0.2.11":
-  version: 0.2.11
-  resolution: "alinea@npm:0.2.11"
+"alinea@npm:^0.2.12":
+  version: 0.2.12
+  resolution: "alinea@npm:0.2.12"
   dependencies:
-    "@alinea/cli": 0.2.11
-    "@alinea/cloud": 0.2.11
-    "@alinea/core": 0.2.11
-    "@alinea/css": 0.2.11
-    "@alinea/dashboard": 0.2.11
-    "@alinea/input.check": 0.2.11
-    "@alinea/input.code": 0.2.11
-    "@alinea/input.date": 0.2.11
-    "@alinea/input.json": 0.2.11
-    "@alinea/input.link": 0.2.11
-    "@alinea/input.list": 0.2.11
-    "@alinea/input.number": 0.2.11
-    "@alinea/input.object": 0.2.11
-    "@alinea/input.path": 0.2.11
-    "@alinea/input.richtext": 0.2.11
-    "@alinea/input.select": 0.2.11
-    "@alinea/input.tabs": 0.2.11
-    "@alinea/input.text": 0.2.11
+    "@alinea/cli": 0.2.12
+    "@alinea/cloud": 0.2.12
+    "@alinea/core": 0.2.12
+    "@alinea/css": 0.2.12
+    "@alinea/dashboard": 0.2.12
+    "@alinea/input.check": 0.2.12
+    "@alinea/input.code": 0.2.12
+    "@alinea/input.date": 0.2.12
+    "@alinea/input.json": 0.2.12
+    "@alinea/input.link": 0.2.12
+    "@alinea/input.list": 0.2.12
+    "@alinea/input.number": 0.2.12
+    "@alinea/input.object": 0.2.12
+    "@alinea/input.path": 0.2.12
+    "@alinea/input.richtext": 0.2.12
+    "@alinea/input.select": 0.2.12
+    "@alinea/input.tabs": 0.2.12
+    "@alinea/input.text": 0.2.12
     "@alinea/sqlite-wasm": ^0.1.11
-    "@alinea/ui": 0.2.11
+    "@alinea/ui": 0.2.12
   bin:
     alinea: dist/cli.js
-  checksum: b63cf4bddfa2636f27e72bd14ec6b918546195287dfcfc912469906755872529e415859209f1bb559cffab9077f9c518c58b7ba9380acfd5a77b014648866bab
+  checksum: 6ed76e75c63c4f913ca97693a4d454c4c7e344ba26dddbae25459b1f41bb4427eef98ef69710586e51c864646f4ab4f352ebf0e6d75891fb36f3ec2e3467e74c
   languageName: node
   linkType: hard
 
@@ -2353,7 +2353,7 @@ __metadata:
     "@types/node": ^18.0.3
     "@types/react": ^18.0.15
     "@types/react-dom": ^18.0.6
-    alinea: 0.2.11
+    alinea: ^0.2.12
     autoprefixer: ^10.4.7
     classnames: ^2.3.1
     date-fns: ^2.28.0
