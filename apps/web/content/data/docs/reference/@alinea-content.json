@@ -1,0 +1,93 @@
+{
+  "id": "KCfi-lnqOtq2CZS-gmh_L",
+  "type": "Doc",
+  "title": "@alinea/content",
+  "blocks": [
+    {
+      "id": "YZnFhTyAwd5PHxYsisiaQ",
+      "index": "a0",
+      "type": "TextBlock",
+      "text": [
+        {
+          "type": "heading",
+          "textAlign": "left",
+          "level": 1,
+          "content": [
+            {
+              "type": "text",
+              "text": "@alinea/content"
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "textAlign": "left",
+          "content": [
+            {
+              "type": "text",
+              "text": "Alinea exports a JavaScript package which allows your to query content. "
+            }
+          ]
+        },
+        {
+          "id": "Mqcyu4eHk8PsqVb4mjZwg",
+          "type": "ChapterLinkBlock",
+          "link": [
+            {
+              "id": "oHJRFzh1ChngTv3t5jKfe",
+              "index": "a0",
+              "type": "entry",
+              "entry": "28Ng6ZnpyhafrKdGMOO7BUUKP4S",
+              "description": ""
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "textAlign": "left",
+          "content": [
+            {
+              "type": "text",
+              "text": "The `alinea init` command links this package by creating an entry in `package.json`. It creates the link slightly differently based on the package manager you use:"
+            }
+          ]
+        },
+        {
+          "id": "_B5xkuIopw7StPUuUJHz1",
+          "type": "CodeVariantsBlock",
+          "variants": [
+            {
+              "id": "3g5p09OtAsBTZLb6JJb5s",
+              "index": "a0",
+              "type": "Variant",
+              "name": "npm & pnpm",
+              "language": "tsx",
+              "code": "{\n  \"dependencies\": {\n    \"@alinea/content\": \"file:.alinea\"\n  }\n}"
+            },
+            {
+              "id": "yFqMuOpRLVAUm60UiLODj",
+              "index": "a1",
+              "type": "Variant",
+              "name": "yarn",
+              "language": "tsx",
+              "code": "{\n  \"dependencies\": {\n    \"@alinea/content\": \"link:.alinea\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "textAlign": "left",
+          "content": [
+            {
+              "type": "text",
+              "text": "Yarn is different in that it allows `file:` packages but does not symlink them. That means content changes are not available until the next `yarn install`. The other package managers do not support `link:` so we end up with different ways to install. This should not pose a problem but if you ever switch package manager this link will need to be updated."
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "alinea": {
+    "index": "Zy"
+  }
+}
