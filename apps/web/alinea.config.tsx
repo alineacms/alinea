@@ -12,7 +12,7 @@ import {DocsPageSchema} from './src/view/DocsPage.schema'
 import {HomePageSchema} from './src/view/HomePage.schema'
 import {LogoChar} from './src/view/layout/branding/LogoChar'
 import {PageSchema} from './src/view/Page.schema'
-// test123456
+
 export const webSchema = schema({
   ...MediaSchema,
   Home: HomePageSchema,
