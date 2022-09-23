@@ -1,12 +1,12 @@
+import {createEmitter} from '@alinea/cli/util/Emitter'
 import {externalPlugin} from '@alinea/cli/util/ExternalPlugin'
 import {ignorePlugin} from '@alinea/cli/util/IgnorePlugin'
 import {publicDefines} from '@alinea/cli/util/PublicDefines'
 import {targetPlugin} from '@alinea/cli/util/TargetPlugin'
 import {EvalPlugin} from '@esbx/eval'
-import {build, BuildFailure, BuildResult} from 'esbuild'
+import {build, BuildResult} from 'esbuild'
 import fs from 'fs-extra'
 import path from 'node:path'
-import {Signal, signal} from 'usignal'
 import {GenerateContext} from './GenerateContext'
 
 // Workaround evanw/esbuild#2460
@@ -44,27 +44,22 @@ function failOnBuildError(build: Promise<BuildResult>) {
   })
 }
 
-interface CompileResult {
-  result: Signal<BuildResult | BuildFailure>
-  stop: () => void
-}
-
-export async function compileConfig({
+export function compileConfig({
   cwd,
   outDir,
   configLocation,
   watch
-}: GenerateContext): Promise<CompileResult> {
+}: GenerateContext) {
   const tsconfig = overrideTsConfig(cwd)
   const define = publicDefines(process.env)
-  const result = signal<BuildResult | BuildFailure>(undefined!)
-  return build({
+  const results = createEmitter<BuildResult>()
+  build({
+    color: true,
     format: 'esm',
     target: 'esnext',
     treeShaking: true,
     outdir: outDir,
     entryPoints: {config: configLocation},
-    absWorkingDir: cwd,
     bundle: true,
     logOverride: {
       'ignored-bare-import': 'silent'
@@ -85,24 +80,15 @@ export async function compileConfig({
     ],
     watch: watch && {
       async onRebuild(error, success) {
-        result.value = (error || success)!
+        if (error) console.log('> config has errors')
+        else results.emit(success!)
       }
     },
     tsconfig
   })
-    .then(buildResult => {
-      result.value = buildResult
-    })
-    .catch(err => {
-      result.value = err as BuildFailure
-    })
+    .then(results.emit, results.throw)
     .then(() => {
-      return {
-        result,
-        stop() {
-          const current = result.value
-          if ('stop' in current) current.stop?.()
-        }
-      }
+      if (!watch) return results.return()
     })
+  return results
 }

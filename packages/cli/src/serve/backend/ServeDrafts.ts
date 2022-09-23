@@ -7,7 +7,7 @@ import {base64} from '@alinea/core/util/Encoding'
 import {Collection} from '@alinea/store/Collection'
 import {SqliteStore} from '@alinea/store/sqlite/SqliteStore'
 import path from 'node:path'
-import {exportStore} from '../ExportStore'
+import {exportStore} from '../../ExportStore'
 
 export interface ServeDraftsOptions extends FileDraftsOptions {
   config: Config

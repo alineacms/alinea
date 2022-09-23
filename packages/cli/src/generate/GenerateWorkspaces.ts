@@ -5,10 +5,7 @@ import path from 'node:path'
 import {GenerateContext} from './GenerateContext'
 
 import {code} from '@alinea/cli/util/CodeGen'
-import {
-  copyFileIfContentsDiffer,
-  writeFileIfContentsDiffer
-} from '../../util/FS'
+import {copyFileIfContentsDiffer, writeFileIfContentsDiffer} from '../util/FS'
 
 function wrapNamespace(code: string, namespace: string | undefined) {
   if (namespace) return `export namespace ${namespace} {\n${code}\n}`

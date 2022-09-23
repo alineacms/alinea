@@ -5,8 +5,11 @@ import {publicDefines} from '@alinea/cli/util/PublicDefines'
 import {createError} from '@alinea/core/ErrorWithCode'
 import semver from 'compare-versions'
 import {build} from 'esbuild'
+import {createRequire} from 'module'
 import path from 'node:path'
 import {GenerateContext} from './GenerateContext'
+
+const require = createRequire(import.meta.url)
 
 export async function generateDashboard(
   {cwd, staticDir}: GenerateContext,

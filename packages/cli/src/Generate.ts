@@ -1,8 +1,15 @@
-import {createDb} from '@alinea/backend/util/CreateDb'
 import {Config} from '@alinea/core/Config'
 import {Outcome} from '@alinea/core/Outcome'
 import {SqliteStore} from '@alinea/store/sqlite/SqliteStore'
+import {BuildResult} from 'esbuild'
 import path from 'node:path'
+import {compileConfig} from './generate/CompileConfig'
+import {copyBoilerplate} from './generate/CopyBoilerplate'
+import {fillCache} from './generate/FillCache'
+import {GenerateContext} from './generate/GenerateContext'
+import {generateDashboard} from './generate/GenerateDashboard'
+import {generateWorkspaces} from './generate/GenerateWorkspaces'
+import {loadConfig} from './generate/LoadConfig'
 import {dirname} from './util/Dirname'
 
 const __dirname = dirname(import.meta.url)
@@ -22,39 +29,50 @@ export type GenerateOptions = {
   onAfterGenerate?: () => void
 }
 
-export async function generate(options: GenerateOptions): Promise<Config> {
+function createWorkspaces(context: GenerateContext, config: Config) {
+  const tasks = [generateWorkspaces(context, config)]
+  const dashboard = config.dashboard
+  if (dashboard?.staticFile)
+    tasks.push(
+      generateDashboard(context, dashboard.handlerUrl, dashboard.staticFile!)
+    )
+  return Promise.all(tasks)
+}
+
+export async function* generate(options: GenerateOptions) {
   const {
     wasmCache = false,
     cwd = process.cwd(),
     configFile = 'alinea.config',
     staticDir = path.join(__dirname, 'static'),
-    quiet = false,
-    onConfigRebuild,
-    onCacheRebuild
+    quiet = false
   } = options
-  const store = options.store || (await createDb())
-  let cacheWatcher: Promise<{stop: () => void}> | undefined
-  let generating: Promise<void> | undefined
-  const configLocation = path.join(cwd, configFile)
-  const outDir = path.join(cwd, '.alinea')
-  const watch = options.watch || onConfigRebuild || onCacheRebuild
 
-  await copyBoilerplate()
-  await compileConfig()
-  await copyStaticFiles()
-  let {config, reloadConfig} = await loadConfig()
-  await (generating = generatePackage())
-  if (options.onAfterGenerate) options.onAfterGenerate()
-  return config
+  const absoluteWorkingDir = path.resolve(cwd)
 
-  async function generatePackage() {
-    if (cacheWatcher) (await cacheWatcher).stop()
-    await Promise.all([
-      generateWorkspaces(config),
-      (cacheWatcher = fillCache(config))
-    ])
-    const dashboard = config.dashboard
-    if (dashboard?.staticFile)
-      await generateDashboard(dashboard.handlerUrl, dashboard.staticFile!)
+  const context: GenerateContext = {
+    wasmCache,
+    cwd: absoluteWorkingDir,
+    staticDir,
+    quiet,
+    configLocation: path.join(absoluteWorkingDir, configFile),
+    fix: options.fix || false,
+    outDir: path.join(absoluteWorkingDir, '.alinea'),
+    watch: options.watch || false
+  }
+
+  await copyBoilerplate(context)
+
+  const builds = compileConfig(context)[Symbol.asyncIterator]()
+  let nextBuild: Promise<{value: BuildResult; done?: boolean}> = builds.next()
+  while (true) {
+    const {done} = await nextBuild
+    if (done) break
+    const config = await loadConfig(context)
+    await createWorkspaces(context, config)
+    nextBuild = builds.next()
+    for await (const store of fillCache(context, config, nextBuild)) {
+      yield {config, store}
+    }
   }
 }

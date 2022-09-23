@@ -14,8 +14,8 @@ export const distPlugin: Plugin = {
         const dist = pkg
           .replace('dist/out/', 'packages/')
           .replace('/src', '/dist')
-        await copyDir(pkg, dist)
-        await copyDir(pkg.replace('/out/', '/types/'), dist)
+        await copyDir(pkg, dist).catch(() => {})
+        await copyDir(pkg.replace('/out/', '/types/'), dist).catch(() => {})
       }
       await fs.copyFile('dist/out/index.css', 'packages/css/src/generated.css')
     })

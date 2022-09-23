@@ -4,17 +4,11 @@ import {FileDrafts} from '@alinea/backend/drafts/FileDrafts'
 import {JsonLoader} from '@alinea/backend/loader/JsonLoader'
 import {router} from '@alinea/backend/router/Router'
 import {JWTPreviews} from '@alinea/backend/util/JWTPreviews'
-import {
-  accumulate,
-  Config,
-  Future,
-  Hub,
-  outcome,
-  Workspaces
-} from '@alinea/core'
+import {accumulate, Config, Hub, outcome, Workspaces} from '@alinea/core'
 import {base64, base64url} from '@alinea/core/util/Encoding'
 import {Response} from '@alinea/iso'
 import {SqliteStore} from '@alinea/store/sqlite/SqliteStore'
+import {Store} from '@alinea/store/Store'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 
@@ -23,7 +17,6 @@ export interface ServeBackendOptions<T extends Workspaces> {
   port?: number
   config: Config<T>
   store: SqliteStore
-  afterPublish?: () => void
 }
 
 export class ServeBackend<
@@ -31,13 +24,11 @@ export class ServeBackend<
 > extends Backend<T> {
   publishing = false
   reload: (config: Config<T>) => void
-  afterPublish?: () => void
   constructor({
     cwd = process.cwd(),
     port = 4500,
     config,
-    store,
-    afterPublish
+    store
   }: ServeBackendOptions<T>) {
     const dashboardUrl = `http://localhost:${port}`
     const outDir = path.join(cwd, '.alinea')
@@ -61,7 +52,6 @@ export class ServeBackend<
       previews: new JWTPreviews('@alinea/backend/devserver')
     }
     super(options)
-    this.afterPublish = afterPublish
     this.reload = config => {
       data.options.config = config
       this.options.config = config
@@ -112,18 +102,9 @@ export class ServeBackend<
     ).recover(router.reportError).handle
   }
 
-  // Todo: this needs a proper lock
-  publishEntries(params: Hub.PublishParams, ctx: Hub.Context): Future<void> {
-    this.publishing = true
-    console.log('--publishing--')
-    return super.publishEntries(params, ctx).finally(() => {
-      if (this.afterPublish) this.afterPublish()
-      this.publishing = false
-      console.log('--after publish--')
-    })
-  }
-
-  reloadPreviewStore() {
-    return this.preview.reload()
+  replaceStore(store: Store) {
+    this.options.createStore = async () => store
+    this.createStore = async () => store
+    this.preview.reload()
   }
 }

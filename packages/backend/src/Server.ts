@@ -225,7 +225,6 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
         false
       )
       await target.publish({changes}, ctx)
-      console.log('-- target published --')
       const ids = entries.map(entry => entry.id)
       await drafts.delete({ids}, ctx)
       if (applyPublish) {

@@ -3,6 +3,7 @@ import {FileData} from '@alinea/backend/data/FileData'
 import {Storage} from '@alinea/backend/Storage'
 import {createDb} from '@alinea/backend/util/CreateDb'
 import {exportStore} from '@alinea/cli/ExportStore'
+import {createEmitter, Emitter} from '@alinea/cli/util/Emitter'
 import {Config} from '@alinea/core/Config'
 import {Entry} from '@alinea/core/Entry'
 import {createError} from '@alinea/core/ErrorWithCode'
@@ -12,7 +13,6 @@ import {SqliteStore} from '@alinea/store/sqlite/SqliteStore'
 import {FSWatcher} from 'chokidar'
 import fs from 'fs-extra'
 import path from 'node:path'
-import {Signal, signal} from 'usignal'
 import {GenerateContext} from './GenerateContext'
 
 async function createSource({cwd, outDir}: GenerateContext, config: Config) {
@@ -23,7 +23,7 @@ async function createSource({cwd, outDir}: GenerateContext, config: Config) {
   for (const sourceLocation of sources) {
     const [stats, err] = await outcome(fs.stat(path.join(cwd, sourceLocation)))
     if (err || !stats!.isDirectory()) {
-      // This whole thing will be tough to support properly
+      // This whole thing will be though to support properly
       // let's disable for now
       // Attempt to build and extract source
       /*const tmpFile = path.join(outDir, '_tmp', createId() + '.js')
@@ -57,11 +57,6 @@ async function createSource({cwd, outDir}: GenerateContext, config: Config) {
     : files
 }
 
-interface FillResult {
-  result: Signal<SqliteStore>
-  stop: () => Promise<void>
-}
-
 async function cacheEntries(
   {quiet, fix}: GenerateContext,
   config: Config,
@@ -84,10 +79,11 @@ function exportToFile(
   return exportStore(store, path.join(outDir, 'store.js'), wasmCache)
 }
 
-export async function fillCache(
+export async function* fillCache(
   context: GenerateContext,
-  config: Config
-): Promise<FillResult> {
+  config: Config,
+  until: Promise<any>
+) {
   const source = await createSource(context, config)
   const files = await source.watchFiles?.()
   async function cache() {
@@ -107,24 +103,29 @@ export async function fillCache(
     }
     return store
   }
-  const result = signal(await cache())
-  if (!context.watch || !files)
-    return {
-      result,
-      stop: async () => {}
-    }
+  const result = await cache()
+  yield result
+  if (!context.watch || !files) return
 
+  const results = createEmitter<SqliteStore>()
   const watcher = new FSWatcher()
   watcher.add(files)
   const reload = async () => {
-    result.value = await cache()
+    results.emit(await cache())
   }
   watcher.on('change', reload)
   watcher.on('unlink', reload)
-  return {
-    result,
-    stop() {
-      return watcher.close()
-    }
+
+  until.then(() => {
+    results.cancel()
+  })
+
+  try {
+    for await (const store of results) yield store
+  } catch (e) {
+    if (e === Emitter.CANCELLED) return
+    throw e
+  } finally {
+    await watcher.close()
   }
 }

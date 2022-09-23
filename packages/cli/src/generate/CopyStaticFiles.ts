@@ -1,6 +1,6 @@
 import fs from 'fs-extra'
 import path from 'node:path'
-import {writeFileIfContentsDiffer} from '../../util/FS'
+import {writeFileIfContentsDiffer} from '../util/FS'
 import {GenerateContext} from './GenerateContext'
 
 function configType(location: string) {
