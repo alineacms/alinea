@@ -1,5 +1,4 @@
 import {Config} from '@alinea/core/Config'
-import {Outcome} from '@alinea/core/Outcome'
 import {SqliteStore} from '@alinea/store/sqlite/SqliteStore'
 import {BuildResult} from 'esbuild'
 import path from 'node:path'
@@ -20,9 +19,6 @@ export type GenerateOptions = {
   configFile?: string
   watch?: boolean
   fix?: boolean
-  canReIndex?: () => boolean
-  onConfigRebuild?: (outcome: Outcome<Config>) => void
-  onCacheRebuild?: (outcome: Outcome<SqliteStore>) => void
   wasmCache?: boolean
   quiet?: boolean
   store?: SqliteStore
@@ -45,7 +41,8 @@ export async function* generate(options: GenerateOptions) {
     cwd = process.cwd(),
     configFile = 'alinea.config',
     staticDir = path.join(__dirname, 'static'),
-    quiet = false
+    quiet = false,
+    onAfterGenerate
   } = options
 
   const absoluteWorkingDir = path.resolve(cwd)
@@ -65,6 +62,7 @@ export async function* generate(options: GenerateOptions) {
 
   const builds = compileConfig(context)[Symbol.asyncIterator]()
   let nextBuild: Promise<{value: BuildResult; done?: boolean}> = builds.next()
+  let afterGenerateCalled = false
   while (true) {
     const {done} = await nextBuild
     if (done) break
@@ -73,6 +71,10 @@ export async function* generate(options: GenerateOptions) {
     nextBuild = builds.next()
     for await (const store of fillCache(context, config, nextBuild)) {
       yield {config, store}
+      if (onAfterGenerate && !afterGenerateCalled) {
+        afterGenerateCalled = true
+        onAfterGenerate()
+      }
     }
   }
 }

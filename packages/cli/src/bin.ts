@@ -23,12 +23,13 @@ prog
     ensureNodeResolution()
     ensureReact()
     const {generate} = await import('./Generate')
-    return generate({
+    for await (const _ of generate({
       cwd: args.dir,
       watch: args.watch,
       fix: args.fix,
       onAfterGenerate: forwardCommand
-    })
+    })) {
+    }
   })
   .command('init')
   .describe('Copy a sample config file to the current directory')
