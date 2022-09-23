@@ -104,7 +104,6 @@ __metadata:
     fs-extra: ^10.0.0
     mime-db: ^1.51.0
     sade: ^1.7.4
-    usignal: ^0.7.10
     yjs: ^13.5.41
   bin:
     alinea: ./dist/bin.js
@@ -12329,13 +12328,6 @@ resolve@^1.10.0:
   dependencies:
     os-homedir: ^1.0.0
   checksum: a3329faa959fcd9e3e01a03347ca974f7f6b8896e6a634f29c61d8d5b61557d853c6fc5a6dff1a28e2da85b400d0e4490368a28de452ba8c41a2bf3a92cb110a
-  languageName: node
-  linkType: hard
-
-"usignal@npm:^0.7.10":
-  version: 0.7.10
-  resolution: "usignal@npm:0.7.10"
-  checksum: 4fa298d9660ac3622cafff9c493d3f1c06bda44ab545a30336b2b20f4d3297608b3f621fcfe01ed7d5299891d0173165373597068992a0cf762f87dd577ddb85
   languageName: node
   linkType: hard
 

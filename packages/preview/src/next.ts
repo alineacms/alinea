@@ -6,7 +6,7 @@ export function useNextPreview() {
   return usePreview({
     async refetch() {
       try {
-        router.replace(router.asPath, undefined, {scroll: false})
+        await router.replace(router.asPath, undefined, {scroll: false})
       } catch (e) {}
     }
   })
