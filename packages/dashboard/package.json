@@ -60,7 +60,6 @@
     "diff-match-patch": "^1.0.5",
     "fast-average-color": "^7.0.1",
     "image-blob-reduce": "^4.1.0",
-    "p-limit": "^4.0.0",
     "pretty-bytes": "^6.0.0",
     "react-tiny-virtual-list": "^2.2.0",
     "y-webrtc": "^10.2.0"

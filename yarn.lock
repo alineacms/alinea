@@ -103,7 +103,6 @@ __metadata:
     find-config: ^1.0.0
     fs-extra: ^10.0.0
     mime-db: ^1.51.0
-    p-limit: ^4.0.0
     sade: ^1.7.4
     yjs: ^13.5.41
   bin:
@@ -196,7 +195,6 @@ __metadata:
     diff-match-patch: ^1.0.5
     fast-average-color: ^7.0.1
     image-blob-reduce: ^4.1.0
-    p-limit: ^4.0.0
     pretty-bytes: ^6.0.0
     react-tiny-virtual-list: ^2.2.0
     y-webrtc: ^10.2.0
@@ -527,6 +525,7 @@ __metadata:
     "@dnd-kit/utilities": ^2.0.0
     "@floating-ui/react-dom": ^0.7.1
     "@headlessui/react": ^1.6.1
+    p-limit: ^4.0.0
     react-query: ^3.39.1
   peerDependencies:
     react: "*"
