@@ -20,6 +20,32 @@ export type FileDataOptions = {
   rootDir?: string
 }
 
+interface Contents {
+  files: Array<string>
+  dirs: Array<string>
+}
+
+async function filesOfPath(fs: FS, dir: string): Promise<Contents> {
+  const res: Contents = {files: [], dirs: []}
+  try {
+    const files = await fs.readdir(dir)
+    for (const file of files) {
+      const location = path.join(dir, file)
+      const stat = await fs.stat(location)
+      if (stat.isDirectory()) {
+        const contents = await filesOfPath(fs, location)
+        res.dirs.push(location, ...contents.dirs)
+        res.files.push(...contents.files)
+      } else {
+        res.files.push(location)
+      }
+    }
+    return res
+  } catch (e) {
+    return res
+  }
+}
+
 export class FileData implements Data.Source, Data.Target, Data.Media {
   canRename = true
 
@@ -138,17 +164,19 @@ export class FileData implements Data.Source, Data.Target, Data.Media {
   }
 
   async watchFiles() {
-    const {config, rootDir = '.'} = this.options
-    const paths = []
+    const {fs, config, rootDir = '.'} = this.options
+    const res: Contents = {files: [], dirs: []}
     for (const {source: contentDir, roots} of Object.values(
       config.workspaces
     )) {
       for (const root of Object.keys(roots)) {
         const rootPath = path.join(rootDir, contentDir, root)
-        paths.push(rootPath)
+        const contents = await filesOfPath(fs, rootPath)
+        res.files.push(...contents.files)
+        res.dirs.push(...contents.dirs)
       }
     }
-    return paths
+    return res
   }
 
   async publish({changes}: Hub.ChangesParams) {

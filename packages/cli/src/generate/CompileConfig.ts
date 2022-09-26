@@ -3,7 +3,6 @@ import {externalPlugin} from '@alinea/cli/util/ExternalPlugin'
 import {ignorePlugin} from '@alinea/cli/util/IgnorePlugin'
 import {publicDefines} from '@alinea/cli/util/PublicDefines'
 import {targetPlugin} from '@alinea/cli/util/TargetPlugin'
-import {EvalPlugin} from '@esbx/eval'
 import {build, BuildResult} from 'esbuild'
 import fs from 'fs-extra'
 import path from 'node:path'
@@ -74,7 +73,6 @@ export function compileConfig({
           packageRoot: outDir
         }
       }),
-      EvalPlugin,
       externalPlugin(cwd),
       ignorePlugin
     ],

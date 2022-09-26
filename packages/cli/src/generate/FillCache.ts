@@ -10,10 +10,10 @@ import {createError} from '@alinea/core/ErrorWithCode'
 import {outcome} from '@alinea/core/Outcome'
 import {Logger} from '@alinea/core/util/Logger'
 import {SqliteStore} from '@alinea/store/sqlite/SqliteStore'
-import {FSWatcher} from 'chokidar'
 import fs from 'fs-extra'
 import path from 'node:path'
 import pLimit from 'p-limit'
+import {createWatcher} from '../util/Watcher'
 import {GenerateContext} from './GenerateContext'
 
 async function createSource({cwd, outDir}: GenerateContext, config: Config) {
@@ -53,9 +53,7 @@ async function createSource({cwd, outDir}: GenerateContext, config: Config) {
     loader: JsonLoader,
     rootDir: cwd
   })
-  return customSources.length > 0
-    ? Data.Source.concat(files, ...customSources)
-    : files
+  return files
 }
 
 async function cacheEntries(
@@ -110,14 +108,10 @@ export async function* fillCache(
   if (!context.watch || !files) return
 
   const results = createEmitter<SqliteStore>()
-  const watcher = new FSWatcher()
-  watcher.add(files)
-  const reload = async () => {
-    results.emit(await limit(cache))
-  }
-  watcher.on('change', reload)
-  watcher.on('unlink', reload)
 
+  const stopWatching = await createWatcher(files, async () => {
+    results.emit(await limit(cache))
+  })
   until.then(() => {
     results.cancel()
   })
@@ -128,6 +122,6 @@ export async function* fillCache(
     if (e === Emitter.CANCELLED) return
     throw e
   } finally {
-    await watcher.close()
+    stopWatching()
   }
 }

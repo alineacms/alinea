@@ -42,7 +42,9 @@ export async function serve(options: ServeOptions): Promise<void> {
     buildOptions: {
       ...buildOptions,
       ...options.buildOptions,
-      plugins: buildOptions.plugins!.concat(options.buildOptions?.plugins || [])
+      plugins: (buildOptions.plugins || []).concat(
+        options.buildOptions?.plugins || []
+      )
     },
     production,
     liveReload: new LiveReload()
