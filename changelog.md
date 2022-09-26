@@ -2,11 +2,15 @@
 
 ## [Unreleased]
 
+- Improved stability of the `serve` and `generate` commands by avoiding race
+  conditions while publishing
+- Removed react-router dependency
+
 ## [0.2.12]
 
 - Public env variables may be used in alinea.config. Currently supported are
-  variables with a key prefix of either `NEXT\_PUBLIC\_`, `PUBLIC\_`, `VITE\_`
-  or `GATSBY\_`.
+  variables with a key prefix of either `NEXT_PUBLIC_`, `PUBLIC_`, `VITE_`
+  or `GATSBY_`.
 
 ## [0.2.11]
 
