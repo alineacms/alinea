@@ -23,7 +23,7 @@
     }
   },
   "dependencies": {
-    "yjs": "^13.5.41"
+    "@alinea/shared": "0.0.0"
   },
   "devDependencies": {
     "@types/ioredis": "^4.28.8",

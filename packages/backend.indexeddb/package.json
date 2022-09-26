@@ -24,7 +24,7 @@
   },
   "dependencies": {
     "@alinea/core": "0.0.0",
-    "yjs": "^13.5.41"
+    "@alinea/shared": "0.0.0"
   },
   "devDependencies": {
     "firebase-admin": "^10.0.2"

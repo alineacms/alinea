@@ -26,8 +26,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@alinea/backend.firestore@workspace:packages/backend.firestore"
   dependencies:
+    "@alinea/shared": 0.0.0
     firebase-admin: ^10.0.2
-    yjs: ^13.5.41
   languageName: unknown
   linkType: soft
 
@@ -47,8 +47,8 @@ __metadata:
   resolution: "@alinea/backend.indexeddb@workspace:packages/backend.indexeddb"
   dependencies:
     "@alinea/core": 0.0.0
+    "@alinea/shared": 0.0.0
     firebase-admin: ^10.0.2
-    yjs: ^13.5.41
   languageName: unknown
   linkType: soft
 
@@ -56,9 +56,9 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@alinea/backend.redis@workspace:packages/backend.redis"
   dependencies:
+    "@alinea/shared": 0.0.0
     "@types/ioredis": ^4.28.8
     ioredis: ^4.28.5
-    yjs: ^13.5.41
   languageName: unknown
   linkType: soft
 
@@ -68,6 +68,7 @@ __metadata:
   dependencies:
     "@alinea/core": 0.0.0
     "@alinea/iso": ^0.1.21
+    "@alinea/shared": 0.0.0
     "@alinea/sqlite-wasm": ^0.1.11
     "@alinea/store": 0.0.0
     "@types/js-yaml": ^4.0.5
@@ -76,7 +77,6 @@ __metadata:
     js-yaml: ^4.1.0
     pretty-ms: ^8.0.0
     regexparam: ^2.0.1
-    yjs: ^13.5.41
   languageName: unknown
   linkType: soft
 
@@ -88,6 +88,7 @@ __metadata:
     "@alinea/client": 0.0.0
     "@alinea/core": 0.0.0
     "@alinea/iso": ^0.1.21
+    "@alinea/shared": 0.0.0
     "@alinea/sqlite-wasm": ^0.1.11
     "@alinea/store": 0.0.0
     "@esbx/eval": ^0.0.19
@@ -102,9 +103,7 @@ __metadata:
     execa: ^6.1.0
     find-config: ^1.0.0
     fs-extra: ^10.0.0
-    mime-db: ^1.51.0
     sade: ^1.7.4
-    yjs: ^13.5.41
   bin:
     alinea: ./dist/bin.js
   languageName: unknown
@@ -152,9 +151,9 @@ __metadata:
   resolution: "@alinea/core@workspace:packages/core"
   dependencies:
     "@alinea/iso": ^0.1.21
+    "@alinea/shared": 0.0.0
     "@alinea/store": 0.0.0
     pretty-ms: ^8.0.0
-    yjs: ^13.5.41
   peerDependencies:
     react: "*"
   languageName: unknown
@@ -198,7 +197,6 @@ __metadata:
     pretty-bytes: ^6.0.0
     react-tiny-virtual-list: ^2.2.0
     y-webrtc: ^10.2.0
-    yjs: ^13.5.41
   peerDependencies:
     react: "*"
     react-dom: "*"
@@ -230,7 +228,6 @@ __metadata:
     "@alinea/core": 0.0.0
     "@alinea/shared": 0.0.0
     "@alinea/ui": 0.0.0
-    yjs: ^13.5.41
   peerDependencies:
     react: "*"
   languageName: unknown
@@ -393,7 +390,6 @@ __metadata:
     "@tiptap/extension-text-align": ^2.0.0-beta.31
     "@tiptap/react": ^2.0.0-beta.114
     y-prosemirror: 1.1.2
-    yjs: ^13.5.41
   peerDependencies:
     react: "*"
     react-dom: "*"
@@ -527,6 +523,7 @@ __metadata:
     "@headlessui/react": ^1.6.1
     p-limit: ^4.0.0
     react-query: ^3.39.1
+    yjs: ^13.5.41
   peerDependencies:
     react: "*"
     react-dom: "*"
