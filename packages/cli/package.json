@@ -37,7 +37,6 @@
     "@esbx/eval": "^0.0.19",
     "chokidar": "^3.5.3",
     "esbuild": "^0.14.51",
-    "mime-db": "^1.51.0",
     "yjs": "^13.5.41"
   },
   "devDependencies": {
