@@ -5,7 +5,7 @@ import {publicDefines} from '@alinea/cli/util/PublicDefines'
 import {createError} from '@alinea/core/ErrorWithCode'
 import semver from 'compare-versions'
 import {build} from 'esbuild'
-import {createRequire} from 'module'
+import {createRequire} from 'node:module'
 import path from 'node:path'
 import {GenerateContext} from './GenerateContext'
 
