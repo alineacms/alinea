@@ -287,8 +287,6 @@ export namespace Cache {
     }
   }
 
-  const Parent = Entry.as('Parent')
-
   function setChildrenUrl(store: Store, config: Config, parentId: string) {
     const children = store.all(
       Entry.where(Entry.alinea.parent.is(parentId)).select({
@@ -296,7 +294,7 @@ export namespace Cache {
         path: Entry.path,
         type: Entry.type,
         alinea: Entry.alinea,
-        parentPaths: Tree.parents(Entry.id).select(Parent.path)
+        parentPaths: Tree.parents(Entry.id).select(page => page.path)
       })
     )
     for (const child of children) {
