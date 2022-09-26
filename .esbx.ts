@@ -14,7 +14,6 @@ import {internalPlugin} from './.esbx/plugin/internal'
 import {resolvePlugin} from './.esbx/plugin/resolve'
 import {sassPlugin} from './.esbx/plugin/sass'
 import {staticPlugin} from './.esbx/plugin/static'
-import {ensureNodeResolution} from './packages/cli/src/util/EnsureNodeResolution'
 
 export {VersionTask} from '@esbx/workspaces'
 export * from './.esbx/bundle-ts'
@@ -107,10 +106,7 @@ const testTask = TestTask.configure({
     plugins: [
       ...buildOptions.plugins!,
       StaticPlugin.configure({
-        sources: [
-          'packages/cli/src/Init.ts',
-          'packages/cli/src/export/ExportStore.ts'
-        ]
+        sources: ['packages/cli/src/Init.ts']
       }),
       internalPlugin
     ]
@@ -120,7 +116,6 @@ const testTask = TestTask.configure({
 export const test = {
   ...testTask,
   async action(options: any) {
-    ensureNodeResolution()
     return testTask.action(options)
   }
 }
