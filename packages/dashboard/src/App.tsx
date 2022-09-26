@@ -81,7 +81,8 @@ function useRoutes() {
         workspace: ':workspace?',
         root: ':root?',
         id: ':id?'
-      })]: <Router.Entry />
+      })]: <Router.Entry />,
+      '/*': <Router.Entry />
     }
   }, [nav])
 }
