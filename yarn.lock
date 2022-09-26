@@ -75,7 +75,7 @@ __metadata:
     convert-hrtime: ^5.0.0
     js-yaml: ^4.1.0
     pretty-ms: ^8.0.0
-    regexparam: ^2.0.0
+    regexparam: ^2.0.1
     yjs: ^13.5.41
   languageName: unknown
   linkType: soft
@@ -198,8 +198,6 @@ __metadata:
     image-blob-reduce: ^4.1.0
     p-limit: ^4.0.0
     pretty-bytes: ^6.0.0
-    react-router: ^6.3.0
-    react-router-dom: ^6.3.0
     react-tiny-virtual-list: ^2.2.0
     y-webrtc: ^10.2.0
     yjs: ^13.5.41
@@ -568,11 +566,11 @@ __metadata:
     color2k: ^1.2.4
     line-height: ^0.3.1
     micro-observables: ^1.7.2
+    regexparam: ^2.0.1
     use-error-boundary: ^2.0.6
   peerDependencies:
     react: "*"
     react-dom: "*"
-    react-router-dom: "*"
   languageName: unknown
   linkType: soft
 
@@ -7174,7 +7172,7 @@ fsevents@~2.3.2:
   languageName: node
   linkType: hard
 
-"history@npm:^5.2.0, history@npm:^5.3.0":
+"history@npm:^5.3.0":
   version: 5.3.0
   resolution: "history@npm:5.3.0"
   dependencies:
@@ -10439,30 +10437,6 @@ fsevents@~2.3.2:
   languageName: node
   linkType: hard
 
-"react-router-dom@npm:^6.3.0":
-  version: 6.3.0
-  resolution: "react-router-dom@npm:6.3.0"
-  dependencies:
-    history: ^5.2.0
-    react-router: 6.3.0
-  peerDependencies:
-    react: ">=16.8"
-    react-dom: ">=16.8"
-  checksum: 77603a654f8a8dc7f65535a2e5917a65f8d9ffcb06546d28dd297e52adcc4b8a84377e0115f48dca330b080af2da3e78f29d590c89307094d36927d2b1751ec3
-  languageName: node
-  linkType: hard
-
-"react-router@npm:6.3.0, react-router@npm:^6.3.0":
-  version: 6.3.0
-  resolution: "react-router@npm:6.3.0"
-  dependencies:
-    history: ^5.2.0
-  peerDependencies:
-    react: ">=16.8"
-  checksum: 7be673f5e72104be01e6ab274516bdb932efd93305243170690f6560e3bd1035dd1df3d3c9ce1e0f452638a2529f43a1e77dcf0934fc8031c4783da657be13ca
-  languageName: node
-  linkType: hard
-
 "react-string-replace@npm:^1.0.0":
   version: 1.0.0
   resolution: "react-string-replace@npm:1.0.0"
@@ -10612,10 +10586,10 @@ fsevents@~2.3.2:
   languageName: node
   linkType: hard
 
-"regexparam@npm:^2.0.0":
-  version: 2.0.0
-  resolution: "regexparam@npm:2.0.0"
-  checksum: 8db9559041b5f5304fd224b5c87b33f12bbb97e07292e7f573a57d73690c0f2e3e2a956fefe6169527b5585d7d0828b8aecedcf61ce5fae40530185ebcae3031
+"regexparam@npm:^2.0.1":
+  version: 2.0.1
+  resolution: "regexparam@npm:2.0.1"
+  checksum: 797998e96c995c200ebd4a7d5e734381b96d3979b4b6672ec65ed5ca9210b8a5149ad73109ec32115779674b526088704c2564e9fa07f8b747743beadc424803
   languageName: node
   linkType: hard
 

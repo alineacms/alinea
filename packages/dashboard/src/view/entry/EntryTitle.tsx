@@ -28,7 +28,7 @@ export function EntryTitle({children, backLink}: EntryTitleProps) {
       </Head>
       <div className={styles.root()}>
         <HStack center gap={18}>
-          {backLink && <IconLink icon={IcRoundArrowBack} to={backLink} />}
+          {backLink && <IconLink icon={IcRoundArrowBack} href={backLink} />}
           <Typo.H1 flat style={{position: 'relative'}}>
             <span>{title}</span>
             {children}

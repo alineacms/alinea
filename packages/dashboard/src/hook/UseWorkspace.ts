@@ -1,7 +1,7 @@
 import {outcome, Workspace} from '@alinea/core'
 import {usePreferences} from '@alinea/ui'
+import {useMatch} from '@alinea/ui/util/HashRouter'
 import {useMemo} from 'react'
-import {useMatch} from 'react-router'
 import {dashboardNav} from '../DashboardNav'
 import {useDashboard} from './UseDashboard'
 
@@ -12,7 +12,7 @@ export function useWorkspace(): Workspace {
   const preferences = usePreferences()
   const [match] = outcome(() => useMatch(nav.matchWorkspace))
   return useMemo(() => {
-    const params: Record<string, string | undefined> = match?.params ?? {}
+    const params: Record<string, string | undefined> = match ?? {}
     const keys = Object.keys(config.workspaces)
     const {
       workspace = keys.includes(preferences.workspace!)

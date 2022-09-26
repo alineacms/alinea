@@ -13,13 +13,17 @@ import {IcRoundEdit} from '@alinea/ui/icons/IcRoundEdit'
 import {IcRoundInsertDriveFile} from '@alinea/ui/icons/IcRoundInsertDriveFile'
 import {IcRoundRotateLeft} from '@alinea/ui/icons/IcRoundRotateLeft'
 import {MdiSourceBranch} from '@alinea/ui/icons/MdiSourceBranch'
-import {Fragment, Suspense, useState} from 'react'
+import {
+  Routes,
+  useLocation,
+  useMatch,
+  useParams
+} from '@alinea/ui/util/HashRouter'
+import {Fragment, Suspense, useMemo, useState} from 'react'
 import {
   QueryClient,
   QueryClientProvider as ReactQueryClientProvider
 } from 'react-query'
-import {Route, Routes, useLocation, useMatch, useParams} from 'react-router'
-import {HashRouter} from 'react-router-dom'
 import {DashboardOptions} from './Dashboard'
 import {CurrentDraftProvider} from './hook/UseCurrentDraft'
 import {DashboardProvider, useDashboard} from './hook/UseDashboard'
@@ -64,6 +68,24 @@ const Router = {
   }
 }
 
+function useRoutes() {
+  const nav = useNav()
+  return useMemo(() => {
+    return {
+      [nav.draft({
+        workspace: ':workspace',
+        root: ':root?',
+        id: ':id?'
+      })]: <Router.Drafts />,
+      [nav.entry({
+        workspace: ':workspace?',
+        root: ':root?',
+        id: ':id?'
+      })]: <Router.Entry />
+    }
+  }, [nav])
+}
+
 function DraftsButton() {
   const location = useLocation()
   const nav = useNav()
@@ -78,7 +100,7 @@ function DraftsButton() {
   return (
     <Sidebar.Nav.Item
       selected={location.pathname.startsWith(nav.draft({workspace}))}
-      to={link}
+      href={link}
       badge={draftsTotal}
     >
       <MdiSourceBranch />
@@ -94,6 +116,7 @@ function AppAuthenticated() {
   const {name: workspace, label, name, color, roots} = useWorkspace()
   const {name: currentRoot} = useRoot()
   const entryLocation = useEntryLocation()
+  const routes = useRoutes()
   return (
     <EntrySummaryProvider>
       <DraftsProvider>
@@ -124,7 +147,7 @@ function AppAuthenticated() {
                         <Sidebar.Nav.Item
                           key={key}
                           selected={isEntry && isSelected}
-                          to={link}
+                          href={link}
                         >
                           {root.icon ? (
                             <root.icon />
@@ -137,42 +160,7 @@ function AppAuthenticated() {
                     <DraftsButton />
                   </Sidebar.Nav>
                   <Suspense fallback={<Loader absolute />}>
-                    <Routes>
-                      <Route
-                        path={nav.draft({workspace: ':workspace'})}
-                        element={<Router.Drafts />}
-                      />
-                      <Route
-                        path={nav.draft({
-                          workspace: ':workspace',
-                          root: ':root',
-                          id: ':id'
-                        })}
-                        element={<Router.Drafts />}
-                      />
-                      <Route
-                        path={nav.entry({workspace: ':workspace'})}
-                        element={<Router.Entry />}
-                      />
-                      <Route
-                        path={nav.entry({
-                          workspace: ':workspace',
-                          root: ':root'
-                        })}
-                        element={<Router.Entry />}
-                      />
-                      <Route
-                        path={
-                          nav.entry({
-                            workspace: ':workspace',
-                            root: ':root',
-                            id: ':id'
-                          }) + '/*'
-                        }
-                        element={<Router.Entry />}
-                      />
-                      <Route path="/*" element={<Router.Entry />} />
-                    </Routes>
+                    <Routes routes={routes} />
                   </Suspense>
                 </div>
                 {/*<Statusbar.Root>
@@ -313,18 +301,13 @@ export function App<T extends Workspaces>({
   )
   return (
     <DashboardProvider value={{...props}}>
-      {/* Todo: https://github.com/remix-run/react-router/issues/7703 */}
-      <HashRouter
-      //hashType="noslash"
-      >
-        <SessionProvider value={session}>
-          <QueryClientProvider client={queryClient}>
-            <PreferencesProvider>
-              <AppRoot session={session} setSession={setSession} />
-            </PreferencesProvider>
-          </QueryClientProvider>
-        </SessionProvider>
-      </HashRouter>
+      <SessionProvider value={session}>
+        <QueryClientProvider client={queryClient}>
+          <PreferencesProvider>
+            <AppRoot session={session} setSession={setSession} />
+          </PreferencesProvider>
+        </QueryClientProvider>
+      </SessionProvider>
     </DashboardProvider>
   )
 }

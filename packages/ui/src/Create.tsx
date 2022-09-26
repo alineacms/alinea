@@ -1,8 +1,8 @@
-import {ComponentType, HTMLAttributes} from 'react'
-import {Link as RRLink, LinkProps} from 'react-router-dom'
+import {ComponentType, HTMLAttributes, HTMLProps} from 'react'
 import css from './Create.module.scss'
 import {IcRoundAddCircle} from './icons/IcRoundAddCircle'
 import {HStack} from './Stack'
+import {link} from './util/HashRouter'
 import {fromModule} from './util/Styler'
 
 const styles = fromModule(css)
@@ -14,15 +14,23 @@ export namespace Create {
     icon?: ComponentType
   }
 
-  export function Link({children, icon: Icon, ...props}: LinkProps & Props) {
+  export function Link({
+    children,
+    icon: Icon,
+    ...props
+  }: HTMLProps<HTMLAnchorElement> & Props) {
     return (
-      <RRLink {...props} className={styles.button.mergeProps(props)()}>
+      <a
+        {...props}
+        {...link(props.href)}
+        className={styles.button.mergeProps(props)()}
+      >
         <HStack center gap={8}>
           <IcRoundAddCircle style={{flexShrink: 0}} />
           {Icon && <Icon />}
           {children && <span>{children}</span>}
         </HStack>
-      </RRLink>
+      </a>
     )
   }
 
