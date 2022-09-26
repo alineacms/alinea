@@ -13,6 +13,7 @@ import {SqliteStore} from '@alinea/store/sqlite/SqliteStore'
 import {FSWatcher} from 'chokidar'
 import fs from 'fs-extra'
 import path from 'node:path'
+import pLimit from 'p-limit'
 import {GenerateContext} from './GenerateContext'
 
 async function createSource({cwd, outDir}: GenerateContext, config: Config) {
@@ -86,6 +87,7 @@ export async function* fillCache(
 ) {
   const source = await createSource(context, config)
   const files = await source.watchFiles?.()
+  const limit = pLimit(1)
   async function cache() {
     const store = await cacheEntries(context, config, source)
     await exportToFile(context, store)
@@ -103,7 +105,7 @@ export async function* fillCache(
     }
     return store
   }
-  const result = await cache()
+  const result = await limit(cache)
   yield result
   if (!context.watch || !files) return
 
@@ -111,7 +113,7 @@ export async function* fillCache(
   const watcher = new FSWatcher()
   watcher.add(files)
   const reload = async () => {
-    results.emit(await cache())
+    results.emit(await limit(cache))
   }
   watcher.on('change', reload)
   watcher.on('unlink', reload)
