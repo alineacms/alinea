@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.2.13]
+
 - Improved stability of the `serve` and `generate` commands by avoiding race
   conditions while publishing
 - Removed react-router dependency
