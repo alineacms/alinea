@@ -1,7 +1,4 @@
 {
-  "bin": {
-    "alinea": "./dist/bin.js"
-  },
   "name": "@alinea/cli",
   "version": "0.0.0",
   "license": "MIT",

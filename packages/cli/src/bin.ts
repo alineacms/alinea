@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 import sade from 'sade'
 import {version} from '../package.json'
 import {ensureEnv} from './util/EnsureEnv'
