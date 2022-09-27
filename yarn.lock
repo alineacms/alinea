@@ -102,8 +102,6 @@ __metadata:
     find-config: ^1.0.0
     fs-extra: ^10.0.0
     sade: ^1.7.4
-  bin:
-    alinea: ./dist/bin.js
   languageName: unknown
   linkType: soft
 
