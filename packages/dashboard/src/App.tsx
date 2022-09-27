@@ -102,6 +102,8 @@ function DraftsButton() {
     <Sidebar.Nav.Item
       selected={location.pathname.startsWith(nav.draft({workspace}))}
       href={link}
+      title="Drafts"
+      aria-label="Drafts"
       badge={draftsTotal}
     >
       <MdiSourceBranch />
@@ -149,6 +151,8 @@ function AppAuthenticated() {
                           key={key}
                           selected={isEntry && isSelected}
                           href={link}
+                          title={renderLabel(root.label)}
+                          aria-label={renderLabel(root.label)}
                         >
                           {root.icon ? (
                             <root.icon />
