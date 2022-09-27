@@ -1,4 +1,4 @@
-import {outcome, Root} from '@alinea/core'
+import {Root} from '@alinea/core'
 import {useMatch} from '@alinea/ui/util/HashRouter'
 import {useMemo} from 'react'
 import {dashboardNav} from '../DashboardNav'
@@ -12,7 +12,7 @@ export function parseRootPath(path: string) {
 
 export function useRoot(): Root {
   const {config} = useDashboard()
-  const [match] = outcome(() => useMatch(nav.matchRoot))
+  const match = useMatch(nav.matchRoot, true)
   return useMemo(() => {
     const params: Record<string, string | undefined> = match ?? {}
     const {

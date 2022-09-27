@@ -28,12 +28,17 @@ function createParams(matcher: Matcher, match: RegExpExecArray) {
   return params
 }
 
-export function useMatch(route: string): Record<string, string> | undefined {
+export function useMatch(
+  route: string,
+  loose?: boolean
+): Record<string, string> | undefined {
   const location = useLocation()
-  const matcher = useMemo<Matcher>(() => parse(route), [route])
-  const match = matcher.pattern.exec(location.pathname)
-  if (match === null) return undefined
-  return createParams(matcher, match)
+  const matcher = useMemo<Matcher>(() => parse(route, loose), [route])
+  return useMemo(() => {
+    const match = matcher.pattern.exec(location.pathname)
+    if (match === null) return undefined
+    return createParams(matcher, match)
+  }, [matcher, location])
 }
 
 export function useNavigate() {
