@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+## [0.2.14]
+
+- The dashboard router was not picking up wilcard routes, which resulted in
+  non-working links (#265)
+- Bundle yjs instead of requiring it as a dependency.
+- Re-use the esbuild watcher in order to remove the chokidar dependency.
+
 ## [0.2.13]
 
 - Improved stability of the `serve` and `generate` commands by avoiding race
