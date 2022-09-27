@@ -1,7 +1,4 @@
 {
-  "bin": {
-    "alinea": "./dist/bin.js"
-  },
   "name": "@alinea/cli",
   "version": "0.0.0",
   "license": "MIT",
@@ -32,13 +29,10 @@
     "@alinea/client": "0.0.0",
     "@alinea/core": "0.0.0",
     "@alinea/iso": "^0.1.21",
+    "@alinea/shared": "0.0.0",
     "@alinea/sqlite-wasm": "^0.1.11",
     "@alinea/store": "0.0.0",
-    "@esbx/eval": "^0.0.19",
-    "chokidar": "^3.5.3",
-    "esbuild": "^0.14.51",
-    "mime-db": "^1.51.0",
-    "yjs": "^13.5.41"
+    "esbuild": "^0.15.9"
   },
   "devDependencies": {
     "@types/compression": "^1.7.2",

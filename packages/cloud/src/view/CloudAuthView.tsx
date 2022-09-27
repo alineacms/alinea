@@ -10,8 +10,7 @@ import {Button, HStack, LogoShape, px, Typo, VStack} from '@alinea/ui'
 import {IcRoundArrowForward} from '@alinea/ui/icons/IcRoundArrowForward'
 import {IcRoundPublish} from '@alinea/ui/icons/IcRoundPublish'
 import {useQuery} from 'react-query'
-import {AuthResult, AuthResultType} from '../server/CloudAuthServer'
-import {cloudConfig} from '../server/CloudConfig'
+import {AuthResult, AuthResultType} from '../AuthResult'
 
 export function CloudAuthView({setSession}: Auth.ViewProps) {
   const {client} = useDashboard()
@@ -68,7 +67,7 @@ export function CloudAuthView({setSession}: Auth.ViewProps) {
                   <br />
                   You can{' '}
                   <Typo.Link
-                    href="https://alinea.sh/docs/deploy/backends"
+                    href="https://alinea.sh/docs/deploy/intro"
                     target="_blank"
                   >
                     <span>fully configure a custom backend</span>
@@ -80,13 +79,12 @@ export function CloudAuthView({setSession}: Auth.ViewProps) {
                 <div>
                   <Button
                     as="a"
-                    href={`${cloudConfig.url}/setup?from=${encodeURIComponent(
+                    href={`${result.setupUrl}?from=${encodeURIComponent(
                       location.protocol +
                         '//' +
                         location.host +
                         location.pathname
                     )}`}
-                    target="_blank"
                     iconRight={IcRoundArrowForward}
                   >
                     Continue with alinea.cloud

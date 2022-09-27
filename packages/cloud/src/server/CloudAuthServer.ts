@@ -3,18 +3,8 @@ import {Auth, Config, createError, Hub, outcome, User} from '@alinea/core'
 import {verify} from '@alinea/core/util/JWT'
 import {fetch, Request, Response} from '@alinea/iso'
 import {version} from '../../package.json'
+import {AuthResult, AuthResultType} from '../AuthResult'
 import {cloudConfig} from './CloudConfig'
-
-export enum AuthResultType {
-  Authenticated,
-  UnAuthenticated,
-  MissingApiKey
-}
-
-export type AuthResult =
-  | {type: AuthResultType.Authenticated; user: User}
-  | {type: AuthResultType.UnAuthenticated; redirect: string}
-  | {type: AuthResultType.MissingApiKey}
 
 export type CloudAuthServerOptions = {
   config: Config
@@ -194,7 +184,11 @@ export class CloudAuthServer implements Auth.Server {
   }
 
   async authResult(request: Request): Promise<AuthResult> {
-    if (!this.options.apiKey) return {type: AuthResultType.MissingApiKey}
+    if (!this.options.apiKey)
+      return {
+        type: AuthResultType.MissingApiKey,
+        setupUrl: cloudConfig.setup
+      }
     const [ctx, err] = await outcome(this.contextFor(request))
     if (ctx) return {type: AuthResultType.Authenticated, user: ctx.user}
     const token = this.options.apiKey.split('_')[1]

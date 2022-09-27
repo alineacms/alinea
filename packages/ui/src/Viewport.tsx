@@ -1,6 +1,6 @@
 import {HTMLProps, PropsWithChildren, useEffect, useLayoutEffect} from 'react'
 import {useContrastColor} from './hook/UseContrastColor'
-import {usePreferences} from './hook/UsePreferences'
+import {PreferencesProvider, usePreferences} from './hook/UsePreferences'
 import {fromModule} from './util/Styler'
 import css from './Viewport.module.scss'
 
@@ -20,7 +20,7 @@ type ViewportProps = PropsWithChildren<
 const useIsomorphicEffect =
   typeof window !== 'undefined' ? useLayoutEffect : useEffect
 
-export function Viewport({
+function ViewportView({
   children,
   color = '#6673FC',
   contain,
@@ -71,5 +71,15 @@ export function Viewport({
         <div />
       </div>
     </main>
+  )
+}
+
+export function Viewport(props: ViewportProps) {
+  const preferences = usePreferences()
+  if (preferences) return <ViewportView {...props} />
+  return (
+    <PreferencesProvider>
+      <ViewportView {...props} />
+    </PreferencesProvider>
   )
 }

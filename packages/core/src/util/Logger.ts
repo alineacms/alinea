@@ -77,7 +77,7 @@ export class Logger {
     if (!this.startProgress) {
       this.startProgress = now()
     }
-    output(`> ${message}\r`)
+    output(`> ${message}          \r`)
   }
 
   summary(message: string) {

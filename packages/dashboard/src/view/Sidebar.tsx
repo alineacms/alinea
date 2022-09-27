@@ -1,15 +1,16 @@
 import {fromModule, Pane, useNonInitialEffect} from '@alinea/ui'
 import {Badge} from '@alinea/ui/Badge'
+import {link} from '@alinea/ui/util/HashRouter'
 import {createSlots} from '@alinea/ui/util/Slots'
 import {useWindowWidth} from '@react-hook/window-size'
 import {
   createContext,
   Dispatch,
+  HTMLProps,
   PropsWithChildren,
   useContext,
   useReducer
 } from 'react'
-import {Link, LinkProps} from 'react-router-dom'
 import {useEntryLocation} from '../hook/UseEntryLocation'
 import {useWorkspace} from '../hook/UseWorkspace'
 import css from './Sidebar.module.scss'
@@ -122,18 +123,19 @@ export namespace Sidebar {
 
   export namespace Nav {
     export type ItemProps = PropsWithChildren<
-      LinkProps & {selected?: boolean; badge?: number}
+      HTMLProps<HTMLAnchorElement> & {selected?: boolean; badge?: number}
     >
     export function Item({children, selected, badge, ...props}: ItemProps) {
       return (
-        <Link
+        <a
           {...props}
+          {...link(props.href)}
           className={styles.root.menu.item.mergeProps(props)({selected})}
         >
           <Badge amount={badge} right={-4} bottom={-3}>
             {children}
           </Badge>
-        </Link>
+        </a>
       )
     }
   }

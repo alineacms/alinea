@@ -17,6 +17,7 @@ export const internalPlugin: Plugin = {
         return [`@alinea/${pkg}`, path.resolve(`packages/${pkg}/src/view.ts`)]
       })
     )
+    aliases['yjs'] = path.resolve('packages/shared/dist/yjs.js')
 
     AliasPlugin.configure(aliases).setup(build)
 

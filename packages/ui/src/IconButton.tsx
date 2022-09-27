@@ -1,6 +1,6 @@
-import {ComponentType, forwardRef, HTMLAttributes, Ref} from 'react'
-import {Link, LinkProps} from 'react-router-dom'
+import {ComponentType, forwardRef, HTMLAttributes, HTMLProps, Ref} from 'react'
 import css from './IconButton.module.scss'
+import {link} from './util/HashRouter'
 import {fromModule} from './util/Styler'
 import {px} from './util/Units'
 
@@ -30,7 +30,7 @@ export const IconButton = forwardRef(function IconButton(
   )
 })
 
-export type IconLinkProps = LinkProps & {
+export type IconLinkProps = HTMLProps<HTMLAnchorElement> & {
   icon: ComponentType
   active?: boolean
 }
@@ -40,12 +40,13 @@ export const IconLink = forwardRef(function IconLink(
   ref: Ref<HTMLAnchorElement>
 ) {
   return (
-    <Link
+    <a
       ref={ref}
       {...props}
+      {...link(props.href)}
       className={styles.root.mergeProps(props)({active})}
     >
       <Icon />
-    </Link>
+    </a>
   )
 })

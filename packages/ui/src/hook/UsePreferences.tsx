@@ -28,10 +28,7 @@ const defaultSize = 16
 const context = createContext<PreferencesState | undefined>(undefined)
 
 export function usePreferences(): PreferencesState {
-  const ctx = useContext(context)
-  if (!ctx)
-    throw new Error(`usePreferences must be used within a PreferencesProvider`)
-  return ctx
+  return useContext(context)!
 }
 
 function usePreferencesState(): PreferencesState {

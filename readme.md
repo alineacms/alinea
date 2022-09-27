@@ -1,5 +1,6 @@
 [![npm](https://img.shields.io/npm/v/alinea.svg)](https://npmjs.org/package/alinea)
 [![install size](https://packagephobia.com/badge?p=alinea)](https://packagephobia.com/result?p=alinea)
+[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz_small.svg)](https://stackblitz.com/github/alineacms/alinea/tree/main/examples/framework-next)
 
 # [![Alinea CMS logo](https://github.com/alineacms/alinea/raw/HEAD/apps/web/public/logo.svg)](https://alinea.sh)
 
@@ -32,6 +33,10 @@ npx alinea serve
 ```
 
 [Start configuring types and fields →](https://alinea.sh/docs/configuration/intro)
+
+## Examples
+
+- [Next.js Blog Starter](https://github.com/alineacms/alinea/tree/main/examples/framework-next)
 
 ## Configure
 

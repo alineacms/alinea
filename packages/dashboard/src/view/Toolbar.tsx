@@ -23,12 +23,11 @@ import {IcSharpBrightnessMedium} from '@alinea/ui/icons/IcSharpBrightnessMedium'
 import {PopoverMenu} from '@alinea/ui/PopoverMenu'
 import {HStack} from '@alinea/ui/Stack'
 import {contrastColor} from '@alinea/ui/util/ContrastColor'
+import {link, useNavigate} from '@alinea/ui/util/HashRouter'
 import {createSlots} from '@alinea/ui/util/Slots'
 import {Switch} from '@headlessui/react'
 import {parseToHsla} from 'color2k'
 import {ComponentType} from 'react'
-import {useNavigate} from 'react-router'
-import {Link} from 'react-router-dom'
 import {useDashboard} from '../hook/UseDashboard'
 import {useNav} from '../hook/UseNav'
 import {useSession} from '../hook/UseSession'
@@ -132,8 +131,8 @@ export namespace Toolbar {
             </DropdownMenu.Items>
           </DropdownMenu.Root>
         ) : (
-          <Link
-            to={nav.root({workspace: workspace.name})}
+          <a
+            {...link(nav.root({workspace: workspace.name}))}
             className={styles.root.workspace()}
           >
             <WorkspaceLabel
@@ -141,7 +140,7 @@ export namespace Toolbar {
               color={workspace.color}
               icon={workspace.icon}
             />
-          </Link>
+          </a>
         )}
 
         <div className={styles.root.portal()}>

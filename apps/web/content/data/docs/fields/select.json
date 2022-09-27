@@ -1,8 +1,6 @@
 {
   "id": "268hmvl73nDMrfPTEpVq3AB5B3L",
   "type": "Doc",
-  "root": "data",
-  "index": "a2",
   "title": "Select",
   "blocks": [
     {
@@ -35,6 +33,11 @@
           "id": "268iVJXDY23EWvw51STlvnDU0eR",
           "type": "CodeBlock",
           "code": "import {alinea} from 'alinea'\nalinea.select('My select field', {\n  a: 'Option a',\n  b: 'Option b'\n})"
+        },
+        {
+          "id": "ezxODaRODivzR5kG0IyUo",
+          "type": "ExampleBlock",
+          "code": "import {alinea} from 'alinea'\nexport default alinea.select('My select field', {\n  a: 'Option a',\n  b: 'Option b'\n})"
         }
       ]
     },

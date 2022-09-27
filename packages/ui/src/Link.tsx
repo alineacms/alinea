@@ -1,6 +1,6 @@
 import type {LinkHTMLAttributes} from 'react'
-import {Link as LinkReactRouter} from 'react-router-dom'
 import css from './Link.module.scss'
+import {link} from './util/HashRouter'
 import {fromModule} from './util/Styler'
 
 const styles = fromModule(css)
@@ -12,12 +12,10 @@ export type LinkProps = {
 
 export function Link({href, external, children, ...props}: LinkProps) {
   const isInternal = href && !external
-  const Comp: any = isInternal ? LinkReactRouter : 'a'
-  const compProps = isInternal ? {to: href} : {}
-
+  const compProps = isInternal ? link(href) : {href}
   return (
-    <Comp {...props} {...compProps} className={styles.root.mergeProps(props)()}>
+    <a {...props} {...compProps} className={styles.root.mergeProps(props)()}>
       {children}
-    </Comp>
+    </a>
   )
 }

@@ -2,6 +2,43 @@
 
 ## [Unreleased]
 
+## [0.2.14]
+
+- The dashboard router was not picking up wilcard routes, which resulted in
+  non-working links (#265)
+- Bundle yjs instead of requiring it as a dependency.
+- Re-use the esbuild watcher in order to remove the chokidar dependency.
+
+## [0.2.13]
+
+- Improved stability of the `serve` and `generate` commands by avoiding race
+  conditions while publishing
+- Removed react-router dependency
+
+## [0.2.12]
+
+- Public env variables may be used in alinea.config. Currently supported are
+  variables with a key prefix of either `NEXT_PUBLIC_`, `PUBLIC_`, `VITE_`
+  or `GATSBY_`.
+
+## [0.2.11]
+
+- The workaround released in 0.2.10 was not stable. Node modules ended up being
+  bundled in the generated Javascript.
+
+## [0.2.10]
+
+- Workaround [evanw/esbuild#2460](https://github.com/evanw/esbuild/issues/2460).
+  Newer esbuild versions support the new "automatic" react jsx feature. This can
+  be enabled from the build options, but also overwritten in tsconfig.json.
+  Alinea depends on this feature but had problems generating correct output
+  when the tsconfig has another jsx setting.
+  Previously the workaround was supplying a blank tsconfig file.
+  However other directives such as paths that the user might supply in their own
+  tsconfig were ignored. With this change alinea will write out a
+  tsconfig.alinea.json that extends the user supplied tsconfig.json
+  and overrides the jsx property.
+
 ## [0.2.9]
 
 - The `alinea serve` command will apply publish actions directly to the memory

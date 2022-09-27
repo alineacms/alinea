@@ -1,8 +1,6 @@
 {
   "id": "GyPkhJLrxgmfXYtYFOq9x",
   "type": "Doc",
-  "root": "data",
-  "index": "a26",
   "title": "Number",
   "blocks": [
     {
@@ -35,6 +33,11 @@
           "id": "g4S5QLIWCAxleuIDzwNpk",
           "type": "CodeBlock",
           "code": "import {alinea} from 'alinea'\nalinea.number('My number field', {\n  minValue: 0,\n  maxValue: 10\n})"
+        },
+        {
+          "id": "MFfouC0Ou_IJ8GmSx0nRK",
+          "type": "ExampleBlock",
+          "code": "import {alinea} from 'alinea'\nexport default alinea.number('My number field', {\n  minValue: 0,\n  maxValue: 10\n})"
         }
       ]
     },

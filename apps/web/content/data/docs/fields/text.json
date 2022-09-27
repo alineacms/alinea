@@ -1,8 +1,6 @@
 {
   "id": "24yE3ttFwpZGiAOJWRTGvP9kK1R",
   "type": "Doc",
-  "root": "data",
-  "index": "a0",
   "title": "Text",
   "blocks": [
     {
@@ -35,6 +33,11 @@
           "id": "267RNY6ruMlaKYh8ADfzxtq0jnA",
           "type": "CodeBlock",
           "code": "import {alinea} from 'alinea'\nalinea.text('My text field', {\n  help: 'This is an example field',\n  multiline: true\n})"
+        },
+        {
+          "id": "kLT1p_gpGFN1L9rIy9e5E",
+          "type": "ExampleBlock",
+          "code": "import {alinea} from 'alinea'\nexport default alinea.text('My text field', {\n  help: 'This is an example field',\n  multiline: true\n})"
         }
       ]
     },
