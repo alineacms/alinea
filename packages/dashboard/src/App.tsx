@@ -122,14 +122,13 @@ function AppAuthenticated() {
                         entryLocation && entryLocation.root === key
                           ? nav.entry(entryLocation)
                           : nav.root({workspace, root: key})
-                      const title = key.charAt(0).toUpperCase() + key.slice(1)
                       return (
                         <Sidebar.Nav.Item
                           key={key}
                           selected={isEntry && isSelected}
                           to={link}
-                          title={title}
-                          aria-label={title}
+                          title={renderLabel(root.label)}
+                          aria-label={renderLabel(root.label)}
                         >
                           {root.icon ? (
                             <root.icon />
