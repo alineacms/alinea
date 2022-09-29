@@ -41,7 +41,9 @@ export function ImageBlock({image, container}: ImageBlockSchema) {
           src={image.src}
           width={image.width}
           height={image.height}
-          sizes="100vw"
+          sizes="(max-width: 980px) 100vw,
+              (max-width: 1200px) 58vw,
+              660px"
           blurDataURL={blurDataURL}
           className={styles.root.image()}
         />
