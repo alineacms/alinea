@@ -8,11 +8,11 @@
       width: 100%;
       max-width: 300px;
       border-radius: 12px;
-      padding: 15px 20px;
+      padding: 14px 20px;
       line-height: 1.2;
       font-size: 14px;
       box-shadow: 0 1px 0 var(--web-outline);
-      border: 1px solid var(--web-outline);
+      border: 2px solid var(--web-outline);
       transition: background 0.25s ease-out;
 
       &:hover {
@@ -31,9 +31,14 @@
 
       &-label {
         font-size: 12px;
-        font-weight: 600;
-        letter-spacing: 1px;
+        font-weight: bold;
         text-transform: uppercase;
+      }
+
+      &-title {
+        font-family: var(--web-title-font);
+        font-size: 15px;
+        font-weight: bold;
       }
     }
   }

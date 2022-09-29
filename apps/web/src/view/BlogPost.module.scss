@@ -2,15 +2,19 @@
   &-publishDate {
     display: block;
     padding-top: 6px;
-    padding-bottom: 10px;
+    padding-bottom: 8px;
   }
 
   &-header {
-    padding-bottom: 10px;
+    padding-bottom: 40px;
+
+    &-title {
+      padding-bottom: 10px;
+    }
   }
 
   &-author {
-    padding-bottom: 20px;
+    padding-bottom: 10px;
 
     &-url {
       font-weight: bold;

@@ -28,7 +28,10 @@ export function BlogPost({title, author, blocks, publishDate}: BlogPostSchema) {
       <article>
         <header className={styles.root.header()}>
           <time className={styles.root.publishDate()}>{publishDate}</time>
-          <HStack className={styles.root.author()} gap={12} center>
+          <WebTypo.H1 flat className={styles.root.header.title()}>
+            {title}
+          </WebTypo.H1>
+          <HStack className={styles.root.author()} gap={8} center>
             By
             <a href={author.url.url} className={styles.root.author.url()}>
               <HStack center gap={8}>
@@ -42,7 +45,6 @@ export function BlogPost({title, author, blocks, publishDate}: BlogPostSchema) {
               </HStack>
             </a>
           </HStack>
-          <WebTypo.H1>{title}</WebTypo.H1>
         </header>
         <Blocks blocks={blocks} />
       </article>
