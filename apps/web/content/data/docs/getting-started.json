@@ -86,6 +86,37 @@
                   "content": [
                     {
                       "type": "text",
+                      "text": "Start from one of our "
+                    },
+                    {
+                      "type": "text",
+                      "text": "examples",
+                      "marks": [
+                        {
+                          "type": "link",
+                          "attrs": {
+                            "data-id": "WpJVcicRJMS41iBIpiDQj",
+                            "data-entry": null,
+                            "href": "https://github.com/alineacms/alinea/tree/main/examples",
+                            "target": "_blank",
+                            "title": null
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "listItem",
+              "content": [
+                {
+                  "type": "paragraph",
+                  "textAlign": "left",
+                  "content": [
+                    {
+                      "type": "text",
                       "text": "Start blank with a new directory  "
                     },
                     {
