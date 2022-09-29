@@ -253,148 +253,189 @@
           ]
         },
         {
-          "type": "heading",
-          "textAlign": "left",
-          "level": 3,
+          "type": "bulletList",
           "content": [
             {
-              "type": "text",
-              "text": "No framework lock-in"
-            }
-          ]
-        },
-        {
-          "type": "paragraph",
-          "textAlign": "left",
-          "content": [
-            {
-              "type": "text",
-              "text": "Use any web framework, static site builder or ad-hoc script to display or transform data that is editable in the CMS."
-            }
-          ]
-        },
-        {
-          "type": "heading",
-          "textAlign": "left",
-          "level": 3,
-          "content": [
-            {
-              "type": "text",
-              "text": "Embedded database"
-            }
-          ]
-        },
-        {
-          "type": "paragraph",
-          "textAlign": "left",
-          "content": [
-            {
-              "type": "text",
-              "text": "Content is indexed in an embedded SQLite database. The database is deployed with your code and can be queried during build time or at runtime with Node.js or inside an edge or serverless function. This will also enable us to provide full text search out of box without requiring an extra service."
-            }
-          ]
-        },
-        {
-          "type": "heading",
-          "textAlign": "left",
-          "level": 3,
-          "content": [
-            {
-              "type": "text",
-              "text": "Fully typed"
-            }
-          ]
-        },
-        {
-          "type": "paragraph",
-          "textAlign": "left",
-          "content": [
-            {
-              "type": "text",
-              "text": "Configuration and content is fully typed when making use of TypeScript. It's a great feeling to be able to see what impact configuration changes have on your codebase."
-            }
-          ]
-        },
-        {
-          "type": "heading",
-          "textAlign": "left",
-          "level": 3,
-          "content": [
-            {
-              "type": "text",
-              "text": "Collaborative"
-            }
-          ]
-        },
-        {
-          "type": "paragraph",
-          "textAlign": "left",
-          "content": [
-            {
-              "type": "text",
-              "text": "The editing experience is built on "
-            },
-            {
-              "type": "text",
-              "text": "y.js",
-              "marks": [
+              "type": "listItem",
+              "content": [
                 {
-                  "type": "link",
-                  "attrs": {
-                    "data-id": "vBGRn_VDaFKuQdMxrlbiy",
-                    "data-entry": null,
-                    "href": "https://docs.yjs.dev/",
-                    "target": "_blank",
-                    "title": null
-                  }
+                  "type": "paragraph",
+                  "textAlign": "left",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "No framework lock-in",
+                      "marks": [
+                        {
+                          "type": "bold"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "hardBreak"
+                    },
+                    {
+                      "type": "text",
+                      "text": "Use any web framework, static site builder or ad-hoc script to display or transform data that is editable in the CMS."
+                    }
+                  ]
                 }
               ]
             },
             {
-              "type": "text",
-              "text": " primitives, which will allow multiple editors to collaborate without merge conflicts. We'll setup a WebRTC provider in the near future."
-            }
-          ]
-        },
-        {
-          "type": "heading",
-          "textAlign": "left",
-          "level": 3,
-          "content": [
+              "type": "listItem",
+              "content": [
+                {
+                  "type": "paragraph",
+                  "textAlign": "left",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Embedded database",
+                      "marks": [
+                        {
+                          "type": "bold"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "hardBreak"
+                    },
+                    {
+                      "type": "text",
+                      "text": "Content is indexed in an embedded SQLite database. The database is deployed with your code and can be queried during build time or at runtime with Node.js or inside an edge or serverless function. This will also enable us to provide full text search out of box without requiring an extra service."
+                    }
+                  ]
+                }
+              ]
+            },
             {
-              "type": "text",
-              "text": "Internationalization"
-            }
-          ]
-        },
-        {
-          "type": "paragraph",
-          "textAlign": "left",
-          "content": [
+              "type": "listItem",
+              "content": [
+                {
+                  "type": "paragraph",
+                  "textAlign": "left",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Fully typed",
+                      "marks": [
+                        {
+                          "type": "bold"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "hardBreak"
+                    },
+                    {
+                      "type": "text",
+                      "text": "Configuration and content is fully typed when making use of TypeScript. It's a great feeling to be able to see what impact configuration changes have on your codebase."
+                    }
+                  ]
+                }
+              ]
+            },
             {
-              "type": "text",
-              "text": "Content can be published in multiple languages and regions. We're polishing the UI that lets you switch and compare between languages."
-            }
-          ]
-        },
-        {
-          "type": "heading",
-          "textAlign": "left",
-          "level": 3,
-          "content": [
+              "type": "listItem",
+              "content": [
+                {
+                  "type": "paragraph",
+                  "textAlign": "left",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Collaborative",
+                      "marks": [
+                        {
+                          "type": "bold"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "hardBreak"
+                    },
+                    {
+                      "type": "text",
+                      "text": "The editing experience is built on "
+                    },
+                    {
+                      "type": "text",
+                      "text": "y.js",
+                      "marks": [
+                        {
+                          "type": "link",
+                          "attrs": {
+                            "data-id": "vBGRn_VDaFKuQdMxrlbiy",
+                            "data-entry": null,
+                            "href": "https://docs.yjs.dev/",
+                            "target": "_blank",
+                            "title": null
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "text": " primitives, which will allow multiple editors to collaborate without merge conflicts. We'll setup a WebRTC provider in the near future."
+                    }
+                  ]
+                }
+              ]
+            },
             {
-              "type": "text",
-              "text": "Host anywhere"
-            }
-          ]
-        },
-        {
-          "type": "paragraph",
-          "textAlign": "left",
-          "content": [
+              "type": "listItem",
+              "content": [
+                {
+                  "type": "paragraph",
+                  "textAlign": "left",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Internationalization",
+                      "marks": [
+                        {
+                          "type": "bold"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "hardBreak"
+                    },
+                    {
+                      "type": "text",
+                      "text": "Content can be published in multiple languages and regions. We're polishing the UI that lets you switch and compare between languages."
+                    }
+                  ]
+                }
+              ]
+            },
             {
-              "type": "text",
-              "text": "The Alinea dashboard can be exported as a handful of static assets and a serverless function to be deployed to any cloud environment, or as a simple Node.js process."
+              "type": "listItem",
+              "content": [
+                {
+                  "type": "paragraph",
+                  "textAlign": "left",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Host anywhere",
+                      "marks": [
+                        {
+                          "type": "bold"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "hardBreak"
+                    },
+                    {
+                      "type": "text",
+                      "text": "The Alinea dashboard can be exported as a handful of static assets and a serverless function to be deployed to any cloud environment, or as a simple Node.js process."
+                    }
+                  ]
+                }
+              ]
             }
           ]
         },
