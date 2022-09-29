@@ -25,7 +25,7 @@
           "content": [
             {
               "type": "text",
-              "text": "Before connecting alinea to a backend we'll need to export the dashboard. We'll create a serverless/edge handler to host an API that connects the dashboard to the backend. Alongside we'll configure alinea to put together an html file and all static assets needed to host the dashboard."
+              "text": "Before connecting Alinea to a backend we'll need to export the dashboard. We'll create a serverless/edge handler to host an API that connects the dashboard to the backend. Alongside we'll configure Alinea to put together an html file and all static assets needed to host the dashboard."
             }
           ]
         },
@@ -168,7 +168,7 @@
           "content": [
             {
               "type": "text",
-              "text": "The final step is connecting your alinea dashboard with a backend. Alinea ships with some packages that help you build a backend — or one can be hosted via our "
+              "text": "The final step is connecting your Alinea dashboard with a backend. Alinea ships with some packages that help you build a backend — or one can be hosted via our "
             },
             {
               "type": "text",

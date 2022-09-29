@@ -1,8 +1,31 @@
 {
   "id": "jVMfGc-GJGY-GXyV4tDTX",
   "type": "BlogPost",
-  "title": "Introducing alinea",
-  "publishDate": "2022-09-20",
+  "title": "Introducing Alinea",
+  "publishDate": "2022-09-30",
+  "author": {
+    "name": "Ben Merckx",
+    "url": [
+      {
+        "id": "DiAsFDEHRKLhrgSoiPAVU",
+        "index": "a0",
+        "type": "url",
+        "url": "https://github.com/benmerckx",
+        "description": "",
+        "target": "_blank"
+      }
+    ],
+    "avatar": [
+      {
+        "id": "Z4LBK9_vyKQLA_3WL6IZ6",
+        "index": "a0",
+        "type": "url",
+        "url": "https://avatars.githubusercontent.com/u/10584189?v=4&s=48",
+        "description": "",
+        "target": "_self"
+      }
+    ]
+  },
   "blocks": [
     {
       "id": "uTHitp5NX4kYClb964yjH",
@@ -10,23 +33,32 @@
       "type": "TextBlock",
       "text": [
         {
-          "type": "heading",
-          "textAlign": "left",
-          "level": 1,
-          "content": [
-            {
-              "type": "text",
-              "text": "Introducing alinea"
-            }
-          ]
-        },
-        {
           "type": "paragraph",
           "textAlign": "left",
           "content": [
             {
               "type": "text",
-              "text": "For about 8 years we've been using a custom built CMS to power the websites, apps and services we build. Over time we've seen our development workflow move from PHP to JavaScript cloud deployments. As it was time for a fresh start to shake off some technical debt and achieve new goals we started work on a new content management system little over a year ago. Today an alpha version of alinea is available to the public."
+              "text": "For about 8 years "
+            },
+            {
+              "type": "text",
+              "text": "we",
+              "marks": [
+                {
+                  "type": "link",
+                  "attrs": {
+                    "data-id": "tUQJ4YhRDGtJZwk7w0Lsa",
+                    "data-entry": null,
+                    "href": "https://codeurs.be/",
+                    "target": "_blank",
+                    "title": null
+                  }
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "text": "'ve been using a custom built CMS to power the websites, apps and services we build. Over time we've seen our development workflow move from PHP to JavaScript cloud deployments. As it was time for a fresh start to shake off some technical debt, achieve new goals and open source everything we started work on a new content management system little over a year ago. Today an alpha version of Alinea is available to the public."
             }
           ]
         },
@@ -59,7 +91,46 @@
           "content": [
             {
               "type": "text",
-              "text": "Alinea is installable from NPM and bundles a few utilities to make it easy to manage and query content. A development server that boots the dashboard for you is included. This makes sure we're not tied to a specific web framework. The dashboard loads your configuration and lets you edit content based on a custom schema which can be composed of very rich set of fields - or added to by "
+              "text": "Alinea is installable from "
+            },
+            {
+              "type": "text",
+              "text": "NPM",
+              "marks": [
+                {
+                  "type": "link",
+                  "attrs": {
+                    "data-id": "Rt6RzFDrREVC0dRXJbph4",
+                    "data-entry": null,
+                    "href": "https://www.npmjs.com/package/alinea",
+                    "target": "_blank",
+                    "title": null
+                  }
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "text": " and bundles a few utilities to structure, manage and query content. The dashboard loads your configuration and lets you edit content based on a custom schema which can be composed of "
+            },
+            {
+              "type": "text",
+              "text": "rich set of fields",
+              "marks": [
+                {
+                  "type": "link",
+                  "attrs": {
+                    "data-id": "TxX_2HQARYVc6te1ewpOv",
+                    "data-entry": "tEBluF6vXUnc-WDPKN5K8",
+                    "href": null,
+                    "title": null
+                  }
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "text": " - or added to by "
             },
             {
               "type": "text",
@@ -78,7 +149,7 @@
             },
             {
               "type": "text",
-              "text": " (which is little more than a React component)."
+              "text": " (which is just some configuration and a React component)."
             }
           ]
         },
@@ -118,7 +189,7 @@
           "content": [
             {
               "type": "text",
-              "text": "Published content changes persist on the file system in json format, allowing content to be version controlled with git. The dashboard can be hosted with a backend which authorises users, keeps drafts and pushes changes to Github. We developed a "
+              "text": "Published content changes persist on the file system in json format (or markdown in the future), allowing content to be version controlled with git. The dashboard can be hosted with a backend which authorises users, keeps drafts and pushes changes to Github. It can be self-hosted or deployed in a few clicks with our "
             },
             {
               "type": "text",
@@ -138,7 +209,7 @@
             },
             {
               "type": "text",
-              "text": " to make this a seamless experience."
+              "text": "."
             }
           ]
         },
@@ -156,8 +227,9 @@
           ]
         },
         {
-          "type": "paragraph",
-          "textAlign": "left"
+          "type": "heading",
+          "textAlign": "left",
+          "level": 2
         },
         {
           "type": "heading",
@@ -239,7 +311,7 @@
           "content": [
             {
               "type": "text",
-              "text": "Configuration and content is fully typed when making use of TypeScript. It's simply fantastic to see what impact configuration changes have on your codebase."
+              "text": "Configuration and content is fully typed when making use of TypeScript. It's a great feeling to be able to see what impact configuration changes have on your codebase."
             }
           ]
         },
@@ -322,7 +394,7 @@
           "content": [
             {
               "type": "text",
-              "text": "The alinea dashboard can be exported as a handful of static assets and a serverless function to be deployed to any cloud environment, or as a simple Node.js process."
+              "text": "The Alinea dashboard can be exported as a handful of static assets and a serverless function to be deployed to any cloud environment, or as a simple Node.js process."
             }
           ]
         },

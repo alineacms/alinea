@@ -64,7 +64,7 @@
 
 .byLine {
   font-size: 14px;
-  line-height: 1.4;
+  line-height: 1.5;
   max-width: 50ch;
 
   @include s {
@@ -72,7 +72,7 @@
   }
 
   @include ml {
-    font-size: 16px;
+    font-size: 17px;
     white-space: pre-line;
   }
 }

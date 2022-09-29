@@ -27,7 +27,10 @@ const separate = new Set([
   '”',
   '*',
   '{',
-  '}'
+  '}',
+  '\n',
+  '\r',
+  '\t'
 ])
 
 const space = ' '.charCodeAt(0)
@@ -39,12 +42,12 @@ export function isSeparator(char: string) {
 export function slugify(input: string, separator = '-'): string {
   let buffer = ''
   for (const char of input) {
-    if (char.charCodeAt(0) < space) continue
     if (isSeparator(char)) {
       if (buffer === '') continue
       if (!buffer.endsWith(separator)) buffer += separator
       continue
     }
+    if (char.charCodeAt(0) < space) continue
     buffer += char
   }
   if (buffer.endsWith(separator)) buffer = buffer.slice(0, -separator.length)

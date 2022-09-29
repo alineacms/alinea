@@ -4,4 +4,29 @@
     padding-top: 6px;
     padding-bottom: 10px;
   }
+
+  &-header {
+    padding-bottom: 10px;
+  }
+
+  &-author {
+    padding-bottom: 20px;
+
+    &-url {
+      font-weight: bold;
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+
+    &-avatar {
+      display: inline-block;
+      vertical-align: middle;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      overflow: hidden;
+      object-fit: cover;
+    }
+  }
 }

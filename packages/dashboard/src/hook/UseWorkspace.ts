@@ -12,6 +12,7 @@ export function useWorkspace(): Workspace {
   const preferences = usePreferences()
   const match = useMatch(nav.matchWorkspace, true)
   return useMemo(() => {
+    console.log(match)
     const params: Record<string, string | undefined> = match ?? {}
     const keys = Object.keys(config.workspaces)
     const {
@@ -19,6 +20,6 @@ export function useWorkspace(): Workspace {
         ? preferences.workspace!
         : keys[0]
     } = params
-    return config.workspaces[workspace]
+    return config.workspaces[workspace] || config.workspaces[keys[0]]
   }, [config, match])
 }

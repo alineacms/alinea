@@ -24,6 +24,7 @@
   white-space: pre-line;
   text-rendering: optimizeLegibility;
   @extend .hyphenate;
+
   &.is-flat {
     margin: 0;
   }
