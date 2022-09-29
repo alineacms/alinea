@@ -9,7 +9,7 @@ export function SEO({
     <Head>
       <meta name="description" content={description} />
       <meta property="og:description" content={description} />
-      <meta property="og:image" content={ogImage.src} />
+      <meta property="og:image" content={'https://alinea.sh' + ogImage.src} />
       <meta property="og:image:width" content="1200" />
       <meta property="og:image:height" content="600" />
       <meta
@@ -17,7 +17,10 @@ export function SEO({
         content="Alinea - Open source headless CMS"
       />
 
-      <meta name="twitter:image:src" content={ogImage.src} />
+      <meta
+        name="twitter:image:src"
+        content={'https://alinea.sh' + ogImage.src}
+      />
       <meta name="twitter:site" content="@alineacms" />
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:title" content={title} />
