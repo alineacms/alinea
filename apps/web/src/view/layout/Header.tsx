@@ -165,6 +165,13 @@ function Menu({links, isMobileOpen, toggleMobileMenu}: MenuProps) {
             src="https://img.shields.io/npm/v/alinea.svg?style=flat-square"
           />
         </a>*/}
+
+        <a
+          href="/blog/introducing-alinea"
+          className={styles.root.nav.link('intro')}
+        >
+          Introduction 🚀
+        </a>
         <a
           href="https://github.com/alineacms/alinea"
           target="_blank"
