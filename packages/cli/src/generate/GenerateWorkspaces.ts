@@ -104,7 +104,7 @@ export async function generateWorkspaces(
         path.join(outDir, key, 'schema.d.ts'),
         schemaTypes(workspace)
       ),
-      copy('index.d.ts', 'index.js'),
+      copy('index.d.ts', 'index.js', 'pages.cjs'),
       writeFileIfContentsDiffer(
         path.join(outDir, key, 'pages.js'),
         pagesOf(workspace)
@@ -128,6 +128,13 @@ export async function generateWorkspaces(
           ...Object.fromEntries(
             Object.keys(config.workspaces).flatMap(key => [
               [`./${key}`, `./${key}/index.js`],
+              [
+                `./${key}/pages.js`,
+                {
+                  require: `./${key}/pages.cjs`,
+                  default: `./${key}/pages.js`
+                }
+              ],
               [`./${key}/*`, `./${key}/*`]
             ])
           )

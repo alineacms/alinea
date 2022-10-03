@@ -1,7 +1,6 @@
 import {Changes} from '@alinea/backend/Storage'
 import {base64url} from '@alinea/core/util/Encoding'
 import {Cursor} from '@alinea/store'
-import {Config} from './Config'
 import {Entry} from './Entry'
 import {Future} from './Future'
 import {Media} from './Media'
@@ -10,7 +9,6 @@ import {Logger} from './util/Logger'
 import {Workspaces} from './Workspace'
 
 export interface Hub<T extends Workspaces = Workspaces> {
-  config: Config<T>
   entry(params: Hub.EntryParams, ctx?: Hub.Context): Future<Entry.Detail | null>
   query<T>(params: Hub.QueryParams<T>, ctx?: Hub.Context): Future<Array<T>>
   updateDraft(params: Hub.UpdateParams, ctx?: Hub.Context): Future

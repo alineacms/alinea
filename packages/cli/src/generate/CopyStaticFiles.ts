@@ -26,8 +26,10 @@ export async function copyStaticFiles({
     'index.js',
     'index.d.ts',
     'drafts.js',
+    'backend.cjs',
     'backend.js',
     'backend.d.ts',
+    'store.cjs',
     'store.d.ts'
   )
 
