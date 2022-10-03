@@ -72,7 +72,7 @@ console.log(
 Content is available during static site generation and when server side querying.  
 Content is bundled with your code and can be queried with zero network overhead.
 
-[How alinea bundles content →](https://alinea.sh/docs/content/introduction)
+[How alinea bundles content →](https://alinea.sh/docs/content/intro)
 
 ## Deploy anywhere
 
