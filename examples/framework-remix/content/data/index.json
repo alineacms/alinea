@@ -1,5 +1,9 @@
 {
   "id": "_BUpO_jKMUSgAcBnLA18f",
   "type": "Page",
-  "title": "Welcome"
+  "title": "Welcome ",
+  "alinea": {
+    "index": "a0",
+    "root": "data"
+  }
 }

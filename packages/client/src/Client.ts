@@ -1,5 +1,6 @@
 import {
   Config,
+  createError,
   Entry,
   Future,
   Hub,
@@ -7,7 +8,7 @@ import {
   Outcome,
   Workspaces
 } from '@alinea/core'
-import {AbortController, fetch, FormData} from '@alinea/iso'
+import {AbortController, fetch, FormData, Response} from '@alinea/iso'
 
 async function toFuture<T = void>(res: Response): Future<T> {
   return Outcome.fromJSON<T>(await res.json())
@@ -92,7 +93,7 @@ export class Client<T extends Workspaces> implements Hub<T> {
     }).then<Outcome<Array<Hub.DirEntry>>>(toFuture)
   }*/
 
-  protected fetch(endpoint: string, init?: RequestInit) {
+  protected fetch(endpoint: string, init?: RequestInit): Promise<Response> {
     const controller = new AbortController()
     const signal = controller.signal
     const url =
@@ -102,10 +103,19 @@ export class Client<T extends Workspaces> implements Hub<T> {
     const promise = fetch(url, {
       ...this.applyAuth(init),
       signal
-    }).then(res => {
-      if (res.status === 401) this.unauthorized()
-      return res
     })
+      .then(res => {
+        if (res.status === 401) this.unauthorized()
+        if (res.status > 400)
+          throw createError(
+            res.status,
+            `Could not fetch "${endpoint}" (${res.status})`
+          )
+        return res
+      })
+      .catch(err => {
+        throw createError(500, `Could not fetch "${endpoint}": ${err}`)
+      })
     const cancel = () => controller.abort()
     function cancelify<T>(promise: Promise<T>) {
       const t = promise.then.bind(promise)
