@@ -8,6 +8,7 @@ import {
   Future,
   Hub,
   Media,
+  Outcome,
   outcome,
   slugify
 } from '@alinea/core'
@@ -37,7 +38,7 @@ import {Previews} from './Previews'
 import {PreviewStore, previewStore} from './PreviewStore'
 import {Storage} from './Storage'
 
-type PagesOptions = {
+export interface PreviewOptions {
   preview?: boolean
   previewToken?: string
 }
@@ -140,7 +141,7 @@ export class Server<T = any> implements Hub<T> {
           ...data,
           original,
           draft: draft && base64.stringify(draft),
-          previewToken: await previews.sign({id})
+          previewToken: await previews.sign({id, url: data.entry.url})
         }
       )
     })
@@ -309,10 +310,10 @@ export class Server<T = any> implements Hub<T> {
     return this.options.drafts
   }
 
-  loadPages(options: PagesOptions = {}): Pages<T> {
-    const {config} = this.options
-    const logger = new Logger('Load pages')
-    const store = options.previewToken
+  loadPages(options: PreviewOptions = {}): Pages<T> {
+    /*
+      const logger = new Logger('Load pages')
+      const store = options.previewToken
       ? async () => {
           const {id} = await this.parsePreviewToken(
             options.previewToken!,
@@ -322,8 +323,16 @@ export class Server<T = any> implements Hub<T> {
         }
       : options.preview
       ? () => this.preview.getStore({logger})
-      : this.createStore
-    return new Pages<T>(config.schema, store)
+      : this.createStore*/
+    return new Pages<T>({
+      schema: this.config.schema,
+      query: cursor => {
+        return this.query({
+          cursor,
+          source: !options?.preview && !options?.previewToken
+        }).then(Outcome.unpack)
+      }
+    })
   }
 
   async parsePreviewToken(

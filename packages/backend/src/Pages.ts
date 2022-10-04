@@ -44,48 +44,6 @@ export class PageTree<P> {
   }
 }
 
-class PageResolver<T> {
-  root: Multiple<T, T> = new Multiple<T, T>(this as any, Entry as any)
-
-  constructor(public store: Promise<Store>) {}
-
-  processCallbacks = new Map<string, (value: any) => any>()
-
-  async postProcess(value: any): Promise<any> {
-    const tasks = iter<Promise<void> | undefined>(
-      value,
-      (value, setValue, inner) => {
-        const depends = inner
-          ? Promise.all(inner.filter(Boolean)).then(() => void 0)
-          : undefined
-        const isProcessValue =
-          value &&
-          typeof value === 'object' &&
-          '$__process' in value &&
-          '$__expr' in value
-        if (isProcessValue) {
-          const id = value['$__process']
-          const expr = value['$__expr']
-          const fn = this.processCallbacks.get(id)
-          if (fn)
-            return Promise.resolve(depends)
-              .then(() => {
-                return Promise.resolve(fn(expr)).then((result: any) =>
-                  setValue(result)
-                )
-              })
-              .finally(() => {
-                this.processCallbacks.delete(id)
-              })
-        }
-        return depends
-      }
-    )
-    await Promise.all(tasks.filter(Boolean))
-    return value
-  }
-}
-
 export type Page<P, T> = T extends {id: string} ? T & {tree: PageTree<P>} : T
 
 abstract class Base<P, T> {
@@ -121,8 +79,7 @@ function resolveWith<T, X>(
 
 class Multiple<P, T> extends Base<P, Array<Page<P, T>>> {
   protected async execute() {
-    const store = await this.resolver.store
-    const rows = store.all(this.cursor)
+    const rows = await this.resolver.query(this.cursor)
     const res = await Promise.all(
       rows.map(row => this.resolver.postProcess(row))
     )
@@ -136,11 +93,11 @@ class Multiple<P, T> extends Base<P, Array<Page<P, T>>> {
       return page
     })
   }
-  async count(): Promise<number> {
+  /*async count(): Promise<number> {
     const store = await this.resolver.store
     return store.count(this.cursor)
   }
-  /*leftJoin<E = T>(that: Collection<T>, on: Expr<boolean>): Multiple<P, E> {
+  leftJoin<E = T>(that: Collection<T>, on: Expr<boolean>): Multiple<P, E> {
     return new Multiple<P, E>(this.resolver, this.cursor.leftJoin(that, on))
   }
   innerJoin<E = T>(that: Collection<T>, on: Expr<boolean>): Multiple<P, E> {
@@ -232,9 +189,9 @@ class Multiple<P, T> extends Base<P, Array<Page<P, T>>> {
 
 class Single<P, T> extends Base<P, Page<P, T> | null> {
   protected async execute() {
-    const store = await this.resolver.store
-    const row = store.first(this.cursor)
-    if (!row) return null
+    const rows = await this.resolver.query(this.cursor)
+    if (rows.length !== 1) return null
+    const row = rows[0]
     const page = await this.resolver.postProcess(row)
     if (typeof page === 'object' && 'id' in page) {
       Object.defineProperty(page, 'tree', {
@@ -334,16 +291,30 @@ function createSelection(schema: Schema, pages: any): ExprData {
   return Entry.type.case(cases, Entry.fields).expr
 }
 
+interface QueryFunc {
+  <T>(cursor: Cursor<T>): Promise<Array<T>>
+}
+
+export interface PagesOptions<T> {
+  schema: Schema<T>
+  query: QueryFunc
+  resolver?: PageResolver<T>
+  withComputed?: boolean
+}
+
 export class Pages<T> extends Multiple<T, T> {
-  constructor(
-    schema: Schema<T>,
-    createCache: () => Promise<Store>,
-    resolver: PageResolver<T> = new PageResolver<T>(createCache()),
+  constructor({
+    schema,
+    query,
+    resolver = new PageResolver<T>(query),
     withComputed = true
-  ) {
+  }: PagesOptions<T>) {
     const from = From.Column(From.Table('Entry', ['data']), 'data')
     const selection: ExprData = withComputed
-      ? createSelection(schema, new Pages(schema, createCache, resolver, false))
+      ? createSelection(
+          schema,
+          new Pages<T>({schema, query, resolver, withComputed: false})
+        )
       : ExprData.Row(from)
     const cursor = new Cursor<T>({
       from,
@@ -368,6 +339,48 @@ export class Pages<T> extends Multiple<T, T> {
         $__expr: Selection.create(input)
       })
     )
+  }
+}
+
+class PageResolver<T> {
+  root: Multiple<T, T> = new Multiple<T, T>(this as any, Entry as any)
+
+  constructor(public query: QueryFunc) {}
+
+  processCallbacks = new Map<string, (value: any) => any>()
+
+  async postProcess(value: any): Promise<any> {
+    const tasks = iter<Promise<void> | undefined>(
+      value,
+      (value, setValue, inner) => {
+        const depends = inner
+          ? Promise.all(inner.filter(Boolean)).then(() => void 0)
+          : undefined
+        const isProcessValue =
+          value &&
+          typeof value === 'object' &&
+          '$__process' in value &&
+          '$__expr' in value
+        if (isProcessValue) {
+          const id = value['$__process']
+          const expr = value['$__expr']
+          const fn = this.processCallbacks.get(id)
+          if (fn)
+            return Promise.resolve(depends)
+              .then(() => {
+                return Promise.resolve(fn(expr)).then((result: any) =>
+                  setValue(result)
+                )
+              })
+              .finally(() => {
+                this.processCallbacks.delete(id)
+              })
+        }
+        return depends
+      }
+    )
+    await Promise.all(tasks.filter(Boolean))
+    return value
   }
 }
 

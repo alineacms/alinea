@@ -1,9 +1,10 @@
 import {initPages} from '@alinea/content/main/pages.js'
-import {json} from '@remix-run/node'
+import {json, LoaderArgs} from '@remix-run/node'
 import {useLoaderData} from '@remix-run/react'
 
-export const loader = async () => {
-  const pages = initPages()
+export async function loader({request}: LoaderArgs) {
+  const previewToken = request.url.slice(request.url.indexOf('?') + 1)
+  const pages = initPages(previewToken)
   return json(await pages.first())
 }
 
@@ -11,7 +12,7 @@ export default function Index() {
   const data = useLoaderData()
   return (
     <div style={{fontFamily: 'system-ui, sans-serif', lineHeight: '1.4'}}>
-      <h1>Welcome to Remix</h1>
+      <h1>{data.title}</h1>
       <ul>
         <li>
           <a
