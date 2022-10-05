@@ -9,10 +9,8 @@ import {Workspace} from '@alinea/core/Workspace'
 import {code} from '../util/CodeGen'
 
 export function generateTypes(workspace: Workspace) {
-  const types = Object.values(workspace.schema.types)
-    .map(generateType)
-    .join('\n')
-  const pageUnion = Object.keys(workspace.schema.types).join(' | ')
+  const types = workspace.schema.allTypes.map(generateType).join('\n')
+  const pageUnion = workspace.schema.allTypes.map(type => type.name).join(' | ')
   return code`
     import {TextDoc} from '@alinea/core'
     ${types}
@@ -23,6 +21,7 @@ export function generateTypes(workspace: Workspace) {
 function generateType(type: Type) {
   return code`
     export interface ${type.name} {
+      type: '${type.name}'
       ${Object.entries(type.fields).map(generateField).join('\n')}
     }
   `
@@ -49,15 +48,14 @@ function typeOf(shape: Shape): string {
       ${typeUnion(shape.values)}
     >`
   if (shape instanceof RecordShape)
-    return Object.entries(shape.properties)
+    return `{${Object.entries(shape.properties)
       .map(([name, shape]) => {
         return `'${name}': ${typeOf(shape)}`
       })
-      .join(', ')
+      .join(', ')}}`
   if (shape instanceof RichTextShape) {
     if (shape.values) return `TextDoc<${typeUnion(shape.values)}>`
     return `TextDoc`
   }
-  console.log(shape)
   throw createError(`Unknown type: ${shape}`)
 }

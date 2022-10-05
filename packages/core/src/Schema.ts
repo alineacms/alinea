@@ -79,6 +79,10 @@ export class Schema<T = any> extends SchemaConfig<T> {
     }
   }
 
+  get allTypes() {
+    return Array.from(this.typeMap.values())
+  }
+
   entries() {
     return this.typeMap.entries()
   }
