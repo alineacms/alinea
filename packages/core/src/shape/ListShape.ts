@@ -39,10 +39,10 @@ export class ListShape<T>
         return [
           key,
           new RecordShape(label, {
-            id: Shape.Scalar('Id'),
-            index: Shape.Scalar('Index'),
-            type: Shape.Scalar('Type'),
-            ...type.shape
+            id: Shape.String('Id'),
+            index: Shape.String('Index'),
+            type: Shape.String('Type'),
+            ...type.properties
           })
         ]
       })

@@ -87,8 +87,8 @@ export class RichTextShape<T> implements Shape<TextDoc<T>, RichTextMutator<T>> {
           return [
             key,
             new RecordShape(value.label, {
-              type: Shape.Scalar('Type'),
-              ...value.shape
+              type: Shape.String('Type'),
+              ...value.properties
             })
           ]
         })

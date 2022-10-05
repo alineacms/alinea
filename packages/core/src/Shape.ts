@@ -19,8 +19,17 @@ export interface Shape<T = any, M = any> {
 }
 
 export namespace Shape {
-  export function Scalar<T>(label: Label, initialValue?: T) {
-    return new ScalarShape<T>(label, initialValue)
+  export function String(label: Label, initialValue?: string) {
+    return Scalar<string>(label, 'string', initialValue)
+  }
+  export function Number(label: Label, initialValue?: number) {
+    return Scalar<number>(label, 'number', initialValue)
+  }
+  export function Boolean(label: Label, initialValue?: boolean) {
+    return Scalar<boolean>(label, 'boolean', initialValue)
+  }
+  export function Scalar<T>(label: Label, type: string, initialValue?: T) {
+    return new ScalarShape<T>(label, type, initialValue)
   }
   export function RichText(
     label: Label,

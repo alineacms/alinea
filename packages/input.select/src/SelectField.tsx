@@ -37,7 +37,7 @@ export function createSelect<T extends string, Items extends Record<T, string>>(
   options: SelectOptions<keyof Items> = {}
 ): SelectField<T> {
   return {
-    shape: Shape.Scalar(label, options.initialValue as T),
+    shape: Shape.Scalar(label, 'Array<string>', options.initialValue as T),
     label,
     items,
     options: options as SelectOptions<T>,

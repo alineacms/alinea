@@ -16,7 +16,7 @@ export interface PathField extends Field.Scalar<string> {
 
 export function createPath(label: Label, options: PathOptions = {}): PathField {
   return {
-    shape: Shape.Scalar(label),
+    shape: Shape.String(label),
     label,
     options,
     hidden: options.hidden

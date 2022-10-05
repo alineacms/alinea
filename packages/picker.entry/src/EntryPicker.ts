@@ -33,7 +33,7 @@ export function createEntryPicker<T>(
   return {
     type: 'entry',
     shape: Shape.Record('Entry', {
-      entry: Shape.Scalar('Entry')
+      entry: Shape.String('Entry')
     }).concat(extra),
     label: options.label || 'Page link',
     handlesMultiple: true,

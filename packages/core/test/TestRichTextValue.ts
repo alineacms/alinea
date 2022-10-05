@@ -8,15 +8,15 @@ import {RecordShape} from '../src/shape/RecordShape'
 test('serialize', () => {
   const type = new RichTextShape('RichText', {
     Block1: new RecordShape('Block1', {
-      field1: new ScalarShape('field1'),
+      field1: new ScalarShape('field1', 'string'),
       blockInner: new RecordShape('Inner block', {
-        field3: new ScalarShape('field3'),
-        field4: new ScalarShape('field4')
+        field3: new ScalarShape('field3', 'string'),
+        field4: new ScalarShape('field4', 'string')
       })
     }),
     Block2: new RecordShape('Block2', {
-      field3: new ScalarShape('field3'),
-      field4: new ScalarShape('field4')
+      field3: new ScalarShape('field3', 'string'),
+      field4: new ScalarShape('field4', 'string')
     })
   })
 
