@@ -14,15 +14,15 @@ export const MediaSchema = {
   [Media.Type.File]: type('File', {
     title: text('Title'),
     path: path('Path'),
-    location: hidden<string>('Location'),
-    extension: hidden<string>('Extension'),
-    size: hidden<number>('File size'),
-    hash: hidden<string>('Hash'),
-    width: hidden<number>('Image width'),
-    height: hidden<number>('Image height'),
-    preview: hidden<string>('Preview'),
-    averageColor: hidden<string>('Average color'),
-    blurHash: hidden<string>('Blur hash')
+    location: hidden<string>('Location', 'string'),
+    extension: hidden<string>('Extension', 'string'),
+    size: hidden<number>('File size', 'number'),
+    hash: hidden<string>('Hash', 'string'),
+    width: hidden<number>('Image width', 'number'),
+    height: hidden<number>('Image height', 'number'),
+    preview: hidden<string>('Preview', 'string'),
+    averageColor: hidden<string>('Average color', 'string'),
+    blurHash: hidden<string>('Blur hash', 'string')
   }).configure({
     isHidden: true
   })

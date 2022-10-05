@@ -25,7 +25,7 @@ export function createCode<Q = string>(
   options: CodeFieldOptions<Q> = {}
 ): CodeField<Q> {
   return {
-    shape: Shape.Scalar(label, options.initialValue),
+    shape: Shape.String(label, options.initialValue),
     label,
     options,
     transform: options.transform,

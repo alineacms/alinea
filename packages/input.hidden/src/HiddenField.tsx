@@ -14,10 +14,11 @@ export interface HiddenField<T> extends Field.Scalar<T> {
 /** Create a text field configuration */
 export function createHidden<T>(
   label: Label,
+  type: string,
   options: HiddenOptions<T> = {}
 ): HiddenField<T> {
   return {
-    shape: Shape.Scalar(label, options.initialValue),
+    shape: Shape.Scalar(label, type, options.initialValue),
     label,
     initialValue: options.initialValue,
     view: () => null

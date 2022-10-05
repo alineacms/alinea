@@ -6,6 +6,7 @@ import {GenerateContext} from './GenerateContext'
 
 import {code} from '@alinea/cli/util/CodeGen'
 import {copyFileIfContentsDiffer, writeFileIfContentsDiffer} from '../util/FS'
+import {generateTypes} from './GenerateTypes'
 
 function wrapNamespace(code: string, namespace: string | undefined) {
   if (namespace) return `export namespace ${namespace} {\n${code}\n}`
@@ -37,7 +38,7 @@ function schemaCollections(workspace: Workspace) {
 
 function schemaTypes(workspace: Workspace) {
   const typeNames = workspace.schema.keys
-  const collections = `export type AnyPage = EntryOf<Entry & typeof schema>
+  /*const collections = `export type AnyPage = EntryOf<Entry & typeof schema>
   export const AnyPage: Collection<AnyPage>
   export type Pages = AlineaPages<AnyPage>
   ${typeNames
@@ -46,7 +47,8 @@ function schemaTypes(workspace: Workspace) {
         `export const ${type}: Collection<Extract<AnyPage, {type: '${type}'}>>
         export type ${type} = DataOf<typeof ${type}>`
     )
-    .join('\n')}`
+    .join('\n')}`*/
+  const collections = generateTypes(workspace)
   return code`
     import {config} from '../config.js'
     import {DataOf, EntryOf, Entry} from '@alinea/core'

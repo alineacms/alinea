@@ -6,7 +6,11 @@ import {Shape} from '../Shape'
 export type ScalarMutator<T> = (value: T) => void
 
 export class ScalarShape<T> implements Shape<T, ScalarMutator<T>> {
-  constructor(public label: Label, private initialValue?: T) {}
+  constructor(
+    public label: Label,
+    public scalarType: string,
+    private initialValue?: T
+  ) {}
   create(): T {
     return this.initialValue as T
   }

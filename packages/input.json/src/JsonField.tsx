@@ -32,7 +32,7 @@ export interface JsonField extends Field.Scalar<any> {
 /** Create a text field configuration */
 export function createJson(label: Label, options: JsonOptions = {}): JsonField {
   return {
-    shape: Shape.Scalar(label, options.initialValue),
+    shape: Shape.String(label, options.initialValue),
     label,
     options,
     hidden: options.hidden

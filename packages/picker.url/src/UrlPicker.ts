@@ -29,9 +29,9 @@ export function createUrlPicker<T>(
     label: 'External website',
     handlesMultiple: false,
     shape: Shape.Record('Url', {
-      url: Shape.Scalar('Url'),
-      description: Shape.Scalar('Description'),
-      target: Shape.Scalar('Target')
+      url: Shape.String('Url'),
+      description: Shape.String('Description'),
+      target: Shape.String('Target')
     }).concat(extra),
     options
   }
