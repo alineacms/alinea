@@ -3,6 +3,7 @@ import {
   Entry,
   EntryMeta,
   Field,
+  Hint,
   Label,
   Media,
   Reference,
@@ -39,7 +40,6 @@ export type LinkOptions<T, Q> = {
   type?: LinkType | Array<LinkType>
   /** Show only entries matching this condition */
   condition?: Expr<boolean>
-
   /** Add extra fields to each link */
   fields?: TypeConfig<any, T>
   /** Width of the field in the dashboard UI (0-1) */
@@ -112,7 +112,6 @@ export function createLink<T, Q>(
   options: LinkOptions<T, Q> = {}
 ): LinkField<T, Q> {
   const pickers = options.pickers || []
-
   const blocks = Object.fromEntries(
     pickers.map(picker => [
       picker.type,
@@ -121,6 +120,7 @@ export function createLink<T, Q>(
   )
   return {
     shape: Shape.List(label, blocks, options.initialValue),
+    hint: Hint.Extern({name: 'Hiero', package: 'test'}),
     label,
     options: {
       ...options,

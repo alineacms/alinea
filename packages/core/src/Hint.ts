@@ -44,9 +44,13 @@ export namespace Hint {
     type: 'union'
     options: Hint[]
   }
+  export interface ExternLocation {
+    name: string
+    package: string
+  }
   export interface Extern {
     type: 'extern'
-    name: string
+    from: ExternLocation
     typeParams: Hint[]
   }
   export interface TypeDefinition extends Definition {
@@ -80,8 +84,8 @@ export namespace Hint {
   export function Union(options: Hint[]): Hint {
     return {type: 'union', options}
   }
-  export function Extern(name: string, ...typeParams: Hint[]): Hint {
-    return {type: 'extern', name, typeParams}
+  export function Extern(from: ExternLocation, ...typeParams: Hint[]): Hint {
+    return {type: 'extern', from, typeParams}
   }
 
   // Let's follow GraphQL rules for now
@@ -163,7 +167,8 @@ export namespace Hint {
       case 'extern':
         const bExtern = b as Hint.Extern
         return (
-          a.name === bExtern.name &&
+          a.from.name === bExtern.from.name &&
+          a.from.package === bExtern.from.package &&
           a.typeParams.every((param, i) => equals(param, bExtern.typeParams[i]))
         )
     }

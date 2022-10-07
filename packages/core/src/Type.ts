@@ -9,7 +9,6 @@ import {Field} from './Field'
 import {Hint} from './Hint'
 import {createId} from './Id'
 import {Label} from './Label'
-import type {Schema} from './Schema'
 import {Section} from './Section'
 import {Shape, ShapeInfo} from './Shape'
 import {RecordShape} from './shape/RecordShape'
@@ -83,6 +82,22 @@ export class TypeConfig<R = any, T = R> {
     }
   }
 
+  get hint() {
+    switch (this.shape.hint.type) {
+      case 'object':
+        const fields: Record<string, Field<any, any>> = {}
+        for (const section of this.sections) {
+          if (section.fields) Object.assign(fields, Lazy.get(section.fields))
+        }
+        const hints = Object.entries(fields).map(([key, field]) => {
+          return [key, field.hint || field.shape.hint]
+        })
+        return Hint.Object(Object.fromEntries(hints))
+      default:
+        throw 'assert'
+    }
+  }
+
   /** Create a new empty instance of this type's fields */
   empty() {
     return this.shape.create()
@@ -142,8 +157,8 @@ export class TypeConfig<R = any, T = R> {
     } as TypeOptions<R, Q>)
   }
 
-  toType(schema: Schema, name: string): Type<R, T> {
-    return new Type(schema, name, this)
+  toType(name: string): Type<R, T> {
+    return new Type(name, this)
   }
 }
 
@@ -154,21 +169,23 @@ export class Type<R = any, T = R>
 {
   parents = []
 
-  constructor(
-    public schema: Schema,
-    public name: string,
-    config: TypeConfig<R, T>
-  ) {
+  constructor(public name: string, config: TypeConfig<R, T>) {
     super(config.label, config.sections, config.options)
   }
 
   get hint() {
     switch (this.shape.hint.type) {
       case 'object':
-        const {type, ...fields} = this.shape.hint.fields
+        const fields: Record<string, Field<any, any>> = {}
+        for (const section of this.sections) {
+          if (section.fields) Object.assign(fields, Lazy.get(section.fields))
+        }
+        const hints = Object.entries(fields).map(([key, field]) => {
+          return [key, field.hint || field.shape.hint]
+        })
         return Hint.Definition(this.name, {
           type: Hint.Literal(this.name),
-          ...fields
+          ...Object.fromEntries(hints)
         })
       default:
         throw 'assert'

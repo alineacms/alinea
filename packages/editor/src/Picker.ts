@@ -1,4 +1,4 @@
-import {Label, Reference} from '@alinea/core'
+import {Hint, Label, Reference} from '@alinea/core'
 import {RecordShape} from '@alinea/core/shape/RecordShape'
 import {ComponentType} from 'react'
 
@@ -16,6 +16,7 @@ export interface Picker<
 > {
   type: string
   shape: RecordShape
+  hint?: Hint
   label: Label
   handlesMultiple: boolean
   options: Options

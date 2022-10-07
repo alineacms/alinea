@@ -96,9 +96,10 @@ export class RichTextShape<T> implements Shape<TextDoc<T>, RichTextMutator<T>> {
       )
   }
   get hint() {
+    const from = {name: 'TextDoc', package: '@alinea/core'}
     if (this.shapes)
       return Hint.Extern(
-        'TextDoc',
+        from,
         Hint.Union(
           Object.entries(this.shapes).map(([name, shape]) => {
             switch (shape.hint.type) {
@@ -119,7 +120,7 @@ export class RichTextShape<T> implements Shape<TextDoc<T>, RichTextMutator<T>> {
           })
         )
       )
-    return Hint.Extern('TextDoc')
+    return Hint.Extern(from)
   }
   innerTypes(parents: Array<string>) {
     if (!this.shapes) return []

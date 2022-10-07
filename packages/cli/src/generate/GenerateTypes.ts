@@ -4,16 +4,6 @@ import {Hint} from '@alinea/core/Hint'
 import {Code, code} from '@alinea/core/util/CodeGen'
 import {Lazy} from '@alinea/core/util/Lazy'
 
-function wrapNamespace(inner: Code, namespace: string | undefined) {
-  if (namespace)
-    return code`
-      export namespace ${namespace} {
-        ${inner}
-      }
-    `
-  return inner
-}
-
 export function generateTypes({schema}: Config) {
   const types = code()
   const seen = new Map<string, Hint.TypeDefinition>()
@@ -48,11 +38,14 @@ export function generateTypes({schema}: Config) {
           .join('\n')}
       }
     `)
+
     if (definition.parents.length === 0) rootTypes.push(definition.name)
   }
   return code`
-    import type {Pages as AlineaPages} from '@alinea/backend'
-    import type {Entry, TextDoc} from '@alinea/core'
+    import {Pages as AlineaPages} from '@alinea/backend'
+    import {Entry, TextDoc} from '@alinea/core'
+    import {ImageReference} from '@alinea/picker.image'
+    import {UrlReference} from '@alinea/picker.url'
     export namespace Page {
       ${types}
     }
@@ -83,8 +76,10 @@ export function generateHint(hint: Hint): Code {
     case 'union':
       return generateUnion(hint)
     case 'extern':
-      if (hint.typeParams.length === 0) return code(hint.name)
-      return code`${hint.name}<${hint.typeParams.map(generateHint).join(', ')}>`
+      if (hint.typeParams.length === 0) return code(hint.from.name)
+      return code`${hint.from.name}<${hint.typeParams
+        .map(generateHint)
+        .join(', ')}>`
     default:
       throw new Error(`Unknown hint type ${hint}`)
   }
