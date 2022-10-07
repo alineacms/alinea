@@ -5,6 +5,7 @@ import {useQuery} from 'react-query'
 import {useRoot} from '../hook/UseRoot'
 import {useSession} from '../hook/UseSession'
 import {useWorkspace} from '../hook/UseWorkspace'
+import {useDashboard} from './UseDashboard'
 
 type QueryParams = {
   workspace: string
@@ -82,10 +83,11 @@ export function useContentTree({
   locale: currentLocale,
   select
 }: UseContentTreeOptions) {
+  const {config} = useDashboard()
   const workspace = useWorkspace()
   const root = useRoot()
   const {hub} = useSession()
-  const persistenceId = `@alinea/dashboard/tree-${workspace}-${root.name}`
+  const persistenceId = `@alinea/dashboard/tree-${workspace.name}-${root.name}`
   const [open, setOpen] = useState(() => {
     const stored = window?.localStorage?.getItem(persistenceId)
     const opened = stored && JSON.parse(stored)
@@ -108,11 +110,10 @@ export function useContentTree({
     [setOpen]
   )
   const visible = useMemo(() => {
-    const schema = workspace.schema
-    return Array.from(schema)
+    return Array.from(config.schema)
       .filter(([, type]) => !type.options.isHidden)
       .map(([key]) => key)
-  }, [workspace])
+  }, [config])
   const ids = Array.from(new Set([...open, ...select])).sort()
   const {data, refetch} = useQuery(
     ['tree', currentLocale, workspace.name, root.name, ids.join('.')],

@@ -3,16 +3,16 @@ import DataLoader from 'dataloader'
 import {createContext, PropsWithChildren, useContext, useMemo} from 'react'
 import {useQuery} from 'react-query'
 import {EntrySummaryRow} from '../view/entry/EntrySummary'
+import {useDashboard} from './UseDashboard'
 import {useSession} from './UseSession'
-import {useWorkspace} from './UseWorkspace'
 
 function useLoader() {
-  const {schema} = useWorkspace()
+  const {config} = useDashboard()
   const {hub} = useSession()
   return useMemo(() => {
     return new DataLoader(
       (ids: ReadonlyArray<string>) => {
-        const selection = View.getSelection(schema, 'summaryRow', Entry)
+        const selection = View.getSelection(config.schema, 'summaryRow', Entry)
         const cursor = Entry.where(Entry.id.isIn(ids))
         return hub
           .query({
@@ -29,7 +29,7 @@ function useLoader() {
       },
       {cache: false}
     )
-  }, [hub, schema])
+  }, [hub, config])
 }
 
 const context = createContext<DataLoader<string, any> | undefined>(undefined)

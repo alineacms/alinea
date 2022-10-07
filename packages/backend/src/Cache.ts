@@ -175,16 +175,14 @@ export namespace Cache {
       store.createIndex(Entry, 'root', [Entry.alinea.root])
       store.createIndex(Entry, 'type', [Entry.type])
       store.createIndex(Entry, 'url', [Entry.url])
-      for (const [workspace, {schema}] of Object.entries(config.workspaces)) {
-        for (const [key, type] of schema) {
-          const {index} = type.options
-          if (!index) continue
-          const collection = type.collection()
-          const indices = index(collection)
-          for (const [name, fields] of Object.entries(indices)) {
-            const indexName = `${workspace}.${key}.${name}`
-            store.createIndex(collection, indexName, fields)
-          }
+      for (const [key, type] of config.schema) {
+        const {index} = type.options
+        if (!index) continue
+        const collection = type.collection()
+        const indices = index(collection)
+        for (const [name, fields] of Object.entries(indices)) {
+          const indexName = `${key}.${name}`
+          store.createIndex(collection, indexName, fields)
         }
       }
     })
@@ -222,7 +220,7 @@ export namespace Cache {
     entry: Entry,
     status: EntryStatus = EntryStatus.Published
   ): Entry {
-    const type = config.type(entry.alinea.workspace, entry.type)
+    const type = config.type(entry.type)
     if (!type) throw createError(400, 'Type not found')
     const root = config.root(entry.alinea.workspace, entry.alinea.root)
     const parents: Array<string> = []
@@ -298,7 +296,7 @@ export namespace Cache {
       })
     )
     for (const child of children) {
-      const type = config.type(child.alinea.workspace, child.type)
+      const type = config.type(child.type)
       if (!type) continue
       const meta = {
         path: child.path,

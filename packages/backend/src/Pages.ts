@@ -1,4 +1,4 @@
-import {createId, Entry, Tree, Workspace} from '@alinea/core'
+import {createId, Entry, Schema, Tree} from '@alinea/core'
 import {
   Collection,
   Cursor,
@@ -313,10 +313,10 @@ class Single<P, T> extends Base<P, Page<P, T> | null> {
   }
 }
 
-function createSelection<T>(workspace: Workspace, pages: Pages<T>): ExprData {
+function createSelection<T>(schema: Schema, pages: Pages<T>): ExprData {
   const cases: Record<string, SelectionInput> = {}
   let isComputed = false
-  for (const [key, type] of workspace.schema.entries()) {
+  for (const [key, type] of schema.entries()) {
     const selection = type.selection(type.collection(), pages as any)
     if (!selection) continue
     cases[key] = selection
@@ -328,7 +328,7 @@ function createSelection<T>(workspace: Workspace, pages: Pages<T>): ExprData {
 
 export class Pages<T> extends Multiple<T, T> {
   constructor(
-    workspace: Workspace<T>,
+    schema: Schema<T>,
     createCache: () => Promise<Store>,
     resolver: PageResolver<T> = new PageResolver<T>(createCache()),
     withComputed = true
@@ -336,8 +336,8 @@ export class Pages<T> extends Multiple<T, T> {
     const from = From.Column(From.Table('Entry', ['data']), 'data')
     const selection: ExprData = withComputed
       ? createSelection<T>(
-          workspace,
-          new Pages<T>(workspace, createCache, resolver, false)
+          schema,
+          new Pages<T>(schema, createCache, resolver, false)
         )
       : ExprData.Row(from)
     const cursor = new Cursor<T>({

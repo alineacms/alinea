@@ -30,7 +30,10 @@ export async function copyStaticFiles({
     'backend.js',
     'backend.d.ts',
     'store.cjs',
-    'store.d.ts'
+    'store.d.ts',
+    'pages.d.ts',
+    'pages.js',
+    'pages.cjs'
   )
 
   await writeFileIfContentsDiffer(

@@ -7,7 +7,6 @@ import {RecordShape} from './shape/RecordShape'
 import type {TypeConfig} from './Type'
 import {Type} from './Type'
 import {LazyRecord} from './util/LazyRecord'
-import type {Workspace} from './Workspace'
 
 export type HasType = {type: string}
 
@@ -57,11 +56,11 @@ export class SchemaConfig<T = any> {
   }
 
   concat<X>(that: SchemaConfig<X>): SchemaConfig<T | X> {
-    return schema(LazyRecord.concat(this.types, that.types))
+    return schema(LazyRecord.concat(this.types, that.types)) as any
   }
 
-  toSchema(workspace: Workspace<T>): Schema<T> {
-    return new Schema(workspace, this)
+  toSchema(): Schema<T> {
+    return new Schema(this)
   }
 }
 
@@ -69,7 +68,7 @@ export class SchemaConfig<T = any> {
 export class Schema<T = any> extends SchemaConfig<T> {
   typeMap = new Map<string, Type<any>>()
 
-  constructor(public workspace: Workspace<T>, config: SchemaConfig<T>) {
+  constructor(config: SchemaConfig<T>) {
     super(config.types)
     for (const [name, type] of LazyRecord.iterate(config.types)) {
       if (!type.hasField('title') || !type.hasField('path'))

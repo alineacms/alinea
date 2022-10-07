@@ -1,13 +1,5 @@
-import {generateHint, generateTypes} from '@alinea/cli/generate/GenerateTypes'
-import {schema} from '@alinea/core/Schema'
+import {generateHint} from '@alinea/cli/generate/GenerateTypes'
 import {Shape} from '@alinea/core/Shape'
-import {type} from '@alinea/core/Type'
-import {Workspace, workspace} from '@alinea/core/Workspace'
-import {list} from '@alinea/input.list'
-import {number} from '@alinea/input.number'
-import {path} from '@alinea/input.path'
-import {richText} from '@alinea/input.richtext'
-import {text} from '@alinea/input.text'
 import {test} from 'uvu'
 import * as assert from 'uvu/assert'
 
@@ -53,6 +45,7 @@ test('list type', () => {
   )
 })
 
+/*
 const workspace1 = new Workspace(
   'test',
   workspace('Test', {
@@ -91,5 +84,6 @@ test('type gen', async () => {
   const types = generateTypes(workspace1)
   assert.is(true, true)
 })
+*/
 
 test.run()

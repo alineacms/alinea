@@ -1,5 +1,5 @@
-import {content} from '@alinea/content/demo'
-import {initPages} from '@alinea/content/demo/pages.js'
+import {Pages} from '@alinea/content'
+import {initPages} from '@alinea/content/pages'
 import {GetStaticPropsContext} from 'next'
 import {Recipe} from '../../view/recipe/Recipe'
 
@@ -20,7 +20,7 @@ export async function getStaticProps(context: GetStaticPropsContext) {
   }
 }
 
-export async function queryRecipe(pages: content.Pages, slug: string) {
+export async function queryRecipe(pages: Pages, slug: string) {
   const detail = await pages
     .whereType('Recipe')
     .where(page => page.path.is(slug))

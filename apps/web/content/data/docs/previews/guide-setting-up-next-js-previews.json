@@ -116,7 +116,7 @@
         {
           "id": "qQxOBtOwIiLwZsZXhGYN9",
           "type": "CodeBlock",
-          "code": "import {initPages} from '@alinea/content/demo/pages.js'\nimport {GetStaticPropsContext} from 'next'\n\nexport async function getStaticProps(context: GetStaticPropsContext) {\n  // Pass the previewToken that we receive in previewData to initPages\n  const pages = initPages(context.previewData as string)\n\n  // Anything we query on this pages instance will reflect drafts data\n  const recipe = await pages.whereType('Recipe').first(page => page.path.is(slug))\n  return {props: recipe}\n}\n\nexport default RecipeView",
+          "code": "import {initPages} from '@alinea/content/pages'\nimport {GetStaticPropsContext} from 'next'\n\nexport async function getStaticProps(context: GetStaticPropsContext) {\n  // Pass the previewToken that we receive in previewData to initPages\n  const pages = initPages(context.previewData as string)\n\n  // Anything we query on this pages instance will reflect drafts data\n  const recipe = await pages.whereType('Recipe').first(page => page.path.is(slug))\n  return {props: recipe}\n}\n\nexport default RecipeView",
           "fileName": "pages/recipe/[slug].tsx"
         },
         {

@@ -1,5 +1,5 @@
-import {content} from '@alinea/content/demo'
-import {initPages} from '@alinea/content/demo/pages.js'
+import {Pages} from '@alinea/content'
+import {initPages} from '@alinea/content/pages'
 import {GetStaticPropsContext} from 'next'
 import {DemoRecipes} from '../../view/recipes/DemoRecipes'
 
@@ -8,7 +8,7 @@ export async function getStaticProps(context: GetStaticPropsContext) {
   return {props: await queryRecipes(pages)}
 }
 
-export async function queryRecipes(pages: content.Pages) {
+export async function queryRecipes(pages: Pages) {
   const parent = await pages.whereType('Recipes').sure()
   const children = await parent.tree.children()
   return {...parent, children}

@@ -6,9 +6,8 @@ import {Future} from './Future'
 import {Media} from './Media'
 import {User} from './User'
 import {Logger} from './util/Logger'
-import {Workspaces} from './Workspace'
 
-export interface Hub<T extends Workspaces = Workspaces> {
+export interface Hub<T = any> {
   entry(params: Hub.EntryParams, ctx?: Hub.Context): Future<Entry.Detail | null>
   query<T>(params: Hub.QueryParams<T>, ctx?: Hub.Context): Future<Array<T>>
   updateDraft(params: Hub.UpdateParams, ctx?: Hub.Context): Future

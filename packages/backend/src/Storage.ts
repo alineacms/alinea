@@ -46,11 +46,11 @@ export namespace Storage {
       const {alinea, path: entryPath, url, ...data} = entry
       const entryData = data
       const workspace = config.workspaces[alinea.workspace]
-      const {schema, source: contentDir} = workspace
+      const {source: contentDir} = workspace
       function abs(root: string, file: string) {
         return join(contentDir, root, file)
       }
-      const type = schema.type(entry.type)
+      const type = config.schema.type(entry.type)
       if (!type) {
         // Todo: some logging solution so these can end up in the UI
         console.log(`Cannot publish entry of unknown type: ${entry.type}`)
@@ -75,7 +75,7 @@ export namespace Storage {
         id: entry.id,
         file,
         contents: decoder.decode(
-          loader.format(schema, {...entryData, alinea: meta})
+          loader.format(config.schema, {...entryData, alinea: meta})
         )
       })
       const previous = store.first(
@@ -153,7 +153,7 @@ export namespace Storage {
           changes.write.push({
             id: child.id,
             file: newLocation,
-            contents: decoder.decode(loader.format(schema, child))
+            contents: decoder.decode(loader.format(config.schema, child))
           })
           renameChildren(newPaths.concat(child.path), child.id)
         }

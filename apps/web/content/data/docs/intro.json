@@ -261,7 +261,7 @@
         {
           "id": "AaQPYG-vXDXCcb-40iYeP",
           "type": "CodeBlock",
-          "code": "import {initPages} from '@alinea/content/myWorkspace/pages.js'\nconst pages = initPages()\nconsole.log(\n  await pages\n    .whereType('BlogPost')\n    .where(post => post.author.is('Me'))\n    .select(post => ({title: post.title}))\n)"
+          "code": "import {initPages} from '@alinea/content/pages'\nconst pages = initPages()\nconsole.log(\n  await pages\n    .whereType('BlogPost')\n    .where(post => post.author.is('Me'))\n    .select(post => ({title: post.title}))\n)"
         },
         {
           "id": "Gs_7cGVP61b0kBG9DKV7u",

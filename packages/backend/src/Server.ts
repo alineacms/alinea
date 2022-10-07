@@ -9,9 +9,7 @@ import {
   Hub,
   Media,
   outcome,
-  slugify,
-  WorkspaceConfig,
-  Workspaces
+  slugify
 } from '@alinea/core'
 import {arrayBufferToHex} from '@alinea/core/util/ArrayBuffers'
 import {base64} from '@alinea/core/util/Encoding'
@@ -44,7 +42,7 @@ type PagesOptions = {
   previewToken?: string
 }
 
-export type ServerOptions<T extends Workspaces> = {
+export type ServerOptions<T> = {
   config: Config<T>
   createStore: () => Promise<Store>
   drafts: Drafts
@@ -57,7 +55,7 @@ export type ServerOptions<T extends Workspaces> = {
   applyPublish?: boolean
 }
 
-export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
+export class Server<T = any> implements Hub<T> {
   preview: PreviewStore
   createStore: () => Promise<Store>
 
@@ -307,9 +305,9 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
     return this.options.drafts
   }
 
-  loadPages<K extends keyof T>(workspaceKey: K, options: PagesOptions = {}) {
+  loadPages(options: PagesOptions = {}) {
+    const {config} = this.options
     const logger = new Logger('Load pages')
-    const workspace = this.config.workspaces[workspaceKey]
     const store = options.previewToken
       ? async () => {
           const {id} = await this.parsePreviewToken(
@@ -321,10 +319,7 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
       : options.preview
       ? () => this.preview.getStore({logger})
       : this.createStore
-    return new Pages<T[K] extends WorkspaceConfig<infer W> ? W : any>(
-      workspace,
-      store
-    )
+    return new Pages<T>(config.schema, store)
   }
 
   async parsePreviewToken(

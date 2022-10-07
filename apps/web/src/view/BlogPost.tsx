@@ -1,15 +1,15 @@
+import {Page} from '@alinea/content'
 import {fromModule, HStack, Stack} from '@alinea/ui'
 import {IcRoundArrowBack} from '@alinea/ui/icons/IcRoundArrowBack'
 import Link from 'next/link'
 import {Blocks} from './blocks/Blocks'
 import css from './BlogPost.module.scss'
-import {BlogPostSchema} from './BlogPost.schema'
 import {Layout} from './layout/Layout'
 import {WebTypo} from './layout/WebTypo'
 
 const styles = fromModule(css)
 
-export function BlogPost({title, author, blocks, publishDate}: BlogPostSchema) {
+export function BlogPost({title, author, blocks, publishDate}: Page.BlogPost) {
   return (
     <Layout.WithSidebar
       sidebar={

@@ -8,6 +8,7 @@ import {useQueryClient} from 'react-query'
 import * as Y from 'yjs'
 import {EntryDraft} from '../draft/EntryDraft'
 import {EntryProperty} from '../draft/EntryProperty'
+import {useDashboard} from '../hook/UseDashboard'
 import {useLocale} from '../hook/UseLocale'
 import {useNav} from '../hook/UseNav'
 import {useSession} from '../hook/UseSession'
@@ -31,7 +32,7 @@ export function EntryEdit({initialMode, draft, isLoading}: EntryEditProps) {
   const nav = useNav()
   const queryClient = useQueryClient()
   const locale = useLocale()
-  const {schema} = useWorkspace()
+  const {schema} = useDashboard().config
   const {hub} = useSession()
   const navigate = useNavigate()
   const type = schema.type(draft.type)

@@ -2,6 +2,7 @@ import {createId} from '@alinea/core'
 import {Entry} from '@alinea/core/Entry'
 import {Reference} from '@alinea/core/Reference'
 import {Search} from '@alinea/core/Search'
+import {useDashboard} from '@alinea/dashboard/hook/UseDashboard'
 import {useFocusList} from '@alinea/dashboard/hook/UseFocusList'
 import {useRoot} from '@alinea/dashboard/hook/UseRoot'
 import {useWorkspace} from '@alinea/dashboard/hook/UseWorkspace'
@@ -75,7 +76,8 @@ export function EntryPickerModal({
   const [selected, setSelected] = useState<Array<Reference>>(
     () => selection || []
   )
-  const {name: workspace, schema} = useWorkspace()
+  const {schema} = useDashboard().config
+  const {name: workspace} = useWorkspace()
   const {name: root} = useRoot()
   const cursor = useMemo(
     () =>

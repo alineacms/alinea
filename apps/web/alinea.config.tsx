@@ -13,7 +13,7 @@ import {HomePageSchema} from './src/view/HomePage.schema'
 import {LogoChar} from './src/view/layout/branding/LogoChar'
 import {PageSchema} from './src/view/Page.schema'
 
-export const webSchema = schema({
+const webSchema = schema({
   ...MediaSchema,
   Home: HomePageSchema,
   Docs: DocsPageSchema,
@@ -25,8 +25,6 @@ export const webSchema = schema({
 
 const web = workspace('Alinea', {
   icon: LogoChar,
-  schema: webSchema,
-  typeNamespace: 'content',
   source: './content',
   mediaDir: './public',
   // mediaUrl: (location: string) => location.slice('public'.length),
@@ -57,7 +55,6 @@ const web = workspace('Alinea', {
 })
 
 const stories = workspace('Stories', {
-  schema: webSchema,
   source: './content/stories',
   color: '#EF437C',
   roots: {
@@ -80,6 +77,8 @@ const workspaces = {web, stories}
 const cloudBackend = createCloudBackend()
 
 export const config = createConfig({
+  typeNamespace: 'content',
+  schema: webSchema,
   dashboard: {
     dashboardUrl: '/admin.html',
     handlerUrl: '/api/cms',

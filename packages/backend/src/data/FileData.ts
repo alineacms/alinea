@@ -53,10 +53,9 @@ export class FileData implements Data.Source, Data.Target, Data.Media {
 
   async *entries(): AsyncGenerator<Entry> {
     const {config, fs, loader, rootDir = '.'} = this.options
-    for (const [
-      workspace,
-      {schema, source: contentDir, roots}
-    ] of Object.entries(config.workspaces)) {
+    for (const [workspace, {source: contentDir, roots}] of Object.entries(
+      config.workspaces
+    )) {
       for (const root of Object.values(roots)) {
         const locales = root.i18n?.locales || [undefined]
         for (const locale of locales) {
@@ -85,7 +84,9 @@ export class FileData implements Data.Source, Data.Target, Data.Media {
                 const name = path.basename(file, extension)
                 const isIndex = name === 'index' || name === ''
                 const buffer = await fs.readFile(location)
-                const [entry, err] = outcome(() => loader.parse(schema, buffer))
+                const [entry, err] = outcome(() =>
+                  loader.parse(config.schema, buffer)
+                )
                 if (!entry) {
                   console.log(`\rCould not parse ${location}: ${err}`)
                   continue
@@ -104,7 +105,7 @@ export class FileData implements Data.Source, Data.Target, Data.Media {
                 ) {
                   continue
                 }
-                const type = schema.type(entry.type)
+                const type = config.schema.type(entry.type)
                 if (!type) continue
                 const isContainer = Boolean(type.options.isContainer)
                 const url = path.join(target, isIndex ? '' : name)
