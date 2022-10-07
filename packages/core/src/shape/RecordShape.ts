@@ -1,4 +1,5 @@
 import * as Y from 'yjs'
+import {Hint} from '../Hint'
 import {Label} from '../Label'
 import {Shape} from '../Shape'
 
@@ -12,6 +13,20 @@ export class RecordShape<T = {}> implements Shape<T, RecordMutator<T>> {
     public properties: Record<string, Shape>,
     public initialValue?: T
   ) {}
+  get hint() {
+    return Hint.Object(
+      Object.fromEntries(
+        Object.entries(this.properties).map(([name, shape]) => {
+          return [name, shape.hint]
+        })
+      )
+    )
+  }
+  innerTypes(parents: Array<string>) {
+    return Object.entries(this.properties).flatMap(([name, shape]) => {
+      return shape.innerTypes(parents.concat(name))
+    })
+  }
   concat<X>(that: RecordShape<X> | undefined): RecordShape<T & X> {
     if (!that) return this as any
     return new RecordShape<T & X>(that.label, {

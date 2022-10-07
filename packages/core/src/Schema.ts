@@ -2,6 +2,7 @@ import {Collection, Cursor, Selection} from '@alinea/store'
 import {Entry} from './Entry'
 import {createError} from './ErrorWithCode'
 import {Field} from './Field'
+import {Hint} from './Hint'
 import {RecordShape} from './shape/RecordShape'
 import type {TypeConfig} from './Type'
 import {Type} from './Type'
@@ -81,6 +82,10 @@ export class Schema<T = any> extends SchemaConfig<T> {
 
   get allTypes() {
     return Array.from(this.typeMap.values())
+  }
+
+  definitions() {
+    return Hint.definitions(this.allTypes.map(type => type.hint))
   }
 
   entries() {

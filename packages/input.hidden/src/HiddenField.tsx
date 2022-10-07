@@ -1,4 +1,5 @@
 import {Field, Label, Shape} from '@alinea/core'
+import {Hint} from '@alinea/core/Hint'
 
 /** Optional settings to configure a text field */
 export type HiddenOptions<T> = {
@@ -14,11 +15,11 @@ export interface HiddenField<T> extends Field.Scalar<T> {
 /** Create a text field configuration */
 export function createHidden<T>(
   label: Label,
-  type: string,
+  hint: Hint,
   options: HiddenOptions<T> = {}
 ): HiddenField<T> {
   return {
-    shape: Shape.Scalar(label, type, options.initialValue),
+    shape: Shape.Scalar(label, hint, options.initialValue),
     label,
     initialValue: options.initialValue,
     view: () => null

@@ -1,4 +1,5 @@
 import {Field, Label, Shape} from '@alinea/core'
+import {Hint} from '@alinea/core/Hint'
 
 /** A string record with option labels */
 export type SelectItems<T extends string> = Record<T, Label>
@@ -37,7 +38,11 @@ export function createSelect<T extends string, Items extends Record<T, string>>(
   options: SelectOptions<keyof Items> = {}
 ): SelectField<T> {
   return {
-    shape: Shape.Scalar(label, 'Array<string>', options.initialValue as T),
+    shape: Shape.Scalar(
+      label,
+      Hint.Array(Hint.String()),
+      options.initialValue as T
+    ),
     label,
     items,
     options: options as SelectOptions<T>,

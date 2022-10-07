@@ -6,7 +6,7 @@ import {ComponentType} from 'react'
 export const ColumnsBlockSchema = type('Columns', {
   items: list('Items', {
     schema: schema({
-      Item: type('Item', {
+      ColumnItem: type('Item', {
         text: richText('Text')
       })
     })

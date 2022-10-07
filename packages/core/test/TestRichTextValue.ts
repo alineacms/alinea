@@ -1,3 +1,4 @@
+import {Hint} from '@alinea/core/Hint'
 import {ScalarShape} from '@alinea/core/shape/ScalarShape'
 import {test} from 'uvu'
 import * as assert from 'uvu/assert'
@@ -8,15 +9,15 @@ import {RecordShape} from '../src/shape/RecordShape'
 test('serialize', () => {
   const type = new RichTextShape('RichText', {
     Block1: new RecordShape('Block1', {
-      field1: new ScalarShape('field1', 'string'),
+      field1: new ScalarShape('field1', Hint.String()),
       blockInner: new RecordShape('Inner block', {
-        field3: new ScalarShape('field3', 'string'),
-        field4: new ScalarShape('field4', 'string')
+        field3: new ScalarShape('field3', Hint.String()),
+        field4: new ScalarShape('field4', Hint.String())
       })
     }),
     Block2: new RecordShape('Block2', {
-      field3: new ScalarShape('field3', 'string'),
-      field4: new ScalarShape('field4', 'string')
+      field3: new ScalarShape('field3', Hint.String()),
+      field4: new ScalarShape('field4', Hint.String())
     })
   })
 

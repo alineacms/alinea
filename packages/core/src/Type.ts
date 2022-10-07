@@ -6,11 +6,12 @@ import {Collection, Expr, SelectionInput} from '@alinea/store'
 import type {ComponentType} from 'react'
 import {Entry} from './Entry'
 import {Field} from './Field'
+import {Hint} from './Hint'
 import {createId} from './Id'
 import {Label} from './Label'
 import type {Schema} from './Schema'
 import {Section} from './Section'
-import {Shape} from './Shape'
+import {Shape, ShapeInfo} from './Shape'
 import {RecordShape} from './shape/RecordShape'
 import {Lazy} from './util/Lazy'
 import {LazyRecord} from './util/LazyRecord'
@@ -77,8 +78,9 @@ export class TypeConfig<R = any, T = R> {
           })
       )
     )
-    for (const section of this.sections)
+    for (const section of this.sections) {
       if (section.fields) Object.assign(this.fields, Lazy.get(section.fields))
+    }
   }
 
   /** Create a new empty instance of this type's fields */
@@ -146,13 +148,31 @@ export class TypeConfig<R = any, T = R> {
 }
 
 /** Describes the structure of an entry by their fields and type */
-export class Type<R = any, T = R> extends TypeConfig<R, T> {
+export class Type<R = any, T = R>
+  extends TypeConfig<R, T>
+  implements ShapeInfo
+{
+  parents = []
+
   constructor(
     public schema: Schema,
     public name: string,
     config: TypeConfig<R, T>
   ) {
     super(config.label, config.sections, config.options)
+  }
+
+  get hint() {
+    switch (this.shape.hint.type) {
+      case 'object':
+        const {type, ...fields} = this.shape.hint.fields
+        return Hint.Definition(this.name, {
+          type: Hint.Literal(this.name),
+          ...fields
+        })
+      default:
+        throw 'assert'
+    }
   }
 
   /** Create a new Entry instance of this type */
