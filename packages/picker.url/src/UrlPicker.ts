@@ -1,3 +1,4 @@
+import {Hint} from '@alinea/core/Hint'
 import {Reference} from '@alinea/core/Reference'
 import {Shape} from '@alinea/core/Shape'
 import {TypeConfig} from '@alinea/core/Type'
@@ -33,6 +34,7 @@ export function createUrlPicker<T>(
       description: Shape.String('Description'),
       target: Shape.String('Target')
     }).concat(extra),
+    hint: Hint.Extern({name: 'UrlReference', package: '@alinea/picker.url'}),
     options
   }
 }

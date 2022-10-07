@@ -43,6 +43,7 @@ export function createObject<T>(
   const shape = options.fields.shape
   return {
     shape,
+    hint: options.fields.hint,
     label,
     options,
     transform: query(options.fields),

@@ -42,11 +42,17 @@ export namespace Schema {
 
 export class SchemaConfig<T = any> {
   shape: Record<string, RecordShape<any>>
+  hint: Hint
 
   constructor(public types: LazyRecord<TypeConfig<any>>) {
     this.shape = Object.fromEntries(
       LazyRecord.iterate(types).map(([key, type]) => {
         return [key, type.shape]
+      })
+    )
+    this.hint = Hint.Union(
+      LazyRecord.iterate(types).map(([key, type]) => {
+        return type.hint
       })
     )
   }
@@ -73,9 +79,9 @@ export class Schema<T = any> extends SchemaConfig<T> {
     for (const [name, type] of LazyRecord.iterate(config.types)) {
       if (!type.hasField('title') || !type.hasField('path'))
         throw createError(
-          `Missing title or path field in type ${name}, see https://alinea.sh//docs/reference/titles`
+          `Missing title or path field in type ${name}, see https://alinea.sh/docs/reference/titles`
         )
-      this.typeMap.set(name, type.toType(this, name))
+      this.typeMap.set(name, type.toType(name))
     }
   }
 
