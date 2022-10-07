@@ -4,6 +4,7 @@
   "name": "@alinea/content",
   "type": "module",
   "sideEffects": false,
+  "types": "./index.d.ts",
   "exports": {
     ".": "./index.js",
     "./config": "./config.js",

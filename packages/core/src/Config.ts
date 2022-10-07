@@ -21,10 +21,6 @@ export class Config<T = any> {
     this.schema = options.schema.toSchema()
   }
 
-  get typeNamespace() {
-    return this.options.typeNamespace
-  }
-
   get hasAuth() {
     return Boolean(this.options.backend?.auth)
   }
@@ -76,8 +72,6 @@ export namespace Config {
 /** Configuration options */
 export type ConfigOptions<T> = {
   schema: SchemaConfig<T>
-  /** Generated types will be placed in this namespace  */
-  typeNamespace?: string
   /** A record containing workspace configurations */
   workspaces: Record<string, WorkspaceConfig>
   backend?: BackendConfig<any>

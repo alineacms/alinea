@@ -24,7 +24,6 @@ export async function copyStaticFiles({
   await copy(
     'package.json',
     'index.js',
-    'index.d.ts',
     'drafts.js',
     'backend.cjs',
     'backend.js',

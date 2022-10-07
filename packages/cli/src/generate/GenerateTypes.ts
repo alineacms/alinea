@@ -14,7 +14,7 @@ function wrapNamespace(inner: Code, namespace: string | undefined) {
   return inner
 }
 
-export function generateTypes({schema, typeNamespace}: Config) {
+export function generateTypes({schema}: Config) {
   const types = code()
   const seen = new Map<string, Hint.TypeDefinition>()
   const rootTypes = []
