@@ -57,6 +57,7 @@ export async function serve(options: ServeOptions): Promise<void> {
     `> Alinea ${dashboardName} available on http://localhost:${server.port}`
   )
 
+  await fs.mkdirp(path.join(cwd, '.alinea'))
   await fs.writeFile(
     path.join(cwd, '.alinea/drafts.js'),
     `export const serverLocation = 'http://localhost:${server.port}'`
