@@ -6,7 +6,7 @@ import {ComponentType} from 'react'
 export const FeaturesBlockSchema = type('Features', {
   items: list('Items', {
     schema: schema({
-      Item: type('Item', {
+      FeatureItem: type('Item', {
         text: richText('Text')
       })
     })

@@ -1,8 +1,8 @@
 import {buildOptions} from '@alinea/cli/build/BuildOptions'
-import {code} from '@alinea/cli/util/CodeGen'
 import {writeFileIfContentsDiffer} from '@alinea/cli/util/FS'
 import {publicDefines} from '@alinea/cli/util/PublicDefines'
 import {createError} from '@alinea/core/ErrorWithCode'
+import {code} from '@alinea/core/util/CodeGen'
 import semver from 'compare-versions'
 import {build} from 'esbuild'
 import {createRequire} from 'node:module'
@@ -67,6 +67,6 @@ export async function generateDashboard(
             boot('${handlerUrl}')
           </script>
         </body>
-      `
+      `.toString()
   )
 }

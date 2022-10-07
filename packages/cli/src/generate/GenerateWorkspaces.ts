@@ -1,28 +1,32 @@
 import {Config} from '@alinea/core/Config'
+import {Code, code} from '@alinea/core/util/CodeGen'
 import {Workspace} from '@alinea/core/Workspace'
 import fs from 'fs-extra'
 import path from 'node:path'
-import {GenerateContext} from './GenerateContext'
-
-import {code} from '@alinea/cli/util/CodeGen'
 import {copyFileIfContentsDiffer, writeFileIfContentsDiffer} from '../util/FS'
+import {GenerateContext} from './GenerateContext'
 import {generateTypes} from './GenerateTypes'
 
-function wrapNamespace(code: string, namespace: string | undefined) {
-  if (namespace) return `export namespace ${namespace} {\n${code}\n}`
-  return code
+function wrapNamespace(inner: Code, namespace: string | undefined) {
+  if (namespace)
+    return code`
+      export namespace ${namespace} {
+        ${inner}
+      }
+    `
+  return inner
 }
 
 function schemaCollections(workspace: Workspace) {
   const typeNames = workspace.schema.keys
   const collections = workspace.typeNamespace
-    ? `export const ${workspace.typeNamespace} = {
+    ? code`export const ${workspace.typeNamespace} = {
       AnyPage: schema.collection(),
       ${typeNames
         .map(type => `${type}: schema.type('${type}').collection()`)
         .join(',\n')}
     }`
-    : `
+    : code`
     export const AnyPage = schema.collection()
     ${typeNames
       .map(type => `export const ${type} = schema.type('${type}').collection()`)
@@ -100,20 +104,20 @@ export async function generateWorkspaces(
       fs.mkdir(path.join(outDir, key), {recursive: true}),
       writeFileIfContentsDiffer(
         path.join(outDir, key, 'schema.js'),
-        schemaCollections(workspace)
+        schemaCollections(workspace).toString()
       ),
       writeFileIfContentsDiffer(
         path.join(outDir, key, 'schema.d.ts'),
-        schemaTypes(workspace)
+        schemaTypes(workspace).toString()
       ),
       copy('index.d.ts', 'index.js', 'pages.cjs'),
       writeFileIfContentsDiffer(
         path.join(outDir, key, 'pages.js'),
-        pagesOf(workspace)
+        pagesOf(workspace).toString()
       ),
       writeFileIfContentsDiffer(
         path.join(outDir, key, 'pages.d.ts'),
-        pagesType(workspace)
+        pagesType(workspace).toString()
       )
     ])
   }
