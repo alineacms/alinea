@@ -24,6 +24,7 @@ import {
 } from 'react'
 import {ContentTreeEntry} from '../../hook/UseContentTree'
 import {useCurrentDraft} from '../../hook/UseCurrentDraft'
+import {useDashboard} from '../../hook/UseDashboard'
 import {useDraftsList} from '../../hook/UseDraftsList'
 import {useNav} from '../../hook/UseNav'
 import {useWorkspace} from '../../hook/UseWorkspace'
@@ -38,7 +39,7 @@ type TreeNodeChildrenCreator = {
 
 function TreeNodeChildrenCreator({locale, entry}: TreeNodeChildrenCreator) {
   const nav = useNav()
-  const {schema} = useWorkspace()
+  const {schema} = useDashboard().config
   const type = schema.type(entry.type)
   if (!type) return null
   return (
@@ -80,7 +81,7 @@ const TreeNodeLink = memo(
     },
     ref
   ) {
-    const {schema} = useWorkspace()
+    const {schema} = useDashboard().config
     const type = schema.type(entry.type)!
     const isContainer = entry.alinea.isContainer
     const containerIcon = isOpened ? (

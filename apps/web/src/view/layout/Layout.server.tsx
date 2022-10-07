@@ -1,4 +1,4 @@
-import {content} from '@alinea/content/web'
+import {Pages} from '@alinea/content'
 import {Store} from '@alinea/store'
 import {menuQuery} from '../DocPage.server'
 
@@ -10,8 +10,8 @@ type PageDetails = {
 
 const fullLayout = new Set(['API', 'Doc'])
 
-export async function layoutQuery(pages: content.Pages, page: PageDetails) {
-  const data = await pages.fetchType(content.Home).select(home => ({
+export async function layoutQuery(pages: Pages, page: PageDetails) {
+  const data = await pages.whereType('Home').select(home => ({
     header: {
       links: home.links
     },

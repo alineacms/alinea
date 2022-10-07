@@ -8,7 +8,7 @@ import {copyStaticFiles} from './generate/CopyStaticFiles'
 import {fillCache} from './generate/FillCache'
 import {GenerateContext} from './generate/GenerateContext'
 import {generateDashboard} from './generate/GenerateDashboard'
-import {generateWorkspaces} from './generate/GenerateWorkspaces'
+import {generateSchema} from './generate/GenerateSchema'
 import {loadConfig} from './generate/LoadConfig'
 import {dirname} from './util/Dirname'
 
@@ -26,8 +26,8 @@ export type GenerateOptions = {
   onAfterGenerate?: () => void
 }
 
-function createWorkspaces(context: GenerateContext, config: Config) {
-  const tasks = [generateWorkspaces(context, config)]
+function generatePackage(context: GenerateContext, config: Config) {
+  const tasks = [generateSchema(context, config)]
   const dashboard = config.dashboard
   if (dashboard?.staticFile)
     tasks.push(
@@ -68,7 +68,7 @@ export async function* generate(options: GenerateOptions) {
     const {done} = await nextBuild
     if (done) break
     const config = await loadConfig(context)
-    await createWorkspaces(context, config)
+    await generatePackage(context, config)
     nextBuild = builds.next()
     for await (const store of fillCache(context, config, nextBuild)) {
       yield {config, store}

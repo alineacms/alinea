@@ -2,7 +2,6 @@ import {createId, slugify, toGenerator} from '@alinea/core'
 import {Config} from '@alinea/core/Config'
 import {Entry} from '@alinea/core/Entry'
 import {Logger} from '@alinea/core/util/Logger'
-import {Workspaces} from '@alinea/core/Workspace'
 import {Cache} from '../Cache'
 import {Data} from '../Data'
 import {createDb} from './CreateDb'
@@ -32,13 +31,15 @@ function toEntry(workspace: string, data: DemoEntry): Entry {
   }
 }
 
-export function demoStore<T extends Workspaces>(
+export function demoStore<T>(
   config: Config<T>,
-  entries: (workspace: keyof T) => Array<DemoEntry>
+  entries: (workspace: string) => Array<DemoEntry>
 ) {
   const all: Array<Entry> = []
   for (const workspace of Object.values(config.workspaces))
-    all.push(...entries(workspace.id).map(raw => toEntry(workspace.name, raw)))
+    all.push(
+      ...entries(workspace.name).map(raw => toEntry(workspace.name, raw))
+    )
   const source: Data.Source = {
     entries() {
       return toGenerator(all)

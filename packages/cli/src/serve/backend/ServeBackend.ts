@@ -4,7 +4,7 @@ import {FileDrafts} from '@alinea/backend/drafts/FileDrafts'
 import {JsonLoader} from '@alinea/backend/loader/JsonLoader'
 import {router} from '@alinea/backend/router/Router'
 import {JWTPreviews} from '@alinea/backend/util/JWTPreviews'
-import {accumulate, Config, Hub, outcome, Workspaces} from '@alinea/core'
+import {accumulate, Config, Hub, outcome} from '@alinea/core'
 import {base64, base64url} from '@alinea/core/util/Encoding'
 import {Response} from '@alinea/iso'
 import {SqliteStore} from '@alinea/store/sqlite/SqliteStore'
@@ -12,16 +12,14 @@ import {Store} from '@alinea/store/Store'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 
-export interface ServeBackendOptions<T extends Workspaces> {
+export interface ServeBackendOptions<T> {
   cwd?: string
   port?: number
   config: Config<T>
   store: SqliteStore
 }
 
-export class ServeBackend<
-  T extends Workspaces = Workspaces
-> extends Backend<T> {
+export class ServeBackend<T = any> extends Backend<T> {
   publishing = false
   reload: (config: Config<T>) => void
   constructor({

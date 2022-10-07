@@ -20,6 +20,7 @@ import {link, useNavigate} from '@alinea/ui/util/HashRouter'
 import {useState} from 'react'
 import {useQueryClient} from 'react-query'
 import {useCurrentDraft} from '../../hook/UseCurrentDraft'
+import {useDashboard} from '../../hook/UseDashboard'
 import {DraftsStatus, useDrafts} from '../../hook/UseDrafts'
 import {useLocale} from '../../hook/UseLocale'
 import {useNav} from '../../hook/UseNav'
@@ -70,7 +71,8 @@ export type EntryHeaderProps = {
 
 export function EntryHeader({mode, setMode}: EntryHeaderProps) {
   const nav = useNav()
-  const {name: workspace, schema} = useWorkspace()
+  const {schema} = useDashboard().config
+  const {name: workspace} = useWorkspace()
   const root = useRoot()
   const drafts = useDrafts()
   const draft = useCurrentDraft()

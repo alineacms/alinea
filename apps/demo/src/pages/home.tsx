@@ -1,5 +1,5 @@
-import {content} from '@alinea/content/demo'
-import {initPages} from '@alinea/content/demo/pages.js'
+import {Pages} from '@alinea/content/demo'
+import {initPages} from '@alinea/content/pages'
 import {Store} from '@alinea/store'
 import {GetStaticPropsContext} from 'next'
 import {DemoHome} from '../view/home/DemoHome'
@@ -11,7 +11,7 @@ export async function getStaticProps(context: GetStaticPropsContext) {
   }
 }
 
-export async function queryHome(pages: content.Pages) {
+export async function queryHome(pages: Pages) {
   const home = await pages.whereType('Home').sure()
   const recipes = await pages
     .whereType('Recipe')

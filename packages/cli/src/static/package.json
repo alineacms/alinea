@@ -6,12 +6,16 @@
   "sideEffects": false,
   "exports": {
     ".": "./index.js",
-    "./store.js": {
+    "./config": "./config.js",
+    "./pages": {
+      "require": "./pages.cjs",
+      "default": "./pages.js"
+    },
+    "./store": {
       "require": "./store.cjs",
       "default": "./store.js"
     },
-    "./config.js": "./config.js",
-    "./backend.js": {
+    "./backend": {
       "require": "./backend.cjs",
       "default": "./backend.js"
     },
@@ -19,6 +23,7 @@
       "worker": "./.server/dist/*",
       "browser": "./.server/client.cjs",
       "default": "./.server/dist/*"
-    }
+    },
+    "./*": "./*"
   }
 }

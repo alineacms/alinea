@@ -15,22 +15,22 @@ const listField = list('List', {
 })
 
 const config = createConfig({
+  schema: schema({
+    Type: type('Type', {
+      title: text('Title'),
+      path: text('path'),
+      list: listField
+    }).configure({
+      isContainer: true
+    }),
+    Sub: type('Sub', {
+      title: text('Title'),
+      path: text('path')
+    })
+  }),
   workspaces: {
     main: workspace('Main', {
       source: 'content',
-      schema: schema({
-        Type: type('Type', {
-          title: text('Title'),
-          path: text('path'),
-          list: listField
-        }).configure({
-          isContainer: true
-        }),
-        Sub: type('Sub', {
-          title: text('Title'),
-          path: text('path')
-        })
-      }),
       roots: {data: root('Root', {contains: ['Type']})}
     })
   }

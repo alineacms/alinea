@@ -1,14 +1,14 @@
-import {Auth, Workspaces} from '@alinea/core'
-import {Entry} from '@alinea/core/Entry'
-import {Hub} from '@alinea/core/Hub'
-import {base64url} from '@alinea/core/util/Encoding'
-import {Logger, LoggerResult, Report} from '@alinea/core/util/Logger'
-import type {Request, Response} from '@alinea/iso'
-import {Cursor, CursorData} from '@alinea/store'
-import {Handle, Route, router} from './router/Router'
-import {Server, ServerOptions} from './Server'
+import { Auth } from '@alinea/core'
+import { Entry } from '@alinea/core/Entry'
+import { Hub } from '@alinea/core/Hub'
+import { base64url } from '@alinea/core/util/Encoding'
+import { Logger, LoggerResult, Report } from '@alinea/core/util/Logger'
+import type { Request, Response } from '@alinea/iso'
+import { Cursor, CursorData } from '@alinea/store'
+import { Handle, Route, router } from './router/Router'
+import { Server, ServerOptions } from './Server'
 
-export type BackendOptions<T extends Workspaces> = {
+export type BackendOptions<T> = {
   auth?: Auth.Server
   dashboardUrl: string
 } & ServerOptions<T>
@@ -30,7 +30,7 @@ function respond<T>({result, logger}: LoggerResult<T>) {
   })
 }
 
-function createRouter<T extends Workspaces>(
+function createRouter<T>(
   hub: Backend<T>,
   auth: Auth.Server
 ): Route<Request, Response | undefined> {
@@ -149,7 +149,7 @@ function createRouter<T extends Workspaces>(
   ).recover(router.reportError)
 }
 
-export class Backend<T extends Workspaces = Workspaces> extends Server<T> {
+export class Backend<T = any> extends Server<T> {
   handle: Handle<Request, Response | undefined>
 
   constructor(public options: BackendOptions<T>) {

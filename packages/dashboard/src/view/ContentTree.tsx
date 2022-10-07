@@ -23,6 +23,7 @@ import useSize from '@react-hook/size'
 import {useMemo, useRef, useState} from 'react'
 import VirtualList from 'react-tiny-virtual-list'
 import {ContentTreeEntry, useContentTree} from '../hook/UseContentTree'
+import {useDashboard} from '../hook/UseDashboard'
 import {useDrafts} from '../hook/UseDrafts'
 import {useNav} from '../hook/UseNav'
 import {useRoot} from '../hook/UseRoot'
@@ -89,7 +90,8 @@ export function ContentTree({
   select = [],
   redirectToRoot
 }: ContentTreeProps) {
-  const {name: workspace, schema} = useWorkspace()
+  const {schema} = useDashboard().config
+  const {name: workspace} = useWorkspace()
   const root = useRoot()
   const {
     locale,

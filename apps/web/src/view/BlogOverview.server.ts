@@ -1,9 +1,9 @@
-import {content} from '@alinea/content/web'
+import {Page, Pages} from '@alinea/content'
 import {Store} from '@alinea/store'
 
 export async function blogOverviewQuery(
-  pages: content.Pages,
-  overview: content.BlogOverview
+  pages: Pages,
+  overview: Page.BlogOverview
 ) {
   return {
     ...overview,
