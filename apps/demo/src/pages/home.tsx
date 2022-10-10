@@ -1,4 +1,4 @@
-import {Pages} from '@alinea/content/demo'
+import {Pages} from '@alinea/content'
 import {initPages} from '@alinea/content/pages'
 import {Store} from '@alinea/store'
 import {GetStaticPropsContext} from 'next'

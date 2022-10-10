@@ -1,4 +1,4 @@
-import {Schema, type} from '@alinea/core'
+import {type} from '@alinea/core'
 import {richText} from '@alinea/input.richtext'
 import {select} from '@alinea/input.select'
 
@@ -11,5 +11,3 @@ export const NoticeBlockSchema = type('Notice', {
     inline: true
   })
 })
-
-export type NoticeBlockSchema = Schema.TypeOf<typeof NoticeBlockSchema>

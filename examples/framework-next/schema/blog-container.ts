@@ -12,5 +12,3 @@ export const BlogContainer = alinea
     isContainer: true,
     contains: ['BlogPost']
   })
-
-export type BlogContainer = alinea.infer<typeof BlogContainer>

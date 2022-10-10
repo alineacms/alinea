@@ -1,44 +1,48 @@
 import {generateHint} from '@alinea/cli/generate/GenerateTypes'
-import {Shape} from '@alinea/core/Shape'
+import {Hint} from '@alinea/core/Hint'
 import {test} from 'uvu'
 import * as assert from 'uvu/assert'
 
 test('string type', () => {
-  const string = Shape.String('String')
-  const type = generateHint(string.hint)
+  const string = Hint.String()
+  const type = generateHint(string)
   assert.is(type, 'string')
 })
 
 test('number type', () => {
-  const number = Shape.Number('Number')
-  const type = generateHint(number.hint)
+  const number = Hint.Number()
+  const type = generateHint(number)
   assert.is(type, 'number')
 })
 
 test('boolean type', () => {
-  const boolean = Shape.Boolean('Boolean')
-  const type = generateHint(boolean.hint)
+  const boolean = Hint.Boolean()
+  const type = generateHint(boolean)
   assert.is(type, 'boolean')
 })
 
 test('record type', () => {
-  const record = Shape.Record('TypeA', {
-    field1: Shape.String('String')
+  const record = Hint.Object({
+    field1: Hint.String()
   })
-  const type = generateHint(record.hint)
+  const type = generateHint(record)
   assert.is(type, `{'field1': string}`)
 })
 
 test('list type', () => {
-  const list = Shape.List('List', {
-    TypeA: Shape.Record('TypeA', {
-      field1: Shape.String('String')
-    }),
-    TypeB: Shape.Record('TypeB', {
-      field1: Shape.String('String')
-    })
-  })
-  const type = generateHint(list.hint)
+  const list = Hint.Array(
+    Hint.Union([
+      Hint.Object({
+        type: Hint.Literal('TypeA'),
+        field1: Hint.String()
+      }),
+      Hint.Object({
+        type: Hint.Literal('TypeB'),
+        field1: Hint.String()
+      })
+    ])
+  )
+  const type = generateHint(list)
   assert.is(
     type,
     `Array<{'type': 'TypeA', 'id': string, 'index': string, 'field1': string} | {'type': 'TypeB', 'id': string, 'index': string, 'field1': string}>`

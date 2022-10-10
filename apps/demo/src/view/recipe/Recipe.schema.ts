@@ -1,4 +1,4 @@
-import {Schema, type} from '@alinea/core'
+import {type} from '@alinea/core'
 import {link} from '@alinea/input.link'
 import {object} from '@alinea/input.object'
 import {path} from '@alinea/input.path'
@@ -18,5 +18,3 @@ export const RecipeSchema = type('Recipe', {
   ingredients: richText('Ingredients'),
   instructions: richText('Instructions')
 })
-
-export type RecipeSchema = Schema.TypeOf<typeof RecipeSchema>

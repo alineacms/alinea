@@ -175,6 +175,12 @@ class Multiple<P, T> extends Base<P, Array<Page<P, T>>> {
       this.cursor.where(Entry.type.is(type as string))
     )
   }
+  whereWorkspace(workspace: string) {
+    return new Multiple<P, T>(
+      this.resolver,
+      this.cursor.where(Entry.alinea.workspace.is(workspace))
+    )
+  }
   whereRoot(root: string) {
     return new Multiple<P, T>(
       this.resolver,
@@ -265,6 +271,12 @@ class Single<P, T> extends Base<P, Page<P, T> | null> {
     return new Single<P, Extract<T, {type: K}>>(
       this.resolver,
       this.cursor.where(Entry.type.is((type as any).__options.alias))
+    )
+  }
+  whereWorkspace(workspace: string) {
+    return new Single<P, T>(
+      this.resolver,
+      this.cursor.where(Entry.alinea.workspace.is(workspace))
     )
   }
   whereRoot(root: string) {

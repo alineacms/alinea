@@ -25,12 +25,7 @@ export async function queryRecipe(pages: Pages, slug: string) {
     .whereType('Recipe')
     .where(page => page.path.is(slug))
     .sure()
-  const related = await pages
-    .whereType('Recipe')
-    .where(related => related.id.isNot(detail.id))
-    .where(related => related.category.is(detail.category))
-    .take(3)
-  return {...detail, related}
+  return {...detail, related: []}
 }
 
 export default Recipe

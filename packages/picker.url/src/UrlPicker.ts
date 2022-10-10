@@ -27,14 +27,17 @@ export function createUrlPicker<T>(
   const extra = options.fields?.shape
   return {
     type: 'url',
-    label: 'External website',
-    handlesMultiple: false,
     shape: Shape.Record('Url', {
-      url: Shape.String('Url'),
-      description: Shape.String('Description'),
-      target: Shape.String('Target')
+      url: Shape.Scalar('Url'),
+      description: Shape.Scalar('Description'),
+      target: Shape.Scalar('Target')
     }).concat(extra),
     hint: Hint.Extern({name: 'UrlReference', package: '@alinea/picker.url'}),
-    options
+    label: 'External website',
+    handlesMultiple: false,
+    options,
+    select(row) {
+      return row.fields
+    }
   }
 }

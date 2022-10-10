@@ -1,7 +1,5 @@
-import type {Pages} from '@alinea/backend'
 import {
   Entry,
-  EntryMeta,
   Field,
   Hint,
   Label,
@@ -11,7 +9,7 @@ import {
   TypeConfig
 } from '@alinea/core'
 import type {Picker} from '@alinea/editor/Picker'
-import {Cursor, Expr, Functions, SelectionInput} from '@alinea/store'
+import {Cursor, Expr, SelectionInput} from '@alinea/store'
 
 export type LinkType = 'entry' | 'image' | 'file' | 'external'
 
@@ -56,11 +54,6 @@ export type LinkOptions<T, Q> = {
   max?: number
   /** A default value */
   initialValue?: Array<Reference & T>
-  /** Modify value returned when queried through `Pages` */
-  transform?: <P>(
-    field: Expr<Array<Reference & T>>,
-    pages: Pages<P>
-  ) => Expr<Q> | undefined
   /** Hide this link field */
   hidden?: boolean
   pickers?: Array<Picker<any, any>>
@@ -70,40 +63,6 @@ export type LinkOptions<T, Q> = {
 export interface LinkField<T, Q> extends Field.List<Reference & T, Q> {
   label: Label
   options: LinkOptions<T, Q>
-}
-
-export type LinkData = LinkData.Entry | LinkData.Url
-
-export namespace LinkData {
-  export interface Url extends Reference {
-    type: 'url'
-    url: string
-    description: string
-    target: string
-  }
-  export interface Entry extends Reference {
-    alinea: EntryMeta
-    type: 'entry'
-    entry: string
-    entryType: string
-    path: string
-    title: Label
-    url: string
-  }
-  export interface File extends Reference {
-    alinea: EntryMeta
-    src: string
-    extension: string
-    size: number
-  }
-  export interface Image extends File {
-    alinea: EntryMeta
-    hash: string
-    width: number
-    height: number
-    averageColor: string
-    blurHash: string
-  }
 }
 
 /** Create a link field configuration */
@@ -118,9 +77,13 @@ export function createLink<T, Q>(
       options.fields ? picker.shape.concat(options.fields.shape) : picker.shape
     ])
   )
+  const hint =
+    pickers.length === 1
+      ? pickers[0].hint
+      : Hint.Union(pickers.map(picker => picker.hint))
   return {
     shape: Shape.List(label, blocks, options.initialValue),
-    hint: Hint.Extern({name: 'Hiero', package: 'test'}),
+    hint: options.multiple ? Hint.Array(hint) : hint,
     label,
     options: {
       ...options,
@@ -128,52 +91,10 @@ export function createLink<T, Q>(
     },
     hidden: options.hidden,
     initialValue: options.initialValue,
-    // Todo: move transform to the picker instances
-    transform(field, pages): Expr<Q> {
-      const row = field.each()
-      const Link = Entry.as<Media.File>('Link')
-      const cases: Record<string, SelectionInput> = {
-        entry: Link.where(entry => entry.id.is(row.get('entry')))
-          .first()
-          .select(entry => {
-            return row.fields
-              .with({
-                entryType: entry.type,
-                url: entry.url,
-                path: entry.path,
-                title: entry.title,
-                alinea: entry.alinea
-              })
-              .with(
-                Functions.iif(
-                  LinkType.conditionOf(entry, 'file'),
-                  {
-                    src: entry.location,
-                    extension: entry.extension,
-                    size: entry.size
-                  },
-                  {}
-                )
-              )
-              .with(
-                Functions.iif(
-                  LinkType.conditionOf(entry, 'image'),
-                  {
-                    src: entry.location,
-                    extension: entry.extension,
-                    size: entry.size,
-                    hash: entry.hash,
-                    width: entry.width,
-                    height: entry.height,
-                    averageColor: entry.averageColor,
-                    blurHash: entry.blurHash
-                  },
-                  {}
-                )
-              )
-          }),
-        url: row.fields
-      }
+    transform(field): Expr<Q> {
+      const row = field.each() as unknown as Cursor<Reference>
+      const cases: Record<string, SelectionInput> = {}
+      for (const picker of pickers) cases[picker.type] = picker.select(row)
       const cursor = row.select(row.get('type').case(cases, row.fields))
       if (!options.multiple) return cursor.first().toExpr()
       return cursor.toExpr()

@@ -1,4 +1,3 @@
-import type {Backend} from '@alinea/backend/Backend'
-import {Config} from '@alinea/core'
-import {config} from './config.js'
-export const backend: Backend<Config.infer<typeof config>>
+import {Backend} from '@alinea/backend/Backend'
+import {Page} from './index.js'
+export const backend: Backend<Page>

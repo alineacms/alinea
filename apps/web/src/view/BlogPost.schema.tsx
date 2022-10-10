@@ -1,4 +1,4 @@
-import {Schema, type} from '@alinea/core'
+import {type} from '@alinea/core'
 import {date} from '@alinea/input.date'
 import {link} from '@alinea/input.link'
 import {object} from '@alinea/input.object'
@@ -19,5 +19,3 @@ export const BlogPostSchema = type('Blog post', {
   }),
   blocks: BlocksSchema
 })
-
-export type BlogPostSchema = Schema.TypeOf<typeof BlogPostSchema>

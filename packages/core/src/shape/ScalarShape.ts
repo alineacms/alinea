@@ -1,17 +1,12 @@
 import * as Y from 'yjs'
 import {createError} from '../ErrorWithCode'
-import {Hint} from '../Hint'
 import {Label} from '../Label'
 import {Shape} from '../Shape'
 
 export type ScalarMutator<T> = (value: T) => void
 
 export class ScalarShape<T> implements Shape<T, ScalarMutator<T>> {
-  constructor(
-    public label: Label,
-    public hint: Hint,
-    private initialValue?: T
-  ) {}
+  constructor(public label: Label, private initialValue?: T) {}
   innerTypes() {
     return []
   }

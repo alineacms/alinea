@@ -1,10 +1,10 @@
+import {Page} from '@alinea/content'
 import {fromModule} from '@alinea/ui'
 import css from './ExampleBlock.module.scss'
-import {ExampleBlockSchema} from './ExampleBlock.schema'
 
 const styles = fromModule(css)
 
-export function ExampleBlock({code}: ExampleBlockSchema) {
+export function ExampleBlock({code}: Page.ExampleBlock) {
   return (
     <div>
       <iframe

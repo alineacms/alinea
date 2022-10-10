@@ -1,4 +1,4 @@
-import {Schema, schema, type} from '@alinea/core'
+import {schema, type} from '@alinea/core'
 import {link} from '@alinea/input.link'
 import {list} from '@alinea/input.list'
 import {object} from '@alinea/input.object'
@@ -62,5 +62,3 @@ export const HomePageSchema = type(
     }).configure({icon: IcRoundLink})
   )
 )
-
-export type HomePageSchema = Schema.TypeOf<typeof HomePageSchema>

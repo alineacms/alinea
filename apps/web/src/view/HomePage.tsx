@@ -1,3 +1,4 @@
+import {Page} from '@alinea/content'
 import {fromModule, HStack, px, Stack, VStack} from '@alinea/ui'
 import {IcRoundOpenInNew} from '@alinea/ui/icons/IcRoundOpenInNew'
 import {MdiSourceBranch} from '@alinea/ui/icons/MdiSourceBranch'
@@ -7,7 +8,6 @@ import heroBg from '../media/hero.jpg'
 import {Blocks} from './blocks/Blocks'
 import {CodeVariantsBlock} from './blocks/CodeVariantsBlock'
 import css from './HomePage.module.scss'
-import {HomePageSchema} from './HomePage.schema'
 import {Newsletter} from './layout/engage/Newsletter'
 import {Feature, Features} from './layout/Features'
 import {Hero} from './layout/Hero'
@@ -17,7 +17,7 @@ import {WebTypo} from './layout/WebTypo'
 
 const styles = fromModule(css)
 
-export function HomePage(props: HomePageSchema) {
+export function HomePage(props: Page.Home) {
   return (
     <div className={styles.root()}>
       <HomePageHero {...props} />
@@ -248,7 +248,7 @@ export function HomePage(props: HomePageSchema) {
   )
 }
 
-function HomePageHero({headline, byline, action, screenshot}: HomePageSchema) {
+function HomePageHero({headline, byline, action, screenshot}: Page.Home) {
   return (
     <div
       className={styles.hero()}

@@ -24,6 +24,7 @@ export async function copyStaticFiles({
   await copy(
     'package.json',
     'index.js',
+    'index.d.ts',
     'drafts.js',
     'backend.cjs',
     'backend.js',
@@ -32,13 +33,15 @@ export async function copyStaticFiles({
     'store.d.ts',
     'pages.d.ts',
     'pages.js',
-    'pages.cjs'
+    'pages.cjs',
+    'schema.js'
   )
 
-  await writeFileIfContentsDiffer(
+  /*await writeFileIfContentsDiffer(
     path.join(outDir, 'config.d.ts'),
     configType(path.resolve(configLocation))
-  )
+  )*/
+
   await writeFileIfContentsDiffer(path.join(outDir, '.gitignore'), `*\n!.keep`)
   await writeFileIfContentsDiffer(
     path.join(outDir, '.keep'),

@@ -1,5 +1,4 @@
 import * as Y from 'yjs'
-import {Hint} from './Hint'
 import {Label} from './Label'
 import {ListShape} from './shape/ListShape'
 import {RecordShape} from './shape/RecordShape'
@@ -17,7 +16,6 @@ export interface ShapeInfo {
 
 export interface Shape<T = any, M = any> {
   label: Label
-  hint: Hint
   innerTypes(parents: Array<string>): Array<ShapeInfo>
   create(): T
   typeOfChild<C>(yValue: any, child: string): Shape<C>
@@ -29,17 +27,8 @@ export interface Shape<T = any, M = any> {
 }
 
 export namespace Shape {
-  export function String(label: Label, initialValue?: string) {
-    return Scalar<string>(label, Hint.String(), initialValue)
-  }
-  export function Number(label: Label, initialValue?: number) {
-    return Scalar<number>(label, Hint.Number(), initialValue)
-  }
-  export function Boolean(label: Label, initialValue?: boolean) {
-    return Scalar<boolean>(label, Hint.Boolean(), initialValue)
-  }
-  export function Scalar<T>(label: Label, hint: Hint, initialValue?: T) {
-    return new ScalarShape<T>(label, hint, initialValue)
+  export function Scalar<T>(label: Label, initialValue?: T) {
+    return new ScalarShape<T>(label, initialValue)
   }
   export function RichText(
     label: Label,

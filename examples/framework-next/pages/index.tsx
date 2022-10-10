@@ -1,3 +1,4 @@
+import {Page} from '@alinea/content'
 import Head from 'next/head'
 import Container from '../components/container'
 import HeroPost from '../components/hero-post'
@@ -5,11 +6,10 @@ import Intro from '../components/intro'
 import Layout from '../components/layout'
 import MoreStories from '../components/more-stories'
 import {createApi} from '../lib/api'
-import {BlogPost, HomePage} from '../schema'
 
 type Props = {
-  home: HomePage
-  allPosts: BlogPost[]
+  home: Page.Home
+  allPosts: Page.BlogPost[]
 }
 
 export default function Index({home, allPosts}: Props) {

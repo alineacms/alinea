@@ -40,36 +40,13 @@ export class ListShape<T>
         return [
           key,
           new RecordShape(label, {
-            id: Shape.String('Id'),
-            index: Shape.String('Index'),
-            type: Shape.String('Type'),
+            id: Shape.Scalar('Id'),
+            index: Shape.Scalar('Index'),
+            type: Shape.Scalar('Type'),
             ...type.properties
           })
         ]
       })
-    )
-  }
-  get hint() {
-    return Hint.Array(
-      Hint.Union(
-        Object.entries(this.shapes).map(([name, value]) => {
-          switch (value.hint.type) {
-            case 'object':
-              const {type, ...fields} = value.hint.fields
-              if (!Hint.isDefinitionName(name))
-                return Hint.Object({
-                  type: Hint.Literal(name),
-                  ...fields
-                })
-              return Hint.Definition(name, {
-                type: Hint.Literal(name),
-                ...fields
-              })
-            default:
-              throw 'assert'
-          }
-        })
-      )
     )
   }
   innerTypes(parents: Array<string>): Array<ShapeInfo> {

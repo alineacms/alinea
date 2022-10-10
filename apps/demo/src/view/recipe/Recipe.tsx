@@ -1,17 +1,16 @@
-import css from './Recipe.module.scss'
-
+import {Page} from '@alinea/content'
 import {fromModule} from '@alinea/ui'
 import {DemoHeader} from '../layout/DemoHeader'
 import {DemoLayout} from '../layout/DemoLayout'
 import {DemoPage} from '../layout/DemoPage'
 import {DemoText} from '../layout/DemoText'
 import {DemoTypo} from '../layout/DemoType'
-import {RecipeSchema} from './Recipe.schema'
+import css from './Recipe.module.scss'
 
 const styles = fromModule(css)
 
 type RelatedProps = {
-  related: RecipeSchema[]
+  related: Array<Page.Recipe>
   category: string
 }
 
@@ -21,7 +20,7 @@ export function Recipe({
   intro,
   ingredients,
   instructions
-}: RecipeSchema & RelatedProps) {
+}: Page.Recipe & RelatedProps) {
   return (
     <DemoLayout>
       <DemoHeader {...header} />

@@ -1,14 +1,10 @@
-import css from './DemoRecipes.module.scss'
-
+import {Page} from '@alinea/content'
 import {fromModule} from '@alinea/ui'
-import {RecipeSchema} from '../recipe/Recipe.schema'
-import {DemoRecipesSchema} from './DemoRecipes.schema'
+import css from './DemoRecipes.module.scss'
 
 const styles = fromModule(css)
 
-export function DemoRecipes(
-  props: DemoRecipesSchema & {children: RecipeSchema[]}
-) {
+export function DemoRecipes(props: Page.Recipes & {children: Page.Recipe[]}) {
   const {title, children} = props
 
   return <div className={styles.root()}>{JSON.stringify(props)}</div>

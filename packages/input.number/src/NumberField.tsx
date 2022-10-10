@@ -1,4 +1,4 @@
-import {Field, Label, Shape} from '@alinea/core'
+import {Field, Hint, Label, Shape} from '@alinea/core'
 
 export type NumberOptions = {
   /** Width of the field in the dashboard UI (0-1) */
@@ -29,7 +29,8 @@ export function createNumber(
   options: NumberOptions = {}
 ): NumberField {
   return {
-    shape: Shape.Number(label, options.initialValue),
+    shape: Shape.Scalar(label, options.initialValue),
+    hint: Hint.Number(),
     label,
     options,
     hidden: options.hidden

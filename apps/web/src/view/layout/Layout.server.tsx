@@ -11,12 +11,15 @@ type PageDetails = {
 const fullLayout = new Set(['API', 'Doc'])
 
 export async function layoutQuery(pages: Pages, page: PageDetails) {
-  const data = await pages.whereType('Home').select(home => ({
-    header: {
-      links: home.links
-    },
-    footer: home.footer
-  }))
+  const data = await pages
+    .whereType('Home')
+    .select(home => ({
+      header: {
+        links: home.links
+      },
+      footer: home.footer
+    }))
+    .first()
   return {
     meta: {
       title: page.title,
@@ -24,7 +27,7 @@ export async function layoutQuery(pages: Pages, page: PageDetails) {
     },
     is: {home: page.type === 'Home'},
     ...data,
-    header: {...data.header, menu: await menuQuery(pages)}
+    header: {...data!.header, menu: await menuQuery(pages)}
   }
 }
 

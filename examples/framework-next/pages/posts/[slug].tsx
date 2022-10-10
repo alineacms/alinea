@@ -1,3 +1,4 @@
+import {Page} from '@alinea/content'
 import {GetStaticPropsContext} from 'next'
 import ErrorPage from 'next/error'
 import Head from 'next/head'
@@ -10,11 +11,10 @@ import PostHeader from '../../components/post-header'
 import PostTitle from '../../components/post-title'
 import {createApi} from '../../lib/api'
 import {CMS_NAME} from '../../lib/constants'
-import type {BlogPost} from '../../schema'
 
 type Props = {
-  post: BlogPost
-  morePosts: BlogPost[]
+  post: Page.BlogPost
+  morePosts: Page.BlogPost[]
   preview?: boolean
 }
 
