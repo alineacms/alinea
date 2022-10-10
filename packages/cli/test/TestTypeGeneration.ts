@@ -1,23 +1,24 @@
 import {generateHint} from '@alinea/cli/generate/GenerateTypes'
 import {Hint} from '@alinea/core/Hint'
+import {code} from '@alinea/core/util/CodeGen'
 import {test} from 'uvu'
 import * as assert from 'uvu/assert'
 
 test('string type', () => {
   const string = Hint.String()
-  const type = generateHint(string)
+  const type = String(generateHint(string))
   assert.is(type, 'string')
 })
 
 test('number type', () => {
   const number = Hint.Number()
-  const type = generateHint(number)
+  const type = String(generateHint(number))
   assert.is(type, 'number')
 })
 
 test('boolean type', () => {
   const boolean = Hint.Boolean()
-  const type = generateHint(boolean)
+  const type = String(generateHint(boolean))
   assert.is(type, 'boolean')
 })
 
@@ -25,8 +26,8 @@ test('record type', () => {
   const record = Hint.Object({
     field1: Hint.String()
   })
-  const type = generateHint(record)
-  assert.is(type, `{'field1': string}`)
+  const type = String(generateHint(record))
+  assert.is(type, `{\n  field1: string\n}`)
 })
 
 test('list type', () => {
@@ -42,10 +43,18 @@ test('list type', () => {
       })
     ])
   )
-  const type = generateHint(list)
+  const type = String(generateHint(list))
   assert.is(
     type,
-    `Array<{'type': 'TypeA', 'id': string, 'index': string, 'field1': string} | {'type': 'TypeB', 'id': string, 'index': string, 'field1': string}>`
+    code`
+      Array<{
+        type: "TypeA"
+        field1: string
+      } | {
+        type: "TypeB"
+        field1: string
+      }>
+    `.toString()
   )
 })
 
