@@ -15,8 +15,6 @@ export type ListOptions<T, Q> = {
   optional?: boolean
   /** Display a minimal version */
   inline?: boolean
-  /** Modify value returned when queried through `Pages` */
-  transform?: (field: Expr<Array<T>>, pages: Pages<any>) => Expr<Q> | undefined
   /** Hide this list field */
   hidden?: boolean
 }
@@ -61,7 +59,7 @@ export function createList<T, Q = Array<T & ListRow>>(
     hint: listHint(schema),
     label,
     options,
-    transform: options.transform || query<T, Q>(schema),
+    transform: query<T, Q>(schema),
     hidden: options.hidden
   }
 }

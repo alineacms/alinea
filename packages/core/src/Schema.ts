@@ -92,21 +92,13 @@ export class Schema<T = any> {
     return this.typeMap.entries()[Symbol.iterator]()
   }
 
-  /** Get a type by name */
-  type<K extends TypesOf<T>>(name: K): Type<Extract<T, {type: K}>> | undefined
-  type(name: string): Type<any> | undefined
-  type(name: any): any {
+  type(name: string): Type<any> | undefined {
     return this.typeMap.get(name)
   }
 
   /** Keys of every type */
   get keys() {
     return Array.from(this.typeMap.keys())
-  }
-
-  /** A generic collection used to query any type in this schema */
-  collection(): Collection<T> {
-    return new Collection('Entry')
   }
 }
 

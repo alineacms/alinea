@@ -305,7 +305,7 @@ export class Server<T = any> implements Hub<T> {
     return this.options.drafts
   }
 
-  loadPages(options: PagesOptions = {}) {
+  loadPages(options: PagesOptions = {}): Pages<T> {
     const {config} = this.options
     const logger = new Logger('Load pages')
     const store = options.previewToken
