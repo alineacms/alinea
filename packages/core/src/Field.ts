@@ -46,7 +46,7 @@ export namespace Field {
 
 export interface Field<V, M, Q = V> {
   shape: Shape<V, M>
-  hint?: Hint
+  hint: Hint
   label: Label
   initialValue?: V
   view?: FieldRenderer<V, M, Field<V, M, Q>>

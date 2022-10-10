@@ -9,6 +9,7 @@ export type Hint =
   | Hint.Definition
   | Hint.Object
   | Hint.Union
+  | Hint.Intersection
   | Hint.Extern
 
 const {entries, keys, values} = Object
@@ -35,6 +36,7 @@ export namespace Hint {
     type: 'definition'
     name: string
     fields: Lazy<Record<string, Hint>>
+    extend: Hint[]
   }
   export interface Object {
     type: 'object'
@@ -42,6 +44,10 @@ export namespace Hint {
   }
   export interface Union {
     type: 'union'
+    options: Hint[]
+  }
+  export interface Intersection {
+    type: 'intersection'
     options: Hint[]
   }
   export interface ExternLocation {
@@ -74,15 +80,19 @@ export namespace Hint {
   }
   export function Definition(
     name: string,
-    fields: Lazy<Record<string, Hint>>
+    fields: Lazy<Record<string, Hint>>,
+    ...extend: Hint[]
   ): Hint {
-    return {type: 'definition', name, fields}
+    return {type: 'definition', name, fields, extend}
   }
   export function Object(fields: Record<string, Hint>): Hint {
     return {type: 'object', fields}
   }
   export function Union(options: Hint[]): Hint {
     return {type: 'union', options}
+  }
+  export function Intersection(...options: Hint[]): Hint {
+    return {type: 'intersection', options}
   }
   export function Extern(from: ExternLocation, ...typeParams: Hint[]): Hint {
     return {type: 'extern', from, typeParams}
@@ -99,6 +109,38 @@ export namespace Hint {
     return identifier.charAt(0).toUpperCase() === identifier[0]
   }
 
+  export function externs(
+    hints: Hint[],
+    map = new Map<string, Set<string>>()
+  ): Map<string, Set<string>> {
+    for (const hint of hints)
+      switch (hint.type) {
+        case 'array':
+          externs([hint.inner], map)
+          continue
+        case 'definition':
+          const fields = Lazy.get(hint.fields)
+          externs(values(fields).concat(hint.extend), map)
+          continue
+        case 'object':
+          externs(values(hint.fields), map)
+          continue
+        case 'intersection':
+        case 'union':
+          externs(hint.options, map)
+          continue
+        case 'extern':
+          if (map.has(hint.from.package)) {
+            map.get(hint.from.package)!.add(hint.from.name)
+          } else {
+            map.set(hint.from.package, new Set([hint.from.name]))
+          }
+          externs(hint.typeParams, map)
+          continue
+      }
+    return map
+  }
+
   export function* definitions(
     hints: Hint[],
     parents: string[] = []
@@ -112,12 +154,14 @@ export namespace Hint {
           const fields = Lazy.get(hint.fields)
           for (const [name, inner] of entries(fields))
             yield* definitions([inner], parents.concat(hint.name, name))
+          yield* definitions(hint.extend, parents.concat(hint.name))
           yield {...hint, parents}
           continue
         case 'object':
           for (const [name, inner] of entries(hint.fields))
             yield* definitions([inner], parents.concat(name))
           continue
+        case 'intersection':
         case 'union':
           yield* definitions(hint.options, parents)
           continue
@@ -159,6 +203,7 @@ export namespace Hint {
             return equals(a.fields[key], bRecord.fields[key])
           })
         )
+      case 'intersection':
       case 'union':
         const bUnion = b as Hint.Union
         return a.options.every((option, i) => {

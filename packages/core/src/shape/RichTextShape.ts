@@ -88,39 +88,12 @@ export class RichTextShape<T> implements Shape<TextDoc<T>, RichTextMutator<T>> {
           return [
             key,
             new RecordShape(value.label, {
-              type: Shape.String('Type'),
+              type: Shape.Scalar('Type'),
               ...value.properties
             })
           ]
         })
       )
-  }
-  get hint() {
-    const from = {name: 'TextDoc', package: '@alinea/core'}
-    if (this.shapes)
-      return Hint.Extern(
-        from,
-        Hint.Union(
-          Object.entries(this.shapes).map(([name, shape]) => {
-            switch (shape.hint.type) {
-              case 'object':
-                const {type, ...fields} = shape.hint.fields
-                if (!Hint.isDefinitionName(name))
-                  return Hint.Object({
-                    type: Hint.Literal(name),
-                    ...fields
-                  })
-                return Hint.Definition(name, {
-                  type: Hint.Literal(name),
-                  ...fields
-                })
-              default:
-                throw 'assert'
-            }
-          })
-        )
-      )
-    return Hint.Extern(from)
   }
   innerTypes(parents: Array<string>) {
     if (!this.shapes) return []

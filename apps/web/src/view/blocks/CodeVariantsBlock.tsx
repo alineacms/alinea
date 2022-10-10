@@ -1,3 +1,4 @@
+import {Page} from '@alinea/content'
 import {fromModule, HStack} from '@alinea/ui'
 import {
   createContext,
@@ -8,7 +9,6 @@ import {
 } from 'react'
 import {WebTypo} from '../layout/WebTypo'
 import css from './CodeVariantsBlock.module.scss'
-import {CodeVariantsBlockSchema} from './CodeVariantsBlock.schema'
 
 const styles = fromModule(css)
 
@@ -43,7 +43,7 @@ export function CodeVariantsProvider({children}: PropsWithChildren<{}>) {
 }
 
 // Todo: fix accessibility when picking a component framework
-export function CodeVariantsBlock({variants}: CodeVariantsBlockSchema) {
+export function CodeVariantsBlock({variants}: Page.CodeVariantsBlock) {
   const [preferences, togglePreference] = useContext(context)!
   if (!variants) return null
   const names = variants.map(variant => variant.name)

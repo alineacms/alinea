@@ -1,12 +1,16 @@
+import {Page} from '@alinea/content'
 import {fromModule} from '@alinea/ui'
-import {Fragment} from 'react'
+import {ComponentType, Fragment} from 'react'
 import {Button} from '../layout/Button'
 import {Image} from '../layout/Image'
 import {WebText} from '../layout/WebText'
 import css from './ImagetextBlock.module.scss'
-import {ImagetextBlockSchema} from './ImagetextBlock.schema'
 
 const styles = fromModule(css)
+
+export interface ImagetextBlockProps extends Page.ImagetextBlock {
+  container?: ComponentType
+}
 
 export function ImagetextBlock({
   image,
@@ -14,14 +18,16 @@ export function ImagetextBlock({
   text,
   button,
   container
-}: ImagetextBlockSchema) {
+}: ImagetextBlockProps) {
   const Wrapper = container || Fragment
   if (!image?.src && !text && !button) return null
 
   return (
     <div className={styles.root()}>
       <Wrapper>
-        <div className={styles.root.row({right: image_position === 'right'})}>
+        <div
+          className={styles.root.row({right: image_position[0] === 'right'})}
+        >
           {image?.src && (
             <div className={styles.root.image()}>
               <Image

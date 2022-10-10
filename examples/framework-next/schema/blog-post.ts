@@ -21,5 +21,3 @@ export const BlogPost = alinea.type(
     })
   )
 )
-
-export type BlogPost = alinea.infer<typeof BlogPost>

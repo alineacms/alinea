@@ -1,14 +1,14 @@
+import {Page} from '@alinea/content'
 import {fromModule, Typo} from '@alinea/ui'
 import {IcRoundCheck} from '@alinea/ui/icons/IcRoundCheck'
 import {useRef} from 'react'
 import {useClipboard} from 'use-clipboard-copy'
 import MdiContentCopy from '../../icons/MdiContentCopy'
 import css from './CodeBlock.module.scss'
-import {CodeBlockSchema} from './CodeBlock.schema'
 
 const styles = fromModule(css)
 
-export function CodeBlock({code, compact, fileName}: CodeBlockSchema) {
+export function CodeBlock({code, compact, fileName}: Page.CodeBlock) {
   const codeRef = useRef<HTMLDivElement>(null)
   const clipboard = useClipboard({
     copiedTimeout: 1200

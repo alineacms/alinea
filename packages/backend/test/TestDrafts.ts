@@ -30,7 +30,7 @@ const Doc = type('Doc', {
   path: path('Path')
 })
 
-const DocType = new Type(undefined!, 'Doc', Doc)
+const DocType = new Type('Doc', Doc)
 
 const drafts = new FileDrafts({
   fs: fs.promises as any,

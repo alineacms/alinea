@@ -1,12 +1,16 @@
+import {Page} from '@alinea/content'
 import {fromModule} from '@alinea/ui'
-import {Fragment} from 'react'
+import {ComponentType, Fragment} from 'react'
 import {WebText} from '../layout/WebText'
 import css from './ColumnsBlock.module.scss'
-import {ColumnsBlockSchema} from './ColumnsBlock.schema'
 
 const styles = fromModule(css)
 
-export function ColumnsBlock({items, container}: ColumnsBlockSchema) {
+export interface ColumnsBlockProps extends Page.ColumnsBlock {
+  container?: ComponentType
+}
+
+export function ColumnsBlock({items, container}: ColumnsBlockProps) {
   const Wrapper = container || Fragment
   if (items?.length <= 0) return null
 

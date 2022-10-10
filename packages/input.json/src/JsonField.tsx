@@ -1,4 +1,4 @@
-import {Field, Label, Shape} from '@alinea/core'
+import {Field, Hint, Label, Shape} from '@alinea/core'
 import type {ComponentType} from 'react'
 
 /** Optional settings to configure a text field */
@@ -32,7 +32,8 @@ export interface JsonField extends Field.Scalar<any> {
 /** Create a text field configuration */
 export function createJson(label: Label, options: JsonOptions = {}): JsonField {
   return {
-    shape: Shape.String(label, options.initialValue),
+    shape: Shape.Scalar(label, options.initialValue),
+    hint: Hint.String(),
     label,
     options,
     hidden: options.hidden

@@ -3,17 +3,23 @@ import {
   Entry,
   Field,
   Label,
-  SchemaConfig,
+  Schema,
   Shape,
   TextDoc,
   TextNode
 } from '@alinea/core'
+import {richTextHint} from '@alinea/core/util/Hints'
 import {Expr, SelectionInput} from '@alinea/store'
 
 /** Optional settings to configure a rich text field */
 export type RichTextOptions<T, Q> = {
+  /**
+   * @deprecated use the schema property
+   * Allow these blocks to be created between text fragments
+   */
+  blocks?: Schema<T>
   /** Allow these blocks to be created between text fragments */
-  blocks?: SchemaConfig<T>
+  schema?: Schema<T>
   /** Width of the field in the dashboard UI (0-1) */
   width?: number
   /** Add instructional text to a field */
@@ -39,7 +45,7 @@ export interface RichTextField<T, Q = TextDoc<T>> extends Field.Text<T, Q> {
   options: RichTextOptions<T, Q>
 }
 
-function query<T, Q>(schema: SchemaConfig<T>) {
+function query<T, Q>(schema: Schema<T>) {
   return (field: Expr<TextDoc<T>>, pages: Pages<any>): Expr<Q> | undefined => {
     const row = field.each()
     const cases: Record<string, SelectionInput> = {}
@@ -108,8 +114,11 @@ export function createRichText<T, Q = TextDoc<T>>(
   label: Label,
   options: RichTextOptions<T, Q> = {}
 ): RichTextField<T, Q> {
+  const schema = options.schema || options.blocks
+  const shape = Shape.RichText(label, schema?.shape, options.initialValue)
   return {
-    shape: Shape.RichText(label, options.blocks?.shape, options.initialValue),
+    shape,
+    hint: richTextHint(schema),
     label,
     options,
     transform: options.transform || transform<T, Q>(options),

@@ -1,5 +1,5 @@
-import {backend} from '@alinea/content/backend.js'
-import {TypeOf} from 'alinea'
+import {initPages} from '@alinea/content/pages'
+import {alinea} from 'alinea'
 import {GetStaticPropsContext} from 'next'
 import {membersOf, packageName, packagePaths, typeNav} from '../../data/Types'
 import {layoutQuery} from '../../view/layout/Layout.server'
@@ -14,7 +14,7 @@ export async function getStaticPaths() {
 }
 
 export async function getStaticProps(context: GetStaticPropsContext) {
-  const pages = backend.loadPages('web')
+  const pages = initPages()
   const slug = context.params?.path as Array<string> | null
   const selected = slug?.join('/')!
   const title = packageName(selected)
@@ -32,7 +32,9 @@ export async function getStaticProps(context: GetStaticPropsContext) {
   return {props}
 }
 
-export type TypePageProps = TypeOf<ReturnType<typeof getStaticProps>>['props']
+export type TypePageProps = alinea.infer<
+  ReturnType<typeof getStaticProps>
+>['props']
 
 export {TypePage as default} from '../../view/TypePage'
 

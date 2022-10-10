@@ -1,6 +1,5 @@
-import {schema, Schema, type} from '@alinea/core'
+import {schema, type} from '@alinea/core'
 import {richText} from '@alinea/input.richtext'
-import {ComponentType} from 'react'
 import {ChapterLinkBlockSchema} from './ChapterLinkBlock.schema'
 import {CodeBlockSchema} from './CodeBlock.schema'
 import {CodeVariantsBlockSchema} from './CodeVariantsBlock.schema'
@@ -21,9 +20,3 @@ export const TextBlockSchema = type('Body text', {
     inline: true
   })
 })
-
-export type TextBlockSchema = Schema.TypeOf<typeof TextBlockSchema> & {
-  id: string
-  type: 'TextBlock'
-  container?: ComponentType
-}

@@ -40,9 +40,10 @@ export namespace Schema {
     : never
 }
 
-export class SchemaConfig<T = any> {
+export class Schema<T = any> {
   shape: Record<string, RecordShape<any>>
   hint: Hint
+  typeMap = new Map<string, Type<any>>()
 
   constructor(public types: LazyRecord<TypeConfig<any>>) {
     this.shape = Object.fromEntries(
@@ -50,39 +51,29 @@ export class SchemaConfig<T = any> {
         return [key, type.shape]
       })
     )
+    for (const [name, type] of LazyRecord.iterate(types))
+      this.typeMap.set(name, type.toType(name))
     this.hint = Hint.Union(
-      LazyRecord.iterate(types).map(([key, type]) => {
+      Array.from(this.typeMap.values()).map(type => {
         return type.hint
       })
     )
+  }
+
+  validate() {
+    for (const type of this.allTypes)
+      if (!type.hasField('title') || !type.hasField('path'))
+        throw createError(
+          `Missing title or path field in type ${type.name}, see https://alinea.sh/docs/reference/titles`
+        )
   }
 
   configEntries() {
     return LazyRecord.iterate(this.types)
   }
 
-  concat<X>(that: SchemaConfig<X>): SchemaConfig<T | X> {
+  concat<X>(that: Schema<X>): Schema<T | X> {
     return schema(LazyRecord.concat(this.types, that.types)) as any
-  }
-
-  toSchema(): Schema<T> {
-    return new Schema(this)
-  }
-}
-
-/** Describes the different types of entries */
-export class Schema<T = any> extends SchemaConfig<T> {
-  typeMap = new Map<string, Type<any>>()
-
-  constructor(config: SchemaConfig<T>) {
-    super(config.types)
-    for (const [name, type] of LazyRecord.iterate(config.types)) {
-      if (!type.hasField('title') || !type.hasField('path'))
-        throw createError(
-          `Missing title or path field in type ${name}, see https://alinea.sh/docs/reference/titles`
-        )
-      this.typeMap.set(name, type.toType(name))
-    }
   }
 
   get allTypes() {
@@ -122,6 +113,6 @@ export class Schema<T = any> extends SchemaConfig<T> {
 /** Create a schema, expects a string record of Type instances */
 export function schema<Types extends LazyRecord<any /* TypeConfig */>>(
   types: Types
-): SchemaConfig<TypeToEntry<TypeToRows<Types>>> {
-  return new SchemaConfig(types)
+): Schema<TypeToEntry<TypeToRows<Types>>> {
+  return new Schema(types)
 }

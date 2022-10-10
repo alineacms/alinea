@@ -1,4 +1,4 @@
-import {Schema, type} from '@alinea/core'
+import {type} from '@alinea/core'
 import {text} from '@alinea/input.text'
 import {IcRoundHdrStrong} from '@alinea/ui/icons/IcRoundHdrStrong'
 import {transformTypes} from './TypesBlock.server'
@@ -9,8 +9,3 @@ export const TypesBlockSchema = type('Types', {
   icon: IcRoundHdrStrong,
   transform: transformTypes
 })
-
-export type TypesBlockSchema = Schema.TypeOf<typeof TypesBlockSchema> & {
-  id: string
-  type: 'TypesBlock'
-}

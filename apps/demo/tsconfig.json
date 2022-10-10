@@ -5,11 +5,7 @@
     "strict": true,
     "noEmit": true,
     "emitDeclarationOnly": false,
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ],
+    "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
     "forceConsistentCasingInFileNames": true,
     "esModuleInterop": true,
@@ -20,10 +16,5 @@
     "moduleResolution": "node",
     "incremental": true
   },
-  "include": [
-    "src"
-  ],
-  "exclude": [
-    "node_modules"
-  ]
+  "include": ["src"]
 }

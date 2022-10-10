@@ -1,4 +1,4 @@
-import {Schema, type} from '@alinea/core'
+import {type} from '@alinea/core'
 import {link} from '@alinea/input.link'
 import {object} from '@alinea/input.object'
 import {path} from '@alinea/input.path'
@@ -21,5 +21,3 @@ export const DemoHomeSchema = type('Home', {
     })
   })
 })
-
-export type DemoHomeSchema = Schema.TypeOf<typeof DemoHomeSchema>

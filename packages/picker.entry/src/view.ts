@@ -8,4 +8,4 @@ export const entryPicker = Picker.withView(createEntryPicker, {
   viewRow: EntryPickerRow
 })
 
-export {EntryReference} from './EntryPicker'
+export {EntryReference, FileReference, ImageReference} from './EntryPicker'

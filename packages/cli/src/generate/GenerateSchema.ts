@@ -8,10 +8,8 @@ export async function generateSchema(
   {outDir}: GenerateContext,
   config: Config
 ) {
-  await Promise.all([
-    writeFileIfContentsDiffer(
-      path.join(outDir, 'index.d.ts'),
-      generateTypes(config).toString()
-    )
-  ])
+  return writeFileIfContentsDiffer(
+    path.join(outDir, 'schema.d.ts'),
+    generateTypes(config).toString()
+  )
 }

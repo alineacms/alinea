@@ -14,5 +14,3 @@ export const HomePage = alinea.type('Homepage', {
     condition: Entry.type.is('BlogPost')
   })
 })
-
-export type HomePage = alinea.infer<typeof HomePage>

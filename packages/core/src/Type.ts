@@ -83,19 +83,14 @@ export class TypeConfig<R = any, T = R> {
   }
 
   get hint() {
-    switch (this.shape.hint.type) {
-      case 'object':
-        const fields: Record<string, Field<any, any>> = {}
-        for (const section of this.sections) {
-          if (section.fields) Object.assign(fields, Lazy.get(section.fields))
-        }
-        const hints = Object.entries(fields).map(([key, field]) => {
-          return [key, field.hint || field.shape.hint]
-        })
-        return Hint.Object(Object.fromEntries(hints))
-      default:
-        throw 'assert'
+    const fields: Record<string, Field<any, any>> = {}
+    for (const section of this.sections) {
+      if (section.fields) Object.assign(fields, Lazy.get(section.fields))
     }
+    const hints = Object.entries(fields).map(([key, field]) => {
+      return [key, field.hint]
+    })
+    return Hint.Object(Object.fromEntries(hints))
   }
 
   /** Create a new empty instance of this type's fields */
@@ -174,22 +169,17 @@ export class Type<R = any, T = R>
   }
 
   get hint() {
-    switch (this.shape.hint.type) {
-      case 'object':
-        const fields: Record<string, Field<any, any>> = {}
-        for (const section of this.sections) {
-          if (section.fields) Object.assign(fields, Lazy.get(section.fields))
-        }
-        const hints = Object.entries(fields).map(([key, field]) => {
-          return [key, field.hint || field.shape.hint]
-        })
-        return Hint.Definition(this.name, {
-          type: Hint.Literal(this.name),
-          ...Object.fromEntries(hints)
-        })
-      default:
-        throw 'assert'
+    const fields: Record<string, Field<any, any>> = {}
+    for (const section of this.sections) {
+      if (section.fields) Object.assign(fields, Lazy.get(section.fields))
     }
+    const hints = Object.entries(fields).map(([key, field]) => {
+      return [key, field.hint]
+    })
+    return Hint.Definition(this.name, {
+      type: Hint.Literal(this.name),
+      ...Object.fromEntries(hints)
+    })
   }
 
   /** Create a new Entry instance of this type */

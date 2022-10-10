@@ -16,7 +16,6 @@ const demoSchema = schema({
 })
 
 const demo = workspace('Demo', {
-  schema: demoSchema,
   typeNamespace: 'content',
   source: './content',
   mediaDir: './public',
@@ -45,6 +44,7 @@ const demo = workspace('Demo', {
 })
 
 export const config = createConfig({
+  schema: demoSchema,
   workspaces: {demo},
   backend: {
     configureBackend({config, createStore}) {

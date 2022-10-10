@@ -18,8 +18,10 @@ export function createHidden<T>(
   hint: Hint,
   options: HiddenOptions<T> = {}
 ): HiddenField<T> {
+  const shape = Shape.Scalar(label, options.initialValue)
   return {
-    shape: Shape.Scalar(label, hint, options.initialValue),
+    shape,
+    hint,
     label,
     initialValue: options.initialValue,
     view: () => null

@@ -3,14 +3,13 @@ import {Auth} from './Auth'
 import {BackendConfig, BackendProps} from './BackendConfig'
 import {createError} from './ErrorWithCode'
 import {Root} from './Root'
-import {Schema, SchemaConfig} from './Schema'
+import {Schema} from './Schema'
 import {Type} from './Type'
 import {Workspace, WorkspaceConfig} from './Workspace'
 
 /** Configuration options for the dashboard */
 export class Config<T = any> {
   workspaces: Record<string, Workspace>
-  schema: Schema<T>
 
   constructor(public options: ConfigOptions<T>) {
     this.workspaces = Object.fromEntries(
@@ -18,7 +17,11 @@ export class Config<T = any> {
         return [name, new Workspace(name, config)]
       })
     ) as any
-    this.schema = options.schema.toSchema()
+    this.schema.validate()
+  }
+
+  get schema() {
+    return this.options.schema
   }
 
   get hasAuth() {
@@ -71,7 +74,7 @@ export namespace Config {
 
 /** Configuration options */
 export type ConfigOptions<T> = {
-  schema: SchemaConfig<T>
+  schema: Schema<T>
   /** A record containing workspace configurations */
   workspaces: Record<string, WorkspaceConfig>
   backend?: BackendConfig<any>

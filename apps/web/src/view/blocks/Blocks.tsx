@@ -1,20 +1,26 @@
+import {Page} from '@alinea/content'
 import {unreachable} from '@alinea/core'
 import {fromModule} from '@alinea/ui'
 import {ComponentType} from 'react'
-import {BlocksSchema} from './Blocks.schema'
+import css from './Blocks.module.scss'
 import {ColumnsBlock} from './ColumnsBlock'
 import {FeaturesBlock} from './FeaturesBlock'
+import {ImageBlock} from './ImageBlock'
 import {ImagetextBlock} from './ImagetextBlock'
 import {TextBlock} from './TextBlock'
 import {TypesBlock} from './TypesBlock'
 
-import css from './Blocks.module.scss'
-import {ImageBlock} from './ImageBlock'
-
 const styles = fromModule(css)
 
 export type BlocksViewProps = {
-  blocks: BlocksSchema
+  blocks: Array<
+    | Page.TextBlock
+    | Page.TypesBlock
+    | Page.ColumnsBlock
+    | Page.ImagetextBlock
+    | Page.ImageBlock
+    | Page.FeaturesBlock
+  >
   container?: ComponentType
 }
 

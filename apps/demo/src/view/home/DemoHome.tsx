@@ -1,5 +1,5 @@
+import {Page} from '@alinea/content'
 import {fromModule, VStack} from '@alinea/ui'
-import type {HomeProps} from '../../pages/home'
 import {DemoHeader} from '../layout/DemoHeader'
 import {DemoLayout} from '../layout/DemoLayout'
 import {DemoPage} from '../layout/DemoPage'
@@ -10,7 +10,10 @@ import css from './DemoHome.module.scss'
 
 const styles = fromModule(css)
 
-export function DemoHome({hero, recipes}: HomeProps) {
+export function DemoHome({
+  hero,
+  recipes
+}: Page.Home & {recipes: Page.Recipe[]}) {
   return (
     <DemoLayout>
       <DemoHeader {...hero.header} />

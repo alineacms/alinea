@@ -14,6 +14,7 @@ const schema = alinea.schema({
 })
 
 export const config = alinea.createConfig({
+  schema,
   dashboard: {
     staticFile: './public/admin.html',
     dashboardUrl: '/admin.html',
@@ -24,7 +25,6 @@ export const config = alinea.createConfig({
     main: alinea.workspace('Blog', {
       source: './content',
       mediaDir: './public/assets',
-      schema,
       roots: {
         pages: alinea.root('Blog', {
           icon: IcRoundInsertDriveFile,

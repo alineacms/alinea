@@ -6,9 +6,10 @@ import {Lazy} from '@alinea/core/util/Lazy'
 
 export function generateTypes({schema}: Config) {
   const types = code()
+  const hints = schema.allTypes.map(type => type.hint)
   const seen = new Map<string, Hint.TypeDefinition>()
   const rootTypes = []
-  for (const definition of schema.definitions()) {
+  for (const definition of Hint.definitions(hints)) {
     if (seen.has(definition.name)) {
       const previous = seen.get(definition.name)!
       if (Hint.equals(previous, definition)) continue
@@ -30,8 +31,14 @@ export function generateTypes({schema}: Config) {
     const fields = Object.entries(Lazy.get(definition.fields)).filter(
       ([name]) => name !== 'type'
     )
+    const isRootType = definition.parents.length === 0
+    const extend = isRootType
+      ? 'Entry'
+      : definition.extend.map(generateHint).join(', ')
     types.push(code`
-      export interface ${definition.name} extends Entry {
+      export interface ${definition.name} ${
+      extend.length > 0 ? 'extends ' + extend + ' ' : ''
+    }{
         type: ${JSON.stringify(definition.name)}
         ${fields
           .map(([name, hint]) => code`${name}: ${generateHint(hint)}`)
@@ -39,13 +46,19 @@ export function generateTypes({schema}: Config) {
       }
     `)
 
-    if (definition.parents.length === 0) rootTypes.push(definition.name)
+    if (isRootType) rootTypes.push(definition.name)
   }
+  const imports = code()
+  for (const [pkg, externs] of Hint.externs(hints).entries()) {
+    imports.push(code`
+      import {${Array.from(externs).join(', ')}} from ${JSON.stringify(pkg)}
+    `)
+  }
+
   return code`
-    import {Pages as AlineaPages} from '@alinea/backend'
-    import {Entry, TextDoc} from '@alinea/core'
-    import {ImageReference} from '@alinea/picker.image'
-    import {UrlReference} from '@alinea/picker.url'
+    import {Pages as AlineaPages} from "@alinea/backend"
+    import {Entry} from "@alinea/core"
+    ${imports}
     export namespace Page {
       ${types}
     }
@@ -75,6 +88,8 @@ export function generateHint(hint: Hint): Code {
       return generateObject(hint)
     case 'union':
       return generateUnion(hint)
+    case 'intersection':
+      return generateIntersection(hint)
     case 'extern':
       if (hint.typeParams.length === 0) return code(hint.from.name)
       return code`${hint.from.name}<${hint.typeParams
@@ -100,4 +115,9 @@ function generateObject(hint: Hint.Object): Code {
 function generateUnion(hint: Hint.Union): Code {
   if (hint.options.length === 0) return code`never`
   return code(hint.options.map(inner => `${generateHint(inner)}`).join(' | '))
+}
+
+function generateIntersection(hint: Hint.Intersection): Code {
+  if (hint.options.length === 0) return code`never`
+  return code(hint.options.map(inner => `${generateHint(inner)}`).join(' & '))
 }
