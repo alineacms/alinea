@@ -85,6 +85,14 @@ export namespace Toolbar {
       '--alinea-saturation': `${saturation * 100}%`,
       '--alinea-lightness': `${lightness * 100}%`
     }
+    const defaultWorkspace = select(
+      'Default workspace',
+      Object.fromEntries(
+        Object.entries(config.workspaces).map(([key, workspace]) => {
+          return [key, (workspace.label as string) || key]
+        })
+      )
+    )
     return (
       <HStack center gap={12} className={styles.root()} style={style}>
         <div className={styles.root.menu()} onClick={toggleNav}>
@@ -207,16 +215,7 @@ export namespace Toolbar {
                       <InputField
                         value={preferences.workspace || ''}
                         onChange={preferences.setWorkspace}
-                        field={select(
-                          'Default workspace',
-                          Object.fromEntries(
-                            Object.entries(config.workspaces).map(
-                              ([key, workspace]) => {
-                                return [key, (workspace.label as string) || key]
-                              }
-                            )
-                          )
-                        )}
+                        field={defaultWorkspace}
                       />
                     )}
                   </VStack>

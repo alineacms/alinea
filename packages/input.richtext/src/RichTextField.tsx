@@ -30,11 +30,6 @@ export type RichTextOptions<T, Q> = {
   inline?: boolean
   /** A default value */
   initialValue?: TextDoc<T>
-  /** Modify value returned when queried through `Pages` */
-  transform?: (
-    field: Expr<TextDoc<T>>,
-    pages: Pages<any>
-  ) => Expr<Q> | undefined
   /** Hide this rich text field */
   hidden?: boolean
 }
@@ -51,13 +46,13 @@ function query<T, Q>(schema: Schema<T>) {
     const cases: Record<string, SelectionInput> = {}
     let isComputed = false
     for (const [key, type] of schema.configEntries()) {
-      const selection = type.selection(row, pages)
+      const selection = type.selection(row as any, pages)
       if (!selection) continue
       cases[key] = selection
       isComputed = true
     }
     if (!isComputed) return
-    return row.select(row.get('type').case(cases, row.fields)).toExpr()
+    return row.select(row.get('type').case(cases, row.fields as any)).toExpr()
   }
 }
 
@@ -121,7 +116,7 @@ export function createRichText<T, Q = TextDoc<T>>(
     hint: richTextHint(schema),
     label,
     options,
-    transform: options.transform || transform<T, Q>(options),
+    transform: transform<T, Q>(options),
     hidden: options.hidden
   }
 }

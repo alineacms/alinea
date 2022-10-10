@@ -16,7 +16,7 @@ async function loadPage(pages: Pages, page: Page) {
 }
 
 export async function pageViewQuery(pages: Pages, url: string) {
-  const page = await pages.fetchUrl(url)
+  const page = await pages.whereUrl(url).first()
   if (!page) return null
   return {
     layout: await layoutQuery(pages, page),

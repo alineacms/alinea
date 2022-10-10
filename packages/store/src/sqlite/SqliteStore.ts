@@ -1,9 +1,10 @@
 import convertHrtime from 'convert-hrtime'
 import prettyMilliseconds from 'pretty-ms'
-import {Collection} from '../Collection'
-import {Cursor} from '../Cursor'
+import {Collection, CollectionImpl} from '../Collection'
+import {CursorImpl} from '../Cursor'
 import {Driver} from '../Driver'
 import {Expr} from '../Expr'
+import {Fields} from '../Fields'
 import {From, FromType} from '../From'
 import {sql} from '../Statement'
 import {IdLess, QueryOptions, Store} from '../Store'
@@ -59,7 +60,7 @@ export class SqliteStore implements Store {
     return result
   }
 
-  all<Row>(cursor: Cursor<Row>, options?: QueryOptions): Array<Row> {
+  all<Row>(cursor: CursorImpl<Row>, options?: QueryOptions): Array<Row> {
     const stmt = f.formatSelect(cursor.cursor, {
       formatAsJson: true,
       formatSubject: subject => sql`json_object('result', ${subject})`
@@ -78,26 +79,29 @@ export class SqliteStore implements Store {
     })
   }
 
-  first<Row>(cursor: Cursor<Row>, options?: QueryOptions): Row | null {
+  first<Row>(cursor: CursorImpl<Row>, options?: QueryOptions): Row | null {
     return ifMissing(null, () => {
       return this.all(cursor.take(1), options)[0] || null
     })
   }
 
-  sure<Row>(cursor: Cursor<Row>, options?: QueryOptions): Row {
+  sure<Row>(cursor: CursorImpl<Row>, options?: QueryOptions): Row {
     const res = this.first(cursor, options)
     if (!res) throw new Error(`Not found`)
     return res
   }
 
-  delete<Row>(cursor: Cursor<Row>, options?: QueryOptions): {changes: number} {
+  delete<Row>(
+    cursor: CursorImpl<Row>,
+    options?: QueryOptions
+  ): {changes: number} {
     return ifMissing({changes: 0}, () => {
       const stmt = f.formatDelete(cursor.cursor)
       return this.prepare(stmt.sql).run(stmt.getParams())
     })
   }
 
-  count<Row>(cursor: Cursor<Row>, options?: QueryOptions): number {
+  count<Row>(cursor: CursorImpl<Row>, options?: QueryOptions): number {
     return ifMissing(0, () => {
       const stmt = f.formatSelect(cursor.cursor)
       return this.prepare(`select count() from (${stmt.sql})`).get(
@@ -145,7 +149,7 @@ export class SqliteStore implements Store {
   }
 
   update<Row>(
-    cursor: Cursor<Row>,
+    cursor: CursorImpl<Row>,
     update: Update<Row>,
     options?: QueryOptions
   ): {changes: number} {
@@ -156,7 +160,7 @@ export class SqliteStore implements Store {
   }
 
   createIndex<Row>(
-    collection: Collection<Row>,
+    collection: CollectionImpl<Row>,
     name: string,
     on: Array<Expr<any>>
   ) {
@@ -203,9 +207,9 @@ export class SqliteStore implements Store {
   }
 
   createFts5<Row extends {}>(
-    collection: Collection<Row>,
+    collection: CollectionImpl<Row>,
     name: string,
-    fields: (collection: Collection<Row>) => Record<string, Expr<string>>
+    fields: (collection: Fields<Row>) => Record<string, Expr<string>>
   ): boolean {
     const created = this.createFts5Table(collection, name, fields)
     if (created) this.createFts5Triggers(collection, name, fields)
@@ -213,9 +217,9 @@ export class SqliteStore implements Store {
   }
 
   createFts5Table<Row extends {}>(
-    collection: Collection<Row>,
+    collection: CollectionImpl<Row>,
     name: string,
-    fields: (collection: Collection<Row>) => Record<string, Expr<string>>
+    fields: (collection: Fields<Row>) => Record<string, Expr<string>>
   ): boolean {
     const newFields = fields(collection.as('new'))
     const keys = Object.keys(newFields).map(key => f.escapeId(key))
@@ -232,9 +236,9 @@ export class SqliteStore implements Store {
   }
 
   createFts5Triggers<Row extends {}>(
-    collection: Collection<Row>,
+    collection: CollectionImpl<Row>,
     name: string,
-    fields: (collection: Collection<Row>) => Record<string, Expr<string>>
+    fields: (collection: Fields<Row>) => Record<string, Expr<string>>
   ) {
     const options = {
       formatInline: true,
@@ -245,7 +249,7 @@ export class SqliteStore implements Store {
     const idx = f.escapeId(name)
     const newFields = fields(collection.as('new'))
     const keys = Object.keys(newFields).map(key => f.escapeId(key))
-    const origins = fields(collection)
+    const origins = fields(collection as any)
     const originValues = Object.values(origins)
       .map(expr => {
         return f.formatExpr(expr.expr, options).sql

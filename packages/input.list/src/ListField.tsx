@@ -59,7 +59,7 @@ export function createList<T, Q = Array<T & ListRow>>(
     hint: listHint(schema),
     label,
     options,
-    transform: query<T, Q>(schema),
+    transform: query<T & ListRow, Q>(schema),
     hidden: options.hidden
   }
 }

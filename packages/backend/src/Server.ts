@@ -24,7 +24,7 @@ import {
 } from '@alinea/core/util/Paths'
 import {crypto} from '@alinea/iso'
 import sqlite from '@alinea/sqlite-wasm'
-import {Cursor, Store} from '@alinea/store'
+import {Store} from '@alinea/store'
 import {SqlJsDriver} from '@alinea/store/sqlite/drivers/SqlJsDriver'
 import {SqliteStore} from '@alinea/store/sqlite/SqliteStore'
 import * as Y from 'yjs'
@@ -113,20 +113,24 @@ export class Server<T = any> implements Hub<T> {
       ])
       const Parent = Entry.as('Parent')
       const Translation = Entry.as('Translation')
-      const minimal = (entry: Cursor<Entry>) => ({
-        id: entry.id,
-        type: entry.type,
-        title: entry.title,
-        alinea: entry.alinea
-      })
       const data = preview.first(
         Entry.where(Entry.id.is(id)).select({
           entry: Entry.fields,
           translations: Translation.where(t =>
             t.alinea.i18n.id.is(Entry.alinea.i18n.id)
-          ).select(minimal),
+          ).select({
+            id: Translation.id,
+            type: Translation.type,
+            title: Translation.title,
+            alinea: Translation.alinea
+          }),
           parent: Parent.where(Parent.id.is(Entry.alinea.parent))
-            .select(minimal)
+            .select({
+              id: Parent.id,
+              type: Parent.type,
+              title: Parent.title,
+              alinea: Parent.alinea
+            })
             .first()
         })
       )

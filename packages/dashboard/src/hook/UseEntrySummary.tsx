@@ -13,7 +13,7 @@ function useLoader() {
     return new DataLoader(
       (ids: ReadonlyArray<string>) => {
         const selection = View.getSelection(config.schema, 'summaryRow', Entry)
-        const cursor = Entry.where(Entry.id.isIn(ids))
+        const cursor = Entry.where(Entry.id.isIn(ids as Array<string>))
         return hub
           .query({
             cursor: cursor.select(

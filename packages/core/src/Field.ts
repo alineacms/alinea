@@ -20,7 +20,7 @@ export namespace Field {
     V,
     M,
     Q,
-    F extends Field<V, M, Q>,
+    F extends Field<V, M>,
     C extends (...args: Array<any>) => F
   >(create: C, view: FieldRenderer<V, M, F>): C {
     const factory = (...args: Parameters<C>) => {

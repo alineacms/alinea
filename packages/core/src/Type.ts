@@ -1,7 +1,7 @@
 // Todo: extract interface and place it in core
 import type {Pages} from '@alinea/backend/Pages'
 import type {EntryEditProps} from '@alinea/dashboard/view/EntryEdit'
-import type {Cursor, Fields} from '@alinea/store'
+import type {CollectionImpl, CursorImpl} from '@alinea/store'
 import {Collection, Expr, SelectionInput} from '@alinea/store'
 import type {ComponentType} from 'react'
 import {Entry} from './Entry'
@@ -48,7 +48,7 @@ export type TypeOptions<R, Q> = {
 
   /** Create indexes on fields of this type */
   // Todo: solve infered type here
-  index?: <T>(fields: Fields<T>) => Record<string, Array<Expr<any>>>
+  index?: (fields: any) => Record<string, Array<Expr<any>>>
 
   entryUrl?: (meta: EntryUrlMeta) => string
 
@@ -126,12 +126,12 @@ export class TypeConfig<R = any, T = R> {
     return this.options.entryUrl
   }
 
-  selection(cursor: Cursor<R>, pages: Pages<any>): Expr<any> | undefined {
+  selection(cursor: CursorImpl<R>, pages: Pages<any>): Expr<any> | undefined {
     const computed: Record<string, SelectionInput> = {}
     let isComputed = false
     for (const [key, field] of this) {
       if (!field.transform) continue
-      const selection = field.transform(cursor.get<any>(key), pages)
+      const selection = field.transform(cursor.get(key), pages)
       if (!selection) continue
       computed[key] = selection
       isComputed = true
@@ -142,7 +142,7 @@ export class TypeConfig<R = any, T = R> {
         pages
       )
     if (!isComputed) return
-    return cursor.fields.with(computed).toExpr()
+    return new Expr(cursor.fields.with(computed).expr)
   }
 
   configure<Q = T>(options: TypeOptions<R, Q>): TypeConfig<R, Q> {
@@ -191,7 +191,7 @@ export class Type<R = any, T = R>
     } as Entry & T
   }
 
-  collection(): Collection<T> {
+  collection(): CollectionImpl<T> {
     const alias = this.name
     const fields = Entry
     const res = new Collection<T>('Entry', {
