@@ -88,15 +88,13 @@ class PageResolver<T> {
 
 export type Page<P, T> = T extends {id: string} ? T & {tree: PageTree<P>} : T
 
-abstract class Base<P, T> extends Promise<T> {
+abstract class Base<P, T> {
   protected result: Promise<T> | undefined
 
   constructor(
     protected resolver: PageResolver<P>,
     protected cursor: Cursor<any>
-  ) {
-    super(function () {})
-  }
+  ) {}
 
   protected abstract execute(): Promise<T>
 
