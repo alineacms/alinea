@@ -65,7 +65,7 @@ export async function serve(options: ServeOptions): Promise<void> {
 
   const gen = generate({...options, watch: true})[Symbol.asyncIterator]()
   let nextGen = gen.next()
-  let backend: ServeBackend | undefined
+  let backend: ServeBackend<any> | undefined
   let handler: RequestListener
   while (true) {
     const {value} = await nextGen

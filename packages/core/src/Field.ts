@@ -1,5 +1,4 @@
 // Todo: extract interface and place it in core
-import type {Pages} from '@alinea/backend/Pages'
 import {InputState} from '@alinea/editor'
 import {Expr} from '@alinea/store'
 import type {ComponentType} from 'react'
@@ -50,6 +49,6 @@ export interface Field<V, M, Q = V> {
   label: Label
   initialValue?: V
   view?: FieldRenderer<V, M, Field<V, M, Q>>
-  transform?: (field: Expr<V>, pages: Pages<any>) => Expr<Q> | undefined
+  transform?: (field: Expr<V>, pages: any) => Expr<Q> | undefined
   hidden?: boolean
 }

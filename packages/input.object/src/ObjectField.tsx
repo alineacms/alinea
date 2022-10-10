@@ -19,7 +19,7 @@ export interface ObjectField<T> extends Field.Record<T> {
 }
 
 function query(type: TypeConfig) {
-  return (expr: Expr<{}>, pages: Pages<any>): Expr<{}> | undefined => {
+  return (expr: Expr<any>, pages: Pages<any>): Expr<any> | undefined => {
     const computed: Record<string, SelectionInput> = {}
     let isComputed = false
     for (const [key, field] of type) {
