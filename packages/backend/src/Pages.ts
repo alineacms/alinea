@@ -1,10 +1,10 @@
 import {createId, Entry, Schema, Tree} from '@alinea/core'
 import {
-  Collection,
   Cursor,
   EV,
   Expr,
   ExprData,
+  Fields,
   From,
   OrderBy,
   Selection,
@@ -140,12 +140,12 @@ class Multiple<P, T> extends Base<P, Array<Page<P, T>>> {
     const store = await this.resolver.store
     return store.count(this.cursor)
   }
-  leftJoin<E = T>(that: Collection<T>, on: Expr<boolean>): Multiple<P, E> {
+  /*leftJoin<E = T>(that: Collection<T>, on: Expr<boolean>): Multiple<P, E> {
     return new Multiple<P, E>(this.resolver, this.cursor.leftJoin(that, on))
   }
   innerJoin<E = T>(that: Collection<T>, on: Expr<boolean>): Multiple<P, E> {
     return new Multiple<P, E>(this.resolver, this.cursor.innerJoin(that, on))
-  }
+  }*/
   take<E = T>(limit: number | undefined): Multiple<P, E> {
     return new Multiple<P, E>(this.resolver, this.cursor.take(limit))
   }
@@ -153,7 +153,7 @@ class Multiple<P, T> extends Base<P, Array<Page<P, T>>> {
     return new Multiple<P, E>(this.resolver, this.cursor.skip(offset))
   }
   where<E = T>(
-    where: EV<boolean> | ((collection: Cursor<T>) => EV<boolean>)
+    where: EV<boolean> | ((collection: Fields<T>) => EV<boolean>)
   ): Multiple<P, E> {
     return new Multiple<P, E>(
       this.resolver,
@@ -169,8 +169,13 @@ class Multiple<P, T> extends Base<P, Array<Page<P, T>>> {
   whereId<E = T>(id: EV<string>): Multiple<P, E> {
     return new Multiple<P, E>(this.resolver, this.cursor.where(Entry.id.is(id)))
   }
-  whereType<K extends string>(type: K): Multiple<P, Extract<T, {type: K}>> {
-    return new Multiple<P, Extract<T, {type: K}>>(
+  whereType<K extends string>(
+    this: Pages<{type: string}>,
+    type: K
+  ): Multiple<P, Extract<T, {type: K}>>
+  whereType<E = T>(type: string): Multiple<P, E>
+  whereType<E = T>(type: string): Multiple<P, E> {
+    return new Multiple<P, E>(
       this.resolver,
       this.cursor.where(Entry.type.is(type as string))
     )
@@ -187,7 +192,7 @@ class Multiple<P, T> extends Base<P, Array<Page<P, T>>> {
       this.cursor.where(Entry.alinea.root.is(root))
     )
   }
-  select<X extends SelectionInput | ((cursor: Cursor<T>) => SelectionInput)>(
+  select<X extends SelectionInput | ((cursor: Fields<T>) => SelectionInput)>(
     selection: X
   ): Multiple<P, Store.TypeOf<X>> {
     return new Multiple<P, Store.TypeOf<X>>(
@@ -199,27 +204,27 @@ class Multiple<P, T> extends Base<P, Array<Page<P, T>>> {
     return new Multiple<P, E>(this.resolver, this.cursor.having(having))
   }
   orderBy<E = T>(...orderBy: Array<OrderBy>): Multiple<P, E>
-  orderBy<E = T>(pick: (cursor: Cursor<T>) => Array<OrderBy>): Multiple<P, E>
+  orderBy<E = T>(pick: (cursor: Fields<T>) => Array<OrderBy>): Multiple<P, E>
   orderBy<E = T>(...args: any) {
     const orderBy: Array<OrderBy> =
       args.length === 1 && typeof args[0] === 'function' ? args[0](Entry) : args
     return new Multiple<P, E>(this.resolver, this.cursor.orderBy(...orderBy))
   }
   groupBy<E = T>(...groupBy: Array<Expr<any>>): Multiple<P, E>
-  groupBy<E = T>(pick: (cursor: Cursor<T>) => Array<Expr<any>>): Multiple<P, E>
+  groupBy<E = T>(pick: (cursor: Fields<T>) => Array<Expr<any>>): Multiple<P, E>
   groupBy<E = T>(...args: any) {
     const groupBy: Array<Expr<any>> =
       args.length === 1 && typeof args[0] === 'function' ? args[0](Entry) : args
     return new Multiple<P, E>(this.resolver, this.cursor.groupBy(...groupBy))
   }
   first<E = T>(
-    where?: EV<boolean> | ((cursor: Cursor<T>) => EV<boolean>)
+    where?: EV<boolean> | ((cursor: Fields<T>) => EV<boolean>)
   ): Single<P, E> {
     if (where) return this.where(resolveWith(where as any, Entry)).first()
     return new Single<P, E>(this.resolver, this.cursor.first())
   }
   sure<E = T>(
-    where?: EV<boolean> | ((cursor: Cursor<T>) => EV<boolean>)
+    where?: EV<boolean> | ((cursor: Fields<T>) => EV<boolean>)
   ): Base<P, Page<P, E>> {
     return this.first(where) as Base<P, Page<P, E>>
   }
@@ -239,24 +244,29 @@ class Single<P, T> extends Base<P, Page<P, T> | null> {
     }
     return page
   }
-  leftJoin<E = T>(that: Collection<T>, on: Expr<boolean>): Single<P, E> {
+  /*leftJoin<E = T>(that: Collection<T>, on: Expr<boolean>): Single<P, E> {
     return new Single<P, E>(this.resolver, this.cursor.leftJoin(that, on))
   }
   innerJoin<E = T>(that: Collection<T>, on: Expr<boolean>): Single<P, E> {
     return new Single<P, E>(this.resolver, this.cursor.innerJoin(that, on))
-  }
+  }*/
   skip<E = T>(offset: number | undefined): Single<P, E> {
     return new Single<P, E>(this.resolver, this.cursor.skip(offset))
   }
   where<E = T>(
-    where: EV<boolean> | ((collection: Cursor<T>) => EV<boolean>)
+    where: EV<boolean> | ((collection: Fields<T>) => EV<boolean>)
   ): Single<P, E> {
     return new Single<P, E>(this.resolver, this.cursor.where(where as any))
   }
-  whereType<K extends string>(type: K): Single<P, Extract<T, {type: K}>> {
-    return new Single<P, Extract<T, {type: K}>>(
+  whereType<K extends string>(
+    this: Pages<{type: string}>,
+    type: K
+  ): Single<P, Extract<T, {type: K}>>
+  whereType<E = T>(type: string): Single<P, E>
+  whereType<E = T>(type: string): Single<P, E> {
+    return new Single<P, E>(
       this.resolver,
-      this.cursor.where(Entry.type.is((type as any).__options.alias))
+      this.cursor.where(Entry.type.is(type as string))
     )
   }
   whereWorkspace<E = T>(workspace: string): Single<P, E> {
@@ -272,7 +282,7 @@ class Single<P, T> extends Base<P, Page<P, T> | null> {
     )
   }
   select<
-    X extends SelectionInput | ((collection: Cursor<T>) => SelectionInput)
+    X extends SelectionInput | ((collection: Fields<T>) => SelectionInput)
   >(selection: X): Single<P, Store.TypeOf<X>> {
     return new Single<P, Store.TypeOf<X>>(
       this.resolver,
@@ -289,12 +299,12 @@ class Single<P, T> extends Base<P, Page<P, T> | null> {
     )
   }*/
   orderBy<E = T>(...orderBy: Array<OrderBy>): Single<P, E>
-  orderBy<E = T>(pick: (cursor: Cursor<T>) => Array<OrderBy>): Single<P, E>
+  orderBy<E = T>(pick: (cursor: Fields<T>) => Array<OrderBy>): Single<P, E>
   orderBy<E = T>(...args: any) {
     return new Single<P, E>(this.resolver, this.cursor.orderBy(...args))
   }
   groupBy<E = T>(...groupBy: Array<Expr<any>>): Single<P, E>
-  groupBy<E = T>(pick: (cursor: Cursor<T>) => Array<Expr<any>>): Single<P, E>
+  groupBy<E = T>(pick: (cursor: Fields<T>) => Array<Expr<any>>): Single<P, E>
   groupBy<E = T>(...args: any) {
     return new Single<P, E>(this.resolver, this.cursor.groupBy(...args))
   }

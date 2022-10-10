@@ -1,6 +1,6 @@
 import {Changes} from '@alinea/backend/Storage'
 import {base64url} from '@alinea/core/util/Encoding'
-import {Cursor} from '@alinea/store'
+import {CursorImpl} from '@alinea/store'
 import {Entry} from './Entry'
 import {Future} from './Future'
 import {Media} from './Media'
@@ -37,7 +37,7 @@ export namespace Hub {
     stateVector?: Uint8Array
   }
   export type QueryParams<T> = {
-    cursor: Cursor<T>
+    cursor: CursorImpl<T>
     /** Query source data, not drafts */
     source?: boolean
   }
