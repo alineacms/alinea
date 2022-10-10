@@ -17,7 +17,7 @@ async function run(cwd: string) {
   process.env.NODE_ENV = 'development'
   await init({cwd, quiet: true})
   const exports = await import(
-    `file://${path.resolve(cwd, '.alinea/main/pages.js')}`
+    `file://${path.resolve(cwd, '.alinea/pages.js')}`
   )
   const pages: Pages<Entry> = exports.initPages()
   const welcome = await pages.where(page => page.title.is('Welcome'))
