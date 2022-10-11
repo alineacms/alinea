@@ -3,7 +3,7 @@ import {anonymousAuth, createRouter} from '@alinea/backend/Backend'
 import {Handle} from '@alinea/backend/router/Router'
 import {PreviewOptions} from '@alinea/backend/Server'
 import {Client} from '@alinea/client'
-import {Config, Outcome, WorkspaceConfig, Workspaces} from '@alinea/core'
+import {Config, Outcome, Workspaces} from '@alinea/core'
 
 export interface DevServerOptions<T extends Workspaces> {
   config: Config<T>
@@ -21,10 +21,9 @@ export class DevBackend<T extends Workspaces = Workspaces> extends Client<T> {
     this.handle = handle
   }
 
-  loadPages<K extends keyof T>(workspaceKey: K, options: PreviewOptions = {}) {
-    const workspace = this.config.workspaces[workspaceKey]
-    return new Pages<T[K] extends WorkspaceConfig<infer W> ? W : any>({
-      workspace,
+  loadPages(options: PreviewOptions = {}) {
+    return new Pages<T>({
+      schema: this.config.schema,
       query: cursor => {
         return this.query({
           cursor,

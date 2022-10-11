@@ -30,7 +30,7 @@ function respond<T>({result, logger}: LoggerResult<T>) {
   })
 }
 
-function createRouter<T>(
+export function createRouter<T>(
   hub: Hub<T>,
   auth: Auth.Server
 ): Route<Request, Response | undefined> {
