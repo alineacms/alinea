@@ -3,9 +3,6 @@ import {Label} from './Label'
 import {Root, RootConfig} from './Root'
 import {getRandomColor} from './util/GetRandomColor'
 
-/** A record of multiple named workspaces */
-export type Workspaces = Record<string, WorkspaceConfig>
-
 export type WorkspaceOptions<T = any> = {
   /**
    * Points to a Data.Source either by passing a directory or a file.

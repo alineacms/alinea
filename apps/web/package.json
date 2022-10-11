@@ -53,7 +53,7 @@
     "@alinea/auth.passwordless": "0.0.0",
     "@alinea/backend": "0.0.0",
     "@alinea/cli": "0.0.0",
-    "@alinea/content": "link:.alinea",
+    "@alinea/content": "link:./.alinea",
     "@alinea/core": "0.0.0",
     "@alinea/dashboard": "0.0.0",
     "@alinea/ui": "0.0.0",

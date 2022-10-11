@@ -1,25 +1,71 @@
 import {JWTPreviews, Pages} from '@alinea/backend'
-import {anonymousAuth, createRouter} from '@alinea/backend/Backend'
+import {anonymousAuth, Backend, createRouter} from '@alinea/backend/Backend'
 import {Handle} from '@alinea/backend/router/Router'
 import {PreviewOptions} from '@alinea/backend/Server'
 import {Client} from '@alinea/client'
-import {Config, Outcome, Workspaces} from '@alinea/core'
+import {Config, Hub, Outcome} from '@alinea/core'
+import {Request, Response} from '@alinea/iso'
+import {Store} from '@alinea/store/Store'
+import {DevData} from './DevData'
+import {DevDrafts} from './DevDrafts'
 
-export interface DevServerOptions<T extends Workspaces> {
+export interface DevServerOptions<T> {
   config: Config<T>
+  createStore: () => Promise<Store>
   serverLocation: string
 }
 
-export class DevBackend<T extends Workspaces = Workspaces> extends Client<T> {
+class LocalBackend<T> extends Backend<T> {
+  constructor({config, createStore, serverLocation}: DevServerOptions<T>) {
+    const drafts = new DevDrafts({
+      serverLocation
+    })
+    const data = new DevData({
+      serverLocation
+    })
+    super({
+      dashboardUrl: serverLocation,
+      createStore,
+      config,
+      drafts: drafts,
+      media: data,
+      target: data,
+      previews: new JWTPreviews('@alinea/backend/devserver')
+    })
+  }
+}
+
+export class DevBackend<T> extends Client<T> {
   handle: Handle<Request, Response | undefined>
   previews = new JWTPreviews('@alinea/backend/devserver')
+  local: LocalBackend<T>
 
-  constructor({config, serverLocation}: DevServerOptions<T>) {
+  constructor(options: DevServerOptions<T>) {
+    const {config, serverLocation} = options
     super(config, serverLocation)
     const api = createRouter<T>(this, anonymousAuth())
     const {handle} = api
+    this.local = new LocalBackend(options)
     this.handle = handle
   }
+
+  fallback(method: keyof Hub<T>) {
+    return async (params: any) => {
+      return super[method](params).then((outcome: Outcome<any>) => {
+        if (outcome.isFailure() && outcome.status === 500)
+          return this.local[method](params)
+        return outcome
+      })
+    }
+  }
+
+  entry: Hub<T>['entry'] = this.fallback('entry')
+  query: Hub<T>['query'] = this.fallback('query')
+  updateDraft: Hub<T>['updateDraft'] = this.fallback('updateDraft')
+  deleteDraft: Hub<T>['deleteDraft'] = this.fallback('deleteDraft')
+  listDrafts: Hub<T>['listDrafts'] = this.fallback('listDrafts')
+  uploadFile: Hub<T>['uploadFile'] = this.fallback('uploadFile')
+  publishEntries: Hub<T>['publishEntries'] = this.fallback('publishEntries')
 
   loadPages(options: PreviewOptions = {}) {
     return new Pages<T>({
@@ -35,12 +81,5 @@ export class DevBackend<T extends Workspaces = Workspaces> extends Client<T> {
 
   parsePreviewToken(token: string): Promise<{id: string; url: string}> {
     return this.previews.verify(token)
-  }
-
-  protected fetch(
-    endpoint: string,
-    init?: RequestInit | undefined
-  ): Promise<Response> {
-    return super.fetch(endpoint, init)
   }
 }

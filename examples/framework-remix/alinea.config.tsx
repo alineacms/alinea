@@ -26,13 +26,13 @@ export const config = alinea.createConfig({
         })
       },
       preview({entry, previewToken}) {
-        // During dev point at running Next.js development server,
+        // During dev point at running Remix development server,
         // in production use the current domain
         const location =
           process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : ''
         return (
           <BrowserPreview
-            url={`${location}${entry.url}?preview=${previewToken}`}
+            url={`${location}${entry.url}?${previewToken}`}
             // The preview pane will display this url to the user
             prettyUrl={entry.url}
           />
