@@ -9,6 +9,10 @@
   "type": "module",
   "exports": {
     ".": "./dist/index.js",
+    "./remix": {
+      "require": "./dist/static/server.cjs",
+      "default": "./dist/remix.js"
+    },
     "./*": "./dist/*.js"
   },
   "files": [

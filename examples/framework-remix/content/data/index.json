@@ -1,7 +1,95 @@
 {
   "id": "_BUpO_jKMUSgAcBnLA18f",
-  "type": "Page",
-  "title": "Welcome ",
+  "type": "Welcome",
+  "title": "Welcome to Remix",
+  "body": [
+    {
+      "type": "bulletList",
+      "content": [
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "15m Quickstart Blog Tutorial",
+                  "marks": [
+                    {
+                      "type": "link",
+                      "attrs": {
+                        "data-id": "kIp8jMNlv2-cFbUaUPK1y",
+                        "data-entry": null,
+                        "href": "https://remix.run/tutorials/blog",
+                        "target": "_blank",
+                        "title": null
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Deep Dive Jokes App Tutorial",
+                  "marks": [
+                    {
+                      "type": "link",
+                      "attrs": {
+                        "data-id": "uvdVrNSwryoGCZvKAiIcA",
+                        "data-entry": null,
+                        "href": "https://remix.run/tutorials/jokes",
+                        "target": "_blank",
+                        "title": null
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Remix Docs",
+                  "marks": [
+                    {
+                      "type": "link",
+                      "attrs": {
+                        "data-id": "GU5_IT_ySsV_5UOv1XjcO",
+                        "data-entry": null,
+                        "href": "https://remix.run/docs",
+                        "target": "_blank",
+                        "title": null
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
   "alinea": {
     "index": "a0",
     "root": "data"

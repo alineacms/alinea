@@ -1,3 +1,4 @@
+// import {usePreview} from '@alinea/preview/remix'
 import type {MetaFunction} from '@remix-run/node'
 import {
   Links,
@@ -14,21 +15,8 @@ export const meta: MetaFunction = () => ({
   viewport: 'width=device-width,initial-scale=1'
 })
 
-// packages/preview/src/remix.ts
-import {usePreview} from '@alinea/preview/react'
-import {useRevalidator} from 'react-router-dom'
-
-function useRemixPreview() {
-  const revalidator = useRevalidator()
-  return usePreview({
-    async refetch() {
-      revalidator.revalidate()
-    }
-  })
-}
-
 export default function App() {
-  useRemixPreview()
+  // usePreview()
   return (
     <html lang="en">
       <head>
