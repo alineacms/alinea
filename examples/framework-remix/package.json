@@ -2,7 +2,7 @@
   "private": true,
   "sideEffects": false,
   "scripts": {
-    "dev": "node ../../packages/alinea/dist/cli.js serve -- remix dev",
+    "dev": "alinea serve -- remix dev",
     "build": "alinea generate -- remix build"
   },
   "dependencies": {
