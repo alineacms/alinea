@@ -1,4 +1,4 @@
-import {renderLabel, Session, Workspaces} from '@alinea/core'
+import {renderLabel, Session} from '@alinea/core'
 import {
   ErrorBoundary,
   FavIcon,
@@ -291,10 +291,7 @@ function localSession(options: DashboardOptions) {
 // facebook/react#24304
 const QueryClientProvider: any = ReactQueryClientProvider
 
-export function App<T extends Workspaces>({
-  fullPage = true,
-  ...props
-}: DashboardOptions<T>) {
+export function App<T>({fullPage = true, ...props}: DashboardOptions<T>) {
   const auth = props.config.authView
   const [queryClient] = useState(
     () =>

@@ -89,7 +89,7 @@ export namespace Outcome {
     return new SuccessOutcome(data) as any
   }
 
-  export function Failure<T>(error: Error | any): Outcome<T> {
+  export function Failure<T = any>(error: Error | any): Outcome<T> {
     return new FailureOutcome(
       error instanceof Error ? error : createError(error)
     ) as any
