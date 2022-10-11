@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [0.3.1]
+
+- Fix the `@alinea/preview/remix` preview hook
+
 ## [0.3.0]
 
 - Generate types (#271)
