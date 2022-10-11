@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.3.0]
+
 - Generate types (#271)
 
   Up until now the TypeScript definitions that were available for the content
