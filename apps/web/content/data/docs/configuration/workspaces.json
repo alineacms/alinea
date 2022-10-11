@@ -25,7 +25,7 @@
           "content": [
             {
               "type": "text",
-              "text": "Workspaces allow you to structure content into logical categories. A workspace can have its own schema, media files and other configuration. Editors can easily switch workspaces in the dashboard."
+              "text": "Workspaces allow you to structure content into logical categories. Editors can easily switch workspaces in the dashboard."
             }
           ]
         },
@@ -104,27 +104,6 @@
           "content": [
             {
               "type": "text",
-              "text": "`schema`"
-            }
-          ]
-        },
-        {
-          "type": "paragraph",
-          "textAlign": "left",
-          "content": [
-            {
-              "type": "text",
-              "text": "The `Schema` describing the content structure. Use the `alinea.schema` function to create one."
-            }
-          ]
-        },
-        {
-          "type": "heading",
-          "level": 3,
-          "textAlign": "left",
-          "content": [
-            {
-              "type": "text",
               "text": "`roots`"
             }
           ]
@@ -138,32 +117,6 @@
               "text": "An object containing `Root` configurations and their keys. Use the `alinea.root` function to create one."
             }
           ]
-        },
-        {
-          "type": "heading",
-          "textAlign": "left",
-          "level": 3,
-          "content": [
-            {
-              "type": "text",
-              "text": "`typesNamespace`"
-            }
-          ]
-        },
-        {
-          "type": "paragraph",
-          "textAlign": "left",
-          "content": [
-            {
-              "type": "text",
-              "text": "Generated types will be available from this namespace (optional)."
-            }
-          ]
-        },
-        {
-          "id": "2AFmWaKSpFE6EzL3jLgdpPZDSsy",
-          "type": "CodeBlock",
-          "code": "// Configuration\nimport {alinea} from 'alinea'\nalinea.workspace('My workspace', {typeNamespace: 'myWorkspaceTypes'})\n// Usage:\nimport {myWorkspaceTypes} from '@alinea/content/myworkspace'\nconsole.log(myWorkspaceTypes.MyType)"
         }
       ]
     },

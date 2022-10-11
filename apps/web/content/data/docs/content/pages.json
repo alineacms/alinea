@@ -115,7 +115,7 @@
         {
           "type": "heading",
           "textAlign": "left",
-          "level": 2,
+          "level": 3,
           "content": [
             {
               "type": "text",
@@ -129,14 +129,14 @@
           "content": [
             {
               "type": "text",
-              "text": "For each type defined in the workspace schema a `Collection` is exported under the same name. Collections can be used to point at specific fields when querying."
+              "text": "To filter pages on specific fields first narrow the search to a type, then use the `where` method to specify conditions."
             }
           ]
         },
         {
           "id": "IEmT75lZgxznL9v7Zq9mW",
           "type": "CodeBlock",
-          "code": "import {initPages} from '@alinea/content/pages'\nimport {Animal, Fruit} from '@alinea/content/$workspace'\n\nconst old = await pages.first(\n  Animal.age.greater(10)\n)\nconst applesOrOranges = await pages.where(\n  Fruit.title.isIn(['apple', 'orange'])\n)"
+          "code": "import {initPages} from '@alinea/content/pages'\n\nconst old = await pages.whereType('Animal').where(\n  animal => animal.age.greater(10)\n)\nconst teenager = await pages.whereType('Human').where(\n  human => \n    human.age.greater(10).or(\n      human.age.less(20)\n    )\n)\nconst applesOrOranges = await pages.whereType('Fruit').where(\n  fruit => fruit.title.isIn(['apple', 'orange'])\n)"
         },
         {
           "type": "heading",
@@ -162,7 +162,7 @@
         {
           "id": "28hzjFJi5kuByP0j3ZX79ATIyyS",
           "type": "CodeBlock",
-          "code": "import {Type} from '@alinea/content/$workspace'\nconst ordered = await pages\n  .orderBy(Type.foo.asc(), Type.bar.desc())"
+          "code": "const ordered = await pages\n  .whereType('NewsItem')\n  .orderBy(item => [item.publishDate.desc()])"
         },
         {
           "type": "heading",
@@ -188,7 +188,7 @@
         {
           "id": "28i0B7nRFUqmGWdCmchhzy21bkt",
           "type": "CodeBlock",
-          "code": "import {Type} from '@alinea/content/$workspace'\nconst grouped = await pages\n  .groupBy(Type.foo, Type.bar)"
+          "code": "const ordered = await pages\n  .whereType('NewsItem')\n  .orderBy(item => [item.category])"
         },
         {
           "type": "heading",

@@ -102,7 +102,7 @@
         {
           "id": "28hnf59Rd5Gbite3NVvsvobRTZz",
           "type": "CodeBlock",
-          "code": "// Published content is stored in json files \n// inside the content directory\ncontent\n├ data // data root\n│ ├ index.json\n│ ├ blog.json\n│ ╰ blog\n│   ├ blog-post.json\n│   ╰ another-blog-post.json\n╰ media // media root\n  ├ image.png.json\n  ╰ file.pdf.json\n\n// A folder which is publicly available\npublic\n╰ media\n  ├ image.png\n  ╰ file.pdf\n\n// The alinea directory exports a Javascript library\n// which can be imported from @alinea/content\n.alinea\n├ web\n│ ├ pages.js\n│ ╰ schema.js\n╰ backend.js",
+          "code": "// Published content is stored in json files \n// inside the content directory\ncontent\n├ data // data root\n│ ├ index.json\n│ ├ blog.json\n│ ╰ blog\n│   ├ blog-post.json\n│   ╰ another-blog-post.json\n╰ media // media root\n  ├ image.png.json\n  ╰ file.pdf.json\n\n// A folder which is publicly available\npublic\n╰ media\n  ├ image.png\n  ╰ file.pdf\n\n// The alinea directory exports a Javascript library\n// which can be imported from @alinea/content\n.alinea\n├ ...\n├ pages.js\n├ schema.js\n╰ backend.js",
           "compact": true
         }
       ]
