@@ -1,7 +1,7 @@
-import {initPages} from '@alinea/content/main/pages.js'
+import {backend} from '@alinea/content/backend'
 
 export function createApi(previewToken?: string) {
-  const pages = initPages(previewToken as string)
+  const pages = backend.loadPages({preview: true})
   return {
     async getHomePage() {
       return pages.whereType('HomePage').sure()

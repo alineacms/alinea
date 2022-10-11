@@ -1,4 +1,5 @@
 import {createCloudBackend} from '@alinea/cloud'
+import {BrowserPreview} from '@alinea/dashboard/view/preview/BrowserPreview'
 import {IcRoundInsertDriveFile} from '@alinea/ui/icons/IcRoundInsertDriveFile'
 import {IcRoundPermMedia} from '@alinea/ui/icons/IcRoundPermMedia'
 import {alinea, MediaSchema} from 'alinea'
@@ -14,6 +15,7 @@ const schema = alinea.schema({
 })
 
 export const config = alinea.createConfig({
+  schema,
   dashboard: {
     staticFile: './public/admin.html',
     dashboardUrl: '/admin.html',
@@ -24,7 +26,6 @@ export const config = alinea.createConfig({
     main: alinea.workspace('Blog', {
       source: './content',
       mediaDir: './public/assets',
-      schema,
       roots: {
         pages: alinea.root('Blog', {
           icon: IcRoundInsertDriveFile,
@@ -38,6 +39,19 @@ export const config = alinea.createConfig({
           icon: IcRoundPermMedia,
           contains: ['MediaLibrary']
         })
+      },
+      preview({entry, previewToken}) {
+        const noPreviews = new Set(['Docs', 'MediaLibrary'])
+        if (noPreviews.has(entry.type)) return null
+        const location =
+          process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : ''
+        return (
+          <BrowserPreview
+            // reload
+            url={`${location}?${previewToken}`}
+            prettyUrl={entry.url}
+          />
+        )
       }
     })
   }
