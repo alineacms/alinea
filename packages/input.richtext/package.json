@@ -19,7 +19,9 @@
   "files": [
     "dist"
   ],
-  "sideEffects": false,
+  "sideEffects": [
+    "./dist/vendor/**"
+  ],
   "typesVersions": {
     "*": {
       "*": [

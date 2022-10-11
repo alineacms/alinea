@@ -1,2 +1,2 @@
-import {Pages} from './index.js'
+import {Pages} from './index'
 export const initPages: (previewToken?: string) => Pages

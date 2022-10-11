@@ -1,24 +1,20 @@
-import {Welcome} from '@alinea/dashboard/Welcome'
 import {IcRoundInsertDriveFile} from '@alinea/ui/icons/IcRoundInsertDriveFile'
 import {IcRoundPermMedia} from '@alinea/ui/icons/IcRoundPermMedia'
 import {alinea, BrowserPreview, MediaSchema} from 'alinea'
 
 export const config = alinea.createConfig({
+  schema: alinea.schema({
+    ...MediaSchema,
+    Welcome: alinea.type('Welcome', {
+      title: alinea.text('Title', {width: 0.5}),
+      path: alinea.path('Path', {width: 0.5}),
+      body: alinea.richText('Body text')
+    })
+  }),
   workspaces: {
-    main: alinea.workspace('Example', {
+    main: alinea.workspace('Remix example', {
       source: './content',
       mediaDir: './public',
-      schema: alinea.schema({
-        ...MediaSchema,
-        Page: alinea.type(
-          'Page',
-          {
-            title: alinea.text('Title'),
-            path: alinea.path('Path')
-          },
-          <Welcome />
-        )
-      }),
       roots: {
         data: alinea.root('Example project', {
           icon: IcRoundInsertDriveFile,

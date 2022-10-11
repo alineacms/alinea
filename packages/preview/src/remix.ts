@@ -1,10 +1,10 @@
 // @ts-ignore
 import {useRevalidator} from 'react-router-dom'
-import {usePreview} from './react'
+import {usePreview as useReactPreview} from './react'
 
-export function useRemixPreview() {
+export function usePreview() {
   const revalidator = useRevalidator()
-  return usePreview({
+  return useReactPreview({
     async refetch() {
       revalidator.revalidate()
     }
