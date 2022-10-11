@@ -1,4 +1,4 @@
-// import {usePreview} from '@alinea/preview/remix'
+import {usePreview} from '@alinea/preview/remix'
 import type {MetaFunction} from '@remix-run/node'
 import {
   Links,
@@ -16,7 +16,7 @@ export const meta: MetaFunction = () => ({
 })
 
 export default function App() {
-  // usePreview()
+  usePreview()
   return (
     <html lang="en">
       <head>

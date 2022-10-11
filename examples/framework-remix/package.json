@@ -7,6 +7,7 @@
   },
   "dependencies": {
     "@alinea/content": "link:.alinea",
+    "@alinea/preview": "latest",
     "@remix-run/node": "^1.7.2",
     "@remix-run/react": "^1.7.2",
     "@remix-run/vercel": "^1.7.2",
