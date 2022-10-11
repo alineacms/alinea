@@ -40,7 +40,7 @@ export function createSelect<T extends string, Items extends Record<T, string>>(
   const keys = Object.keys(items)
   return {
     shape: Shape.Scalar(label, options.initialValue as T),
-    hint: Hint.Array(Hint.Union(keys.map(key => Hint.Literal(key)))),
+    hint: Hint.Union(keys.map(key => Hint.Literal(key))),
     label,
     items,
     options: options as SelectOptions<T>,
