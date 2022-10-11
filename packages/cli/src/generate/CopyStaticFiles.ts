@@ -25,7 +25,6 @@ export async function copyStaticFiles({
     'package.json',
     'index.js',
     'index.d.ts',
-    'drafts.js',
     'backend.cjs',
     'backend.js',
     'backend.d.ts',
@@ -36,6 +35,8 @@ export async function copyStaticFiles({
     'pages.cjs',
     'schema.js'
   )
+
+  if (!fs.existsSync(path.join(staticDir, 'drafts.js'))) await copy('drafts.js')
 
   /*await writeFileIfContentsDiffer(
     path.join(outDir, 'config.d.ts'),
