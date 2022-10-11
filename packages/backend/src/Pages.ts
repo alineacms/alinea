@@ -352,9 +352,9 @@ export class Pages<T> extends Multiple<T, T> {
     super(resolver, cursor)
   }
 
-  /*tree(id: EV<string>) {
+  tree(id: EV<string>) {
     return new PageTree<T>(this.resolver, id)
-  }*/
+  }
 
   process<I extends SelectionInput, X>(
     input: I,
