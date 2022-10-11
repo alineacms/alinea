@@ -13,14 +13,7 @@
       "label": "Get started"
     }
   ],
-  "screenshot": [
-    {
-      "id": "2AKlt1RVaS9P6a7D0lvIPoHmNPK",
-      "index": "a0",
-      "type": "image",
-      "entry": "2AKlsMwiF5NvBhkVZXWQVsNBPP6"
-    }
-  ],
+  "screenshot": [],
   "introduction": {
     "text": [
       {
@@ -108,7 +101,7 @@
         "index": "a2",
         "type": "Variant",
         "name": "Query content",
-        "code": "import {pages} from '@alinea/content/myWorkspace'\n\nconsole.log(\n  await pages\n    .whereType('BlogPost')\n    .where(post => post.author.is('Me'))\n    .select(post => ({title: post.title}))\n)"
+        "code": "import {initPages} from '@alinea/content/pages'\n\nconst pages = initPages()\nconsole.log(\n  await pages\n    .whereType('BlogPost')\n    .where(post => post.author.is('Me'))\n    .select(post => ({title: post.title}))\n)"
       }
     ]
   },
