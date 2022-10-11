@@ -26,6 +26,17 @@
     import {Page} from '@alinea/content'
     ```
 
+- Remix run support (#273)
+
+  A few changes were necessary to get started with Remix. These changes should
+  make it easier to work with other frameworks as well.
+
+  - An example starter was added
+  - The local backend connects to the `serve` instance if it is running. Since
+    Remix does not watch file changes in node modules this should make sure
+    you're always viewing the latest changes.
+  - Export pages/backend as CJS (#270)
+
 ## [0.2.14]
 
 - The dashboard router was not picking up wilcard routes, which resulted in
