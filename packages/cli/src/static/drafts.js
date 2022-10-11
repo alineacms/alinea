@@ -1,1 +1,1 @@
-export const serverLocation = `http://localhost:4500`
+export const serverLocation = undefined
