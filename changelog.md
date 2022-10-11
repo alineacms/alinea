@@ -2,6 +2,30 @@
 
 ## [Unreleased]
 
+- Generate types (#271)
+
+  Up until now the TypeScript definitions that were available for the content
+  schema were fully inferred using the TypeScript compiler. While this had some
+  advantages it also came with stability issues and overall did not prove to be
+  the best solution. TypeScript definitions are now generated from the schema at
+  build time. The runtime type information should prove useful for the upcoming
+  GraphQL support as well. Since GrapQL does not come with namespacing we've
+  introduced a few breaking changes:
+
+  - The config file now supports a single schema at the root level, meaning
+    the schema is used for every workspace.
+  - The generated package structure in turn became simpler because the workspace
+    distinction is no longer needed:
+
+    ```ts
+    // Init pages now available from /pages
+    import {initPages} from '@alinea/content/pages'
+
+    // The Page type describes every content type of the schema
+    // type Page = Page.TypeA | Page.TypeB
+    import {Page} from '@alinea/content'
+    ```
+
 ## [0.2.14]
 
 - The dashboard router was not picking up wilcard routes, which resulted in
