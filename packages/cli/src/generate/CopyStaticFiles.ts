@@ -36,7 +36,7 @@ export async function copyStaticFiles({
     'schema.js'
   )
 
-  if (!fs.existsSync(path.join(staticDir, 'drafts.js'))) await copy('drafts.js')
+  if (!fs.existsSync(path.join(outDir, 'drafts.js'))) await copy('drafts.js')
 
   /*await writeFileIfContentsDiffer(
     path.join(outDir, 'config.d.ts'),
