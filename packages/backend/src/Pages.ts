@@ -1,4 +1,4 @@
-import {createId, Entry, Schema, Tree} from '@alinea/core'
+import {createId, Entry, Schema, Tree, TypesOf} from '@alinea/core'
 import {
   Cursor,
   EV,
@@ -126,13 +126,8 @@ class Multiple<P, T> extends Base<P, Array<Page<P, T>>> {
   whereId<E = T>(id: EV<string>): Multiple<P, E> {
     return new Multiple<P, E>(this.resolver, this.cursor.where(Entry.id.is(id)))
   }
-  whereType<K extends string>(
-    this: Pages<{type: string}>,
-    type: K
-  ): Multiple<P, Extract<T, {type: K}>>
-  whereType<E = T>(type: string): Multiple<P, E>
-  whereType<E = T>(type: string): Multiple<P, E> {
-    return new Multiple<P, E>(
+  whereType<K extends TypesOf<T>>(type: K): Multiple<P, Extract<T, {type: K}>> {
+    return new Multiple<P, Extract<T, {type: K}>>(
       this.resolver,
       this.cursor.where(Entry.type.is(type as string))
     )
@@ -215,13 +210,8 @@ class Single<P, T> extends Base<P, Page<P, T> | null> {
   ): Single<P, E> {
     return new Single<P, E>(this.resolver, this.cursor.where(where as any))
   }
-  whereType<K extends string>(
-    this: Pages<{type: string}>,
-    type: K
-  ): Single<P, Extract<T, {type: K}>>
-  whereType<E = T>(type: string): Single<P, E>
-  whereType<E = T>(type: string): Single<P, E> {
-    return new Single<P, E>(
+  whereType<K extends TypesOf<T>>(type: K): Single<P, Extract<T, {type: K}>> {
+    return new Single<P, Extract<T, {type: K}>>(
       this.resolver,
       this.cursor.where(Entry.type.is(type as string))
     )
