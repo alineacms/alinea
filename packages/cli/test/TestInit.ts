@@ -6,7 +6,7 @@ import path from 'path'
 import {test} from 'uvu'
 import * as assert from 'uvu/assert'
 
-const testPms = false
+const testPms = true
 
 async function setup(cwd: string) {
   await fs.remove(cwd)

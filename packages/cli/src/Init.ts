@@ -63,7 +63,7 @@ export async function init(options: InitOptions) {
     if (!pkg.dependencies) pkg.dependencies = {}
     pkg.dependencies['@alinea/content'] = `${
       pm !== 'npm' ? 'link' : 'file'
-    }:./.alinea`
+    }:.alinea`
     await fs.writeFile(
       path.join(cwd, 'package.json'),
       JSON.stringify(pkg, null, 2)

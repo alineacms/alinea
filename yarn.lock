@@ -130,15 +130,15 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@alinea/content@link:./.alinea::locator=%40alinea%2Fdemo%40workspace%3Aapps%2Fdemo":
+"@alinea/content@link:.alinea::locator=%40alinea%2Fdemo%40workspace%3Aapps%2Fdemo":
   version: 0.0.0-use.local
-  resolution: "@alinea/content@link:./.alinea::locator=%40alinea%2Fdemo%40workspace%3Aapps%2Fdemo"
+  resolution: "@alinea/content@link:.alinea::locator=%40alinea%2Fdemo%40workspace%3Aapps%2Fdemo"
   languageName: node
   linkType: soft
 
-"@alinea/content@link:./.alinea::locator=%40alinea%2Fweb%40workspace%3Aapps%2Fweb":
+"@alinea/content@link:.alinea::locator=%40alinea%2Fweb%40workspace%3Aapps%2Fweb":
   version: 0.0.0-use.local
-  resolution: "@alinea/content@link:./.alinea::locator=%40alinea%2Fweb%40workspace%3Aapps%2Fweb"
+  resolution: "@alinea/content@link:.alinea::locator=%40alinea%2Fweb%40workspace%3Aapps%2Fweb"
   languageName: node
   linkType: soft
 
@@ -203,7 +203,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@alinea/demo@workspace:apps/demo"
   dependencies:
-    "@alinea/content": "link:./.alinea"
+    "@alinea/content": "link:.alinea"
     "@svgr/webpack": ^6.3.1
     "@types/react": ^18.0.5
     "@types/react-dom": ^18.0.0
@@ -574,7 +574,7 @@ __metadata:
     "@alinea/auth.passwordless": 0.0.0
     "@alinea/backend": 0.0.0
     "@alinea/cli": 0.0.0
-    "@alinea/content": "link:./.alinea"
+    "@alinea/content": "link:.alinea"
     "@alinea/core": 0.0.0
     "@alinea/dashboard": 0.0.0
     "@alinea/ui": 0.0.0
