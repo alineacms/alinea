@@ -67,15 +67,19 @@ export async function* generate(options: GenerateOptions) {
   while (true) {
     const {done} = await nextBuild
     if (done) break
-    const config = await loadConfig(context)
-    await generatePackage(context, config)
     nextBuild = builds.next()
-    for await (const store of fillCache(context, config, nextBuild)) {
-      yield {config, store}
-      if (onAfterGenerate && !afterGenerateCalled) {
-        afterGenerateCalled = true
-        onAfterGenerate()
+    const config = await loadConfig(context)
+    try {
+      await generatePackage(context, config)
+      for await (const store of fillCache(context, config, nextBuild)) {
+        yield {config, store}
+        if (onAfterGenerate && !afterGenerateCalled) {
+          afterGenerateCalled = true
+          onAfterGenerate()
+        }
       }
+    } catch (e) {
+      console.error(e)
     }
   }
 }

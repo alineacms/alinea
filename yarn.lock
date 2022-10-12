@@ -101,6 +101,7 @@ __metadata:
     execa: ^6.1.0
     find-config: ^1.0.0
     fs-extra: ^10.0.0
+    graphql: ^16.6.0
     sade: ^1.7.4
   languageName: unknown
   linkType: soft
@@ -443,6 +444,8 @@ __metadata:
     "@alinea/core": 0.0.0
     "@alinea/dashboard": 0.0.0
     "@alinea/editor": 0.0.0
+    "@alinea/input.link": 0.0.0
+    "@alinea/store": 0.0.0
     "@alinea/ui": 0.0.0
   peerDependencies:
     react: "*"
@@ -7094,6 +7097,13 @@ fsevents@~2.3.2:
   version: 4.2.10
   resolution: "graceful-fs@npm:4.2.10"
   checksum: 3f109d70ae123951905d85032ebeae3c2a5a7a997430df00ea30df0e3a6c60cf6689b109654d6fdacd28810a053348c4d14642da1d075049e6be1ba5216218da
+  languageName: node
+  linkType: hard
+
+"graphql@npm:^16.6.0":
+  version: 16.6.0
+  resolution: "graphql@npm:16.6.0"
+  checksum: bf1d9e3c1938ce3c1a81e909bd3ead1ae4707c577f91cff1ca2eca474bfbc7873d5d7b942e1e9777ff5a8304421dba57a4b76d7a29eb19de8711cb70e3c2415e
   languageName: node
   linkType: hard
 
