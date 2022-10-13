@@ -27,7 +27,8 @@
     "@alinea/iso": "^0.1.21",
     "@alinea/shared": "0.0.0",
     "@alinea/sqlite-wasm": "^0.1.11",
-    "@alinea/store": "0.0.0"
+    "@alinea/store": "0.0.0",
+    "graphql": "^16.6.0"
   },
   "devDependencies": {
     "@types/js-yaml": "^4.0.5",
