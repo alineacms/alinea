@@ -47,12 +47,15 @@ namespace Builtins {
       title: {type: GraphQLString},
       path: {type: GraphQLString},
       alinea: {type: EntryMeta}
+    },
+    resolveType(value) {
+      return value.__type
     }
   })
   export const Query = new GraphQLObjectType({
     name: 'Query',
     fields: {
-      pages: {type: Entry}
+      pages: {type: new GraphQLList(Entry)}
     }
   })
   // Todo: some day we might want packages to add their own definitions
@@ -237,7 +240,10 @@ export function graphQLTypeOf(
         () =>
           new GraphQLUnionType({
             name: context.parent,
-            types
+            types,
+            resolveType(value) {
+              return value.__type
+            }
           })
       )
     }

@@ -1,7 +1,8 @@
 import {
-  generateGraphQL,
+  createGraphQLSchema,
   graphQLTypeOf
-} from '@alinea/cli/generate/GenerateGraphQL'
+} from '@alinea/backend/graphql/CreateGraphQLSchema'
+
 import {Hint, schema, type} from '@alinea/core'
 import {link} from '@alinea/input.link'
 import {list} from '@alinea/input.list'
@@ -16,7 +17,7 @@ test('string type', () => {
   const stringType = graphQLTypeOf(string)
   assert.is(stringType, GraphQLString)
 
-  generateGraphQL(
+  createGraphQLSchema(
     schema({
       TypeA: type('Type A', {
         title: text('Title'),

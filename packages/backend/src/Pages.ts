@@ -1,4 +1,4 @@
-import {createId, Entry, Schema, Tree, TypesOf} from '@alinea/core'
+import {createId, Entry, Lazy, Schema, Tree, TypesOf} from '@alinea/core'
 import {
   Cursor,
   EV,
@@ -11,6 +11,9 @@ import {
   SelectionInput,
   Store
 } from '@alinea/store'
+import {graphql, GraphQLSchema} from 'graphql'
+import {createGraphQLSchema} from './graphql/CreateGraphQLSchema'
+import {GraphQLResolver} from './graphql/GraphQLResolver'
 
 export class PageTree<P> {
   constructor(private resolver: PageResolver<P>, private id: EV<string>) {}
@@ -51,7 +54,7 @@ abstract class Base<P, T> {
 
   constructor(
     protected resolver: PageResolver<P>,
-    protected cursor: Cursor<any>
+    public cursor: Cursor<any>
   ) {}
 
   protected abstract execute(): Promise<T>
@@ -126,8 +129,8 @@ class Multiple<P, T> extends Base<P, Array<Page<P, T>>> {
   whereId<E = T>(id: EV<string>): Multiple<P, E> {
     return new Multiple<P, E>(this.resolver, this.cursor.where(Entry.id.is(id)))
   }
-  whereType<K extends TypesOf<T>>(type: K): Multiple<P, Extract<T, {type: K}>> {
-    return new Multiple<P, Extract<T, {type: K}>>(
+  whereType<K extends TypesOf<P>>(type: K): Multiple<P, Extract<P, {type: K}>> {
+    return new Multiple<P, Extract<P, {type: K}>>(
       this.resolver,
       this.cursor.where(Entry.type.is(type as string))
     )
@@ -210,8 +213,8 @@ class Single<P, T> extends Base<P, Page<P, T> | null> {
   ): Single<P, E> {
     return new Single<P, E>(this.resolver, this.cursor.where(where as any))
   }
-  whereType<K extends TypesOf<T>>(type: K): Single<P, Extract<T, {type: K}>> {
-    return new Single<P, Extract<T, {type: K}>>(
+  whereType<K extends TypesOf<P>>(type: P): Single<P, Extract<P, {type: K}>> {
+    return new Single<P, Extract<P, {type: K}>>(
       this.resolver,
       this.cursor.where(Entry.type.is(type as string))
     )
@@ -255,7 +258,7 @@ class Single<P, T> extends Base<P, Page<P, T> | null> {
   groupBy<E = T>(...args: any) {
     return new Single<P, E>(this.resolver, this.cursor.groupBy(...args))
   }
-  children<E = T>(depth = 1): Multiple<P, E> {
+  children<E = P>(depth = 1): Multiple<P, E> {
     if (depth > 1) throw 'todo depth > 1'
     return new Multiple<P, E>(
       this.resolver,
@@ -292,7 +295,14 @@ export interface PagesOptions<T> {
   withComputed?: boolean
 }
 
-export class Pages<T> extends Multiple<T, T> {
+interface GraphQLContext {
+  schema: GraphQLSchema
+  rootValue: GraphQLResolver
+}
+
+export class Pages<T = any> extends Multiple<T, Entry> {
+  graphQLContext: Lazy<GraphQLContext>
+
   constructor({
     schema,
     query,
@@ -311,6 +321,20 @@ export class Pages<T> extends Multiple<T, T> {
       selection
     })
     super(resolver, cursor)
+    this.graphQLContext = () => {
+      return {
+        schema: createGraphQLSchema(schema),
+        rootValue: new GraphQLResolver(this)
+      }
+    }
+  }
+
+  async graphql(query: string, variables?: Record<string, any>) {
+    return graphql({
+      ...Lazy.get(this.graphQLContext),
+      source: query,
+      variableValues: variables
+    })
   }
 
   tree(id: EV<string>) {
