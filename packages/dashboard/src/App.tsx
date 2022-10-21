@@ -1,54 +1,56 @@
-import {DashboardProvider, useDashboard} from './hook/UseDashboard'
-import {DraftsProvider, DraftsStatus, useDrafts} from './hook/UseDrafts'
+import {renderLabel, Session} from '@alinea/core'
 import {
   ErrorBoundary,
   FavIcon,
   Loader,
   PreferencesProvider,
   Statusbar,
-  Viewport,
-  useObservable
+  useObservable,
+  Viewport
 } from '@alinea/ui'
-import {Fragment, Suspense, useMemo, useState} from 'react'
-import {
-  QueryClient,
-  QueryClientProvider as ReactQueryClientProvider
-} from 'react-query'
+import {IcRoundCheck} from '@alinea/ui/icons/IcRoundCheck'
+import {IcRoundEdit} from '@alinea/ui/icons/IcRoundEdit'
+import {IcRoundInsertDriveFile} from '@alinea/ui/icons/IcRoundInsertDriveFile'
+import {IcRoundRotateLeft} from '@alinea/ui/icons/IcRoundRotateLeft'
+import {MdiSourceBranch} from '@alinea/ui/icons/MdiSourceBranch'
 import {
   Routes,
   useLocation,
   useMatch,
   useParams
 } from '@alinea/ui/util/HashRouter'
-import {Session, renderLabel} from '@alinea/core'
-
-import {ContentTree} from './view/ContentTree'
-import {CurrentDraftProvider} from './hook/UseCurrentDraft'
+import {Fragment, Suspense, useMemo, useState} from 'react'
+import {
+  QueryClient,
+  QueryClientProvider as ReactQueryClientProvider
+} from 'react-query'
 import {DashboardOptions} from './Dashboard'
-import {DraftsOverview} from './view/DraftsOverview'
-import {EditMode} from './view/entry/EditMode'
-import {EntryEdit} from './view/EntryEdit'
-import {EntrySummaryProvider} from './hook/UseEntrySummary'
-import {Head} from './util/Head'
-import {IcRoundCheck} from '@alinea/ui/icons/IcRoundCheck'
-import {IcRoundEdit} from '@alinea/ui/icons/IcRoundEdit'
-import {IcRoundInsertDriveFile} from '@alinea/ui/icons/IcRoundInsertDriveFile'
-import {IcRoundRotateLeft} from '@alinea/ui/icons/IcRoundRotateLeft'
-import {MdiSourceBranch} from '@alinea/ui/icons/MdiSourceBranch'
-import {NewEntry} from './view/entry/NewEntry'
-import {RootHeader} from './view/entry/RootHeader'
-import {RootOverview} from './view/RootOverview'
-import {SearchBox} from './view/SearchBox'
-import {SessionProvider} from './hook/UseSession'
-import {Sidebar} from './view/Sidebar'
-import {Toolbar} from './view/Toolbar'
+import {CurrentDraftProvider} from './hook/UseCurrentDraft'
+import {DashboardProvider, useDashboard} from './hook/UseDashboard'
 import {useDraft} from './hook/UseDraft'
+import {DraftsProvider, DraftsStatus, useDrafts} from './hook/UseDrafts'
 import {useDraftsList} from './hook/UseDraftsList'
 import {useEntryLocation} from './hook/UseEntryLocation'
+import {EntrySummaryProvider} from './hook/UseEntrySummary'
 import {useLocale} from './hook/UseLocale'
 import {useNav} from './hook/UseNav'
 import {useRoot} from './hook/UseRoot'
+import {SessionProvider} from './hook/UseSession'
 import {useWorkspace} from './hook/UseWorkspace'
+import {Head} from './util/Head'
+import {ContentTree} from './view/ContentTree'
+import {DraftsOverview} from './view/DraftsOverview'
+import {EditMode} from './view/entry/EditMode'
+import {NewEntry} from './view/entry/NewEntry'
+import {RootHeader} from './view/entry/RootHeader'
+import {EntryEdit} from './view/EntryEdit'
+import {RootOverview} from './view/RootOverview'
+import {SearchBox} from './view/SearchBox'
+import {Sidebar} from './view/Sidebar'
+import {Toolbar} from './view/Toolbar'
+
+const Router = {
+  Entry() {
 
 const Router = {
   Entry() {
