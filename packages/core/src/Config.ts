@@ -3,14 +3,13 @@ import {Auth} from './Auth'
 import {BackendConfig, BackendProps} from './BackendConfig'
 import {createError} from './ErrorWithCode'
 import {Root} from './Root'
+import {Schema} from './Schema'
 import {Type} from './Type'
-import {Workspace, WorkspaceConfig, Workspaces} from './Workspace'
+import {Workspace, WorkspaceConfig} from './Workspace'
 
 /** Configuration options for the dashboard */
-export class Config<T extends Workspaces = Workspaces> {
-  workspaces: {
-    [K in keyof T]: Workspace<T[K] extends WorkspaceConfig<infer W> ? W : any>
-  }
+export class Config<T = any> {
+  workspaces: Record<string, Workspace>
 
   constructor(public options: ConfigOptions<T>) {
     this.workspaces = Object.fromEntries(
@@ -18,6 +17,11 @@ export class Config<T extends Workspaces = Workspaces> {
         return [name, new Workspace(name, config)]
       })
     ) as any
+    this.schema.validate()
+  }
+
+  get schema() {
+    return this.options.schema
   }
 
   get hasAuth() {
@@ -45,11 +49,9 @@ export class Config<T extends Workspaces = Workspaces> {
     return this.workspaces[key]
   }
 
-  /** Find a type by workspace and name */
-  type = (workspace: string, name: string): Type | undefined => {
-    const space = this.workspaces[workspace]
-    if (!space) throw createError(404, `Workspace "${workspace}" not found`)
-    return space.schema.type(name)
+  /** Find a type by name */
+  type = (name: string): Type | undefined => {
+    return this.schema.type(name)
   }
 
   /** Get a root */
@@ -67,16 +69,17 @@ export class Config<T extends Workspaces = Workspaces> {
 }
 
 export namespace Config {
-  export type Infer<T> = T extends Config<infer U> ? U : never
+  export type infer<T> = T extends Config<infer U> ? U : never
 }
 
 /** Configuration options */
-export type ConfigOptions<T extends Workspaces> = {
+export type ConfigOptions<T> = {
+  schema: Schema<T>
+  /** A record containing workspace configurations */
+  workspaces: Record<string, WorkspaceConfig>
   backend?: BackendConfig<any>
   /** The client side authentication view */
   auth?: Auth.View
-  /** A record containing workspace configurations */
-  workspaces: T
   dashboard?: {
     handlerUrl: string
     dashboardUrl: string
@@ -86,6 +89,6 @@ export type ConfigOptions<T extends Workspaces> = {
 }
 
 /** Create a new config instance */
-export function createConfig<T extends Workspaces>(options: ConfigOptions<T>) {
+export function createConfig<T>(options: ConfigOptions<T>) {
   return new Config(options)
 }

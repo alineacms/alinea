@@ -63,7 +63,7 @@
           "content": [
             {
               "type": "text",
-              "text": "The example config below has one workspace named `main` with the following settings :"
+              "text": "In the example below we find a schema which includes the default `MediaSchema`, necessary for file uploads, and a generic `Page` type. One workspace named `main` is defined with the following settings:"
             }
           ]
         },
@@ -109,21 +109,6 @@
                   "content": [
                     {
                       "type": "text",
-                      "text": "`schema`: the schema includes the default `MediaSchema`, necessary for file uploads, and a generic `Page` type"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "type": "listItem",
-              "content": [
-                {
-                  "type": "paragraph",
-                  "textAlign": "left",
-                  "content": [
-                    {
-                      "type": "text",
                       "text": "`roots`: defines two separate web roots, one for data (our welcome page in this case), and one for media (file uploads)"
                     }
                   ]
@@ -135,7 +120,7 @@
         {
           "id": "25HWCBHEFdsLDtooZ4mzxeax3An",
           "type": "CodeBlock",
-          "code": "import {Welcome} from '@alinea/dashboard/Welcome'\nimport {IcRoundInsertDriveFile} from '@alinea/ui/icons/IcRoundInsertDriveFile'\nimport {IcRoundPermMedia} from '@alinea/ui/icons/IcRoundPermMedia'\nimport {alinea} from 'alinea'\n\nexport const config = alinea.createConfig({\n  workspaces: {\n    main: alinea.workspace('Example', {\n      source: './content',\n      mediaDir: './public',\n      schema: alinea.schema({\n        ...alinea.MediaSchema,\n        Page: alinea.type(\n          'Page',\n          {\n            title: alinea.text('Title'),\n            path: alinea.path('Path')\n          },\n          <Welcome />\n        )\n      }),\n      roots: {\n        data: alinea.root('Example project', {\n          icon: IcRoundInsertDriveFile,\n          contains: ['Page']\n        }),\n        media: alinea.root('Media', {\n          icon: IcRoundPermMedia,\n          contains: ['MediaLibrary']\n        })\n      }\n    })\n  }\n})",
+          "code": "import {Welcome} from '@alinea/dashboard/Welcome'\nimport {IcRoundInsertDriveFile} from '@alinea/ui/icons/IcRoundInsertDriveFile'\nimport {IcRoundPermMedia} from '@alinea/ui/icons/IcRoundPermMedia'\nimport {alinea} from 'alinea'\n\nexport const config = alinea.createConfig({\n  schema: alinea.schema({\n    ...alinea.MediaSchema,\n    Page: alinea.type(\n      'Page',\n      {\n        title: alinea.text('Title'),\n        path: alinea.path('Path')\n      },\n      <Welcome />\n    )\n  }),\n  workspaces: {\n    main: alinea.workspace('Example', {\n      source: './content',\n      mediaDir: './public',\n      roots: {\n        data: alinea.root('Example project', {\n          icon: IcRoundInsertDriveFile,\n          contains: ['Page']\n        }),\n        media: alinea.root('Media', {\n          icon: IcRoundPermMedia,\n          contains: ['MediaLibrary']\n        })\n      }\n    })\n  }\n})",
           "fileName": "alinea.config.tsx"
         }
       ]

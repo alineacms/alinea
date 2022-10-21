@@ -1,4 +1,4 @@
-import {Cursor, CursorData, CursorSingleRow} from './Cursor'
+import {Cursor, CursorData, CursorImpl, CursorSingleRow} from './Cursor'
 import {Fields} from './Fields'
 import {From, FromType} from './From'
 import {OrderBy, OrderDirection} from './OrderBy'
@@ -139,7 +139,7 @@ export class Expr<T> {
   static NULL = toExpr(null)
 
   static value<T>(value: T): Expr<T> {
-    return new Expr(ExprData.Param(ParamData.Value(value)))
+    return new Expr<T>(ExprData.Param(ParamData.Value(value)))
   }
 
   constructor(public expr: ExprData) {
@@ -194,18 +194,11 @@ export class Expr<T> {
       return this.isNull()
     return binop(this, BinOp.Equals, that)
   }
-  // We redeclare T as generic to this method because because TypeScript gets
-  // very loopy if we don't
-  isIn<T>(
-    this: Expr<T>,
-    that: EV<ReadonlyArray<T>> | Cursor<T>
-  ): Expr<boolean> {
+
+  isIn(that: EV<Array<T>> | CursorImpl<T>): Expr<boolean> {
     return binop(this, BinOp.In, that)
   }
-  isNotIn<T>(
-    this: Expr<T>,
-    that: EV<ReadonlyArray<T>> | Cursor<T>
-  ): Expr<boolean> {
+  isNotIn(that: EV<Array<T>> | CursorImpl<T>): Expr<boolean> {
     return binop(this, BinOp.NotIn, that)
   }
   add(this: Expr<number>, that: EV<number>): Expr<number> {
@@ -258,9 +251,9 @@ export class Expr<T> {
   private __id() {
     return `__id${Expr.uniqueId++}`
   }
-  each<T>(this: Expr<Array<T>>): Cursor<T> {
+  each<Row>(this: Expr<Array<Row>>): Cursor<Row> {
     const from = From.Each(this.expr, this.__id())
-    return new Cursor<T>({
+    return new Cursor<Row>({
       from,
       selection: ExprData.Row(from)
     })

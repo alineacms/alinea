@@ -1,5 +1,5 @@
 import {Entry, Outcome, Reference, Schema, View} from '@alinea/core'
-import {Cursor, Functions} from '@alinea/store'
+import {Cursor, CursorImpl, Functions} from '@alinea/store'
 import {fromModule, Loader} from '@alinea/ui'
 import useSize from '@react-hook/size'
 import {useRef} from 'react'
@@ -20,7 +20,7 @@ const defaultSummaryView = {
 
 export type ExplorerProps = {
   schema: Schema
-  cursor: Cursor<Entry>
+  cursor: CursorImpl<Entry>
   type: 'row' | 'thumb'
   virtualized?: boolean
   max?: number

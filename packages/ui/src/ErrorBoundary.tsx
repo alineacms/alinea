@@ -1,5 +1,4 @@
 import {PropsWithChildren, useEffect} from 'react'
-import {useLocation} from 'react-router-dom'
 import useErrorBoundary from 'use-error-boundary'
 import {Button} from './Button'
 import css from './ErrorBoundary.module.scss'
@@ -9,6 +8,7 @@ import {IcRoundOpenInNew} from './icons/IcRoundOpenInNew'
 import {IcRoundWarning} from './icons/IcRoundWarning'
 import {HStack, VStack} from './Stack'
 import {Typo} from './Typo'
+import {useLocation} from './util/HashRouter'
 import {fromModule} from './util/Styler'
 
 const styles = fromModule(css)
@@ -19,13 +19,11 @@ type ErrorBoundaryProps = PropsWithChildren<{
 
 export function ErrorBoundary({children, dependencies}: ErrorBoundaryProps) {
   const {ErrorBoundary, didCatch, error, reset} = useErrorBoundary()
-  try {
-    const location = useLocation()
-    useEffect(() => {
-      // Let's retry once we navigate elsewhere
-      if (error) reset()
-    }, [location])
-  } catch (e) {}
+  const location = useLocation()
+  useEffect(() => {
+    // Let's retry once we navigate elsewhere
+    if (error) reset()
+  }, [location])
   useEffect(() => {
     if (error) reset()
   }, dependencies || [])

@@ -1,11 +1,15 @@
 import {useRouter} from 'next/router.js'
-import {usePreview} from './react'
+import {usePreview as useReactPreview} from './react'
 
-export function useNextPreview() {
+export function usePreview() {
   const router = useRouter()
-  return usePreview({
-    refetch() {
-      router.replace(router.asPath, undefined, {scroll: false})
+  return useReactPreview({
+    async refetch() {
+      try {
+        await router.replace(router.asPath, undefined, {scroll: false})
+      } catch (e) {}
     }
   })
 }
+
+export const useNextPreview = usePreview

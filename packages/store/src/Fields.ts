@@ -18,7 +18,7 @@ type FieldsOf<Row> = Row extends Record<string, any>
       [K in keyof Row]-?: Row[K] extends Array<any>
         ? Expr<Row[K]>
         : Row[K] extends object | undefined
-        ? Fields<Row[K]>
+        ? FieldsOf<Row[K]>
         : Expr<Row[K]>
     }
   : never
@@ -29,8 +29,10 @@ type IsStrictlyAny<T> = (T extends never ? true : false) extends false
   : true
 
 export type Fields<T> = IsStrictlyAny<T> extends true
-  ? unknown
-  : FieldsOf<UnionToIntersection<RequiredKeepUndefined<T>>>
+  ? any
+  : T extends Record<string, any>
+  ? FieldsOf<T>
+  : unknown
 
 export namespace Fields {
   export function create(from: ExprData) {

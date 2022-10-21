@@ -3,10 +3,10 @@ import {Entry, Hub} from '@alinea/core'
 export namespace Data {
   export interface Source {
     entries(): AsyncGenerator<Entry>
-    watchFiles?: () => Promise<Array<string>>
+    watchFiles?: () => Promise<{files: Array<string>; dirs: Array<string>}>
   }
 
-  export namespace Source {
+  /*export namespace Source {
     export function concat(...sources: Array<Source>): Source {
       return {
         async *entries(): AsyncGenerator<Entry> {
@@ -24,7 +24,7 @@ export namespace Data {
         }
       }
     }
-  }
+  }*/
 
   export interface Target {
     canRename: boolean

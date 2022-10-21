@@ -11,8 +11,7 @@ import Head from 'next/head'
 import {ComponentType, useEffect, useMemo, useState} from 'react'
 import Frame, {useFrame} from 'react-frame-component'
 import DemoHome, {queryHome} from '../pages/home'
-import DemoRecipes, {queryRecipes} from '../pages/recipes'
-import DemoRecipedetail, {queryRecipe} from '../pages/recipes/[slug]'
+import Recipe, {queryRecipe} from '../pages/recipes/[slug]'
 
 export interface DemoProps {
   fullPage?: boolean
@@ -25,7 +24,7 @@ export default function Demo({fullPage}: DemoProps) {
   return (
     <>
       <Head>
-        <title>Alinea CMS demo</title>
+        <title>Alinea demo</title>
       </Head>
       <Dashboard fullPage={fullPage} config={config} client={client} />
     </>
@@ -45,13 +44,12 @@ interface PreviewData {
 function preview(entry: Entry): PreviewData {
   switch (entry.type) {
     case 'Home':
-      return {query: queryHome, view: DemoHome}
     case 'Recipes':
-      return {query: queryRecipes, view: DemoRecipes}
-    case 'Recipedetail':
+      return {query: queryHome, view: DemoHome}
+    case 'Recipe':
       return {
         query: pages => queryRecipe(pages, entry.path),
-        view: DemoRecipedetail
+        view: Recipe
       }
     default:
       throw new Error(`Unknown type: ${entry.type}`)

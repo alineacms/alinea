@@ -1,7 +1,7 @@
 import {Entry} from '@alinea/core'
 import {Chip, fromModule, TextLabel} from '@alinea/ui'
 import {memo} from 'react'
-import {useWorkspace} from '../../hook/UseWorkspace'
+import {useDashboard} from '../../hook/UseDashboard'
 import {diffRecord} from './DiffUtils'
 import css from './EntryDiff.module.scss'
 import {FieldsDiff} from './FieldsDiff'
@@ -17,9 +17,9 @@ export const EntryDiff = memo(function EntryDiff({
   entryA,
   entryB
 }: EntryDiffProps) {
-  const workspace = useWorkspace()
-  const typeA = workspace.schema.type(entryA.type)!
-  const typeB = workspace.schema.type(entryB.type)!
+  const {schema} = useDashboard().config
+  const typeA = schema.type(entryA.type)!
+  const typeB = schema.type(entryB.type)!
   const typeChanged = typeA !== typeB
   if (typeChanged)
     return (

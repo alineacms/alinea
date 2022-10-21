@@ -86,6 +86,37 @@
                   "content": [
                     {
                       "type": "text",
+                      "text": "Start from one of our "
+                    },
+                    {
+                      "type": "text",
+                      "text": "examples",
+                      "marks": [
+                        {
+                          "type": "link",
+                          "attrs": {
+                            "data-id": "WpJVcicRJMS41iBIpiDQj",
+                            "data-entry": null,
+                            "href": "https://github.com/alineacms/alinea/tree/main/examples",
+                            "target": "_blank",
+                            "title": null
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "listItem",
+              "content": [
+                {
+                  "type": "paragraph",
+                  "textAlign": "left",
+                  "content": [
+                    {
+                      "type": "text",
                       "text": "Start blank with a new directory  "
                     },
                     {
@@ -208,7 +239,7 @@
           "content": [
             {
               "type": "text",
-              "text": "The alinea dashboard uses "
+              "text": "The Alinea dashboard uses "
             },
             {
               "type": "text",
@@ -368,7 +399,7 @@
           "content": [
             {
               "type": "text",
-              "text": "If you're using a framework with its own development server it's possible to prepend the serve command to it. This will wait until the alinea package is generated before starting the dev server make sure userland code can always depend on the package being available. It also simplifies running the dashboard and development server without requiring tools like npm-run-all. "
+              "text": "If you're using a framework with its own development server it's possible to prepend the serve command to it. This will wait until the Alinea package is generated before starting the dev server make sure userland code can always depend on the package being available. It also simplifies running the dashboard and development server without requiring tools like npm-run-all. "
             }
           ]
         },

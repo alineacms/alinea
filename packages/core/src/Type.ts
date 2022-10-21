@@ -1,16 +1,16 @@
 // Todo: extract interface and place it in core
 import type {Pages} from '@alinea/backend/Pages'
 import type {EntryEditProps} from '@alinea/dashboard/view/EntryEdit'
-import type {Cursor, Fields} from '@alinea/store'
+import type {CollectionImpl, CursorImpl} from '@alinea/store'
 import {Collection, Expr, SelectionInput} from '@alinea/store'
 import type {ComponentType} from 'react'
 import {Entry} from './Entry'
 import {Field} from './Field'
+import {Hint} from './Hint'
 import {createId} from './Id'
 import {Label} from './Label'
-import type {Schema} from './Schema'
 import {Section} from './Section'
-import {Shape} from './Shape'
+import {Shape, ShapeInfo} from './Shape'
 import {RecordShape} from './shape/RecordShape'
 import {Lazy} from './util/Lazy'
 import {LazyRecord} from './util/LazyRecord'
@@ -48,7 +48,7 @@ export type TypeOptions<R, Q> = {
 
   /** Create indexes on fields of this type */
   // Todo: solve infered type here
-  index?: <T>(fields: Fields<T>) => Record<string, Array<Expr<any>>>
+  index?: (fields: any) => Record<string, Array<Expr<any>>>
 
   entryUrl?: (meta: EntryUrlMeta) => string
 
@@ -77,8 +77,20 @@ export class TypeConfig<R = any, T = R> {
           })
       )
     )
-    for (const section of this.sections)
+    for (const section of this.sections) {
       if (section.fields) Object.assign(this.fields, Lazy.get(section.fields))
+    }
+  }
+
+  get hint() {
+    const fields: Record<string, Field<any, any>> = {}
+    for (const section of this.sections) {
+      if (section.fields) Object.assign(fields, Lazy.get(section.fields))
+    }
+    const hints = Object.entries(fields).map(([key, field]) => {
+      return [key, field.hint]
+    })
+    return Hint.Object(Object.fromEntries(hints))
   }
 
   /** Create a new empty instance of this type's fields */
@@ -114,12 +126,12 @@ export class TypeConfig<R = any, T = R> {
     return this.options.entryUrl
   }
 
-  selection(cursor: Cursor<R>, pages: Pages<any>): Expr<any> | undefined {
+  selection(cursor: CursorImpl<R>, pages: Pages<any>): Expr<any> | undefined {
     const computed: Record<string, SelectionInput> = {}
     let isComputed = false
     for (const [key, field] of this) {
       if (!field.transform) continue
-      const selection = field.transform(cursor.get<any>(key), pages)
+      const selection = field.transform(cursor.get(key), pages)
       if (!selection) continue
       computed[key] = selection
       isComputed = true
@@ -130,7 +142,7 @@ export class TypeConfig<R = any, T = R> {
         pages
       )
     if (!isComputed) return
-    return cursor.fields.with(computed).toExpr()
+    return new Expr(cursor.fields.with(computed).expr)
   }
 
   configure<Q = T>(options: TypeOptions<R, Q>): TypeConfig<R, Q> {
@@ -140,19 +152,34 @@ export class TypeConfig<R = any, T = R> {
     } as TypeOptions<R, Q>)
   }
 
-  toType(schema: Schema, name: string): Type<R, T> {
-    return new Type(schema, name, this)
+  toType(name: string): Type<R, T> {
+    return new Type(name, this)
   }
 }
 
 /** Describes the structure of an entry by their fields and type */
-export class Type<R = any, T = R> extends TypeConfig<R, T> {
-  constructor(
-    public schema: Schema,
-    public name: string,
-    config: TypeConfig<R, T>
-  ) {
+export class Type<R = any, T = R>
+  extends TypeConfig<R, T>
+  implements ShapeInfo
+{
+  parents = []
+
+  constructor(public name: string, config: TypeConfig<R, T>) {
     super(config.label, config.sections, config.options)
+  }
+
+  get hint() {
+    const fields: Record<string, Field<any, any>> = {}
+    for (const section of this.sections) {
+      if (section.fields) Object.assign(fields, Lazy.get(section.fields))
+    }
+    const hints = Object.entries(fields).map(([key, field]) => {
+      return [key, field.hint]
+    })
+    return Hint.Definition(this.name, {
+      type: Hint.Literal(this.name),
+      ...Object.fromEntries(hints)
+    })
   }
 
   /** Create a new Entry instance of this type */
@@ -164,13 +191,11 @@ export class Type<R = any, T = R> extends TypeConfig<R, T> {
     } as Entry & T
   }
 
-  collection(): Collection<T> {
+  collection(): CollectionImpl<T> {
     const alias = this.name
     const fields = Entry
     const res = new Collection<T>('Entry', {
-      where: fields.type
-        .is(alias)
-        .and(fields.alinea.workspace.is(this.schema.workspace.name))
+      where: fields.type.is(alias)
     })
     // Todo: this is used in Pages(Multiple).whereType() and needs a clean way
     // of passing this option

@@ -1,5 +1,5 @@
+import {useMatch} from '@alinea/ui/util/HashRouter'
 import {useMemo} from 'react'
-import {useMatch} from 'react-router'
 import {dashboardNav, EntryLocation} from '../DashboardNav'
 
 const nav = dashboardNav({})
@@ -7,7 +7,7 @@ const nav = dashboardNav({})
 export function useEntryLocation(): EntryLocation | undefined {
   const match = useMatch(nav.matchEntryId)
   return useMemo(() => {
-    const params = match?.params as EntryLocation
+    const params = match as EntryLocation
     return params || undefined
   }, [match])
 }

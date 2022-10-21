@@ -1,6 +1,6 @@
 import {outcome} from '@alinea/core'
+import {useMatch} from '@alinea/ui/util/HashRouter'
 import {useMemo} from 'react'
-import {useMatch} from 'react-router'
 import {dashboardNav} from '../DashboardNav'
 import {parseRootPath, useRoot} from './UseRoot'
 
@@ -12,7 +12,7 @@ export function useLocale(): string | undefined {
   return useMemo(() => {
     const {i18n} = root
     if (!i18n) return
-    const params: Record<string, string | undefined> = match?.params ?? {}
+    const params: Record<string, string | undefined> = match ?? {}
     const {root: rootKey} = params
     if (rootKey) {
       const fromUrl = parseRootPath(rootKey)[1]

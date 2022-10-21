@@ -254,14 +254,14 @@
           "content": [
             {
               "type": "text",
-              "text": "Alinea indexes the JSON files into an in-memory SQLite database. Having a database with indexed fields means querying content is fast and simple. The database and tools to query content are packaged into a Javascript library that sits next to your code and is aliased to `@alinea/content`."
+              "text": "Alinea indexes the JSON files into an embedded SQLite database. Having a database with indexed fields means querying content is fast and simple. The database and tools to query content are packaged into a Javascript library that sits next to your code and is aliased to `@alinea/content`."
             }
           ]
         },
         {
           "id": "AaQPYG-vXDXCcb-40iYeP",
           "type": "CodeBlock",
-          "code": "import {initPages} from '@alinea/content/myWorkspace/pages.js'\nconst pages = initPages()\nconsole.log(\n  await pages\n    .whereType('BlogPost')\n    .where(post => post.author.is('Me'))\n    .select(post => ({title: post.title}))\n)"
+          "code": "import {initPages} from '@alinea/content/pages'\nconst pages = initPages()\nconsole.log(\n  await pages\n    .whereType('BlogPost')\n    .where(post => post.author.is('Me'))\n    .select(post => ({title: post.title}))\n)"
         },
         {
           "id": "Gs_7cGVP61b0kBG9DKV7u",

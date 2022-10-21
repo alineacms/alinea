@@ -5,7 +5,12 @@ import createExample from './fixture/Example'
 
 test('tree', async () => {
   const {config, store} = await createExample()
-  const pages = new Pages(config.workspaces.main, async () => store)
+  const pages = new Pages({
+    schema: config.schema,
+    async query(cursor) {
+      return store.all(cursor)
+    }
+  })
 
   const root = await pages.first(page => page.id.is('root'))
   if (!root) throw new Error(`root expected`)

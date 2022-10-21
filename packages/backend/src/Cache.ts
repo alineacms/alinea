@@ -123,25 +123,19 @@ export namespace Cache {
     }
   }
 
-  const indexing = new WeakMap()
-
   export interface CacheOptions {
     store: SqliteStore
     config: Config
     from: Data.Source
     logger?: Logger
-    fix?: boolean
   }
 
   export async function create({
     store,
     config,
     from,
-    logger = new Logger('Create cache'),
-    fix
+    logger = new Logger('Create cache')
   }: CacheOptions) {
-    if (indexing.has(store)) throw 'Already indexing'
-    indexing.set(store, true)
     const endDbSetup = logger.time('Database setup')
     let total = 0
     const batch: Array<Entry> = []
@@ -181,16 +175,14 @@ export namespace Cache {
       store.createIndex(Entry, 'root', [Entry.alinea.root])
       store.createIndex(Entry, 'type', [Entry.type])
       store.createIndex(Entry, 'url', [Entry.url])
-      for (const [workspace, {schema}] of Object.entries(config.workspaces)) {
-        for (const [key, type] of schema) {
-          const {index} = type.options
-          if (!index) continue
-          const collection = type.collection()
-          const indices = index(collection)
-          for (const [name, fields] of Object.entries(indices)) {
-            const indexName = `${workspace}.${key}.${name}`
-            store.createIndex(collection, indexName, fields)
-          }
+      for (const [key, type] of config.schema) {
+        const {index} = type.options
+        if (!index) continue
+        const collection = type.collection()
+        const indices = index(collection)
+        for (const [name, fields] of Object.entries(indices)) {
+          const indexName = `${key}.${name}`
+          store.createIndex(collection, indexName, fields)
         }
       }
     })
@@ -201,7 +193,6 @@ export namespace Cache {
     })
     endValidate()
     logger.summary(`Indexed ${total} entries`)
-    indexing.delete(store)
   }
 
   export function createUrl(type: Type, meta: EntryUrlMeta) {
@@ -229,7 +220,7 @@ export namespace Cache {
     entry: Entry,
     status: EntryStatus = EntryStatus.Published
   ): Entry {
-    const type = config.type(entry.alinea.workspace, entry.type)
+    const type = config.type(entry.type)
     if (!type) throw createError(400, 'Type not found')
     const root = config.root(entry.alinea.workspace, entry.alinea.root)
     const parents: Array<string> = []
@@ -294,8 +285,6 @@ export namespace Cache {
     }
   }
 
-  const Parent = Entry.as('Parent')
-
   function setChildrenUrl(store: Store, config: Config, parentId: string) {
     const children = store.all(
       Entry.where(Entry.alinea.parent.is(parentId)).select({
@@ -303,11 +292,11 @@ export namespace Cache {
         path: Entry.path,
         type: Entry.type,
         alinea: Entry.alinea,
-        parentPaths: Tree.parents(Entry.id).select(Parent.path)
+        parentPaths: Tree.parents(Entry.id).select(page => page.path)
       })
     )
     for (const child of children) {
-      const type = config.type(child.alinea.workspace, child.type)
+      const type = config.type(child.type)
       if (!type) continue
       const meta = {
         path: child.path,

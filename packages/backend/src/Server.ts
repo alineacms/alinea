@@ -8,10 +8,9 @@ import {
   Future,
   Hub,
   Media,
+  Outcome,
   outcome,
-  slugify,
-  WorkspaceConfig,
-  Workspaces
+  slugify
 } from '@alinea/core'
 import {arrayBufferToHex} from '@alinea/core/util/ArrayBuffers'
 import {base64} from '@alinea/core/util/Encoding'
@@ -26,7 +25,7 @@ import {
 } from '@alinea/core/util/Paths'
 import {crypto} from '@alinea/iso'
 import sqlite from '@alinea/sqlite-wasm'
-import {Cursor, Store} from '@alinea/store'
+import {Store} from '@alinea/store'
 import {SqlJsDriver} from '@alinea/store/sqlite/drivers/SqlJsDriver'
 import {SqliteStore} from '@alinea/store/sqlite/SqliteStore'
 import * as Y from 'yjs'
@@ -39,12 +38,12 @@ import {Previews} from './Previews'
 import {PreviewStore, previewStore} from './PreviewStore'
 import {Storage} from './Storage'
 
-type PagesOptions = {
+export interface PreviewOptions {
   preview?: boolean
   previewToken?: string
 }
 
-export type ServerOptions<T extends Workspaces> = {
+export type ServerOptions<T> = {
   config: Config<T>
   createStore: () => Promise<Store>
   drafts: Drafts
@@ -57,7 +56,7 @@ export type ServerOptions<T extends Workspaces> = {
   applyPublish?: boolean
 }
 
-export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
+export class Server<T = any> implements Hub<T> {
   preview: PreviewStore
   createStore: () => Promise<Store>
 
@@ -115,20 +114,24 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
       ])
       const Parent = Entry.as('Parent')
       const Translation = Entry.as('Translation')
-      const minimal = (entry: Cursor<Entry>) => ({
-        id: entry.id,
-        type: entry.type,
-        title: entry.title,
-        alinea: entry.alinea
-      })
       const data = preview.first(
         Entry.where(Entry.id.is(id)).select({
           entry: Entry.fields,
           translations: Translation.where(t =>
             t.alinea.i18n.id.is(Entry.alinea.i18n.id)
-          ).select(minimal),
+          ).select({
+            id: Translation.id,
+            type: Translation.type,
+            title: Translation.title,
+            alinea: Translation.alinea
+          }),
           parent: Parent.where(Parent.id.is(Entry.alinea.parent))
-            .select(minimal)
+            .select({
+              id: Parent.id,
+              type: Parent.type,
+              title: Parent.title,
+              alinea: Parent.alinea
+            })
             .first()
         })
       )
@@ -138,7 +141,7 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
           ...data,
           original,
           draft: draft && base64.stringify(draft),
-          previewToken: await previews.sign({id})
+          previewToken: await previews.sign({id, url: data.entry.url})
         }
       )
     })
@@ -307,10 +310,10 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
     return this.options.drafts
   }
 
-  loadPages<K extends keyof T>(workspaceKey: K, options: PagesOptions = {}) {
-    const logger = new Logger('Load pages')
-    const workspace = this.config.workspaces[workspaceKey]
-    const store = options.previewToken
+  loadPages(options: PreviewOptions = {}): Pages<T> {
+    /*
+      const logger = new Logger('Load pages')
+      const store = options.previewToken
       ? async () => {
           const {id} = await this.parsePreviewToken(
             options.previewToken!,
@@ -320,11 +323,16 @@ export class Server<T extends Workspaces = Workspaces> implements Hub<T> {
         }
       : options.preview
       ? () => this.preview.getStore({logger})
-      : this.createStore
-    return new Pages<T[K] extends WorkspaceConfig<infer W> ? W : any>(
-      workspace,
-      store
-    )
+      : this.createStore*/
+    return new Pages<T>({
+      schema: this.config.schema,
+      query: cursor => {
+        return this.query({
+          cursor,
+          source: !options?.preview && !options?.previewToken
+        }).then(Outcome.unpack)
+      }
+    })
   }
 
   async parsePreviewToken(

@@ -25,7 +25,7 @@
           "content": [
             {
               "type": "text",
-              "text": "Hosting an alinea backend requires several services such as storing and retrieving drafts, publishing changes and authenticating users. We'll go through each of these and combine them into a handler which can be hosted on Node.js or serverless/edge Javascript runtimes. Let's start by adjusting the `alinea.config.tsx` file to include the backend setup."
+              "text": "Hosting an Alinea backend requires several services such as storing and retrieving drafts, publishing changes and authenticating users. We'll go through each of these and combine them into a handler which can be hosted on Node.js or serverless/edge Javascript runtimes. Let's start by adjusting the `alinea.config.tsx` file to include the backend setup."
             }
           ]
         },
@@ -239,7 +239,7 @@
           "content": [
             {
               "type": "text",
-              "text": "If you're setting up alinea to run fully inside the browser (like we did with our "
+              "text": "If you're setting up Alinea to run fully inside the browser (like we did with our "
             },
             {
               "type": "text",

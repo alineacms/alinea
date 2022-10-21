@@ -1,3 +1,4 @@
+import {Hint} from '@alinea/core/Hint'
 import {Reference} from '@alinea/core/Reference'
 import {Shape} from '@alinea/core/Shape'
 import {TypeConfig} from '@alinea/core/Type'
@@ -26,13 +27,17 @@ export function createUrlPicker<T>(
   const extra = options.fields?.shape
   return {
     type: 'url',
-    label: 'External website',
-    handlesMultiple: false,
     shape: Shape.Record('Url', {
       url: Shape.Scalar('Url'),
       description: Shape.Scalar('Description'),
       target: Shape.Scalar('Target')
     }).concat(extra),
-    options
+    hint: Hint.Extern({name: 'UrlReference', package: '@alinea/picker.url'}),
+    label: 'External website',
+    handlesMultiple: false,
+    options,
+    select(row) {
+      return row.fields
+    }
   }
 }

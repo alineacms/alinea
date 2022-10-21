@@ -1,4 +1,4 @@
-import {createId, SchemaConfig, TypeConfig} from '@alinea/core'
+import {createId, Schema, TypeConfig} from '@alinea/core'
 import {InputForm, InputLabel, InputState, useInput} from '@alinea/editor'
 import {Card, Create, fromModule, IconButton, px, TextLabel} from '@alinea/ui'
 import {IcRoundClose} from '@alinea/ui/icons/IcRoundClose'
@@ -85,7 +85,7 @@ function typeExtension(
 
 function schemaToExtensions(
   path: InputState<InputState.Text<any>>,
-  schema: SchemaConfig | undefined
+  schema: Schema | undefined
 ) {
   if (!schema) return []
   return schema.configEntries().map(([name, type]) => {
@@ -95,7 +95,7 @@ function schemaToExtensions(
 
 type InsertMenuProps = {
   editor: Editor
-  schema: SchemaConfig | undefined
+  schema: Schema | undefined
   onInsert: (id: string, type: string) => void
 }
 

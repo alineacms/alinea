@@ -1,21 +1,25 @@
 import {
   Config,
+  createError,
   Entry,
   Future,
   Hub,
   Media,
-  Outcome,
-  Workspaces
+  Outcome
 } from '@alinea/core'
-import {AbortController, fetch, FormData} from '@alinea/iso'
+import {AbortController, fetch, FormData, Response} from '@alinea/iso'
 
 async function toFuture<T = void>(res: Response): Future<T> {
   return Outcome.fromJSON<T>(await res.json())
 }
 
+function fail(err: Error): any {
+  return Outcome.Failure(err)
+}
+
 type AuthenticateRequest = (request?: RequestInit) => RequestInit | undefined
 
-export class Client<T extends Workspaces> implements Hub<T> {
+export class Client<T> implements Hub<T> {
   constructor(
     public config: Config<T>,
     public url: string,
@@ -30,7 +34,7 @@ export class Client<T extends Workspaces> implements Hub<T> {
   entry({id, stateVector}: Hub.EntryParams): Future<Entry.Detail | null> {
     return this.fetchJson(Hub.routes.entry(id, stateVector), {
       method: 'GET'
-    }).then<Outcome<Entry.Detail | null>>(toFuture)
+    }).then<Outcome<Entry.Detail | null>>(toFuture, fail)
   }
 
   query<T>({cursor, source}: Hub.QueryParams<T>): Future<Array<T>> {
@@ -38,7 +42,7 @@ export class Client<T extends Workspaces> implements Hub<T> {
     return this.fetchJson(Hub.routes.query() + params, {
       method: 'POST',
       body: JSON.stringify(cursor.toJSON())
-    }).then<Outcome<Array<T>>>(toFuture)
+    }).then<Outcome<Array<T>>>(toFuture, fail)
   }
 
   updateDraft({id, update}: Hub.UpdateParams): Future {
@@ -52,20 +56,20 @@ export class Client<T extends Workspaces> implements Hub<T> {
   deleteDraft({id}: Hub.DeleteParams): Future<boolean> {
     return this.fetch(Hub.routes.draft(id), {
       method: 'DELETE'
-    }).then<Outcome<boolean>>(toFuture)
+    }).then<Outcome<boolean>>(toFuture, fail)
   }
 
   listDrafts({workspace}: Hub.ListParams): Future<Array<{id: string}>> {
     return this.fetch(Hub.routes.drafts() + `?workspace=${workspace}`, {
       method: 'GET'
-    }).then<Outcome<Array<{id: string}>>>(toFuture)
+    }).then<Outcome<Array<{id: string}>>>(toFuture, fail)
   }
 
   publishEntries({entries}: Hub.PublishParams): Future {
     return this.fetchJson(Hub.routes.publish(), {
       method: 'POST',
       body: JSON.stringify(entries)
-    }).then(toFuture)
+    }).then(toFuture, fail)
   }
 
   uploadFile({workspace, root, ...file}: Hub.UploadParams): Future<Media.File> {
@@ -83,7 +87,7 @@ export class Client<T extends Workspaces> implements Hub<T> {
     return this.fetch(Hub.routes.upload(), {
       method: 'POST',
       body: form
-    }).then<Outcome<Media.File>>(toFuture)
+    }).then<Outcome<Media.File>>(toFuture, fail)
   }
 
   /*listFiles(location?: string): Future<Array<Hub.DirEntry>> {
@@ -92,7 +96,7 @@ export class Client<T extends Workspaces> implements Hub<T> {
     }).then<Outcome<Array<Hub.DirEntry>>>(toFuture)
   }*/
 
-  protected fetch(endpoint: string, init?: RequestInit) {
+  protected fetch(endpoint: string, init?: RequestInit): Promise<Response> {
     const controller = new AbortController()
     const signal = controller.signal
     const url =
@@ -102,10 +106,19 @@ export class Client<T extends Workspaces> implements Hub<T> {
     const promise = fetch(url, {
       ...this.applyAuth(init),
       signal
-    }).then(res => {
-      if (res.status === 401) this.unauthorized()
-      return res
     })
+      .then(res => {
+        if (res.status === 401) this.unauthorized()
+        if (res.status > 400)
+          throw createError(
+            res.status,
+            `Could not fetch "${endpoint}" (${res.status})`
+          )
+        return res
+      })
+      .catch(err => {
+        throw createError(500, `Could not fetch "${endpoint}": ${err}`)
+      })
     const cancel = () => controller.abort()
     function cancelify<T>(promise: Promise<T>) {
       const t = promise.then.bind(promise)

@@ -1,7 +1,7 @@
 {
   "id": "home",
   "type": "Home",
-  "title": "Alinea CMS",
+  "title": "Alinea - Open source headless CMS",
   "headline": "Content management\nfor the modern web",
   "byline": "Structure, edit and query content with any web framework.\nFully typed and organized in your repository.",
   "action": [
@@ -13,14 +13,7 @@
       "label": "Get started"
     }
   ],
-  "screenshot": [
-    {
-      "id": "2AKlt1RVaS9P6a7D0lvIPoHmNPK",
-      "index": "a0",
-      "type": "entry",
-      "entry": "2AKlsMwiF5NvBhkVZXWQVsNBPP6"
-    }
-  ],
+  "screenshot": [],
   "introduction": {
     "text": [
       {
@@ -108,14 +101,14 @@
         "index": "a2",
         "type": "Variant",
         "name": "Query content",
-        "code": "import {pages} from '@alinea/content/myWorkspace'\n\nconsole.log(\n  await pages\n    .whereType('BlogPost')\n    .where(post => post.author.is('Me'))\n    .select(post => ({title: post.title}))\n)"
+        "code": "import {initPages} from '@alinea/content/pages'\n\nconst pages = initPages()\nconsole.log(\n  await pages\n    .whereType('BlogPost')\n    .where(post => post.author.is('Me'))\n    .select(post => ({title: post.title}))\n)"
       }
     ]
   },
   "blocks": [],
   "links": [
     {
-      "id": "EWgvSk13pO7egOpA_Oyc-",
+      "id": "KFFmmbYVMbbO6ZcG51SEH",
       "index": "a0",
       "type": "entry",
       "entry": "2AFn42lqIU86a9MI0I4rX3qMJQv",
@@ -123,11 +116,19 @@
       "active": "/docs"
     },
     {
-      "id": "GQeXYvTPjqof9gqIh1kK0",
+      "id": "YcBOn-HADwb-hCGO0GeY_",
       "index": "a1",
       "type": "entry",
       "entry": "CC8aJ6-2U3s31micAzTLU",
       "label": "Roadmap"
+    },
+    {
+      "id": "Q4Njy-I1fBzyuIBdZhb1f",
+      "index": "a2",
+      "type": "entry",
+      "entry": "gx3H52whBKO_DdfcMNI3I",
+      "label": "Blog",
+      "active": ""
     }
   ],
   "footer": [

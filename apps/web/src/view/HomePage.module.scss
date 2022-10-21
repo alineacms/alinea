@@ -37,6 +37,12 @@
       width: 100%;
       padding-top: 20px;
     }
+
+    &-examples {
+      background: var(--web-background);
+      padding: 20px 30px;
+      border-radius: 25px;
+    }
   }
 
   &-demo {

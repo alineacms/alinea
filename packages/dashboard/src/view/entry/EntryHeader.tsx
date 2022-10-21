@@ -16,11 +16,11 @@ import {IcRoundInsertDriveFile} from '@alinea/ui/icons/IcRoundInsertDriveFile'
 import {IcRoundPublish} from '@alinea/ui/icons/IcRoundPublish'
 import {IcRoundRotateLeft} from '@alinea/ui/icons/IcRoundRotateLeft'
 import {MdiSourceBranch} from '@alinea/ui/icons/MdiSourceBranch'
+import {link, useNavigate} from '@alinea/ui/util/HashRouter'
 import {useState} from 'react'
 import {useQueryClient} from 'react-query'
-import {useNavigate} from 'react-router'
-import {Link} from 'react-router-dom'
 import {useCurrentDraft} from '../../hook/UseCurrentDraft'
+import {useDashboard} from '../../hook/UseDashboard'
 import {DraftsStatus, useDrafts} from '../../hook/UseDrafts'
 import {useLocale} from '../../hook/UseLocale'
 import {useNav} from '../../hook/UseNav'
@@ -44,7 +44,7 @@ function EntryStatusChip() {
       return <Chip icon={IcRoundRotateLeft}>Publishing</Chip>
     case EntryStatus.Draft:
       return (
-        <Link to={nav.draft(draft)} style={{textDecoration: 'none'}}>
+        <a {...link(nav.draft(draft))} style={{textDecoration: 'none'}}>
           <Chip
             accent
             icon={
@@ -57,7 +57,7 @@ function EntryStatusChip() {
           >
             Draft
           </Chip>
-        </Link>
+        </a>
       )
     case EntryStatus.Archived:
       return <Chip icon={IcRoundArchive}>Archived</Chip>
@@ -71,7 +71,8 @@ export type EntryHeaderProps = {
 
 export function EntryHeader({mode, setMode}: EntryHeaderProps) {
   const nav = useNav()
-  const {name: workspace, schema} = useWorkspace()
+  const {schema} = useDashboard().config
+  const {name: workspace} = useWorkspace()
   const root = useRoot()
   const drafts = useDrafts()
   const draft = useCurrentDraft()
@@ -137,16 +138,18 @@ export function EntryHeader({mode, setMode}: EntryHeaderProps) {
         <HStack center gap={8}>
           {root.i18n.locales.map(locale => {
             const translation = draft.translation(locale)
-            const link = translation || draft
+            const to = translation || draft
             return (
-              <Link
+              <a
                 key={locale}
-                to={nav.entry({
-                  workspace: link.alinea.workspace,
-                  root: link.alinea.root,
-                  id: link.id,
-                  locale
-                })}
+                {...link(
+                  nav.entry({
+                    workspace: to.alinea.workspace,
+                    root: to.alinea.root,
+                    id: to.id,
+                    locale
+                  })
+                )}
               >
                 <Chip accent={currentLocale === locale}>
                   {translation ? (
@@ -155,7 +158,7 @@ export function EntryHeader({mode, setMode}: EntryHeaderProps) {
                     <>{locale.toUpperCase()}: ❌</>
                   )}
                 </Chip>
-              </Link>
+              </a>
             )
           })}
         </HStack>

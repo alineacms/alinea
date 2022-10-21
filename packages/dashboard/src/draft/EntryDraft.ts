@@ -1,4 +1,5 @@
 import {
+  docFromEntry,
   Entry,
   entryFromDoc,
   EntryMeta,
@@ -36,6 +37,10 @@ export class EntryDraft implements Entry {
 
   get source() {
     return this.detail.entry
+  }
+
+  discard() {
+    docFromEntry(this.detail.entry, () => this.channel, this.doc)
   }
 
   connect() {

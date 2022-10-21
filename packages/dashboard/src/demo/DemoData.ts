@@ -21,7 +21,6 @@ const demoSchema = schema({
 })
 
 const demo = workspace('Demo', {
-  schema: demoSchema,
   source: './content',
   color: 'yellow',
   roots: {
@@ -37,6 +36,7 @@ const demo = workspace('Demo', {
 })
 
 const config = createConfig({
+  schema: demoSchema,
   workspaces: {demo}
 })
 

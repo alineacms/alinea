@@ -2,12 +2,13 @@ import {createId, docFromEntry, EntryStatus} from '@alinea/core'
 import {InputForm} from '@alinea/editor'
 import {Button, ErrorMessage, fromModule, useObservable} from '@alinea/ui'
 import {Main} from '@alinea/ui/Main'
+import {useNavigate} from '@alinea/ui/util/HashRouter'
 import {Suspense, useLayoutEffect, useState} from 'react'
 import {useQueryClient} from 'react-query'
-import {useNavigate} from 'react-router'
 import * as Y from 'yjs'
 import {EntryDraft} from '../draft/EntryDraft'
 import {EntryProperty} from '../draft/EntryProperty'
+import {useDashboard} from '../hook/UseDashboard'
 import {useLocale} from '../hook/UseLocale'
 import {useNav} from '../hook/UseNav'
 import {useSession} from '../hook/UseSession'
@@ -31,7 +32,7 @@ export function EntryEdit({initialMode, draft, isLoading}: EntryEditProps) {
   const nav = useNav()
   const queryClient = useQueryClient()
   const locale = useLocale()
-  const {schema} = useWorkspace()
+  const {schema} = useDashboard().config
   const {hub} = useSession()
   const navigate = useNavigate()
   const type = schema.type(draft.type)

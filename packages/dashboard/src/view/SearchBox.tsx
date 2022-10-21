@@ -4,8 +4,9 @@ import {fromModule, HStack, IconButton, Stack} from '@alinea/ui'
 import {IcOutlineGridView} from '@alinea/ui/icons/IcOutlineGridView'
 import {IcOutlineList} from '@alinea/ui/icons/IcOutlineList'
 import {IcRoundSearch} from '@alinea/ui/icons/IcRoundSearch'
+import {useLocation, useNavigate} from '@alinea/ui/util/HashRouter'
 import {useLayoutEffect, useMemo, useState} from 'react'
-import {useLocation, useNavigate} from 'react-router'
+import {useDashboard} from '../hook/UseDashboard'
 import {useFocusList} from '../hook/UseFocusList'
 import {useNav} from '../hook/UseNav'
 import {useRoot} from '../hook/UseRoot'
@@ -46,7 +47,9 @@ export function SearchBox() {
   const list = useFocusList({
     onClear: () => setSearch('')
   })
-  const {name: workspace, schema} = useWorkspace()
+
+  const {schema} = useDashboard().config
+  const {name: workspace} = useWorkspace()
   const {name: root} = useRoot()
   const cursor = useMemo(
     () => query({workspace, root, search}).select(Entry.fields),

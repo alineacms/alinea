@@ -1,4 +1,4 @@
-import {backend} from '@alinea/content/backend.js'
+import {initPages} from '@alinea/content/pages'
 import fs from 'fs'
 import path from 'path'
 import {remark} from 'remark'
@@ -12,7 +12,7 @@ export async function getStaticProps() {
     return result.toString()
   }
 
-  const pages = backend.loadPages('web')
+  const pages = initPages()
   const filePath = path.join(process.cwd(), '../../changelog.md')
   const doc = fs.readFileSync(filePath)
   const content = await markdownToHtml(doc || '')

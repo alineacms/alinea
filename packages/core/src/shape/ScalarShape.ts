@@ -7,6 +7,9 @@ export type ScalarMutator<T> = (value: T) => void
 
 export class ScalarShape<T> implements Shape<T, ScalarMutator<T>> {
   constructor(public label: Label, private initialValue?: T) {}
+  innerTypes() {
+    return []
+  }
   create(): T {
     return this.initialValue as T
   }

@@ -4,7 +4,7 @@ import {IcRoundArrowForward} from '@alinea/ui/icons/IcRoundArrowForward'
 import Link from 'next/link'
 import {Blocks} from './blocks/Blocks'
 import css from './DocPage.module.scss'
-import {DocPageProps} from './DocPage.server'
+import type {DocPageProps} from './DocPage.server'
 import {Breadcrumbs} from './layout/Breadcrumbs'
 import {Layout} from './layout/Layout'
 import {NavTree, useNavTree} from './layout/NavTree'
@@ -28,14 +28,14 @@ export function DocPage({
         {prev && (
           <Link href={prev.url} passHref>
             <a className={styles.root.nav.link()}>
-              <VStack gap={8}>
+              <VStack gap={4}>
                 <HStack gap={8}>
                   <span className={styles.root.nav.link.icon()}>
                     <IcRoundArrowBack />
                   </span>
                   <span className={styles.root.nav.link.label()}>Previous</span>
                 </HStack>
-                <span>
+                <span className={styles.root.nav.link.title()}>
                   <TextLabel label={prev.title} />
                 </span>
               </VStack>
@@ -45,14 +45,14 @@ export function DocPage({
         {next && (
           <Link href={next.url} passHref>
             <a className={styles.root.nav.link('right')}>
-              <VStack gap={8}>
+              <VStack gap={4}>
                 <HStack gap={8} justify="right">
                   <span className={styles.root.nav.link.label()}>Next</span>
                   <span className={styles.root.nav.link.icon()}>
                     <IcRoundArrowForward />
                   </span>
                 </HStack>
-                <span>
+                <span className={styles.root.nav.link.title()}>
                   <TextLabel label={next.title} />
                 </span>
               </VStack>

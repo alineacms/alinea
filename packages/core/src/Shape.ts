@@ -8,14 +8,22 @@ import {TextDoc} from './TextDoc'
 
 type YType = Y.AbstractType<any>
 
+export interface ShapeInfo {
+  name: string
+  parents: Array<string>
+  shape: RecordShape
+}
+
 export interface Shape<T = any, M = any> {
   label: Label
+  innerTypes(parents: Array<string>): Array<ShapeInfo>
   create(): T
   typeOfChild<C>(yValue: any, child: string): Shape<C>
   toY(value: T): any
   fromY(yValue: any): T
   watch(parent: YType, key: string): (fun: () => void) => void
   mutator(parent: YType, key: string): M
+  toString(): string
 }
 
 export namespace Shape {

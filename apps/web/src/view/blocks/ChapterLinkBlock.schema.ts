@@ -1,4 +1,4 @@
-import {Schema, type} from '@alinea/core'
+import {type} from '@alinea/core'
 import {link} from '@alinea/input.link'
 import {text} from '@alinea/input.text'
 
@@ -10,7 +10,3 @@ export const ChapterLinkBlockSchema = type('Chapter link', {
     inline: true
   })
 })
-
-export type ChapterLinkBlockSchema = Schema.TypeOf<
-  typeof ChapterLinkBlockSchema
->

@@ -1,4 +1,5 @@
 import {
+  Config,
   createError,
   docFromEntry,
   EntryMeta,
@@ -14,6 +15,7 @@ import {QueryClient, useQueryClient} from 'react-query'
 // import {Room} from 'y-webrtc'
 import * as Y from 'yjs'
 import {EntryDraft} from '../draft/EntryDraft'
+import {useDashboard} from './UseDashboard'
 import {useSession} from './UseSession'
 
 export enum DraftsStatus {
@@ -34,7 +36,11 @@ class Drafts {
   status = observable<DraftsStatus>(DraftsStatus.Synced)
   stateVectors = new WeakMap<Y.Doc, Uint8Array>()
 
-  constructor(public hub: Hub, protected queryClient: QueryClient) {}
+  constructor(
+    public config: Config,
+    public hub: Hub,
+    protected queryClient: QueryClient
+  ) {}
 
   async save(id: string, doc: Y.Doc) {
     const {hub} = this
@@ -49,15 +55,12 @@ class Drafts {
   }
 
   async get(id: string) {
-    const {hub} = this
+    const {hub, config} = this
     const doc = new Y.Doc()
     const [result, error] = await hub.entry({id})
     if (error) throw error
     if (!result) throw createError(404, `Entry not found`)
-    const type = hub.config.type(
-      result.entry.alinea.workspace,
-      result.entry.type
-    )
+    const type = config.type(result.entry.type)
     if (!type) throw createError(404, `Type not found`)
     if (result.draft) {
       Y.applyUpdate(doc, base64.parse(result.draft))
@@ -143,8 +146,12 @@ const context = createContext<Drafts | undefined>(undefined)
 
 export function DraftsProvider({children}: PropsWithChildren<{}>) {
   const queryClient = useQueryClient()
+  const {config} = useDashboard()
   const {hub} = useSession()
-  const instance = useMemo(() => new Drafts(hub, queryClient), [hub])
+  const instance = useMemo(
+    () => new Drafts(config, hub, queryClient),
+    [config, hub]
+  )
   return <context.Provider value={instance}>{children}</context.Provider>
 }
 

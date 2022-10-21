@@ -25,7 +25,7 @@ export class Selection<T> {
   }
 
   toExpr(): Expr<T> {
-    return new Expr(this.expr)
+    return new Expr<T>(this.expr)
   }
 }
 

@@ -18,10 +18,11 @@ import {
 import {IcRoundArrowBack} from '@alinea/ui/icons/IcRoundArrowBack'
 import {Link} from '@alinea/ui/Link'
 import {Modal} from '@alinea/ui/Modal'
+import {useNavigate} from '@alinea/ui/util/HashRouter'
 import {FormEvent, useState} from 'react'
 import {useQuery, useQueryClient} from 'react-query'
-import {useNavigate} from 'react-router'
 import * as Y from 'yjs'
+import {useDashboard} from '../../hook/UseDashboard'
 import {useLocale} from '../../hook/UseLocale'
 import {useNav} from '../../hook/UseNav'
 import {useRoot} from '../../hook/UseRoot'
@@ -37,7 +38,8 @@ function NewEntryForm({parentId}: NewEntryProps) {
   const locale = useLocale()
   const queryClient = useQueryClient()
   const {hub} = useSession()
-  const {name: workspace, schema} = useWorkspace()
+  const {schema} = useDashboard().config
+  const {name: workspace} = useWorkspace()
   const containerTypes = [...schema.entries()]
     .filter(pair => {
       return pair[1].isContainer

@@ -1,8 +1,8 @@
-import type {EV} from '@alinea/store'
+import type {CursorImpl, CursorSingleRow, EV} from '@alinea/store'
 import {Entry} from './Entry'
 
 export namespace Tree {
-  export function siblings(id: EV<string>) {
+  export function siblings(id: EV<string>): CursorImpl<Entry> {
     const Self = Entry.as('Self')
     return Entry.where(Entry.id.isNot(id)).where(
       Entry.alinea.parent.is(
@@ -11,14 +11,14 @@ export namespace Tree {
     )
   }
 
-  export function children(id: EV<string>, depth = 1) {
+  export function children(id: EV<string>, depth = 1): CursorImpl<Entry> {
     if (depth > 1) throw 'todo depth > 1'
     return Entry.where(Entry.alinea.parent.is(id)).orderBy(
       Entry.alinea.index.asc()
     )
   }
 
-  export function parents(id: EV<string>) {
+  export function parents(id: EV<string>): CursorImpl<Entry> {
     const Self = Entry.as('Self')
     const Parent = Entry.as('Parent')
     const parentIds = Self.alinea.parents.each()
@@ -34,7 +34,7 @@ export namespace Tree {
       .each()
   }
 
-  export function parent(id: EV<string>) {
+  export function parent(id: EV<string>): CursorImpl<Entry> {
     const Self = Entry.as('Self')
     const Parent = Entry.as('Parent')
     return Self.where(Self.id.is(id))
@@ -42,7 +42,7 @@ export namespace Tree {
       .select(Parent.fields)
   }
 
-  export function nextSibling(id: EV<string>) {
+  export function nextSibling(id: EV<string>): CursorSingleRow<Entry> {
     const Self = Entry.as('Self')
     const self = Self.where(Self.id.is(id))
     return Entry.where(
@@ -53,7 +53,7 @@ export namespace Tree {
       .first()
   }
 
-  export function prevSibling(id: EV<string>) {
+  export function prevSibling(id: EV<string>): CursorSingleRow<Entry> {
     const Self = Entry.as('Self')
     const self = Self.where(Self.id.is(id))
     return Entry.where(

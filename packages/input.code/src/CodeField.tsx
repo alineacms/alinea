@@ -1,5 +1,5 @@
 import type {Pages} from '@alinea/backend/Pages'
-import {Field, Label, Shape} from '@alinea/core'
+import {Field, Hint, Label, Shape} from '@alinea/core'
 import {Expr} from '@alinea/store'
 
 export type CodeFieldOptions<Q> = {
@@ -26,6 +26,7 @@ export function createCode<Q = string>(
 ): CodeField<Q> {
   return {
     shape: Shape.Scalar(label, options.initialValue),
+    hint: Hint.String(),
     label,
     options,
     transform: options.transform,

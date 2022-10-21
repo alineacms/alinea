@@ -5,6 +5,7 @@ import {IcRoundInsertDriveFile} from '@alinea/ui/icons/IcRoundInsertDriveFile'
 import {IcRoundKeyboardArrowDown} from '@alinea/ui/icons/IcRoundKeyboardArrowDown'
 import {IcRoundKeyboardArrowRight} from '@alinea/ui/icons/IcRoundKeyboardArrowRight'
 import {HStack} from '@alinea/ui/Stack'
+import {link} from '@alinea/ui/util/HashRouter'
 import {
   AnimateLayoutChanges,
   defaultAnimateLayoutChanges,
@@ -21,9 +22,9 @@ import {
   useCallback,
   useRef
 } from 'react'
-import {Link} from 'react-router-dom'
 import {ContentTreeEntry} from '../../hook/UseContentTree'
 import {useCurrentDraft} from '../../hook/UseCurrentDraft'
+import {useDashboard} from '../../hook/UseDashboard'
 import {useDraftsList} from '../../hook/UseDraftsList'
 import {useNav} from '../../hook/UseNav'
 import {useWorkspace} from '../../hook/UseWorkspace'
@@ -38,11 +39,11 @@ type TreeNodeChildrenCreator = {
 
 function TreeNodeChildrenCreator({locale, entry}: TreeNodeChildrenCreator) {
   const nav = useNav()
-  const {schema} = useWorkspace()
+  const {schema} = useDashboard().config
   const type = schema.type(entry.type)
   if (!type) return null
   return (
-    <Create.Link to={nav.create({...entry, locale, id: entry.source.id})} />
+    <Create.Link href={nav.create({...entry, locale, id: entry.source.id})} />
   )
 }
 
@@ -66,7 +67,7 @@ const TreeNodeLink = memo(
     {
       locale,
       entry,
-      link,
+      link: url,
       isOpened,
       toggleOpen,
       isSelected,
@@ -80,7 +81,7 @@ const TreeNodeLink = memo(
     },
     ref
   ) {
-    const {schema} = useWorkspace()
+    const {schema} = useDashboard().config
     const type = schema.type(entry.type)!
     const isContainer = entry.alinea.isContainer
     const containerIcon = isOpened ? (
@@ -109,10 +110,10 @@ const TreeNodeLink = memo(
         {...props}
       >
         <div className={styles.root.inner()}>
-          <Link
+          <a
             ref={ref}
             draggable={false}
-            to={link || ''}
+            {...link(url || '')}
             className={styles.root.link()}
             style={{paddingLeft: `${10 + level * 8}px`}}
             onClick={event => {
@@ -157,7 +158,7 @@ const TreeNodeLink = memo(
                 </span>
               )}
             </HStack>
-          </Link>
+          </a>
           {entry.alinea.isContainer && (
             <Stack.Right className={styles.root.create()}>
               <TreeNodeChildrenCreator locale={locale} entry={entry} />

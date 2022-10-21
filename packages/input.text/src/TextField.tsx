@@ -1,4 +1,4 @@
-import {Field, Label, Shape} from '@alinea/core'
+import {Field, Hint, Label, Shape} from '@alinea/core'
 import type {ComponentType} from 'react'
 
 /** Optional settings to configure a text field */
@@ -35,6 +35,7 @@ export interface TextField extends Field.Scalar<string> {
 export function createText(label: Label, options: TextOptions = {}): TextField {
   return {
     shape: Shape.Scalar(label, options.initialValue),
+    hint: Hint.String(),
     label,
     options,
     hidden: options.hidden

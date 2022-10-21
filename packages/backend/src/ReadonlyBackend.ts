@@ -1,16 +1,14 @@
 import {Backend} from '@alinea/backend/Backend'
 import {JWTPreviews} from '@alinea/backend/util/JWTPreviews'
-import {Config, Workspaces} from '@alinea/core'
+import {Config} from '@alinea/core'
 import {SqliteStore} from '@alinea/store/sqlite/SqliteStore'
 
-export interface ReadonlyBackendOptions<T extends Workspaces> {
+export interface ReadonlyBackendOptions<T> {
   config: Config<T>
   createStore: () => Promise<SqliteStore>
 }
 
-export class ReadonlyBackend<
-  T extends Workspaces = Workspaces
-> extends Backend<T> {
+export class ReadonlyBackend<T> extends Backend<T> {
   constructor({config, createStore}: ReadonlyBackendOptions<T>) {
     super({
       dashboardUrl: '',

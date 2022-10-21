@@ -108,7 +108,7 @@
           "content": [
             {
               "type": "text",
-              "text": "Container"
+              "text": "`isContainer`"
             }
           ]
         },
@@ -134,7 +134,7 @@
           "content": [
             {
               "type": "text",
-              "text": "Contains"
+              "text": "`contains`"
             }
           ]
         },
@@ -160,7 +160,7 @@
           "content": [
             {
               "type": "text",
-              "text": "Hidden"
+              "text": "`hidden`"
             }
           ]
         },
@@ -186,7 +186,7 @@
           "content": [
             {
               "type": "text",
-              "text": "Icon"
+              "text": "`icon`"
             }
           ]
         },

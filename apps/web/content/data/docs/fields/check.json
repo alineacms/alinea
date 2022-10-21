@@ -1,8 +1,6 @@
 {
   "id": "28htwzY7qMeaV15j276Myvpek8y",
   "type": "Doc",
-  "root": "data",
-  "index": "a29",
   "title": "Check",
   "blocks": [
     {
@@ -36,6 +34,11 @@
           "type": "CodeBlock",
           "code": "import {alinea} from 'alinea'\nalinea.check('My check field', {\n  label: 'This is an example check field'\n})",
           "compact": true
+        },
+        {
+          "id": "2LfI_a2TA_L7QW2kK-nDa",
+          "type": "ExampleBlock",
+          "code": "import {alinea} from 'alinea'\nexport default alinea.check('My check field', {\n  label: 'This is an example check field'\n})"
         }
       ]
     },

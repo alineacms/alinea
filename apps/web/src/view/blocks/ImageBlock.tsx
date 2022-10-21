@@ -1,10 +1,10 @@
+import {Page} from '@alinea/content'
 import {fromModule} from '@alinea/ui'
 import {decode} from 'blurhash'
 // import Image from 'next/image'
-import {Fragment, useMemo} from 'react'
+import {ComponentType, Fragment, useMemo} from 'react'
 import {Image} from '../layout/Image'
 import css from './ImageBlock.module.scss'
-import {ImageBlockSchema} from './ImageBlock.schema'
 
 const styles = fromModule(css)
 
@@ -29,7 +29,11 @@ function useBlurData(
   }, [blurHash, width, height, punch])
 }
 
-export function ImageBlock({image, container}: ImageBlockSchema) {
+export interface ImageBlockProps extends Page.ImageBlock {
+  container?: ComponentType
+}
+
+export function ImageBlock({image, container}: ImageBlockProps) {
   const Wrapper = container || Fragment
   if (!image) return null
   const blurDataURL = useBlurData(image.blurHash!)
@@ -41,7 +45,9 @@ export function ImageBlock({image, container}: ImageBlockSchema) {
           src={image.src}
           width={image.width}
           height={image.height}
-          sizes="100vw"
+          sizes="(max-width: 980px) 100vw,
+              (max-width: 1200px) 58vw,
+              660px"
           blurDataURL={blurDataURL}
           className={styles.root.image()}
         />

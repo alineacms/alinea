@@ -1,5 +1,6 @@
 import * as Y from 'yjs'
 import {createError} from '../ErrorWithCode'
+import {Hint} from '../Hint'
 import {Label} from '../Label'
 import {Shape} from '../Shape'
 import {TextDoc, TextNode} from '../TextDoc'
@@ -74,10 +75,10 @@ export type RichTextMutator<R> = {
 }
 
 export class RichTextShape<T> implements Shape<TextDoc<T>, RichTextMutator<T>> {
-  values?: Record<string, RecordShape<T>>
+  values?: Record<string, RecordShape>
   constructor(
     public label: Label,
-    protected shapes?: Record<string, RecordShape<T>>,
+    public shapes?: Record<string, RecordShape>,
     public initialValue?: TextDoc<T>
   ) {
     this.values =
@@ -88,11 +89,20 @@ export class RichTextShape<T> implements Shape<TextDoc<T>, RichTextMutator<T>> {
             key,
             new RecordShape(value.label, {
               type: Shape.Scalar('Type'),
-              ...value.shape
+              ...value.properties
             })
           ]
         })
       )
+  }
+  innerTypes(parents: Array<string>) {
+    if (!this.shapes) return []
+    return Object.entries(this.shapes).flatMap(([name, shape]) => {
+      const info = {name, shape, parents}
+      const inner = shape.innerTypes(parents.concat(name))
+      if (Hint.isDefinitionName(name)) return [info, ...inner]
+      return inner
+    })
   }
   create() {
     return this.initialValue || ([] as TextDoc<T>)

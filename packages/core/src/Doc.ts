@@ -8,14 +8,13 @@ export const ROOT_KEY = '#root'
 
 export function entryFromDoc(
   doc: Y.Doc,
-  getType: (workspace: string, typeKey: string) => Type | undefined
+  getType: (typeKey: string) => Type | undefined
 ): Entry {
   const docRoot = doc.getMap(ROOT_KEY)
   const typeKey = docRoot.get('type') as string | undefined
   const meta = docRoot.get('alinea') as EntryMeta
-  const workspace = meta.workspace as string | undefined
   const root = meta.root as string | undefined
-  const type = workspace && typeKey && getType(workspace, typeKey)
+  const type = typeKey && getType(typeKey)
   if (!type)
     throw new Error(
       `Type "${typeKey}" not found in \n ${JSON.stringify(docRoot.toJSON())}`

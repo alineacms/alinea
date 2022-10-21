@@ -20,10 +20,10 @@ import {
   verticalListSortingStrategy
 } from '@dnd-kit/sortable'
 import useSize from '@react-hook/size'
-import {useEffect, useMemo, useRef, useState} from 'react'
-import {useNavigate} from 'react-router'
+import {useMemo, useRef, useState} from 'react'
 import VirtualList from 'react-tiny-virtual-list'
 import {ContentTreeEntry, useContentTree} from '../hook/UseContentTree'
+import {useDashboard} from '../hook/UseDashboard'
 import {useDrafts} from '../hook/UseDrafts'
 import {useNav} from '../hook/UseNav'
 import {useRoot} from '../hook/UseRoot'
@@ -90,7 +90,8 @@ export function ContentTree({
   select = [],
   redirectToRoot
 }: ContentTreeProps) {
-  const {name: workspace, schema} = useWorkspace()
+  const {schema} = useDashboard().config
+  const {name: workspace} = useWorkspace()
   const root = useRoot()
   const {
     locale,
@@ -206,23 +207,7 @@ export function ContentTree({
     }
   }
 
-  // Not sure if this should belong here but it's convenient for now
-  const navigate = useNavigate()
   const nav = useNav()
-  useEffect(() => {
-    return
-    if (redirectToRoot && entries.length > 0) {
-      const first = entries[0]
-      if (
-        first.alinea.workspace === workspace &&
-        first.alinea.root === root.name
-      ) {
-        navigate(nav.entry(first), {
-          replace: true
-        })
-      }
-    }
-  }, [workspace, root, redirectToRoot, entries])
   const height = (32 / 16) * preferences.size
   return (
     <DndContext

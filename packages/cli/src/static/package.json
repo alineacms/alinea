@@ -4,15 +4,27 @@
   "name": "@alinea/content",
   "type": "module",
   "sideEffects": false,
+  "types": "./index.d.ts",
   "exports": {
     ".": "./index.js",
-    "./store.js": "./store.js",
-    "./config.js": "./config.js",
-    "./backend.js": "./backend.js",
+    "./config": "./config.js",
+    "./pages": {
+      "require": "./pages.cjs",
+      "default": "./pages.js"
+    },
+    "./store": {
+      "require": "./store.cjs",
+      "default": "./store.js"
+    },
+    "./backend": {
+      "require": "./backend.cjs",
+      "default": "./backend.js"
+    },
     "./.server/*": {
       "worker": "./.server/dist/*",
       "browser": "./.server/client.cjs",
       "default": "./.server/dist/*"
-    }
+    },
+    "./*": "./*"
   }
 }

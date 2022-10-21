@@ -3,7 +3,7 @@
 // export default nodeHandler(backend.handle)
 
 export default async (req: Request) => {
-  const {backend} = await import('@alinea/content/backend.js')
+  const {backend} = await import('@alinea/content/backend')
   const response = await backend.handle(req)
   if (response === undefined) return new Response('Not found', {status: 404})
   return response

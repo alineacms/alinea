@@ -15,7 +15,7 @@
           "content": [
             {
               "type": "text",
-              "text": "Deploying alinea"
+              "text": "Deploying Alinea"
             }
           ]
         },
@@ -25,7 +25,7 @@
           "content": [
             {
               "type": "text",
-              "text": "Once you're ready to deploy to production it's time to hook up alinea to a backend. Alinea exposes a handler that can be hosted on most Javascript runtimes (Node.js or edge/serverless functions). The handler needs access to a backend service that can authenticate users, store drafts and publish changes back to the git repository."
+              "text": "Once you're ready to deploy to production it's time to hook up Alinea to a backend. Alinea exposes a handler that can be hosted on most Javascript runtimes (Node.js or edge/serverless functions). The handler needs access to a backend service that can authenticate users, store drafts and publish changes back to the git repository."
             }
           ]
         },

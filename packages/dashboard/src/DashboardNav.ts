@@ -40,7 +40,7 @@ export function dashboardNav(defaults: Partial<EntryLocation>) {
     create,
     matchEntry: '/entry/*' as const,
     matchEntryId: '/:action/:workspace/:root/:id' as const,
-    matchWorkspace: '/:action/:workspace/*' as const,
-    matchRoot: '/:action/:workspace/:root/*' as const
+    matchWorkspace: '/:action/:workspace' as const,
+    matchRoot: '/:action/:workspace/:root' as const
   }
 }

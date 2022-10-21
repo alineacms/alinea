@@ -146,7 +146,6 @@ export const resolvePlugin: Plugin = {
         '@alinea/client', // In generated code
         '@alinea/sqlite-wasm', // In generated code
         'nodemailer', // Using types,
-        'mime-db', // Avoid copies of this lib in vendor,
         // Make sure these are not inlined
         'react',
         'react-dom',

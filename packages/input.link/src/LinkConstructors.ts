@@ -1,7 +1,12 @@
 import {Entry, Label, Media} from '@alinea/core'
-import {entryPicker} from '@alinea/picker.entry'
-import {urlPicker} from '@alinea/picker.url'
-import {LinkData, LinkField, LinkOptions} from './LinkField'
+import {
+  entryPicker,
+  EntryReference,
+  FileReference,
+  ImageReference
+} from '@alinea/picker.entry'
+import {urlPicker, UrlReference} from '@alinea/picker.url'
+import {LinkField, LinkOptions} from './LinkField'
 
 interface CreateLink {
   <T, Q>(label: Label, options?: LinkOptions<T, Q>): LinkField<T, Q>
@@ -13,6 +18,7 @@ const imageCondition = Entry.type
 
 export function imagePicker(multiple: boolean) {
   return entryPicker({
+    type: 'image',
     max: multiple ? undefined : 1,
     label: 'Image',
     title: multiple ? 'Select images' : 'Select an image',
@@ -28,6 +34,7 @@ const fileCondition = Entry.type
 
 export function filePicker(multiple: boolean) {
   return entryPicker({
+    type: 'file',
     max: multiple ? undefined : 1,
     label: 'File',
     title: multiple ? 'Select files' : 'Select a file',
@@ -36,6 +43,8 @@ export function filePicker(multiple: boolean) {
     defaultView: 'thumb'
   })
 }
+
+type LinkData = EntryReference | UrlReference | FileReference
 
 export function linkConstructors(createLink: CreateLink) {
   /** Create a link field configuration */
@@ -52,7 +61,12 @@ export function linkConstructors(createLink: CreateLink) {
     const pickers =
       types.length === 0
         ? [
-            entryPicker({...pickerOptions, title: 'Select a page', max: 1}),
+            entryPicker({
+              ...pickerOptions,
+              type: 'entry',
+              title: 'Select a page',
+              max: 1
+            }),
             urlPicker(pickerOptions),
             filePicker(false)
           ]
@@ -60,6 +74,7 @@ export function linkConstructors(createLink: CreateLink) {
             switch (type) {
               case 'entry':
                 return entryPicker({
+                  type: 'entry',
                   title: 'Select a page',
                   max: 1,
                   ...pickerOptions
@@ -87,11 +102,18 @@ export function linkConstructors(createLink: CreateLink) {
       : []
     const pickers =
       types.length === 0
-        ? [entryPicker(pickerOptions), urlPicker(pickerOptions)]
+        ? [
+            entryPicker({type: 'entry', ...pickerOptions}),
+            urlPicker(pickerOptions)
+          ]
         : types.map(type => {
             switch (type) {
               case 'entry':
-                return entryPicker({...pickerOptions, title: 'Select pages'})
+                return entryPicker({
+                  type: 'entry',
+                  ...pickerOptions,
+                  title: 'Select pages'
+                })
               case 'external':
                 return urlPicker(pickerOptions)
               case 'image':
@@ -103,7 +125,7 @@ export function linkConstructors(createLink: CreateLink) {
     return createLink(label, {...options, pickers, multiple: true})
   }
 
-  function entry<T = {}, Q = LinkData.Entry & T>(
+  function entry<T = {}, Q = EntryReference & T>(
     label: Label,
     options: LinkOptions<T, Q> = {}
   ): LinkField<T, Q> {
@@ -112,6 +134,7 @@ export function linkConstructors(createLink: CreateLink) {
       pickers: [
         entryPicker({
           ...options,
+          type: 'entry',
           title: 'Select a page',
           max: 1
         })
@@ -120,18 +143,24 @@ export function linkConstructors(createLink: CreateLink) {
     })
   }
 
-  function multipleEntries<T = {}, Q = Array<LinkData.Entry & T>>(
+  function multipleEntries<T = {}, Q = Array<EntryReference & T>>(
     label: Label,
     options: LinkOptions<T, Q> = {}
   ): LinkField<T, Q> {
     return createLink(label, {
       ...options,
-      pickers: [entryPicker({...options, title: 'Select pages'})],
+      pickers: [
+        entryPicker({
+          ...options,
+          type: 'entry',
+          title: 'Select pages'
+        })
+      ],
       multiple: true
     })
   }
 
-  function url<T = {}, Q = LinkData.Url & T>(
+  function url<T = {}, Q = UrlReference & T>(
     label: Label,
     options: LinkOptions<T, Q> = {}
   ): LinkField<T, Q> {
@@ -146,7 +175,7 @@ export function linkConstructors(createLink: CreateLink) {
     })
   }
 
-  function multipleUrls<T = {}, Q = Array<LinkData.Url & T>>(
+  function multipleUrls<T = {}, Q = Array<UrlReference & T>>(
     label: Label,
     options: LinkOptions<T, Q> = {}
   ): LinkField<T, Q> {
@@ -157,7 +186,7 @@ export function linkConstructors(createLink: CreateLink) {
     })
   }
 
-  function image<T = {}, Q = LinkData.Image & T>(
+  function image<T = {}, Q = ImageReference & T>(
     label: Label,
     options: LinkOptions<T, Q> = {}
   ): LinkField<T, Q> {
@@ -168,7 +197,7 @@ export function linkConstructors(createLink: CreateLink) {
     })
   }
 
-  function multipleImages<T = {}, Q = Array<LinkData.Image & T>>(
+  function multipleImages<T = {}, Q = Array<ImageReference & T>>(
     label: Label,
     options: LinkOptions<T, Q> = {}
   ): LinkField<T, Q> {
@@ -179,7 +208,7 @@ export function linkConstructors(createLink: CreateLink) {
     })
   }
 
-  function file<T = {}, Q = LinkData.File & T>(
+  function file<T = {}, Q = FileReference & T>(
     label: Label,
     options: LinkOptions<T, Q> = {}
   ): LinkField<T, Q> {
@@ -190,7 +219,7 @@ export function linkConstructors(createLink: CreateLink) {
     })
   }
 
-  function multipleFiles<T = {}, Q = Array<LinkData.File & T>>(
+  function multipleFiles<T = {}, Q = Array<FileReference & T>>(
     label: Label,
     options: LinkOptions<T, Q> = {}
   ): LinkField<T, Q> {

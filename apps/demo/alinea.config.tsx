@@ -4,23 +4,22 @@ import {MediaSchema} from '@alinea/dashboard/schema/MediaSchema'
 import {BrowserPreview} from '@alinea/dashboard/view/preview/BrowserPreview'
 import {IcRoundInsertDriveFile} from '@alinea/ui/icons/IcRoundInsertDriveFile'
 import {IcRoundPermMedia} from '@alinea/ui/icons/IcRoundPermMedia'
-import {DemoHomeSchema} from './src/view/channels/home/DemoHome.schema'
-import {DemoRecipedetailSchema} from './src/view/channels/recipedetail/DemoRecipedetail.schema'
-import {DemoRecipesSchema} from './src/view/channels/recipes/DemoRecipes.schema'
+import {DemoHomeSchema} from './src/view/home/DemoHome.schema'
+import {RecipeSchema} from './src/view/recipe/Recipe.schema'
+import {DemoRecipesSchema} from './src/view/recipes/DemoRecipes.schema'
 
 const demoSchema = schema({
   ...MediaSchema,
   Home: DemoHomeSchema,
   Recipes: DemoRecipesSchema,
-  Recipedetail: DemoRecipedetailSchema
+  Recipe: RecipeSchema
 })
 
 const demo = workspace('Demo', {
-  schema: demoSchema,
   typeNamespace: 'content',
   source: './content',
   mediaDir: './public',
-  color: '#17b179',
+  color: '#B698B0',
   roots: {
     data: root('Demo website', {
       icon: IcRoundInsertDriveFile,
@@ -34,6 +33,7 @@ const demo = workspace('Demo', {
   preview({entry, previewToken}) {
     const location =
       process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : ''
+    if (entry.type === 'Recipes') return null
     return (
       <BrowserPreview
         url={`${location}/api/preview?${previewToken}`}
@@ -44,6 +44,7 @@ const demo = workspace('Demo', {
 })
 
 export const config = createConfig({
+  schema: demoSchema,
   workspaces: {demo},
   backend: {
     configureBackend({config, createStore}) {

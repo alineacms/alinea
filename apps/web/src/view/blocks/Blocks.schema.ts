@@ -1,4 +1,4 @@
-import {Schema, schema} from '@alinea/core'
+import {schema} from '@alinea/core'
 import {list} from '@alinea/input.list'
 import {ColumnsBlockSchema} from './ColumnsBlock.schema'
 import {FeaturesBlockSchema} from './FeaturesBlock.schema'
@@ -17,5 +17,3 @@ export const BlocksSchema = list('Body', {
     FeaturesBlock: FeaturesBlockSchema
   })
 })
-
-export type BlocksSchema = Schema.TypeOf<typeof BlocksSchema>

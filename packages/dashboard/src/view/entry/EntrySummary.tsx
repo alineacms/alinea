@@ -11,7 +11,7 @@ import {
 } from '@alinea/ui'
 import {IcRoundKeyboardArrowRight} from '@alinea/ui/icons/IcRoundKeyboardArrowRight'
 import {ReactNode} from 'react'
-import {useWorkspace} from '../../hook/UseWorkspace'
+import {useDashboard} from '../../hook/UseDashboard'
 import css from './EntrySummary.module.scss'
 
 const styles = fromModule(css)
@@ -30,7 +30,7 @@ function entrySummaryQuery(Entry: Collection<Entry>) {
 export const EntrySummaryRow = view(
   entrySummaryQuery,
   function EntrySummaryRow({id, title, type: typeName, parents}) {
-    const {schema} = useWorkspace()
+    const {schema} = useDashboard().config
     const type = schema.type(typeName)
     if (!type) return null
     return (
@@ -68,7 +68,7 @@ export const EntrySummaryRow = view(
 export const EntrySummaryThumb = view(
   entrySummaryQuery,
   function EntrySummaryThumb({id, title, type: typeName, parents}) {
-    const {schema} = useWorkspace()
+    const {schema} = useDashboard().config
     const type = schema.type(typeName)!
     return (
       <div className={styles.thumb()}>

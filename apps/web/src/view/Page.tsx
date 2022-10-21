@@ -1,9 +1,9 @@
+import {Page} from '@alinea/content'
 import {Blocks} from './blocks/Blocks'
 import {InformationBar} from './layout/InformationBar'
 import {Layout} from './layout/Layout'
-import {PageSchema} from './Page.schema'
 
-export function Page(props: PageSchema) {
+export function Page(props: Page.Page) {
   return (
     <Layout.WithSidebar sidebar={<InformationBar />}>
       <article>

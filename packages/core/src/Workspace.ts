@@ -1,15 +1,9 @@
 import type {ComponentType} from 'react'
 import {Label} from './Label'
 import {Root, RootConfig} from './Root'
-import {Schema, SchemaConfig} from './Schema'
 import {getRandomColor} from './util/GetRandomColor'
 
-/** A record of multiple named workspaces */
-export type Workspaces = Record<string, WorkspaceConfig>
-
 export type WorkspaceOptions<T = any> = {
-  /** The schema of the workspace */
-  schema: SchemaConfig<T>
   /**
    * Points to a Data.Source either by passing a directory or a file.
    * - If the source is a directory, it will be scanned for files.
@@ -17,8 +11,6 @@ export type WorkspaceOptions<T = any> = {
    */
   source: string
   roots: Record<string, RootConfig>
-  /** Generated types will be placed in this namespace  */
-  typeNamespace?: string
   /** The directory where media files are placed in case a file backend is used */
   mediaDir?: string
   /* Todo: Rewrite media urls based on their location */
@@ -43,7 +35,6 @@ export class Workspace<T = any> implements WorkspaceConfig<T> {
   label: Label
   options: WorkspaceOptions<T>
   roots: Record<string, Root>
-  schema: Schema<T>
 
   constructor(public name: string, public config: WorkspaceConfig<T>) {
     this.label = config.label
@@ -53,11 +44,6 @@ export class Workspace<T = any> implements WorkspaceConfig<T> {
         return [rootKey, new Root(rootKey, name, config)]
       })
     )
-    this.schema = this.options.schema.toSchema(this)
-  }
-
-  get typeNamespace() {
-    return this.options.typeNamespace
   }
 
   get source(): string {

@@ -10,9 +10,11 @@ export interface MainProps extends HTMLProps<HTMLDivElement> {
 
 export function Main({children, head, ...props}: MainProps) {
   return (
-    <div {...props} className={styles.root()}>
+    <div className={styles.root()}>
       {head}
-      <div className={styles.root.inner.mergeProps(props)()}>{children}</div>
+      <div {...props} className={styles.root.inner.mergeProps(props)()}>
+        {children}
+      </div>
     </div>
   )
 }

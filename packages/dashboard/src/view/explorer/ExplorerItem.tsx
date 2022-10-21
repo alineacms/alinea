@@ -3,7 +3,7 @@ import {EntryReference} from '@alinea/picker.entry'
 import {fromModule} from '@alinea/ui'
 import {IcRoundCheckBox} from '@alinea/ui/icons/IcRoundCheckBox'
 import {IcRoundCheckBoxOutlineBlank} from '@alinea/ui/icons/IcRoundCheckBoxOutlineBlank'
-import {Link} from 'react-router-dom'
+import {link} from '@alinea/ui/util/HashRouter'
 import {useExplorer} from '../../hook/UseExplorer'
 import {useFocusListItem} from '../../hook/UseFocusList'
 import {useNav} from '../../hook/UseNav'
@@ -28,8 +28,8 @@ export function ExplorerItem({
   const explorer = useExplorer()
   const itemRef = useFocusListItem(() => explorer?.onSelect(entry))
   const View: any = schema.type(entry.type)?.options[summaryView] || defaultView
-  const Tag: any = explorer?.selectable ? 'label' : Link
-  const props = explorer?.selectable ? {} : {to: nav.entry(entry)}
+  const Tag: any = explorer?.selectable ? 'label' : 'a'
+  const props = explorer?.selectable ? {} : link(nav.entry(entry))
   const isSelected = Boolean(
     explorer?.selection.find(
       v => EntryReference.isEntry(v) && v.entry === entry.id

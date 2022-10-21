@@ -1,5 +1,5 @@
 .root {
-  display: block;
+  display: inline-block;
   text-decoration: none;
   color: inherit;
   font: inherit;
@@ -8,8 +8,11 @@
   line-height: 1.2;
   font-size: 14px;
   box-shadow: 0 1px 0 var(--web-outline);
-  border: 1px solid var(--web-outline);
+  border: 2px solid var(--web-outline);
   margin-bottom: 18px;
+  margin-top: 12px;
+  margin-right: 22px;
+  margin-left: -6px;
   transition: background 0.25s ease-out;
 
   &:hover {

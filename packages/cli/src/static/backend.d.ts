@@ -1,4 +1,3 @@
-import type {Backend} from '@alinea/backend/Backend'
-import {Config} from '@alinea/core'
-import {config} from './config.js'
-export const backend: Backend<Config.Infer<typeof config>>
+import {Backend} from '@alinea/backend/Backend'
+import {Page} from './index'
+export const backend: Backend<Page>

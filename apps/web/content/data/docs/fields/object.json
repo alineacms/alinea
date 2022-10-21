@@ -1,8 +1,6 @@
 {
   "id": "290i4FnT1HBujZ2qoNZPm4EX69B",
   "type": "Doc",
-  "root": "data",
-  "index": "a2O",
   "title": "Object",
   "blocks": [
     {
@@ -35,6 +33,11 @@
           "id": "290iDwpZVR0wrW2N3JaIHxtxc0I",
           "type": "CodeBlock",
           "code": "import {alinea} from 'alinea'\nalinea.object('My object field', {\n  fields: alinea.type('Object fields', {\n    fieldA: alinea.text('A'),\n    fieldB: alinea.text('B')\n  })\n})"
+        },
+        {
+          "id": "gwFTx1qVSxQvMi_joKo4Q",
+          "type": "ExampleBlock",
+          "code": "import {alinea} from 'alinea'\nexport default alinea.object('My object field', {\n  fields: alinea.type('Object fields', {\n    fieldA: alinea.text('A'),\n    fieldB: alinea.text('B')\n  })\n})"
         }
       ]
     }

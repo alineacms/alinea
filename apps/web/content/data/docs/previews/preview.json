@@ -108,7 +108,7 @@
           "content": [
             {
               "type": "text",
-              "text": "By default alinea will reload the iframe source when content changes, after a certain delay. If your framework has ways to refetch content without a full page reload those can be used instead. A utility function is provided in `@alinea/preview` to register a listener."
+              "text": "By default Alinea will reload the iframe source when content changes, after a certain delay. If your framework has ways to refetch content without a full page reload those can be used instead. A utility function is provided in `@alinea/preview` to register a listener."
             }
           ]
         },

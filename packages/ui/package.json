@@ -14,7 +14,9 @@
   "files": [
     "dist"
   ],
-  "sideEffects": false,
+  "sideEffects": [
+    "./dist/vendor/**"
+  ],
   "typesVersions": {
     "*": {
       "*": [
@@ -32,11 +34,11 @@
     "color2k": "^1.2.4",
     "line-height": "^0.3.1",
     "micro-observables": "^1.7.2",
+    "regexparam": "^2.0.1",
     "use-error-boundary": "^2.0.6"
   },
   "peerDependencies": {
     "react": "*",
-    "react-dom": "*",
-    "react-router-dom": "*"
+    "react-dom": "*"
   }
 }

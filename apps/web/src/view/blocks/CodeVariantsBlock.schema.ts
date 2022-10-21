@@ -1,4 +1,4 @@
-import {schema, Schema, type} from '@alinea/core'
+import {schema, type} from '@alinea/core'
 import {code} from '@alinea/input.code'
 import {list} from '@alinea/input.list'
 import {select} from '@alinea/input.select'
@@ -23,7 +23,3 @@ export const CodeVariants = list('Variants', {
 export const CodeVariantsBlockSchema = type('Code variants', {
   variants: CodeVariants
 }).configure({icon: IcRoundCode})
-
-export type CodeVariantsBlockSchema = Schema.TypeOf<
-  typeof CodeVariantsBlockSchema
->

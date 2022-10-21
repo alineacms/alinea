@@ -1,5 +1,5 @@
 import type {Collection} from './Collection'
-import type {Cursor, CursorSingleRow} from './Cursor'
+import type {Cursor, CursorImpl, CursorSingleRow} from './Cursor'
 import type {Expr} from './Expr'
 import type {Selection, SelectionInput} from './Selection'
 import type {Update} from './Update'
@@ -14,11 +14,14 @@ export type IdLess<Row> = Row extends {id: string}
 export type Document = {id: string}
 
 export interface Store {
-  all<Row>(cursor: Cursor<Row>, options?: QueryOptions): Array<Row>
-  first<Row>(cursor: Cursor<Row>, options?: QueryOptions): Row | null
-  sure<Row>(cursor: Cursor<Row>, options?: QueryOptions): Row
-  count<Row>(cursor: Cursor<Row>, options?: QueryOptions): number
-  delete<Row>(cursor: Cursor<Row>, options?: QueryOptions): {changes: number}
+  all<Row>(cursor: CursorImpl<Row>, options?: QueryOptions): Array<Row>
+  first<Row>(cursor: CursorImpl<Row>, options?: QueryOptions): Row | null
+  sure<Row>(cursor: CursorImpl<Row>, options?: QueryOptions): Row
+  count<Row>(cursor: CursorImpl<Row>, options?: QueryOptions): number
+  delete<Row>(
+    cursor: CursorImpl<Row>,
+    options?: QueryOptions
+  ): {changes: number}
   insert<Row>(
     collection: Collection<Row>,
     object: IdLess<Row>,
@@ -30,7 +33,7 @@ export interface Store {
     options?: QueryOptions
   ): Array<Row>
   update<Row>(
-    cursor: Cursor<Row>,
+    cursor: CursorImpl<Row>,
     update: Update<Row>,
     options?: QueryOptions
   ): {changes: number}
@@ -46,7 +49,7 @@ export interface Store {
 export namespace Store {
   export type TypeOf<T> = T extends CursorSingleRow<infer K>
     ? K
-    : T extends Cursor<infer K>
+    : T extends CursorImpl<infer K>
     ? Array<K>
     : T extends Expr<infer K>
     ? K

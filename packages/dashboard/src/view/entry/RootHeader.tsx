@@ -1,8 +1,8 @@
 import {Create, fromModule, HStack, Icon, TextLabel} from '@alinea/ui'
 import {IcRoundUnfoldMore} from '@alinea/ui/icons/IcRoundUnfoldMore'
+import {link, useNavigate} from '@alinea/ui/util/HashRouter'
 import {Listbox} from '@headlessui/react'
 import {useState} from 'react'
-import {Link, useNavigate} from 'react-router-dom'
 import {useCurrentDraft} from '../../hook/UseCurrentDraft'
 import {useLocale} from '../../hook/UseLocale'
 import {useNav} from '../../hook/UseNav'
@@ -20,14 +20,14 @@ export function RootHeader() {
   return (
     <div className={styles.root({active: !draft})}>
       <div className={styles.root.inner()}>
-        <Link
-          to={nav.root({workspace, root: root.name})}
+        <a
+          {...link(nav.root({workspace, root: root.name}))}
           className={styles.root.link()}
         >
           <TextLabel label={root.label} />
-        </Link>
+        </a>
         {root.i18n && <Langswitch />}
-        <Create.Link to={nav.create({workspace, root: root.name})} />
+        <Create.Link href={nav.create({workspace, root: root.name})} />
       </div>
     </div>
   )

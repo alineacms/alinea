@@ -1,15 +1,9 @@
-import React, {Fragment} from 'react'
-import {DemoFooter} from '../components/footer/DemoFooter'
-import {DemoHeader} from '../components/header/DemoHeader'
+import {fromModule} from '@alinea/ui'
+import {PropsWithChildren} from 'react'
+import css from './DemoLayout.module.scss'
 
-export const DemoLayout: React.FC<{children: React.ReactNode}> = ({
-  children
-}) => {
-  return (
-    <Fragment>
-      <DemoHeader />
-      {children}
-      <DemoFooter />
-    </Fragment>
-  )
+const styles = fromModule(css)
+
+export function DemoLayout({children}: PropsWithChildren<{}>) {
+  return <div className={styles.root()}>{children}</div>
 }

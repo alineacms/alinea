@@ -2,6 +2,84 @@
 
 ## [Unreleased]
 
+## [0.3.1]
+
+- Fix the `@alinea/preview/remix` preview hook
+
+## [0.3.0]
+
+- Generate types (#271)
+
+  Up until now the TypeScript definitions that were available for the content
+  schema were fully inferred using the TypeScript compiler. While this had some
+  advantages it also came with stability issues and overall did not prove to be
+  the best solution. TypeScript definitions are now generated from the schema at
+  build time. The runtime type information should prove useful for the upcoming
+  GraphQL support as well. Since GrapQL does not come with namespacing we've
+  introduced a few breaking changes:
+
+  - The config file now supports a single schema at the root level, meaning
+    the schema is used for every workspace.
+  - The generated package structure in turn became simpler because the workspace
+    distinction is no longer needed:
+
+    ```ts
+    // Init pages now available from /pages
+    import {initPages} from '@alinea/content/pages'
+
+    // The Page type describes every content type of the schema
+    // type Page = Page.TypeA | Page.TypeB
+    import {Page} from '@alinea/content'
+    ```
+
+- Remix run support (#273)
+
+  A few changes were necessary to get started with Remix. These changes should
+  make it easier to work with other frameworks as well.
+
+  - An example starter was added
+  - The local backend connects to the `serve` instance if it is running. Since
+    Remix does not watch file changes in node modules this should make sure
+    you're always viewing the latest changes.
+  - Export pages/backend as CJS (#270)
+
+## [0.2.14]
+
+- The dashboard router was not picking up wilcard routes, which resulted in
+  non-working links (#265)
+- Bundle yjs instead of requiring it as a dependency.
+- Re-use the esbuild watcher in order to remove the chokidar dependency.
+
+## [0.2.13]
+
+- Improved stability of the `serve` and `generate` commands by avoiding race
+  conditions while publishing
+- Removed react-router dependency
+
+## [0.2.12]
+
+- Public env variables may be used in alinea.config. Currently supported are
+  variables with a key prefix of either `NEXT_PUBLIC_`, `PUBLIC_`, `VITE_`
+  or `GATSBY_`.
+
+## [0.2.11]
+
+- The workaround released in 0.2.10 was not stable. Node modules ended up being
+  bundled in the generated Javascript.
+
+## [0.2.10]
+
+- Workaround [evanw/esbuild#2460](https://github.com/evanw/esbuild/issues/2460).
+  Newer esbuild versions support the new "automatic" react jsx feature. This can
+  be enabled from the build options, but also overwritten in tsconfig.json.
+  Alinea depends on this feature but had problems generating correct output
+  when the tsconfig has another jsx setting.
+  Previously the workaround was supplying a blank tsconfig file.
+  However other directives such as paths that the user might supply in their own
+  tsconfig were ignored. With this change alinea will write out a
+  tsconfig.alinea.json that extends the user supplied tsconfig.json
+  and overrides the jsx property.
+
 ## [0.2.9]
 
 - The `alinea serve` command will apply publish actions directly to the memory

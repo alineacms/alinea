@@ -1,49 +1,54 @@
-import {renderLabel, Session, Workspaces} from '@alinea/core'
+import {DashboardProvider, useDashboard} from './hook/UseDashboard'
+import {DraftsProvider, DraftsStatus, useDrafts} from './hook/UseDrafts'
 import {
   ErrorBoundary,
   FavIcon,
   Loader,
   PreferencesProvider,
   Statusbar,
-  useObservable,
-  Viewport
+  Viewport,
+  useObservable
 } from '@alinea/ui'
+import {Fragment, Suspense, useMemo, useState} from 'react'
+import {
+  QueryClient,
+  QueryClientProvider as ReactQueryClientProvider
+} from 'react-query'
+import {
+  Routes,
+  useLocation,
+  useMatch,
+  useParams
+} from '@alinea/ui/util/HashRouter'
+import {Session, renderLabel} from '@alinea/core'
+
+import {ContentTree} from './view/ContentTree'
+import {CurrentDraftProvider} from './hook/UseCurrentDraft'
+import {DashboardOptions} from './Dashboard'
+import {DraftsOverview} from './view/DraftsOverview'
+import {EditMode} from './view/entry/EditMode'
+import {EntryEdit} from './view/EntryEdit'
+import {EntrySummaryProvider} from './hook/UseEntrySummary'
+import {Head} from './util/Head'
 import {IcRoundCheck} from '@alinea/ui/icons/IcRoundCheck'
 import {IcRoundEdit} from '@alinea/ui/icons/IcRoundEdit'
 import {IcRoundInsertDriveFile} from '@alinea/ui/icons/IcRoundInsertDriveFile'
 import {IcRoundRotateLeft} from '@alinea/ui/icons/IcRoundRotateLeft'
 import {MdiSourceBranch} from '@alinea/ui/icons/MdiSourceBranch'
-import {Fragment, Suspense, useState} from 'react'
-import {
-  QueryClient,
-  QueryClientProvider as ReactQueryClientProvider
-} from 'react-query'
-import {Route, Routes, useLocation, useMatch, useParams} from 'react-router'
-import {HashRouter} from 'react-router-dom'
-import {DashboardOptions} from './Dashboard'
-import {CurrentDraftProvider} from './hook/UseCurrentDraft'
-import {DashboardProvider, useDashboard} from './hook/UseDashboard'
+import {NewEntry} from './view/entry/NewEntry'
+import {RootHeader} from './view/entry/RootHeader'
+import {RootOverview} from './view/RootOverview'
+import {SearchBox} from './view/SearchBox'
+import {SessionProvider} from './hook/UseSession'
+import {Sidebar} from './view/Sidebar'
+import {Toolbar} from './view/Toolbar'
 import {useDraft} from './hook/UseDraft'
-import {DraftsProvider, DraftsStatus, useDrafts} from './hook/UseDrafts'
 import {useDraftsList} from './hook/UseDraftsList'
 import {useEntryLocation} from './hook/UseEntryLocation'
-import {EntrySummaryProvider} from './hook/UseEntrySummary'
 import {useLocale} from './hook/UseLocale'
 import {useNav} from './hook/UseNav'
 import {useRoot} from './hook/UseRoot'
-import {SessionProvider} from './hook/UseSession'
 import {useWorkspace} from './hook/UseWorkspace'
-import {Head} from './util/Head'
-import {ContentTree} from './view/ContentTree'
-import {DraftsOverview} from './view/DraftsOverview'
-import {EditMode} from './view/entry/EditMode'
-import {NewEntry} from './view/entry/NewEntry'
-import {RootHeader} from './view/entry/RootHeader'
-import {EntryEdit} from './view/EntryEdit'
-import {RootOverview} from './view/RootOverview'
-import {SearchBox} from './view/SearchBox'
-import {Sidebar} from './view/Sidebar'
-import {Toolbar} from './view/Toolbar'
 
 const Router = {
   Entry() {
@@ -64,6 +69,25 @@ const Router = {
   }
 }
 
+function useRoutes() {
+  const nav = useNav()
+  return useMemo(() => {
+    return {
+      [nav.draft({
+        workspace: ':workspace',
+        root: ':root?',
+        id: ':id?'
+      })]: <Router.Drafts />,
+      [nav.entry({
+        workspace: ':workspace?',
+        root: ':root?',
+        id: ':id?'
+      })]: <Router.Entry />,
+      '/*': <Router.Entry />
+    }
+  }, [nav])
+}
+
 function DraftsButton() {
   const location = useLocation()
   const nav = useNav()
@@ -78,7 +102,7 @@ function DraftsButton() {
   return (
     <Sidebar.Nav.Item
       selected={location.pathname.startsWith(nav.draft({workspace}))}
-      to={link}
+      href={link}
       title="Drafts"
       aria-label="Drafts"
       badge={draftsTotal}
@@ -96,6 +120,7 @@ function AppAuthenticated() {
   const {name: workspace, label, name, color, roots} = useWorkspace()
   const {name: currentRoot} = useRoot()
   const entryLocation = useEntryLocation()
+  const routes = useRoutes()
   return (
     <EntrySummaryProvider>
       <DraftsProvider>
@@ -126,7 +151,7 @@ function AppAuthenticated() {
                         <Sidebar.Nav.Item
                           key={key}
                           selected={isEntry && isSelected}
-                          to={link}
+                          href={link}
                           title={renderLabel(root.label)}
                           aria-label={renderLabel(root.label)}
                         >
@@ -141,42 +166,7 @@ function AppAuthenticated() {
                     <DraftsButton />
                   </Sidebar.Nav>
                   <Suspense fallback={<Loader absolute />}>
-                    <Routes>
-                      <Route
-                        path={nav.draft({workspace: ':workspace'})}
-                        element={<Router.Drafts />}
-                      />
-                      <Route
-                        path={nav.draft({
-                          workspace: ':workspace',
-                          root: ':root',
-                          id: ':id'
-                        })}
-                        element={<Router.Drafts />}
-                      />
-                      <Route
-                        path={nav.entry({workspace: ':workspace'})}
-                        element={<Router.Entry />}
-                      />
-                      <Route
-                        path={nav.entry({
-                          workspace: ':workspace',
-                          root: ':root'
-                        })}
-                        element={<Router.Entry />}
-                      />
-                      <Route
-                        path={
-                          nav.entry({
-                            workspace: ':workspace',
-                            root: ':root',
-                            id: ':id'
-                          }) + '/*'
-                        }
-                        element={<Router.Entry />}
-                      />
-                      <Route path="/*" element={<Router.Entry />} />
-                    </Routes>
+                    <Routes routes={routes} />
                   </Suspense>
                 </div>
                 {/*<Statusbar.Root>
@@ -302,10 +292,7 @@ function localSession(options: DashboardOptions) {
 // facebook/react#24304
 const QueryClientProvider: any = ReactQueryClientProvider
 
-export function App<T extends Workspaces>({
-  fullPage = true,
-  ...props
-}: DashboardOptions<T>) {
+export function App<T>({fullPage = true, ...props}: DashboardOptions<T>) {
   const auth = props.config.authView
   const [queryClient] = useState(
     () =>
@@ -317,18 +304,13 @@ export function App<T extends Workspaces>({
   )
   return (
     <DashboardProvider value={{...props}}>
-      {/* Todo: https://github.com/remix-run/react-router/issues/7703 */}
-      <HashRouter
-      //hashType="noslash"
-      >
-        <SessionProvider value={session}>
-          <QueryClientProvider client={queryClient}>
-            <PreferencesProvider>
-              <AppRoot session={session} setSession={setSession} />
-            </PreferencesProvider>
-          </QueryClientProvider>
-        </SessionProvider>
-      </HashRouter>
+      <SessionProvider value={session}>
+        <QueryClientProvider client={queryClient}>
+          <PreferencesProvider>
+            <AppRoot session={session} setSession={setSession} />
+          </PreferencesProvider>
+        </QueryClientProvider>
+      </SessionProvider>
     </DashboardProvider>
   )
 }

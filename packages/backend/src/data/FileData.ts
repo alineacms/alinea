@@ -6,7 +6,7 @@ import {
   Hub,
   outcome
 } from '@alinea/core'
-import {posix as path} from 'node:path'
+import * as path from '@alinea/core/util/Paths'
 import {Cache} from '../Cache'
 import {Data} from '../Data'
 import {FS} from '../FS'
@@ -20,12 +20,30 @@ export type FileDataOptions = {
   rootDir?: string
 }
 
-// https://stackoverflow.com/a/45242825
-function isChildOf(child: string, parent: string) {
-  const relative = path.relative(parent, child)
-  const isSubdir =
-    relative && !relative.startsWith('..') && !path.isAbsolute(relative)
-  return isSubdir
+interface Contents {
+  files: Array<string>
+  dirs: Array<string>
+}
+
+async function filesOfPath(fs: FS, dir: string): Promise<Contents> {
+  const res: Contents = {files: [], dirs: []}
+  try {
+    const files = await fs.readdir(dir)
+    for (const file of files) {
+      const location = path.join(dir, file)
+      const stat = await fs.stat(location)
+      if (stat.isDirectory()) {
+        const contents = await filesOfPath(fs, location)
+        res.dirs.push(location, ...contents.dirs)
+        res.files.push(...contents.files)
+      } else {
+        res.files.push(location)
+      }
+    }
+    return res
+  } catch (e) {
+    return res
+  }
 }
 
 export class FileData implements Data.Source, Data.Target, Data.Media {
@@ -35,10 +53,9 @@ export class FileData implements Data.Source, Data.Target, Data.Media {
 
   async *entries(): AsyncGenerator<Entry> {
     const {config, fs, loader, rootDir = '.'} = this.options
-    for (const [
-      workspace,
-      {schema, source: contentDir, roots}
-    ] of Object.entries(config.workspaces)) {
+    for (const [workspace, {source: contentDir, roots}] of Object.entries(
+      config.workspaces
+    )) {
       for (const root of Object.values(roots)) {
         const locales = root.i18n?.locales || [undefined]
         for (const locale of locales) {
@@ -67,7 +84,9 @@ export class FileData implements Data.Source, Data.Target, Data.Media {
                 const name = path.basename(file, extension)
                 const isIndex = name === 'index' || name === ''
                 const buffer = await fs.readFile(location)
-                const [entry, err] = outcome(() => loader.parse(schema, buffer))
+                const [entry, err] = outcome(() =>
+                  loader.parse(config.schema, buffer)
+                )
                 if (!entry) {
                   console.log(`\rCould not parse ${location}: ${err}`)
                   continue
@@ -86,7 +105,7 @@ export class FileData implements Data.Source, Data.Target, Data.Media {
                 ) {
                   continue
                 }
-                const type = schema.type(entry.type)
+                const type = config.schema.type(entry.type)
                 if (!type) continue
                 const isContainer = Boolean(type.options.isContainer)
                 const url = path.join(target, isIndex ? '' : name)
@@ -146,17 +165,19 @@ export class FileData implements Data.Source, Data.Target, Data.Media {
   }
 
   async watchFiles() {
-    const {config, rootDir = '.'} = this.options
-    const paths = []
+    const {fs, config, rootDir = '.'} = this.options
+    const res: Contents = {files: [], dirs: []}
     for (const {source: contentDir, roots} of Object.values(
       config.workspaces
     )) {
       for (const root of Object.keys(roots)) {
         const rootPath = path.join(rootDir, contentDir, root)
-        paths.push(rootPath)
+        const contents = await filesOfPath(fs, rootPath)
+        res.files.push(...contents.files)
+        res.dirs.push(...contents.dirs)
       }
     }
-    return paths
+    return res
   }
 
   async publish({changes}: Hub.ChangesParams) {
@@ -197,7 +218,7 @@ export class FileData implements Data.Source, Data.Target, Data.Media {
       .filter(Boolean)
     const file = path.join(rootDir, location)
     const isInMediaLocation = mediaDirs.some(dir =>
-      isChildOf(file, path.join(rootDir, dir))
+      path.contains(path.join(rootDir, dir), file)
     )
     if (!isInMediaLocation) throw createError(401)
     return {type: 'buffer', buffer: await fs.readFile(file)}

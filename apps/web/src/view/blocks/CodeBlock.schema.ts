@@ -1,4 +1,4 @@
-import {Schema, type} from '@alinea/core'
+import {type} from '@alinea/core'
 import {check} from '@alinea/input.check'
 import {code} from '@alinea/input.code'
 import {tab, tabs} from '@alinea/input.tabs'
@@ -22,5 +22,3 @@ export const CodeBlockSchema = type(
     }).configure({icon: IcRoundCode})
   )
 ).configure({icon: IcOutlineSettings})
-
-export type CodeBlockSchema = Schema.TypeOf<typeof CodeBlockSchema>

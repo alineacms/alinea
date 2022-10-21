@@ -2,11 +2,11 @@ import {Collection, Cursor, Selection} from '@alinea/store'
 import {Entry} from './Entry'
 import {createError} from './ErrorWithCode'
 import {Field} from './Field'
+import {Hint} from './Hint'
 import {RecordShape} from './shape/RecordShape'
 import type {TypeConfig} from './Type'
 import {Type} from './Type'
 import {LazyRecord} from './util/LazyRecord'
-import type {Workspace} from './Workspace'
 
 export type HasType = {type: string}
 
@@ -40,8 +40,10 @@ export namespace Schema {
     : never
 }
 
-export class SchemaConfig<T = any> {
+export class Schema<T = any> {
   shape: Record<string, RecordShape<any>>
+  hint: Hint
+  typeMap = new Map<string, Type<any>>()
 
   constructor(public types: LazyRecord<TypeConfig<any>>) {
     this.shape = Object.fromEntries(
@@ -49,34 +51,37 @@ export class SchemaConfig<T = any> {
         return [key, type.shape]
       })
     )
+    for (const [name, type] of LazyRecord.iterate(types))
+      this.typeMap.set(name, type.toType(name))
+    this.hint = Hint.Union(
+      Array.from(this.typeMap.values()).map(type => {
+        return type.hint
+      })
+    )
+  }
+
+  validate() {
+    for (const type of this.allTypes)
+      if (!type.hasField('title') || !type.hasField('path'))
+        throw createError(
+          `Missing title or path field in type ${type.name}, see https://alinea.sh/docs/reference/titles`
+        )
   }
 
   configEntries() {
     return LazyRecord.iterate(this.types)
   }
 
-  concat<X>(that: SchemaConfig<X>): SchemaConfig<T | X> {
-    return schema(LazyRecord.concat(this.types, that.types))
+  concat<X>(that: Schema<X>): Schema<T | X> {
+    return schema(LazyRecord.concat(this.types, that.types)) as any
   }
 
-  toSchema(workspace: Workspace<T>): Schema<T> {
-    return new Schema(workspace, this)
+  get allTypes() {
+    return Array.from(this.typeMap.values())
   }
-}
 
-/** Describes the different types of entries */
-export class Schema<T = any> extends SchemaConfig<T> {
-  typeMap = new Map<string, Type<any>>()
-
-  constructor(public workspace: Workspace<T>, config: SchemaConfig<T>) {
-    super(config.types)
-    for (const [name, type] of LazyRecord.iterate(config.types)) {
-      if (!type.hasField('title') || !type.hasField('path'))
-        throw createError(
-          `Missing title or path field in type ${name}, see https://alinea.sh//docs/reference/titles`
-        )
-      this.typeMap.set(name, type.toType(this, name))
-    }
+  definitions() {
+    return Hint.definitions(this.allTypes.map(type => type.hint))
   }
 
   entries() {
@@ -87,10 +92,7 @@ export class Schema<T = any> extends SchemaConfig<T> {
     return this.typeMap.entries()[Symbol.iterator]()
   }
 
-  /** Get a type by name */
-  type<K extends TypesOf<T>>(name: K): Type<Extract<T, {type: K}>> | undefined
-  type(name: string): Type<any> | undefined
-  type(name: any): any {
+  type(name: string): Type<any> | undefined {
     return this.typeMap.get(name)
   }
 
@@ -98,16 +100,11 @@ export class Schema<T = any> extends SchemaConfig<T> {
   get keys() {
     return Array.from(this.typeMap.keys())
   }
-
-  /** A generic collection used to query any type in this schema */
-  collection(): Collection<T> {
-    return new Collection('Entry')
-  }
 }
 
 /** Create a schema, expects a string record of Type instances */
 export function schema<Types extends LazyRecord<any /* TypeConfig */>>(
   types: Types
-): SchemaConfig<TypeToEntry<TypeToRows<Types>>> {
-  return new SchemaConfig(types)
+): Schema<TypeToEntry<TypeToRows<Types>>> {
+  return new Schema(types)
 }

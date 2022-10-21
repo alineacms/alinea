@@ -1,8 +1,8 @@
-import {content} from '@alinea/content/web'
+import {Page, Pages} from '@alinea/content'
 import {Entry, Label} from '@alinea/core'
 import {Cursor, Store} from '@alinea/store'
 
-export function menuQuery(pages: content.Pages) {
+export function menuQuery(pages: Pages) {
   return pages
     .where(page => page.type.is('Doc').or(page.type.is('Docs')))
     .where(page => page.id.isNot('docs'))
@@ -16,9 +16,9 @@ export function menuQuery(pages: content.Pages) {
     }))
 }
 
-export async function docPageQuery(pages: content.Pages, doc: content.Doc) {
+export async function docPageQuery(pages: Pages, doc: Page.Doc) {
   type Sibling = {id: string; type: string; url: string; title: Label}
-  const sibling = (doc: Cursor<Entry>) => ({
+  const sibling = (doc: Cursor<Page>) => ({
     id: doc.id,
     url: doc.url,
     title: doc.title,
@@ -29,8 +29,7 @@ export async function docPageQuery(pages: content.Pages, doc: content.Doc) {
     direction: 1 | -1
   ): Promise<Sibling | null> {
     const method = direction === 1 ? 'nextSibling' : 'prevSibling'
-    const sort =
-      content.AnyPage.alinea.index[direction === 1 ? 'asc' : 'desc']()
+    const sort = Entry.alinea.index[direction === 1 ? 'asc' : 'desc']()
     const fromTree = pages.tree(from)
     async function pickNext(next: Sibling | null): Promise<Sibling | null> {
       switch (next?.type) {

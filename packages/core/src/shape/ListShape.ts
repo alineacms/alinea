@@ -1,8 +1,9 @@
 import * as Y from 'yjs'
 import {createError} from '../ErrorWithCode'
+import {Hint} from '../Hint'
 import {createId} from '../Id'
 import {Label} from '../Label'
-import {Shape} from '../Shape'
+import {Shape, ShapeInfo} from '../Shape'
 import {generateKeyBetween} from '../util/FractionalIndexing'
 import {RecordShape} from './RecordShape'
 
@@ -28,10 +29,10 @@ export type ListMutator<T> = {
 export class ListShape<T>
   implements Shape<Array<ListRow & T>, ListMutator<ListRow & T>>
 {
-  values: Record<string, RecordShape<ListRow & T>>
+  values: Record<string, RecordShape>
   constructor(
     public label: Label,
-    shapes: Record<string, RecordShape<T>>,
+    public shapes: Record<string, RecordShape>,
     public initialValue?: Array<ListRow & T>
   ) {
     this.values = Object.fromEntries(
@@ -42,11 +43,19 @@ export class ListShape<T>
             id: Shape.Scalar('Id'),
             index: Shape.Scalar('Index'),
             type: Shape.Scalar('Type'),
-            ...type.shape
+            ...type.properties
           })
         ]
       })
     )
+  }
+  innerTypes(parents: Array<string>): Array<ShapeInfo> {
+    return Object.entries(this.shapes).flatMap(([name, shape]) => {
+      const info = {name, shape, parents}
+      const inner = shape.innerTypes(parents.concat(name))
+      if (Hint.isDefinitionName(name)) return [info, ...inner]
+      return inner
+    })
   }
   create() {
     return this.initialValue || ([] as Array<ListRow & T>)

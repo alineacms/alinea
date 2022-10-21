@@ -1,16 +1,13 @@
 import {Changes} from '@alinea/backend/Storage'
 import {base64url} from '@alinea/core/util/Encoding'
-import {Cursor} from '@alinea/store'
-import {Config} from './Config'
+import {CursorImpl} from '@alinea/store'
 import {Entry} from './Entry'
 import {Future} from './Future'
 import {Media} from './Media'
 import {User} from './User'
 import {Logger} from './util/Logger'
-import {Workspaces} from './Workspace'
 
-export interface Hub<T extends Workspaces = Workspaces> {
-  config: Config<T>
+export interface Hub<T = any> {
   entry(params: Hub.EntryParams, ctx?: Hub.Context): Future<Entry.Detail | null>
   query<T>(params: Hub.QueryParams<T>, ctx?: Hub.Context): Future<Array<T>>
   updateDraft(params: Hub.UpdateParams, ctx?: Hub.Context): Future
@@ -40,7 +37,7 @@ export namespace Hub {
     stateVector?: Uint8Array
   }
   export type QueryParams<T> = {
-    cursor: Cursor<T>
+    cursor: CursorImpl<T>
     /** Query source data, not drafts */
     source?: boolean
   }

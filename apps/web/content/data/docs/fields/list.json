@@ -1,8 +1,6 @@
 {
   "id": "268hhWIV6twxD4PMp03isLY6Pac",
   "type": "Doc",
-  "root": "data",
-  "index": "a2V",
   "title": "List",
   "blocks": [
     {
@@ -34,7 +32,12 @@
         {
           "id": "268j9BBXf8jwwZ427XxBT2O0snb",
           "type": "CodeBlock",
-          "code": "import {alinea} from 'alinea'\nalinea.list('My list field', {\n  schema: alinea.schema({\n    // ... types\n  })\n})"
+          "code": "import {alinea} from 'alinea'\n\nalinea.list('My list field', {\n  schema: alinea.schema({\n    Text: alinea.type('Text', {\n      title: alinea.text('Item title'),\n      text: alinea.richText('Item body text')\n    }),\n    Image: alinea.type('Image', {\n      image: alinea.image('Image')\n    })\n  })\n})"
+        },
+        {
+          "id": "MOMpcuuHwKl-kSmmbcKgx",
+          "type": "ExampleBlock",
+          "code": "import {alinea} from 'alinea'\n\nexport default alinea.list('My list field', {\n  schema: alinea.schema({\n    Text: alinea.type('Text', {\n      title: alinea.text('Item title'),\n      text: alinea.richText('Item body text')\n    }),\n    Image: alinea.type('Image', {\n      image: alinea.image('Image')\n    })\n  })\n})"
         }
       ]
     },

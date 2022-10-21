@@ -23,21 +23,21 @@ function entry(entry: Entry.Raw) {
 }
 
 const config = createConfig({
+  schema: createSchema({
+    Type: type('Type', {
+      title: text('Title'),
+      path: text('path')
+    }).configure({
+      isContainer: true
+    }),
+    Sub: type('Sub', {
+      title: text('Title'),
+      path: text('path')
+    })
+  }),
   workspaces: {
     main: workspace('Main', {
       source: 'content',
-      schema: createSchema({
-        Type: type('Type', {
-          title: text('Title'),
-          path: text('path')
-        }).configure({
-          isContainer: true
-        }),
-        Sub: type('Sub', {
-          title: text('Title'),
-          path: text('path')
-        })
-      }),
       roots: {data: root('Root', {contains: ['Type']})}
     })
   }
