@@ -52,6 +52,7 @@
     "react-dom": "*"
   },
   "devDependencies": {
+    "@graphiql/toolkit": "^0.8.0",
     "@react-hook/size": "^2.1.2",
     "@react-hook/window-size": "^3.0.7",
     "@types/diff-match-patch": "^1.0.32",
@@ -60,6 +61,7 @@
     "dataloader": "^2.1.0",
     "diff-match-patch": "^1.0.5",
     "fast-average-color": "^7.0.1",
+    "graphiql": "^2.0.9",
     "image-blob-reduce": "^4.1.0",
     "pretty-bytes": "^6.0.0",
     "react-tiny-virtual-list": "^2.2.0",

@@ -19,6 +19,7 @@ import {
   useMatch,
   useParams
 } from '@alinea/ui/util/HashRouter'
+import 'graphiql/graphiql.css'
 import {Fragment, Suspense, useMemo, useState} from 'react'
 import {
   QueryClient,
@@ -313,3 +314,15 @@ export function App<T>({fullPage = true, ...props}: DashboardOptions<T>) {
     </DashboardProvider>
   )
 }
+
+/*
+import {createGraphiQLFetcher} from '@graphiql/toolkit'
+import {GraphiQL} from 'graphiql'
+import 'graphiql/graphiql.css'
+return (
+  <GraphiQL
+    fetcher={createGraphiQLFetcher({
+      url: 'https://swapi-graphql.netlify.app/.netlify/functions/index'
+    })}
+  />
+)*/

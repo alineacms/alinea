@@ -329,7 +329,7 @@ export class Pages<T = any> extends Multiple<T, Entry> {
     }
   }
 
-  async graphql(query: string, variables?: Record<string, any>) {
+  graphql = (query: string, variables?: Record<string, any>) => {
     return graphql({
       ...Lazy.get(this.graphQLContext),
       source: query,

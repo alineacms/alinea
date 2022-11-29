@@ -86,6 +86,7 @@ export namespace Hub {
   const base = '/hub'
   export const routes = {
     base,
+    graphql: `${base}/graphql`,
     entry(id: string, stateVector?: Uint8Array) {
       const route = base + `/entry/${id}`
       if (stateVector)
