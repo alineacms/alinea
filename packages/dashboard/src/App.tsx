@@ -19,7 +19,6 @@ import {
   useMatch,
   useParams
 } from '@alinea/ui/util/HashRouter'
-import 'graphiql/graphiql.css'
 import {Fragment, Suspense, useMemo, useState} from 'react'
 import {
   QueryClient,
