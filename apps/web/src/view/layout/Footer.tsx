@@ -47,11 +47,6 @@ export function Footer({footer, theme, setTheme}: FooterProps) {
                 </Link>
               </div>
               <div>
-                <Link href="/types/alinea">
-                  <a className={styles.root.link()}>API</a>
-                </Link>
-              </div>
-              <div>
                 <Link href="/playground">
                   <a className={styles.root.link()}>Playground</a>
                 </Link>
