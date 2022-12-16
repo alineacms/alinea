@@ -10,6 +10,7 @@ import {
   VStack
 } from '@alinea/ui'
 import {IcRoundKeyboardArrowRight} from '@alinea/ui/icons/IcRoundKeyboardArrowRight'
+import {Link} from '@alinea/ui/Link'
 import {ReactNode} from 'react'
 import {useDashboard} from '../../hook/UseDashboard'
 import css from './EntrySummary.module.scss'
@@ -54,7 +55,9 @@ export const EntrySummaryRow = view(
             </Ellipsis>
           )}
           <Ellipsis>
-            <TextLabel label={title} />
+            <Link href={`/entry/web/data/${id}`}>
+              <TextLabel label={title} />
+            </Link>
           </Ellipsis>
         </VStack>
         <Chip style={{marginLeft: 'auto'}}>
