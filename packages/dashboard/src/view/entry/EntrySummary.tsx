@@ -13,6 +13,7 @@ import {IcRoundKeyboardArrowRight} from '@alinea/ui/icons/IcRoundKeyboardArrowRi
 import {Link} from '@alinea/ui/Link'
 import {ReactNode} from 'react'
 import {useDashboard} from '../../hook/UseDashboard'
+import {useNav} from '../../hook/UseNav'
 import css from './EntrySummary.module.scss'
 
 const styles = fromModule(css)
@@ -31,6 +32,7 @@ function entrySummaryQuery(Entry: Collection<Entry>) {
 export const EntrySummaryRow = view(
   entrySummaryQuery,
   function EntrySummaryRow({id, title, type: typeName, parents}) {
+    const nav = useNav()
     const {schema} = useDashboard().config
     const type = schema.type(typeName)
     if (!type) return null
@@ -55,7 +57,7 @@ export const EntrySummaryRow = view(
             </Ellipsis>
           )}
           <Ellipsis>
-            <Link href={`/entry/web/data/${id}`}>
+            <Link href={nav.entry({id})}>
               <TextLabel label={title} />
             </Link>
           </Ellipsis>
