@@ -505,7 +505,7 @@ __metadata:
     typescript: ^4.8.4
     typescript-plugin-css-modules: ^3.4.0
     uvu: ^0.5.1
-    wireit: ^0.7.1
+    wireit: ^0.9.1
   languageName: unknown
   linkType: soft
 
@@ -602,7 +602,6 @@ __metadata:
     tsx: ^3.8.1
     use-clipboard-copy: ^0.2.0
     webassembly-loader: ^1.1.0
-    wireit: ^0.7.1
   languageName: unknown
   linkType: soft
 
@@ -12674,6 +12673,21 @@ resolve@^1.10.0:
   bin:
     wireit: bin/wireit.js
   checksum: 1fc70cf5c87df59d898cebd5f514d2b13f134aad9b3585837ab08dae6bc50d7df1655894365a8d2591d7511c5f7092a434bc9d796e6012d7526a7b398d1275e3
+  languageName: node
+  linkType: hard
+
+"wireit@npm:^0.9.1":
+  version: 0.9.1
+  resolution: "wireit@npm:0.9.1"
+  dependencies:
+    braces: ^3.0.2
+    chokidar: ^3.5.3
+    fast-glob: ^3.2.11
+    jsonc-parser: ^3.0.0
+    proper-lockfile: ^4.1.2
+  bin:
+    wireit: bin/wireit.js
+  checksum: 569edf2d348e20707a894f5db673a78994a0990f53d065d76c6d4d05602292d129b4b104b63008b3a31acc953dad471f5c684be3cdbc136efe62e87125c9b571
   languageName: node
   linkType: hard
 

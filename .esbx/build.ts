@@ -11,6 +11,7 @@ import glob from 'glob'
 import path from 'path'
 import {tsconfigResolverSync, TsConfigResult} from 'tsconfig-resolver'
 import which from 'which'
+import {bundleTs} from './bundle-ts'
 import {distPlugin} from './plugin/dist'
 
 export type BuildTaskConfig = {
@@ -59,6 +60,14 @@ function task(
       if (!skipTypes) {
         tsConfig = tsconfigResolverSync()
         await createTypes()
+        await reportTime(
+          async () => bundleTs.action(),
+          'bundling types',
+          err => {
+            if (err) return `type bundling failed`
+            return `types bundled`
+          }
+        )
       }
       const entryPoints: Array<string> = []
       function packageEntryPoints(root: string, location: string) {

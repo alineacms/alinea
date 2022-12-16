@@ -1,5 +1,4 @@
 import {Page} from '@alinea/content'
-import {unreachable} from '@alinea/core'
 import {fromModule} from '@alinea/ui'
 import {ComponentType} from 'react'
 import css from './Blocks.module.scss'
@@ -8,14 +7,12 @@ import {FeaturesBlock} from './FeaturesBlock'
 import {ImageBlock} from './ImageBlock'
 import {ImagetextBlock} from './ImagetextBlock'
 import {TextBlock} from './TextBlock'
-import {TypesBlock} from './TypesBlock'
 
 const styles = fromModule(css)
 
 export type BlocksViewProps = {
   blocks: Array<
     | Page.TextBlock
-    | Page.TypesBlock
     | Page.ColumnsBlock
     | Page.ImagetextBlock
     | Page.ImageBlock
@@ -47,10 +44,10 @@ export function Blocks({blocks, container}: BlocksViewProps) {
             )
           case 'TextBlock':
             return <TextBlock key={block.id} container={container} {...block} />
-          case 'TypesBlock':
-            return <TypesBlock key={block.id} {...block} />
+          //case 'TypesBlock':
+          //  return <TypesBlock key={block.id} {...block} />
           default:
-            throw unreachable(block)
+            return null
         }
       })}
     </div>

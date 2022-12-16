@@ -10,6 +10,4 @@ node_modules
 /api/index.js
 /api/index.js.map
 
-/.yarn
-/yarn.lock
 /public/admin*

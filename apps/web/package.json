@@ -4,50 +4,14 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "build": "wireit",
+    "build": "yarn build:packages && alinea generate -- next build",
     "dev": "cross-env FORCE_COLOR=1 next dev",
-    "generate": "wireit",
-    "gen:types": "wireit",
-    "gen:bundleTs": "wireit",
+    "generate": "yarn build:packages && alinea generate --fix",
+    "gen:types": "cd ../.. && typedoc --json apps/web/src/data/types.json",
     "dev:check": "tsc -w",
     "start": "next start",
     "lint": "next lint",
     "seed": "tsx ./seed.ts"
-  },
-  "wireit": {
-    "build": {
-      "command": "alinea generate -- next build",
-      "dependencies": [
-        "../..:build",
-        "gen:types",
-        "gen:bundleTs"
-      ]
-    },
-    "generate": {
-      "command": "alinea generate --fix",
-      "dependencies": [
-        "../..:build"
-      ]
-    },
-    "gen:types": {
-      "command": "cd ../.. && typedoc --json apps/web/src/data/types.json",
-      "dependencies": [
-        "../..:type"
-      ],
-      "files": [],
-      "output": [
-        "src/data/types.json"
-      ]
-    },
-    "gen:bundleTs": {
-      "command": "cd ../.. && esbx bundleTs",
-      "dependencies": [
-        "../..:type"
-      ],
-      "output": [
-        "src/data/alinea.d.ts.txt"
-      ]
-    }
   },
   "dependencies": {
     "@alinea/auth.passwordless": "0.0.0",
@@ -82,8 +46,7 @@
     "postcss-pxtorem": "^6.0.0",
     "raw-loader": "^4.0.2",
     "tsx": "^3.8.1",
-    "webassembly-loader": "^1.1.0",
-    "wireit": "^0.7.1"
+    "webassembly-loader": "^1.1.0"
   },
   "browserslist": [
     "chrome 61",

@@ -1,5 +1,5 @@
 import {HStack} from '@alinea/ui'
-import {TypePageProps} from '../pages/types/[...path]'
+import {TypePageProps} from '../pages/types/[...path].tsx'
 import {Layout} from './layout/Layout'
 import {NavSidebar} from './layout/NavSidebar'
 import {NavTree} from './layout/NavTree'
