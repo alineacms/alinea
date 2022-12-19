@@ -32,12 +32,12 @@
         {
           "id": "290iDwpZVR0wrW2N3JaIHxtxc0I",
           "type": "CodeBlock",
-          "code": "import {alinea} from 'alinea'\nalinea.object('My object field', {\n  fields: alinea.type('Object fields', {\n    fieldA: alinea.text('A'),\n    fieldB: alinea.text('B')\n  })\n})"
+          "code": "import {alinea} from 'alinea'\nalinea.object('Address', {\n  fields: alinea.type('Object fields', {\n    street: alinea.text('Street'),\n    zip: alinea.text('Zip code', {width: 0.5}),\n    city: alinea.text('City', {width: 0.5})\n  })\n})"
         },
         {
           "id": "gwFTx1qVSxQvMi_joKo4Q",
           "type": "ExampleBlock",
-          "code": "import {alinea} from 'alinea'\nexport default alinea.object('My object field', {\n  fields: alinea.type('Object fields', {\n    fieldA: alinea.text('A'),\n    fieldB: alinea.text('B')\n  })\n})"
+          "code": "import {alinea} from 'alinea'\nexport default alinea.object('Address', {\n  fields: alinea.type('Object fields', {\n    street: alinea.text('Street'),\n    zip: alinea.text('Zip code', {width: 0.5}),\n    city: alinea.text('City', {width: 0.5})\n  })\n})"
         }
       ]
     }

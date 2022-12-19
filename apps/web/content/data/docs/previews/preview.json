@@ -82,7 +82,7 @@
           "content": [
             {
               "type": "text",
-              "text": "A preview token is provided to securely pass context to the preview route, it can later be used to find out which entry we're viewing so it can retrieve the correct draft. Setting up the api route will be very specific to the way your project is build and we'll revise this section later with sample guides for a handful of frameworks."
+              "text": "A preview token is provided to securely pass context to the preview route, it can later be used to find out which entry we're viewing so it can retrieve the correct draft. Setting up the api route will be very specific to the way your project is built and we'll revise this section later with sample guides for a handful of frameworks."
             }
           ]
         },

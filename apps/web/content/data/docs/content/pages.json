@@ -32,7 +32,7 @@
         {
           "id": "KSTSIoTMXMiTf6PYZeqZ6",
           "type": "CodeBlock",
-          "code": "import {initPages} from '@alinea/content/pages'\n\n// The initPages method also accept a previewToken to query\n// drafts while previewing, see the next chapter on how to obtain one\nconst pages = initPages()"
+          "code": "import {initPages} from '@alinea/content/pages'\n\n// The initPages method also accepts a previewToken to query\n// drafts while previewing, see the next chapter on how to obtain one\nconst pages = initPages()"
         },
         {
           "type": "heading",

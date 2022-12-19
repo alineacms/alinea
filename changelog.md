@@ -45,7 +45,7 @@
 
 ## [0.2.14]
 
-- The dashboard router was not picking up wilcard routes, which resulted in
+- The dashboard router was not picking up wildcard routes, which resulted in
   non-working links (#265)
 - Bundle yjs instead of requiring it as a dependency.
 - Re-use the esbuild watcher in order to remove the chokidar dependency.
@@ -147,7 +147,7 @@
 
 ## [0.2.0]
 
-- The exports of the alinea package are restructed. This is a breaking change
+- The exports of the alinea package are restructured. This is a breaking change
   because the input fields are no longer exposed directly but bundled in the
   "alinea" namespace. A few less used exports were removed and can be
   found in the @alinea packages.
@@ -284,7 +284,7 @@
 
 ## [0.1.5]
 
-- The alinea package now export an `alinea` object that bundles the previously
+- The alinea package now exports an `alinea` object that bundles the previously
   exported config functions.
 - Vendor in selected dependencies (#175). Selected dependencies will be compiled
   and packaged with the alinea packages. This reduces install size and amount of

@@ -41,7 +41,7 @@
           "content": [
             {
               "type": "text",
-              "text": "This runs both the alinea and next development servers meaning we'll be able host live Next.js pages within the alinea dashboard."
+              "text": "This runs both the alinea and next development servers meaning we're able to host live Next.js pages within the alinea dashboard."
             }
           ]
         },
@@ -62,7 +62,7 @@
           "content": [
             {
               "type": "text",
-              "text": "To set up preview we'll follow the "
+              "text": "To set up preview we follow the "
             },
             {
               "type": "text",
@@ -82,7 +82,7 @@
             },
             {
               "type": "text",
-              "text": " by creating a preview API route. This API route will receive a preview token from alinea and use it to tell Next.js to redirect to the page we're currently viewing and query draft data. Note that during development this is not strictly required, but getting it out of the way now makes sure this works just the same when we're ready to deploy to production."
+              "text": " by creating a preview API route. This API route receives a preview token from alinea and uses it to tell Next.js to redirect to the page we're currently viewing and query draft data. Note that during development this is not strictly required, but getting it out of the way now makes sure this works just the same when we're ready to deploy to production."
             }
           ]
         },
@@ -136,7 +136,7 @@
           "content": [
             {
               "type": "text",
-              "text": "For previews to show up in the alinea dashboard we'll have to adjust the `preview` property of the workspace we want to preview. We can use the `BrowserPreview` component and point it at our running Next.js development server. You should see the webpage appear on the right side in the dashboard."
+              "text": "For previews to show up in the alinea dashboard we have to adjust the `preview` property of the workspace we want to preview. We use the `BrowserPreview` component and point it at our running Next.js development server. You should see the webpage appear on the right side in the dashboard."
             }
           ]
         },

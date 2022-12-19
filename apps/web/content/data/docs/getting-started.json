@@ -359,7 +359,7 @@
           "content": [
             {
               "type": "text",
-              "text": "The following command start a local server on `http://localhost:4500`"
+              "text": "The following command starts a local server on `http://localhost:4500`"
             }
           ]
         },
@@ -399,7 +399,7 @@
           "content": [
             {
               "type": "text",
-              "text": "If you're using a framework with its own development server it's possible to prepend the serve command to it. This will wait until the Alinea package is generated before starting the dev server make sure userland code can always depend on the package being available. It also simplifies running the dashboard and development server without requiring tools like npm-run-all. "
+              "text": "If you're using a framework with its own development server it's possible to prepend the serve command to it. This will wait until the Alinea package is generated before starting the dev server. This makes sure userland code can always depend on the package being available. It also simplifies running the dashboard and development server without requiring tools like npm-run-all. "
             }
           ]
         },

@@ -41,7 +41,7 @@
                   "content": [
                     {
                       "type": "text",
-                      "text": "Content is published into in a directory as JSON files. Note that "
+                      "text": "Content is published into a directory as JSON files. Note that "
                     },
                     {
                       "type": "text",
