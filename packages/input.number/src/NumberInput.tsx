@@ -1,8 +1,10 @@
 import {InputLabel, InputState, useInput} from '@alinea/editor'
-import {fromModule} from '@alinea/ui'
+
 import {IcRoundNumbers} from '@alinea/ui/icons/IcRoundNumbers'
 import {NumberField} from './NumberField'
 import css from './NumberInput.module.scss'
+import {fromModule} from '@alinea/ui'
+import {useState} from 'react'
 
 const styles = fromModule(css)
 
@@ -14,7 +16,8 @@ export type NumberInputProps = {
 export function NumberInput({state, field}: NumberInputProps) {
   const {inline, help, optional, initialValue, width, minValue, maxValue} =
     field.options
-  const [value = initialValue, setValue] = useInput(state)
+  const [value, setValue] = useInput(state)
+  const [defined, setDefined] = useState<boolean>(typeof value === undefined)
 
   return (
     <InputLabel
@@ -29,14 +32,25 @@ export function NumberInput({state, field}: NumberInputProps) {
       <input
         type="number"
         className={styles.root.input()}
-        value={String(value ?? '')}
-        onChange={e =>
+        value={
+          String(value ?? '') || (!defined ? String(initialValue ?? '') : '')
+        }
+        onChange={e => {
           setValue(
             e.currentTarget.value === ''
               ? undefined!
               : Number(e.currentTarget.value)
           )
-        }
+          if (!defined) setDefined(true)
+        }}
+        onBlur={e => {
+          if (
+            !optional &&
+            value === undefined &&
+            typeof initialValue !== 'undefined'
+          )
+            setValue(initialValue)
+        }}
         min={minValue}
         max={maxValue}
       />
