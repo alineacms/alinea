@@ -155,12 +155,12 @@
         },
         {
           "type": "heading",
-          "level": 3,
           "textAlign": "left",
+          "level": 3,
           "content": [
             {
               "type": "text",
-              "text": "`hidden`"
+              "text": "`entryUrl`"
             }
           ]
         },
@@ -170,14 +170,14 @@
           "content": [
             {
               "type": "text",
-              "text": "By marking a type as hidden it will not show up in the sidebar entry tree."
+              "text": "The `url` property of entries can be controlled using the `entryUrl` function in the type options. Urls are computed during generation and this can help to keep them constant if you're using a web framework that does file system routing. The available parameters are `path`, `parentPaths` and `locale`. For example: making sure a doc page always has an url in the form of `/doc/$path` you can specify `entryUrl` as the following:"
             }
           ]
         },
         {
-          "id": "28hmAEXUe1GuL27vBKjNYRARYWa",
+          "id": "aJxUeLtZdqDwmNG2_fSLq",
           "type": "CodeBlock",
-          "code": "isHidden: true"
+          "code": "entryUrl({path}) {\n  return `/doc/${path}`\n}"
         },
         {
           "type": "heading",
@@ -196,7 +196,7 @@
           "content": [
             {
               "type": "text",
-              "text": "An icon can be used to label a root in the sidebar. Icons are implemented as a React component. You can find icons on "
+              "text": "An icon can be used to label a type in the sidebar entry tree. Icons are implemented as a React component. You can find icons on "
             },
             {
               "type": "text",
@@ -241,12 +241,6 @@
           ]
         }
       ]
-    },
-    {
-      "id": "286HsGRzFoyQsBZIUQgy23OyX9J",
-      "index": "a1",
-      "type": "TypesBlock",
-      "types": "TypeOptions"
     }
   ],
   "alinea": {

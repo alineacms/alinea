@@ -25,7 +25,7 @@
           "content": [
             {
               "type": "text",
-              "text": "Before connecting Alinea to a backend we'll need to export the dashboard. We'll create a serverless/edge handler to host an API that connects the dashboard to the backend. Alongside we'll configure Alinea to put together an html file and all static assets needed to host the dashboard."
+              "text": "Before connecting Alinea to a backend we need to export the dashboard. We create a serverless/edge handler to host an API that connects the dashboard to the backend. Alongside we configure alinea to put together an html file and all static assets needed to host the dashboard."
             }
           ]
         },
@@ -46,7 +46,7 @@
           "content": [
             {
               "type": "text",
-              "text": "The handler can be deployed as a serverless function. Setting up this function will be different based on the framework and hosting provider you choose. We'll demonstrate setting up the handler for Next.js. If you're unsure how to handle this for other frameworks or hosts "
+              "text": "The handler can be deployed as a serverless function. Setting up this function will be different based on the framework and hosting provider you choose. We demonstrate setting up the handler for Next.js. If you're unsure how to handle this for other frameworks or hosts "
             },
             {
               "type": "text",

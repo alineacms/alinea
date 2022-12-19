@@ -25,7 +25,7 @@
           "content": [
             {
               "type": "text",
-              "text": "Hosting an Alinea backend requires several services such as storing and retrieving drafts, publishing changes and authenticating users. We'll go through each of these and combine them into a handler which can be hosted on Node.js or serverless/edge Javascript runtimes. Let's start by adjusting the `alinea.config.tsx` file to include the backend setup."
+              "text": "Hosting an Alinea backend requires several services such as storing and retrieving drafts, publishing changes and authenticating users. We go through each of these and combine them into a handler which can be hosted on Node.js or serverless/edge Javascript runtimes. Let's start by adjusting the `alinea.config.tsx` file to include the backend setup."
             }
           ]
         },
@@ -77,7 +77,7 @@
           "content": [
             {
               "type": "text",
-              "text": "We'll setup the backend in a separate `alinea.server.ts` file that can be imported from the main alinea config. This file will hold all the configuration for the server side of the custom backend. When importing files that end with `.server` alinea makes sure they're not included in the client bundle, so your secrets are safe."
+              "text": "We set up the backend in a separate `alinea.server.ts` file that can be imported from the main alinea config. This file will hold all the configuration for the server side of the custom backend. When importing files that end with `.server` alinea makes sure they're not included in the client bundle, so your secrets are safe."
             }
           ]
         },
@@ -104,7 +104,7 @@
           "content": [
             {
               "type": "text",
-              "text": "The authentication service is the only one that provides not only a server implementation, but also a client part (the login screen). This is why the setup is included in the config file itself which is read by the client as well. We'll use the `@alinea/auth.passwordless` package. It can authenticate users with a magic link. It's ideal for serverless environments as it does not require a persistence layer. Install the backend and the nodemailer library which will handle sending emails."
+              "text": "The authentication service is the only one that provides not only a server implementation, but also a client part (the login screen). This is why the setup is included in the config file itself which is read by the client as well. We use the `@alinea/auth.passwordless` package. It can authenticate users with a magic link. It's ideal for serverless environments as it does not require a persistence layer. Install the backend and the nodemailer library which will handle sending emails."
             }
           ]
         },
@@ -155,7 +155,7 @@
           "content": [
             {
               "type": "text",
-              "text": "In the example we'll sync drafts to and from a Redis store. You can create a free persistent Redis store at "
+              "text": "In the example we sync drafts to and from a Redis store. You can create a free persistent Redis store at "
             },
             {
               "type": "text",

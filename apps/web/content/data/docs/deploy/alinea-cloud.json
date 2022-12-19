@@ -41,7 +41,7 @@
             },
             {
               "type": "text",
-              "text": " provides a cloud service to setup a backend in a few clicks. It takes care of authentication, inviting other users to collaborate, and pushing changes to your git repository. Add the following to your `alinea.config.tsx` config file. After a deploy you can continue the full setup inside the dashboard (`/admin.html`) itself."
+              "text": " provides a cloud service to set up a backend in a few clicks. It takes care of authentication, inviting other users to collaborate, and pushing changes to your git repository. Add the following to your `alinea.config.tsx` config file. After a deploy you can continue the full setup inside the dashboard (`/admin.html`) itself."
             }
           ]
         },

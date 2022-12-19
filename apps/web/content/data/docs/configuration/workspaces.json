@@ -52,7 +52,7 @@
           "content": [
             {
               "type": "text",
-              "text": "Source"
+              "text": "`source`"
             }
           ]
         },
@@ -78,7 +78,7 @@
           "content": [
             {
               "type": "text",
-              "text": "Media directory"
+              "text": "`mediaDir`"
             }
           ]
         },
@@ -119,12 +119,6 @@
           ]
         }
       ]
-    },
-    {
-      "id": "286C2IKcWw9PYcWgPIvXz1fP7Jz",
-      "index": "a1",
-      "type": "TypesBlock",
-      "types": "WorkspaceOptions"
     }
   ],
   "alinea": {

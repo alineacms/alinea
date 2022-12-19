@@ -62,7 +62,7 @@
           "content": [
             {
               "type": "text",
-              "text": "The generate commands indexes content and generates the `@alinea/content` package. It's recommended to run it as part of the build step in your project."
+              "text": "The generate command indexes content and generates the `@alinea/content` package. It's recommended to run it as part of the build step in your project."
             }
           ]
         },
