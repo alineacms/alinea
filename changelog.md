@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+- Added the step property to the number fields. It specifies the interval
+  between legal numbers in the input field. Default is 1.
+
 ## [0.3.1]
 
 - Fix the `@alinea/preview/remix` preview hook

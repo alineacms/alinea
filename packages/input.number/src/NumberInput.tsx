@@ -1,8 +1,9 @@
 import {InputLabel, InputState, useInput} from '@alinea/editor'
-import {fromModule} from '@alinea/ui'
+
 import {IcRoundNumbers} from '@alinea/ui/icons/IcRoundNumbers'
 import {NumberField} from './NumberField'
 import css from './NumberInput.module.scss'
+import {fromModule} from '@alinea/ui'
 
 const styles = fromModule(css)
 
@@ -12,8 +13,16 @@ export type NumberInputProps = {
 }
 
 export function NumberInput({state, field}: NumberInputProps) {
-  const {inline, help, optional, initialValue, width, minValue, maxValue} =
-    field.options
+  const {
+    inline,
+    help,
+    optional,
+    initialValue,
+    width,
+    minValue,
+    maxValue,
+    step
+  } = field.options
   const [value = initialValue, setValue] = useInput(state)
 
   return (
@@ -39,6 +48,7 @@ export function NumberInput({state, field}: NumberInputProps) {
         }
         min={minValue}
         max={maxValue}
+        step={step || 1}
       />
     </InputLabel>
   )
