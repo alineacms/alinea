@@ -8,7 +8,7 @@ const nav = dashboardNav({})
 
 export function useLocale(): string | undefined {
   const root = useRoot()
-  const [match] = outcome(() => useMatch(nav.matchRoot))
+  const [match] = outcome(() => useMatch(nav.matchRoot, true))
   return useMemo(() => {
     const {i18n} = root
     if (!i18n) return
