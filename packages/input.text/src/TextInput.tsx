@@ -24,7 +24,8 @@ export function TextInput({state, field}: TextInputProps) {
     help,
     iconLeft: IconLeft,
     iconRight: IconRight,
-    autoFocus
+    autoFocus,
+    readonly
   } = field.options
 
   const Input = multiline ? TextareaAutosize : 'input'
@@ -55,6 +56,7 @@ export function TextInput({state, field}: TextInputProps) {
           onBlur={() => setFocus(false)}
           placeholder={placeholder}
           autoFocus={autoFocus}
+          disabled={readonly}
         />
         {IconRight && <IconRight />}
       </HStack>

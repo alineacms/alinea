@@ -1,10 +1,11 @@
+import {HStack, fromModule} from '@alinea/ui'
 import {InputLabel, InputState, useInput} from '@alinea/editor'
-import {fromModule, HStack} from '@alinea/ui'
+
+import {CodeField} from './CodeField'
 import {IcRoundCode} from '@alinea/ui/icons/IcRoundCode'
 import {TextareaAutosize} from '@alinea/ui/util/TextareaAutosize'
-import {useState} from 'react'
-import {CodeField} from './CodeField'
 import css from './CodeInput.module.scss'
+import {useState} from 'react'
 
 const styles = fromModule(css)
 
@@ -20,7 +21,7 @@ export type CodeInputProps = {
 export function CodeInput({state, field}: CodeInputProps) {
   const [value, setValue] = useInput(state)
   const [focus, setFocus] = useState(false)
-  const {width, inline, optional, help, language} = field.options
+  const {width, inline, optional, help, readonly} = field.options
 
   // Todo: unlocalise
   const placeholder = inline ? String(field.label) : ''
@@ -47,6 +48,7 @@ export function CodeInput({state, field}: CodeInputProps) {
           onBlur={() => setFocus(false)}
           placeholder={placeholder}
           spellCheck="false"
+          disabled={readonly}
         />
       </HStack>
     </InputLabel>

@@ -1,13 +1,14 @@
 // Todo: extract interface and place it in core
-import {InputState} from '@alinea/editor'
-import {Expr} from '@alinea/store'
+
 import type {ComponentType} from 'react'
+import {Expr} from '@alinea/store'
 import {Hint} from './Hint'
+import {InputState} from '@alinea/editor'
 import {Label} from './Label'
-import {Shape} from './Shape'
 import {ListMutator} from './shape/ListShape'
 import {RecordMutator} from './shape/RecordShape'
 import {RichTextMutator} from './shape/RichTextShape'
+import {Shape} from './Shape'
 import {TextDoc} from './TextDoc'
 
 export type FieldRenderer<V, M, F> = ComponentType<{
@@ -51,4 +52,5 @@ export interface Field<V, M, Q = V> {
   view?: FieldRenderer<V, M, Field<V, M, Q>>
   transform?: (field: Expr<V>, pages: any) => Expr<Q> | undefined
   hidden?: boolean
+  readonly?: boolean
 }

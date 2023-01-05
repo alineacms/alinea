@@ -1,6 +1,6 @@
 import {Field, Hint, Label, Shape} from '@alinea/core'
 
-/** Optional settings to configure a text field */
+/** Optional settings to configure a check field */
 export type CheckOptions = {
   /** Label displayed next to the checkbox  */
   label?: Label
@@ -18,15 +18,17 @@ export type CheckOptions = {
   autoFocus?: boolean
   /** Hide this check field */
   hidden?: boolean
+  /** Make this check field read-only*/
+  readonly?: boolean
 }
 
-/** Internal representation of a text field */
+/** Internal representation of a check field */
 export interface CheckField extends Field.Scalar<boolean> {
   label: Label
   options: CheckOptions
 }
 
-/** Create a text field configuration */
+/** Create a check field configuration */
 export function createCheck(
   label: Label,
   options: CheckOptions = {label}

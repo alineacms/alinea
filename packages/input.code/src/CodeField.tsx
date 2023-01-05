@@ -1,6 +1,7 @@
-import type {Pages} from '@alinea/backend/Pages'
 import {Field, Hint, Label, Shape} from '@alinea/core'
+
 import {Expr} from '@alinea/store'
+import type {Pages} from '@alinea/backend/Pages'
 
 export type CodeFieldOptions<Q> = {
   width?: number
@@ -13,6 +14,8 @@ export type CodeFieldOptions<Q> = {
   transform?: (field: Expr<string>, pages: Pages<any>) => Expr<Q> | undefined
   /** Hide this code field */
   hidden?: boolean
+  /** Make this code field read-only*/
+  readonly?: boolean
 }
 
 export interface CodeField<Q = string> extends Field.Scalar<string, Q> {

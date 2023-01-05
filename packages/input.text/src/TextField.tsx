@@ -23,6 +23,8 @@ export type TextOptions = {
   autoFocus?: boolean
   /** Hide this text field */
   hidden?: boolean
+  /** Make this text field read-only */
+  readonly?: boolean
 }
 
 /** Internal representation of a text field */

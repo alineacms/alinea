@@ -1,8 +1,9 @@
 import {InputLabel, InputState, useInput} from '@alinea/editor'
 import {fromModule, HStack} from '@alinea/ui'
+import {useEffect, useState} from 'react'
+
 import {IcRoundTextFields} from '@alinea/ui/icons/IcRoundTextFields'
 import {TextareaAutosize} from '@alinea/ui/util/TextareaAutosize'
-import {useEffect, useState} from 'react'
 import {JsonField} from './JsonField'
 import css from './JsonInput.module.scss'
 
@@ -25,7 +26,8 @@ export function JsonInput({state, field}: JsonInputProps) {
     help,
     iconLeft: IconLeft,
     iconRight: IconRight,
-    autoFocus
+    autoFocus,
+    readonly
   } = field.options
 
   // Todo: unlocalise
@@ -39,7 +41,7 @@ export function JsonInput({state, field}: JsonInputProps) {
       setValue(newValue)
       setValid(true)
     } catch (e) {
-      setValid(false)
+      setValid(text ? false : true)
     }
   }, [text])
 
@@ -86,6 +88,7 @@ export function JsonInput({state, field}: JsonInputProps) {
           }}
           placeholder={placeholder}
           autoFocus={autoFocus}
+          disabled={readonly}
         />
         {IconRight && <IconRight />}
       </HStack>

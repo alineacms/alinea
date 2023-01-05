@@ -1,5 +1,6 @@
 import {isSeparator, slugify} from '@alinea/core'
 import {InputLabel, InputState, useInput} from '@alinea/editor'
+
 import {fromModule} from '@alinea/ui'
 import {IcRoundLink} from '@alinea/ui/icons/IcRoundLink'
 import {useState} from 'react'
@@ -14,7 +15,7 @@ export type PathInputProps = {
 }
 
 export function PathInput({state, field}: PathInputProps) {
-  const {width, from = 'title', help, optional} = field.options
+  const {width, from = 'title', help, optional, readonly} = field.options
   const [focus, setFocus] = useState(false)
   const parentState = state.parent()
   if (!parentState) throw 'Parent state not found'
@@ -49,6 +50,7 @@ export function PathInput({state, field}: PathInputProps) {
         onFocus={() => setFocus(true)}
         onBlur={() => setFocus(false)}
         placeholder={' '}
+        disabled={readonly}
       />
     </InputLabel>
   )

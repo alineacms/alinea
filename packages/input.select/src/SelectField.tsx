@@ -20,6 +20,8 @@ export type SelectOptions<T> = {
   initialValue?: T
   /** Hide this select field */
   hidden?: boolean
+  /** Make this select field read-only */
+  readonly?: boolean
 }
 
 /** Internal representation of a select field */
