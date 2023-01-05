@@ -17,6 +17,8 @@ export type NumberOptions = {
   maxValue?: number
   /** Hide this number field */
   hidden?: boolean
+  /** Specifies the legal number intervals */
+  step?: number
 }
 
 export interface NumberField extends Field.Scalar<number> {
