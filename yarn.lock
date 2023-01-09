@@ -4156,6 +4156,7 @@ __metadata:
     "@alinea/input.select": 0.0.0
     "@alinea/input.tabs": 0.0.0
     "@alinea/input.text": 0.0.0
+    "@alinea/preview": 0.0.0
     "@alinea/sqlite-wasm": ^0.1.11
   bin:
     alinea: ./dist/cli.js
