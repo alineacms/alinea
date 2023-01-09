@@ -5,6 +5,14 @@
 - Added the step property to the number fields. It specifies the interval
   between legal numbers in the input field. Default is 1.
 
+## [0.3.2]
+
+- Fixed the TypeScript type of the Select input (#282)
+- Moved the `Preview` and `BrowserPreview` exports from the `alinea` package
+  to `@alinea/preview`. This should help import the alinea config within in
+  restrictive environments such as Next 13 which will throw a compile error if
+  any browser code is imported. This will likely be tweaked in future releases.
+
 ## [0.3.1]
 
 - Fix the `@alinea/preview/remix` preview hook
