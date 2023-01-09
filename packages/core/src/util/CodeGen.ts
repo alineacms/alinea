@@ -55,6 +55,7 @@ export class Code {
       else if (char === ' ') baseIndent++
       else break
     }
+    if (baseIndent === 0) return full.trim()
     return indent(full, -baseIndent)
   }
 }

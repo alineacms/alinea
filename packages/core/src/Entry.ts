@@ -21,8 +21,8 @@ export interface EntryMetaRaw {
 
 export interface EntryMeta extends EntryMetaRaw {
   // These are computed during generation
-  root: string
   workspace: string
+  root: string
   parent: string | undefined
   parents: Array<string>
   status?: EntryStatus

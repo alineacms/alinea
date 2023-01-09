@@ -99,6 +99,7 @@ export namespace Hint {
   }
 
   // Let's follow GraphQL rules for now
+  // http://spec.graphql.org/June2018/#sec-Names
   // It would be nice to be less restrictive in the future
   const validIdentifier = /^[_A-Za-z][_0-9A-Za-z]*$/
   export function isValidIdentifier(identifier: string) {

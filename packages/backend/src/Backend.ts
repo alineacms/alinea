@@ -5,6 +5,7 @@ import {base64url} from '@alinea/core/util/Encoding'
 import {Logger, LoggerResult, Report} from '@alinea/core/util/Logger'
 import type {Request, Response} from '@alinea/iso'
 import {Cursor, CursorData} from '@alinea/store'
+import {graphQLRoute} from './graphql/GraphQLRoute'
 import {Handle, Route, router} from './router/Router'
 import {Server, ServerOptions} from './Server'
 
@@ -156,7 +157,13 @@ export class Backend<T = any> extends Server<T> {
     super(options)
     const auth: Auth.Server = options.auth || anonymousAuth()
     const api = createRouter<T>(this, auth)
-    const {handle} = options.auth ? router(options.auth.handler, api) : api
+    const matcher = router.startAt(Hub.routes.base)
+    const graphql = matcher
+      .all(Hub.routes.graphql)
+      .map(graphQLRoute(this.loadPages({preview: true}).graphql))
+    const {handle} = options.auth
+      ? router(graphql, options.auth.handler, api)
+      : router(graphql, api)
     this.handle = handle
   }
 }

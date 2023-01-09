@@ -32,7 +32,8 @@
     "@alinea/shared": "0.0.0",
     "@alinea/sqlite-wasm": "^0.1.11",
     "@alinea/store": "0.0.0",
-    "esbuild": "^0.15.9"
+    "esbuild": "^0.15.9",
+    "graphql": "^16.6.0"
   },
   "devDependencies": {
     "@types/compression": "^1.7.2",

@@ -313,3 +313,15 @@ export function App<T>({fullPage = true, ...props}: DashboardOptions<T>) {
     </DashboardProvider>
   )
 }
+
+/*
+import {createGraphiQLFetcher} from '@graphiql/toolkit'
+import {GraphiQL} from 'graphiql'
+import 'graphiql/graphiql.css'
+return (
+  <GraphiQL
+    fetcher={createGraphiQLFetcher({
+      url: 'https://swapi-graphql.netlify.app/.netlify/functions/index'
+    })}
+  />
+)*/
