@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+- Fixed an issue with the initialValue property of the number field. It is
+  now possible to empty the field while editting when an initialValue was set.
+  The initialValue will only be set at first render when the value is undefined
+  or when leaving the required field with an empty value. Leaving an optional
+  empty number field will not add the initialValue.
 - Added the step property to the number fields. It specifies the interval
   between legal numbers in the input field. Default is 1.
 
