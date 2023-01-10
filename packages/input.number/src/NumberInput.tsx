@@ -14,8 +14,16 @@ export type NumberInputProps = {
 }
 
 export function NumberInput({state, field}: NumberInputProps) {
-  const {inline, help, optional, initialValue, width, minValue, maxValue} =
-    field.options
+  const {
+    inline,
+    help,
+    optional,
+    initialValue,
+    width,
+    minValue,
+    maxValue,
+    step
+  } = field.options
   const [value, setValue] = useInput(state)
   const [defined, setDefined] = useState<boolean>(typeof value === undefined)
 
@@ -53,6 +61,7 @@ export function NumberInput({state, field}: NumberInputProps) {
         }}
         min={minValue}
         max={maxValue}
+        step={step || 1}
       />
     </InputLabel>
   )
