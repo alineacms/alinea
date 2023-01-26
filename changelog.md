@@ -5,6 +5,7 @@
 - Added the step property to the number fields. It specifies the interval
   between legal numbers in the input field. Default is 1.
 - While browsing media folders, use the current folder as default "Upload to"-target
+- Enable setting the default media upload entry to use on an image field
 
 ## [0.3.2]
 
