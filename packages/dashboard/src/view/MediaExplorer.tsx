@@ -43,12 +43,13 @@ export function MediaExplorer() {
   const [containerWidth, containerHeight] = useSize(containerRef)
   const perRow = Math.round(containerWidth / 240)
   const height = 200
+
   return (
     <Main className={styles.root()}>
       <EntryHeader mode={EditMode.Editing} />
       <div className={styles.root.inner()}>
         <HStack style={{flexGrow: 1, minHeight: 0}}>
-          <FileUploader toggleSelect={() => {}} />
+          <FileUploader toggleSelect={() => {}} initial={draft.id} />
           <VStack style={{height: '100%', width: '100%'}}>
             <header className={styles.root.inner.header()}>
               <EntryTitle />

@@ -21,9 +21,10 @@ const {Library} = Media
 type FileUploaderProps = {
   max?: number
   toggleSelect: (id: Entry.Minimal) => void
+  initial?: Entry['id']
 }
 
-export function FileUploader({max, toggleSelect}: FileUploaderProps) {
+export function FileUploader({max, toggleSelect, initial}: FileUploaderProps) {
   const {hub} = useSession()
   const {name: workspace} = useWorkspace()
   const {upload, uploads} = useUploads(toggleSelect)
@@ -48,9 +49,8 @@ export function FileUploader({max, toggleSelect}: FileUploaderProps) {
         .then(Outcome.unpack)
     }
   )
-  const [uploadTo = libraries?.[0]?.id, setUploadTo] = useState<
-    string | undefined
-  >()
+  const [uploadTo = initial || libraries?.[0]?.id, setUploadTo] =
+    useState<Entry['id']>()
   function handleDragEnter(event: DragEvent<HTMLDivElement>) {
     setIsOver(true)
   }
