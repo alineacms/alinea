@@ -65,6 +65,7 @@ export interface EntryPickerOptions<T = {}> {
   condition?: Expr<boolean>
   max?: number
   showUploader?: boolean
+  uploaderInitialEntry?: Entry['id']
   label?: Label
   title?: Label
   fields?: TypeConfig<any, T>

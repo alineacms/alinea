@@ -16,7 +16,10 @@ const imageCondition = Entry.type
   .is(Media.Type.File)
   .and(Entry.get('extension').isIn(Media.imageExtensions))
 
-export function imagePicker(multiple: boolean) {
+export function imagePicker(
+  multiple: boolean,
+  initialEntry: Entry['id'] | undefined
+) {
   return entryPicker({
     type: 'image',
     max: multiple ? undefined : 1,
@@ -24,7 +27,8 @@ export function imagePicker(multiple: boolean) {
     title: multiple ? 'Select images' : 'Select an image',
     condition: imageCondition,
     showUploader: true,
-    defaultView: 'thumb'
+    defaultView: 'thumb',
+    uploaderInitialEntry: initialEntry
   })
 }
 
@@ -82,7 +86,7 @@ export function linkConstructors(createLink: CreateLink) {
               case 'external':
                 return urlPicker(pickerOptions)
               case 'image':
-                return imagePicker(false)
+                return imagePicker(false, options.media_explorer)
               case 'file':
                 return filePicker(false)
             }
@@ -117,7 +121,7 @@ export function linkConstructors(createLink: CreateLink) {
               case 'external':
                 return urlPicker(pickerOptions)
               case 'image':
-                return imagePicker(true)
+                return imagePicker(true, options.media_explorer)
               case 'file':
                 throw 'todo'
             }
@@ -192,7 +196,7 @@ export function linkConstructors(createLink: CreateLink) {
   ): LinkField<T, Q> {
     return createLink(label, {
       ...options,
-      pickers: [imagePicker(false)],
+      pickers: [imagePicker(false, options.media_explorer)],
       multiple: false
     })
   }
@@ -203,7 +207,7 @@ export function linkConstructors(createLink: CreateLink) {
   ): LinkField<T, Q> {
     return createLink(label, {
       ...options,
-      pickers: [imagePicker(true)],
+      pickers: [imagePicker(true, options.media_explorer)],
       multiple: true
     })
   }

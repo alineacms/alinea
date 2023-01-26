@@ -57,6 +57,9 @@ export type LinkOptions<T, Q> = {
   /** Hide this link field */
   hidden?: boolean
   pickers?: Array<Picker<any, any>>
+
+  /** The id of the default media_explorer entry to open */
+  media_explorer?: Entry['id']
 }
 
 /** Internal representation of a link field */

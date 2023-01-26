@@ -158,7 +158,11 @@ export function EntryPickerModal({
           style={{flexGrow: 1, padding: `${px(16)} 0`, minHeight: 0}}
         >
           {!search && showUploader && (
-            <FileUploader max={max} toggleSelect={handleSelect} />
+            <FileUploader
+              max={max}
+              toggleSelect={handleSelect}
+              initial={options.uploaderInitialEntry}
+            />
           )}
           <VStack style={{flexGrow: 1, minHeight: 0}}>
             <list.Container>
