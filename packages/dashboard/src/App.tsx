@@ -1,4 +1,5 @@
 import {renderLabel, Session} from '@alinea/core'
+import {History} from '@alinea/dashboard/view/History'
 import {
   ErrorBoundary,
   FavIcon,
@@ -215,6 +216,7 @@ function EntryRoute({id}: EntryRouteProps) {
           select={select}
           redirectToRoot={!id}
         />
+        <History />
       </Sidebar.Tree>
       {search === '?new' && (
         <Suspense fallback={<Loader absolute />}>

@@ -1,4 +1,5 @@
 import {createId, docFromEntry, EntryStatus} from '@alinea/core'
+import {HistoryAlerts, HistoryEntryTop} from '@alinea/dashboard/view/History'
 import {InputForm} from '@alinea/editor'
 import {Button, ErrorMessage, fromModule, useObservable} from '@alinea/ui'
 import {Main} from '@alinea/ui/Main'
@@ -15,7 +16,6 @@ import {useSession} from '../hook/UseSession'
 import {useWorkspace} from '../hook/UseWorkspace'
 import {EntryDiff} from './diff/EntryDiff'
 import {EditMode} from './entry/EditMode'
-import {EntryHeader} from './entry/EntryHeader'
 import {EntryPreview} from './entry/EntryPreview'
 import {EntryTitle} from './entry/EntryTitle'
 import css from './EntryEdit.module.scss'
@@ -70,10 +70,7 @@ export function EntryEdit({initialMode, draft, isLoading}: EntryEditProps) {
   }, [draft, isTranslating, locale])
   return (
     <>
-      <Main
-        className={styles.root()}
-        head={<EntryHeader mode={mode} setMode={setMode} />}
-      >
+      <Main className={styles.root()} head={<HistoryEntryTop />}>
         <Main.Container>
           <EntryTitle
             backLink={
@@ -84,6 +81,7 @@ export function EntryEdit({initialMode, draft, isLoading}: EntryEditProps) {
               })
             }
           />
+          <HistoryAlerts />
           {mode === EditMode.Diff && status !== EntryStatus.Published ? (
             <>
               {draft.detail.original && (

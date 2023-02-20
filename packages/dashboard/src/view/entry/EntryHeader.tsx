@@ -5,14 +5,12 @@ import {
   fromModule,
   HStack,
   Stack,
-  Typo,
   useObservable
 } from '@alinea/ui'
 import {IcRoundArchive} from '@alinea/ui/icons/IcRoundArchive'
 import {IcRoundCheck} from '@alinea/ui/icons/IcRoundCheck'
 import {IcRoundDelete} from '@alinea/ui/icons/IcRoundDelete'
 import {IcRoundEdit} from '@alinea/ui/icons/IcRoundEdit'
-import {IcRoundInsertDriveFile} from '@alinea/ui/icons/IcRoundInsertDriveFile'
 import {IcRoundPublish} from '@alinea/ui/icons/IcRoundPublish'
 import {IcRoundRotateLeft} from '@alinea/ui/icons/IcRoundRotateLeft'
 import {MdiSourceBranch} from '@alinea/ui/icons/MdiSourceBranch'
@@ -111,29 +109,6 @@ export function EntryHeader({mode, setMode}: EntryHeaderProps) {
   }
   return (
     <AppBar.Root>
-      <AppBar.Item full style={{flexGrow: 1}}>
-        <Typo.Monospace className={styles.root.url()}>
-          <HStack gap={8} center>
-            <div style={{flexShrink: 0}}>
-              {type?.options.icon ? (
-                <type.options.icon />
-              ) : (
-                <IcRoundInsertDriveFile style={{display: 'block'}} />
-              )}
-            </div>
-            <span
-              style={{
-                display: 'block',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap'
-              }}
-            >
-              {draft.url}
-            </span>
-          </HStack>
-        </Typo.Monospace>
-      </AppBar.Item>
       {root.i18n && (
         <HStack center gap={8}>
           {root.i18n.locales.map(locale => {
