@@ -1,4 +1,3 @@
-import {HistoryDialog} from '@alinea/dashboard/view/HistoryDialog'
 import {HistoryDraftAlertForPublishing} from '@alinea/dashboard/view/HistoryDraftAlertForPublishing'
 import {AppBar, fromModule} from '@alinea/ui'
 import {useEffect} from 'react'
@@ -15,9 +14,9 @@ export function History() {
 
   return (
     <div className={styles.root()}>
-      <HistoryDialog />
+      {/** <HistoryDialog /> **/}
       <div className={styles.title()}>Versions</div>
-      <div className={`${styles.item()} border-l-2 border-blue-600 `}>
+      <div className={`${styles.item()} border-l-2 border-blue-600 bg-blue-50`}>
         <div className={styles.item.content()}>
           <div>Edited by David M</div>
           <div>5 minutes ago</div>
@@ -147,29 +146,47 @@ export function HistoryEntryTop() {
           <span className="mt-1 ml-1 text-xs">(unsaved changes detected)</span>
         </div>
         <div className="flex items-center justify-center">
-          {
-            <button
-              type="button"
-              className="inline-flex items-center rounded border border-transparent bg-blue-600 px-2.5 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          <button
+            type="button"
+            className="inline-flex items-center px-4 py-2 mr-2 text-sm font-medium text-blue-700 bg-blue-100 border border-transparent rounded-md hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+              stroke="currentColor"
+              className="w-5 h-5 mr-2"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.5}
-                stroke="currentColor"
-                className="w-5 h-5 mr-2"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M10.125 2.25h-4.5c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125v-9M10.125 2.25h.375a9 9 0 019 9v.375M10.125 2.25A3.375 3.375 0 0113.5 5.625v1.5c0 .621.504 1.125 1.125 1.125h1.5a3.375 3.375 0 013.375 3.375M9 15l2.25 2.25L15 12"
-                />
-              </svg>
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"
+              />
+            </svg>
+            Edit entry
+          </button>
+          <button
+            type="button"
+            className="inline-flex items-center rounded border border-transparent bg-blue-600 px-2.5 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+              stroke="currentColor"
+              className="w-5 h-5 mr-2"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M10.125 2.25h-4.5c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125v-9M10.125 2.25h.375a9 9 0 019 9v.375M10.125 2.25A3.375 3.375 0 0113.5 5.625v1.5c0 .621.504 1.125 1.125 1.125h1.5a3.375 3.375 0 013.375 3.375M9 15l2.25 2.25L15 12"
+              />
+            </svg>
 
-              <span>Save draft</span>
-            </button>
-          }
+            <span>Save draft</span>
+          </button>
           <Dots />
         </div>
       </div>
