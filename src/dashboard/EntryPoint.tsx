@@ -1,5 +1,5 @@
-import '@alinea/css'
 import {Client} from 'alinea/client'
+import 'alinea/css'
 import type {ReactElement} from 'react'
 import {Dashboard} from './Dashboard'
 

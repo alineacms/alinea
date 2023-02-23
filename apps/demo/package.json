@@ -21,7 +21,6 @@
   "devDependencies": {
     "@svgr/webpack": "^6.3.1",
     "@types/react": "^18.0.5",
-    "@types/react-dom": "^18.0.0",
-    "wireit": "^0.7.1"
+    "@types/react-dom": "^18.0.0"
   }
 }

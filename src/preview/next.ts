@@ -1,3 +1,4 @@
+// @ts-ignore
 import {useRouter} from 'next/router.js'
 import {usePreview as useReactPreview} from './react'
 

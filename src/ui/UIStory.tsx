@@ -1,4 +1,4 @@
-import '@alinea/css'
+import 'alinea/css'
 import {FunctionComponent, PropsWithChildren} from 'react'
 import {px} from './util/Units'
 import {Viewport} from './Viewport'

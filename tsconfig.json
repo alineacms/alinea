@@ -13,9 +13,6 @@
     "incremental": true,
     "resolveJsonModule": true,
     "jsx": "react-jsx",
-    "paths": {
-      "alinea/*": ["./src/*"]
-    },
     "plugins": [{"name": "typescript-plugin-css-modules"}],
     "types": ["react/next", "react-dom/next"]
   },

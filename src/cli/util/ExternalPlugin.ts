@@ -11,7 +11,8 @@ export function externalPlugin(cwd: string): Plugin {
           return {path: args.path, external: true}
         return build
           .resolve(args.path, {
-            resolveDir: args.resolveDir
+            resolveDir: args.resolveDir,
+            kind: args.kind
           })
           .then(res => {
             const isNodeModule = path

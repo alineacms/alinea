@@ -1,10 +1,10 @@
 import {bundle} from 'dts-bundle'
 import fs from 'fs-extra'
-import path from 'path'
+import path from 'node:path'
 
 export const bundleTs = {
   async action() {
-    const root = './dist/types'
+    const root = './dist'
     const bundleRoot = './node_modules/.cache/bundle'
     await fs.mkdirp(bundleRoot)
     const pkgs = await fs.readdir(root)

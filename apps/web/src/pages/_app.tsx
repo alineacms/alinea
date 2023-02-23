@@ -1,5 +1,5 @@
-import '@alinea/css'
 import '@alinea/web/src/styles/global.scss'
+import 'alinea/index.css'
 import type {AppProps} from 'next/app'
 import Script from 'next/script'
 import type {PageViewProps} from '../view/PageView.server'

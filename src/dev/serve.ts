@@ -1,11 +1,10 @@
-import {serve} from 'alinea/cli/Serve'
 import dotenv from 'dotenv'
 import findConfig from 'find-config'
 import path from 'node:path'
-import {internalPlugin} from './plugin/internal'
-import {sassPlugin} from './plugin/sass'
+import {serve} from '../cli/Serve'
+import {sassPlugin} from './sass'
 
-dotenv.config({path: findConfig('.env')})
+dotenv.config({path: findConfig('.env')!})
 
 const production = process.argv.includes('--production')
 
@@ -15,10 +14,10 @@ serve({
   alineaDev: true,
   production,
   cwd: path.resolve('apps/web'),
-  staticDir: path.resolve('packages/cli/src/static'),
+  staticDir: path.resolve('src/cli/static'),
   port: 4500,
   buildOptions: {
     minify: false,
-    plugins: [sassPlugin, internalPlugin]
+    plugins: [sassPlugin]
   }
 })

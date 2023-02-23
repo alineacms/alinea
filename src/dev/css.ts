@@ -1,6 +1,6 @@
 import type {Plugin} from 'esbuild'
-import fs from 'fs'
-import path from 'path'
+import fs from 'node:fs'
+import path from 'node:path'
 import {sassPlugin} from './sass'
 
 export const cssPlugin: Plugin = {
@@ -34,7 +34,7 @@ export const cssPlugin: Plugin = {
       return build.esbuild
         .build({
           ignoreAnnotations: true,
-          outdir: 'dist/out',
+          outdir: 'dist',
           stdin: {contents: input, resolveDir: absWorkingDir},
           plugins: [sassPlugin],
           write: false,
