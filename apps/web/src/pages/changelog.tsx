@@ -1,4 +1,4 @@
-import {initPages} from '@alinea/content/pages'
+import {initPages} from 'alinea/content/pages'
 import fs from 'fs'
 import path from 'path'
 import {remark} from 'remark'

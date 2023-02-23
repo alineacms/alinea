@@ -122,7 +122,7 @@
               "type": "Variant",
               "name": "Any environment",
               "language": "tsx",
-              "code": "import {registerPreview} from '@alinea/preview'\nregisterPreview({\n  refetch() {\n    // Reload server data\n  }\n})"
+              "code": "import {registerPreview} from 'alinea/preview'\nregisterPreview({\n  refetch() {\n    // Reload server data\n  }\n})"
             },
             {
               "id": "gMGQTyeA0jJlLrh84mE5D",
@@ -130,7 +130,7 @@
               "type": "Variant",
               "name": "React",
               "language": "tsx",
-              "code": "// A react hook is available\nimport {usePreview} from '@alinea/preview/react'\n// Use this hook once to listen and react to preview changes\nconst {isPreviewing} = usePreview({\n  refetch() {\n    // Reload server data & redraw\n  }\n})"
+              "code": "// A react hook is available\nimport {usePreview} from 'alinea/preview/react'\n// Use this hook once to listen and react to preview changes\nconst {isPreviewing} = usePreview({\n  refetch() {\n    // Reload server data & redraw\n  }\n})"
             },
             {
               "id": "SGf3OFtdZchhCZJvO8XwJ",
@@ -138,7 +138,7 @@
               "type": "Variant",
               "name": "Next.js",
               "language": "tsx",
-              "code": "// A hook specifically for next.js\nimport {useNextPreview} from '@alinea/preview/next'\n// Use this hook once to automatically reload static/server props\nconst {isPreviewing} = useNextPreview()"
+              "code": "// A hook specifically for next.js\nimport {useNextPreview} from 'alinea/preview/next'\n// Use this hook once to automatically reload static/server props\nconst {isPreviewing} = useNextPreview()"
             }
           ]
         }

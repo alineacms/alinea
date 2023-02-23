@@ -1,4 +1,4 @@
-import {RichText} from '@alinea/ui'
+import {RichText} from 'alinea/ui'
 import {TextDoc} from 'alinea'
 import Link from 'next/link'
 import type {Author} from '../schema'

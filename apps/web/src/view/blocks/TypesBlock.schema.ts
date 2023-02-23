@@ -1,6 +1,6 @@
-import {type} from '@alinea/core'
-import {text} from '@alinea/input.text'
-import {IcRoundHdrStrong} from '@alinea/ui/icons/IcRoundHdrStrong'
+import {type} from 'alinea/core'
+import {text} from 'alinea/input/text'
+import {IcRoundHdrStrong} from 'alinea/ui/icons/IcRoundHdrStrong'
 import {transformTypes} from './TypesBlock.server'
 
 export const TypesBlockSchema = type('Types', {

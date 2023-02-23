@@ -1,4 +1,4 @@
-import {VStack} from '@alinea/ui'
+import {VStack} from 'alinea/ui'
 import {Newsletter} from './engage/Newsletter'
 
 export function InformationBar() {

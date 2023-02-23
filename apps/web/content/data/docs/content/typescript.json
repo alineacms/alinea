@@ -72,7 +72,7 @@
         {
           "id": "W2NnQtGHkU2m958whlPt_",
           "type": "CodeBlock",
-          "code": "import {Page} from '@alinea/content'"
+          "code": "import {Page} from 'alinea/content'"
         }
       ]
     }

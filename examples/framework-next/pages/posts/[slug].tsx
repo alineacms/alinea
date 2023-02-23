@@ -1,4 +1,4 @@
-import {Page} from '@alinea/content'
+import {Page} from 'alinea/content'
 import {GetStaticPropsContext} from 'next'
 import ErrorPage from 'next/error'
 import Head from 'next/head'

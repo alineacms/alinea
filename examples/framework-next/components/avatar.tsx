@@ -1,4 +1,4 @@
-import {LinkData} from '@alinea/input.link'
+import {LinkData} from 'alinea/input/link'
 
 type Props = {
   name: string

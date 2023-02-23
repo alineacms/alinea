@@ -1,4 +1,4 @@
-import {fromModule, VStack} from '@alinea/ui'
+import {fromModule, VStack} from 'alinea/ui'
 import Link from 'next/link'
 import css from './BlogOverview.module.scss'
 import {BlogOverviewProps} from './BlogOverview.server'

@@ -1,5 +1,5 @@
-import type {Pages} from '@alinea/backend'
-import {Expr} from '@alinea/store'
+import type {Pages} from 'alinea/backend'
+import {Expr} from 'alinea/store'
 import type {Highlighter} from 'shiki'
 import languageShellScript from '../types/ShikiBashLanguage'
 import {theme} from '../types/ShikiTheme'

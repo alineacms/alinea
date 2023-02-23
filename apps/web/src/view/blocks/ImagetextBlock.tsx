@@ -1,5 +1,5 @@
-import {Page} from '@alinea/content'
-import {fromModule} from '@alinea/ui'
+import {Page} from 'alinea/content'
+import {fromModule} from 'alinea/ui'
 import {ComponentType, Fragment} from 'react'
 import {Button} from '../layout/Button'
 import {Image} from '../layout/Image'

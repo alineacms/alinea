@@ -1,0 +1,12 @@
+{
+  "name": "@alinea/backend",
+  "type": "module",
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.5",
+    "@types/md5": "^2.3.2",
+    "convert-hrtime": "^5.0.0",
+    "js-yaml": "^4.1.0",
+    "pretty-ms": "^8.0.0",
+    "regexparam": "^2.0.1"
+  }
+}

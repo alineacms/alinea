@@ -1,4 +1,4 @@
-import {serve} from '@alinea/cli/Serve'
+import {serve} from 'alinea/cli/Serve'
 import dotenv from 'dotenv'
 import findConfig from 'find-config'
 import path from 'node:path'

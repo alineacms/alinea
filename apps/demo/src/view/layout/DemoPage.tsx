@@ -1,4 +1,4 @@
-import {fromModule} from '@alinea/ui'
+import {fromModule} from 'alinea/ui'
 import {PropsWithChildren} from 'react'
 import css from './DemoPage.module.scss'
 

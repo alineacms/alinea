@@ -1,4 +1,4 @@
-import {fromModule, HStack} from '@alinea/ui'
+import {fromModule, HStack} from 'alinea/ui'
 import {useEffect, useRef} from 'react'
 import css from './ChangelogView.module.scss'
 import {InformationBar} from './layout/InformationBar'

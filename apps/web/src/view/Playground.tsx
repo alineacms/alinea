@@ -1,15 +1,15 @@
 // @ts-ignore
 import declarations from '!!raw-loader!../data/alinea.d.ts.txt'
-import * as core from '@alinea/core'
-import {Field, outcome, TypeConfig} from '@alinea/core'
-import {DashboardProvider, SessionProvider, Toolbar} from '@alinea/dashboard'
-import {createDemo} from '@alinea/dashboard/demo/DemoData'
-import {EntrySummaryProvider} from '@alinea/dashboard/hook/UseEntrySummary'
-import * as editor from '@alinea/editor'
-import {InputForm, useField} from '@alinea/editor'
-import {useForm} from '@alinea/editor/hook/UseForm'
-import {InputField} from '@alinea/editor/view/InputField'
-import {QueryClient, QueryClientProvider} from '@alinea/shared/react-query'
+import * as core from 'alinea/core'
+import {Field, outcome, TypeConfig} from 'alinea/core'
+import {DashboardProvider, SessionProvider, Toolbar} from 'alinea/dashboard'
+import {createDemo} from 'alinea/dashboard/demo/DemoData'
+import {EntrySummaryProvider} from 'alinea/dashboard/hook/UseEntrySummary'
+import * as editor from 'alinea/editor'
+import {InputForm, useField} from 'alinea/editor'
+import {useForm} from 'alinea/editor/hook/UseForm'
+import {InputField} from 'alinea/editor/view/InputField'
+import {QueryClient, QueryClientProvider} from 'alinea/shared/react-query'
 import {
   ErrorBoundary,
   fromModule,
@@ -22,8 +22,8 @@ import {
   Typo,
   Viewport,
   VStack
-} from '@alinea/ui'
-import {Main} from '@alinea/ui/Main'
+} from 'alinea/ui'
+import {Main} from 'alinea/ui/Main'
 import Editor, {Monaco} from '@monaco-editor/react'
 import * as alinea from 'alinea'
 import esbuild, {BuildFailure, Message, Plugin} from 'esbuild-wasm'

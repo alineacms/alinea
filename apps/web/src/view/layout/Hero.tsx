@@ -1,5 +1,5 @@
-import {fromModule, HStack} from '@alinea/ui'
-import {IcRoundArrowForward} from '@alinea/ui/icons/IcRoundArrowForward'
+import {fromModule, HStack} from 'alinea/ui'
+import {IcRoundArrowForward} from 'alinea/ui/icons/IcRoundArrowForward'
 import Link, {LinkProps} from 'next/link'
 import {HTMLProps, PropsWithChildren} from 'react'
 import css from './Hero.module.scss'

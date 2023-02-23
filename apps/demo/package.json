@@ -10,7 +10,7 @@
     "start": "next start"
   },
   "dependencies": {
-    "@alinea/content": "link:./.alinea",
+    "@alinea/content": "file:./.alinea",
     "alinea": "0.0.0",
     "include-media": "^1.4.10",
     "next": "^12.2.5",

@@ -1,4 +1,4 @@
-import {fromModule, HStack, Icon} from '@alinea/ui'
+import {fromModule, HStack, Icon} from 'alinea/ui'
 import Link, {LinkProps} from 'next/link'
 import {ComponentType, PropsWithChildren} from 'react'
 import css from './Button.module.scss'

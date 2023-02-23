@@ -1,9 +1,9 @@
-import {type} from '@alinea/core'
-import {link} from '@alinea/input.link'
-import {object} from '@alinea/input.object'
-import {path} from '@alinea/input.path'
-import {richText} from '@alinea/input.richtext'
-import {text} from '@alinea/input.text'
+import {type} from 'alinea/core'
+import {link} from 'alinea/input/link'
+import {object} from 'alinea/input/object'
+import {path} from 'alinea/input/path'
+import {richText} from 'alinea/input/richtext'
+import {text} from 'alinea/input/text'
 
 export const DemoHomeSchema = type('Home', {
   title: text('Title', {width: 0.5, multiline: true}),

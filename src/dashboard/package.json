@@ -1,0 +1,39 @@
+{
+  "name": "@alinea/dashboard",
+  "version": "0.0.0",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/alineacms/alinea.git"
+  },
+  "type": "module",
+  "exports": {
+    ".": "./dist/index.js",
+    "./*": "./dist/*.js",
+    "./schema/MediaSchema": {
+      "worker": "./dist/schema/MediaSchemaConfig.js",
+      "browser": "./dist/schema/MediaSchema.js",
+      "default": "./dist/schema/MediaSchemaConfig.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": [
+    "./dist/vendor/**"
+  ],
+  "devDependencies": {
+    "@react-hook/size": "^2.1.2",
+    "@react-hook/window-size": "^3.0.7",
+    "@types/diff-match-patch": "^1.0.32",
+    "blurhash": "^1.1.5",
+    "color2k": "^1.2.4",
+    "dataloader": "^2.1.0",
+    "diff-match-patch": "^1.0.5",
+    "fast-average-color": "^7.0.1",
+    "image-blob-reduce": "^4.1.0",
+    "pretty-bytes": "^6.0.0",
+    "react-tiny-virtual-list": "^2.2.0",
+    "y-webrtc": "^10.2.0"
+  }
+}

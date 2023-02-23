@@ -101,7 +101,7 @@
         "index": "a2",
         "type": "Variant",
         "name": "Query content",
-        "code": "import {initPages} from '@alinea/content/pages'\n\nconst pages = initPages()\nconsole.log(\n  await pages\n    .whereType('BlogPost')\n    .where(post => post.author.is('Me'))\n    .select(post => ({title: post.title}))\n)"
+        "code": "import {initPages} from 'alinea/content/pages'\n\nconst pages = initPages()\nconsole.log(\n  await pages\n    .whereType('BlogPost')\n    .where(post => post.author.is('Me'))\n    .select(post => ({title: post.title}))\n)"
       }
     ]
   },

@@ -1,5 +1,5 @@
-import {Pages} from '@alinea/content'
-import {Store} from '@alinea/store'
+import {Pages} from 'alinea/content'
+import {Store} from 'alinea/store'
 import {menuQuery} from '../DocPage.server'
 
 type PageDetails = {

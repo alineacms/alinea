@@ -1,9 +1,11 @@
 {
-  "private": true,
-  "name": "@alinea/root",
+  "bin": "./dist/cli.js",
+  "name": "alinea",
   "version": "0.0.0",
   "license": "MIT",
+  "type": "module",
   "scripts": {
+    "ok": "echo ok",
     "dev": "yarn build:packages && run-p dev:check dev:next dev:compile",
     "build": "yarn build:packages",
     "build:packages": "wireit",
@@ -17,8 +19,7 @@
     "build:stories": "ladle build --base /stories --stories  \"packages/**/*.stories.tsx\" --outDir apps/web/public/stories",
     "trace": "tsc --noEmit --incremental false --emitDeclarationOnly false --diagnostics --generateTrace private/trace && analyze-trace private/trace & speedscope private/trace/trace.json",
     "clean": "esbx clean",
-    "bump": "esbx version",
-    "prepare": "copy-env-cli"
+    "bump": "esbx version"
   },
   "wireit": {
     "build:packages": {
@@ -33,11 +34,34 @@
       ]
     }
   },
-  "files": [],
-  "workspaces": [
-    "apps/*",
-    "packages/*"
+  "files": [
+    "dist"
   ],
+  "workspaces": [
+    "apps/demo",
+    "apps/web",
+    "src/backend",
+    "src/cli",
+    "src/core",
+    "src/dashboard",
+    "src/shared",
+    "src/store",
+    "src/ui",
+    "src/backend/firestore",
+    "src/backend/github",
+    "src/backend/redis",
+    "src/auth/passwordless",
+    "src/input/richtext"
+  ],
+  "dependencies": {
+    "@alinea/content": "link:.alinea",
+    "@alinea/iso": "^0.1.21",
+    "@alinea/sqlite-wasm": "^0.1.11"
+  },
+  "peerDependencies": {
+    "react": "*",
+    "react-dom": "*"
+  },
   "devDependencies": {
     "@esbx/alias": "^0.0.20",
     "@esbx/extension": "^0.0.19",

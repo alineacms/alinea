@@ -1,5 +1,5 @@
-import {btoa} from '@alinea/core/util/Encoding'
-import {useContrastColor} from '@alinea/ui/hook/UseContrastColor'
+import {btoa} from 'alinea/core/util/Encoding'
+import {useContrastColor} from 'alinea/ui/hook/UseContrastColor'
 import NextHead from 'next/head.js'
 
 type FavIconProps = {

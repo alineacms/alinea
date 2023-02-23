@@ -1,6 +1,6 @@
-import {type} from '@alinea/core'
-import {path} from '@alinea/input.path'
-import {text} from '@alinea/input.text'
+import {type} from 'alinea/core'
+import {path} from 'alinea/input/path'
+import {text} from 'alinea/input/text'
 
 export const BlogOverviewSchema = type('Blog overview', {
   title: text('Title', {width: 0.5}),

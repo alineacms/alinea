@@ -1,4 +1,4 @@
-import {Page} from '@alinea/content'
+import {Page} from 'alinea/content'
 import {Blocks} from './blocks/Blocks'
 import {InformationBar} from './layout/InformationBar'
 import {Layout} from './layout/Layout'

@@ -1,4 +1,4 @@
-import {useNextPreview} from '@alinea/preview/next'
+import {useNextPreview} from 'alinea/preview/next'
 import {ComponentType, createElement} from 'react'
 import {CodeVariantsProvider} from '../view/blocks/CodeVariantsBlock'
 import {BlogOverview} from './BlogOverview'

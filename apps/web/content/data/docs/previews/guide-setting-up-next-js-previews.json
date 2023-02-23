@@ -89,7 +89,7 @@
         {
           "id": "-tfrsrqfkY0Z903mpkZnx",
           "type": "CodeBlock",
-          "code": "import {backend} from '@alinea/content/backend.js'\nimport type {NextApiRequest, NextApiResponse} from 'next'\n\nexport default async function handler(\n  req: NextApiRequest,\n  res: NextApiResponse\n) {\n  // We'll parse the previewToken from the url /api/preview?token\n  const previewToken = req.url!.split('?').pop()\n\n  // We can ask alinea to parse and validate the preview token.\n  // We'll receive the url of the entry we're currently previewing.\n  const {url} = await backend.parsePreviewToken(previewToken)\n  \n  // Store the preview token in the Next.js context so we\n  // can use it in the next route to query drafts data. Next.js\n  // uses a temporary cookie to persist this.\n  res.setPreviewData(previewToken)\n\n  // Finally redirect to the page we actually want to view\n  res.redirect(url)\n}",
+          "code": "import {backend} from 'alinea/content/backend.js'\nimport type {NextApiRequest, NextApiResponse} from 'next'\n\nexport default async function handler(\n  req: NextApiRequest,\n  res: NextApiResponse\n) {\n  // We'll parse the previewToken from the url /api/preview?token\n  const previewToken = req.url!.split('?').pop()\n\n  // We can ask alinea to parse and validate the preview token.\n  // We'll receive the url of the entry we're currently previewing.\n  const {url} = await backend.parsePreviewToken(previewToken)\n  \n  // Store the preview token in the Next.js context so we\n  // can use it in the next route to query drafts data. Next.js\n  // uses a temporary cookie to persist this.\n  res.setPreviewData(previewToken)\n\n  // Finally redirect to the page we actually want to view\n  res.redirect(url)\n}",
           "fileName": "pages/api/preview.ts"
         },
         {
@@ -116,7 +116,7 @@
         {
           "id": "qQxOBtOwIiLwZsZXhGYN9",
           "type": "CodeBlock",
-          "code": "import {initPages} from '@alinea/content/pages'\nimport {GetStaticPropsContext} from 'next'\n\nexport async function getStaticProps(context: GetStaticPropsContext) {\n  // Pass the previewToken that we receive in previewData to initPages\n  const pages = initPages(context.previewData as string)\n\n  // Anything we query on this pages instance will reflect drafts data\n  const recipe = await pages.whereType('Recipe').first(page => page.path.is(slug))\n  return {props: recipe}\n}\n\nexport default RecipeView",
+          "code": "import {initPages} from 'alinea/content/pages'\nimport {GetStaticPropsContext} from 'next'\n\nexport async function getStaticProps(context: GetStaticPropsContext) {\n  // Pass the previewToken that we receive in previewData to initPages\n  const pages = initPages(context.previewData as string)\n\n  // Anything we query on this pages instance will reflect drafts data\n  const recipe = await pages.whereType('Recipe').first(page => page.path.is(slug))\n  return {props: recipe}\n}\n\nexport default RecipeView",
           "fileName": "pages/recipe/[slug].tsx"
         },
         {
@@ -170,7 +170,7 @@
         {
           "id": "o-xPn3iI3ihDl8212Av4f",
           "type": "CodeBlock",
-          "code": "import {useNextPreview} from '@alinea/preview/next'\nimport type {AppProps} from 'next/app'\n\nexport default function App({Component, pageProps}: AppProps) {\n  // If we're in an iframe listen to content changes and reload props\n  useNextPreview()\n\n  // This is just the minimal required view for _app,\n  // your implementation will likely be much different\n  return <Component {...pageProps} />\n}",
+          "code": "import {useNextPreview} from 'alinea/preview/next'\nimport type {AppProps} from 'next/app'\n\nexport default function App({Component, pageProps}: AppProps) {\n  // If we're in an iframe listen to content changes and reload props\n  useNextPreview()\n\n  // This is just the minimal required view for _app,\n  // your implementation will likely be much different\n  return <Component {...pageProps} />\n}",
           "fileName": "pages/app.tsx"
         }
       ]

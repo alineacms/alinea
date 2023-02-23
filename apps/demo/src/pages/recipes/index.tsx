@@ -1,5 +1,5 @@
-import {Pages} from '@alinea/content'
-import {initPages} from '@alinea/content/pages'
+import {Pages} from 'alinea/content'
+import {initPages} from 'alinea/content/pages'
 import {GetStaticPropsContext} from 'next'
 import {DemoRecipes} from '../../view/recipes/DemoRecipes'
 

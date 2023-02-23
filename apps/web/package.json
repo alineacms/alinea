@@ -14,13 +14,7 @@
     "seed": "tsx ./seed.ts"
   },
   "dependencies": {
-    "@alinea/auth.passwordless": "0.0.0",
-    "@alinea/backend": "0.0.0",
-    "@alinea/cli": "0.0.0",
-    "@alinea/content": "link:./.alinea",
-    "@alinea/core": "0.0.0",
-    "@alinea/dashboard": "0.0.0",
-    "@alinea/ui": "0.0.0",
+    "@alinea/content": "file:./.alinea",
     "@monaco-editor/react": "^4.4.5",
     "alinea": "0.0.0",
     "esbuild-wasm": "0.14.51",

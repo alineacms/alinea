@@ -1,5 +1,5 @@
-import {Page} from '@alinea/content'
-import {fromModule} from '@alinea/ui'
+import {Page} from 'alinea/content'
+import {fromModule} from 'alinea/ui'
 import css from './DemoRecipes.module.scss'
 
 const styles = fromModule(css)

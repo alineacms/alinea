@@ -1,5 +1,5 @@
-import {Page, Pages} from '@alinea/content'
-import {Store} from '@alinea/store'
+import {Page, Pages} from 'alinea/content'
+import {Store} from 'alinea/store'
 
 export async function blogOverviewQuery(
   pages: Pages,

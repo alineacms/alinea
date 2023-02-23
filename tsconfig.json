@@ -2,40 +2,22 @@
   "compilerOptions": {
     "module": "ESNext",
     "target": "ESNext",
+    "moduleResolution": "node",
     "preserveWatchOutput": true,
-    "outDir": "dist/types",
-    "incremental": true,
-    "emitDeclarationOnly": true,
     "skipLibCheck": true,
     "strict": true,
-    "declaration": true,
-    "moduleResolution": "node",
-    "resolveJsonModule": true,
-    "jsx": "react-jsx",
+    "noEmit": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
-    "importHelpers": true,
+    "outDir": "dist",
+    "incremental": true,
+    "resolveJsonModule": true,
+    "jsx": "react-jsx",
     "paths": {
-      "@alinea/input.*": ["./packages/input.*/src/view.ts"],
-      "@alinea/picker.*": ["./packages/picker.*/src/view.ts"],
-      "@alinea/auth.passwordless/*": ["./packages/auth.passwordless/src/*"],
-      "@alinea/core/*": ["./packages/core/src/*"],
-      "@alinea/cli/*": ["./packages/cli/src/*"],
-      "@alinea/dashboard/*": ["./packages/dashboard/src/*"],
-      "@alinea/backend.*": ["./packages/backend.*/src/index.ts"],
-      "@alinea/backend/*": ["./packages/backend/src/*"],
-      "@alinea/store/*": ["./packages/store/src/*"],
-      "@alinea/preview/*": ["./packages/preview/src/*"],
-      "@alinea/editor/*": ["./packages/editor/src/*"],
-      "@alinea/ui": ["./packages/ui/src"],
-      "@alinea/ui/*": ["./packages/ui/src/*"],
-      "@alinea/content/*": ["./apps/web/.alinea/*"],
-      "@alinea/content": ["./apps/web/.alinea"],
-      "@alinea/*": ["./packages/*/src"]
+      "alinea/*": ["./src/*"]
     },
     "plugins": [{"name": "typescript-plugin-css-modules"}],
     "types": ["react/next", "react-dom/next"]
   },
-  "include": ["packages"],
-  "exclude": ["node_modules", "packages/**/dist"]
+  "include": ["src", "test"]
 }

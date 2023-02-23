@@ -1,5 +1,5 @@
-import {Page, Pages} from '@alinea/content'
-import {Store} from '@alinea/store'
+import {Page, Pages} from 'alinea/content'
+import {Store} from 'alinea/store'
 import {blogOverviewQuery} from './BlogOverview.server'
 import {docPageQuery} from './DocPage.server'
 import {layoutQuery} from './layout/Layout.server'

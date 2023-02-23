@@ -1,5 +1,5 @@
-import {schema} from '@alinea/core'
-import {list} from '@alinea/input.list'
+import {schema} from 'alinea/core'
+import {list} from 'alinea/input/list'
 import {ColumnsBlockSchema} from './ColumnsBlock.schema'
 import {FeaturesBlockSchema} from './FeaturesBlock.schema'
 import {ImageBlockSchema} from './ImageBlock.schema'
