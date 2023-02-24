@@ -1,9 +1,9 @@
 import {Field} from 'alinea/core'
-import {linkConstructors} from './LinkConstructors'
-import {createLink} from './LinkField'
-import {LinkInput} from './LinkInput'
-export * from './LinkField'
-export * from './LinkInput'
+import {linkConstructors} from './LinkConstructors.js'
+import {createLink} from './LinkField.js'
+import {LinkInput} from './LinkInput.js'
+export * from './LinkField.js'
+export * from './LinkInput.js'
 
 const createLinkInput = Field.withView(createLink, LinkInput)
 

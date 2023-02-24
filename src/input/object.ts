@@ -1,1 +1,1 @@
-export * from './object/index'
+export * from './object/index.js'

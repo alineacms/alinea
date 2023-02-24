@@ -4,7 +4,7 @@ import {generateNKeysBetween} from 'alinea/core/util/FractionalIndexing'
 import {link} from 'alinea/input/link'
 import {list} from 'alinea/input/list'
 import {text} from 'alinea/input/text'
-import {createMemoryStore} from './CreateMemoryStore'
+import {createMemoryStore} from './CreateMemoryStore.js'
 
 const listField = list('List', {
   schema: schema({

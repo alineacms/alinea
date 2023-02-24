@@ -1,8 +1,8 @@
 import {HTMLProps, PropsWithChildren, useEffect, useLayoutEffect} from 'react'
-import {useContrastColor} from './hook/UseContrastColor'
-import {PreferencesProvider, usePreferences} from './hook/UsePreferences'
-import {fromModule} from './util/Styler'
 import css from './Viewport.module.scss'
+import {useContrastColor} from './hook/UseContrastColor.js'
+import {PreferencesProvider, usePreferences} from './hook/UsePreferences.js'
+import {fromModule} from './util/Styler.js'
 
 const styles = fromModule(css)
 

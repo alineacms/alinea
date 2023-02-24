@@ -1,7 +1,7 @@
 import {Client} from 'alinea/client'
 import 'alinea/css'
 import type {ReactElement} from 'react'
-import {Dashboard} from './Dashboard'
+import {Dashboard} from './Dashboard.js'
 
 declare var reactRender: (
   subject: ReactElement,

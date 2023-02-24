@@ -7,7 +7,7 @@ import {
   useEffect,
   useState
 } from 'react'
-import {WebTypo} from '../layout/WebTypo'
+import {WebTypo} from '../layout/WebTypo.js'
 import css from './CodeVariantsBlock.module.scss'
 
 const styles = fromModule(css)

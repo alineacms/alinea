@@ -1,5 +1,5 @@
 import {Field} from 'alinea/core/Field'
-import {InputState} from '../InputState'
+import {InputState} from '../InputState.js'
 
 export interface InputFieldBase<V, M> {
   field: Field<V, M>

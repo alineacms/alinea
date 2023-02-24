@@ -1,8 +1,8 @@
 import {ListRow, ListShape} from 'alinea/core/shape/ListShape'
 import {Card} from 'alinea/ui'
-import {ChangeBox} from './ChangeBox'
-import {diffList, diffRecord} from './DiffUtils'
-import {FieldsDiff} from './FieldsDiff'
+import {ChangeBox} from './ChangeBox.js'
+import {diffList, diffRecord} from './DiffUtils.js'
+import {FieldsDiff} from './FieldsDiff.js'
 
 export type ListDiffProps = {
   shape: ListShape<any>

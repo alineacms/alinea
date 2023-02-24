@@ -2,7 +2,7 @@ import {Config} from 'alinea/core/Config'
 import {createError} from 'alinea/core/ErrorWithCode'
 import {createRequire} from 'node:module'
 import path from 'node:path'
-import {GenerateContext} from './GenerateContext'
+import {GenerateContext} from './GenerateContext.js'
 
 export async function loadConfig({outDir}: GenerateContext): Promise<Config> {
   const unique = Date.now()

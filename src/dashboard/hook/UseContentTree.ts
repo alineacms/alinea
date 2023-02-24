@@ -2,10 +2,10 @@ import {Entry, EntryMeta, Label, Outcome} from 'alinea/core'
 import {Cursor, Functions} from 'alinea/store'
 import {useCallback, useEffect, useMemo, useState} from 'react'
 import {useQuery} from 'react-query'
-import {useRoot} from '../hook/UseRoot'
-import {useSession} from '../hook/UseSession'
-import {useWorkspace} from '../hook/UseWorkspace'
-import {useDashboard} from './UseDashboard'
+import {useRoot} from '../hook/UseRoot.js'
+import {useSession} from '../hook/UseSession.js'
+import {useWorkspace} from '../hook/UseWorkspace.js'
+import {useDashboard} from './UseDashboard.js'
 
 type QueryParams = {
   workspace: string

@@ -1,7 +1,7 @@
 import fs from 'fs-extra'
 import path from 'node:path'
-import {writeFileIfContentsDiffer} from '../util/FS'
-import {GenerateContext} from './GenerateContext'
+import {writeFileIfContentsDiffer} from '../util/FS.js'
+import {GenerateContext} from './GenerateContext.js'
 
 function configType(location: string) {
   const file = location.endsWith('.tsx') ? location.slice(0, -4) : location

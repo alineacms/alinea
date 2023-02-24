@@ -1,8 +1,8 @@
 import {useMemo} from 'react'
-import {dashboardNav} from '../DashboardNav'
-import {useLocale} from './UseLocale'
-import {useRoot} from './UseRoot'
-import {useWorkspace} from './UseWorkspace'
+import {dashboardNav} from '../DashboardNav.js'
+import {useLocale} from './UseLocale.js'
+import {useRoot} from './UseRoot.js'
+import {useWorkspace} from './UseWorkspace.js'
 
 export function useNav() {
   const {name: workspace} = useWorkspace()

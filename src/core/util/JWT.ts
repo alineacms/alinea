@@ -3,7 +3,7 @@
 // And: https://github.com/auth0/node-jsonwebtoken
 
 import {crypto} from '@alinea/iso'
-import {base64, base64url} from './Encoding'
+import {base64, base64url} from './Encoding.js'
 
 const textDecoder = new TextDecoder()
 const textEncoder = new TextEncoder()

@@ -3,7 +3,7 @@ import {Expr} from 'alinea/store/Expr'
 import {SqliteFunctions} from 'alinea/store/sqlite/SqliteFunctions'
 import {test} from 'uvu'
 import * as assert from 'uvu/assert'
-import {store} from './DbSuite'
+import {store} from './DbSuite.js'
 
 const {cast, strftime} = SqliteFunctions
 

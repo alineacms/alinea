@@ -1,7 +1,7 @@
 import {Page} from 'alinea/content'
 import {fromModule, HStack} from 'alinea/ui'
 import {IcOutlineInfo} from '../../icons/IcOutlineInfo'
-import {WebText} from '../layout/WebText'
+import {WebText} from '../layout/WebText.js'
 import css from './NoticeBlock.module.scss'
 
 const styles = fromModule(css)

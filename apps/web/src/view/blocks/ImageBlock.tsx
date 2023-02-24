@@ -3,7 +3,7 @@ import {fromModule} from 'alinea/ui'
 import {decode} from 'blurhash'
 // import Image from 'next/image'
 import {ComponentType, Fragment, useMemo} from 'react'
-import {Image} from '../layout/Image'
+import {Image} from '../layout/Image.js'
 import css from './ImageBlock.module.scss'
 
 const styles = fromModule(css)

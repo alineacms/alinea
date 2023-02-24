@@ -1,6 +1,6 @@
 export {
-  createEntryPicker as entryPicker,
   EntryReference,
   FileReference,
-  ImageReference
-} from './EntryPicker'
+  ImageReference,
+  createEntryPicker as entryPicker
+} from './EntryPicker.js'

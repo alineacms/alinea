@@ -1,5 +1,5 @@
 import http, {IncomingMessage, ServerResponse} from 'node:http'
-import {createEmitter, Emitter} from '../util/Emitter'
+import {Emitter, createEmitter} from '../util/Emitter.js'
 
 type MessagePair = [IncomingMessage, ServerResponse]
 

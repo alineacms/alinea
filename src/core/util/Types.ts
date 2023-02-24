@@ -1,4 +1,4 @@
-import {createError} from '../ErrorWithCode'
+import {createError} from '../ErrorWithCode.js'
 
 export type UnionToIntersection<T> = (
   T extends any ? (x: T) => any : never

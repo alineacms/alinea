@@ -1,7 +1,7 @@
 import {InputState} from 'alinea/editor'
 import {useForceUpdate} from 'alinea/ui'
 import {useEffect, useMemo} from 'react'
-import {useCurrentDraft} from '../hook/UseCurrentDraft'
+import {useCurrentDraft} from '../hook/UseCurrentDraft.js'
 
 export class EntryProperty<V, M> implements InputState<readonly [V, M]> {
   constructor(public readonly location: Array<string>) {}

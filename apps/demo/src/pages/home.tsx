@@ -2,7 +2,7 @@ import {Pages} from 'alinea/content'
 import {initPages} from 'alinea/content/pages'
 import {Store} from 'alinea/store'
 import {GetStaticPropsContext} from 'next'
-import {DemoHome} from '../view/home/DemoHome'
+import {DemoHome} from '../view/home/DemoHome.js'
 
 export async function getStaticProps(context: GetStaticPropsContext) {
   const pages = initPages(context.previewData as string)

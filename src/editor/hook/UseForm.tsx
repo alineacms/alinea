@@ -1,11 +1,11 @@
 import {ROOT_KEY} from 'alinea/core/Doc'
-import {RecordMutator, RecordShape} from 'alinea/core/shape/RecordShape'
 import {TypeConfig} from 'alinea/core/Type'
+import {RecordMutator, RecordShape} from 'alinea/core/shape/RecordShape'
 import {Observable, observable} from 'alinea/ui'
 import {useEffect, useMemo} from 'react'
 import * as Y from 'yjs'
-import {InputState} from '../InputState'
-import {FieldState} from './UseField'
+import {InputState} from '../InputState.js'
+import {FieldState} from './UseField.js'
 
 interface FormStateOptions<V, M> {
   shape: RecordShape<V>

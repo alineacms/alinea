@@ -36,7 +36,7 @@ import {
   useMemo,
   useState
 } from 'react'
-import {LinkField} from './LinkField'
+import {LinkField} from './LinkField.js'
 import css from './LinkInput.module.scss'
 
 const styles = fromModule(css)

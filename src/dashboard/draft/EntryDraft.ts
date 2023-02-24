@@ -12,7 +12,7 @@ import {
 } from 'alinea/core'
 import {observable, Observable} from 'alinea/ui'
 import * as Y from 'yjs'
-import {EntryProperty} from './EntryProperty'
+import {EntryProperty} from './EntryProperty.js'
 
 export enum PublishStatus {
   Published,

@@ -1,10 +1,10 @@
-import type {Collection} from './Collection'
-import {EV, Expr, ExprData} from './Expr'
-import {Fields} from './Fields'
-import {From} from './From'
-import type {OrderBy} from './OrderBy'
-import {Selection, SelectionInput} from './Selection'
-import type {Store} from './Store'
+import type {Collection} from './Collection.js'
+import {EV, Expr, ExprData} from './Expr.js'
+import {Fields} from './Fields.js'
+import {From} from './From.js'
+import type {OrderBy} from './OrderBy.js'
+import {Selection, SelectionInput} from './Selection.js'
+import type {Store} from './Store.js'
 
 export type CursorData = {
   from: From

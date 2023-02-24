@@ -1,9 +1,9 @@
 import {Page} from 'alinea/content'
 import {fromModule} from 'alinea/ui'
 import {ComponentType, Fragment} from 'react'
-import {Button} from '../layout/Button'
-import {Image} from '../layout/Image'
-import {WebText} from '../layout/WebText'
+import {Button} from '../layout/Button.js'
+import {Image} from '../layout/Image.js'
+import {WebText} from '../layout/WebText.js'
 import css from './ImagetextBlock.module.scss'
 
 const styles = fromModule(css)

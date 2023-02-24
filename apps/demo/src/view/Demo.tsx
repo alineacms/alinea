@@ -10,8 +10,8 @@ import {Loader, useObservable} from 'alinea/ui'
 import Head from 'next/head'
 import {ComponentType, useEffect, useMemo, useState} from 'react'
 import Frame, {useFrame} from 'react-frame-component'
-import DemoHome, {queryHome} from '../pages/home'
-import Recipe, {queryRecipe} from '../pages/recipes/[slug]'
+import DemoHome, {queryHome} from '../pages/home.js'
+import Recipe, {queryRecipe} from '../pages/recipes/[slug].js'
 
 export interface DemoProps {
   fullPage?: boolean

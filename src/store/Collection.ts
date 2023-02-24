@@ -1,9 +1,9 @@
-import {CursorImpl} from './Cursor'
-import {Expr, ExprData} from './Expr'
-import {Fields} from './Fields'
-import {From} from './From'
-import {Selection, SelectionInput} from './Selection'
-import type {Store} from './Store'
+import {CursorImpl} from './Cursor.js'
+import {Expr, ExprData} from './Expr.js'
+import {Fields} from './Fields.js'
+import {From} from './From.js'
+import {Selection, SelectionInput} from './Selection.js'
+import type {Store} from './Store.js'
 
 export type CollectionOptions = {
   flat?: boolean

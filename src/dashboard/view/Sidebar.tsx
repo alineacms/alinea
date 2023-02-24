@@ -11,8 +11,8 @@ import {
   useContext,
   useReducer
 } from 'react'
-import {useEntryLocation} from '../hook/UseEntryLocation'
-import {useWorkspace} from '../hook/UseWorkspace'
+import {useEntryLocation} from '../hook/UseEntryLocation.js'
+import {useWorkspace} from '../hook/UseWorkspace.js'
 import css from './Sidebar.module.scss'
 
 const styles = fromModule(css)

@@ -12,8 +12,8 @@ import {
 import {IcRoundKeyboardArrowRight} from 'alinea/ui/icons/IcRoundKeyboardArrowRight'
 import {Link} from 'alinea/ui/Link'
 import {ReactNode} from 'react'
-import {useDashboard} from '../../hook/UseDashboard'
-import {useNav} from '../../hook/UseNav'
+import {useDashboard} from '../../hook/UseDashboard.js'
+import {useNav} from '../../hook/UseNav.js'
 import css from './EntrySummary.module.scss'
 
 const styles = fromModule(css)

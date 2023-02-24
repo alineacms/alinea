@@ -1,8 +1,8 @@
 import {outcome} from 'alinea/core'
 import {useMatch} from 'alinea/ui/util/HashRouter'
 import {useMemo} from 'react'
-import {dashboardNav} from '../DashboardNav'
-import {parseRootPath, useRoot} from './UseRoot'
+import {dashboardNav} from '../DashboardNav.js'
+import {parseRootPath, useRoot} from './UseRoot.js'
 
 const nav = dashboardNav({})
 

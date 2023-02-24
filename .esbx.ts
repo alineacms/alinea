@@ -5,12 +5,12 @@ import type {BuildOptions} from 'esbuild'
 import {build} from 'esbuild'
 import fs from 'fs-extra'
 import glob from 'glob'
-import {cssPlugin} from './src/dev/css'
-import {resolvePlugin} from './src/dev/resolve'
-import {sassPlugin} from './src/dev/sass'
+import {cssPlugin} from './src/dev/css.js'
+import {resolvePlugin} from './src/dev/resolve.js'
+import {sassPlugin} from './src/dev/sass.js'
 
 export {VersionTask} from '@esbx/workspaces'
-export * from './src/dev/bundle-ts'
+export * from './src/dev/bundle-ts.js'
 
 const buildOptions: BuildOptions = {
   jsx: 'automatic',

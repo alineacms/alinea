@@ -2,10 +2,10 @@ import {RichTextShape, TextDoc} from 'alinea/core'
 import {RecordShape} from 'alinea/core/shape/RecordShape'
 import {Card} from 'alinea/ui'
 import {ReactNode, useMemo} from 'react'
-import {ChangeBox} from './ChangeBox'
-import {diffList, diffRecord} from './DiffUtils'
-import {FieldsDiff} from './FieldsDiff'
-import {ScalarDiff} from './ScalarDiff'
+import {ChangeBox} from './ChangeBox.js'
+import {diffList, diffRecord} from './DiffUtils.js'
+import {FieldsDiff} from './FieldsDiff.js'
+import {ScalarDiff} from './ScalarDiff.js'
 
 type Block = {
   id: string

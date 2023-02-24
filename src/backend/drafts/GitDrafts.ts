@@ -1,8 +1,8 @@
 /*import {createId, outcome} from 'alinea/core'
 import git, {AuthCallback, HttpClient, PromiseFsClient} from 'isomorphic-git'
 import {posix as path} from 'node:path'
-import {Drafts} from '../Drafts'
-import {FileDrafts, FileDraftsOptions} from './FileDrafts'
+import {Drafts} from '../Drafts.js'
+import {FileDrafts, FileDraftsOptions} from './FileDrafts.js'
 
 export type GitDraftsOptions = FileDraftsOptions & {
   http: HttpClient

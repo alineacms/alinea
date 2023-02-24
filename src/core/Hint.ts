@@ -1,4 +1,4 @@
-import {Lazy} from './util/Lazy'
+import {Lazy} from './util/Lazy.js'
 
 export type Hint =
   | Hint.String

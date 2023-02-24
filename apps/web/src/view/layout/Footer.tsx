@@ -4,9 +4,9 @@ import {IcOutlineLightMode} from 'alinea/ui/icons/IcOutlineLightMode'
 import {IcSharpBrightnessMedium} from 'alinea/ui/icons/IcSharpBrightnessMedium'
 import Link from 'next/link'
 import css from './Footer.module.scss'
-import {Layout} from './Layout'
+import {Layout} from './Layout.js'
 import {LayoutProps} from './Layout.server'
-import {WebTypo} from './WebTypo'
+import {WebTypo} from './WebTypo.js'
 
 const styles = fromModule(css)
 

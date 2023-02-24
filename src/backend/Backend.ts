@@ -5,8 +5,8 @@ import {Hub} from 'alinea/core/Hub'
 import {base64url} from 'alinea/core/util/Encoding'
 import {Logger, LoggerResult, Report} from 'alinea/core/util/Logger'
 import {Cursor, CursorData} from 'alinea/store'
-import {Handle, Route, router} from './router/Router'
-import {Server, ServerOptions} from './Server'
+import {Server, ServerOptions} from './Server.js'
+import {Handle, Route, router} from './router/Router.js'
 
 export type BackendOptions<T> = {
   auth?: Auth.Server

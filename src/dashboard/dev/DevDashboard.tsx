@@ -5,7 +5,7 @@ import {Button, Typo, Viewport, VStack} from 'alinea/ui'
 import {Main} from 'alinea/ui/Main'
 import {useEffect, useMemo, useState} from 'react'
 import {QueryClient} from 'react-query'
-import {Dashboard} from '../Dashboard'
+import {Dashboard} from '../Dashboard.js'
 
 type DevReloadOptions = {
   refresh: () => Promise<void>

@@ -1,7 +1,7 @@
 import {accumulate, Config, Entry, Hub} from 'alinea/core'
 import {Store} from 'alinea/store'
-import {Cache} from './Cache'
-import {Drafts} from './Drafts'
+import {Cache} from './Cache.js'
+import {Drafts} from './Drafts.js'
 
 type Cache = {lastFetched: number; store: Store}
 

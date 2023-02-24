@@ -1,4 +1,4 @@
-import {createError, ErrorWithCode} from './ErrorWithCode'
+import {createError, ErrorWithCode} from './ErrorWithCode.js'
 
 type ErrorObject = {
   stack?: string

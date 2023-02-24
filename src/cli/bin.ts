@@ -1,10 +1,10 @@
 import sade from 'sade'
 const version = '0.0.0'
 // import {version} from '../../package.json'
-import {ensureEnv} from './util/EnsureEnv'
-import {ensureNodeResolution} from './util/EnsureNodeResolution'
-import {ensureReact} from './util/EnsureReact'
-import {forwardCommand} from './util/ForwardCommand'
+import {ensureEnv} from './util/EnsureEnv.js'
+import {ensureNodeResolution} from './util/EnsureNodeResolution.js'
+import {ensureReact} from './util/EnsureReact.js'
+import {forwardCommand} from './util/ForwardCommand.js'
 
 const prog = sade('alinea')
 
@@ -21,7 +21,7 @@ prog
   .action(async args => {
     ensureNodeResolution()
     ensureReact()
-    const {generate} = await import('./Generate')
+    const {generate} = await import('./Generate.js')
     for await (const _ of generate({
       cwd: args.dir,
       watch: args.watch,
@@ -35,7 +35,7 @@ prog
   .action(async args => {
     ensureNodeResolution()
     ensureReact()
-    const {init} = await import('./Init')
+    const {init} = await import('./Init.js')
     return init(args)
   })
   .command('serve')
@@ -47,7 +47,7 @@ prog
     ensureReact()
     ensureEnv(process.cwd())
     process.env.NODE_ENV = args.production ? 'production' : 'development'
-    const {serve} = await import('./Serve')
+    const {serve} = await import('./Serve.js')
     return serve({...args, onAfterGenerate: () => forwardCommand(true)})
   })
 

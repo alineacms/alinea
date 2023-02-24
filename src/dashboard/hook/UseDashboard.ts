@@ -1,5 +1,5 @@
 import {createContext, useContext} from 'react'
-import {DashboardOptions} from '../Dashboard'
+import {DashboardOptions} from '../Dashboard.js'
 
 type DashboardContext = DashboardOptions
 

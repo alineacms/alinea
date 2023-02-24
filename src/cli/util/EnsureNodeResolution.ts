@@ -1,6 +1,6 @@
 import {execFileSync} from 'node:child_process'
 import path from 'node:path'
-import {dirname} from './Dirname'
+import {dirname} from './Dirname.js'
 
 const __dirname = dirname(import.meta.url)
 

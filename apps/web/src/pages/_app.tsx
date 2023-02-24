@@ -3,7 +3,7 @@ import 'alinea/index.css'
 import type {AppProps} from 'next/app'
 import Script from 'next/script'
 import type {PageViewProps} from '../view/PageView.server'
-import {SEO} from '../view/SEO'
+import {SEO} from '../view/SEO.js'
 
 export function App({Component, pageProps}: AppProps<PageViewProps>) {
   return (

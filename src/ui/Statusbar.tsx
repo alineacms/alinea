@@ -1,10 +1,10 @@
 import type {ComponentType} from 'react'
 import {PropsWithChildren} from 'react'
-import {Icon} from './Icon'
-import {HStack} from './Stack'
+import {Icon} from './Icon.js'
+import {HStack} from './Stack.js'
 import css from './Statusbar.module.scss'
-import {createSlots} from './util/Slots'
-import {fromModule} from './util/Styler'
+import {createSlots} from './util/Slots.js'
+import {fromModule} from './util/Styler.js'
 
 const styles = fromModule(css)
 

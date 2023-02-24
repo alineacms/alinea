@@ -1,6 +1,6 @@
 import {Field} from 'alinea/core'
-import {createNumber} from './NumberField'
-import {NumberInput} from './NumberInput'
-export * from './NumberField'
-export * from './NumberInput'
+import {createNumber} from './NumberField.js'
+import {NumberInput} from './NumberInput.js'
+export * from './NumberField.js'
+export * from './NumberInput.js'
 export const number = Field.withView(createNumber, NumberInput)

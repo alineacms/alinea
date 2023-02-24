@@ -1,7 +1,7 @@
 import type {ComponentType} from 'react'
-import {Label} from './Label'
-import {Root, RootConfig} from './Root'
-import {getRandomColor} from './util/GetRandomColor'
+import {Label} from './Label.js'
+import {Root, RootConfig} from './Root.js'
+import {getRandomColor} from './util/GetRandomColor.js'
 
 export type WorkspaceOptions<T = any> = {
   /**

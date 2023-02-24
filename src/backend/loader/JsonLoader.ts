@@ -1,5 +1,5 @@
 import {Entry, Schema} from 'alinea/core'
-import {Loader} from '../Loader'
+import {Loader} from '../Loader.js'
 
 const encoder = new TextEncoder()
 const decoder = new TextDecoder()

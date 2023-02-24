@@ -1,5 +1,5 @@
-import {EV, Expr} from '../Expr'
-import {Functions} from '../Functions'
+import {EV, Expr} from '../Expr.js'
+import {Functions} from '../Functions.js'
 
 export const SqliteFunctions = Functions as SqliteFunctions
 

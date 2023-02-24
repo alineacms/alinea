@@ -17,9 +17,9 @@ import Strike from '@tiptap/extension-strike'
 import Text from '@tiptap/extension-text'
 import TextAlign from '@tiptap/extension-text-align'
 import {fromModule} from 'alinea/ui'
-import {Link} from './extensions/Link'
-import Small from './extensions/Small'
 import css from './RichTextKit.module.scss'
+import {Link} from './extensions/Link.js'
+import Small from './extensions/Small.js'
 
 const styles = fromModule(css)
 

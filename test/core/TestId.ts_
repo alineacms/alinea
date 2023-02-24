@@ -1,6 +1,6 @@
 import {test} from 'uvu'
 import * as assert from 'uvu/assert'
-import {createId, parseId} from '../src'
+import {createId, parseId} from '../src.js'
 
 test('create', () => {
   const id = createId()

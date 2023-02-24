@@ -1,6 +1,6 @@
 import {Field} from 'alinea/core'
-import {createDate} from './DateField'
-import {DateInput} from './DateInput'
-export * from './DateField'
-export * from './DateInput'
+import {createDate} from './DateField.js'
+import {DateInput} from './DateInput.js'
+export * from './DateField.js'
+export * from './DateInput.js'
 export const date = Field.withView(createDate, DateInput)

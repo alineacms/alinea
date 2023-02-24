@@ -3,7 +3,7 @@ import {fromModule, px} from 'alinea/ui'
 import {useContrastColor} from 'alinea/ui/hook/UseContrastColor'
 import {IcRoundInsertDriveFile} from 'alinea/ui/icons/IcRoundInsertDriveFile'
 import {link} from 'alinea/ui/util/HashRouter'
-import {useNav} from '../../hook/UseNav'
+import {useNav} from '../../hook/UseNav.js'
 import css from './MediaThumbnail.module.scss'
 
 const styles = fromModule(css)

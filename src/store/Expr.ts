@@ -1,10 +1,10 @@
-import {Cursor, CursorData, CursorImpl, CursorSingleRow} from './Cursor'
-import {Fields} from './Fields'
-import {From, FromType} from './From'
-import {OrderBy, OrderDirection} from './OrderBy'
-import {ParamData, ParamType} from './Param'
-import {Selection, SelectionInput} from './Selection'
-import type {Store} from './Store'
+import {Cursor, CursorData, CursorImpl, CursorSingleRow} from './Cursor.js'
+import {Fields} from './Fields.js'
+import {From, FromType} from './From.js'
+import {OrderBy, OrderDirection} from './OrderBy.js'
+import {ParamData, ParamType} from './Param.js'
+import {Selection, SelectionInput} from './Selection.js'
+import type {Store} from './Store.js'
 
 export const enum UnOp {
   Not,

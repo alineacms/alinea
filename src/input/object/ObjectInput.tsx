@@ -1,7 +1,7 @@
 import {InputForm, InputLabel, InputState} from 'alinea/editor'
 import {Card} from 'alinea/ui'
 import {IcRoundFeed} from 'alinea/ui/icons/IcRoundFeed'
-import {ObjectField} from './ObjectField'
+import {ObjectField} from './ObjectField.js'
 
 export type ObjectInputProps<T> = {
   state: InputState<InputState.Record<T>>

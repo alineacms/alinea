@@ -6,8 +6,8 @@ import {createError} from 'alinea/core/ErrorWithCode'
 import {Hub} from 'alinea/core/Hub'
 import {Outcome, OutcomeJSON} from 'alinea/core/Outcome'
 import {base64, base64url} from 'alinea/core/util/Encoding'
-import {CloudAuthServerOptions} from './CloudAuthServer'
-import {cloudConfig} from './CloudConfig'
+import {CloudAuthServerOptions} from './CloudAuthServer.js'
+import {cloudConfig} from './CloudConfig.js'
 
 export interface CloudConnection extends Drafts, Data.Media, Data.Target {}
 

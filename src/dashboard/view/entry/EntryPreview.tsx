@@ -1,7 +1,7 @@
 import {Entry} from 'alinea/core'
 import {useObservable} from 'alinea/ui'
 import {ComponentType} from 'react'
-import {EntryDraft} from '../../draft/EntryDraft'
+import {EntryDraft} from '../../draft/EntryDraft.js'
 
 export type EntryPreviewProps = {
   draft: EntryDraft

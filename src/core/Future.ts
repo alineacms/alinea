@@ -1,4 +1,4 @@
-import {Outcome} from './Outcome'
+import {Outcome} from './Outcome.js'
 
 export type Future<T = void> = Promise<Outcome<T>>
 

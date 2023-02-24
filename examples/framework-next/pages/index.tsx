@@ -1,11 +1,11 @@
 import {Page} from 'alinea/content'
 import Head from 'next/head'
-import Container from '../components/container'
-import HeroPost from '../components/hero-post'
-import Intro from '../components/intro'
-import Layout from '../components/layout'
-import MoreStories from '../components/more-stories'
-import {createApi} from '../lib/api'
+import Container from '../components/container.js'
+import HeroPost from '../components/hero-post.js'
+import Intro from '../components/intro.js'
+import Layout from '../components/layout.js'
+import MoreStories from '../components/more-stories.js'
+import {createApi} from '../lib/api.js'
 
 type Props = {
   home: Page.Home

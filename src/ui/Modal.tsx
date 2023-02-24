@@ -1,9 +1,9 @@
 import {Dialog} from '@headlessui/react'
 import {ComponentPropsWithoutRef, PropsWithChildren, useRef} from 'react'
-import {IconButton} from './IconButton'
-import {IcRoundClose} from './icons/IcRoundClose'
+import {IconButton} from './IconButton.js'
 import css from './Modal.module.scss'
-import {fromModule} from './util/Styler'
+import {IcRoundClose} from './icons/IcRoundClose.js'
+import {fromModule} from './util/Styler.js'
 
 const styles = fromModule(css)
 

@@ -2,7 +2,7 @@ import {createError, createId, Field, Shape} from 'alinea/core'
 import {Observable, observable, useForceUpdate} from 'alinea/ui'
 import {useEffect, useMemo} from 'react'
 import * as Y from 'yjs'
-import {InputState} from '../InputState'
+import {InputState} from '../InputState.js'
 
 const FIELD_KEY = '#field'
 

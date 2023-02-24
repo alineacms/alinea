@@ -1,12 +1,12 @@
 import {Collection, Cursor, Selection} from 'alinea/store'
-import {Entry} from './Entry'
-import {createError} from './ErrorWithCode'
-import {Field} from './Field'
-import {Hint} from './Hint'
-import {RecordShape} from './shape/RecordShape'
-import type {TypeConfig} from './Type'
-import {Type} from './Type'
-import {LazyRecord} from './util/LazyRecord'
+import {Entry} from './Entry.js'
+import {createError} from './ErrorWithCode.js'
+import {Field} from './Field.js'
+import {Hint} from './Hint.js'
+import type {TypeConfig} from './Type.js'
+import {Type} from './Type.js'
+import {RecordShape} from './shape/RecordShape.js'
+import {LazyRecord} from './util/LazyRecord.js'
 
 export type HasType = {type: string}
 

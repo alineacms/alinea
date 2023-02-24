@@ -1,7 +1,7 @@
 import type {Backend} from 'alinea/backend/Backend'
 import type {Store} from 'alinea/store'
-import type {Auth} from './Auth'
-import type {Config} from './Config'
+import type {Auth} from './Auth.js'
+import type {Config} from './Config.js'
 
 export type BackendProps = {
   config: Config

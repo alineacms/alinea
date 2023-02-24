@@ -34,8 +34,8 @@ import Link from 'next/link'
 import * as React from 'react'
 import {useEffect, useMemo, useRef, useState} from 'react'
 import {useClipboard} from 'use-clipboard-copy'
-import {FavIcon} from './layout/branding/FavIcon'
-import {Logo} from './layout/branding/Logo'
+import {FavIcon} from './layout/branding/FavIcon.js'
+import {Logo} from './layout/branding/Logo.js'
 import css from './Playground.module.scss'
 
 const styles = fromModule(css)

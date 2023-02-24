@@ -14,9 +14,9 @@ import {createContext, PropsWithChildren, useContext, useMemo} from 'react'
 import {QueryClient, useQueryClient} from 'react-query'
 // import {Room} from 'y-webrtc'
 import * as Y from 'yjs'
-import {EntryDraft} from '../draft/EntryDraft'
-import {useDashboard} from './UseDashboard'
-import {useSession} from './UseSession'
+import {EntryDraft} from '../draft/EntryDraft.js'
+import {useDashboard} from './UseDashboard.js'
+import {useSession} from './UseSession.js'
 
 export enum DraftsStatus {
   Synced = 'synced',

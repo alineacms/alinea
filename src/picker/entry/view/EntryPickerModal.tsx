@@ -28,7 +28,7 @@ import {IcRoundArrowBack} from 'alinea/ui/icons/IcRoundArrowBack'
 import {IcRoundSearch} from 'alinea/ui/icons/IcRoundSearch'
 import {Modal} from 'alinea/ui/Modal'
 import {Suspense, useCallback, useMemo, useState} from 'react'
-import {EntryPickerOptions} from '../EntryPicker'
+import {EntryPickerOptions} from '../EntryPicker.js'
 import css from './EntryPicker.module.scss'
 
 const styles = fromModule(css)

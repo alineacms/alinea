@@ -3,7 +3,7 @@ import {Cursor} from 'alinea/store/Cursor'
 import {Expr} from 'alinea/store/Expr'
 import {test} from 'uvu'
 import * as assert from 'uvu/assert'
-import {store} from './DbSuite'
+import {store} from './DbSuite.js'
 
 test('json', () => {
   const db = store()

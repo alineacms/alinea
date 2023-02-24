@@ -3,8 +3,8 @@ import {detect} from 'detect-package-manager'
 import fs from 'fs-extra'
 import {execSync} from 'node:child_process'
 import path from 'node:path'
-import {generate} from './Generate'
-import {dirname} from './util/Dirname'
+import {generate} from './Generate.js'
+import {dirname} from './util/Dirname.js'
 
 const __dirname = dirname(import.meta.url)
 

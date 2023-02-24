@@ -1,1 +1,1 @@
-export {createUrlPicker as urlPicker, UrlReference} from './UrlPicker'
+export {UrlReference, createUrlPicker as urlPicker} from './UrlPicker.js'

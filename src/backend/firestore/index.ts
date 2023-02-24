@@ -1,1 +1,1 @@
-export * from './FirestoreDrafts'
+export * from './FirestoreDrafts.js'

@@ -1,5 +1,5 @@
 import {fromModule, HStack} from 'alinea/ui'
-import {UrlReference} from '../UrlPicker'
+import {UrlReference} from '../UrlPicker.js'
 import css from './UrlPickerRow.module.scss'
 
 const styles = fromModule(css)

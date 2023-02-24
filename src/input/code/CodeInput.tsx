@@ -1,9 +1,9 @@
 import {InputLabel, InputState, useInput} from 'alinea/editor'
-import {fromModule, HStack} from 'alinea/ui'
+import {HStack, fromModule} from 'alinea/ui'
 import {IcRoundCode} from 'alinea/ui/icons/IcRoundCode'
 import {TextareaAutosize} from 'alinea/ui/util/TextareaAutosize'
 import {useState} from 'react'
-import {CodeField} from './CodeField'
+import {CodeField} from './CodeField.js'
 import css from './CodeInput.module.scss'
 
 const styles = fromModule(css)

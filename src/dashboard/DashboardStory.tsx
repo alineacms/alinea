@@ -2,11 +2,11 @@ import {ErrorBoundary, px} from 'alinea/ui'
 import {UIStory, UIStoryProps} from 'alinea/ui/UIStory'
 import {FunctionComponent, useMemo} from 'react'
 import {QueryClient, QueryClientProvider} from 'react-query'
-import {createDemo} from './demo/DemoData'
-import {DashboardProvider} from './hook/UseDashboard'
-import {EntrySummaryProvider} from './hook/UseEntrySummary'
-import {SessionProvider} from './hook/UseSession'
-import {Toolbar} from './view/Toolbar'
+import {createDemo} from './demo/DemoData.js'
+import {DashboardProvider} from './hook/UseDashboard.js'
+import {EntrySummaryProvider} from './hook/UseEntrySummary.js'
+import {SessionProvider} from './hook/UseSession.js'
+import {Toolbar} from './view/Toolbar.js'
 
 const queryClient = new QueryClient({defaultOptions: {queries: {retry: false}}})
 

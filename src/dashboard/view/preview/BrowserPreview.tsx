@@ -22,9 +22,9 @@ import {IcRoundRefresh} from 'alinea/ui/icons/IcRoundRefresh'
 import {IcRoundSouthWest} from 'alinea/ui/icons/IcRoundSouthWest'
 import {IcRoundTabletMac} from 'alinea/ui/icons/IcRoundTabletMac'
 import {CSSProperties, useEffect, useRef, useState} from 'react'
-import {DraftsStatus, useDrafts} from '../../hook/UseDrafts'
-import {Preview} from '../Preview'
-import {Sidebar} from '../Sidebar'
+import {DraftsStatus, useDrafts} from '../../hook/UseDrafts.js'
+import {Preview} from '../Preview.js'
+import {Sidebar} from '../Sidebar.js'
 import css from './BrowserPreview.module.scss'
 
 const styles = fromModule(css)

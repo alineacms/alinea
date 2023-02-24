@@ -1,13 +1,13 @@
 import {createId, type} from 'alinea/core'
 import {InputForm} from 'alinea/editor'
-import {useForm} from 'alinea/editor/hook/UseForm'
 import {PickerProps} from 'alinea/editor/Picker'
+import {useForm} from 'alinea/editor/hook/UseForm'
 import {check} from 'alinea/input/check'
 import {text} from 'alinea/input/text'
 import {Button, HStack, Stack} from 'alinea/ui'
 import {Modal} from 'alinea/ui/Modal'
 import {FormEvent} from 'react'
-import {UrlReference} from '../UrlPicker'
+import {UrlReference} from '../UrlPicker.js'
 
 const linkForm = type('Link', {
   url: text('Url', {

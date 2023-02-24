@@ -1,6 +1,6 @@
 // @ts-ignore
 import {useRouter} from 'next/router.js'
-import {usePreview as useReactPreview} from './react'
+import {usePreview as useReactPreview} from './react.js'
 
 export function usePreview() {
   const router = useRouter()

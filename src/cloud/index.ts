@@ -1,6 +1,9 @@
 import {BackendConfig} from 'alinea/core/BackendConfig'
-import {CloudAuthServer, CloudAuthServerOptions} from './server/CloudAuthServer'
-import {CloudBackend} from './server/CloudBackend'
+import {
+  CloudAuthServer,
+  CloudAuthServerOptions
+} from './server/CloudAuthServer.js'
+import {CloudBackend} from './server/CloudBackend.js'
 
 export function createCloudBackend(): BackendConfig<CloudAuthServerOptions> {
   return {

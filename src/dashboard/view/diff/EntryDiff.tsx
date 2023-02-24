@@ -2,9 +2,9 @@ import {Entry} from 'alinea/core'
 import {Chip, fromModule, TextLabel} from 'alinea/ui'
 import {memo} from 'react'
 import {useDashboard} from '../../hook/UseDashboard'
-import {diffRecord} from './DiffUtils'
+import {diffRecord} from './DiffUtils.js'
 import css from './EntryDiff.module.scss'
-import {FieldsDiff} from './FieldsDiff'
+import {FieldsDiff} from './FieldsDiff.js'
 
 const styles = fromModule(css)
 

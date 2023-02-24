@@ -1,8 +1,8 @@
 import type {InputState} from 'alinea/editor/InputState'
 import {ComponentType, createElement, isValidElement, ReactElement} from 'react'
-import {Field} from './Field'
-import {Lazy} from './util/Lazy'
-import {UnionToIntersection} from './util/Types'
+import {Field} from './Field.js'
+import {Lazy} from './util/Lazy.js'
+import {UnionToIntersection} from './util/Types.js'
 
 export class Section<R = any, T = R> {
   constructor(

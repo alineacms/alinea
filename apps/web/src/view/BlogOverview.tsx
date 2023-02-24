@@ -2,9 +2,9 @@ import {fromModule, VStack} from 'alinea/ui'
 import Link from 'next/link'
 import css from './BlogOverview.module.scss'
 import {BlogOverviewProps} from './BlogOverview.server'
-import {InformationBar} from './layout/InformationBar'
-import {Layout} from './layout/Layout'
-import {WebTypo} from './layout/WebTypo'
+import {InformationBar} from './layout/InformationBar.js'
+import {Layout} from './layout/Layout.js'
+import {WebTypo} from './layout/WebTypo.js'
 
 const styles = fromModule(css)
 

@@ -22,12 +22,12 @@ import {
   useCallback,
   useRef
 } from 'react'
-import {ContentTreeEntry} from '../../hook/UseContentTree'
-import {useCurrentDraft} from '../../hook/UseCurrentDraft'
-import {useDashboard} from '../../hook/UseDashboard'
-import {useDraftsList} from '../../hook/UseDraftsList'
-import {useNav} from '../../hook/UseNav'
-import {useWorkspace} from '../../hook/UseWorkspace'
+import {ContentTreeEntry} from '../../hook/UseContentTree.js'
+import {useCurrentDraft} from '../../hook/UseCurrentDraft.js'
+import {useDashboard} from '../../hook/UseDashboard.js'
+import {useDraftsList} from '../../hook/UseDraftsList.js'
+import {useNav} from '../../hook/UseNav.js'
+import {useWorkspace} from '../../hook/UseWorkspace.js'
 import css from './TreeNode.module.scss'
 
 const styles = fromModule(css)

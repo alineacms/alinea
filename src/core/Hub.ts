@@ -1,11 +1,11 @@
 import {Changes} from 'alinea/backend/Storage'
 import {base64url} from 'alinea/core/util/Encoding'
 import {CursorImpl} from 'alinea/store'
-import {Entry} from './Entry'
-import {Future} from './Future'
-import {Media} from './Media'
-import {User} from './User'
-import {Logger} from './util/Logger'
+import {Entry} from './Entry.js'
+import {Future} from './Future.js'
+import {Media} from './Media.js'
+import {User} from './User.js'
+import {Logger} from './util/Logger.js'
 
 export interface Hub<T = any> {
   entry(params: Hub.EntryParams, ctx?: Hub.Context): Future<Entry.Detail | null>

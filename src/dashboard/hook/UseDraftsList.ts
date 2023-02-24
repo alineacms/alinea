@@ -1,5 +1,5 @@
 import {useQuery} from 'react-query'
-import {useDrafts} from './UseDrafts'
+import {useDrafts} from './UseDrafts.js'
 
 export function useDraftsList(workspace: string) {
   const drafts = useDrafts()

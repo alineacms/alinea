@@ -2,8 +2,8 @@ import {Backend} from 'alinea/backend/Backend'
 import {JWTPreviews} from 'alinea/backend/util/JWTPreviews'
 import {Config} from 'alinea/core'
 import {Store} from 'alinea/store'
-import {DevData} from './DevData'
-import {DevDrafts} from './DevDrafts'
+import {DevData} from './DevData.js'
+import {DevDrafts} from './DevDrafts.js'
 
 export interface DevServerOptions<T> {
   config: Config<T>

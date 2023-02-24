@@ -1,8 +1,8 @@
 import * as Y from 'yjs'
-import {Entry, EntryMeta} from './Entry'
-import {createError} from './ErrorWithCode'
-import {Label} from './Label'
-import {Type} from './Type'
+import {Entry, EntryMeta} from './Entry.js'
+import {createError} from './ErrorWithCode.js'
+import {Label} from './Label.js'
+import {Type} from './Type.js'
 
 export const ROOT_KEY = '#root'
 

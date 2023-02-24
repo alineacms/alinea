@@ -2,9 +2,9 @@ import {createId, slugify, toGenerator} from 'alinea/core'
 import {Config} from 'alinea/core/Config'
 import {Entry} from 'alinea/core/Entry'
 import {Logger} from 'alinea/core/util/Logger'
-import {Cache} from '../Cache'
-import {Data} from '../Data'
-import {createDb} from './CreateDb'
+import {Cache} from '../Cache.js'
+import {Data} from '../Data.js'
+import {createDb} from './CreateDb.js'
 
 interface DemoEntry extends Partial<Entry> {
   id?: string

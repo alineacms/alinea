@@ -1,10 +1,10 @@
 import * as Y from 'yjs'
-import {Label} from './Label'
-import {ListShape} from './shape/ListShape'
-import {RecordShape} from './shape/RecordShape'
-import {RichTextShape} from './shape/RichTextShape'
-import {ScalarShape} from './shape/ScalarShape'
-import {TextDoc} from './TextDoc'
+import {Label} from './Label.js'
+import {TextDoc} from './TextDoc.js'
+import {ListShape} from './shape/ListShape.js'
+import {RecordShape} from './shape/RecordShape.js'
+import {RichTextShape} from './shape/RichTextShape.js'
+import {ScalarShape} from './shape/ScalarShape.js'
 
 type YType = Y.AbstractType<any>
 

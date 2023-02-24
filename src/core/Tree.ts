@@ -1,5 +1,5 @@
 import type {CursorImpl, CursorSingleRow, EV} from 'alinea/store'
-import {Entry} from './Entry'
+import {Entry} from './Entry.js'
 
 export namespace Tree {
   export function siblings(id: EV<string>): CursorImpl<Entry> {

@@ -5,7 +5,7 @@ import {IcRoundArrowBack} from 'alinea/ui/icons/IcRoundArrowBack'
 import Image from 'next/image'
 import Link from 'next/link'
 import css from './DemoHeader.module.scss'
-import {DemoText} from './DemoText'
+import {DemoText} from './DemoText.js'
 
 const styles = fromModule(css)
 

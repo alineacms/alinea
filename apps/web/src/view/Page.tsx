@@ -1,7 +1,7 @@
 import {Page} from 'alinea/content'
-import {Blocks} from './blocks/Blocks'
-import {InformationBar} from './layout/InformationBar'
-import {Layout} from './layout/Layout'
+import {Blocks} from './blocks/Blocks.js'
+import {InformationBar} from './layout/InformationBar.js'
+import {Layout} from './layout/Layout.js'
 
 export function Page(props: Page.Page) {
   return (

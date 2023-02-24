@@ -37,7 +37,7 @@ import {
   Ref,
   useState
 } from 'react'
-import {ListField, ListRow} from './ListField'
+import {ListField, ListRow} from './ListField.js'
 import css from './ListInput.module.scss'
 
 const styles = fromModule(css)

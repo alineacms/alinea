@@ -2,12 +2,12 @@ import {fromModule, HStack, TextLabel, VStack} from 'alinea/ui'
 import {IcRoundArrowBack} from 'alinea/ui/icons/IcRoundArrowBack'
 import {IcRoundArrowForward} from 'alinea/ui/icons/IcRoundArrowForward'
 import Link from 'next/link'
-import {Blocks} from './blocks/Blocks'
+import {Blocks} from './blocks/Blocks.js'
 import css from './DocPage.module.scss'
 import type {DocPageProps} from './DocPage.server'
-import {Breadcrumbs} from './layout/Breadcrumbs'
-import {Layout} from './layout/Layout'
-import {NavTree, useNavTree} from './layout/NavTree'
+import {Breadcrumbs} from './layout/Breadcrumbs.js'
+import {Layout} from './layout/Layout.js'
+import {NavTree, useNavTree} from './layout/NavTree.js'
 
 const styles = fromModule(css)
 

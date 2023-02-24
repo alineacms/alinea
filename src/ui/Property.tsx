@@ -1,6 +1,6 @@
 import {PropsWithChildren, ReactNode} from 'react'
 import css from './Property.module.scss'
-import {fromModule} from './util/Styler'
+import {fromModule} from './util/Styler.js'
 
 const styles = fromModule(css)
 

@@ -1,7 +1,7 @@
 import {User} from 'alinea/core'
 import {getRandomColor} from 'alinea/core/util/GetRandomColor'
 import {px} from 'alinea/ui'
-import {useContrastColor} from './hook/UseContrastColor'
+import {useContrastColor} from './hook/UseContrastColor.js'
 
 type AvatarProps = {user: User}
 

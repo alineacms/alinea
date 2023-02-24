@@ -7,7 +7,7 @@ import {
   PropsWithRef,
   useMemo
 } from 'react'
-import {px} from './util/Units'
+import {px} from './util/Units.js'
 
 export type StackProps = PropsWithRef<
   Omit<HTMLProps<HTMLDivElement>, 'wrap'> & {

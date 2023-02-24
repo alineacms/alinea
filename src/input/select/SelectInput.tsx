@@ -8,12 +8,12 @@ import {
 import {Listbox} from '@headlessui/react'
 import {Label} from 'alinea/core'
 import {InputLabel, InputState, useInput} from 'alinea/editor'
-import {fromModule, HStack, Icon, IconButton, TextLabel} from 'alinea/ui'
+import {HStack, Icon, IconButton, TextLabel, fromModule} from 'alinea/ui'
 import {IcRoundArrowDropDownCircle} from 'alinea/ui/icons/IcRoundArrowDropDownCircle'
 import {IcRoundCheck} from 'alinea/ui/icons/IcRoundCheck'
 import {IcRoundClose} from 'alinea/ui/icons/IcRoundClose'
 import {IcRoundUnfoldMore} from 'alinea/ui/icons/IcRoundUnfoldMore'
-import {SelectField} from './SelectField'
+import {SelectField} from './SelectField.js'
 import css from './SelectInput.module.scss'
 
 const styles = fromModule(css)

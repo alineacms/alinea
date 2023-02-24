@@ -8,7 +8,7 @@ import FastAverageColor from 'fast-average-color'
 import pLimit from 'p-limit'
 import {useState} from 'react'
 import {useQueryClient} from 'react-query'
-import {useSession} from './UseSession'
+import {useSession} from './UseSession.js'
 
 const enum UploadStatus {
   Queued,

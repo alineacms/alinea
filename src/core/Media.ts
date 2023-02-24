@@ -1,5 +1,5 @@
 import {Collection} from 'alinea/store'
-import {Entry} from './Entry'
+import {Entry} from './Entry.js'
 
 export namespace Media {
   export enum Type {

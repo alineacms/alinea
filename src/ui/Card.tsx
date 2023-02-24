@@ -1,5 +1,5 @@
 import css from './Card.module.scss'
-import {fromModule} from './util/Styler'
+import {fromModule} from './util/Styler.js'
 
 const styles = fromModule(css)
 

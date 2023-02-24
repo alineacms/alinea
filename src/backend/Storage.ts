@@ -1,8 +1,8 @@
 import {Config, Entry, EntryMetaRaw, EntryUrlMeta, Tree} from 'alinea/core'
 import {join} from 'alinea/core/util/Paths'
 import {Store} from 'alinea/store'
-import {Cache} from './Cache'
-import {Loader} from './Loader'
+import {Cache} from './Cache.js'
+import {Loader} from './Loader.js'
 
 export type Changes = {
   write: Array<{id: string; file: string; contents: string}>

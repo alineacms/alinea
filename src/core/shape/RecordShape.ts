@@ -1,6 +1,6 @@
 import * as Y from 'yjs'
-import {Label} from '../Label'
-import {Shape} from '../Shape'
+import {Label} from '../Label.js'
+import {Shape} from '../Shape.js'
 
 export type RecordMutator<T> = {
   set: <K extends keyof T>(k: K, v: T[K]) => void

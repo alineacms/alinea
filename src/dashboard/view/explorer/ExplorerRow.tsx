@@ -4,7 +4,7 @@ import {fromModule} from 'alinea/ui'
 import {memo} from 'react'
 import {useQuery} from 'react-query'
 import {useSession} from '../../hook/UseSession'
-import {ExplorerItem} from './ExplorerItem'
+import {ExplorerItem} from './ExplorerItem.js'
 import css from './ExplorerRow.module.scss'
 
 const styles = fromModule(css)

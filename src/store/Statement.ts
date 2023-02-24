@@ -1,4 +1,4 @@
-import {Param, ParamData, ParamType} from './Param'
+import {Param, ParamData, ParamType} from './Param.js'
 
 export class Statement {
   constructor(public sql: string, public params: Array<ParamData> = []) {}

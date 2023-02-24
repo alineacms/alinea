@@ -1,6 +1,6 @@
 // @ts-ignore
 import {useNavigate} from '@remix-run/react'
-import {usePreview as useReactPreview} from './react'
+import {usePreview as useReactPreview} from './react.js'
 
 export function usePreview() {
   const navigate = useNavigate()

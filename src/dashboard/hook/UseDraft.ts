@@ -1,8 +1,8 @@
 import {useEffect} from 'react'
 import {useQuery} from 'react-query'
-import {EntryDraft} from '../draft/EntryDraft'
-import {useDrafts} from './UseDrafts'
-import {useSession} from './UseSession'
+import {EntryDraft} from '../draft/EntryDraft.js'
+import {useDrafts} from './UseDrafts.js'
+import {useSession} from './UseSession.js'
 
 export function useDraft(id: string | undefined) {
   const {hub} = useSession()

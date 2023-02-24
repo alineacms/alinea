@@ -1,1 +1,1 @@
-export * from './tabs/index'
+export * from './tabs/index.js'

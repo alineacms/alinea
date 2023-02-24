@@ -10,7 +10,7 @@ import {Button, HStack, LogoShape, px, Typo, VStack} from 'alinea/ui'
 import {IcRoundArrowForward} from 'alinea/ui/icons/IcRoundArrowForward'
 import {IcRoundPublish} from 'alinea/ui/icons/IcRoundPublish'
 import {useQuery} from 'react-query'
-import {AuthResult, AuthResultType} from '../AuthResult'
+import {AuthResult, AuthResultType} from '../AuthResult.js'
 
 export function CloudAuthView({setSession}: Auth.ViewProps) {
   const {client} = useDashboard()

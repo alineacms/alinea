@@ -4,7 +4,7 @@ import {useField} from 'alinea/editor'
 import {InputField} from 'alinea/editor/view/InputField'
 import {text} from 'alinea/input/text'
 import {VStack} from 'alinea/ui'
-import {link} from './view'
+import {link} from './view.js'
 
 export function InputStory() {
   const entryLink = useField(link('Entry link', {}))

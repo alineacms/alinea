@@ -1,13 +1,13 @@
 import {useNextPreview} from 'alinea/preview/next'
 import {ComponentType, createElement} from 'react'
-import {CodeVariantsProvider} from '../view/blocks/CodeVariantsBlock'
-import {BlogOverview} from './BlogOverview'
-import {BlogPost} from './BlogPost'
-import {DocPage} from './DocPage'
-import {HomePage} from './HomePage'
-import {Layout} from './layout/Layout'
-import {Page} from './Page'
+import {CodeVariantsProvider} from '../view/blocks/CodeVariantsBlock.js'
+import {BlogOverview} from './BlogOverview.js'
+import {BlogPost} from './BlogPost.js'
+import {DocPage} from './DocPage.js'
+import {HomePage} from './HomePage.js'
+import {Page} from './Page.js'
 import {PageViewProps} from './PageView.server'
+import {Layout} from './layout/Layout.js'
 
 const views: {[key: string]: ComponentType<any>} = {
   Home: HomePage,

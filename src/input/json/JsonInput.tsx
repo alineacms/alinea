@@ -1,9 +1,9 @@
 import {InputLabel, InputState, useInput} from 'alinea/editor'
-import {fromModule, HStack} from 'alinea/ui'
+import {HStack, fromModule} from 'alinea/ui'
 import {IcRoundTextFields} from 'alinea/ui/icons/IcRoundTextFields'
 import {TextareaAutosize} from 'alinea/ui/util/TextareaAutosize'
 import {useEffect, useState} from 'react'
-import {JsonField} from './JsonField'
+import {JsonField} from './JsonField.js'
 import css from './JsonInput.module.scss'
 
 const styles = fromModule(css)

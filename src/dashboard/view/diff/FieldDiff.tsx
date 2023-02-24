@@ -2,11 +2,11 @@ import {RichTextShape, Shape} from 'alinea/core'
 import {ListShape} from 'alinea/core/shape/ListShape'
 import {RecordShape} from 'alinea/core/shape/RecordShape'
 import {ScalarShape} from 'alinea/core/shape/ScalarShape'
-import {diffRecord} from './DiffUtils'
-import {FieldsDiff} from './FieldsDiff'
-import {ListDiff} from './ListDiff'
-import {RichTextDiff} from './RichTextDiff'
-import {ScalarDiff} from './ScalarDiff'
+import {diffRecord} from './DiffUtils.js'
+import {FieldsDiff} from './FieldsDiff.js'
+import {ListDiff} from './ListDiff.js'
+import {RichTextDiff} from './RichTextDiff.js'
+import {ScalarDiff} from './ScalarDiff.js'
 
 export type FieldDiffProps = {
   shape: Shape

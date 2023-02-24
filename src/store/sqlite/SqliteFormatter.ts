@@ -1,8 +1,8 @@
-import {ExprData, ExprType} from '../Expr'
-import {FormatExprOptions, Formatter} from '../Formatter'
-import {From, FromType} from '../From'
-import {ParamData, ParamType} from '../Param'
-import {sql, Statement} from '../Statement'
+import {ExprData, ExprType} from '../Expr.js'
+import {FormatExprOptions, Formatter} from '../Formatter.js'
+import {From, FromType} from '../From.js'
+import {ParamData, ParamType} from '../Param.js'
+import {Statement, sql} from '../Statement.js'
 
 const SINGLE_QUOTE = "'"
 const BACKTICK = '`'

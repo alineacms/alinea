@@ -1,4 +1,4 @@
-import {TypesOf} from './Schema'
+import {TypesOf} from './Schema.js'
 
 export namespace TextNode {
   export type Mark = {

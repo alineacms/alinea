@@ -1,7 +1,7 @@
 import {Collection} from 'alinea/store/Collection'
 import {test} from 'uvu'
 import * as assert from 'uvu/assert'
-import {store} from './DbSuite'
+import {store} from './DbSuite.js'
 
 type Entry = {
   id: string

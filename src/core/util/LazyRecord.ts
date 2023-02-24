@@ -1,4 +1,4 @@
-import {Lazy} from './Lazy'
+import {Lazy} from './Lazy.js'
 
 export type LazyRecord<V> = Lazy<{[key: string]: Lazy<V>}>
 

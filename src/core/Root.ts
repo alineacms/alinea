@@ -1,5 +1,5 @@
 import type {ComponentType} from 'react'
-import {Label} from './Label'
+import {Label} from './Label.js'
 
 export class Root<T = string> {
   label: Label

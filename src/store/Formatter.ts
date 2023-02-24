@@ -1,9 +1,9 @@
-import {CursorData} from './Cursor'
-import {BinOp, ExprData, ExprType, UnOp} from './Expr'
-import {From, FromType} from './From'
-import {OrderBy, OrderDirection} from './OrderBy'
-import {Param, ParamType} from './Param'
-import {sql, Statement} from './Statement'
+import {CursorData} from './Cursor.js'
+import {BinOp, ExprData, ExprType, UnOp} from './Expr.js'
+import {From, FromType} from './From.js'
+import {OrderBy, OrderDirection} from './OrderBy.js'
+import {Param, ParamType} from './Param.js'
+import {Statement, sql} from './Statement.js'
 
 const binOps = {
   [BinOp.Add]: '+',

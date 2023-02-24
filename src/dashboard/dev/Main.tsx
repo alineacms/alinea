@@ -1,5 +1,5 @@
 import type {ReactElement} from 'react'
-import {DevDashboard} from './DevDashboard'
+import {DevDashboard} from './DevDashboard.js'
 
 declare var reactRender: (
   subject: ReactElement,

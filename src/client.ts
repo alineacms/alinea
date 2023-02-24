@@ -1,1 +1,1 @@
-export * from './client/Client'
+export * from './client/Client.js'

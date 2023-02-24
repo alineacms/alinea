@@ -1,9 +1,9 @@
 import {ComponentType, HTMLAttributes} from 'react'
 import css from './AppBar.module.scss'
-import {Icon} from './Icon'
-import {HStack} from './Stack'
-import {PropsWithAs} from './util/PropsWithAs'
-import {fromModule} from './util/Styler'
+import {Icon} from './Icon.js'
+import {HStack} from './Stack.js'
+import {PropsWithAs} from './util/PropsWithAs.js'
+import {fromModule} from './util/Styler.js'
 
 const styles = fromModule(css)
 

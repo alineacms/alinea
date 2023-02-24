@@ -1,5 +1,5 @@
 import {BuildOptions} from 'esbuild'
-import {LiveReload} from './LiveReload'
+import {LiveReload} from './LiveReload.js'
 
 export interface ServeContext {
   cwd: string

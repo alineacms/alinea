@@ -1,6 +1,6 @@
 import {useMatch} from 'alinea/ui/util/HashRouter'
 import {useMemo} from 'react'
-import {dashboardNav, EntryLocation} from '../DashboardNav'
+import {dashboardNav, EntryLocation} from '../DashboardNav.js'
 
 const nav = dashboardNav({})
 

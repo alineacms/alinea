@@ -1,7 +1,7 @@
-import {IcRoundWarning} from './icons/IcRoundWarning'
-import {HStack} from './Stack'
-import {Typo} from './Typo'
-import {px} from './util/Units'
+import {IcRoundWarning} from './icons/IcRoundWarning.js'
+import {HStack} from './Stack.js'
+import {Typo} from './Typo.js'
+import {px} from './util/Units.js'
 
 export type ErrorMessageProps = {
   error: Error

@@ -1,10 +1,10 @@
 import * as Y from 'yjs'
-import {createError} from '../ErrorWithCode'
-import {Hint} from '../Hint'
-import {Label} from '../Label'
-import {Shape} from '../Shape'
-import {TextDoc, TextNode} from '../TextDoc'
-import {RecordShape} from './RecordShape'
+import {createError} from '../ErrorWithCode.js'
+import {Hint} from '../Hint.js'
+import {Label} from '../Label.js'
+import {Shape} from '../Shape.js'
+import {TextDoc, TextNode} from '../TextDoc.js'
+import {RecordShape} from './RecordShape.js'
 
 // Adapted from: https://github.com/yjs/y-prosemirror/blob/1c393fb3254cc1ed4933e8326b57c1316793122a/src/lib.js#L245
 function serialize(

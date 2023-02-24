@@ -1,6 +1,6 @@
 import {TypeConfig} from 'alinea/core'
-import {InputState} from '../InputState'
-import {Fields} from './Fields'
+import {InputState} from '../InputState.js'
+import {Fields} from './Fields.js'
 
 export type InputFormProps = {
   state: InputState<any>

@@ -12,7 +12,7 @@ import {
   useState
 } from 'react'
 import {createPortal} from 'react-dom'
-import {useForceUpdate} from '../hook/UseForceUpdate'
+import {useForceUpdate} from '../hook/UseForceUpdate.js'
 
 type Slots = {
   Provider: ComponentType<PropsWithChildren<{}>>

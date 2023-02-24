@@ -1,6 +1,6 @@
 import {Shape} from 'alinea/core'
 import {TextLabel, Typo, VStack} from 'alinea/ui'
-import {FieldDiff} from './FieldDiff'
+import {FieldDiff} from './FieldDiff.js'
 
 export type FieldsDiffProps = {
   changes: Array<[key: string, shape: Shape]>

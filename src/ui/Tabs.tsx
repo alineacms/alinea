@@ -1,7 +1,7 @@
 import {Tab} from '@headlessui/react'
 import {ComponentPropsWithoutRef, PropsWithChildren} from 'react'
 import css from './Tabs.module.scss'
-import {fromModule} from './util/Styler'
+import {fromModule} from './util/Styler.js'
 
 const styles = fromModule(css)
 

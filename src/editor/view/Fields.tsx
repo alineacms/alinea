@@ -1,9 +1,9 @@
 import {Section} from 'alinea/core'
 import {LazyRecord} from 'alinea/core/util/LazyRecord'
 import {fromModule} from 'alinea/ui'
-import {InputState} from '../InputState'
+import {InputState} from '../InputState.js'
 import css from './Fields.module.scss'
-import {Input} from './Input'
+import {Input} from './Input.js'
 
 const styles = fromModule(css)
 

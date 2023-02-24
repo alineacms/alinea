@@ -5,9 +5,9 @@ import type {
   PropsWithChildren
 } from 'react'
 import css from './Button.module.scss'
-import {Icon} from './Icon'
-import {HStack} from './Stack'
-import {fromModule} from './util/Styler'
+import {Icon} from './Icon.js'
+import {HStack} from './Stack.js'
+import {fromModule} from './util/Styler.js'
 
 const styles = fromModule(css)
 

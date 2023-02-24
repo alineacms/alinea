@@ -1,11 +1,11 @@
 import * as Y from 'yjs'
-import {createError} from '../ErrorWithCode'
-import {Hint} from '../Hint'
-import {createId} from '../Id'
-import {Label} from '../Label'
-import {Shape, ShapeInfo} from '../Shape'
-import {generateKeyBetween} from '../util/FractionalIndexing'
-import {RecordShape} from './RecordShape'
+import {createError} from '../ErrorWithCode.js'
+import {Hint} from '../Hint.js'
+import {createId} from '../Id.js'
+import {Label} from '../Label.js'
+import {Shape, ShapeInfo} from '../Shape.js'
+import {generateKeyBetween} from '../util/FractionalIndexing.js'
+import {RecordShape} from './RecordShape.js'
 
 export type ListRow = {
   id: string

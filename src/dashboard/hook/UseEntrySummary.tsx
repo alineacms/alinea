@@ -1,10 +1,10 @@
 import {Entry, Outcome, View} from 'alinea/core'
 import DataLoader from 'dataloader'
-import {createContext, PropsWithChildren, useContext, useMemo} from 'react'
+import {PropsWithChildren, createContext, useContext, useMemo} from 'react'
 import {useQuery} from 'react-query'
-import {EntrySummaryRow} from '../view/entry/EntrySummary'
-import {useDashboard} from './UseDashboard'
-import {useSession} from './UseSession'
+import {EntrySummaryRow} from '../view/entry/EntrySummary.js'
+import {useDashboard} from './UseDashboard.js'
+import {useSession} from './UseSession.js'
 
 function useLoader() {
   const {config} = useDashboard()

@@ -10,7 +10,7 @@ import {BlogPostSchema} from './src/view/BlogPost.schema'
 import {DocPageSchema} from './src/view/DocPage.schema'
 import {DocsPageSchema} from './src/view/DocsPage.schema'
 import {HomePageSchema} from './src/view/HomePage.schema'
-import {LogoChar} from './src/view/layout/branding/LogoChar'
+import {LogoChar} from './src/view/layout/branding/LogoChar.js'
 import {PageSchema} from './src/view/Page.schema'
 
 const webSchema = schema({

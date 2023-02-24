@@ -3,7 +3,7 @@ import {InputLabel, InputState, useInput} from 'alinea/editor'
 import {fromModule} from 'alinea/ui'
 import {IcRoundLink} from 'alinea/ui/icons/IcRoundLink'
 import {useState} from 'react'
-import {PathField} from './PathField'
+import {PathField} from './PathField.js'
 import css from './PathInput.module.scss'
 
 const styles = fromModule(css)

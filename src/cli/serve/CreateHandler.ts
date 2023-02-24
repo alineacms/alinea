@@ -4,9 +4,9 @@ import semver from 'compare-versions'
 import esbuild, {BuildResult} from 'esbuild'
 import {createRequire} from 'node:module'
 import path from 'node:path'
-import {publicDefines} from '../util/PublicDefines'
-import {ServeContext} from './ServeContext'
-import {ServeBackend} from './backend/ServeBackend'
+import {publicDefines} from '../util/PublicDefines.js'
+import {ServeContext} from './ServeContext.js'
+import {ServeBackend} from './backend/ServeBackend.js'
 
 const require = createRequire(import.meta.url)
 

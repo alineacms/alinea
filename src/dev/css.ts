@@ -1,7 +1,7 @@
 import type {Plugin} from 'esbuild'
 import fs from 'node:fs'
 import path from 'node:path'
-import {sassPlugin} from './sass'
+import {sassPlugin} from './sass.js'
 
 export const cssPlugin: Plugin = {
   name: 'css',

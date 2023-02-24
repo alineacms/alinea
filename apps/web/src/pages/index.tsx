@@ -1,6 +1,6 @@
 import {initPages} from 'alinea/content/pages'
 import {GetStaticPropsContext} from 'next'
-import {PageView} from '../view/PageView'
+import {PageView} from '../view/PageView.js'
 import {pageViewQuery} from '../view/PageView.server'
 
 export async function getStaticProps(context: GetStaticPropsContext) {

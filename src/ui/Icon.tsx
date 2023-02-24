@@ -1,7 +1,7 @@
 import {ComponentType, HTMLAttributes, ReactNode} from 'react'
 import css from './Icon.module.scss'
-import {fromModule} from './util/Styler'
-import {px} from './util/Units'
+import {fromModule} from './util/Styler.js'
+import {px} from './util/Units.js'
 
 const styles = fromModule(css)
 

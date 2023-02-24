@@ -1,5 +1,5 @@
 import {forwardRef} from 'react'
-import type {As, ComponentWithAs} from './PropsWithAs'
+import type {As, ComponentWithAs} from './PropsWithAs.js'
 
 type VariantImpl<T extends string> = T | {[K in T]?: boolean}
 export type Variant<T extends string> = VariantImpl<T> | Array<VariantImpl<T>>

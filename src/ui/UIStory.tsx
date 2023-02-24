@@ -1,7 +1,7 @@
 import 'alinea/css'
 import {FunctionComponent, PropsWithChildren} from 'react'
-import {px} from './util/Units'
-import {Viewport} from './Viewport'
+import {Viewport} from './Viewport.js'
+import {px} from './util/Units.js'
 
 export interface UIStoryProps extends PropsWithChildren<{}> {
   fullWidth?: boolean

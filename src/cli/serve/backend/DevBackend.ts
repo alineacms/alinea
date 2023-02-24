@@ -1,13 +1,13 @@
 import {Request, Response} from '@alinea/iso'
 import {JWTPreviews, Pages} from 'alinea/backend'
-import {anonymousAuth, Backend, createRouter} from 'alinea/backend/Backend'
-import {Handle} from 'alinea/backend/router/Router'
+import {Backend, anonymousAuth, createRouter} from 'alinea/backend/Backend'
 import {PreviewOptions} from 'alinea/backend/Server'
+import {Handle} from 'alinea/backend/router/Router'
 import {Client} from 'alinea/client'
 import {Config, Hub, Outcome} from 'alinea/core'
 import {Store} from 'alinea/store/Store'
-import {DevData} from './DevData'
-import {DevDrafts} from './DevDrafts'
+import {DevData} from './DevData.js'
+import {DevDrafts} from './DevDrafts.js'
 
 export interface DevServerOptions<T> {
   config: Config<T>

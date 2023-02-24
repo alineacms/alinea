@@ -2,7 +2,7 @@ import {Collection} from 'alinea/store/Collection'
 import {Expr} from 'alinea/store/Expr'
 import {test} from 'uvu'
 import * as assert from 'uvu/assert'
-import {store} from './DbSuite'
+import {store} from './DbSuite.js'
 
 test('basic', () => {
   const db = store()

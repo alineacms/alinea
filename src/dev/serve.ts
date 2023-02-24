@@ -1,8 +1,8 @@
 import dotenv from 'dotenv'
 import findConfig from 'find-config'
 import path from 'node:path'
-import {serve} from '../cli/Serve'
-import {sassPlugin} from './sass'
+import {serve} from '../cli/Serve.js'
+import {sassPlugin} from './sass.js'
 
 dotenv.config({path: findConfig('.env')!})
 

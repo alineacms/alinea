@@ -5,7 +5,7 @@ import {
   useRef
 } from 'react'
 import css from './Pane.module.scss'
-import {fromModule} from './util/Styler'
+import {fromModule} from './util/Styler.js'
 
 const styles = fromModule(css)
 

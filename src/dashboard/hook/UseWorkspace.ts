@@ -2,8 +2,8 @@ import {Workspace} from 'alinea/core'
 import {usePreferences} from 'alinea/ui'
 import {useMatch} from 'alinea/ui/util/HashRouter'
 import {useMemo} from 'react'
-import {dashboardNav} from '../DashboardNav'
-import {useDashboard} from './UseDashboard'
+import {dashboardNav} from '../DashboardNav.js'
+import {useDashboard} from './UseDashboard.js'
 
 const nav = dashboardNav({})
 

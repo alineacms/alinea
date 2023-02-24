@@ -1,7 +1,7 @@
 import {fromModule} from 'alinea/ui'
 import {PropsWithChildren} from 'react'
 import css from './Preview.module.scss'
-import {Sidebar} from './Sidebar'
+import {Sidebar} from './Sidebar.js'
 
 const styles = fromModule(css)
 

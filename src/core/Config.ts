@@ -1,11 +1,11 @@
 import type {Backend} from 'alinea/backend/Backend'
-import {Auth} from './Auth'
-import {BackendConfig, BackendProps} from './BackendConfig'
-import {createError} from './ErrorWithCode'
-import {Root} from './Root'
-import {Schema} from './Schema'
-import {Type} from './Type'
-import {Workspace, WorkspaceConfig} from './Workspace'
+import {Auth} from './Auth.js'
+import {BackendConfig, BackendProps} from './BackendConfig.js'
+import {createError} from './ErrorWithCode.js'
+import {Root} from './Root.js'
+import {Schema} from './Schema.js'
+import {Type} from './Type.js'
+import {Workspace, WorkspaceConfig} from './Workspace.js'
 
 /** Configuration options for the dashboard */
 export class Config<T = any> {

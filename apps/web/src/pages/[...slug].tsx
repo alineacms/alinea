@@ -9,4 +9,4 @@ export async function getStaticPaths() {
   }
 }
 
-export {default, getStaticProps} from './index'
+export {default, getStaticProps} from './index.js'

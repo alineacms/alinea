@@ -1,7 +1,7 @@
 import type {Handler} from 'alinea/backend/router/Router'
 import type {ComponentType} from 'react'
-import {Hub} from './Hub'
-import {Session} from './Session'
+import {Hub} from './Hub.js'
+import {Session} from './Session.js'
 
 export namespace Auth {
   export type Server = {

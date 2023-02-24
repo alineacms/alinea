@@ -1,1 +1,1 @@
-export * from './hidden/index'
+export * from './hidden/index.js'

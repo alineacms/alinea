@@ -2,7 +2,7 @@
   "compilerOptions": {
     "module": "ESNext",
     "target": "ESNext",
-    "moduleResolution": "node16",
+    "moduleResolution": "node",
     "strict": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
@@ -14,7 +14,10 @@
     "incremental": true,
     "jsx": "react-jsx",
     "plugins": [{"name": "typescript-plugin-css-modules"}],
-    "types": ["react/next", "react-dom/next"]
+    "rootDir": "./src",
+    "paths": {
+      "alinea/*": ["./src/*.js"]
+    }
   },
   "include": ["src", "test"]
 }

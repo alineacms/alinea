@@ -1,8 +1,8 @@
 import {ComponentType, forwardRef, HTMLAttributes, HTMLProps, Ref} from 'react'
 import css from './IconButton.module.scss'
-import {link} from './util/HashRouter'
-import {fromModule} from './util/Styler'
-import {px} from './util/Units'
+import {link} from './util/HashRouter.js'
+import {fromModule} from './util/Styler.js'
+import {px} from './util/Units.js'
 
 const styles = fromModule(css)
 

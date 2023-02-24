@@ -1,1 +1,1 @@
-export * from './GithubData'
+export * from './GithubData.js'

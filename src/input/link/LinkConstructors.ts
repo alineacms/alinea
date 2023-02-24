@@ -1,12 +1,12 @@
 import {Entry, Label, Media} from 'alinea/core'
 import {
-  entryPicker,
   EntryReference,
   FileReference,
-  ImageReference
+  ImageReference,
+  entryPicker
 } from 'alinea/picker/entry'
-import {urlPicker, UrlReference} from 'alinea/picker/url'
-import {LinkField, LinkOptions} from './LinkField'
+import {UrlReference, urlPicker} from 'alinea/picker/url'
+import {LinkField, LinkOptions} from './LinkField.js'
 
 interface CreateLink {
   <T, Q>(label: Label, options?: LinkOptions<T, Q>): LinkField<T, Q>

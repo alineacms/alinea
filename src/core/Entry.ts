@@ -1,5 +1,5 @@
 import {Collection} from 'alinea/store'
-import {Label} from './Label'
+import {Label} from './Label.js'
 
 export type Id<T> = string & {__t: T}
 

@@ -1,7 +1,7 @@
-import {Menu, Popover} from '@headlessui/react'
-import {ButtonHTMLAttributes, HTMLAttributes, PropsWithChildren} from 'react'
+import {Popover} from '@headlessui/react'
+import {HTMLAttributes, PropsWithChildren} from 'react'
 import css from './PopoverMenu.module.scss'
-import {fromModule} from './util/Styler'
+import {fromModule} from './util/Styler.js'
 
 const styles = fromModule(css)
 

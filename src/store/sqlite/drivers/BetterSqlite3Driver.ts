@@ -1,5 +1,5 @@
 import type {Database, Statement} from 'better-sqlite3'
-import {Driver} from '../../Driver'
+import {Driver} from '../../Driver.js'
 
 export class BetterSqlite3Driver implements Driver {
   constructor(public db: Database) {}

@@ -1,8 +1,8 @@
 import {Plugin} from 'esbuild'
 import crypto from 'node:crypto'
 import path from 'node:path'
-import {externalPlugin} from './ExternalPlugin'
-import {ignorePlugin} from './IgnorePlugin'
+import {externalPlugin} from './ExternalPlugin.js'
+import {ignorePlugin} from './IgnorePlugin.js'
 
 type FileInfo = (file: string) => {
   packageName: string

@@ -1,4 +1,4 @@
-import {Expr, ExprData} from './Expr'
+import {Expr, ExprData} from './Expr.js'
 
 // Source: https://stackoverflow.com/a/49279355/5872160
 type GetKeys<U> = U extends Record<infer K, any> ? K : never

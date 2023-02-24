@@ -2,7 +2,7 @@ import {InputLabel, InputState, useInput} from 'alinea/editor'
 
 import {fromModule} from 'alinea/ui'
 import {IcRoundNumbers} from 'alinea/ui/icons/IcRoundNumbers'
-import {NumberField} from './NumberField'
+import {NumberField} from './NumberField.js'
 import css from './NumberInput.module.scss'
 
 const styles = fromModule(css)

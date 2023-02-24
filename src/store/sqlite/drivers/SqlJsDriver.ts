@@ -1,5 +1,5 @@
 import type {Database} from 'sql.js'
-import {Driver} from '../../Driver'
+import {Driver} from '../../Driver.js'
 
 export class SqlJsDriver implements Driver {
   static transactionId = 0

@@ -18,7 +18,7 @@ import {Logger} from 'alinea/core/util/Logger'
 import {Expr, Store} from 'alinea/store'
 import {SqliteStore} from 'alinea/store/sqlite/SqliteStore'
 import * as Y from 'yjs'
-import {Data} from './Data'
+import {Data} from './Data.js'
 
 export namespace Cache {
   function indexSearch(store: Store, entry: Entry, lookup = true) {

@@ -1,1 +1,1 @@
-export * from './richtext/index'
+export * from './richtext/index.js'

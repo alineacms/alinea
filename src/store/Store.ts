@@ -1,8 +1,8 @@
-import type {Collection} from './Collection'
-import type {Cursor, CursorImpl, CursorSingleRow} from './Cursor'
-import type {Expr} from './Expr'
-import type {Selection, SelectionInput} from './Selection'
-import type {Update} from './Update'
+import type {Collection} from './Collection.js'
+import type {Cursor, CursorImpl, CursorSingleRow} from './Cursor.js'
+import type {Expr} from './Expr.js'
+import type {Selection, SelectionInput} from './Selection.js'
+import type {Update} from './Update.js'
 
 export type QueryOptions = {
   debug?: boolean

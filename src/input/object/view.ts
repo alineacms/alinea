@@ -1,6 +1,6 @@
 import {Field} from 'alinea/core'
-import {createObject} from './ObjectField'
-import {ObjectInput} from './ObjectInput'
-export * from './ObjectField'
-export * from './ObjectInput'
+import {createObject} from './ObjectField.js'
+import {ObjectInput} from './ObjectInput.js'
+export * from './ObjectField.js'
+export * from './ObjectInput.js'
 export const object = Field.withView(createObject, ObjectInput)

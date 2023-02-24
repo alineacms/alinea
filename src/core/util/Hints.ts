@@ -1,5 +1,5 @@
-import {Hint} from '../Hint'
-import {Schema} from '../Schema'
+import {Hint} from '../Hint.js'
+import {Schema} from '../Schema.js'
 
 export function richTextHint(schema?: Schema) {
   const from = {name: 'TextDoc', package: '@alinea/core'}

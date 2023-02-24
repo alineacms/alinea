@@ -1,7 +1,7 @@
 import {fromModule, VStack} from 'alinea/ui'
 import {HTMLProps} from 'react'
-import {Action} from '../Action'
-import {WebTypo} from '../WebTypo'
+import {Action} from '../Action.js'
+import {WebTypo} from '../WebTypo.js'
 import css from './Newsletter.module.scss'
 
 const styles = fromModule(css)

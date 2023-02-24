@@ -1,10 +1,10 @@
 import {Page} from 'alinea/content'
 import {fromModule} from 'alinea/ui'
-import {DemoHeader} from '../layout/DemoHeader'
-import {DemoLayout} from '../layout/DemoLayout'
-import {DemoPage} from '../layout/DemoPage'
-import {DemoText} from '../layout/DemoText'
-import {DemoTypo} from '../layout/DemoType'
+import {DemoHeader} from '../layout/DemoHeader.js'
+import {DemoLayout} from '../layout/DemoLayout.js'
+import {DemoPage} from '../layout/DemoPage.js'
+import {DemoText} from '../layout/DemoText.js'
+import {DemoTypo} from '../layout/DemoType.js'
 import css from './Recipe.module.scss'
 
 const styles = fromModule(css)

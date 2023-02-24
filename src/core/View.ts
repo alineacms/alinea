@@ -1,6 +1,6 @@
 import {Collection, SelectionInput, Store} from 'alinea/store'
 import type {ComponentType} from 'react'
-import {Schema} from './Schema'
+import {Schema} from './Schema.js'
 
 type ViewSelection<T, S> = (collection: Collection<T>) => S
 type ViewSelectionGeneric = <T>(collection: Collection<T>) => SelectionInput

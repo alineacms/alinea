@@ -1,8 +1,8 @@
 import {future, Hub, outcome} from 'alinea/core'
 import {posix as path} from 'node:path'
 import * as Y from 'yjs'
-import {Drafts} from '../Drafts'
-import {FS} from '../FS'
+import {Drafts} from '../Drafts.js'
+import {FS} from '../FS.js'
 
 export type FileDraftsOptions = {
   fs: FS

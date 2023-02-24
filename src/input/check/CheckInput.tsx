@@ -1,9 +1,9 @@
 import {InputLabel, InputState, useInput} from 'alinea/editor'
-import {fromModule, HStack, Icon, TextLabel} from 'alinea/ui'
+import {HStack, Icon, TextLabel, fromModule} from 'alinea/ui'
 import {IcRoundCheck} from 'alinea/ui/icons/IcRoundCheck'
 import {IcRoundTextFields} from 'alinea/ui/icons/IcRoundTextFields'
 import {useState} from 'react'
-import {CheckField} from './CheckField'
+import {CheckField} from './CheckField.js'
 import css from './CheckInput.module.scss'
 
 const styles = fromModule(css)

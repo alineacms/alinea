@@ -1,9 +1,9 @@
 import type {Pages} from 'alinea/backend'
 import {Expr} from 'alinea/store'
 import type {Highlighter} from 'shiki'
-import languageShellScript from '../types/ShikiBashLanguage'
-import {theme} from '../types/ShikiTheme'
-import languageTsx from '../types/ShikiTsxLanguage'
+import languageShellScript from '../types/ShikiBashLanguage.js'
+import {theme} from '../types/ShikiTheme.js'
+import languageTsx from '../types/ShikiTsxLanguage.js'
 
 async function loadHighlighter() {
   const {getHighlighter} = await import('shiki')

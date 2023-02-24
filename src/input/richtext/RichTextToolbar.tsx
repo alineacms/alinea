@@ -28,8 +28,8 @@ import {IcRoundUnfoldMore} from 'alinea/ui/icons/IcRoundUnfoldMore'
 import {IcRoundUndo} from 'alinea/ui/icons/IcRoundUndo'*/
 import {Editor} from '@tiptap/react'
 import {forwardRef, Ref} from 'react'
-import {PickTextLinkFunc} from './PickTextLink'
-import {attributesToReference, referenceToAttributes} from './ReferenceLink'
+import {PickTextLinkFunc} from './PickTextLink.js'
+import {attributesToReference, referenceToAttributes} from './ReferenceLink.js'
 import css from './RichTextToolbar.module.scss'
 
 const styles = fromModule(css)

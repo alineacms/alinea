@@ -1,6 +1,6 @@
-import {CursorData} from './Cursor'
-import {Expr, ExprData} from './Expr'
-import type {Store} from './Store'
+import {CursorData} from './Cursor.js'
+import {Expr, ExprData} from './Expr.js'
+import type {Store} from './Store.js'
 
 type SelectionInputBase = Expr<any> | Selection<any> | {cursor: CursorData}
 interface SelectionInputRecord extends Record<string, SelectionInput> {}

@@ -1,2 +1,2 @@
-export * from './IndexedDBData'
-export * from './IndexedDBDrafts'
+export * from './IndexedDBData.js'
+export * from './IndexedDBDrafts.js'

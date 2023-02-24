@@ -2,12 +2,12 @@ import {fromModule} from 'alinea/ui'
 import {useLocalStorage} from 'alinea/ui/hook/UseLocalStorage'
 import Head from 'next/head'
 import {HTMLAttributes, PropsWithChildren, ReactNode, useEffect} from 'react'
-import {FavIcon} from './branding/FavIcon'
-import {Footer} from './Footer'
-import {Header} from './Header'
+import {Footer} from './Footer.js'
+import {Header} from './Header.js'
 import css from './Layout.module.scss'
 import {LayoutProps} from './Layout.server'
-import {NavSidebar} from './NavSidebar'
+import {NavSidebar} from './NavSidebar.js'
+import {FavIcon} from './branding/FavIcon.js'
 
 const styles = fromModule(css)
 

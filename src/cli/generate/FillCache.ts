@@ -1,9 +1,9 @@
 import {Cache, Data, JsonLoader} from 'alinea/backend'
-import {FileData} from 'alinea/backend/data/FileData'
 import {Storage} from 'alinea/backend/Storage'
+import {FileData} from 'alinea/backend/data/FileData'
 import {createDb} from 'alinea/backend/util/CreateDb'
 import {exportStore} from 'alinea/cli/ExportStore'
-import {createEmitter, Emitter} from 'alinea/cli/util/Emitter'
+import {Emitter, createEmitter} from 'alinea/cli/util/Emitter'
 import {Config} from 'alinea/core/Config'
 import {Entry} from 'alinea/core/Entry'
 import {createError} from 'alinea/core/ErrorWithCode'
@@ -13,8 +13,8 @@ import {SqliteStore} from 'alinea/store/sqlite/SqliteStore'
 import fs from 'fs-extra'
 import path from 'node:path'
 import pLimit from 'p-limit'
-import {createWatcher} from '../util/Watcher'
-import {GenerateContext} from './GenerateContext'
+import {createWatcher} from '../util/Watcher.js'
+import {GenerateContext} from './GenerateContext.js'
 
 async function createSource({cwd, outDir}: GenerateContext, config: Config) {
   const sources = Object.values(config.workspaces).map(workspace => {

@@ -1,12 +1,12 @@
 import {BuildOptions, BuildResult, build} from 'esbuild'
 import fs from 'fs-extra'
 import path from 'node:path'
-import {createEmitter} from '../util/Emitter'
-import {externalPlugin} from '../util/ExternalPlugin'
-import {ignorePlugin} from '../util/IgnorePlugin'
-import {publicDefines} from '../util/PublicDefines'
-import {targetPlugin} from '../util/TargetPlugin'
-import {GenerateContext} from './GenerateContext'
+import {createEmitter} from '../util/Emitter.js'
+import {externalPlugin} from '../util/ExternalPlugin.js'
+import {ignorePlugin} from '../util/IgnorePlugin.js'
+import {publicDefines} from '../util/PublicDefines.js'
+import {targetPlugin} from '../util/TargetPlugin.js'
+import {GenerateContext} from './GenerateContext.js'
 
 // Workaround evanw/esbuild#2460
 function overrideTsConfig(cwd: string): string | undefined {

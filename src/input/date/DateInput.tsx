@@ -1,7 +1,7 @@
 import {InputLabel, InputState, useInput} from 'alinea/editor'
 import {fromModule} from 'alinea/ui'
 import {IcRoundDateRange} from 'alinea/ui/icons/IcRoundDateRange'
-import {DateField} from './DateField'
+import {DateField} from './DateField.js'
 import css from './DateInput.module.scss'
 
 const styles = fromModule(css)

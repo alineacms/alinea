@@ -1,1 +1,1 @@
-export * from './check/index'
+export * from './check/index.js'

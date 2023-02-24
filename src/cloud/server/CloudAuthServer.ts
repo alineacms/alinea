@@ -4,8 +4,8 @@ import {Auth, Config, createError, Hub, outcome, User} from 'alinea/core'
 import {verify} from 'alinea/core/util/JWT'
 const version = '0.0.0'
 // import {version} from '../../../package.json'
-import {AuthResult, AuthResultType} from '../AuthResult'
-import {cloudConfig} from './CloudConfig'
+import {AuthResult, AuthResultType} from '../AuthResult.js'
+import {cloudConfig} from './CloudConfig.js'
 
 export type CloudAuthServerOptions = {
   config: Config

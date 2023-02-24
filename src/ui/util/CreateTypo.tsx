@@ -7,8 +7,8 @@ import {
   ReactNode,
   Ref
 } from 'react'
-import {forwardRefWithAs, PropsWithAs} from './PropsWithAs'
-import {GenericStyles, Styler} from './Styler'
+import {forwardRefWithAs, PropsWithAs} from './PropsWithAs.js'
+import {GenericStyles, Styler} from './Styler.js'
 
 type TypoStyles =
   | {

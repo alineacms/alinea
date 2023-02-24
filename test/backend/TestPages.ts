@@ -1,7 +1,7 @@
 import {Pages} from 'alinea/backend/Pages'
 import {test} from 'uvu'
 import * as assert from 'uvu/assert'
-import createExample from './fixture/Example'
+import createExample from './fixture/Example.js'
 
 test('tree', async () => {
   const {config, store} = await createExample()

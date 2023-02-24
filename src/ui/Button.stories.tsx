@@ -1,6 +1,6 @@
-import {Button} from './Button'
-import {HStack} from './Stack'
-import {uiDecorator} from './UIStory'
+import {Button} from './Button.js'
+import {HStack} from './Stack.js'
+import {uiDecorator} from './UIStory.js'
 
 export function Buttons() {
   return (

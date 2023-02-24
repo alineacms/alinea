@@ -1,4 +1,4 @@
-import {ExprData} from './Expr'
+import {ExprData} from './Expr.js'
 
 export const enum OrderDirection {
   Asc,

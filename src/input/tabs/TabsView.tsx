@@ -1,6 +1,6 @@
 import {InputForm, InputState} from 'alinea/editor'
 import {HStack, Tabs, TextLabel} from 'alinea/ui'
-import {TabsSection} from './TabsSection'
+import {TabsSection} from './TabsSection.js'
 
 export type TabsViewProps = {
   state: InputState<any>

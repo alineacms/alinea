@@ -1,4 +1,4 @@
-import {InputState} from '../InputState'
+import {InputState} from '../InputState.js'
 
 /* eslint-disable */
 export function useInput<T>(path: InputState<T>) {

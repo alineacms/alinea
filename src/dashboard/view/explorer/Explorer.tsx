@@ -1,15 +1,15 @@
 import useSize from '@react-hook/size'
 import {Entry, Outcome, Reference, Schema, View} from 'alinea/core'
 import {Cursor, CursorImpl, Functions} from 'alinea/store'
-import {fromModule, Loader} from 'alinea/ui'
+import {Loader, fromModule} from 'alinea/ui'
 import {useRef} from 'react'
 import {useQuery} from 'react-query'
 import VirtualList from 'react-tiny-virtual-list'
 import {ExplorerProvider} from '../../hook/UseExplorer'
 import {useSession} from '../../hook/UseSession'
-import {EntrySummaryRow, EntrySummaryThumb} from '../entry/EntrySummary'
+import {EntrySummaryRow, EntrySummaryThumb} from '../entry/EntrySummary.js'
 import css from './Explorer.module.scss'
-import {ExplorerRow} from './ExplorerRow'
+import {ExplorerRow} from './ExplorerRow.js'
 
 const styles = fromModule(css)
 

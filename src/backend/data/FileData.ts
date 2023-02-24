@@ -7,11 +7,11 @@ import {
   outcome
 } from 'alinea/core'
 import * as path from 'alinea/core/util/Paths'
-import {Cache} from '../Cache'
-import {Data} from '../Data'
-import {FS} from '../FS'
-import {Loader} from '../Loader'
-import {walkUrl} from '../util/EntryPaths'
+import {Cache} from '../Cache.js'
+import {Data} from '../Data.js'
+import {FS} from '../FS.js'
+import {Loader} from '../Loader.js'
+import {walkUrl} from '../util/EntryPaths.js'
 
 export type FileDataOptions = {
   config: Config

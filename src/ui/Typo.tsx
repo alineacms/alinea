@@ -1,6 +1,6 @@
 import css from './Typo.module.scss'
-import {createTypo} from './util/CreateTypo'
-import {fromModule} from './util/Styler'
+import {createTypo} from './util/CreateTypo.js'
+import {fromModule} from './util/Styler.js'
 
 const styles = fromModule(css)
 

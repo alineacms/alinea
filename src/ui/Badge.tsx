@@ -1,7 +1,7 @@
 import {PropsWithChildren} from 'react'
 import css from './Badge.module.scss'
-import {fromModule} from './util/Styler'
-import {px} from './util/Units'
+import {fromModule} from './util/Styler.js'
+import {px} from './util/Units.js'
 
 const styles = fromModule(css)
 

@@ -7,7 +7,7 @@ import semver from 'compare-versions'
 import {build} from 'esbuild'
 import {createRequire} from 'node:module'
 import path from 'node:path'
-import {GenerateContext} from './GenerateContext'
+import {GenerateContext} from './GenerateContext.js'
 
 const require = createRequire(import.meta.url)
 

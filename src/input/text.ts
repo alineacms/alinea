@@ -1,1 +1,1 @@
-export * from './text/index'
+export * from './text/index.js'
