@@ -1,1 +1,1 @@
-export * from './tabs/index.js'
+export * from '#view/input/tabs/Tabs.view.js'

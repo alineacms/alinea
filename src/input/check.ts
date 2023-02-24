@@ -1,1 +1,1 @@
-export * from './check/index.js'
+export * from '#view/input/check/CheckField.view.js'

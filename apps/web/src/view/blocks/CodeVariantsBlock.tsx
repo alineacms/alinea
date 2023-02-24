@@ -1,4 +1,4 @@
-import {Page} from 'alinea/content'
+import {Page} from '@alinea/content'
 import {fromModule, HStack} from 'alinea/ui'
 import {
   createContext,
@@ -7,7 +7,7 @@ import {
   useEffect,
   useState
 } from 'react'
-import {WebTypo} from '../layout/WebTypo.js'
+import {WebTypo} from '../layout/WebTypo'
 import css from './CodeVariantsBlock.module.scss'
 
 const styles = fromModule(css)

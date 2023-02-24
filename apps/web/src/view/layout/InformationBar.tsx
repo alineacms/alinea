@@ -1,5 +1,5 @@
 import {VStack} from 'alinea/ui'
-import {Newsletter} from './engage/Newsletter.js'
+import {Newsletter} from './engage/Newsletter'
 
 export function InformationBar() {
   return (

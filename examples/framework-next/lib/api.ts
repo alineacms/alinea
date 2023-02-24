@@ -1,4 +1,4 @@
-import {initPages} from 'alinea/content/pages'
+import {initPages} from '@alinea/content/pages'
 import {PreviewData} from 'next'
 
 export function createApi(previewToken?: PreviewData) {

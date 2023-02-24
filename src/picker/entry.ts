@@ -1,1 +1,1 @@
-export * from './entry/index.js'
+export * from '#view/picker/entry/EntryPicker.view.js'

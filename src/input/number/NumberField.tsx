@@ -26,10 +26,7 @@ export interface NumberField extends Field.Scalar<number> {
   options: NumberOptions
 }
 
-export function createNumber(
-  label: Label,
-  options: NumberOptions = {}
-): NumberField {
+export function number(label: Label, options: NumberOptions = {}): NumberField {
   return {
     shape: Shape.Scalar(label, options.initialValue),
     hint: Hint.Number(),

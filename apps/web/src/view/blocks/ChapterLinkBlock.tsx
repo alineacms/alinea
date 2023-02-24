@@ -1,4 +1,4 @@
-import {Page} from 'alinea/content'
+import {Page} from '@alinea/content'
 import {fromModule, HStack, Stack} from 'alinea/ui'
 import {IcRoundArrowForward} from 'alinea/ui/icons/IcRoundArrowForward'
 import Link from 'next/link'

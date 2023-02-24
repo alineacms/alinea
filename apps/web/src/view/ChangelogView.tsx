@@ -1,10 +1,10 @@
 import {fromModule, HStack} from 'alinea/ui'
 import {useEffect, useRef} from 'react'
 import css from './ChangelogView.module.scss'
-import {InformationBar} from './layout/InformationBar.js'
-import {Layout} from './layout/Layout.js'
+import {InformationBar} from './layout/InformationBar'
+import {Layout} from './layout/Layout'
 import {LayoutProps} from './layout/Layout.server'
-import {NavSidebar} from './layout/NavSidebar.js'
+import {NavSidebar} from './layout/NavSidebar'
 
 const styles = fromModule(css)
 

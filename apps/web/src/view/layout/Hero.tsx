@@ -3,8 +3,8 @@ import {IcRoundArrowForward} from 'alinea/ui/icons/IcRoundArrowForward'
 import Link, {LinkProps} from 'next/link'
 import {HTMLProps, PropsWithChildren} from 'react'
 import css from './Hero.module.scss'
-import {Layout} from './Layout.js'
-import {WebTypo} from './WebTypo.js'
+import {Layout} from './Layout'
+import {WebTypo} from './WebTypo'
 
 const styles = fromModule(css)
 

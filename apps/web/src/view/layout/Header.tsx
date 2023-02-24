@@ -6,10 +6,10 @@ import {MdiTwitterCircle} from 'alinea/ui/icons/MdiTwitterCircle'
 import Link from 'next/link'
 import {useRouter} from 'next/router'
 import {useEffect, useMemo, useState} from 'react'
-import {Logo} from './branding/Logo.js'
+import {Logo} from './branding/Logo'
 import css from './Header.module.scss'
-import {Layout} from './Layout.js'
-import {Nav, NavTree, useNavTree} from './NavTree.js'
+import {Layout} from './Layout'
+import {Nav, NavTree, useNavTree} from './NavTree'
 
 const styles = fromModule(css)
 

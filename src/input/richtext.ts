@@ -1,1 +1,1 @@
-export * from './richtext/index.js'
+export * from '#view/input/richtext/RichTextField.view.js'

@@ -32,7 +32,7 @@ export interface TextField extends Field.Scalar<string> {
 }
 
 /** Create a text field configuration */
-export function createText(label: Label, options: TextOptions = {}): TextField {
+export function text(label: Label, options: TextOptions = {}): TextField {
   return {
     shape: Shape.Scalar(label, options.initialValue),
     hint: Hint.String(),

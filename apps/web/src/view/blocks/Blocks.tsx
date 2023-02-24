@@ -1,12 +1,12 @@
-import {Page} from 'alinea/content'
+import {Page} from '@alinea/content'
 import {fromModule} from 'alinea/ui'
 import {ComponentType} from 'react'
 import css from './Blocks.module.scss'
-import {ColumnsBlock} from './ColumnsBlock.js'
-import {FeaturesBlock} from './FeaturesBlock.js'
-import {ImageBlock} from './ImageBlock.js'
-import {ImagetextBlock} from './ImagetextBlock.js'
-import {TextBlock} from './TextBlock.js'
+import {ColumnsBlock} from './ColumnsBlock'
+import {FeaturesBlock} from './FeaturesBlock'
+import {ImageBlock} from './ImageBlock'
+import {ImagetextBlock} from './ImagetextBlock'
+import {TextBlock} from './TextBlock'
 
 const styles = fromModule(css)
 

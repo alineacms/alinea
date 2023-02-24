@@ -12,8 +12,8 @@ export interface HiddenField<T> extends Field.Scalar<T> {
   label: Label
 }
 
-/** Create a text field configuration */
-export function createHidden<T>(
+/** Create a hidden field configuration */
+export function hidden<T>(
   label: Label,
   hint: Hint,
   options: HiddenOptions<T> = {}

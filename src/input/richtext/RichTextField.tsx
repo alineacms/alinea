@@ -105,7 +105,7 @@ function transform<T, Q>(options: RichTextOptions<T, Q>) {
 }
 
 /** Create a rich text field configuration */
-export function createRichText<T, Q = TextDoc<T>>(
+export function richText<T, Q = TextDoc<T>>(
   label: Label,
   options: RichTextOptions<T, Q> = {}
 ): RichTextField<T, Q> {

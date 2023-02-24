@@ -10,13 +10,15 @@
     "outDir": "dist",
     "skipLibCheck": true,
     "preserveWatchOutput": true,
-    "noEmit": true,
+    "declaration": true,
+    "emitDeclarationOnly": true,
     "incremental": true,
     "jsx": "react-jsx",
     "plugins": [{"name": "typescript-plugin-css-modules"}],
     "paths": {
-      "alinea/*": ["./src/*.js"]
+      "alinea/*": ["./src/*"],
+      "#view/*": ["./src/*"]
     }
   },
-  "include": ["src", "test"]
+  "include": ["src"]
 }

@@ -1,5 +1,6 @@
 import {getManifest, getWorkspaces} from '@esbx/workspaces'
 import type {Plugin} from 'esbuild'
+import fs from 'node:fs'
 import path from 'node:path'
 
 function packageOf(filePath: string) {
@@ -65,9 +66,11 @@ export const resolvePlugin: Plugin = {
     build.initialOptions.external = external
     const outExtension = build.initialOptions.outExtension?.['.js'] || '.js'
     const toVendor = {esm: new Set<string>(), cjs: new Set<string>()}
+    const clientImports = new Set<string>()
     build.onStart(() => {
       toVendor.esm.clear()
       toVendor.cjs.clear()
+      clientImports.clear()
     })
     build.onResolve({filter: /.*/}, args => {
       if (args.kind === 'entry-point') return
@@ -75,6 +78,12 @@ export const resolvePlugin: Plugin = {
       const pkg = isNodeModule
         ? packageOf(args.resolveDir)
         : packageOf(args.path)
+      if (args.path === 'yjs' && !args.importer.endsWith('yjs.ts')) {
+        const relative = path
+          .relative(args.resolveDir, path.join(src, 'yjs' + outExtension))
+          .replaceAll('\\', '/')
+        return {path: './' + relative, external: true}
+      }
       if (args.path.startsWith('alinea/')) {
         const requested = args.path.slice('alinea/'.length)
         const relative = path
@@ -83,7 +92,14 @@ export const resolvePlugin: Plugin = {
         return {path: './' + relative, external: true}
       }
       const isLocal = args.path.startsWith('./') || args.path.startsWith('../')
-      const isInternal = args.path.startsWith('node:') || external.includes(pkg)
+      const isInternal =
+        args.path.startsWith('node:') ||
+        external.includes(pkg) ||
+        args.path.startsWith('#')
+      if (args.path.startsWith('#view/')) {
+        clientImports.add(args.path)
+        return {path: args.path, external: true}
+      }
       const hasOutExtension = args.path.endsWith(outExtension)
       const base = path.basename(args.path)
       const hasExtension = base.includes('.') && !base.includes('.node')
@@ -105,7 +121,7 @@ export const resolvePlugin: Plugin = {
           )
           .replaceAll('\\', '/')
         toVendor[isNode ? 'cjs' : 'esm'].add(pkg)
-        return {path: relativePath, external: true}
+        return {path: './' + relativePath, external: true}
       }
       if (isLocal && hasExtension && !hasOutExtension) return
       if (hasOutExtension || !isLocal) return {path: args.path, external: true}
@@ -113,6 +129,20 @@ export const resolvePlugin: Plugin = {
     })
 
     build.onEnd(async () => {
+      const imports: Record<string, any> = {}
+      for (const file of clientImports) {
+        const location = file.slice('#view/'.length)
+        const server = location.replace('.view.', '.')
+        imports[file] = {
+          worker: `./${server}`,
+          browser: `./${location}`,
+          default: `./${server}`
+        }
+      }
+      fs.writeFileSync(
+        'dist/package.json',
+        JSON.stringify({type: 'module', imports}, null, 2)
+      )
       for (const [format, pkgs] of Object.entries(toVendor)) {
         const isNode = format === 'cjs'
         await build.esbuild.build({
@@ -140,9 +170,11 @@ export const resolvePlugin: Plugin = {
         'ioredis',
         'nodemailer'
       ])
-      const unused = [...dependencies].filter(([name, {warnIfUnused}]) => {
-        return warnIfUnused && !seen.has(name) && !knownWarnings.has(name)
-      })
+      const unused = [...dependencies]
+        .filter(([name, {warnIfUnused}]) => {
+          return warnIfUnused && !seen.has(name) && !knownWarnings.has(name)
+        })
+        .map(([name]) => name)
       for (const pkg of unused)
         console.info(
           `info: defined in dependencies, but appears unused: "${pkg}"`

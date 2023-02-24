@@ -1,1 +1,1 @@
-export * from './json/index.js'
+export * from '#view/input/json/JsonField.view.js'

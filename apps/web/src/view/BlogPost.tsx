@@ -1,11 +1,11 @@
-import {Page} from 'alinea/content'
+import {Page} from '@alinea/content'
 import {fromModule, HStack, Stack} from 'alinea/ui'
 import {IcRoundArrowBack} from 'alinea/ui/icons/IcRoundArrowBack'
 import Link from 'next/link'
-import {Blocks} from './blocks/Blocks.js'
+import {Blocks} from './blocks/Blocks'
 import css from './BlogPost.module.scss'
-import {Layout} from './layout/Layout.js'
-import {WebTypo} from './layout/WebTypo.js'
+import {Layout} from './layout/Layout'
+import {WebTypo} from './layout/WebTypo'
 
 const styles = fromModule(css)
 

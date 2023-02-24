@@ -1,7 +1,7 @@
 import {fromModule, RichText, RichTextProps} from 'alinea/ui'
 import reactStringReplace from 'react-string-replace'
 import css from './WebText.module.scss'
-import {WebTypo} from './WebTypo.js'
+import {WebTypo} from './WebTypo'
 
 const styles = fromModule(css)
 

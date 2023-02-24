@@ -1,4 +1,4 @@
-import {initPages} from 'alinea/content/pages'
+import {initPages} from '@alinea/content/pages'
 import {alinea} from 'alinea'
 import {GetStaticPropsContext} from 'next'
 import {membersOf, packageName, packagePaths, typeNav} from '../../data/Types'

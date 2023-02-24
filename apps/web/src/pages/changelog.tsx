@@ -1,9 +1,9 @@
-import {initPages} from 'alinea/content/pages'
+import {initPages} from '@alinea/content/pages'
 import fs from 'fs'
 import path from 'path'
 import {remark} from 'remark'
 import html from 'remark-html'
-import {ChangelogView} from '../view/ChangelogView.js'
+import {ChangelogView} from '../view/ChangelogView'
 import {layoutQuery} from '../view/layout/Layout.server'
 
 export async function getStaticProps() {

@@ -1,6 +1,6 @@
 import {ReadonlyBackend} from 'alinea/backend/ReadonlyBackend'
 import {createConfig, root, schema, workspace} from 'alinea/core'
-import {MediaSchema} from 'alinea/dashboard/schema/MediaSchema'
+import {MediaSchema} from 'alinea/dashboard/schema'
 import {BrowserPreview} from 'alinea/dashboard/view/preview/BrowserPreview'
 import {IcRoundInsertDriveFile} from 'alinea/ui/icons/IcRoundInsertDriveFile'
 import {IcRoundPermMedia} from 'alinea/ui/icons/IcRoundPermMedia'

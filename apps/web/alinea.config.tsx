@@ -1,6 +1,6 @@
 import {createCloudBackend} from 'alinea/cloud'
 import {createConfig, root, schema, workspace} from 'alinea/core'
-import {MediaSchema} from 'alinea/dashboard/schema/MediaSchema'
+import {MediaSchema} from 'alinea/dashboard/schema'
 import {BrowserPreview} from 'alinea/dashboard/view/preview/BrowserPreview'
 import {IcRoundInsertDriveFile} from 'alinea/ui/icons/IcRoundInsertDriveFile'
 import {IcRoundPermMedia} from 'alinea/ui/icons/IcRoundPermMedia'
@@ -10,7 +10,7 @@ import {BlogPostSchema} from './src/view/BlogPost.schema'
 import {DocPageSchema} from './src/view/DocPage.schema'
 import {DocsPageSchema} from './src/view/DocsPage.schema'
 import {HomePageSchema} from './src/view/HomePage.schema'
-import {LogoChar} from './src/view/layout/branding/LogoChar.js'
+import {LogoChar} from './src/view/layout/branding/LogoChar'
 import {PageSchema} from './src/view/Page.schema'
 
 const webSchema = schema({
@@ -73,7 +73,6 @@ const workspaces = {web, stories}
 const cloudBackend = createCloudBackend()
 
 export const config = createConfig({
-  typeNamespace: 'content',
   schema: webSchema,
   dashboard: {
     dashboardUrl: '/admin.html',

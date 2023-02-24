@@ -10,6 +10,7 @@ import {
 } from 'alinea/core'
 import type {Picker} from 'alinea/editor/Picker'
 import {Cursor, Expr, SelectionInput} from 'alinea/store'
+import {linkConstructors} from './LinkConstructors'
 
 export type LinkType = 'entry' | 'image' | 'file' | 'external'
 
@@ -101,3 +102,5 @@ export function createLink<T, Q>(
     }
   }
 }
+
+export const link = linkConstructors(createLink)

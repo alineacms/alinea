@@ -1,1 +1,1 @@
-export * from './text/index.js'
+export * from '#view/input/text/TextField.view.js'

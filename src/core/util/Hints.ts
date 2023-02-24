@@ -2,7 +2,7 @@ import {Hint} from '../Hint.js'
 import {Schema} from '../Schema.js'
 
 export function richTextHint(schema?: Schema) {
-  const from = {name: 'TextDoc', package: '@alinea/core'}
+  const from = {name: 'TextDoc', package: 'alinea/core'}
   if (!schema) return Hint.Extern(from)
   return Hint.Extern(from, rowsOf(schema.hint as Hint.Union))
 }
@@ -17,7 +17,7 @@ function rowsOf(union: Hint.Union) {
     return Hint.Definition(
       def.name,
       def.fields,
-      Hint.Extern({name: 'ListRow', package: '@alinea/input/list'})
+      Hint.Extern({name: 'ListRow', package: 'alinea/input/list'})
     )
   })
   return Hint.Union(types)

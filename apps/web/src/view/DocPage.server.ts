@@ -1,4 +1,4 @@
-import {Page, Pages} from 'alinea/content'
+import {Page, Pages} from '@alinea/content'
 import {Entry, Label} from 'alinea/core'
 import {Cursor, Store} from 'alinea/store'
 

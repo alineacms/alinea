@@ -1,1 +1,1 @@
-export * from './object/index.js'
+export * from '#view/input/object/ObjectField.view.js'

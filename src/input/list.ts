@@ -1,1 +1,1 @@
-export * from './list/index.js'
+export * from '#view/input/list/ListField.view.js'

@@ -1,1 +1,1 @@
-export * from './path/index.js'
+export * from '#view/input/path/PathField.view.js'

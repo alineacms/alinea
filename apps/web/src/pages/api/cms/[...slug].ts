@@ -1,5 +1,5 @@
 // import {nodeHandler} from 'alinea/backend/router/NodeHandler'
-// import {backend} from 'alinea/content/backend.js'
+// import {backend} from '@alinea/content/backend.js'
 // export default nodeHandler(backend.handle)
 
 export default async (req: Request) => {

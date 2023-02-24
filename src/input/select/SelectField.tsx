@@ -32,7 +32,7 @@ export interface SelectField<T extends string = string>
 }
 
 /** Create a select field configuration */
-export function createSelect<T extends string, Items extends Record<T, string>>(
+export function select<T extends string, Items extends Record<T, string>>(
   label: Label,
   items: Items,
   options: SelectOptions<keyof Items> = {}
@@ -46,7 +46,7 @@ export function createSelect<T extends string, Items extends Record<T, string>>(
     options: options as SelectOptions<T>,
     initialValue: options.initialValue as T,
     configure(options: SelectOptions<T>) {
-      return createSelect<T, Items>(label, items, options)
+      return select<T, Items>(label, items, options)
     },
     hidden: options.hidden
   }

@@ -6,6 +6,7 @@ import * as Y from 'yjs'
 // Yjs be functional in this context we keep a single reference to Yjs around
 // and re-export all the functions from that instance. Before doing so we also
 // remove the global check so Yjs doesn't display the warning.
+// See also: https://github.com/yjs/yjs/issues/438
 const global = globalThis as any
 const importIdentifier = '__ $YJS$ __'
 delete global[importIdentifier]

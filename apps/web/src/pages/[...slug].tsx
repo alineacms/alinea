@@ -1,4 +1,4 @@
-import {initPages} from 'alinea/content/pages'
+import {initPages} from '@alinea/content/pages'
 
 export async function getStaticPaths() {
   const pages = initPages()
@@ -9,4 +9,4 @@ export async function getStaticPaths() {
   }
 }
 
-export {default, getStaticProps} from './index.js'
+export {default, getStaticProps} from './index'

@@ -1,1 +1,1 @@
-export * from './select/index.js'
+export * from '#view/input/select/SelectField.view.js'

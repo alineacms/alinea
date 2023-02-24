@@ -1,20 +1,30 @@
-import {Media} from 'alinea/core/Media'
-import {IcRoundPermMedia} from 'alinea/ui/icons/IcRoundPermMedia'
-import {MediaExplorer} from '../view/MediaExplorer.js'
-import {FileEntry} from '../view/media/FileEntry.js'
-import {FileSummaryRow, FileSummaryThumb} from '../view/media/FileSummary.js'
-import {MediaSchema as MediaSchemaConfig} from './MediaSchemaConfig.js'
-
-const {Libary, File} = Media.Type
+import {Media, type} from 'alinea/core'
+import {Hint} from 'alinea/core/Hint'
+import {hidden} from 'alinea/input/hidden'
+import {path} from 'alinea/input/path'
+import {text} from 'alinea/input/text'
 
 export const MediaSchema = {
-  [Libary]: MediaSchemaConfig[Libary].configure({
-    view: MediaExplorer,
-    icon: IcRoundPermMedia
+  [Media.Type.Libary]: type('Media directory', {
+    title: text('Title'),
+    path: path('Path')
+  }).configure({
+    isContainer: true,
+    contains: [Media.Type.Libary]
   }),
-  [File]: MediaSchemaConfig[File].configure({
-    summaryRow: FileSummaryRow,
-    summaryThumb: FileSummaryThumb,
-    view: FileEntry
+  [Media.Type.File]: type('File', {
+    title: text('Title'),
+    path: path('Path'),
+    location: hidden<string>('Location', Hint.String()),
+    extension: hidden<string>('Extension', Hint.String()),
+    size: hidden<number>('File size', Hint.Number()),
+    hash: hidden<string>('Hash', Hint.String()),
+    width: hidden<number>('Image width', Hint.Number()),
+    height: hidden<number>('Image height', Hint.Number()),
+    preview: hidden<string>('Preview', Hint.String()),
+    averageColor: hidden<string>('Average color', Hint.String()),
+    blurHash: hidden<string>('Blur hash', Hint.String())
+  }).configure({
+    isHidden: true
   })
 }

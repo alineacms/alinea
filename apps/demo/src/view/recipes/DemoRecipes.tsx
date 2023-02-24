@@ -1,4 +1,4 @@
-import {Page} from 'alinea/content'
+import {Page} from '@alinea/content'
 import {fromModule} from 'alinea/ui'
 import css from './DemoRecipes.module.scss'
 

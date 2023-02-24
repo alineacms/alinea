@@ -49,7 +49,7 @@ function query<T, Q>(schema: Schema<T>) {
 }
 
 /** Create a list field configuration */
-export function createList<T, Q = Array<T & ListRow>>(
+export function list<T, Q = Array<T & ListRow>>(
   label: Label,
   options: ListOptions<T, Q>
 ): ListField<T, Q> {

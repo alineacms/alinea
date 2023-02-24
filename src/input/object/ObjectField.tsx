@@ -36,7 +36,7 @@ function query(type: TypeConfig) {
   }
 }
 
-export function createObject<T>(
+export function object<T>(
   label: Label,
   options: ObjectOptions<T>
 ): ObjectField<T> {

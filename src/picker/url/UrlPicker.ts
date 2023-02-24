@@ -21,7 +21,7 @@ export interface UrlPickerOptions<T> {
   fields?: TypeConfig<any, T>
 }
 
-export function createUrlPicker<T>(
+export function urlPicker<T>(
   options: UrlPickerOptions<T>
 ): Picker<UrlReference> {
   const extra = options.fields?.shape
@@ -32,7 +32,7 @@ export function createUrlPicker<T>(
       description: Shape.Scalar('Description'),
       target: Shape.Scalar('Target')
     }).concat(extra),
-    hint: Hint.Extern({name: 'UrlReference', package: '@alinea/picker.url'}),
+    hint: Hint.Extern({name: 'UrlReference', package: 'alinea/picker/url'}),
     label: 'External website',
     handlesMultiple: false,
     options,

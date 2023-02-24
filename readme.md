@@ -57,7 +57,7 @@ Retrieve content fully-typed and filter, order, limit and join as needed.
 Select only the fields you need.
 
 ```tsx
-import {initPages} from 'alinea/content/pages'
+import {initPages} from '@alinea/content/pages'
 const pages = initPages()
 console.log(
   await pages

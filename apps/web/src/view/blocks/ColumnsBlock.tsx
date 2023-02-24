@@ -1,7 +1,7 @@
-import {Page} from 'alinea/content'
+import {Page} from '@alinea/content'
 import {fromModule} from 'alinea/ui'
 import {ComponentType, Fragment} from 'react'
-import {WebText} from '../layout/WebText.js'
+import {WebText} from '../layout/WebText'
 import css from './ColumnsBlock.module.scss'
 
 const styles = fromModule(css)

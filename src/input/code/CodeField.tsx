@@ -20,7 +20,7 @@ export interface CodeField<Q = string> extends Field.Scalar<string, Q> {
   options: CodeFieldOptions<Q>
 }
 
-export function createCode<Q = string>(
+export function code<Q = string>(
   label: Label,
   options: CodeFieldOptions<Q> = {}
 ): CodeField<Q> {

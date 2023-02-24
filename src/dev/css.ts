@@ -21,30 +21,36 @@ export const cssPlugin: Plugin = {
       const files = Object.keys(meta.inputs).filter(file => {
         return file.endsWith('.scss')
       })
-      const input = files
-        .filter(file => !file.startsWith('@esbx'))
-        .map(file => {
-          const loc = path
-            .relative(absWorkingDir, file)
-            .split(path.sep)
-            .join('/')
-          return `import './${loc}'`
-        })
-        .join('\n')
+      const input =
+        `import './src/global.scss'\n` +
+        files
+          .filter(file => !file.startsWith('@esbx'))
+          .map(file => {
+            const loc = path
+              .relative(absWorkingDir, file)
+              .split(path.sep)
+              .join('/')
+            return `import './${loc}'`
+          })
+          .join('\n')
       return build.esbuild
         .build({
           ignoreAnnotations: true,
-          outdir: 'dist',
+          outfile: 'dist/index.js',
           stdin: {contents: input, resolveDir: absWorkingDir},
           plugins: [sassPlugin],
           write: false,
           bundle: true,
           absWorkingDir,
-          sourcemap: 'inline'
+          loader: {
+            '.woff2': 'file'
+          }
         })
         .then(res => {
-          const css = res.outputFiles.find(file => file.path.endsWith('.css'))!
-          fs.writeFileSync(path.join(outputDir, 'index.css'), css.contents)
+          for (const output of res.outputFiles) {
+            if (output.path.endsWith('.js')) continue
+            fs.writeFileSync(output.path, output.contents)
+          }
         })
     })
   }

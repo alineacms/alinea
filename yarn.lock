@@ -98,7 +98,7 @@ __metadata:
   resolution: "@alinea/core@workspace:src/core"
   dependencies:
     pretty-ms: ^8.0.0
-    yjs: 13.5.41
+    yjs: ^13.5.47
   languageName: unknown
   linkType: soft
 
@@ -12037,12 +12037,12 @@ resolve@^1.10.0:
   languageName: node
   linkType: hard
 
-"yjs@npm:13.5.41":
-  version: 13.5.41
-  resolution: "yjs@npm:13.5.41"
+"yjs@npm:^13.5.47":
+  version: 13.5.47
+  resolution: "yjs@npm:13.5.47"
   dependencies:
     lib0: ^0.2.49
-  checksum: a1ed0690b5286d0fae71672a968b5c4325d10494f316ea099ebd9a2a4b890d7b2851dabd96432fea676243bf835118b7f307a8fe3519d5314977361af987f8d1
+  checksum: 2c00447f5fc753889fd560efa124dce3f94604d5d2c6ed95ead1eb73b9e5a73e810c889deac835471277b946f3c6b7341ce7a211f6db0fe110d023ba89cc5b07
   languageName: node
   linkType: hard
 

@@ -1,6 +1,6 @@
 import {ReporterPlugin} from '@esbx/reporter'
-import {RunPlugin} from '@esbx/run'
 import {list} from '@esbx/util'
+import {spawn} from 'child_process'
 import type {BuildOptions} from 'esbuild'
 import {build} from 'esbuild'
 import fs from 'fs-extra'
@@ -17,16 +17,14 @@ const buildOptions: BuildOptions = {
   format: 'esm',
   plugins: [sassPlugin],
   loader: {
-    '.woff': 'file',
-    '.woff2': 'file',
-
     // All file extensions of the files in /static
     '.json': 'copy',
     '.html': 'copy',
     '.js': 'copy',
     '.cjs': 'copy',
     '.d.ts': 'copy',
-    '.css': 'copy'
+    '.css': 'copy',
+    '.woff2': 'copy'
   }
 }
 
@@ -46,7 +44,7 @@ function release({
     async action(options) {
       const cwd = process.cwd()
       const entryPoints = glob
-        .sync('src/**/*.{ts,tsx,cjs,js,html,json,css}', {cwd})
+        .sync('src/**/*.{ts,tsx,cjs,js,html,css,woff2}', {cwd})
         .filter(entry => {
           if (entry.endsWith('.test.ts') || entry.endsWith('.test.tsx'))
             return false
@@ -71,23 +69,32 @@ function release({
           resolvePlugin,
           options.silent
             ? undefined
-            : ReporterPlugin.configure({name: 'packages'}),
+            : ReporterPlugin.configure({name: 'alinea'}),
           config.plugins
         )
       })
     }
   }
 }
-
 export const BuildTask = release({command: 'build', watch: false, config: {}})
+let devProcess
 export const DevTask = release({
   command: 'dev',
   watch: true,
   config: {
     plugins: [
-      RunPlugin.configure({
-        cmd: 'node ./dist/dev/serve.js'
-      })
+      {
+        name: 'start',
+        setup(build) {
+          build.onEnd(() => {
+            if (devProcess) return
+            devProcess = spawn('node ./dist/dev/serve.js', {
+              stdio: 'inherit',
+              shell: true
+            })
+          })
+        }
+      }
     ]
   }
 })

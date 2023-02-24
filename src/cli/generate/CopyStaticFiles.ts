@@ -8,6 +8,37 @@ function configType(location: string) {
   return `export * from ${JSON.stringify(file)}`
 }
 
+const packageJson = {
+  private: true,
+  version: '0.0.0',
+  name: '@alinea/content',
+  type: 'module',
+  sideEffects: false,
+  types: './index.d.ts',
+  exports: {
+    '.': './index.js',
+    './config': './config.js',
+    './pages': {
+      require: './pages.cjs',
+      default: './pages.js'
+    },
+    './store': {
+      require: './store.cjs',
+      default: './store.js'
+    },
+    './backend': {
+      require: './backend.cjs',
+      default: './backend.js'
+    },
+    './.server/*': {
+      worker: './.server/dist/*',
+      browser: './.server/client.cjs',
+      default: './.server/dist/*'
+    },
+    './*': './*'
+  }
+}
+
 export async function copyStaticFiles({
   configLocation,
   staticDir,
@@ -21,8 +52,8 @@ export async function copyStaticFiles({
       )
     )
   }
+  fs.writeJSONSync(path.join(outDir, 'package.json'), packageJson, {spaces: 2})
   await copy(
-    'package.json',
     'index.js',
     'index.d.ts',
     'backend.cjs',

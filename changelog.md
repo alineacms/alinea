@@ -36,11 +36,11 @@
 
     ```ts
     // Init pages now available from /pages
-    import {initPages} from 'alinea/content/pages'
+    import {initPages} from '@alinea/content/pages'
 
     // The Page type describes every content type of the schema
     // type Page = Page.TypeA | Page.TypeB
-    import {Page} from 'alinea/content'
+    import {Page} from '@alinea/content'
     ```
 
 - Remix run support (#273)

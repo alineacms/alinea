@@ -1,7 +1,7 @@
-import {Page} from 'alinea/content'
+import {Page} from '@alinea/content'
 import {px} from 'alinea/ui'
-import {Declaration} from '../types/Declaration.js'
-import {TypeRow} from '../types/TypeRow.js'
+import {Declaration} from '../types/Declaration'
+import {TypeRow} from '../types/TypeRow'
 
 export function TypesBlock({members}: Page.TypesBlock) {
   return (

@@ -1,8 +1,8 @@
-import {Page} from 'alinea/content'
+import {Page} from '@alinea/content'
 import {fromModule} from 'alinea/ui'
 import {ComponentType, Fragment} from 'react'
-import {Feature, Features} from '../layout/Features.js'
-import {WebText} from '../layout/WebText.js'
+import {Feature, Features} from '../layout/Features'
+import {WebText} from '../layout/WebText'
 import css from './FeaturesBlock.module.scss'
 
 const styles = fromModule(css)

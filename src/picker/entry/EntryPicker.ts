@@ -76,13 +76,13 @@ const externType = {
   image: 'ImageReference'
 }
 
-export function createEntryPicker<T>(
+export function entryPicker<T>(
   options: EntryPickerOptions<T>
 ): Picker<EntryReference, EntryPickerOptions<T>> {
   const extra = options.fields?.shape
   const hint = Hint.Extern({
     name: externType[options.type],
-    package: '@alinea/picker.entry'
+    package: 'alinea/picker/entry'
   })
   return {
     type: options.type,

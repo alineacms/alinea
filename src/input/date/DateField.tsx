@@ -25,7 +25,7 @@ export interface DateField extends Field.Scalar<string> {
 }
 
 /** Create a date field configuration */
-export function createDate(label: Label, options: DateOptions = {}): DateField {
+export function date(label: Label, options: DateOptions = {}): DateField {
   return {
     shape: Shape.Scalar(label, options.initialValue),
     hint: Hint.String(),

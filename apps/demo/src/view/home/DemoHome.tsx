@@ -1,4 +1,4 @@
-import {Page} from 'alinea/content'
+import {Page} from '@alinea/content'
 import {fromModule, VStack} from 'alinea/ui'
 import {DemoHeader} from '../layout/DemoHeader.js'
 import {DemoLayout} from '../layout/DemoLayout.js'

@@ -32,7 +32,7 @@
         {
           "id": "KSTSIoTMXMiTf6PYZeqZ6",
           "type": "CodeBlock",
-          "code": "import {initPages} from 'alinea/content/pages'\n\n// The initPages method also accepts a previewToken to query\n// drafts while previewing, see the next chapter on how to obtain one\nconst pages = initPages()"
+          "code": "import {initPages} from '@alinea/content/pages'\n\n// The initPages method also accepts a previewToken to query\n// drafts while previewing, see the next chapter on how to obtain one\nconst pages = initPages()"
         },
         {
           "type": "heading",
@@ -136,7 +136,7 @@
         {
           "id": "IEmT75lZgxznL9v7Zq9mW",
           "type": "CodeBlock",
-          "code": "import {initPages} from 'alinea/content/pages'\n\nconst old = await pages.whereType('Animal').where(\n  animal => animal.age.greater(10)\n)\nconst teenager = await pages.whereType('Human').where(\n  human => \n    human.age.greater(10).or(\n      human.age.less(20)\n    )\n)\nconst applesOrOranges = await pages.whereType('Fruit').where(\n  fruit => fruit.title.isIn(['apple', 'orange'])\n)"
+          "code": "import {initPages} from '@alinea/content/pages'\n\nconst old = await pages.whereType('Animal').where(\n  animal => animal.age.greater(10)\n)\nconst teenager = await pages.whereType('Human').where(\n  human => \n    human.age.greater(10).or(\n      human.age.less(20)\n    )\n)\nconst applesOrOranges = await pages.whereType('Fruit').where(\n  fruit => fruit.title.isIn(['apple', 'orange'])\n)"
         },
         {
           "type": "heading",
