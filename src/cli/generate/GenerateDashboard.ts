@@ -5,6 +5,7 @@ import {createError} from 'alinea/core/ErrorWithCode'
 import {code} from 'alinea/core/util/CodeGen'
 import semver from 'compare-versions'
 import {build} from 'esbuild'
+import fs from 'node:fs'
 import {createRequire} from 'node:module'
 import path from 'node:path'
 import {GenerateContext} from './GenerateContext.js'
@@ -24,11 +25,13 @@ export async function generateDashboard(
   const isReact18 = semver.compare(version, '18.0.0', '>=')
   const react = isReact18 ? 'react18' : 'react'
   const entryPoints = {
-    entry: '@alinea/dashboard/EntryPoint',
+    entry: 'alinea/cli/static/dashboard/entry',
     config: '@alinea/content/config.js'
   }
   const basename = path.basename(staticFile, '.html')
   const assetsFolder = path.join(path.dirname(staticFile), basename)
+  const altConfig = path.join(cwd, 'tsconfig.alinea.json')
+  const tsconfig = fs.existsSync(altConfig) ? altConfig : undefined
   await build({
     format: 'esm',
     target: 'esnext',
@@ -46,7 +49,7 @@ export async function generateDashboard(
       ...publicDefines(process.env)
     },
     ...buildOptions,
-    tsconfig: path.join(staticDir, 'tsconfig.json'),
+    tsconfig,
     logLevel: 'error'
   }).catch(e => {
     throw 'Could not compile entrypoint'

@@ -1,4 +1,4 @@
-import {BuildOptions, BuildResult, build} from 'esbuild'
+import {build, BuildOptions, BuildResult} from 'esbuild'
 import fs from 'fs-extra'
 import path from 'node:path'
 import {createEmitter} from '../util/Emitter.js'
@@ -78,18 +78,7 @@ export function compileConfig({
     },
     tsconfig
   }
-  console.log(config)
   build(config)
-    .then(
-      res => {
-        console.log(res)
-        return res
-      },
-      err => {
-        console.error(err)
-        throw err
-      }
-    )
     .then(results.emit, results.throw)
     .then(() => {
       if (!watch) return results.return()

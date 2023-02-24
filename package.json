@@ -30,6 +30,7 @@
   },
   "exports": {
     ".": "./dist/index.js",
+    "./css": "./dist/index.css",
     "./*.js": "./dist/*.js",
     "./*.cjs": "./dist/*.cjs",
     "./*": "./dist/*.js"

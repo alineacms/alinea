@@ -2,11 +2,12 @@ import {ReadableStream, Request, Response, TextEncoderStream} from '@alinea/iso'
 import {router} from 'alinea/backend/router/Router'
 import semver from 'compare-versions'
 import esbuild, {BuildResult} from 'esbuild'
+import fs from 'node:fs'
 import {createRequire} from 'node:module'
 import path from 'node:path'
 import {publicDefines} from '../util/PublicDefines.js'
-import {ServeContext} from './ServeContext.js'
 import {ServeBackend} from './backend/ServeBackend.js'
+import {ServeContext} from './ServeContext.js'
 
 const require = createRequire(import.meta.url)
 
@@ -74,11 +75,12 @@ export function createHandler(
 
   const devDir = path.join(staticDir, 'dev')
   const matcher = router.matcher()
-  const entry = `alinea/dashboard/dev/${alineaDev ? 'Dev' : 'Lib'}Entry`
+  const entry = `alinea/cli/static/dashboard/dev`
+  const altConfig = path.join(cwd, 'tsconfig.alinea.json')
+  const tsconfig = fs.existsSync(altConfig) ? altConfig : undefined
 
   let frontend: Promise<BuildDetails | undefined> = esbuild
     .build({
-      ignoreAnnotations: alineaDev,
       format: 'esm',
       target: 'esnext',
       treeShaking: true,
@@ -103,7 +105,7 @@ export function createHandler(
       logOverride: {
         'ignored-bare-import': 'silent'
       },
-      tsconfig: path.join(staticDir, 'tsconfig.json'),
+      tsconfig,
       write: false,
       watch: alineaDev
         ? {

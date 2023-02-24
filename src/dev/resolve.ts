@@ -50,7 +50,9 @@ const external = [
   'next',
   '@remix-run/node',
   '@remix-run/react',
-  'react/jsx-runtime'
+  'react/jsx-runtime',
+  'react',
+  'react-dom'
 ]
 
 export const resolvePlugin: Plugin = {

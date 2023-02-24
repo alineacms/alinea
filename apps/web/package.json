@@ -3,7 +3,6 @@
   "name": "@alinea/web",
   "version": "0.0.0",
   "license": "MIT",
-  "type": "module",
   "scripts": {
     "build": "yarn build:packages && alinea generate -- next build",
     "dev": "cross-env FORCE_COLOR=1 next dev",

@@ -66,13 +66,13 @@ function release({
         mainFields: ['module', 'main'],
         ...buildOptions,
         plugins: list(
-          config.plugins,
           buildOptions.plugins,
           cssPlugin,
           resolvePlugin,
           options.silent
             ? undefined
-            : ReporterPlugin.configure({name: 'packages'})
+            : ReporterPlugin.configure({name: 'packages'}),
+          config.plugins
         )
       })
     }

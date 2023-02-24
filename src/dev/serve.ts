@@ -2,7 +2,6 @@ import dotenv from 'dotenv'
 import findConfig from 'find-config'
 import path from 'node:path'
 import {serve} from '../cli/Serve.js'
-import {sassPlugin} from './sass.js'
 
 dotenv.config({path: findConfig('.env')!})
 
@@ -15,9 +14,5 @@ serve({
   production,
   cwd: path.resolve('apps/web'),
   staticDir: path.resolve('src/cli/static'),
-  port: 4500,
-  buildOptions: {
-    minify: false,
-    plugins: [sassPlugin]
-  }
+  port: 4500
 })
