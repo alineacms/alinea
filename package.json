@@ -5,8 +5,8 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "dev": "run-p dev:compile dev:check dev:next ",
-    "build": "tsc && esbx build",
+    "dev": "esbx build && run-p dev:compile dev:check dev:next ",
+    "build": "esbx build",
     "release:types": "tsc",
     "release:build": "esbx build",
     "type": "tsc --diagnostics",

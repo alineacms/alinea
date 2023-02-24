@@ -28,6 +28,24 @@ const buildOptions: BuildOptions = {
   }
 }
 
+import {reportTime} from '@esbx/util'
+import {execSync} from 'child_process'
+import which from 'which'
+
+function createTypes() {
+  const tsc = which.sync('tsc') as string
+  return reportTime(
+    async () => {
+      execSync(tsc, {stdio: 'inherit', cwd: process.cwd()})
+    },
+    'type checking',
+    err => {
+      if (err) return `type errors found`
+      return `types built`
+    }
+  )
+}
+
 function release({
   command,
   watch,
@@ -42,6 +60,7 @@ function release({
     description: 'Build workspaces',
     options: [['-w, --watch', 'Rebuild on source file changes']],
     async action(options) {
+      if (!fs.existsSync('./dist/index.d.ts')) await createTypes()
       const cwd = process.cwd()
       const entryPoints = glob
         .sync('src/**/*.{ts,tsx,cjs,js,html,css,woff2}', {cwd})

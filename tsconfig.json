@@ -15,6 +15,7 @@
     "incremental": true,
     "jsx": "react-jsx",
     "plugins": [{"name": "typescript-plugin-css-modules"}],
+    "rootDir": "src",
     "paths": {
       "alinea/*": ["./src/*"],
       "#view/*": ["./src/*"]
