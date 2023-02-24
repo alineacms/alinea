@@ -1,4 +1,3 @@
-import * as path from 'alinea/core/util/Paths'
 import type {Plugin} from 'esbuild'
 
 export function externalPlugin(cwd: string): Plugin {
@@ -7,7 +6,8 @@ export function externalPlugin(cwd: string): Plugin {
     setup(build) {
       build.onResolve({filter: /^[^\.].*/}, args => {
         if (args.kind === 'entry-point') return
-        if (args.path === 'alinea' || args.path.startsWith('@alinea/'))
+        return {path: args.path, external: true}
+        /*if (args.path === 'alinea' || args.path.startsWith('alinea/'))
           return {path: args.path, external: true}
         return build
           .resolve(args.path, {
@@ -15,12 +15,13 @@ export function externalPlugin(cwd: string): Plugin {
             kind: args.kind
           })
           .then(res => {
+            console.log(res)
             const isNodeModule = path
               .normalize(res.path)
               .split('/')
               .includes('node_modules')
             if (isNodeModule) return {path: args.path, external: true}
-          })
+          })*/
       })
     }
   }

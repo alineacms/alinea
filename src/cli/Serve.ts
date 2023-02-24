@@ -3,13 +3,13 @@ import {BuildOptions} from 'esbuild'
 import fs from 'fs-extra'
 import {RequestListener} from 'node:http'
 import path from 'node:path'
-import {buildOptions} from './build/BuildOptions'
 import {generate} from './Generate'
-import {ServeBackend} from './serve/backend/ServeBackend'
+import {buildOptions} from './build/BuildOptions'
 import {createHandler} from './serve/CreateHandler'
 import {LiveReload} from './serve/LiveReload'
 import {ServeContext} from './serve/ServeContext'
 import {startServer} from './serve/StartServer'
+import {ServeBackend} from './serve/backend/ServeBackend'
 import {dirname} from './util/Dirname'
 
 const __dirname = dirname(import.meta.url)
@@ -67,6 +67,7 @@ export async function serve(options: ServeOptions): Promise<void> {
   let nextGen = gen.next()
   let backend: ServeBackend<any> | undefined
   let handler: RequestListener
+
   while (true) {
     const {value} = await nextGen
     const {config, store} = value!

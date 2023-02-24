@@ -30,9 +30,17 @@ const buildOptions: BuildOptions = {
   }
 }
 
-function release(config: Partial<BuildOptions> = {}) {
+function release({
+  command,
+  watch,
+  config
+}: {
+  command: string
+  watch: boolean
+  config: Partial<BuildOptions>
+}) {
   return {
-    command: 'build',
+    command,
     description: 'Build workspaces',
     options: [['-w, --watch', 'Rebuild on source file changes']],
     async action(options) {
@@ -40,6 +48,8 @@ function release(config: Partial<BuildOptions> = {}) {
       const entryPoints = glob
         .sync('src/**/*.{ts,tsx,cjs,js,html,json,css}', {cwd})
         .filter(entry => {
+          if (entry.endsWith('.test.ts') || entry.endsWith('.test.tsx'))
+            return false
           if (entry.endsWith('.stories.tsx')) return false
           return true
         })
@@ -52,7 +62,7 @@ function release(config: Partial<BuildOptions> = {}) {
         // sourcemap: true,
         absWorkingDir: cwd,
         entryPoints: entryPoints,
-        watch: options.watch,
+        watch: watch || options.watch,
         mainFields: ['module', 'main'],
         ...buildOptions,
         plugins: list(
@@ -69,17 +79,18 @@ function release(config: Partial<BuildOptions> = {}) {
   }
 }
 
-export const BuildTask = release()
-export const DevTask = {
-  ...release({
+export const BuildTask = release({command: 'build', watch: false, config: {}})
+export const DevTask = release({
+  command: 'dev',
+  watch: true,
+  config: {
     plugins: [
       RunPlugin.configure({
         cmd: 'node ./dist/dev/serve.js'
       })
     ]
-  }),
-  command: 'dev'
-}
+  }
+})
 
 export const clean = {
   action() {

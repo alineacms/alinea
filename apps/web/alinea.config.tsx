@@ -70,10 +70,6 @@ const stories = workspace('Stories', {
 
 const workspaces = {web, stories}
 
-/*const customBackend = backend({
-  auth: passwordLess
-}).configure(configureBackend)*/
-
 const cloudBackend = createCloudBackend()
 
 export const config = createConfig({

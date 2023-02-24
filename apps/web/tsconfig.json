@@ -14,11 +14,8 @@
     "jsx": "preserve",
     "skipLibCheck": true,
     "moduleResolution": "node",
-    "incremental": true,
-    "paths": {
-      "alinea/*": ["../../dist/*"]
-    }
+    "incremental": true
   },
-  "include": ["next-env.d.ts", "src", "../../packages/env.d.ts"],
+  "include": ["next-env.d.ts", "src"],
   "exclude": []
 }

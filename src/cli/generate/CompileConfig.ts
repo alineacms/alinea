@@ -1,11 +1,11 @@
-import {createEmitter} from 'alinea/cli/util/Emitter'
-import {externalPlugin} from 'alinea/cli/util/ExternalPlugin'
-import {ignorePlugin} from 'alinea/cli/util/IgnorePlugin'
-import {publicDefines} from 'alinea/cli/util/PublicDefines'
-import {targetPlugin} from 'alinea/cli/util/TargetPlugin'
-import {build, BuildResult} from 'esbuild'
+import {BuildOptions, BuildResult, build} from 'esbuild'
 import fs from 'fs-extra'
 import path from 'node:path'
+import {createEmitter} from '../util/Emitter'
+import {externalPlugin} from '../util/ExternalPlugin'
+import {ignorePlugin} from '../util/IgnorePlugin'
+import {publicDefines} from '../util/PublicDefines'
+import {targetPlugin} from '../util/TargetPlugin'
 import {GenerateContext} from './GenerateContext'
 
 // Workaround evanw/esbuild#2460
@@ -46,7 +46,7 @@ export function compileConfig({
   const tsconfig = overrideTsConfig(cwd)
   const define = publicDefines(process.env)
   const results = createEmitter<BuildResult>()
-  build({
+  const config: BuildOptions = {
     color: true,
     format: 'esm',
     target: 'esnext',
@@ -77,7 +77,19 @@ export function compileConfig({
       }
     },
     tsconfig
-  })
+  }
+  console.log(config)
+  build(config)
+    .then(
+      res => {
+        console.log(res)
+        return res
+      },
+      err => {
+        console.error(err)
+        throw err
+      }
+    )
     .then(results.emit, results.throw)
     .then(() => {
       if (!watch) return results.return()

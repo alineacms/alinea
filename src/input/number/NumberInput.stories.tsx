@@ -1,5 +1,5 @@
 import {dashboardDecorator} from 'alinea/dashboard/DashboardStory'
-import {useField} from 'alinea/editor/index'
+import {useField} from 'alinea/editor'
 import {InputField} from 'alinea/editor/view/InputField'
 import {VStack} from 'alinea/ui'
 import {number} from './view'

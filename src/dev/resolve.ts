@@ -56,6 +56,8 @@ const external = [
 export const resolvePlugin: Plugin = {
   name: 'resolve',
   setup(build) {
+    const cwd = process.cwd()
+    const src = path.join(cwd, 'src')
     const dependencies = getDepsInfo()
     const seen = new Set()
     build.initialOptions.external = external
@@ -67,16 +69,19 @@ export const resolvePlugin: Plugin = {
     })
     build.onResolve({filter: /.*/}, args => {
       if (args.kind === 'entry-point') return
-      if (args.path.includes('lib0')) return
       const isNodeModule = args.resolveDir.includes(`node_modules`)
       const pkg = isNodeModule
         ? packageOf(args.resolveDir)
         : packageOf(args.path)
+      if (args.path.startsWith('alinea/')) {
+        const requested = args.path.slice('alinea/'.length)
+        const relative = path
+          .relative(args.resolveDir, path.join(src, requested + outExtension))
+          .replaceAll('\\', '/')
+        return {path: './' + relative, external: true}
+      }
       const isLocal = args.path.startsWith('./') || args.path.startsWith('../')
-      const isInternal =
-        args.path.startsWith('alinea') ||
-        args.path.startsWith('node:') ||
-        external.includes(pkg)
+      const isInternal = args.path.startsWith('node:') || external.includes(pkg)
       const hasOutExtension = args.path.endsWith(outExtension)
       const base = path.basename(args.path)
       const hasExtension = base.includes('.') && !base.includes('.node')
@@ -91,8 +96,12 @@ export const resolvePlugin: Plugin = {
         }
         if (!info.bundle) return {path: args.path, external: true}
         const isNode = info.format === 'cjs'
-        const relativePath =
-          ['alinea/vendor'].concat(pkg).join('/') + (isNode ? '.cjs' : '.js')
+        const relativePath = path
+          .relative(
+            args.resolveDir,
+            path.join(src, `vendor/${pkg + (isNode ? '.cjs' : '.js')}`)
+          )
+          .replaceAll('\\', '/')
         toVendor[isNode ? 'cjs' : 'esm'].add(pkg)
         return {path: relativePath, external: true}
       }

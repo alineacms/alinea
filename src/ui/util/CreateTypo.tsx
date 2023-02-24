@@ -1,4 +1,4 @@
-import {slugify} from 'alinea/core/index'
+import {slugify} from 'alinea/core'
 import {
   ComponentType,
   forwardRef,

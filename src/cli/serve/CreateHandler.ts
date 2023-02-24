@@ -5,8 +5,8 @@ import esbuild, {BuildResult} from 'esbuild'
 import {createRequire} from 'node:module'
 import path from 'node:path'
 import {publicDefines} from '../util/PublicDefines'
-import {ServeBackend} from './backend/ServeBackend'
 import {ServeContext} from './ServeContext'
+import {ServeBackend} from './backend/ServeBackend'
 
 const require = createRequire(import.meta.url)
 
@@ -74,7 +74,7 @@ export function createHandler(
 
   const devDir = path.join(staticDir, 'dev')
   const matcher = router.matcher()
-  const entry = `@alinea/dashboard/dev/${alineaDev ? 'Dev' : 'Lib'}Entry`
+  const entry = `alinea/dashboard/dev/${alineaDev ? 'Dev' : 'Lib'}Entry`
 
   let frontend: Promise<BuildDetails | undefined> = esbuild
     .build({
