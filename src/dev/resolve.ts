@@ -1,6 +1,5 @@
 import {getManifest, getWorkspaces} from '@esbx/workspaces'
 import type {Plugin} from 'esbuild'
-import fs from 'node:fs'
 import path from 'node:path'
 
 function packageOf(filePath: string) {
@@ -66,11 +65,9 @@ export const resolvePlugin: Plugin = {
     build.initialOptions.external = external
     const outExtension = build.initialOptions.outExtension?.['.js'] || '.js'
     const toVendor = {esm: new Set<string>(), cjs: new Set<string>()}
-    const clientImports = new Set<string>()
     build.onStart(() => {
       toVendor.esm.clear()
       toVendor.cjs.clear()
-      clientImports.clear()
     })
     build.onResolve({filter: /.*/}, args => {
       if (args.kind === 'entry-point') return
@@ -84,22 +81,11 @@ export const resolvePlugin: Plugin = {
           .replaceAll('\\', '/')
         return {path: './' + relative, external: true}
       }
-      if (args.path.startsWith('alinea/')) {
-        const requested = args.path.slice('alinea/'.length)
-        const relative = path
-          .relative(args.resolveDir, path.join(src, requested + outExtension))
-          .replaceAll('\\', '/')
-        return {path: './' + relative, external: true}
-      }
       const isLocal = args.path.startsWith('./') || args.path.startsWith('../')
       const isInternal =
         args.path.startsWith('node:') ||
         external.includes(pkg) ||
         args.path.startsWith('#')
-      if (args.path.startsWith('#view/')) {
-        clientImports.add(args.path)
-        return {path: args.path, external: true}
-      }
       const hasOutExtension = args.path.endsWith(outExtension)
       const base = path.basename(args.path)
       const hasExtension = base.includes('.') && !base.includes('.node')
@@ -129,36 +115,24 @@ export const resolvePlugin: Plugin = {
     })
 
     build.onEnd(async () => {
-      const imports: Record<string, any> = {}
-      for (const file of clientImports) {
-        const location = file.slice('#view/'.length)
-        const server = location.replace('.view.', '.')
-        imports[file] = {
-          worker: `./${server}`,
-          browser: `./${location}`,
-          default: `./${server}`
-        }
-      }
-      fs.writeFileSync(
-        'dist/package.json',
-        JSON.stringify({type: 'module', imports}, null, 2)
-      )
       for (const [format, pkgs] of Object.entries(toVendor)) {
         const isNode = format === 'cjs'
         await build.esbuild.build({
-          format: isNode ? 'cjs' : 'esm',
+          format: 'esm',
           platform: isNode ? 'node' : undefined,
+          target: 'esnext',
           bundle: true,
           entryPoints: Object.fromEntries(
             Array.from(pkgs).map(pkg => [pkg, pkg])
           ),
           outdir: './dist/vendor',
-          outExtension: {'.js': isNode ? '.cjs' : '.js'},
+          // outExtension: {'.js': isNode ? '.cjs' : '.js'},
           conditions: ['import'],
+          mainFields: ['module', 'main'],
           define: {
             'process.env.NODE_ENV': "'production'"
           },
-          splitting: !isNode,
+          splitting: true,
           treeShaking: true,
           external
         })

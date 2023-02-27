@@ -6,8 +6,10 @@ import {build} from 'esbuild'
 import fs from 'fs-extra'
 import glob from 'glob'
 import {cssPlugin} from './src/dev/css.js'
-import {resolvePlugin} from './src/dev/resolve.js'
+import {internalPlugin} from './src/dev/internal.js'
+import {resolvePlugin} from './src/dev/resolve'
 import {sassPlugin} from './src/dev/sass.js'
+import {viewsPlugin} from './src/dev/views.js'
 
 export {VersionTask} from '@esbx/workspaces'
 export * from './src/dev/bundle-ts.js'
@@ -17,13 +19,7 @@ const buildOptions: BuildOptions = {
   format: 'esm',
   plugins: [sassPlugin],
   loader: {
-    // All file extensions of the files in /static
-    '.json': 'copy',
-    '.html': 'copy',
-    '.js': 'copy',
-    '.cjs': 'copy',
     '.d.ts': 'copy',
-    '.css': 'copy',
     '.woff2': 'copy'
   }
 }
@@ -63,13 +59,18 @@ function release({
       if (!fs.existsSync('./dist/index.d.ts')) await createTypes()
       const cwd = process.cwd()
       const entryPoints = glob
-        .sync('src/**/*.{ts,tsx,cjs,js,html,css,woff2}', {cwd})
+        .sync('src/**/*.{ts,tsx}', {cwd})
         .filter(entry => {
           if (entry.endsWith('.test.ts') || entry.endsWith('.test.tsx'))
             return false
           if (entry.endsWith('.stories.tsx')) return false
           return true
         })
+      const staticFolders = glob.sync('src/**/static', {cwd})
+      for (const folder of staticFolders) {
+        const target = folder.replace('src/', 'dist/')
+        fs.copySync(folder, target)
+      }
       await build({
         ...config,
         platform: 'neutral',
@@ -85,6 +86,8 @@ function release({
         plugins: list(
           buildOptions.plugins,
           cssPlugin,
+          viewsPlugin,
+          internalPlugin,
           resolvePlugin,
           options.silent
             ? undefined

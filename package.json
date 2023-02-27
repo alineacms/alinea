@@ -29,6 +29,7 @@
     "./*.cjs": "./dist/*.cjs",
     "./*": "./dist/*.js"
   },
+  "sideEffects": false,
   "typesVersions": {
     "*": {
       "*": [
