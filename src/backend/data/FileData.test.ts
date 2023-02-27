@@ -1,23 +1,23 @@
-import {FS} from 'alinea/backend/FS'
-import {Storage} from 'alinea/backend/Storage'
 import {FileData} from 'alinea/backend/data/FileData'
+import {FS} from 'alinea/backend/FS'
 import {JsonLoader} from 'alinea/backend/loader/JsonLoader'
+import {Storage} from 'alinea/backend/Storage'
 import {
-  Entry,
-  ErrorWithCode,
   accumulate,
   createConfig,
-  schema as createSchema,
+  Entry,
+  ErrorWithCode,
   outcome,
   root,
+  schema as createSchema,
   type,
   workspace
 } from 'alinea/core'
+import {createMemoryStore} from 'alinea/dev/test/CreateMemoryStore'
 import {text} from 'alinea/input/text'
 import {Volume} from 'memfs'
 import {test} from 'uvu'
 import * as assert from 'uvu/assert'
-import {createMemoryStore} from './fixture/CreateMemoryStore.js'
 
 function entry(entry: Entry.Raw) {
   return JSON.stringify(entry)

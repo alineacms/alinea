@@ -2,9 +2,9 @@ import {RichTextShape} from 'alinea/core'
 import {Hint} from 'alinea/core/Hint'
 import {RecordShape} from 'alinea/core/shape/RecordShape'
 import {ScalarShape} from 'alinea/core/shape/ScalarShape'
+import * as Y from 'alinea/yjs'
 import {test} from 'uvu'
 import * as assert from 'uvu/assert'
-import * as Y from 'yjs'
 
 test('serialize', () => {
   const type = new RichTextShape('RichText', {

@@ -125,7 +125,7 @@ export const resolvePlugin: Plugin = {
       for (const [format, pkgs] of Object.entries(toVendor)) {
         const isNode = format === 'cjs'
         await build.esbuild.build({
-          format: 'esm',
+          format: isNode ? 'cjs' : 'esm',
           platform: isNode ? 'node' : undefined,
           target: 'esnext',
           bundle: true,
@@ -133,13 +133,13 @@ export const resolvePlugin: Plugin = {
             Array.from(pkgs).map(pkg => [pkg, pkg])
           ),
           outdir: './dist/vendor',
-          // outExtension: {'.js': isNode ? '.cjs' : '.js'},
+          outExtension: {'.js': isNode ? '.cjs' : '.js'},
           conditions: ['import'],
           mainFields: ['module', 'main'],
           define: {
             'process.env.NODE_ENV': "'production'"
           },
-          splitting: true,
+          splitting: !isNode,
           treeShaking: true,
           external
         })
