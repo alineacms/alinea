@@ -1,5 +1,5 @@
 import {JWTPreviews} from 'alinea/backend'
-import {IndexedDBData, IndexedDBDrafts} from 'alinea/backend/indexeddb/index'
+import {IndexedDBData, IndexedDBDrafts} from 'alinea/backend/indexeddb'
 import {Server} from 'alinea/backend/Server'
 import {demoStore} from 'alinea/backend/util/DemoStore'
 import {createConfig, Media, root, schema, type, workspace} from 'alinea/core'
