@@ -22,7 +22,6 @@ jobs:
             '**/node_modules'
           key: ${{ runner.os }}-yarn
       - run: yarn
-      - run: yarn type
       - if: startsWith(github.ref, 'refs/tags/v')
         run: |
           yarn bump ${GITHUB_REF#refs/tags/v}
