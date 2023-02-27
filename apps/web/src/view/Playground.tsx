@@ -51,8 +51,8 @@ const global: any = window
 Object.assign(global, {
   alinea,
   React,
-  '@alinea/core': core,
-  '@alinea/editor': editor
+  'alinea/core': core,
+  'alinea/editor': editor
 })
 
 const alineaPlugin: Plugin = {

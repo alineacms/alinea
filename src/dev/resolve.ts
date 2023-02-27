@@ -71,6 +71,7 @@ export const resolvePlugin: Plugin = {
     })
     build.onResolve({filter: /.*/}, args => {
       if (args.kind === 'entry-point') return
+      if (args.path === 'lib0') return
       const isNodeModule = args.resolveDir.includes(`node_modules`)
       const pkg = isNodeModule
         ? packageOf(args.resolveDir)
@@ -100,16 +101,22 @@ export const resolvePlugin: Plugin = {
         }
         if (!info.bundle) return {path: args.path, external: true}
         const isNode = info.format === 'cjs'
+        const location = args.path
+        const extension = args.path.includes('.js')
+          ? ''
+          : isNode
+          ? '.cjs'
+          : '.js'
         const relativePath = path
           .relative(
             args.resolveDir,
-            path.join(src, `vendor/${pkg + (isNode ? '.cjs' : '.js')}`)
+            path.join(src, `vendor/${location + extension}`)
           )
           .replaceAll('\\', '/')
-        toVendor[isNode ? 'cjs' : 'esm'].add(pkg)
+        toVendor[isNode ? 'cjs' : 'esm'].add(location)
         return {path: './' + relativePath, external: true}
       }
-      if (isLocal && hasExtension && !hasOutExtension) return
+      if (isNodeModule || (isLocal && hasExtension && !hasOutExtension)) return
       if (hasOutExtension || !isLocal) return {path: args.path, external: true}
       return {path: args.path + outExtension, external: true}
     })
