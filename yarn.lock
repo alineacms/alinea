@@ -237,7 +237,7 @@ __metadata:
     "@types/lz-string": ^1.3.34
     "@types/react": ^18.0.5
     "@types/react-dom": ^18.0.0
-    alinea: "link:../.."
+    alinea: 0.0.0
     cross-env: ^7.0.3
     esbuild-wasm: 0.14.51
     find-config: ^1.0.0
@@ -3806,12 +3806,6 @@ __metadata:
   bin:
     alinea: ./dist/cli.js
   languageName: unknown
-  linkType: soft
-
-"alinea@link:../..::locator=%40alinea%2Fweb%40workspace%3Aapps%2Fweb":
-  version: 0.0.0-use.local
-  resolution: "alinea@link:../..::locator=%40alinea%2Fweb%40workspace%3Aapps%2Fweb"
-  languageName: node
   linkType: soft
 
 "alinea@link:.::locator=alinea%40workspace%3A.":

@@ -4,9 +4,9 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "build": "yarn build:packages && alinea generate -- next build",
+    "build": "yarn build:alinea && alinea generate -- next build",
     "dev": "cross-env FORCE_COLOR=1 next dev",
-    "generate": "yarn build:packages && alinea generate --fix",
+    "generate": "yarn build:alinea && alinea generate --fix",
     "gen:types": "cd ../.. && typedoc --json apps/web/src/data/types.json",
     "dev:check": "tsc -w",
     "start": "next start",
@@ -16,7 +16,7 @@
   "dependencies": {
     "@alinea/content": "link:.alinea",
     "@monaco-editor/react": "^4.4.5",
-    "alinea": "link:../..",
+    "alinea": "0.0.0",
     "esbuild-wasm": "0.14.51",
     "lz-string": "^1.4.4",
     "next": "^v12.2.6-canary.10",

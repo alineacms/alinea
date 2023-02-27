@@ -33,7 +33,11 @@ function getDepsInfo() {
       .concat(getDeps(manifest.peerDependencies))
       .concat(getDeps(manifest.optionalDependencies))
     for (const dep of deps)
-      dependencies.set(dep, {format, bundle: false, warnIfUnused: true})
+      dependencies.set(dep, {
+        format,
+        bundle: false,
+        warnIfUnused: true
+      })
     const dev = getDeps(manifest.devDependencies)
     for (const dep of dev)
       if (!dep.startsWith('@types/'))
@@ -123,23 +127,23 @@ export const resolvePlugin: Plugin = {
 
     build.onEnd(async () => {
       for (const [format, pkgs] of Object.entries(toVendor)) {
-        const isNode = format === 'cjs'
+        const commonjs = format === 'cjs'
         await build.esbuild.build({
-          format: isNode ? 'cjs' : 'esm',
-          platform: isNode ? 'node' : undefined,
+          format: commonjs ? 'cjs' : 'esm',
+          platform: commonjs ? 'node' : undefined,
           target: 'esnext',
           bundle: true,
           entryPoints: Object.fromEntries(
             Array.from(pkgs).map(pkg => [pkg, pkg])
           ),
           outdir: './dist/vendor',
-          outExtension: {'.js': isNode ? '.cjs' : '.js'},
-          conditions: ['import'],
-          mainFields: ['module', 'main'],
+          outExtension: {'.js': commonjs ? '.cjs' : '.js'},
           define: {
-            'process.env.NODE_ENV': "'production'"
+            'process.env.NODE_ENV': "'production'",
+            'process.release': '""',
+            'process.argv': 'undefined'
           },
-          splitting: !isNode,
+          splitting: !commonjs,
           treeShaking: true,
           external
         })
