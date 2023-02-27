@@ -5,6 +5,8 @@
   "search.useGlobalIgnoreFiles": true,
   "todo-tree.general.tags": ["Todo"],
   "typescript.tsdk": "./node_modules/typescript/lib",
+  "typescript.preferences.importModuleSpecifierEnding": "js",
+  "typescript.preferences.importModuleSpecifier": "shortest",
   "editor.codeActionsOnSave": {
     "source.organizeImports": true
   },

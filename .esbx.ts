@@ -19,7 +19,6 @@ const buildOptions: BuildOptions = {
   format: 'esm',
   plugins: [sassPlugin],
   loader: {
-    '.d.ts': 'copy',
     '.woff2': 'copy'
   }
 }
@@ -64,6 +63,7 @@ function release({
           if (entry.endsWith('.test.ts') || entry.endsWith('.test.tsx'))
             return false
           if (entry.endsWith('.stories.tsx')) return false
+          if (entry.endsWith('.d.ts')) return false
           return true
         })
       const staticFolders = glob.sync('src/**/static', {cwd})
