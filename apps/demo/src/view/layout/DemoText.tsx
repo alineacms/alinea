@@ -1,6 +1,6 @@
 import {fromModule, RichText, RichTextProps} from 'alinea/ui'
 import css from './DemoText.module.scss'
-import {DemoTypo} from './DemoType.js'
+import {DemoTypo} from './DemoType'
 
 const styles = fromModule(css)
 

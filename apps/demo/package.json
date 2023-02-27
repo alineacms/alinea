@@ -4,9 +4,9 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "dev": "yarn build:packages && alinea serve -- next dev",
-    "generate": "yarn build:packages && alinea generate",
-    "build": "yarn build:packages && alinea generate -- next build",
+    "dev": "yarn build:alinea && alinea serve -- next dev",
+    "generate": "yarn build:alinea && alinea generate",
+    "build": "yarn build:alinea && alinea generate -- next build",
     "start": "next start"
   },
   "dependencies": {

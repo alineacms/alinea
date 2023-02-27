@@ -11,7 +11,7 @@ export const bundleTs = {
     for (const entry of entries) {
       if (entry.includes('/static/')) continue
       const location = entry.slice(0, -'.d.ts'.length)
-      const absolute = `alinea/${location}`
+      const absolute = location === 'index' ? 'alinea' : `alinea/${location}`
       let contents = fs.readFileSync(path.join(root, entry), 'utf-8')
       // Strip shebang
       if (contents.startsWith('#!')) {

@@ -1,16 +1,16 @@
-import {config} from '@alinea/content/config.js'
-import {createStore} from '@alinea/content/store.js'
+import {config} from '@alinea/content/config'
+import {createStore} from '@alinea/content/store'
 import {JWTPreviews, Server} from 'alinea/backend'
-import {IndexedDBData, IndexedDBDrafts} from 'alinea/backend.indexeddb'
+import {IndexedDBData, IndexedDBDrafts} from 'alinea/backend/indexeddb'
 import {Dashboard, Preview} from 'alinea/dashboard'
 import {DraftsStatus, useDrafts} from 'alinea/dashboard/hook/UseDrafts'
-import {useQuery} from 'alinea/shared/react-query'
 import {Loader, useObservable} from 'alinea/ui'
+import {useQuery} from 'alinea/vendor/react-query'
 import Head from 'next/head'
 import {ComponentType, useEffect, useMemo, useState} from 'react'
 import Frame, {useFrame} from 'react-frame-component'
-import DemoHome, {queryHome} from '../pages/home.js'
-import Recipe, {queryRecipe} from '../pages/recipes/[slug].js'
+import DemoHome, {queryHome} from '../pages/home'
+import Recipe, {queryRecipe} from '../pages/recipes/[slug]'
 
 export interface DemoProps {
   fullPage?: boolean

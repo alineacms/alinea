@@ -4,8 +4,8 @@ import {fromModule, HStack, Stack, VStack} from 'alinea/ui'
 import {IcRoundArrowForward} from 'alinea/ui/icons/IcRoundArrowForward'
 import Image from 'next/image'
 import Link from 'next/link'
-import {DemoText} from './DemoText.js'
-import {DemoTypo} from './DemoType.js'
+import {DemoText} from './DemoText'
+import {DemoTypo} from './DemoType'
 import css from './RecipeCard.module.scss'
 
 const styles = fromModule(css)
