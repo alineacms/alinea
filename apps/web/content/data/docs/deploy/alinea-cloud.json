@@ -84,7 +84,7 @@
         {
           "id": "dtl8cR9u7s98X_1erIweC",
           "type": "CodeBlock",
-          "code": "import {createCloudBackend} from '@alinea/cloud'\nexport const config = createConfig({\n  backend: createCloudBackend(),\n  ...config\n})",
+          "code": "import {createCloudBackend} from 'alinea/cloud'\nexport const config = createConfig({\n  backend: createCloudBackend(),\n  ...config\n})",
           "fileName": "alinea.config.tsx"
         },
         {

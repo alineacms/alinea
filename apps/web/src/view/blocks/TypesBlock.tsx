@@ -1,5 +1,5 @@
 import {Page} from '@alinea/content'
-import {px} from '@alinea/ui'
+import {px} from 'alinea/ui'
 import {Declaration} from '../types/Declaration'
 import {TypeRow} from '../types/TypeRow'
 

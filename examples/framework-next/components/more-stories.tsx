@@ -1,5 +1,4 @@
-import {BlogPost} from '../schema'
-import PostPreview from './post-preview'
+import PostPreview from './post-preview.js'
 
 type Props = {
   posts: BlogPost[]

@@ -1,4 +1,4 @@
-import {fromModule, RichText, RichTextProps} from '@alinea/ui'
+import {fromModule, RichText, RichTextProps} from 'alinea/ui'
 import reactStringReplace from 'react-string-replace'
 import css from './WebText.module.scss'
 import {WebTypo} from './WebTypo'

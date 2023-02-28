@@ -1,10 +1,9 @@
-import {RichText} from '@alinea/ui'
 import {TextDoc} from 'alinea'
+import {RichText} from 'alinea/ui'
 import Link from 'next/link'
-import type {Author} from '../schema'
-import Avatar from './avatar'
-import CoverImage from './cover-image'
-import DateFormatter from './date-formatter'
+import Avatar from './avatar.js'
+import CoverImage from './cover-image.js'
+import DateFormatter from './date-formatter.js'
 
 type Props = {
   title: string

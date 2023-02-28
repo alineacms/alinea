@@ -1,0 +1,25 @@
+@import 'alinea/ui/Typo.module.scss';
+
+.root {
+  &-editor > * {
+    display: block;
+    background: transparent;
+    border: none;
+    color: inherit;
+    font: inherit;
+    width: 100%;
+    resize: none;
+    padding: 9px 14px;
+    background: var(--alinea-fields);
+    box-shadow: var(--alinea-fields-shadow);
+    border-radius: 8px;
+    resize: none;
+    cursor: text;
+    line-height: 1.5;
+  }
+
+  &-editor.is-focus > * {
+    background: var(--alinea-fields-selected);
+    outline: 2px solid var(--alinea-fields-focus);
+  }
+}

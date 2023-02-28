@@ -1,0 +1,28 @@
+{
+  "name": "@alinea/backend.firestore",
+  "version": "0.0.0",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/alineacms/alinea.git"
+  },
+  "type": "module",
+  "exports": {
+    ".": "./dist/index.js",
+    "./*": "./dist/*.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "typesVersions": {
+    "*": {
+      "*": [
+        "./dist/*"
+      ]
+    }
+  },
+  "devDependencies": {
+    "firebase-admin": "^10.0.2"
+  }
+}

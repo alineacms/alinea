@@ -1,5 +1,5 @@
 import {Page} from '@alinea/content'
-import {fromModule} from '@alinea/ui'
+import {fromModule} from 'alinea/ui'
 import {ComponentType, Fragment} from 'react'
 import {WebText} from '../layout/WebText'
 import {ChapterLinkBlock} from './ChapterLinkBlock'

@@ -1,9 +1,9 @@
-import {createCloudBackend} from '@alinea/cloud'
-import {IcRoundInsertDriveFile} from '@alinea/ui/icons/IcRoundInsertDriveFile'
-import {IcRoundPermMedia} from '@alinea/ui/icons/IcRoundPermMedia'
 import {alinea, BrowserPreview, MediaSchema} from 'alinea'
-import {Author, BlogContainer, BlogPost, HomePage} from './schema'
-import {IcRoundPerson} from './schema/icons/ic-person'
+import {createCloudBackend} from 'alinea/cloud'
+import {IcRoundInsertDriveFile} from 'alinea/ui/icons/IcRoundInsertDriveFile'
+import {IcRoundPermMedia} from 'alinea/ui/icons/IcRoundPermMedia'
+import {Author, BlogContainer, BlogPost, HomePage} from './schema.js'
+import {IcRoundPerson} from './schema/icons/ic-person.js'
 
 const schema = alinea.schema({
   ...MediaSchema,

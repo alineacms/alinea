@@ -16,6 +16,6 @@
     "moduleResolution": "node",
     "incremental": true
   },
-  "include": ["next-env.d.ts", "src", "../../packages/env.d.ts"],
-  "exclude": []
+  "include": ["next-env.d.ts", "src", "alinea.config.tsx", "alinea.server.tsx"],
+  "exclude": ["node_modules"]
 }

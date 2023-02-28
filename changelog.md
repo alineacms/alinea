@@ -229,7 +229,7 @@
 
   ```ts
   // For any environment
-  import {registerPreview} from '@alinea/preview'
+  import {registerPreview} from 'alinea/preview'
   registerPreview({
     refetch() {
       // Reload server data
@@ -239,7 +239,7 @@
 
   ```ts
   // A react hook is available
-  import {usePreview} from '@alinea/preview/react'
+  import {usePreview} from 'alinea/preview/react'
   const {isPreviewing} = usePreview({
     refetch() {
       // Reload server data & redraw
@@ -249,7 +249,7 @@
 
   ```ts
   // A hook specifically for next.js, which refetches static/server props
-  import {useNextPreview} from '@alinea/preview/next'
+  import {useNextPreview} from 'alinea/preview/next'
   const {isPreviewing} = useNextPreview()
   ```
 
@@ -344,6 +344,6 @@
   tested yet and might require a few additional changes. The fetch api is
   polyfilled for node using @remix-run/web-fetch. Eventually node will support
   this natively.
-- Add an initial implementation of a date field (@alinea/input.date).
+- Add an initial implementation of a date field (@alinea/input/date).
   It currently uses the native browser input which represents dates as ISO8601.
 - The number field had an update to make it functional again.

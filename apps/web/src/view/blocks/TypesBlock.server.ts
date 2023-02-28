@@ -1,5 +1,5 @@
-import {Pages} from '@alinea/backend'
-import {Expr} from '@alinea/store'
+import {Pages} from 'alinea/backend'
+import {Expr} from 'alinea/store'
 import {typeInfo} from '../../data/Types'
 
 export function transformTypes(

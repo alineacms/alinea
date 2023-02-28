@@ -1,6 +1,6 @@
-import {type} from '@alinea/core'
-import {richText} from '@alinea/input.richtext'
-import {select} from '@alinea/input.select'
+import {type} from 'alinea/core'
+import {richText} from 'alinea/input/richtext'
+import {select} from 'alinea/input/select'
 
 export const NoticeBlockSchema = type('Notice', {
   level: select('Level', {

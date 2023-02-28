@@ -1,4 +1,4 @@
-import {fromModule} from '@alinea/ui'
+import {fromModule} from 'alinea/ui'
 import {cloneElement, forwardRef, PropsWithChildren, ReactElement} from 'react'
 import css from './Action.module.scss'
 

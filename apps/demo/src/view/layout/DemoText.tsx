@@ -1,4 +1,4 @@
-import {fromModule, RichText, RichTextProps} from '@alinea/ui'
+import {fromModule, RichText, RichTextProps} from 'alinea/ui'
 import css from './DemoText.module.scss'
 import {DemoTypo} from './DemoType'
 

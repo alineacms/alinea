@@ -1,6 +1,6 @@
 import type {JSONOutput} from 'typedoc'
-import type {NavItem} from '../view/layout/NavTree'
-import {types} from './types-data'
+import type {NavItem} from '../view/layout/NavTree.js'
+import {types} from './types-data.js'
 
 export function memberPath(name: string) {
   return name

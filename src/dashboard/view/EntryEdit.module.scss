@@ -1,0 +1,17 @@
+@import 'alinea/ui/style.scss';
+
+.root {
+  display: flex;
+  flex-direction: column;
+
+  &-draft {
+    padding: 12px;
+    @include ml {
+      padding: 35px 45px;
+    }
+    max-width: 1024px;
+    width: 100%;
+    margin: 0 auto;
+    flex-grow: 1;
+  }
+}

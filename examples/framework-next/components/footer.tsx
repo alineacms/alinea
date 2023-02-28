@@ -1,5 +1,5 @@
-import Container from './container'
-import { EXAMPLE_PATH } from '../lib/constants'
+import {EXAMPLE_PATH} from '../lib/constants.js'
+import Container from './container.js'
 
 const Footer = () => {
   return (

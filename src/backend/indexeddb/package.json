@@ -1,0 +1,7 @@
+{
+  "name": "@alinea/backend.indexeddb",
+  "type": "module",
+  "devDependencies": {
+    "lib0": "^0.2.42"
+  }
+}

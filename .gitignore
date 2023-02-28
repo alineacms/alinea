@@ -11,5 +11,5 @@ node_modules
 .env.cache*
 /.types
 /private
-.wireit
 .DS_Store
+*.tsbuildinfo

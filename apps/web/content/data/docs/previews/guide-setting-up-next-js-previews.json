@@ -170,7 +170,7 @@
         {
           "id": "o-xPn3iI3ihDl8212Av4f",
           "type": "CodeBlock",
-          "code": "import {useNextPreview} from '@alinea/preview/next'\nimport type {AppProps} from 'next/app'\n\nexport default function App({Component, pageProps}: AppProps) {\n  // If we're in an iframe listen to content changes and reload props\n  useNextPreview()\n\n  // This is just the minimal required view for _app,\n  // your implementation will likely be much different\n  return <Component {...pageProps} />\n}",
+          "code": "import {useNextPreview} from 'alinea/preview/next'\nimport type {AppProps} from 'next/app'\n\nexport default function App({Component, pageProps}: AppProps) {\n  // If we're in an iframe listen to content changes and reload props\n  useNextPreview()\n\n  // This is just the minimal required view for _app,\n  // your implementation will likely be much different\n  return <Component {...pageProps} />\n}",
           "fileName": "pages/app.tsx"
         }
       ]

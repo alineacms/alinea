@@ -1,6 +1,6 @@
 import {Page} from '@alinea/content'
-import {fromModule, HStack, Stack} from '@alinea/ui'
-import {IcRoundArrowBack} from '@alinea/ui/icons/IcRoundArrowBack'
+import {fromModule, HStack, Stack} from 'alinea/ui'
+import {IcRoundArrowBack} from 'alinea/ui/icons/IcRoundArrowBack'
 import Link from 'next/link'
 import {Blocks} from './blocks/Blocks'
 import css from './BlogPost.module.scss'

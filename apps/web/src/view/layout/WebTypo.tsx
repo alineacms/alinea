@@ -1,5 +1,5 @@
-import {createTypo} from '@alinea/ui/util/CreateTypo'
-import {fromModule} from '@alinea/ui/util/Styler'
+import {createTypo} from 'alinea/ui/util/CreateTypo'
+import {fromModule} from 'alinea/ui/util/Styler'
 import NextLink from 'next/link'
 import css from './WebTypo.module.scss'
 
