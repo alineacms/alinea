@@ -1,8 +1,8 @@
-import {type} from '@alinea/core'
-import {link} from '@alinea/input.link'
-import {richText} from '@alinea/input.richtext'
-import {select} from '@alinea/input.select'
-import {text} from '@alinea/input.text'
+import {type} from 'alinea/core'
+import {link} from 'alinea/input/link'
+import {richText} from 'alinea/input/richtext'
+import {select} from 'alinea/input/select'
+import {text} from 'alinea/input/text'
 
 export const ImagetextBlockSchema = type('Image & text', {
   image: link.image('Image', {type: 'image', width: 0.75}),

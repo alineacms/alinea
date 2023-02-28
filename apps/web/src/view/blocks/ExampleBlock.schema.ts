@@ -1,5 +1,5 @@
-import {type} from '@alinea/core'
-import {code} from '@alinea/input.code'
+import {type} from 'alinea/core'
+import {code} from 'alinea/input/code'
 import {transformToUrl} from './ExampleBlock.server'
 
 export const ExampleBlockSchema = type('Example', {

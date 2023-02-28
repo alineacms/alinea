@@ -1,7 +1,7 @@
-import {DashboardProvider, SessionProvider, Toolbar} from '@alinea/dashboard'
-import {createDemo} from '@alinea/dashboard/demo/DemoData'
-import {QueryClient, QueryClientProvider} from '@alinea/shared/react-query'
-import {fromModule, Viewport} from '@alinea/ui'
+import {DashboardProvider, SessionProvider, Toolbar} from 'alinea/dashboard'
+import {createDemo} from 'alinea/dashboard/demo/DemoData'
+import {QueryClient, QueryClientProvider} from 'alinea/shared/react-query'
+import {fromModule, Viewport} from 'alinea/ui'
 import {PropsWithChildren, useMemo} from 'react'
 import css from './CodeSample.module.scss'
 

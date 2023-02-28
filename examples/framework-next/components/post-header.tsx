@@ -1,8 +1,7 @@
-import type {Author} from '../schema'
-import Avatar from './avatar'
-import CoverImage from './cover-image'
-import DateFormatter from './date-formatter'
-import PostTitle from './post-title'
+import Avatar from './avatar.js'
+import CoverImage from './cover-image.js'
+import DateFormatter from './date-formatter.js'
+import PostTitle from './post-title.js'
 
 type Props = {
   title: string

@@ -1,5 +1,5 @@
-import type {Pages} from '@alinea/backend'
-import {Expr} from '@alinea/store'
+import type {Pages} from 'alinea/backend'
+import {Expr} from 'alinea/store'
 import lzstring from 'lz-string'
 
 export function transformToUrl(field: Expr<string>, pages: Pages<any>) {

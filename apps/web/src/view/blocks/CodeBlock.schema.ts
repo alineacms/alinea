@@ -1,10 +1,10 @@
-import {type} from '@alinea/core'
-import {check} from '@alinea/input.check'
-import {code} from '@alinea/input.code'
-import {tab, tabs} from '@alinea/input.tabs'
-import {text} from '@alinea/input.text'
-import {IcOutlineSettings} from '@alinea/ui/icons/IcOutlineSettings'
-import {IcRoundCode} from '@alinea/ui/icons/IcRoundCode'
+import {type} from 'alinea/core'
+import {check} from 'alinea/input/check'
+import {code} from 'alinea/input/code'
+import {tab, tabs} from 'alinea/input/tabs'
+import {text} from 'alinea/input/text'
+import {IcOutlineSettings} from 'alinea/ui/icons/IcOutlineSettings'
+import {IcRoundCode} from 'alinea/ui/icons/IcRoundCode'
 import {transformCode} from './CodeBlock.server'
 
 export const CodeBlockSchema = type(

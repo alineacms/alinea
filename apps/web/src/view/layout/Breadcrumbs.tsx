@@ -1,5 +1,5 @@
-import {Label} from '@alinea/core'
-import {fromModule, HStack, TextLabel} from '@alinea/ui'
+import {Label} from 'alinea/core'
+import {fromModule, HStack, TextLabel} from 'alinea/ui'
 import {Fragment} from 'react'
 import css from './Breadcrumbs.module.scss'
 

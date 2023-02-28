@@ -1,5 +1,5 @@
-import {fromModule} from '@alinea/ui'
-import {useLocalStorage} from '@alinea/ui/hook/UseLocalStorage'
+import {fromModule} from 'alinea/ui'
+import {useLocalStorage} from 'alinea/ui/hook/UseLocalStorage'
 import Head from 'next/head'
 import {HTMLAttributes, PropsWithChildren, ReactNode, useEffect} from 'react'
 import {FavIcon} from './branding/FavIcon'

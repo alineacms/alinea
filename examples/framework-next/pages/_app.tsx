@@ -1,4 +1,4 @@
-import {useNextPreview} from '@alinea/preview/next'
+import {useNextPreview} from 'alinea/preview/next'
 import {AppProps} from 'next/app'
 import '../styles/index.css'
 

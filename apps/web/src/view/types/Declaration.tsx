@@ -1,5 +1,5 @@
-import {fromModule, HStack, px} from '@alinea/ui'
-import {IcRoundKeyboardArrowRight} from '@alinea/ui/icons/IcRoundKeyboardArrowRight'
+import {fromModule, HStack, px} from 'alinea/ui'
+import {IcRoundKeyboardArrowRight} from 'alinea/ui/icons/IcRoundKeyboardArrowRight'
 import {ComponentType, Fragment, PropsWithChildren, ReactNode} from 'react'
 import type {JSONOutput} from 'typedoc'
 import css from './Declaration.module.scss'

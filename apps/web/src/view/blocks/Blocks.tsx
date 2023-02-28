@@ -1,5 +1,5 @@
 import {Page} from '@alinea/content'
-import {fromModule} from '@alinea/ui'
+import {fromModule} from 'alinea/ui'
 import {ComponentType} from 'react'
 import css from './Blocks.module.scss'
 import {ColumnsBlock} from './ColumnsBlock'

@@ -15,7 +15,6 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: '16'
-      - uses: google/wireit@setup-github-actions-caching/v1
       - uses: actions/cache@v3
         with:
           path: |
@@ -23,7 +22,6 @@ jobs:
             '**/node_modules'
           key: ${{ runner.os }}-yarn
       - run: yarn
-      - run: yarn type
       - if: startsWith(github.ref, 'refs/tags/v')
         run: |
           yarn bump ${GITHUB_REF#refs/tags/v}

@@ -1,4 +1,4 @@
-import {RichText} from '@alinea/ui'
+import {RichText} from 'alinea/ui'
 import {TextDoc} from 'alinea'
 import markdownStyles from './markdown-styles.module.css'
 

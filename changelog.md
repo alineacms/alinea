@@ -2,6 +2,17 @@
 
 ## [Unreleased]
 
+- Added the step property to the number fields. It specifies the interval
+  between legal numbers in the input field. Default is 1.
+
+## [0.3.2]
+
+- Fixed the TypeScript type of the Select input (#282)
+- Moved the `Preview` and `BrowserPreview` exports from the `alinea` package
+  to `@alinea/preview`. This should help import the alinea config within in
+  restrictive environments such as Next 13 which will throw a compile error if
+  any browser code is imported. This will likely be tweaked in future releases.
+
 ## [0.3.1]
 
 - Fix the `@alinea/preview/remix` preview hook
@@ -218,7 +229,7 @@
 
   ```ts
   // For any environment
-  import {registerPreview} from '@alinea/preview'
+  import {registerPreview} from 'alinea/preview'
   registerPreview({
     refetch() {
       // Reload server data
@@ -228,7 +239,7 @@
 
   ```ts
   // A react hook is available
-  import {usePreview} from '@alinea/preview/react'
+  import {usePreview} from 'alinea/preview/react'
   const {isPreviewing} = usePreview({
     refetch() {
       // Reload server data & redraw
@@ -238,7 +249,7 @@
 
   ```ts
   // A hook specifically for next.js, which refetches static/server props
-  import {useNextPreview} from '@alinea/preview/next'
+  import {useNextPreview} from 'alinea/preview/next'
   const {isPreviewing} = useNextPreview()
   ```
 
@@ -333,6 +344,6 @@
   tested yet and might require a few additional changes. The fetch api is
   polyfilled for node using @remix-run/web-fetch. Eventually node will support
   this natively.
-- Add an initial implementation of a date field (@alinea/input.date).
+- Add an initial implementation of a date field (@alinea/input/date).
   It currently uses the native browser input which represents dates as ISO8601.
 - The number field had an update to make it functional again.

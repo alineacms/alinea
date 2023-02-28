@@ -1,5 +1,5 @@
 import {Page} from '@alinea/content'
-import {fromModule, HStack} from '@alinea/ui'
+import {fromModule, HStack} from 'alinea/ui'
 import {
   createContext,
   PropsWithChildren,

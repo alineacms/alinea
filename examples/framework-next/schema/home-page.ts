@@ -1,4 +1,4 @@
-import {Entry} from '@alinea/core'
+import {Entry} from 'alinea/core'
 import alinea from 'alinea'
 
 export const HomePage = alinea.type('Homepage', {

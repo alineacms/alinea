@@ -1,5 +1,5 @@
 import {Page} from '@alinea/content'
-import {fromModule} from '@alinea/ui'
+import {fromModule} from 'alinea/ui'
 import css from './ExampleBlock.module.scss'
 
 const styles = fromModule(css)

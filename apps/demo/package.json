@@ -1,16 +1,16 @@
 {
   "private": true,
   "name": "@alinea/demo",
-  "version": "0.0.0",
+  "version": "0.4.0",
   "license": "MIT",
   "scripts": {
-    "dev": "yarn build:packages && alinea serve -- next dev",
-    "generate": "yarn build:packages && alinea generate",
-    "build": "yarn build:packages && alinea generate -- next build",
+    "dev": "yarn build:alinea && alinea serve -- next dev",
+    "generate": "yarn build:alinea && alinea generate",
+    "build": "yarn build:alinea && alinea generate -- next build",
     "start": "next start"
   },
   "dependencies": {
-    "@alinea/content": "link:./.alinea",
+    "@alinea/content": "link:.alinea",
     "alinea": "0.0.0",
     "include-media": "^1.4.10",
     "next": "^12.2.5",
@@ -21,7 +21,6 @@
   "devDependencies": {
     "@svgr/webpack": "^6.3.1",
     "@types/react": "^18.0.5",
-    "@types/react-dom": "^18.0.0",
-    "wireit": "^0.7.1"
+    "@types/react-dom": "^18.0.0"
   }
 }

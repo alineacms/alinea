@@ -1,13 +1,13 @@
-import Alert from './alert'
-import Footer from './footer'
-import Meta from './meta'
+import Alert from './alert.js'
+import Footer from './footer.js'
+import Meta from './meta.js'
 
 type Props = {
   preview?: boolean
   children: React.ReactNode
 }
 
-const Layout = ({ preview, children }: Props) => {
+const Layout = ({preview, children}: Props) => {
   return (
     <>
       <Meta />

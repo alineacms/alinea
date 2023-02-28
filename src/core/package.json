@@ -1,0 +1,8 @@
+{
+  "name": "@alinea/core",
+  "type": "module",
+  "devDependencies": {
+    "pretty-ms": "^8.0.0",
+    "yjs": "^13.5.47"
+  }
+}

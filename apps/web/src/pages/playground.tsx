@@ -1,4 +1,4 @@
-import {Loader} from '@alinea/ui'
+import {Loader} from 'alinea/ui'
 import dynamic from 'next/dynamic'
 import {Suspense} from 'react'
 

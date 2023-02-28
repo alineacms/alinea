@@ -1,8 +1,8 @@
 import {Page} from '@alinea/content'
 import {initPages} from '@alinea/content/pages'
-import {RichText} from '@alinea/ui'
 import {json, LoaderArgs} from '@remix-run/node'
 import {useLoaderData} from '@remix-run/react'
+import {RichText} from 'alinea/ui'
 
 export async function loader({request}: LoaderArgs) {
   const previewToken = request.url.slice(request.url.indexOf('?') + 1)

@@ -1,4 +1,4 @@
-import {usePreview} from '@alinea/preview/remix'
+import {usePreview} from 'alinea/preview/remix'
 import type {MetaFunction} from '@remix-run/node'
 import {
   Links,

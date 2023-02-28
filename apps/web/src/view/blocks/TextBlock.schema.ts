@@ -1,5 +1,5 @@
-import {schema, type} from '@alinea/core'
-import {richText} from '@alinea/input.richtext'
+import {schema, type} from 'alinea/core'
+import {richText} from 'alinea/input/richtext'
 import {ChapterLinkBlockSchema} from './ChapterLinkBlock.schema'
 import {CodeBlockSchema} from './CodeBlock.schema'
 import {CodeVariantsBlockSchema} from './CodeVariantsBlock.schema'

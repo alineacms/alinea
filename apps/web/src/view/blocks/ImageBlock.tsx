@@ -1,5 +1,5 @@
 import {Page} from '@alinea/content'
-import {fromModule} from '@alinea/ui'
+import {fromModule} from 'alinea/ui'
 import {decode} from 'blurhash'
 // import Image from 'next/image'
 import {ComponentType, Fragment, useMemo} from 'react'

@@ -1,4 +1,4 @@
-import {fromModule} from '@alinea/ui'
+import {fromModule} from 'alinea/ui'
 import NextImage, {ImageProps as NextImageProps} from 'next/image'
 import css from './Image.module.scss'
 

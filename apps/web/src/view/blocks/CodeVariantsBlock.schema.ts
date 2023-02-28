@@ -1,9 +1,9 @@
-import {schema, type} from '@alinea/core'
-import {code} from '@alinea/input.code'
-import {list} from '@alinea/input.list'
-import {select} from '@alinea/input.select'
-import {text} from '@alinea/input.text'
-import {IcRoundCode} from '@alinea/ui/icons/IcRoundCode'
+import {schema, type} from 'alinea/core'
+import {code} from 'alinea/input/code'
+import {list} from 'alinea/input/list'
+import {select} from 'alinea/input/select'
+import {text} from 'alinea/input/text'
+import {IcRoundCode} from 'alinea/ui/icons/IcRoundCode'
 import {transformCode} from './CodeBlock.server'
 
 export const CodeVariants = list('Variants', {
