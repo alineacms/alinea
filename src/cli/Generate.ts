@@ -66,7 +66,6 @@ export async function* generate(options: GenerateOptions) {
   await copyStaticFiles(context)
   while (true) {
     const {done} = await nextBuild
-    if (done) break
     const config = await loadConfig(context)
     await generatePackage(context, config)
     nextBuild = builds.next()
@@ -77,5 +76,6 @@ export async function* generate(options: GenerateOptions) {
         onAfterGenerate()
       }
     }
+    if (done) break
   }
 }

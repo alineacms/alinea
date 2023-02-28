@@ -77,6 +77,7 @@ export function compileConfig({
               console.log('> config has errors')
             } else {
               results.emit(res)
+              if (!watch) results.return()
             }
           })
         }
@@ -84,9 +85,10 @@ export function compileConfig({
     ],
     tsconfig
   }
-  esbuild.context(config).then(context => {
-    if (!watch) context.rebuild()
-    else context.watch()
-  })
+  if (watch) {
+    esbuild.context(config).then(context => context.watch())
+  } else {
+    esbuild.build(config)
+  }
   return results
 }

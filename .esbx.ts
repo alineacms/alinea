@@ -133,7 +133,6 @@ export const clean = {
   }
 }
 
-import {StaticPlugin} from '@esbx/static'
 import {findNodeModules} from '@esbx/util'
 import {getManifest} from '@esbx/workspaces'
 import crypto from 'crypto'
@@ -191,11 +190,6 @@ export const TestTask = {
       banner: {
         js: `import "data:text/javascript,process.argv.push('.bin/uvu')" // Trigger isCLI`
       },
-      plugins: list(
-        StaticPlugin.configure({
-          sources: modules
-        })
-      ),
       stdin: {
         contents: entry,
         resolveDir: process.cwd(),
