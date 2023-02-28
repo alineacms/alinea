@@ -1,1 +1,1 @@
-export * from '#view/input/path/PathField.view.js'
+export * from 'alinea/input/path/PathField'

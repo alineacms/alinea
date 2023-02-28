@@ -1,6 +1,6 @@
 import {uiDecorator, UIStory} from 'alinea/ui/UIStory'
 import {useState} from 'react'
-import {UrlPickerForm} from './UrlPicker.view.js'
+import {UrlPickerForm} from './UrlPicker.browser.js'
 
 export function PickerForm() {
   const [open, setOpen] = useState(true)

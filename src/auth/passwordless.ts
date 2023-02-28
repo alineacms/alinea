@@ -1,9 +1,9 @@
 import {
   PasswordLessAuth,
   PasswordLessAuthOptions
-} from 'alinea/auth/passwordless/server/PasswordLessAuth'
+} from 'alinea/auth/passwordless/PasswordLessAuth'
 import {Auth} from 'alinea/core'
-import {PasswordLessLogin} from './PasswordLessLogin.js'
+import {PasswordLessLogin} from './passwordLess/PasswordLessLogin.js'
 
 export type PasswordLess = PasswordLessAuthOptions
 

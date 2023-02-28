@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "build": "yarn build:alinea && yarn gen:bundleTs && alinea generate -- next build",
+    "build": "yarn build:alinea && alinea generate -- next build",
     "dev": "cross-env FORCE_COLOR=1 next dev",
     "generate": "yarn build:alinea && alinea generate --fix",
     "gen:types": "cd ../.. && typedoc --json apps/web/src/data/types.json",

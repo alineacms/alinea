@@ -1,1 +1,1 @@
-export * from '#view/input/tabs/Tabs.view.js'
+export * from 'alinea/input/tabs/Tabs'

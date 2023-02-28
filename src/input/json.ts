@@ -1,1 +1,1 @@
-export * from '#view/input/json/JsonField.view.js'
+export * from 'alinea/input/json/JsonField'

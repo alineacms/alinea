@@ -2,7 +2,7 @@ import {dashboardDecorator} from 'alinea/dashboard/DashboardStory'
 import {useField} from 'alinea/editor'
 import {InputField} from 'alinea/editor/view/InputField'
 import {VStack} from 'alinea/ui'
-import {number} from './NumberField.view.js'
+import {number} from './NumberField.browser.js'
 
 export function NumberInput() {
   const defaultNumberInput = useField(number('Number', {}))

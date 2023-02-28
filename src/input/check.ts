@@ -1,1 +1,1 @@
-export * from '#view/input/check/CheckField.view.js'
+export * from 'alinea/input/check/CheckField'

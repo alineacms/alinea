@@ -1,1 +1,1 @@
-export * from '#view/input/object/ObjectField.view.js'
+export * from 'alinea/input/object/ObjectField'

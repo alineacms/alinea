@@ -1,1 +1,1 @@
-export * from '#view/input/date/DateField.view.js'
+export * from 'alinea/input/date/DateField'

@@ -1,1 +1,1 @@
-export * from '#view/picker/entry/EntryPicker.view.js'
+export * from 'alinea/picker/entry/EntryPicker'

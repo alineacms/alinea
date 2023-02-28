@@ -1,1 +1,1 @@
-export * from '#view/input/link/LinkField.view.js'
+export * from 'alinea/input/link/LinkField'

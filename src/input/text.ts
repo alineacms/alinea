@@ -1,1 +1,1 @@
-export * from '#view/input/text/TextField.view.js'
+export * from 'alinea/input/text/TextField'

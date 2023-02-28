@@ -5,11 +5,11 @@ import type {BuildOptions} from 'esbuild'
 import {build} from 'esbuild'
 import fs from 'fs-extra'
 import glob from 'glob'
+import {bundleTsPlugin} from './src/dev/bundle-ts.js'
 import {cssPlugin} from './src/dev/css.js'
 import {internalPlugin} from './src/dev/internal.js'
 import {resolvePlugin} from './src/dev/resolve'
 import {sassPlugin} from './src/dev/sass.js'
-import {viewsPlugin} from './src/dev/views.js'
 
 export {VersionTask} from '@esbx/workspaces'
 export * from './src/dev/bundle-ts.js'
@@ -19,7 +19,8 @@ const buildOptions: BuildOptions = {
   format: 'esm',
   plugins: [sassPlugin],
   loader: {
-    '.woff2': 'copy'
+    '.woff2': 'copy',
+    '.d.ts': 'copy'
   }
 }
 
@@ -58,12 +59,12 @@ function release({
       if (!fs.existsSync('./dist/index.d.ts')) await createTypes()
       const cwd = process.cwd()
       const entryPoints = glob
-        .sync('src/**/*.{ts,tsx}', {cwd})
+        .sync('src/**/*.{ts,tsx,js}', {cwd})
         .filter(entry => {
+          if (entry.includes('/static/')) return false
           if (entry.endsWith('.test.ts') || entry.endsWith('.test.tsx'))
             return false
           if (entry.endsWith('.stories.tsx')) return false
-          if (entry.endsWith('.d.ts')) return false
           return true
         })
       const staticFolders = glob.sync('src/**/static', {cwd})
@@ -86,12 +87,12 @@ function release({
         plugins: list(
           buildOptions.plugins,
           cssPlugin,
-          viewsPlugin,
           internalPlugin,
           resolvePlugin,
           options.silent
             ? undefined
             : ReporterPlugin.configure({name: 'alinea'}),
+          bundleTsPlugin,
           config.plugins
         )
       })

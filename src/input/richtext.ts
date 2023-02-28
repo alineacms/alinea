@@ -1,1 +1,1 @@
-export * from '#view/input/richtext/RichTextField.view.js'
+export * from 'alinea/input/richtext/RichTextField'

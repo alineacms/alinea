@@ -1,1 +1,1 @@
-export * from '#view/input/number/NumberField.view.js'
+export * from 'alinea/input/number/NumberField'

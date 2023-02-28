@@ -1,1 +1,1 @@
-export * from '#view/cloud/Cloud.view.js'
+export * from 'alinea/cloud/Cloud'

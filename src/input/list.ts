@@ -1,1 +1,1 @@
-export * from '#view/input/list/ListField.view.js'
+export * from 'alinea/input/list/ListField'

@@ -7,8 +7,5 @@
   "devDependencies": {
     "@types/nodemailer": "^6.4.4",
     "nodemailer": "^6.6.5"
-  },
-  "peerDependencies": {
-    "react": "*"
   }
 }

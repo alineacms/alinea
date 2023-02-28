@@ -1,1 +1,1 @@
-export * from '#view/picker/url/UrlPicker.view.js'
+export * from 'alinea/picker/url/UrlPicker'

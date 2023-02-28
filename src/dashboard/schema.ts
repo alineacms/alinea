@@ -1,1 +1,1 @@
-export * from '#view/dashboard/schema/MediaSchema.view.js'
+export * from 'alinea/dashboard/schema/MediaSchema'
