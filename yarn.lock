@@ -12,8 +12,6 @@ __metadata:
     "@types/nodemailer": ^6.4.4
     nodemailer: ^6.6.5
     superstruct: ^0.15.4
-  peerDependencies:
-    react: "*"
   languageName: unknown
   linkType: soft
 
