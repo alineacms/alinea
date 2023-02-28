@@ -7,13 +7,17 @@ interface ToWatch {
 
 // Re-use the esbuild watch service which is not exposed to the api
 export async function createWatcher(watch: ToWatch, onChange: () => void) {
+  let initial = true
   const watcher: Plugin = {
     name: 'watcher',
     setup(build) {
       build.onResolve({filter: /^watch$/}, args => {
         return {external: true, watchFiles: watch.files, watchDirs: watch.dirs}
       })
-      build.onStart(onChange)
+      build.onStart(() => {
+        if (initial) initial = false
+        else onChange()
+      })
     }
   }
   const context = await esbuild.context({
