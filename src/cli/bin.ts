@@ -1,6 +1,6 @@
 import sade from 'sade'
-const version = '0.0.0'
-// import {version} from '../../package.json'
+// @ts-ignore
+import {version} from '../../package.json'
 import {ensureEnv} from './util/EnsureEnv.js'
 import {ensureNodeResolution} from './util/EnsureNodeResolution.js'
 import {ensureReact} from './util/EnsureReact.js'

@@ -1,5 +1,5 @@
 import {ReporterPlugin} from '@esbx/reporter'
-import {list} from '@esbx/util'
+import {list, report} from '@esbx/util'
 import {spawn} from 'child_process'
 import type {BuildOptions} from 'esbuild'
 import {build} from 'esbuild'
@@ -11,7 +11,15 @@ import {internalPlugin} from './src/dev/internal.js'
 import {resolvePlugin} from './src/dev/resolve'
 import {sassPlugin} from './src/dev/sass.js'
 
-export {VersionTask} from '@esbx/workspaces'
+export const VersionTask = {
+  command: 'version <semver>',
+  action(semver) {
+    const root = getManifest('.')
+    root.version = semver
+    fs.writeFileSync('package.json', JSON.stringify(root, null, 2) + '\n')
+    report(`bumped version to ${semver}`, false)
+  }
+}
 
 const buildOptions: BuildOptions = {
   jsx: 'automatic',
@@ -58,7 +66,7 @@ function release({
       if (!fs.existsSync('./dist/index.d.ts')) await createTypes()
       const cwd = process.cwd()
       const entryPoints = glob
-        .sync('src/**/*.{ts,tsx,js}', {cwd})
+        .sync('src/**/*.{ts,tsx,js,woff2}', {cwd})
         .filter(entry => {
           if (entry.includes('/static/')) return false
           if (entry.endsWith('.test.ts') || entry.endsWith('.test.tsx'))
@@ -131,6 +139,7 @@ export const clean = {
 
 import {StaticPlugin} from '@esbx/static'
 import {findNodeModules} from '@esbx/util'
+import {getManifest} from '@esbx/workspaces'
 import crypto from 'crypto'
 import path from 'path'
 
