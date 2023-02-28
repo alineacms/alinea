@@ -25,6 +25,7 @@ function NumberInput({state, field}: NumberInputProps) {
     width,
     minValue,
     maxValue,
+    readonly,
     step
   } = field.options
   const [value = initialValue, setValue] = useInput(state)
@@ -52,6 +53,7 @@ function NumberInput({state, field}: NumberInputProps) {
         }
         min={minValue}
         max={maxValue}
+        disabled={readonly}
         step={step || 1}
       />
     </InputLabel>

@@ -1,13 +1,13 @@
 import {Field, Label, Shape} from 'alinea/core'
 import {Hint} from 'alinea/core/Hint'
 
-/** Optional settings to configure a text field */
+/** Optional settings to configure a hidden field */
 export type HiddenOptions<T> = {
   /** A default value */
   initialValue?: T
 }
 
-/** Internal representation of a text field */
+/** Internal representation of a hidden field */
 export interface HiddenField<T> extends Field.Scalar<T> {
   label: Label
 }

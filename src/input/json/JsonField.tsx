@@ -21,6 +21,8 @@ export type JsonOptions = {
   autoFocus?: boolean
   /** Hide this json field */
   hidden?: boolean
+  /** Make this json field read-only*/
+  readonly?: boolean
 }
 
 /** Internal representation of a text field */

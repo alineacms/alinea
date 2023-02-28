@@ -18,6 +18,11 @@
     box-shadow: var(--alinea-fields-shadow);
     border-radius: 4px;
 
+    &.is-disabled {
+      cursor: default;
+      opacity: 0.6;
+    }
+
     &-icon {
       position: absolute;
       width: 100%;
@@ -37,5 +42,10 @@
     cursor: pointer;
     align-self: center;
     user-select: none;
+
+    &.is-disabled {
+      cursor: default;
+      opacity: 0.6;
+    }
   }
 }

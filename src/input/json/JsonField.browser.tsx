@@ -30,7 +30,8 @@ function JsonInput({state, field}: JsonInputProps) {
     help,
     iconLeft: IconLeft,
     iconRight: IconRight,
-    autoFocus
+    autoFocus,
+    readonly
   } = field.options
 
   // Todo: unlocalise
@@ -44,7 +45,7 @@ function JsonInput({state, field}: JsonInputProps) {
       setValue(newValue)
       setValid(true)
     } catch (e) {
-      setValid(false)
+      setValid(text ? false : true)
     }
   }, [text])
 
@@ -91,6 +92,7 @@ function JsonInput({state, field}: JsonInputProps) {
           }}
           placeholder={placeholder}
           autoFocus={autoFocus}
+          disabled={readonly}
         />
         {IconRight && <IconRight />}
       </HStack>

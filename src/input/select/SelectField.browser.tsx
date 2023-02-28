@@ -28,7 +28,7 @@ type SelectInputProps<T extends string> = {
 }
 
 function SelectInput<T extends string>({state, field}: SelectInputProps<T>) {
-  const {width, optional, help, placeholder, inline, initialValue} =
+  const {width, optional, help, placeholder, inline, initialValue, readonly} =
     field.options
   const [value = initialValue, setValue] = useInput(state)
   const items = field.items as Record<string, Label>
@@ -60,7 +60,7 @@ function SelectInput<T extends string>({state, field}: SelectInputProps<T>) {
       icon={IcRoundArrowDropDownCircle}
     >
       <div className={styles.root()}>
-        <Listbox value={value} onChange={setValue}>
+        <Listbox value={value} onChange={setValue} disabled={readonly}>
           {({open}) => (
             <div>
               <Listbox.Button

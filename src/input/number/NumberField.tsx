@@ -17,6 +17,8 @@ export type NumberOptions = {
   maxValue?: number
   /** Hide this number field */
   hidden?: boolean
+  /** Make this number field read-only */
+  readonly?: boolean
   /** Specifies the legal number intervals */
   step?: number
 }

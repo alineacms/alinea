@@ -22,4 +22,9 @@
     background: var(--alinea-fields-selected);
     outline: 2px solid var(--alinea-fields-focus);
   }
+
+  &-editor.is-readonly > * {
+    opacity: 0.6;
+    cursor: default;
+  }
 }

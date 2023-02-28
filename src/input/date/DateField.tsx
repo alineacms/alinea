@@ -16,6 +16,8 @@ export type DateOptions = {
   autoFocus?: boolean
   /** Hide this date field */
   hidden?: boolean
+  /** Make this date field read-only*/
+  readonly?: boolean
 }
 
 /** Internal representation of a date field */

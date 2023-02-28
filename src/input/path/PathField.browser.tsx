@@ -17,7 +17,7 @@ type PathInputProps = {
 }
 
 function PathInput({state, field}: PathInputProps) {
-  const {width, from = 'title', help, optional} = field.options
+  const {width, from = 'title', help, optional, readonly} = field.options
   const [focus, setFocus] = useState(false)
   const parentState = state.parent()
   if (!parentState) throw 'Parent state not found'
@@ -52,6 +52,7 @@ function PathInput({state, field}: PathInputProps) {
         onFocus={() => setFocus(true)}
         onBlur={() => setFocus(false)}
         placeholder={' '}
+        disabled={readonly}
       />
     </InputLabel>
   )

@@ -21,5 +21,9 @@
       background: var(--alinea-fields-selected);
       outline: 2px solid var(--alinea-fields-focus);
     }
+
+    &:disabled {
+      opacity: 0.6;
+    }
   }
 }

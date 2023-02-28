@@ -17,7 +17,8 @@ type DateInputProps = {
 }
 
 function DateInput({state, field}: DateInputProps) {
-  const {width, inline, optional, help, autoFocus, initialValue} = field.options
+  const {width, inline, optional, help, autoFocus, initialValue, readonly} =
+    field.options
   const [value = initialValue, setValue] = useInput(state)
 
   return (
@@ -36,6 +37,7 @@ function DateInput({state, field}: DateInputProps) {
         value={value || ''}
         onChange={e => setValue(e.currentTarget.value)}
         autoFocus={autoFocus}
+        disabled={readonly}
       />
     </InputLabel>
   )

@@ -13,6 +13,8 @@ export type CodeFieldOptions<Q> = {
   transform?: (field: Expr<string>, pages: Pages<any>) => Expr<Q> | undefined
   /** Hide this code field */
   hidden?: boolean
+  /** Make this code field read-only*/
+  readonly?: boolean
 }
 
 export interface CodeField<Q = string> extends Field.Scalar<string, Q> {

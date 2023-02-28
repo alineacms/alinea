@@ -25,7 +25,7 @@ type CodeInputProps = {
 function CodeInput({state, field}: CodeInputProps) {
   const [value, setValue] = useInput(state)
   const [focus, setFocus] = useState(false)
-  const {width, inline, optional, help, language} = field.options
+  const {width, inline, optional, help, readonly} = field.options
 
   // Todo: unlocalise
   const placeholder = inline ? String(field.label) : ''
@@ -52,6 +52,7 @@ function CodeInput({state, field}: CodeInputProps) {
           onBlur={() => setFocus(false)}
           placeholder={placeholder}
           spellCheck="false"
+          disabled={readonly}
         />
       </HStack>
     </InputLabel>

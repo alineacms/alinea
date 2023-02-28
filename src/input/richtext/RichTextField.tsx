@@ -32,6 +32,8 @@ export type RichTextOptions<T, Q> = {
   initialValue?: TextDoc<T>
   /** Hide this rich text field */
   hidden?: boolean
+  /** Make this rich text field read-only */
+  readonly?: boolean
 }
 
 /** Internal representation of a rich text field */

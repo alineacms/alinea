@@ -4,7 +4,8 @@ import {fromModule, HStack, Icon, TextLabel} from 'alinea/ui'
 import {IcRoundCheck} from 'alinea/ui/icons/IcRoundCheck'
 import {IcRoundTextFields} from 'alinea/ui/icons/IcRoundTextFields'
 import {useState} from 'react'
-import {check as createCheck, CheckField} from './CheckField.js'
+import {CheckField} from './CheckField'
+import {check as createCheck} from './CheckField.js'
 import css from './CheckInput.module.scss'
 
 export * from './CheckField.js'
@@ -19,8 +20,16 @@ type CheckInputProps = {
 }
 
 function CheckInput({state, field}: CheckInputProps) {
-  const {label, width, inline, optional, help, autoFocus, initialValue} =
-    field.options
+  const {
+    label,
+    width,
+    inline,
+    optional,
+    help,
+    autoFocus,
+    initialValue,
+    readonly
+  } = field.options
   const [value = initialValue, setValue] = useInput(state)
   const [focus, setFocus] = useState(false)
   // Todo: unlocalise
@@ -45,8 +54,9 @@ function CheckInput({state, field}: CheckInputProps) {
           onFocus={() => setFocus(true)}
           onBlur={() => setFocus(false)}
           autoFocus={autoFocus}
+          disabled={readonly}
         />
-        <span className={styles.root.checkmark()}>
+        <span className={styles.root.checkmark({disabled: readonly})}>
           {value && (
             <Icon
               size={20}
@@ -57,7 +67,7 @@ function CheckInput({state, field}: CheckInputProps) {
         </span>
         <TextLabel
           label={label || field.label}
-          className={styles.root.label()}
+          className={styles.root.label({disabled: readonly})}
         />
       </HStack>
     </InputLabel>
