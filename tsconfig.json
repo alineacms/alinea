@@ -15,8 +15,7 @@
     "jsx": "react-jsx",
     "plugins": [{"name": "typescript-plugin-css-modules"}],
     "paths": {
-      "alinea/*": ["./src/*.js", "./src/*"],
-      "#view/*": ["./src/*"]
+      "alinea/*": ["./src/*.js", "./src/*"]
     },
     "rootDir": "src"
   },

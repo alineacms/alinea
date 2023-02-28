@@ -6,7 +6,7 @@
   "todo-tree.general.tags": ["Todo"],
   "typescript.tsdk": "./node_modules/typescript/lib",
   "typescript.preferences.importModuleSpecifierEnding": "js",
-  "typescript.preferences.importModuleSpecifier": "shortest",
+  "typescript.preferences.importModuleSpecifier": "project-relative",
   "editor.codeActionsOnSave": {
     "source.organizeImports": true
   },

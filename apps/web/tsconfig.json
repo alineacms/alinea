@@ -14,8 +14,10 @@
     "jsx": "preserve",
     "skipLibCheck": true,
     "moduleResolution": "node",
-    "incremental": true
+    "incremental": true,
+    "paths": {
+      "alinea/*": ["../../src/*.js", "../../src/*"]
+    }
   },
-  "include": ["next-env.d.ts", "src", "alinea.config.tsx", "alinea.server.tsx"],
-  "exclude": []
+  "include": ["next-env.d.ts", "src", "alinea.config.tsx", "alinea.server.tsx"]
 }

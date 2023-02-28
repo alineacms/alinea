@@ -12,7 +12,6 @@ import {resolvePlugin} from './src/dev/resolve'
 import {sassPlugin} from './src/dev/sass.js'
 
 export {VersionTask} from '@esbx/workspaces'
-export * from './src/dev/bundle-ts.js'
 
 const buildOptions: BuildOptions = {
   jsx: 'automatic',
