@@ -13,18 +13,15 @@ export async function createWatcher(watch: ToWatch, onChange: () => void) {
       build.onResolve({filter: /^watch$/}, args => {
         return {external: true, watchFiles: watch.files, watchDirs: watch.dirs}
       })
+      build.onStart(onChange)
     }
   }
-  const initial = await esbuild.build({
+  const context = await esbuild.context({
     bundle: true,
     stdin: {contents: "import 'watch'"},
     plugins: [watcher],
-    watch: {
-      onRebuild(error, result) {
-        onChange()
-      }
-    },
     write: false
   })
-  return initial.stop!
+  context.watch()
+  return context.dispose
 }

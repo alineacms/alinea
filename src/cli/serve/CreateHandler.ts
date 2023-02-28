@@ -1,7 +1,8 @@
 import {ReadableStream, Request, Response, TextEncoderStream} from '@alinea/iso'
 import {router} from 'alinea/backend/router/Router'
+import {Trigger, trigger} from 'alinea/core'
 import semver from 'compare-versions'
-import esbuild, {BuildResult} from 'esbuild'
+import esbuild, {BuildOptions, BuildResult} from 'esbuild'
 import fs from 'node:fs'
 import {createRequire} from 'node:module'
 import path from 'node:path'
@@ -78,53 +79,59 @@ export function createHandler(
   const entry = `alinea/cli/static/dashboard/dev`
   const altConfig = path.join(cwd, 'tsconfig.alinea.json')
   const tsconfig = fs.existsSync(altConfig) ? altConfig : undefined
+  let currentBuild: Trigger<BuildDetails> = trigger<BuildDetails>(),
+    initial = true
 
-  let frontend: Promise<BuildDetails | undefined> = esbuild
-    .build({
-      format: 'esm',
-      target: 'esnext',
-      treeShaking: true,
-      minify: true,
-      splitting: true,
-      sourcemap: true,
-      outdir: devDir,
-      bundle: true,
-      absWorkingDir: cwd,
-      entryPoints: {
-        config: path.join(cwd, '.alinea/config.js'),
-        entry
-      },
-      inject: [path.join(staticDir, `render/render-${react}.js`)],
-      platform: 'browser',
-      ...buildOptions,
-      plugins: buildOptions?.plugins || [],
-      define: {
-        'process.env.NODE_ENV': production ? "'production'" : "'development'",
-        ...publicDefines(process.env)
-      },
-      logOverride: {
-        'ignored-bare-import': 'silent'
-      },
-      tsconfig,
-      write: false,
-      watch: alineaDev
-        ? {
-            onRebuild(_, result) {
-              if (result) {
-                frontend = Promise.resolve(buildFiles(devDir, result))
-                liveReload.reload('reload')
-              }
-            }
-          }
-        : undefined
-    })
-    .then(result => buildFiles(devDir, result))
-    .catch(() => undefined)
+  const config = {
+    format: 'esm',
+    target: 'esnext',
+    treeShaking: true,
+    minify: true,
+    splitting: true,
+    sourcemap: true,
+    outdir: devDir,
+    bundle: true,
+    absWorkingDir: cwd,
+    entryPoints: {
+      config: path.join(cwd, '.alinea/config.js'),
+      entry
+    },
+    inject: [path.join(staticDir, `render/render-${react}.js`)],
+    platform: 'browser',
+    ...buildOptions,
+    plugins: buildOptions?.plugins || [],
+    define: {
+      'process.env.NODE_ENV': production ? "'production'" : "'development'",
+      ...publicDefines(process.env)
+    },
+    logOverride: {
+      'ignored-bare-import': 'silent'
+    },
+    tsconfig,
+    write: false
+  } satisfies BuildOptions
+
+  config.plugins.push({
+    name: 'files',
+    setup(build) {
+      build.onStart(() => {
+        if (initial) initial = false
+        else currentBuild = trigger<BuildDetails>()
+      })
+      build.onEnd(result => {
+        currentBuild.resolve(buildFiles(devDir, result))
+        if (alineaDev) liveReload.reload('reload')
+      })
+    }
+  })
+
+  if (alineaDev) esbuild.context(config).then(ctx => ctx.watch())
+  else esbuild.build(config)
 
   async function serveBrowserBuild(
     request: Request
   ): Promise<Response | undefined> {
-    let result = await frontend
+    let result = await currentBuild
     if (!result) return new Response('Build failed', {status: 500})
     const url = new URL(request.url)
     const fileName = url.pathname.toLowerCase()

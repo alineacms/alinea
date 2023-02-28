@@ -2,7 +2,7 @@ import {ReporterPlugin} from '@esbx/reporter'
 import {list, report} from '@esbx/util'
 import {spawn} from 'child_process'
 import type {BuildOptions} from 'esbuild'
-import {build} from 'esbuild'
+import esbuild from 'esbuild'
 import fs from 'fs-extra'
 import glob from 'glob'
 import {bundleTsPlugin} from './src/dev/bundle-ts.js'
@@ -18,16 +18,6 @@ export const VersionTask = {
     root.version = semver
     fs.writeFileSync('package.json', JSON.stringify(root, null, 2) + '\n')
     report(`bumped version to ${semver}`, false)
-  }
-}
-
-const buildOptions: BuildOptions = {
-  jsx: 'automatic',
-  format: 'esm',
-  plugins: [sassPlugin],
-  loader: {
-    '.woff2': 'copy',
-    '.d.ts': 'copy'
   }
 }
 
@@ -79,20 +69,23 @@ function release({
         const target = folder.replace('src/', 'dist/')
         fs.copySync(folder, target)
       }
-      await build({
+      const buildOptions: BuildOptions = {
+        jsx: 'automatic',
+        format: 'esm',
+        loader: {
+          '.woff2': 'copy',
+          '.d.ts': 'copy'
+        },
         ...config,
         platform: 'neutral',
-        format: 'esm',
         outdir: 'dist',
         bundle: true,
         // sourcemap: true,
         absWorkingDir: cwd,
         entryPoints: entryPoints,
-        watch: watch || options.watch,
         mainFields: ['module', 'main'],
-        ...buildOptions,
         plugins: list(
-          buildOptions.plugins,
+          sassPlugin,
           cssPlugin,
           internalPlugin,
           resolvePlugin,
@@ -102,7 +95,10 @@ function release({
           bundleTsPlugin,
           config.plugins
         )
-      })
+      }
+      if (watch || options.watch)
+        return esbuild.context(buildOptions).then(ctx => ctx.watch())
+      return esbuild.build(buildOptions)
     }
   }
 }
@@ -186,7 +182,7 @@ export const TestTask = {
       'node_modules',
       crypto.randomBytes(16).toString('hex') + '.mjs'
     )
-    await build({
+    await esbuild.build({
       bundle: true,
       format: 'esm',
       platform: 'node',

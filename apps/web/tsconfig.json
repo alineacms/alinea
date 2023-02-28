@@ -5,11 +5,7 @@
     "strict": true,
     "noEmit": true,
     "emitDeclarationOnly": false,
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ],
+    "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
     "forceConsistentCasingInFileNames": true,
     "esModuleInterop": true,
@@ -18,21 +14,8 @@
     "jsx": "preserve",
     "skipLibCheck": true,
     "moduleResolution": "node",
-    "incremental": true,
-    "paths": {
-      "alinea/*": [
-        "../../src/*.js",
-        "../../src/*"
-      ]
-    }
+    "incremental": true
   },
-  "include": [
-    "next-env.d.ts",
-    "src",
-    "alinea.config.tsx",
-    "alinea.server.tsx"
-  ],
-  "exclude": [
-    "node_modules"
-  ]
+  "include": ["next-env.d.ts", "src", "alinea.config.tsx", "alinea.server.tsx"],
+  "exclude": ["node_modules"]
 }

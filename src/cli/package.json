@@ -2,7 +2,7 @@
   "name": "@alinea/cli",
   "type": "module",
   "dependencies": {
-    "esbuild": "^0.16.17"
+    "esbuild": "^0.17.10"
   },
   "devDependencies": {
     "@types/compression": "^1.7.2",

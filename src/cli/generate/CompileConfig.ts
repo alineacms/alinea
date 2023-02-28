@@ -1,4 +1,4 @@
-import {build, BuildOptions, BuildResult} from 'esbuild'
+import esbuild, {BuildOptions, BuildResult} from 'esbuild'
 import fs from 'fs-extra'
 import path from 'node:path'
 import {createEmitter} from '../util/Emitter.js'
@@ -68,20 +68,25 @@ export function compileConfig({
         }
       }),
       externalPlugin(cwd),
-      ignorePlugin
-    ],
-    watch: watch && {
-      async onRebuild(error, success) {
-        if (error) console.log('> config has errors')
-        else results.emit(success!)
+      ignorePlugin,
+      {
+        name: 'emit',
+        setup(build) {
+          build.onEnd(res => {
+            if (res.errors.length) {
+              console.log('> config has errors')
+            } else {
+              results.emit(res)
+            }
+          })
+        }
       }
-    },
+    ],
     tsconfig
   }
-  build(config)
-    .then(results.emit, results.throw)
-    .then(() => {
-      if (!watch) return results.return()
-    })
+  esbuild.context(config).then(context => {
+    if (!watch) context.rebuild()
+    else context.watch()
+  })
   return results
 }
