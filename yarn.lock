@@ -57,7 +57,7 @@ __metadata:
     "@types/md5": ^2.3.2
     convert-hrtime: ^5.0.0
     pretty-ms: ^8.0.0
-    rado: ^0.2.25
+    rado: ^0.2.27
     regexparam: ^2.0.1
   languageName: unknown
   linkType: soft
@@ -9415,10 +9415,10 @@ fsevents@~2.3.2:
   languageName: node
   linkType: hard
 
-"rado@npm:^0.2.25":
-  version: 0.2.25
-  resolution: "rado@npm:0.2.25"
-  checksum: 2ff3b1b9d30e6695cead1f56088c5396fa144c3f09d4c41b098f0f6e57706ca66a8508c8b57555b483a542e1dff57663113c92b7c0a820ffa385414735057f51
+"rado@npm:^0.2.27":
+  version: 0.2.27
+  resolution: "rado@npm:0.2.27"
+  checksum: ba43f252f0fdfdeefac9df8ea5bcbb995706936d718c68d65bb1c4e424008c397d8b7f233911b5d844f1dcfdbdfd0cbb96b27a98ed73f6de68d7176ef2bbf7e3
   languageName: node
   linkType: hard
 
