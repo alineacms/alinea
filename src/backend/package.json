@@ -8,6 +8,6 @@
     "regexparam": "^2.0.1"
   },
   "dependencies": {
-    "rado": "^0.2.25"
+    "rado": "^0.2.27"
   }
 }

@@ -1,5 +1,5 @@
 import {createId, Entry} from 'alinea/core'
-import {column, Driver, index, table} from 'rado'
+import {column, Driver, index, table, withRecursive} from 'rado'
 
 enum EntryStatus {
   Draft = 'Draft',
@@ -28,11 +28,16 @@ const EntryTree = table({
     url = column.string
     data = column.json
 
-    parents() {
+    get parents() {
       const Self = EntryTree().as('Self')
-      return Self({entryId: this.parent}).recursiveUnion(({Parent}) => {
-        return Self().innerJoin(Parent({parent: Self.entryId}))
-      })
+      const parents = withRecursive(
+        Self({entryId: this.parent}).select({...Self, level: 0})
+      ).unionAll(() =>
+        Self()
+          .select({...Self, level: parents.level.add(1)})
+          .innerJoin(parents({parent: Self.entryId}))
+      )
+      return parents
     }
 
     protected [table.meta]() {
@@ -75,12 +80,14 @@ export class Database {
           })
           .on(trx)
       }
-
+      const {parents} = EntryTree
       const entry2 = await EntryTree({entryId: 'entry3'})
         .first()
         .select({
           ...EntryTree,
-          parents: EntryTree.parents()
+          parents: parents()
+            .select(parents.entryId)
+            .orderBy(parents.level.desc())
         })
         .on(trx)
       console.log(entry2)
