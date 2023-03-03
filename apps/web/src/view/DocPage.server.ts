@@ -1,6 +1,6 @@
 import {Page, Pages} from '@alinea/content'
 import {Entry, Label} from 'alinea/core'
-import {Cursor, Store} from 'alinea/store'
+import {Cursor} from 'alinea/store'
 
 export function menuQuery(pages: Pages) {
   return pages
@@ -70,4 +70,4 @@ export async function docPageQuery(pages: Pages, doc: Page.Doc) {
   }
 }
 
-export type DocPageProps = Store.TypeOf<ReturnType<typeof docPageQuery>>
+export type DocPageProps = Awaited<ReturnType<typeof docPageQuery>>

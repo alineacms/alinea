@@ -1,6 +1,5 @@
 import {Pages} from '@alinea/content'
 import {initPages} from '@alinea/content/pages'
-import {Store} from 'alinea/store'
 import {GetStaticPropsContext} from 'next'
 import {DemoHome} from '../view/home/DemoHome'
 
@@ -26,6 +25,6 @@ export async function queryHome(pages: Pages) {
   return {...home, recipes}
 }
 
-export type HomeProps = Store.TypeOf<ReturnType<typeof queryHome>>
+export type HomeProps = Awaited<ReturnType<typeof queryHome>>
 
 export default DemoHome

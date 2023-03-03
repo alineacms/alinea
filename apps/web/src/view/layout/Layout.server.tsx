@@ -1,5 +1,4 @@
 import {Pages} from '@alinea/content'
-import {Store} from 'alinea/store'
 import {menuQuery} from '../DocPage.server'
 
 type PageDetails = {
@@ -31,7 +30,4 @@ export async function layoutQuery(pages: Pages, page: PageDetails) {
   }
 }
 
-export type LayoutProps = Exclude<
-  Store.TypeOf<ReturnType<typeof layoutQuery>>,
-  null
->
+export type LayoutProps = Exclude<Awaited<ReturnType<typeof layoutQuery>>, null>

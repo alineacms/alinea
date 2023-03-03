@@ -57,6 +57,7 @@ __metadata:
     "@types/md5": ^2.3.2
     convert-hrtime: ^5.0.0
     pretty-ms: ^8.0.0
+    rado: ^0.2.25
     regexparam: ^2.0.1
   languageName: unknown
   linkType: soft
@@ -9411,6 +9412,13 @@ fsevents@~2.3.2:
   version: 1.2.3
   resolution: "queue-microtask@npm:1.2.3"
   checksum: b676f8c040cdc5b12723ad2f91414d267605b26419d5c821ff03befa817ddd10e238d22b25d604920340fd73efd8ba795465a0377c4adf45a4a41e4234e42dc4
+  languageName: node
+  linkType: hard
+
+"rado@npm:^0.2.25":
+  version: 0.2.25
+  resolution: "rado@npm:0.2.25"
+  checksum: 2ff3b1b9d30e6695cead1f56088c5396fa144c3f09d4c41b098f0f6e57706ca66a8508c8b57555b483a542e1dff57663113c92b7c0a820ffa385414735057f51
   languageName: node
   linkType: hard
 
