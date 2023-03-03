@@ -1,5 +1,4 @@
 import {Page, Pages} from '@alinea/content'
-import {Store} from 'alinea/store'
 
 export async function blogOverviewQuery(
   pages: Pages,
@@ -11,6 +10,4 @@ export async function blogOverviewQuery(
   }
 }
 
-export type BlogOverviewProps = Store.TypeOf<
-  ReturnType<typeof blogOverviewQuery>
->
+export type BlogOverviewProps = Awaited<ReturnType<typeof blogOverviewQuery>>

@@ -6,26 +6,6 @@ export namespace Data {
     watchFiles?: () => Promise<{files: Array<string>; dirs: Array<string>}>
   }
 
-  /*export namespace Source {
-    export function concat(...sources: Array<Source>): Source {
-      return {
-        async *entries(): AsyncGenerator<Entry> {
-          for (const source of sources) {
-            for await (const entry of source.entries()) {
-              yield entry
-            }
-          }
-        },
-        async watchFiles() {
-          const res = await Promise.all(
-            sources.map(source => source.watchFiles?.() || [])
-          )
-          return res.flat()
-        }
-      }
-    }
-  }*/
-
   export interface Target {
     canRename: boolean
     publish(params: Hub.ChangesParams, ctx: Hub.Context): Promise<void>

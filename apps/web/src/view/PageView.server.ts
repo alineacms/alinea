@@ -1,5 +1,4 @@
 import {Page, Pages} from '@alinea/content'
-import {Store} from 'alinea/store'
 import {blogOverviewQuery} from './BlogOverview.server'
 import {docPageQuery} from './DocPage.server'
 import {layoutQuery} from './layout/Layout.server'
@@ -25,6 +24,6 @@ export async function pageViewQuery(pages: Pages, url: string) {
 }
 
 export type PageViewProps = Exclude<
-  Store.TypeOf<ReturnType<typeof pageViewQuery>>,
+  Awaited<ReturnType<typeof pageViewQuery>>,
   null
 >
