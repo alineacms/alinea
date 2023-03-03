@@ -1,53 +1,55 @@
-import {renderLabel, Session} from 'alinea/core'
+import {DashboardProvider, useDashboard} from './hook/UseDashboard.js'
+import {DraftsProvider, DraftsStatus, useDrafts} from './hook/UseDrafts.js'
 import {
   ErrorBoundary,
   FavIcon,
   Loader,
   PreferencesProvider,
   Statusbar,
-  useObservable,
-  Viewport
+  Viewport,
+  useObservable
 } from 'alinea/ui'
-import {IcRoundCheck} from 'alinea/ui/icons/IcRoundCheck'
-import {IcRoundEdit} from 'alinea/ui/icons/IcRoundEdit'
-import {IcRoundInsertDriveFile} from 'alinea/ui/icons/IcRoundInsertDriveFile'
-import {IcRoundRotateLeft} from 'alinea/ui/icons/IcRoundRotateLeft'
-import {MdiSourceBranch} from 'alinea/ui/icons/MdiSourceBranch'
+import {Fragment, Suspense, useMemo, useState} from 'react'
+import {
+  QueryClient,
+  QueryClientProvider as ReactQueryClientProvider
+} from 'react-query'
 import {
   Routes,
   useLocation,
   useMatch,
   useParams
 } from 'alinea/ui/util/HashRouter'
-import {Fragment, Suspense, useMemo, useState} from 'react'
-import {
-  QueryClient,
-  QueryClientProvider as ReactQueryClientProvider
-} from 'react-query'
-import {DashboardOptions} from './Dashboard.js'
+import {Session, renderLabel} from 'alinea/core'
+
+import {ContentTree} from './view/ContentTree.js'
 import {CurrentDraftProvider} from './hook/UseCurrentDraft.js'
-import {DashboardProvider, useDashboard} from './hook/UseDashboard.js'
+import {DashboardOptions} from './Dashboard.js'
+import {DraftsOverview} from './view/DraftsOverview.js'
+import {EditMode} from './view/entry/EditMode.js'
+import {EntryEdit} from './view/EntryEdit.js'
+import {EntrySummaryProvider} from './hook/UseEntrySummary.js'
+import {Head} from './util/Head.js'
+import {IcRoundCheck} from 'alinea/ui/icons/IcRoundCheck'
+import {IcRoundEdit} from 'alinea/ui/icons/IcRoundEdit'
+import {IcRoundInsertDriveFile} from 'alinea/ui/icons/IcRoundInsertDriveFile'
+import {IcRoundRotateLeft} from 'alinea/ui/icons/IcRoundRotateLeft'
+import {MdiSourceBranch} from 'alinea/ui/icons/MdiSourceBranch'
+import {NewEntry} from './view/entry/NewEntry.js'
+import {RootHeader} from './view/entry/RootHeader.js'
+import {RootOverview} from './view/RootOverview.js'
+import {SearchBox} from './view/SearchBox.js'
+import {SessionProvider} from './hook/UseSession.js'
+import {Sidebar} from './view/Sidebar.js'
+import {Toolbar} from './view/Toolbar.js'
+import {useContentTree} from './hook/UseContentTree.js'
 import {useDraft} from './hook/UseDraft.js'
-import {DraftsProvider, DraftsStatus, useDrafts} from './hook/UseDrafts.js'
 import {useDraftsList} from './hook/UseDraftsList.js'
 import {useEntryLocation} from './hook/UseEntryLocation.js'
-import {EntrySummaryProvider} from './hook/UseEntrySummary.js'
 import {useLocale} from './hook/UseLocale.js'
 import {useNav} from './hook/UseNav.js'
 import {useRoot} from './hook/UseRoot.js'
-import {SessionProvider} from './hook/UseSession.js'
 import {useWorkspace} from './hook/UseWorkspace.js'
-import {Head} from './util/Head.js'
-import {ContentTree} from './view/ContentTree.js'
-import {DraftsOverview} from './view/DraftsOverview.js'
-import {EditMode} from './view/entry/EditMode.js'
-import {NewEntry} from './view/entry/NewEntry.js'
-import {RootHeader} from './view/entry/RootHeader.js'
-import {EntryEdit} from './view/EntryEdit.js'
-import {RootOverview} from './view/RootOverview.js'
-import {SearchBox} from './view/SearchBox.js'
-import {Sidebar} from './view/Sidebar.js'
-import {Toolbar} from './view/Toolbar.js'
 
 const Router = {
   Entry() {
@@ -204,16 +206,28 @@ function EntryRoute({id}: EntryRouteProps) {
     .concat(draft?.alinea.parents)
     .concat(draft?.id)
     .filter(Boolean) as Array<string>
+  const {
+    isTreeOpen,
+    toggleTreeOpen,
+    locale: currentLocale,
+    ...contentTree
+  } = useContentTree({
+    locale,
+    workspace: workspace.name,
+    root: root.name,
+    select
+  })
   return (
     <CurrentDraftProvider value={draft}>
       <Sidebar.Tree>
         <SearchBox />
-        <RootHeader />
+        <RootHeader toggleTreeOpen={() => toggleTreeOpen(isTreeOpen)} />
         <ContentTree
           key={workspace.name}
           locale={locale}
           select={select}
           redirectToRoot={!id}
+          {...contentTree}
         />
       </Sidebar.Tree>
       {search === '?new' && (

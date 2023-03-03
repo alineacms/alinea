@@ -1,6 +1,7 @@
 import {Entry, EntryMeta, Label, Outcome} from 'alinea/core'
 import {Cursor, Functions} from 'alinea/store'
 import {useCallback, useEffect, useMemo, useState} from 'react'
+
 import {useQuery} from 'react-query'
 import {useRoot} from '../hook/UseRoot.js'
 import {useSession} from '../hook/UseSession.js'
@@ -92,7 +93,7 @@ export function useContentTree({
     const stored = window?.localStorage?.getItem(persistenceId)
     const opened = stored && JSON.parse(stored)
     return new Set<string>([
-      ...select,
+      // ...select,
       ...(Array.isArray(opened) ? opened : [])
     ])
   })
@@ -151,9 +152,36 @@ export function useContentTree({
       true
     )
   })
+  const parentEntryOpen = (entry: ContentTreeEntry) =>
+    entry.childrenCount > 0 && isOpen(entry.id)
+  const isTreeOpen = entries.some(parentEntryOpen)
+  const toggleTreeOpen = useCallback(
+    (open: boolean) => {
+      if (open) {
+        window?.localStorage?.setItem(persistenceId, JSON.stringify([]))
+        setOpen(new Set([]))
+      }
+      if (!open) {
+        // Todo: figure out how to open always the same/all entries
+        const entryIds = entries.map(entry => entry.id)
+        window?.localStorage?.setItem(persistenceId, JSON.stringify(entryIds))
+        setOpen(new Set(entryIds))
+      }
+    },
+    [setOpen]
+  )
 
   useEffect(() => {
     setOpen(current => new Set([...current, ...select]))
   }, [select.join('.')])
-  return {locale, entries, isOpen, toggleOpen, refetch, index}
+  return {
+    locale,
+    entries,
+    isOpen,
+    toggleOpen,
+    refetch,
+    index,
+    isTreeOpen,
+    toggleTreeOpen
+  }
 }

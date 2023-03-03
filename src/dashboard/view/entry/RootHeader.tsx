@@ -1,7 +1,9 @@
-import {Listbox} from '@headlessui/react'
 import {Create, fromModule, HStack, Icon, TextLabel} from 'alinea/ui'
-import {IcRoundUnfoldMore} from 'alinea/ui/icons/IcRoundUnfoldMore'
 import {link, useNavigate} from 'alinea/ui/util/HashRouter'
+
+import {IcRoundUnfoldMore} from 'alinea/ui/icons/IcRoundUnfoldMore'
+
+import {Listbox} from '@headlessui/react'
 import {useState} from 'react'
 import {useCurrentDraft} from '../../hook/UseCurrentDraft.js'
 import {useLocale} from '../../hook/UseLocale.js'
@@ -12,7 +14,11 @@ import css from './RootHeader.module.scss'
 
 const styles = fromModule(css)
 
-export function RootHeader() {
+export type RootHeaderProps = {
+  toggleTreeOpen: () => void
+}
+
+export function RootHeader({toggleTreeOpen}: RootHeaderProps) {
   const nav = useNav()
   const root = useRoot()
   const {name: workspace} = useWorkspace()
@@ -28,6 +34,12 @@ export function RootHeader() {
         </a>
         {root.i18n && <Langswitch />}
         <Create.Link href={nav.create({workspace, root: root.name})} />
+        {/* Todo: change icon */}
+        <button onClick={toggleTreeOpen}>
+          <HStack center gap={8}>
+            <IcRoundUnfoldMore style={{flexShrink: 0}} />
+          </HStack>
+        </button>
       </div>
     </div>
   )

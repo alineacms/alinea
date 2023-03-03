@@ -16,20 +16,20 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy
 } from '@dnd-kit/sortable'
+import {fromModule, usePreferences} from 'alinea/ui'
+import {useMemo, useRef, useState} from 'react'
+import {TreeNode, TreeNodeSortable} from './tree/TreeNode.js'
+
 import useSize from '@react-hook/size'
 import {Entry} from 'alinea/core/Entry'
 import {generateKeyBetween} from 'alinea/core/util/FractionalIndexing'
-import {fromModule, usePreferences} from 'alinea/ui'
-import {useMemo, useRef, useState} from 'react'
 import VirtualList from 'react-tiny-virtual-list'
-import {ContentTreeEntry, useContentTree} from '../hook/UseContentTree.js'
+import {ContentTreeEntry} from '../hook/UseContentTree.js'
 import {useDashboard} from '../hook/UseDashboard.js'
 import {useDrafts} from '../hook/UseDrafts.js'
 import {useNav} from '../hook/UseNav.js'
 import {useRoot} from '../hook/UseRoot.js'
-import {useWorkspace} from '../hook/UseWorkspace.js'
 import css from './ContentTree.module.scss'
-import {TreeNode, TreeNodeSortable} from './tree/TreeNode.js'
 
 const styles = fromModule(css)
 
@@ -83,29 +83,25 @@ export type ContentTreeProps = {
   locale: string | undefined
   select?: Array<string>
   redirectToRoot?: boolean
+  entries: ContentTreeEntry[]
+  index: Map<string, ContentTreeEntry>
+  toggleOpen: (id: string) => void
+  isOpen: (id: string) => boolean
+  refetch: () => void
 }
 
 export function ContentTree({
-  locale: currentLocale,
+  locale,
   select = [],
-  redirectToRoot
+  redirectToRoot,
+  entries: treeEntries,
+  index,
+  toggleOpen,
+  isOpen,
+  refetch
 }: ContentTreeProps) {
   const {schema} = useDashboard().config
-  const {name: workspace} = useWorkspace()
   const root = useRoot()
-  const {
-    locale,
-    entries: treeEntries,
-    isOpen,
-    toggleOpen,
-    refetch,
-    index
-  } = useContentTree({
-    locale: currentLocale,
-    workspace,
-    root: root.name,
-    select
-  })
   const drafts = useDrafts()
   const [moves, setMoves] = useState<Array<Move>>([])
   const entries = sortByIndex(index, applyMoves(treeEntries, moves))
