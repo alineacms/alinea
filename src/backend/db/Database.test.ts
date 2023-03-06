@@ -1,10 +1,10 @@
 import sqlite from '@alinea/sqlite-wasm'
-import {Entry} from 'alinea/core'
 import {connect} from 'rado/driver/sql.js'
 import {test} from 'uvu'
-import {Database} from './Database.js'
+import {Database, EntryRaw} from './Database.js'
 
-const entry1: Entry = {
+const entry1: EntryRaw = {
+  lastModified: Date.now(),
   id: 'root',
   type: 'Type',
   title: 'Test title',
@@ -19,7 +19,8 @@ const entry1: Entry = {
   }
 }
 
-const entry2: Entry = {
+const entry2: EntryRaw = {
+  lastModified: Date.now(),
   id: 'entry2',
   type: 'Type',
   title: 'Test title',
@@ -34,7 +35,8 @@ const entry2: Entry = {
   }
 }
 
-const entry3: Entry = {
+const entry3: EntryRaw = {
+  lastModified: Date.now(),
   id: 'entry3',
   type: 'Type',
   title: 'Test title',
@@ -58,6 +60,7 @@ test('create', async () => {
   const cnx = connect(new SqlJsDb())
   const db = new Database(cnx.toAsync())
   await db.fill(entries())
+  console.log(await db.state())
 })
 
 test.run()

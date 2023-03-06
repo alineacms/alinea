@@ -1,5 +1,6 @@
-import {createId, Entry} from 'alinea/core'
+import {createId, EntryMeta} from 'alinea/core'
 import {column, Driver, index, table, withRecursive} from 'rado'
+import {group_concat} from 'rado/sqlite'
 
 enum EntryStatus {
   Draft = 'Draft',
@@ -11,6 +12,7 @@ type EntryTree = table<typeof EntryTree>
 const EntryTree = table({
   EntryTree: class {
     revisionId = column.string.primaryKey<'EntryTree'>(createId)
+    lastModified = column.number
     status = column.string<EntryStatus>()
 
     entryId = column.string
@@ -53,17 +55,58 @@ const EntryTree = table({
   }
 })
 
+const AlineaMeta = table({
+  AlineaMeta: class {
+    lastModified = column.number
+    idHash = column.string
+  }
+})
+
+export interface EntryRaw {
+  id: string
+  type: string
+  path: string
+  title: string
+  url: string
+  lastModified: number
+  alinea: EntryMeta
+}
+
 export class Database {
   constructor(public cnx: Driver.Async) {}
 
-  async fill(entries: AsyncGenerator<Entry>): Promise<void> {
-    return this.cnx.transaction(async trx => {
-      await EntryTree().create().on(trx)
+  async meta() {
+    return this.cnx(
+      AlineaMeta()
+        .first()
+        .select({...AlineaMeta})
+    )
+  }
+
+  private async writeMeta() {
+    return this.cnx.transaction(async query => {
+      const {lastModified, ids} = await query(
+        EntryTree()
+          .select({
+            lastModified: EntryTree.lastModified,
+            ids: group_concat(EntryTree.entryId, ',')
+          })
+          .first()
+      )
+      // const hash = md5()
+      // todo
+    })
+  }
+
+  async fill(entries: AsyncGenerator<EntryRaw>): Promise<void> {
+    return this.cnx.transaction(async query => {
+      await query(EntryTree().create())
       for await (const entry of entries) {
-        const {id, type, path, title, url, alinea, ...data} = entry
-        await EntryTree()
-          .insertOne({
-            revisionId: createId() as EntryTree['revisionId'],
+        const {lastModified, id, type, path, title, url, alinea, ...data} =
+          entry
+        await query(
+          EntryTree().insertOne({
+            lastModified: lastModified,
             status: EntryStatus.Published,
             entryId: id,
             type: type,
@@ -78,19 +121,8 @@ export class Database {
             url: url,
             data: data
           })
-          .on(trx)
+        )
       }
-      const {parents} = EntryTree
-      const entry2 = await EntryTree({entryId: 'entry3'})
-        .first()
-        .select({
-          ...EntryTree,
-          parents: parents()
-            .select(parents.entryId)
-            .orderBy(parents.level.desc())
-        })
-        .on(trx)
-      console.log(entry2)
     })
   }
 }
