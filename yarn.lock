@@ -57,8 +57,9 @@ __metadata:
     "@types/md5": ^2.3.2
     convert-hrtime: ^5.0.0
     pretty-ms: ^8.0.0
-    rado: ^0.2.27
+    rado: ^0.2.31
     regexparam: ^2.0.1
+    xxhash-wasm: ^1.0.2
   languageName: unknown
   linkType: soft
 
@@ -9415,10 +9416,10 @@ fsevents@~2.3.2:
   languageName: node
   linkType: hard
 
-"rado@npm:^0.2.27":
-  version: 0.2.27
-  resolution: "rado@npm:0.2.27"
-  checksum: ba43f252f0fdfdeefac9df8ea5bcbb995706936d718c68d65bb1c4e424008c397d8b7f233911b5d844f1dcfdbdfd0cbb96b27a98ed73f6de68d7176ef2bbf7e3
+"rado@npm:^0.2.31":
+  version: 0.2.31
+  resolution: "rado@npm:0.2.31"
+  checksum: 2798f10b7356ab2f07e99a9f11626709ec498fd7ade1fc97944bed7b6b4061b5c96edb23eb76a4500d925b2c4ff3d0ccf92464183f5405cc47e0e5c9aac43c84
   languageName: node
   linkType: hard
 
@@ -11777,6 +11778,13 @@ resolve@^1.10.0:
   version: 4.0.0
   resolution: "xdg-basedir@npm:4.0.0"
   checksum: 0073d5b59a37224ed3a5ac0dd2ec1d36f09c49f0afd769008a6e9cd3cd666bd6317bd1c7ce2eab47e1de285a286bad11a9b038196413cd753b79770361855f3c
+  languageName: node
+  linkType: hard
+
+"xxhash-wasm@npm:^1.0.2":
+  version: 1.0.2
+  resolution: "xxhash-wasm@npm:1.0.2"
+  checksum: 11fec6e6196e37ad96cc958b7a4477dc30caf5b4da889a02a84f6f663ab8cd3c9be6ae405e66f0af0404301f27c39375191c5254f0409a793020e2093afd1409
   languageName: node
   linkType: hard
 

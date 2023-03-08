@@ -5,9 +5,8 @@ import {getRandomColor} from './util/GetRandomColor.js'
 
 export type WorkspaceOptions<T = any> = {
   /**
-   * Points to a Data.Source either by passing a directory or a file.
-   * - If the source is a directory, it will be scanned for files.
-   * - If the source is a file, it will be evaluated.
+   * Points to a Data.Source by passing a directory, it will be scanned
+   * for files.
    */
   source: string
   roots: Record<string, RootConfig>
