@@ -1,138 +1,54 @@
-import {Config, createError, createId} from 'alinea/core'
+import {Config, createError} from 'alinea/core'
 import * as path from 'alinea/core/util/Paths'
-import {
-  alias,
-  column,
-  create,
-  Driver,
-  index,
-  Table,
-  table,
-  withRecursive
-} from 'rado'
-import {group_concat} from 'rado/sqlite'
+import {Driver, Table, alias, create} from 'rado'
 import xxhash from 'xxhash-wasm'
-
-enum EntryStatus {
-  Draft = 'Draft',
-  Published = 'Published',
-  Archived = 'Archived'
-}
-
-class EntryTable {
-  id = column.string.primaryKey(createId)
-  workspace = column.string
-  root = column.string
-  filePath = column.string
-  contentHash = column.string
-
-  modifiedAt = column.number
-  status = column.string<EntryStatus>()
-
-  entryId = column.string
-  type = column.string
-
-  parentDir = column.string
-  childrenDir = column.string.nullable
-  parent = column.string.nullable
-  index = column.string.nullable
-  locale = column.string.nullable
-  i18nId = column.string.nullable
-
-  path = column.string
-  title = column.string
-  url = column.string
-  data = column.json
-
-  get parents() {
-    const Self = EntryTree().as('Self')
-    const parents = withRecursive(
-      Self({entryId: this.parent}).select({...Self, level: 0})
-    ).unionAll(() =>
-      Self()
-        .select({...Self, level: parents.level.add(1)})
-        .innerJoin(parents({parent: Self.entryId}))
-    )
-    return parents
-  }
-
-  [table.meta]() {
-    return {
-      indexes: {
-        type: index(this.type),
-        parent: index(this.parent),
-        index: index(this.index),
-        'workspace.root': index(this.workspace, this.root),
-        parentDir: index(this.parentDir).where(this.parentDir.isNotNull())
-      }
-    }
-  }
-}
-
-export type EntryTree = table<EntryTable>
-export const EntryTree = table({EntryTree: EntryTable})
-
-type AlineaMeta = table<typeof AlineaMeta>
-const AlineaMeta = table({
-  AlineaMeta: class {
-    contentHash = column.string
-    modifiedAt = column.number
-  }
-})
-
-export interface FileInfo {
-  workspace: string
-  root: string
-  filePath: string
-  contents: Uint8Array
-  modifiedAt: number
-}
+import {Syncable} from './Api.js'
+import {SourceEntry} from './Source.js'
+import {Store} from './Store.js'
+import {AlineaMeta} from './collection/AlineaMeta.js'
+import {EntryStatus, EntryTree} from './collection/EntryTree.js'
 
 const decoder = new TextDecoder()
 
-function assert<T>(value: T): T {
-  if (!value) throw new TypeError('Expected value')
-  return value
-}
-
-export interface Syncable {
-  requestUpdates(request: AlineaMeta): Promise<{
-    contentHash: string
-    entries: Array<EntryTree>
-  }>
-  requestIds(): Promise<Array<string>>
-}
-
 export class Database implements Syncable {
-  constructor(public cnx: Driver.Async, public config: Config) {}
+  constructor(public store: Store, public config: Config) {}
 
-  async requestUpdates(request: AlineaMeta) {
+  async updates(request: AlineaMeta) {
     const current = await this.meta()
+    if (current.contentHash === request.contentHash)
+      return {
+        contentHash: current.contentHash,
+        entries: []
+      }
     return {
       contentHash: current.contentHash,
-      entries: await this.cnx(
+      entries: await this.store(
         EntryTree().where(EntryTree.modifiedAt.isGreater(request.modifiedAt))
       )
     }
   }
 
-  async requestIds(): Promise<Array<string>> {
-    return this.cnx(EntryTree().select(EntryTree.id))
+  async ids(): Promise<Array<string>> {
+    return this.store(EntryTree().select(EntryTree.id))
   }
 
   async syncWith(remote: Syncable): Promise<void> {
-    const {contentHash, entries} = await remote.requestUpdates(
-      await this.meta()
-    )
+    const {contentHash, entries} = await remote.updates(await this.meta())
     if (entries.length) await this.updateEntries(entries)
     const updated = await this.meta()
     if (updated.contentHash === contentHash) return
-    const remoteIds = await remote.requestIds()
-    await this.cnx(EntryTree().where(EntryTree.id.isNotIn(remoteIds)))
+    const remoteIds = await remote.ids()
+    await this.store(
+      EntryTree().delete().where(EntryTree.id.isNotIn(remoteIds))
+    )
+    const afterRemoves = await this.meta()
+    if (afterRemoves.contentHash === contentHash) return
+    // Throw: we should abandon syncing and just fetch the full db
+    throw createError('Sync failed')
   }
 
   async updateEntries(entries: Array<EntryTree>) {
-    return this.cnx.transaction(async query => {
+    return this.store.transaction(async query => {
       for (const entry of entries) {
         await query(EntryTree().delete().where(EntryTree.id.is(entry.id)))
         await query(EntryTree().insertOne(entry))
@@ -144,11 +60,7 @@ export class Database implements Syncable {
 
   async meta() {
     return (
-      (await this.cnx(
-        AlineaMeta()
-          .maybeFirst()
-          .select({...AlineaMeta})
-      )) ?? {
+      (await this.store(AlineaMeta().maybeFirst())) ?? {
         contentHash: '',
         modifiedAt: 0
       }
@@ -156,26 +68,23 @@ export class Database implements Syncable {
   }
 
   private async index(query: Driver.Async) {
-    // todo: url
     const {Parent} = alias(EntryTree)
-    return query(
+    const res = await query(
       EntryTree().set({
         parent: Parent({childrenDir: EntryTree.parentDir})
           .select(Parent.entryId)
           .maybeFirst()
       })
     )
+    return res
   }
 
   private async writeMeta(query: Driver.Async) {
     const {h32ToString} = await xxhash()
     const contentHashes = await query(
-      EntryTree()
-        .select(group_concat(EntryTree.contentHash, ''))
-        .orderBy(EntryTree.contentHash)
-        .first()
+      EntryTree().select(EntryTree.contentHash).orderBy(EntryTree.contentHash)
     )
-    const contentHash = h32ToString(contentHashes)
+    const contentHash = h32ToString(contentHashes.join(''))
     const modifiedAt = await query(
       EntryTree()
         .select(EntryTree.modifiedAt)
@@ -192,13 +101,13 @@ export class Database implements Syncable {
   }
 
   async init() {
-    return this.cnx.transaction(async query => {
+    return this.store.transaction(async query => {
       await query(create(EntryTree, AlineaMeta))
     })
   }
 
   computeEntry(
-    file: FileInfo,
+    file: SourceEntry,
     contentHash: string
   ): Table.Insert<typeof EntryTree> {
     const data = JSON.parse(decoder.decode(file.contents))
@@ -217,14 +126,15 @@ export class Database implements Syncable {
         )
     }
 
-    const type = this.config.type(data.type)
+    /*const type = this.config.type(data.type)
     if (!type)
       throw createError(
         `Invalid type: ${data.type}, for entry in ${file.filePath}`
-      )
+      )*/
 
-    const isContainer = type.isContainer
-    const childrenDir = isContainer ? path.join(parentDir, fileName) : null
+    const childrenDir = path.join(parentDir, fileName)
+
+    if (!data.id) throw createError(`Missing id for entry in ${file.filePath}`)
 
     return {
       workspace: file.workspace,
@@ -236,7 +146,7 @@ export class Database implements Syncable {
       // todo: infer draft
       status: EntryStatus.Published,
 
-      entryId: assert(data.id),
+      entryId: data.id,
       type: data.type,
 
       parentDir,
@@ -254,11 +164,11 @@ export class Database implements Syncable {
     }
   }
 
-  async fill(files: AsyncGenerator<FileInfo>): Promise<void> {
+  async fill(files: AsyncGenerator<SourceEntry>): Promise<void> {
     const {h32Raw} = await xxhash()
-    return this.cnx.transaction(async query => {
-      await this.init()
-      const seen = new Set<string>()
+    return this.store.transaction(async query => {
+      const seen: Array<string> = []
+      let inserted = 0
       for await (const file of files) {
         const contentHash = h32Raw(file.contents).toString(16).padStart(8, '0')
         const exists = await query(
@@ -272,12 +182,20 @@ export class Database implements Syncable {
             .maybeFirst()
         )
         if (exists) {
-          seen.add(exists)
+          seen.push(exists)
           continue
         }
         const entry = this.computeEntry(file, contentHash)
-        await query(EntryTree().insertOne(entry))
+        seen.push(
+          await query(EntryTree().insert(entry).returning(EntryTree.id))
+        )
+        inserted++
       }
+      const {rowsAffected: removed} = await query(
+        EntryTree().delete().where(EntryTree.id.isNotIn(seen))
+      )
+      const noChanges = inserted === 0 && removed === 0
+      if (noChanges) return
       await this.index(query)
       await this.writeMeta(query)
     })
