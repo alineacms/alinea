@@ -10,6 +10,17 @@ export namespace Auth {
   }
   export type ViewProps = {setSession: (session: Session | undefined) => void}
   export type View = ComponentType<ViewProps>
+
+  export function anonymous(): Auth.Server {
+    return {
+      async contextFor() {
+        return {}
+      },
+      handler() {
+        return undefined
+      }
+    }
+  }
 }
 
 export interface Auth<Options> {

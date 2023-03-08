@@ -1,13 +1,18 @@
-import sqlite from '@alinea/sqlite-wasm'
+import {nodeHandler} from 'alinea/backend/router/NodeHandler'
 import {createConfig, root, schema, type, workspace} from 'alinea/core'
+import {Logger, Report} from 'alinea/core/util/Logger'
 import {path, text} from 'alinea/input'
-import {connect} from 'rado/driver/sql.js'
-import {test} from 'uvu'
-import {Database, FileInfo} from './Database.js'
+import * as fs from 'node:fs/promises'
+import http from 'node:http'
+import {JWTPreviews} from '../backend.js'
+import {Database} from './Database.js'
+import {Handler} from './Handler.js'
+import {SourceEntry} from './Source.js'
+import {FileData} from './data/FileData.js'
 
 const encode = (data: any) => new TextEncoder().encode(JSON.stringify(data))
 
-const entry1: FileInfo = {
+const entry1: SourceEntry = {
   modifiedAt: Date.now(),
   workspace: 'main',
   root: 'data',
@@ -26,7 +31,7 @@ const entry1: FileInfo = {
   })
 }
 
-const entry2: FileInfo = {
+const entry2: SourceEntry = {
   modifiedAt: Date.now(),
   workspace: 'main',
   root: 'data',
@@ -45,7 +50,7 @@ const entry2: FileInfo = {
   })
 }
 
-const entry3: FileInfo = {
+const entry3: SourceEntry = {
   modifiedAt: Date.now(),
   workspace: 'main',
   root: 'data',
@@ -79,6 +84,9 @@ const config = createConfig({
       roots: {
         data: root('Data', {
           contains: ['Type']
+        }),
+        media: root('Media', {
+          contains: ['Type']
         })
       }
     })
@@ -89,19 +97,36 @@ async function* files() {
   yield* [entry1, entry2, entry3]
 }
 
-test('create', async () => {
-  const {Database: SqlJsDb} = await sqlite()
-  const cnx1 = connect(new SqlJsDb())
-  const db1 = new Database(cnx1.toAsync(), config)
-  await db1.fill(files())
-  console.log(await db1.meta())
+async function boot() {
+  const data = new FileData({
+    config,
+    fs,
+    rootDir: './apps/web/content'
+  })
+  const {default: BetterSqlite3} = await import('better-sqlite3')
+  const {connect} = await import('rado/driver/better-sqlite3')
+  const store = connect(new BetterSqlite3('dist/test.db')).toAsync()
+  const db = new Database(store, config)
+  const logger = new Logger('test')
+  await db.init()
+  const endTimer = logger.time('fill')
+  await db.fill(data.entries())
+  endTimer()
+  Report.toConsole(logger.report())
+  console.log(await db.meta())
 
-  const cnx2 = connect(new SqlJsDb())
-  const db2 = new Database(cnx2.toAsync(), config)
-  await db2.init()
-  await db2.syncWith(db1)
+  const handler = new Handler({
+    store,
+    config,
+    target: data,
+    dashboardUrl: 'http://localhost:3000',
+    media: undefined!,
+    previews: new JWTPreviews('@alinea/backend/devserver')
+  })
 
-  console.log(await db2.meta())
-})
+  http.createServer(nodeHandler(handler.handle)).listen(3000)
 
-test.run()
+  console.log('Listening on port 3000')
+}
+
+boot().catch(console.error)

@@ -9,6 +9,6 @@
     "xxhash-wasm": "^1.0.2"
   },
   "dependencies": {
-    "rado": "^0.2.31"
+    "rado": "^0.2.33"
   }
 }
