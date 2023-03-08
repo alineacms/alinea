@@ -5,9 +5,10 @@
     "@types/md5": "^2.3.2",
     "convert-hrtime": "^5.0.0",
     "pretty-ms": "^8.0.0",
-    "regexparam": "^2.0.1"
+    "regexparam": "^2.0.1",
+    "xxhash-wasm": "^1.0.2"
   },
   "dependencies": {
-    "rado": "^0.2.27"
+    "rado": "^0.2.31"
   }
 }
