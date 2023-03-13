@@ -2,7 +2,7 @@
   "name": "@alinea/auth.passwordless",
   "type": "module",
   "dependencies": {
-    "superstruct": "^0.15.4"
+    "superstruct": "^1.0.3"
   },
   "devDependencies": {
     "@types/nodemailer": "^6.4.4",

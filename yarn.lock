@@ -11,7 +11,7 @@ __metadata:
   dependencies:
     "@types/nodemailer": ^6.4.4
     nodemailer: ^6.6.5
-    superstruct: ^0.15.4
+    superstruct: ^1.0.3
   languageName: unknown
   linkType: soft
 
@@ -57,7 +57,7 @@ __metadata:
     "@types/md5": ^2.3.2
     convert-hrtime: ^5.0.0
     pretty-ms: ^8.0.0
-    rado: ^0.2.33
+    rado: ^0.2.34
     regexparam: ^2.0.1
     xxhash-wasm: ^1.0.2
   languageName: unknown
@@ -9423,10 +9423,10 @@ fsevents@~2.3.2:
   languageName: node
   linkType: hard
 
-"rado@npm:^0.2.33":
-  version: 0.2.33
-  resolution: "rado@npm:0.2.33"
-  checksum: 5f488fda754968e291f5d368f3a7af44bb01bcbf5426e0ac93f9c12c45a1e0918b1584c23643f42f00439e47c0def32e597b0b4af2b3ae5cf15f0e5f65904108
+"rado@npm:^0.2.34":
+  version: 0.2.34
+  resolution: "rado@npm:0.2.34"
+  checksum: a6ea97374d7e09ea267217e0f197af859a1762ae26f18929335d228ed1a4958f1454018d10e47631b67867b5b5e19b711ef28c07ff848a08e506ab481fc9880f
   languageName: node
   linkType: hard
 
@@ -10835,10 +10835,10 @@ resolve@^1.10.0:
   languageName: node
   linkType: hard
 
-"superstruct@npm:^0.15.4":
-  version: 0.15.4
-  resolution: "superstruct@npm:0.15.4"
-  checksum: aac38eecda2c0d3aace2fe95baac042d39bfdd50dda480d3f70b8bacb87fe7ba228ede4869537dfb64f1d32a1fe3d794052e7765ed6c3f7bc156795fd761fdfd
+"superstruct@npm:^1.0.3":
+  version: 1.0.3
+  resolution: "superstruct@npm:1.0.3"
+  checksum: 761790bb111e6e21ddd608299c252f3be35df543263a7ebbc004e840d01fcf8046794c274bcb351bdf3eae4600f79d317d085cdbb19ca05803a4361840cc9bb1
   languageName: node
   linkType: hard
 
