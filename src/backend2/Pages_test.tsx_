@@ -1,0 +1,69 @@
+// @ts-nocheck
+
+const Home,
+  Page,
+  NewsItem,
+  VacationRoot,
+  Vacation,
+  Location,
+  pages,
+  children,
+  Film,
+  Actor
+
+const home = await Page({type: 'Home'})({
+  ...Page,
+  children: children()
+})
+
+const vacations = await pages.all(VacationRoot({type: Vacation})).children({
+  ...Vacation,
+  location: Location({id: Vacation.location})
+})
+
+const {Film: f, Actor} = pages.types
+
+await pages(
+  f(or(f.budget.isGreater(5000), f.language.isIn(['en', 'de'])))
+    .take(100)
+    .only({
+      id: f.id,
+      title: f.title,
+      actors: Actor().only({
+        id: Actor.id
+      })
+    })
+)
+
+pages({
+  root: VacationRoot[1]({id: dinges})({
+    children: children(Vacation[1])({
+      location: {
+        id: Vacation.location
+      }
+    })
+  })
+    .take(5)
+    .skip(20)
+    .orderBy(VacationRoot.id.desc())
+})
+
+page(VacationRoot, {
+  children: children(Vacation, {
+    location: page(Location({id: Vacation.location}))
+  })
+})
+
+pages(Page({root: 'documents', url: '/'}))
+
+const estimates = pages(Estimate({project: project.id})).orderBy(
+  Estimate.number.desc()
+)
+
+const urls = await pages(Document({root: 'documents'}), Document.url)
+
+const vacations = await pages(
+  <VacationRoot>
+    <Vacation {...Vacation} location={<Location id={Vacation.location} />} />
+  </VacationRoot>
+)
