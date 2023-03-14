@@ -94,7 +94,7 @@ class ExprImpl<T> {
   }
 
   is(that: EV<T>): Expr<boolean> {
-    if (that === null || (Expr.isExpr(that) && that.isConstant(null)))
+    if (that === null || (Expr.isExpr(that) && that.isConstant(null!)))
       return this.isNull()
     return Expr('binop', this[Expr.Data], 'equals', ExprData(that))
   }
@@ -111,7 +111,7 @@ class ExprImpl<T> {
   }
 
   isNot(that: EV<T>): Expr<boolean> {
-    if (that === null || (Expr.isExpr(that) && that.isConstant(null)))
+    if (that === null || (Expr.isExpr(that) && that.isConstant(null!)))
       return this.isNotNull()
     return Expr('binop', this[Expr.Data], 'notequals', ExprData(that))
   }
