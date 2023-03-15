@@ -1,48 +1,96 @@
-import {Select} from './Select.js'
+import {any, enums, literal, record, string, union} from 'cito'
+import {Select} from './Cursor.js'
 import {TargetData} from './Target.js'
 
-const {fromEntries, entries} = Object
+const {entries, fromEntries} = Object
 
-export type UnOp = 'not' | 'isnull'
+export enum UnaryOp {
+  Not = 'Not',
+  IsNull = 'IsNull'
+}
 
-export type BinOp =
-  | 'add'
-  | 'subt'
-  | 'mult'
-  | 'mod'
-  | 'div'
-  | 'greater'
-  | 'greaterorequal'
-  | 'less'
-  | 'lessorequal'
-  | 'equals'
-  | 'notequals'
-  | 'and'
-  | 'or'
-  | 'like'
-  | 'in'
-  | 'notin'
-  | 'concat'
+export enum BinaryOp {
+  Add = 'Add',
+  Subt = 'Subt',
+  Mult = 'Mult',
+  Mod = 'Mod',
+  Div = 'Div',
+  Greater = 'Greater',
+  GreaterOrEqual = 'GreaterOrEqual',
+  Less = 'Less',
+  LessOrEqual = 'LessOrEqual',
+  Equals = 'Equals',
+  NotEquals = 'NotEquals',
+  And = 'And',
+  Or = 'Or',
+  Like = 'Like',
+  In = 'In',
+  NotIn = 'NotIn',
+  Concat = 'Concat'
+}
 
-export type ExprData =
-  | [type: 'unop', op: UnOp, expr: ExprData]
-  | [type: 'binop', a: ExprData, op: BinOp, b: ExprData]
-  | [type: 'field', target: TargetData, field: string]
-  | [type: 'access', expr: ExprData, field: string]
-  | [type: 'merge', a: ExprData, b: ExprData]
-  | [type: 'value', value: any]
-  | [type: 'record', fields: Record<string, ExprData>]
+export type ExprData = typeof ExprData.adt.infer
 
 export function ExprData(input: any): ExprData {
-  if (input === null || input === undefined) return ['value', null]
+  if (input === null || input === undefined) return ExprData.Value(null)
   if (Expr.hasExpr(input)) input = input[Expr.ToExpr]()
   if (Expr.isExpr(input)) return input[Expr.Data]
   if (input && typeof input === 'object' && !Array.isArray(input))
-    return [
-      'record',
+    return ExprData.Record(
       fromEntries(entries(input).map(([key, value]) => [key, ExprData(value)]))
-    ]
-  return ['value', input]
+    )
+  return ExprData.Value(input)
+}
+
+export namespace ExprData {
+  class EUnOp {
+    type = literal('unop')
+    op = enums(UnaryOp)
+    expr = adt
+  }
+  export function UnOp(op: UnaryOp, expr: ExprData): ExprData {
+    return {type: 'unop', op, expr}
+  }
+  class EBinOp {
+    type = literal('binop')
+    a = adt
+    op = enums(BinaryOp)
+    b = adt
+  }
+  export function BinOp(a: ExprData, op: BinaryOp, b: ExprData): ExprData {
+    return {type: 'binop', a, op, b}
+  }
+  class EField {
+    type = literal('field')
+    target = TargetData
+    field = string
+  }
+  export function Field(target: TargetData, field: string): ExprData {
+    return {type: 'field', target, field}
+  }
+  class EAccess {
+    type = literal('access')
+    expr = adt
+    field = string
+  }
+  export function Access(expr: ExprData, field: string): ExprData {
+    return {type: 'access', expr, field}
+  }
+  class EValue {
+    type = literal('value')
+    value = any
+  }
+  export function Value(value: any): ExprData {
+    return {type: 'value', value}
+  }
+  class ERecord {
+    type = literal('record')
+    fields = record(adt)
+  }
+  export function Record(fields: Record<string, ExprData>): ExprData {
+    return {type: 'record', fields}
+  }
+  export const adt = union(EUnOp, EBinOp, EField, EAccess, EValue, ERecord)
 }
 
 /** Expression or value of type T */
@@ -50,8 +98,8 @@ export type EV<T> = Expr<T> | T
 
 export interface Expr<T> extends ExprImpl<T> {}
 
-export function Expr<T>(...expr: ExprData): Expr<T> {
-  return new ExprImpl(...expr)
+export function Expr<T>(expr: ExprData): Expr<T> {
+  return new ExprImpl(expr)
 }
 
 interface ExprImpl<T> {
@@ -60,7 +108,7 @@ interface ExprImpl<T> {
 }
 
 class ExprImpl<T> {
-  constructor(...expr: ExprData) {
+  constructor(expr: ExprData) {
     this[Expr.Data] = expr
     this[Expr.IsExpr] = true
   }
@@ -74,7 +122,7 @@ class ExprImpl<T> {
   }*/
 
   not(): Expr<boolean> {
-    return Expr('unop', 'not', this[Expr.Data])
+    return Expr(ExprData.UnOp(UnaryOp.Not, this[Expr.Data]))
   }
 
   or(this: Expr<boolean>, that: EV<boolean>): Expr<boolean> {
@@ -82,7 +130,7 @@ class ExprImpl<T> {
     const b = Expr.create(that)
     if (b.isConstant(true) || a.isConstant(false)) return b
     if (a.isConstant(true) || b.isConstant(false)) return this
-    return Expr('binop', a[Expr.Data], 'or', b[Expr.Data])
+    return Expr(ExprData.BinOp(a[Expr.Data], BinaryOp.Or, b[Expr.Data]))
   }
 
   and(this: Expr<boolean>, that: EV<boolean>): Expr<boolean> {
@@ -90,21 +138,22 @@ class ExprImpl<T> {
     const b = Expr.create(that)
     if (b.isConstant(true) || a.isConstant(false)) return this
     if (a.isConstant(true) || b.isConstant(false)) return b
-    return Expr('binop', a[Expr.Data], 'and', b[Expr.Data])
+    return Expr(ExprData.BinOp(a[Expr.Data], BinaryOp.And, b[Expr.Data]))
   }
 
   is(that: EV<T>): Expr<boolean> {
     if (that === null || (Expr.isExpr(that) && that.isConstant(null!)))
       return this.isNull()
-    return Expr('binop', this[Expr.Data], 'equals', ExprData(that))
+    return Expr(
+      ExprData.BinOp(this[Expr.Data], BinaryOp.Equals, ExprData(that))
+    )
   }
 
   isConstant(value: T): boolean {
     const expr = this[Expr.Data]
-    switch (expr[0]) {
+    switch (expr.type) {
       case 'value':
-        const [, param] = expr
-        return param.value === value
+        return expr.value === value
       default:
         return false
     }
@@ -113,11 +162,13 @@ class ExprImpl<T> {
   isNot(that: EV<T>): Expr<boolean> {
     if (that === null || (Expr.isExpr(that) && that.isConstant(null!)))
       return this.isNotNull()
-    return Expr('binop', this[Expr.Data], 'notequals', ExprData(that))
+    return Expr(
+      ExprData.BinOp(this[Expr.Data], BinaryOp.NotEquals, ExprData(that))
+    )
   }
 
   isNull(): Expr<boolean> {
-    return Expr('unop', 'isnull', this[Expr.Data])
+    return Expr(ExprData.UnOp(UnaryOp.IsNull, this[Expr.Data]))
   }
 
   isNotNull(): Expr<boolean> {
@@ -125,55 +176,63 @@ class ExprImpl<T> {
   }
 
   isIn(that: EV<Array<T>> | Select<T>): Expr<boolean> {
-    return Expr('binop', this[Expr.Data], 'in', ExprData(that))
+    return Expr(ExprData.BinOp(this[Expr.Data], BinaryOp.In, ExprData(that)))
   }
 
   isNotIn(that: EV<Array<T>> | Select<T>): Expr<boolean> {
-    return Expr('binop', this[Expr.Data], 'notin', ExprData(that))
+    return Expr(ExprData.BinOp(this[Expr.Data], BinaryOp.NotIn, ExprData(that)))
   }
 
   isGreater(that: EV<any>): Expr<boolean> {
-    return Expr('binop', this[Expr.Data], 'greater', ExprData(that))
+    return Expr(
+      ExprData.BinOp(this[Expr.Data], BinaryOp.Greater, ExprData(that))
+    )
   }
 
   isGreaterOrEqual(that: EV<any>): Expr<boolean> {
-    return Expr('binop', this[Expr.Data], 'greaterorequal', ExprData(that))
+    return Expr(
+      ExprData.BinOp(this[Expr.Data], BinaryOp.GreaterOrEqual, ExprData(that))
+    )
   }
 
   isLess(that: EV<any>): Expr<boolean> {
-    return Expr('binop', this[Expr.Data], 'less', ExprData(that))
+    return Expr(ExprData.BinOp(this[Expr.Data], BinaryOp.Less, ExprData(that)))
   }
 
   isLessOrEqual(that: EV<any>): Expr<boolean> {
-    return Expr('binop', this[Expr.Data], 'lessorequal', ExprData(that))
+    return Expr(
+      ExprData.BinOp(this[Expr.Data], BinaryOp.LessOrEqual, ExprData(that))
+    )
   }
 
   add(this: Expr<number>, that: EV<number>): Expr<number> {
-    return Expr('binop', this[Expr.Data], 'add', ExprData(that))
+    return Expr(ExprData.BinOp(this[Expr.Data], BinaryOp.Add, ExprData(that)))
   }
 
   substract(this: Expr<number>, that: EV<number>): Expr<number> {
-    return Expr('binop', this[Expr.Data], 'subt', ExprData(that))
+    return Expr(ExprData.BinOp(this[Expr.Data], BinaryOp.Subt, ExprData(that)))
   }
 
   multiply(this: Expr<number>, that: EV<number>): Expr<number> {
-    return Expr('binop', this[Expr.Data], 'mult', ExprData(that))
+    return Expr(ExprData.BinOp(this[Expr.Data], BinaryOp.Mult, ExprData(that)))
   }
 
   remainder(this: Expr<number>, that: EV<number>): Expr<number> {
-    return Expr('binop', this[Expr.Data], 'mod', ExprData(that))
+    return Expr(ExprData.BinOp(this[Expr.Data], BinaryOp.Mod, ExprData(that)))
   }
 
   divide(this: Expr<number>, that: EV<number>): Expr<number> {
-    return Expr('binop', this[Expr.Data], 'div', ExprData(that))
+    return Expr(ExprData.BinOp(this[Expr.Data], BinaryOp.Div, ExprData(that)))
   }
 
   concat(this: Expr<string>, that: EV<string>): Expr<string> {
-    return Expr('binop', this[Expr.Data], 'concat', ExprData(that))
+    return Expr(
+      ExprData.BinOp(this[Expr.Data], BinaryOp.Concat, ExprData(that))
+    )
   }
 
   like(this: Expr<string>, that: EV<string>): Expr<boolean> {
-    return Expr('binop', this[Expr.Data], 'like', ExprData(that))
+    return Expr(ExprData.BinOp(this[Expr.Data], BinaryOp.Like, ExprData(that)))
   }
 
   /*dynamic<X = T>(...path: Array<string>): Fields<X> {
@@ -207,28 +266,30 @@ class ExprImpl<T> {
   }
 
   get<T>(name: string): Expr<T> {
-    return Expr('access', this[Expr.Data], name)
+    return Expr(ExprData.Access(this[Expr.Data], name))
   }
 
   toJSON() {
     return this[Expr.Data]
-  }
-
-  [Symbol.iterator](): Iterator<ExprData> {
-    return this[Expr.Data][Symbol.iterator]()
   }
 }
 
 export function and(...conditions: Array<EV<boolean>>): Expr<boolean> {
   return conditions
     .map(Expr.create)
-    .reduce((condition, expr) => condition.and(expr), Expr('value', true))
+    .reduce(
+      (condition, expr) => condition.and(expr),
+      Expr(ExprData.Value(true))
+    )
 }
 
 export function or(...conditions: Array<EV<boolean>>): Expr<boolean> {
   return conditions
     .map(Expr.create)
-    .reduce((condition, expr) => condition.or(expr), Expr('value', false))
+    .reduce(
+      (condition, expr) => condition.or(expr),
+      Expr(ExprData.Value(false))
+    )
 }
 
 export namespace Expr {
@@ -243,7 +304,7 @@ export namespace Expr {
 
   export function create<T>(input: EV<T>): Expr<T> {
     if (isExpr<T>(input)) return input
-    return Expr('value', input)
+    return Expr(ExprData.Value(input))
   }
 
   export function hasExpr<T>(input: any): input is {[Expr.ToExpr](): Expr<T>} {

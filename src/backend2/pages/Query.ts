@@ -1,25 +1,47 @@
+import {literal, record, union} from 'cito'
 import {Cursor, CursorData} from './Cursor.js'
 import {Expr, ExprData} from './Expr.js'
 
 const {entries, fromEntries} = Object
 
-export type QueryData =
-  | [type: 'record', fields: Record<string, QueryData>]
-  | [type: 'cursor', cursor: CursorData]
-  | [type: 'expr', expr: ExprData]
+export type QueryData = typeof QueryData.adt.infer
 
 export function QueryData(input: any): QueryData {
   if (input === null || input === undefined)
-    return Query('expr', ['value', null])
-  if (Cursor.isCursor(input)) return Query('cursor', input[Cursor.Data])
+    return QueryData.Expr(ExprData.Value(null))
+  if (Cursor.isCursor(input)) return QueryData.Cursor(input[Cursor.Data])
   if (Expr.hasExpr(input)) input = input[Expr.ToExpr]()
-  if (Expr.isExpr(input)) return Query('expr', input[Expr.Data])
+  if (Expr.isExpr(input)) return QueryData.Expr(input[Expr.Data])
   if (input && typeof input === 'object' && !Array.isArray(input))
-    return Query(
-      'record',
+    return QueryData.Record(
       fromEntries(entries(input).map(([key, value]) => [key, QueryData(value)]))
     )
-  return Query('expr', ['value', input])
+  return QueryData.Expr(ExprData.Value(input))
+}
+
+export namespace QueryData {
+  class QRecord {
+    type = literal('record')
+    fields = record(adt)
+  }
+  export function Record(fields: Record<string, QueryData>): QueryData {
+    return {type: 'record', fields}
+  }
+  class QCursor {
+    type = literal('cursor')
+    cursor = CursorData
+  }
+  export function Cursor(cursor: CursorData): QueryData {
+    return {type: 'cursor', cursor}
+  }
+  class QExpr {
+    type = literal('expr')
+    expr = ExprData.adt
+  }
+  export function Expr(expr: ExprData): QueryData {
+    return {type: 'expr', expr}
+  }
+  export const adt = union(QRecord, QCursor, QExpr)
 }
 
 export namespace Query {
@@ -40,6 +62,6 @@ export namespace Query {
 
 export type Query<T> = QueryData
 
-export function Query<T>(...data: QueryData): Query<T> {
+export function Query<T>(data: QueryData): Query<T> {
   return data
 }

@@ -1,11 +1,19 @@
 import {Callable} from 'rado/util/Callable'
-import {and, EV, Expr, ExprData} from './Expr.js'
+import {Select, SelectFirst} from './Cursor.js'
+import {and, BinaryOp, EV, Expr, ExprData} from './Expr.js'
 import {Fields} from './Fields.js'
-import {Select, SelectFirst} from './Select.js'
 
 const {create, entries} = Object
 
-export type TargetData = [name?: string, alias?: string]
+import {object, string} from 'cito'
+
+export type TargetData = typeof TargetData.infer
+export const TargetData = object(
+  class {
+    name? = string.optional
+    alias? = string.optional
+  }
+)
 
 export interface TargetImplSingle<T> extends Callable {
   (conditions: {
@@ -56,24 +64,25 @@ export const Target = class {
     const isConditionalRecord = input.length === 1 && !Expr.isExpr(input[0])
     const conditions = isConditionalRecord
       ? entries(input[0]).map(([key, value]) => {
-          const field = Expr('field', this.data, key)
-          return Expr('binop', field[Expr.Data], 'equals', ExprData(value))
+          const field = Expr(ExprData.Field(this.data, key))
+          return Expr(
+            ExprData.BinOp(field[Expr.Data], BinaryOp.Equals, ExprData(value))
+          )
         })
-      : input.map(ev => Expr(...ExprData(ev)))
+      : input.map(ev => Expr(ExprData(ev)))
     return and(...conditions)[Expr.Data]
   }
 
   get(field: string) {
     if (field === '1') return this.call()
     if (field in this.cache) return this.cache[field]
-    return (this.cache[field] = Expr('field', this.data, field))
+    return (this.cache[field] = Expr(ExprData.Field(this.data, field)))
   }
 
-  static create<Definition>(
-    data: [name: string, alias?: string]
-  ): Target<Definition> {
+  static create<Definition>(data: TargetData): Target<Definition> {
     const impl = new this(data)
-    const call = {[data[0]]: impl.call.bind(impl)}[data[0]]
+    const name = data.name || 'target'
+    const call = {[name]: impl.call.bind(impl)}[name]
     return new Proxy<any>(call, {
       get: (_, prop) => {
         if (typeof prop === 'string') return impl.get(prop)

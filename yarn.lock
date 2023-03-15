@@ -55,7 +55,7 @@ __metadata:
   resolution: "@alinea/backend@workspace:src/backend"
   dependencies:
     "@types/md5": ^2.3.2
-    cito: ^0.0.2
+    cito: ^0.1.1
     convert-hrtime: ^5.0.0
     pretty-ms: ^8.0.0
     rado: ^0.2.34
@@ -4549,10 +4549,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cito@npm:^0.0.2":
-  version: 0.0.2
-  resolution: "cito@npm:0.0.2"
-  checksum: 5720dcc761b7f88b8528e1d62ee2f21df979b3ed7192c82e65168c4eea793c0d519e50590ee3310e4d465594ab78940b4147902b857d14d276cc300b83ff0458
+"cito@npm:^0.1.1":
+  version: 0.1.1
+  resolution: "cito@npm:0.1.1"
+  checksum: c49bfbfba4f366af17bc3d16e1932b50379f6cd38a15f6e1bbc303c835594cb80028b29b3555bfa7d0e79047be5c2f7f6341029f68ab4463771a5c286c8180d7
   languageName: node
   linkType: hard
 
