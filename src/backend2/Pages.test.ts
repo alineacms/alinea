@@ -1,6 +1,6 @@
+import {Pages} from 'alinea/backend2/Pages'
+import {Expr} from 'alinea/backend2/pages/Expr.js'
 import {test} from 'uvu'
-import {Pages} from './Pages.js'
-import {Expr} from './pages/Expr.js'
 
 interface BlogRoot {
   id: string

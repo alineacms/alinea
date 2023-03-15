@@ -76,9 +76,9 @@ interface LinkMark {
 
 function transform<T, Q>(options: RichTextOptions<T, Q>) {
   return (field: Expr<TextDoc<T>>, pages: Pages<any>): Expr<Q> | undefined => {
-    const blocks = options.blocks
+    const schema = options.schema || options.blocks
     const expr: Expr<TextDoc<any>> =
-      (blocks && query(blocks)(field, pages)) || field
+      (schema && query(schema)(field, pages)) || field
     return pages.process(expr, (doc): Q | Promise<Q> => {
       const links: Map<string, LinkMark> = new Map()
       iterMarks(doc, mark => {

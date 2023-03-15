@@ -1,30 +1,33 @@
 import {Config} from 'alinea/core'
+import {Store} from './Store.js'
 import {EntryTree} from './collection/EntryTree.js'
 import {CursorData} from './pages/Cursor.js'
-import {Query as PageQuery, QueryData as PageQueryData} from './pages/Query.js'
-import {Store} from './Store.js'
+import {
+  Query as PageQuery,
+  QueryData as PageQueryData,
+  QueryData
+} from './pages/Query.js'
 
 const {entries, assign} = Object
 
-class QueryResolver<T> {
+class QueryResolver {
   tasks: Array<Promise<void>> = []
 
   constructor(
     protected store: Store,
     protected config: Config,
-    protected query: PageQuery<T>
+    protected query: QueryData
   ) {}
 
   select(row: any) {}
 
   async cursor(target: unknown, query: CursorData) {
-    const condition = query.target?.[0]
-      ? EntryTree.type.is(query.target[0])
-      : true
-    const entries = EntryTree(condition)
-      .take(query.limit?.[0])
-      .skip(query.limit?.[1])
+    const targetName = query.target?.name
+    const condition = targetName ? EntryTree.type.is(targetName) : true
+    const entries = EntryTree(condition).take(query.take).skip(query.skip)
     const isSingle = query.first
+    const type = targetName ? this.config.schema.type(targetName) : undefined
+    if (targetName && !type) throw new Error(`Unknown type: ${targetName}`)
     if (isSingle) {
       const entry = await this.store(entries.first())
       assign(target as {}, entry)
@@ -37,30 +40,30 @@ class QueryResolver<T> {
   }
 
   resultType(query: PageQueryData) {
-    switch (query[0]) {
+    switch (query.type) {
       case 'cursor':
-        return query[1].first ? {} : []
+        return query.cursor.first ? {} : []
       case 'record':
         return {}
       case 'expr':
-        switch (query[1][0]) {
+        switch (query.expr.type) {
           case 'value':
-            return query[1][1]
+            return query.expr.value
           default:
             throw new Error('Invalid query')
         }
     }
   }
 
-  enqueue(target: unknown, query: PageQuery<T>) {
-    switch (query[0]) {
+  enqueue(target: unknown, query: QueryData) {
+    switch (query.type) {
       case 'cursor':
-        return this.tasks.push(this.cursor(target, query[1]))
+        return this.tasks.push(this.cursor(target, query.cursor))
       case 'record':
         const record = target as Record<string, any>
-        for (const [key, subQuery] of entries(query[1])) {
+        for (const [key, subQuery] of entries(query.fields)) {
           record[key] = this.resultType(subQuery)
-          switch (subQuery[0]) {
+          switch (subQuery.type) {
             case 'expr':
               return
             default:
@@ -73,7 +76,7 @@ class QueryResolver<T> {
     }
   }
 
-  async resolve(): Promise<T> {
+  async resolve(): Promise<any> {
     const target = this.resultType(this.query)
     this.enqueue(target, this.query)
     await Promise.all(this.tasks)
@@ -83,12 +86,8 @@ class QueryResolver<T> {
 
 export function createResolver(store: Store, config: Config) {
   return async function resolve<T>(query: PageQuery<T>): Promise<T> {
-    // 1 validate the query data structure
-    // todo
-    // 2 translate into a database query
-
-    // 3 iterate over results & post process fields
-    // 4 return the result
-    return new QueryResolver<T>(store, config, query).resolve()
+    // This validates the input, and throws if it's invalid
+    const data = QueryData.adt(query)
+    return new QueryResolver(store, config, data).resolve()
   }
 }

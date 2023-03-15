@@ -196,6 +196,6 @@ export const TestTask = {
         sourcefile: 'test.js'
       }
     })
-    await import(`file://${outfile}`).finally(() => fs.promises.unlink(outfile))
+    await import(`file://${outfile}`) //.finally(() => fs.promises.unlink(outfile))
   }
 }
