@@ -208,7 +208,8 @@ function EntryRoute({id}: EntryRouteProps) {
     .filter(Boolean) as Array<string>
   const {
     isTreeOpen,
-    toggleTreeOpen,
+    showToggle,
+    toggleTree,
     locale: currentLocale,
     ...contentTree
   } = useContentTree({
@@ -221,7 +222,10 @@ function EntryRoute({id}: EntryRouteProps) {
     <CurrentDraftProvider value={draft}>
       <Sidebar.Tree>
         <SearchBox />
-        <RootHeader toggleTreeOpen={() => toggleTreeOpen(isTreeOpen)} />
+        <RootHeader
+          showToggle={showToggle}
+          toggleTree={() => toggleTree(isTreeOpen)}
+        />
         <ContentTree
           key={workspace.name}
           locale={locale}

@@ -1,12 +1,12 @@
-import {Entry, EntryMeta, Label, Outcome} from 'alinea/core'
 import {Cursor, Functions} from 'alinea/store'
+import {Entry, EntryMeta, Label, Outcome} from 'alinea/core'
 import {useCallback, useEffect, useMemo, useState} from 'react'
 
+import {useDashboard} from './UseDashboard.js'
 import {useQuery} from 'react-query'
 import {useRoot} from '../hook/UseRoot.js'
 import {useSession} from '../hook/UseSession.js'
 import {useWorkspace} from '../hook/UseWorkspace.js'
-import {useDashboard} from './UseDashboard.js'
 
 type QueryParams = {
   workspace: string
@@ -41,25 +41,25 @@ function query({workspace, root, locale, open, visible}: QueryParams) {
       parent: Entry.parent,
       parents: Entry.parents
     },
+    // Todo: fix childrenCount when locale
     childrenCount: Parent.where(
       (locale ? Parent.alinea.i18n.parent : Parent.alinea.parent).is(Entry.id)
     )
       .select(Functions.count())
       .first()
   }
-  let openEntries = parent.isIn(open).or(id.isIn(open)).or(parent.isNull())
-  let condition = openEntries
+  let entries = Entry.take(undefined)
   if (locale) {
-    condition = condition.and(Entry.i18n.locale.is(locale))
+    entries = entries.where(Entry.i18n.locale.is(locale))
   }
-  let query = Entry.where(condition)
+  let query = entries
     .where(Entry.workspace.is(workspace))
     .where(Entry.root.is(root))
     .where(Entry.type.isIn(visible))
     .select(summary)
   if (locale) {
-    const translatedCondition = openEntries
-      .and(Entry.i18n.locale.isNot(locale))
+    const translatedCondition = Entry.i18n.locale
+      .isNot(locale)
       .and(Entry.i18n.id.isNotIn(query.select(Entry.i18n.id)))
     query = query.union(
       Entry.where(translatedCondition)
@@ -155,15 +155,16 @@ export function useContentTree({
   const parentEntryOpen = (entry: ContentTreeEntry) =>
     entry.childrenCount > 0 && isOpen(entry.id)
   const isTreeOpen = entries.some(parentEntryOpen)
-  const toggleTreeOpen = useCallback(
+  const parentEntry = (entry: ContentTreeEntry) => entry.childrenCount > 0
+  const showToggle = entries.some(parentEntry)
+  const toggleTree = useCallback(
     (open: boolean) => {
       if (open) {
         window?.localStorage?.setItem(persistenceId, JSON.stringify([]))
         setOpen(new Set([]))
       }
       if (!open) {
-        // Todo: figure out how to open always the same/all entries
-        const entryIds = entries.map(entry => entry.id)
+        const entryIds = results.map(entry => entry.id)
         window?.localStorage?.setItem(persistenceId, JSON.stringify(entryIds))
         setOpen(new Set(entryIds))
       }
@@ -182,6 +183,7 @@ export function useContentTree({
     refetch,
     index,
     isTreeOpen,
-    toggleTreeOpen
+    showToggle,
+    toggleTree
   }
 }
