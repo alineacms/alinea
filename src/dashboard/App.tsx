@@ -225,6 +225,7 @@ function EntryRoute({id}: EntryRouteProps) {
         <RootHeader
           showToggle={showToggle}
           toggleTree={() => toggleTree(isTreeOpen)}
+          isTreeOpen={isTreeOpen}
         />
         <ContentTree
           key={workspace.name}
