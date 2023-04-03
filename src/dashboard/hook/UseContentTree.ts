@@ -1,12 +1,12 @@
-import {Cursor, Functions} from 'alinea/store'
 import {Entry, EntryMeta, Label, Outcome} from 'alinea/core'
+import {Cursor, Functions} from 'alinea/store'
 import {useCallback, useEffect, useMemo, useState} from 'react'
 
-import {useDashboard} from './UseDashboard.js'
 import {useQuery} from 'react-query'
 import {useRoot} from '../hook/UseRoot.js'
 import {useSession} from '../hook/UseSession.js'
 import {useWorkspace} from '../hook/UseWorkspace.js'
+import {useDashboard} from './UseDashboard.js'
 
 type QueryParams = {
   workspace: string
@@ -26,10 +26,9 @@ export interface ContentTreeEntry {
   alinea: EntryMeta
 }
 
-function query({workspace, root, locale, open, visible}: QueryParams) {
+function query({workspace, root, locale, visible}: QueryParams) {
   const Parent = Entry.as('Parent')
   const id = locale ? Entry.i18n.id : Entry.id
-  const parent = locale ? Entry.i18n.parent : Entry.parent
   const summary = {
     id: Entry.id,
     type: Entry.type,
@@ -41,9 +40,8 @@ function query({workspace, root, locale, open, visible}: QueryParams) {
       parent: Entry.parent,
       parents: Entry.parents
     },
-    // Todo: fix childrenCount when locale
     childrenCount: Parent.where(
-      (locale ? Parent.alinea.i18n.parent : Parent.alinea.parent).is(Entry.id)
+      (locale ? Parent.alinea.i18n.parent : Parent.alinea.parent).is(id)
     )
       .select(Functions.count())
       .first()
@@ -92,10 +90,7 @@ export function useContentTree({
   const [open, setOpen] = useState(() => {
     const stored = window?.localStorage?.getItem(persistenceId)
     const opened = stored && JSON.parse(stored)
-    return new Set<string>([
-      // ...select,
-      ...(Array.isArray(opened) ? opened : [])
-    ])
+    return new Set<string>([...(Array.isArray(opened) ? opened : [])])
   })
   const isOpen = useCallback((id: string) => open.has(id), [open])
   const toggleOpen = useCallback(
