@@ -36,15 +36,18 @@ export interface Cursor<T> {
 }
 
 declare const brand: unique symbol
-export class Cursor<T> extends Callable {
+export class Cursor<T> {
   declare [brand]: T
-  constructor(data: CursorData, fn: (input: any) => Cursor<T>) {
-    super(fn)
+  constructor(data: CursorData) {
     this[Cursor.Data] = data
   }
 
   static isCursor<T>(input: any): input is Cursor<T> {
     return input instanceof Cursor
+  }
+
+  select<S>(select: S): Cursor<Query.Infer<S>> {
+    return new Cursor({...this[Cursor.Data], select: QueryData(select)})
   }
 
   toJSON() {
@@ -56,15 +59,9 @@ export namespace Cursor {
   export const Data = Symbol('Cursor.Data')
 }
 
-export interface Select<Row> extends Callable {
-  <S>(select: S): Select<Query.Infer<S>>
-}
-
 export class Select<Row> extends Cursor<Array<Row>> {
   constructor(data: CursorData) {
-    super(data, function select(input: any) {
-      return new Select({...data, select: QueryData(input)})
-    })
+    super(data)
   }
 
   with<S>(select: S): Select<Query.Combine<Row, S>> {
@@ -86,13 +83,7 @@ export interface SelectFirst<Row> extends Callable {
 
 export class SelectFirst<Row> extends Cursor<Row> {
   constructor(data: CursorData) {
-    super(data, function selectFirst(input: any) {
-      return new SelectFirst({
-        ...data,
-        select: QueryData(input),
-        first: true
-      })
-    })
+    super(data)
   }
 
   with<S>(select: S): SelectFirst<Row & Query.Infer<S>> {
