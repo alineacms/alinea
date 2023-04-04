@@ -3,14 +3,14 @@ import {Expr} from 'alinea/backend2/pages/Expr.js'
 import {test} from 'uvu'
 
 interface BlogRoot {
-  id: string
-  title: string
+  id: Expr<string>
+  title: Expr<string>
 }
 
 interface BlogPost {
-  title: string
-  body: string
-  tags: string[]
+  title: Expr<string>
+  body: Expr<string>
+  tags: Expr<string[]>
 }
 
 interface Tag {
@@ -29,12 +29,26 @@ const pages = new Pages<Schema>(async selection => {
 
 test('test', async () => {
   const {BlogPost, BlogRoot, Tag} = pages.types
-  const root = BlogRoot().first()
-  const entry = await pages({
-    root,
-    children: root.children(BlogPost()).with({
-      tags: Tag(Tag.name.isIn(BlogPost.tags)).only(Tag.name)
-    })
+  const entry = await pages(BlogRoot, {
+    root: BlogRoot,
+    posts({children}) {
+      return pages(children, {
+        ...BlogPost,
+        tags() {
+          return pages(Tag(Tag.name.isIn(BlogPost.tags)))
+        },
+        previousPost({previous}) {
+          return pages(previous, {
+            title: BlogPost.title
+          })
+        },
+        nextPost({next}) {
+          return pages(next, {
+            title: BlogPost.title
+          })
+        }
+      })
+    }
   })
   console.dir(entry, {depth: null})
 })

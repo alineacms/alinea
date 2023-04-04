@@ -1,11 +1,10 @@
+import {object, string} from 'cito'
 import {Callable} from 'rado/util/Callable'
 import {Select, SelectFirst} from './Cursor.js'
-import {and, BinaryOp, EV, Expr, ExprData} from './Expr.js'
+import {BinaryOp, EV, Expr, ExprData, and} from './Expr.js'
 import {Fields} from './Fields.js'
 
 const {create, entries} = Object
-
-import {object, string} from 'cito'
 
 export type TargetData = typeof TargetData.infer
 export const TargetData = object(
@@ -22,18 +21,16 @@ export interface TargetImplSingle<T> extends Callable {
   (...conditions: Array<EV<boolean>>): SelectFirst<T>
 }
 
-declare class WithFirst<T> {
-  get ['1'](): TargetImplSingle<T>
+export declare class TargetImpl<T> {
+  get [Target.IsTarget](): true
 }
 
-export interface TargetImpl<T> extends Callable, WithFirst<T> {
+export interface TargetImpl<T> extends Callable {
   (conditions: {
     [K in keyof T]?: T[K] extends Expr<infer V> ? EV<V> : never
   }): Select<T>
   (...conditions: Array<EV<boolean>>): Select<T>
 }
-
-export type Target<Definition> = Definition & TargetImpl<Definition>
 
 export type TargetFrom<Row> = Target<{
   [K in keyof Row as K extends string ? K : never]: Fields<Row[K]>
@@ -45,12 +42,15 @@ export type TargetRow<Definition> = {
     : never]: Definition[K] extends Expr<infer T> ? T : never
 }
 
+export type Target<Definition> = Definition & TargetImpl<Definition>
+
 export namespace Target {
   export type From<Row> = TargetFrom<Row>
   export type Row<Definition> = TargetRow<Definition>
 }
 
 export const Target = class {
+  static readonly IsTarget = Symbol('IsTarget')
   cache = create(null)
 
   constructor(public data: TargetData) {}
@@ -74,7 +74,6 @@ export const Target = class {
   }
 
   get(field: string) {
-    if (field === '1') return this.call()
     if (field in this.cache) return this.cache[field]
     return (this.cache[field] = Expr(ExprData.Field(this.data, field)))
   }
@@ -82,7 +81,7 @@ export const Target = class {
   static create<Definition>(data: TargetData): Target<Definition> {
     const impl = new this(data)
     const name = data.name || 'target'
-    const call = {[name]: impl.call.bind(impl)}[name]
+    const call = {[name]: (...args: Array<any>) => impl.call(...args)}[name]
     return new Proxy<any>(call, {
       get: (_, prop) => {
         if (typeof prop === 'string') return impl.get(prop)

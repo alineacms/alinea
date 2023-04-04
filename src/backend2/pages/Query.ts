@@ -1,6 +1,7 @@
 import {literal, record, union} from 'cito'
 import {Cursor, CursorData} from './Cursor.js'
 import {Expr, ExprData} from './Expr.js'
+import {Target} from './Target.js'
 
 const {entries, fromEntries} = Object
 
@@ -49,10 +50,14 @@ export namespace Query {
     ? V
     : [T] extends [Expr<infer V>]
     ? V
+    : [T] extends [Target<infer V>]
+    ? Target.Row<V>
+    : [T] extends [(...args: any) => infer V]
+    ? Infer<V>
+    : [T] extends [Promise<infer V>]
+    ? V
     : [T] extends [object]
     ? {[K in keyof T]: Infer<T[K]>}
-    : T extends () => any
-    ? never
     : unknown extends T
     ? never
     : T

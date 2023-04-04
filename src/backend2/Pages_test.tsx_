@@ -67,3 +67,47 @@ const vacations = await pages(
     <Vacation {...Vacation} location={<Location id={Vacation.location} />} />
   </VacationRoot>
 )
+
+
+const client = await pages(Client().orderBy(Client.clientnumber.desc()), {
+  clientnumber: Client.clientnumber,
+  title: Client.title,
+  url: Client.url,
+});
+
+const client = await pages(Client({ url: `/${slug}` }), {
+  client: Client,
+  deeper({children}) {
+    return pages(children(), {
+
+    })
+  },
+  invoices() {
+    return pages(
+      Invoice({ client: this.client.id }).orderBy(Invoice.number.desc()),
+      {
+        invoice: Invoice,
+        creditnotes() {
+          return pages(Creditnote({ invoice: this.invoice.id }));
+        },
+      }
+    );
+  },
+  estimates() {
+    return pages(Estimate({ client: this.client.id }));
+  },
+  projects() {
+    return pages(
+      Project({
+        id: isIn(this.invoices.project).or(isIn(this.estimates.project)),
+      }).orderBy(Project.title.asc())
+    );
+  },
+  subscriptions() {
+    return pages(Subscription({ client: this.client.id }).orderBy(
+      Subscription.until.desc(),
+      Subscription.subscriptType.asc(),
+      Subscription.title.asc()
+    ));
+  }
+});
