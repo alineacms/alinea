@@ -1,7 +1,7 @@
 import {literal, record, union} from 'cito'
 import {Cursor, CursorData} from './Cursor.js'
 import {Expr, ExprData} from './Expr.js'
-import {Target} from './Target.js'
+import {Projection} from './Projection.js'
 
 const {entries, fromEntries} = Object
 
@@ -13,10 +13,11 @@ export function QueryData(input: any): QueryData {
   if (Cursor.isCursor(input)) return QueryData.Cursor(input[Cursor.Data])
   if (Expr.hasExpr(input)) input = input[Expr.ToExpr]()
   if (Expr.isExpr(input)) return QueryData.Expr(input[Expr.Data])
-  if (input && typeof input === 'object' && !Array.isArray(input))
+  if (input && typeof input === 'object' && !Array.isArray(input)) {
     return QueryData.Record(
       fromEntries(entries(input).map(([key, value]) => [key, QueryData(value)]))
     )
+  }
   return QueryData.Expr(ExprData.Value(input))
 }
 
@@ -46,21 +47,7 @@ export namespace QueryData {
 }
 
 export namespace Query {
-  export type Infer<T> = [T] extends [Cursor<infer V>]
-    ? V
-    : [T] extends [Expr<infer V>]
-    ? V
-    : [T] extends [Target<infer V>]
-    ? Target.Row<V>
-    : [T] extends [(...args: any) => infer V]
-    ? Infer<V>
-    : [T] extends [Promise<infer V>]
-    ? V
-    : [T] extends [object]
-    ? {[K in keyof T]: Infer<T[K]>}
-    : unknown extends T
-    ? never
-    : T
+  export type Infer<T> = Projection.Infer<T>
   type Expand<T> = {[K in keyof T]: T[K]} & {}
   export type Combine<A, B> = Expand<Omit<A, keyof Infer<B>> & Infer<B>>
 }

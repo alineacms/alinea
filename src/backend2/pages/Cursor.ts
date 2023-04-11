@@ -1,7 +1,7 @@
 import {array, boolean, enums, number, object} from 'cito'
-import {Callable} from 'rado/util/Callable'
 import {ExprData} from './Expr.js'
 import {Page} from './Page.js'
+import {Projection} from './Projection.js'
 import {Query, QueryData} from './Query.js'
 import {TargetData} from './Target.js'
 
@@ -46,10 +46,6 @@ export class Cursor<T> {
     return input instanceof Cursor
   }
 
-  select<S>(select: S): Cursor<Query.Infer<S>> {
-    return new Cursor({...this[Cursor.Data], select: QueryData(select)})
-  }
-
   toJSON() {
     return this[Cursor.Data]
   }
@@ -57,62 +53,58 @@ export class Cursor<T> {
 
 export namespace Cursor {
   export const Data = Symbol('Cursor.Data')
-}
 
-export class Select<Row> extends Cursor<Array<Row>> {
-  constructor(data: CursorData) {
-    super(data)
+  export class Find<Row> extends Cursor<Array<Row>> {
+    constructor(data: CursorData) {
+      super(data)
+    }
+
+    where(where: ExprData): Find<Row> {
+      return new Find({...this[Cursor.Data], where})
+    }
+
+    get<S extends Projection<Row>>(
+      select?: S
+    ): Get<[S] extends [undefined] ? Row : Query.Infer<S>> {
+      const data = {...this[Cursor.Data], first: true}
+      if (select) data.select = QueryData(select)
+      return new Get(data)
+    }
+
+    select<S extends Projection<Row>>(select: S): Find<Query.Infer<S>> {
+      return new Find({...this[Cursor.Data], select: QueryData(select)})
+    }
   }
 
-  with<S>(select: S): Select<Query.Combine<Row, S>> {
-    return new Select({...this[Cursor.Data], select: QueryData(select)})
-  }
+  export class Get<Row> extends Cursor<Row> {
+    constructor(data: CursorData) {
+      super(data)
+    }
 
-  only<S>(select: S): Select<Query.Infer<S>> {
-    return new Select({...this[Cursor.Data], select: QueryData(select)})
-  }
+    select<S extends Projection<Row>>(select: S): Get<Query.Infer<S>> {
+      return new Get({...this[Cursor.Data], select: QueryData(select)})
+    }
 
-  first(): SelectFirst<Row> {
-    return new SelectFirst({...this[Cursor.Data], first: true})
-  }
-}
+    prev(): Find<Page> {
+      return new Find({
+        traverse: {type: 'Previous', cursor: this[Cursor.Data]}
+      })
+    }
 
-export interface SelectFirst<Row> extends Callable {
-  <S>(select: S): SelectFirst<Query.Infer<S>>
-}
+    next(): Find<Page> {
+      return new Find({traverse: {type: 'Next', cursor: this[Cursor.Data]}})
+    }
 
-export class SelectFirst<Row> extends Cursor<Row> {
-  constructor(data: CursorData) {
-    super(data)
-  }
+    children<T = Page>(define?: Find<T>): Find<T> {
+      return new Find({
+        traverse: {type: 'Children', cursor: this[Cursor.Data]}
+      })
+    }
 
-  with<S>(select: S): SelectFirst<Row & Query.Infer<S>> {
-    return new SelectFirst({
-      ...this[Cursor.Data],
-      select: QueryData(select)
-    })
-  }
-
-  only<S>(select: S): SelectFirst<Query.Infer<S>> {
-    return new SelectFirst({
-      ...this[Cursor.Data],
-      select: QueryData(select)
-    })
-  }
-
-  prev(): Select<Page> {
-    return new Select({traverse: {type: 'Previous', cursor: this[Cursor.Data]}})
-  }
-
-  next(): Select<Page> {
-    return new Select({traverse: {type: 'Next', cursor: this[Cursor.Data]}})
-  }
-
-  children<T = Page>(define?: Select<T>): Select<T> {
-    return new Select({traverse: {type: 'Children', cursor: this[Cursor.Data]}})
-  }
-
-  parents<T = Page>(define?: Select<T>): Select<T> {
-    return new Select({traverse: {type: 'Parents', cursor: this[Cursor.Data]}})
+    parents<T = Page>(define?: Find<T>): Find<T> {
+      return new Find({
+        traverse: {type: 'Parents', cursor: this[Cursor.Data]}
+      })
+    }
   }
 }

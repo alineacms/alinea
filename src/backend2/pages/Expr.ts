@@ -1,5 +1,5 @@
 import {any, enums, literal, record, string, union} from 'cito'
-import {Select} from './Cursor.js'
+import {Cursor} from './Cursor.js'
 import {TargetData} from './Target.js'
 
 const {entries, fromEntries} = Object
@@ -175,11 +175,11 @@ class ExprImpl<T> {
     return this.isNull().not()
   }
 
-  isIn(that: EV<Array<T>> | Select<T>): Expr<boolean> {
+  isIn(that: EV<Array<T>> | Cursor.Find<T>): Expr<boolean> {
     return Expr(ExprData.BinOp(this[Expr.Data], BinaryOp.In, ExprData(that)))
   }
 
-  isNotIn(that: EV<Array<T>> | Select<T>): Expr<boolean> {
+  isNotIn(that: EV<Array<T>> | Cursor.Find<T>): Expr<boolean> {
     return Expr(ExprData.BinOp(this[Expr.Data], BinaryOp.NotIn, ExprData(that)))
   }
 
