@@ -1,6 +1,6 @@
 import {object, string} from 'cito'
 import {Callable} from 'rado/util/Callable'
-import {Select, SelectFirst} from './Cursor.js'
+import {Cursor} from './Cursor.js'
 import {BinaryOp, EV, Expr, ExprData, and} from './Expr.js'
 import {Fields} from './Fields.js'
 
@@ -17,19 +17,20 @@ export const TargetData = object(
 export interface TargetImplSingle<T> extends Callable {
   (conditions: {
     [K in keyof T]?: T[K] extends Expr<infer V> ? EV<V> : never
-  }): SelectFirst<T>
-  (...conditions: Array<EV<boolean>>): SelectFirst<T>
+  }): Cursor.Get<T>
+  (...conditions: Array<EV<boolean>>): Cursor.Get<T>
 }
 
-export declare class TargetImpl<T> {
+export declare class TargetI<T = any> {
   get [Target.IsTarget](): true
 }
 
-export interface TargetImpl<T> extends Callable {
+export interface TargetI<T = any> extends Callable {
   (conditions: {
     [K in keyof T]?: T[K] extends Expr<infer V> ? EV<V> : never
-  }): Select<T>
-  (...conditions: Array<EV<boolean>>): Select<T>
+  }): Cursor.Find<T>
+  (): Cursor.Find<T>
+  (...conditions: Array<EV<boolean>>): Cursor.Find<T>
 }
 
 export type TargetFrom<Row> = Target<{
@@ -42,7 +43,7 @@ export type TargetRow<Definition> = {
     : never]: Definition[K] extends Expr<infer T> ? T : never
 }
 
-export type Target<Definition> = Definition & TargetImpl<Definition>
+export type Target<Definition> = Definition & TargetI<Definition>
 
 export namespace Target {
   export type From<Row> = TargetFrom<Row>
@@ -55,8 +56,12 @@ export const Target = class {
 
   constructor(public data: TargetData) {}
 
+  static isTarget<T>(target: any): target is TargetI<T> {
+    return target && target[Target.IsTarget]
+  }
+
   call(...input: Array<any>) {
-    return new Select({target: this.data, where: this.condition(input)})
+    return new Cursor.Find({target: this.data, where: this.condition(input)})
   }
 
   condition(input: Array<any>): ExprData | undefined {
@@ -85,6 +90,7 @@ export const Target = class {
     return new Proxy<any>(call, {
       get: (_, prop) => {
         if (typeof prop === 'string') return impl.get(prop)
+        if (prop === Target.IsTarget) return true
       }
     })
   }

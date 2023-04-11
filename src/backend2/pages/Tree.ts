@@ -1,23 +1,28 @@
-import {Select, SelectFirst} from './Cursor.js'
+import {Cursor} from './Cursor.js'
 import {Page} from './Page.js'
+import {Query} from './Query.js'
+import {TargetI} from './Target.js'
+
+type Narrow = Cursor.Find<any> | TargetI<any>
+type Output<T> = [T] extends [undefined] ? Page : Query.Infer<T>
 
 export class Tree {
-  children(): Select<Page> {
+  children<N extends Narrow>(narrow?: N): Cursor.Find<Output<N>> {
     throw 'todo'
   }
-  previous(): SelectFirst<Page> {
+  previous<N extends Narrow>(narrow?: N): Cursor.Get<Output<N>> {
     throw 'todo'
   }
-  next(): SelectFirst<Page> {
+  next<N extends Narrow>(narrow?: N): Cursor.Get<Output<N>> {
     throw 'todo'
   }
-  parents(): Select<Page> {
+  parents<N extends Narrow>(narrow?: N): Cursor.Find<Output<N>> {
     throw 'todo'
   }
-  parent(): SelectFirst<Page> {
+  parent<N extends Narrow>(narrow?: N): Cursor.Get<Output<N>> {
     throw 'todo'
   }
-  siblings(): Select<Page> {
+  siblings<N extends Narrow>(narrow?: N): Cursor.Find<Output<N>> {
     throw 'todo'
   }
 }
