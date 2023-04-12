@@ -1,32 +1,50 @@
-import {literal, record, union} from 'cito'
+import {array, literal, string, tuple, union} from 'cito'
 import {Cursor, CursorData} from './Cursor.js'
 import {Expr, ExprData} from './Expr.js'
 import {Projection} from './Projection.js'
-
-const {entries, fromEntries} = Object
+import {Target, TargetData} from './Target.js'
+import {Tree} from './Tree.js'
 
 export type QueryData = typeof QueryData.adt.infer
 
-export function QueryData(input: any): QueryData {
+export function QueryData(input: any, sourceId?: string): QueryData {
   if (input === null || input === undefined)
     return QueryData.Expr(ExprData.Value(null))
   if (Cursor.isCursor(input)) return QueryData.Cursor(input[Cursor.Data])
   if (Expr.hasExpr(input)) input = input[Expr.ToExpr]()
   if (Expr.isExpr(input)) return QueryData.Expr(input[Expr.Data])
+  if (Target.isTarget(input)) return QueryData.Row(input[Target.Data])
+  if (typeof input === 'function') {
+    if (!sourceId) throw new Error('sourceId is required for function queries')
+    return QueryData(input(new Tree(sourceId)))
+  }
   if (input && typeof input === 'object' && !Array.isArray(input)) {
+    const keys = Object.keys(input)
     return QueryData.Record(
-      fromEntries(entries(input).map(([key, value]) => [key, QueryData(value)]))
+      keys.map(key => {
+        if (key.startsWith('@@@')) return [input[key]]
+        return [key, QueryData(input[key], sourceId)]
+      })
     )
   }
   return QueryData.Expr(ExprData.Value(input))
 }
 
 export namespace QueryData {
+  class QRow {
+    type = literal('row')
+    target = TargetData
+  }
+  export function Row(target: TargetData): QueryData {
+    return {type: 'row', target}
+  }
   class QRecord {
     type = literal('record')
-    fields = record(adt)
+    fields = array(union(tuple(string, adt), tuple(TargetData)))
   }
-  export function Record(fields: Record<string, QueryData>): QueryData {
+  export function Record(
+    fields: Array<[string, QueryData] | [TargetData]>
+  ): QueryData {
     return {type: 'record', fields}
   }
   class QCursor {
@@ -43,7 +61,7 @@ export namespace QueryData {
   export function Expr(expr: ExprData): QueryData {
     return {type: 'expr', expr}
   }
-  export const adt = union(QRecord, QCursor, QExpr)
+  export const adt = union(QRow, QRecord, QCursor, QExpr)
 }
 
 export namespace Query {

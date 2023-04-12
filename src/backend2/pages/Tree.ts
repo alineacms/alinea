@@ -1,28 +1,57 @@
-import {Cursor} from './Cursor.js'
+import {createId} from 'alinea/core/Id'
+import {Cursor, CursorData, SourceType} from './Cursor.js'
 import {Page} from './Page.js'
 import {Query} from './Query.js'
-import {TargetI} from './Target.js'
+import {Target, TargetI} from './Target.js'
 
 type Narrow = Cursor.Find<any> | TargetI<any>
-type Output<T> = [T] extends [undefined] ? Page : Query.Infer<T>
+type Output<T> = [Narrow] extends [T] ? Page : Query.Infer<T>
 
 export class Tree {
-  children<N extends Narrow>(narrow?: N): Cursor.Find<Output<N>> {
-    throw 'todo'
+  constructor(protected sourceId: string) {}
+
+  protected narrowData(narrow?: any): Partial<CursorData> {
+    return (
+      narrow &&
+      (Cursor.isCursor(narrow)
+        ? narrow[Cursor.Data]
+        : {target: narrow[Target.Data]})
+    )
   }
-  previous<N extends Narrow>(narrow?: N): Cursor.Get<Output<N>> {
-    throw 'todo'
+
+  protected find<T>(sourceType: SourceType, narrow?: any): Cursor.Find<T> {
+    return new Cursor.Find({
+      id: createId(),
+      ...this.narrowData(narrow),
+      source: [sourceType, this.sourceId]
+    })
   }
-  next<N extends Narrow>(narrow?: N): Cursor.Get<Output<N>> {
-    throw 'todo'
+
+  protected get<T>(sourceType: SourceType, narrow?: any): Cursor.Get<T> {
+    return new Cursor.Get({
+      id: createId(),
+      ...this.narrowData(narrow),
+      first: true,
+      source: [sourceType, this.sourceId]
+    })
   }
-  parents<N extends Narrow>(narrow?: N): Cursor.Find<Output<N>> {
-    throw 'todo'
+
+  children = <N extends Narrow>(narrow?: N): Cursor.Find<Output<N>> => {
+    return this.find(SourceType.Children, narrow)
   }
-  parent<N extends Narrow>(narrow?: N): Cursor.Get<Output<N>> {
-    throw 'todo'
+  previous = <N extends Narrow>(narrow?: N): Cursor.Get<Output<N>> => {
+    return this.get(SourceType.Previous, narrow)
   }
-  siblings<N extends Narrow>(narrow?: N): Cursor.Find<Output<N>> {
-    throw 'todo'
+  next = <N extends Narrow>(narrow?: N): Cursor.Get<Output<N>> => {
+    return this.get(SourceType.Next, narrow)
+  }
+  parents = <N extends Narrow>(narrow?: N): Cursor.Find<Output<N>> => {
+    return this.find(SourceType.Parents, narrow)
+  }
+  /*parent=<N extends Narrow>(narrow?: N): Cursor.Get<Output<N>> =>  {
+    return this.find(SourceType.Parents, narrow).get()
+  }*/
+  siblings = <N extends Narrow>(narrow?: N): Cursor.Find<Output<N>> => {
+    return this.find(SourceType.Siblings, narrow)
   }
 }

@@ -1,5 +1,3 @@
-// @ts-nocheck
-
 import {Pages} from 'alinea/backend2/Pages'
 import {Expr} from 'alinea/backend2/pages/Expr.js'
 import {test} from 'uvu'
@@ -30,19 +28,21 @@ const pages = new Pages<Schema>(async selection => {
 })
 
 test('test', async () => {
-  const {BlogPost, BlogRoot, Tag} = pages.types
-
+  const {BlogRoot, BlogPost, Tag} = pages.types
   const entry = await pages(
     BlogRoot().get({
       ...BlogRoot,
+      test({children}) {
+        return children()
+      },
       posts({children}) {
         return children(BlogPost).select({
           ...BlogPost,
           tags() {
-            return Tag(Tag.name.isIn(this.tags))
+            return Tag(Tag.name.isIn(BlogPost.tags))
           },
           previousPost({previous}) {
-            return previous(BlogPost).select({title: true})
+            return previous(BlogPost).select({title: BlogPost.title})
           },
           nextPost({next}) {
             return next(BlogPost).select({title: BlogPost.title})

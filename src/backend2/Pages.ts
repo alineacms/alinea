@@ -1,25 +1,25 @@
 import {Callable} from 'rado/util/Callable'
-import {Expr} from './pages/Expr.js'
 import {Query, QueryData} from './pages/Query.js'
 import {Target} from './pages/Target.js'
-import {Tree} from './pages/Tree.js'
 
 const {create} = Object
 
-interface Fields {
-  [key: string]: Expr<any> | {[Target.IsTarget]: true} | ((tree: Tree) => any)
+type PageTypes<T> = {
+  [K in keyof T]: Target<T[K]>
 }
 
 export interface Pages<T> extends Callable {
   <S>(select: S): Promise<Query.Infer<S>>
+  <S>(select: (types: PageTypes<T>) => S): Promise<Query.Infer<S>>
 }
 
 export class Pages<T> extends Callable {
-  types: {[K in keyof T]: Target<T[K]>}
+  types: PageTypes<T>
 
   constructor(fetch: <T>(query: QueryData) => Promise<T>) {
     super(async (select: any) => {
-      return fetch(QueryData(select))
+      const query = QueryData(select)
+      return fetch(query)
     })
     this.types = new Proxy(create(null), {
       get(types, type) {
