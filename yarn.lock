@@ -55,7 +55,7 @@ __metadata:
   resolution: "@alinea/backend@workspace:src/backend"
   dependencies:
     "@types/md5": ^2.3.2
-    cito: ^0.1.1
+    cito: ^0.1.6
     convert-hrtime: ^5.0.0
     pretty-ms: ^8.0.0
     rado: ^0.2.34
@@ -3905,7 +3905,7 @@ __metadata:
     react: ^18.2.0
     react-dom: ^18.2.0
     speedscope: ^1.14.0
-    typescript: next
+    typescript: ^5.0.4
     typescript-plugin-css-modules: ^3.4.0
     uvu: ^0.5.1
   peerDependencies:
@@ -4549,10 +4549,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cito@npm:^0.1.1":
-  version: 0.1.1
-  resolution: "cito@npm:0.1.1"
-  checksum: c49bfbfba4f366af17bc3d16e1932b50379f6cd38a15f6e1bbc303c835594cb80028b29b3555bfa7d0e79047be5c2f7f6341029f68ab4463771a5c286c8180d7
+"cito@npm:^0.1.6":
+  version: 0.1.6
+  resolution: "cito@npm:0.1.6"
+  checksum: 8f4b9aa13ea18298d9d45d6b95d4200a13100d7d488f63af786d4635bdfd3800c780af3318fdb152c5fcb23b881a06b7984698879385538b3f7cae26ce22037e
   languageName: node
   linkType: hard
 
@@ -11178,23 +11178,23 @@ resolve@^1.10.0:
   languageName: node
   linkType: hard
 
-"typescript@npm:next":
-  version: 5.1.0-dev.20230308
-  resolution: "typescript@npm:5.1.0-dev.20230308"
+"typescript@npm:^5.0.4":
+  version: 5.0.4
+  resolution: "typescript@npm:5.0.4"
   bin:
     tsc: bin/tsc
     tsserver: bin/tsserver
-  checksum: 24e5cfedf3235f9f80d89a44743ee915d4342025ad1228d792b8218271d8cccbe3d54b61c5e9912949313887a341562fdba5bdbe12e0beb908909b924f446b96
+  checksum: 82b94da3f4604a8946da585f7d6c3025fff8410779e5bde2855ab130d05e4fd08938b9e593b6ebed165bda6ad9292b230984f10952cf82f0a0ca07bbeaa08172
   languageName: node
   linkType: hard
 
-"typescript@patch:typescript@next#~builtin<compat/typescript>":
-  version: 5.1.0-dev.20230308
-  resolution: "typescript@patch:typescript@npm%3A5.1.0-dev.20230308#~builtin<compat/typescript>::version=5.1.0-dev.20230308&hash=bda367"
+"typescript@patch:typescript@^5.0.4#~builtin<compat/typescript>":
+  version: 5.0.4
+  resolution: "typescript@patch:typescript@npm%3A5.0.4#~builtin<compat/typescript>::version=5.0.4&hash=bda367"
   bin:
     tsc: bin/tsc
     tsserver: bin/tsserver
-  checksum: 5320494840c9547cfa06d8dcd8e830e34578c3ce6f8dcce68bed490c6e5bf58ed96fcd5abf75b5f93a68e5da8779cefe33d6a1ab9889e63dad260ced1a11c676
+  checksum: 6a1fe9a77bb9c5176ead919cc4a1499ee63e46b4e05bf667079f11bf3a8f7887f135aa72460a4c3b016e6e6bb65a822cb8689a6d86cbfe92d22cc9f501f09213
   languageName: node
   linkType: hard
 

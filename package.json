@@ -95,7 +95,7 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "speedscope": "^1.14.0",
-    "typescript": "next",
+    "typescript": "^5.0.4",
     "typescript-plugin-css-modules": "^3.4.0",
     "uvu": "^0.5.1"
   },

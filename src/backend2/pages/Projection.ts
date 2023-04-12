@@ -1,18 +1,17 @@
 import {Cursor} from './Cursor.js'
 import {Expr} from './Expr.js'
-import {Fields} from './Fields.js'
 import {Target} from './Target.js'
 import {Tree} from './Tree.js'
 
-export type Projection<Source> =
-  | Expr<any>
-  | {[Target.IsTarget]: true}
-  | Cursor<any>
-  | {
-      [key: string]:
-        | ((this: Fields<Source>, tree: Tree) => Projection<Source>)
-        | Projection<Source>
-    }
+interface ProjectionRecord<Source> {
+  [key: string]:
+    | ((/*this: Fields<Source>,*/ tree: Tree) => PageProjection<Source>)
+    | Projection<Source>
+}
+
+export type PageProjection<Source> = Cursor<any> | ProjectionRecord<Source>
+
+export type Projection<Source> = Expr<any> | PageProjection<Source>
 
 export namespace Projection {
   export type Infer<T> = [T] extends [Expr<infer V>]

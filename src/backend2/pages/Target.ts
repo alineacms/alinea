@@ -1,3 +1,4 @@
+import {createId} from 'alinea/core/Id'
 import {object, string} from 'cito'
 import {Callable} from 'rado/util/Callable'
 import {Cursor} from './Cursor.js'
@@ -23,6 +24,7 @@ export interface TargetImplSingle<T> extends Callable {
 
 export declare class TargetI<T = any> {
   get [Target.IsTarget](): true
+  get [Target.Data](): TargetData
 }
 
 export interface TargetI<T = any> extends Callable {
@@ -51,7 +53,8 @@ export namespace Target {
 }
 
 export const Target = class {
-  static readonly IsTarget = Symbol('IsTarget')
+  static readonly Data = Symbol('Target.Data')
+  static readonly IsTarget = Symbol('Target.IsTarget')
   cache = create(null)
 
   constructor(public data: TargetData) {}
@@ -61,7 +64,11 @@ export const Target = class {
   }
 
   call(...input: Array<any>) {
-    return new Cursor.Find({target: this.data, where: this.condition(input)})
+    return new Cursor.Find({
+      id: createId(),
+      target: this.data,
+      where: this.condition(input)
+    })
   }
 
   condition(input: Array<any>): ExprData | undefined {
@@ -87,10 +94,25 @@ export const Target = class {
     const impl = new this(data)
     const name = data.name || 'target'
     const call = {[name]: (...args: Array<any>) => impl.call(...args)}[name]
+    const rowId = `@@@${createId()}`
     return new Proxy<any>(call, {
+      ownKeys() {
+        return [rowId]
+      },
+      getOwnPropertyDescriptor() {
+        return {enumerable: true, configurable: true}
+      },
       get: (_, prop) => {
-        if (typeof prop === 'string') return impl.get(prop)
-        if (prop === Target.IsTarget) return true
+        if (typeof prop === 'string') {
+          if (prop === rowId) return data
+          return impl.get(prop)
+        }
+        switch (prop) {
+          case Target.IsTarget:
+            return true
+          case Target.Data:
+            return data
+        }
       }
     })
   }
