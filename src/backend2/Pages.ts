@@ -1,5 +1,5 @@
 import {Callable} from 'rado/util/Callable'
-import {Query, QueryData} from './pages/Query.js'
+import {QueryData} from './pages/Selection.js'
 import {Target} from './pages/Target.js'
 
 const {create} = Object

@@ -1,8 +1,7 @@
-import {createId} from 'alinea/core/Id'
 import {array, boolean, enums, number, object, string, tuple} from 'cito'
 import {ExprData} from './Expr.js'
 import {Projection} from './Projection.js'
-import {Query, QueryData} from './Query.js'
+import {Selection} from './Selection.js'
 import {TargetData} from './Target.js'
 
 export type CursorData = typeof CursorData.infer
@@ -14,7 +13,7 @@ export const CursorData = object(
     skip? = number.optional
     take? = number.optional
     orderBy? = array(ExprData.adt).optional
-    select? = QueryData.adt.optional
+    select? = Selection.adt.optional
     first? = boolean.optional
     source? = tuple(enums(SourceType), string).optional
   }
@@ -46,7 +45,7 @@ export class Cursor<T> {
   }
 
   protected with(data: Partial<CursorData>): CursorData {
-    return {...this[Cursor.Data], id: createId(), ...data}
+    return {...this[Cursor.Data], ...data}
   }
 
   static isCursor<T>(input: any): input is Cursor<T> {
@@ -66,15 +65,15 @@ export namespace Cursor {
       return new Find(this.with({where}))
     }
 
-    get<S extends Projection<Row>>(select?: S): Get<Query.Infer<S>> {
+    get<S extends Projection<Row>>(select?: S): Get<Selection.Infer<S>> {
       const query = this.with({first: true})
-      if (select) query.select = QueryData(select, this.id)
-      return new Get<Query.Infer<S>>(query)
+      if (select) query.select = Selection(select, this.id)
+      return new Get<Selection.Infer<S>>(query)
     }
 
-    select<S extends Projection<Row>>(select: S): Find<Query.Infer<S>> {
-      return new Find<Query.Infer<S>>(
-        this.with({select: QueryData(select, this.id)})
+    select<S extends Projection<Row>>(select: S): Find<Selection.Infer<S>> {
+      return new Find<Selection.Infer<S>>(
+        this.with({select: Selection(select, this.id)})
       )
     }
   }
@@ -84,9 +83,9 @@ export namespace Cursor {
       return new Get<Row>(this.with({where}))
     }
 
-    select<S extends Projection<Row>>(select: S): Get<Query.Infer<S>> {
-      return new Get<Query.Infer<S>>(
-        this.with({select: QueryData(select, this.id)})
+    select<S extends Projection<Row>>(select: S): Get<Selection.Infer<S>> {
+      return new Get<Selection.Infer<S>>(
+        this.with({select: Selection(select, this.id)})
       )
     }
   }
