@@ -1,4 +1,4 @@
-import {any, enums, literal, record, string, union} from 'cito'
+import {Infer, any, enums, literal, record, string, union} from 'cito'
 import {Cursor} from './Cursor.js'
 import {TargetData} from './Target.js'
 
@@ -43,54 +43,69 @@ export function ExprData(input: any): ExprData {
 }
 
 export namespace ExprData {
-  class EUnOp {
-    type = literal('unop')
-    op = enums(UnaryOp)
-    expr = adt
+  const types = {
+    UnOp: class {
+      type = literal('unop')
+      op = enums(UnaryOp)
+      expr = adt
+    },
+    BinOp: class {
+      type = literal('binop')
+      a = adt
+      op = enums(BinaryOp)
+      b = adt
+    },
+    Field: class {
+      type = literal('field')
+      target = TargetData
+      field = string
+    },
+    Access: class {
+      type = literal('access')
+      expr = adt
+      field = string
+    },
+    Value: class {
+      type = literal('value')
+      value = any
+    },
+    Record: class {
+      type = literal('record')
+      fields = record(adt)
+    }
   }
+  export type UnOp = Infer<typeof types.UnOp>
   export function UnOp(op: UnaryOp, expr: ExprData): ExprData {
     return {type: 'unop', op, expr}
   }
-  class EBinOp {
-    type = literal('binop')
-    a = adt
-    op = enums(BinaryOp)
-    b = adt
-  }
+  export type BinOp = Infer<typeof types.BinOp>
   export function BinOp(a: ExprData, op: BinaryOp, b: ExprData): ExprData {
     return {type: 'binop', a, op, b}
   }
-  class EField {
-    type = literal('field')
-    target = TargetData
-    field = string
-  }
+  export type Field = Infer<typeof types.Field>
   export function Field(target: TargetData, field: string): ExprData {
     return {type: 'field', target, field}
   }
-  class EAccess {
-    type = literal('access')
-    expr = adt
-    field = string
-  }
+  export type Access = Infer<typeof types.Access>
   export function Access(expr: ExprData, field: string): ExprData {
     return {type: 'access', expr, field}
   }
-  class EValue {
-    type = literal('value')
-    value = any
-  }
+  export type Value = Infer<typeof types.Value>
   export function Value(value: any): ExprData {
     return {type: 'value', value}
   }
-  class ERecord {
-    type = literal('record')
-    fields = record(adt)
-  }
-  export function Record(fields: Record<string, ExprData>): ExprData {
+  export type Record = Infer<typeof types.Record>
+  export function Record(fields: {[k: string]: ExprData}): ExprData {
     return {type: 'record', fields}
   }
-  export const adt = union(EUnOp, EBinOp, EField, EAccess, EValue, ERecord)
+  export const adt = union(
+    types.UnOp,
+    types.BinOp,
+    types.Field,
+    types.Access,
+    types.Value,
+    types.Record
+  )
 }
 
 /** Expression or value of type T */

@@ -1,7 +1,6 @@
 import {createId} from 'alinea/core/Id'
 import {Cursor, CursorData, SourceType} from './Cursor.js'
 import {Page} from './Page.js'
-import {Query} from './Query.js'
 import {Target, TargetI} from './Target.js'
 
 type Narrow = Cursor.Find<any> | TargetI<any>

@@ -3,7 +3,7 @@
   "type": "module",
   "devDependencies": {
     "@types/md5": "^2.3.2",
-    "cito": "^0.1.6",
+    "cito": "^0.1.7",
     "convert-hrtime": "^5.0.0",
     "pretty-ms": "^8.0.0",
     "regexparam": "^2.0.1",

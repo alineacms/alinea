@@ -60,5 +60,12 @@ class EntryTreeTable {
   }
 }
 
-export type EntryTree = table<EntryTreeTable>
+interface EntryData {
+  [key: string]: any
+}
+
+export interface EntryTree extends table<EntryTreeTable> {
+  data: EntryData
+}
+
 export const EntryTree = table({EntryTree: EntryTreeTable})
