@@ -2,11 +2,11 @@ import {Field} from 'alinea/core'
 import {InputForm, InputLabel, InputState} from 'alinea/editor'
 import {Card} from 'alinea/ui'
 import {IcRoundFeed} from 'alinea/ui/icons/IcRoundFeed'
-import {object as createObject, ObjectField} from './ObjectField.js'
+import {ObjectField, object as createObject} from './ObjectField.js'
 
 export * from './ObjectField.js'
 
-export const object = Field.withView(createObject, ObjectInput)
+export const object = Field.provideView(ObjectInput, createObject)
 
 type ObjectInputProps<T> = {
   state: InputState<InputState.Record<T>>
@@ -14,18 +14,13 @@ type ObjectInputProps<T> = {
 }
 
 function ObjectInput<T>({state, field}: ObjectInputProps<T>) {
-  const {width, help} = field.options
+  const {label, options} = field[Field.Data]
 
   return (
-    <InputLabel
-      label={field.label}
-      help={help}
-      width={width}
-      icon={IcRoundFeed}
-    >
+    <InputLabel label={label} {...options} icon={IcRoundFeed}>
       <Card.Root>
         <Card.Content>
-          <InputForm state={state} type={field.options.fields} />
+          <InputForm state={state} type={options.fields} />
         </Card.Content>
       </Card.Root>
     </InputLabel>

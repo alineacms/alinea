@@ -9,19 +9,19 @@ interface MissingViewProps {
 function MissingView({field}: MissingViewProps) {
   return (
     <div>
-      Missing view for field: <TextLabel label={field.label} />
+      Missing view for field: <TextLabel label={field[Field.Data].label} />
     </div>
   )
 }
 
-export type InputProps<V, M> = {
+export interface InputProps<V, M> {
   state: InputState<readonly [V, M]>
   field: Field<V, M>
 }
 
 // Todo: make error messages nice
 export function Input<V, M>({state, field}: InputProps<V, M>) {
-  const View = field.view
+  const View = field[Field.Data].view
   if (!View) return <MissingView field={field} />
   return (
     <ErrorBoundary>

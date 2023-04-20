@@ -43,7 +43,7 @@ import css from './ListInput.module.scss'
 
 export * from './ListField.js'
 
-export const list = Field.withView(createList, ListInput)
+export const list = Field.provideView(ListInput, createList)
 
 const styles = fromModule(css)
 
@@ -110,7 +110,8 @@ function ListInputRow<T extends ListRow>({
   firstRow,
   ...rest
 }: ListInputRowProps<T>) {
-  const {types} = field.options.schema
+  const {label, options} = field[Field.Data]
+  const {types} = options.schema
   const type = LazyRecord.get(types, row.type)
   const [showInsert, setShowInsert] = useState(false)
   if (!type) return null
@@ -175,7 +176,7 @@ type ListCreateRowProps<T> = {
 }
 
 function ListCreateRow<T>({field, inline, onCreate}: ListCreateRowProps<T>) {
-  const {types} = field.options.schema
+  const {types} = field[Field.Data].options.schema
   return (
     <div className={styles.create({inline})}>
       <Create.Root>
@@ -224,8 +225,8 @@ export function ListInput<T extends ListRow>({
   state,
   field
 }: ListInputProps<T>) {
+  const {label, options} = field[Field.Data]
   const [rows, list] = useInput(state)
-  const {help, inline, width, optional} = field.options
   const ids = rows.map(row => row.id)
   const [dragging, setDragging] = useState<T | null>(null)
   const sensors = useSensors(
@@ -255,16 +256,9 @@ export function ListInput<T extends ListRow>({
       onDragEnd={handleDragEnd}
       layoutMeasuring={layoutMeasuringConfig}
     >
-      <InputLabel
-        label={field.label}
-        help={help}
-        optional={optional}
-        inline={inline}
-        width={width}
-        icon={IcOutlineList}
-      >
+      <InputLabel label={label} {...options} icon={IcOutlineList}>
         <div className={styles.root()}>
-          <div className={styles.root.inner({inline})}>
+          <div className={styles.root.inner({inline: options.inline})}>
             <SortableContext items={ids} strategy={verticalListSortingStrategy}>
               <Card.Root>
                 {rows.map((row, i) => {

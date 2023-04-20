@@ -42,7 +42,7 @@ import css from './LinkInput.module.scss'
 
 export * from './LinkField.js'
 
-const createLinkInput = Field.withView(createLink, LinkInput)
+const createLinkInput = Field.provideView(LinkInput, createLink)
 
 /** Create a link field configuration */
 export const link = linkConstructors(createLinkInput)
@@ -150,12 +150,13 @@ const layoutMeasuringConfig = {
   strategy: LayoutMeasuringStrategy.Always
 }
 
-export interface LinkInputProps<T> {
+export interface LinkInputProps<Row> {
   state: InputState<InputState.List<Reference>>
-  field: LinkField<T, any>
+  field: LinkField<Row>
 }
 
 export function LinkInput<T>({state, field}: LinkInputProps<T>) {
+  const {label, options} = field[Field.Data]
   const [value = [], list] = useInput(state)
   const {
     fields,
@@ -165,8 +166,8 @@ export function LinkInput<T>({state, field}: LinkInputProps<T>) {
     optional,
     help,
     max = !multiple ? 1 : undefined
-  } = field.options
-  const pickers = field.options.pickers || []
+  } = options
+  const pickers = options.pickers || []
   const picker = useMemo(() => {
     const res = new Map()
     for (const p of pickers) res.set(p.type, p)
@@ -243,7 +244,7 @@ export function LinkInput<T>({state, field}: LinkInputProps<T>) {
         layoutMeasuring={layoutMeasuringConfig}
       >
         <InputLabel
-          label={field.label}
+          label={label}
           help={help}
           optional={optional}
           inline={inline}

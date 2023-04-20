@@ -3,11 +3,11 @@ import {InputLabel, InputState, useInput} from 'alinea/editor'
 import {fromModule} from 'alinea/ui'
 import {IcRoundLink} from 'alinea/ui/icons/IcRoundLink'
 import {useState} from 'react'
-import {path as createPath, PathField} from './PathField.js'
+import {PathField, path as createPath} from './PathField.js'
 import css from './PathInput.module.scss'
 export * from './PathField.js'
 
-export const path = Field.withView(createPath, PathInput)
+export const path = Field.provideView(PathInput, createPath)
 
 const styles = fromModule(css)
 
@@ -17,7 +17,8 @@ type PathInputProps = {
 }
 
 function PathInput({state, field}: PathInputProps) {
-  const {width, from = 'title', help, optional, readonly} = field.options
+  const {label, options} = field[Field.Data]
+  const {width, from = 'title', help, optional} = options
   const [focus, setFocus] = useState(false)
   const parentState = state.parent()
   if (!parentState) throw 'Parent state not found'
@@ -32,7 +33,7 @@ function PathInput({state, field}: PathInputProps) {
   return (
     <InputLabel
       asLabel
-      label={field.label}
+      label={label}
       help={help}
       optional={optional}
       width={width}
@@ -52,7 +53,7 @@ function PathInput({state, field}: PathInputProps) {
         onFocus={() => setFocus(true)}
         onBlur={() => setFocus(false)}
         placeholder={' '}
-        disabled={readonly}
+        disabled={options.readonly}
       />
     </InputLabel>
   )

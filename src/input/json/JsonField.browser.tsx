@@ -1,44 +1,38 @@
 import {Field} from 'alinea/core'
 import {InputLabel, InputState, useInput} from 'alinea/editor'
-import {fromModule, HStack} from 'alinea/ui'
+import {HStack, fromModule} from 'alinea/ui'
 import {IcRoundTextFields} from 'alinea/ui/icons/IcRoundTextFields'
 import {TextareaAutosize} from 'alinea/ui/util/TextareaAutosize'
 import {useEffect, useState} from 'react'
-import {json as createJson, JsonField} from './JsonField.js'
+import {JsonField, json as createJson} from './JsonField.js'
 import css from './JsonInput.module.scss'
 
 export * from './JsonField.js'
 
-export const json = Field.withView(createJson, JsonInput)
+export const json = Field.provideView(JsonInput, createJson)
 
 const styles = fromModule(css)
 
-type JsonInputProps = {
-  state: InputState<InputState.Scalar<any>>
-  field: JsonField
+interface JsonInputProps<T> {
+  state: InputState<InputState.Scalar<T>>
+  field: JsonField<T>
 }
 
-function JsonInput({state, field}: JsonInputProps) {
+function JsonInput<T>({state, field}: JsonInputProps<T>) {
+  const {label, options} = field[Field.Data]
   const [value, setValue] = useInput(state)
   const [text, setText] = useState(JSON.stringify(value, null, 2))
   const [valid, setValid] = useState(true)
   const [focus, setFocus] = useState(false)
-  const {
-    width,
-    inline,
-    optional,
-    help,
-    iconLeft: IconLeft,
-    iconRight: IconRight,
-    autoFocus,
-    readonly
-  } = field.options
+  const {inline, autoFocus} = options
 
   // Todo: unlocalise
   // Todo: redraw textarea on fontSize change
-  const placeholder = inline ? String(field.label) : ''
+  const placeholder = inline ? String(label) : ''
   const empty = value === ''
 
+  // Todo: @dmerckx - no useEffect needed here, just handle both text and value
+  // setters in the event handlers
   useEffect(() => {
     try {
       const newValue = JSON.parse(text)
@@ -52,17 +46,13 @@ function JsonInput({state, field}: JsonInputProps) {
   return (
     <InputLabel
       asLabel
-      label={field.label}
-      help={help}
-      optional={optional}
-      inline={inline}
-      width={width}
+      label={label}
+      {...options}
       focused={focus}
       icon={IcRoundTextFields}
       empty={empty}
     >
       <HStack center gap={8}>
-        {IconLeft && <IconLeft />}
         <TextareaAutosize
           className={styles.root.input({valid})}
           type="text"
@@ -92,9 +82,8 @@ function JsonInput({state, field}: JsonInputProps) {
           }}
           placeholder={placeholder}
           autoFocus={autoFocus}
-          disabled={readonly}
+          disabled={options.readonly}
         />
-        {IconRight && <IconRight />}
       </HStack>
     </InputLabel>
   )

@@ -1,25 +1,10 @@
-import type {Pages} from 'alinea/backend'
-import {
-  Entry,
-  Field,
-  Label,
-  Schema,
-  Shape,
-  TextDoc,
-  TextNode
-} from 'alinea/core'
+import {Field, Label, Schema, TextDoc} from 'alinea/core'
 import {richTextHint} from 'alinea/core/util/Hints'
-import {Expr, SelectionInput} from 'alinea/store'
 
 /** Optional settings to configure a rich text field */
-export type RichTextOptions<T, Q> = {
-  /**
-   * @deprecated use the schema property
-   * Allow these blocks to be created between text fragments
-   */
-  blocks?: Schema<T>
+export interface RichTextOptions<Blocks> {
   /** Allow these blocks to be created between text fragments */
-  schema?: Schema<T>
+  schema?: Schema<Blocks>
   /** Width of the field in the dashboard UI (0-1) */
   width?: number
   /** Add instructional text to a field */
@@ -29,7 +14,7 @@ export type RichTextOptions<T, Q> = {
   /** Display a minimal version */
   inline?: boolean
   /** A default value */
-  initialValue?: TextDoc<T>
+  initialValue?: TextDoc<Blocks>
   /** Hide this rich text field */
   hidden?: boolean
   /** Make this rich text field read-only */
@@ -37,12 +22,12 @@ export type RichTextOptions<T, Q> = {
 }
 
 /** Internal representation of a rich text field */
-export interface RichTextField<T, Q = TextDoc<T>> extends Field.Text<T, Q> {
-  label: Label
-  options: RichTextOptions<T, Q>
-}
+export class RichTextField<Blocks> extends Field.RichText<
+  Blocks,
+  RichTextOptions<Blocks>
+> {}
 
-function query<T, Q>(schema: Schema<T>) {
+/*function query<T, Q>(schema: Schema<T>) {
   return (field: Expr<TextDoc<T>>, pages: Pages<any>): Expr<Q> | undefined => {
     const row = field.each()
     const cases: Record<string, SelectionInput> = {}
@@ -104,21 +89,17 @@ function transform<T, Q>(options: RichTextOptions<T, Q>) {
         })
     })
   }
-}
+}*/
 
 /** Create a rich text field configuration */
-export function richText<T, Q = TextDoc<T>>(
+export function richText<Blocks>(
   label: Label,
-  options: RichTextOptions<T, Q> = {}
-): RichTextField<T, Q> {
-  const schema = options.schema || options.blocks
-  const shape = Shape.RichText(label, schema?.shape, options.initialValue)
-  return {
-    shape,
-    hint: richTextHint(schema),
+  options: RichTextOptions<Blocks> = {}
+): RichTextField<Blocks> {
+  return new RichTextField(options.schema?.shape, {
+    hint: richTextHint(options.schema),
     label,
     options,
-    transform: transform<T, Q>(options),
-    hidden: options.hidden
-  }
+    initialValue: options.initialValue
+  })
 }

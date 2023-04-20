@@ -1,13 +1,13 @@
 import sqlite from '@alinea/sqlite-wasm'
-import {createConfig, root, schema, type, workspace} from 'alinea/core'
+import {Schema, createConfig, root, schema, type, workspace} from 'alinea/core'
 import {Logger, Report} from 'alinea/core/util/Logger'
 import {path, text} from 'alinea/input'
 import * as fs from 'fs/promises'
 import {connect} from 'rado/driver/sql.js'
 import {test} from 'uvu'
-import {FileData} from './data/FileData.js'
 import {Database} from './Database.js'
 import {SourceEntry} from './Source.js'
+import {FileData} from './data/FileData.js'
 
 const encode = (data: any) => new TextEncoder().encode(JSON.stringify(data))
 
@@ -68,9 +68,17 @@ const entry3: SourceEntry = {
   })
 }
 
-const config = createConfig({
+export const entries = [entry1, entry2, entry3]
+
+export const config = createConfig({
   schema: schema({
     Type: type('Type', {
+      title: text('Title'),
+      path: path('Path')
+    }).configure({
+      isContainer: true
+    }),
+    TypeB: type('TypeB', {
       title: text('Title'),
       path: path('Path')
     }).configure({
@@ -92,17 +100,23 @@ const config = createConfig({
   }
 })
 
-async function* files() {
+export type ExampleSchema = Schema.TypeOf<typeof config.schema>
+
+export async function* files() {
   yield* [entry1, entry2, entry3]
 }
 
-test('create', async () => {
+export async function createDb() {
   const {Database: SqlJsDb} = await sqlite()
-  const cnx1 = connect(new SqlJsDb())
-  const db1 = new Database(cnx1.toAsync(), config)
+  return new Database(connect(new SqlJsDb()).toAsync(), config)
+}
+
+test('create', async () => {
+  const db1 = await createDb()
   await db1.fill(files())
   console.log(await db1.meta())
 
+  const {Database: SqlJsDb} = await sqlite()
   const cnx2 = connect(new SqlJsDb())
   const db2 = new Database(cnx2.toAsync(), config)
   await db2.init()

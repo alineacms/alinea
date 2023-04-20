@@ -1,11 +1,11 @@
-import {Field, Label, Shape} from 'alinea/core'
+import {Field, FieldOptions, Label} from 'alinea/core'
 import {Hint} from 'alinea/core/Hint'
 
 /** A string record with option labels */
 export type SelectItems<T extends string> = Record<T, Label>
 
 /** Optional settings to configure a select field */
-export type SelectOptions<T> = {
+export interface SelectConfig<Key> extends FieldOptions {
   /** Width of the field in the dashboard UI (0-1) */
   width?: number
   /** Add instructional text to a field */
@@ -17,39 +17,36 @@ export type SelectOptions<T> = {
   /** Choose a custom placeholder (eg. 'Select an option')  */
   placeholder?: Label
   /** A default value */
-  initialValue?: T
+  initialValue?: Key
   /** Hide this select field */
   hidden?: boolean
   /** Make this select field read-only */
   readonly?: boolean
 }
 
-/** Internal representation of a select field */
-export interface SelectField<T extends string = string>
-  extends Field.Scalar<T> {
-  label: Label
-  items: Record<T, Label>
-  options: SelectOptions<T>
-  configure: (options: SelectOptions<T>) => SelectField<T>
+export interface SelectOptions<Key, Items> extends SelectConfig<Key> {
+  items: Items
 }
 
+export class SelectField<Key, Items> extends Field.Scalar<
+  Key,
+  SelectOptions<Key, Items>
+> {}
+
 /** Create a select field configuration */
-export function select<T extends string, Items extends Record<T, string>>(
+export function select<Key extends string, Items extends Record<Key, string>>(
   label: Label,
   items: Items,
-  options: SelectOptions<keyof Items> = {}
-): SelectField<T> {
+  options: SelectConfig<Key> = {}
+): SelectField<Key, Items> {
   const keys = Object.keys(items)
-  return {
-    shape: Shape.Scalar(label, options.initialValue as T),
+  return new SelectField({
     hint: Hint.Union(keys.map(key => Hint.Literal(key))),
     label,
-    items,
-    options: options as SelectOptions<T>,
-    initialValue: options.initialValue as T,
-    configure(options: SelectOptions<T>) {
-      return select<T, Items>(label, items, options)
+    options: {
+      items,
+      ...options
     },
-    hidden: options.hidden
-  }
+    initialValue: options.initialValue
+  })
 }

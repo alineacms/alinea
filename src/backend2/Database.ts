@@ -4,15 +4,21 @@ import {Driver, Table, alias, create} from 'rado'
 import xxhash from 'xxhash-wasm'
 import {Syncable} from './Api.js'
 import {entryData} from './EntryData.js'
+import {Resolver} from './Resolver.js'
 import {SourceEntry} from './Source.js'
 import {Store} from './Store.js'
 import {AlineaMeta} from './collection/AlineaMeta.js'
 import {EntryStatus, EntryTree} from './collection/EntryTree.js'
+import {Selection} from './pages/Selection.js'
 
 const decoder = new TextDecoder()
 
 export class Database implements Syncable {
-  constructor(public store: Store, public config: Config) {}
+  resolve: <T>(selection: Selection<T>) => Promise<T>
+
+  constructor(public store: Store, public config: Config) {
+    this.resolve = new Resolver(store, config.schema).resolve
+  }
 
   async updates(request: AlineaMeta) {
     const current = await this.meta()

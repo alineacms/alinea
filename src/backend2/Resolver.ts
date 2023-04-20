@@ -1,4 +1,4 @@
-import {Config, Field} from 'alinea/core'
+import {RichTextShape, Schema, Shape, TextDoc} from 'alinea/core'
 import {assert} from 'cito'
 import {
   BinOpType,
@@ -7,7 +7,6 @@ import {
   ParamData,
   Query,
   QueryData,
-  Table,
   UnOpType
 } from 'rado'
 import {Select, SelectFirst} from 'rado/define/query/Select'
@@ -17,8 +16,6 @@ import {EntryTree} from './collection/EntryTree.js'
 import * as pages from './pages/index.js'
 
 const {keys, entries, fromEntries} = Object
-
-const entryTarget = EntryTree[Table.Data]
 
 const unOps = {
   [pages.UnaryOp.Not]: UnOpType.Not,
@@ -53,18 +50,39 @@ enum ResolveContext {
   InAccess = 1 << 1
 }
 
-class Resolver {
-  constructor(public store: Store, public config: Config) {}
+const POST_KEY = '$$post'
 
-  fieldExpr(
-    ctx: ResolveContext,
-    expr: ExprData,
-    field: Field<any, any>
-  ): ExprData {
+type Pre = {
+  [POST_KEY]: 'richText'
+  doc: TextDoc<any>
+  linked: Array<{id: string; url: string}>
+}
+
+export class Resolver {
+  constructor(public store: Store, public schema: Schema) {}
+
+  fieldExpr(ctx: ResolveContext, expr: ExprData, shape: Shape): ExprData {
     const isInAccess = ctx & ResolveContext.InAccess
     const isInCondition = ctx & ResolveContext.InCondition
     if (isInAccess || isInCondition) return expr
-    return expr
+    switch (true) {
+      case shape instanceof RichTextShape:
+        if (isInAccess || isInCondition) return new ExprData.Field(expr, 'doc')
+        return new ExprData.Record({
+          [POST_KEY]: new ExprData.Param(new ParamData.Value('richText')),
+          doc: new ExprData.Field(expr, 'doc'),
+          linked: new ExprData.Query(
+            EntryTree(
+              EntryTree.id.isIn(new Expr(new ExprData.Field(expr, 'linked')))
+            ).select({
+              id: EntryTree.id,
+              url: EntryTree.url
+            })[Query.Data]
+          )
+        })
+      default:
+        return expr
+    }
   }
 
   fieldOf(
@@ -86,13 +104,13 @@ class Resolver {
       default:
         const {name, alias} = target
         if (!name) throw new Error(`Unknown field: "${field}"`)
-        const type = this.config.type(name)
+        const type = this.schema.type(name)
         if (!type)
           throw new Error(`Selecting "${field}" from unknown type: "${name}"`)
         return this.fieldExpr(
           ctx,
           EntryTree.data.get(field)[Expr.Data],
-          type.field(field)
+          type.field(field).shape
         )
     }
   }
@@ -107,7 +125,7 @@ class Resolver {
   ): Array<[string, ExprData]> {
     const {name, alias} = target
     if (!name) return this.pageFields(ctx, alias)
-    const type = this.config.type(name)
+    const type = this.schema.type(name)
     if (!type) throw new Error(`Selecting from unknown type: "${name}"`)
     return keys(type.fields).map(key => {
       return [key, this.fieldOf(ctx, target, key)]
@@ -264,10 +282,39 @@ class Resolver {
     }
   }
 
-  async resolve<T>(selection: pages.Selection<T>): Promise<T> {
+  postProcess(pre: Pre) {
+    switch (pre[POST_KEY]) {
+      case 'richText':
+        const {doc, linked} = pre
+        // Todo: add href into text doc
+        console.log(linked)
+        return doc
+      default:
+        return pre
+    }
+  }
+
+  post(interim: object): any {
+    if (!interim) return interim
+    if (Array.isArray(interim)) {
+      return interim.map(item => this.post(item))
+    }
+    if (typeof interim === 'object') {
+      if (POST_KEY in interim) return this.postProcess(interim as any)
+      return fromEntries(
+        entries(interim).map(([key, value]) => {
+          return [key, this.post(value)]
+        })
+      )
+    }
+    return interim
+  }
+
+  resolve = async <T>(selection: pages.Selection<T>): Promise<T> => {
     // This validates the input, and throws if it's invalid
     assert(selection, pages.Selection.adt)
     const query = this.query(selection)
-    return this.store(new Query(query))
+    const interim: object | Array<object> = await this.store(new Query(query))
+    return this.post(interim)
   }
 }

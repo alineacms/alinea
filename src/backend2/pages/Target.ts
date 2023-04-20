@@ -19,7 +19,7 @@ export interface TargetImplSingle<T> extends Callable {
   (conditions: {
     [K in keyof T]?: T[K] extends Expr<infer V> ? EV<V> : never
   }): Cursor.Get<T>
-  (...conditions: Array<EV<boolean>>): Cursor.Get<T>
+  // (...conditions: Array<EV<boolean>>): Cursor.Get<T>
 }
 
 export declare class TargetI<T = any> {
@@ -32,7 +32,7 @@ export interface TargetI<T = any> extends Callable {
     [K in keyof T]?: T[K] extends Expr<infer V> ? EV<V> : never
   }): Cursor.Find<T>
   (): Cursor.Find<T>
-  (...conditions: Array<EV<boolean>>): Cursor.Find<T>
+  // (...conditions: Array<EV<boolean>>): Cursor.Find<T>
 }
 
 export type TargetFrom<Row> = Target<{

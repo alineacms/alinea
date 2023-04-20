@@ -1,7 +1,7 @@
-import {Field, Hint, Label, Shape} from 'alinea/core'
+import {Field, FieldOptions, Hint, Label} from 'alinea/core'
 
 /** Optional settings to configure a text field */
-export type DateOptions = {
+export interface DateOptions extends FieldOptions {
   /** Width of the field in the dashboard UI (0-1) */
   width?: number
   /** Add instructional text to a field */
@@ -21,18 +21,14 @@ export type DateOptions = {
 }
 
 /** Internal representation of a date field */
-export interface DateField extends Field.Scalar<string> {
-  label: Label
-  options: DateOptions
-}
+export class DateField extends Field.Scalar<string, DateOptions> {}
 
 /** Create a date field configuration */
 export function date(label: Label, options: DateOptions = {}): DateField {
-  return {
-    shape: Shape.Scalar(label, options.initialValue),
+  return new DateField({
     hint: Hint.String(),
     label,
     options,
-    hidden: options.hidden
-  }
+    initialValue: options.initialValue
+  })
 }

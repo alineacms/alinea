@@ -1,19 +1,19 @@
 import {Field} from 'alinea/core'
 import {InputLabel, InputState, useInput} from 'alinea/editor'
-import {fromModule, HStack} from 'alinea/ui'
+import {HStack, fromModule} from 'alinea/ui'
 import {IcRoundTextFields} from 'alinea/ui/icons/IcRoundTextFields'
 import {TextareaAutosize} from 'alinea/ui/util/TextareaAutosize'
 import {useState} from 'react'
-import {text as createText, TextField} from './TextField.js'
+import {TextField, text as createText} from './TextField.js'
 import css from './TextInput.module.scss'
 
 export * from './TextField.js'
 
-export const text = Field.withView(createText, TextInput)
+export const text = Field.provideView(TextInput, createText)
 
 const styles = fromModule(css)
 
-type TextInputProps = {
+interface TextInputProps {
   state: InputState<InputState.Scalar<string>>
   field: TextField
 }
@@ -21,6 +21,7 @@ type TextInputProps = {
 function TextInput({state, field}: TextInputProps) {
   const [value, setValue] = useInput(state)
   const [focus, setFocus] = useState(false)
+  const {label, options} = field[Field.Data]
   const {
     width,
     multiline,
@@ -29,19 +30,18 @@ function TextInput({state, field}: TextInputProps) {
     help,
     iconLeft: IconLeft,
     iconRight: IconRight,
-    autoFocus,
-    readonly
-  } = field.options
+    autoFocus
+  } = options
 
   const Input = multiline ? TextareaAutosize : 'input'
   // Todo: unlocalise
   // Todo: redraw textarea on fontSize change
-  const placeholder = inline ? String(field.label) : ''
+  const placeholder = inline ? String(label) : ''
   const empty = value === ''
   return (
     <InputLabel
       asLabel
-      label={field.label}
+      label={label}
       help={help}
       optional={optional}
       inline={inline}
@@ -61,7 +61,7 @@ function TextInput({state, field}: TextInputProps) {
           onBlur={() => setFocus(false)}
           placeholder={placeholder}
           autoFocus={autoFocus}
-          disabled={readonly}
+          disabled={options.readonly}
         />
         {IconRight && <IconRight />}
       </HStack>

@@ -1,24 +1,16 @@
-import {Pages} from 'alinea/backend/Pages'
-import {Field, Label, TypeConfig} from 'alinea/core'
-import {Expr} from 'alinea/store/Expr'
-import {SelectionInput} from 'alinea/store/Selection'
+import {Field, FieldOptions, Label, TypeConfig} from 'alinea/core'
 
-export type ObjectOptions<T> = {
+export interface ObjectOptions<Row> extends FieldOptions {
   /** The fields */
-  fields: TypeConfig<any, T>
+  fields: TypeConfig<Row>
   width?: number
   help?: Label
   inline?: boolean
-  /** Hide this object field */
-  hidden?: boolean
 }
 
-export interface ObjectField<T> extends Field.Record<T> {
-  label: Label
-  options: ObjectOptions<T>
-}
+export class ObjectField<Row> extends Field.Record<Row, ObjectOptions<Row>> {}
 
-function query(type: TypeConfig) {
+/*function query(type: TypeConfig) {
   return (expr: Expr<any>, pages: Pages<any>): Expr<any> | undefined => {
     const computed: Record<string, SelectionInput> = {}
     let isComputed = false
@@ -34,19 +26,15 @@ function query(type: TypeConfig) {
     if (!isComputed) return
     return expr.with(computed).toExpr()
   }
-}
+}*/
 
 export function object<T>(
   label: Label,
   options: ObjectOptions<T>
 ): ObjectField<T> {
-  const shape = options.fields.shape
-  return {
-    shape,
+  return new ObjectField(options.fields.shape, {
     hint: options.fields.hint,
     label,
-    options,
-    transform: query(options.fields),
-    hidden: options.hidden
-  }
+    options
+  })
 }

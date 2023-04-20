@@ -1,34 +1,15 @@
-import {Pages} from 'alinea/backend2/Pages'
-import {Expr} from 'alinea/backend2/pages/Expr.js'
 import {test} from 'uvu'
-
-interface BlogRoot {
-  id: Expr<string>
-  title: Expr<string>
-}
-
-interface BlogPost {
-  title: Expr<string>
-  body: Expr<string>
-  tags: Expr<string[]>
-}
-
-interface Tag {
-  name: Expr<string>
-}
-
-type Schema = {
-  BlogRoot: BlogRoot
-  BlogPost: BlogPost
-  Tag: Tag
-}
-
-const pages = new Pages<Schema>(async selection => {
-  return selection as any
-})
+import {ExampleSchema, createDb, files} from './Database.test.js'
+import {Pages} from './Pages.js'
 
 test('test', async () => {
-  const {BlogRoot, BlogPost, Tag} = pages.types
+  const db = await createDb()
+  await db.fill(files())
+  const pages = new Pages<ExampleSchema>(db.resolve)
+  const {Type} = pages.types
+  // const entry1 = await pages(Type({id: 'root'}).get())
+
+  /*const {BlogRoot, BlogPost, Tag} = pages.types
   const entry = await pages(
     BlogRoot().get({
       ...BlogRoot,
@@ -52,7 +33,7 @@ test('test', async () => {
     })
   )
 
-  console.dir(entry, {depth: null})
+  console.dir(entry, {depth: null})*/
 })
 
 test.run()
