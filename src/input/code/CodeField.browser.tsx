@@ -1,19 +1,19 @@
 import {Field} from 'alinea/core'
 import {InputLabel, InputState, useInput} from 'alinea/editor'
-import {fromModule, HStack} from 'alinea/ui'
+import {HStack, fromModule} from 'alinea/ui'
 import {IcRoundCode} from 'alinea/ui/icons/IcRoundCode'
 import {TextareaAutosize} from 'alinea/ui/util/TextareaAutosize'
 import {useState} from 'react'
-import {code as createCode, CodeField} from './CodeField.js'
+import {CodeField, code as createCode} from './CodeField.js'
 import css from './CodeInput.module.scss'
 
 export * from './CodeField.js'
 
-export const code = Field.withView(createCode, CodeInput)
+export const code = Field.provideView(CodeInput, createCode)
 
 const styles = fromModule(css)
 
-type CodeInputProps = {
+interface CodeInputProps {
   state: InputState<InputState.Scalar<string>>
   field: CodeField
 }
@@ -23,21 +23,17 @@ type CodeInputProps = {
 // and is stored as a simple string, but using an XMLFragment on the Yjs
 // side so we can have it be collaborative.
 function CodeInput({state, field}: CodeInputProps) {
+  const {label, options} = field[Field.Data]
   const [value, setValue] = useInput(state)
   const [focus, setFocus] = useState(false)
-  const {width, inline, optional, help, readonly} = field.options
 
-  // Todo: unlocalise
-  const placeholder = inline ? String(field.label) : ''
+  const placeholder = options.inline ? String(label) : ''
   const empty = value === ''
   return (
     <InputLabel
       asLabel
-      label={field.label}
-      help={help}
-      optional={optional}
-      inline={inline}
-      width={width}
+      label={label}
+      {...options}
       focused={focus}
       icon={IcRoundCode}
       empty={empty}
@@ -52,7 +48,7 @@ function CodeInput({state, field}: CodeInputProps) {
           onBlur={() => setFocus(false)}
           placeholder={placeholder}
           spellCheck="false"
-          disabled={readonly}
+          disabled={options.readonly}
         />
       </HStack>
     </InputLabel>

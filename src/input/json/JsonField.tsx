@@ -1,8 +1,7 @@
-import {Field, Hint, Label, Shape} from 'alinea/core'
-import type {ComponentType} from 'react'
+import {Field, FieldOptions, Hint, Label} from 'alinea/core'
 
-/** Optional settings to configure a text field */
-export type JsonOptions = {
+/** Optional settings to configure a JSON field */
+export interface JsonOptions<Value> extends FieldOptions {
   /** Width of the field in the dashboard UI (0-1) */
   width?: number
   /** Add instructional text to a field */
@@ -12,32 +11,23 @@ export type JsonOptions = {
   /** Display a minimal version */
   inline?: boolean
   /** A default value */
-  initialValue?: string
-  /** An icon (React component) to display on the left side of the input */
-  iconLeft?: ComponentType
-  /** An icon (React component) to display on the right side of the input */
-  iconRight?: ComponentType
+  initialValue?: Value
   /** Focus this input automatically */
   autoFocus?: boolean
-  /** Hide this json field */
-  hidden?: boolean
-  /** Make this json field read-only*/
-  readonly?: boolean
 }
 
 /** Internal representation of a text field */
-export interface JsonField extends Field.Scalar<any> {
-  label: Label
-  options: JsonOptions
-}
+export class JsonField<Value> extends Field.Scalar<Value, JsonOptions<Value>> {}
 
 /** Create a text field configuration */
-export function json(label: Label, options: JsonOptions = {}): JsonField {
-  return {
-    shape: Shape.Scalar(label, options.initialValue),
+export function json<T>(
+  label: Label,
+  options: JsonOptions<T> = {}
+): JsonField<T> {
+  return new JsonField({
     hint: Hint.String(),
     label,
     options,
-    hidden: options.hidden
-  }
+    initialValue: options.initialValue
+  })
 }

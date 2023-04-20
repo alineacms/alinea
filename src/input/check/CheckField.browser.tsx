@@ -1,16 +1,15 @@
 import {Field} from 'alinea/core'
 import {InputLabel, InputState, useInput} from 'alinea/editor'
-import {fromModule, HStack, Icon, TextLabel} from 'alinea/ui'
+import {HStack, Icon, TextLabel, fromModule} from 'alinea/ui'
 import {IcRoundCheck} from 'alinea/ui/icons/IcRoundCheck'
 import {IcRoundTextFields} from 'alinea/ui/icons/IcRoundTextFields'
 import {useState} from 'react'
-import {CheckField} from './CheckField'
-import {check as createCheck} from './CheckField.js'
+import {CheckField, check as createCheck} from './CheckField.js'
 import css from './CheckInput.module.scss'
 
 export * from './CheckField.js'
 
-export const check = Field.withView(createCheck, CheckInput)
+export const check = Field.provideView(CheckInput, createCheck)
 
 const styles = fromModule(css)
 
@@ -20,28 +19,14 @@ type CheckInputProps = {
 }
 
 function CheckInput({state, field}: CheckInputProps) {
-  const {
-    label,
-    width,
-    inline,
-    optional,
-    help,
-    autoFocus,
-    initialValue,
-    readonly
-  } = field.options
-  const [value = initialValue, setValue] = useInput(state)
+  const {label, options} = field[Field.Data]
+  const [value = options.initialValue, setValue] = useInput(state)
   const [focus, setFocus] = useState(false)
-  // Todo: unlocalise
-
   return (
     <InputLabel
       asLabel
-      label={field.label}
-      help={help}
-      optional={optional}
-      inline={inline}
-      width={width}
+      label={label}
+      {...options}
       focused={focus}
       icon={IcRoundTextFields}
     >
@@ -53,10 +38,9 @@ function CheckInput({state, field}: CheckInputProps) {
           onChange={e => setValue(e.currentTarget.checked)}
           onFocus={() => setFocus(true)}
           onBlur={() => setFocus(false)}
-          autoFocus={autoFocus}
-          disabled={readonly}
+          autoFocus={options.autoFocus}
         />
-        <span className={styles.root.checkmark({disabled: readonly})}>
+        <span className={styles.root.checkmark({disabled: options.readonly})}>
           {value && (
             <Icon
               size={20}
@@ -65,10 +49,7 @@ function CheckInput({state, field}: CheckInputProps) {
             />
           )}
         </span>
-        <TextLabel
-          label={label || field.label}
-          className={styles.root.label({disabled: readonly})}
-        />
+        <TextLabel label={label} className={styles.root.label()} />
       </HStack>
     </InputLabel>
   )

@@ -1,12 +1,10 @@
-import type {Pages} from 'alinea/backend'
-import {Field, Label, Schema, Shape} from 'alinea/core'
+import {Field, FieldOptions, Label, Schema} from 'alinea/core'
 import {listHint} from 'alinea/core/util/Hints'
-import {Expr, SelectionInput} from 'alinea/store'
 
 /** Optional settings to configure a list field */
-export type ListOptions<T, Q> = {
+export interface ListOptions<Row> extends FieldOptions {
   /** Allow these types of blocks to be created */
-  schema: Schema<T>
+  schema: Schema<Row>
   /** Width of the field in the dashboard UI (0-1) */
   width?: number
   /** Add instructional text to a field */
@@ -26,13 +24,12 @@ export interface ListRow {
 }
 
 /** Internal representation of a list field */
-export interface ListField<T, Q = Array<T & ListRow>>
-  extends Field.List<T & ListRow, Q> {
-  label: Label
-  options: ListOptions<T, Q>
-}
+export class ListField<Row> extends Field.List<
+  Row & ListRow,
+  ListOptions<Row>
+> {}
 
-function query<T, Q>(schema: Schema<T>) {
+/*function query<T, Q>(schema: Schema<T>) {
   return (field: Expr<Array<T>>, pages: Pages<any>): Expr<Q> | undefined => {
     const row = field.each()
     const cases: Record<string, SelectionInput> = {}
@@ -46,20 +43,17 @@ function query<T, Q>(schema: Schema<T>) {
     if (!isComputed) return
     return row.select(row.get('type').case(cases, row.fields)).toExpr()
   }
-}
+}*/
 
 /** Create a list field configuration */
-export function list<T, Q = Array<T & ListRow>>(
+export function list<Row>(
   label: Label,
-  options: ListOptions<T, Q>
-): ListField<T, Q> {
+  options: ListOptions<Row>
+): ListField<Row> {
   const {schema} = options
-  return {
-    shape: Shape.List(label, schema.shape),
+  return new ListField(schema.shape, {
     hint: listHint(schema),
     label,
-    options,
-    transform: query<T & ListRow, Q>(schema),
-    hidden: options.hidden
-  }
+    options
+  })
 }

@@ -23,7 +23,7 @@ import {RichTextToolbar} from './RichTextToolbar.js'
 
 export * from './RichTextField.js'
 
-export const richText = Field.withView(createRichText, RichTextInput)
+export const richText = Field.provideView(RichTextInput, createRichText)
 
 const styles = fromModule(css)
 
@@ -144,9 +144,10 @@ function InsertMenu({editor, schema, onInsert}: InsertMenuProps) {
   )
 }
 
-function RichTextEditor<T>({state, field}: RichTextInputProps<T>) {
+function RichTextEditor<Blocks>({state, field}: RichTextInputProps<Blocks>) {
+  const {label, options} = field[Field.Data]
   const picker = usePickTextLink()
-  const {blocks, optional, inline, help, width, readonly} = field.options
+  const {optional, inline, help, width, schema} = options
   const [focus, setFocus] = useState(false)
   const [value, {fragment, insert}] = useInput(state)
   const toolbarRef = useRef<HTMLDivElement>(null)
@@ -169,7 +170,7 @@ function RichTextEditor<T>({state, field}: RichTextInputProps<T>) {
   const extensions = [
     CollaborationExtension.configure({fragment}),
     RichTextKit,
-    ...schemaToExtensions(state, blocks)
+    ...schemaToExtensions(state, schema)
   ]
   const editor = useEditor({
     content: {
@@ -202,7 +203,7 @@ function RichTextEditor<T>({state, field}: RichTextInputProps<T>) {
       )}
       <PickTextLink picker={picker} />
       <InputLabel
-        label={field.label}
+        label={label}
         help={help}
         optional={optional}
         inline={inline}
@@ -212,9 +213,9 @@ function RichTextEditor<T>({state, field}: RichTextInputProps<T>) {
         empty={editor.isEmpty}
         ref={containerRef}
       >
-        <InsertMenu editor={editor} schema={blocks} onInsert={insert} />
+        <InsertMenu editor={editor} schema={schema} onInsert={insert} />
         <EditorContent
-          className={styles.root.editor({focus, readonly})}
+          className={styles.root.editor({focus, readonly: options.readonly})}
           editor={editor}
         />
       </InputLabel>
@@ -222,12 +223,15 @@ function RichTextEditor<T>({state, field}: RichTextInputProps<T>) {
   )
 }
 
-export type RichTextInputProps<T> = {
-  state: InputState<InputState.Text<T>>
-  field: RichTextField<T>
+export interface RichTextInputProps<Blocks> {
+  state: InputState<InputState.Text<Blocks>>
+  field: RichTextField<Blocks>
 }
 
-export function RichTextInput<T>({state, field}: RichTextInputProps<T>) {
+export function RichTextInput<Blocks>({
+  state,
+  field
+}: RichTextInputProps<Blocks>) {
   const [_, {fragment}] = useInput(state)
   // We key here currently because the tiptap/yjs combination fails to register
   // changes when the fragment is changed while the editor is mounted.

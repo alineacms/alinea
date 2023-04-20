@@ -14,11 +14,11 @@ export interface ShapeInfo {
   shape: RecordShape
 }
 
-export interface Shape<T = any, M = any> {
+export interface Shape<T, M> {
   label: Label
   innerTypes(parents: Array<string>): Array<ShapeInfo>
   create(): T
-  typeOfChild<C>(yValue: any, child: string): Shape<C>
+  typeOfChild<C>(yValue: any, child: string): Shape<C, unknown>
   toY(value: T): any
   fromY(yValue: any): T
   watch(parent: YType, key: string): (fun: () => void) => void
@@ -46,7 +46,7 @@ export namespace Shape {
   }
   export function Record<T>(
     label: Label,
-    shape: Record<string, Shape>,
+    shape: Record<string, Shape<any, unknown>>,
     initialValue?: T
   ): RecordShape<T> {
     return new RecordShape(label, shape, initialValue)

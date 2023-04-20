@@ -1,8 +1,7 @@
 // Todo: extract interface and place it in core
-import type {Pages} from 'alinea/backend/Pages'
 import type {EntryEditProps} from 'alinea/dashboard/view/EntryEdit'
-import type {CollectionImpl, CursorImpl} from 'alinea/store'
-import {Collection, Expr, SelectionInput} from 'alinea/store'
+import type {CollectionImpl} from 'alinea/store'
+import {Collection, Expr} from 'alinea/store'
 import type {ComponentType} from 'react'
 import {Entry} from './Entry.js'
 import {Field} from './Field.js'
@@ -51,8 +50,6 @@ export type TypeOptions<R, Q> = {
   index?: (fields: any) => Record<string, Array<Expr<any>>>
 
   entryUrl?: (meta: EntryUrlMeta) => string
-
-  transform?: (field: Expr<R>, pages: Pages<any>) => Expr<Q> | undefined
 }
 
 export class TypeConfig<R = any, T = R> {
@@ -124,25 +121,6 @@ export class TypeConfig<R = any, T = R> {
 
   get entryUrl() {
     return this.options.entryUrl
-  }
-
-  selection(cursor: CursorImpl<R>, pages: Pages<any>): Expr<any> | undefined {
-    const computed: Record<string, SelectionInput> = {}
-    let isComputed = false
-    for (const [key, field] of this) {
-      if (!field.transform) continue
-      const selection = field.transform(cursor.get(key), pages)
-      if (!selection) continue
-      computed[key] = selection
-      isComputed = true
-    }
-    if (this.options.transform)
-      return this.options.transform(
-        (cursor.fields.with(computed) as any).toExpr(),
-        pages
-      )
-    if (!isComputed) return
-    return new Expr(cursor.fields.with(computed).expr)
   }
 
   configure<Q = T>(options: TypeOptions<R, Q>): TypeConfig<R, Q> {

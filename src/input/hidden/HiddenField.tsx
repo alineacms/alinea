@@ -1,4 +1,4 @@
-import {Field, Label, Shape} from 'alinea/core'
+import {Field, Label} from 'alinea/core'
 import {Hint} from 'alinea/core/Hint'
 
 /** Optional settings to configure a hidden field */
@@ -7,10 +7,8 @@ export type HiddenOptions<T> = {
   initialValue?: T
 }
 
-/** Internal representation of a hidden field */
-export interface HiddenField<T> extends Field.Scalar<T> {
-  label: Label
-}
+/** Internal representation of a text field */
+export class HiddenField<T> extends Field.Scalar<T, {}> {}
 
 /** Create a hidden field configuration */
 export function hidden<T>(
@@ -18,12 +16,11 @@ export function hidden<T>(
   hint: Hint,
   options: HiddenOptions<T> = {}
 ): HiddenField<T> {
-  const shape = Shape.Scalar(label, options.initialValue)
-  return {
-    shape,
+  return new HiddenField({
     hint,
     label,
     initialValue: options.initialValue,
-    view: () => null
-  }
+    view: () => null,
+    options
+  })
 }

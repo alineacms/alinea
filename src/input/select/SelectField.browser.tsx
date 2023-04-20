@@ -6,32 +6,34 @@ import {
   useFloating
 } from '@floating-ui/react-dom'
 import {Listbox} from '@headlessui/react'
-import {Field, Label} from 'alinea/core'
+import {Field} from 'alinea/core'
 import {InputLabel, InputState, useInput} from 'alinea/editor'
-import {fromModule, HStack, Icon, IconButton, TextLabel} from 'alinea/ui'
+import {HStack, Icon, IconButton, TextLabel, fromModule} from 'alinea/ui'
 import {IcRoundArrowDropDownCircle} from 'alinea/ui/icons/IcRoundArrowDropDownCircle'
 import {IcRoundCheck} from 'alinea/ui/icons/IcRoundCheck'
 import {IcRoundClose} from 'alinea/ui/icons/IcRoundClose'
 import {IcRoundUnfoldMore} from 'alinea/ui/icons/IcRoundUnfoldMore'
-import {select as createSelect, SelectField} from './SelectField.js'
+import {SelectField, select as createSelect} from './SelectField.js'
 import css from './SelectInput.module.scss'
 
 export * from './SelectField.js'
 
-export const select = Field.withView(createSelect, SelectInput)
+export const select = Field.provideView(SelectInput, createSelect)
 
 const styles = fromModule(css)
 
-type SelectInputProps<T extends string> = {
-  state: InputState<InputState.Scalar<T>>
-  field: SelectField<T>
+interface SelectInputProps<Key, Items> {
+  state: InputState<InputState.Scalar<Key>>
+  field: SelectField<Key, Items>
 }
 
-function SelectInput<T extends string>({state, field}: SelectInputProps<T>) {
-  const {width, optional, help, placeholder, inline, initialValue, readonly} =
-    field.options
-  const [value = initialValue, setValue] = useInput(state)
-  const items = field.items as Record<string, Label>
+function SelectInput<Key extends string, Items extends Record<Key, string>>({
+  state,
+  field
+}: SelectInputProps<Key, Items>) {
+  const {label, options} = field[Field.Data]
+  const [value = options.initialValue, setValue] = useInput(state)
+  const items = options.items as Record<string, string>
   const {x, y, reference, floating, refs, strategy} = useFloating({
     whileElementsMounted: autoUpdate,
     strategy: 'fixed',
@@ -51,16 +53,9 @@ function SelectInput<T extends string>({state, field}: SelectInputProps<T>) {
   })
 
   return (
-    <InputLabel
-      label={field.label}
-      help={help}
-      optional={optional}
-      inline={inline}
-      width={width}
-      icon={IcRoundArrowDropDownCircle}
-    >
+    <InputLabel label={label} {...options} icon={IcRoundArrowDropDownCircle}>
       <div className={styles.root()}>
-        <Listbox value={value} onChange={setValue} disabled={readonly}>
+        <Listbox value={value} onChange={setValue} disabled={options.readonly}>
           {({open}) => (
             <div>
               <Listbox.Button
@@ -71,14 +66,16 @@ function SelectInput<T extends string>({state, field}: SelectInputProps<T>) {
                   className={styles.root.input.label({placeholder: !value})}
                 >
                   <TextLabel
-                    label={(value ? items[value] : placeholder) || field.label}
+                    label={
+                      (value ? items[value] : options.placeholder) || label
+                    }
                   />
                 </span>
                 <Icon
                   icon={IcRoundUnfoldMore}
                   className={styles.root.input.icon()}
                 />
-                {value && optional && (
+                {value && options.optional && (
                   <IconButton
                     icon={IcRoundClose}
                     onClick={() => setValue(undefined!)}

@@ -1,26 +1,19 @@
-import {Field, Hint, Label, Shape} from 'alinea/core'
+import {Field, FieldOptions, Hint, Label} from 'alinea/core'
 
-export type PathOptions = {
+export interface PathOptions extends FieldOptions {
   width?: number
   from?: string
   help?: Label
   inline?: boolean
   optional?: boolean
-  hidden?: boolean
-  readonly?: boolean
 }
 
-export interface PathField extends Field.Scalar<string> {
-  label: Label
-  options: PathOptions
-}
+export class PathField extends Field.Scalar<string, PathOptions> {}
 
 export function path(label: Label, options: PathOptions = {}): PathField {
-  return {
-    shape: Shape.Scalar(label),
+  return new PathField({
     hint: Hint.String(),
     label,
-    options,
-    hidden: options.hidden
-  }
+    options
+  })
 }

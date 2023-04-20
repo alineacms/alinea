@@ -1,37 +1,21 @@
-import type {Pages} from 'alinea/backend/Pages'
-import {Field, Hint, Label, Shape} from 'alinea/core'
-import {Expr} from 'alinea/store'
+import {Field, FieldOptions, Hint, Label} from 'alinea/core'
 
-export type CodeFieldOptions<Q> = {
+export interface CodeFieldOptions extends FieldOptions {
   width?: number
   help?: Label
   optional?: boolean
   inline?: boolean
   initialValue?: string
   language?: string
-  /** Modify value returned when queried through `Pages` */
-  transform?: (field: Expr<string>, pages: Pages<any>) => Expr<Q> | undefined
-  /** Hide this code field */
-  hidden?: boolean
-  /** Make this code field read-only*/
-  readonly?: boolean
 }
 
-export interface CodeField<Q = string> extends Field.Scalar<string, Q> {
-  label: Label
-  options: CodeFieldOptions<Q>
-}
+export class CodeField extends Field.Scalar<string, CodeFieldOptions> {}
 
-export function code<Q = string>(
-  label: Label,
-  options: CodeFieldOptions<Q> = {}
-): CodeField<Q> {
-  return {
-    shape: Shape.Scalar(label, options.initialValue),
+export function code(label: Label, options: CodeFieldOptions = {}): CodeField {
+  return new CodeField({
     hint: Hint.String(),
     label,
     options,
-    transform: options.transform,
-    hidden: options.hidden
-  }
+    initialValue: options.initialValue
+  })
 }
