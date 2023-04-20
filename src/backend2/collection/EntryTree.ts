@@ -1,5 +1,6 @@
 import {createId} from 'alinea/core'
 import {column, index, table, withRecursive} from 'rado'
+import {EntryData} from '../EntryData.js'
 
 export enum EntryStatus {
   Draft = 'Draft',
@@ -58,10 +59,6 @@ class EntryTreeTable {
       }
     }
   }
-}
-
-interface EntryData {
-  [key: string]: any
 }
 
 export interface EntryTree extends table<EntryTreeTable> {

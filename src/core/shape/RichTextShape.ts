@@ -74,6 +74,11 @@ export type RichTextMutator<R> = {
   insert: (id: string, block: string) => void
 }
 
+export interface RichTextRaw<T> {
+  doc: TextDoc<T>
+  linked: Array<string>
+}
+
 export class RichTextShape<T> implements Shape<TextDoc<T>, RichTextMutator<T>> {
   values?: Record<string, RecordShape>
   constructor(
