@@ -3,6 +3,7 @@ import * as path from 'alinea/core/util/Paths'
 import {Driver, Table, alias, create} from 'rado'
 import xxhash from 'xxhash-wasm'
 import {Syncable} from './Api.js'
+import {entryData} from './EntryData.js'
 import {SourceEntry} from './Source.js'
 import {Store} from './Store.js'
 import {AlineaMeta} from './collection/AlineaMeta.js'
@@ -126,11 +127,11 @@ export class Database implements Syncable {
         )
     }
 
-    /*const type = this.config.type(data.type)
+    const type = this.config.type(data.type)
     if (!type)
       throw createError(
         `Invalid type: ${data.type}, for entry in ${file.filePath}`
-      )*/
+      )
 
     const childrenDir = path.join(parentDir, fileName)
 
@@ -160,7 +161,7 @@ export class Database implements Syncable {
       title: data.title ?? '',
       url: '',
 
-      data
+      data: entryData(type, data)
     }
   }
 

@@ -48,8 +48,9 @@ const binOps = {
 const pageFields = keys(pages.Page)
 
 enum ResolveContext {
-  Select = 0,
-  Condition = 1 << 0
+  InSelect = 0,
+  InCondition = 1 << 0,
+  InAccess = 1 << 1
 }
 
 class Resolver {
@@ -60,7 +61,10 @@ class Resolver {
     expr: ExprData,
     field: Field<any, any>
   ): ExprData {
-    throw 'todo'
+    const isInAccess = ctx & ResolveContext.InAccess
+    const isInCondition = ctx & ResolveContext.InCondition
+    if (isInAccess || isInCondition) return expr
+    return expr
   }
 
   fieldOf(
@@ -136,7 +140,10 @@ class Resolver {
     ctx: ResolveContext,
     {expr, field}: pages.ExprData.Access
   ): ExprData {
-    return new ExprData.Field(this.expr(ctx, expr), field)
+    return new ExprData.Field(
+      this.expr(ctx | ResolveContext.InAccess, expr),
+      field
+    )
   }
 
   exprValue(ctx: ResolveContext, {value}: pages.ExprData.Value): ExprData {
@@ -177,7 +184,7 @@ class Resolver {
           switch (field.length) {
             case 1:
               const [target] = field
-              return this.fieldsOf(ResolveContext.Select, target)
+              return this.fieldsOf(ResolveContext.InSelect, target)
             case 2:
               const [key, selection] = field
               return [[key, this.select(selection)]]
@@ -189,7 +196,7 @@ class Resolver {
 
   selectRow({target}: pages.Selection.Row): ExprData {
     return new ExprData.Record(
-      fromEntries(this.fieldsOf(ResolveContext.Select, target))
+      fromEntries(this.fieldsOf(ResolveContext.InSelect, target))
     )
   }
 
@@ -198,7 +205,7 @@ class Resolver {
   }
 
   selectExpr({expr}: pages.Selection.Expr): ExprData {
-    return this.expr(ResolveContext.Select, expr)
+    return this.expr(ResolveContext.InSelect, expr)
   }
 
   select(selection: pages.Selection): ExprData {
@@ -215,7 +222,7 @@ class Resolver {
   }
 
   queryRow(selection: pages.Selection.Row): QueryData.Select {
-    return this.queryOf(ResolveContext.Select, selection.target).select(
+    return this.queryOf(ResolveContext.InSelect, selection.target).select(
       this.selectRow(selection)
     )[Query.Data]
   }
@@ -227,15 +234,18 @@ class Resolver {
   queryCursor({cursor}: pages.Selection.Cursor): QueryData.Select {
     const {target, where, skip, take, orderBy, select, first, source} = cursor
     let query: Select<any> | SelectFirst<any> = this.queryOf(
-      ResolveContext.Select,
+      ResolveContext.InSelect,
       target
     )
     if (where)
-      query = query.where(new Expr(this.expr(ResolveContext.Condition, where)))
+      query = query.where(
+        new Expr(this.expr(ResolveContext.InCondition, where))
+      )
     if (skip) query = query.skip(skip)
     if (take) query = query.take(take)
     if (first) query = query.first()
     if (select) query = query.select(this.select(select))
+    // Todo:
     // if (orderBy)
     // if (source)
     return query[Query.Data]
