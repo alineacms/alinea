@@ -79,3 +79,7 @@ Content is bundled with your code and can be queried with zero network overhead.
 Alinea supports custom backends that can be hosted as a simple Node.js process or on serverless runtimes.
 
 [Setup your backend →](https://alinea.sh/docs/deploy/intro)
+
+## How to contribute to this project
+
+Have a question or an idea? Found a bug? Read how to [contribute](contributing.md).
