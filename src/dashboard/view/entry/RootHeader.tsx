@@ -1,18 +1,38 @@
-import {Listbox} from '@headlessui/react'
-import {Create, fromModule, HStack, Icon, TextLabel} from 'alinea/ui'
-import {IcRoundUnfoldMore} from 'alinea/ui/icons/IcRoundUnfoldMore'
+import {
+  Create,
+  HStack,
+  Icon,
+  IconButton,
+  TextLabel,
+  fromModule
+} from 'alinea/ui'
 import {link, useNavigate} from 'alinea/ui/util/HashRouter'
-import {useState} from 'react'
+
+import IcRoundKeyboardArrowDown from 'alinea/ui/icons/IcRoundKeyboardArrowDown'
+import IcRoundKeyboardArrowUp from 'alinea/ui/icons/IcRoundKeyboardArrowUp'
+import {IcRoundUnfoldMore} from 'alinea/ui/icons/IcRoundUnfoldMore'
+import {Listbox} from '@headlessui/react'
+import css from './RootHeader.module.scss'
 import {useCurrentDraft} from '../../hook/UseCurrentDraft.js'
 import {useLocale} from '../../hook/UseLocale.js'
 import {useNav} from '../../hook/UseNav.js'
 import {useRoot} from '../../hook/UseRoot.js'
+import {useState} from 'react'
 import {useWorkspace} from '../../hook/UseWorkspace.js'
-import css from './RootHeader.module.scss'
 
 const styles = fromModule(css)
 
-export function RootHeader() {
+export type RootHeaderProps = {
+  showToggle: boolean
+  toggleTree: () => void
+  isTreeOpen: boolean
+}
+
+export function RootHeader({
+  showToggle,
+  toggleTree,
+  isTreeOpen
+}: RootHeaderProps) {
   const nav = useNav()
   const root = useRoot()
   const {name: workspace} = useWorkspace()
@@ -28,6 +48,15 @@ export function RootHeader() {
         </a>
         {root.i18n && <Langswitch />}
         <Create.Link href={nav.create({workspace, root: root.name})} />
+        {showToggle && (
+          <IconButton
+            icon={
+              isTreeOpen ? IcRoundKeyboardArrowUp : IcRoundKeyboardArrowDown
+            }
+            onClick={toggleTree}
+            size={12}
+          />
+        )}
       </div>
     </div>
   )

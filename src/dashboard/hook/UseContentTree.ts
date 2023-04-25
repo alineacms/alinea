@@ -1,6 +1,7 @@
 import {Entry, EntryMeta, Label, Outcome} from 'alinea/core'
 import {Cursor, Functions} from 'alinea/store'
 import {useCallback, useEffect, useMemo, useState} from 'react'
+
 import {useQuery} from 'react-query'
 import {useRoot} from '../hook/UseRoot.js'
 import {useSession} from '../hook/UseSession.js'
@@ -25,10 +26,9 @@ export interface ContentTreeEntry {
   alinea: EntryMeta
 }
 
-function query({workspace, root, locale, open, visible}: QueryParams) {
+function query({workspace, root, locale, visible}: QueryParams) {
   const Parent = Entry.as('Parent')
   const id = locale ? Entry.i18n.id : Entry.id
-  const parent = locale ? Entry.i18n.parent : Entry.parent
   const summary = {
     id: Entry.id,
     type: Entry.type,
@@ -41,24 +41,23 @@ function query({workspace, root, locale, open, visible}: QueryParams) {
       parents: Entry.parents
     },
     childrenCount: Parent.where(
-      (locale ? Parent.alinea.i18n.parent : Parent.alinea.parent).is(Entry.id)
+      (locale ? Parent.alinea.i18n.parent : Parent.alinea.parent).is(id)
     )
       .select(Functions.count())
       .first()
   }
-  let openEntries = parent.isIn(open).or(id.isIn(open)).or(parent.isNull())
-  let condition = openEntries
+  let entries = Entry.take(undefined)
   if (locale) {
-    condition = condition.and(Entry.i18n.locale.is(locale))
+    entries = entries.where(Entry.i18n.locale.is(locale))
   }
-  let query = Entry.where(condition)
+  let query = entries
     .where(Entry.workspace.is(workspace))
     .where(Entry.root.is(root))
     .where(Entry.type.isIn(visible))
     .select(summary)
   if (locale) {
-    const translatedCondition = openEntries
-      .and(Entry.i18n.locale.isNot(locale))
+    const translatedCondition = Entry.i18n.locale
+      .isNot(locale)
       .and(Entry.i18n.id.isNotIn(query.select(Entry.i18n.id)))
     query = query.union(
       Entry.where(translatedCondition)
@@ -91,10 +90,7 @@ export function useContentTree({
   const [open, setOpen] = useState(() => {
     const stored = window?.localStorage?.getItem(persistenceId)
     const opened = stored && JSON.parse(stored)
-    return new Set<string>([
-      ...select,
-      ...(Array.isArray(opened) ? opened : [])
-    ])
+    return new Set<string>([...(Array.isArray(opened) ? opened : [])])
   })
   const isOpen = useCallback((id: string) => open.has(id), [open])
   const toggleOpen = useCallback(
@@ -151,9 +147,38 @@ export function useContentTree({
       true
     )
   })
+  const parentEntryOpen = (entry: ContentTreeEntry) =>
+    entry.childrenCount > 0 && isOpen(entry.id)
+  const isTreeOpen = entries.some(parentEntryOpen)
+  const parentEntry = (entry: ContentTreeEntry) => entry.childrenCount > 0
+  const showToggle = entries.some(parentEntry)
+  const toggleTree = useCallback(
+    (open: boolean) => {
+      if (open) {
+        window?.localStorage?.setItem(persistenceId, JSON.stringify([]))
+        setOpen(new Set([]))
+      }
+      if (!open) {
+        const entryIds = results.map(entry => entry.id)
+        window?.localStorage?.setItem(persistenceId, JSON.stringify(entryIds))
+        setOpen(new Set(entryIds))
+      }
+    },
+    [setOpen]
+  )
 
   useEffect(() => {
     setOpen(current => new Set([...current, ...select]))
   }, [select.join('.')])
-  return {locale, entries, isOpen, toggleOpen, refetch, index}
+  return {
+    locale,
+    entries,
+    isOpen,
+    toggleOpen,
+    refetch,
+    index,
+    isTreeOpen,
+    showToggle,
+    toggleTree
+  }
 }
