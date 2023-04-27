@@ -70,21 +70,29 @@ const entry3: SourceEntry = {
 
 export const entries = [entry1, entry2, entry3]
 
+const TypeA = type('Type', {
+  title: text('Title'),
+  path: path('Path'),
+  [type.meta]: {
+    isContainer: true
+  }
+})
+
+const TypeB = type('TypeB', {
+  title: text('Title'),
+  path: path('Path'),
+  [type.meta]: {
+    isContainer: true,
+    index() {
+      return {
+        one: [this.title, this.path]
+      }
+    }
+  }
+})
+
 export const config = createConfig({
-  schema: schema({
-    Type: type('Type', {
-      title: text('Title'),
-      path: path('Path')
-    }).configure({
-      isContainer: true
-    }),
-    TypeB: type('TypeB', {
-      title: text('Title'),
-      path: path('Path')
-    }).configure({
-      isContainer: true
-    })
-  }),
+  schema: schema({TypeA, TypeB}),
   workspaces: {
     main: workspace('Main', {
       source: '.',
@@ -100,7 +108,7 @@ export const config = createConfig({
   }
 })
 
-export type ExampleSchema = Schema.TypeOf<typeof config.schema>
+export type ExampleSchema = Schema.Infer<typeof config.schema>
 
 export async function* files() {
   yield* [entry1, entry2, entry3]

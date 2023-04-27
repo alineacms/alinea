@@ -5,7 +5,7 @@ import {
   Shape,
   TextDoc,
   TextNode,
-  TypeConfig
+  Type
 } from 'alinea/core'
 import {RecordShape} from 'alinea/core/shape/RecordShape'
 
@@ -69,7 +69,7 @@ function transformValue(shape: Shape, raw: any): any {
 }
 
 export function entryData(
-  type: TypeConfig,
+  type: Type<any>,
   input: Record<string, any>
 ): EntryData {
   const output: EntryData = {}

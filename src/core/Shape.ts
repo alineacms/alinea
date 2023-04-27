@@ -14,7 +14,7 @@ export interface ShapeInfo {
   shape: RecordShape
 }
 
-export interface Shape<T, M> {
+export interface Shape<T = any, M = any> {
   label: Label
   innerTypes(parents: Array<string>): Array<ShapeInfo>
   create(): T

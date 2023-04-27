@@ -1,25 +1,15 @@
 // Todo: extract interface and place it in core
+import {Cursor} from 'alinea/backend2/pages/Cursor'
+import {EV, Expr} from 'alinea/backend2/pages/Expr'
 import type {EntryEditProps} from 'alinea/dashboard/view/EntryEdit'
-import type {CollectionImpl} from 'alinea/store'
-import {Collection, Expr} from 'alinea/store'
+import {Callable} from 'rado/util/Callable'
 import type {ComponentType} from 'react'
-import {Entry} from './Entry.js'
 import {Field} from './Field.js'
 import {Hint} from './Hint.js'
-import {createId} from './Id.js'
 import {Label} from './Label.js'
-import {Section} from './Section.js'
-import {Shape, ShapeInfo} from './Shape.js'
 import type {View} from './View.js'
-import {RecordShape} from './shape/RecordShape.js'
-import {Lazy} from './util/Lazy.js'
-import {LazyRecord} from './util/LazyRecord.js'
 
-export namespace Type {
-  export type Raw<T> = T extends TypeConfig<infer U, any> ? U : never
-  /** Infer the field types */
-  export type Of<T> = T extends TypeConfig<any, infer U> ? U : never
-}
+const {entries, fromEntries, defineProperty} = Object
 
 export interface EntryUrlMeta {
   path: string
@@ -28,7 +18,7 @@ export interface EntryUrlMeta {
 }
 
 /** Optional settings to configure a Type */
-export type TypeOptions<R, Q> = {
+export type TypeMeta<Fields> = {
   /** Entries can be created as children of this entry */
   isContainer?: boolean
   /** Entries do not show up in the sidebar content tree */
@@ -46,149 +36,108 @@ export type TypeOptions<R, Q> = {
   summaryThumb?: View<any>
 
   /** Create indexes on fields of this type */
-  // Todo: solve infered type here
-  index?: (fields: any) => Record<string, Array<Expr<any>>>
+  index?: (this: Fields) => Record<string, Array<Expr<any>>>
 
   entryUrl?: (meta: EntryUrlMeta) => string
 }
 
-export class TypeConfig<R = any, T = R> {
-  fields: Record<string, Field<any, any>> = {}
-  shape: RecordShape<any>
+export interface TypeData {
+  hint: Hint
+  fields: Definition
+  meta: TypeMeta<any>
+}
 
-  constructor(
-    public label: Label,
-    public sections: Array<Section>,
-    public options: TypeOptions<R, T>
-  ) {
-    this.shape = Shape.Record(
-      label,
-      Object.fromEntries(
-        sections
-          .flatMap<[string, Field<any, any>]>(section =>
-            LazyRecord.iterate(section.fields || {})
-          )
-          .filter(([, field]) => field.shape)
-          .map(([key, field]) => {
-            return [key, field.shape!]
-          })
+export declare class TypeI<Fields> {
+  get [Type.Data](): TypeData
+}
+
+export interface TypeI<Fields> extends Callable {
+  (conditions?: {
+    [K in keyof Fields]?: Fields[K] extends Expr<infer V> ? EV<V> : never
+  }): Cursor.Find<TypeRow<Fields>>
+}
+
+export type Type<Fields> = Fields & TypeI<Fields>
+export type AnyType = Type<Record<string, Expr<any>>>
+
+export type TypeRow<Fields> = {
+  [K in keyof Fields as Fields[K] extends Expr<any>
+    ? K
+    : never]: Fields[K] extends Expr<infer T> ? T : never
+}
+
+export namespace Type {
+  export type Row<Fields> = TypeRow<Fields>
+}
+
+export const Type = class<Fields extends Definition> implements TypeData {
+  static readonly Data = Symbol('Type.Data')
+  static readonly Meta = Symbol('Type.Meta')
+  hint: Hint
+  meta: TypeMeta<any>
+
+  constructor(public label: Label, public fields: Fields) {
+    this.meta = this.fields[Type.Meta] || {}
+    this.hint = Hint.Object(
+      fromEntries(
+        entries(fields).map(([key, field]) => {
+          const {hint} = field[Field.Data]
+          return [key, hint]
+        })
       )
     )
-    for (const section of this.sections) {
-      if (section.fields) Object.assign(this.fields, Lazy.get(section.fields))
-    }
   }
 
-  get hint() {
-    const fields: Record<string, Field<any, any>> = {}
-    for (const section of this.sections) {
-      if (section.fields) Object.assign(fields, Lazy.get(section.fields))
-    }
-    const hints = Object.entries(fields).map(([key, field]) => {
-      return [key, field.hint]
+  call(...input: Array<any>) {
+    throw 'todo'
+  }
+
+  defineProperties(instance: any) {
+    for (const [key, value] of entries(this.fields))
+      defineProperty(instance, key, {
+        value,
+        enumerable: true,
+        configurable: true
+      })
+    defineProperty(instance, Type.Data, {
+      value: this,
+      enumerable: false
     })
-    return Hint.Object(Object.fromEntries(hints))
   }
 
-  /** Create a new empty instance of this type's fields */
-  empty() {
-    return this.shape.create()
+  static hint(type: AnyType) {
+    return type[Type.Data].hint
   }
 
-  hasField(key: string) {
-    try {
-      return this.field(key), true
-    } catch (e) {
-      return false
-    }
-  }
-
-  /** Get a field by name */
-  field(key: string) {
-    const field = LazyRecord.get(this.fields, key)
-    if (!field)
-      throw new Error(`No such field: "${key}" in type "${this.label}"`)
-    return field
-  }
-
-  [Symbol.iterator]() {
-    return Object.entries(this.fields)[Symbol.iterator]()
-  }
-
-  get isContainer() {
-    return Boolean(this.options.isContainer)
-  }
-
-  get entryUrl() {
-    return this.options.entryUrl
-  }
-
-  configure<Q = T>(options: TypeOptions<R, Q>): TypeConfig<R, Q> {
-    return new TypeConfig<R, Q>(this.label, this.sections, {
-      ...this.options,
-      ...options
-    } as TypeOptions<R, Q>)
-  }
-
-  toType(name: string): Type<R, T> {
-    return new Type(name, this)
+  static create<Fields extends Definition>(
+    label: Label,
+    fields: Fields
+  ): Type<Fields> {
+    const name = String(label)
+    const instance = new this(label, fields)
+    const callable: any = {
+      [name]: (...args: Array<any>) => instance.call(...args)
+    }[name]
+    delete callable.name
+    delete callable.length
+    instance.defineProperties(callable)
+    return callable
   }
 }
 
-/** Describes the structure of an entry by their fields and type */
-export class Type<R = any, T = R>
-  extends TypeConfig<R, T>
-  implements ShapeInfo
-{
-  parents = []
-
-  constructor(public name: string, config: TypeConfig<R, T>) {
-    super(config.label, config.sections, config.options)
-  }
-
-  get hint() {
-    const fields: Record<string, Field<any, any>> = {}
-    for (const section of this.sections) {
-      if (section.fields) Object.assign(fields, Lazy.get(section.fields))
-    }
-    const hints = Object.entries(fields).map(([key, field]) => {
-      return [key, field.hint]
-    })
-    return Hint.Definition(this.name, {
-      type: Hint.Literal(this.name),
-      ...Object.fromEntries(hints)
-    })
-  }
-
-  /** Create a new Entry instance of this type */
-  create() {
-    return {
-      ...this.empty(),
-      type: this.name,
-      id: createId()
-    } as Entry & T
-  }
-
-  collection(): CollectionImpl<T> {
-    const alias = this.name
-    const fields = Entry
-    const res = new Collection<T>('Entry', {
-      where: fields.type.is(alias)
-    })
-    // Todo: this is used in Pages(Multiple).whereType() and needs a clean way
-    // of passing this option
-    ;(res as any).__options.alias = this.name
-    return res
-  }
+export interface Definition {
+  [key: string]: Field<any, any>
+  [Type.Meta]?: TypeMeta<this>
 }
 
 /** Create a new type */
-export function type<T extends Array<Section.Input>>(
+export function type<Fields extends Definition>(
   label: Label,
-  ...sections: T
-): TypeConfig<
-  Section.RawFieldsOf<T[number]>,
-  Section.TransformedFieldsOf<T[number]>
-> {
-  return new TypeConfig(label, sections.map(Section.from), {})
+  fields: Fields
+): Type<Fields> {
+  return Type.create(label, fields)
+}
+
+export namespace type {
+  export const meta: typeof Type.Meta = Type.Meta
 }

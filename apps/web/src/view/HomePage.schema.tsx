@@ -11,9 +11,8 @@ import {IcRoundLink} from 'alinea/ui/icons/IcRoundLink'
 import {BlocksSchema} from './blocks/Blocks.schema'
 import {CodeVariants} from './blocks/CodeVariantsBlock.schema'
 
-export const HomePageSchema = type(
-  'Home',
-  tabs(
+export const HomePageSchema = type('Home', {
+  ...tabs(
     tab('Homepage', {
       title: text('Title', {
         width: 0.5,
@@ -46,6 +45,7 @@ export const HomePageSchema = type(
       })
     }).configure({icon: IcRoundLink}),
     tab('Footer navigation', {
+      ...(<div></div>),
       footer: list('Navigation', {
         schema: schema({
           Section: type('Section', {
@@ -61,4 +61,4 @@ export const HomePageSchema = type(
       })
     }).configure({icon: IcRoundLink})
   )
-)
+})

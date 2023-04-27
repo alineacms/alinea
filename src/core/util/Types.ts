@@ -26,3 +26,17 @@ export type Merge<T extends object> = {
 } & {
   [k in NonCommonKeys<T>]?: PickTypeOf<T, k>
 }
+
+// Source: https://stackoverflow.com/a/61625831/5872160
+export type IsStrictlyAny<T> = (T extends never ? true : false) extends false
+  ? false
+  : true
+
+// Source: https://www.steveruiz.me/posts/smooshed-object-union
+export type ObjectUnion<T> = {
+  [K in T extends infer P ? keyof P : never]: T extends infer P
+    ? K extends keyof P
+      ? P[K]
+      : never
+    : never
+}
