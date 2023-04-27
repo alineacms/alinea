@@ -2,13 +2,13 @@ import * as Y from 'yjs'
 import {Entry, EntryMeta} from './Entry.js'
 import {createError} from './ErrorWithCode.js'
 import {Label} from './Label.js'
-import {Type} from './Type.js'
+import {AnyType, Type} from './Type.js'
 
 export const ROOT_KEY = '#root'
 
 export function entryFromDoc(
   doc: Y.Doc,
-  getType: (typeKey: string) => Type | undefined
+  getType: (typeKey: string) => AnyType | undefined
 ): Entry {
   const docRoot = doc.getMap(ROOT_KEY)
   const typeKey = docRoot.get('type') as string | undefined

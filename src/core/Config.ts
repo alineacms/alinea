@@ -4,14 +4,14 @@ import {BackendConfig, BackendProps} from './BackendConfig.js'
 import {createError} from './ErrorWithCode.js'
 import {Root} from './Root.js'
 import {Schema} from './Schema.js'
-import {Type} from './Type.js'
+import {AnyType} from './Type.js'
 import {Workspace, WorkspaceConfig} from './Workspace.js'
 
 /** Configuration options for the dashboard */
-export class Config<T = any> {
+export class Config {
   workspaces: Record<string, Workspace>
 
-  constructor(public options: ConfigOptions<T>) {
+  constructor(public options: ConfigOptions) {
     this.workspaces = Object.fromEntries(
       Object.entries(this.options.workspaces).map(([name, config]) => {
         return [name, new Workspace(name, config)]
@@ -50,8 +50,8 @@ export class Config<T = any> {
   }
 
   /** Find a type by name */
-  type = (name: string): Type | undefined => {
-    return this.schema.type(name)
+  type = (name: string): AnyType | undefined => {
+    return this.schema[name]
   }
 
   /** Get a root */
@@ -68,13 +68,9 @@ export class Config<T = any> {
   }
 }
 
-export namespace Config {
-  export type infer<T> = T extends Config<infer U> ? U : never
-}
-
 /** Configuration options */
-export type ConfigOptions<T> = {
-  schema: Schema<T>
+export type ConfigOptions = {
+  schema: Schema
   /** A record containing workspace configurations */
   workspaces: Record<string, WorkspaceConfig>
   backend?: BackendConfig<any>
@@ -89,6 +85,6 @@ export type ConfigOptions<T> = {
 }
 
 /** Create a new config instance */
-export function createConfig<T>(options: ConfigOptions<T>) {
+export function createConfig(options: ConfigOptions) {
   return new Config(options)
 }

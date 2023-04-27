@@ -1,13 +1,24 @@
-import {Collection, Cursor, Selection} from 'alinea/store'
-import {Entry} from './Entry.js'
-import {createError} from './ErrorWithCode.js'
+import {Cursor} from 'alinea/backend2/pages/Cursor'
 import {Field} from './Field.js'
-import {Hint} from './Hint.js'
-import type {TypeConfig} from './Type.js'
-import {Type} from './Type.js'
-import {RecordShape} from './shape/RecordShape.js'
-import {LazyRecord} from './util/LazyRecord.js'
+import {AnyType, Type} from './Type.js'
 
+export type Schema = Record<string, AnyType>
+
+export namespace Schema {
+  export type Infer<T> = T extends Type<infer Fields>
+    ? Fields
+    : T extends Field<infer Value, any>
+    ? Value
+    : T extends Cursor<infer Row>
+    ? Row
+    : never
+}
+
+export function schema<T extends Schema>(types: T): T {
+  return types
+}
+
+/*
 export type HasType = {type: string}
 
 type UnionOfValues<T> = T[keyof T]
@@ -24,12 +35,9 @@ export type ExtractType<T, K extends string> = T extends {type: K}
   : any
 
 export namespace Schema {
-  /** Utility to infer the type of a Schema, Type, Field or any Store type */
   export type TypeOf<T> = T extends Schema<infer U>
     ? U
-    : T extends TypeConfig<any, infer U>
-    ? U
-    : T extends Type<any, infer U>
+    : T extends Type<infer U>
     ? U
     : T extends Field<any, any, infer Q>
     ? Q
@@ -45,7 +53,7 @@ export class Schema<T = any> {
   hint: Hint
   typeMap = new Map<string, Type<any>>()
 
-  constructor(public types: LazyRecord<TypeConfig<any>>) {
+  constructor(public types: LazyRecord<Type<any>>) {
     this.shape = Object.fromEntries(
       LazyRecord.iterate(types).map(([key, type]) => {
         return [key, type.shape]
@@ -96,15 +104,14 @@ export class Schema<T = any> {
     return this.typeMap.get(name)
   }
 
-  /** Keys of every type */
   get keys() {
     return Array.from(this.typeMap.keys())
   }
 }
 
-/** Create a schema, expects a string record of Type instances */
-export function schema<Types extends LazyRecord<any /* TypeConfig */>>(
+export function schema<Types extends LazyRecord<any>>(
   types: Types
 ): Schema<TypeToEntry<TypeToRows<Types>>> {
   return new Schema(types)
 }
+*/

@@ -1,3 +1,4 @@
+import {Type} from 'alinea/core'
 import {Config} from 'alinea/core/Config'
 import {createError} from 'alinea/core/ErrorWithCode'
 import {Hint} from 'alinea/core/Hint'
@@ -6,7 +7,7 @@ import {Lazy} from 'alinea/core/util/Lazy'
 
 export function generateTypes({schema}: Config) {
   const types = code()
-  const hints = schema.allTypes.map(type => type.hint)
+  const hints = Object.values(schema).map(Type.hint)
   const seen = new Map<string, Hint.TypeDefinition>()
   const rootTypes = []
   for (const definition of Hint.definitions(hints)) {

@@ -1,12 +1,11 @@
 import {test} from 'uvu'
-import {ExampleSchema, createDb, files} from './Database.test.js'
+import {createDb, files} from './Database.test.js'
 import {Pages} from './Pages.js'
 
 test('test', async () => {
   const db = await createDb()
   await db.fill(files())
-  const pages = new Pages<ExampleSchema>(db.resolve)
-  const {Type} = pages.types
+  const pages = new Pages(db.resolve)
   // const entry1 = await pages(Type({id: 'root'}).get())
 
   /*const {BlogRoot, BlogPost, Tag} = pages.types

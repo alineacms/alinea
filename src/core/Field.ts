@@ -1,3 +1,4 @@
+import {Expr} from 'alinea/backend2/pages/Expr'
 import {InputState} from 'alinea/editor'
 import type {ComponentType} from 'react'
 import {Hint} from './Hint.js'
@@ -31,7 +32,7 @@ export type FieldView<Value, OnChange, Options> = ComponentType<{
   field: Field<Value, OnChange, Options>
 }>
 
-export interface Field<Value, OnChange, Options> {
+export interface Field<Value, OnChange, Options> extends Expr<Value> {
   [Field.Data]: FieldData<Value, OnChange, Options>
 }
 

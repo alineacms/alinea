@@ -15,13 +15,6 @@ export const TargetData = object(
   }
 )
 
-export interface TargetImplSingle<T> extends Callable {
-  (conditions: {
-    [K in keyof T]?: T[K] extends Expr<infer V> ? EV<V> : never
-  }): Cursor.Get<T>
-  // (...conditions: Array<EV<boolean>>): Cursor.Get<T>
-}
-
 export declare class TargetI<T = any> {
   get [Target.IsTarget](): true
   get [Target.Data](): TargetData
