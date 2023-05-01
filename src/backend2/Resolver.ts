@@ -1,4 +1,4 @@
-import {RichTextShape, Schema, Shape, TextDoc} from 'alinea/core'
+import {Field, RichTextShape, Schema, Shape, TextDoc} from 'alinea/core'
 import {assert} from 'cito'
 import {
   BinOpType,
@@ -104,13 +104,13 @@ export class Resolver {
       default:
         const {name, alias} = target
         if (!name) throw new Error(`Unknown field: "${field}"`)
-        const type = this.schema.type(name)
+        const type = this.schema[name]
         if (!type)
           throw new Error(`Selecting "${field}" from unknown type: "${name}"`)
         return this.fieldExpr(
           ctx,
           EntryTree.data.get(field)[Expr.Data],
-          type.field(field).shape
+          Field.shape(type[field]!)
         )
     }
   }
@@ -125,9 +125,9 @@ export class Resolver {
   ): Array<[string, ExprData]> {
     const {name, alias} = target
     if (!name) return this.pageFields(ctx, alias)
-    const type = this.schema.type(name)
+    const type = this.schema[name]
     if (!type) throw new Error(`Selecting from unknown type: "${name}"`)
-    return keys(type.fields).map(key => {
+    return keys(type).map(key => {
       return [key, this.fieldOf(ctx, target, key)]
     })
   }

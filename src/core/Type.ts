@@ -18,11 +18,11 @@ export interface EntryUrlMeta {
 }
 
 /** Optional settings to configure a Type */
-export type TypeMeta<Fields> = {
+export interface TypeMeta {
   /** Entries can be created as children of this entry */
-  isContainer?: boolean
+  isContainer?: true
   /** Entries do not show up in the sidebar content tree */
-  isHidden?: boolean
+  isHidden?: true
   /** Accepts entries of these types as children */
   contains?: Array<string>
   /** An icon (React component) to represent this type in the dashboard */
@@ -36,7 +36,7 @@ export type TypeMeta<Fields> = {
   summaryThumb?: View<any>
 
   /** Create indexes on fields of this type */
-  index?: (this: Fields) => Record<string, Array<Expr<any>>>
+  // index?: (this: Fields) => Record<string, Array<Expr<any>>>
 
   entryUrl?: (meta: EntryUrlMeta) => string
 }
@@ -44,21 +44,22 @@ export type TypeMeta<Fields> = {
 export interface TypeData {
   hint: Hint
   fields: Definition
-  meta: TypeMeta<any>
+  meta: TypeMeta
 }
 
 export declare class TypeI<Fields> {
   get [Type.Data](): TypeData
 }
 
-export interface TypeI<Fields> extends Callable {
+export interface TypeI<Fields>
+  extends Callable,
+    Partial<Record<string, Field>> {
   (conditions?: {
     [K in keyof Fields]?: Fields[K] extends Expr<infer V> ? EV<V> : never
   }): Cursor.Find<TypeRow<Fields>>
 }
 
-export type Type<Fields> = Fields & TypeI<Fields>
-export type AnyType = Type<Record<string, Expr<any>>>
+export type Type<Fields = object> = Fields & TypeI<Fields>
 
 export type TypeRow<Fields> = {
   [K in keyof Fields as Fields[K] extends Expr<any>
@@ -74,7 +75,7 @@ export const Type = class<Fields extends Definition> implements TypeData {
   static readonly Data = Symbol('Type.Data')
   static readonly Meta = Symbol('Type.Meta')
   hint: Hint
-  meta: TypeMeta<any>
+  meta: TypeMeta
 
   constructor(public label: Label, public fields: Fields) {
     this.meta = this.fields[Type.Meta] || {}
@@ -105,7 +106,7 @@ export const Type = class<Fields extends Definition> implements TypeData {
     })
   }
 
-  static hint(type: AnyType) {
+  static hint(type: Type) {
     return type[Type.Data].hint
   }
 
@@ -127,7 +128,7 @@ export const Type = class<Fields extends Definition> implements TypeData {
 
 export interface Definition {
   [key: string]: Field<any, any>
-  [Type.Meta]?: TypeMeta<this>
+  [Type.Meta]?: TypeMeta
 }
 
 /** Create a new type */
