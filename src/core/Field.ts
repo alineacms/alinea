@@ -36,7 +36,7 @@ export interface Field<Value, OnChange, Options> extends Expr<Value> {
   [Field.Data]: FieldData<Value, OnChange, Options>
 }
 
-export class Field<Value, OnChange, Options = {}> {
+export class Field<Value = unknown, OnChange = unknown, Options = {}> {
   constructor(data: FieldData<Value, OnChange, Options>) {
     this[Field.Data] = data
   }
@@ -112,5 +112,9 @@ export namespace Field {
   >(view: FieldView<Value, OnChange, Options>, factory: Factory): Factory {
     return ((...args: Array<any>) =>
       factory(...args).attachView(view)) as Factory
+  }
+
+  export function shape(field: Field<any, any>) {
+    return field[Field.Data].shape
   }
 }

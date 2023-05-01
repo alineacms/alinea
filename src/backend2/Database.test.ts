@@ -81,13 +81,9 @@ const TypeA = type('Type', {
 const TypeB = type('TypeB', {
   title: text('Title'),
   path: path('Path'),
+  name: text('name'),
   [type.meta]: {
-    isContainer: true,
-    index() {
-      return {
-        one: [this.title, this.path]
-      }
-    }
+    isContainer: true
   }
 })
 

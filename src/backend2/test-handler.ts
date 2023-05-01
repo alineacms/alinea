@@ -73,9 +73,10 @@ const config = createConfig({
   schema: schema({
     Type: type('Type', {
       title: text('Title'),
-      path: path('Path')
-    }).configure({
-      isContainer: true
+      path: path('Path'),
+      [type.meta]: {
+        isContainer: true
+      }
     })
   }),
   workspaces: {

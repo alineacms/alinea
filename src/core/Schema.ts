@@ -1,8 +1,8 @@
 import {Cursor} from 'alinea/backend2/pages/Cursor'
 import {Field} from './Field.js'
-import {AnyType, Type} from './Type.js'
+import {Type} from './Type.js'
 
-export type Schema = Record<string, AnyType>
+export type Schema = Record<string, Type>
 
 export namespace Schema {
   export type Infer<T> = T extends Type<infer Fields>
