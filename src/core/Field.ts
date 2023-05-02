@@ -114,7 +114,17 @@ export namespace Field {
       factory(...args).attachView(view)) as Factory
   }
 
-  export function shape(field: Field<any, any>) {
+  export function shape(field: Field<any, any>): Shape {
     return field[Field.Data].shape
+  }
+
+  export function hint(field: Field): Hint {
+    return field[Field.Data].hint
+  }
+
+  export function view<Value, OnChange, Options>(
+    field: Field<Value, OnChange, Options>
+  ): FieldView<Value, OnChange, Options> | undefined {
+    return field[Field.Data].view
   }
 }

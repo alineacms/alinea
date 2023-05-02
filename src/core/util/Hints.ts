@@ -4,11 +4,11 @@ import {Schema} from '../Schema.js'
 export function richTextHint(schema?: Schema) {
   const from = {name: 'TextDoc', package: 'alinea/core'}
   if (!schema) return Hint.Extern(from)
-  return Hint.Extern(from, rowsOf(schema.hint as Hint.Union))
+  return Hint.Extern(from, rowsOf(Schema.hint(schema)))
 }
 
 export function listHint(schema: Schema) {
-  return Hint.Array(rowsOf(schema.hint as Hint.Union))
+  return Hint.Array(rowsOf(Schema.hint(schema)))
 }
 
 function rowsOf(union: Hint.Union) {

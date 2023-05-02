@@ -96,7 +96,8 @@ export function richText<Blocks>(
   label: Label,
   options: RichTextOptions<Blocks> = {}
 ): RichTextField<Blocks> {
-  return new RichTextField(options.schema?.shape, {
+  const shapes = options.schema && Schema.shapes(options.schema)
+  return new RichTextField(shapes, {
     hint: richTextHint(options.schema),
     label,
     options,

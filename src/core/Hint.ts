@@ -63,19 +63,19 @@ export namespace Hint {
     parents: string[]
   }
 
-  export function String(): Hint {
+  export function String(): Hint.String {
     return {type: 'string'}
   }
-  export function Number(): Hint {
+  export function Number(): Hint.Number {
     return {type: 'number'}
   }
-  export function Boolean(): Hint {
+  export function Boolean(): Hint.Boolean {
     return {type: 'boolean'}
   }
-  export function Literal(value: string): Hint {
+  export function Literal(value: string): Hint.Literal {
     return {type: 'literal', value}
   }
-  export function Array(inner: Hint): Hint {
+  export function Array(inner: Hint): Hint.Array {
     return {type: 'array', inner}
   }
   export function Definition(
@@ -85,16 +85,19 @@ export namespace Hint {
   ): Hint {
     return {type: 'definition', name, fields, extend}
   }
-  export function Object(fields: Record<string, Hint>): Hint {
+  export function Object(fields: Record<string, Hint>): Hint.Object {
     return {type: 'object', fields}
   }
-  export function Union(options: Hint[]): Hint {
+  export function Union(options: Hint[]): Hint.Union {
     return {type: 'union', options}
   }
-  export function Intersection(...options: Hint[]): Hint {
+  export function Intersection(...options: Hint[]): Hint.Intersection {
     return {type: 'intersection', options}
   }
-  export function Extern(from: ExternLocation, ...typeParams: Hint[]): Hint {
+  export function Extern(
+    from: ExternLocation,
+    ...typeParams: Hint[]
+  ): Hint.Extern {
     return {type: 'extern', from, typeParams}
   }
 

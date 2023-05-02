@@ -68,6 +68,7 @@ function transformValue(shape: Shape, raw: any): any {
   }
 }
 
+// Produces the data structure which is stored in a json column in the database
 export function entryData(
   type: Type<any>,
   input: Record<string, any>

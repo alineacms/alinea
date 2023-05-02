@@ -23,6 +23,6 @@ export function InputField<V, M>({field, ...rest}: InputFieldProps<V, M>) {
     'value' in rest
       ? new InputState.StatePair(rest.value, rest.onChange)
       : rest.state
-  const View = field.view!
+  const View = Field.view(field)!
   return <View field={field} state={state} />
 }

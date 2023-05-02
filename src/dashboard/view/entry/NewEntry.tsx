@@ -1,5 +1,13 @@
-import {createId, docFromEntry, Entry, Outcome, slugify} from 'alinea/core'
+import {
+  createId,
+  docFromEntry,
+  Entry,
+  Outcome,
+  slugify,
+  Type
+} from 'alinea/core'
 import {generateKeyBetween} from 'alinea/core/util/FractionalIndexing'
+import {entries, fromEntries, keys} from 'alinea/core/util/Objects'
 import {useField} from 'alinea/editor'
 import {InputField} from 'alinea/editor/view/InputField'
 import {link} from 'alinea/input/link'
@@ -40,9 +48,9 @@ function NewEntryForm({parentId}: NewEntryProps) {
   const {hub} = useSession()
   const {schema} = useDashboard().config
   const {name: workspace} = useWorkspace()
-  const containerTypes = [...schema.entries()]
-    .filter(pair => {
-      return pair[1].isContainer
+  const containerTypes = entries(schema)
+    .filter(([, type]) => {
+      return Type.meta(type).isContainer
     })
     .map(pair => pair[0])
   const root = useRoot()
@@ -82,17 +90,17 @@ function NewEntryForm({parentId}: NewEntryProps) {
     },
     {suspense: true, keepPreviousData: true}
   )
-  const type = parent && schema.type(parent.type)
+  const type = parent && schema[parent.type]
   const types: Array<string> = !parent
     ? root.contains
-    : type?.options.contains || schema.keys
+    : (type && Type.meta(type).contains) || keys(schema)
   const selectedType = useField(
     select(
       'Select type',
-      Object.fromEntries(
+      fromEntries(
         types.map(typeKey => {
-          const type = schema.type(typeKey)
-          return [typeKey, (type?.label || typeKey) as string]
+          const type = schema[typeKey]
+          return [typeKey, (Type.label(type) || typeKey) as string]
         })
       ),
       {initialValue: types[0]}
@@ -108,10 +116,10 @@ function NewEntryForm({parentId}: NewEntryProps) {
     const selected = selectedType()
     if (!selected || !title) return
     setIsCreating(true)
-    const type = schema.type(selected)!
+    const type = schema[selected]!
     const path = slugify(title)
     const entry: Entry = {
-      ...type.create(),
+      ...Type.blankEntry(selected, type),
       path,
       title,
       url: (parent?.url || '') + (parent?.url.endsWith('/') ? '' : '/') + path,
@@ -119,7 +127,8 @@ function NewEntryForm({parentId}: NewEntryProps) {
         index: generateKeyBetween(null, parent?.childrenIndex || null),
         workspace,
         root: root.name,
-        parent: parent?.id
+        parent: parent?.id,
+        parents: []
       }
     }
     if (root.i18n) {

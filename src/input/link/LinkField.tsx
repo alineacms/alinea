@@ -1,12 +1,4 @@
-import {
-  Entry,
-  Field,
-  Hint,
-  Label,
-  Media,
-  Reference,
-  TypeConfig
-} from 'alinea/core'
+import {Entry, Field, Hint, Label, Media, Reference, Type} from 'alinea/core'
 import type {Picker} from 'alinea/editor/Picker'
 import {Cursor, Expr} from 'alinea/store'
 import {linkConstructors} from './LinkConstructors'
@@ -39,7 +31,7 @@ export interface LinkOptions<Row> {
   /** Show only entries matching this condition */
   condition?: Expr<boolean>
   /** Add extra fields to each link */
-  fields?: TypeConfig<Row>
+  fields?: Type<Row>
   /** Width of the field in the dashboard UI (0-1) */
   width?: number
   /** Add instructional text to a field */
@@ -74,7 +66,9 @@ export function createLink<Row>(
   const blocks = Object.fromEntries(
     pickers.map(picker => [
       picker.type,
-      options.fields ? picker.shape.concat(options.fields.shape) : picker.shape
+      options.fields
+        ? picker.shape.concat(Type.shape(options.fields))
+        : picker.shape
     ])
   )
   const hint =

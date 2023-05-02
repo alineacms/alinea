@@ -6,10 +6,12 @@ import {Callable} from 'rado/util/Callable'
 import type {ComponentType} from 'react'
 import {Field} from './Field.js'
 import {Hint} from './Hint.js'
+import {createId} from './Id.js'
 import {Label} from './Label.js'
+import {Shape} from './Shape.js'
 import type {View} from './View.js'
-
-const {entries, fromEntries, defineProperty} = Object
+import {RecordShape} from './shape/RecordShape.js'
+import {defineProperty, entries, fromEntries} from './util/Objects.js'
 
 export interface EntryUrlMeta {
   path: string
@@ -42,6 +44,8 @@ export interface TypeMeta {
 }
 
 export interface TypeData {
+  label: Label
+  shape: RecordShape
   hint: Hint
   fields: Definition
   meta: TypeMeta
@@ -69,21 +73,60 @@ export type TypeRow<Fields> = {
 
 export namespace Type {
   export type Row<Fields> = TypeRow<Fields>
+  export const Data = Symbol('Type.Data')
+  export const Meta = Symbol('Type.Meta')
+
+  export function label(type: Type): Label {
+    return type[Type.Data].label
+  }
+
+  export function meta(type: Type): TypeMeta {
+    return type[Type.Data].meta
+  }
+
+  export function shape(type: Type): RecordShape {
+    return type[Type.Data].shape
+  }
+
+  export function hint(type: Type) {
+    return type[Type.Data].hint
+  }
+
+  export function blankEntry(
+    name: string,
+    type: Type
+  ): {
+    id: string
+    type: string
+    [key: string]: any
+  } {
+    return {
+      ...Type.shape(type).create(),
+      type: name,
+      id: createId()
+    }
+  }
 }
 
-export const Type = class<Fields extends Definition> implements TypeData {
-  static readonly Data = Symbol('Type.Data')
-  static readonly Meta = Symbol('Type.Meta')
+class TypeInstance<Fields extends Definition> implements TypeData {
+  shape: RecordShape
   hint: Hint
   meta: TypeMeta
 
   constructor(public label: Label, public fields: Fields) {
     this.meta = this.fields[Type.Meta] || {}
+    this.shape = Shape.Record(
+      label,
+      fromEntries(
+        entries(fields).map(([key, field]) => {
+          return [key, Field.shape(field)]
+        })
+      )
+    )
     this.hint = Hint.Object(
       fromEntries(
         entries(fields).map(([key, field]) => {
-          const {hint} = field[Field.Data]
-          return [key, hint]
+          return [key, Field.hint(field)]
         })
       )
     )
@@ -105,25 +148,6 @@ export const Type = class<Fields extends Definition> implements TypeData {
       enumerable: false
     })
   }
-
-  static hint(type: Type) {
-    return type[Type.Data].hint
-  }
-
-  static create<Fields extends Definition>(
-    label: Label,
-    fields: Fields
-  ): Type<Fields> {
-    const name = String(label)
-    const instance = new this(label, fields)
-    const callable: any = {
-      [name]: (...args: Array<any>) => instance.call(...args)
-    }[name]
-    delete callable.name
-    delete callable.length
-    instance.defineProperties(callable)
-    return callable
-  }
 }
 
 export interface Definition {
@@ -136,7 +160,15 @@ export function type<Fields extends Definition>(
   label: Label,
   fields: Fields
 ): Type<Fields> {
-  return Type.create(label, fields)
+  const name = String(label)
+  const instance = new TypeInstance(label, fields)
+  const callable: any = {
+    [name]: (...args: Array<any>) => instance.call(...args)
+  }[name]
+  delete callable.name
+  delete callable.length
+  instance.defineProperties(callable)
+  return callable
 }
 
 export namespace type {

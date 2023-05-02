@@ -1,4 +1,4 @@
-import {Entry, EntryMeta, Label, Outcome} from 'alinea/core'
+import {Entry, EntryMeta, Label, Outcome, Type} from 'alinea/core'
 import {Cursor, Functions} from 'alinea/store'
 import {useCallback, useEffect, useMemo, useState} from 'react'
 import {useQuery} from 'react-query'
@@ -110,8 +110,8 @@ export function useContentTree({
     [setOpen]
   )
   const visible = useMemo(() => {
-    return Array.from(config.schema)
-      .filter(([, type]) => !type.options.isHidden)
+    return Object.entries(config.schema)
+      .filter(([, type]) => !Type.meta(type).isHidden)
       .map(([key]) => key)
   }, [config])
   const ids = Array.from(new Set([...open, ...select])).sort()

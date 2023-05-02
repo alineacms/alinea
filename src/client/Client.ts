@@ -21,7 +21,7 @@ type AuthenticateRequest = (request?: RequestInit) => RequestInit | undefined
 
 export class Client<T> implements Hub<T> {
   constructor(
-    public config: Config<T>,
+    public config: Config,
     public url: string,
     protected applyAuth: AuthenticateRequest = v => v,
     protected unauthorized: () => void = () => {}

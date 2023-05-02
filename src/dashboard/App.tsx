@@ -1,4 +1,4 @@
-import {renderLabel, Session} from 'alinea/core'
+import {renderLabel, Session, Type} from 'alinea/core'
 import {
   ErrorBoundary,
   FavIcon,
@@ -198,8 +198,8 @@ function EntryRoute({id}: EntryRouteProps) {
     draft?.id !== id && locale && draft?.alinea.i18n?.locale !== locale
   )
   const {search} = useLocation()
-  const type = draft?.channel
-  const View = type?.options.view || EntryEdit
+  const type = draft?.type
+  const View = (type && Type.meta(type).view) || EntryEdit
   const select = ([] as Array<string | undefined>)
     .concat(draft?.alinea.parents)
     .concat(draft?.id)
