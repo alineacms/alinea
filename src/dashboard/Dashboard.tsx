@@ -3,7 +3,7 @@ import {QueryClient} from 'react-query'
 import {App} from './App.js'
 
 export interface DashboardOptions<T = any> {
-  config: Config<T>
+  config: Config
   client: Hub<T>
   queryClient?: QueryClient
   fullPage?: boolean

@@ -21,8 +21,8 @@ import {
   verticalListSortingStrategy
 } from '@dnd-kit/sortable'
 import {CSS, FirstArgument} from '@dnd-kit/utilities'
-import {Field} from 'alinea/core'
-import {LazyRecord} from 'alinea/core/util/LazyRecord'
+import {Field, Type} from 'alinea/core'
+import {entries} from 'alinea/core/util/Objects'
 import {InputForm, InputLabel, InputState, useInput} from 'alinea/editor'
 import {Card, Create, fromModule, Icon, IconButton, TextLabel} from 'alinea/ui'
 import {IcOutlineList} from 'alinea/ui/icons/IcOutlineList'
@@ -111,11 +111,9 @@ function ListInputRow<T extends ListRow>({
   ...rest
 }: ListInputRowProps<T>) {
   const {label, options} = field[Field.Data]
-  const {types} = options.schema
-  const type = LazyRecord.get(types, row.type)
+  const type = options.schema[row.type]
   const [showInsert, setShowInsert] = useState(false)
   if (!type) return null
-
   return (
     <div
       className={styles.row({dragging: isDragging, overlay: isDragOverlay})}
@@ -142,13 +140,13 @@ function ListInputRow<T extends ListRow>({
       <Card.Header>
         <Card.Options style={{zIndex: 1}}>
           <IconButton
-            icon={type.options.icon || IcRoundDragHandle}
+            icon={Type.meta(type).icon || IcRoundDragHandle}
             {...handle}
             style={{cursor: handle ? 'grab' : 'grabbing'}}
           />
         </Card.Options>
         <Card.Title>
-          <TextLabel label={type.label} />
+          <TextLabel label={Type.label(type)} />
         </Card.Title>
         <Card.Options>
           <IconButton
@@ -176,18 +174,18 @@ type ListCreateRowProps<T> = {
 }
 
 function ListCreateRow<T>({field, inline, onCreate}: ListCreateRowProps<T>) {
-  const {types} = field[Field.Data].options.schema
+  const schema = field[Field.Data].options.schema
   return (
     <div className={styles.create({inline})}>
       <Create.Root>
-        {LazyRecord.iterate(types).map(([key, type]) => {
+        {entries(schema).map(([key, type]) => {
           return (
             <Create.Button
-              icon={type.options.icon}
+              icon={Type.meta(type).icon}
               key={key}
               onClick={() => onCreate(key)}
             >
-              <TextLabel label={type.label} />
+              <TextLabel label={Type.label(type)} />
             </Create.Button>
           )
         })}

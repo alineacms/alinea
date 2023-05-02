@@ -4,9 +4,10 @@ import {Field} from './Field.js'
 import {Lazy} from './util/Lazy.js'
 import {UnionToIntersection} from './util/Types.js'
 
-export class Section<R = any, T = R> {
+// A section holds fields and optionally a view to render them
+export class Section<Fields extends Record<string, Field>> {
   constructor(
-    public fields: Section.Fields | undefined,
+    public fields: Fields,
     public view?: ComponentType<{state: InputState}>
   ) {}
 }

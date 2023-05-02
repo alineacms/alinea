@@ -1,4 +1,4 @@
-import {createError, createId, Field, Shape} from 'alinea/core'
+import {createId, Field, Shape} from 'alinea/core'
 import {Observable, observable, useForceUpdate} from 'alinea/ui'
 import {useEffect, useMemo} from 'react'
 import * as Y from 'yjs'
@@ -57,18 +57,18 @@ export interface ObservableField<V, M> extends Observable.Writable<V> {
   state: FieldState<V, M>
 }
 
-export function createFieldInput<V, M, Q>(
-  field: Field<V, M, Q>
+export function createFieldInput<V, M>(
+  field: Field<V, M>
 ): ObservableField<V, M> {
-  if (!field.shape) throw createError('Cannot use field without shape')
+  const shape = Field.shape(field)
   const doc = new Y.Doc()
   const rootKey = createId()
   const root = doc.getMap(rootKey)
-  const initial = field.shape.create()
-  root.set(FIELD_KEY, field.shape.toY(initial))
+  const initial = shape.create()
+  root.set(FIELD_KEY, shape.toY(initial))
   const input = observable<V>(initial)
   const state = new FieldState<V, M>({
-    shape: field.shape,
+    shape: shape,
     root,
     key: FIELD_KEY,
     attach: input
@@ -76,8 +76,8 @@ export function createFieldInput<V, M, Q>(
   return Object.assign(input, {field, state}) as ObservableField<V, M>
 }
 
-export function useField<V, M, Q>(
-  field: Field<V, M, Q>,
+export function useField<V, M>(
+  field: Field<V, M>,
   deps: ReadonlyArray<unknown> = []
 ): ObservableField<V, M> {
   return useMemo(() => createFieldInput(field), deps)

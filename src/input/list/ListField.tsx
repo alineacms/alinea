@@ -50,9 +50,8 @@ export function list<Row>(
   label: Label,
   options: ListOptions<Row>
 ): ListField<Row> {
-  const {schema} = options
-  return new ListField(schema.shape, {
-    hint: listHint(schema),
+  return new ListField(Schema.shapes(options.schema), {
+    hint: listHint(options.schema),
     label,
     options
   })

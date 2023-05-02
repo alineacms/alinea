@@ -1,5 +1,6 @@
 import {Switch} from '@headlessui/react'
 import {Label} from 'alinea/core/Label'
+import {entries, fromEntries} from 'alinea/core/util/Objects'
 import {InputField} from 'alinea/editor/view/InputField'
 import {select} from 'alinea/input/select'
 import {
@@ -87,8 +88,8 @@ export namespace Toolbar {
     }
     const defaultWorkspace = select(
       'Default workspace',
-      Object.fromEntries(
-        Object.entries(config.workspaces).map(([key, workspace]) => {
+      fromEntries(
+        entries(config.workspaces).map(([key, workspace]) => {
           return [key, (workspace.label as string) || key]
         })
       )

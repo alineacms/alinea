@@ -4,6 +4,7 @@ import {Hint} from '../Hint.js'
 import {Label} from '../Label.js'
 import {Shape} from '../Shape.js'
 import {TextDoc, TextNode} from '../TextDoc.js'
+import {entries, fromEntries} from '../util/Objects.js'
 import {RecordShape} from './RecordShape.js'
 
 // Adapted from: https://github.com/yjs/y-prosemirror/blob/1c393fb3254cc1ed4933e8326b57c1316793122a/src/lib.js#L245
@@ -88,8 +89,8 @@ export class RichTextShape<T> implements Shape<TextDoc<T>, RichTextMutator<T>> {
   ) {
     this.values =
       shapes &&
-      Object.fromEntries(
-        Object.entries(shapes).map(([key, value]) => {
+      fromEntries(
+        entries(shapes).map(([key, value]) => {
           return [
             key,
             new RecordShape(value.label, {
@@ -102,7 +103,7 @@ export class RichTextShape<T> implements Shape<TextDoc<T>, RichTextMutator<T>> {
   }
   innerTypes(parents: Array<string>) {
     if (!this.shapes) return []
-    return Object.entries(this.shapes).flatMap(([name, shape]) => {
+    return entries(this.shapes).flatMap(([name, shape]) => {
       const info = {name, shape, parents}
       const inner = shape.innerTypes(parents.concat(name))
       if (Hint.isDefinitionName(name)) return [info, ...inner]

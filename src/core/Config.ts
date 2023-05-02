@@ -4,7 +4,7 @@ import {BackendConfig, BackendProps} from './BackendConfig.js'
 import {createError} from './ErrorWithCode.js'
 import {Root} from './Root.js'
 import {Schema} from './Schema.js'
-import {AnyType} from './Type.js'
+import {Type} from './Type.js'
 import {Workspace, WorkspaceConfig} from './Workspace.js'
 
 /** Configuration options for the dashboard */
@@ -50,7 +50,7 @@ export class Config {
   }
 
   /** Find a type by name */
-  type = (name: string): AnyType | undefined => {
+  type = (name: string): Type | undefined => {
     return this.schema[name]
   }
 

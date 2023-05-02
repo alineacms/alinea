@@ -1,4 +1,4 @@
-import {Entry, Schema, View} from 'alinea/core'
+import {Entry, Schema, Type, View} from 'alinea/core'
 import {EntryReference} from 'alinea/picker/entry'
 import {fromModule} from 'alinea/ui'
 import {IcRoundCheckBox} from 'alinea/ui/icons/IcRoundCheckBox'
@@ -27,7 +27,7 @@ export function ExplorerItem({
   const nav = useNav()
   const explorer = useExplorer()
   const itemRef = useFocusListItem(() => explorer?.onSelect(entry))
-  const View: any = schema.type(entry.type)?.options[summaryView] || defaultView
+  const View: any = Type.meta(schema[entry.type])[summaryView] || defaultView
   const Tag: any = explorer?.selectable ? 'label' : 'a'
   const props = explorer?.selectable ? {} : link(nav.entry(entry))
   const isSelected = Boolean(

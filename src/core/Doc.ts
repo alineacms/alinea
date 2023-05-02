@@ -1,14 +1,16 @@
 import * as Y from 'yjs'
 import {Entry, EntryMeta} from './Entry.js'
 import {createError} from './ErrorWithCode.js'
+import {Field} from './Field.js'
 import {Label} from './Label.js'
-import {AnyType, Type} from './Type.js'
+import {Type} from './Type.js'
+import {entries} from './util/Objects.js'
 
 export const ROOT_KEY = '#root'
 
 export function entryFromDoc(
   doc: Y.Doc,
-  getType: (typeKey: string) => AnyType | undefined
+  getType: (typeKey: string) => Type | undefined
 ): Entry {
   const docRoot = doc.getMap(ROOT_KEY)
   const typeKey = docRoot.get('type') as string | undefined
@@ -26,7 +28,7 @@ export function entryFromDoc(
     title: docRoot.get('title') as Label,
     path: docRoot.get('path') as string,
     url: docRoot.get('url') as string,
-    ...type.shape.fromY(docRoot),
+    ...Type.shape(type).fromY(docRoot),
     alinea: meta
   }
 }
@@ -50,9 +52,10 @@ export function docFromEntry(
   docRoot.set('title', entry.title)
   docRoot.set('path', entry.path)
   docRoot.set('alinea', entry.alinea)
-  for (const [key, field] of type) {
+  for (const [key, field] of entries(type)) {
+    if (!field) continue
     const contents = entry[key]
-    docRoot.set(key, field.shape.toY(contents))
+    docRoot.set(key, Field.shape(field).toY(contents))
   }
   doc.clientID = clientID
   return doc

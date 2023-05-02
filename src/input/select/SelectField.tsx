@@ -28,7 +28,7 @@ export interface SelectOptions<Key, Items> extends SelectConfig<Key> {
   items: Items
 }
 
-export class SelectField<Key, Items> extends Field.Scalar<
+export class SelectField<Key extends string, Items> extends Field.Scalar<
   Key,
   SelectOptions<Key, Items>
 > {}

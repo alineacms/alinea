@@ -1,8 +1,16 @@
 import {Cursor} from 'alinea/backend2/pages/Cursor'
 import {Field} from './Field.js'
+import {Hint} from './Hint.js'
 import {Type} from './Type.js'
+import {RecordShape} from './shape/RecordShape.js'
+import {entries, fromEntries} from './util/Objects.js'
 
-export type Schema = Record<string, Type>
+const shapesCache = new WeakMap<Schema, Record<string, RecordShape>>()
+const hintCache = new WeakMap<Schema, Hint.Union>()
+
+export interface Schema<Definitions = object> {
+  [key: string]: Type
+}
 
 export namespace Schema {
   export type Infer<T> = T extends Type<infer Fields>
@@ -12,6 +20,33 @@ export namespace Schema {
     : T extends Cursor<infer Row>
     ? Row
     : never
+
+  export function shapes(schema: Schema): Record<string, RecordShape> {
+    if (!shapesCache.has(schema))
+      shapesCache.set(
+        schema,
+        fromEntries(
+          entries(schema).map(([key, type]) => {
+            return [key, Type.shape(type)]
+          })
+        )
+      )
+    return shapesCache.get(schema)!
+  }
+
+  export function hint(schema: Schema): Hint.Union {
+    if (!hintCache.has(schema)) {
+      hintCache.set(
+        schema,
+        Hint.Union(
+          entries(schema).map(([key, type]) => {
+            return Type.hint(type)
+          })
+        )
+      )
+    }
+    return hintCache.get(schema)!
+  }
 }
 
 export function schema<T extends Schema>(types: T): T {

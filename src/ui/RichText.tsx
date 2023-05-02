@@ -1,5 +1,5 @@
-import {HasType, TextDoc, TextNode, TypesOf} from 'alinea/core'
-import {ComponentType, Fragment, isValidElement, ReactElement} from 'react'
+import {TextDoc, TextNode} from 'alinea/core'
+import {ComponentType, Fragment, ReactElement, isValidElement} from 'react'
 
 export enum Elements {
   h1 = 'h1',
@@ -78,7 +78,7 @@ function RichTextNodeView<T>({views, node}: RichTextNodeViewProps<T>) {
         marks?.map(mark => nodeElement(mark.type, mark.attrs)) || []
       return wrappers.reduce((children, element) => {
         if (!element?.type) return <>{children}</>
-        const View = views[element.type]
+        const View: any = views[element.type]
         if (View && !isValidElement(View)) {
           return <View {...element.props}>{children}</View>
         } else {
@@ -94,7 +94,7 @@ function RichTextNodeView<T>({views, node}: RichTextNodeViewProps<T>) {
     default: {
       const {type, content, ...attrs} = node as TextNode.Element
       const element = nodeElement(type, attrs)
-      const View = views[element?.type || type]
+      const View: any = views[element?.type || type]
       const inner =
         content?.map((node, i) => (
           <RichTextNodeView key={i} views={views} node={node} />
@@ -120,8 +120,8 @@ export type RichTextProps<T> = {
   [K in keyof typeof Elements]?:
     | ComponentType<JSX.IntrinsicElements[K]>
     | ReactElement
-} & (T extends HasType
-    ? {[K in TypesOf<T>]?: ComponentType<Extract<T, {type: K}>>}
+} & (T extends {type: string}
+    ? {[K in T['type']]?: ComponentType<Extract<T, {type: K}>>}
     : {})
 
 export function RichText<T>({doc, ...views}: RichTextProps<T>) {
