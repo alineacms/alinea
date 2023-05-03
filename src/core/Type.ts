@@ -137,12 +137,7 @@ class TypeInstance<Fields extends Definition> implements TypeData {
   }
 
   defineProperties(instance: any) {
-    for (const [key, value] of entries(this.fields))
-      defineProperty(instance, key, {
-        value,
-        enumerable: true,
-        configurable: true
-      })
+    for (const [key, value] of entries(this.fields)) instance[key] = value
     defineProperty(instance, Type.Data, {
       value: this,
       enumerable: false

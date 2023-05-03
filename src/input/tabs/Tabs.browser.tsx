@@ -1,31 +1,33 @@
-import {Section} from 'alinea/core'
+import {Section, Type} from 'alinea/core'
 import {InputForm, InputState} from 'alinea/editor'
 import {HStack, Tabs, TextLabel} from 'alinea/ui'
-import {tabs as createTabs, TabsSection} from './Tabs.js'
+import {TabsSection, tabs as createTabs} from './Tabs.js'
 
 export * from './Tabs.js'
 
-export const tabs = Section.withView(createTabs, TabsView)
+export const tabs = Section.provideView(TabsView, createTabs)
 
-type TabsViewProps = {
+interface TabsViewProps {
   state: InputState<any>
-  section: TabsSection<any>
+  section: Section
 }
 
 function TabsView({state, section}: TabsViewProps) {
-  const visibleTypes = section.types.filter(type => !type.options?.isHidden)
+  const tabs = section[Section.Data] as TabsSection
+  const visibleTypes = tabs.types.filter(type => !Type.meta(type).isHidden)
   if (!visibleTypes.length) return null
 
   return (
     <Tabs.Root>
       <Tabs.List>
         {visibleTypes.map((type, i) => {
-          const Icon = type.options?.icon
+          const meta = Type.meta(type)
+          const Icon = meta.icon
           return (
             <Tabs.Trigger key={i}>
               <HStack center gap={8}>
                 {/*Icon && <Icon />*/}
-                <TextLabel label={type.label} />
+                <TextLabel label={Type.label(type)} />
               </HStack>
             </Tabs.Trigger>
           )

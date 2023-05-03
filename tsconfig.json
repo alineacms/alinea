@@ -12,6 +12,7 @@
     "preserveWatchOutput": true,
     "declaration": true,
     "emitDeclarationOnly": true,
+    "exactOptionalPropertyTypes": true,
     "jsx": "react-jsx",
     "plugins": [{"name": "typescript-plugin-css-modules"}],
     "paths": {
