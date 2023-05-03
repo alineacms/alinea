@@ -1,7 +1,7 @@
 import sqlite from '@alinea/sqlite-wasm'
 import {Schema, createConfig, root, schema, type, workspace} from 'alinea/core'
 import {Logger, Report} from 'alinea/core/util/Logger'
-import {path, text} from 'alinea/input'
+import {path, tab, tabs, text} from 'alinea/input'
 import * as fs from 'fs/promises'
 import {connect} from 'rado/driver/sql.js'
 import {test} from 'uvu'
@@ -71,12 +71,26 @@ const entry3: SourceEntry = {
 export const entries = [entry1, entry2, entry3]
 
 const TypeA = type('Type', {
+  /** Testje */
   title: text('Title'),
+  /** Testje */
   path: path('Path'),
+  ...tabs(
+    tab('Tab 1', {
+      namesdf: text('Name'),
+      name: text('Name')
+    }),
+    tab('Tab 2', {
+      name1: text('Name'),
+      name2: text('Name')
+    })
+  ),
   [type.meta]: {
     isContainer: true
   }
 })
+
+type TypeA = Schema.Infer<typeof TypeA>
 
 const TypeB = type('TypeB', {
   title: text('Title'),

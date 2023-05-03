@@ -1,15 +1,76 @@
 import type {InputState} from 'alinea/editor/InputState'
-import {ComponentType, createElement, isValidElement, ReactElement} from 'react'
+import {ComponentType} from 'react'
 import {Field} from './Field.js'
-import {Lazy} from './util/Lazy.js'
-import {UnionToIntersection} from './util/Types.js'
+import {createId} from './Id.js'
+import {assign, create, defineProperty, entries} from './util/Objects.js'
+
+interface Definition {
+  [key: string]: Field<any, any>
+}
+
+export interface SectionData {
+  fields: Definition
+  view?: ComponentType<{
+    state: InputState
+    section: Section
+  }>
+}
+
+export declare class SectionI {
+  get [Section.Data](): SectionData
+}
+
+export type Section<Fields = object> = Fields & SectionI
+
+export type SectionView<Fields> = ComponentType<{
+  state: InputState
+  section: Section<Fields>
+}>
+
+export namespace Section {
+  export const Data = Symbol('Section.Data')
+  export const PREFIX = '@@@'
+
+  export function provideView<
+    Fields,
+    Factory extends (...args: Array<any>) => Section<Fields>
+  >(view: SectionView<Fields>, factory: Factory): Factory {
+    return ((...args: Array<any>) => {
+      const section = factory(...args)
+      section[Section.Data].view = view as SectionView<object>
+      return section
+    }) as Factory
+  }
+}
+
+assign(Section, {
+  [Symbol.hasInstance](instance: any) {
+    return instance && Boolean(instance[Section.Data])
+  }
+})
+
+export function section<Fields>(data: SectionData): Section<Fields> {
+  const section = create(null)
+  for (const [key, value] of entries(data.fields)) section[key] = value
+  section[`${Section.PREFIX}${createId()}`] = section
+  defineProperty(section, Section.Data, {
+    value: data,
+    enumerable: false
+  })
+  return section as Section<Fields>
+}
 
 // A section holds fields and optionally a view to render them
-export class Section<Fields extends Record<string, Field>> {
+/*export class Section<Fields extends FieldRecord = FieldRecord> {
   constructor(
-    public fields: Fields,
-    public view?: ComponentType<{state: InputState}>
-  ) {}
+    fields: Fields,
+    view?: ComponentType<{state: InputState}>
+  ) {
+    for (const [key, value] of entries(fields))
+      this[key] = value
+    this[`@@@${createId()}`] = this
+  }
+  [key: string]: Field | Section
 }
 
 export namespace Section {
@@ -93,3 +154,4 @@ export namespace Section {
     }) as Factory
   }
 }
+*/

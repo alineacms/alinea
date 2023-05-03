@@ -40,13 +40,6 @@ export class Field<Value = unknown, OnChange = unknown, Options = {}> {
   constructor(data: FieldData<Value, OnChange, Options>) {
     this[Field.Data] = data
   }
-
-  attachView(view: FieldView<Value, OnChange, Options>): this {
-    return new Field<Value, OnChange, Options>({
-      ...this[Field.Data],
-      view
-    }) as this
-  }
 }
 
 export namespace Field {
@@ -111,7 +104,7 @@ export namespace Field {
     Factory extends (...args: Array<any>) => Field<Value, OnChange, Options>
   >(view: FieldView<Value, OnChange, Options>, factory: Factory): Factory {
     return ((...args: Array<any>) =>
-      factory(...args).attachView(view)) as Factory
+      new Field({...factory(...args)[Field.Data], view})) as Factory
   }
 
   export function shape(field: Field<any, any>): Shape {
