@@ -8,9 +8,7 @@ import {entries, fromEntries} from './util/Objects.js'
 const shapesCache = new WeakMap<Schema, Record<string, RecordShape>>()
 const hintCache = new WeakMap<Schema, Hint.Union>()
 
-export interface Schema<Definitions = object> {
-  [key: string]: Type
-}
+export interface Schema<Definitions = object> extends Record<string, Type> {}
 
 export namespace Schema {
   export type Infer<T> = T extends Type<infer Fields>
@@ -27,7 +25,7 @@ export namespace Schema {
         schema,
         fromEntries(
           entries(schema).map(([key, type]) => {
-            return [key, Type.shape(type)]
+            return [key, Type.shape(type!)]
           })
         )
       )
@@ -40,7 +38,7 @@ export namespace Schema {
         schema,
         Hint.Union(
           entries(schema).map(([key, type]) => {
-            return Type.hint(type)
+            return Type.hint(type!)
           })
         )
       )

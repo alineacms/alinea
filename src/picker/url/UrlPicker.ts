@@ -1,7 +1,7 @@
 import {Hint} from 'alinea/core/Hint'
 import {Reference} from 'alinea/core/Reference'
 import {Shape} from 'alinea/core/Shape'
-import {TypeConfig} from 'alinea/core/Type'
+import {Type} from 'alinea/core/Type'
 import {Picker} from 'alinea/editor/Picker'
 
 export interface UrlReference extends Reference {
@@ -18,13 +18,13 @@ export namespace UrlReference {
 }
 
 export interface UrlPickerOptions<T> {
-  fields?: TypeConfig<any, T>
+  fields?: Type<T>
 }
 
 export function urlPicker<T>(
   options: UrlPickerOptions<T>
 ): Picker<UrlReference> {
-  const extra = options.fields?.shape
+  const extra = options.fields && Type.shape(options.fields)
   return {
     type: 'url',
     shape: Shape.Record('Url', {

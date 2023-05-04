@@ -35,7 +35,7 @@ export function EntryEdit({initialMode, draft, isLoading}: EntryEditProps) {
   const {schema} = useDashboard().config
   const {hub} = useSession()
   const navigate = useNavigate()
-  const type = schema.type(draft.type)
+  const type = schema[draft.type]
   const {preview} = useWorkspace()
   const isTranslating = !isLoading && locale !== draft.alinea.i18n?.locale
   const [isCreating, setIsCreating] = useState(false)

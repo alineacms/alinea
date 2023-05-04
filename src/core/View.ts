@@ -1,6 +1,8 @@
 import {Collection, SelectionInput, Store} from 'alinea/store'
 import type {ComponentType} from 'react'
 import {Schema} from './Schema.js'
+import {Type} from './Type.js'
+import {entries} from './util/Objects.js'
 
 type ViewSelection<T, S> = (collection: Collection<T>) => S
 type ViewSelectionGeneric = <T>(collection: Collection<T>) => SelectionInput
@@ -31,8 +33,8 @@ export namespace View {
     collection: Collection<T>
   ) {
     const cases: Record<string, SelectionInput> = {}
-    for (const [name, type] of schema) {
-      const view = type.options[summaryView]
+    for (const [name, type] of entries(schema)) {
+      const view = Type.meta(type!)[summaryView]
       if (view) cases[name] = view.selection(collection)
     }
     return cases

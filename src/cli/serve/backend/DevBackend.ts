@@ -9,14 +9,14 @@ import {Store} from 'alinea/store/Store'
 import {DevData} from './DevData.js'
 import {DevDrafts} from './DevDrafts.js'
 
-export interface DevServerOptions<T> {
-  config: Config<T>
+export interface DevServerOptions {
+  config: Config
   createStore: () => Promise<Store>
   serverLocation: string
 }
 
-class LocalBackend<T> extends Backend<T> {
-  constructor({config, createStore, serverLocation}: DevServerOptions<T>) {
+class LocalBackend extends Backend {
+  constructor({config, createStore, serverLocation}: DevServerOptions) {
     const drafts = new DevDrafts({
       serverLocation
     })
@@ -38,10 +38,10 @@ class LocalBackend<T> extends Backend<T> {
 export class DevBackend<T> extends Client<T> {
   handle: Handle<Request, Response | undefined>
   previews = new JWTPreviews('@alinea/backend/devserver')
-  local: LocalBackend<T>
+  local: LocalBackend
   fullyLocal = false
 
-  constructor(options: DevServerOptions<T>) {
+  constructor(options: DevServerOptions) {
     const {config, serverLocation = 'http://localhost:4500'} = options
     super(config, serverLocation)
     this.fullyLocal = options.serverLocation === undefined

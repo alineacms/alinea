@@ -1,16 +1,16 @@
-import {Entry, Tree, view} from 'alinea/core'
+import {Entry, Tree, Type, view} from 'alinea/core'
 import {Collection} from 'alinea/store'
 import {
   Chip,
   Ellipsis,
-  fromModule,
   HStack,
   TextLabel,
   Typo,
-  VStack
+  VStack,
+  fromModule
 } from 'alinea/ui'
-import {IcRoundKeyboardArrowRight} from 'alinea/ui/icons/IcRoundKeyboardArrowRight'
 import {Link} from 'alinea/ui/Link'
+import {IcRoundKeyboardArrowRight} from 'alinea/ui/icons/IcRoundKeyboardArrowRight'
 import {ReactNode} from 'react'
 import {useDashboard} from '../../hook/UseDashboard.js'
 import {useNav} from '../../hook/UseNav.js'
@@ -34,7 +34,7 @@ export const EntrySummaryRow = view(
   function EntrySummaryRow({id, title, type: typeName, parents}) {
     const nav = useNav()
     const {schema} = useDashboard().config
-    const type = schema.type(typeName)
+    const type = schema[typeName]
     if (!type) return null
     return (
       <HStack center full gap={10} className={styles.row()}>
@@ -63,7 +63,7 @@ export const EntrySummaryRow = view(
           </Ellipsis>
         </VStack>
         <Chip style={{marginLeft: 'auto'}}>
-          <TextLabel label={type.label} />
+          <TextLabel label={Type.label(type)} />
         </Chip>
       </HStack>
     )
@@ -74,7 +74,7 @@ export const EntrySummaryThumb = view(
   entrySummaryQuery,
   function EntrySummaryThumb({id, title, type: typeName, parents}) {
     const {schema} = useDashboard().config
-    const type = schema.type(typeName)!
+    const type = schema[typeName]!
     return (
       <div className={styles.thumb()}>
         {parents.length > 0 && (
@@ -99,7 +99,7 @@ export const EntrySummaryThumb = view(
         </div>
         <div className={styles.thumb.footer()}>
           <Chip style={{marginLeft: 'auto'}}>
-            <TextLabel label={type.label} />
+            <TextLabel label={Type.label(type)} />
           </Chip>
         </div>
       </div>

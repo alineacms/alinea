@@ -198,7 +198,7 @@ function EntryRoute({id}: EntryRouteProps) {
     draft?.id !== id && locale && draft?.alinea.i18n?.locale !== locale
   )
   const {search} = useLocation()
-  const type = draft?.type
+  const type = draft?.channel
   const View = (type && Type.meta(type).view) || EntryEdit
   const select = ([] as Array<string | undefined>)
     .concat(draft?.alinea.parents)

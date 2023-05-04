@@ -111,7 +111,7 @@ export function useContentTree({
   )
   const visible = useMemo(() => {
     return Object.entries(config.schema)
-      .filter(([, type]) => !Type.meta(type).isHidden)
+      .filter(([, type]) => !Type.meta(type!).isHidden)
       .map(([key]) => key)
   }, [config])
   const ids = Array.from(new Set([...open, ...select])).sort()

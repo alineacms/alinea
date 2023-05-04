@@ -17,7 +17,7 @@ export class Config {
         return [name, new Workspace(name, config)]
       })
     ) as any
-    this.schema.validate()
+    // this.schema.validate()
   }
 
   get schema() {

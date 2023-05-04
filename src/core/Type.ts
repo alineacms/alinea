@@ -8,10 +8,11 @@ import {Field} from './Field.js'
 import {Hint} from './Hint.js'
 import {createId} from './Id.js'
 import {Label} from './Label.js'
+import {Section, section} from './Section.js'
 import {Shape} from './Shape.js'
 import type {View} from './View.js'
 import {RecordShape} from './shape/RecordShape.js'
-import {defineProperty, entries, fromEntries} from './util/Objects.js'
+import {defineProperty, entries, fromEntries, keys} from './util/Objects.js'
 
 export interface EntryUrlMeta {
   path: string
@@ -49,6 +50,7 @@ export interface TypeData {
   hint: Hint
   fields: Definition
   meta: TypeMeta
+  sections: Array<Section>
 }
 
 export declare class TypeI<Fields> {
@@ -92,6 +94,10 @@ export namespace Type {
     return type[Type.Data].hint
   }
 
+  export function sections(type: Type) {
+    return type[Type.Data].sections
+  }
+
   export function blankEntry(
     name: string,
     type: Type
@@ -112,6 +118,7 @@ class TypeInstance<Fields extends Definition> implements TypeData {
   shape: RecordShape
   hint: Hint
   meta: TypeMeta
+  sections: Array<Section> = []
 
   constructor(public label: Label, public fields: Fields) {
     this.meta = this.fields[Type.Meta] || {}
@@ -130,6 +137,18 @@ class TypeInstance<Fields extends Definition> implements TypeData {
         })
       )
     )
+    let current: Record<string, Field> = {}
+    for (const [key, value] of entries(fields)) {
+      if (Field.isField(value)) {
+        current[key] = value
+      } else if (Section.isSection(value)) {
+        if (keys(current).length > 0)
+          this.sections.push(section({fields: current}))
+        current = {}
+        this.sections.push(value)
+      }
+    }
+    if (keys(current).length > 0) this.sections.push(section({fields: current}))
   }
 
   call(...input: Array<any>) {
@@ -137,7 +156,9 @@ class TypeInstance<Fields extends Definition> implements TypeData {
   }
 
   defineProperties(instance: any) {
-    for (const [key, value] of entries(this.fields)) instance[key] = value
+    for (const [key, value] of entries(this.fields)) {
+      if (Field.isField(value)) instance[key] = value
+    }
     defineProperty(instance, Type.Data, {
       value: this,
       enumerable: false

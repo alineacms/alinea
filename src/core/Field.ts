@@ -120,4 +120,12 @@ export namespace Field {
   ): FieldView<Value, OnChange, Options> | undefined {
     return field[Field.Data].view
   }
+
+  export function options(field: Field): FieldOptions {
+    return field[Field.Data].options
+  }
+
+  export function isField(value: any): value is Field {
+    return value && Boolean(value[Field.Data])
+  }
 }

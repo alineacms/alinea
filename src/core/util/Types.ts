@@ -40,3 +40,7 @@ export type ObjectUnion<T> = {
       : never
     : never
 }
+
+export type HasType = {type: string}
+
+export type TypesOf<T> = T extends HasType ? T['type'] : string

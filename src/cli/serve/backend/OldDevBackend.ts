@@ -5,14 +5,14 @@ import {Store} from 'alinea/store'
 import {DevData} from './DevData.js'
 import {DevDrafts} from './DevDrafts.js'
 
-export interface DevServerOptions<T> {
-  config: Config<T>
+export interface DevServerOptions {
+  config: Config
   createStore: () => Promise<Store>
   serverLocation: string
 }
 
-export class DevBackend<T> extends Backend<T> {
-  constructor({config, createStore, serverLocation}: DevServerOptions<T>) {
+export class DevBackend extends Backend {
+  constructor({config, createStore, serverLocation}: DevServerOptions) {
     const drafts = new DevDrafts({
       serverLocation
     })

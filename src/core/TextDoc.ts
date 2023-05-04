@@ -1,3 +1,5 @@
+import {TypesOf} from 'alinea/core'
+
 export namespace TextNode {
   export type Mark = {
     type: string
@@ -16,7 +18,7 @@ export namespace TextNode {
       | 'italic'
       | 'bulletList'
       | 'listItem'
-    // | TypesOf<T>
+      | TypesOf<T>
     content?: TextDoc<T>
     [key: string]: any
   }

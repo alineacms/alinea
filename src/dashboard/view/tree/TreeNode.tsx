@@ -4,21 +4,21 @@ import {
   useSortable
 } from '@dnd-kit/sortable'
 import {CSS, FirstArgument} from '@dnd-kit/utilities'
-import {renderLabel} from 'alinea/core'
-import {Create, fromModule, px, Stack, useInitialEffect} from 'alinea/ui'
+import {Type, renderLabel} from 'alinea/core'
+import {Create, Stack, fromModule, px, useInitialEffect} from 'alinea/ui'
+import {HStack} from 'alinea/ui/Stack'
 import {IcRoundEdit} from 'alinea/ui/icons/IcRoundEdit'
 import {IcRoundInsertDriveFile} from 'alinea/ui/icons/IcRoundInsertDriveFile'
 import {IcRoundKeyboardArrowDown} from 'alinea/ui/icons/IcRoundKeyboardArrowDown'
 import {IcRoundKeyboardArrowRight} from 'alinea/ui/icons/IcRoundKeyboardArrowRight'
-import {HStack} from 'alinea/ui/Stack'
 import {link} from 'alinea/ui/util/HashRouter'
 import {
   CSSProperties,
-  forwardRef,
   HTMLProps,
-  memo,
   PropsWithoutRef,
   Ref,
+  forwardRef,
+  memo,
   useCallback,
   useRef
 } from 'react'
@@ -40,7 +40,7 @@ type TreeNodeChildrenCreator = {
 function TreeNodeChildrenCreator({locale, entry}: TreeNodeChildrenCreator) {
   const nav = useNav()
   const {schema} = useDashboard().config
-  const type = schema.type(entry.type)
+  const type = schema[entry.type]
   if (!type) return null
   return (
     <Create.Link href={nav.create({...entry, locale, id: entry.source.id})} />
@@ -82,16 +82,16 @@ const TreeNodeLink = memo(
     ref
   ) {
     const {schema} = useDashboard().config
-    const type = schema.type(entry.type)!
+    const type = schema[entry.type]!
     const isContainer = entry.alinea.isContainer
     const containerIcon = isOpened ? (
       <IcRoundKeyboardArrowDown style={{fontSize: px(20)}} />
     ) : (
       <IcRoundKeyboardArrowRight style={{fontSize: px(20)}} />
     )
-    const hasIcon = Boolean(type.options.icon)
-    const icon = type.options.icon ? (
-      <type.options.icon />
+    const Icon = Type.meta(type).icon
+    const icon = Icon ? (
+      <Icon />
     ) : (
       <IcRoundInsertDriveFile style={{fontSize: px(12)}} />
     )
@@ -134,7 +134,7 @@ const TreeNodeLink = memo(
                 {containerIcon}
               </div>
             )}
-            {(hasIcon || !isContainer) && (
+            {(Icon || !isContainer) && (
               <div className={styles.root.link.icon()}>{icon}</div>
             )}
             <HStack center gap={8} style={{width: '100%'}}>

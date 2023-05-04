@@ -1,8 +1,8 @@
-import {Field, FieldOptions, Label, TypeConfig} from 'alinea/core'
+import {Field, FieldOptions, Label, Type} from 'alinea/core'
 
 export interface ObjectOptions<Row> extends FieldOptions {
   /** The fields */
-  fields: TypeConfig<Row>
+  fields: Type<Row>
   width?: number
   help?: Label
   inline?: boolean
@@ -32,8 +32,8 @@ export function object<T>(
   label: Label,
   options: ObjectOptions<T>
 ): ObjectField<T> {
-  return new ObjectField(options.fields.shape, {
-    hint: options.fields.hint,
+  return new ObjectField(Type.shape(options.fields), {
+    hint: Type.hint(options.fields),
     label,
     options
   })

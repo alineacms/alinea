@@ -1,5 +1,5 @@
-import {Entry} from 'alinea/core'
-import {Chip, fromModule, TextLabel} from 'alinea/ui'
+import {Entry, Type} from 'alinea/core'
+import {Chip, TextLabel, fromModule} from 'alinea/ui'
 import {memo} from 'react'
 import {useDashboard} from '../../hook/UseDashboard'
 import {diffRecord} from './DiffUtils.js'
@@ -18,22 +18,22 @@ export const EntryDiff = memo(function EntryDiff({
   entryB
 }: EntryDiffProps) {
   const {schema} = useDashboard().config
-  const typeA = schema.type(entryA.type)!
-  const typeB = schema.type(entryB.type)!
+  const typeA = schema[entryA.type]!
+  const typeB = schema[entryB.type]!
   const typeChanged = typeA !== typeB
   if (typeChanged)
     return (
       <div>
         <Chip>
-          <TextLabel label={typeA.label} />
+          <TextLabel label={Type.label(typeA)} />
         </Chip>{' '}
         =&gt;
         <Chip>
-          <TextLabel label={typeB.label} />
+          <TextLabel label={Type.label(typeB)} />
         </Chip>
       </div>
     )
-  const changes = diffRecord(typeA.shape, entryA, entryB)
+  const changes = diffRecord(Type.shape(typeA), entryA, entryB)
   return (
     <div className={styles.root()}>
       <FieldsDiff changes={changes} targetA={entryA} targetB={entryB} />

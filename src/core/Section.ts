@@ -41,6 +41,18 @@ export namespace Section {
       return section
     }) as Factory
   }
+
+  export function view(section: Section) {
+    return section[Section.Data].view
+  }
+
+  export function fields(section: Section) {
+    return section[Section.Data].fields
+  }
+
+  export function isSection(value: any): value is Section {
+    return value && Boolean(value[Section.Data])
+  }
 }
 
 assign(Section, {
