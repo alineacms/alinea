@@ -6,7 +6,8 @@ import {
   NodeViewWrapper,
   ReactNodeViewRenderer
 } from '@tiptap/react'
-import {createId, Field, Schema, TypeConfig} from 'alinea/core'
+import {createId, Field, Schema, Type} from 'alinea/core'
+import {entries} from 'alinea/core/util/Objects'
 import {InputForm, InputLabel, InputState, useInput} from 'alinea/editor'
 import {Card, Create, fromModule, IconButton, px, TextLabel} from 'alinea/ui'
 import {IcRoundClose} from 'alinea/ui/icons/IcRoundClose'
@@ -35,10 +36,11 @@ type NodeViewProps = {
 function typeExtension(
   parent: InputState<InputState.Text<any>>,
   name: string,
-  type: TypeConfig
+  type: Type
 ) {
   function View({node, deleteNode}: NodeViewProps) {
     const {id} = node.attrs
+    const meta = Type.meta(type)
     if (!id) return null
     return (
       <NodeViewWrapper>
@@ -46,13 +48,13 @@ function typeExtension(
           <Card.Header>
             <Card.Options>
               <IconButton
-                icon={type.options?.icon || IcRoundDragHandle}
+                icon={meta.icon || IcRoundDragHandle}
                 data-drag-handle
                 style={{cursor: 'grab'}}
               />
             </Card.Options>
             <Card.Title>
-              <TextLabel label={type.label} />
+              <TextLabel label={Type.label(type)} />
             </Card.Title>
             <Card.Options>
               <IconButton icon={IcRoundClose} onClick={deleteNode} />
@@ -92,7 +94,7 @@ function schemaToExtensions(
   schema: Schema | undefined
 ) {
   if (!schema) return []
-  return schema.configEntries().map(([name, type]) => {
+  return entries(schema).map(([name, type]) => {
     return typeExtension(path, name, type)
   })
 }
@@ -105,20 +107,22 @@ type InsertMenuProps = {
 
 function InsertMenu({editor, schema, onInsert}: InsertMenuProps) {
   const id = createId()
-  const blocks = schema?.configEntries().map(([key, type]) => {
-    return (
-      <Create.Button
-        key={key}
-        icon={type.options.icon}
-        onClick={() => {
-          onInsert(id, key)
-          editor.chain().focus().insertContent({type: key, attrs: {id}}).run()
-        }}
-      >
-        <TextLabel label={type.label} />
-      </Create.Button>
-    )
-  })
+  const blocks =
+    schema &&
+    entries(schema).map(([key, type]) => {
+      return (
+        <Create.Button
+          key={key}
+          icon={Type.meta(type).icon}
+          onClick={() => {
+            onInsert(id, key)
+            editor.chain().focus().insertContent({type: key, attrs: {id}}).run()
+          }}
+        >
+          <TextLabel label={Type.label(type)} />
+        </Create.Button>
+      )
+    })
   return (
     <FloatingMenu
       editor={editor}

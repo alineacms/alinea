@@ -19,9 +19,10 @@ const config = createConfig({
     Type: type('Type', {
       title: text('Title'),
       path: text('path'),
-      list: listField
-    }).configure({
-      isContainer: true
+      list: listField,
+      [type.meta]: {
+        isContainer: true
+      }
     }),
     Sub: type('Sub', {
       title: text('Title'),

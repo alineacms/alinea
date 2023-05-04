@@ -1,6 +1,7 @@
 import {ROOT_KEY} from 'alinea/core/Doc'
-import {TypeConfig} from 'alinea/core/Type'
+import {Type} from 'alinea/core/Type'
 import {RecordMutator, RecordShape} from 'alinea/core/shape/RecordShape'
+import {entries} from 'alinea/core/util/Objects'
 import {Observable, observable} from 'alinea/ui'
 import {useEffect, useMemo} from 'react'
 import * as Y from 'yjs'
@@ -59,15 +60,15 @@ export class FormState<V extends Record<string, any>, M>
 }
 
 export interface ObservableForm<T extends Record<string, any>>
-  extends Observable.Writable<T> {
-  type: TypeConfig<any, T>
+  extends Observable.Writable<Type.Row<T>> {
+  type: Type<T>
   state: FormState<T, RecordMutator<T>>
   field<K extends keyof T>(name: K): Observable<T[K]>
 }
 
 export type FormOptions<T> = {
-  type: TypeConfig<T, any>
-  initialValue?: Partial<T>
+  type: Type<T>
+  initialValue?: Partial<Type.Row<T>>
 }
 
 function createFormInput<T extends Record<string, any>>(
@@ -77,7 +78,7 @@ function createFormInput<T extends Record<string, any>>(
   const initial: Record<string, any> = initialValue
   const doc = new Y.Doc()
   const root = doc.getMap(ROOT_KEY)
-  for (const [key, field] of type) {
+  for (const [key, field] of entries(type)) {
     if (!initial[key]) initial[key] = field.shape.create()
     root.set(key, field.shape.toY(initial[key]!))
   }
@@ -109,7 +110,7 @@ function createFormInput<T extends Record<string, any>>(
       return input()
     },
     {type, state, field}
-  ) as ObservableForm<T>
+  ) as any
 }
 
 export function useForm<T extends Record<string, any>>(

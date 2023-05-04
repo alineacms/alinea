@@ -31,8 +31,8 @@ function toEntry(workspace: string, data: DemoEntry): Entry {
   }
 }
 
-export function demoStore<T>(
-  config: Config<T>,
+export function demoStore(
+  config: Config,
   entries: (workspace: string) => Array<DemoEntry>
 ) {
   const all: Array<Entry> = []

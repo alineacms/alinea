@@ -27,7 +27,7 @@ export function ExplorerItem({
   const nav = useNav()
   const explorer = useExplorer()
   const itemRef = useFocusListItem(() => explorer?.onSelect(entry))
-  const View: any = Type.meta(schema[entry.type])[summaryView] || defaultView
+  const View: any = Type.meta(schema[entry.type]!)[summaryView] || defaultView
   const Tag: any = explorer?.selectable ? 'label' : 'a'
   const props = explorer?.selectable ? {} : link(nav.entry(entry))
   const isSelected = Boolean(

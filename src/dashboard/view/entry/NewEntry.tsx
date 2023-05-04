@@ -50,7 +50,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
   const {name: workspace} = useWorkspace()
   const containerTypes = entries(schema)
     .filter(([, type]) => {
-      return Type.meta(type).isContainer
+      return Type.meta(type!).isContainer
     })
     .map(pair => pair[0])
   const root = useRoot()
@@ -99,7 +99,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
       'Select type',
       fromEntries(
         types.map(typeKey => {
-          const type = schema[typeKey]
+          const type = schema[typeKey]!
           return [typeKey, (Type.label(type) || typeKey) as string]
         })
       ),

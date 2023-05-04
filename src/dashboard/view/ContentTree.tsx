@@ -17,6 +17,7 @@ import {
   verticalListSortingStrategy
 } from '@dnd-kit/sortable'
 import useSize from '@react-hook/size'
+import {Type} from 'alinea/core'
 import {Entry} from 'alinea/core/Entry'
 import {generateKeyBetween} from 'alinea/core/util/FractionalIndexing'
 import {fromModule, usePreferences} from 'alinea/ui'
@@ -163,8 +164,8 @@ export function ContentTree({
     if (a?.alinea.parent !== parent?.id) {
       // Check if parent of b handles child of type a
       if (parent?.id) {
-        const type = schema.type(parent?.type)
-        const contains = type?.options.contains
+        const type = schema[parent?.type]
+        const contains = type && Type.meta(type).contains
         if (contains && !contains.includes(a.type)) return
       } else {
         if (!root.contains.includes(a.type)) return

@@ -21,7 +21,7 @@ import {
   verticalListSortingStrategy
 } from '@dnd-kit/sortable'
 import {CSS, FirstArgument} from '@dnd-kit/utilities'
-import {Field, Reference, TypeConfig} from 'alinea/core'
+import {Field, Reference, Type} from 'alinea/core'
 import {InputForm, InputLabel, InputState, useInput} from 'alinea/editor'
 import {Picker} from 'alinea/editor/Picker'
 import {Card, Create, fromModule, IconButton, TextLabel} from 'alinea/ui'
@@ -51,7 +51,7 @@ const styles = fromModule(css)
 
 interface LinkInputRowProps<T> extends HTMLAttributes<HTMLDivElement> {
   picker: Picker
-  fields: TypeConfig<T> | undefined
+  fields: Type<T> | undefined
   state: InputState<T>
   reference: Reference
   onRemove: () => void

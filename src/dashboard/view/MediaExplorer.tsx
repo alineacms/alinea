@@ -55,7 +55,7 @@ export function MediaExplorer() {
               {/* Todo: hide this in a tab interface */}
               <div style={{display: 'none'}}>
                 <Suspense fallback={null}>
-                  <InputForm state={EntryProperty.root} type={draft.type} />
+                  <InputForm state={EntryProperty.root} type={draft.channel} />
                 </Suspense>
               </div>
             </header>

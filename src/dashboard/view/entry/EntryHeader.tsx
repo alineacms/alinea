@@ -1,11 +1,11 @@
-import {EntryStatus} from 'alinea/core'
+import {EntryStatus, Type} from 'alinea/core'
 import {
   AppBar,
   Chip,
-  fromModule,
   HStack,
   Stack,
   Typo,
+  fromModule,
   useObservable
 } from 'alinea/ui'
 import {IcRoundArchive} from 'alinea/ui/icons/IcRoundArchive'
@@ -79,7 +79,7 @@ export function EntryHeader({mode, setMode}: EntryHeaderProps) {
   const currentLocale = useLocale()
   const navigate = useNavigate()
   const parent = draft.alinea.parent
-  const type = schema.type(draft.type)
+  const type = schema[draft.type]
   const status = useObservable(draft.status)
   const queryClient = useQueryClient()
   const [isPublishing, setPublishing] = useState(false)
@@ -109,14 +109,15 @@ export function EntryHeader({mode, setMode}: EntryHeaderProps) {
         setPublishing(false)
       })
   }
+  const Icon = type && Type.meta(type).icon
   return (
     <AppBar.Root>
       <AppBar.Item full style={{flexGrow: 1}}>
         <Typo.Monospace className={styles.root.url()}>
           <HStack gap={8} center>
             <div style={{flexShrink: 0}}>
-              {type?.options.icon ? (
-                <type.options.icon />
+              {Icon ? (
+                <Icon />
               ) : (
                 <IcRoundInsertDriveFile style={{display: 'block'}} />
               )}

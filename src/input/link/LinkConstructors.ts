@@ -9,7 +9,7 @@ import {UrlReference, urlPicker} from 'alinea/picker/url'
 import {LinkField, LinkOptions} from './LinkField.js'
 
 interface CreateLink {
-  <T, Q>(label: Label, options?: LinkOptions<T, Q>): LinkField<T, Q>
+  <T>(label: Label, options?: LinkOptions<T>): LinkField<T>
 }
 
 const imageCondition = Entry.type
@@ -50,8 +50,8 @@ export function linkConstructors(createLink: CreateLink) {
   /** Create a link field configuration */
   function link<T = {}, Q = LinkData & T>(
     label: Label,
-    options: LinkOptions<T, Q> = {}
-  ): LinkField<T, Q> {
+    options: LinkOptions<T> = {}
+  ): LinkField<T> {
     const pickerOptions = {fields: options.fields, condition: options.condition}
     const types = Array.isArray(options.type)
       ? options.type
@@ -92,8 +92,8 @@ export function linkConstructors(createLink: CreateLink) {
 
   function multiple<T = {}, Q = Array<LinkData & T>>(
     label: Label,
-    options: LinkOptions<T, Q> = {}
-  ): LinkField<T, Q> {
+    options: LinkOptions<T> = {}
+  ): LinkField<T> {
     const pickerOptions = {fields: options.fields, condition: options.condition}
     const types = Array.isArray(options.type)
       ? options.type
@@ -127,8 +127,8 @@ export function linkConstructors(createLink: CreateLink) {
 
   function entry<T = {}, Q = EntryReference & T>(
     label: Label,
-    options: LinkOptions<T, Q> = {}
-  ): LinkField<T, Q> {
+    options: LinkOptions<T> = {}
+  ): LinkField<T> {
     return createLink(label, {
       ...options,
       pickers: [
@@ -145,8 +145,8 @@ export function linkConstructors(createLink: CreateLink) {
 
   function multipleEntries<T = {}, Q = Array<EntryReference & T>>(
     label: Label,
-    options: LinkOptions<T, Q> = {}
-  ): LinkField<T, Q> {
+    options: LinkOptions<T> = {}
+  ): LinkField<T> {
     return createLink(label, {
       ...options,
       pickers: [
@@ -162,8 +162,8 @@ export function linkConstructors(createLink: CreateLink) {
 
   function url<T = {}, Q = UrlReference & T>(
     label: Label,
-    options: LinkOptions<T, Q> = {}
-  ): LinkField<T, Q> {
+    options: LinkOptions<T> = {}
+  ): LinkField<T> {
     return createLink(label, {
       ...options,
       pickers: [
@@ -177,8 +177,8 @@ export function linkConstructors(createLink: CreateLink) {
 
   function multipleUrls<T = {}, Q = Array<UrlReference & T>>(
     label: Label,
-    options: LinkOptions<T, Q> = {}
-  ): LinkField<T, Q> {
+    options: LinkOptions<T> = {}
+  ): LinkField<T> {
     return createLink(label, {
       ...options,
       pickers: [urlPicker({...options})],
@@ -188,8 +188,8 @@ export function linkConstructors(createLink: CreateLink) {
 
   function image<T = {}, Q = ImageReference & T>(
     label: Label,
-    options: LinkOptions<T, Q> = {}
-  ): LinkField<T, Q> {
+    options: LinkOptions<T> = {}
+  ): LinkField<T> {
     return createLink(label, {
       ...options,
       pickers: [imagePicker(false)],
@@ -199,8 +199,8 @@ export function linkConstructors(createLink: CreateLink) {
 
   function multipleImages<T = {}, Q = Array<ImageReference & T>>(
     label: Label,
-    options: LinkOptions<T, Q> = {}
-  ): LinkField<T, Q> {
+    options: LinkOptions<T> = {}
+  ): LinkField<T> {
     return createLink(label, {
       ...options,
       pickers: [imagePicker(true)],
@@ -210,8 +210,8 @@ export function linkConstructors(createLink: CreateLink) {
 
   function file<T = {}, Q = FileReference & T>(
     label: Label,
-    options: LinkOptions<T, Q> = {}
-  ): LinkField<T, Q> {
+    options: LinkOptions<T> = {}
+  ): LinkField<T> {
     return createLink(label, {
       ...options,
       pickers: [filePicker(false)],
@@ -221,8 +221,8 @@ export function linkConstructors(createLink: CreateLink) {
 
   function multipleFiles<T = {}, Q = Array<FileReference & T>>(
     label: Label,
-    options: LinkOptions<T, Q> = {}
-  ): LinkField<T, Q> {
+    options: LinkOptions<T> = {}
+  ): LinkField<T> {
     return createLink(label, {
       ...options,
       pickers: [filePicker(true)],

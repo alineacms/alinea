@@ -4,7 +4,7 @@ import {Label} from 'alinea/core/Label'
 import {Media} from 'alinea/core/Media'
 import {Reference} from 'alinea/core/Reference'
 import {Shape} from 'alinea/core/Shape'
-import {TypeConfig} from 'alinea/core/Type'
+import {Type} from 'alinea/core/Type'
 import {Picker} from 'alinea/editor/Picker'
 import {LinkType} from 'alinea/input/link'
 import {Expr, Functions} from 'alinea/store'
@@ -67,7 +67,7 @@ export interface EntryPickerOptions<T = {}> {
   showUploader?: boolean
   label?: Label
   title?: Label
-  fields?: TypeConfig<any, T>
+  fields?: Type<T>
 }
 
 const externType = {
@@ -79,7 +79,7 @@ const externType = {
 export function entryPicker<T>(
   options: EntryPickerOptions<T>
 ): Picker<EntryReference, EntryPickerOptions<T>> {
-  const extra = options.fields?.shape
+  const extra = options.fields && Type.shape(options.fields)
   const hint = Hint.Extern({
     name: externType[options.type],
     package: 'alinea/picker/entry'
@@ -89,7 +89,9 @@ export function entryPicker<T>(
     shape: Shape.Record('Entry', {
       entry: Shape.Scalar('Entry')
     }).concat(extra),
-    hint: options.fields ? Hint.Intersection(hint, options.fields.hint) : hint,
+    hint: options.fields
+      ? Hint.Intersection(hint, Type.hint(options.fields))
+      : hint,
     label: options.label || 'Page link',
     handlesMultiple: true,
     options,

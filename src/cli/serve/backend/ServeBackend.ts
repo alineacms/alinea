@@ -12,22 +12,22 @@ import {Store} from 'alinea/store/Store'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 
-export interface ServeBackendOptions<T> {
+export interface ServeBackendOptions {
   cwd?: string
   port?: number
-  config: Config<T>
+  config: Config
   store: SqliteStore
 }
 
-export class ServeBackend<T = any> extends Backend<T> {
+export class ServeBackend extends Backend {
   publishing = false
-  reload: (config: Config<T>) => void
+  reload: (config: Config) => void
   constructor({
     cwd = process.cwd(),
     port = 4500,
     config,
     store
-  }: ServeBackendOptions<T>) {
+  }: ServeBackendOptions) {
     const dashboardUrl = `http://localhost:${port}`
     const outDir = path.join(cwd, '.alinea')
     const data = new FileData({

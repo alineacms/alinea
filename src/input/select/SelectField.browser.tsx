@@ -22,7 +22,7 @@ export const select = Field.provideView(SelectInput, createSelect)
 
 const styles = fromModule(css)
 
-interface SelectInputProps<Key, Items> {
+interface SelectInputProps<Key extends string, Items> {
   state: InputState<InputState.Scalar<Key>>
   field: SelectField<Key, Items>
 }
