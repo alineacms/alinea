@@ -4,20 +4,24 @@ import {Field} from './Field.js'
 import {createId} from './Id.js'
 import {assign, create, defineProperty, entries} from './util/Objects.js'
 
-interface Definition {
-  [key: string]: Field<any, any>
+export interface SectionDefinition {
+  [key: string]: Field<any, any> | Section
 }
 
 export interface SectionData {
-  fields: Definition
+  definition: SectionDefinition
   view?: ComponentType<{
     state: InputState
     section: Section
   }>
 }
 
+export interface SectionI extends Record<string, Field> {}
+
 export declare class SectionI {
-  get [Section.Data](): SectionData
+  get [Section.Data](): SectionData & {
+    fields: Record<string, Field>
+  }
 }
 
 export type Section<Fields = object> = Fields & SectionI
@@ -46,6 +50,10 @@ export namespace Section {
     return section[Section.Data].view
   }
 
+  export function definition(section: Section) {
+    return section[Section.Data].definition
+  }
+
   export function fields(section: Section) {
     return section[Section.Data].fields
   }
@@ -63,8 +71,21 @@ assign(Section, {
 
 export function section<Fields>(data: SectionData): Section<Fields> {
   const section = create(null)
-  for (const [key, value] of entries(data.fields)) section[key] = value
+  const fields: Record<string, Field> = create(null)
+  for (const [key, value] of entries(data.definition)) {
+    if (Field.isField(value)) {
+      defineProperty(section, key, {value, enumerable: false})
+      fields[key] = value
+    } else if (Section.isSection(value)) {
+      assign(fields, Section.fields(value))
+    }
+  }
+  // This magic property is the only enumerable property on the section
+  // Any tools that use a section will have to retrieve the fields from
+  // the section data
   section[`${Section.PREFIX}${createId()}`] = section
+  // Todo: don't mutate here just make the types work
+  assign(data, {fields})
   defineProperty(section, Section.Data, {
     value: data,
     enumerable: false
