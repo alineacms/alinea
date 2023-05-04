@@ -1,5 +1,6 @@
 import {createId} from 'alinea/core/Id'
-import {object, string} from 'cito'
+import {TypeTarget} from 'alinea/core/Type'
+import {object, string, type} from 'cito'
 import {Callable} from 'rado/util/Callable'
 import {Cursor} from './Cursor.js'
 import {BinaryOp, EV, Expr, ExprData, and} from './Expr.js'
@@ -7,11 +8,14 @@ import {Fields} from './Fields.js'
 
 const {create, entries} = Object
 
+const TT = type((value): value is TypeTarget => value instanceof TypeTarget)
+
 export type TargetData = typeof TargetData.infer
 export const TargetData = object(
   class {
     name? = string.optional
     alias? = string.optional
+    type? = TT.optional
   }
 )
 

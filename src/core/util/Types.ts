@@ -34,13 +34,13 @@ export type IsStrictlyAny<T> = (T extends never ? true : false) extends false
 
 // Source: https://www.steveruiz.me/posts/smooshed-object-union
 export type ObjectUnion<T> = {
-  [K in T extends infer P ? keyof P : never]: T extends infer P
-    ? K extends keyof P
-      ? P[K]
-      : never
+  [K in T extends unknown ? keyof T : never]: T extends {[_ in K]: infer V}
+    ? V
     : never
 }
 
 export type HasType = {type: string}
 
 export type TypesOf<T> = T extends HasType ? T['type'] : string
+
+export type Expand<T> = {[K in keyof T]: T[K]} & {}

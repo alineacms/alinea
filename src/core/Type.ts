@@ -1,6 +1,5 @@
-// Todo: extract interface and place it in core
 import {Cursor} from 'alinea/backend2/pages/Cursor'
-import {EV, Expr} from 'alinea/backend2/pages/Expr'
+import {BinaryOp, EV, Expr, ExprData, and} from 'alinea/backend2/pages/Expr'
 import type {EntryEditProps} from 'alinea/dashboard/view/EntryEdit'
 import {Callable} from 'rado/util/Callable'
 import type {ComponentType} from 'react'
@@ -48,33 +47,38 @@ export interface TypeData {
   label: Label
   shape: RecordShape
   hint: Hint
-  fields: Definition
+  definition: TypeDefinition
   meta: TypeMeta
   sections: Array<Section>
+  target: TypeTarget
 }
 
-export declare class TypeI<Fields> {
+export class TypeTarget {}
+
+export declare class TypeI<Definition = object> {
   get [Type.Data](): TypeData
 }
 
-export interface TypeI<Fields>
+export interface TypeI<Definition = object>
   extends Callable,
-    Partial<Record<string, Field>> {
+    Record<string, Field> {
   (conditions?: {
-    [K in keyof Fields]?: Fields[K] extends Expr<infer V> ? EV<V> : never
-  }): Cursor.Find<TypeRow<Fields>>
+    [K in keyof Definition]?: Definition[K] extends Expr<infer V>
+      ? EV<V>
+      : never
+  }): Cursor.Find<TypeRow<Definition>>
 }
 
-export type Type<Fields = object> = Fields & TypeI<Fields>
+export type Type<Definition = object> = Definition & TypeI<Definition>
 
-export type TypeRow<Fields> = {
-  [K in keyof Fields as Fields[K] extends Expr<any>
+export type TypeRow<Definition> = {
+  [K in keyof Definition as Definition[K] extends Expr<any>
     ? K
-    : never]: Fields[K] extends Expr<infer T> ? T : never
+    : never]: Definition[K] extends Expr<infer T> ? T : never
 }
 
 export namespace Type {
-  export type Row<Fields> = TypeRow<Fields>
+  export type Row<Definition> = TypeRow<Definition>
   export const Data = Symbol('Type.Data')
   export const Meta = Symbol('Type.Meta')
 
@@ -98,6 +102,10 @@ export namespace Type {
     return type[Type.Data].sections
   }
 
+  export function target(type: Type) {
+    return type[Type.Data].target
+  }
+
   export function blankEntry(
     name: string,
     type: Type
@@ -114,50 +122,88 @@ export namespace Type {
   }
 }
 
-class TypeInstance<Fields extends Definition> implements TypeData {
+class TypeInstance<Definition extends TypeDefinition> implements TypeData {
   shape: RecordShape
   hint: Hint
   meta: TypeMeta
   sections: Array<Section> = []
+  target = new TypeTarget()
 
-  constructor(public label: Label, public fields: Fields) {
-    this.meta = this.fields[Type.Meta] || {}
+  constructor(public label: Label, public definition: Definition) {
+    this.meta = this.definition[Type.Meta] || {}
     this.shape = Shape.Record(
       label,
       fromEntries(
-        entries(fields).map(([key, field]) => {
-          return [key, Field.shape(field)]
-        })
+        entries(definition)
+          .filter(([, field]) => Field.isField(field))
+          .map(([key, field]) => {
+            return [key, Field.shape(field as Field)]
+          })
       )
     )
     this.hint = Hint.Object(
       fromEntries(
-        entries(fields).map(([key, field]) => {
-          return [key, Field.hint(field)]
-        })
+        entries(definition)
+          .filter(([, field]) => Field.isField(field))
+          .map(([key, field]) => {
+            return [key, Field.hint(field as Field)]
+          })
       )
     )
     let current: Record<string, Field> = {}
-    for (const [key, value] of entries(fields)) {
+    const addCurrent = () => {
+      if (keys(current).length > 0)
+        this.sections.push(section({definition: current}))
+      current = {}
+    }
+    for (const [key, value] of entries(definition)) {
       if (Field.isField(value)) {
         current[key] = value
       } else if (Section.isSection(value)) {
-        if (keys(current).length > 0)
-          this.sections.push(section({fields: current}))
-        current = {}
+        addCurrent()
         this.sections.push(value)
       }
     }
-    if (keys(current).length > 0) this.sections.push(section({fields: current}))
+    addCurrent()
+  }
+
+  condition(input: Array<any>): ExprData | undefined {
+    if (input.length === 0) return undefined
+    const isConditionalRecord = input.length === 1 && !Expr.isExpr(input[0])
+    const conditions = isConditionalRecord
+      ? entries(input[0]).map(([key, value]) => {
+          const field = Expr(ExprData.Field(this.target, key))
+          return Expr(
+            ExprData.BinOp(field[Expr.Data], BinaryOp.Equals, ExprData(value))
+          )
+        })
+      : input.map(ev => Expr(ExprData(ev)))
+    return and(...conditions)[Expr.Data]
   }
 
   call(...input: Array<any>) {
-    throw 'todo'
+    return new Cursor.Find({
+      id: createId(),
+      target: this.target,
+      where: this.condition(input)
+    })
   }
 
-  defineProperties(instance: any) {
-    for (const [key, value] of entries(this.fields)) {
-      if (Field.isField(value)) instance[key] = value
+  defineProperties(instance: TypeI<any>) {
+    for (const [key, value] of entries(this.definition)) {
+      if (Field.isField(value))
+        defineProperty(instance, key, {
+          value,
+          enumerable: true,
+          configurable: true
+        })
+      if (Section.isSection(value))
+        for (const [k, v] of entries(Section.fields(value)))
+          defineProperty(instance, k, {
+            value: v,
+            enumerable: true,
+            configurable: true
+          })
     }
     defineProperty(instance, Type.Data, {
       value: this,
@@ -166,18 +212,18 @@ class TypeInstance<Fields extends Definition> implements TypeData {
   }
 }
 
-export interface Definition {
-  [key: string]: Field<any, any>
+export interface TypeDefinition {
+  [key: string]: Field<any, any> | Section
   [Type.Meta]?: TypeMeta
 }
 
 /** Create a new type */
-export function type<Fields extends Definition>(
+export function type<Definition extends TypeDefinition>(
   label: Label,
-  fields: Fields
-): Type<Fields> {
+  definition: Definition
+): Type<Definition> {
   const name = String(label)
-  const instance = new TypeInstance(label, fields)
+  const instance = new TypeInstance(label, definition)
   const callable: any = {
     [name]: (...args: Array<any>) => instance.call(...args)
   }[name]

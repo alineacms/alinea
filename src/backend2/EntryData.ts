@@ -1,4 +1,5 @@
 import {
+  Field,
   ListShape,
   RichTextRaw,
   RichTextShape,
@@ -8,8 +9,7 @@ import {
   Type
 } from 'alinea/core'
 import {RecordShape} from 'alinea/core/shape/RecordShape'
-
-const {entries, fromEntries} = Object
+import {entries, fromEntries} from 'alinea/core/util/Objects'
 
 export interface EntryData {
   [key: string]: any
@@ -69,13 +69,10 @@ function transformValue(shape: Shape, raw: any): any {
 }
 
 // Produces the data structure which is stored in a json column in the database
-export function entryData(
-  type: Type<any>,
-  input: Record<string, any>
-): EntryData {
+export function entryData(type: Type, input: Record<string, any>): EntryData {
   const output: EntryData = {}
-  for (const [key, field] of type) {
-    output[key] = transformValue(field.shape, input[key])
+  for (const [key, field] of entries(type)) {
+    output[key] = transformValue(Field.shape(field), input[key])
   }
   return output
 }

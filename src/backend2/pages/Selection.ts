@@ -1,4 +1,5 @@
 import {array, literal, object, string, tuple, union} from 'cito'
+import {Expand} from '../../core.js'
 import {Cursor, CursorData} from './Cursor.js'
 import {Expr, ExprData} from './Expr.js'
 import {Projection} from './Projection.js'
@@ -78,6 +79,5 @@ export namespace Selection {
   export const adt = union(types.Row, types.Record, types.Cursor, types.Expr)
 
   export type Infer<T> = Projection.Infer<T>
-  type Expand<T> = {[K in keyof T]: T[K]} & {}
   export type Combine<A, B> = Expand<Omit<A, keyof Infer<B>> & Infer<B>>
 }
