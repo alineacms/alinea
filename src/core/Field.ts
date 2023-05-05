@@ -1,4 +1,4 @@
-import {Expr} from 'alinea/backend2/pages/Expr'
+import {Expr} from 'alinea/core/pages/Expr'
 import {InputState} from 'alinea/editor'
 import type {ComponentType} from 'react'
 import {Hint} from './Hint.js'
@@ -43,7 +43,7 @@ export class Field<Value = unknown, OnChange = unknown, Options = {}> {
 }
 
 export namespace Field {
-  export const Data = Symbol('Field.Data')
+  export const Data = Symbol.for('@alinea/Field.Data')
 
   export class Scalar<Value, Options> extends Field<
     Value,

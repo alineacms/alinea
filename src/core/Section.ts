@@ -31,7 +31,7 @@ export type SectionView<Fields> = ComponentType<{
 }>
 
 export namespace Section {
-  export const Data = Symbol('Section.Data')
+  export const Data = Symbol.for('@alinea/Section.Data')
   export const PREFIX = '@@@'
 
   export function provideView<

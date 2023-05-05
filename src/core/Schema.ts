@@ -1,4 +1,4 @@
-import {Cursor} from 'alinea/backend2/pages/Cursor'
+import {Cursor} from 'alinea/core/pages/Cursor'
 import {Field} from './Field.js'
 import {Hint} from './Hint.js'
 import {Type, TypeTarget} from './Type.js'
@@ -18,6 +18,8 @@ export namespace Schema {
     : T extends Cursor<infer Row>
     ? Row
     : never
+
+  export type Targets = Map<TypeTarget, string>
 
   export function shapes(schema: Schema): Record<string, RecordShape> {
     if (!shapesCache.has(schema))
@@ -46,7 +48,7 @@ export namespace Schema {
     return hintCache.get(schema)!
   }
 
-  export function targets(schema: Schema): Map<TypeTarget, string> {
+  export function targets(schema: Schema): Targets {
     return new Map(
       entries(schema).map(([key, type]) => {
         return [Type.target(type), key]

@@ -1,4 +1,4 @@
-import {Field, RichTextShape, Schema, Shape, TextDoc} from 'alinea/core'
+import {Field, RichTextShape, Schema, Shape, TextDoc, Type} from 'alinea/core'
 import {assert} from 'cito'
 import {
   BinOpType,
@@ -9,11 +9,10 @@ import {
   QueryData,
   UnOpType
 } from 'rado'
-import {Select, SelectFirst} from 'rado/define/query/Select'
 import {Store} from './Store.js'
-import {EntryTree} from './collection/EntryTree.js'
+import {EntryTree} from './database/EntryTree.js'
 
-import * as pages from './pages/index.js'
+import * as pages from '../core/pages/index.js'
 
 const {keys, entries, fromEntries} = Object
 
@@ -110,7 +109,7 @@ export class Resolver {
         return this.fieldExpr(
           ctx,
           EntryTree.data.get(field)[Expr.Data],
-          Field.shape(type[field]!)
+          Field.shape(Type.field(type, field)!)
         )
     }
   }
@@ -132,11 +131,11 @@ export class Resolver {
     })
   }
 
-  queryOf(ctx: ResolveContext, target?: pages.TargetData) {
-    if (!target) return EntryTree()
+  queryOf(ctx: ResolveContext, target?: pages.TargetData): QueryData.Select {
+    if (!target) return EntryTree()[Query.Data]
     const {name, alias} = target
     const Table = alias ? EntryTree().as(alias) : EntryTree
-    return Table().where(name ? Table.type.is(name) : true)
+    return Table().where(name ? Table.type.is(name) : true)[Query.Data]
   }
 
   exprUnOp(ctx: ResolveContext, {op, expr}: pages.ExprData.UnOp): ExprData {
@@ -240,9 +239,9 @@ export class Resolver {
   }
 
   queryRow(selection: pages.Selection.Row): QueryData.Select {
-    return this.queryOf(ResolveContext.InSelect, selection.target).select(
-      this.selectRow(selection)
-    )[Query.Data]
+    return this.queryOf(ResolveContext.InSelect, selection.target).with({
+      selection: this.selectRow(selection)
+    })
   }
 
   queryRecord(selection: pages.Selection.Record): QueryData.Select {
@@ -251,22 +250,17 @@ export class Resolver {
 
   queryCursor({cursor}: pages.Selection.Cursor): QueryData.Select {
     const {target, where, skip, take, orderBy, select, first, source} = cursor
-    let query: Select<any> | SelectFirst<any> = this.queryOf(
-      ResolveContext.InSelect,
-      target
-    )
-    if (where)
-      query = query.where(
-        new Expr(this.expr(ResolveContext.InCondition, where))
-      )
-    if (skip) query = query.skip(skip)
-    if (take) query = query.take(take)
-    if (first) query = query.first()
-    if (select) query = query.select(this.select(select))
+    const res: QueryData.Select = this.queryOf(ResolveContext.InSelect, target)
+    const extra: Partial<QueryData.Select> = {}
+    if (where) extra.where = this.expr(ResolveContext.InCondition, where)
+    if (skip) extra.limit = skip
+    if (take) extra.offset = take
+    if (first) extra.singleResult = true
+    if (select) extra.selection = this.select(select)
     // Todo:
     // if (orderBy)
     // if (source)
-    return query[Query.Data]
+    return res.with(extra)
   }
 
   query(selection: pages.Selection): QueryData.Select {
@@ -287,7 +281,6 @@ export class Resolver {
       case 'richText':
         const {doc, linked} = pre
         // Todo: add href into text doc
-        console.log(linked)
         return doc
       default:
         return pre
@@ -314,6 +307,7 @@ export class Resolver {
     // This validates the input, and throws if it's invalid
     assert(selection, pages.Selection.adt)
     const query = this.query(selection)
+    console.log({selection, query})
     const interim: object | Array<object> = await this.store(new Query(query))
     return this.post(interim)
   }

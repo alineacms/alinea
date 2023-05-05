@@ -5,7 +5,7 @@ import {Database} from './Database.js'
 import {File, Media} from './Media.js'
 import {Store} from './Store.js'
 import {Target} from './Target.js'
-import {AlineaMeta} from './collection/AlineaMeta.js'
+import {AlineaMeta} from './database/AlineaMeta.js'
 
 export interface PreviewOptions {
   preview?: boolean

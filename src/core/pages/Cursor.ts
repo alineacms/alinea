@@ -49,7 +49,8 @@ export class Cursor<T> {
   }
 
   static isCursor<T>(input: any): input is Cursor<T> {
-    return input instanceof Cursor
+    const [d] = Reflect.ownKeys(input)
+    return Boolean(input && input[Cursor.Data])
   }
 
   toJSON() {
@@ -58,7 +59,7 @@ export class Cursor<T> {
 }
 
 export namespace Cursor {
-  export const Data = Symbol('Cursor.Data')
+  export const Data = Symbol.for('@alinea/Cursor.Data')
 
   export class Find<Row> extends Cursor<Array<Row>> {
     where(where: ExprData): Find<Row> {

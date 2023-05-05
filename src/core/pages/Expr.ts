@@ -111,18 +111,18 @@ export namespace ExprData {
 /** Expression or value of type T */
 export type EV<T> = Expr<T> | T
 
-export interface Expr<T> extends ExprImpl<T> {}
+export interface Expr<T> extends ExprI<T> {}
 
 export function Expr<T>(expr: ExprData): Expr<T> {
-  return new ExprImpl(expr)
+  return new ExprI(expr)
 }
 
-interface ExprImpl<T> {
+export interface ExprI<T> {
   [Expr.Data]: ExprData
   [Expr.IsExpr]: boolean
 }
 
-class ExprImpl<T> {
+export class ExprI<T> {
   constructor(expr: ExprData) {
     this[Expr.Data] = expr
     this[Expr.IsExpr] = true
@@ -308,9 +308,9 @@ export function or(...conditions: Array<EV<boolean>>): Expr<boolean> {
 }
 
 export namespace Expr {
-  export const Data = Symbol('Expr.Data')
-  export const IsExpr = Symbol('Expr.IsExpr')
-  export const ToExpr = Symbol('Expr.ToExpr')
+  export const Data = Symbol.for('@alinea/Expr.Data')
+  export const IsExpr = Symbol.for('@alinea/Expr.IsExpr')
+  export const ToExpr = Symbol.for('@alinea/Expr.ToExpr')
   export const NULL = create(null)
 
   /*export function value<T>(value: T): Expr<T> {
