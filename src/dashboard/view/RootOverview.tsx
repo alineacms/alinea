@@ -1,14 +1,14 @@
-import {Root} from 'alinea/core/Root'
-import {Workspace} from 'alinea/core/Workspace'
-import {fromModule, Icon, TextLabel, Typo} from 'alinea/ui'
+import {RootData} from 'alinea/core/Root'
+import {WorkspaceData} from 'alinea/core/Workspace'
+import {Icon, TextLabel, Typo, fromModule} from 'alinea/ui'
 import {Main} from 'alinea/ui/Main'
 import css from './RootOverview.module.scss'
 
 const styles = fromModule(css)
 
 export interface RootOverviewProps {
-  workspace: Workspace
-  root: Root
+  workspace: WorkspaceData
+  root: RootData
 }
 
 export function RootOverview({workspace, root}: RootOverviewProps) {

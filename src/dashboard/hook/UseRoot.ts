@@ -1,4 +1,5 @@
-import {Root} from 'alinea/core'
+import {Root, RootData} from 'alinea/core'
+import {keys} from 'alinea/core/util/Objects'
 import {useMatch} from 'alinea/ui/util/HashRouter'
 import {useMemo} from 'react'
 import {dashboardNav} from '../DashboardNav.js'
@@ -11,14 +12,16 @@ export function parseRootPath(path: string) {
   return path.split(':') as [string, string | undefined]
 }
 
-export function useRoot(): Root {
+export function useRoot(): RootData & {name: string} {
   const {config} = useDashboard()
   const workspace = useWorkspace()
   const match = useMatch(nav.matchRoot, true)
   return useMemo(() => {
     const params: Record<string, string | undefined> = match ?? {}
-    const first = Object.keys(workspace.roots)[0]
-    const {root = first} = params
-    return workspace.roots[parseRootPath(root)[0]] || workspace.roots[first]
+    const requested = [params.root, keys(workspace.roots)[0]]
+    for (const name of requested)
+      if (name && workspace.roots[name])
+        return {name, ...Root.data(workspace.roots[name])}
+    throw new Error(`No root found`)
   }, [config, match])
 }

@@ -5,11 +5,11 @@ import {Storage} from 'alinea/backend/Storage'
 import {
   accumulate,
   createConfig,
+  schema as createSchema,
   Entry,
   ErrorWithCode,
   outcome,
   root,
-  schema as createSchema,
   type,
   workspace
 } from 'alinea/core'

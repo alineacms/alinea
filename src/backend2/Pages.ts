@@ -1,4 +1,4 @@
-import {Schema} from 'alinea/core'
+import {Config, Schema} from 'alinea/core'
 import {Callable} from 'rado/util/Callable'
 import {Selection} from './pages/Selection.js'
 
@@ -8,11 +8,11 @@ export interface Pages extends Callable {
 
 export class Pages extends Callable {
   constructor(
-    schema: Schema,
+    config: Config,
     fetch: <T>(selection: Selection<T>) => Promise<T>
   ) {
     super(async (select: any) => {
-      return fetch(applyTargets(schema, Selection(select)))
+      return fetch(applyTargets(config.schema, Selection(select)))
     })
   }
 }

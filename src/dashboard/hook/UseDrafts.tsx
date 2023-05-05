@@ -60,7 +60,7 @@ class Drafts {
     const [result, error] = await hub.entry({id})
     if (error) throw error
     if (!result) throw createError(404, `Entry not found`)
-    const type = config.type(result.entry.type)
+    const type = config.schema[result.entry.type]
     if (!type) throw createError(404, `Type not found`)
     if (result.draft) {
       Y.applyUpdate(doc, base64.parse(result.draft))

@@ -15,27 +15,27 @@ const Page = type('Page', {
   // content: richText('Content')
 })
 
-const demoSchema = schema({
+export const demoSchema = schema({
   ...MediaSchema,
   Page
 })
 
-const demo = workspace('Demo', {
-  source: './content',
-  color: 'yellow',
-  roots: {
-    data: root('Demo website', {
-      icon: IcRoundInsertDriveFile,
-      contains: ['Page']
-    }),
-    media: root('Media', {
-      icon: IcRoundPermMedia,
-      contains: ['MediaLibrary']
-    })
+export const demo = workspace('Demo', {
+  data: root('Demo website', {
+    icon: IcRoundInsertDriveFile,
+    contains: ['Page']
+  }),
+  media: root('Media', {
+    icon: IcRoundPermMedia,
+    contains: ['MediaLibrary']
+  }),
+  [workspace.meta]: {
+    source: './content',
+    color: 'yellow'
   }
 })
 
-const config = createConfig({
+export const config = createConfig({
   schema: demoSchema,
   workspaces: {demo}
 })

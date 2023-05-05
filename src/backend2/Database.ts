@@ -1,4 +1,4 @@
-import {Config, createError} from 'alinea/core'
+import {Config, Root, createError} from 'alinea/core'
 import * as path from 'alinea/core/util/Paths'
 import {Driver, Table, alias, create} from 'rado'
 import xxhash from 'xxhash-wasm'
@@ -122,7 +122,7 @@ export class Database implements Syncable {
     const extension = path.extname(file.filePath)
     const fileName = path.basename(file.filePath, extension)
     const segments = parentDir.split('/')
-    const root = this.config.workspaces[file.workspace].roots[file.root]
+    const root = Root.data(this.config.workspaces[file.workspace][file.root])
     let locale: string | null = null
 
     if (root.i18n) {
@@ -133,7 +133,7 @@ export class Database implements Syncable {
         )
     }
 
-    const type = this.config.type(data.type)
+    const type = this.config.schema[data.type]
     if (!type)
       throw createError(
         `Invalid type: ${data.type}, for entry in ${file.filePath}`

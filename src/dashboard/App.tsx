@@ -1,4 +1,4 @@
-import {renderLabel, Session, Type} from 'alinea/core'
+import {Config, renderLabel, Root, Session, Type} from 'alinea/core'
 import {
   ErrorBoundary,
   FavIcon,
@@ -19,7 +19,7 @@ import {
   useMatch,
   useParams
 } from 'alinea/ui/util/HashRouter'
-import {Fragment, Suspense, useMemo, useState} from 'react'
+import {Suspense, useMemo, useState} from 'react'
 import {
   QueryClient,
   QueryClientProvider as ReactQueryClientProvider
@@ -146,19 +146,16 @@ function AppAuthenticated() {
                         entryLocation && entryLocation.root === key
                           ? nav.entry(entryLocation)
                           : nav.root({workspace, root: key})
+                      const {label, icon: Icon} = Root.data(root)
                       return (
                         <Sidebar.Nav.Item
                           key={key}
                           selected={isEntry && isSelected}
                           href={link}
-                          title={renderLabel(root.label)}
-                          aria-label={renderLabel(root.label)}
+                          title={renderLabel(label)}
+                          aria-label={renderLabel(label)}
                         >
-                          {root.icon ? (
-                            <root.icon />
-                          ) : (
-                            <IcRoundInsertDriveFile />
-                          )}
+                          {Icon ? <Icon /> : <IcRoundInsertDriveFile />}
                         </Sidebar.Nav.Item>
                       )
                     })}
@@ -264,17 +261,19 @@ type AppRootProps = {
 
 function AppRoot({session, setSession}: AppRootProps) {
   const {fullPage, config} = useDashboard()
-  const {color} = config.firstWorkspace
-  const Auth = config.authView || Fragment
+  const {color} = Config.mainWorkspace(config)
+  const Auth = config.backend?.auth?.view
   if (!session)
     return (
       <Viewport attachToBody={fullPage} contain color={color}>
         <Head>
           <FavIcon color={color} />
         </Head>
-        <Suspense fallback={<Loader absolute />}>
-          <Auth setSession={setSession} />
-        </Suspense>
+        {Auth && (
+          <Suspense fallback={<Loader absolute />}>
+            <Auth setSession={setSession} />
+          </Suspense>
+        )}
       </Viewport>
     )
   return <AppAuthenticated />
@@ -292,7 +291,7 @@ function localSession(options: DashboardOptions) {
 const QueryClientProvider: any = ReactQueryClientProvider
 
 export function App<T>({fullPage = true, ...props}: DashboardOptions<T>) {
-  const auth = props.config.authView
+  const auth = props.config.backend?.auth
   const [queryClient] = useState(
     () =>
       props.queryClient ||

@@ -10,6 +10,7 @@ export interface SectionDefinition {
 
 export interface SectionData {
   definition: SectionDefinition
+  fields: Record<string, Field>
   view?: ComponentType<{
     state: InputState
     section: Section
@@ -19,9 +20,7 @@ export interface SectionData {
 export interface SectionI extends Record<string, Field> {}
 
 export declare class SectionI {
-  get [Section.Data](): SectionData & {
-    fields: Record<string, Field>
-  }
+  get [Section.Data](): SectionData
 }
 
 export type Section<Fields = object> = Fields & SectionI
@@ -69,7 +68,11 @@ assign(Section, {
   }
 })
 
-export function section<Fields>(data: SectionData): Section<Fields> {
+interface SectionOptions extends Omit<SectionData, 'fields'> {
+  fields?: Record<string, Field>
+}
+
+export function section<Fields>(data: SectionOptions): Section<Fields> {
   const section = create(null)
   const fields: Record<string, Field> = create(null)
   for (const [key, value] of entries(data.definition)) {
@@ -84,8 +87,7 @@ export function section<Fields>(data: SectionData): Section<Fields> {
   // Any tools that use a section will have to retrieve the fields from
   // the section data
   section[`${Section.PREFIX}${createId()}`] = section
-  // Todo: don't mutate here just make the types work
-  assign(data, {fields})
+  if (!data.fields) assign(data, {fields})
   defineProperty(section, Section.Data, {
     value: data,
     enumerable: false

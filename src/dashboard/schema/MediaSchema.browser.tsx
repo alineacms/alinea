@@ -1,25 +1,22 @@
 import {type} from 'alinea/core'
-import {Media} from 'alinea/core/Media'
 import {IcRoundPermMedia} from 'alinea/ui/icons/IcRoundPermMedia'
 import {MediaExplorer} from '../view/MediaExplorer.js'
 import {FileEntry} from '../view/media/FileEntry.js'
 import {FileSummaryRow, FileSummaryThumb} from '../view/media/FileSummary.js'
 import {MediaSchema as MediaSchemaConfig} from './MediaSchema.js'
 
-const {Libary, File} = Media.Type
-
 const MediaLibrary = type('Media directory', {
-  ...MediaSchemaConfig[Libary],
+  ...MediaSchemaConfig.MediaLibrary,
   [type.meta]: {
     isContainer: true,
-    contains: [Libary],
+    contains: ['MediaLibrary'],
     view: MediaExplorer,
     icon: IcRoundPermMedia
   }
 })
 
 const MediaFile = type('File', {
-  ...MediaSchemaConfig[File],
+  ...MediaSchemaConfig.MediaFile,
   [type.meta]: {
     isHidden: true,
     summaryRow: FileSummaryRow,
@@ -29,6 +26,6 @@ const MediaFile = type('File', {
 })
 
 export const MediaSchema = {
-  [Libary]: MediaLibrary,
-  [File]: MediaFile
+  MediaLibrary,
+  MediaFile
 }

@@ -4,11 +4,11 @@ import {FileData} from 'alinea/backend/data/FileData'
 import {FS} from 'alinea/backend/FS'
 import {JsonLoader} from 'alinea/backend/loader/JsonLoader'
 import {
-  createConfig,
+  config,
   createId,
+  schema as createSchema,
   Entry,
   root,
-  schema as createSchema,
   type,
   workspace
 } from 'alinea/core'
@@ -22,7 +22,7 @@ function entry(entry: Entry.Raw) {
   return JSON.stringify(entry)
 }
 
-const config = createConfig({
+const config = config({
   schema: createSchema({
     Type: type('Type', {
       title: text('Title'),
