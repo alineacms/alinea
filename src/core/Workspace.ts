@@ -1,79 +1,74 @@
+import {Expand} from 'alinea/core'
 import type {ComponentType} from 'react'
 import {Label} from './Label.js'
-import {Root, RootConfig} from './Root.js'
+import {Root} from './Root.js'
 import {getRandomColor} from './util/GetRandomColor.js'
 
-export type WorkspaceOptions<T = any> = {
+export interface WorkspaceMeta {
   /**
    * Points to a Data.Source by passing a directory, it will be scanned
    * for files.
    */
   source: string
-  roots: Record<string, RootConfig>
   /** The directory where media files are placed in case a file backend is used */
   mediaDir?: string
-  /* Todo: Rewrite media urls based on their location */
-  // mediaUrl?: (location: string) => string
   /** The main theme color used in the dashboard */
   color?: string
-  /** A react component used to preview an entry in the dashboard */
-  preview?: ComponentType<{entry: T; previewToken: string}>
   icon?: ComponentType
 }
 
-export type WorkspaceConfig<T = any> = {
+export interface WorkspaceData extends WorkspaceMeta {
   label: Label
-  options: WorkspaceOptions<T>
+  roots: Roots
+  color: string
 }
 
-/**
- * Use a workspace to divide content.
- * It is possible to create internal links between workspaces.
- **/
-export class Workspace<T = any> implements WorkspaceConfig<T> {
-  label: Label
-  options: WorkspaceOptions<T>
-  roots: Record<string, Root>
+type Roots = Record<string, Root>
 
-  constructor(public name: string, public config: WorkspaceConfig<T>) {
-    this.label = config.label
-    this.options = config.options
-    this.roots = Object.fromEntries(
-      Object.entries(this.options.roots).map(([rootKey, config]) => {
-        return [rootKey, new Root(rootKey, name, config)]
-      })
-    )
+export interface WorkspaceDefinition extends Roots {
+  [Workspace.Meta]: WorkspaceMeta
+}
+
+export type Workspace<T extends Roots = Roots> = T & {
+  [Workspace.Data]: WorkspaceData
+}
+
+export namespace Workspace {
+  export const Data = Symbol('Workspace.Data')
+  export const Meta = Symbol('Workspace.Meta')
+
+  export function data(workspace: Workspace): WorkspaceData {
+    return workspace[Workspace.Data]
   }
 
-  get source(): string {
-    return this.options.source
+  export function roots(workspace: Workspace): Roots {
+    return workspace[Workspace.Data].roots
   }
 
-  get mediaDir() {
-    return this.options.mediaDir
-  }
-
-  get preview() {
-    return this.options.preview
-  }
-
-  get color() {
-    return this.options.color || getRandomColor(JSON.stringify(this.label))
-  }
-
-  get icon() {
-    return this.options.icon
+  export function label(workspace: Workspace): Label {
+    return workspace[Workspace.Data].label
   }
 }
 
 /** Create a workspace */
-export function workspace<T>(
+export function workspace<Definition extends WorkspaceDefinition>(
   /** The name of the workspace */
   label: Label,
-  options: WorkspaceOptions<T>
-): WorkspaceConfig<T> {
+  definition: Definition
+): Workspace<Expand<Omit<Definition, typeof Workspace.Meta>>> {
   return {
-    label,
-    options
+    ...definition,
+    [Workspace.Data]: {
+      label,
+      roots: definition,
+      ...definition[Workspace.Meta],
+      color:
+        definition[Workspace.Meta].color ??
+        getRandomColor(JSON.stringify(label))
+    }
   }
+}
+
+export namespace workspace {
+  export const meta: typeof Workspace.Meta = Workspace.Meta
 }

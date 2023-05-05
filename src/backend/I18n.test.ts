@@ -5,10 +5,10 @@ import {JsonLoader} from 'alinea/backend/loader/JsonLoader'
 import {Storage} from 'alinea/backend/Storage'
 import {
   accumulate,
-  createConfig,
+  config,
+  schema as createSchema,
   Entry,
   root,
-  schema as createSchema,
   type,
   workspace
 } from 'alinea/core'
@@ -22,7 +22,7 @@ function entry(entry: Entry.Raw) {
   return JSON.stringify(entry)
 }
 
-const config = createConfig({
+const config = config({
   schema: createSchema({
     Home: type('Home', {
       title: text('Title'),

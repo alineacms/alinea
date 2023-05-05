@@ -1,7 +1,7 @@
 import {Client} from 'alinea/client'
-import {Config} from 'alinea/core'
+import {Config, createConfig} from 'alinea/core'
 import {joinPaths} from 'alinea/core/util/Urls'
-import {Button, Typo, Viewport, VStack} from 'alinea/ui'
+import {Button, Typo, VStack, Viewport} from 'alinea/ui'
 import {Main} from 'alinea/ui/Main'
 import {useEffect, useMemo, useState} from 'react'
 import {QueryClient} from 'react-query'
@@ -52,7 +52,7 @@ export function DevDashboard({loadConfig}: DevDashboardOptions) {
       .then(config => {
         // Strip any backend or authentication specifics in dev
         if (process.env.NODE_ENV === 'development')
-          return new Config({...config.options, backend: undefined})
+          return createConfig({...config, backend: undefined})
         return config
       })
       .then(setConfig)

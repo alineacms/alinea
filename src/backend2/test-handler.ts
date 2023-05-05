@@ -81,14 +81,14 @@ const config = createConfig({
   }),
   workspaces: {
     main: workspace('Main', {
-      source: '.',
-      roots: {
-        data: root('Data', {
-          contains: ['Type']
-        }),
-        media: root('Media', {
-          contains: ['Type']
-        })
+      data: root('Data', {
+        contains: ['Type']
+      }),
+      media: root('Media', {
+        contains: ['Type']
+      }),
+      [workspace.meta]: {
+        source: '.'
       }
     })
   }

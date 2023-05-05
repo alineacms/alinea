@@ -1,17 +1,15 @@
-import {Media, type} from 'alinea/core'
+import {type} from 'alinea/core'
 import {Hint} from 'alinea/core/Hint'
 import {hidden} from 'alinea/input/hidden'
 import {path} from 'alinea/input/path'
 import {text} from 'alinea/input/text'
-
-const {Libary, File} = Media.Type
 
 const MediaLibrary = type('Media directory', {
   title: text('Title'),
   path: path('Path'),
   [type.meta]: {
     isContainer: true,
-    contains: [Libary]
+    contains: ['MediaLibrary']
   }
 })
 
@@ -33,6 +31,6 @@ const MediaFile = type('File', {
 })
 
 export const MediaSchema = {
-  [Libary]: MediaLibrary,
-  [File]: MediaFile
+  MediaLibrary,
+  MediaFile
 }

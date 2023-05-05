@@ -1,4 +1,5 @@
 import {Switch} from '@headlessui/react'
+import {Root as AlineaRoot, Config, Workspace} from 'alinea/core'
 import {Label} from 'alinea/core/Label'
 import {entries, fromEntries} from 'alinea/core/util/Objects'
 import {InputField} from 'alinea/editor/view/InputField'
@@ -6,15 +7,17 @@ import {select} from 'alinea/input/select'
 import {
   Avatar,
   DropdownMenu,
-  fromModule,
   Icon,
   IconButton,
   LogoShape,
-  px,
   TextLabel,
-  usePreferences,
-  VStack
+  VStack,
+  fromModule,
+  px,
+  usePreferences
 } from 'alinea/ui'
+import {PopoverMenu} from 'alinea/ui/PopoverMenu'
+import {HStack} from 'alinea/ui/Stack'
 import {IcOutlineScreenshot} from 'alinea/ui/icons/IcOutlineScreenshot'
 import IcRoundKeyboardArrowDown from 'alinea/ui/icons/IcRoundKeyboardArrowDown'
 import IcRoundKeyboardArrowUp from 'alinea/ui/icons/IcRoundKeyboardArrowUp'
@@ -22,8 +25,6 @@ import {IcRoundMenu} from 'alinea/ui/icons/IcRoundMenu'
 import IcRoundTextFields from 'alinea/ui/icons/IcRoundTextFields'
 import {IcRoundUnfoldMore} from 'alinea/ui/icons/IcRoundUnfoldMore'
 import {IcSharpBrightnessMedium} from 'alinea/ui/icons/IcSharpBrightnessMedium'
-import {PopoverMenu} from 'alinea/ui/PopoverMenu'
-import {HStack} from 'alinea/ui/Stack'
 import {contrastColor} from 'alinea/ui/util/ContrastColor'
 import {link, useNavigate} from 'alinea/ui/util/HashRouter'
 import {createSlots} from 'alinea/ui/util/Slots'
@@ -90,7 +91,7 @@ export namespace Toolbar {
       'Default workspace',
       fromEntries(
         entries(config.workspaces).map(([key, workspace]) => {
-          return [key, (workspace.label as string) || key]
+          return [key, (Workspace.label(workspace) as string) || key]
         })
       )
     )
@@ -115,7 +116,8 @@ export namespace Toolbar {
 
             <DropdownMenu.Items>
               {workspaces.map(([key, workspace]) => {
-                const root = Object.values(workspace.roots)[0]
+                const {roots, label, color, icon} = Workspace.data(workspace)
+                const [name, root] = entries(roots)[0]
                 return (
                   <DropdownMenu.Item
                     key={key}
@@ -123,17 +125,13 @@ export namespace Toolbar {
                       navigate(
                         nav.entry({
                           workspace: key,
-                          root: root.name,
-                          locale: root.defaultLocale
+                          root: name,
+                          locale: AlineaRoot.defaultLocale(root)
                         })
                       )
                     }
                   >
-                    <WorkspaceLabel
-                      label={workspace.label}
-                      color={workspace.color}
-                      icon={workspace.icon}
-                    />
+                    <WorkspaceLabel label={label} color={color} icon={icon} />
                   </DropdownMenu.Item>
                 )
               })}
@@ -167,7 +165,7 @@ export namespace Toolbar {
 
               <PopoverMenu.Items right>
                 <VStack gap={25}>
-                  {config.hasAuth && (
+                  {Config.hasAuth(config) && (
                     <PopoverMenu.Header>
                       <p>
                         {session.user.sub.charAt(0).toUpperCase() +
@@ -221,7 +219,7 @@ export namespace Toolbar {
                     )}
                   </VStack>
 
-                  {config.hasAuth && (
+                  {Config.hasAuth(config) && (
                     <PopoverMenu.Footer>
                       <DropdownMenu.Root>
                         <DropdownMenu.Item onClick={session.end}>

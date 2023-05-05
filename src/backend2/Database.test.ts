@@ -15,7 +15,7 @@ test('create', async () => {
 
   const {Database: SqlJsDb} = await sqlite()
   const cnx2 = connect(new SqlJsDb())
-  const db2 = new Database(cnx2.toAsync(), Example.config)
+  const db2 = new Database(cnx2.toAsync(), Example.cms)
   await db2.init()
   await db2.syncWith(db1)
 
@@ -24,14 +24,14 @@ test('create', async () => {
 
 test('filedata', async () => {
   const data = new FileData({
-    config: Example.config,
+    config: Example.cms,
     fs,
     rootDir: './apps/web/content'
   })
   const {default: BetterSqlite3} = await import('better-sqlite3')
   const {connect} = await import('rado/driver/better-sqlite3')
   const cnx1 = connect(new BetterSqlite3('dist/test.db'))
-  const db = new Database(cnx1.toAsync(), Example.config)
+  const db = new Database(cnx1.toAsync(), Example.cms)
   const logger = new Logger('test')
   await db.init()
   const endTimer = logger.time('fill')

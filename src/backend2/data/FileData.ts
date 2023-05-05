@@ -2,6 +2,9 @@ import {FS} from 'alinea/backend/FS'
 import {Config} from 'alinea/core/Config'
 import {Hub} from 'alinea/core/Hub'
 import {outcome} from 'alinea/core/Outcome'
+import {Root} from 'alinea/core/Root'
+import {Workspace} from 'alinea/core/Workspace'
+import {entries} from 'alinea/core/util/Objects'
 import * as path from 'alinea/core/util/Paths'
 import {Source, SourceEntry} from '../Source.js'
 import {Target} from '../Target.js'
@@ -19,17 +22,19 @@ export class FileData implements Source, Target {
 
   async *entries(): AsyncGenerator<SourceEntry> {
     const {config, fs, rootDir = '.'} = this.options
-    for (const [workspace, {source: contentDir, roots}] of Object.entries(
+    for (const [workspaceName, workspace] of Object.entries(
       config.workspaces
     )) {
-      for (const {name: root, i18n} of Object.values(roots)) {
+      const contentDir = Workspace.data(workspace).source
+      for (const [rootName, root] of entries(workspace)) {
+        const {i18n} = Root.data(root)
         const locales = i18n?.locales || [undefined]
         for (const locale of locales) {
           const targets = [locale ? `/${locale}` : '/']
           while (targets.length > 0) {
             const target = targets.shift()!
             const [files, err] = await outcome(
-              fs.readdir(path.join(rootDir, contentDir, root, target))
+              fs.readdir(path.join(rootDir, contentDir, rootName, target))
             )
             if (!files) continue
             const toRead = []
@@ -37,7 +42,7 @@ export class FileData implements Source, Target {
               const location = path.join(
                 rootDir,
                 contentDir,
-                root,
+                rootName,
                 target,
                 file
               )
@@ -49,8 +54,8 @@ export class FileData implements Source, Target {
                 toRead.push({filePath, location})
                 const contents = await fs.readFile(location)
                 yield {
-                  workspace,
-                  root,
+                  workspace: workspaceName,
+                  root: rootName,
                   filePath,
                   contents,
                   modifiedAt: stat.mtime.getTime()

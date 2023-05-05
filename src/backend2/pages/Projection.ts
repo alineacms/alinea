@@ -1,3 +1,4 @@
+import {Type} from 'alinea/core/Type'
 import {Cursor} from './Cursor.js'
 import {Expr} from './Expr.js'
 import {Target} from './Target.js'
@@ -18,6 +19,8 @@ export namespace Projection {
     ? V
     : [T] extends [Target<infer V>]
     ? Target.Row<V>
+    : [T] extends [Type<infer V>]
+    ? Type.Row<V>
     : [T] extends [Cursor<infer V>]
     ? V
     : [T] extends [object]

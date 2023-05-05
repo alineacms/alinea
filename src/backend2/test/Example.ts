@@ -18,7 +18,7 @@ export namespace Example {
   const entry1: SourceEntry = {
     modifiedAt: Date.now(),
     workspace: 'main',
-    root: 'data',
+    root: 'pages',
     filePath: 'index.json',
     contents: encode({
       id: 'root',
@@ -37,7 +37,7 @@ export namespace Example {
   const entry2: SourceEntry = {
     modifiedAt: Date.now(),
     workspace: 'main',
-    root: 'data',
+    root: 'pages',
     filePath: 'index/entry2.json',
     contents: encode({
       id: 'entry2',
@@ -56,7 +56,7 @@ export namespace Example {
   const entry3: SourceEntry = {
     modifiedAt: Date.now(),
     workspace: 'main',
-    root: 'data',
+    root: 'pages',
     filePath: 'index/entry2/entry3.json',
     contents: encode({
       id: 'entry3',
@@ -104,21 +104,17 @@ export namespace Example {
   export const schema = createSchema({TypeA, TypeB})
   export type Schema = typeof schema
 
-  export const config = createConfig({
-    schema,
-    workspaces: {
-      main: workspace('Main', {
-        source: '.',
-        roots: {
-          data: root('Data', {
-            contains: ['Type']
-          }),
-          media: root('Media', {
-            contains: ['Type']
-          })
-        }
-      })
+  const main = workspace('Main', {
+    pages: root('Pages', {contains: ['Type']}),
+    media: root('Media', {contains: ['Type']}),
+    [workspace.meta]: {
+      source: '.'
     }
+  })
+
+  export const cms = createConfig({
+    schema,
+    workspaces: {main}
   })
 
   export async function* files() {
@@ -127,6 +123,6 @@ export namespace Example {
 
   export async function createDb() {
     const {Database: SqlJsDb} = await sqlite()
-    return new Database(connect(new SqlJsDb()).toAsync(), config)
+    return new Database(connect(new SqlJsDb()).toAsync(), cms)
   }
 }

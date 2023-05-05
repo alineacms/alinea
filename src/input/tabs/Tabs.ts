@@ -1,5 +1,6 @@
 import {
   Expand,
+  Field,
   SectionData,
   SectionDefinition,
   Type,
@@ -10,8 +11,12 @@ import {entries, fromEntries} from 'alinea/core/util/Objects'
 
 export class TabsSection implements SectionData {
   definition: SectionDefinition
+  fields: Record<string, Field>
   constructor(public types: Array<Type>) {
     this.definition = fromEntries(types.flatMap(entries))
+    this.fields = fromEntries(
+      types.flatMap(entries).filter(([key, field]) => Field.isField(field))
+    )
   }
 }
 

@@ -31,8 +31,10 @@ const config = createConfig({
   }),
   workspaces: {
     main: workspace('Main', {
-      source: 'content',
-      roots: {data: root('Root', {contains: ['Type']})}
+      data: root('Root', {contains: ['Type']}),
+      [workspace.meta]: {
+        source: 'content'
+      }
     })
   }
 })

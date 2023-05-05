@@ -1,5 +1,6 @@
 import {Cursor} from 'alinea/backend2/pages/Cursor'
 import {BinaryOp, EV, Expr, ExprData, and} from 'alinea/backend2/pages/Expr'
+import {Expand} from 'alinea/core'
 import type {EntryEditProps} from 'alinea/dashboard/view/EntryEdit'
 import {Callable} from 'rado/util/Callable'
 import type {ComponentType} from 'react'
@@ -59,9 +60,7 @@ export declare class TypeI<Definition = object> {
   get [Type.Data](): TypeData
 }
 
-export interface TypeI<Definition = object>
-  extends Callable,
-    Record<string, Field> {
+export interface TypeI<Definition = object> extends Callable {
   (conditions?: {
     [K in keyof Definition]?: Definition[K] extends Expr<infer V>
       ? EV<V>
@@ -71,11 +70,11 @@ export interface TypeI<Definition = object>
 
 export type Type<Definition = object> = Definition & TypeI<Definition>
 
-export type TypeRow<Definition> = {
+export type TypeRow<Definition> = Expand<{
   [K in keyof Definition as Definition[K] extends Expr<any>
     ? K
     : never]: Definition[K] extends Expr<infer T> ? T : never
-}
+}>
 
 export namespace Type {
   export type Row<Definition> = TypeRow<Definition>
@@ -214,14 +213,14 @@ class TypeInstance<Definition extends TypeDefinition> implements TypeData {
 
 export interface TypeDefinition {
   [key: string]: Field<any, any> | Section
-  [Type.Meta]?: TypeMeta
+  readonly [Type.Meta]?: TypeMeta
 }
 
 /** Create a new type */
 export function type<Definition extends TypeDefinition>(
   label: Label,
   definition: Definition
-): Type<Definition> {
+): Type<Expand<Omit<Definition, symbol>>> {
   const name = String(label)
   const instance = new TypeInstance(label, definition)
   const callable: any = {

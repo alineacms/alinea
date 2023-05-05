@@ -1,4 +1,4 @@
-import {outcome} from 'alinea/core'
+import {Root, outcome} from 'alinea/core'
 import {useMatch} from 'alinea/ui/util/HashRouter'
 import {useMemo} from 'react'
 import {dashboardNav} from '../DashboardNav.js'
@@ -18,6 +18,6 @@ export function useLocale(): string | undefined {
       const fromUrl = parseRootPath(rootKey)[1]
       if (fromUrl && i18n.locales.includes(fromUrl)) return fromUrl
     }
-    return root.defaultLocale
+    return Root.defaultLocale(i18n)
   }, [root, match])
 }
