@@ -1,6 +1,6 @@
 import {Future, Hub, Media} from 'alinea/core'
-import {AlineaMeta} from './collection/AlineaMeta.js'
-import {EntryTree} from './collection/EntryTree.js'
+import {AlineaMeta} from './database/AlineaMeta.js'
+import {EntryTree} from './database/EntryTree.js'
 
 export interface UpdateResponse {
   contentHash: string

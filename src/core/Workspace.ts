@@ -34,8 +34,8 @@ export type Workspace<T extends Roots = Roots> = T & {
 }
 
 export namespace Workspace {
-  export const Data = Symbol('Workspace.Data')
-  export const Meta = Symbol('Workspace.Meta')
+  export const Data = Symbol.for('@alinea/Workspace.Data')
+  export const Meta = Symbol.for('@alinea/Workspace.Meta')
 
   export function data(workspace: Workspace): WorkspaceData {
     return workspace[Workspace.Data]

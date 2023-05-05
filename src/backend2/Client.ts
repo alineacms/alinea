@@ -1,7 +1,7 @@
 import {AbortController, fetch, FormData, Response} from '@alinea/iso'
 import {Config, createError, Future, Hub, Media, Outcome} from 'alinea/core'
 import {Api, UpdateResponse} from './Api.js'
-import {AlineaMeta} from './collection/AlineaMeta.js'
+import {AlineaMeta} from './database/AlineaMeta.js'
 
 async function toFuture<T = void>(res: Response): Future<T> {
   return Outcome.fromJSON<T>(await res.json())

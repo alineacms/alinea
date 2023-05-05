@@ -50,8 +50,8 @@ export namespace Target {
 }
 
 export const Target = class {
-  static readonly Data = Symbol('Target.Data')
-  static readonly IsTarget = Symbol('Target.IsTarget')
+  static readonly Data = Symbol.for('@alinea/Target.Data')
+  static readonly IsTarget = Symbol.for('@alinea/Target.IsTarget')
   cache = create(null)
 
   constructor(public data: TargetData) {}

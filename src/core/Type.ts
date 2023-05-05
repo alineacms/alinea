@@ -1,6 +1,6 @@
-import {Cursor} from 'alinea/backend2/pages/Cursor'
-import {BinaryOp, EV, Expr, ExprData, and} from 'alinea/backend2/pages/Expr'
 import {Expand} from 'alinea/core'
+import {Cursor} from 'alinea/core/pages/Cursor'
+import {BinaryOp, EV, Expr, ExprData, and} from 'alinea/core/pages/Expr'
 import type {EntryEditProps} from 'alinea/dashboard/view/EntryEdit'
 import {Callable} from 'rado/util/Callable'
 import type {ComponentType} from 'react'
@@ -12,7 +12,13 @@ import {Section, section} from './Section.js'
 import {Shape} from './Shape.js'
 import type {View} from './View.js'
 import {RecordShape} from './shape/RecordShape.js'
-import {defineProperty, entries, fromEntries, keys} from './util/Objects.js'
+import {
+  assign,
+  defineProperty,
+  entries,
+  fromEntries,
+  keys
+} from './util/Objects.js'
 
 export interface EntryUrlMeta {
   path: string
@@ -78,8 +84,8 @@ export type TypeRow<Definition> = Expand<{
 
 export namespace Type {
   export type Row<Definition> = TypeRow<Definition>
-  export const Data = Symbol('Type.Data')
-  export const Meta = Symbol('Type.Meta')
+  export const Data = Symbol.for('@alinea/Type.Data')
+  export const Meta = Symbol.for('@alinea/Type.Meta')
 
   export function label(type: Type): Label {
     return type[Type.Data].label
@@ -101,8 +107,16 @@ export namespace Type {
     return type[Type.Data].sections
   }
 
-  export function target(type: Type) {
+  export function target(type: Type): TypeTarget {
     return type[Type.Data].target
+  }
+
+  export function field(type: Type, name: string): Field | undefined {
+    return (type as Record<string, Field>)[name]
+  }
+
+  export function isType(type: any): type is Type {
+    return type && Boolean(type[Type.Data])
   }
 
   export function blankEntry(
@@ -183,8 +197,14 @@ class TypeInstance<Definition extends TypeDefinition> implements TypeData {
   call(...input: Array<any>) {
     return new Cursor.Find({
       id: createId(),
-      target: this.target,
+      target: {type: this.target},
       where: this.condition(input)
+    })
+  }
+
+  field(def: Field, name: string) {
+    return assign(Expr(ExprData.Field({type: this.target}, name)), {
+      [Field.Data]: def[Field.Data]
     })
   }
 
@@ -192,14 +212,14 @@ class TypeInstance<Definition extends TypeDefinition> implements TypeData {
     for (const [key, value] of entries(this.definition)) {
       if (Field.isField(value))
         defineProperty(instance, key, {
-          value,
+          value: this.field(value, key),
           enumerable: true,
           configurable: true
         })
       if (Section.isSection(value))
         for (const [k, v] of entries(Section.fields(value)))
           defineProperty(instance, k, {
-            value: v,
+            value: this.field(v, k),
             enumerable: true,
             configurable: true
           })

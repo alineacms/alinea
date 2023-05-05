@@ -5,7 +5,6 @@ import {Root} from './Root.js'
 import {Schema} from './Schema.js'
 import {Type} from './Type.js'
 import {Workspace, WorkspaceData} from './Workspace.js'
-import {keys} from './util/Objects.js'
 
 /** Configuration options */
 export interface ConfigDefinition {
@@ -41,14 +40,6 @@ export namespace Config {
 
   export function type(config: Config, name: string): Type | undefined {
     return config.schema[name]
-  }
-
-  export function workspaceName(config: Config, workspace: Workspace): string {
-    const name = keys(config.workspaces).find(
-      key => config.workspaces[key] === workspace
-    )
-    if (!name) throw createError(404, `Workspace not found`)
-    return name
   }
 
   export function root(config: Config, workspace: string, root: string): Root {

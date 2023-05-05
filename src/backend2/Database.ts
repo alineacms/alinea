@@ -2,14 +2,14 @@ import {Config, Root, createError} from 'alinea/core'
 import * as path from 'alinea/core/util/Paths'
 import {Driver, Table, alias, create} from 'rado'
 import xxhash from 'xxhash-wasm'
+import {Selection} from '../core/pages/Selection.js'
 import {Syncable} from './Api.js'
 import {entryData} from './EntryData.js'
 import {Resolver} from './Resolver.js'
 import {SourceEntry} from './Source.js'
 import {Store} from './Store.js'
-import {AlineaMeta} from './collection/AlineaMeta.js'
-import {EntryStatus, EntryTree} from './collection/EntryTree.js'
-import {Selection} from './pages/Selection.js'
+import {AlineaMeta} from './database/AlineaMeta.js'
+import {EntryStatus, EntryTree} from './database/EntryTree.js'
 
 const decoder = new TextDecoder()
 

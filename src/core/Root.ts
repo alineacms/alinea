@@ -1,4 +1,4 @@
-import {Selection} from 'alinea/backend2/pages/Selection'
+import {Selection} from 'alinea/core/pages/Selection'
 import type {ComponentType} from 'react'
 import {Label} from './Label.js'
 
@@ -35,7 +35,7 @@ export class Root {
 }
 
 export namespace Root {
-  export const Data = Symbol('Root.Data')
+  export const Data = Symbol.for('@alinea/Root.Data')
 
   export function label(root: Root): Label {
     return root[Root.Data].label

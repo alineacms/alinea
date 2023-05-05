@@ -1,5 +1,5 @@
 import {array, literal, object, string, tuple, union} from 'cito'
-import {Expand} from '../../core.js'
+import {Expand, Type} from '../../core.js'
 import {Cursor, CursorData} from './Cursor.js'
 import {Expr, ExprData} from './Expr.js'
 import {Projection} from './Projection.js'
@@ -14,6 +14,7 @@ export function Selection(input: any, sourceId?: string): Selection {
   if (Cursor.isCursor(input)) return Selection.Cursor(input[Cursor.Data])
   if (Expr.hasExpr(input)) input = input[Expr.ToExpr]()
   if (Expr.isExpr(input)) return Selection.Expr(input[Expr.Data])
+  if (Type.isType(input)) return Selection.Row({type: Type.target(input)})
   if (Target.isTarget(input)) return Selection.Row(input[Target.Data])
   if (typeof input === 'function') {
     if (!sourceId) throw new Error('sourceId is required for function queries')
