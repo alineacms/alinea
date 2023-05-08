@@ -1,5 +1,6 @@
 import {
   Config,
+  Connection,
   createError,
   docFromEntry,
   EntryMeta,
@@ -7,7 +8,6 @@ import {
   Outcome,
   ROOT_KEY
 } from 'alinea/core'
-import {Hub} from 'alinea/core/Hub'
 import {base64} from 'alinea/core/util/Encoding'
 import {observable} from 'alinea/ui'
 import {createContext, PropsWithChildren, useContext, useMemo} from 'react'
@@ -38,15 +38,15 @@ class Drafts {
 
   constructor(
     public config: Config,
-    public hub: Hub,
+    public cnx: Connection,
     protected queryClient: QueryClient
   ) {}
 
   async save(id: string, doc: Y.Doc) {
-    const {hub} = this
+    const {cnx} = this
     const sv = Y.encodeStateVector(doc)
     const update = Y.encodeStateAsUpdate(doc) // , this.stateVectors.get(doc))
-    await hub
+    await cnx
       .updateDraft({id, update})
       .then(Outcome.unpack)
       .then(() => {
@@ -55,7 +55,7 @@ class Drafts {
   }
 
   async get(id: string) {
-    const {hub, config} = this
+    const {cnx: hub, config} = this
     const doc = new Y.Doc()
     const [result, error] = await hub.entry({id})
     if (error) throw error
@@ -72,14 +72,14 @@ class Drafts {
   }
 
   async list(workspace: string) {
-    return this.hub.listDrafts({workspace}).then(Outcome.unpack)
+    return this.cnx.listDrafts({workspace}).then(Outcome.unpack)
   }
 
   async discard(draft: EntryDraft) {
     if (this.saveTimeout) clearTimeout(this.saveTimeout)
     draft.status(EntryStatus.Publishing)
     this.status(DraftsStatus.Saving)
-    return this.hub.deleteDraft({id: draft.id}).then(result => {
+    return this.cnx.deleteDraft({id: draft.id}).then(result => {
       draft.status(EntryStatus.Published)
       this.queryClient.invalidateQueries('draft-list')
       return result
@@ -90,7 +90,7 @@ class Drafts {
     if (this.saveTimeout) clearTimeout(this.saveTimeout)
     draft.status(EntryStatus.Publishing)
     this.status(DraftsStatus.Saving)
-    return this.hub.publishEntries({entries: [draft.getEntry()]}).then(res => {
+    return this.cnx.publishEntries({entries: [draft.getEntry()]}).then(res => {
       if (res.isFailure()) console.error(res.error)
       draft.status(res.isSuccess() ? EntryStatus.Published : EntryStatus.Draft)
       this.status(DraftsStatus.Synced)
@@ -147,7 +147,7 @@ const context = createContext<Drafts | undefined>(undefined)
 export function DraftsProvider({children}: PropsWithChildren<{}>) {
   const queryClient = useQueryClient()
   const {config} = useDashboard()
-  const {hub} = useSession()
+  const {cnx: hub} = useSession()
   const instance = useMemo(
     () => new Drafts(config, hub, queryClient),
     [config, hub]

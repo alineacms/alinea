@@ -1,13 +1,19 @@
-import {Hub} from 'alinea/core/Hub'
+import {Connection} from 'alinea/core'
 
 export interface Drafts {
   get(
-    params: Hub.EntryParams,
-    ctx: Hub.Context
+    params: Connection.EntryParams,
+    ctx: Connection.Context
   ): Promise<Uint8Array | undefined>
-  update(params: Hub.UpdateParams, ctx: Hub.Context): Promise<Drafts.Update>
-  delete(params: Hub.DeleteMultipleParams, ctx: Hub.Context): Promise<void>
-  updates(params: {}, ctx: Hub.Context): AsyncGenerator<Drafts.Update>
+  update(
+    params: Connection.UpdateParams,
+    ctx: Connection.Context
+  ): Promise<Drafts.Update>
+  delete(
+    params: Connection.DeleteMultipleParams,
+    ctx: Connection.Context
+  ): Promise<void>
+  updates(params: {}, ctx: Connection.Context): AsyncGenerator<Drafts.Update>
 }
 
 export namespace Drafts {

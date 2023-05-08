@@ -5,7 +5,7 @@ import {useDrafts} from './UseDrafts.js'
 import {useSession} from './UseSession.js'
 
 export function useDraft(id: string | undefined) {
-  const {hub} = useSession()
+  const {cnx: hub} = useSession()
   const docs = useDrafts()
   const {data: draft, isLoading} = useQuery(
     ['draft', id],

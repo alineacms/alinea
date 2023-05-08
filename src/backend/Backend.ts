@@ -1,7 +1,6 @@
 import type {Request, Response} from '@alinea/iso'
-import {Auth} from 'alinea/core'
+import {Auth, Connection} from 'alinea/core'
 import {Entry} from 'alinea/core/Entry'
-import {Hub} from 'alinea/core/Hub'
 import {base64url} from 'alinea/core/util/Encoding'
 import {Logger, LoggerResult, Report} from 'alinea/core/util/Logger'
 import {Cursor, CursorData} from 'alinea/store'
@@ -31,13 +30,13 @@ function respond<T>({result, logger}: LoggerResult<T>) {
 }
 
 export function createRouter<T>(
-  hub: Hub<T>,
+  cnx: Connection<T>,
   auth: Auth.Server
 ): Route<Request, Response | undefined> {
-  const matcher = router.startAt(Hub.routes.base)
+  const matcher = router.startAt(Connection.routes.base)
   async function context<T extends {request: Request; url: URL}>(
     input: T
-  ): Promise<T & {ctx: Hub.Context; logger: Logger}> {
+  ): Promise<T & {ctx: Connection.Context; logger: Logger}> {
     const logger = new Logger(`${input.request.method} ${input.url.pathname}`)
     return {
       ...input,
@@ -47,7 +46,7 @@ export function createRouter<T>(
   }
   return router(
     matcher
-      .get(Hub.routes.entry(':id'))
+      .get(Connection.routes.entry(':id'))
       .map(context)
       .map(({ctx, url, params}) => {
         const id = params.id as string
@@ -56,18 +55,18 @@ export function createRouter<T>(
           typeof svParam === 'string'
             ? new Uint8Array(base64url.parse(svParam))
             : undefined
-        return ctx.logger.result(hub.entry({id, stateVector}, ctx))
+        return ctx.logger.result(cnx.entry({id, stateVector}, ctx))
       })
       .map(respond),
 
     matcher
-      .post(Hub.routes.query())
+      .post(Connection.routes.query())
       .map(context)
       .map(router.parseJson)
       .map(({ctx, url, body}) => {
         const fromSource = url.searchParams.has('source')
         return ctx.logger.result(
-          hub.query(
+          cnx.query(
             {
               cursor: new Cursor(body as CursorData),
               source: fromSource
@@ -79,56 +78,56 @@ export function createRouter<T>(
       .map(respond),
 
     matcher
-      .get(Hub.routes.drafts())
+      .get(Connection.routes.drafts())
       .map(context)
       .map(({ctx, url}) => {
         const workspace = url.searchParams.get('workspace')
         if (!workspace) return undefined
-        return ctx.logger.result(hub.listDrafts({workspace}, ctx))
+        return ctx.logger.result(cnx.listDrafts({workspace}, ctx))
       })
       .map(respond),
 
     matcher
-      .put(Hub.routes.draft(':id'))
+      .put(Connection.routes.draft(':id'))
       .map(context)
       .map(router.parseBuffer)
       .map(({ctx, params, body}) => {
         const id = params.id as string
         return ctx.logger.result(
-          hub.updateDraft({id, update: new Uint8Array(body)}, ctx)
+          cnx.updateDraft({id, update: new Uint8Array(body)}, ctx)
         )
       })
       .map(respond),
 
     matcher
-      .delete(Hub.routes.draft(':id'))
+      .delete(Connection.routes.draft(':id'))
       .map(context)
       .map(({ctx, params}) => {
         const id = params.id as string
-        return ctx.logger.result(hub.deleteDraft({id}, ctx))
+        return ctx.logger.result(cnx.deleteDraft({id}, ctx))
       })
       .map(respond),
 
     matcher
-      .post(Hub.routes.publish())
+      .post(Connection.routes.publish())
       .map(context)
       .map(router.parseJson)
       .map(({ctx, body}) => {
         return ctx.logger.result(
-          hub.publishEntries({entries: body as Array<Entry>}, ctx)
+          cnx.publishEntries({entries: body as Array<Entry>}, ctx)
         )
       })
       .map(respond),
 
     matcher
-      .post(Hub.routes.upload())
+      .post(Connection.routes.upload())
       .map(context)
       .map(router.parseFormData)
       .map(async ({ctx, body}) => {
         const workspace = String(body.get('workspace'))
         const root = String(body.get('root'))
         return ctx.logger.result(
-          hub.uploadFile(
+          cnx.uploadFile(
             {
               workspace,
               root,

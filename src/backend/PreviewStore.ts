@@ -1,4 +1,4 @@
-import {accumulate, Config, Entry, Hub} from 'alinea/core'
+import {Config, Connection, Entry, accumulate} from 'alinea/core'
 import {Store} from 'alinea/store'
 import {Cache} from './Cache.js'
 import {Drafts} from './Drafts.js'
@@ -29,7 +29,7 @@ export class PreviewStore {
 
   constructor(public options: PreviewStoreOptions) {}
 
-  async getStore(ctx: Hub.Context) {
+  async getStore(ctx: Connection.Context) {
     if (this.lastFetchedAll && this.store) {
       const isExpired = isStale(this.lastFetchedAll, 60)
       if (!isExpired) return this.store
@@ -39,7 +39,7 @@ export class PreviewStore {
     return this.store!
   }
 
-  private async fetchAllUpdates(ctx: Hub.Context) {
+  private async fetchAllUpdates(ctx: Connection.Context) {
     const end = ctx.logger.time('Fetch draft updates for preview store', true)
     const {drafts} = this.options
     const updates: Map<string, Uint8Array> = new Map()
@@ -50,7 +50,7 @@ export class PreviewStore {
     end()
   }
 
-  async fetchUpdate(id: string, ctx: Hub.Context) {
+  async fetchUpdate(id: string, ctx: Connection.Context) {
     const {drafts} = this.options
     const lastFetched = this.lastFetched.get(id)
     if (lastFetched && !isStale(lastFetched, 1)) {

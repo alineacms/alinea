@@ -1,10 +1,10 @@
-import {Config, Hub} from 'alinea/core'
+import {Config, Connection} from 'alinea/core'
 import {QueryClient} from 'react-query'
 import {App} from './App.js'
 
 export interface DashboardOptions<T = any> {
   config: Config
-  client: Hub<T>
+  client: Connection<T>
   queryClient?: QueryClient
   fullPage?: boolean
 }

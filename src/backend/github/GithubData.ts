@@ -2,7 +2,7 @@ import {fetch} from '@alinea/iso'
 import {Octokit} from '@octokit/rest'
 import type {Data} from 'alinea/backend/Data'
 import type {Loader} from 'alinea/backend/Loader'
-import {Config, createError, Hub} from 'alinea/core'
+import {Config, Connection, createError} from 'alinea/core'
 import {join} from 'alinea/core/util/Paths'
 import createOrUpdateFiles from 'octokit-commit-multiple-files/create-or-update-files.js'
 
@@ -28,7 +28,7 @@ export class GithubData implements Data.Target, Data.Media {
     this.octokit = new Octokit({auth: options.githubAuthToken})
   }
 
-  async publish({changes}: Hub.ChangesParams, ctx: Hub.Context) {
+  async publish({changes}: Connection.ChangesParams, ctx: Connection.Context) {
     const {rootDir = '.'} = this.options
     return createOrUpdateFiles(this.octokit, {
       owner: this.options.owner,
@@ -49,7 +49,10 @@ export class GithubData implements Data.Target, Data.Media {
     })
   }
 
-  async upload({fileLocation, buffer}: Hub.MediaUploadParams): Promise<string> {
+  async upload({
+    fileLocation,
+    buffer
+  }: Connection.MediaUploadParams): Promise<string> {
     const {rootDir = '.', owner, repo, branch, author} = this.options
     const location = join(rootDir, fileLocation)
     const changes = {[location]: buffer}
@@ -68,7 +71,9 @@ export class GithubData implements Data.Target, Data.Media {
     return location
   }
 
-  async download({location}: Hub.DownloadParams): Promise<Hub.Download> {
+  async download({
+    location
+  }: Connection.DownloadParams): Promise<Connection.Download> {
     const {rootDir = '.', owner, repo, branch} = this.options
     const pathname = join(rootDir, owner, repo, branch, location)
     const url = `https://raw.githubusercontent.com/${pathname}`

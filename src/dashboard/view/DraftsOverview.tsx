@@ -22,7 +22,7 @@ export type DraftsOverviewProps = {
 }
 
 export function DraftsOverview({id}: DraftsOverviewProps) {
-  const {hub} = useSession()
+  const {cnx: hub} = useSession()
   const nav = useNav()
   const workspace = useWorkspace()
   const {ids} = useDraftsList(workspace.name)

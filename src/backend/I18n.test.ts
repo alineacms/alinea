@@ -5,7 +5,7 @@ import {JsonLoader} from 'alinea/backend/loader/JsonLoader'
 import {Storage} from 'alinea/backend/Storage'
 import {
   accumulate,
-  config,
+  createConfig,
   schema as createSchema,
   Entry,
   root,
@@ -22,7 +22,7 @@ function entry(entry: Entry.Raw) {
   return JSON.stringify(entry)
 }
 
-const config = config({
+const config = createConfig({
   schema: createSchema({
     Home: type('Home', {
       title: text('Title'),
@@ -30,8 +30,11 @@ const config = config({
     }),
     Type: type('Type', {
       title: text('Title'),
-      path: text('path')
-    }).configure({isContainer: true}),
+      path: text('path'),
+      [type.meta]: {
+        isContainer: true
+      }
+    }),
     Sub: type('Sub', {
       title: text('Title'),
       path: text('path')
@@ -39,15 +42,15 @@ const config = config({
   }),
   workspaces: {
     main: workspace('Main', {
-      source: 'content',
-      mediaDir: 'files',
-      roots: {
-        data: root('Root', {
-          contains: ['Type'],
-          i18n: {
-            locales: ['a', 'b']
-          }
-        })
+      data: root('Root', {
+        contains: ['Type'],
+        i18n: {
+          locales: ['a', 'b']
+        }
+      }),
+      [workspace.meta]: {
+        source: 'content',
+        mediaDir: 'files'
       }
     })
   }

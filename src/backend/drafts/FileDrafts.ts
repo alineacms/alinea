@@ -1,4 +1,4 @@
-import {future, Hub, outcome} from 'alinea/core'
+import {Connection, future, outcome} from 'alinea/core'
 import {posix as path} from 'node:path'
 import * as Y from 'yjs'
 import {Drafts} from '../Drafts.js'
@@ -15,7 +15,7 @@ export class FileDrafts implements Drafts {
   async get({
     id,
     stateVector
-  }: Hub.EntryParams): Promise<Uint8Array | undefined> {
+  }: Connection.EntryParams): Promise<Uint8Array | undefined> {
     const {fs, dir} = this.options
     const location = path.join(dir, id)
     const [draft, err] = await outcome(fs.readFile(location))
@@ -26,7 +26,7 @@ export class FileDrafts implements Drafts {
     return Y.encodeStateAsUpdate(doc, stateVector)
   }
 
-  async update({id, update}: Hub.UpdateParams): Promise<Drafts.Update> {
+  async update({id, update}: Connection.UpdateParams): Promise<Drafts.Update> {
     const {fs, dir} = this.options
     const doc = new Y.Doc()
     const current = await this.get({id})
@@ -39,7 +39,7 @@ export class FileDrafts implements Drafts {
     return {id, update: draft}
   }
 
-  async delete({ids}: Hub.DeleteMultipleParams): Promise<void> {
+  async delete({ids}: Connection.DeleteMultipleParams): Promise<void> {
     const {fs, dir} = this.options
     for (const id of ids) {
       const location = path.join(dir, id)

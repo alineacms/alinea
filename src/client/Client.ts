@@ -1,10 +1,10 @@
 import {AbortController, fetch, FormData, Response} from '@alinea/iso'
 import {
   Config,
+  Connection,
   createError,
   Entry,
   Future,
-  Hub,
   Media,
   Outcome
 } from 'alinea/core'
@@ -19,7 +19,7 @@ function fail(err: Error): any {
 
 type AuthenticateRequest = (request?: RequestInit) => RequestInit | undefined
 
-export class Client<T> implements Hub<T> {
+export class Client<T> implements Connection<T> {
   constructor(
     public config: Config,
     public url: string,
@@ -31,48 +31,55 @@ export class Client<T> implements Hub<T> {
     return new Client(this.config, this.url, applyAuth, unauthorized)
   }
 
-  entry({id, stateVector}: Hub.EntryParams): Future<Entry.Detail | null> {
-    return this.fetchJson(Hub.routes.entry(id, stateVector), {
+  entry({
+    id,
+    stateVector
+  }: Connection.EntryParams): Future<Entry.Detail | null> {
+    return this.fetchJson(Connection.routes.entry(id, stateVector), {
       method: 'GET'
     }).then<Outcome<Entry.Detail | null>>(toFuture, fail)
   }
 
-  query<T>({cursor, source}: Hub.QueryParams<T>): Future<Array<T>> {
+  query<T>({cursor, source}: Connection.QueryParams<T>): Future<Array<T>> {
     const params = source ? '?source' : ''
-    return this.fetchJson(Hub.routes.query() + params, {
+    return this.fetchJson(Connection.routes.query() + params, {
       method: 'POST',
       body: JSON.stringify(cursor.toJSON())
     }).then<Outcome<Array<T>>>(toFuture, fail)
   }
 
-  updateDraft({id, update}: Hub.UpdateParams): Future {
-    return this.fetch(Hub.routes.draft(id), {
+  updateDraft({id, update}: Connection.UpdateParams): Future {
+    return this.fetch(Connection.routes.draft(id), {
       method: 'PUT',
       headers: {'content-type': 'application/octet-stream'},
       body: update
     }).then(toFuture)
   }
 
-  deleteDraft({id}: Hub.DeleteParams): Future<boolean> {
-    return this.fetch(Hub.routes.draft(id), {
+  deleteDraft({id}: Connection.DeleteParams): Future<boolean> {
+    return this.fetch(Connection.routes.draft(id), {
       method: 'DELETE'
     }).then<Outcome<boolean>>(toFuture, fail)
   }
 
-  listDrafts({workspace}: Hub.ListParams): Future<Array<{id: string}>> {
-    return this.fetch(Hub.routes.drafts() + `?workspace=${workspace}`, {
+  listDrafts({workspace}: Connection.ListParams): Future<Array<{id: string}>> {
+    return this.fetch(Connection.routes.drafts() + `?workspace=${workspace}`, {
       method: 'GET'
     }).then<Outcome<Array<{id: string}>>>(toFuture, fail)
   }
 
-  publishEntries({entries}: Hub.PublishParams): Future {
-    return this.fetchJson(Hub.routes.publish(), {
+  publishEntries({entries}: Connection.PublishParams): Future {
+    return this.fetchJson(Connection.routes.publish(), {
       method: 'POST',
       body: JSON.stringify(entries)
     }).then(toFuture, fail)
   }
 
-  uploadFile({workspace, root, ...file}: Hub.UploadParams): Future<Media.File> {
+  uploadFile({
+    workspace,
+    root,
+    ...file
+  }: Connection.UploadParams): Future<Media.File> {
     const form = new FormData()
     form.append('workspace', workspace as string)
     form.append('root', root as string)
@@ -84,7 +91,7 @@ export class Client<T> implements Hub<T> {
     if ('height' in file) form.append('height', String(file.height))
     form.append('buffer', new Blob([file.buffer]))
     if (file.preview) form.append('preview', file.preview)
-    return this.fetch(Hub.routes.upload(), {
+    return this.fetch(Connection.routes.upload(), {
       method: 'POST',
       body: form
     }).then<Outcome<Media.File>>(toFuture, fail)

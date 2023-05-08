@@ -8,7 +8,7 @@ import {useSession} from './UseSession.js'
 
 function useLoader() {
   const {config} = useDashboard()
-  const {hub} = useSession()
+  const {cnx: hub} = useSession()
   return useMemo(() => {
     return new DataLoader(
       (ids: ReadonlyArray<string>) => {

@@ -1,4 +1,4 @@
-import {Entry, Hub} from 'alinea/core'
+import {Connection, Entry} from 'alinea/core'
 
 export namespace Data {
   export interface Source {
@@ -8,14 +8,20 @@ export namespace Data {
 
   export interface Target {
     canRename: boolean
-    publish(params: Hub.ChangesParams, ctx: Hub.Context): Promise<void>
+    publish(
+      params: Connection.ChangesParams,
+      ctx: Connection.Context
+    ): Promise<void>
   }
 
   export interface Media {
-    upload(params: Hub.MediaUploadParams, ctx: Hub.Context): Promise<string>
+    upload(
+      params: Connection.MediaUploadParams,
+      ctx: Connection.Context
+    ): Promise<string>
     download(
-      params: Hub.DownloadParams,
-      ctx: Hub.Context
-    ): Promise<Hub.Download>
+      params: Connection.DownloadParams,
+      ctx: Connection.Context
+    ): Promise<Connection.Download>
   }
 }

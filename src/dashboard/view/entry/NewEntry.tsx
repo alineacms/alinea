@@ -45,7 +45,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
   const navigate = useNavigate()
   const locale = useLocale()
   const queryClient = useQueryClient()
-  const {hub} = useSession()
+  const {cnx: hub} = useSession()
   const {schema} = useDashboard().config
   const {name: workspace} = useWorkspace()
   const containerTypes = entries(schema)

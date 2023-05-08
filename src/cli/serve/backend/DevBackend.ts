@@ -4,7 +4,7 @@ import {Backend, anonymousAuth, createRouter} from 'alinea/backend/Backend'
 import {PreviewOptions} from 'alinea/backend/Server'
 import {Handle} from 'alinea/backend/router/Router'
 import {Client} from 'alinea/client'
-import {Config, Hub, Outcome} from 'alinea/core'
+import {Config, Connection, Outcome} from 'alinea/core'
 import {Store} from 'alinea/store/Store'
 import {DevData} from './DevData.js'
 import {DevDrafts} from './DevDrafts.js'
@@ -51,7 +51,7 @@ export class DevBackend<T> extends Client<T> {
     this.handle = handle
   }
 
-  fallback(method: keyof Hub<T>): any {
+  fallback(method: keyof Connection<T>): any {
     return async (params: any) => {
       if (this.fullyLocal) return this.local[method](params)
       return super[method](params).then((outcome: Outcome<any>) => {
@@ -62,13 +62,14 @@ export class DevBackend<T> extends Client<T> {
     }
   }
 
-  entry: Hub<T>['entry'] = this.fallback('entry')
-  query: Hub<T>['query'] = this.fallback('query')
-  updateDraft: Hub<T>['updateDraft'] = this.fallback('updateDraft')
-  deleteDraft: Hub<T>['deleteDraft'] = this.fallback('deleteDraft')
-  listDrafts: Hub<T>['listDrafts'] = this.fallback('listDrafts')
-  uploadFile: Hub<T>['uploadFile'] = this.fallback('uploadFile')
-  publishEntries: Hub<T>['publishEntries'] = this.fallback('publishEntries')
+  entry: Connection<T>['entry'] = this.fallback('entry')
+  query: Connection<T>['query'] = this.fallback('query')
+  updateDraft: Connection<T>['updateDraft'] = this.fallback('updateDraft')
+  deleteDraft: Connection<T>['deleteDraft'] = this.fallback('deleteDraft')
+  listDrafts: Connection<T>['listDrafts'] = this.fallback('listDrafts')
+  uploadFile: Connection<T>['uploadFile'] = this.fallback('uploadFile')
+  publishEntries: Connection<T>['publishEntries'] =
+    this.fallback('publishEntries')
 
   loadPages(options: PreviewOptions = {}) {
     return new Pages<T>({

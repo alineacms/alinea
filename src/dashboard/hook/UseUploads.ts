@@ -1,5 +1,5 @@
+import {Connection} from 'alinea/core'
 import {Entry} from 'alinea/core/Entry'
-import {Hub} from 'alinea/core/Hub'
 import {createId} from 'alinea/core/Id'
 import {Media} from 'alinea/core/Media'
 import {Outcome} from 'alinea/core/Outcome'
@@ -78,7 +78,7 @@ const tasker = {
   [UploadStatus.Done]: defaultTasker
 }
 
-async function process(upload: Upload, hub: Hub): Promise<Upload> {
+async function process(upload: Upload, cnx: Connection): Promise<Upload> {
   switch (upload.status) {
     case UploadStatus.Queued:
       const isImage = Media.isImage(upload.file.name)
@@ -138,7 +138,7 @@ async function process(upload: Upload, hub: Hub): Promise<Upload> {
       const {to, file, preview, averageColor, blurHash, width, height} = upload
       const buffer = await file.arrayBuffer()
       const path = (to.url === '/' ? '' : to.url) + '/' + file.name
-      const result = await hub
+      const result = await cnx
         .uploadFile({
           ...to,
           parentId: to.id,
@@ -159,7 +159,7 @@ async function process(upload: Upload, hub: Hub): Promise<Upload> {
 }
 
 export function useUploads(onSelect: (entry: Entry.Minimal) => void) {
-  const {hub} = useSession()
+  const {cnx: hub} = useSession()
   const [uploads, setUploads] = useState<Array<Upload>>([])
   const queryClient = useQueryClient()
 

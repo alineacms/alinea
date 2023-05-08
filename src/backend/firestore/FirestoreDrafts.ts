@@ -1,5 +1,5 @@
 import type {Drafts} from 'alinea/backend/Drafts'
-import {Hub} from 'alinea/core/Hub'
+import {Connection} from 'alinea/core'
 import type {CollectionReference} from 'firebase-admin/firestore'
 import * as Y from 'yjs'
 
@@ -13,7 +13,7 @@ export class FirestoreDrafts implements Drafts {
   async get({
     id,
     stateVector
-  }: Hub.EntryParams): Promise<Uint8Array | undefined> {
+  }: Connection.EntryParams): Promise<Uint8Array | undefined> {
     const {collection} = this.options
     const ref = collection.doc(id)
     const row = await ref.get()
@@ -26,7 +26,7 @@ export class FirestoreDrafts implements Drafts {
     return Y.encodeStateAsUpdate(doc, stateVector)
   }
 
-  async update({id, update}: Hub.UpdateParams): Promise<Drafts.Update> {
+  async update({id, update}: Connection.UpdateParams): Promise<Drafts.Update> {
     const {collection} = this.options
     const doc = new Y.Doc()
     const current = await this.get({id})
@@ -41,7 +41,7 @@ export class FirestoreDrafts implements Drafts {
     return {id, update: draft}
   }
 
-  async delete({ids}: Hub.DeleteMultipleParams): Promise<void> {
+  async delete({ids}: Connection.DeleteMultipleParams): Promise<void> {
     const {collection} = this.options
     // Minor impovement: this could be batched
     for (const id of ids) await collection.doc(id).delete()

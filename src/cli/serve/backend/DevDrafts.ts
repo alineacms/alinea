@@ -1,7 +1,7 @@
 import {fetch} from '@alinea/iso'
 import {Drafts} from 'alinea/backend/Drafts'
+import {Connection} from 'alinea/core'
 import {createError} from 'alinea/core/ErrorWithCode'
-import {Hub} from 'alinea/core/Hub'
 import {base64, base64url} from 'alinea/core/util/Encoding'
 
 async function failOnHttpError(res: Response): Promise<Response> {
@@ -21,22 +21,22 @@ export class DevDrafts implements Drafts {
   constructor(public options: DevDraftsOptions) {}
 
   // We never need to mutate from the preview side
-  async update(params: Hub.UpdateParams): Promise<Drafts.Update> {
+  async update(params: Connection.UpdateParams): Promise<Drafts.Update> {
     return params
   }
-  async delete({ids}: Hub.DeleteMultipleParams): Promise<void> {}
+  async delete({ids}: Connection.DeleteMultipleParams): Promise<void> {}
 
   // Forward draft requests to the running alinea server
   get(
-    {id, stateVector}: Hub.EntryParams,
-    ctx: Hub.Context
+    {id, stateVector}: Connection.EntryParams,
+    ctx: Connection.Context
   ): Promise<Uint8Array | undefined> {
     const {serverLocation} = this.options
     const params = stateVector
       ? '?' +
         new URLSearchParams({stateVector: base64url.stringify(stateVector)})
       : ''
-    const url = `${serverLocation}${Hub.routes.base}/~draft/${id}${params}`
+    const url = `${serverLocation}${Connection.routes.base}/~draft/${id}${params}`
     return fetch(url, {
       headers: {accept: 'application/json'}
     }).then(res => {
@@ -47,9 +47,9 @@ export class DevDrafts implements Drafts {
     })
   }
 
-  async *updates({}, ctx: Hub.Context): AsyncGenerator<Drafts.Update> {
+  async *updates({}, ctx: Connection.Context): AsyncGenerator<Drafts.Update> {
     const {serverLocation} = this.options
-    const url = `${serverLocation}${Hub.routes.base}/~draft`
+    const url = `${serverLocation}${Connection.routes.base}/~draft`
     const updates = await fetch(url, {
       headers: {accept: 'application/json'}
     })

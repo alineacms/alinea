@@ -1,8 +1,8 @@
-import {Hub} from './Hub.js'
+import {Connection} from './Connection.js'
 import {User} from './User.js'
 
 export interface Session<T = any> {
-  hub: Hub<T>
+  cnx: Connection<T>
   user: User
   end: () => Promise<void>
 }

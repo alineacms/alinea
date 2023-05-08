@@ -1,5 +1,5 @@
 import type {Drafts} from 'alinea/backend/Drafts'
-import {Hub} from 'alinea/core/Hub'
+import {Connection} from 'alinea/core'
 import * as idb from 'lib0/indexeddb.js'
 import * as Y from 'yjs'
 
@@ -20,7 +20,7 @@ export class IndexedDBDrafts implements Drafts {
   async get({
     id,
     stateVector
-  }: Hub.EntryParams): Promise<Uint8Array | undefined> {
+  }: Connection.EntryParams): Promise<Uint8Array | undefined> {
     const db = await this.db
     const [store] = idb.transact(db, [STORE_NAME], 'readonly')
     const draft = await idb.get(store, id)
@@ -32,7 +32,7 @@ export class IndexedDBDrafts implements Drafts {
     return Y.encodeStateAsUpdate(doc, stateVector)
   }
 
-  async update({id, update}: Hub.UpdateParams): Promise<Drafts.Update> {
+  async update({id, update}: Connection.UpdateParams): Promise<Drafts.Update> {
     const db = await this.db
     const doc = new Y.Doc()
     const current = await this.get({id})
@@ -44,7 +44,7 @@ export class IndexedDBDrafts implements Drafts {
     return {id, update: draft}
   }
 
-  async delete({ids}: Hub.DeleteMultipleParams): Promise<void> {
+  async delete({ids}: Connection.DeleteMultipleParams): Promise<void> {
     const db = await this.db
     const [store] = idb.transact(db, [STORE_NAME])
     for (const id of ids) await idb.del(store, id)

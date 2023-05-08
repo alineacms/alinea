@@ -1,5 +1,12 @@
 import {AbortController, fetch, FormData, Response} from '@alinea/iso'
-import {Config, createError, Future, Hub, Media, Outcome} from 'alinea/core'
+import {
+  Config,
+  Connection,
+  createError,
+  Future,
+  Media,
+  Outcome
+} from 'alinea/core'
 import {Api, UpdateResponse} from './Api.js'
 import {AlineaMeta} from './database/AlineaMeta.js'
 
@@ -39,14 +46,18 @@ export class Client implements Api {
     return this.fetchJson(Api.routes.ids()).then(toFuture, fail)
   }
 
-  publishEntries({entries}: Hub.PublishParams): Future {
-    return this.fetchJson(Hub.routes.publish(), {
+  publishEntries({entries}: Connection.PublishParams): Future {
+    return this.fetchJson(Connection.routes.publish(), {
       method: 'POST',
       body: JSON.stringify(entries)
     }).then(toFuture, fail)
   }
 
-  uploadFile({workspace, root, ...file}: Hub.UploadParams): Future<Media.File> {
+  uploadFile({
+    workspace,
+    root,
+    ...file
+  }: Connection.UploadParams): Future<Media.File> {
     const form = new FormData()
     form.append('workspace', workspace as string)
     form.append('root', root as string)
@@ -58,7 +69,7 @@ export class Client implements Api {
     if ('height' in file) form.append('height', String(file.height))
     form.append('buffer', new Blob([file.buffer]))
     if (file.preview) form.append('preview', file.preview)
-    return this.fetch(Hub.routes.upload(), {
+    return this.fetch(Connection.routes.upload(), {
       method: 'POST',
       body: form
     }).then<Outcome<Media.File>>(toFuture, fail)

@@ -23,7 +23,7 @@ const scrollOffsets = new Map<string, number>()
 
 export function MediaExplorer() {
   const draft = useCurrentDraft()
-  const {hub} = useSession()
+  const {cnx: hub} = useSession()
   const {File} = Media
   const {data} = useQuery(
     ['media', 'total', draft.id],

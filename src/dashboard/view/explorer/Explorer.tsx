@@ -39,7 +39,7 @@ export function Explorer({
   selection = [],
   toggleSelect = () => {}
 }: ExplorerProps) {
-  const {hub} = useSession()
+  const {cnx: hub} = useSession()
   const {data, isLoading} = useQuery(
     ['explorer', type, cursor, max],
     () => {

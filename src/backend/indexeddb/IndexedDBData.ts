@@ -1,5 +1,5 @@
 import type {Data} from 'alinea/backend/Data'
-import {Entry, Hub} from 'alinea/core'
+import {Connection, Entry} from 'alinea/core'
 import * as idb from 'lib0/indexeddb.js'
 
 export type IndexedDBOptions = {}
@@ -35,7 +35,7 @@ export class IndexedDBData implements Data.Source, Data.Target, Data.Media {
     }
   }
 
-  async publish({changes}: Hub.ChangesParams, ctx: Hub.Context) {
+  async publish({changes}: Connection.ChangesParams, ctx: Connection.Context) {
     const db = await this.db
     const [store] = idb.transact(db, [STORE_NAME])
     for (const {id, contents} of changes.write)
@@ -43,14 +43,19 @@ export class IndexedDBData implements Data.Source, Data.Target, Data.Media {
     for (const {id} of changes.delete) await idb.del(store, 'entry:' + id)
   }
 
-  async upload({fileLocation, buffer}: Hub.MediaUploadParams): Promise<string> {
+  async upload({
+    fileLocation,
+    buffer
+  }: Connection.MediaUploadParams): Promise<string> {
     const db = await this.db
     const [store] = idb.transact(db, [STORE_NAME])
     await idb.put(store, buffer, 'file:' + fileLocation)
     return fileLocation
   }
 
-  async download({location}: Hub.DownloadParams): Promise<Hub.Download> {
+  async download({
+    location
+  }: Connection.DownloadParams): Promise<Connection.Download> {
     const db = await this.db
     const [store] = idb.transact(db, [STORE_NAME], 'readonly')
     const buffer = await idb.get(store, 'file:' + location)

@@ -5,7 +5,7 @@ import {FileDrafts} from 'alinea/backend/drafts/FileDrafts'
 import {JsonLoader} from 'alinea/backend/loader/JsonLoader'
 import {router} from 'alinea/backend/router/Router'
 import {JWTPreviews} from 'alinea/backend/util/JWTPreviews'
-import {accumulate, Config, Hub, outcome} from 'alinea/core'
+import {accumulate, Config, Connection, outcome} from 'alinea/core'
 import {base64, base64url} from 'alinea/core/util/Encoding'
 import {SqliteStore} from 'alinea/store/sqlite/SqliteStore'
 import {Store} from 'alinea/store/Store'
@@ -58,7 +58,7 @@ export class ServeBackend extends Backend {
     const matcher = router.matcher()
     this.handle = router(
       matcher
-        .get(Hub.routes.base + '/~draft')
+        .get(Connection.routes.base + '/~draft')
         .map(async () => {
           const updates = await accumulate(drafts.updates())
           return updates.map(u => {
@@ -67,7 +67,7 @@ export class ServeBackend extends Backend {
         })
         .map(router.jsonResponse),
       matcher
-        .get(Hub.routes.base + '/~draft/:id')
+        .get(Connection.routes.base + '/~draft/:id')
         .map(async ({params, url}) => {
           const id = params.id as string
           const svParam = url.searchParams.get('stateVector')
@@ -79,21 +79,21 @@ export class ServeBackend extends Backend {
           })
         }),
       matcher
-        .get(Hub.routes.base + '/~publish')
+        .get(Connection.routes.base + '/~publish')
         .map(router.parseJson)
         .map(({body}) => {
           return outcome(data.publish({changes: body as any}))
         })
         .map(router.jsonResponse),
       matcher
-        .post(Hub.routes.base + '/~media')
+        .post(Connection.routes.base + '/~media')
         .map(router.parseBuffer)
         .map(({request, body}) => {
           const fileLocation = request.headers.get('x-file-location') as string
           return outcome(data.upload({fileLocation, buffer: body}))
         })
         .map(router.jsonResponse),
-      matcher.get(Hub.routes.base + '/~media').map(({}) => {
+      matcher.get(Connection.routes.base + '/~media').map(({}) => {
         return new Response('Not implemented', {status: 500})
       }),
       api

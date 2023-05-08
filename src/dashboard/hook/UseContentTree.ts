@@ -86,7 +86,7 @@ export function useContentTree({
   const {config} = useDashboard()
   const workspace = useWorkspace()
   const root = useRoot()
-  const {hub} = useSession()
+  const {cnx: hub} = useSession()
   const persistenceId = `@alinea/dashboard/tree-${workspace.name}-${root.name}`
   const [open, setOpen] = useState(() => {
     const stored = window?.localStorage?.getItem(persistenceId)

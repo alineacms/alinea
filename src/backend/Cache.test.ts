@@ -4,7 +4,7 @@ import {FileData} from 'alinea/backend/data/FileData'
 import {FS} from 'alinea/backend/FS'
 import {JsonLoader} from 'alinea/backend/loader/JsonLoader'
 import {
-  config,
+  createConfig,
   createId,
   schema as createSchema,
   Entry,
@@ -22,13 +22,14 @@ function entry(entry: Entry.Raw) {
   return JSON.stringify(entry)
 }
 
-const config = config({
+const config = createConfig({
   schema: createSchema({
     Type: type('Type', {
       title: text('Title'),
-      path: text('path')
-    }).configure({
-      isContainer: true
+      path: text('path'),
+      [type.meta]: {
+        isContainer: true
+      }
     }),
     Sub: type('Sub', {
       title: text('Title'),
@@ -37,8 +38,10 @@ const config = config({
   }),
   workspaces: {
     main: workspace('Main', {
-      source: 'content',
-      roots: {data: root('Root', {contains: ['Type']})}
+      data: root('Root', {contains: ['Type']}),
+      [workspace.meta]: {
+        source: 'content'
+      }
     })
   }
 })

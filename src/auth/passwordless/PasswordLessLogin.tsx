@@ -1,14 +1,14 @@
 import {Client} from 'alinea/client'
-import {Auth, createError, Hub, Session} from 'alinea/core'
+import {Auth, Connection, Session, createError} from 'alinea/core'
 import {decode} from 'alinea/core/util/JWT'
 import {joinPaths} from 'alinea/core/util/Urls'
 import {useDashboard} from 'alinea/dashboard/hook/UseDashboard'
 import {Head} from 'alinea/dashboard/util/Head'
-import {Button, fromModule, Loader, LogoShape, px, Typo} from 'alinea/ui'
+import {Button, Loader, LogoShape, Typo, fromModule, px} from 'alinea/ui'
+import {HStack, VStack} from 'alinea/ui/Stack'
 import {IcRoundArrowBack} from 'alinea/ui/icons/IcRoundArrowBack'
 import {IcRoundArrowForward} from 'alinea/ui/icons/IcRoundArrowForward'
 import {RiFlashlightFill} from 'alinea/ui/icons/RiFlashlightFill'
-import {HStack, VStack} from 'alinea/ui/Stack'
 import {FormEvent, PropsWithChildren, useLayoutEffect, useState} from 'react'
 import css from './PasswordLessLogin.module.scss'
 
@@ -156,7 +156,7 @@ function useResolveToken(setSession: (session: Session | undefined) => void) {
         throw createError(`Cannot authenticate with non http client`)
       setSession({
         user,
-        hub: client.authenticate(applyAuth, logout),
+        cnx: client.authenticate(applyAuth, logout),
         end: async () => logout()
       })
       if (isTokenFromUrl) {
@@ -178,7 +178,7 @@ export function PasswordLessLogin({setSession}: Auth.ViewProps) {
     setState(LoginState.Loading)
     if (!(client instanceof Client))
       throw createError(`Cannot authenticate with non http client`)
-    fetch(joinPaths(client.url, Hub.routes.base, `/auth.passwordless`), {
+    fetch(joinPaths(client.url, Connection.routes.base, `/auth.passwordless`), {
       headers: {'content-type': 'application/json'},
       method: 'POST',
       body: JSON.stringify({email})

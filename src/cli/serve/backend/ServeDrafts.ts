@@ -1,8 +1,8 @@
 import {Drafts} from 'alinea/backend/Drafts'
 import {FileDrafts, FileDraftsOptions} from 'alinea/backend/drafts/FileDrafts'
 import {createDb} from 'alinea/backend/util/CreateDb'
+import {Connection} from 'alinea/core'
 import {Config} from 'alinea/core/Config'
-import {Hub} from 'alinea/core/Hub'
 import {base64} from 'alinea/core/util/Encoding'
 import {Collection} from 'alinea/store/Collection'
 import {SqliteStore} from 'alinea/store/sqlite/SqliteStore'
@@ -39,13 +39,13 @@ export class ServeDrafts extends FileDrafts {
     await exportStore(store, this.location)
   }
 
-  async update({id, update}: Hub.UpdateParams): Promise<Drafts.Update> {
+  async update({id, update}: Connection.UpdateParams): Promise<Drafts.Update> {
     const res = await super.update({id, update})
     await this.write()
     return res
   }
 
-  async delete({ids}: Hub.DeleteMultipleParams): Promise<void> {
+  async delete({ids}: Connection.DeleteMultipleParams): Promise<void> {
     await super.delete({ids})
     await this.write()
   }

@@ -1,16 +1,16 @@
 import {crypto} from '@alinea/iso'
 import sqlite from '@alinea/sqlite-wasm'
 import {
-  accumulate,
   Config,
-  createError,
-  createId,
+  Connection,
   Entry,
-  entryFromDoc,
   Future,
-  Hub,
   Media,
   Outcome,
+  accumulate,
+  createError,
+  createId,
+  entryFromDoc,
   outcome,
   slugify
 } from 'alinea/core'
@@ -26,17 +26,17 @@ import {
   normalize
 } from 'alinea/core/util/Paths'
 import {Store} from 'alinea/store'
-import {SqlJsDriver} from 'alinea/store/sqlite/drivers/SqlJsDriver'
 import {SqliteStore} from 'alinea/store/sqlite/SqliteStore'
+import {SqlJsDriver} from 'alinea/store/sqlite/drivers/SqlJsDriver'
 import * as Y from 'yjs'
 import {Cache} from './Cache.js'
 import {Data} from './Data.js'
 import {Drafts} from './Drafts.js'
-import {JsonLoader} from './loader/JsonLoader.js'
 import {Pages} from './Pages.js'
-import {Previews} from './Previews.js'
 import {PreviewStore, previewStore} from './PreviewStore.js'
+import {Previews} from './Previews.js'
 import {Storage} from './Storage.js'
+import {JsonLoader} from './loader/JsonLoader.js'
 
 export interface PreviewOptions {
   preview?: boolean
@@ -44,7 +44,7 @@ export interface PreviewOptions {
 }
 
 export type ServerOptions<T> = {
-  config: Config<T>
+  config: Config
   createStore: () => Promise<Store>
   drafts: Drafts
   target: Data.Target
@@ -56,7 +56,7 @@ export type ServerOptions<T> = {
   applyPublish?: boolean
 }
 
-export class Server<T = any> implements Hub<T> {
+export class Server<T = any> implements Connection<T> {
   preview: PreviewStore
   createStore: () => Promise<Store>
 
@@ -83,13 +83,13 @@ export class Server<T = any> implements Hub<T> {
     }
   }
 
-  get config(): Config<T> {
+  get config(): Config {
     return this.options.config
   }
 
   async entry(
-    {id, stateVector}: Hub.EntryParams,
-    ctx: Hub.Context = this.createContext()
+    {id, stateVector}: Connection.EntryParams,
+    ctx: Connection.Context = this.createContext()
   ): Future<Entry.Detail | null> {
     const {config, drafts, previews} = this.options
     const end = ctx.logger.time('Get draft', true)
@@ -99,7 +99,7 @@ export class Server<T = any> implements Hub<T> {
       const doc = new Y.Doc()
       Y.applyUpdate(doc, draft)
       const isValidDraft = outcome.succeeds(() =>
-        entryFromDoc(doc, config.type)
+        entryFromDoc(doc, type => config.schema[type])
       )
       if (!isValidDraft) {
         console.log(`Removed invalid draft ${id}`)
@@ -148,8 +148,8 @@ export class Server<T = any> implements Hub<T> {
   }
 
   async query<T>(
-    {cursor, source}: Hub.QueryParams<T>,
-    ctx: Hub.Context = this.createContext()
+    {cursor, source}: Connection.QueryParams<T>,
+    ctx: Connection.Context = this.createContext()
   ): Future<Array<T>> {
     return outcome(async () => {
       const create = source
@@ -161,8 +161,8 @@ export class Server<T = any> implements Hub<T> {
   }
 
   updateDraft(
-    {id, update}: Hub.UpdateParams,
-    ctx: Hub.Context = this.createContext()
+    {id, update}: Connection.UpdateParams,
+    ctx: Connection.Context = this.createContext()
   ): Future<void> {
     const {drafts} = this.options
     return outcome(async () => {
@@ -174,8 +174,8 @@ export class Server<T = any> implements Hub<T> {
   }
 
   deleteDraft(
-    {id}: Hub.DeleteParams,
-    ctx: Hub.Context = this.createContext()
+    {id}: Connection.DeleteParams,
+    ctx: Connection.Context = this.createContext()
   ): Future<boolean> {
     const {drafts} = this.options
     return outcome(async () => {
@@ -190,8 +190,8 @@ export class Server<T = any> implements Hub<T> {
   }
 
   listDrafts(
-    {workspace}: Hub.ListParams,
-    ctx: Hub.Context = this.createContext()
+    {workspace}: Connection.ListParams,
+    ctx: Connection.Context = this.createContext()
   ) {
     return outcome(async () => {
       const store = await this.preview.getStore(ctx)
@@ -209,8 +209,8 @@ export class Server<T = any> implements Hub<T> {
   }
 
   publishEntries(
-    {entries}: Hub.PublishParams,
-    ctx: Hub.Context = this.createContext()
+    {entries}: Connection.PublishParams,
+    ctx: Connection.Context = this.createContext()
   ): Future<void> {
     const {config, drafts, target, applyPublish = true} = this.options
     function applyEntriesTo(store: Store) {
@@ -239,8 +239,8 @@ export class Server<T = any> implements Hub<T> {
   }
 
   uploadFile(
-    {workspace, root, parentId, ...file}: Hub.UploadParams,
-    ctx: Hub.Context = this.createContext()
+    {workspace, root, parentId, ...file}: Connection.UploadParams,
+    ctx: Connection.Context = this.createContext()
   ): Future<Media.File> {
     const {config} = this.options
     return outcome(async () => {

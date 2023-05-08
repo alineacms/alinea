@@ -282,7 +282,7 @@ function AppRoot({session, setSession}: AppRootProps) {
 function localSession(options: DashboardOptions) {
   return {
     user: {sub: 'anonymous'},
-    hub: options.client,
+    cnx: options.client,
     end: async () => {}
   }
 }
