@@ -19,7 +19,7 @@ function fail(err: Error): any {
 
 type AuthenticateRequest = (request?: RequestInit) => RequestInit | undefined
 
-export class Client<T> implements Connection<T> {
+export class Client implements Connection {
   constructor(
     public config: Config,
     public url: string,

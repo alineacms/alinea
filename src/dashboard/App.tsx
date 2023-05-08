@@ -290,7 +290,7 @@ function localSession(options: DashboardOptions) {
 // facebook/react#24304
 const QueryClientProvider: any = ReactQueryClientProvider
 
-export function App<T>({fullPage = true, ...props}: DashboardOptions<T>) {
+export function App({fullPage = true, ...props}: DashboardOptions) {
   const auth = props.config.backend?.auth
   const [queryClient] = useState(
     () =>

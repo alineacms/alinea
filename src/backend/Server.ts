@@ -43,7 +43,7 @@ export interface PreviewOptions {
   previewToken?: string
 }
 
-export type ServerOptions<T> = {
+export type ServerOptions = {
   config: Config
   createStore: () => Promise<Store>
   drafts: Drafts
@@ -56,11 +56,11 @@ export type ServerOptions<T> = {
   applyPublish?: boolean
 }
 
-export class Server<T = any> implements Connection<T> {
+export class Server implements Connection {
   preview: PreviewStore
   createStore: () => Promise<Store>
 
-  constructor(public options: ServerOptions<T>) {
+  constructor(public options: ServerOptions) {
     this.createStore = options.createStore
     this.preview = previewStore({
       name: `preview for ${this.constructor.name}`,

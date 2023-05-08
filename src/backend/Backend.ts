@@ -7,10 +7,10 @@ import {Cursor, CursorData} from 'alinea/store'
 import {Server, ServerOptions} from './Server.js'
 import {Handle, Route, router} from './router/Router.js'
 
-export type BackendOptions<T> = {
+export type BackendOptions = {
   auth?: Auth.Server
   dashboardUrl: string
-} & ServerOptions<T>
+} & ServerOptions
 
 export function anonymousAuth(): Auth.Server {
   return {
@@ -29,8 +29,8 @@ function respond<T>({result, logger}: LoggerResult<T>) {
   })
 }
 
-export function createRouter<T>(
-  cnx: Connection<T>,
+export function createRouter(
+  cnx: Connection,
   auth: Auth.Server
 ): Route<Request, Response | undefined> {
   const matcher = router.startAt(Connection.routes.base)
@@ -148,13 +148,13 @@ export function createRouter<T>(
   ).recover(router.reportError)
 }
 
-export class Backend<T = any> extends Server<T> {
+export class Backend extends Server {
   handle: Handle<Request, Response | undefined>
 
-  constructor(public options: BackendOptions<T>) {
+  constructor(public options: BackendOptions) {
     super(options)
     const auth: Auth.Server = options.auth || anonymousAuth()
-    const api = createRouter<T>(this, auth)
+    const api = createRouter(this, auth)
     const {handle} = options.auth ? router(options.auth.handler, api) : api
     this.handle = handle
   }
