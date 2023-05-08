@@ -26,7 +26,8 @@ export interface WorkspaceData extends WorkspaceMeta {
 
 type Roots = Record<string, Root>
 
-export interface WorkspaceDefinition extends Roots {
+export interface WorkspaceDefinition {
+  [key: string]: Root
   [Workspace.Meta]: WorkspaceMeta
 }
 

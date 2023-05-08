@@ -1,7 +1,6 @@
 import {Selection} from 'alinea/core/pages/Selection'
 import type {ComponentType} from 'react'
 import {CMS} from './CMS.js'
-import {Connection} from './Connection.js'
 import {Label} from './Label.js'
 
 export interface RootI18n {
@@ -28,15 +27,12 @@ export class Root {
     this[Root.Data] = data
   }
 
-  async fetch<S>(select: S): Promise<Selection.Infer<S>> {
-    const cms = CMS.instanceFor(this)
-    const cnx = await Connection.establish()
-    return cnx.fetch(select)
+  fetch<S>(select: S): Promise<Selection.Infer<S>> {
+    return CMS.instanceFor(this).connection().fetch(select)
   }
 
-  async fetchOne<S>(select: S): Promise<Selection.Infer<S>> {
-    const cnx = await Connection.establish()
-    return cnx.fetch(select)
+  fetchOne<S>(select: S): Promise<Selection.Infer<S>> {
+    return CMS.instanceFor(this).connection().fetch(select)
   }
 }
 

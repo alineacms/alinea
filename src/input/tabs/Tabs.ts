@@ -1,6 +1,7 @@
 import {
   Expand,
   Field,
+  Section,
   SectionData,
   SectionDefinition,
   Type,
@@ -29,8 +30,10 @@ type ArrayIntersection<T> = Expand<
 >
 
 /** Create tabs */
-export function tabs<Types extends Array<Type>>(...types: Types) {
-  return section<ArrayIntersection<Types>>(new TabsSection(types))
+export function tabs<Types extends Array<Type>>(
+  ...types: Types
+): Section<ArrayIntersection<Types>> {
+  return section(new TabsSection(types))
 }
 
 /** Create a tab */

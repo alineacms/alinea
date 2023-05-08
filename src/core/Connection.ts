@@ -5,10 +5,11 @@ import {Entry} from './Entry.js'
 import {Future} from './Future.js'
 import {Media} from './Media.js'
 import {User} from './User.js'
+import {Selection} from './pages/Selection.js'
 import {Logger} from './util/Logger.js'
 
 export interface Connection {
-  // fetch<S>(selection: S): Promise<Selection.Infer<S>>
+  fetch<S>(selection: S): Promise<Selection.Infer<S>>
   entry(
     params: Connection.EntryParams,
     ctx?: Connection.Context
@@ -126,9 +127,5 @@ export namespace Connection {
     files(location?: string) {
       return base + `/files${location ? '/' + location : ''}`
     }
-  }
-
-  export async function establish(): Promise<Connection> {
-    throw new Error(`No CMS connection available`)
   }
 }

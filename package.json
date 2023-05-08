@@ -5,7 +5,7 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "dev": "esbx build && run-p dev:compile dev:check dev:next ",
+    "dev": "esbx build && run-p dev:compile dev:check dev:web2",
     "build": "esbx build",
     "build:alinea": "esbx build",
     "release:types": "tsc",
@@ -14,6 +14,7 @@
     "test": "esbx build && cross-env FORCE_COLOR=1 esbx test",
     "dev:check": "tsc -w",
     "dev:next": "yarn workspace @alinea/web dev",
+    "dev:web2": "yarn workspace @alinea/web2 dev",
     "dev:compile": "esbx dev",
     "dev:stories": "ladle serve --stories \"src/**/*.stories.tsx\"",
     "gen:bundleTs": "esbx bundleTs",
@@ -43,6 +44,7 @@
   "workspaces": [
     "apps/demo",
     "apps/web",
+    "apps/web2",
     "src/backend",
     "src/cli",
     "src/core",

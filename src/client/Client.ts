@@ -35,21 +35,21 @@ export class Client implements Connection {
     id,
     stateVector
   }: Connection.EntryParams): Future<Entry.Detail | null> {
-    return this.fetchJson(Connection.routes.entry(id, stateVector), {
+    return this.requestJson(Connection.routes.entry(id, stateVector), {
       method: 'GET'
     }).then<Outcome<Entry.Detail | null>>(toFuture, fail)
   }
 
   query<T>({cursor, source}: Connection.QueryParams<T>): Future<Array<T>> {
     const params = source ? '?source' : ''
-    return this.fetchJson(Connection.routes.query() + params, {
+    return this.requestJson(Connection.routes.query() + params, {
       method: 'POST',
       body: JSON.stringify(cursor.toJSON())
     }).then<Outcome<Array<T>>>(toFuture, fail)
   }
 
   updateDraft({id, update}: Connection.UpdateParams): Future {
-    return this.fetch(Connection.routes.draft(id), {
+    return this.request(Connection.routes.draft(id), {
       method: 'PUT',
       headers: {'content-type': 'application/octet-stream'},
       body: update
@@ -57,19 +57,22 @@ export class Client implements Connection {
   }
 
   deleteDraft({id}: Connection.DeleteParams): Future<boolean> {
-    return this.fetch(Connection.routes.draft(id), {
+    return this.request(Connection.routes.draft(id), {
       method: 'DELETE'
     }).then<Outcome<boolean>>(toFuture, fail)
   }
 
   listDrafts({workspace}: Connection.ListParams): Future<Array<{id: string}>> {
-    return this.fetch(Connection.routes.drafts() + `?workspace=${workspace}`, {
-      method: 'GET'
-    }).then<Outcome<Array<{id: string}>>>(toFuture, fail)
+    return this.request(
+      Connection.routes.drafts() + `?workspace=${workspace}`,
+      {
+        method: 'GET'
+      }
+    ).then<Outcome<Array<{id: string}>>>(toFuture, fail)
   }
 
   publishEntries({entries}: Connection.PublishParams): Future {
-    return this.fetchJson(Connection.routes.publish(), {
+    return this.requestJson(Connection.routes.publish(), {
       method: 'POST',
       body: JSON.stringify(entries)
     }).then(toFuture, fail)
@@ -91,19 +94,19 @@ export class Client implements Connection {
     if ('height' in file) form.append('height', String(file.height))
     form.append('buffer', new Blob([file.buffer]))
     if (file.preview) form.append('preview', file.preview)
-    return this.fetch(Connection.routes.upload(), {
+    return this.request(Connection.routes.upload(), {
       method: 'POST',
       body: form
     }).then<Outcome<Media.File>>(toFuture, fail)
   }
 
   /*listFiles(location?: string): Future<Array<Hub.DirEntry>> {
-    return this.fetch(Hub.routes.files(location), {
+    return this.request(Hub.routes.files(location), {
       method: 'GET'
     }).then<Outcome<Array<Hub.DirEntry>>>(toFuture)
   }*/
 
-  protected fetch(endpoint: string, init?: RequestInit): Promise<Response> {
+  protected request(endpoint: string, init?: RequestInit): Promise<Response> {
     const controller = new AbortController()
     const signal = controller.signal
     const url =
@@ -139,8 +142,8 @@ export class Client implements Connection {
     return cancelify(promise)
   }
 
-  protected fetchJson(endpoint: string, init?: RequestInit) {
-    return this.fetch(endpoint, {
+  protected requestJson(endpoint: string, init?: RequestInit) {
+    return this.request(endpoint, {
       ...init,
       headers: {
         ...init?.headers,

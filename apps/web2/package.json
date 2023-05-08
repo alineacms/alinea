@@ -1,0 +1,25 @@
+{
+  "private": true,
+  "name": "@alinea/web2",
+  "version": "0.0.0",
+  "license": "MIT",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "alinea": "0.0.0",
+    "next": "^13.4.1",
+    "react": "18.2.0",
+    "react-dom": "18.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "20.0.0",
+    "@types/react": "18.2.5",
+    "eslint": "8.39.0",
+    "eslint-config-next": "13.4.0",
+    "typescript": "5.0.4"
+  }
+}
