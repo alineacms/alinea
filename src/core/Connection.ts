@@ -8,6 +8,7 @@ import {User} from './User.js'
 import {Logger} from './util/Logger.js'
 
 export interface Connection {
+  // fetch<S>(selection: S): Promise<Selection.Infer<S>>
   entry(
     params: Connection.EntryParams,
     ctx?: Connection.Context
@@ -125,5 +126,9 @@ export namespace Connection {
     files(location?: string) {
       return base + `/files${location ? '/' + location : ''}`
     }
+  }
+
+  export async function establish(): Promise<Connection> {
+    throw new Error(`No CMS connection available`)
   }
 }

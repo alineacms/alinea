@@ -1,5 +1,6 @@
 import {Expand} from 'alinea/core'
 import type {ComponentType} from 'react'
+import {CMS} from './CMS.js'
 import {Label} from './Label.js'
 import {Root} from './Root.js'
 import {getRandomColor} from './util/GetRandomColor.js'
@@ -31,6 +32,7 @@ export interface WorkspaceDefinition extends Roots {
 
 export type Workspace<T extends Roots = Roots> = T & {
   [Workspace.Data]: WorkspaceData
+  [CMS.Link]?: CMS
 }
 
 export namespace Workspace {
