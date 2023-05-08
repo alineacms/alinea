@@ -1,13 +1,12 @@
 import type {Backend} from 'alinea/backend/Backend'
 import {BackendConfig, BackendProps} from './BackendConfig.js'
 import {createError} from './ErrorWithCode.js'
-import {Root} from './Root.js'
 import {Schema} from './Schema.js'
 import {Type} from './Type.js'
 import {Workspace, WorkspaceData} from './Workspace.js'
 
 /** Configuration options */
-export interface ConfigDefinition {
+export interface Config {
   schema: Schema
   /** A record containing workspace configurations */
   workspaces: Record<string, Workspace>
@@ -20,8 +19,6 @@ export interface ConfigDefinition {
     staticFile?: string
   }
 }
-
-export type Config = ConfigDefinition
 
 export namespace Config {
   export function createBackend(
@@ -42,25 +39,13 @@ export namespace Config {
     return config.schema[name]
   }
 
-  export function root(config: Config, workspace: string, root: string): Root {
-    const space = config.workspaces[workspace]
-    if (!space) throw createError(404, `Workspace "${workspace}" not found`)
-    const maybeRoot = space[root]
-    if (!maybeRoot)
-      throw createError(
-        404,
-        `Root "${root}" in workspace "${workspace}" not found`
-      )
-    return maybeRoot
-  }
-
   export function hasAuth(config: Config): boolean {
     return Boolean(config.backend?.auth)
   }
 }
 
 /** Create a new config instance */
-export function createConfig<Definition extends ConfigDefinition>(
+export function createConfig<Definition extends Config>(
   definition: Definition
 ) {
   return definition

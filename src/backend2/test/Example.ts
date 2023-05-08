@@ -1,15 +1,10 @@
 import sqlite from '@alinea/sqlite-wasm'
 import {Database} from 'alinea/backend2/Database'
-import {
-  createConfig,
-  schema as createSchema,
-  root,
-  type,
-  workspace
-} from 'alinea/core'
+import {schema as createSchema, root, type, workspace} from 'alinea/core'
 import {path, tab, tabs, text} from 'alinea/input'
 import {SourceEntry} from '../Source.js'
 
+import {createCMS} from 'alinea/core/CMS'
 import {connect} from 'rado/driver/sql.js'
 
 const encode = (data: any) => new TextEncoder().encode(JSON.stringify(data))
@@ -112,7 +107,7 @@ export namespace Example {
     }
   })
 
-  export const cms = createConfig({
+  export const cms = createCMS({
     schema,
     workspaces: {main}
   })
