@@ -7,7 +7,7 @@ import {Media} from './Media.js'
 import {User} from './User.js'
 import {Logger} from './util/Logger.js'
 
-export interface Connection<T = any> {
+export interface Connection {
   entry(
     params: Connection.EntryParams,
     ctx?: Connection.Context

@@ -35,7 +35,7 @@ class LocalBackend extends Backend {
   }
 }
 
-export class DevBackend<T> extends Client<T> {
+export class DevBackend extends Client {
   handle: Handle<Request, Response | undefined>
   previews = new JWTPreviews('@alinea/backend/devserver')
   local: LocalBackend
@@ -45,13 +45,13 @@ export class DevBackend<T> extends Client<T> {
     const {config, serverLocation = 'http://localhost:4500'} = options
     super(config, serverLocation)
     this.fullyLocal = options.serverLocation === undefined
-    const api = createRouter<T>(this, anonymousAuth())
+    const api = createRouter(this, anonymousAuth())
     const {handle} = api
     this.local = new LocalBackend({...options, serverLocation})
     this.handle = handle
   }
 
-  fallback(method: keyof Connection<T>): any {
+  fallback(method: keyof Connection): any {
     return async (params: any) => {
       if (this.fullyLocal) return this.local[method](params)
       return super[method](params).then((outcome: Outcome<any>) => {
@@ -62,17 +62,16 @@ export class DevBackend<T> extends Client<T> {
     }
   }
 
-  entry: Connection<T>['entry'] = this.fallback('entry')
-  query: Connection<T>['query'] = this.fallback('query')
-  updateDraft: Connection<T>['updateDraft'] = this.fallback('updateDraft')
-  deleteDraft: Connection<T>['deleteDraft'] = this.fallback('deleteDraft')
-  listDrafts: Connection<T>['listDrafts'] = this.fallback('listDrafts')
-  uploadFile: Connection<T>['uploadFile'] = this.fallback('uploadFile')
-  publishEntries: Connection<T>['publishEntries'] =
-    this.fallback('publishEntries')
+  entry: Connection['entry'] = this.fallback('entry')
+  query: Connection['query'] = this.fallback('query')
+  updateDraft: Connection['updateDraft'] = this.fallback('updateDraft')
+  deleteDraft: Connection['deleteDraft'] = this.fallback('deleteDraft')
+  listDrafts: Connection['listDrafts'] = this.fallback('listDrafts')
+  uploadFile: Connection['uploadFile'] = this.fallback('uploadFile')
+  publishEntries: Connection['publishEntries'] = this.fallback('publishEntries')
 
   loadPages(options: PreviewOptions = {}) {
-    return new Pages<T>({
+    return new Pages({
       schema: this.config.schema,
       query: cursor => {
         return this.query({
