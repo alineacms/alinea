@@ -1,5 +1,5 @@
 import {Previews} from 'alinea/backend/Previews'
-import {Config, Future, Hub} from 'alinea/core'
+import {Config, Connection, Future} from 'alinea/core'
 import {Api} from './Api.js'
 import {Database} from './Database.js'
 import {File, Media} from './Media.js'
@@ -23,7 +23,10 @@ export type ServerOptions = {
 export class Server implements Api {
   db: Database
 
-  constructor(public options: ServerOptions, public context: Hub.Context) {
+  constructor(
+    public options: ServerOptions,
+    public context: Connection.Context
+  ) {
     this.db = new Database(options.store, options.config)
   }
 
@@ -35,11 +38,11 @@ export class Server implements Api {
     return this.db.updates(request)
   }
 
-  publishEntries(params: Hub.PublishParams): Future {
+  publishEntries(params: Connection.PublishParams): Future {
     throw 'assert'
   }
 
-  uploadFile(params: Hub.UploadParams): Future<File> {
+  uploadFile(params: Connection.UploadParams): Future<File> {
     throw 'assert'
   }
 }

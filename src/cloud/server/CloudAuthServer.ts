@@ -1,6 +1,6 @@
 import {fetch, Request, Response} from '@alinea/iso'
 import {Handler, router} from 'alinea/backend/router/Router'
-import {Auth, Config, createError, Hub, outcome, User} from 'alinea/core'
+import {Auth, Config, Connection, createError, outcome, User} from 'alinea/core'
 import {verify} from 'alinea/core/util/JWT'
 const version = '0.0.0'
 // import {version} from '../../../package.json'
@@ -43,103 +43,110 @@ export class CloudAuthServer implements Auth.Server {
     const {apiKey, config} = options
 
     this.dashboardUrl = config.dashboard?.dashboardUrl!
-    const matcher = router.startAt(Hub.routes.base)
+    const matcher = router.startAt(Connection.routes.base)
     this.handler = router(
       // We start by asking our backend whether we have:
       // - a logged in user => return the user so we can create a session
       // - no user, but a valid api key => we can redirect to cloud login
       // - no api key => display a message to setup backend
       matcher
-        .get(Hub.routes.base + '/auth.cloud')
+        .get(Connection.routes.base + '/auth.cloud')
         .map(async ({request}) => {
           return this.authResult(request)
         })
         .map(router.jsonResponse),
 
       // The cloud server will request a handshake confirmation on this route
-      matcher.get(Hub.routes.base + '/auth/handshake').map(async ({url}) => {
-        const handShakeId = url.searchParams.get('handshake_id')
-        if (!handShakeId)
-          throw createError(
-            400,
-            'Provide a valid handshake id to initiate handshake'
-          )
-        const body: any = {
-          handshake_id: handShakeId,
-          status: {
-            version,
-            roles: [
-              {
-                key: 'editor',
-                label: 'Editor',
-                description: 'Can view and edit all pages'
-              }
-            ],
-            sourceDirectories: Object.values(config.workspaces).map(
-              workspace => {
-                return workspace.source
-              }
+      matcher
+        .get(Connection.routes.base + '/auth/handshake')
+        .map(async ({url}) => {
+          const handShakeId = url.searchParams.get('handshake_id')
+          if (!handShakeId)
+            throw createError(
+              400,
+              'Provide a valid handshake id to initiate handshake'
             )
+          const body: any = {
+            handshake_id: handShakeId,
+            status: {
+              version,
+              roles: [
+                {
+                  key: 'editor',
+                  label: 'Editor',
+                  description: 'Can view and edit all pages'
+                }
+              ],
+              sourceDirectories: Object.values(config.workspaces).map(
+                workspace => {
+                  return workspace.source
+                }
+              )
+            }
           }
-        }
-        if (process.env.VERCEL) {
-          body.git = {
-            hosting: 'vercel',
-            env: process.env.VERCEL_ENV,
-            url: process.env.VERCEL_URL,
-            provider: process.env.VERCEL_GIT_PROVIDER,
-            repo: process.env.VERCEL_GIT_REPO_SLUG,
-            owner: process.env.VERCEL_GIT_REPO_OWNER,
-            branch: process.env.VERCEL_GIT_COMMIT_REF
+          if (process.env.VERCEL) {
+            body.git = {
+              hosting: 'vercel',
+              env: process.env.VERCEL_ENV,
+              url: process.env.VERCEL_URL,
+              provider: process.env.VERCEL_GIT_PROVIDER,
+              repo: process.env.VERCEL_GIT_REPO_SLUG,
+              owner: process.env.VERCEL_GIT_REPO_OWNER,
+              branch: process.env.VERCEL_GIT_COMMIT_REF
+            }
           }
-        }
-        // We submit the handshake id, our status and authorize using the
-        // private key
-        const res = await fetch(cloudConfig.handshake, {
-          method: 'POST',
-          body: JSON.stringify(body),
-          headers: {
-            'content-type': 'application/json',
-            accept: 'application/json',
-            authorization: `Bearer ${apiKey}`
-          }
-        }).catch(e => {
-          throw createError(500, `Could not reach handshake api: ${e}`)
-        })
-        if (res.status !== 200)
-          throw createError(res.status, `Handshake failed: ${await res.text()}`)
-        return new Response('alinea cloud handshake')
-      }),
+          // We submit the handshake id, our status and authorize using the
+          // private key
+          const res = await fetch(cloudConfig.handshake, {
+            method: 'POST',
+            body: JSON.stringify(body),
+            headers: {
+              'content-type': 'application/json',
+              accept: 'application/json',
+              authorization: `Bearer ${apiKey}`
+            }
+          }).catch(e => {
+            throw createError(500, `Could not reach handshake api: ${e}`)
+          })
+          if (res.status !== 200)
+            throw createError(
+              res.status,
+              `Handshake failed: ${await res.text()}`
+            )
+          return new Response('alinea cloud handshake')
+        }),
 
       // If the user followed through to the cloud login page it should
       // redirect us here with a token
-      matcher.get(Hub.routes.base + '/auth').map(async ({request, url}) => {
-        if (!apiKey) throw createError(500, 'No api key set')
-        const token: string | null = url.searchParams.get('token')
-        if (!token) throw createError(400, 'Token required')
-        const user = await verify<User>(token, await this.key)
-        // Store the token in a cookie and redirect to the dashboard
-        // Todo: add expires and max-age based on token expiration
-        const target = new URL(this.dashboardUrl, url)
-        return router.redirect(target.href, {
-          status: 302,
-          headers: {
-            'set-cookie': router.cookie({
-              name: COOKIE_NAME,
-              value: token,
-              domain: target.hostname,
-              path: '/',
-              secure: target.protocol === 'https:',
-              httpOnly: true,
-              sameSite: 'strict'
-            })
-          }
-        })
-      }),
+      matcher
+        .get(Connection.routes.base + '/auth')
+        .map(async ({request, url}) => {
+          if (!apiKey) throw createError(500, 'No api key set')
+          const token: string | null = url.searchParams.get('token')
+          if (!token) throw createError(400, 'Token required')
+          const user = await verify<User>(token, await this.key)
+          // Store the token in a cookie and redirect to the dashboard
+          // Todo: add expires and max-age based on token expiration
+          const target = new URL(this.dashboardUrl, url)
+          return router.redirect(target.href, {
+            status: 302,
+            headers: {
+              'set-cookie': router.cookie({
+                name: COOKIE_NAME,
+                value: token,
+                domain: target.hostname,
+                path: '/',
+                secure: target.protocol === 'https:',
+                httpOnly: true,
+                sameSite: 'strict'
+              })
+            }
+          })
+        }),
 
       // The logout route unsets our cookies
       matcher
-        .get(Hub.routes.base + '/auth/logout')
+        .get(Connection.routes.base + '/auth/logout')
         .map(async ({url, request}) => {
           const target = new URL(this.dashboardUrl, url)
 

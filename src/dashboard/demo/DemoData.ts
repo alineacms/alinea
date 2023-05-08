@@ -83,7 +83,7 @@ export function createDemo() {
     client,
     session: {
       user: {sub: 'anonymous'},
-      hub: client,
+      cnx: client,
       end: async () => {}
     }
   }

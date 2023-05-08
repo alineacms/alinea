@@ -4,7 +4,7 @@ import {Config} from 'alinea/core'
 import {SqliteStore} from 'alinea/store/sqlite/SqliteStore'
 
 export interface ReadonlyBackendOptions<T> {
-  config: Config<T>
+  config: Config
   createStore: () => Promise<SqliteStore>
 }
 

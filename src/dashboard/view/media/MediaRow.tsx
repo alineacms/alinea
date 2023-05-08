@@ -33,7 +33,7 @@ function query(parentId: string, start: number, batchSize: number) {
 }
 
 export function MediaRow({amount, parentId, from, batchSize}: MediaRowProps) {
-  const {hub} = useSession()
+  const {cnx: hub} = useSession()
   const start = Math.floor(from / batchSize)
   const {data} = useQuery(
     ['media', 'batch', batchSize, parentId, start],

@@ -33,7 +33,7 @@ export function EntryEdit({initialMode, draft, isLoading}: EntryEditProps) {
   const queryClient = useQueryClient()
   const locale = useLocale()
   const {schema} = useDashboard().config
-  const {hub} = useSession()
+  const {cnx: hub} = useSession()
   const navigate = useNavigate()
   const type = schema[draft.type]
   const {preview} = useWorkspace()

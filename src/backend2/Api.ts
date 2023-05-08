@@ -1,4 +1,4 @@
-import {Future, Hub, Media} from 'alinea/core'
+import {Connection, Future, Media} from 'alinea/core'
 import {AlineaMeta} from './database/AlineaMeta.js'
 import {EntryTree} from './database/EntryTree.js'
 
@@ -13,8 +13,8 @@ export interface Syncable {
 }
 
 export interface Api extends Syncable {
-  uploadFile(params: Hub.UploadParams): Future<Media.File>
-  publishEntries(params: Hub.PublishParams): Future
+  uploadFile(params: Connection.UploadParams): Future<Media.File>
+  publishEntries(params: Connection.PublishParams): Future
 }
 
 export namespace Api {

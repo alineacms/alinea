@@ -1,16 +1,16 @@
 import {
-  docFromEntry,
+  Connection,
   Entry,
-  entryFromDoc,
   EntryMeta,
   EntryStatus,
-  Hub,
   Label,
   ROOT_KEY,
   Shape,
-  Type
+  Type,
+  docFromEntry,
+  entryFromDoc
 } from 'alinea/core'
-import {observable, Observable} from 'alinea/ui'
+import {Observable, observable} from 'alinea/ui'
 import * as Y from 'yjs'
 import {EntryProperty} from './EntryProperty.js'
 
@@ -25,7 +25,7 @@ export class EntryDraft implements Entry {
   private __root: Y.Map<any>
 
   constructor(
-    protected hub: Hub,
+    protected cnx: Connection,
     public channel: Type,
     public detail: Entry.Detail,
     public doc: Y.Doc

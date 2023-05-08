@@ -1,6 +1,6 @@
 import {FS} from 'alinea/backend/FS'
+import {Connection} from 'alinea/core'
 import {Config} from 'alinea/core/Config'
-import {Hub} from 'alinea/core/Hub'
 import {outcome} from 'alinea/core/Outcome'
 import {Root} from 'alinea/core/Root'
 import {Workspace} from 'alinea/core/Workspace'
@@ -68,7 +68,7 @@ export class FileData implements Source, Target {
     }
   }
 
-  async publish({changes}: Hub.ChangesParams) {
+  async publish({changes}: Connection.ChangesParams) {
     const {fs, rootDir = '.'} = this.options
     const tasks = []
     const noop = () => {}

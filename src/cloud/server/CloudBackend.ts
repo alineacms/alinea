@@ -1,9 +1,9 @@
 import {fetch} from '@alinea/iso'
 import {Backend, Data, Drafts, JWTPreviews} from 'alinea/backend'
+import {Connection} from 'alinea/core'
 import {BackendCreateOptions} from 'alinea/core/BackendConfig'
 import {Config} from 'alinea/core/Config'
 import {createError} from 'alinea/core/ErrorWithCode'
-import {Hub} from 'alinea/core/Hub'
 import {Outcome, OutcomeJSON} from 'alinea/core/Outcome'
 import {base64, base64url} from 'alinea/core/util/Encoding'
 import {CloudAuthServerOptions} from './CloudAuthServer.js'
@@ -20,7 +20,7 @@ function json<T>(res: Response): Promise<T> {
   return res.json()
 }
 
-function withAuth(ctx: Hub.AuthContext, init: RequestInit = {}) {
+function withAuth(ctx: Connection.AuthContext, init: RequestInit = {}) {
   return {
     ...init,
     headers: {
@@ -46,13 +46,13 @@ export class CloudApi implements CloudConnection {
 
   constructor(private config: Config, private apiKey: string | undefined) {}
 
-  auth(ctx: Hub.Context) {
+  auth(ctx: Connection.Context) {
     return {
       authorization: `Bearer ${ctx.token!}`
     }
   }
 
-  publish({changes}: Hub.ChangesParams, ctx: Hub.Context) {
+  publish({changes}: Connection.ChangesParams, ctx: Connection.Context) {
     return fetch(
       cloudConfig.publish,
       withAuth(
@@ -67,8 +67,8 @@ export class CloudApi implements CloudConnection {
       .then<void>(json)
   }
   async upload(
-    {fileLocation, buffer}: Hub.MediaUploadParams,
-    ctx: Hub.Context
+    {fileLocation, buffer}: Connection.MediaUploadParams,
+    ctx: Connection.Context
   ): Promise<string> {
     return fetch(
       cloudConfig.media,
@@ -88,9 +88,9 @@ export class CloudApi implements CloudConnection {
       .then(Outcome.unpack)
   }
   async download(
-    {location}: Hub.DownloadParams,
-    ctx: Hub.Context
-  ): Promise<Hub.Download> {
+    {location}: Connection.DownloadParams,
+    ctx: Connection.Context
+  ): Promise<Connection.Download> {
     return fetch(
       cloudConfig.media + '?' + new URLSearchParams({location}),
       withAuth(ctx)
@@ -99,8 +99,8 @@ export class CloudApi implements CloudConnection {
       .then(async res => ({type: 'buffer', buffer: await res.arrayBuffer()}))
   }
   get(
-    {id, stateVector}: Hub.EntryParams,
-    ctx: Hub.Context
+    {id, stateVector}: Connection.EntryParams,
+    ctx: Connection.Context
   ): Promise<Uint8Array | undefined> {
     const params = stateVector
       ? '?' +
@@ -119,8 +119,8 @@ export class CloudApi implements CloudConnection {
     )
   }
   update(
-    {id, update}: Hub.UpdateParams,
-    ctx: Hub.Context
+    {id, update}: Connection.UpdateParams,
+    ctx: Connection.Context
   ): Promise<Drafts.Update> {
     return fetch(
       cloudConfig.draft + `/${id}`,
@@ -133,7 +133,10 @@ export class CloudApi implements CloudConnection {
       .then(failOnHttpError)
       .then(() => ({id, update}))
   }
-  delete({ids}: Hub.DeleteMultipleParams, ctx: Hub.Context): Promise<void> {
+  delete(
+    {ids}: Connection.DeleteMultipleParams,
+    ctx: Connection.Context
+  ): Promise<void> {
     return fetch(
       cloudConfig.draft,
       asJson(withAuth(ctx, {method: 'DELETE', body: JSON.stringify({ids})}))
@@ -141,7 +144,7 @@ export class CloudApi implements CloudConnection {
       .then(failOnHttpError)
       .then(() => void 0)
   }
-  async *updates({}, ctx: Hub.Context): AsyncGenerator<Drafts.Update> {
+  async *updates({}, ctx: Connection.Context): AsyncGenerator<Drafts.Update> {
     // We use the api key to fetch a draft here which was requested during
     // previewing. The preview token has been validated in Server.loadPages.
     const token = ctx.preview ? this.apiKey : ctx.token

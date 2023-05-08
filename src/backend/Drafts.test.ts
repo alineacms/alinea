@@ -1,5 +1,5 @@
 import {FileDrafts} from 'alinea/backend/drafts/FileDrafts'
-import {docFromEntry, Entry, ROOT_KEY, Type, type} from 'alinea/core'
+import {docFromEntry, Entry, ROOT_KEY, type} from 'alinea/core'
 import {path} from 'alinea/input/path'
 import {text} from 'alinea/input/text'
 import dotenv from 'dotenv'
@@ -30,15 +30,13 @@ const Doc = type('Doc', {
   path: path('Path')
 })
 
-const DocType = new Type('Doc', Doc)
-
 const drafts = new FileDrafts({
   fs: fs.promises as any,
   dir: '/tmp'
 })
 
 test('update doc', async () => {
-  const yDoc = docFromEntry(entry, () => DocType)
+  const yDoc = docFromEntry(entry, () => Doc)
   const stateVector = Y.encodeStateVector(yDoc)
   await drafts.update({
     id: entry.id,

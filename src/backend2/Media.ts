@@ -1,4 +1,4 @@
-import {Entry, Hub} from 'alinea/core'
+import {Connection, Entry} from 'alinea/core'
 
 export enum Type {
   Libary = 'MediaLibrary',
@@ -25,6 +25,6 @@ export interface File extends Entry, FileProperties, Partial<ImageProperties> {}
 export interface Image extends Entry, FileProperties, ImageProperties {}
 
 export interface Media {
-  upload(params: Hub.MediaUploadParams): Promise<string>
-  download(params: Hub.DownloadParams): Promise<Hub.Download>
+  upload(params: Connection.MediaUploadParams): Promise<string>
+  download(params: Connection.DownloadParams): Promise<Connection.Download>
 }

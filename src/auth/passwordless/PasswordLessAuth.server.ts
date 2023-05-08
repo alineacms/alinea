@@ -1,5 +1,5 @@
 import {Handler, router} from 'alinea/backend/router/Router'
-import {Auth, createError, Hub, Outcome, User} from 'alinea/core'
+import {Auth, Connection, Outcome, User, createError} from 'alinea/core'
 import {sign, verify} from 'alinea/core/util/JWT'
 import type {Transporter} from 'nodemailer'
 import {assert, object, string} from 'superstruct'
@@ -27,10 +27,10 @@ export class PasswordLessAuth implements Auth.Server {
   users = new WeakMap<Request, User>()
 
   constructor(protected options: PasswordLessAuthOptions) {
-    const matcher = router.startAt(Hub.routes.base)
+    const matcher = router.startAt(Connection.routes.base)
     this.handler = router(
       matcher
-        .post(Hub.routes.base + '/auth.passwordless')
+        .post(Connection.routes.base + '/auth.passwordless')
         .map(router.parseJson)
         .map(async ({body}) => {
           assert(body, LoginBody)
@@ -62,7 +62,7 @@ export class PasswordLessAuth implements Auth.Server {
     ).recover(router.reportError)
   }
 
-  async contextFor(request: Request): Promise<Hub.AuthContext> {
+  async contextFor(request: Request): Promise<Connection.AuthContext> {
     return {user: await this.userFor(request)}
   }
 

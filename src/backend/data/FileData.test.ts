@@ -31,8 +31,11 @@ const config = createConfig({
     }),
     Type: type('Type', {
       title: text('Title'),
-      path: text('path')
-    }).configure({isContainer: true}),
+      path: text('path'),
+      [type.meta]: {
+        isContainer: true
+      }
+    }),
     Sub: type('Sub', {
       title: text('Title'),
       path: text('path')
@@ -40,12 +43,12 @@ const config = createConfig({
   }),
   workspaces: {
     main: workspace('Main', {
-      source: 'content',
-      mediaDir: 'files',
-      roots: {
-        data: root('Root', {
-          contains: ['Type']
-        })
+      data: root('Root', {
+        contains: ['Type']
+      }),
+      [workspace.meta]: {
+        source: 'content',
+        mediaDir: 'files'
       }
     })
   }

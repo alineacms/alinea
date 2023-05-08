@@ -1,6 +1,6 @@
 import {Request, Response} from '@alinea/iso'
 import {Handle, Route, router} from 'alinea/backend'
-import {Auth, Entry, Hub} from 'alinea/core'
+import {Auth, Connection, Entry} from 'alinea/core'
 import {Logger, LoggerResult, Report} from 'alinea/core/util/Logger'
 import {Api} from './Api.js'
 import {Server, ServerOptions} from './Server.js'
@@ -13,12 +13,12 @@ function respond<T>({result, logger}: LoggerResult<T>) {
 
 function createRouter(
   auth: Auth.Server,
-  createApi: (context: Hub.Context) => Api
+  createApi: (context: Connection.Context) => Api
 ): Route<Request, Response | undefined> {
-  const matcher = router.startAt(Hub.routes.base)
+  const matcher = router.startAt(Connection.routes.base)
   async function context<T extends {request: Request; url: URL}>(
     input: T
-  ): Promise<T & {ctx: Hub.Context; logger: Logger}> {
+  ): Promise<T & {ctx: Connection.Context; logger: Logger}> {
     const logger = new Logger(`${input.request.method} ${input.url.pathname}`)
     return {
       ...input,
@@ -48,7 +48,7 @@ function createRouter(
       .map(respond),
 
     matcher
-      .post(Hub.routes.publish())
+      .post(Connection.routes.publish())
       .map(context)
       .map(router.parseJson)
       .map(({ctx, body}) => {
@@ -60,7 +60,7 @@ function createRouter(
       .map(respond),
 
     matcher
-      .post(Hub.routes.upload())
+      .post(Connection.routes.upload())
       .map(context)
       .map(router.parseFormData)
       .map(async ({ctx, body}) => {

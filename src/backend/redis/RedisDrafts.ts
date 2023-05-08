@@ -1,5 +1,5 @@
 import type {Drafts} from 'alinea/backend/Drafts'
-import {Hub} from 'alinea/core/Hub'
+import {Connection} from 'alinea/core'
 import type {Redis} from 'ioredis'
 import * as Y from 'yjs'
 
@@ -20,7 +20,7 @@ export class RedisDrafts implements Drafts {
   async get({
     id,
     stateVector
-  }: Hub.EntryParams): Promise<Uint8Array | undefined> {
+  }: Connection.EntryParams): Promise<Uint8Array | undefined> {
     const {prefix, client} = this.options
     const draft = await client.getBuffer(prefix + id)
     if (!(draft instanceof Uint8Array)) return undefined
@@ -30,7 +30,7 @@ export class RedisDrafts implements Drafts {
     return Y.encodeStateAsUpdate(doc, stateVector)
   }
 
-  async update({id, update}: Hub.UpdateParams): Promise<Drafts.Update> {
+  async update({id, update}: Connection.UpdateParams): Promise<Drafts.Update> {
     const {prefix, client} = this.options
     const doc = new Y.Doc()
     const current = await this.get({id})
@@ -41,7 +41,7 @@ export class RedisDrafts implements Drafts {
     return {id, update: draft}
   }
 
-  async delete({ids}: Hub.DeleteMultipleParams): Promise<void> {
+  async delete({ids}: Connection.DeleteMultipleParams): Promise<void> {
     const {prefix, client} = this.options
     for (const id of ids) await client.del(prefix + id)
   }

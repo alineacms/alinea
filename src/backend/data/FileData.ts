@@ -1,9 +1,9 @@
 import {
   Config,
-  createError,
+  Connection,
   Entry,
   EntryStatus,
-  Hub,
+  createError,
   outcome
 } from 'alinea/core'
 import * as path from 'alinea/core/util/Paths'
@@ -180,7 +180,7 @@ export class FileData implements Data.Source, Data.Target, Data.Media {
     return res
   }
 
-  async publish({changes}: Hub.ChangesParams) {
+  async publish({changes}: Connection.ChangesParams) {
     const {fs, rootDir = '.'} = this.options
     const tasks = []
     const noop = () => {}
@@ -205,13 +205,18 @@ export class FileData implements Data.Source, Data.Target, Data.Media {
     return Promise.all(tasks).then(() => void 0)
   }
 
-  async upload({fileLocation, buffer}: Hub.MediaUploadParams): Promise<string> {
+  async upload({
+    fileLocation,
+    buffer
+  }: Connection.MediaUploadParams): Promise<string> {
     const {fs, rootDir = '.'} = this.options
     await fs.writeFile(path.join(rootDir, fileLocation), Buffer.from(buffer))
     return fileLocation
   }
 
-  async download({location}: Hub.DownloadParams): Promise<Hub.Download> {
+  async download({
+    location
+  }: Connection.DownloadParams): Promise<Connection.Download> {
     const {fs, config, rootDir = '.'} = this.options
     const mediaDirs: Array<string> = Object.values(config.workspaces)
       .map(workspace => workspace.mediaDir!)

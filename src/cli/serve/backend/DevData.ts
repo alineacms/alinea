@@ -1,7 +1,7 @@
 import {fetch} from '@alinea/iso'
 import {Data} from 'alinea/backend/Data'
+import {Connection} from 'alinea/core'
 import {createError} from 'alinea/core/ErrorWithCode'
-import {Hub} from 'alinea/core/Hub'
 import {Outcome, OutcomeJSON} from 'alinea/core/Outcome'
 
 async function failOnHttpError(res: Response): Promise<Response> {
@@ -23,10 +23,10 @@ export class DevData implements Data.Media, Data.Target {
 
   protected url(endPoint: string) {
     const {serverLocation} = this.options
-    return serverLocation + Hub.routes.base + endPoint
+    return serverLocation + Connection.routes.base + endPoint
   }
 
-  publish({changes}: Hub.ChangesParams) {
+  publish({changes}: Connection.ChangesParams) {
     return fetch(this.url('/~publish'), {
       method: 'POST',
       headers: {
@@ -41,7 +41,10 @@ export class DevData implements Data.Media, Data.Target {
       .then(Outcome.unpack)
   }
 
-  async upload({fileLocation, buffer}: Hub.MediaUploadParams): Promise<string> {
+  async upload({
+    fileLocation,
+    buffer
+  }: Connection.MediaUploadParams): Promise<string> {
     return fetch(this.url('/~media'), {
       method: 'POST',
       headers: {
@@ -57,7 +60,9 @@ export class DevData implements Data.Media, Data.Target {
       .then(Outcome.unpack)
   }
 
-  async download({location}: Hub.DownloadParams): Promise<Hub.Download> {
+  async download({
+    location
+  }: Connection.DownloadParams): Promise<Connection.Download> {
     return fetch(this.url('/~media') + '?' + new URLSearchParams({location}))
       .then(failOnHttpError)
       .then(async res => ({type: 'buffer', buffer: await res.arrayBuffer()}))

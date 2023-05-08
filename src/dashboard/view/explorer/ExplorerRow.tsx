@@ -28,7 +28,7 @@ export const ExplorerRow = memo(function ExplorerRow({
   summaryView,
   defaultView
 }: ExplorerRowProps) {
-  const {hub} = useSession()
+  const {cnx: hub} = useSession()
   const start = Math.floor(from / batchSize)
   const startAt = from % batchSize
   const {data} = useQuery(

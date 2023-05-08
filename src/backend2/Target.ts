@@ -1,6 +1,9 @@
-import {Hub} from 'alinea/core'
+import {Connection} from 'alinea/core'
 
 export interface Target {
   canRename: boolean
-  publish(params: Hub.ChangesParams, ctx: Hub.Context): Promise<void>
+  publish(
+    params: Connection.ChangesParams,
+    ctx: Connection.Context
+  ): Promise<void>
 }

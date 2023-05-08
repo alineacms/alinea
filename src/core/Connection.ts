@@ -7,20 +7,35 @@ import {Media} from './Media.js'
 import {User} from './User.js'
 import {Logger} from './util/Logger.js'
 
-export interface Hub<T = any> {
-  entry(params: Hub.EntryParams, ctx?: Hub.Context): Future<Entry.Detail | null>
-  query<T>(params: Hub.QueryParams<T>, ctx?: Hub.Context): Future<Array<T>>
-  updateDraft(params: Hub.UpdateParams, ctx?: Hub.Context): Future
-  deleteDraft(params: Hub.DeleteParams, ctx?: Hub.Context): Future<boolean>
+export interface Connection<T = any> {
+  entry(
+    params: Connection.EntryParams,
+    ctx?: Connection.Context
+  ): Future<Entry.Detail | null>
+  query<T>(
+    params: Connection.QueryParams<T>,
+    ctx?: Connection.Context
+  ): Future<Array<T>>
+  updateDraft(params: Connection.UpdateParams, ctx?: Connection.Context): Future
+  deleteDraft(
+    params: Connection.DeleteParams,
+    ctx?: Connection.Context
+  ): Future<boolean>
   listDrafts(
-    params: Hub.ListParams,
-    ctx?: Hub.Context
+    params: Connection.ListParams,
+    ctx?: Connection.Context
   ): Future<Array<{id: string}>>
-  uploadFile(params: Hub.UploadParams, ctx?: Hub.Context): Future<Media.File>
-  publishEntries(params: Hub.PublishParams, ctx?: Hub.Context): Future
+  uploadFile(
+    params: Connection.UploadParams,
+    ctx?: Connection.Context
+  ): Future<Media.File>
+  publishEntries(
+    params: Connection.PublishParams,
+    ctx?: Connection.Context
+  ): Future
 }
 
-export namespace Hub {
+export namespace Connection {
   export interface AuthContext {
     user?: User
     token?: string
