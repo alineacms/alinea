@@ -72,6 +72,10 @@ export namespace Cursor {
       return new Get<Selection.Infer<S>>(query)
     }
 
+    first(): Get<Row> {
+      return new Get<Row>(this.with({first: true}))
+    }
+
     select<S extends Projection<Row>>(select: S): Find<Selection.Infer<S>> {
       return new Find<Selection.Infer<S>>(
         this.with({select: Selection(select, this.id)})

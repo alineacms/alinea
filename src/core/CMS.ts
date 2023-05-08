@@ -15,6 +15,10 @@ export class CMS implements Config, CMSApi {
     this.attach(config)
   }
 
+  connection() {
+    return this.driver.establishConnection()
+  }
+
   protected attach(config: Config) {
     for (const [name, workspace] of entries(config.workspaces)) {
       if (attached.has(workspace))

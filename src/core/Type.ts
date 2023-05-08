@@ -240,7 +240,7 @@ export interface TypeDefinition {
 export function type<Definition extends TypeDefinition>(
   label: Label,
   definition: Definition
-): Type<Expand<Omit<Definition, symbol>>> {
+): Type<Definition> {
   const name = String(label)
   const instance = new TypeInstance(label, definition)
   const callable: any = {

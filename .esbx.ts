@@ -1,6 +1,5 @@
 import {ReporterPlugin} from '@esbx/reporter'
 import {list, report} from '@esbx/util'
-import {spawn} from 'child_process'
 import type {BuildOptions} from 'esbuild'
 import esbuild from 'esbuild'
 import fs from 'fs-extra'
@@ -108,7 +107,7 @@ export const DevTask = release({
   command: 'dev',
   watch: true,
   config: {
-    plugins: [
+    /*plugins: [
       {
         name: 'start',
         setup(build) {
@@ -121,7 +120,7 @@ export const DevTask = release({
           })
         }
       }
-    ]
+    ]*/
   }
 })
 
