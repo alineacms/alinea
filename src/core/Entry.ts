@@ -1,80 +1,68 @@
-import {Collection} from 'alinea/store'
-import {Label} from './Label.js'
-
-export type Id<T> = string & {__t: T}
+import {createId} from 'alinea/core'
+import {column, index, table, withRecursive} from 'rado'
+import {EntryData} from '../backend/db/EntryData.js'
 
 export enum EntryStatus {
-  Draft = 'draft',
-  Published = 'published',
-  Publishing = 'publishing',
-  Archived = 'archived'
+  Draft = 'Draft',
+  Published = 'Published',
+  Archived = 'Archived'
 }
 
-export interface EntryMetaRaw {
-  // In case this entry has no parent we'll keep a reference to which root it
-  // belongs to
-  root?: string
-  // These fields are stored on disk when using file data
-  index: string
-  i18n?: {id: string}
-}
+class EntryTable {
+  id = column.string.primaryKey(createId)
+  workspace = column.string
+  root = column.string
+  filePath = column.string
+  contentHash = column.string
 
-export interface EntryMeta extends EntryMetaRaw {
-  // These are computed during generation
-  root: string
-  workspace: string
-  parent: string | undefined
-  parents: Array<string>
-  status?: EntryStatus
-  isContainer?: boolean
-  i18n?: Entry.I18N
-}
+  modifiedAt = column.number
+  status = column.string<EntryStatus>()
 
-export interface Entry {
-  id: string
-  type: string
-  url: string // computed
-  title: Label
-  path: string
-  alinea: EntryMeta
-}
+  entryId = column.string
+  type = column.string
 
-export namespace Entry {
-  export type Detail = {
-    entry: Entry
-    original: Entry | null
-    draft: string | undefined
-    previewToken: string
-    parent?: Entry.Minimal
-    translations?: Array<Entry.Minimal>
+  parentDir = column.string
+  childrenDir = column.string.nullable
+  parent = column.string.nullable
+  index = column.string.nullable
+  locale = column.string.nullable
+  i18nId = column.string.nullable
+
+  path = column.string
+  title = column.string
+  url = column.string
+  data = column.json
+
+  get parents() {
+    const Self = Entry().as('Self')
+    const parents = withRecursive(
+      Self({entryId: this.parent}).select({...Self, level: 0})
+    ).unionAll(() =>
+      Self()
+        .select({...Self, level: parents.level.add(1)})
+        .innerJoin(parents({parent: Self.entryId}))
+    )
+    return parents
   }
-  export type I18N = {
-    id: string
-    locale: string
-    parent: string | undefined
-    parents: Array<string>
-  }
-  export type Minimal = Pick<Entry, 'id' | 'type' | 'title' | 'alinea'>
-  export type Summary = Pick<Entry, 'id' | 'type' | 'title' | 'alinea'> & {
-    childrenCount: number
-  }
-  export interface Raw {
-    id: string
-    type: string
-    title: Label
-    alinea: EntryMetaRaw
+
+  protected [table.meta]() {
+    return {
+      indexes: {
+        modifiedAt: index(this.modifiedAt),
+        contentHash: index(this.contentHash),
+        type: index(this.type),
+        parent: index(this.parent),
+        index: index(this.index),
+        fileIdentifier: index(this.filePath, this.workspace, this.root),
+        parentDir: index(this.parentDir),
+        childrenDir: index(this.childrenDir)
+      }
+    }
   }
 }
 
-class EntryCollection extends Collection<Entry> {
-  constructor() {
-    super('Entry')
-  }
-  index = this.alinea.index
-  root = this.alinea.root
-  workspace = this.alinea.workspace
-  i18n = this.alinea.i18n
-  parent = this.alinea.parent
-  parents = this.alinea.parents
+export interface Entry extends table<EntryTable> {
+  data: EntryData
 }
-export const Entry = new EntryCollection()
+
+export const Entry = table({Entry: EntryTable})

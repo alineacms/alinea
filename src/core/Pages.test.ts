@@ -1,4 +1,4 @@
-import {Example} from 'alinea/backend2/test/Example'
+import {Example} from 'alinea/backend/test/Example'
 import {Pages} from 'alinea/core/Pages'
 import {test} from 'uvu'
 

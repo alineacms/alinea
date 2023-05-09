@@ -1,42 +1,12 @@
-import {crypto} from '@alinea/iso'
-import sqlite from '@alinea/sqlite-wasm'
-import {
-  Config,
-  Connection,
-  Entry,
-  Future,
-  Media,
-  Outcome,
-  accumulate,
-  createError,
-  createId,
-  entryFromDoc,
-  outcome,
-  slugify
-} from 'alinea/core'
-import {arrayBufferToHex} from 'alinea/core/util/ArrayBuffers'
-import {base64} from 'alinea/core/util/Encoding'
-import {generateKeyBetween} from 'alinea/core/util/FractionalIndexing'
-import {Logger} from 'alinea/core/util/Logger'
-import {
-  basename,
-  dirname,
-  extname,
-  join,
-  normalize
-} from 'alinea/core/util/Paths'
-import {Store} from 'alinea/store'
-import {SqliteStore} from 'alinea/store/sqlite/SqliteStore'
-import {SqlJsDriver} from 'alinea/store/sqlite/drivers/SqlJsDriver'
-import * as Y from 'yjs'
-import {Cache} from './Cache.js'
-import {Data} from './Data.js'
-import {Drafts} from './Drafts.js'
-import {Pages} from './Pages.js'
-import {PreviewStore, previewStore} from './PreviewStore.js'
-import {Previews} from './Previews.js'
-import {Storage} from './Storage.js'
-import {JsonLoader} from './loader/JsonLoader.js'
+import {Config, Connection, Future} from 'alinea/core'
+import {Selection} from 'alinea/core/pages/Selection'
+import {Database} from './Database.js'
+import {File, Media} from './Media.js'
+import {Previews} from './Previews'
+import {Resolver} from './Resolver.js'
+import {Store} from './Store.js'
+import {Target} from './Target.js'
+import {AlineaMeta} from './db/AlineaMeta.js'
 
 export interface PreviewOptions {
   preview?: boolean
@@ -45,310 +15,46 @@ export interface PreviewOptions {
 
 export type ServerOptions = {
   config: Config
-  createStore: () => Promise<Store>
-  drafts: Drafts
-  target: Data.Target
-  media: Data.Media
+  store: Store
+  target: Target
+  media: Media
   previews: Previews
-  // After publishing entries, also apply that change to the memory db
-  // this is to be avoided during development as the publish changes will
-  // be picked up by the file watcher
-  applyPublish?: boolean
 }
 
 export class Server implements Connection {
-  preview: PreviewStore
-  createStore: () => Promise<Store>
+  db: Database
+  resolver: Resolver
 
-  constructor(public options: ServerOptions) {
-    this.createStore = options.createStore
-    this.preview = previewStore({
-      name: `preview for ${this.constructor.name}`,
-      createCache: async () => {
-        const {Database} = await sqlite()
-        const original = await this.createStore()
-        return new SqliteStore(
-          new SqlJsDriver(new Database(original.export())),
-          createId
-        )
-      },
-      config: options.config,
-      drafts: options.drafts
-    })
-  }
-
-  createContext() {
-    return {
-      logger: new Logger(this.constructor.name)
-    }
-  }
-
-  get config(): Config {
-    return this.options.config
-  }
-
-  async entry(
-    {id, stateVector}: Connection.EntryParams,
-    ctx: Connection.Context = this.createContext()
-  ): Future<Entry.Detail | null> {
-    const {config, drafts, previews} = this.options
-    const end = ctx.logger.time('Get draft', true)
-    let draft = await drafts.get({id, stateVector}, ctx)
-    end()
-    if (draft) {
-      const doc = new Y.Doc()
-      Y.applyUpdate(doc, draft)
-      const isValidDraft = outcome.succeeds(() =>
-        entryFromDoc(doc, type => config.schema[type])
-      )
-      if (!isValidDraft) {
-        console.log(`Removed invalid draft ${id}`)
-        await drafts.delete({ids: [id]}, ctx)
-        draft = undefined
-      }
-    }
-    return outcome(async () => {
-      const [preview, source] = await Promise.all([
-        this.preview.getStore(ctx),
-        this.createStore()
-      ])
-      const Parent = Entry.as('Parent')
-      const Translation = Entry.as('Translation')
-      const data = preview.first(
-        Entry.where(Entry.id.is(id)).select({
-          entry: Entry.fields,
-          translations: Translation.where(t =>
-            t.alinea.i18n.id.is(Entry.alinea.i18n.id)
-          ).select({
-            id: Translation.id,
-            type: Translation.type,
-            title: Translation.title,
-            alinea: Translation.alinea
-          }),
-          parent: Parent.where(Parent.id.is(Entry.alinea.parent))
-            .select({
-              id: Parent.id,
-              type: Parent.type,
-              title: Parent.title,
-              alinea: Parent.alinea
-            })
-            .first()
-        })
-      )
-      const original = source.first(Entry.where(Entry.id.is(id)))
-      return (
-        data && {
-          ...data,
-          original,
-          draft: draft && base64.stringify(draft),
-          previewToken: await previews.sign({id, url: data.entry.url})
-        }
-      )
-    })
-  }
-
-  async query<T>(
-    {cursor, source}: Connection.QueryParams<T>,
-    ctx: Connection.Context = this.createContext()
-  ): Future<Array<T>> {
-    return outcome(async () => {
-      const create = source
-        ? this.createStore
-        : this.preview.getStore.bind(this.preview)
-      const store = await create(ctx)
-      return store.all(cursor)
-    })
-  }
-
-  updateDraft(
-    {id, update}: Connection.UpdateParams,
-    ctx: Connection.Context = this.createContext()
-  ): Future<void> {
-    const {drafts} = this.options
-    return outcome(async () => {
-      const end = ctx.logger.time('Update draft', true)
-      const instruction = await drafts.update({id, update}, ctx)
-      end()
-      await this.preview.applyUpdate(instruction)
-    })
-  }
-
-  deleteDraft(
-    {id}: Connection.DeleteParams,
-    ctx: Connection.Context = this.createContext()
-  ): Future<boolean> {
-    const {drafts} = this.options
-    return outcome(async () => {
-      const end = ctx.logger.time('Delete draft', true)
-      await drafts.delete({ids: [id]}, ctx)
-      end()
-      await this.preview.deleteUpdate(id)
-      const store = await this.preview.getStore(ctx)
-      // Do we still have an entry after removing the draft?
-      return Boolean(store.first(Entry.where(Entry.id.is(id))))
-    })
-  }
-
-  listDrafts(
-    {workspace}: Connection.ListParams,
-    ctx: Connection.Context = this.createContext()
+  constructor(
+    public options: ServerOptions,
+    public context: Connection.Context
   ) {
-    return outcome(async () => {
-      const store = await this.preview.getStore(ctx)
-      const end = ctx.logger.time('Fetch draft updates', true)
-      const drafts = await accumulate(this.drafts.updates({}, ctx))
-      end()
-      const ids = drafts.map(({id}) => id)
-      const inWorkspace = store.all(
-        Entry.where(Entry.alinea.workspace.is(workspace))
-          .where(Entry.id.isIn(ids))
-          .select(Entry.id)
-      )
-      return inWorkspace.map(id => ({id}))
-    })
+    this.db = new Database(options.store, options.config)
+    this.resolver = new Resolver(options.store, options.config.schema)
   }
 
-  publishEntries(
-    {entries}: Connection.PublishParams,
-    ctx: Connection.Context = this.createContext()
-  ): Future<void> {
-    const {config, drafts, target, applyPublish = true} = this.options
-    function applyEntriesTo(store: Store) {
-      Cache.applyPublish(store, config, entries)
-      return store
-    }
-    return outcome(async () => {
-      const create = this.createStore
-      const current = await create()
-      const changes = await Storage.publishChanges(
-        config,
-        current,
-        JsonLoader,
-        entries,
-        false
-      )
-      await target.publish({changes}, ctx)
-      const ids = entries.map(entry => entry.id)
-      await drafts.delete({ids}, ctx)
-      if (applyPublish) {
-        applyEntriesTo(current)
-        this.createStore = () => create().then(applyEntriesTo)
-      }
-      await this.preview.applyPublish(entries)
-    })
+  // Api
+
+  resolve(selection: Selection) {
+    return this.resolver.resolve(selection)
   }
 
-  uploadFile(
-    {workspace, root, parentId, ...file}: Connection.UploadParams,
-    ctx: Connection.Context = this.createContext()
-  ): Future<Media.File> {
-    const {config} = this.options
-    return outcome(async () => {
-      const store = await this.preview.getStore(ctx)
-      const id = createId()
-      const {media} = this.options
-      const parents = !parentId
-        ? []
-        : store
-            .first(Entry.where(Entry.id.is(parentId)).select(Entry.parents))!
-            .concat(parentId)
-      const dir = dirname(file.path)
-      const extension = extname(file.path)
-      const name = basename(file.path, extension)
-      const fileName = `${slugify(name)}.${createId()}${extension}`
-      const {mediaDir} = config.workspaces[workspace]
-      const prefix = mediaDir && normalize(mediaDir)
-      const fileLocation = join(prefix, dir, fileName)
-
-      let location = await media.upload(
-        {fileLocation, buffer: file.buffer},
-        ctx
-      )
-
-      // We'll strip the media dir off the location we received. We don't want
-      // this information to be saved to disk because it would be impractical
-      // to ever refactor to another directory.
-      if (prefix && location.startsWith(prefix))
-        location = location.slice(prefix.length)
-
-      const prev = store.first(
-        Entry.where(Entry.alinea.workspace.is(workspace))
-          .where(Entry.alinea.root.is(root))
-          .where(Entry.alinea.parent.is(parentId))
-      )
-      const entry: Media.File = {
-        id,
-        type: 'File',
-        url: file.path.toLowerCase(),
-        title: basename(file.path, extension),
-        path: basename(file.path),
-        location,
-        extension: extension,
-        size: file.buffer.byteLength,
-        hash: arrayBufferToHex(
-          await crypto.subtle.digest('SHA-256', file.buffer)
-        ),
-        width: file.width,
-        height: file.height,
-        averageColor: file.averageColor,
-        blurHash: file.blurHash,
-        preview: file.preview,
-        alinea: {
-          index: generateKeyBetween(null, prev?.alinea.index || null),
-          workspace: workspace as string,
-          root: root as string,
-          parent: parentId,
-          parents
-        }
-      }
-      await this.publishEntries({entries: [entry]}, ctx)
-      return entry
-    })
+  async publishEntries({entries}: Connection.PublishParams): Future<void> {
+    const {config, target} = this.options
+    throw new Error('todo')
   }
 
-  get drafts() {
-    return this.options.drafts
+  uploadFile(params: Connection.UploadParams): Future<File> {
+    throw 'assert'
   }
 
-  loadPages(options: PreviewOptions = {}): Pages<T> {
-    /*
-      const logger = new Logger('Load pages')
-      const store = options.previewToken
-      ? async () => {
-          const {id} = await this.parsePreviewToken(
-            options.previewToken!,
-            logger
-          )
-          return this.preview.getStore({preview: id, logger})
-        }
-      : options.preview
-      ? () => this.preview.getStore({logger})
-      : this.createStore*/
-    return new Pages<T>({
-      schema: this.config.schema,
-      query: cursor => {
-        return this.query({
-          cursor,
-          source: !options?.preview && !options?.previewToken
-        }).then(Outcome.unpack)
-      }
-    })
+  // Syncable
+
+  ids() {
+    return this.db.ids()
   }
 
-  async parsePreviewToken(
-    token: string,
-    logger: Logger = new Logger('Parse preview token')
-  ): Promise<{id: string; url: string}> {
-    const {previews} = this.options
-    const [tokenData, err] = await outcome(() => previews.verify(token))
-    if (!tokenData) throw createError(400, `Incorrect token: ${err}`)
-    const {id} = tokenData
-    const store = await this.preview.getStore({preview: id, logger})
-    await this.preview.fetchUpdate(id, {preview: id, logger})
-    const entry = store.first(
-      Entry.where(Entry.id.is(id)).select({id: Entry.id, url: Entry.url})
-    )
-    if (!entry) throw createError(404, 'Entry not found')
-    return entry
+  updates(request: AlineaMeta) {
+    return this.db.updates(request)
   }
 }
