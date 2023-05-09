@@ -1,8 +1,8 @@
+import {entryData} from 'alinea/backend2/db/EntryData.js'
 import {type} from 'alinea/core'
 import {richText} from 'alinea/input/richtext/RichTextField'
 import {test} from 'uvu'
 import * as assert from 'uvu/assert'
-import {entryData} from './EntryData.js'
 
 const typeWithRichTest = type('Test', {
   text: richText('My rich text field')

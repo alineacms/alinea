@@ -8,7 +8,7 @@ import {
   Outcome
 } from 'alinea/core'
 import {Api, UpdateResponse} from './Api.js'
-import {AlineaMeta} from './database/AlineaMeta.js'
+import {AlineaMeta} from './db/AlineaMeta.js'
 
 async function toFuture<T = void>(res: Response): Future<T> {
   return Outcome.fromJSON<T>(await res.json())

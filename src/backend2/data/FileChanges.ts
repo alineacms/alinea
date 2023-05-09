@@ -8,11 +8,9 @@ import {
   Workspace
 } from 'alinea/core'
 import {join} from 'alinea/core/util/Paths'
-import {Store} from 'alinea/store'
-import {Cache} from './Cache.js'
-import {Loader} from './Loader.js'
+import {Database} from '../Database.js'
 
-export type Changes = {
+export interface FileDiff {
   write: Array<{id: string; file: string; contents: string}>
   rename: Array<{id: string; file: string; to: string}>
   delete: Array<{id: string; file: string}>
@@ -20,7 +18,7 @@ export type Changes = {
 
 const decoder = new TextDecoder()
 
-export namespace Storage {
+export namespace FileDiff {
   export function entryLocation(
     {locale, parentPaths, path}: EntryUrlMeta,
     extension: string
@@ -39,18 +37,23 @@ export namespace Storage {
 
   export async function publishChanges(
     config: Config,
-    store: Store,
-    loader: Loader,
+    db: Database,
     entries: Array<Entry>,
     canRename = true
-  ): Promise<Changes> {
-    const changes: Changes = {
+  ): Promise<FileDiff> {
+    const changes: FileDiff = {
       write: [],
       rename: [],
       delete: []
     }
     for (const todo of entries) {
-      const entry = Cache.computeEntry(store, config, todo)
+      /*const entry = db.computeEntry({
+        workspace: todo.alinea.workspace,
+        root: todo.alinea.root,
+        filePath: '',
+        contents: todo,
+        modifiedAt: Date.now()
+      })*/
       const {alinea, path: entryPath, url, ...data} = entry
       const entryData = data
       const workspace = config.workspaces[alinea.workspace]

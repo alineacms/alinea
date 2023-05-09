@@ -1,6 +1,6 @@
 import {createId} from 'alinea/core'
 import {column, index, table, withRecursive} from 'rado'
-import {EntryData} from '../EntryData.js'
+import {EntryData} from './EntryData.js'
 
 export enum EntryStatus {
   Draft = 'Draft',
@@ -8,7 +8,7 @@ export enum EntryStatus {
   Archived = 'Archived'
 }
 
-class EntryTreeTable {
+class EntryTable {
   id = column.string.primaryKey(createId)
   workspace = column.string
   root = column.string
@@ -34,7 +34,7 @@ class EntryTreeTable {
   data = column.json
 
   get parents() {
-    const Self = EntryTree().as('Self')
+    const Self = Entry().as('Self')
     const parents = withRecursive(
       Self({entryId: this.parent}).select({...Self, level: 0})
     ).unionAll(() =>
@@ -61,8 +61,8 @@ class EntryTreeTable {
   }
 }
 
-export interface EntryTree extends table<EntryTreeTable> {
+export interface Entry extends table<EntryTable> {
   data: EntryData
 }
 
-export const EntryTree = table({EntryTree: EntryTreeTable})
+export const Entry = table({Entry: EntryTable})

@@ -1,14 +1,14 @@
 import {Connection, Future, Media} from 'alinea/core'
-import {AlineaMeta} from './database/AlineaMeta.js'
-import {EntryTree} from './database/EntryTree.js'
+import {AlineaMeta} from './db/AlineaMeta.js'
+import {Entry} from './db/Entry.js'
 
 export interface UpdateResponse {
   contentHash: string
-  entries: Array<EntryTree>
+  entries: Array<Entry>
 }
 
 export interface Syncable {
-  updates(request: AlineaMeta): Promise<UpdateResponse>
+  updates(request: AlineaMeta): Promise<UpdateResponse | Uint8Array>
   ids(): Promise<Array<string>>
 }
 
