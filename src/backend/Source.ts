@@ -6,7 +6,12 @@ export interface SourceEntry {
   modifiedAt: number
 }
 
+export interface WatchFiles {
+  files: Array<string>
+  dirs: Array<string>
+}
+
 export interface Source {
   entries(): AsyncGenerator<SourceEntry>
-  // watch?: () => Emitter<SourceEntry>
+  watchFiles?: () => Promise<WatchFiles>
 }

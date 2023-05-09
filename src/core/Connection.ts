@@ -64,6 +64,9 @@ export namespace Connection {
   const base = '/hub'
   export const routes = {
     base,
+    resolve() {
+      return base + `/resolve`
+    },
     updates() {
       return base + `/updates`
     },

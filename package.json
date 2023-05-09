@@ -7,6 +7,7 @@
   "scripts": {
     "dev": "esbx build && run-p dev:compile dev:check dev:web2",
     "build": "esbx build",
+    "alinea": "rimraf -g 'dist/**/*.js' && esbx build && node dist/cli/bin.js",
     "build:alinea": "esbx build",
     "release:types": "tsc",
     "release:build": "esbx build",
@@ -92,6 +93,7 @@
     "postcss-pxtorem": "^6.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "rimraf": "^5.0.0",
     "speedscope": "^1.14.0",
     "typescript": "^5.0.4",
     "typescript-plugin-css-modules": "^3.4.0",

@@ -1,0 +1,54 @@
+{
+  "id": "268hhWIV6twxD4PMp03isLY6Pac",
+  "type": "Doc",
+  "title": "List",
+  "blocks": [
+    {
+      "id": "268i1rDJRNrTBVC4yDR7AfJoDpW",
+      "index": "a0",
+      "type": "TextBlock",
+      "text": [
+        {
+          "type": "heading",
+          "level": 1,
+          "textAlign": "left",
+          "content": [
+            {
+              "type": "text",
+              "text": "List"
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "textAlign": "left",
+          "content": [
+            {
+              "type": "text",
+              "text": "A list field contains blocks of fields. Every block is configured using a specific type. These can be created using the schema and type functions as seen before."
+            }
+          ]
+        },
+        {
+          "id": "268j9BBXf8jwwZ427XxBT2O0snb",
+          "type": "CodeBlock",
+          "code": "import {alinea} from 'alinea'\n\nalinea.list('My list field', {\n  schema: alinea.schema({\n    Text: alinea.type('Text', {\n      title: alinea.text('Item title'),\n      text: alinea.richText('Item body text')\n    }),\n    Image: alinea.type('Image', {\n      image: alinea.image('Image')\n    })\n  })\n})"
+        },
+        {
+          "id": "MOMpcuuHwKl-kSmmbcKgx",
+          "type": "ExampleBlock",
+          "code": "import {alinea} from 'alinea'\n\nexport default alinea.list('My list field', {\n  schema: alinea.schema({\n    Text: alinea.type('Text', {\n      title: alinea.text('Item title'),\n      text: alinea.richText('Item body text')\n    }),\n    Image: alinea.type('Image', {\n      image: alinea.image('Image')\n    })\n  })\n})"
+        }
+      ]
+    },
+    {
+      "id": "286IYmoRMQcuVIU0Najc00OBfdR",
+      "index": "a1",
+      "type": "TypesBlock",
+      "types": "ListOptions"
+    }
+  ],
+  "alinea": {
+    "index": "a2V"
+  }
+}

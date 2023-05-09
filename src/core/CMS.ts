@@ -11,7 +11,7 @@ type Attachment = Workspace | Root
 const attached = new WeakMap<Attachment, CMS>()
 
 export class CMS implements Config, CMSApi {
-  constructor(private config: Config, protected driver: Driver) {
+  constructor(public config: Config, public driver: Driver) {
     this.attach(config)
   }
 

@@ -14,15 +14,8 @@ const packageJson = {
   }
 }
 
-export async function copyStaticFiles({staticDir, outDir}: GenerateContext) {
+export async function copyStaticFiles({outDir}: GenerateContext) {
   await fs.mkdirp(outDir).catch(console.log)
-  function copy(...files: Array<string>) {
-    return Promise.all(
-      files.map(file =>
-        fs.copyFile(path.join(staticDir, file), path.join(outDir, file))
-      )
-    )
-  }
   fs.writeJSONSync(path.join(outDir, 'package.json'), packageJson, {spaces: 2})
   await writeFileIfContentsDiffer(path.join(outDir, '.gitignore'), `*\n!.keep`)
   await writeFileIfContentsDiffer(

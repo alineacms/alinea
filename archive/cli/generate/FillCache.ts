@@ -80,6 +80,7 @@ function exportToFile(
 
 export async function* fillCache(
   context: GenerateContext,
+  store: Store,
   config: Config,
   until: Promise<any>
 ) {

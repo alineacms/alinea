@@ -1,13 +1,9 @@
-import {Entry, EntryMeta} from 'alinea/core/Entry'
 import {Hint} from 'alinea/core/Hint'
 import {Label} from 'alinea/core/Label'
-import {Media} from 'alinea/core/Media'
 import {Reference} from 'alinea/core/Reference'
 import {Shape} from 'alinea/core/Shape'
 import {Type} from 'alinea/core/Type'
 import {Picker} from 'alinea/editor/Picker'
-import {LinkType} from 'alinea/input/link'
-import {Expr, Functions} from 'alinea/store'
 
 export interface EntryReference extends Reference {
   type: 'entry'
@@ -16,7 +12,6 @@ export interface EntryReference extends Reference {
   path: string
   title: Label
   url: string
-  alinea: EntryMeta
 }
 
 export namespace EntryReference {
@@ -31,7 +26,6 @@ export interface FileReference extends Reference {
   url: string
   extension: string
   size: number
-  alinea: EntryMeta
 }
 
 export namespace FileReference {
@@ -50,7 +44,6 @@ export interface ImageReference extends Reference {
   height: number
   averageColor: string
   blurHash: string
-  alinea: EntryMeta
 }
 
 export namespace ImageReference {
@@ -62,7 +55,7 @@ export namespace ImageReference {
 export interface EntryPickerOptions<T = {}> {
   type: 'entry' | 'file' | 'image'
   defaultView?: 'row' | 'thumb'
-  condition?: Expr<boolean>
+  // condition?: Expr<boolean>
   max?: number
   showUploader?: boolean
   label?: Label
@@ -94,8 +87,8 @@ export function entryPicker<T>(
       : hint,
     label: options.label || 'Page link',
     handlesMultiple: true,
-    options,
-    select(row) {
+    options
+    /*select(row) {
       const Link = Entry.as<Media.File>('Link')
       // Todo: in time this does not need to check a condition but simply the
       // type that was passed
@@ -139,6 +132,6 @@ export function entryPicker<T>(
               )
             )
         })
-    }
+    }*/
   }
 }

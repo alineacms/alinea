@@ -1,3 +1,7 @@
-export * from './HomePage'
-import {MediaSchema} from 'alinea/dashboard/schema'
-export const {MediaFile, MediaLibrary} = MediaSchema
+export {MediaFile, MediaLibrary} from 'alinea/core/media/MediaSchema'
+export * from './BlogOverview'
+export * from './BlogPost'
+export * from './Doc'
+export * from './Docs'
+export * from './Home'
+export * from './Page'

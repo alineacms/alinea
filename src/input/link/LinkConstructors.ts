@@ -1,4 +1,5 @@
-import {Entry, Label, Media} from 'alinea/core'
+import {Label, Media} from 'alinea/core'
+import {MediaFile} from 'alinea/core/media/MediaSchema'
 import {
   EntryReference,
   FileReference,
@@ -12,9 +13,7 @@ interface CreateLink {
   <T>(label: Label, options?: LinkOptions<T>): LinkField<T>
 }
 
-const imageCondition = Entry.type
-  .is(Media.Type.File)
-  .and(Entry.get('extension').isIn(Media.imageExtensions))
+const imageCondition = MediaFile.extension.isIn(Media.imageExtensions)
 
 export function imagePicker(multiple: boolean) {
   return entryPicker({
@@ -28,9 +27,7 @@ export function imagePicker(multiple: boolean) {
   })
 }
 
-const fileCondition = Entry.type
-  .is(Media.Type.File)
-  .and(Entry.get('extension').isNotIn(Media.imageExtensions))
+const fileCondition = MediaFile.extension.isNotIn(Media.imageExtensions)
 
 export function filePicker(multiple: boolean) {
   return entryPicker({
