@@ -1,6 +1,6 @@
 import useSize from '@react-hook/size'
 import {Entry, Outcome, Reference, Schema, View} from 'alinea/core'
-import {Cursor, CursorImpl, Functions} from 'alinea/store'
+import {Cursor} from 'alinea/core/pages/Cursor'
 import {Loader, fromModule} from 'alinea/ui'
 import {useRef} from 'react'
 import {useQuery} from 'react-query'
@@ -20,7 +20,7 @@ const defaultSummaryView = {
 
 export type ExplorerProps = {
   schema: Schema
-  cursor: CursorImpl<Entry>
+  cursor: Cursor<Entry>
   type: 'row' | 'thumb'
   virtualized?: boolean
   max?: number
@@ -39,6 +39,7 @@ export function Explorer({
   selection = [],
   toggleSelect = () => {}
 }: ExplorerProps) {
+  return <>todo</>
   const {cnx: hub} = useSession()
   const {data, isLoading} = useQuery(
     ['explorer', type, cursor, max],

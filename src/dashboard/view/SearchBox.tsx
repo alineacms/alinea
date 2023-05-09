@@ -1,5 +1,4 @@
 import {Entry} from 'alinea/core/Entry'
-import {Search} from 'alinea/core/Search'
 import {fromModule, HStack, IconButton, Stack} from 'alinea/ui'
 import {IcOutlineGridView} from 'alinea/ui/icons/IcOutlineGridView'
 import {IcOutlineList} from 'alinea/ui/icons/IcOutlineList'
@@ -31,12 +30,12 @@ type QueryParams = {
   root: string
 }
 
-function query({workspace, search, root}: QueryParams) {
+/*function query({workspace, search, root}: QueryParams) {
   return Search.leftJoin(Entry, Search.id.is(Entry.id))
     .where(search ? Search.title.match(searchTerms(search)) : false)
     .where(Entry.workspace.is(workspace))
     .orderBy(Entry.root.is(root).desc(), Search.get('rank').asc())
-}
+}*/
 
 export function SearchBox() {
   const nav = useNav()
@@ -51,6 +50,7 @@ export function SearchBox() {
   const {schema} = useDashboard().config
   const {name: workspace} = useWorkspace()
   const {name: root} = useRoot()
+  return <>todo</>
   const cursor = useMemo(
     () => query({workspace, root, search}).select(Entry.fields),
     [workspace, root, search]
