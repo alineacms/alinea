@@ -7,6 +7,7 @@ import {RequestListener} from 'node:http'
 import path from 'node:path'
 import {generate} from './Generate.js'
 import {buildOptions} from './build/BuildOptions.js'
+import {createHandler} from './serve/CreateHandler.js'
 import {LiveReload} from './serve/LiveReload.js'
 import {ServeContext} from './serve/ServeContext.js'
 import {startServer} from './serve/StartServer.js'
@@ -77,14 +78,17 @@ export async function serve(options: ServeOptions): Promise<void> {
       context.liveReload.reload('refetch')
     } else {
       handler = nodeHandler(
-        new Handler({
-          dashboardUrl,
-          config: currentCMS,
-          store: current.value.store,
-          target: undefined!,
-          media: undefined!,
-          previews: new JWTPreviews('@alinea/backend/devserver')
-        }).handle
+        createHandler(
+          context,
+          new Handler({
+            dashboardUrl,
+            config: currentCMS,
+            store: current.value.store,
+            target: undefined!,
+            media: undefined!,
+            previews: new JWTPreviews('@alinea/backend/devserver')
+          })
+        ).handle
       )
       cms = currentCMS
       context.liveReload.reload('refresh')

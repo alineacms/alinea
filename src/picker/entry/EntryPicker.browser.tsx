@@ -1,7 +1,6 @@
 import {createId} from 'alinea/core'
 import {Entry} from 'alinea/core/Entry'
 import {Reference} from 'alinea/core/Reference'
-import {Search} from 'alinea/core/Search'
 import {useDashboard} from 'alinea/dashboard/hook/UseDashboard'
 import {useFocusList} from 'alinea/dashboard/hook/UseFocusList'
 import {useRoot} from 'alinea/dashboard/hook/UseRoot'
@@ -12,25 +11,25 @@ import {Picker, PickerProps} from 'alinea/editor/Picker'
 import {EntryReference} from 'alinea/picker/entry'
 import {
   Button,
-  fromModule,
   HStack,
   IconButton,
   Loader,
-  px,
   Stack,
   TextLabel,
   Typo,
-  VStack
+  VStack,
+  fromModule,
+  px
 } from 'alinea/ui'
+import {Modal} from 'alinea/ui/Modal'
 import {IcOutlineGridView} from 'alinea/ui/icons/IcOutlineGridView'
 import {IcOutlineList} from 'alinea/ui/icons/IcOutlineList'
 import {IcRoundArrowBack} from 'alinea/ui/icons/IcRoundArrowBack'
 import {IcRoundSearch} from 'alinea/ui/icons/IcRoundSearch'
-import {Modal} from 'alinea/ui/Modal'
 import {Suspense, useCallback, useMemo, useState} from 'react'
 import {
-  entryPicker as createEntryPicker,
-  EntryPickerOptions
+  EntryPickerOptions,
+  entryPicker as createEntryPicker
 } from './EntryPicker.js'
 import css from './EntryPicker.module.scss'
 import {EntryPickerRow} from './EntryPickerRow.js'
@@ -79,6 +78,7 @@ export function EntryPickerModal({
   onConfirm,
   onCancel
 }: EntryPickerModalProps) {
+  return <>todo</>
   const {title, defaultView, max, condition, showUploader} = options
   const [search, setSearch] = useState('')
   const list = useFocusList({

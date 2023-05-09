@@ -43,13 +43,19 @@ prog
   .option('-d, --dir', `Directory containing the alinea config file`)
   .option('-p, --port', `Port to listen on`)
   .option('--production', `Use production backend`)
+  .option('--dev', `Watch alinea sources`)
   .action(async args => {
     ensureNodeResolution()
     ensureReact()
     ensureEnv(args.dir)
     process.env.NODE_ENV = args.production ? 'production' : 'development'
     const {serve} = await import('./Serve.js')
-    return serve({...args, cwd: args.dir, onAfterGenerate: forwardCommand})
+    return serve({
+      ...args,
+      alineaDev: args.dev,
+      cwd: args.dir,
+      onAfterGenerate: forwardCommand
+    })
   })
 
 prog.parse(process.argv)

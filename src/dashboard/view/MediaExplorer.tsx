@@ -2,7 +2,6 @@ import useSize from '@react-hook/size'
 import {Media} from 'alinea/core/Media'
 import {Outcome} from 'alinea/core/Outcome'
 import {InputForm} from 'alinea/editor'
-import {Functions} from 'alinea/store'
 import {fromModule, HStack, VStack} from 'alinea/ui'
 import {Main} from 'alinea/ui/Main'
 import {Suspense, useRef} from 'react'
@@ -22,6 +21,7 @@ const styles = fromModule(css)
 const scrollOffsets = new Map<string, number>()
 
 export function MediaExplorer() {
+  return <>todo</>
   const draft = useCurrentDraft()
   const {cnx: hub} = useSession()
   const {File} = Media

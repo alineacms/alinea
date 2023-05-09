@@ -12,7 +12,7 @@ process.env.NODE_ENV = production ? 'production' : 'development'
 serve({
   alineaDev: true,
   production,
-  cwd: path.resolve('apps/web'),
+  cwd: path.resolve('apps/web2'),
   staticDir: path.resolve('src/cli/static'),
   port: 4500
 })

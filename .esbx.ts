@@ -21,7 +21,7 @@ export const VersionTask = {
 }
 
 import {reportTime} from '@esbx/util'
-import {execSync} from 'child_process'
+import {execSync, spawn} from 'child_process'
 import which from 'which'
 
 function createTypes() {
@@ -107,7 +107,7 @@ export const DevTask = release({
   command: 'dev',
   watch: true,
   config: {
-    /*plugins: [
+    plugins: [
       {
         name: 'start',
         setup(build) {
@@ -120,7 +120,7 @@ export const DevTask = release({
           })
         }
       }
-    ]*/
+    ]
   }
 })
 

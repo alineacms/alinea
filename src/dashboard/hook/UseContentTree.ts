@@ -1,5 +1,4 @@
-import {Entry, EntryMeta, Label, Outcome, Type} from 'alinea/core'
-import {Cursor, Functions} from 'alinea/store'
+import {Label, Outcome, Type} from 'alinea/core'
 import {useCallback, useEffect, useMemo, useState} from 'react'
 import {useQuery} from 'react-query'
 import {useRoot} from '../hook/UseRoot.js'
@@ -25,7 +24,7 @@ export interface ContentTreeEntry {
   alinea: EntryMeta
 }
 
-function query({workspace, root, locale, open, visible}: QueryParams) {
+/*function query({workspace, root, locale, open, visible}: QueryParams) {
   const Parent = Entry.as('Parent')
   const id = locale ? Entry.i18n.id : Entry.id
   const parent = locale ? Entry.i18n.parent : Entry.parent
@@ -70,7 +69,7 @@ function query({workspace, root, locale, open, visible}: QueryParams) {
     )
   }
   return query as Cursor<ContentTreeEntry>
-}
+}*/
 
 type UseContentTreeOptions = {
   locale: string | undefined
@@ -83,6 +82,7 @@ export function useContentTree({
   locale: currentLocale,
   select
 }: UseContentTreeOptions) {
+  return undefined!
   const {config} = useDashboard()
   const workspace = useWorkspace()
   const root = useRoot()

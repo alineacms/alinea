@@ -1,3 +1,5 @@
+import {CMS} from 'alinea/core'
+import {values} from 'alinea/core/util/Objects'
 import type {ReactElement} from 'react'
 import {DevDashboard} from './DevDashboard.js'
 
@@ -16,6 +18,9 @@ export function main() {
 }
 
 async function loadConfig() {
-  const {config} = await import('/config.js?' + Math.random())
-  return config
+  const exports = await import('/config.js?' + Math.random())
+  for (const member of values(exports)) {
+    if (member instanceof CMS) return member
+  }
+  throw new Error(`No config found in "/config.js"`)
 }

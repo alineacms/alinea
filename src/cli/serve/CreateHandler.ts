@@ -1,13 +1,12 @@
 import {ReadableStream, Request, Response, TextEncoderStream} from '@alinea/iso'
+import {Handler} from 'alinea/backend'
 import {router} from 'alinea/backend/router/Router'
 import {Trigger, trigger} from 'alinea/core'
-import semver from 'compare-versions'
 import esbuild, {BuildOptions, BuildResult} from 'esbuild'
 import fs from 'node:fs'
 import {createRequire} from 'node:module'
 import path from 'node:path'
 import {publicDefines} from '../util/PublicDefines.js'
-import {ServeBackend} from './backend/ServeBackend.js'
 import {ServeContext} from './ServeContext.js'
 
 const require = createRequire(import.meta.url)
@@ -68,12 +67,8 @@ export function createHandler(
     production,
     liveReload
   }: ServeContext,
-  server: ServeBackend
+  handler: Handler
 ) {
-  const {version} = require('react/package.json')
-  const isReact18 = semver.compare(version, '18.0.0', '>=')
-  const react = isReact18 ? 'react18' : 'react'
-
   const devDir = path.join(staticDir, 'dev')
   const matcher = router.matcher()
   const entry = `alinea/cli/static/dashboard/dev`
@@ -83,6 +78,7 @@ export function createHandler(
     initial = true
 
   const config = {
+    external: ['next/headers', 'better-sqlite3'],
     format: 'esm',
     target: 'esnext',
     treeShaking: true,
@@ -96,7 +92,6 @@ export function createHandler(
       config: path.join(cwd, '.alinea/config.js'),
       entry
     },
-    inject: [path.join(staticDir, `render/render-${react}.js`)],
     platform: 'browser',
     ...buildOptions,
     plugins: buildOptions?.plugins || [],
@@ -126,7 +121,7 @@ export function createHandler(
   })
 
   if (alineaDev) esbuild.context(config).then(ctx => ctx.watch())
-  else esbuild.build(config)
+  else esbuild.build(config).catch(() => {})
 
   async function serveBrowserBuild(
     request: Request
@@ -188,7 +183,7 @@ export function createHandler(
     matcher
       .all('/hub/*')
       .map(async ({request}): Promise<Response | undefined> => {
-        return server.handle(request)
+        return handler.handle(request)
       }),
     serveBrowserBuild,
     matcher.get('/config.css').map((): Response => {

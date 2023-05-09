@@ -5,14 +5,9 @@ import {
   Loader,
   PreferencesProvider,
   Statusbar,
-  useObservable,
   Viewport
 } from 'alinea/ui'
-import {IcRoundCheck} from 'alinea/ui/icons/IcRoundCheck'
-import {IcRoundEdit} from 'alinea/ui/icons/IcRoundEdit'
 import {IcRoundInsertDriveFile} from 'alinea/ui/icons/IcRoundInsertDriveFile'
-import {IcRoundRotateLeft} from 'alinea/ui/icons/IcRoundRotateLeft'
-import {MdiSourceBranch} from 'alinea/ui/icons/MdiSourceBranch'
 import {
   Routes,
   useLocation,
@@ -28,8 +23,7 @@ import {DashboardOptions} from './Dashboard.js'
 import {CurrentDraftProvider} from './hook/UseCurrentDraft.js'
 import {DashboardProvider, useDashboard} from './hook/UseDashboard.js'
 import {useDraft} from './hook/UseDraft.js'
-import {DraftsProvider, DraftsStatus, useDrafts} from './hook/UseDrafts.js'
-import {useDraftsList} from './hook/UseDraftsList.js'
+import {DraftsProvider} from './hook/UseDrafts.js'
 import {useEntryLocation} from './hook/UseEntryLocation.js'
 import {EntrySummaryProvider} from './hook/UseEntrySummary.js'
 import {useLocale} from './hook/UseLocale.js'
@@ -38,7 +32,6 @@ import {useRoot} from './hook/UseRoot.js'
 import {SessionProvider} from './hook/UseSession.js'
 import {useWorkspace} from './hook/UseWorkspace.js'
 import {Head} from './util/Head.js'
-import {ContentTree} from './view/ContentTree.js'
 import {DraftsOverview} from './view/DraftsOverview.js'
 import {EditMode} from './view/entry/EditMode.js'
 import {NewEntry} from './view/entry/NewEntry.js'
@@ -87,7 +80,7 @@ function useRoutes() {
   }, [nav])
 }
 
-function DraftsButton() {
+/*function DraftsButton() {
   const location = useLocation()
   const nav = useNav()
   const {name: workspace} = useWorkspace()
@@ -109,7 +102,7 @@ function DraftsButton() {
       <MdiSourceBranch />
     </Sidebar.Nav.Item>
   )
-}
+}*/
 
 function AppAuthenticated() {
   const {fullPage, config} = useDashboard()
@@ -159,7 +152,7 @@ function AppAuthenticated() {
                         </Sidebar.Nav.Item>
                       )
                     })}
-                    <DraftsButton />
+                    {/*<DraftsButton />*/}
                   </Sidebar.Nav>
                   <Suspense fallback={<Loader absolute />}>
                     <Routes routes={routes} />
@@ -206,12 +199,7 @@ function EntryRoute({id}: EntryRouteProps) {
       <Sidebar.Tree>
         <SearchBox />
         <RootHeader />
-        <ContentTree
-          key={workspace.name}
-          locale={locale}
-          select={select}
-          redirectToRoot={!id}
-        />
+        content tree
       </Sidebar.Tree>
       {search === '?new' && (
         <Suspense fallback={<Loader absolute />}>
@@ -237,21 +225,6 @@ function EntryRoute({id}: EntryRouteProps) {
       )}
     </CurrentDraftProvider>
   )
-}
-
-function DraftsStatusSummary() {
-  const drafts = useDrafts()
-  const status = useObservable(drafts.status)
-  switch (status) {
-    case DraftsStatus.Synced:
-      return <Statusbar.Status icon={IcRoundCheck}>Synced</Statusbar.Status>
-    case DraftsStatus.Editing:
-      return <Statusbar.Status icon={IcRoundEdit}>Editing</Statusbar.Status>
-    case DraftsStatus.Saving:
-      return (
-        <Statusbar.Status icon={IcRoundRotateLeft}>Saving</Statusbar.Status>
-      )
-  }
 }
 
 type AppRootProps = {

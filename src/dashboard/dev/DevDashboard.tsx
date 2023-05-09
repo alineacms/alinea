@@ -1,5 +1,5 @@
-import {Client} from 'alinea/client'
-import {Config, createConfig} from 'alinea/core'
+import {Config} from 'alinea/core'
+import {Client} from 'alinea/core/Client'
 import {joinPaths} from 'alinea/core/util/Urls'
 import {Button, Typo, VStack, Viewport} from 'alinea/ui'
 import {Main} from 'alinea/ui/Main'
@@ -41,21 +41,14 @@ export type DevDashboardOptions = {
 const queryClient = new QueryClient({defaultOptions: {queries: {retry: false}}})
 
 export function DevDashboard({loadConfig}: DevDashboardOptions) {
-  const [config, setConfig] = useState<Config>()
+  const [cms, setCms] = useState<Config>()
   const [connected, setConnected] = useState(true)
   const client = useMemo(() => {
-    if (!config) return null
-    return new Client(config, joinPaths(location.origin, location.pathname))
-  }, [config])
+    if (!cms) return null
+    return new Client(cms, joinPaths(location.origin, location.pathname))
+  }, [cms])
   function getConfig() {
-    return loadConfig()
-      .then(config => {
-        // Strip any backend or authentication specifics in dev
-        if (process.env.NODE_ENV === 'development')
-          return createConfig({...config, backend: undefined})
-        return config
-      })
-      .then(setConfig)
+    return loadConfig().then(setCms)
   }
   function refetch() {
     return queryClient.refetchQueries()
@@ -69,7 +62,7 @@ export function DevDashboard({loadConfig}: DevDashboardOptions) {
       close: () => setConnected(false)
     })
   }, [])
-  if (!config) return null
+  if (!cms) return null
   if (!connected)
     return (
       <Viewport color="#5763E6">
@@ -88,7 +81,5 @@ export function DevDashboard({loadConfig}: DevDashboardOptions) {
         </Main>
       </Viewport>
     )
-  return (
-    <Dashboard queryClient={queryClient} config={config} client={client!} />
-  )
+  return <Dashboard queryClient={queryClient} config={cms} client={client!} />
 }
