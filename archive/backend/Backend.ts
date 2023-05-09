@@ -1,0 +1,161 @@
+import type {Request, Response} from '@alinea/iso'
+import {Auth, Connection} from 'alinea/core'
+import {Entry} from 'alinea/core/Entry'
+import {base64url} from 'alinea/core/util/Encoding'
+import {Logger, LoggerResult, Report} from 'alinea/core/util/Logger'
+import {Cursor, CursorData} from 'alinea/store'
+import {Server, ServerOptions} from './Server.js'
+import {Handle, Route, router} from './router/Router.js'
+
+export type BackendOptions = {
+  auth?: Auth.Server
+  dashboardUrl: string
+} & ServerOptions
+
+export function anonymousAuth(): Auth.Server {
+  return {
+    async contextFor() {
+      return {}
+    },
+    handler() {
+      return undefined
+    }
+  }
+}
+
+function respond<T>({result, logger}: LoggerResult<T>) {
+  return router.jsonResponse(result, {
+    headers: {'server-timing': Report.toServerTiming(logger.report())}
+  })
+}
+
+export function createRouter(
+  cnx: Connection,
+  auth: Auth.Server
+): Route<Request, Response | undefined> {
+  const matcher = router.startAt(Connection.routes.base)
+  async function context<T extends {request: Request; url: URL}>(
+    input: T
+  ): Promise<T & {ctx: Connection.Context; logger: Logger}> {
+    const logger = new Logger(`${input.request.method} ${input.url.pathname}`)
+    return {
+      ...input,
+      ctx: {...(await auth.contextFor(input.request)), logger},
+      logger
+    }
+  }
+  return router(
+    matcher
+      .get(Connection.routes.entry(':id'))
+      .map(context)
+      .map(({ctx, url, params}) => {
+        const id = params.id as string
+        const svParam = url.searchParams.get('stateVector')!
+        const stateVector =
+          typeof svParam === 'string'
+            ? new Uint8Array(base64url.parse(svParam))
+            : undefined
+        return ctx.logger.result(cnx.entry({id, stateVector}, ctx))
+      })
+      .map(respond),
+
+    matcher
+      .post(Connection.routes.query())
+      .map(context)
+      .map(router.parseJson)
+      .map(({ctx, url, body}) => {
+        const fromSource = url.searchParams.has('source')
+        return ctx.logger.result(
+          cnx.query(
+            {
+              cursor: new Cursor(body as CursorData),
+              source: fromSource
+            },
+            ctx
+          )
+        )
+      })
+      .map(respond),
+
+    matcher
+      .get(Connection.routes.drafts())
+      .map(context)
+      .map(({ctx, url}) => {
+        const workspace = url.searchParams.get('workspace')
+        if (!workspace) return undefined
+        return ctx.logger.result(cnx.listDrafts({workspace}, ctx))
+      })
+      .map(respond),
+
+    matcher
+      .put(Connection.routes.draft(':id'))
+      .map(context)
+      .map(router.parseBuffer)
+      .map(({ctx, params, body}) => {
+        const id = params.id as string
+        return ctx.logger.result(
+          cnx.updateDraft({id, update: new Uint8Array(body)}, ctx)
+        )
+      })
+      .map(respond),
+
+    matcher
+      .delete(Connection.routes.draft(':id'))
+      .map(context)
+      .map(({ctx, params}) => {
+        const id = params.id as string
+        return ctx.logger.result(cnx.deleteDraft({id}, ctx))
+      })
+      .map(respond),
+
+    matcher
+      .post(Connection.routes.publish())
+      .map(context)
+      .map(router.parseJson)
+      .map(({ctx, body}) => {
+        return ctx.logger.result(
+          cnx.publishEntries({entries: body as Array<Entry>}, ctx)
+        )
+      })
+      .map(respond),
+
+    matcher
+      .post(Connection.routes.upload())
+      .map(context)
+      .map(router.parseFormData)
+      .map(async ({ctx, body}) => {
+        const workspace = String(body.get('workspace'))
+        const root = String(body.get('root'))
+        return ctx.logger.result(
+          cnx.uploadFile(
+            {
+              workspace,
+              root,
+              buffer: await (body.get('buffer') as File).arrayBuffer(),
+              parentId: String(body.get('parentId')) || undefined,
+              path: String(body.get('path')),
+              preview: String(body.get('preview')),
+              averageColor: String(body.get('averageColor')),
+              blurHash: String(body.get('blurHash')),
+              width: Number(body.get('width')),
+              height: Number(body.get('height'))
+            },
+            ctx
+          )
+        )
+      })
+      .map(respond)
+  ).recover(router.reportError)
+}
+
+export class Backend extends Server {
+  handle: Handle<Request, Response | undefined>
+
+  constructor(public options: BackendOptions) {
+    super(options)
+    const auth: Auth.Server = options.auth || anonymousAuth()
+    const api = createRouter(this, auth)
+    const {handle} = options.auth ? router(options.auth.handler, api) : api
+    this.handle = handle
+  }
+}

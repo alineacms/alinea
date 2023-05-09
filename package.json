@@ -52,10 +52,6 @@
     "src/store",
     "src/ui",
     "src/dev",
-    "src/backend/firestore",
-    "src/backend/github",
-    "src/backend/redis",
-    "src/backend/indexeddb",
     "src/auth/passwordless",
     "src/input/richtext"
   ],
