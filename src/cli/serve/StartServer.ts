@@ -25,7 +25,7 @@ export async function startServer(port = 4500): Promise<Server> {
       async *serve(until?: Promise<void>) {
         until?.then(() => messages.cancel())
         try {
-          for await (const pair of messages) yield pair
+          yield* messages
         } catch (e) {
           if (e === Emitter.CANCELLED) return
           throw e

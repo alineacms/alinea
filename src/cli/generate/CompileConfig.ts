@@ -74,7 +74,7 @@ export function compileConfig({
   if (watch) {
     esbuild.context(config).then(context => context.watch())
   } else {
-    esbuild.build(config)
+    esbuild.build(config).catch(() => {})
   }
   return results
 }

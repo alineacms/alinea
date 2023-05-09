@@ -50,7 +50,6 @@
     "src/cli",
     "src/core",
     "src/dashboard",
-    "src/store",
     "src/ui",
     "src/dev",
     "src/auth/passwordless",

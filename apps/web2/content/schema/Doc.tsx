@@ -1,10 +1,8 @@
-import {type} from 'alinea/core'
-import {path} from 'alinea/input/path'
-import {text} from 'alinea/input/text'
+import alinea from 'alinea'
 import {Blocks} from './blocks/Blocks'
 
-export const Doc = type('Doc', {
-  title: text('Title', {width: 0.5}),
-  path: path('Path', {width: 0.5}),
+export const Doc = alinea.type('Doc', {
+  title: alinea.text('Title', {width: 0.5}),
+  path: alinea.path('Path', {width: 0.5}),
   blocks: Blocks
 })
