@@ -1,3 +1,5 @@
+import {Store} from 'alinea/backend/Store'
+import {CMS} from 'alinea/core/CMS'
 import {Config} from 'alinea/core/Config'
 import {BuildResult} from 'esbuild'
 import path from 'node:path'
@@ -6,8 +8,7 @@ import {copyStaticFiles} from './generate/CopyStaticFiles.js'
 import {fillCache} from './generate/FillCache.js'
 import {GenerateContext} from './generate/GenerateContext.js'
 import {generateDashboard} from './generate/GenerateDashboard.js'
-import {generateSchema} from './generate/GenerateSchema.js'
-import {loadConfig} from './generate/LoadConfig.js'
+import {loadCMS} from './generate/LoadConfig.js'
 import {dirname} from './util/Dirname.js'
 
 const __dirname = dirname(import.meta.url)
@@ -20,20 +21,26 @@ export type GenerateOptions = {
   fix?: boolean
   wasmCache?: boolean
   quiet?: boolean
-  onAfterGenerate?: () => void
+  onAfterGenerate?: (env?: Record<string, string>) => void
 }
 
 function generatePackage(context: GenerateContext, config: Config) {
-  const tasks = [generateSchema(context, config)]
   const dashboard = config.dashboard
   if (dashboard?.staticFile)
-    tasks.push(
-      generateDashboard(context, dashboard.handlerUrl, dashboard.staticFile!)
+    return generateDashboard(
+      context,
+      dashboard.handlerUrl,
+      dashboard.staticFile!
     )
-  return Promise.all(tasks)
 }
 
-export async function* generate(options: GenerateOptions) {
+export async function* generate(options: GenerateOptions): AsyncGenerator<
+  {
+    cms: CMS
+    store: Store
+  },
+  void
+> {
   const {
     wasmCache = false,
     cwd = process.cwd(),
@@ -62,11 +69,12 @@ export async function* generate(options: GenerateOptions) {
   await copyStaticFiles(context)
   while (true) {
     const {done} = await nextBuild
-    const config = await loadConfig(context)
-    await generatePackage(context, config)
+    const cms = await loadCMS(context)
+    await generatePackage(context, cms)
     nextBuild = builds.next()
-    for await (const store of fillCache(context, config, nextBuild)) {
-      yield {config, store}
+    const store = await cms.driver.createStore(context.cwd)
+    for await (const _ of fillCache(context, store, cms, nextBuild)) {
+      yield {cms, store}
       if (onAfterGenerate && !afterGenerateCalled) {
         afterGenerateCalled = true
         onAfterGenerate()

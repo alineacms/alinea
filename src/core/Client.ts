@@ -1,4 +1,5 @@
 import {AbortController, fetch, FormData, Response} from '@alinea/iso'
+import {AlineaMeta} from 'alinea/backend/db/AlineaMeta'
 import {
   Config,
   Connection,
@@ -7,8 +8,8 @@ import {
   Media,
   Outcome
 } from 'alinea/core'
-import {AlineaMeta} from './backend/db/AlineaMeta.js'
 import {UpdateResponse} from './Connection.js'
+import {Selection} from './pages/Selection.js'
 
 async function toFuture<T = void>(res: Response): Future<T> {
   return Outcome.fromJSON<T>(await res.json())
@@ -27,6 +28,14 @@ export class Client implements Connection {
     protected applyAuth: AuthenticateRequest = v => v,
     protected unauthorized: () => void = () => {}
   ) {}
+
+  resolve(selection: Selection): Promise<unknown> {
+    const body = JSON.stringify(selection)
+    return this.fetchJson(Connection.routes.resolve(), {
+      method: 'POST',
+      body
+    }).then(toFuture, fail)
+  }
 
   authenticate(applyAuth: AuthenticateRequest, unauthorized: () => void) {
     return new Client(this.config, this.url, applyAuth, unauthorized)

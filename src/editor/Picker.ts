@@ -1,7 +1,5 @@
 import {Hint, Label, Reference} from 'alinea/core'
 import {RecordShape} from 'alinea/core/shape/RecordShape'
-import {Cursor} from 'alinea/store/Cursor'
-import {SelectionInput} from 'alinea/store/Selection'
 import {ComponentType} from 'react'
 
 export interface PickerProps<T = {}> {
@@ -31,7 +29,6 @@ export interface Picker<
   label: Label
   handlesMultiple: boolean
   options: Options
-  select: (row: Cursor<Reference>) => SelectionInput
   view?: ComponentType<PickerProps<Options>>
   viewRow?: ComponentType<{reference: Ref}>
 }

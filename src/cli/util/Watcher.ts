@@ -5,18 +5,26 @@ interface ToWatch {
   files: Array<string>
 }
 
+export interface WatchOptions {
+  watchFiles(): Promise<ToWatch>
+  onChange(): void
+}
+
 // Re-use the esbuild watch service which is not exposed to the api
-export async function createWatcher(watch: ToWatch, onChange: () => void) {
+export async function createWatcher(
+  options: WatchOptions
+): Promise<() => void> {
   let initial = true
   const watcher: Plugin = {
     name: 'watcher',
     setup(build) {
-      build.onResolve({filter: /^watch$/}, args => {
-        return {external: true, watchFiles: watch.files, watchDirs: watch.dirs}
+      build.onResolve({filter: /^watch$/}, async args => {
+        const {files, dirs} = await options.watchFiles()
+        return {external: true, watchFiles: files, watchDirs: dirs}
       })
       build.onStart(() => {
         if (initial) initial = false
-        else onChange()
+        else options.onChange()
       })
     }
   }
@@ -27,5 +35,5 @@ export async function createWatcher(watch: ToWatch, onChange: () => void) {
     write: false
   })
   context.watch()
-  return context.dispose
+  return context.dispose.bind(context)
 }

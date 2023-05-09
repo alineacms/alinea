@@ -13,6 +13,9 @@ export const cms = createNextCMS({
   workspaces: {
     main: alinea.workspace('Alinea', {
       pages,
+      media: alinea.root('Media', {
+        contains: ['MediaLibrary']
+      }),
       [alinea.workspace.meta]: {
         source: './content'
       }

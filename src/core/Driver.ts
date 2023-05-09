@@ -1,5 +1,7 @@
+import {Store} from 'alinea/backend/Store'
 import {Connection} from './Connection.js'
 
 export interface Driver {
-  establishConnection(): Connection
+  createStore(cwd: string): Promise<Store>
+  establishConnection(): Promise<Connection>
 }

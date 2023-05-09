@@ -1,11 +1,10 @@
-import {Entry, Field, Hint, Label, Media, Reference, Type} from 'alinea/core'
+import {Field, Hint, Label, Reference, Type} from 'alinea/core'
 import type {Picker} from 'alinea/editor/Picker'
-import {Cursor, Expr} from 'alinea/store'
 import {linkConstructors} from './LinkConstructors'
 
 export type LinkType = 'entry' | 'image' | 'file' | 'external'
 
-export namespace LinkType {
+/*export namespace LinkType {
   export function conditionOf(cursor: Cursor<Entry>, type: LinkType) {
     switch (type) {
       case 'entry':
@@ -22,14 +21,14 @@ export namespace LinkType {
         return Expr.value(true)
     }
   }
-}
+}*/
 
 /** Optional settings to configure a link field */
 export interface LinkOptions<Row> {
   /** The type of links, this will configure the options of the link picker */
   type?: LinkType | Array<LinkType>
   /** Show only entries matching this condition */
-  condition?: Expr<boolean>
+  // condition?: Expr<boolean>
   /** Add extra fields to each link */
   fields?: Type<Row>
   /** Width of the field in the dashboard UI (0-1) */

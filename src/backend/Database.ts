@@ -1,5 +1,6 @@
 import {Config, Root, Syncable, createError} from 'alinea/core'
 import * as path from 'alinea/core/util/Paths'
+import {timer} from 'alinea/core/util/Timer'
 import {Driver, Table, alias, create} from 'rado'
 import xxhash from 'xxhash-wasm'
 import {Entry, EntryStatus} from '../core/Entry.js'
@@ -49,7 +50,8 @@ export class Database implements Syncable {
     const updated = await this.meta()
     if (updated.contentHash === contentHash) return
     const remoteIds = await remote.ids()
-    await this.store(Entry().delete().where(Entry.id.isNotIn(remoteIds)))
+    if (remoteIds.length > 0)
+      await this.store(Entry().delete().where(Entry.id.isNotIn(remoteIds)))
     const afterRemoves = await this.meta()
     if (afterRemoves.contentHash === contentHash) return
     // Todo: we should abandon syncing and just fetch the full db
@@ -106,7 +108,7 @@ export class Database implements Syncable {
     )
   }
 
-  async init() {
+  private async init() {
     return this.store.transaction(async query => {
       await query(create(Entry, AlineaMeta))
     })
@@ -130,20 +132,14 @@ export class Database implements Syncable {
     if (root.i18n) {
       locale = segments.shift()!
       if (!root.i18n.locales.includes(locale))
-        throw createError(
-          `Invalid locale: ${locale}, for entry in ${file.filePath}`
-        )
+        throw new Error(`invalid locale: "${locale}"`)
     }
 
     const type = this.config.schema[data.type]
-    if (!type)
-      throw createError(
-        `Invalid type: ${data.type}, for entry in ${file.filePath}`
-      )
-
+    if (!type) throw new Error(`invalid type: "${data.type}"`)
     const childrenDir = path.join(parentDir, fileName)
 
-    if (!data.id) throw createError(`Missing id for entry in ${file.filePath}`)
+    if (!data.id) throw new Error(`missing id`)
 
     return {
       workspace: file.workspace,
@@ -175,9 +171,11 @@ export class Database implements Syncable {
 
   async fill(files: AsyncGenerator<SourceEntry>): Promise<void> {
     const {h32Raw} = await xxhash()
+    await this.init()
     return this.store.transaction(async query => {
       const seen: Array<string> = []
       let inserted = 0
+      const endScan = timer('Scanning entries')
       for await (const file of files) {
         if (!(file.contents instanceof Uint8Array))
           throw new Error(`Cannot fill with non-binary content`)
@@ -192,22 +190,33 @@ export class Database implements Syncable {
             .select(Entry.id)
             .maybeFirst()
         )
+        // Todo: a config change but unchanged entry data will currently
+        // fly under the radar
         if (exists) {
           seen.push(exists)
           continue
         }
-        const entry = this.computeEntry(file)
-        const withHash = entry as Table.Insert<typeof Entry>
-        withHash.contentHash = contentHash
-        seen.push(await query(Entry().insert(withHash).returning(Entry.id)))
-        inserted++
+        try {
+          const entry = this.computeEntry(file)
+          const withHash = entry as Table.Insert<typeof Entry>
+          withHash.contentHash = contentHash
+          seen.push(await query(Entry().insert(withHash).returning(Entry.id)))
+          inserted++
+        } catch (e: any) {
+          console.log(`> skipped ${file.filePath} — ${e.message}`)
+        }
       }
+      endScan(`Scanned ${seen.length} entries`)
+      if (seen.length === 0) return
       const {rowsAffected: removed} = await query(
         Entry().delete().where(Entry.id.isNotIn(seen))
       )
       const noChanges = inserted === 0 && removed === 0
       if (noChanges) return
+
+      const endIndex = timer('Indexing entries')
       await this.index(query)
+      endIndex()
       await this.writeMeta(query)
     })
   }

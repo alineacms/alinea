@@ -4,9 +4,9 @@ import {Config} from 'alinea/core/Config'
 import {outcome} from 'alinea/core/Outcome'
 import {Root} from 'alinea/core/Root'
 import {Workspace} from 'alinea/core/Workspace'
-import {entries} from 'alinea/core/util/Objects'
+import {entries, keys, values} from 'alinea/core/util/Objects'
 import * as path from 'alinea/core/util/Paths'
-import {Source, SourceEntry} from '../Source.js'
+import {Source, SourceEntry, WatchFiles} from '../Source.js'
 import {Target} from '../Target.js'
 
 export type FileDataOptions = {
@@ -15,16 +15,51 @@ export type FileDataOptions = {
   rootDir?: string
 }
 
+async function filesOfPath(fs: FS, dir: string): Promise<WatchFiles> {
+  const res: WatchFiles = {files: [], dirs: []}
+  try {
+    const files = await fs.readdir(dir)
+    for (const file of files) {
+      const location = path.join(dir, file)
+      const stat = await fs.stat(location)
+      if (stat.isDirectory()) {
+        const contents = await filesOfPath(fs, location)
+        res.dirs.push(location, ...contents.dirs)
+        res.files.push(...contents.files)
+      } else {
+        res.files.push(location)
+      }
+    }
+    return res
+  } catch (e) {
+    return res
+  }
+}
+
 export class FileData implements Source, Target {
   canRename = true
 
   constructor(public options: FileDataOptions) {}
 
+  async watchFiles() {
+    const {fs, config, rootDir = '.'} = this.options
+    const res: WatchFiles = {files: [], dirs: []}
+    for (const workspace of values(config.workspaces)) {
+      const contentDir = Workspace.data(workspace).source
+      for (const rootName of keys(workspace)) {
+        const rootPath = path.join(rootDir, contentDir, rootName)
+        res.dirs.push(rootPath)
+        const contents = await filesOfPath(fs, rootPath)
+        res.files.push(...contents.files)
+        res.dirs.push(...contents.dirs)
+      }
+    }
+    return res
+  }
+
   async *entries(): AsyncGenerator<SourceEntry> {
     const {config, fs, rootDir = '.'} = this.options
-    for (const [workspaceName, workspace] of Object.entries(
-      config.workspaces
-    )) {
+    for (const [workspaceName, workspace] of entries(config.workspaces)) {
       const contentDir = Workspace.data(workspace).source
       for (const [rootName, root] of entries(workspace)) {
         const {i18n} = Root.data(root)

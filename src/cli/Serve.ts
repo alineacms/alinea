@@ -1,15 +1,15 @@
+import {JWTPreviews} from 'alinea/backend'
+import {Handler} from 'alinea/backend/Handler'
 import {nodeHandler} from 'alinea/backend/router/NodeHandler'
+import {CMS} from 'alinea/core/CMS'
 import {BuildOptions} from 'esbuild'
-import fs from 'fs-extra'
 import {RequestListener} from 'node:http'
 import path from 'node:path'
 import {generate} from './Generate.js'
 import {buildOptions} from './build/BuildOptions.js'
-import {createHandler} from './serve/CreateHandler.js'
 import {LiveReload} from './serve/LiveReload.js'
 import {ServeContext} from './serve/ServeContext.js'
 import {startServer} from './serve/StartServer.js'
-import {ServeBackend} from './serve/backend/ServeBackend.js'
 import {dirname} from './util/Dirname.js'
 
 const __dirname = dirname(import.meta.url)
@@ -22,7 +22,7 @@ export type ServeOptions = {
   buildOptions?: BuildOptions
   alineaDev?: boolean
   production?: boolean
-  onAfterGenerate?: () => void
+  onAfterGenerate?: (env?: Record<string, string>) => void
 }
 
 export async function serve(options: ServeOptions): Promise<void> {
@@ -53,30 +53,40 @@ export async function serve(options: ServeOptions): Promise<void> {
   const preferredPort = options.port ? Number(options.port) : 4500
   const server = await startServer(preferredPort)
   const dashboardName = production ? '(production) dashboard' : 'dashboard'
-  console.log(
-    `> Alinea ${dashboardName} available on http://localhost:${server.port}`
-  )
+  const dashboardUrl = `http://localhost:${server.port}`
+  console.log(`> Alinea ${dashboardName} available on ${dashboardUrl}`)
 
-  await fs.mkdirp(path.join(cwd, '.alinea'))
-  await fs.writeFile(
-    path.join(cwd, '.alinea/drafts.js'),
-    `export const serverLocation = 'http://localhost:${server.port}'`
-  )
-
-  const gen = generate({...options, watch: true})[Symbol.asyncIterator]()
+  const gen = generate({
+    ...options,
+    watch: true,
+    onAfterGenerate: () => {
+      options.onAfterGenerate?.({
+        ALINEA_DEV_SERVER: dashboardUrl
+      })
+    }
+  })[Symbol.asyncIterator]()
   let nextGen = gen.next()
-  let backend: ServeBackend | undefined
-  let handler: RequestListener
+  let cms: CMS | undefined
+  let handler: RequestListener | undefined
 
   while (true) {
-    const {value} = await nextGen
-    const {config, store} = value!
-    if (backend && backend.config === config) {
-      backend.replaceStore(store)
+    const current = await nextGen
+    if (!current?.value) return
+    const currentCMS = current.value.cms
+    if (currentCMS === cms) {
       context.liveReload.reload('refetch')
     } else {
-      backend = new ServeBackend({cwd, port: server.port, config, store})
-      handler = nodeHandler(createHandler(context, backend).handle)
+      handler = nodeHandler(
+        new Handler({
+          dashboardUrl,
+          config: currentCMS,
+          store: current.value.store,
+          target: undefined!,
+          media: undefined!,
+          previews: new JWTPreviews('@alinea/backend/devserver')
+        }).handle
+      )
+      cms = currentCMS
       context.liveReload.reload('refresh')
     }
     nextGen = gen.next()

@@ -2,7 +2,7 @@ import alinea from 'alinea'
 import {IcRoundInsertDriveFile} from 'alinea/ui/icons/IcRoundInsertDriveFile'
 import {IcRoundLink} from 'alinea/ui/icons/IcRoundLink'
 
-export const HomePage = alinea.type(
+export const Home = alinea.type(
   'Home',
   alinea.tabs(
     alinea.tab('Homepage', {

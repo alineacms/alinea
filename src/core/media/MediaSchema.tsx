@@ -4,7 +4,7 @@ import {hidden} from 'alinea/input/hidden'
 import {path} from 'alinea/input/path'
 import {text} from 'alinea/input/text'
 
-const MediaLibrary = type('Media directory', {
+export const MediaLibrary = type('Media directory', {
   title: text('Title'),
   path: path('Path'),
   [type.meta]: {
@@ -13,7 +13,7 @@ const MediaLibrary = type('Media directory', {
   }
 })
 
-const MediaFile = type('File', {
+export const MediaFile = type('File', {
   title: text('Title'),
   path: path('Path'),
   location: hidden<string>('Location', Hint.String()),
