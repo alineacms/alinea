@@ -10,7 +10,7 @@ import {
   UnOpType
 } from 'rado'
 import {Store} from './Store.js'
-import {EntryTree} from './database/EntryTree.js'
+import {Entry} from './db/Entry.js'
 
 import * as pages from '../core/pages/index.js'
 
@@ -71,11 +71,11 @@ export class Resolver {
           [POST_KEY]: new ExprData.Param(new ParamData.Value('richText')),
           doc: new ExprData.Field(expr, 'doc'),
           linked: new ExprData.Query(
-            EntryTree(
-              EntryTree.id.isIn(new Expr(new ExprData.Field(expr, 'linked')))
+            Entry(
+              Entry.id.isIn(new Expr(new ExprData.Field(expr, 'linked')))
             ).select({
-              id: EntryTree.id,
-              url: EntryTree.url
+              id: Entry.id,
+              url: Entry.url
             })[Query.Data]
           )
         })
@@ -91,15 +91,15 @@ export class Resolver {
   ): ExprData {
     switch (field) {
       case 'id':
-        return EntryTree.entryId[Expr.Data]
+        return Entry.entryId[Expr.Data]
       case 'type':
-        return EntryTree.type[Expr.Data]
+        return Entry.type[Expr.Data]
       case 'url':
-        return EntryTree.url[Expr.Data]
+        return Entry.url[Expr.Data]
       case 'title':
-        return EntryTree.title[Expr.Data]
+        return Entry.title[Expr.Data]
       case 'path':
-        return EntryTree.path[Expr.Data]
+        return Entry.path[Expr.Data]
       default:
         const {name, alias} = target
         if (!name) throw new Error(`Unknown field: "${field}"`)
@@ -108,7 +108,7 @@ export class Resolver {
           throw new Error(`Selecting "${field}" from unknown type: "${name}"`)
         return this.fieldExpr(
           ctx,
-          EntryTree.data.get(field)[Expr.Data],
+          Entry.data.get(field)[Expr.Data],
           Field.shape(Type.field(type, field)!)
         )
     }
@@ -132,9 +132,9 @@ export class Resolver {
   }
 
   queryOf(ctx: ResolveContext, target?: pages.TargetData): QueryData.Select {
-    if (!target) return EntryTree()[Query.Data]
+    if (!target) return Entry()[Query.Data]
     const {name, alias} = target
-    const Table = alias ? EntryTree().as(alias) : EntryTree
+    const Table = alias ? Entry().as(alias) : Entry
     return Table().where(name ? Table.type.is(name) : true)[Query.Data]
   }
 
@@ -245,7 +245,7 @@ export class Resolver {
   }
 
   queryRecord(selection: pages.Selection.Record): QueryData.Select {
-    return EntryTree().select(this.selectRecord(selection))[Query.Data]
+    return Entry().select(this.selectRecord(selection))[Query.Data]
   }
 
   queryCursor({cursor}: pages.Selection.Cursor): QueryData.Select {
