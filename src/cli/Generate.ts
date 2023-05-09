@@ -1,9 +1,7 @@
 import {Config} from 'alinea/core/Config'
-import {SqliteStore} from 'alinea/store/sqlite/SqliteStore'
 import {BuildResult} from 'esbuild'
 import path from 'node:path'
 import {compileConfig} from './generate/CompileConfig.js'
-import {copyBoilerplate} from './generate/CopyBoilerplate.js'
 import {copyStaticFiles} from './generate/CopyStaticFiles.js'
 import {fillCache} from './generate/FillCache.js'
 import {GenerateContext} from './generate/GenerateContext.js'
@@ -22,7 +20,6 @@ export type GenerateOptions = {
   fix?: boolean
   wasmCache?: boolean
   quiet?: boolean
-  store?: SqliteStore
   onAfterGenerate?: () => void
 }
 
@@ -59,7 +56,6 @@ export async function* generate(options: GenerateOptions) {
     watch: options.watch || false
   }
 
-  await copyBoilerplate(context)
   const builds = compileConfig(context)[Symbol.asyncIterator]()
   let nextBuild: Promise<{value: BuildResult; done?: boolean}> = builds.next()
   let afterGenerateCalled = false

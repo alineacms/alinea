@@ -5,7 +5,6 @@ import {createEmitter} from '../util/Emitter.js'
 import {externalPlugin} from '../util/ExternalPlugin.js'
 import {ignorePlugin} from '../util/IgnorePlugin.js'
 import {publicDefines} from '../util/PublicDefines.js'
-import {targetPlugin} from '../util/TargetPlugin.js'
 import {GenerateContext} from './GenerateContext.js'
 
 // Workaround evanw/esbuild#2460
@@ -28,13 +27,6 @@ function overrideTsConfig(cwd: string): string | undefined {
     fs.writeFileSync(overrideLocation, JSON.stringify(extendedConfig, null, 2))
     return overrideLocation
   }
-}
-
-function failOnBuildError(build: Promise<BuildResult>) {
-  return build.catch(error => {
-    // Ignore build error because esbuild reports it to stderr
-    process.exit(1)
-  })
 }
 
 export function compileConfig({
@@ -61,12 +53,6 @@ export function compileConfig({
     jsx: 'automatic',
     define,
     plugins: [
-      targetPlugin(file => {
-        return {
-          packageName: '@alinea/content',
-          packageRoot: outDir
-        }
-      }),
       externalPlugin(cwd),
       ignorePlugin,
       {

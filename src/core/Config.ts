@@ -1,6 +1,4 @@
-import type {Backend} from 'alinea/backend/Backend'
-import {BackendConfig, BackendProps} from './BackendConfig.js'
-import {createError} from './ErrorWithCode.js'
+import {BackendConfig} from './BackendConfig.js'
 import {Schema} from './Schema.js'
 import {Type} from './Type.js'
 import {Workspace, WorkspaceData} from './Workspace.js'
@@ -21,15 +19,6 @@ export interface Config {
 }
 
 export namespace Config {
-  export function createBackend(
-    config: Config,
-    options: BackendProps
-  ): Backend {
-    const backendConfig = config.backend
-    if (!backendConfig) throw createError('No backend config found')
-    return backendConfig.configureBackend({...backendConfig, ...options})
-  }
-
   export function mainWorkspace(config: Config): WorkspaceData {
     const key = Object.keys(config.workspaces)[0]
     return Workspace.data(config.workspaces[key])
