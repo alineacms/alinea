@@ -23,7 +23,7 @@ __metadata:
     better-sqlite3: ^8.1.0
     cito: ^0.1.7
     pretty-ms: ^8.0.0
-    rado: ^0.2.34
+    rado: ^0.3.3
     regexparam: ^2.0.1
     xxhash-wasm: ^1.0.2
   languageName: unknown
@@ -86,6 +86,9 @@ __metadata:
     diff-match-patch: ^1.0.5
     fast-average-color: ^7.0.1
     image-blob-reduce: ^4.1.0
+    jotai: ^2.1.0
+    jotai-optics: ^0.3.0
+    lib0: ^0.2.42
     p-limit: ^4.0.0
     pretty-bytes: ^6.0.0
     react-query: ^3.39.1
@@ -7409,6 +7412,28 @@ fsevents@~2.3.2:
   languageName: node
   linkType: hard
 
+"jotai-optics@npm:^0.3.0":
+  version: 0.3.0
+  resolution: "jotai-optics@npm:0.3.0"
+  peerDependencies:
+    jotai: ">=1.11.0"
+    optics-ts: "*"
+  checksum: 446fb07780ce8bc5e85862a1921d9621dc273a096ec8c3fec8d525612bc14964600ade28e4f272f7cf490918d3e362218141cd13cdae9def47be45c20f5dc544
+  languageName: node
+  linkType: hard
+
+"jotai@npm:^2.1.0":
+  version: 2.1.0
+  resolution: "jotai@npm:2.1.0"
+  peerDependencies:
+    react: ">=17.0.0"
+  peerDependenciesMeta:
+    react:
+      optional: true
+  checksum: 060b78dd221950c52e2c796f122b86b2cbbe99ba2b57e8c999a9b5403fd5f970cb8834296f0ac20bace85af8f96a8aac573efb9515382d215bbeace6c417a074
+  languageName: node
+  linkType: hard
+
 "js-sdsl@npm:^4.1.4":
   version: 4.4.0
   resolution: "js-sdsl@npm:4.4.0"
@@ -9866,10 +9891,10 @@ fsevents@~2.3.2:
   languageName: node
   linkType: hard
 
-"rado@npm:^0.2.34":
-  version: 0.2.34
-  resolution: "rado@npm:0.2.34"
-  checksum: a6ea97374d7e09ea267217e0f197af859a1762ae26f18929335d228ed1a4958f1454018d10e47631b67867b5b5e19b711ef28c07ff848a08e506ab481fc9880f
+"rado@npm:^0.3.3":
+  version: 0.3.3
+  resolution: "rado@npm:0.3.3"
+  checksum: c99ceaa8ece5895a8a7a4f328924c25509c7276b650cc492f9800e9ae8b4e22a82d8be4a16288dcc46b444b27ec547dbb4d628f5e1f8b111ba68b5ff4671771c
   languageName: node
   linkType: hard
 

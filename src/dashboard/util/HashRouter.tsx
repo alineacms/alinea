@@ -1,44 +1,24 @@
-import {useHash} from 'alinea/ui/hook/UseHash'
 import {
+  createParams,
+  locationAtom,
+  matchAtoms
+} from 'alinea/dashboard/atoms/HashAtoms'
+import {Provider, atom, useAtomValue, useStore} from 'jotai'
+import {
+  PropsWithChildren,
   createContext,
   memo,
-  PropsWithChildren,
   useContext,
   useMemo
 } from 'react'
 import {parse} from 'regexparam'
 
+export function useMatch(route: string, loose = false) {
+  return useAtomValue(matchAtoms({route, loose}))
+}
+
 export function useLocation() {
-  const [hash] = useHash()
-  const path = hash.slice(1) || '/'
-  const url = useMemo(() => new URL(path, location.href), [hash])
-  return url
-}
-
-interface Matcher {
-  keys: Array<string>
-  pattern: RegExp
-}
-
-function createParams(matcher: Matcher, match: RegExpExecArray) {
-  const params: Record<string, string> = {}
-  if (matcher.keys)
-    for (let i = 0; i < matcher.keys.length; i++)
-      params[matcher.keys[i]] = match[i + 1]
-  return params
-}
-
-export function useMatch(
-  route: string,
-  loose?: boolean
-): Record<string, string> | undefined {
-  const location = useLocation()
-  const matcher = useMemo<Matcher>(() => parse(route, loose), [route])
-  return useMemo(() => {
-    const match = matcher.pattern.exec(location.pathname)
-    if (match === null) return undefined
-    return createParams(matcher, match)
-  }, [matcher, location])
+  return useAtomValue(locationAtom)
 }
 
 export function useNavigate() {
@@ -68,9 +48,19 @@ interface RoutesProps {
   routes: Record<string, JSX.Element>
 }
 
+type MatchingRoute = {
+  path: string
+  element: JSX.Element
+  params: any
+}
+
+export const matchingRouteAtom = atom(undefined! as MatchingRoute)
+
 export const Routes = memo(function Routes({
   routes
 }: PropsWithChildren<RoutesProps>) {
+  const store = useStore()
+  const location = useAtomValue(locationAtom)
   const matchers = useMemo(() => {
     return Object.entries(routes).map(([key, element]) => ({
       path: key,
@@ -78,7 +68,6 @@ export const Routes = memo(function Routes({
       element
     }))
   }, [routes])
-  const location = useLocation()
   const match = useMemo(() => {
     for (const {path, matcher, element} of matchers) {
       const match = matcher.pattern.exec(location.pathname)
@@ -87,5 +76,6 @@ export const Routes = memo(function Routes({
     }
   }, [location, matchers])
   if (!match) return null
-  return <route.Provider value={match}>{match.element}</route.Provider>
+  store.set(matchingRouteAtom, match)
+  return <Provider store={store}>{match.element}</Provider>
 })

@@ -1,7 +1,7 @@
 import {Listbox} from '@headlessui/react'
+import {link, useNavigate} from 'alinea/dashboard/util/HashRouter'
 import {Create, fromModule, HStack, Icon, TextLabel} from 'alinea/ui'
 import {IcRoundUnfoldMore} from 'alinea/ui/icons/IcRoundUnfoldMore'
-import {link, useNavigate} from 'alinea/ui/util/HashRouter'
 import {useState} from 'react'
 import {useCurrentDraft} from '../../hook/UseCurrentDraft.js'
 import {useLocale} from '../../hook/UseLocale.js'

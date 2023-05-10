@@ -1,8 +1,8 @@
 import {ComponentType, HTMLAttributes, HTMLProps} from 'react'
+import {link} from '../dashboard/util/HashRouter.js'
 import css from './Create.module.scss'
 import {HStack} from './Stack.js'
 import {IcRoundAddCircle} from './icons/IcRoundAddCircle.js'
-import {link} from './util/HashRouter.js'
 import {fromModule} from './util/Styler.js'
 
 const styles = fromModule(css)

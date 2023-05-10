@@ -1,8 +1,8 @@
+import {useContrastColor} from 'alinea/ui/hook/UseContrastColor'
+import {fromModule} from 'alinea/ui/util/Styler'
 import {HTMLProps, PropsWithChildren, useEffect, useLayoutEffect} from 'react'
+import {usePreferences} from '../hook/UsePreferences.js'
 import css from './Viewport.module.scss'
-import {useContrastColor} from './hook/UseContrastColor.js'
-import {PreferencesProvider, usePreferences} from './hook/UsePreferences.js'
-import {fromModule} from './util/Styler.js'
 
 const styles = fromModule(css)
 
@@ -20,7 +20,7 @@ type ViewportProps = PropsWithChildren<
 const useIsomorphicEffect =
   typeof window !== 'undefined' ? useLayoutEffect : useEffect
 
-function ViewportView({
+export function Viewport({
   children,
   color = '#6673FC',
   contain,
@@ -71,15 +71,5 @@ function ViewportView({
         <div />
       </div>
     </main>
-  )
-}
-
-export function Viewport(props: ViewportProps) {
-  const preferences = usePreferences()
-  if (preferences) return <ViewportView {...props} />
-  return (
-    <PreferencesProvider>
-      <ViewportView {...props} />
-    </PreferencesProvider>
   )
 }

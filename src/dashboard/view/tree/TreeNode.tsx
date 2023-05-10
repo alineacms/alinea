@@ -5,13 +5,13 @@ import {
 } from '@dnd-kit/sortable'
 import {CSS, FirstArgument} from '@dnd-kit/utilities'
 import {Type, renderLabel} from 'alinea/core'
+import {link} from 'alinea/dashboard/util/HashRouter'
 import {Create, Stack, fromModule, px, useInitialEffect} from 'alinea/ui'
 import {HStack} from 'alinea/ui/Stack'
 import {IcRoundEdit} from 'alinea/ui/icons/IcRoundEdit'
 import {IcRoundInsertDriveFile} from 'alinea/ui/icons/IcRoundInsertDriveFile'
 import {IcRoundKeyboardArrowDown} from 'alinea/ui/icons/IcRoundKeyboardArrowDown'
 import {IcRoundKeyboardArrowRight} from 'alinea/ui/icons/IcRoundKeyboardArrowRight'
-import {link} from 'alinea/ui/util/HashRouter'
 import {
   CSSProperties,
   HTMLProps,
