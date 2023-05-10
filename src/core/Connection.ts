@@ -1,6 +1,6 @@
 import {Changes} from 'alinea/backend/data/Changes'
 import {AlineaMeta} from 'alinea/backend/db/AlineaMeta'
-import {Future, Media, User} from 'alinea/core'
+import {Media, User} from 'alinea/core'
 import {Entry} from './Entry.js'
 import {Selection} from './pages/Selection.js'
 import {Logger} from './util/Logger.js'
@@ -17,8 +17,8 @@ export interface Syncable {
 
 export interface Connection extends Syncable {
   resolve(selection: Selection): Promise<unknown>
-  uploadFile(params: Connection.UploadParams): Future<Media.File>
-  publishEntries(params: Connection.PublishParams): Future
+  uploadFile(params: Connection.UploadParams): Promise<Media.File>
+  publishEntries(params: Connection.PublishParams): Promise<void>
 }
 
 export namespace Connection {

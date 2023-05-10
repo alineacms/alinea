@@ -1,4 +1,5 @@
 import {EntryStatus, Type} from 'alinea/core'
+import {link, useNavigate} from 'alinea/dashboard/util/HashRouter'
 import {
   AppBar,
   Chip,
@@ -16,7 +17,6 @@ import {IcRoundInsertDriveFile} from 'alinea/ui/icons/IcRoundInsertDriveFile'
 import {IcRoundPublish} from 'alinea/ui/icons/IcRoundPublish'
 import {IcRoundRotateLeft} from 'alinea/ui/icons/IcRoundRotateLeft'
 import {MdiSourceBranch} from 'alinea/ui/icons/MdiSourceBranch'
-import {link, useNavigate} from 'alinea/ui/util/HashRouter'
 import {useState} from 'react'
 import {useQueryClient} from 'react-query'
 import {useCurrentDraft} from '../../hook/UseCurrentDraft.js'

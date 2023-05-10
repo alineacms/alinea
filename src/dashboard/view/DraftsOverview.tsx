@@ -1,19 +1,8 @@
-import {Entry, Outcome} from 'alinea/core'
-import {Button, HStack, Stack, Typo, VStack, fromModule, px} from 'alinea/ui'
-import {IcRoundArrowForward} from 'alinea/ui/icons/IcRoundArrowForward'
-import {useState} from 'react'
-import {useQuery} from 'react-query'
-import {CurrentDraftProvider} from '../hook/UseCurrentDraft.js'
-import {useDraft} from '../hook/UseDraft.js'
-import {useDraftsList} from '../hook/UseDraftsList.js'
+import {fromModule} from 'alinea/ui'
+import {useSession} from '../atoms/DashboardAtoms.js'
 import {useNav} from '../hook/UseNav.js'
-import {useSession} from '../hook/UseSession.js'
 import {useWorkspace} from '../hook/UseWorkspace.js'
 import css from './DraftsOverview.module.scss'
-import {EntryEdit} from './EntryEdit.js'
-import {Sidebar} from './Sidebar.js'
-import {EditMode} from './entry/EditMode.js'
-import {TreeNode} from './tree/TreeNode.js'
 
 const styles = fromModule(css)
 
@@ -25,7 +14,8 @@ export function DraftsOverview({id}: DraftsOverviewProps) {
   const {cnx: hub} = useSession()
   const nav = useNav()
   const workspace = useWorkspace()
-  const {ids} = useDraftsList(workspace.name)
+  return null
+  /*const {ids} = useDraftsList(workspace.name)
   const {data, refetch} = useQuery(
     ['drafts-overview', ids],
     () => {
@@ -101,5 +91,5 @@ export function DraftsOverview({id}: DraftsOverviewProps) {
         />
       )}
     </CurrentDraftProvider>
-  )
+  )*/
 }

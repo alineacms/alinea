@@ -1,7 +1,7 @@
 import {useWindowWidth} from '@react-hook/window-size'
+import {link} from 'alinea/dashboard/util/HashRouter'
 import {fromModule, Pane, useNonInitialEffect} from 'alinea/ui'
 import {Badge} from 'alinea/ui/Badge'
-import {link} from 'alinea/ui/util/HashRouter'
 import {createSlots} from 'alinea/ui/util/Slots'
 import {
   createContext,

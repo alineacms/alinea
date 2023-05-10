@@ -9,6 +9,13 @@ export type EntryLocation = {
   }
 }
 
+export const navMatchers = {
+  matchEntry: '/entry/*',
+  matchEntryId: '/:action/:workspace/:root/:id',
+  matchWorkspace: '/:action/:workspace',
+  matchRoot: '/:action/:workspace/:root'
+} as const
+
 export function dashboardNav(defaults: Partial<EntryLocation>) {
   function loc(location: EntryLocation) {
     const workspace =
@@ -38,9 +45,6 @@ export function dashboardNav(defaults: Partial<EntryLocation>) {
     entry,
     draft,
     create,
-    matchEntry: '/entry/*' as const,
-    matchEntryId: '/:action/:workspace/:root/:id' as const,
-    matchWorkspace: '/:action/:workspace' as const,
-    matchRoot: '/:action/:workspace/:root' as const
+    ...navMatchers
   }
 }

@@ -40,6 +40,7 @@ export class Database implements Syncable {
   }
 
   async syncWith(remote: Syncable): Promise<void> {
+    await this.init()
     const update = await remote.updates(await this.meta())
     if (update instanceof Uint8Array) {
       // Replace db with remote
@@ -108,10 +109,18 @@ export class Database implements Syncable {
     )
   }
 
+  inited = false
   private async init() {
-    return this.store.transaction(async query => {
-      await query(create(Entry, AlineaMeta))
-    })
+    if (this.inited) return
+    this.inited = true
+    try {
+      await this.store.transaction(async query => {
+        await query(create(Entry, AlineaMeta))
+      })
+    } catch (e) {
+      this.inited = false
+      throw e
+    }
   }
 
   computeEntry(

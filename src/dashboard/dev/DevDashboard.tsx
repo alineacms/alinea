@@ -1,11 +1,12 @@
 import {Config} from 'alinea/core'
 import {Client} from 'alinea/core/Client'
 import {joinPaths} from 'alinea/core/util/Urls'
-import {Button, Typo, VStack, Viewport} from 'alinea/ui'
+import {Button, Typo, VStack} from 'alinea/ui'
 import {Main} from 'alinea/ui/Main'
 import {useEffect, useMemo, useState} from 'react'
 import {QueryClient} from 'react-query'
-import {Dashboard} from '../Dashboard.js'
+import {App} from '../App.js'
+import {Viewport} from '../view/Viewport.js'
 
 type DevReloadOptions = {
   refresh: () => Promise<void>
@@ -81,5 +82,5 @@ export function DevDashboard({loadConfig}: DevDashboardOptions) {
         </Main>
       </Viewport>
     )
-  return <Dashboard queryClient={queryClient} config={cms} client={client!} />
+  return <App queryClient={queryClient} config={cms} client={client!} />
 }

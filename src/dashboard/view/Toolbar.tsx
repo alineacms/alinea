@@ -2,6 +2,7 @@ import {Switch} from '@headlessui/react'
 import {Root as AlineaRoot, Config, Workspace} from 'alinea/core'
 import {Label} from 'alinea/core/Label'
 import {entries, fromEntries} from 'alinea/core/util/Objects'
+import {link, useNavigate} from 'alinea/dashboard/util/HashRouter'
 import {InputField} from 'alinea/editor/view/InputField'
 import {select} from 'alinea/input/select'
 import {
@@ -13,8 +14,7 @@ import {
   TextLabel,
   VStack,
   fromModule,
-  px,
-  usePreferences
+  px
 } from 'alinea/ui'
 import {PopoverMenu} from 'alinea/ui/PopoverMenu'
 import {HStack} from 'alinea/ui/Stack'
@@ -26,22 +26,24 @@ import IcRoundTextFields from 'alinea/ui/icons/IcRoundTextFields'
 import {IcRoundUnfoldMore} from 'alinea/ui/icons/IcRoundUnfoldMore'
 import {IcSharpBrightnessMedium} from 'alinea/ui/icons/IcSharpBrightnessMedium'
 import {contrastColor} from 'alinea/ui/util/ContrastColor'
-import {link, useNavigate} from 'alinea/ui/util/HashRouter'
 import {createSlots} from 'alinea/ui/util/Slots'
 import {parseToHsla} from 'color2k'
+import {useAtomValue, useSetAtom} from 'jotai'
 import {ComponentType} from 'react'
-import {useDashboard} from '../hook/UseDashboard.js'
-import {useNav} from '../hook/UseNav.js'
-import {useSession} from '../hook/UseSession.js'
-import {useWorkspace} from '../hook/UseWorkspace.js'
+import {dashboardOptionsAtom, sessionAtom} from '../atoms/DashboardAtoms.js'
+import {navAtom, workspaceAtom} from '../atoms/NavigationAtoms.js'
+import {
+  preferencesAtom,
+  sizePreferenceAtom,
+  toggleSchemePreferenceAtom,
+  workspacePreferenceAtom
+} from '../atoms/PreferencesAtoms.js'
+import {accentColorAtom} from '../atoms/StyleAtoms.js'
 import {useSidebar} from './Sidebar.js'
 import css from './Toolbar.module.scss'
 
 const styles = fromModule(css)
 
-type ToolbarProps = {
-  color: string
-}
 type WorkspaceLabelProps = {
   color?: string
   label: Label
@@ -69,15 +71,15 @@ function WorkspaceLabel({label, color, icon: Icon}: WorkspaceLabelProps) {
 export namespace Toolbar {
   export const {Provider, Portal, Slot} = createSlots()
 
-  export function Root({color}: ToolbarProps) {
-    const accentColor = color!
-    const session = useSession()
-    const {config} = useDashboard()
-    const nav = useNav()
-    const preferences = usePreferences()
+  export function Root() {
+    const accentColor = useAtomValue(accentColorAtom)
+    const session = useAtomValue(sessionAtom)
+    const {config} = useAtomValue(dashboardOptionsAtom)
+    const nav = useAtomValue(navAtom)
+    const preferences = useAtomValue(preferencesAtom)
     const size = preferences.size || 16
     const checked = preferences?.scheme === 'dark'
-    const workspace = useWorkspace()
+    const workspace = useAtomValue(workspaceAtom)
     const navigate = useNavigate()
     const {isNavOpen, isPreviewOpen, toggleNav, togglePreview} = useSidebar()
     const workspaces = Object.entries(config.workspaces)
@@ -95,6 +97,9 @@ export namespace Toolbar {
         })
       )
     )
+    const toggleSchemePreference = useSetAtom(toggleSchemePreferenceAtom)
+    const updateFontSize = useSetAtom(sizePreferenceAtom)
+    const updateWorkspace = useSetAtom(workspacePreferenceAtom)
     return (
       <HStack center gap={12} className={styles.root()} style={style}>
         <div className={styles.root.menu()} onClick={toggleNav}>
@@ -180,7 +185,7 @@ export namespace Toolbar {
                         <Icon icon={IcSharpBrightnessMedium} size={20} />
                         <Switch
                           checked={checked}
-                          onChange={preferences.toggleColorScheme}
+                          onChange={toggleSchemePreference}
                           className={styles.root.switch({
                             checked
                           })}
@@ -200,12 +205,12 @@ export namespace Toolbar {
                         />
                         <IconButton
                           icon={IcRoundKeyboardArrowDown}
-                          onClick={() => preferences.updateFontSize(size - 1)}
+                          onClick={() => updateFontSize(size - 1)}
                           disabled={size <= 16}
                         />
                         <IconButton
                           icon={IcRoundKeyboardArrowUp}
-                          onClick={() => preferences.updateFontSize(size + 1)}
+                          onClick={() => updateFontSize(size + 1)}
                           disabled={size >= 40}
                         />
                       </HStack>
@@ -213,7 +218,7 @@ export namespace Toolbar {
                     {workspaces.length > 1 && (
                       <InputField
                         value={preferences.workspace || ''}
-                        onChange={preferences.setWorkspace}
+                        onChange={updateWorkspace}
                         field={defaultWorkspace}
                       />
                     )}

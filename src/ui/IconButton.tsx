@@ -1,6 +1,6 @@
 import {ComponentType, forwardRef, HTMLAttributes, HTMLProps, Ref} from 'react'
+import {link} from '../dashboard/util/HashRouter.js'
 import css from './IconButton.module.scss'
-import {link} from './util/HashRouter.js'
 import {fromModule} from './util/Styler.js'
 import {px} from './util/Units.js'
 

@@ -1,6 +1,6 @@
 import type {LinkHTMLAttributes} from 'react'
+import {link} from '../dashboard/util/HashRouter.js'
 import css from './Link.module.scss'
-import {link} from './util/HashRouter.js'
 import {fromModule} from './util/Styler.js'
 
 const styles = fromModule(css)

@@ -1,5 +1,6 @@
 import {PropsWithChildren, useEffect} from 'react'
 import useErrorBoundary from 'use-error-boundary'
+import {useLocation} from '../dashboard/util/HashRouter.js'
 import {Button} from './Button.js'
 import css from './ErrorBoundary.module.scss'
 import {Icon} from './Icon.js'
@@ -8,7 +9,6 @@ import {Typo} from './Typo.js'
 import {IcRoundClose} from './icons/IcRoundClose.js'
 import {IcRoundOpenInNew} from './icons/IcRoundOpenInNew.js'
 import {IcRoundWarning} from './icons/IcRoundWarning.js'
-import {useLocation} from './util/HashRouter.js'
 import {fromModule} from './util/Styler.js'
 
 const styles = fromModule(css)

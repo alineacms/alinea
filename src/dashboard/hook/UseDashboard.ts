@@ -1,12 +1,4 @@
-import {createContext, useContext} from 'react'
-import {DashboardOptions} from '../Dashboard.js'
+import {useAtomValue} from 'jotai'
+import {dashboardOptionsAtom} from '../atoms/DashboardAtoms.js'
 
-type DashboardContext = DashboardOptions
-
-const context = createContext<DashboardContext | undefined>(undefined)
-
-export function useDashboard() {
-  return useContext(context)!
-}
-
-export const DashboardProvider = context.Provider
+export const useDashboard = () => useAtomValue(dashboardOptionsAtom)

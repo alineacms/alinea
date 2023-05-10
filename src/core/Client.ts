@@ -1,22 +1,13 @@
 import {AbortController, fetch, FormData, Response} from '@alinea/iso'
 import {AlineaMeta} from 'alinea/backend/db/AlineaMeta'
-import {
-  Config,
-  Connection,
-  createError,
-  Future,
-  Media,
-  Outcome
-} from 'alinea/core'
+import {Config, Connection, createError, Media} from 'alinea/core'
 import {UpdateResponse} from './Connection.js'
 import {Selection} from './pages/Selection.js'
 
-async function toFuture<T = void>(res: Response): Future<T> {
-  return Outcome.fromJSON<T>(await res.json())
-}
-
-function fail(err: Error): any {
-  return Outcome.Failure(err)
+async function failOnHttpError<T>(res: Response): Promise<T> {
+  if (res.ok) return res.json()
+  const text = await res.text()
+  throw createError(res.status, text || res.statusText)
 }
 
 type AuthenticateRequest = (request?: RequestInit) => RequestInit | undefined
@@ -34,7 +25,7 @@ export class Client implements Connection {
     return this.fetchJson(Connection.routes.resolve(), {
       method: 'POST',
       body
-    }).then(toFuture, fail)
+    }).then(failOnHttpError)
   }
 
   authenticate(applyAuth: AuthenticateRequest, unauthorized: () => void) {
@@ -47,25 +38,27 @@ export class Client implements Connection {
     params.append('modifiedAt', String(request.modifiedAt))
     return this.fetchJson(
       Connection.routes.updates() + '?' + params.toString()
-    ).then(toFuture, fail)
+    ).then<UpdateResponse>(failOnHttpError)
   }
 
   ids(): Promise<Array<string>> {
-    return this.fetchJson(Connection.routes.ids()).then(toFuture, fail)
+    return this.fetchJson(Connection.routes.ids()).then<Array<string>>(
+      failOnHttpError
+    )
   }
 
-  publishEntries({entries}: Connection.PublishParams): Future {
+  publishEntries({entries}: Connection.PublishParams): Promise<void> {
     return this.fetchJson(Connection.routes.publish(), {
       method: 'POST',
       body: JSON.stringify(entries)
-    }).then(toFuture, fail)
+    }).then<void>(failOnHttpError)
   }
 
   uploadFile({
     workspace,
     root,
     ...file
-  }: Connection.UploadParams): Future<Media.File> {
+  }: Connection.UploadParams): Promise<Media.File> {
     const form = new FormData()
     form.append('workspace', workspace as string)
     form.append('root', root as string)
@@ -80,7 +73,7 @@ export class Client implements Connection {
     return this.fetch(Connection.routes.upload(), {
       method: 'POST',
       body: form
-    }).then<Outcome<Media.File>>(toFuture, fail)
+    }).then<Media.File>(failOnHttpError)
   }
 
   protected fetch(endpoint: string, init?: RequestInit): Promise<Response> {

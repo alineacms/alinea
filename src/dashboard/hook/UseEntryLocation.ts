@@ -1,13 +1,4 @@
-import {useMatch} from 'alinea/ui/util/HashRouter'
-import {useMemo} from 'react'
-import {dashboardNav, EntryLocation} from '../DashboardNav.js'
+import {useAtomValue} from 'jotai'
+import {entryLocationAtom} from '../atoms/NavigationAtoms.js'
 
-const nav = dashboardNav({})
-
-export function useEntryLocation(): EntryLocation | undefined {
-  const match = useMatch(nav.matchEntryId)
-  return useMemo(() => {
-    const params = match as EntryLocation
-    return params || undefined
-  }, [match])
-}
+export const useEntryLocation = () => useAtomValue(entryLocationAtom)

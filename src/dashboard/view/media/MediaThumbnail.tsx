@@ -1,8 +1,8 @@
 import {Media, renderLabel} from 'alinea/core'
+import {link} from 'alinea/dashboard/util/HashRouter'
 import {fromModule, px} from 'alinea/ui'
 import {useContrastColor} from 'alinea/ui/hook/UseContrastColor'
 import {IcRoundInsertDriveFile} from 'alinea/ui/icons/IcRoundInsertDriveFile'
-import {link} from 'alinea/ui/util/HashRouter'
 import {useNav} from '../../hook/UseNav.js'
 import css from './MediaThumbnail.module.scss'
 
