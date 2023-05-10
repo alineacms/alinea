@@ -1,20 +1,22 @@
-import {Entry, Tree, view} from 'alinea/core'
-import {Collection} from 'alinea/store'
 import {
   Chip,
   Ellipsis,
-  fromModule,
   HStack,
+  IconLink,
   TextLabel,
   Typo,
-  VStack
+  VStack,
+  fromModule
 } from 'alinea/ui'
+import {Entry, Tree, view} from 'alinea/core'
+
+import {Collection} from 'alinea/store'
 import {IcRoundKeyboardArrowRight} from 'alinea/ui/icons/IcRoundKeyboardArrowRight'
-import {Link} from 'alinea/ui/Link'
+import {MdiLaunch} from 'alinea/ui/icons/MdiLaunch'
 import {ReactNode} from 'react'
+import css from './EntrySummary.module.scss'
 import {useDashboard} from '../../hook/UseDashboard.js'
 import {useNav} from '../../hook/UseNav.js'
-import css from './EntrySummary.module.scss'
 
 const styles = fromModule(css)
 
@@ -57,12 +59,16 @@ export const EntrySummaryRow = view(
             </Ellipsis>
           )}
           <Ellipsis>
-            <Link href={nav.entry({id})}>
-              <TextLabel label={title} />
-            </Link>
+            <TextLabel label={title} />
           </Ellipsis>
         </VStack>
-        <Chip style={{marginLeft: 'auto'}}>
+        <IconLink
+          style={{marginLeft: 'auto'}}
+          icon={MdiLaunch}
+          href={nav.entry({id})}
+          target="_blank"
+        />
+        <Chip>
           <TextLabel label={type.label} />
         </Chip>
       </HStack>
