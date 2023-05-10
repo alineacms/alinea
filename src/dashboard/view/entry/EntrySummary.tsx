@@ -12,6 +12,7 @@ import {Entry, Tree, view} from 'alinea/core'
 
 import {Collection} from 'alinea/store'
 import {IcRoundKeyboardArrowRight} from 'alinea/ui/icons/IcRoundKeyboardArrowRight'
+import {IcRoundOpenInNew} from 'alinea/ui/icons/IcRoundOpenInNew'
 import {MdiLaunch} from 'alinea/ui/icons/MdiLaunch'
 import {ReactNode} from 'react'
 import css from './EntrySummary.module.scss'
@@ -64,7 +65,7 @@ export const EntrySummaryRow = view(
         </VStack>
         <IconLink
           style={{marginLeft: 'auto'}}
-          icon={MdiLaunch}
+          icon={IcRoundOpenInNew}
           href={nav.entry({id})}
           target="_blank"
         />
