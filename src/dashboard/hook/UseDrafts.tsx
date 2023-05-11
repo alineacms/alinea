@@ -79,7 +79,7 @@ class Drafts {
     if (this.saveTimeout) clearTimeout(this.saveTimeout)
     draft.status(EntryStatus.Publishing)
     this.status(DraftsStatus.Saving)
-    return this.cnx.deleteDraft({id: draft.id}).then(result => {
+    return this.cnx.deleteDraft({id: draft.versionId}).then(result => {
       draft.status(EntryStatus.Published)
       this.queryClient.invalidateQueries('draft-list')
       return result

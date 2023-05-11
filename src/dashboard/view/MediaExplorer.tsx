@@ -26,11 +26,11 @@ export function MediaExplorer() {
   const {cnx: hub} = useSession()
   const {File} = Media
   const {data} = useQuery(
-    ['media', 'total', draft.id],
+    ['media', 'total', draft.versionId],
     () => {
       return hub
         .query({
-          cursor: File.where(File.alinea.parent.is(draft.id)).select({
+          cursor: File.where(File.alinea.parent.is(draft.versionId)).select({
             total: Functions.count()
           })
         })
@@ -76,16 +76,16 @@ export function MediaExplorer() {
                       <div key={index} style={{...style, height}}>
                         <MediaRow
                           amount={perRow}
-                          parentId={draft.id}
+                          parentId={draft.versionId}
                           from={from}
                           batchSize={perRow * 5}
                         />
                       </div>
                     )
                   }}
-                  scrollOffset={scrollOffsets.get(draft.id) || 0}
+                  scrollOffset={scrollOffsets.get(draft.versionId) || 0}
                   onScroll={scrollTop => {
-                    scrollOffsets.set(draft.id, scrollTop)
+                    scrollOffsets.set(draft.versionId, scrollTop)
                   }}
                 />
               )}

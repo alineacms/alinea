@@ -66,7 +66,7 @@ export namespace Cursor {
       return new Find(this.with({where}))
     }
 
-    get<S extends Projection<Row>>(select?: S): Get<Selection.Infer<S>> {
+    get<S extends Projection<Row>>(select: S): Get<Selection.Infer<S>> {
       const query = this.with({first: true})
       if (select) query.select = Selection(select, this.id)
       return new Get<Selection.Infer<S>>(query)

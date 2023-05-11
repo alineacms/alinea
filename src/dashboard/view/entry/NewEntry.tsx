@@ -74,12 +74,12 @@ function NewEntryForm({parentId}: NewEntryProps) {
       const Child = Entry.as('Child')
       return hub
         .query({
-          cursor: Entry.where(Entry.id.is(parentId)).select({
-            id: Entry.id,
+          cursor: Entry.where(Entry.versionId.is(parentId)).select({
+            id: Entry.versionId,
             type: Entry.type,
             url: Entry.url,
             alinea: Entry.alinea,
-            childrenIndex: Child.where(Child.alinea.parent.is(Entry.id))
+            childrenIndex: Child.where(Child.alinea.parent.is(Entry.versionId))
               .select(Child.alinea.index)
               .orderBy(Child.alinea.index.asc())
               .first()
@@ -145,7 +145,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
     }
     const doc = docFromEntry(entry, () => type)
     return hub
-      .updateDraft({id: entry.id, update: Y.encodeStateAsUpdate(doc)})
+      .updateDraft({id: entry.versionId, update: Y.encodeStateAsUpdate(doc)})
       .then(result => {
         if (result.isSuccess()) {
           queryClient.invalidateQueries([

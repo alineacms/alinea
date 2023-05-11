@@ -19,34 +19,23 @@ export const TargetData = object(
   }
 )
 
-export declare class TargetI<T = any> {
+export declare class TargetI<Row = object> {
   get [Target.IsTarget](): true
   get [Target.Data](): TargetData
 }
 
-export interface TargetI<T = any> extends Callable {
-  (conditions: {
-    [K in keyof T]?: T[K] extends Expr<infer V> ? EV<V> : never
-  }): Cursor.Find<T>
-  (): Cursor.Find<T>
-  // (...conditions: Array<EV<boolean>>): Cursor.Find<T>
+export interface TargetI<Row = object> extends Callable {
+  (conditions?: {
+    [K in keyof Row]?: EV<Row[K]>
+  }): Cursor.Find<Row>
 }
 
-export type TargetFrom<Row> = Target<{
-  [K in keyof Row as K extends string ? K : never]: Fields<Row[K]>
-}>
-
-export type TargetRow<Definition> = {
-  [K in keyof Definition as Definition[K] extends Expr<any>
-    ? K
-    : never]: Definition[K] extends Expr<infer T> ? T : never
-}
-
-export type Target<Definition> = Definition & TargetI<Definition>
+export type Target<Row> = Target.Definition<Row> & TargetI<Row>
 
 export namespace Target {
-  export type From<Row> = TargetFrom<Row>
-  export type Row<Definition> = TargetRow<Definition>
+  export type Definition<Row> = {
+    [K in keyof Row as K extends string ? K : never]: Fields<Row[K]>
+  }
 }
 
 export const Target = class {
@@ -87,7 +76,7 @@ export const Target = class {
     return (this.cache[field] = Expr(ExprData.Field(this.data, field)))
   }
 
-  static create<Definition>(data: TargetData): Target<Definition> {
+  static create<T>(data: TargetData): Target<T> {
     const impl = new this(data)
     const name = data.name || 'target'
     const call = {[name]: (...args: Array<any>) => impl.call(...args)}[name]

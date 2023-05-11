@@ -23,7 +23,7 @@ export function entryFromDoc(
     )
   if (!root) throw new Error(`No root`)
   return {
-    id: docRoot.get('id') as string,
+    versionId: docRoot.get('id') as string,
     type: typeKey,
     title: docRoot.get('title') as Label,
     path: docRoot.get('path') as string,
@@ -46,7 +46,7 @@ export function docFromEntry(
   // less guaranteed to be deterministic
   doc.clientID = 1
   const docRoot = doc.getMap(ROOT_KEY)
-  docRoot.set('id', entry.id)
+  docRoot.set('id', entry.versionId)
   docRoot.set('type', entry.type)
   docRoot.set('url', entry.url)
   docRoot.set('title', entry.title)

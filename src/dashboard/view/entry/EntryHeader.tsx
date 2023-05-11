@@ -85,7 +85,7 @@ export function EntryHeader({mode, setMode}: EntryHeaderProps) {
   const [isPublishing, setPublishing] = useState(false)
   function handleDiscard() {
     return drafts.discard(draft).then(([entryRemains, err]) => {
-      queryClient.invalidateQueries(['draft', draft.id])
+      queryClient.invalidateQueries(['draft', draft.versionId])
       if (!entryRemains) {
         queryClient.invalidateQueries(['tree'])
         // Navigate to parent, otherwise we'll 404

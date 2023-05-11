@@ -1,17 +1,7 @@
-import {
-  createParams,
-  locationAtom,
-  matchAtoms
-} from 'alinea/dashboard/atoms/HashAtoms'
-import {Provider, atom, useAtomValue, useStore} from 'jotai'
-import {
-  PropsWithChildren,
-  createContext,
-  memo,
-  useContext,
-  useMemo
-} from 'react'
+import {atom, useAtomValue} from 'jotai'
+import {createContext, useContext, useMemo} from 'react'
 import {parse} from 'regexparam'
+import {createParams, locationAtom, matchAtoms} from '../atoms/RouterAtoms.js'
 
 export function useMatch(route: string, loose = false) {
   return useAtomValue(matchAtoms({route, loose}))
@@ -37,15 +27,11 @@ interface RouteContext {
 const route = createContext<RouteContext | undefined>(undefined)
 
 export function useParams() {
-  return useContext(route)?.params!
+  return useContext(route)?.params || {}
 }
 
 export function link(url: string | undefined) {
   return typeof url === 'string' ? {href: `#${url}`} : {}
-}
-
-interface RoutesProps {
-  routes: Record<string, JSX.Element>
 }
 
 type MatchingRoute = {
@@ -56,10 +42,7 @@ type MatchingRoute = {
 
 export const matchingRouteAtom = atom(undefined! as MatchingRoute)
 
-export const Routes = memo(function Routes({
-  routes
-}: PropsWithChildren<RoutesProps>) {
-  const store = useStore()
+export function useRoutes(routes: Record<string, JSX.Element>) {
   const location = useAtomValue(locationAtom)
   const matchers = useMemo(() => {
     return Object.entries(routes).map(([key, element]) => ({
@@ -75,7 +58,11 @@ export const Routes = memo(function Routes({
       return {path, element, params: createParams(matcher, match)}
     }
   }, [location, matchers])
-  if (!match) return null
-  store.set(matchingRouteAtom, match)
-  return <Provider store={store}>{match.element}</Provider>
-})
+
+  return match
+    ? {
+        ...match,
+        element: <route.Provider value={match}>{match.element}</route.Provider>
+      }
+    : undefined
+}
