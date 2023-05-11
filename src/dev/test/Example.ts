@@ -41,7 +41,7 @@ const config = createConfig({
 
 const entries: Array<Entry & Record<string, any>> = [
   {
-    id: 'root',
+    versionId: 'root',
     type: 'Type',
     url: '/',
     title: 'Test title',
@@ -55,7 +55,7 @@ const entries: Array<Entry & Record<string, any>> = [
     }
   },
   {
-    id: 'sub',
+    versionId: 'sub',
     type: 'Type',
     title: 'Sub title',
     path: 'sub',

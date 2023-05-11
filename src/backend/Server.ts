@@ -1,4 +1,4 @@
-import {Config, Connection, Future} from 'alinea/core'
+import {Config, Connection} from 'alinea/core'
 import {Selection} from 'alinea/core/pages/Selection'
 import {Database} from './Database.js'
 import {File, Media} from './Media.js'
@@ -39,12 +39,12 @@ export class Server implements Connection {
     return this.resolver.resolve(selection)
   }
 
-  async publishEntries({entries}: Connection.PublishParams): Future<void> {
+  async publishEntries({entries}: Connection.PublishParams): Promise<void> {
     const {config, target} = this.options
     throw new Error('todo')
   }
 
-  uploadFile(params: Connection.UploadParams): Future<File> {
+  uploadFile(params: Connection.UploadParams): Promise<File> {
     throw 'assert'
   }
 

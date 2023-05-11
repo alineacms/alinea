@@ -1,6 +1,6 @@
 import {Listbox} from '@headlessui/react'
 import {link, useNavigate} from 'alinea/dashboard/util/HashRouter'
-import {Create, fromModule, HStack, Icon, TextLabel} from 'alinea/ui'
+import {Create, HStack, Icon, TextLabel, fromModule} from 'alinea/ui'
 import {IcRoundUnfoldMore} from 'alinea/ui/icons/IcRoundUnfoldMore'
 import {useState} from 'react'
 import {useCurrentDraft} from '../../hook/UseCurrentDraft.js'
@@ -51,7 +51,7 @@ function Langswitch() {
           const translation = draft?.translation(value)
           navigate(
             nav.entry({
-              id: translation?.id || draft?.id,
+              id: translation?.id || draft?.versionId,
               workspace,
               root: root.name,
               locale: value

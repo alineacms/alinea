@@ -72,9 +72,9 @@ export class Resolver {
           doc: new ExprData.Field(expr, 'doc'),
           linked: new ExprData.Query(
             Entry(
-              Entry.id.isIn(new Expr(new ExprData.Field(expr, 'linked')))
+              Entry.versionId.isIn(new Expr(new ExprData.Field(expr, 'linked')))
             ).select({
-              id: Entry.id,
+              id: Entry.versionId,
               url: Entry.url
             })[Query.Data]
           )
@@ -102,7 +102,11 @@ export class Resolver {
         return Entry.path[Expr.Data]
       default:
         const {name, alias} = target
-        if (!name) throw new Error(`Unknown field: "${field}"`)
+        if (!name) {
+          const fields: Record<string, Expr<any>> = Entry as any
+          if (field in fields) return fields[field][Expr.Data]
+          throw new Error(`Selecting unknown field: "${field}"`)
+        }
         const type = this.schema[name]
         if (!type)
           throw new Error(`Selecting "${field}" from unknown type: "${name}"`)
@@ -245,7 +249,11 @@ export class Resolver {
   }
 
   queryRecord(selection: pages.Selection.Record): QueryData.Select {
-    return Entry().select(this.selectRecord(selection))[Query.Data]
+    const expr = this.selectRecord(selection)
+    return new QueryData.Select({
+      selection: expr,
+      singleResult: true
+    })
   }
 
   queryCursor({cursor}: pages.Selection.Cursor): QueryData.Select {
@@ -307,7 +315,6 @@ export class Resolver {
     // This validates the input, and throws if it's invalid
     assert(selection, pages.Selection.adt)
     const query = this.query(selection)
-    console.log({selection, query})
     const interim: object | Array<object> = await this.store(new Query(query))
     return this.post(interim)
   }

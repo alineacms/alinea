@@ -45,16 +45,16 @@ export function EntryEdit({initialMode, draft, isLoading}: EntryEditProps) {
     if (!locale || isCreating) return
     setIsCreating(true)
     const entry = draft.getEntry()
-    entry.id = createId()
+    entry.versionId = createId()
     entry.alinea.i18n!.locale = locale
     const path = entry.url.split('/').slice(1).join('/')
     entry.url = `/${locale}/${path}`
     const doc = docFromEntry(entry, () => type)
     return hub
-      .updateDraft({id: entry.id, update: Y.encodeStateAsUpdate(doc)})
+      .updateDraft({id: entry.versionId, update: Y.encodeStateAsUpdate(doc)})
       .then(result => {
         if (!result.isFailure()) {
-          queryClient.invalidateQueries(['draft', draft.id])
+          queryClient.invalidateQueries(['draft', draft.versionId])
           navigate(nav.entry(entry))
         } else {
           throw result.error

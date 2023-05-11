@@ -4,7 +4,7 @@ import {Entry} from './Entry.js'
 export namespace Tree {
   export function siblings(id: EV<string>): CursorImpl<Entry> {
     const Self = Entry.as('Self')
-    return Entry.where(Entry.id.isNot(id)).where(
+    return Entry.where(Entry.versionId.isNot(id)).where(
       Entry.alinea.parent.is(
         Self.where(Self.id.is(id)).select(Self.alinea.parent).first()
       )

@@ -21,9 +21,9 @@ __metadata:
   dependencies:
     "@types/better-sqlite3": ^5.4.1
     better-sqlite3: ^8.1.0
-    cito: ^0.1.7
+    cito: ^0.1.8
     pretty-ms: ^8.0.0
-    rado: ^0.3.3
+    rado: ^0.3.4
     regexparam: ^2.0.1
     xxhash-wasm: ^1.0.2
   languageName: unknown
@@ -87,7 +87,6 @@ __metadata:
     fast-average-color: ^7.0.1
     image-blob-reduce: ^4.1.0
     jotai: ^2.1.0
-    jotai-optics: ^0.3.0
     lib0: ^0.2.42
     p-limit: ^4.0.0
     pretty-bytes: ^6.0.0
@@ -4466,10 +4465,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cito@npm:^0.1.7":
-  version: 0.1.7
-  resolution: "cito@npm:0.1.7"
-  checksum: 14822ddeac0ae331de74cc0aee4dc6a9f56437ea25ba716925c3745c2cc75cbcf89dd3d843710dfdc8b480fd885745ee3a1a6b1d8b3e92ede39e6631b64d55b8
+"cito@npm:^0.1.8":
+  version: 0.1.8
+  resolution: "cito@npm:0.1.8"
+  checksum: d76829d44746060497cc665190cfab2d441a015a6e036a954bee6168536f000986e9bd823dfb2a58dda5ae45269e2399019a7c5f75d81b6ff06b11d4335af09c
   languageName: node
   linkType: hard
 
@@ -7412,16 +7411,6 @@ fsevents@~2.3.2:
   languageName: node
   linkType: hard
 
-"jotai-optics@npm:^0.3.0":
-  version: 0.3.0
-  resolution: "jotai-optics@npm:0.3.0"
-  peerDependencies:
-    jotai: ">=1.11.0"
-    optics-ts: "*"
-  checksum: 446fb07780ce8bc5e85862a1921d9621dc273a096ec8c3fec8d525612bc14964600ade28e4f272f7cf490918d3e362218141cd13cdae9def47be45c20f5dc544
-  languageName: node
-  linkType: hard
-
 "jotai@npm:^2.1.0":
   version: 2.1.0
   resolution: "jotai@npm:2.1.0"
@@ -9891,10 +9880,10 @@ fsevents@~2.3.2:
   languageName: node
   linkType: hard
 
-"rado@npm:^0.3.3":
-  version: 0.3.3
-  resolution: "rado@npm:0.3.3"
-  checksum: c99ceaa8ece5895a8a7a4f328924c25509c7276b650cc492f9800e9ae8b4e22a82d8be4a16288dcc46b444b27ec547dbb4d628f5e1f8b111ba68b5ff4671771c
+"rado@npm:^0.3.4":
+  version: 0.3.4
+  resolution: "rado@npm:0.3.4"
+  checksum: 79b57bbdf44f8cd528ed52244f076749cd8331bdc48c1c3a437dd000a3f60692ce1678102194ce16ca500e2afe0df2c43fb05f82c091d612b619e9fd48fc1766
   languageName: node
   linkType: hard
 

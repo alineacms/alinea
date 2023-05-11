@@ -20,6 +20,10 @@ export class Database implements Syncable {
     this.resolve = new Resolver(store, config.schema).resolve
   }
 
+  find<S>(selection: S) {
+    return this.resolve(Selection(selection)) as Promise<Selection.Infer<S>>
+  }
+
   async updates(request: AlineaMeta) {
     const current = await this.meta()
     if (current.contentHash === request.contentHash)
@@ -36,10 +40,17 @@ export class Database implements Syncable {
   }
 
   async ids(): Promise<Array<string>> {
-    return this.store(Entry().select(Entry.id))
+    return this.store(Entry().select(Entry.versionId))
   }
 
-  async syncWith(remote: Syncable): Promise<void> {
+  entriesOf(query: Driver.Async, versionIds: Array<string>) {
+    return query(
+      Entry().select(Entry.entryId).where(Entry.versionId.isIn(versionIds))
+    )
+  }
+
+  // Syncs data with a remote database, returning the ids of changed entries
+  async syncWith(remote: Syncable): Promise<Array<string>> {
     await this.init()
     const update = await remote.updates(await this.meta())
     if (update instanceof Uint8Array) {
@@ -49,20 +60,37 @@ export class Database implements Syncable {
     const {contentHash, entries} = update
     if (entries.length) await this.updateEntries(entries)
     const updated = await this.meta()
-    if (updated.contentHash === contentHash) return
+    const changedEntries = await this.entriesOf(
+      this.store,
+      entries.map(e => e.versionId)
+    )
+    if (updated.contentHash === contentHash) return changedEntries
     const remoteIds = await remote.ids()
-    if (remoteIds.length > 0)
-      await this.store(Entry().delete().where(Entry.id.isNotIn(remoteIds)))
+    const excessEntries = await this.store.transaction(async query => {
+      const excess = await query(
+        Entry()
+          .select(Entry.versionId)
+          .where(
+            remoteIds.length > 0 ? Entry.versionId.isNotIn(remoteIds) : true
+          )
+      )
+      await query(Entry().delete().where(Entry.versionId.isIn(excess)))
+      await this.index(query)
+      await this.writeMeta(query)
+      return this.entriesOf(query, excess)
+    })
     const afterRemoves = await this.meta()
-    if (afterRemoves.contentHash === contentHash) return
+    if (afterRemoves.contentHash === contentHash)
+      return changedEntries.concat(excessEntries)
     // Todo: we should abandon syncing and just fetch the full db
     throw createError('Sync failed')
   }
 
   async updateEntries(entries: Array<Entry>) {
     return this.store.transaction(async query => {
+      const ids = entries.map(e => e.versionId)
+      await query(Entry().delete().where(Entry.versionId.isIn(ids)))
       for (const entry of entries) {
-        await query(Entry().delete().where(Entry.id.is(entry.id)))
         await query(Entry().insertOne(entry))
       }
       await this.index(query)
@@ -196,7 +224,7 @@ export class Database implements Syncable {
             workspace: file.workspace,
             root: file.root
           })
-            .select(Entry.id)
+            .select(Entry.versionId)
             .maybeFirst()
         )
         // Todo: a config change but unchanged entry data will currently
@@ -209,7 +237,9 @@ export class Database implements Syncable {
           const entry = this.computeEntry(file)
           const withHash = entry as Table.Insert<typeof Entry>
           withHash.contentHash = contentHash
-          seen.push(await query(Entry().insert(withHash).returning(Entry.id)))
+          seen.push(
+            await query(Entry().insert(withHash).returning(Entry.versionId))
+          )
           inserted++
         } catch (e: any) {
           console.log(`> skipped ${file.filePath} — ${e.message}`)
@@ -218,7 +248,7 @@ export class Database implements Syncable {
       endScan(`Scanned ${seen.length} entries`)
       if (seen.length === 0) return
       const {rowsAffected: removed} = await query(
-        Entry().delete().where(Entry.id.isNotIn(seen))
+        Entry().delete().where(Entry.versionId.isNotIn(seen))
       )
       const noChanges = inserted === 0 && removed === 0
       if (noChanges) return

@@ -63,7 +63,7 @@ export class EntryDraft implements Entry {
     return new EntryProperty<string, (state: string) => string>(['title'])
   }
 
-  get id() {
+  get versionId() {
     return this.source.id
   }
   get type() {

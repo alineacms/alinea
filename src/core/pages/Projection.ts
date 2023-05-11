@@ -18,7 +18,7 @@ export namespace Projection {
   export type Infer<T> = [T] extends [Expr<infer V>]
     ? V
     : [T] extends [Target<infer V>]
-    ? Target.Row<V>
+    ? V
     : [T] extends [Type<infer V>]
     ? Type.Row<V>
     : [T] extends [Cursor<infer V>]
@@ -26,7 +26,9 @@ export namespace Projection {
     : [T] extends [object]
     ? {
         [K in keyof T]: [T[K]] extends [Target<infer V>]
-          ? Target.Row<V>
+          ? V
+          : [T[K]] extends [Type<infer V>]
+          ? Type.Row<V>
           : [T[K]] extends [(...args: any) => infer V]
           ? Infer<V>
           : Infer<T[K]>

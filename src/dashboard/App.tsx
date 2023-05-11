@@ -1,10 +1,10 @@
 import {Config, renderLabel, Root} from 'alinea/core'
 import {Client} from 'alinea/core/Client'
-import {Routes} from 'alinea/dashboard/util/HashRouter'
+import {useParams, useRoutes} from 'alinea/dashboard/util/HashRouter'
 import {ErrorBoundary, FavIcon, Loader} from 'alinea/ui'
 import {IcRoundInsertDriveFile} from 'alinea/ui/icons/IcRoundInsertDriveFile'
 import {atom, useAtom, useAtomValue} from 'jotai'
-import {Suspense} from 'react'
+import {Suspense, useMemo} from 'react'
 import {
   QueryClient,
   QueryClientProvider as ReactQueryClientProvider
@@ -15,62 +15,22 @@ import {
   useSetDashboardOptions
 } from './atoms/DashboardAtoms.js'
 
-import {navAtom} from './atoms/NavigationAtoms.js'
+import {useDbUpdater} from './atoms/EntryAtoms.js'
 import {locationAtom, matchAtoms} from './atoms/RouterAtoms.js'
 import {navMatchers} from './DashboardNav.js'
 import {useDashboard} from './hook/UseDashboard.js'
+import {useEntry} from './hook/UseEntry.js'
 import {useEntryLocation} from './hook/UseEntryLocation.js'
+import {useLocale} from './hook/UseLocale.js'
 import {useNav} from './hook/UseNav.js'
 import {useRoot} from './hook/UseRoot.js'
 import {useWorkspace} from './hook/UseWorkspace.js'
-import {matchingRouteAtom} from './util/HashRouter.js'
 import {Head} from './util/Head.js'
 import {DraftsOverview} from './view/DraftsOverview.js'
+import {RootOverview} from './view/RootOverview.js'
 import {Sidebar} from './view/Sidebar.js'
 import {Toolbar} from './view/Toolbar.js'
 import {Viewport} from './view/Viewport.js'
-
-const Router = {
-  Entry() {
-    const {
-      params: {id}
-    } = useAtomValue(matchingRouteAtom)
-    return <>Entry {id}</>
-    return (
-      <ErrorBoundary>
-        <EntryRoute id={id} />
-      </ErrorBoundary>
-    )
-  },
-  Drafts() {
-    const {
-      params: {id}
-    } = useAtomValue(matchingRouteAtom)
-    return <>Draft {id}</>
-    return (
-      <ErrorBoundary>
-        <DraftsOverview id={id} />
-      </ErrorBoundary>
-    )
-  }
-}
-
-export const routesAtom = atom(get => {
-  const nav = get(navAtom)
-  return {
-    [nav.draft({
-      workspace: ':workspace',
-      root: ':root?',
-      id: ':id?'
-    })]: <Router.Drafts />,
-    [nav.entry({
-      workspace: ':workspace?',
-      root: ':root?',
-      id: ':id?'
-    })]: <Router.Entry />,
-    '/*': <Router.Entry />
-  }
-})
 
 /*function DraftsButton() {
   const location = useLocation()
@@ -80,7 +40,7 @@ export const routesAtom = atom(get => {
   const {total: draftsTotal} = useDraftsList(workspace)
   const entryLocation = useEntryLocation()
   const link =
-    entryLocation && entryLocation.root === root
+    entryLocation && entryLocation.root === root 
       ? nav.draft(entryLocation)
       : nav.draft({workspace})
   return (
@@ -109,7 +69,21 @@ function AppAuthenticated() {
   const {name: workspace, color, roots} = useWorkspace()
   const {name: currentRoot} = useRoot()
   const entryLocation = useEntryLocation()
-  const routes = useAtomValue(routesAtom)
+  const routes = useMemo(() => {
+    return {
+      [nav.draft({
+        workspace: ':workspace',
+        root: ':root?',
+        id: ':id?'
+      })]: <DraftsOverview />,
+      [nav.entry({
+        workspace: ':workspace?',
+        root: ':root?',
+        id: ':id?'
+      })]: <RootView />
+    }
+  }, [nav])
+  const match = useRoutes(routes)
   return (
     <Toolbar.Provider>
       <Sidebar.Provider>
@@ -149,7 +123,9 @@ function AppAuthenticated() {
               {/*<DraftsButton />*/}
             </Sidebar.Nav>
             <Suspense fallback={<Loader absolute />}>
-              <Routes routes={routes} />
+              <ErrorBoundary>
+                {match ? match.element : <RootView />}
+              </ErrorBoundary>
             </Suspense>
           </div>
         </Viewport>
@@ -158,15 +134,34 @@ function AppAuthenticated() {
   )
 }
 
-/*type EntryRouteProps = {
-  id?: string
+function RootView() {
+  const {id} = useParams()
+  const workspace = useWorkspace()
+  const root = useRoot()
+  if (id) return <EntryView id={id} />
+  return (
+    <>
+      <Head>
+        <title>{renderLabel(workspace.label)}</title>
+      </Head>
+      <RootOverview workspace={workspace} root={root} />
+    </>
+  )
 }
 
-function EntryRoute({id}: EntryRouteProps) {
-  const workspace = useAtomValue(workspaceAtom)
-  const root = useAtomValue(rootAtom)
-  const {draft} = useDraft(id)
+interface EntryViewProps {
+  id: string
+}
+
+function EntryView({id}: EntryViewProps) {
+  useDbUpdater()
+  const workspace = useWorkspace()
+  const root = useRoot()
   const locale = useLocale()
+  const entry = useEntry(id)
+  console.log(entry)
+  return <div>entry</div>
+  const {draft} = useDraft(id)
   const isLoading = Boolean(
     draft?.id !== id && locale && draft?.alinea.i18n?.locale !== locale
   )
@@ -208,7 +203,7 @@ function EntryRoute({id}: EntryRouteProps) {
       )}
     </CurrentDraftProvider>
   )
-}*/
+}
 
 function AppRoot() {
   const [session, setSession] = useAtom(sessionAtom)

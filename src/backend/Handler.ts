@@ -1,5 +1,6 @@
 import {Request, Response} from '@alinea/iso'
 import {Auth, Connection, Entry} from 'alinea/core'
+import {Selection} from 'alinea/core/pages/Selection'
 import {Logger, LoggerResult, Report} from 'alinea/core/util/Logger'
 import {Server, ServerOptions} from './Server.js'
 import {Handle, Route, router} from './router/Router.js'
@@ -26,6 +27,17 @@ function createRouter(
     }
   }
   return router(
+    matcher
+      .post(Connection.routes.resolve())
+      .map(context)
+      .map(router.parseJson)
+      .map(({ctx, body}) => {
+        const selection = body as Selection
+        const api = createApi(ctx)
+        return ctx.logger.result(api.resolve(selection))
+      })
+      .map(respond),
+
     matcher
       .get(Connection.routes.updates())
       .map(context)

@@ -236,7 +236,7 @@ export function TreeNode({
   const workspace = useWorkspace()
   const {ids: drafts} = useDraftsList(workspace.name)
   const isDraft = drafts.includes(entry.source.id)
-  const isSelected = draft?.id === entry.source.id
+  const isSelected = draft?.versionId === entry.source.id
   const handleToggleOpen = useCallback(() => {
     if (entry.alinea.isContainer) toggleOpen(entry.id)
   }, [toggleOpen])

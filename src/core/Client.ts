@@ -20,9 +20,13 @@ export class Client implements Connection {
     protected unauthorized: () => void = () => {}
   ) {}
 
+  find<S>(selection: S) {
+    return this.resolve(Selection(selection)) as Promise<Selection.Infer<S>>
+  }
+
   resolve(selection: Selection): Promise<unknown> {
     const body = JSON.stringify(selection)
-    return this.fetchJson(Connection.routes.resolve(), {
+    return this.requestJson(Connection.routes.resolve(), {
       method: 'POST',
       body
     }).then(failOnHttpError)
@@ -36,19 +40,19 @@ export class Client implements Connection {
     const params = new URLSearchParams()
     params.append('contentHash', request.contentHash)
     params.append('modifiedAt', String(request.modifiedAt))
-    return this.fetchJson(
+    return this.requestJson(
       Connection.routes.updates() + '?' + params.toString()
     ).then<UpdateResponse>(failOnHttpError)
   }
 
   ids(): Promise<Array<string>> {
-    return this.fetchJson(Connection.routes.ids()).then<Array<string>>(
+    return this.requestJson(Connection.routes.ids()).then<Array<string>>(
       failOnHttpError
     )
   }
 
   publishEntries({entries}: Connection.PublishParams): Promise<void> {
-    return this.fetchJson(Connection.routes.publish(), {
+    return this.requestJson(Connection.routes.publish(), {
       method: 'POST',
       body: JSON.stringify(entries)
     }).then<void>(failOnHttpError)
@@ -70,13 +74,13 @@ export class Client implements Connection {
     if ('height' in file) form.append('height', String(file.height))
     form.append('buffer', new Blob([file.buffer]))
     if (file.preview) form.append('preview', file.preview)
-    return this.fetch(Connection.routes.upload(), {
+    return this.request(Connection.routes.upload(), {
       method: 'POST',
       body: form
     }).then<Media.File>(failOnHttpError)
   }
 
-  protected fetch(endpoint: string, init?: RequestInit): Promise<Response> {
+  protected request(endpoint: string, init?: RequestInit): Promise<Response> {
     const controller = new AbortController()
     const signal = controller.signal
     const url =
@@ -112,8 +116,8 @@ export class Client implements Connection {
     return cancelify(promise)
   }
 
-  protected fetchJson(endpoint: string, init?: RequestInit) {
-    return this.fetch(endpoint, {
+  protected requestJson(endpoint: string, init?: RequestInit) {
+    return this.request(endpoint, {
       ...init,
       headers: {
         ...init?.headers,

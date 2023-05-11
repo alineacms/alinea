@@ -1,17 +1,28 @@
-import {Expr, ExprData} from './Expr.js'
+import {Target} from './Target.js'
 
 export interface Page {
   id: string
+  workspace: string
+  root: string
+  filePath: string
+
+  contentHash: string
+  modifiedAt: number
+
+  entryId: string
   type: string
-  url: string
-  title: string
+
+  parentDir: string
+  childrenDir: string
+  parent: string
+  index: string | null
+  locale: string | null
+  i18nId: string | null
+
   path: string
+  title: string
+  url: string
+  data: Record<string, any>
 }
 
-export namespace Page {
-  export const id = Expr(ExprData.Field({}, 'id'))
-  export const type = Expr(ExprData.Field({}, 'type'))
-  export const url = Expr(ExprData.Field({}, 'url'))
-  export const title = Expr(ExprData.Field({}, 'title'))
-  export const path = Expr(ExprData.Field({}, 'path'))
-}
+export const Page = Target.create<Page>({})
