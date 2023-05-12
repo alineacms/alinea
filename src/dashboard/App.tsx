@@ -1,6 +1,10 @@
 import {Config, renderLabel, Root} from 'alinea/core'
 import {Client} from 'alinea/core/Client'
-import {useParams, useRoutes} from 'alinea/dashboard/util/HashRouter'
+import {
+  useLocation,
+  useParams,
+  useRoutes
+} from 'alinea/dashboard/util/HashRouter'
 import {ErrorBoundary, FavIcon, Loader} from 'alinea/ui'
 import {IcRoundInsertDriveFile} from 'alinea/ui/icons/IcRoundInsertDriveFile'
 import {atom, useAtom, useAtomValue} from 'jotai'
@@ -15,34 +19,39 @@ import {
   useSetDashboardOptions
 } from './atoms/DashboardAtoms.js'
 
+import {MdiSourceBranch} from 'alinea/ui/icons/MdiSourceBranch'
 import {useDbUpdater} from './atoms/EntryAtoms.js'
 import {locationAtom, matchAtoms} from './atoms/RouterAtoms.js'
 import {navMatchers} from './DashboardNav.js'
 import {useDashboard} from './hook/UseDashboard.js'
-import {useEntry} from './hook/UseEntry.js'
 import {useEntryLocation} from './hook/UseEntryLocation.js'
-import {useLocale} from './hook/UseLocale.js'
 import {useNav} from './hook/UseNav.js'
 import {useRoot} from './hook/UseRoot.js'
 import {useWorkspace} from './hook/UseWorkspace.js'
 import {Head} from './util/Head.js'
 import {DraftsOverview} from './view/DraftsOverview.js'
+import {NewEntry} from './view/entry/NewEntry.js'
+import {RootHeader} from './view/entry/RootHeader.js'
+import {EntryEdit} from './view/EntryEdit.js'
 import {RootOverview} from './view/RootOverview.js'
+import {SearchBox} from './view/SearchBox.js'
 import {Sidebar} from './view/Sidebar.js'
 import {Toolbar} from './view/Toolbar.js'
 import {Viewport} from './view/Viewport.js'
 
-/*function DraftsButton() {
+function DraftsButton() {
   const location = useLocation()
   const nav = useNav()
   const {name: workspace} = useWorkspace()
   const {name: root} = useRoot()
-  const {total: draftsTotal} = useDraftsList(workspace)
   const entryLocation = useEntryLocation()
   const link =
-    entryLocation && entryLocation.root === root 
+    entryLocation && entryLocation.root === root
       ? nav.draft(entryLocation)
       : nav.draft({workspace})
+  const draftsTotal = 0
+  /*const {total: draftsTotal} = useDraftsList(workspace)
+   */
   return (
     <Sidebar.Nav.Item
       selected={location.pathname.startsWith(nav.draft({workspace}))}
@@ -54,7 +63,7 @@ import {Viewport} from './view/Viewport.js'
       <MdiSourceBranch />
     </Sidebar.Nav.Item>
   )
-}*/
+}
 
 const isEntryAtom = atom(get => {
   const location = get(locationAtom)
@@ -63,6 +72,7 @@ const isEntryAtom = atom(get => {
 })
 
 function AppAuthenticated() {
+  useDbUpdater()
   const {fullPage} = useDashboard()
   const nav = useNav()
   const isEntry = useAtomValue(isEntryAtom)
@@ -80,7 +90,7 @@ function AppAuthenticated() {
         workspace: ':workspace?',
         root: ':root?',
         id: ':id?'
-      })]: <RootView />
+      })]: <ContentView />
     }
   }, [nav])
   const match = useRoutes(routes)
@@ -120,11 +130,11 @@ function AppAuthenticated() {
                   </Sidebar.Nav.Item>
                 )
               })}
-              {/*<DraftsButton />*/}
+              <DraftsButton />
             </Sidebar.Nav>
             <Suspense fallback={<Loader absolute />}>
               <ErrorBoundary>
-                {match ? match.element : <RootView />}
+                {match ? match.element : <ContentView />}
               </ErrorBoundary>
             </Suspense>
           </div>
@@ -134,46 +144,13 @@ function AppAuthenticated() {
   )
 }
 
-function RootView() {
+function ContentView() {
   const {id} = useParams()
   const workspace = useWorkspace()
   const root = useRoot()
-  if (id) return <EntryView id={id} />
+  const {search} = useLocation()
   return (
     <>
-      <Head>
-        <title>{renderLabel(workspace.label)}</title>
-      </Head>
-      <RootOverview workspace={workspace} root={root} />
-    </>
-  )
-}
-
-interface EntryViewProps {
-  id: string
-}
-
-function EntryView({id}: EntryViewProps) {
-  useDbUpdater()
-  const workspace = useWorkspace()
-  const root = useRoot()
-  const locale = useLocale()
-  const entry = useEntry(id)
-  console.log(entry)
-  return <div>entry</div>
-  const {draft} = useDraft(id)
-  const isLoading = Boolean(
-    draft?.id !== id && locale && draft?.alinea.i18n?.locale !== locale
-  )
-  const {search} = useAtomValue(locationAtom)
-  const type = draft?.channel
-  const View = (type && Type.meta(type).view) || EntryEdit
-  const select = ([] as Array<string | undefined>)
-    .concat(draft?.alinea.parents)
-    .concat(draft?.id)
-    .filter(Boolean) as Array<string>
-  return (
-    <CurrentDraftProvider value={draft}>
       <Sidebar.Tree>
         <SearchBox />
         <RootHeader />
@@ -184,24 +161,14 @@ function EntryView({id}: EntryViewProps) {
           <NewEntry parentId={id} />
         </Suspense>
       )}
-      {draft ? (
-        <Suspense fallback={<Loader absolute />}>
-          <View
-            key={draft.id}
-            initialMode={EditMode.Editing}
-            draft={draft}
-            isLoading={isLoading}
-          />
-        </Suspense>
-      ) : (
-        <>
-          <Head>
-            <title>{renderLabel(workspace.label)}</title>
-          </Head>
+      <Suspense fallback={<Loader absolute />}>
+        {id ? (
+          <EntryEdit id={id} />
+        ) : (
           <RootOverview workspace={workspace} root={root} />
-        </>
-      )}
-    </CurrentDraftProvider>
+        )}
+      </Suspense>
+    </>
   )
 }
 

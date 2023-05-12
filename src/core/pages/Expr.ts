@@ -190,11 +190,11 @@ export class ExprI<T> {
     return this.isNull().not()
   }
 
-  isIn(that: EV<Array<T>> | Cursor.Find<T>): Expr<boolean> {
+  isIn(that: EV<ReadonlyArray<T>> | Cursor.Find<T>): Expr<boolean> {
     return Expr(ExprData.BinOp(this[Expr.Data], BinaryOp.In, ExprData(that)))
   }
 
-  isNotIn(that: EV<Array<T>> | Cursor.Find<T>): Expr<boolean> {
+  isNotIn(that: EV<ReadonlyArray<T>> | Cursor.Find<T>): Expr<boolean> {
     return Expr(ExprData.BinOp(this[Expr.Data], BinaryOp.NotIn, ExprData(that)))
   }
 

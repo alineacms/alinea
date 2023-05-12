@@ -2,7 +2,7 @@ import {
   Connection,
   Entry,
   EntryMeta,
-  EntryStatus,
+  EntryPhase,
   Label,
   ROOT_KEY,
   Shape,
@@ -21,7 +21,7 @@ export enum PublishStatus {
 
 export class EntryDraft implements Entry {
   public entry: Observable.Writable<Entry>
-  public status: Observable.Writable<EntryStatus>
+  public phase: Observable.Writable<EntryPhase>
   private __root: Y.Map<any>
 
   constructor(
@@ -32,7 +32,7 @@ export class EntryDraft implements Entry {
   ) {
     this.__root = doc.getMap(ROOT_KEY)
     this.entry = observable(this.getEntry())
-    this.status = observable(this.alinea.status)
+    this.phase = observable(this.alinea.status)
   }
 
   get source() {
@@ -45,8 +45,7 @@ export class EntryDraft implements Entry {
 
   connect() {
     const watch = () => {
-      if (this.status() === EntryStatus.Published)
-        this.status(EntryStatus.Draft)
+      if (this.phase() === EntryPhase.Published) this.phase(EntryPhase.Draft)
       this.entry(this.getEntry())
     }
     this.doc.on('update', watch)
@@ -79,7 +78,7 @@ export class EntryDraft implements Entry {
       ...meta,
       isContainer: draftMeta.isContainer || meta.isContainer,
       index: draftMeta.index || meta.index,
-      status: meta.status || EntryStatus.Published,
+      status: meta.status || EntryPhase.Published,
       parent: draftMeta.parent || meta.parent
     }
   }

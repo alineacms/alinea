@@ -11,8 +11,8 @@ export interface UpdateResponse {
 }
 
 export interface Syncable {
-  updates(request: AlineaMeta): Promise<UpdateResponse | Uint8Array>
-  ids(): Promise<Array<string>>
+  updates(request: AlineaMeta): Promise<UpdateResponse>
+  versionIds(): Promise<Array<string>>
 }
 
 export interface Connection extends Syncable {
@@ -70,8 +70,8 @@ export namespace Connection {
     updates() {
       return base + `/updates`
     },
-    ids() {
-      return base + `/ids`
+    versionIds() {
+      return base + `/versionIds`
     },
     publish() {
       return base + `/publish`

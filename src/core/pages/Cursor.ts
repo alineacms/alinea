@@ -1,5 +1,5 @@
 import {array, boolean, enums, number, object, string, tuple} from 'cito'
-import {ExprData} from './Expr.js'
+import {Expr, ExprData} from './Expr.js'
 import {Projection} from './Projection.js'
 import {Selection} from './Selection.js'
 import {TargetData} from './Target.js'
@@ -62,8 +62,12 @@ export namespace Cursor {
   export const Data = Symbol.for('@alinea/Cursor.Data')
 
   export class Find<Row> extends Cursor<Array<Row>> {
-    where(where: ExprData): Find<Row> {
-      return new Find(this.with({where}))
+    where(where: Expr<boolean>): Find<Row> {
+      return new Find(
+        this.with({
+          where: where[Expr.Data]
+        })
+      )
     }
 
     get<S extends Projection<Row>>(select: S): Get<Selection.Infer<S>> {

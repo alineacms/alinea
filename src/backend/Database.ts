@@ -3,7 +3,7 @@ import * as path from 'alinea/core/util/Paths'
 import {timer} from 'alinea/core/util/Timer'
 import {Driver, Table, alias, create} from 'rado'
 import xxhash from 'xxhash-wasm'
-import {Entry, EntryStatus} from '../core/Entry.js'
+import {Entry, EntryPhase} from '../core/Entry.js'
 import {Selection} from '../core/pages/Selection.js'
 import {Resolver} from './Resolver.js'
 import {SourceEntry} from './Source.js'
@@ -12,6 +12,8 @@ import {AlineaMeta} from './db/AlineaMeta.js'
 import {entryData} from './db/EntryData.js'
 
 const decoder = new TextDecoder()
+
+const ALT_STATUS = [EntryPhase.Draft, EntryPhase.Archived]
 
 export class Database implements Syncable {
   resolve: <T>(selection: Selection<T>) => Promise<T>
@@ -39,45 +41,38 @@ export class Database implements Syncable {
     }
   }
 
-  async ids(): Promise<Array<string>> {
+  async versionIds(): Promise<Array<string>> {
     return this.store(Entry().select(Entry.versionId))
-  }
-
-  entriesOf(query: Driver.Async, versionIds: Array<string>) {
-    return query(
-      Entry().select(Entry.entryId).where(Entry.versionId.isIn(versionIds))
-    )
   }
 
   // Syncs data with a remote database, returning the ids of changed entries
   async syncWith(remote: Syncable): Promise<Array<string>> {
     await this.init()
     const update = await remote.updates(await this.meta())
-    if (update instanceof Uint8Array) {
-      // Replace db with remote
-      throw new Error('Todo: replace db with remote')
-    }
     const {contentHash, entries} = update
     if (entries.length) await this.updateEntries(entries)
     const updated = await this.meta()
-    const changedEntries = await this.entriesOf(
-      this.store,
-      entries.map(e => e.versionId)
-    )
+    const changedEntries = entries.map(e => e.entryId)
     if (updated.contentHash === contentHash) return changedEntries
-    const remoteIds = await remote.ids()
+    const remoteVersionIds = await remote.versionIds()
     const excessEntries = await this.store.transaction(async query => {
       const excess = await query(
         Entry()
-          .select(Entry.versionId)
+          .select({entryId: Entry.entryId, versionId: Entry.versionId})
           .where(
-            remoteIds.length > 0 ? Entry.versionId.isNotIn(remoteIds) : true
+            remoteVersionIds.length > 0
+              ? Entry.versionId.isNotIn(remoteVersionIds)
+              : true
           )
       )
-      await query(Entry().delete().where(Entry.versionId.isIn(excess)))
+      await query(
+        Entry()
+          .delete()
+          .where(Entry.versionId.isIn(excess.map(e => e.versionId)))
+      )
       await this.index(query)
       await this.writeMeta(query)
-      return this.entriesOf(query, excess)
+      return excess.map(e => e.entryId)
     })
     const afterRemoves = await this.meta()
     if (afterRemoves.contentHash === contentHash)
@@ -88,9 +83,13 @@ export class Database implements Syncable {
 
   async updateEntries(entries: Array<Entry>) {
     return this.store.transaction(async query => {
-      const ids = entries.map(e => e.versionId)
-      await query(Entry().delete().where(Entry.versionId.isIn(ids)))
       for (const entry of entries) {
+        await query(
+          Entry({
+            entryId: entry.entryId,
+            phase: entry.phase
+          }).delete()
+        )
         await query(Entry().insertOne(entry))
       }
       await this.index(query)
@@ -151,9 +150,16 @@ export class Database implements Syncable {
     }
   }
 
+  entryInfo(fileName: string): [name: string, status: EntryPhase] {
+    // See if filename ends in a known status
+    const status = ALT_STATUS.find(s => fileName.endsWith(`.${s}`))
+    if (status) return [fileName.slice(0, -status.length - 1), status]
+    // Otherwise, it's published
+    return [fileName, EntryPhase.Published]
+  }
+
   computeEntry(
     file: SourceEntry
-    // contentHash: string
   ): Omit<Table.Insert<typeof Entry>, 'contentHash'> {
     const data =
       file.contents instanceof Uint8Array
@@ -162,6 +168,7 @@ export class Database implements Syncable {
     const parentDir = path.dirname(file.filePath)
     const extension = path.extname(file.filePath)
     const fileName = path.basename(file.filePath, extension)
+    const [entryPath, entryPhase] = this.entryInfo(fileName)
     const segments = parentDir.split('/')
     const root = Root.data(this.config.workspaces[file.workspace][file.root])
     let locale: string | null = null
@@ -185,10 +192,9 @@ export class Database implements Syncable {
       // contentHash,
 
       modifiedAt: file.modifiedAt,
-      // todo: infer draft
-      status: EntryStatus.Published,
 
       entryId: data.id,
+      phase: entryPhase,
       type: data.type,
 
       parentDir,
@@ -198,7 +204,7 @@ export class Database implements Syncable {
       locale,
       i18nId: data.alinea?.i18n?.id,
 
-      path: fileName,
+      path: entryPath,
       title: data.title ?? '',
       url: '',
 
@@ -207,6 +213,8 @@ export class Database implements Syncable {
   }
 
   async fill(files: AsyncGenerator<SourceEntry>): Promise<void> {
+    // Todo: run a validation step for orders, paths, id matching on statuses
+    // etc
     const {h32Raw} = await xxhash()
     await this.init()
     return this.store.transaction(async query => {
@@ -224,7 +232,7 @@ export class Database implements Syncable {
             workspace: file.workspace,
             root: file.root
           })
-            .select(Entry.versionId)
+            .select(Entry.entryId)
             .maybeFirst()
         )
         // Todo: a config change but unchanged entry data will currently
@@ -235,10 +243,13 @@ export class Database implements Syncable {
         }
         try {
           const entry = this.computeEntry(file)
+          await query(
+            Entry({entryId: entry.entryId, phase: entry.phase}).delete()
+          )
           const withHash = entry as Table.Insert<typeof Entry>
           withHash.contentHash = contentHash
           seen.push(
-            await query(Entry().insert(withHash).returning(Entry.versionId))
+            await query(Entry().insert(withHash).returning(Entry.entryId))
           )
           inserted++
         } catch (e: any) {
@@ -248,14 +259,14 @@ export class Database implements Syncable {
       endScan(`Scanned ${seen.length} entries`)
       if (seen.length === 0) return
       const {rowsAffected: removed} = await query(
-        Entry().delete().where(Entry.versionId.isNotIn(seen))
+        Entry().delete().where(Entry.entryId.isNotIn(seen))
       )
       const noChanges = inserted === 0 && removed === 0
       if (noChanges) return
 
-      const endIndex = timer('Indexing entries')
+      //const endIndex = timer('Indexing entries')
       await this.index(query)
-      endIndex()
+      //endIndex()
       await this.writeMeta(query)
     })
   }

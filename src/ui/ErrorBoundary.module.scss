@@ -2,7 +2,7 @@
   padding: 16px;
   width: 100%;
   display: flex;
-  
+
   &-inner {
     margin: auto;
   }
@@ -12,5 +12,7 @@
     font-size: 0.9em;
     font-feature-settings: 'tnum' 1;
     white-space: pre-line;
+    max-height: 300px;
+    overflow: auto;
   }
 }

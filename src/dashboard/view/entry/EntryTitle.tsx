@@ -1,25 +1,25 @@
 import {Type} from 'alinea/core'
 import {renderLabel} from 'alinea/core/Label'
-import {useInput} from 'alinea/editor'
 import {Chip, fromModule, HStack, IconLink, Typo} from 'alinea/ui'
 import {IcRoundArrowBack} from 'alinea/ui/icons/IcRoundArrowBack'
-import {PropsWithChildren} from 'react'
-import {EntryDraft} from '../../draft/EntryDraft.js'
-import {useCurrentDraft} from '../../hook/UseCurrentDraft.js'
+import {useAtomValue} from 'jotai'
+import {EntryVersionEditor} from '../../atoms/EntryEditor.js'
 import {useWorkspace} from '../../hook/UseWorkspace.js'
 import {Head} from '../../util/Head.js'
 import css from './EntryTitle.module.scss'
 
 const styles = fromModule(css)
 
-export type EntryTitleProps = PropsWithChildren<{
+export interface EntryTitleProps {
+  versionEditor: EntryVersionEditor
   backLink?: string
-}>
+}
 
-export function EntryTitle({children, backLink}: EntryTitleProps) {
-  const draft = useCurrentDraft()
-  const [title] = useInput(EntryDraft.title)
+export function EntryTitle({versionEditor, backLink}: EntryTitleProps) {
   const {label} = useWorkspace()
+  const version = useAtomValue(versionEditor.version)
+  const type = useAtomValue(versionEditor.type)
+  const title = version.title
   return (
     <>
       <Head>
@@ -32,9 +32,8 @@ export function EntryTitle({children, backLink}: EntryTitleProps) {
           {backLink && <IconLink icon={IcRoundArrowBack} href={backLink} />}
           <Typo.H1 flat style={{position: 'relative'}}>
             <span>{title}</span>
-            {children}
           </Typo.H1>
-          <Chip>{renderLabel(Type.label(draft.channel))}</Chip>
+          <Chip>{renderLabel(Type.label(type))}</Chip>
           {/*<IconButton icon={MdOutlineMoreHoriz} />*/}
         </HStack>
       </div>

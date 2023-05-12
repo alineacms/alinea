@@ -2,7 +2,8 @@ import {createId} from 'alinea/core'
 import {column, index, table, withRecursive} from 'rado'
 import {EntryData} from '../backend/db/EntryData.js'
 
-/*class EntryVersionTable {
+/*
+class EntryVersionTable {
   entryId = column.string
   status = column.string<EntryStatus>()
   modifiedAt = column.number
@@ -12,6 +13,10 @@ import {EntryData} from '../backend/db/EntryData.js'
   title = column.string
   url = column.string
   data = column.json
+
+  get versionId() {
+    return this.entryId.concat('.').concat(this.status)
+  }
 }
 
 export interface EntryVersion extends table<EntryVersionTable> {
@@ -22,37 +27,35 @@ export const EntryVersion = table({
   EntryVersion: EntryVersionTable,
   [table.indexes]() {
     return {
-      modifiedAt: index(this.modifiedAt),
-      contentHash: index(this.contentHash),
-      type: index(this.type),
-      parent: index(this.parent),
-      index: index(this.index),
-      fileIdentifier: index(this.filePath, this.workspace, this.root),
-      parentDir: index(this.parentDir),
-      childrenDir: index(this.childrenDir)
+      entry: index(this.entryId)
     }
+  },
+  [table.primaryKey]() {
+    return [this.entryId, this.status]
   }
 })
 */
 
-export enum EntryStatus {
-  Draft = 'Draft',
-  Published = 'Published',
-  Archived = 'Archived'
+export enum EntryPhase {
+  Draft = 'draft',
+  Published = 'published',
+  Archived = 'archived'
 }
 
 class EntryTable {
   // Entry data
-  entryId = column.string
+  entryId = column.string.default(createId)
+  phase = column.string<EntryPhase>()
   type = column.string
 
   // Hierarchy
   workspace = column.string
   root = column.string
-  filePath = column.string
 
+  filePath = column.string
   parentDir = column.string
   childrenDir = column.string.nullable
+
   parent = column.string.nullable
   index = column.string.nullable
 
@@ -61,8 +64,9 @@ class EntryTable {
   i18nId = column.string.nullable
 
   // Version specific
-  status = column.string<EntryStatus>()
-  versionId = column.string.primaryKey(createId)
+  get versionId() {
+    return this.entryId.concat('.').concat(this.phase)
+  }
   modifiedAt = column.number
   contentHash = column.string
 
@@ -90,6 +94,9 @@ export interface Entry extends table<EntryTable> {
 
 export const Entry = table({
   Entry: EntryTable,
+  [table.primaryKey]() {
+    return [this.entryId, this.phase]
+  },
   [table.indexes]() {
     return {
       modifiedAt: index(this.modifiedAt),
@@ -99,7 +106,8 @@ export const Entry = table({
       index: index(this.index),
       fileIdentifier: index(this.filePath, this.workspace, this.root),
       parentDir: index(this.parentDir),
-      childrenDir: index(this.childrenDir)
+      childrenDir: index(this.childrenDir),
+      versionId: index(this.versionId)
     }
   }
 })
