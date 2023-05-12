@@ -48,9 +48,9 @@ export class Tree {
   parents = <N extends Narrow>(narrow?: N): Cursor.Find<Output<N>> => {
     return this.find(SourceType.Parents, narrow)
   }
-  /*parent=<N extends Narrow>(narrow?: N): Cursor.Get<Output<N>> =>  {
-    return this.find(SourceType.Parents, narrow).get()
-  }*/
+  parent = <N extends Narrow>(narrow?: N): Cursor.Get<Output<N>> => {
+    return this.get(SourceType.Parent, narrow)
+  }
   siblings = <N extends Narrow>(narrow?: N): Cursor.Find<Output<N>> => {
     return this.find(SourceType.Siblings, narrow)
   }

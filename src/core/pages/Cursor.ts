@@ -1,5 +1,5 @@
 import {array, boolean, enums, number, object, string, tuple} from 'cito'
-import {Expr, ExprData} from './Expr.js'
+import {Expr, ExprData, and} from './Expr.js'
 import {Projection} from './Projection.js'
 import {Selection} from './Selection.js'
 import {TargetData} from './Target.js'
@@ -15,7 +15,7 @@ export const CursorData = object(
     orderBy? = array(ExprData.adt).optional
     select? = Selection.adt.optional
     first? = boolean.optional
-    source? = tuple(enums(SourceType), string).optional
+    source? = CursorSource.optional
   }
 )
 
@@ -27,6 +27,9 @@ export enum SourceType {
   Next = 'Next',
   Previous = 'Previous'
 }
+
+export type CursorSource = typeof CursorSource.infer
+export const CursorSource = tuple(enums(SourceType), string)
 
 export interface Cursor<T> {
   [Cursor.Data]: CursorData
@@ -49,7 +52,6 @@ export class Cursor<T> {
   }
 
   static isCursor<T>(input: any): input is Cursor<T> {
-    const [d] = Reflect.ownKeys(input)
     return Boolean(input && input[Cursor.Data])
   }
 
@@ -62,10 +64,10 @@ export namespace Cursor {
   export const Data = Symbol.for('@alinea/Cursor.Data')
 
   export class Find<Row> extends Cursor<Array<Row>> {
-    where(where: Expr<boolean>): Find<Row> {
+    where(...where: Array<Expr<boolean>>): Find<Row> {
       return new Find(
         this.with({
-          where: where[Expr.Data]
+          where: and(...where)[Expr.Data]
         })
       )
     }

@@ -1,8 +1,8 @@
 {
   "id": "home",
   "type": "Home",
-  "title": "123Alinea - Open source headless CMS",
-  "headline": "Content management\nfor the modern web",
+  "title": "123 Alinea - Open source headless CMS",
+  "headline": "123 Content management\nfor the modern web",
   "byline": "Structure, edit and query content with any web framework.\nFully typed and organized in your repository.",
   "action": [
     {
