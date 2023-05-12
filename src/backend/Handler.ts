@@ -54,7 +54,7 @@ function createRouter(
       .map(context)
       .map(({ctx}) => {
         const api = createApi(ctx)
-        return ctx.logger.result(api.ids())
+        return ctx.logger.result(api.versionIds())
       })
       .map(respond),
 

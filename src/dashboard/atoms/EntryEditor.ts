@@ -69,7 +69,6 @@ export class EntryVersionEditor {
     const type = await get(this.type)
     const shape = Type.shape(type)
     const data = yDoc.getMap(ROOT_KEY)
-    console.log(entries(type))
     return new InputState.YDocState(shape, data, '')
   })
 }
