@@ -232,7 +232,7 @@ export class Database implements Syncable {
             workspace: file.workspace,
             root: file.root
           })
-            .select(Entry.entryId)
+            .select(Entry.versionId)
             .maybeFirst()
         )
         // Todo: a config change but unchanged entry data will currently
@@ -249,7 +249,7 @@ export class Database implements Syncable {
           const withHash = entry as Table.Insert<typeof Entry>
           withHash.contentHash = contentHash
           seen.push(
-            await query(Entry().insert(withHash).returning(Entry.entryId))
+            await query(Entry().insert(withHash).returning(Entry.versionId))
           )
           inserted++
         } catch (e: any) {
@@ -259,7 +259,7 @@ export class Database implements Syncable {
       endScan(`Scanned ${seen.length} entries`)
       if (seen.length === 0) return
       const {rowsAffected: removed} = await query(
-        Entry().delete().where(Entry.entryId.isNotIn(seen))
+        Entry().delete().where(Entry.versionId.isNotIn(seen))
       )
       const noChanges = inserted === 0 && removed === 0
       if (noChanges) return

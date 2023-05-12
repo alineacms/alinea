@@ -389,7 +389,6 @@ export class Resolver {
     // This validates the input, and throws if it's invalid
     assert(selection, pages.Selection.adt)
     const query = this.query(selection)
-    console.log(new Query(query).toSql(this.store))
     const interim: object | Array<object> = await this.store(new Query(query))
     return this.post(interim)
   }

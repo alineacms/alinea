@@ -50,8 +50,8 @@ export class Server implements Connection {
 
   // Syncable
 
-  ids() {
-    return this.db.ids()
+  versionIds() {
+    return this.db.versionIds()
   }
 
   updates(request: AlineaMeta) {
