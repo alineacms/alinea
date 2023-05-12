@@ -23,7 +23,7 @@ __metadata:
     better-sqlite3: ^8.1.0
     cito: ^0.1.8
     pretty-ms: ^8.0.0
-    rado: ^0.3.4
+    rado: ^0.3.5
     regexparam: ^2.0.1
     xxhash-wasm: ^1.0.2
   languageName: unknown
@@ -9880,10 +9880,10 @@ fsevents@~2.3.2:
   languageName: node
   linkType: hard
 
-"rado@npm:^0.3.4":
-  version: 0.3.4
-  resolution: "rado@npm:0.3.4"
-  checksum: 79b57bbdf44f8cd528ed52244f076749cd8331bdc48c1c3a437dd000a3f60692ce1678102194ce16ca500e2afe0df2c43fb05f82c091d612b619e9fd48fc1766
+"rado@npm:^0.3.5":
+  version: 0.3.5
+  resolution: "rado@npm:0.3.5"
+  checksum: 6c159761eaf341d7caf289d317712519ab5935a14914493bc838a135d49ee8bf6b0d5a82b491ebc1652e42732d91e476db11f94c7ffabc388bb624cd9cea53bb
   languageName: node
   linkType: hard
 

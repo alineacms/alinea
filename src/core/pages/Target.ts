@@ -14,7 +14,7 @@ export type TargetData = typeof TargetData.infer
 export const TargetData = object(
   class {
     name? = string.optional
-    alias? = string.optional
+    // alias? = string.optional
     type? = TT.optional
   }
 )

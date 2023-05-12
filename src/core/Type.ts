@@ -153,12 +153,6 @@ class TypeInstance<Definition extends TypeDefinition> implements TypeData {
 
   constructor(public label: Label, public definition: Definition) {
     this.meta = this.definition[Type.Meta] || {}
-    if (label === 'Home') {
-      console.log(entries(definition))
-      console.log(
-        entries(definition).filter(([, field]) => Field.isField(field))
-      )
-    }
     this.shape = Shape.Record(
       label,
       fromEntries(

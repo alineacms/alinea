@@ -7,9 +7,12 @@ import {
   ParamData,
   Query,
   QueryData,
-  UnOpType
+  Select,
+  Table,
+  UnOpType,
+  withRecursive
 } from 'rado'
-import {Entry} from '../core/Entry.js'
+import {Entry, EntryTable} from '../core/Entry.js'
 import {Store} from './Store.js'
 
 import * as pages from '../core/pages/index.js'
@@ -43,10 +46,50 @@ const binOps = {
 
 const pageFields = keys(pages.Page)
 
-enum ResolveContext {
-  InSelect = 0,
-  InCondition = 1 << 0,
-  InAccess = 1 << 1
+class ResolveContext {
+  constructor(
+    public table: Table<EntryTable> | undefined,
+    public expr: ExprContext = ExprContext.InNone
+  ) {}
+
+  get Table() {
+    if (!this.table) throw new Error(`Cannot select without a table reference`)
+    return this.table
+  }
+
+  get inSelect() {
+    return this.expr & ExprContext.InSelect
+  }
+
+  get inCondition() {
+    return this.expr & ExprContext.InCondition
+  }
+
+  get inAccess() {
+    return this.expr & ExprContext.InAccess
+  }
+
+  get select(): ResolveContext {
+    if (this.inSelect) return this
+    return new ResolveContext(this.table, this.expr | ExprContext.InSelect)
+  }
+
+  get condition(): ResolveContext {
+    if (this.inCondition) return this
+    return new ResolveContext(this.table, this.expr | ExprContext.InCondition)
+  }
+
+  get access(): ResolveContext {
+    if (this.inAccess) return this
+    return new ResolveContext(this.table, this.expr | ExprContext.InAccess)
+  }
+}
+
+enum ExprContext {
+  InNone = 0,
+  InSelect = 1 << 0,
+  InCondition = 1 << 1,
+  InAccess = 1 << 2
 }
 
 const POST_KEY = '$$post'
@@ -61,20 +104,19 @@ export class Resolver {
   constructor(public store: Store, public schema: Schema) {}
 
   fieldExpr(ctx: ResolveContext, expr: ExprData, shape: Shape): ExprData {
-    const isInAccess = ctx & ResolveContext.InAccess
-    const isInCondition = ctx & ResolveContext.InCondition
-    if (isInAccess || isInCondition) return expr
+    if (ctx.inAccess || ctx.inCondition) return expr
     switch (true) {
       case shape instanceof RichTextShape:
-        if (isInAccess || isInCondition) return new ExprData.Field(expr, 'doc')
+        if (ctx.inAccess || ctx.inCondition)
+          return new ExprData.Field(expr, 'doc')
         return new ExprData.Record({
           [POST_KEY]: new ExprData.Param(new ParamData.Value('richText')),
           doc: new ExprData.Field(expr, 'doc'),
           linked: new ExprData.Query(
             Entry(
-              Entry.versionId.isIn(new Expr(new ExprData.Field(expr, 'linked')))
+              Entry.entryId.isIn(new Expr(new ExprData.Field(expr, 'linked')))
             ).select({
-              id: Entry.versionId,
+              id: Entry.entryId,
               url: Entry.url
             })[Query.Data]
           )
@@ -91,19 +133,20 @@ export class Resolver {
   ): ExprData {
     switch (field) {
       case 'id':
-        return Entry.entryId[Expr.Data]
+      case 'entryId':
+        return ctx.Table.entryId[Expr.Data]
       case 'type':
-        return Entry.type[Expr.Data]
+        return ctx.Table.type[Expr.Data]
       case 'url':
-        return Entry.url[Expr.Data]
+        return ctx.Table.url[Expr.Data]
       case 'title':
-        return Entry.title[Expr.Data]
+        return ctx.Table.title[Expr.Data]
       case 'path':
-        return Entry.path[Expr.Data]
+        return ctx.Table.path[Expr.Data]
       default:
-        const {name, alias} = target
+        const {name} = target
         if (!name) {
-          const fields: Record<string, Expr<any>> = Entry as any
+          const fields: Record<string, Expr<any>> = ctx.Table as any
           if (field in fields) return fields[field][Expr.Data]
           throw new Error(`Selecting unknown field: "${field}"`)
         }
@@ -112,34 +155,27 @@ export class Resolver {
           throw new Error(`Selecting "${field}" from unknown type: "${name}"`)
         return this.fieldExpr(
           ctx,
-          Entry.data.get(field)[Expr.Data],
+          ctx.Table.data.get(field)[Expr.Data],
           Field.shape(Type.field(type, field)!)
         )
     }
   }
 
-  pageFields(ctx: ResolveContext, alias?: string): Array<[string, ExprData]> {
-    return pageFields.map(key => [key, this.fieldOf(ctx, {alias}, key)])
+  pageFields(ctx: ResolveContext): Array<[string, ExprData]> {
+    return pageFields.map(key => [key, this.fieldOf(ctx, {}, key)])
   }
 
   fieldsOf(
     ctx: ResolveContext,
     target: pages.TargetData
   ): Array<[string, ExprData]> {
-    const {name, alias} = target
-    if (!name) return this.pageFields(ctx, alias)
+    const {name} = target
+    if (!name) return this.pageFields(ctx)
     const type = this.schema[name]
     if (!type) throw new Error(`Selecting from unknown type: "${name}"`)
     return keys(type).map(key => {
       return [key, this.fieldOf(ctx, target, key)]
     })
-  }
-
-  queryOf(ctx: ResolveContext, target?: pages.TargetData): QueryData.Select {
-    if (!target) return Entry()[Query.Data]
-    const {name, alias} = target
-    const Table = alias ? Entry().as(alias) : Entry
-    return Table().where(name ? Table.type.is(name) : true)[Query.Data]
   }
 
   exprUnOp(ctx: ResolveContext, {op, expr}: pages.ExprData.UnOp): ExprData {
@@ -161,10 +197,7 @@ export class Resolver {
     ctx: ResolveContext,
     {expr, field}: pages.ExprData.Access
   ): ExprData {
-    return new ExprData.Field(
-      this.expr(ctx | ResolveContext.InAccess, expr),
-      field
-    )
+    return new ExprData.Field(this.expr(ctx.access, expr), field)
   }
 
   exprValue(ctx: ResolveContext, {value}: pages.ExprData.Value): ExprData {
@@ -198,83 +231,124 @@ export class Resolver {
     }
   }
 
-  selectRecord({fields}: pages.Selection.Record): ExprData {
+  selectRecord(
+    ctx: ResolveContext,
+    {fields}: pages.Selection.Record
+  ): ExprData {
     return new ExprData.Record(
       fromEntries(
         fields.flatMap(field => {
           switch (field.length) {
             case 1:
               const [target] = field
-              return this.fieldsOf(ResolveContext.InSelect, target)
+              return this.fieldsOf(ctx.select, target)
             case 2:
               const [key, selection] = field
-              return [[key, this.select(selection)]]
+              return [[key, this.select(ctx, selection)]]
           }
         })
       )
     )
   }
 
-  selectRow({target}: pages.Selection.Row): ExprData {
-    return new ExprData.Record(
-      fromEntries(this.fieldsOf(ResolveContext.InSelect, target))
-    )
+  selectRow(ctx: ResolveContext, {target}: pages.Selection.Row): ExprData {
+    return new ExprData.Record(fromEntries(this.fieldsOf(ctx.select, target)))
   }
 
   selectCursor(selection: pages.Selection.Cursor): ExprData {
     return new ExprData.Query(this.queryCursor(selection))
   }
 
-  selectExpr({expr}: pages.Selection.Expr): ExprData {
-    return this.expr(ResolveContext.InSelect, expr)
+  selectExpr(ctx: ResolveContext, {expr}: pages.Selection.Expr): ExprData {
+    return this.expr(ctx.select, expr)
   }
 
-  select(selection: pages.Selection): ExprData {
+  select(ctx: ResolveContext, selection: pages.Selection): ExprData {
     switch (selection.type) {
-      case 'row':
-        return this.selectRow(selection)
       case 'cursor':
         return this.selectCursor(selection)
+      case 'row':
+        return this.selectRow(ctx, selection)
       case 'record':
-        return this.selectRecord(selection)
+        return this.selectRecord(ctx, selection)
       case 'expr':
-        return this.selectExpr(selection)
+        return this.selectExpr(ctx, selection)
     }
   }
 
-  queryRow(selection: pages.Selection.Row): QueryData.Select {
-    return this.queryOf(ResolveContext.InSelect, selection.target).with({
-      selection: this.selectRow(selection)
-    })
-  }
-
   queryRecord(selection: pages.Selection.Record): QueryData.Select {
-    const expr = this.selectRecord(selection)
+    const expr = this.selectRecord(
+      new ResolveContext(undefined, ExprContext.InSelect),
+      selection
+    )
     return new QueryData.Select({
       selection: expr,
       singleResult: true
     })
   }
 
+  querySource(
+    ctx: ResolveContext,
+    source: pages.CursorSource | undefined
+  ): Select<Table.Select<EntryTable>> {
+    if (!source) return ctx.Table()
+    const from = Entry().as(source[1])
+    switch (source[0]) {
+      case pages.SourceType.Parent:
+        return ctx.Table().where(ctx.Table.entryId.is(from.parent)).take(1)
+      case pages.SourceType.Parents:
+        const Self = Entry().as('Self')
+        const parents = withRecursive(
+          Self({entryId: from.entryId}).select({
+            entryId: Self.entryId,
+            parent: Self.parent,
+            level: 0
+          })
+        ).unionAll(() =>
+          Self()
+            .select({
+              entryId: Self.entryId,
+              parent: Self.parent,
+              level: parents.level.add(1)
+            })
+            .innerJoin(parents({parent: Self.entryId}))
+        )
+        const parentIds = parents().select(parents.entryId).skip(1)
+        return ctx.Table().where(ctx.Table.entryId.isIn(parentIds))
+      default:
+        throw new Error(`Todo`)
+    }
+  }
+
   queryCursor({cursor}: pages.Selection.Cursor): QueryData.Select {
-    const {target, where, skip, take, orderBy, select, first, source} = cursor
-    const res: QueryData.Select = this.queryOf(ResolveContext.InSelect, target)
+    const {id, target, where, skip, take, orderBy, select, first, source} =
+      cursor
+    const ctx = new ResolveContext(Entry().as(id), ExprContext.InNone)
+    const {name} = target || {}
+    let query = this.querySource(ctx, source)
+    let preCondition = query[Query.Data].where
+    let condition = Expr.and(
+      preCondition ? new Expr(preCondition) : Expr.value(true),
+      name ? ctx.Table.type.is(name) : Expr.value(true)
+    )
+    if (where)
+      query = query.where(
+        condition.and(new Expr(this.expr(ctx.condition, where)))
+      )
+    if (skip) query = query.skip(skip)
+    if (take) query = query.take(take)
     const extra: Partial<QueryData.Select> = {}
-    if (where) extra.where = this.expr(ResolveContext.InCondition, where)
-    if (skip) extra.limit = skip
-    if (take) extra.offset = take
+    if (select) extra.selection = this.select(ctx.select, select)
     if (first) extra.singleResult = true
-    if (select) extra.selection = this.select(select)
-    // Todo:
-    // if (orderBy)
-    // if (source)
-    return res.with(extra)
+    // Todo: orderBy
+    return query[Query.Data].with(extra)
   }
 
   query(selection: pages.Selection): QueryData.Select {
     switch (selection.type) {
       case 'row':
-        return this.queryRow(selection)
+        throw new Error(`Cannot select rows at root level`)
+      // return this.queryRow(selection)
       case 'cursor':
         return this.queryCursor(selection)
       case 'record':
@@ -315,6 +389,7 @@ export class Resolver {
     // This validates the input, and throws if it's invalid
     assert(selection, pages.Selection.adt)
     const query = this.query(selection)
+    console.log(new Query(query).toSql(this.store))
     const interim: object | Array<object> = await this.store(new Query(query))
     return this.post(interim)
   }

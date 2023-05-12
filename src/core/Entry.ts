@@ -42,7 +42,7 @@ export enum EntryPhase {
   Archived = 'archived'
 }
 
-class EntryTable {
+export class EntryTable {
   // Entry data
   entryId = column.string.default(createId)
   phase = column.string<EntryPhase>()
