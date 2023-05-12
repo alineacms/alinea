@@ -1,16 +1,17 @@
+import {EntryPhase} from '../Entry.js'
 import {Target} from './Target.js'
 
 export interface Page {
-  id: string
+  entryId: string
+  phase: EntryPhase
+  type: string
+
   workspace: string
   root: string
   filePath: string
 
   contentHash: string
   modifiedAt: number
-
-  entryId: string
-  type: string
 
   parentDir: string
   childrenDir: string

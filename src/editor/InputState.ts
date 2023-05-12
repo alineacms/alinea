@@ -1,7 +1,8 @@
-import {RichTextMutator} from 'alinea/core'
+import {RichTextMutator, Shape} from 'alinea/core'
 import {ListMutator} from 'alinea/core/shape/ListShape'
 import {RecordMutator} from 'alinea/core/shape/RecordShape'
 import {TextDoc} from 'alinea/core/TextDoc'
+import * as Y from 'yjs'
 
 export interface InputState<T = any> {
   parent(): InputState<any> | undefined
@@ -15,6 +16,30 @@ export namespace InputState {
   export type Record<T> = readonly [T, RecordMutator<T>]
   export type List<T> = readonly [Array<T>, ListMutator<T>]
   export type Text<T> = readonly [TextDoc<T>, RichTextMutator<T>]
+
+  export class YDocState<V, M> implements InputState<readonly [V, M]> {
+    constructor(
+      protected shape: Shape<V, M>,
+      protected data: Y.Map<any>,
+      protected key: string | undefined,
+      protected _parent?: InputState<any>
+    ) {}
+    parent() {
+      return this._parent
+    }
+    child(field: string): InputState<any> {
+      const {shape, data, key} = this
+      const child = key ? data.get(key) : data
+      return new YDocState(shape.typeOfChild(child, field), child, field, this)
+    }
+    use() {
+      const value = this.key ? this.data.get(this.key) : this.data
+      return [
+        this.shape.fromY(value),
+        this.shape.mutator(this.data, this.key!)
+      ] as const
+    }
+  }
 
   export class StatePair<V, M> implements InputState<readonly [V, M]> {
     constructor(

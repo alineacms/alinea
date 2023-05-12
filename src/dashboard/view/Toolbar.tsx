@@ -197,7 +197,7 @@ export namespace Toolbar {
                           />
                         </Switch>
                       </HStack>
-                      <HStack gap={4}>
+                      <HStack center gap={4}>
                         <Icon
                           icon={IcRoundTextFields}
                           size={20}

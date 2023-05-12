@@ -1,4 +1,4 @@
-import {atom, useAtomValue} from 'jotai'
+import {atom, useAtomValue, useSetAtom} from 'jotai'
 import {createContext, useContext, useMemo} from 'react'
 import {parse} from 'regexparam'
 import {createParams, locationAtom, matchAtoms} from '../atoms/RouterAtoms.js'
@@ -12,10 +12,9 @@ export function useLocation() {
 }
 
 export function useNavigate() {
+  const setLocation = useSetAtom(locationAtom)
   return function navigate(url: string) {
-    const destination = '#' + url
-    if (location.hash === destination) return
-    location.hash = destination
+    setLocation(url)
   }
 }
 

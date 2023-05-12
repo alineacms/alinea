@@ -45,8 +45,8 @@ export class Client implements Connection {
     ).then<UpdateResponse>(failOnHttpError)
   }
 
-  ids(): Promise<Array<string>> {
-    return this.requestJson(Connection.routes.ids()).then<Array<string>>(
+  versionIds(): Promise<Array<string>> {
+    return this.requestJson(Connection.routes.versionIds()).then<Array<string>>(
       failOnHttpError
     )
   }

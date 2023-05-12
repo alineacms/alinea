@@ -3,9 +3,11 @@ import {Client} from 'alinea/core/Client'
 import {joinPaths} from 'alinea/core/util/Urls'
 import {Button, Typo, VStack} from 'alinea/ui'
 import {Main} from 'alinea/ui/Main'
+import {useSetAtom} from 'jotai'
 import {useEffect, useMemo, useState} from 'react'
 import {QueryClient} from 'react-query'
 import {App} from '../App.js'
+import {updateDbAtom} from '../atoms/EntryAtoms.js'
 import {Viewport} from '../view/Viewport.js'
 
 type DevReloadOptions = {
@@ -44,6 +46,7 @@ const queryClient = new QueryClient({defaultOptions: {queries: {retry: false}}})
 export function DevDashboard({loadConfig}: DevDashboardOptions) {
   const [cms, setCms] = useState<Config>()
   const [connected, setConnected] = useState(true)
+  const forceDbUpdate = useSetAtom(updateDbAtom)
   const client = useMemo(() => {
     if (!cms) return null
     return new Client(cms, joinPaths(location.origin, location.pathname))
@@ -51,14 +54,11 @@ export function DevDashboard({loadConfig}: DevDashboardOptions) {
   function getConfig() {
     return loadConfig().then(setCms)
   }
-  function refetch() {
-    return queryClient.refetchQueries()
-  }
   useEffect(() => {
     getConfig()
     return setupDevReload({
-      refresh: () => getConfig().then(refetch),
-      refetch: refetch,
+      refresh: () => getConfig().then(forceDbUpdate),
+      refetch: forceDbUpdate,
       open: () => setConnected(true),
       close: () => setConnected(false)
     })

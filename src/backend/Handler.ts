@@ -50,7 +50,7 @@ function createRouter(
       .map(respond),
 
     matcher
-      .get(Connection.routes.ids())
+      .get(Connection.routes.versionIds())
       .map(context)
       .map(({ctx}) => {
         const api = createApi(ctx)

@@ -22,7 +22,7 @@ export interface Shape<T = any, M = any> {
   toY(value: T): any
   fromY(yValue: any): T
   watch(parent: YType, key: string): (fun: () => void) => void
-  mutator(parent: YType, key: string): M
+  mutator(parent: Y.Doc | YType, key: string): M
   toString(): string
 }
 

@@ -1,7 +1,6 @@
 import {Expand} from 'alinea/core'
 import {Cursor} from 'alinea/core/pages/Cursor'
 import {BinaryOp, EV, Expr, ExprData, and} from 'alinea/core/pages/Expr'
-import type {EntryEditProps} from 'alinea/dashboard/view/EntryEdit'
 import {Callable} from 'rado/util/Callable'
 import type {ComponentType} from 'react'
 import {Field} from './Field.js'
@@ -38,7 +37,7 @@ export interface TypeMeta {
   icon?: ComponentType
 
   /** A React component used to view an entry of this type in the dashboard */
-  view?: ComponentType<EntryEditProps>
+  view?: ComponentType
   /** A React component used to view a row of this type in the dashboard */
   summaryRow?: View<any>
   /** A React component used to view a thumbnail of this type in the dashboard */
@@ -135,6 +134,16 @@ export namespace Type {
   }
 }
 
+function fieldsOfDefinition(
+  definition: TypeDefinition
+): Array<readonly [string, Field]> {
+  return entries(definition).flatMap(([key, value]) => {
+    if (Field.isField(value)) return [[key, value]] as const
+    if (Section.isSection(value)) return entries(Section.fields(value))
+    return []
+  })
+}
+
 class TypeInstance<Definition extends TypeDefinition> implements TypeData {
   shape: RecordShape
   hint: Hint
@@ -144,23 +153,25 @@ class TypeInstance<Definition extends TypeDefinition> implements TypeData {
 
   constructor(public label: Label, public definition: Definition) {
     this.meta = this.definition[Type.Meta] || {}
+    if (label === 'Home') {
+      console.log(entries(definition))
+      console.log(
+        entries(definition).filter(([, field]) => Field.isField(field))
+      )
+    }
     this.shape = Shape.Record(
       label,
       fromEntries(
-        entries(definition)
-          .filter(([, field]) => Field.isField(field))
-          .map(([key, field]) => {
-            return [key, Field.shape(field as Field)]
-          })
+        fieldsOfDefinition(definition).map(([key, field]) => {
+          return [key, Field.shape(field as Field)]
+        })
       )
     )
     this.hint = Hint.Object(
       fromEntries(
-        entries(definition)
-          .filter(([, field]) => Field.isField(field))
-          .map(([key, field]) => {
-            return [key, Field.hint(field as Field)]
-          })
+        fieldsOfDefinition(definition).map(([key, field]) => {
+          return [key, Field.hint(field as Field)]
+        })
       )
     )
     let current: Record<string, Field> = {}
@@ -209,20 +220,12 @@ class TypeInstance<Definition extends TypeDefinition> implements TypeData {
   }
 
   defineProperties(instance: TypeI<any>) {
-    for (const [key, value] of entries(this.definition)) {
-      if (Field.isField(value))
-        defineProperty(instance, key, {
-          value: this.field(value, key),
-          enumerable: true,
-          configurable: true
-        })
-      if (Section.isSection(value))
-        for (const [k, v] of entries(Section.fields(value)))
-          defineProperty(instance, k, {
-            value: this.field(v, k),
-            enumerable: true,
-            configurable: true
-          })
+    for (const [key, value] of fieldsOfDefinition(this.definition)) {
+      defineProperty(instance, key, {
+        value: this.field(value, key),
+        enumerable: true,
+        configurable: true
+      })
     }
     defineProperty(instance, Type.Data, {
       value: this,

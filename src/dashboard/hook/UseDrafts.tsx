@@ -4,7 +4,7 @@ import {
   createError,
   docFromEntry,
   EntryMeta,
-  EntryStatus,
+  EntryPhase,
   Outcome,
   ROOT_KEY
 } from 'alinea/core'
@@ -77,10 +77,10 @@ class Drafts {
 
   async discard(draft: EntryDraft) {
     if (this.saveTimeout) clearTimeout(this.saveTimeout)
-    draft.status(EntryStatus.Publishing)
+    draft.phase(EntryPhase.Publishing)
     this.status(DraftsStatus.Saving)
     return this.cnx.deleteDraft({id: draft.versionId}).then(result => {
-      draft.status(EntryStatus.Published)
+      draft.phase(EntryPhase.Published)
       this.queryClient.invalidateQueries('draft-list')
       return result
     })
@@ -88,11 +88,11 @@ class Drafts {
 
   async publish(draft: EntryDraft) {
     if (this.saveTimeout) clearTimeout(this.saveTimeout)
-    draft.status(EntryStatus.Publishing)
+    draft.phase(EntryPhase.Publishing)
     this.status(DraftsStatus.Saving)
     return this.cnx.publishEntries({entries: [draft.getEntry()]}).then(res => {
       if (res.isFailure()) console.error(res.error)
-      draft.status(res.isSuccess() ? EntryStatus.Published : EntryStatus.Draft)
+      draft.phase(res.isSuccess() ? EntryPhase.Published : EntryPhase.Draft)
       this.status(DraftsStatus.Synced)
       this.queryClient.invalidateQueries('draft-list')
     })

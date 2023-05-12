@@ -1,10 +1,9 @@
 import {Database} from 'alinea/backend'
-import {Page} from 'alinea/core/pages/Page'
-import {atom, useAtomValue} from 'jotai'
+import {atom, useAtom, useAtomValue} from 'jotai'
 import {atomFamily} from 'jotai/utils'
-import {useEffect} from 'react'
 import {createPersistentStore} from '../util/PersistentStore.js'
 import {clientAtom} from './DashboardAtoms.js'
+import {EntryEditor} from './EntryEditor.js'
 
 export const storeAtom = atom(createPersistentStore)
 
@@ -17,33 +16,26 @@ export const dbAtom = atom(async get => {
   return db
 })
 
+export const updateDbAtom = atom(null, async (get, set) => {
+  const client = get(clientAtom)
+  const store = await get(storeAtom)
+  const db = await get(dbAtom)
+  const changed = await db.syncWith(client)
+  if (!changed.length) return
+  for (const id of changed) set(get(entryAtoms(id)).refresh)
+  await store.flush()
+})
+updateDbAtom.onMount = update => {
+  const interval = setInterval(update, 1000 * 60)
+  return () => clearInterval(interval)
+}
+
 export const entryAtoms = atomFamily((id: string) => {
-  const entryAtom = atom(async get => {
-    const db = await get(dbAtom)
-    const entry = await db.find(
-      Page({entryId: id})
-        .select({
-          title: Page.title
-        })
-        .first()
-    )
-    return entry
-  })
-  return entryAtom
+  return atom(new EntryEditor(id))
 })
 
 export function useDbUpdater() {
-  const client = useAtomValue(clientAtom)
-  const store = useAtomValue(storeAtom)
-  const db = useAtomValue(dbAtom)
-  useEffect(() => {
-    const update = async () => {
-      const changed = await db.syncWith(client)
-      console.log(changed)
-      if (changed.length) await store.flush()
-      for (const id of changed) entryAtoms.remove(id)
-    }
-    const interval = setInterval(update, 5000)
-    return () => clearInterval(interval)
-  }, [db])
+  useAtom(updateDbAtom)
 }
+
+export const useEntryEditor = (id: string) => useAtomValue(entryAtoms(id))

@@ -1,4 +1,4 @@
-import {EntryStatus, Type} from 'alinea/core'
+import {EntryPhase, Type} from 'alinea/core'
 import {link, useNavigate} from 'alinea/dashboard/util/HashRouter'
 import {
   AppBar,
@@ -17,10 +17,10 @@ import {IcRoundInsertDriveFile} from 'alinea/ui/icons/IcRoundInsertDriveFile'
 import {IcRoundPublish} from 'alinea/ui/icons/IcRoundPublish'
 import {IcRoundRotateLeft} from 'alinea/ui/icons/IcRoundRotateLeft'
 import {MdiSourceBranch} from 'alinea/ui/icons/MdiSourceBranch'
-import {useState} from 'react'
-import {useQueryClient} from 'react-query'
+import {useAtomValue} from 'jotai'
+import {useConfig} from '../../atoms/DashboardAtoms.js'
+import {EntryVersionEditor} from '../../atoms/EntryEditor.js'
 import {useCurrentDraft} from '../../hook/UseCurrentDraft.js'
-import {useDashboard} from '../../hook/UseDashboard.js'
 import {DraftsStatus, useDrafts} from '../../hook/UseDrafts.js'
 import {useLocale} from '../../hook/UseLocale.js'
 import {useNav} from '../../hook/UseNav.js'
@@ -36,13 +36,13 @@ function EntryStatusChip() {
   const drafts = useDrafts()
   const draftsStatus = useObservable(drafts.status)
   const draft = useCurrentDraft()
-  const status = useObservable(draft.status)
+  const status = useObservable(draft.phase)
   switch (status) {
-    case EntryStatus.Published:
+    case EntryPhase.Published:
       return <Chip icon={IcRoundCheck}>Published</Chip>
-    case EntryStatus.Publishing:
+    case EntryPhase.Publishing:
       return <Chip icon={IcRoundRotateLeft}>Publishing</Chip>
-    case EntryStatus.Draft:
+    case EntryPhase.Draft:
       return (
         <a {...link(nav.draft(draft))} style={{textDecoration: 'none'}}>
           <Chip
@@ -59,31 +59,34 @@ function EntryStatusChip() {
           </Chip>
         </a>
       )
-    case EntryStatus.Archived:
+    case EntryPhase.Archived:
       return <Chip icon={IcRoundArchive}>Archived</Chip>
   }
 }
 
 export type EntryHeaderProps = {
+  versionEditor: EntryVersionEditor
   mode: EditMode
   setMode?: (mode: EditMode) => void
 }
 
-export function EntryHeader({mode, setMode}: EntryHeaderProps) {
+export function EntryHeader({
+  mode,
+  setMode,
+  versionEditor: phaseEditor
+}: EntryHeaderProps) {
   const nav = useNav()
-  const {schema} = useDashboard().config
+  const {schema} = useConfig()
   const {name: workspace} = useWorkspace()
   const root = useRoot()
-  const drafts = useDrafts()
-  const draft = useCurrentDraft()
   const currentLocale = useLocale()
   const navigate = useNavigate()
-  const parent = draft.alinea.parent
-  const type = schema[draft.type]
-  const status = useObservable(draft.status)
-  const queryClient = useQueryClient()
-  const [isPublishing, setPublishing] = useState(false)
-  function handleDiscard() {
+  const phase = phaseEditor.phase
+  const version = useAtomValue(phaseEditor.version)
+  const parent = version.parent
+  const type = schema[version.type]
+  const Icon = type && Type.meta(type).icon
+  /*function handleDiscard() {
     return drafts.discard(draft).then(([entryRemains, err]) => {
       queryClient.invalidateQueries(['draft', draft.versionId])
       if (!entryRemains) {
@@ -108,8 +111,7 @@ export function EntryHeader({mode, setMode}: EntryHeaderProps) {
       .finally(() => {
         setPublishing(false)
       })
-  }
-  const Icon = type && Type.meta(type).icon
+  }*/
   return (
     <AppBar.Root>
       <AppBar.Item full style={{flexGrow: 1}}>
@@ -130,12 +132,12 @@ export function EntryHeader({mode, setMode}: EntryHeaderProps) {
                 whiteSpace: 'nowrap'
               }}
             >
-              {draft.url}
+              {version.url}
             </span>
           </HStack>
         </Typo.Monospace>
       </AppBar.Item>
-      {root.i18n && (
+      {/*root.i18n && (
         <HStack center gap={8}>
           {root.i18n.locales.map(locale => {
             const translation = draft.translation(locale)
@@ -163,13 +165,11 @@ export function EntryHeader({mode, setMode}: EntryHeaderProps) {
             )
           })}
         </HStack>
-      )}
+      )*/}
       <Stack.Right>
-        <AppBar.Item>
-          <EntryStatusChip />
-        </AppBar.Item>
+        <AppBar.Item>status</AppBar.Item>
       </Stack.Right>
-      {status === EntryStatus.Draft && mode === EditMode.Editing && setMode && (
+      {phase === EntryPhase.Draft && mode === EditMode.Editing && setMode && (
         <AppBar.Item
           as="button"
           icon={MdiSourceBranch}
@@ -178,7 +178,7 @@ export function EntryHeader({mode, setMode}: EntryHeaderProps) {
           <span>View changes</span>
         </AppBar.Item>
       )}
-      {status === EntryStatus.Draft && mode === EditMode.Diff && setMode && (
+      {phase === EntryPhase.Draft && mode === EditMode.Diff && setMode && (
         <AppBar.Item
           as="button"
           icon={IcRoundEdit}
@@ -187,13 +187,13 @@ export function EntryHeader({mode, setMode}: EntryHeaderProps) {
           <span>Edit entry</span>
         </AppBar.Item>
       )}
-      {status === EntryStatus.Draft && (
-        <AppBar.Item as="button" icon={IcRoundDelete} onClick={handleDiscard}>
+      {phase === EntryPhase.Draft && (
+        <AppBar.Item as="button" icon={IcRoundDelete}>
           <span>Discard</span>
         </AppBar.Item>
       )}
-      {status !== EntryStatus.Published && !isPublishing && (
-        <AppBar.Item as="button" icon={IcRoundPublish} onClick={handlePublish}>
+      {phase !== EntryPhase.Published && (
+        <AppBar.Item as="button" icon={IcRoundPublish}>
           <span>Publish</span>
         </AppBar.Item>
       )}

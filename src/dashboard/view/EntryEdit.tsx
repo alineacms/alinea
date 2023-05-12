@@ -1,46 +1,49 @@
-import {createId, docFromEntry, EntryStatus} from 'alinea/core'
-import {useNavigate} from 'alinea/dashboard/util/HashRouter'
+import {EntryPhase} from 'alinea/core'
+import {values} from 'alinea/core/util/Objects'
+import {useLocation, useNavigate} from 'alinea/dashboard/util/HashRouter'
 import {InputForm} from 'alinea/editor'
-import {Button, ErrorMessage, fromModule, useObservable} from 'alinea/ui'
+import {fromModule} from 'alinea/ui'
 import {Main} from 'alinea/ui/Main'
-import {Suspense, useLayoutEffect, useState} from 'react'
-import {useQueryClient} from 'react-query'
-import * as Y from 'yjs'
-import {EntryDraft} from '../draft/EntryDraft.js'
-import {EntryProperty} from '../draft/EntryProperty.js'
-import {useDashboard} from '../hook/UseDashboard.js'
+import {useAtom, useAtomValue} from 'jotai'
+import {Suspense} from 'react'
+import {useEntryEditor} from '../atoms/EntryAtoms.js'
 import {useLocale} from '../hook/UseLocale.js'
 import {useNav} from '../hook/UseNav.js'
-import {useSession} from '../hook/UseSession.js'
-import {useWorkspace} from '../hook/UseWorkspace.js'
-import {EntryDiff} from './diff/EntryDiff.js'
+import css from './EntryEdit.module.scss'
 import {EditMode} from './entry/EditMode.js'
 import {EntryHeader} from './entry/EntryHeader.js'
-import {EntryPreview} from './entry/EntryPreview.js'
 import {EntryTitle} from './entry/EntryTitle.js'
-import css from './EntryEdit.module.scss'
 
 const styles = fromModule(css)
 
-export type EntryEditProps = {
-  initialMode: EditMode
-  draft: EntryDraft
-  isLoading: boolean
+interface EntryEditProps {
+  id: string
 }
 
-export function EntryEdit({initialMode, draft, isLoading}: EntryEditProps) {
+export function EntryEdit({id}: EntryEditProps) {
+  const {search} = useLocation()
   const nav = useNav()
-  const queryClient = useQueryClient()
   const locale = useLocale()
-  const {schema} = useDashboard().config
-  const {cnx: hub} = useSession()
   const navigate = useNavigate()
+
+  const entryEditor = useEntryEditor(id)
+  const [mode, setMode] = useAtom(entryEditor.editMode)
+  const phases = useAtomValue(entryEditor.phases)
+  const phaseInSearch = search.slice(1) as EntryPhase
+  const selectedPhase: EntryPhase = values(EntryPhase).includes(phaseInSearch)
+    ? phaseInSearch
+    : phases[0]
+  const versionEditor = useAtomValue(entryEditor.versionEditor(selectedPhase))
+  const version = useAtomValue(versionEditor.version)
+  const type = useAtomValue(versionEditor.type)
+  const state = useAtomValue(versionEditor.state)
+  /*  const {schema} = useConfig()
   const type = schema[draft.type]
   const {preview} = useWorkspace()
   const isTranslating = !isLoading && locale !== draft.alinea.i18n?.locale
   const [isCreating, setIsCreating] = useState(false)
   const [mode, setMode] = useState<EditMode>(initialMode)
-  const status = useObservable(draft.status)
+  const status = useObservable(draft.phase)
   function handleTranslation() {
     if (!locale || isCreating) return
     setIsCreating(true)
@@ -67,35 +70,40 @@ export function EntryEdit({initialMode, draft, isLoading}: EntryEditProps) {
     if (!mightHaveTranslation) return
     const translation = draft.translation(locale)
     if (translation) navigate(nav.entry(translation))
-  }, [draft, isTranslating, locale])
+  }, [draft, isTranslating, locale])*/
   return (
     <>
       <Main
         className={styles.root()}
-        head={<EntryHeader mode={mode} setMode={setMode} />}
+        head={
+          <EntryHeader
+            mode={mode}
+            setMode={setMode}
+            versionEditor={versionEditor}
+          />
+        }
       >
         <Main.Container>
           <EntryTitle
+            versionEditor={versionEditor}
             backLink={
-              draft.alinea.parent &&
-              nav.entry({
-                id: draft.alinea.parent,
-                workspace: draft.alinea.workspace
-              })
+              version.parent &&
+              nav.entry({id: version.parent, workspace: version.workspace})
             }
           />
-          {mode === EditMode.Diff && status !== EntryStatus.Published ? (
+          {mode === EditMode.Diff ? (
             <>
-              {draft.detail.original && (
+              Show entry diff here
+              {/*draft.detail.original && (
                 <EntryDiff
                   entryA={draft.detail.original}
                   entryB={draft.getEntry()}
                 />
-              )}
+              )*/}
             </>
           ) : (
             <>
-              {isTranslating ? (
+              {/*isTranslating ? (
                 <Button onClick={() => handleTranslation()}>
                   Translate from {draft.alinea.i18n?.locale.toUpperCase()}
                 </Button>
@@ -107,12 +115,15 @@ export function EntryEdit({initialMode, draft, isLoading}: EntryEditProps) {
                     <ErrorMessage error={new Error('Type not found')} />
                   )}
                 </Suspense>
-              )}
+                  )*/}
+              <Suspense fallback={null}>
+                <InputForm type={type} state={state} />
+              </Suspense>
             </>
           )}
         </Main.Container>
       </Main>
-      {preview && <EntryPreview preview={preview} draft={draft} />}
+      {/*preview && <EntryPreview preview={preview} draft={draft} />*/}
     </>
   )
 }

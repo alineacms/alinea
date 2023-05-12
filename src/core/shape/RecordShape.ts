@@ -1,6 +1,7 @@
 import * as Y from 'yjs'
 import {Label} from '../Label.js'
 import {Shape} from '../Shape.js'
+import {entries} from '../util/Objects.js'
 
 export type RecordMutator<T> = {
   set: <K extends keyof T>(k: K, v: T[K]) => void
@@ -13,7 +14,7 @@ export class RecordShape<T = {}> implements Shape<T, RecordMutator<T>> {
     public initialValue?: T
   ) {}
   innerTypes(parents: Array<string>) {
-    return Object.entries(this.properties).flatMap(([name, shape]) => {
+    return entries(this.properties).flatMap(([name, shape]) => {
       return shape.innerTypes(parents.concat(name))
     })
   }

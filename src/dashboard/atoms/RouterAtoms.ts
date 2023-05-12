@@ -12,21 +12,17 @@ hashAtom.onMount = set => {
   return () => window.removeEventListener('hashchange', listener)
 }
 
-export const useHash = () => useAtom(hashAtom)
-
 export const locationAtom = atom(
   get => {
     const hash = get(hashAtom)
     const path = hash.slice(1) || '/'
     return new URL(path, location.href)
   },
-  (get, set, url: URL) => {
-    const hash = `#${url.pathname}`
+  (get, set, url: string) => {
+    const hash = `#${url}`
     set(hashAtom, hash)
   }
 )
-
-export const useLocation = () => useAtom(locationAtom)
 
 interface Matcher {
   keys: Array<string>
@@ -62,3 +58,5 @@ export const matchAtoms = atomFamily(
 export function useMatch(route: string, loose?: boolean) {
   return useAtom(matchAtoms({route, loose}))
 }
+
+export const useHash = () => useAtom(hashAtom)
