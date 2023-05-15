@@ -20,6 +20,7 @@
     "lib0": "^0.2.42",
     "p-limit": "^4.0.0",
     "pretty-bytes": "^6.0.0",
+    "react-complex-tree": "^2.1.4-alpha.0",
     "react-query": "^3.39.1",
     "react-tiny-virtual-list": "^2.2.0",
     "y-webrtc": "^10.2.0"

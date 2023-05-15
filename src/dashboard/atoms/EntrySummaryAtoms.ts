@@ -2,11 +2,11 @@ import {Page} from 'alinea/core/pages/Page'
 import DataLoader from 'dataloader'
 import {atom} from 'jotai'
 import {atomFamily} from 'jotai/utils'
-import {dbAtom} from './EntryAtoms.js'
+import {dbAtom, entryRevisionAtoms} from './EntryAtoms.js'
 
-export const entrySummaryLoaderAtom = atom(get => {
+export const entrySummaryLoaderAtom = atom(async get => {
+  const db = await get(dbAtom)
   return new DataLoader(async (ids: ReadonlyArray<string>) => {
-    const db = await get(dbAtom)
     const res = new Map()
     const entries = await db.find(
       Page()
@@ -17,20 +17,27 @@ export const entrySummaryLoaderAtom = atom(get => {
           root: Page.root,
           title: Page.title,
           parents({parents}) {
-            return parents(Page).select({title: Page.title})
+            return parents(Page).select({
+              entryId: Page.entryId,
+              title: Page.title
+            })
           }
         })
         .where(Page.entryId.isIn(ids))
     )
-    console.log(entries)
     for (const entry of entries) res.set(entry.entryId, entry)
-    return ids.map(id => res.get(id))
+    return ids.map(id => res.get(id)) as typeof entries
   })
 })
 
 export const entrySummaryAtoms = atomFamily((id: string) => {
-  return atom(get => {
-    const loader = get(entrySummaryLoaderAtom)
-    return loader.load(id)
+  return atom(async get => {
+    const loader = await get(entrySummaryLoaderAtom)
+    // We clear the dataloader cache because we use the atom family cache
+    const summary = await loader.clear(id).load(id)
+    get(entryRevisionAtoms(id))
+    for (const parent of summary.parents)
+      get(entryRevisionAtoms(parent.entryId))
+    return summary
   })
 })

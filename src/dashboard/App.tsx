@@ -7,6 +7,7 @@ import {
 } from 'alinea/dashboard/util/HashRouter'
 import {ErrorBoundary, FavIcon, Loader} from 'alinea/ui'
 import {IcRoundInsertDriveFile} from 'alinea/ui/icons/IcRoundInsertDriveFile'
+import {MdiSourceBranch} from 'alinea/ui/icons/MdiSourceBranch'
 import {atom, useAtom, useAtomValue} from 'jotai'
 import {Suspense, useMemo} from 'react'
 import {
@@ -18,8 +19,6 @@ import {
   sessionAtom,
   useSetDashboardOptions
 } from './atoms/DashboardAtoms.js'
-
-import {MdiSourceBranch} from 'alinea/ui/icons/MdiSourceBranch'
 import {useDbUpdater} from './atoms/EntryAtoms.js'
 import {locationAtom, matchAtoms} from './atoms/RouterAtoms.js'
 import {navMatchers} from './DashboardNav.js'
@@ -33,6 +32,7 @@ import {DraftsOverview} from './view/DraftsOverview.js'
 import {NewEntry} from './view/entry/NewEntry.js'
 import {RootHeader} from './view/entry/RootHeader.js'
 import {EntryEdit} from './view/EntryEdit.js'
+import {EntryTree} from './view/EntryTree.js'
 import {RootOverview} from './view/RootOverview.js'
 import {SearchBox} from './view/SearchBox.js'
 import {Sidebar} from './view/Sidebar.js'
@@ -154,7 +154,9 @@ function ContentView() {
       <Sidebar.Tree>
         <SearchBox />
         <RootHeader />
-        content tree
+        <Suspense fallback={<Loader />}>
+          <EntryTree />
+        </Suspense>
       </Sidebar.Tree>
       {search === '?new' && (
         <Suspense fallback={<Loader absolute />}>

@@ -106,6 +106,10 @@ export namespace Type {
     return type[Type.Data].sections
   }
 
+  export function isContainer(type: Type) {
+    return Boolean(type[Type.Data].meta.isContainer)
+  }
+
   export function target(type: Type): TypeTarget {
     return type[Type.Data].target
   }

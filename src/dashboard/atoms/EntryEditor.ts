@@ -6,7 +6,7 @@ import {Atom, atom} from 'jotai'
 import {atomFamily} from 'jotai/utils'
 import * as Y from 'yjs'
 import {configAtom} from './DashboardAtoms.js'
-import {dbAtom} from './EntryAtoms.js'
+import {dbAtom, entryRevisionAtoms} from './EntryAtoms.js'
 
 export enum EditMode {
   Editing = 'editing',
@@ -54,6 +54,7 @@ export class EntryVersionEditor {
     const config = get(configAtom)
     const version = await get(this.version)
     const doc = new Y.Doc()
+    const clientID = doc.clientID
     doc.clientID = 1
     const type = config.schema[version.type]
     const docRoot = doc.getMap(ROOT_KEY)
@@ -61,8 +62,13 @@ export class EntryVersionEditor {
       const contents = version.data[key]
       docRoot.set(key, Field.shape(field).toY(contents))
     }
+    doc.clientID = clientID
     return doc
   })
+
+  //hasConflict = atom()
+
+  // isDirty =
 
   state = atom(async get => {
     const yDoc = await get(this.yDoc)
@@ -76,17 +82,12 @@ export class EntryVersionEditor {
 export class EntryEditor {
   constructor(public entryId: string) {}
 
-  private revision = atom(0)
   private db = atom(get => {
-    get(this.revision)
+    get(entryRevisionAtoms(this.entryId))
     return get(dbAtom)
   })
 
   editMode = atom(EditMode.Editing)
-
-  refresh = atom(null, (get, set) => {
-    set(this.revision, i => i + 1)
-  })
 
   versions = keepPreviousData(
     atom(async get => {

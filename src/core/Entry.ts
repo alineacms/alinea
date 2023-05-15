@@ -1,5 +1,5 @@
 import {createId} from 'alinea/core'
-import {column, index, table, withRecursive} from 'rado'
+import {column, index, table} from 'rado'
 import {EntryData} from '../backend/db/EntryData.js'
 
 /*
@@ -74,18 +74,6 @@ export class EntryTable {
   title = column.string
   url = column.string
   data = column.json
-
-  get parents() {
-    const Self = Entry().as('Self')
-    const parents = withRecursive(
-      Self({entryId: this.parent}).select({...Self, level: 0})
-    ).unionAll(() =>
-      Self()
-        .select({...Self, level: parents.level.add(1)})
-        .innerJoin(parents({parent: Self.entryId}))
-    )
-    return parents
-  }
 }
 
 export interface Entry extends table<EntryTable> {

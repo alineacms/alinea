@@ -76,6 +76,7 @@ export const resolvePlugin: Plugin = {
     build.onResolve({filter: /.*/}, args => {
       if (args.kind === 'entry-point') return
       if (args.path === 'lib0') return
+      if (args.path.startsWith('data:')) return
       const isNodeModule = args.resolveDir.includes(`node_modules`)
       const pkg = isNodeModule
         ? packageOf(args.resolveDir)
