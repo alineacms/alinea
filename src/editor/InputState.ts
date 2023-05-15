@@ -1,7 +1,9 @@
 import {RichTextMutator, Shape} from 'alinea/core'
+import {TextDoc} from 'alinea/core/TextDoc'
 import {ListMutator} from 'alinea/core/shape/ListShape'
 import {RecordMutator} from 'alinea/core/shape/RecordShape'
-import {TextDoc} from 'alinea/core/TextDoc'
+import {useForceUpdate} from 'alinea/ui'
+import {useEffect} from 'react'
 import * as Y from 'yjs'
 
 export interface InputState<T = any> {
@@ -9,6 +11,8 @@ export interface InputState<T = any> {
   child(field: string): InputState<any>
   use(): T
 }
+
+// Todo: rewrite this based on atoms?
 
 /* eslint-disable */
 export namespace InputState {
@@ -20,7 +24,7 @@ export namespace InputState {
   export class YDocState<V, M> implements InputState<readonly [V, M]> {
     constructor(
       protected shape: Shape<V, M>,
-      protected data: Y.Map<any>,
+      protected parentData: Y.Map<any>,
       protected key: string | undefined,
       protected _parent?: InputState<any>
     ) {}
@@ -28,15 +32,18 @@ export namespace InputState {
       return this._parent
     }
     child(field: string): InputState<any> {
-      const {shape, data, key} = this
+      const {shape, parentData: data, key} = this
       const child = key ? data.get(key) : data
       return new YDocState(shape.typeOfChild(child, field), child, field, this)
     }
     use() {
-      const value = this.key ? this.data.get(this.key) : this.data
+      const value = this.key ? this.parentData.get(this.key) : this.parentData
+      const listener = this.shape.watch(this.parentData, this.key!)
+      const forceUpdate = useForceUpdate()
+      useEffect(() => listener(forceUpdate), [])
       return [
         this.shape.fromY(value),
-        this.shape.mutator(this.data, this.key!)
+        this.shape.mutator(this.parentData, this.key!)
       ] as const
     }
   }

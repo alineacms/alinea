@@ -1,8 +1,21 @@
-import {array, boolean, enums, number, object, string, tuple} from 'cito'
+import {array, boolean, enums, number, object, string} from 'cito'
 import {Expr, ExprData, and} from './Expr.js'
 import {Projection} from './Projection.js'
 import {Selection} from './Selection.js'
 import {TargetData} from './Target.js'
+
+export enum OrderDirection {
+  Asc = 'Asc',
+  Desc = 'Desc'
+}
+
+export type OrderBy = typeof OrderBy.infer
+export const OrderBy = object(
+  class {
+    expr = ExprData.adt
+    order = enums(OrderDirection)
+  }
+)
 
 export type CursorData = typeof CursorData.infer
 export const CursorData = object(
@@ -12,7 +25,7 @@ export const CursorData = object(
     where? = ExprData.adt.optional
     skip? = number.optional
     take? = number.optional
-    orderBy? = array(ExprData.adt).optional
+    orderBy? = array(OrderBy).optional
     select? = Selection.adt.optional
     first? = boolean.optional
     source? = CursorSource.optional
@@ -29,7 +42,13 @@ export enum SourceType {
 }
 
 export type CursorSource = typeof CursorSource.infer
-export const CursorSource = tuple(enums(SourceType), string)
+export const CursorSource = object(
+  class {
+    type = enums(SourceType)
+    id = string
+    depth? = number.optional
+  }
+)
 
 export interface Cursor<T> {
   [Cursor.Data]: CursorData
@@ -65,9 +84,10 @@ export namespace Cursor {
 
   export class Find<Row> extends Cursor<Array<Row>> {
     where(...where: Array<Expr<boolean>>): Find<Row> {
+      const current = this[Cursor.Data].where
       return new Find(
         this.with({
-          where: and(...where)[Expr.Data]
+          where: and(current ? Expr(current) : true, ...where)[Expr.Data]
         })
       )
     }
@@ -86,6 +106,10 @@ export namespace Cursor {
       return new Find<Selection.Infer<S>>(
         this.with({select: Selection(select, this.id)})
       )
+    }
+
+    orderBy(...orderBy: Array<OrderBy>): Find<Row> {
+      return new Find<Row>(this.with({orderBy}))
     }
   }
 

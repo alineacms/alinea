@@ -4,6 +4,8 @@ import {
   BinOpType,
   Expr,
   ExprData,
+  OrderBy,
+  OrderDirection,
   ParamData,
   Query,
   QueryData,
@@ -131,6 +133,7 @@ export class Resolver {
     target: pages.TargetData,
     field: string
   ): ExprData {
+    // Todo: we should make this non-ambiguous
     switch (field) {
       case 'id':
       case 'entryId':
@@ -143,6 +146,8 @@ export class Resolver {
         return ctx.Table.title[Expr.Data]
       case 'path':
         return ctx.Table.path[Expr.Data]
+      case 'index':
+        return ctx.Table.index[Expr.Data]
       default:
         const {name} = target
         if (!name) {
@@ -292,32 +297,63 @@ export class Resolver {
     source: pages.CursorSource | undefined
   ): Select<Table.Select<EntryTable>> {
     if (!source) return ctx.Table()
-    const from = Entry().as(source[1])
-    switch (source[0]) {
+    const from = Entry().as(source.id)
+    switch (source.type) {
       case pages.SourceType.Parent:
         return ctx.Table().where(ctx.Table.entryId.is(from.parent)).take(1)
-      case pages.SourceType.Parents:
-        const Self = Entry().as('Self')
-        const parents = withRecursive(
-          Self({entryId: from.entryId}).select({
-            entryId: Self.entryId,
-            parent: Self.parent,
+      case pages.SourceType.Children:
+        const Child = Entry().as('Child')
+        const children = withRecursive(
+          Child({entryId: from.entryId}).select({
+            entryId: Child.entryId,
+            parent: Child.parent,
             level: 0
           })
         ).unionAll(() =>
-          Self()
+          Child()
             .select({
-              entryId: Self.entryId,
-              parent: Self.parent,
+              entryId: Child.entryId,
+              parent: Child.parent,
+              level: children.level.add(1)
+            })
+            .innerJoin(children({entryId: Child.parent}))
+            .where(children.level.isLess(source.depth))
+        )
+        const childrenIds = children().select(children.entryId).skip(1)
+        return ctx.Table().where(ctx.Table.entryId.isIn(childrenIds))
+      case pages.SourceType.Parents:
+        const Parent = Entry().as('Parent')
+        const parents = withRecursive(
+          Parent({entryId: from.entryId}).select({
+            entryId: Parent.entryId,
+            parent: Parent.parent,
+            level: 0
+          })
+        ).unionAll(() =>
+          Parent()
+            .select({
+              entryId: Parent.entryId,
+              parent: Parent.parent,
               level: parents.level.add(1)
             })
-            .innerJoin(parents({parent: Self.entryId}))
+            .innerJoin(parents({parent: Parent.entryId}))
+            .where(source.depth ? children.level.isLess(source.depth) : true)
         )
         const parentIds = parents().select(parents.entryId).skip(1)
         return ctx.Table().where(ctx.Table.entryId.isIn(parentIds))
       default:
         throw new Error(`Todo`)
     }
+  }
+
+  orderBy(ctx: ResolveContext, orderBy: Array<pages.OrderBy>): Array<OrderBy> {
+    return orderBy.map(({expr, order}) => {
+      const exprData = this.expr(ctx, expr)
+      return {
+        expr: exprData,
+        order: order === 'Desc' ? OrderDirection.Desc : OrderDirection.Asc
+      }
+    })
   }
 
   queryCursor({cursor}: pages.Selection.Cursor): QueryData.Select {
@@ -340,7 +376,7 @@ export class Resolver {
     const extra: Partial<QueryData.Select> = {}
     if (select) extra.selection = this.select(ctx.select, select)
     if (first) extra.singleResult = true
-    // Todo: orderBy
+    if (orderBy) extra.orderBy = this.orderBy(ctx, orderBy)
     return query[Query.Data].with(extra)
   }
 

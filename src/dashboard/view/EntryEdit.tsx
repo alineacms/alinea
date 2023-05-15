@@ -1,13 +1,12 @@
 import {EntryPhase} from 'alinea/core'
 import {values} from 'alinea/core/util/Objects'
-import {useLocation, useNavigate} from 'alinea/dashboard/util/HashRouter'
+import {useLocation} from 'alinea/dashboard/util/HashRouter'
 import {InputForm} from 'alinea/editor'
 import {fromModule} from 'alinea/ui'
 import {Main} from 'alinea/ui/Main'
 import {useAtom, useAtomValue} from 'jotai'
 import {Suspense} from 'react'
 import {useEntryEditor} from '../atoms/EntryAtoms.js'
-import {useLocale} from '../hook/UseLocale.js'
 import {useNav} from '../hook/UseNav.js'
 import css from './EntryEdit.module.scss'
 import {EditMode} from './entry/EditMode.js'
@@ -23,9 +22,6 @@ interface EntryEditProps {
 export function EntryEdit({id}: EntryEditProps) {
   const {search} = useLocation()
   const nav = useNav()
-  const locale = useLocale()
-  const navigate = useNavigate()
-
   const entryEditor = useEntryEditor(id)
   const [mode, setMode] = useAtom(entryEditor.editMode)
   const phases = useAtomValue(entryEditor.phases)

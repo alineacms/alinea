@@ -1,5 +1,5 @@
 import {Infer, any, enums, literal, record, string, union} from 'cito'
-import {Cursor} from './Cursor.js'
+import {Cursor, OrderBy, OrderDirection} from './Cursor.js'
 import {TargetData} from './Target.js'
 
 const {entries, fromEntries} = Object
@@ -128,13 +128,13 @@ export class ExprI<T> {
     this[Expr.IsExpr] = true
   }
 
-  /*asc(): OrderBy {
+  asc(): OrderBy {
     return {expr: this[Expr.Data], order: OrderDirection.Asc}
   }
 
   desc(): OrderBy {
     return {expr: this[Expr.Data], order: OrderDirection.Desc}
-  }*/
+  }
 
   not(): Expr<boolean> {
     return Expr(ExprData.UnOp(UnaryOp.Not, this[Expr.Data]))

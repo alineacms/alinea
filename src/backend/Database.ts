@@ -200,7 +200,7 @@ export class Database implements Syncable {
       parentDir,
       childrenDir,
       parent: null,
-      index: null,
+      index: data.alinea?.index,
       locale,
       i18nId: data.alinea?.i18n?.id,
 

@@ -8,7 +8,10 @@ type Narrow = Cursor.Find<any> | TargetI<any>
 type Output<T> = [Narrow] extends [T] ? Page : Selection.Infer<T>
 
 export class Tree {
-  constructor(protected sourceId: string) {}
+  constructor(protected sourceId: string) {
+    this.children = this.children.bind(this)
+    this.parents = this.parents.bind(this)
+  }
 
   protected narrowData(narrow?: any): Partial<CursorData> {
     return (
@@ -19,11 +22,15 @@ export class Tree {
     )
   }
 
-  protected find<T>(sourceType: SourceType, narrow?: any): Cursor.Find<T> {
+  protected find<T>(
+    sourceType: SourceType,
+    narrow?: any,
+    depth?: number
+  ): Cursor.Find<T> {
     return new Cursor.Find({
       id: createId(),
       ...this.narrowData(narrow),
-      source: [sourceType, this.sourceId]
+      source: {type: sourceType, id: this.sourceId, depth}
     })
   }
 
@@ -32,21 +39,35 @@ export class Tree {
       id: createId(),
       ...this.narrowData(narrow),
       first: true,
-      source: [sourceType, this.sourceId]
+      source: {type: sourceType, id: this.sourceId}
     })
   }
 
-  children = <N extends Narrow>(narrow?: N): Cursor.Find<Output<N>> => {
-    return this.find(SourceType.Children, narrow)
+  children<N extends Narrow>(depth?: number): Cursor.Find<Output<N>>
+  children<N extends Narrow>(narrow?: N, depth?: number): Cursor.Find<Output<N>>
+  children<N extends Narrow>(
+    narrow?: N | number,
+    depth?: number
+  ): Cursor.Find<Output<N>> {
+    ;[narrow, depth] =
+      typeof narrow === 'number' ? [undefined, narrow] : [narrow, depth || 1]
+    return this.find(SourceType.Children, narrow, depth)
+  }
+  parents<N extends Narrow>(depth?: number): Cursor.Find<Output<N>>
+  parents<N extends Narrow>(narrow?: N, depth?: number): Cursor.Find<Output<N>>
+  parents<N extends Narrow>(
+    narrow?: N | number,
+    depth?: number
+  ): Cursor.Find<Output<N>> {
+    ;[narrow, depth] =
+      typeof narrow === 'number' ? [undefined, narrow] : [narrow, depth]
+    return this.find(SourceType.Parents, narrow, depth)
   }
   previous = <N extends Narrow>(narrow?: N): Cursor.Get<Output<N>> => {
     return this.get(SourceType.Previous, narrow)
   }
   next = <N extends Narrow>(narrow?: N): Cursor.Get<Output<N>> => {
     return this.get(SourceType.Next, narrow)
-  }
-  parents = <N extends Narrow>(narrow?: N): Cursor.Find<Output<N>> => {
-    return this.find(SourceType.Parents, narrow)
   }
   parent = <N extends Narrow>(narrow?: N): Cursor.Get<Output<N>> => {
     return this.get(SourceType.Parent, narrow)

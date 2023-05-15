@@ -90,6 +90,7 @@ __metadata:
     lib0: ^0.2.42
     p-limit: ^4.0.0
     pretty-bytes: ^6.0.0
+    react-complex-tree: ^2.1.4-alpha.0
     react-query: ^3.39.1
     react-tiny-virtual-list: ^2.2.0
     y-webrtc: ^10.2.0
@@ -9945,6 +9946,15 @@ fsevents@~2.3.2:
   bin:
     rc: ./cli.js
   checksum: 2e26e052f8be2abd64e6d1dabfbd7be03f80ec18ccbc49562d31f617d0015fbdbcf0f9eed30346ea6ab789e0fdfe4337f033f8016efdbee0df5354751842080e
+  languageName: node
+  linkType: hard
+
+"react-complex-tree@npm:^2.1.4-alpha.0":
+  version: 2.1.4-alpha.0
+  resolution: "react-complex-tree@npm:2.1.4-alpha.0"
+  peerDependencies:
+    react: ">=16.0.0"
+  checksum: 116f6b4305f7109f1cb1302ee5e52bc3e2516a5fc76a484b457e9e48e7d6bb33a4e3891f6149674a29eb31ab504cd28f56fc03946e00b163ac544919fad33631
   languageName: node
   linkType: hard
 
