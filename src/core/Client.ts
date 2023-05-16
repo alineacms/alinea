@@ -20,10 +20,6 @@ export class Client implements Connection {
     protected unauthorized: () => void = () => {}
   ) {}
 
-  find<S>(selection: S) {
-    return this.resolve(Selection(selection)) as Promise<Selection.Infer<S>>
-  }
-
   resolve(selection: Selection): Promise<unknown> {
     const body = JSON.stringify(selection)
     return this.requestJson(Connection.routes.resolve(), {

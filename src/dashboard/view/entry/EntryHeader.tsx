@@ -17,7 +17,6 @@ import {IcRoundInsertDriveFile} from 'alinea/ui/icons/IcRoundInsertDriveFile'
 import {IcRoundPublish} from 'alinea/ui/icons/IcRoundPublish'
 import {IcRoundRotateLeft} from 'alinea/ui/icons/IcRoundRotateLeft'
 import {MdiSourceBranch} from 'alinea/ui/icons/MdiSourceBranch'
-import {useAtomValue} from 'jotai'
 import {useConfig} from '../../atoms/DashboardAtoms.js'
 import {EntryVersionEditor} from '../../atoms/EntryEditor.js'
 import {useCurrentDraft} from '../../hook/UseCurrentDraft.js'
@@ -40,8 +39,6 @@ function EntryStatusChip() {
   switch (status) {
     case EntryPhase.Published:
       return <Chip icon={IcRoundCheck}>Published</Chip>
-    case EntryPhase.Publishing:
-      return <Chip icon={IcRoundRotateLeft}>Publishing</Chip>
     case EntryPhase.Draft:
       return (
         <a {...link(nav.draft(draft))} style={{textDecoration: 'none'}}>
@@ -70,19 +67,15 @@ export type EntryHeaderProps = {
   setMode?: (mode: EditMode) => void
 }
 
-export function EntryHeader({
-  mode,
-  setMode,
-  versionEditor: phaseEditor
-}: EntryHeaderProps) {
+export function EntryHeader({mode, setMode, versionEditor}: EntryHeaderProps) {
   const nav = useNav()
   const {schema} = useConfig()
   const {name: workspace} = useWorkspace()
   const root = useRoot()
   const currentLocale = useLocale()
   const navigate = useNavigate()
-  const phase = phaseEditor.phase
-  const version = useAtomValue(phaseEditor.version)
+  const phase = versionEditor.phase
+  const version = versionEditor.version
   const parent = version.parent
   const type = schema[version.type]
   const Icon = type && Type.meta(type).icon

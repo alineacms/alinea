@@ -46,7 +46,7 @@ const binOps = {
   [pages.BinaryOp.Concat]: BinOpType.Concat
 }
 
-const pageFields = keys(pages.Page)
+const pageFields = keys(Entry)
 
 class ResolveContext {
   constructor(
@@ -357,8 +357,18 @@ export class Resolver {
   }
 
   queryCursor({cursor}: pages.Selection.Cursor): QueryData.Select {
-    const {id, target, where, skip, take, orderBy, select, first, source} =
-      cursor
+    const {
+      id,
+      target,
+      where,
+      skip,
+      take,
+      orderBy,
+      groupBy,
+      select,
+      first,
+      source
+    } = cursor
     const ctx = new ResolveContext(Entry().as(id), ExprContext.InNone)
     const {name} = target || {}
     let query = this.querySource(ctx, source)
@@ -376,6 +386,7 @@ export class Resolver {
     const extra: Partial<QueryData.Select> = {}
     if (select) extra.selection = this.select(ctx.select, select)
     if (first) extra.singleResult = true
+    if (groupBy) extra.groupBy = groupBy.map(expr => this.expr(ctx, expr))
     if (orderBy) extra.orderBy = this.orderBy(ctx, orderBy)
     return query[Query.Data].with(extra)
   }

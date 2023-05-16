@@ -26,6 +26,7 @@ export const CursorData = object(
     skip? = number.optional
     take? = number.optional
     orderBy? = array(OrderBy).optional
+    groupBy? = array(ExprData.adt).optional
     select? = Selection.adt.optional
     first? = boolean.optional
     source? = CursorSource.optional
@@ -106,6 +107,10 @@ export namespace Cursor {
       return new Find<Selection.Infer<S>>(
         this.with({select: Selection(select, this.id)})
       )
+    }
+
+    groupBy(...groupBy: Array<Expr<any>>): Find<Row> {
+      return new Find<Row>(this.with({groupBy: groupBy.map(ExprData)}))
     }
 
     orderBy(...orderBy: Array<OrderBy>): Find<Row> {

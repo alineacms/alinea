@@ -181,7 +181,7 @@ export class Database implements Syncable {
 
     const type = this.config.schema[data.type]
     if (!type) throw new Error(`invalid type: "${data.type}"`)
-    const childrenDir = path.join(parentDir, fileName)
+    const childrenDir = path.join(parentDir, entryPath)
 
     if (!data.id) throw new Error(`missing id`)
 
@@ -191,7 +191,7 @@ export class Database implements Syncable {
       filePath: file.filePath,
       // contentHash,
 
-      modifiedAt: file.modifiedAt,
+      modifiedAt: Date.now(), // file.modifiedAt,
 
       entryId: data.id,
       phase: entryPhase,
@@ -222,9 +222,12 @@ export class Database implements Syncable {
       let inserted = 0
       const endScan = timer('Scanning entries')
       for await (const file of files) {
-        if (!(file.contents instanceof Uint8Array))
-          throw new Error(`Cannot fill with non-binary content`)
-        const contentHash = h32Raw(file.contents).toString(16).padStart(8, '0')
+        const extension = path.extname(file.filePath)
+        const fileName = path.basename(file.filePath, extension)
+        const [, phase] = this.entryInfo(fileName)
+        const phaseData = new TextEncoder().encode(phase)
+        const contents = new Uint8Array(phaseData.length + file.contents.length)
+        const contentHash = h32Raw(contents).toString(16).padStart(8, '0')
         const exists = await query(
           Entry({
             contentHash,
@@ -263,6 +266,8 @@ export class Database implements Syncable {
       )
       const noChanges = inserted === 0 && removed === 0
       if (noChanges) return
+      if (inserted) console.log(`> updated ${inserted} entries`)
+      if (removed) console.log(`> removed ${removed} entries`)
 
       //const endIndex = timer('Indexing entries')
       await this.index(query)

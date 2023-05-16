@@ -11,8 +11,10 @@ import {
 import {RecordShape} from 'alinea/core/shape/RecordShape'
 import {entries, fromEntries} from 'alinea/core/util/Objects'
 
+export type EntryDataValue = unknown
+
 export interface EntryData {
-  [key: string]: any
+  [key: string]: EntryDataValue
 }
 
 function iterMarks(doc: TextDoc<any>, fn: (mark: TextNode.Mark) => void) {
@@ -70,6 +72,7 @@ function transformValue(shape: Shape, raw: any): any {
 
 // Produces the data structure which is stored in a json column in the database
 export function entryData(type: Type, input: Record<string, any>): EntryData {
+  return input
   const output: EntryData = {}
   for (const [key, field] of entries(type)) {
     output[key] = transformValue(Field.shape(field), input[key])

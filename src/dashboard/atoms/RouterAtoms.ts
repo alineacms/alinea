@@ -1,3 +1,4 @@
+import {values} from 'alinea/core/util/Objects'
 import {atom, useAtom} from 'jotai'
 import {atomFamily} from 'jotai/utils'
 import {parse} from 'regexparam'
@@ -44,12 +45,19 @@ interface MatchOptions {
 
 export const matchAtoms = atomFamily(
   ({route, loose}: MatchOptions) => {
+    let current: Record<string, string> | undefined
     const matcher = parse(route, loose)
     return atom(get => {
       const location = get(locationAtom)
       const match = matcher.pattern.exec(location.pathname)
       if (match === null) return undefined
-      return createParams(matcher, match)
+      const result = createParams(matcher, match)
+      if (current) {
+        const resultValues = values(result)
+        const currentValues = values(current)
+        if (resultValues.every((v, i) => v === currentValues[i])) return current
+      }
+      return (current = result)
     })
   },
   (a, b) => a.route === b.route && a.loose === b.loose
