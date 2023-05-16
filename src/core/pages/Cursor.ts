@@ -116,6 +116,14 @@ export namespace Cursor {
     orderBy(...orderBy: Array<OrderBy>): Find<Row> {
       return new Find<Row>(this.with({orderBy}))
     }
+
+    skip(skip: number): Find<Row> {
+      return new Find<Row>(this.with({skip}))
+    }
+
+    take(take: number): Find<Row> {
+      return new Find<Row>(this.with({take}))
+    }
   }
 
   export class Get<Row> extends Cursor<Row> {
