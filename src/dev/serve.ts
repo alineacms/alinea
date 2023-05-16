@@ -14,5 +14,8 @@ serve({
   production,
   cwd: path.resolve('apps/web2'),
   staticDir: path.resolve('src/cli/static'),
-  port: 4500
+  port: 4500,
+  buildOptions: {
+    minify: false
+  }
 })

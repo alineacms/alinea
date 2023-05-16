@@ -19,7 +19,7 @@ import {
   sessionAtom,
   useSetDashboardOptions
 } from './atoms/DashboardAtoms.js'
-import {useDbUpdater} from './atoms/EntryAtoms.js'
+import {useDbUpdater, useEntryEditor} from './atoms/EntryAtoms.js'
 import {locationAtom, matchAtoms} from './atoms/RouterAtoms.js'
 import {navMatchers} from './DashboardNav.js'
 import {useDashboard} from './hook/UseDashboard.js'
@@ -29,6 +29,7 @@ import {useRoot} from './hook/UseRoot.js'
 import {useWorkspace} from './hook/UseWorkspace.js'
 import {Head} from './util/Head.js'
 import {DraftsOverview} from './view/DraftsOverview.js'
+import {EntryVersionList} from './view/entry/EntryVersionList.js'
 import {NewEntry} from './view/entry/NewEntry.js'
 import {RootHeader} from './view/entry/RootHeader.js'
 import {EntryEdit} from './view/EntryEdit.js'
@@ -149,27 +150,29 @@ function ContentView() {
   const workspace = useWorkspace()
   const root = useRoot()
   const {search} = useLocation()
+  const editor = useEntryEditor(id)
   return (
     <>
       <Sidebar.Tree>
         <SearchBox />
         <RootHeader />
-        <Suspense fallback={<Loader />}>
-          <EntryTree />
-        </Suspense>
+        <EntryTree entryId={editor?.entryId} selected={editor?.main.parents} />
+        {editor && <EntryVersionList editor={editor} />}
       </Sidebar.Tree>
       {search === '?new' && (
         <Suspense fallback={<Loader absolute />}>
           <NewEntry parentId={id} />
         </Suspense>
       )}
-      <Suspense fallback={<Loader absolute />}>
-        {id ? (
-          <EntryEdit id={id} />
+      {id ? (
+        editor ? (
+          <EntryEdit editor={editor} />
         ) : (
-          <RootOverview workspace={workspace} root={root} />
-        )}
-      </Suspense>
+          <Loader absolute />
+        )
+      ) : (
+        <RootOverview workspace={workspace} root={root} />
+      )}
     </>
   )
 }

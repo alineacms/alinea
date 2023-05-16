@@ -1,12 +1,11 @@
 import {EntryPhase} from 'alinea/core'
-import {values} from 'alinea/core/util/Objects'
 import {useLocation} from 'alinea/dashboard/util/HashRouter'
 import {InputForm} from 'alinea/editor'
 import {fromModule} from 'alinea/ui'
 import {Main} from 'alinea/ui/Main'
 import {useAtom, useAtomValue} from 'jotai'
-import {Suspense} from 'react'
-import {useEntryEditor} from '../atoms/EntryAtoms.js'
+import {useMemo} from 'react'
+import {EntryEditor} from '../atoms/EntryEditor.js'
 import {useNav} from '../hook/UseNav.js'
 import css from './EntryEdit.module.scss'
 import {EditMode} from './entry/EditMode.js'
@@ -16,24 +15,76 @@ import {EntryTitle} from './entry/EntryTitle.js'
 const styles = fromModule(css)
 
 interface EntryEditProps {
-  id: string
+  editor: EntryEditor
 }
 
-export function EntryEdit({id}: EntryEditProps) {
+export function EntryEdit({editor}: EntryEditProps) {
   const {search} = useLocation()
   const nav = useNav()
-  const entryEditor = useEntryEditor(id)
-  const [mode, setMode] = useAtom(entryEditor.editMode)
-  const phases = useAtomValue(entryEditor.phases)
+  const [mode, setMode] = useAtom(editor.editMode)
   const phaseInSearch = search.slice(1) as EntryPhase
-  const selectedPhase: EntryPhase = values(EntryPhase).includes(phaseInSearch)
-    ? phaseInSearch
-    : phases[0]
-  const versionEditor = useAtomValue(entryEditor.versionEditor(selectedPhase))
-  const version = useAtomValue(versionEditor.version)
-  const type = useAtomValue(versionEditor.type)
-  const state = useAtomValue(versionEditor.state)
-  /*  const {schema} = useConfig()
+  const selectedPhase = useAtomValue(editor.selectedPhase)
+  const versionEditor = useMemo(
+    () => editor.versionEditor(selectedPhase),
+    [editor, selectedPhase]
+  )
+  const {version, type, state} = versionEditor
+  return (
+    <>
+      <Main
+        className={styles.root()}
+        head={
+          <EntryHeader
+            mode={mode}
+            setMode={setMode}
+            versionEditor={versionEditor}
+          />
+        }
+      >
+        <Main.Container>
+          <EntryTitle
+            versionEditor={versionEditor}
+            backLink={
+              versionEditor.version.parent &&
+              nav.entry({id: version.parent, workspace: version.workspace})
+            }
+          />
+          {mode === EditMode.Diff ? (
+            <>
+              Show entry diff here
+              {/*draft.detail.original && (
+                <EntryDiff
+                  entryA={draft.detail.original}
+                  entryB={draft.getEntry()}
+                />
+              )*/}
+            </>
+          ) : (
+            <>
+              {/*isTranslating ? (
+                <Button onClick={() => handleTranslation()}>
+                  Translate from {draft.alinea.i18n?.locale.toUpperCase()}
+                </Button>
+              ) : (
+                <Suspense fallback={null}>
+                  {type ? (
+                    <InputForm type={type} state={EntryProperty.root} />
+                  ) : (
+                    <ErrorMessage error={new Error('Type not found')} />
+                  )}
+                </Suspense>
+                  )*/}
+              <InputForm type={type} state={state} />
+            </>
+          )}
+        </Main.Container>
+      </Main>
+      {/*preview && <EntryPreview preview={preview} draft={draft} />*/}
+    </>
+  )
+}
+
+/*  const {schema} = useConfig()
   const type = schema[draft.type]
   const {preview} = useWorkspace()
   const isTranslating = !isLoading && locale !== draft.alinea.i18n?.locale
@@ -67,59 +118,3 @@ export function EntryEdit({id}: EntryEditProps) {
     const translation = draft.translation(locale)
     if (translation) navigate(nav.entry(translation))
   }, [draft, isTranslating, locale])*/
-  return (
-    <>
-      <Main
-        className={styles.root()}
-        head={
-          <EntryHeader
-            mode={mode}
-            setMode={setMode}
-            versionEditor={versionEditor}
-          />
-        }
-      >
-        <Main.Container>
-          <EntryTitle
-            versionEditor={versionEditor}
-            backLink={
-              version.parent &&
-              nav.entry({id: version.parent, workspace: version.workspace})
-            }
-          />
-          {mode === EditMode.Diff ? (
-            <>
-              Show entry diff here
-              {/*draft.detail.original && (
-                <EntryDiff
-                  entryA={draft.detail.original}
-                  entryB={draft.getEntry()}
-                />
-              )*/}
-            </>
-          ) : (
-            <>
-              {/*isTranslating ? (
-                <Button onClick={() => handleTranslation()}>
-                  Translate from {draft.alinea.i18n?.locale.toUpperCase()}
-                </Button>
-              ) : (
-                <Suspense fallback={null}>
-                  {type ? (
-                    <InputForm type={type} state={EntryProperty.root} />
-                  ) : (
-                    <ErrorMessage error={new Error('Type not found')} />
-                  )}
-                </Suspense>
-                  )*/}
-              <Suspense fallback={null}>
-                <InputForm type={type} state={state} />
-              </Suspense>
-            </>
-          )}
-        </Main.Container>
-      </Main>
-      {/*preview && <EntryPreview preview={preview} draft={draft} />*/}
-    </>
-  )
-}

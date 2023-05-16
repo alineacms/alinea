@@ -1,3 +1,4 @@
+import {EntryData} from 'alinea/backend/db/EntryData'
 import {EntryPhase} from '../Entry.js'
 import {Target} from './Target.js'
 
@@ -23,7 +24,7 @@ export interface Page {
   path: string
   title: string
   url: string
-  data: Record<string, any>
+  data: EntryData
 }
 
 export const Page = Target.create<Page>({})

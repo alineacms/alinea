@@ -1,0 +1,13 @@
+.root {
+  border-top: 1px solid var(--alinea-outline);
+
+  &-item {
+    display: block;
+    width: 100%;
+    padding: 10px;
+
+    &.is-active {
+      background: var(--alinea-highlight);
+    }
+  }
+}

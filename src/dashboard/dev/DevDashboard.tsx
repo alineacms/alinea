@@ -64,7 +64,8 @@ export function DevDashboard({loadConfig}: DevDashboardOptions) {
     })
   }, [])
   if (!cms) return null
-  if (!connected)
+  if (false)
+    //!connected)
     return (
       <Viewport color="#5763E6">
         <Main

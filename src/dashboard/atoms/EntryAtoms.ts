@@ -2,13 +2,14 @@ import {Database} from 'alinea/backend'
 import {Type} from 'alinea/core'
 import {Page} from 'alinea/core/pages/Page'
 import DataLoader from 'dataloader'
-import {atom, useAtom, useAtomValue} from 'jotai'
-import {atomFamily} from 'jotai/utils'
+import {atom, useAtom, useAtomValue, useSetAtom} from 'jotai'
+import {atomFamily, useHydrateAtoms} from 'jotai/utils'
 import {MutableRefObject, useEffect, useMemo, useRef} from 'react'
 import {TreeDataProvider, TreeItem, TreeItemIndex} from 'react-complex-tree'
+import {keepPreviousData} from '../util/KeepPreviousData.js'
 import {createPersistentStore} from '../util/PersistentStore.js'
 import {clientAtom, configAtom} from './DashboardAtoms.js'
-import {EntryEditor} from './EntryEditor.js'
+import {EntryEditor, createEntryEditor} from './EntryEditor.js'
 import {rootAtom, workspaceAtom} from './NavigationAtoms.js'
 
 export const storeAtom = atom(createPersistentStore)
@@ -35,7 +36,7 @@ export const updateDbAtom = atom(null, async (get, set) => {
   const client = get(clientAtom)
   const store = await get(storeAtom)
   const db = await get(dbAtom)
-  const changed = await db.syncWith(client)
+  const changed = await db.syncWith(client).catch(() => [])
   if (!changed.length) return
   for (const id of changed) set(entryRevisionAtoms(id))
   set(changedEntriesAtom, changed)
@@ -46,15 +47,40 @@ updateDbAtom.onMount = update => {
   return () => clearInterval(interval)
 }
 
-export const entryAtoms = atomFamily((id: string) => {
-  return atom(new EntryEditor(id))
-})
-
 export function useDbUpdater() {
   useAtom(updateDbAtom)
 }
 
-export const useEntryEditor = (id: string) => useAtomValue(entryAtoms(id))
+export const selectedEntryId = atom<string | undefined>(undefined)
+
+export const entryEditor = keepPreviousData(
+  atom(async get => {
+    const config = get(configAtom)
+    const entryId = get(selectedEntryId)
+    const db = await get(dbAtom)
+    if (!entryId) return undefined
+    get(entryRevisionAtoms(entryId))
+    const versions = await db.find(
+      Page({entryId}).select({
+        ...Page,
+        parents({parents}) {
+          return parents(Page).select(Page.entryId)
+        }
+      })
+    )
+    return createEntryEditor(entryId, versions, config)
+  })
+)
+
+export const useEntryEditor = (
+  id: string | undefined
+): EntryEditor | undefined => {
+  useHydrateAtoms([[selectedEntryId, id]])
+  const setEntryId = useSetAtom(selectedEntryId)
+  const editor = useAtomValue(entryEditor)
+  useEffect(() => setEntryId(id), [id])
+  return editor
+}
 
 export const ENTRY_TREE_ROOT_KEY = '@alinea/dashboard.entryTreeRoot'
 
@@ -71,6 +97,7 @@ const entryTreeRootAtom = atom(
           Page.parent.isNull()
         )
         .select(Page.entryId)
+        .groupBy(Page.entryId)
         .orderBy(Page.index.asc())
     )
     return {
@@ -107,6 +134,8 @@ const entryTreeItemLoaderAtom = atom(async get => {
             return children(Page).select(Page.entryId).orderBy(Page.index.asc())
           }
         })
+        .groupBy(Page.entryId)
+        .orderBy(Page.modifiedAt.desc())
         .where(Page.entryId.isIn(search))
     )
     for (const entry of entries) res.set(entry.index, entry)
