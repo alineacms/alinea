@@ -133,6 +133,7 @@ export const resolvePlugin: Plugin = {
           format: commonjs ? 'cjs' : 'esm',
           platform: commonjs ? 'node' : undefined,
           target: 'esnext',
+          mainFields: ['module', 'main'],
           bundle: true,
           entryPoints: Object.fromEntries(
             Array.from(pkgs).map(pkg => [pkg, pkg])

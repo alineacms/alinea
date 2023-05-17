@@ -2,7 +2,7 @@ import {Type} from 'alinea/core'
 import {renderLabel} from 'alinea/core/Label'
 import {Chip, fromModule, HStack, IconLink, Typo} from 'alinea/ui'
 import {IcRoundArrowBack} from 'alinea/ui/icons/IcRoundArrowBack'
-import {EntryVersionEditor} from '../../atoms/EntryEditor.js'
+import {EntryEditor} from '../../atoms/EntryEditor.js'
 import {useWorkspace} from '../../hook/UseWorkspace.js'
 import {Head} from '../../util/Head.js'
 import css from './EntryTitle.module.scss'
@@ -10,14 +10,14 @@ import css from './EntryTitle.module.scss'
 const styles = fromModule(css)
 
 export interface EntryTitleProps {
-  versionEditor: EntryVersionEditor
+  editor: EntryEditor
   backLink?: string
 }
 
-export function EntryTitle({versionEditor, backLink}: EntryTitleProps) {
+export function EntryTitle({editor, backLink}: EntryTitleProps) {
   const {label} = useWorkspace()
-  const version = versionEditor.version
-  const type = versionEditor.type
+  const version = editor.version
+  const type = editor.type
   const title = version.title
   return (
     <>

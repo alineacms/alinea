@@ -9,7 +9,7 @@ const styles = fromModule(css)
 
 export type ModalProps = PropsWithChildren<
   {
-    open: boolean
+    open?: boolean
     onClose: () => void
     className?: string
   } & ComponentPropsWithoutRef<typeof Dialog>
@@ -20,6 +20,7 @@ export function Modal({children, ...props}: ModalProps) {
   return (
     <Dialog
       {...props}
+      open={Boolean(props.open)}
       ref={modalRef}
       initialFocus={modalRef}
       className={styles.root({open: props.open})}

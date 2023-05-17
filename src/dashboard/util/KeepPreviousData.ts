@@ -4,19 +4,20 @@ import {Atom, atom} from 'jotai'
 export function keepPreviousData<Value, T extends Atom<Promise<Value>>>(
   asynAtom: T
 ): T {
+  let expected: Promise<Value> | undefined
   const currentAtom = atom<Value | undefined>(undefined)
   return atom(
     (get, {setSelf}) => {
       const next = get(asynAtom)
       const current = get(currentAtom)
-      const promised = next.then(value => {
-        setSelf(value)
+      expected = next.then(value => {
+        setSelf(expected, value)
         return value
       })
-      return current ?? promised
+      return current ?? expected
     },
-    (get, set, value: Value) => {
-      set(currentAtom, value)
+    (get, set, forPromise: Promise<Value>, value: Value) => {
+      if (forPromise === expected) set(currentAtom, value)
     }
   ) as any
 }

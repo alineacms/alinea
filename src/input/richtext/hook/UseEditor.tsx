@@ -9,7 +9,10 @@ export const useEditor = (options: Partial<EditorOptions> = {}) => {
   const [editor] = useState<Editor>(() => new Editor(options))
   const forceUpdate = useForceUpdate()
   useEffect(() => {
-    editor.on('transaction', forceUpdate)
+    editor.on('transaction', () => {
+      console.log('here')
+      forceUpdate()
+    })
     return () => editor.destroy()
   }, [])
   return editor

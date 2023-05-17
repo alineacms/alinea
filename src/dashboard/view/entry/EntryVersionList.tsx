@@ -1,6 +1,6 @@
 import {Chip, HStack, fromModule} from 'alinea/ui'
-import {useAtom} from 'jotai'
 import {EntryEditor} from '../../atoms/EntryEditor.js'
+import {useLocation} from '../../util/HashRouter.js'
 import css from './EntryVersionList.module.scss'
 
 const styles = fromModule(css)
@@ -10,7 +10,7 @@ export interface EntryVersionListProps {
 }
 
 export function EntryVersionList({editor}: EntryVersionListProps) {
-  const [selectedPhase, setSelectedPhase] = useAtom(editor.selectedPhase)
+  const location = useLocation()
   return (
     <ul className={styles.root()}>
       {editor.availablePhases.map(phase => {
@@ -18,11 +18,11 @@ export function EntryVersionList({editor}: EntryVersionListProps) {
         const date = new Date(modifiedAt)
         return (
           <li key={phase}>
-            <button
+            <a
               className={styles.root.item({
-                active: selectedPhase === phase
+                active: editor.phase === phase
               })}
-              onClick={() => setSelectedPhase(phase)}
+              href={'#' + location.pathname + `?${phase}`}
             >
               <HStack center gap={25}>
                 <small>
@@ -30,7 +30,7 @@ export function EntryVersionList({editor}: EntryVersionListProps) {
                 </small>
                 <Chip>{phase}</Chip>
               </HStack>
-            </button>
+            </a>
           </li>
         )
       })}
