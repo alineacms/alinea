@@ -18,7 +18,7 @@ import {IcRoundPublish} from 'alinea/ui/icons/IcRoundPublish'
 import {IcRoundRotateLeft} from 'alinea/ui/icons/IcRoundRotateLeft'
 import {MdiSourceBranch} from 'alinea/ui/icons/MdiSourceBranch'
 import {useConfig} from '../../atoms/DashboardAtoms.js'
-import {EntryVersionEditor} from '../../atoms/EntryEditor.js'
+import {EntryEditor} from '../../atoms/EntryEditor.js'
 import {useCurrentDraft} from '../../hook/UseCurrentDraft.js'
 import {DraftsStatus, useDrafts} from '../../hook/UseDrafts.js'
 import {useLocale} from '../../hook/UseLocale.js'
@@ -62,20 +62,20 @@ function EntryStatusChip() {
 }
 
 export type EntryHeaderProps = {
-  versionEditor: EntryVersionEditor
+  editor: EntryEditor
   mode: EditMode
   setMode?: (mode: EditMode) => void
 }
 
-export function EntryHeader({mode, setMode, versionEditor}: EntryHeaderProps) {
+export function EntryHeader({mode, setMode, editor}: EntryHeaderProps) {
   const nav = useNav()
   const {schema} = useConfig()
   const {name: workspace} = useWorkspace()
   const root = useRoot()
   const currentLocale = useLocale()
   const navigate = useNavigate()
-  const phase = versionEditor.phase
-  const version = versionEditor.version
+  const phase = editor.phase
+  const version = editor.version
   const parent = version.parent
   const type = schema[version.type]
   const Icon = type && Type.meta(type).icon

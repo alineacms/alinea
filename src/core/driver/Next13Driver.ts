@@ -7,6 +7,7 @@ class Next13Driver extends DefaultDriver {
   async establishConnection() {
     // @ts-ignore
     const {draftMode} = await import('next/headers')
+
     const {isEnabled: isDraft} = draftMode()
     const devPort = process.env.ALINEA_PORT || 4500
     const isDevelopment = process.env.NODE_ENV === 'development'

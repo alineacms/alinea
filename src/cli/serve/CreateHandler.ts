@@ -115,7 +115,6 @@ export function createHandler(
       })
       build.onEnd(result => {
         currentBuild.resolve(buildFiles(devDir, result))
-        console.log('done')
         if (alineaDev) liveReload.reload('reload')
       })
     }

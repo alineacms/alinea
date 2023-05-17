@@ -1,10 +1,9 @@
-import {EntryPhase} from 'alinea/core'
-import {useLocation} from 'alinea/dashboard/util/HashRouter'
 import {InputForm} from 'alinea/editor'
-import {fromModule} from 'alinea/ui'
+import {Button, fromModule} from 'alinea/ui'
 import {Main} from 'alinea/ui/Main'
-import {useAtom, useAtomValue} from 'jotai'
-import {useMemo} from 'react'
+import {useAtom, useAtomValue, useSetAtom} from 'jotai'
+import {useEffect, useRef} from 'react'
+import {entryRevisionAtoms} from '../atoms/EntryAtoms.js'
 import {EntryEditor} from '../atoms/EntryEditor.js'
 import {useNav} from '../hook/UseNav.js'
 import css from './EntryEdit.module.scss'
@@ -19,36 +18,42 @@ interface EntryEditProps {
 }
 
 export function EntryEdit({editor}: EntryEditProps) {
-  const {search} = useLocation()
   const nav = useNav()
   const [mode, setMode] = useAtom(editor.editMode)
-  const phaseInSearch = search.slice(1) as EntryPhase
-  const selectedPhase = useAtomValue(editor.selectedPhase)
-  const versionEditor = useMemo(
-    () => editor.versionEditor(selectedPhase),
-    [editor, selectedPhase]
-  )
-  const {version, type, state} = versionEditor
+  const isDirty = useAtomValue(editor.isDirty)
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    ref.current?.scrollTo({top: 0})
+  }, [editor.entryId])
+  const forceRefresh = useSetAtom(entryRevisionAtoms(editor.entryId))
   return (
     <>
       <Main
+        ref={ref}
         className={styles.root()}
-        head={
-          <EntryHeader
-            mode={mode}
-            setMode={setMode}
-            versionEditor={versionEditor}
-          />
-        }
+        head={<EntryHeader mode={mode} setMode={setMode} editor={editor} />}
       >
         <Main.Container>
+          <Button
+            onClick={() => {
+              forceRefresh()
+            }}
+          >
+            Force server version update
+          </Button>
+          <br />
+          <br />
           <EntryTitle
-            versionEditor={versionEditor}
+            editor={editor}
             backLink={
-              versionEditor.version.parent &&
-              nav.entry({id: version.parent, workspace: version.workspace})
+              editor.version.parent &&
+              nav.entry({
+                id: editor.version.parent,
+                workspace: editor.version.workspace
+              })
             }
           />
+          Dirty: {isDirty ? 'true' : 'false'}
           {mode === EditMode.Diff ? (
             <>
               Show entry diff here
@@ -74,7 +79,11 @@ export function EntryEdit({editor}: EntryEditProps) {
                   )}
                 </Suspense>
                   )*/}
-              <InputForm type={type} state={state} />
+              <InputForm
+                key={editor.revisionId}
+                type={editor.type}
+                state={editor.state}
+              />
             </>
           )}
         </Main.Container>
