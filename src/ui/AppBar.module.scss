@@ -4,8 +4,6 @@
   position: sticky;
   top: 0;
   z-index: 3;
-  display: flex;
-  align-items: center;
   background-color: hsla(var(--alinea-positive), 0.6);
   backdrop-filter: blur(12px);
   flex-shrink: 0;
@@ -14,6 +12,23 @@
 
   @include s {
     overflow-x: auto;
+  }
+
+  &.is-draft {
+    color: var(--alinea-draft-foreground);
+    background: var(--alinea-draft-background);
+  }
+  &.is-published {
+    color: var(--alinea-published-foreground);
+    background: var(--alinea-published-background);
+  }
+  &.is-archived {
+    color: var(--alinea-archived-foreground);
+    background: var(--alinea-archived-background);
+  }
+  &.is-transition {
+    color: var(--alinea-transition-foreground);
+    background: var(--alinea-transition-background);
   }
 }
 

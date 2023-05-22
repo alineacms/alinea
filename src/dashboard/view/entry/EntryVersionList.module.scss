@@ -9,5 +9,20 @@
     &.is-active {
       background: var(--alinea-highlight);
     }
+
+    &.is-active.is-draft {
+      color: var(--alinea-draft-foreground);
+      background: var(--alinea-draft-background);
+    }
+
+    &.is-active.is-published {
+      color: var(--alinea-published-foreground);
+      background: var(--alinea-published-background);
+    }
+
+    &.is-active.is-archived {
+      color: var(--alinea-archived-foreground);
+      background: var(--alinea-archived-background);
+    }
   }
 }

@@ -1,8 +1,6 @@
 import {Config, Root, renderLabel} from 'alinea/core'
 import {Client} from 'alinea/core/Client'
-import {useLocation, useParams} from 'alinea/dashboard/util/HashRouter'
-import {Button, ErrorBoundary, FavIcon, HStack, Loader, Stack} from 'alinea/ui'
-import {Modal} from 'alinea/ui/Modal'
+import {ErrorBoundary, FavIcon, Loader} from 'alinea/ui'
 import {IcRoundInsertDriveFile} from 'alinea/ui/icons/IcRoundInsertDriveFile'
 import {MdiSourceBranch} from 'alinea/ui/icons/MdiSourceBranch'
 import {atom, useAtom, useAtomValue} from 'jotai'
@@ -12,48 +10,25 @@ import {
   QueryClientProvider as ReactQueryClientProvider
 } from 'react-query'
 import {navMatchers} from './DashboardNav.js'
+import {router} from './Routes.js'
 import {
   queryClientAtom,
   sessionAtom,
   useSetDashboardOptions
 } from './atoms/DashboardAtoms.js'
 import {useDbUpdater} from './atoms/EntryAtoms.js'
-import {useEditContext} from './atoms/EntryEditor.js'
-import {createRouter, locationAtom, matchAtoms} from './atoms/RouterAtoms.js'
+import {locationAtom, matchAtoms, useLocation} from './atoms/LocationAtoms.js'
+import {RouteView, RouterProvider} from './atoms/RouterAtoms.js'
 import {useDashboard} from './hook/UseDashboard.js'
 import {useEntryLocation} from './hook/UseEntryLocation.js'
 import {useNav} from './hook/UseNav.js'
 import {useRoot} from './hook/UseRoot.js'
 import {useWorkspace} from './hook/UseWorkspace.js'
+import {ContentView} from './pages/ContentView.js'
 import {Head} from './util/Head.js'
-import {DraftsOverview} from './view/DraftsOverview.js'
-import {EntryEdit} from './view/EntryEdit.js'
-import {EntryTree} from './view/EntryTree.js'
-import {RootOverview} from './view/RootOverview.js'
-import {SearchBox} from './view/SearchBox.js'
 import {Sidebar} from './view/Sidebar.js'
 import {Toolbar} from './view/Toolbar.js'
 import {Viewport} from './view/Viewport.js'
-import {EntryVersionList} from './view/entry/EntryVersionList.js'
-import {NewEntry} from './view/entry/NewEntry.js'
-import {RootHeader} from './view/entry/RootHeader.js'
-
-const router = createRouter(
-  {
-    path: '/entry/:workspace?/:root?/:id?',
-    loader: async ({id}) => {
-      return {}
-    },
-    component: ContentView
-  },
-  {
-    path: '/draft/:workspace?/:root?/:id?',
-    loader: async ({id}) => {
-      return {}
-    },
-    component: DraftsOverview
-  }
-)
 
 function DraftsButton() {
   const location = useLocation()
@@ -95,27 +70,8 @@ function AppAuthenticated() {
   const {name: workspace, color, roots} = useWorkspace()
   const {name: currentRoot} = useRoot()
   const entryLocation = useEntryLocation()
-  const match = router.useMatch()
-  const [isBlocking, unblock] = router.useBlocker(
-    'Are you sure you want to discard changes?'
-  )
   return (
     <>
-      {isBlocking && (
-        <Modal open onClose={() => unblock()}>
-          Are you sure you want to discard changes?
-          <HStack as="footer">
-            <Stack.Right>
-              <HStack gap={16}>
-                <Button outline type="button" onClick={onCancel}>
-                  Cancel
-                </Button>
-                <Button onClick={handleConfirm}>Confirm</Button>
-              </HStack>
-            </Stack.Right>
-          </HStack>
-        </Modal>
-      )}
       <Toolbar.Provider>
         <Sidebar.Provider>
           <Viewport attachToBody={fullPage} contain color={color}>
@@ -155,50 +111,13 @@ function AppAuthenticated() {
               </Sidebar.Nav>
               <Suspense fallback={<Loader absolute />}>
                 <ErrorBoundary>
-                  {match ? <match.route.component /> : <ContentView />}
+                  <RouteView fallback={<ContentView />} />
                 </ErrorBoundary>
               </Suspense>
             </div>
           </Viewport>
         </Sidebar.Provider>
       </Toolbar.Provider>
-    </>
-  )
-}
-
-function ContentView() {
-  const {id} = useParams()
-  const workspace = useWorkspace()
-  const root = useRoot()
-  const {search} = useLocation()
-  const {editor, editorUpdate} = useEditContext()
-  return (
-    <>
-      <Sidebar.Tree>
-        <SearchBox />
-        <RootHeader />
-        <EntryTree
-          entryId={editor?.entryId}
-          selected={editor?.version.parents}
-        />
-        {editor && <EntryVersionList editor={editor} />}
-      </Sidebar.Tree>
-      {search === '?new' && (
-        <Suspense fallback={<Loader absolute />}>
-          <NewEntry parentId={id} />
-        </Suspense>
-      )}
-      <Suspense fallback={<Loader absolute />}>
-        {id ? (
-          editor ? (
-            <EntryEdit editor={editor} />
-          ) : (
-            <Loader absolute />
-          )
-        ) : (
-          <RootOverview workspace={workspace} root={root} />
-        )}
-      </Suspense>
     </>
   )
 }
@@ -223,7 +142,9 @@ function AppRoot() {
     )
   return (
     <Suspense fallback={<Loader absolute />}>
-      <AppAuthenticated />
+      <RouterProvider router={router}>
+        <AppAuthenticated />
+      </RouterProvider>
     </Suspense>
   )
 }

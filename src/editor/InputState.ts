@@ -61,11 +61,11 @@ export namespace InputState {
 
     child(field: string): InputState<any> {
       const {mutator} = this
-      if (typeof mutator !== 'function')
-        throw 'Cannot access child field of non-object'
       const record = this.current as unknown as {[key: string]: V}
       const current = record[field]
       const mutate = (state: V) => {
+        if (typeof mutator !== 'function')
+          throw 'Cannot access child field of non-object'
         mutator({...this.current, [field]: state})
       }
       // We don't have any field information here so we can only assume

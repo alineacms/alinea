@@ -1,16 +1,17 @@
 import {InputForm} from 'alinea/editor'
-import {Button, fromModule} from 'alinea/ui'
+import {Button, HStack, Stack, fromModule} from 'alinea/ui'
 import {Main} from 'alinea/ui/Main'
+import {Modal} from 'alinea/ui/Modal'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {useEffect, useRef} from 'react'
 import {entryRevisionAtoms} from '../atoms/EntryAtoms.js'
 import {EntryEditor} from '../atoms/EntryEditor.js'
+import {useRouteBlocker} from '../atoms/RouterAtoms.js'
 import {useNav} from '../hook/UseNav.js'
 import css from './EntryEdit.module.scss'
 import {EditMode} from './entry/EditMode.js'
 import {EntryHeader} from './entry/EntryHeader.js'
 import {EntryTitle} from './entry/EntryTitle.js'
-
 const styles = fromModule(css)
 
 interface EntryEditProps {
@@ -20,14 +21,42 @@ interface EntryEditProps {
 export function EntryEdit({editor}: EntryEditProps) {
   const nav = useNav()
   const [mode, setMode] = useAtom(editor.editMode)
-  const isDirty = useAtomValue(editor.isDirty)
+  const hasChanges = useAtomValue(editor.hasChanges)
+  const selectedPhase = useAtomValue(editor.selectedPhase)
   const ref = useRef<HTMLDivElement>(null)
   useEffect(() => {
     ref.current?.scrollTo({top: 0})
   }, [editor.entryId])
   const forceRefresh = useSetAtom(entryRevisionAtoms(editor.entryId))
+  // Todo: prettify server conflicts
+  const {isBlocking, nextRoute, confirm, cancel} = useRouteBlocker(
+    'Are you sure you want to discard changes?',
+    hasChanges
+  )
+  const isNavigationChange =
+    (nextRoute?.data.editor as EntryEditor)?.entryId !== editor.entryId
+  const isActivePhase = editor.activePhase === selectedPhase
+  const state = isActivePhase ? editor.draftState : editor.states[selectedPhase]
   return (
     <>
+      {isBlocking && (
+        <Modal open onClose={() => cancel()}>
+          <p>
+            This document was changed, would you like to save your changes
+            {isNavigationChange ? ' before navigating' : ''}?
+          </p>
+          <HStack as="footer">
+            <Stack.Right>
+              <HStack gap={16}>
+                <Button outline type="button" onClick={confirm}>
+                  Discard my changes
+                </Button>
+                <Button onClick={cancel}>Save as draft</Button>
+              </HStack>
+            </Stack.Right>
+          </HStack>
+        </Modal>
+      )}
       <Main
         ref={ref}
         className={styles.root()}
@@ -53,7 +82,7 @@ export function EntryEdit({editor}: EntryEditProps) {
               })
             }
           />
-          Dirty: {isDirty ? 'true' : 'false'}
+          Dirty: {hasChanges ? 'true' : 'false'}
           {mode === EditMode.Diff ? (
             <>
               Show entry diff here
@@ -80,9 +109,9 @@ export function EntryEdit({editor}: EntryEditProps) {
                 </Suspense>
                   )*/}
               <InputForm
-                key={editor.revisionId}
+                key={editor.entryId + selectedPhase}
                 type={editor.type}
-                state={editor.state}
+                state={state}
               />
             </>
           )}

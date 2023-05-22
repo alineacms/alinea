@@ -13,6 +13,8 @@ export interface EntryTreeProps {
   selected?: Array<string>
 }
 
+// Todo: style & convert to controlled & virtualize (lukasbach/react-complex-tree#263)
+
 export function EntryTree({entryId, selected = []}: EntryTreeProps) {
   const dataProvider = useEntryTreeProvider()
   const navigate = useNavigate()
