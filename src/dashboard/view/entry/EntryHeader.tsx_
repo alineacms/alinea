@@ -1,17 +1,14 @@
-import {EntryPhase} from 'alinea/core'
-import {link} from 'alinea/dashboard/util/HashRouter'
+import {EntryPhase, Type} from 'alinea/core'
+import {link, useNavigate} from 'alinea/dashboard/util/HashRouter'
 import {
   AppBar,
-  Button,
   Chip,
   HStack,
-  Icon,
   Stack,
   Typo,
   fromModule,
   useObservable
 } from 'alinea/ui'
-import {IcOutlineRemoveRedEye} from 'alinea/ui/icons/IcOutlineRemoveRedEye'
 import {IcRoundArchive} from 'alinea/ui/icons/IcRoundArchive'
 import {IcRoundCheck} from 'alinea/ui/icons/IcRoundCheck'
 import {IcRoundDelete} from 'alinea/ui/icons/IcRoundDelete'
@@ -20,11 +17,14 @@ import {IcRoundInsertDriveFile} from 'alinea/ui/icons/IcRoundInsertDriveFile'
 import {IcRoundPublish} from 'alinea/ui/icons/IcRoundPublish'
 import {IcRoundRotateLeft} from 'alinea/ui/icons/IcRoundRotateLeft'
 import {MdiSourceBranch} from 'alinea/ui/icons/MdiSourceBranch'
-import {useAtomValue} from 'jotai'
+import {useConfig} from '../../atoms/DashboardAtoms.js'
 import {EntryEditor} from '../../atoms/EntryEditor.js'
 import {useCurrentDraft} from '../../hook/UseCurrentDraft.js'
 import {DraftsStatus, useDrafts} from '../../hook/UseDrafts.js'
+import {useLocale} from '../../hook/UseLocale.js'
 import {useNav} from '../../hook/UseNav.js'
+import {useRoot} from '../../hook/UseRoot.js'
+import {useWorkspace} from '../../hook/UseWorkspace.js'
 import {EditMode} from './EditMode.js'
 import css from './EntryHeader.module.scss'
 
@@ -61,12 +61,6 @@ function EntryStatusChip() {
   }
 }
 
-const variantDescription = {
-  draft: 'Draft',
-  published: 'Published',
-  archived: 'Archived'
-}
-
 export type EntryHeaderProps = {
   editor: EntryEditor
   mode: EditMode
@@ -74,33 +68,7 @@ export type EntryHeaderProps = {
 }
 
 export function EntryHeader({mode, setMode, editor}: EntryHeaderProps) {
-  const selectedPhase = useAtomValue(editor.selectedPhase)
-  const isActivePhase = editor.activePhase === selectedPhase
-  const hasChanges = useAtomValue(editor.hasChanges)
-  const variant = hasChanges && isActivePhase ? 'draft' : selectedPhase
-  return (
-    <AppBar.Root variant={variant}>
-      <HStack center gap={10} className={styles.root.description()}>
-        <Icon icon={IcRoundEdit} size={18} />
-        <span>{variantDescription[variant]}</span>
-        {isActivePhase &&
-          (hasChanges ? (
-            <span>(unsaved changes detected)</span>
-          ) : (
-            <span>(edit to create a new draft)</span>
-          ))}
-        <Stack.Right>
-          {hasChanges && variant === 'draft' && (
-            <Button icon={IcRoundCheck}>Save draft</Button>
-          )}
-          {!hasChanges && selectedPhase === 'draft' && (
-            <Button icon={IcOutlineRemoveRedEye}>Publish draft</Button>
-          )}
-        </Stack.Right>
-      </HStack>
-    </AppBar.Root>
-  )
-  /*const nav = useNav()
+  const nav = useNav()
   const {schema} = useConfig()
   const {name: workspace} = useWorkspace()
   const root = useRoot()
@@ -111,7 +79,7 @@ export function EntryHeader({mode, setMode, editor}: EntryHeaderProps) {
   const parent = version.parent
   const type = schema[version.type]
   const Icon = type && Type.meta(type).icon
-  function handleDiscard() {
+  /*function handleDiscard() {
     return drafts.discard(draft).then(([entryRemains, err]) => {
       queryClient.invalidateQueries(['draft', draft.versionId])
       if (!entryRemains) {
@@ -194,34 +162,30 @@ export function EntryHeader({mode, setMode, editor}: EntryHeaderProps) {
       <Stack.Right>
         <AppBar.Item>status</AppBar.Item>
       </Stack.Right>
-      {selectedPhase === EntryPhase.Draft &&
-        mode === EditMode.Editing &&
-        setMode && (
-          <AppBar.Item
-            as="button"
-            icon={MdiSourceBranch}
-            onClick={() => setMode(EditMode.Diff)}
-          >
-            <span>View changes</span>
-          </AppBar.Item>
-        )}
-      {selectedPhase === EntryPhase.Draft &&
-        mode === EditMode.Diff &&
-        setMode && (
-          <AppBar.Item
-            as="button"
-            icon={IcRoundEdit}
-            onClick={() => setMode(EditMode.Editing)}
-          >
-            <span>Edit entry</span>
-          </AppBar.Item>
-        )}
-      {selectedPhase === EntryPhase.Draft && (
+      {phase === EntryPhase.Draft && mode === EditMode.Editing && setMode && (
+        <AppBar.Item
+          as="button"
+          icon={MdiSourceBranch}
+          onClick={() => setMode(EditMode.Diff)}
+        >
+          <span>View changes</span>
+        </AppBar.Item>
+      )}
+      {phase === EntryPhase.Draft && mode === EditMode.Diff && setMode && (
+        <AppBar.Item
+          as="button"
+          icon={IcRoundEdit}
+          onClick={() => setMode(EditMode.Editing)}
+        >
+          <span>Edit entry</span>
+        </AppBar.Item>
+      )}
+      {phase === EntryPhase.Draft && (
         <AppBar.Item as="button" icon={IcRoundDelete}>
           <span>Discard</span>
         </AppBar.Item>
       )}
-      {selectedPhase !== EntryPhase.Published && (
+      {phase !== EntryPhase.Published && (
         <AppBar.Item as="button" icon={IcRoundPublish}>
           <span>Publish</span>
         </AppBar.Item>

@@ -1,16 +1,17 @@
 import {fromModule} from 'alinea/ui'
 import {useSession} from '../atoms/DashboardAtoms.js'
+import {EntryEditor} from '../atoms/EntryEditor.js'
 import {useNav} from '../hook/UseNav.js'
 import {useWorkspace} from '../hook/UseWorkspace.js'
 import css from './DraftsOverview.module.scss'
 
 const styles = fromModule(css)
 
-export type DraftsOverviewProps = {
-  id?: string
+export interface DraftsOverviewProps {
+  editor?: EntryEditor
 }
 
-export function DraftsOverview({id}: DraftsOverviewProps) {
+export function DraftsOverview({editor}: DraftsOverviewProps) {
   const {cnx: hub} = useSession()
   const nav = useNav()
   const workspace = useWorkspace()

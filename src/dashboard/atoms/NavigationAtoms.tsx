@@ -3,8 +3,8 @@ import {keys} from 'alinea/core/util/Objects'
 import {atom} from 'jotai'
 import {EntryLocation, dashboardNav, navMatchers} from '../DashboardNav.js'
 import {configAtom} from './DashboardAtoms.js'
+import {matchAtoms} from './LocationAtoms.js'
 import {workspacePreferenceAtom} from './PreferencesAtoms.js'
-import {matchAtoms} from './RouterAtoms.js'
 
 export const workspaceAtom = atom(get => {
   const config = get(configAtom)

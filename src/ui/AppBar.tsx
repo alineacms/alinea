@@ -8,7 +8,15 @@ import {fromModule} from './util/Styler.js'
 const styles = fromModule(css)
 
 export namespace AppBar {
-  export const Root = styles.root.toElement('header')
+  export interface RootProps extends HTMLAttributes<HTMLElement> {
+    variant?: 'draft' | 'published' | 'archived' | 'transition'
+  }
+
+  export function Root({variant, ...props}: RootProps) {
+    return (
+      <header {...props} className={styles.root.mergeProps(props)(variant)} />
+    )
+  }
 
   export type ItemProps = PropsWithAs<
     {

@@ -3,31 +3,18 @@
   text-decoration: none;
   position: relative;
   border: none;
-  background: hsla(var(--alinea-negative), 1);
-  color: var(--alinea-background);
+  color: var(--alinea-button-foreground);
+  background: var(--alinea-button-background);
   font: inherit;
   cursor: pointer;
-  overflow: hidden;
   z-index: 0;
   font-size: 13px;
-  transition: 0.25s ease-out;
-
-  &:after {
-    position: absolute;
-    content: '';
-    background: var(--alinea-background);
-    opacity: 0;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: -1;
-  }
+  // transition: 0.25s ease-out;
 
   &.is-medium {
     min-height: 22px;
     padding: 8px 16px;
-    border-radius: 50px;
+    border-radius: 4px;
   }
 
   &.is-large {
@@ -39,12 +26,12 @@
 
   &.is-outline {
     background: transparent;
-    border: 1px solid var(--alinea-fields-focus);
-    color: var(--alinea-focus-foreground);
+    border: 1px solid var(--alinea-button-background);
+    color: var(--alinea-button-background);
   }
 
   &:hover {
-    background: var(--alinea-accent);
-    color: var(--alinea-accent-foreground);
+    //background: var(--alinea-accent);
+    //color: var(--alinea-accent-foreground);
   }
 }

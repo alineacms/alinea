@@ -1,6 +1,11 @@
 @import 'alinea/ui/style.scss';
 
 .root {
+  &-description {
+    height: 100%;
+    padding: 0 20px;
+  }
+
   &-url {
     display: flex;
     align-items: center;
