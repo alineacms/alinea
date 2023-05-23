@@ -90,7 +90,7 @@ class Drafts {
     if (this.saveTimeout) clearTimeout(this.saveTimeout)
     draft.phase(EntryPhase.Publishing)
     this.status(DraftsStatus.Saving)
-    return this.cnx.publishEntries({entries: [draft.getEntry()]}).then(res => {
+    return this.cnx.createEntries({entries: [draft.getEntry()]}).then(res => {
       if (res.isFailure()) console.error(res.error)
       draft.phase(res.isSuccess() ? EntryPhase.Published : EntryPhase.Draft)
       this.status(DraftsStatus.Synced)

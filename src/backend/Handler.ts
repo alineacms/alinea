@@ -1,7 +1,9 @@
 import {Request, Response} from '@alinea/iso'
 import {Auth, Connection, Entry} from 'alinea/core'
+import {Realm} from 'alinea/core/pages/Realm'
 import {Selection} from 'alinea/core/pages/Selection'
 import {Logger, LoggerResult, Report} from 'alinea/core/util/Logger'
+import {enums, object} from 'cito'
 import {Server, ServerOptions} from './Server.js'
 import {Handle, Route, router} from './router/Router.js'
 
@@ -10,6 +12,11 @@ function respond<T>({result, logger}: LoggerResult<T>) {
     headers: {'server-timing': Report.toServerTiming(logger.report())}
   })
 }
+
+const ResolveBody = object({
+  selection: Selection.adt,
+  realm: enums(Realm)
+})
 
 function createRouter(
   auth: Auth.Server,
@@ -32,9 +39,10 @@ function createRouter(
       .map(context)
       .map(router.parseJson)
       .map(({ctx, body}) => {
-        const selection = body as Selection
+        // This validates the input, and throws if it's invalid
+        const {selection, realm} = ResolveBody(body)
         const api = createApi(ctx)
-        return ctx.logger.result(api.resolve(selection))
+        return ctx.logger.result(api.resolve(selection, realm))
       })
       .map(respond),
 
@@ -59,14 +67,22 @@ function createRouter(
       .map(respond),
 
     matcher
-      .post(Connection.routes.publish())
+      .post(Connection.routes.saveDraft())
       .map(context)
       .map(router.parseJson)
       .map(({ctx, body}) => {
         const api = createApi(ctx)
-        return ctx.logger.result(
-          api.publishEntries({entries: body as Array<Entry>})
-        )
+        return ctx.logger.result(api.saveDraft(body as Entry))
+      })
+      .map(respond),
+
+    matcher
+      .post(Connection.routes.publishDrafts())
+      .map(context)
+      .map(router.parseJson)
+      .map(({ctx, body}) => {
+        const api = createApi(ctx)
+        return ctx.logger.result(api.publishDrafts(body as Array<Entry>))
       })
       .map(respond),
 

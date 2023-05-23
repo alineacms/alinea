@@ -246,7 +246,11 @@
     );
   margin-left: calc(-1 * var(--rct-arrow-size));
   cursor: var(--rct-cursor);
+  display: block;
   transition: color 100ms ease-out, background-color 100ms ease-out;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .rct-tree-item-button:focus-visible {

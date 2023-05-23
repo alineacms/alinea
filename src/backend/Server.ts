@@ -1,4 +1,5 @@
-import {Config, Connection} from 'alinea/core'
+import {Config, Connection, Entry, EntryPhase} from 'alinea/core'
+import {Realm} from 'alinea/core/pages/Realm'
 import {Selection} from 'alinea/core/pages/Selection'
 import {Database} from './Database.js'
 import {File, Media} from './Media.js'
@@ -6,6 +7,7 @@ import {Previews} from './Previews'
 import {Resolver} from './Resolver.js'
 import {Store} from './Store.js'
 import {Target} from './Target.js'
+import {ChangeSet} from './data/ChangeSet.js'
 import {AlineaMeta} from './db/AlineaMeta.js'
 
 export interface PreviewOptions {
@@ -35,13 +37,30 @@ export class Server implements Connection {
 
   // Api
 
-  resolve(selection: Selection) {
-    return this.resolver.resolve(selection)
+  resolve(selection: Selection, realm: Realm) {
+    return this.resolver.resolve(selection, realm)
   }
 
-  async publishEntries({entries}: Connection.PublishParams): Promise<void> {
-    const {config, target} = this.options
-    throw new Error('todo')
+  async saveDraft(entry: Entry): Promise<void> {
+    const {target} = this.options
+    const changes = await ChangeSet.create(
+      this.db,
+      [entry],
+      EntryPhase.Draft,
+      target.canRename
+    )
+    await target.publishChanges({changes}, this.context)
+  }
+
+  async publishDrafts(entries: Array<Entry>): Promise<void> {
+    const {target} = this.options
+    const changes = await ChangeSet.create(
+      this.db,
+      entries,
+      EntryPhase.Published,
+      target.canRename
+    )
+    await target.publishChanges({changes}, this.context)
   }
 
   uploadFile(params: Connection.UploadParams): Promise<File> {

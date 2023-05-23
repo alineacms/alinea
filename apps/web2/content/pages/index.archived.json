@@ -1,8 +1,7 @@
 {
   "id": "home",
   "type": "Home",
-  "title": "Alinea - Open source headless CMS 1",
-  "path": "",
+  "title": "Archived - Open source headless CMS",
   "headline": "Content management\nfor the modern web",
   "byline": "Structure, edit and query content with any web framework.\nFully typed and organized in your repository.",
   "action": [
@@ -80,8 +79,33 @@
           }
         ]
       }
+    ],
+    "code": [
+      {
+        "id": "iaPXpt5wncvScFUOisACx",
+        "index": "a0",
+        "type": "Variant",
+        "name": "Getting started",
+        "language": "bash",
+        "code": "# Install alinea in your project directory\nnpm install alinea\n\n# Initialize alinea's config file\nnpx alinea init\n\n# Open the dashboard to have a look around\nnpx alinea serve"
+      },
+      {
+        "id": "a86NIPs3RI0qFdRbItqmm",
+        "index": "a1",
+        "type": "Variant",
+        "name": "Configure fields",
+        "code": "import {alinea} from 'alinea'\n\nconst BlogPost = alinea.type('Blog post', {\n  title: alinea.text('Blog entry title'),\n  body: alinea.richText('Body text')\n})"
+      },
+      {
+        "id": "ZCapLFBYLA2c5Qsdz_dqs",
+        "index": "a2",
+        "type": "Variant",
+        "name": "Query content",
+        "code": "import {initPages} from '@alinea/content/pages'\n\nconst pages = initPages()\nconsole.log(\n  await pages\n    .whereType('BlogPost')\n    .where(post => post.author.is('Me'))\n    .select(post => ({title: post.title}))\n)"
+      }
     ]
   },
+  "blocks": [],
   "links": [
     {
       "id": "KFFmmbYVMbbO6ZcG51SEH",
@@ -126,6 +150,6 @@
   ],
   "alinea": {
     "index": "Zy",
-    "root": "pages"
+    "root": "data"
   }
 }

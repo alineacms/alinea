@@ -6,7 +6,7 @@
   },
   "devDependencies": {
     "@types/better-sqlite3": "^5.4.1",
-    "cito": "^0.1.8",
+    "cito": "^0.2.0",
     "pretty-ms": "^8.0.0",
     "rado": "^0.3.5",
     "regexparam": "^2.0.1",

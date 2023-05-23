@@ -1,7 +1,10 @@
 import {Config, Root, Syncable, createError} from 'alinea/core'
+import {EntryRecord} from 'alinea/core/EntryRecord'
+import {Realm} from 'alinea/core/pages/Realm'
 import * as path from 'alinea/core/util/Paths'
 import {timer} from 'alinea/core/util/Timer'
-import {Driver, Table, alias, create} from 'rado'
+import {Driver, Expr, Table, alias, create} from 'rado'
+import {exists} from 'rado/sqlite'
 import xxhash from 'xxhash-wasm'
 import {Entry, EntryPhase} from '../core/Entry.js'
 import {Selection} from '../core/pages/Selection.js'
@@ -16,14 +19,16 @@ const decoder = new TextDecoder()
 const ALT_STATUS = [EntryPhase.Draft, EntryPhase.Archived]
 
 export class Database implements Syncable {
-  resolve: <T>(selection: Selection<T>) => Promise<T>
+  resolve: <T>(selection: Selection<T>, realm: Realm) => Promise<T>
 
-  constructor(public store: Store, public config: Config) {
+  constructor(protected store: Store, public config: Config) {
     this.resolve = new Resolver(store, config.schema).resolve
   }
 
-  find<S>(selection: S) {
-    return this.resolve(Selection(selection)) as Promise<Selection.Infer<S>>
+  find<S>(selection: S, realm = Realm.Published) {
+    return this.resolve(Selection(selection), realm) as Promise<
+      Selection.Infer<S>
+    >
   }
 
   async updates(request: AlineaMeta) {
@@ -112,7 +117,9 @@ export class Database implements Syncable {
       Entry().set({
         parent: Parent({childrenDir: Entry.parentDir})
           .select(Parent.entryId)
-          .maybeFirst()
+          .maybeFirst(),
+        active: EntryRealm.isActive,
+        main: EntryRealm.isMain
       })
     )
     return res
@@ -161,10 +168,12 @@ export class Database implements Syncable {
   computeEntry(
     file: SourceEntry
   ): Omit<Table.Insert<typeof Entry>, 'contentHash'> {
-    const data =
+    const data = EntryRecord(
       file.contents instanceof Uint8Array
         ? JSON.parse(decoder.decode(file.contents))
         : file.contents
+    )
+
     const parentDir = path.dirname(file.filePath)
     const extension = path.extname(file.filePath)
     const fileName = path.basename(file.filePath, extension)
@@ -192,6 +201,8 @@ export class Database implements Syncable {
       // contentHash,
 
       modifiedAt: Date.now(), // file.modifiedAt,
+      active: false,
+      main: false,
 
       entryId: data.id,
       phase: entryPhase,
@@ -200,6 +211,7 @@ export class Database implements Syncable {
       parentDir,
       childrenDir,
       parent: null,
+      level: parentDir === '/' ? 0 : segments.length - 1,
       index: data.alinea?.index,
       locale,
       i18nId: data.alinea?.i18n?.id,
@@ -208,11 +220,23 @@ export class Database implements Syncable {
       title: data.title ?? '',
       url: '',
 
-      data: entryData(type, data)
+      data: entryData(type, {
+        ...data,
+        path: entryPath === 'index' ? '' : entryPath
+      })
     }
   }
 
-  async fill(files: AsyncGenerator<SourceEntry>): Promise<void> {
+  /*async applyChanges(changes: ChangeSet) {
+    for (const create of changes.write) {
+
+    }
+  }*/
+
+  async fill(
+    files: AsyncGenerator<SourceEntry>,
+    partial = false
+  ): Promise<void> {
     // Todo: run a validation step for orders, paths, id matching on statuses
     // etc
     const {h32Raw} = await xxhash()
@@ -261,13 +285,16 @@ export class Database implements Syncable {
       }
       endScan(`Scanned ${seen.length} entries`)
       if (seen.length === 0) return
-      const {rowsAffected: removed} = await query(
-        Entry().delete().where(Entry.versionId.isNotIn(seen))
-      )
-      const noChanges = inserted === 0 && removed === 0
-      if (noChanges) return
-      if (inserted) console.log(`> updated ${inserted} entries`)
-      if (removed) console.log(`> removed ${removed} entries`)
+
+      if (!partial) {
+        const {rowsAffected: removed} = await query(
+          Entry().delete().where(Entry.versionId.isNotIn(seen))
+        )
+        const noChanges = inserted === 0 && removed === 0
+        if (noChanges) return
+        if (inserted) console.log(`> updated ${inserted} entries`)
+        if (removed) console.log(`> removed ${removed} entries`)
+      }
 
       //const endIndex = timer('Indexing entries')
       await this.index(query)
@@ -275,4 +302,42 @@ export class Database implements Syncable {
       await this.writeMeta(query)
     })
   }
+}
+
+namespace EntryRealm {
+  const {Alt} = alias(Entry)
+  const isDraft = Entry.phase.is(EntryPhase.Draft)
+  const isArchived = Entry.phase.is(EntryPhase.Archived)
+  const isPublished = Entry.phase.is(EntryPhase.Published)
+  const hasDraft = exists(
+    Alt({phase: EntryPhase.Draft, entryId: Entry.entryId})
+  )
+  const hasPublished = exists(
+    Alt({phase: EntryPhase.Published, entryId: Entry.entryId})
+  )
+  const hasArchived = exists(
+    Alt({phase: EntryPhase.Archived, entryId: Entry.entryId})
+  )
+  const isPublishedWithoutDraft = Expr.and(isPublished, hasDraft.not())
+  const isArchivedWithoutDraftOrPublished = Expr.and(
+    isArchived,
+    hasDraft.not(),
+    hasPublished.not()
+  )
+  export const isActive = Expr.or(
+    isDraft,
+    isPublishedWithoutDraft,
+    isArchivedWithoutDraftOrPublished
+  )
+  const isArchivedWithoutPublished = Expr.and(isArchived, hasPublished.not())
+  const isDraftWithoutPublishedOrArchived = Expr.and(
+    isDraft,
+    hasPublished.not(),
+    hasArchived.not()
+  )
+  export const isMain = Expr.or(
+    isPublished,
+    isArchivedWithoutPublished,
+    isDraftWithoutPublishedOrArchived
+  )
 }

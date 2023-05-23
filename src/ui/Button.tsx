@@ -34,7 +34,7 @@ export function Button<T extends ElementType = 'button'>({
   return (
     <Tag {...props} className={styles.root.mergeProps(props)(size, {outline})}>
       <HStack center gap={8}>
-        <Icon icon={icon} />
+        <Icon icon={icon} size={18} />
         <span>{children}</span>
         <Icon icon={iconRight} />
       </HStack>

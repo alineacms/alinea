@@ -1,12 +1,14 @@
 import {Config, EntryPhase, Field, ROOT_KEY, Type} from 'alinea/core'
+import {Client} from 'alinea/core/Client'
 import {Page} from 'alinea/core/pages/Page'
+import {Realm} from 'alinea/core/pages/Realm'
 import {entries, fromEntries, values} from 'alinea/core/util/Objects'
 import {InputState} from 'alinea/editor'
 import {atom} from 'jotai'
 import {atomFamily} from 'jotai/utils'
 import * as Y from 'yjs'
-import {configAtom} from './DashboardAtoms.js'
-import {dbAtom, entryRevisionAtoms} from './EntryAtoms.js'
+import {clientAtom, configAtom} from './DashboardAtoms.js'
+import {entryRevisionAtoms, findAtom} from './EntryAtoms.js'
 import {locationAtom} from './LocationAtoms.js'
 
 export enum EditMode {
@@ -19,15 +21,17 @@ export type Version = Page & {parents: Array<string>}
 export const entryEditorAtoms = atomFamily((entryId: string) => {
   return atom(async get => {
     const config = get(configAtom)
-    const db = await get(dbAtom)
+    const client = get(clientAtom)
+    const find = await get(findAtom)
     get(entryRevisionAtoms(entryId))
-    const versions = await db.find(
+    const versions = await find(
       Page({entryId}).select({
         ...Page,
         parents({parents}) {
           return parents(Page).select(Page.entryId)
         }
-      })
+      }),
+      Realm.All
     )
     if (versions.length === 0) return undefined
     const phases = fromEntries(
@@ -37,19 +41,21 @@ export const entryEditorAtoms = atomFamily((entryId: string) => {
       phase => phases[phase] !== undefined
     )
     return createEntryEditor({
+      client,
+      config,
       entryId,
       versions,
       phases,
-      availablePhases,
-      config
+      availablePhases
     })
   })
 })
 
 export interface EntryData {
+  client: Client
+  config: Config
   entryId: string
   versions: Array<Version>
-  config: Config
   phases: Record<EntryPhase, Version>
   availablePhases: Array<EntryPhase>
 }
@@ -57,7 +63,7 @@ export interface EntryData {
 export type EntryEditor = ReturnType<typeof createEntryEditor>
 
 export function createEntryEditor(entryData: EntryData) {
-  const {config, availablePhases} = entryData
+  const {client, config, availablePhases} = entryData
   const activePhase = availablePhases[0]
   const version = entryData.phases[activePhase]
   const type = config.schema[version.type]
@@ -76,12 +82,28 @@ export function createEntryEditor(entryData: EntryData) {
   )
   const draftState = states[activePhase]
   const editMode = atom(EditMode.Editing)
+  const isSaving = atom(false)
+  const isPublishing = atom(false)
   const selectedPhase = atom(get => {
     const {search} = get(locationAtom)
     const phaseInSearch = search.slice(1)
     if ((<Array<string>>availablePhases).includes(phaseInSearch))
       return <EntryPhase>phaseInSearch
     return activePhase
+  })
+  const saveDraft = atom(null, async (get, set) => {
+    const entryData = parseYDoc(type, docs[activePhase])
+    const updatedEntry = {...version, ...entryData}
+    set(isSaving, true)
+    await client.saveDraft(updatedEntry)
+    set(isSaving, false)
+  })
+  const publishDraft = atom(null, async (get, set) => {
+    const entryData = parseYDoc(type, docs[activePhase])
+    const updatedEntry = {...version, ...entryData}
+    set(isPublishing, true)
+    await client.publishDrafts([updatedEntry])
+    set(isPublishing, false)
   })
   return {
     ...entryData,
@@ -93,7 +115,21 @@ export function createEntryEditor(entryData: EntryData) {
     type,
     draftState,
     states,
-    hasChanges
+    hasChanges,
+    saveDraft,
+    publishDraft,
+    isSaving,
+    isPublishing
+  }
+}
+
+function parseYDoc(type: Type, doc: Y.Doc) {
+  const docRoot = doc.getMap(ROOT_KEY)
+  const data: Record<string, any> = Type.shape(type).fromY(docRoot)
+  return {
+    path: data.path,
+    title: data.title,
+    data
   }
 }
 
@@ -118,11 +154,12 @@ function createChangesAtom(yDoc: Y.Doc) {
     const cancel = () => {
       if (isCanceled) return
       isCanceled = true
-      yDoc.on('update', listener)
+      yDoc.off('update', listener)
     }
     yDoc.on('update', listener)
     return cancel
     function listener() {
+      // Todo: check if we made this change
       setAtom(true)
       cancel()
     }

@@ -1,7 +1,7 @@
 import * as Y from 'yjs'
 import {Label} from '../Label.js'
 import {Shape} from '../Shape.js'
-import {entries} from '../util/Objects.js'
+import {create, entries} from '../util/Objects.js'
 
 export type RecordMutator<T> = {
   set: <K extends keyof T>(k: K, v: T[K]) => void
@@ -47,7 +47,7 @@ export class RecordShape<T = {}> implements Shape<T, RecordMutator<T>> {
     return map
   }
   fromY(map: Y.Map<any>) {
-    const res: Record<string, any> = {}
+    const res: Record<string, any> = create(null)
     for (const key of Object.keys(this.properties)) {
       res[key] = this.properties[key].fromY(map?.get(key))
     }

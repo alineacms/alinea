@@ -103,6 +103,10 @@ export namespace Cursor {
       return new Get<Row>(this.with({first: true}))
     }
 
+    maybeFirst(): Get<Row | undefined> {
+      return new Get<Row | undefined>(this.with({first: true}))
+    }
+
     select<S extends Projection<Row>>(select: S): Find<Selection.Infer<S>> {
       return new Find<Selection.Infer<S>>(
         this.with({select: Selection(select, this.id)})

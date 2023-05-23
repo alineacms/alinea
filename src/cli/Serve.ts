@@ -1,8 +1,10 @@
 import {JWTPreviews} from 'alinea/backend'
 import {Handler} from 'alinea/backend/Handler'
+import {FileData} from 'alinea/backend/data/FileData'
 import {nodeHandler} from 'alinea/backend/router/NodeHandler'
 import {CMS} from 'alinea/core/CMS'
 import {BuildOptions} from 'esbuild'
+import fs from 'node:fs'
 import {RequestListener} from 'node:http'
 import path from 'node:path'
 import {generate} from './Generate.js'
@@ -84,7 +86,11 @@ export async function serve(options: ServeOptions): Promise<void> {
             dashboardUrl,
             config: currentCMS,
             store: current.value.store,
-            target: undefined!,
+            target: new FileData({
+              config: currentCMS,
+              fs: fs.promises,
+              rootDir: cwd
+            }),
             media: undefined!,
             previews: new JWTPreviews('@alinea/backend/devserver')
           })

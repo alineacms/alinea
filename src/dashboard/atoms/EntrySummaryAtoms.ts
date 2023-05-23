@@ -2,13 +2,13 @@ import {Page} from 'alinea/core/pages/Page'
 import DataLoader from 'dataloader'
 import {atom} from 'jotai'
 import {atomFamily} from 'jotai/utils'
-import {dbAtom, entryRevisionAtoms} from './EntryAtoms.js'
+import {entryRevisionAtoms, findAtom} from './EntryAtoms.js'
 
 export const entrySummaryLoaderAtom = atom(async get => {
-  const db = await get(dbAtom)
+  const find = await get(findAtom)
   return new DataLoader(async (ids: ReadonlyArray<string>) => {
     const res = new Map()
-    const entries = await db.find(
+    const entries = await find(
       Page()
         .select({
           entryId: Page.entryId,

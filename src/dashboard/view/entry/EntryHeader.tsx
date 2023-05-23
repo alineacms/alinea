@@ -1,16 +1,5 @@
 import {EntryPhase} from 'alinea/core'
-import {link} from 'alinea/dashboard/util/HashRouter'
-import {
-  AppBar,
-  Button,
-  Chip,
-  HStack,
-  Icon,
-  Stack,
-  Typo,
-  fromModule,
-  useObservable
-} from 'alinea/ui'
+import {AppBar, Button, HStack, Icon, Stack, Typo, fromModule} from 'alinea/ui'
 import {IcOutlineRemoveRedEye} from 'alinea/ui/icons/IcOutlineRemoveRedEye'
 import {IcRoundArchive} from 'alinea/ui/icons/IcRoundArchive'
 import {IcRoundCheck} from 'alinea/ui/icons/IcRoundCheck'
@@ -18,53 +7,24 @@ import {IcRoundDelete} from 'alinea/ui/icons/IcRoundDelete'
 import {IcRoundEdit} from 'alinea/ui/icons/IcRoundEdit'
 import {IcRoundInsertDriveFile} from 'alinea/ui/icons/IcRoundInsertDriveFile'
 import {IcRoundPublish} from 'alinea/ui/icons/IcRoundPublish'
-import {IcRoundRotateLeft} from 'alinea/ui/icons/IcRoundRotateLeft'
 import {MdiSourceBranch} from 'alinea/ui/icons/MdiSourceBranch'
-import {useAtomValue} from 'jotai'
+import {useAtomValue, useSetAtom} from 'jotai'
 import {EntryEditor} from '../../atoms/EntryEditor.js'
-import {useCurrentDraft} from '../../hook/UseCurrentDraft.js'
-import {DraftsStatus, useDrafts} from '../../hook/UseDrafts.js'
-import {useNav} from '../../hook/UseNav.js'
 import {EditMode} from './EditMode.js'
 import css from './EntryHeader.module.scss'
 
 const styles = fromModule(css)
 
-function EntryStatusChip() {
-  const nav = useNav()
-  const drafts = useDrafts()
-  const draftsStatus = useObservable(drafts.status)
-  const draft = useCurrentDraft()
-  const status = useObservable(draft.phase)
-  switch (status) {
-    case EntryPhase.Published:
-      return <Chip icon={IcRoundCheck}>Published</Chip>
-    case EntryPhase.Draft:
-      return (
-        <a {...link(nav.draft(draft))} style={{textDecoration: 'none'}}>
-          <Chip
-            accent
-            icon={
-              draftsStatus === DraftsStatus.Saving
-                ? IcRoundRotateLeft
-                : draftsStatus === DraftsStatus.Synced
-                ? IcRoundCheck
-                : IcRoundEdit
-            }
-          >
-            Draft
-          </Chip>
-        </a>
-      )
-    case EntryPhase.Archived:
-      return <Chip icon={IcRoundArchive}>Archived</Chip>
-  }
-}
-
 const variantDescription = {
   draft: 'Draft',
   published: 'Published',
   archived: 'Archived'
+}
+
+const variantIcon = {
+  draft: IcRoundEdit,
+  published: IcOutlineRemoveRedEye,
+  archived: IcRoundArchive
 }
 
 export type EntryHeaderProps = {
@@ -77,24 +37,32 @@ export function EntryHeader({mode, setMode, editor}: EntryHeaderProps) {
   const selectedPhase = useAtomValue(editor.selectedPhase)
   const isActivePhase = editor.activePhase === selectedPhase
   const hasChanges = useAtomValue(editor.hasChanges)
-  const variant = hasChanges && isActivePhase ? 'draft' : selectedPhase
+  const isSaving = useAtomValue(editor.isSaving)
+  const variant =
+    (hasChanges || isSaving) && isActivePhase ? 'draft' : selectedPhase
+  const saveDraft = useSetAtom(editor.saveDraft)
+  const publishDraft = useSetAtom(editor.publishDraft)
   return (
     <AppBar.Root variant={variant}>
       <HStack center gap={10} className={styles.root.description()}>
-        <Icon icon={IcRoundEdit} size={18} />
+        <Icon icon={variantIcon[variant]} size={18} />
         <span>{variantDescription[variant]}</span>
         {isActivePhase &&
-          (hasChanges ? (
+          (hasChanges || isSaving ? (
             <span>(unsaved changes detected)</span>
           ) : (
             <span>(edit to create a new draft)</span>
           ))}
         <Stack.Right>
           {hasChanges && variant === 'draft' && (
-            <Button icon={IcRoundCheck}>Save draft</Button>
+            <Button icon={IcRoundCheck} onClick={saveDraft}>
+              Save draft
+            </Button>
           )}
           {!hasChanges && selectedPhase === 'draft' && (
-            <Button icon={IcOutlineRemoveRedEye}>Publish draft</Button>
+            <Button icon={IcOutlineRemoveRedEye} onClick={publishDraft}>
+              Publish draft
+            </Button>
           )}
         </Stack.Right>
       </HStack>

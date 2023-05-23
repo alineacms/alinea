@@ -59,6 +59,14 @@ export class FileData implements Source, Target {
 
   async *entries(): AsyncGenerator<SourceEntry> {
     const {config, fs, rootDir = '.'} = this.options
+    const BATCH_SIZE = 4
+    const batch: Array<() => Promise<SourceEntry>> = []
+    async function* runBatch() {
+      for (const entry of await Promise.all(
+        batch.splice(0, batch.length).map(fn => fn())
+      ))
+        yield entry
+    }
     for (const [workspaceName, workspace] of entries(config.workspaces)) {
       const contentDir = Workspace.data(workspace).source
       for (const [rootName, root] of entries(workspace)) {
@@ -85,25 +93,29 @@ export class FileData implements Source, Target {
               if (stat.isDirectory()) {
                 targets.push(path.join(target, file))
               } else {
+                if (batch.length >= BATCH_SIZE) yield* runBatch()
                 const filePath = path.join(target, file)
                 toRead.push({filePath, location})
-                const contents = await fs.readFile(location)
-                yield {
-                  workspace: workspaceName,
-                  root: rootName,
-                  filePath,
-                  contents,
-                  modifiedAt: stat.mtime.getTime()
-                }
+                batch.push(async (): Promise<SourceEntry> => {
+                  const contents = await fs.readFile(location)
+                  return {
+                    workspace: workspaceName,
+                    root: rootName,
+                    filePath,
+                    contents,
+                    modifiedAt: stat.mtime.getTime()
+                  }
+                })
               }
             }
           }
         }
       }
     }
+    yield* runBatch()
   }
 
-  async publish({changes}: Connection.ChangesParams) {
+  async publishChanges({changes}: Connection.ChangesParams) {
     const {fs, rootDir = '.'} = this.options
     const tasks = []
     const noop = () => {}
