@@ -1,11 +1,15 @@
 import {AbortController, fetch, FormData, Response} from '@alinea/iso'
 import {AlineaMeta} from 'alinea/backend/db/AlineaMeta'
-import {Config, Connection, createError, Media} from 'alinea/core'
+import {Config, Connection, createError, Entry, Media} from 'alinea/core'
 import {UpdateResponse} from './Connection.js'
+import {Realm} from './pages/Realm.js'
 import {Selection} from './pages/Selection.js'
 
-async function failOnHttpError<T>(res: Response): Promise<T> {
-  if (res.ok) return res.json()
+async function failOnHttpError<T>(
+  res: Response,
+  expectJson = true
+): Promise<T> {
+  if (res.ok) return expectJson ? res.json() : undefined
   const text = await res.text()
   throw createError(res.status, text || res.statusText)
 }
@@ -20,8 +24,8 @@ export class Client implements Connection {
     protected unauthorized: () => void = () => {}
   ) {}
 
-  resolve(selection: Selection): Promise<unknown> {
-    const body = JSON.stringify(selection)
+  resolve(selection: Selection, realm: Realm): Promise<unknown> {
+    const body = JSON.stringify({selection, realm})
     return this.requestJson(Connection.routes.resolve(), {
       method: 'POST',
       body
@@ -47,11 +51,18 @@ export class Client implements Connection {
     )
   }
 
-  publishEntries({entries}: Connection.PublishParams): Promise<void> {
-    return this.requestJson(Connection.routes.publish(), {
+  saveDraft(entry: Entry): Promise<void> {
+    return this.requestJson(Connection.routes.saveDraft(), {
+      method: 'POST',
+      body: JSON.stringify(entry)
+    }).then<void>(res => failOnHttpError(res, false))
+  }
+
+  publishDrafts(entries: Array<Entry>): Promise<void> {
+    return this.requestJson(Connection.routes.publishDrafts(), {
       method: 'POST',
       body: JSON.stringify(entries)
-    }).then<void>(failOnHttpError)
+    }).then<void>(res => failOnHttpError(res, false))
   }
 
   uploadFile({

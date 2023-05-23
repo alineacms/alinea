@@ -2,6 +2,7 @@ import {Type} from 'alinea/core'
 import {renderLabel} from 'alinea/core/Label'
 import {Chip, fromModule, HStack, IconLink, Typo} from 'alinea/ui'
 import {IcRoundArrowBack} from 'alinea/ui/icons/IcRoundArrowBack'
+import {useAtomValue} from 'jotai'
 import {EntryEditor} from '../../atoms/EntryEditor.js'
 import {useWorkspace} from '../../hook/UseWorkspace.js'
 import {Head} from '../../util/Head.js'
@@ -16,7 +17,8 @@ export interface EntryTitleProps {
 
 export function EntryTitle({editor, backLink}: EntryTitleProps) {
   const {label} = useWorkspace()
-  const version = editor.version
+  const selectedPhase = useAtomValue(editor.selectedPhase)
+  const version = editor.phases[selectedPhase]
   const type = editor.type
   const title = version.title
   return (

@@ -82,7 +82,7 @@ export class ServeBackend extends Backend {
         .get(Connection.routes.base + '/~publish')
         .map(router.parseJson)
         .map(({body}) => {
-          return outcome(data.publish({changes: body as any}))
+          return outcome(data.publishChanges({changes: body as any}))
         })
         .map(router.jsonResponse),
       matcher

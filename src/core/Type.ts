@@ -1,4 +1,4 @@
-import {Expand} from 'alinea/core'
+import {EntryPhase, Expand} from 'alinea/core'
 import {Cursor} from 'alinea/core/pages/Cursor'
 import {BinaryOp, EV, Expr, ExprData, and} from 'alinea/core/pages/Expr'
 import {Callable} from 'rado/util/Callable'
@@ -20,9 +20,10 @@ import {
 } from './util/Objects.js'
 
 export interface EntryUrlMeta {
+  phase: EntryPhase
   path: string
   parentPaths: Array<string>
-  locale?: string
+  locale?: string | null
 }
 
 /** Optional settings to configure a Type */

@@ -31,12 +31,15 @@
 
   --alinea-button-foreground: white;
   --alinea-button-background: #3f61e8;
+  --alinea-button-hover: #2e4fd1;
   --alinea-draft-foreground: #f0f6ff;
-  --alinea-draft-background: hsla(230, 40%, 42%, 0.8);
+  --alinea-draft-background: hsla(230, 40%, 30%, 0.8);
   --alinea-published-foreground: #f1fdf4;
-  --alinea-published-background: hsla(140, 21%, 42%, 0.8);
+  --alinea-published-background: hsla(140, 21%, 30%, 0.8);
+  --alinea-archived-foreground: #f0f0f0;
+  --alinea-archived-background: hsla(0, 0%, 30%, 0.8);
   --alinea-transition-foreground: #fef7ed;
-  --alinea-transition-background: hsla(15, 54%, 40%, 0.8);
+  --alinea-transition-background: hsla(15, 54%, 30%, 0.8);
 }
 
 @mixin light-theme {
@@ -71,10 +74,13 @@
 
   --alinea-button-foreground: white;
   --alinea-button-background: #3f61e8;
+  --alinea-button-hover: #2e4fd1;
   --alinea-draft-background: hsla(216, 100%, 97%, 0.8);
   --alinea-draft-foreground: #415097;
   --alinea-published-background: hsla(135, 75%, 97%, 0.8);
   --alinea-published-foreground: #558164;
+  --alinea-archived-background: hsla(0, 0%, 94%, 0.8);
+  --alinea-archived-foreground: #535353;
   --alinea-transition-background: hsla(35, 89%, 96%, 0.8);
   --alinea-transition-foreground: #9f4b2f;
 }

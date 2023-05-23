@@ -1,7 +1,8 @@
-import {Changes} from 'alinea/backend/data/Changes'
+import {ChangeSet} from 'alinea/backend/data/ChangeSet'
 import {AlineaMeta} from 'alinea/backend/db/AlineaMeta'
 import {Media, User} from 'alinea/core'
 import {Entry} from './Entry.js'
+import {Realm} from './pages/Realm.js'
 import {Selection} from './pages/Selection.js'
 import {Logger} from './util/Logger.js'
 
@@ -16,9 +17,13 @@ export interface Syncable {
 }
 
 export interface Connection extends Syncable {
-  resolve(selection: Selection): Promise<unknown>
+  resolve(selection: Selection, realm: Realm): Promise<unknown>
   uploadFile(params: Connection.UploadParams): Promise<Media.File>
-  publishEntries(params: Connection.PublishParams): Promise<void>
+
+  saveDraft(entry: Entry): Promise<void>
+  publishDrafts(entries: Array<Entry>): Promise<void>
+  // archive
+  // createEntries(params: Connection.CreateParams): Promise<void>
 }
 
 export namespace Connection {
@@ -34,7 +39,7 @@ export namespace Connection {
     width?: number
     height?: number
   }
-  export type PublishParams = {
+  export type CreateParams = {
     entries: Array<Entry>
   }
   export type MediaUploadParams = {
@@ -48,7 +53,7 @@ export namespace Connection {
     location: string
   }
   export type ChangesParams = {
-    changes: Changes
+    changes: ChangeSet
   }
   export interface AuthContext {
     user?: User
@@ -73,7 +78,10 @@ export namespace Connection {
     versionIds() {
       return base + `/versionIds`
     },
-    publish() {
+    saveDraft() {
+      return base + `/save`
+    },
+    publishDrafts() {
       return base + `/publish`
     },
     upload() {

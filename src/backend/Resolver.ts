@@ -1,5 +1,5 @@
 import {Field, RichTextShape, Schema, Shape, TextDoc, Type} from 'alinea/core'
-import {assert} from 'cito'
+import {Realm} from 'alinea/core/pages/Realm'
 import {
   BinOpType,
   Expr,
@@ -14,10 +14,9 @@ import {
   UnOpType,
   withRecursive
 } from 'rado'
-import {Entry, EntryTable} from '../core/Entry.js'
-import {Store} from './Store.js'
-
+import {Entry, EntryPhase, EntryTable} from '../core/Entry.js'
 import * as pages from '../core/pages/index.js'
+import {Store} from './Store.js'
 
 const {keys, entries, fromEntries} = Object
 
@@ -48,15 +47,20 @@ const binOps = {
 
 const pageFields = keys(Entry)
 
-class ResolveContext {
+class QueryContext {
   constructor(
-    public table: Table<EntryTable> | undefined,
+    public realm: Realm,
+    public table: Table<EntryTable> | undefined = undefined,
     public expr: ExprContext = ExprContext.InNone
   ) {}
 
   get Table() {
     if (!this.table) throw new Error(`Cannot select without a table reference`)
     return this.table
+  }
+
+  withTable(table: Table<EntryTable>): QueryContext {
+    return new QueryContext(this.realm, table, this.expr)
   }
 
   get inSelect() {
@@ -71,19 +75,35 @@ class ResolveContext {
     return this.expr & ExprContext.InAccess
   }
 
-  get select(): ResolveContext {
+  get select(): QueryContext {
     if (this.inSelect) return this
-    return new ResolveContext(this.table, this.expr | ExprContext.InSelect)
+    return new QueryContext(
+      this.realm,
+      this.table,
+      this.expr | ExprContext.InSelect
+    )
   }
 
-  get condition(): ResolveContext {
+  get condition(): QueryContext {
     if (this.inCondition) return this
-    return new ResolveContext(this.table, this.expr | ExprContext.InCondition)
+    return new QueryContext(
+      this.realm,
+      this.table,
+      this.expr | ExprContext.InCondition
+    )
   }
 
-  get access(): ResolveContext {
+  get access(): QueryContext {
     if (this.inAccess) return this
-    return new ResolveContext(this.table, this.expr | ExprContext.InAccess)
+    return new QueryContext(
+      this.realm,
+      this.table,
+      this.expr | ExprContext.InAccess
+    )
+  }
+
+  get none(): QueryContext {
+    return new QueryContext(this.realm, this.table, ExprContext.InNone)
   }
 }
 
@@ -105,7 +125,7 @@ type Pre = {
 export class Resolver {
   constructor(public store: Store, public schema: Schema) {}
 
-  fieldExpr(ctx: ResolveContext, expr: ExprData, shape: Shape): ExprData {
+  fieldExpr(ctx: QueryContext, expr: ExprData, shape: Shape): ExprData {
     if (ctx.inAccess || ctx.inCondition) return expr
     switch (true) {
       case shape instanceof RichTextShape:
@@ -129,11 +149,12 @@ export class Resolver {
   }
 
   fieldOf(
-    ctx: ResolveContext,
+    ctx: QueryContext,
     target: pages.TargetData,
     field: string
   ): ExprData {
     // Todo: we should make this non-ambiguous
+    // Todo: userland should never be able to query phase field
     switch (field) {
       case 'id':
       case 'entryId':
@@ -166,12 +187,12 @@ export class Resolver {
     }
   }
 
-  pageFields(ctx: ResolveContext): Array<[string, ExprData]> {
+  pageFields(ctx: QueryContext): Array<[string, ExprData]> {
     return pageFields.map(key => [key, this.fieldOf(ctx, {}, key)])
   }
 
   fieldsOf(
-    ctx: ResolveContext,
+    ctx: QueryContext,
     target: pages.TargetData
   ): Array<[string, ExprData]> {
     const {name} = target
@@ -183,33 +204,33 @@ export class Resolver {
     })
   }
 
-  exprUnOp(ctx: ResolveContext, {op, expr}: pages.ExprData.UnOp): ExprData {
+  exprUnOp(ctx: QueryContext, {op, expr}: pages.ExprData.UnOp): ExprData {
     return new ExprData.UnOp(unOps[op], this.expr(ctx, expr))
   }
 
-  exprBinOp(ctx: ResolveContext, {op, a, b}: pages.ExprData.BinOp): ExprData {
+  exprBinOp(ctx: QueryContext, {op, a, b}: pages.ExprData.BinOp): ExprData {
     return new ExprData.BinOp(binOps[op], this.expr(ctx, a), this.expr(ctx, b))
   }
 
   exprField(
-    ctx: ResolveContext,
+    ctx: QueryContext,
     {target, field}: pages.ExprData.Field
   ): ExprData {
     return this.fieldOf(ctx, target, field)
   }
 
   exprAccess(
-    ctx: ResolveContext,
+    ctx: QueryContext,
     {expr, field}: pages.ExprData.Access
   ): ExprData {
     return new ExprData.Field(this.expr(ctx.access, expr), field)
   }
 
-  exprValue(ctx: ResolveContext, {value}: pages.ExprData.Value): ExprData {
+  exprValue(ctx: QueryContext, {value}: pages.ExprData.Value): ExprData {
     return new ExprData.Param(new ParamData.Value(value))
   }
 
-  exprRecord(ctx: ResolveContext, {fields}: pages.ExprData.Record): ExprData {
+  exprRecord(ctx: QueryContext, {fields}: pages.ExprData.Record): ExprData {
     return new ExprData.Record(
       fromEntries(
         entries(fields).map(([key, expr]) => {
@@ -219,7 +240,7 @@ export class Resolver {
     )
   }
 
-  expr(ctx: ResolveContext, expr: pages.ExprData): ExprData {
+  expr(ctx: QueryContext, expr: pages.ExprData): ExprData {
     switch (expr.type) {
       case 'unop':
         return this.exprUnOp(ctx, expr)
@@ -236,10 +257,7 @@ export class Resolver {
     }
   }
 
-  selectRecord(
-    ctx: ResolveContext,
-    {fields}: pages.Selection.Record
-  ): ExprData {
+  selectRecord(ctx: QueryContext, {fields}: pages.Selection.Record): ExprData {
     return new ExprData.Record(
       fromEntries(
         fields.flatMap(field => {
@@ -256,22 +274,22 @@ export class Resolver {
     )
   }
 
-  selectRow(ctx: ResolveContext, {target}: pages.Selection.Row): ExprData {
+  selectRow(ctx: QueryContext, {target}: pages.Selection.Row): ExprData {
     return new ExprData.Record(fromEntries(this.fieldsOf(ctx.select, target)))
   }
 
-  selectCursor(selection: pages.Selection.Cursor): ExprData {
-    return new ExprData.Query(this.queryCursor(selection))
+  selectCursor(ctx: QueryContext, selection: pages.Selection.Cursor): ExprData {
+    return new ExprData.Query(this.queryCursor(ctx, selection))
   }
 
-  selectExpr(ctx: ResolveContext, {expr}: pages.Selection.Expr): ExprData {
+  selectExpr(ctx: QueryContext, {expr}: pages.Selection.Expr): ExprData {
     return this.expr(ctx.select, expr)
   }
 
-  select(ctx: ResolveContext, selection: pages.Selection): ExprData {
+  select(ctx: QueryContext, selection: pages.Selection): ExprData {
     switch (selection.type) {
       case 'cursor':
-        return this.selectCursor(selection)
+        return this.selectCursor(ctx, selection)
       case 'row':
         return this.selectRow(ctx, selection)
       case 'record':
@@ -281,11 +299,11 @@ export class Resolver {
     }
   }
 
-  queryRecord(selection: pages.Selection.Record): QueryData.Select {
-    const expr = this.selectRecord(
-      new ResolveContext(undefined, ExprContext.InSelect),
-      selection
-    )
+  queryRecord(
+    ctx: QueryContext,
+    selection: pages.Selection.Record
+  ): QueryData.Select {
+    const expr = this.selectRecord(ctx.select, selection)
     return new QueryData.Select({
       selection: expr,
       singleResult: true
@@ -293,7 +311,7 @@ export class Resolver {
   }
 
   querySource(
-    ctx: ResolveContext,
+    ctx: QueryContext,
     source: pages.CursorSource | undefined
   ): Select<Table.Select<EntryTable>> {
     if (!source) return ctx.Table()
@@ -304,11 +322,13 @@ export class Resolver {
       case pages.SourceType.Children:
         const Child = Entry().as('Child')
         const children = withRecursive(
-          Child({entryId: from.entryId}).select({
-            entryId: Child.entryId,
-            parent: Child.parent,
-            level: 0
-          })
+          Child({entryId: from.entryId})
+            .where(this.restrictRealm(Child, ctx.realm))
+            .select({
+              entryId: Child.entryId,
+              parent: Child.parent,
+              level: 0
+            })
         ).unionAll(() =>
           Child()
             .select({
@@ -317,18 +337,23 @@ export class Resolver {
               level: children.level.add(1)
             })
             .innerJoin(children({entryId: Child.parent}))
-            .where(children.level.isLess(source.depth))
+            .where(
+              this.restrictRealm(Child, ctx.realm),
+              children.level.isLess(source.depth)
+            )
         )
         const childrenIds = children().select(children.entryId).skip(1)
         return ctx.Table().where(ctx.Table.entryId.isIn(childrenIds))
       case pages.SourceType.Parents:
         const Parent = Entry().as('Parent')
         const parents = withRecursive(
-          Parent({entryId: from.entryId}).select({
-            entryId: Parent.entryId,
-            parent: Parent.parent,
-            level: 0
-          })
+          Parent({entryId: from.entryId})
+            .where(this.restrictRealm(Parent, ctx.realm))
+            .select({
+              entryId: Parent.entryId,
+              parent: Parent.parent,
+              level: 0
+            })
         ).unionAll(() =>
           Parent()
             .select({
@@ -337,16 +362,22 @@ export class Resolver {
               level: parents.level.add(1)
             })
             .innerJoin(parents({parent: Parent.entryId}))
-            .where(source.depth ? children.level.isLess(source.depth) : true)
+            .where(
+              this.restrictRealm(Parent, ctx.realm),
+              source.depth ? children.level.isLess(source.depth) : true
+            )
         )
         const parentIds = parents().select(parents.entryId).skip(1)
-        return ctx.Table().where(ctx.Table.entryId.isIn(parentIds))
+        return ctx
+          .Table()
+          .where(ctx.Table.entryId.isIn(parentIds))
+          .orderBy(ctx.Table.level.asc())
       default:
         throw new Error(`Todo`)
     }
   }
 
-  orderBy(ctx: ResolveContext, orderBy: Array<pages.OrderBy>): Array<OrderBy> {
+  orderBy(ctx: QueryContext, orderBy: Array<pages.OrderBy>): Array<OrderBy> {
     return orderBy.map(({expr, order}) => {
       const exprData = this.expr(ctx, expr)
       return {
@@ -356,7 +387,27 @@ export class Resolver {
     })
   }
 
-  queryCursor({cursor}: pages.Selection.Cursor): QueryData.Select {
+  restrictRealm(Table: Table<EntryTable>, realm: Realm) {
+    switch (realm) {
+      case Realm.Published:
+        return Table.phase.is(EntryPhase.Published)
+      case Realm.Draft:
+        return Table.phase.is(EntryPhase.Draft)
+      case Realm.Archived:
+        return Table.phase.is(EntryPhase.Archived)
+      case Realm.PreferDraft:
+        return Table.active
+      case Realm.PreferPublished:
+        return Table.main
+      case Realm.All:
+        return Expr.value(true)
+    }
+  }
+
+  queryCursor(
+    ctx: QueryContext,
+    {cursor}: pages.Selection.Cursor
+  ): QueryData.Select {
     const {
       id,
       target,
@@ -369,13 +420,14 @@ export class Resolver {
       first,
       source
     } = cursor
-    const ctx = new ResolveContext(Entry().as(id), ExprContext.InNone)
+    ctx = ctx.withTable(Entry().as(id)).none
     const {name} = target || {}
     let query = this.querySource(ctx, source)
     let preCondition = query[Query.Data].where
     let condition = Expr.and(
       preCondition ? new Expr(preCondition) : Expr.value(true),
-      name ? ctx.Table.type.is(name) : Expr.value(true)
+      name ? ctx.Table.type.is(name) : Expr.value(true),
+      this.restrictRealm(ctx.Table, ctx.realm)
     )
     if (where)
       query = query.where(
@@ -391,15 +443,15 @@ export class Resolver {
     return query[Query.Data].with(extra)
   }
 
-  query(selection: pages.Selection): QueryData.Select {
+  query(ctx: QueryContext, selection: pages.Selection): QueryData.Select {
     switch (selection.type) {
       case 'row':
         throw new Error(`Cannot select rows at root level`)
       // return this.queryRow(selection)
       case 'cursor':
-        return this.queryCursor(selection)
+        return this.queryCursor(ctx, selection)
       case 'record':
-        return this.queryRecord(selection)
+        return this.queryRecord(ctx, selection)
       case 'expr':
         throw new Error(`Cannot select expressions at root level`)
     }
@@ -432,10 +484,11 @@ export class Resolver {
     return interim
   }
 
-  resolve = async <T>(selection: pages.Selection<T>): Promise<T> => {
-    // This validates the input, and throws if it's invalid
-    assert(selection, pages.Selection.adt)
-    const query = this.query(selection)
+  resolve = async <T>(
+    selection: pages.Selection<T>,
+    realm: Realm
+  ): Promise<T> => {
+    const query = this.query(new QueryContext(realm), selection)
     const interim: object | Array<object> = await this.store(new Query(query))
     return this.post(interim)
   }

@@ -21,7 +21,7 @@ __metadata:
   dependencies:
     "@types/better-sqlite3": ^5.4.1
     better-sqlite3: ^8.1.0
-    cito: ^0.1.8
+    cito: ^0.2.0
     pretty-ms: ^8.0.0
     rado: ^0.3.5
     regexparam: ^2.0.1
@@ -79,8 +79,6 @@ __metadata:
     "@headlessui/react": ^1.6.1
     "@react-hook/size": ^2.1.2
     "@react-hook/window-size": ^3.0.7
-    "@tanstack/react-router": ^0.0.1-alpha.0
-    "@tanstack/router": ^0.0.1-beta.53
     "@types/diff-match-patch": ^1.0.32
     blurhash: ^1.1.5
     color2k: ^1.2.4
@@ -1582,21 +1580,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/runtime@npm:^7.16.7, @babel/runtime@npm:^7.20.7":
-  version: 7.21.5
-  resolution: "@babel/runtime@npm:7.21.5"
-  dependencies:
-    regenerator-runtime: ^0.13.11
-  checksum: 358f2779d3187f5c67ad302e8f8d435412925d0b991d133c7d4a7b1ddd5a3fda1b6f34537cb64628dfd96a27ae46df105bed3895b8d754b88cacdded8d1129dd
-  languageName: node
-  linkType: hard
-
 "@babel/runtime@npm:^7.18.9, @babel/runtime@npm:^7.8.4":
   version: 7.18.9
   resolution: "@babel/runtime@npm:7.18.9"
   dependencies:
     regenerator-runtime: ^0.13.4
   checksum: 36dd736baba7164e82b3cc9d43e081f0cb2d05ff867ad39cac515d99546cee75b7f782018b02a3dcf5f2ef3d27f319faa68965fdfec49d4912c60c6002353a2e
+  languageName: node
+  linkType: hard
+
+"@babel/runtime@npm:^7.20.7":
+  version: 7.21.5
+  resolution: "@babel/runtime@npm:7.21.5"
+  dependencies:
+    regenerator-runtime: ^0.13.11
+  checksum: 358f2779d3187f5c67ad302e8f8d435412925d0b991d133c7d4a7b1ddd5a3fda1b6f34537cb64628dfd96a27ae46df105bed3895b8d754b88cacdded8d1129dd
   languageName: node
   linkType: hard
 
@@ -2884,87 +2882,6 @@ __metadata:
   dependencies:
     tslib: ^2.4.0
   checksum: 71e0e27234590435e4c62b97ef5e796f88e786841a38c7116a5e27a3eafa7b9ead7cdec5249b32165902076de78446945311c973e59bddf77c1e24f33a8f272a
-  languageName: node
-  linkType: hard
-
-"@tanstack/react-router@npm:^0.0.1-alpha.0":
-  version: 0.0.1-beta.83
-  resolution: "@tanstack/react-router@npm:0.0.1-beta.83"
-  dependencies:
-    "@babel/runtime": ^7.16.7
-    "@tanstack/react-store": 0.0.1-beta.81
-    "@tanstack/router": 0.0.1-beta.83
-  peerDependencies:
-    react: ">=16"
-    react-dom: ">=16"
-  checksum: 6d53d7abdaa5d9168c72947e4385dbd9106b87e6dcd6d597d62d9b8cc2bafd9740a6f5adf7e5837bf395f079760e24c559b1fd2dbc44d4fdbb25c56b81527696
-  languageName: node
-  linkType: hard
-
-"@tanstack/react-store@npm:0.0.1-beta.81":
-  version: 0.0.1-beta.81
-  resolution: "@tanstack/react-store@npm:0.0.1-beta.81"
-  dependencies:
-    "@tanstack/store": 0.0.1-beta.81
-    use-sync-external-store: ^1.2.0
-  peerDependencies:
-    react: ">=16"
-    react-dom: ">=16"
-  checksum: 575f2e47da90dc3e3e801beba5e93c34f5411e64287f342c14bf99dd6ca2339c861e1b92d5543a2f146fd169ff77dc1360c4086c581c1f5f947e6d4842d8adc5
-  languageName: node
-  linkType: hard
-
-"@tanstack/react-store@npm:0.0.1-beta.89":
-  version: 0.0.1-beta.89
-  resolution: "@tanstack/react-store@npm:0.0.1-beta.89"
-  dependencies:
-    "@tanstack/store": 0.0.1-beta.89
-    use-sync-external-store: ^1.2.0
-  peerDependencies:
-    react: ">=16"
-    react-dom: ">=16"
-  checksum: 41b04a18a4295833b9dac652b100788217707b6c35ec51f060533a1dde462f0292a180fcb4e87f0a90514e5956e5868fcd78b5cb37af4a422e5ddaf8da0523fb
-  languageName: node
-  linkType: hard
-
-"@tanstack/router@npm:0.0.1-beta.83":
-  version: 0.0.1-beta.83
-  resolution: "@tanstack/router@npm:0.0.1-beta.83"
-  dependencies:
-    "@babel/runtime": ^7.16.7
-    "@tanstack/store": 0.0.1-beta.81
-    tiny-invariant: ^1.3.1
-    tiny-warning: ^1.0.3
-  checksum: 76356274f20282f53e6d8f8705bdbc44dd2c01599a50827967b92997e0cf3f434153814e403805ea600584b72b144ce4f4bb74755b86d254aac8c5a05fc89f56
-  languageName: node
-  linkType: hard
-
-"@tanstack/router@npm:^0.0.1-beta.53":
-  version: 0.0.1-beta.89
-  resolution: "@tanstack/router@npm:0.0.1-beta.89"
-  dependencies:
-    "@babel/runtime": ^7.16.7
-    "@tanstack/react-store": 0.0.1-beta.89
-    tiny-invariant: ^1.3.1
-    tiny-warning: ^1.0.3
-  peerDependencies:
-    react: ">=16"
-    react-dom: ">=16"
-  checksum: c77e6538b145b4dc9842f6cd6976d1b44c76fdf806f3880f9112303d645c4f8dda21e3ac633faf6976e83baf42191d5b87945981802a9c6ecd748ec6e96241d3
-  languageName: node
-  linkType: hard
-
-"@tanstack/store@npm:0.0.1-beta.81":
-  version: 0.0.1-beta.81
-  resolution: "@tanstack/store@npm:0.0.1-beta.81"
-  checksum: b97c8857c50ad1a047cc9cffa3044dd68e4746235e32ffb4d36d6fa56390224dc0f68d1baf27ecd84a23ac5cca7643a57edb60da8584963d571ea099eabf3c7b
-  languageName: node
-  linkType: hard
-
-"@tanstack/store@npm:0.0.1-beta.89":
-  version: 0.0.1-beta.89
-  resolution: "@tanstack/store@npm:0.0.1-beta.89"
-  checksum: 085dc494c4408f449e1546a75e31a85bd68aea7fea3c8c4a322da02dcc7d44f13e0fac180fd4bb1feb90998c74d1d41010a69359c2f92e93728c5e67f1191932
   languageName: node
   linkType: hard
 
@@ -4549,10 +4466,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cito@npm:^0.1.8":
-  version: 0.1.8
-  resolution: "cito@npm:0.1.8"
-  checksum: d76829d44746060497cc665190cfab2d441a015a6e036a954bee6168536f000986e9bd823dfb2a58dda5ae45269e2399019a7c5f75d81b6ff06b11d4335af09c
+"cito@npm:^0.2.0":
+  version: 0.2.0
+  resolution: "cito@npm:0.2.0"
+  checksum: beb252c170b4158055372699f4300c08367adb1bb4fb61c1f8119305281b7433c9569478e7f14cfb35a1bd05e5eeac709f3959353c4fbc0efd1f32af8a847845
   languageName: node
   linkType: hard
 
@@ -11612,20 +11529,6 @@ resolve@^1.10.0:
   languageName: node
   linkType: hard
 
-"tiny-invariant@npm:^1.3.1":
-  version: 1.3.1
-  resolution: "tiny-invariant@npm:1.3.1"
-  checksum: 872dbd1ff20a21303a2fd20ce3a15602cfa7fcf9b228bd694a52e2938224313b5385a1078cb667ed7375d1612194feaca81c4ecbe93121ca1baebe344de4f84c
-  languageName: node
-  linkType: hard
-
-"tiny-warning@npm:^1.0.3":
-  version: 1.0.3
-  resolution: "tiny-warning@npm:1.0.3"
-  checksum: da62c4acac565902f0624b123eed6dd3509bc9a8d30c06e017104bedcf5d35810da8ff72864400ad19c5c7806fc0a8323c68baf3e326af7cb7d969f846100d71
-  languageName: node
-  linkType: hard
-
 "tippy.js@npm:^6.3.7":
   version: 6.3.7
   resolution: "tippy.js@npm:6.3.7"
@@ -12178,7 +12081,7 @@ resolve@^1.10.0:
   languageName: node
   linkType: hard
 
-"use-sync-external-store@npm:1.2.0, use-sync-external-store@npm:^1.2.0":
+"use-sync-external-store@npm:1.2.0":
   version: 1.2.0
   resolution: "use-sync-external-store@npm:1.2.0"
   peerDependencies:

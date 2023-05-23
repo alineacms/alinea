@@ -68,7 +68,7 @@ export class DevBackend extends Client {
   deleteDraft: Connection['deleteDraft'] = this.fallback('deleteDraft')
   listDrafts: Connection['listDrafts'] = this.fallback('listDrafts')
   uploadFile: Connection['uploadFile'] = this.fallback('uploadFile')
-  publishEntries: Connection['publishEntries'] = this.fallback('publishEntries')
+  publishEntries: Connection['publish'] = this.fallback('publishEntries')
 
   loadPages(options: PreviewOptions = {}) {
     return new Pages({

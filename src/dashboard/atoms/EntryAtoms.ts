@@ -1,6 +1,7 @@
 import {Database} from 'alinea/backend'
 import {Type} from 'alinea/core'
 import {Page} from 'alinea/core/pages/Page'
+import {Realm} from 'alinea/core/pages/Realm'
 import DataLoader from 'dataloader'
 import {atom, useAtom, useAtomValue} from 'jotai'
 import {atomFamily} from 'jotai/utils'
@@ -12,13 +13,18 @@ import {rootAtom, workspaceAtom} from './NavigationAtoms.js'
 
 export const storeAtom = atom(createPersistentStore)
 
-export const dbAtom = atom(async get => {
+export const localDbAtom = atom(async get => {
   const client = get(clientAtom)
   const store = await get(storeAtom)
   const db = new Database(store, client.config)
   await db.syncWith(client)
   await store.flush()
   return db
+})
+
+export const findAtom = atom(async get => {
+  const db = await get(localDbAtom)
+  return db.find.bind(db)
 })
 
 export const entryRevisionAtoms = atomFamily((id: string) => {
@@ -33,7 +39,7 @@ export const changedEntriesAtom = atom<Array<string>>([])
 export const updateDbAtom = atom(null, async (get, set) => {
   const client = get(clientAtom)
   const store = await get(storeAtom)
-  const db = await get(dbAtom)
+  const db = await get(localDbAtom)
   const changed = await db.syncWith(client).catch(() => [])
   if (!changed.length) return
   for (const id of changed) set(entryRevisionAtoms(id))
@@ -53,19 +59,20 @@ export const ENTRY_TREE_ROOT_KEY = '@alinea/dashboard.entryTreeRoot'
 
 const entryTreeRootAtom = atom(
   async (get): Promise<TreeItem<EntryTreeItem>> => {
-    const db = await get(dbAtom)
+    const find = await get(findAtom)
     const workspace = get(workspaceAtom)
     const root = get(rootAtom)
-    const children = await db.find(
+    const children = await find(
       Page()
         .where(
           Page.workspace.is(workspace.name),
           Page.root.is(root.name),
-          Page.parent.isNull()
+          Page.parent.isNull(),
+          Page.active
         )
         .select(Page.entryId)
-        .groupBy(Page.entryId)
-        .orderBy(Page.index.asc())
+        .orderBy(Page.index.asc()),
+      Realm.PreferDraft
     )
     return {
       index: ENTRY_TREE_ROOT_KEY,
@@ -80,7 +87,7 @@ const entryTreeRootAtom = atom(
 )
 
 const entryTreeItemLoaderAtom = atom(async get => {
-  const db = await get(dbAtom)
+  const find = await get(findAtom)
   const entryTreeRootItem = await get(entryTreeRootAtom)
   const {schema} = get(configAtom)
   return new DataLoader(async (ids: ReadonlyArray<TreeItemIndex>) => {
@@ -88,7 +95,7 @@ const entryTreeItemLoaderAtom = atom(async get => {
     const search = (ids as Array<string>).filter(
       id => id !== ENTRY_TREE_ROOT_KEY
     )
-    const entries: Array<TreeItem<EntryTreeItem>> = await db.find(
+    const entries: Array<TreeItem<EntryTreeItem>> = await find(
       Page()
         .select({
           index: Page.entryId,
@@ -101,9 +108,8 @@ const entryTreeItemLoaderAtom = atom(async get => {
             return children(Page).select(Page.entryId).orderBy(Page.index.asc())
           }
         })
-        .groupBy(Page.entryId)
-        .orderBy(Page.modifiedAt.desc())
-        .where(Page.entryId.isIn(search))
+        .where(Page.entryId.isIn(search)),
+      Realm.PreferDraft
     )
     for (const entry of entries) res.set(entry.index, entry)
     return ids.map(id => {
@@ -131,7 +137,6 @@ export function useEntryTreeProvider(): TreeDataProvider<EntryTreeItem> {
     listener.current?.(changed)
   }, [changed])
   return useMemo(() => {
-    console.log('create new provider')
     return {
       onDidChangeTreeData(_) {
         listener.current = _

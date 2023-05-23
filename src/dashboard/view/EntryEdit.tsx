@@ -63,15 +63,6 @@ export function EntryEdit({editor}: EntryEditProps) {
         head={<EntryHeader mode={mode} setMode={setMode} editor={editor} />}
       >
         <Main.Container>
-          <Button
-            onClick={() => {
-              forceRefresh()
-            }}
-          >
-            Force server version update
-          </Button>
-          <br />
-          <br />
           <EntryTitle
             editor={editor}
             backLink={
@@ -82,7 +73,6 @@ export function EntryEdit({editor}: EntryEditProps) {
               })
             }
           />
-          Dirty: {hasChanges ? 'true' : 'false'}
           {mode === EditMode.Diff ? (
             <>
               Show entry diff here
@@ -115,6 +105,16 @@ export function EntryEdit({editor}: EntryEditProps) {
               />
             </>
           )}
+
+          <Button
+            onClick={() => {
+              forceRefresh()
+            }}
+          >
+            Force server version update
+          </Button>
+          <br />
+          <br />
         </Main.Container>
       </Main>
       {/*preview && <EntryPreview preview={preview} draft={draft} />*/}
