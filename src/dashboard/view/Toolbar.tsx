@@ -25,6 +25,7 @@ import {IcRoundMenu} from 'alinea/ui/icons/IcRoundMenu'
 import IcRoundTextFields from 'alinea/ui/icons/IcRoundTextFields'
 import {IcRoundUnfoldMore} from 'alinea/ui/icons/IcRoundUnfoldMore'
 import {IcSharpBrightnessMedium} from 'alinea/ui/icons/IcSharpBrightnessMedium'
+import {RiFlashlightFill} from 'alinea/ui/icons/RiFlashlightFill'
 import {contrastColor} from 'alinea/ui/util/ContrastColor'
 import {createSlots} from 'alinea/ui/util/Slots'
 import {parseToHsla} from 'color2k'
@@ -51,17 +52,13 @@ type WorkspaceLabelProps = {
 }
 
 function WorkspaceLabel({label, color, icon: Icon}: WorkspaceLabelProps) {
-  const symbol = Icon ? (
-    <Icon />
-  ) : (
-    <span>{String(label).charAt(0).toUpperCase()}</span>
-  )
+  const symbol = Icon ? <Icon /> : <RiFlashlightFill />
   return (
     <HStack center gap={12}>
       <LogoShape foreground={contrastColor(color)} background={color}>
         {symbol}
       </LogoShape>
-      <div style={{fontSize: '13px'}}>
+      <div style={{fontSize: '13px', fontWeight: 600}}>
         <TextLabel label={label} />
       </div>
     </HStack>

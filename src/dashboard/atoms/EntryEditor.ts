@@ -10,6 +10,7 @@ import * as Y from 'yjs'
 import {clientAtom, configAtom} from './DashboardAtoms.js'
 import {entryRevisionAtoms, findAtom} from './EntryAtoms.js'
 import {locationAtom} from './LocationAtoms.js'
+import {yAtom} from './YAtom.js'
 
 export enum EditMode {
   Editing = 'editing',
@@ -73,7 +74,8 @@ export function createEntryEditor(entryData: EntryData) {
       createYDoc(config, version)
     ])
   )
-  const hasChanges = createChangesAtom(docs[activePhase])
+  const yDoc = docs[activePhase]
+  const hasChanges = createChangesAtom(yDoc)
   const states = fromEntries(
     entries(docs).map(([phase, doc]) => [
       phase,
@@ -81,9 +83,11 @@ export function createEntryEditor(entryData: EntryData) {
     ])
   )
   const draftState = states[activePhase]
+  const draftEntry = yAtom(yDoc.getMap(ROOT_KEY), getDraftEntry)
   const editMode = atom(EditMode.Editing)
   const isSaving = atom(false)
   const isPublishing = atom(false)
+
   const selectedPhase = atom(get => {
     const {search} = get(locationAtom)
     const phaseInSearch = search.slice(1)
@@ -91,20 +95,43 @@ export function createEntryEditor(entryData: EntryData) {
       return <EntryPhase>phaseInSearch
     return activePhase
   })
-  const saveDraft = atom(null, async (get, set) => {
-    const entryData = parseYDoc(type, docs[activePhase])
-    const updatedEntry = {...version, ...entryData}
+
+  const saveDraft = atom(null, (get, set) => {
+    const updatedEntry = getDraftEntry()
     set(isSaving, true)
-    await client.saveDraft(updatedEntry)
-    set(isSaving, false)
+    return client.saveDraft(updatedEntry).catch(() => {
+      set(isSaving, false)
+    })
   })
-  const publishDraft = atom(null, async (get, set) => {
-    const entryData = parseYDoc(type, docs[activePhase])
-    const updatedEntry = {...version, ...entryData}
+
+  const publishDraft = atom(null, (get, set) => {
+    const updatedEntry = getDraftEntry()
     set(isPublishing, true)
-    await client.publishDrafts([updatedEntry])
-    set(isPublishing, false)
+    return client.publishDrafts([updatedEntry]).catch(() => {
+      set(isPublishing, false)
+    })
   })
+
+  const resetDraft = atom(null, (get, set) => {
+    const type = config.schema[version.type]
+    const docRoot = yDoc.getMap(ROOT_KEY)
+    for (const [key, field] of entries(type)) {
+      const contents = version.data[key]
+      docRoot.set(key, Field.shape(field).toY(contents))
+    }
+    set(hasChanges, false)
+  })
+
+  const activeTitle = yAtom(
+    yDoc.getMap(ROOT_KEY),
+    () => yDoc.getMap(ROOT_KEY).get('title') as string
+  )
+
+  function getDraftEntry() {
+    const entryData = parseYDoc(type, yDoc)
+    return {...version, ...entryData}
+  }
+
   return {
     ...entryData,
     activePhase,
@@ -114,10 +141,13 @@ export function createEntryEditor(entryData: EntryData) {
     version,
     type,
     draftState,
+    draftEntry,
+    activeTitle,
     states,
     hasChanges,
     saveDraft,
     publishDraft,
+    resetDraft,
     isSaving,
     isPublishing
   }

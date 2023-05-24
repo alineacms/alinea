@@ -22,4 +22,24 @@
     background: var(--alinea-accent);
     color: var(--alinea-accent-foreground);
   }
+
+  &.is-disabled {
+    color: var(--alinea-variant-disabled-foreground);
+    background: var(--alinea-variant-disabled-background);
+  }
+
+  &.is-info {
+    color: var(--alinea-variant-info-foreground);
+    background: var(--alinea-variant-info-background);
+  }
+
+  &.is-success {
+    color: var(--alinea-variant-success-foreground);
+    background: var(--alinea-variant-success-background);
+  }
+
+  &.is-progress {
+    color: var(--alinea-variant-progress-foreground);
+    background: var(--alinea-variant-progress-background);
+  }
 }

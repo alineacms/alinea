@@ -343,7 +343,10 @@ export class Resolver {
             )
         )
         const childrenIds = children().select(children.entryId).skip(1)
-        return ctx.Table().where(ctx.Table.entryId.isIn(childrenIds))
+        return ctx
+          .Table()
+          .where(ctx.Table.entryId.isIn(childrenIds))
+          .orderBy(ctx.Table.index.asc())
       case pages.SourceType.Parents:
         const Parent = Entry().as('Parent')
         const parents = withRecursive(
@@ -429,13 +432,14 @@ export class Resolver {
       name ? ctx.Table.type.is(name) : Expr.value(true),
       this.restrictRealm(ctx.Table, ctx.realm)
     )
-    if (where)
-      query = query.where(
-        condition.and(new Expr(this.expr(ctx.condition, where)))
-      )
     if (skip) query = query.skip(skip)
     if (take) query = query.take(take)
     const extra: Partial<QueryData.Select> = {}
+    extra.where = (
+      where
+        ? condition.and(new Expr(this.expr(ctx.condition, where)))
+        : condition
+    )[Expr.Data]
     if (select) extra.selection = this.select(ctx.select, select)
     if (first) extra.singleResult = true
     if (groupBy) extra.groupBy = groupBy.map(expr => this.expr(ctx, expr))

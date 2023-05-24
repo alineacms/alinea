@@ -9,14 +9,15 @@ const styles = fromModule(css)
 export type ChipProps = StackProps & {
   icon?: ComponentType
   accent?: boolean
+  variant?: 'info' | 'success' | 'disabled' | 'progress'
 }
 
-export function Chip({children, icon, accent, ...props}: ChipProps) {
+export function Chip({children, icon, accent, variant, ...props}: ChipProps) {
   return (
     <HStack
       center
       {...props}
-      className={styles.root.mergeProps(props)({accent})}
+      className={styles.root.mergeProps(props)({accent}, variant)}
     >
       {icon && <Icon className={styles.root.icon()} icon={icon} />}
       <div className={styles.root.label()}>{children}</div>

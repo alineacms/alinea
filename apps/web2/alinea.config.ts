@@ -8,7 +8,7 @@ export {schema}
 export const cms = createNextCMS({
   schema,
   workspaces: {
-    main: alinea.workspace('Alinea', {
+    main: alinea.workspace('Alinea website', {
       pages: alinea.root('Pages', {
         contains: ['page']
       }),
@@ -17,6 +17,7 @@ export const cms = createNextCMS({
         icon: IcRoundPermMedia
       }),
       [alinea.workspace.meta]: {
+        color: '#5763E6',
         source: './content'
       }
     })

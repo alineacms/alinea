@@ -1,7 +1,6 @@
 import {Entry, Type} from 'alinea/core'
 import {Chip, TextLabel, fromModule} from 'alinea/ui'
-import {memo} from 'react'
-import {useDashboard} from '../../hook/UseDashboard'
+import {useConfig} from '../../hook/UseConfig.js'
 import {diffRecord} from './DiffUtils.js'
 import css from './EntryDiff.module.scss'
 import {FieldsDiff} from './FieldsDiff.js'
@@ -13,11 +12,8 @@ export type EntryDiffProps = {
   entryB: Entry
 }
 
-export const EntryDiff = memo(function EntryDiff({
-  entryA,
-  entryB
-}: EntryDiffProps) {
-  const {schema} = useDashboard().config
+export function EntryDiff({entryA, entryB}: EntryDiffProps) {
+  const {schema} = useConfig()
   const typeA = schema[entryA.type]!
   const typeB = schema[entryB.type]!
   const typeChanged = typeA !== typeB
@@ -33,10 +29,14 @@ export const EntryDiff = memo(function EntryDiff({
         </Chip>
       </div>
     )
-  const changes = diffRecord(Type.shape(typeA), entryA, entryB)
+  const changes = diffRecord(Type.shape(typeA), entryA.data, entryB.data)
   return (
     <div className={styles.root()}>
-      <FieldsDiff changes={changes} targetA={entryA} targetB={entryB} />
+      <FieldsDiff
+        changes={changes}
+        targetA={entryA.data}
+        targetB={entryB.data}
+      />
     </div>
   )
-})
+}

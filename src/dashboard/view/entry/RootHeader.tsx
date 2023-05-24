@@ -3,7 +3,6 @@ import {link, useNavigate} from 'alinea/dashboard/util/HashRouter'
 import {Create, HStack, Icon, TextLabel, fromModule} from 'alinea/ui'
 import {IcRoundUnfoldMore} from 'alinea/ui/icons/IcRoundUnfoldMore'
 import {useState} from 'react'
-import {useCurrentDraft} from '../../hook/UseCurrentDraft.js'
 import {useLocale} from '../../hook/UseLocale.js'
 import {useNav} from '../../hook/UseNav.js'
 import {useRoot} from '../../hook/UseRoot.js'
@@ -12,13 +11,16 @@ import css from './RootHeader.module.scss'
 
 const styles = fromModule(css)
 
-export function RootHeader() {
+export interface RootHeaderProps {
+  active?: boolean
+}
+
+export function RootHeader({active}: RootHeaderProps) {
   const nav = useNav()
   const root = useRoot()
   const {name: workspace} = useWorkspace()
-  const draft = useCurrentDraft()
   return (
-    <div className={styles.root({active: !draft})}>
+    <div className={styles.root({active})}>
       <div className={styles.root.inner()}>
         <a
           {...link(nav.root({workspace, root: root.name}))}
@@ -26,7 +28,7 @@ export function RootHeader() {
         >
           <TextLabel label={root.label} />
         </a>
-        {root.i18n && <Langswitch />}
+        {/*root.i18n && <Langswitch />*/}
         <Create.Link href={nav.create({workspace, root: root.name})} />
       </div>
     </div>
@@ -40,7 +42,6 @@ function Langswitch() {
   const currentLocale = useLocale()!
   const [selectedLang, setSelectedLang] = useState(currentLocale)
   const {name: workspace} = useWorkspace()
-  const draft = useCurrentDraft()
   return (
     <div className={styles.langswitch()}>
       <Listbox

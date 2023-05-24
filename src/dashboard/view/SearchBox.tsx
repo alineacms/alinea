@@ -1,17 +1,15 @@
-import {Entry} from 'alinea/core/Entry'
 import {useLocation, useNavigate} from 'alinea/dashboard/util/HashRouter'
 import {HStack, IconButton, Stack, fromModule} from 'alinea/ui'
 import {IcOutlineGridView} from 'alinea/ui/icons/IcOutlineGridView'
 import {IcOutlineList} from 'alinea/ui/icons/IcOutlineList'
 import {IcRoundSearch} from 'alinea/ui/icons/IcRoundSearch'
-import {useLayoutEffect, useMemo, useState} from 'react'
+import {useLayoutEffect, useState} from 'react'
 import {useDashboard} from '../hook/UseDashboard.js'
 import {useFocusList} from '../hook/UseFocusList.js'
 import {useNav} from '../hook/UseNav.js'
 import {useRoot} from '../hook/UseRoot.js'
 import {useWorkspace} from '../hook/UseWorkspace.js'
 import css from './SearchBox.module.scss'
-import {Explorer} from './explorer/Explorer.js'
 
 const styles = fromModule(css)
 
@@ -50,11 +48,10 @@ export function SearchBox() {
   const {schema} = useDashboard().config
   const {name: workspace} = useWorkspace()
   const {name: root} = useRoot()
-  return <></>
-  const cursor = useMemo(
+  /*const cursor = useMemo(
     () => query({workspace, root, search}).select(Entry.fields),
     [workspace, root, search]
-  )
+  )*/
   const [explorerView, setExplorerView] = useState<'row' | 'thumb'>('row')
   // If we navigate to another page (for example by selecting one of the items)
   // clear the search term
@@ -104,7 +101,7 @@ export function SearchBox() {
         </label>
       </div>
       <list.Container>
-        {isOpen && search && (
+        {/*isOpen && search && (
           <div className={styles.root.popover()}>
             <Explorer
               schema={schema}
@@ -114,7 +111,7 @@ export function SearchBox() {
               max={25}
             />
           </div>
-        )}
+        )*/}
       </list.Container>
     </div>
   )

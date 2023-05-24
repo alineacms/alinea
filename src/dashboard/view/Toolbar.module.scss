@@ -5,14 +5,18 @@
   padding: 0 10px;
   padding-left: 6px;
   height: 44px;
-  color: var(--alinea-foreground);
-  background: var(--alinea-background);
-  border-bottom: 2px solid var(--alinea-outline);
+  background: var(--alinea-accent);
+  color: var(--alinea-accent-foreground);
+  border-bottom: 1px solid var(--alinea-outline);
 
   &-menu {
     display: flex;
     justify-content: center;
     width: 44px - 12px;
+
+    @media (min-width: 600px) {
+      display: none;
+    }
   }
 
   &-portal {
