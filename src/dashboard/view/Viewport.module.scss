@@ -20,6 +20,7 @@
   --alinea-fields-selected: var(--alinea-selected);
   --alinea-fields-focus: hsl(var(--alinea-hue), var(--alinea-saturation), 30%);
   --alinea-focus-foreground: hsl(var(--alinea-negative));
+  --alinea-content: hsl(var(--alinea-positive));
   --alinea-shadow: rgba(0, 0, 0, 0.4);
   --alinea-divider-top: 0 -1px 0 rgba(0, 0, 0, 0.25),
     inset 0 1px 0 rgba(255, 255, 255, 0.08);
@@ -32,14 +33,15 @@
   --alinea-button-foreground: white;
   --alinea-button-background: #3f61e8;
   --alinea-button-hover: #2e4fd1;
-  --alinea-draft-foreground: #f0f6ff;
-  --alinea-draft-background: hsla(230, 40%, 30%, 0.8);
-  --alinea-published-foreground: #f1fdf4;
-  --alinea-published-background: hsla(140, 21%, 30%, 0.8);
-  --alinea-archived-foreground: #f0f0f0;
-  --alinea-archived-background: hsla(0, 0%, 30%, 0.8);
-  --alinea-transition-foreground: #fef7ed;
-  --alinea-transition-background: hsla(15, 54%, 30%, 0.8);
+
+  --alinea-variant-info-foreground: #f0f6ff;
+  --alinea-variant-info-background: hsla(230, 40%, 30%, 0.8);
+  --alinea-variant-success-foreground: #f1fdf4;
+  --alinea-variant-success-background: hsla(140, 21%, 30%, 0.8);
+  --alinea-variant-disabled-foreground: #f0f0f0;
+  --alinea-variant-disabled-background: hsla(0, 0%, 30%, 0.8);
+  --alinea-variant-progress-foreground: #fef7ed;
+  --alinea-variant-progress-background: hsla(15, 54%, 30%, 0.8);
 }
 
 @mixin light-theme {
@@ -48,21 +50,22 @@
   --alinea-positive: var(--alinea-hue), var(--alinea-saturation), 100%;
   --alinea-negative: 200, 12%, 14%;
   --alinea-background: hsl(var(--alinea-positive));
-  --alinea-foreground: hsl(197, 21%, 6%);
+  --alinea-foreground: #1e232a;
   --alinea-foreground-faded: #1a1a1b;
   --alinea-toolbar: hsl(var(--alinea-hue), var(--alinea-saturation), 98%);
   --alinea-inner: hsl(var(--alinea-hue), var(--alinea-saturation), 98.5%);
   --alinea-inner-outline: #dcdce4;
   --alinea-highlight: hsla(var(--alinea-negative), 0.06);
-  --alinea-lift: white;
+  --alinea-lift: #f5f5f7;
   --alinea-selected: hsl(200, 12%, 93.5%);
-  --alinea-outline: #f4f4f4;
+  --alinea-outline: hsl(0, 0%, 96%);
+  --alinea-content: white;
   --alinea-shadow: rgba(0, 0, 0, 0.1);
-  --alinea-fields: hsl(200, 12%, 96.5%);
+  --alinea-fields: white;
   --alinea-fields-foreground: #696969;
-  --alinea-fields-shadow: 0 0px 0 1px hsl(0, 0%, 97%);
-  --alinea-fields-selected: hsl(200, 12%, 97%);
-  --alinea-fields-focus: var(--alinea-accent);
+  --alinea-fields-shadow: 0 0px 0 1px hsl(0, 0%, 94%);
+  --alinea-fields-selected: white;
+  --alinea-fields-focus: var(--alinea-outline);
   --alinea-focus-foreground: var(--alinea-accent);
   --alinea-divider-top: 0 -1px 0 rgba(0, 0, 0, 0.06),
     inset 0 1px 0 rgba(255, 255, 255, 0.2);
@@ -75,14 +78,15 @@
   --alinea-button-foreground: white;
   --alinea-button-background: #3f61e8;
   --alinea-button-hover: #2e4fd1;
-  --alinea-draft-background: hsla(216, 100%, 97%, 0.8);
-  --alinea-draft-foreground: #415097;
-  --alinea-published-background: hsla(135, 75%, 97%, 0.8);
-  --alinea-published-foreground: #558164;
-  --alinea-archived-background: hsla(0, 0%, 94%, 0.8);
-  --alinea-archived-foreground: #535353;
-  --alinea-transition-background: hsla(35, 89%, 96%, 0.8);
-  --alinea-transition-foreground: #9f4b2f;
+
+  --alinea-variant-info-background: hsla(216, 100%, 97%, 0.8);
+  --alinea-variant-info-foreground: #415097;
+  --alinea-variant-success-background: hsla(135, 75%, 97%, 0.8);
+  --alinea-variant-success-foreground: #558164;
+  --alinea-variant-disabled-background: hsla(0, 0%, 94%, 0.8);
+  --alinea-variant-disabled-foreground: #535353;
+  --alinea-variant-progress-background: hsla(35, 89%, 96%, 0.8);
+  --alinea-variant-progress-foreground: #9f4b2f;
 }
 
 .root {

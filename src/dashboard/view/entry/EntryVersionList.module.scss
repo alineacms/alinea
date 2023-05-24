@@ -11,18 +11,18 @@
     }
 
     &.is-active.is-draft {
-      color: var(--alinea-draft-foreground);
-      background: var(--alinea-draft-background);
+      color: var(--alinea-variant-info-foreground);
+      background: var(--alinea-variant-info-background);
     }
 
     &.is-active.is-published {
-      color: var(--alinea-published-foreground);
-      background: var(--alinea-published-background);
+      color: var(--alinea-variant-success-foreground);
+      background: var(--alinea-variant-success-background);
     }
 
     &.is-active.is-archived {
-      color: var(--alinea-archived-foreground);
-      background: var(--alinea-archived-background);
+      color: var(--alinea-variant-disabled-foreground);
+      background: var(--alinea-variant-disabled-background);
     }
   }
 }

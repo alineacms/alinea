@@ -1,0 +1,10 @@
+.root {
+  &-sidebar {
+    border-top-left-radius: 12px;
+    overflow: hidden;
+    background: var(--alinea-selected);
+    border-right: 1px solid var(--alinea-outline);
+    border-left: 1px solid var(--alinea-outline);
+    border-top: 1px solid var(--alinea-outline);
+  }
+}

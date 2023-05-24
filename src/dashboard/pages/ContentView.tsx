@@ -1,4 +1,4 @@
-import {Loader} from 'alinea/ui'
+import {Loader, fromModule} from 'alinea/ui'
 import {Suspense} from 'react'
 import {EntryEditor} from '../atoms/EntryEditor.js'
 import {useRoot} from '../hook/UseRoot.js'
@@ -12,6 +12,9 @@ import {Sidebar} from '../view/Sidebar.js'
 import {EntryVersionList} from '../view/entry/EntryVersionList.js'
 import {NewEntry} from '../view/entry/NewEntry.js'
 import {RootHeader} from '../view/entry/RootHeader.js'
+import css from './ContentView.module.scss'
+
+const styles = fromModule(css)
 
 export interface ContentViewProps {
   editor?: EntryEditor
@@ -23,9 +26,9 @@ export function ContentView({editor}: ContentViewProps) {
   const {search} = useLocation()
   return (
     <>
-      <Sidebar.Tree>
+      <Sidebar.Tree className={styles.root.sidebar()}>
         <SearchBox />
-        <RootHeader />
+        <RootHeader active={!editor} />
         <EntryTree
           entryId={editor?.entryId}
           selected={editor?.version.parents}

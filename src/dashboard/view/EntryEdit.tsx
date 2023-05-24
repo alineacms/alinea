@@ -9,6 +9,7 @@ import {EntryEditor} from '../atoms/EntryEditor.js'
 import {useRouteBlocker} from '../atoms/RouterAtoms.js'
 import {useNav} from '../hook/UseNav.js'
 import css from './EntryEdit.module.scss'
+import {EntryDiff} from './diff/EntryDiff.js'
 import {EditMode} from './entry/EditMode.js'
 import {EntryHeader} from './entry/EntryHeader.js'
 import {EntryTitle} from './entry/EntryTitle.js'
@@ -18,25 +19,34 @@ interface EntryEditProps {
   editor: EntryEditor
 }
 
+function ShowChanges({editor}: EntryEditProps) {
+  const draftEntry = useAtomValue(editor.draftEntry)
+  return <EntryDiff entryA={editor.version} entryB={draftEntry} />
+}
+
 export function EntryEdit({editor}: EntryEditProps) {
   const nav = useNav()
   const [mode, setMode] = useAtom(editor.editMode)
   const hasChanges = useAtomValue(editor.hasChanges)
   const selectedPhase = useAtomValue(editor.selectedPhase)
   const ref = useRef<HTMLDivElement>(null)
+  const isSaving = useAtomValue(editor.isSaving)
+  const isPublishing = useAtomValue(editor.isPublishing)
   useEffect(() => {
     ref.current?.scrollTo({top: 0})
-  }, [editor.entryId])
+  }, [editor.entryId, mode, selectedPhase])
   const forceRefresh = useSetAtom(entryRevisionAtoms(editor.entryId))
   // Todo: prettify server conflicts
   const {isBlocking, nextRoute, confirm, cancel} = useRouteBlocker(
     'Are you sure you want to discard changes?',
-    hasChanges
+    hasChanges && !isSaving && !isPublishing
   )
   const isNavigationChange =
     (nextRoute?.data.editor as EntryEditor)?.entryId !== editor.entryId
   const isActivePhase = editor.activePhase === selectedPhase
   const state = isActivePhase ? editor.draftState : editor.states[selectedPhase]
+  const saveDraft = useSetAtom(editor.saveDraft)
+  const resetDraft = useSetAtom(editor.resetDraft)
   return (
     <>
       {isBlocking && (
@@ -48,10 +58,28 @@ export function EntryEdit({editor}: EntryEditProps) {
           <HStack as="footer">
             <Stack.Right>
               <HStack gap={16}>
-                <Button outline type="button" onClick={confirm}>
+                <Button
+                  outline
+                  type="button"
+                  onClick={() => {
+                    resetDraft()
+                    confirm()
+                  }}
+                >
                   Discard my changes
                 </Button>
-                <Button onClick={cancel}>Save as draft</Button>
+                <Button
+                  onClick={() => {
+                    saveDraft().catch(() => {
+                      console.warn(
+                        'Failed to save draft, this should redirect back to the failed entry'
+                      )
+                    })
+                    confirm()
+                  }}
+                >
+                  Save as draft
+                </Button>
               </HStack>
             </Stack.Right>
           </HStack>
@@ -60,29 +88,22 @@ export function EntryEdit({editor}: EntryEditProps) {
       <Main
         ref={ref}
         className={styles.root()}
-        head={<EntryHeader mode={mode} setMode={setMode} editor={editor} />}
+        head={<EntryHeader editor={editor} />}
       >
         <Main.Container>
           <EntryTitle
             editor={editor}
             backLink={
-              editor.version.parent &&
-              nav.entry({
-                id: editor.version.parent,
-                workspace: editor.version.workspace
-              })
+              editor.version.parent
+                ? nav.entry({
+                    id: editor.version.parent,
+                    workspace: editor.version.workspace
+                  })
+                : undefined
             }
           />
           {mode === EditMode.Diff ? (
-            <>
-              Show entry diff here
-              {/*draft.detail.original && (
-                <EntryDiff
-                  entryA={draft.detail.original}
-                  entryB={draft.getEntry()}
-                />
-              )*/}
-            </>
+            <ShowChanges editor={editor} />
           ) : (
             <>
               {/*isTranslating ? (
@@ -106,7 +127,7 @@ export function EntryEdit({editor}: EntryEditProps) {
             </>
           )}
 
-          <Button
+          {/*<Button
             onClick={() => {
               forceRefresh()
             }}
@@ -114,45 +135,10 @@ export function EntryEdit({editor}: EntryEditProps) {
             Force server version update
           </Button>
           <br />
-          <br />
+          <br />*/}
         </Main.Container>
       </Main>
       {/*preview && <EntryPreview preview={preview} draft={draft} />*/}
     </>
   )
 }
-
-/*  const {schema} = useConfig()
-  const type = schema[draft.type]
-  const {preview} = useWorkspace()
-  const isTranslating = !isLoading && locale !== draft.alinea.i18n?.locale
-  const [isCreating, setIsCreating] = useState(false)
-  const [mode, setMode] = useState<EditMode>(initialMode)
-  const status = useObservable(draft.phase)
-  function handleTranslation() {
-    if (!locale || isCreating) return
-    setIsCreating(true)
-    const entry = draft.getEntry()
-    entry.versionId = createId()
-    entry.alinea.i18n!.locale = locale
-    const path = entry.url.split('/').slice(1).join('/')
-    entry.url = `/${locale}/${path}`
-    const doc = docFromEntry(entry, () => type)
-    return hub
-      .updateDraft({id: entry.versionId, update: Y.encodeStateAsUpdate(doc)})
-      .then(result => {
-        if (!result.isFailure()) {
-          queryClient.invalidateQueries(['draft', draft.versionId])
-          navigate(nav.entry(entry))
-        } else {
-          throw result.error
-        }
-      })
-      .finally(() => setIsCreating(false))
-  }
-  useLayoutEffect(() => {
-    const mightHaveTranslation = locale && isTranslating
-    if (!mightHaveTranslation) return
-    const translation = draft.translation(locale)
-    if (translation) navigate(nav.entry(translation))
-  }, [draft, isTranslating, locale])*/

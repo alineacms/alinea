@@ -1,10 +1,26 @@
+import {EntryPhase} from 'alinea/core'
 import {Chip, HStack, fromModule} from 'alinea/ui'
+import {IcOutlineRemoveRedEye} from 'alinea/ui/icons/IcOutlineRemoveRedEye'
+import IcRoundArchive from 'alinea/ui/icons/IcRoundArchive'
+import {IcRoundEdit} from 'alinea/ui/icons/IcRoundEdit'
 import {useAtomValue} from 'jotai'
 import {EntryEditor} from '../../atoms/EntryEditor.js'
 import {useLocation} from '../../util/HashRouter.js'
 import css from './EntryVersionList.module.scss'
 
 const styles = fromModule(css)
+
+const phaseVariant = {
+  [EntryPhase.Archived]: 'disabled',
+  [EntryPhase.Draft]: 'info',
+  [EntryPhase.Published]: 'success'
+} as const
+
+const phaseIcon = {
+  [EntryPhase.Draft]: IcRoundEdit,
+  [EntryPhase.Published]: IcOutlineRemoveRedEye,
+  [EntryPhase.Archived]: IcRoundArchive
+}
 
 export interface EntryVersionListProps {
   editor: EntryEditor
@@ -31,7 +47,9 @@ export function EntryVersionList({editor}: EntryVersionListProps) {
                 <small>
                   {date.toLocaleDateString()} {date.toLocaleTimeString()}
                 </small>
-                <Chip>{phase}</Chip>
+                <Chip variant={phaseVariant[phase]} icon={phaseIcon[phase]}>
+                  {phase}
+                </Chip>
               </HStack>
             </a>
           </li>

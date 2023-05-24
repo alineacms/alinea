@@ -14,7 +14,7 @@
   box-shadow: var(--alinea-fields-shadow);
 
   &-segment {
-    white-space: pre-line;
+    white-space: pre-wrap;
     &.is-insert {
       color: rgb(10, 161, 10);
       background: rgba(30, 131, 30, 0.1);

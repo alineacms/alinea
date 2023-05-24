@@ -10,16 +10,24 @@ export type IconProps = {
   size?: number
   active?: boolean
   round?: boolean
+  variant?: 'info' | 'success' | 'disabled' | 'progress'
 } & HTMLAttributes<HTMLSpanElement>
 
-export function Icon({icon, size, round, active, ...props}: IconProps) {
+export function Icon({
+  icon,
+  size,
+  round,
+  active,
+  variant,
+  ...props
+}: IconProps) {
   const IconView = icon as any
   if (!IconView) return null
   return (
     <i
       {...props}
       style={{...props.style, fontSize: size ? px(size) : undefined}}
-      className={styles.root.mergeProps(props)({round, active})}
+      className={styles.root.mergeProps(props)({round, active}, variant)}
     >
       {typeof IconView === 'function' ? <IconView /> : IconView}
     </i>

@@ -20,7 +20,9 @@ export function EntryTitle({editor, backLink}: EntryTitleProps) {
   const selectedPhase = useAtomValue(editor.selectedPhase)
   const version = editor.phases[selectedPhase]
   const type = editor.type
-  const title = version.title
+  const activeTitle = useAtomValue(editor.activeTitle)
+  const title =
+    selectedPhase === editor.activePhase ? activeTitle : version.title
   return (
     <>
       <Head>

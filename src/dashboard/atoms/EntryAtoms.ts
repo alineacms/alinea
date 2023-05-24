@@ -1,5 +1,5 @@
 import {Database} from 'alinea/backend'
-import {Type} from 'alinea/core'
+import {EntryPhase, Type} from 'alinea/core'
 import {Page} from 'alinea/core/pages/Page'
 import {Realm} from 'alinea/core/pages/Realm'
 import DataLoader from 'dataloader'
@@ -79,7 +79,8 @@ const entryTreeRootAtom = atom(
       data: {
         title: 'Root',
         type: undefined!,
-        entryId: undefined!
+        entryId: undefined!,
+        phase: undefined!
       },
       children
     }
@@ -102,10 +103,11 @@ const entryTreeItemLoaderAtom = atom(async get => {
           data: {
             entryId: Page.entryId,
             type: Page.type,
-            title: Page.title
+            title: Page.title,
+            phase: Page.phase
           },
           children({children}) {
-            return children(Page).select(Page.entryId).orderBy(Page.index.asc())
+            return children(Page).select(Page.entryId)
           }
         })
         .where(Page.entryId.isIn(search)),
@@ -122,17 +124,25 @@ const entryTreeItemLoaderAtom = atom(async get => {
   })
 })
 
+const loaderAtom = atom(get => {
+  return {loader: get(entryTreeItemLoaderAtom)}
+})
+
 export interface EntryTreeItem {
   type: string
   entryId: string
   title: string
+  phase: EntryPhase
 }
 
 export function useEntryTreeProvider(): TreeDataProvider<EntryTreeItem> {
   const listener: MutableRefObject<(changedItemIds: TreeItemIndex[]) => void> =
     useRef(() => {})
   const changed = useAtomValue(changedEntriesAtom)
-  const loader = useAtomValue(entryTreeItemLoaderAtom)
+  const {loader} = useAtomValue(loaderAtom)
+  useEffect(() => {
+    listener.current?.([ENTRY_TREE_ROOT_KEY])
+  }, [loader])
   useEffect(() => {
     listener.current?.(changed)
   }, [changed])
@@ -143,14 +153,14 @@ export function useEntryTreeProvider(): TreeDataProvider<EntryTreeItem> {
         return {dispose: () => {}}
       },
       async getTreeItem(index: TreeItemIndex): Promise<TreeItem> {
-        return loader.clear(index).load(index)
+        return (await loader).clear(index).load(index)
       },
       async getTreeItems(itemIds): Promise<Array<TreeItem>> {
-        const items = await loader.clearAll().loadMany(itemIds)
+        const items = await (await loader).clearAll().loadMany(itemIds)
         return items.filter(
           (item): item is TreeItem => item instanceof Error === false
         )
       }
     }
-  }, [])
+  }, [loader])
 }
