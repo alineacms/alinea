@@ -5,7 +5,7 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "dev": "esbx build && run-p dev:compile dev:check dev:web2",
+    "dev": "esbx build && run-p dev:compile dev:web2",
     "build": "esbx build",
     "alinea": "rimraf -g 'dist/**/*.js' && esbx build && node dist/cli/bin.js",
     "build:alinea": "esbx build",

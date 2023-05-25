@@ -63,6 +63,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@alinea/core@workspace:src/core"
   dependencies:
+    cito: ^0.2.0
     pretty-ms: ^8.0.0
     yjs: ^13.5.47
   languageName: unknown

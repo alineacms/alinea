@@ -1,6 +1,6 @@
 import {Entry} from 'alinea/core/Entry'
 import {fromModule, Typo} from 'alinea/ui'
-import {Preview} from '../Preview.js'
+import {Preview} from '../Preview.browser.js'
 import css from './FieldsPreview.module.scss'
 
 const styles = fromModule(css)

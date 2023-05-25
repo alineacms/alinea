@@ -72,7 +72,7 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
     const cms = await loadCMS(context)
     await generatePackage(context, cms)
     nextBuild = builds.next()
-    const store = await cms.driver.createStore(context.cwd)
+    const store = await cms.createStore(context.cwd)
     for await (const _ of fillCache(context, store, cms, nextBuild)) {
       yield {cms, store}
       if (onAfterGenerate && !afterGenerateCalled) {

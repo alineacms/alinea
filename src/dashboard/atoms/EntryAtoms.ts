@@ -164,3 +164,14 @@ export function useEntryTreeProvider(): TreeDataProvider<EntryTreeItem> {
     }
   }, [loader])
 }
+
+export const previewTokenAtoms = atomFamily((id: string) => {
+  return atom(async get => {
+    const client = get(clientAtom)
+    return client.previewToken(id)
+  })
+})
+
+export function usePreviewToken(id: string) {
+  return useAtomValue(previewTokenAtoms(id))
+}

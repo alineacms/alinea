@@ -1,6 +1,6 @@
-import {createId} from 'alinea/core'
 import {column, index, table} from 'rado'
 import {EntryData} from '../backend/db/EntryData.js'
+import {createId} from './Id.js'
 /*
 class EntryVersionTable {
   entryId = column.string

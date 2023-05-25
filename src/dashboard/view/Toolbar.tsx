@@ -40,6 +40,7 @@ import {
   workspacePreferenceAtom
 } from '../atoms/PreferencesAtoms.js'
 import {accentColorAtom} from '../atoms/StyleAtoms.js'
+import {AlineaLogo} from './AlineaLogo.js'
 import {useSidebar} from './Sidebar.js'
 import css from './Toolbar.module.scss'
 
@@ -56,7 +57,7 @@ function WorkspaceLabel({label, color, icon: Icon}: WorkspaceLabelProps) {
   return (
     <HStack center gap={12}>
       <LogoShape foreground={contrastColor(color)} background={color}>
-        {symbol}
+        <AlineaLogo />
       </LogoShape>
       <div style={{fontSize: '13px', fontWeight: 600}}>
         <TextLabel label={label} />

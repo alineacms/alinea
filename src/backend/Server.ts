@@ -41,6 +41,11 @@ export class Server implements Connection {
     return this.resolver.resolve(selection, realm)
   }
 
+  previewToken(entryId: string): Promise<string> {
+    const {previews} = this.options
+    return previews.sign({id: entryId})
+  }
+
   async saveDraft(entry: Entry): Promise<void> {
     const {target} = this.options
     const changes = await ChangeSet.create(

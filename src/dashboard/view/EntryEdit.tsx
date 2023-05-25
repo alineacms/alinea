@@ -7,11 +7,13 @@ import {useEffect, useRef} from 'react'
 import {entryRevisionAtoms} from '../atoms/EntryAtoms.js'
 import {EntryEditor} from '../atoms/EntryEditor.js'
 import {useRouteBlocker} from '../atoms/RouterAtoms.js'
+import {useConfig} from '../hook/UseConfig.js'
 import {useNav} from '../hook/UseNav.js'
 import css from './EntryEdit.module.scss'
 import {EntryDiff} from './diff/EntryDiff.js'
 import {EditMode} from './entry/EditMode.js'
 import {EntryHeader} from './entry/EntryHeader.js'
+import {EntryPreview} from './entry/EntryPreview.js'
 import {EntryTitle} from './entry/EntryTitle.js'
 const styles = fromModule(css)
 
@@ -25,6 +27,7 @@ function ShowChanges({editor}: EntryEditProps) {
 }
 
 export function EntryEdit({editor}: EntryEditProps) {
+  const {preview} = useConfig()
   const nav = useNav()
   const [mode, setMode] = useAtom(editor.editMode)
   const hasChanges = useAtomValue(editor.hasChanges)
@@ -138,7 +141,7 @@ export function EntryEdit({editor}: EntryEditProps) {
           <br />*/}
         </Main.Container>
       </Main>
-      {/*preview && <EntryPreview preview={preview} draft={draft} />*/}
+      {preview && <EntryPreview preview={preview} editor={editor} />}
     </>
   )
 }

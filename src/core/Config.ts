@@ -1,3 +1,4 @@
+import {ComponentType} from 'react'
 import {BackendConfig} from './BackendConfig.js'
 import {Schema} from './Schema.js'
 import {Type} from './Type.js'
@@ -16,6 +17,8 @@ export interface Config {
     /** Compile all static assets for the dashboard to this dir */
     staticFile?: string
   }
+  /** A react component used to preview an entry in the dashboard */
+  preview?: ComponentType<{previewToken: string}>
 }
 
 export namespace Config {

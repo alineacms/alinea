@@ -2,6 +2,7 @@ import {Selection} from 'alinea/core/pages/Selection'
 import type {ComponentType} from 'react'
 import {CMS} from './CMS.js'
 import {Label} from './Label.js'
+import {Realm} from './pages/Realm.js'
 
 export interface RootI18n {
   locales: Array<string>
@@ -27,12 +28,18 @@ export class Root {
     this[Root.Data] = data
   }
 
-  fetch<S>(select: S): Promise<Selection.Infer<S>> {
-    return CMS.instanceFor(this).connection().fetch(select)
+  async find<S>(select: S) {
+    const cnx = await CMS.instanceFor(this).connection()
+    return cnx.resolve(Selection(select), Realm.PreferDraft) as Promise<
+      Selection.Infer<S>
+    >
   }
 
-  fetchOne<S>(select: S): Promise<Selection.Infer<S>> {
-    return CMS.instanceFor(this).connection().fetch(select)
+  async findOne<S>(select: S): Promise<Selection.Infer<S>> {
+    const cnx = await CMS.instanceFor(this).connection()
+    return cnx.resolve(Selection(select), Realm.Published) as Promise<
+      Selection.Infer<S>
+    >
   }
 }
 
