@@ -1,9 +1,17 @@
 import {AbortController, fetch, FormData, Response} from '@alinea/iso'
 import {AlineaMeta} from 'alinea/backend/db/AlineaMeta'
-import {Config, Connection, createError, Entry, Media} from 'alinea/core'
+import {
+  Config,
+  Connection,
+  createError,
+  Entry,
+  Media,
+  Schema
+} from 'alinea/core'
 import {UpdateResponse} from './Connection.js'
 import {Realm} from './pages/Realm.js'
 import {Selection} from './pages/Selection.js'
+import {serializeSelection} from './pages/Serialize.js'
 
 async function failOnHttpError<T>(
   res: Response,
@@ -17,14 +25,25 @@ async function failOnHttpError<T>(
 type AuthenticateRequest = (request?: RequestInit) => RequestInit | undefined
 
 export class Client implements Connection {
+  targets: Schema.Targets
+
   constructor(
     public config: Config,
     public url: string,
     protected applyAuth: AuthenticateRequest = v => v,
     protected unauthorized: () => void = () => {}
-  ) {}
+  ) {
+    this.targets = Schema.targets(config.schema)
+  }
+
+  previewToken(entryId: string): Promise<string> {
+    return this.requestJson(
+      Connection.routes.previewToken(entryId)
+    ).then<string>(failOnHttpError)
+  }
 
   resolve(selection: Selection, realm: Realm): Promise<unknown> {
+    serializeSelection(this.targets, selection)
     const body = JSON.stringify({selection, realm})
     return this.requestJson(Connection.routes.resolve(), {
       method: 'POST',
@@ -98,13 +117,15 @@ export class Client implements Connection {
       ...this.applyAuth(init),
       signal
     })
-      .then(res => {
+      .then(async res => {
         if (res.status === 401) this.unauthorized()
-        if (res.status > 400)
+        if (!res.ok) {
+          const msg = await res.text()
           throw createError(
             res.status,
-            `Could not fetch "${endpoint}" (${res.status})`
+            `Could not fetch "${endpoint}" (${res.status}: ${msg})`
           )
+        }
         return res
       })
       .catch(err => {

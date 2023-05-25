@@ -60,7 +60,11 @@ export interface TypeData {
   target: TypeTarget
 }
 
-export class TypeTarget {}
+export class TypeTarget {
+  toJSON() {
+    return undefined
+  }
+}
 
 export declare class TypeI<Definition = object> {
   get [Type.Data](): TypeData

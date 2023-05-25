@@ -92,7 +92,7 @@ export async function serve(options: ServeOptions): Promise<void> {
               rootDir: cwd
             }),
             media: undefined!,
-            previews: new JWTPreviews('@alinea/backend/devserver')
+            previews: new JWTPreviews('dev')
           })
         ).handle
       )

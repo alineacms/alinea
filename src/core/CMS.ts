@@ -1,23 +1,25 @@
+import {Store} from 'alinea/backend/Store'
 import {Config} from './Config.js'
-import {Driver} from './Driver.js'
+import {Connection} from './Connection.js'
 import {Root} from './Root.js'
 import {Workspace} from './Workspace.js'
-import {DefaultDriver} from './driver/DefaultDriver.js'
 import {entries} from './util/Objects.js'
-
-export interface CMSApi {}
 
 type Attachment = Workspace | Root
 const attached = new WeakMap<Attachment, CMS>()
 
-export class CMS implements Config, CMSApi {
-  constructor(public config: Config, public driver: Driver) {
+export interface CMSApi {
+  createStore(cwd: string): Promise<Store>
+  connection(): Promise<Connection>
+}
+
+export abstract class CMS implements Config {
+  constructor(protected config: Config) {
     this.attach(config)
   }
 
-  connection() {
-    return this.driver.establishConnection()
-  }
+  abstract createStore(cwd: string): Promise<Store>
+  abstract connection(): Promise<Connection>
 
   protected attach(config: Config) {
     for (const [name, workspace] of entries(config.workspaces)) {
@@ -39,6 +41,29 @@ export class CMS implements Config, CMSApi {
   get workspaces() {
     return this.config.workspaces
   }
+
+  get backend() {
+    return this.config.backend
+  }
+
+  get preview() {
+    return this.config.preview
+  }
+}
+
+export class DefaultCMS extends CMS {
+  async createStore(cwd: string): Promise<Store> {
+    const {default: BetterSqlite3} = await import('better-sqlite3')
+    const {connect} = await import('rado/driver/better-sqlite3')
+    const cnx = connect(new BetterSqlite3(`${cwd}/.alinea/content.sqlite`))
+    return cnx.toAsync()
+  }
+
+  async connection(): Promise<Connection> {
+    // const isBrowser = typeof window !== 'undefined'
+    // if (isBrowser) return new Client(this.config)
+    throw new Error('Method not implemented.')
+  }
 }
 
 export namespace CMS {
@@ -52,8 +77,7 @@ export namespace CMS {
 }
 
 export function createCMS<Definition extends Config>(
-  config: Definition,
-  driver: Driver = new DefaultDriver(config)
+  config: Definition
 ): Definition & CMSApi {
-  return new CMS(config, driver) as any
+  return new DefaultCMS(config) as any
 }

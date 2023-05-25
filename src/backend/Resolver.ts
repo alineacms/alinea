@@ -286,6 +286,11 @@ export class Resolver {
     return this.expr(ctx.select, expr)
   }
 
+  selectAll(ctx: QueryContext, target: pages.TargetData): ExprData {
+    const fields = this.fieldsOf(ctx.select, target)
+    return new ExprData.Record(fromEntries(fields))
+  }
+
   select(ctx: QueryContext, selection: pages.Selection): ExprData {
     switch (selection.type) {
       case 'cursor':
@@ -440,7 +445,9 @@ export class Resolver {
         ? condition.and(new Expr(this.expr(ctx.condition, where)))
         : condition
     )[Expr.Data]
-    if (select) extra.selection = this.select(ctx.select, select)
+    extra.selection = select
+      ? this.select(ctx.select, select)
+      : this.selectAll(ctx, {name})
     if (first) extra.singleResult = true
     if (groupBy) extra.groupBy = groupBy.map(expr => this.expr(ctx, expr))
     if (orderBy) extra.orderBy = this.orderBy(ctx, orderBy)

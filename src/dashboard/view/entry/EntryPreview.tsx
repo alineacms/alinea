@@ -1,14 +1,15 @@
-import {Entry} from 'alinea/core'
-import {useObservable} from 'alinea/ui'
+import {useAtomValue} from 'jotai'
 import {ComponentType} from 'react'
-import {EntryDraft} from '../../draft/EntryDraft.js'
+import {usePreviewToken} from '../../atoms/EntryAtoms.js'
+import {EntryEditor} from '../../atoms/EntryEditor.js'
 
 export type EntryPreviewProps = {
-  draft: EntryDraft
-  preview: ComponentType<{entry: Entry; previewToken: string}>
+  editor: EntryEditor
+  preview: ComponentType<{previewToken: string}>
 }
 
-export function EntryPreview({draft, preview: Preview}: EntryPreviewProps) {
-  const entry = useObservable(draft.entry)
-  return <Preview entry={entry} previewToken={draft.detail.previewToken} />
+export function EntryPreview({editor, preview: Preview}: EntryPreviewProps) {
+  const entry = useAtomValue(editor.draftEntry)
+  const previewToken = usePreviewToken(editor.entryId)
+  return <Preview previewToken={previewToken} />
 }

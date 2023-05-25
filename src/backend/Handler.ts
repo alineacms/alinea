@@ -35,6 +35,15 @@ function createRouter(
   }
   return router(
     matcher
+      .get(Connection.routes.previewToken(':entryId'))
+      .map(context)
+      .map(({ctx, params}) => {
+        const api = createApi(ctx)
+        return ctx.logger.result(api.previewToken(params.entryId as string))
+      })
+      .map(respond),
+
+    matcher
       .post(Connection.routes.resolve())
       .map(context)
       .map(router.parseJson)
