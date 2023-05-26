@@ -1,4 +1,12 @@
-import {Field, RichTextShape, Schema, Shape, TextDoc, Type} from 'alinea/core'
+import {
+  Connection,
+  Field,
+  RichTextShape,
+  Schema,
+  Shape,
+  TextDoc,
+  Type
+} from 'alinea/core'
 import {Realm} from 'alinea/core/pages/Realm'
 import {
   BinOpType,
@@ -495,12 +503,36 @@ export class Resolver {
     return interim
   }
 
-  resolve = async <T>(
-    selection: pages.Selection<T>,
-    realm: Realm
-  ): Promise<T> => {
-    const query = this.query(new QueryContext(realm), selection)
-    const interim: object | Array<object> = await this.store(new Query(query))
-    return this.post(interim)
+  resolve = async <T>({
+    selection,
+    realm = Realm.Published,
+    preview
+  }: Connection.ResolveParams): Promise<T> => {
+    const query = new Query<object | Array<object>>(
+      this.query(new QueryContext(realm), selection)
+    )
+    let interim: object | Array<object>
+    if (preview) {
+      try {
+        await this.store.transaction(async tx => {
+          // Temporarily add preview entry
+          const current = Entry({
+            entryId: preview.entryId,
+            phase: preview.phase
+          })
+          await tx(current.delete())
+          await tx(Entry().insert(preview))
+          const result = await tx(query)
+          // The transaction api needs to be revised to support explicit commit/rollback
+          throw {result}
+        })
+      } catch (err: any) {
+        if (err.result) interim = err.result
+        else throw err
+      }
+    } else {
+      interim = await this.store(query)
+    }
+    return this.post(interim!)
   }
 }

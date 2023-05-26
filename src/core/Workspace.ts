@@ -2,6 +2,7 @@ import {Expand} from 'alinea/core'
 import type {ComponentType} from 'react'
 import {CMS} from './CMS.js'
 import {Label} from './Label.js'
+import {Meta} from './Meta.js'
 import {Root} from './Root.js'
 import {getRandomColor} from './util/GetRandomColor.js'
 
@@ -28,7 +29,7 @@ type Roots = Record<string, Root>
 
 export interface WorkspaceDefinition {
   [key: string]: Root
-  [Workspace.Meta]: WorkspaceMeta
+  [Meta]: WorkspaceMeta
 }
 
 export type Workspace<T extends Roots = Roots> = T & {
@@ -64,14 +65,12 @@ export function workspace<Definition extends WorkspaceDefinition>(
     [Workspace.Data]: {
       label,
       roots: definition,
-      ...definition[Workspace.Meta],
-      color:
-        definition[Workspace.Meta].color ??
-        getRandomColor(JSON.stringify(label))
+      ...definition[Meta],
+      color: definition[Meta].color ?? getRandomColor(JSON.stringify(label))
     }
   }
 }
 
 export namespace workspace {
-  export const meta: typeof Workspace.Meta = Workspace.Meta
+  export const meta: typeof Meta = Meta
 }

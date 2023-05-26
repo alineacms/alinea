@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "dev": "next dev",
+    "dev": "cross-env ALINEA_PORT=4500 next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"

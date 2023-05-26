@@ -78,7 +78,7 @@ export function createHandler(
     initial = true
 
   const config = {
-    external: ['next/headers', 'better-sqlite3'],
+    external: ['next/navigation', 'next/headers', 'better-sqlite3'],
     format: 'esm',
     target: 'esnext',
     treeShaking: true,
@@ -114,6 +114,9 @@ export function createHandler(
         else currentBuild = trigger<BuildDetails>()
       })
       build.onEnd(result => {
+        if (result.errors.length) {
+          console.log('> building alinea dashboard failed')
+        }
         currentBuild.resolve(buildFiles(devDir, result))
         if (alineaDev) liveReload.reload('reload')
       })

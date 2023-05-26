@@ -1,6 +1,4 @@
 import {Config, Connection, Entry, EntryPhase} from 'alinea/core'
-import {Realm} from 'alinea/core/pages/Realm'
-import {Selection} from 'alinea/core/pages/Selection'
 import {Database} from './Database.js'
 import {File, Media} from './Media.js'
 import {Previews} from './Previews'
@@ -37,14 +35,14 @@ export class Server implements Connection {
 
   // Api
 
-  resolve(selection: Selection, realm: Realm) {
-    return this.resolver.resolve(selection, realm)
+  resolve(params: Connection.ResolveParams) {
+    return this.resolver.resolve(params)
   }
 
   previewToken(): Promise<string> {
     const {previews} = this.options
     const user = this.context.user
-    if (!user) throw new Error(`Unauthorized`)
+    if (!user) return previews.sign({anonymous: true})
     return previews.sign({sub: user.sub})
   }
 

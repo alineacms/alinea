@@ -1,4 +1,3 @@
-import {ComponentType} from 'react'
 import {BackendConfig} from './BackendConfig.js'
 import {Schema} from './Schema.js'
 import {Type} from './Type.js'
@@ -10,15 +9,14 @@ export interface Config {
   /** A record containing workspace configurations */
   workspaces: Record<string, Workspace>
   backend?: BackendConfig<any>
-  // preview
   dashboard?: {
     handlerUrl: string
     dashboardUrl: string
     /** Compile all static assets for the dashboard to this dir */
     staticFile?: string
   }
-  /** A react component used to preview an entry in the dashboard */
-  preview?: ComponentType<{previewSearch: string}>
+  /** A url which will be embedded in the dashboard for live previews */
+  preview?: string
 }
 
 export namespace Config {

@@ -15,8 +15,9 @@ export const storeAtom = atom(createPersistentStore)
 
 export const localDbAtom = atom(async get => {
   const client = get(clientAtom)
+  const config = get(configAtom)
   const store = await get(storeAtom)
-  const db = new Database(store, client.config)
+  const db = new Database(store, config)
   await db.syncWith(client)
   await store.flush()
   return db

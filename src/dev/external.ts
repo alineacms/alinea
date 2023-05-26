@@ -25,6 +25,7 @@ function externalDeps() {
 
 const external = [
   'next',
+  'next/navigation',
   '@remix-run/node',
   '@remix-run/react',
   'react/jsx-runtime',
