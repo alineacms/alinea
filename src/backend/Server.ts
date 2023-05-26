@@ -41,9 +41,11 @@ export class Server implements Connection {
     return this.resolver.resolve(selection, realm)
   }
 
-  previewToken(entryId: string): Promise<string> {
+  previewToken(): Promise<string> {
     const {previews} = this.options
-    return previews.sign({id: entryId})
+    const user = this.context.user
+    if (!user) throw new Error(`Unauthorized`)
+    return previews.sign({sub: user.sub})
   }
 
   async saveDraft(entry: Entry): Promise<void> {

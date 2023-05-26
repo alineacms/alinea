@@ -16,14 +16,14 @@ export const cms = createNextCMS({
         icon: IcRoundPermMedia
       }),
       [alinea.workspace.meta]: {
-        color: '#5763E6',
+        color: '#3F61E8',
         source: './content'
       }
     })
   },
-  preview({previewToken}) {
+  preview({previewSearch}) {
     const location =
       process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : ''
-    return <BrowserPreview url={`${location}/api/preview?${previewToken}`} />
+    return <BrowserPreview url={`${location}/api/preview${previewSearch}`} />
   }
 })
