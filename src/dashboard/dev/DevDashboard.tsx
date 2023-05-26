@@ -49,7 +49,10 @@ export function DevDashboard({loadConfig}: DevDashboardOptions) {
   const forceDbUpdate = useSetAtom(updateDbAtom)
   const client = useMemo(() => {
     if (!cms) return null
-    return new Client(cms, joinPaths(location.origin, location.pathname))
+    return new Client({
+      config: cms,
+      url: joinPaths(location.origin, location.pathname)
+    })
   }, [cms])
   function getConfig() {
     return loadConfig().then(setCms)

@@ -18,7 +18,7 @@ export interface Syncable {
 
 export interface Connection extends Syncable {
   previewToken(): Promise<string>
-  resolve(selection: Selection, realm: Realm): Promise<unknown>
+  resolve(params: Connection.ResolveParams): Promise<unknown>
   uploadFile(params: Connection.UploadParams): Promise<Media.File>
   saveDraft(entry: Entry): Promise<void>
   publishDrafts(entries: Array<Entry>): Promise<void>
@@ -38,6 +38,11 @@ export namespace Connection {
     blurHash?: string
     width?: number
     height?: number
+  }
+  export interface ResolveParams {
+    selection: Selection
+    realm?: Realm
+    preview?: Entry
   }
   export type CreateParams = {
     entries: Array<Entry>

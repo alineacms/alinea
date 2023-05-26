@@ -1,27 +1,24 @@
-export enum PreviewAction {
-  Ping = '[alinea-ping]',
-  Pong = '[alinea-pong]',
-  Reload = '[alinea-reload]',
-  Refetch = '[alinea-refetch]',
-  Previous = '[alinea-previous]',
-  Next = '[alinea-next]'
+import type {Entry} from 'alinea/core'
+import {PreviewAction, PreviewMessage} from './PreviewMessage.js'
+
+export interface PreviewApi {
+  preview(entry: Entry): Promise<void>
+  setIsPreviewing(isPreviewing: boolean): void
 }
 
-export type PreviewApi = {
-  refetch?: () => void
-  setIsPreviewing?: (isPreviewing: boolean) => void
-}
-
-export function registerPreview(api: PreviewApi = {}) {
+export function registerPreview(api: PreviewApi) {
   if (typeof window === 'undefined') return
-  function handleMessage(event: MessageEvent<string>) {
-    switch (event.data) {
+  function handleMessage(event: MessageEvent<PreviewMessage>) {
+    if (!event.data || typeof event.data !== 'object') return
+    const message = event.data as PreviewMessage
+    switch (message.action) {
+      case PreviewAction.Preview:
+        console.log('[Alinea preview received]')
+        api.preview(message.entry)
+        return
       case PreviewAction.Reload:
         console.log('[Alinea preview reload received]')
         return location.reload()
-      case PreviewAction.Refetch:
-        console.log('[Alinea preview refetch received]')
-        return api.refetch ? api.refetch() : location.reload()
       case PreviewAction.Previous:
         console.log('[Alinea preview previous received]')
         return history.back()
@@ -30,12 +27,17 @@ export function registerPreview(api: PreviewApi = {}) {
         return history.forward()
       case PreviewAction.Ping:
         console.log('[Alinea preview ping received]')
-        api.setIsPreviewing?.(true)
-        return window.parent.postMessage(PreviewAction.Pong, event.origin)
+        api.setIsPreviewing(true)
+        return window.parent.postMessage(
+          {action: PreviewAction.Pong},
+          event.origin
+        )
     }
   }
   if (window.location != window.parent.location) {
-    window.parent.postMessage(PreviewAction.Pong, document.referrer)
+    // On first load send a pong because we might have missed ping,
+    // this can warn in the console but it seems we cannot catch it
+    window.parent.postMessage({action: PreviewAction.Pong}, document.referrer)
     addEventListener('message', handleMessage)
     console.log('[Alinea preview listener attached]')
   }

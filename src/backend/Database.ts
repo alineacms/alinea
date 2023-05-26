@@ -1,4 +1,12 @@
-import {Config, Root, Syncable, createError} from 'alinea/core'
+import {
+  Config,
+  Connection,
+  EntryUrlMeta,
+  Root,
+  Syncable,
+  Type,
+  createError
+} from 'alinea/core'
 import {EntryRecord} from 'alinea/core/EntryRecord'
 import {Realm} from 'alinea/core/pages/Realm'
 import * as path from 'alinea/core/util/Paths'
@@ -19,14 +27,14 @@ const decoder = new TextDecoder()
 const ALT_STATUS = [EntryPhase.Draft, EntryPhase.Archived]
 
 export class Database implements Syncable {
-  resolve: <T>(selection: Selection<T>, realm: Realm) => Promise<T>
+  resolve: <T>(params: Connection.ResolveParams) => Promise<T>
 
   constructor(protected store: Store, public config: Config) {
     this.resolve = new Resolver(store, config.schema).resolve
   }
 
   find<S>(selection: S, realm = Realm.Published) {
-    return this.resolve(Selection(selection), realm) as Promise<
+    return this.resolve({selection: Selection(selection), realm}) as Promise<
       Selection.Infer<S>
     >
   }
@@ -165,6 +173,22 @@ export class Database implements Syncable {
     return [fileName, EntryPhase.Published]
   }
 
+  entryUrl(type: Type, meta: EntryUrlMeta) {
+    const {entryUrl} = Type.meta(type)
+    if (entryUrl) return entryUrl(meta)
+    const segments = meta.locale ? [meta.locale] : []
+    return (
+      '/' +
+      segments
+        .concat(
+          meta.parentPaths
+            .concat(meta.path)
+            .filter(segment => segment !== 'index')
+        )
+        .join('/')
+    )
+  }
+
   computeEntry(
     file: SourceEntry
   ): Omit<Table.Insert<typeof Entry>, 'contentHash'> {
@@ -178,7 +202,7 @@ export class Database implements Syncable {
     const extension = path.extname(file.filePath)
     const fileName = path.basename(file.filePath, extension)
     const [entryPath, entryPhase] = this.entryInfo(fileName)
-    const segments = parentDir.split('/')
+    const segments = parentDir.split('/').filter(Boolean)
     const root = Root.data(this.config.workspaces[file.workspace][file.root])
     let locale: string | null = null
 
@@ -193,6 +217,13 @@ export class Database implements Syncable {
     const childrenDir = path.join(parentDir, entryPath)
 
     if (!data.id) throw new Error(`missing id`)
+
+    const urlMeta: EntryUrlMeta = {
+      locale,
+      parentPaths: segments,
+      path: entryPath,
+      phase: entryPhase
+    }
 
     return {
       workspace: file.workspace,
@@ -218,7 +249,7 @@ export class Database implements Syncable {
 
       path: entryPath,
       title: data.title ?? '',
-      url: '',
+      url: this.entryUrl(type, urlMeta),
 
       data: entryData(type, {
         ...data,

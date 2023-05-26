@@ -10,7 +10,6 @@ import {
 } from 'alinea/core'
 import {UpdateResponse} from './Connection.js'
 import {Realm} from './pages/Realm.js'
-import {Selection} from './pages/Selection.js'
 import {serializeSelection} from './pages/Serialize.js'
 
 async function failOnHttpError<T>(
@@ -24,16 +23,22 @@ async function failOnHttpError<T>(
 
 type AuthenticateRequest = (request?: RequestInit) => RequestInit | undefined
 
+export interface ClientOptions {
+  config: Config
+  url: string
+  applyAuth?: AuthenticateRequest
+  unauthorized?: () => void
+  resolveDefaults?: {
+    realm?: Realm
+    preview?: Entry
+  }
+}
+
 export class Client implements Connection {
   targets: Schema.Targets
 
-  constructor(
-    public config: Config,
-    public url: string,
-    protected applyAuth: AuthenticateRequest = v => v,
-    protected unauthorized: () => void = () => {}
-  ) {
-    this.targets = Schema.targets(config.schema)
+  constructor(public options: ClientOptions) {
+    this.targets = Schema.targets(options.config.schema)
   }
 
   previewToken(): Promise<string> {
@@ -42,9 +47,11 @@ export class Client implements Connection {
     )
   }
 
-  resolve(selection: Selection, realm: Realm): Promise<unknown> {
+  resolve(params: Connection.ResolveParams): Promise<unknown> {
+    const {resolveDefaults} = this.options
+    const {selection} = params
     serializeSelection(this.targets, selection)
-    const body = JSON.stringify({selection, realm})
+    const body = JSON.stringify({...resolveDefaults, ...params})
     return this.requestJson(Connection.routes.resolve(), {
       method: 'POST',
       body
@@ -52,7 +59,7 @@ export class Client implements Connection {
   }
 
   authenticate(applyAuth: AuthenticateRequest, unauthorized: () => void) {
-    return new Client(this.config, this.url, applyAuth, unauthorized)
+    return new Client({...this.options, applyAuth, unauthorized})
   }
 
   updates(request: AlineaMeta): Promise<UpdateResponse> {
@@ -107,18 +114,22 @@ export class Client implements Connection {
   }
 
   protected request(endpoint: string, init?: RequestInit): Promise<Response> {
+    const {url, applyAuth = v => v, unauthorized} = this.options
     const controller = new AbortController()
     const signal = controller.signal
-    const url =
-      this.url.endsWith('/') && endpoint.startsWith('/')
-        ? this.url + endpoint.slice(1)
-        : this.url + endpoint
-    const promise = fetch(url, {
-      ...this.applyAuth(init),
+    const location =
+      url.endsWith('/') && endpoint.startsWith('/')
+        ? url + endpoint.slice(1)
+        : url + endpoint
+    const promise = fetch(location, {
+      ...applyAuth(init),
       signal
     })
+      .catch(err => {
+        throw createError(500, `Could not fetch "${endpoint}": ${err}`)
+      })
       .then(async res => {
-        if (res.status === 401) this.unauthorized()
+        if (res.status === 401) unauthorized?.()
         if (!res.ok) {
           const msg = await res.text()
           throw createError(
@@ -127,9 +138,6 @@ export class Client implements Connection {
           )
         }
         return res
-      })
-      .catch(err => {
-        throw createError(500, `Could not fetch "${endpoint}": ${err}`)
       })
     const cancel = () => controller.abort()
     function cancelify<T>(promise: Promise<T>) {

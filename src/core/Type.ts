@@ -7,6 +7,7 @@ import {Field} from './Field.js'
 import {Hint} from './Hint.js'
 import {createId} from './Id.js'
 import {Label} from './Label.js'
+import {Meta} from './Meta.js'
 import {Section, section} from './Section.js'
 import {Shape} from './Shape.js'
 import type {View} from './View.js'
@@ -89,7 +90,6 @@ export type TypeRow<Definition> = Expand<{
 export namespace Type {
   export type Row<Definition> = TypeRow<Definition>
   export const Data = Symbol.for('@alinea/Type.Data')
-  export const Meta = Symbol.for('@alinea/Type.Meta')
 
   export function label(type: Type): Label {
     return type[Type.Data].label
@@ -161,7 +161,7 @@ class TypeInstance<Definition extends TypeDefinition> implements TypeData {
   target = new TypeTarget()
 
   constructor(public label: Label, public definition: Definition) {
-    this.meta = this.definition[Type.Meta] || {}
+    this.meta = this.definition[Meta] || {}
     this.shape = Shape.Record(
       label,
       fromEntries(
@@ -199,7 +199,7 @@ class TypeInstance<Definition extends TypeDefinition> implements TypeData {
     const isConditionalRecord = input.length === 1 && !Expr.isExpr(input[0])
     const conditions = isConditionalRecord
       ? entries(input[0]).map(([key, value]) => {
-          const field = Expr(ExprData.Field(this.target, key))
+          const field = Expr(ExprData.Field({type: this.target}, key))
           return Expr(
             ExprData.BinOp(field[Expr.Data], BinaryOp.Equals, ExprData(value))
           )
@@ -239,7 +239,7 @@ class TypeInstance<Definition extends TypeDefinition> implements TypeData {
 
 export interface TypeDefinition {
   [key: string]: Field<any, any> | Section
-  readonly [Type.Meta]?: TypeMeta
+  readonly [Meta]?: TypeMeta
 }
 
 /** Create a new type */
@@ -259,5 +259,5 @@ export function type<Definition extends TypeDefinition>(
 }
 
 export namespace type {
-  export const meta: typeof Type.Meta = Type.Meta
+  export const meta: typeof Meta = Meta
 }

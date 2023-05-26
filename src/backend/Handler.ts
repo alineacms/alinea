@@ -3,7 +3,7 @@ import {Auth, Connection, Entry} from 'alinea/core'
 import {Realm} from 'alinea/core/pages/Realm'
 import {Selection} from 'alinea/core/pages/Selection'
 import {Logger, LoggerResult, Report} from 'alinea/core/util/Logger'
-import {enums, object} from 'cito'
+import {any, enums, object} from 'cito'
 import {Server, ServerOptions} from './Server.js'
 import {Handle, Route, router} from './router/Router.js'
 
@@ -15,7 +15,8 @@ function respond<T>({result, logger}: LoggerResult<T>) {
 
 const ResolveBody = object({
   selection: Selection.adt,
-  realm: enums(Realm)
+  realm: enums(Realm),
+  preview: any
 })
 
 function createRouter(
@@ -49,9 +50,8 @@ function createRouter(
       .map(router.parseJson)
       .map(({ctx, body}) => {
         // This validates the input, and throws if it's invalid
-        const {selection, realm} = ResolveBody(body)
         const api = createApi(ctx)
-        return ctx.logger.result(api.resolve(selection, realm))
+        return ctx.logger.result(api.resolve(ResolveBody(body)))
       })
       .map(respond),
 

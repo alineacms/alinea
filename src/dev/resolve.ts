@@ -52,6 +52,7 @@ function getDepsInfo() {
 
 const external = [
   'next',
+  'next/navigation',
   '@remix-run/node',
   '@remix-run/react',
   'react/jsx-runtime',
