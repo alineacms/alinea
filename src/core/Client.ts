@@ -36,10 +36,10 @@ export class Client implements Connection {
     this.targets = Schema.targets(config.schema)
   }
 
-  previewToken(entryId: string): Promise<string> {
-    return this.requestJson(
-      Connection.routes.previewToken(entryId)
-    ).then<string>(failOnHttpError)
+  previewToken(): Promise<string> {
+    return this.requestJson(Connection.routes.previewToken()).then<string>(
+      failOnHttpError
+    )
   }
 
   resolve(selection: Selection, realm: Realm): Promise<unknown> {

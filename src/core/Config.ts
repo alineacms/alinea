@@ -18,7 +18,7 @@ export interface Config {
     staticFile?: string
   }
   /** A react component used to preview an entry in the dashboard */
-  preview?: ComponentType<{previewToken: string}>
+  preview?: ComponentType<{previewSearch: string}>
 }
 
 export namespace Config {

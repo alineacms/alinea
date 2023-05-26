@@ -1,4 +1,5 @@
 import {JWTPreviews} from 'alinea/backend'
+import {enums, object, string} from 'cito'
 import {CMSApi, DefaultCMS} from '../CMS.js'
 import {Client} from '../Client.js'
 import {Config} from '../Config.js'
@@ -9,6 +10,12 @@ import {Selection} from '../pages/Selection.js'
 export interface NextApi extends CMSApi {
   previewHandler(request: Request): Promise<Response>
 }
+
+const SearhParams = object({
+  token: string,
+  entryId: string,
+  realm: enums(Realm)
+})
 
 class NextDriver extends DefaultCMS implements NextApi {
   connection = async () => {
@@ -25,26 +32,29 @@ class NextDriver extends DefaultCMS implements NextApi {
   previewHandler = async (request: Request) => {
     // @ts-ignore
     const {draftMode} = await import('next/headers')
-    const previewToken = decodeURIComponent(
-      new URL(request.url).search
-    ).substring(1)
+    const {searchParams} = new URL(request.url)
+    const params = SearhParams({
+      token: searchParams.get('token'),
+      entryId: searchParams.get('entryId'),
+      phase: searchParams.get('phase')
+    })
     const jwtSecret =
       process.env.NODE_ENV === 'development'
         ? 'dev'
         : process.env.ALINEA_API_KEY
     if (!jwtSecret) throw new Error('No JWT secret set')
     const previews = new JWTPreviews(jwtSecret)
-    const {id} = await previews.verify(previewToken)
+    const {sub} = await previews.verify(params.token)
     const cnx = await this.connection()
-    const url = await cnx.resolve(
-      Selection(Page({entryId: id}).select(Page.url).first()),
-      Realm.PreferDraft
-    )
-    const root = new URL('/', request.url)
+    const url = (await cnx.resolve(
+      Selection(Page({entryId: params.entryId}).select(Page.url).first()),
+      params.realm
+    )) as string
+    const location = new URL(url ?? '/', request.url)
     draftMode().enable()
     return new Response('', {
       status: 302,
-      headers: {location: root.toString()}
+      headers: {location: location.toString()}
     })
   }
 }

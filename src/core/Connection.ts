@@ -17,7 +17,7 @@ export interface Syncable {
 }
 
 export interface Connection extends Syncable {
-  previewToken(entryId: string): Promise<string>
+  previewToken(): Promise<string>
   resolve(selection: Selection, realm: Realm): Promise<unknown>
   uploadFile(params: Connection.UploadParams): Promise<Media.File>
   saveDraft(entry: Entry): Promise<void>
@@ -93,8 +93,8 @@ export namespace Connection {
     files(location?: string) {
       return base + `/files${location ? '/' + location : ''}`
     },
-    previewToken(entryId: string) {
-      return base + `/preview/${entryId}`
+    previewToken() {
+      return base + `/preview-token`
     }
   }
 }

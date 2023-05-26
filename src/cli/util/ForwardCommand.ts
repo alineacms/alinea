@@ -9,12 +9,15 @@ export function forwardCommand(env: Record<string, string> = {}) {
   function finish({exitCode}: {exitCode: number}) {
     process.exit(exitCode)
   }
-  execa(command.join(' '), {
+  const instance = execa(command.join(' '), {
     shell: true,
     stdio: 'inherit',
     env: {
       ...process.env,
       ...env
     }
-  }).then(finish, finish)
+  })
+  instance.then(finish, finish)
+  process.on('SIGINT', () => instance.kill('SIGINT'))
+  process.on('SIGTERM', () => instance.kill('SIGTERM'))
 }
