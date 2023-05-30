@@ -13,7 +13,7 @@ export const cms = createNextCMS({
   schema,
   workspaces: {
     main: alinea.workspace('Alinea website', {
-      pages: pages,
+      pages,
       media: alinea.root('Media', {
         contains: ['MediaLibrary'],
         icon: IcRoundPermMedia
