@@ -1,6 +1,7 @@
 import {ChangeSet} from 'alinea/backend/data/ChangeSet'
 import {AlineaMeta} from 'alinea/backend/db/AlineaMeta'
 import {Media, User} from 'alinea/core'
+import {PreviewUpdate} from 'alinea/preview/PreviewMessage'
 import {Entry} from './Entry.js'
 import {Realm} from './pages/Realm.js'
 import {Selection} from './pages/Selection.js'
@@ -42,7 +43,7 @@ export namespace Connection {
   export interface ResolveParams {
     selection: Selection
     realm?: Realm
-    preview?: Entry
+    preview?: PreviewUpdate
   }
   export type CreateParams = {
     entries: Array<Entry>

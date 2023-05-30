@@ -5,7 +5,7 @@
   "license": "MIT",
   "scripts": {
     "dev": "cross-env ALINEA_PORT=4500 next dev",
-    "build": "next build",
+    "build": "alinea build src/cms -- next build",
     "start": "next start",
     "lint": "next lint"
   },

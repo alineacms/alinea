@@ -10,7 +10,8 @@ const prog = sade('alinea')
 
 prog
   .version(meta.version)
-  .command('generate')
+  .command('build')
+  .alias('generate')
   .describe('Generate types and content cache')
   .option('-w, --watch', `Watch for changes to source files`)
   .option('-d, --dir', `Directory containing the alinea config file`)
@@ -30,6 +31,7 @@ prog
     })) {
     }
   })
+
   .command('init')
   .describe('Copy a sample config file to the current directory')
   .action(async args => {
@@ -38,7 +40,9 @@ prog
     const {init} = await import('./Init.js')
     return init(args)
   })
-  .command('serve')
+
+  .command('dev')
+  .alias('serve')
   .describe('Start a development dashboard')
   .option('-d, --dir', `Directory containing the alinea config file`)
   .option('-p, --port', `Port to listen on`)

@@ -1,4 +1,5 @@
-import {Entry} from 'alinea/core'
+import {base64} from 'alinea/core/util/Encoding'
+import {PreviewUpdate} from 'alinea/preview/PreviewMessage'
 import {useAtomValue} from 'jotai'
 import {useEffect, useState} from 'react'
 import {usePreviewToken} from '../../atoms/EntryAtoms.js'
@@ -11,7 +12,7 @@ export interface EntryPreviewProps {
 }
 
 export interface LivePreview {
-  preview(entry: Entry): void
+  preview(update: PreviewUpdate): void
 }
 
 export function EntryPreview({editor, preview}: EntryPreviewProps) {
@@ -20,9 +21,15 @@ export function EntryPreview({editor, preview}: EntryPreviewProps) {
   const previewSearch = `?token=${previewToken}&entryId=${editor.entryId}&realm=${selectedPhase}`
   const url = new URL(previewSearch, preview)
   const [api, setApi] = useState<LivePreview | undefined>(undefined)
-  const draftEntry = useAtomValue(editor.draftEntry)
+  const yUpdate = useAtomValue(editor.yUpdate)
   useEffect(() => {
-    if (api) api.preview(draftEntry)
-  }, [api, draftEntry])
+    if (!api) return
+    const update = base64.stringify(yUpdate)
+    api.preview({
+      entryId: editor.entryId,
+      phase: selectedPhase,
+      update
+    })
+  }, [api, yUpdate])
   return <BrowserPreview url={url.toString()} registerLivePreview={setApi} />
 }

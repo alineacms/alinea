@@ -77,6 +77,7 @@ export interface TypeI<Definition = object> extends Callable {
       ? EV<V>
       : never
   }): Cursor.Find<TypeRow<Definition>>
+  infer: TypeRow<Definition>
 }
 
 export type Type<Definition = object> = Definition & TypeI<Definition>

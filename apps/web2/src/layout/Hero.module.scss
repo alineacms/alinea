@@ -1,0 +1,78 @@
+@import '@alinea/web/src/style.scss';
+
+.root {
+  padding: 60px 0;
+  // background: var(--web-background-variant);
+
+  @include ml {
+    padding: 120px 0;
+  }
+
+  &-inner {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    flex-grow: 1;
+  }
+
+  &-bg {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    width: 100%;
+    fill: var(--web-background);
+    transform: translateY(-100%);
+  }
+}
+
+.title {
+  font-size: 35px;
+  line-height: 1;
+  margin-bottom: 24px;
+
+  @include m {
+    font-size: 45px;
+  }
+
+  @include l {
+    font-size: 50px;
+  }
+}
+
+.action {
+  font-family: var(--web-title-font);
+  display: inline-block;
+  text-decoration: none;
+  background: var(--web-accent);
+  color: var(--web-accent-foreground);
+  padding: 10px 16px;
+  border-radius: 25px;
+  font-size: 14px;
+  font-weight: 500;
+
+  &.is-outline {
+    border: 1px solid var(--web-accent-foreground);
+  }
+
+  &:hover {
+    background: var(--web-accent-light);
+  }
+}
+
+.byLine {
+  font-size: 14px;
+  line-height: 1.5;
+  max-width: 50ch;
+
+  @include s {
+    padding: 0 10px;
+  }
+
+  @include ml {
+    font-size: 17px;
+    white-space: pre-line;
+  }
+}

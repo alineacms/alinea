@@ -1,4 +1,12 @@
-import {Config, EntryPhase, Field, ROOT_KEY, Type} from 'alinea/core'
+import {
+  Config,
+  EntryPhase,
+  Field,
+  ROOT_KEY,
+  Type,
+  createYDoc,
+  parseYDoc
+} from 'alinea/core'
 import {Client} from 'alinea/core/Client'
 import {Page} from 'alinea/core/pages/Page'
 import {Realm} from 'alinea/core/pages/Realm'
@@ -71,10 +79,11 @@ export function createEntryEditor(entryData: EntryData) {
   const docs = fromEntries(
     entries(entryData.phases).map(([phase, version]) => [
       phase,
-      createYDoc(config, version)
+      createYDoc(type, version)
     ])
   )
   const yDoc = docs[activePhase]
+  const yStateVector = Y.encodeStateVector(yDoc)
   const hasChanges = createChangesAtom(yDoc)
   const states = fromEntries(
     entries(docs).map(([phase, doc]) => [
@@ -87,6 +96,10 @@ export function createEntryEditor(entryData: EntryData) {
   const editMode = atom(EditMode.Editing)
   const isSaving = atom(false)
   const isPublishing = atom(false)
+
+  const yUpdate = yAtom(yDoc.getMap(ROOT_KEY), () => {
+    return Y.encodeStateAsUpdateV2(yDoc, yStateVector)
+  })
 
   const selectedPhase = atom(get => {
     const {search} = get(locationAtom)
@@ -142,6 +155,7 @@ export function createEntryEditor(entryData: EntryData) {
     type,
     draftState,
     draftEntry,
+    yUpdate,
     activeTitle,
     states,
     hasChanges,
@@ -151,30 +165,6 @@ export function createEntryEditor(entryData: EntryData) {
     isSaving,
     isPublishing
   }
-}
-
-function parseYDoc(type: Type, doc: Y.Doc) {
-  const docRoot = doc.getMap(ROOT_KEY)
-  const data: Record<string, any> = Type.shape(type).fromY(docRoot)
-  return {
-    path: data.path,
-    title: data.title,
-    data
-  }
-}
-
-function createYDoc(config: Config, version: Page) {
-  const doc = new Y.Doc()
-  const clientID = doc.clientID
-  doc.clientID = 1
-  const type = config.schema[version.type]
-  const docRoot = doc.getMap(ROOT_KEY)
-  for (const [key, field] of entries(type)) {
-    const contents = version.data[key]
-    docRoot.set(key, Field.shape(field).toY(contents))
-  }
-  doc.clientID = clientID
-  return doc
 }
 
 function createChangesAtom(yDoc: Y.Doc) {

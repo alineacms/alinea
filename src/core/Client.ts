@@ -5,6 +5,7 @@ import {
   Connection,
   createError,
   Entry,
+  EntryPhase,
   Media,
   Schema
 } from 'alinea/core'
@@ -30,7 +31,11 @@ export interface ClientOptions {
   unauthorized?: () => void
   resolveDefaults?: {
     realm?: Realm
-    preview?: Entry
+    preview?: {
+      entryId: string
+      phase: EntryPhase
+      update: string
+    }
   }
 }
 

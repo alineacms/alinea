@@ -1,11 +1,12 @@
 import {Type} from 'alinea/core'
 import {renderLabel} from 'alinea/core/Label'
-import {Chip, fromModule, HStack, IconLink, Typo} from 'alinea/ui'
+import {Chip, fromModule, HStack, Typo} from 'alinea/ui'
 import {IcRoundArrowBack} from 'alinea/ui/icons/IcRoundArrowBack'
 import {useAtomValue} from 'jotai'
 import {EntryEditor} from '../../atoms/EntryEditor.js'
 import {useWorkspace} from '../../hook/UseWorkspace.js'
 import {Head} from '../../util/Head.js'
+import {IconLink} from '../IconButton.js'
 import css from './EntryTitle.module.scss'
 
 const styles = fromModule(css)

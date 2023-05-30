@@ -1,4 +1,5 @@
 import {Reference, type} from 'alinea/core'
+import {Modal} from 'alinea/dashboard/view/Modal'
 import {InputForm, useField} from 'alinea/editor'
 import {useForm} from 'alinea/editor/hook/UseForm'
 import {InputField} from 'alinea/editor/view/InputField'
@@ -7,15 +8,14 @@ import {link as createLink} from 'alinea/input/link'
 import {text} from 'alinea/input/text'
 import {
   Button,
-  fromModule,
   HStack,
   Stack,
-  useObservable,
-  VStack
+  VStack,
+  fromModule,
+  useObservable
 } from 'alinea/ui'
 import {useTrigger} from 'alinea/ui/hook/UseTrigger'
 import {IcRoundClose} from 'alinea/ui/icons/IcRoundClose'
-import {Modal} from 'alinea/ui/Modal'
 import {FormEvent, useMemo} from 'react'
 import css from './PickLink.module.scss'
 

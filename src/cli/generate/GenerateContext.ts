@@ -1,7 +1,8 @@
 export interface GenerateContext {
   wasmCache: boolean
-  cwd: string
+  rootDir: string
   configLocation: string
+  configDir: string
   staticDir: string
   quiet: boolean
   outDir: string

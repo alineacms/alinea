@@ -1,5 +1,5 @@
 import {useLocation, useNavigate} from 'alinea/dashboard/util/HashRouter'
-import {HStack, IconButton, Stack, fromModule} from 'alinea/ui'
+import {HStack, Stack, fromModule} from 'alinea/ui'
 import {IcOutlineGridView} from 'alinea/ui/icons/IcOutlineGridView'
 import {IcOutlineList} from 'alinea/ui/icons/IcOutlineList'
 import {IcRoundSearch} from 'alinea/ui/icons/IcRoundSearch'
@@ -9,6 +9,7 @@ import {useFocusList} from '../hook/UseFocusList.js'
 import {useNav} from '../hook/UseNav.js'
 import {useRoot} from '../hook/UseRoot.js'
 import {useWorkspace} from '../hook/UseWorkspace.js'
+import {IconButton} from './IconButton.js'
 import css from './SearchBox.module.scss'
 
 const styles = fromModule(css)

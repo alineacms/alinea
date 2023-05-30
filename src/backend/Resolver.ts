@@ -5,9 +5,12 @@ import {
   Schema,
   Shape,
   TextDoc,
-  Type
+  Type,
+  createYDoc,
+  parseYDoc
 } from 'alinea/core'
 import {Realm} from 'alinea/core/pages/Realm'
+import {base64} from 'alinea/core/util/Encoding'
 import {
   BinOpType,
   Expr,
@@ -22,6 +25,7 @@ import {
   UnOpType,
   withRecursive
 } from 'rado'
+import * as Y from 'yjs'
 import {Entry, EntryPhase, EntryTable} from '../core/Entry.js'
 import * as pages from '../core/pages/index.js'
 import {Store} from './Store.js'
@@ -513,23 +517,33 @@ export class Resolver {
     )
     let interim: object | Array<object>
     if (preview) {
-      try {
-        await this.store.transaction(async tx => {
-          // Temporarily add preview entry
-          const current = Entry({
-            entryId: preview.entryId,
-            phase: preview.phase
+      const current = Entry({
+        entryId: preview.entryId,
+        phase: preview.phase
+      })
+      const entry = await this.store(current.maybeFirst())
+      if (entry)
+        try {
+          // Create yjs doc
+          const type = this.schema[entry.type]
+          const yDoc = createYDoc(type, entry)
+          // Apply update
+          const update = base64.parse(preview.update)
+          Y.applyUpdateV2(yDoc, update)
+          const entryData = parseYDoc(type, yDoc)
+          const previewEntry = {...entry, ...entryData}
+          await this.store.transaction(async tx => {
+            // Temporarily add preview entry
+            await tx(current.delete())
+            await tx(Entry().insert(previewEntry))
+            const result = await tx(query)
+            // The transaction api needs to be revised to support explicit commit/rollback
+            throw {result}
           })
-          await tx(current.delete())
-          await tx(Entry().insert(preview))
-          const result = await tx(query)
-          // The transaction api needs to be revised to support explicit commit/rollback
-          throw {result}
-        })
-      } catch (err: any) {
-        if (err.result) interim = err.result
-        else throw err
-      }
+        } catch (err: any) {
+          if (err.result) interim = err.result
+          else throw err
+        }
     } else {
       interim = await this.store(query)
     }

@@ -13,6 +13,7 @@ serve({
   alineaDev: true,
   production,
   cwd: path.resolve('apps/web2'),
+  configFile: 'src/cms',
   staticDir: path.resolve('src/cli/static'),
   port: 4500,
   buildOptions: {

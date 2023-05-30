@@ -1,16 +1,13 @@
 import {Head} from 'alinea/dashboard/util/Head'
+import {Button, HStack, Icon, Typo, VStack} from 'alinea/ui'
+import {IcRoundClose} from 'alinea/ui/icons/IcRoundClose'
+import {IcRoundOpenInNew} from 'alinea/ui/icons/IcRoundOpenInNew'
+import {IcRoundWarning} from 'alinea/ui/icons/IcRoundWarning'
+import {fromModule} from 'alinea/ui/util/Styler'
 import {PropsWithChildren, useEffect} from 'react'
 import useErrorBoundary from 'use-error-boundary'
-import {useLocation} from '../dashboard/util/HashRouter.js'
-import {Button} from './Button.js'
+import {useLocation} from '../util/HashRouter.js'
 import css from './ErrorBoundary.module.scss'
-import {Icon} from './Icon.js'
-import {HStack, VStack} from './Stack.js'
-import {Typo} from './Typo.js'
-import {IcRoundClose} from './icons/IcRoundClose.js'
-import {IcRoundOpenInNew} from './icons/IcRoundOpenInNew.js'
-import {IcRoundWarning} from './icons/IcRoundWarning.js'
-import {fromModule} from './util/Styler.js'
 
 const styles = fromModule(css)
 

@@ -50,16 +50,19 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
     onAfterGenerate
   } = options
 
-  const absoluteWorkingDir = path.resolve(cwd)
+  const rootDir = path.resolve(cwd)
+  const configLocation = path.join(path.resolve(cwd), configFile)
+  const configDir = path.dirname(configLocation)
 
   const context: GenerateContext = {
     wasmCache,
-    cwd: absoluteWorkingDir,
+    rootDir: rootDir,
+    configDir,
     staticDir,
     quiet,
-    configLocation: path.join(absoluteWorkingDir, configFile),
+    configLocation,
     fix: options.fix || false,
-    outDir: path.join(absoluteWorkingDir, '.alinea'),
+    outDir: path.join(rootDir, '.alinea'),
     watch: options.watch || false
   }
 
@@ -72,7 +75,7 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
     const cms = await loadCMS(context)
     await generatePackage(context, cms)
     nextBuild = builds.next()
-    const store = await cms.createStore(context.cwd)
+    const store = await cms.createStore(context.rootDir)
     for await (const _ of fillCache(context, store, cms, nextBuild)) {
       yield {cms, store}
       if (onAfterGenerate && !afterGenerateCalled) {

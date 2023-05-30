@@ -1,6 +1,7 @@
 import {Field} from 'alinea/core'
+import {ErrorBoundary} from 'alinea/dashboard/view/ErrorBoundary'
 import {InputState} from 'alinea/editor'
-import {ErrorBoundary, TextLabel} from 'alinea/ui'
+import {TextLabel} from 'alinea/ui'
 
 interface MissingViewProps {
   field: Field<any, any>

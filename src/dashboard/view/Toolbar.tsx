@@ -9,7 +9,6 @@ import {
   Avatar,
   DropdownMenu,
   Icon,
-  IconButton,
   LogoShape,
   TextLabel,
   VStack,
@@ -41,6 +40,7 @@ import {
 } from '../atoms/PreferencesAtoms.js'
 import {accentColorAtom} from '../atoms/StyleAtoms.js'
 import {AlineaLogo} from './AlineaLogo.js'
+import {IconButton} from './IconButton.js'
 import {useSidebar} from './Sidebar.js'
 import css from './Toolbar.module.scss'
 
