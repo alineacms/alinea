@@ -1,5 +1,7 @@
 import {cms} from '@/cms'
+import 'alinea/css'
 import {PropsWithChildren} from 'react'
+import '../styles/global.scss'
 
 export const metadata = {
   title: 'Next.js',

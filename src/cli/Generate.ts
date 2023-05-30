@@ -69,13 +69,15 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
   const builds = compileConfig(context)[Symbol.asyncIterator]()
   let nextBuild: Promise<{value: BuildResult; done?: boolean}> = builds.next()
   let afterGenerateCalled = false
+  let store: Store | undefined
   await copyStaticFiles(context)
   while (true) {
     const {done} = await nextBuild
     const cms = await loadCMS(context)
     await generatePackage(context, cms)
     nextBuild = builds.next()
-    const store = await cms.createStore(context.rootDir)
+    if (store) await store.close()
+    store = await cms.createStore(context.rootDir)
     for await (const _ of fillCache(context, store, cms, nextBuild)) {
       yield {cms, store}
       if (onAfterGenerate && !afterGenerateCalled) {
