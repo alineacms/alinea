@@ -10,6 +10,7 @@ import {lazy} from 'react'
 import {CMSApi, DefaultCMS} from '../CMS.js'
 import {Client, ClientOptions} from '../Client.js'
 import {Config} from '../Config.js'
+import {EntryPhase} from '../Entry.js'
 import {Page} from '../pages/Page.js'
 import {Realm} from '../pages/Realm.js'
 import {Selection} from '../pages/Selection.js'
@@ -27,7 +28,6 @@ const SearchParams = object({
 
 class NextDriver extends DefaultCMS implements NextApi {
   connection = async () => {
-    // @ts-ignore
     const {cookies, draftMode} = await import('next/headers')
     const {isEnabled: isDraft} = draftMode()
     const devPort = process.env.ALINEA_PORT
@@ -42,7 +42,7 @@ class NextDriver extends DefaultCMS implements NextApi {
         const entryIdCookie = cookies().get(PREVIEW_ENTRYID_NAME)
         const phaseCookie = cookies().get(PREVIEW_PHASE_NAME)
         const entryId = entryIdCookie?.value
-        const phase = phaseCookie?.value
+        const phase = phaseCookie?.value as EntryPhase
         if (entryId && phase) resolveDefaults.preview = {entryId, phase, update}
       }
     }
@@ -56,7 +56,6 @@ class NextDriver extends DefaultCMS implements NextApi {
   }
 
   previewHandler = async (request: Request) => {
-    // @ts-ignore
     const {draftMode} = await import('next/headers')
     const {searchParams} = new URL(request.url)
     const params = SearchParams({
@@ -89,7 +88,6 @@ class NextDriver extends DefaultCMS implements NextApi {
 
   // Todo: update typescript to support async server components
   previews = (async (): Promise<JSX.Element | null> => {
-    // @ts-ignore
     const {draftMode} = await import('next/headers')
     const {isEnabled: isDraft} = draftMode()
     if (!isDraft) return null

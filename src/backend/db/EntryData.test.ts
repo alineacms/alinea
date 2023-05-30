@@ -4,7 +4,7 @@ import {richText} from 'alinea/input/richtext/RichTextField'
 import {test} from 'uvu'
 import * as assert from 'uvu/assert'
 
-const typeWithRichTest = type('Test', {
+const typeWithRichText = type('Test', {
   text: richText('My rich text field')
 })
 
@@ -145,7 +145,7 @@ const exampleData = [
 ]
 
 test('parse links for rich text fields', () => {
-  const parsed = entryData(typeWithRichTest, {text: exampleData})
+  const parsed = entryData(typeWithRichText, {text: exampleData})
   assert.equal(parsed.text.linked, ['267QuOShP41WnFxQFOcHZQoCsla'])
 })
 

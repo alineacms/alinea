@@ -2,17 +2,26 @@
 
 import {useLocalStorage} from 'alinea/ui/hook/UseLocalStorage'
 import {fromModule} from 'alinea/ui/util/Styler'
-import Head from 'next/head'
 import {HTMLAttributes, PropsWithChildren, ReactNode, useEffect} from 'react'
-import {Footer} from './Footer'
-import {Header} from './Header'
+import {Footer, FooterProps} from './Footer'
+import {Header, HeaderProps} from './Header'
 import css from './Layout.module.scss'
 import {NavSidebar} from './NavSidebar'
-import {FavIcon} from './branding/FavIcon'
 
 const styles = fromModule(css)
 
-export function Layout({meta, children, is, header, footer}) {
+export interface LayoutProps {
+  header: HeaderProps
+  footer: FooterProps
+  isHome: boolean
+}
+
+export function Layout({
+  children,
+  isHome,
+  header,
+  footer
+}: PropsWithChildren<LayoutProps>) {
   const [theme, setTheme] = useLocalStorage<LayoutTheme>(
     '@alinea/web/theme',
     'system'
@@ -26,18 +35,8 @@ export function Layout({meta, children, is, header, footer}) {
   }, [theme])
   return (
     <>
-      <FavIcon color="#4a65e8" />
-      <Head>
-        <title>{meta.title}</title>
-        <meta name="theme-color" content="#4a65e8" />
-        <style>
-          {`
-            @media (max-width: 440px) {html {font-size: calc(4.4444vw + .00012px)}}
-          `}
-        </style>
-      </Head>
-      <div className={styles.root(is)}>
-        <Header transparent={is.home} {...header} />
+      <div className={styles.root()}>
+        <Header {...header} transparent={isHome} />
         <div className={styles.root.content()}>{children}</div>
         <Footer footer={footer} theme={theme} setTheme={setTheme} />
       </div>

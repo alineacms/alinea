@@ -100,6 +100,7 @@
   },
   "packageManager": "yarn@3.2.0",
   "resolutions": {
+    "@types/react": "18.2.5",
     "esbuild": "0.17.19",
     "y-prosemirror": "1.1.2",
     "mime-db": "1.51.0",
