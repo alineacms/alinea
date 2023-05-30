@@ -4,7 +4,7 @@ import {IcRoundHamburger} from 'alinea/ui/icons/IcRoundHamburger'
 import {MdiGithub} from 'alinea/ui/icons/MdiGithub'
 import {MdiTwitterCircle} from 'alinea/ui/icons/MdiTwitterCircle'
 import Link from 'next/link'
-import {useRouter} from 'next/router'
+import {usePathname, useRouter} from 'next/navigation'
 import {useEffect, useMemo, useState} from 'react'
 import {Logo} from './branding/Logo'
 import css from './Header.module.scss'
@@ -20,6 +20,7 @@ type LinksProps = {
 
 function Links({links, style}: LinksProps) {
   const router = useRouter()
+  const pathname = usePathname()
   return (
     <>
       {links?.map(link => {
@@ -30,7 +31,7 @@ function Links({links, style}: LinksProps) {
                 href={link.url}
                 key={link.id}
                 className={style({
-                  active: router.asPath.startsWith(link.active || link.url)
+                  active: pathname.startsWith(link.active || link.url)
                 })}
               >
                 {link.label}
@@ -42,7 +43,7 @@ function Links({links, style}: LinksProps) {
       })}
       <Link
         href="/changelog"
-        className={style({active: router.asPath.startsWith('/changelog')})}
+        className={style({active: pathname.startsWith('/changelog')})}
       >
         Changelog
       </Link>
@@ -106,7 +107,7 @@ export function Header({links, menu, transparent}: HeaderProps) {
   }, [isMobileOpen])
   useEffect(() => {
     if (isMobileOpen) setIsMobileOpen(false)
-  }, [router.asPath])
+  }, [router.pathname])
   return (
     <>
       <header className={styles.root({transparent})}>

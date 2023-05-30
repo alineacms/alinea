@@ -22,7 +22,12 @@ export default function NextPreviews() {
       )) {
         document.cookie = `${name}=${value}`
       }
-      router.refresh()
+      // router.refresh() would be the obvious choice but it seems
+      // to reload global css styles resulting in FOUC,
+      // unfortunately this means cms data in the layout are not updated
+      router.replace(location.pathname + '?v=' + Date.now(), {
+        forceOptimisticNavigation: true
+      })
     }
   })
   return <div>Preview: {isPreviewing ? 'in iframe' : 'no'}</div>

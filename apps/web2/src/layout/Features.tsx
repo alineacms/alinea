@@ -1,4 +1,4 @@
-import {fromModule} from 'alinea/ui'
+import {fromModule} from 'alinea/ui/util/Styler'
 import {ComponentType, HTMLProps, PropsWithChildren} from 'react'
 import css from './Features.module.scss'
 
