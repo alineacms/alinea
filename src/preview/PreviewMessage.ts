@@ -1,4 +1,4 @@
-import type {Entry} from 'alinea/core'
+import {EntryPhase} from 'alinea/core'
 
 export enum PreviewAction {
   Ping = '[alinea-ping]',
@@ -10,6 +10,12 @@ export enum PreviewAction {
   Preview = '[alinea-preview]'
 }
 
+export interface PreviewUpdate {
+  entryId: string
+  phase: EntryPhase
+  update: string
+}
+
 export type PreviewMessage =
   | {action: PreviewAction.Ping}
   | {action: PreviewAction.Pong}
@@ -17,4 +23,4 @@ export type PreviewMessage =
   | {action: PreviewAction.Refetch}
   | {action: PreviewAction.Previous}
   | {action: PreviewAction.Next}
-  | {action: PreviewAction.Preview; entry: Entry}
+  | ({action: PreviewAction.Preview} & PreviewUpdate)

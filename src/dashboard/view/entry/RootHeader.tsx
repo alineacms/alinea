@@ -1,12 +1,13 @@
 import {Listbox} from '@headlessui/react'
 import {link, useNavigate} from 'alinea/dashboard/util/HashRouter'
-import {Create, HStack, Icon, TextLabel, fromModule} from 'alinea/ui'
+import {HStack, Icon, TextLabel, fromModule} from 'alinea/ui'
 import {IcRoundUnfoldMore} from 'alinea/ui/icons/IcRoundUnfoldMore'
 import {useState} from 'react'
 import {useLocale} from '../../hook/UseLocale.js'
 import {useNav} from '../../hook/UseNav.js'
 import {useRoot} from '../../hook/UseRoot.js'
 import {useWorkspace} from '../../hook/UseWorkspace.js'
+import {Create} from '../Create.js'
 import css from './RootHeader.module.scss'
 
 const styles = fromModule(css)

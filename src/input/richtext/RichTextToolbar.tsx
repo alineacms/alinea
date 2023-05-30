@@ -1,15 +1,7 @@
 import {Reference} from 'alinea/core/Reference'
 import {Toolbar} from 'alinea/dashboard'
 import {UrlReference} from 'alinea/picker/url'
-import {
-  DropdownMenu,
-  fromModule,
-  HStack,
-  Icon,
-  IconButton,
-  px,
-  Typo
-} from 'alinea/ui'
+import {DropdownMenu, fromModule, HStack, Icon, px, Typo} from 'alinea/ui'
 import IcAlignCenter from 'alinea/ui/icons/IcAlignCenter'
 import IcAlignJustify from 'alinea/ui/icons/IcAlignJustify'
 import {IcAlignLeft} from 'alinea/ui/icons/IcAlignLeft'
@@ -27,6 +19,7 @@ import {IcRoundUnfoldMore} from 'alinea/ui/icons/IcRoundUnfoldMore'
 /*import {IcRoundRedo} from 'alinea/ui/icons/IcRoundRedo'
 import {IcRoundUndo} from 'alinea/ui/icons/IcRoundUndo'*/
 import {Editor} from '@tiptap/react'
+import {IconButton} from 'alinea/dashboard/view/IconButton'
 import {forwardRef, Ref} from 'react'
 import {PickTextLinkFunc} from './PickTextLink.js'
 import {attributesToReference, referenceToAttributes} from './ReferenceLink.js'

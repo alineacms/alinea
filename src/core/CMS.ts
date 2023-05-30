@@ -55,7 +55,9 @@ export class DefaultCMS extends CMS {
   async createStore(cwd: string): Promise<Store> {
     const {default: BetterSqlite3} = await import('better-sqlite3')
     const {connect} = await import('rado/driver/better-sqlite3')
-    const cnx = connect(new BetterSqlite3(`${cwd}/.alinea/content.sqlite`))
+    const db = new BetterSqlite3(`${cwd}/.alinea/content.sqlite`)
+    db.pragma('journal_mode = WAL')
+    const cnx = connect(db)
     return cnx.toAsync()
   }
 

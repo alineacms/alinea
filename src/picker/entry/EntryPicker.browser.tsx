@@ -5,6 +5,8 @@ import {useDashboard} from 'alinea/dashboard/hook/UseDashboard'
 import {useFocusList} from 'alinea/dashboard/hook/UseFocusList'
 import {useRoot} from 'alinea/dashboard/hook/UseRoot'
 import {useWorkspace} from 'alinea/dashboard/hook/UseWorkspace'
+import {IconButton} from 'alinea/dashboard/view/IconButton'
+import {Modal} from 'alinea/dashboard/view/Modal'
 import {Explorer} from 'alinea/dashboard/view/explorer/Explorer'
 import {FileUploader} from 'alinea/dashboard/view/media/FileUploader'
 import {Picker, PickerProps} from 'alinea/editor/Picker'
@@ -12,7 +14,6 @@ import {EntryReference} from 'alinea/picker/entry'
 import {
   Button,
   HStack,
-  IconButton,
   Loader,
   Stack,
   TextLabel,
@@ -21,7 +22,6 @@ import {
   fromModule,
   px
 } from 'alinea/ui'
-import {Modal} from 'alinea/ui/Modal'
 import {IcOutlineGridView} from 'alinea/ui/icons/IcOutlineGridView'
 import {IcOutlineList} from 'alinea/ui/icons/IcOutlineList'
 import {IcRoundArrowBack} from 'alinea/ui/icons/IcRoundArrowBack'

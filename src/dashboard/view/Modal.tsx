@@ -1,9 +1,9 @@
 import {Dialog} from '@headlessui/react'
+import {IconButton} from 'alinea/dashboard/view/IconButton'
+import {IcRoundClose} from 'alinea/ui/icons/IcRoundClose'
+import {fromModule} from 'alinea/ui/util/Styler'
 import {ComponentPropsWithoutRef, PropsWithChildren, useRef} from 'react'
-import {IconButton} from './IconButton.js'
 import css from './Modal.module.scss'
-import {IcRoundClose} from './icons/IcRoundClose.js'
-import {fromModule} from './util/Styler.js'
 
 const styles = fromModule(css)
 

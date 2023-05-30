@@ -23,8 +23,10 @@ import {
 import {CSS, FirstArgument} from '@dnd-kit/utilities'
 import {Field, Type} from 'alinea/core'
 import {entries} from 'alinea/core/util/Objects'
+import {Create} from 'alinea/dashboard/view/Create'
+import {IconButton} from 'alinea/dashboard/view/IconButton'
 import {InputForm, InputLabel, InputState, useInput} from 'alinea/editor'
-import {Card, Create, fromModule, Icon, IconButton, TextLabel} from 'alinea/ui'
+import {Card, fromModule, Icon, TextLabel} from 'alinea/ui'
 import {IcOutlineList} from 'alinea/ui/icons/IcOutlineList'
 import IcRoundAdd from 'alinea/ui/icons/IcRoundAdd'
 import {IcRoundClose} from 'alinea/ui/icons/IcRoundClose'
@@ -40,7 +42,6 @@ import {
 } from 'react'
 import {list as createList, ListField, ListRow} from './ListField.js'
 import css from './ListInput.module.scss'
-
 export * from './ListField.js'
 
 export const list = Field.provideView(ListInput, createList)

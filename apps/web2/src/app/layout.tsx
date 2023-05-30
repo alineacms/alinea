@@ -1,5 +1,5 @@
+import {cms} from '@/cms'
 import {PropsWithChildren} from 'react'
-import {cms} from '../alinea.config'
 
 export const metadata = {
   title: 'Next.js',

@@ -30,12 +30,12 @@ function overrideTsConfig(cwd: string): string | undefined {
 }
 
 export function compileConfig({
-  cwd,
+  rootDir,
   outDir,
   configLocation,
   watch
 }: GenerateContext) {
-  const tsconfig = overrideTsConfig(cwd)
+  const tsconfig = overrideTsConfig(rootDir)
   const define = publicDefines(process.env)
   const results = createEmitter<BuildResult>()
   const config: BuildOptions = {
@@ -53,7 +53,7 @@ export function compileConfig({
     jsx: 'automatic',
     define,
     plugins: [
-      externalPlugin(cwd),
+      externalPlugin(rootDir),
       ignorePlugin,
       {
         name: 'emit',

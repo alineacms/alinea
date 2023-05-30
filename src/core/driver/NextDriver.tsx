@@ -1,6 +1,10 @@
 import {JWTPreviews} from 'alinea/backend'
-import {PREVIEW_COOKIE_NAME} from 'alinea/preview/PreviewConstants'
-import {parsePreviewCookies} from 'alinea/preview/PreviewCookie'
+import {parseChunkedCookies} from 'alinea/preview/ChunkCookieValue'
+import {
+  PREVIEW_ENTRYID_NAME,
+  PREVIEW_PHASE_NAME,
+  PREVIEW_UPDATE_NAME
+} from 'alinea/preview/PreviewConstants'
 import {enums, object, string} from 'cito'
 import {lazy} from 'react'
 import {CMSApi, DefaultCMS} from '../CMS.js'
@@ -30,9 +34,17 @@ class NextDriver extends DefaultCMS implements NextApi {
     const resolveDefaults: ClientOptions['resolveDefaults'] = {}
     if (isDraft) {
       resolveDefaults.realm = Realm.PreferDraft
-      const entry = parsePreviewCookies(PREVIEW_COOKIE_NAME, cookies().getAll())
-      console.log({entry})
-      resolveDefaults.preview = entry
+      const update = parseChunkedCookies(
+        PREVIEW_UPDATE_NAME,
+        cookies().getAll()
+      )
+      if (update) {
+        const entryIdCookie = cookies().get(PREVIEW_ENTRYID_NAME)
+        const phaseCookie = cookies().get(PREVIEW_PHASE_NAME)
+        const entryId = entryIdCookie?.value
+        const phase = phaseCookie?.value
+        if (entryId && phase) resolveDefaults.preview = {entryId, phase, update}
+      }
     }
     if (devPort)
       return new Client({

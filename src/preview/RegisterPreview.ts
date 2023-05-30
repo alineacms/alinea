@@ -1,8 +1,7 @@
-import type {Entry} from 'alinea/core'
-import {PreviewAction, PreviewMessage} from './PreviewMessage.js'
+import {PreviewAction, PreviewMessage, PreviewUpdate} from './PreviewMessage.js'
 
 export interface PreviewApi {
-  preview(entry: Entry): Promise<void>
+  preview(update: PreviewUpdate): Promise<void>
   setIsPreviewing(isPreviewing: boolean): void
 }
 
@@ -14,7 +13,7 @@ export function registerPreview(api: PreviewApi) {
     switch (message.action) {
       case PreviewAction.Preview:
         console.log('[Alinea preview received]')
-        api.preview(message.entry)
+        api.preview(message)
         return
       case PreviewAction.Reload:
         console.log('[Alinea preview reload received]')

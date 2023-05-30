@@ -1,7 +1,9 @@
+// @ts-nocheck
+
 import alinea from 'alinea'
 import {createNextCMS} from 'alinea/core/driver/NextDriver'
 import {IcRoundPermMedia} from 'alinea/ui/icons/IcRoundPermMedia'
-import * as schema from './content/schema'
+import * as schema from './schema'
 
 export const pages = alinea.root('Pages', {
   contains: ['page']
@@ -18,7 +20,7 @@ export const cms = createNextCMS({
       }),
       [alinea.meta]: {
         color: '#3F61E8',
-        source: './content'
+        source: '../content'
       }
     })
   },

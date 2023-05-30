@@ -36,8 +36,8 @@ export function BrowserPreview({
         console.log('[Alinea preview window detected]')
         hasPreviewListener.current = true
         registerLivePreview({
-          preview(entry) {
-            post({action: PreviewAction.Preview, entry})
+          preview(update) {
+            post({action: PreviewAction.Preview, ...update})
           }
         })
       }

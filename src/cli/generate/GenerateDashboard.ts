@@ -13,7 +13,7 @@ import {GenerateContext} from './GenerateContext.js'
 const require = createRequire(import.meta.url)
 
 export async function generateDashboard(
-  {cwd, staticDir}: GenerateContext,
+  {rootDir: cwd, staticDir}: GenerateContext,
   handlerUrl: string,
   staticFile: string
 ) {

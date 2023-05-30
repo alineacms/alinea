@@ -1,7 +1,7 @@
+import {Modal} from 'alinea/dashboard/view/Modal'
 import {InputForm} from 'alinea/editor'
 import {Button, HStack, Stack, fromModule} from 'alinea/ui'
 import {Main} from 'alinea/ui/Main'
-import {Modal} from 'alinea/ui/Modal'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {useEffect, useRef} from 'react'
 import {entryRevisionAtoms} from '../atoms/EntryAtoms.js'

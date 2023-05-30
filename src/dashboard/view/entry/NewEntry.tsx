@@ -1,14 +1,8 @@
-import {
-  createId,
-  docFromEntry,
-  Entry,
-  Outcome,
-  slugify,
-  Type
-} from 'alinea/core'
+import {createId, Entry, Outcome, slugify, Type} from 'alinea/core'
 import {generateKeyBetween} from 'alinea/core/util/FractionalIndexing'
 import {entries, fromEntries, keys} from 'alinea/core/util/Objects'
 import {useNavigate} from 'alinea/dashboard/util/HashRouter'
+import {Modal} from 'alinea/dashboard/view/Modal'
 import {useField} from 'alinea/editor'
 import {InputField} from 'alinea/editor/view/InputField'
 import {link} from 'alinea/input/link'
@@ -19,14 +13,12 @@ import {
   Button,
   fromModule,
   HStack,
-  IconButton,
   Loader,
   Typo,
   useObservable
 } from 'alinea/ui'
 import {IcRoundArrowBack} from 'alinea/ui/icons/IcRoundArrowBack'
 import {Link} from 'alinea/ui/Link'
-import {Modal} from 'alinea/ui/Modal'
 import {FormEvent, useState} from 'react'
 import {useQuery, useQueryClient} from 'react-query'
 import * as Y from 'yjs'
@@ -41,6 +33,7 @@ import css from './NewEntry.module.scss'
 const styles = fromModule(css)
 
 function NewEntryForm({parentId}: NewEntryProps) {
+  return <>todo</>
   const nav = useNav()
   const navigate = useNavigate()
   const locale = useLocale()
