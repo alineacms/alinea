@@ -1,39 +1,6 @@
 import {column, index, table} from 'rado'
 import {EntryData} from '../backend/db/EntryData.js'
 import {createId} from './Id.js'
-/*
-class EntryVersionTable {
-  entryId = column.string
-  status = column.string<EntryStatus>()
-  modifiedAt = column.number
-  contentHash = column.string
-
-  path = column.string
-  title = column.string
-  url = column.string
-  data = column.json
-
-  get versionId() {
-    return this.entryId.concat('.').concat(this.status)
-  }
-}
-
-export interface EntryVersion extends table<EntryVersionTable> {
-  data: EntryData
-}
-
-export const EntryVersion = table({
-  EntryVersion: EntryVersionTable,
-  [table.indexes]() {
-    return {
-      entry: index(this.entryId)
-    }
-  },
-  [table.primaryKey]() {
-    return [this.entryId, this.status]
-  }
-})
-*/
 
 export enum EntryPhase {
   Draft = 'draft',

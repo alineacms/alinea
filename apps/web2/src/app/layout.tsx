@@ -28,7 +28,7 @@ export default async function RootLayout({children}: PropsWithChildren) {
             return Page()
               .where(Page.type.is('Doc').or(Page.type.is('Docs')))
               .select({
-                id: Page.id,
+                id: Page.entryId,
                 type: Page.type,
                 url: Page.url,
                 title: Page.title,
@@ -45,9 +45,7 @@ export default async function RootLayout({children}: PropsWithChildren) {
       <head>
         <meta name="theme-color" content={color} />
         <style>
-          {`
-            @media (max-width: 440px) {html {font-size: calc(4.4444vw + .00012px)}}
-          `}
+          {`@media (max-width: 440px) {html {font-size: calc(4.4444vw + .00012px)}}`}
         </style>
         <link
           rel="icon"
