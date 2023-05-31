@@ -11,7 +11,9 @@ export const EntryMeta = object(
 )
 
 // The data structure as stored in json files on disk
-export type EntryRecord = typeof EntryRecord.infer
+export type EntryRecord = typeof EntryRecord.infer & {
+  [field: string]: any
+}
 export const EntryRecord = object(
   class {
     id = string

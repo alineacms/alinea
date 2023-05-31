@@ -8,6 +8,8 @@ export enum EntryPhase {
   Archived = 'archived'
 }
 
+export type EntryLinks = Array<[field: string, link: string]>
+
 export class EntryTable {
   // Entry data
   entryId = column.string.default(createId)
@@ -46,7 +48,8 @@ export class EntryTable {
   path = column.string
   title = column.string
   url = column.string
-  data = column.json
+  data = column.json<EntryData>()
+  links = column.json<EntryLinks>()
 
   /*get parentIds() {
     const Parent = Entry().as('Parent')

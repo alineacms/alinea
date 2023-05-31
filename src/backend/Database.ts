@@ -20,7 +20,6 @@ import {Resolver} from './Resolver.js'
 import {SourceEntry} from './Source.js'
 import {Store} from './Store.js'
 import {AlineaMeta} from './db/AlineaMeta.js'
-import {entryData} from './db/EntryData.js'
 
 const decoder = new TextDecoder()
 
@@ -192,12 +191,11 @@ export class Database implements Syncable {
   computeEntry(
     file: SourceEntry
   ): Omit<Table.Insert<typeof Entry>, 'contentHash'> {
-    const data = EntryRecord(
+    const data: EntryRecord = EntryRecord(
       file.contents instanceof Uint8Array
         ? JSON.parse(decoder.decode(file.contents))
         : file.contents
     )
-
     const parentDir = path.dirname(file.filePath)
     const extension = path.extname(file.filePath)
     const fileName = path.basename(file.filePath, extension)
@@ -225,6 +223,13 @@ export class Database implements Syncable {
       phase: entryPhase
     }
 
+    const pathData = entryPath === 'index' ? '' : entryPath
+    const entryData = {
+      ...data,
+      path: pathData
+    }
+    const links = Type.shape(type).extractLinks([], entryData)
+
     return {
       workspace: file.workspace,
       root: file.root,
@@ -251,10 +256,8 @@ export class Database implements Syncable {
       title: data.title ?? '',
       url: this.entryUrl(type, urlMeta),
 
-      data: entryData(type, {
-        ...data,
-        path: entryPath === 'index' ? '' : entryPath
-      })
+      data: entryData,
+      links
     }
   }
 
