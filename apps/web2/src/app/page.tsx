@@ -17,6 +17,7 @@ const styles = fromModule(css)
 
 export default async function HomePage() {
   const home = await pages.find(Home().first())
+  console.log(home.introduction.text)
   return (
     <main className={styles.home()}>
       <div

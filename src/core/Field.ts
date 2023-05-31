@@ -51,7 +51,10 @@ export namespace Field {
     Options
   > {
     constructor(meta: FieldMeta<Value, (value: Value) => void, Options>) {
-      super({shape: Shape.Scalar(meta.label, meta.initialValue), ...meta})
+      super({
+        shape: Shape.Scalar(meta.label, meta.initialValue),
+        ...meta
+      })
     }
   }
 
@@ -64,7 +67,10 @@ export namespace Field {
       shape: {[key: string]: RecordShape<any>},
       meta: FieldMeta<Array<Row>, ListMutator<Row>, Options>
     ) {
-      super({shape: Shape.List(meta.label, shape, meta.initialValue), ...meta})
+      super({
+        shape: Shape.List(meta.label, shape, meta.initialValue),
+        ...meta
+      })
     }
   }
 

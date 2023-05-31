@@ -2,7 +2,6 @@ import {cms, pages} from '@/cms'
 import {Page} from 'alinea/core'
 import {btoa} from 'alinea/core/util/Encoding'
 import {PropsWithChildren} from 'react'
-import {Layout} from '../layout/Layout'
 import {Home} from '../schema/Home'
 import '../styles/global.scss'
 
@@ -54,9 +53,10 @@ export default async function RootLayout({children}: PropsWithChildren) {
         />
       </head>
       <body>
-        <Layout isHome {...layout}>
+        {children}
+        {/*<Layout isHome {...layout}>
           {children}
-        </Layout>
+          </Layout>*/}
         <cms.previews />
       </body>
     </html>

@@ -69,4 +69,50 @@ export class RecordShape<T = {}> implements Shape<T, RecordMutator<T>> {
       }
     }
   }
+  extractLinks(path: Array<string>, value: any) {
+    if (value && typeof value !== 'object') return []
+    return [
+      ...entries(this.properties).flatMap(([key, shape]) => {
+        return shape.extractLinks(path.concat(key), value[key])
+      })
+    ]
+  }
+  /*valueToStorage(value: T): T {
+    const obj: Record<string, any> = value || {}
+    if (typeof obj !== 'object') return {} as T
+    return fromEntries(
+      entries(this.properties).map(([key, shape]) => {
+        return [key, shape.valueToStorage(obj[key])]
+      })
+    ) as T
+  }
+  storageToValue(stored: T): T {
+    const obj: Record<string, any> = stored || {}
+    if (typeof obj !== 'object') return {} as T
+    return fromEntries(
+      entries(this.properties).map(([key, shape]) => {
+        return [key, shape.storageToValue(obj[key])]
+      })
+    ) as T
+  }
+  selectFromStorage(expr: Expr<T>): Expr<T> {
+    return new Expr(
+      new ExprData.Record(
+        fromEntries(
+          entries(this.properties).map(([key, shape]) => {
+            return [key, shape.selectFromStorage(expr.get(key))[Expr.Data]]
+          })
+        )
+      )
+    )
+  }
+  selectedToValue(selected: T): T {
+    const obj: Record<string, any> = selected || {}
+    if (typeof obj !== 'object') return {} as T
+    return fromEntries(
+      entries(this.properties).map(([key, shape]) => {
+        return [key, shape.selectedToValue(obj[key])]
+      })
+    ) as T
+  }*/
 }

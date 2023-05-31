@@ -1,4 +1,5 @@
 import * as Y from 'yjs'
+import {EntryLinks} from './Entry.js'
 import {Label} from './Label.js'
 import {TextDoc} from './TextDoc.js'
 import {ListShape} from './shape/ListShape.js'
@@ -14,16 +15,17 @@ export interface ShapeInfo {
   shape: RecordShape
 }
 
-export interface Shape<T = any, M = any> {
+export interface Shape<Value = any, OnChange = any> {
   label: Label
   innerTypes(parents: Array<string>): Array<ShapeInfo>
-  create(): T
+  create(): Value
   typeOfChild<C>(yValue: any, child: string): Shape<C, unknown>
-  toY(value: T): any
-  fromY(yValue: any): T
+  toY(value: Value): any
+  fromY(yValue: any): Value
   watch(parent: YType, key: string): (fun: () => void) => void
-  mutator(parent: Y.Doc | YType, key: string): M
+  mutator(parent: Y.Doc | YType, key: string): OnChange
   toString(): string
+  extractLinks(path: Array<string>, value: Value): EntryLinks
 }
 
 export namespace Shape {

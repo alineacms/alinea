@@ -75,17 +75,24 @@ export type RichTextMutator<R> = {
   insert: (id: string, block: string) => void
 }
 
-export interface RichTextRaw<T> {
-  doc: TextDoc<T>
+export interface TextDocStorage<Blocks> {
+  doc: TextDoc<Blocks>
   linked: Array<string>
 }
 
-export class RichTextShape<T> implements Shape<TextDoc<T>, RichTextMutator<T>> {
+export interface TextDocSelected<Blocks> {
+  doc: TextDoc<Blocks>
+  linked: Array<{id: string; url: string}>
+}
+
+export class RichTextShape<Blocks>
+  implements Shape<TextDoc<Blocks>, RichTextMutator<Blocks>>
+{
   values?: Record<string, RecordShape>
   constructor(
     public label: Label,
     public shapes?: Record<string, RecordShape>,
-    public initialValue?: TextDoc<T>
+    public initialValue?: TextDoc<Blocks>
   ) {
     this.values =
       shapes &&
@@ -111,7 +118,7 @@ export class RichTextShape<T> implements Shape<TextDoc<T>, RichTextMutator<T>> {
     })
   }
   create() {
-    return this.initialValue || ([] as TextDoc<T>)
+    return this.initialValue || ([] as TextDoc<Blocks>)
   }
   typeOfChild<C>(yValue: Y.Map<any>, child: string): Shape<C> {
     const block = yValue.get(child)
@@ -120,7 +127,7 @@ export class RichTextShape<T> implements Shape<TextDoc<T>, RichTextMutator<T>> {
     if (value) return value as unknown as Shape<C>
     throw createError(`Type of block "${child}" not found`)
   }
-  toY(value: TextDoc<T>) {
+  toY(value: TextDoc<Blocks>) {
     const map = new Y.Map()
     const text = new Y.XmlFragment()
     map.set('$text', text)
@@ -134,7 +141,7 @@ export class RichTextShape<T> implements Shape<TextDoc<T>, RichTextMutator<T>> {
     text.insert(0, value.map(unserialize))
     return map
   }
-  fromY(value: Y.Map<any>): TextDoc<T> {
+  fromY(value: Y.Map<any>): TextDoc<Blocks> {
     if (!value) return []
     const text: Y.XmlFragment = value.get('$text')
     const types = this.values || {}
@@ -144,16 +151,16 @@ export class RichTextShape<T> implements Shape<TextDoc<T>, RichTextMutator<T>> {
       content[0].type === 'paragraph' &&
       !content[0].content
     if (isEmpty) return []
-    return content.map((node): TextNode<T> => {
+    return content.map((node): TextNode<Blocks> => {
       const type = types[node.type]
       if (type && 'id' in node) {
         return {
           id: node.id,
           type: node.type,
           ...type.fromY(value.get(node.id))
-        } as TextNode.Element<T>
+        } as TextNode.Element<Blocks>
       }
-      return node as TextNode<T>
+      return node as TextNode<Blocks>
     })
   }
   watch(parent: Y.Map<any>, key: string) {
@@ -172,6 +179,80 @@ export class RichTextShape<T> implements Shape<TextDoc<T>, RichTextMutator<T>> {
         map.set(id, shape.toY(row))
       }
     }
+  }
+  extractLinks(path: Array<string>, value: TextDoc<Blocks>) {
+    const result = []
+    const self = path.join('.')
+    iterMarks(value, mark => {
+      if (mark.type !== 'link') return
+      const id = mark.attrs!['data-entry']
+      if (id) result.push([self, id])
+    })
+    for (const row of value) {
+      const subType = this.values?.[row.type]
+      if (!subType) continue
+      result.push(...subType.extractLinks(path.concat(row.type), row))
+    }
+    return result
+  }
+  /*valueToStorage(value: TextDoc<Blocks>): TextDocStorage<Blocks> {
+    if (!Array.isArray(value)) return {doc: [], linked: []}
+    const linked = new Set<string>()
+    iterMarks(value, mark => {
+      if (mark.type !== 'link') return
+      const id = mark.attrs!['data-entry']
+      if (id) linked.add(id)
+    })
+    const doc = value.map(row => {
+      const subType = this.values?.[row.type]
+      if (!subType) return row
+      return subType.valueToStorage(row)
+    }) as TextDoc<Blocks>
+    return {
+      doc,
+      linked: Array.from(linked)
+    }
+  }
+  storageToValue(storage: TextDocStorage<Blocks>): TextDoc<Blocks> {
+    return storage.doc
+  }
+  selectFromStorage(
+    expr: Expr<TextDocStorage<Blocks>>
+  ): Expr<TextDocSelected<Blocks>> {
+    return new Expr(
+      new ExprData.Record({
+        doc: expr.get('doc')[Expr.Data],
+        linked: new ExprData.Query(
+          Entry(Entry.entryId.isIn(expr.get('linked'))).select({
+            id: Entry.entryId,
+            url: Entry.url
+          })[Query.Data]
+        )
+      })
+    )
+  }
+  selectedToValue({doc, linked}: TextDocSelected<Blocks>): TextDoc<Blocks> {
+    if (!Array.isArray(doc)) return []
+    if (linked?.length === 0) return doc
+    const links = new Map(linked.map(({id, url}) => [id, url]))
+    iterMarks(doc, mark => {
+      if (mark.type !== 'link') return
+      const id = mark.attrs!['data-entry']
+      if (id) mark.attrs!['href'] = links.get(id)!
+    })
+    return doc.map(row => {
+      const subType = this.values?.[row.type]
+      if (!subType) return row
+      return subType.selectedToValue(row)
+    }) as TextDoc<Blocks>
+  }*/
+}
+
+function iterMarks(doc: TextDoc<any>, fn: (mark: TextNode.Mark) => void) {
+  for (const row of doc) {
+    if (row.marks) row.marks.forEach(fn)
+    if (!TextNode.isElement(row)) continue
+    if (row.content) iterMarks(row.content, fn)
   }
 }
 

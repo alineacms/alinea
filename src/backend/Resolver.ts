@@ -1,16 +1,15 @@
 import {
   Connection,
   Field,
-  RichTextShape,
   Schema,
   Shape,
-  TextDoc,
   Type,
   createYDoc,
   parseYDoc
 } from 'alinea/core'
 import {Realm} from 'alinea/core/pages/Realm'
 import {base64} from 'alinea/core/util/Encoding'
+import {assign} from 'alinea/core/util/Objects'
 import {
   BinOpType,
   Expr,
@@ -59,7 +58,9 @@ const binOps = {
 
 const pageFields = keys(Entry)
 
-class QueryContext {
+type Interim = any
+
+export class ResolveContext {
   constructor(
     public realm: Realm,
     public table: Table<EntryTable> | undefined = undefined,
@@ -71,8 +72,8 @@ class QueryContext {
     return this.table
   }
 
-  withTable(table: Table<EntryTable>): QueryContext {
-    return new QueryContext(this.realm, table, this.expr)
+  withTable(table: Table<EntryTable>): ResolveContext {
+    return new ResolveContext(this.realm, table, this.expr)
   }
 
   get inSelect() {
@@ -87,35 +88,35 @@ class QueryContext {
     return this.expr & ExprContext.InAccess
   }
 
-  get select(): QueryContext {
+  get select(): ResolveContext {
     if (this.inSelect) return this
-    return new QueryContext(
+    return new ResolveContext(
       this.realm,
       this.table,
       this.expr | ExprContext.InSelect
     )
   }
 
-  get condition(): QueryContext {
+  get condition(): ResolveContext {
     if (this.inCondition) return this
-    return new QueryContext(
+    return new ResolveContext(
       this.realm,
       this.table,
       this.expr | ExprContext.InCondition
     )
   }
 
-  get access(): QueryContext {
+  get access(): ResolveContext {
     if (this.inAccess) return this
-    return new QueryContext(
+    return new ResolveContext(
       this.realm,
       this.table,
       this.expr | ExprContext.InAccess
     )
   }
 
-  get none(): QueryContext {
-    return new QueryContext(this.realm, this.table, ExprContext.InNone)
+  get none(): ResolveContext {
+    return new ResolveContext(this.realm, this.table, ExprContext.InNone)
   }
 }
 
@@ -126,20 +127,14 @@ enum ExprContext {
   InAccess = 1 << 2
 }
 
-const POST_KEY = '$$post'
-
-type Pre = {
-  [POST_KEY]: 'richText'
-  doc: TextDoc<any>
-  linked: Array<{id: string; url: string}>
-}
-
 export class Resolver {
   constructor(public store: Store, public schema: Schema) {}
 
-  fieldExpr(ctx: QueryContext, expr: ExprData, shape: Shape): ExprData {
-    if (ctx.inAccess || ctx.inCondition) return expr
-    switch (true) {
+  fieldExpr(ctx: ResolveContext, expr: Expr<any>, shape: Shape): ExprData {
+    return expr[Expr.Data]
+    if (ctx.inAccess || ctx.inCondition) return expr[Expr.Data]
+    return shape.selectFromStorage(expr)[Expr.Data]
+    /*switch (true) {
       case shape instanceof RichTextShape:
         if (ctx.inAccess || ctx.inCondition)
           return new ExprData.Field(expr, 'doc')
@@ -157,11 +152,11 @@ export class Resolver {
         })
       default:
         return expr
-    }
+    }*/
   }
 
   fieldOf(
-    ctx: QueryContext,
+    ctx: ResolveContext,
     target: pages.TargetData,
     field: string
   ): ExprData {
@@ -193,18 +188,18 @@ export class Resolver {
           throw new Error(`Selecting "${field}" from unknown type: "${name}"`)
         return this.fieldExpr(
           ctx,
-          ctx.Table.data.get(field)[Expr.Data],
+          ctx.Table.data.get(field),
           Field.shape(Type.field(type, field)!)
         )
     }
   }
 
-  pageFields(ctx: QueryContext): Array<[string, ExprData]> {
+  pageFields(ctx: ResolveContext): Array<[string, ExprData]> {
     return pageFields.map(key => [key, this.fieldOf(ctx, {}, key)])
   }
 
-  fieldsOf(
-    ctx: QueryContext,
+  selectFieldsOf(
+    ctx: ResolveContext,
     target: pages.TargetData
   ): Array<[string, ExprData]> {
     const {name} = target
@@ -216,33 +211,33 @@ export class Resolver {
     })
   }
 
-  exprUnOp(ctx: QueryContext, {op, expr}: pages.ExprData.UnOp): ExprData {
+  exprUnOp(ctx: ResolveContext, {op, expr}: pages.ExprData.UnOp): ExprData {
     return new ExprData.UnOp(unOps[op], this.expr(ctx, expr))
   }
 
-  exprBinOp(ctx: QueryContext, {op, a, b}: pages.ExprData.BinOp): ExprData {
+  exprBinOp(ctx: ResolveContext, {op, a, b}: pages.ExprData.BinOp): ExprData {
     return new ExprData.BinOp(binOps[op], this.expr(ctx, a), this.expr(ctx, b))
   }
 
   exprField(
-    ctx: QueryContext,
+    ctx: ResolveContext,
     {target, field}: pages.ExprData.Field
   ): ExprData {
     return this.fieldOf(ctx, target, field)
   }
 
   exprAccess(
-    ctx: QueryContext,
+    ctx: ResolveContext,
     {expr, field}: pages.ExprData.Access
   ): ExprData {
     return new ExprData.Field(this.expr(ctx.access, expr), field)
   }
 
-  exprValue(ctx: QueryContext, {value}: pages.ExprData.Value): ExprData {
+  exprValue(ctx: ResolveContext, {value}: pages.ExprData.Value): ExprData {
     return new ExprData.Param(new ParamData.Value(value))
   }
 
-  exprRecord(ctx: QueryContext, {fields}: pages.ExprData.Record): ExprData {
+  exprRecord(ctx: ResolveContext, {fields}: pages.ExprData.Record): ExprData {
     return new ExprData.Record(
       fromEntries(
         entries(fields).map(([key, expr]) => {
@@ -252,7 +247,7 @@ export class Resolver {
     )
   }
 
-  expr(ctx: QueryContext, expr: pages.ExprData): ExprData {
+  expr(ctx: ResolveContext, expr: pages.ExprData): ExprData {
     switch (expr.type) {
       case 'unop':
         return this.exprUnOp(ctx, expr)
@@ -269,14 +264,17 @@ export class Resolver {
     }
   }
 
-  selectRecord(ctx: QueryContext, {fields}: pages.Selection.Record): ExprData {
+  selectRecord(
+    ctx: ResolveContext,
+    {fields}: pages.Selection.Record
+  ): ExprData {
     return new ExprData.Record(
       fromEntries(
         fields.flatMap(field => {
           switch (field.length) {
             case 1:
               const [target] = field
-              return this.fieldsOf(ctx.select, target)
+              return this.selectFieldsOf(ctx.select, target)
             case 2:
               const [key, selection] = field
               return [[key, this.select(ctx, selection)]]
@@ -286,24 +284,29 @@ export class Resolver {
     )
   }
 
-  selectRow(ctx: QueryContext, {target}: pages.Selection.Row): ExprData {
-    return new ExprData.Record(fromEntries(this.fieldsOf(ctx.select, target)))
+  selectRow(ctx: ResolveContext, {target}: pages.Selection.Row): ExprData {
+    return new ExprData.Record(
+      fromEntries(this.selectFieldsOf(ctx.select, target))
+    )
   }
 
-  selectCursor(ctx: QueryContext, selection: pages.Selection.Cursor): ExprData {
+  selectCursor(
+    ctx: ResolveContext,
+    selection: pages.Selection.Cursor
+  ): ExprData {
     return new ExprData.Query(this.queryCursor(ctx, selection))
   }
 
-  selectExpr(ctx: QueryContext, {expr}: pages.Selection.Expr): ExprData {
+  selectExpr(ctx: ResolveContext, {expr}: pages.Selection.Expr): ExprData {
     return this.expr(ctx.select, expr)
   }
 
-  selectAll(ctx: QueryContext, target: pages.TargetData): ExprData {
-    const fields = this.fieldsOf(ctx.select, target)
+  selectAll(ctx: ResolveContext, target: pages.TargetData): ExprData {
+    const fields = this.selectFieldsOf(ctx.select, target)
     return new ExprData.Record(fromEntries(fields))
   }
 
-  select(ctx: QueryContext, selection: pages.Selection): ExprData {
+  select(ctx: ResolveContext, selection: pages.Selection): ExprData {
     switch (selection.type) {
       case 'cursor':
         return this.selectCursor(ctx, selection)
@@ -317,7 +320,7 @@ export class Resolver {
   }
 
   queryRecord(
-    ctx: QueryContext,
+    ctx: ResolveContext,
     selection: pages.Selection.Record
   ): QueryData.Select {
     const expr = this.selectRecord(ctx.select, selection)
@@ -328,7 +331,7 @@ export class Resolver {
   }
 
   querySource(
-    ctx: QueryContext,
+    ctx: ResolveContext,
     source: pages.CursorSource | undefined
   ): Select<Table.Select<EntryTable>> {
     if (!source) return ctx.Table()
@@ -397,7 +400,7 @@ export class Resolver {
     }
   }
 
-  orderBy(ctx: QueryContext, orderBy: Array<pages.OrderBy>): Array<OrderBy> {
+  orderBy(ctx: ResolveContext, orderBy: Array<pages.OrderBy>): Array<OrderBy> {
     return orderBy.map(({expr, order}) => {
       const exprData = this.expr(ctx, expr)
       return {
@@ -425,7 +428,7 @@ export class Resolver {
   }
 
   queryCursor(
-    ctx: QueryContext,
+    ctx: ResolveContext,
     {cursor}: pages.Selection.Cursor
   ): QueryData.Select {
     const {
@@ -466,11 +469,10 @@ export class Resolver {
     return query[Query.Data].with(extra)
   }
 
-  query(ctx: QueryContext, selection: pages.Selection): QueryData.Select {
+  query(ctx: ResolveContext, selection: pages.Selection): QueryData.Select {
     switch (selection.type) {
       case 'row':
         throw new Error(`Cannot select rows at root level`)
-      // return this.queryRow(selection)
       case 'cursor':
         return this.queryCursor(ctx, selection)
       case 'record':
@@ -480,31 +482,86 @@ export class Resolver {
     }
   }
 
-  postProcess(pre: Pre) {
-    switch (pre[POST_KEY]) {
-      case 'richText':
-        const {doc, linked} = pre
-        // Todo: add href into text doc
-        return doc
+  postRow(interim: Interim, {target}: pages.Selection.Row): Interim {
+    return fromEntries(this.postFieldsOf(interim, target))
+  }
+
+  postCursor(interim: Interim, {cursor}: pages.Selection.Cursor): Interim {
+    const {target = {}, select, first} = cursor
+    if (select)
+      return first
+        ? this.post(interim, select)
+        : interim.map((row: Interim) => this.post(row, select))
+    return first
+      ? assign(interim, fromEntries(this.postFieldsOf(interim, target)))
+      : interim.map((row: Interim) =>
+          assign(row, fromEntries(this.postFieldsOf(row, target)))
+        )
+  }
+
+  postField(interim: Interim, {target, field}: pages.ExprData.Field): Interim {
+    const {name} = target
+    if (!name) return interim
+    const type = this.schema[name]
+    if (!type) throw new Error(`Selecting from unknown type: "${name}"`)
+    const shape = Field.shape(Type.field(type, field)!)
+    return shape.selectedToValue(interim)
+  }
+
+  postExpr(interim: Interim, {expr}: pages.Selection.Expr): Interim {
+    switch (expr.type) {
+      case 'field':
+        return this.postField(interim, expr)
       default:
-        return pre
+        return interim
     }
   }
 
-  post(interim: object): any {
-    if (!interim) return interim
-    if (Array.isArray(interim)) {
-      return interim.map(item => this.post(item))
-    }
-    if (typeof interim === 'object') {
-      if (POST_KEY in interim) return this.postProcess(interim as any)
-      return fromEntries(
-        entries(interim).map(([key, value]) => {
-          return [key, this.post(value)]
+  postFieldsOf(
+    interim: Interim,
+    target: pages.TargetData
+  ): Array<[string, Interim]> {
+    const {name} = target
+    if (!name) return []
+    const type = this.schema[name]
+    if (!type) throw new Error(`Selecting from unknown type: "${name}"`)
+    return keys(type).map(field => {
+      return [
+        field,
+        this.postField(interim[field], {type: 'field', target, field})
+      ]
+    })
+  }
+
+  postRecord(interim: Interim, {fields}: pages.Selection.Record): Interim {
+    return assign(
+      interim,
+      fromEntries(
+        fields.flatMap(field => {
+          switch (field.length) {
+            case 1:
+              const [target] = field
+              return this.postFieldsOf(interim, target)
+            case 2:
+              const [key, selection] = field
+              return [[key, this.post(interim[key], selection)]]
+          }
         })
       )
+    )
+  }
+
+  post(interim: Interim, selection: pages.Selection): Interim {
+    switch (selection.type) {
+      case 'row':
+        return this.postRow(interim, selection)
+      case 'cursor':
+        return this.postCursor(interim, selection)
+      case 'record':
+        return this.postRecord(interim, selection)
+      case 'expr':
+        return this.postExpr(interim, selection)
     }
-    return interim
   }
 
   resolve = async <T>({
@@ -512,10 +569,10 @@ export class Resolver {
     realm = Realm.Published,
     preview
   }: Connection.ResolveParams): Promise<T> => {
-    const query = new Query<object | Array<object>>(
-      this.query(new QueryContext(realm), selection)
+    const query = new Query<Interim>(
+      this.query(new ResolveContext(realm), selection)
     )
-    let interim: object | Array<object>
+    let interim: Interim
     if (preview) {
       const current = Entry({
         entryId: preview.entryId,
@@ -547,6 +604,6 @@ export class Resolver {
     } else {
       interim = await this.store(query)
     }
-    return this.post(interim!)
+    return this.post(interim!, selection) as T
   }
 }

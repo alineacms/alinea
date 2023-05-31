@@ -159,4 +159,47 @@ export class ListShape<T>
     }
     return res
   }
+  extractLinks(path: Array<string>, value: any) {
+    if (!Array.isArray(value)) return []
+    return value.flatMap(row => {
+      const type = row.type
+      const shape = this.values[type]
+      if (!shape) return []
+      return shape.extractLinks(path.concat(row.type), row)
+    })
+  }
+  /*valueToStorage(value: Array<ListRow & T>): Array<ListRow> {
+    if (!Array.isArray(value)) return []
+    return value.map(row => {
+      const type = row.type
+      const shape = this.values[type]
+      if (!shape) return row
+      return shape.valueToStorage(row) as ListRow
+    })
+  }
+  storageToValue(stored: Array<ListRow>): Array<ListRow & T> {
+    return stored.map(row => {
+      const type = row.type
+      const shape = this.values[type]
+      if (!shape) return row as any
+      return shape.storageToValue(row) as ListRow & T
+    })
+  }
+  selectFromStorage(expr: Expr<Array<ListRow>>): Expr<Array<ListRow>> {
+    return expr.map(row => {
+      let res: Expr<ListRow> = row as any
+      for (const [type, shape] of entries(this.values)) {
+        res = iif(row.type.is(type), shape.selectFromStorage(row as any), res)
+      }
+      return res
+    })
+  }
+  selectedToValue(selected: Array<ListRow>): Array<ListRow & T> {
+    return selected.map(row => {
+      const type = row.type
+      const shape = this.values[type]
+      if (!shape) return row as any
+      return shape.selectedToValue(row as any) as ListRow & T
+    })
+  }*/
 }

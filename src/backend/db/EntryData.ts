@@ -1,10 +1,10 @@
 import {
   Field,
   ListShape,
-  RichTextRaw,
   RichTextShape,
   Shape,
   TextDoc,
+  TextDocStorage,
   TextNode,
   Type
 } from 'alinea/core'
@@ -64,7 +64,7 @@ function transformValue(shape: Shape, raw: any): any {
       return {
         doc,
         linked: Array.from(linked)
-      } satisfies RichTextRaw<any>
+      } satisfies TextDocStorage<any>
     default:
       return raw
   }
