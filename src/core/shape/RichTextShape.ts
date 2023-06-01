@@ -181,13 +181,15 @@ export class RichTextShape<Blocks>
     }
   }
   extractLinks(path: Array<string>, value: TextDoc<Blocks>) {
-    const result = []
+    const result: Array<[field: string, links: Array<string>]> = []
     const self = path.join('.')
+    const links = new Set<string>()
     iterMarks(value, mark => {
       if (mark.type !== 'link') return
       const id = mark.attrs!['data-entry']
-      if (id) result.push([self, id])
+      if (id) links.add(id)
     })
+    if (links.size) result.push([self, Array.from(links)])
     for (const row of value) {
       const subType = this.values?.[row.type]
       if (!subType) continue

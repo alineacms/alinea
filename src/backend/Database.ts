@@ -9,6 +9,7 @@ import {
 } from 'alinea/core'
 import {EntryRecord} from 'alinea/core/EntryRecord'
 import {Realm} from 'alinea/core/pages/Realm'
+import {fromEntries} from 'alinea/core/util/Objects'
 import * as path from 'alinea/core/util/Paths'
 import {timer} from 'alinea/core/util/Timer'
 import {Driver, Expr, Table, alias, create} from 'rado'
@@ -228,7 +229,7 @@ export class Database implements Syncable {
       ...data,
       path: pathData
     }
-    const links = Type.shape(type).extractLinks([], entryData)
+    const links = fromEntries(Type.shape(type).extractLinks([], entryData))
 
     return {
       workspace: file.workspace,
@@ -273,8 +274,8 @@ export class Database implements Syncable {
   ): Promise<void> {
     // Todo: run a validation step for orders, paths, id matching on statuses
     // etc
-    const {h32Raw} = await xxhash()
     await this.init()
+    const {h32Raw} = await xxhash()
     return this.store.transaction(async query => {
       const seen: Array<string> = []
       let inserted = 0

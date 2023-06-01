@@ -1,6 +1,6 @@
 import {EntryPhase, Expand} from 'alinea/core'
 import {Cursor} from 'alinea/core/pages/Cursor'
-import {BinaryOp, EV, Expr, ExprData, and} from 'alinea/core/pages/Expr'
+import {BinaryOp, Expr, ExprData, and} from 'alinea/core/pages/Expr'
 import {Callable} from 'rado/util/Callable'
 import type {ComponentType} from 'react'
 import {Field} from './Field.js'
@@ -61,11 +61,7 @@ export interface TypeData {
   target: TypeTarget
 }
 
-export class TypeTarget {
-  toJSON() {
-    return undefined
-  }
-}
+export interface TypeTarget {}
 
 export declare class TypeI<Definition = object> {
   get [Type.Data](): TypeData
@@ -74,7 +70,7 @@ export declare class TypeI<Definition = object> {
 export interface TypeI<Definition = object> extends Callable {
   (conditions?: {
     [K in keyof Definition]?: Definition[K] extends Expr<infer V>
-      ? EV<V>
+      ? V /*EV<V>*/
       : never
   }): Cursor.Find<TypeRow<Definition>>
   infer: TypeRow<Definition>
@@ -154,12 +150,13 @@ function fieldsOfDefinition(
   })
 }
 
-class TypeInstance<Definition extends TypeDefinition> implements TypeData {
+class TypeInstance<Definition extends TypeDefinition>
+  implements TypeData, TypeTarget
+{
   shape: RecordShape
   hint: Hint
   meta: TypeMeta
   sections: Array<Section> = []
-  target = new TypeTarget()
 
   constructor(public label: Label, public definition: Definition) {
     this.meta = this.definition[Meta] || {}
@@ -195,6 +192,10 @@ class TypeInstance<Definition extends TypeDefinition> implements TypeData {
     addCurrent()
   }
 
+  get target() {
+    return this
+  }
+
   condition(input: Array<any>): ExprData | undefined {
     if (input.length === 0) return undefined
     const isConditionalRecord = input.length === 1 && !Expr.isExpr(input[0])
@@ -212,13 +213,13 @@ class TypeInstance<Definition extends TypeDefinition> implements TypeData {
   call(...input: Array<any>) {
     return new Cursor.Find({
       id: createId(),
-      target: {type: this.target},
+      target: {type: this},
       where: this.condition(input)
     })
   }
 
   field(def: Field, name: string) {
-    return assign(Expr(ExprData.Field({type: this.target}, name)), {
+    return assign(Expr(ExprData.Field({type: this}, name)), {
       [Field.Data]: def[Field.Data]
     })
   }

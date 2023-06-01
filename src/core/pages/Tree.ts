@@ -1,6 +1,6 @@
 import {createId} from 'alinea/core/Id'
+import {Page} from '../Page.js'
 import {Cursor, CursorData, SourceType} from './Cursor.js'
-import {Page} from './Page.js'
 import {Selection} from './Selection.js'
 import {Target, TargetI} from './Target.js'
 

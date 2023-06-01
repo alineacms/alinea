@@ -32,7 +32,7 @@ export interface WorkspaceDefinition {
   [Meta]: WorkspaceMeta
 }
 
-export type Workspace<T extends Roots = Roots> = T & {
+export type Workspace<Definition extends Roots = Roots> = Definition & {
   [Workspace.Data]: WorkspaceData
   [CMS.Link]?: CMS
 }

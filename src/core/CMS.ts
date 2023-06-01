@@ -3,6 +3,7 @@ import {Config} from './Config.js'
 import {Connection} from './Connection.js'
 import {Root} from './Root.js'
 import {Workspace} from './Workspace.js'
+import {Selection} from './pages/Selection.js'
 import {entries} from './util/Objects.js'
 
 type Attachment = Workspace | Root
@@ -11,9 +12,13 @@ const attached = new WeakMap<Attachment, CMS>()
 export interface CMSApi {
   createStore(cwd: string): Promise<Store>
   connection(): Promise<Connection>
+  find<S>(select: S): Promise<Selection.Infer<S>>
+  find<S>(location: Location, select: S): Promise<Selection.Infer<S>>
 }
 
-export abstract class CMS implements Config {
+export type Location = Root | Workspace
+
+export abstract class CMS implements Config, CMSApi {
   constructor(protected config: Config) {
     this.attach(config)
   }
@@ -32,6 +37,14 @@ export abstract class CMS implements Config {
         attached.set(root, this)
       }
     }
+  }
+
+  async find<S>(...args: Array<any>) {
+    const [location, select] = args.length === 1 ? [undefined, args[0]] : args
+    const cnx = await this.connection()
+    return cnx.resolve({
+      selection: Selection(select)
+    }) as Promise<Selection.Infer<S>>
   }
 
   get schema() {

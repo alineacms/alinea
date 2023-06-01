@@ -1,4 +1,4 @@
-import {pages} from '@/cms'
+import {cms} from '@/cms'
 import {
   IcRoundFastForward,
   MdiLanguageTypescript,
@@ -16,7 +16,7 @@ import css from './home.module.scss'
 const styles = fromModule(css)
 
 export default async function HomePage() {
-  const home = await pages.find(Home().first())
+  const home = await cms.find(cms.workspaces.main, Home().first())
   console.log(home.introduction.text)
   return (
     <main className={styles.home()}>

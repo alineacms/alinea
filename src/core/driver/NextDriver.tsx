@@ -11,7 +11,7 @@ import {CMSApi, DefaultCMS} from '../CMS.js'
 import {Client, ClientOptions} from '../Client.js'
 import {Config} from '../Config.js'
 import {EntryPhase} from '../Entry.js'
-import {Page} from '../pages/Page.js'
+import {Page} from '../Page.js'
 import {Realm} from '../pages/Realm.js'
 import {Selection} from '../pages/Selection.js'
 

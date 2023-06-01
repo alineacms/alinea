@@ -1,7 +1,8 @@
-import {Selection} from 'alinea/core/pages/Selection'
 import type {ComponentType} from 'react'
 import {CMS} from './CMS.js'
 import {Label} from './Label.js'
+import {Meta} from './Meta.js'
+import {PageSeed} from './Page.js'
 
 export interface RootI18n {
   locales: Array<string>
@@ -13,33 +14,18 @@ export interface RootMeta {
   i18n?: RootI18n
 }
 
+export interface RootDefinition {
+  [key: string]: PageSeed
+  [Meta]: RootMeta
+}
+
 export interface RootData extends RootMeta {
   label: Label
 }
 
-export interface Root {
+export type Root<Definition = {}> = Definition & {
   [Root.Data]: RootData
   [CMS.Link]?: CMS
-}
-
-export class Root {
-  constructor(data: RootData) {
-    this[Root.Data] = data
-  }
-
-  async find<S>(select: S) {
-    const cnx = await CMS.instanceFor(this).connection()
-    return cnx.resolve({
-      selection: Selection(select)
-    }) as Promise<Selection.Infer<S>>
-  }
-
-  async findOne<S>(select: S): Promise<Selection.Infer<S>> {
-    const cnx = await CMS.instanceFor(this).connection()
-    return cnx.resolve({
-      selection: Selection(select)
-    }) as Promise<Selection.Infer<S>>
-  }
 }
 
 export namespace Root {
@@ -62,6 +48,19 @@ export namespace Root {
   }
 }
 
-export function root(label: Label, meta: RootMeta): Root {
-  return new Root({label, ...meta})
+export function root<Definition extends RootDefinition>(
+  label: Label,
+  definition: Definition
+): Root<Definition> {
+  return {
+    ...definition,
+    [Root.Data]: {
+      label,
+      ...definition[Meta]
+    }
+  }
+}
+
+export namespace root {
+  export const meta: typeof Meta = Meta
 }
