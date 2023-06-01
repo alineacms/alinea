@@ -8,7 +8,7 @@ export enum EntryPhase {
   Archived = 'archived'
 }
 
-export type EntryLinks = Array<[field: string, link: string]>
+export type EntryLinks = {[field: string]: Array<string>}
 
 export class EntryTable {
   // Entry data
