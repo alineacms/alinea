@@ -1,5 +1,8 @@
 import {array, boolean, enums, number, object, string} from 'cito'
-import {Expr, ExprData, and} from './Expr.js'
+import {createId} from '../Id.js'
+import {Type} from '../Type.js'
+import {entries} from '../util/Objects.js'
+import {BinaryOp, Expr, ExprData, and} from './Expr.js'
 import {Projection} from './Projection.js'
 import {Selection} from './Selection.js'
 import {TargetData} from './Target.js'
@@ -127,6 +130,32 @@ export namespace Cursor {
 
     take(take: number): Find<Row> {
       return new Find<Row>(this.with({take}))
+    }
+  }
+
+  export class Partial<Definition> extends Find<Type.Row<Definition>> {
+    constructor(
+      public type: Type<Definition>,
+      public partial: Partial<Type.Row<Definition>>
+    ) {
+      super({
+        id: createId(),
+        target: {type},
+        where: Partial.condition(type, partial)
+      })
+    }
+
+    static condition(
+      type: Type,
+      input: Record<string, any>
+    ): ExprData | undefined {
+      const conditions = entries(input).map(([key, value]) => {
+        const field = Expr(ExprData.Field({type}, key))
+        return Expr(
+          ExprData.BinOp(field[Expr.Data], BinaryOp.Equals, ExprData(value))
+        )
+      })
+      return and(...conditions)[Expr.Data]
     }
   }
 

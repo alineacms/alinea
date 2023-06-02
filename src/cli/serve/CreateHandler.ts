@@ -60,7 +60,7 @@ function buildFiles(outdir: string, result: BuildResult) {
 
 export function createHandler(
   {
-    cwd,
+    rootDir: cwd,
     staticDir,
     alineaDev,
     buildOptions,

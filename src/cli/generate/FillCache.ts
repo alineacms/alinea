@@ -15,21 +15,21 @@ export async function* fillCache(
   until: Promise<any>
 ) {
   const db = new Database(store, config)
-  const source = new FileData({
+  const fileData = new FileData({
     config,
     fs: fs.promises,
     rootDir: configDir
   })
   const limit = pLimit(1)
-  const cache = () => db.fill(source.entries())
+  const cache = () => db.fill(fileData, fileData)
   const result = await limit(cache)
   yield result
 
-  if (!watch || !source.watchFiles) return
+  if (!watch || !fileData.watchFiles) return
 
   const results = createEmitter<void>()
   const stopWatching = await createWatcher({
-    watchFiles: source.watchFiles.bind(source),
+    watchFiles: fileData.watchFiles.bind(fileData),
     async onChange() {
       results.emit(await limit(cache))
     }

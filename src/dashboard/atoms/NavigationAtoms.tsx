@@ -40,7 +40,9 @@ export const rootAtom = atom(get => {
 })
 
 export const localeAtom = atom(get => {
+  const workspace = get(workspaceAtom)
   const root = get(rootAtom)
+  const config = get(configAtom)
   const {i18n} = root
   if (!i18n) return
   const match = get(matchAtoms({route: navMatchers.matchRoot, loose: true}))
@@ -50,7 +52,7 @@ export const localeAtom = atom(get => {
     const fromUrl = parseRootPath(rootKey)[1]
     if (fromUrl && i18n.locales.includes(fromUrl)) return fromUrl
   }
-  return Root.defaultLocale(i18n)
+  return Root.defaultLocale(config.workspaces[workspace.name][root.name])
 })
 
 export const entryLocationAtom = atom(get => {

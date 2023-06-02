@@ -15,6 +15,7 @@ prog
   .describe('Generate types and content cache')
   .option('-w, --watch', `Watch for changes to source files`)
   .option('-d, --dir', `Directory containing the alinea config file`)
+  .option('-c, --config', `Path to the alinea config file`)
   .option(
     '--fix',
     `Any missing or incorrect properties will be overwritten by their default`
@@ -27,7 +28,8 @@ prog
       cwd: args.dir,
       watch: args.watch,
       fix: args.fix,
-      onAfterGenerate: forwardCommand
+      onAfterGenerate: forwardCommand,
+      configFile: args.config
     })) {
     }
   })
@@ -45,6 +47,7 @@ prog
   .alias('serve')
   .describe('Start a development dashboard')
   .option('-d, --dir', `Directory containing the alinea config file`)
+  .option('-c, --config', `Path to the alinea config file`)
   .option('-p, --port', `Port to listen on`)
   .option('--production', `Use production backend`)
   .option('--dev', `Watch alinea sources`)
@@ -58,7 +61,8 @@ prog
       ...args,
       alineaDev: args.dev,
       cwd: args.dir,
-      onAfterGenerate: forwardCommand
+      onAfterGenerate: forwardCommand,
+      configFile: args.config
     })
   })
 

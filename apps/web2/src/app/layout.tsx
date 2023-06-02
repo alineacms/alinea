@@ -1,4 +1,4 @@
-import {cms, pages} from '@/cms'
+import {cms} from '@/cms'
 import {Page} from 'alinea/core'
 import {btoa} from 'alinea/core/util/Encoding'
 import {PropsWithChildren} from 'react'
@@ -17,8 +17,8 @@ const favicon = btoa(
   </svg>`
 )
 
-export default async function RootLayout({children}: PropsWithChildren) {
-  const layout = await pages.find(
+export default async function Layout({children}: PropsWithChildren) {
+  const layout = await cms.find(
     Home()
       .select({
         header: {

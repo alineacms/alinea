@@ -7,7 +7,6 @@ const TypeA = type('Type', {
   path: path('Path'),
   ...tabs(
     tab('Tab 1', {
-      namesdf: text('Name'),
       name: path('Name')
     }),
     tab('Tab 2', {

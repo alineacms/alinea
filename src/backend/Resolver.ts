@@ -534,6 +534,7 @@ export class Resolver {
   }
 
   postRecord(interim: Interim, {fields}: pages.Selection.Record): Interim {
+    if (!interim) return interim
     return assign(
       interim,
       fromEntries(

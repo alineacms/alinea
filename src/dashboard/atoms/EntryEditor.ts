@@ -8,7 +8,7 @@ import {
   parseYDoc
 } from 'alinea/core'
 import {Client} from 'alinea/core/Client'
-import {Page} from 'alinea/core/pages/Page'
+import {Page} from 'alinea/core/Page'
 import {Realm} from 'alinea/core/pages/Realm'
 import {entries, fromEntries, values} from 'alinea/core/util/Objects'
 import {InputState} from 'alinea/editor'

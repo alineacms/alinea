@@ -1,4 +1,4 @@
-import {object, string} from 'cito'
+import {boolean, object, string} from 'cito'
 import {Entry} from './Entry.js'
 
 export type EntryMeta = typeof EntryMeta.infer
@@ -6,6 +6,7 @@ export const EntryMeta = object(
   class {
     index = string
     root? = string.optional
+    seeded? = boolean.optional
     i18n? = object({id: string}).optional
   }
 )
@@ -18,21 +19,23 @@ export const EntryRecord = object(
   class {
     id = string
     type = string
-    title = string
+    title = string.optional
     alinea = EntryMeta
     // ... fields
   }
 )
 
 export function createRecord(entry: Entry): EntryRecord {
+  const {path, ...data} = entry.data
   const meta: EntryMeta = {index: entry.index}
+  if (entry.seeded) meta.seeded = entry.seeded
   if (entry.i18nId) meta.i18n = {id: entry.i18nId}
   if (!entry.parent) meta.root = entry.root
   return {
     id: entry.entryId,
     type: entry.type,
     title: entry.title,
-    ...entry.data,
+    ...data,
     alinea: meta
   }
 }

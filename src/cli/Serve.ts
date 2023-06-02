@@ -31,15 +31,18 @@ export type ServeOptions = {
 export async function serve(options: ServeOptions): Promise<void> {
   const {
     cwd = process.cwd(),
+    configFile = 'alinea.config',
     staticDir = path.join(__dirname, 'static'),
     alineaDev = false,
     production = false
   } = options
 
-  const absoluteWorkingDir = path.resolve(cwd)
+  const rootDir = path.resolve(cwd)
+  const configLocation = path.join(path.resolve(cwd), configFile)
+  const configDir = path.dirname(configLocation)
 
   const context: ServeContext = {
-    cwd: absoluteWorkingDir,
+    rootDir,
     staticDir,
     alineaDev,
     buildOptions: {
@@ -89,7 +92,7 @@ export async function serve(options: ServeOptions): Promise<void> {
             target: new FileData({
               config: currentCMS,
               fs: fs.promises,
-              rootDir: cwd
+              rootDir: configDir
             }),
             media: undefined!,
             previews: new JWTPreviews('dev')

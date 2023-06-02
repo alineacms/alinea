@@ -9,21 +9,23 @@ export interface RootI18n {
 }
 
 export interface RootMeta {
-  contains: Array<string>
+  contains?: Array<string>
   icon?: ComponentType
   i18n?: RootI18n
 }
 
 export interface RootDefinition {
   [key: string]: PageSeed
-  [Meta]: RootMeta
+  [Meta]?: RootMeta
 }
 
 export interface RootData extends RootMeta {
   label: Label
 }
 
-export type Root<Definition = {}> = Definition & {
+type Seed = Record<string, PageSeed>
+
+export type Root<Definition extends Seed = Seed> = Definition & {
   [Root.Data]: RootData
   [CMS.Link]?: CMS
 }
@@ -39,12 +41,8 @@ export namespace Root {
     return root[Root.Data]
   }
 
-  export function defaultLocale(
-    i18n: RootI18n | Root | undefined
-  ): string | undefined {
-    if (i18n === undefined) return undefined
-    if ('locales' in i18n) return i18n?.locales[0]
-    return i18n[Root.Data].i18n?.locales[0]
+  export function defaultLocale(root: Root): string | undefined {
+    return root[Root.Data].i18n?.locales[0]
   }
 }
 

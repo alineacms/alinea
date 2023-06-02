@@ -70,7 +70,7 @@ export class RecordShape<T = {}> implements Shape<T, RecordMutator<T>> {
     }
   }
   extractLinks(path: Array<string>, value: any) {
-    if (value && typeof value !== 'object') return []
+    if (!value || typeof value !== 'object') return []
     return [
       ...entries(this.properties).flatMap(([key, shape]) => {
         return shape.extractLinks(path.concat(key), value[key])

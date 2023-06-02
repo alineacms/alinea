@@ -2,14 +2,18 @@ import {
   Config,
   Connection,
   EntryUrlMeta,
+  PageSeed,
   Root,
+  Schema,
   Syncable,
   Type,
-  createError
+  createError,
+  createId
 } from 'alinea/core'
 import {EntryRecord} from 'alinea/core/EntryRecord'
 import {Realm} from 'alinea/core/pages/Realm'
-import {fromEntries} from 'alinea/core/util/Objects'
+import {Logger} from 'alinea/core/util/Logger'
+import {entries, fromEntries} from 'alinea/core/util/Objects'
 import * as path from 'alinea/core/util/Paths'
 import {timer} from 'alinea/core/util/Timer'
 import {Driver, Expr, Table, alias, create} from 'rado'
@@ -18,19 +22,30 @@ import xxhash from 'xxhash-wasm'
 import {Entry, EntryPhase} from '../core/Entry.js'
 import {Selection} from '../core/pages/Selection.js'
 import {Resolver} from './Resolver.js'
-import {SourceEntry} from './Source.js'
+import {Source} from './Source.js'
 import {Store} from './Store.js'
+import {Target} from './Target.js'
+import {ChangeSet} from './data/ChangeSet.js'
 import {AlineaMeta} from './db/AlineaMeta.js'
 
 const decoder = new TextDecoder()
 
 const ALT_STATUS = [EntryPhase.Draft, EntryPhase.Archived]
+type Seed = {
+  type: string
+  workspace: string
+  root: string
+  filePath: string
+  page: PageSeed
+}
 
 export class Database implements Syncable {
   resolve: <T>(params: Connection.ResolveParams) => Promise<T>
+  seed: Map<string, Seed>
 
   constructor(protected store: Store, public config: Config) {
     this.resolve = new Resolver(store, config.schema).resolve
+    this.seed = this.seedData()
   }
 
   find<S>(selection: S, realm = Realm.Published) {
@@ -190,19 +205,20 @@ export class Database implements Syncable {
   }
 
   computeEntry(
-    file: SourceEntry
+    data: EntryRecord,
+    meta: {
+      workspace: string
+      root: string
+      filePath: string
+    },
+    seed?: Seed
   ): Omit<Table.Insert<typeof Entry>, 'contentHash'> {
-    const data: EntryRecord = EntryRecord(
-      file.contents instanceof Uint8Array
-        ? JSON.parse(decoder.decode(file.contents))
-        : file.contents
-    )
-    const parentDir = path.dirname(file.filePath)
-    const extension = path.extname(file.filePath)
-    const fileName = path.basename(file.filePath, extension)
+    const parentDir = path.dirname(meta.filePath)
+    const extension = path.extname(meta.filePath)
+    const fileName = path.basename(meta.filePath, extension)
     const [entryPath, entryPhase] = this.entryInfo(fileName)
     const segments = parentDir.split('/').filter(Boolean)
-    const root = Root.data(this.config.workspaces[file.workspace][file.root])
+    const root = Root.data(this.config.workspaces[meta.workspace][meta.root])
     let locale: string | null = null
 
     if (root.i18n) {
@@ -213,6 +229,10 @@ export class Database implements Syncable {
 
     const type = this.config.schema[data.type]
     if (!type) throw new Error(`invalid type: "${data.type}"`)
+    if (seed && seed.type !== data.type)
+      throw new Error(
+        `Type mismatch between seed and file: "${seed.type}" !== "${data.type}"`
+      )
     const childrenDir = path.join(parentDir, entryPath)
 
     if (!data.id) throw new Error(`missing id`)
@@ -225,16 +245,19 @@ export class Database implements Syncable {
     }
 
     const pathData = entryPath === 'index' ? '' : entryPath
+    const seedData = seed ? PageSeed.data(seed.page).partial : {}
     const entryData = {
+      ...seedData,
       ...data,
       path: pathData
     }
     const links = fromEntries(Type.shape(type).extractLinks([], entryData))
 
     return {
-      workspace: file.workspace,
-      root: file.root,
-      filePath: file.filePath,
+      workspace: meta.workspace,
+      root: meta.root,
+      filePath: meta.filePath,
+      seeded: Boolean(seed || data.alinea.seeded || false),
       // contentHash,
 
       modifiedAt: Date.now(), // file.modifiedAt,
@@ -254,7 +277,7 @@ export class Database implements Syncable {
       i18nId: data.alinea?.i18n?.id,
 
       path: entryPath,
-      title: data.title ?? '',
+      title: data.title ?? seedData?.title ?? '',
       url: this.entryUrl(type, urlMeta),
 
       data: entryData,
@@ -262,30 +285,69 @@ export class Database implements Syncable {
     }
   }
 
-  /*async applyChanges(changes: ChangeSet) {
-    for (const create of changes.write) {
-
+  seedData() {
+    const res = new Map<string, Seed>()
+    const typeNames = Schema.typeNames(this.config.schema)
+    for (const [workspaceName, workspace] of entries(this.config.workspaces)) {
+      for (const [rootName, root] of entries(workspace)) {
+        let pages = entries(root)
+        if (pages.length === 0) continue
+        const {i18n} = Root.data(root)
+        const locales = i18n?.locales || [undefined]
+        for (const locale of locales) {
+          const target = locale ? `/${locale}` : '/'
+          while (pages.length > 0) {
+            const [pagePath, page] = pages.shift()!
+            const {type} = PageSeed.data(page)
+            const filePath = path.join(target, pagePath) + '.json'
+            const typeName = typeNames.get(type)
+            if (!typeName) continue
+            res.set(filePath, {
+              type: typeName,
+              workspace: workspaceName,
+              root: rootName,
+              filePath,
+              page: page
+            })
+            const children = entries(page)
+            pages.push(...children)
+          }
+        }
+      }
     }
-  }*/
+    return res
+  }
 
-  async fill(
-    files: AsyncGenerator<SourceEntry>,
-    partial = false
-  ): Promise<void> {
+  async fill(source: Source, target?: Target): Promise<void> {
     // Todo: run a validation step for orders, paths, id matching on statuses
     // etc
     await this.init()
     const {h32Raw} = await xxhash()
-    return this.store.transaction(async query => {
-      const seen: Array<string> = []
+    const typeNames = Schema.typeNames(this.config.schema)
+    const publishSeed: Array<Entry> = []
+
+    await this.store.transaction(async query => {
+      const seenVersions: Array<string> = []
+      const seenSeeds = new Set<string>()
       let inserted = 0
       const endScan = timer('Scanning entries')
-      for await (const file of files) {
+      for await (const file of source.entries()) {
+        const seed = this.seed.get(file.filePath)
         const extension = path.extname(file.filePath)
         const fileName = path.basename(file.filePath, extension)
         const [, phase] = this.entryInfo(fileName)
+        const seedData = seed
+          ? new TextEncoder().encode(
+              seed.type + JSON.stringify(PageSeed.data(seed.page).partial)
+            )
+          : new Uint8Array(0)
         const phaseData = new TextEncoder().encode(phase)
-        const contents = new Uint8Array(phaseData.length + file.contents.length)
+        const contents = new Uint8Array(
+          seedData.length + phaseData.length + file.contents.length
+        )
+        contents.set(seedData)
+        contents.set(phaseData, seedData.length)
+        contents.set(file.contents, seedData.length + phaseData.length)
         const contentHash = h32Raw(contents).toString(16).padStart(8, '0')
         const exists = await query(
           Entry({
@@ -297,20 +359,29 @@ export class Database implements Syncable {
             .select(Entry.versionId)
             .maybeFirst()
         )
+        if (seed) {
+          seenSeeds.add(seed.filePath)
+        }
         // Todo: a config change but unchanged entry data will currently
         // fly under the radar
         if (exists) {
-          seen.push(exists)
+          seenVersions.push(exists)
           continue
         }
         try {
-          const entry = this.computeEntry(file)
+          const entry = this.computeEntry(
+            EntryRecord(JSON.parse(decoder.decode(file.contents))),
+            file,
+            seed
+          )
+          if (entry.seeded && !seed)
+            throw new Error(`seed entry is missing from config`)
           await query(
             Entry({entryId: entry.entryId, phase: entry.phase}).delete()
           )
           const withHash = entry as Table.Insert<typeof Entry>
           withHash.contentHash = contentHash
-          seen.push(
+          seenVersions.push(
             await query(Entry().insert(withHash).returning(Entry.versionId))
           )
           inserted++
@@ -318,24 +389,65 @@ export class Database implements Syncable {
           console.log(`> skipped ${file.filePath} — ${e.message}`)
         }
       }
-      endScan(`Scanned ${seen.length} entries`)
-      if (seen.length === 0) return
-
-      if (!partial) {
-        const {rowsAffected: removed} = await query(
-          Entry().delete().where(Entry.versionId.isNotIn(seen))
+      for (const seedPath of this.seed.keys()) {
+        if (seenSeeds.has(seedPath)) continue
+        const seed = this.seed.get(seedPath)!
+        const {type, partial} = PageSeed.data(seed.page)
+        const typeName = typeNames.get(type)
+        if (!typeName) continue
+        const entry = this.computeEntry(
+          {
+            id: createId(),
+            type: typeName,
+            title: partial.title ?? '',
+            alinea: {
+              index: 'a0'
+            }
+          },
+          seed
         )
-        const noChanges = inserted === 0 && removed === 0
-        if (noChanges) return
-        if (inserted) console.log(`> updated ${inserted} entries`)
-        if (removed) console.log(`> removed ${removed} entries`)
+        const seedData = new TextEncoder().encode(
+          seed.type + JSON.stringify(PageSeed.data(seed.page).partial)
+        )
+        const contentHash = h32Raw(seedData).toString(16).padStart(8, '0')
+        const withHash = entry as Entry
+        withHash.contentHash = contentHash
+        seenVersions.push(
+          await query(Entry().insert(withHash).returning(Entry.versionId))
+        )
+        publishSeed.push({
+          ...withHash,
+          seeded: true,
+          title: undefined!,
+          data: {}
+        })
       }
+      endScan(`Scanned ${seenVersions.length} entries`)
+      if (seenVersions.length === 0) return
+
+      const {rowsAffected: removed} = await query(
+        Entry().delete().where(Entry.versionId.isNotIn(seenVersions))
+      )
+      const noChanges = inserted === 0 && removed === 0
+      if (noChanges) return
+      if (inserted) console.log(`> updated ${inserted} entries`)
+      if (removed) console.log(`> removed ${removed} entries`)
 
       //const endIndex = timer('Indexing entries')
       await this.index(query)
       //endIndex()
       await this.writeMeta(query)
     })
+
+    if (target && publishSeed.length > 0) {
+      const changes = await ChangeSet.create(
+        this,
+        publishSeed,
+        EntryPhase.Published,
+        target.canRename
+      )
+      await target.publishChanges({changes}, {logger: new Logger('seed')})
+    }
   }
 }
 
