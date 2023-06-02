@@ -1,11 +1,12 @@
+import {Database} from 'alinea/backend/Database'
 import {test} from 'uvu'
-import {Example} from './test/Example.js'
+import {example} from './test/Example.js'
 
 test('create', async () => {
-  const db1 = await Example.createDb()
-  await db1.fill(Example.files())
-
-  const {cms, schema} = Example
+  await example.generate()
+  const db = new Database(await example.createStore('.'), example)
+  const res1 = await example.find(example.schema.TypeA())
+  console.log(res1)
 })
 
 test.run()

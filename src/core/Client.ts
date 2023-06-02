@@ -6,12 +6,10 @@ import {
   createError,
   Entry,
   EntryPhase,
-  Media,
-  Schema
+  Media
 } from 'alinea/core'
 import {UpdateResponse} from './Connection.js'
 import {Realm} from './pages/Realm.js'
-import {serializeSelection} from './pages/Serialize.js'
 
 async function failOnHttpError<T>(
   res: Response,
@@ -40,11 +38,7 @@ export interface ClientOptions {
 }
 
 export class Client implements Connection {
-  targets: Schema.Targets
-
-  constructor(public options: ClientOptions) {
-    this.targets = Schema.targets(options.config.schema)
-  }
+  constructor(public options: ClientOptions) {}
 
   previewToken(): Promise<string> {
     return this.requestJson(Connection.routes.previewToken()).then<string>(
@@ -54,8 +48,6 @@ export class Client implements Connection {
 
   resolve(params: Connection.ResolveParams): Promise<unknown> {
     const {resolveDefaults} = this.options
-    const {selection} = params
-    serializeSelection(this.targets, selection)
     const body = JSON.stringify({...resolveDefaults, ...params})
     return this.requestJson(Connection.routes.resolve(), {
       method: 'POST',
