@@ -3,6 +3,7 @@ import {Schema} from 'alinea/core'
 export {
   createConfig,
   Meta as meta,
+  page,
   root,
   schema,
   type,

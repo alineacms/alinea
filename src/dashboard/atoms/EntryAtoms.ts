@@ -1,6 +1,6 @@
 import {Database} from 'alinea/backend'
 import {EntryPhase, Type} from 'alinea/core'
-import {Page} from 'alinea/core/pages/Page'
+import {Page} from 'alinea/core/Page'
 import {Realm} from 'alinea/core/pages/Realm'
 import DataLoader from 'dataloader'
 import {atom, useAtom, useAtomValue} from 'jotai'
@@ -108,7 +108,7 @@ const entryTreeItemLoaderAtom = atom(async get => {
             phase: Page.phase
           },
           children({children}) {
-            return children(Page).select(Page.entryId)
+            return children(Page).select(Page.entryId).orderBy(Page.index.asc())
           }
         })
         .where(Page.entryId.isIn(search)),

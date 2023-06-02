@@ -1,12 +1,11 @@
-// @ts-nocheck
-
 import alinea from 'alinea'
 import {createNextCMS} from 'alinea/core/driver/NextDriver'
 import {IcRoundPermMedia} from 'alinea/ui/icons/IcRoundPermMedia'
 import * as schema from './schema'
 
 export const pages = alinea.root('Pages', {
-  contains: ['page']
+  index: alinea.page(schema.Home),
+  docs: alinea.page(schema.Docs)
 })
 
 export const cms = createNextCMS({
@@ -15,8 +14,10 @@ export const cms = createNextCMS({
     main: alinea.workspace('Alinea website', {
       pages,
       media: alinea.root('Media', {
-        contains: ['MediaLibrary'],
-        icon: IcRoundPermMedia
+        [alinea.meta]: {
+          contains: ['MediaLibrary'],
+          icon: IcRoundPermMedia
+        }
       }),
       [alinea.meta]: {
         color: '#3F61E8',

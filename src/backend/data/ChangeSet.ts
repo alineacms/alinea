@@ -1,6 +1,6 @@
 import {Entry, EntryPhase, EntryUrlMeta, Type, Workspace} from 'alinea/core'
 import {createRecord} from 'alinea/core/EntryRecord'
-import {Page} from 'alinea/core/pages/Page'
+import {Page} from 'alinea/core/Page'
 import {Realm} from 'alinea/core/pages/Realm'
 import {join} from 'alinea/core/util/Paths'
 import {Database} from '../Database.js'
@@ -48,7 +48,7 @@ export namespace ChangeSet {
         console.warn(`Cannot publish entry of unknown type: ${entry.type}`)
         continue
       }
-      const {parentPaths} = await db.find(
+      const result = await db.find(
         Page({entryId: entry.entryId})
           .select({
             parentPaths({parents}) {
@@ -58,6 +58,7 @@ export namespace ChangeSet {
           .first(),
         Realm.PreferPublished
       )
+      const parentPaths = result?.parentPaths ?? []
       const workspace = db.config.workspaces[entry.workspace]
       const isContainer = Type.isContainer(type)
       const isPublishing = phase === EntryPhase.Published

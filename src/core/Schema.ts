@@ -55,6 +55,10 @@ export namespace Schema {
       })
     )
   }
+
+  export function typeNames(schema: Schema): Map<Type, string> {
+    return new Map(entries(schema).map(([key, type]) => [type, key]))
+  }
 }
 
 export function schema<T extends Schema>(types: T): T {

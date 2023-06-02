@@ -15,6 +15,7 @@ export class EntryTable {
   entryId = column.string.default(createId)
   phase = column.string<EntryPhase>()
   type = column.string
+  seeded = column.boolean.default(false)
 
   // Hierarchy
   workspace = column.string

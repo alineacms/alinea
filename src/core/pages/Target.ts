@@ -8,7 +8,9 @@ import {Fields} from './Fields.js'
 
 const {create, entries} = Object
 
-const TT = type((value): value is TypeTarget => value instanceof TypeTarget)
+const TT = type(
+  (value): value is TypeTarget => value && typeof value === 'object'
+)
 
 export type TargetData = typeof TargetData.infer
 export const TargetData = object(

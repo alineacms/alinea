@@ -1,4 +1,4 @@
-import {Page} from 'alinea/core/pages/Page'
+import {Page} from 'alinea/core/Page'
 import DataLoader from 'dataloader'
 import {atom} from 'jotai'
 import {atomFamily} from 'jotai/utils'

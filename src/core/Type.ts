@@ -61,18 +61,15 @@ export interface TypeData {
   target: TypeTarget
 }
 
-export interface TypeTarget {}
+export class TypeTarget {}
 
 export declare class TypeI<Definition = object> {
   get [Type.Data](): TypeData
 }
 
 export interface TypeI<Definition = object> extends Callable {
-  (conditions?: {
-    [K in keyof Definition]?: Definition[K] extends Expr<infer V>
-      ? V /*EV<V>*/
-      : never
-  }): Cursor.Find<TypeRow<Definition>>
+  (): Cursor.Find<TypeRow<Definition>>
+  (partial: Partial<TypeRow<Definition>>): Cursor.Partial<Definition>
   infer: TypeRow<Definition>
 }
 
@@ -150,13 +147,12 @@ function fieldsOfDefinition(
   })
 }
 
-class TypeInstance<Definition extends TypeDefinition>
-  implements TypeData, TypeTarget
-{
+class TypeInstance<Definition extends TypeDefinition> implements TypeData {
   shape: RecordShape
   hint: Hint
   meta: TypeMeta
   sections: Array<Section> = []
+  target: Type<Definition>
 
   constructor(public label: Label, public definition: Definition) {
     this.meta = this.definition[Meta] || {}
@@ -190,10 +186,11 @@ class TypeInstance<Definition extends TypeDefinition>
       }
     }
     addCurrent()
-  }
-
-  get target() {
-    return this
+    const callable = ((...args: Array<any>) => this.call(...args)) as any
+    delete callable.name
+    delete callable.length
+    this.defineProperties(callable)
+    this.target = callable
   }
 
   condition(input: Array<any>): ExprData | undefined {
@@ -211,15 +208,18 @@ class TypeInstance<Definition extends TypeDefinition>
   }
 
   call(...input: Array<any>) {
-    return new Cursor.Find({
-      id: createId(),
-      target: {type: this},
-      where: this.condition(input)
-    })
+    const isConditionalRecord = input.length === 1 && !Expr.isExpr(input[0])
+    if (isConditionalRecord) return new Cursor.Partial(this.target, input[0])
+    else
+      return new Cursor.Find({
+        id: createId(),
+        target: {type: this.target},
+        where: this.condition(input)
+      })
   }
 
   field(def: Field, name: string) {
-    return assign(Expr(ExprData.Field({type: this}, name)), {
+    return assign(Expr(ExprData.Field({type: this.target}, name)), {
       [Field.Data]: def[Field.Data]
     })
   }
@@ -249,15 +249,8 @@ export function type<Definition extends TypeDefinition>(
   label: Label,
   definition: Definition
 ): Type<Definition> {
-  const name = String(label)
   const instance = new TypeInstance(label, definition)
-  const callable: any = {
-    [name]: (...args: Array<any>) => instance.call(...args)
-  }[name]
-  delete callable.name
-  delete callable.length
-  instance.defineProperties(callable)
-  return callable
+  return instance.target
 }
 
 export namespace type {
