@@ -374,7 +374,7 @@ export class Database implements Syncable {
             file,
             seed
           )
-          if (entry.seeded && !seed)
+          if (entry.seeded && entry.phase === EntryPhase.Published && !seed)
             throw new Error(`seed entry is missing from config`)
           await query(
             Entry({entryId: entry.entryId, phase: entry.phase}).delete()
