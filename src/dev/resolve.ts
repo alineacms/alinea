@@ -96,6 +96,7 @@ export const resolvePlugin: Plugin = {
       const hasOutExtension = args.path.endsWith(outExtension)
       const base = path.basename(args.path)
       const hasExtension = base.includes('.') && !base.includes('.node')
+
       if (!isInternal && !isLocal && pkg) {
         seen.add(pkg)
         const info = dependencies.get(pkg)
@@ -108,11 +109,7 @@ export const resolvePlugin: Plugin = {
         if (!info.bundle) return {path: args.path, external: true}
         const isNode = info.format === 'cjs'
         const location = args.path
-        const extension = args.path.includes('.js')
-          ? ''
-          : isNode
-          ? '.cjs'
-          : '.js'
+        const extension = isNode ? '.cjs' : '.js'
         const relativePath = path
           .relative(
             args.resolveDir,

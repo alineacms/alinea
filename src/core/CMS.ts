@@ -2,8 +2,10 @@ import {Store} from 'alinea/backend/Store'
 import {Config} from './Config.js'
 import {Connection} from './Connection.js'
 import {Root} from './Root.js'
+import {Schema} from './Schema.js'
 import {Workspace} from './Workspace.js'
 import {Selection} from './pages/Selection.js'
+import {serializeSelection} from './pages/Serialize.js'
 import {entries} from './util/Objects.js'
 
 type Attachment = Workspace | Root
@@ -19,8 +21,11 @@ export interface CMSApi {
 export type Location = Root | Workspace
 
 export abstract class CMS implements Config, CMSApi {
+  targets: Schema.Targets
+
   constructor(protected config: Config) {
     this.attach(config)
+    this.targets = Schema.targets(config.schema)
   }
 
   abstract createStore(cwd: string): Promise<Store>
@@ -42,8 +47,10 @@ export abstract class CMS implements Config, CMSApi {
   async find<S>(...args: Array<any>) {
     const [location, select] = args.length === 1 ? [undefined, args[0]] : args
     const cnx = await this.connection()
+    const selection = Selection(select)
+    serializeSelection(this.targets, selection)
     return cnx.resolve({
-      selection: Selection(select)
+      selection
     }) as Promise<Selection.Infer<S>>
   }
 
