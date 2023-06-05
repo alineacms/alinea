@@ -22,7 +22,7 @@ __metadata:
     "@types/better-sqlite3": ^5.4.1
     better-sqlite3: ^8.1.0
     cito: ^0.2.0
-    deepmap: ^0.2.1
+    dataloader: ^2.1.0
     pretty-ms: ^8.0.0
     rado: ^0.3.8
     regexparam: ^2.0.1
@@ -4977,15 +4977,6 @@ __metadata:
   version: 0.1.4
   resolution: "deep-is@npm:0.1.4"
   checksum: edb65dd0d7d1b9c40b2f50219aef30e116cedd6fc79290e740972c132c09106d2e80aa0bc8826673dd5a00222d4179c84b36a790eef63a4c4bca75a37ef90804
-  languageName: node
-  linkType: hard
-
-"deepmap@npm:^0.2.1":
-  version: 0.2.1
-  resolution: "deepmap@npm:0.2.1"
-  dependencies:
-    xet: ^1.0.4
-  checksum: 1b95466a95d99ff1e664f74285dc037a9ce0b2733f0f75d5846cfef23b396254f393a4f86ae3c288e61442be5e323b9ed71204e139c527b77476ab0a1fa4e005
   languageName: node
   linkType: hard
 
@@ -12441,13 +12432,6 @@ resolve@^1.10.0:
     utf-8-validate:
       optional: true
   checksum: bd2b437256012af526c69c03d6670a132e7ab0fe5853f3b7092826acea4203fad4ee2a8d0d9bd44834b2b968e747bf34f753ab535f4a3edf40d262da4b1d0805
-  languageName: node
-  linkType: hard
-
-"xet@npm:^1.0.4":
-  version: 1.0.4
-  resolution: "xet@npm:1.0.4"
-  checksum: 36cb469b1289fab52ceb5c0945b718387a0c61e86f74eff9a4ad9a0ab697f7e73e767524eb1bef2c41f18f6381e62e378159014ef8633786b356d5e21ba240a3
   languageName: node
   linkType: hard
 
