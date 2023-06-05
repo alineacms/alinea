@@ -182,24 +182,6 @@ export class RichTextShape<Blocks>
       }
     }
   }
-  /*extractLinks(path: Array<string>, value: TextDoc<Blocks>) {
-    const result: Array<[field: string, links: Array<string>]> = []
-    const self = path.join('.')
-    const links = new Set<string>()
-    iterMarks(value, mark => {
-      if (mark.type !== 'link') return
-      const id = mark.attrs!['data-entry']
-      if (id) links.add(id)
-    })
-    if (links.size) result.push([self, Array.from(links)])
-    for (const row of value) {
-      const subType = this.values?.[row.type]
-      if (!subType) continue
-      result.push(...subType.extractLinks(path.concat(row.type), row))
-    }
-    return result
-  }*/
-
   async applyLinks(doc: TextDoc<Blocks>, loader: LinkResolver): Promise<void> {
     if (!Array.isArray(doc)) return
     const links = new Map<TextNode.Mark, string>()
@@ -227,58 +209,6 @@ export class RichTextShape<Blocks>
       )
     )
   }
-
-  /*valueToStorage(value: TextDoc<Blocks>): TextDocStorage<Blocks> {
-    if (!Array.isArray(value)) return {doc: [], linked: []}
-    const linked = new Set<string>()
-    iterMarks(value, mark => {
-      if (mark.type !== 'link') return
-      const id = mark.attrs!['data-entry']
-      if (id) linked.add(id)
-    })
-    const doc = value.map(row => {
-      const subType = this.values?.[row.type]
-      if (!subType) return row
-      return subType.valueToStorage(row)
-    }) as TextDoc<Blocks>
-    return {
-      doc,
-      linked: Array.from(linked)
-    }
-  }
-  storageToValue(storage: TextDocStorage<Blocks>): TextDoc<Blocks> {
-    return storage.doc
-  }
-  selectFromStorage(
-    expr: Expr<TextDocStorage<Blocks>>
-  ): Expr<TextDocSelected<Blocks>> {
-    return new Expr(
-      new ExprData.Record({
-        doc: expr.get('doc')[Expr.Data],
-        linked: new ExprData.Query(
-          Entry(Entry.entryId.isIn(expr.get('linked'))).select({
-            id: Entry.entryId,
-            url: Entry.url
-          })[Query.Data]
-        )
-      })
-    )
-  }
-  selectedToValue({doc, linked}: TextDocSelected<Blocks>): TextDoc<Blocks> {
-    if (!Array.isArray(doc)) return []
-    if (linked?.length === 0) return doc
-    const links = new Map(linked.map(({id, url}) => [id, url]))
-    iterMarks(doc, mark => {
-      if (mark.type !== 'link') return
-      const id = mark.attrs!['data-entry']
-      if (id) mark.attrs!['href'] = links.get(id)!
-    })
-    return doc.map(row => {
-      const subType = this.values?.[row.type]
-      if (!subType) return row
-      return subType.selectedToValue(row)
-    }) as TextDoc<Blocks>
-  }*/
 }
 
 function iterMarks(doc: TextDoc<any>, fn: (mark: TextNode.Mark) => void) {

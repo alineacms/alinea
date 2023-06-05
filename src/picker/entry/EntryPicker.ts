@@ -3,6 +3,7 @@ import {Label} from 'alinea/core/Label'
 import {Reference} from 'alinea/core/Reference'
 import {Shape} from 'alinea/core/Shape'
 import {Type} from 'alinea/core/Type'
+import {Expr} from 'alinea/core/pages/Expr'
 import {Picker} from 'alinea/editor/Picker'
 
 export interface EntryReference extends Reference {
@@ -53,9 +54,8 @@ export namespace ImageReference {
 }
 
 export interface EntryPickerOptions<T = {}> {
-  type: 'entry' | 'file' | 'image'
   defaultView?: 'row' | 'thumb'
-  // condition?: Expr<boolean>
+  condition?: Expr<boolean>
   max?: number
   showUploader?: boolean
   label?: Label
@@ -69,9 +69,9 @@ const externType = {
   image: 'ImageReference'
 }
 
-export function entryPicker<T>(
+export function entryPicker<T extends Reference>(
   options: EntryPickerOptions<T>
-): Picker<EntryReference, EntryPickerOptions<T>> {
+): Picker<T, EntryPickerOptions<T>> {
   const extra = options.fields && Type.shape(options.fields)
   const hint = Hint.Extern({
     name: externType[options.type],

@@ -8,6 +8,7 @@ import {TextDoc} from './TextDoc.js'
 import {ListMutator} from './shape/ListShape.js'
 import {RecordMutator, RecordShape} from './shape/RecordShape.js'
 import {RichTextMutator} from './shape/RichTextShape.js'
+import {UnionMutator, UnionRow} from './shape/UnionShape.js'
 
 export interface FieldOptions {
   hidden?: boolean
@@ -69,6 +70,22 @@ export namespace Field {
     ) {
       super({
         shape: Shape.List(meta.label, shape, meta.initialValue),
+        ...meta
+      })
+    }
+  }
+
+  export class Union<Row, Options> extends Field<
+    UnionRow & Row,
+    UnionMutator<Row>,
+    Options
+  > {
+    constructor(
+      shapes: {[key: string]: RecordShape<any>},
+      meta: FieldMeta<UnionRow & Row, UnionMutator<Row>, Options>
+    ) {
+      super({
+        shape: Shape.Union<Row>(meta.label, shapes, meta.initialValue),
         ...meta
       })
     }

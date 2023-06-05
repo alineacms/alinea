@@ -37,16 +37,4 @@ export class ScalarShape<T> implements Shape<T, ScalarMutator<T>> {
     }
   }
   async applyLinks() {}
-  /*valueToStorage(value: T): T {
-    return value
-  }
-  storageToValue(stored: T): T {
-    return stored
-  }
-  selectFromStorage(expr: Expr<T>): Expr<T> {
-    return expr
-  }
-  selectedToValue(selected: T): T {
-    return selected
-  }*/
 }
