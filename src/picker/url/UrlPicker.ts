@@ -21,9 +21,9 @@ export interface UrlPickerOptions<T> {
   fields?: Type<T>
 }
 
-export function urlPicker<T>(
-  options: UrlPickerOptions<T>
-): Picker<UrlReference> {
+export function urlPicker<Fields>(
+  options: UrlPickerOptions<Fields>
+): Picker<UrlReference & Fields> {
   const extra = options.fields && Type.shape(options.fields)
   return {
     type: 'url',
@@ -35,9 +35,9 @@ export function urlPicker<T>(
     hint: Hint.Extern({name: 'UrlReference', package: 'alinea/picker/url'}),
     label: 'External website',
     handlesMultiple: false,
-    options,
+    options /*,
     select(row) {
       return row.fields
-    }
+    }*/
   }
 }

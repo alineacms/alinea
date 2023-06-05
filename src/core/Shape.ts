@@ -6,6 +6,7 @@ import {ListShape} from './shape/ListShape.js'
 import {RecordShape} from './shape/RecordShape.js'
 import {RichTextShape} from './shape/RichTextShape.js'
 import {ScalarShape} from './shape/ScalarShape.js'
+import {UnionRow, UnionShape} from './shape/UnionShape.js'
 
 type YType = Y.AbstractType<any>
 
@@ -52,5 +53,12 @@ export namespace Shape {
     initialValue?: T
   ): RecordShape<T> {
     return new RecordShape(label, shape, initialValue)
+  }
+  export function Union<T>(
+    label: Label,
+    shapes: Record<string, RecordShape>,
+    initialValue?: UnionRow & T
+  ): UnionShape<T> {
+    return new UnionShape<T>(label, shapes, initialValue)
   }
 }

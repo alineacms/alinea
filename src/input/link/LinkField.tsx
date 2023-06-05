@@ -1,4 +1,5 @@
 import {Field, Hint, Label, Reference, Type} from 'alinea/core'
+import {Expr} from 'alinea/core/pages/Expr'
 import type {Picker} from 'alinea/editor/Picker'
 import {linkConstructors} from './LinkConstructors'
 
@@ -28,7 +29,7 @@ export interface LinkOptions<Row> {
   /** The type of links, this will configure the options of the link picker */
   type?: LinkType | Array<LinkType>
   /** Show only entries matching this condition */
-  // condition?: Expr<boolean>
+  condition?: Expr<boolean>
   /** Add extra fields to each link */
   fields?: Type<Row>
   /** Width of the field in the dashboard UI (0-1) */

@@ -8,7 +8,7 @@ export type RecordMutator<T> = {
   set: <K extends keyof T>(k: K, v: T[K]) => void
 }
 
-export class RecordShape<T = {}> implements Shape<T, RecordMutator<T>> {
+export class RecordShape<T = object> implements Shape<T, RecordMutator<T>> {
   constructor(
     public label: Label,
     public properties: Record<string, Shape>,
@@ -66,7 +66,7 @@ export class RecordShape<T = {}> implements Shape<T, RecordMutator<T>> {
       set: <K extends keyof T>(k: K, v: T[K]) => {
         const record = parent.get(key)
         const field = this.properties[k as string]
-        record.set(key, field.toY(v))
+        record.set(k, field.toY(v))
       }
     }
   }
@@ -76,42 +76,4 @@ export class RecordShape<T = {}> implements Shape<T, RecordMutator<T>> {
       await shape.applyLinks(obj[key], loader)
     }
   }
-  /*valueToStorage(value: T): T {
-    const obj: Record<string, any> = value || {}
-    if (typeof obj !== 'object') return {} as T
-    return fromEntries(
-      entries(this.properties).map(([key, shape]) => {
-        return [key, shape.valueToStorage(obj[key])]
-      })
-    ) as T
-  }
-  storageToValue(stored: T): T {
-    const obj: Record<string, any> = stored || {}
-    if (typeof obj !== 'object') return {} as T
-    return fromEntries(
-      entries(this.properties).map(([key, shape]) => {
-        return [key, shape.storageToValue(obj[key])]
-      })
-    ) as T
-  }
-  selectFromStorage(expr: Expr<T>): Expr<T> {
-    return new Expr(
-      new ExprData.Record(
-        fromEntries(
-          entries(this.properties).map(([key, shape]) => {
-            return [key, shape.selectFromStorage(expr.get(key))[Expr.Data]]
-          })
-        )
-      )
-    )
-  }
-  selectedToValue(selected: T): T {
-    const obj: Record<string, any> = selected || {}
-    if (typeof obj !== 'object') return {} as T
-    return fromEntries(
-      entries(this.properties).map(([key, shape]) => {
-        return [key, shape.selectedToValue(obj[key])]
-      })
-    ) as T
-  }*/
 }
