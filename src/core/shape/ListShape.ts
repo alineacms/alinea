@@ -1,3 +1,4 @@
+import {LinkResolver} from 'alinea/backend/resolver/LinkResolver'
 import * as Y from 'yjs'
 import {createError} from '../ErrorWithCode.js'
 import {Hint} from '../Hint.js'
@@ -159,7 +160,16 @@ export class ListShape<T>
     }
     return res
   }
-  extractLinks(path: Array<string>, value: any) {
+  async applyLinks(value: Array<ListRow & T>, loader: LinkResolver) {
+    const tasks = []
+    for (const row of value) {
+      const type = row.type
+      const shape = this.values[type]
+      if (shape) tasks.push(shape.applyLinks(row, loader))
+    }
+    await Promise.all(tasks)
+  }
+  /*extractLinks(path: Array<string>, value: any) {
     if (!Array.isArray(value)) return []
     return value.flatMap(row => {
       const type = row.type
@@ -167,7 +177,7 @@ export class ListShape<T>
       if (!shape) return []
       return shape.extractLinks(path.concat(row.type), row)
     })
-  }
+  }*/
   /*valueToStorage(value: Array<ListRow & T>): Array<ListRow> {
     if (!Array.isArray(value)) return []
     return value.map(row => {

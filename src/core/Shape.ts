@@ -1,3 +1,4 @@
+import {LinkResolver} from 'alinea/backend/resolver/LinkResolver'
 import * as Y from 'yjs'
 import {Label} from './Label.js'
 import {TextDoc} from './TextDoc.js'
@@ -24,10 +25,7 @@ export interface Shape<Value = any, OnChange = any> {
   watch(parent: YType, key: string): (fun: () => void) => void
   mutator(parent: Y.Doc | YType, key: string): OnChange
   toString(): string
-  extractLinks(
-    path: Array<string>,
-    value: Value
-  ): Array<[field: string, links: Array<string>]>
+  applyLinks(value: Value, loader: LinkResolver): Promise<void>
 }
 
 export namespace Shape {

@@ -1,6 +1,6 @@
 export class DeepMap<K, V> {
   #root = new Map()
-  #leaves = new Map<Map<any, any>, V>()
+  #leaves = new Map()
 
   constructor(entries?: ReadonlyArray<readonly [ReadonlyArray<K>, V]> | null) {
     if (entries) for (const entry of entries) this.set(...entry)

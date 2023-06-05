@@ -5,6 +5,7 @@
     "better-sqlite3": "^8.1.0"
   },
   "devDependencies": {
+    "dataloader": "^2.1.0",
     "@types/better-sqlite3": "^5.4.1",
     "cito": "^0.2.0",
     "pretty-ms": "^8.0.0",

@@ -9,7 +9,6 @@ import {
 } from 'alinea/core'
 import {Realm} from 'alinea/core/pages/Realm'
 import {base64} from 'alinea/core/util/Encoding'
-import {assign} from 'alinea/core/util/Objects'
 import {
   BinOpType,
   Expr,
@@ -28,6 +27,7 @@ import * as Y from 'yjs'
 import {Entry, EntryPhase, EntryTable} from '../core/Entry.js'
 import * as pages from '../core/pages/index.js'
 import {Store} from './Store.js'
+import {LinkResolver} from './resolver/LinkResolver.js'
 
 const {keys, entries, fromEntries} = Object
 
@@ -120,6 +120,10 @@ export class ResolveContext {
   }
 }
 
+export interface PostContext {
+  linkResolver: LinkResolver
+}
+
 enum ExprContext {
   InNone = 0,
   InSelect = 1 << 0,
@@ -132,9 +136,9 @@ export class Resolver {
 
   fieldExpr(ctx: ResolveContext, expr: Expr<any>, shape: Shape): ExprData {
     return expr[Expr.Data]
-    if (ctx.inAccess || ctx.inCondition) return expr[Expr.Data]
+    /*if (ctx.inAccess || ctx.inCondition) return expr[Expr.Data]
     return shape.selectFromStorage(expr)[Expr.Data]
-    /*switch (true) {
+    switch (true) {
       case shape instanceof RichTextShape:
         if (ctx.inAccess || ctx.inCondition)
           return new ExprData.Field(expr, 'doc')
@@ -482,86 +486,112 @@ export class Resolver {
     }
   }
 
-  postRow(interim: Interim, {target}: pages.Selection.Row): Interim {
-    return fromEntries(this.postFieldsOf(interim, target))
+  async postRow(
+    ctx: PostContext,
+    interim: Interim,
+    {target}: pages.Selection.Row
+  ): Promise<void> {
+    await this.postFieldsOf(ctx, interim, target)
   }
 
-  postCursor(interim: Interim, {cursor}: pages.Selection.Cursor): Interim {
+  async postCursor(
+    ctx: PostContext,
+    interim: Interim,
+    {cursor}: pages.Selection.Cursor
+  ): Promise<void> {
     const {target = {}, select, first} = cursor
-    if (select)
-      return first
-        ? this.post(interim, select)
-        : interim.map((row: Interim) => this.post(row, select))
-    return first
-      ? assign(interim, fromEntries(this.postFieldsOf(interim, target)))
-      : interim.map((row: Interim) =>
-          assign(row, fromEntries(this.postFieldsOf(row, target)))
+    if (select) {
+      if (first) await this.post(ctx, interim, select)
+      else
+        await Promise.all(
+          interim.map((row: Interim) => this.post(ctx, row, select))
         )
-  }
-
-  postField(interim: Interim, {target, field}: pages.ExprData.Field): Interim {
-    const {name} = target
-    if (!name) return interim
-    const type = this.schema[name]
-    if (!type) throw new Error(`Selecting from unknown type: "${name}"`)
-    const shape = Field.shape(Type.field(type, field)!)
-    return shape.selectedToValue(interim)
-  }
-
-  postExpr(interim: Interim, {expr}: pages.Selection.Expr): Interim {
-    switch (expr.type) {
-      case 'field':
-        return this.postField(interim, expr)
-      default:
-        return interim
+    } else {
+      if (first) await this.postFieldsOf(ctx, interim, target)
+      else
+        await Promise.all(
+          interim.map((row: Interim) => this.postFieldsOf(ctx, row, target))
+        )
     }
   }
 
-  postFieldsOf(
+  async postField(
+    ctx: PostContext,
     interim: Interim,
-    target: pages.TargetData
-  ): Array<[string, Interim]> {
+    {target, field}: pages.ExprData.Field
+  ): Promise<void> {
     const {name} = target
-    if (!name) return []
+    if (!name) return
     const type = this.schema[name]
-    if (!type) throw new Error(`Selecting from unknown type: "${name}"`)
-    return keys(type).map(field => {
-      return [
-        field,
-        this.postField(interim[field], {type: 'field', target, field})
-      ]
-    })
+    if (!type) return
+    const shape = Field.shape(Type.field(type, field)!)
+    await shape.applyLinks(interim, ctx.linkResolver)
   }
 
-  postRecord(interim: Interim, {fields}: pages.Selection.Record): Interim {
-    if (!interim) return interim
-    return assign(
-      interim,
-      fromEntries(
-        fields.flatMap(field => {
-          switch (field.length) {
-            case 1:
-              const [target] = field
-              return this.postFieldsOf(interim, target)
-            case 2:
-              const [key, selection] = field
-              return [[key, this.post(interim[key], selection)]]
-          }
+  async postExpr(
+    ctx: PostContext,
+    interim: Interim,
+    {expr}: pages.Selection.Expr
+  ): Promise<void> {
+    if (expr.type === 'field') await this.postField(ctx, interim, expr)
+  }
+
+  async postFieldsOf(
+    ctx: PostContext,
+    interim: Interim,
+    target: pages.TargetData
+  ): Promise<void> {
+    const {name} = target
+    if (!name) return
+    const type = this.schema[name]
+    if (!type) return
+    await Promise.all(
+      keys(type).map(field => {
+        return this.postField(ctx, interim[field], {
+          type: 'field',
+          target,
+          field
         })
-      )
+      })
     )
   }
 
-  post(interim: Interim, selection: pages.Selection): Interim {
+  async postRecord(
+    ctx: PostContext,
+    interim: Interim,
+    {fields}: pages.Selection.Record
+  ): Promise<void> {
+    if (!interim) return
+    const tasks = []
+    for (const field of fields) {
+      switch (field.length) {
+        case 1:
+          const [target] = field
+          tasks.push(this.postFieldsOf(ctx, interim, target))
+          continue
+        case 2:
+          const [key, selection] = field
+          tasks.push(this.post(ctx, interim[key], selection))
+          continue
+      }
+    }
+    await Promise.all(tasks)
+  }
+
+  post(
+    ctx: PostContext,
+    interim: Interim,
+    selection: pages.Selection
+  ): Promise<void> {
     switch (selection.type) {
       case 'row':
-        return this.postRow(interim, selection)
+        return this.postRow(ctx, interim, selection)
       case 'cursor':
-        return this.postCursor(interim, selection)
+        return this.postCursor(ctx, interim, selection)
       case 'record':
-        return this.postRecord(interim, selection)
+        return this.postRecord(ctx, interim, selection)
       case 'expr':
-        return this.postExpr(interim, selection)
+        return this.postExpr(ctx, interim, selection)
     }
   }
 
@@ -573,7 +603,6 @@ export class Resolver {
     const query = new Query<Interim>(
       this.query(new ResolveContext(realm), selection)
     )
-    let interim: Interim
     if (preview) {
       const current = Entry({
         entryId: preview.entryId,
@@ -595,16 +624,19 @@ export class Resolver {
             await tx(current.delete())
             await tx(Entry().insert(previewEntry))
             const result = await tx(query)
+            const linkResolver = new LinkResolver(this, tx, realm)
+            await this.post({linkResolver}, result, selection)
             // The transaction api needs to be revised to support explicit commit/rollback
             throw {result}
           })
         } catch (err: any) {
-          if (err.result) interim = err.result
+          if (err.result) return err.result
           else throw err
         }
-    } else {
-      interim = await this.store(query)
     }
-    return this.post(interim!, selection) as T
+    const result = await this.store(query)
+    const linkResolver = new LinkResolver(this, this.store, realm)
+    await this.post({linkResolver}, result, selection)
+    return result
   }
 }

@@ -118,7 +118,7 @@ export namespace Type {
   }
 
   export function isType(type: any): type is Type {
-    return type && Boolean(type[Type.Data])
+    return Boolean(type && type[Type.Data])
   }
 
   export function blankEntry(
@@ -189,8 +189,8 @@ class TypeInstance<Definition extends TypeDefinition> implements TypeData {
     const callable = ((...args: Array<any>) => this.call(...args)) as any
     delete callable.name
     delete callable.length
-    this.defineProperties(callable)
     this.target = callable
+    this.defineProperties(callable)
   }
 
   condition(input: Array<any>): ExprData | undefined {
