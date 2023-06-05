@@ -1,3 +1,4 @@
+import {LinkResolver} from 'alinea/backend/resolver/LinkResolver'
 import * as Y from 'yjs'
 import {Label} from '../Label.js'
 import {Shape} from '../Shape.js'
@@ -69,13 +70,11 @@ export class RecordShape<T = {}> implements Shape<T, RecordMutator<T>> {
       }
     }
   }
-  extractLinks(path: Array<string>, value: any) {
-    if (!value || typeof value !== 'object') return []
-    return [
-      ...entries(this.properties).flatMap(([key, shape]) => {
-        return shape.extractLinks(path.concat(key), value[key])
-      })
-    ]
+  async applyLinks(value: T, loader: LinkResolver) {
+    const obj: Record<string, any> = value || {}
+    for (const [key, shape] of entries(this.properties)) {
+      await shape.applyLinks(obj[key], loader)
+    }
   }
   /*valueToStorage(value: T): T {
     const obj: Record<string, any> = value || {}

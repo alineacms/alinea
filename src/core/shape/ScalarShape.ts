@@ -36,9 +36,7 @@ export class ScalarShape<T> implements Shape<T, ScalarMutator<T>> {
       parent.set(key, value)
     }
   }
-  extractLinks(path: string[], value: T) {
-    return []
-  }
+  async applyLinks() {}
   /*valueToStorage(value: T): T {
     return value
   }

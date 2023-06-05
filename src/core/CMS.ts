@@ -3,7 +3,10 @@ import {Config} from './Config.js'
 import {Connection} from './Connection.js'
 import {Root} from './Root.js'
 import {Schema} from './Schema.js'
+import {Type} from './Type.js'
 import {Workspace} from './Workspace.js'
+import {Cursor} from './pages/Cursor.js'
+import {Projection} from './pages/Projection.js'
 import {Selection} from './pages/Selection.js'
 import {serializeSelection} from './pages/Serialize.js'
 import {entries} from './util/Objects.js'
@@ -14,8 +17,10 @@ const attached = new WeakMap<Attachment, CMS>()
 export interface CMSApi {
   createStore(cwd: string): Promise<Store>
   connection(): Promise<Connection>
-  find<S>(select: S): Promise<Selection.Infer<S>>
-  find<S>(location: Location, select: S): Promise<Selection.Infer<S>>
+  get<S>(select: S): Promise<Projection.InferOne<S>>
+  get<S>(path: string, select: S): Promise<Projection.InferOne<S>>
+  find<S>(select: S): Promise<Projection.Infer<S>>
+  find<S>(location: Location, select: S): Promise<Projection.Infer<S>>
 }
 
 export type Location = Root | Workspace
@@ -44,14 +49,22 @@ export abstract class CMS implements Config, CMSApi {
     }
   }
 
-  async find<S>(...args: Array<any>) {
+  async get(...args: Array<any>): Promise<any> {
+    let [location, select] = args.length === 1 ? [undefined, args[0]] : args
+    const cnx = await this.connection()
+    if (select instanceof Cursor.Find) select = select.first()
+    if (Type.isType(select)) select = select().first()
+    const selection = Selection.create(select)
+    serializeSelection(this.targets, selection)
+    return cnx.resolve({selection})
+  }
+
+  async find(...args: Array<any>): Promise<any> {
     const [location, select] = args.length === 1 ? [undefined, args[0]] : args
     const cnx = await this.connection()
-    const selection = Selection(select)
+    const selection = Selection.create(select)
     serializeSelection(this.targets, selection)
-    return cnx.resolve({
-      selection
-    }) as Promise<Selection.Infer<S>>
+    return cnx.resolve({selection})
   }
 
   get schema() {

@@ -4,17 +4,19 @@ import {Expr} from './Expr.js'
 import {Target} from './Target.js'
 import {Tree} from './Tree.js'
 
-interface ProjectionRecord<Source> {
-  [key: string]:
-    | ((/*this: Fields<Source>,*/ tree: Tree) => PageProjection<Source>)
-    | Projection<Source>
+interface ProjectionRecord {
+  [key: string]: ((tree: Tree) => PageProjection) | Projection
 }
 
-export type PageProjection<Source> = Cursor<any> | ProjectionRecord<Source>
+export type PageProjection = Cursor<any> | ProjectionRecord
 
-export type Projection<Source> = Expr<any> | PageProjection<Source>
+export type Projection = Expr<any> | PageProjection
 
 export namespace Projection {
+  export type InferOne<T> = [T] extends [Cursor.Find<infer V>]
+    ? Type.Row<V>
+    : Infer<T>
+
   export type Infer<T> = [T] extends [Expr<infer V>]
     ? V
     : [T] extends [Target<infer V>]

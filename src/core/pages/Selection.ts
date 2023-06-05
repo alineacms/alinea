@@ -8,30 +8,6 @@ import {Tree} from './Tree.js'
 
 export type Selection<T = any> = typeof Selection.adt.infer
 
-export function Selection(input: any, sourceId?: string): Selection {
-  if (input === null || input === undefined)
-    return Selection.Expr(ExprData.Value(null))
-  if (Cursor.isCursor(input)) return Selection.Cursor(input[Cursor.Data])
-  if (Expr.hasExpr(input)) input = input[Expr.ToExpr]()
-  if (Expr.isExpr(input)) return Selection.Expr(input[Expr.Data])
-  if (Type.isType(input)) return Selection.Row({type: Type.target(input)})
-  if (Target.isTarget(input)) return Selection.Row(input[Target.Data])
-  if (typeof input === 'function') {
-    if (!sourceId) throw new Error('sourceId is required for function queries')
-    return Selection(input(new Tree(sourceId)))
-  }
-  if (input && typeof input === 'object' && !Array.isArray(input)) {
-    const keys = Object.keys(input)
-    return Selection.Record(
-      keys.map(key => {
-        if (key.startsWith('@@@')) return [input[key]]
-        return [key, Selection(input[key], sourceId)]
-      })
-    )
-  }
-  return Selection.Expr(ExprData.Value(input))
-}
-
 export namespace Selection {
   const types = {
     Row: object(
@@ -81,4 +57,32 @@ export namespace Selection {
 
   export type Infer<T> = Projection.Infer<T>
   export type Combine<A, B> = Expand<Omit<A, keyof Infer<B>> & Infer<B>>
+
+  export function create(input: any, sourceId?: string) {
+    return Type.isType(input) ? fromInput(input()) : fromInput(input, sourceId)
+  }
+}
+
+function fromInput(input: any, sourceId?: string): Selection {
+  if (input === null || input === undefined)
+    return Selection.Expr(ExprData.Value(null))
+  if (Cursor.isCursor(input)) return Selection.Cursor(input[Cursor.Data])
+  if (Expr.hasExpr(input)) input = input[Expr.ToExpr]()
+  if (Expr.isExpr(input)) return Selection.Expr(input[Expr.Data])
+  if (Type.isType(input)) return Selection.Row({type: Type.target(input)})
+  if (Target.isTarget(input)) return Selection.Row(input[Target.Data])
+  if (typeof input === 'function') {
+    if (!sourceId) throw new Error('sourceId is required for function queries')
+    return fromInput(input(new Tree(sourceId)))
+  }
+  if (input && typeof input === 'object' && !Array.isArray(input)) {
+    const keys = Object.keys(input)
+    return Selection.Record(
+      keys.map(key => {
+        if (key.startsWith('@@@')) return [input[key]]
+        return [key, fromInput(input[key], sourceId)]
+      })
+    )
+  }
+  return Selection.Expr(ExprData.Value(input))
 }

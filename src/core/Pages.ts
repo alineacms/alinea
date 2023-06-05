@@ -14,7 +14,7 @@ export class Pages extends Callable {
   ) {
     const targets = Schema.targets(config.schema)
     super(async (select: any) => {
-      const selection = Selection(select)
+      const selection = Selection.create(select)
       serializeSelection(targets, selection)
       return fetch(selection)
     })

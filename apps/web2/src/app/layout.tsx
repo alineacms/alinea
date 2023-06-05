@@ -1,8 +1,6 @@
 import {cms} from '@/cms'
-import {Page} from 'alinea/core'
 import {btoa} from 'alinea/core/util/Encoding'
 import {PropsWithChildren} from 'react'
-import {Home} from '../schema/Home'
 import '../styles/global.scss'
 
 export const metadata = {
@@ -18,9 +16,10 @@ const favicon = btoa(
 )
 
 export default async function Layout({children}: PropsWithChildren) {
-  const layout = await cms.find(
+  /*const layout = await cms.find(
     Home()
       .select({
+        footer: Home.footer,
         header: {
           links: Home.links,
           menu() {
@@ -34,11 +33,10 @@ export default async function Layout({children}: PropsWithChildren) {
                 parent: Page.parent
               })
           }
-        },
-        footer: Home.footer
+        }
       })
       .first()
-  )
+  )*/
   return (
     <html lang="en">
       <head>

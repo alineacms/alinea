@@ -16,8 +16,7 @@ import css from './home.module.scss'
 const styles = fromModule(css)
 
 export default async function HomePage() {
-  const home = await cms.find(cms.workspaces.main, Home().first())
-  console.log(home.introduction.text)
+  const home = await cms.get(Home)
   return (
     <main className={styles.home()}>
       <div

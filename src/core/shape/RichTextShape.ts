@@ -1,7 +1,9 @@
+import {LinkResolver} from 'alinea/backend/resolver/LinkResolver'
 import * as Y from 'yjs'
 import {createError} from '../ErrorWithCode.js'
 import {Hint} from '../Hint.js'
 import {Label} from '../Label.js'
+import {Page} from '../Page.js'
 import {Shape} from '../Shape.js'
 import {TextDoc, TextNode} from '../TextDoc.js'
 import {entries, fromEntries} from '../util/Objects.js'
@@ -180,7 +182,7 @@ export class RichTextShape<Blocks>
       }
     }
   }
-  extractLinks(path: Array<string>, value: TextDoc<Blocks>) {
+  /*extractLinks(path: Array<string>, value: TextDoc<Blocks>) {
     const result: Array<[field: string, links: Array<string>]> = []
     const self = path.join('.')
     const links = new Set<string>()
@@ -196,7 +198,36 @@ export class RichTextShape<Blocks>
       result.push(...subType.extractLinks(path.concat(row.type), row))
     }
     return result
+  }*/
+
+  async applyLinks(doc: TextDoc<Blocks>, loader: LinkResolver): Promise<void> {
+    if (!Array.isArray(doc)) return
+    const links = new Map<TextNode.Mark, string>()
+    iterMarks(doc, mark => {
+      if (mark.type !== 'link') return
+      const id = mark.attrs!['data-entry']
+      if (id) links.set(mark, id)
+    })
+    async function loadLinks() {
+      const linkIds = Array.from(new Set(links.values()))
+      const entries = await loader.resolveLinks(Page.url, linkIds)
+      const urls = new Map(linkIds.map((id, i) => [id, entries[i]]))
+      for (const [mark, id] of links) {
+        const url = urls.get(id)
+        if (url) mark.attrs!['href'] = url
+      }
+    }
+    await Promise.all(
+      [loadLinks()].concat(
+        doc.flatMap(row => {
+          const subType = this.values?.[row.type]
+          if (!subType) return []
+          return [subType.applyLinks(row, loader)]
+        })
+      )
+    )
   }
+
   /*valueToStorage(value: TextDoc<Blocks>): TextDocStorage<Blocks> {
     if (!Array.isArray(value)) return {doc: [], linked: []}
     const linked = new Set<string>()

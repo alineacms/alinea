@@ -49,9 +49,10 @@ export class Database implements Syncable {
   }
 
   find<S>(selection: S, realm = Realm.Published) {
-    return this.resolve({selection: Selection(selection), realm}) as Promise<
-      Selection.Infer<S>
-    >
+    return this.resolve({
+      selection: Selection.create(selection),
+      realm
+    }) as Promise<Selection.Infer<S>>
   }
 
   async updates(request: AlineaMeta) {

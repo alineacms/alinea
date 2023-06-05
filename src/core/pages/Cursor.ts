@@ -96,9 +96,9 @@ export namespace Cursor {
       )
     }
 
-    get<S extends Projection<Row>>(select: S): Get<Selection.Infer<S>> {
+    get<S extends Projection>(select: S): Get<Selection.Infer<S>> {
       const query = this.with({first: true})
-      if (select) query.select = Selection(select, this.id)
+      if (select) query.select = Selection.create(select, this.id)
       return new Get<Selection.Infer<S>>(query)
     }
 
@@ -110,9 +110,9 @@ export namespace Cursor {
       return new Get<Row | undefined>(this.with({first: true}))
     }
 
-    select<S extends Projection<Row>>(select: S): Find<Selection.Infer<S>> {
+    select<S extends Projection>(select: S): Find<Selection.Infer<S>> {
       return new Find<Selection.Infer<S>>(
-        this.with({select: Selection(select, this.id)})
+        this.with({select: Selection.create(select, this.id)})
       )
     }
 
@@ -164,9 +164,9 @@ export namespace Cursor {
       return new Get<Row>(this.with({where}))
     }
 
-    select<S extends Projection<Row>>(select: S): Get<Selection.Infer<S>> {
+    select<S extends Projection>(select: S): Get<Selection.Infer<S>> {
       return new Get<Selection.Infer<S>>(
-        this.with({select: Selection(select, this.id)})
+        this.with({select: Selection.create(select, this.id)})
       )
     }
   }

@@ -72,7 +72,7 @@ class NextDriver extends DefaultCMS implements NextApi {
     const payload = await previews.verify(params.token)
     const cnx = await this.connection()
     const url = (await cnx.resolve({
-      selection: Selection(
+      selection: Selection.create(
         Page({entryId: params.entryId}).select(Page.url).first()
       ),
       realm: params.realm
