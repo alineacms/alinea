@@ -1,5 +1,4 @@
 import {column, index, table} from 'rado'
-import {EntryData} from '../backend/db/EntryData.js'
 import {createId} from './Id.js'
 
 export enum EntryPhase {
@@ -49,8 +48,7 @@ export class EntryTable {
   path = column.string
   title = column.string
   url = column.string
-  data = column.json<EntryData>()
-  links = column.json<EntryLinks>()
+  data = column.json<Record<string, any>>()
 
   /*get parentIds() {
     const Parent = Entry().as('Parent')
@@ -73,9 +71,7 @@ export class EntryTable {
   }*/
 }
 
-export interface Entry extends table<EntryTable> {
-  data: EntryData
-}
+export interface Entry extends table<EntryTable> {}
 
 export const Entry = table({
   Entry: EntryTable,

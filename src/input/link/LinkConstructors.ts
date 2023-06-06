@@ -1,23 +1,33 @@
-import {Label, Media} from 'alinea/core'
+import {Hint, Label, Media, Type} from 'alinea/core'
 import {MediaFile} from 'alinea/core/media/MediaSchema'
 import {
+  LinkField,
+  LinkFieldOptions,
+  LinksField,
+  createLink,
+  createLinks
+} from 'alinea/input/link/LinkField'
+import {
+  EntryPickerOptions,
   EntryReference,
   FileReference,
   ImageReference,
   entryPicker
 } from 'alinea/picker/entry'
-import {UrlReference, urlPicker} from 'alinea/picker/url'
-import {LinkField, LinkOptions} from './LinkField.js'
-
-interface CreateLink {
-  <T>(label: Label, options?: LinkOptions<T>): LinkField<T>
-}
+import {UrlPickerOptions, UrlReference, urlPicker} from 'alinea/picker/url'
 
 const imageCondition = MediaFile.extension.isIn(Media.imageExtensions)
 
-export function imagePicker(multiple: boolean) {
-  return entryPicker({
-    type: 'image',
+export function imagePicker<Fields>(
+  multiple: boolean,
+  options: Omit<EntryPickerOptions<Fields>, 'hint'>
+) {
+  return entryPicker<ImageReference, Fields>({
+    ...options,
+    hint: Hint.Extern({
+      name: 'ImageReference',
+      package: 'alinea/picker/entry'
+    }),
     max: multiple ? undefined : 1,
     label: 'Image',
     title: multiple ? 'Select images' : 'Select an image',
@@ -29,9 +39,16 @@ export function imagePicker(multiple: boolean) {
 
 const fileCondition = MediaFile.extension.isNotIn(Media.imageExtensions)
 
-export function filePicker(multiple: boolean) {
-  return entryPicker({
-    type: 'file',
+export function filePicker<Fields>(
+  multiple: boolean,
+  options: Omit<EntryPickerOptions<Fields>, 'hint'>
+) {
+  return entryPicker<FileReference, Fields>({
+    ...options,
+    hint: Hint.Extern({
+      name: 'FileReference',
+      package: 'alinea/picker/entry'
+    }),
     max: multiple ? undefined : 1,
     label: 'File',
     title: multiple ? 'Select files' : 'Select a file',
@@ -41,197 +58,181 @@ export function filePicker(multiple: boolean) {
   })
 }
 
-type LinkData = EntryReference | UrlReference | FileReference
+export interface LinkOptions<Fields> extends LinkFieldOptions {
+  fields?: Type<Fields>
+}
 
-export function linkConstructors(createLink: CreateLink) {
-  /** Create a link field configuration */
-  function link<T = {}, Q = LinkData & T>(
-    label: Label,
-    options: LinkOptions<T> = {}
-  ): LinkField<T> {
-    const pickerOptions = {fields: options.fields, condition: options.condition}
-    const types = Array.isArray(options.type)
-      ? options.type
-      : options.type
-      ? [options.type]
-      : []
-    const pickers =
-      types.length === 0
-        ? [
-            entryPicker({
-              ...pickerOptions,
-              type: 'entry',
-              title: 'Select a page',
-              max: 1
+export function link<Fields>(label: Label, options: LinkOptions<Fields>) {
+  return createLink<(EntryReference & Fields) | (UrlReference & Fields)>(
+    label,
+    {
+      ...options,
+      pickers: {
+        entry: entryPicker<EntryReference, Fields>({
+          ...options,
+          hint: Hint.Extern({
+            name: 'EntryReference',
+            package: 'alinea/picker/entry'
+          }),
+          title: 'Select a page',
+          max: 1
+        }),
+        url: urlPicker<Fields>(options)
+      }
+    }
+  )
+}
+
+export namespace link {
+  export function multiple<Fields>(label: Label, options: LinkOptions<Fields>) {
+    return createLinks<(EntryReference & Fields) | (UrlReference & Fields)>(
+      label,
+      {
+        ...options,
+        pickers: {
+          entry: entryPicker<EntryReference, Fields>({
+            ...options,
+            hint: Hint.Extern({
+              name: 'EntryReference',
+              package: 'alinea/picker/entry'
             }),
-            urlPicker(pickerOptions),
-            filePicker(false)
-          ]
-        : types.map(type => {
-            switch (type) {
-              case 'entry':
-                return entryPicker({
-                  type: 'entry',
-                  title: 'Select a page',
-                  max: 1,
-                  ...pickerOptions
-                })
-              case 'external':
-                return urlPicker(pickerOptions)
-              case 'image':
-                return imagePicker(false)
-              case 'file':
-                return filePicker(false)
-            }
-          })
-    return createLink(label, {...options, pickers, multiple: false})
+            title: 'Select a page',
+            max: 1
+          }),
+          url: urlPicker<Fields>(options)
+        }
+      }
+    )
   }
+}
 
-  function multiple<T = {}, Q = Array<LinkData & T>>(
-    label: Label,
-    options: LinkOptions<T> = {}
-  ): LinkField<T> {
-    const pickerOptions = {fields: options.fields, condition: options.condition}
-    const types = Array.isArray(options.type)
-      ? options.type
-      : options.type
-      ? [options.type]
-      : []
-    const pickers =
-      types.length === 0
-        ? [
-            entryPicker({type: 'entry', ...pickerOptions}),
-            urlPicker(pickerOptions)
-          ]
-        : types.map(type => {
-            switch (type) {
-              case 'entry':
-                return entryPicker({
-                  type: 'entry',
-                  ...pickerOptions,
-                  title: 'Select pages'
-                })
-              case 'external':
-                return urlPicker(pickerOptions)
-              case 'image':
-                return imagePicker(true)
-              case 'file':
-                throw 'todo'
-            }
-          })
-    return createLink(label, {...options, pickers, multiple: true})
-  }
+export namespace link {
+  export interface EntryOptions<Fields>
+    extends LinkFieldOptions,
+      Omit<EntryPickerOptions<Fields>, 'hint'> {}
 
-  function entry<T = {}, Q = EntryReference & T>(
+  export function entry<Fields>(
     label: Label,
-    options: LinkOptions<T> = {}
-  ): LinkField<T> {
+    options: EntryOptions<Fields>
+  ): LinkField<EntryReference & Fields> {
     return createLink(label, {
       ...options,
-      pickers: [
-        entryPicker({
+      pickers: {
+        entry: entryPicker<EntryReference, Fields>({
           ...options,
-          type: 'entry',
+          hint: Hint.Extern({
+            name: 'EntryReference',
+            package: 'alinea/picker/entry'
+          }),
           title: 'Select a page',
           max: 1
         })
-      ],
-      multiple: false
+      }
     })
   }
+}
 
-  function multipleEntries<T = {}, Q = Array<EntryReference & T>>(
+export namespace link.entry {
+  export function multiple<Fields>(
     label: Label,
-    options: LinkOptions<T> = {}
-  ): LinkField<T> {
-    return createLink(label, {
+    options: EntryOptions<Fields> = {}
+  ): LinksField<EntryReference & Fields> {
+    return createLinks(label, {
       ...options,
-      pickers: [
-        entryPicker({
+      pickers: {
+        entry: entryPicker<EntryReference, Fields>({
           ...options,
-          type: 'entry',
-          title: 'Select pages'
+          hint: Hint.Extern({
+            name: 'EntryReference',
+            package: 'alinea/picker/entry'
+          }),
+          title: 'Select a page'
         })
-      ],
-      multiple: true
+      }
     })
   }
+}
 
-  function url<T = {}, Q = UrlReference & T>(
+export namespace link {
+  export interface UrlOptions<Fields>
+    extends LinkFieldOptions,
+      UrlPickerOptions<Fields> {}
+
+  export function url<Fields>(
     label: Label,
-    options: LinkOptions<T> = {}
-  ): LinkField<T> {
+    options: UrlOptions<Fields> = {}
+  ): LinkField<UrlReference & Fields> {
     return createLink(label, {
       ...options,
-      pickers: [
-        urlPicker({
-          ...options
-        })
-      ],
-      multiple: false
+      pickers: {url: urlPicker(options)}
     })
   }
+}
 
-  function multipleUrls<T = {}, Q = Array<UrlReference & T>>(
+export namespace link.url {
+  export function multiple<Fields>(
     label: Label,
-    options: LinkOptions<T> = {}
-  ): LinkField<T> {
+    options: UrlOptions<Fields> = {}
+  ): LinksField<UrlReference & Fields> {
+    return createLinks(label, {
+      ...options,
+      pickers: {url: urlPicker(options)}
+    })
+  }
+}
+
+export namespace link {
+  export interface ImageOptions<Fields>
+    extends LinkFieldOptions,
+      Omit<EntryPickerOptions<Fields>, 'hint'> {}
+
+  export function image<Fields>(
+    label: Label,
+    options: ImageOptions<Fields> = {}
+  ): LinkField<ImageReference & Fields> {
     return createLink(label, {
       ...options,
-      pickers: [urlPicker({...options})],
-      multiple: true
+      pickers: {entry: imagePicker(false, options)}
     })
   }
+}
 
-  function image<T = {}, Q = ImageReference & T>(
+export namespace link.image {
+  export function multiple<Fields>(
     label: Label,
-    options: LinkOptions<T> = {}
-  ): LinkField<T> {
+    options: ImageOptions<Fields> = {}
+  ): LinksField<ImageReference & Fields> {
+    return createLinks(label, {
+      ...options,
+      pickers: {entry: imagePicker(true, options)}
+    })
+  }
+}
+
+export namespace link {
+  export interface FileOptions<Fields>
+    extends LinkFieldOptions,
+      Omit<EntryPickerOptions<Fields>, 'hint'> {}
+
+  export function file<Fields>(
+    label: Label,
+    options: FileOptions<Fields> = {}
+  ): LinkField<FileReference & Fields> {
     return createLink(label, {
       ...options,
-      pickers: [imagePicker(false)],
-      multiple: false
+      pickers: {file: filePicker(false, options)}
     })
   }
+}
 
-  function multipleImages<T = {}, Q = Array<ImageReference & T>>(
+export namespace link.file {
+  export function multiple<Fields>(
     label: Label,
-    options: LinkOptions<T> = {}
-  ): LinkField<T> {
-    return createLink(label, {
+    options: FileOptions<Fields> = {}
+  ): LinksField<FileReference & Fields> {
+    return createLinks(label, {
       ...options,
-      pickers: [imagePicker(true)],
-      multiple: true
+      pickers: {file: filePicker(true, options)}
     })
   }
-
-  function file<T = {}, Q = FileReference & T>(
-    label: Label,
-    options: LinkOptions<T> = {}
-  ): LinkField<T> {
-    return createLink(label, {
-      ...options,
-      pickers: [filePicker(false)],
-      multiple: false
-    })
-  }
-
-  function multipleFiles<T = {}, Q = Array<FileReference & T>>(
-    label: Label,
-    options: LinkOptions<T> = {}
-  ): LinkField<T> {
-    return createLink(label, {
-      ...options,
-      pickers: [filePicker(true)],
-      multiple: true
-    })
-  }
-
-  return Object.assign(link, {
-    multiple,
-    entry: Object.assign(entry, {multiple: multipleEntries}),
-    url: Object.assign(url, {multiple: multipleUrls}),
-    image: Object.assign(image, {multiple: multipleImages}),
-    file: Object.assign(file, {multiple: multipleFiles})
-  })
 }

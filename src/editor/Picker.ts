@@ -1,4 +1,4 @@
-import {Hint, Label, Reference} from 'alinea/core'
+import {Hint, Label, Reference, Type} from 'alinea/core'
 import {RecordShape} from 'alinea/core/shape/RecordShape'
 import {ComponentType} from 'react'
 
@@ -19,18 +19,15 @@ export interface PickerRow {
   target?: string
 }
 
-export interface Picker<
-  Ref extends Reference = Reference,
-  Options extends {} = {}
-> {
-  type: string
+export interface Picker<Row extends Reference, Options extends {} = {}> {
   shape: RecordShape
+  fields: Type<any> | undefined
   hint: Hint
   label: Label
   handlesMultiple: boolean
   options: Options
   view?: ComponentType<PickerProps<Options>>
-  viewRow?: ComponentType<{reference: Ref}>
+  viewRow?: ComponentType<{reference: Row}>
 }
 
 export namespace Picker {

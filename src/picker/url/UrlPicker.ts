@@ -26,7 +26,6 @@ export function urlPicker<Fields>(
 ): Picker<UrlReference & Fields> {
   const extra = options.fields && Type.shape(options.fields)
   return {
-    type: 'url',
     shape: Shape.Record('Url', {
       url: Shape.Scalar('Url'),
       description: Shape.Scalar('Description'),
@@ -35,6 +34,7 @@ export function urlPicker<Fields>(
     hint: Hint.Extern({name: 'UrlReference', package: 'alinea/picker/url'}),
     label: 'External website',
     handlesMultiple: false,
+    fields: options.fields,
     options /*,
     select(row) {
       return row.fields

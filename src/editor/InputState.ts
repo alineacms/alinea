@@ -2,6 +2,7 @@ import {RichTextMutator, Shape} from 'alinea/core'
 import {TextDoc} from 'alinea/core/TextDoc'
 import {ListMutator} from 'alinea/core/shape/ListShape'
 import {RecordMutator} from 'alinea/core/shape/RecordShape'
+import {UnionMutator} from 'alinea/core/shape/UnionShape'
 import {useForceUpdate} from 'alinea/ui'
 import {useEffect} from 'react'
 import * as Y from 'yjs'
@@ -20,6 +21,7 @@ export namespace InputState {
   export type Record<T> = readonly [T, RecordMutator<T>]
   export type List<T> = readonly [Array<T>, ListMutator<T>]
   export type Text<T> = readonly [TextDoc<T>, RichTextMutator<T>]
+  export type Union<T> = readonly [T, UnionMutator<T>]
 
   export class YDocState<V, M> implements InputState<readonly [V, M]> {
     constructor(

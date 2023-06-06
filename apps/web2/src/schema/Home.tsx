@@ -32,7 +32,6 @@ export const Home = alinea.type(
     }),
     alinea.tab('Top navigation', {
       links: alinea.link.multiple('Links', {
-        type: ['entry', 'external'],
         fields: alinea.type('Fields', {
           label: alinea.text('Label'),
           active: alinea.text('Active url', {
@@ -50,7 +49,6 @@ export const Home = alinea.type(
           Section: alinea.type('Section', {
             label: alinea.text('Label'),
             links: alinea.link.multiple('Links', {
-              type: ['entry', 'external'],
               fields: alinea.type('Fields', {
                 label: alinea.text('Label')
               })
