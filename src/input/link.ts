@@ -1,1 +1,1 @@
-export * from 'alinea/input/link/LinkField'
+export * from 'alinea/input/link/LinkConstructors'

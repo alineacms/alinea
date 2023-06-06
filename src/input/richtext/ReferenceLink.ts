@@ -10,16 +10,19 @@ interface Anchor extends HTMLProps<HTMLAnchorElement> {
 }
 
 export function referenceToAttributes(reference: Reference): Anchor {
-  if (UrlReference.isUrl(reference)) {
+  // Todo: don't stringly type here
+  if (reference.type === 'url') {
+    const ref = reference as UrlReference
     return {
-      'data-id': reference.id,
-      href: reference.url,
-      target: reference.target
+      'data-id': ref.id,
+      href: ref.url,
+      target: ref.target
     }
-  } else if (EntryReference.isEntry(reference)) {
+  } else if (reference.type === 'entry') {
+    const ref = reference as EntryReference
     return {
-      'data-id': reference.id,
-      'data-entry': reference.entry
+      'data-id': ref.id,
+      'data-entry': ref.entry
     }
   }
   throw createError(`Unexpected reference type: ${reference.type}`)

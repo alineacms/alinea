@@ -13,7 +13,7 @@ import {
 import {EntryRecord} from 'alinea/core/EntryRecord'
 import {Realm} from 'alinea/core/pages/Realm'
 import {Logger} from 'alinea/core/util/Logger'
-import {entries, fromEntries} from 'alinea/core/util/Objects'
+import {entries} from 'alinea/core/util/Objects'
 import * as path from 'alinea/core/util/Paths'
 import {timer} from 'alinea/core/util/Timer'
 import {Driver, Expr, Table, alias, create} from 'rado'
@@ -252,7 +252,6 @@ export class Database implements Syncable {
       ...data,
       path: pathData
     }
-    const links = fromEntries(Type.shape(type).extractLinks([], entryData))
 
     return {
       workspace: meta.workspace,
@@ -281,8 +280,7 @@ export class Database implements Syncable {
       title: data.title ?? seedData?.title ?? '',
       url: this.entryUrl(type, urlMeta),
 
-      data: entryData,
-      links
+      data: entryData
     }
   }
 

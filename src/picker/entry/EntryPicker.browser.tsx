@@ -10,7 +10,7 @@ import {Modal} from 'alinea/dashboard/view/Modal'
 import {Explorer} from 'alinea/dashboard/view/explorer/Explorer'
 import {FileUploader} from 'alinea/dashboard/view/media/FileUploader'
 import {Picker, PickerProps} from 'alinea/editor/Picker'
-import {EntryReference} from 'alinea/picker/entry'
+import type {EntryReference} from 'alinea/picker/entry'
 import {
   Button,
   HStack,

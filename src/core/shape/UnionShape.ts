@@ -14,6 +14,7 @@ export type UnionRow = {
 }
 
 export type UnionMutator<T> = {
+  replace: (v: (UnionRow & T) | undefined) => void
   set: <K extends keyof T>(k: K, v: T[K]) => void
 }
 
@@ -83,6 +84,10 @@ export class UnionShape<T> implements Shape<UnionRow & T, UnionMutator<T>> {
   }
   mutator(parent: Y.Map<any>, key: string): UnionMutator<T> {
     return {
+      replace: (v: (UnionRow & T) | undefined) => {
+        if (!v) parent.delete(key)
+        else parent.set(key, this.toY(v))
+      },
       set: (k: any, v: any) => {
         const record = parent.get(key)
         const type = record.get('type')

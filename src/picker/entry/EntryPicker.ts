@@ -7,7 +7,6 @@ import {Expr} from 'alinea/core/pages/Expr'
 import {Picker} from 'alinea/editor/Picker'
 
 export interface EntryReference extends Reference {
-  type: 'entry'
   entry: string
   entryType: string
   path: string
@@ -15,28 +14,14 @@ export interface EntryReference extends Reference {
   url: string
 }
 
-export namespace EntryReference {
-  export function isEntry(value: any): value is EntryReference {
-    return value && value.type === 'entry'
-  }
-}
-
 export interface FileReference extends Reference {
-  type: 'file'
   src: string
   url: string
   extension: string
   size: number
 }
 
-export namespace FileReference {
-  export function isFile(value: any): value is FileReference {
-    return value && value.type === 'file'
-  }
-}
-
 export interface ImageReference extends Reference {
-  type: 'image'
   src: string
   extension: string
   size: number
@@ -47,13 +32,8 @@ export interface ImageReference extends Reference {
   blurHash: string
 }
 
-export namespace ImageReference {
-  export function isImage(value: any): value is ImageReference {
-    return value && value.type === 'image'
-  }
-}
-
 export interface EntryPickerOptions<T = {}> {
+  hint: Hint
   defaultView?: 'row' | 'thumb'
   condition?: Expr<boolean>
   max?: number
@@ -63,28 +43,22 @@ export interface EntryPickerOptions<T = {}> {
   fields?: Type<T>
 }
 
-const externType = {
-  entry: 'EntryReference',
-  file: 'FileReference',
-  image: 'ImageReference'
-}
-
-export function entryPicker<T extends Reference>(
-  options: EntryPickerOptions<T>
-): Picker<T, EntryPickerOptions<T>> {
+export function entryPicker<Ref extends Reference, Fields>(
+  options: EntryPickerOptions<Fields>
+): Picker<Ref & Fields, EntryPickerOptions<Fields>> {
   const extra = options.fields && Type.shape(options.fields)
-  const hint = Hint.Extern({
+  /*const hint = Hint.Extern({
     name: externType[options.type],
     package: 'alinea/picker/entry'
-  })
+  })*/
   return {
-    type: options.type,
     shape: Shape.Record('Entry', {
       entry: Shape.Scalar('Entry')
     }).concat(extra),
     hint: options.fields
-      ? Hint.Intersection(hint, Type.hint(options.fields))
-      : hint,
+      ? Hint.Intersection(options.hint, Type.hint(options.fields))
+      : options.hint,
+    fields: options.fields,
     label: options.label || 'Page link',
     handlesMultiple: true,
     options

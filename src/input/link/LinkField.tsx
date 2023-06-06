@@ -1,37 +1,9 @@
-import {Field, Hint, Label, Reference, Type} from 'alinea/core'
-import {Expr} from 'alinea/core/pages/Expr'
+import {Field, FieldOptions, Hint, Label, Reference} from 'alinea/core'
+import {entries, fromEntries} from 'alinea/core/util/Objects'
 import type {Picker} from 'alinea/editor/Picker'
-import {linkConstructors} from './LinkConstructors'
-
-export type LinkType = 'entry' | 'image' | 'file' | 'external'
-
-/*export namespace LinkType {
-  export function conditionOf(cursor: Cursor<Entry>, type: LinkType) {
-    switch (type) {
-      case 'entry':
-        return cursor.type.isNot(Media.Type.File)
-      case 'image':
-        return cursor.type
-          .is(Media.Type.File)
-          .and(cursor.get('extension').isIn(Media.imageExtensions))
-      case 'file':
-        return cursor.type
-          .is(Media.Type.File)
-          .and(cursor.get('extension').isNotIn(Media.imageExtensions))
-      case 'external':
-        return Expr.value(true)
-    }
-  }
-}*/
 
 /** Optional settings to configure a link field */
-export interface LinkOptions<Row> {
-  /** The type of links, this will configure the options of the link picker */
-  type?: LinkType | Array<LinkType>
-  /** Show only entries matching this condition */
-  condition?: Expr<boolean>
-  /** Add extra fields to each link */
-  fields?: Type<Row>
+export interface LinkFieldOptions extends FieldOptions {
   /** Width of the field in the dashboard UI (0-1) */
   width?: number
   /** Add instructional text to a field */
@@ -40,58 +12,58 @@ export interface LinkOptions<Row> {
   optional?: boolean
   /** Display a minimal version */
   inline?: boolean
-  /** Allow multiple links */
-  multiple?: boolean
-  /** Maximum amount of links that can be selected */
-  max?: number
-  /** A default value */
-  initialValue?: Array<Reference & Row>
-  /** Hide this link field */
-  hidden?: boolean
-  pickers?: Array<Picker<any, any>>
 }
 
-/** Internal representation of a link field */
-export class LinkField<Row> extends Field.List<
-  Reference & Row,
+export interface LinkOptions<Row extends Reference> extends LinkFieldOptions {
+  pickers: Record<string, Picker<any, any>>
+}
+
+export class LinkField<Row extends Reference> extends Field.Union<
+  Row,
   LinkOptions<Row>
 > {}
 
-/** Create a link field configuration */
-export function createLink<Row>(
+export function createLink<Row extends Reference>(
   label: Label,
-  options: LinkOptions<Row> = {}
+  options: LinkOptions<Row>
 ): LinkField<Row> {
-  const pickers = options.pickers || []
-  const blocks = Object.fromEntries(
-    pickers.map(picker => [
-      picker.type,
-      options.fields
-        ? picker.shape.concat(Type.shape(options.fields))
-        : picker.shape
-    ])
+  const pickers = entries(options.pickers)
+  const blocks = fromEntries(
+    pickers.map(([type, picker]) => [type, picker.shape])
   )
   const hint =
     pickers.length === 1
-      ? pickers[0].hint
-      : Hint.Union(pickers.map(picker => picker.hint))
+      ? pickers[0][1].hint
+      : Hint.Union(pickers.map(([, picker]) => picker.hint))
   return new LinkField(blocks, {
-    hint: options.multiple ? Hint.Array(hint) : hint,
+    hint,
     label,
-    options: {
-      ...options,
-      pickers
-    },
-    initialValue: options.initialValue
-    /*transform(field): Expr<Q> {
-      const row = field.each() as unknown as Cursor<Reference>
-      const cases: Record<string, SelectionInput> = {}
-      for (const picker of pickers) cases[picker.type] = picker.select(row)
-      const cursor = row.select(row.get('type').case(cases, row.fields))
-      if (!options.multiple) return cursor.first().toExpr()
-      return cursor.toExpr()
-    }*/
+    options
   })
 }
 
-export const link = linkConstructors(createLink)
+/** Internal representation of a link field */
+export class LinksField<Row extends Reference> extends Field.List<
+  Row,
+  LinkOptions<Row> & {max?: number}
+> {}
+
+/** Create a link field configuration */
+export function createLinks<Row extends Reference>(
+  label: Label,
+  options: LinkOptions<Row>
+): LinksField<Row> {
+  const pickers = entries(options.pickers)
+  const blocks = fromEntries(
+    pickers.map(([type, picker]) => [type, picker.shape])
+  )
+  const hint =
+    pickers.length === 1
+      ? pickers[0][1].hint
+      : Hint.Union(pickers.map(([, picker]) => picker.hint))
+  return new LinksField(blocks, {
+    hint: Hint.Array(hint),
+    label,
+    options
+  })
+}
