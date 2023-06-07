@@ -45,7 +45,7 @@ export interface EntryPickerOptions<T = {}> {
 
 export function entryPicker<Ref extends Reference, Fields>(
   options: EntryPickerOptions<Fields>
-): Picker<Ref & Fields, EntryPickerOptions<Fields>> {
+): Picker<Ref & Type.Row<Fields>, EntryPickerOptions<Fields>> {
   const extra = options.fields && Type.shape(options.fields)
   /*const hint = Hint.Extern({
     name: externType[options.type],

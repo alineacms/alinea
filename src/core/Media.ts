@@ -16,8 +16,8 @@ export namespace Media {
     blurHash: string
   }
 
-  export type File = Entry & FileProperties & Partial<ImageProperties>
-  export type Image = Entry & FileProperties & ImageProperties
+  export type File = Entry<FileProperties & Partial<ImageProperties>>
+  export type Image = Entry<FileProperties & ImageProperties>
 
   export const imageExtensions = [
     '.jpg',

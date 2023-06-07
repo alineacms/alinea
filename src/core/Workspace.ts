@@ -52,6 +52,10 @@ export namespace Workspace {
   export function label(workspace: Workspace): Label {
     return workspace[Workspace.Data].label
   }
+
+  export function isWorkspace(value: any): value is Workspace {
+    return Boolean(value && value[Workspace.Data])
+  }
 }
 
 /** Create a workspace */

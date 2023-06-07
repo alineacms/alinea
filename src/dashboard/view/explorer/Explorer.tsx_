@@ -1,13 +1,12 @@
 import useSize from '@react-hook/size'
-import {Entry, Reference, Schema, View} from 'alinea/core'
+import {Entry, Outcome, Reference, Schema, View} from 'alinea/core'
 import {Cursor} from 'alinea/core/pages/Cursor'
 import {Loader, fromModule} from 'alinea/ui'
-import {useAtomValue} from 'jotai'
 import {useRef} from 'react'
 import {useQuery} from 'react-query'
 import VirtualList from 'react-tiny-virtual-list'
-import {findAtom} from '../../atoms/EntryAtoms.js'
 import {ExplorerProvider} from '../../hook/UseExplorer'
+import {useSession} from '../../hook/UseSession'
 import {EntrySummaryRow, EntrySummaryThumb} from '../entry/EntrySummary.js'
 import css from './Explorer.module.scss'
 import {ExplorerRow} from './ExplorerRow.js'
@@ -19,15 +18,15 @@ const defaultSummaryView = {
   summaryThumb: EntrySummaryThumb
 }
 
-export interface ExplorerProps {
+export type ExplorerProps = {
   schema: Schema
-  cursor: Cursor.Find<Entry>
+  cursor: Cursor<Entry>
   type: 'row' | 'thumb'
   virtualized?: boolean
   max?: number
   selectable?: boolean
   selection?: Array<Reference>
-  toggleSelect?: (entry: Entry) => void
+  toggleSelect?: (id: Entry.Minimal) => void
 }
 
 export function Explorer({
@@ -40,23 +39,29 @@ export function Explorer({
   selection = [],
   toggleSelect = () => {}
 }: ExplorerProps) {
-  //const {cnx: hub} = useSession()
-  const find = useAtomValue(findAtom)
+  return <>todo</>
+  const {cnx: hub} = useSession()
   const {data, isLoading} = useQuery(
     ['explorer', type, cursor, max],
     () => {
       const summaryView = type === 'row' ? 'summaryRow' : 'summaryThumb'
-      const defaultView = defaultSummaryView[summaryView]
-      const selection = View.getSelection(schema, summaryView)
-      let total = 1000
-      return {
-        type,
-        total: max ? Math.min(max, total) : total,
-        selection,
-        cursor: find(cursor.select(selection)),
-        summaryView,
-        defaultView
-      } as const
+      const selection = View.getSelection(schema, summaryView, Entry)
+      return hub
+        .query({cursor: cursor.select(Functions.count())})
+        .then(Outcome.unpack)
+        .then(([total]) => {
+          const defaultView = defaultSummaryView[summaryView]
+          return {
+            type,
+            total: max ? Math.min(max, total) : total,
+            selection,
+            cursor: cursor.select(
+              Entry.type.case(selection, defaultView.selection(Entry))
+            ) as Cursor<Entry.Minimal>,
+            summaryView,
+            defaultView
+          } as const
+        })
     },
     {keepPreviousData: true}
   )

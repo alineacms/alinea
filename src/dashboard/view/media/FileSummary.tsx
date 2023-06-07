@@ -1,15 +1,15 @@
-import {Media, renderLabel, Tree, view} from 'alinea/core'
-import {Store} from 'alinea/store'
-import {Collection} from 'alinea/store/Collection'
+import {Page, renderLabel, view} from 'alinea/core'
+import {MediaFile} from 'alinea/core/media/MediaSchema'
+import {Projection} from 'alinea/core/pages/Projection'
 import {
   Chip,
   Ellipsis,
-  fromModule,
   HStack,
-  px,
   TextLabel,
   Typo,
-  VStack
+  VStack,
+  fromModule,
+  px
 } from 'alinea/ui'
 import {IcRoundInsertDriveFile} from 'alinea/ui/icons/IcRoundInsertDriveFile'
 import {IcRoundKeyboardArrowRight} from 'alinea/ui/icons/IcRoundKeyboardArrowRight'
@@ -18,24 +18,24 @@ import css from './FileSummary.module.scss'
 
 const styles = fromModule(css)
 
-function fileSummarySelect(File: Collection<Media.File>) {
+function fileSummarySelect() {
   return {
-    id: File.id,
-    type: File.type,
-    workspace: File.alinea.workspace,
-    root: File.alinea.root,
-    title: File.title,
-    extension: File.extension,
-    size: File.size,
-    preview: File.preview,
-    averageColor: File.averageColor,
-    parents: Tree.parents(File.id).select(parent => ({
-      title: parent.title
-    }))
-  }
+    id: Page.entryId,
+    type: Page.type,
+    workspace: Page.workspace,
+    root: Page.root,
+    title: Page.title,
+    extension: MediaFile.extension,
+    size: MediaFile.size,
+    preview: MediaFile.preview,
+    averageColor: MediaFile.averageColor,
+    parents({parents}) {
+      return parents().select(Page.title)
+    }
+  } satisfies Projection
 }
 
-type SummaryProps = Store.TypeOf<ReturnType<typeof fileSummarySelect>>
+type SummaryProps = Projection.Infer<ReturnType<typeof fileSummarySelect>>
 
 export const FileSummaryRow = view(
   fileSummarySelect,
@@ -57,7 +57,7 @@ export const FileSummaryRow = view(
               <Typo.Small>
                 <HStack center gap={3}>
                   {file.parents
-                    .map<ReactNode>(({title}) => <TextLabel label={title} />)
+                    .map<ReactNode>(title => <>{title}</>)
                     .reduce((prev, curr) => [
                       prev,
                       <IcRoundKeyboardArrowRight />,

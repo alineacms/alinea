@@ -7,6 +7,7 @@ import {
   createYDoc,
   parseYDoc
 } from 'alinea/core'
+import {EntrySearch} from 'alinea/core/EntrySearch'
 import {Realm} from 'alinea/core/pages/Realm'
 import {base64} from 'alinea/core/util/Encoding'
 import {
@@ -23,6 +24,7 @@ import {
   UnOpType,
   withRecursive
 } from 'rado'
+import {iif, match} from 'rado/sqlite'
 import * as Y from 'yjs'
 import {Entry, EntryPhase, EntryTable} from '../core/Entry.js'
 import * as pages from '../core/pages/index.js'
@@ -63,6 +65,7 @@ type Interim = any
 export class ResolveContext {
   constructor(
     public realm: Realm,
+    public location: Array<string> = [],
     public table: Table<EntryTable> | undefined = undefined,
     public expr: ExprContext = ExprContext.InNone
   ) {}
@@ -73,7 +76,7 @@ export class ResolveContext {
   }
 
   withTable(table: Table<EntryTable>): ResolveContext {
-    return new ResolveContext(this.realm, table, this.expr)
+    return new ResolveContext(this.realm, this.location, table, this.expr)
   }
 
   get inSelect() {
@@ -92,6 +95,7 @@ export class ResolveContext {
     if (this.inSelect) return this
     return new ResolveContext(
       this.realm,
+      this.location,
       this.table,
       this.expr | ExprContext.InSelect
     )
@@ -101,6 +105,7 @@ export class ResolveContext {
     if (this.inCondition) return this
     return new ResolveContext(
       this.realm,
+      this.location,
       this.table,
       this.expr | ExprContext.InCondition
     )
@@ -110,13 +115,19 @@ export class ResolveContext {
     if (this.inAccess) return this
     return new ResolveContext(
       this.realm,
+      this.location,
       this.table,
       this.expr | ExprContext.InAccess
     )
   }
 
   get none(): ResolveContext {
-    return new ResolveContext(this.realm, this.table, ExprContext.InNone)
+    return new ResolveContext(
+      this.realm,
+      this.location,
+      this.table,
+      ExprContext.InNone
+    )
   }
 }
 
@@ -251,6 +262,19 @@ export class Resolver {
     )
   }
 
+  exprCase(
+    ctx: ResolveContext,
+    {expr, cases, defaultCase}: pages.ExprData.Case
+  ): ExprData {
+    const subject = new Expr(this.expr(ctx, expr))
+    let res = new Expr(
+      defaultCase ? this.expr(ctx, defaultCase) : Expr.NULL[Expr.Data]
+    )
+    for (const [condition, value] of entries(cases))
+      res = iif(subject.is(condition), this.expr(ctx, value), res)
+    return res[Expr.Data]
+  }
+
   expr(ctx: ResolveContext, expr: pages.ExprData): ExprData {
     switch (expr.type) {
       case 'unop':
@@ -265,6 +289,8 @@ export class Resolver {
         return this.exprValue(ctx, expr)
       case 'record':
         return this.exprRecord(ctx, expr)
+      case 'case':
+        return this.exprCase(ctx, expr)
     }
   }
 
@@ -336,18 +362,27 @@ export class Resolver {
 
   querySource(
     ctx: ResolveContext,
-    source: pages.CursorSource | undefined
+    source: pages.CursorSource | undefined,
+    hasSearch: boolean
   ): Select<Table.Select<EntryTable>> {
-    if (!source) return ctx.Table()
+    const cursor = hasSearch
+      ? EntrySearch()
+          .innerJoin(
+            ctx.Table,
+            ctx.Table().get('rowid').is(EntrySearch().get('rowid'))
+          )
+          .select(ctx.Table)
+      : ctx.Table()
+    if (!source) return cursor
     const from = Entry().as(source.id)
     switch (source.type) {
       case pages.SourceType.Parent:
-        return ctx.Table().where(ctx.Table.entryId.is(from.parent)).take(1)
+        return cursor.where(ctx.Table.entryId.is(from.parent)).take(1)
       case pages.SourceType.Children:
         const Child = Entry().as('Child')
         const children = withRecursive(
           Child({entryId: from.entryId})
-            .where(this.restrictRealm(Child, ctx.realm))
+            .where(this.conditionRealm(Child, ctx.realm))
             .select({
               entryId: Child.entryId,
               parent: Child.parent,
@@ -362,20 +397,19 @@ export class Resolver {
             })
             .innerJoin(children({entryId: Child.parent}))
             .where(
-              this.restrictRealm(Child, ctx.realm),
+              this.conditionRealm(Child, ctx.realm),
               children.level.isLess(source.depth)
             )
         )
         const childrenIds = children().select(children.entryId).skip(1)
-        return ctx
-          .Table()
+        return cursor
           .where(ctx.Table.entryId.isIn(childrenIds))
           .orderBy(ctx.Table.index.asc())
       case pages.SourceType.Parents:
         const Parent = Entry().as('Parent')
         const parents = withRecursive(
           Parent({entryId: from.entryId})
-            .where(this.restrictRealm(Parent, ctx.realm))
+            .where(this.conditionRealm(Parent, ctx.realm))
             .select({
               entryId: Parent.entryId,
               parent: Parent.parent,
@@ -390,13 +424,12 @@ export class Resolver {
             })
             .innerJoin(parents({parent: Parent.entryId}))
             .where(
-              this.restrictRealm(Parent, ctx.realm),
+              this.conditionRealm(Parent, ctx.realm),
               source.depth ? children.level.isLess(source.depth) : true
             )
         )
         const parentIds = parents().select(parents.entryId).skip(1)
-        return ctx
-          .Table()
+        return cursor
           .where(ctx.Table.entryId.isIn(parentIds))
           .orderBy(ctx.Table.level.asc())
       default:
@@ -414,7 +447,7 @@ export class Resolver {
     })
   }
 
-  restrictRealm(Table: Table<EntryTable>, realm: Realm) {
+  conditionRealm(Table: Table<EntryTable>, realm: Realm) {
     switch (realm) {
       case Realm.Published:
         return Table.phase.is(EntryPhase.Published)
@@ -431,6 +464,23 @@ export class Resolver {
     }
   }
 
+  conditionLocation(Table: Table<EntryTable>, location: Array<string>) {
+    switch (location.length) {
+      case 1:
+        return Table.workspace.is(location[0])
+      case 2:
+        return Table.workspace.is(location[0]).and(Table.root.is(location[1]))
+      default:
+        return Expr.value(true)
+    }
+  }
+
+  conditionSearch(Table: Table<EntryTable>, searchTerms?: Array<string>) {
+    if (!searchTerms?.length) return Expr.value(true)
+    const terms = searchTerms.map(term => `"${term}"*`).join(' AND ')
+    return match(EntrySearch, terms)
+  }
+
   queryCursor(
     ctx: ResolveContext,
     {cursor}: pages.Selection.Cursor
@@ -445,16 +495,20 @@ export class Resolver {
       groupBy,
       select,
       first,
-      source
+      source,
+      searchTerms
     } = cursor
     ctx = ctx.withTable(Entry().as(id)).none
     const {name} = target || {}
-    let query = this.querySource(ctx, source)
+    const hasSearch = Boolean(searchTerms?.length)
+    let query = this.querySource(ctx, source, hasSearch)
     let preCondition = query[Query.Data].where
     let condition = Expr.and(
       preCondition ? new Expr(preCondition) : Expr.value(true),
       name ? ctx.Table.type.is(name) : Expr.value(true),
-      this.restrictRealm(ctx.Table, ctx.realm)
+      this.conditionLocation(ctx.Table, ctx.location),
+      this.conditionRealm(ctx.Table, ctx.realm),
+      this.conditionSearch(ctx.Table, searchTerms)
     )
     if (skip) query = query.skip(skip)
     if (take) query = query.take(take)
@@ -597,11 +651,12 @@ export class Resolver {
 
   resolve = async <T>({
     selection,
+    location,
     realm = Realm.Published,
     preview
   }: Connection.ResolveParams): Promise<T> => {
     const query = new Query<Interim>(
-      this.query(new ResolveContext(realm), selection)
+      this.query(new ResolveContext(realm, location), selection)
     )
     if (preview) {
       const current = Entry({

@@ -1,5 +1,5 @@
-import {Entry, Tree, Type, view} from 'alinea/core'
-import {Collection} from 'alinea/store'
+import {Page, Type, view} from 'alinea/core'
+import {Projection} from 'alinea/core/pages/Projection'
 import {
   Chip,
   Ellipsis,
@@ -18,20 +18,24 @@ import css from './EntrySummary.module.scss'
 
 const styles = fromModule(css)
 
-function entrySummaryQuery(Entry: Collection<Entry>) {
+function entrySummaryQuery() {
   return {
-    id: Entry.id,
-    type: Entry.type,
-    workspace: Entry.alinea.workspace,
-    root: Entry.alinea.root,
-    title: Entry.title,
-    parents: Tree.parents(Entry.id).select(parent => ({title: parent.title}))
-  }
+    id: Page.entryId,
+    type: Page.type,
+    workspace: Page.workspace,
+    root: Page.root,
+    title: Page.title,
+    parents({parents}) {
+      return parents().select(Page.title)
+    }
+  } satisfies Projection
 }
+
+type SummaryProps = Projection.Infer<ReturnType<typeof entrySummaryQuery>>
 
 export const EntrySummaryRow = view(
   entrySummaryQuery,
-  function EntrySummaryRow({id, title, type: typeName, parents}) {
+  function EntrySummaryRow({id, title, type: typeName, parents}: SummaryProps) {
     const nav = useNav()
     const {schema} = useDashboard().config
     const type = schema[typeName]
@@ -44,9 +48,7 @@ export const EntrySummaryRow = view(
               <Typo.Small>
                 <HStack center gap={3}>
                   {parents
-                    .map<ReactNode>(({title}, i) => (
-                      <TextLabel key={i} label={title} />
-                    ))
+                    .map<ReactNode>(title => <>{title}</>)
                     .reduce((prev, curr, i) => [
                       prev,
                       <IcRoundKeyboardArrowRight key={`s${i}`} />,
@@ -72,7 +74,12 @@ export const EntrySummaryRow = view(
 
 export const EntrySummaryThumb = view(
   entrySummaryQuery,
-  function EntrySummaryThumb({id, title, type: typeName, parents}) {
+  function EntrySummaryThumb({
+    id,
+    title,
+    type: typeName,
+    parents
+  }: SummaryProps) {
     const {schema} = useDashboard().config
     const type = schema[typeName]!
     return (
@@ -82,9 +89,7 @@ export const EntrySummaryThumb = view(
             <Typo.Small>
               <HStack center gap={3}>
                 {parents
-                  .map<ReactNode>(({title}, i) => (
-                    <TextLabel key={i} label={title} />
-                  ))
+                  .map<ReactNode>(title => <>{title}</>)
                   .reduce((prev, curr, i) => [
                     prev,
                     <IcRoundKeyboardArrowRight key={`s${i}`} />,

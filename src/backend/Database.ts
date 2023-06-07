@@ -27,6 +27,7 @@ import {Store} from './Store.js'
 import {Target} from './Target.js'
 import {ChangeSet} from './data/ChangeSet.js'
 import {AlineaMeta} from './db/AlineaMeta.js'
+import {createEntrySearch} from './db/CreateEntrySearch.js'
 
 const decoder = new TextDecoder()
 
@@ -172,8 +173,9 @@ export class Database implements Syncable {
     if (this.inited) return
     this.inited = true
     try {
-      await this.store.transaction(async query => {
-        await query(create(Entry, AlineaMeta))
+      await this.store.transaction(async tx => {
+        await tx(create(Entry, AlineaMeta))
+        await createEntrySearch(tx)
       })
     } catch (e) {
       this.inited = false
@@ -252,6 +254,7 @@ export class Database implements Syncable {
       ...data,
       path: pathData
     }
+    const searchableText = ''
 
     return {
       workspace: meta.workspace,
@@ -280,7 +283,8 @@ export class Database implements Syncable {
       title: data.title ?? seedData?.title ?? '',
       url: this.entryUrl(type, urlMeta),
 
-      data: entryData
+      data: entryData,
+      searchableText
     }
   }
 

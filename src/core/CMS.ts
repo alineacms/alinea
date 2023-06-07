@@ -8,7 +8,7 @@ import {Workspace} from './Workspace.js'
 import {Cursor} from './pages/Cursor.js'
 import {Projection} from './pages/Projection.js'
 import {Selection} from './pages/Selection.js'
-import {serializeSelection} from './pages/Serialize.js'
+import {seralizeLocation, serializeSelection} from './pages/Serialize.js'
 import {entries} from './util/Objects.js'
 
 type Attachment = Workspace | Root
@@ -50,21 +50,29 @@ export abstract class CMS implements Config, CMSApi {
   }
 
   async get(...args: Array<any>): Promise<any> {
-    let [location, select] = args.length === 1 ? [undefined, args[0]] : args
+    let [providedLocation, select] =
+      args.length === 1 ? [undefined, args[0]] : args
     const cnx = await this.connection()
     if (select instanceof Cursor.Find) select = select.first()
     if (Type.isType(select)) select = select().first()
     const selection = Selection.create(select)
     serializeSelection(this.targets, selection)
-    return cnx.resolve({selection})
+    return cnx.resolve({
+      selection,
+      location: seralizeLocation(this, providedLocation)
+    })
   }
 
   async find(...args: Array<any>): Promise<any> {
-    const [location, select] = args.length === 1 ? [undefined, args[0]] : args
+    const [providedLocation, select] =
+      args.length === 1 ? [undefined, args[0]] : args
     const cnx = await this.connection()
     const selection = Selection.create(select)
     serializeSelection(this.targets, selection)
-    return cnx.resolve({selection})
+    return cnx.resolve({
+      selection,
+      location: seralizeLocation(this, providedLocation)
+    })
   }
 
   get schema() {
