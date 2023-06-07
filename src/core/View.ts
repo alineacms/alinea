@@ -1,42 +1,48 @@
-import {Collection, SelectionInput, Store} from 'alinea/store'
 import type {ComponentType} from 'react'
+import {Page} from './Page.js'
 import {Schema} from './Schema.js'
 import {Type} from './Type.js'
-import {entries} from './util/Objects.js'
+import {Expr} from './pages/Expr.js'
+import {Projection} from './pages/Projection.js'
+import {assign, entries} from './util/Objects.js'
 
-type ViewSelection<T, S> = (collection: Collection<T>) => S
-type ViewSelectionGeneric = <T>(collection: Collection<T>) => SelectionInput
+type ViewSelection<T, S> = () => S
+type ViewSelectionGeneric = () => Projection
 
 export type View<
   T,
   Props = any,
-  S extends SelectionInput = SelectionInput
+  S extends Projection = Projection
 > = ComponentType<Props> & {
   selection: ViewSelectionGeneric
 }
 
 export function view<
   T,
-  S extends SelectionInput,
-  Params extends Store.TypeOf<S>
+  S extends Projection,
+  Params extends Projection.Infer<S>
 >(
   selection: ViewSelection<T, S>,
   component: ComponentType<Params>
 ): View<T, Params> {
-  return Object.assign(component, {selection}) as any
+  return assign(component, {selection}) as any
 }
 
 export namespace View {
-  export function getSelection<T>(
+  export function getSelection(
     schema: Schema,
-    summaryView: 'summaryRow' | 'summaryThumb',
-    collection: Collection<T>
-  ) {
-    const cases: Record<string, SelectionInput> = {}
+    summaryView: 'summaryRow' | 'summaryThumb'
+  ): Expr<any> {
+    let select
     for (const [name, type] of entries(schema)) {
       const view = Type.meta(type!)[summaryView]
-      if (view) cases[name] = view.selection(collection)
+      if (view) {
+        const selection: any = view.selection()
+        select = select
+          ? select.when(name, selection)
+          : Page.type.when(name, selection)
+      }
     }
-    return cases
+    return select ? select.end() : Expr.NULL
   }
 }

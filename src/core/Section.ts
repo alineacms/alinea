@@ -58,15 +58,9 @@ export namespace Section {
   }
 
   export function isSection(value: any): value is Section {
-    return value && Boolean(value[Section.Data])
+    return Boolean(value && value[Section.Data])
   }
 }
-
-assign(Section, {
-  [Symbol.hasInstance](instance: any) {
-    return instance && Boolean(instance[Section.Data])
-  }
-})
 
 interface SectionOptions extends Omit<SectionData, 'fields'> {
   fields?: Record<string, Field>

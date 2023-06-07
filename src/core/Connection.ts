@@ -42,6 +42,7 @@ export namespace Connection {
   }
   export interface ResolveParams {
     selection: Selection
+    location?: Array<string>
     realm?: Realm
     preview?: PreviewUpdate
   }

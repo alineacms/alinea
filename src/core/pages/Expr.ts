@@ -1,5 +1,6 @@
 import {Infer, any, enums, literal, record, string, union} from 'cito'
 import {Cursor, OrderBy, OrderDirection} from './Cursor.js'
+import {Projection} from './Projection.js'
 import {TargetData} from './Target.js'
 
 const {entries, fromEntries} = Object
@@ -29,7 +30,14 @@ export enum BinaryOp {
   Concat = 'Concat'
 }
 
-export type ExprData = typeof ExprData.adt.infer
+export type ExprData =
+  | ExprData.UnOp
+  | ExprData.BinOp
+  | ExprData.Field
+  | ExprData.Access
+  | ExprData.Value
+  | ExprData.Record
+  | ExprData.Case
 
 export function ExprData(input: any): ExprData {
   if (input === null || input === undefined) return ExprData.Value(null)
@@ -43,60 +51,74 @@ export function ExprData(input: any): ExprData {
 }
 
 export namespace ExprData {
-  const types = {
-    UnOp: class {
+  namespace types {
+    export class UnOp {
       type = literal('unop')
       op = enums(UnaryOp)
       expr = adt
-    },
-    BinOp: class {
+    }
+    export class BinOp {
       type = literal('binop')
       a = adt
       op = enums(BinaryOp)
       b = adt
-    },
-    Field: class {
+    }
+    export class Field {
       type = literal('field')
       target = TargetData
       field = string
-    },
-    Access: class {
+    }
+    export class Access {
       type = literal('access')
       expr = adt
       field = string
-    },
-    Value: class {
+    }
+    export class Value {
       type = literal('value')
       value = any
-    },
-    Record: class {
+    }
+    export class Record {
       type = literal('record')
       fields = record(adt)
     }
+    export class Case {
+      type = literal('case')
+      expr = adt
+      cases = record(adt)
+      defaultCase? = adt.optional
+    }
   }
-  export type UnOp = Infer<typeof types.UnOp>
+  export type UnOp = Infer<types.UnOp>
   export function UnOp(op: UnaryOp, expr: ExprData): ExprData {
     return {type: 'unop', op, expr}
   }
-  export type BinOp = Infer<typeof types.BinOp>
+  export type BinOp = Infer<types.BinOp>
   export function BinOp(a: ExprData, op: BinaryOp, b: ExprData): ExprData {
     return {type: 'binop', a, op, b}
   }
-  export type Field = Infer<typeof types.Field>
+  export type Field = Infer<types.Field>
   export function Field(target: TargetData, field: string): ExprData {
     return {type: 'field', target, field}
   }
-  export type Access = Infer<typeof types.Access>
+  export type Access = Infer<types.Access>
   export function Access(expr: ExprData, field: string): ExprData {
     return {type: 'access', expr, field}
   }
-  export type Value = Infer<typeof types.Value>
+  export type Value = Infer<types.Value>
   export function Value(value: any): ExprData {
     return {type: 'value', value}
   }
-  export type Record = Infer<typeof types.Record>
+  export type Record = Infer<types.Record>
   export function Record(fields: {[k: string]: ExprData}): ExprData {
     return {type: 'record', fields}
+  }
+  export type Case = Infer<types.Case>
+  export function Case(
+    expr: ExprData,
+    cases: {[k: string]: ExprData},
+    defaultCase?: ExprData
+  ): ExprData {
+    return {type: 'case', expr, cases, defaultCase}
   }
   export const adt = union(
     types.UnOp,
@@ -104,7 +126,8 @@ export namespace ExprData {
     types.Field,
     types.Access,
     types.Value,
-    types.Record
+    types.Record,
+    types.Case
   )
 }
 
@@ -268,13 +291,20 @@ export class ExprI<T> {
     )
   }*/
 
+  when<S extends Projection>(
+    expr: EV<T>,
+    select: S
+  ): CaseBuilder<T, Projection.Infer<S>> {
+    return new CaseBuilder(this).when(expr, select)
+  }
+
   at<T>(this: Expr<Array<T>>, index: number): Expr<T | null> {
     return this.get(`[${Number(index)}]`)
   }
 
-  /*includes<T>(this: Expr<Array<T>>, value: EV<T>): Expr<boolean> {
-    return Expr(value).isIn(this)
-  }*/
+  includes<T>(this: Expr<Array<T>>, value: EV<T>): Expr<boolean> {
+    return Expr(ExprData(value)).isIn(this)
+  }
 
   sure(): Expr<NonNullable<T>> {
     return this as any
@@ -286,6 +316,37 @@ export class ExprI<T> {
 
   toJSON() {
     return this[Expr.Data]
+  }
+}
+
+export class CaseBuilder<T, Res> {
+  constructor(
+    public expr: Expr<T>,
+    public cases: Array<[Expr<T>, Expr<Res>]> = []
+  ) {}
+
+  when<S extends Projection>(
+    expr: EV<T>,
+    select: S
+  ): CaseBuilder<T, Res | Projection.Infer<S>> {
+    return new CaseBuilder(
+      this.expr,
+      this.cases.concat([[Expr.create(expr), Expr.create(select)]])
+    )
+  }
+
+  orElse<S extends Projection>(select: S): Expr<Res | Projection.Infer<S>> {
+    return Expr(
+      ExprData.Case(
+        this.expr[Expr.Data],
+        fromEntries(this.cases),
+        Expr.create(select)[Expr.Data]
+      )
+    )
+  }
+
+  end(): Expr<Res> {
+    return Expr(ExprData.Case(this.expr[Expr.Data], fromEntries(this.cases)))
   }
 }
 

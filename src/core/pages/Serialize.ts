@@ -1,10 +1,29 @@
+import {Config} from '../Config.js'
+import {Root} from '../Root.js'
 import {Schema} from '../Schema.js'
-import {values} from '../util/Objects.js'
+import {Workspace} from '../Workspace.js'
+import {entries, values} from '../util/Objects.js'
 import {unreachable} from '../util/Types.js'
 import {CursorData} from './Cursor.js'
 import {ExprData} from './Expr.js'
 import {Selection} from './Selection.js'
 import {TargetData} from './Target.js'
+
+export function seralizeLocation(
+  config: Config,
+  location: Workspace | Root | undefined
+): Array<string> {
+  if (!location) return []
+  const isWorkspace = Workspace.isWorkspace(location)
+  for (const [workspaceName, workspace] of entries(config.workspaces)) {
+    if (workspace === location) return [workspaceName]
+    if (isWorkspace) continue
+    for (const [rootName, root] of entries(workspace)) {
+      if (root === location) return [workspaceName, rootName]
+    }
+  }
+  return []
+}
 
 export function serializeSelection(
   targets: Schema.Targets,
@@ -27,7 +46,7 @@ function serializeCursor(targets: Schema.Targets, cursor: CursorData): void {
   serializeTarget(targets, cursor.target)
   seralizeExpr(targets, cursor.where)
   if (cursor.orderBy)
-    for (const order of cursor.orderBy) seralizeExpr(targets, order)
+    for (const order of cursor.orderBy) seralizeExpr(targets, order.expr)
   serializeSelection(targets, cursor.select)
 }
 

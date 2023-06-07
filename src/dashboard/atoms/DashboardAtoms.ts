@@ -40,4 +40,4 @@ export const sessionAtom = atom<Session>(get => {
 
 export const useSession = () => useAtomValue(sessionAtom)
 
-export const useConfig = () => useAtomValue(clientAtom).config
+export const useConfig = () => useAtomValue(configAtom)

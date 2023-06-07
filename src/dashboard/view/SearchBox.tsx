@@ -1,9 +1,12 @@
+import {Page} from 'alinea/core'
 import {useLocation, useNavigate} from 'alinea/dashboard/util/HashRouter'
 import {HStack, Stack, fromModule} from 'alinea/ui'
 import {IcOutlineGridView} from 'alinea/ui/icons/IcOutlineGridView'
 import {IcOutlineList} from 'alinea/ui/icons/IcOutlineList'
 import {IcRoundSearch} from 'alinea/ui/icons/IcRoundSearch'
-import {useLayoutEffect, useState} from 'react'
+import {useAtomValue} from 'jotai'
+import {useLayoutEffect, useMemo, useState} from 'react'
+import {findAtom} from '../atoms/EntryAtoms.js'
 import {useDashboard} from '../hook/UseDashboard.js'
 import {useFocusList} from '../hook/UseFocusList.js'
 import {useNav} from '../hook/UseNav.js'
@@ -11,6 +14,7 @@ import {useRoot} from '../hook/UseRoot.js'
 import {useWorkspace} from '../hook/UseWorkspace.js'
 import {IconButton} from './IconButton.js'
 import css from './SearchBox.module.scss'
+import {Explorer} from './explorer/Explorer.js'
 
 const styles = fromModule(css)
 
@@ -45,6 +49,11 @@ export function SearchBox() {
   const list = useFocusList({
     onClear: () => setSearch('')
   })
+  const find = useAtomValue(findAtom)
+  const cursor = useMemo(() => {
+    const terms = search.replace(/,/g, ' ').split(' ').filter(Boolean)
+    return Page().search(...terms)
+  }, [search])
 
   const {schema} = useDashboard().config
   const {name: workspace} = useWorkspace()
@@ -102,7 +111,7 @@ export function SearchBox() {
         </label>
       </div>
       <list.Container>
-        {/*isOpen && search && (
+        {isOpen && search && (
           <div className={styles.root.popover()}>
             <Explorer
               schema={schema}
@@ -112,7 +121,7 @@ export function SearchBox() {
               max={25}
             />
           </div>
-        )*/}
+        )}
       </list.Container>
     </div>
   )

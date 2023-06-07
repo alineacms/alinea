@@ -48,7 +48,8 @@ export class EntryTable {
   path = column.string
   title = column.string
   url = column.string
-  data = column.json<Record<string, any>>()
+  data = column.json<any>()
+  searchableText = column.string
 
   /*get parentIds() {
     const Parent = Entry().as('Parent')
@@ -71,7 +72,9 @@ export class EntryTable {
   }*/
 }
 
-export interface Entry extends table<EntryTable> {}
+export interface Entry<Data = object> extends table<EntryTable> {
+  data: Data
+}
 
 export const Entry = table({
   Entry: EntryTable,

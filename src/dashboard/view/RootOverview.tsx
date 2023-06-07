@@ -39,31 +39,3 @@ export function RootOverview({workspace, root}: RootOverviewProps) {
     </>
   )
 }
-
-/*
-
-
-function RedirectToFirstEntry({workspace, root}: EntryLocation) {
-  const navigate = useNavigate()
-  const nav = useNav()
-  const {hub} = useSession()
-  const {data: topEntries} = useQuery(['top-entry', workspace, root], () => {
-    return hub
-      .query({
-        cursor: Entry.where(Entry.workspace.is(workspace!))
-          .where(Entry.root.is(root!))
-          .where(Entry.parent.isNull())
-          .select({id: Entry.id})
-          .orderBy(Entry.index.asc())
-          .take(1)
-      })
-      .then(Outcome.unpack)
-  })
-  const entry = topEntries?.[0]
-  useEffect(() => {
-    if (entry) navigate(nav.entry({workspace, root, id: entry.id}))
-  }, [entry])
-  return <Loader absolute />
-}
-
-*/

@@ -63,9 +63,30 @@ export interface LinkOptions<Fields> extends LinkFieldOptions {
 }
 
 export function link<Fields>(label: Label, options: LinkOptions<Fields>) {
-  return createLink<(EntryReference & Fields) | (UrlReference & Fields)>(
-    label,
-    {
+  return createLink<
+    (EntryReference & Type.Row<Fields>) | (UrlReference & Type.Row<Fields>)
+  >(label, {
+    ...options,
+    pickers: {
+      entry: entryPicker<EntryReference, Fields>({
+        ...options,
+        hint: Hint.Extern({
+          name: 'EntryReference',
+          package: 'alinea/picker/entry'
+        }),
+        title: 'Select a page',
+        max: 1
+      }),
+      url: urlPicker<Fields>(options)
+    }
+  })
+}
+
+export namespace link {
+  export function multiple<Fields>(label: Label, options: LinkOptions<Fields>) {
+    return createLinks<
+      (EntryReference & Type.Row<Fields>) | (UrlReference & Type.Row<Fields>)
+    >(label, {
       ...options,
       pickers: {
         entry: entryPicker<EntryReference, Fields>({
@@ -79,30 +100,7 @@ export function link<Fields>(label: Label, options: LinkOptions<Fields>) {
         }),
         url: urlPicker<Fields>(options)
       }
-    }
-  )
-}
-
-export namespace link {
-  export function multiple<Fields>(label: Label, options: LinkOptions<Fields>) {
-    return createLinks<(EntryReference & Fields) | (UrlReference & Fields)>(
-      label,
-      {
-        ...options,
-        pickers: {
-          entry: entryPicker<EntryReference, Fields>({
-            ...options,
-            hint: Hint.Extern({
-              name: 'EntryReference',
-              package: 'alinea/picker/entry'
-            }),
-            title: 'Select a page',
-            max: 1
-          }),
-          url: urlPicker<Fields>(options)
-        }
-      }
-    )
+    })
   }
 }
 
@@ -114,7 +112,7 @@ export namespace link {
   export function entry<Fields>(
     label: Label,
     options: EntryOptions<Fields>
-  ): LinkField<EntryReference & Fields> {
+  ): LinkField<EntryReference & Type.Row<Fields>> {
     return createLink(label, {
       ...options,
       pickers: {
@@ -136,7 +134,7 @@ export namespace link.entry {
   export function multiple<Fields>(
     label: Label,
     options: EntryOptions<Fields> = {}
-  ): LinksField<EntryReference & Fields> {
+  ): LinksField<EntryReference & Type.Row<Fields>> {
     return createLinks(label, {
       ...options,
       pickers: {
@@ -161,7 +159,7 @@ export namespace link {
   export function url<Fields>(
     label: Label,
     options: UrlOptions<Fields> = {}
-  ): LinkField<UrlReference & Fields> {
+  ): LinkField<UrlReference & Type.Row<Fields>> {
     return createLink(label, {
       ...options,
       pickers: {url: urlPicker(options)}
@@ -173,7 +171,7 @@ export namespace link.url {
   export function multiple<Fields>(
     label: Label,
     options: UrlOptions<Fields> = {}
-  ): LinksField<UrlReference & Fields> {
+  ): LinksField<UrlReference & Type.Row<Fields>> {
     return createLinks(label, {
       ...options,
       pickers: {url: urlPicker(options)}
@@ -189,7 +187,7 @@ export namespace link {
   export function image<Fields>(
     label: Label,
     options: ImageOptions<Fields> = {}
-  ): LinkField<ImageReference & Fields> {
+  ): LinkField<ImageReference & Type.Row<Fields>> {
     return createLink(label, {
       ...options,
       pickers: {entry: imagePicker(false, options)}
@@ -201,7 +199,7 @@ export namespace link.image {
   export function multiple<Fields>(
     label: Label,
     options: ImageOptions<Fields> = {}
-  ): LinksField<ImageReference & Fields> {
+  ): LinksField<ImageReference & Type.Row<Fields>> {
     return createLinks(label, {
       ...options,
       pickers: {entry: imagePicker(true, options)}
@@ -217,7 +215,7 @@ export namespace link {
   export function file<Fields>(
     label: Label,
     options: FileOptions<Fields> = {}
-  ): LinkField<FileReference & Fields> {
+  ): LinkField<FileReference & Type.Row<Fields>> {
     return createLink(label, {
       ...options,
       pickers: {file: filePicker(false, options)}
@@ -229,7 +227,7 @@ export namespace link.file {
   export function multiple<Fields>(
     label: Label,
     options: FileOptions<Fields> = {}
-  ): LinksField<FileReference & Fields> {
+  ): LinksField<FileReference & Type.Row<Fields>> {
     return createLinks(label, {
       ...options,
       pickers: {file: filePicker(true, options)}

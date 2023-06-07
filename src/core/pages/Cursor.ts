@@ -26,6 +26,7 @@ export const CursorData = object(
     id = string
     target? = TargetData.optional
     where? = ExprData.adt.optional
+    searchTerms? = array(string).optional
     skip? = number.optional
     take? = number.optional
     orderBy? = array(OrderBy).optional
@@ -96,6 +97,10 @@ export namespace Cursor {
       )
     }
 
+    search(...searchTerms: Array<string>) {
+      return new Find<Row>(this.with({searchTerms}))
+    }
+
     get<S extends Projection>(select: S): Get<Selection.Infer<S>> {
       const query = this.with({first: true})
       if (select) query.select = Selection.create(select, this.id)
@@ -162,6 +167,10 @@ export namespace Cursor {
   export class Get<Row> extends Cursor<Row> {
     where(where: ExprData): Get<Row> {
       return new Get<Row>(this.with({where}))
+    }
+
+    search(...searchTerms: Array<string>) {
+      return new Get<Row>(this.with({searchTerms}))
     }
 
     select<S extends Projection>(select: S): Get<Selection.Infer<S>> {

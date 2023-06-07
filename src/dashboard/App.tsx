@@ -42,8 +42,6 @@ function DraftsButton() {
       ? nav.draft(entryLocation)
       : nav.draft({workspace})
   const draftsTotal = 0
-  /*const {total: draftsTotal} = useDraftsList(workspace)
-   */
   return (
     <Sidebar.Nav.Item
       selected={location.pathname.startsWith(nav.draft({workspace}))}
