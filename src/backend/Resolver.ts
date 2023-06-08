@@ -677,7 +677,6 @@ export class Resolver {
   }: Connection.ResolveParams): Promise<T> => {
     const queryData = this.query(new ResolveContext(realm, location), selection)
     const query = new Query<Interim>(queryData)
-    console.log(query.toSql(this.store))
     if (preview) {
       const current = Entry({
         entryId: preview.entryId,
