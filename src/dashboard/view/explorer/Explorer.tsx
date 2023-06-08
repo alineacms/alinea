@@ -53,7 +53,7 @@ export function Explorer({
         type,
         total: max ? Math.min(max, total) : total,
         selection,
-        cursor: find(cursor.select(selection)),
+        cursor: cursor.select(selection),
         summaryView,
         defaultView
       } as const

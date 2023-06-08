@@ -1,9 +1,10 @@
-import {Entry, Outcome, Schema, View} from 'alinea/core'
-import {Cursor} from 'alinea/store'
+import {Entry, Schema, View} from 'alinea/core'
+import {Cursor} from 'alinea/core/pages/Cursor'
 import {fromModule} from 'alinea/ui'
+import {useAtomValue} from 'jotai'
 import {memo} from 'react'
 import {useQuery} from 'react-query'
-import {useSession} from '../../hook/UseSession'
+import {findAtom} from '../../atoms/EntryAtoms.js'
 import {ExplorerItem} from './ExplorerItem.js'
 import css from './ExplorerRow.module.scss'
 
@@ -11,7 +12,7 @@ const styles = fromModule(css)
 
 export type ExplorerRowProps = {
   schema: Schema
-  cursor: Cursor<Entry.Minimal>
+  cursor: Cursor.Find<Entry>
   batchSize: number
   amount: number
   from: number
@@ -28,15 +29,13 @@ export const ExplorerRow = memo(function ExplorerRow({
   summaryView,
   defaultView
 }: ExplorerRowProps) {
-  const {cnx: hub} = useSession()
+  const find = useAtomValue(findAtom)
   const start = Math.floor(from / batchSize)
   const startAt = from % batchSize
   const {data} = useQuery(
     ['explorer', 'batch', cursor, batchSize, start],
     () => {
-      return hub
-        .query({cursor: cursor.skip(start * batchSize).take(batchSize)})
-        .then(Outcome.unpack)
+      return find(cursor.skip(start * batchSize).take(batchSize))
     },
     {refetchOnWindowFocus: false, keepPreviousData: true, staleTime: 10000}
   )
@@ -51,9 +50,10 @@ export const ExplorerRow = memo(function ExplorerRow({
         }}
       >
         {entries?.map(entry => {
+          if (!entry) return null
           return (
             <ExplorerItem
-              key={entry.id}
+              key={entry.entryId}
               schema={schema}
               entry={entry}
               summaryView={summaryView}

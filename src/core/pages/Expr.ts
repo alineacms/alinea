@@ -1,4 +1,15 @@
-import {Infer, any, enums, literal, record, string, union} from 'cito'
+import {
+  Infer,
+  Type,
+  any,
+  array,
+  enums,
+  literal,
+  record,
+  string,
+  tuple,
+  union
+} from 'cito'
 import {Cursor, OrderBy, OrderDirection} from './Cursor.js'
 import {Projection} from './Projection.js'
 import {TargetData} from './Target.js'
@@ -84,43 +95,43 @@ export namespace ExprData {
     export class Case {
       type = literal('case')
       expr = adt
-      cases = record(adt)
+      cases = array(tuple(adt, adt))
       defaultCase? = adt.optional
     }
   }
-  export type UnOp = Infer<types.UnOp>
+  export interface UnOp extends Infer<types.UnOp> {}
   export function UnOp(op: UnaryOp, expr: ExprData): ExprData {
     return {type: 'unop', op, expr}
   }
-  export type BinOp = Infer<types.BinOp>
+  export interface BinOp extends Infer<types.BinOp> {}
   export function BinOp(a: ExprData, op: BinaryOp, b: ExprData): ExprData {
     return {type: 'binop', a, op, b}
   }
-  export type Field = Infer<types.Field>
+  export interface Field extends Infer<types.Field> {}
   export function Field(target: TargetData, field: string): ExprData {
     return {type: 'field', target, field}
   }
-  export type Access = Infer<types.Access>
+  export interface Access extends Infer<types.Access> {}
   export function Access(expr: ExprData, field: string): ExprData {
     return {type: 'access', expr, field}
   }
-  export type Value = Infer<types.Value>
+  export interface Value extends Infer<types.Value> {}
   export function Value(value: any): ExprData {
     return {type: 'value', value}
   }
-  export type Record = Infer<types.Record>
+  export interface Record extends Infer<types.Record> {}
   export function Record(fields: {[k: string]: ExprData}): ExprData {
     return {type: 'record', fields}
   }
-  export type Case = Infer<types.Case>
+  export interface Case extends Infer<types.Case> {}
   export function Case(
     expr: ExprData,
-    cases: {[k: string]: ExprData},
+    cases: Array<[ExprData, ExprData]>,
     defaultCase?: ExprData
   ): ExprData {
     return {type: 'case', expr, cases, defaultCase}
   }
-  export const adt = union(
+  export const adt: Type<ExprData> = union(
     types.UnOp,
     types.BinOp,
     types.Field,
