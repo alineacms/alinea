@@ -1,4 +1,12 @@
-import {array, literal, object, string, tuple, union} from 'cito'
+import {
+  Infer as CInfer,
+  Type as CType,
+  array,
+  literal,
+  string,
+  tuple,
+  union
+} from 'cito'
 import {Expand, Type} from '../../core.js'
 import {Cursor, CursorData} from './Cursor.js'
 import {Expr, ExprData} from './Expr.js'
@@ -6,54 +14,55 @@ import {Projection} from './Projection.js'
 import {Target, TargetData} from './Target.js'
 import {Tree} from './Tree.js'
 
-export type Selection<T = any> = typeof Selection.adt.infer
+export type Selection<T = any> =
+  | Selection.Row
+  | Selection.Record
+  | Selection.Cursor
+  | Selection.Expr
 
 export namespace Selection {
-  const types = {
-    Row: object(
-      class {
-        type = literal('row')
-        target = TargetData
-      }
-    ),
-    Record: object(
-      class {
-        type = literal('record')
-        fields = array(union(tuple(string, adt), tuple(TargetData)))
-      }
-    ),
-    Cursor: object(
-      class {
-        type = literal('cursor')
-        cursor = CursorData
-      }
-    ),
-    Expr: object(
-      class {
-        type = literal('expr')
-        expr = ExprData.adt
-      }
-    )
+  namespace types {
+    export class Row {
+      type = literal('row')
+      target = TargetData
+    }
+    export class Record {
+      type = literal('record')
+      fields = array(union(tuple(string, adt), tuple(TargetData)))
+    }
+    export class Cursor {
+      type = literal('cursor')
+      cursor = CursorData
+    }
+    export class Expr {
+      type = literal('expr')
+      expr = ExprData.adt
+    }
   }
-  export type Row = typeof types.Row.infer
+  export interface Row extends CInfer<types.Row> {}
   export function Row(target: TargetData): Selection.Row {
     return {type: 'row', target}
   }
-  export type Record = typeof types.Record.infer
+  export interface Record extends CInfer<types.Record> {}
   export function Record(
     fields: Array<[string, Selection] | [TargetData]>
   ): Selection.Record {
     return {type: 'record', fields}
   }
-  export type Cursor = typeof types.Cursor.infer
+  export interface Cursor extends CInfer<types.Cursor> {}
   export function Cursor(cursor: CursorData): Selection.Cursor {
     return {type: 'cursor', cursor}
   }
-  export type Expr = typeof types.Expr.infer
+  export interface Expr extends CInfer<types.Expr> {}
   export function Expr(expr: ExprData): Selection.Expr {
     return {type: 'expr', expr}
   }
-  export const adt = union(types.Row, types.Record, types.Cursor, types.Expr)
+  export const adt: CType<Selection> = union(
+    types.Row,
+    types.Record,
+    types.Cursor,
+    types.Expr
+  )
 
   export type Infer<T> = Projection.Infer<T>
   export type Combine<A, B> = Expand<Omit<A, keyof Infer<B>> & Infer<B>>

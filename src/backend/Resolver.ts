@@ -270,8 +270,12 @@ export class Resolver {
     let res = new Expr(
       defaultCase ? this.expr(ctx, defaultCase) : Expr.NULL[Expr.Data]
     )
-    for (const [condition, value] of entries(cases))
-      res = iif(subject.is(condition), this.expr(ctx, value), res)
+    for (const [condition, value] of cases)
+      res = iif(
+        subject.is(this.expr(ctx, condition)),
+        this.expr(ctx, value),
+        res
+      )
     return res[Expr.Data]
   }
 
