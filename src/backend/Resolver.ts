@@ -24,7 +24,7 @@ import {
   UnOpType,
   withRecursive
 } from 'rado'
-import {iif, match} from 'rado/sqlite'
+import {iif, match, count as sqlCount} from 'rado/sqlite'
 import * as Y from 'yjs'
 import {Entry, EntryPhase, EntryTable} from '../core/Entry.js'
 import * as pages from '../core/pages/index.js'
@@ -63,20 +63,28 @@ const pageFields = keys(Entry)
 type Interim = any
 
 export class ResolveContext {
+  table: Table<EntryTable>
   constructor(
     public realm: Realm,
     public location: Array<string> = [],
-    public table: Table<EntryTable> | undefined = undefined,
+    public depth = 0,
+    //public table: Table<EntryTable> | undefined = undefined,
     public expr: ExprContext = ExprContext.InNone
-  ) {}
+  ) {
+    this.table = Entry().as(`E${this.depth}`)
+  }
 
   get Table() {
-    if (!this.table) throw new Error(`Cannot select without a table reference`)
     return this.table
   }
 
-  withTable(table: Table<EntryTable>): ResolveContext {
-    return new ResolveContext(this.realm, this.location, table, this.expr)
+  step(): ResolveContext {
+    return new ResolveContext(
+      this.realm,
+      this.location,
+      this.depth + 1,
+      this.expr
+    )
   }
 
   get inSelect() {
@@ -96,7 +104,7 @@ export class ResolveContext {
     return new ResolveContext(
       this.realm,
       this.location,
-      this.table,
+      this.depth,
       this.expr | ExprContext.InSelect
     )
   }
@@ -106,7 +114,7 @@ export class ResolveContext {
     return new ResolveContext(
       this.realm,
       this.location,
-      this.table,
+      this.depth,
       this.expr | ExprContext.InCondition
     )
   }
@@ -116,7 +124,7 @@ export class ResolveContext {
     return new ResolveContext(
       this.realm,
       this.location,
-      this.table,
+      this.depth,
       this.expr | ExprContext.InAccess
     )
   }
@@ -125,7 +133,7 @@ export class ResolveContext {
     return new ResolveContext(
       this.realm,
       this.location,
-      this.table,
+      this.depth,
       ExprContext.InNone
     )
   }
@@ -268,12 +276,12 @@ export class Resolver {
   ): ExprData {
     const subject = new Expr(this.expr(ctx, expr))
     let res = new Expr(
-      defaultCase ? this.expr(ctx, defaultCase) : Expr.NULL[Expr.Data]
+      defaultCase ? this.select(ctx, defaultCase) : Expr.NULL[Expr.Data]
     )
     for (const [condition, value] of cases)
       res = iif(
         subject.is(this.expr(ctx, condition)),
-        this.expr(ctx, value),
+        this.select(ctx, value),
         res
       )
     return res[Expr.Data]
@@ -335,6 +343,10 @@ export class Resolver {
     return this.expr(ctx.select, expr)
   }
 
+  selectCount(): ExprData {
+    return sqlCount()[Expr.Data]
+  }
+
   selectAll(ctx: ResolveContext, target: pages.TargetData): ExprData {
     const fields = this.selectFieldsOf(ctx.select, target)
     return new ExprData.Record(fromEntries(fields))
@@ -350,6 +362,8 @@ export class Resolver {
         return this.selectRecord(ctx, selection)
       case 'expr':
         return this.selectExpr(ctx, selection)
+      case 'count':
+        return this.selectCount()
     }
   }
 
@@ -378,7 +392,7 @@ export class Resolver {
           .select(ctx.Table)
       : ctx.Table()
     if (!source) return cursor
-    const from = Entry().as(source.id)
+    const from = Entry().as(`E${ctx.depth - 1}`) // .as(source.id)
     switch (source.type) {
       case pages.SourceType.Parent:
         return cursor.where(ctx.Table.entryId.is(from.parent)).take(1)
@@ -502,7 +516,7 @@ export class Resolver {
       source,
       searchTerms
     } = cursor
-    ctx = ctx.withTable(Entry().as(id)).none
+    ctx = ctx.step().none
     const {name} = target || {}
     const hasSearch = Boolean(searchTerms?.length)
     let query = this.querySource(ctx, source, hasSearch)
@@ -533,14 +547,14 @@ export class Resolver {
 
   query(ctx: ResolveContext, selection: pages.Selection): QueryData.Select {
     switch (selection.type) {
-      case 'row':
-        throw new Error(`Cannot select rows at root level`)
       case 'cursor':
         return this.queryCursor(ctx, selection)
       case 'record':
         return this.queryRecord(ctx, selection)
+      case 'row':
+      case 'count':
       case 'expr':
-        throw new Error(`Cannot select expressions at root level`)
+        throw new Error(`Cannot select thhis at root level`)
     }
   }
 
@@ -650,6 +664,8 @@ export class Resolver {
         return this.postRecord(ctx, interim, selection)
       case 'expr':
         return this.postExpr(ctx, interim, selection)
+      case 'count':
+        return Promise.resolve()
     }
   }
 
@@ -659,9 +675,9 @@ export class Resolver {
     realm = Realm.Published,
     preview
   }: Connection.ResolveParams): Promise<T> => {
-    const query = new Query<Interim>(
-      this.query(new ResolveContext(realm, location), selection)
-    )
+    const queryData = this.query(new ResolveContext(realm, location), selection)
+    const query = new Query<Interim>(queryData)
+    console.log(query.toSql(this.store))
     if (preview) {
       const current = Entry({
         entryId: preview.entryId,

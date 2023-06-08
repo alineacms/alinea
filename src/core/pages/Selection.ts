@@ -19,6 +19,7 @@ export type Selection<T = any> =
   | Selection.Record
   | Selection.Cursor
   | Selection.Expr
+  | Selection.Count
 
 export namespace Selection {
   namespace types {
@@ -37,6 +38,9 @@ export namespace Selection {
     export class Expr {
       type = literal('expr')
       expr = ExprData.adt
+    }
+    export class Count {
+      type = literal('count')
     }
   }
   export interface Row extends CInfer<types.Row> {}
@@ -57,11 +61,16 @@ export namespace Selection {
   export function Expr(expr: ExprData): Selection.Expr {
     return {type: 'expr', expr}
   }
+  export interface Count extends CInfer<types.Count> {}
+  export function Count(): Selection.Count {
+    return {type: 'count'}
+  }
   export const adt: CType<Selection> = union(
     types.Row,
     types.Record,
     types.Cursor,
-    types.Expr
+    types.Expr,
+    types.Count
   )
 
   export type Infer<T> = Projection.Infer<T>
@@ -81,8 +90,8 @@ function fromInput(input: any, sourceId?: string): Selection {
   if (Type.isType(input)) return Selection.Row({type: Type.target(input)})
   if (Target.isTarget(input)) return Selection.Row(input[Target.Data])
   if (typeof input === 'function') {
-    if (!sourceId) throw new Error('sourceId is required for function queries')
-    return fromInput(input(new Tree(sourceId)))
+    //if (!sourceId) throw new Error('sourceId is required for function queries')
+    return fromInput(input(new Tree(/*sourceId*/)))
   }
   if (input && typeof input === 'object' && !Array.isArray(input)) {
     const keys = Object.keys(input)

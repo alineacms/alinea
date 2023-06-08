@@ -50,7 +50,7 @@ export type CursorSource = typeof CursorSource.infer
 export const CursorSource = object(
   class {
     type = enums(SourceType)
-    id = string
+    // id = string
     depth? = number.optional
   }
 )
@@ -67,7 +67,7 @@ export class Cursor<T> {
     this[Cursor.Data] = data
   }
 
-  protected get id() {
+  protected get entryId() {
     return this[Cursor.Data].id
   }
 
@@ -103,8 +103,14 @@ export namespace Cursor {
 
     get<S extends Projection>(select: S): Get<Selection.Infer<S>> {
       const query = this.with({first: true})
-      if (select) query.select = Selection.create(select, this.id)
+      if (select) query.select = Selection.create(select, this.entryId)
       return new Get<Selection.Infer<S>>(query)
+    }
+
+    count(): Cursor<number> {
+      return new Cursor<number>(
+        this.with({first: true, select: Selection.Count()})
+      )
     }
 
     first(): Get<Row> {
@@ -117,7 +123,7 @@ export namespace Cursor {
 
     select<S extends Projection>(select: S): Find<Selection.Infer<S>> {
       return new Find<Selection.Infer<S>>(
-        this.with({select: Selection.create(select, this.id)})
+        this.with({select: Selection.create(select, this.entryId)})
       )
     }
 
@@ -175,7 +181,7 @@ export namespace Cursor {
 
     select<S extends Projection>(select: S): Get<Selection.Infer<S>> {
       return new Get<Selection.Infer<S>>(
-        this.with({select: Selection.create(select, this.id)})
+        this.with({select: Selection.create(select, this.entryId)})
       )
     }
   }

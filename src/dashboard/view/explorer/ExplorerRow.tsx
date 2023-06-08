@@ -4,7 +4,7 @@ import {fromModule} from 'alinea/ui'
 import {useAtomValue} from 'jotai'
 import {memo} from 'react'
 import {useQuery} from 'react-query'
-import {findAtom} from '../../atoms/EntryAtoms.js'
+import {graphAtom} from '../../atoms/EntryAtoms.js'
 import {ExplorerItem} from './ExplorerItem.js'
 import css from './ExplorerRow.module.scss'
 
@@ -29,13 +29,13 @@ export const ExplorerRow = memo(function ExplorerRow({
   summaryView,
   defaultView
 }: ExplorerRowProps) {
-  const find = useAtomValue(findAtom)
+  const {active} = useAtomValue(graphAtom)
   const start = Math.floor(from / batchSize)
   const startAt = from % batchSize
   const {data} = useQuery(
     ['explorer', 'batch', cursor, batchSize, start],
-    () => {
-      return find(cursor.skip(start * batchSize).take(batchSize))
+    async () => {
+      return active.find(cursor.skip(start * batchSize).take(batchSize))
     },
     {refetchOnWindowFocus: false, keepPreviousData: true, staleTime: 10000}
   )

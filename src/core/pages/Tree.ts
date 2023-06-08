@@ -8,7 +8,7 @@ type Narrow = Cursor.Find<any> | TargetI<any>
 type Output<T> = [Narrow] extends [T] ? Page : Selection.Infer<T>
 
 export class Tree {
-  constructor(protected sourceId: string) {
+  constructor(/*protected sourceId: string*/) {
     this.children = this.children.bind(this)
     this.parents = this.parents.bind(this)
   }
@@ -30,7 +30,7 @@ export class Tree {
     return new Cursor.Find({
       id: createId(),
       ...this.narrowData(narrow),
-      source: {type: sourceType, id: this.sourceId, depth}
+      source: {type: sourceType, depth}
     })
   }
 
@@ -39,7 +39,7 @@ export class Tree {
       id: createId(),
       ...this.narrowData(narrow),
       first: true,
-      source: {type: sourceType, id: this.sourceId}
+      source: {type: sourceType}
     })
   }
 

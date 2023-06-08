@@ -26,7 +26,7 @@ export function ContentView({editor}: ContentViewProps) {
   const {search} = useLocation()
   return (
     <>
-      <Sidebar.Tree className={styles.root.sidebar()}>
+      <Sidebar.Tree>
         <SearchBox />
         <RootHeader active={!editor} />
         <EntryTree

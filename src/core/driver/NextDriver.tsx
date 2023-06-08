@@ -7,7 +7,7 @@ import {
 } from 'alinea/preview/PreviewConstants'
 import {enums, object, string} from 'cito'
 import {lazy} from 'react'
-import {CMSApi, DefaultCMS} from '../CMS.js'
+import {DefaultCMS} from '../CMS.js'
 import {Client, ClientOptions} from '../Client.js'
 import {Config} from '../Config.js'
 import {EntryPhase} from '../Entry.js'
@@ -15,19 +15,14 @@ import {Page} from '../Page.js'
 import {Realm} from '../pages/Realm.js'
 import {Selection} from '../pages/Selection.js'
 
-export interface NextApi extends CMSApi {
-  previewHandler(request: Request): Promise<Response>
-  previews(): JSX.Element
-}
-
 const SearchParams = object({
   token: string,
   entryId: string,
   realm: enums(Realm)
 })
 
-class NextDriver extends DefaultCMS implements NextApi {
-  connection = async () => {
+class NextDriver extends DefaultCMS {
+  connect = async () => {
     const {cookies, draftMode} = await import('next/headers')
     const {isEnabled: isDraft} = draftMode()
     const devPort = process.env.ALINEA_PORT
@@ -70,7 +65,7 @@ class NextDriver extends DefaultCMS implements NextApi {
     if (!jwtSecret) throw new Error('No JWT secret set')
     const previews = new JWTPreviews(jwtSecret)
     const payload = await previews.verify(params.token)
-    const cnx = await this.connection()
+    const cnx = await this.connect()
     const url = (await cnx.resolve({
       selection: Selection.create(
         Page({entryId: params.entryId}).select(Page.url).first()
@@ -103,6 +98,6 @@ class NextDriver extends DefaultCMS implements NextApi {
 
 export function createNextCMS<Definition extends Config>(
   config: Definition
-): Definition & NextApi {
+): Definition & NextDriver {
   return new NextDriver(config) as any
 }

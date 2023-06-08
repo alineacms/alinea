@@ -17,7 +17,7 @@ class TestDriver extends DefaultCMS implements TestApi {
     return this.store
   }
 
-  async connection(): Promise<Connection> {
+  async connect(): Promise<Connection> {
     const isBrowser = typeof window !== 'undefined'
     if (isBrowser)
       throw new Error('Test drivers are not available in the browser')
