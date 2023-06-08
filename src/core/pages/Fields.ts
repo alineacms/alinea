@@ -13,7 +13,9 @@ type Field<T> = [T] extends [Array<any>]
   : Expr<T>
 
 type FieldsOf<Row> = [Row] extends [Record<string, any>]
-  ? {[K in keyof Row]-?: Field<Row[K]>}
+  ? keyof Row extends never
+    ? Expr<object>
+    : {[K in keyof Row]-?: Field<Row[K]>}
   : never
 
 export type Fields<T> = IsStrictlyAny<T> extends true
