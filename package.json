@@ -93,13 +93,15 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "rimraf": "^5.0.0",
+    "sass-embedded": "^1.62.0",
     "speedscope": "^1.14.0",
     "typescript": "^5.0.4",
     "typescript-plugin-css-modules": "^3.4.0",
     "uvu": "^0.5.1"
   },
-  "packageManager": "yarn@3.2.0",
+  "packageManager": "yarn@3.6.0",
   "resolutions": {
+    "sass-embedded": "1.62.0",
     "@types/react": "18.2.5",
     "esbuild": "0.17.19",
     "y-prosemirror": "1.1.2",
