@@ -72,7 +72,7 @@ export class EntryTable {
   }*/
 }
 
-export interface Entry<Data = object> extends table<EntryTable> {
+export interface Entry<Data = Record<string, any>> extends table<EntryTable> {
   data: Data
 }
 

@@ -4,7 +4,7 @@ import {createContext, useContext} from 'react'
 type ExplorerContext = {
   selectable: boolean
   selection: Array<Reference>
-  onSelect: (id: Entry.Minimal) => void
+  onSelect: (entry: Entry) => void
 }
 
 const context = createContext<ExplorerContext | undefined>(undefined)

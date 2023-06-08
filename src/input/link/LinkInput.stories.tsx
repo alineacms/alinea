@@ -1,5 +1,4 @@
 import {type} from 'alinea/core/Type'
-import {dashboardDecorator} from 'alinea/dashboard/DashboardStory'
 import {useField} from 'alinea/editor'
 import {InputField} from 'alinea/editor/view/InputField'
 import {link} from 'alinea/input/link/LinkConstructors'
@@ -11,7 +10,7 @@ export function InputStory() {
   const multipleEntryLink = useField(
     link.entry.multiple('Multiple entry links', {})
   )
-  const externalLink = useField(link.url('External link', {type: 'external'}))
+  const externalLink = useField(link.url('External link'))
   const imageLink = useField(link.image('Image link', {}))
   const fileLink = useField(link.file('File link', {}))
   return (
@@ -37,6 +36,5 @@ export function WithExtraFields() {
 }
 
 export default {
-  title: 'Fields / Link',
-  decorators: dashboardDecorator({fullWidth: true})
+  title: 'Fields / Link'
 }

@@ -70,7 +70,6 @@ export declare class TypeI<Definition = object> {
 export interface TypeI<Definition = object> extends Callable {
   (): Cursor.Find<TypeRow<Definition>>
   (partial: Partial<TypeRow<Definition>>): Cursor.Partial<Definition>
-  infer: TypeRow<Definition>
 }
 
 export type Type<Definition = object> = Definition & TypeI<Definition>
@@ -82,7 +81,7 @@ export type TypeRow<Definition> = Expand<{
 }>
 
 export namespace Type {
-  export type Row<Definition> = TypeRow<Definition>
+  export type Infer<Definition> = TypeRow<Definition>
   export const Data = Symbol.for('@alinea/Type.Data')
 
   export function label(type: Type): Label {

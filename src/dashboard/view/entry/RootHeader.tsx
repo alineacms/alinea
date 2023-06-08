@@ -29,7 +29,7 @@ export function RootHeader({active}: RootHeaderProps) {
         >
           <TextLabel label={root.label} />
         </a>
-        {/*root.i18n && <Langswitch />*/}
+        {root.i18n && <Langswitch />}
         <Create.Link href={nav.create({workspace, root: root.name})} />
       </div>
     </div>
@@ -50,10 +50,10 @@ function Langswitch() {
         onChange={value => {
           if (!value) return
           setSelectedLang(value)
-          const translation = draft?.translation(value)
+          // const translation = draft?.translation(value)
           navigate(
             nav.entry({
-              id: translation?.id || draft?.versionId,
+              // id: translation?.id || draft?.versionId,
               workspace,
               root: root.name,
               locale: value

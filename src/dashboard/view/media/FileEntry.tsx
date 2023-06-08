@@ -1,9 +1,10 @@
-import {Media} from 'alinea/core/Media'
-import {fromModule, Property, useObservable} from 'alinea/ui'
+import {Media} from 'alinea/backend/Media'
+import {Entry} from 'alinea/core'
+import {fromModule, Property} from 'alinea/ui'
 import {Main} from 'alinea/ui/Main'
+import {useAtomValue} from 'jotai'
 import prettyBytes from 'pretty-bytes'
 import {useNav} from '../../hook/UseNav.js'
-import {EditMode} from '../entry/EditMode.js'
 import {EntryHeader} from '../entry/EntryHeader.js'
 import {EntryTitle} from '../entry/EntryTitle.js'
 import {EntryEditProps} from '../EntryEdit.js'
@@ -11,46 +12,48 @@ import css from './FileEntry.module.scss'
 
 const styles = fromModule(css)
 
-function ImageView({draft}: EntryEditProps) {
-  const image = useObservable(draft.entry) as Media.Image
+function ImageView({editor}: EntryEditProps) {
+  const image: Media.Image = useAtomValue(editor.draftEntry) as Entry<any>
   return (
     <div>
-      <img src={image.preview} />
+      <img src={image.data.preview} />
 
-      <Property label="Extension">{image.extension}</Property>
-      <Property label="File size">{prettyBytes(image.size)}</Property>
+      <Property label="Extension">{image.data.extension}</Property>
+      <Property label="File size">{prettyBytes(image.data.size)}</Property>
       <Property label="Dimensions">
-        {image.width} x {image.height} pixels
+        {image.data.width} x {image.data.height} pixels
       </Property>
     </div>
   )
 }
 
-function FileView({draft}: EntryEditProps) {
-  const file = useObservable(draft.entry) as Media.File
+function FileView({editor}: EntryEditProps) {
+  const file: Media.File = useAtomValue(editor.draftEntry) as Entry<any>
   return (
     <div>
-      <Property label="Extension">{file.extension}</Property>
-      <Property label="File size">{prettyBytes(file.size)}</Property>
+      <Property label="Extension">{file.data.extension}</Property>
+      <Property label="File size">{prettyBytes(file.data.size)}</Property>
     </div>
   )
 }
 
 export function FileEntry(props: EntryEditProps) {
   const nav = useNav()
-  const {draft} = props
-  const isImage = Media.isImage(draft.url)
+  const {editor} = props
+  const isImage = Media.isImage(editor.version.path)
   return (
     <Main className={styles.root()}>
-      <EntryHeader mode={EditMode.Editing} />
+      <EntryHeader editor={editor} />
       <Main.Container>
         <EntryTitle
+          editor={editor}
           backLink={
-            draft.alinea.parent &&
-            nav.entry({
-              id: draft.alinea.parent,
-              workspace: draft.alinea.workspace
-            })
+            editor.version.parent
+              ? nav.entry({
+                  entryId: editor.version.parent,
+                  workspace: editor.version.workspace
+                })
+              : undefined
           }
         />
         {isImage ? <ImageView {...props} /> : <FileView {...props} />}

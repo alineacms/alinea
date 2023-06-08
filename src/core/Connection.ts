@@ -1,6 +1,7 @@
+import {Media} from 'alinea/backend/Media'
 import {ChangeSet} from 'alinea/backend/data/ChangeSet'
 import {AlineaMeta} from 'alinea/backend/db/AlineaMeta'
-import {Media, User} from 'alinea/core'
+import {User} from 'alinea/core'
 import {PreviewUpdate} from 'alinea/preview/PreviewMessage'
 import {Entry} from './Entry.js'
 import {Realm} from './pages/Realm.js'

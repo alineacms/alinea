@@ -1,5 +1,4 @@
 import {base64} from 'alinea/core/util/Encoding'
-import {SqliteStore} from 'alinea/store/sqlite/SqliteStore'
 import {promises as fs} from 'node:fs'
 import path, {dirname} from 'node:path'
 import {fileURLToPath} from 'node:url'
@@ -86,11 +85,10 @@ function embedInJs(source: string, data: Uint8Array) {
 }
 
 export async function exportStore(
-  store: SqliteStore,
+  data: Uint8Array,
   location: string,
   asWasm = false
 ) {
-  const data = store.export()
   const staticDir = path.join(__dirname, 'static')
   const source = await fs.readFile(
     path.join(staticDir, `store.${asWasm ? 'wasm' : 'embed'}.js`),

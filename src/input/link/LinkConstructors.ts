@@ -1,4 +1,5 @@
-import {Hint, Label, Media, Type} from 'alinea/core'
+import {Media} from 'alinea/backend/Media'
+import {Hint, Label, Reference, Type} from 'alinea/core'
 import {MediaFile} from 'alinea/core/media/MediaSchema'
 import {
   LinkField,
@@ -58,14 +59,17 @@ export function filePicker<Fields>(
   })
 }
 
+type LinkData<Fields> =
+  | (EntryReference & Type.Infer<Fields>)
+  | (UrlReference & Type.Infer<Fields>)
+
 export interface LinkOptions<Fields> extends LinkFieldOptions {
+  initialValue?: Reference
   fields?: Type<Fields>
 }
 
 export function link<Fields>(label: Label, options: LinkOptions<Fields>) {
-  return createLink<
-    (EntryReference & Type.Row<Fields>) | (UrlReference & Type.Row<Fields>)
-  >(label, {
+  return createLink<LinkData<Fields>>(label, {
     ...options,
     pickers: {
       entry: entryPicker<EntryReference, Fields>({
@@ -85,7 +89,8 @@ export function link<Fields>(label: Label, options: LinkOptions<Fields>) {
 export namespace link {
   export function multiple<Fields>(label: Label, options: LinkOptions<Fields>) {
     return createLinks<
-      (EntryReference & Type.Row<Fields>) | (UrlReference & Type.Row<Fields>)
+      | (EntryReference & Type.Infer<Fields>)
+      | (UrlReference & Type.Infer<Fields>)
     >(label, {
       ...options,
       pickers: {
@@ -112,7 +117,7 @@ export namespace link {
   export function entry<Fields>(
     label: Label,
     options: EntryOptions<Fields>
-  ): LinkField<EntryReference & Type.Row<Fields>> {
+  ): LinkField<EntryReference & Type.Infer<Fields>> {
     return createLink(label, {
       ...options,
       pickers: {
@@ -134,7 +139,7 @@ export namespace link.entry {
   export function multiple<Fields>(
     label: Label,
     options: EntryOptions<Fields> = {}
-  ): LinksField<EntryReference & Type.Row<Fields>> {
+  ): LinksField<EntryReference & Type.Infer<Fields>> {
     return createLinks(label, {
       ...options,
       pickers: {
@@ -159,7 +164,7 @@ export namespace link {
   export function url<Fields>(
     label: Label,
     options: UrlOptions<Fields> = {}
-  ): LinkField<UrlReference & Type.Row<Fields>> {
+  ): LinkField<UrlReference & Type.Infer<Fields>> {
     return createLink(label, {
       ...options,
       pickers: {url: urlPicker(options)}
@@ -171,7 +176,7 @@ export namespace link.url {
   export function multiple<Fields>(
     label: Label,
     options: UrlOptions<Fields> = {}
-  ): LinksField<UrlReference & Type.Row<Fields>> {
+  ): LinksField<UrlReference & Type.Infer<Fields>> {
     return createLinks(label, {
       ...options,
       pickers: {url: urlPicker(options)}
@@ -187,7 +192,7 @@ export namespace link {
   export function image<Fields>(
     label: Label,
     options: ImageOptions<Fields> = {}
-  ): LinkField<ImageReference & Type.Row<Fields>> {
+  ): LinkField<ImageReference & Type.Infer<Fields>> {
     return createLink(label, {
       ...options,
       pickers: {entry: imagePicker(false, options)}
@@ -199,7 +204,7 @@ export namespace link.image {
   export function multiple<Fields>(
     label: Label,
     options: ImageOptions<Fields> = {}
-  ): LinksField<ImageReference & Type.Row<Fields>> {
+  ): LinksField<ImageReference & Type.Infer<Fields>> {
     return createLinks(label, {
       ...options,
       pickers: {entry: imagePicker(true, options)}
@@ -215,7 +220,7 @@ export namespace link {
   export function file<Fields>(
     label: Label,
     options: FileOptions<Fields> = {}
-  ): LinkField<FileReference & Type.Row<Fields>> {
+  ): LinkField<FileReference & Type.Infer<Fields>> {
     return createLink(label, {
       ...options,
       pickers: {file: filePicker(false, options)}
@@ -227,7 +232,7 @@ export namespace link.file {
   export function multiple<Fields>(
     label: Label,
     options: FileOptions<Fields> = {}
-  ): LinksField<FileReference & Type.Row<Fields>> {
+  ): LinksField<FileReference & Type.Infer<Fields>> {
     return createLinks(label, {
       ...options,
       pickers: {file: filePicker(true, options)}

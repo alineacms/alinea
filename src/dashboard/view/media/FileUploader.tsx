@@ -1,7 +1,6 @@
 import {Entry} from 'alinea/core/Entry'
-import {Media} from 'alinea/core/Media'
+import {MediaLibrary} from 'alinea/core/media/MediaSchema'
 import {Outcome} from 'alinea/core/Outcome'
-import {Tree} from 'alinea/core/Tree'
 import {InputField} from 'alinea/editor/view/InputField'
 import {select} from 'alinea/input/select'
 import {fromModule, px, Typo, VStack} from 'alinea/ui'
@@ -16,11 +15,9 @@ import css from './FileUploader.module.scss'
 
 const styles = fromModule(css)
 
-const {Library} = Media
-
 type FileUploaderProps = {
   max?: number
-  toggleSelect: (id: Entry.Minimal) => void
+  toggleSelect: (id: Entry) => void
 }
 
 export function FileUploader({max, toggleSelect}: FileUploaderProps) {
@@ -34,13 +31,13 @@ export function FileUploader({max, toggleSelect}: FileUploaderProps) {
     () => {
       return hub
         .query({
-          cursor: Library.where(Library.alinea.workspace.is(workspace)).select({
-            id: Library.id,
-            title: Library.title,
-            workspace: Library.alinea.workspace,
-            root: Library.alinea.root,
-            url: Library.url,
-            parents: Tree.parents(Library.id).select(parent => ({
+          cursor: MediaLibrary.where(Page.workspace.is(workspace)).select({
+            id: MediaLibrary.id,
+            title: MediaLibrary.title,
+            workspace: MediaLibrary.alinea.workspace,
+            root: MediaLibrary.alinea.root,
+            url: MediaLibrary.url,
+            parents: Tree.parents(MediaLibrary.id).select(parent => ({
               title: parent.title
             }))
           })
@@ -73,8 +70,8 @@ export function FileUploader({max, toggleSelect}: FileUploaderProps) {
     if (files) uploadFiles(files)
   }
   function uploadFiles(files: FileList) {
-    const library = libraries?.find(l => l.id === uploadTo)
-    if (library) upload(files, library)
+    const mediaLibraryMediaLibrary = libraries?.find(l => l.id === uploadTo)
+    if (mediaLibraryMediaLibrary) upload(files, mediaLibraryMediaLibrary)
   }
   return (
     <VStack
@@ -87,21 +84,20 @@ export function FileUploader({max, toggleSelect}: FileUploaderProps) {
     >
       <div className={styles.root.uploads()}>
         {uploads.map(upload => {
-          const library = libraries?.find(l => l.id === upload.to.id)
+          const mediaLibrary = libraries?.find(l => l.id === upload.to.id)
           // Todo: show upload progress
           return (
             <FileSummaryRow
               key={upload.id}
               id={upload.id}
-              type={Media.Type.File}
               title={upload.file.name}
               extension={upload.file.name.split('.').pop()!}
               size={upload.file.size}
               workspace={upload.to.workspace}
               root={upload.to.root}
-              preview={upload.preview}
-              averageColor={upload.averageColor}
-              parents={library!.parents.concat(library!)}
+              preview={upload.preview!}
+              averageColor={upload.averageColor!}
+              parents={mediaLibrary!.parents.concat(mediaLibrary!)}
             />
           )
         })}
@@ -128,8 +124,8 @@ export function FileUploader({max, toggleSelect}: FileUploaderProps) {
           field={select(
             'Upload to',
             Object.fromEntries(
-              libraries!.map(library => {
-                return [library.id, library.title as string]
+              libraries!.map(mediaLibrary => {
+                return [mediaLibrary.id, mediaLibrary.title as string]
               })
             )
           )}

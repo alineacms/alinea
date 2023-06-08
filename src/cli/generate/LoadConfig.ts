@@ -2,9 +2,8 @@ import {CMS} from 'alinea/core/CMS'
 import {values} from 'alinea/core/util/Objects'
 import {createRequire} from 'node:module'
 import path from 'node:path'
-import {GenerateContext} from './GenerateContext.js'
 
-export async function loadCMS({outDir}: GenerateContext): Promise<CMS> {
+export async function loadCMS(outDir: string): Promise<CMS> {
   const unique = Date.now()
   const genConfigFile = path.join(outDir, 'config.js').replace(/\\/g, '/')
   // Passing a unique identifier makes sure we don't receive the same module

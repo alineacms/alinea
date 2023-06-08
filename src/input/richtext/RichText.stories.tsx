@@ -1,4 +1,3 @@
-import {dashboardDecorator} from 'alinea/dashboard/DashboardStory'
 import {useField} from 'alinea/editor'
 import {InputField} from 'alinea/editor/view/InputField'
 import {richText} from 'alinea/input/richtext'
@@ -80,6 +79,5 @@ export function Example() {
 }
 
 export default {
-  title: 'Fields / Rich text',
-  decorators: dashboardDecorator({fullWidth: true, fullHeight: true})
+  title: 'Fields / Rich text'
 }

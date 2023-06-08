@@ -60,7 +60,7 @@ export class FormState<V extends Record<string, any>, M>
 }
 
 export interface ObservableForm<T extends Record<string, any>>
-  extends Observable.Writable<Type.Row<T>> {
+  extends Observable.Writable<Type.Infer<T>> {
   type: Type<T>
   state: FormState<T, RecordMutator<T>>
   field<K extends keyof T>(name: K): Observable<T[K]>
@@ -68,7 +68,7 @@ export interface ObservableForm<T extends Record<string, any>>
 
 export type FormOptions<T> = {
   type: Type<T>
-  initialValue?: Partial<Type.Row<T>>
+  initialValue?: Partial<Type.Infer<T>>
 }
 
 function createFormInput<T extends Record<string, any>>(

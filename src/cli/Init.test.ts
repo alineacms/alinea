@@ -1,10 +1,10 @@
-import {Pages} from 'alinea/backend/Pages'
 import {init} from 'alinea/cli/Init'
-import {Entry} from 'alinea/core/Entry'
+import {Page} from 'alinea/core'
 import fs from 'fs-extra'
 import path from 'path'
 import {test} from 'uvu'
 import * as assert from 'uvu/assert'
+import {loadCMS} from './generate/LoadConfig.js'
 
 const testPms = false
 
@@ -16,11 +16,8 @@ async function setup(cwd: string) {
 async function run(cwd: string) {
   process.env.NODE_ENV = 'development'
   await init({cwd, quiet: true})
-  const exports = await import(
-    `file://${path.resolve(cwd, '.alinea/pages.js')}`
-  )
-  const pages: Pages<Entry> = exports.initPages()
-  const welcome = await pages.where(page => page.title.is('Welcome'))
+  const cms = await loadCMS(path.resolve(cwd))
+  const welcome = await cms.get(Page)
   assert.ok(welcome)
 }
 

@@ -84,6 +84,14 @@ function seralizeExpr(
     case 'record':
       for (const field of values(expr.fields)) seralizeExpr(targets, field)
       return
+    case 'case':
+      seralizeExpr(targets, expr.expr)
+      for (const [condition, value] of expr.cases) {
+        seralizeExpr(targets, condition)
+        seralizeExpr(targets, value)
+      }
+      if (expr.defaultCase) seralizeExpr(targets, expr.defaultCase)
+      return
     default:
       unreachable(expr)
   }

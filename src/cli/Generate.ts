@@ -73,7 +73,7 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
   await copyStaticFiles(context)
   while (true) {
     const {done} = await nextBuild
-    const cms = await loadCMS(context)
+    const cms = await loadCMS(context.outDir)
     await generatePackage(context, cms)
     nextBuild = builds.next()
     if (store) await store.close()
