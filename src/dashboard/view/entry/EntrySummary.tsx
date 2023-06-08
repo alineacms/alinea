@@ -59,7 +59,7 @@ export const EntrySummaryRow = view(
             </Ellipsis>
           )}
           <Ellipsis>
-            <Link href={nav.entry({id})}>
+            <Link href={nav.entry({entryId: id})}>
               <TextLabel label={title} />
             </Link>
           </Ellipsis>

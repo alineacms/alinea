@@ -1,6 +1,6 @@
 import {Config, Connection, Entry, EntryPhase} from 'alinea/core'
 import {Database} from './Database.js'
-import {File, Media} from './Media.js'
+import {Media} from './Media.js'
 import {Previews} from './Previews'
 import {Resolver} from './Resolver.js'
 import {Store} from './Store.js'
@@ -68,7 +68,7 @@ export class Server implements Connection {
     await target.publishChanges({changes}, this.context)
   }
 
-  uploadFile(params: Connection.UploadParams): Promise<File> {
+  uploadFile(params: Connection.UploadParams): Promise<Media.File> {
     throw 'assert'
   }
 

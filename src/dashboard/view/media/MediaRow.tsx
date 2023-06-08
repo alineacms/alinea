@@ -1,11 +1,9 @@
-import {Media, Outcome} from 'alinea/core'
+import {Outcome} from 'alinea/core'
 import {fromModule} from 'alinea/ui'
 import {useQuery} from 'react-query'
 import {useSession} from '../../hook/UseSession.js'
 import css from './MediaRow.module.scss'
 import {MediaThumbnail} from './MediaThumbnail.js'
-
-const {File} = Media
 
 const styles = fromModule(css)
 

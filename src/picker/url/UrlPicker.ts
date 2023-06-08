@@ -23,7 +23,7 @@ export interface UrlPickerOptions<T> {
 
 export function urlPicker<Fields>(
   options: UrlPickerOptions<Fields>
-): Picker<UrlReference & Type.Row<Fields>> {
+): Picker<UrlReference & Type.Infer<Fields>> {
   const extra = options.fields && Type.shape(options.fields)
   return {
     shape: Shape.Record('Url', {

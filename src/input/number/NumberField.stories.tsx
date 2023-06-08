@@ -1,4 +1,3 @@
-import {dashboardDecorator} from 'alinea/dashboard/DashboardStory'
 import {useField} from 'alinea/editor'
 import {InputField} from 'alinea/editor/view/InputField'
 import {number} from 'alinea/input/number'
@@ -18,6 +17,5 @@ export function numberInput() {
 }
 
 export default {
-  title: 'Fields / Number',
-  decorators: dashboardDecorator({fullWidth: true})
+  title: 'Fields / Number'
 }

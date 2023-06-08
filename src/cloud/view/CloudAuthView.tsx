@@ -1,7 +1,7 @@
 import {fetch} from '@alinea/iso'
-import {Client} from 'alinea/client'
 import {Connection} from 'alinea/core'
 import {Auth} from 'alinea/core/Auth'
+import {Client} from 'alinea/core/Client'
 import {createError} from 'alinea/core/ErrorWithCode'
 import {joinPaths} from 'alinea/core/util/Urls'
 import {useDashboard} from 'alinea/dashboard'
@@ -20,7 +20,7 @@ export function CloudAuthView({setSession}: Auth.ViewProps) {
     ['auth.cloud'],
     () => {
       return fetch(
-        joinPaths(client.url, Connection.routes.base, `/auth.cloud`),
+        joinPaths(client.options.url, Connection.routes.base, `/auth.cloud`),
         {
           credentials: 'include'
         }
@@ -40,7 +40,7 @@ export function CloudAuthView({setSession}: Auth.ViewProps) {
         ),
         end: async () => {
           location.href = joinPaths(
-            client.url,
+            client.options.url,
             Connection.routes.base,
             `/auth/logout`
           )

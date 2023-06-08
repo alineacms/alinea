@@ -1,8 +1,6 @@
-import {Connection} from 'alinea/core'
-import {Entry} from 'alinea/core/Entry'
+import {Media} from 'alinea/backend/Media'
+import {Connection, Entry} from 'alinea/core'
 import {createId} from 'alinea/core/Id'
-import {Media} from 'alinea/core/Media'
-import {Outcome} from 'alinea/core/Outcome'
 import {encode} from 'blurhash'
 import FastAverageColor from 'fast-average-color'
 import pLimit from 'p-limit'
@@ -138,19 +136,17 @@ async function process(upload: Upload, cnx: Connection): Promise<Upload> {
       const {to, file, preview, averageColor, blurHash, width, height} = upload
       const buffer = await file.arrayBuffer()
       const path = (to.url === '/' ? '' : to.url) + '/' + file.name
-      const result = await cnx
-        .uploadFile({
-          ...to,
-          parentId: to.id,
-          path,
-          buffer,
-          preview,
-          averageColor,
-          blurHash,
-          width,
-          height
-        })
-        .then(Outcome.unpack)
+      const result = await cnx.uploadFile({
+        ...to,
+        parentId: to.id,
+        path,
+        buffer,
+        preview,
+        averageColor,
+        blurHash,
+        width,
+        height
+      })
       return {...upload, result, status: UploadStatus.Done}
     }
     case UploadStatus.Done:
@@ -158,7 +154,7 @@ async function process(upload: Upload, cnx: Connection): Promise<Upload> {
   }
 }
 
-export function useUploads(onSelect: (entry: Entry.Minimal) => void) {
+export function useUploads(onSelect: (entry: Entry) => void) {
   const {cnx: hub} = useSession()
   const [uploads, setUploads] = useState<Array<Upload>>([])
   const queryClient = useQueryClient()

@@ -74,10 +74,10 @@ export function PickTextLinkForm({
   const isExistingLink = Boolean(options.link)
   const link = useField(
     createLink('Link', {
-      initialValue: options.link && [options.link]
+      initialValue: options.link
     })
   )
-  const [selected] = useObservable(link)
+  const selected = useObservable(link)
   const isUrl = selected?.type === 'url'
   const descriptionRequired =
     options.requireDescription && !(isExistingLink || isUrl)

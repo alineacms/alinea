@@ -1,9 +1,10 @@
-import {type} from 'alinea/core'
+import {Type, type} from 'alinea/core'
 import {Hint} from 'alinea/core/Hint'
 import {hidden} from 'alinea/input/hidden'
 import {path} from 'alinea/input/path'
 import {text} from 'alinea/input/text'
 
+export type MediaLibrary = Type.Infer<typeof MediaLibrary>
 export const MediaLibrary = type('Media directory', {
   title: text('Title'),
   path: path('Path'),
@@ -13,6 +14,7 @@ export const MediaLibrary = type('Media directory', {
   }
 })
 
+export type MediaFile = Type.Infer<typeof MediaFile>
 export const MediaFile = type('File', {
   title: text('Title'),
   path: path('Path'),

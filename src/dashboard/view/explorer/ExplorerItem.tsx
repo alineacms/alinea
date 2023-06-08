@@ -12,7 +12,7 @@ const styles = fromModule(css)
 
 export type ExplorerItemProps = {
   schema: Schema
-  entry: Entry.Minimal
+  entry: Entry
   summaryView: 'summaryRow' | 'summaryThumb'
   defaultView: View<Entry, any>
 }
@@ -37,7 +37,7 @@ export function ExplorerItem({
   )
   return (
     <Tag
-      key={entry.id}
+      key={entry.entryId}
       className={styles.root(summaryView === 'summaryRow' ? 'row' : 'thumb', {
         selected: isSelected
       })}

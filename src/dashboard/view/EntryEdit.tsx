@@ -17,13 +17,13 @@ import {EntryPreview} from './entry/EntryPreview.js'
 import {EntryTitle} from './entry/EntryTitle.js'
 const styles = fromModule(css)
 
-interface EntryEditProps {
-  editor: EntryEditor
-}
-
 function ShowChanges({editor}: EntryEditProps) {
   const draftEntry = useAtomValue(editor.draftEntry)
   return <EntryDiff entryA={editor.version} entryB={draftEntry} />
+}
+
+export interface EntryEditProps {
+  editor: EntryEditor
 }
 
 export function EntryEdit({editor}: EntryEditProps) {
@@ -99,7 +99,7 @@ export function EntryEdit({editor}: EntryEditProps) {
             backLink={
               editor.version.parent
                 ? nav.entry({
-                    id: editor.version.parent,
+                    entryId: editor.version.parent,
                     workspace: editor.version.workspace
                   })
                 : undefined

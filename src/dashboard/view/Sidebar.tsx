@@ -61,7 +61,7 @@ export namespace Sidebar {
       isLarge ? simpleToggle : uniqueToggle,
       {nav: true, preview: isLarge}
     )
-    const {id} = useEntryLocation() || {}
+    const {entryId: id} = useEntryLocation() || {}
     const {name: workspace} = useWorkspace()
     useNonInitialEffect(() => {
       if (!isSmall) return
@@ -81,7 +81,10 @@ export namespace Sidebar {
     )
   }
 
-  export function Tree({children}: PropsWithChildren<{}>) {
+  export function Tree({
+    children,
+    ...props
+  }: PropsWithChildren<HTMLProps<HTMLElement>>) {
     return (
       <slots.Slot>
         <Pane
@@ -89,6 +92,7 @@ export namespace Sidebar {
           resizable="right"
           defaultWidth={300}
           minWidth={200}
+          {...props}
         >
           {children}
         </Pane>

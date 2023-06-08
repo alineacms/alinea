@@ -138,10 +138,10 @@ export namespace Cursor {
     }
   }
 
-  export class Partial<Definition> extends Find<Type.Row<Definition>> {
+  export class Partial<Definition> extends Find<Type.Infer<Definition>> {
     constructor(
       public type: Type<Definition>,
-      public partial: Partial<Type.Row<Definition>>
+      public partial: Partial<Type.Infer<Definition>>
     ) {
       super({
         id: createId(),

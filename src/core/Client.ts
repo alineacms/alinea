@@ -1,13 +1,7 @@
 import {AbortController, fetch, FormData, Response} from '@alinea/iso'
 import {AlineaMeta} from 'alinea/backend/db/AlineaMeta'
-import {
-  Config,
-  Connection,
-  createError,
-  Entry,
-  EntryPhase,
-  Media
-} from 'alinea/core'
+import {Media} from 'alinea/backend/Media'
+import {Config, Connection, createError, Entry, EntryPhase} from 'alinea/core'
 import {UpdateResponse} from './Connection.js'
 import {Realm} from './pages/Realm.js'
 

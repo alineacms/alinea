@@ -14,7 +14,7 @@ export type Projection = Expr<any> | PageProjection
 
 export namespace Projection {
   export type InferOne<T> = [T] extends [Cursor.Find<infer V>]
-    ? Type.Row<V>
+    ? Type.Infer<V>
     : Infer<T>
 
   export type Infer<T> = [T] extends [Expr<infer V>]
@@ -22,7 +22,7 @@ export namespace Projection {
     : [T] extends [Target<infer V>]
     ? V
     : [T] extends [Type<infer V>]
-    ? Type.Row<V>
+    ? Type.Infer<V>
     : [T] extends [Cursor<infer V>]
     ? V
     : [T] extends [object]
@@ -30,7 +30,7 @@ export namespace Projection {
         [K in keyof T]: [T[K]] extends [Target<infer V>]
           ? V
           : [T[K]] extends [Type<infer V>]
-          ? Type.Row<V>
+          ? Type.Infer<V>
           : [T[K]] extends [(...args: any) => infer V]
           ? Infer<V>
           : Infer<T[K]>
