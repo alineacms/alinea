@@ -1,36 +1,23 @@
 import {Store} from 'alinea/backend/Store'
 import {Config} from './Config.js'
 import {Connection} from './Connection.js'
+import {Graph} from './Graph.js'
 import {Root} from './Root.js'
-import {Schema} from './Schema.js'
-import {Type} from './Type.js'
 import {Workspace} from './Workspace.js'
-import {Cursor} from './pages/Cursor.js'
-import {Projection} from './pages/Projection.js'
-import {Selection} from './pages/Selection.js'
-import {seralizeLocation, serializeSelection} from './pages/Serialize.js'
 import {entries} from './util/Objects.js'
 
 type Attachment = Workspace | Root
 const attached = new WeakMap<Attachment, CMS>()
 
-export interface CMSApi {
-  createStore(cwd: string): Promise<Store>
-  connection(): Promise<Connection>
-  get<S>(select: S): Promise<Projection.InferOne<S>>
-  get<S>(path: string, select: S): Promise<Projection.InferOne<S>>
-  find<S>(select: S): Promise<Projection.Infer<S>>
-  find<S>(location: Location, select: S): Promise<Projection.Infer<S>>
-}
-
 export type Location = Root | Workspace
 
-export abstract class CMS implements Config, CMSApi {
-  targets: Schema.Targets
-
+export abstract class CMS extends Graph implements Config {
   constructor(protected config: Config) {
+    super(config, async params => {
+      const cnx = await this.connection()
+      return cnx.resolve(params)
+    })
     this.attach(config)
-    this.targets = Schema.targets(config.schema)
   }
 
   abstract createStore(cwd: string): Promise<Store>
@@ -47,32 +34,6 @@ export abstract class CMS implements Config, CMSApi {
         attached.set(root, this)
       }
     }
-  }
-
-  async get(...args: Array<any>): Promise<any> {
-    let [providedLocation, select] =
-      args.length === 1 ? [undefined, args[0]] : args
-    const cnx = await this.connection()
-    if (select instanceof Cursor.Find) select = select.first()
-    if (Type.isType(select)) select = select().first()
-    const selection = Selection.create(select)
-    serializeSelection(this.targets, selection)
-    return cnx.resolve({
-      selection,
-      location: seralizeLocation(this, providedLocation)
-    })
-  }
-
-  async find(...args: Array<any>): Promise<any> {
-    const [providedLocation, select] =
-      args.length === 1 ? [undefined, args[0]] : args
-    const cnx = await this.connection()
-    const selection = Selection.create(select)
-    serializeSelection(this.targets, selection)
-    return cnx.resolve({
-      selection,
-      location: seralizeLocation(this, providedLocation)
-    })
   }
 
   get schema() {
@@ -121,6 +82,6 @@ export namespace CMS {
 
 export function createCMS<Definition extends Config>(
   config: Definition
-): Definition & CMSApi {
+): Definition & CMS {
   return new DefaultCMS(config) as any
 }

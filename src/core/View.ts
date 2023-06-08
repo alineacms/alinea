@@ -2,8 +2,8 @@ import type {ComponentType} from 'react'
 import {Page} from './Page.js'
 import {Schema} from './Schema.js'
 import {Type} from './Type.js'
-import {Expr} from './pages/Expr.js'
 import {Projection} from './pages/Projection.js'
+import {Selection} from './pages/Selection.js'
 import {assign, entries} from './util/Objects.js'
 
 type ViewSelection<T, S> = () => S
@@ -31,8 +31,9 @@ export function view<
 export namespace View {
   export function getSelection(
     schema: Schema,
-    summaryView: 'summaryRow' | 'summaryThumb'
-  ): Expr<any> {
+    summaryView: 'summaryRow' | 'summaryThumb',
+    defaultSelection: Projection
+  ): Selection {
     let select
     for (const [name, type] of entries(schema)) {
       const view = Type.meta(type!)[summaryView]
@@ -43,6 +44,8 @@ export namespace View {
           : Page.type.when(name, selection)
       }
     }
-    return select ? select.end() : Expr.NULL
+    return select
+      ? Selection.create(select.orElse(defaultSelection))
+      : Selection.create(defaultSelection)
   }
 }

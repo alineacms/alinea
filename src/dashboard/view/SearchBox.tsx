@@ -6,7 +6,7 @@ import {IcOutlineList} from 'alinea/ui/icons/IcOutlineList'
 import {IcRoundSearch} from 'alinea/ui/icons/IcRoundSearch'
 import {useAtomValue} from 'jotai'
 import {useLayoutEffect, useMemo, useState} from 'react'
-import {findAtom} from '../atoms/EntryAtoms.js'
+import {graphAtom} from '../atoms/EntryAtoms.js'
 import {useDashboard} from '../hook/UseDashboard.js'
 import {useFocusList} from '../hook/UseFocusList.js'
 import {useNav} from '../hook/UseNav.js'
@@ -49,12 +49,11 @@ export function SearchBox() {
   const list = useFocusList({
     onClear: () => setSearch('')
   })
-  const find = useAtomValue(findAtom)
+  const graph = useAtomValue(graphAtom)
   const cursor = useMemo(() => {
     const terms = search.replace(/,/g, ' ').split(' ').filter(Boolean)
     return Page().search(...terms)
   }, [search])
-
   const {schema} = useDashboard().config
   const {name: workspace} = useWorkspace()
   const {name: root} = useRoot()

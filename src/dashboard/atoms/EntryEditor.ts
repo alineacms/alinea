@@ -9,14 +9,13 @@ import {
 } from 'alinea/core'
 import {Client} from 'alinea/core/Client'
 import {Page} from 'alinea/core/Page'
-import {Realm} from 'alinea/core/pages/Realm'
 import {entries, fromEntries, values} from 'alinea/core/util/Objects'
 import {InputState} from 'alinea/editor'
 import {atom} from 'jotai'
 import {atomFamily} from 'jotai/utils'
 import * as Y from 'yjs'
 import {clientAtom, configAtom} from './DashboardAtoms.js'
-import {entryRevisionAtoms, findAtom} from './EntryAtoms.js'
+import {entryRevisionAtoms, graphAtom} from './EntryAtoms.js'
 import {locationAtom} from './LocationAtoms.js'
 import {yAtom} from './YAtom.js'
 
@@ -31,16 +30,15 @@ export const entryEditorAtoms = atomFamily((entryId: string) => {
   return atom(async get => {
     const config = get(configAtom)
     const client = get(clientAtom)
-    const find = await get(findAtom)
+    const {all} = await get(graphAtom)
     get(entryRevisionAtoms(entryId))
-    const versions = await find(
+    const versions = await all.find(
       Page({entryId}).select({
         ...Page,
         parents({parents}) {
           return parents(Page).select(Page.entryId)
         }
-      }),
-      Realm.All
+      })
     )
     if (versions.length === 0) return undefined
     const phases = fromEntries(

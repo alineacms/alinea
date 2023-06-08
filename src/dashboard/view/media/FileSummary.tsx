@@ -20,7 +20,7 @@ const styles = fromModule(css)
 
 function fileSummarySelect() {
   return {
-    id: Page.entryId,
+    entryId: Page.entryId,
     type: Page.type,
     workspace: Page.workspace,
     root: Page.root,

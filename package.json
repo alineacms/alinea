@@ -43,8 +43,6 @@
     "dist"
   ],
   "workspaces": [
-    "apps/demo",
-    "apps/web",
     "apps/web2",
     "src/backend",
     "src/cli",
@@ -76,7 +74,7 @@
     "@esbx/workspaces": "^0.0.19",
     "@ladle/react": "^2.0.2",
     "@types/glob": "^7.1.4",
-    "@types/node": "^16.9.0",
+    "@types/node": "20.0.0",
     "@typescript/analyze-trace": "^0.9.1",
     "alinea": "0.0.0",
     "autoprefixer": "^10.4.2",
@@ -99,7 +97,7 @@
     "typescript-plugin-css-modules": "^3.4.0",
     "uvu": "^0.5.1"
   },
-  "packageManager": "yarn@3.6.0",
+  "packageManager": "yarn@3.2.0",
   "resolutions": {
     "sass-embedded": "1.62.0",
     "@types/react": "18.2.5",

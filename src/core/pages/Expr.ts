@@ -12,6 +12,7 @@ import {
 } from 'cito'
 import {Cursor, OrderBy, OrderDirection} from './Cursor.js'
 import {Projection} from './Projection.js'
+import {Selection} from './Selection.js'
 import {TargetData} from './Target.js'
 
 const {entries, fromEntries} = Object
@@ -95,8 +96,8 @@ export namespace ExprData {
     export class Case {
       type = literal('case')
       expr = adt
-      cases = array(tuple(adt, adt))
-      defaultCase? = adt.optional
+      cases = array(tuple(adt, Selection.adt))
+      defaultCase? = Selection.adt.optional
     }
   }
   export interface UnOp extends Infer<types.UnOp> {}
@@ -126,8 +127,8 @@ export namespace ExprData {
   export interface Case extends Infer<types.Case> {}
   export function Case(
     expr: ExprData,
-    cases: Array<[ExprData, ExprData]>,
-    defaultCase?: ExprData
+    cases: Array<[ExprData, Selection]>,
+    defaultCase?: Selection
   ): ExprData {
     return {type: 'case', expr, cases, defaultCase}
   }
@@ -332,8 +333,8 @@ export class ExprI<T> {
 
 export class CaseBuilder<T, Res> {
   constructor(
-    public expr: Expr<T>,
-    public cases: Array<[Expr<T>, Expr<Res>]> = []
+    protected expr: Expr<T>,
+    protected cases: Array<[ExprData, Selection]> = []
   ) {}
 
   when<S extends Projection>(
@@ -342,22 +343,20 @@ export class CaseBuilder<T, Res> {
   ): CaseBuilder<T, Res | Projection.Infer<S>> {
     return new CaseBuilder(
       this.expr,
-      this.cases.concat([[Expr.create(expr), Expr.create(select)]])
+      this.cases.concat([
+        [Expr.create(expr)[Expr.Data], Selection.create(select)]
+      ])
     )
   }
 
   orElse<S extends Projection>(select: S): Expr<Res | Projection.Infer<S>> {
     return Expr(
-      ExprData.Case(
-        this.expr[Expr.Data],
-        fromEntries(this.cases),
-        Expr.create(select)[Expr.Data]
-      )
+      ExprData.Case(this.expr[Expr.Data], this.cases, Selection.create(select))
     )
   }
 
   end(): Expr<Res> {
-    return Expr(ExprData.Case(this.expr[Expr.Data], fromEntries(this.cases)))
+    return Expr(ExprData.Case(this.expr[Expr.Data], this.cases))
   }
 }
 

@@ -2,28 +2,15 @@ import {Page} from 'alinea/core/Page'
 import DataLoader from 'dataloader'
 import {atom} from 'jotai'
 import {atomFamily} from 'jotai/utils'
-import {entryRevisionAtoms, findAtom} from './EntryAtoms.js'
+import {entrySummaryQuery} from '../view/entry/EntrySummary.js'
+import {entryRevisionAtoms, graphAtom} from './EntryAtoms.js'
 
 export const entrySummaryLoaderAtom = atom(async get => {
-  const find = await get(findAtom)
+  const {active: drafts} = await get(graphAtom)
   return new DataLoader(async (ids: ReadonlyArray<string>) => {
     const res = new Map()
-    const entries = await find(
-      Page()
-        .select({
-          entryId: Page.entryId,
-          type: Page.type,
-          workspace: Page.workspace,
-          root: Page.root,
-          title: Page.title,
-          parents({parents}) {
-            return parents(Page).select({
-              entryId: Page.entryId,
-              title: Page.title
-            })
-          }
-        })
-        .where(Page.entryId.isIn(ids))
+    const entries = await drafts.find(
+      Page().select(entrySummaryQuery()).where(Page.entryId.isIn(ids))
     )
     for (const entry of entries) res.set(entry.entryId, entry)
     return ids.map(id => res.get(id)) as typeof entries

@@ -1,5 +1,6 @@
 import {Database} from 'alinea/backend'
 import {EntryPhase, Type} from 'alinea/core'
+import {Graph} from 'alinea/core/Graph'
 import {Page} from 'alinea/core/Page'
 import {Realm} from 'alinea/core/pages/Realm'
 import DataLoader from 'dataloader'
@@ -23,9 +24,23 @@ export const localDbAtom = atom(async get => {
   return db
 })
 
-export const findAtom = atom(async get => {
+export const graphAtom = atom(async get => {
+  const config = get(configAtom)
   const db = await get(localDbAtom)
-  return db.find.bind(db)
+  return {
+    active: new Graph(config, params => {
+      return db.resolve({
+        ...params,
+        realm: Realm.PreferDraft
+      })
+    }),
+    all: new Graph(config, params => {
+      return db.resolve({
+        ...params,
+        realm: Realm.All
+      })
+    })
+  }
 })
 
 export const entryRevisionAtoms = atomFamily((id: string) => {
@@ -60,10 +75,10 @@ export const ENTRY_TREE_ROOT_KEY = '@alinea/dashboard.entryTreeRoot'
 
 const entryTreeRootAtom = atom(
   async (get): Promise<TreeItem<EntryTreeItem>> => {
-    const find = await get(findAtom)
+    const {active: drafts} = await get(graphAtom)
     const workspace = get(workspaceAtom)
     const root = get(rootAtom)
-    const children = await find(
+    const children = await drafts.find(
       Page()
         .where(
           Page.workspace.is(workspace.name),
@@ -72,8 +87,7 @@ const entryTreeRootAtom = atom(
           Page.active
         )
         .select(Page.entryId)
-        .orderBy(Page.index.asc()),
-      Realm.PreferDraft
+        .orderBy(Page.index.asc())
     )
     return {
       index: ENTRY_TREE_ROOT_KEY,
@@ -89,7 +103,7 @@ const entryTreeRootAtom = atom(
 )
 
 const entryTreeItemLoaderAtom = atom(async get => {
-  const find = await get(findAtom)
+  const graph = await get(graphAtom)
   const entryTreeRootItem = await get(entryTreeRootAtom)
   const {schema} = get(configAtom)
   return new DataLoader(async (ids: ReadonlyArray<TreeItemIndex>) => {
@@ -97,7 +111,7 @@ const entryTreeItemLoaderAtom = atom(async get => {
     const search = (ids as Array<string>).filter(
       id => id !== ENTRY_TREE_ROOT_KEY
     )
-    const entries: Array<TreeItem<EntryTreeItem>> = await find(
+    const entries: Array<TreeItem<EntryTreeItem>> = await graph.active.find(
       Page()
         .select({
           index: Page.entryId,
@@ -111,8 +125,7 @@ const entryTreeItemLoaderAtom = atom(async get => {
             return children(Page).select(Page.entryId).orderBy(Page.index.asc())
           }
         })
-        .where(Page.entryId.isIn(search)),
-      Realm.PreferDraft
+        .where(Page.entryId.isIn(search))
     )
     for (const entry of entries) res.set(entry.index, entry)
     return ids.map(id => {

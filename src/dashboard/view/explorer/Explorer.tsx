@@ -6,7 +6,7 @@ import {useAtomValue} from 'jotai'
 import {useRef} from 'react'
 import {useQuery} from 'react-query'
 import VirtualList from 'react-tiny-virtual-list'
-import {findAtom} from '../../atoms/EntryAtoms.js'
+import {graphAtom} from '../../atoms/EntryAtoms.js'
 import {ExplorerProvider} from '../../hook/UseExplorer'
 import {EntrySummaryRow, EntrySummaryThumb} from '../entry/EntrySummary.js'
 import css from './Explorer.module.scss'
@@ -41,19 +41,27 @@ export function Explorer({
   toggleSelect = () => {}
 }: ExplorerProps) {
   //const {cnx: hub} = useSession()
-  const find = useAtomValue(findAtom)
+  const graph = useAtomValue(graphAtom)
   const {data, isLoading} = useQuery(
     ['explorer', type, cursor, max],
-    () => {
+    async () => {
       const summaryView = type === 'row' ? 'summaryRow' : 'summaryThumb'
       const defaultView = defaultSummaryView[summaryView]
-      const selection = View.getSelection(schema, summaryView)
-      let total = 1000
+      const selection = View.getSelection(
+        schema,
+        summaryView,
+        defaultView.selection()
+      )
+      const total = await graph.active.count(cursor)
+      const select = new Cursor.Find<any>({
+        ...cursor[Cursor.Data],
+        select: selection
+      })
       return {
         type,
         total: max ? Math.min(max, total) : total,
         selection,
-        cursor: cursor.select(selection),
+        cursor: select,
         summaryView,
         defaultView
       } as const

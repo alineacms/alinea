@@ -18,15 +18,18 @@ import css from './EntrySummary.module.scss'
 
 const styles = fromModule(css)
 
-function entrySummaryQuery() {
+export function entrySummaryQuery() {
   return {
-    id: Page.entryId,
+    entryId: Page.entryId,
     type: Page.type,
     workspace: Page.workspace,
     root: Page.root,
     title: Page.title,
     parents({parents}) {
-      return parents().select(Page.title)
+      return parents(Page).select({
+        entryId: Page.entryId,
+        title: Page.title
+      })
     }
   } satisfies Projection
 }
@@ -35,7 +38,12 @@ type SummaryProps = Projection.Infer<ReturnType<typeof entrySummaryQuery>>
 
 export const EntrySummaryRow = view(
   entrySummaryQuery,
-  function EntrySummaryRow({id, title, type: typeName, parents}: SummaryProps) {
+  function EntrySummaryRow({
+    entryId: id,
+    title,
+    type: typeName,
+    parents
+  }: SummaryProps) {
     const nav = useNav()
     const {schema} = useDashboard().config
     const type = schema[typeName]
@@ -48,7 +56,7 @@ export const EntrySummaryRow = view(
               <Typo.Small>
                 <HStack center gap={3}>
                   {parents
-                    .map<ReactNode>(title => <>{title}</>)
+                    .map<ReactNode>(({title}) => <>{title}</>)
                     .reduce((prev, curr, i) => [
                       prev,
                       <IcRoundKeyboardArrowRight key={`s${i}`} />,
@@ -75,7 +83,7 @@ export const EntrySummaryRow = view(
 export const EntrySummaryThumb = view(
   entrySummaryQuery,
   function EntrySummaryThumb({
-    id,
+    entryId: id,
     title,
     type: typeName,
     parents
@@ -89,7 +97,7 @@ export const EntrySummaryThumb = view(
             <Typo.Small>
               <HStack center gap={3}>
                 {parents
-                  .map<ReactNode>(title => <>{title}</>)
+                  .map<ReactNode>(({title}) => <>{title}</>)
                   .reduce((prev, curr, i) => [
                     prev,
                     <IcRoundKeyboardArrowRight key={`s${i}`} />,
