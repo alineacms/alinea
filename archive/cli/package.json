@@ -5,6 +5,7 @@
     "esbuild": "^0.17.10"
   },
   "devDependencies": {
+    "@types/find-config": "^1.0.1",
     "@types/compression": "^1.7.2",
     "@types/fs-extra": "^9.0.13",
     "@types/sade": "^1.7.3",

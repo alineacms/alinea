@@ -75,6 +75,8 @@
     "@ladle/react": "^2.0.2",
     "@types/glob": "^7.1.4",
     "@types/node": "20.0.0",
+    "@types/react": "18.2.5",
+    "@types/react-dom": "18.2.4",
     "@typescript/analyze-trace": "^0.9.1",
     "alinea": "0.0.0",
     "autoprefixer": "^10.4.2",
@@ -101,6 +103,7 @@
   "resolutions": {
     "sass-embedded": "1.62.0",
     "@types/react": "18.2.5",
+    "@types/react-dom": "18.2.4",
     "esbuild": "0.17.19",
     "y-prosemirror": "1.1.2",
     "mime-db": "1.51.0",

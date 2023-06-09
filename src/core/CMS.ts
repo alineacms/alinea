@@ -1,7 +1,7 @@
 import {Store} from 'alinea/backend/Store'
 import {Config} from './Config.js'
 import {Connection} from './Connection.js'
-import {Graph} from './Graph.js'
+import {Graph, GraphApi} from './Graph.js'
 import {Root} from './Root.js'
 import {Workspace} from './Workspace.js'
 import {entries} from './util/Objects.js'
@@ -11,19 +11,24 @@ const attached = new WeakMap<Attachment, CMS>()
 
 export type Location = Root | Workspace
 
+export interface CMSApi extends GraphApi {
+  createStore(cwd: string): Promise<Store>
+  connection(): Promise<Connection>
+}
+
 export abstract class CMS extends Graph implements Config {
-  constructor(protected config: Config) {
+  constructor(public config: Config) {
     super(config, async params => {
       const cnx = await this.connection()
       return cnx.resolve(params)
     })
-    this.attach(config)
+    this.#attach(config)
   }
 
   abstract createStore(cwd: string): Promise<Store>
   abstract connection(): Promise<Connection>
 
-  protected attach(config: Config) {
+  #attach(config: Config) {
     for (const [name, workspace] of entries(config.workspaces)) {
       if (attached.has(workspace))
         throw new Error(`Workspace is already attached to a CMS: ${name}`)
@@ -82,6 +87,6 @@ export namespace CMS {
 
 export function createCMS<Definition extends Config>(
   config: Definition
-): Definition & CMS {
+): Definition & CMSApi {
   return new DefaultCMS(config) as any
 }

@@ -7,13 +7,18 @@ import {
 } from 'alinea/preview/PreviewConstants'
 import {enums, object, string} from 'cito'
 import {lazy} from 'react'
-import {DefaultCMS} from '../CMS.js'
+import {CMSApi, DefaultCMS} from '../CMS.js'
 import {Client, ClientOptions} from '../Client.js'
 import {Config} from '../Config.js'
 import {EntryPhase} from '../Entry.js'
 import {Page} from '../Page.js'
 import {Realm} from '../pages/Realm.js'
 import {Selection} from '../pages/Selection.js'
+
+export interface NextApi extends CMSApi {
+  previewHandler(request: Request): Promise<Response>
+  previews(): JSX.Element
+}
 
 const SearchParams = object({
   token: string,
@@ -98,6 +103,6 @@ class NextDriver extends DefaultCMS {
 
 export function createNextCMS<Definition extends Config>(
   config: Definition
-): Definition & NextDriver {
+): Definition & NextApi {
   return new NextDriver(config) as any
 }

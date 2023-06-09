@@ -46,6 +46,7 @@ export function UrlPickerForm({options, onConfirm, onCancel}: PickerProps) {
     const reference: UrlReference = {
       id: createId(),
       type: 'url',
+      ref: 'url',
       url: data.url,
       description: data.description || '',
       target: data.blank ? '_blank' : '_self'

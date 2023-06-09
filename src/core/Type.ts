@@ -1,6 +1,7 @@
 import {EntryPhase, Expand} from 'alinea/core'
 import {Cursor} from 'alinea/core/pages/Cursor'
 import {BinaryOp, Expr, ExprData, and} from 'alinea/core/pages/Expr'
+import {EntryEditProps} from 'alinea/dashboard/view/EntryEdit'
 import {Callable} from 'rado/util/Callable'
 import type {ComponentType} from 'react'
 import {Field} from './Field.js'
@@ -39,7 +40,7 @@ export interface TypeMeta {
   icon?: ComponentType
 
   /** A React component used to view an entry of this type in the dashboard */
-  view?: ComponentType
+  view?: ComponentType<EntryEditProps>
   /** A React component used to view a row of this type in the dashboard */
   summaryRow?: View<any>
   /** A React component used to view a thumbnail of this type in the dashboard */

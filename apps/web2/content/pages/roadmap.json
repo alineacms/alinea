@@ -2,7 +2,6 @@
   "id": "CC8aJ6-2U3s31micAzTLU",
   "type": "Page",
   "title": "Roadmap",
-  "path": "roadmap",
   "blocks": [
     {
       "id": "kTJ7zZrVSxrhZRKk5foMz",
@@ -370,7 +369,7 @@
           "content": [
             {
               "type": "text",
-              "text": "Medium term5"
+              "text": "Medium term"
             }
           ]
         },

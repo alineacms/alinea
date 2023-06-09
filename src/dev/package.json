@@ -3,6 +3,7 @@
   "type": "module",
   "devDependencies": {
     "@esbx/sass": "^0.0.19",
+    "@types/find-config": "^1.0.1",
     "autoprefixer": "^10.4.2",
     "dotenv": "^16.0.1",
     "find-config": "^1.0.0",
