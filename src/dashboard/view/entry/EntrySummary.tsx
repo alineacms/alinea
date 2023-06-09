@@ -11,7 +11,7 @@ import {
 } from 'alinea/ui'
 import {Link} from 'alinea/ui/Link'
 import {IcRoundKeyboardArrowRight} from 'alinea/ui/icons/IcRoundKeyboardArrowRight'
-import {ReactNode} from 'react'
+import {Fragment, ReactNode} from 'react'
 import {useDashboard} from '../../hook/UseDashboard.js'
 import {useNav} from '../../hook/UseNav.js'
 import css from './EntrySummary.module.scss'
@@ -56,7 +56,9 @@ export const EntrySummaryRow = view(
               <Typo.Small>
                 <HStack center gap={3}>
                   {parents
-                    .map<ReactNode>(({title}) => <>{title}</>)
+                    .map<ReactNode>(({entryId, title}) => (
+                      <Fragment key={entryId}>{title}</Fragment>
+                    ))
                     .reduce((prev, curr, i) => [
                       prev,
                       <IcRoundKeyboardArrowRight key={`s${i}`} />,
@@ -97,7 +99,9 @@ export const EntrySummaryThumb = view(
             <Typo.Small>
               <HStack center gap={3}>
                 {parents
-                  .map<ReactNode>(({title}) => <>{title}</>)
+                  .map<ReactNode>(({entryId, title}) => (
+                    <Fragment key={entryId}>{title}</Fragment>
+                  ))
                   .reduce((prev, curr, i) => [
                     prev,
                     <IcRoundKeyboardArrowRight key={`s${i}`} />,

@@ -2,7 +2,7 @@ import {array, boolean, enums, number, object, string} from 'cito'
 import {createId} from '../Id.js'
 import {Type} from '../Type.js'
 import {entries} from '../util/Objects.js'
-import {BinaryOp, Expr, ExprData, and} from './Expr.js'
+import {BinaryOp, EV, Expr, ExprData, and} from './Expr.js'
 import {Projection} from './Projection.js'
 import {Selection} from './Selection.js'
 import {TargetData} from './Target.js'
@@ -88,7 +88,7 @@ export namespace Cursor {
   export const Data = Symbol.for('@alinea/Cursor.Data')
 
   export class Find<Row> extends Cursor<Array<Row>> {
-    where(...where: Array<Expr<boolean>>): Find<Row> {
+    where(...where: Array<EV<boolean>>): Find<Row> {
       const current = this[Cursor.Data].where
       return new Find(
         this.with({
@@ -171,8 +171,13 @@ export namespace Cursor {
   }
 
   export class Get<Row> extends Cursor<Row> {
-    where(where: ExprData): Get<Row> {
-      return new Get<Row>(this.with({where}))
+    where(...where: Array<EV<boolean>>): Get<Row> {
+      const current = this[Cursor.Data].where
+      return new Get(
+        this.with({
+          where: and(current ? Expr(current) : true, ...where)[Expr.Data]
+        })
+      )
     }
 
     search(...searchTerms: Array<string>) {

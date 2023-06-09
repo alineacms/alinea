@@ -2,4 +2,5 @@
 export interface Reference {
   id: string
   type: string
+  ref: string
 }

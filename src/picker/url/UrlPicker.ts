@@ -5,7 +5,7 @@ import {Type} from 'alinea/core/Type'
 import {Picker} from 'alinea/editor/Picker'
 
 export interface UrlReference extends Reference {
-  type: 'url'
+  ref: 'url'
   url: string
   description: string
   target: string
@@ -13,7 +13,7 @@ export interface UrlReference extends Reference {
 
 export namespace UrlReference {
   export function isUrl(value: any): value is UrlReference {
-    return value && value.type === 'url'
+    return value && (value.type === 'url' || value.ref === 'url')
   }
 }
 
