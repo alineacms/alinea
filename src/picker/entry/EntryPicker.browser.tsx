@@ -1,4 +1,4 @@
-import {createId} from 'alinea/core'
+import {Page, createId} from 'alinea/core'
 import {Entry} from 'alinea/core/Entry'
 import {Reference} from 'alinea/core/Reference'
 import {useDashboard} from 'alinea/dashboard/hook/UseDashboard'
@@ -10,7 +10,7 @@ import {Modal} from 'alinea/dashboard/view/Modal'
 import {Explorer} from 'alinea/dashboard/view/explorer/Explorer'
 import {FileUploader} from 'alinea/dashboard/view/media/FileUploader'
 import {Picker, PickerProps} from 'alinea/editor/Picker'
-import type {EntryReference} from 'alinea/picker/entry'
+import {EntryReference} from 'alinea/picker/entry'
 import {
   Button,
   HStack,
@@ -43,31 +43,6 @@ export const entryPicker = Picker.withView(createEntryPicker, {
 
 const styles = fromModule(css)
 
-function searchTerms(input: string) {
-  const terms = input
-    .replace(/,/g, ' ')
-    .split(' ')
-    .filter(v => v)
-    .map(term => `"${term}"*`)
-  return terms.join(' AND ')
-}
-
-type QueryParams = {
-  workspace: string
-  search: string
-  root: string
-}
-
-function query({workspace, search, root}: QueryParams) {
-  const orderBy = search
-    ? [Entry.root.is(root).desc(), Search.get('rank').asc()]
-    : [Entry.versionId.desc()]
-  return Search.leftJoin(Entry, Search.id.is(Entry.versionId))
-    .where(search ? Search.title.match(searchTerms(search)) : true)
-    .where(Entry.workspace.is(workspace))
-    .orderBy(...orderBy)
-}
-
 export interface EntryPickerModalProps
   extends PickerProps<EntryPickerOptions> {}
 
@@ -78,7 +53,6 @@ export function EntryPickerModal({
   onConfirm,
   onCancel
 }: EntryPickerModalProps) {
-  return <>todo</>
   const {title, defaultView, max, condition, showUploader} = options
   const [search, setSearch] = useState('')
   const list = useFocusList({
@@ -90,19 +64,19 @@ export function EntryPickerModal({
   const {schema} = useDashboard().config
   const {name: workspace} = useWorkspace()
   const {name: root} = useRoot()
-  const cursor = useMemo(
-    () =>
-      query({workspace, root, search})
-        .where(condition || true)
-        .select(Entry.fields),
-    [workspace, root, search, condition]
-  )
+  const cursor = useMemo(() => {
+    const terms = search.replace(/,/g, ' ').split(' ').filter(Boolean)
+    return Page({workspace, root})
+      .where(condition || true)
+      .search(...terms)
+  }, [workspace, root, search, condition])
   const [view, setView] = useState<'row' | 'thumb'>(defaultView || 'row')
   const handleSelect = useCallback(
-    (entry: Entry.Minimal) => {
+    (entry: Entry) => {
       setSelected(selected => {
         const index = selected.findIndex(
-          v => EntryReference.isEntry(v) && v.entry === entry.id
+          ref =>
+            EntryReference.isEntryReference(ref) && ref.entry === entry.entryId
         )
         let res = selected.slice()
         if (index === -1) {
@@ -110,7 +84,7 @@ export function EntryPickerModal({
             .concat({
               id: createId(),
               type,
-              entry: entry.id
+              entry: entry.entryId
             } as EntryReference)
             .slice(-(max || 0))
         } else {

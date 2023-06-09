@@ -1,4 +1,4 @@
-import {createId, Entry, Outcome, slugify, Type} from 'alinea/core'
+import {createId, Entry, EntryPhase, Page, slugify, Type} from 'alinea/core'
 import {generateKeyBetween} from 'alinea/core/util/FractionalIndexing'
 import {entries, fromEntries, keys} from 'alinea/core/util/Objects'
 import {useNavigate} from 'alinea/dashboard/util/HashRouter'
@@ -19,21 +19,22 @@ import {
 } from 'alinea/ui'
 import {IcRoundArrowBack} from 'alinea/ui/icons/IcRoundArrowBack'
 import {Link} from 'alinea/ui/Link'
+import {useAtomValue} from 'jotai'
 import {FormEvent, useState} from 'react'
 import {useQuery, useQueryClient} from 'react-query'
-import * as Y from 'yjs'
+import {graphAtom} from '../../atoms/EntryAtoms.js'
 import {useDashboard} from '../../hook/UseDashboard'
 import {useLocale} from '../../hook/UseLocale'
 import {useNav} from '../../hook/UseNav'
 import {useRoot} from '../../hook/UseRoot'
 import {useSession} from '../../hook/UseSession'
 import {useWorkspace} from '../../hook/UseWorkspace'
+import {IconButton} from '../IconButton.js'
 import css from './NewEntry.module.scss'
 
 const styles = fromModule(css)
 
 function NewEntryForm({parentId}: NewEntryProps) {
-  return <>todo</>
   const nav = useNav()
   const navigate = useNavigate()
   const locale = useLocale()
@@ -49,43 +50,48 @@ function NewEntryForm({parentId}: NewEntryProps) {
   const root = useRoot()
   const parentField = useField(
     link.entry('Parent', {
-      condition: Entry.type
+      condition: Page.type
         .isIn(containerTypes)
-        .and(Entry.workspace.is(workspace))
-        .and(Entry.root.is(root.name)),
+        .and(Page.workspace.is(workspace))
+        .and(Page.root.is(root.name)),
       initialValue: parentId
-        ? [{id: 'parent', type: 'entry', entry: parentId}]
+        ? ({
+            id: 'parent',
+            ref: 'entry',
+            type: 'entry',
+            entry: parentId
+          } as EntryReference)
         : undefined
     })
   )
   const selectedParent = useObservable(parentField)
+  const graph = useAtomValue(graphAtom)
   const {data: parent} = useQuery(
     ['parent', selectedParent],
-    () => {
-      const parentId = (selectedParent?.[0] as EntryReference)?.entry
+    async () => {
+      const parentId = selectedParent?.entry
       if (!parentId) return
-      const Child = Entry.as('Child')
-      return hub
-        .query({
-          cursor: Entry.where(Entry.versionId.is(parentId)).select({
-            id: Entry.versionId,
-            type: Entry.type,
-            url: Entry.url,
-            alinea: Entry.alinea,
-            childrenIndex: Child.where(Child.alinea.parent.is(Entry.versionId))
-              .select(Child.alinea.index)
-              .orderBy(Child.alinea.index.asc())
+      const res = await graph.active.get(
+        Page({entryId: parentId}).select({
+          id: Page.entryId,
+          type: Page.type,
+          url: Page.url,
+          level: Page.level,
+          childrenIndex({children}) {
+            return children()
+              .select(Page.index)
+              .orderBy(Page.index.asc())
               .first()
-          })
+          }
         })
-        .then(Outcome.unpack)
-        .then(res => res[0])
+      )
+      return res
     },
     {suspense: true, keepPreviousData: true}
   )
   const type = parent && schema[parent.type]
   const types: Array<string> = !parent
-    ? root.contains
+    ? root.contains || []
     : (type && Type.meta(type).contains) || keys(schema)
   const selectedType = useField(
     select(
@@ -111,32 +117,27 @@ function NewEntryForm({parentId}: NewEntryProps) {
     setIsCreating(true)
     const type = schema[selected]!
     const path = slugify(title)
-    const entry: Entry = {
-      ...Type.blankEntry(selected, type),
+    const entry: Partial<Entry> = {
+      entryId: createId(),
+      type: selected,
       path,
       title,
       url: (parent?.url || '') + (parent?.url.endsWith('/') ? '' : '/') + path,
-      alinea: {
-        index: generateKeyBetween(null, parent?.childrenIndex || null),
-        workspace,
-        root: root.name,
-        parent: parent?.id,
-        parents: []
-      }
+      index: generateKeyBetween(null, parent?.childrenIndex || null),
+      workspace,
+      root: root.name,
+      parent: parent?.id ?? null,
+      phase: EntryPhase.Draft,
+      seeded: false,
+      level: parent ? parent.level + 1 : 0,
+      data: {}
     }
     if (root.i18n) {
-      entry.alinea.i18n = {
-        id: createId(),
-        locale: locale!,
-        parent: parent?.id,
-        parents: ([] as Array<string | undefined>)
-          .concat(parent?.alinea.i18n?.parents)
-          .concat(parent?.id)
-          .filter(Boolean) as Array<string>
-      }
+      entry.locale = locale
+      entry.i18nId = createId()
       entry.url = `/${locale}${entry.url}`
     }
-    const doc = docFromEntry(entry, () => type)
+    /*const doc = docFromEntry(entry, () => type)
     return hub
       .updateDraft({id: entry.versionId, update: Y.encodeStateAsUpdate(doc)})
       .then(result => {
@@ -152,7 +153,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
       })
       .finally(() => {
         setIsCreating(false)
-      })
+      })*/
   }
   return (
     <form onSubmit={handleCreate}>
@@ -187,7 +188,7 @@ export function NewEntry({parentId}: NewEntryProps) {
   const {name: workspace} = useWorkspace()
 
   function handleClose() {
-    navigate(nav.entry({workspace, id: parentId}))
+    navigate(nav.entry({workspace, entryId: parentId}))
   }
 
   return (

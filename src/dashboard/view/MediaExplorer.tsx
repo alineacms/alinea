@@ -1,5 +1,4 @@
 import useSize from '@react-hook/size'
-import {Outcome} from 'alinea/core/Outcome'
 import {InputForm} from 'alinea/editor'
 import {fromModule, HStack, VStack} from 'alinea/ui'
 import {Main} from 'alinea/ui/Main'
@@ -8,11 +7,13 @@ import {useQuery} from 'react-query'
 import VirtualList from 'react-tiny-virtual-list'
 //import {EntryProperty} from '../draft/EntryProperty.js'
 //import {useCurrentDraft} from '../hook/UseCurrentDraft.js'
-import {Media} from 'alinea/backend'
-import {useSession} from '../hook/UseSession.js'
-import {EditMode} from './entry/EditMode.js'
+import {Page} from 'alinea/core'
+import {MediaFile} from 'alinea/core/media/MediaSchema'
+import {useAtomValue} from 'jotai'
+import {graphAtom} from '../atoms/EntryAtoms.js'
 import {EntryHeader} from './entry/EntryHeader.js'
 import {EntryTitle} from './entry/EntryTitle.js'
+import {EntryEditProps} from './EntryEdit.js'
 import {FileUploader} from './media/FileUploader.js'
 import {MediaRow} from './media/MediaRow.js'
 import css from './MediaExplorer.module.scss'
@@ -20,42 +21,38 @@ import css from './MediaExplorer.module.scss'
 const styles = fromModule(css)
 const scrollOffsets = new Map<string, number>()
 
-export function MediaExplorer() {
-  return <>todo</>
-  const draft = useCurrentDraft()
-  const {cnx: hub} = useSession()
-  const {File} = Media
+export function MediaExplorer({editor}: EntryEditProps) {
+  const graph = useAtomValue(graphAtom)
   const {data} = useQuery(
-    ['media', 'total', draft.versionId],
+    ['media', 'total', editor.entryId],
     () => {
-      return hub
-        .query({
-          cursor: File.where(File.alinea.parent.is(draft.versionId)).select({
-            total: Functions.count()
-          })
-        })
-        .then(Outcome.unpack)
+      return graph.active.count(
+        MediaFile().where(Page.parent.is(editor.entryId))
+      )
     },
     {suspense: true}
   )
-  const total = data![0].total
+  const total = data || 0
   const containerRef = useRef(null)
   const [containerWidth, containerHeight] = useSize(containerRef)
   const perRow = Math.round(containerWidth / 240)
   const height = 200
+  const selectedPhase = useAtomValue(editor.selectedPhase)
+  const isActivePhase = editor.activePhase === selectedPhase
+  const state = isActivePhase ? editor.draftState : editor.states[selectedPhase]
   return (
     <Main className={styles.root()}>
-      <EntryHeader mode={EditMode.Editing} />
+      <EntryHeader editor={editor} />
       <div className={styles.root.inner()}>
         <HStack style={{flexGrow: 1, minHeight: 0}}>
           <FileUploader toggleSelect={() => {}} />
           <VStack style={{height: '100%', width: '100%'}}>
             <header className={styles.root.inner.header()}>
-              <EntryTitle />
+              <EntryTitle editor={editor} />
               {/* Todo: hide this in a tab interface */}
               <div style={{display: 'none'}}>
                 <Suspense fallback={null}>
-                  <InputForm state={EntryProperty.root} type={draft.channel} />
+                  <InputForm type={editor.type} state={state} />
                 </Suspense>
               </div>
             </header>
@@ -76,16 +73,16 @@ export function MediaExplorer() {
                       <div key={index} style={{...style, height}}>
                         <MediaRow
                           amount={perRow}
-                          parentId={draft.versionId}
+                          parentId={editor.entryId}
                           from={from}
                           batchSize={perRow * 5}
                         />
                       </div>
                     )
                   }}
-                  scrollOffset={scrollOffsets.get(draft.versionId) || 0}
+                  scrollOffset={scrollOffsets.get(editor.entryId) || 0}
                   onScroll={scrollTop => {
-                    scrollOffsets.set(draft.versionId, scrollTop)
+                    scrollOffsets.set(editor.entryId, scrollTop)
                   }}
                 />
               )}

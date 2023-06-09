@@ -112,7 +112,9 @@ export namespace link {
 export namespace link {
   export interface EntryOptions<Fields>
     extends LinkFieldOptions,
-      Omit<EntryPickerOptions<Fields>, 'hint'> {}
+      Omit<EntryPickerOptions<Fields>, 'hint'> {
+    initialValue?: EntryReference
+  }
 
   export function entry<Fields>(
     label: Label,

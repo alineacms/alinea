@@ -4,43 +4,18 @@ import {HStack, Stack, fromModule} from 'alinea/ui'
 import {IcOutlineGridView} from 'alinea/ui/icons/IcOutlineGridView'
 import {IcOutlineList} from 'alinea/ui/icons/IcOutlineList'
 import {IcRoundSearch} from 'alinea/ui/icons/IcRoundSearch'
-import {useAtomValue} from 'jotai'
 import {useLayoutEffect, useMemo, useState} from 'react'
-import {graphAtom} from '../atoms/EntryAtoms.js'
-import {useDashboard} from '../hook/UseDashboard.js'
+import {useConfig} from '../hook/UseConfig.js'
 import {useFocusList} from '../hook/UseFocusList.js'
 import {useNav} from '../hook/UseNav.js'
-import {useRoot} from '../hook/UseRoot.js'
-import {useWorkspace} from '../hook/UseWorkspace.js'
 import {IconButton} from './IconButton.js'
 import css from './SearchBox.module.scss'
 import {Explorer} from './explorer/Explorer.js'
 
 const styles = fromModule(css)
 
-function searchTerms(input: string) {
-  const terms = input
-    .replace(/,/g, ' ')
-    .split(' ')
-    .filter(v => v)
-    .map(term => `"${term}"*`)
-  return terms.join(' AND ')
-}
-
-type QueryParams = {
-  workspace: string
-  search: string
-  root: string
-}
-
-/*function query({workspace, search, root}: QueryParams) {
-  return Search.leftJoin(Entry, Search.id.is(Entry.id))
-    .where(search ? Search.title.match(searchTerms(search)) : false)
-    .where(Entry.workspace.is(workspace))
-    .orderBy(Entry.root.is(root).desc(), Search.get('rank').asc())
-}*/
-
 export function SearchBox() {
+  const {schema} = useConfig()
   const nav = useNav()
   const navigate = useNavigate()
   const location = useLocation()
@@ -49,18 +24,10 @@ export function SearchBox() {
   const list = useFocusList({
     onClear: () => setSearch('')
   })
-  const graph = useAtomValue(graphAtom)
   const cursor = useMemo(() => {
     const terms = search.replace(/,/g, ' ').split(' ').filter(Boolean)
     return Page().search(...terms)
   }, [search])
-  const {schema} = useDashboard().config
-  const {name: workspace} = useWorkspace()
-  const {name: root} = useRoot()
-  /*const cursor = useMemo(
-    () => query({workspace, root, search}).select(Entry.fields),
-    [workspace, root, search]
-  )*/
   const [explorerView, setExplorerView] = useState<'row' | 'thumb'>('row')
   // If we navigate to another page (for example by selecting one of the items)
   // clear the search term

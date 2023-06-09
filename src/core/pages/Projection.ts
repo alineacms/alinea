@@ -13,9 +13,7 @@ export type PageProjection = Cursor<any> | ProjectionRecord
 export type Projection = Expr<any> | PageProjection
 
 export namespace Projection {
-  export type InferOne<T> = [T] extends [Cursor.Find<infer V>]
-    ? Type.Infer<V>
-    : Infer<T>
+  export type InferOne<T> = [T] extends [Cursor.Find<infer V>] ? V : Infer<T>
 
   export type Infer<T> = [T] extends [Expr<infer V>]
     ? V

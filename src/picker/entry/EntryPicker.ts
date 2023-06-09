@@ -7,6 +7,7 @@ import {Expr} from 'alinea/core/pages/Expr'
 import {Picker} from 'alinea/editor/Picker'
 
 export interface EntryReference extends Reference {
+  ref: 'entry'
   entry: string
   entryType: string
   path: string
@@ -14,14 +15,28 @@ export interface EntryReference extends Reference {
   url: string
 }
 
+export namespace EntryReference {
+  export function isEntryReference(value: any): value is EntryReference {
+    return value && (value.type === 'entry' || value.ref === 'entry')
+  }
+}
+
 export interface FileReference extends Reference {
+  ref: 'file'
   src: string
   url: string
   extension: string
   size: number
 }
 
+export namespace FileReference {
+  export function isFileReference(value: any): value is FileReference {
+    return value && (value.type === 'file' || value.ref === 'file')
+  }
+}
+
 export interface ImageReference extends Reference {
+  ref: 'image'
   src: string
   extension: string
   size: number
@@ -30,6 +45,12 @@ export interface ImageReference extends Reference {
   height: number
   averageColor: string
   blurHash: string
+}
+
+export namespace ImageReference {
+  export function isImageReference(value: any): value is ImageReference {
+    return value && (value.type === 'image' || value.ref === 'image')
+  }
 }
 
 export interface EntryPickerOptions<T = {}> {
