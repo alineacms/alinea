@@ -20,14 +20,26 @@ export default function NextPreviews() {
         PREVIEW_UPDATE_NAME,
         update
       )) {
-        document.cookie = `${name}=${value}`
+        document.cookie = `${name}=${value}; path=/`
       }
+      const currentStylesheet = []
+      const head = document.getElementsByTagName('head')[0]
+      for (const link of document.getElementsByTagName('link')) {
+        if (link.rel !== 'stylesheet') continue
+        if (!link.getAttribute('data-precedence')) continue
+        currentStylesheet.push(link.cloneNode() as HTMLLinkElement)
+      }
+      /*for (const link of currentStylesheet) {
+        link.removeAttribute('data-precedence')
+        head.appendChild(link)
+      }*/
+      router.refresh()
       // router.refresh() would be the obvious choice but it seems
       // to reload global css styles resulting in FOUC,
       // unfortunately this means cms data in the layout are not updated
-      router.replace(location.pathname + '?v=' + Date.now(), {
+      /*router.replace(location.pathname + '?v=' + Date.now(), {
         forceOptimisticNavigation: true
-      })
+      })*/
     }
   })
   return <div>Preview: {isPreviewing ? 'in iframe' : 'no'}</div>

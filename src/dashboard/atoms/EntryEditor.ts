@@ -94,6 +94,7 @@ export function createEntryEditor(entryData: EntryData) {
   const editMode = atom(EditMode.Editing)
   const isSaving = atom(false)
   const isPublishing = atom(false)
+  const view = Type.meta(type).view
 
   const yUpdate = yAtom(yDoc.getMap(ROOT_KEY), () => {
     return Y.encodeStateAsUpdateV2(yDoc, yStateVector)
@@ -161,7 +162,8 @@ export function createEntryEditor(entryData: EntryData) {
     publishDraft,
     resetDraft,
     isSaving,
-    isPublishing
+    isPublishing,
+    view
   }
 }
 

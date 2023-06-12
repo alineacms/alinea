@@ -3,6 +3,7 @@ import {EntryPhase, Type} from 'alinea/core'
 import {Graph} from 'alinea/core/Graph'
 import {Page} from 'alinea/core/Page'
 import {Realm} from 'alinea/core/pages/Realm'
+import {entries} from 'alinea/core/util/Objects'
 import DataLoader from 'dataloader'
 import {atom, useAtom, useAtomValue} from 'jotai'
 import {atomFamily} from 'jotai/utils'
@@ -28,6 +29,12 @@ export const graphAtom = atom(async get => {
   const config = get(configAtom)
   const db = await get(localDbAtom)
   return {
+    drafts: new Graph(config, params => {
+      return db.resolve({
+        ...params,
+        realm: Realm.Draft
+      })
+    }),
     active: new Graph(config, params => {
       return db.resolve({
         ...params,
@@ -73,18 +80,27 @@ export function useDbUpdater() {
 
 export const ENTRY_TREE_ROOT_KEY = '@alinea/dashboard.entryTreeRoot'
 
+const visibleTypesAtom = atom(get => {
+  const {schema} = get(configAtom)
+  return entries(schema)
+    .filter(([_, type]) => !Type.meta(type).isHidden)
+    .map(([name]) => name)
+})
+
 const entryTreeRootAtom = atom(
   async (get): Promise<TreeItem<EntryTreeItem>> => {
     const {active: drafts} = await get(graphAtom)
     const workspace = get(workspaceAtom)
     const root = get(rootAtom)
+    const visibleTypes = get(visibleTypesAtom)
     const children = await drafts.find(
       Page()
         .where(
           Page.workspace.is(workspace.name),
           Page.root.is(root.name),
           Page.parent.isNull(),
-          Page.active
+          Page.active,
+          Page.type.isIn(visibleTypes)
         )
         .select(Page.entryId)
         .orderBy(Page.index.asc())
@@ -106,6 +122,7 @@ const entryTreeItemLoaderAtom = atom(async get => {
   const graph = await get(graphAtom)
   const entryTreeRootItem = await get(entryTreeRootAtom)
   const {schema} = get(configAtom)
+  const visibleTypes = get(visibleTypesAtom)
   return new DataLoader(async (ids: ReadonlyArray<TreeItemIndex>) => {
     const res = new Map<TreeItemIndex, TreeItem<EntryTreeItem>>()
     const search = (ids as Array<string>).filter(
@@ -122,7 +139,10 @@ const entryTreeItemLoaderAtom = atom(async get => {
             phase: Page.phase
           },
           children({children}) {
-            return children(Page).select(Page.entryId).orderBy(Page.index.asc())
+            return children(Page)
+              .where(Page.type.isIn(visibleTypes))
+              .select(Page.entryId)
+              .orderBy(Page.index.asc())
           }
         })
         .where(Page.entryId.isIn(search))

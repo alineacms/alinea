@@ -56,6 +56,7 @@ export class UnionShape<T> implements Shape<UnionRow & T, UnionMutator<T>> {
     throw createError(`Could not determine type of child "${child}"`)
   }
   toY(value: UnionRow & T) {
+    if (Array.isArray(value)) value = value[0] ?? {}
     const type = value.type
     const shape = this.shapes[type]
     const self: Record<string, any> = value || {}

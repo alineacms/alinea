@@ -25,7 +25,7 @@ export class LinkField<Row extends Reference> extends Field.Union<
 
 export function createLink<Row extends Reference>(
   label: Label,
-  options: LinkOptions<Row>
+  options: LinkOptions<Row> & {initialValue?: Row}
 ): LinkField<Row> {
   const pickers = entries(options.pickers)
   const blocks = fromEntries(
@@ -38,20 +38,21 @@ export function createLink<Row extends Reference>(
   return new LinkField(blocks, {
     hint,
     label,
-    options
+    options,
+    initialValue: options.initialValue
   })
 }
 
 /** Internal representation of a link field */
 export class LinksField<Row extends Reference> extends Field.List<
   Row,
-  LinkOptions<Row> & {max?: number}
+  LinkOptions<Row>
 > {}
 
 /** Create a link field configuration */
 export function createLinks<Row extends Reference>(
   label: Label,
-  options: LinkOptions<Row>
+  options: LinkOptions<Row> & {max?: number; initialvalue?: Array<Row>}
 ): LinksField<Row> {
   const pickers = entries(options.pickers)
   const blocks = fromEntries(
