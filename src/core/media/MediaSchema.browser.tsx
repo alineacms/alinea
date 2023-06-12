@@ -8,7 +8,7 @@ import {
 } from '../../dashboard/view/media/FileSummary.js'
 import {MediaSchema as MediaSchemaConfig} from './MediaSchema.js'
 
-export const MediaLibrary = type('Media directory', {
+export const MediaLibrary = type('Media directory browser', {
   ...MediaSchemaConfig.MediaLibrary,
   [type.meta]: {
     isContainer: true,

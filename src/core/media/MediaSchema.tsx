@@ -5,7 +5,7 @@ import {path} from 'alinea/input/path'
 import {text} from 'alinea/input/text'
 
 export type MediaLibrary = Type.Infer<typeof MediaLibrary>
-export const MediaLibrary = type('Media directory', {
+export const MediaLibrary = type('Media directory server', {
   title: text('Title'),
   path: path('Path'),
   [type.meta]: {

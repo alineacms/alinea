@@ -40,7 +40,6 @@ export function Explorer({
   selection = [],
   toggleSelect = () => {}
 }: ExplorerProps) {
-  //const {cnx: hub} = useSession()
   const graph = useAtomValue(graphAtom)
   const {data, isLoading} = useQuery(
     ['explorer', type, cursor, max],
