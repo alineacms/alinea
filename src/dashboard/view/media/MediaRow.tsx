@@ -1,7 +1,9 @@
-import {Outcome} from 'alinea/core'
+import {Page} from 'alinea/core'
+import {MediaFile} from 'alinea/core/media/MediaSchema'
 import {fromModule} from 'alinea/ui'
+import {useAtomValue} from 'jotai'
 import {useQuery} from 'react-query'
-import {useSession} from '../../hook/UseSession.js'
+import {graphAtom} from '../../atoms/EntryAtoms.js'
 import css from './MediaRow.module.scss'
 import {MediaThumbnail} from './MediaThumbnail.js'
 
@@ -14,31 +16,27 @@ export type MediaRowProps = {
   batchSize: number
 }
 
-function query(parentId: string, start: number, batchSize: number) {
-  return File.where(File.alinea.parent.is(parentId))
-    .skip(start * batchSize)
-    .take(batchSize)
-    .select({
-      id: File.id,
-      alinea: File.alinea,
-      title: File.title,
-      extension: File.extension,
-      size: File.size,
-      preview: File.preview,
-      averageColor: File.averageColor
-    })
-    .orderBy(File.title.asc())
-}
-
 export function MediaRow({amount, parentId, from, batchSize}: MediaRowProps) {
-  const {cnx: hub} = useSession()
+  const graph = useAtomValue(graphAtom)
   const start = Math.floor(from / batchSize)
   const {data} = useQuery(
     ['media', 'batch', batchSize, parentId, start],
     () => {
-      return hub
-        .query({cursor: query(parentId, start, batchSize)})
-        .then(Outcome.unpack)
+      return graph.active.find(
+        MediaFile()
+          .where(Page.parent.is(parentId))
+          .skip(start * batchSize)
+          .take(batchSize)
+          .select({
+            entryId: Page.entryId,
+            title: Page.title,
+            extension: MediaFile.extension,
+            size: MediaFile.size,
+            preview: MediaFile.preview,
+            averageColor: MediaFile.averageColor
+          })
+          .orderBy(Page.title.asc())
+      )
     },
     {
       staleTime: 10000,
@@ -57,7 +55,7 @@ export function MediaRow({amount, parentId, from, batchSize}: MediaRowProps) {
         }}
       >
         {files?.map(file => (
-          <MediaThumbnail key={file.id} file={file} />
+          <MediaThumbnail key={file.entryId} file={file} />
         ))}
       </div>
     </div>

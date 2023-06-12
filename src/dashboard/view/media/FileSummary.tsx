@@ -21,7 +21,6 @@ const styles = fromModule(css)
 function fileSummarySelect() {
   return {
     entryId: Page.entryId,
-    type: Page.type,
     workspace: Page.workspace,
     root: Page.root,
     title: Page.title,

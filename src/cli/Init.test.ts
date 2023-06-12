@@ -17,7 +17,7 @@ async function run(cwd: string) {
   process.env.NODE_ENV = 'development'
   await init({cwd, quiet: true})
   const cms = await loadCMS(path.resolve(cwd))
-  const welcome = await cms.get(Page)
+  const welcome = await cms.get(Page())
   assert.ok(welcome)
 }
 

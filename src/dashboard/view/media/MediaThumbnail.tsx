@@ -1,4 +1,3 @@
-import {Media} from 'alinea/backend/Media'
 import {renderLabel} from 'alinea/core'
 import {link} from 'alinea/dashboard/util/HashRouter'
 import {fromModule, px} from 'alinea/ui'
@@ -10,12 +9,19 @@ import css from './MediaThumbnail.module.scss'
 const styles = fromModule(css)
 
 export type MediaThumbnailProps = {
-  file: Media.File
+  file: {
+    entryId: string
+    title: string
+    extension: string
+    size: number
+    preview: string
+    averageColor: string
+  }
 }
 
 export function MediaThumbnail({file}: MediaThumbnailProps) {
   const nav = useNav()
-  const {extension, preview, averageColor: color} = file.data
+  const {extension, preview, averageColor: color} = file
   const fontColor = useContrastColor(color)
   return (
     <a {...link(nav.entry(file))} className={styles.root()}>

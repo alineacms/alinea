@@ -44,27 +44,29 @@ export const internalPlugin: Plugin = {
     build.onEnd(async () => {
       const pkg = getManifest('.')
       const exports: Record<string, any> = {
-        '.': './index.js',
-        './css': './index.css',
-        './*.cjs': './*.cjs',
-        './*': './*.js'
+        '.': './dist/index.js',
+        './css': './dist/index.css',
+        './*.cjs': './dist/*.cjs',
+        './*': './dist/*.js'
       }
-      for (const file of browserFiles) {
+      const bFiles = [...browserFiles].sort()
+      for (const file of bFiles) {
         exports[`./${file}`] = {
-          worker: `./${file}.js`,
-          browser: `./${file}.${BROWSER_TARGET}.js`,
-          default: `./${file}.js`
+          worker: `./dist/${file}.js`,
+          browser: `./dist/${file}.${BROWSER_TARGET}.js`,
+          default: `./dist/${file}.js`
         }
       }
-      for (const file of serverFiles) {
+      const sFiles = [...serverFiles].sort()
+      for (const file of sFiles) {
         exports[`./${file}`] = {
-          browser: `./${file}.js`,
-          default: `./${file}.${SERVER_TARGET}.js`
+          browser: `./dist/${file}.js`,
+          default: `./dist/${file}.${SERVER_TARGET}.js`
         }
       }
       fs.writeFileSync(
-        'dist/package.json',
-        JSON.stringify({type: 'module', name: 'alinea', exports}, null, 2)
+        'package.json',
+        JSON.stringify({...pkg, exports}, null, 2)
       )
     })
   }

@@ -1,6 +1,7 @@
 import {Config} from '../Config.js'
 import {Root} from '../Root.js'
 import {Schema} from '../Schema.js'
+import {Type} from '../Type.js'
 import {Workspace} from '../Workspace.js'
 import {entries, values} from '../util/Objects.js'
 import {unreachable} from '../util/Types.js'
@@ -103,6 +104,10 @@ function serializeTarget(
 ): void {
   if (!target?.type) return
   const name = targets.get(target.type)
-  if (!name) throw new Error(`Unknown target ${target.type}`)
+  const label = Type.label(target.type as Type)
+  if (!name)
+    throw new Error(
+      `Cannot query content type "${label}" because it is not defined in the schema`
+    )
   target.name = name
 }

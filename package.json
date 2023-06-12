@@ -25,12 +25,6 @@
     "bump": "esbx version",
     "prepare": "yarn build"
   },
-  "exports": {
-    ".": "./dist/index.js",
-    "./css": "./dist/index.css",
-    "./*.cjs": "./dist/*.cjs",
-    "./*": "./dist/*.js"
-  },
   "sideEffects": false,
   "typesVersions": {
     "*": {
@@ -112,5 +106,110 @@
     "prosemirror-state": "1.4.1",
     "prosemirror-transform": "1.6.0",
     "prosemirror-view": "1.26.2"
+  },
+  "exports": {
+    ".": "./dist/index.js",
+    "./css": "./dist/index.css",
+    "./*.cjs": "./dist/*.cjs",
+    "./*": "./dist/*.js",
+    "./cloud/Cloud": {
+      "worker": "./dist/cloud/Cloud.js",
+      "browser": "./dist/cloud/Cloud.browser.js",
+      "default": "./dist/cloud/Cloud.js"
+    },
+    "./core/media/MediaSchema": {
+      "worker": "./dist/core/media/MediaSchema.js",
+      "browser": "./dist/core/media/MediaSchema.browser.js",
+      "default": "./dist/core/media/MediaSchema.js"
+    },
+    "./dashboard/view/Preview": {
+      "worker": "./dist/dashboard/view/Preview.js",
+      "browser": "./dist/dashboard/view/Preview.browser.js",
+      "default": "./dist/dashboard/view/Preview.js"
+    },
+    "./input/check/CheckField": {
+      "worker": "./dist/input/check/CheckField.js",
+      "browser": "./dist/input/check/CheckField.browser.js",
+      "default": "./dist/input/check/CheckField.js"
+    },
+    "./input/code/CodeField": {
+      "worker": "./dist/input/code/CodeField.js",
+      "browser": "./dist/input/code/CodeField.browser.js",
+      "default": "./dist/input/code/CodeField.js"
+    },
+    "./input/date/DateField": {
+      "worker": "./dist/input/date/DateField.js",
+      "browser": "./dist/input/date/DateField.browser.js",
+      "default": "./dist/input/date/DateField.js"
+    },
+    "./input/json/JsonField": {
+      "worker": "./dist/input/json/JsonField.js",
+      "browser": "./dist/input/json/JsonField.browser.js",
+      "default": "./dist/input/json/JsonField.js"
+    },
+    "./input/link/LinkField": {
+      "worker": "./dist/input/link/LinkField.js",
+      "browser": "./dist/input/link/LinkField.browser.js",
+      "default": "./dist/input/link/LinkField.js"
+    },
+    "./input/list/ListField": {
+      "worker": "./dist/input/list/ListField.js",
+      "browser": "./dist/input/list/ListField.browser.js",
+      "default": "./dist/input/list/ListField.js"
+    },
+    "./input/number/NumberField": {
+      "worker": "./dist/input/number/NumberField.js",
+      "browser": "./dist/input/number/NumberField.browser.js",
+      "default": "./dist/input/number/NumberField.js"
+    },
+    "./input/object/ObjectField": {
+      "worker": "./dist/input/object/ObjectField.js",
+      "browser": "./dist/input/object/ObjectField.browser.js",
+      "default": "./dist/input/object/ObjectField.js"
+    },
+    "./input/path/PathField": {
+      "worker": "./dist/input/path/PathField.js",
+      "browser": "./dist/input/path/PathField.browser.js",
+      "default": "./dist/input/path/PathField.js"
+    },
+    "./input/richtext/RichTextField": {
+      "worker": "./dist/input/richtext/RichTextField.js",
+      "browser": "./dist/input/richtext/RichTextField.browser.js",
+      "default": "./dist/input/richtext/RichTextField.js"
+    },
+    "./input/select/SelectField": {
+      "worker": "./dist/input/select/SelectField.js",
+      "browser": "./dist/input/select/SelectField.browser.js",
+      "default": "./dist/input/select/SelectField.js"
+    },
+    "./input/tabs/Tabs": {
+      "worker": "./dist/input/tabs/Tabs.js",
+      "browser": "./dist/input/tabs/Tabs.browser.js",
+      "default": "./dist/input/tabs/Tabs.js"
+    },
+    "./input/text/TextField": {
+      "worker": "./dist/input/text/TextField.js",
+      "browser": "./dist/input/text/TextField.browser.js",
+      "default": "./dist/input/text/TextField.js"
+    },
+    "./picker/entry/EntryPicker": {
+      "worker": "./dist/picker/entry/EntryPicker.js",
+      "browser": "./dist/picker/entry/EntryPicker.browser.js",
+      "default": "./dist/picker/entry/EntryPicker.js"
+    },
+    "./picker/url/UrlPicker": {
+      "worker": "./dist/picker/url/UrlPicker.js",
+      "browser": "./dist/picker/url/UrlPicker.browser.js",
+      "default": "./dist/picker/url/UrlPicker.js"
+    },
+    "./preview/remix": {
+      "worker": "./dist/preview/remix.js",
+      "browser": "./dist/preview/remix.browser.js",
+      "default": "./dist/preview/remix.js"
+    },
+    "./auth/passwordless/PasswordLessAuth": {
+      "browser": "./dist/auth/passwordless/PasswordLessAuth.js",
+      "default": "./dist/auth/passwordless/PasswordLessAuth.server.js"
+    }
   }
 }

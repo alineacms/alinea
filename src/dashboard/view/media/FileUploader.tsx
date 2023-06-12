@@ -1,13 +1,14 @@
+import {Page} from 'alinea/core'
 import {Entry} from 'alinea/core/Entry'
 import {MediaLibrary} from 'alinea/core/media/MediaSchema'
-import {Outcome} from 'alinea/core/Outcome'
 import {InputField} from 'alinea/editor/view/InputField'
 import {select} from 'alinea/input/select'
-import {fromModule, px, Typo, VStack} from 'alinea/ui'
+import {Typo, VStack, fromModule, px} from 'alinea/ui'
 import {IcRoundUploadFile} from 'alinea/ui/icons/IcRoundUploadFile'
+import {useAtomValue} from 'jotai'
 import {ChangeEvent, DragEvent, useRef, useState} from 'react'
 import {useQuery} from 'react-query'
-import {useSession} from '../../hook/UseSession.js'
+import {graphAtom} from '../../atoms/EntryAtoms.js'
 import {useUploads} from '../../hook/UseUploads.js'
 import {useWorkspace} from '../../hook/UseWorkspace.js'
 import {FileSummaryRow} from './FileSummary.js'
@@ -21,28 +22,28 @@ type FileUploaderProps = {
 }
 
 export function FileUploader({max, toggleSelect}: FileUploaderProps) {
-  const {cnx: hub} = useSession()
   const {name: workspace} = useWorkspace()
   const {upload, uploads} = useUploads(toggleSelect)
   const dropZone = useRef<HTMLDivElement>(null)
   const [isOver, setIsOver] = useState(false)
+  const graph = useAtomValue(graphAtom)
   const {data: libraries = []} = useQuery(
     ['media-libraries', workspace],
     () => {
-      return hub
-        .query({
-          cursor: MediaLibrary.where(Page.workspace.is(workspace)).select({
-            id: MediaLibrary.id,
+      return graph.active.find(
+        MediaLibrary()
+          .where(Page.workspace.is(workspace))
+          .select({
+            id: Page.entryId,
             title: MediaLibrary.title,
-            workspace: MediaLibrary.alinea.workspace,
-            root: MediaLibrary.alinea.root,
-            url: MediaLibrary.url,
-            parents: Tree.parents(MediaLibrary.id).select(parent => ({
-              title: parent.title
-            }))
+            workspace: Page.workspace,
+            root: Page.root,
+            url: Page.url,
+            parents({parents}) {
+              return parents().select(Page.title)
+            }
           })
-        })
-        .then(Outcome.unpack)
+      )
     }
   )
   const [uploadTo = libraries?.[0]?.id, setUploadTo] = useState<
@@ -89,7 +90,7 @@ export function FileUploader({max, toggleSelect}: FileUploaderProps) {
           return (
             <FileSummaryRow
               key={upload.id}
-              id={upload.id}
+              entryId={upload.id}
               title={upload.file.name}
               extension={upload.file.name.split('.').pop()!}
               size={upload.file.size}
@@ -97,7 +98,7 @@ export function FileUploader({max, toggleSelect}: FileUploaderProps) {
               root={upload.to.root}
               preview={upload.preview!}
               averageColor={upload.averageColor!}
-              parents={mediaLibrary!.parents.concat(mediaLibrary!)}
+              parents={mediaLibrary!.parents.concat(mediaLibrary!.title)}
             />
           )
         })}

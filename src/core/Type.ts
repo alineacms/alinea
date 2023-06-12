@@ -186,8 +186,18 @@ class TypeInstance<Definition extends TypeDefinition> implements TypeData {
       }
     }
     addCurrent()
-    const callable = ((...args: Array<any>) => this.call(...args)) as any
-    delete callable.name
+    const name = label as string
+    const callable = {
+      [name]: (...condition: Array<any>) => this.call(...condition)
+    }[name] as any
+    /*defineProperty(callable, 'name', {
+      value: name,
+      enumerable: false,
+      configurable: true,
+      writable: true
+    })*/
+    //console.log(Object.getOwnPropertyDescriptors(callable))
+    //delete callable.name
     delete callable.length
     this.target = callable
     this.defineProperties(callable)
