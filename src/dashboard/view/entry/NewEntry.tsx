@@ -1,4 +1,5 @@
 import {createId, Entry, EntryPhase, Page, slugify, Type} from 'alinea/core'
+import {Projection} from 'alinea/core/pages/Projection'
 import {generateKeyBetween} from 'alinea/core/util/FractionalIndexing'
 import {entries, fromEntries, keys} from 'alinea/core/util/Objects'
 import {useNavigate} from 'alinea/dashboard/util/HashRouter'
@@ -21,26 +22,46 @@ import {IcRoundArrowBack} from 'alinea/ui/icons/IcRoundArrowBack'
 import {Link} from 'alinea/ui/Link'
 import {useAtomValue} from 'jotai'
 import {FormEvent, useState} from 'react'
-import {useQuery, useQueryClient} from 'react-query'
+import {useQuery} from 'react-query'
 import {graphAtom} from '../../atoms/EntryAtoms.js'
-import {useDashboard} from '../../hook/UseDashboard'
+import {useConfig} from '../../hook/UseConfig.js'
 import {useLocale} from '../../hook/UseLocale'
 import {useNav} from '../../hook/UseNav'
 import {useRoot} from '../../hook/UseRoot'
-import {useSession} from '../../hook/UseSession'
 import {useWorkspace} from '../../hook/UseWorkspace'
 import {IconButton} from '../IconButton.js'
 import css from './NewEntry.module.scss'
 
 const styles = fromModule(css)
 
+const parentData = {
+  id: Page.entryId,
+  type: Page.type,
+  url: Page.url,
+  level: Page.level,
+  parent: Page.parent,
+  childrenIndex({children}) {
+    return children().select(Page.index).orderBy(Page.index.asc()).first()
+  }
+} satisfies Projection
+
 function NewEntryForm({parentId}: NewEntryProps) {
+  const {schema} = useConfig()
+  const graph = useAtomValue(graphAtom)
+  const {data: requestedParent} = useQuery(
+    ['parent-req', parentId],
+    async () => {
+      return graph.active.get(Page({entryId: parentId}).select(parentData))
+    },
+    {suspense: true, keepPreviousData: true}
+  )
+  const preselectedId =
+    requestedParent &&
+    (Type.isContainer(schema[requestedParent.type])
+      ? requestedParent.id
+      : requestedParent.parent)
   const nav = useNav()
-  const navigate = useNavigate()
   const locale = useLocale()
-  const queryClient = useQueryClient()
-  const {cnx: hub} = useSession()
-  const {schema} = useDashboard().config
   const {name: workspace} = useWorkspace()
   const containerTypes = entries(schema)
     .filter(([, type]) => {
@@ -54,38 +75,23 @@ function NewEntryForm({parentId}: NewEntryProps) {
         .isIn(containerTypes)
         .and(Page.workspace.is(workspace))
         .and(Page.root.is(root.name)),
-      initialValue: parentId
+      initialValue: preselectedId
         ? ({
             id: 'parent',
             ref: 'entry',
             type: 'entry',
-            entry: parentId
+            entry: preselectedId
           } as EntryReference)
         : undefined
     })
   )
   const selectedParent = useObservable(parentField)
-  const graph = useAtomValue(graphAtom)
   const {data: parent} = useQuery(
     ['parent', selectedParent],
     async () => {
       const parentId = selectedParent?.entry
       if (!parentId) return
-      const res = await graph.active.get(
-        Page({entryId: parentId}).select({
-          id: Page.entryId,
-          type: Page.type,
-          url: Page.url,
-          level: Page.level,
-          childrenIndex({children}) {
-            return children()
-              .select(Page.index)
-              .orderBy(Page.index.asc())
-              .first()
-          }
-        })
-      )
-      return res
+      return graph.active.get(Page({entryId: parentId}).select(parentData))
     },
     {suspense: true, keepPreviousData: true}
   )

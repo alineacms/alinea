@@ -5,11 +5,16 @@ import {
   MdiSourceBranch
 } from '@/icons'
 import {Home} from '@/schema/Home'
+import {HStack, Stack, VStack} from 'alinea/ui/Stack'
+import {IcRoundOpenInNew} from 'alinea/ui/icons/IcRoundOpenInNew'
 import {fromModule} from 'alinea/ui/util/Styler'
+import {px} from 'alinea/ui/util/Units'
 import {Feature, Features} from '../layout/Features'
 import {Hero} from '../layout/Hero'
 import {LayoutContainer} from '../layout/Layout'
+import {WebText} from '../layout/WebText'
 import {WebTypo} from '../layout/WebTypo'
+import {Newsletter} from '../layout/engage/Newsletter'
 import heroBg from '../media/hero.jpg'
 import css from './home.module.scss'
 
@@ -80,12 +85,12 @@ export default async function HomePage() {
         </Features>
       </section>
 
-      {/*<section className={styles.home.section('highlight')}>
+      <section className={styles.home.section('highlight')}>
         <LayoutContainer>
           <div className={styles.home.intro()}>
-            <WebText doc={props.introduction.text} />
+            <WebText doc={home.introduction.text} />
             <div className={styles.home.intro.code()}>
-              <CodeVariantsBlock variants={props.introduction.code} />
+              {/*<CodeVariantsBlock variants={props.introduction.code} />*/}
               <HStack center>
                 <Stack.Right className={styles.home.intro.examples()}>
                   <HStack gap={25}>
@@ -175,18 +180,18 @@ export default async function HomePage() {
               <WebTypo.H2>User friendly dashboard</WebTypo.H2>
               <WebTypo.P>
                 Content can be navigated hierarchically, much like the website
-                you're structuring, making it easy to find what you're looking
-                for. A live preview of the page shows exactly what changes look
-                like.
+                you&apos;re structuring, making it easy to find what you&apos;re
+                looking for. A live preview of the page shows exactly what
+                changes look like.
               </WebTypo.P>
             </WebTypo>
           </LayoutContainer>
-          <div className={styles.home.demo()}>
+          {/*<div className={styles.home.demo()}>
             <iframe
               src="https://demo.alinea.sh"
               className={styles.home.demo.inner()}
             />
-          </div>
+          </div>*/}
         </VStack>
       </section>
 
@@ -199,7 +204,7 @@ export default async function HomePage() {
                 <WebTypo.P>
                   Alinea is open source under the MIT license.
                   <br />
-                  It needs some work before it's production-ready.
+                  It needs some work before it&apos;s production-ready.
                 </WebTypo.P>
               </WebTypo>
               <Hero.Action
@@ -212,7 +217,7 @@ export default async function HomePage() {
             <Newsletter style={{flexGrow: 1}} />
           </HStack>
         </LayoutContainer>
-      </section>*/}
+      </section>
 
       {/*
 

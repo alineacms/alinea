@@ -7,7 +7,6 @@ import {useLocale} from '../../hook/UseLocale.js'
 import {useNav} from '../../hook/UseNav.js'
 import {useRoot} from '../../hook/UseRoot.js'
 import {useWorkspace} from '../../hook/UseWorkspace.js'
-import {Create} from '../Create.js'
 import css from './RootHeader.module.scss'
 
 const styles = fromModule(css)
@@ -30,7 +29,7 @@ export function RootHeader({active}: RootHeaderProps) {
           <TextLabel label={root.label} />
         </a>
         {root.i18n && <Langswitch />}
-        <Create.Link href={nav.create({workspace, root: root.name})} />
+        {/*<Create.Link href={nav.create({workspace, root: root.name})} />*/}
       </div>
     </div>
   )

@@ -1,4 +1,3 @@
-import {cms} from '@/cms'
 import {btoa} from 'alinea/core/util/Encoding'
 import {PropsWithChildren} from 'react'
 import '../styles/global.scss'
@@ -55,7 +54,7 @@ export default async function Layout({children}: PropsWithChildren) {
         {/*<Layout isHome {...layout}>
           {children}
           </Layout>*/}
-        <cms.previews />
+        {/*<cms.previews />*/}
       </body>
     </html>
   )

@@ -27,11 +27,13 @@ const SearchParams = object({
 })
 
 class NextDriver extends DefaultCMS {
-  connect = async () => {
+  connection = async () => {
     const {cookies, draftMode} = await import('next/headers')
     const {isEnabled: isDraft} = draftMode()
     const devPort = process.env.ALINEA_PORT
-    const resolveDefaults: ClientOptions['resolveDefaults'] = {}
+    const resolveDefaults: ClientOptions['resolveDefaults'] = {
+      realm: Realm.Published
+    }
     if (isDraft) {
       resolveDefaults.realm = Realm.PreferDraft
       const update = parseChunkedCookies(
@@ -70,7 +72,7 @@ class NextDriver extends DefaultCMS {
     if (!jwtSecret) throw new Error('No JWT secret set')
     const previews = new JWTPreviews(jwtSecret)
     const payload = await previews.verify(params.token)
-    const cnx = await this.connect()
+    const cnx = await this.connection()
     const url = (await cnx.resolve({
       selection: Selection.create(
         Page({entryId: params.entryId}).select(Page.url).first()

@@ -1,8 +1,14 @@
-import {fromModule} from 'alinea/ui'
-import {useSession} from '../atoms/DashboardAtoms.js'
+import {Page} from 'alinea/core'
+import {Button, HStack, Stack, Typo, VStack, fromModule, px} from 'alinea/ui'
+import {IcRoundArrowForward} from 'alinea/ui/icons/IcRoundArrowForward'
+import {useAtomValue} from 'jotai'
+import {useQuery} from 'react-query'
+import {graphAtom} from '../atoms/EntryAtoms.js'
 import {EntryEditor} from '../atoms/EntryEditor.js'
 import {useNav} from '../hook/UseNav.js'
 import {useWorkspace} from '../hook/UseWorkspace.js'
+import {EntryEdit} from '../view/EntryEdit.js'
+import {Sidebar} from '../view/Sidebar.js'
 import css from './DraftsOverview.module.scss'
 
 const styles = fromModule(css)
@@ -12,37 +18,30 @@ export interface DraftsOverviewProps {
 }
 
 export function DraftsOverview({editor}: DraftsOverviewProps) {
-  const {cnx: hub} = useSession()
+  const graph = useAtomValue(graphAtom)
   const nav = useNav()
   const workspace = useWorkspace()
-  return null
-  /*const {ids} = useDraftsList(workspace.name)
   const {data, refetch} = useQuery(
-    ['drafts-overview', ids],
+    ['drafts-overview'],
     () => {
-      const criteria = Entry.where(Entry.id.isIn(ids)).where(
-        Entry.workspace.is(workspace.name)
-      )
-      const drafts = hub.query({cursor: criteria}).then(Outcome.unpack)
-      return drafts
+      return graph.drafts.find(Page({workspace: workspace.name}))
     },
     {suspense: true}
   )
   const drafts = data!
-  const selected = id && drafts.find(d => d.id === id)
-  const {draft, isLoading} = useDraft(id)
-  const [publishing, setPublishing] = useState(false)
+  const selected =
+    editor?.entryId && drafts.find(d => d.entryId === editor?.entryId)
   function handlePublish() {
-    if (publishing) return
+    /*if (publishing) return
     setPublishing(true)
     return hub
       .publishEntries({entries: drafts})
       .then(Outcome.unpack)
       .then(() => refetch())
-      .finally(() => setPublishing(false))
+      .finally(() => setPublishing(false))*/
   }
   return (
-    <CurrentDraftProvider value={draft}>
+    <>
       <Sidebar.Tree>
         <HStack center style={{padding: `${px(10)} ${px(20)}`}}>
           <Typo.H4 flat>DRAFTS</Typo.H4>
@@ -55,8 +54,9 @@ export function DraftsOverview({editor}: DraftsOverviewProps) {
         <VStack>
           {drafts.map(draft => {
             return (
-              <div key={draft.id}>
-                <TreeNode
+              <div key={draft.entryId}>
+                {draft.title}
+                {/*<TreeNode
                   entry={{
                     ...draft,
                     locale: draft.alinea.i18n?.locale!,
@@ -78,19 +78,13 @@ export function DraftsOverview({editor}: DraftsOverviewProps) {
                   link={nav.draft({...draft.alinea, id: draft.id})}
                   isOpen={() => false}
                   toggleOpen={() => {}}
-                />
+                />*/}
               </div>
             )
           })}
         </VStack>
       </Sidebar.Tree>
-      {selected && draft && (
-        <EntryEdit
-          initialMode={EditMode.Diff}
-          draft={draft}
-          isLoading={isLoading}
-        />
-      )}
-    </CurrentDraftProvider>
-  )*/
+      {selected && editor && <EntryEdit editor={editor} />}
+    </>
+  )
 }

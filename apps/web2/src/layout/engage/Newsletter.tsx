@@ -1,4 +1,5 @@
-import {fromModule, VStack} from 'alinea/ui'
+import {VStack} from 'alinea/ui/Stack'
+import {fromModule} from 'alinea/ui/util/Styler'
 import {HTMLProps} from 'react'
 import {Action} from '../Action'
 import {WebTypo} from '../WebTypo'
