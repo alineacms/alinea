@@ -1,15 +1,11 @@
 import {fetch} from '@alinea/iso'
-import {Backend, Data, Drafts, JWTPreviews} from 'alinea/backend'
+import {JWTPreviews, Media, Server, Target} from 'alinea/backend'
 import {Connection} from 'alinea/core'
 import {BackendCreateOptions} from 'alinea/core/BackendConfig'
-import {Config} from 'alinea/core/Config'
 import {createError} from 'alinea/core/ErrorWithCode'
 import {Outcome, OutcomeJSON} from 'alinea/core/Outcome'
-import {base64, base64url} from 'alinea/core/util/Encoding'
 import {CloudAuthServerOptions} from './CloudAuthServer.js'
 import {cloudConfig} from './CloudConfig.js'
-
-export interface CloudConnection extends Drafts, Data.Media, Data.Target {}
 
 async function failOnHttpError(res: Response): Promise<Response> {
   if (res.status >= 400) throw createError(res.status, await res.text())
@@ -41,22 +37,22 @@ function asJson(init: RequestInit = {}) {
   }
 }
 
-export class CloudApi implements CloudConnection {
+export class CloudApi implements Media, Target {
   canRename = false
 
-  constructor(private config: Config, private apiKey: string | undefined) {}
+  constructor(private ctx: Connection.Context) {}
 
-  auth(ctx: Connection.Context) {
+  auth() {
     return {
-      authorization: `Bearer ${ctx.token!}`
+      authorization: `Bearer ${this.ctx.token!}`
     }
   }
 
-  publish({changes}: Connection.ChangesParams, ctx: Connection.Context) {
+  publishChanges({changes}: Connection.ChangesParams) {
     return fetch(
       cloudConfig.publish,
       withAuth(
-        ctx,
+        this.ctx,
         asJson({
           method: 'POST',
           body: JSON.stringify(changes)
@@ -66,13 +62,14 @@ export class CloudApi implements CloudConnection {
       .then(failOnHttpError)
       .then<void>(json)
   }
-  async upload(
-    {fileLocation, buffer}: Connection.MediaUploadParams,
-    ctx: Connection.Context
-  ): Promise<string> {
+
+  async upload({
+    fileLocation,
+    buffer
+  }: Connection.MediaUploadParams): Promise<string> {
     return fetch(
       cloudConfig.media,
-      withAuth(ctx, {
+      withAuth(this.ctx, {
         method: 'POST',
         headers: {
           accept: 'application/json',
@@ -87,89 +84,22 @@ export class CloudApi implements CloudConnection {
       .then<Outcome<string>>(Outcome.fromJSON)
       .then(Outcome.unpack)
   }
-  async download(
-    {location}: Connection.DownloadParams,
-    ctx: Connection.Context
-  ): Promise<Connection.Download> {
+
+  async download({
+    location
+  }: Connection.DownloadParams): Promise<Connection.Download> {
     return fetch(
       cloudConfig.media + '?' + new URLSearchParams({location}),
-      withAuth(ctx)
+      withAuth(this.ctx)
     )
       .then(failOnHttpError)
       .then(async res => ({type: 'buffer', buffer: await res.arrayBuffer()}))
-  }
-  get(
-    {id, stateVector}: Connection.EntryParams,
-    ctx: Connection.Context
-  ): Promise<Uint8Array | undefined> {
-    const params = stateVector
-      ? '?' +
-        new URLSearchParams({stateVector: base64url.stringify(stateVector)})
-      : ''
-    // We use the api key to fetch a draft here which was requested during
-    // previewing. The preview token has been validated in Server.loadPages.
-    const token = ctx.preview ? this.apiKey : ctx.token
-    return fetch(cloudConfig.draft + `/${id}` + params, withAuth({token})).then(
-      res => {
-        if (res.status === 404) return undefined
-        return failOnHttpError(res)
-          .then(res => res.arrayBuffer())
-          .then(buffer => new Uint8Array(buffer))
-      }
-    )
-  }
-  update(
-    {id, update}: Connection.UpdateParams,
-    ctx: Connection.Context
-  ): Promise<Drafts.Update> {
-    return fetch(
-      cloudConfig.draft + `/${id}`,
-      withAuth(ctx, {
-        method: 'PUT',
-        headers: {'content-type': 'application/octet-stream'},
-        body: update
-      })
-    )
-      .then(failOnHttpError)
-      .then(() => ({id, update}))
-  }
-  delete(
-    {ids}: Connection.DeleteMultipleParams,
-    ctx: Connection.Context
-  ): Promise<void> {
-    return fetch(
-      cloudConfig.draft,
-      asJson(withAuth(ctx, {method: 'DELETE', body: JSON.stringify({ids})}))
-    )
-      .then(failOnHttpError)
-      .then(() => void 0)
-  }
-  async *updates({}, ctx: Connection.Context): AsyncGenerator<Drafts.Update> {
-    // We use the api key to fetch a draft here which was requested during
-    // previewing. The preview token has been validated in Server.loadPages.
-    const token = ctx.preview ? this.apiKey : ctx.token
-    const updates = await fetch(cloudConfig.draft, asJson(withAuth({token})))
-      .then(failOnHttpError)
-      .then<{
-        success: boolean
-        data: Array<{
-          id: string
-          update: string
-        }>
-      }>(json)
-
-    for (const update of updates.data) {
-      yield {
-        id: update.id,
-        update: base64.parse(update.update)
-      }
-    }
   }
 }
 
 export type CloudBackendOptions = BackendCreateOptions<CloudAuthServerOptions>
 
-export class CloudBackend extends Backend {
+export class CloudBackend extends Server {
   constructor(options: CloudBackendOptions) {
     const apiKey = process.env.ALINEA_API_KEY
     const api = new CloudApi(options.config, apiKey)
