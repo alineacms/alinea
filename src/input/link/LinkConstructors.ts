@@ -1,5 +1,5 @@
 import {Media} from 'alinea/backend/Media'
-import {Hint, Label, Reference, Type} from 'alinea/core'
+import {Hint, Label, Type} from 'alinea/core'
 import {MediaFile} from 'alinea/core/media/MediaSchema'
 import {
   LinkField,
@@ -64,7 +64,6 @@ type LinkData<Fields> =
   | (UrlReference & Type.Infer<Fields>)
 
 export interface LinkOptions<Fields> extends LinkFieldOptions {
-  initialValue?: Reference
   fields?: Type<Fields>
 }
 
@@ -112,9 +111,7 @@ export namespace link {
 export namespace link {
   export interface EntryOptions<Fields>
     extends LinkFieldOptions,
-      Omit<EntryPickerOptions<Fields>, 'hint'> {
-    initialValue?: EntryReference
-  }
+      Omit<EntryPickerOptions<Fields>, 'hint'> {}
 
   export function entry<Fields>(
     label: Label,
