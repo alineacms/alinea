@@ -12,6 +12,7 @@ export interface LinkFieldOptions extends FieldOptions {
   optional?: boolean
   /** Display a minimal version */
   inline?: boolean
+  initialValue?: Reference | Array<Reference>
 }
 
 export interface LinkOptions<Row extends Reference> extends LinkFieldOptions {
@@ -25,7 +26,7 @@ export class LinkField<Row extends Reference> extends Field.Union<
 
 export function createLink<Row extends Reference>(
   label: Label,
-  options: LinkOptions<Row> & {initialValue?: Row}
+  options: LinkOptions<Row>
 ): LinkField<Row> {
   const pickers = entries(options.pickers)
   const blocks = fromEntries(
@@ -39,20 +40,20 @@ export function createLink<Row extends Reference>(
     hint,
     label,
     options,
-    initialValue: options.initialValue
+    initialValue: options.initialValue as Row
   })
 }
 
 /** Internal representation of a link field */
 export class LinksField<Row extends Reference> extends Field.List<
   Row,
-  LinkOptions<Row>
+  LinkOptions<Row> & {max?: number}
 > {}
 
 /** Create a link field configuration */
 export function createLinks<Row extends Reference>(
   label: Label,
-  options: LinkOptions<Row> & {max?: number; initialvalue?: Array<Row>}
+  options: LinkOptions<Row> & {max?: number}
 ): LinksField<Row> {
   const pickers = entries(options.pickers)
   const blocks = fromEntries(
