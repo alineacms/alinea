@@ -1,4 +1,4 @@
-import {JWTPreviews} from 'alinea/backend'
+import {JWTPreviews, Server} from 'alinea/backend'
 import {Store} from 'alinea/backend/Store'
 import {exportStore} from 'alinea/cli/ExportStore'
 import {createCloudHandler} from 'alinea/cloud/server/CloudHandler'
@@ -17,6 +17,7 @@ import {EntryPhase} from '../Entry.js'
 import {Page} from '../Page.js'
 import {Realm} from '../pages/Realm.js'
 import {Selection} from '../pages/Selection.js'
+import {Logger} from '../util/Logger.js'
 import {join} from '../util/Paths.js'
 import {NextApi} from './NextDriver.js'
 
@@ -56,7 +57,17 @@ class NextDriver extends CMS implements NextApi {
         url: `http://127.0.0.1:${devPort}`,
         resolveDefaults
       })
-    throw new Error(`No CMS connection available`)
+    const store = await this.readStore()
+    return new Server(
+      {
+        config: this.config,
+        store,
+        media: undefined!,
+        target: undefined!,
+        previews: new JWTPreviews(this.apiKey!)
+      },
+      {logger: new Logger('NextDriver')}
+    )
   }
 
   exportStore(outDir: string, data: Uint8Array): Promise<void> {
@@ -64,8 +75,9 @@ class NextDriver extends CMS implements NextApi {
   }
 
   async readStore(): Promise<Store> {
-    // return a readonly store
-    return undefined!
+    // @ts-ignore
+    const {createStore} = await import('@alinea/generated/store.js')
+    return createStore()
   }
 
   backendHandler() {

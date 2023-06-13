@@ -14,7 +14,7 @@
     "seed": "tsx ./seed.ts"
   },
   "dependencies": {
-    "@alinea/content": "link:.alinea",
+    "@alinea/generated": "link:.alinea",
     "@monaco-editor/react": "^4.4.5",
     "alinea": "0.0.0",
     "esbuild-wasm": "0.14.51",

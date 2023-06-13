@@ -11,7 +11,7 @@ function configType(location: string) {
 const packageJson = {
   private: true,
   version: '0.0.0',
-  name: '@alinea/content',
+  name: '@alinea/generated',
   type: 'module',
   sideEffects: false,
   types: './index.d.ts',

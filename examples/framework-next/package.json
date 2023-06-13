@@ -7,7 +7,7 @@
     "typecheck": "tsc"
   },
   "dependencies": {
-    "@alinea/content": "link:.alinea",
+    "@alinea/generated": "link:.alinea",
     "alinea": "latest",
     "classnames": "^2.3.1",
     "date-fns": "^2.28.0",
@@ -26,6 +26,6 @@
   },
   "stackblitz": {
     "installDependencies": false,
-    "startCommand": "turbo add @alinea/content@file:.alinea && turbo run dev"
+    "startCommand": "turbo add @alinea/generated@file:.alinea && turbo run dev"
   }
 }

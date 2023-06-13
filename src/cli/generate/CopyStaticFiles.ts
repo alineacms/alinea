@@ -1,12 +1,12 @@
 import fs from 'fs-extra'
 import path from 'node:path'
-import {writeFileIfContentsDiffer} from '../util/FS.js'
-import {GenerateContext} from './GenerateContext.js'
+import { writeFileIfContentsDiffer } from '../util/FS.js'
+import { GenerateContext } from './GenerateContext.js'
 
 const packageJson = {
   private: true,
   version: '0.0.0',
-  name: '@alinea/content',
+  name: '@alinea/generated',
   type: 'module',
   sideEffects: false,
   exports: {

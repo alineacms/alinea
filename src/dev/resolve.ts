@@ -51,6 +51,7 @@ function getDepsInfo() {
 }
 
 const external = [
+  '@alinea/generated',
   'next',
   'next/navigation',
   '@remix-run/node',
@@ -131,7 +132,7 @@ export const resolvePlugin: Plugin = {
           format: commonjs ? 'cjs' : 'esm',
           platform: commonjs ? 'node' : undefined,
           target: 'esnext',
-          mainFields: ['module', 'main'],
+          mainFields: commonjs ? ['main'] : ['module', 'main'],
           bundle: true,
           entryPoints: Object.fromEntries(
             Array.from(pkgs).map(pkg => [pkg, pkg])

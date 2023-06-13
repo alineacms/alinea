@@ -1,4 +1,4 @@
-import {Page} from '@alinea/content'
+import {Page} from '@alinea/generated'
 import {px} from 'alinea/ui'
 import {Declaration} from '../types/Declaration'
 import {TypeRow} from '../types/TypeRow'

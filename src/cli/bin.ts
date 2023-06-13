@@ -10,17 +10,16 @@ const prog = sade('alinea')
 
 prog
   .version(meta.version)
-  .command('build')
+  .command('build [config]')
   .alias('generate')
   .describe('Generate types and content cache')
   .option('-w, --watch', `Watch for changes to source files`)
   .option('-d, --dir', `Directory containing the alinea config file`)
-  .option('-c, --config', `Path to the alinea config file`)
   .option(
     '--fix',
     `Any missing or incorrect properties will be overwritten by their default`
   )
-  .action(async args => {
+  .action(async (config, args) => {
     ensureNodeResolution()
     ensureReact()
     const {generate} = await import('./Generate.js')
@@ -29,7 +28,7 @@ prog
       watch: args.watch,
       fix: args.fix,
       onAfterGenerate: forwardCommand,
-      configFile: args.config
+      configFile: config
     })) {
     }
   })
@@ -43,15 +42,14 @@ prog
     return init(args)
   })
 
-  .command('dev')
+  .command('dev [config]')
   .alias('serve')
   .describe('Start a development dashboard')
   .option('-d, --dir', `Directory containing the alinea config file`)
-  .option('-c, --config', `Path to the alinea config file`)
   .option('-p, --port', `Port to listen on`)
   .option('--production', `Use production backend`)
   .option('--dev', `Watch alinea sources`)
-  .action(async args => {
+  .action(async (config, args) => {
     ensureNodeResolution()
     ensureReact()
     ensureEnv(args.dir)
@@ -62,7 +60,7 @@ prog
       alineaDev: args.dev,
       cwd: args.dir,
       onAfterGenerate: forwardCommand,
-      configFile: args.config
+      configFile: config
     })
   })
 

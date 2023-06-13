@@ -1,5 +1,5 @@
-import {Page} from '@alinea/content'
-import {initPages} from '@alinea/content/pages'
+import {Page} from '@alinea/generated'
+import {initPages} from '@alinea/generated/pages'
 import {json, LoaderArgs} from '@remix-run/node'
 import {useLoaderData} from '@remix-run/react'
 import {RichText} from 'alinea/ui'

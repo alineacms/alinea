@@ -5,11 +5,13 @@
   "license": "MIT",
   "scripts": {
     "dev": "cross-env ALINEA_PORT=4500 next dev",
-    "build": "alinea build src/cms -- next build",
+    "dev:test": "alinea dev src/cms.tsx -- next dev",
+    "build": "alinea build src/cms.tsx -- next build",
     "start": "next start",
     "lint": "next lint"
   },
   "dependencies": {
+    "@alinea/generated": "link:.alinea",
     "alinea": "0.0.0",
     "next": "13.4.5-canary.2",
     "react": "18.2.0",

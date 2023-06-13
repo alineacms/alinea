@@ -1,4 +1,4 @@
-import {Page} from '@alinea/content'
+import {Page} from '@alinea/generated'
 import {fromModule} from 'alinea/ui'
 import {ComponentType, Fragment} from 'react'
 import {WebText} from '../layout/WebText'

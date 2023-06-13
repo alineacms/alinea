@@ -1,4 +1,4 @@
-import {Page} from '@alinea/content'
+import {Page} from '@alinea/generated'
 import {fromModule} from 'alinea/ui'
 import {ComponentType} from 'react'
 import css from './Blocks.module.scss'

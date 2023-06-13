@@ -61,7 +61,7 @@ export async function init(options: InitOptions) {
   const [pm = 'npm'] = await outcome(detect({cwd}))
   if (pkg) {
     if (!pkg.dependencies) pkg.dependencies = {}
-    pkg.dependencies['@alinea/content'] = `${
+    pkg.dependencies['@alinea/generated'] = `${
       pm !== 'npm' ? 'link' : 'file'
     }:.alinea`
     await fs.writeFile(
@@ -76,12 +76,12 @@ export async function init(options: InitOptions) {
     await outcome(
       fs.symlink(
         path.join(cwd, '.alinea'),
-        path.join(cwd, 'node_modules/@alinea/content'),
+        path.join(cwd, 'node_modules/@alinea/generated'),
         symlinkType
       )
     )
     const installSucceeded = await outcome.succeeds(
-      fs.stat(path.join(cwd, 'node_modules/@alinea/content'))
+      fs.stat(path.join(cwd, 'node_modules/@alinea/generated'))
     )
     if (!installSucceeded) execSync(`${pm} install`, {cwd, stdio: 'inherit'})
   }
