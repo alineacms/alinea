@@ -3,6 +3,7 @@ import {CMS} from 'alinea/core/CMS'
 import {Config} from 'alinea/core/Config'
 import {BuildResult} from 'esbuild'
 import path from 'node:path'
+import {connect} from 'rado/driver/sql.js'
 import {compileConfig} from './generate/CompileConfig.js'
 import {copyStaticFiles} from './generate/CopyStaticFiles.js'
 import {fillCache} from './generate/FillCache.js'
@@ -32,6 +33,14 @@ function generatePackage(context: GenerateContext, config: Config) {
       dashboard.handlerUrl,
       dashboard.staticFile!
     )
+}
+
+async function createDb(): Promise<[Store, () => Uint8Array]> {
+  const {default: sqlite} = await import('@alinea/sqlite-wasm')
+  const {Database} = await sqlite()
+  const db = new Database()
+  const store = connect(db).toAsync()
+  return [store, () => db.export()]
 }
 
 export async function* generate(options: GenerateOptions): AsyncGenerator<
@@ -69,22 +78,28 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
   const builds = compileConfig(context)[Symbol.asyncIterator]()
   let nextBuild: Promise<{value: BuildResult; done?: boolean}> = builds.next()
   let afterGenerateCalled = false
-  let store: Store | undefined
+
+  const [store, exportStore] = await createDb()
   await copyStaticFiles(context)
   while (true) {
     const {done} = await nextBuild
-    const cms = await loadCMS(context.outDir)
-    await generatePackage(context, cms)
     nextBuild = builds.next()
-    if (store) await store.close()
-    store = await cms.createStore(context.rootDir)
-    for await (const _ of fillCache(context, store, cms, nextBuild)) {
-      yield {cms, store}
-      if (onAfterGenerate && !afterGenerateCalled) {
-        afterGenerateCalled = true
-        onAfterGenerate()
+    try {
+      const cms = await loadCMS(context.outDir)
+      await generatePackage(context, cms)
+      // if (store) await store.close()
+      // store = await cms.createDevStore(context.rootDir)
+      for await (const _ of fillCache(context, store, cms, nextBuild)) {
+        yield {cms, store}
+        if (onAfterGenerate && !afterGenerateCalled) {
+          afterGenerateCalled = true
+          onAfterGenerate()
+        }
       }
+      if (done) break
+      await cms.exportStore(context.outDir, exportStore())
+    } catch (e: any) {
+      console.log(e.message)
     }
-    if (done) break
   }
 }

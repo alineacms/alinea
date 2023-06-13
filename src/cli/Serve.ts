@@ -86,7 +86,7 @@ export async function serve(options: ServeOptions): Promise<void> {
         createHandler(
           context,
           new Handler({
-            dashboardUrl,
+            // dashboardUrl,
             config: currentCMS,
             store: current.value.store,
             target: new FileData({

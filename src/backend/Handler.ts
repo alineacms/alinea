@@ -39,6 +39,8 @@ function createRouter(
     }
   }
   return router(
+    auth.handler,
+
     matcher
       .get(Connection.routes.previewToken())
       .map(context)
@@ -128,7 +130,6 @@ function createRouter(
 
 export interface HandlerOptions extends ServerOptions {
   auth?: Auth.Server
-  dashboardUrl: string
 }
 
 export class Handler {

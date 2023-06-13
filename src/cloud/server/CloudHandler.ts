@@ -1,10 +1,10 @@
 import {fetch} from '@alinea/iso'
-import {JWTPreviews, Media, Server, Target} from 'alinea/backend'
-import {Connection} from 'alinea/core'
-import {BackendCreateOptions} from 'alinea/core/BackendConfig'
+import {Handler, JWTPreviews, Media, Target} from 'alinea/backend'
+import {Store} from 'alinea/backend/Store'
+import {Config, Connection} from 'alinea/core'
 import {createError} from 'alinea/core/ErrorWithCode'
 import {Outcome, OutcomeJSON} from 'alinea/core/Outcome'
-import {CloudAuthServerOptions} from './CloudAuthServer.js'
+import {CloudAuthServer} from './CloudAuthServer.js'
 import {cloudConfig} from './CloudConfig.js'
 
 async function failOnHttpError(res: Response): Promise<Response> {
@@ -40,19 +40,13 @@ function asJson(init: RequestInit = {}) {
 export class CloudApi implements Media, Target {
   canRename = false
 
-  constructor(private ctx: Connection.Context) {}
+  constructor() {}
 
-  auth() {
-    return {
-      authorization: `Bearer ${this.ctx.token!}`
-    }
-  }
-
-  publishChanges({changes}: Connection.ChangesParams) {
+  publishChanges({changes}: Connection.ChangesParams, ctx: Connection.Context) {
     return fetch(
       cloudConfig.publish,
       withAuth(
-        this.ctx,
+        ctx,
         asJson({
           method: 'POST',
           body: JSON.stringify(changes)
@@ -63,13 +57,13 @@ export class CloudApi implements Media, Target {
       .then<void>(json)
   }
 
-  async upload({
-    fileLocation,
-    buffer
-  }: Connection.MediaUploadParams): Promise<string> {
+  async upload(
+    {fileLocation, buffer}: Connection.MediaUploadParams,
+    ctx: Connection.Context
+  ): Promise<string> {
     return fetch(
       cloudConfig.media,
-      withAuth(this.ctx, {
+      withAuth(ctx, {
         method: 'POST',
         headers: {
           accept: 'application/json',
@@ -85,33 +79,31 @@ export class CloudApi implements Media, Target {
       .then(Outcome.unpack)
   }
 
-  async download({
-    location
-  }: Connection.DownloadParams): Promise<Connection.Download> {
+  async download(
+    {location}: Connection.DownloadParams,
+    ctx: Connection.Context
+  ): Promise<Connection.Download> {
     return fetch(
       cloudConfig.media + '?' + new URLSearchParams({location}),
-      withAuth(this.ctx)
+      withAuth(ctx)
     )
       .then(failOnHttpError)
       .then(async res => ({type: 'buffer', buffer: await res.arrayBuffer()}))
   }
 }
 
-export type CloudBackendOptions = BackendCreateOptions<CloudAuthServerOptions>
-
-export class CloudBackend extends Server {
-  constructor(options: CloudBackendOptions) {
-    const apiKey = process.env.ALINEA_API_KEY
-    const api = new CloudApi(options.config, apiKey)
-    super({
-      dashboardUrl: options.config.dashboard?.dashboardUrl!,
-      config: options.config,
-      createStore: options.createStore,
-      auth: options.auth?.configure({apiKey, config: options.config}),
-      drafts: api,
-      target: api,
-      media: api,
-      previews: new JWTPreviews(apiKey!)
-    })
-  }
+export async function createCloudHandler(
+  config: Config,
+  store: Store,
+  apiKey: string
+) {
+  const api = new CloudApi()
+  return new Handler({
+    auth: new CloudAuthServer({config, apiKey}),
+    store,
+    config,
+    target: api,
+    media: api,
+    previews: new JWTPreviews(apiKey)
+  })
 }

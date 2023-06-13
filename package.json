@@ -112,10 +112,10 @@
     "./css": "./dist/index.css",
     "./*.cjs": "./dist/*.cjs",
     "./*": "./dist/*.js",
-    "./cloud/Cloud": {
-      "worker": "./dist/cloud/Cloud.js",
-      "browser": "./dist/cloud/Cloud.browser.js",
-      "default": "./dist/cloud/Cloud.js"
+    "./cloud/view/CloudAuth": {
+      "worker": "./dist/cloud/view/CloudAuth.js",
+      "browser": "./dist/cloud/view/CloudAuth.browser.js",
+      "default": "./dist/cloud/view/CloudAuth.js"
     },
     "./core/media/MediaSchema": {
       "worker": "./dist/core/media/MediaSchema.js",
@@ -210,6 +210,10 @@
     "./auth/passwordless/PasswordLessAuth": {
       "browser": "./dist/auth/passwordless/PasswordLessAuth.js",
       "default": "./dist/auth/passwordless/PasswordLessAuth.server.js"
+    },
+    "./core/driver/NextDriver": {
+      "browser": "./dist/core/driver/NextDriver.js",
+      "default": "./dist/core/driver/NextDriver.server.js"
     }
   }
 }

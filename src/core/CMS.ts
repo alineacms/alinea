@@ -1,32 +1,46 @@
 import {Store} from 'alinea/backend/Store'
+import {MediaFile, MediaLibrary} from 'alinea/core/media/MediaSchema'
 import {Config} from './Config.js'
 import {Connection} from './Connection.js'
 import {Graph, GraphApi} from './Graph.js'
 import {Root} from './Root.js'
+import {Schema} from './Schema.js'
 import {Workspace} from './Workspace.js'
 import {entries} from './util/Objects.js'
 
 type Attachment = Workspace | Root
 const attached = new WeakMap<Attachment, CMS>()
 
+interface MediaSchema {
+  MediaLibrary: typeof MediaLibrary
+  MediaFile: typeof MediaFile
+}
+
 export type Location = Root | Workspace
 
 export interface CMSApi extends GraphApi {
-  createStore(cwd: string): Promise<Store>
   connection(): Promise<Connection>
 }
 
-export abstract class CMS extends Graph implements Config {
-  constructor(public config: Config) {
+export abstract class CMS extends Graph implements Config, CMSApi {
+  schema: Schema
+
+  constructor(config: Config) {
     super(config, async params => {
       const cnx = await this.connection()
       return cnx.resolve(params)
     })
+    this.schema = {
+      MediaLibrary,
+      MediaFile,
+      ...config.schema
+    }
     this.#attach(config)
   }
 
-  abstract createStore(cwd: string): Promise<Store>
   abstract connection(): Promise<Connection>
+  abstract exportStore(cwd: string, store: Uint8Array): Promise<void>
+  abstract readStore(): Promise<Store>
 
   #attach(config: Config) {
     for (const [name, workspace] of entries(config.workspaces)) {
@@ -41,16 +55,8 @@ export abstract class CMS extends Graph implements Config {
     }
   }
 
-  get schema() {
-    return this.config.schema
-  }
-
   get workspaces() {
     return this.config.workspaces
-  }
-
-  get backend() {
-    return this.config.backend
   }
 
   get preview() {
@@ -59,18 +65,11 @@ export abstract class CMS extends Graph implements Config {
 }
 
 export class DefaultCMS extends CMS {
-  async createStore(cwd: string): Promise<Store> {
-    const {default: BetterSqlite3} = await import('better-sqlite3')
-    const {connect} = await import('rado/driver/better-sqlite3')
-    const db = new BetterSqlite3(`${cwd}/.alinea/content.sqlite`)
-    db.pragma('journal_mode = WAL')
-    const cnx = connect(db)
-    return cnx.toAsync()
+  async exportStore(): Promise<void> {}
+  async readStore(): Promise<Store> {
+    throw new Error('Method not implemented.')
   }
-
   async connection(): Promise<Connection> {
-    // const isBrowser = typeof window !== 'undefined'
-    // if (isBrowser) return new Client(this.config)
     throw new Error('Method not implemented.')
   }
 }

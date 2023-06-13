@@ -433,8 +433,8 @@ export class Database implements Syncable {
       )
       const noChanges = inserted === 0 && removed === 0
       if (noChanges) return
-      if (inserted) console.log(`> updated ${inserted} entries`)
-      if (removed) console.log(`> removed ${removed} entries`)
+      // if (inserted) console.log(`> updated ${inserted} entries`)
+      // if (removed) console.log(`> removed ${removed} entries`)
 
       //const endIndex = timer('Indexing entries')
       await this.index(query)

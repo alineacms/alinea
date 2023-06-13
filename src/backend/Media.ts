@@ -1,8 +1,14 @@
 import {Connection, Entry} from 'alinea/core'
 
 export interface Media {
-  upload(params: Connection.MediaUploadParams): Promise<string>
-  download(params: Connection.DownloadParams): Promise<Connection.Download>
+  upload(
+    params: Connection.MediaUploadParams,
+    ctx: Connection.Context
+  ): Promise<string>
+  download(
+    params: Connection.DownloadParams,
+    ctx: Connection.Context
+  ): Promise<Connection.Download>
 }
 
 export namespace Media {
