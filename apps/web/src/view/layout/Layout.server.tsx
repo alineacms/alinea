@@ -1,4 +1,4 @@
-import {Pages} from '@alinea/content'
+import {Pages} from '@alinea/generated'
 import {menuQuery} from '../DocPage.server'
 
 type PageDetails = {

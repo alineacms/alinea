@@ -63,7 +63,7 @@ export function compileConfig({
     plugins: [
       targetPlugin(file => {
         return {
-          packageName: '@alinea/content',
+          packageName: '@alinea/generated',
           packageRoot: outDir
         }
       }),

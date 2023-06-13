@@ -1,4 +1,4 @@
-import {Page} from '@alinea/content'
+import {Page} from '@alinea/generated'
 import {fromModule, Typo} from 'alinea/ui'
 import {IcRoundCheck} from 'alinea/ui/icons/IcRoundCheck'
 import {useRef} from 'react'

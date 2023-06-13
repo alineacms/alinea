@@ -26,7 +26,7 @@ export async function generateDashboard(
   const react = isReact18 ? 'react18' : 'react'
   const entryPoints = {
     entry: 'alinea/cli/static/dashboard/entry',
-    config: '@alinea/content/config.js'
+    config: '@alinea/generated/config.js'
   }
   const basename = path.basename(staticFile, '.html')
   const assetsFolder = path.join(path.dirname(staticFile), basename)

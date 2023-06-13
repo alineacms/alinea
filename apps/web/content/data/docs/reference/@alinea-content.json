@@ -1,7 +1,7 @@
 {
   "id": "KCfi-lnqOtq2CZS-gmh_L",
   "type": "Doc",
-  "title": "@alinea/content",
+  "title": "@alinea/generated",
   "blocks": [
     {
       "id": "YZnFhTyAwd5PHxYsisiaQ",
@@ -15,7 +15,7 @@
           "content": [
             {
               "type": "text",
-              "text": "@alinea/content"
+              "text": "@alinea/generated"
             }
           ]
         },
@@ -62,7 +62,7 @@
               "type": "Variant",
               "name": "npm & pnpm",
               "language": "tsx",
-              "code": "{\n  \"dependencies\": {\n    \"@alinea/content\": \"file:.alinea\"\n  }\n}"
+              "code": "{\n  \"dependencies\": {\n    \"@alinea/generated\": \"file:.alinea\"\n  }\n}"
             },
             {
               "id": "yFqMuOpRLVAUm60UiLODj",
@@ -70,7 +70,7 @@
               "type": "Variant",
               "name": "yarn",
               "language": "tsx",
-              "code": "{\n  \"dependencies\": {\n    \"@alinea/content\": \"link:.alinea\"\n  }\n}"
+              "code": "{\n  \"dependencies\": {\n    \"@alinea/generated\": \"link:.alinea\"\n  }\n}"
             }
           ]
         },

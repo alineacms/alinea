@@ -6,7 +6,7 @@
     "build": "alinea generate -- remix build"
   },
   "dependencies": {
-    "@alinea/content": "link:.alinea",
+    "@alinea/generated": "link:.alinea",
     "@remix-run/node": "^1.7.2",
     "@remix-run/react": "^1.7.2",
     "@remix-run/vercel": "^1.7.2",

@@ -1,4 +1,4 @@
-import {backend} from '@alinea/content/backend'
+import {backend} from '@alinea/generated/backend'
 import type {NextApiRequest, NextApiResponse} from 'next'
 
 export default async function handler(

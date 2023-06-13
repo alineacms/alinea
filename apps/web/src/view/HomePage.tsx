@@ -1,4 +1,4 @@
-import {Page} from '@alinea/content'
+import {Page} from '@alinea/generated'
 import {fromModule, HStack, px, Stack, VStack} from 'alinea/ui'
 import {IcRoundOpenInNew} from 'alinea/ui/icons/IcRoundOpenInNew'
 import {MdiSourceBranch} from 'alinea/ui/icons/MdiSourceBranch'

@@ -1,5 +1,5 @@
-import {Type, type} from 'alinea/core'
 import {Hint} from 'alinea/core/Hint'
+import {Type, type} from 'alinea/core/Type'
 import {hidden} from 'alinea/input/hidden'
 import {path} from 'alinea/input/path'
 import {text} from 'alinea/input/text'

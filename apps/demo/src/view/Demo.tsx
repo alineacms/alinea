@@ -1,5 +1,5 @@
-import {config} from '@alinea/content/config'
-import {createStore} from '@alinea/content/store'
+import {config} from '@alinea/generated/config'
+import {createStore} from '@alinea/generated/store'
 import {JWTPreviews, Server} from 'alinea/backend'
 import {IndexedDBData, IndexedDBDrafts} from 'alinea/backend/indexeddb'
 import {Dashboard, Preview} from 'alinea/dashboard'

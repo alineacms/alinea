@@ -96,8 +96,10 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
           onAfterGenerate()
         }
       }
-      if (done) break
-      await cms.exportStore(context.outDir, exportStore())
+      if (done) {
+        await cms.exportStore(context.outDir, exportStore())
+        break
+      }
     } catch (e: any) {
       console.log(e.message)
     }

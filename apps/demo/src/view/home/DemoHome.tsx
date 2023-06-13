@@ -1,4 +1,4 @@
-import {Page} from '@alinea/content'
+import {Page} from '@alinea/generated'
 import {fromModule, VStack} from 'alinea/ui'
 import {DemoHeader} from '../layout/DemoHeader'
 import {DemoLayout} from '../layout/DemoLayout'

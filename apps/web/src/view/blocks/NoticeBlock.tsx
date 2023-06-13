@@ -1,4 +1,4 @@
-import {Page} from '@alinea/content'
+import {Page} from '@alinea/generated'
 import {fromModule, HStack} from 'alinea/ui'
 import {IcOutlineInfo} from '../../icons/IcOutlineInfo'
 import {WebText} from '../layout/WebText'

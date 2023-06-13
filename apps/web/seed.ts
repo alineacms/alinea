@@ -1,5 +1,5 @@
-import {config} from '@alinea/content/config.js'
-import {createStore} from '@alinea/content/store.js'
+import {config} from '@alinea/generated/config.js'
+import {createStore} from '@alinea/generated/store.js'
 import {JsonLoader} from 'alinea/backend'
 import {FileData} from 'alinea/backend/data/FileData'
 import {Storage} from 'alinea/backend/Storage'

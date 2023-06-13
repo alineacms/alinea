@@ -5,15 +5,16 @@ import {IcSharpBrightnessMedium} from 'alinea/ui/icons/IcSharpBrightnessMedium'
 import {fromModule} from 'alinea/ui/util/Styler'
 import Link from 'next/link'
 import css from './Footer.module.scss'
-import {LayoutContainer} from './Layout'
+import {LayoutContainer, LayoutTheme} from './Layout'
+import {LayoutProps} from './RootLayout.jsx'
 import {WebTypo} from './WebTypo'
 
 const styles = fromModule(css)
 
 export type FooterProps = {
   footer: LayoutProps['footer']
-  theme: Layout.Theme
-  setTheme: (theme: Layout.Theme) => void
+  theme: LayoutTheme
+  setTheme: (theme: LayoutTheme) => void
 }
 
 const themeIcons = {

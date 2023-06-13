@@ -1,4 +1,4 @@
-import {initPages} from '@alinea/content/pages'
+import {initPages} from '@alinea/generated/pages'
 
 export async function getStaticPaths() {
   const pages = initPages()

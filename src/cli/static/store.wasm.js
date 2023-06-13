@@ -1,7 +1,5 @@
 import init from '@alinea/sqlite-wasm'
-import {createId} from 'alinea/core'
-import {SqliteStore} from 'alinea/store/sqlite/SqliteStore'
-import {SqlJsDriver} from 'alinea/store/sqlite/drivers/SqlJsDriver'
+import {connect} from 'rado/driver/sql.js'
 import * as storeExports from './$WASM.js'
 
 function unpack(exports) {
@@ -24,6 +22,6 @@ async function getWasmInstance(exports, imports) {
 export function createStore() {
   return Promise.all([getWasmInstance(storeExports), init()]).then(
     ([{exports}, {Database}]) =>
-      new SqliteStore(new SqlJsDriver(new Database(unpack(exports))), createId)
+      connect(new Database(unpack(exports))).toAsync()
   )
 }

@@ -28,7 +28,7 @@ yarn dev
 ```
 
 If you're using a different package manager than yarn update the
-`@alinea/content` package link to `file:.alinea`
+`@alinea/generated` package link to `file:.alinea`
 ([more info](https://alinea.sh/docs/reference/@alinea-content)).
 
 The alinea dashboard is available at [http://localhost:4500](http://localhost:4500).

@@ -41,11 +41,11 @@ __metadata:
     compare-versions: ^4.1.3
     detect-package-manager: ^2.0.1
     dotenv: ^16.0.1
-    esbuild: ^0.17.19
+    esbuild: ^0.18.2
     execa: ^6.1.0
     find-config: ^1.0.0
     fs-extra: ^10.0.0
-    sade: ^1.7.4
+    sade: ^1.8.1
   languageName: unknown
   linkType: soft
 
@@ -99,6 +99,12 @@ __metadata:
     find-config: ^1.0.0
     postcss-pxtorem: ^6.0.0
   languageName: unknown
+  linkType: soft
+
+"@alinea/generated@link:.alinea::locator=%40alinea%2Fweb2%40workspace%3Aapps%2Fweb2":
+  version: 0.0.0-use.local
+  resolution: "@alinea/generated@link:.alinea::locator=%40alinea%2Fweb2%40workspace%3Aapps%2Fweb2"
+  languageName: node
   linkType: soft
 
 "@alinea/input.richtext@workspace:src/input/richtext":
@@ -163,6 +169,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@alinea/web2@workspace:apps/web2"
   dependencies:
+    "@alinea/generated": "link:.alinea"
     "@fontsource/inter": 5.0.1
     "@fontsource/jetbrains-mono": 5.0.1
     "@fontsource/poppins": 5.0.1
@@ -3108,7 +3115,7 @@ __metadata:
     compare-versions: ^4.1.3
     copy-env-cli: 1.0.0
     cross-env: ^7.0.3
-    esbuild: ^0.17.19
+    esbuild: ^0.18.2
     esbx: ^0.0.18
     fs-extra: ^10.0.0
     glob: ^7.2.0
@@ -8900,6 +8907,15 @@ resolve@^1.10.0:
   dependencies:
     mri: ^1.1.0
   checksum: 80a2c4ca086c25cdb62cb084a38a0cc72afc657ed4b1874d6e7b3fd0b7f748cf806567ece6d68f13e19d0ed1779cd226ca8c24d8fd7ae692bf09bff1e1966522
+  languageName: node
+  linkType: hard
+
+"sade@npm:^1.8.1":
+  version: 1.8.1
+  resolution: "sade@npm:1.8.1"
+  dependencies:
+    mri: ^1.1.0
+  checksum: 0756e5b04c51ccdc8221ebffd1548d0ce5a783a44a0fa9017a026659b97d632913e78f7dca59f2496aa996a0be0b0c322afd87ca72ccd909406f49dbffa0f45d
   languageName: node
   linkType: hard
 

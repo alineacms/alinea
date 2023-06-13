@@ -80,7 +80,7 @@
               "type": "Variant",
               "name": "Next.js serverless",
               "language": "tsx",
-              "code": "// pages/api/cms/[...slug].ts\n\n// The nodeHandler utility exports the backend handle as a Node.js http handler\nimport {nodeHandler} from 'alinea/backend/router/NodeHandler'\n// The generated backend file will connect to the backend we'll configure next\nimport {backend} from '@alinea/content/backend.js'\n// Handle cms API routes at /api/cms/[...slug]\nexport default nodeHandler(backend.handle)\n// Disable the body parser middleware that next.js injects,\n// we'll let the handler deal with it\nexport const config = {api: {bodyParser: false}}"
+              "code": "// pages/api/cms/[...slug].ts\n\n// The nodeHandler utility exports the backend handle as a Node.js http handler\nimport {nodeHandler} from 'alinea/backend/router/NodeHandler'\n// The generated backend file will connect to the backend we'll configure next\nimport {backend} from '@alinea/generated/backend.js'\n// Handle cms API routes at /api/cms/[...slug]\nexport default nodeHandler(backend.handle)\n// Disable the body parser middleware that next.js injects,\n// we'll let the handler deal with it\nexport const config = {api: {bodyParser: false}}"
             }
           ]
         },

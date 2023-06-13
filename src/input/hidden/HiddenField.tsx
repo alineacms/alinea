@@ -1,5 +1,6 @@
-import {Field, Label} from 'alinea/core'
+import {Field} from 'alinea/core/Field'
 import {Hint} from 'alinea/core/Hint'
+import {Label} from 'alinea/core/Label'
 
 /** Optional settings to configure a hidden field */
 export type HiddenOptions<T> = {

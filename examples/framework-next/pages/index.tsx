@@ -1,4 +1,4 @@
-import {Page} from '@alinea/content'
+import {Page} from '@alinea/generated'
 import Head from 'next/head'
 import Container from '../components/container.js'
 import HeroPost from '../components/hero-post.js'

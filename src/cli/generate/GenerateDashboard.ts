@@ -1,14 +1,14 @@
-import {buildOptions} from 'alinea/cli/build/BuildOptions'
-import {writeFileIfContentsDiffer} from 'alinea/cli/util/FS'
-import {publicDefines} from 'alinea/cli/util/PublicDefines'
-import {createError} from 'alinea/core/ErrorWithCode'
-import {code} from 'alinea/core/util/CodeGen'
+import { buildOptions } from 'alinea/cli/build/BuildOptions'
+import { writeFileIfContentsDiffer } from 'alinea/cli/util/FS'
+import { publicDefines } from 'alinea/cli/util/PublicDefines'
+import { createError } from 'alinea/core/ErrorWithCode'
+import { code } from 'alinea/core/util/CodeGen'
 import semver from 'compare-versions'
-import {build} from 'esbuild'
+import { build } from 'esbuild'
 import fs from 'node:fs'
-import {createRequire} from 'node:module'
+import { createRequire } from 'node:module'
 import path from 'node:path'
-import {GenerateContext} from './GenerateContext.js'
+import { GenerateContext } from './GenerateContext.js'
 
 const require = createRequire(import.meta.url)
 
@@ -26,7 +26,7 @@ export async function generateDashboard(
   const react = isReact18 ? 'react18' : 'react'
   const entryPoints = {
     entry: 'alinea/cli/static/dashboard/entry',
-    config: '@alinea/content/config.js'
+    config: '@alinea/generated/config.js'
   }
   const basename = path.basename(staticFile, '.html')
   const assetsFolder = path.join(path.dirname(staticFile), basename)

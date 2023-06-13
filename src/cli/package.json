@@ -2,7 +2,7 @@
   "name": "@alinea/cli",
   "type": "module",
   "dependencies": {
-    "esbuild": "^0.17.19"
+    "esbuild": "^0.18.2"
   },
   "devDependencies": {
     "@types/compression": "^1.7.2",
@@ -15,6 +15,6 @@
     "execa": "^6.1.0",
     "find-config": "^1.0.0",
     "fs-extra": "^10.0.0",
-    "sade": "^1.7.4"
+    "sade": "^1.8.1"
   }
 }

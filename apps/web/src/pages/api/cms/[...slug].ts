@@ -1,9 +1,9 @@
 // import {nodeHandler} from 'alinea/backend/router/NodeHandler'
-// import {backend} from '@alinea/content/backend.js'
+// import {backend} from '@alinea/generated/backend.js'
 // export default nodeHandler(backend.handle)
 
 export default async (req: Request) => {
-  const {backend} = await import('@alinea/content/backend')
+  const {backend} = await import('@alinea/generated/backend')
   const response = await backend.handle(req)
   if (response === undefined) return new Response('Not found', {status: 404})
   return response

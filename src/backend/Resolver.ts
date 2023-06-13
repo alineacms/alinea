@@ -613,6 +613,7 @@ export class Resolver {
     interim: Interim,
     target: pages.TargetData
   ): Promise<void> {
+    if (!interim) return
     const {name} = target
     if (!name) return
     const type = this.schema[name]
@@ -699,7 +700,7 @@ export class Resolver {
             await tx(Entry().insert(previewEntry))
             const result = await tx(query)
             const linkResolver = new LinkResolver(this, tx, realm)
-            await this.post({linkResolver}, result, selection)
+            if (result) await this.post({linkResolver}, result, selection)
             // The transaction api needs to be revised to support explicit commit/rollback
             throw {result}
           })
@@ -710,7 +711,7 @@ export class Resolver {
     }
     const result = await this.store(query)
     const linkResolver = new LinkResolver(this, this.store, realm)
-    await this.post({linkResolver}, result, selection)
+    if (result) await this.post({linkResolver}, result, selection)
     return result
   }
 }

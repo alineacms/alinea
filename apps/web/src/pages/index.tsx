@@ -1,4 +1,4 @@
-import {initPages} from '@alinea/content/pages'
+import {initPages} from '@alinea/generated/pages'
 import {GetStaticPropsContext} from 'next'
 import {PageView} from '../view/PageView'
 import {pageViewQuery} from '../view/PageView.server'
