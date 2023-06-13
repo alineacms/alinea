@@ -16,6 +16,7 @@ import {Realm} from '../pages/Realm.js'
 import {Selection} from '../pages/Selection.js'
 
 export interface NextApi extends CMSApi {
+  //handler(request: Request): Promise<Response>
   previewHandler(request: Request): Promise<Response>
   previews(): JSX.Element
 }
@@ -26,7 +27,7 @@ const SearchParams = object({
   realm: enums(Realm)
 })
 
-class NextDriver extends DefaultCMS {
+class NextDriver extends DefaultCMS implements NextApi {
   connection = async () => {
     const {cookies, draftMode} = await import('next/headers')
     const {isEnabled: isDraft} = draftMode()
@@ -56,6 +57,8 @@ class NextDriver extends DefaultCMS {
       })
     throw new Error(`No CMS connection available`)
   }
+
+  handler = async (request: Request) => {}
 
   previewHandler = async (request: Request) => {
     const {draftMode} = await import('next/headers')

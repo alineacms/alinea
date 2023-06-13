@@ -1,11 +1,12 @@
 import {FS} from 'alinea/backend/FS'
-import {Connection} from 'alinea/core'
+import {Connection, createError} from 'alinea/core'
 import {Config} from 'alinea/core/Config'
 import {outcome} from 'alinea/core/Outcome'
 import {Root} from 'alinea/core/Root'
 import {Workspace} from 'alinea/core/Workspace'
 import {entries, keys, values} from 'alinea/core/util/Objects'
 import * as path from 'alinea/core/util/Paths'
+import {Media} from '../Media.js'
 import {Source, SourceEntry, WatchFiles} from '../Source.js'
 import {Target} from '../Target.js'
 
@@ -36,7 +37,7 @@ async function filesOfPath(fs: FS, dir: string): Promise<WatchFiles> {
   }
 }
 
-export class FileData implements Source, Target {
+export class FileData implements Source, Target, Media {
   canRename = true
 
   constructor(public options: FileDataOptions) {}
@@ -138,5 +139,29 @@ export class FileData implements Source, Target {
       tasks.push(fs.rm(location, {recursive: true, force: true}).catch(noop))
     }
     return Promise.all(tasks).then(() => void 0)
+  }
+
+  async upload({
+    fileLocation,
+    buffer
+  }: Connection.MediaUploadParams): Promise<string> {
+    const {fs, rootDir = '.'} = this.options
+    await fs.writeFile(path.join(rootDir, fileLocation), Buffer.from(buffer))
+    return fileLocation
+  }
+
+  async download({
+    location
+  }: Connection.DownloadParams): Promise<Connection.Download> {
+    const {fs, config, rootDir = '.'} = this.options
+    const mediaDirs: Array<string> = Object.values(config.workspaces)
+      .map(workspace => Workspace.data(workspace).mediaDir!)
+      .filter(Boolean)
+    const file = path.join(rootDir, location)
+    const isInMediaLocation = mediaDirs.some(dir =>
+      path.contains(path.join(rootDir, dir), file)
+    )
+    if (!isInMediaLocation) throw createError(401)
+    return {type: 'buffer', buffer: await fs.readFile(file)}
   }
 }
