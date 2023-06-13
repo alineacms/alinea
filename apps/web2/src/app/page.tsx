@@ -5,7 +5,6 @@ import {
   MdiSourceBranch
 } from '@/icons'
 import {Home} from '@/schema/Home'
-import {Page} from 'alinea/core'
 import {HStack, Stack, VStack} from 'alinea/ui/Stack'
 import {IcRoundOpenInNew} from 'alinea/ui/icons/IcRoundOpenInNew'
 import {fromModule} from 'alinea/ui/util/Styler'
@@ -22,10 +21,6 @@ import css from './home.module.scss'
 const styles = fromModule(css)
 
 export default async function HomePage() {
-  const pages = await cms.find(Page())
-  console.log('=================')
-  console.log(pages)
-  console.log('=================')
   const home = await cms.get(Home)
   return (
     <main className={styles.home()}>

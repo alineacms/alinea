@@ -65,6 +65,7 @@ export const internalPlugin: Plugin = {
       const sFiles = [...serverFiles].sort()
       for (const file of sFiles) {
         exports[`./${file}`] = {
+          worker: `./dist/${file}.${SERVER_TARGET}.js`,
           browser: `./dist/${file}.js`,
           default: `./dist/${file}.${SERVER_TARGET}.js`
         }

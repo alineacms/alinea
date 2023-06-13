@@ -64,7 +64,7 @@ class NextDriver extends CMS implements NextApi {
         store,
         media: undefined!,
         target: undefined!,
-        previews: new JWTPreviews(this.apiKey!)
+        previews: undefined!
       },
       {logger: new Logger('NextDriver')}
     )

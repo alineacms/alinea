@@ -1,11 +1,7 @@
 {
   "name": "@alinea/backend",
   "type": "module",
-  "dependencies": {
-    "better-sqlite3": "^8.1.0"
-  },
   "devDependencies": {
-    "@types/better-sqlite3": "^5.4.1",
     "cito": "^0.2.0",
     "dataloader": "^2.1.0",
     "pretty-ms": "^8.0.0",
