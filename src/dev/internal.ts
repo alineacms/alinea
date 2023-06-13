@@ -25,6 +25,11 @@ export const internalPlugin: Plugin = {
           file.slice('src/'.length, -`.${BROWSER_TARGET}.ts`.length)
         )
       }
+      for (const file of glob.sync(`src/**/*.${SERVER_TARGET}.tsx`)) {
+        serverFiles.add(
+          file.slice('src/'.length, -`.${SERVER_TARGET}.tsx`.length)
+        )
+      }
       for (const file of glob.sync(`src/**/*.${SERVER_TARGET}.ts`)) {
         serverFiles.add(
           file.slice('src/'.length, -`.${SERVER_TARGET}.ts`.length)

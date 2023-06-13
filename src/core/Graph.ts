@@ -20,14 +20,12 @@ export interface GraphApi {
 }
 
 export class Graph implements GraphApi {
-  #config: Config
   targets: Schema.Targets
 
   constructor(
-    config: Config,
+    public config: Config,
     public resolve: (params: Connection.ResolveParams) => Promise<unknown>
   ) {
-    this.#config = config
     this.targets = Schema.targets(config.schema)
   }
 
@@ -45,7 +43,7 @@ export class Graph implements GraphApi {
     serializeSelection(this.targets, selection)
     return this.resolve({
       selection,
-      location: seralizeLocation(this.#config, providedLocation)
+      location: seralizeLocation(this.config, providedLocation)
     })
   }
 
@@ -58,7 +56,7 @@ export class Graph implements GraphApi {
     serializeSelection(this.targets, selection)
     return this.resolve({
       selection,
-      location: seralizeLocation(this.#config, providedLocation)
+      location: seralizeLocation(this.config, providedLocation)
     })
   }
 
@@ -71,7 +69,7 @@ export class Graph implements GraphApi {
     serializeSelection(this.targets, selection)
     return this.resolve({
       selection,
-      location: seralizeLocation(this.#config, providedLocation)
+      location: seralizeLocation(this.config, providedLocation)
     })
   }
 }

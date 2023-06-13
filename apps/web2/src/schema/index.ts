@@ -1,4 +1,3 @@
-export {MediaFile, MediaLibrary} from 'alinea/core/media/MediaSchema'
 export * from './BlogOverview'
 export * from './BlogPost'
 export * from './Doc'

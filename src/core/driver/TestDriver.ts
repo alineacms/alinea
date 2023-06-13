@@ -16,7 +16,7 @@ class TestDriver extends DefaultCMS implements TestApi {
     connect(new Database()).toAsync()
   )
 
-  createStore(): Promise<Store> {
+  createDevStore(): Promise<Store> {
     return this.store
   }
 

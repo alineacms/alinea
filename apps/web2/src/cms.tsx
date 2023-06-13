@@ -1,10 +1,10 @@
-import alinea from 'alinea'
-import {createNextCMS} from 'alinea/core/driver/NextDriver'
+import alinea, {createNextCMS} from 'alinea'
 import {IcRoundPermMedia} from 'alinea/ui/icons/IcRoundPermMedia'
 import * as schema from './schema'
 
 export const pages = alinea.root('Pages', {
   index: alinea.page(schema.Home),
+  roadmap: alinea.page(schema.Page),
   docs: alinea.page(schema.Docs)
 })
 

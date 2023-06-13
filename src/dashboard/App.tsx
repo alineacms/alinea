@@ -125,7 +125,7 @@ function AppRoot() {
   const [session, setSession] = useAtom(sessionAtom)
   const {fullPage, config} = useDashboard()
   const {color} = Config.mainWorkspace(config)
-  const Auth = config.backend?.auth?.view
+  const Auth = config.dashboard?.auth
   if (!session)
     return (
       <Viewport attachToBody={fullPage} contain color={color}>
