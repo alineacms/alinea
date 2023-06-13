@@ -49,7 +49,7 @@
   ],
   "dependencies": {
     "@alinea/iso": "^0.1.21",
-    "@alinea/sqlite-wasm": "^0.1.11"
+    "@alinea/sqlite-wasm": "^0.1.12"
   },
   "peerDependencies": {
     "react": "*",
@@ -208,10 +208,12 @@
       "default": "./dist/preview/remix.js"
     },
     "./auth/passwordless/PasswordLessAuth": {
+      "worker": "./dist/auth/passwordless/PasswordLessAuth.server.js",
       "browser": "./dist/auth/passwordless/PasswordLessAuth.js",
       "default": "./dist/auth/passwordless/PasswordLessAuth.server.js"
     },
     "./core/driver/NextDriver": {
+      "worker": "./dist/core/driver/NextDriver.server.js",
       "browser": "./dist/core/driver/NextDriver.js",
       "default": "./dist/core/driver/NextDriver.server.js"
     }

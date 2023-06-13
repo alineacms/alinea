@@ -1,6 +1,6 @@
 import init from '@alinea/sqlite-wasm'
 import {base64} from 'alinea/core/util/Encoding'
-import {connect} from 'rado/driver/sql.js'
+import {connect} from 'alinea/vendor/rado/driver/sql.js'
 
 const buffer = base64.parse('$DB')
 

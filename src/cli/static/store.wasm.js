@@ -1,5 +1,5 @@
 import init from '@alinea/sqlite-wasm'
-import {connect} from 'rado/driver/sql.js'
+import {connect} from 'alinea/vendor/rado/driver/sql.js'
 import * as storeExports from './$WASM.js'
 
 function unpack(exports) {

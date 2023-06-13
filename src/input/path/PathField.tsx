@@ -1,4 +1,6 @@
-import {Field, FieldOptions, Hint, Label} from 'alinea/core'
+import {Field, FieldOptions} from 'alinea/core/Field'
+import {Hint} from 'alinea/core/Hint'
+import {Label} from 'alinea/core/Label'
 
 export interface PathOptions extends FieldOptions {
   width?: number
