@@ -87,11 +87,8 @@ class NextDriver extends CMS implements NextApi {
   }
 
   cloudHandler = PLazy.from(async () => {
-    const {apiKey} = this
-    if (!apiKey)
-      return async () => new Response('No API key set', {status: 401})
     const store = await this.readStore()
-    const handler = await createCloudHandler(this, store, apiKey)
+    const handler = await createCloudHandler(this, store, this.apiKey)
     return async (request: Request) => {
       const response = await handler.handle(request)
       return response ?? new Response('Not found', {status: 404})

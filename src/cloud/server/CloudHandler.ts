@@ -1,4 +1,3 @@
-import {fetch} from '@alinea/iso'
 import {Handler, JWTPreviews, Media, Target} from 'alinea/backend'
 import {Store} from 'alinea/backend/Store'
 import {Config, Connection} from 'alinea/core'
@@ -95,7 +94,7 @@ export class CloudApi implements Media, Target {
 export async function createCloudHandler(
   config: Config,
   store: Store,
-  apiKey: string
+  apiKey: string | undefined
 ) {
   const api = new CloudApi()
   return new Handler({
@@ -104,6 +103,6 @@ export async function createCloudHandler(
     config,
     target: api,
     media: api,
-    previews: new JWTPreviews(apiKey)
+    previews: new JWTPreviews(apiKey!)
   })
 }

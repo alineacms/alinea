@@ -1,4 +1,3 @@
-import {fetch} from '@alinea/iso'
 import {Connection} from 'alinea/core'
 import {Auth} from 'alinea/core/Auth'
 import {Client} from 'alinea/core/Client'

@@ -1,6 +1,7 @@
 import {Store} from 'alinea/backend/Store'
+import {CloudAuthView} from 'alinea/cloud/view/CloudAuth'
 import {MediaFile, MediaLibrary} from 'alinea/core/media/MediaSchema'
-import {Config} from './Config.js'
+import {Config, DashboardConfig} from './Config.js'
 import {Connection} from './Connection.js'
 import {Graph, GraphApi} from './Graph.js'
 import {Root} from './Root.js'
@@ -24,6 +25,7 @@ export interface CMSApi extends GraphApi {
 
 export abstract class CMS extends Graph implements Config, CMSApi {
   schema: Schema
+  dashboard: DashboardConfig
 
   constructor(config: Config) {
     super(config, async params => {
@@ -34,6 +36,10 @@ export abstract class CMS extends Graph implements Config, CMSApi {
       MediaLibrary,
       MediaFile,
       ...config.schema
+    }
+    this.dashboard = {
+      auth: CloudAuthView,
+      ...(config.dashboard as DashboardConfig)
     }
     this.#attach(config)
   }
@@ -53,10 +59,6 @@ export abstract class CMS extends Graph implements Config, CMSApi {
         attached.set(root, this)
       }
     }
-  }
-
-  get dashboard() {
-    return this.config.dashboard
   }
 
   get workspaces() {
