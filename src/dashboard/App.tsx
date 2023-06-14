@@ -156,6 +156,7 @@ export interface AppProps {
   client: Client
   queryClient?: QueryClient
   fullPage?: boolean
+  dev?: boolean
 }
 
 export function App(props: AppProps) {
