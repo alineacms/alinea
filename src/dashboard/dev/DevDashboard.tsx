@@ -86,5 +86,5 @@ export function DevDashboard({loadConfig}: DevDashboardOptions) {
         </Main>
       </Viewport>
     )
-  return <App queryClient={queryClient} config={cms} client={client!} />
+  return <App queryClient={queryClient} config={cms} client={client!} dev />
 }

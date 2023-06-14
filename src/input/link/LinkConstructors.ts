@@ -1,5 +1,7 @@
 import {Media} from 'alinea/backend/Media'
-import {Hint, Label, Type} from 'alinea/core'
+import {Hint} from 'alinea/core/Hint'
+import {Label} from 'alinea/core/Label'
+import {Type} from 'alinea/core/Type'
 import {MediaFile} from 'alinea/core/media/MediaSchema'
 import {
   LinkField,

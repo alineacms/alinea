@@ -5,7 +5,7 @@ import {createError} from 'alinea/core/ErrorWithCode'
 import {joinPaths} from 'alinea/core/util/Urls'
 import {useDashboard} from 'alinea/dashboard'
 import {Head} from 'alinea/dashboard/util/Head'
-import {Button, HStack, LogoShape, px, Typo, VStack} from 'alinea/ui'
+import {Button, HStack, Loader, LogoShape, px, Typo, VStack} from 'alinea/ui'
 import {IcRoundArrowForward} from 'alinea/ui/icons/IcRoundArrowForward'
 import {IcRoundPublish} from 'alinea/ui/icons/IcRoundPublish'
 import {useQuery} from 'react-query'
@@ -15,7 +15,7 @@ export function CloudAuthView({setSession}: Auth.ViewProps) {
   const {client} = useDashboard()
   if (!(client instanceof Client))
     throw createError(`Cannot authenticate with non http client`)
-  const {data} = useQuery(
+  const {data, isError} = useQuery(
     ['auth.cloud'],
     () => {
       return fetch(
@@ -25,14 +25,44 @@ export function CloudAuthView({setSession}: Auth.ViewProps) {
         }
       ).then<AuthResult>(res => res.json())
     },
-    {suspense: true}
+    {keepPreviousData: true}
   )
-  const result = data!
+  if (isError)
+    return (
+      <>
+        <Head>
+          <title>Alinea</title>
+        </Head>
+        <div style={{display: 'flex', height: '100%', width: '100%'}}>
+          <div style={{margin: 'auto', padding: px(20)}}>
+            <VStack gap={20}>
+              <HStack center gap={16}>
+                <LogoShape>
+                  <IcRoundPublish />
+                </LogoShape>
+                <Typo.H1 flat>Ready to deploy?</Typo.H1>
+              </HStack>
+              <Typo.P>
+                Alinea requires a{' '}
+                <Typo.Link
+                  href="https://alinea.sh/docs/deploy/exporting-the-dashboard"
+                  target="_blank"
+                >
+                  handler
+                </Typo.Link>{' '}
+                to continue.
+              </Typo.P>
+            </VStack>
+          </div>
+        </div>
+      </>
+    )
+  if (!data) return <Loader absolute />
   const {location} = window
-  switch (result.type) {
+  switch (data.type) {
     case AuthResultType.Authenticated:
       setSession({
-        user: result.user,
+        user: data.user,
         cnx: client.authenticate(
           options => ({...options, credentials: 'same-origin'}),
           () => setSession(undefined)
@@ -48,7 +78,7 @@ export function CloudAuthView({setSession}: Auth.ViewProps) {
       return null
     case AuthResultType.UnAuthenticated:
       location.href =
-        result.redirect +
+        data.redirect +
         `&from=${encodeURIComponent(
           location.protocol + '//' + location.host + location.pathname
         )}`
@@ -85,7 +115,7 @@ export function CloudAuthView({setSession}: Auth.ViewProps) {
                 <div>
                   <Button
                     as="a"
-                    href={`${result.setupUrl}?from=${encodeURIComponent(
+                    href={`${data.setupUrl}?from=${encodeURIComponent(
                       location.protocol +
                         '//' +
                         location.host +
