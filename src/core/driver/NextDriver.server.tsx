@@ -133,12 +133,9 @@ class NextDriver extends CMS implements NextApi {
     if (!isDraft) return null
     const NextPreviews = lazy(() => import('alinea/core/driver/NextPreviews'))
     return (
-      <div>
-        Previews enabled
-        <Suspense>
-          <NextPreviews />
-        </Suspense>
-      </div>
+      <Suspense>
+        <NextPreviews />
+      </Suspense>
     )
   }) as any
 }

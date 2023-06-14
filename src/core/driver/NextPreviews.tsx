@@ -42,5 +42,5 @@ export default function NextPreviews() {
       })*/
     }
   })
-  return <div>Preview: {isPreviewing ? 'in iframe' : 'no'}</div>
+  return null
 }
