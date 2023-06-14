@@ -48,7 +48,7 @@
     "src/input/richtext"
   ],
   "dependencies": {
-    "@alinea/iso": "^0.1.21",
+    "@alinea/iso": "^0.3.0",
     "@alinea/sqlite-wasm": "^0.1.12"
   },
   "peerDependencies": {
@@ -201,11 +201,6 @@
       "worker": "./dist/picker/url/UrlPicker.js",
       "browser": "./dist/picker/url/UrlPicker.browser.js",
       "default": "./dist/picker/url/UrlPicker.js"
-    },
-    "./preview/remix": {
-      "worker": "./dist/preview/remix.js",
-      "browser": "./dist/preview/remix.browser.js",
-      "default": "./dist/preview/remix.js"
     },
     "./auth/passwordless/PasswordLessAuth": {
       "worker": "./dist/auth/passwordless/PasswordLessAuth.server.js",

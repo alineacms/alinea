@@ -4,9 +4,9 @@ import {Type} from './Type.js'
 import {Workspace, WorkspaceData} from './Workspace.js'
 
 export interface DashboardConfig {
-  auth?: Auth.View
   handlerUrl: string
   dashboardUrl: string
+  auth?: Auth.View
   /** Compile all static assets for the dashboard to this dir */
   staticFile?: string
 }

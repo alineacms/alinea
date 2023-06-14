@@ -1,1 +1,3 @@
-export function CloudAuthView() {}
+export function CloudAuthView() {
+  return null
+}
