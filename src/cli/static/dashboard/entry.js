@@ -1,8 +1,8 @@
 import {CMS} from 'alinea/core'
+import {Client} from 'alinea/core/Client'
+import 'alinea/css'
+import {App} from 'alinea/dashboard/App'
 import {jsx} from 'react/jsx-runtime'
-import {Client} from '../../../client.js'
-import {Dashboard} from '../../../dashboard/Dashboard.js'
-import '../../../index.css'
 import {reactRender} from './render-react18.js'
 
 export async function boot(apiUrl) {
@@ -12,13 +12,13 @@ export async function boot(apiUrl) {
   into.id = 'root'
   element.parentElement.replaceChild(into, element)
   const config = await loadConfig()
-  const client = new Client(config, apiUrl)
-  reactRender(jsx(Dashboard, {config, client}), into)
+  const client = new Client({config, url: apiUrl})
+  reactRender(jsx(App, {config, client}), into)
 }
 
 async function loadConfig() {
-  const exports = await import('/config.js?' + Math.random())
-  for (const member of values(exports)) {
+  const exports = await import('./config.js?' + Math.random())
+  for (const member of Object.values(exports)) {
     if (member instanceof CMS) return member
   }
   throw new Error(`No config found in "/config.js"`)

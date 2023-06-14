@@ -9,6 +9,7 @@ import {
   PREVIEW_UPDATE_NAME
 } from 'alinea/preview/PreviewConstants'
 import {enums, object, string} from 'cito'
+import PLazy from 'p-lazy'
 import {Suspense, lazy} from 'react'
 import {CMS} from '../CMS.js'
 import {Client, ClientOptions} from '../Client.js'
@@ -80,51 +81,52 @@ class NextDriver extends CMS implements NextApi {
     return createStore()
   }
 
-  backendHandler() {
+  backendHandler = async (request: Request) => {
+    const handler = await this.cloudHandler
+    return handler(request)
+  }
+
+  cloudHandler = PLazy.from(async () => {
     const {apiKey} = this
     if (!apiKey)
       return async () => new Response('No API key set', {status: 401})
-    const cloudHandler = this.readStore().then(store =>
-      createCloudHandler(this, store, apiKey)
-    )
+    const store = await this.readStore()
+    const handler = await createCloudHandler(this, store, apiKey)
     return async (request: Request) => {
-      const handler = await cloudHandler
       const response = await handler.handle(request)
       return response ?? new Response('Not found', {status: 404})
     }
-  }
+  })
 
-  previewHandler() {
-    return async (request: Request) => {
-      const {draftMode} = await import('next/headers')
-      const {searchParams} = new URL(request.url)
-      const params = SearchParams({
-        token: searchParams.get('token'),
-        entryId: searchParams.get('entryId'),
-        realm: searchParams.get('realm')
-      })
-      const jwtSecret =
-        process.env.NODE_ENV === 'development'
-          ? 'dev'
-          : process.env.ALINEA_API_KEY
-      if (!jwtSecret) throw new Error('No JWT secret set')
-      const previews = new JWTPreviews(jwtSecret)
-      const payload = await previews.verify(params.token)
-      const cnx = await this.connection()
-      const url = (await cnx.resolve({
-        selection: Selection.create(
-          Page({entryId: params.entryId}).select(Page.url).first()
-        ),
-        realm: params.realm
-      })) as string
-      const source = new URL(request.url)
-      const location = new URL(url, source.origin)
-      draftMode().enable()
-      return new Response(`Redirecting`, {
-        status: 302,
-        headers: {location: location.toString()}
-      })
-    }
+  previewHandler = async (request: Request) => {
+    const {draftMode} = await import('next/headers')
+    const {searchParams} = new URL(request.url)
+    const params = SearchParams({
+      token: searchParams.get('token'),
+      entryId: searchParams.get('entryId'),
+      realm: searchParams.get('realm')
+    })
+    const jwtSecret =
+      process.env.NODE_ENV === 'development'
+        ? 'dev'
+        : process.env.ALINEA_API_KEY
+    if (!jwtSecret) throw new Error('No JWT secret set')
+    const previews = new JWTPreviews(jwtSecret)
+    const payload = await previews.verify(params.token)
+    const cnx = await this.connection()
+    const url = (await cnx.resolve({
+      selection: Selection.create(
+        Page({entryId: params.entryId}).select(Page.url).first()
+      ),
+      realm: params.realm
+    })) as string
+    const source = new URL(request.url)
+    const location = new URL(url, source.origin)
+    draftMode().enable()
+    return new Response(`Redirecting`, {
+      status: 302,
+      headers: {location: location.toString()}
+    })
   }
 
   // Todo: update typescript to support async server components

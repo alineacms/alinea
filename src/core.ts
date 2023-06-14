@@ -1,5 +1,4 @@
 export * from './core/Auth.js'
-export * from './core/BackendConfig.js'
 export * from './core/CMS.js'
 export * from './core/Config.js'
 export * from './core/Connection.js'

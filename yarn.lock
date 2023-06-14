@@ -52,6 +52,7 @@ __metadata:
   resolution: "@alinea/core@workspace:src/core"
   dependencies:
     cito: ^0.2.0
+    p-lazy: ^4.0.0
     pretty-ms: ^8.0.0
     yjs: ^13.5.47
   languageName: unknown
@@ -7533,6 +7534,13 @@ fsevents@~2.3.2:
   version: 1.0.2
   resolution: "os-homedir@npm:1.0.2"
   checksum: af609f5a7ab72de2f6ca9be6d6b91a599777afc122ac5cad47e126c1f67c176fe9b52516b9eeca1ff6ca0ab8587fe66208bc85e40a3940125f03cdb91408e9d2
+  languageName: node
+  linkType: hard
+
+"p-lazy@npm:^4.0.0":
+  version: 4.0.0
+  resolution: "p-lazy@npm:4.0.0"
+  checksum: 9b66107eaedfb439ee7d42d81f7547a7524d350492454c710f9a861057a9a4f9494c9737c6a5e76b27031c4711b9b3f0bd47f48c44b596d42c5553d70c264e61
   languageName: node
   linkType: hard
 
