@@ -1,4 +1,6 @@
+import {Server} from 'alinea/backend'
 import {Store} from 'alinea/backend/Store'
+import {exportStore} from 'alinea/cli/ExportStore'
 import {CloudAuthView} from 'alinea/cloud/view/CloudAuth'
 import {MediaFile, MediaLibrary} from 'alinea/core/media/MediaSchema'
 import {Config, DashboardConfig} from './Config.js'
@@ -7,15 +9,12 @@ import {Graph, GraphApi} from './Graph.js'
 import {Root} from './Root.js'
 import {Schema} from './Schema.js'
 import {Workspace} from './Workspace.js'
+import {Logger} from './util/Logger.js'
 import {entries} from './util/Objects.js'
+import {join} from './util/Paths.js'
 
 type Attachment = Workspace | Root
 const attached = new WeakMap<Attachment, CMS>()
-
-interface MediaSchema {
-  MediaLibrary: typeof MediaLibrary
-  MediaFile: typeof MediaFile
-}
 
 export type Location = Root | Workspace
 
@@ -71,12 +70,28 @@ export abstract class CMS extends Graph implements Config, CMSApi {
 }
 
 export class DefaultCMS extends CMS {
-  async exportStore(): Promise<void> {}
-  async readStore(): Promise<Store> {
-    throw new Error('Method not implemented.')
+  exportStore(outDir: string, data: Uint8Array): Promise<void> {
+    return exportStore(data, join(outDir, 'store.js'))
   }
+
+  async readStore(): Promise<Store> {
+    // @ts-ignore
+    const {createStore} = await import('@alinea/generated/store.js')
+    return createStore()
+  }
+
   async connection(): Promise<Connection> {
-    throw new Error('Method not implemented.')
+    const store = await this.readStore()
+    return new Server(
+      {
+        config: this.config,
+        store,
+        media: undefined!,
+        target: undefined!,
+        previews: undefined!
+      },
+      {logger: new Logger('CMSDriver')}
+    )
   }
 }
 

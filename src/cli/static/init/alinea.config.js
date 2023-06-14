@@ -1,33 +1,42 @@
-import {alinea, MediaSchema} from 'alinea'
-import {Welcome} from 'alinea/dashboard/Welcome'
-import {IcRoundInsertDriveFile} from 'alinea/ui/icons/IcRoundInsertDriveFile'
+import alinea, {createCMS} from 'alinea'
+import {MediaLibrary} from 'alinea/core/media/MediaSchema'
 import {IcRoundPermMedia} from 'alinea/ui/icons/IcRoundPermMedia'
 
-export const config = alinea.createConfig({
-  schema: alinea.schema({
-    ...MediaSchema,
-    Page: alinea.type(
-      'Page',
-      {
-        title: alinea.text('Title'),
-        path: alinea.path('Path')
-      },
-      <Welcome />
-    )
-  }),
+const Page = alinea.type('Page', {
+  title: alinea.text('Title'),
+  path: alinea.path('Path')
+})
+
+export const cms = createCMS({
+  schema: {
+    Page
+  },
   workspaces: {
     main: alinea.workspace('Example', {
-      source: './content',
-      mediaDir: './public',
-      roots: {
-        data: alinea.root('Example project', {
-          icon: IcRoundInsertDriveFile,
+      pages: alinea.root('Example project', {
+        welcome: alinea.page(
+          Page({
+            title: 'Welcome'
+          })
+        ),
+        [alinea.meta]: {
           contains: ['Page']
-        }),
-        media: alinea.root('Media', {
+        }
+      }),
+      media: alinea.root('Media', {
+        media: alinea.page(
+          MediaLibrary({
+            title: 'Media library'
+          })
+        ),
+        [alinea.meta]: {
           icon: IcRoundPermMedia,
           contains: ['MediaLibrary']
-        })
+        }
+      }),
+      [alinea.meta]: {
+        source: './content',
+        mediaDir: './public'
       }
     })
   }

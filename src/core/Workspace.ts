@@ -7,10 +7,7 @@ import {Root} from './Root.js'
 import {getRandomColor} from './util/GetRandomColor.js'
 
 export interface WorkspaceMeta {
-  /**
-   * Points to a Data.Source by passing a directory, it will be scanned
-   * for files.
-   */
+  /** A directory which contains the json entry files */
   source: string
   /** The directory where media files are placed in case a file backend is used */
   mediaDir?: string
@@ -64,6 +61,8 @@ export function workspace<Definition extends WorkspaceDefinition>(
   label: Label,
   definition: Definition
 ): Workspace<Expand<Omit<Definition, typeof Workspace.Meta>>> {
+  if (!definition[Meta])
+    throw new Error(`Workspace definition must contain a meta property`)
   return {
     ...definition,
     [Workspace.Data]: {

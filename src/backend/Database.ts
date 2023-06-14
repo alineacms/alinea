@@ -301,6 +301,7 @@ export class Database implements Syncable {
           const target = locale ? `/${locale}` : '/'
           while (pages.length > 0) {
             const [pagePath, page] = pages.shift()!
+            if (!PageSeed.isPageSeed(page)) continue
             const {type} = PageSeed.data(page)
             const filePath = path.join(target, pagePath) + '.json'
             const typeName = typeNames.get(type)
