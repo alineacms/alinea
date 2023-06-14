@@ -218,7 +218,10 @@ export namespace router {
         const headers = new Headers(response.headers)
         headers.set('content-encoding', method)
         headers.delete('content-length')
-        return new Response(stream, {headers, status: response.status})
+        return new Response(stream, {
+          headers,
+          status: response.status
+        })
       }
     )
   }

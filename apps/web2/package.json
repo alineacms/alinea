@@ -13,7 +13,7 @@
   "dependencies": {
     "@alinea/generated": "link:.alinea",
     "alinea": "0.0.0",
-    "next": "13.4.5-canary.2",
+    "next": "^13.4.5",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-string-replace": "^1.0.0"
