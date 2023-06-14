@@ -89,7 +89,7 @@ export async function exportStore(
   location: string,
   asWasm = false
 ) {
-  const staticDir = path.join(__dirname, 'static')
+  const staticDir = path.join(__dirname, '../static')
   const source = await fs.readFile(
     path.join(staticDir, `store.${asWasm ? 'wasm' : 'embed'}.js`),
     'utf-8'

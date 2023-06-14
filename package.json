@@ -87,7 +87,7 @@
     "rimraf": "^5.0.0",
     "sass-embedded": "^1.62.0",
     "speedscope": "^1.14.0",
-    "typescript": "^5.0.4",
+    "typescript": "^5.1.3",
     "typescript-plugin-css-modules": "^3.4.0",
     "uvu": "^0.5.1"
   },
@@ -204,6 +204,11 @@
       "worker": "./dist/auth/passwordless/PasswordLessAuth.server.js",
       "browser": "./dist/auth/passwordless/PasswordLessAuth.js",
       "default": "./dist/auth/passwordless/PasswordLessAuth.server.js"
+    },
+    "./cli/util/ExportStore": {
+      "worker": "./dist/cli/util/ExportStore.server.js",
+      "browser": "./dist/cli/util/ExportStore.js",
+      "default": "./dist/cli/util/ExportStore.server.js"
     },
     "./core/driver/NextDriver": {
       "worker": "./dist/core/driver/NextDriver.server.js",

@@ -49,9 +49,10 @@ function fromNodeRequest(request: http.IncomingMessage) {
       headers.set(key, value)
     }
   }
-  const init: RequestInit = {
+  const init: RequestInit & {duplex: 'half'} = {
     method: request.method!,
-    headers
+    headers,
+    duplex: 'half'
   }
   const protocol =
     request.socket instanceof TLSSocket && request.socket.encrypted

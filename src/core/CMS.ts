@@ -1,6 +1,6 @@
 import {Server} from 'alinea/backend'
 import {Store} from 'alinea/backend/Store'
-import {exportStore} from 'alinea/cli/ExportStore'
+import {exportStore} from 'alinea/cli/util/ExportStore'
 import {CloudAuthView} from 'alinea/cloud/view/CloudAuth'
 import {MediaFile, MediaLibrary} from 'alinea/core/media/MediaSchema'
 import {Config, DashboardConfig} from './Config.js'
