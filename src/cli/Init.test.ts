@@ -16,7 +16,7 @@ async function setup(cwd: string) {
 async function run(cwd: string) {
   process.env.NODE_ENV = 'development'
   await init({cwd, quiet: true})
-  const cms = await loadCMS(path.resolve(cwd))
+  const cms = await loadCMS(path.join(path.resolve(cwd), '.alinea'))
   const welcome = await cms.get(Page())
   assert.ok(welcome)
 }

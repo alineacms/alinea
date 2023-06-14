@@ -24,6 +24,10 @@ export namespace PageSeed {
   export function data(page: PageSeed): PageSeedData {
     return page[PageSeed.Data]
   }
+
+  export function isPageSeed(page: any): page is PageSeed {
+    return Boolean(page && page[PageSeed.Data])
+  }
 }
 
 export function page<

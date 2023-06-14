@@ -1,10 +1,10 @@
-import { createId, outcome } from 'alinea/core'
-import { detect } from 'detect-package-manager'
+import {createId, outcome} from 'alinea/core'
+import {detect} from 'detect-package-manager'
 import fs from 'fs-extra'
-import { execSync } from 'node:child_process'
+import {execSync} from 'node:child_process'
 import path from 'node:path'
-import { generate } from './Generate.js'
-import { dirname } from './util/Dirname.js'
+import {generate} from './Generate.js'
+import {dirname} from './util/Dirname.js'
 
 const __dirname = dirname(import.meta.url)
 
@@ -23,9 +23,9 @@ export async function init(options: InitOptions) {
     console.log(`> An alinea config file already exists in ${cwd}`)
     process.exit(1)
   }
-  await fs.mkdir(path.join(cwd, 'content/data'), {recursive: true})
+  await fs.mkdir(path.join(cwd, 'content/pages'), {recursive: true})
   await fs.writeFile(
-    path.join(cwd, 'content/data/index.json'),
+    path.join(cwd, 'content/pages/index.json'),
     JSON.stringify(
       {
         id: createId(),
@@ -88,7 +88,7 @@ export async function init(options: InitOptions) {
   for await (const _ of generate({cwd: path.resolve(cwd), quiet})) {
   }
   const runner = pm === 'npm' ? 'npx' : pm
-  const command = `${runner} alinea serve`
+  const command = `${runner} alinea dev`
   if (!quiet)
     console.log(
       '> Alinea initialized. You can open the dashboard with `' + command + '`'

@@ -1,6 +1,7 @@
 // Config creation
 export {Root, Workspace} from 'alinea/core'
 export type {Config, Schema, TextDoc, Type} from 'alinea/core'
+export * from 'alinea/core/CMS'
 export * from 'alinea/core/driver/NextDriver'
 // Dashboard
 export {MediaSchema} from 'alinea/core/media/MediaSchema'
