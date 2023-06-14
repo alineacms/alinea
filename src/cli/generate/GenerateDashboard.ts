@@ -16,7 +16,6 @@ export async function generateDashboard(
   handlerUrl: string,
   staticFile: string
 ) {
-  console.log('> Generating dashboard')
   if (!staticFile.endsWith('.html'))
     throw createError(
       `The staticFile option in config.dashboard must point to an .html file (include the extension)`
