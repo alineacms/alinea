@@ -28,7 +28,7 @@ export const configAtom = atom(get => {
 
 export const sessionAtom = atom<Session>(get => {
   const {client, config} = get(dashboardOptionsAtom)
-  const auth = config.backend?.auth
+  const auth = config.dashboard?.auth
   if (!auth)
     return {
       user: {sub: 'anonymous'},

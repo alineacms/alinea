@@ -1,4 +1,5 @@
 import alinea, {createNextCMS} from 'alinea'
+import {MediaLibrary} from 'alinea/core/media/MediaSchema'
 import {IcRoundPermMedia} from 'alinea/ui/icons/IcRoundPermMedia'
 import * as schema from './schema'
 
@@ -9,11 +10,17 @@ export const pages = alinea.root('Pages', {
 })
 
 export const cms = createNextCMS({
+  dashboard: {
+    dashboardUrl: '/admin.html',
+    handlerUrl: '/api/cms',
+    staticFile: '../public/admin.html'
+  },
   schema,
   workspaces: {
     main: alinea.workspace('Alinea website', {
       pages,
       media: alinea.root('Media', {
+        media: alinea.page(MediaLibrary),
         [alinea.meta]: {
           contains: ['MediaLibrary'],
           icon: IcRoundPermMedia

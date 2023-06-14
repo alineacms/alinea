@@ -31,6 +31,6 @@ export function ensureReact() {
         `${pkg} version ${version} is not supported, at least ${minVersion} is required\n`
       )
   }
-  ensurePackage('react', '17.0.0')
-  ensurePackage('react-dom', '17.0.0')
+  ensurePackage('react', '18.0.0')
+  ensurePackage('react-dom', '18.0.0')
 }

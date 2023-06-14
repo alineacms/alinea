@@ -55,6 +55,10 @@ export abstract class CMS extends Graph implements Config, CMSApi {
     }
   }
 
+  get dashboard() {
+    return this.config.dashboard
+  }
+
   get workspaces() {
     return this.config.workspaces
   }

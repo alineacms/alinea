@@ -86,9 +86,6 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
     nextBuild = builds.next()
     try {
       const cms = await loadCMS(context.outDir)
-      await generatePackage(context, cms)
-      // if (store) await store.close()
-      // store = await cms.createDevStore(context.rootDir)
       for await (const _ of fillCache(context, store, cms, nextBuild)) {
         yield {cms, store}
         if (onAfterGenerate && !afterGenerateCalled) {
@@ -97,7 +94,10 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
         }
       }
       if (done) {
-        await cms.exportStore(context.outDir, exportStore())
+        await Promise.all([
+          generatePackage(context, cms),
+          cms.exportStore(context.outDir, exportStore())
+        ])
         break
       }
     } catch (e: any) {

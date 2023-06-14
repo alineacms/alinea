@@ -3,8 +3,8 @@ import {Config} from '../Config.js'
 
 export interface NextApi extends CMSApi {
   previews(): JSX.Element
-  backendHandler(): (request: Request) => Promise<Response>
-  previewHandler(): (request: Request) => Promise<Response>
+  backendHandler(request: Request): Promise<Response>
+  previewHandler(request: Request): Promise<Response>
 }
 
 export function createNextCMS<Definition extends Config>(
