@@ -1,4 +1,3 @@
-import {dashboardDecorator} from '@alinea/dashboard/DashboardStory'
 import {useField} from 'alinea/editor'
 import {InputField} from 'alinea/editor/view/InputField'
 import {text} from 'alinea/input/text'
@@ -20,6 +19,5 @@ export function TextInput() {
 }
 
 export default {
-  title: 'Fields / Text',
-  decorators: dashboardDecorator()
+  title: 'Fields / Text'
 }

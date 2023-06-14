@@ -1,4 +1,3 @@
-import {dashboardDecorator} from 'alinea/dashboard/DashboardStory'
 import {useField} from 'alinea/editor'
 import {InputField} from 'alinea/editor/view/InputField'
 import {json} from 'alinea/input/json'
@@ -18,6 +17,5 @@ export function JsonInput() {
 }
 
 export default {
-  title: 'Fields / Json',
-  decorators: dashboardDecorator()
+  title: 'Fields / Json'
 }

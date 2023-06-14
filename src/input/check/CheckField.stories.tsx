@@ -1,4 +1,3 @@
-import {dashboardDecorator} from 'alinea/dashboard/DashboardStory'
 import {useField} from 'alinea/editor'
 import {InputField} from 'alinea/editor/view/InputField'
 import {check} from 'alinea/input/check'
@@ -26,6 +25,5 @@ export function CheckInput() {
 }
 
 export default {
-  title: 'Fields / Check',
-  decorators: dashboardDecorator()
+  title: 'Fields / Check'
 }

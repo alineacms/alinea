@@ -1,4 +1,3 @@
-import {dashboardDecorator} from 'alinea/dashboard/DashboardStory'
 import {useField} from 'alinea/editor'
 import {InputField} from 'alinea/editor/view/InputField'
 import {code} from 'alinea/input/code'
@@ -21,6 +20,5 @@ export function CodeInput() {
 }
 
 export default {
-  title: 'Fields / Code',
-  decorators: dashboardDecorator({fullWidth: true})
+  title: 'Fields / Code'
 }

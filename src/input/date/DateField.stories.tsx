@@ -1,4 +1,3 @@
-import {dashboardDecorator} from 'alinea/dashboard/DashboardStory'
 import {useField} from 'alinea/editor'
 import {InputField} from 'alinea/editor/view/InputField'
 import {date} from 'alinea/input/date'
@@ -20,6 +19,5 @@ export function DateInput() {
 }
 
 export default {
-  title: 'Fields / Date',
-  decorators: dashboardDecorator()
+  title: 'Fields / Date'
 }
