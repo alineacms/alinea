@@ -2,7 +2,7 @@ import sade from 'sade'
 // @ts-ignore
 import meta from '../../package.json'
 import {ensureEnv} from './util/EnsureEnv.js'
-import {ensureNodeResolution} from './util/EnsureNodeResolution.js'
+import {ensureNode} from './util/EnsureNode.js'
 import {ensureReact} from './util/EnsureReact.js'
 import {forwardCommand} from './util/ForwardCommand.js'
 
@@ -20,7 +20,7 @@ prog
     `Any missing or incorrect properties will be overwritten by their default`
   )
   .action(async (config, args) => {
-    ensureNodeResolution()
+    ensureNode()
     ensureReact()
     const {generate} = await import('./Generate.js')
     for await ({} of generate({
@@ -36,7 +36,7 @@ prog
   .command('init')
   .describe('Copy a sample config file to the current directory')
   .action(async args => {
-    ensureNodeResolution()
+    ensureNode()
     ensureReact()
     const {init} = await import('./Init.js')
     return init(args)
@@ -50,7 +50,7 @@ prog
   .option('--production', `Use production backend`)
   .option('--dev', `Watch alinea sources`)
   .action(async (config, args) => {
-    ensureNodeResolution()
+    ensureNode()
     ensureReact()
     ensureEnv(args.dir)
     process.env.NODE_ENV = args.production ? 'production' : 'development'

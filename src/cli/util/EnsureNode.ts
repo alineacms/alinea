@@ -1,14 +1,17 @@
-import {execFileSync} from 'node:child_process'
-import path from 'node:path'
-import {dirname} from './Dirname.js'
-
-const __dirname = dirname(import.meta.url)
+import semver from 'compare-versions'
 
 // Alinea does not require node resolution but many third party packages
 // do and this should make using those packages easier
-export function ensureNodeResolution() {
+export function ensureNode() {
   // @ts-ignore
   if (globalThis.Bun) return
+  if (!process.version) return
+  const isValidNode = semver.compare(process.version, '18.0.0', '>=')
+  if (isValidNode) return
+  console.error(`Alinea requires Node version 18 or higher`)
+  process.exit(1)
+
+  /*
   const nodeResolutionFlag = '--experimental-specifier-resolution=node'
   const resolutionSet = process.execArgv.includes(nodeResolutionFlag)
 
@@ -29,5 +32,5 @@ export function ensureNodeResolution() {
       process.exit(e.status)
     }
     process.exit(0)
-  }
+  }*/
 }

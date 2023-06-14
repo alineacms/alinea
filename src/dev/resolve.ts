@@ -23,7 +23,7 @@ interface Dependency {
 
 function getDepsInfo() {
   const dependencies = new Map<string, Dependency>()
-  for (const dir of getWorkspaces('.').concat('.')) {
+  for (const dir of ['.'].concat(getWorkspaces('.'))) {
     if (dir.includes('apps')) continue
     const isDev = dir.includes('dev') || dir.includes('test')
     const isRoot = dir === '.'
@@ -97,7 +97,6 @@ export const resolvePlugin: Plugin = {
       const hasOutExtension = args.path.endsWith(outExtension)
       const base = path.basename(args.path)
       const hasExtension = base.includes('.') && !base.includes('.node')
-
       if (!isInternal && !isLocal && pkg) {
         seen.add(pkg)
         const info = dependencies.get(pkg)
@@ -107,6 +106,13 @@ export const resolvePlugin: Plugin = {
           )
           process.exit(1)
         }
+        if (pkg.includes('compare'))
+          console.log({
+            isInternal,
+            isLocal,
+            pkg,
+            info
+          })
         if (!info.bundle) return {path: args.path, external: true}
         const isNode = info.format === 'cjs'
         const location = args.path
