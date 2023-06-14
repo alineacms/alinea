@@ -21,6 +21,7 @@ export interface TextOptions extends FieldOptions {
   iconRight?: ComponentType
   /** Focus this input automatically */
   autoFocus?: boolean
+  initialValue?: string
 }
 
 export class TextField extends Field.Scalar<string, TextOptions> {}
@@ -30,6 +31,7 @@ export function text(label: Label, options: TextOptions = {}) {
   return new TextField({
     hint: Hint.String(),
     label,
-    options
+    options,
+    initialValue: options.initialValue ?? ''
   })
 }

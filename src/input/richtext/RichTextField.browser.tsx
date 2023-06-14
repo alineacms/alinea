@@ -194,7 +194,7 @@ function RichTextEditor<Blocks>({state, field}: RichTextInputProps<Blocks>) {
     onFocus: ({event}) => focusToggle(event.currentTarget),
     onBlur: ({event}) => focusToggle(event.relatedTarget),
     extensions,
-    editable: !readonly
+    editable: !options.readonly
   })
   if (!editor) return null
   return (

@@ -1,4 +1,3 @@
-import {dashboardDecorator} from '@alinea/dashboard/DashboardStory'
 import {useField} from 'alinea/editor'
 import {InputField} from 'alinea/editor/view/InputField'
 import {path} from 'alinea/input/path'
@@ -14,6 +13,5 @@ export function PathInput() {
 }
 
 export default {
-  title: 'Fields / Path',
-  decorators: dashboardDecorator()
+  title: 'Fields / Path'
 }
