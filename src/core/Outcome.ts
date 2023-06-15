@@ -1,4 +1,4 @@
-import {createError, ErrorWithCode} from './ErrorWithCode.js'
+import {HttpError} from './HttpError.js'
 
 type ErrorObject = {
   stack?: string
@@ -71,7 +71,7 @@ export type Outcome<T = void> = Outcome.OutcomeImpl<T> & Pair<T>
 export namespace Outcome {
   export function fromJSON<T>(json: OutcomeJSON<T>): Outcome<T> {
     if (json.success) return Success(json.data)
-    const error = new ErrorWithCode(json.error.status!, json.error.message!)
+    const error = new HttpError(json.error.status!, json.error.message!)
     error.stack = json.error.stack
     return Failure(error)
   }
@@ -91,7 +91,7 @@ export namespace Outcome {
 
   export function Failure<T = any>(error: Error | any): Outcome<T> {
     return new FailureOutcome(
-      error instanceof Error ? error : createError(error)
+      error instanceof Error ? error : new Error(error)
     ) as any
   }
 
@@ -137,7 +137,7 @@ export namespace Outcome {
     value = undefined
     constructor(public error: Error) {
       super(false)
-      this.status = error instanceof ErrorWithCode ? error.code : 500
+      this.status = error instanceof HttpError ? error.code : 500
     }
 
     *[Symbol.iterator]() {

@@ -1,5 +1,3 @@
-import {createError} from '../ErrorWithCode.js'
-
 export type UnionToIntersection<T> = (
   T extends any ? (x: T) => any : never
 ) extends (x: infer R) => any
@@ -7,7 +5,7 @@ export type UnionToIntersection<T> = (
   : never
 
 export function unreachable(value: never): never {
-  throw createError('unreachable')
+  throw new Error('unreachable')
 }
 
 // Source: https://dev.to/lucianbc/union-type-merging-in-typescript-9al

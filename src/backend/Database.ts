@@ -7,7 +7,6 @@ import {
   Schema,
   Syncable,
   Type,
-  createError,
   createId
 } from 'alinea/core'
 import {EntryRecord} from 'alinea/core/EntryRecord'
@@ -109,7 +108,7 @@ export class Database implements Syncable {
     if (afterRemoves.contentHash === contentHash)
       return changedEntries.concat(excessEntries)
     // Todo: we should abandon syncing and just fetch the full db
-    throw createError('Sync failed')
+    throw new Error('Sync failed')
   }
 
   async updateEntries(entries: Array<Entry>) {

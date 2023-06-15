@@ -1,7 +1,6 @@
 import {buildOptions} from 'alinea/cli/build/BuildOptions'
 import {writeFileIfContentsDiffer} from 'alinea/cli/util/FS'
 import {publicDefines} from 'alinea/cli/util/PublicDefines'
-import {createError} from 'alinea/core/ErrorWithCode'
 import {code} from 'alinea/core/util/CodeGen'
 import {build} from 'esbuild'
 import fs from 'node:fs'
@@ -17,7 +16,7 @@ export async function generateDashboard(
   staticFile: string
 ) {
   if (!staticFile.endsWith('.html'))
-    throw createError(
+    throw new Error(
       `The staticFile option in config.dashboard must point to an .html file (include the extension)`
     )
   const entryPoints = {

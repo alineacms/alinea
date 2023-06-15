@@ -1,6 +1,5 @@
 import {LinkResolver} from 'alinea/backend/resolver/LinkResolver'
 import * as Y from 'yjs'
-import {createError} from '../ErrorWithCode.js'
 import {Hint} from '../Hint.js'
 import {Label} from '../Label.js'
 import {Page} from '../Page.js'
@@ -127,7 +126,7 @@ export class RichTextShape<Blocks>
     const type = block && block.get('type')
     const value = type && this.values && this.values[type]
     if (value) return value as unknown as Shape<C>
-    throw createError(`Type of block "${child}" not found`)
+    throw new Error(`Type of block "${child}" not found`)
   }
   toY(value: TextDoc<Blocks>) {
     const map = new Y.Map()

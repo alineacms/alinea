@@ -1,6 +1,6 @@
 import {fetch, Request, Response} from '@alinea/iso'
 import {Handler, router} from 'alinea/backend/router/Router'
-import {Auth, Config, Connection, createError, outcome, User} from 'alinea/core'
+import {Auth, Config, Connection, HttpError, outcome, User} from 'alinea/core'
 import {verify} from 'alinea/core/util/JWT'
 const version = '0.0.0'
 // import {version} from '../../../package.json'
@@ -17,12 +17,12 @@ type JWKS = {keys: Array<JsonWebKey>}
 function getPublicKey(retry = 0): Promise<JsonWebKey> {
   return fetch(cloudConfig.jwks)
     .then<JWKS>(async res => {
-      if (res.status !== 200) throw createError(res.status, await res.text())
+      if (res.status !== 200) throw new HttpError(res.status, await res.text())
       return res.json()
     })
     .then(jwks => {
       const key = jwks.keys[0] // .find(key => key.use === 'sig')
-      if (!key) throw createError(500, 'No signature key found')
+      if (!key) throw new HttpError(500, 'No signature key found')
       return key
     })
     .catch(err => {
@@ -62,7 +62,7 @@ export class CloudAuthServer implements Auth.Server {
         .map(async ({url}) => {
           const handShakeId = url.searchParams.get('handshake_id')
           if (!handShakeId)
-            throw createError(
+            throw new HttpError(
               400,
               'Provide a valid handshake id to initiate handshake'
             )
@@ -106,10 +106,10 @@ export class CloudAuthServer implements Auth.Server {
               authorization: `Bearer ${apiKey}`
             }
           }).catch(e => {
-            throw createError(500, `Could not reach handshake api: ${e}`)
+            throw new HttpError(500, `Could not reach handshake api: ${e}`)
           })
           if (res.status !== 200)
-            throw createError(
+            throw new HttpError(
               res.status,
               `Handshake failed: ${await res.text()}`
             )
@@ -121,9 +121,9 @@ export class CloudAuthServer implements Auth.Server {
       matcher
         .get(Connection.routes.base + '/auth')
         .map(async ({request, url}) => {
-          if (!apiKey) throw createError(500, 'No api key set')
+          if (!apiKey) throw new HttpError(500, 'No api key set')
           const token: string | null = url.searchParams.get('token')
-          if (!token) throw createError(400, 'Token required')
+          if (!token) throw new HttpError(400, 'Token required')
           const user = await verify<User>(token, await this.key)
           // Store the token in a cookie and redirect to the dashboard
           // Todo: add expires and max-age based on token expiration
@@ -184,7 +184,7 @@ export class CloudAuthServer implements Auth.Server {
           try {
             const {user} = await this.contextFor(request)
           } catch (e) {
-            throw createError(401, 'Unauthorized')
+            throw new HttpError(401, 'Unauthorized')
           }
         })
         .map(router.jsonResponse)
@@ -209,12 +209,12 @@ export class CloudAuthServer implements Auth.Server {
   async contextFor(request: Request): Promise<{token: string; user: User}> {
     if (this.context.has(request)) return this.context.get(request)!
     const cookies = request.headers.get('cookie')
-    if (!cookies) throw createError(401, 'Unauthorized - no cookies')
+    if (!cookies) throw new HttpError(401, 'Unauthorized - no cookies')
     const token = cookies
       .split(';')
       .map(c => c.trim())
       .find(c => c.startsWith(`${COOKIE_NAME}=`))
-    if (!token) throw createError(401, `Unauthorized - no ${COOKIE_NAME}`)
+    if (!token) throw new HttpError(401, `Unauthorized - no ${COOKIE_NAME}`)
     const jwt = token.slice(`${COOKIE_NAME}=`.length)
     return {token: jwt, user: await verify<User>(jwt, await this.key)}
   }

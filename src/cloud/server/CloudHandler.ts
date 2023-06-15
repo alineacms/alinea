@@ -1,13 +1,12 @@
 import {Handler, JWTPreviews, Media, Target} from 'alinea/backend'
 import {Store} from 'alinea/backend/Store'
-import {Config, Connection} from 'alinea/core'
-import {createError} from 'alinea/core/ErrorWithCode'
+import {Config, Connection, HttpError} from 'alinea/core'
 import {Outcome, OutcomeJSON} from 'alinea/core/Outcome'
 import {CloudAuthServer} from './CloudAuthServer.js'
 import {cloudConfig} from './CloudConfig.js'
 
 async function failOnHttpError(res: Response): Promise<Response> {
-  if (res.status >= 400) throw createError(res.status, await res.text())
+  if (res.status >= 400) throw new HttpError(res.status, await res.text())
   return res
 }
 

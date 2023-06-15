@@ -1,5 +1,4 @@
 import * as Y from 'yjs'
-import {createError} from '../ErrorWithCode.js'
 import {Label} from '../Label.js'
 import {Shape} from '../Shape.js'
 
@@ -14,7 +13,7 @@ export class ScalarShape<T> implements Shape<T, ScalarMutator<T>> {
     return this.initialValue as T
   }
   typeOfChild<C>(yValue: T, child: string): Shape<C> {
-    throw createError(`No children in scalar values`)
+    throw new Error(`No children in scalar values`)
   }
   toY(value: T) {
     return value

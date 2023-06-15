@@ -1,6 +1,5 @@
 import {LinkResolver} from 'alinea/backend/resolver/LinkResolver'
 import * as Y from 'yjs'
-import {createError} from '../ErrorWithCode.js'
 import {Hint} from '../Hint.js'
 import {createId} from '../Id.js'
 import {Label} from '../Label.js'
@@ -66,7 +65,7 @@ export class ListShape<T>
     const type = row && row.get('type')
     const value = type && this.values[type]
     if (value) return value as unknown as Shape<C>
-    throw createError(`Could not determine type of child "${child}"`)
+    throw new Error(`Could not determine type of child "${child}"`)
   }
   toY(value: Array<ListRow & T>) {
     const map = new Y.Map()

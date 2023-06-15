@@ -1,5 +1,5 @@
 import {FS} from 'alinea/backend/FS'
-import {Connection, createError} from 'alinea/core'
+import {Connection, HttpError} from 'alinea/core'
 import {Config} from 'alinea/core/Config'
 import {outcome} from 'alinea/core/Outcome'
 import {Root} from 'alinea/core/Root'
@@ -156,7 +156,7 @@ export class FileData implements Source, Target, Media {
     const {fs, rootDir = '.'} = this.options
     const file = path.join(rootDir, fileLocation)
     const isInMediaLocation = this.isInMediaLocation(file)
-    if (!isInMediaLocation) throw createError(401)
+    if (!isInMediaLocation) throw new HttpError(401)
     const dir = path.dirname(file)
     await fs.mkdir(dir, {recursive: true})
     await fs.writeFile(file, Buffer.from(buffer))
@@ -169,7 +169,7 @@ export class FileData implements Source, Target, Media {
     const {fs, rootDir = '.'} = this.options
     const file = path.join(rootDir, location)
     const isInMediaLocation = this.isInMediaLocation(file)
-    if (!isInMediaLocation) throw createError(401)
+    if (!isInMediaLocation) throw new HttpError(401)
     return {type: 'buffer', buffer: await fs.readFile(file)}
   }
 }

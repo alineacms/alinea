@@ -1,6 +1,5 @@
 import {LinkResolver} from 'alinea/backend/resolver/LinkResolver'
 import * as Y from 'yjs'
-import {createError} from '../ErrorWithCode.js'
 import {Hint} from '../Hint.js'
 import {createId} from '../Id.js'
 import {Label} from '../Label.js'
@@ -53,7 +52,7 @@ export class UnionShape<T> implements Shape<UnionRow & T, UnionMutator<T>> {
     const type = yValue && yValue.get('type')
     const shape = type && this.shapes[type]
     if (shape) return shape.typeOfChild(yValue, child)
-    throw createError(`Could not determine type of child "${child}"`)
+    throw new Error(`Could not determine type of child "${child}"`)
   }
   toY(value: UnionRow & T) {
     if (Array.isArray(value)) value = value[0] ?? {}
@@ -95,7 +94,7 @@ export class UnionShape<T> implements Shape<UnionRow & T, UnionMutator<T>> {
         const record = parent.get(key)
         const type = record.get('type')
         const shape = this.shapes[type]
-        if (!shape) throw createError(`Could not find type "${type}"`)
+        if (!shape) throw new Error(`Could not find type "${type}"`)
         record.set(k, shape.toY(v as object))
       }
     }
