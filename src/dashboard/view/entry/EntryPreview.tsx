@@ -1,5 +1,6 @@
 import {base64} from 'alinea/core/util/Encoding'
 import {PreviewUpdate} from 'alinea/preview/PreviewMessage'
+import {zlibSync} from 'fflate'
 import {useAtomValue} from 'jotai'
 import {useEffect, useState} from 'react'
 import {usePreviewToken} from '../../atoms/EntryAtoms.js'
@@ -24,7 +25,9 @@ export function EntryPreview({editor, preview}: EntryPreviewProps) {
   const yUpdate = useAtomValue(editor.yUpdate)
   useEffect(() => {
     if (!api) return
-    const update = base64.stringify(yUpdate)
+    const compressed = zlibSync(yUpdate, {level: 9})
+    const update = base64.stringify(compressed)
+
     api.preview({
       entryId: editor.entryId,
       phase: selectedPhase,
