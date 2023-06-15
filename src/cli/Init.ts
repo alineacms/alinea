@@ -30,7 +30,10 @@ export async function init(options: InitOptions) {
       {
         id: createId(),
         type: 'Page',
-        title: 'Welcome'
+        title: 'Welcome',
+        alinea: {
+          index: 'a0'
+        }
       },
       null,
       2
@@ -43,7 +46,10 @@ export async function init(options: InitOptions) {
       {
         id: createId(),
         type: 'MediaLibrary',
-        title: 'Media library'
+        title: 'Media library',
+        alinea: {
+          index: 'a0'
+        }
       },
       null,
       2

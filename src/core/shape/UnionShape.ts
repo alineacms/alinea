@@ -78,15 +78,17 @@ export class UnionShape<T> implements Shape<UnionRow & T, UnionMutator<T>> {
   }
   watch(parent: Y.Map<any>, key: string) {
     return (fun: () => void) => {
-      const record = parent.get(key)
-      record.observe(fun)
-      return () => record.unobserve(fun)
+      const observe = (event: Y.YMapEvent<any>) => {
+        if (event.keysChanged.has(key)) fun()
+      }
+      parent.observe(observe)
+      return () => parent.unobserve(observe)
     }
   }
   mutator(parent: Y.Map<any>, key: string): UnionMutator<T> {
     return {
       replace: (v: (UnionRow & T) | undefined) => {
-        if (!v) parent.delete(key)
+        if (!v) parent.set(key, null)
         else parent.set(key, this.toY(v))
       },
       set: (k: any, v: any) => {

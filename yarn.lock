@@ -76,7 +76,6 @@ __metadata:
     jotai: ^2.1.0
     lib0: ^0.2.42
     p-limit: ^4.0.0
-    preact: ^10.15.1
     pretty-bytes: ^6.0.0
     react-complex-tree: ^2.1.4-alpha.0
     react-query: ^3.39.1
@@ -7901,13 +7900,6 @@ fsevents@~2.3.2:
     picocolors: ^1.0.0
     source-map-js: ^1.0.1
   checksum: b78abdd89c10f7b48f4bdcd376104a19d6e9c7495ab521729bdb3df315af6c211360e9f06887ad3bc0ab0f61a04b91d68ea11462997c79cced58b9ccd66fac07
-  languageName: node
-  linkType: hard
-
-"preact@npm:^10.15.1":
-  version: 10.15.1
-  resolution: "preact@npm:10.15.1"
-  checksum: dabad11843b19b40b11846a25ff0b1fc4bc58268909e01a7faddb341a40983d24fbe7d44ad6e2c5d35e43091963af616800552fec9af44dd0a2f0f698d1bba1f
   languageName: node
   linkType: hard
 
