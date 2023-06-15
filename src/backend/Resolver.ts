@@ -554,7 +554,7 @@ export class Resolver {
       case 'row':
       case 'count':
       case 'expr':
-        throw new Error(`Cannot select thhis at root level`)
+        throw new Error(`Cannot select ${selection.type} at root level`)
     }
   }
 
