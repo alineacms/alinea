@@ -28,6 +28,7 @@ import {Target} from './Target.js'
 import {ChangeSet} from './data/ChangeSet.js'
 import {AlineaMeta} from './db/AlineaMeta.js'
 import {createEntrySearch} from './db/CreateEntrySearch.js'
+import {createContentHash} from './util/ContentHash.js'
 
 const decoder = new TextDecoder()
 
@@ -340,19 +341,13 @@ export class Database implements Syncable {
         const extension = path.extname(file.filePath)
         const fileName = path.basename(file.filePath, extension)
         const [, phase] = this.entryInfo(fileName)
-        const seedData = seed
-          ? new TextEncoder().encode(
-              seed.type + JSON.stringify(PageSeed.data(seed.page).partial)
-            )
-          : new Uint8Array(0)
-        const phaseData = new TextEncoder().encode(phase)
-        const contents = new Uint8Array(
-          seedData.length + phaseData.length + file.contents.length
+        const contentHash = await createContentHash(
+          phase,
+          file.contents,
+          seed
+            ? seed.type + JSON.stringify(PageSeed.data(seed.page).partial)
+            : undefined
         )
-        contents.set(seedData)
-        contents.set(phaseData, seedData.length)
-        contents.set(file.contents, seedData.length + phaseData.length)
-        const contentHash = h32Raw(contents).toString(16).padStart(8, '0')
         const exists = await query(
           Entry({
             contentHash,

@@ -12,6 +12,8 @@ export interface RootMeta {
   contains?: Array<string>
   icon?: ComponentType
   i18n?: RootI18n
+  /** A React component used to view this root in the dashboard */
+  view?: ComponentType<{root: RootData}>
 }
 
 export interface RootDefinition {

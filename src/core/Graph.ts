@@ -8,6 +8,13 @@ import {Selection} from './pages/Selection.js'
 import {seralizeLocation, serializeSelection} from './pages/Serialize.js'
 
 export interface GraphApi {
+  maybeGet<S extends Projection>(
+    select: S
+  ): Promise<Projection.InferOne<S> | null>
+  maybeGet<S extends Projection>(
+    location: Location,
+    select: S
+  ): Promise<Projection.InferOne<S> | null>
   get<S extends Projection>(select: S): Promise<Projection.InferOne<S>>
   get<S extends Projection>(
     location: Location,
@@ -29,12 +36,14 @@ export class Graph implements GraphApi {
     this.targets = Schema.targets(config.schema)
   }
 
-  get<S extends Projection>(select: S): Promise<Projection.InferOne<S>>
-  get<S extends Projection>(
+  maybeGet<S extends Projection>(
+    select: S
+  ): Promise<Projection.InferOne<S> | null>
+  maybeGet<S extends Projection>(
     location: Location,
     select: S
-  ): Promise<Projection.InferOne<S>>
-  async get(...args: Array<any>): Promise<any> {
+  ): Promise<Projection.InferOne<S> | null>
+  async maybeGet(...args: Array<any>): Promise<any> {
     let [providedLocation, select] =
       args.length === 1 ? [undefined, args[0]] : args
     if (select instanceof Cursor.Find) select = select.first()
@@ -45,6 +54,17 @@ export class Graph implements GraphApi {
       selection,
       location: seralizeLocation(this.config, providedLocation)
     })
+  }
+
+  get<S extends Projection>(select: S): Promise<Projection.InferOne<S>>
+  get<S extends Projection>(
+    location: Location,
+    select: S
+  ): Promise<Projection.InferOne<S>>
+  async get(...args: Array<any>): Promise<any> {
+    const result = this.maybeGet(args[0], args[1])
+    if (result === null) throw new Error('Not found')
+    return result
   }
 
   find<S>(select: S): Promise<Selection.Infer<S>>
