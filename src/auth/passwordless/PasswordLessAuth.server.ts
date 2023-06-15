@@ -1,5 +1,5 @@
 import {Handler, router} from 'alinea/backend/router/Router'
-import {Auth, Connection, Outcome, User, createError} from 'alinea/core'
+import {Auth, Connection, HttpError, Outcome, User} from 'alinea/core'
 import {sign, verify} from 'alinea/core/util/JWT'
 import type {Transporter} from 'nodemailer'
 import {assert, object, string} from 'superstruct'
@@ -37,7 +37,7 @@ export class PasswordLessAuth implements Auth.Server {
           const email = body.email
           const isUser = await this.options.isUser(email)
           if (!isUser)
-            return Outcome.Failure(createError(404, 'User not found'))
+            return Outcome.Failure(new HttpError(404, 'User not found'))
           const token = await sign({sub: email}, this.options.jwtSecret)
           const url = `${this.options.dashboardUrl}?token=${token}`
           await this.options.transporter.sendMail({
@@ -55,7 +55,7 @@ export class PasswordLessAuth implements Auth.Server {
           try {
             const user = await this.userFor(request)
           } catch (e) {
-            return Outcome.Failure(createError(401, 'Unauthorized'))
+            return Outcome.Failure(new HttpError(401, 'Unauthorized'))
           }
         })
         .map(router.jsonResponse)
@@ -69,10 +69,10 @@ export class PasswordLessAuth implements Auth.Server {
   async userFor(request: Request) {
     if (this.users.has(request)) return this.users.get(request)!
     const authHeader = request.headers.get('Authorization')
-    if (!authHeader) throw createError(400, 'No Authorization header')
+    if (!authHeader) throw new HttpError(400, 'No Authorization header')
     const [scheme, token] = authHeader.split(' ')
     if (scheme !== 'Bearer')
-      throw createError(400, 'Invalid Authorization header')
+      throw new HttpError(400, 'Invalid Authorization header')
     const user = await verify<User>(token, this.options.jwtSecret)
     this.users.set(request, user)
     return user

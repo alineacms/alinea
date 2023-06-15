@@ -1,4 +1,4 @@
-import {Auth, Connection, Session, createError} from 'alinea/core'
+import {Auth, Connection, Session} from 'alinea/core'
 import {Client} from 'alinea/core/Client'
 import {decode} from 'alinea/core/util/JWT'
 import {joinPaths} from 'alinea/core/util/Urls'
@@ -153,7 +153,7 @@ function useResolveToken(setSession: (session: Session | undefined) => void) {
         }
       }
       if (!(client instanceof Client))
-        throw createError(`Cannot authenticate with non http client`)
+        throw new Error(`Cannot authenticate with non http client`)
       setSession({
         user,
         cnx: client.authenticate(applyAuth, logout),
@@ -177,7 +177,7 @@ export function PasswordLessLogin({setSession}: Auth.ViewProps) {
   function handleSubmit() {
     setState(LoginState.Loading)
     if (!(client instanceof Client))
-      throw createError(`Cannot authenticate with non http client`)
+      throw new Error(`Cannot authenticate with non http client`)
     fetch(
       joinPaths(
         client.options.url,

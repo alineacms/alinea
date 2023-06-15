@@ -1,4 +1,3 @@
-import {createError} from 'alinea/core/ErrorWithCode'
 import {Reference} from 'alinea/core/Reference'
 import {EntryReference} from 'alinea/picker/entry'
 import {UrlReference} from 'alinea/picker/url'
@@ -25,7 +24,7 @@ export function referenceToAttributes(reference: Reference): Anchor {
       'data-entry': ref.entry
     }
   }
-  throw createError(`Unexpected reference type: ${reference.type}`)
+  throw new Error(`Unexpected reference type: ${reference.type}`)
 }
 
 export function attributesToReference(

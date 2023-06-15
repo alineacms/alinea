@@ -1,7 +1,7 @@
 import {AbortController, fetch, FormData, Response} from '@alinea/iso'
 import {AlineaMeta} from 'alinea/backend/db/AlineaMeta'
 import {Media} from 'alinea/backend/Media'
-import {Config, Connection, createError, Entry, EntryPhase} from 'alinea/core'
+import {Config, Connection, Entry, EntryPhase, HttpError} from 'alinea/core'
 import {UpdateResponse} from './Connection.js'
 import {Realm} from './pages/Realm.js'
 
@@ -11,7 +11,7 @@ async function failOnHttpError<T>(
 ): Promise<T> {
   if (res.ok) return expectJson ? res.json() : undefined
   const text = await res.text()
-  throw createError(res.status, text || res.statusText)
+  throw new HttpError(res.status, text || res.statusText)
 }
 
 type AuthenticateRequest = (request?: RequestInit) => RequestInit | undefined
@@ -117,13 +117,13 @@ export class Client implements Connection {
       signal
     })
       .catch(err => {
-        throw createError(500, `Could not fetch "${endpoint}": ${err}`)
+        throw new HttpError(500, `Could not fetch "${endpoint}": ${err}`)
       })
       .then(async res => {
         if (res.status === 401) unauthorized?.()
         if (!res.ok) {
           const msg = await res.text()
-          throw createError(
+          throw new HttpError(
             res.status,
             `Could not fetch "${endpoint}" (${res.status}: ${msg})`
           )

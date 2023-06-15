@@ -1,6 +1,5 @@
 import {Type} from 'alinea/core'
 import {Config} from 'alinea/core/Config'
-import {createError} from 'alinea/core/ErrorWithCode'
 import {Hint} from 'alinea/core/Hint'
 import {Code, code} from 'alinea/core/util/CodeGen'
 import {Lazy} from 'alinea/core/util/Lazy'
@@ -14,7 +13,7 @@ export function generateTypes({schema}: Config) {
     if (seen.has(definition.name)) {
       const previous = seen.get(definition.name)!
       if (Hint.equals(previous, definition)) continue
-      throw createError(
+      throw new Error(
         code`
           ${previous.parents.join('.')} ${generateHint(
           Hint.Object(Lazy.get(previous.fields))
