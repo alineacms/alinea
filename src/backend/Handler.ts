@@ -118,7 +118,7 @@ function createRouter(
             path: String(body.get('path')),
             preview: String(body.get('preview')),
             averageColor: String(body.get('averageColor')),
-            blurHash: String(body.get('blurHash')),
+            thumbHash: String(body.get('thumbHash')),
             width: Number(body.get('width')),
             height: Number(body.get('height'))
           })

@@ -93,7 +93,7 @@ export class Client implements Connection {
     form.append('path', file.path)
     form.append('parentId', file.parentId || '')
     if (file.averageColor) form.append('averageColor', file.averageColor)
-    if (file.blurHash) form.append('blurHash', file.blurHash)
+    if (file.thumbHash) form.append('thumbHash', file.thumbHash)
     if ('width' in file) form.append('width', String(file.width))
     if ('height' in file) form.append('height', String(file.height))
     form.append('buffer', new Blob([file.buffer]))

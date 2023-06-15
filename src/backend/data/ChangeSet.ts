@@ -48,17 +48,24 @@ export namespace ChangeSet {
         console.warn(`Cannot publish entry of unknown type: ${entry.type}`)
         continue
       }
-      const result = await db.find(
-        Page({entryId: entry.entryId})
-          .select({
-            parentPaths({parents}) {
-              return parents().select(Page.path)
-            }
-          })
-          .first(),
-        Realm.PreferPublished
-      )
-      const parentPaths = result?.parentPaths ?? []
+      const parentData =
+        entry.parent &&
+        (await db.find(
+          Page({entryId: entry.parent})
+            .select({
+              path: Page.path,
+              paths({parents}) {
+                return parents().select(Page.path)
+              }
+            })
+            .first(),
+          Realm.PreferPublished
+        ))
+      if (entry.parent && !parentData)
+        throw new Error(`Cannot find parent entry: ${entry.parent}`)
+      const parentPaths = parentData
+        ? parentData.paths.concat(parentData.path)
+        : []
       const workspace = db.config.workspaces[entry.workspace]
       const isContainer = Type.isContainer(type)
       const isPublishing = phase === EntryPhase.Published
