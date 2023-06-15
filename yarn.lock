@@ -73,6 +73,7 @@ __metadata:
     color2k: ^1.2.4
     dataloader: ^2.1.0
     diff-match-patch: ^1.0.5
+    fflate: ^0.8.0
     jotai: ^2.1.0
     lib0: ^0.2.42
     p-limit: ^4.0.0
@@ -5086,6 +5087,13 @@ __metadata:
   dependencies:
     reusify: ^1.0.4
   checksum: 32cf15c29afe622af187d12fc9cd93e160a0cb7c31a3bb6ace86b7dea3b28e7b72acde89c882663f307b2184e14782c6c664fa315973c03626c7d4bff070bb0b
+  languageName: node
+  linkType: hard
+
+"fflate@npm:^0.8.0":
+  version: 0.8.0
+  resolution: "fflate@npm:0.8.0"
+  checksum: 6215f95ee01d620a41e459247a7de7e7117dd23e78ef017c26b64c26f2a880a90eedc77675918bbf816d18cc990f6505cd71be933c67cc48cc1e7ebbff1589ea
   languageName: node
   linkType: hard
 

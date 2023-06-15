@@ -10,6 +10,7 @@ import {
 import {EntrySearch} from 'alinea/core/EntrySearch'
 import {Realm} from 'alinea/core/pages/Realm'
 import {base64} from 'alinea/core/util/Encoding'
+import {unzlibSync} from 'fflate'
 import {
   BinOpType,
   Expr,
@@ -690,7 +691,7 @@ export class Resolver {
           const type = this.schema[entry.type]
           const yDoc = createYDoc(type, entry)
           // Apply update
-          const update = base64.parse(preview.update)
+          const update = unzlibSync(base64.parse(preview.update))
           Y.applyUpdateV2(yDoc, update)
           const entryData = parseYDoc(type, yDoc)
           const previewEntry = {...entry, ...entryData}
@@ -706,7 +707,7 @@ export class Resolver {
           })
         } catch (err: any) {
           if (err.result) return err.result
-          else throw err
+          console.warn('Could not decode preview update', err)
         }
     }
     const result = await this.store(query)

@@ -143,6 +143,12 @@ const base64UrlEncoding: Encoding = {
   bits: 6
 }
 
+const base85Encoding: Encoding = {
+  chars:
+    '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!#$%&()*+-;<=>?@^_`{|}~',
+  bits: 7
+}
+
 export const base16 = {
   parse(string: string, opts?: ParseOptions): Uint8Array {
     return parse(string.toUpperCase(), base16Encoding, opts)
@@ -200,6 +206,16 @@ export const base64url = {
 
   stringify(data: ArrayLike<number>, opts?: StringifyOptions): string {
     return stringify(data, base64UrlEncoding, opts)
+  }
+}
+
+export const base85 = {
+  parse(string: string, opts?: ParseOptions): Uint8Array {
+    return parse(string, base85Encoding, opts)
+  },
+
+  stringify(data: ArrayLike<number>, opts?: StringifyOptions): string {
+    return stringify(data, base85Encoding, opts)
   }
 }
 
