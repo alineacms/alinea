@@ -29,17 +29,10 @@ export enum ErrorCode {
 
 export class HttpError extends Error {
   public code: ErrorCode
-  constructor(code: number)
-  constructor(code: ErrorCode)
-  constructor(code: number, message: string)
-  constructor(code: ErrorCode, message: string)
   constructor(code: number | ErrorCode, message?: string) {
     super(message ?? code.toString())
     this.code = code
   }
-
-  static NotFound = new HttpError(ErrorCode.NotFound)
-  static Unauthorized = new HttpError(ErrorCode.Unauthorized)
 }
 
 export function isHttpError(error: Error): error is HttpError {
