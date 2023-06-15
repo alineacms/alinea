@@ -1,6 +1,7 @@
 import {Media} from 'alinea/backend/Media'
 import {Hint} from 'alinea/core/Hint'
 import {Label} from 'alinea/core/Label'
+import {Page} from 'alinea/core/Page'
 import {Type} from 'alinea/core/Type'
 import {MediaFile} from 'alinea/core/media/MediaSchema'
 import {
@@ -19,7 +20,9 @@ import {
 } from 'alinea/picker/entry'
 import {UrlPickerOptions, UrlReference, urlPicker} from 'alinea/picker/url'
 
-const imageCondition = MediaFile.extension.isIn(Media.imageExtensions)
+const imageCondition = Page.type
+  .is('MediaFile')
+  .and(MediaFile.extension.isIn(Media.imageExtensions))
 
 export function imagePicker<Fields>(
   multiple: boolean,
@@ -40,7 +43,9 @@ export function imagePicker<Fields>(
   })
 }
 
-const fileCondition = MediaFile.extension.isNotIn(Media.imageExtensions)
+const fileCondition = Page.type
+  .is('MediaFile')
+  .and(MediaFile.extension.isNotIn(Media.imageExtensions))
 
 export function filePicker<Fields>(
   multiple: boolean,

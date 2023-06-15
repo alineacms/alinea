@@ -2,6 +2,7 @@ import {createId, Entry, EntryPhase, Page, slugify, Type} from 'alinea/core'
 import {Projection} from 'alinea/core/pages/Projection'
 import {generateKeyBetween} from 'alinea/core/util/FractionalIndexing'
 import {entries, fromEntries, keys} from 'alinea/core/util/Objects'
+import {useDashboard} from 'alinea/dashboard'
 import {useNavigate} from 'alinea/dashboard/util/HashRouter'
 import {Modal} from 'alinea/dashboard/view/Modal'
 import {useField} from 'alinea/editor'
@@ -20,10 +21,10 @@ import {
 } from 'alinea/ui'
 import {IcRoundArrowBack} from 'alinea/ui/icons/IcRoundArrowBack'
 import {Link} from 'alinea/ui/Link'
-import {useAtomValue} from 'jotai'
+import {useAtomValue, useSetAtom} from 'jotai'
 import {FormEvent, useState} from 'react'
 import {useQuery} from 'react-query'
-import {graphAtom} from '../../atoms/EntryAtoms.js'
+import {changedEntriesAtom, graphAtom} from '../../atoms/EntryAtoms.js'
 import {useConfig} from '../../hook/UseConfig.js'
 import {useLocale} from '../../hook/UseLocale'
 import {useNav} from '../../hook/UseNav'
@@ -46,6 +47,7 @@ const parentData = {
 } satisfies Projection
 
 function NewEntryForm({parentId}: NewEntryProps) {
+  const {client} = useDashboard()
   const {schema} = useConfig()
   const graph = useAtomValue(graphAtom)
   const {data: requestedParent} = useQuery(
@@ -61,6 +63,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
       ? requestedParent.id
       : requestedParent.parent)
   const nav = useNav()
+  const navigate = useNavigate()
   const locale = useLocale()
   const {name: workspace} = useWorkspace()
   const containerTypes = entries(schema)
@@ -114,6 +117,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
   )
   const titleField = useField(text('Title', {autoFocus: true}))
   const [isCreating, setIsCreating] = useState(false)
+  const updateEntries = useSetAtom(changedEntriesAtom)
 
   function handleCreate(e: FormEvent) {
     e.preventDefault()
@@ -143,6 +147,17 @@ function NewEntryForm({parentId}: NewEntryProps) {
       entry.i18nId = createId()
       entry.url = `/${locale}${entry.url}`
     }
+
+    return client
+      .saveDraft(entry as Entry)
+      .then(() => {
+        updateEntries([])
+        navigate(nav.entry(entry))
+      })
+      .finally(() => {
+        setIsCreating(false)
+      })
+
     /*const doc = docFromEntry(entry, () => type)
     return hub
       .updateDraft({id: entry.versionId, update: Y.encodeStateAsUpdate(doc)})

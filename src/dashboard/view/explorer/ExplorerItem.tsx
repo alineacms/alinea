@@ -1,5 +1,6 @@
 import {Entry, Schema, Type, View} from 'alinea/core'
 import {link} from 'alinea/dashboard/util/HashRouter'
+import {EntryReference} from 'alinea/picker/entry'
 import {fromModule} from 'alinea/ui'
 import {IcRoundCheckBox} from 'alinea/ui/icons/IcRoundCheckBox'
 import {IcRoundCheckBoxOutlineBlank} from 'alinea/ui/icons/IcRoundCheckBoxOutlineBlank'
@@ -26,14 +27,14 @@ export function ExplorerItem({
   const nav = useNav()
   const explorer = useExplorer()
   const itemRef = useFocusListItem(() => explorer?.onSelect(entry))
-  const View: any = Type.meta(schema[entry.type]!)[summaryView] || defaultView
+  const type = schema[entry.type]
+  const View: any = (type && Type.meta(type)[summaryView]) || defaultView
   const Tag: any = explorer?.selectable ? 'label' : 'a'
   const props = explorer?.selectable ? {} : link(nav.entry(entry))
-  // Todo: upgrade
   const isSelected = Boolean(
-    false /*explorer?.selection.find(
-      v => EntryReference.isEntry(v) && v.entry === entry.id
-    )*/
+    explorer?.selection.find(
+      v => EntryReference.isEntryReference(v) && v.entry === entry.entryId
+    )
   )
   return (
     <Tag
