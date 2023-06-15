@@ -26,7 +26,8 @@ export function ContentView({editor}: ContentViewProps) {
   const workspace = useWorkspace()
   const root = useRoot()
   const {search} = useLocation()
-  const View = editor?.view ?? EntryEdit
+  const EntryView = editor?.view ?? EntryEdit
+  const RootView = root?.view ?? RootOverview
   const nav = useNav()
   const navigate = useNavigate()
   return (
@@ -62,11 +63,7 @@ export function ContentView({editor}: ContentViewProps) {
         </Suspense>
       )}
       <Suspense fallback={<Loader absolute />}>
-        {editor ? (
-          <View editor={editor} />
-        ) : (
-          <RootOverview workspace={workspace} root={root} />
-        )}
+        {editor ? <EntryView editor={editor} /> : <RootView root={root} />}
       </Suspense>
     </>
   )

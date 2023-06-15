@@ -38,96 +38,94 @@ function createRouter(
       logger
     }
   }
-  return router
-    .compress(
-      auth.handler,
+  return router(
+    auth.handler,
 
-      matcher
-        .get(Connection.routes.previewToken())
-        .map(context)
-        .map(({ctx}) => {
-          const api = createApi(ctx)
-          return ctx.logger.result(api.previewToken())
-        })
-        .map(respond),
+    matcher
+      .get(Connection.routes.previewToken())
+      .map(context)
+      .map(({ctx}) => {
+        const api = createApi(ctx)
+        return ctx.logger.result(api.previewToken())
+      })
+      .map(respond),
 
-      matcher
-        .post(Connection.routes.resolve())
-        .map(context)
-        .map(router.parseJson)
-        .map(({ctx, body}) => {
-          // This validates the input, and throws if it's invalid
-          const api = createApi(ctx)
-          return ctx.logger.result(api.resolve(ResolveBody(body)))
-        })
-        .map(respond),
+    matcher
+      .post(Connection.routes.resolve())
+      .map(context)
+      .map(router.parseJson)
+      .map(({ctx, body}) => {
+        // This validates the input, and throws if it's invalid
+        const api = createApi(ctx)
+        return ctx.logger.result(api.resolve(ResolveBody(body)))
+      })
+      .map(respond),
 
-      matcher
-        .get(Connection.routes.updates())
-        .map(context)
-        .map(({ctx, url}) => {
-          const api = createApi(ctx)
-          const contentHash = url.searchParams.get('contentHash')!
-          const modifiedAt = Number(url.searchParams.get('modifiedAt'))!
-          return ctx.logger.result(api.updates({contentHash, modifiedAt}))
-        })
-        .map(respond),
+    matcher
+      .get(Connection.routes.updates())
+      .map(context)
+      .map(({ctx, url}) => {
+        const api = createApi(ctx)
+        const contentHash = url.searchParams.get('contentHash')!
+        const modifiedAt = Number(url.searchParams.get('modifiedAt'))!
+        return ctx.logger.result(api.updates({contentHash, modifiedAt}))
+      })
+      .map(respond),
 
-      matcher
-        .get(Connection.routes.versionIds())
-        .map(context)
-        .map(({ctx}) => {
-          const api = createApi(ctx)
-          return ctx.logger.result(api.versionIds())
-        })
-        .map(respond),
+    matcher
+      .get(Connection.routes.versionIds())
+      .map(context)
+      .map(({ctx}) => {
+        const api = createApi(ctx)
+        return ctx.logger.result(api.versionIds())
+      })
+      .map(respond),
 
-      matcher
-        .post(Connection.routes.saveDraft())
-        .map(context)
-        .map(router.parseJson)
-        .map(({ctx, body}) => {
-          const api = createApi(ctx)
-          return ctx.logger.result(api.saveDraft(body as Entry))
-        })
-        .map(respond),
+    matcher
+      .post(Connection.routes.saveDraft())
+      .map(context)
+      .map(router.parseJson)
+      .map(({ctx, body}) => {
+        const api = createApi(ctx)
+        return ctx.logger.result(api.saveDraft(body as Entry))
+      })
+      .map(respond),
 
-      matcher
-        .post(Connection.routes.publishDrafts())
-        .map(context)
-        .map(router.parseJson)
-        .map(({ctx, body}) => {
-          const api = createApi(ctx)
-          return ctx.logger.result(api.publishDrafts(body as Array<Entry>))
-        })
-        .map(respond),
+    matcher
+      .post(Connection.routes.publishDrafts())
+      .map(context)
+      .map(router.parseJson)
+      .map(({ctx, body}) => {
+        const api = createApi(ctx)
+        return ctx.logger.result(api.publishDrafts(body as Array<Entry>))
+      })
+      .map(respond),
 
-      matcher
-        .post(Connection.routes.upload())
-        .map(context)
-        .map(router.parseFormData)
-        .map(async ({ctx, body}) => {
-          const api = createApi(ctx)
-          const workspace = String(body.get('workspace'))
-          const root = String(body.get('root'))
-          return ctx.logger.result(
-            api.uploadFile({
-              workspace,
-              root,
-              buffer: await (body.get('buffer') as File).arrayBuffer(),
-              parentId: String(body.get('parentId')) || undefined,
-              path: String(body.get('path')),
-              preview: String(body.get('preview')),
-              averageColor: String(body.get('averageColor')),
-              blurHash: String(body.get('blurHash')),
-              width: Number(body.get('width')),
-              height: Number(body.get('height'))
-            })
-          )
-        })
-        .map(respond)
-    )
-    .recover(router.reportError)
+    matcher
+      .post(Connection.routes.upload())
+      .map(context)
+      .map(router.parseFormData)
+      .map(async ({ctx, body}) => {
+        const api = createApi(ctx)
+        const workspace = String(body.get('workspace'))
+        const root = String(body.get('root'))
+        return ctx.logger.result(
+          api.uploadFile({
+            workspace,
+            root,
+            buffer: await (body.get('buffer') as File).arrayBuffer(),
+            parentId: String(body.get('parentId')) || undefined,
+            path: String(body.get('path')),
+            preview: String(body.get('preview')),
+            averageColor: String(body.get('averageColor')),
+            blurHash: String(body.get('blurHash')),
+            width: Number(body.get('width')),
+            height: Number(body.get('height'))
+          })
+        )
+      })
+      .map(respond)
+  ).recover(router.reportError)
 }
 
 export interface HandlerOptions extends ServerOptions {

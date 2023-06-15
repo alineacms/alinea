@@ -1,6 +1,5 @@
 import {renderLabel} from 'alinea/core'
 import {RootData} from 'alinea/core/Root'
-import {WorkspaceData} from 'alinea/core/Workspace'
 import {Icon, TextLabel, Typo, fromModule} from 'alinea/ui'
 import {Main} from 'alinea/ui/Main'
 import {IcRoundInsertDriveFile} from 'alinea/ui/icons/IcRoundInsertDriveFile'
@@ -10,11 +9,10 @@ import css from './RootOverview.module.scss'
 const styles = fromModule(css)
 
 export interface RootOverviewProps {
-  workspace: WorkspaceData
   root: RootData
 }
 
-export function RootOverview({workspace, root}: RootOverviewProps) {
+export function RootOverview({root}: RootOverviewProps) {
   return (
     <>
       <Head>

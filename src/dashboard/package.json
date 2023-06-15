@@ -23,6 +23,7 @@
     "react-complex-tree": "^2.1.4-alpha.0",
     "react-query": "^3.39.1",
     "react-tiny-virtual-list": "^2.2.0",
+    "thumbhash": "^0.1.1",
     "y-webrtc": "^10.2.0"
   }
 }

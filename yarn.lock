@@ -83,6 +83,7 @@ __metadata:
     react-complex-tree: ^2.1.4-alpha.0
     react-query: ^3.39.1
     react-tiny-virtual-list: ^2.2.0
+    thumbhash: ^0.1.1
     y-webrtc: ^10.2.0
   languageName: unknown
   linkType: soft
@@ -9590,6 +9591,13 @@ resolve@^1.10.0:
   dependencies:
     readable-stream: 3
   checksum: ac7430bd54ccb7920fd094b1c7ff3e1ad6edd94202e5528331253e5fde0cc56ceaa690e8df9895de2e073148c52dfbe6c4db74cacae812477a35660090960cc0
+  languageName: node
+  linkType: hard
+
+"thumbhash@npm:^0.1.1":
+  version: 0.1.1
+  resolution: "thumbhash@npm:0.1.1"
+  checksum: cd97dc8faecb82cf872ca1be89488f7b6b4a14d4faa3b42e5e86a553d1f6f71d6ed6f561c0ddbbb54e064a221f882e909b6ad24af2e21fb87a0741df28fb2dbd
   languageName: node
   linkType: hard
 

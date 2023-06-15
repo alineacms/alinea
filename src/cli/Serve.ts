@@ -82,6 +82,11 @@ export async function serve(options: ServeOptions): Promise<void> {
     if (currentCMS === cms) {
       context.liveReload.reload('refetch')
     } else {
+      const fileData = new FileData({
+        config: currentCMS,
+        fs: fs.promises,
+        rootDir: configDir
+      })
       handler = nodeHandler(
         createHandler(
           context,
@@ -89,12 +94,8 @@ export async function serve(options: ServeOptions): Promise<void> {
             // dashboardUrl,
             config: currentCMS,
             store: current.value.store,
-            target: new FileData({
-              config: currentCMS,
-              fs: fs.promises,
-              rootDir: configDir
-            }),
-            media: undefined!,
+            target: fileData,
+            media: fileData,
             previews: new JWTPreviews('dev')
           })
         ).handle

@@ -207,6 +207,8 @@ export namespace router {
         if (response === undefined) return undefined
         const body = response.body
         if (!body) return response
+        const isCompressed = response.headers.get('content-encoding')
+        if (isCompressed) return response
         const accept = request.headers.get('accept-encoding')
         const method = accept?.includes('gzip')
           ? 'gzip'
