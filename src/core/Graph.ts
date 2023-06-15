@@ -45,7 +45,7 @@ export class Graph implements GraphApi {
   ): Promise<Projection.InferOne<S> | null>
   async maybeGet(...args: Array<any>): Promise<any> {
     let [providedLocation, select] =
-      args.length === 1 ? [undefined, args[0]] : args
+      args[1] === undefined ? [undefined, args[0]] : args
     if (select instanceof Cursor.Find) select = select.first()
     if (Type.isType(select)) select = select().first()
     const selection = Selection.create(select)
@@ -71,7 +71,7 @@ export class Graph implements GraphApi {
   find<S>(location: Location, select: S): Promise<Selection.Infer<S>>
   async find(...args: Array<any>): Promise<any> {
     const [providedLocation, select] =
-      args.length === 1 ? [undefined, args[0]] : args
+      args[1] === undefined ? [undefined, args[0]] : args
     const selection = Selection.create(select)
     serializeSelection(this.targets, selection)
     return this.resolve({
