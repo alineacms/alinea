@@ -37,7 +37,7 @@ export namespace Connection {
     buffer: ArrayBuffer
     preview?: string
     averageColor?: string
-    blurHash?: string
+    thumbHash?: string
     width?: number
     height?: number
   }

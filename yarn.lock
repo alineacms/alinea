@@ -70,15 +70,13 @@ __metadata:
     "@react-hook/size": ^2.1.2
     "@react-hook/window-size": ^3.0.7
     "@types/diff-match-patch": ^1.0.32
-    blurhash: ^1.1.5
     color2k: ^1.2.4
     dataloader: ^2.1.0
     diff-match-patch: ^1.0.5
-    fast-average-color: ^7.0.1
-    image-blob-reduce: ^4.1.0
     jotai: ^2.1.0
     lib0: ^0.2.42
     p-limit: ^4.0.0
+    preact: ^10.15.1
     pretty-bytes: ^6.0.0
     react-complex-tree: ^2.1.4-alpha.0
     react-query: ^3.39.1
@@ -2815,13 +2813,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/offscreencanvas@npm:^2019.6.4":
-  version: 2019.6.4
-  resolution: "@types/offscreencanvas@npm:2019.6.4"
-  checksum: ea05348b49cb0dc082fadf7ccc283e53c03ecf9b94c5ee096fce447edfcb563f6c060714609b72cee7848ea24589aa56297144a2b3a89a833e6ea24eaaa96da9
-  languageName: node
-  linkType: hard
-
 "@types/prop-types@npm:*":
   version: 15.7.5
   resolution: "@types/prop-types@npm:15.7.5"
@@ -3461,13 +3452,6 @@ __metadata:
   version: 2.2.0
   resolution: "binary-extensions@npm:2.2.0"
   checksum: ccd267956c58d2315f5d3ea6757cf09863c5fc703e50fbeb13a7dc849b812ef76e3cf9ca8f35a0c48498776a7478d7b4a0418e1e2b8cb9cb9731f2922aaad7f8
-  languageName: node
-  linkType: hard
-
-"blurhash@npm:^1.1.5":
-  version: 1.1.5
-  resolution: "blurhash@npm:1.1.5"
-  checksum: 8a647024948552e7250d4f123a0dc2a56941be476811c1c999b182cde01e6e15cc6938a8c523f1a2fea8c0dc12c1fffc1cf2001b86683e196bed03e88e176af2
   languageName: node
   linkType: hard
 
@@ -5043,15 +5027,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fast-average-color@npm:^7.0.1":
-  version: 7.0.1
-  resolution: "fast-average-color@npm:7.0.1"
-  dependencies:
-    "@types/offscreencanvas": ^2019.6.4
-  checksum: 8597f52a0f18f6fd1218f052f9c42334b8f58ee3fd6130167b7a8e62ed12300c66afc842461699ab545c4b4aeed00c0b231321f8c752300e01a48db659d4a825
-  languageName: node
-  linkType: hard
-
 "fast-deep-equal@npm:^3.1.1, fast-deep-equal@npm:^3.1.3":
   version: 3.1.3
   resolution: "fast-deep-equal@npm:3.1.3"
@@ -5565,13 +5540,6 @@ fsevents@~2.3.2:
   languageName: node
   linkType: hard
 
-"glur@npm:^1.1.2":
-  version: 1.1.2
-  resolution: "glur@npm:1.1.2"
-  checksum: d80a50fe7f713a564cf50a8e46e2385e5256233c1180b94c06dfdf038655c8b11aa648dd8516b66025abfe437f4201aa10c0e759b68b9a37241375707cf107ea
-  languageName: node
-  linkType: hard
-
 "gopd@npm:^1.0.1":
   version: 1.0.1
   resolution: "gopd@npm:1.0.1"
@@ -5835,15 +5803,6 @@ fsevents@~2.3.2:
   version: 5.2.0
   resolution: "ignore@npm:5.2.0"
   checksum: 6b1f926792d614f64c6c83da3a1f9c83f6196c2839aa41e1e32dd7b8d174cef2e329d75caabb62cb61ce9dc432f75e67d07d122a037312db7caa73166a1bdb77
-  languageName: node
-  linkType: hard
-
-"image-blob-reduce@npm:^4.1.0":
-  version: 4.1.0
-  resolution: "image-blob-reduce@npm:4.1.0"
-  dependencies:
-    pica: ^9.0.0
-  checksum: 48aa9efaf4f432c7baf135ec8f28f5b9a19c7aef0e9e7f223916fe7ca0676ac0adefdd005abd72a4a0c6dc31c871de2115224f298cce76b071dff332a8ea5ab4
   languageName: node
   linkType: hard
 
@@ -7060,16 +7019,6 @@ fsevents@~2.3.2:
   languageName: node
   linkType: hard
 
-"multimath@npm:^2.0.0":
-  version: 2.0.0
-  resolution: "multimath@npm:2.0.0"
-  dependencies:
-    glur: ^1.1.2
-    object-assign: ^4.1.1
-  checksum: 420d2090e4c9466c8195281011643a7087a3f8db9f7621fb19e13dce34d468d16f6e686625426efd4dbd1c9fa1cbc3c07ff634d9d9534dc6fa47b0849c2bcd69
-  languageName: node
-  linkType: hard
-
 "nano-time@npm:1.0.0":
   version: 1.0.0
   resolution: "nano-time@npm:1.0.0"
@@ -7716,18 +7665,6 @@ fsevents@~2.3.2:
   languageName: node
   linkType: hard
 
-"pica@npm:^9.0.0":
-  version: 9.0.1
-  resolution: "pica@npm:9.0.1"
-  dependencies:
-    glur: ^1.1.2
-    multimath: ^2.0.0
-    object-assign: ^4.1.1
-    webworkify: ^1.5.0
-  checksum: 0063206643ef54c6641f3f8795807de9567acebbe3160839ae87bbf870ff2e4e4caca8135dd050e1f5427d12737488d4ede7f3cce4525ae86f2a0138d397f738
-  languageName: node
-  linkType: hard
-
 "picocolors@npm:^1.0.0":
   version: 1.0.0
   resolution: "picocolors@npm:1.0.0"
@@ -7964,6 +7901,13 @@ fsevents@~2.3.2:
     picocolors: ^1.0.0
     source-map-js: ^1.0.1
   checksum: b78abdd89c10f7b48f4bdcd376104a19d6e9c7495ab521729bdb3df315af6c211360e9f06887ad3bc0ab0f61a04b91d68ea11462997c79cced58b9ccd66fac07
+  languageName: node
+  linkType: hard
+
+"preact@npm:^10.15.1":
+  version: 10.15.1
+  resolution: "preact@npm:10.15.1"
+  checksum: dabad11843b19b40b11846a25ff0b1fc4bc58268909e01a7faddb341a40983d24fbe7d44ad6e2c5d35e43091963af616800552fec9af44dd0a2f0f698d1bba1f
   languageName: node
   linkType: hard
 
@@ -10119,13 +10063,6 @@ resolve@^1.10.0:
     glob-to-regexp: ^0.4.1
     graceful-fs: ^4.1.2
   checksum: 23d4bc58634dbe13b86093e01c6a68d8096028b664ab7139d58f0c37d962d549a940e98f2f201cecdabd6f9c340338dc73ef8bf094a2249ef582f35183d1a131
-  languageName: node
-  linkType: hard
-
-"webworkify@npm:^1.5.0":
-  version: 1.5.0
-  resolution: "webworkify@npm:1.5.0"
-  checksum: 426c10e0b94cac0678aed05fdf1abce98e8e11a523380537bab99fcd63df7c4b71b3630e61ab8052fdbd8d6e55e53700523b423cd475b258f95be5189d8cde49
   languageName: node
   linkType: hard
 

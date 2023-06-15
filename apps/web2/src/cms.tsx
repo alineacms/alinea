@@ -28,6 +28,7 @@ export const cms = createNextCMS({
       }),
       [alinea.meta]: {
         color: '#3F61E8',
+        mediaDir: '../public',
         source: '../content'
       }
     })

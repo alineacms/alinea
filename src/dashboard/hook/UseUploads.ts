@@ -1,18 +1,17 @@
 import {Media} from 'alinea/backend/Media'
 import {Connection, Entry} from 'alinea/core'
 import {createId} from 'alinea/core/Id'
-import {encode} from 'blurhash'
-import FastAverageColor from 'fast-average-color'
+import {base64} from 'alinea/core/util/Encoding'
+import {rgba, toHex} from 'color2k'
 import pLimit from 'p-limit'
 import {useState} from 'react'
 import {useQueryClient} from 'react-query'
+import {rgbaToThumbHash, thumbHashToAverageRGBA} from 'thumbhash'
 import {useSession} from './UseSession.js'
 
 const enum UploadStatus {
   Queued,
   CreatingPreview,
-  PickingColor,
-  BlurHashing,
   Uploading,
   Done
 }
@@ -31,36 +30,10 @@ type Upload = {
   status: UploadStatus
   preview?: string
   averageColor?: string
-  blurHash?: string
+  thumbHash?: string
   width?: number
   height?: number
   result?: Media.File
-}
-
-function blobUrl(blob: Blob): Promise<string> {
-  return new Promise((resolve, _) => {
-    const reader = new FileReader()
-    reader.onloadend = () => resolve(reader.result as string)
-    reader.readAsDataURL(blob)
-  })
-}
-
-function loadImage(src: string) {
-  return new Promise<HTMLImageElement>((resolve, reject) => {
-    const img = new Image()
-    img.onload = () => resolve(img)
-    img.onerror = (...args) => reject(args)
-    img.src = src
-  })
-}
-
-function getImageData(image: HTMLImageElement) {
-  const canvas = document.createElement('canvas')
-  canvas.width = image.width
-  canvas.height = image.height
-  const context = canvas.getContext('2d')!
-  context.drawImage(image, 0, 0)
-  return context.getImageData(0, 0, image.width, image.height)
 }
 
 const defaultTasker = pLimit(Infinity)
@@ -70,8 +43,6 @@ const networkTasker = pLimit(8)
 const tasker = {
   [UploadStatus.Queued]: defaultTasker,
   [UploadStatus.CreatingPreview]: cpuTasker,
-  [UploadStatus.PickingColor]: cpuTasker,
-  [UploadStatus.BlurHashing]: cpuTasker,
   [UploadStatus.Uploading]: networkTasker,
   [UploadStatus.Done]: defaultTasker
 }
@@ -83,57 +54,59 @@ async function process(upload: Upload, cnx: Connection): Promise<Upload> {
       const next = isImage
         ? UploadStatus.CreatingPreview
         : UploadStatus.Uploading
-      if (isImage) {
-        const {width, height} = await new Promise<HTMLImageElement>(
-          (resolve, reject) => {
-            const image = new Image()
-            image.onload = () => resolve(image)
-            image.onerror = err => reject(err)
-            image.src = URL.createObjectURL(upload.file)
-          }
-        )
-        return {...upload, width, height, status: next}
-      }
       return {...upload, status: next}
-    case UploadStatus.CreatingPreview:
-      const {default: reduce} = await import('image-blob-reduce')
-      const blob = await reduce().toBlob(upload.file, {
-        max: 160,
-        unsharpAmount: 160,
-        unsharpRadius: 0.6,
-        unsharpThreshold: 1
-      })
+    case UploadStatus.CreatingPreview: {
+      const url = URL.createObjectURL(upload.file)
+
+      // Load the image
+      const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+        const image = new Image()
+        image.onload = () => resolve(image)
+        image.onerror = err => reject(err)
+        image.src = url
+      }).finally(() => URL.revokeObjectURL(url))
+
+      const size = Math.max(image.width, image.height)
+
+      // Scale the image to 100x100 maximum size
+      const thumbW = Math.round((100 * image.width) / size)
+      const thumbH = Math.round((100 * image.height) / size)
+      const thumbCanvas = document.createElement('canvas')
+      const thumbContext = thumbCanvas.getContext('2d')!
+      thumbCanvas.width = thumbW
+      thumbCanvas.height = thumbH
+      thumbContext.drawImage(image, 0, 0, thumbW, thumbH)
+
+      // Calculate thumbhash
+      const pixels = thumbContext.getImageData(0, 0, thumbW, thumbH)
+      const thumbHash = rgbaToThumbHash(thumbW, thumbH, pixels.data)
+
+      // Get the average color via thumbhash
+      const {r, g, b, a} = thumbHashToAverageRGBA(thumbHash)
+      const averageColor = toHex(rgba(r * 255, g * 255, b * 255, a))
+
+      // Create webp preview image
+      const previewW = Math.round((160 * image.width) / size)
+      const previewH = Math.round((160 * image.height) / size)
+      const previewCanvas = document.createElement('canvas')
+      const previewContext = previewCanvas.getContext('2d')!
+      previewCanvas.width = previewW
+      previewCanvas.height = previewH
+      previewContext.drawImage(image, 0, 0, previewW, previewH)
+      const preview = previewCanvas.toDataURL('image/webp', 1)
+
       return {
         ...upload,
-        preview: await blobUrl(blob),
-        status: UploadStatus.PickingColor
-      }
-    case UploadStatus.PickingColor:
-      const fac = new FastAverageColor()
-      const res = await fac.getColorAsync(upload.preview!)
-      return {
-        ...upload,
-        averageColor: res.hex,
-        status: UploadStatus.BlurHashing
-      }
-    case UploadStatus.BlurHashing: {
-      const image = await loadImage(upload.preview!)
-      const imageData = getImageData(image)
-      const blurHash = encode(
-        imageData.data,
-        imageData.width,
-        imageData.height,
-        4,
-        4
-      )
-      return {
-        ...upload,
-        blurHash,
+        preview,
+        averageColor,
+        thumbHash: base64.stringify(thumbHash),
+        width: image.width,
+        height: image.height,
         status: UploadStatus.Uploading
       }
     }
     case UploadStatus.Uploading: {
-      const {to, file, preview, averageColor, blurHash, width, height} = upload
+      const {to, file, preview, averageColor, thumbHash, width, height} = upload
       const buffer = await file.arrayBuffer()
       const path = (to.url === '/' ? '' : to.url) + '/' + file.name
       const result = await cnx.uploadFile({
@@ -143,7 +116,7 @@ async function process(upload: Upload, cnx: Connection): Promise<Upload> {
         buffer,
         preview,
         averageColor,
-        blurHash,
+        thumbHash,
         width,
         height
       })
@@ -161,6 +134,7 @@ export function useUploads(onSelect: (entry: Entry) => void) {
 
   async function uploadFile(file: File, to: Destination) {
     let upload = {id: createId(), file, to, status: UploadStatus.Queued}
+    console.log(upload)
     function update(upload: Upload) {
       setUploads(current => {
         const index = current.findIndex(u => u.id === upload.id)

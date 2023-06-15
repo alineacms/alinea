@@ -141,26 +141,34 @@ export class FileData implements Source, Target, Media {
     return Promise.all(tasks).then(() => void 0)
   }
 
+  isInMediaLocation(file: string): boolean {
+    const {config, rootDir = '.'} = this.options
+    const mediaDirs: Array<string> = values(config.workspaces)
+      .map(workspace => Workspace.data(workspace).mediaDir!)
+      .filter(Boolean)
+    return mediaDirs.some(dir => path.contains(path.join(rootDir, dir), file))
+  }
+
   async upload({
     fileLocation,
     buffer
   }: Connection.MediaUploadParams): Promise<string> {
     const {fs, rootDir = '.'} = this.options
-    await fs.writeFile(path.join(rootDir, fileLocation), Buffer.from(buffer))
+    const file = path.join(rootDir, fileLocation)
+    const isInMediaLocation = this.isInMediaLocation(file)
+    if (!isInMediaLocation) throw createError(401)
+    const dir = path.dirname(file)
+    await fs.mkdir(dir, {recursive: true})
+    await fs.writeFile(file, Buffer.from(buffer))
     return fileLocation
   }
 
   async download({
     location
   }: Connection.DownloadParams): Promise<Connection.Download> {
-    const {fs, config, rootDir = '.'} = this.options
-    const mediaDirs: Array<string> = Object.values(config.workspaces)
-      .map(workspace => Workspace.data(workspace).mediaDir!)
-      .filter(Boolean)
+    const {fs, rootDir = '.'} = this.options
     const file = path.join(rootDir, location)
-    const isInMediaLocation = mediaDirs.some(dir =>
-      path.contains(path.join(rootDir, dir), file)
-    )
+    const isInMediaLocation = this.isInMediaLocation(file)
     if (!isInMediaLocation) throw createError(401)
     return {type: 'buffer', buffer: await fs.readFile(file)}
   }
