@@ -36,7 +36,7 @@ export namespace View {
   ): Selection {
     let select
     for (const [name, type] of entries(schema)) {
-      const view = Type.meta(type!)[summaryView]
+      const view = Type.meta(type)[summaryView]
       if (view) {
         const selection: any = view.selection()
         select = select

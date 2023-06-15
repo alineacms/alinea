@@ -6,7 +6,10 @@ import * as schema from './schema'
 export const pages = alinea.root('Pages', {
   index: alinea.page(schema.Home),
   roadmap: alinea.page(schema.Page),
-  docs: alinea.page(schema.Docs)
+  docs: alinea.page(schema.Docs),
+  [alinea.meta]: {
+    contains: ['Page']
+  }
 })
 
 export const cms = createNextCMS({
@@ -32,9 +35,9 @@ export const cms = createNextCMS({
         source: '../content'
       }
     })
-  },
-  preview:
+  }
+  /*preview:
     process.env.NODE_ENV === 'development'
       ? 'http://localhost:3000/api/preview'
-      : ''
+      : ''*/
 })

@@ -5,26 +5,20 @@
   "publishDate": "2022-09-30",
   "author": {
     "name": "Ben Merckx",
-    "url": [
-      {
-        "id": "DiAsFDEHRKLhrgSoiPAVU",
-        "index": "a0",
-        "type": "url",
-        "url": "https://github.com/benmerckx",
-        "description": "",
-        "target": "_blank"
-      }
-    ],
-    "avatar": [
-      {
-        "id": "Z4LBK9_vyKQLA_3WL6IZ6",
-        "index": "a0",
-        "type": "url",
-        "url": "https://avatars.githubusercontent.com/u/10584189?v=4&s=48",
-        "description": "",
-        "target": "_self"
-      }
-    ]
+    "url": {
+      "id": "DiAsFDEHRKLhrgSoiPAVU",
+      "type": "url",
+      "url": "https://github.com/benmerckx",
+      "description": "",
+      "target": "_blank"
+    },
+    "avatar": {
+      "id": "Z4LBK9_vyKQLA_3WL6IZ6",
+      "type": "url",
+      "url": "https://avatars.githubusercontent.com/u/10584189?v=4&s=48",
+      "description": "",
+      "target": "_self"
+    }
   },
   "blocks": [
     {
@@ -65,14 +59,11 @@
         {
           "id": "tKjbwqdpcMCGqkUPeKpi9",
           "type": "ImageBlock",
-          "image": [
-            {
-              "id": "fMq2rBtPcvbrBih_tNNm4",
-              "index": "a0",
-              "type": "image",
-              "entry": "xHdbCGvsMXq_4_EJvtyJ4"
-            }
-          ]
+          "image": {
+            "id": "o_J1v36tf_ejnWbTJY0CB",
+            "type": "entry",
+            "entry": "2AKlsMwiF5NvBhkVZXWQVsNBPP6"
+          }
         },
         {
           "type": "heading",
@@ -216,15 +207,12 @@
         {
           "id": "pviuHYPv4K_CQgbCRbEKx",
           "type": "ChapterLinkBlock",
-          "link": [
-            {
-              "id": "JOpW2joyR1Q0NpA0FpEI7",
-              "index": "a0",
-              "type": "entry",
-              "entry": "20580nQzbOBR3Lt4kIdxyRGglc6",
-              "description": "Take it for a spin"
-            }
-          ]
+          "link": {
+            "id": "JOpW2joyR1Q0NpA0FpEI7",
+            "type": "entry",
+            "entry": "20580nQzbOBR3Lt4kIdxyRGglc6",
+            "description": "Take it for a spin"
+          }
         },
         {
           "type": "heading",
@@ -442,15 +430,12 @@
         {
           "id": "LHkwOsLpUl2Dwlkgie7I4",
           "type": "ChapterLinkBlock",
-          "link": [
-            {
-              "id": "ETNJb5lOS8bZ0EZmTcOuh",
-              "index": "a0",
-              "type": "entry",
-              "entry": "2AFn42lqIU86a9MI0I4rX3qMJQv",
-              "description": "Read the docs"
-            }
-          ]
+          "link": {
+            "id": "ETNJb5lOS8bZ0EZmTcOuh",
+            "type": "entry",
+            "entry": "2AFn42lqIU86a9MI0I4rX3qMJQv",
+            "description": "Read the docs"
+          }
         }
       ]
     }

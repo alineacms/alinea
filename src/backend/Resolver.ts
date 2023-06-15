@@ -251,8 +251,8 @@ export class Resolver {
     )
     for (const [condition, value] of cases)
       res = iif(
-        subject.is(this.expr(ctx, condition)),
-        this.select(ctx, value),
+        subject.is(new Expr(this.expr(ctx, condition))),
+        new Expr(this.select(ctx, value)),
         res
       )
     return res[Expr.Data]

@@ -66,8 +66,11 @@ export function EntryPickerModal({
   const {name: root} = useRoot()
   const cursor = useMemo(() => {
     const terms = search.replace(/,/g, ' ').split(' ').filter(Boolean)
-    return Page({workspace, root})
-      .where(condition || true)
+    const defaultCondition = Page.workspace
+      .is(workspace)
+      .and(Page.root.is(root))
+    return Page()
+      .where(condition ?? defaultCondition)
       .search(...terms)
   }, [workspace, root, search, condition])
   const [view, setView] = useState<'row' | 'thumb'>(defaultView || 'row')

@@ -13,7 +13,7 @@ import {
 } from 'alinea/ui'
 import {IcRoundInsertDriveFile} from 'alinea/ui/icons/IcRoundInsertDriveFile'
 import {IcRoundKeyboardArrowRight} from 'alinea/ui/icons/IcRoundKeyboardArrowRight'
-import {ReactNode} from 'react'
+import {Fragment, ReactNode} from 'react'
 import css from './FileSummary.module.scss'
 
 const styles = fromModule(css)
@@ -21,6 +21,7 @@ const styles = fromModule(css)
 function fileSummarySelect() {
   return {
     entryId: Page.entryId,
+    type: Page.type,
     workspace: Page.workspace,
     root: Page.root,
     title: Page.title,
@@ -29,7 +30,10 @@ function fileSummarySelect() {
     preview: MediaFile.preview,
     averageColor: MediaFile.averageColor,
     parents({parents}) {
-      return parents().select(Page.title)
+      return parents(Page).select({
+        entryId: Page.entryId,
+        title: Page.title
+      })
     }
   } satisfies Projection
 }
@@ -56,7 +60,9 @@ export const FileSummaryRow = view(
               <Typo.Small>
                 <HStack center gap={3}>
                   {file.parents
-                    .map<ReactNode>(title => <>{title}</>)
+                    .map<ReactNode>(({entryId, title}) => (
+                      <Fragment key={entryId}>{title}</Fragment>
+                    ))
                     .reduce((prev, curr) => [
                       prev,
                       <IcRoundKeyboardArrowRight />,

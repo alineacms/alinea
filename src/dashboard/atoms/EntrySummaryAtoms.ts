@@ -1,17 +1,29 @@
+import {View} from 'alinea/core'
 import {Page} from 'alinea/core/Page'
+import {Cursor} from 'alinea/core/pages/Cursor'
 import DataLoader from 'dataloader'
 import {atom} from 'jotai'
 import {atomFamily} from 'jotai/utils'
-import {entrySummaryQuery} from '../view/entry/EntrySummary.js'
+import {EntrySummaryRow} from '../view/entry/EntrySummary.js'
+import {configAtom} from './DashboardAtoms.js'
 import {entryRevisionAtoms, graphAtom} from './EntryAtoms.js'
 
 export const entrySummaryLoaderAtom = atom(async get => {
   const {active: drafts} = await get(graphAtom)
+  const {schema} = get(configAtom)
+  const selection = View.getSelection(
+    schema,
+    'summaryRow',
+    EntrySummaryRow.selection()
+  )
   return new DataLoader(async (ids: ReadonlyArray<string>) => {
     const res = new Map()
-    const entries = await drafts.find(
-      Page().select(entrySummaryQuery()).where(Page.entryId.isIn(ids))
-    )
+    let cursor: Cursor.Find<any> = Page().where(Page.entryId.isIn(ids))
+    cursor = new Cursor.Find<any>({
+      ...cursor[Cursor.Data],
+      select: selection
+    })
+    const entries = await drafts.find(cursor)
     for (const entry of entries) res.set(entry.entryId, entry)
     return ids.map(id => res.get(id)) as typeof entries
   })
