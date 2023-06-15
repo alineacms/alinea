@@ -163,11 +163,11 @@ export function createHandler(
         }
       })
     }),
-    // router.compress(
-    matcher.get('/').map(({url}): Response => {
-      const handlerUrl = `${url.protocol}//${url.host}`
-      return new Response(
-        `<!DOCTYPE html>
+    router.compress(
+      matcher.get('/').map(({url}): Response => {
+        const handlerUrl = `${url.protocol}//${url.host}`
+        return new Response(
+          `<!DOCTYPE html>
           <meta charset="utf-8" />
           <link rel="icon" href="data:," />
           <link href="./config.css" rel="stylesheet" />
@@ -178,20 +178,20 @@ export function createHandler(
           <body>
             <script type="module" src="./entry.js"></script>
           </body>`,
-        {
-          headers: {'content-type': 'text/html'}
-        }
-      )
-    }),
-    matcher
-      .all('/hub/*')
-      .map(async ({request}): Promise<Response | undefined> => {
-        return handler.handle(request)
+          {
+            headers: {'content-type': 'text/html'}
+          }
+        )
       }),
-    serveBrowserBuild,
-    matcher.get('/config.css').map((): Response => {
-      return new Response('', {headers: {'content-type': 'text/css'}})
-    })
-    // )
+      matcher
+        .all('/hub/*')
+        .map(async ({request}): Promise<Response | undefined> => {
+          return handler.handle(request)
+        }),
+      serveBrowserBuild,
+      matcher.get('/config.css').map((): Response => {
+        return new Response('', {headers: {'content-type': 'text/css'}})
+      })
+    )
   ).notFound(() => new Response('Not found', {status: 404}))
 }

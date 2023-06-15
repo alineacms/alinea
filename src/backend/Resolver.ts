@@ -2,7 +2,6 @@ import {
   Connection,
   Field,
   Schema,
-  Shape,
   Type,
   createYDoc,
   parseYDoc
@@ -154,31 +153,6 @@ enum ExprContext {
 export class Resolver {
   constructor(public store: Store, public schema: Schema) {}
 
-  fieldExpr(ctx: ResolveContext, expr: Expr<any>, shape: Shape): ExprData {
-    return expr[Expr.Data]
-    /*if (ctx.inAccess || ctx.inCondition) return expr[Expr.Data]
-    return shape.selectFromStorage(expr)[Expr.Data]
-    switch (true) {
-      case shape instanceof RichTextShape:
-        if (ctx.inAccess || ctx.inCondition)
-          return new ExprData.Field(expr, 'doc')
-        return new ExprData.Record({
-          [POST_KEY]: new ExprData.Param(new ParamData.Value('richText')),
-          doc: new ExprData.Field(expr, 'doc'),
-          linked: new ExprData.Query(
-            Entry(
-              Entry.entryId.isIn(new Expr(new ExprData.Field(expr, 'linked')))
-            ).select({
-              id: Entry.entryId,
-              url: Entry.url
-            })[Query.Data]
-          )
-        })
-      default:
-        return expr
-    }*/
-  }
-
   fieldOf(
     ctx: ResolveContext,
     target: pages.TargetData,
@@ -210,11 +184,7 @@ export class Resolver {
         const type = this.schema[name]
         if (!type)
           throw new Error(`Selecting "${field}" from unknown type: "${name}"`)
-        return this.fieldExpr(
-          ctx,
-          ctx.Table.data.get(field),
-          Field.shape(Type.field(type, field)!)
-        )
+        return ctx.Table.data.get(field)[Expr.Data]
     }
   }
 
