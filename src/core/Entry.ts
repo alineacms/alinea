@@ -12,8 +12,9 @@ export type EntryLinks = {[field: string]: Array<string>}
 export class EntryTable {
   // Entry data
   entryId = column.string.default(createId)
-  phase = column.string<EntryPhase>()
+  title = column.string
   type = column.string
+  phase = column.string<EntryPhase>()
   seeded = column.boolean.default(false)
 
   // Hierarchy
@@ -46,7 +47,6 @@ export class EntryTable {
   main = column.boolean
 
   path = column.string
-  title = column.string
   url = column.string
   data = column.json<any>()
   searchableText = column.string

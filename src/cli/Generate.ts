@@ -88,6 +88,8 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
       const cms = await loadCMS(context.outDir)
       for await (const _ of fillCache(context, store, cms, nextBuild)) {
         yield {cms, store}
+        // For debug reasons write out db
+        // fs.writeFile(path.join(context.outDir, 'content.sqlite'), exportStore())
         if (onAfterGenerate && !afterGenerateCalled) {
           afterGenerateCalled = true
           onAfterGenerate()
