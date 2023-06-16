@@ -274,7 +274,7 @@ export class Database implements Syncable {
       parentDir,
       childrenDir,
       parent: null,
-      level: parentDir === '/' ? 0 : segments.length - 1,
+      level: parentDir === '/' ? 0 : segments.length,
       index: data.alinea?.index,
       locale,
       i18nId: data.alinea?.i18n?.id,
