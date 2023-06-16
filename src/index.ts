@@ -8,3 +8,9 @@ export {MediaSchema} from 'alinea/core/media/MediaSchema'
 export {alinea}
 import * as alinea from './alinea.js'
 export default alinea
+export type {
+  EntryReference,
+  FileReference,
+  ImageReference
+} from 'alinea/picker/entry'
+export type {UrlReference} from 'alinea/picker/url'

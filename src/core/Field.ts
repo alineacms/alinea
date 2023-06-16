@@ -71,7 +71,12 @@ export namespace Field {
       meta: FieldMeta<Array<Schema>, ListMutator<Schema>, Options>
     ) {
       super({
-        shape: Shape.List(meta.label, shape, meta.initialValue),
+        shape: Shape.List(
+          meta.label,
+          shape,
+          meta.initialValue,
+          meta.postProcess
+        ),
         ...meta
       })
     }

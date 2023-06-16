@@ -43,7 +43,6 @@
 }
 
 .action {
-  font-family: var(--web-title-font);
   display: inline-block;
   text-decoration: none;
   background: var(--web-accent);
@@ -51,7 +50,6 @@
   padding: 10px 16px;
   border-radius: 25px;
   font-size: 14px;
-  font-weight: 500;
 
   &.is-outline {
     border: 1px solid var(--web-accent-foreground);
