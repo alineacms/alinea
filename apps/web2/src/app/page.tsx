@@ -22,7 +22,6 @@ const styles = fromModule(css)
 
 export default async function HomePage() {
   const home = await cms.get(Home)
-  console.log(home.action)
   return (
     <main className={styles.home()}>
       <div

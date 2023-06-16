@@ -4,6 +4,7 @@ import {Hint} from '../Hint.js'
 import {createId} from '../Id.js'
 import {Label} from '../Label.js'
 import {Shape, ShapeInfo} from '../Shape.js'
+import {PostProcess} from '../pages/PostProcess.js'
 import {generateKeyBetween} from '../util/FractionalIndexing.js'
 import {RecordShape} from './RecordShape.js'
 
@@ -33,7 +34,8 @@ export class ListShape<T>
   constructor(
     public label: Label,
     public shapes: Record<string, RecordShape>,
-    public initialValue?: Array<ListRow & T>
+    public initialValue?: Array<ListRow & T>,
+    protected postProcess?: PostProcess<Array<ListRow & T>>
   ) {
     this.values = Object.fromEntries(
       Object.entries(shapes).map(([key, type]) => {
@@ -161,6 +163,7 @@ export class ListShape<T>
   }
   async applyLinks(value: Array<ListRow & T>, loader: LinkResolver) {
     const tasks = []
+    if (this.postProcess) tasks.push(this.postProcess(value, loader))
     for (const row of value) {
       const type = row.type
       const shape = this.values[type]

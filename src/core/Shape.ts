@@ -2,6 +2,7 @@ import {LinkResolver} from 'alinea/backend/resolver/LinkResolver'
 import * as Y from 'yjs'
 import {Label} from './Label.js'
 import {TextDoc} from './TextDoc.js'
+import {PostProcess} from './pages/PostProcess.js'
 import {ListShape} from './shape/ListShape.js'
 import {RecordShape} from './shape/RecordShape.js'
 import {RichTextShape} from './shape/RichTextShape.js'
@@ -43,9 +44,10 @@ export namespace Shape {
   export function List(
     label: Label,
     shapes: Record<string, RecordShape<any>>,
-    initialValue?: Array<any>
+    initialValue?: Array<any>,
+    postProcess?: PostProcess<Array<any>>
   ) {
-    return new ListShape(label, shapes, initialValue)
+    return new ListShape(label, shapes, initialValue, postProcess)
   }
   export function Record<T>(
     label: Label,
@@ -58,7 +60,7 @@ export namespace Shape {
     label: Label,
     shapes: Record<string, RecordShape>,
     initialValue?: UnionRow & T,
-    postProcess?: (value: UnionRow & T, loader: LinkResolver) => Promise<void>
+    postProcess?: PostProcess<UnionRow & T>
   ): UnionShape<T> {
     return new UnionShape<T>(label, shapes, initialValue, postProcess)
   }
