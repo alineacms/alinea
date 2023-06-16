@@ -5,18 +5,12 @@ import {entries, fromEntries} from 'alinea/core/util/Objects'
 import {link, useNavigate} from 'alinea/dashboard/util/HashRouter'
 import {InputField} from 'alinea/editor/view/InputField'
 import {select} from 'alinea/input/select'
-import {
-  Avatar,
-  DropdownMenu,
-  Icon,
-  LogoShape,
-  TextLabel,
-  VStack,
-  fromModule,
-  px
-} from 'alinea/ui'
+import {Icon, TextLabel, VStack, fromModule, px} from 'alinea/ui'
+import {Avatar} from 'alinea/ui/Avatar'
+import {DropdownMenu} from 'alinea/ui/DropdownMenu'
 import {PopoverMenu} from 'alinea/ui/PopoverMenu'
 import {HStack} from 'alinea/ui/Stack'
+import {LogoShape} from 'alinea/ui/branding/LogoShape'
 import {IcOutlineScreenshot} from 'alinea/ui/icons/IcOutlineScreenshot'
 import IcRoundKeyboardArrowDown from 'alinea/ui/icons/IcRoundKeyboardArrowDown'
 import IcRoundKeyboardArrowUp from 'alinea/ui/icons/IcRoundKeyboardArrowUp'

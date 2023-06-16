@@ -1,3 +1,4 @@
+import {LinkResolver} from 'alinea/backend/resolver/LinkResolver'
 import {Expr} from 'alinea/core/pages/Expr'
 import {InputState} from 'alinea/editor'
 import type {ComponentType} from 'react'
@@ -21,6 +22,7 @@ export interface FieldMeta<Value, OnChange, Options> {
   initialValue?: Value
   options: Options
   view?: FieldView<Value, OnChange, Options>
+  postProcess?: (value: Value, loader: LinkResolver) => Promise<void>
 }
 
 export interface FieldData<Value, OnChange, Options>
@@ -59,14 +61,14 @@ export namespace Field {
     }
   }
 
-  export class List<Row, Options> extends Field<
-    Array<Row>,
-    ListMutator<Row>,
+  export class List<Schema, Options> extends Field<
+    Array<Schema>,
+    ListMutator<Schema>,
     Options
   > {
     constructor(
       shape: {[key: string]: RecordShape<any>},
-      meta: FieldMeta<Array<Row>, ListMutator<Row>, Options>
+      meta: FieldMeta<Array<Schema>, ListMutator<Schema>, Options>
     ) {
       super({
         shape: Shape.List(meta.label, shape, meta.initialValue),
@@ -85,7 +87,12 @@ export namespace Field {
       meta: FieldMeta<UnionRow & Row, UnionMutator<Row>, Options>
     ) {
       super({
-        shape: Shape.Union<Row>(meta.label, shapes, meta.initialValue),
+        shape: Shape.Union<Row>(
+          meta.label,
+          shapes,
+          meta.initialValue,
+          meta.postProcess
+        ),
         ...meta
       })
     }

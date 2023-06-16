@@ -3,7 +3,7 @@ import {TextDoc} from 'alinea/core/TextDoc'
 import {ListMutator} from 'alinea/core/shape/ListShape'
 import {RecordMutator} from 'alinea/core/shape/RecordShape'
 import {UnionMutator} from 'alinea/core/shape/UnionShape'
-import {useForceUpdate} from 'alinea/ui'
+import {useForceUpdate} from 'alinea/ui/hook/UseForceUpdate'
 import {useEffect} from 'react'
 import * as Y from 'yjs'
 

@@ -1,5 +1,6 @@
 import {PreviewAction, PreviewMessage} from 'alinea/preview/PreviewMessage'
-import {AppBar, HStack, Loader, Typo, fromModule, px} from 'alinea/ui'
+import {HStack, Loader, Typo, fromModule, px} from 'alinea/ui'
+import {AppBar} from 'alinea/ui/AppBar'
 import {IcRoundArrowBack} from 'alinea/ui/icons/IcRoundArrowBack'
 import {IcRoundArrowForward} from 'alinea/ui/icons/IcRoundArrowForward'
 import {IcRoundLock} from 'alinea/ui/icons/IcRoundLock'

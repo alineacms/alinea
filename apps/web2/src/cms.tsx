@@ -35,9 +35,9 @@ export const cms = createNextCMS({
         source: '../content'
       }
     })
-  }
-  /*preview:
+  },
+  preview:
     process.env.NODE_ENV === 'development'
       ? 'http://localhost:3000/api/preview'
-      : ''*/
+      : ''
 })

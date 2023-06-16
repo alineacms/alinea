@@ -21,7 +21,7 @@ import {
   verticalListSortingStrategy
 } from '@dnd-kit/sortable'
 import {CSS, FirstArgument} from '@dnd-kit/utilities'
-import {Field, Type} from 'alinea/core'
+import {Field, Schema, Type} from 'alinea/core'
 import {entries} from 'alinea/core/util/Objects'
 import {Create} from 'alinea/dashboard/view/Create'
 import {IconButton} from 'alinea/dashboard/view/IconButton'
@@ -54,7 +54,7 @@ function animateLayoutChanges(args: FirstArgument<AnimateLayoutChanges>) {
   return true
 }
 
-function ListInputRowSortable<T extends ListRow>(props: ListInputRowProps<T>) {
+function ListInputRowSortable(props: ListInputRowProps) {
   const {onCreate} = props
   const {attributes, listeners, setNodeRef, transform, transition, isDragging} =
     useSortable({
@@ -78,11 +78,11 @@ function ListInputRowSortable<T extends ListRow>(props: ListInputRowProps<T>) {
   )
 }
 
-type ListInputRowProps<T extends ListRow> = PropsWithChildren<
+type ListInputRowProps = PropsWithChildren<
   {
-    row: T
-    path: InputState<T>
-    field: ListField<T>
+    row: ListRow
+    path: InputState<ListRow>
+    field: ListField<Schema>
     isDragging?: boolean
     onMove?: (direction: 1 | -1) => void
     onDelete?: () => void
@@ -97,7 +97,7 @@ type ListInputRowProps<T extends ListRow> = PropsWithChildren<
   } & HTMLAttributes<HTMLDivElement>
 >
 
-function ListInputRow<T extends ListRow>({
+function ListInputRow({
   row,
   field,
   path,
@@ -110,7 +110,7 @@ function ListInputRow<T extends ListRow>({
   onCreate,
   firstRow,
   ...rest
-}: ListInputRowProps<T>) {
+}: ListInputRowProps) {
   const {label, options} = field[Field.Data]
   const type = options.schema[row.type]
   const [showInsert, setShowInsert] = useState(false)
@@ -168,13 +168,13 @@ function ListInputRow<T extends ListRow>({
   )
 }
 
-type ListCreateRowProps<T> = {
-  field: ListField<T>
+interface ListCreateRowProps {
+  field: ListField<Schema>
   inline?: boolean
   onCreate: (type: string) => void
 }
 
-function ListCreateRow<T>({field, inline, onCreate}: ListCreateRowProps<T>) {
+function ListCreateRow({field, inline, onCreate}: ListCreateRowProps) {
   const schema = field[Field.Data].options.schema
   return (
     <div className={styles.create({inline})}>
@@ -195,13 +195,13 @@ function ListCreateRow<T>({field, inline, onCreate}: ListCreateRowProps<T>) {
   )
 }
 
-type ListInsertRowProps<T> = {
+interface ListInsertRowProps {
   first: boolean
   open: boolean
   onInsert: () => void
 }
 
-function ListInsertRow<T>({first, open, onInsert}: ListInsertRowProps<T>) {
+function ListInsertRow({first, open, onInsert}: ListInsertRowProps) {
   return (
     <>
       <div className={styles.insert({open, first})}>
@@ -213,21 +213,21 @@ function ListInsertRow<T>({first, open, onInsert}: ListInsertRowProps<T>) {
   )
 }
 
-export type ListInputProps<T> = {
-  state: InputState<InputState.List<T>>
-  field: ListField<T>
+export interface ListInputProps {
+  state: InputState<InputState.List<any>>
+  field: ListField<Schema>
 }
+
 const layoutMeasuringConfig = {
   strategy: LayoutMeasuringStrategy.Always
 }
-export function ListInput<T extends ListRow>({
-  state,
-  field
-}: ListInputProps<T>) {
+
+export function ListInput({state, field}: ListInputProps) {
   const {label, options} = field[Field.Data]
-  const [rows, list] = useInput(state)
+  const [value, list] = useInput(state)
+  const rows: Array<ListRow> = value as any
   const ids = rows.map(row => row.id)
-  const [dragging, setDragging] = useState<T | null>(null)
+  const [dragging, setDragging] = useState<ListRow | null>(null)
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
@@ -262,7 +262,7 @@ export function ListInput<T extends ListRow>({
               <Card.Root>
                 {rows.map((row, i) => {
                   return (
-                    <ListInputRowSortable<T>
+                    <ListInputRowSortable
                       key={row.id}
                       row={row}
                       field={field}
@@ -292,7 +292,7 @@ export function ListInput<T extends ListRow>({
               }}
             >
               {dragging ? (
-                <ListInputRow<T>
+                <ListInputRow
                   key="overlay"
                   row={dragging}
                   field={field}

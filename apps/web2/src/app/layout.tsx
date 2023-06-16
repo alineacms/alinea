@@ -1,6 +1,7 @@
 import {cms} from '@/cms'
 import {btoa} from 'alinea/core/util/Encoding'
 import {PropsWithChildren} from 'react'
+import {Header} from '../layout/Header'
 import '../styles/global.scss'
 
 export const metadata = {
@@ -16,26 +17,24 @@ const favicon = btoa(
 )
 
 export default async function Layout({children}: PropsWithChildren) {
-  /*const layout = await cms.find(
-    Home()
-      .select({
-        footer: Home.footer,
-        header: {
-          links: Home.links,
-          menu() {
-            return Page()
-              .where(Page.type.is('Doc').or(Page.type.is('Docs')))
-              .select({
-                id: Page.entryId,
-                type: Page.type,
-                url: Page.url,
-                title: Page.title,
-                parent: Page.parent
-              })
-          }
+  /*const layout = await cms.get(
+    Home().select({
+      footer: Home.footer,
+      header: {
+        links: Home.links,
+        menu() {
+          return Page()
+            .where(Page.type.is('Doc').or(Page.type.is('Docs')))
+            .select({
+              id: Page.entryId,
+              type: Page.type,
+              url: Page.url,
+              title: Page.title,
+              parent: Page.parent
+            })
         }
-      })
-      .first()
+      }
+    })
   )*/
   return (
     <html lang="en">
@@ -51,10 +50,11 @@ export default async function Layout({children}: PropsWithChildren) {
         />
       </head>
       <body>
+        <Header />
         {children}
-        {/*<Layout isHome {...layout}>
+        {/*<RootLayout isHome {...layout}>
           {children}
-          </Layout>*/}
+          </RootLayout>*/}
         <cms.previews />
       </body>
     </html>

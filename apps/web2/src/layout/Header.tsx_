@@ -1,4 +1,3 @@
-import {cms} from '@/cms'
 import {fromModule, HStack, Stack, Styler} from 'alinea/ui'
 import {IcRoundClose} from 'alinea/ui/icons/IcRoundClose'
 import {IcRoundHamburger} from 'alinea/ui/icons/IcRoundHamburger'
@@ -6,10 +5,11 @@ import {MdiGithub} from 'alinea/ui/icons/MdiGithub'
 import {MdiTwitterCircle} from 'alinea/ui/icons/MdiTwitterCircle'
 import Link from 'next/link'
 import {usePathname, useRouter} from 'next/navigation'
-import {Home} from '../schema/Home'
+import {useEffect, useMemo, useState} from 'react'
 import {Logo} from './branding/Logo'
 import css from './Header.module.scss'
 import {LayoutContainer} from './Layout'
+import {Nav, NavTree, useNavTree} from './NavTree'
 
 const styles = fromModule(css)
 
@@ -62,19 +62,75 @@ type Link = {
   label: string
 }
 
-export async function Header() {
-  const links = await cms.get(Home().select(Home.links))
+export type HeaderProps = {
+  links?: Array<Link>
+  menu: Nav
+}
+
+export function Header({links, menu}: HeaderProps) {
+  const transparent = true
+  const router = useRouter()
+  const [isMobileOpen, setIsMobileOpen] = useState<boolean>(false)
+  function toggleMobileMenu() {
+    setIsMobileOpen(!isMobileOpen)
+  }
+  const mobileTree: Nav = useMemo(() => {
+    return [
+      {id: 'home', url: '/', title: 'Home'},
+      {id: 'roadmap', url: '/roadmap', title: 'Roadmap'},
+      {id: 'blog', url: '/blog', title: 'Blog'},
+      ...menu.map(page => {
+        if (page.parent) return page
+        return {...page, parent: 'docs'}
+      }),
+      {id: 'docs', url: '/docs', title: 'Docs'},
+      {id: 'developer', title: 'Developer'},
+      {
+        parent: 'developer',
+        id: 'changelog',
+        url: '/changelog',
+        title: 'Changelog'
+      },
+      {parent: 'developer', id: 'api', url: '/types/alinea', title: 'API'},
+      {
+        parent: 'developer',
+        id: 'playground',
+        url: '/playground',
+        title: 'Playground'
+      }
+    ]
+  }, [links, menu])
+  const nav = useNavTree(mobileTree)
+  useEffect(() => {
+    if (isMobileOpen) document.body.style.overflow = 'hidden'
+    else document.body.style.overflow = ''
+  }, [isMobileOpen])
+  /*useEffect(() => {
+    if (isMobileOpen) setIsMobileOpen(false)
+  }, [router.pathname])*/
   return (
     <>
-      <header className={styles.root()}>
-        <LayoutContainer style={{height: '100%'}}>hello header</LayoutContainer>
+      <header className={styles.root({transparent})}>
+        <LayoutContainer style={{height: '100%'}}>
+          <Menu
+            links={links}
+            isMobileOpen={isMobileOpen}
+            toggleMobileMenu={toggleMobileMenu}
+          />
+        </LayoutContainer>
       </header>
-      <div className={styles.mobilemenu()}>
+      <div className={styles.mobilemenu({open: isMobileOpen})}>
         <div className={styles.mobilemenu.container()}>
           <LayoutContainer className={styles.mobilemenu.top()}>
-            hello mobile
+            <Menu
+              links={links}
+              isMobileOpen={isMobileOpen}
+              toggleMobileMenu={toggleMobileMenu}
+            />
           </LayoutContainer>
-          <div className={styles.mobilemenu.nav()}>nav tree</div>
+          <div className={styles.mobilemenu.nav()}>
+            <NavTree nav={nav} />
+          </div>
         </div>
       </div>
     </>

@@ -1,6 +1,7 @@
 import {Config, Root, renderLabel} from 'alinea/core'
 import {Client} from 'alinea/core/Client'
-import {FavIcon, Loader} from 'alinea/ui'
+import {Loader} from 'alinea/ui'
+import {FavIcon} from 'alinea/ui/branding/FavIcon'
 import {IcRoundInsertDriveFile} from 'alinea/ui/icons/IcRoundInsertDriveFile'
 import {MdiSourceBranch} from 'alinea/ui/icons/MdiSourceBranch'
 import {atom, useAtom, useAtomValue} from 'jotai'

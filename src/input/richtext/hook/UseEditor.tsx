@@ -2,7 +2,7 @@
 
 import {EditorOptions} from '@tiptap/core'
 import {Editor} from '@tiptap/react'
-import {useForceUpdate} from 'alinea/ui'
+import {useForceUpdate} from 'alinea/ui/hook/UseForceUpdate'
 import {useEffect, useState} from 'react'
 
 export const useEditor = (options: Partial<EditorOptions> = {}) => {

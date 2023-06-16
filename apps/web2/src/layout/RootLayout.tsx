@@ -4,25 +4,25 @@ import {useLocalStorage} from 'alinea/ui/hook/UseLocalStorage'
 import {fromModule} from 'alinea/ui/util/Styler'
 import {PropsWithChildren, useEffect} from 'react'
 import {Footer, FooterProps} from './Footer'
-import {Header, HeaderProps} from './Header'
+import {Header, HeaderProps} from './Header.tsx_'
 import css from './RootLayout.module.scss'
 
 const styles = fromModule(css)
 
 export type LayoutTheme = 'system' | 'dark' | 'light'
 
-export interface LayoutProps {
+export interface RootLayoutProps {
   header: HeaderProps
   footer: FooterProps
   isHome: boolean
 }
 
-export function Layout({
+export function RootLayout({
   children,
   isHome,
   header,
   footer
-}: PropsWithChildren<LayoutProps>) {
+}: PropsWithChildren<RootLayoutProps>) {
   const [theme, setTheme] = useLocalStorage<LayoutTheme>(
     '@alinea/web/theme',
     'system'

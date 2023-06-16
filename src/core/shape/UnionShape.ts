@@ -4,7 +4,8 @@ import {Hint} from '../Hint.js'
 import {createId} from '../Id.js'
 import {Label} from '../Label.js'
 import {Shape, ShapeInfo} from '../Shape.js'
-import {entries} from '../util/Objects.js'
+import {PostProcess} from '../pages/PostProcess.js'
+import {entries, fromEntries} from '../util/Objects.js'
 import {RecordShape} from './RecordShape.js'
 
 export type UnionRow = {
@@ -22,10 +23,11 @@ export class UnionShape<T> implements Shape<UnionRow & T, UnionMutator<T>> {
   constructor(
     public label: Label,
     shapes: Record<string, RecordShape>,
-    public initialValue?: UnionRow & T
+    public initialValue?: UnionRow & T,
+    protected postProcess?: PostProcess<UnionRow & T>
   ) {
-    this.shapes = Object.fromEntries(
-      Object.entries(shapes).map(([key, type]) => {
+    this.shapes = fromEntries(
+      entries(shapes).map(([key, type]) => {
         return [
           key,
           new RecordShape(label, {
@@ -38,7 +40,7 @@ export class UnionShape<T> implements Shape<UnionRow & T, UnionMutator<T>> {
     )
   }
   innerTypes(parents: Array<string>): Array<ShapeInfo> {
-    return Object.entries(this.shapes).flatMap(([name, shape]) => {
+    return entries(this.shapes).flatMap(([name, shape]) => {
       const info = {name, shape, parents}
       const inner = shape.innerTypes(parents.concat(name))
       if (Hint.isDefinitionName(name)) return [info, ...inner]
@@ -102,6 +104,9 @@ export class UnionShape<T> implements Shape<UnionRow & T, UnionMutator<T>> {
   async applyLinks(value: UnionRow & T, loader: LinkResolver) {
     const type = value.type
     const shape = this.shapes[type]
-    if (shape) await shape.applyLinks(value, loader)
+    const tasks = []
+    if (shape) tasks.push(shape.applyLinks(value, loader))
+    if (this.postProcess) tasks.push(this.postProcess(value, loader))
+    await Promise.all(tasks)
   }
 }

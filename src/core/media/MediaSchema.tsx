@@ -26,7 +26,7 @@ export const MediaFile = type('File', {
   height: hidden<number>('Image height', Hint.Number()),
   preview: hidden<string>('Preview', Hint.String()),
   averageColor: hidden<string>('Average color', Hint.String()),
-  blurHash: hidden<string>('Blur hash', Hint.String()),
+  thumbHash: hidden<string>('Blur hash', Hint.String()),
   [type.meta]: {
     isHidden: true
   }

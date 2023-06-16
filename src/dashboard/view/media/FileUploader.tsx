@@ -40,7 +40,10 @@ export function FileUploader({max, toggleSelect}: FileUploaderProps) {
             root: Page.root,
             url: Page.url,
             parents({parents}) {
-              return parents().select(Page.title)
+              return parents().select({
+                entryId: Page.entryId,
+                title: Page.title
+              })
             }
           })
       )
@@ -91,6 +94,7 @@ export function FileUploader({max, toggleSelect}: FileUploaderProps) {
             <FileSummaryRow
               key={upload.id}
               entryId={upload.id}
+              type={'MediaLibrary'}
               title={upload.file.name}
               extension={upload.file.name.split('.').pop()!}
               size={upload.file.size}
@@ -98,7 +102,10 @@ export function FileUploader({max, toggleSelect}: FileUploaderProps) {
               root={upload.to.root}
               preview={upload.preview!}
               averageColor={upload.averageColor!}
-              parents={mediaLibrary!.parents.concat(mediaLibrary!.title)}
+              parents={mediaLibrary!.parents.concat({
+                entryId: mediaLibrary!.id,
+                title: mediaLibrary!.title
+              })}
             />
           )
         })}

@@ -1,14 +1,7 @@
 import {Page, Type, view} from 'alinea/core'
 import {Projection} from 'alinea/core/pages/Projection'
-import {
-  Chip,
-  Ellipsis,
-  HStack,
-  TextLabel,
-  Typo,
-  VStack,
-  fromModule
-} from 'alinea/ui'
+import {Chip, HStack, TextLabel, Typo, VStack, fromModule} from 'alinea/ui'
+import {Ellipsis} from 'alinea/ui/Ellipsis'
 import {IcRoundKeyboardArrowRight} from 'alinea/ui/icons/IcRoundKeyboardArrowRight'
 import {Fragment, ReactNode} from 'react'
 import {useDashboard} from '../../hook/UseDashboard.js'

@@ -1,18 +1,31 @@
 import {Hint} from 'alinea/core/Hint'
 import {Label} from 'alinea/core/Label'
+import {Page} from 'alinea/core/Page'
 import {Reference} from 'alinea/core/Reference'
 import {Shape} from 'alinea/core/Shape'
 import {Type} from 'alinea/core/Type'
+import {MediaFile} from 'alinea/core/media/MediaSchema'
 import {Expr} from 'alinea/core/pages/Expr'
+import {Projection} from 'alinea/core/pages/Projection'
+import {assign} from 'alinea/core/util/Objects'
 import {Picker} from 'alinea/editor/Picker'
 
-export interface EntryReference extends Reference {
-  ref: 'entry'
+export interface EntryLinkReference extends Reference {
   entry: string
+}
+
+export interface EntryReference extends EntryLinkReference {
   entryType: string
   path: string
   title: Label
   url: string
+}
+
+export const entryFields = {
+  entryType: Page.type,
+  url: Page.url,
+  path: Page.path,
+  title: Page.title
 }
 
 export namespace EntryReference {
@@ -21,12 +34,18 @@ export namespace EntryReference {
   }
 }
 
-export interface FileReference extends Reference {
-  ref: 'file'
+export interface FileReference extends EntryLinkReference {
   src: string
   url: string
   extension: string
   size: number
+}
+
+export const fileFields = {
+  title: Page.title,
+  url: MediaFile.location,
+  extension: MediaFile.extension,
+  size: MediaFile.size
 }
 
 export namespace FileReference {
@@ -35,8 +54,7 @@ export namespace FileReference {
   }
 }
 
-export interface ImageReference extends Reference {
-  ref: 'image'
+export interface ImageReference extends EntryLinkReference {
   src: string
   extension: string
   size: number
@@ -47,6 +65,18 @@ export interface ImageReference extends Reference {
   blurHash: string
 }
 
+export const imageFields = {
+  title: Page.title,
+  src: MediaFile.location,
+  extension: MediaFile.extension,
+  size: MediaFile.size,
+  hash: MediaFile.hash,
+  width: MediaFile.width,
+  height: MediaFile.height,
+  averageColor: MediaFile.averageColor,
+  thumbHash: MediaFile.thumbHash
+}
+
 export namespace ImageReference {
   export function isImageReference(value: any): value is ImageReference {
     return value && (value.type === 'image' || value.ref === 'image')
@@ -55,6 +85,7 @@ export namespace ImageReference {
 
 export interface EntryPickerOptions<T = {}> {
   hint: Hint
+  selection: Projection
   defaultView?: 'row' | 'thumb'
   condition?: Expr<boolean>
   max?: number
@@ -83,51 +114,14 @@ export function entryPicker<Ref extends Reference, Fields>(
     fields: options.fields,
     label: options.label || 'Page link',
     handlesMultiple: true,
-    options
-    /*select(row) {
-      const Link = Entry.as<Media.File>('Link')
-      // Todo: in time this does not need to check a condition but simply the
-      // type that was passed
-      return Link.where(entry => entry.id.is(row.get('entry')))
-        .first()
-        .select(entry => {
-          return row.fields
-            .with({
-              entryType: entry.type,
-              url: entry.url,
-              path: entry.path,
-              title: entry.title,
-              alinea: entry.alinea
-            })
-            .with(
-              Functions.iif(
-                LinkType.conditionOf(entry, 'file'),
-                {
-                  src: entry.location,
-                  url: entry.location,
-                  extension: entry.extension,
-                  size: entry.size
-                },
-                {}
-              )
-            )
-            .with(
-              Functions.iif(
-                LinkType.conditionOf(entry, 'image'),
-                {
-                  src: entry.location,
-                  extension: entry.extension,
-                  size: entry.size,
-                  hash: entry.hash,
-                  width: entry.width,
-                  height: entry.height,
-                  averageColor: entry.averageColor,
-                  blurHash: entry.blurHash
-                },
-                {}
-              )
-            )
-        })
-    }*/
+    options,
+    async postProcess(row, loader) {
+      const link: EntryLinkReference = row as any
+      if (!link.entry) return
+      const linkIds = [link.entry]
+      if (!options.selection) return
+      const [fields] = await loader.resolveLinks(options.selection, linkIds)
+      assign(row, fields)
+    }
   }
 }
