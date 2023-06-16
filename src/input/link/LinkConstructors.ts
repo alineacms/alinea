@@ -16,7 +16,10 @@ import {
   EntryReference,
   FileReference,
   ImageReference,
-  entryPicker
+  entryFields,
+  entryPicker,
+  fileFields,
+  imageFields
 } from 'alinea/picker/entry'
 import {UrlPickerOptions, UrlReference, urlPicker} from 'alinea/picker/url'
 
@@ -26,7 +29,7 @@ const imageCondition = Page.type
 
 export function imagePicker<Fields>(
   multiple: boolean,
-  options: Omit<EntryPickerOptions<Fields>, 'hint'>
+  options: Omit<EntryPickerOptions<Fields>, 'hint' | 'selection'>
 ) {
   return entryPicker<ImageReference, Fields>({
     ...options,
@@ -39,7 +42,8 @@ export function imagePicker<Fields>(
     title: multiple ? 'Select images' : 'Select an image',
     condition: imageCondition,
     showUploader: true,
-    defaultView: 'thumb'
+    defaultView: 'thumb',
+    selection: imageFields
   })
 }
 
@@ -49,7 +53,7 @@ const fileCondition = Page.type
 
 export function filePicker<Fields>(
   multiple: boolean,
-  options: Omit<EntryPickerOptions<Fields>, 'hint'>
+  options: Omit<EntryPickerOptions<Fields>, 'hint' | 'selection'>
 ) {
   return entryPicker<FileReference, Fields>({
     ...options,
@@ -62,7 +66,8 @@ export function filePicker<Fields>(
     title: multiple ? 'Select files' : 'Select a file',
     condition: fileCondition,
     showUploader: true,
-    defaultView: 'thumb'
+    defaultView: 'thumb',
+    selection: fileFields
   })
 }
 
@@ -85,7 +90,8 @@ export function link<Fields>(label: Label, options: LinkOptions<Fields>) {
           package: 'alinea/picker/entry'
         }),
         title: 'Select a page',
-        max: 1
+        max: 1,
+        selection: entryFields
       }),
       url: urlPicker<Fields>(options)
     }
@@ -107,7 +113,8 @@ export namespace link {
             package: 'alinea/picker/entry'
           }),
           title: 'Select a page',
-          max: 1
+          max: 1,
+          selection: entryFields
         }),
         url: urlPicker<Fields>(options)
       }
@@ -118,7 +125,7 @@ export namespace link {
 export namespace link {
   export interface EntryOptions<Fields>
     extends LinkFieldOptions,
-      Omit<EntryPickerOptions<Fields>, 'hint'> {}
+      Omit<EntryPickerOptions<Fields>, 'hint' | 'selection'> {}
 
   export function entry<Fields>(
     label: Label,
@@ -134,7 +141,8 @@ export namespace link {
             package: 'alinea/picker/entry'
           }),
           title: 'Select a page',
-          max: 1
+          max: 1,
+          selection: entryFields
         })
       }
     })
@@ -155,7 +163,8 @@ export namespace link.entry {
             name: 'EntryReference',
             package: 'alinea/picker/entry'
           }),
-          title: 'Select a page'
+          title: 'Select a page',
+          selection: entryFields
         })
       }
     })
@@ -193,7 +202,7 @@ export namespace link.url {
 export namespace link {
   export interface ImageOptions<Fields>
     extends LinkFieldOptions,
-      Omit<EntryPickerOptions<Fields>, 'hint'> {}
+      Omit<EntryPickerOptions<Fields>, 'hint' | 'selection'> {}
 
   export function image<Fields>(
     label: Label,
@@ -221,7 +230,7 @@ export namespace link.image {
 export namespace link {
   export interface FileOptions<Fields>
     extends LinkFieldOptions,
-      Omit<EntryPickerOptions<Fields>, 'hint'> {}
+      Omit<EntryPickerOptions<Fields>, 'hint' | 'selection'> {}
 
   export function file<Fields>(
     label: Label,

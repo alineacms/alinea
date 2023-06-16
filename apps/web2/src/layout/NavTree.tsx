@@ -27,7 +27,7 @@ export function useNavTree(nav: Nav) {
   return useMemo(() => nestNav(nav), [nav])
 }
 
-export type Nav = Array<Omit<NavItem, 'children'> & {parent?: string}>
+export type Nav = Array<Omit<NavItem, 'children'> & {parent: string | null}>
 
 export type NavItem = {
   id: string

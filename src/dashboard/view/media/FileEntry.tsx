@@ -1,13 +1,14 @@
 import {Media} from 'alinea/backend/Media'
 import {Entry} from 'alinea/core'
-import {fromModule, Property} from 'alinea/ui'
+import {fromModule} from 'alinea/ui'
 import {Main} from 'alinea/ui/Main'
+import {Property} from 'alinea/ui/Property'
 import {useAtomValue} from 'jotai'
 import prettyBytes from 'pretty-bytes'
 import {useNav} from '../../hook/UseNav.js'
+import {EntryEditProps} from '../EntryEdit.js'
 import {EntryHeader} from '../entry/EntryHeader.js'
 import {EntryTitle} from '../entry/EntryTitle.js'
-import {EntryEditProps} from '../EntryEdit.js'
 import css from './FileEntry.module.scss'
 
 const styles = fromModule(css)

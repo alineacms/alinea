@@ -57,8 +57,9 @@ export namespace Shape {
   export function Union<T>(
     label: Label,
     shapes: Record<string, RecordShape>,
-    initialValue?: UnionRow & T
+    initialValue?: UnionRow & T,
+    postProcess?: (value: UnionRow & T, loader: LinkResolver) => Promise<void>
   ): UnionShape<T> {
-    return new UnionShape<T>(label, shapes, initialValue)
+    return new UnionShape<T>(label, shapes, initialValue, postProcess)
   }
 }

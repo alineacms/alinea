@@ -40,7 +40,13 @@ export function createLink<Row extends Reference>(
     hint,
     label,
     options,
-    initialValue: options.initialValue as Row
+    initialValue: options.initialValue as Row,
+    async postProcess(value, loader) {
+      const type = value.type
+      const picker = options.pickers[type]
+      if (!picker) return
+      if (picker.postProcess) await picker.postProcess(value, loader)
+    }
   })
 }
 
@@ -66,6 +72,16 @@ export function createLinks<Row extends Reference>(
   return new LinksField(blocks, {
     hint: Hint.Array(hint),
     label,
-    options
+    options,
+    async postProcess(rows, loader) {
+      const tasks = []
+      for (const row of rows) {
+        const type = row.type
+        const picker = options.pickers[type]
+        if (!picker) return
+        if (picker.postProcess) tasks.push(picker.postProcess(row, loader))
+      }
+      await Promise.all(tasks)
+    }
   })
 }

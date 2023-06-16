@@ -1,4 +1,5 @@
-import {AppBar, Button, HStack, Icon, Stack, fromModule} from 'alinea/ui'
+import {Button, HStack, Icon, Stack, fromModule} from 'alinea/ui'
+import {AppBar} from 'alinea/ui/AppBar'
 import {IcOutlineRemoveRedEye} from 'alinea/ui/icons/IcOutlineRemoveRedEye'
 import {IcRoundArchive} from 'alinea/ui/icons/IcRoundArchive'
 import {IcRoundCheck} from 'alinea/ui/icons/IcRoundCheck'

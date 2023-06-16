@@ -6,16 +6,10 @@ import {InputField} from 'alinea/editor/view/InputField'
 import {check} from 'alinea/input/check'
 import {link as createLink} from 'alinea/input/link'
 import {text} from 'alinea/input/text'
-import {
-  Button,
-  HStack,
-  Stack,
-  VStack,
-  fromModule,
-  useObservable
-} from 'alinea/ui'
+import {Button, HStack, Stack, VStack, fromModule} from 'alinea/ui'
 import {useTrigger} from 'alinea/ui/hook/UseTrigger'
 import {IcRoundClose} from 'alinea/ui/icons/IcRoundClose'
+import {useObservable} from 'alinea/ui/util/Observable'
 import {FormEvent, useMemo} from 'react'
 import css from './PickLink.module.scss'
 

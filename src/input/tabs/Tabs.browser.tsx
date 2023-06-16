@@ -1,6 +1,7 @@
 import {Section, Type} from 'alinea/core'
 import {InputForm, InputState} from 'alinea/editor'
-import {HStack, Tabs, TextLabel} from 'alinea/ui'
+import {HStack, TextLabel} from 'alinea/ui'
+import {Tabs} from 'alinea/ui/Tabs'
 import {TabsSection, tabs as createTabs} from './Tabs.js'
 
 export * from './Tabs.js'

@@ -1,5 +1,6 @@
 import {createId, Field, Shape} from 'alinea/core'
-import {Observable, observable, useForceUpdate} from 'alinea/ui'
+import {useForceUpdate} from 'alinea/ui/hook/UseForceUpdate'
+import {observable, Observable} from 'alinea/ui/util/Observable'
 import {useEffect, useMemo} from 'react'
 import * as Y from 'yjs'
 import {InputState} from '../InputState.js'

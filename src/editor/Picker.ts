@@ -1,4 +1,5 @@
 import {Hint, Label, Reference, Type} from 'alinea/core'
+import {PostProcess} from 'alinea/core/pages/PostProcess'
 import {RecordShape} from 'alinea/core/shape/RecordShape'
 import {ComponentType} from 'react'
 
@@ -28,6 +29,7 @@ export interface Picker<Row extends Reference, Options extends {} = {}> {
   options: Options
   view?: ComponentType<PickerProps<Options>>
   viewRow?: ComponentType<{reference: Row}>
+  postProcess?: PostProcess<Row>
 }
 
 export namespace Picker {

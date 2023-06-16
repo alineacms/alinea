@@ -11,16 +11,10 @@ import {link} from 'alinea/input/link'
 import {select} from 'alinea/input/select'
 import {text} from 'alinea/input/text'
 import {EntryReference} from 'alinea/picker/entry'
-import {
-  Button,
-  fromModule,
-  HStack,
-  Loader,
-  Typo,
-  useObservable
-} from 'alinea/ui'
+import {Button, fromModule, HStack, Loader, Typo} from 'alinea/ui'
 import {IcRoundArrowBack} from 'alinea/ui/icons/IcRoundArrowBack'
 import {Link} from 'alinea/ui/Link'
+import {useObservable} from 'alinea/ui/util/Observable'
 import {useAtomValue, useSetAtom} from 'jotai'
 import {FormEvent, useState} from 'react'
 import {useQuery} from 'react-query'

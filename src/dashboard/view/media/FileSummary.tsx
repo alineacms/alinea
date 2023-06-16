@@ -1,16 +1,8 @@
 import {Page, renderLabel, view} from 'alinea/core'
 import {MediaFile} from 'alinea/core/media/MediaSchema'
 import {Projection} from 'alinea/core/pages/Projection'
-import {
-  Chip,
-  Ellipsis,
-  HStack,
-  TextLabel,
-  Typo,
-  VStack,
-  fromModule,
-  px
-} from 'alinea/ui'
+import {Chip, HStack, TextLabel, Typo, VStack, fromModule, px} from 'alinea/ui'
+import {Ellipsis} from 'alinea/ui/Ellipsis'
 import {IcRoundInsertDriveFile} from 'alinea/ui/icons/IcRoundInsertDriveFile'
 import {IcRoundKeyboardArrowRight} from 'alinea/ui/icons/IcRoundKeyboardArrowRight'
 import {Fragment, ReactNode} from 'react'

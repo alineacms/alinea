@@ -6,13 +6,13 @@ import {fromModule} from 'alinea/ui/util/Styler'
 import Link from 'next/link'
 import css from './Footer.module.scss'
 import {LayoutContainer, LayoutTheme} from './Layout'
-import {LayoutProps} from './RootLayout.jsx'
+import {RootLayoutProps} from './RootLayout.jsx'
 import {WebTypo} from './WebTypo'
 
 const styles = fromModule(css)
 
 export type FooterProps = {
-  footer: LayoutProps['footer']
+  footer: RootLayoutProps['footer']
   theme: LayoutTheme
   setTheme: (theme: LayoutTheme) => void
 }
