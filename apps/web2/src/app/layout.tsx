@@ -1,8 +1,13 @@
 import {cms} from '@/cms'
 import {btoa} from 'alinea/core/util/Encoding'
+import {fromModule} from 'alinea/ui'
 import {PropsWithChildren} from 'react'
+import {Footer} from '../layout/Footer'
 import {Header} from '../layout/Header'
 import '../styles/global.scss'
+import css from './layout.module.scss'
+
+const styles = fromModule(css)
 
 export const metadata = {
   title: 'Alinea'
@@ -17,25 +22,6 @@ const favicon = btoa(
 )
 
 export default async function Layout({children}: PropsWithChildren) {
-  /*const layout = await cms.get(
-    Home().select({
-      footer: Home.footer,
-      header: {
-        links: Home.links,
-        menu() {
-          return Page()
-            .where(Page.type.is('Doc').or(Page.type.is('Docs')))
-            .select({
-              id: Page.entryId,
-              type: Page.type,
-              url: Page.url,
-              title: Page.title,
-              parent: Page.parent
-            })
-        }
-      }
-    })
-  )*/
   return (
     <html lang="en">
       <head>
@@ -50,12 +36,12 @@ export default async function Layout({children}: PropsWithChildren) {
         />
       </head>
       <body>
-        <Header />
-        {children}
-        {/*<RootLayout isHome {...layout}>
-          {children}
-          </RootLayout>*/}
-        <cms.previews />
+        <div className={styles.layout()}>
+          <Header />
+          <div className={styles.layout.content()}>{children}</div>
+          <Footer />
+          <cms.previews />
+        </div>
       </body>
     </html>
   )

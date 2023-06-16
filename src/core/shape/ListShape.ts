@@ -85,7 +85,7 @@ export class ListShape<T>
   }
   fromY(map: Y.Map<any>): Array<ListRow & T> {
     const rows: Array<ListRow & T> = []
-    if (!map) return rows
+    if (!map || typeof map.keys !== 'function') return rows
     for (const key of map.keys()) {
       const row = map.get(key)
       if (!row || typeof row.get !== 'function') continue

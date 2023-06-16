@@ -16,7 +16,7 @@ import {WebText} from '../layout/WebText'
 import {WebTypo} from '../layout/WebTypo'
 import {Newsletter} from '../layout/engage/Newsletter'
 import heroBg from '../media/hero.jpg'
-import css from './home.module.scss'
+import css from './page.module.scss'
 
 const styles = fromModule(css)
 

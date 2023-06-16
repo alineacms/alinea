@@ -14,14 +14,15 @@ export default function NextPreviews() {
   const router = useRouter()
   const {isPreviewing} = usePreview({
     async preview({entryId, phase, update}) {
-      document.cookie = `${PREVIEW_ENTRYID_NAME}=${entryId}`
-      document.cookie = `${PREVIEW_PHASE_NAME}=${phase}`
+      document.cookie = `${PREVIEW_ENTRYID_NAME}=${entryId};path=/`
+      document.cookie = `${PREVIEW_PHASE_NAME}=${phase};path=/`
       for (const {name, value} of chunkCookieValue(
         PREVIEW_UPDATE_NAME,
         update
       )) {
-        document.cookie = `${name}=${value}; path=/`
+        document.cookie = `${name}=${value};path=/`
       }
+
       router.refresh()
       // router.refresh unfortunately causes FOUC because Next servers
       // all responses in development with a no-store, revalidate header
