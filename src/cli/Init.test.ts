@@ -11,6 +11,10 @@ const testPms = false
 async function setup(cwd: string) {
   await fs.remove(cwd)
   await fs.mkdirp(cwd)
+  await fs.writeFile(
+    path.join(cwd, 'package.json'),
+    '{"dependencies": {}, "scripts": {}}'
+  )
 }
 
 async function run(cwd: string) {
@@ -56,7 +60,7 @@ if (testPms) {
   })
 } else {
   test('init', async () => {
-    const cwd = 'dist/.init'
+    const cwd = path.join(process.cwd(), 'dist/.init')
     await setup(cwd)
     await run(cwd)
   })
