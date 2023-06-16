@@ -80,6 +80,9 @@ export async function init(options: InitOptions) {
       /^(msys|cygwin)$/.test(process.env.OSTYPE as string)
     const symlinkType = IS_WINDOWS ? 'junction' : 'dir'
     await outcome(
+      fs.mkdir(path.join(cwd, 'node_modules/@alinea'), {recursive: true})
+    )
+    await outcome(
       fs.symlink(
         path.join(cwd, '.alinea'),
         path.join(cwd, 'node_modules/@alinea/generated'),
