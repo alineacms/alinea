@@ -8,7 +8,7 @@ import {
 } from 'alinea/core'
 import {EntrySearch} from 'alinea/core/EntrySearch'
 import {Realm} from 'alinea/core/pages/Realm'
-import {base64} from 'alinea/core/util/Encoding'
+import {base64url} from 'alinea/core/util/Encoding'
 import {unzlibSync} from 'fflate'
 import {
   BinOpType,
@@ -661,7 +661,7 @@ export class Resolver {
           const type = this.schema[entry.type]
           const yDoc = createYDoc(type, entry)
           // Apply update
-          const update = unzlibSync(base64.parse(preview.update))
+          const update = unzlibSync(base64url.parse(preview.update))
           Y.applyUpdateV2(yDoc, update)
           const entryData = parseYDoc(type, yDoc)
           const previewEntry = {...entry, ...entryData}

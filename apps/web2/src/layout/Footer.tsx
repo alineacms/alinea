@@ -1,3 +1,5 @@
+'use client'
+
 import {HStack, VStack} from 'alinea/ui/Stack'
 import {IcOutlineDarkMode} from 'alinea/ui/icons/IcOutlineDarkMode'
 import {IcOutlineLightMode} from 'alinea/ui/icons/IcOutlineLightMode'
@@ -6,13 +8,11 @@ import {fromModule} from 'alinea/ui/util/Styler'
 import Link from 'next/link'
 import css from './Footer.module.scss'
 import {LayoutContainer, LayoutTheme} from './Layout'
-import {RootLayoutProps} from './RootLayout.jsx'
 import {WebTypo} from './WebTypo'
 
 const styles = fromModule(css)
 
 export type FooterProps = {
-  footer: RootLayoutProps['footer']
   theme: LayoutTheme
   setTheme: (theme: LayoutTheme) => void
 }
@@ -23,12 +23,13 @@ const themeIcons = {
   light: IcOutlineLightMode
 }
 
-export function Footer({footer, theme, setTheme}: FooterProps) {
+export function Footer() {
+  const theme = 'system'
   const ThemeIcon = themeIcons[theme]
   function handleThemeToggle() {
-    setTheme(
+    /*setTheme(
       theme === 'system' ? 'light' : theme === 'light' ? 'dark' : 'system'
-    )
+    )*/
   }
   return (
     <footer className={styles.root()}>
@@ -63,22 +64,6 @@ export function Footer({footer, theme, setTheme}: FooterProps) {
               </div>
             </VStack>
           </VStack>
-          {/*footer?.map(section => {
-            return (
-              <div key={section.id}>
-                <WebTypo.H4>{section.label}</WebTypo.H4>
-                <nav>
-                  {section.links.map(link => {
-                    return (
-                      <Link key={link.id} href={link.url}>
-                        <a key={link.id}>{link.label}</a>
-                      </Link>
-                    )
-                  })}
-                </nav>
-              </div>
-            )
-          })*/}
 
           <HStack
             style={{marginTop: 'auto'}}

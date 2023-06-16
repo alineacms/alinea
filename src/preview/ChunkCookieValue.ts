@@ -1,6 +1,6 @@
 type Cookie = {name: string; value: string}
 
-const MAX_COOKIE_LENGTH = 4096
+export const MAX_COOKIE_LENGTH = 4096
 
 // Provided value should be url encoded
 export function chunkCookieValue(
