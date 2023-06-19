@@ -24,6 +24,7 @@ const external = builtinModules
   .concat(builtinModules.map(m => `node:${m}`))
   .concat([
     '@alinea/generated',
+    '@alinea/iso',
     '@alinea/sqlite-wasm',
     'next',
     'next/navigation',
@@ -63,11 +64,11 @@ const internalPlugin = {
     const cwd = process.cwd()
     const src = path.join(cwd, 'src')
     build.onResolve({filter: /^alinea\/.*/}, args => {
-      const file = args.path.slice('alinea/'.length)
-      return build.resolve('./' + path.join('src', file), {
+      return {path: args.path, external: true}
+      /*return build.resolve('./' + path.join('src', file), {
         kind: args.kind,
         resolveDir: cwd
-      })
+      })*/
     })
   }
 }
@@ -120,6 +121,34 @@ const cssEntry = {
 }
 
 /** @type {import('esbuild').Plugin} */
+const externalize = {
+  name: 'externalize',
+  setup(build) {
+    const cwd = process.cwd()
+    const src = path.join(cwd, 'src')
+    build.onResolve({filter: /^\./}, args => {
+      if (args.kind === 'entry-point') return
+      if (args.path.endsWith('.scss') || args.path.endsWith('.json')) return
+      if (!args.resolveDir.startsWith(src)) return
+      if (!args.path.endsWith('.js')) {
+        console.error(`Missing file extension on local import: ${args.path}`)
+        console.error(`In file: ${args.importer}`)
+        process.exit(1)
+      }
+      const file = path.join(args.resolveDir, args.path)
+      const location = path
+        .relative(src, file)
+        .replaceAll(path.sep, '/')
+        .slice(0, -'.js'.length)
+      return {
+        path: `alinea/${location}`,
+        external: true
+      }
+    })
+  }
+}
+
+/** @type {import('esbuild').Plugin} */
 const jsEntry = {
   name: 'js-entry',
   setup(build) {
@@ -132,8 +161,8 @@ const jsEntry = {
         if (file.includes('dev')) return false
         return !file.endsWith('.d.ts') && !file.endsWith('.test.ts')
       })
-      const context = await esbuild.context({
-        plugins: [sassJsPlugin, internalPlugin],
+      const result = await esbuild.build({
+        plugins: [sassJsPlugin, internalPlugin, externalize],
         format: 'esm',
         entryPoints: files,
         outdir: 'dist',
@@ -143,8 +172,6 @@ const jsEntry = {
         external,
         chunkNames: 'chunks/[name]-[hash]'
       })
-      const {outputFiles} = await context.build()
-      console.log(outputFiles)
       return {
         contents: '',
         resolveDir: '.'

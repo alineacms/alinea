@@ -4,9 +4,9 @@ import {EntryReference} from 'alinea/picker/entry'
 import {fromModule} from 'alinea/ui'
 import {IcRoundCheckBox} from 'alinea/ui/icons/IcRoundCheckBox'
 import {IcRoundCheckBoxOutlineBlank} from 'alinea/ui/icons/IcRoundCheckBoxOutlineBlank'
-import {useExplorer} from '../../hook/UseExplorer'
-import {useFocusListItem} from '../../hook/UseFocusList'
-import {useNav} from '../../hook/UseNav'
+import {useExplorer} from '../../hook/UseExplorer.js'
+import {useFocusListItem} from '../../hook/UseFocusList.js'
+import {useNav} from '../../hook/UseNav.js'
 import css from './ExplorerItem.module.scss'
 
 const styles = fromModule(css)
