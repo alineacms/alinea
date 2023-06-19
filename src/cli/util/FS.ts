@@ -1,4 +1,4 @@
-import fs from 'fs-extra'
+import fs from 'node:fs/promises'
 
 export async function copyFileIfContentsDiffer(source: string, target: string) {
   const data = await fs.readFile(source)

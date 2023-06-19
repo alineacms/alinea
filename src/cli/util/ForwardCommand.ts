@@ -1,4 +1,4 @@
-import {execa} from 'execa'
+import {spawn} from 'child_process'
 
 export function forwardCommand(env: Record<string, string> = {}) {
   const argv = process.argv
@@ -9,7 +9,7 @@ export function forwardCommand(env: Record<string, string> = {}) {
   function finish({exitCode}: {exitCode: number}) {
     process.exit(exitCode)
   }
-  const instance = execa(command.join(' '), {
+  const instance = spawn(command.join(' '), {
     shell: true,
     stdio: 'inherit',
     env: {
@@ -17,7 +17,7 @@ export function forwardCommand(env: Record<string, string> = {}) {
       ...env
     }
   })
-  instance.then(finish, finish)
+  instance.on('exit', finish)
   process.on('SIGINT', () => instance.kill('SIGINT'))
   process.on('SIGTERM', () => instance.kill('SIGTERM'))
 }

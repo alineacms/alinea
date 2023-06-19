@@ -1,4 +1,8 @@
-import {PreviewAction, PreviewMessage, PreviewUpdate} from './PreviewMessage.js'
+import {
+  PreviewAction,
+  PreviewMessage,
+  PreviewUpdate
+} from 'alinea/preview/PreviewMessage'
 
 export interface PreviewApi {
   preview(update: PreviewUpdate): Promise<void>

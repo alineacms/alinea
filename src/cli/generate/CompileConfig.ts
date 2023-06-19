@@ -1,5 +1,5 @@
 import esbuild, {BuildOptions, BuildResult} from 'esbuild'
-import fs from 'fs-extra'
+import fs from 'node:fs'
 import path from 'node:path'
 import {createEmitter} from '../util/Emitter.js'
 import {externalPlugin} from '../util/ExternalPlugin.js'

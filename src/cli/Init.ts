@@ -1,10 +1,10 @@
-import { createId, outcome } from 'alinea/core'
-import { detect } from 'detect-package-manager'
-import fs from 'fs-extra'
-import { execSync } from 'node:child_process'
+import {createId, outcome} from 'alinea/core'
+import {detect} from 'detect-package-manager'
+import {execSync} from 'node:child_process'
+import fs from 'node:fs/promises'
 import path from 'node:path'
-import { generate } from './Generate.js'
-import { dirname } from './util/Dirname.js'
+import {generate} from './Generate.js'
+import {dirname} from './util/Dirname.js'
 
 const __dirname = dirname(import.meta.url)
 
@@ -15,11 +15,13 @@ export type InitOptions = {
 
 export async function init(options: InitOptions) {
   const {cwd = process.cwd(), quiet = false} = options
-  if (fs.existsSync(path.join(cwd, '.alinea'))) {
+  if ((await outcome(fs.stat(path.join(cwd, '.alinea')))).isSuccess()) {
     console.log(`> A folder named ".alinea" already exists in ${cwd}`)
     process.exit(1)
   }
-  if (fs.existsSync(path.join(cwd, 'alinea.config.tsx'))) {
+  if (
+    (await outcome(fs.stat(path.join(cwd, 'alinea.config.tsx')))).isSuccess()
+  ) {
     console.log(`> An alinea config file already exists in ${cwd}`)
     process.exit(1)
   }
