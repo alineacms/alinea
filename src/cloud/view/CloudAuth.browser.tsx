@@ -1,7 +1,6 @@
 import {Connection} from 'alinea/core'
 import {Auth} from 'alinea/core/Auth'
 import {Client} from 'alinea/core/Client'
-import {ErrorWithCode} from 'alinea/core/ErrorWithCode'
 import {joinPaths} from 'alinea/core/util/Urls'
 import {useDashboard} from 'alinea/dashboard'
 import {Head} from 'alinea/dashboard/util/Head'
@@ -16,7 +15,7 @@ import {AuthResult, AuthResultType} from '../AuthResult.js'
 export function CloudAuthView({setSession}: Auth.ViewProps) {
   const {client} = useDashboard()
   if (!(client instanceof Client))
-    throw new ErrorWithCode(`Cannot authenticate with non http client`)
+    throw new Error(`Cannot authenticate with non http client`)
   const {data, isError} = useQuery(
     ['auth.cloud'],
     () => {
