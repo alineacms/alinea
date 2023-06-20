@@ -20,10 +20,10 @@ enum PM {
 }
 
 const lockfiles = {
-  [PM.NPM]: 'package-lock.json',
-  [PM.Yarn]: 'yarn.lock',
+  [PM.Bun]: 'bun.lockb',
   [PM.PNPM]: 'pnpm-lock.yaml',
-  [PM.Bun]: 'bun.lockb'
+  [PM.Yarn]: 'yarn.lock',
+  [PM.NPM]: 'package-lock.json'
 }
 
 async function detectPm(): Promise<PM> {
@@ -49,14 +49,15 @@ export async function init(options: InitOptions) {
   }
   await fs.mkdir(path.join(cwd, 'content/pages'), {recursive: true})
   await fs.writeFile(
-    path.join(cwd, 'content/pages/index.json'),
+    path.join(cwd, 'content/pages/welcome.json'),
     JSON.stringify(
       {
         id: createId(),
         type: 'Page',
         title: 'Welcome',
         alinea: {
-          index: 'a0'
+          index: 'a0',
+          seeded: true
         }
       },
       null,
@@ -72,7 +73,8 @@ export async function init(options: InitOptions) {
         type: 'MediaLibrary',
         title: 'Media library',
         alinea: {
-          index: 'a0'
+          index: 'a0',
+          seeded: true
         }
       },
       null,
