@@ -78,7 +78,12 @@ export function createHandler(
     initial = true
 
   const config = {
-    external: ['next/navigation', 'next/headers', 'better-sqlite3'],
+    external: [
+      'next/navigation',
+      'next/headers',
+      'better-sqlite3',
+      '@alinea/generated/store.js'
+    ],
     format: 'esm',
     target: 'esnext',
     treeShaking: true,

@@ -97,6 +97,7 @@
     "@types/react": "18.2.5",
     "@types/react-dom": "18.2.4",
     "y-prosemirror": "1.1.2",
+    "esbuild": "^0.18.5",
     "mime-db": "1.51.0",
     "prosemirror-model": "1.18.1",
     "prosemirror-schema-list": "1.2.0",
