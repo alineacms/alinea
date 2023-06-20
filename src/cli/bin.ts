@@ -53,7 +53,7 @@ prog
     ensureNode()
     ensureReact()
     ensureEnv(args.dir)
-    process.env.NODE_ENV = args.production ? 'production' : 'development'
+    // process.env.NODE_ENV = args.production ? 'production' : 'development'
     const {serve} = await import('./Serve.js')
     return serve({
       ...args,

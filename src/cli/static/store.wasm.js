@@ -1,5 +1,4 @@
-import init from '@alinea/sqlite-wasm'
-import {connect} from 'alinea/vendor/rado/driver/sql.js'
+import {createStore as CS} from 'alinea/backend/Store'
 import * as storeExports from './$WASM.js'
 
 function unpack(exports) {
@@ -20,8 +19,7 @@ async function getWasmInstance(exports, imports) {
 }
 
 export function createStore() {
-  return Promise.all([getWasmInstance(storeExports), init()]).then(
-    ([{exports}, {Database}]) =>
-      connect(new Database(unpack(exports))).toAsync()
-  )
+  return getWasmInstance(storeExports)
+    .then(({exports}) => unpack(exports))
+    .then(CS)
 }
