@@ -86,6 +86,7 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
     nextBuild = builds.next()
     try {
       const cms = await loadCMS(context.outDir)
+      cms.exportStore(context.outDir, new Uint8Array())
       for await (const _ of fillCache(context, store, cms, nextBuild)) {
         yield {cms, store}
         // For debug reasons write out db
