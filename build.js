@@ -32,6 +32,7 @@ const resolveAlinea = {
 const external = builtinModules
   .concat(builtinModules.map(m => `node:${m}`))
   .concat([
+    'fs-extra',
     '@alinea/generated',
     '@alinea/iso',
     '@alinea/sqlite-wasm',
@@ -226,7 +227,7 @@ const targetPlugin = {
   }
 }
 
-function jsEntry(watch) {
+function jsEntry({watch, test}) {
   return {
     name: JS_ENTRY,
     setup(build) {
@@ -245,11 +246,8 @@ function jsEntry(watch) {
             fsExtra.copySync(folder, target)
           }
           const files = glob.sync('src/**/*.{ts,tsx}').filter(file => {
-            return (
-              !file.endsWith('.d.ts') &&
-              !file.endsWith('.test.ts') &&
-              !file.endsWith('.stories.tsx')
-            )
+            if (!test && file.endsWith('.test.ts')) return false
+            return !file.endsWith('.d.ts') && !file.endsWith('.stories.tsx')
           })
           if (!context || !dequal(currentFiles, files)) {
             context = await esbuild.context({
@@ -361,16 +359,17 @@ const devPlugin = {
   }
 }
 
-async function build() {
-  const dev = process.argv.includes('--dev')
-  const watch = dev || process.argv.includes('--watch')
+const dev = process.argv.includes('--dev')
+const watch = dev || process.argv.includes('--watch')
+const test = process.argv.includes('--test')
 
+async function build() {
   const plugins = [
     targetPlugin,
     cssEntry,
     sassCssPlugin,
     cleanup,
-    jsEntry(watch),
+    jsEntry({watch, test}),
     ReporterPlugin.configure({name: 'alinea'})
   ]
 
@@ -395,3 +394,30 @@ async function build() {
 }
 
 await build()
+
+async function runTests() {
+  const filter = process.argv[3] || ''
+  const files = glob.sync('dist/**/*.test.js')
+  const modules = files.filter(file => {
+    if (!filter) return true
+    return path.basename(file).toLowerCase().includes(filter)
+  })
+  if (modules.length === 0) {
+    console.log(`No tests found for pattern "${filter}"`)
+    process.exit()
+  }
+  process.argv.push('.bin/uvu') // Trigger isCLI
+  const {exec} = await import('uvu')
+  globalThis.UVU_DEFER = 1
+  for (const [idx, m] of modules.entries()) {
+    globalThis.UVU_INDEX = idx
+    globalThis.UVU_QUEUE.push([path.basename(m)])
+    await import('./' + m)
+  }
+  return exec().catch(error => {
+    console.error(error.stack || error.message)
+    process.exit(1)
+  })
+}
+
+if (test) await runTests()
