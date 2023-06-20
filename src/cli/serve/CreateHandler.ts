@@ -123,8 +123,19 @@ export function createHandler(
     }
   })
 
-  if (alineaDev) esbuild.context(config).then(ctx => ctx.watch())
-  else esbuild.build(config).catch(() => {})
+  /*const esbuildServer = esbuild.context(config).then(ctx => {
+    return ctx.watch().then(() => ctx.serve())
+  })
+
+  async function forwardBuild(request: Request) {
+    const {port} = await esbuildServer
+    const url = new URL(request.url)
+    url.host = '127.0.0.1'
+    url.port = port.toString()
+    return fetch(url, request)
+  }*/
+
+  esbuild.context(config).then(ctx => ctx.watch())
 
   async function serveBrowserBuild(
     request: Request
@@ -163,35 +174,35 @@ export function createHandler(
         }
       })
     }),
-    router.compress(
-      matcher.get('/').map(({url}): Response => {
-        const handlerUrl = `${url.protocol}//${url.host}`
-        return new Response(
-          `<!DOCTYPE html>
+    //router.compress(
+    matcher.get('/').map(({url}): Response => {
+      const handlerUrl = `${url.protocol}//${url.host}`
+      return new Response(
+        `<!DOCTYPE html>
           <meta charset="utf-8" />
           <link rel="icon" href="data:," />
-          <link href="./config.css" rel="stylesheet" />
-          <link href="./entry.css" rel="stylesheet" />
+          <link href="/config.css" rel="stylesheet" />
+          <link href="/entry.css" rel="stylesheet" />
           <meta name="viewport" content="width=device-width, initial-scale=1" />
           <meta name="handshake_url" value="${handlerUrl}/hub/auth/handshake" />
           <meta name="redirect_url" value="${handlerUrl}/hub/auth" />
           <body>
             <script type="module" src="./entry.js"></script>
           </body>`,
-          {
-            headers: {'content-type': 'text/html'}
-          }
-        )
+        {
+          headers: {'content-type': 'text/html'}
+        }
+      )
+    }),
+    matcher
+      .all('/hub/*')
+      .map(async ({request}): Promise<Response | undefined> => {
+        return handler.handle(request)
       }),
-      matcher
-        .all('/hub/*')
-        .map(async ({request}): Promise<Response | undefined> => {
-          return handler.handle(request)
-        }),
-      serveBrowserBuild,
-      matcher.get('/config.css').map((): Response => {
-        return new Response('', {headers: {'content-type': 'text/css'}})
-      })
-    )
+    serveBrowserBuild,
+    matcher.get('/config.css').map((): Response => {
+      return new Response('', {headers: {'content-type': 'text/css'}})
+    })
+    //)
   ).notFound(() => new Response('Not found', {status: 404}))
 }

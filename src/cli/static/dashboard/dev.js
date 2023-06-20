@@ -1,7 +1,7 @@
 import {CMS} from 'alinea/core'
+import 'alinea/css'
+import {DevDashboard} from 'alinea/dashboard/dev/DevDashboard'
 import {jsx} from 'react/jsx-runtime'
-import {DevDashboard} from '../../../dashboard/dev/DevDashboard.js'
-import '../../../index.css'
 import {reactRender} from './render-react18.js'
 
 const scripts = document.getElementsByTagName('script')

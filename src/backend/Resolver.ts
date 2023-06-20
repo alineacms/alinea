@@ -9,6 +9,7 @@ import {
 import {EntrySearch} from 'alinea/core/EntrySearch'
 import {Realm} from 'alinea/core/pages/Realm'
 import {base64url} from 'alinea/core/util/Encoding'
+import * as Y from 'alinea/yjs'
 import {unzlibSync} from 'fflate'
 import {
   BinOpType,
@@ -25,7 +26,6 @@ import {
   withRecursive
 } from 'rado'
 import {iif, match, count as sqlCount} from 'rado/sqlite'
-import * as Y from 'yjs'
 import {Entry, EntryPhase, EntryTable} from '../core/Entry.js'
 import * as pages from '../core/pages/index.js'
 import {Store} from './Store.js'

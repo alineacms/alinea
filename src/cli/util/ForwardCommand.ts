@@ -6,8 +6,8 @@ export function forwardCommand(env: Record<string, string> = {}) {
   if (separator === -1) return
   const command = argv.slice(separator + 1)
   if (command.length === 0) return
-  function finish({exitCode}: {exitCode: number}) {
-    process.exit(exitCode)
+  function finish(code: number) {
+    process.exit(code)
   }
   const instance = spawn(command.join(' '), {
     shell: true,
