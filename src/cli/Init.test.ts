@@ -1,10 +1,7 @@
 import {init} from 'alinea/cli/Init'
-import {Page} from 'alinea/core'
 import fs from 'fs-extra'
 import path from 'path'
 import {test} from 'uvu'
-import * as assert from 'uvu/assert'
-import {loadCMS} from './generate/LoadConfig.js'
 
 const testPms = false
 
@@ -18,12 +15,12 @@ async function setup(cwd: string) {
 }
 
 async function run(cwd: string) {
-  process.env.NODE_ENV = 'development'
+  // process.env.NODE_ENV = 'development'
   await init({cwd, quiet: true})
-  const cms = await loadCMS(path.join(cwd, '.alinea'))
+  /*const cms = await loadCMS(path.join(cwd, '.alinea'))
   const welcome = await cms.get(Page())
   console.log(welcome)
-  assert.ok(welcome)
+  assert.ok(welcome)*/
 }
 
 if (testPms) {

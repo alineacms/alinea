@@ -1,5 +1,4 @@
 import {createId, outcome} from 'alinea/core'
-import {detect} from 'detect-package-manager'
 import {execSync} from 'node:child_process'
 import fs from 'node:fs/promises'
 import path from 'node:path'
@@ -11,6 +10,29 @@ const __dirname = dirname(import.meta.url)
 export type InitOptions = {
   cwd?: string
   quiet?: boolean
+}
+
+enum PM {
+  NPM = 'npm',
+  Yarn = 'yarn',
+  PNPM = 'pnpm',
+  Bun = 'bun'
+}
+
+const lockfiles = {
+  [PM.NPM]: 'package-lock.json',
+  [PM.Yarn]: 'yarn.lock',
+  [PM.PNPM]: 'pnpm-lock.yaml',
+  [PM.Bun]: 'bun.lockb'
+}
+
+async function detectPm(): Promise<PM> {
+  for (const [pm, lockFile] of Object.entries(lockfiles)) {
+    if ((await outcome(fs.stat(lockFile))).isSuccess()) {
+      return pm as PM
+    }
+  }
+  return PM.NPM
 }
 
 export async function init(options: InitOptions) {
@@ -66,7 +88,7 @@ export async function init(options: InitOptions) {
       .readFile(path.join(cwd, 'package.json'), 'utf-8')
       .then(contents => JSON.parse(contents))
   )
-  const [pm = 'npm'] = await outcome(detect({cwd}))
+  const pm = await detectPm()
   if (pkg) {
     if (!pkg.dependencies) pkg.dependencies = {}
     pkg.dependencies['@alinea/generated'] = `${
