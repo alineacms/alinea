@@ -28,18 +28,12 @@ jobs:
         run: npm publish
       - if: steps.version.outputs.prerelease
         run: npm publish --tag preview
-  release:
-    needs: ci
-    runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/v')
-    steps:
-      - uses: actions/checkout@v3
-      - name: Extract release notes
+      - if: steps.version.outputs.is_stable == 'true'
         id: extract-release-notes
         uses: ffurrer2/extract-release-notes@v1
         with:
           changelog_file: changelog.md
-      - name: Create release
+      - if: steps.version.outputs.is_stable == 'true'
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
