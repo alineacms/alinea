@@ -19,7 +19,7 @@ jobs:
       - uses: nowsprinting/check-version-format-action@v3
         id: version
         with: {prefix: 'v'}
-      - if: steps.version.outputs.is_valid
+      - if: steps.version.outputs.is_valid == 'true'
         run: |
           rm -r dist
           yarn bump ${GITHUB_REF#refs/tags/v}
