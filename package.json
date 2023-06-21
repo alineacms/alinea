@@ -13,6 +13,7 @@
     "release:build": "node build.js",
     "type": "tsc --diagnostics",
     "test": "node build.js --test",
+    "tag": "esbx tag",
     "dev:check": "tsc -w",
     "dev:run": "node build.js --dev -- yarn workspace @alinea/web2 dev",
     "dev:stories": "ladle serve --stories \"src/**/*.stories.tsx\"",
