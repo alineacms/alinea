@@ -1,9 +1,13 @@
 import {cms} from '@/cms'
 import {EntryReference, UrlReference} from 'alinea'
+import {Page} from 'alinea/core'
 import {HStack, Stack, Styler, fromModule} from 'alinea/ui'
+import {IcRoundClose} from 'alinea/ui/icons/IcRoundClose'
+import {IcRoundHamburger} from 'alinea/ui/icons/IcRoundHamburger'
 import {MdiGithub} from 'alinea/ui/icons/MdiGithub'
 import {MdiTwitterCircle} from 'alinea/ui/icons/MdiTwitterCircle'
-import Link from 'next/link'
+import {Link} from '../nav/Link'
+import {NavTree} from '../nav/NavTree'
 import {Home} from '../schema/Home'
 import css from './Header.module.scss'
 import {LayoutContainer} from './Layout'
@@ -25,21 +29,65 @@ export async function Header() {
   const links = await cms.get(Home().select(Home.links))
   return (
     <>
+      <input
+        type="checkbox"
+        id="mobilemenu"
+        className={styles.mobilemenu.check()}
+      />
+      <div className={styles.mobilemenu()}>
+        <div className={styles.mobilemenu.container()}>
+          <LayoutContainer className={styles.mobilemenu.top()}>
+            <Menu links={links} />
+          </LayoutContainer>
+          <div className={styles.mobilemenu.nav()}>
+            <MobileNav />
+          </div>
+        </div>
+      </div>
       <header className={styles.root()}>
         <LayoutContainer style={{height: '100%'}}>
           <Menu links={links} />
         </LayoutContainer>
       </header>
-      <div className={styles.mobilemenu()}>
-        <div className={styles.mobilemenu.container()}>
-          <LayoutContainer className={styles.mobilemenu.top()}>
-            hello mobile
-          </LayoutContainer>
-          <div className={styles.mobilemenu.nav()}>nav tree</div>
-        </div>
-      </div>
     </>
   )
+}
+
+async function MobileNav() {
+  const docs = await cms.find(
+    cms.workspaces.main.pages.docs,
+    Page().select({
+      id: Page.entryId,
+      type: Page.type,
+      url: Page.url,
+      title: Page.title,
+      parent: Page.parent
+    })
+  )
+  const tree = [
+    {id: 'home', url: '/', title: 'Home'},
+    {id: 'roadmap', url: '/roadmap', title: 'Roadmap'},
+    {id: 'blog', url: '/blog', title: 'Blog'},
+    ...docs.map(page => {
+      if (page.parent) return page
+      return {...page, parent: 'docs'}
+    }),
+    {id: 'docs', url: '/docs', title: 'Docs'},
+    {id: 'developer', title: 'Developer'},
+    {
+      parent: 'developer',
+      id: 'changelog',
+      url: '/changelog',
+      title: 'Changelog'
+    },
+    {
+      parent: 'developer',
+      id: 'playground',
+      url: '/playground',
+      title: 'Playground'
+    }
+  ]
+  return <NavTree nav={tree} />
 }
 
 interface MenuProps {
@@ -58,23 +106,6 @@ function Menu({links}: MenuProps) {
         </HStack>
       </Stack.Center>
       <HStack gap={16} center>
-        {/*<a
-          href="https://www.npmjs.com/package/alinea"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <img
-            style={{display: 'block'}}
-            src="https://img.shields.io/npm/v/alinea.svg?style=flat-square"
-          />
-        </a>*/}
-
-        {/*<a
-          href="/blog/introducing-alinea"
-          className={styles.root.nav.link('intro')}
-        >
-          Introduction 🚀
-      </a>*/}
         <a
           href="https://github.com/alineacms/alinea"
           target="_blank"
@@ -89,9 +120,10 @@ function Menu({links}: MenuProps) {
         >
           <MdiTwitterCircle className={styles.root.social.icon()} />
         </a>
-        {/*<button onClick={toggleMobileMenu} className={styles.root.hamburger()}>
-          {isMobileOpen ? <IcRoundClose /> : <IcRoundHamburger />}
-        </button>*/}
+        <label htmlFor="mobilemenu" className={styles.root.mobileButton()}>
+          <IcRoundHamburger className={styles.root.mobileButton.hamburger()} />
+          <IcRoundClose className={styles.root.mobileButton.close()} />
+        </label>
       </HStack>
     </HStack>
   )
@@ -112,9 +144,8 @@ function HeaderLinks({links, style}: HeaderLinksProps) {
               <Link
                 href={link.url}
                 key={link.id}
-                className={style({
-                  //active: pathname.startsWith(link.active || link.url)
-                })}
+                className={style()}
+                activeFor={link.active}
               >
                 {link.label}
               </Link>
@@ -123,12 +154,7 @@ function HeaderLinks({links, style}: HeaderLinksProps) {
             return null
         }
       })}
-      <Link
-        href="/changelog"
-        className={style({
-          //active: pathname.startsWith('/changelog')
-        })}
-      >
+      <Link href="/changelog" className={style()}>
         Changelog
       </Link>
       <a href="https://demo.alinea.sh" target="_blank" className={style()}>

@@ -150,7 +150,10 @@ function InsertMenu({editor, schema, onInsert}: InsertMenuProps) {
   )
 }
 
-function RichTextEditor<Blocks>({state, field}: RichTextInputProps<Blocks>) {
+function RichTextEditor<Blocks extends Schema>({
+  state,
+  field
+}: RichTextInputProps<Blocks>) {
   const {label, options} = field[Field.Data]
   const picker = usePickTextLink()
   const {optional, inline, help, width, schema} = options
@@ -229,12 +232,12 @@ function RichTextEditor<Blocks>({state, field}: RichTextInputProps<Blocks>) {
   )
 }
 
-export interface RichTextInputProps<Blocks> {
+export interface RichTextInputProps<Blocks extends Schema> {
   state: InputState<InputState.Text<Blocks>>
   field: RichTextField<Blocks>
 }
 
-export function RichTextInput<Blocks>({
+export function RichTextInput<Blocks extends Schema>({
   state,
   field
 }: RichTextInputProps<Blocks>) {

@@ -1,4 +1,3 @@
-import {Schema} from 'alinea/core'
 // Config creation
 export {
   createConfig,
@@ -11,4 +10,3 @@ export {
 } from 'alinea/core'
 // Default inputs
 export * from './input.js'
-export type infer<T> = Schema.Infer<T>

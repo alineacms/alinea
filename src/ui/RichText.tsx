@@ -1,4 +1,4 @@
-import {TextDoc, TextNode} from 'alinea/core'
+import {Infer, Schema, TextDoc, TextNode} from 'alinea/core'
 import {ComponentType, Fragment, ReactElement, isValidElement} from 'react'
 
 export enum Elements {
@@ -113,18 +113,19 @@ function RichTextNodeView<T>({views, node}: RichTextNodeViewProps<T>) {
   }
 }
 
-export type RichTextProps<T> = {
-  doc: TextDoc<T>
+export type RichTextProps<Blocks extends Schema> = {
+  doc: TextDoc<Blocks>
   text?: ComponentType<{children: string}>
 } & {
   [K in keyof typeof Elements]?:
     | ComponentType<JSX.IntrinsicElements[K]>
     | ReactElement
-} & (T extends {type: string}
-    ? {[K in T['type']]?: ComponentType<Extract<T, {type: K}>>}
-    : {})
+} & {[K in keyof Blocks]?: ComponentType<Infer<Blocks[K]>>}
 
-export function RichText<T>({doc, ...views}: RichTextProps<T>) {
+export function RichText<Blocks extends Schema>({
+  doc,
+  ...views
+}: RichTextProps<Blocks>) {
   if (!Array.isArray(doc)) return null
   return (
     <>

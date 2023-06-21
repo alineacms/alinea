@@ -1,11 +1,16 @@
 import {Config} from './Config.js'
 import {Connection} from './Connection.js'
+import {PageSeed} from './Page.js'
+import {Root} from './Root.js'
 import {Schema} from './Schema.js'
 import {Type} from './Type.js'
+import {Workspace} from './Workspace.js'
 import {Cursor} from './pages/Cursor.js'
 import {Projection} from './pages/Projection.js'
 import {Selection} from './pages/Selection.js'
 import {seralizeLocation, serializeSelection} from './pages/Serialize.js'
+
+export type Location = Root | Workspace | PageSeed
 
 export interface GraphApi {
   maybeGet<S extends Projection>(

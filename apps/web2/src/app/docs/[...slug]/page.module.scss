@@ -1,0 +1,45 @@
+.root {
+  &-nav {
+    margin-top: auto;
+    padding-top: 30px;
+
+    &-link {
+      display: block;
+      width: 100%;
+      max-width: 300px;
+      border-radius: 12px;
+      padding: 14px 20px;
+      line-height: 1.2;
+      font-size: 14px;
+      box-shadow: 0 1px 0 var(--web-outline);
+      border: 2px solid var(--web-outline);
+      transition: background 0.25s ease-out;
+
+      &:hover {
+        background: hsla(var(--web-negative-hsl), 0.05);
+      }
+
+      &.is-right {
+        text-align: right;
+        margin-left: auto;
+      }
+
+      &-icon,
+      &-label {
+        color: var(--web-accent);
+      }
+
+      &-label {
+        font-size: 12px;
+        font-weight: bold;
+        text-transform: uppercase;
+      }
+
+      &-title {
+        font-family: var(--web-title-font);
+        font-size: 15px;
+        font-weight: bold;
+      }
+    }
+  }
+}

@@ -1,4 +1,5 @@
 import {Field, FieldOptions, Label, Schema} from 'alinea/core'
+import {Infer} from 'alinea/core/Infer'
 import {listHint} from 'alinea/core/util/Hints'
 
 /** Optional settings to configure a list field */
@@ -25,7 +26,7 @@ export interface ListRow {
 
 /** Internal representation of a list field */
 export class ListField<Definitions extends Schema> extends Field.List<
-  Schema.InferListRow<Definitions>,
+  Infer<Definitions>,
   ListOptions<Definitions>
 > {}
 

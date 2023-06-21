@@ -16,8 +16,6 @@ import {join} from './util/Paths.js'
 type Attachment = Workspace | Root
 const attached = new WeakMap<Attachment, CMS>()
 
-export type Location = Root | Workspace
-
 export interface CMSApi extends GraphApi {
   connection(): Promise<Connection>
 }

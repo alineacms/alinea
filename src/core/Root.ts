@@ -46,6 +46,10 @@ export namespace Root {
   export function defaultLocale(root: Root): string | undefined {
     return root[Root.Data].i18n?.locales[0]
   }
+
+  export function isRoot(value: any): value is Root {
+    return Boolean(value && value[Root.Data])
+  }
 }
 
 export function root<Definition extends RootDefinition>(

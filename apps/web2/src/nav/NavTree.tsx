@@ -1,41 +1,18 @@
+'use client'
+
 import {fromModule, HStack} from 'alinea/ui'
 import {IcRoundKeyboardArrowDown} from 'alinea/ui/icons/IcRoundKeyboardArrowDown'
 import {IcRoundKeyboardArrowRight} from 'alinea/ui/icons/IcRoundKeyboardArrowRight'
 import Link from 'next/link'
-import {useRouter} from 'next/router'
+import {usePathname} from 'next/navigation'
 import {useEffect, useMemo, useState} from 'react'
 import css from './NavTree.module.scss'
+import {Nav, NavItem, nestNav} from './NestNav'
 
 const styles = fromModule(css)
 
-function nestNav(pages: Nav) {
-  const res: Array<NavItem> = []
-  const root = new Map<string, NavItem>(
-    pages.map(page => [page.id, {...page, children: []}])
-  )
-  for (const page of pages) {
-    if (!root.has(page.parent!)) {
-      res.push(root.get(page.id)!)
-    } else {
-      root.get(page.parent!)!.children!.push(root.get(page.id)!)
-    }
-  }
-  return res
-}
-
-export function useNavTree(nav: Nav) {
+function useNavTree(nav: Nav) {
   return useMemo(() => nestNav(nav), [nav])
-}
-
-export type Nav = Array<Omit<NavItem, 'children'> & {parent: string | null}>
-
-export type NavItem = {
-  id: string
-  url?: string
-  // type: string
-  title?: string
-  label?: string
-  children?: Array<NavItem>
 }
 
 interface NavTreeItemProps {
@@ -44,8 +21,7 @@ interface NavTreeItemProps {
 }
 
 function NavTreeItem({level, page}: NavTreeItemProps) {
-  const router = useRouter()
-  const pathname = router.asPath
+  const pathname = usePathname()
   const [showChildren, setShowChildren] = useState<boolean | undefined>(
     undefined
   )
@@ -108,9 +84,10 @@ export type NavTreeProps = {
 }
 
 export function NavTree({nav, level = 0, open = true}: NavTreeProps) {
+  const tree = useNavTree(nav)
   return (
     <div className={styles.root(`level-${level}`, {open})}>
-      {nav.map(page => {
+      {tree.map(page => {
         return <NavTreeItem key={page.id} level={level} page={page} />
       })}
     </div>

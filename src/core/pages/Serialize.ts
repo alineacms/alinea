@@ -1,4 +1,5 @@
 import {Config} from '../Config.js'
+import {PageSeed} from '../Page.js'
 import {Root} from '../Root.js'
 import {Schema} from '../Schema.js'
 import {Type} from '../Type.js'
@@ -12,15 +13,27 @@ import {TargetData} from './Target.js'
 
 export function seralizeLocation(
   config: Config,
-  location: Workspace | Root | undefined
+  location: Workspace | Root | PageSeed | undefined
 ): Array<string> {
   if (!location) return []
   const isWorkspace = Workspace.isWorkspace(location)
+  const isRoot = Root.isRoot(location)
   for (const [workspaceName, workspace] of entries(config.workspaces)) {
     if (workspace === location) return [workspaceName]
     if (isWorkspace) continue
     for (const [rootName, root] of entries(workspace)) {
       if (root === location) return [workspaceName, rootName]
+      if (isRoot) continue
+      const children: Array<readonly [string, PageSeed]> = entries(root)
+      while (children.length) {
+        const [pageName, page] = children.shift()!
+        if (page === location) return [workspaceName, rootName, pageName]
+        children.push(
+          ...entries(page).map(
+            ([name, page]) => [pageName + '/' + name, page] as const
+          )
+        )
+      }
     }
   }
   return []

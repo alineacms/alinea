@@ -2,9 +2,9 @@ import {Field, Label, Schema, TextDoc} from 'alinea/core'
 import {richTextHint} from 'alinea/core/util/Hints'
 
 /** Optional settings to configure a rich text field */
-export interface RichTextOptions<Blocks> {
+export interface RichTextOptions<Blocks extends Schema> {
   /** Allow these blocks to be created between text fragments */
-  schema?: Schema<Blocks>
+  schema?: Blocks
   /** Width of the field in the dashboard UI (0-1) */
   width?: number
   /** Add instructional text to a field */
@@ -22,13 +22,13 @@ export interface RichTextOptions<Blocks> {
 }
 
 /** Internal representation of a rich text field */
-export class RichTextField<Blocks> extends Field.RichText<
+export class RichTextField<Blocks extends Schema> extends Field.RichText<
   Blocks,
   RichTextOptions<Blocks>
 > {}
 
 /** Create a rich text field configuration */
-export function richText<Blocks>(
+export function richText<Blocks extends Schema = {}>(
   label: Label,
   options: RichTextOptions<Blocks> = {}
 ): RichTextField<Blocks> {

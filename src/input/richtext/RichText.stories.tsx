@@ -1,16 +1,17 @@
+import {TextDoc} from 'alinea/core'
 import {useField} from 'alinea/editor'
 import {InputField} from 'alinea/editor/view/InputField'
 import {richText} from 'alinea/input/richtext'
 
-const lipsumDoc = [
+const lipsumDoc: TextDoc = [
   {
-    type: 'heading',
+    type: 'heading' as const,
     textAlign: 'left',
     level: 1,
     content: [{type: 'text', text: 'Lorem ipsum dolor sit amet'}]
   },
   {
-    type: 'paragraph',
+    type: 'paragraph' as const,
     textAlign: 'justify',
     content: [
       {
@@ -20,13 +21,13 @@ const lipsumDoc = [
     ]
   },
   {
-    type: 'heading',
+    type: 'heading' as const,
     textAlign: 'left',
     level: 2,
     content: [{type: 'text', text: 'Suspendisse maximus'}]
   },
   {
-    type: 'paragraph',
+    type: 'paragraph' as const,
     textAlign: 'justify',
     content: [
       {
@@ -36,13 +37,13 @@ const lipsumDoc = [
     ]
   },
   {
-    type: 'heading',
+    type: 'heading' as const,
     textAlign: 'left',
     level: 3,
     content: [{type: 'text', text: 'Cras massa elit'}]
   },
   {
-    type: 'paragraph',
+    type: 'paragraph' as const,
     textAlign: 'justify',
     content: [
       {
@@ -52,13 +53,13 @@ const lipsumDoc = [
     ]
   },
   {
-    type: 'heading',
+    type: 'heading' as const,
     textAlign: 'left',
     level: 2,
     content: [{type: 'text', text: 'Aenean quis ante lacinia'}]
   },
   {
-    type: 'paragraph',
+    type: 'paragraph' as const,
     textAlign: 'justify',
     content: [
       {

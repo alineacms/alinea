@@ -85,7 +85,7 @@
         color: black;
       }
 
-      &.is-active {
+      &[aria-current] {
         color: var(--web-selected-foreground);
         font-weight: 600;
         // border-color: var(--web-accent);
@@ -110,7 +110,7 @@
     }
   }
 
-  &-hamburger {
+  &-mobileButton {
     display: block;
     font-size: 25px;
 
@@ -118,8 +118,18 @@
       display: none !important;
     }
 
-    > svg {
+    &-hamburger {
       display: block;
+      .mobilemenu & {
+        display: none;
+      }
+    }
+
+    &-close {
+      display: none;
+      .mobilemenu & {
+        display: block;
+      }
     }
   }
 }
@@ -136,6 +146,10 @@
 
   @include l {
     display: none !important;
+  }
+
+  &-check {
+    display: none;
   }
 
   &-container {
@@ -170,7 +184,7 @@
     text-decoration: none;
   }
 
-  &.is-open {
+  :global(#mobilemenu:checked) + & {
     display: block;
   }
 }

@@ -4,7 +4,8 @@ import {
   Schema,
   Type,
   createYDoc,
-  parseYDoc
+  parseYDoc,
+  unreachable
 } from 'alinea/core'
 import {EntrySearch} from 'alinea/core/EntrySearch'
 import {Realm} from 'alinea/core/pages/Realm'
@@ -362,11 +363,26 @@ export class Resolver {
           )
           .select(ctx.Table)
       : ctx.Table()
-    if (!source) return cursor
+    if (!source) return cursor.orderBy(ctx.Table.index.asc())
     const from = Entry().as(`E${ctx.depth - 1}`) // .as(source.id)
     switch (source.type) {
       case pages.SourceType.Parent:
         return cursor.where(ctx.Table.entryId.is(from.parent)).take(1)
+      case pages.SourceType.Next:
+        return cursor
+          .where(ctx.Table.parent.is(from.parent))
+          .where(ctx.Table.index.isGreater(from.index))
+          .take(1)
+      case pages.SourceType.Previous:
+        return cursor
+          .where(ctx.Table.parent.is(from.parent))
+          .where(ctx.Table.index.isLess(from.index))
+          .take(1)
+      case pages.SourceType.Siblings:
+        return cursor
+          .where(ctx.Table.parent.is(from.parent))
+          .where(ctx.Table.entryId.isNot(from.entryId))
+          .take(1)
       case pages.SourceType.Children:
         const Child = Entry().as('Child')
         const children = withRecursive(
@@ -422,7 +438,7 @@ export class Resolver {
           .where(ctx.Table.entryId.isIn(parentIds))
           .orderBy(ctx.Table.level.asc())
       default:
-        throw new Error(`Todo`)
+        throw unreachable(source.type)
     }
   }
 
@@ -459,6 +475,12 @@ export class Resolver {
         return Table.workspace.is(location[0])
       case 2:
         return Table.workspace.is(location[0]).and(Table.root.is(location[1]))
+      case 3:
+        const condition = Table.workspace
+          .is(location[0])
+          .and(Table.root.is(location[1]))
+          .and(Table.parentDir.like(`/${location[2]}%`))
+        return condition
       default:
         return Expr.value(true)
     }

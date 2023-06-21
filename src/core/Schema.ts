@@ -1,38 +1,14 @@
-import {Field} from './Field.js'
 import {Hint} from './Hint.js'
 import {Type, TypeTarget} from './Type.js'
-import {Cursor} from './pages/Cursor.js'
 import {RecordShape} from './shape/RecordShape.js'
 import {entries, fromEntries} from './util/Objects.js'
-import {Expand} from './util/Types.js'
 
 const shapesCache = new WeakMap<Schema, Record<string, RecordShape>>()
 const hintCache = new WeakMap<Schema, Hint.Union>()
 
-type UnionOfValues<T> = T[keyof T]
-type Types<T> = Expand<
-  UnionOfValues<{
-    [K in keyof T]: {id: string; type: K; index: string} & Type.Infer<T[K]>
-  }>
->
-
 export interface Schema<Definitions = object> extends Record<string, Type> {}
 
 export namespace Schema {
-  export type InferListRow<Definitions> = Definitions extends Record<
-    string,
-    Type
-  >
-    ? Types<Definitions>
-    : never
-  export type Infer<T> = T extends Type<infer Fields>
-    ? Fields
-    : T extends Field<infer Value, any>
-    ? Value
-    : T extends Cursor<infer Row>
-    ? Row
-    : never
-
   export type Targets = Map<TypeTarget, string>
 
   export function shapes(schema: Schema): Record<string, RecordShape> {
