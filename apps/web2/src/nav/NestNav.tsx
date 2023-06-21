@@ -2,7 +2,7 @@ export type Nav = Array<NavItem>
 
 export type NavItem = {
   id: string
-  type: string
+  type?: string
   url?: string
   title?: string
   label?: string
