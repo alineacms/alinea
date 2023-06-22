@@ -160,7 +160,7 @@ export namespace Cursor {
       type: Type,
       input: Record<string, any>
     ): ExprData | undefined {
-      const conditions = entries(input).map(([key, value]) => {
+      const conditions = entries(input || {}).map(([key, value]) => {
         const field = Expr(ExprData.Field({type}, key))
         return Expr(
           ExprData.BinOp(field[Expr.Data], BinaryOp.Equals, ExprData(value))

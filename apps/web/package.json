@@ -1,6 +1,6 @@
 {
   "private": true,
-  "name": "@alinea/web2",
+  "name": "@alinea/web",
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
@@ -12,8 +12,10 @@
   },
   "dependencies": {
     "@alinea/generated": "link:.alinea",
+    "@monaco-editor/react": "^4.4.5",
     "alinea": "0.0.0",
-    "next": "^13.4.5",
+    "lz-string": "^1.4.4",
+    "next": "^13.4.7",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-string-replace": "^1.0.0",
@@ -23,6 +25,7 @@
     "use-clipboard-copy": "^0.2.0"
   },
   "devDependencies": {
+    "@babel/standalone": "^7.22.5",
     "@fontsource/inter": "5.0.1",
     "@fontsource/jetbrains-mono": "5.0.1",
     "@fontsource/poppins": "5.0.1",
@@ -30,6 +33,8 @@
     "@types/react": "^18.2.13",
     "eslint": "8.39.0",
     "eslint-config-next": "13.4.0",
+    "file-loader": "^6.2.0",
+    "raw-loader": "^4.0.2",
     "typescript": "^5.1.3"
   }
 }

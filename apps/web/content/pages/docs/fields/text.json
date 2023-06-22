@@ -37,15 +37,9 @@
         {
           "id": "kLT1p_gpGFN1L9rIy9e5E",
           "type": "ExampleBlock",
-          "code": "import {alinea} from 'alinea'\nexport default alinea.text('My text field', {\n  help: 'This is an example field',\n  multiline: true\n})"
+          "code": "export default alinea.text('My text field', {\n  help: 'This is an example field',\n  multiline: true\n})"
         }
       ]
-    },
-    {
-      "id": "286Htu5lEXpxa9TlpUBlEm9HHQt",
-      "index": "a1",
-      "type": "TypesBlock",
-      "types": "TextOptions"
     }
   ],
   "alinea": {

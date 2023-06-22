@@ -61,10 +61,7 @@ export function Viewport({
   }, [accentColor])
   const mainProps = attachToBody ? {} : {className, style}
   return (
-    <main
-      {...mainProps}
-      className={styles.main.mergeProps(mainProps)({contain})}
-    >
+    <main {...mainProps} className={styles.main.mergeProps(props)({contain})}>
       {children}
       {/* See: https://github.com/tailwindlabs/headlessui/discussions/666#discussioncomment-2197931 */}
       <div id="headlessui-portal-root">

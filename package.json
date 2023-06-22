@@ -15,7 +15,7 @@
     "test": "node build.js --test",
     "tag": "esbx tag",
     "dev:check": "tsc -w",
-    "dev:run": "node build.js --dev -- yarn workspace @alinea/web2 dev",
+    "dev:run": "node build.js --dev -- yarn workspace @alinea/web dev",
     "dev:stories": "ladle serve --stories \"src/**/*.stories.tsx\"",
     "gen:bundleTs": "esbx bundleTs",
     "build:stories": "ladle build --base /stories --stories  \"packages/**/*.stories.tsx\" --outDir apps/web/public/stories",

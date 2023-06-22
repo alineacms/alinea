@@ -1,4 +1,5 @@
 import {ROOT_KEY} from 'alinea/core/Doc'
+import {Field} from 'alinea/core/Field'
 import {Type} from 'alinea/core/Type'
 import {RecordMutator, RecordShape} from 'alinea/core/shape/RecordShape'
 import {entries} from 'alinea/core/util/Objects'
@@ -78,19 +79,20 @@ function createFormInput<T extends Record<string, any>>(
   const initial: Record<string, any> = initialValue
   const doc = new Y.Doc()
   const root = doc.getMap(ROOT_KEY)
-  for (const [key, field] of entries(type)) {
-    if (!initial[key]) initial[key] = field.shape.create()
-    root.set(key, field.shape.toY(initial[key]!))
+  for (const [key, f] of entries(type)) {
+    const field: Field = f
+    if (!initial[key]) initial[key] = Field.shape(field).create()
+    root.set(key, Field.shape(field).toY(initial[key]!))
   }
   function setValue(data: T) {
     for (const [key, value] of Object.entries(data)) {
-      const field = type.field(key)
-      root.set(key, field.shape.toY(value))
+      const field = Type.field(type, key)
+      if (field) root.set(key, Field.shape(field).toY(value))
     }
   }
   const input = observable<T>(initial as T)
   const state = new FormState({
-    shape: type.shape,
+    shape: Type.shape(type),
     root: doc as any,
     key: ROOT_KEY,
     attach: input
