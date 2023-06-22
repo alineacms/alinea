@@ -24,7 +24,7 @@ import {createSlots} from 'alinea/ui/util/Slots'
 import {parseToHsla} from 'color2k'
 import {useAtomValue, useSetAtom} from 'jotai'
 import {ComponentType} from 'react'
-import {dashboardOptionsAtom, sessionAtom} from '../atoms/DashboardAtoms.js'
+import {dashboardOptionsAtom} from '../atoms/DashboardAtoms.js'
 import {navAtom, workspaceAtom} from '../atoms/NavigationAtoms.js'
 import {
   preferencesAtom,
@@ -33,6 +33,7 @@ import {
   workspacePreferenceAtom
 } from '../atoms/PreferencesAtoms.js'
 import {accentColorAtom} from '../atoms/StyleAtoms.js'
+import {useSession} from '../hook/UseSession.js'
 import {AlineaLogo} from './AlineaLogo.js'
 import {IconButton} from './IconButton.js'
 import {useSidebar} from './Sidebar.js'
@@ -65,7 +66,7 @@ export namespace Toolbar {
 
   export function Root() {
     const accentColor = useAtomValue(accentColorAtom)
-    const session = useAtomValue(sessionAtom)
+    const session = useSession()
     const {config} = useAtomValue(dashboardOptionsAtom)
     const nav = useAtomValue(navAtom)
     const preferences = useAtomValue(preferencesAtom)

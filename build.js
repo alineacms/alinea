@@ -315,7 +315,11 @@ function jsEntry({watch, test}) {
               treeShaking: true,
               external,
               chunkNames: 'chunks/[name]-[hash]',
-              metafile: true
+              metafile: true,
+              define: {
+                // See https://github.com/pmndrs/jotai/blob/2188d7557500e59c10415a9e74bb5cfc8a3f9c31/src/react/useSetAtom.ts#L33
+                'import.meta.env.MODE': '"production"'
+              }
             })
             currentFiles = files
           }

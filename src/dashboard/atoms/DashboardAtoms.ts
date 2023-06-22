@@ -6,10 +6,27 @@ import {useEffect} from 'react'
 import {QueryClient} from 'react-query'
 import {AppProps} from '../App.js'
 
+export const sessionAtom = atom(undefined! as Session | undefined)
+
 export const dashboardOptionsAtom = atom(undefined! as AppProps)
 
 export function useSetDashboardOptions(options: AppProps) {
   useHydrateAtoms([[dashboardOptionsAtom, options]])
+
+  const {client, config, dev} = options
+  const auth = config.dashboard?.auth
+  if (dev || !auth)
+    useHydrateAtoms([
+      [
+        sessionAtom,
+        {
+          user: {sub: 'anonymous'},
+          cnx: client,
+          end: async () => {}
+        }
+      ]
+    ])
+
   const setDashboardOptions = useSetAtom(dashboardOptionsAtom)
   useEffect(() => setDashboardOptions(options), [options])
 }
@@ -24,18 +41,6 @@ export const clientAtom = atom<Client>(get => {
 
 export const configAtom = atom(get => {
   return get(dashboardOptionsAtom).config
-})
-
-export const sessionAtom = atom<Session>(get => {
-  const {client, config, dev} = get(dashboardOptionsAtom)
-  const auth = config.dashboard?.auth
-  if (dev || !auth)
-    return {
-      user: {sub: 'anonymous'},
-      cnx: client,
-      end: async () => {}
-    }
-  return undefined!
 })
 
 export const useSession = () => useAtomValue(sessionAtom)
