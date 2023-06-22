@@ -95,14 +95,8 @@
   },
   "packageManager": "yarn@3.2.0",
   "resolutions": {
-    "y-prosemirror": "1.1.2",
     "esbuild": "^0.18.5",
-    "mime-db": "1.51.0",
-    "prosemirror-model": "1.18.1",
-    "prosemirror-schema-list": "1.2.0",
-    "prosemirror-state": "1.4.1",
-    "prosemirror-transform": "1.6.0",
-    "prosemirror-view": "1.26.2"
+    "mime-db": "1.51.0"
   },
   "exports": {
     ".": "./dist/index.js",

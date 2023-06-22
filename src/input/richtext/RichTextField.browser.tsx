@@ -1,4 +1,5 @@
 import {mergeAttributes, Node} from '@tiptap/core'
+import {Collaboration} from '@tiptap/extension-collaboration'
 import {
   Editor,
   EditorContent,
@@ -16,7 +17,6 @@ import {IcRoundClose} from 'alinea/ui/icons/IcRoundClose'
 import {IcRoundDragHandle} from 'alinea/ui/icons/IcRoundDragHandle'
 import {IcRoundNotes} from 'alinea/ui/icons/IcRoundNotes'
 import {useCallback, useRef, useState} from 'react'
-import {CollaborationExtension} from './extensions/Collaboration.js'
 import {useEditor} from './hook/UseEditor.js'
 import {PickTextLink, usePickTextLink} from './PickTextLink.js'
 import {richText as createRichText, RichTextField} from './RichTextField.js'
@@ -177,7 +177,7 @@ function RichTextEditor<Blocks extends Schema>({
     [setFocus]
   )
   const extensions = [
-    CollaborationExtension.configure({fragment}),
+    Collaboration.configure({fragment}),
     RichTextKit,
     ...schemaToExtensions(state, schema)
   ]
