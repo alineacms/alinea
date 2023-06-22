@@ -30,7 +30,7 @@ class NextDriver extends DefaultCMS implements NextApi {
   jwtSecret = this.apiKey ?? 'dev'
 
   async connection() {
-    const {cookies, draftMode} = await import('next/headers')
+    const {cookies, draftMode, headers} = await import('next/headers')
     const {isEnabled: isDraft} = draftMode()
     const devPort = process.env.ALINEA_PORT
     const resolveDefaults: ClientOptions['resolveDefaults'] = {
@@ -56,6 +56,17 @@ class NextDriver extends DefaultCMS implements NextApi {
         url: `http://127.0.0.1:${devPort}`,
         resolveDefaults
       })
+
+    if (isDraft) {
+      const host = headers().get('host')
+      const handlerUrl = new URL(this.dashboard.handlerUrl, `https://${host}`)
+      return new Client({
+        config: this.config,
+        url: handlerUrl.toString(),
+        resolveDefaults
+      })
+    }
+
     const store = await this.readStore()
     return new Server(
       {
