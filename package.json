@@ -35,7 +35,7 @@
     "dist"
   ],
   "workspaces": [
-    "apps/web2",
+    "apps/web",
     "src/backend",
     "src/cli",
     "src/core",

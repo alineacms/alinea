@@ -1,0 +1,64 @@
+import {cms} from '@/cms'
+import {Entry} from 'alinea/core'
+import {HStack, Stack, fromModule} from 'alinea/ui'
+import {IcRoundArrowBack} from 'alinea/ui/icons/IcRoundArrowBack'
+import {notFound} from 'next/navigation'
+import {BlocksView} from '../../../../BlocksView'
+import {LayoutWithSidebar} from '../../../../layout/Layout'
+import {WebTypo} from '../../../../layout/WebTypo'
+import {Link} from '../../../../nav/Link'
+import {BlogPost} from '../../../../schema/BlogPost'
+import css from './page.module.scss'
+
+const styles = fromModule(css)
+
+export interface BlogPostPageProps {
+  params: {
+    slug: Array<string>
+  }
+}
+
+export default async function BlogPostPage({params}: BlogPostPageProps) {
+  const page = await cms.maybeGet(
+    BlogPost().where(Entry.url.is(`/blog/${params.slug.join('/')}`))
+  )
+  if (!page) return notFound()
+  return (
+    <LayoutWithSidebar
+      sidebar={
+        <Stack.Right>
+          <Link href="/blog">
+            <HStack gap={8} center>
+              <IcRoundArrowBack />
+              <span>Blog</span>
+            </HStack>
+          </Link>
+        </Stack.Right>
+      }
+    >
+      <article>
+        <header className={styles.root.header()}>
+          <time className={styles.root.publishDate()}>{page.publishDate}</time>
+          <WebTypo.H1 flat className={styles.root.header.title()}>
+            {page.title}
+          </WebTypo.H1>
+          <HStack className={styles.root.author()} gap={8} center>
+            By
+            <a href={page.author.url.url} className={styles.root.author.url()}>
+              <HStack center gap={8}>
+                {page.author.avatar && (
+                  <img
+                    className={styles.root.author.avatar()}
+                    src={page.author.avatar.url}
+                  />
+                )}
+                {page.author.name}
+              </HStack>
+            </a>
+          </HStack>
+        </header>
+        <BlocksView blocks={page.blocks} />
+      </article>
+    </LayoutWithSidebar>
+  )
+}

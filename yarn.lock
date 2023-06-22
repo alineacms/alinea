@@ -78,9 +78,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@alinea/generated@link:.alinea::locator=%40alinea%2Fweb2%40workspace%3Aapps%2Fweb2":
+"@alinea/generated@link:.alinea::locator=%40alinea%2Fweb2%40workspace%3Aapps%2Fweb":
   version: 0.0.0-use.local
-  resolution: "@alinea/generated@link:.alinea::locator=%40alinea%2Fweb2%40workspace%3Aapps%2Fweb2"
+  resolution: "@alinea/generated@link:.alinea::locator=%40alinea%2Fweb2%40workspace%3Aapps%2Fweb"
   languageName: node
   linkType: soft
 
@@ -149,9 +149,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@alinea/web2@workspace:apps/web2":
+"@alinea/web2@workspace:apps/web":
   version: 0.0.0-use.local
-  resolution: "@alinea/web2@workspace:apps/web2"
+  resolution: "@alinea/web2@workspace:apps/web"
   dependencies:
     "@alinea/generated": "link:.alinea"
     "@fontsource/inter": 5.0.1

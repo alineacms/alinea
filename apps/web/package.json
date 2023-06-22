@@ -1,27 +1,21 @@
 {
   "private": true,
-  "name": "@alinea/web",
+  "name": "@alinea/web2",
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "build": "yarn build:alinea && alinea generate -- next build",
-    "dev": "cross-env FORCE_COLOR=1 next dev",
-    "generate": "yarn build:alinea && alinea generate --fix",
-    "gen:types": "cd ../.. && typedoc --json apps/web/src/data/types.json",
-    "dev:check": "tsc -w",
+    "dev": "cross-env ALINEA_PORT=4500 next dev",
+    "dev:test": "alinea dev src/cms.tsx -- next dev",
+    "build": "alinea build src/cms.tsx -- next build",
     "start": "next start",
-    "lint": "next lint",
-    "seed": "tsx ./seed.ts"
+    "lint": "next lint"
   },
   "dependencies": {
     "@alinea/generated": "link:.alinea",
-    "@monaco-editor/react": "^4.4.5",
     "alinea": "0.0.0",
-    "esbuild-wasm": "0.14.51",
-    "lz-string": "^1.4.4",
-    "next": "^v12.2.6-canary.10",
-    "react": "^18.1.0",
-    "react-dom": "^18.1.0",
+    "next": "^13.4.5",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
     "react-string-replace": "^1.0.0",
     "remark": "^14.0.2",
     "remark-html": "^15.0.1",
@@ -29,23 +23,13 @@
     "use-clipboard-copy": "^0.2.0"
   },
   "devDependencies": {
-    "@types/find-config": "^1.0.1",
-    "@types/lz-string": "^1.3.34",
-    "@types/react": "^18.0.5",
-    "@types/react-dom": "^18.0.0",
-    "cross-env": "^7.0.3",
-    "find-config": "^1.0.0",
-    "npm-run-all": "^4.1.5",
-    "postcss-pxtorem": "^6.0.0",
-    "raw-loader": "^4.0.2",
-    "tsx": "^3.8.1",
-    "webassembly-loader": "^1.1.0"
-  },
-  "browserslist": [
-    "chrome 61",
-    "edge 16",
-    "firefox 60",
-    "opera 48",
-    "safari 11"
-  ]
+    "@fontsource/inter": "5.0.1",
+    "@fontsource/jetbrains-mono": "5.0.1",
+    "@fontsource/poppins": "5.0.1",
+    "@types/node": "20.0.0",
+    "@types/react": "^18.2.13",
+    "eslint": "8.39.0",
+    "eslint-config-next": "13.4.0",
+    "typescript": "^5.1.3"
+  }
 }
