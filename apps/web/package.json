@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "cross-env ALINEA_PORT=4500 next dev",
     "dev:test": "alinea dev src/cms.tsx -- next dev",
-    "build": "alinea build src/cms.tsx -- next build",
+    "build": "yarn build:alinea && alinea build src/cms.tsx -- next build",
     "start": "next start",
     "lint": "next lint"
   },
@@ -36,5 +36,11 @@
     "file-loader": "^6.2.0",
     "raw-loader": "^4.0.2",
     "typescript": "^5.1.3"
+  },
+  "exports": {
+    ".": "./dist/index.js",
+    "./css": "./dist/index.css",
+    "./*.cjs": "./dist/*.cjs",
+    "./*": "./dist/*.js"
   }
 }
