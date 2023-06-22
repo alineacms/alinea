@@ -27,6 +27,7 @@ const SearchParams = object({
 
 class NextDriver extends DefaultCMS implements NextApi {
   apiKey = process.env.ALINEA_API_KEY
+  jwtSecret = this.apiKey ?? 'dev'
 
   async connection() {
     const {cookies, draftMode} = await import('next/headers')
@@ -62,7 +63,7 @@ class NextDriver extends DefaultCMS implements NextApi {
         store,
         media: undefined!,
         target: undefined!,
-        previews: new JWTPreviews(this.apiKey!)
+        previews: new JWTPreviews(this.jwtSecret)
       },
       {logger: new Logger('CMSDriver')}
     )
@@ -90,12 +91,7 @@ class NextDriver extends DefaultCMS implements NextApi {
       entryId: searchParams.get('entryId'),
       realm: searchParams.get('realm')
     })
-    const jwtSecret =
-      process.env.NODE_ENV === 'development' ? 'dev' : this.apiKey
-    if (!jwtSecret) throw new Error('No JWT secret set')
-    const previews = new JWTPreviews(jwtSecret)
-    console.log(params)
-    console.log(`Using JWT secret ${jwtSecret}`)
+    const previews = new JWTPreviews(this.jwtSecret)
     const payload = await previews.verify(params.token)
     const cnx = await this.connection()
     const url = (await cnx.resolve({
