@@ -91,11 +91,11 @@ class NextDriver extends DefaultCMS implements NextApi {
       realm: searchParams.get('realm')
     })
     const jwtSecret =
-      process.env.NODE_ENV === 'development'
-        ? 'dev'
-        : process.env.ALINEA_API_KEY
+      process.env.NODE_ENV === 'development' ? 'dev' : this.apiKey
     if (!jwtSecret) throw new Error('No JWT secret set')
     const previews = new JWTPreviews(jwtSecret)
+    console.log(params)
+    console.log(`Using JWT secret ${jwtSecret}`)
     const payload = await previews.verify(params.token)
     const cnx = await this.connection()
     const url = (await cnx.resolve({
@@ -107,7 +107,7 @@ class NextDriver extends DefaultCMS implements NextApi {
     const source = new URL(request.url)
     const location = new URL(url, source.origin)
     draftMode().enable()
-    return new Response(`Redirecting`, {
+    return new Response(`Redirecting...`, {
       status: 302,
       headers: {location: location.toString()}
     })
