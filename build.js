@@ -276,7 +276,7 @@ const targetPlugin = {
       }
       fs.writeFileSync(
         'package.json',
-        JSON.stringify({...pkg, exports}, null, 2)
+        JSON.stringify({...pkg, exports}, null, 2) + '\n'
       )
     })
   }
