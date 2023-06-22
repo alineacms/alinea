@@ -1,4 +1,4 @@
-import {Server} from 'alinea/backend'
+import {JWTPreviews, Server} from 'alinea/backend'
 import {Store} from 'alinea/backend/Store'
 import {exportStore} from 'alinea/cli/util/ExportStore'
 import {CloudAuthView} from 'alinea/cloud/view/CloudAuth'
@@ -68,6 +68,8 @@ export abstract class CMS extends Graph implements Config, CMSApi {
 }
 
 export class DefaultCMS extends CMS {
+  apiKey = process.env.ALINEA_API_KEY
+
   exportStore(outDir: string, data: Uint8Array): Promise<void> {
     return exportStore(data, join(outDir, 'store.js'))
   }
@@ -86,7 +88,7 @@ export class DefaultCMS extends CMS {
         store,
         media: undefined!,
         target: undefined!,
-        previews: undefined!
+        previews: new JWTPreviews(this.apiKey!)
       },
       {logger: new Logger('CMSDriver')}
     )

@@ -25,8 +25,6 @@ const SearchParams = object({
 })
 
 class NextDriver extends DefaultCMS implements NextApi {
-  apiKey = process.env.ALINEA_API_KEY
-
   async connection() {
     const {cookies, draftMode} = await import('next/headers')
     const {isEnabled: isDraft} = draftMode()
