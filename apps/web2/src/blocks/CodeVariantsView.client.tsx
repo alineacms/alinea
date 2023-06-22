@@ -17,7 +17,8 @@ const preferenceAtom = atomWithStorage<string | undefined>(
 
 export function CodeVariantTabs({variants}: Infer<typeof CodeVariantsBlock>) {
   const [variantPreference, setVariantPreference] = useAtom(preferenceAtom)
-  const selectedVariant = variantPreference ?? variants[0].name
+  const isOption = variants.find(variant => variant.name === variantPreference)
+  const selectedVariant = isOption ? variantPreference : variants[0].name
   return (
     <div className={styles.root()}>
       <HStack className={styles.root.triggers()}>

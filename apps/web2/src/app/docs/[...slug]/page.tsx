@@ -1,9 +1,10 @@
 import {cms} from '@/cms'
 import {Doc} from '@/schema/Doc'
-import {Page} from 'alinea/core'
+import {Entry} from 'alinea/core'
 import {HStack, VStack, fromModule} from 'alinea/ui'
 import {IcRoundArrowBack} from 'alinea/ui/icons/IcRoundArrowBack'
 import {IcRoundArrowForward} from 'alinea/ui/icons/IcRoundArrowForward'
+import {notFound} from 'next/navigation'
 import {BlocksView} from '../../../BlocksView'
 import {Breadcrumbs} from '../../../layout/Breadcrumbs'
 import {LayoutWithSidebar} from '../../../layout/Layout'
@@ -22,31 +23,31 @@ export interface DocPageProps {
 
 export default async function DocPage({params}: DocPageProps) {
   const summary = {
-    id: Page.entryId,
-    title: Page.title,
-    url: Page.url
+    id: Entry.entryId,
+    title: Entry.title,
+    url: Entry.url
   }
   const page = await cms.maybeGet(
     Doc()
-      .where(Page.url.is(`/docs/${params.slug.join('/')}`))
+      .where(Entry.url.is(`/docs/${params.slug.join('/')}`))
       .select({
         ...Doc,
-        id: Page.entryId,
-        level: Page.level,
+        id: Entry.entryId,
+        level: Entry.level,
         parents({parents}) {
           return parents().select(summary)
         }
       })
   )
-  if (!page) return <div>404</div>
+  if (!page) return notFound()
   const nav = await cms.find(
     cms.workspaces.main.pages.docs,
-    Page().select({
-      id: Page.entryId,
-      type: Page.type,
-      url: Page.url,
-      title: Page.title,
-      parent: Page.parent
+    Entry().select({
+      id: Entry.entryId,
+      type: Entry.type,
+      url: Entry.url,
+      title: Entry.title,
+      parent: Entry.parent
     })
   )
   const nested = nestNav(nav)

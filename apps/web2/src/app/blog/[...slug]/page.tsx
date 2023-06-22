@@ -1,93 +1,64 @@
 import {cms} from '@/cms'
-import {Doc} from '@/schema/Doc'
-import {Page} from 'alinea/core'
-import {HStack, VStack, fromModule} from 'alinea/ui'
+import {Entry} from 'alinea/core'
+import {HStack, Stack, fromModule} from 'alinea/ui'
 import {IcRoundArrowBack} from 'alinea/ui/icons/IcRoundArrowBack'
-import {IcRoundArrowForward} from 'alinea/ui/icons/IcRoundArrowForward'
+import {notFound} from 'next/navigation'
 import {BlocksView} from '../../../BlocksView'
-import {Breadcrumbs} from '../../../layout/Breadcrumbs'
 import {LayoutWithSidebar} from '../../../layout/Layout'
+import {WebTypo} from '../../../layout/WebTypo'
 import {Link} from '../../../nav/Link'
-import {NavTree} from '../../../nav/NavTree'
-import {NavItem, nestNav} from '../../../nav/NestNav'
+import {BlogPost} from '../../../schema/BlogPost'
 import css from './page.module.scss'
 
 const styles = fromModule(css)
 
-export interface DocPageProps {
+export interface BlogPostPageProps {
   params: {
     slug: Array<string>
   }
 }
 
-export default async function DocPage({params}: DocPageProps) {
-  const summary = {
-    id: Page.entryId,
-    title: Page.title,
-    url: Page.url
-  }
+export default async function BlogPostPage({params}: BlogPostPageProps) {
   const page = await cms.maybeGet(
-    Doc()
-      .where(Page.url.is(`/docs/${params.slug.join('/')}`))
-      .select({
-        ...Doc,
-        id: Page.entryId,
-        level: Page.level,
-        parents({parents}) {
-          return parents().select(summary)
-        }
-      })
+    BlogPost().where(Entry.url.is(`/blog/${params.slug.join('/')}`))
   )
-  if (!page) return <div>404</div>
-  const nav = await cms.find(
-    cms.workspaces.main.pages.docs,
-    Page().select({
-      id: Page.entryId,
-      type: Page.type,
-      url: Page.url,
-      title: Page.title,
-      parent: Page.parent
-    })
-  )
-  const nested = nestNav(nav)
-  const itemsIn = (item: NavItem): Array<NavItem> =>
-    item.children ? [item, ...item.children.flatMap(itemsIn)] : [item]
-  const docs = nested.flatMap(itemsIn).filter(page => page.type === 'Doc')
-  const index = docs.findIndex(item => item.id === page.id)
-  const prev = docs[index - 1]
-  const next = docs[index + 1]
+  if (!page) return notFound()
   return (
-    <LayoutWithSidebar sidebar={<NavTree nav={nav} />}>
-      <Breadcrumbs parents={page.parents} />
-      <BlocksView blocks={page.blocks} />
-      <HStack gap={20} justify="space-between" className={styles.root.nav()}>
-        {prev?.url && (
-          <Link href={prev.url} className={styles.root.nav.link()}>
-            <VStack gap={4}>
-              <HStack gap={8}>
-                <span className={styles.root.nav.link.icon()}>
-                  <IcRoundArrowBack />
-                </span>
-                <span className={styles.root.nav.link.label()}>Previous</span>
-              </HStack>
-              <span className={styles.root.nav.link.title()}>{prev.title}</span>
-            </VStack>
+    <LayoutWithSidebar
+      sidebar={
+        <Stack.Right>
+          <Link href="/blog">
+            <HStack gap={8} center>
+              <IcRoundArrowBack />
+              <span>Blog</span>
+            </HStack>
           </Link>
-        )}
-        {next?.url && (
-          <Link href={next.url} className={styles.root.nav.link('right')}>
-            <VStack gap={4}>
-              <HStack gap={8} justify="right">
-                <span className={styles.root.nav.link.label()}>Next</span>
-                <span className={styles.root.nav.link.icon()}>
-                  <IcRoundArrowForward />
-                </span>
+        </Stack.Right>
+      }
+    >
+      <article>
+        <header className={styles.root.header()}>
+          <time className={styles.root.publishDate()}>{page.publishDate}</time>
+          <WebTypo.H1 flat className={styles.root.header.title()}>
+            {page.title}
+          </WebTypo.H1>
+          <HStack className={styles.root.author()} gap={8} center>
+            By
+            <a href={page.author.url.url} className={styles.root.author.url()}>
+              <HStack center gap={8}>
+                {page.author.avatar && (
+                  <img
+                    className={styles.root.author.avatar()}
+                    src={page.author.avatar.url}
+                  />
+                )}
+                {page.author.name}
               </HStack>
-              <span className={styles.root.nav.link.title()}>{next.title}</span>
-            </VStack>
-          </Link>
-        )}
-      </HStack>
+            </a>
+          </HStack>
+        </header>
+        <BlocksView blocks={page.blocks} />
+      </article>
     </LayoutWithSidebar>
   )
 }

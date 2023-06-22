@@ -1,5 +1,5 @@
 import {cms} from '@/cms'
-import {Page} from 'alinea/core'
+import {Entry} from 'alinea/core'
 import {VStack, fromModule} from 'alinea/ui'
 import {InformationBar} from '../../layout/InformationBar'
 import {LayoutWithSidebar} from '../../layout/Layout'
@@ -17,8 +17,8 @@ export default async function BlogPage() {
       title: BlogOverview.title,
       posts({children}) {
         return children().select({
-          id: Page.entryId,
-          url: Page.url,
+          id: Entry.entryId,
+          url: Entry.url,
           title: BlogPost.title,
           publishDate: BlogPost.publishDate
         })

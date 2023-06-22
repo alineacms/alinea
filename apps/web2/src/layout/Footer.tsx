@@ -65,7 +65,7 @@ export function Footer() {
             </VStack>
           </VStack>
 
-          <HStack
+          {/*<HStack
             style={{marginTop: 'auto'}}
             center
             gap={8}
@@ -76,7 +76,7 @@ export function Footer() {
           >
             <ThemeIcon />
             <span>{theme.charAt(0).toUpperCase() + theme.slice(1)}</span>
-          </HStack>
+          </HStack>*/}
         </HStack>
       </LayoutContainer>
     </footer>

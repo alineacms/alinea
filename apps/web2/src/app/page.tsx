@@ -30,16 +30,22 @@ export default async function HomePage() {
       >
         <Hero>
           <LayoutContainer>
-            <div>
+            <VStack center>
               <Hero.Title>{home.headline}</Hero.Title>
               <Hero.ByLine>{home.byline}</Hero.ByLine>
-              <div>
+              <HStack
+                wrap
+                center
+                gap={24}
+                justify="center"
+                style={{paddingTop: px(20)}}
+              >
                 {home.action?.url && (
                   <Hero.Action href={home.action.url}>
                     {home.action.label}
                   </Hero.Action>
                 )}
-                <WebTypo.Link
+                {/*<WebTypo.Link
                   className={styles.hero.demo()}
                   href="https://demo.alinea.sh"
                   target="_blank"
@@ -47,9 +53,9 @@ export default async function HomePage() {
                   <div>
                     <span>Try the demo</span>
                   </div>
-                </WebTypo.Link>
-              </div>
-            </div>
+                </WebTypo.Link>*/}
+              </HStack>
+            </VStack>
           </LayoutContainer>
         </Hero>
       </div>
