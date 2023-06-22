@@ -699,6 +699,7 @@ export class Resolver {
           })
         } catch (err: any) {
           if (err.result) return err.result
+          console.warn('Could not decode preview update', err)
         }
     }
     const result = await this.store(query)
