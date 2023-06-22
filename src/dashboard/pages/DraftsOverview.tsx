@@ -1,4 +1,4 @@
-import {Page} from 'alinea/core'
+import {Entry} from 'alinea/core'
 import {Button, HStack, Stack, Typo, VStack, fromModule, px} from 'alinea/ui'
 import {IcRoundArrowForward} from 'alinea/ui/icons/IcRoundArrowForward'
 import {useAtomValue} from 'jotai'
@@ -24,7 +24,7 @@ export function DraftsOverview({editor}: DraftsOverviewProps) {
   const {data, refetch} = useQuery(
     ['drafts-overview'],
     () => {
-      return graph.drafts.find(Page({workspace: workspace.name}))
+      return graph.drafts.find(Entry({workspace: workspace.name}))
     },
     {suspense: true}
   )

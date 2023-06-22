@@ -1,5 +1,5 @@
 import type {ComponentType} from 'react'
-import {Page} from './Page.js'
+import {Entry} from './Entry.js'
 import {Schema} from './Schema.js'
 import {Type} from './Type.js'
 import {Projection} from './pages/Projection.js'
@@ -41,7 +41,7 @@ export namespace View {
         const selection: any = view.selection()
         select = select
           ? select.when(name, selection)
-          : Page.type.when(name, selection)
+          : Entry.type.when(name, selection)
       }
     }
     return select

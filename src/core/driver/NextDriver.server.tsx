@@ -12,8 +12,8 @@ import {Suspense, lazy} from 'react'
 import {DefaultCMS} from '../CMS.js'
 import {Client, ClientOptions} from '../Client.js'
 import {Config} from '../Config.js'
+import {Entry} from '../Entry.js'
 import {EntryPhase} from '../EntryRow.js'
-import {Page} from '../Page.js'
 import {Realm} from '../pages/Realm.js'
 import {Selection} from '../pages/Selection.js'
 import {NextApi} from './NextDriver.js'
@@ -89,7 +89,7 @@ class NextDriver extends DefaultCMS implements NextApi {
     const cnx = await this.connection()
     const url = (await cnx.resolve({
       selection: Selection.create(
-        Page({entryId: params.entryId}).select(Page.url).first()
+        Entry({entryId: params.entryId}).select(Entry.url).first()
       ),
       realm: params.realm
     })) as string

@@ -1,9 +1,9 @@
 import {
   Config,
   Connection,
+  Entry,
   EntryPhase,
   EntryRow,
-  Page,
   Workspace,
   createId
 } from 'alinea/core'
@@ -126,8 +126,8 @@ export class Server implements Connection {
       EntryPhase.Published,
       new Uint8Array(file.buffer)
     )
-    const parent = await this.graph.maybeGet(Page({entryId: parentId}))
-    const prev = await this.graph.maybeGet(Page({parent: parentId}))
+    const parent = await this.graph.maybeGet(Entry({entryId: parentId}))
+    const prev = await this.graph.maybeGet(Entry({parent: parentId}))
     const entry: Media.File = {
       entryId,
       type: 'MediaFile',

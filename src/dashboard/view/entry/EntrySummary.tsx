@@ -1,4 +1,4 @@
-import {Page, Type, view} from 'alinea/core'
+import {Entry, Type, view} from 'alinea/core'
 import {Projection} from 'alinea/core/pages/Projection'
 import {Chip, HStack, TextLabel, Typo, VStack, fromModule} from 'alinea/ui'
 import {Ellipsis} from 'alinea/ui/Ellipsis'
@@ -12,15 +12,15 @@ const styles = fromModule(css)
 
 export function entrySummaryQuery() {
   return {
-    entryId: Page.entryId,
-    type: Page.type,
-    workspace: Page.workspace,
-    root: Page.root,
-    title: Page.title,
+    entryId: Entry.entryId,
+    type: Entry.type,
+    workspace: Entry.workspace,
+    root: Entry.root,
+    title: Entry.title,
     parents({parents}) {
-      return parents(Page).select({
-        entryId: Page.entryId,
-        title: Page.title
+      return parents(Entry).select({
+        entryId: Entry.entryId,
+        title: Entry.title
       })
     }
   } satisfies Projection

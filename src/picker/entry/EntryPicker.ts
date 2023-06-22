@@ -1,6 +1,6 @@
+import {Entry} from 'alinea/core/Entry'
 import {Hint} from 'alinea/core/Hint'
 import {Label} from 'alinea/core/Label'
-import {Page} from 'alinea/core/Page'
 import {Reference} from 'alinea/core/Reference'
 import {Shape} from 'alinea/core/Shape'
 import {Type} from 'alinea/core/Type'
@@ -22,10 +22,10 @@ export interface EntryReference extends EntryLinkReference {
 }
 
 export const entryFields = {
-  entryType: Page.type,
-  url: Page.url,
-  path: Page.path,
-  title: Page.title
+  entryType: Entry.type,
+  url: Entry.url,
+  path: Entry.path,
+  title: Entry.title
 }
 
 export namespace EntryReference {
@@ -42,7 +42,7 @@ export interface FileReference extends EntryLinkReference {
 }
 
 export const fileFields = {
-  title: Page.title,
+  title: Entry.title,
   url: MediaFile.location,
   extension: MediaFile.extension,
   size: MediaFile.size
@@ -66,7 +66,7 @@ export interface ImageReference extends EntryLinkReference {
 }
 
 export const imageFields = {
-  title: Page.title,
+  title: Entry.title,
   src: MediaFile.location,
   extension: MediaFile.extension,
   size: MediaFile.size,

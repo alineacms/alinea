@@ -7,7 +7,7 @@ import {useQuery} from 'react-query'
 import VirtualList from 'react-tiny-virtual-list'
 //import {EntryProperty} from '../draft/EntryProperty.js'
 //import {useCurrentDraft} from '../hook/UseCurrentDraft.js'
-import {Page} from 'alinea/core'
+import {Entry} from 'alinea/core'
 import {MediaFile} from 'alinea/core/media/MediaSchema'
 import {useAtomValue} from 'jotai'
 import {graphAtom} from '../atoms/EntryAtoms.js'
@@ -27,7 +27,7 @@ export function MediaExplorer({editor}: EntryEditProps) {
     ['media', 'total', editor.entryId],
     () => {
       return graph.active.count(
-        MediaFile().where(Page.parent.is(editor.entryId))
+        MediaFile().where(Entry.parent.is(editor.entryId))
       )
     },
     {suspense: true}

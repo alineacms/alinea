@@ -1,4 +1,4 @@
-import {Page} from 'alinea/core'
+import {Entry} from 'alinea/core'
 import {MediaFile} from 'alinea/core/media/MediaSchema'
 import {fromModule} from 'alinea/ui'
 import {useAtomValue} from 'jotai'
@@ -24,18 +24,18 @@ export function MediaRow({amount, parentId, from, batchSize}: MediaRowProps) {
     () => {
       return graph.active.find(
         MediaFile()
-          .where(Page.parent.is(parentId))
+          .where(Entry.parent.is(parentId))
           .skip(start * batchSize)
           .take(batchSize)
           .select({
-            entryId: Page.entryId,
-            title: Page.title,
+            entryId: Entry.entryId,
+            title: Entry.title,
             extension: MediaFile.extension,
             size: MediaFile.size,
             preview: MediaFile.preview,
             averageColor: MediaFile.averageColor
           })
-          .orderBy(Page.title.asc())
+          .orderBy(Entry.title.asc())
       )
     },
     {

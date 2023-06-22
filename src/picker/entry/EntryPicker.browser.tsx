@@ -1,4 +1,4 @@
-import {Page, createId} from 'alinea/core'
+import {createId} from 'alinea/core'
 import {Entry} from 'alinea/core/Entry'
 import {Reference} from 'alinea/core/Reference'
 import {useDashboard} from 'alinea/dashboard/hook/UseDashboard'
@@ -66,10 +66,10 @@ export function EntryPickerModal({
   const {name: root} = useRoot()
   const cursor = useMemo(() => {
     const terms = search.replace(/,/g, ' ').split(' ').filter(Boolean)
-    const defaultCondition = Page.workspace
+    const defaultCondition = Entry.workspace
       .is(workspace)
-      .and(Page.root.is(root))
-    return Page()
+      .and(Entry.root.is(root))
+    return Entry()
       .where(condition ?? defaultCondition)
       .search(...terms)
   }, [workspace, root, search, condition])

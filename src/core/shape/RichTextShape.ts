@@ -1,8 +1,8 @@
 import {LinkResolver} from 'alinea/backend/resolver/LinkResolver'
 import * as Y from 'yjs'
+import {Entry} from '../Entry.js'
 import {Hint} from '../Hint.js'
 import {Label} from '../Label.js'
-import {Page} from '../Page.js'
 import {Shape} from '../Shape.js'
 import {TextDoc, TextNode} from '../TextDoc.js'
 import {entries, fromEntries} from '../util/Objects.js'
@@ -191,7 +191,7 @@ export class RichTextShape<Blocks>
     })
     async function loadLinks() {
       const linkIds = Array.from(new Set(links.values()))
-      const entries = await loader.resolveLinks(Page.url, linkIds)
+      const entries = await loader.resolveLinks(Entry.url, linkIds)
       const urls = new Map(linkIds.map((id, i) => [id, entries[i]]))
       for (const [mark, id] of links) {
         const url = urls.get(id)

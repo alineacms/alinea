@@ -1,7 +1,7 @@
 import {Database} from 'alinea/backend'
 import {EntryPhase, Type} from 'alinea/core'
+import {Entry} from 'alinea/core/Entry'
 import {Graph} from 'alinea/core/Graph'
-import {Page} from 'alinea/core/Page'
 import {Realm} from 'alinea/core/pages/Realm'
 import {entries} from 'alinea/core/util/Objects'
 import DataLoader from 'dataloader'
@@ -94,16 +94,16 @@ const entryTreeRootAtom = atom(
     const root = get(rootAtom)
     const visibleTypes = get(visibleTypesAtom)
     const children = await drafts.find(
-      Page()
+      Entry()
         .where(
-          Page.workspace.is(workspace.name),
-          Page.root.is(root.name),
-          Page.parent.isNull(),
-          Page.active,
-          Page.type.isIn(visibleTypes)
+          Entry.workspace.is(workspace.name),
+          Entry.root.is(root.name),
+          Entry.parent.isNull(),
+          Entry.active,
+          Entry.type.isIn(visibleTypes)
         )
-        .select(Page.entryId)
-        .orderBy(Page.index.asc())
+        .select(Entry.entryId)
+        .orderBy(Entry.index.asc())
     )
     return {
       index: ENTRY_TREE_ROOT_KEY,
@@ -129,23 +129,23 @@ const entryTreeItemLoaderAtom = atom(async get => {
       id => id !== ENTRY_TREE_ROOT_KEY
     )
     const entries: Array<TreeItem<EntryTreeItem>> = await graph.active.find(
-      Page()
+      Entry()
         .select({
-          index: Page.entryId,
+          index: Entry.entryId,
           data: {
-            entryId: Page.entryId,
-            type: Page.type,
-            title: Page.title,
-            phase: Page.phase
+            entryId: Entry.entryId,
+            type: Entry.type,
+            title: Entry.title,
+            phase: Entry.phase
           },
           children({children}) {
-            return children(Page)
-              .where(Page.type.isIn(visibleTypes))
-              .select(Page.entryId)
-              .orderBy(Page.index.asc())
+            return children(Entry)
+              .where(Entry.type.isIn(visibleTypes))
+              .select(Entry.entryId)
+              .orderBy(Entry.index.asc())
           }
         })
-        .where(Page.entryId.isIn(search))
+        .where(Entry.entryId.isIn(search))
     )
     for (const entry of entries) res.set(entry.index, entry)
     return ids.map(id => {

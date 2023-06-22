@@ -1,5 +1,5 @@
 import {View} from 'alinea/core'
-import {Page} from 'alinea/core/Page'
+import {Entry} from 'alinea/core/Entry'
 import {Cursor} from 'alinea/core/pages/Cursor'
 import DataLoader from 'dataloader'
 import {atom} from 'jotai'
@@ -18,7 +18,7 @@ export const entrySummaryLoaderAtom = atom(async get => {
   )
   return new DataLoader(async (ids: ReadonlyArray<string>) => {
     const res = new Map()
-    let cursor: Cursor.Find<any> = Page().where(Page.entryId.isIn(ids))
+    let cursor: Cursor.Find<any> = Entry().where(Entry.entryId.isIn(ids))
     cursor = new Cursor.Find<any>({
       ...cursor[Cursor.Data],
       select: selection

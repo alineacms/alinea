@@ -1,4 +1,3 @@
-import {Page} from 'alinea/core'
 import {Entry} from 'alinea/core/Entry'
 import {MediaLibrary} from 'alinea/core/media/MediaSchema'
 import {InputField} from 'alinea/editor/view/InputField'
@@ -32,17 +31,17 @@ export function FileUploader({max, toggleSelect}: FileUploaderProps) {
     () => {
       return graph.active.find(
         MediaLibrary()
-          .where(Page.workspace.is(workspace))
+          .where(Entry.workspace.is(workspace))
           .select({
-            id: Page.entryId,
+            id: Entry.entryId,
             title: MediaLibrary.title,
-            workspace: Page.workspace,
-            root: Page.root,
-            url: Page.url,
+            workspace: Entry.workspace,
+            root: Entry.root,
+            url: Entry.url,
             parents({parents}) {
               return parents().select({
-                entryId: Page.entryId,
-                title: Page.title
+                entryId: Entry.entryId,
+                title: Entry.title
               })
             }
           })

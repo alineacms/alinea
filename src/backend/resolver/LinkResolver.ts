@@ -1,4 +1,4 @@
-import {Page} from 'alinea/core'
+import {Entry} from 'alinea/core'
 import {Projection} from 'alinea/core/pages/Projection'
 import {Realm} from 'alinea/core/pages/Realm'
 import {Selection} from 'alinea/core/pages/Selection'
@@ -25,8 +25,8 @@ export class LinkResolver {
     return new DataLoader<string, object>(
       async (ids: ReadonlyArray<string>) => {
         const selection = Selection.create(
-          Page().where(Page.entryId.isIn(ids)).select({
-            entryId: Page.entryId,
+          Entry().where(Entry.entryId.isIn(ids)).select({
+            entryId: Entry.entryId,
             projection: projection
           })
         )

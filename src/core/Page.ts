@@ -1,10 +1,5 @@
-import {EntryRow} from './EntryRow.js'
 import {Type} from './Type.js'
 import {Cursor} from './pages/Cursor.js'
-import {Target} from './pages/Target.js'
-
-export interface Page extends EntryRow {}
-export const Page = Target.create<Page>({})
 
 export interface PageSeedData {
   type: Type

@@ -1,11 +1,11 @@
 import {createId} from 'alinea/core/Id'
-import {Page} from '../Page.js'
+import {Entry} from '../Entry.js'
 import {Cursor, CursorData, SourceType} from './Cursor.js'
 import {Selection} from './Selection.js'
 import {Target, TargetI} from './Target.js'
 
 type Narrow = Cursor.Find<any> | TargetI<any>
-type Output<T> = [Narrow] extends [T] ? Page : Selection.Infer<T>
+type Output<T> = [Narrow] extends [T] ? Entry : Selection.Infer<T>
 
 export class Tree {
   constructor(/*protected sourceId: string*/) {

@@ -1,4 +1,4 @@
-import {Page} from 'alinea/core'
+import {Entry} from 'alinea/core'
 import {useLocation, useNavigate} from 'alinea/dashboard/util/HashRouter'
 import {HStack, Stack, fromModule} from 'alinea/ui'
 import {IcOutlineGridView} from 'alinea/ui/icons/IcOutlineGridView'
@@ -26,7 +26,7 @@ export function SearchBox() {
   })
   const cursor = useMemo(() => {
     const terms = search.replace(/,/g, ' ').split(' ').filter(Boolean)
-    return Page().search(...terms)
+    return Entry().search(...terms)
   }, [search])
   const [explorerView, setExplorerView] = useState<'row' | 'thumb'>('row')
   // If we navigate to another page (for example by selecting one of the items)

@@ -1,4 +1,4 @@
-import {EntryPhase, EntryRow, Page, Type, createId, slugify} from 'alinea/core'
+import {Entry, EntryPhase, EntryRow, Type, createId, slugify} from 'alinea/core'
 import {Projection} from 'alinea/core/pages/Projection'
 import {generateKeyBetween} from 'alinea/core/util/FractionalIndexing'
 import {entries, fromEntries, keys} from 'alinea/core/util/Objects'
@@ -30,13 +30,13 @@ import css from './NewEntry.module.scss'
 const styles = fromModule(css)
 
 const parentData = {
-  id: Page.entryId,
-  type: Page.type,
-  url: Page.url,
-  level: Page.level,
-  parent: Page.parent,
+  id: Entry.entryId,
+  type: Entry.type,
+  url: Entry.url,
+  level: Entry.level,
+  parent: Entry.parent,
   childrenIndex({children}) {
-    return children().select(Page.index).orderBy(Page.index.asc()).first()
+    return children().select(Entry.index).orderBy(Entry.index.asc()).first()
   }
 } satisfies Projection
 
@@ -47,7 +47,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
   const {data: requestedParent} = useQuery(
     ['parent-req', parentId],
     async () => {
-      return graph.active.get(Page({entryId: parentId}).select(parentData))
+      return graph.active.get(Entry({entryId: parentId}).select(parentData))
     },
     {suspense: true, keepPreviousData: true}
   )
@@ -68,10 +68,10 @@ function NewEntryForm({parentId}: NewEntryProps) {
   const root = useRoot()
   const parentField = useField(
     link.entry('Parent', {
-      condition: Page.type
+      condition: Entry.type
         .isIn(containerTypes)
-        .and(Page.workspace.is(workspace))
-        .and(Page.root.is(root.name)),
+        .and(Entry.workspace.is(workspace))
+        .and(Entry.root.is(root.name)),
       initialValue: preselectedId
         ? ({
             id: 'parent',
@@ -88,7 +88,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
     async () => {
       const parentId = selectedParent?.entry
       if (!parentId) return
-      return graph.active.get(Page({entryId: parentId}).select(parentData))
+      return graph.active.get(Entry({entryId: parentId}).select(parentData))
     },
     {suspense: true, keepPreviousData: true}
   )

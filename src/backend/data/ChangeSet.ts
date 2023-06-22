@@ -1,6 +1,6 @@
 import {EntryPhase, EntryRow, EntryUrlMeta, Type, Workspace} from 'alinea/core'
+import {Entry} from 'alinea/core/Entry'
 import {createRecord} from 'alinea/core/EntryRecord'
-import {Page} from 'alinea/core/Page'
 import {Realm} from 'alinea/core/pages/Realm'
 import {join} from 'alinea/core/util/Paths'
 import {Database} from '../Database.js'
@@ -51,11 +51,11 @@ export namespace ChangeSet {
       const parentData =
         entry.parent &&
         (await db.find(
-          Page({entryId: entry.parent})
+          Entry({entryId: entry.parent})
             .select({
-              path: Page.path,
+              path: Entry.path,
               paths({parents}) {
-                return parents().select(Page.path)
+                return parents().select(Entry.path)
               }
             })
             .first(),
@@ -89,12 +89,12 @@ export namespace ChangeSet {
       })
       const previousPhase: Realm = entry.phase as any
       const previous = await db.find(
-        Page({entryId: entry.entryId})
+        Entry({entryId: entry.entryId})
           .select({
-            phase: Page.phase,
-            path: Page.path,
-            locale: Page.locale,
-            root: Page.root
+            phase: Entry.phase,
+            path: Entry.path,
+            locale: Entry.locale,
+            root: Entry.root
           })
           .maybeFirst(),
         previousPhase
@@ -136,12 +136,12 @@ export namespace ChangeSet {
       async function renameChildren(newPaths: Array<string>, parentId: string) {
         // List every child as write + delete
         const children = await db.find(
-          Page()
-            .where(Page.parent.is(parentId))
+          Entry()
+            .where(Entry.parent.is(parentId))
             .select({
-              child: {...Page},
+              child: {...Entry},
               oldPaths({parents}) {
-                return parents().select(Page.path)
+                return parents().select(Entry.path)
               }
             }),
           Realm.All

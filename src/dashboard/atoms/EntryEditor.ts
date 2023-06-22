@@ -8,7 +8,7 @@ import {
   parseYDoc
 } from 'alinea/core'
 import {Client} from 'alinea/core/Client'
-import {Page} from 'alinea/core/Page'
+import {Entry} from 'alinea/core/Entry'
 import {entries, fromEntries, values} from 'alinea/core/util/Objects'
 import {InputState} from 'alinea/editor'
 import {atom} from 'jotai'
@@ -24,7 +24,7 @@ export enum EditMode {
   Diff = 'diff'
 }
 
-export type Version = Page & {parents: Array<string>}
+export type Version = Entry & {parents: Array<string>}
 
 export const entryEditorAtoms = atomFamily((entryId: string) => {
   return atom(async get => {
@@ -33,10 +33,10 @@ export const entryEditorAtoms = atomFamily((entryId: string) => {
     const {all} = await get(graphAtom)
     get(entryRevisionAtoms(entryId))
     const versions = await all.find(
-      Page({entryId}).select({
-        ...Page,
+      Entry({entryId}).select({
+        ...Entry,
         parents({parents}) {
-          return parents(Page).select(Page.entryId)
+          return parents(Entry).select(Entry.entryId)
         }
       })
     )
