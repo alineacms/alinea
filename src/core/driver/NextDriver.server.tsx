@@ -1,4 +1,4 @@
-import {JWTPreviews} from 'alinea/backend'
+import {JWTPreviews, Server} from 'alinea/backend'
 import {createCloudHandler} from 'alinea/cloud/server/CloudHandler'
 import {parseChunkedCookies} from 'alinea/preview/ChunkCookieValue'
 import {
@@ -16,6 +16,7 @@ import {Entry} from '../Entry.js'
 import {EntryPhase} from '../EntryRow.js'
 import {Realm} from '../pages/Realm.js'
 import {Selection} from '../pages/Selection.js'
+import {Logger} from '../util/Logger.js'
 import {NextApi} from './NextDriver.js'
 
 const SearchParams = object({
@@ -25,6 +26,8 @@ const SearchParams = object({
 })
 
 class NextDriver extends DefaultCMS implements NextApi {
+  apiKey = process.env.ALINEA_API_KEY
+
   async connection() {
     const {cookies, draftMode} = await import('next/headers')
     const {isEnabled: isDraft} = draftMode()
@@ -52,7 +55,17 @@ class NextDriver extends DefaultCMS implements NextApi {
         url: `http://127.0.0.1:${devPort}`,
         resolveDefaults
       })
-    return super.connection()
+    const store = await this.readStore()
+    return new Server(
+      {
+        config: this.config,
+        store,
+        media: undefined!,
+        target: undefined!,
+        previews: new JWTPreviews(this.apiKey!)
+      },
+      {logger: new Logger('CMSDriver')}
+    )
   }
 
   backendHandler = async (request: Request) => {
