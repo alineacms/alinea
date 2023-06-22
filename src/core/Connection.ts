@@ -1,16 +1,16 @@
 import {Media} from 'alinea/backend/Media'
 import {ChangeSet} from 'alinea/backend/data/ChangeSet'
 import {AlineaMeta} from 'alinea/backend/db/AlineaMeta'
-import {User} from 'alinea/core'
 import {PreviewUpdate} from 'alinea/preview/PreviewMessage'
-import {Entry} from './Entry.js'
+import {EntryRow} from './EntryRow.js'
+import {User} from './User.js'
 import {Realm} from './pages/Realm.js'
 import {Selection} from './pages/Selection.js'
 import {Logger} from './util/Logger.js'
 
 export interface UpdateResponse {
   contentHash: string
-  entries: Array<Entry>
+  entries: Array<EntryRow>
 }
 
 export interface Syncable {
@@ -22,8 +22,8 @@ export interface Connection extends Syncable {
   previewToken(): Promise<string>
   resolve(params: Connection.ResolveParams): Promise<unknown>
   uploadFile(params: Connection.UploadParams): Promise<Media.File>
-  saveDraft(entry: Entry): Promise<void>
-  publishDrafts(entries: Array<Entry>): Promise<void>
+  saveDraft(entry: EntryRow): Promise<void>
+  publishDrafts(entries: Array<EntryRow>): Promise<void>
   // archive
   // createEntries(params: Connection.CreateParams): Promise<void>
 }
@@ -48,7 +48,7 @@ export namespace Connection {
     preview?: PreviewUpdate
   }
   export type CreateParams = {
-    entries: Array<Entry>
+    entries: Array<EntryRow>
   }
   export type MediaUploadParams = {
     buffer: ArrayBuffer

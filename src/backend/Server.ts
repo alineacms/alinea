@@ -1,8 +1,8 @@
 import {
   Config,
   Connection,
-  Entry,
   EntryPhase,
+  EntryRow,
   Page,
   Workspace,
   createId
@@ -73,7 +73,7 @@ export class Server implements Connection {
     return previews.sign({sub: user.sub})
   }
 
-  async saveDraft(entry: Entry): Promise<void> {
+  async saveDraft(entry: EntryRow): Promise<void> {
     const {target} = this.options
     const changes = await ChangeSet.create(
       this.db,
@@ -84,7 +84,7 @@ export class Server implements Connection {
     await target.publishChanges({changes}, this.context)
   }
 
-  async publishDrafts(entries: Array<Entry>): Promise<void> {
+  async publishDrafts(entries: Array<EntryRow>): Promise<void> {
     const {target} = this.options
     const changes = await ChangeSet.create(
       this.db,

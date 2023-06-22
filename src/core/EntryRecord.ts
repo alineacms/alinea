@@ -1,5 +1,5 @@
 import {boolean, object, string} from 'cito'
-import {Entry} from './Entry.js'
+import {EntryRow} from './EntryRow.js'
 
 export type EntryMeta = typeof EntryMeta.infer
 export const EntryMeta = object(
@@ -25,7 +25,7 @@ export const EntryRecord = object(
   }
 )
 
-export function createRecord(entry: Entry): EntryRecord {
+export function createRecord(entry: EntryRow): EntryRecord {
   const {path, ...data} = entry.data
   const meta: EntryMeta = {index: entry.index}
   if (entry.seeded) meta.seeded = entry.seeded

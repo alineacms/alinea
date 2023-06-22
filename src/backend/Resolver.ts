@@ -27,7 +27,7 @@ import {
   withRecursive
 } from 'rado'
 import {iif, match, count as sqlCount} from 'rado/sqlite'
-import {Entry, EntryPhase, EntryTable} from '../core/Entry.js'
+import {EntryPhase, EntryRow, EntryTable} from '../core/EntryRow.js'
 import * as pages from '../core/pages/index.js'
 import {Store} from './Store.js'
 import {LinkResolver} from './resolver/LinkResolver.js'
@@ -59,7 +59,7 @@ const binOps = {
   [pages.BinaryOp.Concat]: BinOpType.Concat
 }
 
-const pageFields = keys(Entry)
+const pageFields = keys(EntryRow)
 
 type Interim = any
 
@@ -72,7 +72,7 @@ export class ResolveContext {
     //public table: Table<EntryTable> | undefined = undefined,
     public expr: ExprContext = ExprContext.InNone
   ) {
-    this.table = Entry().as(`E${this.depth}`)
+    this.table = EntryRow().as(`E${this.depth}`)
   }
 
   get Table() {
@@ -364,7 +364,7 @@ export class Resolver {
           .select(ctx.Table)
       : ctx.Table()
     if (!source) return cursor.orderBy(ctx.Table.index.asc())
-    const from = Entry().as(`E${ctx.depth - 1}`) // .as(source.id)
+    const from = EntryRow().as(`E${ctx.depth - 1}`) // .as(source.id)
     switch (source.type) {
       case pages.SourceType.Parent:
         return cursor.where(ctx.Table.entryId.is(from.parent)).take(1)
@@ -384,7 +384,7 @@ export class Resolver {
           .where(ctx.Table.entryId.isNot(from.entryId))
           .take(1)
       case pages.SourceType.Children:
-        const Child = Entry().as('Child')
+        const Child = EntryRow().as('Child')
         const children = withRecursive(
           Child({entryId: from.entryId})
             .where(this.conditionRealm(Child, ctx.realm))
@@ -411,7 +411,7 @@ export class Resolver {
           .where(ctx.Table.entryId.isIn(childrenIds))
           .orderBy(ctx.Table.index.asc())
       case pages.SourceType.Parents:
-        const Parent = Entry().as('Parent')
+        const Parent = EntryRow().as('Parent')
         const parents = withRecursive(
           Parent({entryId: from.entryId})
             .where(this.conditionRealm(Parent, ctx.realm))
@@ -672,7 +672,7 @@ export class Resolver {
     const queryData = this.query(new ResolveContext(realm, location), selection)
     const query = new Query<Interim>(queryData)
     if (preview) {
-      const current = Entry({
+      const current = EntryRow({
         entryId: preview.entryId,
         phase: preview.phase
       })
@@ -690,7 +690,7 @@ export class Resolver {
           await this.store.transaction(async tx => {
             // Temporarily add preview entry
             await tx(current.delete())
-            await tx(Entry().insert(previewEntry))
+            await tx(EntryRow().insert(previewEntry))
             const result = await tx(query)
             const linkResolver = new LinkResolver(this, tx, realm)
             if (result) await this.post({linkResolver}, result, selection)

@@ -1,7 +1,7 @@
 import {AbortController, fetch, FormData, Response} from '@alinea/iso'
 import {AlineaMeta} from 'alinea/backend/db/AlineaMeta'
 import {Media} from 'alinea/backend/Media'
-import {Config, Connection, Entry, EntryPhase, HttpError} from 'alinea/core'
+import {Config, Connection, EntryPhase, EntryRow, HttpError} from 'alinea/core'
 import {UpdateResponse} from './Connection.js'
 import {Realm} from './pages/Realm.js'
 
@@ -68,14 +68,14 @@ export class Client implements Connection {
     )
   }
 
-  saveDraft(entry: Entry): Promise<void> {
+  saveDraft(entry: EntryRow): Promise<void> {
     return this.requestJson(Connection.routes.saveDraft(), {
       method: 'POST',
       body: JSON.stringify(entry)
     }).then<void>(res => failOnHttpError(res, false))
   }
 
-  publishDrafts(entries: Array<Entry>): Promise<void> {
+  publishDrafts(entries: Array<EntryRow>): Promise<void> {
     return this.requestJson(Connection.routes.publishDrafts(), {
       method: 'POST',
       body: JSON.stringify(entries)

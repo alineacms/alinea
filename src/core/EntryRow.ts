@@ -50,33 +50,18 @@ export class EntryTable {
   url = column.string
   data = column.json<any>()
   searchableText = column.string
-
-  /*get parentIds() {
-    const Parent = Entry().as('Parent')
-    const parents = withRecursive(
-      Parent({entryId: this.entryId}).select({
-        entryId: Parent.entryId,
-        parent: Parent.parent,
-        level: 0
-      })
-    ).unionAll(() =>
-      Parent()
-        .select({
-          entryId: Parent.entryId,
-          parent: Parent.parent,
-          level: parents.level.add(1)
-        })
-        .innerJoin(parents({parent: Parent.entryId}))
-    )
-    return parents().select(parents.entryId).skip(1)
-  }*/
 }
 
-export interface Entry<Data = Record<string, any>> extends table<EntryTable> {
+/**
+ * Represents an Entry row in the database,
+ * field data is available in the data column in JSON format.
+ */
+export interface EntryRow<Data = Record<string, any>>
+  extends table<EntryTable> {
   data: Data
 }
 
-export const Entry = table({
+export const EntryRow = table({
   Entry: EntryTable,
   [table.primaryKey]() {
     return [this.entryId, this.phase]

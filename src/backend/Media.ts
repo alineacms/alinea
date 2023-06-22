@@ -1,4 +1,4 @@
-import {Connection, Entry} from 'alinea/core'
+import {Connection, EntryRow} from 'alinea/core'
 
 export interface Media {
   upload(
@@ -27,8 +27,8 @@ export namespace Media {
     blurHash: string
   }
 
-  export type File = Entry<FileProperties & Partial<ImageProperties>>
-  export type Image = Entry<FileProperties & ImageProperties>
+  export type File = EntryRow<FileProperties & Partial<ImageProperties>>
+  export type Image = EntryRow<FileProperties & ImageProperties>
 
   export const imageExtensions = [
     '.jpg',

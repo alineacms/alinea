@@ -1,4 +1,4 @@
-import {Entry, Type} from 'alinea/core'
+import {EntryRow, Type} from 'alinea/core'
 import {Chip, TextLabel, fromModule} from 'alinea/ui'
 import {useConfig} from '../../hook/UseConfig.js'
 import {diffRecord} from './DiffUtils.js'
@@ -8,8 +8,8 @@ import {FieldsDiff} from './FieldsDiff.js'
 const styles = fromModule(css)
 
 export type EntryDiffProps = {
-  entryA: Entry
-  entryB: Entry
+  entryA: EntryRow
+  entryB: EntryRow
 }
 
 export function EntryDiff({entryA, entryB}: EntryDiffProps) {

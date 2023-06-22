@@ -18,7 +18,7 @@ import {timer} from 'alinea/core/util/Timer'
 import {Driver, Expr, Table, alias, create} from 'rado'
 import {exists} from 'rado/sqlite'
 import xxhash from 'xxhash-wasm'
-import {Entry, EntryPhase} from '../core/Entry.js'
+import {EntryPhase, EntryRow} from '../core/EntryRow.js'
 import {Selection} from '../core/pages/Selection.js'
 import {Resolver} from './Resolver.js'
 import {Source} from './Source.js'
@@ -66,13 +66,13 @@ export class Database implements Syncable {
     return {
       contentHash: current.contentHash,
       entries: await this.store(
-        Entry().where(Entry.modifiedAt.isGreater(request.modifiedAt))
+        EntryRow().where(EntryRow.modifiedAt.isGreater(request.modifiedAt))
       )
     }
   }
 
   async versionIds(): Promise<Array<string>> {
-    return this.store(Entry().select(Entry.versionId))
+    return this.store(EntryRow().select(EntryRow.versionId))
   }
 
   // Syncs data with a remote database, returning the ids of changed entries
@@ -87,18 +87,18 @@ export class Database implements Syncable {
     const remoteVersionIds = await remote.versionIds()
     const excessEntries = await this.store.transaction(async query => {
       const excess = await query(
-        Entry()
-          .select({entryId: Entry.entryId, versionId: Entry.versionId})
+        EntryRow()
+          .select({entryId: EntryRow.entryId, versionId: EntryRow.versionId})
           .where(
             remoteVersionIds.length > 0
-              ? Entry.versionId.isNotIn(remoteVersionIds)
+              ? EntryRow.versionId.isNotIn(remoteVersionIds)
               : true
           )
       )
       await query(
-        Entry()
+        EntryRow()
           .delete()
-          .where(Entry.versionId.isIn(excess.map(e => e.versionId)))
+          .where(EntryRow.versionId.isIn(excess.map(e => e.versionId)))
       )
       await this.index(query)
       await this.writeMeta(query)
@@ -111,16 +111,16 @@ export class Database implements Syncable {
     throw new Error('Sync failed')
   }
 
-  async updateEntries(entries: Array<Entry>) {
+  async updateEntries(entries: Array<EntryRow>) {
     return this.store.transaction(async query => {
       for (const entry of entries) {
         await query(
-          Entry({
+          EntryRow({
             entryId: entry.entryId,
             phase: entry.phase
           }).delete()
         )
-        await query(Entry().insertOne(entry))
+        await query(EntryRow().insertOne(entry))
       }
       await this.index(query)
       await this.writeMeta(query)
@@ -137,10 +137,10 @@ export class Database implements Syncable {
   }
 
   private async index(query: Driver.Async) {
-    const {Parent} = alias(Entry)
+    const {Parent} = alias(EntryRow)
     const res = await query(
-      Entry().set({
-        parent: Parent({childrenDir: Entry.parentDir})
+      EntryRow().set({
+        parent: Parent({childrenDir: EntryRow.parentDir})
           .select(Parent.entryId)
           .maybeFirst(),
         active: EntryRealm.isActive,
@@ -153,11 +153,14 @@ export class Database implements Syncable {
   private async writeMeta(query: Driver.Async) {
     const {h32ToString} = await xxhash()
     const contentHashes = await query(
-      Entry().select(Entry.contentHash).orderBy(Entry.contentHash)
+      EntryRow().select(EntryRow.contentHash).orderBy(EntryRow.contentHash)
     )
     const contentHash = h32ToString(contentHashes.join(''))
     const modifiedAt = await query(
-      Entry().select(Entry.modifiedAt).orderBy(Entry.modifiedAt.desc()).first()
+      EntryRow()
+        .select(EntryRow.modifiedAt)
+        .orderBy(EntryRow.modifiedAt.desc())
+        .first()
     )
     await query(
       AlineaMeta().delete(),
@@ -174,7 +177,7 @@ export class Database implements Syncable {
     this.inited = true
     try {
       await this.store.transaction(async tx => {
-        await tx(create(Entry, AlineaMeta))
+        await tx(create(EntryRow, AlineaMeta))
         await createEntrySearch(tx)
       })
     } catch (e) {
@@ -215,7 +218,7 @@ export class Database implements Syncable {
       filePath: string
     },
     seed?: Seed
-  ): Omit<Table.Insert<typeof Entry>, 'contentHash'> {
+  ): Omit<Table.Insert<typeof EntryRow>, 'contentHash'> {
     const parentDir = path.dirname(meta.filePath)
     const extension = path.extname(meta.filePath)
     const fileName = path.basename(meta.filePath, extension)
@@ -328,7 +331,7 @@ export class Database implements Syncable {
     await this.init()
     const {h32Raw} = await xxhash()
     const typeNames = Schema.typeNames(this.config.schema)
-    const publishSeed: Array<Entry> = []
+    const publishSeed: Array<EntryRow> = []
 
     await this.store.transaction(async query => {
       const seenVersions: Array<string> = []
@@ -348,13 +351,13 @@ export class Database implements Syncable {
             : undefined
         )
         const exists = await query(
-          Entry({
+          EntryRow({
             contentHash,
             filePath: file.filePath,
             workspace: file.workspace,
             root: file.root
           })
-            .select(Entry.versionId)
+            .select(EntryRow.versionId)
             .maybeFirst()
         )
         if (seed) {
@@ -375,12 +378,14 @@ export class Database implements Syncable {
           if (entry.seeded && entry.phase === EntryPhase.Published && !seed)
             throw new Error(`seed entry is missing from config`)
           await query(
-            Entry({entryId: entry.entryId, phase: entry.phase}).delete()
+            EntryRow({entryId: entry.entryId, phase: entry.phase}).delete()
           )
-          const withHash = entry as Table.Insert<typeof Entry>
+          const withHash = entry as Table.Insert<typeof EntryRow>
           withHash.contentHash = contentHash
           seenVersions.push(
-            await query(Entry().insert(withHash).returning(Entry.versionId))
+            await query(
+              EntryRow().insert(withHash).returning(EntryRow.versionId)
+            )
           )
           inserted++
         } catch (e: any) {
@@ -408,10 +413,10 @@ export class Database implements Syncable {
           seed.type + JSON.stringify(PageSeed.data(seed.page).partial)
         )
         const contentHash = h32Raw(seedData).toString(16).padStart(8, '0')
-        const withHash = entry as Entry
+        const withHash = entry as EntryRow
         withHash.contentHash = contentHash
         seenVersions.push(
-          await query(Entry().insert(withHash).returning(Entry.versionId))
+          await query(EntryRow().insert(withHash).returning(EntryRow.versionId))
         )
         publishSeed.push({
           ...withHash,
@@ -424,7 +429,7 @@ export class Database implements Syncable {
       if (seenVersions.length === 0) return
 
       const {rowsAffected: removed} = await query(
-        Entry().delete().where(Entry.versionId.isNotIn(seenVersions))
+        EntryRow().delete().where(EntryRow.versionId.isNotIn(seenVersions))
       )
       const noChanges = inserted === 0 && removed === 0
       if (noChanges) return
@@ -450,18 +455,18 @@ export class Database implements Syncable {
 }
 
 namespace EntryRealm {
-  const {Alt} = alias(Entry)
-  const isDraft = Entry.phase.is(EntryPhase.Draft)
-  const isArchived = Entry.phase.is(EntryPhase.Archived)
-  const isPublished = Entry.phase.is(EntryPhase.Published)
+  const {Alt} = alias(EntryRow)
+  const isDraft = EntryRow.phase.is(EntryPhase.Draft)
+  const isArchived = EntryRow.phase.is(EntryPhase.Archived)
+  const isPublished = EntryRow.phase.is(EntryPhase.Published)
   const hasDraft = exists(
-    Alt({phase: EntryPhase.Draft, entryId: Entry.entryId})
+    Alt({phase: EntryPhase.Draft, entryId: EntryRow.entryId})
   )
   const hasPublished = exists(
-    Alt({phase: EntryPhase.Published, entryId: Entry.entryId})
+    Alt({phase: EntryPhase.Published, entryId: EntryRow.entryId})
   )
   const hasArchived = exists(
-    Alt({phase: EntryPhase.Archived, entryId: Entry.entryId})
+    Alt({phase: EntryPhase.Archived, entryId: EntryRow.entryId})
   )
   const isPublishedWithoutDraft = Expr.and(isPublished, hasDraft.not())
   const isArchivedWithoutDraftOrPublished = Expr.and(

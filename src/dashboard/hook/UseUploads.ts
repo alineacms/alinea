@@ -1,5 +1,5 @@
 import {Media} from 'alinea/backend/Media'
-import {Connection, Entry} from 'alinea/core'
+import {Connection, EntryRow} from 'alinea/core'
 import {createId} from 'alinea/core/Id'
 import {base64} from 'alinea/core/util/Encoding'
 import {rgba, toHex} from 'color2k'
@@ -127,7 +127,7 @@ async function process(upload: Upload, cnx: Connection): Promise<Upload> {
   }
 }
 
-export function useUploads(onSelect: (entry: Entry) => void) {
+export function useUploads(onSelect: (entry: EntryRow) => void) {
   const {cnx: hub} = useSession()
   const [uploads, setUploads] = useState<Array<Upload>>([])
   const queryClient = useQueryClient()

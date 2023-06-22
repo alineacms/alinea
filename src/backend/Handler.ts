@@ -1,5 +1,5 @@
 import {Request, Response} from '@alinea/iso'
-import {Auth, Connection, Entry, EntryPhase} from 'alinea/core'
+import {Auth, Connection, EntryPhase, EntryRow} from 'alinea/core'
 import {Realm} from 'alinea/core/pages/Realm'
 import {Selection} from 'alinea/core/pages/Selection'
 import {Logger, LoggerResult, Report} from 'alinea/core/util/Logger'
@@ -87,7 +87,7 @@ function createRouter(
       .map(router.parseJson)
       .map(({ctx, body}) => {
         const api = createApi(ctx)
-        return ctx.logger.result(api.saveDraft(body as Entry))
+        return ctx.logger.result(api.saveDraft(body as EntryRow))
       })
       .map(respond),
 
@@ -97,7 +97,7 @@ function createRouter(
       .map(router.parseJson)
       .map(({ctx, body}) => {
         const api = createApi(ctx)
-        return ctx.logger.result(api.publishDrafts(body as Array<Entry>))
+        return ctx.logger.result(api.publishDrafts(body as Array<EntryRow>))
       })
       .map(respond),
 

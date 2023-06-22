@@ -1,4 +1,4 @@
-import {Entry, Schema, Type, View} from 'alinea/core'
+import {EntryRow, Schema, Type, View} from 'alinea/core'
 import {link} from 'alinea/dashboard/util/HashRouter'
 import {EntryReference} from 'alinea/picker/entry'
 import {fromModule} from 'alinea/ui'
@@ -13,9 +13,9 @@ const styles = fromModule(css)
 
 export type ExplorerItemProps = {
   schema: Schema
-  entry: Entry
+  entry: EntryRow
   summaryView: 'summaryRow' | 'summaryThumb'
-  defaultView: View<Entry, any>
+  defaultView: View<EntryRow, any>
 }
 
 export function ExplorerItem({

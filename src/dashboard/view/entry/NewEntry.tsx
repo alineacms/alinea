@@ -1,4 +1,4 @@
-import {createId, Entry, EntryPhase, Page, slugify, Type} from 'alinea/core'
+import {EntryPhase, EntryRow, Page, Type, createId, slugify} from 'alinea/core'
 import {Projection} from 'alinea/core/pages/Projection'
 import {generateKeyBetween} from 'alinea/core/util/FractionalIndexing'
 import {entries, fromEntries, keys} from 'alinea/core/util/Objects'
@@ -11,9 +11,9 @@ import {link} from 'alinea/input/link'
 import {select} from 'alinea/input/select'
 import {text} from 'alinea/input/text'
 import {EntryReference} from 'alinea/picker/entry'
-import {Button, fromModule, HStack, Loader, Typo} from 'alinea/ui'
-import {IcRoundArrowBack} from 'alinea/ui/icons/IcRoundArrowBack'
+import {Button, HStack, Loader, Typo, fromModule} from 'alinea/ui'
 import {Link} from 'alinea/ui/Link'
+import {IcRoundArrowBack} from 'alinea/ui/icons/IcRoundArrowBack'
 import {useObservable} from 'alinea/ui/util/Observable'
 import {useAtomValue, useSetAtom} from 'jotai'
 import {FormEvent, useState} from 'react'
@@ -121,7 +121,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
     setIsCreating(true)
     const type = schema[selected]!
     const path = slugify(title)
-    const entry: Partial<Entry> = {
+    const entry: Partial<EntryRow> = {
       entryId: createId(),
       type: selected,
       path,
@@ -143,7 +143,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
     }
 
     return client
-      .saveDraft(entry as Entry)
+      .saveDraft(entry as EntryRow)
       .then(() => {
         updateEntries([])
         navigate(nav.entry(entry))

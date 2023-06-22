@@ -1,4 +1,4 @@
-import {Entry, Schema, View} from 'alinea/core'
+import {EntryRow, Schema, View} from 'alinea/core'
 import {Cursor} from 'alinea/core/pages/Cursor'
 import {fromModule} from 'alinea/ui'
 import {useAtomValue} from 'jotai'
@@ -12,12 +12,12 @@ const styles = fromModule(css)
 
 export type ExplorerRowProps = {
   schema: Schema
-  cursor: Cursor.Find<Entry>
+  cursor: Cursor.Find<EntryRow>
   batchSize: number
   amount: number
   from: number
   summaryView: 'summaryRow' | 'summaryThumb'
-  defaultView: View<Entry, any>
+  defaultView: View<EntryRow, any>
 }
 
 export const ExplorerRow = memo(function ExplorerRow({

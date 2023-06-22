@@ -1,5 +1,5 @@
 import useSize from '@react-hook/size'
-import {Entry, Reference, Schema, View} from 'alinea/core'
+import {EntryRow, Reference, Schema, View} from 'alinea/core'
 import {Cursor} from 'alinea/core/pages/Cursor'
 import {Loader, fromModule} from 'alinea/ui'
 import {useAtomValue} from 'jotai'
@@ -21,13 +21,13 @@ const defaultSummaryView = {
 
 export interface ExplorerProps {
   schema: Schema
-  cursor: Cursor.Find<Entry>
+  cursor: Cursor.Find<EntryRow>
   type: 'row' | 'thumb'
   virtualized?: boolean
   max?: number
   selectable?: boolean
   selection?: Array<Reference>
-  toggleSelect?: (entry: Entry) => void
+  toggleSelect?: (entry: EntryRow) => void
 }
 
 export function Explorer({

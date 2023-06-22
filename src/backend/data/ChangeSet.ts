@@ -1,4 +1,4 @@
-import {Entry, EntryPhase, EntryUrlMeta, Type, Workspace} from 'alinea/core'
+import {EntryPhase, EntryRow, EntryUrlMeta, Type, Workspace} from 'alinea/core'
 import {createRecord} from 'alinea/core/EntryRecord'
 import {Page} from 'alinea/core/Page'
 import {Realm} from 'alinea/core/pages/Realm'
@@ -33,7 +33,7 @@ export namespace ChangeSet {
 
   export async function create(
     db: Database,
-    entries: Array<Entry>,
+    entries: Array<EntryRow>,
     phase: EntryPhase,
     canRename = true
   ): Promise<ChangeSet> {

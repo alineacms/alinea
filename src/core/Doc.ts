@@ -1,12 +1,12 @@
 import * as Y from 'yjs'
-import {Entry} from './Entry.js'
+import {EntryRow} from './EntryRow.js'
 import {Field} from './Field.js'
 import {Type} from './Type.js'
 import {entries} from './util/Objects.js'
 
 export const ROOT_KEY = '#root'
 
-export function createYDoc(type: Type, entry: Entry) {
+export function createYDoc(type: Type, entry: EntryRow) {
   const doc = new Y.Doc()
   const clientID = doc.clientID
   doc.clientID = 1

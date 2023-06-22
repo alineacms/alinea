@@ -1,4 +1,4 @@
-import {EntryPhase} from '../Entry.js'
+import {EntryPhase} from '../EntryRow.js'
 
 export enum Realm {
   // Query only published entries

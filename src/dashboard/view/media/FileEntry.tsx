@@ -1,5 +1,5 @@
 import {Media} from 'alinea/backend/Media'
-import {Entry} from 'alinea/core'
+import {EntryRow} from 'alinea/core'
 import {fromModule} from 'alinea/ui'
 import {Main} from 'alinea/ui/Main'
 import {Property} from 'alinea/ui/Property'
@@ -14,7 +14,7 @@ import css from './FileEntry.module.scss'
 const styles = fromModule(css)
 
 function ImageView({editor}: EntryEditProps) {
-  const image: Media.Image = useAtomValue(editor.draftEntry) as Entry<any>
+  const image: Media.Image = useAtomValue(editor.draftEntry) as EntryRow<any>
   return (
     <div>
       <img src={image.data.preview} />
@@ -29,7 +29,7 @@ function ImageView({editor}: EntryEditProps) {
 }
 
 function FileView({editor}: EntryEditProps) {
-  const file: Media.File = useAtomValue(editor.draftEntry) as Entry<any>
+  const file: Media.File = useAtomValue(editor.draftEntry) as EntryRow<any>
   return (
     <div>
       <Property label="Extension">{file.data.extension}</Property>
