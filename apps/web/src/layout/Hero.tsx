@@ -2,7 +2,7 @@ import {HStack} from 'alinea/ui/Stack'
 import {IcRoundArrowForward} from 'alinea/ui/icons/IcRoundArrowForward'
 import {fromModule} from 'alinea/ui/util/Styler'
 import Link, {LinkProps} from 'next/link'
-import {PropsWithChildren} from 'react'
+import {HTMLProps, PropsWithChildren} from 'react'
 import css from './Hero.module.scss'
 import {LayoutContainer} from './Layout'
 import {WebTypo} from './WebTypo'
@@ -29,8 +29,13 @@ export function Hero({children}: PropsWithChildren<{}>) {
 }
 
 export namespace Hero {
-  export function Title({children}: PropsWithChildren<{}>) {
-    return <WebTypo.H1 className={styles.title()}>{children}</WebTypo.H1>
+  export function Title(props: PropsWithChildren<HTMLProps<HTMLElement>>) {
+    return (
+      <WebTypo.H1
+        {...(props as any)}
+        className={styles.title.mergeProps(props)()}
+      />
+    )
   }
   export const ByLine = styles.byLine.toElement('p')
   export function Action({
