@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "run-p dev:check dev:run",
+    "demo": "node build.js --watch -- node dev.js --dir apps/demo --config src/cms -- yarn workspace @alinea/demo dev",
     "build": "tsc && node build.js",
     "alinea": "node build.js && node dist/cli.js",
     "build:alinea": "node build.js",
@@ -15,7 +16,7 @@
     "test": "node build.js --test",
     "tag": "esbx tag",
     "dev:check": "tsc -w",
-    "dev:run": "node build.js --dev -- yarn workspace @alinea/web dev",
+    "dev:run": "node build.js --watch -- node dev.js -- yarn workspace @alinea/web dev",
     "dev:stories": "ladle serve --stories \"src/**/*.stories.tsx\"",
     "gen:bundleTs": "esbx bundleTs",
     "build:stories": "ladle build --base /stories --stories  \"packages/**/*.stories.tsx\" --outDir apps/web/public/stories",
@@ -35,6 +36,7 @@
     "dist"
   ],
   "workspaces": [
+    "apps/demo",
     "apps/web",
     "src/backend",
     "src/cli",

@@ -11,6 +11,7 @@ import path from 'node:path'
 import {pathToFileURL} from 'node:url'
 import postcss from 'postcss'
 import postcssModules from 'postcss-modules'
+import sade from 'sade'
 
 // Interestingly sass seems to outperform sass-embedded about 2x
 import * as sass from 'sass'
@@ -400,16 +401,16 @@ function forwardCmd() {
   return command.join(' ')
 }
 
-const devPlugin = {
-  name: 'dev',
+const runPlugin = {
+  name: 'run',
   setup(build) {
     let isStarted = false
     build.onEnd(res => {
       if (isStarted) return
       if (res.errors.length > 0) return
       const cmd = forwardCmd()
-      const rest = cmd ? ` -- ${cmd}` : ''
-      spawn(`node dev.js ${rest}`, {
+      if (!cmd) return
+      spawn(cmd, {
         stdio: 'inherit',
         shell: true
       })
@@ -418,11 +419,7 @@ const devPlugin = {
   }
 }
 
-const dev = process.argv.includes('--dev')
-const watch = dev || process.argv.includes('--watch')
-const test = process.argv.includes('--test')
-
-async function build() {
+async function build({watch, test}) {
   const plugins = [
     targetPlugin,
     cssEntry,
@@ -430,10 +427,9 @@ async function build() {
     cleanup,
     jsEntry({watch, test}),
     bundleTs,
-    ReporterPlugin.configure({name: 'alinea'})
+    ReporterPlugin.configure({name: 'alinea'}),
+    runPlugin
   ]
-
-  if (dev) plugins.push(devPlugin)
 
   const context = await esbuild.context({
     bundle: true,
@@ -445,15 +441,13 @@ async function build() {
     loader: {
       '.woff2': 'file'
     },
-    sourcemap: dev,
+    sourcemap: Boolean(watch),
     plugins
   })
   return watch
     ? context.watch()
     : context.rebuild().then(() => context.dispose())
 }
-
-await build()
 
 async function runTests() {
   const filter = process.argv[3] || ''
@@ -480,4 +474,11 @@ async function runTests() {
   })
 }
 
-if (test) await runTests()
+sade('build', true)
+  .option('--test', `Run tests`)
+  .option('--watch', `Watch for changes`)
+  .action(async opts => {
+    await build(opts)
+    if (opts.test) return runTests()
+  })
+  .parse(process.argv)

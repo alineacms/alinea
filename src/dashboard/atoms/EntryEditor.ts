@@ -101,7 +101,7 @@ export function createEntryEditor(entryData: EntryData) {
     yAtom(yDoc.getMap(ROOT_KEY), () => {
       return Y.encodeStateAsUpdateV2(yDoc, yStateVector)
     }),
-    500
+    100
   )
 
   const selectedPhase = atom(get => {

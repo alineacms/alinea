@@ -58,6 +58,7 @@ export class UnionShape<T> implements Shape<UnionRow & T, UnionMutator<T>> {
   }
   toY(value: UnionRow & T) {
     if (Array.isArray(value)) value = value[0] ?? {}
+    else value = value ?? {}
     const type = value.type
     const shape = this.shapes[type]
     const self: Record<string, any> = value || {}

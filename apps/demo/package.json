@@ -1,26 +1,44 @@
 {
   "private": true,
   "name": "@alinea/demo",
-  "version": "0.4.0",
+  "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "dev": "yarn build:alinea && alinea serve -- next dev",
-    "generate": "yarn build:alinea && alinea generate",
-    "build": "yarn build:alinea && alinea generate -- next build",
-    "start": "next start"
+    "dev": "next dev",
+    "build": "yarn build:alinea && alinea build src/cms.tsx -- next build"
   },
   "dependencies": {
     "@alinea/generated": "link:.alinea",
+    "@monaco-editor/react": "^4.4.5",
     "alinea": "0.0.0",
-    "include-media": "^1.4.10",
-    "next": "^12.2.5",
-    "react": "^18.1.0",
-    "react-dom": "^18.1.0",
-    "react-frame-component": "^5.2.3"
+    "lz-string": "^1.4.4",
+    "next": "^13.4.7",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "react-string-replace": "^1.0.0",
+    "remark": "^14.0.2",
+    "remark-html": "^15.0.1",
+    "shiki": "^0.10.1",
+    "use-clipboard-copy": "^0.2.0"
   },
   "devDependencies": {
-    "@svgr/webpack": "^6.3.1",
-    "@types/react": "^18.0.5",
-    "@types/react-dom": "^18.0.0"
+    "@babel/standalone": "^7.22.5",
+    "@fontsource/inter": "5.0.1",
+    "@fontsource/jetbrains-mono": "5.0.1",
+    "@fontsource/poppins": "5.0.1",
+    "@types/node": "20.0.0",
+    "@types/react": "^18.2.13",
+    "cross-env": "^7.0.3",
+    "eslint": "8.39.0",
+    "eslint-config-next": "13.4.0",
+    "file-loader": "^6.2.0",
+    "raw-loader": "^4.0.2",
+    "typescript": "^5.1.3"
+  },
+  "exports": {
+    ".": "./dist/index.js",
+    "./css": "./dist/index.css",
+    "./*.cjs": "./dist/*.cjs",
+    "./*": "./dist/*.js"
   }
 }

@@ -1,5 +1,6 @@
-import {CMSApi, DefaultCMS} from '../CMS.js'
+import {CMSApi} from '../CMS.js'
 import {Config} from '../Config.js'
+import {DefaultDriver} from './DefaultDriver.js'
 
 export interface NextApi extends CMSApi {
   previews(): JSX.Element
@@ -10,5 +11,5 @@ export interface NextApi extends CMSApi {
 export function createNextCMS<Definition extends Config>(
   config: Definition
 ): Definition & NextApi {
-  return new DefaultCMS(config) as any
+  return new DefaultDriver(config) as any
 }
