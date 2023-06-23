@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "dev": "cross-env ALINEA_PORT=4500 next dev",
+    "dev": "next dev",
     "dev:test": "alinea dev src/cms.tsx -- next dev",
     "build": "yarn build:alinea && alinea build src/cms.tsx -- next build",
     "start": "next start",

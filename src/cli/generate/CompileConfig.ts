@@ -35,7 +35,7 @@ export function compileConfig({
   configLocation,
   watch
 }: GenerateContext) {
-  const tsconfig = overrideTsConfig(rootDir)
+  const tsConfigFile = overrideTsConfig(rootDir)
   const define = publicDefines(process.env)
   const results = createEmitter<BuildResult>()
   const config: BuildOptions = {
@@ -69,7 +69,7 @@ export function compileConfig({
         }
       }
     ],
-    tsconfig
+    tsconfig: tsConfigFile
   }
   if (watch) {
     esbuild.context(config).then(context => context.watch())

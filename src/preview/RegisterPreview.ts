@@ -1,8 +1,5 @@
-import {
-  PreviewAction,
-  PreviewMessage,
-  PreviewUpdate
-} from 'alinea/preview/PreviewMessage'
+import {PreviewUpdate} from 'alinea/backend/Resolver'
+import {PreviewAction, PreviewMessage} from 'alinea/preview/PreviewMessage'
 
 export interface PreviewApi {
   preview(update: PreviewUpdate): Promise<void>

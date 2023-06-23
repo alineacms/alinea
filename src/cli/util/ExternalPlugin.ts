@@ -1,27 +1,29 @@
+import {dirname, normalize, relative} from 'alinea/core/util/Paths'
 import type {Plugin} from 'esbuild'
+import {createPathsMatcher, getTsconfig} from 'get-tsconfig'
 
 export function externalPlugin(cwd: string): Plugin {
   return {
     name: 'external',
     setup(build) {
-      build.onResolve({filter: /^[^\.].*/}, args => {
+      const tsConfig = getTsconfig(cwd)
+      const rootDir = tsConfig && normalize(dirname(tsConfig.path))
+      const pathsMatcher = tsConfig && createPathsMatcher(tsConfig)
+      build.onResolve({filter: /^[^\.].*/}, async ({path, ...args}) => {
         if (args.kind === 'entry-point') return
-        return {path: args.path, external: true}
-        /*if (args.path === 'alinea' || args.path.startsWith('alinea/'))
-          return {path: args.path, external: true}
-        return build
-          .resolve(args.path, {
-            resolveDir: args.resolveDir,
-            kind: args.kind
+        const extern = {path, external: true}
+        if (!tsConfig || !rootDir || !pathsMatcher) return extern
+        const tryPaths = pathsMatcher(path)
+        if (tryPaths.length === 0) return extern
+        for (const attempt of tryPaths) {
+          const location = relative(rootDir, attempt)
+          const resolved = await build.resolve(`./${location}`, {
+            kind: args.kind,
+            resolveDir: rootDir
           })
-          .then(res => {
-            console.log(res)
-            const isNodeModule = path
-              .normalize(res.path)
-              .split('/')
-              .includes('node_modules')
-            if (isNodeModule) return {path: args.path, external: true}
-          })*/
+          if (resolved) return resolved
+        }
+        return extern
       })
     }
   }

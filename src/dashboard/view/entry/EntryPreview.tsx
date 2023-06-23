@@ -1,5 +1,5 @@
+import {PreviewUpdate} from 'alinea/backend/Resolver'
 import {base64url} from 'alinea/core/util/Encoding'
-import {PreviewUpdate} from 'alinea/preview/PreviewMessage'
 import {zlibSync} from 'fflate'
 import {useAtomValue} from 'jotai'
 import {useEffect, useState} from 'react'

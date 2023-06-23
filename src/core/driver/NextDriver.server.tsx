@@ -32,7 +32,7 @@ class NextDriver extends DefaultCMS implements NextApi {
   async connection() {
     const {cookies, draftMode, headers} = await import('next/headers')
     const {isEnabled: isDraft} = draftMode()
-    const devPort = process.env.ALINEA_PORT
+    const devUrl = process.env.ALINEA_DEV_SERVER
     const resolveDefaults: ClientOptions['resolveDefaults'] = {
       realm: Realm.Published
     }
@@ -50,10 +50,10 @@ class NextDriver extends DefaultCMS implements NextApi {
         if (entryId && phase) resolveDefaults.preview = {entryId, phase, update}
       }
     }
-    if (devPort)
+    if (devUrl)
       return new Client({
         config: this.config,
-        url: `http://127.0.0.1:${devPort}`,
+        url: devUrl,
         resolveDefaults
       })
 
