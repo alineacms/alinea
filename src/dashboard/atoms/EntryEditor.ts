@@ -14,6 +14,7 @@ import {InputState} from 'alinea/editor'
 import {atom} from 'jotai'
 import {atomFamily} from 'jotai/utils'
 import * as Y from 'yjs'
+import {debounceAtom} from '../util/DebounceAtom.js'
 import {clientAtom, configAtom} from './DashboardAtoms.js'
 import {entryRevisionAtoms, graphAtom} from './EntryAtoms.js'
 import {locationAtom} from './LocationAtoms.js'
@@ -96,9 +97,12 @@ export function createEntryEditor(entryData: EntryData) {
   const isPublishing = atom(false)
   const view = Type.meta(type).view
 
-  const yUpdate = yAtom(yDoc.getMap(ROOT_KEY), () => {
-    return Y.encodeStateAsUpdateV2(yDoc, yStateVector)
-  })
+  const yUpdate = debounceAtom(
+    yAtom(yDoc.getMap(ROOT_KEY), () => {
+      return Y.encodeStateAsUpdateV2(yDoc, yStateVector)
+    }),
+    500
+  )
 
   const selectedPhase = atom(get => {
     const {search} = get(locationAtom)

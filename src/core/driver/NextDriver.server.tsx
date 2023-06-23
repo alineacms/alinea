@@ -1,4 +1,6 @@
 import {JWTPreviews, Server} from 'alinea/backend'
+import {Store} from 'alinea/backend/Store'
+import {exportStore} from 'alinea/cli/util/ExportStore'
 import {createCloudHandler} from 'alinea/cloud/server/CloudHandler'
 import {parseChunkedCookies} from 'alinea/preview/ChunkCookieValue'
 import {
@@ -9,7 +11,7 @@ import {
 import {enums, object, string} from 'cito'
 import PLazy from 'p-lazy'
 import {Suspense, lazy} from 'react'
-import {DefaultCMS} from '../CMS.js'
+import {CMS} from '../CMS.js'
 import {Client, ClientOptions} from '../Client.js'
 import {Config} from '../Config.js'
 import {Entry} from '../Entry.js'
@@ -17,6 +19,7 @@ import {EntryPhase} from '../EntryRow.js'
 import {Realm} from '../pages/Realm.js'
 import {Selection} from '../pages/Selection.js'
 import {Logger} from '../util/Logger.js'
+import {join} from '../util/Paths.js'
 import {NextApi} from './NextDriver.js'
 
 const SearchParams = object({
@@ -25,9 +28,19 @@ const SearchParams = object({
   realm: enums(Realm)
 })
 
-class NextDriver extends DefaultCMS implements NextApi {
+class NextDriver extends CMS implements NextApi {
   apiKey = process.env.ALINEA_API_KEY
   jwtSecret = this.apiKey || 'dev'
+
+  exportStore(outDir: string, data: Uint8Array): Promise<void> {
+    return exportStore(data, join(outDir, 'store.js'))
+  }
+
+  async readStore(): Promise<Store> {
+    // @ts-ignore
+    const {createStore} = await import('@alinea/generated/store.js')
+    return createStore()
+  }
 
   async connection() {
     const {cookies, draftMode, headers} = await import('next/headers')
