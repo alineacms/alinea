@@ -1,4 +1,4 @@
-import {EntryPhase} from 'alinea/core'
+import type {PreviewUpdate} from 'alinea/backend/Resolver'
 
 export enum PreviewAction {
   Ping = '[alinea-ping]',
@@ -8,12 +8,6 @@ export enum PreviewAction {
   Previous = '[alinea-previous]',
   Next = '[alinea-next]',
   Preview = '[alinea-preview]'
-}
-
-export interface PreviewUpdate {
-  entryId: string
-  phase: EntryPhase
-  update: string
 }
 
 export type PreviewMessage =

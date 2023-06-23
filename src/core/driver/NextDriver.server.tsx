@@ -27,7 +27,7 @@ const SearchParams = object({
 
 class NextDriver extends DefaultCMS implements NextApi {
   apiKey = process.env.ALINEA_API_KEY
-  jwtSecret = this.apiKey ?? 'dev'
+  jwtSecret = this.apiKey || 'dev'
 
   async connection() {
     const {cookies, draftMode, headers} = await import('next/headers')
@@ -57,7 +57,7 @@ class NextDriver extends DefaultCMS implements NextApi {
         resolveDefaults
       })
 
-    if (isDraft) {
+    /*if (isDraft) {
       const host = headers().get('host')
       const handlerUrl = new URL(this.dashboard.handlerUrl, `https://${host}`)
       return new Client({
@@ -65,7 +65,7 @@ class NextDriver extends DefaultCMS implements NextApi {
         url: handlerUrl.toString(),
         resolveDefaults
       })
-    }
+    }*/
 
     const store = await this.readStore()
     return new Server(
@@ -74,7 +74,8 @@ class NextDriver extends DefaultCMS implements NextApi {
         store,
         media: undefined!,
         target: undefined!,
-        previews: new JWTPreviews(this.jwtSecret)
+        previews: new JWTPreviews(this.jwtSecret),
+        resolveDefaults
       },
       {logger: new Logger('CMSDriver')}
     )

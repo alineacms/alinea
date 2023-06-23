@@ -21,7 +21,7 @@ import {slugify} from 'alinea/core/util/Slugs'
 import {Database} from './Database.js'
 import {Media} from './Media.js'
 import {Previews} from './Previews'
-import {Resolver} from './Resolver.js'
+import {ResolveDefaults, Resolver} from './Resolver.js'
 import {Store} from './Store.js'
 import {Target} from './Target.js'
 import {ChangeSet} from './data/ChangeSet.js'
@@ -39,6 +39,7 @@ export type ServerOptions = {
   target: Target
   media: Media
   previews: Previews
+  resolveDefaults?: ResolveDefaults
 }
 
 export class Server implements Connection {
@@ -63,7 +64,8 @@ export class Server implements Connection {
   // Api
 
   resolve(params: Connection.ResolveParams) {
-    return this.resolver.resolve(params)
+    const {resolveDefaults} = this.options
+    return this.resolver.resolve({...resolveDefaults, ...params})
   }
 
   previewToken(): Promise<string> {

@@ -1,10 +1,9 @@
 import {Media} from 'alinea/backend/Media'
+import {ResolveDefaults} from 'alinea/backend/Resolver'
 import {ChangeSet} from 'alinea/backend/data/ChangeSet'
 import {AlineaMeta} from 'alinea/backend/db/AlineaMeta'
-import {PreviewUpdate} from 'alinea/preview/PreviewMessage'
 import {EntryRow} from './EntryRow.js'
 import {User} from './User.js'
-import {Realm} from './pages/Realm.js'
 import {Selection} from './pages/Selection.js'
 import {Logger} from './util/Logger.js'
 
@@ -41,11 +40,9 @@ export namespace Connection {
     width?: number
     height?: number
   }
-  export interface ResolveParams {
+  export interface ResolveParams extends ResolveDefaults {
     selection: Selection
     location?: Array<string>
-    realm?: Realm
-    preview?: PreviewUpdate
   }
   export type CreateParams = {
     entries: Array<EntryRow>

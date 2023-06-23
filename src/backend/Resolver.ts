@@ -32,6 +32,17 @@ import * as pages from '../core/pages/index.js'
 import {Store} from './Store.js'
 import {LinkResolver} from './resolver/LinkResolver.js'
 
+export interface PreviewUpdate {
+  entryId: string
+  phase: EntryPhase
+  update: string
+}
+
+export interface ResolveDefaults {
+  realm?: Realm
+  preview?: PreviewUpdate
+}
+
 const {keys, entries, fromEntries} = Object
 
 const unOps = {
