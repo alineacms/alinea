@@ -91,7 +91,7 @@ __metadata:
     "@monaco-editor/react": ^4.4.5
     "@types/node": 20.0.0
     "@types/react": ^18.2.13
-    alinea: 0.0.0
+    alinea: "link:../.."
     cross-env: ^7.0.3
     eslint: 8.39.0
     eslint-config-next: 13.4.0
@@ -200,7 +200,7 @@ __metadata:
     "@monaco-editor/react": ^4.4.5
     "@types/node": 20.0.0
     "@types/react": ^18.2.13
-    alinea: 0.0.0
+    alinea: "link:../.."
     cross-env: ^7.0.3
     eslint: 8.39.0
     eslint-config-next: 13.4.0
@@ -3576,6 +3576,18 @@ __metadata:
   bin:
     alinea: ./dist/cli.js
   languageName: unknown
+  linkType: soft
+
+"alinea@link:../..::locator=%40alinea%2Fdemo%40workspace%3Aapps%2Fdemo":
+  version: 0.0.0-use.local
+  resolution: "alinea@link:../..::locator=%40alinea%2Fdemo%40workspace%3Aapps%2Fdemo"
+  languageName: node
+  linkType: soft
+
+"alinea@link:../..::locator=%40alinea%2Fweb%40workspace%3Aapps%2Fweb":
+  version: 0.0.0-use.local
+  resolution: "alinea@link:../..::locator=%40alinea%2Fweb%40workspace%3Aapps%2Fweb"
+  languageName: node
   linkType: soft
 
 "ansi-align@npm:^3.0.1":

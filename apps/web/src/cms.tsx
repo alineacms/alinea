@@ -39,5 +39,5 @@ export const cms = createNextCMS({
   preview:
     process.env.NODE_ENV === 'development'
       ? 'http://localhost:3000/api/preview'
-      : 'https://alinea-git-main-codeurs.vercel.app/api/preview'
+      : '/api/preview'
 })
