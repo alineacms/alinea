@@ -3,9 +3,11 @@ import {fromModule} from 'alinea/ui'
 import {ComponentType, Fragment} from 'react'
 import {WebText} from '../layout/WebText'
 import {TextBlock} from '../schema/blocks/TextBlock'
+import {ChapterLinkView} from './ChapterLinkView'
 import {CodeBlockView} from './CodeBlockView'
 import {CodeVariantsView} from './CodeVariantsView'
 import {ExampleBlockView} from './ExampleBlockView'
+import {NoticeView} from './NoticeView'
 import css from './TextBlockView.module.scss'
 
 const styles = fromModule(css)
@@ -24,6 +26,8 @@ export function TextBlockView({text, container}: TextBlockViewProps) {
           CodeBlock={CodeBlockView}
           CodeVariantsBlock={CodeVariantsView}
           ExampleBlock={ExampleBlockView}
+          ChapterLinkBlock={ChapterLinkView}
+          NoticeBlock={NoticeView}
         />
       </Wrapper>
     </div>

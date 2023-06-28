@@ -49,7 +49,24 @@ export function EntryEdit({editor}: EntryEditProps) {
   const isActivePhase = editor.activePhase === selectedPhase
   const state = isActivePhase ? editor.draftState : editor.states[selectedPhase]
   const saveDraft = useSetAtom(editor.saveDraft)
+  const publishDraft = useSetAtom(editor.publishDraft)
   const resetDraft = useSetAtom(editor.resetDraft)
+  useEffect(() => {
+    if (!hasChanges) return
+    function listener(e: KeyboardEvent) {
+      if (e.ctrlKey && e.key === 's') {
+        e.preventDefault()
+        if (isSaving) return
+        saveDraft()
+        // else publishDraft()
+        console.log('Save')
+      }
+    }
+    document.addEventListener('keydown', listener)
+    return () => {
+      document.removeEventListener('keydown', listener)
+    }
+  }, [editor, hasChanges, saveDraft])
   return (
     <>
       {isBlocking && (

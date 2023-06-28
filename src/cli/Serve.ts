@@ -14,6 +14,7 @@ import {LiveReload} from './serve/LiveReload.js'
 import {ServeContext} from './serve/ServeContext.js'
 import {startServer} from './serve/StartServer.js'
 import {dirname} from './util/Dirname.js'
+import {findConfigFile} from './util/FindConfigFile.js'
 
 const __dirname = dirname(import.meta.url)
 
@@ -31,14 +32,18 @@ export type ServeOptions = {
 export async function serve(options: ServeOptions): Promise<void> {
   const {
     cwd = process.cwd(),
-    configFile = 'alinea.config',
+    configFile,
     staticDir = path.join(__dirname, 'static'),
     alineaDev = false,
     production = false
   } = options
 
+  const configLocation = configFile
+    ? path.join(path.resolve(cwd), configFile)
+    : findConfigFile(cwd)
+  if (!configLocation) throw new Error(`No config file specified`)
+
   const rootDir = path.resolve(cwd)
-  const configLocation = path.join(path.resolve(cwd), configFile)
   const configDir = path.dirname(configLocation)
 
   const context: ServeContext = {

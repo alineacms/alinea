@@ -3,14 +3,9 @@
   "editor.formatOnSave": true,
   "editor.tabSize": 2,
   "search.useGlobalIgnoreFiles": true,
-  "todo-tree.general.tags": ["Todo"],
-  "typescript.tsdk": "./node_modules/typescript/lib",
   "typescript.preferences.importModuleSpecifierEnding": "js",
   "typescript.preferences.importModuleSpecifier": "project-relative",
   "editor.codeActionsOnSave": {
     "source.organizeImports": true
-  },
-  "typescript.tsserver.watchOptions": {
-    "watchFile": "useFsEvents"
   }
 }

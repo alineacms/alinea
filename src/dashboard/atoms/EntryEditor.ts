@@ -113,6 +113,7 @@ export function createEntryEditor(entryData: EntryData) {
   })
 
   const saveDraft = atom(null, (get, set) => {
+    console.log('saving draft')
     const updatedEntry = getDraftEntry()
     set(isSaving, true)
     return client.saveDraft(updatedEntry).catch(() => {

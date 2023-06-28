@@ -2,7 +2,6 @@
   "id": "20580nQzbOBR3Lt4kIdxyRGglc6",
   "type": "Doc",
   "title": "Getting started",
-  "path": "getting-started",
   "blocks": [
     {
       "id": "258h6WzHYus17B6W3ypGfui7STP",
@@ -407,7 +406,7 @@
         {
           "id": "5EX0WWSSfvfk3Tf24UVPq",
           "type": "CodeBlock",
-          "code": "{\n  \"scripts\": {\n    \"dev\": \"alinea serve -- next dev\",\n    \"build\": \"alinea generate -- next build\"\n  }\n}",
+          "code": "{\n  \"scripts\": {\n    \"dev\": \"alinea dev -- next dev\",\n    \"build\": \"alinea build -- next build\"\n  }\n}",
           "fileName": "package.json"
         },
         {
@@ -434,14 +433,11 @@
         {
           "id": "ZVufhJK-XzvqHUpJAvUmW",
           "type": "ChapterLinkBlock",
-          "link": [
-            {
-              "id": "cldLhwTMbFhRddjIIq-O7",
-              "index": "a0",
-              "type": "entry",
-              "entry": "28NgU841OXMyHZX4EU1GRqxZaB0"
-            }
-          ]
+          "link": {
+            "id": "cldLhwTMbFhRddjIIq-O7",
+            "type": "entry",
+            "entry": "28NgU841OXMyHZX4EU1GRqxZaB0"
+          }
         }
       ]
     }

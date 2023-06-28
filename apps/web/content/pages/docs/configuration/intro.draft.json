@@ -35,7 +35,7 @@
           "content": [
             {
               "type": "text",
-              "text": "All configuration can be managed from the `alinea.config.tsx` file. This file is created during `alinea init`. It contains an example workspace to get started from."
+              "text": "All configuration can be managed from the `alinea.config.tsx` file. This file is created during `alinea init`. It contains an example workspace to get started from.s"
             }
           ]
         },

@@ -3,12 +3,13 @@ import {Type, type} from 'alinea/core/Type'
 import {hidden} from 'alinea/input/hidden'
 import {path} from 'alinea/input/path'
 import {text} from 'alinea/input/text'
+import {Meta} from '../Meta.js'
 
 export type MediaLibrary = Type.Infer<typeof MediaLibrary>
 export const MediaLibrary = type('Media directory', {
   title: text('Title'),
   path: path('Path'),
-  [type.meta]: {
+  [Meta]: {
     isContainer: true,
     contains: ['MediaLibrary']
   }
@@ -27,7 +28,7 @@ export const MediaFile = type('File', {
   preview: hidden<string>('Preview', Hint.String()),
   averageColor: hidden<string>('Average color', Hint.String()),
   thumbHash: hidden<string>('Blur hash', Hint.String()),
-  [type.meta]: {
+  [Meta]: {
     isHidden: true
   }
 })

@@ -114,7 +114,7 @@ export namespace Type {
   }
 
   export function field(type: Type, name: string): Field | undefined {
-    return (type as Record<string, Field>)[name]
+    return (type as any)[name]
   }
 
   export function isType(type: any): type is Type {

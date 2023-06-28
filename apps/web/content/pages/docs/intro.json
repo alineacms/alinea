@@ -248,14 +248,9 @@
           "content": [
             {
               "type": "text",
-              "text": "Alinea indexes the JSON files into an embedded SQLite database. Having a database with indexed fields means querying content is fast and simple. The database and tools to query content are packaged into a Javascript library that sits next to your code and is aliased to `@alinea/generated`."
+              "text": "Alinea indexes the JSON files into an embedded SQLite database. Having a database with indexed fields means querying content is fast and simple."
             }
           ]
-        },
-        {
-          "id": "AaQPYG-vXDXCcb-40iYeP",
-          "type": "CodeBlock",
-          "code": "import {initPages} from '@alinea/generated/pages'\nconst pages = initPages()\nconsole.log(\n  await pages\n    .whereType('BlogPost')\n    .where(post => post.author.is('Me'))\n    .select(post => ({title: post.title}))\n)"
         },
         {
           "id": "Gs_7cGVP61b0kBG9DKV7u",
@@ -264,16 +259,6 @@
             "id": "s1TBmqCylqtoDnUtpwZhI",
             "type": "entry",
             "entry": "28Ng6ZnpyhafrKdGMOO7BUUKP4S"
-          }
-        },
-        {
-          "id": "AQ9-OhpjjbiwFzqTE3kcz",
-          "type": "ChapterLinkBlock",
-          "link": {
-            "id": "cx95njAJYb0e3RAEH68Uh",
-            "type": "entry",
-            "entry": "28hxVNf3JO9raYJ1HVQ6XgDX9pW",
-            "description": "Querying content"
           }
         },
         {

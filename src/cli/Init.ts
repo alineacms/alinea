@@ -4,6 +4,7 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import {generate} from './Generate.js'
 import {dirname} from './util/Dirname.js'
+import {findConfigFile} from './util/FindConfigFile.js'
 
 const __dirname = dirname(import.meta.url)
 
@@ -41,9 +42,8 @@ export async function init(options: InitOptions) {
     console.log(`> A folder named ".alinea" already exists in ${cwd}`)
     process.exit(1)
   }
-  if (
-    (await outcome(fs.stat(path.join(cwd, 'alinea.config.tsx')))).isSuccess()
-  ) {
+  const configLocation = findConfigFile(cwd)
+  if (configLocation) {
     console.log(`> An alinea config file already exists in ${cwd}`)
     process.exit(1)
   }
@@ -82,8 +82,8 @@ export async function init(options: InitOptions) {
     )
   )
   await fs.copyFile(
-    path.join(__dirname, 'static/init/alinea.config.js'),
-    path.join(cwd, 'alinea.config.tsx')
+    path.join(__dirname, 'static/init/cms.js'),
+    path.join(cwd, 'cms.ts')
   )
   const [pkg, err] = await outcome(
     fs

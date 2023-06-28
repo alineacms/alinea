@@ -1,10 +1,32 @@
 @import 'alinea/ui/style.scss';
 
 .root {
-  &-description {
+  background: var(--alinea-selected);
+
+  &-tabTrigger {
+    background: var(--alinea-outline);
+    display: flex;
+    align-items: center;
     height: 100%;
     padding: 0 20px;
-    border-bottom: 1px solid var(--alinea-outline);
+    gap: 10px;
+    color: var(--alinea-foreground);
+    background: var(--alinea-selected);
+
+    &:hover {
+      background: var(--alinea-highlight);
+    }
+
+    &.is-active {
+      background: var(--alinea-background);
+    }
+  }
+
+  &-description {
+    height: 100%;
+    flex: 1;
+    padding: 0 20px;
+    // border-bottom: 1px solid var(--alinea-outline);
   }
 
   &-url {

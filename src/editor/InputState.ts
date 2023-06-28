@@ -42,7 +42,7 @@ export namespace InputState {
       const value = this.key ? this.parentData.get(this.key) : this.parentData
       const listener = this.shape.watch(this.parentData, this.key!)
       const forceUpdate = useForceUpdate()
-      useEffect(() => listener(forceUpdate), [])
+      useEffect(() => listener(forceUpdate), [this])
       return [
         this.shape.fromY(value),
         this.shape.mutator(this.parentData, this.key!)

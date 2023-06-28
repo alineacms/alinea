@@ -5,8 +5,8 @@
   "license": "MIT",
   "scripts": {
     "dev": "next dev",
-    "dev:test": "alinea dev src/cms.tsx -- next dev",
-    "build": "yarn build:alinea && alinea build src/cms.tsx -- next build",
+    "dev:test": "alinea dev -- next dev",
+    "build": "yarn build:alinea && alinea build -- next build",
     "start": "next start",
     "lint": "next lint"
   },

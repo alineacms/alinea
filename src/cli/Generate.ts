@@ -11,6 +11,7 @@ import {GenerateContext} from './generate/GenerateContext.js'
 import {generateDashboard} from './generate/GenerateDashboard.js'
 import {loadCMS} from './generate/LoadConfig.js'
 import {dirname} from './util/Dirname.js'
+import {findConfigFile} from './util/FindConfigFile.js'
 
 const __dirname = dirname(import.meta.url)
 
@@ -53,14 +54,17 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
   const {
     wasmCache = false,
     cwd = process.cwd(),
-    configFile = 'alinea.config',
+    configFile,
     staticDir = path.join(__dirname, 'static'),
     quiet = false,
     onAfterGenerate
   } = options
 
+  const configLocation = configFile
+    ? path.join(path.resolve(cwd), configFile)
+    : findConfigFile(cwd)
+  if (!configLocation) throw new Error(`No config file specified`)
   const rootDir = path.resolve(cwd)
-  const configLocation = path.join(path.resolve(cwd), configFile)
   const configDir = path.dirname(configLocation)
 
   const context: GenerateContext = {
