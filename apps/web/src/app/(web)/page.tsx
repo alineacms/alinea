@@ -209,8 +209,6 @@ export default async function HomePage() {
                 <WebTypo.H2>Build with us</WebTypo.H2>
                 <WebTypo.P>
                   Alinea is open source under the MIT license.
-                  <br />
-                  It needs some work before it&apos;s production-ready.
                 </WebTypo.P>
               </WebTypo>
               <Hero.Action
