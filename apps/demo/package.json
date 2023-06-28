@@ -10,7 +10,7 @@
   "dependencies": {
     "@alinea/generated": "link:.alinea",
     "@monaco-editor/react": "^4.4.5",
-    "alinea": "link:../..",
+    "alinea": "0.0.0",
     "lz-string": "^1.4.4",
     "next": "^13.4.7",
     "react": "18.2.0",
