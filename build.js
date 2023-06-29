@@ -324,7 +324,6 @@ function jsEntry({watch, test}) {
                   export const subtle = crypto.subtle
                   export const getRandomValues = crypto.getRandomValues.bind(crypto)`
               },
-              metafile: true,
               define: {
                 // See https://github.com/pmndrs/jotai/blob/2188d7557500e59c10415a9e74bb5cfc8a3f9c31/src/react/useSetAtom.ts#L33
                 'import.meta.env.MODE': '"production"'
@@ -333,7 +332,6 @@ function jsEntry({watch, test}) {
             currentFiles = files
           }
           const result = await context.rebuild().catch(() => {})
-          fs.writeFileSync('meta.json', JSON.stringify(result.metafile))
           if (!watch) context.dispose()
           return {
             contents: '',
