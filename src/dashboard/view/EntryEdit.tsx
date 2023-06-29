@@ -1,6 +1,6 @@
 import {Modal} from 'alinea/dashboard/view/Modal'
 import {InputForm} from 'alinea/editor'
-import {Button, HStack, Stack, fromModule} from 'alinea/ui'
+import {Button, HStack, Stack, VStack, fromModule} from 'alinea/ui'
 import {Main} from 'alinea/ui/Main'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {useEffect, useRef} from 'react'
@@ -71,38 +71,40 @@ export function EntryEdit({editor}: EntryEditProps) {
     <>
       {isBlocking && (
         <Modal open onClose={() => cancel()}>
-          <p>
-            This document was changed, would you like to save your changes
-            {isNavigationChange ? ' before navigating' : ''}?
-          </p>
-          <HStack as="footer">
-            <Stack.Right>
-              <HStack gap={16}>
-                <Button
-                  outline
-                  type="button"
-                  onClick={() => {
-                    resetDraft()
-                    confirm()
-                  }}
-                >
-                  Discard my changes
-                </Button>
-                <Button
-                  onClick={() => {
-                    saveDraft().catch(() => {
-                      console.warn(
-                        'Failed to save draft, this should redirect back to the failed entry'
-                      )
-                    })
-                    confirm()
-                  }}
-                >
-                  Save as draft
-                </Button>
-              </HStack>
-            </Stack.Right>
-          </HStack>
+          <VStack gap={30}>
+            <p>
+              This document was changed, would you like to save your changes
+              {isNavigationChange ? ' before navigating' : ''}?
+            </p>
+            <HStack as="footer">
+              <Stack.Right>
+                <HStack gap={16}>
+                  <Button
+                    outline
+                    type="button"
+                    onClick={() => {
+                      resetDraft()
+                      confirm()
+                    }}
+                  >
+                    Discard my changes
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      saveDraft().catch(() => {
+                        console.warn(
+                          'Failed to save draft, this should redirect back to the failed entry'
+                        )
+                      })
+                      confirm()
+                    }}
+                  >
+                    Save as draft
+                  </Button>
+                </HStack>
+              </Stack.Right>
+            </HStack>
+          </VStack>
         </Modal>
       )}
       <Main

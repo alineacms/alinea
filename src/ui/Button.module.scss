@@ -24,15 +24,16 @@
     border-radius: 16px;
   }
 
+  &:hover {
+    background: var(--alinea-button-hover);
+  }
+
   &.is-outline {
     background: transparent;
     border: 1px solid var(--alinea-button-background);
     color: var(--alinea-button-background);
-  }
-
-  &:hover {
-    background: var(--alinea-button-hover);
-    //background: var(--alinea-accent);
-    //color: var(--alinea-accent-foreground);
+    &:hover {
+      border: 1px solid var(--alinea-button-hover);
+    }
   }
 }

@@ -98,7 +98,9 @@
   "packageManager": "yarn@3.2.0",
   "resolutions": {
     "esbuild": "^0.18.5",
-    "mime-db": "1.51.0"
+    "mime-db": "1.51.0",
+    "yjs": "13.6.6",
+    "lib0": "0.2.74"
   },
   "exports": {
     ".": "./dist/index.js",

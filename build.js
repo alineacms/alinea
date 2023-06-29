@@ -316,6 +316,14 @@ function jsEntry({watch, test}) {
               treeShaking: true,
               external,
               chunkNames: 'chunks/[name]-[hash]',
+              platform: 'neutral',
+              mainFields: ['module', 'main'],
+              alias: {
+                'lib0/webcrypto': `data:text/javascript,
+                  import {crypto} from '@alinea/iso'
+                  export const subtle = crypto.subtle
+                  export const getRandomValues = crypto.getRandomValues.bind(crypto)`
+              },
               metafile: true,
               define: {
                 // See https://github.com/pmndrs/jotai/blob/2188d7557500e59c10415a9e74bb5cfc8a3f9c31/src/react/useSetAtom.ts#L33
@@ -325,6 +333,7 @@ function jsEntry({watch, test}) {
             currentFiles = files
           }
           const result = await context.rebuild().catch(() => {})
+          fs.writeFileSync('meta.json', JSON.stringify(result.metafile))
           if (!watch) context.dispose()
           return {
             contents: '',

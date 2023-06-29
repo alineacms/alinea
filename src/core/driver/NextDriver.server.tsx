@@ -1,4 +1,4 @@
-import {JWTPreviews, Server} from 'alinea/backend'
+import {JWTPreviews, Media, Server, Target} from 'alinea/backend'
 import {createCloudHandler} from 'alinea/cloud/server/CloudHandler'
 import {parseChunkedCookies} from 'alinea/preview/ChunkCookieValue'
 import {
@@ -13,6 +13,7 @@ import {Client, ClientOptions} from '../Client.js'
 import {Config} from '../Config.js'
 import {Entry} from '../Entry.js'
 import {EntryPhase} from '../EntryRow.js'
+import {outcome} from '../Outcome.js'
 import {Realm} from '../pages/Realm.js'
 import {Selection} from '../pages/Selection.js'
 import {Logger} from '../util/Logger.js'
@@ -30,8 +31,8 @@ class NextDriver extends DefaultDriver implements NextApi {
   jwtSecret = this.apiKey || 'dev'
 
   async connection() {
-    const {cookies, draftMode, headers} = await import('next/headers')
-    const {isEnabled: isDraft} = draftMode()
+    const {cookies, draftMode} = await import('next/headers')
+    const isDraft = outcome(() => draftMode().isEnabled).isSuccess()
     const devUrl = process.env.ALINEA_DEV_SERVER
     const resolveDefaults: ClientOptions['resolveDefaults'] = {
       realm: Realm.Published
@@ -68,12 +69,22 @@ class NextDriver extends DefaultDriver implements NextApi {
     }*/
 
     const store = await this.readStore()
+    /*const isDev = process.env.NODE_ENV === 'development'
+    const fileData = new FileData({
+      config: this,
+      fs: fs.promises,
+      rootDir: process.cwd()
+    })*/
     return new Server(
       {
         config: this.config,
         store,
-        media: undefined!,
-        target: undefined!,
+        get media(): Media {
+          throw new Error('Cannot access local media')
+        },
+        get target(): Target {
+          throw new Error('Cannot access local target')
+        },
         previews: new JWTPreviews(this.jwtSecret),
         resolveDefaults
       },

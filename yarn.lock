@@ -47,7 +47,7 @@ __metadata:
     cito: ^0.2.0
     p-lazy: ^4.0.0
     pretty-ms: ^8.0.0
-    yjs: ^13.5.47
+    yjs: ^13.6.6
   languageName: unknown
   linkType: soft
 
@@ -68,7 +68,7 @@ __metadata:
     diff-match-patch: ^1.0.5
     fflate: ^0.8.0
     jotai: ^2.1.0
-    lib0: ^0.2.42
+    lib0: ^0.2.78
     p-limit: ^4.0.0
     pretty-bytes: ^6.0.0
     react-complex-tree: ^2.1.4-alpha.0
@@ -214,6 +214,7 @@ __metadata:
     remark: ^14.0.2
     remark-html: ^15.0.1
     shiki: ^0.10.1
+    tsx: ^3.12.7
     typescript: ^5.1.3
     use-clipboard-copy: ^0.2.0
   languageName: unknown
@@ -1954,6 +1955,36 @@ __metadata:
   dependencies:
     tslib: ^2.0.0
   checksum: 10173fc8d6fa8e46394ac2b739e443a3254e31854cbdbe810782bb7b6f4b4dd948752c3114479827c0da757e6616dd44a70394b6e8524d807514db0be192b18d
+  languageName: node
+  linkType: hard
+
+"@esbuild-kit/cjs-loader@npm:^2.4.2":
+  version: 2.4.2
+  resolution: "@esbuild-kit/cjs-loader@npm:2.4.2"
+  dependencies:
+    "@esbuild-kit/core-utils": ^3.0.0
+    get-tsconfig: ^4.4.0
+  checksum: e346e339bfc7eff5c52c270fd0ec06a7f2341b624adfb69f84b7d83f119c35070420906f2761a0b4604e0a0ec90e35eaf12544585476c428ed6d6ee3b250c0fe
+  languageName: node
+  linkType: hard
+
+"@esbuild-kit/core-utils@npm:^3.0.0":
+  version: 3.1.0
+  resolution: "@esbuild-kit/core-utils@npm:3.1.0"
+  dependencies:
+    esbuild: ~0.17.6
+    source-map-support: ^0.5.21
+  checksum: d54fd5adb3ce6784d84bb025ad54ddcfbab99267071a7f65298e547f56696f0b9d0dba96c535f9678a30d4887ec71cd445fdd277d65fbec1f3b504f6808f693e
+  languageName: node
+  linkType: hard
+
+"@esbuild-kit/esm-loader@npm:^2.5.5":
+  version: 2.5.5
+  resolution: "@esbuild-kit/esm-loader@npm:2.5.5"
+  dependencies:
+    "@esbuild-kit/core-utils": ^3.0.0
+    get-tsconfig: ^4.4.0
+  checksum: 9d4a03ffc937fbec75a8456c3d45d7cdb1a65768416791a5720081753502bc9f485ba27942a46f564b12483b140a8a46c12433a4496430d93e4513e430484ec7
   languageName: node
   linkType: hard
 
@@ -4086,6 +4117,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"buffer-from@npm:^1.0.0":
+  version: 1.1.2
+  resolution: "buffer-from@npm:1.1.2"
+  checksum: 0448524a562b37d4d7ed9efd91685a5b77a50672c556ea254ac9a6d30e3403a517d8981f10e565db24e8339413b43c97ca2951f10e399c6125a0d8911f5679bb
+  languageName: node
+  linkType: hard
+
 "buffer@npm:^6.0.3":
   version: 6.0.3
   resolution: "buffer@npm:6.0.3"
@@ -6006,6 +6044,15 @@ fsevents@~2.3.2:
   languageName: node
   linkType: hard
 
+"get-tsconfig@npm:^4.4.0":
+  version: 4.6.2
+  resolution: "get-tsconfig@npm:4.6.2"
+  dependencies:
+    resolve-pkg-maps: ^1.0.0
+  checksum: e791e671a9b55e91efea3ca819ecd7a25beae679e31c83234bf3dd62ddd93df070c1b95ae7e29d206358ebb6408f6f79ac6d83a32a3bbd6a6d217babe23de077
+  languageName: node
+  linkType: hard
+
 "get-tsconfig@npm:^4.5.0":
   version: 4.5.0
   resolution: "get-tsconfig@npm:4.5.0"
@@ -7354,21 +7401,15 @@ fsevents@~2.3.2:
   languageName: node
   linkType: hard
 
-"lib0@npm:^0.2.42":
-  version: 0.2.42
-  resolution: "lib0@npm:0.2.42"
+"lib0@npm:0.2.74":
+  version: 0.2.74
+  resolution: "lib0@npm:0.2.74"
   dependencies:
     isomorphic.js: ^0.2.4
-  checksum: 35df110c3e4c0df5e04c12d242312144169612ab489cd9fc11cdd142e892f5c52933c957411f13a2b149547e6918c71f54903742cf6f87c7cc42fbb92b9467b0
-  languageName: node
-  linkType: hard
-
-"lib0@npm:^0.2.49":
-  version: 0.2.51
-  resolution: "lib0@npm:0.2.51"
-  dependencies:
-    isomorphic.js: ^0.2.4
-  checksum: bdd00ba42b66d27d048fc169e7d472b9dfe9140e067daeb92db82f40209365d9399aaed679078cc440c496c43d429427b0e231dbaaf171793d98ea6f5476aa3a
+  bin:
+    0gentesthtml: bin/gentesthtml.js
+    0serve: bin/0serve.js
+  checksum: a468fc2f8d231bdcb305f04706d0e568ad53a0aa968aaf3d1769fcfbf326a5b158e98d86c0aa8edf26b3223cb60687480f15cfc0d07c681333f9d9d55dd7c802
   languageName: node
   linkType: hard
 
@@ -10481,6 +10522,16 @@ resolve@^1.10.0:
   languageName: node
   linkType: hard
 
+"source-map-support@npm:^0.5.21":
+  version: 0.5.21
+  resolution: "source-map-support@npm:0.5.21"
+  dependencies:
+    buffer-from: ^1.0.0
+    source-map: ^0.6.0
+  checksum: 43e98d700d79af1d36f859bdb7318e601dfc918c7ba2e98456118ebc4c4872b327773e5a1df09b0524e9e5063bb18f0934538eace60cca2710d1fa687645d137
+  languageName: node
+  linkType: hard
+
 "source-map-url@npm:^0.4.0":
   version: 0.4.1
   resolution: "source-map-url@npm:0.4.1"
@@ -10488,7 +10539,7 @@ resolve@^1.10.0:
   languageName: node
   linkType: hard
 
-"source-map@npm:^0.6.1, source-map@npm:~0.6.0":
+"source-map@npm:^0.6.0, source-map@npm:^0.6.1, source-map@npm:~0.6.0":
   version: 0.6.1
   resolution: "source-map@npm:0.6.1"
   checksum: 59ce8640cf3f3124f64ac289012c2b8bd377c238e316fb323ea22fbfe83da07d81e000071d7242cad7a23cd91c7de98e4df8830ec3f133cb6133a5f6e9f67bc2
@@ -11149,6 +11200,23 @@ resolve@^1.10.0:
   peerDependencies:
     typescript: ">=2.8.0 || >= 3.2.0-dev || >= 3.3.0-dev || >= 3.4.0-dev || >= 3.5.0-dev || >= 3.6.0-dev || >= 3.6.0-beta || >= 3.7.0-dev || >= 3.7.0-beta"
   checksum: 1843f4c1b2e0f975e08c4c21caa4af4f7f65a12ac1b81b3b8489366826259323feb3fc7a243123453d2d1a02314205a7634e048d4a8009921da19f99755cdc48
+  languageName: node
+  linkType: hard
+
+"tsx@npm:^3.12.7":
+  version: 3.12.7
+  resolution: "tsx@npm:3.12.7"
+  dependencies:
+    "@esbuild-kit/cjs-loader": ^2.4.2
+    "@esbuild-kit/core-utils": ^3.0.0
+    "@esbuild-kit/esm-loader": ^2.5.5
+    fsevents: ~2.3.2
+  dependenciesMeta:
+    fsevents:
+      optional: true
+  bin:
+    tsx: dist/cli.js
+  checksum: ddec149ad263e5c75fc8fde5c6ba7ec2ee390934c0a2e2c23897bacab83bc8c665955a23b608a19c42f49c14a7362cf74ad793b52cc94eda684be5c2c13fdb4d
   languageName: node
   linkType: hard
 
@@ -11938,12 +12006,12 @@ resolve@^1.10.0:
   languageName: node
   linkType: hard
 
-"yjs@npm:^13.5.47":
-  version: 13.5.47
-  resolution: "yjs@npm:13.5.47"
+"yjs@npm:13.6.6":
+  version: 13.6.6
+  resolution: "yjs@npm:13.6.6"
   dependencies:
-    lib0: ^0.2.49
-  checksum: 2c00447f5fc753889fd560efa124dce3f94604d5d2c6ed95ead1eb73b9e5a73e810c889deac835471277b946f3c6b7341ce7a211f6db0fe110d023ba89cc5b07
+    lib0: ^0.2.74
+  checksum: c69cb9a084aa433e813f6d0a191ebad5800a9a7098f7c6715952e4f8e5fc23270e3b8d7d747e1b0d0f1adca5f6efe01019654389eddb3977006814c4e2ff7ce6
   languageName: node
   linkType: hard
 
