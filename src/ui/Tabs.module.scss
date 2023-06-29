@@ -1,11 +1,12 @@
 .list {
   display: flex;
-  margin: 0 6px 10px 6px;
+  margin: 0 0 10px 0;
   gap: 8px;
-  background: var(--alinea-selected);
-  border-radius: var(--alinea-border-radius);
-  padding: 2px;
+  //background: var(--alinea-selected);
+  //border-radius: var(--alinea-border-radius);
+  //padding: 2px;
   overflow: auto;
+  padding: 5px 0;
   max-width: 100%;
 }
 
@@ -22,7 +23,7 @@
   font-size: 13px;
   line-height: 1.1;
   outline: none;
-  border-radius: calc(var(--alinea-border-radius) - 2.5px);
+  border-radius: var(--alinea-border-radius);
   font-weight: 600;
   white-space: nowrap;
   color: var(--alinea-tabs-trigger-foreground);
@@ -35,6 +36,6 @@
   &.is-selected {
     opacity: 1;
     background: var(--alinea-tabs-trigger-background);
-    box-shadow: 0 2px 3.5px var(--alinea-shadow), var(--alinea-divider-top);
+    box-shadow: 0 1px 3.5px var(--alinea-shadow);
   }
 }

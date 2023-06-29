@@ -41,9 +41,9 @@
 .container {
   padding: 12px;
   @include ml {
-    padding: 35px 45px;
+    padding: 50px 90px;
   }
-  max-width: 960px;
+  max-width: 1200px;
   width: 100%;
   // margin: 0 auto;
   flex-grow: 1;

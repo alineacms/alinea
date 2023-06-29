@@ -3,10 +3,10 @@
 .root {
   cursor: default;
   position: relative;
-  border-radius: 8px;
+  border-radius: var(--alinea-border-radius);
   background: var(--alinea-content);
-  box-shadow: 0 2px 4px var(--alinea-shadow);
-  border: 1px solid var(--alinea-shadow);
+  //box-shadow: 0 2px 4px var(--alinea-shadow);
+  //border: 1px solid var(--alinea-shadow);
 }
 
 .row {
@@ -34,7 +34,7 @@
 
 .content {
   flex-grow: 1;
-  padding: 14px 10px;
+  padding: 24px;
 
   .header + & {
     padding-top: 4px;

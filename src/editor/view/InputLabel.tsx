@@ -2,7 +2,7 @@ import {Label, renderLabel} from 'alinea/core/Label'
 import {fromModule} from 'alinea/ui'
 import {Chip} from 'alinea/ui/Chip'
 import {HStack} from 'alinea/ui/Stack'
-import {ComponentType, forwardRef, memo, PropsWithChildren} from 'react'
+import {ComponentType, PropsWithChildren, forwardRef, memo} from 'react'
 import css from './InputLabel.module.scss'
 
 const styles = fromModule(css)
@@ -81,18 +81,16 @@ export const InputLabel = forwardRef<HTMLElement, LabelProps>(
         ref={ref as any}
       >
         <div className={styles.root.inner()}>
-          {!inline && (
-            <div className={styles.root.header()}>
-              <LabelHeader
-                label={label}
-                help={help}
-                optional={optional}
-                size={size}
-                focused={focused}
-                icon={icon}
-              />
-            </div>
-          )}
+          <div className={styles.root.header()}>
+            <LabelHeader
+              label={label}
+              help={help}
+              optional={optional}
+              size={size}
+              focused={focused}
+              icon={icon}
+            />
+          </div>
           {children}
         </div>
       </Tag>

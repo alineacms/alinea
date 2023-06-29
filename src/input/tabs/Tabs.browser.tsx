@@ -27,7 +27,7 @@ function TabsView({state, section}: TabsViewProps) {
           return (
             <Tabs.Trigger key={i}>
               <HStack center gap={8}>
-                {/*Icon && <Icon />*/}
+                {Icon && <Icon />}
                 <TextLabel label={Type.label(type)} />
               </HStack>
             </Tabs.Trigger>

@@ -8,14 +8,13 @@
 
 .h1 {
   min-width: 0;
-  font-size: 24px;
+  font-size: 26px;
   font-weight: 600;
   line-height: 1.25;
   margin-bottom: 20px;
   white-space: pre-line;
   text-rendering: optimizeLegibility;
   @extend .hyphenate;
-  color: var(--alinea-title-foreground);
   &.is-flat {
     margin-bottom: 0;
   }
@@ -30,7 +29,6 @@
   white-space: pre-line;
   text-rendering: optimizeLegibility;
   @extend .hyphenate;
-  color: var(--alinea-title-foreground);
   &.is-flat {
     margin-bottom: 0;
   }
@@ -45,7 +43,6 @@
   white-space: pre-line;
   text-rendering: optimizeLegibility;
   @extend .hyphenate;
-  color: var(--alinea-title-foreground);
   &.is-flat {
     margin-bottom: 0;
   }
@@ -59,7 +56,6 @@
   white-space: pre-line;
   text-rendering: optimizeLegibility;
   @extend .hyphenate;
-  color: var(--alinea-title-foreground);
   &.is-flat {
     margin-bottom: 0;
   }

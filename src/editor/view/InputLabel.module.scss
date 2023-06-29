@@ -3,11 +3,15 @@
   vertical-align: top;
 
   &-inner {
-    padding: 6px;
+    padding: 0 6px 12px 6px;
   }
 
   &-header {
     padding-top: 0;
+  }
+
+  &.is-inline {
+    padding-top: 6px;
   }
 }
 
@@ -17,16 +21,15 @@
 
   &-title {
     display: inline-block;
-    font-size: 13px;
+    font-size: 13.5px;
     font-weight: 600;
     // color: var(--alinea-fields-foreground);
-    padding: 6px 0 6px 0;
+    padding: 8px 0 10px 0;
   }
 
   &-help {
     font-weight: normal;
     padding: 4px 0 9px 0;
-    color: var(--alinea-foreground-faded);
     font-style: italic;
     font-size: 12px;
   }
