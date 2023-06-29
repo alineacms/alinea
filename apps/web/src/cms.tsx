@@ -10,6 +10,12 @@ export const pages = alinea.root('Pages', {
   }
 })
 
+const pages2 = alinea.root('Pages', {
+  [alinea.meta]: {
+    contains: ['Page', 'Home']
+  }
+})
+
 export const cms = createNextCMS({
   dashboard: {
     dashboardUrl: '/admin.html',
@@ -18,7 +24,7 @@ export const cms = createNextCMS({
   },
   schema,
   workspaces: {
-    main: alinea.workspace('Alinea website', {
+    main: alinea.workspace('Alinea', {
       pages,
       media: alinea.media,
       [alinea.meta]: {
@@ -27,6 +33,14 @@ export const cms = createNextCMS({
         source: '../content'
       }
     })
+    /*main2: alinea.workspace('Workspace with very long title and more', {
+      pages2,
+      [alinea.meta]: {
+        color: 'red',
+        mediaDir: '../public',
+        source: '../content'
+      }
+    })*/
   },
   preview:
     process.env.NODE_ENV === 'development'

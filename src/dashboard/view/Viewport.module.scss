@@ -59,7 +59,7 @@
   --alinea-lift: #f5f5f7;
   --alinea-selected: hsl(200, 12%, 93.5%);
   --alinea-outline: hsl(0, 0%, 90.24%);
-  --alinea-content: #fdfdfd;
+  --alinea-content: #f6f5f8;
   --alinea-shadow: rgba(0, 0, 0, 0.1);
   --alinea-fields: white;
   --alinea-fields-foreground: #696969;
@@ -92,6 +92,7 @@
 .root {
   @include dark-theme;
   --alinea-border-radius: 8px;
+  --alinea-header-height: 46px;
   color: var(--alinea-foreground-faded);
   font-size: 14px;
   font-family: Inter, sans-serif;

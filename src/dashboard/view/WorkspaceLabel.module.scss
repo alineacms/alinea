@@ -1,0 +1,15 @@
+.root {
+  max-width: 100%;
+
+  &-logo {
+    width: 35px;
+  }
+
+  &-label {
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}

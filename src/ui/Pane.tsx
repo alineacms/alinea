@@ -37,9 +37,10 @@ function Divider({
       for (const iframe of iframes) iframe.style.pointerEvents = ''
     }
   }
+  const draggingClassName = 'is-dragging'
   function handleMouseDown(mouseDownEvent: ReactMouseEvent) {
+    container.current?.classList.add(draggingClassName)
     let prevX = mouseDownEvent.clientX
-    const fullWidth = window.innerWidth
     const restoreIframes = ignoreIframes()
     function move(moveEvent: MouseEvent) {
       moveEvent.preventDefault()
@@ -56,6 +57,7 @@ function Divider({
     window.addEventListener(
       'mouseup',
       function () {
+        container.current?.classList.remove(draggingClassName)
         window.removeEventListener('mousemove', move)
         restoreIframes()
       },

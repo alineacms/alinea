@@ -20,8 +20,8 @@ export const localDbAtom = atom(async get => {
   const config = get(configAtom)
   const store = await get(storeAtom)
   const db = new Database(store, config)
-  //await db.syncWith(client)
-  //await store.flush()
+  await db.syncWith(client)
+  await store.flush()
   return db
 })
 

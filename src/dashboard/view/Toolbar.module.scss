@@ -4,13 +4,13 @@
   width: 100%;
   padding: 0 10px;
   padding-left: 6px;
-  height: 44px;
+  height: var(--alinea-header-height);
   border-bottom: 1px solid var(--alinea-outline);
 
   &-menu {
     display: flex;
     justify-content: center;
-    width: 44px - 12px;
+    width: calc(var(--alinea-header-height) - 12px);
 
     @media (min-width: 600px) {
       display: none;

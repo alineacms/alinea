@@ -11,9 +11,7 @@ import {EntryTree} from '../view/EntryTree.js'
 import {RootOverview} from '../view/RootOverview.js'
 import {SearchBox} from '../view/SearchBox.js'
 import {Sidebar} from '../view/Sidebar.js'
-import {EntryVersionList} from '../view/entry/EntryVersionList.js'
 import {NewEntry} from '../view/entry/NewEntry.js'
-import {RootHeader} from '../view/entry/RootHeader.js'
 import css from './ContentView.module.scss'
 
 const styles = fromModule(css)
@@ -34,7 +32,7 @@ export function ContentView({editor}: ContentViewProps) {
     <>
       <Sidebar.Tree>
         <SearchBox />
-        <RootHeader active={!editor} />
+        {/*<RootHeader active={!editor} />*/}
         <EntryTree
           entryId={editor?.entryId}
           selected={editor?.version.parents}
@@ -55,7 +53,7 @@ export function ContentView({editor}: ContentViewProps) {
             Create new page
           </Button>
         </div>
-        {editor && <EntryVersionList editor={editor} />}
+        {/*editor && <EntryVersionList editor={editor} />*/}
       </Sidebar.Tree>
       {search === '?new' && (
         <Suspense fallback={<Loader absolute />}>

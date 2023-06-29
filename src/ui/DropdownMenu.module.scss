@@ -1,6 +1,7 @@
 .root {
   position: relative;
   display: flex;
+  min-width: 0;
 }
 
 .trigger {
@@ -9,6 +10,7 @@
   border-radius: var(--alinea-border-radius);
   padding: 4px;
   white-space: nowrap;
+  min-width: 0;
 
   &:focus,
   &:hover {

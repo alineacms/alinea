@@ -1,14 +1,11 @@
 @import 'alinea/ui/style.scss';
 
 .root {
-  position: sticky;
-  top: 0;
-  z-index: 3;
-  background-color: hsla(var(--alinea-positive), 0.6);
-  backdrop-filter: blur(12px);
+  background-color: hsla(var(--alinea-positive), 1);
   flex-shrink: 0;
   // box-shadow: 0 1px 4px var(--alinea-shadow);
-  height: 44px;
+  height: var(--alinea-header-height);
+  border-bottom: 1px solid var(--alinea-outline);
 
   @include s {
     overflow-x: auto;

@@ -1,21 +1,28 @@
 import {useWindowWidth} from '@react-hook/window-size'
-import {link} from 'alinea/dashboard/util/HashRouter'
-import {fromModule} from 'alinea/ui'
+import {Root, Workspace} from 'alinea/core'
+import {entries} from 'alinea/core/util/Objects'
+import {link, useNavigate} from 'alinea/dashboard/util/HashRouter'
+import {HStack, Icon, fromModule} from 'alinea/ui'
 import {Badge} from 'alinea/ui/Badge'
-import {useNonInitialEffect} from 'alinea/ui/hook/UseNonInitialEffect'
+import {DropdownMenu} from 'alinea/ui/DropdownMenu'
 import {Pane} from 'alinea/ui/Pane'
+import {useNonInitialEffect} from 'alinea/ui/hook/UseNonInitialEffect'
+import {IcRoundUnfoldMore} from 'alinea/ui/icons/IcRoundUnfoldMore'
 import {createSlots} from 'alinea/ui/util/Slots'
 import {
-  createContext,
   Dispatch,
   HTMLProps,
   PropsWithChildren,
+  createContext,
   useContext,
   useReducer
 } from 'react'
+import {useConfig} from '../hook/UseConfig.js'
 import {useEntryLocation} from '../hook/UseEntryLocation.js'
+import {useNav} from '../hook/UseNav.js'
 import {useWorkspace} from '../hook/UseWorkspace.js'
 import css from './Sidebar.module.scss'
+import {WorkspaceLabel} from './WorkspaceLabel.js'
 
 const styles = fromModule(css)
 
@@ -87,19 +94,7 @@ export namespace Sidebar {
     children,
     ...props
   }: PropsWithChildren<HTMLProps<HTMLElement>>) {
-    return (
-      <slots.Slot>
-        <Pane
-          id="content-tree"
-          resizable="right"
-          defaultWidth={300}
-          minWidth={200}
-          {...props}
-        >
-          {children}
-        </Pane>
-      </slots.Slot>
-    )
+    return <slots.Slot>{children}</slots.Slot>
   }
 
   export function Preview({children}: PropsWithChildren<{}>) {
@@ -114,15 +109,85 @@ export namespace Sidebar {
     )
   }
 
+  function NavHeader() {
+    const config = useConfig()
+    const workspace = useWorkspace()
+    const workspaces = entries(config.workspaces)
+    const navigate = useNavigate()
+    const nav = useNav()
+    return (
+      <HStack as="header" center gap={12} className={styles.navHeader()}>
+        {workspaces.length > 1 ? (
+          <DropdownMenu.Root>
+            <DropdownMenu.Trigger>
+              <HStack center gap={4}>
+                <WorkspaceLabel
+                  label={workspace.label}
+                  color={workspace.color}
+                  icon={workspace.icon}
+                />
+                <Icon icon={IcRoundUnfoldMore} />
+              </HStack>
+            </DropdownMenu.Trigger>
+
+            <DropdownMenu.Items>
+              {workspaces.map(([key, workspace]) => {
+                const {roots, label, color, icon} = Workspace.data(workspace)
+                const [name, root] = entries(roots)[0]
+                return (
+                  <DropdownMenu.Item
+                    key={key}
+                    onClick={() =>
+                      navigate(
+                        nav.entry({
+                          workspace: key,
+                          root: name,
+                          locale: Root.defaultLocale(root)
+                        })
+                      )
+                    }
+                  >
+                    <WorkspaceLabel label={label} color={color} icon={icon} />
+                  </DropdownMenu.Item>
+                )
+              })}
+            </DropdownMenu.Items>
+          </DropdownMenu.Root>
+        ) : (
+          <a
+            {...link(nav.root({workspace: workspace.name}))}
+            className={styles.navHeader.workspace()}
+          >
+            <WorkspaceLabel
+              label={workspace.label}
+              color={workspace.color}
+              icon={workspace.icon}
+            />
+          </a>
+        )}
+      </HStack>
+    )
+  }
+
   export function Nav({children}: PropsWithChildren<{}>) {
     const {isNavOpen, toggleNav} = use()
     return (
       <div className={styles.collapse('left', {open: isNavOpen})}>
         <div className={styles.collapse.overlay()} onClick={toggleNav} />
-        <div className={styles.collapse.inner()}>
-          <nav className={styles.root.menu()}>{children}</nav>
-          <slots.Portal />
-        </div>
+        <Pane
+          id="content-tree"
+          resizable="right"
+          defaultWidth={360}
+          minWidth={200}
+        >
+          <div className={styles.nav.inner()}>
+            <NavHeader />
+            <div className={styles.nav.container()}>
+              <nav className={styles.nav.menu()}>{children}</nav>
+              <slots.Portal className={styles.nav.portal()} />
+            </div>
+          </div>
+        </Pane>
       </div>
     )
   }
@@ -136,11 +201,13 @@ export namespace Sidebar {
         <a
           {...props}
           {...link(props.href)}
-          className={styles.root.menu.item.mergeProps(props)({selected})}
+          className={styles.nav.menu.item.mergeProps(props)({selected})}
         >
-          <Badge amount={badge} right={-4} bottom={-3}>
-            {children}
-          </Badge>
+          <div className={styles.nav.menu.item.bg()}>
+            <Badge amount={badge} right={-4} bottom={-3}>
+              {children}
+            </Badge>
+          </div>
         </a>
       )
     }

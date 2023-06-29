@@ -14,7 +14,7 @@
   &-inner {
     flex-grow: 1;
     height: 100%;
-    overflow: auto;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
 
@@ -53,9 +53,11 @@
       z-index: 4;
     }
 
+    :global(.is-dragging) &-line,
     &:hover &-line {
-      // border-color: hsla(var(--alinea-negative), 0.2);
-      border-width: 2px;
+      border-color: var(--alinea-button-background);
+      border-width: 3px;
+      transition: 0s border-width 0.25s, 0.25s border-color 0.25s;
     }
   }
 

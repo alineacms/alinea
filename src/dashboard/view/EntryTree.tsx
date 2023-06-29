@@ -28,7 +28,7 @@ export function EntryTree({entryId, selected = []}: EntryTreeProps) {
   const navigate = useNavigate()
   const nav = useNav()
   return (
-    <div className="rct-dark" style={{height: '100%', overflow: 'auto'}}>
+    <div className="rct-dark" style={{flexGrow: 1, overflow: 'auto'}}>
       <UncontrolledTreeEnvironment<EntryTreeItem>
         dataProvider={dataProvider}
         getItemTitle={item => item.data.title}

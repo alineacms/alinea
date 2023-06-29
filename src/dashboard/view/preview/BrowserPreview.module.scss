@@ -9,6 +9,23 @@
     width: 100%;
     border: none;
     background: white;
+
+    &::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    &::-webkit-scrollbar-track {
+      background: transparent; //var(--alinea-outline);
+    }
+    &::-webkit-scrollbar-thumb {
+      background: hsla(var(--alinea-negative), 0.2);
+    }
+    &::-webkit-scrollbar-thumb:hover {
+      background: hsla(var(--alinea-negative), 0.4);
+    }
+    &::-webkit-scrollbar-thumb:active {
+      background: hsla(var(--alinea-negative), 0.9);
+    }
   }
 
   &-loader {

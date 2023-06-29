@@ -27,8 +27,8 @@
   height: 32px;
   display: flex;
   align-items: center;
-  border-radius: 6px;
-  margin: 0 6px;
+  border-radius: var(--alinea-border-radius);
+  margin: 0 12px;
 
   &:hover {
     color: inherit;

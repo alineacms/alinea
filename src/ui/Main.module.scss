@@ -3,7 +3,6 @@
 .root {
   position: relative;
   flex-grow: 1;
-  overflow: auto;
   height: 100%;
   width: 100%;
   display: flex;
@@ -14,27 +13,28 @@
     width: 100%;
     flex-grow: 1;
     min-width: 0;
+    overflow: auto;
 
     @mixin ml {
       min-width: 560px;
     }
-  }
 
-  &::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-  &::-webkit-scrollbar-track {
-    background: transparent; //var(--alinea-outline);
-  }
-  &::-webkit-scrollbar-thumb {
-    background: hsla(var(--alinea-negative), 0.2);
-  }
-  &::-webkit-scrollbar-thumb:hover {
-    background: hsla(var(--alinea-negative), 0.4);
-  }
-  &::-webkit-scrollbar-thumb:active {
-    background: hsla(var(--alinea-negative), 0.9);
+    &::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    &::-webkit-scrollbar-track {
+      background: transparent; //var(--alinea-outline);
+    }
+    &::-webkit-scrollbar-thumb {
+      background: hsla(var(--alinea-negative), 0.2);
+    }
+    &::-webkit-scrollbar-thumb:hover {
+      background: hsla(var(--alinea-negative), 0.4);
+    }
+    &::-webkit-scrollbar-thumb:active {
+      background: hsla(var(--alinea-negative), 0.9);
+    }
   }
 }
 

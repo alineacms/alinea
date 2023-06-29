@@ -1,8 +1,8 @@
 import {Config, Root, renderLabel} from 'alinea/core'
 import {Client} from 'alinea/core/Client'
-import {Loader} from 'alinea/ui'
+import {Icon, Loader} from 'alinea/ui'
 import {FavIcon} from 'alinea/ui/branding/FavIcon'
-import {IcRoundInsertDriveFile} from 'alinea/ui/icons/IcRoundInsertDriveFile'
+import {IcOutlineInsertDriveFile} from 'alinea/ui/icons/IcOutlineInsertDriveFile'
 import {MdiSourceBranch} from 'alinea/ui/icons/MdiSourceBranch'
 import {atom, useAtom, useAtomValue} from 'jotai'
 import {Suspense} from 'react'
@@ -47,11 +47,10 @@ function DraftsButton() {
     <Sidebar.Nav.Item
       selected={location.pathname.startsWith(nav.draft({workspace}))}
       href={link}
-      title="Drafts"
       aria-label="Drafts"
       badge={draftsTotal}
     >
-      <MdiSourceBranch />
+      <Icon icon={MdiSourceBranch} />
     </Sidebar.Nav.Item>
   )
 }
@@ -78,7 +77,6 @@ function AppAuthenticated() {
             <Head>
               <FavIcon color={color} />
             </Head>
-            <Toolbar.Root />
             <div
               style={{
                 flex: '1',
@@ -94,16 +92,15 @@ function AppAuthenticated() {
                     entryLocation && entryLocation.root === key
                       ? nav.entry(entryLocation)
                       : nav.root({workspace, root: key})
-                  const {label, icon: Icon} = Root.data(root)
+                  const {label, icon} = Root.data(root)
                   return (
                     <Sidebar.Nav.Item
                       key={key}
                       selected={isEntry && isSelected}
                       href={link}
-                      title={renderLabel(label)}
                       aria-label={renderLabel(label)}
                     >
-                      {Icon ? <Icon /> : <IcRoundInsertDriveFile />}
+                      <Icon icon={icon ?? IcOutlineInsertDriveFile} />
                     </Sidebar.Nav.Item>
                   )
                 })}
