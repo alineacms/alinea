@@ -45,7 +45,7 @@ export async function createPersistentStore(): Promise<PersistentStore> {
           stmt.params()
         )
         const plan: Array<QueryPlanItem> = []
-        while (explain.step()) plan.push(explain.getAsObject())
+        while (explain.step()) plan.push(explain.getAsObject() as any)
         explain.free()
         renderQueryPlan(plan)
         console.groupEnd()
