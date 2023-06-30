@@ -108,7 +108,7 @@ export function EntryEdit({editor}: EntryEditProps) {
         </Modal>
       )}
       <Main
-        ref={ref}
+        scrollRef={ref}
         className={styles.root()}
         head={<EntryHeader editor={editor} />}
       >

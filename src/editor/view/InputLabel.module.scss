@@ -18,12 +18,13 @@
 .header {
   position: relative;
   z-index: 1;
+  padding-bottom: 6px;
 
   &-title {
     display: inline-block;
     font-size: 13px;
     color: var(--alinea-fields-foreground);
-    padding: 0 0 10px 0;
+    padding-bottom: 4px;
   }
 
   &-help {

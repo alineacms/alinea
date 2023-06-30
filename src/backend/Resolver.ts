@@ -499,7 +499,9 @@ export class Resolver {
 
   conditionSearch(Table: Table<EntryTable>, searchTerms?: Array<string>) {
     if (!searchTerms?.length) return Expr.value(true)
-    const terms = searchTerms.map(term => `"${term}"*`).join(' AND ')
+    const terms = searchTerms
+      .map(term => `"${term.replaceAll('"', '')}"*`)
+      .join(' + ')
     return match(EntrySearch, terms)
   }
 

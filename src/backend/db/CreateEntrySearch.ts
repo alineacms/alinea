@@ -6,7 +6,8 @@ export function createEntrySearch(store: Store) {
     sql`
       create virtual table if not exists EntrySearch using fts5(
         title, searchableText,
-        content='Entry'
+        content='Entry', 
+        tokenize='porter unicode61 remove_diacritics 2'
       )
     `,
     sql`

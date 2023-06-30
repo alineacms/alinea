@@ -81,16 +81,14 @@ export const InputLabel = forwardRef<HTMLElement, LabelProps>(
         ref={ref as any}
       >
         <div className={styles.root.inner()}>
-          <div className={styles.root.header()}>
-            <LabelHeader
-              label={label}
-              help={help}
-              optional={optional}
-              size={size}
-              focused={focused}
-              icon={icon}
-            />
-          </div>
+          <LabelHeader
+            label={label}
+            help={help}
+            optional={optional}
+            size={size}
+            focused={focused}
+            icon={icon}
+          />
           {children}
         </div>
       </Tag>

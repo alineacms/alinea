@@ -7,16 +7,21 @@ const styles = fromModule(css)
 
 export interface MainProps extends HTMLProps<HTMLDivElement> {
   head?: ReactNode
+  scrollRef?: Ref<HTMLDivElement>
 }
 
 function MainRoot(
-  {children, head, ...props}: MainProps,
+  {children, head, scrollRef, ...props}: MainProps,
   ref: Ref<HTMLDivElement>
 ) {
   return (
     <div ref={ref} className={styles.root()}>
       {head}
-      <div {...props} className={styles.root.inner.mergeProps(props)()}>
+      <div
+        ref={scrollRef}
+        {...props}
+        className={styles.root.inner.mergeProps(props)()}
+      >
         {children}
       </div>
     </div>
