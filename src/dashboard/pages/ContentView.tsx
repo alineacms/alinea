@@ -1,4 +1,4 @@
-import {Button, Loader, fromModule} from 'alinea/ui'
+import {HStack, Icon, Loader, fromModule} from 'alinea/ui'
 import IcRoundAddCircle from 'alinea/ui/icons/IcRoundAddCircle'
 import {Suspense} from 'react'
 import {EntryEditor} from '../atoms/EntryEditor.js'
@@ -38,8 +38,8 @@ export function ContentView({editor}: ContentViewProps) {
           selected={editor?.version.parents}
         />
         <div className={styles.root.create()}>
-          <Button
-            icon={IcRoundAddCircle}
+          <button
+            className={styles.root.create.button()}
             onClick={() =>
               navigate(
                 nav.create({
@@ -50,8 +50,11 @@ export function ContentView({editor}: ContentViewProps) {
               )
             }
           >
-            Create new page
-          </Button>
+            <HStack center gap={8} align="center">
+              <Icon icon={IcRoundAddCircle} />
+              <span>Create new page</span>
+            </HStack>
+          </button>
         </div>
         {/*editor && <EntryVersionList editor={editor} />*/}
       </Sidebar.Tree>

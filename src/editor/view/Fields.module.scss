@@ -2,11 +2,11 @@
   border-radius: var(--alinea-border-radius);
   background: var(--alinea-background);
   box-shadow: 0 2px 3.5px var(--alinea-shadow);
-  padding: 24px;
+  padding: 14px 24px 24px 24px;
   transition: 0.25s ease-out;
 
   & & {
-    padding: 10px;
+    padding: 4px 10px 10px 10px;
 
     &:focus-within {
       box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);

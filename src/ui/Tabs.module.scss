@@ -1,12 +1,12 @@
 .list {
   display: flex;
-  margin: 0 0 10px 0;
+  margin: 0 -5px 10px -5px;
   gap: 8px;
   //background: var(--alinea-selected);
   //border-radius: var(--alinea-border-radius);
   //padding: 2px;
   overflow: auto;
-  padding: 5px 0;
+  padding: 5px;
   max-width: 100%;
 }
 

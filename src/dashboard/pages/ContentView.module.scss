@@ -13,5 +13,16 @@
     display: flex;
     justify-content: flex-end;
     border-top: 1px solid var(--alinea-outline);
+
+    &-button {
+      font-weight: 600;
+      font-size: 13px;
+      color: var(--alinea-fields-foreground);
+      padding: 8px 10px;
+
+      &:hover {
+        color: inherit;
+      }
+    }
   }
 }

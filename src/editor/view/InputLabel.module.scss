@@ -3,7 +3,7 @@
   vertical-align: top;
 
   &-inner {
-    padding: 0 6px 12px 6px;
+    padding: 10px 6px 12px 6px;
   }
 
   &-header {
@@ -21,10 +21,9 @@
 
   &-title {
     display: inline-block;
-    font-size: 13.5px;
-    font-weight: 600;
-    // color: var(--alinea-fields-foreground);
-    padding: 8px 0 10px 0;
+    font-size: 13px;
+    color: var(--alinea-fields-foreground);
+    padding: 0 0 10px 0;
   }
 
   &-help {

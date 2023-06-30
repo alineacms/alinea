@@ -36,9 +36,11 @@
   }
 }
 
-.rct-tree-item-title-container-selected {
+.rct-tree-item-title-container-selected,
+.rct-tree-item-title-container-selected:hover {
   color: inherit;
-  background: var(--alinea-highlight);
+  background: var(--alinea-selected);
+  color: var(--alinea-button-hover);
   /*color: var(--alinea-variant-info-foreground);
   background: var(--alinea-variant-info-background);*/
 
@@ -67,6 +69,9 @@
   height: 20px;
   flex-shrink: 0;
   color: hsla(var(--alinea-negative), 0.5);
+  .rct-tree-item-title-container-selected & {
+    color: var(--alinea-button-hover);
+  }
 }
 
 .rct-tree-item-status {
@@ -96,6 +101,9 @@
   height: 20px;
   flex-shrink: 0;
   color: hsla(var(--alinea-negative), 0.5);
+  .rct-tree-item-title-container-selected & {
+    color: var(--alinea-button-hover);
+  }
 }
 
 .rct-tree-item-title {
