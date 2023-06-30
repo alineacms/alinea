@@ -12,5 +12,5 @@ export type {
   EntryReference,
   FileReference,
   ImageReference
-} from 'alinea/picker/entry'
+} from 'alinea/picker/entry/EntryReference'
 export type {UrlReference} from 'alinea/picker/url'

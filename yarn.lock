@@ -22,7 +22,7 @@ __metadata:
     cito: ^0.2.0
     dataloader: ^2.1.0
     pretty-ms: ^8.0.0
-    rado: ^0.3.8
+    rado: ^0.3.9
     regexparam: ^2.0.1
     xxhash-wasm: ^1.0.2
   languageName: unknown
@@ -47,6 +47,7 @@ __metadata:
     cito: ^0.2.0
     p-lazy: ^4.0.0
     pretty-ms: ^8.0.0
+    xksuid: ^0.0.3
     yjs: ^13.6.6
   languageName: unknown
   linkType: soft
@@ -165,12 +166,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@alinea/sqlite-wasm@npm:^0.1.12":
-  version: 0.1.12
-  resolution: "@alinea/sqlite-wasm@npm:0.1.12"
+"@alinea/sqlite-wasm@npm:^0.1.13":
+  version: 0.1.13
+  resolution: "@alinea/sqlite-wasm@npm:0.1.13"
   dependencies:
     "@alinea/iso": "*"
-  checksum: fcb802f0045ab554080c3ac97fecb18bbc4f1c9ed55ce93d4ea7526e88ded39ba5a18b5dfc55ece501143dd6d40f17172cfe2c542129a7c3d8a19b9074cd1607
+  checksum: 1cb18b3b5e9926376742332ab7606dc21c27cd70246124036265b63f8038e47541a3810f325ca79feed99f822293bfd02dfdc9da4af88e7633c63025795c4581
   languageName: node
   linkType: hard
 
@@ -3169,6 +3170,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/emscripten@npm:*":
+  version: 1.39.6
+  resolution: "@types/emscripten@npm:1.39.6"
+  checksum: 437f2f9cdfd9057255662508fa9a415fe704ba484c6198f3549c5b05feebcdcd612b1ec7b10026d2566935d05d3c36f9366087cb42bc90bd25772a88fcfc9343
+  languageName: node
+  linkType: hard
+
 "@types/fs-extra@npm:^11.0.1":
   version: 11.0.1
   resolution: "@types/fs-extra@npm:11.0.1"
@@ -3356,6 +3364,16 @@ __metadata:
   version: 0.16.2
   resolution: "@types/scheduler@npm:0.16.2"
   checksum: b6b4dcfeae6deba2e06a70941860fb1435730576d3689225a421280b7742318d1548b3d22c1f66ab68e414f346a9542f29240bc955b6332c5b11e561077583bc
+  languageName: node
+  linkType: hard
+
+"@types/sql.js@npm:^1.4.4":
+  version: 1.4.4
+  resolution: "@types/sql.js@npm:1.4.4"
+  dependencies:
+    "@types/emscripten": "*"
+    "@types/node": "*"
+  checksum: c71928d76b59e4899da4b137a4f1bbf8cc0cf198928efa183bba90880ae69331da23a99175b88a7f5eaa34ce9ebef8f94dd1dcca8e4abdac2abb560d860e6636
   languageName: node
   linkType: hard
 
@@ -3563,7 +3581,7 @@ __metadata:
   resolution: "alinea@workspace:."
   dependencies:
     "@alinea/iso": ^0.3.0
-    "@alinea/sqlite-wasm": ^0.1.12
+    "@alinea/sqlite-wasm": ^0.1.13
     "@esbx/alias": ^0.0.20
     "@esbx/extension": ^0.0.19
     "@esbx/external": ^0.0.19
@@ -3580,6 +3598,7 @@ __metadata:
     "@types/node": 20.0.0
     "@types/react": ^18.2.13
     "@types/react-dom": ^18.2.6
+    "@types/sql.js": ^1.4.4
     "@typescript/analyze-trace": ^0.9.1
     alinea: 0.0.0
     autoprefixer: ^10.4.2
@@ -9488,10 +9507,10 @@ fsevents@~2.3.2:
   languageName: node
   linkType: hard
 
-"rado@npm:^0.3.8":
-  version: 0.3.8
-  resolution: "rado@npm:0.3.8"
-  checksum: 42214d9f8e821919428a2aefb534d2dd7a7577e35e6504dedd6845553063d2e36019b43e66292f879becf93de047415ec4ec8ec272a8cdf7d1a01f84723686cc
+"rado@npm:^0.3.9":
+  version: 0.3.9
+  resolution: "rado@npm:0.3.9"
+  checksum: 736c5fb28fb7ad9e87ec4da5b844ac277a270fcbda85438e844c4d84da6d2f365e3202eef26ba02fc6719cea45a0804b92da3d2c65ff02538999f349872eb451
   languageName: node
   linkType: hard
 
@@ -11905,6 +11924,13 @@ resolve@^1.10.0:
     utf-8-validate:
       optional: true
   checksum: bd2b437256012af526c69c03d6670a132e7ab0fe5853f3b7092826acea4203fad4ee2a8d0d9bd44834b2b968e747bf34f753ab535f4a3edf40d262da4b1d0805
+  languageName: node
+  linkType: hard
+
+"xksuid@npm:^0.0.3":
+  version: 0.0.3
+  resolution: "xksuid@npm:0.0.3"
+  checksum: bc1161dd6de10c39db9d0754546d57abf4dc7ce869934798e55d094fa13bb970d8cfd5364be30b8c6a263a21ff6f64f81990447dd38cdc42cf8495931b8e6178
   languageName: node
   linkType: hard
 

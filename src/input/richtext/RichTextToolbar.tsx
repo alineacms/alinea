@@ -1,5 +1,5 @@
 import {Reference} from 'alinea/core/Reference'
-import {Toolbar} from 'alinea/dashboard'
+import {Toolbar} from 'alinea/dashboard/view/Toolbar'
 import {UrlReference} from 'alinea/picker/url'
 import {fromModule, HStack, Icon, px, Typo} from 'alinea/ui'
 import {DropdownMenu} from 'alinea/ui/DropdownMenu'

@@ -133,6 +133,11 @@ const base32HexEncoding: Encoding = {
   bits: 5
 }
 
+const base62Encoding: Encoding = {
+  chars: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz',
+  bits: 6
+}
+
 const base64Encoding: Encoding = {
   chars: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/',
   bits: 6
@@ -196,6 +201,16 @@ export const base64 = {
 
   stringify(data: ArrayLike<number>, opts?: StringifyOptions): string {
     return stringify(data, base64Encoding, opts)
+  }
+}
+
+export const base62 = {
+  parse(string: string, opts?: ParseOptions): Uint8Array {
+    return parse(string, base62Encoding, opts)
+  },
+
+  stringify(data: ArrayLike<number>, opts?: StringifyOptions): string {
+    return stringify(data, base62Encoding, opts)
   }
 }
 

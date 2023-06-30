@@ -1,62 +1,72 @@
-import useSize from '@react-hook/size'
-import {InputForm} from 'alinea/editor'
-import {fromModule, HStack, VStack} from 'alinea/ui'
+import {fromModule, HStack, TextLabel, Typo, VStack} from 'alinea/ui'
 import {Main} from 'alinea/ui/Main'
-import {Suspense, useRef} from 'react'
+import {useMemo} from 'react'
 import {useQuery} from 'react-query'
-import VirtualList from 'react-tiny-virtual-list'
 //import {EntryProperty} from '../draft/EntryProperty.js'
 //import {useCurrentDraft} from '../hook/UseCurrentDraft.js'
-import {Entry} from 'alinea/core'
-import {MediaFile} from 'alinea/core/media/MediaSchema'
+import {Entry, RootData} from 'alinea/core'
+import {Expr} from 'alinea/core/pages/Expr'
 import {useAtomValue} from 'jotai'
 import {graphAtom} from '../atoms/EntryAtoms.js'
-import {EntryHeader} from './entry/EntryHeader.js'
-import {EntryTitle} from './entry/EntryTitle.js'
-import {EntryEditProps} from './EntryEdit.js'
-import {FileUploader} from './media/FileUploader.js'
-import {MediaRow} from './media/MediaRow.js'
+import {EntryEditor} from '../atoms/EntryEditor.js'
+import {useRoot} from '../hook/UseRoot.js'
+import {useWorkspace} from '../hook/UseWorkspace.js'
+import {Head} from '../util/Head.js'
+import {Explorer} from './explorer/Explorer.js'
 import css from './MediaExplorer.module.scss'
 
 const styles = fromModule(css)
-const scrollOffsets = new Map<string, number>()
+const scrollOffsets = new Map<Expr<boolean>, number>()
 
-export function MediaExplorer({editor}: EntryEditProps) {
+export interface MediaExplorerProps {
+  editor?: EntryEditor
+  root?: RootData
+}
+
+export function MediaExplorer({editor}: MediaExplorerProps) {
+  const parentId = editor?.entryId
+  const workspace = useWorkspace()
+  const root = useRoot()
   const graph = useAtomValue(graphAtom)
+  const condition = useMemo(() => {
+    return parentId
+      ? Entry.parent.is(parentId)
+      : Entry.root
+          .is(root.name)
+          .and(Entry.workspace.is(workspace.name))
+          .and(Entry.parent.isNull())
+  }, [workspace, root, parentId])
   const {data} = useQuery(
-    ['media', 'total', editor.entryId],
-    () => {
-      return graph.active.count(
-        MediaFile().where(Entry.parent.is(editor.entryId))
-      )
+    ['media', 'total', condition],
+    async () => {
+      const cursor = Entry()
+        .where(condition)
+        .orderBy(Entry.type.desc(), Entry.entryId.desc())
+      const info = await graph.active.get({
+        title: Entry({entryId: parentId}).select(Entry.title).maybeFirst()
+      })
+      return {...info, cursor}
     },
-    {suspense: true}
+    {suspense: true, keepPreviousData: true}
   )
-  const total = data || 0
-  const containerRef = useRef(null)
-  const [containerWidth, containerHeight] = useSize(containerRef)
-  const perRow = Math.round(containerWidth / 240)
-  const height = 200
-  const selectedPhase = useAtomValue(editor.selectedPhase)
-  const isActivePhase = editor.activePhase === selectedPhase
-  const state = isActivePhase ? editor.draftState : editor.states[selectedPhase]
+  const {cursor} = data!
+  const title = data?.title || root.label
   return (
     <Main className={styles.root()}>
-      <EntryHeader editor={editor} />
       <div className={styles.root.inner()}>
         <HStack style={{flexGrow: 1, minHeight: 0}}>
-          <FileUploader toggleSelect={() => {}} />
+          {/*<FileUploader toggleSelect={() => {}} />*/}
           <VStack style={{height: '100%', width: '100%'}}>
             <header className={styles.root.inner.header()}>
-              <EntryTitle editor={editor} />
-              {/* Todo: hide this in a tab interface */}
-              <div style={{display: 'none'}}>
-                <Suspense fallback={null}>
-                  <InputForm type={editor.type} state={state} />
-                </Suspense>
-              </div>
+              <Head>
+                <title>{String(title)}</title>
+              </Head>
+              <Typo.H1 flat style={{position: 'relative'}}>
+                <TextLabel label={title} />
+              </Typo.H1>
             </header>
-            <div
+            <Explorer cursor={cursor} type="thumb" virtualized />
+            {/*<div
               ref={containerRef}
               style={{flexGrow: 1, minHeight: 0, overflow: 'hidden'}}
             >
@@ -65,7 +75,7 @@ export function MediaExplorer({editor}: EntryEditProps) {
                   className={styles.root.list()}
                   width="100%"
                   height={containerHeight}
-                  itemCount={Math.ceil(total / perRow)}
+                  itemCount={Math.ceil(files / perRow)}
                   itemSize={height}
                   renderItem={({index, style}) => {
                     const from = index * perRow
@@ -73,20 +83,20 @@ export function MediaExplorer({editor}: EntryEditProps) {
                       <div key={index} style={{...style, height}}>
                         <MediaRow
                           amount={perRow}
-                          parentId={editor.entryId}
+                          condition={condition}
                           from={from}
                           batchSize={perRow * 5}
                         />
                       </div>
                     )
                   }}
-                  scrollOffset={scrollOffsets.get(editor.entryId) || 0}
+                  scrollOffset={scrollOffsets.get(condition) || 0}
                   onScroll={scrollTop => {
-                    scrollOffsets.set(editor.entryId, scrollTop)
+                    scrollOffsets.set(condition, scrollTop)
                   }}
                 />
               )}
-            </div>
+            </div>*/}
           </VStack>
         </HStack>
       </div>

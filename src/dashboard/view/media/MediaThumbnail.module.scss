@@ -19,7 +19,8 @@
     align-items: center;
     justify-content: center;
     flex-direction: column;
-    background: hsla(var(--alinea-negative), 0.05);
+    //background: hsla(var(--alinea-negative), 0.05);
+    background: red;
     transition: background 0.25s ease-out;
 
     &-picture {

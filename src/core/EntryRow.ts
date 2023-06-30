@@ -72,7 +72,6 @@ export const EntryRow = table({
       contentHash: index(this.contentHash),
       type: index(this.type),
       parent: index(this.parent),
-      index: index(this.index),
       fileIdentifier: index(this.filePath, this.workspace, this.root),
       parentDir: index(this.parentDir),
       childrenDir: index(this.childrenDir),

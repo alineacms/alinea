@@ -49,7 +49,7 @@
   ],
   "dependencies": {
     "@alinea/iso": "^0.3.0",
-    "@alinea/sqlite-wasm": "^0.1.12",
+    "@alinea/sqlite-wasm": "^0.1.13",
     "esbuild": "^0.18.5"
   },
   "peerDependencies": {
@@ -73,6 +73,7 @@
     "@types/node": "20.0.0",
     "@types/react": "^18.2.13",
     "@types/react-dom": "^18.2.6",
+    "@types/sql.js": "^1.4.4",
     "@typescript/analyze-trace": "^0.9.1",
     "alinea": "0.0.0",
     "autoprefixer": "^10.4.2",
@@ -111,6 +112,11 @@
       "worker": "./dist/cloud/view/CloudAuth.js",
       "browser": "./dist/cloud/view/CloudAuth.browser.js",
       "default": "./dist/cloud/view/CloudAuth.js"
+    },
+    "./core/media/MediaRoot": {
+      "worker": "./dist/core/media/MediaRoot.js",
+      "browser": "./dist/core/media/MediaRoot.browser.js",
+      "default": "./dist/core/media/MediaRoot.js"
     },
     "./core/media/MediaSchema": {
       "worker": "./dist/core/media/MediaSchema.js",

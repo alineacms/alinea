@@ -47,6 +47,7 @@ export class FileData implements Source, Target, Media {
     const res: WatchFiles = {files: [], dirs: []}
     for (const workspace of values(config.workspaces)) {
       const contentDir = Workspace.data(workspace).source
+      res.dirs.push(path.join(rootDir, contentDir))
       for (const rootName of keys(workspace)) {
         const rootPath = path.join(rootDir, contentDir, rootName)
         res.dirs.push(rootPath)

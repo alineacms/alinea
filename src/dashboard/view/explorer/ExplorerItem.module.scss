@@ -20,8 +20,9 @@
     height: 100%;
     width: 100%;
     min-width: 0;
-    background: hsla(var(--alinea-negative), 0.05);
-    border-radius: 0.25rem;
+    background: var(--alinea-background);
+    border-radius: var(--alinea-border-radius);
+    box-shadow: 0 2px 3.5px var(--alinea-shadow);
     padding: 0 8px;
     display: flex;
   }

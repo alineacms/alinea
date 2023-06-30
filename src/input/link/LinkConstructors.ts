@@ -13,14 +13,16 @@ import {
 } from 'alinea/input/link/LinkField'
 import {
   EntryPickerOptions,
-  EntryReference,
-  FileReference,
-  ImageReference,
   entryFields,
   entryPicker,
   fileFields,
   imageFields
 } from 'alinea/picker/entry'
+import {
+  EntryReference,
+  FileReference,
+  ImageReference
+} from 'alinea/picker/entry/EntryReference'
 import {UrlPickerOptions, UrlReference, urlPicker} from 'alinea/picker/url'
 
 const imageCondition = Entry.type

@@ -1,5 +1,5 @@
 import {Reference} from 'alinea/core/Reference'
-import {EntryReference} from 'alinea/picker/entry'
+import {EntryReference} from 'alinea/picker/entry/EntryReference'
 import {UrlReference} from 'alinea/picker/url'
 import type {HTMLProps} from 'react'
 

@@ -5,7 +5,6 @@ import {IcOutlineGridView} from 'alinea/ui/icons/IcOutlineGridView'
 import {IcOutlineList} from 'alinea/ui/icons/IcOutlineList'
 import {IcRoundSearch} from 'alinea/ui/icons/IcRoundSearch'
 import {useLayoutEffect, useMemo, useState} from 'react'
-import {useConfig} from '../hook/UseConfig.js'
 import {useFocusList} from '../hook/UseFocusList.js'
 import {useNav} from '../hook/UseNav.js'
 import {IconButton} from './IconButton.js'
@@ -15,7 +14,6 @@ import {Explorer} from './explorer/Explorer.js'
 const styles = fromModule(css)
 
 export function SearchBox() {
-  const {schema} = useConfig()
   const nav = useNav()
   const navigate = useNavigate()
   const location = useLocation()
@@ -80,7 +78,6 @@ export function SearchBox() {
         {isOpen && search && (
           <div className={styles.root.popover()}>
             <Explorer
-              schema={schema}
               cursor={cursor}
               type={explorerView}
               toggleSelect={entry => navigate(nav.entry(entry))}

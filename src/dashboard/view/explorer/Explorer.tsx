@@ -1,5 +1,5 @@
 import useSize from '@react-hook/size'
-import {EntryRow, Reference, Schema, View} from 'alinea/core'
+import {EntryRow, Reference, View} from 'alinea/core'
 import {Cursor} from 'alinea/core/pages/Cursor'
 import {Loader, fromModule} from 'alinea/ui'
 import {useAtomValue} from 'jotai'
@@ -7,6 +7,7 @@ import {useRef} from 'react'
 import {useQuery} from 'react-query'
 import VirtualList from 'react-tiny-virtual-list'
 import {graphAtom} from '../../atoms/EntryAtoms.js'
+import {useConfig} from '../../hook/UseConfig.js'
 import {ExplorerProvider} from '../../hook/UseExplorer.js'
 import {EntrySummaryRow, EntrySummaryThumb} from '../entry/EntrySummary.js'
 import css from './Explorer.module.scss'
@@ -20,7 +21,6 @@ const defaultSummaryView = {
 }
 
 export interface ExplorerProps {
-  schema: Schema
   cursor: Cursor.Find<EntryRow>
   type: 'row' | 'thumb'
   virtualized?: boolean
@@ -31,7 +31,6 @@ export interface ExplorerProps {
 }
 
 export function Explorer({
-  schema,
   type,
   cursor,
   virtualized,
@@ -40,6 +39,7 @@ export function Explorer({
   selection = [],
   toggleSelect = () => {}
 }: ExplorerProps) {
+  const {schema} = useConfig()
   const graph = useAtomValue(graphAtom)
   const {data, isLoading} = useQuery(
     ['explorer', type, cursor, max],

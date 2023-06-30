@@ -1,7 +1,6 @@
 import {createId} from 'alinea/core'
 import {Entry} from 'alinea/core/Entry'
 import {Reference} from 'alinea/core/Reference'
-import {useDashboard} from 'alinea/dashboard/hook/UseDashboard'
 import {useFocusList} from 'alinea/dashboard/hook/UseFocusList'
 import {useRoot} from 'alinea/dashboard/hook/UseRoot'
 import {useWorkspace} from 'alinea/dashboard/hook/UseWorkspace'
@@ -10,7 +9,6 @@ import {Modal} from 'alinea/dashboard/view/Modal'
 import {Explorer} from 'alinea/dashboard/view/explorer/Explorer'
 import {FileUploader} from 'alinea/dashboard/view/media/FileUploader'
 import {Picker, PickerProps} from 'alinea/editor/Picker'
-import {EntryReference} from 'alinea/picker/entry'
 import {
   Button,
   HStack,
@@ -33,6 +31,7 @@ import {
 } from './EntryPicker.js'
 import css from './EntryPicker.module.scss'
 import {EntryPickerRow} from './EntryPickerRow.js'
+import {EntryReference} from './EntryReference.js'
 
 export * from './EntryPicker.js'
 
@@ -61,7 +60,6 @@ export function EntryPickerModal({
   const [selected, setSelected] = useState<Array<Reference>>(
     () => selection || []
   )
-  const {schema} = useDashboard().config
   const {name: workspace} = useWorkspace()
   const {name: root} = useRoot()
   const cursor = useMemo(() => {
@@ -153,7 +151,6 @@ export function EntryPickerModal({
               <div className={styles.root.results()}>
                 <Explorer
                   virtualized
-                  schema={schema}
                   cursor={cursor}
                   type={view}
                   selectable

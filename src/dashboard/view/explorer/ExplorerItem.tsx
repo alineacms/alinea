@@ -1,6 +1,6 @@
 import {EntryRow, Schema, Type, View} from 'alinea/core'
 import {link} from 'alinea/dashboard/util/HashRouter'
-import {EntryReference} from 'alinea/picker/entry'
+import {EntryReference} from 'alinea/picker/entry/EntryReference'
 import {fromModule} from 'alinea/ui'
 import {IcRoundCheckBox} from 'alinea/ui/icons/IcRoundCheckBox'
 import {IcRoundCheckBoxOutlineBlank} from 'alinea/ui/icons/IcRoundCheckBoxOutlineBlank'
