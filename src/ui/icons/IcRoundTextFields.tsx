@@ -10,4 +10,3 @@ export function IcRoundTextFields(props: SVGProps<SVGSVGElement>) {
     </svg>
   )
 }
-export default IcRoundTextFields

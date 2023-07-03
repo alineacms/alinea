@@ -30,4 +30,6 @@ function MainRoot(
 
 const MainContainer = styles.container.toElement('div')
 
-export const Main = assign(forwardRef(MainRoot), {Container: MainContainer})
+export const Main = assign(forwardRef(MainRoot), {
+  Container: MainContainer
+})

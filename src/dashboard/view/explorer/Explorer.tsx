@@ -3,10 +3,10 @@ import {EntryRow, Reference, View} from 'alinea/core'
 import {Cursor} from 'alinea/core/pages/Cursor'
 import {Loader, fromModule} from 'alinea/ui'
 import {useAtomValue} from 'jotai'
-import {useRef} from 'react'
-import {useQuery} from 'react-query'
+import {useEffect, useRef} from 'react'
+import {useQuery, useQueryClient} from 'react-query'
 import VirtualList from 'react-tiny-virtual-list'
-import {graphAtom} from '../../atoms/EntryAtoms.js'
+import {changedEntriesAtom, graphAtom} from '../../atoms/EntryAtoms.js'
 import {useConfig} from '../../hook/UseConfig.js'
 import {ExplorerProvider} from '../../hook/UseExplorer.js'
 import {EntrySummaryRow, EntrySummaryThumb} from '../entry/EntrySummary.js'
@@ -41,6 +41,13 @@ export function Explorer({
 }: ExplorerProps) {
   const {schema} = useConfig()
   const graph = useAtomValue(graphAtom)
+
+  const queryClient = useQueryClient()
+  const changed = useAtomValue(changedEntriesAtom)
+  useEffect(() => {
+    queryClient.invalidateQueries('explorer')
+  }, [changed])
+
   const {data, isLoading} = useQuery(
     ['explorer', type, cursor, max],
     async () => {

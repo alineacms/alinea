@@ -7,12 +7,15 @@ const styles = fromModule(css)
 type LoaderProps = {
   light?: boolean
   absolute?: boolean
-  small?: boolean
+  size?: number
 } & HTMLAttributes<HTMLDivElement>
 
-export function Loader({light, absolute, small, ...props}: LoaderProps) {
+export function Loader({light, absolute, size = 16, ...props}: LoaderProps) {
   return (
-    <div className={styles.loader.mergeProps(props)({small, absolute})}>
+    <div
+      style={{fontSize: size}}
+      className={styles.loader.mergeProps(props)({absolute})}
+    >
       <div
         {...props}
         className={styles.loader.inner()}

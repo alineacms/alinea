@@ -1,0 +1,39 @@
+.root {
+  height: 100%;
+  min-width: 0;
+  font-size: 13px;
+  padding: 0 4px;
+
+  &-preview {
+    width: 34px;
+    height: 34px;
+    background: hsla(var(--alinea-negative), 0.05);
+    flex-shrink: 0;
+    overflow: hidden;
+    border-radius: 6px;
+    display: flex;
+
+    &-image {
+      display: block;
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: cover;
+      object-position: center center;
+      margin: auto;
+    }
+
+    &-icon {
+      display: block;
+      margin: auto;
+      opacity: 0.4;
+    }
+  }
+
+  &-status {
+    width: 40px;
+    display: flex;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 18px;
+  }
+}

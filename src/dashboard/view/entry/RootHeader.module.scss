@@ -1,5 +1,5 @@
 .root {
-  padding: 1px 6px;
+  padding: 1px 12px;
 
   &-inner {
     position: relative;
@@ -27,12 +27,13 @@
     align-items: center;
   }
 
-  &.is-active &-inner {
-    background: var(--alinea-selected);
-  }
-
   &:hover &-inner {
     background: var(--alinea-highlight);
+  }
+
+  &.is-active &-inner {
+    background: var(--alinea-selected);
+    color: var(--alinea-button-hover);
   }
 }
 

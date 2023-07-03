@@ -1,6 +1,6 @@
 import {Type} from 'alinea/core'
 import {renderLabel} from 'alinea/core/Label'
-import {Chip, fromModule, HStack, Typo} from 'alinea/ui'
+import {Chip, fromModule, HStack} from 'alinea/ui'
 import {IcRoundArrowBack} from 'alinea/ui/icons/IcRoundArrowBack'
 import {useAtomValue} from 'jotai'
 import {EntryEditor} from '../../atoms/EntryEditor.js'
@@ -34,9 +34,9 @@ export function EntryTitle({editor, backLink}: EntryTitleProps) {
       <div className={styles.root()}>
         <HStack center gap={18}>
           {backLink && <IconLink icon={IcRoundArrowBack} href={backLink} />}
-          <Typo.H1 flat style={{position: 'relative'}}>
+          <h1 className={styles.root.title()}>
             <span>{title}</span>
-          </Typo.H1>
+          </h1>
           <Chip>{renderLabel(Type.label(type))}</Chip>
           {/*<IconButton icon={MdOutlineMoreHoriz} />*/}
         </HStack>

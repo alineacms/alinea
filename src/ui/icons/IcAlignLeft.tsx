@@ -10,4 +10,3 @@ export function IcAlignLeft(props: SVGProps<SVGSVGElement>) {
     </svg>
   )
 }
-export default IcAlignLeft

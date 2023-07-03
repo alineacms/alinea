@@ -90,7 +90,7 @@
 
 .root {
   @include dark-theme;
-  --alinea-border-radius: 8px;
+  --alinea-border-radius: 6px;
   --alinea-header-height: 46px;
   color: var(--alinea-foreground);
   font-size: 14px;

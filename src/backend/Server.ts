@@ -133,9 +133,9 @@ export class Server implements Connection {
     const entry: Media.File = {
       entryId,
       type: 'MediaFile',
-      url: file.path.toLowerCase(),
+      url: (parent ? parent.url : '/') + file.path.toLowerCase(),
       title: basename(file.path, extension),
-      path: basename(file.path),
+      path: basename(file.path.toLowerCase()),
       parent: parentId ?? null,
       workspace,
       root,
@@ -156,7 +156,7 @@ export class Server implements Connection {
       main: true,
       data: {
         location,
-        extension: extension,
+        extension: extension.toLowerCase(),
         size: file.buffer.byteLength,
         hash: contentHash,
         width: file.width,

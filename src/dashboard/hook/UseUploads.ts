@@ -5,28 +5,26 @@ import {base64} from 'alinea/core/util/Encoding'
 import {rgba, toHex} from 'color2k'
 import pLimit from 'p-limit'
 import {useState} from 'react'
-import {useQueryClient} from 'react-query'
 import {rgbaToThumbHash, thumbHashToAverageRGBA} from 'thumbhash'
 import {useSession} from './UseSession.js'
 
-const enum UploadStatus {
+export enum UploadStatus {
   Queued,
   CreatingPreview,
   Uploading,
   Done
 }
 
-type Destination = {
-  id: string
+export interface UploadDestination {
+  parentId?: string
   workspace: string
   root: string
-  url: string
 }
 
 type Upload = {
   id: string
   file: File
-  to: Destination
+  to: UploadDestination
   status: UploadStatus
   preview?: string
   averageColor?: string
@@ -108,10 +106,9 @@ async function process(upload: Upload, cnx: Connection): Promise<Upload> {
     case UploadStatus.Uploading: {
       const {to, file, preview, averageColor, thumbHash, width, height} = upload
       const buffer = await file.arrayBuffer()
-      const path = (to.url === '/' ? '' : to.url) + '/' + file.name
+      const path = file.name
       const result = await cnx.uploadFile({
         ...to,
-        parentId: to.id,
         path,
         buffer,
         preview,
@@ -127,18 +124,15 @@ async function process(upload: Upload, cnx: Connection): Promise<Upload> {
   }
 }
 
-export function useUploads(onSelect: (entry: EntryRow) => void) {
+export function useUploads(onSelect?: (entry: EntryRow) => void) {
   const {cnx: hub} = useSession()
   const [uploads, setUploads] = useState<Array<Upload>>([])
-  const queryClient = useQueryClient()
 
-  async function uploadFile(file: File, to: Destination) {
-    let upload = {id: createId(), file, to, status: UploadStatus.Queued}
-    console.log(upload)
+  async function uploadFile(upload: Upload) {
     function update(upload: Upload) {
       setUploads(current => {
         const index = current.findIndex(u => u.id === upload.id)
-        if (index === -1) return current.concat(upload)
+        if (index === -1) throw new Error('assert')
         const result = current.slice()
         result[index] = upload
         return result
@@ -148,8 +142,7 @@ export function useUploads(onSelect: (entry: EntryRow) => void) {
       const next = await tasker[upload.status](() => process(upload, hub))
       update(next)
       if (next.status === UploadStatus.Done) {
-        queryClient.invalidateQueries('explorer')
-        onSelect(next.result!)
+        onSelect?.(next.result!)
         break
       } else {
         upload = next
@@ -157,8 +150,12 @@ export function useUploads(onSelect: (entry: EntryRow) => void) {
     }
   }
 
-  async function upload(files: FileList, to: Destination) {
-    return Promise.all(Array.from(files).map(file => uploadFile(file, to)))
+  async function upload(files: FileList, to: UploadDestination) {
+    const uploads = Array.from(files).map(file => {
+      return {id: createId(), file, to, status: UploadStatus.Queued}
+    })
+    setUploads(current => [...uploads, ...current])
+    return Promise.all(uploads.map(uploadFile))
   }
 
   return {upload, uploads}

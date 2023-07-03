@@ -109,6 +109,8 @@ function createRouter(
         const api = createApi(ctx)
         const workspace = String(body.get('workspace'))
         const root = String(body.get('root'))
+        const castOrUndefined = <T>(cast: (x: unknown) => T, value: unknown) =>
+          value !== null ? cast(value) : undefined
         return ctx.logger.result(
           api.uploadFile({
             workspace,
@@ -116,11 +118,11 @@ function createRouter(
             buffer: await (body.get('buffer') as File).arrayBuffer(),
             parentId: String(body.get('parentId')) || undefined,
             path: String(body.get('path')),
-            preview: String(body.get('preview')),
-            averageColor: String(body.get('averageColor')),
-            thumbHash: String(body.get('thumbHash')),
-            width: Number(body.get('width')),
-            height: Number(body.get('height'))
+            preview: castOrUndefined(String, body.get('preview')),
+            averageColor: castOrUndefined(String, body.get('averageColor')),
+            thumbHash: castOrUndefined(String, body.get('thumbHash')),
+            width: castOrUndefined(Number, body.get('width')),
+            height: castOrUndefined(Number, body.get('height'))
           })
         )
       })

@@ -1,3 +1,5 @@
+@import 'alinea/ui/style.scss';
+
 .root {
   display: flex;
   flex-direction: column;
@@ -7,12 +9,15 @@
     flex-grow: 1;
     display: flex;
     flex-direction: column;
-    min-height: 0;
 
     &-header {
-      padding: 0 35px;
-      padding-top: 35px;
+      padding-bottom: 35px;
     }
+  }
+
+  &-title {
+    font-size: 28px;
+    font-weight: 600;
   }
 
   &-list {

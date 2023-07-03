@@ -3,7 +3,7 @@ import {Projection} from 'alinea/core/pages/Projection'
 import {generateKeyBetween} from 'alinea/core/util/FractionalIndexing'
 import {entries, fromEntries, keys} from 'alinea/core/util/Objects'
 import {useDashboard} from 'alinea/dashboard/hook/UseDashboard'
-import {useNavigate} from 'alinea/dashboard/util/HashRouter'
+import {useLocation, useNavigate} from 'alinea/dashboard/util/HashRouter'
 import {Modal} from 'alinea/dashboard/view/Modal'
 import {useField} from 'alinea/editor'
 import {InputField} from 'alinea/editor/view/InputField'
@@ -56,6 +56,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
     (Type.isContainer(schema[requestedParent.type])
       ? requestedParent.id
       : requestedParent.parent)
+  const {pathname} = useLocation()
   const nav = useNav()
   const navigate = useNavigate()
   const locale = useLocale()
@@ -181,10 +182,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
           <InputField {...titleField} />
           <InputField {...selectedType} />
           <div className={styles.root.footer()}>
-            <Link
-              href={nav.entry({workspace, ...parent})}
-              className={styles.root.footer.link()}
-            >
+            <Link href={pathname} className={styles.root.footer.link()}>
               Cancel
             </Link>
             <Button>Create</Button>

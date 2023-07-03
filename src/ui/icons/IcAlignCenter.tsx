@@ -10,4 +10,3 @@ export function IcAlignCenter(props: SVGProps<SVGSVGElement>) {
     </svg>
   )
 }
-export default IcAlignCenter

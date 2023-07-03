@@ -9,10 +9,11 @@
   }
 
   &-create {
-    padding: 10px 16px;
+    padding: 0 16px;
     display: flex;
     justify-content: flex-end;
     border-top: 1px solid var(--alinea-outline);
+    height: var(--alinea-header-height);
 
     &-button {
       font-weight: 600;

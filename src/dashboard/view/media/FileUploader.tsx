@@ -1,143 +1,136 @@
 import {Entry} from 'alinea/core/Entry'
-import {MediaLibrary} from 'alinea/core/media/MediaSchema'
-import {InputField} from 'alinea/editor/view/InputField'
-import {select} from 'alinea/input/select'
-import {Typo, VStack, fromModule, px} from 'alinea/ui'
-import {IcRoundUploadFile} from 'alinea/ui/icons/IcRoundUploadFile'
-import {useAtomValue} from 'jotai'
-import {ChangeEvent, DragEvent, useRef, useState} from 'react'
-import {useQuery} from 'react-query'
-import {graphAtom} from '../../atoms/EntryAtoms.js'
-import {useUploads} from '../../hook/UseUploads.js'
-import {useWorkspace} from '../../hook/UseWorkspace.js'
-import {FileSummaryRow} from './FileSummary.js'
+import {HStack, Icon, VStack, fromModule} from 'alinea/ui'
+import {IcOutlineCloudUpload} from 'alinea/ui/icons/IcOutlineCloudUpload'
+import {IcRoundKeyboardArrowDown} from 'alinea/ui/icons/IcRoundKeyboardArrowDown'
+import {IcRoundKeyboardArrowUp} from 'alinea/ui/icons/IcRoundKeyboardArrowUp'
+import {ChangeEvent, useEffect, useState} from 'react'
+import {
+  UploadDestination,
+  UploadStatus,
+  useUploads
+} from '../../hook/UseUploads.js'
+import {FileUploadRow} from './FileUploadRow.js'
 import css from './FileUploader.module.scss'
 
 const styles = fromModule(css)
 
-type FileUploaderProps = {
+export interface FileUploaderProps {
+  destination: UploadDestination
   max?: number
-  toggleSelect: (id: Entry) => void
+  toggleSelect?: (id: Entry) => void
 }
 
-export function FileUploader({max, toggleSelect}: FileUploaderProps) {
-  const {name: workspace} = useWorkspace()
+export function FileUploader({
+  destination,
+  max,
+  toggleSelect
+}: FileUploaderProps) {
   const {upload, uploads} = useUploads(toggleSelect)
-  const dropZone = useRef<HTMLDivElement>(null)
   const [isOver, setIsOver] = useState(false)
-  const graph = useAtomValue(graphAtom)
-  const {data: libraries = []} = useQuery(
-    ['media-libraries', workspace],
-    () => {
-      return graph.active.find(
-        MediaLibrary()
-          .where(Entry.workspace.is(workspace))
-          .select({
-            id: Entry.entryId,
-            title: MediaLibrary.title,
-            workspace: Entry.workspace,
-            root: Entry.root,
-            url: Entry.url,
-            parents({parents}) {
-              return parents().select({
-                entryId: Entry.entryId,
-                title: Entry.title
-              })
-            }
-          })
-      )
-    }
-  )
-  const [uploadTo = libraries?.[0]?.id, setUploadTo] = useState<
-    string | undefined
-  >()
-  function handleDragEnter(event: DragEvent<HTMLDivElement>) {
-    setIsOver(true)
-  }
-  function handleDragLeave(event: DragEvent<HTMLDivElement>) {
-    if (event.target !== dropZone.current) return
-    if (dropZone.current!.contains(event.relatedTarget as HTMLElement)) return
-    setIsOver(false)
-  }
-  function handleDragOver(event: DragEvent<HTMLDivElement>) {
-    event.preventDefault()
-  }
-  function handleDrop(event: DragEvent<HTMLDivElement>) {
-    event.preventDefault()
-    const files = event.dataTransfer.files
-    setIsOver(false)
-    uploadFiles(files)
+  const isUploading = uploads.length > 0
+  const uploadsDone = uploads.filter(
+    upload => upload.status === UploadStatus.Done
+  ).length
+  const isFinished = uploadsDone === uploads.length
+  const todo = uploads.length - uploadsDone
+  const [showUploads, setShowUploads] = useState(true)
+  function uploadFiles(files: FileList) {
+    return upload(files, destination)
   }
   function handleFileInput(event: ChangeEvent<HTMLInputElement>) {
     const {files} = event.target
-    if (files) uploadFiles(files)
+    if (files) return uploadFiles(files)
   }
-  function uploadFiles(files: FileList) {
-    const mediaLibraryMediaLibrary = libraries?.find(l => l.id === uploadTo)
-    if (mediaLibraryMediaLibrary) upload(files, mediaLibraryMediaLibrary)
-  }
+  const description = isUploading
+    ? isFinished
+      ? `${uploadsDone} upload${uploadsDone > 1 ? 's' : ''} complete`
+      : `uploading ${todo} file${todo > 1 ? 's' : ''}`
+    : 'Upload files'
+  useEffect(() => {
+    const {body} = document
+    let eventTarget: EventTarget | null
+    function handleDragEnter(event: DragEvent) {
+      eventTarget = event.target
+      setIsOver(true)
+    }
+    function handleDragOver(event: DragEvent) {
+      event.preventDefault()
+    }
+    function handleDragLeave(event: DragEvent) {
+      if (event.target === eventTarget) setIsOver(false)
+    }
+    function handleDrop(event: DragEvent) {
+      event.preventDefault()
+      setIsOver(false)
+      const files = event.dataTransfer?.files
+      if (files) uploadFiles(files)
+    }
+    body.addEventListener('dragenter', handleDragEnter)
+    body.addEventListener('dragover', handleDragOver)
+    body.addEventListener('dragleave', handleDragLeave)
+    body.addEventListener('drop', handleDrop)
+    return () => {
+      body.removeEventListener('dragenter', handleDragEnter)
+      body.removeEventListener('dragover', handleDragOver)
+      body.removeEventListener('dragleave', handleDragLeave)
+      body.removeEventListener('drop', handleDrop)
+    }
+  }, [destination])
   return (
-    <VStack
-      ref={dropZone}
-      className={styles.root({over: isOver})}
-      onDragEnter={handleDragEnter}
-      onDragLeave={handleDragLeave}
-      onDragOver={handleDragOver}
-      onDrop={handleDrop}
-    >
-      <div className={styles.root.uploads()}>
-        {uploads.map(upload => {
-          const mediaLibrary = libraries?.find(l => l.id === upload.to.id)
-          // Todo: show upload progress
-          return (
-            <FileSummaryRow
-              key={upload.id}
-              entryId={upload.id}
-              type={'MediaLibrary'}
-              title={upload.file.name}
-              extension={upload.file.name.split('.').pop()!}
-              size={upload.file.size}
-              workspace={upload.to.workspace}
-              root={upload.to.root}
-              preview={upload.preview!}
-              averageColor={upload.averageColor!}
-              parents={mediaLibrary!.parents.concat({
-                entryId: mediaLibrary!.id,
-                title: mediaLibrary!.title
-              })}
+    <div className={styles.root({over: isOver})}>
+      <VStack className={styles.root.content()}>
+        <HStack as="header" className={styles.root.header()}>
+          <label className={styles.root.header.label()}>
+            <input
+              type="file"
+              className={styles.root.header.label.input()}
+              multiple={max !== 1}
+              onChange={handleFileInput}
             />
-          )
-        })}
-      </div>
-      <VStack center className={styles.root.desc()}>
-        <IcRoundUploadFile style={{fontSize: px(30)}} />
-        <Typo.P as="label" className={styles.root.desc.label()}>
-          <input
-            type="file"
-            className={styles.root.desc.label.input()}
-            multiple={max !== 1}
-            onChange={handleFileInput}
-          />
-          <Typo.Link className={styles.root.desc.label.link()}>
-            Browse files
-          </Typo.Link>{' '}
-          or drag and drop to start uploading
-        </Typo.P>
-      </VStack>
-      <footer className={styles.root.footer()}>
-        <InputField
-          value={uploadTo}
-          onChange={setUploadTo}
-          field={select(
-            'Upload to',
-            Object.fromEntries(
-              libraries!.map(mediaLibrary => {
-                return [mediaLibrary.id, mediaLibrary.title as string]
-              })
-            )
+            <HStack center gap={8}>
+              <Icon icon={IcOutlineCloudUpload} size={17} />
+              <span>{description}</span>
+            </HStack>
+          </label>
+
+          {isUploading && (
+            <button
+              onClick={() => setShowUploads(!showUploads)}
+              className={styles.root.header.close()}
+            >
+              <Icon
+                icon={
+                  showUploads
+                    ? IcRoundKeyboardArrowDown
+                    : IcRoundKeyboardArrowUp
+                }
+                size={18}
+              />
+            </button>
           )}
-        />
-      </footer>
-    </VStack>
+        </HStack>
+
+        {showUploads && (
+          <div className={styles.root.uploads()}>
+            {uploads.map(upload => {
+              // Todo: show upload progress
+              return (
+                <div className={styles.root.uploads.row()}>
+                  <FileUploadRow
+                    key={upload.id}
+                    title={upload.file.name}
+                    extension={upload.file.name.split('.').pop()!}
+                    size={upload.file.size}
+                    preview={upload.preview!}
+                    averageColor={upload.averageColor!}
+                    status={upload.status}
+                  />
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </VStack>
+    </div>
   )
 }

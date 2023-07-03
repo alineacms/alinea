@@ -2,7 +2,7 @@ import {renderLabel} from 'alinea/core'
 import {RootData} from 'alinea/core/Root'
 import {Icon, TextLabel, Typo, fromModule} from 'alinea/ui'
 import {Main} from 'alinea/ui/Main'
-import {IcRoundInsertDriveFile} from 'alinea/ui/icons/IcRoundInsertDriveFile'
+import {IcOutlineInsertDriveFile} from 'alinea/ui/icons/IcOutlineInsertDriveFile'
 import {Head} from '../util/Head.js'
 import css from './RootOverview.module.scss'
 
@@ -21,7 +21,7 @@ export function RootOverview({root}: RootOverviewProps) {
       <Main>
         <div className={styles.root()}>
           <Icon
-            icon={root.icon || IcRoundInsertDriveFile}
+            icon={root.icon || IcOutlineInsertDriveFile}
             className={styles.root.icon()}
           />
           <Typo.H1>

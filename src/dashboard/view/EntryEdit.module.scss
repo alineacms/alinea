@@ -5,11 +5,11 @@
   flex-direction: column;
 
   &-draft {
+    max-width: 1024px;
     padding: 12px;
     @include ml {
       padding: 35px 45px;
     }
-    max-width: 1024px;
     width: 100%;
     margin: 0 auto;
     flex-grow: 1;

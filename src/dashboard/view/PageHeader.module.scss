@@ -1,0 +1,12 @@
+.root {
+  position: relative;
+  z-index: 1;
+  background: var(--alinea-background);
+  box-shadow: 0 2px 3.5px var(--alinea-shadow);
+}
+
+.content {
+  padding: 10px 20px;
+  height: var(--alinea-header-height);
+  border-bottom: 1px solid var(--alinea-outline);
+}

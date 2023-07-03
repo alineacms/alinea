@@ -2,7 +2,7 @@ import {EntryPhase, Type} from 'alinea/core'
 import {Icon, px} from 'alinea/ui'
 import {IcOutlineInsertDriveFile} from 'alinea/ui/icons/IcOutlineInsertDriveFile'
 import {IcRoundEdit} from 'alinea/ui/icons/IcRoundEdit'
-import IcRoundKeyboardArrowDown from 'alinea/ui/icons/IcRoundKeyboardArrowDown'
+import {IcRoundKeyboardArrowDown} from 'alinea/ui/icons/IcRoundKeyboardArrowDown'
 import {IcRoundKeyboardArrowRight} from 'alinea/ui/icons/IcRoundKeyboardArrowRight'
 import {Tree, UncontrolledTreeEnvironment} from 'react-complex-tree'
 import {

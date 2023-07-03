@@ -29,7 +29,7 @@ export interface Connection extends Syncable {
 
 export namespace Connection {
   export type UploadParams = {
-    parentId: string | undefined
+    parentId?: string
     workspace: string
     root: string
     path: string
