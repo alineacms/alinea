@@ -2,6 +2,7 @@ import {useField} from 'alinea/editor'
 import {InputField} from 'alinea/editor/view/InputField'
 import {select} from 'alinea/input/select'
 import {VStack} from 'alinea/ui'
+import {UIStory} from 'alinea/ui/UIStory'
 
 const options = {
   1: 'Option 1',
@@ -14,10 +15,12 @@ export function SelectInput() {
     select('Select (read-only)', options, {readonly: true, initialValue: '1'})
   )
   return (
-    <VStack>
-      <InputField {...selectField} />
-      <InputField {...readonlySelectField} />
-    </VStack>
+    <UIStory>
+      <VStack>
+        <InputField {...selectField} />
+        <InputField {...readonlySelectField} />
+      </VStack>
+    </UIStory>
   )
 }
 

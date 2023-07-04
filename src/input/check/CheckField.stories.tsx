@@ -2,6 +2,7 @@ import {useField} from 'alinea/editor'
 import {InputField} from 'alinea/editor/view/InputField'
 import {check} from 'alinea/input/check'
 import {VStack} from 'alinea/ui'
+import {UIStory} from 'alinea/ui/UIStory'
 
 export function CheckInput() {
   const checkField = useField(check('Check', {inline: true}))
@@ -15,12 +16,14 @@ export function CheckInput() {
     check('Check (read-only)', {inline: true, readonly: true})
   )
   return (
-    <VStack>
-      <InputField {...checkField} />
-      <InputField {...focusedCheckField} />
-      <InputField {...checkedCheckField} />
-      <InputField {...readonlyCheckField} />
-    </VStack>
+    <UIStory>
+      <VStack>
+        <InputField {...checkField} />
+        <InputField {...focusedCheckField} />
+        <InputField {...checkedCheckField} />
+        <InputField {...readonlyCheckField} />
+      </VStack>
+    </UIStory>
   )
 }
 

@@ -67,7 +67,7 @@
     "@esbx/static": "^0.0.19",
     "@esbx/target": "^0.0.20",
     "@esbx/workspaces": "^0.0.19",
-    "@ladle/react": "^2.0.2",
+    "@ladle/react": "^2.15.0",
     "@types/fs-extra": "^11.0.1",
     "@types/glob": "^7.1.4",
     "@types/node": "20.0.0",

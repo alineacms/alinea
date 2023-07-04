@@ -3,11 +3,11 @@ import {ErrorBoundary} from 'alinea/dashboard/view/ErrorBoundary'
 import {InputState} from 'alinea/editor'
 import {TextLabel} from 'alinea/ui'
 
-interface MissingViewProps {
+export interface MissingViewProps {
   field: Field<any, any>
 }
 
-function MissingView({field}: MissingViewProps) {
+export function MissingView({field}: MissingViewProps) {
   return (
     <div>
       Missing view for field: <TextLabel label={field[Field.Data].label} />

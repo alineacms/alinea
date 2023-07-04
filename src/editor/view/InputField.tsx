@@ -1,5 +1,6 @@
 import {Field} from 'alinea/core/Field'
 import {InputState} from '../InputState.js'
+import {MissingView} from './Input.js'
 
 export interface InputFieldBase<V, M> {
   field: Field<V, M>
@@ -23,6 +24,7 @@ export function InputField<V, M>({field, ...rest}: InputFieldProps<V, M>) {
     'value' in rest
       ? new InputState.StatePair(rest.value, rest.onChange)
       : rest.state
-  const View = Field.view(field)!
+  const View = Field.view(field)
+  if (!View) return <MissingView field={field} />
   return <View field={field} state={state} />
 }

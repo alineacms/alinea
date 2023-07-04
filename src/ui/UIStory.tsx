@@ -1,6 +1,6 @@
-// import 'alinea/css'
 import {Viewport} from 'alinea/dashboard/view/Viewport'
 import {FunctionComponent, PropsWithChildren} from 'react'
+import '../global.css'
 import {px} from './util/Units.js'
 
 export interface UIStoryProps extends PropsWithChildren<{}> {

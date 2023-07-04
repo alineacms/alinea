@@ -2,6 +2,7 @@ import {useField} from 'alinea/editor'
 import {InputField} from 'alinea/editor/view/InputField'
 import {date} from 'alinea/input/date'
 import {VStack} from 'alinea/ui'
+import {UIStory} from 'alinea/ui/UIStory'
 
 export function DateInput() {
   const dateField = useField(date('Date', {}))
@@ -10,11 +11,13 @@ export function DateInput() {
     date('Date (read-only)', {readonly: true, initialValue: '1900-01-01'})
   )
   return (
-    <VStack>
-      <InputField {...dateField} />
-      <InputField {...focusedDateField} />
-      <InputField {...readonlyDateField} />
-    </VStack>
+    <UIStory>
+      <VStack>
+        <InputField {...dateField} />
+        <InputField {...focusedDateField} />
+        <InputField {...readonlyDateField} />
+      </VStack>
+    </UIStory>
   )
 }
 

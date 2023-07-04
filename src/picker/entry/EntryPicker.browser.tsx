@@ -62,6 +62,10 @@ export function EntryPickerModal({
   )
   const {name: workspace} = useWorkspace()
   const {name: root} = useRoot()
+  const destination = {
+    workspace,
+    root
+  }
   const cursor = useMemo(() => {
     const terms = search.replace(/,/g, ' ').split(' ').filter(Boolean)
     const defaultCondition = Entry.workspace
@@ -144,7 +148,11 @@ export function EntryPickerModal({
           style={{flexGrow: 1, padding: `${px(16)} 0`, minHeight: 0}}
         >
           {!search && showUploader && (
-            <FileUploader max={max} toggleSelect={handleSelect} />
+            <FileUploader
+              destination={destination}
+              max={max}
+              toggleSelect={handleSelect}
+            />
           )}
           <VStack style={{flexGrow: 1, minHeight: 0}}>
             <list.Container>

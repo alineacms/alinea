@@ -2,6 +2,7 @@ import {useField} from 'alinea/editor'
 import {InputField} from 'alinea/editor/view/InputField'
 import {code} from 'alinea/input/code'
 import {VStack} from 'alinea/ui'
+import {UIStory} from 'alinea/ui/UIStory'
 
 export function CodeInput() {
   const codeField = useField(code('Code'))
@@ -12,10 +13,12 @@ export function CodeInput() {
     })
   )
   return (
-    <VStack>
-      <InputField {...codeField} />
-      <InputField {...disabledCodeField} />
-    </VStack>
+    <UIStory>
+      <VStack>
+        <InputField {...codeField} />
+        <InputField {...disabledCodeField} />
+      </VStack>
+    </UIStory>
   )
 }
 

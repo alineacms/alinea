@@ -1,4 +1,4 @@
-import {uiDecorator, UIStory} from 'alinea/ui/UIStory'
+import {UIStory} from 'alinea/ui/UIStory'
 import {useState} from 'react'
 import {UrlPickerForm} from './UrlPicker.browser.js'
 
@@ -18,6 +18,5 @@ export function PickerForm() {
 }
 
 export default {
-  title: 'Pickers / Url',
-  decorators: uiDecorator()
+  title: 'Pickers / Url'
 }

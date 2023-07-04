@@ -2,6 +2,7 @@ import {TextDoc} from 'alinea/core'
 import {useField} from 'alinea/editor'
 import {InputField} from 'alinea/editor/view/InputField'
 import {richText} from 'alinea/input/richtext'
+import {UIStory} from 'alinea/ui/UIStory'
 
 const lipsumDoc: TextDoc = [
   {
@@ -76,7 +77,11 @@ export function Example() {
       initialValue: lipsumDoc
     })
   )
-  return <InputField {...richTextField} />
+  return (
+    <UIStory>
+      <InputField {...richTextField} />
+    </UIStory>
+  )
 }
 
 export default {

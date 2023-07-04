@@ -2,6 +2,7 @@ import {useField} from 'alinea/editor'
 import {InputField} from 'alinea/editor/view/InputField'
 import {number} from 'alinea/input/number'
 import {VStack} from 'alinea/ui'
+import {UIStory} from 'alinea/ui/UIStory'
 
 export function numberInput() {
   const numberField = useField(number('Number'))
@@ -9,10 +10,12 @@ export function numberInput() {
     number('Number (read-only)', {readonly: true, initialValue: 0})
   )
   return (
-    <VStack>
-      <InputField {...numberField} />
-      <InputField {...readonlyNumberField} />
-    </VStack>
+    <UIStory>
+      <VStack>
+        <InputField {...numberField} />
+        <InputField {...readonlyNumberField} />
+      </VStack>
+    </UIStory>
   )
 }
 

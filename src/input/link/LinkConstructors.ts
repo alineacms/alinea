@@ -115,7 +115,6 @@ export namespace link {
             package: 'alinea/picker/entry'
           }),
           title: 'Select a page',
-          max: 1,
           selection: entryFields
         }),
         url: urlPicker<Fields>(options)
