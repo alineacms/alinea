@@ -4,7 +4,7 @@ import {date} from 'alinea/input/date'
 import {VStack} from 'alinea/ui'
 import {UIStory} from 'alinea/ui/UIStory'
 
-export function DateInput() {
+export function DateField() {
   const dateField = useField(date('Date', {}))
   const focusedDateField = useField(date('Date', {autoFocus: true}))
   const readonlyDateField = useField(

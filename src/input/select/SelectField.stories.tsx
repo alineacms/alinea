@@ -9,7 +9,7 @@ const options = {
   2: 'Option 2'
 } as const
 
-export function SelectInput() {
+export function SelectField() {
   const selectField = useField(select('Select', options))
   const readonlySelectField = useField(
     select('Select (read-only)', options, {readonly: true, initialValue: '1'})

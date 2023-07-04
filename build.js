@@ -302,6 +302,7 @@ function jsEntry({watch, test}) {
             fsExtra.copySync(folder, target)
           }
           const files = glob.sync('src/**/*.{ts,tsx}').filter(file => {
+            if (file.endsWith('UIStory.tsx')) return false
             if (!test && file.endsWith('.test.ts')) return false
             return !file.endsWith('.d.ts') && !file.endsWith('.stories.tsx')
           })

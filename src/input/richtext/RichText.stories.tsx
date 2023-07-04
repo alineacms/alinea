@@ -71,7 +71,7 @@ const lipsumDoc: TextDoc = [
   }
 ]
 
-export function Example() {
+export function RichTextField() {
   const richTextField = useField(
     richText('Rich text example', {
       initialValue: lipsumDoc

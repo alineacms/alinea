@@ -6,7 +6,7 @@ import {text} from 'alinea/input/text'
 import {VStack} from 'alinea/ui'
 import {UIStory} from 'alinea/ui/UIStory'
 
-export function InputStory() {
+export function LinkField() {
   const entryLink = useField(link.entry('Entry link', {}))
   const multipleEntryLink = useField(
     link.entry.multiple('Multiple entry links', {})

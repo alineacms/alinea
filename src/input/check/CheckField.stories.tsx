@@ -4,7 +4,7 @@ import {check} from 'alinea/input/check'
 import {VStack} from 'alinea/ui'
 import {UIStory} from 'alinea/ui/UIStory'
 
-export function CheckInput() {
+export function CheckField() {
   const checkField = useField(check('Check', {inline: true}))
   const focusedCheckField = useField(
     check('Check (autofocus)', {inline: true, autoFocus: true})

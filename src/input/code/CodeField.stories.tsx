@@ -4,7 +4,7 @@ import {code} from 'alinea/input/code'
 import {VStack} from 'alinea/ui'
 import {UIStory} from 'alinea/ui/UIStory'
 
-export function CodeInput() {
+export function CodeField() {
   const codeField = useField(code('Code'))
   const disabledCodeField = useField(
     code('Code (read-only)', {

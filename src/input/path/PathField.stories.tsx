@@ -4,7 +4,7 @@ import {path} from 'alinea/input/path'
 import {VStack} from 'alinea/ui'
 import {UIStory} from 'alinea/ui/UIStory'
 
-export function PathInput() {
+export function PathField() {
   const pathField = useField(path('Path'))
   return (
     <UIStory>
