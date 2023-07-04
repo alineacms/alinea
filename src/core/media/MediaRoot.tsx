@@ -13,14 +13,23 @@ type MediaRoot = Root<{
   }>
 }>
 
-export const mediaRoot: MediaRoot = root('Media', {
-  media: page(
-    MediaLibrary({
-      title: 'Media library'
-    })
-  ),
-  [Meta]: {
-    icon: IcRoundPermMedia,
-    contains: ['MediaLibrary']
-  }
-})
+const mediaRoot = Symbol()
+
+export function isMediaRoot(root: any): root is MediaRoot {
+  return Boolean(root[mediaRoot])
+}
+
+export function createMediaRoot(): MediaRoot {
+  return root('Media', {
+    media: page(
+      MediaLibrary({
+        title: 'Media library'
+      })
+    ),
+    [Meta]: {
+      icon: IcRoundPermMedia,
+      contains: ['MediaLibrary']
+    },
+    [mediaRoot]: true
+  })
+}

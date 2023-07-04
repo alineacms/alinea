@@ -5,7 +5,7 @@ import IcRoundPermMedia from 'alinea/ui/icons/IcRoundPermMedia'
 import {Meta} from '../Meta.js'
 import {PageSeed} from '../Page.js'
 import {Root, root} from '../Root.js'
-import {mediaRoot as mediaRootConfig} from './MediaRoot.js'
+import {createMediaRoot as createMediaRootConfig} from './MediaRoot.js'
 
 type MediaRoot = Root<{
   media: PageSeed<{
@@ -14,11 +14,13 @@ type MediaRoot = Root<{
   }>
 }>
 
-export const mediaRoot: MediaRoot = root('Media', {
-  media: mediaRootConfig.media,
-  [Meta]: {
-    icon: IcRoundPermMedia,
-    contains: ['MediaLibrary'],
-    view: MediaExplorer
-  }
-})
+export function createMediaRoot(): MediaRoot {
+  return root('Media', {
+    media: createMediaRootConfig().media,
+    [Meta]: {
+      icon: IcRoundPermMedia,
+      contains: ['MediaLibrary'],
+      view: MediaExplorer
+    }
+  })
+}

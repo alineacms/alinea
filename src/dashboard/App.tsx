@@ -1,5 +1,4 @@
-import {Config, Root, renderLabel} from 'alinea/core'
-import {Client} from 'alinea/core/Client'
+import {Config, Connection, Root, renderLabel} from 'alinea/core'
 import {Icon, Loader} from 'alinea/ui'
 import {FavIcon} from 'alinea/ui/branding/FavIcon'
 import {IcOutlineInsertDriveFile} from 'alinea/ui/icons/IcOutlineInsertDriveFile'
@@ -151,7 +150,7 @@ const QueryClientProvider: any = ReactQueryClientProvider
 
 export interface AppProps {
   config: Config
-  client: Client
+  client: Connection
   queryClient?: QueryClient
   fullPage?: boolean
   dev?: boolean

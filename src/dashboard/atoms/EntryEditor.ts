@@ -1,5 +1,6 @@
 import {
   Config,
+  Connection,
   EntryPhase,
   Field,
   ROOT_KEY,
@@ -7,7 +8,6 @@ import {
   createYDoc,
   parseYDoc
 } from 'alinea/core'
-import {Client} from 'alinea/core/Client'
 import {Entry} from 'alinea/core/Entry'
 import {entries, fromEntries, values} from 'alinea/core/util/Objects'
 import {InputState} from 'alinea/editor'
@@ -60,7 +60,7 @@ export const entryEditorAtoms = atomFamily((entryId: string) => {
 })
 
 export interface EntryData {
-  client: Client
+  client: Connection
   config: Config
   entryId: string
   versions: Array<Version>

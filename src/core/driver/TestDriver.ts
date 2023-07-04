@@ -16,19 +16,11 @@ class TestDriver extends DefaultDriver implements TestApi {
   store: Promise<Store> = sqlite().then(({Database}) =>
     connect(new Database()).toAsync()
   )
-
-  createDevStore(): Promise<Store> {
-    return this.store
-  }
-
-  async connect(): Promise<Connection> {
-    const isBrowser = typeof window !== 'undefined'
-    if (isBrowser)
-      throw new Error('Test drivers are not available in the browser')
-    return new Server(
+  server = this.store.then(async store => {
+    const server = new Server(
       {
         config: this,
-        store: await this.store,
+        store: store,
         target: undefined!,
         media: undefined!,
         previews: new JWTPreviews('test')
@@ -37,6 +29,23 @@ class TestDriver extends DefaultDriver implements TestApi {
         logger: new Logger('test')
       }
     )
+    await server.db.syncWith({
+      async updates() {
+        return {contentHash: '', entries: []}
+      },
+      async versionIds() {
+        return []
+      }
+    })
+    return server
+  })
+
+  async readStore(): Promise<Store> {
+    return this.store
+  }
+
+  async connection(): Promise<Connection> {
+    return this.server
   }
 
   async generate() {

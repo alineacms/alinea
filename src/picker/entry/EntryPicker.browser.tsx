@@ -121,12 +121,12 @@ export function EntryPickerModal({
           <IcRoundSearch className={styles.root.label.icon()} />
           <input
             type="text"
-            autoFocus
             placeholder="Search"
             value={search}
             onChange={event => setSearch(event.target.value)}
             className={styles.root.label.input()}
             {...list.focusProps}
+            autoFocus
           />
           <Stack.Right>
             <HStack gap={16}>

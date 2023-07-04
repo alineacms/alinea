@@ -16,6 +16,16 @@ const pages2 = alinea.root('Pages', {
   }
 })
 
+export const main = alinea.workspace('Alinea', {
+  pages,
+  media: alinea.media(),
+  [alinea.meta]: {
+    color: '#3F61E8',
+    mediaDir: '../public',
+    source: '../content'
+  }
+})
+
 export const cms = createNextCMS({
   dashboard: {
     dashboardUrl: '/admin.html',
@@ -24,23 +34,16 @@ export const cms = createNextCMS({
   },
   schema,
   workspaces: {
-    main: alinea.workspace('Alinea', {
-      pages,
-      media: alinea.media,
-      [alinea.meta]: {
-        color: '#3F61E8',
-        mediaDir: '../public',
-        source: '../content'
-      }
-    })
-    /*main2: alinea.workspace('Workspace with very long title and more', {
+    main,
+    main2: alinea.workspace('Workspace with very long title and more', {
       pages2,
+      media: alinea.media(),
       [alinea.meta]: {
         color: 'red',
         mediaDir: '../public',
         source: '../content'
       }
-    })*/
+    })
   },
   preview:
     process.env.NODE_ENV === 'development'

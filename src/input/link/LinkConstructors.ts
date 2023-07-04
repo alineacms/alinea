@@ -205,7 +205,7 @@ export namespace link {
     extends LinkFieldOptions,
       Omit<EntryPickerOptions<Fields>, 'hint' | 'selection'> {}
 
-  export function image<Fields>(
+  export function image<Fields = unknown>(
     label: Label,
     options: ImageOptions<Fields> = {}
   ): LinkField<ImageReference & Type.Infer<Fields>> {

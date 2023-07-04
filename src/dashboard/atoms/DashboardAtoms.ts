@@ -1,5 +1,4 @@
-import {Session} from 'alinea/core'
-import {Client} from 'alinea/core/Client'
+import {Connection, Session} from 'alinea/core'
 import {atom, useAtomValue, useSetAtom} from 'jotai'
 import {useHydrateAtoms} from 'jotai/utils'
 import {useEffect} from 'react'
@@ -35,7 +34,7 @@ export const queryClientAtom = atom(
   new QueryClient({defaultOptions: {queries: {retry: false}}})
 )
 
-export const clientAtom = atom<Client>(get => {
+export const clientAtom = atom<Connection>(get => {
   return get(dashboardOptionsAtom).client
 })
 
