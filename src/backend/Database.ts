@@ -434,7 +434,6 @@ export class Database implements Syncable {
         EntryRow().delete().where(EntryRow.versionId.isNotIn(seenVersions))
       )
       const noChanges = inserted === 0 && removed === 0
-      console.log(noChanges)
       if (noChanges) return
       // if (inserted) console.log(`> updated ${inserted} entries`)
       // if (removed) console.log(`> removed ${removed} entries`)
