@@ -116,7 +116,6 @@ export function EntryPickerModal({
             {title ? <TextLabel label={title} /> : 'Select a reference'}
           </Typo.H1>
         </HStack>
-
         <label className={styles.root.label()}>
           <IcRoundSearch className={styles.root.label.icon()} />
           <input

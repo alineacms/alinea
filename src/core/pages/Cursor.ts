@@ -98,6 +98,7 @@ export namespace Cursor {
     }
 
     search(...searchTerms: Array<string>) {
+      if (searchTerms.length === 0) return this
       return new Find<Row>(this.with({searchTerms}))
     }
 

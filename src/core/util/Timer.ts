@@ -1,12 +1,14 @@
 import prettyMilliseconds from 'pretty-ms'
 
+const out = globalThis.process
+  ? process.stdout.write.bind(process.stdout)
+  : console.log.bind(console)
+
 export function timer(name: string) {
   const startProgress = performance.now()
-  process.stdout.write(`> ${name}\r`)
+  out(`> ${name}\r`)
   return (msg?: string) => {
     const duration = performance.now() - startProgress
-    process.stdout.write(
-      `> ${msg || name} in ${prettyMilliseconds(duration)}\n`
-    )
+    out(`> ${msg || name} in ${prettyMilliseconds(duration)}\n`)
   }
 }

@@ -6,11 +6,12 @@ import {
   FileSummaryRow,
   FileSummaryThumb
 } from '../../dashboard/view/media/FileSummary.js'
+import {Meta} from '../Meta.js'
 import {MediaSchema as MediaSchemaConfig} from './MediaSchema.js'
 
 export const MediaLibrary = type('Media directory', {
   ...MediaSchemaConfig.MediaLibrary,
-  [type.meta]: {
+  [Meta]: {
     isContainer: true,
     contains: ['MediaLibrary'],
     view: MediaExplorer,
@@ -20,7 +21,7 @@ export const MediaLibrary = type('Media directory', {
 
 export const MediaFile = type('File', {
   ...MediaSchemaConfig.MediaFile,
-  [type.meta]: {
+  [Meta]: {
     isHidden: true,
     summaryRow: FileSummaryRow,
     summaryThumb: FileSummaryThumb,

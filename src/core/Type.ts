@@ -8,7 +8,7 @@ import {Field} from './Field.js'
 import {Hint} from './Hint.js'
 import {createId} from './Id.js'
 import {Label} from './Label.js'
-import {Meta} from './Meta.js'
+import {Meta, StripMeta} from './Meta.js'
 import {Section, section} from './Section.js'
 import {Shape} from './Shape.js'
 import type {View} from './View.js'
@@ -258,8 +258,8 @@ export interface TypeDefinition {
 export function type<Definition extends TypeDefinition>(
   label: Label,
   definition: Definition
-): Type<Definition> {
-  const instance = new TypeInstance(label, definition)
+): Type<StripMeta<Definition>> {
+  const instance = new TypeInstance<StripMeta<Definition>>(label, definition)
   return instance.target
 }
 

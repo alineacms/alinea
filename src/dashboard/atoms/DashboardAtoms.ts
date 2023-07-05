@@ -27,7 +27,10 @@ export function useSetDashboardOptions(options: AppProps) {
     ])
 
   const setDashboardOptions = useSetAtom(dashboardOptionsAtom)
-  useEffect(() => setDashboardOptions(options), [options])
+  useEffect(
+    () => setDashboardOptions(options),
+    [options.client, options.config]
+  )
 }
 
 export const queryClientAtom = atom(

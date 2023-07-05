@@ -29,14 +29,7 @@ class TestDriver extends DefaultDriver implements TestApi {
         logger: new Logger('test')
       }
     )
-    await server.db.syncWith({
-      async updates() {
-        return {contentHash: '', entries: []}
-      },
-      async versionIds() {
-        return []
-      }
-    })
+    await server.db.fill({async *entries() {}})
     return server
   })
 

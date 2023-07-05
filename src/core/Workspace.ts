@@ -1,8 +1,7 @@
-import {Expand} from 'alinea/core'
 import type {ComponentType} from 'react'
 import {CMS} from './CMS.js'
 import {Label} from './Label.js'
-import {Meta} from './Meta.js'
+import {Meta, StripMeta} from './Meta.js'
 import {Root} from './Root.js'
 import {getRandomColor} from './util/GetRandomColor.js'
 
@@ -60,7 +59,7 @@ export function workspace<Definition extends WorkspaceDefinition>(
   /** The name of the workspace */
   label: Label,
   definition: Definition
-): Workspace<Expand<Omit<Definition, typeof Workspace.Meta>>> {
+): Workspace<StripMeta<Definition>> {
   if (!definition[Meta])
     throw new Error(`Workspace definition must contain a meta property`)
   return {

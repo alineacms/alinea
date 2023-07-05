@@ -1,9 +1,7 @@
 import type {ComponentType} from 'react'
-import {CMS} from './CMS.js'
 import {Label} from './Label.js'
-import {Meta} from './Meta.js'
+import {Meta, StripMeta} from './Meta.js'
 import {PageSeed} from './Page.js'
-
 export interface RootI18n {
   locales: Array<string>
 }
@@ -29,7 +27,6 @@ type Seed = Record<string, PageSeed>
 
 export type Root<Definition extends Seed = Seed> = Definition & {
   [Root.Data]: RootData
-  [CMS.Link]?: CMS
 }
 
 export namespace Root {
@@ -55,7 +52,7 @@ export namespace Root {
 export function root<Definition extends RootDefinition>(
   label: Label,
   definition: Definition
-): Root<Definition> {
+): Root<StripMeta<Definition>> {
   return {
     ...definition,
     [Root.Data]: {

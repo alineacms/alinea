@@ -1,14 +1,11 @@
 import {Config} from 'alinea/core'
 import {Client} from 'alinea/core/Client'
 import {joinPaths} from 'alinea/core/util/Urls'
-import {Button, Typo, VStack} from 'alinea/ui'
-import {Main} from 'alinea/ui/Main'
 import {useSetAtom} from 'jotai'
 import {useEffect, useMemo, useState} from 'react'
 import {QueryClient} from 'react-query'
 import {App} from '../App.js'
 import {updateDbAtom} from '../atoms/EntryAtoms.js'
-import {Viewport} from '../view/Viewport.js'
 
 type DevReloadOptions = {
   refresh: () => Promise<void>
@@ -67,24 +64,5 @@ export function DevDashboard({loadConfig}: DevDashboardOptions) {
     })
   }, [])
   if (!cms) return null
-  if (false)
-    //!connected)
-    return (
-      <Viewport color="#5763E6">
-        <Main
-          style={{display: 'flex', flexDirection: 'column', height: '100%'}}
-        >
-          <div style={{margin: 'auto', padding: '20px'}}>
-            <VStack gap={20}>
-              <Typo.H1 flat>Disconnected</Typo.H1>
-              <Typo.P flat>The Alinea server was disconnected</Typo.P>
-              <div>
-                <Button onClick={() => window.location.reload()}>Reload</Button>
-              </div>
-            </VStack>
-          </div>
-        </Main>
-      </Viewport>
-    )
   return <App queryClient={queryClient} config={cms} client={client!} dev />
 }

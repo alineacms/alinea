@@ -11,20 +11,20 @@ import {EntryPickerModal} from './EntryPicker.browser.js'
 
 const client = await example.connection()
 
-export function EntryForm() {
+export function EntryPicker() {
   const queryClient = useAtomValue(queryClientAtom)
   useSetDashboardOptions({
     config: example,
     client: client,
     dev: true
   })
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(true)
   return (
     <QueryClientProvider client={queryClient}>
       <UIStory>
         {open ? (
           <EntryPickerModal
-            type="url"
+            type="entry"
             selection={[]}
             options={{
               hint: undefined!,
