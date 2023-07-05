@@ -1,7 +1,7 @@
 import {page, root, type, workspace} from 'alinea/core'
 import {createTestCMS} from 'alinea/core/driver/TestDriver'
 import {createMediaRoot} from 'alinea/core/media/MediaRoot'
-import {MediaFile} from 'alinea/core/media/MediaSchema'
+import {MediaFile, MediaLibrary} from 'alinea/core/media/MediaSchema'
 import {object, path, tab, tabs, text} from 'alinea/input'
 
 const TypeA = type('Type', {
@@ -41,21 +41,13 @@ const main = workspace('Main', {
     entry2: page(TypeA({title: 'Entry 2'}), {
       entry3: page(TypeB({title: 'Entry 3'}))
     }),
-    file1: page(
-      MediaFile({
-        title: 'File 1',
-        path: 'file1.png',
-        extension: '.png',
-        size: 1000,
-        hash: 'hash1'
-      })
-    ),
     [root.meta]: {
       contains: ['TypeA']
     }
   }),
   media: createMediaRoot({
-    file1: page(
+    dir: page(MediaLibrary({title: 'Media folder'})),
+    'file1.png': page(
       MediaFile({
         title: 'File 1',
         path: 'file1.png',

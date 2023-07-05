@@ -1,5 +1,5 @@
 import sqlite from '@alinea/sqlite-wasm'
-import {Database, JWTPreviews, Server} from 'alinea/backend'
+import {Database, JWTPreviews, Media, Server, Target} from 'alinea/backend'
 import {Store} from 'alinea/backend/Store'
 import {Connection} from 'alinea/core'
 import {DefaultDriver} from 'alinea/core/driver/DefaultDriver'
@@ -21,8 +21,12 @@ class TestDriver extends DefaultDriver implements TestApi {
       {
         config: this,
         store: store,
-        target: undefined!,
-        media: undefined!,
+        get target(): Target {
+          throw new Error('Test driver cannot publish')
+        },
+        get media(): Media {
+          throw new Error('Test driver has no media backend')
+        },
         previews: new JWTPreviews('test')
       },
       {

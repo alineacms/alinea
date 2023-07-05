@@ -115,9 +115,8 @@ export function FileUploader({
             {uploads.map(upload => {
               // Todo: show upload progress
               return (
-                <div className={styles.root.uploads.row()}>
+                <div key={upload.id} className={styles.root.uploads.row()}>
                   <FileUploadRow
-                    key={upload.id}
                     title={upload.file.name}
                     extension={upload.file.name.split('.').pop()!}
                     size={upload.file.size}

@@ -1,12 +1,20 @@
-import {createId} from 'alinea/core'
+import {Root, WorkspaceData, createId} from 'alinea/core'
 import {Entry} from 'alinea/core/Entry'
 import {Reference} from 'alinea/core/Reference'
+import {isMediaRoot} from 'alinea/core/media/MediaRoot'
+import {and} from 'alinea/core/pages/Expr'
+import {entries} from 'alinea/core/util/Objects'
 import {useFocusList} from 'alinea/dashboard/hook/UseFocusList'
+import {useNav} from 'alinea/dashboard/hook/UseNav'
 import {useRoot} from 'alinea/dashboard/hook/UseRoot'
 import {useWorkspace} from 'alinea/dashboard/hook/UseWorkspace'
+import {Breadcrumbs} from 'alinea/dashboard/view/Breadcrumbs'
 import {IconButton} from 'alinea/dashboard/view/IconButton'
 import {Modal} from 'alinea/dashboard/view/Modal'
-import {Explorer} from 'alinea/dashboard/view/explorer/Explorer'
+import {
+  Explorer,
+  ExporerItemSelect
+} from 'alinea/dashboard/view/explorer/Explorer'
 import {FileUploader} from 'alinea/dashboard/view/media/FileUploader'
 import {Picker, PickerProps} from 'alinea/editor/Picker'
 import {
@@ -15,14 +23,11 @@ import {
   Loader,
   Stack,
   TextLabel,
-  Typo,
   VStack,
-  fromModule,
-  px
+  fromModule
 } from 'alinea/ui'
 import {IcOutlineGridView} from 'alinea/ui/icons/IcOutlineGridView'
 import {IcOutlineList} from 'alinea/ui/icons/IcOutlineList'
-import {IcRoundArrowBack} from 'alinea/ui/icons/IcRoundArrowBack'
 import {IcRoundSearch} from 'alinea/ui/icons/IcRoundSearch'
 import {Suspense, useCallback, useMemo, useState} from 'react'
 import {
@@ -40,7 +45,19 @@ export const entryPicker = Picker.withView(createEntryPicker, {
   viewRow: EntryPickerRow
 })
 
+interface PickerLocation {
+  parentId?: string
+  workspace: string
+  root: string
+}
+
 const styles = fromModule(css)
+
+function mediaRoot(workspace: WorkspaceData & {name: string}): string {
+  for (const [name, root] of entries(workspace.roots))
+    if (isMediaRoot(root)) return name
+  throw new Error(`Workspace ${workspace.name} has no media root`)
+}
 
 export interface EntryPickerModalProps
   extends PickerProps<EntryPickerOptions> {}
@@ -52,7 +69,7 @@ export function EntryPickerModal({
   onConfirm,
   onCancel
 }: EntryPickerModalProps) {
-  const {title, defaultView, max, condition, showUploader} = options
+  const {title, defaultView, max, condition, showMedia} = options
   const [search, setSearch] = useState('')
   const list = useFocusList({
     onClear: () => setSearch('')
@@ -60,24 +77,31 @@ export function EntryPickerModal({
   const [selected, setSelected] = useState<Array<Reference>>(
     () => selection || []
   )
-  const {name: workspace} = useWorkspace()
+  const workspace = useWorkspace()
   const {name: root} = useRoot()
-  const destination = {
-    workspace,
-    root
-  }
+  const [destination, setDestination] = useState<PickerLocation>({
+    workspace: workspace.name,
+    root: showMedia ? mediaRoot(workspace) : root
+  })
   const cursor = useMemo(() => {
     const terms = search.replace(/,/g, ' ').split(' ').filter(Boolean)
-    const defaultCondition = Entry.workspace
-      .is(workspace)
-      .and(Entry.root.is(root))
+    const rootCondition = and(
+      Entry.workspace.is(destination.workspace),
+      Entry.root.is(destination.root)
+    )
+    const destinationCondition =
+      terms.length === 0
+        ? and(rootCondition, Entry.parent.is(destination.parentId ?? null))
+        : rootCondition
     return Entry()
-      .where(condition ?? defaultCondition)
+      .where(
+        condition ? condition.and(destinationCondition) : destinationCondition
+      )
       .search(...terms)
-  }, [workspace, root, search, condition])
+  }, [destination, search, condition])
   const [view, setView] = useState<'row' | 'thumb'>(defaultView || 'row')
   const handleSelect = useCallback(
-    (entry: Entry) => {
+    (entry: ExporerItemSelect) => {
       setSelected(selected => {
         const index = selected.findIndex(
           ref =>
@@ -107,68 +131,75 @@ export function EntryPickerModal({
   function handleConfirm() {
     onConfirm(selected)
   }
+  const nav = useNav()
+  const parents = [
+    {id: workspace.name, title: workspace.label},
+    {id: destination.root, title: Root.label(workspace.roots[destination.root])}
+  ]
   return (
     <Modal open onClose={onCancel} className={styles.root()}>
       <Suspense fallback={<Loader absolute />}>
-        <HStack center gap={18} className={styles.root.header()}>
-          <IconButton icon={IcRoundArrowBack} onClick={onCancel} />
-          <Typo.H1 flat>
-            {title ? <TextLabel label={title} /> : 'Select a reference'}
-          </Typo.H1>
-        </HStack>
-        <label className={styles.root.label()}>
-          <IcRoundSearch className={styles.root.label.icon()} />
-          <input
-            type="text"
-            placeholder="Search"
-            value={search}
-            onChange={event => setSearch(event.target.value)}
-            className={styles.root.label.input()}
-            {...list.focusProps}
-            autoFocus
-          />
-          <Stack.Right>
-            <HStack gap={16}>
-              <IconButton
-                icon={IcOutlineList}
-                active={view === 'row'}
-                onClick={() => setView('row')}
+        <div className={styles.root.header()}>
+          <VStack gap={24}>
+            <VStack gap={8}>
+              <Breadcrumbs parents={parents} />
+              <h2>
+                {title ? <TextLabel label={title} /> : 'Select a reference'}
+              </h2>
+            </VStack>
+            <label className={styles.root.search()}>
+              <IcRoundSearch className={styles.root.search.icon()} />
+              <input
+                type="text"
+                placeholder="Search"
+                value={search}
+                onChange={event => setSearch(event.target.value)}
+                className={styles.root.search.input()}
+                {...list.focusProps}
+                autoFocus
               />
-              <IconButton
-                icon={IcOutlineGridView}
-                active={view === 'thumb'}
-                onClick={() => setView('thumb')}
+              <Stack.Right>
+                <HStack gap={16}>
+                  <IconButton
+                    icon={IcOutlineList}
+                    active={view === 'row'}
+                    onClick={() => setView('row')}
+                  />
+                  <IconButton
+                    icon={IcOutlineGridView}
+                    active={view === 'thumb'}
+                    onClick={() => setView('thumb')}
+                  />
+                </HStack>
+              </Stack.Right>
+            </label>
+          </VStack>
+        </div>
+        <VStack style={{flexGrow: 1, minHeight: 0}}>
+          <list.Container>
+            <div className={styles.root.results()}>
+              <Explorer
+                virtualized
+                cursor={cursor}
+                type={view}
+                selectable
+                selection={selected}
+                toggleSelect={handleSelect}
+                onNavigate={entryId => {
+                  setDestination({...destination, parentId: entryId})
+                }}
               />
-            </HStack>
-          </Stack.Right>
-        </label>
-        <HStack
-          gap={16}
-          style={{flexGrow: 1, padding: `${px(16)} 0`, minHeight: 0}}
-        >
-          {!search && showUploader && (
+            </div>
+          </list.Container>
+          {showMedia && (
             <FileUploader
               destination={destination}
               max={max}
               toggleSelect={handleSelect}
             />
           )}
-          <VStack style={{flexGrow: 1, minHeight: 0}}>
-            <list.Container>
-              <div className={styles.root.results()}>
-                <Explorer
-                  virtualized
-                  cursor={cursor}
-                  type={view}
-                  selectable
-                  selection={selected}
-                  toggleSelect={handleSelect}
-                />
-              </div>
-            </list.Container>
-          </VStack>
-        </HStack>
-        <HStack as="footer">
+        </VStack>
+        <HStack as="footer" className={styles.root.footer()}>
           <Stack.Right>
             <HStack gap={16}>
               <Button outline type="button" onClick={onCancel}>

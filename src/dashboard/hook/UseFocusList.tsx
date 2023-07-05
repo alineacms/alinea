@@ -117,9 +117,11 @@ export function useFocusList({onClear}: FocusListParams) {
   return res
 }
 
-export function useFocusListItem(onSelect: () => void) {
+export function useFocusListItem<Element extends HTMLElement = HTMLElement>(
+  onSelect: () => void
+): Ref<Element> {
   const ctx = useContext(context)!
-  const itemRef = useRef()
+  const itemRef = useRef<Element>(null)
   useLayoutEffect(() => {
     if (itemRef.current && ctx)
       return ctx.registerItem(onSelect, itemRef.current)

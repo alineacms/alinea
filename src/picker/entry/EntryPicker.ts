@@ -1,12 +1,9 @@
 import {Entry} from 'alinea/core/Entry'
 import {Hint} from 'alinea/core/Hint'
 import {Label} from 'alinea/core/Label'
-import {PageSeed} from 'alinea/core/Page'
 import {Reference} from 'alinea/core/Reference'
-import {Root} from 'alinea/core/Root'
 import {Shape} from 'alinea/core/Shape'
 import {Type} from 'alinea/core/Type'
-import {Workspace} from 'alinea/core/Workspace'
 import {MediaFile} from 'alinea/core/media/MediaSchema'
 import {Expr} from 'alinea/core/pages/Expr'
 import {Projection} from 'alinea/core/pages/Projection'
@@ -45,13 +42,12 @@ export interface EntryPickerOptions<T = {}> {
   selection: Projection
   defaultView?: 'row' | 'thumb'
   condition?: Expr<boolean>
+  showMedia?: boolean
   max?: number
-  showUploader?: boolean
   label?: Label
   title?: Label
   fields?: Type<T>
   initialValue?: Reference | Array<Reference>
-  location?: () => Workspace | Root | PageSeed | undefined
 }
 
 export function entryPicker<Ref extends Reference, Fields>(

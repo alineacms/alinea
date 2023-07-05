@@ -1,5 +1,5 @@
 import useSize from '@react-hook/size'
-import {EntryRow, Reference, View} from 'alinea/core'
+import {Reference, View} from 'alinea/core'
 import {Cursor} from 'alinea/core/pages/Cursor'
 import {Loader, fromModule} from 'alinea/ui'
 import {useAtomValue} from 'jotai'
@@ -20,14 +20,24 @@ const defaultSummaryView = {
   summaryThumb: EntrySummaryThumb
 }
 
+export interface ExporerItemSelect {
+  entryId: string
+  type: string
+  workspace: string
+  root: string
+  title: string
+  childrenAmount?: number
+}
+
 export interface ExplorerProps {
-  cursor: Cursor.Find<EntryRow>
+  cursor: Cursor.Find<ExporerItemSelect>
   type: 'row' | 'thumb'
   virtualized?: boolean
   max?: number
   selectable?: boolean
   selection?: Array<Reference>
-  toggleSelect?: (entry: EntryRow) => void
+  toggleSelect?: (entry: ExporerItemSelect) => void
+  onNavigate?: (entryId: string) => void
 }
 
 export function Explorer({
@@ -37,7 +47,8 @@ export function Explorer({
   max,
   selectable = false,
   selection = [],
-  toggleSelect = () => {}
+  toggleSelect = () => {},
+  onNavigate = () => {}
 }: ExplorerProps) {
   const {schema} = useConfig()
   const graph = useAtomValue(graphAtom)
@@ -82,7 +93,9 @@ export function Explorer({
   const showList =
     data && containerWidth > 0 && (!virtualized || containerHeight > 0)
   return (
-    <ExplorerProvider value={{selectable, selection, onSelect: toggleSelect}}>
+    <ExplorerProvider
+      value={{selectable, selection, onSelect: toggleSelect, onNavigate}}
+    >
       <div ref={containerRef} className={styles.root()}>
         {showList ? (
           data.total > 0 ? (

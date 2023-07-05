@@ -7,15 +7,15 @@ import {MediaLibrary} from './MediaSchema.js'
 export type MediaRoot<Children extends Record<string, PageSeed>> =
   Root<Children>
 
-const mediaRoot = Symbol()
+export const mediaRootId = Symbol.for('@alinea/mediaRoot')
 
 export function isMediaRoot(
   root: any
 ): root is MediaRoot<Record<string, PageSeed>> {
-  return Boolean(root[mediaRoot])
+  return Boolean(root[mediaRootId])
 }
 
-function defaultLibrary(): Record<string, PageSeed> {
+export function defaultLibrary(): Record<string, PageSeed> {
   return {
     media: page(
       MediaLibrary({
@@ -34,6 +34,6 @@ export function createMediaRoot<Children extends Record<string, PageSeed>>(
       icon: IcRoundPermMedia,
       contains: ['MediaLibrary']
     },
-    [mediaRoot]: true
+    [mediaRootId]: true
   }) as any as MediaRoot<Children>
 }

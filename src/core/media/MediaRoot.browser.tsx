@@ -1,26 +1,27 @@
 import {MediaExplorer} from 'alinea/dashboard/view/MediaExplorer'
-import {PathField} from 'alinea/input/path'
-import {TextField} from 'alinea/input/text'
 import IcRoundPermMedia from 'alinea/ui/icons/IcRoundPermMedia'
 import {Meta} from '../Meta.js'
 import {PageSeed} from '../Page.js'
-import {Root, root} from '../Root.js'
-import {createMediaRoot as createMediaRootConfig} from './MediaRoot.js'
+import {root} from '../Root.js'
+import {
+  MediaRoot,
+  createMediaRoot as createMediaRootConfig,
+  defaultLibrary,
+  mediaRootId
+} from './MediaRoot.js'
 
-type MediaRoot = Root<{
-  media: PageSeed<{
-    title: TextField
-    path: PathField
-  }>
-}>
+export {isMediaRoot} from './MediaRoot.js'
 
-export function createMediaRoot(): MediaRoot {
+export function createMediaRoot<Children extends Record<string, PageSeed>>(
+  children: Children = defaultLibrary() as Children
+) {
   return root('Media', {
-    media: createMediaRootConfig().media,
+    ...createMediaRootConfig(children),
     [Meta]: {
       icon: IcRoundPermMedia,
       contains: ['MediaLibrary'],
       view: MediaExplorer
-    }
-  })
+    },
+    [mediaRootId]: true
+  }) as any as MediaRoot<Children>
 }

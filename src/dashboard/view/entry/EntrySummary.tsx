@@ -22,6 +22,9 @@ export function entrySummaryQuery() {
         entryId: Entry.entryId,
         title: Entry.title
       })
+    },
+    childrenAmount({children}) {
+      return children(Entry).count()
     }
   } satisfies Projection
 }
@@ -31,7 +34,7 @@ type SummaryProps = Projection.Infer<ReturnType<typeof entrySummaryQuery>>
 export const EntrySummaryRow = view(
   entrySummaryQuery,
   function EntrySummaryRow({
-    entryId: id,
+    entryId,
     title,
     type: typeName,
     parents
@@ -75,7 +78,7 @@ export const EntrySummaryRow = view(
 export const EntrySummaryThumb = view(
   entrySummaryQuery,
   function EntrySummaryThumb({
-    entryId: id,
+    entryId,
     title,
     type: typeName,
     parents

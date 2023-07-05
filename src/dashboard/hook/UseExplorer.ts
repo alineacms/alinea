@@ -1,10 +1,12 @@
-import {EntryRow, Reference} from 'alinea/core'
+import {Reference} from 'alinea/core'
 import {createContext, useContext} from 'react'
+import {ExporerItemSelect} from '../view/explorer/Explorer.js'
 
 type ExplorerContext = {
   selectable: boolean
   selection: Array<Reference>
-  onSelect: (entry: EntryRow) => void
+  onSelect: (entry: ExporerItemSelect) => void
+  onNavigate: (entryId: string) => void
 }
 
 const context = createContext<ExplorerContext | undefined>(undefined)

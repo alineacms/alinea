@@ -11,6 +11,37 @@ import {EntryPickerModal} from './EntryPicker.browser.js'
 
 const client = await example.connection()
 
+export function ImagePicker() {
+  const queryClient = useAtomValue(queryClientAtom)
+  useSetDashboardOptions({
+    config: example,
+    client: client,
+    dev: true
+  })
+  const [open, setOpen] = useState(true)
+  return (
+    <QueryClientProvider client={queryClient}>
+      <UIStory>
+        {open ? (
+          <EntryPickerModal
+            type="image"
+            selection={[]}
+            options={{
+              hint: undefined!,
+              selection: undefined!,
+              showMedia: true
+            }}
+            onConfirm={console.log}
+            onCancel={() => setOpen(false)}
+          />
+        ) : (
+          <button onClick={() => setOpen(true)}>Open</button>
+        )}
+      </UIStory>
+    </QueryClientProvider>
+  )
+}
+
 export function EntryPicker() {
   const queryClient = useAtomValue(queryClientAtom)
   useSetDashboardOptions({
@@ -39,8 +70,4 @@ export function EntryPicker() {
       </UIStory>
     </QueryClientProvider>
   )
-}
-
-export default {
-  title: 'Pickers / Entry'
 }

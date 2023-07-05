@@ -5,7 +5,6 @@
   text-decoration: none;
   gap: 8px;
   height: 100%;
-  cursor: pointer;
   min-width: 0;
 
   &.is-row {
@@ -16,6 +15,10 @@
     padding: 5px;
   }
 
+  &.is-thumb &-inner {
+    flex-direction: column;
+  }
+
   &-inner {
     height: 100%;
     width: 100%;
@@ -23,8 +26,48 @@
     background: var(--alinea-background);
     border-radius: var(--alinea-border-radius);
     box-shadow: 0 2px 3.5px var(--alinea-shadow);
-    padding: 0 8px;
     display: flex;
+
+    &-hitBox {
+      padding-right: 8px;
+      &:hover {
+        background: var(--alinea-selected);
+      }
+    }
+  }
+
+  &-children {
+    cursor: pointer;
+    padding: 8px;
+    padding-left: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+
+    &-badge {
+      display: block;
+      background: var(--alinea-selected);
+      border-radius: 8px;
+      font-size: 10px;
+      height: 16px;
+      line-height: 16px;
+      font-weight: 600;
+      padding: 0 6px;
+      white-space: nowrap;
+    }
+
+    &:hover {
+      background: var(--alinea-selected);
+    }
+  }
+
+  &.is-row &-children {
+    border-left: 1px solid var(--alinea-outline);
+  }
+
+  &.is-thumb &-children {
+    border-top: 1px solid var(--alinea-outline);
   }
 
   &-checkbox {
@@ -38,22 +81,14 @@
     font-size: 19px;
     padding: 8px 0;
     padding-right: 4px;
+    padding-left: 8px;
   }
 
   &.is-row &-selection {
     align-items: center;
   }
 
-  &.is-selected &-inner {
-    background: hsla(var(--alinea-negative), 0.1);
-  }
-
-  &:hover &-inner {
-    background: var(--alinea-selected);
-  }
-
   &[aria-selected] &-inner {
-    background: var(--alinea-inner-outline);
-    color: var(--alinea-focus-foreground);
+    background: var(--alinea-selected);
   }
 }

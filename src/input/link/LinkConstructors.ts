@@ -42,8 +42,8 @@ export function imagePicker<Fields>(
     max: multiple ? undefined : 1,
     label: 'Image',
     title: multiple ? 'Select images' : 'Select an image',
-    condition: imageCondition,
-    showUploader: true,
+    condition: imageCondition.or(Entry.type.is('MediaLibrary')),
+    showMedia: true,
     defaultView: 'thumb',
     selection: imageFields
   })
@@ -66,8 +66,8 @@ export function filePicker<Fields>(
     max: multiple ? undefined : 1,
     label: 'File',
     title: multiple ? 'Select files' : 'Select a file',
-    condition: fileCondition,
-    showUploader: true,
+    condition: fileCondition.or(Entry.type.is('MediaLibrary')),
+    showMedia: true,
     defaultView: 'thumb',
     selection: fileFields
   })
