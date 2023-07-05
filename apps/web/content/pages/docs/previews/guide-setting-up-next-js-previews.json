@@ -2,178 +2,171 @@
   "id": "nm9zCQ2Sa9hXnwhucIBPH",
   "type": "Doc",
   "title": "Guide: setting up Next.js previews",
-  "blocks": [
+  "body": [
     {
-      "id": "VJkQaeQc3dWucgmoEuydl",
-      "index": "a0",
-      "type": "TextBlock",
-      "text": [
+      "type": "heading",
+      "textAlign": "left",
+      "level": 1,
+      "content": [
         {
-          "type": "heading",
-          "textAlign": "left",
-          "level": 1,
-          "content": [
-            {
-              "type": "text",
-              "text": "Guide: setting up Next.js previews"
-            }
-          ]
-        },
-        {
-          "type": "paragraph",
-          "textAlign": "left",
-          "content": [
-            {
-              "type": "text",
-              "text": "We can serve up the dashboard while developing a Next.js website by tweaking the `dev` command in our `package.json` just a little bit."
-            }
-          ]
-        },
-        {
-          "id": "qL5tV5X8L_7Wor2Q01QRM",
-          "type": "CodeBlock",
-          "code": "{\n  \"scripts\": {\n    \"dev\": \"alinea serve -- next dev\"\n  }\n}",
-          "fileName": "package.json"
-        },
-        {
-          "type": "paragraph",
-          "textAlign": "left",
-          "content": [
-            {
-              "type": "text",
-              "text": "This runs both the alinea and next development servers meaning we're able to host live Next.js pages within the alinea dashboard."
-            }
-          ]
-        },
-        {
-          "type": "heading",
-          "textAlign": "left",
-          "level": 2,
-          "content": [
-            {
-              "type": "text",
-              "text": "Preview API route"
-            }
-          ]
-        },
-        {
-          "type": "paragraph",
-          "textAlign": "left",
-          "content": [
-            {
-              "type": "text",
-              "text": "To set up preview we follow the "
-            },
-            {
-              "type": "text",
-              "text": "recommended Next.js way",
-              "marks": [
-                {
-                  "type": "link",
-                  "attrs": {
-                    "data-id": "5nDoYYBK70xmJNOzR5HK5",
-                    "data-entry": null,
-                    "href": "https://nextjs.org/docs/advanced-features/preview-mode#step-1-create-and-access-a-preview-api-route",
-                    "target": "_blank",
-                    "title": null
-                  }
-                }
-              ]
-            },
-            {
-              "type": "text",
-              "text": " by creating a preview API route. This API route receives a preview token from alinea and uses it to tell Next.js to redirect to the page we're currently viewing and query draft data. Note that during development this is not strictly required, but getting it out of the way now makes sure this works just the same when we're ready to deploy to production."
-            }
-          ]
-        },
-        {
-          "id": "-tfrsrqfkY0Z903mpkZnx",
-          "type": "CodeBlock",
-          "code": "import {backend} from '@alinea/generated/backend.js'\nimport type {NextApiRequest, NextApiResponse} from 'next'\n\nexport default async function handler(\n  req: NextApiRequest,\n  res: NextApiResponse\n) {\n  // We'll parse the previewToken from the url /api/preview?token\n  const previewToken = req.url!.split('?').pop()\n\n  // We can ask alinea to parse and validate the preview token.\n  // We'll receive the url of the entry we're currently previewing.\n  const {url} = await backend.parsePreviewToken(previewToken)\n  \n  // Store the preview token in the Next.js context so we\n  // can use it in the next route to query drafts data. Next.js\n  // uses a temporary cookie to persist this.\n  res.setPreviewData(previewToken)\n\n  // Finally redirect to the page we actually want to view\n  res.redirect(url)\n}",
-          "fileName": "pages/api/preview.ts"
-        },
-        {
-          "type": "heading",
-          "textAlign": "left",
-          "level": 2,
-          "content": [
-            {
-              "type": "text",
-              "text": "Querying preview data"
-            }
-          ]
-        },
-        {
-          "type": "paragraph",
-          "textAlign": "left",
-          "content": [
-            {
-              "type": "text",
-              "text": "CMS data will typically be queried within the `getStaticProps` function of Next.js routes. Normally Next.js will call these functions at build time, but because we used the `setPreviewData` function it will call them directly making sure we don't get cached results."
-            }
-          ]
-        },
-        {
-          "id": "qQxOBtOwIiLwZsZXhGYN9",
-          "type": "CodeBlock",
-          "code": "import {initPages} from '@alinea/generated/pages'\nimport {GetStaticPropsContext} from 'next'\n\nexport async function getStaticProps(context: GetStaticPropsContext) {\n  // Pass the previewToken that we receive in previewData to initPages\n  const pages = initPages(context.previewData as string)\n\n  // Anything we query on this pages instance will reflect drafts data\n  const recipe = await pages.whereType('Recipe').first(page => page.path.is(slug))\n  return {props: recipe}\n}\n\nexport default RecipeView",
-          "fileName": "pages/recipe/[slug].tsx"
-        },
-        {
-          "type": "heading",
-          "textAlign": "left",
-          "level": 2,
-          "content": [
-            {
-              "type": "text",
-              "text": "Setting up the preview panel"
-            }
-          ]
-        },
-        {
-          "type": "paragraph",
-          "textAlign": "left",
-          "content": [
-            {
-              "type": "text",
-              "text": "For previews to show up in the alinea dashboard we have to adjust the `preview` property of the workspace we want to preview. We use the `BrowserPreview` component and point it at our running Next.js development server. You should see the webpage appear on the right side in the dashboard."
-            }
-          ]
-        },
-        {
-          "id": "ImAV2Fkl2BeUmosY1W9o3",
-          "type": "CodeBlock",
-          "code": "import {alinea, BrowserPreview} from 'alinea'\n\nexport const config = createConfig({\n  workspaces: {\n    web: alinea.workspace('My workspace', {\n      // ... workspace options\n      preview({entry, previewToken}) {\n        // During dev point at running Next.js development server, \n        // in production use the current domain\n        const location = process.env.NODE_ENV === 'development' \n          ? 'http://localhost:3000' \n          : ''\n        return (\n          <BrowserPreview\n            url={`${location}/api/preview?${previewToken}`}\n            // The preview pane will display this url to the user\n            prettyUrl={entry.url}\n          />\n        )\n      }\n    })\n  }\n})",
-          "fileName": "alinea.config.tsx"
-        },
-        {
-          "type": "heading",
-          "textAlign": "left",
-          "level": 2,
-          "content": [
-            {
-              "type": "text",
-              "text": "Reloading props on content changes"
-            }
-          ]
-        },
-        {
-          "type": "paragraph",
-          "textAlign": "left",
-          "content": [
-            {
-              "type": "text",
-              "text": "With the above changes we can now see a live preview during editing. It reloads the iframe a short time after content changes. However, we can do much better by asking Next.js to reload our props and rerender the page instead of doing a full page reload. Alinea exports a hook in the `@alinea/preview` package (< 1kB) which can be used in `_app.tsx` or a similar high level component."
-            }
-          ]
-        },
-        {
-          "id": "o-xPn3iI3ihDl8212Av4f",
-          "type": "CodeBlock",
-          "code": "import {useNextPreview} from 'alinea/preview/next'\nimport type {AppProps} from 'next/app'\n\nexport default function App({Component, pageProps}: AppProps) {\n  // If we're in an iframe listen to content changes and reload props\n  useNextPreview()\n\n  // This is just the minimal required view for _app,\n  // your implementation will likely be much different\n  return <Component {...pageProps} />\n}",
-          "fileName": "pages/app.tsx"
+          "type": "text",
+          "text": "Guide: setting up Next.js previews"
         }
       ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "We can serve up the dashboard while developing a Next.js website by tweaking the `dev` command in our `package.json` just a little bit."
+        }
+      ]
+    },
+    {
+      "id": "qL5tV5X8L_7Wor2Q01QRM",
+      "type": "CodeBlock",
+      "code": "{\n  \"scripts\": {\n    \"dev\": \"alinea serve -- next dev\"\n  }\n}",
+      "fileName": "package.json"
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "This runs both the alinea and next development servers meaning we're able to host live Next.js pages within the alinea dashboard."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "textAlign": "left",
+      "level": 2,
+      "content": [
+        {
+          "type": "text",
+          "text": "Preview API route"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "To set up preview we follow the "
+        },
+        {
+          "type": "text",
+          "text": "recommended Next.js way",
+          "marks": [
+            {
+              "type": "link",
+              "attrs": {
+                "data-id": "5nDoYYBK70xmJNOzR5HK5",
+                "data-entry": null,
+                "href": "https://nextjs.org/docs/advanced-features/preview-mode#step-1-create-and-access-a-preview-api-route",
+                "target": "_blank",
+                "title": null
+              }
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": " by creating a preview API route. This API route receives a preview token from alinea and uses it to tell Next.js to redirect to the page we're currently viewing and query draft data. Note that during development this is not strictly required, but getting it out of the way now makes sure this works just the same when we're ready to deploy to production."
+        }
+      ]
+    },
+    {
+      "id": "-tfrsrqfkY0Z903mpkZnx",
+      "type": "CodeBlock",
+      "code": "import {backend} from '@alinea/generated/backend.js'\nimport type {NextApiRequest, NextApiResponse} from 'next'\n\nexport default async function handler(\n  req: NextApiRequest,\n  res: NextApiResponse\n) {\n  // We'll parse the previewToken from the url /api/preview?token\n  const previewToken = req.url!.split('?').pop()\n\n  // We can ask alinea to parse and validate the preview token.\n  // We'll receive the url of the entry we're currently previewing.\n  const {url} = await backend.parsePreviewToken(previewToken)\n  \n  // Store the preview token in the Next.js context so we\n  // can use it in the next route to query drafts data. Next.js\n  // uses a temporary cookie to persist this.\n  res.setPreviewData(previewToken)\n\n  // Finally redirect to the page we actually want to view\n  res.redirect(url)\n}",
+      "fileName": "pages/api/preview.ts"
+    },
+    {
+      "type": "heading",
+      "textAlign": "left",
+      "level": 2,
+      "content": [
+        {
+          "type": "text",
+          "text": "Querying preview data"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "CMS data will typically be queried within the `getStaticProps` function of Next.js routes. Normally Next.js will call these functions at build time, but because we used the `setPreviewData` function it will call them directly making sure we don't get cached results."
+        }
+      ]
+    },
+    {
+      "id": "qQxOBtOwIiLwZsZXhGYN9",
+      "type": "CodeBlock",
+      "code": "import {initPages} from '@alinea/generated/pages'\nimport {GetStaticPropsContext} from 'next'\n\nexport async function getStaticProps(context: GetStaticPropsContext) {\n  // Pass the previewToken that we receive in previewData to initPages\n  const pages = initPages(context.previewData as string)\n\n  // Anything we query on this pages instance will reflect drafts data\n  const recipe = await pages.whereType('Recipe').first(page => page.path.is(slug))\n  return {props: recipe}\n}\n\nexport default RecipeView",
+      "fileName": "pages/recipe/[slug].tsx"
+    },
+    {
+      "type": "heading",
+      "textAlign": "left",
+      "level": 2,
+      "content": [
+        {
+          "type": "text",
+          "text": "Setting up the preview panel"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "For previews to show up in the alinea dashboard we have to adjust the `preview` property of the workspace we want to preview. We use the `BrowserPreview` component and point it at our running Next.js development server. You should see the webpage appear on the right side in the dashboard."
+        }
+      ]
+    },
+    {
+      "id": "ImAV2Fkl2BeUmosY1W9o3",
+      "type": "CodeBlock",
+      "code": "import {alinea, BrowserPreview} from 'alinea'\n\nexport const config = createConfig({\n  workspaces: {\n    web: alinea.workspace('My workspace', {\n      // ... workspace options\n      preview({entry, previewToken}) {\n        // During dev point at running Next.js development server, \n        // in production use the current domain\n        const location = process.env.NODE_ENV === 'development' \n          ? 'http://localhost:3000' \n          : ''\n        return (\n          <BrowserPreview\n            url={`${location}/api/preview?${previewToken}`}\n            // The preview pane will display this url to the user\n            prettyUrl={entry.url}\n          />\n        )\n      }\n    })\n  }\n})",
+      "fileName": "alinea.config.tsx"
+    },
+    {
+      "type": "heading",
+      "textAlign": "left",
+      "level": 2,
+      "content": [
+        {
+          "type": "text",
+          "text": "Reloading props on content changes"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "With the above changes we can now see a live preview during editing. It reloads the iframe a short time after content changes. However, we can do much better by asking Next.js to reload our props and rerender the page instead of doing a full page reload. Alinea exports a hook in the `@alinea/preview` package (< 1kB) which can be used in `_app.tsx` or a similar high level component."
+        }
+      ]
+    },
+    {
+      "id": "o-xPn3iI3ihDl8212Av4f",
+      "type": "CodeBlock",
+      "code": "import {useNextPreview} from 'alinea/preview/next'\nimport type {AppProps} from 'next/app'\n\nexport default function App({Component, pageProps}: AppProps) {\n  // If we're in an iframe listen to content changes and reload props\n  useNextPreview()\n\n  // This is just the minimal required view for _app,\n  // your implementation will likely be much different\n  return <Component {...pageProps} />\n}",
+      "fileName": "pages/app.tsx"
     }
   ],
   "alinea": {

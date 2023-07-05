@@ -1,16 +1,16 @@
+import {TextView} from '@/blocks/TextBlockView'
 import {cms} from '@/cms'
+import {Breadcrumbs} from '@/layout/Breadcrumbs'
+import {LayoutWithSidebar} from '@/layout/Layout'
+import {Link} from '@/nav/Link'
+import {NavTree} from '@/nav/NavTree'
+import {NavItem, nestNav} from '@/nav/NestNav'
 import {Doc} from '@/schema/Doc'
 import {Entry} from 'alinea/core'
 import {HStack, VStack, fromModule} from 'alinea/ui'
 import {IcRoundArrowBack} from 'alinea/ui/icons/IcRoundArrowBack'
 import {IcRoundArrowForward} from 'alinea/ui/icons/IcRoundArrowForward'
 import {notFound} from 'next/navigation'
-import {BlocksView} from '../../../../BlocksView'
-import {Breadcrumbs} from '../../../../layout/Breadcrumbs'
-import {LayoutWithSidebar} from '../../../../layout/Layout'
-import {Link} from '../../../../nav/Link'
-import {NavTree} from '../../../../nav/NavTree'
-import {NavItem, nestNav} from '../../../../nav/NestNav'
 import css from './page.module.scss'
 
 const styles = fromModule(css)
@@ -60,7 +60,7 @@ export default async function DocPage({params}: DocPageProps) {
   return (
     <LayoutWithSidebar sidebar={<NavTree nav={nav} />}>
       <Breadcrumbs parents={page.parents} />
-      <BlocksView blocks={page.blocks} />
+      <TextView text={page.body} />
       <HStack gap={20} justify="space-between" className={styles.root.nav()}>
         {prev?.url && (
           <Link href={prev.url} className={styles.root.nav.link()}>

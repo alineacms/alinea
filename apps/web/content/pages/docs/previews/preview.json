@@ -2,145 +2,138 @@
   "id": "cifCRcc3FmFxJKqjRsTtv",
   "type": "Doc",
   "title": "Live previews",
-  "blocks": [
+  "body": [
     {
-      "id": "WcJ7Qiq0MVMXIXSulcit0",
-      "index": "a0",
-      "type": "TextBlock",
-      "text": [
+      "type": "heading",
+      "textAlign": "left",
+      "level": 1,
+      "content": [
         {
-          "type": "heading",
-          "textAlign": "left",
-          "level": 1,
-          "content": [
-            {
-              "type": "text",
-              "text": "Live previews"
-            }
-          ]
+          "type": "text",
+          "text": "Live previews"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "You can set up a live preview of your website inside the dashboard. Previews are implemented as a React component. It does not mean React is required for developing your project."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "textAlign": "left",
+      "level": 2,
+      "content": [
+        {
+          "type": "text",
+          "text": "A basic preview"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "In the config file (`alinea.config.tsx`) you can define a preview component on your current workspace that simply renders the title field and nothing else. The `Preview` wrapper makes sure the title is displayed inside a resizable pane, but it is strictly not required if you'd like to get creative."
+        }
+      ]
+    },
+    {
+      "id": "ka2apLC9O0Vmg50j9M2Zz",
+      "type": "CodeBlock",
+      "code": "import {Preview} from 'alinea'\nworkspace('My workspace', {\n  // ... workspace options\n  preview({entry}) {\n    return (\n      <Preview>\n        <h1>{entry.title}</h1>\n      </Preview>\n    )\n  }\n})"
+    },
+    {
+      "type": "heading",
+      "textAlign": "left",
+      "level": 2,
+      "content": [
+        {
+          "type": "text",
+          "text": "Rendering externally"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "The `BrowserPreview` component can be used to preview external sources by rendering an iframe. This can be useful to take full advantage of web frameworks that expose their own server with a `dev` command (or similar). "
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "A preview token is provided to securely pass context to the preview route, it can later be used to find out which entry we're viewing so it can retrieve the correct draft. Setting up the api route will be very specific to the way your project is built and we'll revise this section later with sample guides for a handful of frameworks."
+        }
+      ]
+    },
+    {
+      "id": "MP6gNDkdn7IOauBddwK5Q",
+      "type": "CodeBlock",
+      "code": "import {BrowserPreview} from 'alinea'\nworkspace('My workspace', {\n  // ... workspace options\n  preview({previewToken}) {\n    return (\n      <BrowserPreview\n        url={`http://localhost:3000/api/preview?${previewToken}`}\n      />\n    )\n  }\n})"
+    },
+    {
+      "type": "heading",
+      "textAlign": "left",
+      "level": 3,
+      "content": [
+        {
+          "type": "text",
+          "text": "Reacting to content changes"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "By default Alinea will reload the iframe source when content changes, after a certain delay. If your framework has ways to refetch content without a full page reload those can be used instead. A utility function is provided in `@alinea/preview` to register a listener."
+        }
+      ]
+    },
+    {
+      "id": "7V4Ajn0wMli04FxHqpn_B",
+      "type": "CodeVariantsBlock",
+      "variants": [
+        {
+          "id": "sp2OOzH2vnVf3XxZceV12",
+          "index": "a0",
+          "type": "Variant",
+          "name": "Any environment",
+          "language": "tsx",
+          "code": "import {registerPreview} from 'alinea/preview'\nregisterPreview({\n  refetch() {\n    // Reload server data\n  }\n})"
         },
         {
-          "type": "paragraph",
-          "textAlign": "left",
-          "content": [
-            {
-              "type": "text",
-              "text": "You can set up a live preview of your website inside the dashboard. Previews are implemented as a React component. It does not mean React is required for developing your project."
-            }
-          ]
+          "id": "gMGQTyeA0jJlLrh84mE5D",
+          "index": "a1",
+          "type": "Variant",
+          "name": "React",
+          "language": "tsx",
+          "code": "// A react hook is available\nimport {usePreview} from 'alinea/preview/react'\n// Use this hook once to listen and react to preview changes\nconst {isPreviewing} = usePreview({\n  refetch() {\n    // Reload server data & redraw\n  }\n})"
         },
         {
-          "type": "heading",
-          "textAlign": "left",
-          "level": 2,
-          "content": [
-            {
-              "type": "text",
-              "text": "A basic preview"
-            }
-          ]
-        },
-        {
-          "type": "paragraph",
-          "textAlign": "left",
-          "content": [
-            {
-              "type": "text",
-              "text": "In the config file (`alinea.config.tsx`) you can define a preview component on your current workspace that simply renders the title field and nothing else. The `Preview` wrapper makes sure the title is displayed inside a resizable pane, but it is strictly not required if you'd like to get creative."
-            }
-          ]
-        },
-        {
-          "id": "ka2apLC9O0Vmg50j9M2Zz",
-          "type": "CodeBlock",
-          "code": "import {Preview} from 'alinea'\nworkspace('My workspace', {\n  // ... workspace options\n  preview({entry}) {\n    return (\n      <Preview>\n        <h1>{entry.title}</h1>\n      </Preview>\n    )\n  }\n})"
-        },
-        {
-          "type": "heading",
-          "textAlign": "left",
-          "level": 2,
-          "content": [
-            {
-              "type": "text",
-              "text": "Rendering externally"
-            }
-          ]
-        },
-        {
-          "type": "paragraph",
-          "textAlign": "left",
-          "content": [
-            {
-              "type": "text",
-              "text": "The `BrowserPreview` component can be used to preview external sources by rendering an iframe. This can be useful to take full advantage of web frameworks that expose their own server with a `dev` command (or similar). "
-            }
-          ]
-        },
-        {
-          "type": "paragraph",
-          "textAlign": "left",
-          "content": [
-            {
-              "type": "text",
-              "text": "A preview token is provided to securely pass context to the preview route, it can later be used to find out which entry we're viewing so it can retrieve the correct draft. Setting up the api route will be very specific to the way your project is built and we'll revise this section later with sample guides for a handful of frameworks."
-            }
-          ]
-        },
-        {
-          "id": "MP6gNDkdn7IOauBddwK5Q",
-          "type": "CodeBlock",
-          "code": "import {BrowserPreview} from 'alinea'\nworkspace('My workspace', {\n  // ... workspace options\n  preview({previewToken}) {\n    return (\n      <BrowserPreview\n        url={`http://localhost:3000/api/preview?${previewToken}`}\n      />\n    )\n  }\n})"
-        },
-        {
-          "type": "heading",
-          "textAlign": "left",
-          "level": 3,
-          "content": [
-            {
-              "type": "text",
-              "text": "Reacting to content changes"
-            }
-          ]
-        },
-        {
-          "type": "paragraph",
-          "textAlign": "left",
-          "content": [
-            {
-              "type": "text",
-              "text": "By default Alinea will reload the iframe source when content changes, after a certain delay. If your framework has ways to refetch content without a full page reload those can be used instead. A utility function is provided in `@alinea/preview` to register a listener."
-            }
-          ]
-        },
-        {
-          "id": "7V4Ajn0wMli04FxHqpn_B",
-          "type": "CodeVariantsBlock",
-          "variants": [
-            {
-              "id": "sp2OOzH2vnVf3XxZceV12",
-              "index": "a0",
-              "type": "Variant",
-              "name": "Any environment",
-              "language": "tsx",
-              "code": "import {registerPreview} from 'alinea/preview'\nregisterPreview({\n  refetch() {\n    // Reload server data\n  }\n})"
-            },
-            {
-              "id": "gMGQTyeA0jJlLrh84mE5D",
-              "index": "a1",
-              "type": "Variant",
-              "name": "React",
-              "language": "tsx",
-              "code": "// A react hook is available\nimport {usePreview} from 'alinea/preview/react'\n// Use this hook once to listen and react to preview changes\nconst {isPreviewing} = usePreview({\n  refetch() {\n    // Reload server data & redraw\n  }\n})"
-            },
-            {
-              "id": "SGf3OFtdZchhCZJvO8XwJ",
-              "index": "a2",
-              "type": "Variant",
-              "name": "Next.js",
-              "language": "tsx",
-              "code": "// A hook specifically for next.js\nimport {useNextPreview} from 'alinea/preview/next'\n// Use this hook once to automatically reload static/server props\nconst {isPreviewing} = useNextPreview()"
-            }
-          ]
+          "id": "SGf3OFtdZchhCZJvO8XwJ",
+          "index": "a2",
+          "type": "Variant",
+          "name": "Next.js",
+          "language": "tsx",
+          "code": "// A hook specifically for next.js\nimport {useNextPreview} from 'alinea/preview/next'\n// Use this hook once to automatically reload static/server props\nconst {isPreviewing} = useNextPreview()"
         }
       ]
     }

@@ -2,105 +2,98 @@
   "id": "267KTV8uPHIdZgFUQvJf06sfm4h",
   "type": "Doc",
   "title": "Schema",
-  "blocks": [
+  "body": [
     {
-      "id": "267KUArMsLoytOeNGlQGAf4v4tt",
-      "index": "a0",
-      "type": "TextBlock",
-      "text": [
+      "type": "heading",
+      "level": 1,
+      "textAlign": "left",
+      "content": [
         {
-          "type": "heading",
-          "level": 1,
-          "textAlign": "left",
-          "content": [
-            {
-              "type": "text",
-              "text": "Schema"
-            }
-          ]
-        },
-        {
-          "type": "paragraph",
-          "textAlign": "left",
-          "content": [
-            {
-              "type": "text",
-              "text": "A schema is a collection of "
-            },
-            {
-              "type": "text",
-              "text": "types",
-              "marks": [
-                {
-                  "type": "link",
-                  "attrs": {
-                    "data-id": "L5f7XuNlknTxxICB7sxMu",
-                    "data-entry": "267QuOShP41WnFxQFOcHZQoCsla",
-                    "href": null,
-                    "title": null
-                  }
-                }
-              ]
-            },
-            {
-              "type": "text",
-              "text": "."
-            }
-          ]
-        },
-        {
-          "id": "267QjRgoDq3nZ6Dth0o3MElJgzP",
-          "type": "CodeBlock",
-          "code": "alinea.schema('My schema', {\n  TypeA, TypeB, TypeC\n})"
-        },
-        {
-          "type": "heading",
-          "textAlign": "left",
-          "level": 2,
-          "content": [
-            {
-              "type": "text",
-              "text": "Configuration"
-            }
-          ]
-        },
-        {
-          "type": "paragraph",
-          "textAlign": "left",
-          "content": [
-            {
-              "type": "text",
-              "text": "Schemas currently have no configuration options, other than the types."
-            }
-          ]
-        },
-        {
-          "type": "heading",
-          "level": 2,
-          "textAlign": "left",
-          "content": [
-            {
-              "type": "text",
-              "text": "Example schema"
-            }
-          ]
-        },
-        {
-          "type": "paragraph",
-          "textAlign": "left",
-          "content": [
-            {
-              "type": "text",
-              "text": "The schema below is a minimal example of a blog setup. It is comprised of two types: `BlogOverview` and `BlogPost`. The overview type corresponds to a page that lists the posts. To achieve that it is configured as a container which can hold blog posts as children."
-            }
-          ]
-        },
-        {
-          "id": "286gbW4zHgdrAHcGBLGRtixZguV",
-          "type": "CodeBlock",
-          "code": "alinea.schema({\n  BlogOverview: alinea.type('Blog overview', {\n    title: alinea.text('Title'),\n    path: alinea.path('Path')\n  }).configure({\n    isContainer: true,\n    contains: ['BlogPost']\n  }),\n  BlogPost: alinea.type('Blog post', {\n    title: alinea.text('Title'),\n    path: alinea.path('Path'),\n    publishDate: alinea.date('Publish date'),\n    body: alinea.richText('Body')\n  })\n})"
+          "type": "text",
+          "text": "Schema"
         }
       ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "A schema is a collection of "
+        },
+        {
+          "type": "text",
+          "text": "types",
+          "marks": [
+            {
+              "type": "link",
+              "attrs": {
+                "data-id": "L5f7XuNlknTxxICB7sxMu",
+                "data-entry": "267QuOShP41WnFxQFOcHZQoCsla",
+                "href": null,
+                "title": null
+              }
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": "."
+        }
+      ]
+    },
+    {
+      "id": "267QjRgoDq3nZ6Dth0o3MElJgzP",
+      "type": "CodeBlock",
+      "code": "alinea.schema('My schema', {\n  TypeA, TypeB, TypeC\n})"
+    },
+    {
+      "type": "heading",
+      "textAlign": "left",
+      "level": 2,
+      "content": [
+        {
+          "type": "text",
+          "text": "Configuration"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "Schemas currently have no configuration options, other than the types."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "Example schema"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "The schema below is a minimal example of a blog setup. It is comprised of two types: `BlogOverview` and `BlogPost`. The overview type corresponds to a page that lists the posts. To achieve that it is configured as a container which can hold blog posts as children."
+        }
+      ]
+    },
+    {
+      "id": "286gbW4zHgdrAHcGBLGRtixZguV",
+      "type": "CodeBlock",
+      "code": "alinea.schema({\n  BlogOverview: alinea.type('Blog overview', {\n    title: alinea.text('Title'),\n    path: alinea.path('Path')\n  }).configure({\n    isContainer: true,\n    contains: ['BlogPost']\n  }),\n  BlogPost: alinea.type('Blog post', {\n    title: alinea.text('Title'),\n    path: alinea.path('Path'),\n    publishDate: alinea.date('Publish date'),\n    body: alinea.richText('Body')\n  })\n})"
     }
   ],
   "alinea": {

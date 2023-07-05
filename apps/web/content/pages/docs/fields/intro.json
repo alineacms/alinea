@@ -2,163 +2,156 @@
   "id": "tEBluF6vXUnc-WDPKN5K8",
   "type": "Doc",
   "title": "Overview",
-  "blocks": [
+  "body": [
     {
-      "id": "1m0Ci_wxHvpO0gfohw5p7",
-      "index": "a0",
-      "type": "TextBlock",
-      "text": [
+      "type": "heading",
+      "textAlign": "left",
+      "level": 1,
+      "content": [
         {
-          "type": "heading",
-          "textAlign": "left",
-          "level": 1,
-          "content": [
-            {
-              "type": "text",
-              "text": "Fields"
-            }
-          ]
-        },
+          "type": "text",
+          "text": "Fields"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
         {
-          "type": "paragraph",
-          "textAlign": "left",
-          "content": [
-            {
-              "type": "text",
-              "text": "Fields hold data that can be edited in the dashboard. Alinea ships with a number of useful fields that can be added to by creating custom fields."
-            }
-          ]
-        },
+          "type": "text",
+          "text": "Fields hold data that can be edited in the dashboard. Alinea ships with a number of useful fields that can be added to by creating custom fields."
+        }
+      ]
+    },
+    {
+      "id": "HeTPIvCg4LofpD5C23eYi",
+      "type": "ExampleBlock",
+      "code": "import {alinea} from 'alinea'\nimport {Field, Hint, Label, Shape} from 'alinea/core'\nimport {InputLabel, InputState, useInput} from 'alinea/editor'\n\nexport interface RangeFieldOptions {\n  min?: number\n  max?: number\n  help?: Label\n}\n\nexport interface RangeField extends Field.Scalar<number> {\n  label: Label\n  options?: RangeFieldOptions\n}\n\n// The constructor function is used to create fields in our schema\n// later on. It is usually passed a label and options.\nexport function range(label: Label, options?: RangeFieldOptions): RangeField {\n  return {\n    shape: Shape.Scalar(label),\n    label,\n    options,\n    view: RangeInput,\n    hint: Hint.Number()\n  }\n}\n\ninterface RangeInputProps {\n  state: InputState<InputState.Scalar<number>>\n  field: RangeField\n}\n\n// To view our field we can create a React component. \n// This component can call the useInput hook to receive the\n// current value and a method to update it.\nfunction RangeInput({state, field}: RangeInputProps) {\n  const [value = 5, setValue] = useInput(state)\n  const {min = 0, max = 10, help} = field.options || {}\n  return (\n    <InputLabel label={field.label} help={help}>\n      <input \n        type=\"range\" \n        min={min} max={max} \n        value={value} \n        onChange={e => setValue(Number(e.target.value))} \n      />\n    </InputLabel>\n  )\n}\n\nexport default alinea.type('Kitchen sink',\n  alinea.tabs(\n    alinea.tab('Basic fields', {\n      title: alinea.text('Text field'),\n      path: alinea.path('Path field', {\n        help: 'Creates a slug of the value of another field'\n      }),\n      richText: alinea.richText('Rich text field'),\n      select: alinea.select('Select field', {\n        a: 'Option a',\n        b: 'Option b'\n      }),\n      number: alinea.number('Number field', {\n        minValue: 0,\n        maxValue: 10\n      }),\n      check: alinea.check('Check field', {label: 'Check me please'}),\n      date: alinea.date('Date field'),\n      code: alinea.code('Code field')\n    }),\n    alinea.tab('Link fields', {\n      externalLink: alinea.url('External link'),\n      entry: alinea.entry('Internal link'),\n      linkMultiple: alinea.link.multiple('Mixed links, multiple'),\n      image: alinea.entry('Image link'),\n      file: alinea.entry('File link')\n    }),\n    alinea.tab('List fields', {\n      list: alinea.list('My list field', {\n        schema: alinea.schema({\n          Text: alinea.type('Text', {\n            title: alinea.text('Item title'),\n            text: alinea.richText('Item body text')\n          }),\n          Image: alinea.type('Image', {\n            image: alinea.image('Image')\n          })\n        })\n      })  \n    }),\n    alinea.tab('Inline fields', {\n      street: alinea.text('Street', {width: 0.6, inline: true, multiline: true}),\n      number: alinea.text('Number', {width: 0.2, inline: true}),\n      box: alinea.text('Box', {width: 0.2, inline: true}),\n      zip: alinea.text('Zipcode', {width: 0.2, inline: true}),\n      city: alinea.text('City', {width: 0.4, inline: true}),\n      country: alinea.text('Country', {\n        width: 0.4,\n        inline: true\n      })\n    }),\n    alinea.tab('Custom fields', {\n      range: range('Range field', {\n        help: 'See the custom field guide'\n      })  \n    })\n  )\n)"
+    },
+    {
+      "type": "heading",
+      "textAlign": "left",
+      "level": 2,
+      "content": [
         {
-          "id": "HeTPIvCg4LofpD5C23eYi",
-          "type": "ExampleBlock",
-          "code": "import {alinea} from 'alinea'\nimport {Field, Hint, Label, Shape} from 'alinea/core'\nimport {InputLabel, InputState, useInput} from 'alinea/editor'\n\nexport interface RangeFieldOptions {\n  min?: number\n  max?: number\n  help?: Label\n}\n\nexport interface RangeField extends Field.Scalar<number> {\n  label: Label\n  options?: RangeFieldOptions\n}\n\n// The constructor function is used to create fields in our schema\n// later on. It is usually passed a label and options.\nexport function range(label: Label, options?: RangeFieldOptions): RangeField {\n  return {\n    shape: Shape.Scalar(label),\n    label,\n    options,\n    view: RangeInput,\n    hint: Hint.Number()\n  }\n}\n\ninterface RangeInputProps {\n  state: InputState<InputState.Scalar<number>>\n  field: RangeField\n}\n\n// To view our field we can create a React component. \n// This component can call the useInput hook to receive the\n// current value and a method to update it.\nfunction RangeInput({state, field}: RangeInputProps) {\n  const [value = 5, setValue] = useInput(state)\n  const {min = 0, max = 10, help} = field.options || {}\n  return (\n    <InputLabel label={field.label} help={help}>\n      <input \n        type=\"range\" \n        min={min} max={max} \n        value={value} \n        onChange={e => setValue(Number(e.target.value))} \n      />\n    </InputLabel>\n  )\n}\n\nexport default alinea.type('Kitchen sink',\n  alinea.tabs(\n    alinea.tab('Basic fields', {\n      title: alinea.text('Text field'),\n      path: alinea.path('Path field', {\n        help: 'Creates a slug of the value of another field'\n      }),\n      richText: alinea.richText('Rich text field'),\n      select: alinea.select('Select field', {\n        a: 'Option a',\n        b: 'Option b'\n      }),\n      number: alinea.number('Number field', {\n        minValue: 0,\n        maxValue: 10\n      }),\n      check: alinea.check('Check field', {label: 'Check me please'}),\n      date: alinea.date('Date field'),\n      code: alinea.code('Code field')\n    }),\n    alinea.tab('Link fields', {\n      externalLink: alinea.url('External link'),\n      entry: alinea.entry('Internal link'),\n      linkMultiple: alinea.link.multiple('Mixed links, multiple'),\n      image: alinea.entry('Image link'),\n      file: alinea.entry('File link')\n    }),\n    alinea.tab('List fields', {\n      list: alinea.list('My list field', {\n        schema: alinea.schema({\n          Text: alinea.type('Text', {\n            title: alinea.text('Item title'),\n            text: alinea.richText('Item body text')\n          }),\n          Image: alinea.type('Image', {\n            image: alinea.image('Image')\n          })\n        })\n      })  \n    }),\n    alinea.tab('Inline fields', {\n      street: alinea.text('Street', {width: 0.6, inline: true, multiline: true}),\n      number: alinea.text('Number', {width: 0.2, inline: true}),\n      box: alinea.text('Box', {width: 0.2, inline: true}),\n      zip: alinea.text('Zipcode', {width: 0.2, inline: true}),\n      city: alinea.text('City', {width: 0.4, inline: true}),\n      country: alinea.text('Country', {\n        width: 0.4,\n        inline: true\n      })\n    }),\n    alinea.tab('Custom fields', {\n      range: range('Range field', {\n        help: 'See the custom field guide'\n      })  \n    })\n  )\n)"
-        },
+          "type": "text",
+          "text": "Configuration"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
         {
-          "type": "heading",
-          "textAlign": "left",
-          "level": 2,
-          "content": [
-            {
-              "type": "text",
-              "text": "Configuration"
-            }
-          ]
-        },
+          "type": "text",
+          "text": "While every field will have unique properties, there are a few properties that are usually available."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "textAlign": "left",
+      "level": 3,
+      "content": [
         {
-          "type": "paragraph",
-          "textAlign": "left",
-          "content": [
-            {
-              "type": "text",
-              "text": "While every field will have unique properties, there are a few properties that are usually available."
-            }
-          ]
-        },
+          "type": "text",
+          "text": "`initialValue`"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
         {
-          "type": "heading",
-          "textAlign": "left",
-          "level": 3,
-          "content": [
-            {
-              "type": "text",
-              "text": "`initialValue`"
-            }
-          ]
-        },
+          "type": "text",
+          "text": "Prefill the fields value."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "textAlign": "left",
+      "level": 3,
+      "content": [
         {
-          "type": "paragraph",
-          "textAlign": "left",
-          "content": [
-            {
-              "type": "text",
-              "text": "Prefill the fields value."
-            }
-          ]
-        },
+          "type": "text",
+          "text": "`hidden`"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
         {
-          "type": "heading",
-          "textAlign": "left",
-          "level": 3,
-          "content": [
-            {
-              "type": "text",
-              "text": "`hidden`"
-            }
-          ]
-        },
+          "type": "text",
+          "text": "Hide this field in the dashboard but keep its value intact."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "textAlign": "left",
+      "level": 3,
+      "content": [
         {
-          "type": "paragraph",
-          "textAlign": "left",
-          "content": [
-            {
-              "type": "text",
-              "text": "Hide this field in the dashboard but keep its value intact."
-            }
-          ]
-        },
+          "type": "text",
+          "text": "`help`"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
         {
-          "type": "heading",
-          "textAlign": "left",
-          "level": 3,
-          "content": [
-            {
-              "type": "text",
-              "text": "`help`"
-            }
-          ]
-        },
+          "type": "text",
+          "text": "Display a help text next to the fields label."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "textAlign": "left",
+      "level": 3,
+      "content": [
         {
-          "type": "paragraph",
-          "textAlign": "left",
-          "content": [
-            {
-              "type": "text",
-              "text": "Display a help text next to the fields label."
-            }
-          ]
-        },
+          "type": "text",
+          "text": "`inline`"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
         {
-          "type": "heading",
-          "textAlign": "left",
-          "level": 3,
-          "content": [
-            {
-              "type": "text",
-              "text": "`inline`"
-            }
-          ]
-        },
+          "type": "text",
+          "text": "Show a minimal version of the field. In most cases this will mean the input label will be hidden, and the label will show up as a placeholder instead."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "textAlign": "left",
+      "level": 3,
+      "content": [
         {
-          "type": "paragraph",
-          "textAlign": "left",
-          "content": [
-            {
-              "type": "text",
-              "text": "Show a minimal version of the field. In most cases this will mean the input label will be hidden, and the label will show up as a placeholder instead."
-            }
-          ]
-        },
+          "type": "text",
+          "text": "`width`"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
         {
-          "type": "heading",
-          "textAlign": "left",
-          "level": 3,
-          "content": [
-            {
-              "type": "text",
-              "text": "`width`"
-            }
-          ]
-        },
-        {
-          "type": "paragraph",
-          "textAlign": "left",
-          "content": [
-            {
-              "type": "text",
-              "text": "Setting a width value will scale the fields width down, use a number between 0 and 1. This allows you to compose the dashboard UI better based on the content of the fields."
-            }
-          ]
+          "type": "text",
+          "text": "Setting a width value will scale the fields width down, use a number between 0 and 1. This allows you to compose the dashboard UI better based on the content of the fields."
         }
       ]
     }

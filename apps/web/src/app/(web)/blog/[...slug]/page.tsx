@@ -1,13 +1,13 @@
+import {TextView} from '@/blocks/TextBlockView'
 import {cms} from '@/cms'
+import {LayoutWithSidebar} from '@/layout/Layout'
+import {WebTypo} from '@/layout/WebTypo'
+import {Link} from '@/nav/Link'
+import {BlogPost} from '@/schema/BlogPost'
 import {Entry} from 'alinea/core'
 import {HStack, Stack, fromModule} from 'alinea/ui'
 import {IcRoundArrowBack} from 'alinea/ui/icons/IcRoundArrowBack'
 import {notFound} from 'next/navigation'
-import {BlocksView} from '../../../../BlocksView'
-import {LayoutWithSidebar} from '../../../../layout/Layout'
-import {WebTypo} from '../../../../layout/WebTypo'
-import {Link} from '../../../../nav/Link'
-import {BlogPost} from '../../../../schema/BlogPost'
 import css from './page.module.scss'
 
 const styles = fromModule(css)
@@ -57,7 +57,7 @@ export default async function BlogPostPage({params}: BlogPostPageProps) {
             </a>
           </HStack>
         </header>
-        <BlocksView blocks={page.blocks} />
+        <TextView text={page.body} />
       </article>
     </LayoutWithSidebar>
   )

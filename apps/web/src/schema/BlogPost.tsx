@@ -1,5 +1,5 @@
 import alinea from 'alinea'
-import {Blocks} from './blocks/Blocks'
+import {TextField} from './blocks/TextBlock'
 
 export const BlogPost = alinea.type('Blog post', {
   title: alinea.text('Title', {width: 0.5}),
@@ -12,5 +12,5 @@ export const BlogPost = alinea.type('Blog post', {
       avatar: alinea.link.url('Avatar url')
     })
   }),
-  blocks: Blocks
+  body: TextField
 })

@@ -21,15 +21,21 @@ export function TextBlockView({text, container}: TextBlockViewProps) {
   return (
     <div className={styles.root()}>
       <Wrapper>
-        <WebText
-          doc={text}
-          CodeBlock={CodeBlockView}
-          CodeVariantsBlock={CodeVariantsView}
-          ExampleBlock={ExampleBlockView}
-          ChapterLinkBlock={ChapterLinkView}
-          NoticeBlock={NoticeView}
-        />
+        <TextView text={text} />
       </Wrapper>
     </div>
+  )
+}
+
+export function TextView({text}: TextBlockViewProps) {
+  return (
+    <WebText
+      doc={text}
+      CodeBlock={CodeBlockView}
+      CodeVariantsBlock={CodeVariantsView}
+      ExampleBlock={ExampleBlockView}
+      ChapterLinkBlock={ChapterLinkView}
+      NoticeBlock={NoticeView}
+    />
   )
 }

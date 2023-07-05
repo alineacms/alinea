@@ -1,10 +1,10 @@
+import {TextView} from '@/blocks/TextBlockView'
 import {cms} from '@/cms'
+import {InformationBar} from '@/layout/InformationBar'
+import {LayoutWithSidebar} from '@/layout/Layout'
+import {Page} from '@/schema/Page'
 import {Entry} from 'alinea/core'
 import {notFound} from 'next/navigation'
-import {BlocksView} from '../../../BlocksView'
-import {InformationBar} from '../../../layout/InformationBar'
-import {LayoutWithSidebar} from '../../../layout/Layout'
-import {Page} from '../../../schema/Page'
 
 export interface AnyPageProps {
   params: {
@@ -18,7 +18,7 @@ export default async function AnyPage({params}: AnyPageProps) {
   return (
     <LayoutWithSidebar sidebar={<InformationBar />}>
       <article>
-        <BlocksView blocks={page.blocks} />
+        <TextView text={page.body} />
       </article>
     </LayoutWithSidebar>
   )

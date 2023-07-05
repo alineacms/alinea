@@ -2,44 +2,37 @@
   "id": "Xu4-sW6S0ynehY5zKR1VZ",
   "type": "Doc",
   "title": "Image",
-  "blocks": [
+  "body": [
     {
-      "id": "Vs_ErtgQbgcIJr5IV0Yg-",
-      "index": "a0",
-      "type": "TextBlock",
-      "text": [
+      "type": "heading",
+      "textAlign": "left",
+      "level": 1,
+      "content": [
         {
-          "type": "heading",
-          "textAlign": "left",
-          "level": 1,
-          "content": [
-            {
-              "type": "text",
-              "text": "Image"
-            }
-          ]
-        },
-        {
-          "type": "paragraph",
-          "textAlign": "left",
-          "content": [
-            {
-              "type": "text",
-              "text": "The image field can be used to select an image."
-            }
-          ]
-        },
-        {
-          "id": "YCDn4dBOi-_bHy32PAqzU",
-          "type": "CodeBlock",
-          "code": "import {alinea} from 'alinea'\nalinea.image('My image field')"
-        },
-        {
-          "id": "D6afYJyRzrcvfZy1mTq5L",
-          "type": "ExampleBlock",
-          "code": "import {alinea} from 'alinea'\nexport default alinea.image('My image field')"
+          "type": "text",
+          "text": "Image"
         }
       ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "The image field can be used to select an image."
+        }
+      ]
+    },
+    {
+      "id": "YCDn4dBOi-_bHy32PAqzU",
+      "type": "CodeBlock",
+      "code": "import {alinea} from 'alinea'\nalinea.image('My image field')"
+    },
+    {
+      "id": "D6afYJyRzrcvfZy1mTq5L",
+      "type": "ExampleBlock",
+      "code": "import {alinea} from 'alinea'\nexport default alinea.image('My image field')"
     }
   ],
   "alinea": {

@@ -2,138 +2,131 @@
   "id": "25HWCBHEFdsLDtooZ4mzxeax3An",
   "type": "Doc",
   "title": "Creating a CMS instance",
-  "blocks": [
+  "body": [
     {
-      "id": "25HWDVdhsKXsw9R0i0ImOmwE32h",
-      "index": "a0",
-      "type": "TextBlock",
-      "text": [
+      "type": "heading",
+      "level": 1,
+      "textAlign": "left",
+      "content": [
         {
-          "type": "heading",
-          "level": 1,
-          "textAlign": "left",
-          "content": [
-            {
-              "type": "text",
-              "text": "Creating a CMS instance"
-            }
-          ]
-        },
+          "type": "text",
+          "text": "Creating a CMS instance"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "All configuration can be managed by creating a CMS instance. The `alinea` package exports a general purpose `createCMS` function as well as framework specific functions such as `createNextCMS`. The framework specific instances expose helper methods to help integrate the content into your framework of choice."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "All configuration can be managed from the `alinea.config.tsx` file. This file is created during `alinea init`. It contains an example workspace to get started from."
+        }
+      ]
+    },
+    {
+      "id": "tcDzW-tnYPRST5jAp3IoQ",
+      "type": "NoticeBlock",
+      "level": "info",
+      "body": [
         {
           "type": "paragraph",
           "textAlign": "left",
           "content": [
             {
               "type": "text",
-              "text": "All configuration can be managed by creating a CMS instance. The `alinea` package exports a general purpose `createCMS` function as well as framework specific functions such as `createNextCMS`. The framework specific instances expose helper methods to help integrate the content into your framework of choice."
+              "text": "If you prefer plain Javascript over Typescript, just rename the file to `alinea.config.js`"
             }
           ]
-        },
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "textAlign": "left",
+      "level": 2,
+      "content": [
         {
-          "type": "paragraph",
-          "textAlign": "left",
+          "type": "text",
+          "text": "Example config"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "In the example below we find a schema which includes the default `MediaSchema`, necessary for file uploads, and a generic `Page` type. One workspace named `main` is defined with the following settings:"
+        }
+      ]
+    },
+    {
+      "type": "bulletList",
+      "content": [
+        {
+          "type": "listItem",
           "content": [
-            {
-              "type": "text",
-              "text": "All configuration can be managed from the `alinea.config.tsx` file. This file is created during `alinea init`. It contains an example workspace to get started from."
-            }
-          ]
-        },
-        {
-          "id": "tcDzW-tnYPRST5jAp3IoQ",
-          "type": "NoticeBlock",
-          "level": "info",
-          "body": [
             {
               "type": "paragraph",
               "textAlign": "left",
               "content": [
                 {
                   "type": "text",
-                  "text": "If you prefer plain Javascript over Typescript, just rename the file to `alinea.config.js`"
+                  "text": "`source`: content is stored in json files and can be found in the `content` directory"
                 }
               ]
             }
           ]
         },
         {
-          "type": "heading",
-          "textAlign": "left",
-          "level": 2,
+          "type": "listItem",
           "content": [
             {
-              "type": "text",
-              "text": "Example config"
+              "type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "`mediaDir`: uploaded files are placed in the `public` folder"
+                }
+              ]
             }
           ]
         },
         {
-          "type": "paragraph",
-          "textAlign": "left",
+          "type": "listItem",
           "content": [
             {
-              "type": "text",
-              "text": "In the example below we find a schema which includes the default `MediaSchema`, necessary for file uploads, and a generic `Page` type. One workspace named `main` is defined with the following settings:"
-            }
-          ]
-        },
-        {
-          "type": "bulletList",
-          "content": [
-            {
-              "type": "listItem",
+              "type": "paragraph",
+              "textAlign": "left",
               "content": [
                 {
-                  "type": "paragraph",
-                  "textAlign": "left",
-                  "content": [
-                    {
-                      "type": "text",
-                      "text": "`source`: content is stored in json files and can be found in the `content` directory"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "type": "listItem",
-              "content": [
-                {
-                  "type": "paragraph",
-                  "textAlign": "left",
-                  "content": [
-                    {
-                      "type": "text",
-                      "text": "`mediaDir`: uploaded files are placed in the `public` folder"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "type": "listItem",
-              "content": [
-                {
-                  "type": "paragraph",
-                  "textAlign": "left",
-                  "content": [
-                    {
-                      "type": "text",
-                      "text": "`roots`: defines two separate web roots, one for data (our welcome page in this case), and one for media (file uploads)"
-                    }
-                  ]
+                  "type": "text",
+                  "text": "`roots`: defines two separate web roots, one for data (our welcome page in this case), and one for media (file uploads)"
                 }
               ]
             }
           ]
-        },
-        {
-          "id": "25HWCBHEFdsLDtooZ4mzxeax3An",
-          "type": "CodeBlock",
-          "code": "import {Welcome} from 'alinea/dashboard/Welcome'\nimport {IcRoundInsertDriveFile} from 'alinea/ui/icons/IcRoundInsertDriveFile'\nimport {IcRoundPermMedia} from 'alinea/ui/icons/IcRoundPermMedia'\nimport {alinea} from 'alinea'\n\nexport const config = alinea.createConfig({\n  schema: alinea.schema({\n    ...alinea.MediaSchema,\n    Page: alinea.type(\n      'Page',\n      {\n        title: alinea.text('Title'),\n        path: alinea.path('Path')\n      },\n      <Welcome />\n    )\n  }),\n  workspaces: {\n    main: alinea.workspace('Example', {\n      source: './content',\n      mediaDir: './public',\n      roots: {\n        data: alinea.root('Example project', {\n          icon: IcRoundInsertDriveFile,\n          contains: ['Page']\n        }),\n        media: alinea.root('Media', {\n          icon: IcRoundPermMedia,\n          contains: ['MediaLibrary']\n        })\n      }\n    })\n  }\n})",
-          "fileName": "alinea.config.tsx"
         }
       ]
+    },
+    {
+      "id": "25HWCBHEFdsLDtooZ4mzxeax3An",
+      "type": "CodeBlock",
+      "code": "import {Welcome} from 'alinea/dashboard/Welcome'\nimport {IcRoundInsertDriveFile} from 'alinea/ui/icons/IcRoundInsertDriveFile'\nimport {IcRoundPermMedia} from 'alinea/ui/icons/IcRoundPermMedia'\nimport {alinea} from 'alinea'\n\nexport const config = alinea.createConfig({\n  schema: alinea.schema({\n    ...alinea.MediaSchema,\n    Page: alinea.type(\n      'Page',\n      {\n        title: alinea.text('Title'),\n        path: alinea.path('Path')\n      },\n      <Welcome />\n    )\n  }),\n  workspaces: {\n    main: alinea.workspace('Example', {\n      source: './content',\n      mediaDir: './public',\n      roots: {\n        data: alinea.root('Example project', {\n          icon: IcRoundInsertDriveFile,\n          contains: ['Page']\n        }),\n        media: alinea.root('Media', {\n          icon: IcRoundPermMedia,\n          contains: ['MediaLibrary']\n        })\n      }\n    })\n  }\n})",
+      "fileName": "alinea.config.tsx"
     }
   ],
   "alinea": {
