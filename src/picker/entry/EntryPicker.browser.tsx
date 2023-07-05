@@ -193,6 +193,7 @@ export function EntryPickerModal({
           </list.Container>
           {showMedia && (
             <FileUploader
+              position="left"
               destination={destination}
               max={max}
               toggleSelect={handleSelect}

@@ -1,14 +1,13 @@
 .root {
   position: absolute;
   bottom: 0;
-  left: 0;
   padding: 0 30px;
   width: 360px;
   max-width: 100%;
 
   &-content {
     background: var(--alinea-background);
-    box-shadow: 0 0 1.4px var(--alinea-shadow), 0 2px 3.5px var(--alinea-shadow);
+    box-shadow: 0 0.5px 4.5px var(--alinea-shadow);
     border-top-left-radius: var(--alinea-border-radius);
     border-top-right-radius: var(--alinea-border-radius);
   }

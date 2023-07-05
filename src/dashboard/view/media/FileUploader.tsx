@@ -18,12 +18,14 @@ export interface FileUploaderProps {
   destination: UploadDestination
   max?: number
   toggleSelect?: (id: Entry) => void
+  position?: 'left' | 'right'
 }
 
 export function FileUploader({
   destination,
   max,
-  toggleSelect
+  toggleSelect,
+  position = 'right'
 }: FileUploaderProps) {
   const {upload, uploads} = useUploads(toggleSelect)
   const [isOver, setIsOver] = useState(false)
@@ -77,7 +79,12 @@ export function FileUploader({
     }
   }, [destination])
   return (
-    <div className={styles.root({over: isOver})}>
+    <div
+      className={styles.root({over: isOver})}
+      style={{
+        [position]: 0
+      }}
+    >
       <VStack className={styles.root.content()}>
         <HStack as="header" className={styles.root.header()}>
           <label className={styles.root.header.label()}>

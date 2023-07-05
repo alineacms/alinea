@@ -33,6 +33,7 @@ export function ExplorerItem({
   )
   const type = schema[entry.type]
   const View: any = (type && Type.meta(type)[summaryView]) || defaultView
+  const Tag: any = explorer?.selectable ? 'label' : 'a'
   const props = explorer?.selectable ? {} : link(nav.entry(entry))
   const isSelected = Boolean(
     explorer?.selection.find(
@@ -47,14 +48,14 @@ export function ExplorerItem({
       className={styles.root(summaryView === 'summaryRow' ? 'row' : 'thumb', {
         selected: isSelected
       })}
-      {...props}
       tabIndex={0}
     >
       <div className={styles.root.inner()}>
         <HStack
-          as="label"
+          as={Tag}
           className={styles.root.inner.hitBox()}
           style={{flexGrow: 1}}
+          {...props}
         >
           {explorer?.selectable && (
             <>

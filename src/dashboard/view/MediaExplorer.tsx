@@ -67,15 +67,15 @@ export function MediaExplorer({editor}: MediaExplorerProps) {
               <Explorer cursor={cursor} type="thumb" virtualized />
             </VStack>
           </HStack>
+          <FileUploader
+            destination={{
+              parentId,
+              workspace: workspace.name,
+              root: root.name
+            }}
+          />
         </Main.Container>
       </Main>
-      <FileUploader
-        destination={{
-          parentId,
-          workspace: workspace.name,
-          root: root.name
-        }}
-      />
     </>
   )
 }
