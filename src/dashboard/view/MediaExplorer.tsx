@@ -8,6 +8,8 @@ import {Entry, RootData} from 'alinea/core'
 import {useAtomValue} from 'jotai'
 import {graphAtom} from '../atoms/EntryAtoms.js'
 import {EntryEditor} from '../atoms/EntryEditor.js'
+import {useNavigate} from '../atoms/LocationAtoms.js'
+import {useNav} from '../hook/UseNav.js'
 import {useRoot} from '../hook/UseRoot.js'
 import {useWorkspace} from '../hook/UseWorkspace.js'
 import {Head} from '../util/Head.js'
@@ -50,6 +52,8 @@ export function MediaExplorer({editor}: MediaExplorerProps) {
   )
   const {cursor} = data!
   const title = data?.title || root.label
+  const nav = useNav()
+  const navigate = useNavigate()
   return (
     <>
       <Main className={styles.root()}>
@@ -64,7 +68,12 @@ export function MediaExplorer({editor}: MediaExplorerProps) {
                   <TextLabel label={title} />
                 </h1>
               </header>
-              <Explorer cursor={cursor} type="thumb" virtualized />
+              <Explorer
+                cursor={cursor}
+                type="thumb"
+                virtualized
+                onNavigate={entryId => navigate(nav.entry({entryId}))}
+              />
             </VStack>
           </HStack>
           <FileUploader
