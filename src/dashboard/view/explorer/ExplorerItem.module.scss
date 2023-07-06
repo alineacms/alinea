@@ -31,7 +31,7 @@
     &-hitBox {
       padding-right: 8px;
       &:hover {
-        background: var(--alinea-selected);
+        background: var(--alinea-highlight);
       }
     }
   }
@@ -44,6 +44,7 @@
     align-items: center;
     justify-content: flex-end;
     gap: 8px;
+    min-width: 100px;
 
     &-badge {
       display: block;
@@ -58,7 +59,7 @@
     }
 
     &:hover {
-      background: var(--alinea-selected);
+      background: var(--alinea-highlight);
     }
   }
 
@@ -89,6 +90,6 @@
   }
 
   &[aria-selected] &-inner {
-    background: var(--alinea-selected);
+    background: var(--alinea-highlight);
   }
 }

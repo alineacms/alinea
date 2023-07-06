@@ -2,11 +2,12 @@
   position: absolute;
   inset: 0;
   z-index: 4;
-  display: none;
   padding: 60px 30px 40px 30px;
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out;
 
   &.is-open {
-    display: flex;
+    opacity: 1;
   }
 
   &-background {

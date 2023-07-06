@@ -6,7 +6,8 @@ type ExplorerContext = {
   selectable: boolean
   selection: Array<Reference>
   onSelect: (entry: ExporerItemSelect) => void
-  onNavigate: (entryId: string) => void
+  onNavigate?: (entryId: string) => void
+  showMedia?: boolean
 }
 
 const context = createContext<ExplorerContext | undefined>(undefined)

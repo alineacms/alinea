@@ -1,6 +1,10 @@
 .root {
   font-size: 13px;
 
+  > :last-child {
+    display: none;
+  }
+
   &-separator {
     opacity: 0.5;
   }

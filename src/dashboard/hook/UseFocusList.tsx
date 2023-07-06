@@ -61,7 +61,7 @@ export function useFocusList({onClear}: FocusListParams) {
           break
         case 'Enter':
           event.preventDefault()
-          if (current) selects.get(current)?.()
+          selects.get(current ?? items[0])?.()
           break
         default:
       }
@@ -69,9 +69,9 @@ export function useFocusList({onClear}: FocusListParams) {
     const focusProps = {
       ref: focusRef as Ref<any>,
       onKeyDown,
-      onFocus() {
+      /*onFocus() {
         selectFirst()
-      },
+      },*/
       onBlur() {
         select(undefined)
         itemsReset = true
@@ -86,8 +86,8 @@ export function useFocusList({onClear}: FocusListParams) {
       }
       items.splice(i, 0, element)
       selects.set(element, onSelect)
-      window.clearTimeout(selectTimeout)
-      selectTimeout = window.setTimeout(selectFirst, 0)
+      //window.clearTimeout(selectTimeout)
+      //selectTimeout = window.setTimeout(selectFirst, 0)
       return () => {
         if (current === element) current = undefined
         items = items.filter(item => item !== element)

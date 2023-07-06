@@ -38,6 +38,7 @@ export interface ExplorerProps {
   selection?: Array<Reference>
   toggleSelect?: (entry: ExporerItemSelect) => void
   onNavigate?: (entryId: string) => void
+  showMedia?: boolean
 }
 
 export function Explorer({
@@ -48,7 +49,8 @@ export function Explorer({
   selectable = false,
   selection = [],
   toggleSelect = () => {},
-  onNavigate = () => {}
+  onNavigate = () => {},
+  showMedia
 }: ExplorerProps) {
   const {schema} = useConfig()
   const graph = useAtomValue(graphAtom)
@@ -94,7 +96,13 @@ export function Explorer({
     data && containerWidth > 0 && (!virtualized || containerHeight > 0)
   return (
     <ExplorerProvider
-      value={{selectable, selection, onSelect: toggleSelect, onNavigate}}
+      value={{
+        selectable,
+        selection,
+        onSelect: toggleSelect,
+        onNavigate,
+        showMedia
+      }}
     >
       <div ref={containerRef} className={styles.root()}>
         {showList ? (

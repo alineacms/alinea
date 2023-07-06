@@ -37,7 +37,7 @@ export function SearchBox() {
       className={styles.root()}
       onFocus={() => {
         setIsOpen(true)
-        list.focusProps.onFocus()
+        //list.focusProps.onFocus()
       }}
       onBlur={({currentTarget, relatedTarget}) => {
         if (currentTarget.contains(relatedTarget as Node)) return

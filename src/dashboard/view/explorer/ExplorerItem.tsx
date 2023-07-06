@@ -2,6 +2,7 @@ import {Schema, Type, View} from 'alinea/core'
 import {link} from 'alinea/dashboard/util/HashRouter'
 import {EntryReference} from 'alinea/picker/entry/EntryReference'
 import {HStack, Icon, fromModule} from 'alinea/ui'
+import {IcOutlineInsertDriveFile} from 'alinea/ui/icons/IcOutlineInsertDriveFile'
 import {IcRoundCheckBox} from 'alinea/ui/icons/IcRoundCheckBox'
 import {IcRoundCheckBoxOutlineBlank} from 'alinea/ui/icons/IcRoundCheckBoxOutlineBlank'
 import {IcRoundKeyboardArrowRight} from 'alinea/ui/icons/IcRoundKeyboardArrowRight'
@@ -80,14 +81,16 @@ export function ExplorerItem({
           <View {...entry} />
         </HStack>
 
-        {childrenAmount > 0 && (
+        {explorer.onNavigate && childrenAmount > 0 && (
           <button
             type="button"
             className={styles.root.children()}
             onClick={() => {
-              explorer.onNavigate(entry.entryId)
+              explorer.onNavigate?.(entry.entryId)
             }}
           >
+            <Icon icon={IcOutlineInsertDriveFile} size={18} />
+
             <span className={styles.root.children.badge()}>
               {childrenAmount}
             </span>

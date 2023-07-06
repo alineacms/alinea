@@ -5,10 +5,10 @@ import {isMediaRoot} from 'alinea/core/media/MediaRoot'
 import {and} from 'alinea/core/pages/Expr'
 import {entries} from 'alinea/core/util/Objects'
 import {useFocusList} from 'alinea/dashboard/hook/UseFocusList'
-import {useNav} from 'alinea/dashboard/hook/UseNav'
+import {useGraph} from 'alinea/dashboard/hook/UseGraph'
 import {useRoot} from 'alinea/dashboard/hook/UseRoot'
 import {useWorkspace} from 'alinea/dashboard/hook/UseWorkspace'
-import {Breadcrumbs} from 'alinea/dashboard/view/Breadcrumbs'
+import {Breadcrumbs, BreadcrumbsItem} from 'alinea/dashboard/view/Breadcrumbs'
 import {IconButton} from 'alinea/dashboard/view/IconButton'
 import {Modal} from 'alinea/dashboard/view/Modal'
 import {
@@ -28,8 +28,10 @@ import {
 } from 'alinea/ui'
 import {IcOutlineGridView} from 'alinea/ui/icons/IcOutlineGridView'
 import {IcOutlineList} from 'alinea/ui/icons/IcOutlineList'
+import {IcRoundArrowBack} from 'alinea/ui/icons/IcRoundArrowBack'
 import {IcRoundSearch} from 'alinea/ui/icons/IcRoundSearch'
 import {Suspense, useCallback, useMemo, useState} from 'react'
+import {useQuery} from 'react-query'
 import {
   EntryPickerOptions,
   entryPicker as createEntryPicker
@@ -69,6 +71,7 @@ export function EntryPickerModal({
   onConfirm,
   onCancel
 }: EntryPickerModalProps) {
+  const graph = useGraph()
   const {title, defaultView, max, condition, showMedia} = options
   const [search, setSearch] = useState('')
   const list = useFocusList({
@@ -83,6 +86,24 @@ export function EntryPickerModal({
     workspace: workspace.name,
     root: showMedia ? mediaRoot(workspace) : root
   })
+  const {data: parentEntries} = useQuery(
+    ['picker-parents', destination],
+    async () => {
+      if (!destination.parentId) return []
+      const res = await graph.active.get(
+        Entry({entryId: destination.parentId}).select({
+          title: Entry.title,
+          parents({parents}) {
+            return parents().select({
+              id: Entry.entryId,
+              title: Entry.title
+            })
+          }
+        })
+      )
+      return res.parents.concat({id: destination.parentId, title: res.title})
+    }
+  )
   const cursor = useMemo(() => {
     const terms = search.replace(/,/g, ' ').split(' ').filter(Boolean)
     const rootCondition = and(
@@ -131,22 +152,60 @@ export function EntryPickerModal({
   function handleConfirm() {
     onConfirm(selected)
   }
-  const nav = useNav()
-  const parents = [
-    {id: workspace.name, title: workspace.label},
-    {id: destination.root, title: Root.label(workspace.roots[destination.root])}
-  ]
+
+  function toRoot() {
+    setDestination({...destination, parentId: undefined})
+  }
+
+  function goUp() {
+    if (!destination.parentId) return onCancel()
+    const parentIndex = parentEntries?.findIndex(
+      ({id}) => id === destination.parentId
+    )
+    if (parentIndex === undefined) return
+    const parent = parentEntries?.[parentIndex - 1]
+    if (!parent) return toRoot()
+    setDestination({...destination, parentId: parent.id})
+  }
+
   return (
     <Modal open onClose={onCancel} className={styles.root()}>
       <Suspense fallback={<Loader absolute />}>
         <div className={styles.root.header()}>
           <VStack gap={24}>
-            <VStack gap={8}>
-              <Breadcrumbs parents={parents} />
-              <h2>
-                {title ? <TextLabel label={title} /> : 'Select a reference'}
-              </h2>
-            </VStack>
+            <HStack align="flex-end" gap={18}>
+              <IconButton icon={IcRoundArrowBack} onClick={goUp} />
+              <VStack gap={8}>
+                <Breadcrumbs>
+                  <BreadcrumbsItem>
+                    <button onClick={toRoot}>{workspace.label}</button>
+                  </BreadcrumbsItem>
+                  <BreadcrumbsItem>
+                    <button onClick={toRoot}>
+                      {Root.label(workspace.roots[destination.root])}{' '}
+                    </button>
+                  </BreadcrumbsItem>
+                  {!search &&
+                    parentEntries?.map(({id, title}) => {
+                      return (
+                        <BreadcrumbsItem key={id}>
+                          <button
+                            onClick={() => {
+                              setDestination({...destination, parentId: id})
+                            }}
+                          >
+                            {title}
+                          </button>
+                        </BreadcrumbsItem>
+                      )
+                    })}
+                </Breadcrumbs>
+                <h2>
+                  {title ? <TextLabel label={title} /> : 'Select a reference'}
+                </h2>
+              </VStack>
+            </HStack>
+
             <label className={styles.root.search()}>
               <IcRoundSearch className={styles.root.search.icon()} />
               <input
@@ -185,9 +244,14 @@ export function EntryPickerModal({
                 selectable
                 selection={selected}
                 toggleSelect={handleSelect}
-                onNavigate={entryId => {
-                  setDestination({...destination, parentId: entryId})
-                }}
+                showMedia={showMedia}
+                onNavigate={
+                  search
+                    ? undefined
+                    : entryId => {
+                        setDestination({...destination, parentId: entryId})
+                      }
+                }
               />
             </div>
           </list.Container>
