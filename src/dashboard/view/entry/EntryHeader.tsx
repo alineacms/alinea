@@ -57,16 +57,26 @@ export function EntryHeader({editor}: EntryHeaderProps) {
             <span>(edit to create a new draft)</span>
           ))}
         <Stack.Right>
-          {hasChanges && variant === 'draft' && (
-            <Button icon={IcRoundCheck} onClick={saveDraft}>
-              Save draft
-            </Button>
-          )}
-          {!hasChanges && selectedPhase === 'draft' && (
-            <Button icon={IcOutlineRemoveRedEye} onClick={publishDraft}>
-              Publish draft
-            </Button>
-          )}
+          <HStack center gap={8}>
+            {hasChanges && variant === 'draft' && (
+              <Button icon={IcRoundCheck} onClick={saveDraft}>
+                Save draft
+              </Button>
+            )}
+            {!hasChanges && selectedPhase === 'draft' && (
+              <Button icon={IcOutlineRemoveRedEye} onClick={publishDraft}>
+                Publish draft
+              </Button>
+            )}
+
+            {/*<PopoverMenu.Root>
+              <PopoverMenu.Trigger>
+                <Icon icon={IcRoundMoreVert} />
+              </PopoverMenu.Trigger>
+
+              <PopoverMenu.Items right>open me</PopoverMenu.Items>
+            </PopoverMenu.Root>*/}
+          </HStack>
         </Stack.Right>
       </HStack>
     </AppBar.Root>

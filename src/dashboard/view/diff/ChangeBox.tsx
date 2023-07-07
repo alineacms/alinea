@@ -1,8 +1,8 @@
 import {fromModule, HStack, Icon} from 'alinea/ui'
-import IcOutlineArrowCircleRight from 'alinea/ui/icons/IcOutlineArrowCircleRight'
-import IcRoundAddCircleOutline from 'alinea/ui/icons/IcRoundAddCircleOutline'
-import IcRoundMoreHoriz from 'alinea/ui/icons/IcRoundMoreHoriz'
-import IcRoundRemoveCircleOutline from 'alinea/ui/icons/IcRoundRemoveCircleOutline'
+import {IcOutlineArrowCircleRight} from 'alinea/ui/icons/IcOutlineArrowCircleRight'
+import {IcRoundAddCircleOutline} from 'alinea/ui/icons/IcRoundAddCircleOutline'
+import {IcRoundMoreHoriz} from 'alinea/ui/icons/IcRoundMoreHoriz'
+import {IcRoundRemoveCircleOutline} from 'alinea/ui/icons/IcRoundRemoveCircleOutline'
 import {PropsWithChildren} from 'react'
 import css from './ChangeBox.module.scss'
 
