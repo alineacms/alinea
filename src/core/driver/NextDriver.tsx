@@ -3,7 +3,7 @@ import {Config} from '../Config.js'
 import {DefaultDriver} from './DefaultDriver.js'
 
 export interface NextApi extends CMSApi {
-  previews(): JSX.Element
+  previews(): Promise<JSX.Element | null>
   backendHandler(request: Request): Promise<Response>
   previewHandler(request: Request): Promise<Response>
 }

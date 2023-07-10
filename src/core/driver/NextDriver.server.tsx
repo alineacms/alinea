@@ -132,8 +132,7 @@ class NextDriver extends DefaultDriver implements NextApi {
     })
   }
 
-  // Todo: update typescript to support async server components
-  previews = (async (): Promise<JSX.Element | null> => {
+  async previews(): Promise<JSX.Element | null> {
     const {draftMode} = await import('next/headers')
     const {isEnabled: isDraft} = draftMode()
     if (!isDraft) return null
@@ -143,7 +142,7 @@ class NextDriver extends DefaultDriver implements NextApi {
         <NextPreviews />
       </Suspense>
     )
-  }) as any
+  }
 }
 
 export function createNextCMS<Definition extends Config>(
