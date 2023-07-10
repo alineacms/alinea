@@ -22,13 +22,7 @@ export default function NextPreviews() {
       )) {
         document.cookie = `${name}=${value};path=/`
       }
-
       router.refresh()
-      // router.refresh unfortunately causes FOUC because Next serves
-      // all responses in development with a no-store, revalidate header.
-      // Hopefully we'll find a workaround in time. The alternative is
-      // routing to the same page with a query param, but that will not refresh
-      // layout components.
     }
   })
   return null
