@@ -36,7 +36,6 @@
     "dist"
   ],
   "workspaces": [
-    "apps/demo",
     "apps/web",
     "src/backend",
     "src/cli",
