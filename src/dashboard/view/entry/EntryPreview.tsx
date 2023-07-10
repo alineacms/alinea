@@ -20,7 +20,8 @@ export function EntryPreview({editor, preview}: EntryPreviewProps) {
   const previewToken = usePreviewToken()
   const selectedPhase = useAtomValue(editor.selectedPhase)
   const previewSearch = `?token=${previewToken}&entryId=${editor.entryId}&realm=${selectedPhase}`
-  const url = new URL(previewSearch, preview)
+  const base = new URL(preview, location.href)
+  const url = new URL(previewSearch, base)
   const [api, setApi] = useState<LivePreview | undefined>(undefined)
   const yUpdate = useAtomValue(editor.yUpdate)
   useEffect(() => {
