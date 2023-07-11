@@ -21,7 +21,7 @@ export const cms = createCMS({
           contains: ['Page']
         }
       }),
-      media: alinea.media,
+      media: alinea.media(),
       [alinea.meta]: {
         source: './content',
         mediaDir: './public'
