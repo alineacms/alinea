@@ -3,11 +3,10 @@
   inset: 0;
   z-index: 4;
   padding: 60px 30px 40px 30px;
-  opacity: 0;
-  transition: opacity 0.2s ease-in-out;
+  display: none;
 
   &.is-open {
-    opacity: 1;
+    display: flex;
   }
 
   &-background {
