@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "run-p dev:check dev:run",
+    "stories": "ladle serve",
     "demo": "node build.js --watch -- node dev.js --dir apps/demo --config src/cms -- yarn workspace @alinea/demo dev",
     "build": "tsc && node build.js",
     "alinea": "node build.js && node dist/cli.js",

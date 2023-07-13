@@ -24,7 +24,7 @@ export const select = Field.provideView(SelectInput, createSelect)
 const styles = fromModule(css)
 
 interface SelectInputProps<Key extends string, Items> {
-  state: InputState<InputState.Scalar<Key>>
+  state: InputState<InputState.Scalar<Key | null>>
   field: SelectField<Key, Items>
 }
 
@@ -33,7 +33,7 @@ function SelectInput<Key extends string, Items extends Record<Key, string>>({
   field
 }: SelectInputProps<Key, Items>) {
   const {label, options} = field[Field.Data]
-  const [value = options.initialValue, setValue] = useInput(state)
+  const [value, setValue] = useInput(state)
   const items = options.items as Record<string, string>
   const {x, y, reference, floating, refs, strategy} = useFloating({
     whileElementsMounted: autoUpdate,

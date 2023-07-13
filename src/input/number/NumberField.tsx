@@ -19,13 +19,13 @@ export interface NumberOptions extends FieldOptions {
   step?: number
 }
 
-export class NumberField extends Field.Scalar<number, NumberOptions> {}
+export class NumberField extends Field.Scalar<number | null, NumberOptions> {}
 
 export function number(label: Label, options: NumberOptions = {}): NumberField {
   return new NumberField({
     hint: Hint.Number(),
     label,
     options,
-    initialValue: options.initialValue
+    initialValue: options.initialValue ?? null
   })
 }

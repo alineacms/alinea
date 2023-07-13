@@ -30,6 +30,6 @@ export function check(
     hint: Hint.Boolean(),
     label,
     options,
-    initialValue: options.initialValue
+    initialValue: options.initialValue ?? false
   })
 }

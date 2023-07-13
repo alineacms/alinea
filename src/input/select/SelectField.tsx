@@ -29,7 +29,7 @@ export interface SelectOptions<Key, Items> extends SelectConfig<Key> {
 }
 
 export class SelectField<Key extends string, Items> extends Field.Scalar<
-  Key,
+  Key | null,
   SelectOptions<Key, Items>
 > {}
 
@@ -47,6 +47,6 @@ export function select<Key extends string, Items extends Record<Key, string>>(
       items,
       ...options
     },
-    initialValue: options.initialValue
+    initialValue: options.initialValue ?? null
   })
 }

@@ -12,24 +12,15 @@ export const number = Field.provideView(NumberInput, createNumber)
 const styles = fromModule(css)
 
 interface NumberInputProps {
-  state: InputState<InputState.Scalar<number>>
+  state: InputState<InputState.Scalar<number | null>>
   field: NumberField
 }
 
 function NumberInput({state, field}: NumberInputProps) {
   const {label, options} = field[Field.Data]
-  const {
-    inline,
-    help,
-    optional,
-    initialValue,
-    width,
-    minValue,
-    maxValue,
-    readonly,
-    step
-  } = options
-  const [value = initialValue, setValue] = useInput(state)
+  const {inline, help, optional, width, minValue, maxValue, readonly, step} =
+    options
+  const [value, setValue] = useInput(state)
 
   return (
     <InputLabel
@@ -47,9 +38,7 @@ function NumberInput({state, field}: NumberInputProps) {
         value={String(value ?? '')}
         onChange={e =>
           setValue(
-            e.currentTarget.value === ''
-              ? undefined!
-              : Number(e.currentTarget.value)
+            e.currentTarget.value === '' ? null : Number(e.currentTarget.value)
           )
         }
         min={minValue}

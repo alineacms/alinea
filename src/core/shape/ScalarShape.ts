@@ -16,7 +16,7 @@ export class ScalarShape<T> implements Shape<T, ScalarMutator<T>> {
     throw new Error(`No children in scalar values`)
   }
   toY(value: T) {
-    return value
+    return value ?? this.initialValue
   }
   fromY(yValue: any) {
     return yValue

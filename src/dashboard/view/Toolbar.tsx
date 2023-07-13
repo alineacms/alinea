@@ -211,7 +211,7 @@ export namespace Toolbar {
                     {workspaces.length > 1 && (
                       <InputField
                         value={preferences.workspace || ''}
-                        onChange={updateWorkspace}
+                        onChange={v => updateWorkspace(v ?? undefined)}
                         field={defaultWorkspace}
                       />
                     )}

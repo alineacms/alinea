@@ -20,7 +20,8 @@ type CheckInputProps = {
 
 function CheckInput({state, field}: CheckInputProps) {
   const {label, options} = field[Field.Data]
-  const [value = options.initialValue, setValue] = useInput(state)
+  const {readonly} = options
+  const [value, setValue] = useInput(state)
   const [focus, setFocus] = useState(false)
   return (
     <InputLabel
@@ -39,6 +40,7 @@ function CheckInput({state, field}: CheckInputProps) {
           onFocus={() => setFocus(true)}
           onBlur={() => setFocus(false)}
           autoFocus={options.autoFocus}
+          disabled={readonly}
         />
         <span className={styles.root.checkmark({disabled: options.readonly})}>
           {value && (

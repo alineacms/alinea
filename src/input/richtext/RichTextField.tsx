@@ -37,6 +37,6 @@ export function richText<Blocks extends Schema = {}>(
     hint: richTextHint(options.schema),
     label,
     options,
-    initialValue: options.initialValue
+    initialValue: options.initialValue ?? []
   })
 }
