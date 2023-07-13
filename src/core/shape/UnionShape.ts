@@ -103,8 +103,11 @@ export class UnionShape<T> implements Shape<UnionRow & T, UnionMutator<T>> {
     }
   }
   async applyLinks(value: UnionRow & T, loader: LinkResolver) {
+    if (!value) return
     const type = value.type
+    if (!type) return
     const shape = this.shapes[type]
+    if (!shape) return
     const tasks = []
     if (shape) tasks.push(shape.applyLinks(value, loader))
     if (this.postProcess) tasks.push(this.postProcess(value, loader))

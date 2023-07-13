@@ -44,17 +44,22 @@ export default async function BlogPostPage({params}: BlogPostPageProps) {
           </WebTypo.H1>
           <HStack className={styles.root.author()} gap={8} center>
             By
-            <a href={page.author.url.url} className={styles.root.author.url()}>
-              <HStack center gap={8}>
-                {page.author.avatar && (
-                  <img
-                    className={styles.root.author.avatar()}
-                    src={page.author.avatar.url}
-                  />
-                )}
-                {page.author.name}
-              </HStack>
-            </a>
+            {page.author && (
+              <a
+                href={page.author.url.url}
+                className={styles.root.author.url()}
+              >
+                <HStack center gap={8}>
+                  {page.author.avatar && (
+                    <img
+                      className={styles.root.author.avatar()}
+                      src={page.author.avatar.url}
+                    />
+                  )}
+                  {page.author.name}
+                </HStack>
+              </a>
+            )}
           </HStack>
         </header>
         <TextView text={page.body} />
