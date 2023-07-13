@@ -27,6 +27,11 @@ export enum EditMode {
 
 export type Version = Entry & {parents: Array<string>}
 
+const previewTokenAtom = atom(async get => {
+  const client = get(clientAtom)
+  return client.previewToken()
+})
+
 export const entryEditorAtoms = atomFamily((entryId: string) => {
   return atom(async get => {
     const config = get(configAtom)
@@ -48,7 +53,9 @@ export const entryEditorAtoms = atomFamily((entryId: string) => {
     const availablePhases = values(EntryPhase).filter(
       phase => phases[phase] !== undefined
     )
+    const previewToken = await get(previewTokenAtom)
     return createEntryEditor({
+      previewToken,
       client,
       config,
       entryId,
@@ -66,6 +73,7 @@ export interface EntryData {
   versions: Array<Version>
   phases: Record<EntryPhase, Version>
   availablePhases: Array<EntryPhase>
+  previewToken: string
 }
 
 export type EntryEditor = ReturnType<typeof createEntryEditor>

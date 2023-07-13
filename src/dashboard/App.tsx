@@ -4,7 +4,6 @@ import {FavIcon} from 'alinea/ui/branding/FavIcon'
 import {IcOutlineInsertDriveFile} from 'alinea/ui/icons/IcOutlineInsertDriveFile'
 import {MdiSourceBranch} from 'alinea/ui/icons/MdiSourceBranch'
 import {atom, useAtom, useAtomValue} from 'jotai'
-import {Suspense} from 'react'
 import {
   QueryClient,
   QueryClientProvider as ReactQueryClientProvider
@@ -26,6 +25,7 @@ import {useRoot} from './hook/UseRoot.js'
 import {useWorkspace} from './hook/UseWorkspace.js'
 import {ContentView} from './pages/ContentView.js'
 import {Head} from './util/Head.js'
+import {SuspenseBoundary} from './util/SuspenseBoundary.js'
 import {ErrorBoundary} from './view/ErrorBoundary.js'
 import {Sidebar} from './view/Sidebar.js'
 import {Toolbar} from './view/Toolbar.js'
@@ -105,11 +105,11 @@ function AppAuthenticated() {
                 })}
                 <DraftsButton />
               </Sidebar.Nav>
-              <Suspense fallback={<Loader absolute />}>
-                <ErrorBoundary>
+              <ErrorBoundary>
+                <SuspenseBoundary name="main" fallback={<Loader absolute />}>
                   <RouteView fallback={<ContentView />} />
-                </ErrorBoundary>
-              </Suspense>
+                </SuspenseBoundary>
+              </ErrorBoundary>
             </div>
           </Viewport>
         </Sidebar.Provider>
@@ -130,18 +130,18 @@ function AppRoot() {
           <FavIcon color={color} />
         </Head>
         {Auth && (
-          <Suspense fallback={<Loader absolute />}>
+          <SuspenseBoundary name="auth" fallback={<Loader absolute />}>
             <Auth setSession={setSession} />
-          </Suspense>
+          </SuspenseBoundary>
         )}
       </Viewport>
     )
   return (
-    <Suspense fallback={<Loader absolute />}>
+    <SuspenseBoundary name="router" fallback={<Loader absolute />}>
       <RouterProvider router={router}>
         <AppAuthenticated />
       </RouterProvider>
-    </Suspense>
+    </SuspenseBoundary>
   )
 }
 

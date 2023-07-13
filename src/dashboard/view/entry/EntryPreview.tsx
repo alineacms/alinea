@@ -3,7 +3,6 @@ import {base64url} from 'alinea/core/util/Encoding'
 import {zlibSync} from 'fflate'
 import {useAtomValue} from 'jotai'
 import {useEffect, useState} from 'react'
-import {usePreviewToken} from '../../atoms/EntryAtoms.js'
 import {EntryEditor} from '../../atoms/EntryEditor.js'
 import {BrowserPreview} from '../preview/BrowserPreview.js'
 
@@ -17,9 +16,8 @@ export interface LivePreview {
 }
 
 export function EntryPreview({editor, preview}: EntryPreviewProps) {
-  const previewToken = usePreviewToken()
   const selectedPhase = useAtomValue(editor.selectedPhase)
-  const previewSearch = `?token=${previewToken}&entryId=${editor.entryId}&realm=${selectedPhase}`
+  const previewSearch = `?token=${editor.previewToken}&entryId=${editor.entryId}&realm=${selectedPhase}`
   const base = new URL(preview, location.href)
   const url = new URL(previewSearch, base)
   const [api, setApi] = useState<LivePreview | undefined>(undefined)

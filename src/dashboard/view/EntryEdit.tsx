@@ -4,11 +4,11 @@ import {Button, HStack, Stack, VStack, fromModule} from 'alinea/ui'
 import {Main} from 'alinea/ui/Main'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {useEffect, useRef} from 'react'
-import {entryRevisionAtoms} from '../atoms/EntryAtoms.js'
 import {EntryEditor} from '../atoms/EntryEditor.js'
 import {useRouteBlocker} from '../atoms/RouterAtoms.js'
 import {useConfig} from '../hook/UseConfig.js'
 import {useNav} from '../hook/UseNav.js'
+import {SuspenseBoundary} from '../util/SuspenseBoundary.js'
 import css from './EntryEdit.module.scss'
 import {EntryDiff} from './diff/EntryDiff.js'
 import {EditMode} from './entry/EditMode.js'
@@ -38,7 +38,6 @@ export function EntryEdit({editor}: EntryEditProps) {
   useEffect(() => {
     ref.current?.scrollTo({top: 0})
   }, [editor.entryId, mode, selectedPhase])
-  const forceRefresh = useSetAtom(entryRevisionAtoms(editor.entryId))
   // Todo: prettify server conflicts
   const {isBlocking, nextRoute, confirm, cancel} = useRouteBlocker(
     'Are you sure you want to discard changes?',
@@ -141,11 +140,13 @@ export function EntryEdit({editor}: EntryEditProps) {
                   )}
                 </Suspense>
                   )*/}
-              <InputForm
-                key={editor.entryId + selectedPhase}
-                type={editor.type}
-                state={state}
-              />
+              <SuspenseBoundary name="input form">
+                <InputForm
+                  key={editor.entryId + selectedPhase}
+                  type={editor.type}
+                  state={state}
+                />
+              </SuspenseBoundary>
             </>
           )}
 
