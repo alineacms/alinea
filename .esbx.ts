@@ -16,7 +16,8 @@ export const VersionTask = {
 export const TagRelease = {
   command: 'tag <semver>',
   action(semver) {
-    execSync(`git tag -a v${semver} -m "v${semver}"`)
+    const version = semver.startsWith('v') ? semver : `v${semver}`
+    execSync(`git tag -a ${version} -m "${version}"`)
     execSync(`git push --follow-tags`)
   }
 }
