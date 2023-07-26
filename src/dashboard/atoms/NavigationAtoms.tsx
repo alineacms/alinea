@@ -1,6 +1,7 @@
 import {Root, Workspace} from 'alinea/core'
 import {keys} from 'alinea/core/util/Objects'
-import {atom} from 'jotai'
+import {atom, useAtom} from 'jotai'
+import {atomWithStorage} from 'jotai/utils'
 import {EntryLocation, dashboardNav, navMatchers} from '../DashboardNav.js'
 import {configAtom} from './DashboardAtoms.js'
 import {matchAtoms} from './LocationAtoms.js'
@@ -32,12 +33,18 @@ export const rootAtom = atom(get => {
   const workspace = get(workspaceAtom)
   const match = get(matchAtoms({route: navMatchers.matchRoot, loose: true}))
   const params: Record<string, string | undefined> = match ?? {}
-  const requested = [params.root, keys(workspace.roots)[0]]
+  const requestedRoot = params.root ? parseRootPath(params.root)[0] : undefined
+  const requested = [requestedRoot, keys(workspace.roots)[0]]
   for (const name of requested)
     if (name && workspace.roots[name])
       return {name, ...Root.data(workspace.roots[name])}
   throw new Error(`No root found`)
 })
+
+export const preferredLanguageAtom = atomWithStorage<string | undefined>(
+  `@alinea/locale`,
+  undefined
+)
 
 export const localeAtom = atom(get => {
   const workspace = get(workspaceAtom)
@@ -52,6 +59,10 @@ export const localeAtom = atom(get => {
     const fromUrl = parseRootPath(rootKey)[1]
     if (fromUrl && i18n.locales.includes(fromUrl)) return fromUrl
   }
+  const preferredLanguage = get(preferredLanguageAtom)
+  console.log(preferredLanguage)
+  if (preferredLanguage && i18n.locales.includes(preferredLanguage))
+    return preferredLanguage
   return Root.defaultLocale(config.workspaces[workspace.name][root.name])
 })
 
@@ -67,3 +78,5 @@ export const navAtom = atom(get => {
   const locale = get(localeAtom)
   return dashboardNav({workspace, root, locale})
 })
+
+export const usePreferredLanguage = () => useAtom(preferredLanguageAtom)
