@@ -9,7 +9,7 @@ import {
   Type,
   createId
 } from 'alinea/core'
-import {EntryRecord} from 'alinea/core/EntryRecord'
+import {EntryRecord, META_KEY} from 'alinea/core/EntryRecord'
 import {Realm} from 'alinea/core/pages/Realm'
 import {Logger} from 'alinea/core/util/Logger'
 import {entries} from 'alinea/core/util/Objects'
@@ -219,6 +219,7 @@ export class Database implements Syncable {
     },
     seed?: Seed
   ): Omit<Table.Insert<typeof EntryRow>, 'contentHash'> {
+    const typeName = data[META_KEY].type
     const parentDir = path.dirname(meta.filePath)
     const extension = path.extname(meta.filePath)
     const fileName = path.basename(meta.filePath, extension)
@@ -233,15 +234,15 @@ export class Database implements Syncable {
         throw new Error(`invalid locale: "${locale}"`)
     }
 
-    const type = this.config.schema[data.type]
-    if (!type) throw new Error(`invalid type: "${data.type}"`)
-    if (seed && seed.type !== data.type)
+    const type = this.config.schema[typeName]
+    if (!type) throw new Error(`invalid type: "${typeName}"`)
+    if (seed && seed.type !== typeName)
       throw new Error(
-        `Type mismatch between seed and file: "${seed.type}" !== "${data.type}"`
+        `Type mismatch between seed and file: "${seed.type}" !== "${typeName}"`
       )
     const childrenDir = path.join(parentDir, entryPath)
 
-    if (!data.id) throw new Error(`missing id`)
+    if (!data[META_KEY].id) throw new Error(`missing id`)
 
     const urlMeta: EntryUrlMeta = {
       locale,
@@ -263,24 +264,24 @@ export class Database implements Syncable {
       workspace: meta.workspace,
       root: meta.root,
       filePath: meta.filePath,
-      seeded: Boolean(seed || data.alinea.seeded || false),
+      seeded: Boolean(seed || data[META_KEY].seeded || false),
       // contentHash,
 
       modifiedAt: Date.now(), // file.modifiedAt,
       active: false,
       main: false,
 
-      entryId: data.id,
+      entryId: data[META_KEY].id,
       phase: entryPhase,
-      type: data.type,
+      type: data[META_KEY].type,
 
       parentDir,
       childrenDir,
       parent: null,
       level: parentDir === '/' ? 0 : segments.length,
-      index: data.alinea?.index,
+      index: data[META_KEY].index,
       locale,
-      i18nId: data.alinea?.i18n?.id,
+      i18nId: data[META_KEY].i18nId,
 
       path: entryPath,
       title: data.title ?? seedData?.title ?? '',
@@ -370,11 +371,12 @@ export class Database implements Syncable {
           continue
         }
         try {
-          const entry = this.computeEntry(
-            EntryRecord(JSON.parse(decoder.decode(file.contents))),
-            file,
-            seed
-          )
+          const raw = JSON.parse(decoder.decode(file.contents))
+          // This is backwards compatibility for the old format
+          if (!raw[META_KEY]) raw[META_KEY] = raw.alinea ?? {}
+          if (!raw[META_KEY].id) raw[META_KEY].id = raw.id
+          if (!raw[META_KEY].type) raw[META_KEY].type = raw.type
+          const entry = this.computeEntry(EntryRecord(raw), file, seed)
           if (entry.seeded && entry.phase === EntryPhase.Published && !seed)
             throw new Error(`seed entry is missing from config`)
           await query(
@@ -401,10 +403,10 @@ export class Database implements Syncable {
         if (!typeName) continue
         const entry = this.computeEntry(
           {
-            id: createId(),
-            type: typeName,
             title: partial.title ?? '',
-            alinea: {
+            [META_KEY]: {
+              id: createId(),
+              type: typeName,
               index: 'a0'
             }
           },

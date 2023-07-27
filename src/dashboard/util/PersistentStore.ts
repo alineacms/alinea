@@ -31,7 +31,7 @@ export async function createPersistentStore(): Promise<PersistentStore> {
   return assign(
     connect(db, {
       logQuery(stmt, duration) {
-        if (duration < 5) return
+        if (!stmt.sql.startsWith('SELECT')) return
         const icon = duration < 100 ? '⚡' : '⚠️'
         console.groupCollapsed(
           `${icon} Local query (${prettyMilliseconds(duration)})`

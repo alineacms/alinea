@@ -1,6 +1,5 @@
 import {Entry} from 'alinea/core'
 import {Projection} from 'alinea/core/pages/Projection'
-import {Realm} from 'alinea/core/pages/Realm'
 import {Selection} from 'alinea/core/pages/Selection'
 import DataLoader from 'dataloader'
 import {Query} from 'rado'
@@ -18,7 +17,7 @@ export class LinkResolver {
   constructor(
     public resolver: Resolver,
     public store: Store,
-    public realm: Realm
+    public ctx: ResolveContext
   ) {}
 
   load(projection: Projection) {
@@ -31,7 +30,7 @@ export class LinkResolver {
           })
         )
         const query = new Query<Array<LinkData>>(
-          this.resolver.query(new ResolveContext(this.realm), selection)
+          this.resolver.query(this.ctx.linkContext(), selection)
         )
         const entries = await this.store(query)
         const results = new Map(

@@ -72,13 +72,13 @@ export function EntryTree({entryId, selected = []}: EntryTreeProps) {
           )
         }}
         onPrimaryAction={item => {
-          navigate(nav.entry({entryId: item.data.entryId}))
+          navigate(nav.entry({entryId: item.data.id}))
         }}
         onExpandItem={item => {
-          navigate(nav.entry({entryId: item.data.entryId}))
+          navigate(nav.entry({entryId: item.data.id}))
         }}
         onCollapseItem={item => {
-          navigate(nav.entry({entryId: item.data.entryId}))
+          navigate(nav.entry({entryId: item.data.id}))
         }}
         viewState={{
           ['entry-tree']: {
