@@ -1,7 +1,7 @@
 {
   "id": "28hxVNf3JO9raYJ1HVQ6XgDX9pW",
   "type": "Doc",
-  "title": "Quering content",
+  "title": "Querying content",
   "body": [
     {
       "type": "heading",
@@ -10,7 +10,7 @@
       "content": [
         {
           "type": "text",
-          "text": "Quering content"
+          "text": "Querying content"
         }
       ]
     },
