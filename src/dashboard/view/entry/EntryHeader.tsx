@@ -41,7 +41,7 @@ export function EntryHeader({editor}: EntryHeaderProps) {
   const isActivePhase = editor.activePhase === selectedPhase
   const hasChanges = useAtomValue(editor.hasChanges)
   const isSaving = useAtomValue(editor.isSaving)
-  const untranslated = locale !== editor.version.locale
+  const untranslated = locale && locale !== editor.version.locale
   const variant = untranslated
     ? 'untranslated'
     : (hasChanges || isSaving) && isActivePhase
