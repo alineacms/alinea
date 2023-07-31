@@ -1,4 +1,3 @@
-import {createId} from 'alinea/core/Id'
 import {Entry} from '../Entry.js'
 import {Cursor, CursorData, SourceType} from './Cursor.js'
 import {Selection} from './Selection.js'
@@ -28,7 +27,6 @@ export class Tree {
     depth?: number
   ): Cursor.Find<T> {
     return new Cursor.Find({
-      id: createId(),
       ...this.narrowData(narrow),
       source: {type: sourceType, depth}
     })
@@ -36,7 +34,6 @@ export class Tree {
 
   protected get<T>(sourceType: SourceType, narrow?: any): Cursor.Get<T> {
     return new Cursor.Get({
-      id: createId(),
       ...this.narrowData(narrow),
       first: true,
       source: {type: sourceType}
@@ -74,5 +71,8 @@ export class Tree {
   }
   siblings = <N extends Narrow>(narrow?: N): Cursor.Find<Output<N>> => {
     return this.find(SourceType.Siblings, narrow)
+  }
+  translations = (includeSelf = false): Cursor.Find<Entry> => {
+    return this.find(SourceType.Translations)
   }
 }

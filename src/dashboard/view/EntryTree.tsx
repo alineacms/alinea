@@ -1,19 +1,23 @@
 import {EntryPhase, Type} from 'alinea/core'
-import {Icon, px} from 'alinea/ui'
+import {Icon, fromModule, px} from 'alinea/ui'
 import {IcOutlineInsertDriveFile} from 'alinea/ui/icons/IcOutlineInsertDriveFile'
 import {IcRoundEdit} from 'alinea/ui/icons/IcRoundEdit'
 import {IcRoundKeyboardArrowDown} from 'alinea/ui/icons/IcRoundKeyboardArrowDown'
 import {IcRoundKeyboardArrowRight} from 'alinea/ui/icons/IcRoundKeyboardArrowRight'
-import {Tree, UncontrolledTreeEnvironment} from 'react-complex-tree'
+import {Tree, TreeItem, UncontrolledTreeEnvironment} from 'react-complex-tree'
 import {
   ENTRY_TREE_ROOT_KEY,
   EntryTreeItem,
   useEntryTreeProvider
 } from '../atoms/EntryAtoms.js'
 import {useConfig} from '../hook/UseConfig.js'
+import {useLocale} from '../hook/UseLocale.js'
 import {useNav} from '../hook/UseNav.js'
 import {useNavigate} from '../util/HashRouter.js'
+import css from './EntryTree.module.scss'
 import './EntryTree.scss'
+
+const styles = fromModule(css)
 
 export interface EntryTreeProps {
   entryId?: string
@@ -27,11 +31,20 @@ export function EntryTree({entryId, selected = []}: EntryTreeProps) {
   const dataProvider = useEntryTreeProvider()
   const navigate = useNavigate()
   const nav = useNav()
+  const locale = useLocale()
+  function selectedEntry(item: TreeItem<EntryTreeItem>) {
+    return (
+      item.data.entries.find(entry => entry.locale === locale) ??
+      item.data.entries[0]
+    )
+  }
   return (
     <div className="rct-dark" style={{flexGrow: 1, overflow: 'auto'}}>
       <UncontrolledTreeEnvironment<EntryTreeItem>
         dataProvider={dataProvider}
-        getItemTitle={item => item.data.title}
+        getItemTitle={item => {
+          return selectedEntry(item).title
+        }}
         canDragAndDrop={true}
         canDropOnFolder={true}
         canReorderItems={true}
@@ -50,9 +63,11 @@ export function EntryTree({entryId, selected = []}: EntryTreeProps) {
           )
         }}
         renderItemTitle={({title, item}) => {
+          const selected = selectedEntry(item)
           const hasChildren = Boolean(item.children?.length)
-          const {icon} = Type.meta(schema[item.data.type])
-          const isDraft = item.data.phase === EntryPhase.Draft
+          const {icon} = Type.meta(schema[selected.type])
+          const isDraft = selected.phase === EntryPhase.Draft
+          const isUntranslated = locale && selected.locale !== locale
           return (
             <>
               {!hasChildren && (
@@ -61,7 +76,9 @@ export function EntryTree({entryId, selected = []}: EntryTreeProps) {
                 </span>
               )}
 
-              <span className="rct-tree-item-title">{title}</span>
+              <span className={styles.title({untranslated: isUntranslated})}>
+                {title}
+              </span>
 
               {isDraft && (
                 <span className="rct-tree-item-status">
@@ -72,13 +89,13 @@ export function EntryTree({entryId, selected = []}: EntryTreeProps) {
           )
         }}
         onPrimaryAction={item => {
-          navigate(nav.entry({entryId: item.data.id}))
+          navigate(nav.entry({entryId: item.index as string}))
         }}
         onExpandItem={item => {
-          navigate(nav.entry({entryId: item.data.id}))
+          navigate(nav.entry({entryId: item.index as string}))
         }}
         onCollapseItem={item => {
-          navigate(nav.entry({entryId: item.data.id}))
+          navigate(nav.entry({entryId: item.index as string}))
         }}
         viewState={{
           ['entry-tree']: {

@@ -2,6 +2,7 @@ import {
   Infer as CInfer,
   Type as CType,
   array,
+  boolean,
   literal,
   string,
   tuple,
@@ -38,6 +39,7 @@ export namespace Selection {
     export class Expr {
       type = literal('expr')
       expr = ExprData.adt
+      fromParent = boolean
     }
     export class Count {
       type = literal('count')
@@ -58,8 +60,8 @@ export namespace Selection {
     return {type: 'cursor', cursor}
   }
   export interface Expr extends CInfer<types.Expr> {}
-  export function Expr(expr: ExprData): Selection.Expr {
-    return {type: 'expr', expr}
+  export function Expr(expr: ExprData, fromParent = false): Selection.Expr {
+    return {type: 'expr', expr, fromParent}
   }
   export interface Count extends CInfer<types.Count> {}
   export function Count(): Selection.Count {
@@ -76,12 +78,12 @@ export namespace Selection {
   export type Infer<T> = Projection.Infer<T>
   export type Combine<A, B> = Expand<Omit<A, keyof Infer<B>> & Infer<B>>
 
-  export function create(input: any, sourceId?: string) {
-    return Type.isType(input) ? fromInput(input()) : fromInput(input, sourceId)
+  export function create(input: any) {
+    return Type.isType(input) ? fromInput(input()) : fromInput(input)
   }
 }
 
-function fromInput(input: any, sourceId?: string): Selection {
+function fromInput(input: any, parent?: any, level = 0): Selection {
   if (input === null || input === undefined)
     return Selection.Expr(ExprData.Value(null))
   if (Cursor.isCursor(input)) return Selection.Cursor(input[Cursor.Data])
@@ -90,15 +92,21 @@ function fromInput(input: any, sourceId?: string): Selection {
   if (Type.isType(input)) return Selection.Row({type: Type.target(input)})
   if (Target.isTarget(input)) return Selection.Row(input[Target.Data])
   if (typeof input === 'function') {
-    //if (!sourceId) throw new Error('sourceId is required for function queries')
-    return fromInput(input(new Tree(/*sourceId*/)))
+    const self = new Proxy(parent, {
+      get(_, prop) {
+        const res = parent[prop]
+        if (Expr.isExpr(res)) return Selection.Expr(res[Expr.Data], true)
+        return res
+      }
+    })
+    return fromInput(input.call(self, new Tree(/*sourceId*/)), level)
   }
   if (input && typeof input === 'object' && !Array.isArray(input)) {
     const keys = Object.keys(input)
     return Selection.Record(
       keys.map(key => {
         if (key.startsWith('@@@')) return [input[key]]
-        return [key, fromInput(input[key], sourceId)]
+        return [key, fromInput(input[key], input, level + 1)]
       })
     )
   }

@@ -2,6 +2,7 @@ import {Store} from 'alinea/backend/Store'
 import {CMS} from 'alinea/core/CMS'
 import {Config} from 'alinea/core/Config'
 import {BuildResult} from 'esbuild'
+import fs from 'node:fs'
 import path from 'node:path'
 import {connect} from 'rado/driver/sql.js'
 import {compileConfig} from './generate/CompileConfig.js'
@@ -93,6 +94,11 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
       cms.exportStore(context.outDir, new Uint8Array())
       for await (const _ of fillCache(context, store, cms, nextBuild)) {
         yield {cms, store}
+        // For debug reasons write out db
+        fs.writeFileSync(
+          path.join(context.outDir, 'content.sqlite'),
+          exportStore()
+        )
         if (onAfterGenerate && !afterGenerateCalled) {
           afterGenerateCalled = true
           onAfterGenerate()

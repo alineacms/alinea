@@ -131,7 +131,7 @@
     }
   ],
   "@alinea": {
-    "id": "home",
+    "entryId": "home",
     "type": "Home",
     "index": "Zy",
     "seeded": true,

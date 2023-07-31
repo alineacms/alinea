@@ -6,12 +6,12 @@ export const META_KEY = '@alinea'
 export type EntryMeta = typeof EntryMeta.infer
 export const EntryMeta = object(
   class {
-    id = string
+    entryId = string
+    i18nId? = string.optional
     type = string
     index = string
     root? = string.optional
     seeded? = boolean.optional
-    i18nId? = string.optional
   }
 )
 
@@ -30,7 +30,7 @@ export const EntryRecord = object(
 export function createRecord(entry: EntryRow): EntryRecord {
   const {path, ...data} = entry.data
   const meta: EntryMeta = {
-    id: entry.entryId,
+    entryId: entry.entryId,
     type: entry.type,
     index: entry.index
   }

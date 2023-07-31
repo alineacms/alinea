@@ -2,7 +2,6 @@ import {Database} from 'alinea/backend'
 import {EntryPhase, Type} from 'alinea/core'
 import {Entry} from 'alinea/core/Entry'
 import {Graph} from 'alinea/core/Graph'
-import {Expr} from 'alinea/core/pages/Expr'
 import {Realm} from 'alinea/core/pages/Realm'
 import {entries} from 'alinea/core/util/Objects'
 import DataLoader from 'dataloader'
@@ -90,11 +89,9 @@ const visibleTypesAtom = atom(get => {
 
 const entryTreeRootAtom = atom(
   async (get): Promise<TreeItem<EntryTreeItem>> => {
-    const {active: drafts} = await get(graphAtom)
+    const {active} = await get(graphAtom)
     const workspace = get(workspaceAtom)
     const root = get(rootAtom)
-    const hasLocales = Boolean(root.i18n)
-    const idField = hasLocales ? Entry.i18nId : Entry.entryId
     const visibleTypes = get(visibleTypesAtom)
     const rootEntries = Entry()
       .where(
@@ -104,17 +101,13 @@ const entryTreeRootAtom = atom(
         Entry.active,
         Entry.type.isIn(visibleTypes)
       )
-      .select(idField as Expr<string>)
+      .select(Entry.i18nId)
+      .groupBy(Entry.i18nId)
       .orderBy(Entry.index.asc())
-    const children = await drafts.find(rootEntries)
+    const children = await active.find(rootEntries)
     return {
       index: ENTRY_TREE_ROOT_KEY,
-      data: {
-        title: 'Root',
-        type: undefined!,
-        id: undefined!,
-        phase: undefined!
-      },
+      data: {entries: []},
       children
     }
   }
@@ -122,57 +115,67 @@ const entryTreeRootAtom = atom(
 
 const entryTreeItemLoaderAtom = atom(async get => {
   const graph = await get(graphAtom)
-  const root = get(rootAtom)
-  const hasLocales = Boolean(root.i18n)
   const entryTreeRootItem = await get(entryTreeRootAtom)
-  const {schema} = get(configAtom)
   const visibleTypes = get(visibleTypesAtom)
   return new DataLoader(async (ids: ReadonlyArray<TreeItemIndex>) => {
     const res = new Map<TreeItemIndex, TreeItem<EntryTreeItem>>()
     const search = (ids as Array<string>).filter(
       id => id !== ENTRY_TREE_ROOT_KEY
     )
-    const idField = (hasLocales ? Entry.i18nId : Entry.entryId) as Expr<string>
-    const entries: Array<TreeItem<EntryTreeItem>> = await graph.active.find(
-      Entry()
-        .select({
-          index: Entry.entryId,
-          data: {
-            id: idField,
-            type: Entry.type,
-            title: Entry.title,
-            phase: Entry.phase
-          },
-          children({children}) {
-            return children(Entry)
-              .where(Entry.type.isIn(visibleTypes))
-              .select(idField)
-              .orderBy(Entry.index.asc())
-              .groupBy(Entry.i18nId)
-          }
-        })
-        .where(idField.isIn(search))
-    )
-    for (const entry of entries) res.set(entry.index, entry)
+    const data = {
+      id: Entry.i18nId,
+      type: Entry.type,
+      title: Entry.title,
+      phase: Entry.phase,
+      locale: Entry.locale
+    }
+    const find = Entry()
+      .select({
+        index: Entry.i18nId,
+        data,
+        translations({translations}) {
+          return translations().select(data)
+        },
+        children({children}) {
+          return children(Entry)
+            .where(Entry.type.isIn(visibleTypes))
+            .select(Entry.i18nId)
+            .groupBy(Entry.i18nId)
+            .orderBy(Entry.index.asc())
+        }
+      })
+      .groupBy(Entry.i18nId)
+      .where(Entry.i18nId.isIn(search))
+    const rows = await graph.active.find(find)
+    for (const row of rows) {
+      const entries = [row.data].concat(row.translations)
+      res.set(row.index, {
+        index: row.index,
+        data: {entries},
+        children: row.children
+      })
+    }
     return ids.map(id => {
       if (id === ENTRY_TREE_ROOT_KEY) return entryTreeRootItem
       const entry = res.get(id)!
-      const type = schema[entry.data.type]
-      const isFolder = Type.isContainer(type)
-      return {...entry, isFolder}
-    }) as typeof entries
+      return entry
+    })
   })
 })
 
 const loaderAtom = atom(get => {
+  // Don't return the Promise directly because that causes Jotai to suspend
   return {loader: get(entryTreeItemLoaderAtom)}
 })
 
 export interface EntryTreeItem {
-  type: string
-  id: string
-  title: string
-  phase: EntryPhase
+  entries: Array<{
+    id: string
+    type: string
+    title: string
+    phase: EntryPhase
+    locale: string | null
+  }>
 }
 
 export function useEntryTreeProvider(): TreeDataProvider<EntryTreeItem> {

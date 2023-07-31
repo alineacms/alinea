@@ -242,7 +242,7 @@ export class Database implements Syncable {
       )
     const childrenDir = path.join(parentDir, entryPath)
 
-    if (!data[META_KEY].id) throw new Error(`missing id`)
+    if (!data[META_KEY].entryId) throw new Error(`missing id`)
 
     const urlMeta: EntryUrlMeta = {
       locale,
@@ -271,7 +271,7 @@ export class Database implements Syncable {
       active: false,
       main: false,
 
-      entryId: data[META_KEY].id,
+      entryId: data[META_KEY].entryId,
       phase: entryPhase,
       type: data[META_KEY].type,
 
@@ -281,7 +281,7 @@ export class Database implements Syncable {
       level: parentDir === '/' ? 0 : segments.length,
       index: data[META_KEY].index,
       locale,
-      i18nId: data[META_KEY].i18nId,
+      i18nId: data[META_KEY].i18nId ?? data[META_KEY].entryId,
 
       path: entryPath,
       title: data.title ?? seedData?.title ?? '',
@@ -374,8 +374,11 @@ export class Database implements Syncable {
           const raw = JSON.parse(decoder.decode(file.contents))
           // This is backwards compatibility for the old format
           if (!raw[META_KEY]) raw[META_KEY] = raw.alinea ?? {}
-          if (!raw[META_KEY].id) raw[META_KEY].id = raw.id
+          if (!raw[META_KEY].entryId)
+            raw[META_KEY].entryId = raw.id ?? raw[META_KEY].id
           if (!raw[META_KEY].type) raw[META_KEY].type = raw.type
+          if (!raw[META_KEY].i18nId && raw[META_KEY].i18n)
+            raw[META_KEY].i18nId = raw[META_KEY].i18n?.id
           const entry = this.computeEntry(EntryRecord(raw), file, seed)
           if (entry.seeded && entry.phase === EntryPhase.Published && !seed)
             throw new Error(`seed entry is missing from config`)
@@ -405,7 +408,7 @@ export class Database implements Syncable {
           {
             title: partial.title ?? '',
             [META_KEY]: {
-              id: createId(),
+              entryId: createId(),
               type: typeName,
               index: 'a0'
             }

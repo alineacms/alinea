@@ -145,7 +145,7 @@ export class Server implements Connection {
       searchableText: '',
       index: generateKeyBetween(null, prev?.index ?? null),
       locale: null,
-      i18nId: null,
+      i18nId: entryId,
 
       level: parent ? parent.level + 1 : 0,
       parentDir: '',

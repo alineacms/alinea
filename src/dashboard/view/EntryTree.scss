@@ -40,12 +40,6 @@
 .rct-tree-item-title-container-selected:hover {
   background: var(--alinea-selected);
   color: var(--alinea-button-hover);
-  /*color: var(--alinea-variant-info-foreground);
-  background: var(--alinea-variant-info-background);*/
-
-  .rct-tree-item-title {
-    font-weight: 600;
-  }
 }
 
 .rct-tree-item-button {
@@ -103,13 +97,6 @@
   .rct-tree-item-title-container-selected & {
     color: var(--alinea-button-hover);
   }
-}
-
-.rct-tree-item-title {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 13px;
 }
 
 .rct-tree-drag-between-line {

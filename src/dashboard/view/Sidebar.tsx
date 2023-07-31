@@ -19,6 +19,7 @@ import {
 } from 'react'
 import {useConfig} from '../hook/UseConfig.js'
 import {useEntryLocation} from '../hook/UseEntryLocation.js'
+import {useLocale} from '../hook/UseLocale.js'
 import {useNav} from '../hook/UseNav.js'
 import {useRoot} from '../hook/UseRoot.js'
 import {useWorkspace} from '../hook/UseWorkspace.js'
@@ -112,12 +113,14 @@ export namespace Sidebar {
   }
 
   function NavHeader() {
+    const locale = useLocale()
     const config = useConfig()
     const workspace = useWorkspace()
     const root = useRoot()
     const workspaces = entries(config.workspaces)
     const navigate = useNavigate()
     const nav = useNav()
+    const entryLocation = useEntryLocation()
     return (
       <HStack as="header" center gap={12} className={styles.navHeader()}>
         {workspaces.length > 1 ? (
@@ -168,7 +171,17 @@ export namespace Sidebar {
             />
           </a>
         )}
-        <Stack.Right>{root.i18n && <Langswitch />}</Stack.Right>
+        <Stack.Right>
+          {root.i18n && (
+            <Langswitch
+              selected={locale!}
+              locales={root.i18n.locales}
+              onChange={locale => {
+                navigate(nav.entry({...entryLocation, locale}))
+              }}
+            />
+          )}
+        </Stack.Right>
       </HStack>
     )
   }

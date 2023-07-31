@@ -72,7 +72,7 @@ export function MediaExplorer({editor}: MediaExplorerProps) {
                 cursor={cursor}
                 type="thumb"
                 virtualized
-                onNavigate={entryId => navigate(nav.entry({entryId}))}
+                onNavigate={entryId => navigate(nav.entry({entryId: entryId}))}
               />
             </VStack>
           </HStack>

@@ -1,12 +1,11 @@
 {
-  "id": "2T7AT2rO8AqhmfO5PxgXA5lY9fQ",
-  "type": "Page",
   "title": "An english entry",
-  "alinea": {
+  "body": [],
+  "@alinea": {
+    "entryId": "2T7AT2rO8AqhmfO5PxgXA5lY9fQ",
+    "type": "Page",
     "index": "a0",
-    "i18n": {
-      "id": "2T7AT4LtcISZXvK7F6m8eW5mF9Q"
-    },
+    "i18nId": "2T7AT4LtcISZXvK7F6m8eW5mF9Q",
     "root": "example"
   }
 }

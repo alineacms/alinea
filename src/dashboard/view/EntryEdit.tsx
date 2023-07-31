@@ -2,17 +2,20 @@ import {Modal} from 'alinea/dashboard/view/Modal'
 import {InputForm} from 'alinea/editor'
 import {Button, HStack, Stack, VStack, fromModule} from 'alinea/ui'
 import {Main} from 'alinea/ui/Main'
+import {IcRoundTranslate} from 'alinea/ui/icons/IcRoundTranslate'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {useEffect, useRef} from 'react'
 import {EntryEditor} from '../atoms/EntryEditor.js'
 import {useRouteBlocker} from '../atoms/RouterAtoms.js'
 import {useConfig} from '../hook/UseConfig.js'
+import {useLocale} from '../hook/UseLocale.js'
 import {useNav} from '../hook/UseNav.js'
 import {SuspenseBoundary} from '../util/SuspenseBoundary.js'
 import css from './EntryEdit.module.scss'
 import {EntryDiff} from './diff/EntryDiff.js'
 import {EditMode} from './entry/EditMode.js'
 import {EntryHeader} from './entry/EntryHeader.js'
+import {EntryNotice} from './entry/EntryNotice.js'
 import {EntryPreview} from './entry/EntryPreview.js'
 import {EntryTitle} from './entry/EntryTitle.js'
 const styles = fromModule(css)
@@ -27,6 +30,7 @@ export interface EntryEditProps {
 }
 
 export function EntryEdit({editor}: EntryEditProps) {
+  const locale = useLocale()
   const {preview} = useConfig()
   const nav = useNav()
   const [mode, setMode] = useAtom(editor.editMode)
@@ -50,6 +54,7 @@ export function EntryEdit({editor}: EntryEditProps) {
   const saveDraft = useSetAtom(editor.saveDraft)
   const publishDraft = useSetAtom(editor.publishDraft)
   const resetDraft = useSetAtom(editor.resetDraft)
+  const untranslated = locale && locale !== editor.version.locale
   useEffect(() => {
     if (!hasChanges) return
     function listener(e: KeyboardEvent) {
@@ -123,6 +128,19 @@ export function EntryEdit({editor}: EntryEditProps) {
                 : undefined
             }
           />
+
+          {untranslated && (
+            <EntryNotice
+              icon={IcRoundTranslate}
+              title="Untranslated"
+              variant="untranslated"
+            >
+              This page has not yet been translated to this language,
+              <br />
+              please enter the details below and save to start translating.
+            </EntryNotice>
+          )}
+
           {mode === EditMode.Diff ? (
             <ShowChanges editor={editor} />
           ) : (
@@ -161,7 +179,9 @@ export function EntryEdit({editor}: EntryEditProps) {
           <br />*/}
         </Main.Container>
       </Main>
-      {preview && <EntryPreview preview={preview} editor={editor} />}
+      {preview && !untranslated && (
+        <EntryPreview preview={preview} editor={editor} />
+      )}
     </>
   )
 }

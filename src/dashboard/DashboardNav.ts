@@ -7,7 +7,7 @@ export type EntryLocation = {
 
 export const navMatchers = {
   matchEntry: '/entry/*',
-  matchEntryId: '/:action/:workspace/:root/:id',
+  matchEntryId: '/:action/:workspace/:root/:entryId',
   matchWorkspace: '/:action/:workspace',
   matchRoot: '/:action/:workspace/:root'
 } as const

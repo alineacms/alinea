@@ -53,7 +53,6 @@ export const Target = class {
 
   call(...input: Array<any>) {
     return new Cursor.Find({
-      id: createId(),
       target: this.data,
       where: this.condition(input)
     })

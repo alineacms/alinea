@@ -114,8 +114,12 @@ export class ResolveContext {
     return this.table
   }
 
-  step(): ResolveContext {
+  increaseDepth(): ResolveContext {
     return new ResolveContext({...this.data, depth: this.depth + 1})
+  }
+
+  decreaseDepth(): ResolveContext {
+    return new ResolveContext({...this.data, depth: this.depth - 1})
   }
 
   get isInSelect() {
@@ -310,7 +314,11 @@ export class Resolver {
     return new ExprData.Query(this.queryCursor(ctx, selection))
   }
 
-  selectExpr(ctx: ResolveContext, {expr}: pages.Selection.Expr): ExprData {
+  selectExpr(
+    ctx: ResolveContext,
+    {expr, fromParent}: pages.Selection.Expr
+  ): ExprData {
+    ctx = fromParent ? ctx.decreaseDepth() : ctx
     return this.expr(ctx.select, expr)
   }
 
@@ -381,7 +389,10 @@ export class Resolver {
         return cursor
           .where(ctx.Table.parent.is(from.parent))
           .where(ctx.Table.entryId.isNot(from.entryId))
-          .take(1)
+      case pages.SourceType.Translations:
+        return cursor
+          .where(ctx.Table.i18nId.is(from.i18nId))
+          .where(ctx.Table.entryId.isNot(from.entryId))
       case pages.SourceType.Children:
         const Child = EntryRow().as('Child')
         const children = withRecursive(
@@ -511,7 +522,6 @@ export class Resolver {
     {cursor}: pages.Selection.Cursor
   ): QueryData.Select {
     const {
-      id,
       target,
       where,
       skip,
@@ -523,7 +533,7 @@ export class Resolver {
       source,
       searchTerms
     } = cursor
-    ctx = ctx.step().none
+    ctx = ctx.increaseDepth().none
     const {name} = target || {}
     const hasSearch = Boolean(searchTerms?.length)
     let query = this.querySource(ctx, source, hasSearch)

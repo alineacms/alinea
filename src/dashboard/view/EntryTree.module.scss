@@ -1,0 +1,14 @@
+.title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+
+  :global(.rct-tree-item-title-container-selected) & {
+    font-weight: 600;
+  }
+
+  &.is-untranslated {
+    opacity: 0.6;
+  }
+}

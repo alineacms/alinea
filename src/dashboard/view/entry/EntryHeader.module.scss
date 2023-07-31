@@ -26,7 +26,26 @@
     height: 100%;
     flex: 1;
     padding: 0 20px;
-    // border-bottom: 1px solid var(--alinea-outline);
+
+    &-title {
+      position: relative;
+      font-weight: bold;
+      padding-right: 12px;
+
+      &::after {
+        content: '';
+        position: absolute;
+        top: -2px;
+        bottom: -2px;
+        right: 0;
+        border-right: 1px solid;
+        opacity: 0.2;
+      }
+    }
+
+    &-action {
+      font-size: 14px;
+    }
   }
 
   &-url {

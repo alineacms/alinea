@@ -214,7 +214,6 @@ class TypeInstance<Definition extends TypeDefinition> implements TypeData {
     if (isConditionalRecord) return new Cursor.Partial(this.target, input[0])
     else
       return new Cursor.Find({
-        id: createId(),
         target: {type: this.target},
         where: this.condition(input)
       })

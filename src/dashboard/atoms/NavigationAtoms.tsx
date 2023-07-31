@@ -60,7 +60,6 @@ export const localeAtom = atom(get => {
     if (fromUrl && i18n.locales.includes(fromUrl)) return fromUrl
   }
   const preferredLanguage = get(preferredLanguageAtom)
-  console.log(preferredLanguage)
   if (preferredLanguage && i18n.locales.includes(preferredLanguage))
     return preferredLanguage
   return Root.defaultLocale(config.workspaces[workspace.name][root.name])
@@ -68,7 +67,12 @@ export const localeAtom = atom(get => {
 
 export const entryLocationAtom = atom(get => {
   const match = get(matchAtoms({route: navMatchers.matchEntryId}))
-  const params = match as EntryLocation
+  const [root, locale] = parseRootPath(match?.root ?? '')
+  const params: EntryLocation = {
+    ...match,
+    root,
+    locale
+  }
   return params || undefined
 })
 
