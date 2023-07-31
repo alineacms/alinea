@@ -65,7 +65,7 @@
     {
       "id": "iNtPnN_nh2s8YA4sjw63w",
       "type": "CodeBlock",
-      "code": "alinea.root('Website', {\n  i18: {\n    locales: [\n      'en', \n      'fr', \n      'de'\n    ]\n  }\n})"
+      "code": "alinea.root('Website', {\n  i18n: {\n    locales: [\n      'en', \n      'fr', \n      'de'\n    ]\n  }\n})"
     }
   ],
   "alinea": {

@@ -151,7 +151,7 @@
     {
       "id": "28hlSdI7ooykir1ldfHW4lLtIUL",
       "type": "CodeBlock",
-      "code": "i18: {\n  locales: ['en', 'fr', 'de']\n}"
+      "code": "i18n: {\n  locales: ['en', 'fr', 'de']\n}"
     },
     {
       "id": "cD4t19x1eBJYat1SFKTMa",
