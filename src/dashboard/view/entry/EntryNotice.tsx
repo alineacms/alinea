@@ -19,7 +19,7 @@ export function EntryNotice({
 }: PropsWithChildren<EntryNoticeProps>) {
   return (
     <Lift className={styles.root(variant)}>
-      <HStack gap={22}>
+      <HStack center gap={22}>
         {icon && (
           <div>
             <Icon icon={icon} size={24} />

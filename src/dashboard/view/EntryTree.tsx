@@ -1,3 +1,9 @@
+import {
+  asyncDataLoaderFeature,
+  dragAndDropFeature,
+  selectionFeature
+} from '@headless-tree/core'
+import {useTree} from '@headless-tree/react'
 import {EntryPhase, Type} from 'alinea/core'
 import {Icon, fromModule, px} from 'alinea/ui'
 import {IcOutlineInsertDriveFile} from 'alinea/ui/icons/IcOutlineInsertDriveFile'
@@ -5,10 +11,12 @@ import {IcRoundEdit} from 'alinea/ui/icons/IcRoundEdit'
 import {IcRoundKeyboardArrowDown} from 'alinea/ui/icons/IcRoundKeyboardArrowDown'
 import {IcRoundKeyboardArrowRight} from 'alinea/ui/icons/IcRoundKeyboardArrowRight'
 import {IcRoundTranslate} from 'alinea/ui/icons/IcRoundTranslate'
-import {Tree, TreeItem, UncontrolledTreeEnvironment} from 'react-complex-tree'
+import {useAtomValue} from 'jotai'
+import {useEffect} from 'react'
 import {
   ENTRY_TREE_ROOT_KEY,
   EntryTreeItem,
+  changedEntriesAtom,
   useEntryTreeProvider
 } from '../atoms/EntryAtoms.js'
 import {useConfig} from '../hook/UseConfig.js'
@@ -16,103 +24,135 @@ import {useLocale} from '../hook/UseLocale.js'
 import {useNav} from '../hook/UseNav.js'
 import {useNavigate} from '../util/HashRouter.js'
 import css from './EntryTree.module.scss'
-import './EntryTree.scss'
 
 const styles = fromModule(css)
 
 export interface EntryTreeProps {
-  entryId?: string
+  i18nId?: string
   selected?: Array<string>
 }
 
-// Todo: convert to controlled & virtualize (lukasbach/react-complex-tree#263)
-
-export function EntryTree({entryId, selected = []}: EntryTreeProps) {
+export function EntryTree({i18nId: entryId, selected = []}: EntryTreeProps) {
   const {schema} = useConfig()
-  const dataProvider = useEntryTreeProvider()
+  const dataLoader = useEntryTreeProvider()
   const navigate = useNavigate()
   const nav = useNav()
   const locale = useLocale()
-  function selectedEntry(item: TreeItem<EntryTreeItem>) {
+  function selectedEntry(item: EntryTreeItem) {
     return (
-      item.data.entries.find(entry => entry.locale === locale) ??
-      item.data.entries[0]
+      item.entries.find(entry => entry.locale === locale) ?? item.entries[0]
     )
   }
+  const tree = useTree<EntryTreeItem>({
+    rootItemId: ENTRY_TREE_ROOT_KEY,
+    canDropInbetween: true,
+    onDrop: (items, target) => {
+      console.log(
+        `Dropped ${items.map(item =>
+          item.getId()
+        )} on ${target.item.getId()}, index ${target.childIndex}`
+      )
+    },
+    asyncDataLoader: dataLoader,
+    getItemName: item =>
+      item.getItemData() && selectedEntry(item.getItemData()).title,
+    isItemFolder: item =>
+      item.getItemData() && Boolean(item.getItemData().isFolder),
+    onPrimaryAction: item => {
+      navigate(nav.entry({entryId: item.getId()}))
+    },
+    initialState: {
+      expandedItems: selected
+    },
+    state: {
+      selectedItems: entryId ? [entryId] : []
+    },
+    features: [
+      asyncDataLoaderFeature as any,
+      selectionFeature,
+      dragAndDropFeature
+      // hotkeysCoreFeature
+    ]
+  })
+  const changed = useAtomValue(changedEntriesAtom)
+  useEffect(() => {
+    tree.invalidateChildrenIds(ENTRY_TREE_ROOT_KEY)
+  }, [dataLoader])
+  useEffect(() => {
+    for (const id of changed) tree.invalidateChildrenIds(id)
+  }, [changed])
   return (
-    <div className="rct-dark" style={{flexGrow: 1, overflow: 'auto'}}>
-      <UncontrolledTreeEnvironment<EntryTreeItem>
-        dataProvider={dataProvider}
-        getItemTitle={item => {
-          return selectedEntry(item).title
-        }}
-        canDragAndDrop={true}
-        canDropOnFolder={true}
-        canReorderItems={true}
-        renderItemArrow={({context, item, info}) => {
-          const hasChildren = Boolean(item.children?.length)
-          if (!hasChildren) return null
-          const {isExpanded} = context
-          return (
-            <span className="rct-tree-item-arrow">
-              {isExpanded ? (
-                <IcRoundKeyboardArrowDown style={{fontSize: px(20)}} />
-              ) : (
-                <IcRoundKeyboardArrowRight style={{fontSize: px(20)}} />
-              )}
-            </span>
-          )
-        }}
-        renderItemTitle={({title, item}) => {
-          const selected = selectedEntry(item)
-          const hasChildren = Boolean(item.children?.length)
+    <>
+      <div ref={tree.registerElement} className={styles.tree()}>
+        {tree.getItems().map(item => {
+          const data = item.getItemData()
+          if (!data) return null
+          const hasChildren = Boolean(data.children?.length)
+          const selected = selectedEntry(data)
           const {icon} = Type.meta(schema[selected.type])
           const isDraft = selected.phase === EntryPhase.Draft
           const isUntranslated = locale && selected.locale !== locale
           return (
-            <>
-              {!hasChildren && (
-                <span className="rct-tree-item-icon">
-                  <Icon icon={icon || IcOutlineInsertDriveFile} />
-                </span>
-              )}
+            <div
+              {...item.getProps()}
+              ref={item.registerElement}
+              className={styles.tree.item({
+                untranslated: isUntranslated,
+                selected: entryId && item.isSelected(),
+                drop: item.isDropTarget() && item.isDraggingOver(),
+                dropAbove: item.isDropTargetAbove() && item.isDraggingOver(),
+                dropBelow: item.isDropTargetBelow() && item.isDraggingOver()
+              })}
+              key={item.getId()}
+            >
+              <button
+                className={styles.tree.item.label()}
+                style={{paddingLeft: px((item.getItemMeta().level + 1) * 12)}}
+              >
+                {item.isFolder() && (
+                  <span className={styles.tree.item.arrow()}>
+                    {item.isExpanded() ? (
+                      <Icon icon={IcRoundKeyboardArrowDown} size={20} />
+                    ) : (
+                      <Icon icon={IcRoundKeyboardArrowRight} size={20} />
+                    )}
+                  </span>
+                )}
 
-              <span className={styles.title({untranslated: isUntranslated})}>
-                {title}
-              </span>
+                {!hasChildren && (
+                  <span className={styles.tree.item.icon()}>
+                    <Icon
+                      icon={
+                        isUntranslated
+                          ? IcRoundTranslate
+                          : icon || IcOutlineInsertDriveFile
+                      }
+                    />
+                  </span>
+                )}
 
-              {isUntranslated && (
-                <span className={styles.status()}>
-                  <IcRoundTranslate />
+                <span className={styles.tree.item.label.itemName()}>
+                  {item.getItemName()}
                 </span>
-              )}
 
-              {!isUntranslated && isDraft && (
-                <span className={styles.status()}>
-                  <IcRoundEdit />
-                </span>
-              )}
-            </>
+                {/*isUntranslated && (
+                  <span className={styles.tree.status()}>
+                    <Icon icon={IcRoundTranslate} />
+                  </span>
+                )*/}
+
+                {!isUntranslated && isDraft && (
+                  <span className={styles.tree.status({draft: true})}>
+                    <Icon icon={IcRoundEdit} />
+                  </span>
+                )}
+
+                {/*item.isLoading() && <Loader />*/}
+              </button>
+            </div>
           )
-        }}
-        onPrimaryAction={item => {
-          navigate(nav.entry({entryId: item.index as string}))
-        }}
-        onExpandItem={item => {
-          navigate(nav.entry({entryId: item.index as string}))
-        }}
-        onCollapseItem={item => {
-          navigate(nav.entry({entryId: item.index as string}))
-        }}
-        viewState={{
-          ['entry-tree']: {
-            selectedItems: entryId ? [entryId] : [],
-            expandedItems: selected
-          }
-        }}
-      >
-        <Tree treeId="entry-tree" rootItem={ENTRY_TREE_ROOT_KEY} />
-      </UncontrolledTreeEnvironment>
-    </div>
+        })}
+      </div>
+    </>
   )
 }

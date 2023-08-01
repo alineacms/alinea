@@ -67,6 +67,8 @@ __metadata:
     "@dnd-kit/sortable": ^4.0.0
     "@dnd-kit/utilities": ^2.0.0
     "@floating-ui/react-dom": ^0.7.1
+    "@headless-tree/core": ^0.0.6
+    "@headless-tree/react": ^0.0.5
     "@headlessui/react": ^1.6.1
     "@react-hook/size": ^2.1.2
     "@react-hook/window-size": ^3.0.7
@@ -79,7 +81,6 @@ __metadata:
     lib0: ^0.2.78
     p-limit: ^4.0.0
     pretty-bytes: ^6.0.0
-    react-complex-tree: ^2.1.4-alpha.0
     react-query: ^3.39.1
     react-tiny-virtual-list: ^2.2.0
     thumbhash: ^0.1.1
@@ -1111,6 +1112,24 @@ __metadata:
   version: 1.1.2
   resolution: "@gar/promisify@npm:1.1.2"
   checksum: d05081e0887a49c178b75ee3067bd6ee086f73c154d121b854fb2e044e8a89cb1cbb6de3a0dd93a519b80f0531fda68b099dd7256205f7fbb3490324342f2217
+  languageName: node
+  linkType: hard
+
+"@headless-tree/core@npm:^0.0.6":
+  version: 0.0.6
+  resolution: "@headless-tree/core@npm:0.0.6"
+  checksum: 2cdc2fc8dd4558c1fae558b62ba36476e7fd18aeb9169f84f9dd610d6a3b984e696f0c00fc5965dd686648026ffe22f2507e0ef1c8bd9d6ae91a189fb68ff70a
+  languageName: node
+  linkType: hard
+
+"@headless-tree/react@npm:^0.0.5":
+  version: 0.0.5
+  resolution: "@headless-tree/react@npm:0.0.5"
+  peerDependencies:
+    "@headless-tree/core": "*"
+    react: "*"
+    react-dom: "*"
+  checksum: c1e619b40638533c7b1bd4e74cc761066d5c7ee28a16223916cc6e3d0d5506e949cd30fe73e080b12c719796b12f79c59d5ed26522bbfc77fc162c85c55afc32
   languageName: node
   linkType: hard
 
@@ -8679,15 +8698,6 @@ fsevents@~2.3.2:
   peerDependencies:
     webpack: ^4.0.0 || ^5.0.0
   checksum: 51cc1b0d0e8c37c4336b5318f3b2c9c51d6998ad6f56ea09612afcfefc9c1f596341309e934a744ae907177f28efc9f1654eacd62151e82853fcc6d37450e795
-  languageName: node
-  linkType: hard
-
-"react-complex-tree@npm:^2.1.4-alpha.0":
-  version: 2.1.4-alpha.0
-  resolution: "react-complex-tree@npm:2.1.4-alpha.0"
-  peerDependencies:
-    react: ">=16.0.0"
-  checksum: 116f6b4305f7109f1cb1302ee5e52bc3e2516a5fc76a484b457e9e48e7d6bb33a4e3891f6149674a29eb31ab504cd28f56fc03946e00b163ac544919fad33631
   languageName: node
   linkType: hard
 

@@ -1,3 +1,4 @@
+import {AsyncTreeDataLoader} from '@headless-tree/core'
 import {Database} from 'alinea/backend'
 import {EntryPhase, Type} from 'alinea/core'
 import {Entry} from 'alinea/core/Entry'
@@ -7,8 +8,7 @@ import {entries} from 'alinea/core/util/Objects'
 import DataLoader from 'dataloader'
 import {atom, useAtom, useAtomValue} from 'jotai'
 import {atomFamily} from 'jotai/utils'
-import {MutableRefObject, useEffect, useMemo, useRef} from 'react'
-import {TreeDataProvider, TreeItem, TreeItemIndex} from 'react-complex-tree'
+import {useMemo} from 'react'
 import {createPersistentStore} from '../util/PersistentStore.js'
 import {clientAtom, configAtom} from './DashboardAtoms.js'
 import {rootAtom, workspaceAtom} from './NavigationAtoms.js'
@@ -87,39 +87,38 @@ const visibleTypesAtom = atom(get => {
     .map(([name]) => name)
 })
 
-const entryTreeRootAtom = atom(
-  async (get): Promise<TreeItem<EntryTreeItem>> => {
-    const {active} = await get(graphAtom)
-    const workspace = get(workspaceAtom)
-    const root = get(rootAtom)
-    const visibleTypes = get(visibleTypesAtom)
-    const rootEntries = Entry()
-      .where(
-        Entry.workspace.is(workspace.name),
-        Entry.root.is(root.name),
-        Entry.parent.isNull(),
-        Entry.active,
-        Entry.type.isIn(visibleTypes)
-      )
-      .select(Entry.i18nId)
-      .groupBy(Entry.i18nId)
-      .orderBy(Entry.index.asc())
-    const children = await active.find(rootEntries)
-    return {
-      index: ENTRY_TREE_ROOT_KEY,
-      data: {entries: []},
-      children
-    }
+const entryTreeRootAtom = atom(async (get): Promise<EntryTreeItem> => {
+  const {active} = await get(graphAtom)
+  const workspace = get(workspaceAtom)
+  const root = get(rootAtom)
+  const visibleTypes = get(visibleTypesAtom)
+  const rootEntries = Entry()
+    .where(
+      Entry.workspace.is(workspace.name),
+      Entry.root.is(root.name),
+      Entry.parent.isNull(),
+      Entry.active,
+      Entry.type.isIn(visibleTypes)
+    )
+    .select(Entry.i18nId)
+    .groupBy(Entry.i18nId)
+    .orderBy(Entry.index.asc())
+  const children = await active.find(rootEntries)
+  return {
+    id: ENTRY_TREE_ROOT_KEY,
+    isFolder: true,
+    entries: [],
+    children
   }
-)
+})
 
 const entryTreeItemLoaderAtom = atom(async get => {
   const graph = await get(graphAtom)
   const entryTreeRootItem = await get(entryTreeRootAtom)
   const visibleTypes = get(visibleTypesAtom)
   const {schema} = get(configAtom)
-  return new DataLoader(async (ids: ReadonlyArray<TreeItemIndex>) => {
-    const res = new Map<TreeItemIndex, TreeItem<EntryTreeItem>>()
+  return new DataLoader(async (ids: ReadonlyArray<string>) => {
+    const res = new Map<string, EntryTreeItem>()
     const search = (ids as Array<string>).filter(
       id => id !== ENTRY_TREE_ROOT_KEY
     )
@@ -151,15 +150,15 @@ const entryTreeItemLoaderAtom = atom(async get => {
     for (const row of rows) {
       const entries = [row.data].concat(row.translations)
       res.set(row.index, {
-        index: row.index,
-        data: {entries},
+        id: row.index,
+        entries,
         children: row.children
       })
     }
     return ids.map(id => {
       if (id === ENTRY_TREE_ROOT_KEY) return entryTreeRootItem
       const entry = res.get(id)!
-      const typeName = entry.data.entries[0].type
+      const typeName = entry.entries[0].type
       const type = schema[typeName]
       const isFolder = Type.isContainer(type)
       return {...entry, isFolder}
@@ -173,6 +172,7 @@ const loaderAtom = atom(get => {
 })
 
 export interface EntryTreeItem {
+  id: string
   entries: Array<{
     id: string
     type: string
@@ -180,33 +180,24 @@ export interface EntryTreeItem {
     phase: EntryPhase
     locale: string | null
   }>
+  isFolder?: boolean
+  children: Array<string>
 }
 
-export function useEntryTreeProvider(): TreeDataProvider<EntryTreeItem> {
-  const listener: MutableRefObject<(changedItemIds: TreeItemIndex[]) => void> =
-    useRef(() => {})
-  const changed = useAtomValue(changedEntriesAtom)
+export function useEntryTreeProvider(): AsyncTreeDataLoader<EntryTreeItem> {
   const {loader} = useAtomValue(loaderAtom)
-  useEffect(() => {
-    listener.current?.([ENTRY_TREE_ROOT_KEY])
-  }, [loader])
-  useEffect(() => {
-    listener.current?.(changed)
-  }, [changed])
   return useMemo(() => {
     return {
-      onDidChangeTreeData(_) {
+      /*onDidChangeTreeData(_) {
         listener.current = _
         return {dispose: () => {}}
+      },*/
+      async getItem(id: string): Promise<EntryTreeItem> {
+        // await new Promise(r => setTimeout(r, 3000))
+        return (await loader).load(id)
       },
-      async getTreeItem(index: TreeItemIndex): Promise<TreeItem> {
-        return (await loader).clear(index).load(index)
-      },
-      async getTreeItems(itemIds): Promise<Array<TreeItem>> {
-        const items = await (await loader).clearAll().loadMany(itemIds)
-        return items.filter(
-          (item): item is TreeItem => item instanceof Error === false
-        )
+      async getChildren(id: string): Promise<Array<string>> {
+        return this.getItem(id).then(item => item.children)
       }
     }
   }, [loader])
