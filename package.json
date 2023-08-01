@@ -50,7 +50,6 @@
   "dependencies": {
     "@alinea/iso": "^0.3.0",
     "@alinea/sqlite-wasm": "^0.1.13",
-    "@sqlite.org/sqlite-wasm": "^3.42.0-build4",
     "esbuild": "^0.18.5"
   },
   "optionalDependencies": {
