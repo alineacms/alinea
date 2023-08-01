@@ -1,6 +1,5 @@
 import {HStack, Icon, Loader, fromModule} from 'alinea/ui'
 import IcRoundAddCircle from 'alinea/ui/icons/IcRoundAddCircle'
-import {Suspense} from 'react'
 import {EntryEditor} from '../atoms/EntryEditor.js'
 import {useNav} from '../hook/UseNav.js'
 import {useRoot} from '../hook/UseRoot.js'
@@ -45,7 +44,7 @@ export function ContentView({editor}: ContentViewProps) {
             onClick={() =>
               navigate(
                 nav.create({
-                  entryId: editor?.entryId,
+                  entryId: editor?.version.i18nId,
                   workspace: workspace.name,
                   root: root.name
                 })
@@ -60,11 +59,7 @@ export function ContentView({editor}: ContentViewProps) {
         </div>
         {/*editor && <EntryVersionList editor={editor} />*/}
       </Sidebar.Tree>
-      {search === '?new' && (
-        <Suspense fallback={<Loader absolute />}>
-          <NewEntry parentId={editor?.entryId} />
-        </Suspense>
-      )}
+      {search === '?new' && <NewEntry parentId={editor?.entryId} />}
       <SuspenseBoundary name="content view" fallback={<Loader absolute />}>
         {editor ? <EntryView editor={editor} /> : <RootView root={root} />}
       </SuspenseBoundary>

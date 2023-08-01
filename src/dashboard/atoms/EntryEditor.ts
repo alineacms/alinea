@@ -44,10 +44,11 @@ export const entryEditorAtoms = atomFamily(
       const config = get(configAtom)
       const client = get(clientAtom)
       const graph = await get(graphAtom)
-      const {search} = get(locationAtom)
-      let entry = await graph.active.maybeGet(Entry({i18nId, locale}))
+      const search = locale ? {i18nId, locale} : {i18nId}
+      let entry = await graph.active.maybeGet(Entry(search))
       if (!entry) {
-        const preferredLanguage = search.slice(1)
+        const {searchParams} = get(locationAtom)
+        const preferredLanguage = searchParams.get('from')
         entry = await graph.active.maybeGet(
           Entry({i18nId}).where(
             preferredLanguage ? Entry.locale.is(preferredLanguage) : true
@@ -64,7 +65,6 @@ export const entryEditorAtoms = atomFamily(
           }
         })
       )
-      console.log(versions)
       const translations = (await graph.active.find(
         Entry({i18nId})
           .where(Entry.locale.isNotNull(), Entry.entryId.isNot(entryId))

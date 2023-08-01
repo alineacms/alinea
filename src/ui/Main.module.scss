@@ -19,7 +19,7 @@
       min-width: 560px;
     }
 
-    &::-webkit-scrollbar {
+    /*&::-webkit-scrollbar {
       width: 6px;
       height: 6px;
     }
@@ -34,7 +34,7 @@
     }
     &::-webkit-scrollbar-thumb:active {
       background: hsla(var(--alinea-negative), 0.9);
-    }
+    }*/
   }
 }
 

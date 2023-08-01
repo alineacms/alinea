@@ -16,7 +16,7 @@ import {Link} from 'alinea/ui/Link'
 import {IcRoundArrowBack} from 'alinea/ui/icons/IcRoundArrowBack'
 import {useObservable} from 'alinea/ui/util/Observable'
 import {useAtomValue, useSetAtom} from 'jotai'
-import {FormEvent, useState} from 'react'
+import {FormEvent, Suspense, useState} from 'react'
 import {useQuery} from 'react-query'
 import {changedEntriesAtom, graphAtom} from '../../atoms/EntryAtoms.js'
 import {useConfig} from '../../hook/UseConfig.js'
@@ -196,21 +196,20 @@ function NewEntryForm({parentId}: NewEntryProps) {
 export type NewEntryProps = {parentId?: string}
 
 export function NewEntry({parentId}: NewEntryProps) {
-  const nav = useNav()
   const navigate = useNavigate()
-  const {name: workspace} = useWorkspace()
-
+  const {pathname} = useLocation()
   function handleClose() {
-    navigate(nav.entry({workspace, entryId: parentId}))
+    navigate(pathname)
   }
-
   return (
     <Modal open onClose={handleClose} className={styles.root()}>
       <HStack center gap={18} className={styles.root.header()}>
         <IconButton icon={IcRoundArrowBack} onClick={handleClose} />
         <Typo.H1 flat>New entry</Typo.H1>
       </HStack>
-      <NewEntryForm parentId={parentId} />
+      <Suspense fallback={<Loader absolute />}>
+        <NewEntryForm parentId={parentId} />
+      </Suspense>
     </Modal>
   )
 }

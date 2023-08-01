@@ -112,7 +112,7 @@ export class Database implements Syncable {
   }
 
   async updateEntries(entries: Array<EntryRow>) {
-    return this.store.transaction(async query => {
+    await this.store.transaction(async query => {
       for (const entry of entries) {
         await query(
           EntryRow({
@@ -162,8 +162,8 @@ export class Database implements Syncable {
         .orderBy(EntryRow.modifiedAt.desc())
         .first()
     )
+    await query(AlineaMeta().delete())
     await query(
-      AlineaMeta().delete(),
       AlineaMeta().insertOne({
         modifiedAt,
         contentHash

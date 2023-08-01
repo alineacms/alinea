@@ -114,8 +114,9 @@ export function EntryEdit({editor}: EntryEditProps) {
       <Main
         scrollRef={ref}
         className={styles.root()}
-        head={<EntryHeader editor={editor} />}
+        // head={<EntryHeader editor={editor} />}
       >
+        <EntryHeader editor={editor} />
         <Main.Container>
           <EntryTitle
             editor={editor}

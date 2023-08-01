@@ -67,7 +67,7 @@ export function EntryHeader({editor}: EntryHeaderProps) {
                 selected={editor.version.locale!}
                 locales={editor.translations.map(({locale}) => locale)}
                 onChange={locale => {
-                  navigate(pathname + `?` + locale)
+                  navigate(pathname + `?from=` + locale)
                 }}
               />
             </HStack>
