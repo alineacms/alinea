@@ -10,18 +10,8 @@ export const pages = alinea.root('Pages', {
   }
 })
 
-export const example = alinea.root('Example', {
-  [alinea.meta]: {
-    contains: ['Page', 'Home'],
-    i18n: {
-      locales: ['nl', 'en', 'de']
-    }
-  }
-})
-
 export const main = alinea.workspace('Alinea', {
   pages,
-  example,
   media: alinea.media(),
   [alinea.meta]: {
     color: '#3F61E8',
