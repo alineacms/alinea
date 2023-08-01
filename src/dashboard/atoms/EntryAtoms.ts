@@ -117,6 +117,7 @@ const entryTreeItemLoaderAtom = atom(async get => {
   const graph = await get(graphAtom)
   const entryTreeRootItem = await get(entryTreeRootAtom)
   const visibleTypes = get(visibleTypesAtom)
+  const {schema} = get(configAtom)
   return new DataLoader(async (ids: ReadonlyArray<TreeItemIndex>) => {
     const res = new Map<TreeItemIndex, TreeItem<EntryTreeItem>>()
     const search = (ids as Array<string>).filter(
@@ -129,7 +130,7 @@ const entryTreeItemLoaderAtom = atom(async get => {
       phase: Entry.phase,
       locale: Entry.locale
     }
-    const find = Entry()
+    const entries = Entry()
       .select({
         index: Entry.i18nId,
         data,
@@ -146,7 +147,7 @@ const entryTreeItemLoaderAtom = atom(async get => {
       })
       .groupBy(Entry.i18nId)
       .where(Entry.i18nId.isIn(search))
-    const rows = await graph.active.find(find)
+    const rows = await graph.active.find(entries)
     for (const row of rows) {
       const entries = [row.data].concat(row.translations)
       res.set(row.index, {
@@ -158,7 +159,10 @@ const entryTreeItemLoaderAtom = atom(async get => {
     return ids.map(id => {
       if (id === ENTRY_TREE_ROOT_KEY) return entryTreeRootItem
       const entry = res.get(id)!
-      return entry
+      const typeName = entry.data.entries[0].type
+      const type = schema[typeName]
+      const isFolder = Type.isContainer(type)
+      return {...entry, isFolder}
     })
   })
 })

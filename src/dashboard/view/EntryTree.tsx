@@ -4,6 +4,7 @@ import {IcOutlineInsertDriveFile} from 'alinea/ui/icons/IcOutlineInsertDriveFile
 import {IcRoundEdit} from 'alinea/ui/icons/IcRoundEdit'
 import {IcRoundKeyboardArrowDown} from 'alinea/ui/icons/IcRoundKeyboardArrowDown'
 import {IcRoundKeyboardArrowRight} from 'alinea/ui/icons/IcRoundKeyboardArrowRight'
+import {IcRoundTranslate} from 'alinea/ui/icons/IcRoundTranslate'
 import {Tree, TreeItem, UncontrolledTreeEnvironment} from 'react-complex-tree'
 import {
   ENTRY_TREE_ROOT_KEY,
@@ -80,8 +81,14 @@ export function EntryTree({entryId, selected = []}: EntryTreeProps) {
                 {title}
               </span>
 
-              {isDraft && (
-                <span className="rct-tree-item-status">
+              {isUntranslated && (
+                <span className={styles.status()}>
+                  <IcRoundTranslate />
+                </span>
+              )}
+
+              {!isUntranslated && isDraft && (
+                <span className={styles.status()}>
                   <IcRoundEdit />
                 </span>
               )}

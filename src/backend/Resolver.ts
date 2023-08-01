@@ -447,7 +447,7 @@ export class Resolver {
             .innerJoin(parents({parent: Parent.entryId}))
             .where(
               this.conditionRealm(Parent, ctx.realm),
-              this.conditionLocale(Parent, ctx.realm),
+              this.conditionLocale(Parent, ctx.locale),
               source.depth ? children.level.isLess(source.depth) : true
             )
         )

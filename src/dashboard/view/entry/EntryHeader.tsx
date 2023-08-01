@@ -7,9 +7,8 @@ import {IcRoundEdit} from 'alinea/ui/icons/IcRoundEdit'
 import {IcRoundTranslate} from 'alinea/ui/icons/IcRoundTranslate'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {EntryEditor} from '../../atoms/EntryEditor.js'
-import {useNavigate} from '../../atoms/LocationAtoms.js'
+import {useLocation, useNavigate} from '../../atoms/LocationAtoms.js'
 import {useLocale} from '../../hook/UseLocale.js'
-import {useNav} from '../../hook/UseNav.js'
 import {EditMode} from './EditMode.js'
 import css from './EntryHeader.module.scss'
 import {Langswitch} from './LangSwitch.js'
@@ -50,11 +49,9 @@ export function EntryHeader({editor}: EntryHeaderProps) {
   const saveDraft = useSetAtom(editor.saveDraft)
   const publishDraft = useSetAtom(editor.publishDraft)
   const saveTranslation = useSetAtom(editor.saveTranslation)
+  const translate = () => saveTranslation(locale!)
   const navigate = useNavigate()
-  const nav = useNav()
-  function translate() {
-    return saveTranslation(locale!)
-  }
+  const {pathname} = useLocation()
   return (
     <AppBar.Root variant={variant}>
       <HStack center gap={12} className={styles.root.description()}>
@@ -69,7 +66,9 @@ export function EntryHeader({editor}: EntryHeaderProps) {
               <Langswitch
                 selected={editor.version.locale!}
                 locales={editor.translations.map(({locale}) => locale)}
-                onChange={() => {}}
+                onChange={locale => {
+                  navigate(pathname + `?` + locale)
+                }}
               />
             </HStack>
           ) : (
@@ -120,36 +119,4 @@ export function EntryHeader({editor}: EntryHeaderProps) {
       </HStack>
     </AppBar.Root>
   )
-}
-
-{
-  /*root.i18n && (
-        <HStack center gap={8}>
-          {root.i18n.locales.map(locale => {
-            const translation = draft.translation(locale)
-            const to = translation || draft
-            return (
-              <a
-                key={locale}
-                {...link(
-                  nav.entry({
-                    workspace: to.alinea.workspace,
-                    root: to.alinea.root,
-                    id: to.id,
-                    locale
-                  })
-                )}
-              >
-                <Chip accent={currentLocale === locale}>
-                  {translation ? (
-                    <>{locale.toUpperCase()}: ✅</>
-                  ) : (
-                    <>{locale.toUpperCase()}: ❌</>
-                  )}
-                </Chip>
-              </a>
-            )
-          })}
-        </HStack>
-      )*/
 }
