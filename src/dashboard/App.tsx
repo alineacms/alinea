@@ -26,7 +26,6 @@ import {useLocale} from './hook/UseLocale.js'
 import {useNav} from './hook/UseNav.js'
 import {useRoot} from './hook/UseRoot.js'
 import {useWorkspace} from './hook/UseWorkspace.js'
-import {ContentView} from './pages/ContentView.js'
 import {Head} from './util/Head.js'
 import {SuspenseBoundary} from './util/SuspenseBoundary.js'
 import {ErrorBoundary} from './view/ErrorBoundary.js'
@@ -119,7 +118,7 @@ function AppAuthenticated() {
               </Sidebar.Nav>
               <ErrorBoundary>
                 <SuspenseBoundary name="main" fallback={<Loader absolute />}>
-                  <RouteView fallback={<ContentView />} />
+                  <RouteView fallback={null} />
                 </SuspenseBoundary>
               </ErrorBoundary>
             </div>

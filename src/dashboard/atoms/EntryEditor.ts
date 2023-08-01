@@ -35,12 +35,13 @@ const previewTokenAtom = atom(async get => {
 
 interface EntryEditorParams {
   locale: string | undefined
-  i18nId: string
+  i18nId: string | undefined
 }
 
 export const entryEditorAtoms = atomFamily(
   ({locale, i18nId}: EntryEditorParams) => {
     return atom(async get => {
+      if (!i18nId) return undefined
       const config = get(configAtom)
       const client = get(clientAtom)
       const graph = await get(graphAtom)

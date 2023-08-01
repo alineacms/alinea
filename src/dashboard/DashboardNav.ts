@@ -1,8 +1,8 @@
 export type EntryLocation = {
-  entryId?: string | null
-  workspace?: string | null
-  root?: string | null
-  locale?: string | null
+  entryId?: string
+  workspace?: string
+  root?: string
+  locale?: string
 }
 
 export const navMatchers = {

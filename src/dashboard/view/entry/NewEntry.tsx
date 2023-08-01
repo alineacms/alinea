@@ -141,13 +141,15 @@ function NewEntryForm({parentId}: NewEntryProps) {
       entry.locale = locale
       entry.i18nId = createId()
       entry.url = `/${locale}${entry.url}`
+    } else {
+      entry.i18nId = entry.entryId
     }
 
     return client
       .saveDraft(entry as EntryRow)
       .then(() => {
         updateEntries([])
-        navigate(nav.entry(entry))
+        navigate(nav.entry({entryId: entry.i18nId}))
       })
       .finally(() => {
         setIsCreating(false)

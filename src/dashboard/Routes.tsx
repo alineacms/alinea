@@ -1,23 +1,25 @@
 import {atom} from 'jotai'
 import {atomFamily} from 'jotai/utils'
 import {entryEditorAtoms} from './atoms/EntryEditor.js'
-import {localeAtom} from './atoms/NavigationAtoms.js'
+import {entryLocationAtom, localeAtom} from './atoms/NavigationAtoms.js'
 import {Route, Router} from './atoms/RouterAtoms.js'
 import {ContentView} from './pages/ContentView.js'
 import {DraftsOverview} from './pages/DraftsOverview.js'
 
-const editorLoader = atomFamily(
-  ({id}: Record<string, string>) => {
-    return atom(async get => {
-      const locale = get(localeAtom)
-      return {editor: await get(entryEditorAtoms({locale, i18nId: id}))}
-    })
-  },
-  (a, b) => a.id === b.id
-)
+const editorLoader = atomFamily(() => {
+  return atom(async get => {
+    const entryLocation = get(entryLocationAtom)
+    const locale = get(localeAtom)
+    return {
+      editor: await get(
+        entryEditorAtoms({locale, i18nId: entryLocation?.entryId})
+      )
+    }
+  })
+})
 
 export const entryRoute = new Route({
-  path: '/entry/:workspace?/:root?/:id?',
+  path: '*',
   loader: editorLoader,
   component: ContentView
 })
@@ -28,6 +30,6 @@ export const draftRoute = new Route({
   component: DraftsOverview
 })
 
-const routes = [entryRoute, draftRoute]
+const routes = [draftRoute, entryRoute]
 
 export const router = new Router({routes})
