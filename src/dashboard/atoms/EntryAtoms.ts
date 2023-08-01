@@ -78,7 +78,9 @@ export function useDbUpdater() {
   useAtom(updateDbAtom)
 }
 
-export const ENTRY_TREE_ROOT_KEY = '@alinea/dashboard.entryTreeRoot'
+export function rootId(rootName: string) {
+  return `@alinea/root-${rootName}`
+}
 
 const visibleTypesAtom = atom(get => {
   const {schema} = get(configAtom)
@@ -105,7 +107,7 @@ const entryTreeRootAtom = atom(async (get): Promise<EntryTreeItem> => {
     .orderBy(Entry.index.asc())
   const children = await active.find(rootEntries)
   return {
-    id: ENTRY_TREE_ROOT_KEY,
+    id: rootId(root.name),
     isFolder: true,
     entries: [],
     children
@@ -117,11 +119,10 @@ const entryTreeItemLoaderAtom = atom(async get => {
   const entryTreeRootItem = await get(entryTreeRootAtom)
   const visibleTypes = get(visibleTypesAtom)
   const {schema} = get(configAtom)
+  const root = get(rootAtom)
   return new DataLoader(async (ids: ReadonlyArray<string>) => {
     const res = new Map<string, EntryTreeItem>()
-    const search = (ids as Array<string>).filter(
-      id => id !== ENTRY_TREE_ROOT_KEY
-    )
+    const search = (ids as Array<string>).filter(id => id !== rootId(root.name))
     const data = {
       id: Entry.i18nId,
       type: Entry.type,
@@ -156,7 +157,7 @@ const entryTreeItemLoaderAtom = atom(async get => {
       })
     }
     return ids.map(id => {
-      if (id === ENTRY_TREE_ROOT_KEY) return entryTreeRootItem
+      if (id === rootId(root.name)) return entryTreeRootItem
       const entry = res.get(id)!
       const typeName = entry.entries[0].type
       const type = schema[typeName]
@@ -188,12 +189,7 @@ export function useEntryTreeProvider(): AsyncTreeDataLoader<EntryTreeItem> {
   const {loader} = useAtomValue(loaderAtom)
   return useMemo(() => {
     return {
-      /*onDidChangeTreeData(_) {
-        listener.current = _
-        return {dispose: () => {}}
-      },*/
       async getItem(id: string): Promise<EntryTreeItem> {
-        // await new Promise(r => setTimeout(r, 3000))
         return (await loader).load(id)
       },
       async getChildren(id: string): Promise<Array<string>> {

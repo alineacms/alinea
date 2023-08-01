@@ -14,14 +14,15 @@ import {IcRoundTranslate} from 'alinea/ui/icons/IcRoundTranslate'
 import {useAtomValue} from 'jotai'
 import {useEffect} from 'react'
 import {
-  ENTRY_TREE_ROOT_KEY,
   EntryTreeItem,
   changedEntriesAtom,
+  rootId,
   useEntryTreeProvider
 } from '../atoms/EntryAtoms.js'
 import {useConfig} from '../hook/UseConfig.js'
 import {useLocale} from '../hook/UseLocale.js'
 import {useNav} from '../hook/UseNav.js'
+import {useRoot} from '../hook/UseRoot.js'
 import {useNavigate} from '../util/HashRouter.js'
 import css from './EntryTree.module.scss'
 
@@ -33,6 +34,7 @@ export interface EntryTreeProps {
 }
 
 export function EntryTree({i18nId: entryId, selected = []}: EntryTreeProps) {
+  const root = useRoot()
   const {schema} = useConfig()
   const dataLoader = useEntryTreeProvider()
   const navigate = useNavigate()
@@ -44,7 +46,7 @@ export function EntryTree({i18nId: entryId, selected = []}: EntryTreeProps) {
     )
   }
   const tree = useTree<EntryTreeItem>({
-    rootItemId: ENTRY_TREE_ROOT_KEY,
+    rootItemId: rootId(root.name),
     canDropInbetween: true,
     onDrop: (items, target) => {
       console.log(
@@ -76,7 +78,7 @@ export function EntryTree({i18nId: entryId, selected = []}: EntryTreeProps) {
   })
   const changed = useAtomValue(changedEntriesAtom)
   useEffect(() => {
-    tree.invalidateChildrenIds(ENTRY_TREE_ROOT_KEY)
+    tree.invalidateChildrenIds(rootId(root.name))
   }, [dataLoader])
   useEffect(() => {
     for (const id of changed) tree.invalidateChildrenIds(id)
@@ -85,7 +87,7 @@ export function EntryTree({i18nId: entryId, selected = []}: EntryTreeProps) {
     <>
       <div ref={tree.registerElement} className={styles.tree()}>
         {tree.getItems().map(item => {
-          const data = item.getItemData()
+          const data: EntryTreeItem = item.getItemData()
           if (!data) return null
           const hasChildren = Boolean(data.children?.length)
           const selected = selectedEntry(data)
