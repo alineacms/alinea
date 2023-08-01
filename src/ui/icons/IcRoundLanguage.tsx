@@ -10,4 +10,3 @@ export function IcRoundLanguage(props: SVGProps<SVGSVGElement>) {
     </svg>
   )
 }
-export default IcRoundLanguage

@@ -1,6 +1,7 @@
 import {atom} from 'jotai'
 import {atomFamily} from 'jotai/utils'
 import {entryEditorAtoms} from './atoms/EntryEditor.js'
+import {localeAtom} from './atoms/NavigationAtoms.js'
 import {Route, Router} from './atoms/RouterAtoms.js'
 import {ContentView} from './pages/ContentView.js'
 import {DraftsOverview} from './pages/DraftsOverview.js'
@@ -8,7 +9,8 @@ import {DraftsOverview} from './pages/DraftsOverview.js'
 const editorLoader = atomFamily(
   ({id}: Record<string, string>) => {
     return atom(async get => {
-      return {editor: await get(entryEditorAtoms(id))}
+      const locale = get(localeAtom)
+      return {editor: await get(entryEditorAtoms({locale, i18nId: id}))}
     })
   },
   (a, b) => a.id === b.id

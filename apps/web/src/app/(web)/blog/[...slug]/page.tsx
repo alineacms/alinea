@@ -1,3 +1,5 @@
+/* eslint-disable @next/next/no-img-element */
+
 import {TextView} from '@/blocks/TextBlockView'
 import {cms} from '@/cms'
 import {LayoutWithSidebar} from '@/layout/Layout'
@@ -52,6 +54,7 @@ export default async function BlogPostPage({params}: BlogPostPageProps) {
                 <HStack center gap={8}>
                   {page.author.avatar && (
                     <img
+                      alt="Author avatar"
                       className={styles.root.author.avatar()}
                       src={page.author.avatar.url}
                     />

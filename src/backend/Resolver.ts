@@ -10,6 +10,7 @@ import {
 import {EntrySearch} from 'alinea/core/EntrySearch'
 import {Realm} from 'alinea/core/pages/Realm'
 import {base64url} from 'alinea/core/util/Encoding'
+import {entries, fromEntries, keys} from 'alinea/core/util/Objects'
 import * as Y from 'alinea/yjs'
 import {unzlibSync} from 'fflate'
 import {
@@ -43,8 +44,6 @@ export interface ResolveDefaults {
   preview?: PreviewUpdate
 }
 
-const {keys, entries, fromEntries} = Object
-
 const unOps = {
   [pages.UnaryOp.Not]: UnOpType.Not,
   [pages.UnaryOp.IsNull]: UnOpType.IsNull
@@ -74,80 +73,91 @@ const pageFields = keys(EntryRow)
 
 type Interim = any
 
+interface ResolveContextData {
+  realm: Realm
+  location: Array<string>
+  locale: string | undefined
+  depth: number
+  expr: ExprContext
+}
+
 export class ResolveContext {
   table: Table<EntryTable>
-  constructor(
-    public realm: Realm,
-    public location: Array<string> = [],
-    public depth = 0,
-    //public table: Table<EntryTable> | undefined = undefined,
-    public expr: ExprContext = ExprContext.InNone
-  ) {
+  constructor(private data: Partial<ResolveContextData>) {
     this.table = EntryRow().as(`E${this.depth}`)
+  }
+
+  linkContext() {
+    return new ResolveContext({
+      realm: this.realm,
+      locale: this.locale
+    })
+  }
+
+  get depth() {
+    return this.data.depth ?? 0
+  }
+  get location() {
+    return this.data.location ?? []
+  }
+  get realm() {
+    return this.data.realm ?? Realm.Published
+  }
+  get locale() {
+    return this.data.locale
+  }
+  get expr() {
+    return this.data.expr ?? ExprContext.InNone
   }
 
   get Table() {
     return this.table
   }
 
-  step(): ResolveContext {
-    return new ResolveContext(
-      this.realm,
-      this.location,
-      this.depth + 1,
-      this.expr
-    )
+  increaseDepth(): ResolveContext {
+    return new ResolveContext({...this.data, depth: this.depth + 1})
   }
 
-  get inSelect() {
+  decreaseDepth(): ResolveContext {
+    return new ResolveContext({...this.data, depth: this.depth - 1})
+  }
+
+  get isInSelect() {
     return this.expr & ExprContext.InSelect
   }
-
-  get inCondition() {
+  get isInCondition() {
     return this.expr & ExprContext.InCondition
   }
-
-  get inAccess() {
+  get isInAccess() {
     return this.expr & ExprContext.InAccess
   }
 
   get select(): ResolveContext {
-    if (this.inSelect) return this
-    return new ResolveContext(
-      this.realm,
-      this.location,
-      this.depth,
-      this.expr | ExprContext.InSelect
-    )
+    if (this.isInSelect) return this
+    return new ResolveContext({
+      ...this.data,
+      expr: this.expr | ExprContext.InSelect
+    })
   }
-
   get condition(): ResolveContext {
-    if (this.inCondition) return this
-    return new ResolveContext(
-      this.realm,
-      this.location,
-      this.depth,
-      this.expr | ExprContext.InCondition
-    )
+    if (this.isInCondition) return this
+    return new ResolveContext({
+      ...this.data,
+      expr: this.expr | ExprContext.InCondition
+    })
   }
-
   get access(): ResolveContext {
-    if (this.inAccess) return this
-    return new ResolveContext(
-      this.realm,
-      this.location,
-      this.depth,
-      this.expr | ExprContext.InAccess
-    )
+    if (this.isInAccess) return this
+    return new ResolveContext({
+      ...this.data,
+      expr: this.expr | ExprContext.InAccess
+    })
   }
-
   get none(): ResolveContext {
-    return new ResolveContext(
-      this.realm,
-      this.location,
-      this.depth,
-      ExprContext.InNone
-    )
+    return new ResolveContext({
+      ...this.data,
+      expr: this.expr | ExprContext.InNone
+    })
   }
 }
 
@@ -170,34 +180,16 @@ export class Resolver {
     target: pages.TargetData,
     field: string
   ): ExprData {
-    // Todo: we should make this non-ambiguous
-    // Todo: userland should never be able to query phase field
-    switch (field) {
-      case 'id':
-      case 'entryId':
-        return ctx.Table.entryId[Expr.Data]
-      case 'type':
-        return ctx.Table.type[Expr.Data]
-      case 'url':
-        return ctx.Table.url[Expr.Data]
-      case 'title':
-        return ctx.Table.title[Expr.Data]
-      case 'path':
-        return ctx.Table.path[Expr.Data]
-      case 'index':
-        return ctx.Table.index[Expr.Data]
-      default:
-        const {name} = target
-        if (!name) {
-          const fields: Record<string, Expr<any>> = ctx.Table as any
-          if (field in fields) return fields[field][Expr.Data]
-          throw new Error(`Selecting unknown field: "${field}"`)
-        }
-        const type = this.schema[name]
-        if (!type)
-          throw new Error(`Selecting "${field}" from unknown type: "${name}"`)
-        return ctx.Table.data.get(field)[Expr.Data]
+    const {name} = target
+    if (!name) {
+      const fields: Record<string, Expr<any>> = ctx.Table as any
+      if (field in fields) return fields[field][Expr.Data]
+      throw new Error(`Selecting unknown field: "${field}"`)
     }
+    const type = this.schema[name]
+    if (!type)
+      throw new Error(`Selecting "${field}" from unknown type: "${name}"`)
+    return ctx.Table.data.get(field)[Expr.Data]
   }
 
   pageFields(ctx: ResolveContext): Array<[string, ExprData]> {
@@ -322,7 +314,11 @@ export class Resolver {
     return new ExprData.Query(this.queryCursor(ctx, selection))
   }
 
-  selectExpr(ctx: ResolveContext, {expr}: pages.Selection.Expr): ExprData {
+  selectExpr(
+    ctx: ResolveContext,
+    {expr, fromParent}: pages.Selection.Expr
+  ): ExprData {
+    ctx = fromParent ? ctx.decreaseDepth() : ctx
     return this.expr(ctx.select, expr)
   }
 
@@ -393,12 +389,18 @@ export class Resolver {
         return cursor
           .where(ctx.Table.parent.is(from.parent))
           .where(ctx.Table.entryId.isNot(from.entryId))
-          .take(1)
+      case pages.SourceType.Translations:
+        return cursor
+          .where(ctx.Table.i18nId.is(from.i18nId))
+          .where(ctx.Table.entryId.isNot(from.entryId))
       case pages.SourceType.Children:
         const Child = EntryRow().as('Child')
         const children = withRecursive(
           Child({entryId: from.entryId})
-            .where(this.conditionRealm(Child, ctx.realm))
+            .where(
+              this.conditionRealm(Child, ctx.realm),
+              this.conditionLocale(Child, ctx.locale)
+            )
             .select({
               entryId: Child.entryId,
               parent: Child.parent,
@@ -414,6 +416,7 @@ export class Resolver {
             .innerJoin(children({entryId: Child.parent}))
             .where(
               this.conditionRealm(Child, ctx.realm),
+              this.conditionLocale(Child, ctx.locale),
               children.level.isLess(source.depth)
             )
         )
@@ -425,7 +428,10 @@ export class Resolver {
         const Parent = EntryRow().as('Parent')
         const parents = withRecursive(
           Parent({entryId: from.entryId})
-            .where(this.conditionRealm(Parent, ctx.realm))
+            .where(
+              this.conditionRealm(Parent, ctx.realm),
+              this.conditionLocale(Parent, ctx.locale)
+            )
             .select({
               entryId: Parent.entryId,
               parent: Parent.parent,
@@ -441,6 +447,7 @@ export class Resolver {
             .innerJoin(parents({parent: Parent.entryId}))
             .where(
               this.conditionRealm(Parent, ctx.realm),
+              this.conditionLocale(Parent, ctx.locale),
               source.depth ? children.level.isLess(source.depth) : true
             )
         )
@@ -461,6 +468,11 @@ export class Resolver {
         order: order === 'Desc' ? OrderDirection.Desc : OrderDirection.Asc
       }
     })
+  }
+
+  conditionLocale(Table: Table<EntryTable>, locale?: string) {
+    if (!locale) return Expr.value(true)
+    return Table.locale.is(locale)
   }
 
   conditionRealm(Table: Table<EntryTable>, realm: Realm) {
@@ -510,7 +522,6 @@ export class Resolver {
     {cursor}: pages.Selection.Cursor
   ): QueryData.Select {
     const {
-      id,
       target,
       where,
       skip,
@@ -522,7 +533,7 @@ export class Resolver {
       source,
       searchTerms
     } = cursor
-    ctx = ctx.step().none
+    ctx = ctx.increaseDepth().none
     const {name} = target || {}
     const hasSearch = Boolean(searchTerms?.length)
     let query = this.querySource(ctx, source, hasSearch)
@@ -532,6 +543,7 @@ export class Resolver {
       name ? ctx.Table.type.is(name) : Expr.value(true),
       this.conditionLocation(ctx.Table, ctx.location),
       this.conditionRealm(ctx.Table, ctx.realm),
+      this.conditionLocale(ctx.Table, ctx.locale),
       this.conditionSearch(ctx.Table, searchTerms)
     )
     if (skip) query = query.skip(skip)
@@ -679,10 +691,12 @@ export class Resolver {
   resolve = async <T>({
     selection,
     location,
+    locale,
     realm = Realm.Published,
     preview
   }: Connection.ResolveParams): Promise<T> => {
-    const queryData = this.query(new ResolveContext(realm, location), selection)
+    const ctx = new ResolveContext({realm, location, locale})
+    const queryData = this.query(ctx, selection)
     const query = new Query<Interim>(queryData)
     if (preview) {
       const current = EntryRow({
@@ -705,7 +719,7 @@ export class Resolver {
             await tx(current.delete())
             await tx(EntryRow().insert(previewEntry))
             const result = await tx(query)
-            const linkResolver = new LinkResolver(this, tx, realm)
+            const linkResolver = new LinkResolver(this, tx, ctx)
             if (result) await this.post({linkResolver}, result, selection)
             // The transaction api needs to be revised to support explicit commit/rollback
             throw {result}
@@ -716,7 +730,7 @@ export class Resolver {
         }
     }
     const result = await this.store(query)
-    const linkResolver = new LinkResolver(this, this.store, realm)
+    const linkResolver = new LinkResolver(this, this.store, ctx)
     if (result) await this.post({linkResolver}, result, selection)
     return result
   }

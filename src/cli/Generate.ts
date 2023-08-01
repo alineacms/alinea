@@ -2,8 +2,8 @@ import {Store} from 'alinea/backend/Store'
 import {CMS} from 'alinea/core/CMS'
 import {Config} from 'alinea/core/Config'
 import {BuildResult} from 'esbuild'
+import fs from 'node:fs'
 import path from 'node:path'
-import {connect} from 'rado/driver/sql.js'
 import {compileConfig} from './generate/CompileConfig.js'
 import {copyStaticFiles} from './generate/CopyStaticFiles.js'
 import {fillCache} from './generate/FillCache.js'
@@ -37,11 +37,20 @@ function generatePackage(context: GenerateContext, config: Config) {
 }
 
 async function createDb(): Promise<[Store, () => Uint8Array]> {
-  const {default: sqlite} = await import('@alinea/sqlite-wasm')
-  const {Database} = await sqlite()
-  const db = new Database()
-  const store = connect(db).toAsync()
-  return [store, () => db.export()]
+  try {
+    const {default: betterSqlite3} = await import('better-sqlite3')
+    const {connect} = await import('rado/driver/better-sqlite3')
+    const db = betterSqlite3(':memory:')
+    const store = connect(db).toAsync()
+    return [store, () => db.serialize()]
+  } catch {
+    const {default: sqlite} = await import('@alinea/sqlite-wasm')
+    const {Database} = await sqlite()
+    const {connect} = await import('rado/driver/sql.js')
+    const db = new Database()
+    const store = connect(db).toAsync()
+    return [store, () => db.export()]
+  }
 }
 
 export async function* generate(options: GenerateOptions): AsyncGenerator<
@@ -93,6 +102,11 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
       cms.exportStore(context.outDir, new Uint8Array())
       for await (const _ of fillCache(context, store, cms, nextBuild)) {
         yield {cms, store}
+        // For debug reasons write out db
+        fs.writeFileSync(
+          path.join(context.outDir, 'content.sqlite'),
+          exportStore()
+        )
         if (onAfterGenerate && !afterGenerateCalled) {
           afterGenerateCalled = true
           onAfterGenerate()

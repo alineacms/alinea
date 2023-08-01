@@ -15,6 +15,7 @@ function respond<T>({result, logger}: LoggerResult<T>) {
 
 const ResolveBody: Type<Connection.ResolveParams> = object({
   selection: Selection.adt,
+  locale: string.optional,
   realm: enums(Realm),
   preview: object({
     entryId: string,

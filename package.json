@@ -50,7 +50,11 @@
   "dependencies": {
     "@alinea/iso": "^0.3.0",
     "@alinea/sqlite-wasm": "^0.1.13",
+    "@sqlite.org/sqlite-wasm": "^3.42.0-build4",
     "esbuild": "^0.18.5"
+  },
+  "optionalDependencies": {
+    "better-sqlite3": "^8.5.0"
   },
   "peerDependencies": {
     "react": "*",
@@ -68,6 +72,7 @@
     "@esbx/target": "^0.0.20",
     "@esbx/workspaces": "^0.0.19",
     "@ladle/react": "^2.15.0",
+    "@types/better-sqlite3": "^7.6.4",
     "@types/fs-extra": "^11.0.1",
     "@types/glob": "^7.1.4",
     "@types/node": "20.0.0",

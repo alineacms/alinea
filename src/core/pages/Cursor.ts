@@ -1,5 +1,4 @@
 import {array, boolean, enums, number, object, string} from 'cito'
-import {createId} from '../Id.js'
 import {Type} from '../Type.js'
 import {entries} from '../util/Objects.js'
 import {BinaryOp, EV, Expr, ExprData, and} from './Expr.js'
@@ -23,7 +22,6 @@ export const OrderBy = object(
 export type CursorData = typeof CursorData.infer
 export const CursorData = object(
   class {
-    id = string
     target? = TargetData.optional
     where? = ExprData.adt.optional
     searchTerms? = array(string).optional
@@ -40,6 +38,7 @@ export const CursorData = object(
 export enum SourceType {
   Children = 'Children',
   Siblings = 'Siblings',
+  Translations = 'Translations',
   Parents = 'Parents',
   Parent = 'Parent',
   Next = 'Next',
@@ -65,10 +64,6 @@ export class Cursor<T> {
 
   constructor(data: CursorData) {
     this[Cursor.Data] = data
-  }
-
-  protected get entryId() {
-    return this[Cursor.Data].id
   }
 
   protected with(data: Partial<CursorData>): CursorData {
@@ -104,7 +99,7 @@ export namespace Cursor {
 
     get<S extends Projection>(select: S): Get<Selection.Infer<S>> {
       const query = this.with({first: true})
-      if (select) query.select = Selection.create(select, this.entryId)
+      if (select) query.select = Selection.create(select)
       return new Get<Selection.Infer<S>>(query)
     }
 
@@ -124,7 +119,7 @@ export namespace Cursor {
 
     select<S extends Projection>(select: S): Find<Selection.Infer<S>> {
       return new Find<Selection.Infer<S>>(
-        this.with({select: Selection.create(select, this.entryId)})
+        this.with({select: Selection.create(select)})
       )
     }
 
@@ -151,7 +146,6 @@ export namespace Cursor {
       public partial: Partial<Type.Infer<Definition>>
     ) {
       super({
-        id: createId(),
         target: {type},
         where: Partial.condition(type, partial)
       })
@@ -187,7 +181,7 @@ export namespace Cursor {
 
     select<S extends Projection>(select: S): Get<Selection.Infer<S>> {
       return new Get<Selection.Infer<S>>(
-        this.with({select: Selection.create(select, this.entryId)})
+        this.with({select: Selection.create(select)})
       )
     }
   }

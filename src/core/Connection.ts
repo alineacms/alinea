@@ -43,6 +43,7 @@ export namespace Connection {
   export interface ResolveParams extends ResolveDefaults {
     selection: Selection
     location?: Array<string>
+    locale?: string
   }
   export type CreateParams = {
     entries: Array<EntryRow>

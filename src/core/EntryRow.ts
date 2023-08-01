@@ -12,9 +12,9 @@ export type EntryLinks = {[field: string]: Array<string>}
 export class EntryTable {
   // Entry data
   entryId = column.string.default(createId)
+  phase = column.string<EntryPhase>()
   title = column.string
   type = column.string
-  phase = column.string<EntryPhase>()
   seeded = column.boolean.default(false)
 
   // Hierarchy
@@ -29,8 +29,8 @@ export class EntryTable {
   parent = column.string.nullable
 
   // I18n
+  i18nId = column.string
   locale = column.string.nullable
-  i18nId = column.string.nullable
 
   // Version specific
   get versionId() {

@@ -40,8 +40,7 @@ export default async function DocPage({params}: DocPageProps) {
       })
   )
   if (!page) return notFound()
-  const nav = await cms.find(
-    cms.workspaces.main.pages.docs,
+  const nav = await cms.in(cms.workspaces.main.pages.docs).find(
     Entry().select({
       id: Entry.entryId,
       type: Entry.type,

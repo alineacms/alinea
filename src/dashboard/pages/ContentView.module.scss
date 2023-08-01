@@ -9,6 +9,7 @@
   }
 
   &-create {
+    flex-shrink: 0;
     padding: 0 16px;
     display: flex;
     justify-content: flex-end;
@@ -20,6 +21,7 @@
       font-size: 13px;
       color: var(--alinea-fields-foreground);
       padding: 8px 10px;
+      cursor: pointer;
 
       &:hover {
         color: inherit;

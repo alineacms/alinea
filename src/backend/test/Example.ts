@@ -2,7 +2,7 @@ import {page, root, type, workspace} from 'alinea/core'
 import {createTestCMS} from 'alinea/core/driver/TestDriver'
 import {createMediaRoot} from 'alinea/core/media/MediaRoot'
 import {MediaFile, MediaLibrary} from 'alinea/core/media/MediaSchema'
-import {object, path, tab, tabs, text} from 'alinea/input'
+import {path, tab, tabs, text} from 'alinea/input'
 
 const TypeA = type('Type', {
   title: text('Title'),
@@ -25,11 +25,6 @@ const TypeB = type('TypeB', {
   title: text('Title'),
   path: path('Path'),
   name: text('name'),
-  sub: object('Sub', {
-    fields: type('Fields', {
-      title: text('Title')
-    })
-  }),
   [type.meta]: {
     isContainer: true
   }

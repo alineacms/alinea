@@ -190,14 +190,6 @@ class TypeInstance<Definition extends TypeDefinition> implements TypeData {
     const callable = {
       [name]: (...condition: Array<any>) => this.call(...condition)
     }[name] as any
-    /*defineProperty(callable, 'name', {
-      value: name,
-      enumerable: false,
-      configurable: true,
-      writable: true
-    })*/
-    //console.log(Object.getOwnPropertyDescriptors(callable))
-    //delete callable.name
     delete callable.length
     this.target = callable
     this.defineProperties(callable)
@@ -222,7 +214,6 @@ class TypeInstance<Definition extends TypeDefinition> implements TypeData {
     if (isConditionalRecord) return new Cursor.Partial(this.target, input[0])
     else
       return new Cursor.Find({
-        id: createId(),
         target: {type: this.target},
         where: this.condition(input)
       })

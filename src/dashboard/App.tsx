@@ -4,6 +4,7 @@ import {FavIcon} from 'alinea/ui/branding/FavIcon'
 import {IcOutlineInsertDriveFile} from 'alinea/ui/icons/IcOutlineInsertDriveFile'
 import {MdiSourceBranch} from 'alinea/ui/icons/MdiSourceBranch'
 import {atom, useAtom, useAtomValue} from 'jotai'
+import {useEffect} from 'react'
 import {
   QueryClient,
   QueryClientProvider as ReactQueryClientProvider
@@ -17,9 +18,11 @@ import {
 } from './atoms/DashboardAtoms.js'
 import {useDbUpdater} from './atoms/EntryAtoms.js'
 import {locationAtom, matchAtoms, useLocation} from './atoms/LocationAtoms.js'
+import {usePreferredLanguage} from './atoms/NavigationAtoms.js'
 import {RouteView, RouterProvider} from './atoms/RouterAtoms.js'
 import {useDashboard} from './hook/UseDashboard.js'
 import {useEntryLocation} from './hook/UseEntryLocation.js'
+import {useLocale} from './hook/UseLocale.js'
 import {useNav} from './hook/UseNav.js'
 import {useRoot} from './hook/UseRoot.js'
 import {useWorkspace} from './hook/UseWorkspace.js'
@@ -68,6 +71,11 @@ function AppAuthenticated() {
   const {name: workspace, color, roots} = useWorkspace()
   const {name: currentRoot} = useRoot()
   const entryLocation = useEntryLocation()
+  const locale = useLocale()
+  const [preferredLanguage, setPreferredLanguage] = usePreferredLanguage()
+  useEffect(() => {
+    setPreferredLanguage(locale)
+  }, [locale])
   return (
     <>
       <Toolbar.Provider>
@@ -90,7 +98,11 @@ function AppAuthenticated() {
                   const link =
                     entryLocation && entryLocation.root === key
                       ? nav.entry(entryLocation)
-                      : nav.root({workspace, root: key})
+                      : nav.root({
+                          workspace,
+                          root: key,
+                          locale: preferredLanguage
+                        })
                   const {label, icon} = Root.data(root)
                   return (
                     <Sidebar.Nav.Item
@@ -103,7 +115,7 @@ function AppAuthenticated() {
                     </Sidebar.Nav.Item>
                   )
                 })}
-                <DraftsButton />
+                {/*<DraftsButton />*/}
               </Sidebar.Nav>
               <ErrorBoundary>
                 <SuspenseBoundary name="main" fallback={<Loader absolute />}>

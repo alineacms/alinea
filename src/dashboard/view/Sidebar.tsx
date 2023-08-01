@@ -2,7 +2,7 @@ import {useWindowWidth} from '@react-hook/window-size'
 import {Root, Workspace} from 'alinea/core'
 import {entries} from 'alinea/core/util/Objects'
 import {link, useNavigate} from 'alinea/dashboard/util/HashRouter'
-import {HStack, Icon, fromModule} from 'alinea/ui'
+import {HStack, Icon, Stack, fromModule} from 'alinea/ui'
 import {Badge} from 'alinea/ui/Badge'
 import {DropdownMenu} from 'alinea/ui/DropdownMenu'
 import {Pane} from 'alinea/ui/Pane'
@@ -19,10 +19,13 @@ import {
 } from 'react'
 import {useConfig} from '../hook/UseConfig.js'
 import {useEntryLocation} from '../hook/UseEntryLocation.js'
+import {useLocale} from '../hook/UseLocale.js'
 import {useNav} from '../hook/UseNav.js'
+import {useRoot} from '../hook/UseRoot.js'
 import {useWorkspace} from '../hook/UseWorkspace.js'
 import css from './Sidebar.module.scss'
 import {WorkspaceLabel} from './WorkspaceLabel.js'
+import {Langswitch} from './entry/LangSwitch.js'
 
 const styles = fromModule(css)
 
@@ -110,11 +113,14 @@ export namespace Sidebar {
   }
 
   function NavHeader() {
+    const locale = useLocale()
     const config = useConfig()
     const workspace = useWorkspace()
+    const root = useRoot()
     const workspaces = entries(config.workspaces)
     const navigate = useNavigate()
     const nav = useNav()
+    const entryLocation = useEntryLocation()
     return (
       <HStack as="header" center gap={12} className={styles.navHeader()}>
         {workspaces.length > 1 ? (
@@ -165,10 +171,20 @@ export namespace Sidebar {
             />
           </a>
         )}
+        <Stack.Right>
+          {root.i18n && (
+            <Langswitch
+              selected={locale!}
+              locales={root.i18n.locales}
+              onChange={locale => {
+                navigate(nav.entry({...entryLocation, locale}))
+              }}
+            />
+          )}
+        </Stack.Right>
       </HStack>
     )
   }
-
   export function Nav({children}: PropsWithChildren<{}>) {
     const {isNavOpen, toggleNav} = use()
     return (

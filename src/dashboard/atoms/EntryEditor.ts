@@ -5,6 +5,7 @@ import {
   Field,
   ROOT_KEY,
   Type,
+  createId,
   createYDoc,
   parseYDoc
 } from 'alinea/core'
@@ -32,39 +33,66 @@ const previewTokenAtom = atom(async get => {
   return client.previewToken()
 })
 
-export const entryEditorAtoms = atomFamily((entryId: string) => {
-  return atom(async get => {
-    const config = get(configAtom)
-    const client = get(clientAtom)
-    const {all} = await get(graphAtom)
-    get(entryRevisionAtoms(entryId))
-    const versions = await all.find(
-      Entry({entryId}).select({
-        ...Entry,
-        parents({parents}) {
-          return parents(Entry).select(Entry.entryId)
-        }
+interface EntryEditorParams {
+  locale: string | undefined
+  i18nId: string
+}
+
+export const entryEditorAtoms = atomFamily(
+  ({locale, i18nId}: EntryEditorParams) => {
+    return atom(async get => {
+      const config = get(configAtom)
+      const client = get(clientAtom)
+      const graph = await get(graphAtom)
+      const search = locale ? {i18nId, locale} : {i18nId}
+      let entry = await graph.active.maybeGet(Entry(search))
+      if (!entry) {
+        const {searchParams} = get(locationAtom)
+        const preferredLanguage = searchParams.get('from')
+        entry = await graph.active.maybeGet(
+          Entry({i18nId}).where(
+            preferredLanguage ? Entry.locale.is(preferredLanguage) : true
+          )
+        )
+      }
+      if (!entry) return undefined
+      const entryId = entry.entryId
+      const versions = await graph.all.find(
+        Entry({entryId}).select({
+          ...Entry,
+          parents({parents}) {
+            return parents().select(Entry.i18nId)
+          }
+        })
+      )
+      const translations = (await graph.active.find(
+        Entry({i18nId})
+          .where(Entry.locale.isNotNull(), Entry.entryId.isNot(entryId))
+          .select({locale: Entry.locale, entryId: Entry.entryId})
+      )) as Array<{locale: string; entryId: string}>
+      get(entryRevisionAtoms(entryId))
+      if (versions.length === 0) return undefined
+      const phases = fromEntries(
+        versions.map(version => [version.phase, version])
+      ) as Record<EntryPhase, Version>
+      const availablePhases = values(EntryPhase).filter(
+        phase => phases[phase] !== undefined
+      )
+      const previewToken = await get(previewTokenAtom)
+      return createEntryEditor({
+        translations,
+        previewToken,
+        client,
+        config,
+        entryId,
+        versions,
+        phases,
+        availablePhases
       })
-    )
-    if (versions.length === 0) return undefined
-    const phases = fromEntries(
-      versions.map(version => [version.phase, version])
-    ) as Record<EntryPhase, Version>
-    const availablePhases = values(EntryPhase).filter(
-      phase => phases[phase] !== undefined
-    )
-    const previewToken = await get(previewTokenAtom)
-    return createEntryEditor({
-      previewToken,
-      client,
-      config,
-      entryId,
-      versions,
-      phases,
-      availablePhases
     })
-  })
-})
+  },
+  (a, b) => a.locale === b.locale && a.i18nId === b.i18nId
+)
 
 export interface EntryData {
   client: Connection
@@ -73,6 +101,7 @@ export interface EntryData {
   versions: Array<Version>
   phases: Record<EntryPhase, Version>
   availablePhases: Array<EntryPhase>
+  translations: Array<{locale: string; entryId: string}>
   previewToken: string
 }
 
@@ -121,12 +150,19 @@ export function createEntryEditor(entryData: EntryData) {
   })
 
   const saveDraft = atom(null, (get, set) => {
-    console.log('saving draft')
     const updatedEntry = getDraftEntry()
     set(isSaving, true)
     return client.saveDraft(updatedEntry).catch(() => {
       set(isSaving, false)
     })
+  })
+
+  const saveTranslation = atom(null, (get, set, locale: string) => {
+    const updatedEntry = getDraftEntry()
+    updatedEntry.entryId = createId()
+    updatedEntry.locale = locale
+    console.log(updatedEntry)
+    // return client.saveDraft(updatedEntry).then(() => updatedEntry)
   })
 
   const publishDraft = atom(null, (get, set) => {
@@ -173,6 +209,7 @@ export function createEntryEditor(entryData: EntryData) {
     hasChanges,
     saveDraft,
     publishDraft,
+    saveTranslation,
     resetDraft,
     isSaving,
     isPublishing,

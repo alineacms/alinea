@@ -46,7 +46,8 @@ const external = builtinModules
     'react-dom',
     'sass',
     'glob',
-    'esbuild'
+    'esbuild',
+    'better-sqlite3'
   ])
 
 const scssOptions = {

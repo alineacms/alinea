@@ -54,8 +54,7 @@ export async function Header() {
 }
 
 async function MobileNav() {
-  const docs = await cms.find(
-    cms.workspaces.main.pages.docs,
+  const docs = await cms.in(cms.workspaces.main.pages.docs).find(
     Entry().select({
       id: Entry.entryId,
       type: Entry.type,

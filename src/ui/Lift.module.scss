@@ -1,0 +1,8 @@
+.root {
+  border-radius: var(--alinea-border-radius);
+  background: var(--alinea-background);
+  box-shadow: 0 0 1.4px var(--alinea-shadow), 0 2px 3.5px var(--alinea-shadow);
+
+  padding: 14px 24px 24px 24px;
+  transition: box-shadow 0.25s ease-out;
+}
