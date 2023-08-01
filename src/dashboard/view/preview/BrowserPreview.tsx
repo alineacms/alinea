@@ -119,7 +119,7 @@ export function BrowserPreview({
   return (
     <Preview>
       <div className={styles.root()}>
-        <AppBar.Root>
+        <AppBar.Root className={styles.root.bar()}>
           <HStack style={{height: '100%'}}>
             <AppBar.Item
               as="button"

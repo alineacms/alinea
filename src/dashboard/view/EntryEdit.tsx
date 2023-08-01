@@ -18,6 +18,7 @@ import {EntryHeader} from './entry/EntryHeader.js'
 import {EntryNotice} from './entry/EntryNotice.js'
 import {EntryPreview} from './entry/EntryPreview.js'
 import {EntryTitle} from './entry/EntryTitle.js'
+import {FieldToolbar} from './entry/FieldToolbar.js'
 const styles = fromModule(css)
 
 function ShowChanges({editor}: EntryEditProps) {
@@ -116,69 +117,49 @@ export function EntryEdit({editor}: EntryEditProps) {
         className={styles.root()}
         // head={<EntryHeader editor={editor} />}
       >
-        <EntryHeader editor={editor} />
-        <Main.Container>
-          <EntryTitle
-            editor={editor}
-            backLink={
-              editor.version.parent
-                ? nav.entry({
-                    entryId: editor.version.parent,
-                    workspace: editor.version.workspace
-                  })
-                : undefined
-            }
-          />
+        <FieldToolbar.Provider>
+          <EntryHeader editor={editor} />
+          <Main.Container>
+            <EntryTitle
+              editor={editor}
+              backLink={
+                editor.version.parent
+                  ? nav.entry({
+                      entryId: editor.version.parent,
+                      workspace: editor.version.workspace
+                    })
+                  : undefined
+              }
+            />
 
-          {untranslated && (
-            <EntryNotice
-              icon={IcRoundTranslate}
-              title="Untranslated"
-              variant="untranslated"
-            >
-              This page has not yet been translated to this language,
-              <br />
-              please enter the details below and save to start translating.
-            </EntryNotice>
-          )}
+            {untranslated && (
+              <EntryNotice
+                icon={IcRoundTranslate}
+                title="Untranslated"
+                variant="untranslated"
+              >
+                This page has not yet been translated to this language,
+                <br />
+                please enter the details below and save to start translating.
+              </EntryNotice>
+            )}
 
-          {mode === EditMode.Diff ? (
-            <ShowChanges editor={editor} />
-          ) : (
-            <>
-              {/*isTranslating ? (
-                <Button onClick={() => handleTranslation()}>
-                  Translate from {draft.alinea.i18n?.locale.toUpperCase()}
-                </Button>
-              ) : (
-                <Suspense fallback={null}>
-                  {type ? (
-                    <InputForm type={type} state={EntryProperty.root} />
-                  ) : (
-                    <ErrorMessage error={new Error('Type not found')} />
-                  )}
-                </Suspense>
-                  )*/}
-              <SuspenseBoundary name="input form">
-                <InputForm
-                  key={editor.entryId + selectedPhase}
-                  type={editor.type}
-                  state={state}
-                />
-              </SuspenseBoundary>
-            </>
-          )}
-
-          {/*<Button
-            onClick={() => {
-              forceRefresh()
-            }}
-          >
-            Force server version update
-          </Button>
-          <br />
-          <br />*/}
-        </Main.Container>
+            {mode === EditMode.Diff ? (
+              <ShowChanges editor={editor} />
+            ) : (
+              <>
+                <SuspenseBoundary name="input form">
+                  <InputForm
+                    key={editor.entryId + selectedPhase}
+                    type={editor.type}
+                    state={state}
+                  />
+                </SuspenseBoundary>
+              </>
+            )}
+          </Main.Container>
+          <FieldToolbar.Root />
+        </FieldToolbar.Provider>
       </Main>
       {preview && !untranslated && (
         <EntryPreview preview={preview} editor={editor} />

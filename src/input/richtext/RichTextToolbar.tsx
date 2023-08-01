@@ -1,5 +1,4 @@
 import {Reference} from 'alinea/core/Reference'
-import {Toolbar} from 'alinea/dashboard/view/Toolbar'
 import {UrlReference} from 'alinea/picker/url'
 import {fromModule, HStack, Icon, px, Typo} from 'alinea/ui'
 import {DropdownMenu} from 'alinea/ui/DropdownMenu'
@@ -20,6 +19,7 @@ import {IcRoundUnfoldMore} from 'alinea/ui/icons/IcRoundUnfoldMore'
 /*import {IcRoundRedo} from 'alinea/ui/icons/IcRoundRedo'
 import {IcRoundUndo} from 'alinea/ui/icons/IcRoundUndo'*/
 import {Editor} from '@tiptap/react'
+import {FieldToolbar} from 'alinea/dashboard/view/entry/FieldToolbar'
 import {IconButton} from 'alinea/dashboard/view/IconButton'
 import {forwardRef, Ref} from 'react'
 import {PickTextLinkFunc} from './PickTextLink.js'
@@ -104,7 +104,7 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
       .catch(() => {})
   }
   return (
-    <Toolbar.Slot>
+    <FieldToolbar.Slot>
       <div
         ref={ref}
         tabIndex={-1}
@@ -312,6 +312,6 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
           />
         </HStack>
       </div>
-    </Toolbar.Slot>
+    </FieldToolbar.Slot>
   )
 })

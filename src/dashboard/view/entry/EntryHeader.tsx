@@ -53,7 +53,7 @@ export function EntryHeader({editor}: EntryHeaderProps) {
   const navigate = useNavigate()
   const {pathname} = useLocation()
   return (
-    <AppBar.Root variant={variant}>
+    <AppBar.Root className={styles.root()} variant={variant}>
       <HStack center gap={12} className={styles.root.description()}>
         <Icon icon={variantIcon[variant]} size={18} />
         <strong className={styles.root.description.title()}>

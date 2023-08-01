@@ -20,7 +20,7 @@ export namespace DropdownMenu {
     const floating = useFloating({
       whileElementsMounted: autoUpdate,
       strategy: 'fixed',
-      placement: 'bottom-start',
+      placement: 'top',
       middleware: [offset(4), flip()]
     })
     return (

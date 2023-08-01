@@ -1,7 +1,9 @@
 @import '../../../ui/style.scss';
 
 .root {
-  background: var(--alinea-selected);
+  position: sticky;
+  top: 0;
+  border-bottom: 1px solid var(--alinea-outline);
 
   &-tabTrigger {
     background: var(--alinea-outline);

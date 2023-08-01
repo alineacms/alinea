@@ -18,6 +18,7 @@ type Slots = {
   Provider: ComponentType<PropsWithChildren<{}>>
   Portal: ComponentType<HTMLProps<HTMLDivElement>>
   Slot: ComponentType<PropsWithChildren<{}>>
+  useSlots: () => {shown: boolean}
 }
 
 export function createSlots(): Slots {
@@ -34,6 +35,11 @@ export function createSlots(): Slots {
     return (
       <context.Provider value={[refs, setRefs]}>{children}</context.Provider>
     )
+  }
+
+  function useSlots() {
+    const [refs, setRefs] = useContext(context)!
+    return {shown: refs.length > 0}
   }
 
   function useSlot() {
@@ -65,5 +71,5 @@ export function createSlots(): Slots {
     )
   }
 
-  return {Provider, Portal, Slot}
+  return {Provider, Portal, Slot, useSlots}
 }

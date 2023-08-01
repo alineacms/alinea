@@ -4,6 +4,10 @@
   flex-direction: column;
   overflow: hidden;
 
+  &-bar {
+    border-bottom: 1px solid var(--alinea-outline);
+  }
+
   &-iframe {
     height: 100%;
     width: 100%;
