@@ -33,6 +33,7 @@ const resolveAlinea = {
 const external = builtinModules
   .concat(builtinModules.map(m => `node:${m}`))
   .concat([
+    'fs-extra',
     '@alinea/generated',
     '@alinea/iso',
     '@alinea/sqlite-wasm',
