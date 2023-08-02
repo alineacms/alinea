@@ -1,82 +1,13 @@
 import {AsyncTreeDataLoader} from '@headless-tree/core'
-import {Database} from 'alinea/backend'
 import {EntryPhase, Type} from 'alinea/core'
 import {Entry} from 'alinea/core/Entry'
-import {Graph} from 'alinea/core/Graph'
-import {Realm} from 'alinea/core/pages/Realm'
 import {entries} from 'alinea/core/util/Objects'
 import DataLoader from 'dataloader'
-import {atom, useAtom, useAtomValue} from 'jotai'
-import {atomFamily} from 'jotai/utils'
+import {atom, useAtomValue} from 'jotai'
 import {useMemo} from 'react'
-import {createPersistentStore} from '../util/PersistentStore.js'
-import {clientAtom, configAtom} from './DashboardAtoms.js'
+import {configAtom} from './DashboardAtoms.js'
+import {graphAtom} from './DbAtoms.js'
 import {rootAtom, workspaceAtom} from './NavigationAtoms.js'
-
-export const storeAtom = atom(createPersistentStore)
-
-export const localDbAtom = atom(async get => {
-  const client = get(clientAtom)
-  const config = get(configAtom)
-  const store = await get(storeAtom)
-  const db = new Database(store, config)
-  await db.syncWith(client)
-  await store.flush()
-  return db
-})
-
-export const graphAtom = atom(async get => {
-  const config = get(configAtom)
-  const db = await get(localDbAtom)
-  return {
-    drafts: new Graph(config, params => {
-      return db.resolve({
-        ...params,
-        realm: Realm.Draft
-      })
-    }),
-    active: new Graph(config, params => {
-      return db.resolve({
-        ...params,
-        realm: Realm.PreferDraft
-      })
-    }),
-    all: new Graph(config, params => {
-      return db.resolve({
-        ...params,
-        realm: Realm.All
-      })
-    })
-  }
-})
-
-export const entryRevisionAtoms = atomFamily((id: string) => {
-  const revision = atom(0)
-  return atom(
-    get => get(revision),
-    (get, set) => set(revision, i => i + 1)
-  )
-})
-
-export const changedEntriesAtom = atom<Array<string>>([])
-export const updateDbAtom = atom(null, async (get, set) => {
-  const client = get(clientAtom)
-  const store = await get(storeAtom)
-  const db = await get(localDbAtom)
-  const changed = await db.syncWith(client).catch(() => [])
-  if (!changed.length) return
-  for (const id of changed) set(entryRevisionAtoms(id))
-  set(changedEntriesAtom, changed)
-  await store.flush()
-})
-updateDbAtom.onMount = update => {
-  const interval = setInterval(update, 1000 * 60)
-  return () => clearInterval(interval)
-}
-
-export function useDbUpdater() {
-  useAtom(updateDbAtom)
-}
 
 export function rootId(rootName: string) {
   return `@alinea/root-${rootName}`

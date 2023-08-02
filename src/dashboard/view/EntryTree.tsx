@@ -13,9 +13,9 @@ import {IcRoundKeyboardArrowRight} from 'alinea/ui/icons/IcRoundKeyboardArrowRig
 import {IcRoundTranslate} from 'alinea/ui/icons/IcRoundTranslate'
 import {useAtomValue} from 'jotai'
 import {useEffect} from 'react'
+import {changedEntriesAtom} from '../atoms/DbAtoms.js'
 import {
   EntryTreeItem,
-  changedEntriesAtom,
   rootId,
   useEntryTreeProvider
 } from '../atoms/EntryAtoms.js'

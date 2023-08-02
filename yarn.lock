@@ -29,7 +29,7 @@ __metadata:
     cito: ^0.2.0
     dataloader: ^2.1.0
     pretty-ms: ^8.0.0
-    rado: ^0.4.2
+    rado: ^0.4.3
     regexparam: ^2.0.1
     xxhash-wasm: ^1.0.2
   languageName: unknown
@@ -84,6 +84,7 @@ __metadata:
     react-query: ^3.39.1
     react-tiny-virtual-list: ^2.2.0
     thumbhash: ^0.1.1
+    y-indexeddb: ^9.0.11
     y-webrtc: ^10.2.0
   languageName: unknown
   linkType: soft
@@ -1728,20 +1729,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@sqlite.org/sqlite-wasm@npm:^3.42.0-build4":
-  version: 3.42.0-build4
-  resolution: "@sqlite.org/sqlite-wasm@npm:3.42.0-build4"
-  dependencies:
-    comlink: ^4.4.1
-  dependenciesMeta:
-    comlink:
-      optional: true
-  bin:
-    sqlite-wasm: bin/index.js
-  checksum: 028bb67197d1d59daf7e941f407b20869a3f7e5743bd0810d59f5060c2b1bdedd644cb42af57dc82ad1898420db69dbb7b6b622756c6753e86823fd4fcd47d6a
-  languageName: node
-  linkType: hard
-
 "@swc/core-darwin-arm64@npm:1.3.67":
   version: 1.3.67
   resolution: "@swc/core-darwin-arm64@npm:1.3.67"
@@ -2640,7 +2627,6 @@ __metadata:
     "@esbx/target": ^0.0.20
     "@esbx/workspaces": ^0.0.19
     "@ladle/react": ^2.15.0
-    "@sqlite.org/sqlite-wasm": ^3.42.0-build4
     "@types/better-sqlite3": ^7.6.4
     "@types/fs-extra": ^11.0.1
     "@types/glob": ^7.1.4
@@ -3472,13 +3458,6 @@ __metadata:
   version: 1.2.4
   resolution: "color2k@npm:1.2.4"
   checksum: 9cde39430d9e4b7c03f1e572d9be76e17be3ce0c8cc1acd276eadc65d13a0e80f484220e3428cd53272d105369cae652b141ac03149e5738000b79a7fae1ba96
-  languageName: node
-  linkType: hard
-
-"comlink@npm:^4.4.1":
-  version: 4.4.1
-  resolution: "comlink@npm:4.4.1"
-  checksum: 16d58a8f590087fc45432e31d6c138308dfd4b75b89aec0b7f7bb97ad33d810381bd2b1e608a1fb2cf05979af9cbfcdcaf1715996d5fcf77aeb013b6da3260af
   languageName: node
   linkType: hard
 
@@ -8886,10 +8865,10 @@ fsevents@~2.3.2:
   languageName: node
   linkType: hard
 
-"rado@npm:^0.4.2":
-  version: 0.4.2
-  resolution: "rado@npm:0.4.2"
-  checksum: 0f98a4616918398ecac8b447565f2dd5bb0058c601efab889ae9b392ecafd050e454cea90e2ce8270fc6840121a348a7aab535fc17d7d770ee1ec9f89bb01359
+"rado@npm:^0.4.3":
+  version: 0.4.3
+  resolution: "rado@npm:0.4.3"
+  checksum: 910cd98e4f5b0fcd2c0fe89eec364c59147bce478cb28400f4165daad14d7977383fca8fc9c5249bdbfc19580c921adadd14bcc4bcef37a5a6014065c62eb642
   languageName: node
   linkType: hard
 
@@ -11251,6 +11230,17 @@ resolve@^1.10.0:
   version: 1.0.2
   resolution: "xxhash-wasm@npm:1.0.2"
   checksum: 11fec6e6196e37ad96cc958b7a4477dc30caf5b4da889a02a84f6f663ab8cd3c9be6ae405e66f0af0404301f27c39375191c5254f0409a793020e2093afd1409
+  languageName: node
+  linkType: hard
+
+"y-indexeddb@npm:^9.0.11":
+  version: 9.0.11
+  resolution: "y-indexeddb@npm:9.0.11"
+  dependencies:
+    lib0: ^0.2.74
+  peerDependencies:
+    yjs: ^13.0.0
+  checksum: 890b745b420badeadcc0925b517628a50a4f74b88739647aaa3098b7e60a47db351ebbaef9f2bcdf74a50739a3a8e3fe4a3b47281f21f53b5e19cd1725d4dd8b
   languageName: node
   linkType: hard
 

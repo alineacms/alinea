@@ -16,8 +16,9 @@ import {
   sessionAtom,
   useSetDashboardOptions
 } from './atoms/DashboardAtoms.js'
-import {useDbUpdater} from './atoms/EntryAtoms.js'
+import {useDbUpdater} from './atoms/DbAtoms.js'
 import {locationAtom, matchAtoms, useLocation} from './atoms/LocationAtoms.js'
+import {useMutations} from './atoms/MutationAtoms.js'
 import {usePreferredLanguage} from './atoms/NavigationAtoms.js'
 import {RouteView, RouterProvider} from './atoms/RouterAtoms.js'
 import {useDashboard} from './hook/UseDashboard.js'
@@ -63,6 +64,8 @@ const isEntryAtom = atom(get => {
 })
 
 function AppAuthenticated() {
+  const {pending} = useMutations()
+  console.log(useAtomValue(pending))
   useDbUpdater()
   const {fullPage} = useDashboard()
   const nav = useNav()

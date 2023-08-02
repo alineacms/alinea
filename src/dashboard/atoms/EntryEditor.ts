@@ -10,6 +10,7 @@ import {
   parseYDoc
 } from 'alinea/core'
 import {Entry} from 'alinea/core/Entry'
+import {MutationType} from 'alinea/core/Mutation'
 import {entries, fromEntries, values} from 'alinea/core/util/Objects'
 import {InputState} from 'alinea/editor'
 import {atom} from 'jotai'
@@ -17,8 +18,9 @@ import {atomFamily} from 'jotai/utils'
 import * as Y from 'yjs'
 import {debounceAtom} from '../util/DebounceAtom.js'
 import {clientAtom, configAtom} from './DashboardAtoms.js'
-import {entryRevisionAtoms, graphAtom} from './EntryAtoms.js'
+import {entryRevisionAtoms, graphAtom} from './DbAtoms.js'
 import {locationAtom} from './LocationAtoms.js'
+import {mutationsAtom} from './MutationAtoms.js'
 import {yAtom} from './YAtom.js'
 
 export enum EditMode {
@@ -151,10 +153,11 @@ export function createEntryEditor(entryData: EntryData) {
   })
 
   const saveDraft = atom(null, (get, set) => {
-    const updatedEntry = getDraftEntry()
-    set(isSaving, true)
-    return client.saveDraft(updatedEntry).catch(() => {
-      set(isSaving, false)
+    const {addMutation} = get(mutationsAtom)
+    return addMutation({
+      type: MutationType.Update,
+      entryId: version.entryId,
+      entry: getDraftEntry()
     })
   })
 
@@ -162,15 +165,19 @@ export function createEntryEditor(entryData: EntryData) {
     const updatedEntry = getDraftEntry()
     updatedEntry.entryId = createId()
     updatedEntry.locale = locale
-    console.log(updatedEntry)
-    // return client.saveDraft(updatedEntry).then(() => updatedEntry)
+    const {addMutation} = get(mutationsAtom)
+    return addMutation({
+      type: MutationType.Update,
+      entryId: version.entryId,
+      entry: updatedEntry
+    })
   })
 
   const publishDraft = atom(null, (get, set) => {
-    const updatedEntry = getDraftEntry()
-    set(isPublishing, true)
-    return client.publishDrafts([updatedEntry]).catch(() => {
-      set(isPublishing, false)
+    const {addMutation} = get(mutationsAtom)
+    return addMutation({
+      type: MutationType.Publish,
+      entryId: version.entryId
     })
   })
 

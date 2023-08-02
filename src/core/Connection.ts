@@ -23,8 +23,6 @@ export interface Connection extends Syncable {
   uploadFile(params: Connection.UploadParams): Promise<Media.File>
   saveDraft(entry: EntryRow): Promise<void>
   publishDrafts(entries: Array<EntryRow>): Promise<void>
-  // archive
-  // createEntries(params: Connection.CreateParams): Promise<void>
 }
 
 export namespace Connection {
@@ -44,9 +42,6 @@ export namespace Connection {
     selection: Selection
     location?: Array<string>
     locale?: string
-  }
-  export type CreateParams = {
-    entries: Array<EntryRow>
   }
   export type MediaUploadParams = {
     buffer: ArrayBuffer

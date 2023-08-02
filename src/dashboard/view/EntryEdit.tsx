@@ -96,11 +96,11 @@ export function EntryEdit({editor}: EntryEditProps) {
                   </Button>
                   <Button
                     onClick={() => {
-                      saveDraft().catch(() => {
+                      saveDraft() /*.catch(() => {
                         console.warn(
                           'Failed to save draft, this should redirect back to the failed entry'
                         )
-                      })
+                      })*/
                       confirm()
                     }}
                   >
