@@ -208,6 +208,13 @@ export function createHandler(
       matcher.get('/config.css').map((): Response => {
         return new Response('', {headers: {'content-type': 'text/css'}})
       })
+      /*matcher.get('sqlite3.wasm').map(() => {
+        return new Response(
+          fs.readFileSync(
+            './node_modules/@sqlite.org/sqlite-wasm/sqlite-wasm/jswasm/sqlite3.wasm'
+          )
+        )
+      })*/
     )
   ).notFound(() => new Response('Not found', {status: 404}))
 }

@@ -67,11 +67,12 @@ __metadata:
     "@dnd-kit/sortable": ^4.0.0
     "@dnd-kit/utilities": ^2.0.0
     "@floating-ui/react-dom": ^0.7.1
-    "@headless-tree/core": ^0.0.6
-    "@headless-tree/react": ^0.0.5
+    "@headless-tree/core": ^0.0.8
+    "@headless-tree/react": ^0.0.7
     "@headlessui/react": ^1.6.1
     "@react-hook/size": ^2.1.2
     "@react-hook/window-size": ^3.0.7
+    "@sqlite.org/sqlite-wasm": ^3.42.0-build4
     "@types/diff-match-patch": ^1.0.32
     color2k: ^1.2.4
     dataloader: ^2.1.0
@@ -1116,21 +1117,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@headless-tree/core@npm:^0.0.6":
-  version: 0.0.6
-  resolution: "@headless-tree/core@npm:0.0.6"
-  checksum: 2cdc2fc8dd4558c1fae558b62ba36476e7fd18aeb9169f84f9dd610d6a3b984e696f0c00fc5965dd686648026ffe22f2507e0ef1c8bd9d6ae91a189fb68ff70a
+"@headless-tree/core@npm:^0.0.8":
+  version: 0.0.8
+  resolution: "@headless-tree/core@npm:0.0.8"
+  checksum: 3b290a511db1792513457bc2da01c8323d2c109f3908180bba7e77e3b4e6dd6cb5e771954d6ca1b98a2f89c2379489cba9fb2d6fd97a44220871ef2c28fceb5b
   languageName: node
   linkType: hard
 
-"@headless-tree/react@npm:^0.0.5":
-  version: 0.0.5
-  resolution: "@headless-tree/react@npm:0.0.5"
+"@headless-tree/react@npm:^0.0.7":
+  version: 0.0.7
+  resolution: "@headless-tree/react@npm:0.0.7"
   peerDependencies:
     "@headless-tree/core": "*"
     react: "*"
     react-dom: "*"
-  checksum: c1e619b40638533c7b1bd4e74cc761066d5c7ee28a16223916cc6e3d0d5506e949cd30fe73e080b12c719796b12f79c59d5ed26522bbfc77fc162c85c55afc32
+  checksum: a80e521d0625a81892322ce35270f0e8028354fe5b4763592201579f8e89bf1a72b56c6544ff66d3e97d7e3118bcea3809616d6c30ce9359a45ab43adb1a2816
   languageName: node
   linkType: hard
 
@@ -1726,6 +1727,20 @@ __metadata:
   version: 1.2.0
   resolution: "@rushstack/eslint-patch@npm:1.2.0"
   checksum: faa749faae0e83c26ae9eb00ad36a897ac78f3cf27da8e8ff21c00bcf7973b598d823d8f2b3957ef66079288bcf577f94df831eae2d65f3f68d8ca32f18b6aff
+  languageName: node
+  linkType: hard
+
+"@sqlite.org/sqlite-wasm@npm:^3.42.0-build4":
+  version: 3.42.0-build4
+  resolution: "@sqlite.org/sqlite-wasm@npm:3.42.0-build4"
+  dependencies:
+    comlink: ^4.4.1
+  dependenciesMeta:
+    comlink:
+      optional: true
+  bin:
+    sqlite-wasm: bin/index.js
+  checksum: 028bb67197d1d59daf7e941f407b20869a3f7e5743bd0810d59f5060c2b1bdedd644cb42af57dc82ad1898420db69dbb7b6b622756c6753e86823fd4fcd47d6a
   languageName: node
   linkType: hard
 
@@ -3458,6 +3473,13 @@ __metadata:
   version: 1.2.4
   resolution: "color2k@npm:1.2.4"
   checksum: 9cde39430d9e4b7c03f1e572d9be76e17be3ce0c8cc1acd276eadc65d13a0e80f484220e3428cd53272d105369cae652b141ac03149e5738000b79a7fae1ba96
+  languageName: node
+  linkType: hard
+
+"comlink@npm:^4.4.1":
+  version: 4.4.1
+  resolution: "comlink@npm:4.4.1"
+  checksum: 16d58a8f590087fc45432e31d6c138308dfd4b75b89aec0b7f7bb97ad33d810381bd2b1e608a1fb2cf05979af9cbfcdcaf1715996d5fcf77aeb013b6da3260af
   languageName: node
   linkType: hard
 

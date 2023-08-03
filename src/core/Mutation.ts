@@ -7,7 +7,7 @@ export enum MutationProgress {
 }
 
 export enum MutationType {
-  Update = 'update',
+  SaveDraft = 'update',
   Publish = 'publish',
   Archive = 'archive',
   Remove = 'remove',
@@ -31,7 +31,7 @@ export type Mutation =
   | FileUploadMutation
 
 export interface EditMutation {
-  type: MutationType.Update
+  type: MutationType.SaveDraft
   entryId: string
   entry: EntryRow
 }

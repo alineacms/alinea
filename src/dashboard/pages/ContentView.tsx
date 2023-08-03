@@ -1,6 +1,6 @@
 import {HStack, Icon, Loader, fromModule} from 'alinea/ui'
 import IcRoundAddCircle from 'alinea/ui/icons/IcRoundAddCircle'
-import {EntryEditor} from '../atoms/EntryEditor.js'
+import {EntryEditor} from '../atoms/EntryEditorAtoms.js'
 import {useNav} from '../hook/UseNav.js'
 import {useRoot} from '../hook/UseRoot.js'
 import {useWorkspace} from '../hook/UseWorkspace.js'

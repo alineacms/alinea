@@ -3,7 +3,7 @@ import {base64url} from 'alinea/core/util/Encoding'
 import {zlibSync} from 'fflate'
 import {useAtomValue} from 'jotai'
 import {useEffect, useState} from 'react'
-import {EntryEditor} from '../../atoms/EntryEditor.js'
+import {EntryEditor} from '../../atoms/EntryEditorAtoms.js'
 import {BrowserPreview} from '../preview/BrowserPreview.js'
 
 export interface EntryPreviewProps {

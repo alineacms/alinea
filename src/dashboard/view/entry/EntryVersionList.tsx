@@ -4,7 +4,7 @@ import {IcOutlineRemoveRedEye} from 'alinea/ui/icons/IcOutlineRemoveRedEye'
 import IcRoundArchive from 'alinea/ui/icons/IcRoundArchive'
 import {IcRoundEdit} from 'alinea/ui/icons/IcRoundEdit'
 import {useAtomValue} from 'jotai'
-import {EntryEditor} from '../../atoms/EntryEditor.js'
+import {EntryEditor} from '../../atoms/EntryEditorAtoms.js'
 import {useLocation} from '../../util/HashRouter.js'
 import css from './EntryVersionList.module.scss'
 

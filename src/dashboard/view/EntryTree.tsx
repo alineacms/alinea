@@ -1,4 +1,5 @@
 import {
+  ItemInstance,
   asyncDataLoaderFeature,
   dragAndDropFeature,
   selectionFeature
@@ -12,7 +13,7 @@ import {IcRoundKeyboardArrowDown} from 'alinea/ui/icons/IcRoundKeyboardArrowDown
 import {IcRoundKeyboardArrowRight} from 'alinea/ui/icons/IcRoundKeyboardArrowRight'
 import {IcRoundTranslate} from 'alinea/ui/icons/IcRoundTranslate'
 import {useAtomValue} from 'jotai'
-import {useEffect} from 'react'
+import {useEffect, useRef} from 'react'
 import {changedEntriesAtom} from '../atoms/DbAtoms.js'
 import {
   EntryTreeItem,
@@ -28,6 +29,87 @@ import css from './EntryTree.module.scss'
 
 const styles = fromModule(css)
 
+function selectedEntry(locale: string | undefined, item: EntryTreeItem) {
+  return item.entries.find(entry => entry.locale === locale) ?? item.entries[0]
+}
+
+interface EntryTreeItemProps {
+  item: ItemInstance<EntryTreeItem>
+}
+
+function EntryTreeItem({item}: EntryTreeItemProps) {
+  const locale = useLocale()
+  const {schema} = useConfig()
+  const currentData = useRef<EntryTreeItem>()
+  const data: EntryTreeItem = item.getItemData() ?? currentData.current
+  if (!data) return console.log(item), null
+  currentData.current = data
+  const selected = selectedEntry(locale, data)
+  const {icon} = Type.meta(schema[selected.type])
+  const isDraft = selected.phase === EntryPhase.Draft
+  const isUntranslated = locale && selected.locale !== locale
+  return (
+    <div
+      {...item.getProps()}
+      ref={item.registerElement}
+      className={styles.tree.item({
+        untranslated: isUntranslated,
+        selected: /*entryId &&*/ item.isSelected(),
+        drop: item.isDropTarget() && item.isDraggingOver(),
+        dropAbove: item.isDropTargetAbove() && item.isDraggingOver(),
+        dropBelow: item.isDropTargetBelow() && item.isDraggingOver()
+      })}
+      key={item.getId()}
+      data-id={item.getId()}
+    >
+      <button
+        className={styles.tree.item.label()}
+        style={{paddingLeft: px((item.getItemMeta().level + 1) * 12)}}
+      >
+        {item.isFolder() && (
+          <span className={styles.tree.item.arrow()}>
+            {item.isExpanded() ? (
+              <Icon icon={IcRoundKeyboardArrowDown} size={20} />
+            ) : (
+              <Icon icon={IcRoundKeyboardArrowRight} size={20} />
+            )}
+          </span>
+        )}
+
+        {!item.isFolder() && (
+          <span className={styles.tree.item.icon()}>
+            <Icon
+              icon={
+                isUntranslated
+                  ? IcRoundTranslate
+                  : icon || IcOutlineInsertDriveFile
+              }
+            />
+          </span>
+        )}
+
+        <span className={styles.tree.item.label.itemName()}>
+          {selectedEntry(locale, data).title}
+        </span>
+
+        {/*isUntranslated && (
+                  <span className={styles.tree.status()}>
+                    <Icon icon={IcRoundTranslate} />
+                  </span>
+                )*/}
+
+        {!isUntranslated && isDraft && (
+          <span className={styles.tree.status({draft: true})}>
+            <Icon icon={IcRoundEdit} />
+          </span>
+        )}
+
+        {/*item.isLoading() && <Loader />*/}
+      </button>
+    </div>
+  )
+}
+
 export interface EntryTreeProps {
   i18nId?: string
   selected?: Array<string>
@@ -35,16 +117,10 @@ export interface EntryTreeProps {
 
 export function EntryTree({i18nId: entryId, selected = []}: EntryTreeProps) {
   const root = useRoot()
-  const {schema} = useConfig()
   const dataLoader = useEntryTreeProvider()
   const navigate = useNavigate()
   const nav = useNav()
   const locale = useLocale()
-  function selectedEntry(item: EntryTreeItem) {
-    return (
-      item.entries.find(entry => entry.locale === locale) ?? item.entries[0]
-    )
-  }
   const tree = useTree<EntryTreeItem>({
     rootItemId: rootId(root.name),
     canDropInbetween: true,
@@ -57,7 +133,7 @@ export function EntryTree({i18nId: entryId, selected = []}: EntryTreeProps) {
     },
     asyncDataLoader: dataLoader,
     getItemName: item =>
-      item.getItemData() && selectedEntry(item.getItemData()).title,
+      item.getItemData() && selectedEntry(locale, item.getItemData()).title,
     isItemFolder: item =>
       item.getItemData() && Boolean(item.getItemData().isFolder),
     onPrimaryAction: item => {
@@ -78,85 +154,18 @@ export function EntryTree({i18nId: entryId, selected = []}: EntryTreeProps) {
   })
   const changed = useAtomValue(changedEntriesAtom)
   useEffect(() => {
-    tree.invalidateItemData(rootId(root.name))
     tree.invalidateChildrenIds(rootId(root.name))
   }, [dataLoader])
   useEffect(() => {
     for (const id of changed) {
       tree.invalidateItemData(id)
-      tree.invalidateChildrenIds(id)
     }
   }, [changed])
   return (
     <>
       <div ref={tree.registerElement} className={styles.tree()}>
         {tree.getItems().map(item => {
-          const data: EntryTreeItem = item.getItemData()
-          if (!data) return null
-          const hasChildren = Boolean(data.children?.length)
-          const selected = selectedEntry(data)
-          const {icon} = Type.meta(schema[selected.type])
-          const isDraft = selected.phase === EntryPhase.Draft
-          const isUntranslated = locale && selected.locale !== locale
-          return (
-            <div
-              {...item.getProps()}
-              ref={item.registerElement}
-              className={styles.tree.item({
-                untranslated: isUntranslated,
-                selected: entryId && item.isSelected(),
-                drop: item.isDropTarget() && item.isDraggingOver(),
-                dropAbove: item.isDropTargetAbove() && item.isDraggingOver(),
-                dropBelow: item.isDropTargetBelow() && item.isDraggingOver()
-              })}
-              key={item.getId()}
-            >
-              <button
-                className={styles.tree.item.label()}
-                style={{paddingLeft: px((item.getItemMeta().level + 1) * 12)}}
-              >
-                {item.isFolder() && (
-                  <span className={styles.tree.item.arrow()}>
-                    {item.isExpanded() ? (
-                      <Icon icon={IcRoundKeyboardArrowDown} size={20} />
-                    ) : (
-                      <Icon icon={IcRoundKeyboardArrowRight} size={20} />
-                    )}
-                  </span>
-                )}
-
-                {!hasChildren && (
-                  <span className={styles.tree.item.icon()}>
-                    <Icon
-                      icon={
-                        isUntranslated
-                          ? IcRoundTranslate
-                          : icon || IcOutlineInsertDriveFile
-                      }
-                    />
-                  </span>
-                )}
-
-                <span className={styles.tree.item.label.itemName()}>
-                  {item.getItemName()}
-                </span>
-
-                {/*isUntranslated && (
-                  <span className={styles.tree.status()}>
-                    <Icon icon={IcRoundTranslate} />
-                  </span>
-                )*/}
-
-                {!isUntranslated && isDraft && (
-                  <span className={styles.tree.status({draft: true})}>
-                    <Icon icon={IcRoundEdit} />
-                  </span>
-                )}
-
-                {/*item.isLoading() && <Loader />*/}
-              </button>
-            </div>
-          )
+          return <EntryTreeItem key={item.getId()} item={item} />
         })}
       </div>
     </>

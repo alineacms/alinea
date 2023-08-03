@@ -20,7 +20,7 @@ import {debounceAtom} from '../util/DebounceAtom.js'
 import {clientAtom, configAtom} from './DashboardAtoms.js'
 import {entryRevisionAtoms, graphAtom} from './DbAtoms.js'
 import {locationAtom} from './LocationAtoms.js'
-import {mutationsAtom} from './MutationAtoms.js'
+import {addPending} from './PendingAtoms.js'
 import {yAtom} from './YAtom.js'
 
 export enum EditMode {
@@ -153,10 +153,8 @@ export function createEntryEditor(entryData: EntryData) {
   })
 
   const saveDraft = atom(null, (get, set) => {
-    const {addMutation} = get(mutationsAtom)
-    console.log('saving draft')
-    return addMutation({
-      type: MutationType.Update,
+    return addPending({
+      type: MutationType.SaveDraft,
       entryId: version.entryId,
       entry: {...getDraftEntry(), phase: EntryPhase.Draft}
     })
@@ -164,19 +162,18 @@ export function createEntryEditor(entryData: EntryData) {
 
   const saveTranslation = atom(null, (get, set, locale: string) => {
     const updatedEntry = getDraftEntry()
+    updatedEntry.phase = EntryPhase.Draft
     updatedEntry.entryId = createId()
     updatedEntry.locale = locale
-    const {addMutation} = get(mutationsAtom)
-    return addMutation({
-      type: MutationType.Update,
+    return addPending({
+      type: MutationType.SaveDraft,
       entryId: version.entryId,
       entry: updatedEntry
     })
   })
 
   const publishDraft = atom(null, (get, set) => {
-    const {addMutation} = get(mutationsAtom)
-    return addMutation({
+    return addPending({
       type: MutationType.Publish,
       entryId: version.entryId
     })

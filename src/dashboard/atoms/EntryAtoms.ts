@@ -79,6 +79,7 @@ const entryTreeItemLoaderAtom = atom(async get => {
       .groupBy(Entry.i18nId)
       .where(Entry.i18nId.isIn(search))
     const rows = await graph.active.find(entries)
+    console.log(rows)
     for (const row of rows) {
       const entries = [row.data].concat(row.translations)
       res.set(row.index, {
@@ -121,7 +122,7 @@ export function useEntryTreeProvider(): AsyncTreeDataLoader<EntryTreeItem> {
   return useMemo(() => {
     return {
       async getItem(id: string): Promise<EntryTreeItem> {
-        return (await loader).load(id)
+        return (await loader).clear(id).load(id)
       },
       async getChildren(id: string): Promise<Array<string>> {
         return this.getItem(id).then(item => item.children)

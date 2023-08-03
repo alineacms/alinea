@@ -5,7 +5,7 @@ import {Main} from 'alinea/ui/Main'
 import {IcRoundTranslate} from 'alinea/ui/icons/IcRoundTranslate'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {useEffect, useRef} from 'react'
-import {EntryEditor} from '../atoms/EntryEditor.js'
+import {EntryEditor} from '../atoms/EntryEditorAtoms.js'
 import {useRouteBlocker} from '../atoms/RouterAtoms.js'
 import {useConfig} from '../hook/UseConfig.js'
 import {useLocale} from '../hook/UseLocale.js'
@@ -46,7 +46,7 @@ export function EntryEdit({editor}: EntryEditProps) {
   // Todo: prettify server conflicts
   const {isBlocking, nextRoute, confirm, cancel} = useRouteBlocker(
     'Are you sure you want to discard changes?',
-    hasChanges && !isSaving && !isPublishing
+    false // hasChanges && !isSaving && !isPublishing
   )
   const isNavigationChange =
     (nextRoute?.data.editor as EntryEditor)?.entryId !== editor.entryId

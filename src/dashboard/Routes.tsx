@@ -1,6 +1,6 @@
 import {atom} from 'jotai'
 import {atomFamily} from 'jotai/utils'
-import {entryEditorAtoms} from './atoms/EntryEditor.js'
+import {entryEditorAtoms} from './atoms/EntryEditorAtoms.js'
 import {entryLocationAtom, localeAtom} from './atoms/NavigationAtoms.js'
 import {Route, Router} from './atoms/RouterAtoms.js'
 import {ContentView} from './pages/ContentView.js'

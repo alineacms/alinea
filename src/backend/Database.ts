@@ -132,9 +132,12 @@ export class Database implements Syncable {
   async applyMutations(mutations: Array<Mutation>) {
     for (const mutation of mutations) {
       switch (mutation.type) {
-        case MutationType.Update:
+        case MutationType.SaveDraft:
           await this.store(
-            EntryRow({entryId: mutation.entryId}).delete(),
+            EntryRow({
+              entryId: mutation.entryId,
+              phase: EntryPhase.Draft
+            }).delete(),
             EntryRow().insert(mutation.entry)
           )
           continue
@@ -182,6 +185,7 @@ export class Database implements Syncable {
           throw unreachable(mutation)
       }
     }
+    await this.index(this.store)
   }
 
   async meta() {

@@ -6,7 +6,7 @@ import {IcRoundCheck} from 'alinea/ui/icons/IcRoundCheck'
 import {IcRoundEdit} from 'alinea/ui/icons/IcRoundEdit'
 import {IcRoundTranslate} from 'alinea/ui/icons/IcRoundTranslate'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
-import {EntryEditor} from '../../atoms/EntryEditor.js'
+import {EntryEditor} from '../../atoms/EntryEditorAtoms.js'
 import {useLocation, useNavigate} from '../../atoms/LocationAtoms.js'
 import {useLocale} from '../../hook/UseLocale.js'
 import {EditMode} from './EditMode.js'
@@ -57,7 +57,9 @@ export function EntryHeader({editor}: EntryHeaderProps) {
       <HStack center gap={12} className={styles.root.description()}>
         <Icon icon={variantIcon[variant]} size={18} />
         <strong className={styles.root.description.title()}>
-          {variantDescription[variant]}
+          {variant === 'draft' && hasChanges
+            ? 'Editing'
+            : variantDescription[variant]}
         </strong>
         <div className={styles.root.description.action()}>
           {untranslated && !hasChanges ? (
