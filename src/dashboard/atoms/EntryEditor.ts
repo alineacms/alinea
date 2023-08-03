@@ -154,10 +154,11 @@ export function createEntryEditor(entryData: EntryData) {
 
   const saveDraft = atom(null, (get, set) => {
     const {addMutation} = get(mutationsAtom)
+    console.log('saving draft')
     return addMutation({
       type: MutationType.Update,
       entryId: version.entryId,
-      entry: getDraftEntry()
+      entry: {...getDraftEntry(), phase: EntryPhase.Draft}
     })
   })
 

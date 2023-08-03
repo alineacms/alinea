@@ -78,10 +78,14 @@ export function EntryTree({i18nId: entryId, selected = []}: EntryTreeProps) {
   })
   const changed = useAtomValue(changedEntriesAtom)
   useEffect(() => {
+    tree.invalidateItemData(rootId(root.name))
     tree.invalidateChildrenIds(rootId(root.name))
   }, [dataLoader])
   useEffect(() => {
-    for (const id of changed) tree.invalidateChildrenIds(id)
+    for (const id of changed) {
+      tree.invalidateItemData(id)
+      tree.invalidateChildrenIds(id)
+    }
   }, [changed])
   return (
     <>

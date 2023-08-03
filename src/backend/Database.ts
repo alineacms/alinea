@@ -7,9 +7,11 @@ import {
   Schema,
   Syncable,
   Type,
-  createId
+  createId,
+  unreachable
 } from 'alinea/core'
 import {EntryRecord, META_KEY} from 'alinea/core/EntryRecord'
+import {Mutation, MutationType} from 'alinea/core/Mutation'
 import {Realm} from 'alinea/core/pages/Realm'
 import {Logger} from 'alinea/core/util/Logger'
 import {entries} from 'alinea/core/util/Objects'
@@ -125,6 +127,61 @@ export class Database implements Syncable {
       await this.index(query)
       await this.writeMeta(query)
     })
+  }
+
+  async applyMutations(mutations: Array<Mutation>) {
+    for (const mutation of mutations) {
+      switch (mutation.type) {
+        case MutationType.Update:
+          await this.store(
+            EntryRow({entryId: mutation.entryId}).delete(),
+            EntryRow().insert(mutation.entry)
+          )
+          continue
+        case MutationType.Archive:
+          await this.store(
+            EntryRow({
+              entryId: mutation.entryId,
+              phase: EntryPhase.Published
+            }).set({phase: EntryPhase.Archived})
+          )
+          continue
+        case MutationType.Publish:
+          await this.store(
+            EntryRow({
+              entryId: mutation.entryId,
+              phase: EntryPhase.Published
+            }).delete(),
+            EntryRow({entryId: mutation.entryId, phase: EntryPhase.Draft}).set({
+              phase: EntryPhase.Published
+            })
+          )
+          continue
+        case MutationType.Remove:
+          await this.store(EntryRow({entryId: mutation.entryId}).delete())
+          continue
+        case MutationType.Order:
+          await this.store(
+            EntryRow({entryId: mutation.entryId}).set({index: mutation.index})
+          )
+          continue
+        case MutationType.Move:
+          await this.store(
+            EntryRow({entryId: mutation.entryId}).set({
+              index: mutation.index,
+              parent: mutation.parent,
+              workspace: mutation.workspace,
+              root: mutation.root
+            })
+          )
+          continue
+        case MutationType.FileUpload:
+          await this.store(EntryRow().insert(mutation.entry))
+          continue
+        default:
+          throw unreachable(mutation)
+      }
+    }
   }
 
   async meta() {

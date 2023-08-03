@@ -1,6 +1,6 @@
 import {createId} from 'alinea/core'
 import {Mutation, MutationProgress, PendingMutation} from 'alinea/core/Mutation'
-import {Atom, WritableAtom, atom, useAtomValue} from 'jotai'
+import {Atom, atom, useAtomValue} from 'jotai'
 import {atomFamily, loadable} from 'jotai/utils'
 import {IndexeddbPersistence} from 'y-indexeddb'
 import * as Y from 'yjs'
@@ -20,25 +20,18 @@ function createMutations() {
   // Todo: provide a unique name during dev (based on project root dir?)
   const local = new IndexeddbPersistence('@alinea/mutations', doc)
 
-  const mapAtom: Atom<Array<PendingMutation>> = yAtom(mutationMap, () => {
+  const pending: Atom<Array<PendingMutation>> = yAtom(mutationMap, () => {
     return [...mutationMap.values()]
   })
 
-  const pending: WritableAtom<Array<PendingMutation>, [number], void> = atom(
-    (get, {setSelf}): Array<PendingMutation> => {
-      const record = get(mapAtom)
-      get(dbModifiedAtom).then(modifiedAt => setSelf(modifiedAt))
-      return record
-    },
-    (get, set, modifiedAt: number) => {
-      // Cleanup mutations which are finished
-      doc.transact(() => {
-        for (const mutation of get(pending))
-          if (modifiedAt > mutation.createdAt)
-            mutationMap.delete(mutation.mutationId)
-      })
-    }
-  )
+  function cleanup(modifiedAt: number) {
+    // Cleanup mutations which are finished
+    doc.transact(() => {
+      for (const mutation of mutationMap.values())
+        if (modifiedAt > mutation.createdAt)
+          mutationMap.delete(mutation.mutationId)
+    })
+  }
 
   function addMutation(mutation: Mutation) {
     const mutationId = createId()
@@ -77,6 +70,7 @@ function createMutations() {
 
   return {
     pending,
+    cleanup,
     addMutation,
     mutationProgress
   }

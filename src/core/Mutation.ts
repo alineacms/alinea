@@ -1,4 +1,3 @@
-import {EntryLocation} from './EntryLocation.js'
 import {EntryRow} from './EntryRow.js'
 
 export enum MutationProgress {
@@ -12,6 +11,7 @@ export enum MutationType {
   Publish = 'publish',
   Archive = 'archive',
   Remove = 'remove',
+  Order = 'order',
   Move = 'move',
   FileUpload = 'file-upload'
 }
@@ -26,6 +26,7 @@ export type Mutation =
   | PublishMutation
   | ArchiveMutation
   | RemoveMutation
+  | OrderMutation
   | MoveMutation
   | FileUploadMutation
 
@@ -50,13 +51,23 @@ export interface RemoveMutation {
   entryId: string
 }
 
+export interface OrderMutation {
+  type: MutationType.Order
+  entryId: string
+  index: string
+}
+
 export interface MoveMutation {
   type: MutationType.Move
   entryId: string
-  location: EntryLocation
+  index: string
+  parent: string | null
+  workspace: string
+  root: string
 }
 
 export interface FileUploadMutation {
   type: MutationType.FileUpload
   entryId: string
+  entry: EntryRow
 }
