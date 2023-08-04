@@ -7,14 +7,15 @@ import {Type} from './Type.js'
 import {Workspace} from './Workspace.js'
 import {Cursor} from './pages/Cursor.js'
 import {Projection} from './pages/Projection.js'
+import {Realm} from './pages/Realm.js'
 import {Selection} from './pages/Selection.js'
 import {seralizeLocation, serializeSelection} from './pages/Serialize.js'
 
 export type Location = Root | Workspace | PageSeed
 
-export interface GraphApi {
-  in(location: Location): GraphApi
-  locale(locale: string): GraphApi
+export interface GraphRealmApi {
+  in(location: Location): GraphRealmApi
+  locale(locale: string): GraphRealmApi
   maybeGet<S extends Projection>(
     select: S
   ): Promise<Projection.InferOne<S> | null>
@@ -28,7 +29,7 @@ export interface GraphOrigin {
   locale?: string
 }
 
-export class Graph implements GraphApi {
+export class GraphRealm implements GraphRealmApi {
   targets: Schema.Targets
 
   constructor(
@@ -39,13 +40,13 @@ export class Graph implements GraphApi {
     this.targets = Schema.targets(config.schema)
   }
 
-  in(location: Location): GraphApi {
+  in(location: Location): GraphRealmApi {
     // Should this reset locale?
-    return new Graph(this.config, this.resolve, {...this.origin, location})
+    return new GraphRealm(this.config, this.resolve, {...this.origin, location})
   }
 
   locale(locale: string) {
-    return new Graph(this.config, this.resolve, {
+    return new GraphRealm(this.config, this.resolve, {
       ...this.origin,
       locale
     })
@@ -92,6 +93,50 @@ export class Graph implements GraphApi {
       selection,
       location: seralizeLocation(this.config, this.origin.location),
       locale: this.origin.locale
+    })
+  }
+}
+
+export class Graph {
+  drafts: GraphRealm
+  published: GraphRealm
+  preferPublished: GraphRealm
+  preferDraft: GraphRealm
+  all: GraphRealm
+
+  constructor(
+    public config: Config,
+    public resolve: (params: Connection.ResolveParams) => Promise<unknown>
+  ) {
+    this.drafts = new GraphRealm(this.config, params => {
+      return this.resolve({
+        ...params,
+        realm: Realm.Draft
+      })
+    })
+    this.published = new GraphRealm(config, params => {
+      return resolve({
+        ...params,
+        realm: Realm.Published
+      })
+    })
+    this.preferDraft = new GraphRealm(config, params => {
+      return resolve({
+        ...params,
+        realm: Realm.PreferDraft
+      })
+    })
+    this.preferPublished = new GraphRealm(config, params => {
+      return resolve({
+        ...params,
+        realm: Realm.PreferPublished
+      })
+    })
+    this.all = new GraphRealm(config, params => {
+      return resolve({
+        ...params,
+        realm: Realm.All
+      })
     })
   }
 }

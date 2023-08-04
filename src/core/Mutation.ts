@@ -7,7 +7,7 @@ export enum MutationProgress {
 }
 
 export enum MutationType {
-  SaveDraft = 'update',
+  Edit = 'update',
   Publish = 'publish',
   Archive = 'archive',
   Remove = 'remove',
@@ -22,7 +22,7 @@ export type PendingMutation = Mutation & {
 }
 
 export type Mutation =
-  | SaveDraftMutation
+  | EditMutation
   | PublishMutation
   | ArchiveMutation
   | RemoveMutation
@@ -30,44 +30,53 @@ export type Mutation =
   | MoveMutation
   | FileUploadMutation
 
-export interface SaveDraftMutation {
-  type: MutationType.SaveDraft
+export interface EditMutation {
+  type: MutationType.Edit
   entryId: string
+  file: string
   entry: EntryRow
 }
 
 export interface PublishMutation {
   type: MutationType.Publish
   entryId: string
+  file: string
 }
 
 export interface ArchiveMutation {
   type: MutationType.Archive
   entryId: string
+  file: string
 }
 
 export interface RemoveMutation {
   type: MutationType.Remove
   entryId: string
+  file: string
 }
 
 export interface OrderMutation {
   type: MutationType.Order
   entryId: string
+  file: string
   index: string
 }
 
 export interface MoveMutation {
   type: MutationType.Move
   entryId: string
-  index: string
-  parent: string | null
-  workspace: string
+  entryType: string
+  fromFile: string
+  toFile: string
+  parent: string
   root: string
+  workspace: string
+  index: string
 }
 
 export interface FileUploadMutation {
   type: MutationType.FileUpload
   entryId: string
+  file: string
   entry: EntryRow
 }

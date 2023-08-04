@@ -11,6 +11,7 @@ import PLazy from 'p-lazy'
 import {Suspense, lazy} from 'react'
 import {Client, ClientOptions} from '../Client.js'
 import {Config} from '../Config.js'
+import {Connection} from '../Connection.js'
 import {Entry} from '../Entry.js'
 import {EntryPhase} from '../EntryRow.js'
 import {outcome} from '../Outcome.js'
@@ -30,7 +31,7 @@ class NextDriver extends DefaultDriver implements NextApi {
   apiKey = process.env.ALINEA_API_KEY
   jwtSecret = this.apiKey || 'dev'
 
-  async connection() {
+  async connection(): Promise<Connection> {
     const {cookies, draftMode} = await import('next/headers')
     const isDraft = outcome(() => draftMode().isEnabled).isSuccess()
     const devUrl = process.env.ALINEA_DEV_SERVER

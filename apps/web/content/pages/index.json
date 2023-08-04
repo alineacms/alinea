@@ -130,11 +130,13 @@
       ]
     }
   ],
+  "path": "",
   "@alinea": {
     "entryId": "home",
     "type": "Home",
     "index": "Zy",
     "seeded": true,
+    "i18nId": "home",
     "root": "pages"
   }
 }

@@ -1,4 +1,8 @@
-import {AsyncTreeDataLoader} from '@headless-tree/core'
+import {
+  AsyncTreeDataLoader,
+  DropTarget,
+  ItemInstance
+} from '@headless-tree/core'
 import {EntryPhase, Type} from 'alinea/core'
 import {Entry} from 'alinea/core/Entry'
 import {entries} from 'alinea/core/util/Objects'
@@ -39,6 +43,7 @@ const entryTreeRootAtom = atom(async (get): Promise<EntryTreeItem> => {
   const children = await active.find(rootEntries)
   return {
     id: rootId(root.name),
+    index: '',
     isFolder: true,
     entries: [],
     children
@@ -56,6 +61,7 @@ const entryTreeItemLoaderAtom = atom(async get => {
     const search = (ids as Array<string>).filter(id => id !== rootId(root.name))
     const data = {
       id: Entry.i18nId,
+      entryId: Entry.entryId,
       type: Entry.type,
       title: Entry.title,
       phase: Entry.phase,
@@ -63,7 +69,8 @@ const entryTreeItemLoaderAtom = atom(async get => {
     }
     const entries = Entry()
       .select({
-        index: Entry.i18nId,
+        id: Entry.i18nId,
+        index: Entry.index,
         data,
         translations({translations}) {
           return translations().select(data)
@@ -81,8 +88,9 @@ const entryTreeItemLoaderAtom = atom(async get => {
     const rows = await graph.active.find(entries)
     for (const row of rows) {
       const entries = [row.data].concat(row.translations)
-      res.set(row.index, {
-        id: row.index,
+      res.set(row.id, {
+        id: row.id,
+        index: row.index,
         entries,
         children: row.children
       })
@@ -105,8 +113,10 @@ const loaderAtom = atom(get => {
 
 export interface EntryTreeItem {
   id: string
+  index: string
   entries: Array<{
     id: string
+    entryId: string
     type: string
     title: string
     phase: EntryPhase
@@ -116,14 +126,38 @@ export interface EntryTreeItem {
   children: Array<string>
 }
 
-export function useEntryTreeProvider(): AsyncTreeDataLoader<EntryTreeItem> {
+export function useEntryTreeProvider(): AsyncTreeDataLoader<EntryTreeItem> & {
+  onDrop(
+    items: Array<ItemInstance<EntryTreeItem>>,
+    target: DropTarget<EntryTreeItem>
+  ): void
+} {
   const {loader} = useAtomValue(loaderAtom)
   return useMemo(() => {
     return {
-      async getItem(id: string): Promise<EntryTreeItem> {
+      onDrop(items, target) {
+        console.log('onDrop', items, target)
+        /*const targetId = target.item.getId()
+        const mutations: Array<OrderMutation> = []
+        for (const item of items) {
+          const newIndex = 'todo'
+          const data = item.getItemData()
+          const previous = item.getItemAbove()?.getItemData()?.index
+          const next = item.getItemAbove()?.getItemData()?.index
+          for (const {entryId} of data.entries) {
+            mutations.push({
+              type: MutationType.Order,
+              entryId,
+              file: 'todo',
+              index: newIndex
+            })
+          }
+        }*/
+      },
+      async getItem(id): Promise<EntryTreeItem> {
         return (await loader).clear(id).load(id)
       },
-      async getChildren(id: string): Promise<Array<string>> {
+      async getChildren(id): Promise<Array<string>> {
         return this.getItem(id).then(item => item.children)
       }
     }

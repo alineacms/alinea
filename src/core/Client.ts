@@ -3,6 +3,7 @@ import {AlineaMeta} from 'alinea/backend/db/AlineaMeta'
 import {Media} from 'alinea/backend/Media'
 import {Config, Connection, EntryPhase, EntryRow, HttpError} from 'alinea/core'
 import {UpdateResponse} from './Connection.js'
+import {Mutation} from './Mutation.js'
 import {Realm} from './pages/Realm.js'
 
 async function failOnHttpError<T>(
@@ -47,6 +48,13 @@ export class Client implements Connection {
       method: 'POST',
       body
     }).then(failOnHttpError)
+  }
+
+  mutate(mutations: Array<Mutation>): Promise<void> {
+    return this.requestJson(Connection.routes.mutate(), {
+      method: 'POST',
+      body: JSON.stringify(mutations)
+    }).then<void>(res => failOnHttpError(res, false))
   }
 
   authenticate(applyAuth: AuthenticateRequest, unauthorized: () => void) {

@@ -1,3 +1,4 @@
+import {EntryPhase} from 'alinea/core'
 import {Modal} from 'alinea/dashboard/view/Modal'
 import {InputForm} from 'alinea/editor'
 import {Button, HStack, Stack, VStack, fromModule} from 'alinea/ui'
@@ -57,14 +58,11 @@ export function EntryEdit({editor}: EntryEditProps) {
   const resetDraft = useSetAtom(editor.resetDraft)
   const untranslated = locale && locale !== editor.version.locale
   useEffect(() => {
-    if (!hasChanges) return
     function listener(e: KeyboardEvent) {
       if (e.ctrlKey && e.key === 's') {
         e.preventDefault()
-        if (isSaving) return
-        saveDraft()
-        // else publishDraft()
-        console.log('Save')
+        if (hasChanges) saveDraft()
+        else if (selectedPhase === EntryPhase.Draft) publishDraft()
       }
     }
     document.addEventListener('keydown', listener)

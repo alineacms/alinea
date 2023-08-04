@@ -2,6 +2,7 @@ import {
   Config,
   Connection,
   EntryPhase,
+  EntryRow,
   Field,
   ROOT_KEY,
   Type,
@@ -10,7 +11,8 @@ import {
   parseYDoc
 } from 'alinea/core'
 import {Entry} from 'alinea/core/Entry'
-import {MutationType} from 'alinea/core/Mutation'
+import {entryFileName} from 'alinea/core/EntryFilenames'
+import {Mutation, MutationType} from 'alinea/core/Mutation'
 import {entries, fromEntries, values} from 'alinea/core/util/Objects'
 import {InputState} from 'alinea/editor'
 import {atom} from 'jotai'
@@ -18,9 +20,8 @@ import {atomFamily} from 'jotai/utils'
 import * as Y from 'yjs'
 import {debounceAtom} from '../util/DebounceAtom.js'
 import {clientAtom, configAtom} from './DashboardAtoms.js'
-import {entryRevisionAtoms, graphAtom} from './DbAtoms.js'
+import {entryRevisionAtoms, graphAtom, mutateAtom} from './DbAtoms.js'
 import {locationAtom} from './LocationAtoms.js'
-import {addPending} from './PendingAtoms.js'
 import {yAtom} from './YAtom.js'
 
 export enum EditMode {
@@ -68,6 +69,13 @@ export const entryEditorAtoms = atomFamily(
           }
         })
       )
+      const {parents} = await graph.active.get(
+        Entry({entryId}).select({
+          parents({parents}) {
+            return parents().select({entryId: Entry.entryId, path: Entry.path})
+          }
+        })
+      )
       const translations = (await graph.active.find(
         Entry({i18nId})
           .where(Entry.locale.isNotNull(), Entry.entryId.isNot(entryId))
@@ -83,6 +91,7 @@ export const entryEditorAtoms = atomFamily(
       )
       const previewToken = await get(previewTokenAtom)
       return createEntryEditor({
+        parents,
         translations,
         previewToken,
         client,
@@ -98,6 +107,7 @@ export const entryEditorAtoms = atomFamily(
 )
 
 export interface EntryData {
+  parents: Array<{entryId: string; path: string}>
   client: Connection
   config: Config
   entryId: string
@@ -152,31 +162,45 @@ export function createEntryEditor(entryData: EntryData) {
     return activePhase
   })
 
+  function entryFile(entry: EntryRow) {
+    return entryFileName(
+      config,
+      entry,
+      entryData.parents.map(p => p.path)
+    )
+  }
+
   const saveDraft = atom(null, (get, set) => {
-    return addPending({
-      type: MutationType.SaveDraft,
+    const entry = {...getDraftEntry(), phase: EntryPhase.Draft}
+    const mutation: Mutation = {
+      type: MutationType.Edit,
+      file: entryFile(entry),
       entryId: version.entryId,
-      entry: {...getDraftEntry(), phase: EntryPhase.Draft}
-    })
+      entry
+    }
+    return set(mutateAtom, mutation)
   })
 
   const saveTranslation = atom(null, (get, set, locale: string) => {
-    const updatedEntry = getDraftEntry()
-    updatedEntry.phase = EntryPhase.Draft
-    updatedEntry.entryId = createId()
-    updatedEntry.locale = locale
-    return addPending({
-      type: MutationType.SaveDraft,
-      entryId: version.entryId,
-      entry: updatedEntry
-    })
+    const entryId = createId()
+    const entry = {...getDraftEntry(), entryId, locale, phase: EntryPhase.Draft}
+    const mutation: Mutation = {
+      type: MutationType.Edit,
+      file: entryFile(entry),
+      entryId,
+      entry
+    }
+    throw new Error('Calulate parent paths correctly here')
+    return set(mutateAtom, mutation)
   })
 
   const publishDraft = atom(null, (get, set) => {
-    return addPending({
+    const mutation: Mutation = {
       type: MutationType.Publish,
-      entryId: version.entryId
-    })
+      entryId: version.entryId,
+      file: entryFile(version)
+    }
+    return set(mutateAtom, mutation)
   })
 
   const resetDraft = atom(null, (get, set) => {

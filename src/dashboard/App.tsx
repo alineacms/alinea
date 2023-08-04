@@ -19,6 +19,7 @@ import {
 import {useDbUpdater} from './atoms/DbAtoms.js'
 import {locationAtom, matchAtoms, useLocation} from './atoms/LocationAtoms.js'
 import {usePreferredLanguage} from './atoms/NavigationAtoms.js'
+import {pendingAtom} from './atoms/PendingAtoms.js'
 import {RouteView, RouterProvider} from './atoms/RouterAtoms.js'
 import {useDashboard} from './hook/UseDashboard.js'
 import {useEntryLocation} from './hook/UseEntryLocation.js'
@@ -75,6 +76,10 @@ function AppAuthenticated() {
   useEffect(() => {
     setPreferredLanguage(locale)
   }, [locale])
+  const pending = useAtomValue(pendingAtom)
+  useEffect(() => {
+    console.log(pending)
+  }, [pending])
   return (
     <>
       <Toolbar.Provider>

@@ -3,6 +3,7 @@ import {ResolveDefaults} from 'alinea/backend/Resolver'
 import {ChangeSet} from 'alinea/backend/data/ChangeSet'
 import {AlineaMeta} from 'alinea/backend/db/AlineaMeta'
 import {EntryRow} from './EntryRow.js'
+import {Mutation} from './Mutation.js'
 import {User} from './User.js'
 import {Selection} from './pages/Selection.js'
 import {Logger} from './util/Logger.js'
@@ -20,10 +21,8 @@ export interface Syncable {
 export interface Connection extends Syncable {
   previewToken(): Promise<string>
   resolve(params: Connection.ResolveParams): Promise<unknown>
+  mutate(mutations: Array<Mutation>): Promise<void>
   uploadFile(params: Connection.UploadParams): Promise<Media.File>
-  saveDraft(entry: EntryRow): Promise<void>
-  publishDrafts(entries: Array<EntryRow>): Promise<void>
-  //mutate(mutations: Array<Mutation>): Promise<void>
 }
 
 export namespace Connection {
@@ -73,6 +72,9 @@ export namespace Connection {
     base,
     resolve() {
       return base + `/resolve`
+    },
+    mutate() {
+      return base + `/mutate`
     },
     updates() {
       return base + `/updates`

@@ -1,6 +1,5 @@
 import {
   Config,
-  Connection,
   EntryUrlMeta,
   PageSeed,
   Root,
@@ -10,9 +9,9 @@ import {
   createId,
   unreachable
 } from 'alinea/core'
+import {entryInfo} from 'alinea/core/EntryFilenames'
 import {EntryRecord, META_KEY} from 'alinea/core/EntryRecord'
 import {Mutation, MutationType} from 'alinea/core/Mutation'
-import {Realm} from 'alinea/core/pages/Realm'
 import {Logger} from 'alinea/core/util/Logger'
 import {entries} from 'alinea/core/util/Objects'
 import * as path from 'alinea/core/util/Paths'
@@ -21,12 +20,10 @@ import {Driver, Expr, Table, alias, create} from 'rado'
 import {exists} from 'rado/sqlite'
 import xxhash from 'xxhash-wasm'
 import {EntryPhase, EntryRow} from '../core/EntryRow.js'
-import {Selection} from '../core/pages/Selection.js'
-import {Resolver} from './Resolver.js'
 import {Source} from './Source.js'
 import {Store} from './Store.js'
 import {Target} from './Target.js'
-import {ChangeSet} from './data/ChangeSet.js'
+import {ChangeSetCreator} from './data/ChangeSet.js'
 import {AlineaMeta} from './db/AlineaMeta.js'
 import {createEntrySearch} from './db/CreateEntrySearch.js'
 import {createContentHash} from './util/ContentHash.js'
@@ -43,19 +40,10 @@ type Seed = {
 }
 
 export class Database implements Syncable {
-  resolve: <T>(params: Connection.ResolveParams) => Promise<T>
   seed: Map<string, Seed>
 
   constructor(protected store: Store, public config: Config) {
-    this.resolve = new Resolver(store, config.schema).resolve
     this.seed = this.seedData()
-  }
-
-  find<S>(selection: S, realm = Realm.Published) {
-    return this.resolve({
-      selection: Selection.create(selection),
-      realm
-    }) as Promise<Selection.Infer<S>>
   }
 
   async updates(request: AlineaMeta) {
@@ -132,7 +120,7 @@ export class Database implements Syncable {
   async applyMutations(mutations: Array<Mutation>) {
     for (const mutation of mutations) {
       switch (mutation.type) {
-        case MutationType.SaveDraft:
+        case MutationType.Edit:
           await this.store(
             EntryRow({
               entryId: mutation.entryId,
@@ -150,15 +138,25 @@ export class Database implements Syncable {
           )
           continue
         case MutationType.Publish:
-          await this.store(
+          const hasDraft = await this.store(
             EntryRow({
               entryId: mutation.entryId,
-              phase: EntryPhase.Published
-            }).delete(),
-            EntryRow({entryId: mutation.entryId, phase: EntryPhase.Draft}).set({
-              phase: EntryPhase.Published
-            })
+              phase: EntryPhase.Draft
+            }).maybeFirst()
           )
+          if (hasDraft)
+            await this.store(
+              EntryRow({
+                entryId: mutation.entryId,
+                phase: EntryPhase.Published
+              }).delete(),
+              EntryRow({
+                entryId: mutation.entryId,
+                phase: EntryPhase.Draft
+              }).set({
+                phase: EntryPhase.Published
+              })
+            )
           continue
         case MutationType.Remove:
           await this.store(EntryRow({entryId: mutation.entryId}).delete())
@@ -247,14 +245,6 @@ export class Database implements Syncable {
     }
   }
 
-  entryInfo(fileName: string): [name: string, status: EntryPhase] {
-    // See if filename ends in a known status
-    const status = ALT_STATUS.find(s => fileName.endsWith(`.${s}`))
-    if (status) return [fileName.slice(0, -status.length - 1), status]
-    // Otherwise, it's published
-    return [fileName, EntryPhase.Published]
-  }
-
   entryUrl(type: Type, meta: EntryUrlMeta) {
     const {entryUrl} = Type.meta(type)
     if (entryUrl) return entryUrl(meta)
@@ -284,7 +274,7 @@ export class Database implements Syncable {
     const parentDir = path.dirname(meta.filePath)
     const extension = path.extname(meta.filePath)
     const fileName = path.basename(meta.filePath, extension)
-    const [entryPath, entryPhase] = this.entryInfo(fileName)
+    const [entryPath, entryPhase] = entryInfo(fileName)
     const segments = parentDir.split('/').filter(Boolean)
     const root = Root.data(this.config.workspaces[meta.workspace][meta.root])
     let locale: string | null = null
@@ -404,7 +394,7 @@ export class Database implements Syncable {
         const seed = this.seed.get(file.filePath)
         const extension = path.extname(file.filePath)
         const fileName = path.basename(file.filePath, extension)
-        const [, phase] = this.entryInfo(fileName)
+        const [, phase] = entryInfo(fileName)
         const contentHash = await createContentHash(
           phase,
           file.contents,
@@ -511,11 +501,14 @@ export class Database implements Syncable {
     })
 
     if (target && publishSeed.length > 0) {
-      const changes = await ChangeSet.create(
-        this,
-        publishSeed,
-        EntryPhase.Published,
-        target.canRename
+      const changeSetCreator = new ChangeSetCreator(this.config)
+      const changes = changeSetCreator.create(
+        publishSeed.map(seed => ({
+          type: MutationType.Edit,
+          entryId: seed.entryId,
+          file: seed.filePath,
+          entry: seed
+        }))
       )
       await target.publishChanges({changes}, {logger: new Logger('seed')})
     }

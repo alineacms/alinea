@@ -118,21 +118,17 @@ export interface EntryTreeProps {
 
 export function EntryTree({i18nId: entryId, selected = []}: EntryTreeProps) {
   const root = useRoot()
-  const dataLoader = useEntryTreeProvider()
+  const treeProvider = useEntryTreeProvider()
   const navigate = useNavigate()
   const nav = useNav()
   const locale = useLocale()
   const tree = useTree<EntryTreeItem>({
     rootItemId: rootId(root.name),
     canDropInbetween: true,
-    onDrop: (items, target) => {
-      console.log(
-        `Dropped ${items.map(item =>
-          item.getId()
-        )} on ${target.item.getId()}, index ${target.childIndex}`
-      )
+    onDrop(items, target) {
+      return treeProvider.onDrop(items, target)
     },
-    asyncDataLoader: dataLoader,
+    asyncDataLoader: treeProvider,
     getItemName: item =>
       item.getItemData() && selectedEntry(locale, item.getItemData()).title,
     isItemFolder: item =>
@@ -156,7 +152,7 @@ export function EntryTree({i18nId: entryId, selected = []}: EntryTreeProps) {
   const changed = useAtomValue(changedEntriesAtom)
   useEffect(() => {
     tree.invalidateChildrenIds(rootId(root.name))
-  }, [dataLoader])
+  }, [treeProvider])
   useEffect(() => {
     for (const id of changed) {
       tree.invalidateItemData(id)

@@ -9,6 +9,7 @@ import * as path from 'alinea/core/util/Paths'
 import {Media} from '../Media.js'
 import {Source, SourceEntry, WatchFiles} from '../Source.js'
 import {Target} from '../Target.js'
+import {ChangeType} from './ChangeSet.js'
 
 export type FileDataOptions = {
   config: Config
@@ -119,27 +120,37 @@ export class FileData implements Source, Target, Media {
 
   async publishChanges({changes}: Connection.ChangesParams) {
     const {fs, rootDir = '.'} = this.options
-    const tasks = []
     const noop = () => {}
-    for (const {file, contents} of changes.write) {
-      const location = path.join(rootDir, file)
-      tasks.push(
-        fs
-          .mkdir(path.dirname(location), {recursive: true})
-          .catch(noop)
-          .then(() => fs.writeFile(location, contents))
-      )
+    for (const change of changes) {
+      switch (change.type) {
+        case ChangeType.Write: {
+          const location = path.join(rootDir, change.file)
+          await fs
+            .mkdir(path.dirname(location), {recursive: true})
+            .catch(noop)
+            .then(() => fs.writeFile(location, change.contents))
+          continue
+        }
+        case ChangeType.Rename: {
+          const location = path.join(rootDir, change.from)
+          const newLocation = path.join(rootDir, change.to)
+          await fs.rename(location, newLocation)
+          continue
+        }
+        case ChangeType.Delete: {
+          const location = path.join(rootDir, change.file)
+          await fs.rm(location, {recursive: true, force: true}).catch(noop)
+          continue
+        }
+        case ChangeType.Patch: {
+          const location = path.join(rootDir, change.file)
+          const contents = await fs.readFile(location)
+          const record = JSON.parse(contents.toString())
+          const newContents = applyJsonPatch(record, change.patch)
+          await fs.writeFile(location, JSON.stringify(newContents))
+        }
+      }
     }
-    for (const {file: a, to: b} of changes.rename) {
-      const location = path.join(rootDir, a)
-      const newLocation = path.join(rootDir, b)
-      tasks.push(fs.rename(location, newLocation).catch(noop))
-    }
-    for (const {file} of changes.delete) {
-      const location = path.join(rootDir, file)
-      tasks.push(fs.rm(location, {recursive: true, force: true}).catch(noop))
-    }
-    return Promise.all(tasks).then(() => void 0)
   }
 
   isInMediaLocation(file: string): boolean {
