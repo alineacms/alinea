@@ -22,7 +22,7 @@ export type PendingMutation = Mutation & {
 }
 
 export type Mutation =
-  | EditMutation
+  | SaveDraftMutation
   | PublishMutation
   | ArchiveMutation
   | RemoveMutation
@@ -30,7 +30,7 @@ export type Mutation =
   | MoveMutation
   | FileUploadMutation
 
-export interface EditMutation {
+export interface SaveDraftMutation {
   type: MutationType.SaveDraft
   entryId: string
   entry: EntryRow

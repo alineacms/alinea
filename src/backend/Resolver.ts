@@ -30,6 +30,7 @@ import {
 import {iif, match, count as sqlCount} from 'rado/sqlite'
 import {EntryPhase, EntryRow, EntryTable} from '../core/EntryRow.js'
 import * as pages from '../core/pages/index.js'
+import {Database} from './Database.js'
 import {Store} from './Store.js'
 import {LinkResolver} from './resolver/LinkResolver.js'
 
@@ -718,6 +719,7 @@ export class Resolver {
             // Temporarily add preview entry
             await tx(current.delete())
             await tx(EntryRow().insert(previewEntry))
+            await Database.index(tx)
             const result = await tx(query)
             const linkResolver = new LinkResolver(this, tx, ctx)
             if (result) await this.post({linkResolver}, result, selection)

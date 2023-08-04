@@ -12,7 +12,8 @@
     overflow-x: auto;
   }
 
-  &.is-draft {
+  &.is-draft,
+  &.is-editing {
     color: var(--alinea-variant-info-foreground);
     background: var(--alinea-variant-info-background);
   }

@@ -79,7 +79,6 @@ const entryTreeItemLoaderAtom = atom(async get => {
       .groupBy(Entry.i18nId)
       .where(Entry.i18nId.isIn(search))
     const rows = await graph.active.find(entries)
-    console.log(rows)
     for (const row of rows) {
       const entries = [row.data].concat(row.translations)
       res.set(row.index, {

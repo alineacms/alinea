@@ -11,13 +11,13 @@
 
   &-background {
     background: hsla(var(--alinea-positive), 0.8);
-    // backdrop-filter: blur(5px);
+    backdrop-filter: blur(5px);
     position: absolute;
     inset: 0;
   }
 
   &.is-open &-background {
-    opacity: 0.7;
+    opacity: 1;
   }
 
   &-inner {
@@ -32,7 +32,8 @@
     overflow: auto;
     background: var(--alinea-background);
     border: 1px solid var(--alinea-outline);
-    box-shadow: 0 2px 110px 10px var(--alinea-shadow);
+    box-shadow: 0 2px 200px 10px var(--alinea-shadow),
+      0 8px 10px 0 var(--alinea-shadow);
 
     &-close {
       background: var(--alinea-inner);

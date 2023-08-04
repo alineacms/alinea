@@ -102,7 +102,7 @@ export class Database implements Syncable {
           .delete()
           .where(EntryRow.versionId.isIn(excess.map(e => e.versionId)))
       )
-      await this.index(query)
+      await Database.index(query)
       await this.writeMeta(query)
       return excess.map(e => e.entryId)
     })
@@ -124,7 +124,7 @@ export class Database implements Syncable {
         )
         await query(EntryRow().insertOne(entry))
       }
-      await this.index(query)
+      await Database.index(query)
       await this.writeMeta(query)
     })
   }
@@ -185,7 +185,7 @@ export class Database implements Syncable {
           throw unreachable(mutation)
       }
     }
-    await this.index(this.store)
+    await Database.index(this.store)
   }
 
   async meta() {
@@ -197,7 +197,7 @@ export class Database implements Syncable {
     )
   }
 
-  private async index(query: Driver.Async) {
+  static async index(query: Driver.Async) {
     const {Parent} = alias(EntryRow)
     const res = await query(
       EntryRow().set({
@@ -505,7 +505,7 @@ export class Database implements Syncable {
       // if (removed) console.log(`> removed ${removed} entries`)
 
       //const endIndex = timer('Indexing entries')
-      await this.index(query)
+      await Database.index(query)
       //endIndex()
       await this.writeMeta(query)
     })

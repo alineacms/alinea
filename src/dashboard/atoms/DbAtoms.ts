@@ -21,7 +21,6 @@ export const storeAtom = atom(createPersistentStore)
 const limit = pLimit(1)
 
 async function cancelMutations(store: Store) {
-  console.log('Canceling mutations')
   // Cancel previous mutations if they were applied
   try {
     await store(sql`rollback to mutations`)

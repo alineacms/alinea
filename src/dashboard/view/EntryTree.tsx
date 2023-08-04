@@ -35,16 +35,17 @@ function selectedEntry(locale: string | undefined, item: EntryTreeItem) {
 
 interface EntryTreeItemProps {
   item: ItemInstance<EntryTreeItem>
+  data: EntryTreeItem
 }
 
-function EntryTreeItem({item}: EntryTreeItemProps) {
+function EntryTreeItem({item, data}: EntryTreeItemProps) {
   const locale = useLocale()
   const {schema} = useConfig()
-  const currentData = useRef<EntryTreeItem>()
-  const data: EntryTreeItem = item.getItemData() ?? currentData.current
-  if (!data) return console.log(item), null
+  const currentData = useRef<EntryTreeItem>(data)
+  const itemData = data || currentData.current
+  if (!data) return null
   currentData.current = data
-  const selected = selectedEntry(locale, data)
+  const selected = selectedEntry(locale, itemData)
   const {icon} = Type.meta(schema[selected.type])
   const isDraft = selected.phase === EntryPhase.Draft
   const isUntranslated = locale && selected.locale !== locale
@@ -89,7 +90,7 @@ function EntryTreeItem({item}: EntryTreeItemProps) {
         )}
 
         <span className={styles.tree.item.label.itemName()}>
-          {selectedEntry(locale, data).title}
+          {selectedEntry(locale, itemData).title}
         </span>
 
         {/*isUntranslated && (
@@ -165,7 +166,13 @@ export function EntryTree({i18nId: entryId, selected = []}: EntryTreeProps) {
     <>
       <div ref={tree.registerElement} className={styles.tree()}>
         {tree.getItems().map(item => {
-          return <EntryTreeItem key={item.getId()} item={item} />
+          return (
+            <EntryTreeItem
+              key={item.getId()}
+              item={item}
+              data={item.getItemData()}
+            />
+          )
         })}
       </div>
     </>

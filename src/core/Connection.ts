@@ -1,4 +1,4 @@
-import {Media} from 'alinea/backend/Media'
+import {Media} from 'alinea/backend'
 import {ResolveDefaults} from 'alinea/backend/Resolver'
 import {ChangeSet} from 'alinea/backend/data/ChangeSet'
 import {AlineaMeta} from 'alinea/backend/db/AlineaMeta'
@@ -23,6 +23,7 @@ export interface Connection extends Syncable {
   uploadFile(params: Connection.UploadParams): Promise<Media.File>
   saveDraft(entry: EntryRow): Promise<void>
   publishDrafts(entries: Array<EntryRow>): Promise<void>
+  //mutate(mutations: Array<Mutation>): Promise<void>
 }
 
 export namespace Connection {

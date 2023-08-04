@@ -2,6 +2,7 @@ import {createId} from 'alinea/core'
 import {Mutation, MutationProgress, PendingMutation} from 'alinea/core/Mutation'
 import {Atom, atom} from 'jotai'
 import {atomFamily, loadable} from 'jotai/utils'
+import {IndexeddbPersistence} from 'y-indexeddb'
 import * as Y from 'yjs'
 import {dbModifiedAtom} from './DbAtoms.js'
 import {yAtom} from './YAtom.js'
@@ -10,6 +11,10 @@ const MAP_KEY = 'mutations'
 
 export const pendingDoc = new Y.Doc()
 export const pendingMap = pendingDoc.getMap<PendingMutation>(MAP_KEY)
+
+// Todo: Set up provider here
+// Todo: provide a unique name during dev (based on project root dir?)
+const local = new IndexeddbPersistence('@alinea/mutations', pendingDoc)
 
 export const pendingAtom: Atom<Array<PendingMutation>> = yAtom(
   pendingMap,
