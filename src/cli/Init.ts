@@ -1,5 +1,4 @@
 import {createId, outcome} from 'alinea/core'
-import {execSync} from 'node:child_process'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import {generate} from './Generate.js'
@@ -85,12 +84,12 @@ export async function init(options: InitOptions) {
     path.join(__dirname, 'static/init/cms.js'),
     path.join(cwd, 'cms.ts')
   )
-  const [pkg, err] = await outcome(
+  const pm = await detectPm()
+  /*const [pkg, err] = await outcome(
     fs
       .readFile(path.join(cwd, 'package.json'), 'utf-8')
       .then(contents => JSON.parse(contents))
   )
-  const pm = await detectPm()
   if (pkg) {
     if (!pkg.dependencies) pkg.dependencies = {}
     pkg.dependencies['@alinea/generated'] = `${
@@ -119,7 +118,7 @@ export async function init(options: InitOptions) {
       fs.stat(path.join(cwd, 'node_modules/@alinea/generated'))
     )
     if (!installSucceeded) execSync(`${pm} install`, {cwd, stdio: 'inherit'})
-  }
+  }*/
   for await (const _ of generate({cwd: path.resolve(cwd), quiet})) {
   }
   const runner = pm === 'npm' ? 'npx' : pm
