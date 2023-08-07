@@ -123,7 +123,7 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
                 <Icon icon={IcRoundUnfoldMore} />
               </HStack>
             </DropdownMenu.Trigger>
-            <DropdownMenu.Items>
+            <DropdownMenu.Items placement="top">
               <DropdownMenu.Item onClick={() => exec().clearNodes().run()}>
                 <Typo.P>Normal text</Typo.P>
               </DropdownMenu.Item>
@@ -196,7 +196,7 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
                 <Icon icon={IcRoundUnfoldMore} />
               </HStack>
             </DropdownMenu.Trigger>
-            <DropdownMenu.Items>
+            <DropdownMenu.Items placement="top">
               <DropdownMenu.Item
                 onClick={() => exec().setTextAlign('left').run()}
               >

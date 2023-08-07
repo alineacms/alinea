@@ -14,7 +14,7 @@ import {useNav} from '../hook/UseNav.js'
 import {SuspenseBoundary} from '../util/SuspenseBoundary.js'
 import css from './EntryEdit.module.scss'
 import {EntryDiff} from './diff/EntryDiff.js'
-import {EditMode} from './entry/EditMode.js'
+import {EditMode} from './entry/EditModeToggle.js'
 import {EntryHeader} from './entry/EntryHeader.js'
 import {EntryNotice} from './entry/EntryNotice.js'
 import {EntryPreview} from './entry/EntryPreview.js'
@@ -24,7 +24,13 @@ const styles = fromModule(css)
 
 function ShowChanges({editor}: EntryEditProps) {
   const draftEntry = useAtomValue(editor.draftEntry)
-  return <EntryDiff entryA={editor.version} entryB={draftEntry} />
+  const hasChanges = useAtomValue(editor.hasChanges)
+  const compareTo = hasChanges
+    ? editor.activeVersion
+    : editor.phases[
+        editor.availablePhases.find(phase => phase !== EntryPhase.Draft)!
+      ]
+  return <EntryDiff entryA={compareTo} entryB={draftEntry} />
 }
 
 export interface EntryEditProps {
@@ -55,8 +61,8 @@ export function EntryEdit({editor}: EntryEditProps) {
   const state = isActivePhase ? editor.draftState : editor.states[selectedPhase]
   const saveDraft = useSetAtom(editor.saveDraft)
   const publishDraft = useSetAtom(editor.publishDraft)
-  const resetDraft = useSetAtom(editor.resetDraft)
-  const untranslated = locale && locale !== editor.version.locale
+  const discardEdits = useSetAtom(editor.discardEdits)
+  const untranslated = locale && locale !== editor.activeVersion.locale
   useEffect(() => {
     function listener(e: KeyboardEvent) {
       if (e.ctrlKey && e.key === 's') {
@@ -86,7 +92,7 @@ export function EntryEdit({editor}: EntryEditProps) {
                     outline
                     type="button"
                     onClick={() => {
-                      resetDraft()
+                      discardEdits()
                       confirm()
                     }}
                   >
@@ -121,10 +127,10 @@ export function EntryEdit({editor}: EntryEditProps) {
             <EntryTitle
               editor={editor}
               backLink={
-                editor.version.parent
+                editor.activeVersion.parent
                   ? nav.entry({
-                      entryId: editor.version.parent,
-                      workspace: editor.version.workspace
+                      entryId: editor.activeVersion.parent,
+                      workspace: editor.activeVersion.workspace
                     })
                   : undefined
               }

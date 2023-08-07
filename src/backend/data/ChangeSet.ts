@@ -2,6 +2,7 @@ import {Config, EntryPhase, EntryUrlMeta, Type} from 'alinea/core'
 import {META_KEY, createRecord} from 'alinea/core/EntryRecord'
 import {
   ArchiveMutation,
+  DiscardDraftMutation,
   EditMutation,
   FileUploadMutation,
   MoveMutation,
@@ -9,7 +10,7 @@ import {
   MutationType,
   OrderMutation,
   PublishMutation,
-  RemoveMutation
+  RemoveEntryMutation
 } from 'alinea/core/Mutation'
 import {JsonLoader} from '../loader/JsonLoader.js'
 
@@ -109,7 +110,15 @@ export class ChangeSetCreator {
     ]
   }
 
-  removeChanges({entryId, file}: RemoveMutation): ChangeSet {
+  removeChanges({entryId, file}: RemoveEntryMutation): ChangeSet {
+    // Todo: remove all possible phases
+    return [{type: ChangeType.Delete, entryId, file}]
+  }
+
+  discardChanges({entryId, file}: DiscardDraftMutation): ChangeSet {
+    const fileEnd = `.${EntryPhase.Draft}.json`
+    if (!file.endsWith(fileEnd))
+      throw new Error(`Cannot discard non-draft file: ${file}`)
     return [{type: ChangeType.Delete, entryId, file}]
   }
 
@@ -163,6 +172,8 @@ export class ChangeSetCreator {
         return this.archiveChanges(mutation)
       case MutationType.Remove:
         return this.removeChanges(mutation)
+      case MutationType.Discard:
+        return this.discardChanges(mutation)
       case MutationType.Order:
         return this.orderChanges(mutation)
       case MutationType.Move:

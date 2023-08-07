@@ -136,7 +136,7 @@ export namespace Sidebar {
               </HStack>
             </DropdownMenu.Trigger>
 
-            <DropdownMenu.Items>
+            <DropdownMenu.Items placement="bottom">
               {workspaces.map(([key, workspace]) => {
                 const {roots, label, color, icon} = Workspace.data(workspace)
                 const [name, root] = entries(roots)[0]

@@ -161,6 +161,14 @@ export class Database implements Syncable {
         case MutationType.Remove:
           await this.store(EntryRow({entryId: mutation.entryId}).delete())
           continue
+        case MutationType.Discard:
+          await this.store(
+            EntryRow({
+              entryId: mutation.entryId,
+              phase: EntryPhase.Draft
+            }).delete()
+          )
+          continue
         case MutationType.Order:
           await this.store(
             EntryRow({entryId: mutation.entryId}).set({index: mutation.index})

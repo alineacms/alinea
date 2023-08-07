@@ -40,7 +40,7 @@ function FileView({editor}: EntryEditProps) {
 export function FileEntry(props: EntryEditProps) {
   const nav = useNav()
   const {editor} = props
-  const isImage = Media.isImage(editor.version.path)
+  const isImage = Media.isImage(editor.activeVersion.path)
   return (
     <Main className={styles.root()}>
       {/*<EntryHeader editor={editor} />*/}
@@ -48,10 +48,10 @@ export function FileEntry(props: EntryEditProps) {
         <EntryTitle
           editor={editor}
           backLink={
-            editor.version.parent
+            editor.activeVersion.parent
               ? nav.entry({
-                  entryId: editor.version.parent,
-                  workspace: editor.version.workspace
+                  entryId: editor.activeVersion.parent,
+                  workspace: editor.activeVersion.workspace
                 })
               : undefined
           }

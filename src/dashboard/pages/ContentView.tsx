@@ -35,8 +35,8 @@ export function ContentView({editor}: ContentViewProps) {
         <SearchBox />
         <RootHeader active={!editor} />
         <EntryTree
-          i18nId={editor?.version.i18nId}
-          selected={editor?.version.parents}
+          i18nId={editor?.activeVersion.i18nId}
+          selected={editor?.activeVersion.parents}
         />
         <div className={styles.root.create()}>
           <button
@@ -44,7 +44,7 @@ export function ContentView({editor}: ContentViewProps) {
             onClick={() =>
               navigate(
                 nav.create({
-                  entryId: editor?.version.i18nId,
+                  entryId: editor?.activeVersion.i18nId,
                   workspace: workspace.name,
                   root: root.name
                 })

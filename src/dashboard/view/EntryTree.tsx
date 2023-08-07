@@ -155,7 +155,15 @@ export function EntryTree({i18nId: entryId, selected = []}: EntryTreeProps) {
   }, [treeProvider])
   useEffect(() => {
     for (const id of changed) {
-      tree.invalidateItemData(id)
+      try {
+        const item = tree.getItemInstance(id)
+        if (!item) continue
+        const parent = item.getParent()
+        const parentId = parent?.getId()
+        tree.invalidateChildrenIds(parentId)
+        tree.invalidateChildrenIds(id)
+        tree.invalidateItemData(id)
+      } catch (e) {}
     }
   }, [changed])
   return (

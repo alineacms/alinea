@@ -83,17 +83,17 @@
   --alinea-button-hover: #4a65e8;
 
   --alinea-variant-info-background: hsla(216, 100%, 97%, 0.8);
-  --alinea-variant-info-foreground: #415097;
-  --alinea-variant-info-action: #d1e3ff;
+  --alinea-variant-info-foreground: hsl(230, 40%, 42%);
+  --alinea-variant-info-action: hsl(230, 100%, 91%);
   --alinea-variant-success-background: hsla(135, 75%, 97%, 0.8);
-  --alinea-variant-success-foreground: #558164;
-  --alinea-variant-success-action: #d1ffd1;
+  --alinea-variant-success-foreground: hsl(140, 21%, 42%);
+  --alinea-variant-success-action: hsl(140, 70%, 87%);
   --alinea-variant-disabled-background: hsla(0, 0%, 94%, 0.8);
-  --alinea-variant-disabled-foreground: #535353;
-  --alinea-variant-disabled-action: #e6e6e6;
+  --alinea-variant-disabled-foreground: hsl(0, 0%, 33%);
+  --alinea-variant-disabled-action: hsl(0, 0%, 90%);
   --alinea-variant-progress-background: hsla(35, 89%, 96%, 0.8);
-  --alinea-variant-progress-foreground: #9f4b2f;
-  --alinea-variant-progress-action: #ffd1d1;
+  --alinea-variant-progress-foreground: hsl(15, 54%, 40%);
+  --alinea-variant-progress-action: hsl(15, 100%, 91%);
 }
 
 .root {

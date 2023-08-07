@@ -22,6 +22,7 @@ import {debounceAtom} from '../util/DebounceAtom.js'
 import {clientAtom, configAtom} from './DashboardAtoms.js'
 import {entryRevisionAtoms, graphAtom, mutateAtom} from './DbAtoms.js'
 import {locationAtom} from './LocationAtoms.js'
+import {pendingAtom} from './PendingAtoms.js'
 import {yAtom} from './YAtom.js'
 
 export enum EditMode {
@@ -123,8 +124,8 @@ export type EntryEditor = ReturnType<typeof createEntryEditor>
 export function createEntryEditor(entryData: EntryData) {
   const {client, config, availablePhases} = entryData
   const activePhase = availablePhases[0]
-  const version = entryData.phases[activePhase]
-  const type = config.schema[version.type]
+  const activeVersion = entryData.phases[activePhase]
+  const type = config.schema[activeVersion.type]
   const docs = fromEntries(
     entries(entryData.phases).map(([phase, version]) => [
       phase,
@@ -144,8 +145,16 @@ export function createEntryEditor(entryData: EntryData) {
   const draftEntry = yAtom(yDoc.getMap(ROOT_KEY), getDraftEntry)
   const editMode = atom(EditMode.Editing)
   const isSaving = atom(false)
-  const isPublishing = atom(false)
   const view = Type.meta(type).view
+
+  const isPublishing = atom(get => {
+    const pending = get(pendingAtom)
+    return pending.some(
+      mutation =>
+        mutation.type === MutationType.Publish &&
+        mutation.entryId === activeVersion.entryId
+    )
+  })
 
   const yUpdate = debounceAtom(
     yAtom(yDoc.getMap(ROOT_KEY), () => {
@@ -175,7 +184,7 @@ export function createEntryEditor(entryData: EntryData) {
     const mutation: Mutation = {
       type: MutationType.Edit,
       file: entryFile(entry),
-      entryId: version.entryId,
+      entryId: activeVersion.entryId,
       entry
     }
     return set(mutateAtom, mutation)
@@ -197,17 +206,26 @@ export function createEntryEditor(entryData: EntryData) {
   const publishDraft = atom(null, (get, set) => {
     const mutation: Mutation = {
       type: MutationType.Publish,
-      entryId: version.entryId,
-      file: entryFile(version)
+      entryId: activeVersion.entryId,
+      file: entryFile(activeVersion)
     }
     return set(mutateAtom, mutation)
   })
 
-  const resetDraft = atom(null, (get, set) => {
-    const type = config.schema[version.type]
+  const discardDraft = atom(null, (get, set) => {
+    const mutation: Mutation = {
+      type: MutationType.Discard,
+      entryId: activeVersion.entryId,
+      file: entryFile(activeVersion)
+    }
+    return set(mutateAtom, mutation)
+  })
+
+  const discardEdits = atom(null, (get, set) => {
+    const type = config.schema[activeVersion.type]
     const docRoot = yDoc.getMap(ROOT_KEY)
     for (const [key, field] of entries(type)) {
-      const contents = version.data[key]
+      const contents = activeVersion.data[key]
       docRoot.set(key, Field.shape(field).toY(contents))
     }
     set(hasChanges, false)
@@ -220,7 +238,7 @@ export function createEntryEditor(entryData: EntryData) {
 
   function getDraftEntry() {
     const entryData = parseYDoc(type, yDoc)
-    return {...version, ...entryData}
+    return {...activeVersion, ...entryData}
   }
 
   return {
@@ -229,7 +247,7 @@ export function createEntryEditor(entryData: EntryData) {
     selectedPhase,
     entryData,
     editMode,
-    version,
+    activeVersion,
     type,
     draftState,
     draftEntry,
@@ -239,8 +257,9 @@ export function createEntryEditor(entryData: EntryData) {
     hasChanges,
     saveDraft,
     publishDraft,
+    discardDraft,
     saveTranslation,
-    resetDraft,
+    discardEdits,
     isSaving,
     isPublishing,
     view

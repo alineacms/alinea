@@ -3,7 +3,7 @@ import {Resolver} from 'alinea/backend/Resolver'
 import {Store} from 'alinea/backend/Store'
 import {Connection} from 'alinea/core'
 import {GraphRealm} from 'alinea/core/Graph'
-import {Mutation} from 'alinea/core/Mutation'
+import {Mutation, MutationType} from 'alinea/core/Mutation'
 import {Realm} from 'alinea/core/pages/Realm'
 import {atom, useSetAtom} from 'jotai'
 import {atomFamily} from 'jotai/utils'
@@ -68,7 +68,7 @@ const localDbAtom = atom(
     }
 
     const applyPending = (pending: Array<Mutation>) =>
-      (pendingLock = limit(async () => {
+      (pendingLock = limit(async (): Promise<Array<string>> => {
         await cancelMutations(store)
 
         // Open a savepoint in which we apply all mutations
@@ -79,7 +79,18 @@ const localDbAtom = atom(
         // Apply all mutations
         await db.applyMutations(pending)
 
-        return pending.map(({entryId}) => entryId)
+        console.log(pending)
+
+        return pending.flatMap(mutation => {
+          switch (mutation.type) {
+            case MutationType.Edit:
+              if (mutation.entry.parent)
+                return [mutation.entryId, mutation.entry.parent]
+            case MutationType.Discard:
+            default:
+              return mutation.entryId
+          }
+        })
       }))
 
     return {db, resolve, sync, applyPending}
@@ -153,6 +164,10 @@ export const entryRevisionAtoms = atomFamily((id: string) => {
     (get, set) => set(revision, i => i + 1)
   )
 })
+
+export function useMutate() {
+  return useSetAtom(mutateAtom)
+}
 
 export function useDbUpdater(everySeconds = 1000 * 60) {
   const forceDbUpdate = useSetAtom(dbUpdateAtom)

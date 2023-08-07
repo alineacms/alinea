@@ -98,6 +98,7 @@ const entryTreeItemLoaderAtom = atom(async get => {
     return ids.map(id => {
       if (id === rootId(root.name)) return entryTreeRootItem
       const entry = res.get(id)!
+      if (!entry) return undefined
       const typeName = entry.entries[0].type
       const type = schema[typeName]
       const isFolder = Type.isContainer(type)
@@ -155,10 +156,10 @@ export function useEntryTreeProvider(): AsyncTreeDataLoader<EntryTreeItem> & {
         }*/
       },
       async getItem(id): Promise<EntryTreeItem> {
-        return (await loader).clear(id).load(id)
+        return (await (await loader).clear(id).load(id))!
       },
       async getChildren(id): Promise<Array<string>> {
-        return this.getItem(id).then(item => item.children)
+        return this.getItem(id).then(item => item?.children ?? [])
       }
     }
   }, [loader])

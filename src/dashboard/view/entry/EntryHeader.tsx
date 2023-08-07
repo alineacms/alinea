@@ -1,6 +1,9 @@
+import {EntryPhase} from 'alinea/core'
 import {Button, HStack, Icon, Stack, fromModule, px} from 'alinea/ui'
 import {AppBar} from 'alinea/ui/AppBar'
+import {DropdownMenu} from 'alinea/ui/DropdownMenu'
 import {PopoverMenu} from 'alinea/ui/PopoverMenu'
+import IcOutlineAvTimer from 'alinea/ui/icons/IcOutlineAvTimer'
 import {IcOutlineDrafts} from 'alinea/ui/icons/IcOutlineDrafts'
 import {IcOutlineRemoveRedEye} from 'alinea/ui/icons/IcOutlineRemoveRedEye'
 import {IcRoundArchive} from 'alinea/ui/icons/IcRoundArchive'
@@ -10,12 +13,11 @@ import {IcRoundEdit} from 'alinea/ui/icons/IcRoundEdit'
 import {IcRoundMoreVert} from 'alinea/ui/icons/IcRoundMoreVert'
 import {IcRoundSave} from 'alinea/ui/icons/IcRoundSave'
 import {IcRoundTranslate} from 'alinea/ui/icons/IcRoundTranslate'
-import {MdiSourceBranch} from 'alinea/ui/icons/MdiSourceBranch'
+import {IcRoundUnfoldMore} from 'alinea/ui/icons/IcRoundUnfoldMore'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {EntryEditor} from '../../atoms/EntryEditorAtoms.js'
 import {useLocation, useNavigate} from '../../atoms/LocationAtoms.js'
 import {useLocale} from '../../hook/UseLocale.js'
-import {EditMode} from './EditMode.js'
 import css from './EntryHeader.module.scss'
 import {Langswitch} from './LangSwitch.js'
 
@@ -25,6 +27,7 @@ const variantDescription = {
   draft: 'Draft',
   editing: 'Editing',
   published: 'Published',
+  publishing: 'Publishing',
   archived: 'Archived',
   untranslated: 'Untranslated'
 }
@@ -33,6 +36,7 @@ const variantIcon = {
   draft: IcOutlineDrafts,
   editing: IcRoundEdit,
   published: IcOutlineRemoveRedEye,
+  publishing: IcOutlineAvTimer,
   archived: IcRoundArchive,
   untranslated: IcRoundTranslate
 }
@@ -46,80 +50,114 @@ export function EntryHeader({editor}: EntryHeaderProps) {
   const [mode, setMode] = useAtom(editor.editMode)
   const selectedPhase = useAtomValue(editor.selectedPhase)
   const isActivePhase = editor.activePhase === selectedPhase
+  const isPublishing = useAtomValue(editor.isPublishing)
   const hasChanges = useAtomValue(editor.hasChanges)
-  const untranslated = locale && locale !== editor.version.locale
+  const untranslated = locale && locale !== editor.activeVersion.locale
   const variant = untranslated
     ? 'untranslated'
     : hasChanges
     ? 'editing'
+    : selectedPhase === EntryPhase.Published && isPublishing
+    ? 'publishing'
     : selectedPhase
   const saveDraft = useSetAtom(editor.saveDraft)
   const publishDraft = useSetAtom(editor.publishDraft)
+  const discardDraft = useSetAtom(editor.discardDraft)
   const saveTranslation = useSetAtom(editor.saveTranslation)
-  const discardDraft = useSetAtom(editor.resetDraft)
+  const discardEdits = useSetAtom(editor.discardEdits)
   const translate = () => saveTranslation(locale!)
   const navigate = useNavigate()
   const {pathname} = useLocation()
   return (
     <AppBar.Root className={styles.root()} variant={variant}>
-      <HStack center gap={16} className={styles.root.description()}>
+      <HStack center gap={12} className={styles.root.description()}>
         <Icon icon={variantIcon[variant]} size={18} />
-        <strong className={styles.root.description.title()}>
+
+        <DropdownMenu.Root>
+          <DropdownMenu.Trigger className={styles.root.description.title()}>
+            <HStack center gap={4}>
+              <span>
+                {variant === 'draft' && hasChanges
+                  ? 'Editing'
+                  : variantDescription[variant]}
+              </span>
+              {editor.availablePhases.length > 1 && (
+                <Icon icon={IcRoundUnfoldMore} />
+              )}
+            </HStack>
+          </DropdownMenu.Trigger>
+          <DropdownMenu.Items placement="bottom">
+            {editor.availablePhases.map(phase => {
+              return (
+                <DropdownMenu.Item
+                  key={phase}
+                  onClick={() => {
+                    const search =
+                      phase === editor.activePhase ? '' : `?${phase}`
+                    navigate(pathname + search)
+                  }}
+                >
+                  {variantDescription[phase]}
+                </DropdownMenu.Item>
+              )
+            })}
+          </DropdownMenu.Items>
+        </DropdownMenu.Root>
+        {/*<strong className={styles.root.description.title()}>
           {variant === 'draft' && hasChanges
             ? 'Editing'
             : variantDescription[variant]}
-        </strong>
-
-        <span className={styles.root.description.separator()} />
+        </strong>*/}
 
         {!hasChanges && isActivePhase && (
-          <div className={styles.root.description.action()}>
-            Edit to create a new draft
-          </div>
+          <>
+            <span className={styles.root.description.separator()} />
+            <div className={styles.root.description.action()}>
+              Edit to create a new draft
+            </div>
+          </>
         )}
 
+        {!hasChanges &&
+          !isActivePhase &&
+          editor.availablePhases.includes(EntryPhase.Draft) && (
+            <>
+              <span className={styles.root.description.separator()} />
+              <div className={styles.root.description.action()}>
+                A newer draft version is available
+              </div>
+            </>
+          )}
+
         {untranslated && !hasChanges && (
-          <div className={styles.root.description.action()}>
-            <HStack center>
-              <span style={{marginRight: px(8)}}>Translate from</span>
-              <Langswitch
-                selected={editor.version.locale!}
-                locales={editor.translations.map(({locale}) => locale)}
-                onChange={locale => {
-                  navigate(pathname + `?from=` + locale)
-                }}
-              />
-            </HStack>
-          </div>
+          <>
+            <span className={styles.root.description.separator()} />
+            <div className={styles.root.description.action()}>
+              <HStack center>
+                <span style={{marginRight: px(8)}}>Translate from</span>
+                <Langswitch
+                  selected={editor.activeVersion.locale!}
+                  locales={editor.translations.map(({locale}) => locale)}
+                  onChange={locale => {
+                    navigate(pathname + `?from=` + locale)
+                  }}
+                />
+              </HStack>
+            </div>
+          </>
         )}
 
         {hasChanges && (
           <>
-            <div className={styles.root.description.action()}>
-              <button
-                className={styles.root.description.action.button()}
-                onClick={() =>
-                  setMode(
-                    mode === EditMode.Editing ? EditMode.Diff : EditMode.Editing
-                  )
-                }
-              >
-                <Icon icon={MdiSourceBranch} />
-                <span>
-                  {mode === EditMode.Editing ? 'Show changes' : 'Close changes'}
-                </span>
-              </button>
-            </div>
-
             <span className={styles.root.description.separator()} />
 
             <div className={styles.root.description.action()}>
               <button
                 className={styles.root.description.action.button()}
-                onClick={discardDraft}
+                onClick={discardEdits}
               >
                 <Icon icon={IcRoundDelete} />
-                <span>Discard draft</span>
+                <span>Discard edits</span>
               </button>
             </div>
           </>
@@ -159,11 +197,15 @@ export function EntryHeader({editor}: EntryHeaderProps) {
             )}
 
             <PopoverMenu.Root>
-              <PopoverMenu.Trigger className={styles.root.more()}>
+              <PopoverMenu.Trigger className={styles.root.more(variant)}>
                 <Icon icon={IcRoundMoreVert} />
               </PopoverMenu.Trigger>
 
-              <PopoverMenu.Items right>hzere</PopoverMenu.Items>
+              <PopoverMenu.Items right>
+                {variant === 'draft' && (
+                  <button onClick={discardDraft}>Remove draft</button>
+                )}
+              </PopoverMenu.Items>
             </PopoverMenu.Root>
           </HStack>
         </Stack.Right>

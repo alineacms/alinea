@@ -10,6 +10,7 @@ export enum MutationType {
   Edit = 'update',
   Publish = 'publish',
   Archive = 'archive',
+  Discard = 'discard',
   Remove = 'remove',
   Order = 'order',
   Move = 'move',
@@ -25,7 +26,8 @@ export type Mutation =
   | EditMutation
   | PublishMutation
   | ArchiveMutation
-  | RemoveMutation
+  | RemoveEntryMutation
+  | DiscardDraftMutation
   | OrderMutation
   | MoveMutation
   | FileUploadMutation
@@ -49,8 +51,14 @@ export interface ArchiveMutation {
   file: string
 }
 
-export interface RemoveMutation {
+export interface RemoveEntryMutation {
   type: MutationType.Remove
+  entryId: string
+  file: string
+}
+
+export interface DiscardDraftMutation {
+  type: MutationType.Discard
   entryId: string
   file: string
 }

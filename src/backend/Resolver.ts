@@ -70,6 +70,8 @@ const binOps = {
   [pages.BinaryOp.Concat]: BinOpType.Concat
 }
 
+const MAX_DEPTH = 999
+
 const pageFields = keys(EntryRow)
 
 type Interim = any
@@ -418,7 +420,9 @@ export class Resolver {
             .where(
               this.conditionRealm(Child, ctx.realm),
               this.conditionLocale(Child, ctx.locale),
-              children.level.isLess(source.depth)
+              children.level.isLess(
+                Math.min(source.depth ?? MAX_DEPTH, MAX_DEPTH)
+              )
             )
         )
         const childrenIds = children().select(children.entryId).skip(1)
@@ -449,7 +453,9 @@ export class Resolver {
             .where(
               this.conditionRealm(Parent, ctx.realm),
               this.conditionLocale(Parent, ctx.locale),
-              source.depth ? children.level.isLess(source.depth) : true
+              parents.level.isLess(
+                Math.min(source.depth ?? MAX_DEPTH, MAX_DEPTH)
+              )
             )
         )
         const parentIds = parents().select(parents.entryId).skip(1)

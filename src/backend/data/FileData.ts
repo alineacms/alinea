@@ -122,6 +122,7 @@ export class FileData implements Source, Target, Media {
     const {fs, rootDir = '.'} = this.options
     const noop = () => {}
     for (const change of changes) {
+      if (!change.type) continue
       switch (change.type) {
         case ChangeType.Write: {
           const location = path.join(rootDir, change.file)

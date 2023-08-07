@@ -87,5 +87,23 @@
     &:hover {
       background: hsla(var(--alinea-positive), 1);
     }
+
+    &.is-draft,
+    &.is-editing {
+      color: var(--alinea-variant-info-foreground);
+      background: var(--alinea-variant-info-action);
+    }
+    &.is-published {
+      color: var(--alinea-variant-success-foreground);
+      background: var(--alinea-variant-success-action);
+    }
+    &.is-archived {
+      color: var(--alinea-variant-disabled-foreground);
+      background: var(--alinea-variant-disabled-action);
+    }
+    &.is-publishing {
+      color: var(--alinea-variant-progress-foreground);
+      background: var(--alinea-variant-progress-action);
+    }
   }
 }
