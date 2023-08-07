@@ -13,6 +13,7 @@ export interface DashboardConfig {
 
 /** Configuration options */
 export interface Config {
+  /** A schema describing the types of entries */
   schema: Schema
   /** A record containing workspace configurations */
   workspaces: Record<string, Workspace>

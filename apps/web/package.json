@@ -11,7 +11,6 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@alinea/generated": "link:.alinea",
     "@monaco-editor/react": "^4.4.5",
     "alinea": "0.0.0",
     "lz-string": "^1.4.4",

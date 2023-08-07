@@ -14,7 +14,7 @@ export class DefaultDriver extends CMS {
 
   async readStore(): Promise<Store> {
     // @ts-ignore
-    const {createStore} = await import('@alinea/generated/store.js')
+    const {createStore} = await import('alinea/generated/store.js')
     return createStore()
   }
 

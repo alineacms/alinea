@@ -21,7 +21,7 @@ export async function generateDashboard(
     )
   const entryPoints = {
     entry: 'alinea/cli/static/dashboard/entry',
-    config: '@alinea/generated/config.js'
+    config: 'alinea/generated/config.js'
   }
   const basename = path.basename(staticFile, '.html')
   const assetsFolder = path.join(path.dirname(staticFile), basename)

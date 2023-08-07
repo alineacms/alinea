@@ -6,10 +6,12 @@ import esbuild, {BuildOptions, BuildResult} from 'esbuild'
 import fs from 'node:fs'
 import {createRequire} from 'node:module'
 import path from 'node:path'
+import {dirname} from '../util/Dirname.js'
 import {publicDefines} from '../util/PublicDefines.js'
 import {ServeContext} from './ServeContext.js'
 
 const require = createRequire(import.meta.url)
+const __dirname = dirname(import.meta.url)
 
 type BuildDetails = Map<string, Uint8Array>
 
@@ -82,7 +84,7 @@ export function createHandler(
       'next/navigation',
       'next/headers',
       'better-sqlite3',
-      '@alinea/generated/store.js'
+      'alinea/generated/store.js'
     ],
     format: 'esm',
     target: 'esnext',
@@ -94,7 +96,7 @@ export function createHandler(
     bundle: true,
     absWorkingDir: cwd,
     entryPoints: {
-      config: path.join(cwd, '.alinea/config.js'),
+      config: path.join(__dirname, '../../../generated/config.js'),
       entry
     },
     platform: 'browser',

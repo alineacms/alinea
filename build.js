@@ -258,6 +258,7 @@ const targetPlugin = {
         '.': './dist/index.js',
         './css': './dist/index.css',
         './*.cjs': './dist/*.cjs',
+        './generated/*': './generated/*',
         './*': './dist/*.js'
       }
       const bFiles = [...browserFiles].sort()

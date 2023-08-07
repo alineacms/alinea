@@ -111,6 +111,7 @@
     ".": "./dist/index.js",
     "./css": "./dist/index.css",
     "./*.cjs": "./dist/*.cjs",
+    "./generated/*": "./generated/*",
     "./*": "./dist/*.js",
     "./cloud/view/CloudAuth": {
       "worker": "./dist/cloud/view/CloudAuth.js",

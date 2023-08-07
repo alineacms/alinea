@@ -84,7 +84,7 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
     quiet,
     configLocation,
     fix: options.fix || false,
-    outDir: path.join(rootDir, '.alinea'),
+    outDir: path.join(__dirname, '../../generated'), // path.join(rootDir, '.alinea'),
     watch: options.watch || false
   }
 
@@ -103,10 +103,11 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
       for await (const _ of fillCache(context, store, cms, nextBuild)) {
         yield {cms, store}
         // For debug reasons write out db
-        fs.writeFileSync(
-          path.join(context.outDir, 'content.sqlite'),
-          exportStore()
-        )
+        if (process.env.NODE_ENV === 'development')
+          fs.writeFileSync(
+            path.join(context.outDir, 'content.sqlite'),
+            exportStore()
+          )
         if (onAfterGenerate && !afterGenerateCalled) {
           afterGenerateCalled = true
           onAfterGenerate()
