@@ -88,12 +88,6 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@alinea/generated@link:.alinea::locator=%40alinea%2Fweb%40workspace%3Aapps%2Fweb":
-  version: 0.0.0-use.local
-  resolution: "@alinea/generated@link:.alinea::locator=%40alinea%2Fweb%40workspace%3Aapps%2Fweb"
-  languageName: node
-  linkType: soft
-
 "@alinea/input.richtext@workspace:src/input/richtext":
   version: 0.0.0-use.local
   resolution: "@alinea/input.richtext@workspace:src/input/richtext"
@@ -164,7 +158,6 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@alinea/web@workspace:apps/web"
   dependencies:
-    "@alinea/generated": "link:.alinea"
     "@babel/standalone": ^7.22.5
     "@fontsource/inter": 5.0.1
     "@fontsource/jetbrains-mono": 5.0.1
@@ -1728,20 +1721,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@sqlite.org/sqlite-wasm@npm:^3.42.0-build4":
-  version: 3.42.0-build4
-  resolution: "@sqlite.org/sqlite-wasm@npm:3.42.0-build4"
-  dependencies:
-    comlink: ^4.4.1
-  dependenciesMeta:
-    comlink:
-      optional: true
-  bin:
-    sqlite-wasm: bin/index.js
-  checksum: 028bb67197d1d59daf7e941f407b20869a3f7e5743bd0810d59f5060c2b1bdedd644cb42af57dc82ad1898420db69dbb7b6b622756c6753e86823fd4fcd47d6a
-  languageName: node
-  linkType: hard
-
 "@swc/core-darwin-arm64@npm:1.3.67":
   version: 1.3.67
   resolution: "@swc/core-darwin-arm64@npm:1.3.67"
@@ -2640,7 +2619,6 @@ __metadata:
     "@esbx/target": ^0.0.20
     "@esbx/workspaces": ^0.0.19
     "@ladle/react": ^2.15.0
-    "@sqlite.org/sqlite-wasm": ^3.42.0-build4
     "@types/better-sqlite3": ^7.6.4
     "@types/fs-extra": ^11.0.1
     "@types/glob": ^7.1.4
@@ -3472,13 +3450,6 @@ __metadata:
   version: 1.2.4
   resolution: "color2k@npm:1.2.4"
   checksum: 9cde39430d9e4b7c03f1e572d9be76e17be3ce0c8cc1acd276eadc65d13a0e80f484220e3428cd53272d105369cae652b141ac03149e5738000b79a7fae1ba96
-  languageName: node
-  linkType: hard
-
-"comlink@npm:^4.4.1":
-  version: 4.4.1
-  resolution: "comlink@npm:4.4.1"
-  checksum: 16d58a8f590087fc45432e31d6c138308dfd4b75b89aec0b7f7bb97ad33d810381bd2b1e608a1fb2cf05979af9cbfcdcaf1715996d5fcf77aeb013b6da3260af
   languageName: node
   linkType: hard
 
