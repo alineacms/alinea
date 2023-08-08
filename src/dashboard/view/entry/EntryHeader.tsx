@@ -14,7 +14,7 @@ import {IcRoundMoreVert} from 'alinea/ui/icons/IcRoundMoreVert'
 import {IcRoundSave} from 'alinea/ui/icons/IcRoundSave'
 import {IcRoundTranslate} from 'alinea/ui/icons/IcRoundTranslate'
 import {IcRoundUnfoldMore} from 'alinea/ui/icons/IcRoundUnfoldMore'
-import {useAtom, useAtomValue, useSetAtom} from 'jotai'
+import {useAtomValue, useSetAtom} from 'jotai'
 import {EntryEditor} from '../../atoms/EntryEditorAtoms.js'
 import {useLocation, useNavigate} from '../../atoms/LocationAtoms.js'
 import {useLocale} from '../../hook/UseLocale.js'
@@ -47,7 +47,6 @@ export interface EntryHeaderProps {
 
 export function EntryHeader({editor}: EntryHeaderProps) {
   const locale = useLocale()
-  const [mode, setMode] = useAtom(editor.editMode)
   const selectedPhase = useAtomValue(editor.selectedPhase)
   const isActivePhase = editor.activePhase === selectedPhase
   const isPublishing = useAtomValue(editor.isPublishing)
@@ -55,11 +54,11 @@ export function EntryHeader({editor}: EntryHeaderProps) {
   const untranslated = locale && locale !== editor.activeVersion.locale
   const variant = untranslated
     ? 'untranslated'
-    : hasChanges
+    : hasChanges && !selectedPhase
     ? 'editing'
     : selectedPhase === EntryPhase.Published && isPublishing
     ? 'publishing'
-    : selectedPhase
+    : selectedPhase ?? editor.activePhase
   const saveDraft = useSetAtom(editor.saveDraft)
   const publishDraft = useSetAtom(editor.publishDraft)
   const discardDraft = useSetAtom(editor.discardDraft)
@@ -87,14 +86,21 @@ export function EntryHeader({editor}: EntryHeaderProps) {
             </HStack>
           </DropdownMenu.Trigger>
           <DropdownMenu.Items placement="bottom">
+            {hasChanges && (
+              <DropdownMenu.Item
+                onClick={() => {
+                  navigate(pathname)
+                }}
+              >
+                Editing
+              </DropdownMenu.Item>
+            )}
             {editor.availablePhases.map(phase => {
               return (
                 <DropdownMenu.Item
                   key={phase}
                   onClick={() => {
-                    const search =
-                      phase === editor.activePhase ? '' : `?${phase}`
-                    navigate(pathname + search)
+                    navigate(`${pathname}?${phase}`)
                   }}
                 >
                   {variantDescription[phase]}
@@ -103,11 +109,6 @@ export function EntryHeader({editor}: EntryHeaderProps) {
             })}
           </DropdownMenu.Items>
         </DropdownMenu.Root>
-        {/*<strong className={styles.root.description.title()}>
-          {variant === 'draft' && hasChanges
-            ? 'Editing'
-            : variantDescription[variant]}
-        </strong>*/}
 
         {!hasChanges && isActivePhase && (
           <>
@@ -162,21 +163,6 @@ export function EntryHeader({editor}: EntryHeaderProps) {
             </div>
           </>
         )}
-
-        {/*variant === 'draft' &&
-          editor.availablePhases.includes(EntryPhase.Published) && (
-            <>
-              <span className={styles.root.description.separator()} />
-              <div className={styles.root.description.action()}>
-                <a
-                  className={styles.root.description.action.button()}
-                  href={'#' + pathname + `?published`}
-                >
-                  Currently published
-                </a>
-              </div>
-            </>
-          )*/}
 
         <Stack.Right>
           <HStack center gap={12}>

@@ -1,6 +1,4 @@
 {
-  "id": "CC8aJ6-2U3s31micAzTLU",
-  "type": "Page",
   "title": "Roadmap",
   "body": [
     {
@@ -475,8 +473,11 @@
       ]
     }
   ],
-  "alinea": {
+  "@alinea": {
+    "entryId": "CC8aJ6-2U3s31micAzTLU",
+    "type": "Page",
     "index": "Zz",
+    "seeded": true,
     "root": "pages"
   }
 }

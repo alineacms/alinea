@@ -13,7 +13,7 @@
     width: 100%;
     flex-grow: 1;
     min-width: 0;
-    overflow: auto;
+    overflow-y: scroll;
 
     @mixin ml {
       min-width: 560px;

@@ -22,6 +22,7 @@ export const pendingAtom: Atom<Array<PendingMutation>> = yAtom(
 )
 
 export function cleanupPending(modifiedAt: number) {
+  console.log(`Cleanup pending`)
   // Cleanup mutations which are committed
   pendingDoc.transact(() => {
     for (const mutation of pendingMap.values())

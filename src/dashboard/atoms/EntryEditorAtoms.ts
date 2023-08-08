@@ -168,7 +168,7 @@ export function createEntryEditor(entryData: EntryData) {
     const phaseInSearch = search.slice(1)
     if ((<Array<string>>availablePhases).includes(phaseInSearch))
       return <EntryPhase>phaseInSearch
-    return activePhase
+    return undefined
   })
 
   function entryFile(entry: EntryRow) {

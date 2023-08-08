@@ -43,10 +43,8 @@ export function EntryEdit({editor}: EntryEditProps) {
   const nav = useNav()
   const [mode, setMode] = useAtom(editor.editMode)
   const hasChanges = useAtomValue(editor.hasChanges)
-  const selectedPhase = useAtomValue(editor.selectedPhase)
+  const selectedPhase = useAtomValue(editor.selectedPhase) || editor.activePhase
   const ref = useRef<HTMLDivElement>(null)
-  const isSaving = useAtomValue(editor.isSaving)
-  const isPublishing = useAtomValue(editor.isPublishing)
   useEffect(() => {
     ref.current?.scrollTo({top: 0})
   }, [editor.entryId, mode, selectedPhase])

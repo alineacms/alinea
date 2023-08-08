@@ -75,11 +75,10 @@ const localDbAtom = atom(
         // we can rollback the savepoint on next sync
         // This requires we use the same single connection for all reads
         // Alternatively we could create a new db here
+        await store(sql`savepoint mutations`)
 
         // Apply all mutations
         await db.applyMutations(pending)
-
-        console.log(pending)
 
         return pending.flatMap(mutation => {
           switch (mutation.type) {
