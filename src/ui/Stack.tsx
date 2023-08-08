@@ -93,4 +93,9 @@ export namespace Stack {
   ) {
     return <div {...props} style={{...props.style, marginLeft: 'auto'}} />
   }
+  export function Bottom(
+    props: PropsWithChildren<HTMLAttributes<HTMLDivElement>>
+  ) {
+    return <div {...props} style={{...props.style, marginTop: 'auto'}} />
+  }
 }

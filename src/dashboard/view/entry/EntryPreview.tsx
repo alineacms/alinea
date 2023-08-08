@@ -16,7 +16,7 @@ export interface LivePreview {
 }
 
 export function EntryPreview({editor, preview}: EntryPreviewProps) {
-  const selectedPhase = useAtomValue(editor.selectedPhase) ?? editor.activePhase
+  const selectedPhase = useAtomValue(editor.selectedPhase)
   const previewSearch = `?token=${editor.previewToken}&entryId=${editor.entryId}&realm=${selectedPhase}`
   const base = new URL(preview, location.href)
   const url = new URL(previewSearch, base)

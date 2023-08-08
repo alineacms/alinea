@@ -10,7 +10,7 @@
   }
 
   &-background {
-    background: hsla(var(--alinea-positive), 0.8);
+    background: var(--alinea-modal-background);
     position: absolute;
     inset: 0;
   }

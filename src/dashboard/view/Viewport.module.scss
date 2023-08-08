@@ -30,14 +30,18 @@
   --alinea-tabs-trigger-foreground: white;
   --alinea-tabs-trigger-background: hsl(215, 17%, 35%);
 
+  --alinea-modal-background: hsla(200, 12%, 14%, 0.95);
+
   --alinea-button-foreground: white;
   --alinea-button-background: #3f61e8;
-  --alinea-button-hover: #2e4fd1;
+  --alinea-button-hover: #4a65e8;
 
   --alinea-variant-info-foreground: #f0f6ff;
   --alinea-variant-info-background: hsla(230, 40%, 30%, 0.8);
+  --alinea-variant-info-action: hsl(230, 100%, 30%);
   --alinea-variant-success-foreground: #f1fdf4;
   --alinea-variant-success-background: hsla(140, 21%, 30%, 0.8);
+  --alinea-variant-success-action: hsl(140, 30%, 87%);
   --alinea-variant-disabled-foreground: #f0f0f0;
   --alinea-variant-disabled-background: hsla(0, 0%, 30%, 0.8);
   --alinea-variant-progress-foreground: #fef7ed;
@@ -78,6 +82,8 @@
   --alinea-tabs-trigger-foreground: inherit;
   --alinea-tabs-trigger-background: white;
 
+  --alinea-modal-background: hsla(200, 12%, 14%, 0.6);
+
   --alinea-button-foreground: white;
   --alinea-button-background: #3f61e8;
   --alinea-button-hover: #4a65e8;
@@ -111,11 +117,13 @@
   &.is-light,
   html[data-theme='light'] & {
     @include light-theme;
+    color-scheme: light;
   }
 
   &.is-dark,
   html[data-theme='dark'] & {
     @include dark-theme;
+    color-scheme: dark;
   }
 }
 

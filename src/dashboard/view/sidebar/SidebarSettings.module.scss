@@ -1,0 +1,37 @@
+.root {
+  &-switch {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    height: 20px;
+    width: 40px;
+    background-color: hsla(
+      var(--alinea-hue),
+      var(--alinea-saturation),
+      var(--alinea-lightness),
+      0.2
+    );
+    border-radius: 25px;
+    border: none;
+    cursor: pointer;
+
+    &.is-checked {
+      background-color: var(--alinea-accent);
+    }
+
+    &-slider {
+      position: absolute;
+      display: inline-block;
+      height: 16px;
+      width: 16px;
+      left: 2px;
+      border-radius: 50%;
+      background-color: var(--alinea-accent-foreground);
+      transition: transform 0.2s ease-in;
+
+      &.is-checked {
+        transform: translateX(20px);
+      }
+    }
+  }
+}

@@ -122,7 +122,7 @@ export interface EntryData {
 export type EntryEditor = ReturnType<typeof createEntryEditor>
 
 export function createEntryEditor(entryData: EntryData) {
-  const {client, config, availablePhases} = entryData
+  const {config, availablePhases} = entryData
   const activePhase = availablePhases[0]
   const activeVersion = entryData.phases[activePhase]
   const type = config.schema[activeVersion.type]
@@ -163,12 +163,16 @@ export function createEntryEditor(entryData: EntryData) {
     250
   )
 
-  const selectedPhase = atom(get => {
+  const phaseInUrl = atom(get => {
     const {search} = get(locationAtom)
     const phaseInSearch = search.slice(1)
     if ((<Array<string>>availablePhases).includes(phaseInSearch))
       return <EntryPhase>phaseInSearch
     return undefined
+  })
+
+  const selectedPhase = atom(get => {
+    return get(phaseInUrl) ?? activePhase
   })
 
   function entryFile(entry: EntryRow) {
@@ -244,6 +248,7 @@ export function createEntryEditor(entryData: EntryData) {
   return {
     ...entryData,
     activePhase,
+    phaseInUrl,
     selectedPhase,
     entryData,
     editMode,

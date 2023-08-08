@@ -15,6 +15,7 @@ import {IcRoundSave} from 'alinea/ui/icons/IcRoundSave'
 import {IcRoundTranslate} from 'alinea/ui/icons/IcRoundTranslate'
 import {IcRoundUnfoldMore} from 'alinea/ui/icons/IcRoundUnfoldMore'
 import {useAtomValue, useSetAtom} from 'jotai'
+import {useEffect} from 'react'
 import {EntryEditor} from '../../atoms/EntryEditorAtoms.js'
 import {useLocation, useNavigate} from '../../atoms/LocationAtoms.js'
 import {useLocale} from '../../hook/UseLocale.js'
@@ -47,6 +48,7 @@ export interface EntryHeaderProps {
 
 export function EntryHeader({editor}: EntryHeaderProps) {
   const locale = useLocale()
+  const phaseInUrl = useAtomValue(editor.phaseInUrl)
   const selectedPhase = useAtomValue(editor.selectedPhase)
   const isActivePhase = editor.activePhase === selectedPhase
   const isPublishing = useAtomValue(editor.isPublishing)
@@ -54,11 +56,11 @@ export function EntryHeader({editor}: EntryHeaderProps) {
   const untranslated = locale && locale !== editor.activeVersion.locale
   const variant = untranslated
     ? 'untranslated'
-    : hasChanges && !selectedPhase
+    : hasChanges && !phaseInUrl
     ? 'editing'
     : selectedPhase === EntryPhase.Published && isPublishing
     ? 'publishing'
-    : selectedPhase ?? editor.activePhase
+    : selectedPhase
   const saveDraft = useSetAtom(editor.saveDraft)
   const publishDraft = useSetAtom(editor.publishDraft)
   const discardDraft = useSetAtom(editor.discardDraft)
@@ -67,6 +69,10 @@ export function EntryHeader({editor}: EntryHeaderProps) {
   const translate = () => saveTranslation(locale!)
   const navigate = useNavigate()
   const {pathname} = useLocation()
+  useEffect(() => {
+    // Reset the selected phase if we make edits
+    if (hasChanges && selectedPhase) navigate(pathname)
+  }, [hasChanges])
   return (
     <AppBar.Root className={styles.root()} variant={variant}>
       <HStack center gap={12} className={styles.root.description()}>
@@ -75,11 +81,7 @@ export function EntryHeader({editor}: EntryHeaderProps) {
         <DropdownMenu.Root>
           <DropdownMenu.Trigger className={styles.root.description.title()}>
             <HStack center gap={4}>
-              <span>
-                {variant === 'draft' && hasChanges
-                  ? 'Editing'
-                  : variantDescription[variant]}
-              </span>
+              <span>{variantDescription[variant]}</span>
               {editor.availablePhases.length > 1 && (
                 <Icon icon={IcRoundUnfoldMore} />
               )}
@@ -148,7 +150,7 @@ export function EntryHeader({editor}: EntryHeaderProps) {
           </>
         )}
 
-        {hasChanges && (
+        {variant === 'editing' && (
           <>
             <span className={styles.root.description.separator()} />
 

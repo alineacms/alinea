@@ -179,9 +179,7 @@ export namespace Toolbar {
                         <Switch
                           checked={checked}
                           onChange={toggleSchemePreference}
-                          className={styles.root.switch({
-                            checked
-                          })}
+                          className={styles.root.switch({checked})}
                         >
                           <span
                             className={styles.root.switch.slider({

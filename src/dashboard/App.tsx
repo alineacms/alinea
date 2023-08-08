@@ -33,6 +33,7 @@ import {ErrorBoundary} from './view/ErrorBoundary.js'
 import {Sidebar} from './view/Sidebar.js'
 import {Toolbar} from './view/Toolbar.js'
 import {Viewport} from './view/Viewport.js'
+import {SidebarSettings} from './view/sidebar/SidebarSettings.js'
 
 function DraftsButton() {
   const location = useLocation()
@@ -120,6 +121,7 @@ function AppAuthenticated() {
                   )
                 })}
                 {/*<DraftsButton />*/}
+                <SidebarSettings />
               </Sidebar.Nav>
               <ErrorBoundary>
                 <SuspenseBoundary name="main" fallback={<Loader absolute />}>

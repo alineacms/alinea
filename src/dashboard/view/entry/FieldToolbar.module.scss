@@ -7,6 +7,7 @@
   // Disable backdrop filter so we can use fixed positioning for the rich text
   // toolbar
   backdrop-filter: none !important;
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.08);
 
   &-inner {
     height: 100%;

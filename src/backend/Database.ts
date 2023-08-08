@@ -95,6 +95,7 @@ export class Database implements Syncable {
       return excess.map(e => e.entryId)
     })
     const afterRemoves = await this.meta()
+    console.log({afterRemoves, contentHash})
     if (afterRemoves.contentHash === contentHash)
       return changedEntries.concat(excessEntries)
     // Todo: we should abandon syncing and just fetch the full db

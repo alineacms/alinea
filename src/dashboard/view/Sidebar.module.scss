@@ -74,7 +74,7 @@
   }
 
   &-menu {
-    padding: 8px 0;
+    padding: 6px 0;
     gap: 8px;
     display: flex;
     flex-direction: column;
@@ -108,8 +108,8 @@
         left: 100%;
         font-size: 12px;
         font-weight: 600;
-        background: hsla(var(--alinea-negative), 0.6);
-        backdrop-filter: blur(5px);
+        background: hsla(var(--alinea-negative), 0.8);
+        //backdrop-filter: blur(5px);
         color: var(--alinea-background);
         padding: 6px 12px;
         top: 50%;

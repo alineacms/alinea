@@ -19,7 +19,7 @@ export interface EntryTitleProps {
 
 export function EntryTitle({editor, backLink}: EntryTitleProps) {
   const {label} = useWorkspace()
-  const selectedPhase = useAtomValue(editor.selectedPhase) ?? editor.activePhase
+  const selectedPhase = useAtomValue(editor.selectedPhase)
   const [editMode, setEditMode] = useAtom(editor.editMode)
   const version = editor.phases[selectedPhase]
   const type = editor.type
