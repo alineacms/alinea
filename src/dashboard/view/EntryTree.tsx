@@ -94,10 +94,10 @@ function EntryTreeItem({item, data}: EntryTreeItemProps) {
         </span>
 
         {/*isUntranslated && (
-                  <span className={styles.tree.status()}>
-                    <Icon icon={IcRoundTranslate} />
-                  </span>
-                )*/}
+            <span className={styles.tree.status()}>
+              <Icon icon={IcRoundTranslate} />
+            </span>
+          )*/}
 
         {!isUntranslated && isDraft && (
           <span className={styles.tree.status({draft: true})}>
@@ -160,7 +160,11 @@ export function EntryTree({i18nId: entryId, selected = []}: EntryTreeProps) {
         if (!item) continue
         const parent = item.getParent()
         const parentId = parent?.getId()
-        tree.invalidateChildrenIds(parentId)
+        if (!parentId) {
+          tree.invalidateChildrenIds(rootId(root.name))
+        } else {
+          tree.invalidateChildrenIds(parentId)
+        }
         tree.invalidateChildrenIds(id)
         tree.invalidateItemData(id)
       } catch (e) {}

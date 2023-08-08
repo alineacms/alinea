@@ -1,3 +1,4 @@
+import {JsonLoader} from 'alinea/backend'
 import {FS} from 'alinea/backend/FS'
 import {Connection, HttpError} from 'alinea/core'
 import {Config} from 'alinea/core/Config'
@@ -9,6 +10,7 @@ import * as path from 'alinea/core/util/Paths'
 import {Media} from '../Media.js'
 import {Source, SourceEntry, WatchFiles} from '../Source.js'
 import {Target} from '../Target.js'
+import {applyJsonPatch} from '../util/JsonPatch.js'
 import {ChangeType} from './ChangeSet.js'
 
 export type FileDataOptions = {
@@ -119,7 +121,7 @@ export class FileData implements Source, Target, Media {
   }
 
   async publishChanges({changes}: Connection.ChangesParams) {
-    const {fs, rootDir = '.'} = this.options
+    const {fs, rootDir = '.', config} = this.options
     const noop = () => {}
     for (const change of changes) {
       if (!change.type) continue
@@ -146,9 +148,12 @@ export class FileData implements Source, Target, Media {
         case ChangeType.Patch: {
           const location = path.join(rootDir, change.file)
           const contents = await fs.readFile(location)
-          const record = JSON.parse(contents.toString())
+          const record = JsonLoader.parse(config.schema, contents)
           const newContents = applyJsonPatch(record, change.patch)
-          await fs.writeFile(location, JSON.stringify(newContents))
+          await fs.writeFile(
+            location,
+            JsonLoader.format(config.schema, newContents)
+          )
         }
       }
     }

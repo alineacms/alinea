@@ -2,7 +2,7 @@
 // objects deeply and removing keys that are set to null.
 // It is not related to the JSON Patch standard.
 // !!!!! It mutates the provided source
-function applyJsonPatch(source: any, patch: object) {
+export function applyJsonPatch(source: any, patch: object) {
   if (!patch || typeof patch !== 'object') return source
   for (const [key, value] of Object.entries(patch)) {
     if (value && typeof value === 'object') {

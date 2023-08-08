@@ -5,12 +5,14 @@ import {
 } from '@headless-tree/core'
 import {EntryPhase, Type} from 'alinea/core'
 import {Entry} from 'alinea/core/Entry'
+import {Projection} from 'alinea/core/pages/Projection'
 import {entries} from 'alinea/core/util/Objects'
 import DataLoader from 'dataloader'
-import {atom, useAtomValue} from 'jotai'
+import {atom, useAtomValue, useSetAtom} from 'jotai'
 import {useMemo} from 'react'
+import {useDashboard} from '../hook/UseDashboard.js'
 import {configAtom} from './DashboardAtoms.js'
-import {graphAtom} from './DbAtoms.js'
+import {graphAtom, mutateAtom} from './DbAtoms.js'
 import {rootAtom, workspaceAtom} from './NavigationAtoms.js'
 
 export function rootId(rootName: string) {
@@ -65,8 +67,14 @@ const entryTreeItemLoaderAtom = atom(async get => {
       type: Entry.type,
       title: Entry.title,
       phase: Entry.phase,
-      locale: Entry.locale
-    }
+      locale: Entry.locale,
+      workspace: Entry.workspace,
+      root: Entry.root,
+      path: Entry.path,
+      parentPaths({parents}) {
+        return parents(Entry).select(Entry.path)
+      }
+    } satisfies Projection
     const entries = Entry()
       .select({
         id: Entry.i18nId,
@@ -122,6 +130,10 @@ export interface EntryTreeItem {
     title: string
     phase: EntryPhase
     locale: string | null
+    workspace: string
+    root: string
+    path: string
+    parentPaths: Array<string>
   }>
   isFolder?: boolean
   children: Array<string>
@@ -134,25 +146,31 @@ export function useEntryTreeProvider(): AsyncTreeDataLoader<EntryTreeItem> & {
   ): void
 } {
   const {loader} = useAtomValue(loaderAtom)
+  const mutate = useSetAtom(mutateAtom)
+  const {config} = useDashboard()
   return useMemo(() => {
     return {
-      onDrop(items, target) {
-        console.log('onDrop', items, target)
-        /*const targetId = target.item.getId()
-        const mutations: Array<OrderMutation> = []
-        for (const item of items) {
-          const newIndex = 'todo'
-          const data = item.getItemData()
-          const previous = item.getItemAbove()?.getItemData()?.index
-          const next = item.getItemAbove()?.getItemData()?.index
-          for (const {entryId} of data.entries) {
-            mutations.push({
-              type: MutationType.Order,
-              entryId,
-              file: 'todo',
-              index: newIndex
-            })
-          }
+      onDrop(items, {item: parent, childIndex, insertionIndex}) {
+        if (items.length !== 1) return
+        const [dropping] = items
+        if (insertionIndex === null) {
+          console.log('Todo: move entries')
+          return
+        }
+        console.log('Todo: order entries')
+        return
+        /*const previous = parent.getChildren()[insertionIndex - 1]
+        const next = parent.getChildren()[insertionIndex]
+        const previousIndex = previous?.getItemData()?.index ?? null
+        const nextIndex = next?.getItemData()?.index ?? null
+        const newIndex = generateKeyBetween(previousIndex, nextIndex)
+        for (const entry of dropping.getItemData().entries) {
+          mutate({
+            type: MutationType.Order,
+            entryId: entry.entryId,
+            file: entryFileName(config, entry, entry.parentPaths),
+            index: newIndex
+          })
         }*/
       },
       async getItem(id): Promise<EntryTreeItem> {

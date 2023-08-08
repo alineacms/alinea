@@ -1,3 +1,4 @@
+import {JsonLoader} from 'alinea/backend'
 import {
   Config,
   EntryUrlMeta,
@@ -119,6 +120,7 @@ export class Database implements Syncable {
   }
 
   async applyMutations(mutations: Array<Mutation>) {
+    console.log(mutations)
     for (const mutation of mutations) {
       switch (mutation.type) {
         case MutationType.Edit:
@@ -431,14 +433,7 @@ export class Database implements Syncable {
           continue
         }
         try {
-          const raw = JSON.parse(decoder.decode(file.contents))
-          // This is backwards compatibility for the old format
-          if (!raw[META_KEY]) raw[META_KEY] = raw.alinea ?? {}
-          if (!raw[META_KEY].entryId)
-            raw[META_KEY].entryId = raw.id ?? raw[META_KEY].id
-          if (!raw[META_KEY].type) raw[META_KEY].type = raw.type
-          if (!raw[META_KEY].i18nId && raw[META_KEY].i18n)
-            raw[META_KEY].i18nId = raw[META_KEY].i18n?.id
+          const raw = JsonLoader.parse(this.config.schema, file.contents)
           const entry = this.computeEntry(EntryRecord(raw), file, seed)
           if (entry.seeded && entry.phase === EntryPhase.Published && !seed)
             throw new Error(`seed entry is missing from config`)
