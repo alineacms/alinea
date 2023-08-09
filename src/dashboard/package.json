@@ -17,7 +17,7 @@
     "dataloader": "^2.1.0",
     "diff-match-patch": "^1.0.5",
     "fflate": "^0.8.0",
-    "jotai": "^2.1.0",
+    "jotai": "^2.3.1",
     "lib0": "^0.2.78",
     "p-limit": "^4.0.0",
     "pretty-bytes": "^6.0.0",

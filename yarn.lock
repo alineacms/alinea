@@ -78,7 +78,7 @@ __metadata:
     dataloader: ^2.1.0
     diff-match-patch: ^1.0.5
     fflate: ^0.8.0
-    jotai: ^2.1.0
+    jotai: ^2.3.1
     lib0: ^0.2.78
     p-limit: ^4.0.0
     pretty-bytes: ^6.0.0
@@ -6183,15 +6183,18 @@ fsevents@~2.3.2:
   languageName: node
   linkType: hard
 
-"jotai@npm:^2.1.0":
-  version: 2.1.0
-  resolution: "jotai@npm:2.1.0"
+"jotai@npm:^2.3.1":
+  version: 2.3.1
+  resolution: "jotai@npm:2.3.1"
   peerDependencies:
+    "@types/react": ">=17.0.0"
     react: ">=17.0.0"
   peerDependenciesMeta:
+    "@types/react":
+      optional: true
     react:
       optional: true
-  checksum: 060b78dd221950c52e2c796f122b86b2cbbe99ba2b57e8c999a9b5403fd5f970cb8834296f0ac20bace85af8f96a8aac573efb9515382d215bbeace6c417a074
+  checksum: c2e3dcb3206749cd7f63ab9cfec5d0bacd19ac8c1710e688716fcbdaa031c6bb78f10ed24ea8da65cd98b4dc3c04170c05eedb4d3284b9ad80858f834c69a914
   languageName: node
   linkType: hard
 
