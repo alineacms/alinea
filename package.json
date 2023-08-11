@@ -49,11 +49,8 @@
   ],
   "dependencies": {
     "@alinea/iso": "^0.3.0",
-    "@alinea/sqlite-wasm": "^0.1.13",
+    "@alinea/sqlite-wasm": "^0.1.14",
     "esbuild": "^0.18.5"
-  },
-  "optionalDependencies": {
-    "better-sqlite3": "^8.5.0"
   },
   "peerDependencies": {
     "react": "*",

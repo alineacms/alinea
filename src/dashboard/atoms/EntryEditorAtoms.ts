@@ -156,6 +156,15 @@ export function createEntryEditor(entryData: EntryData) {
     )
   })
 
+  const isArchiving = atom(get => {
+    const pending = get(pendingAtom)
+    return pending.some(
+      mutation =>
+        mutation.type === MutationType.Archive &&
+        mutation.entryId === activeVersion.entryId
+    )
+  })
+
   const yUpdate = debounceAtom(
     yAtom(yDoc.getMap(ROOT_KEY), () => {
       return Y.encodeStateAsUpdateV2(yDoc, yStateVector)
@@ -225,6 +234,26 @@ export function createEntryEditor(entryData: EntryData) {
     return set(mutateAtom, mutation)
   })
 
+  const archivePublished = atom(null, (get, set) => {
+    const published = entryData.phases[EntryPhase.Published]
+    const mutation: Mutation = {
+      type: MutationType.Archive,
+      entryId: published.entryId,
+      file: entryFile(published)
+    }
+    return set(mutateAtom, mutation)
+  })
+
+  const publishArchived = atom(null, (get, set) => {
+    const archived = entryData.phases[EntryPhase.Archived]
+    const mutation: Mutation = {
+      type: MutationType.Publish,
+      entryId: archived.entryId,
+      file: entryFile(archived)
+    }
+    return set(mutateAtom, mutation)
+  })
+
   const discardEdits = atom(null, (get, set) => {
     const type = config.schema[activeVersion.type]
     const docRoot = yDoc.getMap(ROOT_KEY)
@@ -263,10 +292,13 @@ export function createEntryEditor(entryData: EntryData) {
     saveDraft,
     publishDraft,
     discardDraft,
+    archivePublished,
+    publishArchived,
     saveTranslation,
     discardEdits,
     isSaving,
     isPublishing,
+    isArchiving,
     view
   }
 }

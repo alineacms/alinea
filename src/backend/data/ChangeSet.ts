@@ -83,17 +83,27 @@ export class ChangeSetCreator {
   }
 
   publishChanges({entryId, file}: PublishMutation): ChangeSet {
-    const fileEnd = `.${EntryPhase.Draft}.json`
-    if (!file.endsWith(fileEnd))
-      throw new Error(`Cannot publish non-draft file: ${file}`)
-    return [
-      {
-        type: ChangeType.Rename,
-        entryId,
-        from: file,
-        to: file.slice(0, -fileEnd.length) + '.json'
-      }
-    ]
+    const draftFile = `.${EntryPhase.Draft}.json`
+    const archivedFiled = `.${EntryPhase.Archived}.json`
+    if (file.endsWith(draftFile))
+      return [
+        {
+          type: ChangeType.Rename,
+          entryId,
+          from: file,
+          to: file.slice(0, -draftFile.length) + '.json'
+        }
+      ]
+    if (file.endsWith(archivedFiled))
+      return [
+        {
+          type: ChangeType.Rename,
+          entryId,
+          from: file,
+          to: file.slice(0, -archivedFiled.length) + '.json'
+        }
+      ]
+    throw new Error(`Cannot publish file: ${file}`)
   }
 
   archiveChanges({entryId, file}: ArchiveMutation): ChangeSet {

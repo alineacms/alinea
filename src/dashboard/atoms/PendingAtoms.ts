@@ -22,21 +22,41 @@ export const pendingAtom: Atom<Array<PendingMutation>> = yAtom(
 )
 
 export function cleanupPending(modifiedAt: number) {
-  console.log(`Cleanup pending`)
   // Cleanup mutations which are committed
   pendingDoc.transact(() => {
-    for (const mutation of pendingMap.values())
-      if (modifiedAt > mutation.createdAt)
+    for (const mutation of pendingMap.values()) {
+      if (modifiedAt > mutation.createdAt) {
         pendingMap.delete(mutation.mutationId)
+      } else {
+        // Cleanup mutations which are older than 20 minutes as these may
+        // have silently failed
+        const duration = Date.now() - mutation.createdAt
+        if (duration > 1000 * 60 * 20) pendingMap.delete(mutation.mutationId)
+      }
+    }
   })
 }
 
-export function addPending(mutation: Mutation) {
+export function addPending(...mutations: Array<Mutation>) {
   const mutationId = createId()
-  pendingMap.set(mutationId, {
-    ...mutation,
-    mutationId,
-    createdAt: Date.now()
+  const res: Array<PendingMutation> = []
+  pendingDoc.transact(() => {
+    for (const mutation of mutations) {
+      const pending = {
+        ...mutation,
+        mutationId,
+        createdAt: Date.now()
+      }
+      pendingMap.set(mutationId, pending)
+      res.push(pending)
+    }
+  })
+  return res
+}
+
+export function removePending(...mutationIds: Array<string>) {
+  pendingDoc.transact(() => {
+    for (const mutationId of mutationIds) pendingMap.delete(mutationId)
   })
 }
 

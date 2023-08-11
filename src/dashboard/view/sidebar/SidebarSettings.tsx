@@ -1,5 +1,5 @@
 import {Switch} from '@headlessui/react'
-import {Config, Workspace} from 'alinea/core'
+import {Workspace} from 'alinea/core'
 import {entries, fromEntries} from 'alinea/core/util/Objects'
 import {InputField} from 'alinea/editor/view/InputField'
 import {select} from 'alinea/input'
@@ -67,17 +67,8 @@ export function SidebarSettings() {
         </Sidebar.Nav.Item>
       </DropdownMenu.Trigger>
 
-      <DropdownMenu.Items placement="top">
+      <DropdownMenu.Items top style={{left: px(14)}}>
         <VStack gap={25}>
-          {Config.hasAuth(config) && (
-            <PopoverMenu.Header>
-              <p>
-                {session.user.sub.charAt(0).toUpperCase() +
-                  session.user.sub.slice(1)}
-              </p>
-            </PopoverMenu.Header>
-          )}
-
           <VStack gap={15}>
             <HStack justify={'space-between'} style={{padding: px(6)}}>
               <HStack center gap={16}>
@@ -121,7 +112,7 @@ export function SidebarSettings() {
             )}
           </VStack>
 
-          {Config.hasAuth(config) && (
+          {session.end && (
             <PopoverMenu.Footer>
               <DropdownMenu.Root>
                 <DropdownMenu.Item onClick={session.end}>

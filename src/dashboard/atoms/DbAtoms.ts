@@ -15,7 +15,12 @@ import {
   createPersistentStore
 } from '../util/PersistentStore.js'
 import {clientAtom, configAtom} from './DashboardAtoms.js'
-import {addPending, cleanupPending, pendingMap} from './PendingAtoms.js'
+import {
+  addPending,
+  cleanupPending,
+  pendingMap,
+  removePending
+} from './PendingAtoms.js'
 
 export const storeAtom = atom(createPersistentStore)
 
@@ -24,7 +29,7 @@ const limit = pLimit(1)
 async function cancelMutations(store: Store) {
   // Cancel previous mutations if they were applied
   try {
-    await store(sql`rollback to mutations`)
+    await store(sql`rollback`)
   } catch {}
 }
 
@@ -103,11 +108,17 @@ const localDbAtom = atom(
 )
 localDbAtom.onMount = init => init()
 
-export const mutateAtom = atom(null, (get, set, mutation: Mutation) => {
-  const client = get(clientAtom)
-  addPending(mutation)
-  return client.mutate([mutation])
-})
+export const mutateAtom = atom(
+  null,
+  (get, set, ...mutations: Array<Mutation>) => {
+    const client = get(clientAtom)
+    const pending = addPending(...mutations)
+    return client.mutate(mutations).catch(error => {
+      removePending(...pending.map(m => m.mutationId))
+      console.error(error)
+    })
+  }
+)
 
 export const dbUpdateAtom = atom(null, async (get, set) => {
   const {sync, applyPending} = await get(localDbAtom)
@@ -168,10 +179,10 @@ export function useMutate() {
   return useSetAtom(mutateAtom)
 }
 
-export function useDbUpdater(everySeconds = 1000 * 60) {
+export function useDbUpdater(everySeconds = 60) {
   const forceDbUpdate = useSetAtom(dbUpdateAtom)
   useEffect(() => {
-    const interval = setInterval(forceDbUpdate, everySeconds)
+    const interval = setInterval(forceDbUpdate, everySeconds * 1000)
     return () => clearInterval(interval)
   }, [everySeconds, forceDbUpdate])
 }

@@ -24,7 +24,7 @@ export namespace Media {
     height: number
     preview: string
     averageColor: string
-    blurHash: string
+    thumbHash: string
   }
 
   export type File = EntryRow<FileProperties & Partial<ImageProperties>>

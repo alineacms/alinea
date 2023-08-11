@@ -2,7 +2,6 @@ import {EntryPhase} from 'alinea/core'
 import {Button, HStack, Icon, Stack, fromModule, px} from 'alinea/ui'
 import {AppBar} from 'alinea/ui/AppBar'
 import {DropdownMenu} from 'alinea/ui/DropdownMenu'
-import {PopoverMenu} from 'alinea/ui/PopoverMenu'
 import IcOutlineAvTimer from 'alinea/ui/icons/IcOutlineAvTimer'
 import {IcOutlineDrafts} from 'alinea/ui/icons/IcOutlineDrafts'
 import {IcOutlineRemoveRedEye} from 'alinea/ui/icons/IcOutlineRemoveRedEye'
@@ -30,6 +29,7 @@ const variantDescription = {
   published: 'Published',
   publishing: 'Publishing',
   archived: 'Archived',
+  archiving: 'Archiving',
   untranslated: 'Untranslated'
 }
 
@@ -39,6 +39,7 @@ const variantIcon = {
   published: IcOutlineRemoveRedEye,
   publishing: IcOutlineAvTimer,
   archived: IcRoundArchive,
+  archiving: IcOutlineAvTimer,
   untranslated: IcRoundTranslate
 }
 
@@ -52,6 +53,7 @@ export function EntryHeader({editor}: EntryHeaderProps) {
   const selectedPhase = useAtomValue(editor.selectedPhase)
   const isActivePhase = editor.activePhase === selectedPhase
   const isPublishing = useAtomValue(editor.isPublishing)
+  const isArchiving = useAtomValue(editor.isArchiving)
   const hasChanges = useAtomValue(editor.hasChanges)
   const untranslated = locale && locale !== editor.activeVersion.locale
   const variant = untranslated
@@ -60,10 +62,14 @@ export function EntryHeader({editor}: EntryHeaderProps) {
     ? 'editing'
     : selectedPhase === EntryPhase.Published && isPublishing
     ? 'publishing'
+    : selectedPhase === EntryPhase.Archived && isArchiving
+    ? 'archiving'
     : selectedPhase
   const saveDraft = useSetAtom(editor.saveDraft)
   const publishDraft = useSetAtom(editor.publishDraft)
   const discardDraft = useSetAtom(editor.discardDraft)
+  const archivePublished = useSetAtom(editor.archivePublished)
+  const publishArchived = useSetAtom(editor.publishArchived)
   const saveTranslation = useSetAtom(editor.saveTranslation)
   const discardEdits = useSetAtom(editor.discardEdits)
   const translate = () => saveTranslation(locale!)
@@ -87,7 +93,7 @@ export function EntryHeader({editor}: EntryHeaderProps) {
               )}
             </HStack>
           </DropdownMenu.Trigger>
-          <DropdownMenu.Items placement="bottom">
+          <DropdownMenu.Items bottom>
             {hasChanges && (
               <DropdownMenu.Item
                 onClick={() => {
@@ -184,17 +190,42 @@ export function EntryHeader({editor}: EntryHeaderProps) {
               </Button>
             )}
 
-            <PopoverMenu.Root>
-              <PopoverMenu.Trigger className={styles.root.more(variant)}>
-                <Icon icon={IcRoundMoreVert} />
-              </PopoverMenu.Trigger>
+            {['draft', EntryPhase.Published, EntryPhase.Archived].includes(
+              variant
+            ) && (
+              <DropdownMenu.Root>
+                <DropdownMenu.Trigger className={styles.root.more(variant)}>
+                  <Icon icon={IcRoundMoreVert} />
+                </DropdownMenu.Trigger>
 
-              <PopoverMenu.Items right>
-                {variant === 'draft' && (
-                  <button onClick={discardDraft}>Remove draft</button>
-                )}
-              </PopoverMenu.Items>
-            </PopoverMenu.Root>
+                <DropdownMenu.Items bottom right>
+                  {variant === 'draft' && (
+                    <DropdownMenu.Item
+                      className={styles.root.action()}
+                      onClick={discardDraft}
+                    >
+                      Remove draft
+                    </DropdownMenu.Item>
+                  )}
+                  {variant === EntryPhase.Published && (
+                    <DropdownMenu.Item
+                      className={styles.root.action()}
+                      onClick={archivePublished}
+                    >
+                      Archive
+                    </DropdownMenu.Item>
+                  )}
+                  {variant === EntryPhase.Archived && (
+                    <DropdownMenu.Item
+                      className={styles.root.action()}
+                      onClick={publishArchived}
+                    >
+                      Publish
+                    </DropdownMenu.Item>
+                  )}
+                </DropdownMenu.Items>
+              </DropdownMenu.Root>
+            )}
           </HStack>
         </Stack.Right>
       </HStack>
