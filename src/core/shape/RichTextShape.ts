@@ -71,7 +71,7 @@ function unserialize(node: TextNode): Y.XmlText | Y.XmlElement {
 }
 
 export type RichTextMutator<R> = {
-  // map: Y.Map<any>
+  map: Y.Map<any>
   fragment: Y.XmlFragment
   insert: (id: string, block: string) => void
 }
@@ -171,7 +171,7 @@ export class RichTextShape<Blocks>
   mutator(parent: Y.Map<any>, key: string) {
     const map = parent.get(key)
     return {
-      // map: parent.get(key),
+      map: parent.get(key),
       fragment: map.get('$text'),
       insert: (id: string, block: string) => {
         if (!this.values) throw new Error('No types defined')

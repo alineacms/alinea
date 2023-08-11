@@ -200,6 +200,7 @@ export function createEntryEditor(entryData: EntryData) {
       entryId: activeVersion.entryId,
       entry
     }
+    set(hasChanges, false)
     return set(mutateAtom, mutation)
   })
 
@@ -257,10 +258,13 @@ export function createEntryEditor(entryData: EntryData) {
   const discardEdits = atom(null, (get, set) => {
     const type = config.schema[activeVersion.type]
     const docRoot = yDoc.getMap(ROOT_KEY)
-    for (const [key, field] of entries(type)) {
-      const contents = activeVersion.data[key]
-      docRoot.set(key, Field.shape(field).toY(contents))
-    }
+    yDoc.transact(() => {
+      for (const [key, field] of entries(type)) {
+        const contents = activeVersion.data[key]
+        const output = Field.shape(field).toY(contents)
+        docRoot.set(key, output)
+      }
+    })
     set(hasChanges, false)
   })
 
@@ -305,20 +309,10 @@ export function createEntryEditor(entryData: EntryData) {
 
 function createChangesAtom(yDoc: Y.Doc) {
   const hasChanges = atom(false)
-  hasChanges.onMount = setAtom => {
-    let isCanceled = false
-    const cancel = () => {
-      if (isCanceled) return
-      isCanceled = true
-      yDoc.off('update', listener)
-    }
+  hasChanges.onMount = (setAtom: (value: boolean) => void) => {
+    const listener = () => setAtom(true)
     yDoc.on('update', listener)
-    return cancel
-    function listener() {
-      // Todo: check if we made this change
-      setAtom(true)
-      cancel()
-    }
+    return () => yDoc.off('update', listener)
   }
   return hasChanges
 }
