@@ -79,6 +79,30 @@ export function EntryHeader({editor}: EntryHeaderProps) {
     // Reset the selected phase if we make edits
     if (hasChanges && selectedPhase) navigate(pathname)
   }, [hasChanges])
+  const options =
+    variant === 'draft' ? (
+      <DropdownMenu.Item
+        className={styles.root.action()}
+        onClick={discardDraft}
+      >
+        Remove draft
+      </DropdownMenu.Item>
+    ) : variant === EntryPhase.Published && !editor.activeVersion.seeded ? (
+      <DropdownMenu.Item
+        className={styles.root.action()}
+        onClick={archivePublished}
+      >
+        Archive
+      </DropdownMenu.Item>
+    ) : variant === EntryPhase.Archived ? (
+      <DropdownMenu.Item
+        className={styles.root.action()}
+        onClick={publishArchived}
+      >
+        Publish
+      </DropdownMenu.Item>
+    ) : null
+
   return (
     <AppBar.Root className={styles.root()} variant={variant}>
       <HStack center gap={12} className={styles.root.description()}>
@@ -190,39 +214,14 @@ export function EntryHeader({editor}: EntryHeaderProps) {
               </Button>
             )}
 
-            {['draft', EntryPhase.Published, EntryPhase.Archived].includes(
-              variant
-            ) && (
+            {options && (
               <DropdownMenu.Root>
                 <DropdownMenu.Trigger className={styles.root.more(variant)}>
                   <Icon icon={IcRoundMoreVert} />
                 </DropdownMenu.Trigger>
 
                 <DropdownMenu.Items bottom right>
-                  {variant === 'draft' && (
-                    <DropdownMenu.Item
-                      className={styles.root.action()}
-                      onClick={discardDraft}
-                    >
-                      Remove draft
-                    </DropdownMenu.Item>
-                  )}
-                  {variant === EntryPhase.Published && (
-                    <DropdownMenu.Item
-                      className={styles.root.action()}
-                      onClick={archivePublished}
-                    >
-                      Archive
-                    </DropdownMenu.Item>
-                  )}
-                  {variant === EntryPhase.Archived && (
-                    <DropdownMenu.Item
-                      className={styles.root.action()}
-                      onClick={publishArchived}
-                    >
-                      Publish
-                    </DropdownMenu.Item>
-                  )}
+                  {options}
                 </DropdownMenu.Items>
               </DropdownMenu.Root>
             )}
