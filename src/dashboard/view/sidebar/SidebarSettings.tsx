@@ -14,8 +14,6 @@ import {IcSharpBrightnessMedium} from 'alinea/ui/icons/IcSharpBrightnessMedium'
 import {parseToHsla} from 'color2k'
 import {useAtomValue, useSetAtom} from 'jotai'
 import {dashboardOptionsAtom} from '../../atoms/DashboardAtoms.js'
-import {useNavigate} from '../../atoms/LocationAtoms.js'
-import {navAtom, workspaceAtom} from '../../atoms/NavigationAtoms.js'
 import {
   preferencesAtom,
   sizePreferenceAtom,
@@ -25,7 +23,7 @@ import {
 import {accentColorAtom} from '../../atoms/StyleAtoms.js'
 import {useSession} from '../../hook/UseSession.js'
 import {IconButton} from '../IconButton.js'
-import {Sidebar, useSidebar} from '../Sidebar.js'
+import {Sidebar} from '../Sidebar.js'
 import css from './SidebarSettings.module.scss'
 
 const styles = fromModule(css)
@@ -34,13 +32,9 @@ export function SidebarSettings() {
   const accentColor = useAtomValue(accentColorAtom)
   const session = useSession()
   const {config} = useAtomValue(dashboardOptionsAtom)
-  const nav = useAtomValue(navAtom)
   const preferences = useAtomValue(preferencesAtom)
   const size = preferences.size || 16
   const checked = preferences?.scheme === 'dark'
-  const workspace = useAtomValue(workspaceAtom)
-  const navigate = useNavigate()
-  const {isNavOpen, isPreviewOpen, toggleNav, togglePreview} = useSidebar()
   const workspaces = Object.entries(config.workspaces)
   const [hue, saturation, lightness] = parseToHsla(accentColor)
   const style: any = {
@@ -67,24 +61,24 @@ export function SidebarSettings() {
         </Sidebar.Nav.Item>
       </DropdownMenu.Trigger>
 
-      <DropdownMenu.Items placement="top">
-        <VStack gap={25}>
-          {Config.hasAuth(config) && (
-            <PopoverMenu.Header>
-              <p>
-                {session.user.sub.charAt(0).toUpperCase() +
-                  session.user.sub.slice(1)}
-              </p>
-            </PopoverMenu.Header>
-          )}
-
+      <DropdownMenu.Items placement="top" style={{left: px(16)}}>
+        <VStack gap={10}>
           <VStack gap={15}>
             <HStack justify={'space-between'} style={{padding: px(6)}}>
               <HStack center gap={16}>
                 <Icon icon={IcSharpBrightnessMedium} size={20} />
                 <Switch
                   checked={checked}
-                  onChange={toggleSchemePreference}
+                  onChange={() => {
+                    document.body.setAttribute(
+                      'data-disable-transition',
+                      'true'
+                    )
+                    toggleSchemePreference()
+                    setTimeout(() =>
+                      document.body.removeAttribute('data-disable-transition')
+                    )
+                  }}
                   className={styles.root.switch({checked})}
                 >
                   <span

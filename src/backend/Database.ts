@@ -69,7 +69,8 @@ export class Database implements Syncable {
   // Syncs data with a remote database, returning the ids of changed entries
   async syncWith(remote: Syncable): Promise<Array<string>> {
     await this.init()
-    const update = await remote.updates(await this.meta())
+    const current = await this.meta()
+    const update = await remote.updates(current)
     const {contentHash, entries} = update
     if (entries.length) await this.updateEntries(entries)
     const updated = await this.meta()
@@ -96,7 +97,6 @@ export class Database implements Syncable {
       return excess.map(e => e.entryId)
     })
     const afterRemoves = await this.meta()
-    console.log({afterRemoves, contentHash})
     if (afterRemoves.contentHash === contentHash)
       return changedEntries.concat(excessEntries)
     // Todo: we should abandon syncing and just fetch the full db
@@ -120,7 +120,6 @@ export class Database implements Syncable {
   }
 
   async applyMutations(mutations: Array<Mutation>) {
-    console.log(mutations)
     for (const mutation of mutations) {
       switch (mutation.type) {
         case MutationType.Edit:
@@ -407,6 +406,7 @@ export class Database implements Syncable {
         const fileName = path.basename(file.filePath, extension)
         const [, phase] = entryInfo(fileName)
         const contentHash = await createContentHash(
+          file.modifiedAt,
           phase,
           file.contents,
           seed

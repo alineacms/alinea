@@ -141,8 +141,8 @@
       }
 
       &.is-selected &-bg {
-        color: #3f61e8;
-        background: #f1f3fd;
+        color: var(--alinea-selected-foreground);
+        background: var(--alinea-selected);
       }
     }
   }

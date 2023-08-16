@@ -12,6 +12,7 @@
   --alinea-highlight: hsla(var(--alinea-negative), 0.06);
   --alinea-lift: hsl(var(--alinea-hue), var(--alinea-saturation), 18%);
   --alinea-selected: hsl(var(--alinea-hue), var(--alinea-saturation), 22%);
+  --alinea-selected-foreground: white;
   --alinea-outline: hsl(var(--alinea-hue), var(--alinea-saturation), 20%);
   --alinea-fields: hsl(var(--alinea-hue), var(--alinea-saturation), 11.5%);
   --alinea-fields-foreground: #dee1e4;
@@ -37,15 +38,17 @@
   --alinea-button-hover: #4a65e8;
 
   --alinea-variant-info-foreground: #f0f6ff;
-  --alinea-variant-info-background: hsla(230, 40%, 30%, 0.8);
-  --alinea-variant-info-action: hsl(230, 100%, 30%);
+  --alinea-variant-info-background: hsla(230, 40%, 41%, 0.8);
+  --alinea-variant-info-action: hsl(230, 40%, 50%);
   --alinea-variant-success-foreground: #f1fdf4;
-  --alinea-variant-success-background: hsla(140, 21%, 30%, 0.8);
-  --alinea-variant-success-action: hsl(140, 30%, 87%);
+  --alinea-variant-success-background: hsla(140, 21%, 41%, 0.8);
+  --alinea-variant-success-action: hsl(140, 21%, 50%);
   --alinea-variant-disabled-foreground: #f0f0f0;
-  --alinea-variant-disabled-background: hsla(0, 0%, 30%, 0.8);
+  --alinea-variant-disabled-background: hsla(0, 0%, 41%, 0.8);
+  --alinea-variant-disabled-action: hsl(0, 0%, 50%);
   --alinea-variant-progress-foreground: #fef7ed;
-  --alinea-variant-progress-background: hsla(15, 54%, 30%, 0.8);
+  --alinea-variant-progress-background: hsla(20, 29%, 41%, 0.8);
+  --alinea-variant-progress-actoion: hsl(15, 54%, 50%);
 }
 
 @mixin light-theme {
@@ -61,6 +64,7 @@
   --alinea-highlight: hsla(var(--alinea-negative), 0.06);
   --alinea-lift: #f5f5f7;
   --alinea-selected: #f1f3fd;
+  --alinea-selected-foreground: #3f61e8;
   --alinea-outline: #eaeaef;
   --alinea-content: linear-gradient(
     to bottom,

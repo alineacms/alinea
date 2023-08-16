@@ -24,7 +24,7 @@ const limit = pLimit(1)
 async function cancelMutations(store: Store) {
   // Cancel previous mutations if they were applied
   try {
-    await store(sql`rollback to mutations`)
+    await store(sql`ROLLBACK`)
   } catch {}
 }
 
@@ -75,7 +75,7 @@ const localDbAtom = atom(
         // we can rollback the savepoint on next sync
         // This requires we use the same single connection for all reads
         // Alternatively we could create a new db here
-        await store(sql`savepoint mutations`)
+        await store(sql`SAVEPOINT \`mutations\``)
 
         // Apply all mutations
         await db.applyMutations(pending)
@@ -168,10 +168,10 @@ export function useMutate() {
   return useSetAtom(mutateAtom)
 }
 
-export function useDbUpdater(everySeconds = 1000 * 60) {
+export function useDbUpdater(everySeconds = 60) {
   const forceDbUpdate = useSetAtom(dbUpdateAtom)
   useEffect(() => {
-    const interval = setInterval(forceDbUpdate, everySeconds)
+    const interval = setInterval(forceDbUpdate, everySeconds * 1000)
     return () => clearInterval(interval)
   }, [everySeconds, forceDbUpdate])
 }

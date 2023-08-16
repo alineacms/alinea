@@ -105,6 +105,7 @@ export class Server implements Connection {
       location = location.slice(prefix.length)
 
     const contentHash = await createContentHash(
+      Date.now(),
       EntryPhase.Published,
       new Uint8Array(file.buffer)
     )

@@ -65,7 +65,8 @@ const isEntryAtom = atom(get => {
 })
 
 function AppAuthenticated() {
-  useDbUpdater()
+  const pending = useAtomValue(pendingAtom)
+  useDbUpdater(pending.length > 0 ? 5 : 60)
   const {fullPage} = useDashboard()
   const nav = useNav()
   const isEntry = useAtomValue(isEntryAtom)
@@ -77,10 +78,9 @@ function AppAuthenticated() {
   useEffect(() => {
     setPreferredLanguage(locale)
   }, [locale])
-  const pending = useAtomValue(pendingAtom)
-  useEffect(() => {
+  /*useEffect(() => {
     console.log(pending)
-  }, [pending])
+  }, [pending])*/
   return (
     <>
       <Toolbar.Provider>

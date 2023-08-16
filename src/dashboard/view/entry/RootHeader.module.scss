@@ -33,7 +33,7 @@
 
   &.is-active &-inner {
     background: var(--alinea-selected);
-    color: var(--alinea-button-hover);
+    color: var(--alinea-selected-foreground);
   }
 }
 
