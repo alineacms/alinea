@@ -7,6 +7,7 @@ import {ChapterLinkView} from './ChapterLinkView'
 import {CodeBlockView} from './CodeBlockView'
 import {CodeVariantsView} from './CodeVariantsView'
 import {ExampleBlockView} from './ExampleBlockView'
+import {ImageBlockView} from './ImageBlockView'
 import {NoticeView} from './NoticeView'
 import css from './TextBlockView.module.scss'
 
@@ -36,6 +37,7 @@ export function TextView({text}: TextBlockViewProps) {
       ExampleBlock={ExampleBlockView}
       ChapterLinkBlock={ChapterLinkView}
       NoticeBlock={NoticeView}
+      ImageBlock={ImageBlockView}
     />
   )
 }

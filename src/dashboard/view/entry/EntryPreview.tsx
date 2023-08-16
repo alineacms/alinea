@@ -24,6 +24,7 @@ export function EntryPreview({editor, preview}: EntryPreviewProps) {
   const yUpdate = useAtomValue(editor.yUpdate)
   useEffect(() => {
     if (!api) return
+
     const compressed = zlibSync(yUpdate, {level: 9})
     const update = base64url.stringify(compressed)
 

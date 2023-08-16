@@ -48,13 +48,6 @@ export function BrowserPreview({
     return () => removeEventListener('message', handleMessage)
   }, [url])
 
-  /*useEffect(() => {
-    if (status === DraftsStatus.Synced) {
-      if (!reload && hasPreviewListener.current) handleRefetch()
-      else handleReload()
-    }
-  }, [status])*/
-
   useEffect(() => {
     if (loading) {
       const timeout = setTimeout(() => setLoading(false), 3000)
@@ -78,10 +71,6 @@ export function BrowserPreview({
     if (hasPreviewListener.current) post({action: PreviewAction.Reload})
     else iframe.current?.setAttribute('src', url)
     setLoading(true)
-  }
-
-  function handleRefetch() {
-    post({action: PreviewAction.Refetch})
   }
 
   const inner = (

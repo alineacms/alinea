@@ -53,7 +53,7 @@ export namespace Connection {
   export type DownloadParams = {
     location: string
   }
-  export type ChangesParams = {
+  export type MutateParams = {
     mutations: ChangeSet
   }
   export interface AuthContext {
@@ -82,17 +82,8 @@ export namespace Connection {
     versionIds() {
       return base + `/versionIds`
     },
-    saveDraft() {
-      return base + `/save`
-    },
-    publishDrafts() {
-      return base + `/publish`
-    },
     upload() {
       return base + `/upload`
-    },
-    query() {
-      return base + `/query`
     },
     files(location?: string) {
       return base + `/files${location ? '/' + location : ''}`

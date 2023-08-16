@@ -211,7 +211,7 @@ export namespace link {
   ): LinkField<ImageReference & Type.Infer<Fields>> {
     return createLink(label, {
       ...options,
-      pickers: {entry: imagePicker(false, options)}
+      pickers: {image: imagePicker(false, options)}
     })
   }
 }
@@ -223,7 +223,7 @@ export namespace link.image {
   ): LinksField<ImageReference & Type.Infer<Fields>> {
     return createLinks(label, {
       ...options,
-      pickers: {entry: imagePicker(true, options)}
+      pickers: {image: imagePicker(true, options)}
     })
   }
 }

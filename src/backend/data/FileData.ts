@@ -120,7 +120,7 @@ export class FileData implements Source, Target, Media {
     yield* runBatch()
   }
 
-  async publishChanges({mutations}: Connection.ChangesParams) {
+  async mutate({mutations}: Connection.MutateParams) {
     const {fs, rootDir = '.', config} = this.options
     const noop = () => {}
     for (const {changes} of mutations) {

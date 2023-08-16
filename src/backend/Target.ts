@@ -2,8 +2,8 @@ import {Connection} from 'alinea/core'
 
 export interface Target {
   canRename: boolean
-  publishChanges(
-    params: Connection.ChangesParams,
+  mutate(
+    params: Connection.MutateParams,
     ctx: Connection.Context
   ): Promise<void>
 }

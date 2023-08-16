@@ -1,7 +1,7 @@
 import {AbortController, fetch, FormData, Response} from '@alinea/iso'
 import {AlineaMeta} from 'alinea/backend/db/AlineaMeta'
 import {Media} from 'alinea/backend/Media'
-import {Config, Connection, EntryPhase, EntryRow, HttpError} from 'alinea/core'
+import {Config, Connection, EntryPhase, HttpError} from 'alinea/core'
 import {UpdateResponse} from './Connection.js'
 import {Mutation} from './Mutation.js'
 import {Realm} from './pages/Realm.js'
@@ -74,20 +74,6 @@ export class Client implements Connection {
     return this.requestJson(Connection.routes.versionIds()).then<Array<string>>(
       failOnHttpError
     )
-  }
-
-  saveDraft(entry: EntryRow): Promise<void> {
-    return this.requestJson(Connection.routes.saveDraft(), {
-      method: 'POST',
-      body: JSON.stringify(entry)
-    }).then<void>(res => failOnHttpError(res, false))
-  }
-
-  publishDrafts(entries: Array<EntryRow>): Promise<void> {
-    return this.requestJson(Connection.routes.publishDrafts(), {
-      method: 'POST',
-      body: JSON.stringify(entries)
-    }).then<void>(res => failOnHttpError(res, false))
   }
 
   uploadFile({

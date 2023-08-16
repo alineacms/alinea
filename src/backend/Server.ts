@@ -67,7 +67,7 @@ export class Server implements Connection {
   async mutate(mutations: Array<Mutation>): Promise<void> {
     const {target} = this.options
     const changes = this.changes.create(mutations)
-    await target.publishChanges({mutations: changes}, this.context)
+    await target.mutate({mutations: changes}, this.context)
   }
 
   previewToken(): Promise<string> {

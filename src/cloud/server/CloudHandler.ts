@@ -40,10 +40,7 @@ export class CloudApi implements Media, Target {
 
   constructor() {}
 
-  publishChanges(
-    {mutations}: Connection.ChangesParams,
-    ctx: Connection.Context
-  ) {
+  mutate({mutations}: Connection.MutateParams, ctx: Connection.Context) {
     return fetch(
       cloudConfig.mutate,
       withAuth(
