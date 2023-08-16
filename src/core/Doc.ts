@@ -7,16 +7,24 @@ import {entries} from './util/Objects.js'
 export const ROOT_KEY = '#root'
 
 export function createYDoc(type: Type, entry: EntryRow) {
-  const doc = new Y.Doc()
+  const doc = new Y.Doc({gc: false})
   const clientID = doc.clientID
-  doc.clientID = 1
-  const docRoot = doc.getMap(ROOT_KEY)
-  for (const [key, field] of entries(type)) {
-    const contents = entry.data[key]
-    docRoot.set(key, Field.shape(field).toY(contents))
-  }
-  doc.clientID = clientID
+  //doc.clientID = 1
+  doc.transact(() => {
+    const docRoot = doc.getMap(ROOT_KEY)
+    for (const [key, field] of entries(type)) {
+      const contents = entry.data[key]
+      docRoot.set(key, Field.shape(field).toY(contents))
+    }
+  })
+  //doc.clientID = clientID
   return doc
+}
+
+export function applyEntryData(doc: Y.Doc, type: Type, entry: EntryRow) {
+  const freshDoc = createYDoc(type, entry)
+  const snapshot = Y.snapshot(freshDoc)
+  Y.createDocFromSnapshot(freshDoc, snapshot, doc)
 }
 
 export function parseYDoc(type: Type, doc: Y.Doc) {

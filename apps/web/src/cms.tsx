@@ -29,9 +29,9 @@ export const cms = createNextCMS({
   schema,
   workspaces: {
     main
-  }
-  /*preview:
+  },
+  preview:
     process.env.NODE_ENV === 'development'
       ? 'http://localhost:3000/api/preview'
-      : '/api/preview'*/
+      : '/api/preview'
 })
