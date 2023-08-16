@@ -1,82 +1,19 @@
-import {AsyncTreeDataLoader} from '@headless-tree/core'
-import {Database} from 'alinea/backend'
+import {
+  AsyncTreeDataLoader,
+  DropTarget,
+  ItemInstance
+} from '@headless-tree/core'
 import {EntryPhase, Type} from 'alinea/core'
 import {Entry} from 'alinea/core/Entry'
-import {Graph} from 'alinea/core/Graph'
-import {Realm} from 'alinea/core/pages/Realm'
+import {Projection} from 'alinea/core/pages/Projection'
 import {entries} from 'alinea/core/util/Objects'
 import DataLoader from 'dataloader'
-import {atom, useAtom, useAtomValue} from 'jotai'
-import {atomFamily} from 'jotai/utils'
+import {atom, useAtomValue, useSetAtom} from 'jotai'
 import {useMemo} from 'react'
-import {createPersistentStore} from '../util/PersistentStore.js'
-import {clientAtom, configAtom} from './DashboardAtoms.js'
+import {useDashboard} from '../hook/UseDashboard.js'
+import {configAtom} from './DashboardAtoms.js'
+import {graphAtom, mutateAtom} from './DbAtoms.js'
 import {rootAtom, workspaceAtom} from './NavigationAtoms.js'
-
-export const storeAtom = atom(createPersistentStore)
-
-export const localDbAtom = atom(async get => {
-  const client = get(clientAtom)
-  const config = get(configAtom)
-  const store = await get(storeAtom)
-  const db = new Database(store, config)
-  await db.syncWith(client)
-  await store.flush()
-  return db
-})
-
-export const graphAtom = atom(async get => {
-  const config = get(configAtom)
-  const db = await get(localDbAtom)
-  return {
-    drafts: new Graph(config, params => {
-      return db.resolve({
-        ...params,
-        realm: Realm.Draft
-      })
-    }),
-    active: new Graph(config, params => {
-      return db.resolve({
-        ...params,
-        realm: Realm.PreferDraft
-      })
-    }),
-    all: new Graph(config, params => {
-      return db.resolve({
-        ...params,
-        realm: Realm.All
-      })
-    })
-  }
-})
-
-export const entryRevisionAtoms = atomFamily((id: string) => {
-  const revision = atom(0)
-  return atom(
-    get => get(revision),
-    (get, set) => set(revision, i => i + 1)
-  )
-})
-
-export const changedEntriesAtom = atom<Array<string>>([])
-export const updateDbAtom = atom(null, async (get, set) => {
-  const client = get(clientAtom)
-  const store = await get(storeAtom)
-  const db = await get(localDbAtom)
-  const changed = await db.syncWith(client).catch(() => [])
-  if (!changed.length) return
-  for (const id of changed) set(entryRevisionAtoms(id))
-  set(changedEntriesAtom, changed)
-  await store.flush()
-})
-updateDbAtom.onMount = update => {
-  const interval = setInterval(update, 1000 * 60)
-  return () => clearInterval(interval)
-}
-
-export function useDbUpdater() {
-  useAtom(updateDbAtom)
-}
 
 export function rootId(rootName: string) {
   return `@alinea/root-${rootName}`
@@ -108,6 +45,7 @@ const entryTreeRootAtom = atom(async (get): Promise<EntryTreeItem> => {
   const children = await active.find(rootEntries)
   return {
     id: rootId(root.name),
+    index: '',
     isFolder: true,
     entries: [],
     children
@@ -125,14 +63,22 @@ const entryTreeItemLoaderAtom = atom(async get => {
     const search = (ids as Array<string>).filter(id => id !== rootId(root.name))
     const data = {
       id: Entry.i18nId,
+      entryId: Entry.entryId,
       type: Entry.type,
       title: Entry.title,
       phase: Entry.phase,
-      locale: Entry.locale
-    }
+      locale: Entry.locale,
+      workspace: Entry.workspace,
+      root: Entry.root,
+      path: Entry.path,
+      parentPaths({parents}) {
+        return parents(Entry).select(Entry.path)
+      }
+    } satisfies Projection
     const entries = Entry()
       .select({
-        index: Entry.i18nId,
+        id: Entry.i18nId,
+        index: Entry.index,
         data,
         translations({translations}) {
           return translations().select(data)
@@ -150,8 +96,9 @@ const entryTreeItemLoaderAtom = atom(async get => {
     const rows = await graph.active.find(entries)
     for (const row of rows) {
       const entries = [row.data].concat(row.translations)
-      res.set(row.index, {
-        id: row.index,
+      res.set(row.id, {
+        id: row.id,
+        index: row.index,
         entries,
         children: row.children
       })
@@ -159,6 +106,7 @@ const entryTreeItemLoaderAtom = atom(async get => {
     return ids.map(id => {
       if (id === rootId(root.name)) return entryTreeRootItem
       const entry = res.get(id)!
+      if (!entry) return undefined
       const typeName = entry.entries[0].type
       const type = schema[typeName]
       const isFolder = Type.isContainer(type)
@@ -174,26 +122,62 @@ const loaderAtom = atom(get => {
 
 export interface EntryTreeItem {
   id: string
+  index: string
   entries: Array<{
     id: string
+    entryId: string
     type: string
     title: string
     phase: EntryPhase
     locale: string | null
+    workspace: string
+    root: string
+    path: string
+    parentPaths: Array<string>
   }>
   isFolder?: boolean
   children: Array<string>
 }
 
-export function useEntryTreeProvider(): AsyncTreeDataLoader<EntryTreeItem> {
+export function useEntryTreeProvider(): AsyncTreeDataLoader<EntryTreeItem> & {
+  onDrop(
+    items: Array<ItemInstance<EntryTreeItem>>,
+    target: DropTarget<EntryTreeItem>
+  ): void
+} {
   const {loader} = useAtomValue(loaderAtom)
+  const mutate = useSetAtom(mutateAtom)
+  const {config} = useDashboard()
   return useMemo(() => {
     return {
-      async getItem(id: string): Promise<EntryTreeItem> {
-        return (await loader).load(id)
+      onDrop(items, {item: parent, childIndex, insertionIndex}) {
+        if (items.length !== 1) return
+        const [dropping] = items
+        if (insertionIndex === null) {
+          console.log('Todo: move entries')
+          return
+        }
+        console.log('Todo: order entries')
+        return
+        /*const previous = parent.getChildren()[insertionIndex - 1]
+        const next = parent.getChildren()[insertionIndex]
+        const previousIndex = previous?.getItemData()?.index ?? null
+        const nextIndex = next?.getItemData()?.index ?? null
+        const newIndex = generateKeyBetween(previousIndex, nextIndex)
+        for (const entry of dropping.getItemData().entries) {
+          mutate({
+            type: MutationType.Order,
+            entryId: entry.entryId,
+            file: entryFileName(config, entry, entry.parentPaths),
+            index: newIndex
+          })
+        }*/
       },
-      async getChildren(id: string): Promise<Array<string>> {
-        return this.getItem(id).then(item => item.children)
+      async getItem(id): Promise<EntryTreeItem> {
+        return (await (await loader).clear(id).load(id))!
+      },
+      async getChildren(id): Promise<Array<string>> {
+        return this.getItem(id).then(item => item?.children ?? [])
       }
     }
   }, [loader])

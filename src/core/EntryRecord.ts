@@ -35,7 +35,7 @@ export function createRecord(entry: EntryRow): EntryRecord {
     index: entry.index
   }
   if (entry.seeded) meta.seeded = entry.seeded
-  if (entry.i18nId) meta.i18nId = entry.i18nId
+  if (entry.locale && entry.i18nId) meta.i18nId = entry.i18nId
   if (!entry.parent) meta.root = entry.root
   return {
     title: entry.title,

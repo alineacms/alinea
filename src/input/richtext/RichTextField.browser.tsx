@@ -16,7 +16,14 @@ import {Card, fromModule, px, TextLabel} from 'alinea/ui'
 import {IcRoundClose} from 'alinea/ui/icons/IcRoundClose'
 import {IcRoundDragHandle} from 'alinea/ui/icons/IcRoundDragHandle'
 import {IcRoundNotes} from 'alinea/ui/icons/IcRoundNotes'
-import {useCallback, useRef, useState} from 'react'
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  useRef,
+  useState
+} from 'react'
 import {useEditor} from './hook/UseEditor.js'
 import {PickTextLink, usePickTextLink} from './PickTextLink.js'
 import {richText as createRichText, RichTextField} from './RichTextField.js'
@@ -29,6 +36,8 @@ export * from './RichTextField.js'
 export const richText = Field.provideView(RichTextInput, createRichText)
 
 const styles = fromModule(css)
+
+const IsNested = createContext(false)
 
 type NodeViewProps = {
   node: {attrs: {id: string}}
@@ -63,7 +72,9 @@ function typeExtension(
             </Card.Options>
           </Card.Header>
           <Card.Content>
-            <InputForm state={parent.child(id)} type={type} />
+            <IsNested.Provider value={true}>
+              <InputForm state={parent.child(id)} type={type} />
+            </IsNested.Provider>
           </Card.Content>
         </Card.Root>
       </NodeViewWrapper>
@@ -181,8 +192,9 @@ function RichTextEditor<Blocks extends Schema>({
     RichTextKit,
     ...schemaToExtensions(state, schema)
   ]
-  const editor = useEditor({
-    content: {
+  const isNested = useContext(IsNested)
+  const content = useMemo(() => {
+    return {
       type: 'doc',
       content: value.map(node => {
         if (node.type === 'text') return node //
@@ -193,12 +205,18 @@ function RichTextEditor<Blocks extends Schema>({
           attrs
         }
       })
+    }
+  }, [])
+  const editor = useEditor(
+    {
+      content: isNested ? undefined : content,
+      onFocus: ({event}) => focusToggle(event.currentTarget),
+      onBlur: ({event}) => focusToggle(event.relatedTarget),
+      extensions,
+      editable: !options.readonly
     },
-    onFocus: ({event}) => focusToggle(event.currentTarget),
-    onBlur: ({event}) => focusToggle(event.relatedTarget),
-    extensions,
-    editable: !options.readonly
-  })
+    [fragment]
+  )
   if (!editor) return null
   return (
     <>
@@ -244,7 +262,5 @@ export function RichTextInput<Blocks extends Schema>({
   const [_, {fragment}] = useInput(state)
   // We key here currently because the tiptap/yjs combination fails to register
   // changes when the fragment is changed while the editor is mounted.
-  return (
-    <RichTextEditor /*key={fragment.doc?.guid}*/ state={state} field={field} />
-  )
+  return <RichTextEditor key={fragment.doc?.guid} state={state} field={field} />
 }

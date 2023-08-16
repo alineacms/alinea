@@ -5,6 +5,7 @@ export function yAtom<T>(yType: Y.AbstractType<any>, get: () => T) {
   const revision = atom(0)
   revision.onMount = setAtom => {
     const onChange = () => setAtom(x => x + 1)
+    onChange()
     yType.observeDeep(onChange)
     return () => yType.unobserveDeep(onChange)
   }

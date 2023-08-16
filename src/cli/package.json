@@ -2,7 +2,7 @@
   "name": "@alinea/cli",
   "type": "module",
   "dependencies": {
-    "esbuild": "^0.18.5"
+    "esbuild": "^0.19.0"
   },
   "devDependencies": {
     "@types/sade": "^1.7.3",

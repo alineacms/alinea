@@ -1,8 +1,14 @@
 import {Entry, EntryPhase, EntryRow, Type, createId, slugify} from 'alinea/core'
+import {
+  entryChildrenDir,
+  entryFileName,
+  entryFilepath
+} from 'alinea/core/EntryFilenames'
+import {MutationType} from 'alinea/core/Mutation'
 import {Projection} from 'alinea/core/pages/Projection'
 import {generateKeyBetween} from 'alinea/core/util/FractionalIndexing'
 import {entries, fromEntries, keys} from 'alinea/core/util/Objects'
-import {useDashboard} from 'alinea/dashboard/hook/UseDashboard'
+import {dirname} from 'alinea/core/util/Paths'
 import {useLocation, useNavigate} from 'alinea/dashboard/util/HashRouter'
 import {Modal} from 'alinea/dashboard/view/Modal'
 import {useField} from 'alinea/editor'
@@ -15,10 +21,10 @@ import {Button, HStack, Loader, Typo, fromModule} from 'alinea/ui'
 import {Link} from 'alinea/ui/Link'
 import {IcRoundArrowBack} from 'alinea/ui/icons/IcRoundArrowBack'
 import {useObservable} from 'alinea/ui/util/Observable'
-import {useAtomValue, useSetAtom} from 'jotai'
+import {useAtomValue} from 'jotai'
 import {FormEvent, Suspense, useState} from 'react'
 import {useQuery} from 'react-query'
-import {changedEntriesAtom, graphAtom} from '../../atoms/EntryAtoms.js'
+import {graphAtom, useMutate} from '../../atoms/DbAtoms.js'
 import {useConfig} from '../../hook/UseConfig.js'
 import {useLocale} from '../../hook/UseLocale.js'
 import {useNav} from '../../hook/UseNav.js'
@@ -32,36 +38,40 @@ const styles = fromModule(css)
 const parentData = {
   id: Entry.entryId,
   type: Entry.type,
+  path: Entry.path,
   url: Entry.url,
   level: Entry.level,
   parent: Entry.parent,
+  parentPaths({parents}) {
+    return parents().select(Entry.path)
+  },
   childrenIndex({children}) {
     return children().select(Entry.index).orderBy(Entry.index.asc()).first()
   }
 } satisfies Projection
 
 function NewEntryForm({parentId}: NewEntryProps) {
-  const {client} = useDashboard()
-  const {schema} = useConfig()
+  const config = useConfig()
   const graph = useAtomValue(graphAtom)
   const {data: requestedParent} = useQuery(
     ['parent-req', parentId],
     async () => {
       return graph.active.get(Entry({entryId: parentId}).select(parentData))
     },
-    {suspense: true, keepPreviousData: true}
+    {suspense: true, keepPreviousData: true, staleTime: 0}
   )
   const preselectedId =
     requestedParent &&
-    (Type.isContainer(schema[requestedParent.type])
+    (Type.isContainer(config.schema[requestedParent.type])
       ? requestedParent.id
       : requestedParent.parent)
   const {pathname} = useLocation()
   const nav = useNav()
   const navigate = useNavigate()
   const locale = useLocale()
+  const mutate = useMutate()
   const {name: workspace} = useWorkspace()
-  const containerTypes = entries(schema)
+  const containerTypes = entries(config.schema)
     .filter(([, type]) => {
       return Type.meta(type!).isContainer
     })
@@ -91,18 +101,19 @@ function NewEntryForm({parentId}: NewEntryProps) {
       if (!parentId) return
       return graph.active.get(Entry({entryId: parentId}).select(parentData))
     },
-    {suspense: true, keepPreviousData: true}
+    {suspense: true, keepPreviousData: true, staleTime: 0}
   )
-  const type = parent && schema[parent.type]
+  const parentPaths = parent ? parent.parentPaths.concat(parent.path) : []
+  const type = parent && config.schema[parent.type]
   const types: Array<string> = !parent
     ? root.contains || []
-    : (type && Type.meta(type).contains) || keys(schema)
+    : (type && Type.meta(type).contains) || keys(config.schema)
   const selectedType = useField(
     select(
       'Select type',
       fromEntries(
         types.map(typeKey => {
-          const type = schema[typeKey]!
+          const type = config.schema[typeKey]!
           return [typeKey, (Type.label(type) || typeKey) as string]
         })
       ),
@@ -112,7 +123,6 @@ function NewEntryForm({parentId}: NewEntryProps) {
   )
   const titleField = useField(text('Title', {autoFocus: true}))
   const [isCreating, setIsCreating] = useState(false)
-  const updateEntries = useSetAtom(changedEntriesAtom)
 
   function handleCreate(e: FormEvent) {
     e.preventDefault()
@@ -120,58 +130,54 @@ function NewEntryForm({parentId}: NewEntryProps) {
     const selected = selectedType()
     if (!selected || !title) return
     setIsCreating(true)
-    const type = schema[selected]!
     const path = slugify(title)
-    const entry: Partial<EntryRow> = {
-      entryId: createId(),
+    const entryId = createId()
+    const data = {
+      workspace,
+      root: root.name,
+      locale: locale ?? null,
+      path,
+      phase: EntryPhase.Draft
+    }
+    const filePath = entryFilepath(config, data, parentPaths)
+    const childrenDir = entryChildrenDir(config, data, parentPaths)
+    const parentDir = dirname(filePath)
+    const url =
+      (parent?.url || '') + (parent?.url.endsWith('/') ? '' : '/') + path
+    const entry: EntryRow = {
+      entryId,
+      ...data,
+      filePath,
       type: selected,
       path,
       title,
-      url: (parent?.url || '') + (parent?.url.endsWith('/') ? '' : '/') + path,
+      url: root.i18n ? `/${locale}${url}` : url,
       index: generateKeyBetween(null, parent?.childrenIndex || null),
-      workspace,
-      root: root.name,
       parent: parent?.id ?? null,
-      phase: EntryPhase.Draft,
       seeded: false,
       level: parent ? parent.level + 1 : 0,
-      data: {}
+      parentDir: parentDir,
+      childrenDir: childrenDir,
+      i18nId: root.i18n ? createId() : entryId,
+      modifiedAt: Date.now(),
+      active: true,
+      main: false,
+      contentHash: '', // Todo: set content hash here
+      data: {title, path},
+      searchableText: ''
     }
-    if (root.i18n) {
-      entry.locale = locale
-      entry.i18nId = createId()
-      entry.url = `/${locale}${entry.url}`
-    } else {
-      entry.i18nId = entry.entryId
-    }
-
-    return client
-      .saveDraft(entry as EntryRow)
+    return mutate({
+      type: MutationType.Edit,
+      entryId: entry.entryId,
+      entry,
+      file: entryFileName(config, data, parentPaths)
+    })
       .then(() => {
-        updateEntries([])
         navigate(nav.entry({entryId: entry.i18nId}))
       })
       .finally(() => {
         setIsCreating(false)
       })
-
-    /*const doc = docFromEntry(entry, () => type)
-    return hub
-      .updateDraft({id: entry.versionId, update: Y.encodeStateAsUpdate(doc)})
-      .then(result => {
-        if (result.isSuccess()) {
-          queryClient.invalidateQueries([
-            'children',
-            entry.alinea.workspace,
-            entry.alinea.root,
-            entry.alinea.parent
-          ])
-          navigate(nav.entry(entry))
-        }
-      })
-      .finally(() => {
-        setIsCreating(false)
-      })*/
   }
   return (
     <form onSubmit={handleCreate}>
@@ -209,7 +215,7 @@ export function NewEntry({parentId}: NewEntryProps) {
         <IconButton icon={IcRoundArrowBack} onClick={handleClose} />
         <Typo.H1 flat>New entry</Typo.H1>
       </HStack>
-      <Suspense fallback={<Loader absolute />}>
+      <Suspense fallback={<Loader />}>
         <NewEntryForm parentId={parentId} />
       </Suspense>
     </Modal>

@@ -9,7 +9,14 @@ const styles = fromModule(css)
 
 export namespace AppBar {
   export interface RootProps extends HTMLAttributes<HTMLElement> {
-    variant?: 'draft' | 'published' | 'archived' | 'transition' | 'untranslated'
+    variant?:
+      | 'draft'
+      | 'editing'
+      | 'published'
+      | 'archived'
+      | 'archiving'
+      | 'publishing'
+      | 'untranslated'
   }
 
   export function Root({variant, ...props}: RootProps) {

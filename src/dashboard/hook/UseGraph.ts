@@ -1,5 +1,5 @@
 import {useAtomValue} from 'jotai'
-import {graphAtom} from '../atoms/EntryAtoms.js'
+import {graphAtom} from '../atoms/DbAtoms.js'
 
 export function useGraph() {
   return useAtomValue(graphAtom)

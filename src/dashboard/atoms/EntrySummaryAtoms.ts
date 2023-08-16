@@ -6,7 +6,7 @@ import {atom} from 'jotai'
 import {atomFamily} from 'jotai/utils'
 import {EntrySummaryRow} from '../view/entry/EntrySummary.js'
 import {configAtom} from './DashboardAtoms.js'
-import {entryRevisionAtoms, graphAtom} from './EntryAtoms.js'
+import {entryRevisionAtoms, graphAtom} from './DbAtoms.js'
 
 export const entrySummaryLoaderAtom = atom(async get => {
   const {active: drafts} = await get(graphAtom)

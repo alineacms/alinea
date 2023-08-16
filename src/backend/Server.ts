@@ -3,12 +3,11 @@ import {
   Connection,
   Entry,
   EntryPhase,
-  EntryRow,
   Workspace,
   createId
 } from 'alinea/core'
 import {Graph} from 'alinea/core/Graph'
-import {Realm} from 'alinea/core/pages/Realm'
+import {Mutation, MutationType} from 'alinea/core/Mutation'
 import {generateKeyBetween} from 'alinea/core/util/FractionalIndexing'
 import {
   basename,
@@ -24,7 +23,7 @@ import {Previews} from './Previews'
 import {ResolveDefaults, Resolver} from './Resolver.js'
 import {Store} from './Store.js'
 import {Target} from './Target.js'
-import {ChangeSet} from './data/ChangeSet.js'
+import {ChangeSetCreator} from './data/ChangeSet.js'
 import {AlineaMeta} from './db/AlineaMeta.js'
 import {createContentHash} from './util/ContentHash.js'
 
@@ -46,6 +45,7 @@ export class Server implements Connection {
   db: Database
   resolver: Resolver
   protected graph: Graph
+  changes: ChangeSetCreator
 
   constructor(
     public options: ServerOptions,
@@ -53,12 +53,8 @@ export class Server implements Connection {
   ) {
     this.db = new Database(options.store, options.config)
     this.resolver = new Resolver(options.store, options.config.schema)
-    this.graph = new Graph(this.options.config, params => {
-      return this.resolve({
-        ...params,
-        realm: Realm.PreferDraft
-      })
-    })
+    this.graph = new Graph(this.options.config, this.resolve)
+    this.changes = new ChangeSetCreator(options.config)
   }
 
   // Api
@@ -68,33 +64,17 @@ export class Server implements Connection {
     return this.resolver.resolve({...resolveDefaults, ...params})
   }
 
+  async mutate(mutations: Array<Mutation>): Promise<void> {
+    const {target} = this.options
+    const changes = this.changes.create(mutations)
+    await target.publishChanges({changes}, this.context)
+  }
+
   previewToken(): Promise<string> {
     const {previews} = this.options
     const user = this.context.user
     if (!user) return previews.sign({anonymous: true})
     return previews.sign({sub: user.sub})
-  }
-
-  async saveDraft(entry: EntryRow): Promise<void> {
-    const {target} = this.options
-    const changes = await ChangeSet.create(
-      this.db,
-      [entry],
-      EntryPhase.Draft,
-      target.canRename
-    )
-    await target.publishChanges({changes}, this.context)
-  }
-
-  async publishDrafts(entries: Array<EntryRow>): Promise<void> {
-    const {target} = this.options
-    const changes = await ChangeSet.create(
-      this.db,
-      entries,
-      EntryPhase.Published,
-      target.canRename
-    )
-    await target.publishChanges({changes}, this.context)
   }
 
   async uploadFile({
@@ -125,11 +105,19 @@ export class Server implements Connection {
       location = location.slice(prefix.length)
 
     const contentHash = await createContentHash(
+      Date.now(),
       EntryPhase.Published,
       new Uint8Array(file.buffer)
     )
-    const parent = await this.graph.maybeGet(Entry({entryId: parentId}))
-    const prev = await this.graph.maybeGet(Entry({parent: parentId}))
+    const parent = await this.graph.preferDraft.maybeGet(
+      Entry({entryId: parentId})
+    )
+    const prev = await this.graph.preferDraft.maybeGet(
+      Entry({parent: parentId})
+    )
+    const filePath = ''
+    if (filePath === '')
+      throw new Error(`Todo: Filepath needs calculation here`)
     const entry: Media.File = {
       entryId,
       type: 'MediaFile',
@@ -149,7 +137,7 @@ export class Server implements Connection {
 
       level: parent ? parent.level + 1 : 0,
       parentDir: '',
-      filePath: '',
+      filePath,
       childrenDir: '',
       contentHash,
       active: true,
@@ -162,11 +150,18 @@ export class Server implements Connection {
         width: file.width,
         height: file.height,
         averageColor: file.averageColor,
-        blurHash: file.thumbHash,
+        thumbHash: file.thumbHash,
         preview: file.preview
       }
     }
-    await this.publishDrafts([entry])
+    await this.mutate([
+      {
+        type: MutationType.FileUpload,
+        entryId: entry.entryId,
+        file: filePath,
+        entry
+      }
+    ])
     return entry
   }
 

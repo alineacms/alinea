@@ -4,15 +4,7 @@
 }
 
 .trigger {
-  all: unset;
   cursor: pointer;
-  border-radius: var(--alinea-border-radius);
-  padding: 4px;
-
-  &:focus,
-  &:hover {
-    background: var(--alinea-highlight);
-  }
 }
 
 .items {

@@ -29,24 +29,34 @@
     flex: 1;
     padding: 0 20px;
 
+    &-separator {
+      border-right: 1px solid;
+      opacity: 0.2;
+      height: 60%;
+    }
+
     &-title {
       position: relative;
       font-weight: bold;
-      padding-right: 12px;
-
-      &::after {
-        content: '';
-        position: absolute;
-        top: -2px;
-        bottom: -2px;
-        right: 0;
-        border-right: 1px solid;
-        opacity: 0.2;
-      }
     }
 
     &-action {
+      height: 100%;
       font-size: 14px;
+      display: flex;
+      align-items: center;
+
+      &-button {
+        height: 100%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        text-underline-offset: 2px;
+        gap: 8px;
+        &:hover {
+          text-decoration: underline;
+        }
+      }
     }
   }
 
@@ -61,5 +71,45 @@
     @include s {
       display: none;
     }
+  }
+
+  &-more {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: hsl(216, 100%, 91%);
+    cursor: pointer;
+    font-size: 16.5px;
+    transition: background 0.25s ease-out;
+
+    &:hover {
+      background: hsla(var(--alinea-positive), 1);
+    }
+
+    &.is-draft,
+    &.is-editing {
+      color: var(--alinea-variant-info-foreground);
+      background: var(--alinea-variant-info-action);
+    }
+    &.is-published {
+      color: var(--alinea-variant-success-foreground);
+      background: var(--alinea-variant-success-action);
+    }
+    &.is-archived {
+      color: var(--alinea-variant-disabled-foreground);
+      background: var(--alinea-variant-disabled-action);
+    }
+    &.is-publishing,
+    &.is-archiving {
+      color: var(--alinea-variant-progress-foreground);
+      background: var(--alinea-variant-progress-action);
+    }
+  }
+
+  &-action {
+    cursor: pointer;
   }
 }

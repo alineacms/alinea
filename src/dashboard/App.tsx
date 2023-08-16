@@ -16,9 +16,10 @@ import {
   sessionAtom,
   useSetDashboardOptions
 } from './atoms/DashboardAtoms.js'
-import {useDbUpdater} from './atoms/EntryAtoms.js'
+import {useDbUpdater} from './atoms/DbAtoms.js'
 import {locationAtom, matchAtoms, useLocation} from './atoms/LocationAtoms.js'
 import {usePreferredLanguage} from './atoms/NavigationAtoms.js'
+import {pendingAtom} from './atoms/PendingAtoms.js'
 import {RouteView, RouterProvider} from './atoms/RouterAtoms.js'
 import {useDashboard} from './hook/UseDashboard.js'
 import {useEntryLocation} from './hook/UseEntryLocation.js'
@@ -32,6 +33,7 @@ import {ErrorBoundary} from './view/ErrorBoundary.js'
 import {Sidebar} from './view/Sidebar.js'
 import {Toolbar} from './view/Toolbar.js'
 import {Viewport} from './view/Viewport.js'
+import {SidebarSettings} from './view/sidebar/SidebarSettings.js'
 
 function DraftsButton() {
   const location = useLocation()
@@ -63,7 +65,8 @@ const isEntryAtom = atom(get => {
 })
 
 function AppAuthenticated() {
-  useDbUpdater()
+  const pending = useAtomValue(pendingAtom)
+  useDbUpdater(pending.length > 0 ? 10 : 60)
   const {fullPage} = useDashboard()
   const nav = useNav()
   const isEntry = useAtomValue(isEntryAtom)
@@ -115,6 +118,7 @@ function AppAuthenticated() {
                   )
                 })}
                 {/*<DraftsButton />*/}
+                <SidebarSettings />
               </Sidebar.Nav>
               <ErrorBoundary>
                 <SuspenseBoundary name="main" fallback={<Loader absolute />}>

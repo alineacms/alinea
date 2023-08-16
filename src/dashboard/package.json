@@ -6,8 +6,8 @@
     "@dnd-kit/sortable": "^4.0.0",
     "@dnd-kit/utilities": "^2.0.0",
     "@floating-ui/react-dom": "^0.7.1",
-    "@headless-tree/core": "^0.0.6",
-    "@headless-tree/react": "^0.0.5",
+    "@headless-tree/core": "^0.0.8",
+    "@headless-tree/react": "^0.0.7",
     "@headlessui/react": "^1.6.1",
     "@react-hook/size": "^2.1.2",
     "@react-hook/window-size": "^3.0.7",
@@ -16,13 +16,14 @@
     "dataloader": "^2.1.0",
     "diff-match-patch": "^1.0.5",
     "fflate": "^0.8.0",
-    "jotai": "^2.1.0",
+    "jotai": "^2.3.1",
     "lib0": "^0.2.78",
     "p-limit": "^4.0.0",
     "pretty-bytes": "^6.0.0",
     "react-query": "^3.39.1",
     "react-tiny-virtual-list": "^2.2.0",
     "thumbhash": "^0.1.1",
+    "y-indexeddb": "^9.0.11",
     "y-webrtc": "^10.2.0"
   }
 }

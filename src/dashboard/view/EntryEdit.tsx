@@ -1,3 +1,4 @@
+import {EntryPhase} from 'alinea/core'
 import {Modal} from 'alinea/dashboard/view/Modal'
 import {InputForm} from 'alinea/editor'
 import {Button, HStack, Stack, VStack, fromModule} from 'alinea/ui'
@@ -5,7 +6,7 @@ import {Main} from 'alinea/ui/Main'
 import {IcRoundTranslate} from 'alinea/ui/icons/IcRoundTranslate'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {useEffect, useRef} from 'react'
-import {EntryEditor} from '../atoms/EntryEditor.js'
+import {EntryEditor} from '../atoms/EntryEditorAtoms.js'
 import {useRouteBlocker} from '../atoms/RouterAtoms.js'
 import {useConfig} from '../hook/UseConfig.js'
 import {useLocale} from '../hook/UseLocale.js'
@@ -13,7 +14,7 @@ import {useNav} from '../hook/UseNav.js'
 import {SuspenseBoundary} from '../util/SuspenseBoundary.js'
 import css from './EntryEdit.module.scss'
 import {EntryDiff} from './diff/EntryDiff.js'
-import {EditMode} from './entry/EditMode.js'
+import {EditMode} from './entry/EditModeToggle.js'
 import {EntryHeader} from './entry/EntryHeader.js'
 import {EntryNotice} from './entry/EntryNotice.js'
 import {EntryPreview} from './entry/EntryPreview.js'
@@ -23,7 +24,13 @@ const styles = fromModule(css)
 
 function ShowChanges({editor}: EntryEditProps) {
   const draftEntry = useAtomValue(editor.draftEntry)
-  return <EntryDiff entryA={editor.version} entryB={draftEntry} />
+  const hasChanges = useAtomValue(editor.hasChanges)
+  const compareTo = hasChanges
+    ? editor.activeVersion
+    : editor.phases[
+        editor.availablePhases.find(phase => phase !== EntryPhase.Draft)!
+      ]
+  return <EntryDiff entryA={compareTo} entryB={draftEntry} />
 }
 
 export interface EntryEditProps {
@@ -38,15 +45,12 @@ export function EntryEdit({editor}: EntryEditProps) {
   const hasChanges = useAtomValue(editor.hasChanges)
   const selectedPhase = useAtomValue(editor.selectedPhase)
   const ref = useRef<HTMLDivElement>(null)
-  const isSaving = useAtomValue(editor.isSaving)
-  const isPublishing = useAtomValue(editor.isPublishing)
   useEffect(() => {
     ref.current?.scrollTo({top: 0})
   }, [editor.entryId, mode, selectedPhase])
-  // Todo: prettify server conflicts
   const {isBlocking, nextRoute, confirm, cancel} = useRouteBlocker(
     'Are you sure you want to discard changes?',
-    hasChanges && !isSaving && !isPublishing
+    false //hasChanges
   )
   const isNavigationChange =
     (nextRoute?.data.editor as EntryEditor)?.entryId !== editor.entryId
@@ -54,17 +58,14 @@ export function EntryEdit({editor}: EntryEditProps) {
   const state = isActivePhase ? editor.draftState : editor.states[selectedPhase]
   const saveDraft = useSetAtom(editor.saveDraft)
   const publishDraft = useSetAtom(editor.publishDraft)
-  const resetDraft = useSetAtom(editor.resetDraft)
-  const untranslated = locale && locale !== editor.version.locale
+  const discardEdits = useSetAtom(editor.discardEdits)
+  const untranslated = locale && locale !== editor.activeVersion.locale
   useEffect(() => {
-    if (!hasChanges) return
     function listener(e: KeyboardEvent) {
       if (e.ctrlKey && e.key === 's') {
         e.preventDefault()
-        if (isSaving) return
-        saveDraft()
-        // else publishDraft()
-        console.log('Save')
+        if (hasChanges) saveDraft()
+        else if (selectedPhase === EntryPhase.Draft) publishDraft()
       }
     }
     document.addEventListener('keydown', listener)
@@ -72,9 +73,12 @@ export function EntryEdit({editor}: EntryEditProps) {
       document.removeEventListener('keydown', listener)
     }
   }, [editor, hasChanges, saveDraft])
+  useEffect(() => {
+    if (isBlocking && !isNavigationChange) confirm?.()
+  }, [isBlocking, isNavigationChange, confirm])
   return (
     <>
-      {isBlocking && (
+      {isBlocking && isNavigationChange && (
         <Modal open onClose={() => cancel()}>
           <VStack gap={30}>
             <p>
@@ -88,7 +92,7 @@ export function EntryEdit({editor}: EntryEditProps) {
                     outline
                     type="button"
                     onClick={() => {
-                      resetDraft()
+                      discardEdits()
                       confirm()
                     }}
                   >
@@ -96,11 +100,11 @@ export function EntryEdit({editor}: EntryEditProps) {
                   </Button>
                   <Button
                     onClick={() => {
-                      saveDraft().catch(() => {
+                      saveDraft() /*.catch(() => {
                         console.warn(
                           'Failed to save draft, this should redirect back to the failed entry'
                         )
-                      })
+                      })*/
                       confirm()
                     }}
                   >
@@ -123,10 +127,10 @@ export function EntryEdit({editor}: EntryEditProps) {
             <EntryTitle
               editor={editor}
               backLink={
-                editor.version.parent
+                editor.activeVersion.parent
                   ? nav.entry({
-                      entryId: editor.version.parent,
-                      workspace: editor.version.workspace
+                      entryId: editor.activeVersion.parent,
+                      workspace: editor.activeVersion.workspace
                     })
                   : undefined
               }
@@ -149,11 +153,7 @@ export function EntryEdit({editor}: EntryEditProps) {
             ) : (
               <>
                 <SuspenseBoundary name="input form">
-                  <InputForm
-                    key={editor.entryId + selectedPhase}
-                    type={editor.type}
-                    state={state}
-                  />
+                  <InputForm type={editor.type} state={state} />
                 </SuspenseBoundary>
               </>
             )}

@@ -1,5 +1,5 @@
 import {Request, Response} from '@alinea/iso'
-import {Auth, Connection, EntryPhase, EntryRow} from 'alinea/core'
+import {Auth, Connection, EntryPhase} from 'alinea/core'
 import {Realm} from 'alinea/core/pages/Realm'
 import {Selection} from 'alinea/core/pages/Selection'
 import {Logger, LoggerResult, Report} from 'alinea/core/util/Logger'
@@ -63,6 +63,18 @@ function createRouter(
       .map(respond),
 
     matcher
+      .post(Connection.routes.mutate())
+      .map(context)
+      .map(router.parseJson)
+      .map(({ctx, body}) => {
+        const api = createApi(ctx)
+        if (!Array.isArray(body)) throw new Error('Expected array')
+        // Todo: validate mutations properly
+        return ctx.logger.result(api.mutate(body))
+      })
+      .map(respond),
+
+    matcher
       .get(Connection.routes.updates())
       .map(context)
       .map(({ctx, url}) => {
@@ -79,26 +91,6 @@ function createRouter(
       .map(({ctx}) => {
         const api = createApi(ctx)
         return ctx.logger.result(api.versionIds())
-      })
-      .map(respond),
-
-    matcher
-      .post(Connection.routes.saveDraft())
-      .map(context)
-      .map(router.parseJson)
-      .map(({ctx, body}) => {
-        const api = createApi(ctx)
-        return ctx.logger.result(api.saveDraft(body as EntryRow))
-      })
-      .map(respond),
-
-    matcher
-      .post(Connection.routes.publishDrafts())
-      .map(context)
-      .map(router.parseJson)
-      .map(({ctx, body}) => {
-        const api = createApi(ctx)
-        return ctx.logger.result(api.publishDrafts(body as Array<EntryRow>))
       })
       .map(respond),
 

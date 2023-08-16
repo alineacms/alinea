@@ -30,6 +30,7 @@ import {
 import {iif, match, count as sqlCount} from 'rado/sqlite'
 import {EntryPhase, EntryRow, EntryTable} from '../core/EntryRow.js'
 import * as pages from '../core/pages/index.js'
+import {Database} from './Database.js'
 import {Store} from './Store.js'
 import {LinkResolver} from './resolver/LinkResolver.js'
 
@@ -68,6 +69,8 @@ const binOps = {
   [pages.BinaryOp.NotIn]: BinOpType.NotIn,
   [pages.BinaryOp.Concat]: BinOpType.Concat
 }
+
+const MAX_DEPTH = 999
 
 const pageFields = keys(EntryRow)
 
@@ -417,7 +420,9 @@ export class Resolver {
             .where(
               this.conditionRealm(Child, ctx.realm),
               this.conditionLocale(Child, ctx.locale),
-              children.level.isLess(source.depth)
+              children.level.isLess(
+                Math.min(source.depth ?? MAX_DEPTH, MAX_DEPTH)
+              )
             )
         )
         const childrenIds = children().select(children.entryId).skip(1)
@@ -448,7 +453,9 @@ export class Resolver {
             .where(
               this.conditionRealm(Parent, ctx.realm),
               this.conditionLocale(Parent, ctx.locale),
-              source.depth ? children.level.isLess(source.depth) : true
+              parents.level.isLess(
+                Math.min(source.depth ?? MAX_DEPTH, MAX_DEPTH)
+              )
             )
         )
         const parentIds = parents().select(parents.entryId).skip(1)
@@ -718,6 +725,7 @@ export class Resolver {
             // Temporarily add preview entry
             await tx(current.delete())
             await tx(EntryRow().insert(previewEntry))
+            await Database.index(tx)
             const result = await tx(query)
             const linkResolver = new LinkResolver(this, tx, ctx)
             if (result) await this.post({linkResolver}, result, selection)

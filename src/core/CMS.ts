@@ -3,7 +3,7 @@ import {CloudAuthView} from 'alinea/cloud/view/CloudAuth'
 import {MediaFile, MediaLibrary} from 'alinea/core/media/MediaSchema'
 import {Config, DashboardConfig} from './Config.js'
 import {Connection} from './Connection.js'
-import {Graph, GraphApi} from './Graph.js'
+import {GraphRealm, GraphRealmApi} from './Graph.js'
 import {Root} from './Root.js'
 import {Schema} from './Schema.js'
 import {Workspace} from './Workspace.js'
@@ -12,11 +12,11 @@ import {entries} from './util/Objects.js'
 type Attachment = Workspace | Root
 const attached = new WeakMap<Attachment, CMS>()
 
-export interface CMSApi extends GraphApi {
+export interface CMSApi extends GraphRealmApi {
   connection(): Promise<Connection>
 }
 
-export abstract class CMS extends Graph implements Config, CMSApi {
+export abstract class CMS extends GraphRealm implements Config, CMSApi {
   schema: Schema
   dashboard: DashboardConfig
 

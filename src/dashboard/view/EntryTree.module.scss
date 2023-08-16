@@ -39,7 +39,7 @@
     }
 
     &.is-selected &-icon {
-      color: var(--alinea-button-hover);
+      color: var(--alinea-selected-foreground);
     }
 
     &:hover {
@@ -49,7 +49,7 @@
 
     &.is-selected {
       background: var(--alinea-selected);
-      color: var(--alinea-button-hover);
+      color: var(--alinea-selected-foreground);
     }
 
     &.is-drop {
@@ -127,7 +127,7 @@
     }
 
     &.is-selected &-arrow {
-      color: var(--alinea-button-hover);
+      color: var(--alinea-selected-foreground);
     }
   }
 

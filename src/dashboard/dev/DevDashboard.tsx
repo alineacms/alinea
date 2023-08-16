@@ -5,7 +5,7 @@ import {useSetAtom} from 'jotai'
 import {useEffect, useMemo, useState} from 'react'
 import {QueryClient} from 'react-query'
 import {App} from '../App.js'
-import {updateDbAtom} from '../atoms/EntryAtoms.js'
+import {dbUpdateAtom} from '../atoms/DbAtoms.js'
 
 type DevReloadOptions = {
   refresh: () => Promise<void>
@@ -43,7 +43,7 @@ const queryClient = new QueryClient({defaultOptions: {queries: {retry: false}}})
 export function DevDashboard({loadConfig}: DevDashboardOptions) {
   const [cms, setCms] = useState<Config>()
   const [connected, setConnected] = useState(true)
-  const forceDbUpdate = useSetAtom(updateDbAtom)
+  const forceDbUpdate = useSetAtom(dbUpdateAtom)
   const client = useMemo(() => {
     if (!cms) return null
     return new Client({

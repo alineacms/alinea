@@ -11,6 +11,10 @@ body,
   margin: 0;
 }
 
+body[data-disable-transition='true'] * {
+  transition: none !important;
+}
+
 a {
   color: inherit;
   font: inherit;

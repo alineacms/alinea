@@ -112,7 +112,7 @@ export namespace Toolbar {
               </HStack>
             </DropdownMenu.Trigger>
 
-            <DropdownMenu.Items>
+            <DropdownMenu.Items bottom>
               {workspaces.map(([key, workspace]) => {
                 const {roots, label, color, icon} = Workspace.data(workspace)
                 const [name, root] = entries(roots)[0]
@@ -179,9 +179,7 @@ export namespace Toolbar {
                         <Switch
                           checked={checked}
                           onChange={toggleSchemePreference}
-                          className={styles.root.switch({
-                            checked
-                          })}
+                          className={styles.root.switch({checked})}
                         >
                           <span
                             className={styles.root.switch.slider({

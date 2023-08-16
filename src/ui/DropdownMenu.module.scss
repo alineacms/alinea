@@ -5,17 +5,9 @@
 }
 
 .trigger {
-  all: unset;
   cursor: pointer;
-  border-radius: var(--alinea-border-radius);
-  padding: 4px;
   white-space: nowrap;
   min-width: 0;
-
-  &:focus,
-  &:hover {
-    background: var(--alinea-highlight);
-  }
 }
 
 .items {
@@ -26,32 +18,41 @@
   border: 1px solid var(--alinea-outline);
   box-shadow: 0 2px 10px var(--alinea-shadow);
   outline: none;
+  position: absolute;
+  z-index: 1;
+  color: var(--alinea-foreground);
+
+  &.is-bottom {
+    top: calc(100% + 5px);
+  }
+
+  &.is-top {
+    bottom: calc(100% + 5px);
+  }
+
+  &.is-left {
+    left: 0;
+  }
+
+  &.is-right {
+    right: 0;
+  }
 }
 
 .item {
-  border: none;
-  background: transparent;
-  appearance: none;
-  color: inherit;
-  font: inherit;
-  display: block;
-  appearance: none;
   width: 100%;
-  font-size: 13px;
-  line-height: 1;
+  font-size: 14px;
   display: flex;
   align-items: center;
   min-height: 25px;
   position: relative;
   user-select: none;
-  border-radius: 3px;
-  padding: 4px 8px;
+  border-radius: var(--alinea-border-radius);
+  padding: 8px 10px;
   cursor: pointer;
 
   &:focus {
-    // Todo: make our css vars work with these portaled items (or somehow
-    // make radix portal these in our viewport)
-    background-color: #f7f6f6;
+    background-color: var(--alinea-selected);
   }
 
   &:hover,

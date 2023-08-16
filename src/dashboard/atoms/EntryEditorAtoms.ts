@@ -2,7 +2,7 @@ import {
   Config,
   Connection,
   EntryPhase,
-  Field,
+  EntryRow,
   ROOT_KEY,
   Type,
   createId,
@@ -10,6 +10,8 @@ import {
   parseYDoc
 } from 'alinea/core'
 import {Entry} from 'alinea/core/Entry'
+import {entryFileName} from 'alinea/core/EntryFilenames'
+import {Mutation, MutationType} from 'alinea/core/Mutation'
 import {entries, fromEntries, values} from 'alinea/core/util/Objects'
 import {InputState} from 'alinea/editor'
 import {atom} from 'jotai'
@@ -17,8 +19,9 @@ import {atomFamily} from 'jotai/utils'
 import * as Y from 'yjs'
 import {debounceAtom} from '../util/DebounceAtom.js'
 import {clientAtom, configAtom} from './DashboardAtoms.js'
-import {entryRevisionAtoms, graphAtom} from './EntryAtoms.js'
+import {entryRevisionAtoms, graphAtom, mutateAtom} from './DbAtoms.js'
 import {locationAtom} from './LocationAtoms.js'
+import {pendingAtom} from './PendingAtoms.js'
 import {yAtom} from './YAtom.js'
 
 export enum EditMode {
@@ -34,7 +37,7 @@ const previewTokenAtom = atom(async get => {
 })
 
 interface EntryEditorParams {
-  locale: string | undefined
+  locale: string | null
   i18nId: string | undefined
 }
 
@@ -58,6 +61,7 @@ export const entryEditorAtoms = atomFamily(
       }
       if (!entry) return undefined
       const entryId = entry.entryId
+      get(entryRevisionAtoms(entryId))
       const versions = await graph.all.find(
         Entry({entryId}).select({
           ...Entry,
@@ -66,12 +70,18 @@ export const entryEditorAtoms = atomFamily(
           }
         })
       )
+      const {parents} = await graph.active.get(
+        Entry({entryId}).select({
+          parents({parents}) {
+            return parents().select({entryId: Entry.entryId, path: Entry.path})
+          }
+        })
+      )
       const translations = (await graph.active.find(
         Entry({i18nId})
           .where(Entry.locale.isNotNull(), Entry.entryId.isNot(entryId))
           .select({locale: Entry.locale, entryId: Entry.entryId})
       )) as Array<{locale: string; entryId: string}>
-      get(entryRevisionAtoms(entryId))
       if (versions.length === 0) return undefined
       const phases = fromEntries(
         versions.map(version => [version.phase, version])
@@ -81,6 +91,7 @@ export const entryEditorAtoms = atomFamily(
       )
       const previewToken = await get(previewTokenAtom)
       return createEntryEditor({
+        parents,
         translations,
         previewToken,
         client,
@@ -96,6 +107,7 @@ export const entryEditorAtoms = atomFamily(
 )
 
 export interface EntryData {
+  parents: Array<{entryId: string; path: string}>
   client: Connection
   config: Config
   entryId: string
@@ -109,10 +121,10 @@ export interface EntryData {
 export type EntryEditor = ReturnType<typeof createEntryEditor>
 
 export function createEntryEditor(entryData: EntryData) {
-  const {client, config, availablePhases} = entryData
+  const {config, availablePhases} = entryData
   const activePhase = availablePhases[0]
-  const version = entryData.phases[activePhase]
-  const type = config.schema[version.type]
+  const activeVersion = entryData.phases[activePhase]
+  const type = config.schema[activeVersion.type]
   const docs = fromEntries(
     entries(entryData.phases).map(([phase, version]) => [
       phase,
@@ -121,7 +133,7 @@ export function createEntryEditor(entryData: EntryData) {
   )
   const yDoc = docs[activePhase]
   const yStateVector = Y.encodeStateVector(yDoc)
-  const hasChanges = createChangesAtom(yDoc)
+  const hasChanges = createChangesAtom(yDoc.getMap(ROOT_KEY))
   const states = fromEntries(
     entries(docs).map(([phase, doc]) => [
       phase,
@@ -132,8 +144,25 @@ export function createEntryEditor(entryData: EntryData) {
   const draftEntry = yAtom(yDoc.getMap(ROOT_KEY), getDraftEntry)
   const editMode = atom(EditMode.Editing)
   const isSaving = atom(false)
-  const isPublishing = atom(false)
   const view = Type.meta(type).view
+
+  const isPublishing = atom(get => {
+    const pending = get(pendingAtom)
+    return pending.some(
+      mutation =>
+        mutation.type === MutationType.Publish &&
+        mutation.entryId === activeVersion.entryId
+    )
+  })
+
+  const isArchiving = atom(get => {
+    const pending = get(pendingAtom)
+    return pending.some(
+      mutation =>
+        mutation.type === MutationType.Archive &&
+        mutation.entryId === activeVersion.entryId
+    )
+  })
 
   const yUpdate = debounceAtom(
     yAtom(yDoc.getMap(ROOT_KEY), () => {
@@ -142,46 +171,91 @@ export function createEntryEditor(entryData: EntryData) {
     250
   )
 
-  const selectedPhase = atom(get => {
+  const phaseInUrl = atom(get => {
     const {search} = get(locationAtom)
     const phaseInSearch = search.slice(1)
     if ((<Array<string>>availablePhases).includes(phaseInSearch))
       return <EntryPhase>phaseInSearch
-    return activePhase
+    return undefined
   })
 
+  const selectedPhase = atom(get => {
+    return get(phaseInUrl) ?? activePhase
+  })
+
+  function entryFile(entry: EntryRow) {
+    return entryFileName(
+      config,
+      entry,
+      entryData.parents.map(p => p.path)
+    )
+  }
+
   const saveDraft = atom(null, (get, set) => {
-    const updatedEntry = getDraftEntry()
-    set(isSaving, true)
-    return client.saveDraft(updatedEntry).catch(() => {
-      set(isSaving, false)
-    })
+    const entry = {...getDraftEntry(), phase: EntryPhase.Draft}
+    const mutation: Mutation = {
+      type: MutationType.Edit,
+      file: entryFile(entry),
+      entryId: activeVersion.entryId,
+      entry
+    }
+    set(hasChanges, false)
+    return set(mutateAtom, mutation)
   })
 
   const saveTranslation = atom(null, (get, set, locale: string) => {
-    const updatedEntry = getDraftEntry()
-    updatedEntry.entryId = createId()
-    updatedEntry.locale = locale
-    console.log(updatedEntry)
-    // return client.saveDraft(updatedEntry).then(() => updatedEntry)
+    const entryId = createId()
+    const entry = {...getDraftEntry(), entryId, locale, phase: EntryPhase.Draft}
+    const mutation: Mutation = {
+      type: MutationType.Edit,
+      file: entryFile(entry),
+      entryId,
+      entry
+    }
+    throw new Error('Calulate parent paths correctly here')
+    return set(mutateAtom, mutation)
   })
 
   const publishDraft = atom(null, (get, set) => {
-    const updatedEntry = getDraftEntry()
-    set(isPublishing, true)
-    return client.publishDrafts([updatedEntry]).catch(() => {
-      set(isPublishing, false)
-    })
+    const mutation: Mutation = {
+      type: MutationType.Publish,
+      entryId: activeVersion.entryId,
+      file: entryFile(activeVersion)
+    }
+    return set(mutateAtom, mutation)
   })
 
-  const resetDraft = atom(null, (get, set) => {
-    const type = config.schema[version.type]
-    const docRoot = yDoc.getMap(ROOT_KEY)
-    for (const [key, field] of entries(type)) {
-      const contents = version.data[key]
-      docRoot.set(key, Field.shape(field).toY(contents))
+  const discardDraft = atom(null, (get, set) => {
+    const mutation: Mutation = {
+      type: MutationType.Discard,
+      entryId: activeVersion.entryId,
+      file: entryFile(activeVersion)
     }
-    set(hasChanges, false)
+    return set(mutateAtom, mutation)
+  })
+
+  const archivePublished = atom(null, (get, set) => {
+    const published = entryData.phases[EntryPhase.Published]
+    const mutation: Mutation = {
+      type: MutationType.Archive,
+      entryId: published.entryId,
+      file: entryFile(published)
+    }
+    return set(mutateAtom, mutation)
+  })
+
+  const publishArchived = atom(null, (get, set) => {
+    const archived = entryData.phases[EntryPhase.Archived]
+    const mutation: Mutation = {
+      type: MutationType.Publish,
+      entryId: archived.entryId,
+      file: entryFile(archived)
+    }
+    return set(mutateAtom, mutation)
+  })
+
+  const discardEdits = atom(null, (get, set) => {
+    set(entryRevisionAtoms(activeVersion.entryId))
   })
 
   const activeTitle = yAtom(
@@ -191,16 +265,18 @@ export function createEntryEditor(entryData: EntryData) {
 
   function getDraftEntry() {
     const entryData = parseYDoc(type, yDoc)
-    return {...version, ...entryData}
+    return {...activeVersion, ...entryData}
   }
 
   return {
     ...entryData,
+    revisionId: createId(),
     activePhase,
+    phaseInUrl,
     selectedPhase,
     entryData,
     editMode,
-    version,
+    activeVersion,
     type,
     draftState,
     draftEntry,
@@ -210,30 +286,26 @@ export function createEntryEditor(entryData: EntryData) {
     hasChanges,
     saveDraft,
     publishDraft,
+    discardDraft,
+    archivePublished,
+    publishArchived,
     saveTranslation,
-    resetDraft,
+    discardEdits,
     isSaving,
     isPublishing,
+    isArchiving,
     view
   }
 }
 
-function createChangesAtom(yDoc: Y.Doc) {
+function createChangesAtom(yMap: Y.Map<unknown>) {
   const hasChanges = atom(false)
-  hasChanges.onMount = setAtom => {
-    let isCanceled = false
-    const cancel = () => {
-      if (isCanceled) return
-      isCanceled = true
-      yDoc.off('update', listener)
-    }
-    yDoc.on('update', listener)
-    return cancel
-    function listener() {
-      // Todo: check if we made this change
+  hasChanges.onMount = (setAtom: (value: boolean) => void) => {
+    const listener = (events: Array<Y.YEvent<any>>, tx: Y.Transaction) => {
       setAtom(true)
-      cancel()
     }
+    yMap.observeDeep(listener)
+    return () => yMap.unobserveDeep(listener)
   }
   return hasChanges
 }

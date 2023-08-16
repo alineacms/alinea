@@ -4,7 +4,7 @@ import {fromModule} from 'alinea/ui'
 import {useAtomValue} from 'jotai'
 import {memo} from 'react'
 import {useQuery} from 'react-query'
-import {graphAtom} from '../../atoms/EntryAtoms.js'
+import {graphAtom} from '../../atoms/DbAtoms.js'
 import {ExplorerItem} from './ExplorerItem.js'
 import css from './ExplorerRow.module.scss'
 

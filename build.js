@@ -11,6 +11,7 @@ import path from 'node:path'
 import {pathToFileURL} from 'node:url'
 import postcss from 'postcss'
 import postcssModules from 'postcss-modules'
+import pxtorem from 'postcss-pxtorem'
 import sade from 'sade'
 
 // Interestingly sass seems to outperform sass-embedded about 2x
@@ -354,6 +355,10 @@ const sassExports = new Map()
 const sassCache = new Map()
 
 const postCssPlugins = [
+  pxtorem({
+    minPixelValue: 2,
+    propList: ['*']
+  }),
   postcssModules({
     localsConvention: 'dashes',
     generateScopedName(name, fileName, css) {

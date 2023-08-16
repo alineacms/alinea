@@ -13,7 +13,7 @@
     width: 100%;
     flex-grow: 1;
     min-width: 0;
-    overflow: auto;
+    overflow-y: scroll;
 
     @mixin ml {
       min-width: 560px;
@@ -41,9 +41,9 @@
 .container {
   padding: 12px;
   @include ml {
-    padding: 40px 40px;
+    padding: 40px var(--alinea-header-height) 20px var(--alinea-header-height);
   }
-  max-width: 1400px;
+  max-width: 1200px;
   width: 100%;
   // margin: 0 auto;
   flex-grow: 1;

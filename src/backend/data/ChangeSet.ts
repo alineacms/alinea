@@ -1,22 +1,58 @@
-import {EntryPhase, EntryRow, EntryUrlMeta, Type, Workspace} from 'alinea/core'
-import {Entry} from 'alinea/core/Entry'
-import {createRecord} from 'alinea/core/EntryRecord'
-import {Realm} from 'alinea/core/pages/Realm'
-import {join} from 'alinea/core/util/Paths'
-import {Database} from '../Database.js'
+import {Config, EntryPhase, EntryUrlMeta, Type} from 'alinea/core'
+import {META_KEY, createRecord} from 'alinea/core/EntryRecord'
+import {
+  ArchiveMutation,
+  DiscardDraftMutation,
+  EditMutation,
+  FileUploadMutation,
+  MoveMutation,
+  Mutation,
+  MutationType,
+  OrderMutation,
+  PublishMutation,
+  RemoveEntryMutation
+} from 'alinea/core/Mutation'
 import {JsonLoader} from '../loader/JsonLoader.js'
 
-export interface ChangeSet {
-  write: Array<{id: string; file: string; contents: string}>
-  rename: Array<{id: string; file: string; to: string}>
-  delete: Array<{id: string; file: string}>
+export enum ChangeType {
+  Write = 'write',
+  Rename = 'rename',
+  Patch = 'patch',
+  Delete = 'delete'
 }
+export interface WriteChange {
+  type: ChangeType.Write
+  entryId: string
+  file: string
+  contents: string
+}
+export interface RenameChange {
+  type: ChangeType.Rename
+  entryId: string
+  from: string
+  to: string
+}
+export interface PatchChange {
+  type: ChangeType.Patch
+  entryId: string
+  file: string
+  patch: object
+}
+export interface DeleteChange {
+  type: ChangeType.Delete
+  entryId: string
+  file: string
+}
+export type Change = WriteChange | RenameChange | PatchChange | DeleteChange
+export type ChangeSet = Array<Change>
 
 const decoder = new TextDecoder()
 const loader = JsonLoader
 
-export namespace ChangeSet {
-  export function entryLocation(
+export class ChangeSetCreator {
+  constructor(public config: Config) {}
+
+  entryLocation(
     {locale, parentPaths, path, phase}: EntryUrlMeta,
     extension: string
   ) {
@@ -31,157 +67,133 @@ export namespace ChangeSet {
     return (segments + phaseSegment + extension).toLowerCase()
   }
 
-  export async function create(
-    db: Database,
-    entries: Array<EntryRow>,
-    phase: EntryPhase,
-    canRename = true
-  ): Promise<ChangeSet> {
-    const changes: ChangeSet = {
-      write: [],
-      rename: [],
-      delete: []
-    }
-    for (const entry of entries) {
-      const type = db.config.schema[entry.type]
-      if (!type) {
-        console.warn(`Cannot publish entry of unknown type: ${entry.type}`)
-        continue
-      }
-      const parentData =
-        entry.parent &&
-        (await db.find(
-          Entry({entryId: entry.parent})
-            .select({
-              path: Entry.path,
-              paths({parents}) {
-                return parents().select(Entry.path)
-              }
-            })
-            .first(),
-          Realm.PreferPublished
-        ))
-      if (entry.parent && !parentData)
-        throw new Error(`Cannot find parent entry: ${entry.parent}`)
-      const parentPaths = parentData
-        ? parentData.paths.concat(parentData.path)
-        : []
-      const workspace = db.config.workspaces[entry.workspace]
-      const isContainer = Type.isContainer(type)
-      const isPublishing = phase === EntryPhase.Published
-      const {source: contentDir} = Workspace.data(workspace)
-      const entryMeta = {
-        phase,
-        path: entry.path,
-        parentPaths,
-        locale: entry.locale ?? undefined
-      }
-      const location = entryLocation(entryMeta, loader.extension)
-      function abs(root: string, file: string) {
-        return join(contentDir, root, file)
-      }
-      const file = abs(entry.root, location)
-      const record = createRecord(entry)
-      changes.write.push({
-        id: entry.entryId,
+  draftChanges({entryId, file, entry}: EditMutation): ChangeSet {
+    const type = this.config.schema[entry.type]
+    if (!type)
+      throw new Error(`Cannot publish entry of unknown type: ${entry.type}`)
+    const record = createRecord(entry)
+    return [
+      {
+        type: ChangeType.Write,
+        entryId,
         file,
-        contents: decoder.decode(loader.format(db.config.schema, record))
+        contents: decoder.decode(loader.format(this.config.schema, record))
+      }
+    ]
+  }
+
+  publishChanges({entryId, file}: PublishMutation): ChangeSet {
+    const draftFile = `.${EntryPhase.Draft}.json`
+    const archivedFiled = `.${EntryPhase.Archived}.json`
+    if (file.endsWith(draftFile))
+      return [
+        {
+          type: ChangeType.Rename,
+          entryId,
+          from: file,
+          to: file.slice(0, -draftFile.length) + '.json'
+        }
+      ]
+    if (file.endsWith(archivedFiled))
+      return [
+        {
+          type: ChangeType.Rename,
+          entryId,
+          from: file,
+          to: file.slice(0, -archivedFiled.length) + '.json'
+        }
+      ]
+    throw new Error(`Cannot publish file: ${file}`)
+  }
+
+  archiveChanges({entryId, file}: ArchiveMutation): ChangeSet {
+    const fileEnd = '.json'
+    if (!file.endsWith(fileEnd))
+      throw new Error(`File extension does not match json: ${file}`)
+    return [
+      {
+        type: ChangeType.Rename,
+        entryId,
+        from: file,
+        to: file.slice(0, -fileEnd.length) + `.${EntryPhase.Archived}.json`
+      }
+    ]
+  }
+
+  removeChanges({entryId, file}: RemoveEntryMutation): ChangeSet {
+    // Todo: remove all possible phases
+    return [{type: ChangeType.Delete, entryId, file}]
+  }
+
+  discardChanges({entryId, file}: DiscardDraftMutation): ChangeSet {
+    const fileEnd = `.${EntryPhase.Draft}.json`
+    if (!file.endsWith(fileEnd))
+      throw new Error(`Cannot discard non-draft file: ${file}`)
+    return [{type: ChangeType.Delete, entryId, file}]
+  }
+
+  orderChanges({entryId, file, index}: OrderMutation): ChangeSet {
+    return [
+      {type: ChangeType.Patch, entryId, file, patch: {[META_KEY]: {index}}}
+    ]
+  }
+
+  moveChanges({
+    entryId,
+    entryType,
+    fromFile,
+    toFile,
+    index
+  }: MoveMutation): ChangeSet {
+    const result: ChangeSet = []
+    const isContainer = Type.isContainer(this.config.schema[entryType])
+    result.push({type: ChangeType.Rename, entryId, from: fromFile, to: toFile})
+    if (!isContainer) return result
+    const fromFolder = fromFile.slice(0, -'.json'.length)
+    const toFolder = toFile.slice(0, -'.json'.length)
+    result.push({
+      type: ChangeType.Rename,
+      entryId,
+      from: fromFolder,
+      to: toFolder
+    })
+    result.push(
+      ...this.orderChanges({
+        type: MutationType.Order,
+        entryId,
+        file: toFile,
+        index
       })
-      const previousPhase: Realm = entry.phase as any
-      const previous = await db.find(
-        Entry({entryId: entry.entryId})
-          .select({
-            phase: Entry.phase,
-            path: Entry.path,
-            locale: Entry.locale,
-            root: Entry.root
-          })
-          .maybeFirst(),
-        previousPhase
-      )
+    )
+    return result
+  }
 
-      // Cleanup old files
-      if (previous && phase !== EntryPhase.Draft) {
-        const previousMeta: EntryUrlMeta = {...previous, parentPaths}
-        const oldLocation = entryLocation(previousMeta, loader.extension)
-        if (oldLocation !== location) {
-          const oldFile = abs(previous.root, oldLocation)
-          changes.delete.push({id: entry.entryId, file: oldFile})
-          if (isPublishing && isContainer) {
-            if (canRename) {
-              const oldFolder = abs(
-                previous.root,
-                entryLocation(previousMeta, '')
-              )
-              const newFolder = abs(previous.root, entryLocation(entryMeta, ''))
-              changes.rename.push({
-                id: entry.entryId,
-                file: oldFolder,
-                to: newFolder
-              })
-            } else {
-              await renameChildren(
-                entryMeta.parentPaths.concat(entryMeta.path),
-                entry.entryId
-              )
-              changes.delete.push({
-                id: entry.entryId,
-                file: abs(previous.root, entryLocation(previousMeta, ''))
-              })
-            }
-          }
-        }
-      }
+  fileUploadChanges(mutation: FileUploadMutation): ChangeSet {
+    throw new Error('Not implemented')
+  }
 
-      async function renameChildren(newPaths: Array<string>, parentId: string) {
-        // List every child as write + delete
-        const children = await db.find(
-          Entry()
-            .where(Entry.parent.is(parentId))
-            .select({
-              child: {...Entry},
-              oldPaths({parents}) {
-                return parents().select(Entry.path)
-              }
-            }),
-          Realm.All
-        )
-        for (const {child, oldPaths} of children) {
-          const childFile = abs(
-            child.root,
-            entryLocation(
-              {
-                phase: child.phase,
-                path: child.path,
-                parentPaths: oldPaths,
-                locale: child.locale
-              },
-              loader.extension
-            )
-          )
-          changes.delete.push({id: child.entryId, file: childFile})
-          const newLocation = abs(
-            entry.root,
-            entryLocation(
-              {
-                phase: child.phase,
-                path: child.path,
-                parentPaths: newPaths,
-                locale: child.locale
-              },
-              loader.extension
-            )
-          )
-          const record = createRecord(child)
-          changes.write.push({
-            id: child.entryId,
-            file: newLocation,
-            contents: decoder.decode(loader.format(db.config.schema, record))
-          })
-          renameChildren(newPaths.concat(child.path), child.entryId)
-        }
-      }
+  mutationChanges(mutation: Mutation): ChangeSet {
+    switch (mutation.type) {
+      case MutationType.Edit:
+        return this.draftChanges(mutation)
+      case MutationType.Publish:
+        return this.publishChanges(mutation)
+      case MutationType.Archive:
+        return this.archiveChanges(mutation)
+      case MutationType.Remove:
+        return this.removeChanges(mutation)
+      case MutationType.Discard:
+        return this.discardChanges(mutation)
+      case MutationType.Order:
+        return this.orderChanges(mutation)
+      case MutationType.Move:
+        return this.moveChanges(mutation)
+      case MutationType.FileUpload:
+        return this.fileUploadChanges(mutation)
     }
-    return changes
+  }
+
+  create(mutations: Array<Mutation>): ChangeSet {
+    return mutations.flatMap(mutation => this.mutationChanges(mutation))
   }
 }
