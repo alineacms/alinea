@@ -66,7 +66,11 @@ export function SidebarSettings() {
           <VStack gap={15}>
             <HStack justify={'space-between'} style={{padding: px(6)}}>
               <HStack center gap={16}>
-                <Icon icon={IcSharpBrightnessMedium} size={20} />
+                <Icon
+                  icon={IcSharpBrightnessMedium}
+                  size={20}
+                  title="Switch theme"
+                />
                 <Switch
                   checked={checked}
                   onChange={() => {
@@ -93,16 +97,19 @@ export function SidebarSettings() {
                   icon={IcRoundTextFields}
                   size={20}
                   style={{marginRight: px(12)}}
+                  title="Font size"
                 />
                 <IconButton
                   icon={IcRoundKeyboardArrowDown}
                   onClick={() => updateFontSize(size - 1)}
                   disabled={size <= 16}
+                  title="Decrease font size"
                 />
                 <IconButton
                   icon={IcRoundKeyboardArrowUp}
                   onClick={() => updateFontSize(size + 1)}
                   disabled={size >= 40}
+                  title="Increase font size"
                 />
               </HStack>
             </HStack>
