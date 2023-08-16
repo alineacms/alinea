@@ -76,7 +76,8 @@ export const EntryRow = table({
       parentDir: index(this.parentDir),
       childrenDir: index(this.childrenDir),
       versionId: index(this.versionId),
-      phase: index(this.phase)
+      phase: index(this.phase),
+      i18nId: index(this.i18nId)
     }
   }
 })

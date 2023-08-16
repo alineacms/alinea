@@ -39,7 +39,7 @@ export interface ImageReference extends EntryLinkReference {
   width: number
   height: number
   averageColor: string
-  blurHash: string
+  thumbHash: string
 }
 
 export namespace ImageReference {

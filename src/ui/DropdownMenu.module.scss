@@ -29,6 +29,14 @@
   &.is-top {
     bottom: calc(100% + 5px);
   }
+
+  &.is-left {
+    left: 0;
+  }
+
+  &.is-right {
+    right: 0;
+  }
 }
 
 .item {

@@ -21,14 +21,17 @@ export namespace DropdownMenu {
   }
 
   export interface ItemsProps extends HTMLAttributes<HTMLDivElement> {
-    placement: 'top' | 'bottom'
+    top?: boolean
+    right?: boolean
+    bottom?: boolean
+    left?: boolean
   }
 
-  export function Items({placement, ...props}: ItemsProps) {
+  export function Items({top, bottom, left, right, ...props}: ItemsProps) {
     return (
       <Menu.Items
         {...props}
-        className={styles.items.mergeProps(props)(placement)}
+        className={styles.items.mergeProps(props)({top, bottom, left, right})}
       />
     )
   }

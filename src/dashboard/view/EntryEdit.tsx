@@ -48,10 +48,9 @@ export function EntryEdit({editor}: EntryEditProps) {
   useEffect(() => {
     ref.current?.scrollTo({top: 0})
   }, [editor.entryId, mode, selectedPhase])
-  // Todo: prettify server conflicts
   const {isBlocking, nextRoute, confirm, cancel} = useRouteBlocker(
     'Are you sure you want to discard changes?',
-    false // hasChanges && !isSaving && !isPublishing
+    hasChanges
   )
   const isNavigationChange =
     (nextRoute?.data.editor as EntryEditor)?.entryId !== editor.entryId
@@ -76,7 +75,7 @@ export function EntryEdit({editor}: EntryEditProps) {
   }, [editor, hasChanges, saveDraft])
   return (
     <>
-      {isBlocking && (
+      {isBlocking && isNavigationChange && (
         <Modal open onClose={() => cancel()}>
           <VStack gap={30}>
             <p>

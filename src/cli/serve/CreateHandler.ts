@@ -2,7 +2,7 @@ import {ReadableStream, Request, Response, TextEncoderStream} from '@alinea/iso'
 import {Handler} from 'alinea/backend'
 import {router} from 'alinea/backend/router/Router'
 import {Trigger, trigger} from 'alinea/core'
-import esbuild, {BuildOptions, BuildResult} from 'esbuild'
+import esbuild, {BuildOptions, BuildResult, OutputFile} from 'esbuild'
 import fs from 'node:fs'
 import {createRequire} from 'node:module'
 import path from 'node:path'
@@ -11,7 +11,7 @@ import {ServeContext} from './ServeContext.js'
 
 const require = createRequire(import.meta.url)
 
-type BuildDetails = Map<string, Uint8Array>
+type BuildDetails = Map<string, OutputFile>
 
 // Source: https://github.com/evanw/esbuild/blob/71be8bc24e70609ab50a80e90a17a1f5770c89b5/internal/helpers/mime.go#L5
 const mimeTypes = new Map(
@@ -52,7 +52,7 @@ function buildFiles(outdir: string, result: BuildResult) {
     result.outputFiles!.map(file => {
       return [
         file.path.slice(outdir.length).replace(/\\/g, '/').toLowerCase(),
-        file.contents
+        file
       ]
     })
   )
@@ -149,12 +149,17 @@ export function createHandler(
     if (!result) return new Response('Build failed', {status: 500})
     const url = new URL(request.url)
     const fileName = url.pathname.toLowerCase()
-    const contents = result.get(fileName)
-    if (!contents) return undefined
+    const file = result.get(fileName)
+    if (!file) return undefined
+    const ifNoneMatch = request.headers.get('if-none-match')
+    const etag = `"${file.hash}"`
+    if (ifNoneMatch && ifNoneMatch === etag)
+      return new Response(undefined, {status: 304})
     const extension = path.extname(fileName)
-    return new Response(contents, {
+    return new Response(file.contents, {
       headers: {
-        'content-type': mimeTypes.get(extension) || 'application/octet-stream'
+        'content-type': mimeTypes.get(extension) || 'application/octet-stream',
+        etag
       }
     })
   }

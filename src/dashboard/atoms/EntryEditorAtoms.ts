@@ -156,6 +156,15 @@ export function createEntryEditor(entryData: EntryData) {
     )
   })
 
+  const isArchiving = atom(get => {
+    const pending = get(pendingAtom)
+    return pending.some(
+      mutation =>
+        mutation.type === MutationType.Archive &&
+        mutation.entryId === activeVersion.entryId
+    )
+  })
+
   const yUpdate = debounceAtom(
     yAtom(yDoc.getMap(ROOT_KEY), () => {
       return Y.encodeStateAsUpdateV2(yDoc, yStateVector)
@@ -191,6 +200,7 @@ export function createEntryEditor(entryData: EntryData) {
       entryId: activeVersion.entryId,
       entry
     }
+    set(hasChanges, false)
     return set(mutateAtom, mutation)
   })
 
@@ -225,13 +235,36 @@ export function createEntryEditor(entryData: EntryData) {
     return set(mutateAtom, mutation)
   })
 
+  const archivePublished = atom(null, (get, set) => {
+    const published = entryData.phases[EntryPhase.Published]
+    const mutation: Mutation = {
+      type: MutationType.Archive,
+      entryId: published.entryId,
+      file: entryFile(published)
+    }
+    return set(mutateAtom, mutation)
+  })
+
+  const publishArchived = atom(null, (get, set) => {
+    const archived = entryData.phases[EntryPhase.Archived]
+    const mutation: Mutation = {
+      type: MutationType.Publish,
+      entryId: archived.entryId,
+      file: entryFile(archived)
+    }
+    return set(mutateAtom, mutation)
+  })
+
   const discardEdits = atom(null, (get, set) => {
     const type = config.schema[activeVersion.type]
     const docRoot = yDoc.getMap(ROOT_KEY)
-    for (const [key, field] of entries(type)) {
-      const contents = activeVersion.data[key]
-      docRoot.set(key, Field.shape(field).toY(contents))
-    }
+    yDoc.transact(() => {
+      for (const [key, field] of entries(type)) {
+        const contents = activeVersion.data[key]
+        const output = Field.shape(field).toY(contents)
+        docRoot.set(key, output)
+      }
+    })
     set(hasChanges, false)
   })
 
@@ -263,30 +296,23 @@ export function createEntryEditor(entryData: EntryData) {
     saveDraft,
     publishDraft,
     discardDraft,
+    archivePublished,
+    publishArchived,
     saveTranslation,
     discardEdits,
     isSaving,
     isPublishing,
+    isArchiving,
     view
   }
 }
 
 function createChangesAtom(yDoc: Y.Doc) {
   const hasChanges = atom(false)
-  hasChanges.onMount = setAtom => {
-    let isCanceled = false
-    const cancel = () => {
-      if (isCanceled) return
-      isCanceled = true
-      yDoc.off('update', listener)
-    }
+  hasChanges.onMount = (setAtom: (value: boolean) => void) => {
+    const listener = () => setAtom(true)
     yDoc.on('update', listener)
-    return cancel
-    function listener() {
-      // Todo: check if we made this change
-      setAtom(true)
-      cancel()
-    }
+    return () => yDoc.off('update', listener)
   }
   return hasChanges
 }

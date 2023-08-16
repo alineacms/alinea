@@ -14,6 +14,7 @@ export namespace AppBar {
       | 'editing'
       | 'published'
       | 'archived'
+      | 'archiving'
       | 'publishing'
       | 'untranslated'
   }

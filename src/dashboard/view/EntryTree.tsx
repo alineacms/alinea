@@ -8,6 +8,7 @@ import {useTree} from '@headless-tree/react'
 import {EntryPhase, Type} from 'alinea/core'
 import {Icon, fromModule, px} from 'alinea/ui'
 import {IcOutlineInsertDriveFile} from 'alinea/ui/icons/IcOutlineInsertDriveFile'
+import IcRoundArchive from 'alinea/ui/icons/IcRoundArchive'
 import {IcRoundEdit} from 'alinea/ui/icons/IcRoundEdit'
 import {IcRoundKeyboardArrowDown} from 'alinea/ui/icons/IcRoundKeyboardArrowDown'
 import {IcRoundKeyboardArrowRight} from 'alinea/ui/icons/IcRoundKeyboardArrowRight'
@@ -42,13 +43,14 @@ function EntryTreeItem({item, data}: EntryTreeItemProps) {
   const locale = useLocale()
   const {schema} = useConfig()
   const currentData = useRef<EntryTreeItem>(data)
-  const itemData = data || currentData.current
+  const itemData = data ?? currentData.current
   if (!data) return null
   currentData.current = data
   const selected = selectedEntry(locale, itemData)
   const {icon} = Type.meta(schema[selected.type])
   const isDraft = selected.phase === EntryPhase.Draft
   const isUntranslated = locale && selected.locale !== locale
+  const isArchived = selected.phase === EntryPhase.Archived
   return (
     <div
       {...item.getProps()}
@@ -105,6 +107,12 @@ function EntryTreeItem({item, data}: EntryTreeItemProps) {
           </span>
         )}
 
+        {!isUntranslated && isArchived && (
+          <span className={styles.tree.status({archived: true})}>
+            <Icon icon={IcRoundArchive} size={18} />
+          </span>
+        )}
+
         {/*item.isLoading() && <Loader />*/}
       </button>
     </div>
@@ -157,14 +165,15 @@ export function EntryTree({i18nId: entryId, selected = []}: EntryTreeProps) {
     for (const id of changed) {
       try {
         const item = tree.getItemInstance(id)
-        if (!item) continue
+        if (!item) {
+          console.log('not in tree')
+          tree.invalidateChildrenIds(rootId(root.name))
+          continue
+        }
         const parent = item.getParent()
         const parentId = parent?.getId()
-        if (!parentId) {
-          tree.invalidateChildrenIds(rootId(root.name))
-        } else {
-          tree.invalidateChildrenIds(parentId)
-        }
+        if (parentId) tree.invalidateChildrenIds(parentId)
+
         tree.invalidateChildrenIds(id)
         tree.invalidateItemData(id)
       } catch (e) {}

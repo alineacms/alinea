@@ -83,6 +83,7 @@
     background: hsl(216, 100%, 91%);
     cursor: pointer;
     font-size: 16.5px;
+    transition: background 0.25s ease-out;
 
     &:hover {
       background: hsla(var(--alinea-positive), 1);
@@ -101,9 +102,14 @@
       color: var(--alinea-variant-disabled-foreground);
       background: var(--alinea-variant-disabled-action);
     }
-    &.is-publishing {
+    &.is-publishing,
+    &.is-archiving {
       color: var(--alinea-variant-progress-foreground);
       background: var(--alinea-variant-progress-action);
     }
+  }
+
+  &-action {
+    cursor: pointer;
   }
 }

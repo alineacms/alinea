@@ -140,13 +140,13 @@ export class Database implements Syncable {
           )
           continue
         case MutationType.Publish:
-          const hasDraft = await this.store(
+          const phases = await this.store(
             EntryRow({
-              entryId: mutation.entryId,
-              phase: EntryPhase.Draft
-            }).maybeFirst()
+              entryId: mutation.entryId
+            }).select(EntryRow.phase)
           )
-          if (hasDraft)
+          const promoting = phases.find(p => ALT_STATUS.includes(p))
+          if (promoting)
             await this.store(
               EntryRow({
                 entryId: mutation.entryId,
@@ -154,7 +154,7 @@ export class Database implements Syncable {
               }).delete(),
               EntryRow({
                 entryId: mutation.entryId,
-                phase: EntryPhase.Draft
+                phase: promoting
               }).set({
                 phase: EntryPhase.Published
               })
@@ -222,7 +222,9 @@ export class Database implements Syncable {
   private async writeMeta(query: Driver.Async) {
     const {h32ToString} = await xxhash()
     const contentHashes = await query(
-      EntryRow().select(EntryRow.contentHash).orderBy(EntryRow.contentHash)
+      EntryRow()
+        .select(EntryRow.contentHash.concat('.').concat(EntryRow.phase))
+        .orderBy(EntryRow.contentHash)
     )
     const contentHash = h32ToString(contentHashes.join(''))
     const modifiedAt = await query(
@@ -503,6 +505,8 @@ export class Database implements Syncable {
       //endIndex()
       await this.writeMeta(query)
     })
+
+    const updated = await this.meta()
 
     if (target && publishSeed.length > 0) {
       const changeSetCreator = new ChangeSetCreator(this.config)

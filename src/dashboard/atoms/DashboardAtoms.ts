@@ -20,8 +20,7 @@ export function useSetDashboardOptions(options: AppProps) {
         sessionAtom,
         {
           user: {sub: 'anonymous'},
-          cnx: client,
-          end: async () => {}
+          cnx: client
         }
       ]
     ])

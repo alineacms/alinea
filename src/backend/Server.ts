@@ -150,7 +150,7 @@ export class Server implements Connection {
         width: file.width,
         height: file.height,
         averageColor: file.averageColor,
-        blurHash: file.thumbHash,
+        thumbHash: file.thumbHash,
         preview: file.preview
       }
     }

@@ -167,7 +167,9 @@ export function useRouteBlocker(
   useEffect(() => {
     if (!when) return
     setBlockers(blockers => new Set(blockers).add(blockingAtom))
+    window.onbeforeunload = () => true
     return () => {
+      window.onbeforeunload = null
       setBlockers(blockers => {
         const res = new Set(blockers)
         res.delete(blockingAtom)

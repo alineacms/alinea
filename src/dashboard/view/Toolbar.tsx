@@ -112,7 +112,7 @@ export namespace Toolbar {
               </HStack>
             </DropdownMenu.Trigger>
 
-            <DropdownMenu.Items placement="bottom">
+            <DropdownMenu.Items bottom>
               {workspaces.map(([key, workspace]) => {
                 const {roots, label, color, icon} = Workspace.data(workspace)
                 const [name, root] = entries(roots)[0]

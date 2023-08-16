@@ -7,6 +7,7 @@
   height: var(--alinea-header-height);
   z-index: 2;
   backdrop-filter: blur(12px);
+  transition: background 0.25s ease-out;
 
   @include s {
     overflow-x: auto;
@@ -25,7 +26,8 @@
     color: var(--alinea-variant-disabled-foreground);
     background: var(--alinea-variant-disabled-background);
   }
-  &.is-publishing {
+  &.is-publishing,
+  &.is-archiving {
     color: var(--alinea-variant-progress-foreground);
     background: var(--alinea-variant-progress-background);
   }
