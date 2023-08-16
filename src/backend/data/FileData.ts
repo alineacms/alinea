@@ -120,40 +120,42 @@ export class FileData implements Source, Target, Media {
     yield* runBatch()
   }
 
-  async publishChanges({changes}: Connection.ChangesParams) {
+  async publishChanges({mutations}: Connection.ChangesParams) {
     const {fs, rootDir = '.', config} = this.options
     const noop = () => {}
-    for (const change of changes) {
-      if (!change.type) continue
-      switch (change.type) {
-        case ChangeType.Write: {
-          const location = path.join(rootDir, change.file)
-          await fs
-            .mkdir(path.dirname(location), {recursive: true})
-            .catch(noop)
-            .then(() => fs.writeFile(location, change.contents))
-          continue
-        }
-        case ChangeType.Rename: {
-          const location = path.join(rootDir, change.from)
-          const newLocation = path.join(rootDir, change.to)
-          await fs.rename(location, newLocation)
-          continue
-        }
-        case ChangeType.Delete: {
-          const location = path.join(rootDir, change.file)
-          await fs.rm(location, {recursive: true, force: true}).catch(noop)
-          continue
-        }
-        case ChangeType.Patch: {
-          const location = path.join(rootDir, change.file)
-          const contents = await fs.readFile(location)
-          const record = JsonLoader.parse(config.schema, contents)
-          const newContents = applyJsonPatch(record, change.patch)
-          await fs.writeFile(
-            location,
-            JsonLoader.format(config.schema, newContents)
-          )
+    for (const {changes} of mutations) {
+      for (const change of changes) {
+        if (!change.type) continue
+        switch (change.type) {
+          case ChangeType.Write: {
+            const location = path.join(rootDir, change.file)
+            await fs
+              .mkdir(path.dirname(location), {recursive: true})
+              .catch(noop)
+              .then(() => fs.writeFile(location, change.contents))
+            continue
+          }
+          case ChangeType.Rename: {
+            const location = path.join(rootDir, change.from)
+            const newLocation = path.join(rootDir, change.to)
+            await fs.rename(location, newLocation)
+            continue
+          }
+          case ChangeType.Delete: {
+            const location = path.join(rootDir, change.file)
+            await fs.rm(location, {recursive: true, force: true}).catch(noop)
+            continue
+          }
+          case ChangeType.Patch: {
+            const location = path.join(rootDir, change.file)
+            const contents = await fs.readFile(location)
+            const record = JsonLoader.parse(config.schema, contents)
+            const newContents = applyJsonPatch(record, change.patch)
+            await fs.writeFile(
+              location,
+              JsonLoader.format(config.schema, newContents)
+            )
+          }
         }
       }
     }

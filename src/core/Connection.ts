@@ -54,7 +54,7 @@ export namespace Connection {
     location: string
   }
   export type ChangesParams = {
-    changes: ChangeSet
+    mutations: ChangeSet
   }
   export interface AuthContext {
     user?: User

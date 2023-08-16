@@ -1,5 +1,5 @@
-import {Config, EntryPhase, EntryUrlMeta, Type} from 'alinea/core'
-import {META_KEY, createRecord} from 'alinea/core/EntryRecord'
+import { Config, EntryPhase, EntryUrlMeta, Type } from 'alinea/core'
+import { META_KEY, createRecord } from 'alinea/core/EntryRecord'
 import {
   ArchiveMutation,
   DiscardDraftMutation,
@@ -12,7 +12,7 @@ import {
   PublishMutation,
   RemoveEntryMutation
 } from 'alinea/core/Mutation'
-import {JsonLoader} from '../loader/JsonLoader.js'
+import { JsonLoader } from '../loader/JsonLoader.js'
 
 export enum ChangeType {
   Write = 'write',
@@ -22,29 +22,29 @@ export enum ChangeType {
 }
 export interface WriteChange {
   type: ChangeType.Write
-  entryId: string
   file: string
   contents: string
 }
 export interface RenameChange {
   type: ChangeType.Rename
-  entryId: string
   from: string
   to: string
 }
 export interface PatchChange {
   type: ChangeType.Patch
-  entryId: string
   file: string
   patch: object
 }
 export interface DeleteChange {
   type: ChangeType.Delete
-  entryId: string
   file: string
 }
 export type Change = WriteChange | RenameChange | PatchChange | DeleteChange
-export type ChangeSet = Array<Change>
+export type ChangeWithMeta= {
+  changes: Array<Change>
+  meta: Mutation
+}
+export type ChangeSet = Array<ChangeWithMeta>
 
 const decoder = new TextDecoder()
 const loader = JsonLoader
@@ -67,7 +67,7 @@ export class ChangeSetCreator {
     return (segments + phaseSegment + extension).toLowerCase()
   }
 
-  draftChanges({entryId, file, entry}: EditMutation): ChangeSet {
+  draftChanges({file, entry}: EditMutation): Array<Change> {
     const type = this.config.schema[entry.type]
     if (!type)
       throw new Error(`Cannot publish entry of unknown type: ${entry.type}`)
@@ -75,21 +75,19 @@ export class ChangeSetCreator {
     return [
       {
         type: ChangeType.Write,
-        entryId,
         file,
         contents: decoder.decode(loader.format(this.config.schema, record))
       }
     ]
   }
 
-  publishChanges({entryId, file}: PublishMutation): ChangeSet {
+  publishChanges({file}: PublishMutation): Array<Change> {
     const draftFile = `.${EntryPhase.Draft}.json`
     const archivedFiled = `.${EntryPhase.Archived}.json`
     if (file.endsWith(draftFile))
       return [
         {
           type: ChangeType.Rename,
-          entryId,
           from: file,
           to: file.slice(0, -draftFile.length) + '.json'
         }
@@ -98,7 +96,6 @@ export class ChangeSetCreator {
       return [
         {
           type: ChangeType.Rename,
-          entryId,
           from: file,
           to: file.slice(0, -archivedFiled.length) + '.json'
         }
@@ -106,35 +103,34 @@ export class ChangeSetCreator {
     throw new Error(`Cannot publish file: ${file}`)
   }
 
-  archiveChanges({entryId, file}: ArchiveMutation): ChangeSet {
+  archiveChanges({file}: ArchiveMutation): Array<Change> {
     const fileEnd = '.json'
     if (!file.endsWith(fileEnd))
       throw new Error(`File extension does not match json: ${file}`)
     return [
       {
         type: ChangeType.Rename,
-        entryId,
         from: file,
         to: file.slice(0, -fileEnd.length) + `.${EntryPhase.Archived}.json`
       }
     ]
   }
 
-  removeChanges({entryId, file}: RemoveEntryMutation): ChangeSet {
+  removeChanges({ file}: RemoveEntryMutation): Array<Change> {
     // Todo: remove all possible phases
-    return [{type: ChangeType.Delete, entryId, file}]
+    return [{type: ChangeType.Delete, file}]
   }
 
-  discardChanges({entryId, file}: DiscardDraftMutation): ChangeSet {
+  discardChanges({file}: DiscardDraftMutation): Array<Change> {
     const fileEnd = `.${EntryPhase.Draft}.json`
     if (!file.endsWith(fileEnd))
       throw new Error(`Cannot discard non-draft file: ${file}`)
-    return [{type: ChangeType.Delete, entryId, file}]
+    return [{type: ChangeType.Delete, file}]
   }
 
-  orderChanges({entryId, file, index}: OrderMutation): ChangeSet {
+  orderChanges({file, index}: OrderMutation): Array<Change> {
     return [
-      {type: ChangeType.Patch, entryId, file, patch: {[META_KEY]: {index}}}
+      {type: ChangeType.Patch, file, patch: {[META_KEY]: {index}}}
     ]
   }
 
@@ -144,16 +140,15 @@ export class ChangeSetCreator {
     fromFile,
     toFile,
     index
-  }: MoveMutation): ChangeSet {
-    const result: ChangeSet = []
+  }: MoveMutation): Array<Change> {
+    const result: Array<Change> = []
     const isContainer = Type.isContainer(this.config.schema[entryType])
-    result.push({type: ChangeType.Rename, entryId, from: fromFile, to: toFile})
+    result.push({type: ChangeType.Rename, from: fromFile, to: toFile})
     if (!isContainer) return result
     const fromFolder = fromFile.slice(0, -'.json'.length)
     const toFolder = toFile.slice(0, -'.json'.length)
     result.push({
       type: ChangeType.Rename,
-      entryId,
       from: fromFolder,
       to: toFolder
     })
@@ -168,11 +163,11 @@ export class ChangeSetCreator {
     return result
   }
 
-  fileUploadChanges(mutation: FileUploadMutation): ChangeSet {
+  fileUploadChanges(mutation: FileUploadMutation): Array<Change> {
     throw new Error('Not implemented')
   }
 
-  mutationChanges(mutation: Mutation): ChangeSet {
+  mutationChanges(mutation: Mutation): Array<Change> {
     switch (mutation.type) {
       case MutationType.Edit:
         return this.draftChanges(mutation)
@@ -194,6 +189,8 @@ export class ChangeSetCreator {
   }
 
   create(mutations: Array<Mutation>): ChangeSet {
-    return mutations.flatMap(mutation => this.mutationChanges(mutation))
+    return mutations.map(meta => {
+      return {changes: this.mutationChanges(meta), meta}
+    })
   }
 }

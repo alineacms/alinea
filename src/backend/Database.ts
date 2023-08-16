@@ -518,7 +518,10 @@ export class Database implements Syncable {
           entry: seed
         }))
       )
-      await target.publishChanges({changes}, {logger: new Logger('seed')})
+      await target.publishChanges(
+        {mutations: changes},
+        {logger: new Logger('seed')}
+      )
     }
   }
 }

@@ -40,14 +40,17 @@ export class CloudApi implements Media, Target {
 
   constructor() {}
 
-  publishChanges({changes}: Connection.ChangesParams, ctx: Connection.Context) {
+  publishChanges(
+    {mutations}: Connection.ChangesParams,
+    ctx: Connection.Context
+  ) {
     return fetch(
-      cloudConfig.publish,
+      cloudConfig.mutate,
       withAuth(
         ctx,
         asJson({
           method: 'POST',
-          body: JSON.stringify(changes)
+          body: JSON.stringify({mutations})
         })
       )
     )
