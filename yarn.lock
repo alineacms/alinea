@@ -55,7 +55,7 @@ __metadata:
     p-lazy: ^4.0.0
     pretty-ms: ^8.0.0
     xksuid: ^0.0.3
-    yjs: ^13.6.6
+    yjs: ^13.6.7
   languageName: unknown
   linkType: soft
 
@@ -72,7 +72,6 @@ __metadata:
     "@headlessui/react": ^1.6.1
     "@react-hook/size": ^2.1.2
     "@react-hook/window-size": ^3.0.7
-    "@sqlite.org/sqlite-wasm": ^3.42.0-build4
     "@types/diff-match-patch": ^1.0.32
     color2k: ^1.2.4
     dataloader: ^2.1.0
@@ -1727,20 +1726,6 @@ __metadata:
   version: 1.2.0
   resolution: "@rushstack/eslint-patch@npm:1.2.0"
   checksum: faa749faae0e83c26ae9eb00ad36a897ac78f3cf27da8e8ff21c00bcf7973b598d823d8f2b3957ef66079288bcf577f94df831eae2d65f3f68d8ca32f18b6aff
-  languageName: node
-  linkType: hard
-
-"@sqlite.org/sqlite-wasm@npm:^3.42.0-build4":
-  version: 3.42.0-build4
-  resolution: "@sqlite.org/sqlite-wasm@npm:3.42.0-build4"
-  dependencies:
-    comlink: ^4.4.1
-  dependenciesMeta:
-    comlink:
-      optional: true
-  bin:
-    sqlite-wasm: bin/index.js
-  checksum: 028bb67197d1d59daf7e941f407b20869a3f7e5743bd0810d59f5060c2b1bdedd644cb42af57dc82ad1898420db69dbb7b6b622756c6753e86823fd4fcd47d6a
   languageName: node
   linkType: hard
 
@@ -3421,13 +3406,6 @@ __metadata:
   version: 1.2.4
   resolution: "color2k@npm:1.2.4"
   checksum: 9cde39430d9e4b7c03f1e572d9be76e17be3ce0c8cc1acd276eadc65d13a0e80f484220e3428cd53272d105369cae652b141ac03149e5738000b79a7fae1ba96
-  languageName: node
-  linkType: hard
-
-"comlink@npm:^4.4.1":
-  version: 4.4.1
-  resolution: "comlink@npm:4.4.1"
-  checksum: 16d58a8f590087fc45432e31d6c138308dfd4b75b89aec0b7f7bb97ad33d810381bd2b1e608a1fb2cf05979af9cbfcdcaf1715996d5fcf77aeb013b6da3260af
   languageName: node
   linkType: hard
 
@@ -11088,12 +11066,12 @@ resolve@^1.10.0:
   languageName: node
   linkType: hard
 
-"yjs@npm:13.6.6":
-  version: 13.6.6
-  resolution: "yjs@npm:13.6.6"
+"yjs@npm:13.6.7":
+  version: 13.6.7
+  resolution: "yjs@npm:13.6.7"
   dependencies:
     lib0: ^0.2.74
-  checksum: c69cb9a084aa433e813f6d0a191ebad5800a9a7098f7c6715952e4f8e5fc23270e3b8d7d747e1b0d0f1adca5f6efe01019654389eddb3977006814c4e2ff7ce6
+  checksum: 8e89257c8b565ab97cf3354fca2ce0b6bc3d1abe90b9d45a218a94b35da372c88d2411b353ed8ca03a6619004c4da76c96f7c203c38506c3758c9f8c1a730ca4
   languageName: node
   linkType: hard
 

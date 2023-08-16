@@ -11,7 +11,6 @@
     "@headlessui/react": "^1.6.1",
     "@react-hook/size": "^2.1.2",
     "@react-hook/window-size": "^3.0.7",
-    "@sqlite.org/sqlite-wasm": "^3.42.0-build4",
     "@types/diff-match-patch": "^1.0.32",
     "color2k": "^1.2.4",
     "dataloader": "^2.1.0",
