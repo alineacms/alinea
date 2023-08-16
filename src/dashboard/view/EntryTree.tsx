@@ -44,8 +44,9 @@ function EntryTreeItem({item, data}: EntryTreeItemProps) {
   const {schema} = useConfig()
   const currentData = useRef<EntryTreeItem>(data)
   const itemData = data ?? currentData.current
-  if (!data) return null
-  currentData.current = data
+
+  if (!itemData) return null
+  currentData.current = itemData
   const selected = selectedEntry(locale, itemData)
   const {icon} = Type.meta(schema[selected.type])
   const isDraft = selected.phase === EntryPhase.Draft
@@ -166,7 +167,6 @@ export function EntryTree({i18nId: entryId, selected = []}: EntryTreeProps) {
       try {
         const item = tree.getItemInstance(id)
         if (!item) {
-          console.log('not in tree')
           tree.invalidateChildrenIds(rootId(root.name))
           continue
         }
@@ -182,14 +182,8 @@ export function EntryTree({i18nId: entryId, selected = []}: EntryTreeProps) {
   return (
     <>
       <div ref={tree.registerElement} className={styles.tree()}>
-        {tree.getItems().map(item => {
-          return (
-            <EntryTreeItem
-              key={item.getId()}
-              item={item}
-              data={item.getItemData()}
-            />
-          )
+        {tree.getItems().map((item, i) => {
+          return <EntryTreeItem key={i} item={item} data={item.getItemData()} />
         })}
       </div>
     </>

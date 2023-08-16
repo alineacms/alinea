@@ -3,7 +3,6 @@ import {
   Connection,
   EntryPhase,
   EntryRow,
-  Field,
   ROOT_KEY,
   Type,
   createId,
@@ -38,7 +37,7 @@ const previewTokenAtom = atom(async get => {
 })
 
 interface EntryEditorParams {
-  locale: string | undefined
+  locale: string | null
   i18nId: string | undefined
 }
 
@@ -62,6 +61,7 @@ export const entryEditorAtoms = atomFamily(
       }
       if (!entry) return undefined
       const entryId = entry.entryId
+      get(entryRevisionAtoms(entryId))
       const versions = await graph.all.find(
         Entry({entryId}).select({
           ...Entry,
@@ -82,7 +82,6 @@ export const entryEditorAtoms = atomFamily(
           .where(Entry.locale.isNotNull(), Entry.entryId.isNot(entryId))
           .select({locale: Entry.locale, entryId: Entry.entryId})
       )) as Array<{locale: string; entryId: string}>
-      get(entryRevisionAtoms(entryId))
       if (versions.length === 0) return undefined
       const phases = fromEntries(
         versions.map(version => [version.phase, version])
@@ -134,7 +133,7 @@ export function createEntryEditor(entryData: EntryData) {
   )
   const yDoc = docs[activePhase]
   const yStateVector = Y.encodeStateVector(yDoc)
-  const hasChanges = createChangesAtom(yDoc)
+  const hasChanges = createChangesAtom(yDoc.getMap(ROOT_KEY))
   const states = fromEntries(
     entries(docs).map(([phase, doc]) => [
       phase,
@@ -256,16 +255,7 @@ export function createEntryEditor(entryData: EntryData) {
   })
 
   const discardEdits = atom(null, (get, set) => {
-    const type = config.schema[activeVersion.type]
-    const docRoot = yDoc.getMap(ROOT_KEY)
-    yDoc.transact(() => {
-      for (const [key, field] of entries(type)) {
-        const contents = activeVersion.data[key]
-        const output = Field.shape(field).toY(contents)
-        docRoot.set(key, output)
-      }
-    })
-    set(hasChanges, false)
+    set(entryRevisionAtoms(activeVersion.entryId))
   })
 
   const activeTitle = yAtom(
@@ -280,6 +270,7 @@ export function createEntryEditor(entryData: EntryData) {
 
   return {
     ...entryData,
+    revisionId: createId(),
     activePhase,
     phaseInUrl,
     selectedPhase,
@@ -307,12 +298,14 @@ export function createEntryEditor(entryData: EntryData) {
   }
 }
 
-function createChangesAtom(yDoc: Y.Doc) {
+function createChangesAtom(yMap: Y.Map<unknown>) {
   const hasChanges = atom(false)
   hasChanges.onMount = (setAtom: (value: boolean) => void) => {
-    const listener = () => setAtom(true)
-    yDoc.on('update', listener)
-    return () => yDoc.off('update', listener)
+    const listener = (events: Array<Y.YEvent<any>>, tx: Y.Transaction) => {
+      setAtom(true)
+    }
+    yMap.observeDeep(listener)
+    return () => yMap.unobserveDeep(listener)
   }
   return hasChanges
 }

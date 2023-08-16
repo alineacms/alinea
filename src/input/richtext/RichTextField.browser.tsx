@@ -262,7 +262,5 @@ export function RichTextInput<Blocks extends Schema>({
   const [_, {fragment}] = useInput(state)
   // We key here currently because the tiptap/yjs combination fails to register
   // changes when the fragment is changed while the editor is mounted.
-  return (
-    <RichTextEditor /*key={fragment.doc?.guid}*/ state={state} field={field} />
-  )
+  return <RichTextEditor key={fragment.doc?.guid} state={state} field={field} />
 }

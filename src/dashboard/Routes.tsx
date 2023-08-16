@@ -9,7 +9,7 @@ import {DraftsOverview} from './pages/DraftsOverview.js'
 const editorLoader = atomFamily(() => {
   return atom(async get => {
     const entryLocation = get(entryLocationAtom)
-    const locale = get(localeAtom)
+    const locale = get(localeAtom) ?? null
     return {
       editor: await get(
         entryEditorAtoms({locale, i18nId: entryLocation?.entryId})
