@@ -72,7 +72,7 @@ function typeExtension(
             </Card.Options>
           </Card.Header>
           <Card.Content>
-            <IsNested.Provider value={false}>
+            <IsNested.Provider value={true}>
               <InputForm state={parent.child(id)} type={type} />
             </IsNested.Provider>
           </Card.Content>
