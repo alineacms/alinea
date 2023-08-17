@@ -205,9 +205,9 @@ export function createEntryEditor(entryData: EntryData) {
 
   const saveTranslation = atom(null, async (get, set, locale: string) => {
     const {active} = await get(graphAtom)
-    const {parentPaths} = await active.get(
+    const parentData = await active.maybeGet(
       Entry({i18nId: activeVersion.i18nId, locale}).select({
-        parentPaths({parents}) {
+        paths({parents}) {
           return parents().select(Entry.path)
         }
       })
@@ -216,7 +216,7 @@ export function createEntryEditor(entryData: EntryData) {
     const entry = {...getDraftEntry(), entryId, locale, phase: EntryPhase.Draft}
     const mutation: Mutation = {
       type: MutationType.Edit,
-      file: entryFile(entry, parentPaths),
+      file: entryFile(entry, parentData?.paths ?? []),
       entryId,
       entry
     }

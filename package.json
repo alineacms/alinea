@@ -8,6 +8,7 @@
     "dev": "run-p dev:check dev:run",
     "stories": "ladle serve",
     "demo": "node build.js --watch -- node dev.js --dir apps/demo --config src/cms -- yarn workspace @alinea/demo dev",
+    "cms:stories": "node build.js --watch -- node dev.js --dir apps/stories --config cms",
     "build": "tsc && node build.js",
     "alinea": "node build.js && node dist/cli.js",
     "build:alinea": "node build.js",
@@ -38,6 +39,8 @@
   ],
   "workspaces": [
     "apps/web",
+    "apps/demo",
+    "apps/stories",
     "src/backend",
     "src/cli",
     "src/core",

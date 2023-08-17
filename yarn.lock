@@ -89,6 +89,36 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@alinea/demo@workspace:apps/demo":
+  version: 0.0.0-use.local
+  resolution: "@alinea/demo@workspace:apps/demo"
+  dependencies:
+    "@babel/standalone": ^7.22.5
+    "@fontsource/inter": 5.0.1
+    "@fontsource/jetbrains-mono": 5.0.1
+    "@fontsource/poppins": 5.0.1
+    "@monaco-editor/react": ^4.4.5
+    "@types/node": 20.0.0
+    "@types/react": ^18.2.13
+    alinea: 0.0.0
+    cross-env: ^7.0.3
+    eslint: 8.39.0
+    eslint-config-next: 13.4.0
+    file-loader: ^6.2.0
+    lz-string: ^1.4.4
+    next: ^13.4.8
+    raw-loader: ^4.0.2
+    react: 18.2.0
+    react-dom: 18.2.0
+    react-string-replace: ^1.0.0
+    remark: ^14.0.2
+    remark-html: ^15.0.1
+    shiki: ^0.10.1
+    typescript: ^5.1.3
+    use-clipboard-copy: ^0.2.0
+  languageName: unknown
+  linkType: soft
+
 "@alinea/input.richtext@workspace:src/input/richtext":
   version: 0.0.0-use.local
   resolution: "@alinea/input.richtext@workspace:src/input/richtext"
@@ -140,6 +170,14 @@ __metadata:
   checksum: 858ccec0ef70b5010fb132b2843a48819608383152cb0a12123e0636c9b079f6d9aaa7e6207c72bb3b385b996c42a90e54a7b30dc58a65fb2ea9eca9d236bcec
   languageName: node
   linkType: hard
+
+"@alinea/stories@workspace:apps/stories":
+  version: 0.0.0-use.local
+  resolution: "@alinea/stories@workspace:apps/stories"
+  dependencies:
+    alinea: 0.0.0
+  languageName: unknown
+  linkType: soft
 
 "@alinea/ui@workspace:src/ui":
   version: 0.0.0-use.local
