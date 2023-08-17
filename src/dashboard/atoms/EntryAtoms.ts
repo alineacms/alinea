@@ -5,8 +5,11 @@ import {
 } from '@headless-tree/core'
 import {EntryPhase, Type} from 'alinea/core'
 import {Entry} from 'alinea/core/Entry'
+import {entryFileName} from 'alinea/core/EntryFilenames'
 import {GraphRealm} from 'alinea/core/Graph'
+import {MutationType} from 'alinea/core/Mutation'
 import {Projection} from 'alinea/core/pages/Projection'
+import {generateKeyBetween} from 'alinea/core/util/FractionalIndexing'
 import {entries} from 'alinea/core/util/Objects'
 import DataLoader from 'dataloader'
 import {atom, useAtomValue, useSetAtom} from 'jotai'
@@ -170,25 +173,27 @@ export function useEntryTreeProvider(): AsyncTreeDataLoader<EntryTreeItem> & {
       onDrop(items, {item: parent, childIndex, insertionIndex}) {
         if (items.length !== 1) return
         const [dropping] = items
-        if (insertionIndex === null) {
+        if (dropping.getParent() !== parent || childIndex === null) {
           console.log('Todo: move entries')
           return
         }
-        console.log('Todo: order entries')
-        return
-        /*const previous = parent.getChildren()[insertionIndex - 1]
-        const next = parent.getChildren()[insertionIndex]
+        const previous = parent.getChildren()[childIndex - 1]
+        const next = parent.getChildren()[childIndex]
         const previousIndex = previous?.getItemData()?.index ?? null
         const nextIndex = next?.getItemData()?.index ?? null
-        const newIndex = generateKeyBetween(previousIndex, nextIndex)
-        for (const entry of dropping.getItemData().entries) {
-          mutate({
-            type: MutationType.Order,
-            entryId: entry.entryId,
-            file: entryFileName(config, entry, entry.parentPaths),
-            index: newIndex
-          })
-        }*/
+        try {
+          const newIndex = generateKeyBetween(previousIndex, nextIndex)
+          for (const entry of dropping.getItemData().entries) {
+            mutate({
+              type: MutationType.Order,
+              entryId: entry.entryId,
+              file: entryFileName(config, entry, entry.parentPaths),
+              index: newIndex
+            })
+          }
+        } catch (err) {
+          console.error(err)
+        }
       },
       async getItem(id): Promise<EntryTreeItem> {
         return (await (await loader).clear(id).load(id))!
