@@ -28,12 +28,22 @@ export const pages = alinea.root('Languages', {
 export const cms = createCMS({
   schema,
   workspaces: {
-    main: alinea.workspace('Multi language', {
+    primary: alinea.workspace('Multi language', {
       pages,
       media: alinea.media(),
       [alinea.meta]: {
         mediaDir: 'public',
-        source: 'content'
+        source: 'primary'
+      }
+    }),
+    secondary: alinea.workspace('Secondary workspace', {
+      pages: alinea.root('Pages', {
+        [alinea.meta]: {
+          contains: ['Page', 'Folder']
+        }
+      }),
+      [alinea.meta]: {
+        source: 'secondary'
       }
     })
   }

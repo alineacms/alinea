@@ -144,7 +144,9 @@ export function EntryEdit({editor}: EntryEditProps) {
               >
                 This page has not yet been translated to this language,
                 <br />
-                please enter the details below and save to start translating.
+                {editor.parentNeedsTranslation
+                  ? 'please translate the parent page first.'
+                  : 'please enter the details below and save to start translating.'}
               </EntryNotice>
             )}
 

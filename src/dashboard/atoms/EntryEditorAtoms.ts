@@ -82,6 +82,14 @@ export const entryEditorAtoms = atomFamily(
           .where(Entry.locale.isNotNull(), Entry.entryId.isNot(entryId))
           .select({locale: Entry.locale, entryId: Entry.entryId})
       )) as Array<{locale: string; entryId: string}>
+      const parentLink =
+        entry.parent &&
+        (await graph.active.get(
+          Entry({entryId: entry.parent}).select(Entry.i18nId)
+        ))
+      const parentNeedsTranslation = parentLink
+        ? !(await graph.active.maybeGet(Entry({i18nId: parentLink, locale})))
+        : false
       if (versions.length === 0) return undefined
       const phases = fromEntries(
         versions.map(version => [version.phase, version])
@@ -93,6 +101,7 @@ export const entryEditorAtoms = atomFamily(
       return createEntryEditor({
         parents,
         translations,
+        parentNeedsTranslation,
         previewToken,
         client,
         config,
@@ -115,6 +124,7 @@ export interface EntryData {
   phases: Record<EntryPhase, Version>
   availablePhases: Array<EntryPhase>
   translations: Array<{locale: string; entryId: string}>
+  parentNeedsTranslation: boolean
   previewToken: string
 }
 
@@ -205,15 +215,32 @@ export function createEntryEditor(entryData: EntryData) {
 
   const saveTranslation = atom(null, async (get, set, locale: string) => {
     const {active} = await get(graphAtom)
-    const parentData = await active.maybeGet(
-      Entry({i18nId: activeVersion.i18nId, locale}).select({
-        paths({parents}) {
-          return parents().select(Entry.path)
-        }
-      })
-    )
+    const parentLink =
+      activeVersion.parent &&
+      (await active.get(
+        Entry({entryId: activeVersion.parent}).select(Entry.i18nId)
+      ))
+    if (activeVersion.parent && !parentLink) throw new Error('Parent not found')
+    const parentData = parentLink
+      ? await active.get(
+          Entry({i18nId: parentLink, locale}).select({
+            entryId: Entry.entryId,
+            paths({parents}) {
+              return parents().select(Entry.path)
+            }
+          })
+        )
+      : undefined
+    if (activeVersion.parent && !parentData)
+      throw new Error('Parent not translated')
     const entryId = createId()
-    const entry = {...getDraftEntry(), entryId, locale, phase: EntryPhase.Draft}
+    const entry = {
+      ...getDraftEntry(),
+      parent: parentData?.entryId ?? null,
+      entryId,
+      locale,
+      phase: EntryPhase.Draft
+    }
     const mutation: Mutation = {
       type: MutationType.Edit,
       file: entryFile(entry, parentData?.paths ?? []),

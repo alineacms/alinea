@@ -151,7 +151,7 @@ export function EntryHeader({editor}: EntryHeaderProps) {
           </DropdownMenu.Items>
         </DropdownMenu.Root>
 
-        {!hasChanges && isActivePhase && (
+        {!hasChanges && isActivePhase && !untranslated && (
           <>
             <span className={styles.root.description.separator()} />
             <div className={styles.root.description.action()}>
@@ -171,7 +171,7 @@ export function EntryHeader({editor}: EntryHeaderProps) {
             </>
           )}
 
-        {untranslated && !hasChanges && (
+        {untranslated && !editor.parentNeedsTranslation && !hasChanges && (
           <>
             <span className={styles.root.description.separator()} />
             <div className={styles.root.description.action()}>
@@ -185,6 +185,15 @@ export function EntryHeader({editor}: EntryHeaderProps) {
                   }}
                 />
               </HStack>
+            </div>
+          </>
+        )}
+
+        {untranslated && editor.parentNeedsTranslation && (
+          <>
+            <span className={styles.root.description.separator()} />
+            <div className={styles.root.description.action()}>
+              Translate parent page first
             </div>
           </>
         )}
@@ -207,7 +216,7 @@ export function EntryHeader({editor}: EntryHeaderProps) {
 
         <Stack.Right>
           <HStack center gap={12}>
-            {untranslated && (
+            {untranslated && !editor.parentNeedsTranslation && (
               <Button icon={IcRoundSave} onClick={translate}>
                 Save translation
               </Button>
