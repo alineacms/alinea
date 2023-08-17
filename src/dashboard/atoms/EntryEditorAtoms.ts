@@ -222,9 +222,10 @@ export function createEntryEditor(entryData: EntryData) {
       ))
     if (activeVersion.parent && !parentLink) throw new Error('Parent not found')
     const parentData = parentLink
-      ? await active.get(
-          Entry({i18nId: parentLink, locale}).select({
+      ? await active.locale(locale).get(
+          Entry({i18nId: parentLink}).select({
             entryId: Entry.entryId,
+            path: Entry.path,
             paths({parents}) {
               return parents().select(Entry.path)
             }
@@ -243,11 +244,16 @@ export function createEntryEditor(entryData: EntryData) {
     }
     const mutation: Mutation = {
       type: MutationType.Edit,
-      file: entryFile(entry, parentData?.paths ?? []),
+      file: entryFile(
+        entry,
+        parentData?.paths ? parentData.paths.concat(parentData.path) : []
+      ),
       entryId,
       entry
     }
-    return set(mutateAtom, mutation)
+    const res = set(mutateAtom, mutation)
+    set(entryRevisionAtoms(activeVersion.entryId))
+    return res
   })
 
   const publishDraft = atom(null, (get, set) => {
