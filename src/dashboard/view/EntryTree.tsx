@@ -5,7 +5,7 @@ import {
   selectionFeature
 } from '@headless-tree/core'
 import {useTree} from '@headless-tree/react'
-import {EntryPhase, Type} from 'alinea/core'
+import {Entry, EntryPhase, Type} from 'alinea/core'
 import {Icon, fromModule, px} from 'alinea/ui'
 import {IcOutlineInsertDriveFile} from 'alinea/ui/icons/IcOutlineInsertDriveFile'
 import IcRoundArchive from 'alinea/ui/icons/IcRoundArchive'
@@ -15,7 +15,7 @@ import {IcRoundKeyboardArrowRight} from 'alinea/ui/icons/IcRoundKeyboardArrowRig
 import {IcRoundTranslate} from 'alinea/ui/icons/IcRoundTranslate'
 import {useAtomValue} from 'jotai'
 import {useEffect, useRef} from 'react'
-import {changedEntriesAtom} from '../atoms/DbAtoms.js'
+import {changedEntriesAtom, graphAtom} from '../atoms/DbAtoms.js'
 import {
   EntryTreeItem,
   rootId,
@@ -126,6 +126,7 @@ export interface EntryTreeProps {
 }
 
 export function EntryTree({i18nId: entryId, selected = []}: EntryTreeProps) {
+  const graph = useAtomValue(graphAtom)
   const root = useRoot()
   const treeProvider = useEntryTreeProvider()
   const navigate = useNavigate()
@@ -163,22 +164,28 @@ export function EntryTree({i18nId: entryId, selected = []}: EntryTreeProps) {
     tree.invalidateChildrenIds(rootId(root.name))
   }, [treeProvider])
   useEffect(() => {
-    console.log('changed', changed)
-    for (const id of changed) {
-      try {
-        const item = tree.getItemInstance(id)
-        if (!item) {
-          tree.invalidateChildrenIds(rootId(root.name))
-          continue
-        }
-        const parent = item.getParent()
-        const parentId = parent?.getId()
-        if (parentId) tree.invalidateChildrenIds(parentId)
+    const all = locale
+      ? graph.active.find(
+          Entry().where(Entry.entryId.isIn(changed)).select(Entry.i18nId)
+        )
+      : Promise.resolve(changed)
+    all.then(ids => {
+      for (const id of ids) {
+        try {
+          const item = tree.getItemInstance(id)
+          if (!item) {
+            tree.invalidateChildrenIds(rootId(root.name))
+            continue
+          }
+          const parent = item.getParent()
+          const parentId = parent?.getId()
+          if (parentId) tree.invalidateChildrenIds(parentId)
 
-        tree.invalidateChildrenIds(id)
-        tree.invalidateItemData(id)
-      } catch (e) {}
-    }
+          tree.invalidateChildrenIds(id)
+          tree.invalidateItemData(id)
+        } catch (e) {}
+      }
+    })
   }, [changed])
   return (
     <>

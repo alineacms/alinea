@@ -78,6 +78,13 @@ const entryTreeItemLoaderAtom = atom(async get => {
       path: Entry.path,
       parentPaths({parents}) {
         return parents(Entry).select(Entry.path)
+      },
+      children({children}) {
+        return children(Entry)
+          .where(Entry.type.isIn(visibleTypes))
+          .select(Entry.i18nId)
+          .groupBy(Entry.i18nId)
+          .orderBy(Entry.index.asc())
       }
     } satisfies Projection
     const entries = Entry()
@@ -87,13 +94,6 @@ const entryTreeItemLoaderAtom = atom(async get => {
         data,
         translations({translations}) {
           return translations().select(data)
-        },
-        children({children}) {
-          return children(Entry)
-            .where(Entry.type.isIn(visibleTypes))
-            .select(Entry.i18nId)
-            .groupBy(Entry.i18nId)
-            .orderBy(Entry.index.asc())
         }
       })
       .groupBy(Entry.i18nId)
@@ -105,7 +105,7 @@ const entryTreeItemLoaderAtom = atom(async get => {
         id: row.id,
         index: row.index,
         entries,
-        children: row.children
+        children: [...new Set(entries.flatMap(entry => entry.children))]
       })
     }
     const res: Array<EntryTreeItem | undefined> = []
