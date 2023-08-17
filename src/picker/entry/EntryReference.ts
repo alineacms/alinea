@@ -1,4 +1,3 @@
-import {Label} from 'alinea/core/Label'
 import {Reference} from 'alinea/core/Reference'
 
 export interface EntryLinkReference extends Reference {
@@ -6,9 +5,9 @@ export interface EntryLinkReference extends Reference {
 }
 
 export interface EntryReference extends EntryLinkReference {
+  title: string
   entryType: string
   path: string
-  title: Label
   url: string
 }
 
@@ -19,6 +18,7 @@ export namespace EntryReference {
 }
 
 export interface FileReference extends EntryLinkReference {
+  title: string
   src: string
   url: string
   extension: string
@@ -32,6 +32,7 @@ export namespace FileReference {
 }
 
 export interface ImageReference extends EntryLinkReference {
+  title: string
   src: string
   extension: string
   size: number

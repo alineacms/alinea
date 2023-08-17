@@ -12,10 +12,10 @@ import {Picker} from 'alinea/editor/Picker'
 import {EntryLinkReference} from './EntryReference.js'
 
 export const entryFields = {
+  title: Entry.title,
   entryType: Entry.type,
   url: Entry.url,
-  path: Entry.path,
-  title: Entry.title
+  path: Entry.path
 }
 
 export const fileFields = {
