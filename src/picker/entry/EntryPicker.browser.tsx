@@ -20,16 +20,19 @@ import {Picker, PickerProps} from 'alinea/editor/Picker'
 import {
   Button,
   HStack,
+  Icon,
   Loader,
   Stack,
   TextLabel,
   VStack,
   fromModule
 } from 'alinea/ui'
+import {DropdownMenu} from 'alinea/ui/DropdownMenu'
 import {IcOutlineGridView} from 'alinea/ui/icons/IcOutlineGridView'
 import {IcOutlineList} from 'alinea/ui/icons/IcOutlineList'
 import {IcRoundArrowBack} from 'alinea/ui/icons/IcRoundArrowBack'
 import {IcRoundSearch} from 'alinea/ui/icons/IcRoundSearch'
+import {IcRoundUnfoldMore} from 'alinea/ui/icons/IcRoundUnfoldMore'
 import {Suspense, useCallback, useMemo, useState} from 'react'
 import {useQuery} from 'react-query'
 import {
@@ -181,9 +184,31 @@ export function EntryPickerModal({
                     <button onClick={toRoot}>{workspace.label}</button>
                   </BreadcrumbsItem>
                   <BreadcrumbsItem>
-                    <button onClick={toRoot}>
-                      {Root.label(workspace.roots[destination.root])}{' '}
-                    </button>
+                    <DropdownMenu.Root>
+                      <DropdownMenu.Trigger>
+                        <HStack center gap={4}>
+                          {Root.label(workspace.roots[destination.root])}
+                          <Icon icon={IcRoundUnfoldMore} />
+                        </HStack>
+                      </DropdownMenu.Trigger>
+                      <DropdownMenu.Items bottom>
+                        {entries(workspace.roots).map(([name, root]) => {
+                          return (
+                            <DropdownMenu.Item
+                              key={name}
+                              onClick={() => {
+                                setDestination({
+                                  workspace: destination.workspace,
+                                  root: name
+                                })
+                              }}
+                            >
+                              {Root.label(root)}
+                            </DropdownMenu.Item>
+                          )
+                        })}
+                      </DropdownMenu.Items>
+                    </DropdownMenu.Root>
                   </BreadcrumbsItem>
                   {!search &&
                     parentEntries?.map(({id, title}) => {
