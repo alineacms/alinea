@@ -92,8 +92,7 @@ export class ResolveContext {
 
   linkContext() {
     return new ResolveContext({
-      realm: this.realm,
-      locale: this.locale
+      realm: this.realm
     })
   }
 
@@ -176,7 +175,11 @@ enum ExprContext {
 }
 
 export class Resolver {
-  constructor(public store: Store, public schema: Schema) {}
+  targets: Schema.Targets
+
+  constructor(public store: Store, public schema: Schema) {
+    this.targets = Schema.targets(schema)
+  }
 
   fieldOf(
     ctx: ResolveContext,
@@ -727,7 +730,7 @@ export class Resolver {
             await tx(EntryRow().insert(previewEntry))
             await Database.index(tx)
             const result = await tx(query)
-            const linkResolver = new LinkResolver(this, tx, ctx)
+            const linkResolver = new LinkResolver(this, tx, ctx.realm)
             if (result) await this.post({linkResolver}, result, selection)
             // The transaction api needs to be revised to support explicit commit/rollback
             throw {result}
@@ -738,7 +741,7 @@ export class Resolver {
         }
     }
     const result = await this.store(query)
-    const linkResolver = new LinkResolver(this, this.store, ctx)
+    const linkResolver = new LinkResolver(this, this.store, ctx.realm)
     if (result) await this.post({linkResolver}, result, selection)
     return result
   }

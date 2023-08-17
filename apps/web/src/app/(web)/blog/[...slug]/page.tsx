@@ -25,7 +25,6 @@ export default async function BlogPostPage({params}: BlogPostPageProps) {
     BlogPost().where(Entry.url.is(`/blog/${params.slug.join('/')}`))
   )
   if (!page) return notFound()
-  console.log(page.body[0])
   return (
     <LayoutWithSidebar
       sidebar={
