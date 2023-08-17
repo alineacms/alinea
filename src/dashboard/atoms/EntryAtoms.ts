@@ -5,6 +5,7 @@ import {
 } from '@headless-tree/core'
 import {EntryPhase, Type} from 'alinea/core'
 import {Entry} from 'alinea/core/Entry'
+import {GraphRealm} from 'alinea/core/Graph'
 import {Projection} from 'alinea/core/pages/Projection'
 import {entries} from 'alinea/core/util/Objects'
 import DataLoader from 'dataloader'
@@ -26,15 +27,16 @@ const visibleTypesAtom = atom(get => {
     .map(([name]) => name)
 })
 
-const entryTreeRootAtom = atom(async (get): Promise<EntryTreeItem> => {
-  const {active} = await get(graphAtom)
-  const workspace = get(workspaceAtom)
-  const root = get(rootAtom)
-  const visibleTypes = get(visibleTypesAtom)
+async function entryTreeRoot(
+  active: GraphRealm,
+  workspace: string,
+  root: string,
+  visibleTypes: Array<string>
+): Promise<EntryTreeItem> {
   const rootEntries = Entry()
     .where(
-      Entry.workspace.is(workspace.name),
-      Entry.root.is(root.name),
+      Entry.workspace.is(workspace),
+      Entry.root.is(root),
       Entry.parent.isNull(),
       Entry.active,
       Entry.type.isIn(visibleTypes)
@@ -44,22 +46,22 @@ const entryTreeRootAtom = atom(async (get): Promise<EntryTreeItem> => {
     .orderBy(Entry.index.asc())
   const children = await active.find(rootEntries)
   return {
-    id: rootId(root.name),
+    id: rootId(root),
     index: '',
     isFolder: true,
     entries: [],
     children
   }
-})
+}
 
 const entryTreeItemLoaderAtom = atom(async get => {
   const graph = await get(graphAtom)
-  const entryTreeRootItem = await get(entryTreeRootAtom)
   const visibleTypes = get(visibleTypesAtom)
   const {schema} = get(configAtom)
   const root = get(rootAtom)
+  const workspace = get(workspaceAtom)
   return new DataLoader(async (ids: ReadonlyArray<string>) => {
-    const res = new Map<string, EntryTreeItem>()
+    const indexed = new Map<string, EntryTreeItem>()
     const search = (ids as Array<string>).filter(id => id !== rootId(root.name))
     const data = {
       id: Entry.i18nId,
@@ -96,22 +98,37 @@ const entryTreeItemLoaderAtom = atom(async get => {
     const rows = await graph.active.find(entries)
     for (const row of rows) {
       const entries = [row.data].concat(row.translations)
-      res.set(row.id, {
+      indexed.set(row.id, {
         id: row.id,
         index: row.index,
         entries,
         children: row.children
       })
     }
-    return ids.map(id => {
-      if (id === rootId(root.name)) return entryTreeRootItem
-      const entry = res.get(id)!
-      if (!entry) return undefined
+    const res: Array<EntryTreeItem | undefined> = []
+    for (const id of ids) {
+      if (id === rootId(root.name)) {
+        res.push(
+          await entryTreeRoot(
+            graph.active,
+            workspace.name,
+            root.name,
+            visibleTypes
+          )
+        )
+        continue
+      }
+      const entry = indexed.get(id)!
+      if (!entry) {
+        res.push(undefined)
+        continue
+      }
       const typeName = entry.entries[0].type
       const type = schema[typeName]
       const isFolder = Type.isContainer(type)
-      return {...entry, isFolder}
-    })
+      res.push({...entry, isFolder})
+    }
+    return res
   })
 })
 
