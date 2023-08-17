@@ -183,11 +183,11 @@ export function createEntryEditor(entryData: EntryData) {
     return get(phaseInUrl) ?? activePhase
   })
 
-  function entryFile(entry: EntryRow) {
+  function entryFile(entry: EntryRow, parentPaths?: Array<string>) {
     return entryFileName(
       config,
       entry,
-      entryData.parents.map(p => p.path)
+      parentPaths ?? entryData.parents.map(p => p.path)
     )
   }
 
@@ -203,16 +203,23 @@ export function createEntryEditor(entryData: EntryData) {
     return set(mutateAtom, mutation)
   })
 
-  const saveTranslation = atom(null, (get, set, locale: string) => {
+  const saveTranslation = atom(null, async (get, set, locale: string) => {
+    const {active} = await get(graphAtom)
+    const {parentPaths} = await active.get(
+      Entry({i18nId: activeVersion.i18nId, locale}).select({
+        parentPaths({parents}) {
+          return parents().select(Entry.path)
+        }
+      })
+    )
     const entryId = createId()
     const entry = {...getDraftEntry(), entryId, locale, phase: EntryPhase.Draft}
     const mutation: Mutation = {
       type: MutationType.Edit,
-      file: entryFile(entry),
+      file: entryFile(entry, parentPaths),
       entryId,
       entry
     }
-    throw new Error('Calulate parent paths correctly here')
     return set(mutateAtom, mutation)
   })
 
