@@ -254,6 +254,16 @@ export function createEntryEditor(entryData: EntryData) {
     return set(mutateAtom, mutation)
   })
 
+  const deleteArchived = atom(null, (get, set) => {
+    const archived = entryData.phases[EntryPhase.Archived]
+    const mutation: Mutation = {
+      type: MutationType.Remove,
+      entryId: archived.entryId,
+      file: entryFile(archived)
+    }
+    return set(mutateAtom, mutation)
+  })
+
   const discardEdits = atom(null, (get, set) => {
     set(entryRevisionAtoms(activeVersion.entryId))
   })
@@ -289,6 +299,7 @@ export function createEntryEditor(entryData: EntryData) {
     discardDraft,
     archivePublished,
     publishArchived,
+    deleteArchived,
     saveTranslation,
     discardEdits,
     isSaving,

@@ -70,6 +70,7 @@ export function EntryHeader({editor}: EntryHeaderProps) {
   const discardDraft = useSetAtom(editor.discardDraft)
   const archivePublished = useSetAtom(editor.archivePublished)
   const publishArchived = useSetAtom(editor.publishArchived)
+  const deleteArchived = useSetAtom(editor.deleteArchived)
   const saveTranslation = useSetAtom(editor.saveTranslation)
   const discardEdits = useSetAtom(editor.discardEdits)
   const translate = () => saveTranslation(locale!)
@@ -95,12 +96,20 @@ export function EntryHeader({editor}: EntryHeaderProps) {
         Archive
       </DropdownMenu.Item>
     ) : variant === EntryPhase.Archived ? (
-      <DropdownMenu.Item
-        className={styles.root.action()}
-        onClick={publishArchived}
-      >
-        Publish
-      </DropdownMenu.Item>
+      <>
+        <DropdownMenu.Item
+          className={styles.root.action()}
+          onClick={publishArchived}
+        >
+          Publish
+        </DropdownMenu.Item>
+        <DropdownMenu.Item
+          className={styles.root.action()}
+          onClick={deleteArchived}
+        >
+          Delete
+        </DropdownMenu.Item>
+      </>
     ) : null
 
   return (
