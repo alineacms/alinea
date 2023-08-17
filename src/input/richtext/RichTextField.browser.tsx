@@ -72,7 +72,7 @@ function typeExtension(
             </Card.Options>
           </Card.Header>
           <Card.Content>
-            <IsNested.Provider value={true}>
+            <IsNested.Provider value={false}>
               <InputForm state={parent.child(id)} type={type} />
             </IsNested.Provider>
           </Card.Content>
@@ -199,6 +199,7 @@ function RichTextEditor<Blocks extends Schema>({
       content: value.map(node => {
         if (node.type === 'text') return node //
         const {type, ...attrs} = node
+        if (schema?.[type]) return {type, attrs: {id: (node as any).id}}
         return {
           type,
           content: 'content' in node ? node.content : undefined,

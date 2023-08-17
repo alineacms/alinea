@@ -2,20 +2,14 @@
   position: sticky;
   bottom: 0;
   border-top: 1px solid var(--alinea-outline);
-  opacity: 0;
-  pointer-events: none;
-  // Disable backdrop filter so we can use fixed positioning for the rich text
-  // toolbar
-  backdrop-filter: none !important;
   box-shadow: 0 0 30px rgba(0, 0, 0, 0.08);
+  display: none;
 
   &-inner {
     height: 100%;
   }
 
   &.is-active {
-    opacity: 1;
-    pointer-events: all;
-    transition: 0.25s ease-out;
+    display: block;
   }
 }

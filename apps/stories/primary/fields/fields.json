@@ -1,0 +1,97 @@
+{
+  "title": "Fields",
+  "richText": [
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "Rich text value"
+        }
+      ]
+    }
+  ],
+  "select": "a",
+  "number": 42,
+  "check": true,
+  "date": "2022-07-14",
+  "code": "<plaintext>",
+  "externalLink": {},
+  "entry": {},
+  "linkMultiple": [],
+  "image": {},
+  "file": {},
+  "list": [
+    {
+      "id": "2U6zmJT84rFV9R1kGBKi6nENtTN",
+      "index": "a0",
+      "type": "Text",
+      "title": "A text item",
+      "text": [
+        {
+          "type": "paragraph",
+          "textAlign": "left",
+          "content": [
+            {
+              "type": "text",
+              "text": "Some body text"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "nested": [
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "Blocks can be created within rich text fields. This is a block:"
+        }
+      ]
+    },
+    {
+      "id": "2U70XiwtuZ1GwGK5XJWauz5Da1m",
+      "type": "Inner",
+      "checkbox1": false,
+      "checkbox2": false,
+      "title": "Some title",
+      "content": [
+        {
+          "type": "paragraph",
+          "textAlign": "left",
+          "content": [
+            {
+              "type": "text",
+              "text": "ABCD"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "Text continues alongside blocks."
+        }
+      ]
+    }
+  ],
+  "street": "",
+  "box": "",
+  "zip": "",
+  "city": "",
+  "country": "",
+  "@alinea": {
+    "entryId": "2U6y6iIQIuQg2D0PViWdKenqgMv",
+    "type": "Fields",
+    "index": "a0",
+    "root": "fields"
+  }
+}

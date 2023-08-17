@@ -81,7 +81,7 @@ export interface LinkOptions<Fields> extends LinkFieldOptions {
   fields?: Type<Fields>
 }
 
-export function link<Fields>(label: Label, options: LinkOptions<Fields>) {
+export function link<Fields>(label: Label, options: LinkOptions<Fields> = {}) {
   return createLink<LinkData<Fields>>(label, {
     ...options,
     pickers: {
@@ -101,7 +101,10 @@ export function link<Fields>(label: Label, options: LinkOptions<Fields>) {
 }
 
 export namespace link {
-  export function multiple<Fields>(label: Label, options: LinkOptions<Fields>) {
+  export function multiple<Fields>(
+    label: Label,
+    options: LinkOptions<Fields> = {}
+  ) {
     return createLinks<
       | (EntryReference & Type.Infer<Fields>)
       | (UrlReference & Type.Infer<Fields>)
@@ -130,7 +133,7 @@ export namespace link {
 
   export function entry<Fields>(
     label: Label,
-    options: EntryOptions<Fields>
+    options: EntryOptions<Fields> = {}
   ): LinkField<EntryReference & Type.Infer<Fields>> {
     return createLink(label, {
       ...options,

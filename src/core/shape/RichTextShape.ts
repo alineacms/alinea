@@ -132,14 +132,20 @@ export class RichTextShape<Blocks>
     const map = new Y.Map()
     const text = new Y.XmlFragment()
     map.set('$text', text)
-    const types = this.values
+    const types = this.values ?? {}
     if (!Array.isArray(value)) return map
-    if (types)
-      for (const node of value) {
-        const type = types[node.type]
-        if (type && 'id' in node) map.set(node.id, type.toY(node as any))
-      }
-    text.insert(0, value.map(unserialize))
+    for (const node of value) {
+      const type = types[node.type]
+      if (type && 'id' in node) map.set(node.id, type.toY(node as any))
+    }
+    text.insert(
+      0,
+      value
+        .map(row => {
+          return types[row.type] ? {type: row.type, id: (row as any).id} : row
+        })
+        .map(unserialize)
+    )
     return map
   }
   fromY(value: Y.Map<any>): TextDoc<Blocks> {
