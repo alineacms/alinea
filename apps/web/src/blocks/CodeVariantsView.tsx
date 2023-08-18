@@ -16,7 +16,7 @@ export async function CodeVariantsView({variants}: CodeVariantsViewProps) {
     .filter(variant => variant.code)
     .map(variant => {
       const html = codeToHtml(variant.code, {
-        lang: variant.language
+        lang: variant.language!
       })
       return {...variant, code: html}
     })
