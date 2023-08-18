@@ -1,11 +1,14 @@
 import {Media} from 'alinea/backend/Media'
 import {Connection, EntryRow} from 'alinea/core'
 import {createId} from 'alinea/core/Id'
+import {MutationType} from 'alinea/core/Mutation'
 import {base64} from 'alinea/core/util/Encoding'
+import {imageBlurUrl} from 'alinea/ui'
 import {rgba, toHex} from 'color2k'
 import pLimit from 'p-limit'
 import {useState} from 'react'
 import {rgbaToThumbHash, thumbHashToAverageRGBA} from 'thumbhash'
+import {addPending} from '../atoms/PendingAtoms.js'
 import {useSession} from './UseSession.js'
 
 export enum UploadStatus {
@@ -45,7 +48,7 @@ const tasker = {
   [UploadStatus.Done]: defaultTasker
 }
 
-async function process(upload: Upload, cnx: Connection): Promise<Upload> {
+async function process(upload: Upload, client: Connection): Promise<Upload> {
   switch (upload.status) {
     case UploadStatus.Queued:
       const isImage = Media.isImage(upload.file.name)
@@ -107,7 +110,7 @@ async function process(upload: Upload, cnx: Connection): Promise<Upload> {
       const {to, file, preview, averageColor, thumbHash, width, height} = upload
       const buffer = await file.arrayBuffer()
       const path = file.name
-      const result = await cnx.uploadFile({
+      const result = await client.uploadFile({
         ...to,
         path,
         buffer,
@@ -117,6 +120,7 @@ async function process(upload: Upload, cnx: Connection): Promise<Upload> {
         width,
         height
       })
+
       return {...upload, result, status: UploadStatus.Done}
     }
     case UploadStatus.Done:
@@ -125,7 +129,7 @@ async function process(upload: Upload, cnx: Connection): Promise<Upload> {
 }
 
 export function useUploads(onSelect?: (entry: EntryRow) => void) {
-  const {cnx: hub} = useSession()
+  const {cnx: client} = useSession()
   const [uploads, setUploads] = useState<Array<Upload>>([])
 
   async function uploadFile(upload: Upload) {
@@ -139,10 +143,23 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
       })
     }
     while (true) {
-      const next = await tasker[upload.status](() => process(upload, hub))
+      const next = await tasker[upload.status](() => process(upload, client))
       update(next)
       if (next.status === UploadStatus.Done) {
-        onSelect?.(next.result!)
+        const entry = next.result! as Media.Image
+        const hashThumbHash = Boolean(entry.data.thumbHash)
+        if (hashThumbHash) {
+          const previewSrc = imageBlurUrl(entry.data)!
+          entry.data.preview = previewSrc
+          entry.data.location = previewSrc
+        }
+        addPending({
+          type: MutationType.FileUpload,
+          entryId: entry.entryId,
+          file: entry.filePath,
+          entry: entry
+        })
+        onSelect?.(entry)
         break
       } else {
         upload = next

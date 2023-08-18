@@ -120,7 +120,6 @@ export function FileUploader({
         {showUploads && (
           <div className={styles.root.uploads()}>
             {uploads.map(upload => {
-              // Todo: show upload progress
               return (
                 <div key={upload.id} className={styles.root.uploads.row()}>
                   <FileUploadRow
