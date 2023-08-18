@@ -72,8 +72,10 @@ export class RecordShape<T = object> implements Shape<T, RecordMutator<T>> {
   }
   async applyLinks(value: T, loader: LinkResolver) {
     const obj: Record<string, any> = value || {}
+    const tasks = []
     for (const [key, shape] of entries(this.properties)) {
-      await shape.applyLinks(obj[key], loader)
+      tasks.push(shape.applyLinks(obj[key], loader))
     }
+    await Promise.all(tasks)
   }
 }

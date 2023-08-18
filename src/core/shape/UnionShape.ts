@@ -110,7 +110,7 @@ export class UnionShape<T> implements Shape<UnionRow & T, UnionMutator<T>> {
     if (!shape) return
     const tasks = []
     if (shape) tasks.push(shape.applyLinks(value, loader))
-    if (this.postProcess) tasks.push(this.postProcess(value, loader))
     await Promise.all(tasks)
+    if (this.postProcess) await this.postProcess(value, loader)
   }
 }

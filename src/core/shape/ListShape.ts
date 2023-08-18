@@ -163,12 +163,12 @@ export class ListShape<T>
   }
   async applyLinks(value: Array<ListRow & T>, loader: LinkResolver) {
     const tasks = []
-    if (this.postProcess) tasks.push(this.postProcess(value, loader))
     for (const row of value) {
       const type = row.type
       const shape = this.values[type]
       if (shape) tasks.push(shape.applyLinks(row, loader))
     }
     await Promise.all(tasks)
+    if (this.postProcess) await this.postProcess(value, loader)
   }
 }
