@@ -3,6 +3,7 @@ import {writeFileIfContentsDiffer} from 'alinea/cli/util/FS'
 import {publicDefines} from 'alinea/cli/util/PublicDefines'
 import {code} from 'alinea/core/util/CodeGen'
 import {build} from 'esbuild'
+import escapeHtml from 'escape-html'
 import fs from 'node:fs'
 import {createRequire} from 'node:module'
 import path from 'node:path'
@@ -48,20 +49,21 @@ export async function generateDashboard(
   }).catch(e => {
     throw 'Could not compile entrypoint'
   })
+  const baseUrl = './' + escapeHtml(basename)
   await writeFileIfContentsDiffer(
     path.join(configDir, staticFile),
     code`
         <!DOCTYPE html>
         <meta charset="utf-8" />
         <link rel="icon" href="data:," />
-        <link href="./${basename}/entry.css" rel="stylesheet" />
+        <link href="${baseUrl}/entry.css" rel="stylesheet" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="handshake_url" value="${handlerUrl}/hub/auth/handshake" />
         <meta name="redirect_url" value="${handlerUrl}/hub/auth" />
         <body>
           <script type="module">
-            import {boot} from './${basename}/entry.js'
-            boot('${handlerUrl}')
+            import {boot} from '${baseUrl}/entry.js'
+            boot('${handlerUrl}', '${baseUrl}')
           </script>
         </body>
       `.toString()
