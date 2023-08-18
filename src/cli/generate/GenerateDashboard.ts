@@ -60,7 +60,7 @@ export async function generateDashboard(
         <body>
           <script type="module">
             import {boot} from '${baseUrl}/entry.js'
-            boot('${handlerUrl}', '${baseUrl}')
+            boot('${handlerUrl}')
           </script>
         </body>
       `.toString()
