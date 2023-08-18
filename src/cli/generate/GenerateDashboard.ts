@@ -5,11 +5,8 @@ import {code} from 'alinea/core/util/CodeGen'
 import {build} from 'esbuild'
 import escapeHtml from 'escape-html'
 import fs from 'node:fs'
-import {createRequire} from 'node:module'
 import path from 'node:path'
 import {GenerateContext} from './GenerateContext.js'
-
-const require = createRequire(import.meta.url)
 
 export async function generateDashboard(
   {rootDir, configDir, staticDir}: GenerateContext,
