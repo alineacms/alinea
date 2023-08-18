@@ -9,10 +9,11 @@ import {
 } from '@tiptap/react'
 import {createId, Field, Schema, Type} from 'alinea/core'
 import {entries} from 'alinea/core/util/Objects'
-import {Create} from 'alinea/dashboard/view/Create'
 import {IconButton} from 'alinea/dashboard/view/IconButton'
 import {InputForm, InputLabel, InputState, useInput} from 'alinea/editor'
-import {Card, fromModule, px, TextLabel} from 'alinea/ui'
+import {Card, fromModule, HStack, Icon, px, TextLabel} from 'alinea/ui'
+import {DropdownMenu} from 'alinea/ui/DropdownMenu'
+import IcRoundAddCircle from 'alinea/ui/icons/IcRoundAddCircle'
 import {IcRoundClose} from 'alinea/ui/icons/IcRoundClose'
 import {IcRoundDragHandle} from 'alinea/ui/icons/IcRoundDragHandle'
 import {IcRoundNotes} from 'alinea/ui/icons/IcRoundNotes'
@@ -27,7 +28,7 @@ import {
 import {useEditor} from './hook/UseEditor.js'
 import {PickTextLink, usePickTextLink} from './PickTextLink.js'
 import {richText as createRichText, RichTextField} from './RichTextField.js'
-import css from './RichTextInput.module.scss'
+import css from './RichTextField.module.scss'
 import {RichTextKit} from './RichTextKit.js'
 import {RichTextToolbar} from './RichTextToolbar.js'
 
@@ -120,22 +121,23 @@ type InsertMenuProps = {
 
 function InsertMenu({editor, schema, onInsert}: InsertMenuProps) {
   const id = createId()
-  const blocks =
-    schema &&
-    entries(schema).map(([key, type]) => {
-      return (
-        <Create.Button
-          key={key}
-          icon={Type.meta(type).icon}
-          onClick={() => {
-            onInsert(id, key)
-            editor.chain().focus().insertContent({type: key, attrs: {id}}).run()
-          }}
-        >
+  if (!schema) return null
+  const blocks = entries(schema).map(([key, type]) => {
+    return (
+      <DropdownMenu.Item
+        key={key}
+        onClick={() => {
+          onInsert(id, key)
+          editor.chain().focus().insertContent({type: key, attrs: {id}}).run()
+        }}
+      >
+        <HStack center gap={8}>
+          <Icon icon={Type.meta(type).icon ?? IcRoundAddCircle} />
           <TextLabel label={Type.label(type)} />
-        </Create.Button>
-      )
-    })
+        </HStack>
+      </DropdownMenu.Item>
+    )
+  })
   return (
     <FloatingMenu
       editor={editor}
@@ -144,19 +146,13 @@ function InsertMenu({editor, schema, onInsert}: InsertMenuProps) {
         maxWidth: 'none'
       }}
     >
-      <Create.Root>
-        <Create.Button
-          onClick={() => editor.chain().focus().toggleHeading({level: 1}).run()}
-        >
-          H1
-        </Create.Button>
-        <Create.Button
-          onClick={() => editor.chain().focus().toggleHeading({level: 2}).run()}
-        >
-          H2
-        </Create.Button>
-        {blocks}
-      </Create.Root>
+      <DropdownMenu.Root>
+        <DropdownMenu.Trigger className={styles.insert.trigger()}>
+          <Icon icon={IcRoundAddCircle} />
+          <span>Insert block</span>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Items bottom>{blocks}</DropdownMenu.Items>
+      </DropdownMenu.Root>
     </FloatingMenu>
   )
 }

@@ -13,6 +13,8 @@
 .items {
   padding: 5px;
   min-width: 220px;
+  max-height: 300px;
+  overflow: auto;
   border-radius: var(--alinea-border-radius);
   background: var(--alinea-background);
   border: 1px solid var(--alinea-outline);
@@ -21,6 +23,23 @@
   position: absolute;
   z-index: 1;
   color: var(--alinea-foreground);
+
+  &::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent; //var(--alinea-outline);
+  }
+  &::-webkit-scrollbar-thumb {
+    background: hsla(var(--alinea-negative), 0.2);
+  }
+  &::-webkit-scrollbar-thumb:hover {
+    background: hsla(var(--alinea-negative), 0.4);
+  }
+  &::-webkit-scrollbar-thumb:active {
+    background: hsla(var(--alinea-negative), 0.9);
+  }
 
   &.is-bottom {
     top: calc(100% + 5px);

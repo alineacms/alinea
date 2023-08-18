@@ -28,3 +28,19 @@
     cursor: default;
   }
 }
+
+.insert {
+  &-trigger {
+    background: var(--alinea-content);
+    border-radius: var(--alinea-border-radius);
+    padding: 6px 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+
+    &:hover {
+      background: var(--alinea-highlight);
+    }
+  }
+}
