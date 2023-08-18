@@ -14,7 +14,7 @@
     "@monaco-editor/react": "^4.4.5",
     "alinea": "0.0.0",
     "lz-string": "^1.4.4",
-    "next": "^13.4.8",
+    "next": "^13.4.18",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-string-replace": "^1.0.0",

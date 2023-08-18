@@ -16,11 +16,11 @@ export type Location = Root | Workspace | PageSeed
 export interface GraphRealmApi {
   in(location: Location): GraphRealmApi
   locale(locale: string): GraphRealmApi
-  maybeGet<S extends Projection>(
+  maybeGet<S extends Projection | Type>(
     select: S
   ): Promise<Projection.InferOne<S> | null>
-  get<S extends Projection>(select: S): Promise<Projection.InferOne<S>>
-  find<S>(select: S): Promise<Selection.Infer<S>>
+  get<S extends Projection | Type>(select: S): Promise<Projection.InferOne<S>>
+  find<S extends Projection | Type>(select: S): Promise<Selection.Infer<S>>
   count(cursor: Cursor.Find<any>): Promise<number>
 }
 
@@ -52,7 +52,7 @@ export class GraphRealm implements GraphRealmApi {
     })
   }
 
-  maybeGet<S extends Projection>(
+  maybeGet<S extends Projection | Type>(
     select: S
   ): Promise<Projection.InferOne<S> | null>
   async maybeGet(select: any) {
@@ -67,14 +67,14 @@ export class GraphRealm implements GraphRealmApi {
     })
   }
 
-  get<S extends Projection>(select: S): Promise<Projection.InferOne<S>>
+  get<S extends Projection | Type>(select: S): Promise<Projection.InferOne<S>>
   async get(select: any) {
     const result = this.maybeGet(select)
     if (result === null) throw new Error('Not found')
     return result
   }
 
-  find<S>(select: S): Promise<Selection.Infer<S>>
+  find<S extends Projection | Type>(select: S): Promise<Selection.Infer<S>>
   async find(select: any) {
     const selection = Selection.create(select)
     serializeSelection(this.targets, selection)

@@ -1,6 +1,4 @@
 {
-  "id": "jVMfGc-GJGY-GXyV4tDTX",
-  "type": "BlogPost",
   "title": "Introducing Alinea 🚀",
   "publishDate": "2022-09-30",
   "author": {
@@ -52,12 +50,12 @@
       ]
     },
     {
-      "id": "tKjbwqdpcMCGqkUPeKpi9",
+      "id": "2U9fzC4RrGpYPrgl9rpk8IZbvJa",
       "type": "ImageBlock",
       "image": {
-        "id": "o_J1v36tf_ejnWbTJY0CB",
+        "id": "2U9fzPZ0ELQ3SyRzFp4HeppRTFG",
         "type": "image",
-        "entry": "2AKlsMwiF5NvBhkVZXWQVsNBPP6"
+        "entry": "2U9fkdrboimLR37hC4sjIB7Ah8B"
       }
     },
     {
@@ -433,7 +431,9 @@
       }
     }
   ],
-  "alinea": {
+  "@alinea": {
+    "entryId": "jVMfGc-GJGY-GXyV4tDTX",
+    "type": "BlogPost",
     "index": "Zz"
   }
 }

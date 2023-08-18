@@ -40,6 +40,16 @@
           ]
         }
       ]
+    },
+    {
+      "id": "2U9P9OJRv4bMWkjGXY413fmQxmQ",
+      "index": "a1",
+      "type": "Image",
+      "image": {
+        "id": "2U9P9bAWANiHyhGeAs3GsAo0fSz",
+        "type": "image",
+        "entry": "2U9Ol2IjAs1kgpZ3DaDIrLqqhPq"
+      }
     }
   ],
   "nested": [

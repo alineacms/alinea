@@ -41,7 +41,7 @@
 .container {
   padding: 12px;
   @include ml {
-    padding: 40px var(--alinea-header-height) 20px var(--alinea-header-height);
+    padding: 40px var(--alinea-header-height);
   }
   max-width: 1200px;
   width: 100%;

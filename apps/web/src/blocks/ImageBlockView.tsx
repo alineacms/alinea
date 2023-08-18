@@ -1,16 +1,22 @@
 import {Infer} from 'alinea'
+import {fromModule, imageBlurUrl} from 'alinea/ui'
 import Image from 'next/image'
 import {ImageBlock} from '../schema/blocks/ImageBlock.js'
+import css from './ImageBlockView.module.scss'
+
+const styles = fromModule(css)
 
 export function ImageBlockView({image}: Infer<typeof ImageBlock>) {
+  const blurUrl = imageBlurUrl(image)
   return (
     <Image
+      className={styles.image()}
       alt={image.title}
-      // src={image.src}
+      src={image.src}
       width={image.width}
       height={image.height}
-      placeholder="blur"
-      blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg=="
+      placeholder={blurUrl ? 'blur' : undefined}
+      blurDataURL={blurUrl}
     />
   )
 }

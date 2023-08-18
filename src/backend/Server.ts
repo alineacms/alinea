@@ -6,6 +6,7 @@ import {
   Workspace,
   createId
 } from 'alinea/core'
+import {entryFilepath} from 'alinea/core/EntryFilenames'
 import {Graph} from 'alinea/core/Graph'
 import {Mutation, MutationType} from 'alinea/core/Mutation'
 import {generateKeyBetween} from 'alinea/core/util/FractionalIndexing'
@@ -59,7 +60,7 @@ export class Server implements Connection {
 
   // Api
 
-  resolve(params: Connection.ResolveParams) {
+  resolve = (params: Connection.ResolveParams) => {
     const {resolveDefaults} = this.options
     return this.resolver.resolve({...resolveDefaults, ...params})
   }
@@ -78,7 +79,7 @@ export class Server implements Connection {
   }
 
   async uploadFile({
-    workspace,
+    workspace: workspaceName,
     root,
     parentId,
     ...file
@@ -89,8 +90,8 @@ export class Server implements Connection {
     const extension = extname(file.path)
     const name = basename(file.path, extension)
     const fileName = `${slugify(name)}.${createId()}${extension}`
-    const {mediaDir} = Workspace.data(config.workspaces[workspace])
-    const prefix = mediaDir && normalize(mediaDir)
+    const workspace = Workspace.data(config.workspaces[workspaceName])
+    const prefix = workspace.mediaDir && normalize(workspace.mediaDir)
     const fileLocation = join(prefix, dir, fileName)
 
     let location = await media.upload(
@@ -110,29 +111,44 @@ export class Server implements Connection {
       new Uint8Array(file.buffer)
     )
     const parent = await this.graph.preferDraft.maybeGet(
-      Entry({entryId: parentId})
+      Entry({entryId: parentId}).select({
+        level: Entry.level,
+        entryId: Entry.entryId,
+        url: Entry.url,
+        path: Entry.path,
+        parentPaths({parents}) {
+          return parents().select(Entry.path)
+        }
+      })
     )
     const prev = await this.graph.preferDraft.maybeGet(
       Entry({parent: parentId})
     )
-    const filePath = ''
-    if (filePath === '')
-      throw new Error(`Todo: Filepath needs calculation here`)
+    const entryLocation = {
+      workspace: workspaceName,
+      root,
+      locale: null,
+      path: basename(file.path.toLowerCase()),
+      phase: EntryPhase.Published
+    }
+
+    const filePath = entryFilepath(
+      config,
+      entryLocation,
+      parent ? parent.parentPaths.concat(parent.path) : []
+    )
+
     const entry: Media.File = {
+      ...entryLocation,
+      parent: parent?.entryId ?? null,
       entryId,
       type: 'MediaFile',
       url: (parent ? parent.url : '/') + file.path.toLowerCase(),
       title: basename(file.path, extension),
-      path: basename(file.path.toLowerCase()),
-      parent: parentId ?? null,
-      workspace,
-      root,
-      phase: EntryPhase.Published,
       seeded: false,
       modifiedAt: Date.now(),
       searchableText: '',
       index: generateKeyBetween(null, prev?.index ?? null),
-      locale: null,
       i18nId: entryId,
 
       level: parent ? parent.level + 1 : 0,
@@ -154,11 +170,12 @@ export class Server implements Connection {
         preview: file.preview
       }
     }
+    const entryFile = join(workspace.source, entry.root, entry.filePath)
     await this.mutate([
       {
         type: MutationType.FileUpload,
         entryId: entry.entryId,
-        file: filePath,
+        file: entryFile,
         entry
       }
     ])

@@ -2,7 +2,7 @@ import alinea, {createCMS} from 'alinea'
 import {IcRoundTranslate} from 'alinea/ui/icons/IcRoundTranslate'
 import {IcRoundUploadFile} from 'alinea/ui/icons/IcRoundUploadFile'
 
-namespace schema {
+export namespace schema {
   export const Page = alinea.type('Page', {
     title: alinea.text('Title', {width: 0.5, multiline: true}),
     path: alinea.path('Path', {width: 0.5})
@@ -58,8 +58,8 @@ namespace schema {
           })
         })
       }),
-      alinea.tab('Nested fields (blocks)', {
-        nested: alinea.richText('Nested field', {
+      alinea.tab('Rich text fields', {
+        nested: alinea.richText('With nested blocks', {
           schema: {
             Inner: alinea.type('Inner', {
               checkbox1: alinea.check('Checkbox 1'),
@@ -92,7 +92,13 @@ namespace schema {
 export const cms = createCMS({
   schema,
   workspaces: {
-    primary: alinea.workspace('Primary workspaces', {
+    primary: alinea.workspace('Primary workspace', {
+      fields: alinea.root('Fields', {
+        [alinea.meta]: {
+          contains: ['Links'],
+          icon: IcRoundUploadFile
+        }
+      }),
       pages: alinea.root('Languages', {
         [alinea.meta]: {
           icon: IcRoundTranslate,
@@ -102,16 +108,10 @@ export const cms = createCMS({
           }
         }
       }),
-      fields: alinea.root('Fields', {
-        [alinea.meta]: {
-          contains: ['Links'],
-          icon: IcRoundUploadFile
-        }
-      }),
       media: alinea.media(),
       [alinea.meta]: {
         mediaDir: 'public',
-        source: 'primary'
+        source: 'content/primary'
       }
     }),
     secondary: alinea.workspace('Secondary workspace', {
@@ -121,7 +121,7 @@ export const cms = createCMS({
         }
       }),
       [alinea.meta]: {
-        source: 'secondary'
+        source: 'content/secondary'
       }
     })
   }

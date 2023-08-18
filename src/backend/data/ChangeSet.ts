@@ -1,5 +1,5 @@
-import { Config, EntryPhase, EntryUrlMeta, Type } from 'alinea/core'
-import { META_KEY, createRecord } from 'alinea/core/EntryRecord'
+import {Config, EntryPhase, EntryUrlMeta, Type} from 'alinea/core'
+import {META_KEY, createRecord} from 'alinea/core/EntryRecord'
 import {
   ArchiveMutation,
   DiscardDraftMutation,
@@ -12,7 +12,7 @@ import {
   PublishMutation,
   RemoveEntryMutation
 } from 'alinea/core/Mutation'
-import { JsonLoader } from '../loader/JsonLoader.js'
+import {JsonLoader} from '../loader/JsonLoader.js'
 
 export enum ChangeType {
   Write = 'write',
@@ -40,7 +40,7 @@ export interface DeleteChange {
   file: string
 }
 export type Change = WriteChange | RenameChange | PatchChange | DeleteChange
-export type ChangeWithMeta= {
+export type ChangeWithMeta = {
   changes: Array<Change>
   meta: Mutation
 }
@@ -67,7 +67,7 @@ export class ChangeSetCreator {
     return (segments + phaseSegment + extension).toLowerCase()
   }
 
-  draftChanges({file, entry}: EditMutation): Array<Change> {
+  editChanges({file, entry}: EditMutation): Array<Change> {
     const type = this.config.schema[entry.type]
     if (!type)
       throw new Error(`Cannot publish entry of unknown type: ${entry.type}`)
@@ -116,7 +116,7 @@ export class ChangeSetCreator {
     ]
   }
 
-  removeChanges({ file}: RemoveEntryMutation): Array<Change> {
+  removeChanges({file}: RemoveEntryMutation): Array<Change> {
     // Todo: remove all possible phases
     return [{type: ChangeType.Delete, file}]
   }
@@ -129,9 +129,7 @@ export class ChangeSetCreator {
   }
 
   orderChanges({file, index}: OrderMutation): Array<Change> {
-    return [
-      {type: ChangeType.Patch, file, patch: {[META_KEY]: {index}}}
-    ]
+    return [{type: ChangeType.Patch, file, patch: {[META_KEY]: {index}}}]
   }
 
   moveChanges({
@@ -164,13 +162,13 @@ export class ChangeSetCreator {
   }
 
   fileUploadChanges(mutation: FileUploadMutation): Array<Change> {
-    throw new Error('Not implemented')
+    return this.editChanges({...mutation, type: MutationType.Edit})
   }
 
   mutationChanges(mutation: Mutation): Array<Change> {
     switch (mutation.type) {
       case MutationType.Edit:
-        return this.draftChanges(mutation)
+        return this.editChanges(mutation)
       case MutationType.Publish:
         return this.publishChanges(mutation)
       case MutationType.Archive:

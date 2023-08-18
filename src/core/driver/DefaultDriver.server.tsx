@@ -2,8 +2,10 @@ import {Server} from 'alinea/backend'
 import {Store} from 'alinea/backend/Store'
 import {exportStore} from 'alinea/cli/util/ExportStore'
 import {CMS, CMSApi} from '../CMS.js'
+import {Client} from '../Client.js'
 import {Config} from '../Config.js'
 import {Connection} from '../Connection.js'
+import {Realm} from '../pages/Realm.js'
 import {Logger} from '../util/Logger.js'
 import {join} from '../util/Paths.js'
 
@@ -19,6 +21,15 @@ export class DefaultDriver extends CMS {
   }
 
   async connection(): Promise<Connection> {
+    const devUrl = process.env.ALINEA_DEV_SERVER
+    if (devUrl)
+      return new Client({
+        config: this.config,
+        url: devUrl,
+        resolveDefaults: {
+          realm: Realm.Published
+        }
+      })
     const store = await this.readStore()
     return new Server(
       {

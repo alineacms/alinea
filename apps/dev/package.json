@@ -1,6 +1,6 @@
 {
   "private": true,
-  "name": "@alinea/stories",
+  "name": "@alinea/dev",
   "version": "0.0.0",
   "license": "MIT",
   "dependencies": {

@@ -1,4 +1,8 @@
 .root {
+  ~ [role='tablist'] {
+    margin-top: 16px;
+  }
+
   &.is-border {
     border-radius: var(--alinea-border-radius);
     background: var(--alinea-background);

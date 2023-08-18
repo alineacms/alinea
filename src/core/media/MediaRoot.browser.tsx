@@ -6,14 +6,13 @@ import {root} from '../Root.js'
 import {
   MediaRoot,
   createMediaRoot as createMediaRootConfig,
-  defaultLibrary,
   mediaRootId
 } from './MediaRoot.js'
 
 export {isMediaRoot} from './MediaRoot.js'
 
 export function createMediaRoot<Children extends Record<string, PageSeed>>(
-  children: Children = defaultLibrary() as Children
+  children: Children = {} as Children
 ) {
   return root('Media', {
     ...createMediaRootConfig(children),
