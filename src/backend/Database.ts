@@ -7,6 +7,7 @@ import {
   Schema,
   Syncable,
   Type,
+  Workspace,
   createId,
   unreachable
 } from 'alinea/core'
@@ -510,14 +511,21 @@ export class Database implements Syncable {
 
     if (target && publishSeed.length > 0) {
       const changeSetCreator = new ChangeSetCreator(this.config)
-      const changes = changeSetCreator.create(
-        publishSeed.map(seed => ({
+      const mutations = publishSeed.map((seed): Mutation => {
+        const workspace = this.config.workspaces[seed.workspace]
+        const file = path.join(
+          Workspace.data(workspace).source,
+          seed.root,
+          seed.filePath
+        )
+        return {
           type: MutationType.Edit,
           entryId: seed.entryId,
-          file: seed.filePath,
+          file: file,
           entry: seed
-        }))
-      )
+        }
+      })
+      const changes = changeSetCreator.create(mutations)
       await target.mutate({mutations: changes}, {logger: new Logger('seed')})
     }
   }
