@@ -22,7 +22,7 @@ export async function generateDashboard(
     config: 'alinea/generated/config.js'
   }
   const basename = path.basename(staticFile, '.html')
-  const assetsFolder = path.join(path.dirname(staticFile), basename)
+  const assetsFolder = path.join(rootDir, path.dirname(staticFile), basename)
   const altConfig = path.join(rootDir, 'tsconfig.alinea.json')
   const tsconfig = fs.existsSync(altConfig) ? altConfig : undefined
   await build({
