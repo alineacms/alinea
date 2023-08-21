@@ -79,9 +79,9 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
   const context: GenerateContext = {
     wasmCache,
     rootDir: rootDir,
-    configDir,
     staticDir,
     quiet,
+    configDir,
     configLocation,
     fix: options.fix || false,
     outDir: path.join(__dirname, '../../generated'), // path.join(rootDir, '.alinea'),

@@ -9,7 +9,7 @@ import path from 'node:path'
 import {GenerateContext} from './GenerateContext.js'
 
 export async function generateDashboard(
-  {rootDir, configDir, staticDir}: GenerateContext,
+  {rootDir, configDir}: GenerateContext,
   handlerUrl: string,
   staticFile: string
 ) {
@@ -48,7 +48,7 @@ export async function generateDashboard(
   })
   const baseUrl = './' + escapeHtml(basename)
   await writeFileIfContentsDiffer(
-    path.join(configDir, staticFile),
+    path.join(rootDir, staticFile),
     code`
         <!DOCTYPE html>
         <meta charset="utf-8" />

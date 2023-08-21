@@ -23,8 +23,8 @@ export const cms = createCMS({
       }),
       media: alinea.media(),
       [alinea.meta]: {
-        source: './content',
-        mediaDir: './public'
+        source: 'content',
+        mediaDir: 'public'
       }
     })
   }

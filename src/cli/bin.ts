@@ -15,7 +15,7 @@ prog
   .describe('Generate types and content cache')
   .option('-c, --config', `Config file location`)
   .option('-w, --watch', `Watch for changes to source files`)
-  .option('-d, --dir', `Directory containing the alinea config file`)
+  .option('-d, --dir', `Root directory of the project`)
   .option(
     '--fix',
     `Any missing or incorrect properties will be overwritten by their default`
@@ -47,7 +47,7 @@ prog
   .alias('serve')
   .describe('Start a development dashboard')
   .option('-c, --config', `Config file location`)
-  .option('-d, --dir', `Directory containing the alinea config file`)
+  .option('-d, --dir', `Root directory of the project`)
   .option('-p, --port', `Port to listen on`)
   .option('--production', `Use production backend`)
   .option('--dev', `Watch alinea sources`)

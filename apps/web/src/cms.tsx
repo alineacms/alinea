@@ -15,8 +15,8 @@ export const main = alinea.workspace('Alinea', {
   media: alinea.media(),
   [alinea.meta]: {
     color: '#3F61E8',
-    mediaDir: '../public',
-    source: '../content'
+    mediaDir: 'public',
+    source: 'content'
   }
 })
 
@@ -24,7 +24,7 @@ export const cms = createNextCMS({
   dashboard: {
     dashboardUrl: process.env.NODE_ENV === 'development' ? '/' : '/admin.html',
     handlerUrl: '/api/cms',
-    staticFile: '../public/admin.html'
+    staticFile: 'public/admin.html'
   },
   schema,
   workspaces: {

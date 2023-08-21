@@ -45,7 +45,6 @@ export async function serve(options: ServeOptions): Promise<void> {
   if (!configLocation) throw new Error(`No config file specified`)
 
   const rootDir = path.resolve(cwd)
-  const configDir = path.dirname(configLocation)
 
   const context: ServeContext = {
     rootDir,
@@ -91,7 +90,7 @@ export async function serve(options: ServeOptions): Promise<void> {
       const fileData = new FileData({
         config: currentCMS,
         fs: fs.promises,
-        rootDir: configDir
+        rootDir: rootDir
       })
       if (process.env.ALINEA_CLOUD_URL) {
       }

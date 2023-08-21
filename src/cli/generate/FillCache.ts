@@ -9,7 +9,7 @@ import {createWatcher} from '../util/Watcher.js'
 import {GenerateContext} from './GenerateContext.js'
 
 export async function* fillCache(
-  {watch, configDir}: GenerateContext,
+  {watch, rootDir}: GenerateContext,
   store: Store,
   config: Config,
   until: Promise<any>
@@ -18,7 +18,7 @@ export async function* fillCache(
   const fileData = new FileData({
     config,
     fs: fs.promises,
-    rootDir: configDir
+    rootDir: rootDir
   })
   const limit = pLimit(1)
   const cache = () => db.fill(fileData, fileData)
