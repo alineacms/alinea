@@ -409,7 +409,6 @@ export class Database implements Syncable {
         const fileName = path.basename(file.filePath, extension)
         const [, phase] = entryInfo(fileName)
         const contentHash = await createContentHash(
-          file.modifiedAt,
           phase,
           file.contents,
           seed
