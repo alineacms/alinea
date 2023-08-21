@@ -29,8 +29,12 @@ export enum ErrorCode {
 
 export class HttpError extends Error {
   public code: ErrorCode
-  constructor(code: number | ErrorCode, message?: string) {
-    super(message ?? code.toString())
+  constructor(
+    code: number | ErrorCode,
+    message?: string,
+    options?: ErrorOptions
+  ) {
+    super(message ?? code.toString(), options)
     this.code = code
   }
 }

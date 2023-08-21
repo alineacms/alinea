@@ -4,6 +4,7 @@ import {Auth, Config, Connection, HttpError, outcome, User} from 'alinea/core'
 import {verify} from 'alinea/core/util/JWT'
 const version = '0.0.0'
 // import {version} from '../../../package.json'
+import PLazy from 'p-lazy'
 import {AuthResult, AuthResultType} from '../AuthResult.js'
 import {cloudConfig} from './CloudConfig.js'
 
@@ -14,7 +15,10 @@ export type CloudAuthServerOptions = {
 
 type JWKS = {keys: Array<JsonWebKey>}
 
-function getPublicKey(retry = 0): Promise<JsonWebKey> {
+class RemoteUnavailableError extends Error {}
+
+let publicKey = PLazy.from(loadPublicKey)
+function loadPublicKey(retry = 0): Promise<JsonWebKey> {
   return fetch(cloudConfig.jwks)
     .then<JWKS>(async res => {
       if (res.status !== 200) throw new HttpError(res.status, await res.text())
@@ -25,9 +29,10 @@ function getPublicKey(retry = 0): Promise<JsonWebKey> {
       if (!key) throw new HttpError(500, 'No signature key found')
       return key
     })
-    .catch(err => {
-      if (retry < 3) return getPublicKey(retry + 1)
-      throw err
+    .catch(error => {
+      if (retry < 3) return loadPublicKey(retry + 1)
+      publicKey = PLazy.from(loadPublicKey)
+      throw new RemoteUnavailableError('Remote unavailable', {cause: error})
     })
 }
 
@@ -36,7 +41,6 @@ const COOKIE_NAME = 'alinea.cloud'
 export class CloudAuthServer implements Auth.Server {
   handler: Handler<Request, Response | undefined>
   context = new WeakMap<Request, {token: string; user: User}>()
-  key = getPublicKey()
   dashboardUrl: string
 
   constructor(private options: CloudAuthServerOptions) {
@@ -124,7 +128,7 @@ export class CloudAuthServer implements Auth.Server {
           if (!apiKey) throw new HttpError(500, 'No api key set')
           const token: string | null = url.searchParams.get('token')
           if (!token) throw new HttpError(400, 'Token required')
-          const user = await verify<User>(token, await this.key)
+          const user = await verify<User>(token, await publicKey)
           // Store the token in a cookie and redirect to the dashboard
           // Todo: add expires and max-age based on token expiration
           const target = new URL(this.dashboardUrl, url)
@@ -183,8 +187,9 @@ export class CloudAuthServer implements Auth.Server {
         .use(async (request: Request) => {
           try {
             const {user} = await this.contextFor(request)
-          } catch (e) {
-            throw new HttpError(401, 'Unauthorized')
+          } catch (error) {
+            if (error instanceof HttpError) throw error
+            throw new HttpError(401, 'Unauthorized', {cause: error})
           }
         })
         .map(router.jsonResponse)
@@ -200,6 +205,11 @@ export class CloudAuthServer implements Auth.Server {
     const [ctx, err] = await outcome(this.contextFor(request))
     if (ctx) return {type: AuthResultType.Authenticated, user: ctx.user}
     const token = this.options.apiKey.split('_')[1]
+    if (!token)
+      return {
+        type: AuthResultType.MissingApiKey,
+        setupUrl: cloudConfig.setup
+      }
     return {
       type: AuthResultType.UnAuthenticated,
       redirect: `${cloudConfig.auth}?token=${token}`
@@ -216,6 +226,6 @@ export class CloudAuthServer implements Auth.Server {
       .find(c => c.startsWith(`${COOKIE_NAME}=`))
     if (!token) throw new HttpError(401, `Unauthorized - no ${COOKIE_NAME}`)
     const jwt = token.slice(`${COOKIE_NAME}=`.length)
-    return {token: jwt, user: await verify<User>(jwt, await this.key)}
+    return {token: jwt, user: await verify<User>(jwt, await publicKey)}
   }
 }

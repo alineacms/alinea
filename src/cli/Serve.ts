@@ -2,6 +2,7 @@ import {JWTPreviews} from 'alinea/backend'
 import {Handler} from 'alinea/backend/Handler'
 import {FileData} from 'alinea/backend/data/FileData'
 import {nodeHandler} from 'alinea/backend/router/NodeHandler'
+import {createCloudHandler} from 'alinea/cloud/server/CloudHandler'
 import {CMS} from 'alinea/core/CMS'
 import {BuildOptions} from 'esbuild'
 import fs from 'node:fs'
@@ -92,10 +93,15 @@ export async function serve(options: ServeOptions): Promise<void> {
         fs: fs.promises,
         rootDir: configDir
       })
-      handler = nodeHandler(
-        createHandler(
-          context,
-          new Handler({
+      if (process.env.ALINEA_CLOUD_URL) {
+      }
+      const backend = process.env.ALINEA_CLOUD_URL
+        ? createCloudHandler(
+            currentCMS,
+            current.value.store,
+            process.env.ALINEA_API_KEY
+          )
+        : new Handler({
             // dashboardUrl,
             config: currentCMS,
             store: current.value.store,
@@ -103,8 +109,7 @@ export async function serve(options: ServeOptions): Promise<void> {
             media: fileData,
             previews: new JWTPreviews('dev')
           })
-        ).handle
-      )
+      handler = nodeHandler(createHandler(context, backend).handle)
       cms = currentCMS
       context.liveReload.reload('refresh')
     }

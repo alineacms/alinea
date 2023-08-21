@@ -111,15 +111,23 @@ export class Client implements Connection {
       signal
     })
       .catch(err => {
-        throw new HttpError(500, `Could not fetch "${endpoint}": ${err}`)
+        throw new HttpError(
+          500,
+          `❌ ${init?.method || 'GET'} "${endpoint}": ${err}`
+        )
       })
       .then(async res => {
         if (res.status === 401) unauthorized?.()
         if (!res.ok) {
-          const msg = await res.text()
+          const isJson = res.headers
+            .get('content-type')
+            ?.includes('application/json')
+          const msg = isJson
+            ? JSON.stringify(await res.json(), null, 2)
+            : await res.text()
           throw new HttpError(
             res.status,
-            `Could not fetch "${endpoint}" (${res.status}: ${msg})`
+            `❌ ${init?.method || 'GET'} "${endpoint}" (${res.status})\n${msg}`
           )
         }
         return res

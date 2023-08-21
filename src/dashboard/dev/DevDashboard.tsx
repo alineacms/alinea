@@ -64,5 +64,12 @@ export function DevDashboard({loadConfig}: DevDashboardOptions) {
     })
   }, [])
   if (!cms) return null
-  return <App queryClient={queryClient} config={cms} client={client!} dev />
+  return (
+    <App
+      queryClient={queryClient}
+      config={cms}
+      client={client!}
+      dev={!process.env.ALINEA_CLOUD_URL}
+    />
+  )
 }

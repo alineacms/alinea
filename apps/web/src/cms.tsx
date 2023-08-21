@@ -22,7 +22,7 @@ export const main = alinea.workspace('Alinea', {
 
 export const cms = createNextCMS({
   dashboard: {
-    dashboardUrl: '/admin.html',
+    dashboardUrl: process.env.NODE_ENV === 'development' ? '/' : '/admin.html',
     handlerUrl: '/api/cms',
     staticFile: '../public/admin.html'
   },

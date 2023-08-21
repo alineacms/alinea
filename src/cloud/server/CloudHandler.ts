@@ -90,7 +90,7 @@ export class CloudApi implements Media, Target {
   }
 }
 
-export async function createCloudHandler(
+export function createCloudHandler(
   config: Config,
   store: Store,
   apiKey: string | undefined

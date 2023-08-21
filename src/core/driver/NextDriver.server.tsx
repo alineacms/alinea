@@ -100,7 +100,7 @@ class NextDriver extends DefaultDriver implements NextApi {
 
   cloudHandler = PLazy.from(async () => {
     const store = await this.readStore()
-    const handler = await createCloudHandler(this, store, this.apiKey)
+    const handler = createCloudHandler(this, store, this.apiKey)
     return async (request: Request) => {
       const response = await handler.handle(request)
       return response ?? new Response('Not found', {status: 404})

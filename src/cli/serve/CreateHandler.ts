@@ -78,7 +78,9 @@ export function createHandler(
   const tsconfig = fs.existsSync(altConfig) ? altConfig : undefined
   let currentBuild: Trigger<BuildDetails> = trigger<BuildDetails>(),
     initial = true
-
+  const cloudUrl = process.env.ALINEA_CLOUD_URL
+    ? `'${process.env.ALINEA_CLOUD_URL}'`
+    : 'undefined'
   const config = {
     external: [
       'next/navigation',
@@ -103,7 +105,9 @@ export function createHandler(
     ...buildOptions,
     plugins: buildOptions?.plugins || [],
     define: {
-      'process.env.NODE_ENV': production ? "'production'" : "'development'",
+      'process.env.NODE_ENV':
+        production || cloudUrl ? "'production'" : "'development'",
+      'process.env.ALINEA_CLOUD_URL': cloudUrl,
       ...publicDefines(process.env)
     },
     logOverride: {
