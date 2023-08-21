@@ -64,22 +64,6 @@ export async function init(options: InitOptions) {
     )
   )
   await fs.mkdir(path.join(cwd, 'content/media'), {recursive: true})
-  await fs.writeFile(
-    path.join(cwd, 'content/media/media.json'),
-    JSON.stringify(
-      {
-        id: createId(),
-        type: 'MediaLibrary',
-        title: 'Media library',
-        alinea: {
-          index: 'a0',
-          seeded: true
-        }
-      },
-      null,
-      2
-    )
-  )
   await fs.copyFile(
     path.join(__dirname, 'static/init/cms.js'),
     path.join(cwd, 'cms.ts')
