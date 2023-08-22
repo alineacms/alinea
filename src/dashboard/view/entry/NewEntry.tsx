@@ -56,7 +56,9 @@ function NewEntryForm({parentId}: NewEntryProps) {
   const {data: requestedParent} = useQuery(
     ['parent-req', parentId],
     async () => {
-      return graph.active.get(Entry({entryId: parentId}).select(parentData))
+      return graph.preferDraft.get(
+        Entry({entryId: parentId}).select(parentData)
+      )
     },
     {suspense: true, keepPreviousData: true, staleTime: 0}
   )
@@ -99,7 +101,9 @@ function NewEntryForm({parentId}: NewEntryProps) {
     async () => {
       const parentId = selectedParent?.entry
       if (!parentId) return
-      return graph.active.get(Entry({entryId: parentId}).select(parentData))
+      return graph.preferDraft.get(
+        Entry({entryId: parentId}).select(parentData)
+      )
     },
     {suspense: true, keepPreviousData: true, staleTime: 0}
   )

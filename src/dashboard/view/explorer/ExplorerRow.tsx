@@ -29,7 +29,7 @@ export const ExplorerRow = memo(function ExplorerRow({
   summaryView,
   defaultView
 }: ExplorerRowProps) {
-  const {active} = useAtomValue(graphAtom)
+  const {preferDraft: active} = useAtomValue(graphAtom)
   const start = Math.floor(from / batchSize)
   const startAt = from % batchSize
   const {data} = useQuery(

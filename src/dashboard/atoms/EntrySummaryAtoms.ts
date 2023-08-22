@@ -9,7 +9,7 @@ import {configAtom} from './DashboardAtoms.js'
 import {entryRevisionAtoms, graphAtom} from './DbAtoms.js'
 
 export const entrySummaryLoaderAtom = atom(async get => {
-  const {active: drafts} = await get(graphAtom)
+  const {preferDraft: drafts} = await get(graphAtom)
   const {schema} = get(configAtom)
   const selection = View.getSelection(
     schema,

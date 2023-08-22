@@ -2,12 +2,14 @@ import {Store} from 'alinea/backend/Store'
 import {assign} from 'alinea/core/util/Objects'
 import * as idb from 'lib0/indexeddb.js'
 import prettyMilliseconds from 'pretty-ms'
+import {DriverOptions} from 'rado'
 import {connect} from 'rado/driver/sql.js'
 
 const STORAGE_NAME = '@alinea/peristent.store'
 
 export interface PersistentStore extends Store {
   flush(): Promise<void>
+  clone(): Store
 }
 
 export async function createPersistentStore(): Promise<PersistentStore> {
@@ -26,43 +28,45 @@ export async function createPersistentStore(): Promise<PersistentStore> {
   const buffer = await idb.get(store, 'db')
   const init = ArrayBuffer.isView(buffer) ? buffer : undefined
   const db = new Database(init)
+  const driverOptions: DriverOptions = {
+    logQuery(stmt, duration) {
+      if (!stmt.sql.startsWith('SELECT')) return
+      if (duration < 10) return
+      const icon = duration < 100 ? '⚡' : '⚠️'
+      console.groupCollapsed(
+        `${icon} Local query (${prettyMilliseconds(duration)})`
+      )
+      console.groupCollapsed('SQL')
+      console.log(stmt.sql)
+      console.groupEnd()
+      console.groupCollapsed('Params')
+      console.log(stmt.params())
+      console.groupEnd()
+      console.groupCollapsed('Query plan')
+      const explain = db.prepare(
+        `explain query plan ${stmt.sql}`,
+        stmt.params()
+      )
+      const plan: Array<QueryPlanItem> = []
+      while (explain.step()) plan.push(explain.getAsObject() as any)
+      explain.free()
+      renderQueryPlan(plan)
+      console.groupEnd()
+      console.groupEnd()
+    }
+  }
   // Return an async connection so we can move the database to a worker later
   // without have to rewrite the dashboard
-  return assign(
-    connect(db, {
-      logQuery(stmt, duration) {
-        if (!stmt.sql.startsWith('SELECT')) return
-        if (duration < 10) return
-        const icon = duration < 100 ? '⚡' : '⚠️'
-        console.groupCollapsed(
-          `${icon} Local query (${prettyMilliseconds(duration)})`
-        )
-        console.groupCollapsed('SQL')
-        console.log(stmt.sql)
-        console.groupEnd()
-        console.groupCollapsed('Params')
-        console.log(stmt.params())
-        console.groupEnd()
-        console.groupCollapsed('Query plan')
-        const explain = db.prepare(
-          `explain query plan ${stmt.sql}`,
-          stmt.params()
-        )
-        const plan: Array<QueryPlanItem> = []
-        while (explain.step()) plan.push(explain.getAsObject() as any)
-        explain.free()
-        renderQueryPlan(plan)
-        console.groupEnd()
-        console.groupEnd()
-      }
-    }).toAsync(),
-    {
-      async flush() {
-        const [store] = idb.transact(storage, [STORAGE_NAME], 'readwrite')
-        await idb.put(store, db.export(), 'db')
-      }
+  return assign(connect(db, driverOptions).toAsync(), {
+    async flush() {
+      const [store] = idb.transact(storage, [STORAGE_NAME], 'readwrite')
+      await idb.put(store, db.export(), 'db')
+    },
+    clone() {
+      const clone = new Database(db.export())
+      return connect(clone, driverOptions).toAsync()
     }
-  )
+  })
 }
 
 interface QueryPlanItem {

@@ -5,6 +5,7 @@ import {
   EntryRow,
   ROOT_KEY,
   Type,
+  applyEntryData,
   createId,
   createYDoc,
   parseYDoc
@@ -19,7 +20,12 @@ import {atomFamily} from 'jotai/utils'
 import * as Y from 'yjs'
 import {debounceAtom} from '../util/DebounceAtom.js'
 import {clientAtom, configAtom} from './DashboardAtoms.js'
-import {entryRevisionAtoms, graphAtom, mutateAtom} from './DbAtoms.js'
+import {
+  entryRevisionAtoms,
+  graphAtom,
+  mutateAtom,
+  sourceGraphAtom
+} from './DbAtoms.js'
 import {locationAtom} from './LocationAtoms.js'
 import {pendingAtom} from './PendingAtoms.js'
 import {yAtom} from './YAtom.js'
@@ -47,13 +53,14 @@ export const entryEditorAtoms = atomFamily(
       if (!i18nId) return undefined
       const config = get(configAtom)
       const client = get(clientAtom)
+      const sourceGraph = await get(sourceGraphAtom)
       const graph = await get(graphAtom)
       const search = locale ? {i18nId, locale} : {i18nId}
-      let entry = await graph.active.maybeGet(Entry(search))
+      let entry = await graph.preferDraft.maybeGet(Entry(search))
       if (!entry) {
         const {searchParams} = get(locationAtom)
         const preferredLanguage = searchParams.get('from')
-        entry = await graph.active.maybeGet(
+        entry = await graph.preferDraft.maybeGet(
           Entry({i18nId}).where(
             preferredLanguage ? Entry.locale.is(preferredLanguage) : true
           )
@@ -62,6 +69,7 @@ export const entryEditorAtoms = atomFamily(
       if (!entry) return undefined
       const entryId = entry.entryId
       get(entryRevisionAtoms(entryId))
+      const sourceEntry = await sourceGraph.preferDraft.get(Entry({entryId}))
       const versions = await graph.all.find(
         Entry({entryId}).select({
           ...Entry,
@@ -70,25 +78,27 @@ export const entryEditorAtoms = atomFamily(
           }
         })
       )
-      const {parents} = await graph.active.get(
+      const {parents} = await graph.preferDraft.get(
         Entry({entryId}).select({
           parents({parents}) {
             return parents().select({entryId: Entry.entryId, path: Entry.path})
           }
         })
       )
-      const translations = (await graph.active.find(
+      const translations = (await graph.preferDraft.find(
         Entry({i18nId})
           .where(Entry.locale.isNotNull(), Entry.entryId.isNot(entryId))
           .select({locale: Entry.locale, entryId: Entry.entryId})
       )) as Array<{locale: string; entryId: string}>
       const parentLink =
         entry.parent &&
-        (await graph.active.get(
+        (await graph.preferDraft.get(
           Entry({entryId: entry.parent}).select(Entry.i18nId)
         ))
       const parentNeedsTranslation = parentLink
-        ? !(await graph.active.maybeGet(Entry({i18nId: parentLink, locale})))
+        ? !(await graph.preferDraft.maybeGet(
+            Entry({i18nId: parentLink, locale})
+          ))
         : false
       if (versions.length === 0) return undefined
       const phases = fromEntries(
@@ -99,6 +109,7 @@ export const entryEditorAtoms = atomFamily(
       )
       const previewToken = await get(previewTokenAtom)
       return createEntryEditor({
+        sourceEntry,
         parents,
         translations,
         parentNeedsTranslation,
@@ -116,6 +127,7 @@ export const entryEditorAtoms = atomFamily(
 )
 
 export interface EntryData {
+  sourceEntry: EntryRow
   parents: Array<{entryId: string; path: string}>
   client: Connection
   config: Config
@@ -142,7 +154,6 @@ export function createEntryEditor(entryData: EntryData) {
     ])
   )
   const yDoc = docs[activePhase]
-  const yStateVector = Y.encodeStateVector(yDoc)
   const hasChanges = createChangesAtom(yDoc.getMap(ROOT_KEY))
   const states = fromEntries(
     entries(docs).map(([phase, doc]) => [
@@ -174,9 +185,15 @@ export function createEntryEditor(entryData: EntryData) {
     )
   })
 
+  const yStateVector = Y.encodeStateVector(
+    createYDoc(type, entryData.sourceEntry)
+  )
   const yUpdate = debounceAtom(
     yAtom(yDoc.getMap(ROOT_KEY), () => {
-      return Y.encodeStateAsUpdateV2(yDoc, yStateVector)
+      const draftEntry = getDraftEntry()
+      const sourceDoc = createYDoc(type, entryData.sourceEntry)
+      applyEntryData(sourceDoc, type, draftEntry)
+      return Y.encodeStateAsUpdateV2(sourceDoc, yStateVector)
     }),
     250
   )
@@ -214,7 +231,7 @@ export function createEntryEditor(entryData: EntryData) {
   })
 
   const saveTranslation = atom(null, async (get, set, locale: string) => {
-    const {active} = await get(graphAtom)
+    const {preferDraft: active} = await get(graphAtom)
     const parentLink =
       activeVersion.parent &&
       (await active.get(
@@ -313,7 +330,7 @@ export function createEntryEditor(entryData: EntryData) {
     () => yDoc.getMap(ROOT_KEY).get('title') as string
   )
 
-  function getDraftEntry() {
+  function getDraftEntry(): EntryRow {
     const entryData = parseYDoc(type, yDoc)
     return {...activeVersion, ...entryData}
   }

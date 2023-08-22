@@ -71,7 +71,7 @@ export function Explorer({
         summaryView,
         defaultView.selection()
       )
-      const total = await graph.active.count(cursor)
+      const total = await graph.preferDraft.count(cursor)
       const select = new Cursor.Find<any>({
         ...cursor[Cursor.Data],
         select: selection

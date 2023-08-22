@@ -711,7 +711,7 @@ export class Resolver {
     if (preview) {
       const current = EntryRow({
         entryId: preview.entryId,
-        phase: preview.phase
+        active: true
       })
       const entry = await this.store(current.maybeFirst())
       if (entry)

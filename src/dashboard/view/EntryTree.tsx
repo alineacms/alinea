@@ -165,7 +165,7 @@ export function EntryTree({i18nId: entryId, selected = []}: EntryTreeProps) {
   }, [treeProvider])
   useEffect(() => {
     const all = locale
-      ? graph.active.find(
+      ? graph.preferDraft.find(
           Entry().where(Entry.entryId.isIn(changed)).select(Entry.i18nId)
         )
       : Promise.resolve(changed)

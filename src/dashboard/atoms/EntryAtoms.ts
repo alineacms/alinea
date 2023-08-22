@@ -98,7 +98,7 @@ const entryTreeItemLoaderAtom = atom(async get => {
       })
       .groupBy(Entry.i18nId)
       .where(Entry.i18nId.isIn(search))
-    const rows = await graph.active.find(entries)
+    const rows = await graph.preferDraft.find(entries)
     for (const row of rows) {
       const entries = [row.data].concat(row.translations)
       indexed.set(row.id, {
@@ -113,7 +113,7 @@ const entryTreeItemLoaderAtom = atom(async get => {
       if (id === rootId(root.name)) {
         res.push(
           await entryTreeRoot(
-            graph.active,
+            graph.preferDraft,
             workspace.name,
             root.name,
             visibleTypes

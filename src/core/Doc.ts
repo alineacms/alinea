@@ -21,6 +21,16 @@ export function createYDoc(type: Type, entry: EntryRow) {
   return doc
 }
 
+export function applyEntryData(doc: Y.Doc, type: Type, entry: EntryRow) {
+  doc.transact(() => {
+    const docRoot = doc.getMap(ROOT_KEY)
+    for (const [key, field] of entries(type)) {
+      const contents = entry.data[key]
+      docRoot.set(key, Field.shape(field).toY(contents))
+    }
+  })
+}
+
 export function parseYDoc(type: Type, doc: Y.Doc) {
   const docRoot = doc.getMap(ROOT_KEY)
   const data: Record<string, any> = Type.shape(type).fromY(docRoot)

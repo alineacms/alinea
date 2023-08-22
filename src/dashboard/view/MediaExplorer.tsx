@@ -43,7 +43,7 @@ export function MediaExplorer({editor}: MediaExplorerProps) {
       const cursor = Entry()
         .where(condition)
         .orderBy(Entry.type.desc(), Entry.entryId.desc())
-      const info = await graph.active.get({
+      const info = await graph.preferDraft.get({
         title: Entry({entryId: parentId}).select(Entry.title).maybeFirst()
       })
       return {...info, cursor}

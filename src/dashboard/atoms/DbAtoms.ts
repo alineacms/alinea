@@ -2,9 +2,8 @@ import {Database} from 'alinea/backend'
 import {Resolver} from 'alinea/backend/Resolver'
 import {Store} from 'alinea/backend/Store'
 import {Connection} from 'alinea/core'
-import {GraphRealm} from 'alinea/core/Graph'
+import {Graph} from 'alinea/core/Graph'
 import {Mutation, MutationType} from 'alinea/core/Mutation'
-import {Realm} from 'alinea/core/pages/Realm'
 import {atom, useSetAtom} from 'jotai'
 import {atomFamily} from 'jotai/utils'
 import pLimit from 'p-limit'
@@ -52,38 +51,38 @@ const localDbAtom = atom(
     let pendingLock: Promise<unknown> = Promise.resolve()
     const config = get(configAtom)
     const client = get(clientAtom)
-    const store = await get(storeAtom)
-    const db = new Database(store, config)
-    const resolver = new Resolver(store, config.schema)
+    const sourceStore = await get(storeAtom)
+    const sourceDb = new Database(sourceStore, config)
+    const sourceResolver = new Resolver(sourceStore, config.schema)
+    const pendingStore = sourceStore.clone()
+    const pendingDb = new Database(pendingStore, config)
+    const pendingResolver = new Resolver(pendingStore, config.schema)
 
-    await limit(() => syncDb(db, client, store))
-    await db.meta().then(meta => cleanupPending(meta.modifiedAt))
+    await limit(() => syncDb(sourceDb, client, sourceStore))
+    await sourceDb.meta().then(meta => cleanupPending(meta.modifiedAt))
 
-    async function resolve(params: Connection.ResolveParams) {
+    async function resolvePending(params: Connection.ResolveParams) {
       await pendingLock
-      return resolver.resolve(params)
+      return pendingResolver.resolve(params)
+    }
+
+    async function resolveSource(params: Connection.ResolveParams) {
+      return sourceResolver.resolve(params)
     }
 
     async function sync() {
       const changed = await limit(() =>
-        syncDb(db, client, store).catch(() => [] as Array<string>)
+        syncDb(sourceDb, client, sourceStore).catch(() => [] as Array<string>)
       )
-      await db.meta().then(meta => cleanupPending(meta.modifiedAt))
+      await sourceDb.meta().then(meta => cleanupPending(meta.modifiedAt))
+      await pendingDb.syncWith(sourceDb)
       return changed
     }
 
     const applyPending = (pending: Array<Mutation>) =>
       (pendingLock = limit(async (): Promise<Array<string>> => {
-        await cancelMutations(store)
-
-        // Open a savepoint in which we apply all mutations
-        // we can rollback the savepoint on next sync
-        // This requires we use the same single connection for all reads
-        // Alternatively we could create a new db here
-        await store(sql`savepoint mutations`)
-
         // Apply all mutations
-        await db.applyMutations(pending)
+        await pendingDb.applyMutations(pending)
 
         return pending.flatMap(mutation => {
           switch (mutation.type) {
@@ -97,7 +96,7 @@ const localDbAtom = atom(
         })
       }))
 
-    return {db, resolve, sync, applyPending}
+    return {sourceDb, resolvePending, resolveSource, sync, applyPending}
   },
   (get, set) => {
     const update = () => set(pendingUpdateAtom)
@@ -107,6 +106,8 @@ const localDbAtom = atom(
   }
 )
 localDbAtom.onMount = init => init()
+
+export const sourceDbAtom = atom(async get => (await get(localDbAtom)).sourceDb)
 
 export const mutateAtom = atom(
   null,
@@ -134,29 +135,16 @@ export const pendingUpdateAtom = atom(null, async (get, set) => {
   set(changedEntriesAtom, await applyPending(pending))
 })
 
+export const sourceGraphAtom = atom(async get => {
+  const config = get(configAtom)
+  const {resolveSource: resolve} = await get(localDbAtom)
+  return new Graph(config, resolve)
+})
+
 export const graphAtom = atom(async get => {
   const config = get(configAtom)
-  const {resolve} = await get(localDbAtom)
-  return {
-    drafts: new GraphRealm(config, async params => {
-      return resolve({
-        ...params,
-        realm: Realm.Draft
-      })
-    }),
-    active: new GraphRealm(config, async params => {
-      return resolve({
-        ...params,
-        realm: Realm.PreferDraft
-      })
-    }),
-    all: new GraphRealm(config, async params => {
-      return resolve({
-        ...params,
-        realm: Realm.All
-      })
-    })
-  }
+  const {resolvePending: resolve} = await get(localDbAtom)
+  return new Graph(config, resolve)
 })
 
 const changedAtom = atom<Array<string>>([])

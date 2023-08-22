@@ -93,7 +93,7 @@ export function EntryPickerModal({
     ['picker-parents', destination],
     async () => {
       if (!destination.parentId) return []
-      const res = await graph.active.get(
+      const res = await graph.preferDraft.get(
         Entry({entryId: destination.parentId}).select({
           title: Entry.title,
           parents({parents}) {
