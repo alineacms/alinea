@@ -106,7 +106,9 @@ export function createHandler(
     plugins: buildOptions?.plugins || [],
     define: {
       'process.env.NODE_ENV':
-        production || cloudUrl ? "'production'" : "'development'",
+        production || process.env.ALINEA_CLOUD_URL
+          ? "'production'"
+          : "'development'",
       'process.env.ALINEA_CLOUD_URL': cloudUrl,
       ...publicDefines(process.env)
     },

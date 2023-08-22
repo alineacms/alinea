@@ -92,8 +92,6 @@ export async function serve(options: ServeOptions): Promise<void> {
         fs: fs.promises,
         rootDir: rootDir
       })
-      if (process.env.ALINEA_CLOUD_URL) {
-      }
       const backend = process.env.ALINEA_CLOUD_URL
         ? createCloudHandler(
             currentCMS,
