@@ -91,7 +91,7 @@ class NextDriver extends DefaultDriver implements NextApi {
   })
 
   previewHandler = async (request: Request) => {
-    const {draftMode} = await import('next/headers')
+    const {draftMode, cookies} = await import('next/headers')
     const {searchParams} = new URL(request.url)
     const params = SearchParams({
       token: searchParams.get('token'),
@@ -111,6 +111,12 @@ class NextDriver extends DefaultDriver implements NextApi {
     const source = new URL(request.url)
     const location = new URL(url, source.origin)
     draftMode().enable()
+    if (!searchParams.has('full')) {
+      // Clear preview cookies
+      cookies().delete(PREVIEW_UPDATE_NAME)
+      cookies().delete(PREVIEW_ENTRYID_NAME)
+      cookies().delete(PREVIEW_PHASE_NAME)
+    }
     return new Response(`Redirecting...`, {
       status: 302,
       headers: {location: location.toString()}

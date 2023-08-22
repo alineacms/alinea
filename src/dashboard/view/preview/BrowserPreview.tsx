@@ -153,7 +153,7 @@ export function BrowserPreview({
             <AppBar.Item
               as="a"
               icon={IcRoundOpenInNew}
-              href={url}
+              href={url + '&full'}
               target="_blank"
             />
           </HStack>
