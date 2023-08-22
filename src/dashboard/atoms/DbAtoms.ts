@@ -126,7 +126,7 @@ export const dbUpdateAtom = atom(null, async (get, set) => {
   const changed = await sync()
   const pending = [...pendingMap.values()]
   const updated = await applyPending(pending)
-  set(changedEntriesAtom, changed.concat(updated))
+  set(changedEntriesAtom, changed /*.concat(updated)*/)
 })
 
 export const pendingUpdateAtom = atom(null, async (get, set) => {
