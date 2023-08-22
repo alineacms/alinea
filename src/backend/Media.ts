@@ -13,6 +13,7 @@ export interface Media {
 
 export namespace Media {
   type FileProperties = {
+    title: string
     location: string
     extension: string
     size: number

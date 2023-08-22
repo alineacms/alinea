@@ -137,6 +137,8 @@ export class Server implements Connection {
       parent ? parent.parentPaths.concat(parent.path) : []
     )
 
+    const parentDir = dirname(filePath)
+
     const entry: Media.File = {
       ...entryLocation,
       parent: parent?.entryId ?? null,
@@ -151,13 +153,14 @@ export class Server implements Connection {
       i18nId: entryId,
 
       level: parent ? parent.level + 1 : 0,
-      parentDir: '',
+      parentDir: parentDir,
       filePath,
-      childrenDir: '',
+      childrenDir: filePath.slice(0, -extension.length),
       contentHash,
       active: true,
       main: true,
       data: {
+        title: basename(file.path, extension),
         location,
         extension: extension.toLowerCase(),
         size: file.buffer.byteLength,

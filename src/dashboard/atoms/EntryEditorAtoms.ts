@@ -127,7 +127,7 @@ export const entryEditorAtoms = atomFamily(
 )
 
 export interface EntryData {
-  sourceEntry: EntryRow
+  sourceEntry: EntryRow | null
   parents: Array<{entryId: string; path: string}>
   client: Connection
   config: Config

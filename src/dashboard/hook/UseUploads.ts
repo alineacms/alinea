@@ -150,7 +150,7 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
         const hashThumbHash = Boolean(entry.data.thumbHash)
         if (hashThumbHash) {
           const previewSrc = imageBlurUrl(entry.data)!
-          entry.data.preview = previewSrc
+          entry.data.preview = next.preview!
           entry.data.location = previewSrc
         }
         addPending({

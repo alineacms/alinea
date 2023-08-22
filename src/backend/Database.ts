@@ -44,7 +44,7 @@ type Seed = {
 export class Database implements Syncable {
   seed: Map<string, Seed>
 
-  constructor(protected store: Store, public config: Config) {
+  constructor(public store: Store, public config: Config) {
     this.seed = this.seedData()
   }
 
@@ -122,79 +122,83 @@ export class Database implements Syncable {
 
   async applyMutations(mutations: Array<Mutation>) {
     for (const mutation of mutations) {
-      switch (mutation.type) {
-        case MutationType.Edit:
-          await this.store(
-            EntryRow({
-              entryId: mutation.entryId,
-              phase: mutation.entry.phase
-            }).delete(),
-            EntryRow().insert(mutation.entry)
-          )
-          continue
-        case MutationType.Archive:
+      console.log(`Applying mutation: ${mutation.type} to ${mutation.entryId}`)
+      this.applyMutation(mutation)
+    }
+    await Database.index(this.store)
+  }
+
+  async applyMutation(mutation: Mutation) {
+    switch (mutation.type) {
+      case MutationType.Edit:
+        return this.store(
+          EntryRow({
+            entryId: mutation.entryId,
+            phase: mutation.entry.phase
+          }).delete(),
+          EntryRow().insert(mutation.entry)
+        )
+      case MutationType.Archive:
+        return this.store(
+          EntryRow({
+            entryId: mutation.entryId,
+            phase: EntryPhase.Published
+          }).set({phase: EntryPhase.Archived})
+        )
+      case MutationType.Publish:
+        const phases = await this.store(
+          EntryRow({
+            entryId: mutation.entryId
+          }).select(EntryRow.phase)
+        )
+        const promoting = phases.find(p => ALT_STATUS.includes(p))
+        if (promoting)
           await this.store(
             EntryRow({
               entryId: mutation.entryId,
               phase: EntryPhase.Published
-            }).set({phase: EntryPhase.Archived})
-          )
-          continue
-        case MutationType.Publish:
-          const phases = await this.store(
-            EntryRow({
-              entryId: mutation.entryId
-            }).select(EntryRow.phase)
-          )
-          const promoting = phases.find(p => ALT_STATUS.includes(p))
-          if (promoting)
-            await this.store(
-              EntryRow({
-                entryId: mutation.entryId,
-                phase: EntryPhase.Published
-              }).delete(),
-              EntryRow({
-                entryId: mutation.entryId,
-                phase: promoting
-              }).set({
-                phase: EntryPhase.Published
-              })
-            )
-          continue
-        case MutationType.Remove:
-          await this.store(EntryRow({entryId: mutation.entryId}).delete())
-          continue
-        case MutationType.Discard:
-          await this.store(
+            }).delete(),
             EntryRow({
               entryId: mutation.entryId,
-              phase: EntryPhase.Draft
-            }).delete()
-          )
-          continue
-        case MutationType.Order:
-          await this.store(
-            EntryRow({entryId: mutation.entryId}).set({index: mutation.index})
-          )
-          continue
-        case MutationType.Move:
-          await this.store(
-            EntryRow({entryId: mutation.entryId}).set({
-              index: mutation.index,
-              parent: mutation.parent,
-              workspace: mutation.workspace,
-              root: mutation.root
+              phase: promoting
+            }).set({
+              phase: EntryPhase.Published
             })
           )
-          continue
-        case MutationType.FileUpload:
-          await this.store(EntryRow().insert(mutation.entry))
-          continue
-        default:
-          throw unreachable(mutation)
-      }
+        return
+      case MutationType.Remove:
+        return this.store(EntryRow({entryId: mutation.entryId}).delete())
+
+      case MutationType.Discard:
+        return this.store(
+          EntryRow({
+            entryId: mutation.entryId,
+            phase: EntryPhase.Draft
+          }).delete()
+        )
+      case MutationType.Order:
+        return this.store(
+          EntryRow({entryId: mutation.entryId}).set({index: mutation.index})
+        )
+      case MutationType.Move:
+        return this.store(
+          EntryRow({entryId: mutation.entryId}).set({
+            index: mutation.index,
+            parent: mutation.parent,
+            workspace: mutation.workspace,
+            root: mutation.root
+          })
+        )
+      case MutationType.FileUpload:
+        return this.store(
+          EntryRow({
+            entryId: mutation.entryId
+          }).delete(),
+          EntryRow().insert(mutation.entry)
+        )
+      default:
+        throw unreachable(mutation)
     }
-    await Database.index(this.store)
   }
 
   async meta() {

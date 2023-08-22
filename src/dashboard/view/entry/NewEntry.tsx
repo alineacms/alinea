@@ -170,18 +170,14 @@ function NewEntryForm({parentId}: NewEntryProps) {
       data: {title, path},
       searchableText: ''
     }
-    return mutate({
+    const result = mutate({
       type: MutationType.Edit,
       entryId: entry.entryId,
       entry,
       file: entryFileName(config, data, parentPaths)
     })
-      .then(() => {
-        navigate(nav.entry({entryId: entry.i18nId}))
-      })
-      .finally(() => {
-        setIsCreating(false)
-      })
+    navigate(nav.entry({entryId: entry.i18nId}))
+    return result
   }
   return (
     <form onSubmit={handleCreate}>

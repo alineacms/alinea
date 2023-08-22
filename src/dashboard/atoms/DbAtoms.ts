@@ -3,7 +3,7 @@ import {Resolver} from 'alinea/backend/Resolver'
 import {Store} from 'alinea/backend/Store'
 import {Connection} from 'alinea/core'
 import {Graph} from 'alinea/core/Graph'
-import {Mutation, MutationType} from 'alinea/core/Mutation'
+import {Mutation, MutationType, PendingMutation} from 'alinea/core/Mutation'
 import {atom, useSetAtom} from 'jotai'
 import {atomFamily} from 'jotai/utils'
 import pLimit from 'p-limit'
@@ -80,10 +80,20 @@ const localDbAtom = atom(
       return changed
     }
 
-    const applyPending = (pending: Array<Mutation>) =>
+    const applyPending = (pending: Array<PendingMutation>) =>
       (pendingLock = limit(async (): Promise<Array<string>> => {
         // Apply all mutations
-        await pendingDb.applyMutations(pending)
+        const remove = []
+        for (const mutation of pending) {
+          try {
+            await pendingDb.applyMutation(mutation)
+          } catch (err) {
+            remove.push(mutation.mutationId)
+          }
+        }
+        await Database.index(pendingDb.store)
+
+        if (remove.length) removePending(...remove)
 
         return pending.flatMap(mutation => {
           switch (mutation.type) {

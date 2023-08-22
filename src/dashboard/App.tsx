@@ -66,7 +66,7 @@ const isEntryAtom = atom(get => {
 
 function AppAuthenticated() {
   const pending = useAtomValue(pendingAtom)
-  useDbUpdater(pending.length > 0 ? 10 : 60)
+  useDbUpdater(pending.length > 0 ? 30 : 60)
   const {fullPage} = useDashboard()
   const nav = useNav()
   const isEntry = useAtomValue(isEntryAtom)
