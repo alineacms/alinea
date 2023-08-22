@@ -47,6 +47,8 @@ export interface EntryHeaderProps {
   editor: EntryEditor
 }
 
+const enableDrafts = false
+
 export function EntryHeader({editor}: EntryHeaderProps) {
   const locale = useLocale()
   const phaseInUrl = useAtomValue(editor.phaseInUrl)
@@ -66,6 +68,7 @@ export function EntryHeader({editor}: EntryHeaderProps) {
     ? 'archiving'
     : selectedPhase
   const saveDraft = useSetAtom(editor.saveDraft)
+  const publishEdits = useSetAtom(editor.publishEdits)
   const publishDraft = useSetAtom(editor.publishDraft)
   const discardDraft = useSetAtom(editor.discardDraft)
   const archivePublished = useSetAtom(editor.archivePublished)
@@ -221,9 +224,14 @@ export function EntryHeader({editor}: EntryHeaderProps) {
                 Save translation
               </Button>
             )}
-            {variant === 'editing' && (
+            {enableDrafts && variant === 'editing' && (
               <Button icon={IcRoundSave} onClick={saveDraft}>
                 Save draft
+              </Button>
+            )}
+            {!enableDrafts && variant === 'editing' && (
+              <Button icon={IcRoundSave} onClick={publishEdits}>
+                Publish
               </Button>
             )}
             {!untranslated && !hasChanges && selectedPhase === 'draft' && (

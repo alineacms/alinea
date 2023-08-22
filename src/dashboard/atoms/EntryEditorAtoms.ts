@@ -273,6 +273,18 @@ export function createEntryEditor(entryData: EntryData) {
     return res
   })
 
+  const publishEdits = atom(null, (get, set) => {
+    const entry = {...getDraftEntry(), phase: EntryPhase.Published}
+    const mutation: Mutation = {
+      type: MutationType.Edit,
+      file: entryFile(entry),
+      entryId: activeVersion.entryId,
+      entry
+    }
+    set(hasChanges, false)
+    return set(mutateAtom, mutation)
+  })
+
   const publishDraft = atom(null, (get, set) => {
     const mutation: Mutation = {
       type: MutationType.Publish,
@@ -352,6 +364,7 @@ export function createEntryEditor(entryData: EntryData) {
     states,
     hasChanges,
     saveDraft,
+    publishEdits,
     publishDraft,
     discardDraft,
     archivePublished,

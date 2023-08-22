@@ -127,7 +127,7 @@ export class Database implements Syncable {
           await this.store(
             EntryRow({
               entryId: mutation.entryId,
-              phase: EntryPhase.Draft
+              phase: mutation.entry.phase
             }).delete(),
             EntryRow().insert(mutation.entry)
           )
