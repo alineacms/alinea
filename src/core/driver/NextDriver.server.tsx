@@ -58,24 +58,7 @@ class NextDriver extends DefaultDriver implements NextApi {
         url: devUrl,
         resolveDefaults
       })
-
-    /*if (isDraft) {
-      const host = headers().get('host')
-      const handlerUrl = new URL(this.dashboard.handlerUrl, `https://${host}`)
-      return new Client({
-        config: this.config,
-        url: handlerUrl.toString(),
-        resolveDefaults
-      })
-    }*/
-
     const store = await this.readStore()
-    /*const isDev = process.env.NODE_ENV === 'development'
-    const fileData = new FileData({
-      config: this,
-      fs: fs.promises,
-      rootDir: process.cwd()
-    })*/
     return new Server(
       {
         config: this.config,
@@ -117,13 +100,14 @@ class NextDriver extends DefaultDriver implements NextApi {
     })
     const previews = new JWTPreviews(this.jwtSecret)
     const payload = await previews.verify(params.token)
-    const cnx = await this.connection()
+    const cnx = (await this.connection()) as Client
     const url = (await cnx.resolve({
       selection: Selection.create(
         Entry({entryId: params.entryId}).select(Entry.url).first()
       ),
-      realm: params.realm
-    })) as string
+      realm: Realm.PreferDraft
+    })) as string | null
+    if (!url) return new Response('Not found', {status: 404})
     const source = new URL(request.url)
     const location = new URL(url, source.origin)
     draftMode().enable()
