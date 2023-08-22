@@ -54,12 +54,13 @@ const localDbAtom = atom(
     const sourceStore = await get(storeAtom)
     const sourceDb = new Database(sourceStore, config)
     const sourceResolver = new Resolver(sourceStore, config.schema)
-    const pendingStore = sourceStore.clone()
-    const pendingDb = new Database(pendingStore, config)
-    const pendingResolver = new Resolver(pendingStore, config.schema)
 
     await limit(() => syncDb(sourceDb, client, sourceStore))
     await sourceDb.meta().then(meta => cleanupPending(meta.modifiedAt))
+
+    const pendingStore = sourceStore.clone()
+    const pendingDb = new Database(pendingStore, config)
+    const pendingResolver = new Resolver(pendingStore, config.schema)
 
     async function resolvePending(params: Connection.ResolveParams) {
       await pendingLock
