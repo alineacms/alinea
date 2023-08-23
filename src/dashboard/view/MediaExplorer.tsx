@@ -46,7 +46,6 @@ export function MediaExplorer({editor}: MediaExplorerProps) {
       const info = await graph.preferDraft.get({
         title: Entry({entryId: parentId}).select(Entry.title).maybeFirst()
       })
-      console.log(await graph.all.find(Entry({type: 'MediaFile'})))
       return {...info, cursor}
     },
     {suspense: true, keepPreviousData: true}

@@ -3,7 +3,10 @@
   background: var(--alinea-fields);
   box-shadow: var(--alinea-fields-shadow);
   border-radius: var(--alinea-border-radius);
-  margin: 6px 0;
+
+  &.is-inline {
+    box-shadow: none;
+  }
 
   &-input {
     appearance: none;
@@ -18,6 +21,7 @@
     text-align: left;
     padding: 4px 0;
     padding-left: 8px;
+    cursor: pointer;
 
     &-label {
       font-size: 12px;

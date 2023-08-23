@@ -10,7 +10,7 @@ type LoaderProps = {
   size?: number
 } & HTMLAttributes<HTMLDivElement>
 
-export function Loader({light, absolute, size = 16, ...props}: LoaderProps) {
+export function Loader({light, absolute, size = 22, ...props}: LoaderProps) {
   return (
     <div
       style={{fontSize: size}}

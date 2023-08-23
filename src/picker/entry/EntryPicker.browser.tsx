@@ -6,11 +6,13 @@ import {and} from 'alinea/core/pages/Expr'
 import {entries} from 'alinea/core/util/Objects'
 import {useFocusList} from 'alinea/dashboard/hook/UseFocusList'
 import {useGraph} from 'alinea/dashboard/hook/UseGraph'
+import {useLocale} from 'alinea/dashboard/hook/UseLocale'
 import {useRoot} from 'alinea/dashboard/hook/UseRoot'
 import {useWorkspace} from 'alinea/dashboard/hook/UseWorkspace'
 import {Breadcrumbs, BreadcrumbsItem} from 'alinea/dashboard/view/Breadcrumbs'
 import {IconButton} from 'alinea/dashboard/view/IconButton'
 import {Modal} from 'alinea/dashboard/view/Modal'
+import {Langswitch} from 'alinea/dashboard/view/entry/LangSwitch'
 import {
   Explorer,
   ExporerItemSelect
@@ -54,6 +56,7 @@ interface PickerLocation {
   parentId?: string
   workspace: string
   root: string
+  locale?: string
 }
 
 const styles = fromModule(css)
@@ -85,15 +88,24 @@ export function EntryPickerModal({
   )
   const workspace = useWorkspace()
   const {name: root} = useRoot()
+  const locale = useLocale()
   const [destination, setDestination] = useState<PickerLocation>({
     workspace: workspace.name,
-    root: showMedia ? mediaRoot(workspace) : root
+    root: showMedia ? mediaRoot(workspace) : root,
+    locale: locale
   })
+  const destinationRoot = Root.data(workspace.roots[destination.root])
+  const destinationLocale =
+    destination.locale ?? destinationRoot.i18n?.locales[0]
   const {data: parentEntries} = useQuery(
-    ['picker-parents', destination],
+    ['picker-parents', destination, destinationLocale],
     async () => {
       if (!destination.parentId) return []
-      const res = await graph.preferDraft.get(
+      const drafts = graph.preferDraft
+      const query = destinationLocale
+        ? drafts.locale(destinationLocale)
+        : drafts
+      const res = await query.get(
         Entry({entryId: destination.parentId}).select({
           title: Entry.title,
           parents({parents}) {
@@ -117,12 +129,15 @@ export function EntryPickerModal({
       terms.length === 0
         ? and(rootCondition, Entry.parent.is(destination.parentId ?? null))
         : rootCondition
+    const translatedCondition = destinationLocale
+      ? and(destinationCondition, Entry.locale.is(destinationLocale))
+      : destinationCondition
     return Entry()
       .where(
-        condition ? condition.and(destinationCondition) : destinationCondition
+        condition ? condition.and(translatedCondition) : translatedCondition
       )
       .search(...terms)
-  }, [destination, search, condition])
+  }, [destination, destinationLocale, search, condition])
   const [view, setView] = useState<'row' | 'thumb'>(defaultView || 'row')
   const handleSelect = useCallback(
     (entry: ExporerItemSelect) => {
@@ -178,7 +193,7 @@ export function EntryPickerModal({
           <VStack gap={24}>
             <HStack align="flex-end" gap={18}>
               <IconButton icon={IcRoundArrowBack} onClick={goUp} />
-              <VStack gap={8}>
+              <VStack>
                 <Breadcrumbs>
                   <BreadcrumbsItem>
                     <button onClick={toRoot}>{workspace.label}</button>
@@ -209,6 +224,20 @@ export function EntryPickerModal({
                         })}
                       </DropdownMenu.Items>
                     </DropdownMenu.Root>
+                    {destinationRoot.i18n && (
+                      <Langswitch
+                        inline
+                        selected={destinationLocale!}
+                        locales={destinationRoot.i18n.locales}
+                        onChange={locale => {
+                          setDestination({
+                            ...destination,
+                            parentId: undefined,
+                            locale
+                          })
+                        }}
+                      />
+                    )}
                   </BreadcrumbsItem>
                   {!search &&
                     parentEntries?.map(({id, title}) => {
