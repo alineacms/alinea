@@ -53,7 +53,7 @@ export function ContentView({editor}: ContentViewProps) {
           >
             <HStack center gap={8} align="center">
               <Icon icon={IcRoundAddCircle} size={17} />
-              <span>Create new page</span>
+              <span>Create new</span>
             </HStack>
           </button>
         </div>
