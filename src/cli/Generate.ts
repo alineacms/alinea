@@ -11,8 +11,10 @@ import {fillCache} from './generate/FillCache.js'
 import {GenerateContext} from './generate/GenerateContext.js'
 import {generateDashboard} from './generate/GenerateDashboard.js'
 import {loadCMS} from './generate/LoadConfig.js'
+import {dirname} from './util/Dirname.js'
 import {findConfigFile} from './util/FindConfigFile.js'
 
+const __dirname = dirname(import.meta.url)
 const require = createRequire(import.meta.url)
 const alineaPackageDir = path.dirname(require.resolve('alinea/package.json'))
 
