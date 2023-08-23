@@ -17,9 +17,8 @@ import {link} from 'alinea/input/link'
 import {select} from 'alinea/input/select'
 import {text} from 'alinea/input/text'
 import {EntryReference} from 'alinea/picker/entry/EntryReference'
-import {Button, HStack, Loader, Typo, fromModule} from 'alinea/ui'
+import {Button, Loader, fromModule} from 'alinea/ui'
 import {Link} from 'alinea/ui/Link'
-import {IcRoundArrowBack} from 'alinea/ui/icons/IcRoundArrowBack'
 import {useObservable} from 'alinea/ui/util/Observable'
 import {useAtomValue} from 'jotai'
 import {FormEvent, Suspense, useState} from 'react'
@@ -30,7 +29,6 @@ import {useLocale} from '../../hook/UseLocale.js'
 import {useNav} from '../../hook/UseNav.js'
 import {useRoot} from '../../hook/UseRoot.js'
 import {useWorkspace} from '../../hook/UseWorkspace.js'
-import {IconButton} from '../IconButton.js'
 import css from './NewEntry.module.scss'
 
 const styles = fromModule(css)
@@ -211,10 +209,6 @@ export function NewEntry({parentId}: NewEntryProps) {
   }
   return (
     <Modal open onClose={handleClose} className={styles.root()}>
-      <HStack center gap={18} className={styles.root.header()}>
-        <IconButton icon={IcRoundArrowBack} onClick={handleClose} />
-        <Typo.H1 flat>New entry</Typo.H1>
-      </HStack>
       <Suspense fallback={<Loader />}>
         <NewEntryForm parentId={parentId} />
       </Suspense>
