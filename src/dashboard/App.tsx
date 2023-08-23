@@ -1,5 +1,5 @@
 import {Config, Connection, Root, renderLabel} from 'alinea/core'
-import {Icon, Loader} from 'alinea/ui'
+import {Icon, Loader, px} from 'alinea/ui'
 import {FavIcon} from 'alinea/ui/branding/FavIcon'
 import {IcOutlineInsertDriveFile} from 'alinea/ui/icons/IcOutlineInsertDriveFile'
 import {MdiSourceBranch} from 'alinea/ui/icons/MdiSourceBranch'
@@ -17,6 +17,7 @@ import {
   useSetDashboardOptions
 } from './atoms/DashboardAtoms.js'
 import {useDbUpdater} from './atoms/DbAtoms.js'
+import {errorAtom} from './atoms/ErrorAtoms.js'
 import {locationAtom, matchAtoms, useLocation} from './atoms/LocationAtoms.js'
 import {usePreferredLanguage} from './atoms/NavigationAtoms.js'
 import {pendingAtom} from './atoms/PendingAtoms.js'
@@ -30,6 +31,7 @@ import {useWorkspace} from './hook/UseWorkspace.js'
 import {Head} from './util/Head.js'
 import {SuspenseBoundary} from './util/SuspenseBoundary.js'
 import {ErrorBoundary} from './view/ErrorBoundary.js'
+import {Modal} from './view/Modal.js'
 import {Sidebar} from './view/Sidebar.js'
 import {Toolbar} from './view/Toolbar.js'
 import {Viewport} from './view/Viewport.js'
@@ -75,11 +77,17 @@ function AppAuthenticated() {
   const entryLocation = useEntryLocation()
   const locale = useLocale()
   const [preferredLanguage, setPreferredLanguage] = usePreferredLanguage()
+  const [errorMessage, setErrorMessage] = useAtom(errorAtom)
   useEffect(() => {
     setPreferredLanguage(locale)
   }, [locale])
   return (
     <>
+      {errorMessage && (
+        <Modal open onClose={() => setErrorMessage(null)}>
+          <div style={{padding: px(16)}}>{errorMessage}</div>
+        </Modal>
+      )}
       <Toolbar.Provider>
         <Sidebar.Provider>
           <Viewport attachToBody={fullPage} contain color={color}>
