@@ -121,6 +121,11 @@ export namespace Sidebar {
     const navigate = useNavigate()
     const nav = useNav()
     const entryLocation = useEntryLocation()
+    const location = {
+      root: root.name,
+      workspace: workspace.name,
+      ...entryLocation
+    }
     return (
       <HStack as="header" center gap={12} className={styles.navHeader()}>
         {workspaces.length > 1 ? (
@@ -177,7 +182,7 @@ export namespace Sidebar {
               selected={locale!}
               locales={root.i18n.locales}
               onChange={locale => {
-                navigate(nav.entry({...entryLocation, locale}))
+                navigate(nav.entry({...location, locale}))
               }}
             />
           )}
