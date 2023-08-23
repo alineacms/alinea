@@ -32,7 +32,7 @@ class NextDriver extends DefaultDriver implements NextApi {
   jwtSecret = this.apiKey || 'dev'
 
   async connection(): Promise<Connection> {
-    const {cookies, draftMode} = await import('next/headers')
+    const {cookies, draftMode} = await import('next/headers.js')
     const isDraft = outcome(() => draftMode().isEnabled).isSuccess()
     const devUrl = process.env.ALINEA_DEV_SERVER
     const resolveDefaults: ClientOptions['resolveDefaults'] = {
@@ -91,7 +91,7 @@ class NextDriver extends DefaultDriver implements NextApi {
   })
 
   previewHandler = async (request: Request) => {
-    const {draftMode, cookies} = await import('next/headers')
+    const {draftMode, cookies} = await import('next/headers.js')
     const {searchParams} = new URL(request.url)
     const params = SearchParams({
       token: searchParams.get('token'),
@@ -124,7 +124,7 @@ class NextDriver extends DefaultDriver implements NextApi {
   }
 
   async previews(): Promise<JSX.Element | null> {
-    const {draftMode} = await import('next/headers')
+    const {draftMode} = await import('next/headers.js')
     const {isEnabled: isDraft} = draftMode()
     if (!isDraft) return null
     const NextPreviews = lazy(() => import('alinea/core/driver/NextPreviews'))

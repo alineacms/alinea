@@ -3,6 +3,7 @@ import {CMS} from 'alinea/core/CMS'
 import {Config} from 'alinea/core/Config'
 import {BuildResult} from 'esbuild'
 import fs from 'node:fs'
+import {createRequire} from 'node:module'
 import path from 'node:path'
 import {compileConfig} from './generate/CompileConfig.js'
 import {copyStaticFiles} from './generate/CopyStaticFiles.js'
@@ -10,10 +11,10 @@ import {fillCache} from './generate/FillCache.js'
 import {GenerateContext} from './generate/GenerateContext.js'
 import {generateDashboard} from './generate/GenerateDashboard.js'
 import {loadCMS} from './generate/LoadConfig.js'
-import {dirname} from './util/Dirname.js'
 import {findConfigFile} from './util/FindConfigFile.js'
 
-const __dirname = dirname(import.meta.url)
+const require = createRequire(import.meta.url)
+const alineaPackageDir = path.dirname(require.resolve('alinea/package.json'))
 
 export type GenerateOptions = {
   cwd?: string
@@ -76,6 +77,10 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
   const rootDir = path.resolve(cwd)
   const configDir = path.dirname(configLocation)
 
+  const nodeModules = alineaPackageDir.includes('node_modules')
+    ? path.join(alineaPackageDir, '..')
+    : path.join(alineaPackageDir, 'node_modules')
+
   const context: GenerateContext = {
     wasmCache,
     rootDir: rootDir,
@@ -84,7 +89,7 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
     configDir,
     configLocation,
     fix: options.fix || false,
-    outDir: path.join(__dirname, '../../generated'), // path.join(rootDir, '.alinea'),
+    outDir: path.join(nodeModules, '@alinea/generated'), // path.join(rootDir, '.alinea'),
     watch: options.watch || false
   }
 
