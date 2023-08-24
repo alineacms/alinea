@@ -127,7 +127,11 @@ export const mutateAtom = atom(
     const pending = addPending(...mutations)
     return client.mutate(mutations).catch(error => {
       removePending(...pending.map(m => m.mutationId))
-      console.error(error)
+      set(
+        changedEntriesAtom,
+        pending.map(m => m.entryId)
+      )
+      throw error
     })
   }
 )

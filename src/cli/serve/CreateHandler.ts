@@ -86,7 +86,7 @@ export function createHandler(
       'next/navigation',
       'next/headers',
       'better-sqlite3',
-      'alinea/generated/store.js'
+      '@alinea/generated/store.js'
     ],
     format: 'esm',
     target: 'esnext',
@@ -98,7 +98,7 @@ export function createHandler(
     bundle: true,
     absWorkingDir: cwd,
     entryPoints: {
-      config: path.join(__dirname, '../../../generated/config.js'),
+      config: '@alinea/generated/config.js',
       entry
     },
     platform: 'browser',

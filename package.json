@@ -108,10 +108,10 @@
     "lib0": "0.2.74"
   },
   "exports": {
+    "./package.json": "./package.json",
     ".": "./dist/index.js",
     "./css": "./dist/index.css",
     "./*.cjs": "./dist/*.cjs",
-    "./generated/*": "./generated/*",
     "./*": "./dist/*.js",
     "./cloud/view/CloudAuth": {
       "worker": "./dist/cloud/view/CloudAuth.js",

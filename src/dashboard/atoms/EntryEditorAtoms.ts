@@ -26,6 +26,7 @@ import {
   mutateAtom,
   sourceGraphAtom
 } from './DbAtoms.js'
+import {errorAtom} from './ErrorAtoms.js'
 import {locationAtom} from './LocationAtoms.js'
 import {pendingAtom} from './PendingAtoms.js'
 import {yAtom} from './YAtom.js'
@@ -227,7 +228,14 @@ export function createEntryEditor(entryData: EntryData) {
       entry
     }
     set(hasChanges, false)
-    return set(mutateAtom, mutation)
+    return set(mutateAtom, mutation).catch(error => {
+      set(hasChanges, true)
+      set(
+        errorAtom,
+        'Could not complete save action, please try again later',
+        error
+      )
+    })
   })
 
   const saveTranslation = atom(null, async (get, set, locale: string) => {
@@ -270,7 +278,13 @@ export function createEntryEditor(entryData: EntryData) {
     }
     const res = set(mutateAtom, mutation)
     set(entryRevisionAtoms(activeVersion.entryId))
-    return res
+    return res.catch(error => {
+      set(
+        errorAtom,
+        'Could not complete translate action, please try again later',
+        error
+      )
+    })
   })
 
   const publishEdits = atom(null, (get, set) => {
@@ -282,7 +296,14 @@ export function createEntryEditor(entryData: EntryData) {
       entry
     }
     set(hasChanges, false)
-    return set(mutateAtom, mutation)
+    return set(mutateAtom, mutation).catch(error => {
+      set(hasChanges, true)
+      set(
+        errorAtom,
+        'Could not complete publish action, please try again later',
+        error
+      )
+    })
   })
 
   const publishDraft = atom(null, (get, set) => {
@@ -291,7 +312,13 @@ export function createEntryEditor(entryData: EntryData) {
       entryId: activeVersion.entryId,
       file: entryFile(activeVersion)
     }
-    return set(mutateAtom, mutation)
+    return set(mutateAtom, mutation).catch(error => {
+      set(
+        errorAtom,
+        'Could not complete publish action, please try again later',
+        error
+      )
+    })
   })
 
   const discardDraft = atom(null, (get, set) => {
@@ -300,7 +327,13 @@ export function createEntryEditor(entryData: EntryData) {
       entryId: activeVersion.entryId,
       file: entryFile(activeVersion)
     }
-    return set(mutateAtom, mutation)
+    return set(mutateAtom, mutation).catch(error => {
+      set(
+        errorAtom,
+        'Could not complete remove action, please try again later',
+        error
+      )
+    })
   })
 
   const archivePublished = atom(null, (get, set) => {
@@ -310,7 +343,13 @@ export function createEntryEditor(entryData: EntryData) {
       entryId: published.entryId,
       file: entryFile(published)
     }
-    return set(mutateAtom, mutation)
+    return set(mutateAtom, mutation).catch(error => {
+      set(
+        errorAtom,
+        'Could not complete archive action, please try again later',
+        error
+      )
+    })
   })
 
   const publishArchived = atom(null, (get, set) => {
@@ -320,7 +359,13 @@ export function createEntryEditor(entryData: EntryData) {
       entryId: archived.entryId,
       file: entryFile(archived)
     }
-    return set(mutateAtom, mutation)
+    return set(mutateAtom, mutation).catch(error => {
+      set(
+        errorAtom,
+        'Could not complete publish action, please try again later',
+        error
+      )
+    })
   })
 
   const deleteArchived = atom(null, (get, set) => {
@@ -330,7 +375,13 @@ export function createEntryEditor(entryData: EntryData) {
       entryId: archived.entryId,
       file: entryFile(archived)
     }
-    return set(mutateAtom, mutation)
+    return set(mutateAtom, mutation).catch(error => {
+      set(
+        errorAtom,
+        'Could not complete delete action, please try again later',
+        error
+      )
+    })
   })
 
   const discardEdits = atom(null, (get, set) => {

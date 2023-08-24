@@ -1,6 +1,7 @@
 import {Server} from 'alinea/backend'
-import {Store} from 'alinea/backend/Store'
+import {Store, createStore} from 'alinea/backend/Store'
 import {exportStore} from 'alinea/cli/util/ExportStore'
+import {base64} from 'alinea/core/util/Encoding'
 import {CMS, CMSApi} from '../CMS.js'
 import {Client} from '../Client.js'
 import {Config} from '../Config.js'
@@ -16,8 +17,8 @@ export class DefaultDriver extends CMS {
 
   async readStore(): Promise<Store> {
     // @ts-ignore
-    const {createStore} = await import('alinea/generated/store.js')
-    return createStore()
+    const {storeData} = await import('@alinea/generated/store.js')
+    return createStore(new Uint8Array(base64.parse(storeData)))
   }
 
   async connection(): Promise<Connection> {

@@ -8,6 +8,9 @@ const nextConfig = {
   },
   eslint: {
     ignoreDuringBuilds: true
+  },
+  experimental: {
+    serverComponentsExternalPackages: ['@alinea/generated']
   }
 }
 

@@ -256,10 +256,10 @@ const targetPlugin = {
         )
       const pkg = getManifest('.')
       const exports = {
+        './package.json': './package.json',
         '.': './dist/index.js',
         './css': './dist/index.css',
         './*.cjs': './dist/*.cjs',
-        './generated/*': './generated/*',
         './*': './dist/*.js'
       }
       const bFiles = [...browserFiles].sort()

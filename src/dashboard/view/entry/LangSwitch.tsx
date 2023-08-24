@@ -10,11 +10,17 @@ export interface LangswitchProps {
   locales: Array<string>
   selected: string
   onChange: (locale: string) => void
+  inline?: boolean
 }
 
-export function Langswitch({selected, locales, onChange}: LangswitchProps) {
+export function Langswitch({
+  selected,
+  locales,
+  onChange,
+  inline
+}: LangswitchProps) {
   return (
-    <div className={styles.langswitch()}>
+    <div className={styles.langswitch({inline})}>
       <Listbox
         value={selected}
         onChange={value => {
