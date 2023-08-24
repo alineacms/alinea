@@ -1,1 +1,4 @@
-export type User = {sub: string}
+export interface User {
+  sub: string
+  name?: string
+}

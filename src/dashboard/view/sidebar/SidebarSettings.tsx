@@ -5,6 +5,7 @@ import {InputField} from 'alinea/editor/view/InputField'
 import {select} from 'alinea/input'
 import {HStack, Icon, VStack, fromModule, px} from 'alinea/ui'
 import {DropdownMenu} from 'alinea/ui/DropdownMenu'
+import {Ellipsis} from 'alinea/ui/Ellipsis'
 import {PopoverMenu} from 'alinea/ui/PopoverMenu'
 import {IcBaselineAccountCircle} from 'alinea/ui/icons/IcBaselineAccountCircle'
 import {IcRoundKeyboardArrowDown} from 'alinea/ui/icons/IcRoundKeyboardArrowDown'
@@ -53,6 +54,7 @@ export function SidebarSettings() {
   const toggleSchemePreference = useSetAtom(toggleSchemePreferenceAtom)
   const updateFontSize = useSetAtom(sizePreferenceAtom)
   const updateWorkspace = useSetAtom(workspacePreferenceAtom)
+
   return (
     <DropdownMenu.Root style={{marginTop: 'auto', ...style}}>
       <DropdownMenu.Trigger style={{width: '100%'}}>
@@ -61,9 +63,18 @@ export function SidebarSettings() {
         </Sidebar.Nav.Item>
       </DropdownMenu.Trigger>
 
-      <DropdownMenu.Items top style={{left: px(14)}}>
-        <VStack gap={25}>
-          <VStack gap={15}>
+      <DropdownMenu.Items top style={{left: px(14), maxWidth: px(200)}}>
+        <VStack gap={10}>
+          {session.user.name && (
+            <PopoverMenu.Header>
+              <HStack center gap={10} className={styles.root.username()}>
+                <Icon icon={IcBaselineAccountCircle} size={26} />
+                <Ellipsis>{session.user.name}</Ellipsis>
+              </HStack>
+            </PopoverMenu.Header>
+          )}
+
+          <VStack gap={8}>
             <HStack justify={'space-between'} style={{padding: px(6)}}>
               <HStack center gap={16}>
                 <Icon
