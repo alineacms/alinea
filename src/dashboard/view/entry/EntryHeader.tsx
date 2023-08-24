@@ -44,12 +44,13 @@ const variantIcon = {
 }
 
 export interface EntryHeaderProps {
+  editable?: boolean
   editor: EntryEditor
 }
 
 const enableDrafts = false
 
-export function EntryHeader({editor}: EntryHeaderProps) {
+export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
   const locale = useLocale()
   const phaseInUrl = useAtomValue(editor.phaseInUrl)
   const selectedPhase = useAtomValue(editor.selectedPhase)
@@ -154,7 +155,7 @@ export function EntryHeader({editor}: EntryHeaderProps) {
           </DropdownMenu.Items>
         </DropdownMenu.Root>
 
-        {!hasChanges && isActivePhase && !untranslated && (
+        {editable && !hasChanges && isActivePhase && !untranslated && (
           <>
             <span className={styles.root.description.separator()} />
             <div className={styles.root.description.action()}>

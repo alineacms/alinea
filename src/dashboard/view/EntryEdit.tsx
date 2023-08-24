@@ -132,7 +132,7 @@ export function EntryEdit({editor}: EntryEditProps) {
                       entryId: editor.activeVersion.parent,
                       workspace: editor.activeVersion.workspace
                     })
-                  : undefined
+                  : nav.entry({entryId: undefined})
               }
             />
 

@@ -192,4 +192,12 @@ export class FileData implements Source, Target, Media {
     if (!isInMediaLocation) throw new HttpError(401)
     return {type: 'buffer', buffer: await fs.readFile(file)}
   }
+
+  async delete({location}: Connection.DeleteParams): Promise<void> {
+    const {fs, rootDir = '.'} = this.options
+    const file = path.join(rootDir, location)
+    const isInMediaLocation = this.isInMediaLocation(file)
+    if (!isInMediaLocation) throw new HttpError(401)
+    await fs.rm(file, {recursive: true, force: true})
+  }
 }

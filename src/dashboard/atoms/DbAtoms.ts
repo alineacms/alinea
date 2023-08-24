@@ -71,6 +71,7 @@ const localDbAtom = atom(
       return sourceResolver.resolve(params)
     }
 
+    // Todo: debounce this
     async function sync() {
       const changed = await limit(() =>
         syncDb(sourceDb, client, sourceStore).catch(() => [] as Array<string>)

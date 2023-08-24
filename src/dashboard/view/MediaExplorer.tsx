@@ -5,6 +5,7 @@ import {useQuery} from 'react-query'
 //import {EntryProperty} from '../draft/EntryProperty.js'
 //import {useCurrentDraft} from '../hook/UseCurrentDraft.js'
 import {Entry, RootData} from 'alinea/core'
+import {IcRoundArrowBack} from 'alinea/ui/icons/IcRoundArrowBack'
 import {useAtomValue} from 'jotai'
 import {graphAtom} from '../atoms/DbAtoms.js'
 import {EntryEditor} from '../atoms/EntryEditorAtoms.js'
@@ -14,6 +15,7 @@ import {useRoot} from '../hook/UseRoot.js'
 import {useWorkspace} from '../hook/UseWorkspace.js'
 import {Head} from '../util/Head.js'
 import {Explorer} from './explorer/Explorer.js'
+import {IconLink} from './IconButton.js'
 import {FileUploader} from './media/FileUploader.js'
 import css from './MediaExplorer.module.scss'
 
@@ -43,9 +45,14 @@ export function MediaExplorer({editor}: MediaExplorerProps) {
       const cursor = Entry()
         .where(condition)
         .orderBy(Entry.type.desc(), Entry.entryId.desc())
-      const info = await graph.preferDraft.get({
-        title: Entry({entryId: parentId}).select(Entry.title).maybeFirst()
-      })
+      const info = await graph.preferDraft.get(
+        Entry({entryId: parentId})
+          .select({
+            title: Entry.title,
+            parent: Entry.parent
+          })
+          .maybeFirst()
+      )
       return {...info, cursor}
     },
     {suspense: true, keepPreviousData: true}
@@ -54,19 +61,27 @@ export function MediaExplorer({editor}: MediaExplorerProps) {
   const title = data?.title || root.label
   const nav = useNav()
   const navigate = useNavigate()
+  const backLink = data?.parent
+    ? nav.entry({entryId: data.parent})
+    : nav.root({root: root.name})
   return (
     <>
-      <Main className={styles.root()}>
-        <Main.Container className={styles.root.inner()}>
+      <Main className={styles.root()} scrollable={false}>
+        <div className={styles.root.inner()}>
           <HStack style={{flexGrow: 1, minHeight: 0}}>
             <VStack style={{height: '100%', width: '100%'}}>
               <header className={styles.root.inner.header()}>
                 <Head>
                   <title>{String(title)}</title>
                 </Head>
-                <h1 className={styles.root.title()}>
-                  <TextLabel label={title} />
-                </h1>
+                <HStack center gap={18}>
+                  {backLink && (
+                    <IconLink icon={IcRoundArrowBack} href={backLink} />
+                  )}
+                  <h1 className={styles.root.title()}>
+                    <TextLabel label={title} />
+                  </h1>
+                </HStack>
               </header>
               <Explorer
                 cursor={cursor}
@@ -83,7 +98,7 @@ export function MediaExplorer({editor}: MediaExplorerProps) {
               root: root.name
             }}
           />
-        </Main.Container>
+        </div>
       </Main>
     </>
   )

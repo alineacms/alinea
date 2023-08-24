@@ -9,6 +9,10 @@ export interface Media {
     params: Connection.DownloadParams,
     ctx: Connection.Context
   ): Promise<Connection.Download>
+  delete(
+    params: Connection.DeleteParams,
+    ctx: Connection.Context
+  ): Promise<void>
 }
 
 export namespace Media {

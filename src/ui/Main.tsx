@@ -8,14 +8,15 @@ const styles = fromModule(css)
 export interface MainProps extends HTMLProps<HTMLDivElement> {
   head?: ReactNode
   scrollRef?: Ref<HTMLDivElement>
+  scrollable?: boolean
 }
 
 function MainRoot(
-  {children, head, scrollRef, ...props}: MainProps,
+  {children, head, scrollRef, scrollable = true, ...props}: MainProps,
   ref: Ref<HTMLDivElement>
 ) {
   return (
-    <div ref={ref} className={styles.root()}>
+    <div ref={ref} className={styles.root({scrollable})}>
       {head}
       <div
         ref={scrollRef}
