@@ -265,7 +265,7 @@ export function createEntryEditor(entryData: EntryData) {
       parent: parentData?.entryId ?? null,
       entryId,
       locale,
-      phase: EntryPhase.Draft
+      phase: EntryPhase.Published
     }
     const mutation: Mutation = {
       type: MutationType.Edit,
@@ -278,7 +278,9 @@ export function createEntryEditor(entryData: EntryData) {
     }
     const res = set(mutateAtom, mutation)
     set(entryRevisionAtoms(activeVersion.entryId))
+    set(hasChanges, false)
     return res.catch(error => {
+      set(hasChanges, true)
       set(
         errorAtom,
         'Could not complete translate action, please try again later',

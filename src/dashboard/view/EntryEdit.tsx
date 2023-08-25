@@ -63,12 +63,16 @@ export function EntryEdit({editor}: EntryEditProps) {
   const publishDraft = useSetAtom(editor.publishDraft)
   const publishEdits = useSetAtom(editor.publishEdits)
   const discardEdits = useSetAtom(editor.discardEdits)
+  const saveTranslation = useSetAtom(editor.saveTranslation)
   const untranslated = locale && locale !== editor.activeVersion.locale
+  const translate = () => saveTranslation(locale!)
   useEffect(() => {
     function listener(e: KeyboardEvent) {
       if (e.ctrlKey && e.key === 's') {
         e.preventDefault()
-        if (enableDrafts) {
+        if (untranslated && hasChanges) {
+          translate()
+        } else if (enableDrafts) {
           if (hasChanges) saveDraft()
           else if (selectedPhase === EntryPhase.Draft) publishDraft()
         } else {
