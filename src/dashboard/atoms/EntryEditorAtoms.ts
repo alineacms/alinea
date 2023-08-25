@@ -290,15 +290,24 @@ export function createEntryEditor(entryData: EntryData) {
   })
 
   const publishEdits = atom(null, (get, set) => {
+    const currentFile = entryFile(activeVersion)
     const entry = {...getDraftEntry(), phase: EntryPhase.Published}
-    const mutation: Mutation = {
+    const mutations: Array<Mutation> = []
+    const editedFile = entryFile(entry)
+    if (currentFile !== editedFile)
+      mutations.push({
+        type: MutationType.Remove,
+        entryId: activeVersion.entryId,
+        file: currentFile
+      })
+    mutations.push({
       type: MutationType.Edit,
       file: entryFile(entry),
       entryId: activeVersion.entryId,
       entry
-    }
+    })
     set(hasChanges, false)
-    return set(mutateAtom, mutation).catch(error => {
+    return set(mutateAtom, ...mutations).catch(error => {
       set(hasChanges, true)
       set(
         errorAtom,
