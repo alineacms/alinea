@@ -385,6 +385,7 @@ export function createEntryEditor(entryData: EntryData) {
   })
 
   const discardEdits = atom(null, (get, set) => {
+    set(hasChanges, false)
     set(entryRevisionAtoms(activeVersion.entryId))
   })
 

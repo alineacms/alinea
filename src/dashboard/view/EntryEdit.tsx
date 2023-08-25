@@ -50,7 +50,7 @@ export function EntryEdit({editor}: EntryEditProps) {
   }, [editor.entryId, mode, selectedPhase])
   const {isBlocking, nextRoute, confirm, cancel} = useRouteBlocker(
     'Are you sure you want to discard changes?',
-    false //hasChanges
+    hasChanges
   )
   const isNavigationChange =
     (nextRoute?.data.editor as EntryEditor)?.entryId !== editor.entryId
@@ -73,9 +73,9 @@ export function EntryEdit({editor}: EntryEditProps) {
       document.removeEventListener('keydown', listener)
     }
   }, [editor, hasChanges, saveDraft])
-  useEffect(() => {
+  /*useEffect(() => {
     if (isBlocking && !isNavigationChange) confirm?.()
-  }, [isBlocking, isNavigationChange, confirm])
+  }, [isBlocking, isNavigationChange, confirm])*/
   return (
     <>
       {isBlocking && isNavigationChange && (
