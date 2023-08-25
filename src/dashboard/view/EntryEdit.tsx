@@ -20,6 +20,7 @@ import {EntryNotice} from './entry/EntryNotice.js'
 import {EntryPreview} from './entry/EntryPreview.js'
 import {EntryTitle} from './entry/EntryTitle.js'
 import {FieldToolbar} from './entry/FieldToolbar.js'
+
 const styles = fromModule(css)
 
 function ShowChanges({editor}: EntryEditProps) {
@@ -32,6 +33,8 @@ function ShowChanges({editor}: EntryEditProps) {
       ]
   return <EntryDiff entryA={compareTo} entryB={draftEntry} />
 }
+
+const enableDrafts = false
 
 export interface EntryEditProps {
   editor: EntryEditor
@@ -58,14 +61,19 @@ export function EntryEdit({editor}: EntryEditProps) {
   const state = isActivePhase ? editor.draftState : editor.states[selectedPhase]
   const saveDraft = useSetAtom(editor.saveDraft)
   const publishDraft = useSetAtom(editor.publishDraft)
+  const publishEdits = useSetAtom(editor.publishEdits)
   const discardEdits = useSetAtom(editor.discardEdits)
   const untranslated = locale && locale !== editor.activeVersion.locale
   useEffect(() => {
     function listener(e: KeyboardEvent) {
       if (e.ctrlKey && e.key === 's') {
         e.preventDefault()
-        if (hasChanges) saveDraft()
-        else if (selectedPhase === EntryPhase.Draft) publishDraft()
+        if (enableDrafts) {
+          if (hasChanges) saveDraft()
+          else if (selectedPhase === EntryPhase.Draft) publishDraft()
+        } else {
+          if (hasChanges) publishEdits()
+        }
       }
     }
     document.addEventListener('keydown', listener)
