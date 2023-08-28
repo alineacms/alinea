@@ -121,7 +121,6 @@ export function EntryPickerModal({
     }
   )
   const cursor = useMemo(() => {
-    console.log(destinationLocale)
     const terms = search.replace(/,/g, ' ').split(' ').filter(Boolean)
     const rootCondition = and(
       Entry.workspace.is(destination.workspace),

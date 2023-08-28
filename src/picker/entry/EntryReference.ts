@@ -13,7 +13,7 @@ export interface EntryReference extends EntryLinkReference {
 
 export namespace EntryReference {
   export function isEntryReference(value: any): value is EntryReference {
-    return value && (value.type === 'entry' || value.ref === 'entry')
+    return value && 'entry' in value
   }
 }
 
