@@ -6,6 +6,7 @@ import {build} from 'esbuild'
 import escapeHtml from 'escape-html'
 import fs from 'node:fs'
 import path from 'node:path'
+import {version} from '../../../package.json'
 import {GenerateContext} from './GenerateContext.js'
 
 export async function generateDashboard(
@@ -53,13 +54,13 @@ export async function generateDashboard(
         <!DOCTYPE html>
         <meta charset="utf-8" />
         <link rel="icon" href="data:," />
-        <link href="${baseUrl}/entry.css" rel="stylesheet" />
+        <link href="${baseUrl}/entry.css?${version}" rel="stylesheet" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="handshake_url" value="${handlerUrl}/hub/auth/handshake" />
         <meta name="redirect_url" value="${handlerUrl}/hub/auth" />
         <body>
           <script type="module">
-            import {boot} from '${baseUrl}/entry.js'
+            import {boot} from '${baseUrl}/entry.js?${version}'
             boot('${handlerUrl}')
           </script>
         </body>
