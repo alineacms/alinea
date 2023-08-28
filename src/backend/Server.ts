@@ -87,7 +87,7 @@ export class Server implements Connection {
     const {media, config} = this.options
     const entryId = createId()
     const dir = dirname(file.path)
-    const extension = extname(file.path)
+    const extension = extname(file.path).toLowerCase()
     const name = basename(file.path, extension)
     const fileName = `${slugify(name)}.${createId()}${extension}`
     const workspace = Workspace.data(config.workspaces[workspaceName])
