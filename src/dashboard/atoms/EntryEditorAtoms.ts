@@ -269,8 +269,7 @@ export function createEntryEditor(entryData: EntryData) {
       phase: EntryPhase.Published
     }
     const mutation: Mutation = {
-      type: MutationType.Edit,
-      previousFile: entryFile(activeVersion),
+      type: MutationType.Create,
       file: entryFile(
         entry,
         parentData?.paths ? parentData.paths.concat(parentData.path) : []
