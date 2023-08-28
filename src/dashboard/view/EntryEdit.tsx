@@ -51,9 +51,10 @@ export function EntryEdit({editor}: EntryEditProps) {
   useEffect(() => {
     ref.current?.scrollTo({top: 0})
   }, [editor.entryId, mode, selectedPhase])
+  const untranslated = locale && locale !== editor.activeVersion.locale
   const {isBlocking, nextRoute, confirm, cancel} = useRouteBlocker(
     'Are you sure you want to discard changes?',
-    hasChanges
+    !untranslated && hasChanges
   )
   const isNavigationChange =
     (nextRoute?.data.editor as EntryEditor)?.entryId !== editor.entryId
@@ -64,7 +65,6 @@ export function EntryEdit({editor}: EntryEditProps) {
   const publishEdits = useSetAtom(editor.publishEdits)
   const discardEdits = useSetAtom(editor.discardEdits)
   const saveTranslation = useSetAtom(editor.saveTranslation)
-  const untranslated = locale && locale !== editor.activeVersion.locale
   const translate = () => saveTranslation(locale!)
   useEffect(() => {
     function listener(e: KeyboardEvent) {
