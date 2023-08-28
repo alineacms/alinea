@@ -171,7 +171,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
       searchableText: ''
     }
     const result = mutate({
-      type: MutationType.Edit,
+      type: MutationType.Create,
       entryId: entry.entryId,
       entry,
       file: entryFileName(config, data, parentPaths)

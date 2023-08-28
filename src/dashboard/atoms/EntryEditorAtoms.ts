@@ -223,6 +223,7 @@ export function createEntryEditor(entryData: EntryData) {
     const entry = {...getDraftEntry(), phase: EntryPhase.Draft}
     const mutation: Mutation = {
       type: MutationType.Edit,
+      previousFile: entryFile(activeVersion),
       file: entryFile(entry),
       entryId: activeVersion.entryId,
       entry
@@ -269,6 +270,7 @@ export function createEntryEditor(entryData: EntryData) {
     }
     const mutation: Mutation = {
       type: MutationType.Edit,
+      previousFile: entryFile(activeVersion),
       file: entryFile(
         entry,
         parentData?.paths ? parentData.paths.concat(parentData.path) : []
@@ -294,15 +296,10 @@ export function createEntryEditor(entryData: EntryData) {
     const entry = {...getDraftEntry(), phase: EntryPhase.Published}
     const mutations: Array<Mutation> = []
     const editedFile = entryFile(entry)
-    if (currentFile !== editedFile)
-      mutations.push({
-        type: MutationType.Remove,
-        entryId: activeVersion.entryId,
-        file: currentFile
-      })
     mutations.push({
       type: MutationType.Edit,
-      file: entryFile(entry),
+      previousFile: currentFile,
+      file: editedFile,
       entryId: activeVersion.entryId,
       entry
     })
