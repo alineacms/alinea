@@ -138,7 +138,7 @@ export class FileData implements Source, Target, Media {
           case ChangeType.Rename: {
             const location = path.join(rootDir, change.from)
             const newLocation = path.join(rootDir, change.to)
-            await fs.rename(location, newLocation)
+            await fs.rename(location, newLocation).catch(noop)
             continue
           }
           case ChangeType.Delete: {
