@@ -34,14 +34,28 @@ export function ExplorerItem({
   )
   const type = schema[entry.type]
   const View: any = (type && Type.meta(type)[summaryView]) || defaultView
-  const Tag: any = explorer?.selectable ? 'label' : 'a'
-  const props = explorer?.selectable ? {} : link(nav.entry(entry))
+  const isSelectable =
+    explorer.selectable === true ||
+    (Array.isArray(explorer.selectable) &&
+      explorer.selectable.includes(entry.type))
+  const Tag: any = isSelectable ? 'label' : 'a'
+  const props = isSelectable
+    ? {}
+    : explorer.selectable
+    ? {onClick: navigateTo}
+    : link(nav.entry(entry))
   const isSelected = Boolean(
-    explorer?.selection.find(
-      v => EntryReference.isEntryReference(v) && v.entry === entry.entryId
-    )
+    isSelectable &&
+      explorer.selection.find(
+        v => EntryReference.isEntryReference(v) && v.entry === entry.entryId
+      )
   )
   const childrenAmount = entry.childrenAmount ?? 0
+
+  function navigateTo() {
+    explorer.onNavigate?.(entry.entryId)
+  }
+
   return (
     <div
       ref={itemRef}
@@ -58,7 +72,7 @@ export function ExplorerItem({
           style={{flexGrow: 1}}
           {...props}
         >
-          {explorer?.selectable && (
+          {isSelectable && (
             <>
               <input
                 type="checkbox"
@@ -85,9 +99,7 @@ export function ExplorerItem({
           <button
             type="button"
             className={styles.root.children()}
-            onClick={() => {
-              explorer.onNavigate?.(entry.entryId)
-            }}
+            onClick={navigateTo}
           >
             <Icon icon={IcOutlineInsertDriveFile} size={18} />
 

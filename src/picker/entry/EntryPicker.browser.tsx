@@ -296,7 +296,7 @@ export function EntryPickerModal({
                 virtualized
                 cursor={cursor}
                 type={view}
-                selectable
+                selectable={showMedia ? ['MediaFile'] : true}
                 selection={selected}
                 toggleSelect={handleSelect}
                 showMedia={showMedia}

@@ -34,7 +34,7 @@ export interface ExplorerProps {
   type: 'row' | 'thumb'
   virtualized?: boolean
   max?: number
-  selectable?: boolean
+  selectable?: Array<string> | boolean
   selection?: Array<Reference>
   toggleSelect?: (entry: ExporerItemSelect) => void
   onNavigate?: (entryId: string) => void
@@ -46,7 +46,7 @@ export function Explorer({
   cursor,
   virtualized,
   max,
-  selectable = false,
+  selectable,
   selection = [],
   toggleSelect = () => {},
   onNavigate = () => {},
