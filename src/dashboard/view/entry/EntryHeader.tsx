@@ -17,6 +17,7 @@ import {useAtomValue, useSetAtom} from 'jotai'
 import {useEffect} from 'react'
 import {EntryEditor} from '../../atoms/EntryEditorAtoms.js'
 import {useLocation, useNavigate} from '../../atoms/LocationAtoms.js'
+import {useConfig} from '../../hook/UseConfig.js'
 import {useLocale} from '../../hook/UseLocale.js'
 import css from './EntryHeader.module.scss'
 import {Langswitch} from './LangSwitch.js'
@@ -47,9 +48,8 @@ export interface EntryHeaderProps {
   editor: EntryEditor
 }
 
-const enableDrafts = false
-
 export function EntryHeader({editor}: EntryHeaderProps) {
+  const {enableDrafts} = useConfig()
   const locale = useLocale()
   const phaseInUrl = useAtomValue(editor.phaseInUrl)
   const selectedPhase = useAtomValue(editor.selectedPhase)

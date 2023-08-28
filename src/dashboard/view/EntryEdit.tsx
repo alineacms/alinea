@@ -34,15 +34,13 @@ function ShowChanges({editor}: EntryEditProps) {
   return <EntryDiff entryA={compareTo} entryB={draftEntry} />
 }
 
-const enableDrafts = false
-
 export interface EntryEditProps {
   editor: EntryEditor
 }
 
 export function EntryEdit({editor}: EntryEditProps) {
   const locale = useLocale()
-  const {preview} = useConfig()
+  const {preview, enableDrafts} = useConfig()
   const nav = useNav()
   const [mode, setMode] = useAtom(editor.editMode)
   const hasChanges = useAtomValue(editor.hasChanges)
@@ -84,7 +82,7 @@ export function EntryEdit({editor}: EntryEditProps) {
     return () => {
       document.removeEventListener('keydown', listener)
     }
-  }, [editor, hasChanges, saveDraft])
+  }, [editor, hasChanges, saveDraft, enableDrafts])
   /*useEffect(() => {
     if (isBlocking && !isNavigationChange) confirm?.()
   }, [isBlocking, isNavigationChange, confirm])*/
@@ -110,18 +108,25 @@ export function EntryEdit({editor}: EntryEditProps) {
                   >
                     Discard my changes
                   </Button>
-                  <Button
-                    onClick={() => {
-                      saveDraft() /*.catch(() => {
-                        console.warn(
-                          'Failed to save draft, this should redirect back to the failed entry'
-                        )
-                      })*/
-                      confirm()
-                    }}
-                  >
-                    Save as draft
-                  </Button>
+                  {enableDrafts ? (
+                    <Button
+                      onClick={() => {
+                        saveDraft()
+                        confirm()
+                      }}
+                    >
+                      Save as draft
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={() => {
+                        publishEdits()
+                        confirm()
+                      }}
+                    >
+                      Publish changes
+                    </Button>
+                  )}
                 </HStack>
               </Stack.Right>
             </HStack>

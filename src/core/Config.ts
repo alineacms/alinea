@@ -21,6 +21,8 @@ export interface Config {
   dashboard?: DashboardConfig
   /** A url which will be embedded in the dashboard for live previews */
   preview?: string
+  /** Every edit will pass through a draft phase before being published */
+  enableDrafts?: boolean
 }
 
 export namespace Config {
