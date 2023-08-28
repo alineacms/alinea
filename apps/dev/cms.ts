@@ -103,7 +103,7 @@ export const cms = createCMS({
       pages: alinea.root('Languages', {
         [alinea.meta]: {
           icon: IcRoundTranslate,
-          contains: ['Page', 'Folder'],
+          contains: ['Fields', 'Page', 'Folder'],
           i18n: {
             locales: ['en', 'fr', 'nl']
           }

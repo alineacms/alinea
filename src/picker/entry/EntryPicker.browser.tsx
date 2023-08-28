@@ -95,8 +95,9 @@ export function EntryPickerModal({
     locale: locale
   })
   const destinationRoot = Root.data(workspace.roots[destination.root])
-  const destinationLocale =
-    destination.locale ?? destinationRoot.i18n?.locales[0]
+  const destinationLocale = !destinationRoot.i18n
+    ? undefined
+    : destination.locale ?? destinationRoot.i18n.locales[0]
   const {data: parentEntries} = useQuery(
     ['picker-parents', destination, destinationLocale],
     async () => {
@@ -120,6 +121,7 @@ export function EntryPickerModal({
     }
   )
   const cursor = useMemo(() => {
+    console.log(destinationLocale)
     const terms = search.replace(/,/g, ' ').split(' ').filter(Boolean)
     const rootCondition = and(
       Entry.workspace.is(destination.workspace),
