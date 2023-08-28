@@ -5,9 +5,11 @@ import {MutationType} from 'alinea/core/Mutation'
 import {base64} from 'alinea/core/util/Encoding'
 import {imageBlurUrl} from 'alinea/ui'
 import {rgba, toHex} from 'color2k'
+import {useSetAtom} from 'jotai'
 import pLimit from 'p-limit'
 import {useState} from 'react'
 import {rgbaToThumbHash, thumbHashToAverageRGBA} from 'thumbhash'
+import {errorAtom} from '../atoms/ErrorAtoms.js'
 import {addPending} from '../atoms/PendingAtoms.js'
 import {useSession} from './UseSession.js'
 
@@ -24,7 +26,7 @@ export interface UploadDestination {
   root: string
 }
 
-type Upload = {
+export interface Upload {
   id: string
   file: File
   to: UploadDestination
@@ -35,6 +37,7 @@ type Upload = {
   width?: number
   height?: number
   result?: Media.File
+  error?: Error
 }
 
 const defaultTasker = pLimit(Infinity)
@@ -110,34 +113,42 @@ async function process(upload: Upload, client: Connection): Promise<Upload> {
       const {to, file, preview, averageColor, thumbHash, width, height} = upload
       const buffer = await file.arrayBuffer()
       const path = file.name
-      const result = await client.uploadFile({
-        ...to,
-        path,
-        buffer,
-        preview,
-        averageColor,
-        thumbHash,
-        width,
-        height
-      })
-
-      return {...upload, result, status: UploadStatus.Done}
+      try {
+        const result = await client.uploadFile({
+          ...to,
+          path,
+          buffer,
+          preview,
+          averageColor,
+          thumbHash,
+          width,
+          height
+        })
+        return {...upload, result, status: UploadStatus.Done}
+      } catch (error: unknown) {
+        return {
+          ...upload,
+          error: new Error('Could not upload file', {cause: error}),
+          status: UploadStatus.Done
+        }
+      }
     }
     case UploadStatus.Done:
-      throw 'assert'
+      throw new Error('Should not end up here')
   }
 }
 
 export function useUploads(onSelect?: (entry: EntryRow) => void) {
   const {cnx: client} = useSession()
+  const setErrorAtom = useSetAtom(errorAtom)
   const [uploads, setUploads] = useState<Array<Upload>>([])
 
   async function uploadFile(upload: Upload) {
     function update(upload: Upload) {
       setUploads(current => {
-        const index = current.findIndex(u => u.id === upload.id)
-        if (index === -1) throw new Error('assert')
         const result = current.slice()
+        const index = current.findIndex(u => u.id === upload.id)
+        if (index === -1) return result
         result[index] = upload
         return result
       })
@@ -146,20 +157,24 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
       const next = await tasker[upload.status](() => process(upload, client))
       update(next)
       if (next.status === UploadStatus.Done) {
-        const entry = next.result! as Media.Image
-        const hashThumbHash = Boolean(entry.data.thumbHash)
-        if (hashThumbHash) {
-          const previewSrc = imageBlurUrl(entry.data)!
-          entry.data.preview = next.preview!
-          entry.data.location = previewSrc
+        if (next.error) {
+          setErrorAtom(next.error.message, next.error)
+        }
+        const result = next.result as Media.Image | undefined
+        if (!result) break
+        const hasThumbHash = Boolean(result.data.thumbHash)
+        if (hasThumbHash) {
+          const previewSrc = imageBlurUrl(result.data)!
+          result.data.preview = next.preview!
+          result.data.location = previewSrc
         }
         addPending({
           type: MutationType.FileUpload,
-          entryId: entry.entryId,
-          file: entry.filePath,
-          entry: entry
+          entryId: result.entryId,
+          file: result.filePath,
+          entry: result
         })
-        onSelect?.(entry)
+        onSelect?.(result)
         break
       } else {
         upload = next
