@@ -14,7 +14,6 @@ import {Config} from '../Config.js'
 import {Connection} from '../Connection.js'
 import {Entry} from '../Entry.js'
 import {EntryPhase} from '../EntryRow.js'
-import {outcome} from '../Outcome.js'
 import {Realm} from '../pages/Realm.js'
 import {Selection} from '../pages/Selection.js'
 import {Logger} from '../util/Logger.js'
@@ -33,7 +32,7 @@ class NextDriver extends DefaultDriver implements NextApi {
 
   async connection(): Promise<Connection> {
     const {cookies, draftMode} = await import('next/headers.js')
-    const isDraft = outcome(() => draftMode().isEnabled).isSuccess()
+    const isDraft = draftMode().isEnabled
     const devUrl = process.env.ALINEA_DEV_SERVER
     const resolveDefaults: ClientOptions['resolveDefaults'] = {
       realm: Realm.Published
@@ -100,6 +99,12 @@ class NextDriver extends DefaultDriver implements NextApi {
     })
     const previews = new JWTPreviews(this.jwtSecret)
     const payload = await previews.verify(params.token)
+    if (!searchParams.has('full')) {
+      // Clear preview cookies
+      cookies().delete(PREVIEW_UPDATE_NAME)
+      cookies().delete(PREVIEW_ENTRYID_NAME)
+      cookies().delete(PREVIEW_PHASE_NAME)
+    }
     const cnx = (await this.connection()) as Client
     const url = (await cnx.resolve({
       selection: Selection.create(
@@ -111,12 +116,6 @@ class NextDriver extends DefaultDriver implements NextApi {
     const source = new URL(request.url)
     const location = new URL(url, source.origin)
     draftMode().enable()
-    if (!searchParams.has('full')) {
-      // Clear preview cookies
-      cookies().delete(PREVIEW_UPDATE_NAME)
-      cookies().delete(PREVIEW_ENTRYID_NAME)
-      cookies().delete(PREVIEW_PHASE_NAME)
-    }
     return new Response(`Redirecting...`, {
       status: 302,
       headers: {location: location.toString()}

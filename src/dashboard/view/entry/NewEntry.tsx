@@ -139,7 +139,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
       root: root.name,
       locale: locale ?? null,
       path,
-      phase: EntryPhase.Draft
+      phase: config.enableDrafts ? EntryPhase.Draft : EntryPhase.Published
     }
     const filePath = entryFilepath(config, data, parentPaths)
     const childrenDir = entryChildrenDir(config, data, parentPaths)
@@ -169,7 +169,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
       searchableText: ''
     }
     const result = mutate({
-      type: MutationType.Edit,
+      type: MutationType.Create,
       entryId: entry.entryId,
       entry,
       file: entryFileName(config, data, parentPaths)
