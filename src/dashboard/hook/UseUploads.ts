@@ -91,6 +91,7 @@ async function process(upload: Upload, client: Connection): Promise<Upload> {
       const previewH = Math.round((160 * image.height) / size)
       const previewCanvas = document.createElement('canvas')
       const previewContext = previewCanvas.getContext('2d')!
+      previewContext.imageSmoothingQuality = 'high'
       previewCanvas.width = previewW
       previewCanvas.height = previewH
       previewContext.drawImage(image, 0, 0, previewW, previewH)
