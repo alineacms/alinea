@@ -166,9 +166,9 @@ export class Database implements Syncable {
             })
           )
         return
+      case MutationType.FileRemove:
       case MutationType.Remove:
         return this.store(EntryRow({entryId: mutation.entryId}).delete())
-
       case MutationType.Discard:
         return this.store(
           EntryRow({

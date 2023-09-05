@@ -74,7 +74,7 @@ export class Server implements Connection {
       if (mutation.type === MutationType.Remove) {
         const file = await this.graph.preferDraft.maybeGet(
           MediaFile()
-            .where(Entry.entryId.is(entryId))
+            .where(Entry.entryId.is(mutation.entryId))
             .select({
               location: MediaFile.location,
               entryId: Entry.entryId,

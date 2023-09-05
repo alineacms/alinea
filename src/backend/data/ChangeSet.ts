@@ -4,6 +4,7 @@ import {
   ArchiveMutation,
   DiscardDraftMutation,
   EditMutation,
+  FileRemoveMutation,
   FileUploadMutation,
   MoveMutation,
   Mutation,
@@ -165,6 +166,10 @@ export class ChangeSetCreator {
     return this.editChanges({...mutation, type: MutationType.Edit})
   }
 
+  fileRemoveChanges({file}: FileRemoveMutation): Array<Change> {
+    return [{type: ChangeType.Delete, file}]
+  }
+
   mutationChanges(mutation: Mutation): Array<Change> {
     switch (mutation.type) {
       case MutationType.Edit:
@@ -183,6 +188,8 @@ export class ChangeSetCreator {
         return this.moveChanges(mutation)
       case MutationType.FileUpload:
         return this.fileUploadChanges(mutation)
+      case MutationType.FileRemove:
+        return this.fileRemoveChanges(mutation)
     }
   }
 

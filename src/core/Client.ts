@@ -76,6 +76,8 @@ export class Client implements Connection {
     )
   }
 
+  async deleteFile(entryId: string): Promise<void> {}
+
   uploadFile({
     workspace,
     root,
