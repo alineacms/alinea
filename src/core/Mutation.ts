@@ -95,5 +95,6 @@ export interface FileRemoveMutation {
   type: MutationType.FileRemove
   entryId: string
   file: string
+  workspace: string
   location: string
 }

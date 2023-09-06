@@ -57,6 +57,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
   const isActivePhase = editor.activePhase === selectedPhase
   const isPublishing = useAtomValue(editor.isPublishing)
   const isArchiving = useAtomValue(editor.isArchiving)
+  const isMediaFile = editor.activeVersion.type === 'MediaFile'
   const hasChanges = useAtomValue(editor.hasChanges)
   const untranslated = locale && locale !== editor.activeVersion.locale
   const variant = untranslated
@@ -75,6 +76,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
   const archivePublished = useSetAtom(editor.archivePublished)
   const publishArchived = useSetAtom(editor.publishArchived)
   const deleteArchived = useSetAtom(editor.deleteArchived)
+  const deleteFile = useSetAtom(editor.deleteFile)
   const saveTranslation = useSetAtom(editor.saveTranslation)
   const discardEdits = useSetAtom(editor.discardEdits)
   const translate = () => saveTranslation(locale!)
@@ -93,12 +95,21 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
         Remove draft
       </DropdownMenu.Item>
     ) : variant === EntryPhase.Published && !editor.activeVersion.seeded ? (
-      <DropdownMenu.Item
-        className={styles.root.action()}
-        onClick={archivePublished}
-      >
-        Archive
-      </DropdownMenu.Item>
+      isMediaFile ? (
+        <DropdownMenu.Item
+          className={styles.root.action()}
+          onClick={deleteFile}
+        >
+          Delete
+        </DropdownMenu.Item>
+      ) : (
+        <DropdownMenu.Item
+          className={styles.root.action()}
+          onClick={archivePublished}
+        >
+          Archive
+        </DropdownMenu.Item>
+      )
     ) : variant === EntryPhase.Archived ? (
       <>
         <DropdownMenu.Item

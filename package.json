@@ -80,7 +80,7 @@
     "@types/react-dom": "^18.2.6",
     "@types/sql.js": "^1.4.4",
     "@typescript/analyze-trace": "^0.9.1",
-    "alinea": "0.0.0",
+    "alinea": "link:.",
     "autoprefixer": "^10.4.2",
     "copy-env-cli": "1.0.0",
     "cross-env": "^7.0.3",

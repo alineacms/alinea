@@ -22,7 +22,6 @@ export interface Connection extends Syncable {
   previewToken(): Promise<string>
   resolve(params: Connection.ResolveParams): Promise<unknown>
   mutate(mutations: Array<Mutation>): Promise<void>
-  deleteFile(entryId: string): Promise<void>
   uploadFile(params: Connection.UploadParams): Promise<Media.File>
 }
 
@@ -52,9 +51,11 @@ export namespace Connection {
     | {type: 'buffer'; buffer: ArrayBuffer}
     | {type: 'url'; url: string}
   export type DownloadParams = {
+    workspace: string
     location: string
   }
   export type DeleteParams = {
+    workspace: string
     location: string
   }
   export type MutateParams = {

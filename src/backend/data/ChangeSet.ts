@@ -166,8 +166,8 @@ export class ChangeSetCreator {
     return this.editChanges({...mutation, type: MutationType.Edit})
   }
 
-  fileRemoveChanges({file}: FileRemoveMutation): Array<Change> {
-    return [{type: ChangeType.Delete, file}]
+  fileRemoveChanges({file: entryFile}: FileRemoveMutation): Array<Change> {
+    return [{type: ChangeType.Delete, file: entryFile}]
   }
 
   mutationChanges(mutation: Mutation): Array<Change> {

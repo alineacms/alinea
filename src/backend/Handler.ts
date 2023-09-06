@@ -95,16 +95,6 @@ function createRouter(
       .map(respond),
 
     matcher
-      .delete(Connection.routes.media())
-      .map(context)
-      .map(async ({ctx, url}) => {
-        const api = createApi(ctx)
-        const location = String(url.searchParams.get('location'))
-        await api.deleteFile(location)
-        return new Response('Removed')
-      }),
-
-    matcher
       .post(Connection.routes.media())
       .map(context)
       .map(router.parseFormData)

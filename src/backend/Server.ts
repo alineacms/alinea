@@ -3,14 +3,12 @@ import {
   Connection,
   Entry,
   EntryPhase,
-  HttpError,
   Workspace,
   createId
 } from 'alinea/core'
 import {entryFilepath} from 'alinea/core/EntryFilenames'
 import {Graph} from 'alinea/core/Graph'
 import {Mutation, MutationType} from 'alinea/core/Mutation'
-import {MediaFile} from 'alinea/core/media/MediaSchema'
 import {generateKeyBetween} from 'alinea/core/util/FractionalIndexing'
 import {
   basename,
@@ -70,27 +68,15 @@ export class Server implements Connection {
   async mutate(mutations: Array<Mutation>): Promise<void> {
     const {target} = this.options
     const changes = this.changes.create(mutations)
+    await target.mutate({mutations: changes}, this.context)
     for (const mutation of mutations) {
-      if (mutation.type === MutationType.Remove) {
-        const file = await this.graph.preferDraft.maybeGet(
-          MediaFile()
-            .where(Entry.entryId.is(mutation.entryId))
-            .select({
-              location: MediaFile.location,
-              entryId: Entry.entryId,
-              workspace: Entry.workspace,
-              root: Entry.root,
-              locale: Entry.locale,
-              path: Entry.path,
-              phase: Entry.phase,
-              parentPaths({parents}) {
-                return parents().select(Entry.path)
-              }
-            })
+      if (mutation.type === MutationType.FileRemove) {
+        await this.options.media.delete(
+          {location: mutation.location, workspace: mutation.workspace},
+          this.context
         )
       }
     }
-    await target.mutate({mutations: changes}, this.context)
   }
 
   previewToken(): Promise<string> {
@@ -98,35 +84,6 @@ export class Server implements Connection {
     const user = this.context.user
     if (!user) return previews.sign({anonymous: true})
     return previews.sign({sub: user.sub})
-  }
-
-  async deleteFile(entryId: string): Promise<void> {
-    const {media} = this.options
-    const entry = await this.graph.preferDraft.maybeGet(
-      MediaFile()
-        .where(Entry.entryId.is(entryId))
-        .select({
-          location: MediaFile.location,
-          entryId: Entry.entryId,
-          workspace: Entry.workspace,
-          root: Entry.root,
-          locale: Entry.locale,
-          path: Entry.path,
-          phase: Entry.phase,
-          parentPaths({parents}) {
-            return parents().select(Entry.path)
-          }
-        })
-    )
-    if (!entry) throw new HttpError(404, 'Not found')
-    await this.mutate([
-      {
-        type: MutationType.Remove,
-        entryId: entry.entryId,
-        file: entryFilepath(this.options.config, entry, entry.parentPaths)
-      }
-    ])
-    await media.delete({location: entry.location}, this.context)
   }
 
   async uploadFile({
