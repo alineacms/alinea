@@ -184,12 +184,29 @@ export class FileData implements Source, Target, Media {
   }
 
   async download({
-    location
+    location,
+    workspace
   }: Connection.DownloadParams): Promise<Connection.Download> {
     const {fs, rootDir = '.'} = this.options
-    const file = path.join(rootDir, location)
+    const mediaDir = Workspace.data(
+      this.options.config.workspaces[workspace]
+    ).mediaDir
+    if (!mediaDir) throw new HttpError(401)
+    const file = path.join(rootDir, mediaDir, location)
     const isInMediaLocation = this.isInMediaLocation(file)
     if (!isInMediaLocation) throw new HttpError(401)
     return {type: 'buffer', buffer: await fs.readFile(file)}
+  }
+
+  async delete({location, workspace}: Connection.DeleteParams): Promise<void> {
+    const {fs, rootDir = '.'} = this.options
+    const mediaDir = Workspace.data(
+      this.options.config.workspaces[workspace]
+    ).mediaDir
+    if (!mediaDir) throw new HttpError(401)
+    const file = path.join(rootDir, mediaDir, location)
+    const isInMediaLocation = this.isInMediaLocation(file)
+    if (!isInMediaLocation) throw new HttpError(401)
+    await fs.rm(file, {recursive: true, force: true})
   }
 }

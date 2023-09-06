@@ -13,7 +13,6 @@
     width: 100%;
     flex-grow: 1;
     min-width: 0;
-    overflow-y: scroll;
 
     @mixin ml {
       min-width: 560px;
@@ -35,6 +34,9 @@
     &::-webkit-scrollbar-thumb:active {
       background: hsla(var(--alinea-negative), 0.9);
     }*/
+  }
+  &.is-scrollable &-inner {
+    overflow-y: scroll;
   }
 }
 

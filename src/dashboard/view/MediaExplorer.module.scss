@@ -11,7 +11,18 @@
     flex-direction: column;
 
     &-header {
-      padding-bottom: 35px;
+      padding: 12px;
+      @include ml {
+        padding: 40px var(--alinea-header-height);
+      }
+    }
+
+    &-content {
+      margin: 0 -30px;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
     }
   }
 

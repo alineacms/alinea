@@ -51,6 +51,11 @@ export namespace Connection {
     | {type: 'buffer'; buffer: ArrayBuffer}
     | {type: 'url'; url: string}
   export type DownloadParams = {
+    workspace: string
+    location: string
+  }
+  export type DeleteParams = {
+    workspace: string
     location: string
   }
   export type MutateParams = {
@@ -82,8 +87,8 @@ export namespace Connection {
     versionIds() {
       return base + `/versionIds`
     },
-    upload() {
-      return base + `/upload`
+    media() {
+      return base + `/media`
     },
     files(location?: string) {
       return base + `/files${location ? '/' + location : ''}`

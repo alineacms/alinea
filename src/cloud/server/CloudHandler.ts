@@ -88,6 +88,18 @@ export class CloudApi implements Media, Target {
       .then(failOnHttpError)
       .then(async res => ({type: 'buffer', buffer: await res.arrayBuffer()}))
   }
+
+  async delete(
+    {location}: Connection.DeleteParams,
+    ctx: Connection.Context
+  ): Promise<void> {
+    return fetch(
+      cloudConfig.media + '?' + new URLSearchParams({location}),
+      withAuth(ctx, {method: 'DELETE'})
+    )
+      .then(failOnHttpError)
+      .then(() => undefined)
+  }
 }
 
 export function createCloudHandler(

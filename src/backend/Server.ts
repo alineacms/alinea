@@ -69,6 +69,14 @@ export class Server implements Connection {
     const {target} = this.options
     const changes = this.changes.create(mutations)
     await target.mutate({mutations: changes}, this.context)
+    for (const mutation of mutations) {
+      if (mutation.type === MutationType.FileRemove) {
+        await this.options.media.delete(
+          {location: mutation.location, workspace: mutation.workspace},
+          this.context
+        )
+      }
+    }
   }
 
   previewToken(): Promise<string> {

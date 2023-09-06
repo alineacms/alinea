@@ -7,6 +7,7 @@ import {useAtomValue} from 'jotai'
 import prettyBytes from 'pretty-bytes'
 import {useNav} from '../../hook/UseNav.js'
 import {EntryEditProps} from '../EntryEdit.js'
+import {EntryHeader} from '../entry/EntryHeader.js'
 import {EntryTitle} from '../entry/EntryTitle.js'
 import css from './FileEntry.module.scss'
 
@@ -43,7 +44,7 @@ export function FileEntry(props: EntryEditProps) {
   const isImage = Media.isImage(editor.activeVersion.path)
   return (
     <Main className={styles.root()}>
-      {/*<EntryHeader editor={editor} />*/}
+      <EntryHeader editable={false} editor={editor} />
       <Main.Container>
         <EntryTitle
           editor={editor}
@@ -53,7 +54,7 @@ export function FileEntry(props: EntryEditProps) {
                   entryId: editor.activeVersion.parent,
                   workspace: editor.activeVersion.workspace
                 })
-              : undefined
+              : nav.entry({entryId: undefined})
           }
         />
         {isImage ? <ImageView {...props} /> : <FileView {...props} />}

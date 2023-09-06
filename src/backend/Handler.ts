@@ -95,7 +95,7 @@ function createRouter(
       .map(respond),
 
     matcher
-      .post(Connection.routes.upload())
+      .post(Connection.routes.media())
       .map(context)
       .map(router.parseFormData)
       .map(async ({ctx, body}) => {

@@ -15,7 +15,8 @@ export enum MutationType {
   Remove = 'remove',
   Order = 'order',
   Move = 'move',
-  FileUpload = 'file-upload'
+  FileUpload = 'file-upload',
+  FileRemove = 'file-remove'
 }
 
 export type PendingMutation = Mutation & {
@@ -33,6 +34,7 @@ export type Mutation =
   | OrderMutation
   | MoveMutation
   | FileUploadMutation
+  | FileRemoveMutation
 
 export interface EditMutation {
   type: MutationType.Edit
@@ -97,4 +99,12 @@ export interface FileUploadMutation {
   entryId: string
   file: string
   entry: EntryRow
+}
+
+export interface FileRemoveMutation {
+  type: MutationType.FileRemove
+  entryId: string
+  file: string
+  workspace: string
+  location: string
 }

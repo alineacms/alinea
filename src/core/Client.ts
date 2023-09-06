@@ -92,7 +92,7 @@ export class Client implements Connection {
     if ('height' in file) form.append('height', String(file.height))
     form.append('buffer', new Blob([file.buffer]))
     if (file.preview) form.append('preview', file.preview)
-    return this.request(Connection.routes.upload(), {
+    return this.request(Connection.routes.media(), {
       method: 'POST',
       body: form
     }).then<Media.File>(failOnHttpError)

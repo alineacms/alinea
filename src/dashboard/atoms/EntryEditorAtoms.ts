@@ -13,6 +13,7 @@ import {
 import {Entry} from 'alinea/core/Entry'
 import {entryFileName} from 'alinea/core/EntryFilenames'
 import {Mutation, MutationType} from 'alinea/core/Mutation'
+import {MediaFile} from 'alinea/core/media/MediaSchema'
 import {entries, fromEntries, values} from 'alinea/core/util/Objects'
 import {InputState} from 'alinea/editor'
 import {atom} from 'jotai'
@@ -375,6 +376,24 @@ export function createEntryEditor(entryData: EntryData) {
     })
   })
 
+  const deleteFile = atom(null, (get, set) => {
+    const published = entryData.phases[EntryPhase.Published]
+    const mutation: Mutation = {
+      type: MutationType.FileRemove,
+      entryId: published.entryId,
+      workspace: published.workspace,
+      location: (published.data as MediaFile).location,
+      file: entryFile(published)
+    }
+    return set(mutateAtom, mutation).catch(error => {
+      set(
+        errorAtom,
+        'Could not complete delete action, please try again later',
+        error
+      )
+    })
+  })
+
   const deleteArchived = atom(null, (get, set) => {
     const archived = entryData.phases[EntryPhase.Archived]
     const mutation: Mutation = {
@@ -428,6 +447,7 @@ export function createEntryEditor(entryData: EntryData) {
     discardDraft,
     archivePublished,
     publishArchived,
+    deleteFile,
     deleteArchived,
     saveTranslation,
     discardEdits,
