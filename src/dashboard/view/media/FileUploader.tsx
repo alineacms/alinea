@@ -122,14 +122,7 @@ export function FileUploader({
             {uploads.map(upload => {
               return (
                 <div key={upload.id} className={styles.root.uploads.row()}>
-                  <FileUploadRow
-                    title={upload.file.name}
-                    extension={upload.file.name.split('.').pop()!}
-                    size={upload.file.size}
-                    preview={upload.preview!}
-                    averageColor={upload.averageColor!}
-                    status={upload.status}
-                  />
+                  <FileUploadRow {...upload} />
                 </div>
               )
             })}

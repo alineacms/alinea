@@ -130,6 +130,7 @@ export class Database implements Syncable {
 
   async applyMutation(mutation: Mutation) {
     switch (mutation.type) {
+      case MutationType.Create:
       case MutationType.Edit:
         return this.store(
           EntryRow({
@@ -510,8 +511,6 @@ export class Database implements Syncable {
       await this.writeMeta(query)
     })
 
-    const updated = await this.meta()
-
     if (target && publishSeed.length > 0) {
       const changeSetCreator = new ChangeSetCreator(this.config)
       const mutations = publishSeed.map((seed): Mutation => {
@@ -522,7 +521,7 @@ export class Database implements Syncable {
           seed.filePath
         )
         return {
-          type: MutationType.Edit,
+          type: MutationType.Create,
           entryId: seed.entryId,
           file: file,
           entry: seed

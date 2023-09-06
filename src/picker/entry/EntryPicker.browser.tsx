@@ -95,8 +95,9 @@ export function EntryPickerModal({
     locale: locale
   })
   const destinationRoot = Root.data(workspace.roots[destination.root])
-  const destinationLocale =
-    destination.locale ?? destinationRoot.i18n?.locales[0]
+  const destinationLocale = !destinationRoot.i18n
+    ? undefined
+    : destination.locale ?? destinationRoot.i18n.locales[0]
   const {data: parentEntries} = useQuery(
     ['picker-parents', destination, destinationLocale],
     async () => {
@@ -295,7 +296,7 @@ export function EntryPickerModal({
                 virtualized
                 cursor={cursor}
                 type={view}
-                selectable
+                selectable={showMedia ? ['MediaFile'] : true}
                 selection={selected}
                 toggleSelect={handleSelect}
                 showMedia={showMedia}

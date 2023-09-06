@@ -20,6 +20,7 @@ import {EntryNotice} from './entry/EntryNotice.js'
 import {EntryPreview} from './entry/EntryPreview.js'
 import {EntryTitle} from './entry/EntryTitle.js'
 import {FieldToolbar} from './entry/FieldToolbar.js'
+
 const styles = fromModule(css)
 
 function ShowChanges({editor}: EntryEditProps) {
@@ -39,7 +40,7 @@ export interface EntryEditProps {
 
 export function EntryEdit({editor}: EntryEditProps) {
   const locale = useLocale()
-  const {preview} = useConfig()
+  const {preview, enableDrafts} = useConfig()
   const nav = useNav()
   const [mode, setMode] = useAtom(editor.editMode)
   const hasChanges = useAtomValue(editor.hasChanges)
@@ -48,9 +49,10 @@ export function EntryEdit({editor}: EntryEditProps) {
   useEffect(() => {
     ref.current?.scrollTo({top: 0})
   }, [editor.entryId, mode, selectedPhase])
+  const untranslated = locale && locale !== editor.activeVersion.locale
   const {isBlocking, nextRoute, confirm, cancel} = useRouteBlocker(
     'Are you sure you want to discard changes?',
-    false //hasChanges
+    !untranslated && hasChanges
   )
   const isNavigationChange =
     (nextRoute?.data.editor as EntryEditor)?.entryId !== editor.entryId
@@ -58,24 +60,32 @@ export function EntryEdit({editor}: EntryEditProps) {
   const state = isActivePhase ? editor.draftState : editor.states[selectedPhase]
   const saveDraft = useSetAtom(editor.saveDraft)
   const publishDraft = useSetAtom(editor.publishDraft)
+  const publishEdits = useSetAtom(editor.publishEdits)
   const discardEdits = useSetAtom(editor.discardEdits)
-  const untranslated = locale && locale !== editor.activeVersion.locale
+  const saveTranslation = useSetAtom(editor.saveTranslation)
+  const translate = () => saveTranslation(locale!)
   useEffect(() => {
     function listener(e: KeyboardEvent) {
       if (e.ctrlKey && e.key === 's') {
         e.preventDefault()
-        if (hasChanges) saveDraft()
-        else if (selectedPhase === EntryPhase.Draft) publishDraft()
+        if (untranslated && hasChanges) {
+          translate()
+        } else if (enableDrafts) {
+          if (hasChanges) saveDraft()
+          else if (selectedPhase === EntryPhase.Draft) publishDraft()
+        } else {
+          if (hasChanges) publishEdits()
+        }
       }
     }
     document.addEventListener('keydown', listener)
     return () => {
       document.removeEventListener('keydown', listener)
     }
-  }, [editor, hasChanges, saveDraft])
-  useEffect(() => {
+  }, [editor, hasChanges, saveDraft, enableDrafts])
+  /*useEffect(() => {
     if (isBlocking && !isNavigationChange) confirm?.()
-  }, [isBlocking, isNavigationChange, confirm])
+  }, [isBlocking, isNavigationChange, confirm])*/
   return (
     <>
       {isBlocking && isNavigationChange && (
@@ -98,18 +108,25 @@ export function EntryEdit({editor}: EntryEditProps) {
                   >
                     Discard my changes
                   </Button>
-                  <Button
-                    onClick={() => {
-                      saveDraft() /*.catch(() => {
-                        console.warn(
-                          'Failed to save draft, this should redirect back to the failed entry'
-                        )
-                      })*/
-                      confirm()
-                    }}
-                  >
-                    Save as draft
-                  </Button>
+                  {enableDrafts ? (
+                    <Button
+                      onClick={() => {
+                        saveDraft()
+                        confirm()
+                      }}
+                    >
+                      Save as draft
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={() => {
+                        publishEdits()
+                        confirm()
+                      }}
+                    >
+                      Publish changes
+                    </Button>
+                  )}
                 </HStack>
               </Stack.Right>
             </HStack>

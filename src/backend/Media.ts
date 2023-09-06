@@ -47,7 +47,7 @@ export namespace Media {
   ]
 
   export function isImage(path: string) {
-    const extension = path.split('.').pop()
+    const extension = path.toLowerCase().split('.').pop()
     return extension && imageExtensions.includes(`.${extension}`)
   }
 }

@@ -27,6 +27,7 @@
     border-radius: var(--alinea-border-radius);
     box-shadow: 0 2px 3.5px var(--alinea-shadow);
     display: flex;
+    overflow: hidden;
 
     &-hitBox {
       padding-right: 8px;

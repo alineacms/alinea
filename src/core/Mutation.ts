@@ -8,6 +8,7 @@ export enum MutationProgress {
 
 export enum MutationType {
   Edit = 'update',
+  Create = 'create',
   Publish = 'publish',
   Archive = 'archive',
   Discard = 'discard',
@@ -25,6 +26,7 @@ export type PendingMutation = Mutation & {
 
 export type Mutation =
   | EditMutation
+  | CreateMutation
   | PublishMutation
   | ArchiveMutation
   | RemoveEntryMutation
@@ -36,6 +38,14 @@ export type Mutation =
 
 export interface EditMutation {
   type: MutationType.Edit
+  entryId: string
+  previousFile: string
+  file: string
+  entry: EntryRow
+}
+
+export interface CreateMutation {
+  type: MutationType.Create
   entryId: string
   file: string
   entry: EntryRow

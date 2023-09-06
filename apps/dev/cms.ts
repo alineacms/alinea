@@ -42,7 +42,8 @@ export namespace schema {
         externalLink: alinea.url('External link'),
         entry: alinea.entry('Internal link'),
         linkMultiple: alinea.link.multiple('Mixed links, multiple'),
-        image: alinea.entry('Image link'),
+        image: alinea.image('Image link'),
+        images: alinea.image.multiple('Image link (multiple)'),
         file: alinea.entry('File link')
       }),
       alinea.tab('List fields', {
@@ -102,7 +103,7 @@ export const cms = createCMS({
       pages: alinea.root('Languages', {
         [alinea.meta]: {
           icon: IcRoundTranslate,
-          contains: ['Page', 'Folder'],
+          contains: ['Fields', 'Page', 'Folder'],
           i18n: {
             locales: ['en', 'fr', 'nl']
           }

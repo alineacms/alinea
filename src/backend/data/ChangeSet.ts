@@ -2,6 +2,7 @@ import {Config, EntryPhase, EntryUrlMeta, Type} from 'alinea/core'
 import {META_KEY, createRecord} from 'alinea/core/EntryRecord'
 import {
   ArchiveMutation,
+  CreateMutation,
   DiscardDraftMutation,
   EditMutation,
   FileRemoveMutation,
@@ -68,10 +69,32 @@ export class ChangeSetCreator {
     return (segments + phaseSegment + extension).toLowerCase()
   }
 
-  editChanges({file, entry}: EditMutation): Array<Change> {
+  editChanges({previousFile, file, entry}: EditMutation): Array<Change> {
     const type = this.config.schema[entry.type]
     if (!type)
       throw new Error(`Cannot publish entry of unknown type: ${entry.type}`)
+    const record = createRecord(entry)
+    const res: Array<Change> = []
+    if (previousFile && previousFile !== file) {
+      res.push({
+        type: ChangeType.Rename,
+        from: previousFile,
+        to: file
+      })
+      res.push({
+        type: ChangeType.Rename,
+        from: previousFile.slice(0, -'.json'.length),
+        to: file.slice(0, -'.json'.length)
+      })
+    }
+    return res.concat({
+      type: ChangeType.Write,
+      file,
+      contents: decoder.decode(loader.format(this.config.schema, record))
+    })
+  }
+
+  createChanges({file, entry}: CreateMutation): Array<Change> {
     const record = createRecord(entry)
     return [
       {
@@ -163,7 +186,11 @@ export class ChangeSetCreator {
   }
 
   fileUploadChanges(mutation: FileUploadMutation): Array<Change> {
-    return this.editChanges({...mutation, type: MutationType.Edit})
+    return this.editChanges({
+      ...mutation,
+      previousFile: mutation.file,
+      type: MutationType.Edit
+    })
   }
 
   fileRemoveChanges({file: entryFile}: FileRemoveMutation): Array<Change> {
@@ -174,6 +201,8 @@ export class ChangeSetCreator {
     switch (mutation.type) {
       case MutationType.Edit:
         return this.editChanges(mutation)
+      case MutationType.Create:
+        return this.createChanges(mutation)
       case MutationType.Publish:
         return this.publishChanges(mutation)
       case MutationType.Archive:

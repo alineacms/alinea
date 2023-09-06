@@ -70,9 +70,9 @@ export const entryLocationAtom = atom(get => {
   const [root, locale] = parseRootPath(match?.root ?? '')
   const params: EntryLocation = {
     ...match,
-    root,
     locale
   }
+  if (root) params.root = root
   return params || undefined
 })
 

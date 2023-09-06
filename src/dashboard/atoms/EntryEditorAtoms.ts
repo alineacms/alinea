@@ -224,6 +224,7 @@ export function createEntryEditor(entryData: EntryData) {
     const entry = {...getDraftEntry(), phase: EntryPhase.Draft}
     const mutation: Mutation = {
       type: MutationType.Edit,
+      previousFile: entryFile(activeVersion),
       file: entryFile(entry),
       entryId: activeVersion.entryId,
       entry
@@ -266,10 +267,10 @@ export function createEntryEditor(entryData: EntryData) {
       parent: parentData?.entryId ?? null,
       entryId,
       locale,
-      phase: EntryPhase.Draft
+      phase: EntryPhase.Published
     }
     const mutation: Mutation = {
-      type: MutationType.Edit,
+      type: MutationType.Create,
       file: entryFile(
         entry,
         parentData?.paths ? parentData.paths.concat(parentData.path) : []
@@ -279,7 +280,9 @@ export function createEntryEditor(entryData: EntryData) {
     }
     const res = set(mutateAtom, mutation)
     set(entryRevisionAtoms(activeVersion.entryId))
+    set(hasChanges, false)
     return res.catch(error => {
+      set(hasChanges, true)
       set(
         errorAtom,
         'Could not complete translate action, please try again later',
@@ -289,15 +292,19 @@ export function createEntryEditor(entryData: EntryData) {
   })
 
   const publishEdits = atom(null, (get, set) => {
+    const currentFile = entryFile(activeVersion)
     const entry = {...getDraftEntry(), phase: EntryPhase.Published}
-    const mutation: Mutation = {
+    const mutations: Array<Mutation> = []
+    const editedFile = entryFile(entry)
+    mutations.push({
       type: MutationType.Edit,
-      file: entryFile(entry),
+      previousFile: currentFile,
+      file: editedFile,
       entryId: activeVersion.entryId,
       entry
-    }
+    })
     set(hasChanges, false)
-    return set(mutateAtom, mutation).catch(error => {
+    return set(mutateAtom, ...mutations).catch(error => {
       set(hasChanges, true)
       set(
         errorAtom,
@@ -404,6 +411,7 @@ export function createEntryEditor(entryData: EntryData) {
   })
 
   const discardEdits = atom(null, (get, set) => {
+    set(hasChanges, false)
     set(entryRevisionAtoms(activeVersion.entryId))
   })
 
