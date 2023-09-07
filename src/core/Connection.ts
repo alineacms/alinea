@@ -85,11 +85,11 @@ export namespace Connection {
     mutate() {
       return base + `/mutate`
     },
-    revisions(filePath: string) {
-      return base + `/revisions/${filePath}`
+    revisions() {
+      return base + `/revisions`
     },
     revisionData(revisionId: string) {
-      return base + `/revisionData/${revisionId}`
+      return base + `/revisions/${revisionId}`
     },
     updates() {
       return base + `/updates`

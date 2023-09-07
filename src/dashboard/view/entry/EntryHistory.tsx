@@ -1,10 +1,12 @@
 import {fromModule} from 'alinea/ui'
-import {AppBar} from 'alinea/ui/AppBar'
+import {useAtomValue} from 'jotai'
 import {EntryEditProps} from '../EntryEdit.js'
 import css from './EntryHistory.module.scss'
 
 const styles = fromModule(css)
 
 export function EntryHistory({editor}: EntryEditProps) {
-  return <AppBar.Root className={styles.root()}>History</AppBar.Root>
+  const revisions = useAtomValue(editor.revisionsAtom)
+  console.log(revisions)
+  return <header className={styles.root()}>History</header>
 }

@@ -52,11 +52,12 @@ function createRouter(
       .map(respond),
 
     matcher
-      .get(Connection.routes.revisions(':filePath'))
+      .get(Connection.routes.revisions())
       .map(context)
-      .map(({ctx, params}) => {
+      .map(({ctx, url}) => {
         const api = createApi(ctx)
-        return ctx.logger.result(api.revisions(params.filePath as string))
+        const filePath = url.searchParams.get('filePath')!
+        return ctx.logger.result(api.revisions(filePath as string))
       })
       .map(respond),
 

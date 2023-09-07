@@ -426,6 +426,11 @@ export function createEntryEditor(entryData: EntryData) {
     return {...activeVersion, ...entryData}
   }
 
+  const revisionsAtom = atom(async get => {
+    const client = get(clientAtom)
+    return client.revisions(activeVersion.filePath)
+  })
+
   return {
     ...entryData,
     revisionId: createId(),
@@ -456,7 +461,8 @@ export function createEntryEditor(entryData: EntryData) {
     showHistory,
     isPublishing,
     isArchiving,
-    view
+    view,
+    revisionsAtom
   }
 }
 

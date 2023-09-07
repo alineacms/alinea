@@ -64,9 +64,9 @@ export class Client implements Connection {
   }
 
   revisions(filePath: string): Promise<Array<Revision>> {
-    return this.requestJson(Connection.routes.revisions(filePath)).then<
-      Array<Revision>
-    >(failOnHttpError)
+    return this.requestJson(
+      Connection.routes.revisions() + `?filePath=${filePath}`
+    ).then<Array<Revision>>(failOnHttpError)
   }
 
   revisionData(revisionId: string): Promise<EntryRecord> {
