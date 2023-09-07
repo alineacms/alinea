@@ -30,7 +30,9 @@
     overflow: hidden;
 
     &-hitBox {
-      padding-right: 8px;
+      cursor: pointer;
+      position: relative;
+
       &:hover {
         background: var(--alinea-highlight);
       }
@@ -74,16 +76,29 @@
 
   &-checkbox {
     position: absolute;
-    left: -9999px;
+    left: 0;
+    top: 0;
+    opacity: 0;
+  }
+
+  &-checkbox:focus-visible ~ &-selection {
+    color: var(--alinea-button-background);
   }
 
   &-selection {
-    height: 100%;
-    display: flex;
+    position: absolute;
+    z-index: 1;
+    top: 10px;
+    left: 10px;
     font-size: 19px;
-    padding: 8px 0;
-    padding-right: 4px;
-    padding-left: 8px;
+
+    .is-selected & {
+      color: var(--alinea-button-background);
+    }
+
+    svg {
+      display: block;
+    }
   }
 
   &.is-row &-selection {
