@@ -1,7 +1,7 @@
 import {Config, Connection, Root, renderLabel} from 'alinea/core'
 import {Icon, Loader, px} from 'alinea/ui'
 import {FavIcon} from 'alinea/ui/branding/FavIcon'
-import {IcOutlineInsertDriveFile} from 'alinea/ui/icons/IcOutlineInsertDriveFile'
+import {IcOutlineDescription} from 'alinea/ui/icons/IcOutlineDescription'
 import {MdiSourceBranch} from 'alinea/ui/icons/MdiSourceBranch'
 import {atom, useAtom, useAtomValue} from 'jotai'
 import {useEffect} from 'react'
@@ -121,7 +121,7 @@ function AppAuthenticated() {
                       href={link}
                       aria-label={renderLabel(label)}
                     >
-                      <Icon icon={icon ?? IcOutlineInsertDriveFile} />
+                      <Icon icon={icon ?? IcOutlineDescription} />
                     </Sidebar.Nav.Item>
                   )
                 })}

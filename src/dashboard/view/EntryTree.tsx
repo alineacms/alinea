@@ -7,7 +7,7 @@ import {
 import {useTree} from '@headless-tree/react'
 import {Entry, EntryPhase, Type} from 'alinea/core'
 import {Icon, fromModule, px} from 'alinea/ui'
-import {IcOutlineInsertDriveFile} from 'alinea/ui/icons/IcOutlineInsertDriveFile'
+import {IcOutlineDescription} from 'alinea/ui/icons/IcOutlineDescription'
 import IcRoundArchive from 'alinea/ui/icons/IcRoundArchive'
 import {IcRoundEdit} from 'alinea/ui/icons/IcRoundEdit'
 import {IcRoundKeyboardArrowDown} from 'alinea/ui/icons/IcRoundKeyboardArrowDown'
@@ -84,9 +84,7 @@ function EntryTreeItem({item, data}: EntryTreeItemProps) {
           <span className={styles.tree.item.icon()}>
             <Icon
               icon={
-                isUntranslated
-                  ? IcRoundTranslate
-                  : icon || IcOutlineInsertDriveFile
+                isUntranslated ? IcRoundTranslate : icon || IcOutlineDescription
               }
             />
           </span>
