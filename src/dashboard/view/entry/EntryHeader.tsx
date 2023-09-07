@@ -13,7 +13,7 @@ import {IcRoundMoreVert} from 'alinea/ui/icons/IcRoundMoreVert'
 import {IcRoundSave} from 'alinea/ui/icons/IcRoundSave'
 import {IcRoundTranslate} from 'alinea/ui/icons/IcRoundTranslate'
 import {IcRoundUnfoldMore} from 'alinea/ui/icons/IcRoundUnfoldMore'
-import {useAtomValue, useSetAtom} from 'jotai'
+import {useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {useEffect} from 'react'
 import {EntryEditor} from '../../atoms/EntryEditorAtoms.js'
 import {useLocation, useNavigate} from '../../atoms/LocationAtoms.js'
@@ -80,6 +80,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
   const saveTranslation = useSetAtom(editor.saveTranslation)
   const discardEdits = useSetAtom(editor.discardEdits)
   const translate = () => saveTranslation(locale!)
+  const [showHistory, setShowHistory] = useAtom(editor.showHistory)
   const navigate = useNavigate()
   const {pathname} = useLocation()
   useEffect(() => {
@@ -252,17 +253,18 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
               </Button>
             )}
 
-            {options && (
-              <DropdownMenu.Root>
-                <DropdownMenu.Trigger className={styles.root.more(variant)}>
-                  <Icon icon={IcRoundMoreVert} />
-                </DropdownMenu.Trigger>
+            <DropdownMenu.Root>
+              <DropdownMenu.Trigger className={styles.root.more(variant)}>
+                <Icon icon={IcRoundMoreVert} />
+              </DropdownMenu.Trigger>
 
-                <DropdownMenu.Items bottom right>
-                  {options}
-                </DropdownMenu.Items>
-              </DropdownMenu.Root>
-            )}
+              <DropdownMenu.Items bottom right>
+                <DropdownMenu.Item onClick={() => setShowHistory(!showHistory)}>
+                  {showHistory ? 'Hide' : 'Show'} history
+                </DropdownMenu.Item>
+                {options}
+              </DropdownMenu.Items>
+            </DropdownMenu.Root>
           </HStack>
         </Stack.Right>
       </HStack>

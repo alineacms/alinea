@@ -7,7 +7,6 @@ import fs from 'node:fs'
 import pLimit from 'p-limit'
 import {createWatcher} from '../util/Watcher.js'
 import {GenerateContext} from './GenerateContext.js'
-import {recordHistory} from './RecordHistory.js'
 
 export async function* fillCache(
   {watch, rootDir}: GenerateContext,
@@ -22,10 +21,8 @@ export async function* fillCache(
     rootDir: rootDir
   })
   const limit = pLimit(1)
-  const cache = () => {
-    db.fill(fileData, fileData)
-    recordHistory(rootDir)
-  }
+  const cache = () => db.fill(fileData, fileData)
+
   const result = await limit(cache)
   yield result
 

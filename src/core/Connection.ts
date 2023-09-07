@@ -1,7 +1,9 @@
 import {Media} from 'alinea/backend'
+import {History, Revision} from 'alinea/backend/History'
 import {ResolveDefaults} from 'alinea/backend/Resolver'
 import {ChangeSet} from 'alinea/backend/data/ChangeSet'
 import {AlineaMeta} from 'alinea/backend/db/AlineaMeta'
+import {EntryRecord} from './EntryRecord.js'
 import {EntryRow} from './EntryRow.js'
 import {Mutation} from './Mutation.js'
 import {User} from './User.js'
@@ -18,11 +20,13 @@ export interface Syncable {
   versionIds(): Promise<Array<string>>
 }
 
-export interface Connection extends Syncable {
+export interface Connection extends Syncable, History {
   previewToken(): Promise<string>
   resolve(params: Connection.ResolveParams): Promise<unknown>
   mutate(mutations: Array<Mutation>): Promise<void>
   uploadFile(params: Connection.UploadParams): Promise<Media.File>
+  revisions(filePath: string): Promise<Array<Revision>>
+  revisionData(revisionId: string): Promise<EntryRecord>
 }
 
 export namespace Connection {
@@ -80,6 +84,12 @@ export namespace Connection {
     },
     mutate() {
       return base + `/mutate`
+    },
+    revisions(filePath: string) {
+      return base + `/revisions/${filePath}`
+    },
+    revisionData(revisionId: string) {
+      return base + `/revisionData/${revisionId}`
     },
     updates() {
       return base + `/updates`

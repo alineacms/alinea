@@ -1,8 +1,10 @@
 import {AbortController, fetch, FormData, Response} from '@alinea/iso'
 import {AlineaMeta} from 'alinea/backend/db/AlineaMeta'
+import {Revision} from 'alinea/backend/History'
 import {Media} from 'alinea/backend/Media'
 import {Config, Connection, EntryPhase, HttpError} from 'alinea/core'
 import {UpdateResponse} from './Connection.js'
+import {EntryRecord} from './EntryRecord.js'
 import {Mutation} from './Mutation.js'
 import {Realm} from './pages/Realm.js'
 
@@ -59,6 +61,18 @@ export class Client implements Connection {
 
   authenticate(applyAuth: AuthenticateRequest, unauthorized: () => void) {
     return new Client({...this.options, applyAuth, unauthorized})
+  }
+
+  revisions(filePath: string): Promise<Array<Revision>> {
+    return this.requestJson(Connection.routes.revisions(filePath)).then<
+      Array<Revision>
+    >(failOnHttpError)
+  }
+
+  revisionData(revisionId: string): Promise<EntryRecord> {
+    return this.requestJson(
+      Connection.routes.revisionData(revisionId)
+    ).then<EntryRecord>(failOnHttpError)
   }
 
   updates(request: AlineaMeta): Promise<UpdateResponse> {

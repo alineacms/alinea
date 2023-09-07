@@ -11,6 +11,7 @@ import path from 'node:path'
 import {generate} from './Generate.js'
 import {buildOptions} from './build/BuildOptions.js'
 import {createHandler} from './serve/CreateHandler.js'
+import {GitHistory} from './serve/GitHistory.js'
 import {LiveReload} from './serve/LiveReload.js'
 import {ServeContext} from './serve/ServeContext.js'
 import {startServer} from './serve/StartServer.js'
@@ -104,6 +105,7 @@ export async function serve(options: ServeOptions): Promise<void> {
             store: current.value.store,
             target: fileData,
             media: fileData,
+            history: new GitHistory(rootDir),
             previews: new JWTPreviews('dev')
           })
       handler = nodeHandler(createHandler(context, backend).handle)

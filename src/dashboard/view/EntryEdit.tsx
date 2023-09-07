@@ -16,6 +16,7 @@ import css from './EntryEdit.module.scss'
 import {EntryDiff} from './diff/EntryDiff.js'
 import {EditMode} from './entry/EditModeToggle.js'
 import {EntryHeader} from './entry/EntryHeader.js'
+import {EntryHistory} from './entry/EntryHistory.js'
 import {EntryNotice} from './entry/EntryNotice.js'
 import {EntryPreview} from './entry/EntryPreview.js'
 import {EntryTitle} from './entry/EntryTitle.js'
@@ -62,6 +63,7 @@ export function EntryEdit({editor}: EntryEditProps) {
   const publishDraft = useSetAtom(editor.publishDraft)
   const publishEdits = useSetAtom(editor.publishEdits)
   const discardEdits = useSetAtom(editor.discardEdits)
+  const showHistory = useAtomValue(editor.showHistory)
   const saveTranslation = useSetAtom(editor.saveTranslation)
   const translate = () => saveTranslation(locale!)
   useEffect(() => {
@@ -140,6 +142,7 @@ export function EntryEdit({editor}: EntryEditProps) {
       >
         <FieldToolbar.Provider>
           <EntryHeader editor={editor} />
+          {showHistory && <EntryHistory editor={editor} />}
           <Main.Container>
             <EntryTitle
               editor={editor}

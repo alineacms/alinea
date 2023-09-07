@@ -168,6 +168,7 @@ export function createEntryEditor(entryData: EntryData) {
   const editMode = atom(EditMode.Editing)
   const isSaving = atom(false)
   const view = Type.meta(type).view
+  const showHistory = atom(true)
 
   const isPublishing = atom(get => {
     const pending = get(pendingAtom)
@@ -452,6 +453,7 @@ export function createEntryEditor(entryData: EntryData) {
     saveTranslation,
     discardEdits,
     isSaving,
+    showHistory,
     isPublishing,
     isArchiving,
     view

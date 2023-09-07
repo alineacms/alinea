@@ -52,6 +52,24 @@ function createRouter(
       .map(respond),
 
     matcher
+      .get(Connection.routes.revisions(':filePath'))
+      .map(context)
+      .map(({ctx, params}) => {
+        const api = createApi(ctx)
+        return ctx.logger.result(api.revisions(params.filePath as string))
+      })
+      .map(respond),
+
+    matcher
+      .get(Connection.routes.revisionData(':revisionId'))
+      .map(context)
+      .map(({ctx, params}) => {
+        const api = createApi(ctx)
+        return ctx.logger.result(api.revisionData(params.revisionId as string))
+      })
+      .map(respond),
+
+    matcher
       .post(Connection.routes.resolve())
       .map(context)
       .map(router.parseJson)

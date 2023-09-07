@@ -1,0 +1,10 @@
+.root {
+  position: sticky;
+  top: var(--alinea-header-height);
+  left: 0;
+  right: 0;
+  height: var(--alinea-header-height);
+  background: var(--alinea-background);
+  flex-shrink: 0;
+  z-index: 1;
+}
