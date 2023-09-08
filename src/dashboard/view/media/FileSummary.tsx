@@ -5,6 +5,7 @@ import {Chip, HStack, TextLabel, Typo, VStack, fromModule, px} from 'alinea/ui'
 import {Ellipsis} from 'alinea/ui/Ellipsis'
 import {IcRoundInsertDriveFile} from 'alinea/ui/icons/IcRoundInsertDriveFile'
 import {IcRoundKeyboardArrowRight} from 'alinea/ui/icons/IcRoundKeyboardArrowRight'
+import prettyBytes from 'pretty-bytes'
 import {Fragment, ReactNode} from 'react'
 import css from './FileSummary.module.scss'
 
@@ -21,6 +22,8 @@ function fileSummarySelect() {
     size: MediaFile.size,
     preview: MediaFile.preview,
     averageColor: MediaFile.averageColor,
+    width: MediaFile.width,
+    height: MediaFile.height,
     parents({parents}) {
       return parents(Entry).select({
         entryId: Entry.entryId,
@@ -77,22 +80,37 @@ export const FileSummaryRow = view(
 export const FileSummaryThumb = view(
   fileSummarySelect,
   function FileSummaryThumb(file: SummaryProps) {
+    const imageCover =
+      file.preview && file.width && file.height && file.width > 320
+
     return (
-      <div className={styles.thumb()}>
+      <div className={styles.thumb()} title={renderLabel(file.title)}>
         <div className={styles.thumb.preview()}>
           {file.preview ? (
-            <img src={file.preview} className={styles.thumb.preview.image()} />
+            <img
+              src={file.preview}
+              className={styles.thumb.preview.image(imageCover && 'cover')}
+            />
           ) : (
             <div className={styles.thumb.preview.icon()}>
               <IcRoundInsertDriveFile style={{fontSize: px(36)}} />
             </div>
           )}
+          <Chip className={styles.thumb.preview.extension()}>
+            {file.extension}
+          </Chip>
         </div>
         <div className={styles.thumb.footer()}>
-          <span className={styles.thumb.footer.title()}>
+          <p className={styles.thumb.footer.title()}>
             {renderLabel(file.title)}
-          </span>
-          <Chip style={{marginLeft: 'auto'}}>{file.extension}</Chip>
+          </p>
+          <p className={styles.thumb.footer.details()}>
+            {file.width && file.height && (
+              <span>{`${file.width} x ${file.height} px`}</span>
+            )}
+            {file.size > 0 && file.width && file.height && ' | '}
+            {file.size > 0 && <span>{prettyBytes(file.size)}</span>}
+          </p>
         </div>
       </div>
     )

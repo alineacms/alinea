@@ -37,7 +37,7 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  padding: 6px;
+  // padding: 6px;
   color: inherit;
   text-decoration: none;
 
@@ -51,48 +51,90 @@
     align-items: center;
     justify-content: center;
     flex-direction: column;
-    padding: 4px;
+    // padding: 4px;
+    // background-color: #fafafa;
+    background: var(--alinea-highlight);
 
     &-image {
       display: block;
+      margin: auto;
       max-width: 100%;
       max-height: 100%;
-      object-fit: cover;
+      object-fit: contain;
       object-position: center center;
-      margin: auto;
+      background-size: 20px 20px;
+      background-position: 0px 0px, 10px 10px;
+      background-image: linear-gradient(
+          45deg,
+          #eee 25%,
+          transparent 25%,
+          transparent 75%,
+          #eee 75%,
+          #eee 100%
+        ),
+        linear-gradient(
+          45deg,
+          #eee 25%,
+          white 25%,
+          white 75%,
+          #eee 75%,
+          #eee 100%
+        );
+
+      &.is-cover {
+        width: 100%;
+        object-fit: cover;
+        background: transparent;
+      }
     }
 
     &-icon {
       margin: auto;
       opacity: 0.4;
     }
+
+    &-extension {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+    }
   }
 
   &-footer {
-    padding: 8px 0;
-    display: flex;
-    align-items: center;
+    padding: 10px;
+    // display: flex;
+    // align-items: center;
     width: 100%;
     overflow: hidden;
     flex-shrink: 0;
-    text-align: center;
+    // text-align: center;
+
+    &-title + &-details {
+      margin-top: 5px;
+    }
 
     &-title {
       min-width: 0;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    &-details {
+      color: hsla(var(--alinea-negative), 0.5);
       font-size: 12px;
     }
 
-    &-extension {
-      opacity: 0.5;
-      margin-left: auto;
-      padding: 3px 5px;
-      flex-shrink: 0;
-      font-size: 10px;
-      background: hsla(var(--alinea-negative), 0.05);
-      border-radius: 6px;
-    }
+    // &-extension {
+    //   opacity: 0.5;
+    //   margin-left: auto;
+    //   padding: 3px 5px;
+    //   flex-shrink: 0;
+    //   font-size: 10px;
+    //   background: hsla(var(--alinea-negative), 0.05);
+    //   border-radius: 6px;
+    // }
   }
 }
