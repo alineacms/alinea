@@ -105,7 +105,7 @@ export async function serve(options: ServeOptions): Promise<void> {
             store: current.value.store,
             target: fileData,
             media: fileData,
-            history: new GitHistory(rootDir),
+            history: new GitHistory(currentCMS, rootDir),
             previews: new JWTPreviews('dev')
           })
       handler = nodeHandler(createHandler(context, backend).handle)

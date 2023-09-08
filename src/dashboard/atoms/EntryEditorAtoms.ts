@@ -144,6 +144,8 @@ export interface EntryData {
 
 export type EntryEditor = ReturnType<typeof createEntryEditor>
 
+const showHistoryAtom = atom(true)
+
 export function createEntryEditor(entryData: EntryData) {
   const {config, availablePhases} = entryData
   const activePhase = availablePhases[0]
@@ -168,7 +170,7 @@ export function createEntryEditor(entryData: EntryData) {
   const editMode = atom(EditMode.Editing)
   const isSaving = atom(false)
   const view = Type.meta(type).view
-  const showHistory = atom(true)
+  const showHistory = showHistoryAtom
 
   const isPublishing = atom(get => {
     const pending = get(pendingAtom)
@@ -428,7 +430,13 @@ export function createEntryEditor(entryData: EntryData) {
 
   const revisionsAtom = atom(async get => {
     const client = get(clientAtom)
-    return client.revisions(activeVersion.filePath)
+    return client.revisions(activeVersion)
+  })
+
+  const rollbackRevision = atom(null, async (get, set, revisionId: string) => {
+    const client = get(clientAtom)
+    const entryData = await client.revisionData(activeVersion, revisionId)
+    console.log(entryData)
   })
 
   return {
@@ -462,7 +470,8 @@ export function createEntryEditor(entryData: EntryData) {
     isPublishing,
     isArchiving,
     view,
-    revisionsAtom
+    revisionsAtom,
+    rollbackRevision
   }
 }
 

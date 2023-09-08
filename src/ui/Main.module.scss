@@ -8,6 +8,7 @@
   display: flex;
   flex-direction: column;
   background: var(--alinea-content);
+  min-width: 0;
 
   &-inner {
     width: 100%;

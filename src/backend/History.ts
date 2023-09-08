@@ -8,9 +8,16 @@ export interface Revision {
   description?: string
 }
 
+export interface EntryFile {
+  workspace: string
+  root: string
+  filePath: string
+}
+
 export interface History {
-  revisions(filePath: string, ctx: Connection.Context): Promise<Array<Revision>>
+  revisions(file: EntryFile, ctx: Connection.Context): Promise<Array<Revision>>
   revisionData(
+    file: EntryFile,
     revisionId: string,
     ctx: Connection.Context
   ): Promise<EntryRecord>
