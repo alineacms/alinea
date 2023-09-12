@@ -144,6 +144,7 @@ __metadata:
     "@tiptap/extension-gapcursor": ^2.0.4
     "@tiptap/extension-hard-break": ^2.0.4
     "@tiptap/extension-heading": ^2.0.4
+    "@tiptap/extension-highlight": ^2.1.8
     "@tiptap/extension-horizontal-rule": ^2.0.4
     "@tiptap/extension-italic": ^2.0.4
     "@tiptap/extension-list-item": ^2.0.4
@@ -2000,6 +2001,15 @@ __metadata:
   peerDependencies:
     "@tiptap/core": ^2.0.0
   checksum: 70e90fd51b1dd2c91475636b9316c0d430c4b461cdb05d77cb9ba75cec69547e0abd3b44bd9247ee004006b5e70d46a5dac4c0095d17c2d471c9af8132a40e80
+  languageName: node
+  linkType: hard
+
+"@tiptap/extension-highlight@npm:^2.1.8":
+  version: 2.1.8
+  resolution: "@tiptap/extension-highlight@npm:2.1.8"
+  peerDependencies:
+    "@tiptap/core": ^2.0.0
+  checksum: 65d3fd4bbec0b72fd6f14f3da44518b06ff0839b233a26ea9b6a6fb4886c3605291994d2d8620cc8f7a95dc53551be110572d22661d732a1781ed0e63036bc23
   languageName: node
   linkType: hard
 
