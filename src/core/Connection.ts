@@ -1,5 +1,5 @@
 import {Media} from 'alinea/backend'
-import {EntryFile, History, Revision} from 'alinea/backend/History'
+import {History, Revision} from 'alinea/backend/History'
 import {ResolveDefaults} from 'alinea/backend/Resolver'
 import {ChangeSet} from 'alinea/backend/data/ChangeSet'
 import {AlineaMeta} from 'alinea/backend/db/AlineaMeta'
@@ -25,8 +25,8 @@ export interface Connection extends Syncable, History {
   resolve(params: Connection.ResolveParams): Promise<unknown>
   mutate(mutations: Array<Mutation>): Promise<void>
   uploadFile(params: Connection.UploadParams): Promise<Media.File>
-  revisions(file: EntryFile): Promise<Array<Revision>>
-  revisionData(file: EntryFile, revisionId: string): Promise<EntryRecord>
+  revisions(file: string): Promise<Array<Revision>>
+  revisionData(file: string, revisionId: string): Promise<EntryRecord>
 }
 
 export namespace Connection {
@@ -62,6 +62,9 @@ export namespace Connection {
     workspace: string
     location: string
   }
+  export interface RevisionsParams {
+    file: string
+  }
   export type MutateParams = {
     mutations: ChangeSet
   }
@@ -87,9 +90,6 @@ export namespace Connection {
     },
     revisions() {
       return base + `/revisions`
-    },
-    revisionData(revisionId: string) {
-      return base + `/revisions/${revisionId}`
     },
     updates() {
       return base + `/updates`

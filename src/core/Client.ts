@@ -1,6 +1,6 @@
 import {AbortController, fetch, FormData, Response} from '@alinea/iso'
 import {AlineaMeta} from 'alinea/backend/db/AlineaMeta'
-import {EntryFile, Revision} from 'alinea/backend/History'
+import {Revision} from 'alinea/backend/History'
 import {Media} from 'alinea/backend/Media'
 import {Config, Connection, EntryPhase, HttpError} from 'alinea/core'
 import {UpdateResponse} from './Connection.js'
@@ -63,23 +63,17 @@ export class Client implements Connection {
     return new Client({...this.options, applyAuth, unauthorized})
   }
 
-  revisions(file: EntryFile): Promise<Array<Revision>> {
-    const params = new URLSearchParams()
-    params.append('workspace', file.workspace)
-    params.append('root', file.root)
-    params.append('filePath', file.filePath)
+  revisions(file: string): Promise<Array<Revision>> {
+    const params = new URLSearchParams({file})
     return this.requestJson(
       Connection.routes.revisions() + '?' + params.toString()
     ).then<Array<Revision>>(failOnHttpError)
   }
 
-  revisionData(file: EntryFile, revisionId: string): Promise<EntryRecord> {
-    const params = new URLSearchParams()
-    params.append('workspace', file.workspace)
-    params.append('root', file.root)
-    params.append('filePath', file.filePath)
+  revisionData(file: string, revisionId: string): Promise<EntryRecord> {
+    const params = new URLSearchParams({file, revisionId})
     return this.requestJson(
-      Connection.routes.revisionData(revisionId) + '?' + params.toString()
+      Connection.routes.revisions() + '?' + params.toString()
     ).then<EntryRecord>(failOnHttpError)
   }
 

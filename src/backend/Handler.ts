@@ -56,26 +56,10 @@ function createRouter(
       .map(context)
       .map(({ctx, url}) => {
         const api = createApi(ctx)
-        const workspace = url.searchParams.get('workspace')!
-        const root = url.searchParams.get('root')!
-        const filePath = url.searchParams.get('filePath')!
-        return ctx.logger.result(api.revisions({workspace, root, filePath}))
-      })
-      .map(respond),
-
-    matcher
-      .get(Connection.routes.revisionData(':revisionId'))
-      .map(context)
-      .map(({ctx, url, params}) => {
-        const api = createApi(ctx)
-        const workspace = url.searchParams.get('workspace')!
-        const root = url.searchParams.get('root')!
-        const filePath = url.searchParams.get('filePath')!
-        return ctx.logger.result(
-          api.revisionData(
-            {workspace, root, filePath},
-            params.revisionId as string
-          )
+        const file = url.searchParams.get('file')!
+        const revisionId = url.searchParams.get('revisionId')
+        return ctx.logger.result<any>(
+          revisionId ? api.revisionData(file, revisionId) : api.revisions(file)
         )
       })
       .map(respond),

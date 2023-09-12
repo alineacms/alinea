@@ -1,6 +1,8 @@
 import {Handler, JWTPreviews, Media, Target} from 'alinea/backend'
+import {History, Revision} from 'alinea/backend/History'
 import {Store} from 'alinea/backend/Store'
 import {Config, Connection, HttpError} from 'alinea/core'
+import {EntryRecord} from 'alinea/core/EntryRecord'
 import {Outcome, OutcomeJSON} from 'alinea/core/Outcome'
 import {CloudAuthServer} from './CloudAuthServer.js'
 import {cloudConfig} from './CloudConfig.js'
@@ -35,7 +37,7 @@ function asJson(init: RequestInit = {}) {
   }
 }
 
-export class CloudApi implements Media, Target {
+export class CloudApi implements Media, Target, History {
   canRename = false
 
   constructor() {}
@@ -55,7 +57,7 @@ export class CloudApi implements Media, Target {
       .then<void>(json)
   }
 
-  async upload(
+  upload(
     {fileLocation, buffer}: Connection.MediaUploadParams,
     ctx: Connection.Context
   ): Promise<string> {
@@ -77,7 +79,7 @@ export class CloudApi implements Media, Target {
       .then(Outcome.unpack)
   }
 
-  async download(
+  download(
     {location}: Connection.DownloadParams,
     ctx: Connection.Context
   ): Promise<Connection.Download> {
@@ -89,7 +91,7 @@ export class CloudApi implements Media, Target {
       .then(async res => ({type: 'buffer', buffer: await res.arrayBuffer()}))
   }
 
-  async delete(
+  delete(
     {location}: Connection.DeleteParams,
     ctx: Connection.Context
   ): Promise<void> {
@@ -99,6 +101,30 @@ export class CloudApi implements Media, Target {
     )
       .then(failOnHttpError)
       .then(() => undefined)
+  }
+
+  revisions(file: string, ctx: Connection.Context): Promise<Array<Revision>> {
+    return fetch(
+      cloudConfig.history + '?' + new URLSearchParams({file}),
+      withAuth(ctx)
+    )
+      .then(failOnHttpError)
+      .then<Array<Revision>>(json)
+  }
+
+  revisionData(
+    file: string,
+    revisionId: string,
+    ctx: Connection.Context
+  ): Promise<EntryRecord> {
+    return fetch(
+      cloudConfig.history +
+        '?' +
+        new URLSearchParams({file, revisionId, data: 'true'}),
+      withAuth(ctx)
+    )
+      .then(failOnHttpError)
+      .then<EntryRecord>(json)
   }
 }
 

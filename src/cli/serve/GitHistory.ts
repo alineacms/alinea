@@ -1,6 +1,6 @@
 import {JsonLoader} from 'alinea/backend'
-import {EntryFile, History, Revision} from 'alinea/backend/History'
-import {Config, Workspace} from 'alinea/core'
+import {History, Revision} from 'alinea/backend/History'
+import {Config} from 'alinea/core'
 import {EntryRecord} from 'alinea/core/EntryRecord'
 import {join, normalize, relative} from 'alinea/core/util/Paths'
 import simpleGit, {SimpleGit} from 'simple-git'
@@ -14,16 +14,13 @@ export class GitHistory implements History {
     this.git = simpleGit(rootDir)
   }
 
-  async revisions(file: EntryFile): Promise<Array<Revision>> {
-    const {config} = this
-    const contentDir = Workspace.data(config.workspaces[file.workspace]).source
-    const location = join(contentDir, file.root, file.filePath)
+  async revisions(file: string): Promise<Array<Revision>> {
     const list = await this.git.log([
       // If we follow we can't really retrieve the data later on because
       // the file path will be wrong
       /*'--follow',*/
       '--',
-      location
+      join(this.rootDir, file)
     ])
     return list.all.map(row => {
       return {
@@ -38,19 +35,12 @@ export class GitHistory implements History {
     })
   }
 
-  async revisionData(
-    file: EntryFile,
-    revisionId: string
-  ): Promise<EntryRecord> {
+  async revisionData(file: string, revisionId: string): Promise<EntryRecord> {
     const {config} = this
-    const contentDir = Workspace.data(config.workspaces[file.workspace]).source
     const topLevel = (
       await this.git.raw(['rev-parse', '--show-toplevel'])
     ).trim()
-    const location = relative(
-      normalize(topLevel),
-      join(this.rootDir, contentDir, file.root, file.filePath)
-    )
+    const location = relative(normalize(topLevel), join(this.rootDir, file))
     const data = await this.git.show([
       `${revisionId}:${location}`,
       '--format=%B'
@@ -58,10 +48,9 @@ export class GitHistory implements History {
     try {
       return JsonLoader.parse(config.schema, encoder.encode(data))
     } catch (cause) {
-      throw new Error(
-        `Failed to parse revision ${revisionId} of ${file.filePath}`,
-        {cause}
-      )
+      throw new Error(`Failed to parse revision ${revisionId} of ${file}`, {
+        cause
+      })
     }
   }
 }

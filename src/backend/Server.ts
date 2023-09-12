@@ -20,7 +20,7 @@ import {
 } from 'alinea/core/util/Paths'
 import {slugify} from 'alinea/core/util/Slugs'
 import {Database} from './Database.js'
-import {EntryFile, History, Revision} from './History.js'
+import {History, Revision} from './History.js'
 import {Media} from './Media.js'
 import {Previews} from './Previews'
 import {ResolveDefaults, Resolver} from './Resolver.js'
@@ -197,16 +197,13 @@ export class Server implements Connection {
 
   // History
 
-  async revisions(file: EntryFile): Promise<Array<Revision>> {
+  async revisions(file: string): Promise<Array<Revision>> {
     const {history} = this.options
     if (!history) return []
     return history.revisions(file, this.context)
   }
 
-  async revisionData(
-    file: EntryFile,
-    revisionId: string
-  ): Promise<EntryRecord> {
+  async revisionData(file: string, revisionId: string): Promise<EntryRecord> {
     const {history} = this.options
     if (!history) throw new Error('History not available')
     return history.revisionData(file, revisionId, this.context)
