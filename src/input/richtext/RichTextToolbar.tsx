@@ -11,6 +11,7 @@ import {IcRoundFormatClear} from 'alinea/ui/icons/IcRoundFormatClear'
 import {IcRoundFormatItalic} from 'alinea/ui/icons/IcRoundFormatItalic'
 import {IcRoundFormatListBulleted} from 'alinea/ui/icons/IcRoundFormatListBulleted'
 import {IcRoundFormatListNumbered} from 'alinea/ui/icons/IcRoundFormatListNumbered'
+import {IcRoundFormatPaint} from 'alinea/ui/icons/IcRoundFormatPaint'
 import {IcRoundHorizontalRule} from 'alinea/ui/icons/IcRoundHorizontalRule'
 import {IcRoundLink} from 'alinea/ui/icons/IcRoundLink'
 import {IcRoundQuote} from 'alinea/ui/icons/IcRoundQuote'
@@ -174,6 +175,16 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
               exec().toggleSmall().run()
             }}
             active={editor.isActive('small')}
+          />
+          <IconButton
+            icon={IcRoundFormatPaint}
+            size={18}
+            title="Highlight"
+            onClick={e => {
+              e.preventDefault()
+              exec().toggleHighlight().run()
+            }}
+            active={editor.isActive('highlight')}
           />
           <DropdownMenu.Root>
             <DropdownMenu.Trigger
