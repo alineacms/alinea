@@ -12,7 +12,7 @@
   }
 
   &.is-thumb {
-    padding: 5px;
+    padding: 10px;
   }
 
   &.is-thumb &-inner {
@@ -30,8 +30,9 @@
     overflow: hidden;
 
     &-hitBox {
-      cursor: pointer;
       position: relative;
+      display: flex;
+      align-items: center;
 
       &:hover {
         background: var(--alinea-highlight);
@@ -81,24 +82,26 @@
     opacity: 0;
   }
 
-  &-checkbox:focus-visible ~ &-selection {
-    color: var(--alinea-button-background);
-  }
-
   &-selection {
-    position: absolute;
-    z-index: 1;
-    top: 10px;
-    left: 10px;
     font-size: 19px;
-
-    .is-selected & {
-      color: var(--alinea-button-background);
-    }
 
     svg {
       display: block;
     }
+  }
+
+  &.is-row &-inner-hitBox {
+    padding: 0 12px;
+  }
+  &.is-row &-selection {
+    padding-right: 8px;
+  }
+
+  &.is-thumb &-selection {
+    position: absolute;
+    z-index: 1;
+    top: 5px;
+    left: 5px;
   }
 
   &.is-row &-selection {

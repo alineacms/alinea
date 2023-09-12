@@ -90,8 +90,14 @@ async function process(upload: Upload, client: Connection): Promise<Upload> {
       const averageColor = toHex(rgba(r * 255, g * 255, b * 255, a))
 
       // Create webp preview image
-      const previewW = Math.round((160 * image.width) / size)
-      const previewH = Math.round((160 * image.height) / size)
+      const previewW = Math.min(
+        Math.round((160 * image.width) / size),
+        image.width
+      )
+      const previewH = Math.min(
+        Math.round((160 * image.height) / size),
+        image.height
+      )
       const previewCanvas = document.createElement('canvas')
       const previewContext = previewCanvas.getContext('2d')!
       previewContext.imageSmoothingEnabled = true
@@ -106,8 +112,8 @@ async function process(upload: Upload, client: Connection): Promise<Upload> {
         preview,
         averageColor,
         thumbHash: base64.stringify(thumbHash),
-        width: image.width,
-        height: image.height,
+        width: image.naturalWidth,
+        height: image.naturalHeight,
         status: UploadStatus.Uploading
       }
     }

@@ -43,7 +43,8 @@ export namespace Media {
     '.bmp',
     '.webp',
     '.avif',
-    '.heic'
+    '.heic',
+    '.svg'
   ]
 
   export function isImage(path: string) {

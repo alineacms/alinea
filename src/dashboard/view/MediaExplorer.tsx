@@ -63,7 +63,9 @@ export function MediaExplorer({editor}: MediaExplorerProps) {
   const navigate = useNavigate()
   const backLink = data?.parent
     ? nav.entry({entryId: data.parent})
-    : nav.root({root: root.name})
+    : editor
+    ? nav.root({root: root.name})
+    : undefined
   return (
     <>
       <Main className={styles.root()} scrollable={false}>
