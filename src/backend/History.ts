@@ -2,8 +2,9 @@ import {Connection, User} from 'alinea/core'
 import {EntryRecord} from 'alinea/core/EntryRecord'
 
 export interface Revision {
-  revisionId: string
+  ref: string
   createdAt: number
+  file: string
   user?: User
   description?: string
 }

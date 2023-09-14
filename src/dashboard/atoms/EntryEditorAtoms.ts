@@ -434,12 +434,13 @@ export function createEntryEditor(entryData: EntryData) {
     return client.revisions(file)
   })
 
-  const rollbackRevision = atom(null, async (get, set, revisionId: string) => {
-    const client = get(clientAtom)
-    const file = entryFile(activeVersion)
-    const entryData = await client.revisionData(file, revisionId)
-    console.log(entryData)
-  })
+  const rollbackRevision = atom(
+    null,
+    async (get, set, file: string, ref: string) => {
+      const client = get(clientAtom)
+      const entryData = await client.revisionData(file, ref)
+    }
+  )
 
   return {
     ...entryData,

@@ -26,7 +26,7 @@ function RevisionList({editor}: EntryEditProps) {
       {revisions.map(revision => {
         return (
           <RevisionItem
-            key={revision.revisionId}
+            key={revision.ref}
             editor={editor}
             revision={revision}
           />
@@ -46,10 +46,10 @@ function RevisionItem({editor, revision}: RevisionItemProps) {
   const rollbackRevision = useSetAtom(editor.rollbackRevision)
   return (
     <button
-      key={revision.revisionId}
+      key={revision.ref}
       title={revision.description}
       className={styles.list.revision()}
-      onClick={() => rollbackRevision(revision.revisionId)}
+      onClick={() => rollbackRevision(revision.file, revision.ref)}
     >
       <Ellipsis>
         <b>{revision.user?.name}</b>
