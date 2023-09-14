@@ -22,11 +22,15 @@ export class GitHistory implements History {
       join(this.rootDir, file)
     ])
     return list.all.map(row => {
+      const parsedFile = row.diff?.files?.[0]?.file
+      const fileLocation =
+        // SimpeGit seems to mis-parse these sometimes so we try to fix it here
+        parsedFile ? parsedFile.split('\t').pop()!.trim() : file
       return {
         ref: row.hash,
         createdAt: new Date(row.date).getTime(),
         description: row.message,
-        file: row.diff?.files?.[0]?.file ?? file,
+        file: fileLocation,
         user: {
           sub: row.author_email,
           name: row.author_name

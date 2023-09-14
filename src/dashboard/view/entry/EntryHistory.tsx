@@ -1,7 +1,9 @@
 import {Revision} from 'alinea/backend/History'
-import {Loader, fromModule} from 'alinea/ui'
+import {HStack, Icon, Loader, VStack, fromModule} from 'alinea/ui'
 import {Ellipsis} from 'alinea/ui/Ellipsis'
-import {useAtomValue, useSetAtom} from 'jotai'
+import {IcOutlineRemoveRedEye} from 'alinea/ui/icons/IcOutlineRemoveRedEye'
+import {IcRoundPublishedWithChanges} from 'alinea/ui/icons/IcRoundPublishedWithChanges'
+import {useAtom, useAtomValue} from 'jotai'
 import {Suspense} from 'react'
 import {EntryEditor} from '../../atoms/EntryEditorAtoms.js'
 import {EntryEditProps} from '../EntryEdit.js'
@@ -23,12 +25,13 @@ function RevisionList({editor}: EntryEditProps) {
   const revisions = useAtomValue(editor.revisionsAtom)
   return (
     <ul className={styles.list()}>
-      {revisions.map(revision => {
+      {revisions.map((revision, index) => {
         return (
           <RevisionItem
             key={revision.ref}
             editor={editor}
             revision={revision}
+            isCurrent={index === 0}
           />
         )
       })}
@@ -39,26 +42,41 @@ function RevisionList({editor}: EntryEditProps) {
 interface RevisionItemProps {
   revision: Revision
   editor: EntryEditor
+  isCurrent: boolean
 }
 
-function RevisionItem({editor, revision}: RevisionItemProps) {
+function RevisionItem({editor, revision, isCurrent}: RevisionItemProps) {
   const date = new Date(revision.createdAt)
-  const rollbackRevision = useSetAtom(editor.rollbackRevision)
+  const [previewRevision, setPreviewRevision] = useAtom(editor.previewRevision)
   return (
     <button
       key={revision.ref}
       title={revision.description}
-      className={styles.list.revision()}
-      onClick={() => rollbackRevision(revision.file, revision.ref)}
-    >
-      <Ellipsis>
-        <b>{revision.user?.name}</b>
-      </Ellipsis>
-      {date.toLocaleDateString(undefined, {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
+      className={styles.list.revision({
+        selected: previewRevision
+          ? previewRevision.ref === revision.ref
+          : isCurrent,
+        current: isCurrent
       })}
+      onClick={() => setPreviewRevision(isCurrent ? undefined : revision)}
+    >
+      <HStack center gap={10}>
+        {isCurrent ? (
+          <Icon icon={IcOutlineRemoveRedEye} size={18} />
+        ) : (
+          <Icon icon={IcRoundPublishedWithChanges} size={18} />
+        )}
+        <VStack align="flex-start">
+          <b>
+            {date.toLocaleDateString(undefined, {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric'
+            })}
+          </b>
+          <Ellipsis>{revision.user?.name}</Ellipsis>
+        </VStack>
+      </HStack>
     </button>
   )
 }

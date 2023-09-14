@@ -26,6 +26,7 @@ export function applyEntryData(doc: Y.Doc, type: Type, entry: EntryRow) {
   doc.transact(() => {
     const docRoot = doc.getMap(ROOT_KEY)
     for (const [key, field] of entries(type)) {
+      if (key === 'path') continue
       const contents = entry.data[key]
       docRoot.set(key, Field.shape(field).toY(contents))
     }

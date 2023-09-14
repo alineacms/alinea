@@ -2,6 +2,7 @@ import {Field} from 'alinea/core'
 import {entries} from 'alinea/core/util/Objects'
 import {fromModule} from 'alinea/ui'
 import {InputState} from '../InputState.js'
+import {useInput} from '../hook/UseInput.js'
 import css from './Fields.module.scss'
 import {Input} from './Input.js'
 
@@ -14,12 +15,12 @@ export interface FieldsProps {
 }
 
 export function Fields({state, fields, border = true}: FieldsProps) {
-  const list = entries(fields).filter(
-    ([key, field]) => !Field.options(field).hidden
-  )
+  useInput(state)
   return (
     <div className={styles.root({border})}>
-      {list.map(([name, field]) => {
+      {entries(fields).map(([name, field]) => {
+        const isHidden = Field.options(field).hidden
+        if (isHidden) return null
         return <Input key={name} state={state.child(name)} field={field} />
       })}
     </div>

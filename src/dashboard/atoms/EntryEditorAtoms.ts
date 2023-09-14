@@ -17,7 +17,7 @@ import {MediaFile} from 'alinea/core/media/MediaSchema'
 import {entries, fromEntries, values} from 'alinea/core/util/Objects'
 import {InputState} from 'alinea/editor'
 import {atom} from 'jotai'
-import {atomFamily} from 'jotai/utils'
+import {atomFamily, unwrap} from 'jotai/utils'
 import * as Y from 'yjs'
 import {debounceAtom} from '../util/DebounceAtom.js'
 import {clientAtom, configAtom} from './DashboardAtoms.js'
@@ -170,7 +170,16 @@ export function createEntryEditor(entryData: EntryData) {
   const editMode = atom(EditMode.Editing)
   const isSaving = atom(false)
   const view = Type.meta(type).view
-  const showHistory = showHistoryAtom
+  const previewRevision = atom(
+    undefined as {ref: string; file: string} | undefined
+  )
+  const showHistory = atom(
+    get => get(showHistoryAtom),
+    (get, set, value: boolean) => {
+      set(showHistoryAtom, value)
+      if (!value) set(previewRevision, undefined)
+    }
+  )
 
   const isPublishing = atom(get => {
     const pending = get(pendingAtom)
@@ -317,6 +326,10 @@ export function createEntryEditor(entryData: EntryData) {
     })
   })
 
+  const publishRevision = atom(null, (get, set) => {
+    alert('todo')
+  })
+
   const publishDraft = atom(null, (get, set) => {
     const mutation: Mutation = {
       type: MutationType.Publish,
@@ -434,13 +447,35 @@ export function createEntryEditor(entryData: EntryData) {
     return client.revisions(file)
   })
 
-  const rollbackRevision = atom(
-    null,
-    async (get, set, file: string, ref: string) => {
-      const client = get(clientAtom)
-      const entryData = await client.revisionData(file, ref)
-    }
+  const revisionDocState = atomFamily(
+    (params: {file: string; ref: string}) => {
+      return atom(async get => {
+        const client = get(clientAtom)
+        const entryData = await client.revisionData(params.file, params.ref)
+        const doc = createYDoc(type, {...activeVersion, data: entryData})
+        return new InputState.YDocState(
+          Type.shape(type),
+          doc.getMap(ROOT_KEY),
+          ''
+        )
+      })
+    },
+    (a, b) => a.file === b.file && a.ref === b.ref
   )
+
+  const selectedState = atom(get => {
+    const selected = get(selectedPhase)
+    const isActivePhase = activePhase === selected
+    return isActivePhase ? draftState : states[selected]
+  })
+  const revisionState = atom(get => {
+    const revision = get(previewRevision)
+    return revision ? get(revisionDocState(revision)) : undefined
+  })
+  const identity = (prev: any) => prev
+  const state = atom((get): InputState => {
+    return get(unwrap(revisionState, identity)) ?? get(selectedState)
+  })
 
   return {
     ...entryData,
@@ -460,6 +495,7 @@ export function createEntryEditor(entryData: EntryData) {
     hasChanges,
     saveDraft,
     publishEdits,
+    publishRevision,
     publishDraft,
     discardDraft,
     archivePublished,
@@ -472,9 +508,10 @@ export function createEntryEditor(entryData: EntryData) {
     showHistory,
     isPublishing,
     isArchiving,
-    view,
     revisionsAtom,
-    rollbackRevision
+    previewRevision,
+    state,
+    view
   }
 }
 

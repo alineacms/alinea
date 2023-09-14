@@ -52,7 +52,7 @@
     "src/input/richtext"
   ],
   "dependencies": {
-    "@alinea/iso": "^0.3.0",
+    "@alinea/iso": "^0.3.1",
     "@alinea/sqlite-wasm": "^0.1.14",
     "esbuild": "^0.19.2"
   },
@@ -97,7 +97,7 @@
     "sass": "^1.63.4",
     "simple-git": "^3.19.1",
     "speedscope": "^1.14.0",
-    "typescript": "^5.1.3",
+    "typescript": "^5.2.2",
     "typescript-plugin-css-modules": "^5.0.1",
     "uvu": "^0.5.1"
   },

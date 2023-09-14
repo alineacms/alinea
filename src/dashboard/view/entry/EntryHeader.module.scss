@@ -90,7 +90,8 @@
     }
 
     &.is-draft,
-    &.is-editing {
+    &.is-editing,
+    &.is-revision {
       color: var(--alinea-variant-info-foreground);
       background: var(--alinea-variant-info-action);
     }

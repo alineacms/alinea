@@ -2,10 +2,11 @@ import {Atom, atom} from 'jotai'
 
 // Suspend if we have no data, but keep previous data while loading new data
 export function keepPreviousData<Value, T extends Atom<Promise<Value>>>(
-  asynAtom: T
+  asynAtom: T,
+  initalValue?: Value
 ): T {
   let expected: Promise<Value> | undefined
-  const currentAtom = atom<Value | undefined>(undefined)
+  const currentAtom = atom<Value | undefined>(initalValue)
   return atom(
     (get, {setSelf}) => {
       const next = get(asynAtom)

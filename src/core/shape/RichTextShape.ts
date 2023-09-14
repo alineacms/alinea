@@ -171,7 +171,7 @@ export class RichTextShape<Blocks>
     })
   }
   watch(parent: Y.Map<any>, key: string) {
-    // There's no watching involved, the editor should handle all rendering
+    // There's no watching of the fragment involved
     return () => {}
   }
   mutator(parent: Y.Map<any>, key: string) {

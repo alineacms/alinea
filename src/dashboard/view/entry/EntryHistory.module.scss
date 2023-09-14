@@ -58,7 +58,7 @@
   &-revision {
     display: flex;
     flex-direction: column;
-    padding: 5px 20px;
+    padding: 5px 16px 5px 12px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -74,6 +74,14 @@
 
     &:hover {
       background: var(--alinea-highlight);
+    }
+
+    &.is-selected {
+      background: var(--alinea-selected);
+      border-color: transparent;
+    }
+    &.is-selected + & {
+      border-color: transparent;
     }
   }
 }

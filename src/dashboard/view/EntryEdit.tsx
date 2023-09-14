@@ -57,19 +57,23 @@ export function EntryEdit({editor}: EntryEditProps) {
   )
   const isNavigationChange =
     (nextRoute?.data.editor as EntryEditor)?.entryId !== editor.entryId
-  const isActivePhase = editor.activePhase === selectedPhase
-  const state = isActivePhase ? editor.draftState : editor.states[selectedPhase]
+  const state = useAtomValue(editor.state)
   const saveDraft = useSetAtom(editor.saveDraft)
   const publishDraft = useSetAtom(editor.publishDraft)
   const publishEdits = useSetAtom(editor.publishEdits)
   const discardEdits = useSetAtom(editor.discardEdits)
   const showHistory = useAtomValue(editor.showHistory)
   const saveTranslation = useSetAtom(editor.saveTranslation)
+  const previewRevision = useAtomValue(editor.previewRevision)
   const translate = () => saveTranslation(locale!)
   useEffect(() => {
     function listener(e: KeyboardEvent) {
       if (e.ctrlKey && e.key === 's') {
         e.preventDefault()
+        if (previewRevision) {
+          alert('todo')
+          return
+        }
         if (untranslated && hasChanges) {
           translate()
         } else if (enableDrafts) {

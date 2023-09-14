@@ -56,7 +56,7 @@ export class RecordShape<T = object> implements Shape<T, RecordMutator<T>> {
   }
   watch(parent: Y.Map<any>, key: string) {
     return (fun: () => void) => {
-      const record = parent.get(key)
+      const record = !key ? parent : parent.get(key)
       record.observe(fun)
       return () => record.unobserve(fun)
     }

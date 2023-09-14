@@ -181,7 +181,7 @@ function RichTextEditor<Blocks extends Schema>({
         false
       setFocus(isFocused)
     },
-    [setFocus]
+    [setFocus, containerRef, toolbarRef]
   )
   const extensions = [
     Collaboration.configure({fragment}),
@@ -189,8 +189,11 @@ function RichTextEditor<Blocks extends Schema>({
     ...schemaToExtensions(state, schema)
   ]
   const isNested = useContext(IsNested)
-  const content = useMemo(() => {
-    return {
+  // The collaboration extension takes over content syncing after inital content
+  // is set. Unfortunately we can't fully utilize it to set the content initally
+  // as well because it does not work synchronously causing flickering.
+  const content = useMemo(
+    () => ({
       type: 'doc',
       content: value.map(node => {
         if (node.type === 'text') return node //
@@ -202,17 +205,26 @@ function RichTextEditor<Blocks extends Schema>({
           attrs
         }
       })
-    }
-  }, [])
+    }),
+    []
+  )
+  const onFocus = useCallback(
+    ({event}: {event: Event}) => focusToggle(event.currentTarget),
+    [focusToggle]
+  )
+  const onBlur = useCallback(
+    ({event}: {event: FocusEvent}) => focusToggle(event.relatedTarget),
+    [focusToggle]
+  )
   const editor = useEditor(
     {
       content: isNested ? undefined : content,
-      onFocus: ({event}) => focusToggle(event.currentTarget),
-      onBlur: ({event}) => focusToggle(event.relatedTarget),
+      onFocus,
+      onBlur,
       extensions,
       editable: !options.readonly
     },
-    [fragment]
+    []
   )
   if (!editor) return null
   return (
@@ -257,7 +269,8 @@ export function RichTextInput<Blocks extends Schema>({
   field
 }: RichTextInputProps<Blocks>) {
   const [_, {fragment}] = useInput(state)
+  const key = useMemo(createId, [fragment])
   // We key here currently because the tiptap/yjs combination fails to register
   // changes when the fragment is changed while the editor is mounted.
-  return <RichTextEditor key={fragment.doc?.guid} state={state} field={field} />
+  return <RichTextEditor key={key} state={state} field={field} />
 }

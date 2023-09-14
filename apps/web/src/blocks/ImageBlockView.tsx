@@ -8,6 +8,7 @@ const styles = fromModule(css)
 
 export function ImageBlockView({image}: Infer<typeof ImageBlock>) {
   const blurUrl = imageBlurUrl(image)
+  if (!image.src) return null
   return (
     <Image
       className={styles.image()}
