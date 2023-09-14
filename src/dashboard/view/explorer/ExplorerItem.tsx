@@ -1,7 +1,7 @@
 import {Schema, Type, View} from 'alinea/core'
 import {link} from 'alinea/dashboard/util/HashRouter'
 import {EntryReference} from 'alinea/picker/entry/EntryReference'
-import {HStack, Icon, fromModule} from 'alinea/ui'
+import {Icon, fromModule} from 'alinea/ui'
 import {IcOutlineInsertDriveFile} from 'alinea/ui/icons/IcOutlineInsertDriveFile'
 import {IcRoundCheckBox} from 'alinea/ui/icons/IcRoundCheckBox'
 import {IcRoundCheckBoxOutlineBlank} from 'alinea/ui/icons/IcRoundCheckBoxOutlineBlank'
@@ -66,8 +66,7 @@ export function ExplorerItem({
       tabIndex={0}
     >
       <div className={styles.root.inner()}>
-        <HStack
-          as={Tag}
+        <Tag
           className={styles.root.inner.hitBox()}
           style={{flexGrow: 1}}
           {...props}
@@ -93,7 +92,7 @@ export function ExplorerItem({
           )}
 
           <View {...entry} />
-        </HStack>
+        </Tag>
 
         {explorer.onNavigate && childrenAmount > 0 && (
           <button

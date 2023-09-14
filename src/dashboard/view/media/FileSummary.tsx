@@ -5,6 +5,8 @@ import {Chip, HStack, TextLabel, Typo, VStack, fromModule, px} from 'alinea/ui'
 import {Ellipsis} from 'alinea/ui/Ellipsis'
 import {IcRoundInsertDriveFile} from 'alinea/ui/icons/IcRoundInsertDriveFile'
 import {IcRoundKeyboardArrowRight} from 'alinea/ui/icons/IcRoundKeyboardArrowRight'
+import {transparentize} from 'color2k'
+import prettyBytes from 'pretty-bytes'
 import {Fragment, ReactNode} from 'react'
 import css from './FileSummary.module.scss'
 
@@ -20,7 +22,10 @@ function fileSummarySelect() {
     extension: MediaFile.extension,
     size: MediaFile.size,
     preview: MediaFile.preview,
+    thumbHash: MediaFile.thumbHash,
     averageColor: MediaFile.averageColor,
+    width: MediaFile.width,
+    height: MediaFile.height,
     parents({parents}) {
       return parents(Entry).select({
         entryId: Entry.entryId,
@@ -68,7 +73,9 @@ export const FileSummaryRow = view(
             <TextLabel label={file.title} />
           </Ellipsis>
         </VStack>
-        <Chip style={{marginLeft: 'auto'}}>{file.extension}</Chip>
+        <Chip style={{marginLeft: 'auto'}}>
+          {file.extension.slice(1).toUpperCase()}
+        </Chip>
       </HStack>
     )
   }
@@ -77,11 +84,26 @@ export const FileSummaryRow = view(
 export const FileSummaryThumb = view(
   fileSummarySelect,
   function FileSummaryThumb(file: SummaryProps) {
+    const ratio = file.width / file.height
+    const imageCover = ratio > 1 && ratio < 2
     return (
-      <div className={styles.thumb()}>
-        <div className={styles.thumb.preview()}>
+      <div className={styles.thumb()} title={renderLabel(file.title)}>
+        <div
+          className={styles.thumb.preview()}
+          style={{
+            backgroundImage:
+              file.averageColor &&
+              `linear-gradient(45deg, ${transparentize(
+                file.averageColor,
+                0.6
+              )} 0%, ${transparentize(file.averageColor, 0.8)} 100%)`
+          }}
+        >
           {file.preview ? (
-            <img src={file.preview} className={styles.thumb.preview.image()} />
+            <img
+              src={file.preview}
+              className={styles.thumb.preview.image(/*{cover: imageCover}*/)}
+            />
           ) : (
             <div className={styles.thumb.preview.icon()}>
               <IcRoundInsertDriveFile style={{fontSize: px(36)}} />
@@ -89,10 +111,14 @@ export const FileSummaryThumb = view(
           )}
         </div>
         <div className={styles.thumb.footer()}>
-          <span className={styles.thumb.footer.title()}>
+          <p className={styles.thumb.footer.title()}>
             {renderLabel(file.title)}
-          </span>
-          <Chip style={{marginLeft: 'auto'}}>{file.extension}</Chip>
+          </p>
+          <p className={styles.thumb.footer.details()}>
+            {file.extension.slice(1).toUpperCase()}
+            {file.width && file.height && ` - ${file.width}x${file.height}`}
+            <span style={{marginLeft: 'auto'}}>{prettyBytes(file.size)}</span>
+          </p>
         </div>
       </div>
     )

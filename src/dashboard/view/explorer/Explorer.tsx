@@ -89,8 +89,8 @@ export function Explorer({
   )
   const containerRef = useRef(null)
   const [containerWidth, containerHeight] = useSize(containerRef)
-  const perRow = data?.type === 'thumb' ? Math.round(containerWidth / 240) : 1
-  const height = data?.type === 'thumb' ? 200 : 50
+  const perRow = data?.type === 'thumb' ? Math.round(containerWidth / 260) : 1
+  const height = data?.type === 'thumb' ? 180 : 50
   const batchSize = data?.type === 'thumb' ? perRow * 10 : 50
   const showList =
     data && containerWidth > 0 && (!virtualized || containerHeight > 0)
