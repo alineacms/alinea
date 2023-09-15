@@ -399,6 +399,9 @@ export function createEntryEditor(entryData: EntryData) {
   })
 
   const deleteFile = atom(null, (get, set) => {
+    // Prompt for confirmation
+    const result = confirm('Are you sure you want to delete this file?')
+    if (!result) return
     const published = entryData.phases[EntryPhase.Published]
     const mutation: Mutation = {
       type: MutationType.FileRemove,
