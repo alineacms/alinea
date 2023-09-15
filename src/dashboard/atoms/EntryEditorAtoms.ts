@@ -144,7 +144,7 @@ export interface EntryData {
 
 export type EntryEditor = ReturnType<typeof createEntryEditor>
 
-const showHistoryAtom = atom(true)
+const showHistoryAtom = atom(false)
 
 export function createEntryEditor(entryData: EntryData) {
   const {config, availablePhases} = entryData
