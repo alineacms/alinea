@@ -114,13 +114,11 @@ export class CloudApi implements Media, Target, History {
 
   revisionData(
     file: string,
-    revisionId: string,
+    ref: string,
     ctx: Connection.Context
   ): Promise<EntryRecord> {
     return fetch(
-      cloudConfig.history +
-        '?' +
-        new URLSearchParams({file, revisionId, data: 'true'}),
+      cloudConfig.history + '?' + new URLSearchParams({file, ref}),
       withAuth(ctx)
     )
       .then(failOnHttpError)
@@ -140,6 +138,7 @@ export function createCloudHandler(
     config,
     target: api,
     media: api,
+    history: api,
     previews: new JWTPreviews(apiKey!)
   })
 }
