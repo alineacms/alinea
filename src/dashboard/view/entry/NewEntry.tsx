@@ -20,10 +20,10 @@ import {EntryReference} from 'alinea/picker/entry/EntryReference'
 import {Button, Loader, fromModule} from 'alinea/ui'
 import {Link} from 'alinea/ui/Link'
 import {useObservable} from 'alinea/ui/util/Observable'
-import {useAtomValue} from 'jotai'
+import {useAtomValue, useSetAtom} from 'jotai'
 import {FormEvent, Suspense, useState} from 'react'
 import {useQuery} from 'react-query'
-import {graphAtom, useMutate} from '../../atoms/DbAtoms.js'
+import {changedEntriesAtom, graphAtom, useMutate} from '../../atoms/DbAtoms.js'
 import {useConfig} from '../../hook/UseConfig.js'
 import {useLocale} from '../../hook/UseLocale.js'
 import {useNav} from '../../hook/UseNav.js'
@@ -125,6 +125,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
   )
   const titleField = useField(text('Title', {autoFocus: true}))
   const [isCreating, setIsCreating] = useState(false)
+  const updateEntries = useSetAtom(changedEntriesAtom)
 
   function handleCreate(e: FormEvent) {
     e.preventDefault()
@@ -175,6 +176,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
       file: entryFileName(config, data, parentPaths)
     })
     navigate(nav.entry({entryId: entry.i18nId}))
+    if (entry.parent) updateEntries([entry.parent])
     return result
   }
   return (

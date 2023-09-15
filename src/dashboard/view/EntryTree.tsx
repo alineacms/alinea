@@ -181,7 +181,9 @@ export function EntryTree({i18nId: entryId, selected = []}: EntryTreeProps) {
 
           tree.invalidateChildrenIds(id)
           tree.invalidateItemData(id)
-        } catch (e) {}
+        } catch (e) {
+          console.error(e)
+        }
       }
     })
   }, [changed])
