@@ -95,7 +95,6 @@
     "react-dom": "^18.2.0",
     "rimraf": "^5.0.0",
     "sass": "^1.63.4",
-    "simple-git": "^3.19.1",
     "speedscope": "^1.14.0",
     "typescript": "^5.2.2",
     "typescript-plugin-css-modules": "^5.0.1",

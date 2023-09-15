@@ -34,7 +34,6 @@ const resolveAlinea = {
 const external = builtinModules
   .concat(builtinModules.map(m => `node:${m}`))
   .concat([
-    'simple-git',
     'fs-extra',
     '@alinea/generated',
     '@alinea/iso',
@@ -234,8 +233,6 @@ const externalize = {
 const targetPlugin = {
   name: 'target',
   setup(build) {
-    const cwd = process.cwd()
-    const src = path.join(cwd, 'src')
     const browserFiles = new Set()
     const serverFiles = new Set()
     build.onStart(() => {
@@ -324,10 +321,27 @@ function jsEntry({watch, test}) {
               platform: 'neutral',
               mainFields: ['module', 'main'],
               alias: {
+                // Used in lib0, polyfill crypto for nodejs
                 'lib0/webcrypto': `data:text/javascript,
                   import {crypto} from '@alinea/iso'
                   export const subtle = crypto.subtle
-                  export const getRandomValues = crypto.getRandomValues.bind(crypto)`
+                  export const getRandomValues = crypto.getRandomValues.bind(crypto)`,
+
+                // Used in simple-git, but not ESM and not useful for us
+                '@kwsites/file-exists': `data:text/javascript,
+                  export function exists() {return true}
+                  export const FOLDER = undefined`,
+
+                // Used in simple-git, but not ESM and not useful for us
+                debug: `data:text/javascript,
+                  const instance = () => () => {}
+                  instance.extend = instance
+                  export default function debug() {
+                    return instance
+                  }
+                  debug.enable = () => {}
+                  debug.formatters = {}
+                `
               },
               define: {
                 // See https://github.com/pmndrs/jotai/blob/2188d7557500e59c10415a9e74bb5cfc8a3f9c31/src/react/useSetAtom.ts#L33
