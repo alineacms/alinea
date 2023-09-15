@@ -2,7 +2,6 @@ import {Field} from 'alinea/core'
 import {entries} from 'alinea/core/util/Objects'
 import {fromModule} from 'alinea/ui'
 import {InputState} from '../InputState.js'
-import {useInput} from '../hook/UseInput.js'
 import css from './Fields.module.scss'
 import {Input} from './Input.js'
 
@@ -15,7 +14,6 @@ export interface FieldsProps {
 }
 
 export function Fields({state, fields, border = true}: FieldsProps) {
-  useInput(state)
   return (
     <div className={styles.root({border})}>
       {entries(fields).map(([name, field]) => {
