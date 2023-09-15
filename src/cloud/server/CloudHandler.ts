@@ -109,7 +109,9 @@ export class CloudApi implements Media, Target, History {
       withAuth(ctx)
     )
       .then(failOnHttpError)
-      .then<Array<Revision>>(json)
+      .then<OutcomeJSON<Array<Revision>>>(json)
+      .then<Outcome<Array<Revision>>>(Outcome.fromJSON)
+      .then(Outcome.unpack)
   }
 
   revisionData(
@@ -122,7 +124,9 @@ export class CloudApi implements Media, Target, History {
       withAuth(ctx)
     )
       .then(failOnHttpError)
-      .then<EntryRecord>(json)
+      .then<OutcomeJSON<EntryRecord>>(json)
+      .then<Outcome<EntryRecord>>(Outcome.fromJSON)
+      .then(Outcome.unpack)
   }
 }
 
