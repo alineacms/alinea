@@ -7,6 +7,7 @@ import {
   createId
 } from 'alinea/core'
 import {entryFilepath} from 'alinea/core/EntryFilenames'
+import {EntryRecord} from 'alinea/core/EntryRecord'
 import {Graph} from 'alinea/core/Graph'
 import {Mutation, MutationType} from 'alinea/core/Mutation'
 import {generateKeyBetween} from 'alinea/core/util/FractionalIndexing'
@@ -19,6 +20,7 @@ import {
 } from 'alinea/core/util/Paths'
 import {slugify} from 'alinea/core/util/Slugs'
 import {Database} from './Database.js'
+import {History, Revision} from './History.js'
 import {Media} from './Media.js'
 import {Previews} from './Previews'
 import {ResolveDefaults, Resolver} from './Resolver.js'
@@ -39,6 +41,7 @@ export type ServerOptions = {
   target: Target
   media: Media
   previews: Previews
+  history?: History
   resolveDefaults?: ResolveDefaults
 }
 
@@ -190,6 +193,20 @@ export class Server implements Connection {
       }
     ])
     return entry
+  }
+
+  // History
+
+  async revisions(file: string): Promise<Array<Revision>> {
+    const {history} = this.options
+    if (!history) return []
+    return history.revisions(file, this.context)
+  }
+
+  async revisionData(file: string, revisionId: string): Promise<EntryRecord> {
+    const {history} = this.options
+    if (!history) throw new Error('History not available')
+    return history.revisionData(file, revisionId, this.context)
   }
 
   // Syncable

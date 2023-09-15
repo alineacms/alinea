@@ -10,10 +10,11 @@ import {IcRoundCheck} from 'alinea/ui/icons/IcRoundCheck'
 import {IcRoundDelete} from 'alinea/ui/icons/IcRoundDelete'
 import {IcRoundEdit} from 'alinea/ui/icons/IcRoundEdit'
 import {IcRoundMoreVert} from 'alinea/ui/icons/IcRoundMoreVert'
+import {IcRoundPublishedWithChanges} from 'alinea/ui/icons/IcRoundPublishedWithChanges'
 import {IcRoundSave} from 'alinea/ui/icons/IcRoundSave'
 import {IcRoundTranslate} from 'alinea/ui/icons/IcRoundTranslate'
 import {IcRoundUnfoldMore} from 'alinea/ui/icons/IcRoundUnfoldMore'
-import {useAtomValue, useSetAtom} from 'jotai'
+import {useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {useEffect} from 'react'
 import {EntryEditor} from '../../atoms/EntryEditorAtoms.js'
 import {useLocation, useNavigate} from '../../atoms/LocationAtoms.js'
@@ -31,7 +32,8 @@ const variantDescription = {
   publishing: 'Publishing',
   archived: 'Archived',
   archiving: 'Archiving',
-  untranslated: 'Untranslated'
+  untranslated: 'Untranslated',
+  revision: 'Revision'
 }
 
 const variantIcon = {
@@ -41,7 +43,8 @@ const variantIcon = {
   publishing: IcOutlineAvTimer,
   archived: IcRoundArchive,
   archiving: IcOutlineAvTimer,
-  untranslated: IcRoundTranslate
+  untranslated: IcRoundTranslate,
+  revision: IcRoundPublishedWithChanges
 }
 
 export interface EntryHeaderProps {
@@ -54,13 +57,16 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
   const locale = useLocale()
   const phaseInUrl = useAtomValue(editor.phaseInUrl)
   const selectedPhase = useAtomValue(editor.selectedPhase)
+  const previewRevision = useAtomValue(editor.previewRevision)
   const isActivePhase = editor.activePhase === selectedPhase
   const isPublishing = useAtomValue(editor.isPublishing)
   const isArchiving = useAtomValue(editor.isArchiving)
   const isMediaFile = editor.activeVersion.type === 'MediaFile'
   const hasChanges = useAtomValue(editor.hasChanges)
   const untranslated = locale && locale !== editor.activeVersion.locale
-  const variant = untranslated
+  const variant = previewRevision
+    ? 'revision'
+    : untranslated
     ? 'untranslated'
     : hasChanges && !phaseInUrl
     ? 'editing'
@@ -72,6 +78,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
   const saveDraft = useSetAtom(editor.saveDraft)
   const publishEdits = useSetAtom(editor.publishEdits)
   const publishDraft = useSetAtom(editor.publishDraft)
+  const publishRevision = useSetAtom(editor.publishRevision)
   const discardDraft = useSetAtom(editor.discardDraft)
   const archivePublished = useSetAtom(editor.archivePublished)
   const publishArchived = useSetAtom(editor.publishArchived)
@@ -80,6 +87,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
   const saveTranslation = useSetAtom(editor.saveTranslation)
   const discardEdits = useSetAtom(editor.discardEdits)
   const translate = () => saveTranslation(locale!)
+  const [showHistory, setShowHistory] = useAtom(editor.showHistory)
   const navigate = useNavigate()
   const {pathname} = useLocation()
   useEffect(() => {
@@ -136,7 +144,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
           <DropdownMenu.Trigger className={styles.root.description.title()}>
             <HStack center gap={4}>
               <span>{variantDescription[variant]}</span>
-              {editor.availablePhases.length > 1 && (
+              {!previewRevision && editor.availablePhases.length > 1 && (
                 <Icon icon={IcRoundUnfoldMore} />
               )}
             </HStack>
@@ -151,29 +159,34 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
                 Editing
               </DropdownMenu.Item>
             )}
-            {editor.availablePhases.map(phase => {
-              return (
-                <DropdownMenu.Item
-                  key={phase}
-                  onClick={() => {
-                    navigate(`${pathname}?${phase}`)
-                  }}
-                >
-                  {variantDescription[phase]}
-                </DropdownMenu.Item>
-              )
-            })}
+            {!previewRevision &&
+              editor.availablePhases.map(phase => {
+                return (
+                  <DropdownMenu.Item
+                    key={phase}
+                    onClick={() => {
+                      navigate(`${pathname}?${phase}`)
+                    }}
+                  >
+                    {variantDescription[phase]}
+                  </DropdownMenu.Item>
+                )
+              })}
           </DropdownMenu.Items>
         </DropdownMenu.Root>
 
-        {editable && !hasChanges && isActivePhase && !untranslated && (
-          <>
-            <span className={styles.root.description.separator()} />
-            <div className={styles.root.description.action()}>
-              Edit to create a new draft
-            </div>
-          </>
-        )}
+        {editable &&
+          !hasChanges &&
+          isActivePhase &&
+          !untranslated &&
+          !previewRevision && (
+            <>
+              <span className={styles.root.description.separator()} />
+              <div className={styles.root.description.action()}>
+                Edit to create a new draft
+              </div>
+            </>
+          )}
 
         {!hasChanges &&
           !isActivePhase &&
@@ -251,18 +264,24 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
                 Publish draft
               </Button>
             )}
-
-            {options && (
-              <DropdownMenu.Root>
-                <DropdownMenu.Trigger className={styles.root.more(variant)}>
-                  <Icon icon={IcRoundMoreVert} />
-                </DropdownMenu.Trigger>
-
-                <DropdownMenu.Items bottom right>
-                  {options}
-                </DropdownMenu.Items>
-              </DropdownMenu.Root>
+            {variant === 'revision' && (
+              <Button icon={IcRoundSave} onClick={publishRevision}>
+                Publish
+              </Button>
             )}
+
+            <DropdownMenu.Root>
+              <DropdownMenu.Trigger className={styles.root.more(variant)}>
+                <Icon icon={IcRoundMoreVert} />
+              </DropdownMenu.Trigger>
+
+              <DropdownMenu.Items bottom right>
+                <DropdownMenu.Item onClick={() => setShowHistory(!showHistory)}>
+                  {showHistory ? 'Hide' : 'Show'} history
+                </DropdownMenu.Item>
+                {options}
+              </DropdownMenu.Items>
+            </DropdownMenu.Root>
           </HStack>
         </Stack.Right>
       </HStack>

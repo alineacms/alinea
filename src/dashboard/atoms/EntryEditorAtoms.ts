@@ -17,7 +17,7 @@ import {MediaFile} from 'alinea/core/media/MediaSchema'
 import {entries, fromEntries, values} from 'alinea/core/util/Objects'
 import {InputState} from 'alinea/editor'
 import {atom} from 'jotai'
-import {atomFamily} from 'jotai/utils'
+import {atomFamily, unwrap} from 'jotai/utils'
 import * as Y from 'yjs'
 import {debounceAtom} from '../util/DebounceAtom.js'
 import {clientAtom, configAtom} from './DashboardAtoms.js'
@@ -144,6 +144,8 @@ export interface EntryData {
 
 export type EntryEditor = ReturnType<typeof createEntryEditor>
 
+const showHistoryAtom = atom(true)
+
 export function createEntryEditor(entryData: EntryData) {
   const {config, availablePhases} = entryData
   const activePhase = availablePhases[0]
@@ -157,17 +159,20 @@ export function createEntryEditor(entryData: EntryData) {
   )
   const yDoc = docs[activePhase]
   const hasChanges = createChangesAtom(yDoc.getMap(ROOT_KEY))
-  const states = fromEntries(
-    entries(docs).map(([phase, doc]) => [
-      phase,
-      new InputState.YDocState(Type.shape(type), doc.getMap(ROOT_KEY), '')
-    ])
-  )
-  const draftState = states[activePhase]
   const draftEntry = yAtom(yDoc.getMap(ROOT_KEY), getDraftEntry)
   const editMode = atom(EditMode.Editing)
   const isSaving = atom(false)
   const view = Type.meta(type).view
+  const previewRevision = atom(
+    undefined as {ref: string; file: string} | undefined
+  )
+  const showHistory = atom(
+    get => get(showHistoryAtom),
+    (get, set, value: boolean) => {
+      set(showHistoryAtom, value)
+      if (!value) set(previewRevision, undefined)
+    }
+  )
 
   const isPublishing = atom(get => {
     const pending = get(pendingAtom)
@@ -189,15 +194,6 @@ export function createEntryEditor(entryData: EntryData) {
 
   const yStateVector = Y.encodeStateVector(
     createYDoc(type, entryData.sourceEntry)
-  )
-  const yUpdate = debounceAtom(
-    yAtom(yDoc.getMap(ROOT_KEY), () => {
-      const draftEntry = getDraftEntry()
-      const sourceDoc = createYDoc(type, entryData.sourceEntry)
-      applyEntryData(sourceDoc, type, draftEntry)
-      return Y.encodeStateAsUpdateV2(sourceDoc, yStateVector)
-    }),
-    250
   )
 
   const phaseInUrl = atom(get => {
@@ -305,6 +301,32 @@ export function createEntryEditor(entryData: EntryData) {
     })
     set(hasChanges, false)
     return set(mutateAtom, ...mutations).catch(error => {
+      set(hasChanges, true)
+      set(
+        errorAtom,
+        'Could not complete publish action, please try again later',
+        error
+      )
+    })
+  })
+
+  const publishRevision = atom(null, async (get, set) => {
+    const revision = get(previewRevision)
+    if (!revision) return
+    const data = await get(revisionData(revision))
+    const entry: EntryRow = {
+      ...activeVersion,
+      phase: EntryPhase.Published,
+      data
+    }
+    const editedFile = entryFile(entry)
+    return set(mutateAtom, {
+      type: MutationType.Edit,
+      previousFile: editedFile,
+      file: editedFile,
+      entryId: activeVersion.entryId,
+      entry
+    }).catch(error => {
       set(hasChanges, true)
       set(
         errorAtom,
@@ -425,6 +447,76 @@ export function createEntryEditor(entryData: EntryData) {
     return {...activeVersion, ...entryData}
   }
 
+  const revisionsAtom = atom(async get => {
+    const client = get(clientAtom)
+    const file = entryFile(activeVersion)
+    return client.revisions(file)
+  })
+
+  const revisionData = atomFamily(
+    (params: {file: string; ref: string}) => {
+      return atom(get => {
+        const client = get(clientAtom)
+        return client.revisionData(params.file, params.ref)
+      })
+    },
+    (a, b) => a.file === b.file && a.ref === b.ref
+  )
+
+  const revisionDocState = atomFamily(
+    (params: {file: string; ref: string}) => {
+      return atom(async get => {
+        const data = await get(revisionData(params))
+        return createYDoc(type, {...activeVersion, data})
+      })
+    },
+    (a, b) => a.file === b.file && a.ref === b.ref
+  )
+
+  const selectedState = atom(get => {
+    const selected = get(selectedPhase)
+    return docs[selected]
+  })
+  const revisionState = atom(get => {
+    const revision = get(previewRevision)
+    return revision ? get(revisionDocState(revision)) : undefined
+  })
+  const identity = (prev: any) => prev
+  const currentDoc = atom(get => {
+    return get(unwrap(revisionState, identity)) ?? get(selectedState)
+  })
+  const state = atom(get => {
+    const doc = get(currentDoc)
+    return new InputState.YDocState(Type.shape(type), doc.getMap(ROOT_KEY), '')
+  })
+
+  function createPreviewUpdate(entry: EntryRow) {
+    const sourceDoc = createYDoc(type, entryData.sourceEntry)
+    applyEntryData(sourceDoc, type, entry)
+    return Y.encodeStateAsUpdateV2(sourceDoc, yStateVector)
+  }
+
+  const docRevision = atomFamily((doc: Y.Doc) => {
+    let revision = 0
+    return debounceAtom(
+      yAtom(doc.getMap(ROOT_KEY), () => revision++),
+      250
+    )
+  })
+
+  // The debounce here prevents React warning us about a state change during
+  // render for rich text fields. Some day that should be properly fixed.
+  const yUpdate = debounceAtom(
+    atom(get => {
+      const doc = get(currentDoc)
+      get(docRevision(doc))
+      const entryData = parseYDoc(type, doc)
+      const entry = {...activeVersion, ...entryData}
+      return createPreviewUpdate(entry)
+    }),
+    10
+  )
+
   return {
     ...entryData,
     revisionId: createId(),
@@ -435,14 +527,13 @@ export function createEntryEditor(entryData: EntryData) {
     editMode,
     activeVersion,
     type,
-    draftState,
     draftEntry,
     yUpdate,
     activeTitle,
-    states,
     hasChanges,
     saveDraft,
     publishEdits,
+    publishRevision,
     publishDraft,
     discardDraft,
     archivePublished,
@@ -452,8 +543,12 @@ export function createEntryEditor(entryData: EntryData) {
     saveTranslation,
     discardEdits,
     isSaving,
+    showHistory,
     isPublishing,
     isArchiving,
+    revisionsAtom,
+    previewRevision,
+    state,
     view
   }
 }

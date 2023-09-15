@@ -22,6 +22,7 @@ export async function* fillCache(
   })
   const limit = pLimit(1)
   const cache = () => db.fill(fileData, fileData)
+
   const result = await limit(cache)
   yield result
 

@@ -52,6 +52,19 @@ function createRouter(
       .map(respond),
 
     matcher
+      .get(Connection.routes.revisions())
+      .map(context)
+      .map(({ctx, url}) => {
+        const api = createApi(ctx)
+        const file = url.searchParams.get('file')!
+        const revisionId = url.searchParams.get('revisionId')
+        return ctx.logger.result<any>(
+          revisionId ? api.revisionData(file, revisionId) : api.revisions(file)
+        )
+      })
+      .map(respond),
+
+    matcher
       .post(Connection.routes.resolve())
       .map(context)
       .map(router.parseJson)

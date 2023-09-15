@@ -14,12 +14,11 @@ export interface FieldsProps {
 }
 
 export function Fields({state, fields, border = true}: FieldsProps) {
-  const list = entries(fields).filter(
-    ([key, field]) => !Field.options(field).hidden
-  )
   return (
     <div className={styles.root({border})}>
-      {list.map(([name, field]) => {
+      {entries(fields).map(([name, field]) => {
+        const isHidden = Field.options(field).hidden
+        if (isHidden) return null
         return <Input key={name} state={state.child(name)} field={field} />
       })}
     </div>

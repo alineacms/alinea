@@ -16,6 +16,7 @@ import css from './EntryEdit.module.scss'
 import {EntryDiff} from './diff/EntryDiff.js'
 import {EditMode} from './entry/EditModeToggle.js'
 import {EntryHeader} from './entry/EntryHeader.js'
+import {EntryHistory} from './entry/EntryHistory.js'
 import {EntryNotice} from './entry/EntryNotice.js'
 import {EntryPreview} from './entry/EntryPreview.js'
 import {EntryTitle} from './entry/EntryTitle.js'
@@ -56,18 +57,23 @@ export function EntryEdit({editor}: EntryEditProps) {
   )
   const isNavigationChange =
     (nextRoute?.data.editor as EntryEditor)?.entryId !== editor.entryId
-  const isActivePhase = editor.activePhase === selectedPhase
-  const state = isActivePhase ? editor.draftState : editor.states[selectedPhase]
+  const state = useAtomValue(editor.state)
   const saveDraft = useSetAtom(editor.saveDraft)
   const publishDraft = useSetAtom(editor.publishDraft)
   const publishEdits = useSetAtom(editor.publishEdits)
   const discardEdits = useSetAtom(editor.discardEdits)
+  const showHistory = useAtomValue(editor.showHistory)
   const saveTranslation = useSetAtom(editor.saveTranslation)
+  const previewRevision = useAtomValue(editor.previewRevision)
   const translate = () => saveTranslation(locale!)
   useEffect(() => {
     function listener(e: KeyboardEvent) {
       if (e.ctrlKey && e.key === 's') {
         e.preventDefault()
+        if (previewRevision) {
+          alert('todo')
+          return
+        }
         if (untranslated && hasChanges) {
           translate()
         } else if (enableDrafts) {
@@ -140,6 +146,7 @@ export function EntryEdit({editor}: EntryEditProps) {
       >
         <FieldToolbar.Provider>
           <EntryHeader editor={editor} />
+          {showHistory && <EntryHistory editor={editor} />}
           <Main.Container>
             <EntryTitle
               editor={editor}

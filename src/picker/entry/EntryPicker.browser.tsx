@@ -117,7 +117,10 @@ export function EntryPickerModal({
           }
         })
       )
-      return res.parents.concat({id: destination.parentId, title: res.title})
+      return res.parents.concat({
+        id: destination.parentId,
+        title: res.title
+      })
     }
   )
   const cursor = useMemo(() => {

@@ -15,7 +15,6 @@ type ObjectInputProps<Definition> = {
 
 function ObjectInput<Definition>({state, field}: ObjectInputProps<Definition>) {
   const {label, options} = field[Field.Data]
-
   return (
     <InputLabel label={label} {...options} icon={IcRoundFeed}>
       <Card.Root>

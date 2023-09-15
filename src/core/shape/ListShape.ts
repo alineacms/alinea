@@ -163,6 +163,7 @@ export class ListShape<T>
   }
   async applyLinks(value: Array<ListRow & T>, loader: LinkResolver) {
     const tasks = []
+    if (!Array.isArray(value)) return
     for (const row of value) {
       const type = row.type
       const shape = this.values[type]

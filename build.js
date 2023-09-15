@@ -34,6 +34,7 @@ const resolveAlinea = {
 const external = builtinModules
   .concat(builtinModules.map(m => `node:${m}`))
   .concat([
+    'simple-git',
     'fs-extra',
     '@alinea/generated',
     '@alinea/iso',

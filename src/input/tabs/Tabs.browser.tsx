@@ -17,7 +17,6 @@ function TabsView({state, section}: TabsViewProps) {
   const tabs = section[Section.Data] as TabsSection
   const visibleTypes = tabs.types.filter(type => !Type.meta(type).isHidden)
   if (!visibleTypes.length) return null
-
   return (
     <Tabs.Root>
       <Tabs.List>
