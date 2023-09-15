@@ -276,9 +276,13 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
               </DropdownMenu.Trigger>
 
               <DropdownMenu.Items bottom right>
-                <DropdownMenu.Item onClick={() => setShowHistory(!showHistory)}>
-                  {showHistory ? 'Hide' : 'Show'} history
-                </DropdownMenu.Item>
+                {!isMediaFile && (
+                  <DropdownMenu.Item
+                    onClick={() => setShowHistory(!showHistory)}
+                  >
+                    {showHistory ? 'Hide' : 'Show'} history
+                  </DropdownMenu.Item>
+                )}
                 {options}
               </DropdownMenu.Items>
             </DropdownMenu.Root>
