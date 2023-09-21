@@ -5,17 +5,15 @@ import {dequal} from 'dequal'
 import esbuild from 'esbuild'
 import fsExtra from 'fs-extra'
 import glob from 'glob'
+import {Features, bundle, composeVisitors} from 'lightningcss'
+import {pxToRem, suffixes} from 'lightningcss-plugins'
 import {builtinModules} from 'module'
 import fs from 'node:fs'
 import path from 'node:path'
 import {pathToFileURL} from 'node:url'
-import postcss from 'postcss'
-import postcssModules from 'postcss-modules'
-import pxtorem from 'postcss-pxtorem'
 import sade from 'sade'
 
-// Interestingly sass seems to outperform sass-embedded about 2x
-import * as sass from 'sass'
+const {fromEntries, entries} = Object
 
 const BROWSER_TARGET = 'browser'
 const SERVER_TARGET = 'server'
@@ -366,27 +364,7 @@ function jsEntry({watch, test}) {
   }
 }
 
-const sassExports = new Map()
 const sassCache = new Map()
-
-const postCssPlugins = [
-  pxtorem({
-    minPixelValue: 2,
-    propList: ['*']
-  }),
-  postcssModules({
-    localsConvention: 'dashes',
-    generateScopedName(name, fileName, css) {
-      const module = path.basename(fileName).split('.')[0]
-      if (name.startsWith('root-')) name = name.slice(5)
-      if (name.startsWith('root')) name = name.slice(4)
-      return `alinea-${module}${name ? '-' + name : ''}`
-    },
-    getJSON(file, json) {
-      sassExports.set(file, `export default ${JSON.stringify(json, null, 2)}`)
-    }
-  })
-]
 
 async function processScss(file) {
   const prev = sassCache.get(file)
@@ -394,29 +372,47 @@ async function processScss(file) {
     const key = hash(prev.watchFiles)
     if (key === prev.key) return prev
   }
-  const {css, loadedUrls, sourceMap} = sass.compile(file, scssOptions)
-  const watchFiles = loadedUrls.map(url => {
-    return url.pathname.substring(isWindows ? 1 : 0)
+  const isModule = file.endsWith('.module.scss')
+  const {code, map, exports, dependencies} = bundle({
+    filename: file,
+    code: fs.readFileSync(file),
+    sourceMap: true,
+    include: Features.Nesting,
+    visitor: composeVisitors([suffixes, pxToRem()]),
+    errorRecovery: true,
+    cssModules: isModule
+      ? {
+          pattern: 'alinea-[name]-[local]'
+        }
+      : undefined
   })
+  const watchFiles = [file].concat(
+    dependencies?.map(dependency => {
+      return dependency.url
+    }) ?? []
+  )
   const key = hash(watchFiles)
-  if (!file.endsWith('.module.scss')) {
-    const result = {key, css, watchFiles}
-    sassCache.set(file, result)
-    return result
-  }
-  const processed = await postcss(postCssPlugins).process(css, {
-    from: file,
-    map: {
-      inline: true,
-      prev: sourceMap
-    }
-  })
   const result = {
     key,
-    css: processed.css,
+    css: Buffer.concat([
+      code,
+      Buffer.from('\n/*# sourceMappingURL=data:application/json;base64,'),
+      Buffer.from(map.toString('base64')),
+      Buffer.from(' */')
+    ]),
     watchFiles,
-    isModule: true,
-    json: sassExports.get(file)
+    isModule: isModule,
+    json: `export default ${
+      exports
+        ? JSON.stringify(
+            fromEntries(
+              entries(exports).map(([key, value]) => [key, value.name])
+            ),
+            null,
+            2
+          )
+        : '{}'
+    }`
   }
   sassCache.set(file, result)
   return result
