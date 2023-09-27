@@ -85,6 +85,22 @@ export namespace schema {
           width: 0.4,
           inline: true
         })
+      }),
+      alinea.tab('Layout fields', {
+        object: alinea.object('Object field', {
+          fields: alinea.type('Fields', {
+            fieldA: alinea.text('Field A', {width: 0.5}),
+            fieldB: alinea.text('Field B', {width: 0.5})
+          })
+        }),
+        ...alinea.tabs(
+          alinea.tab('Tab A', {
+            tabA: alinea.text('Tab A')
+          }),
+          alinea.tab('Tab B', {
+            tabB: alinea.text('Tab B')
+          })
+        )
       })
     )
   })
