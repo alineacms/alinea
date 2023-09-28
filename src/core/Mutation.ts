@@ -97,6 +97,7 @@ export interface MoveMutation {
 export interface UploadMutation {
   type: MutationType.Upload
   entryId: string
+  fileId: string
   file: string
 }
 

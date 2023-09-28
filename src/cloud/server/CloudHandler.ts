@@ -62,7 +62,7 @@ export class CloudApi implements Media, Target, History {
     ctx: Connection.Context
   ): Promise<Connection.UploadResponse> {
     return fetch(
-      cloudConfig.media,
+      cloudConfig.upload,
       withAuth(
         ctx,
         asJson({
@@ -75,6 +75,10 @@ export class CloudApi implements Media, Target, History {
       .then<OutcomeJSON<Connection.UploadResponse>>(json)
       .then<Outcome<Connection.UploadResponse>>(Outcome.fromJSON)
       .then(Outcome.unpack)
+      .then(info => {
+        if ('filename' in info) info.location = info.filename as string
+        return info
+      })
   }
 
   delete(

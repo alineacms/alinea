@@ -9,7 +9,7 @@ export const cloudConfig = {
   auth: `${baseUrl}/auth`,
   handshake: `${baseUrl}/api/v1/handshake`,
   mutate: `${baseUrl}/api/v1/mutate`,
-  draft: `${baseUrl}/api/v1/draft`,
+  upload: `${baseUrl}/api/v1/upload`,
   media: `${baseUrl}/api/v1/media`,
   logout: `${baseUrl}/api/v1/logout`,
   history: `${baseUrl}/api/v1/history`

@@ -152,7 +152,6 @@ async function process(
       const info = await client.prepareUpload(file)
       await fetch(info.upload.url, {
         method: info.upload.method ?? 'POST',
-        headers: info.upload.headers ?? {},
         body: upload.file
       }).then(async result => {
         if (!result.ok)
@@ -176,7 +175,8 @@ async function process(
         {
           type: MutationType.Upload,
           entryId: entry.entryId,
-          file
+          fileId: upload.info!.fileId,
+          file: upload.info!.location
         }
       ])
 
@@ -195,6 +195,7 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
   const [uploads, setUploads] = useState<Array<Upload>>([])
 
   async function createEntry(upload: Upload) {
+    const entryId = createId()
     const {parentId} = upload.to
     const buffer = await upload.file.arrayBuffer()
     const contentHash = await createContentHash(
@@ -228,7 +229,7 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
     )
     const extension = extname(path)
     const parentDir = dirname(filePath)
-    const {fileId, location} = upload.info!
+    const {location} = upload.info!
     const workspace = Workspace.data(config.workspaces[upload.to.workspace])
     const prefix = workspace.mediaDir && normalize(workspace.mediaDir)
     const fileLocation =
@@ -239,7 +240,7 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
     const entry: Media.File = {
       ...entryLocation,
       parent: parent?.entryId ?? null,
-      entryId: fileId,
+      entryId: entryId,
       type: 'MediaFile',
       url: (parent ? parent.url : '/') + path,
       title: basename(path, extension),
@@ -247,7 +248,7 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
       modifiedAt: Date.now(),
       searchableText: '',
       index: generateKeyBetween(null, prev?.index ?? null),
-      i18nId: fileId,
+      i18nId: entryId,
 
       level: parent ? parent.level + 1 : 0,
       parentDir: parentDir,

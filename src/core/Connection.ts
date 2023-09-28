@@ -48,7 +48,6 @@ export namespace Connection {
     upload: {
       url: string
       method?: string
-      headers?: Record<string, string>
     }
   }
   export interface ResolveParams extends ResolveDefaults {
