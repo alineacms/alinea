@@ -1,14 +1,10 @@
 import {Connection, EntryRow} from 'alinea/core'
 
 export interface Media {
-  upload(
-    params: Connection.MediaUploadParams,
+  prepareUpload(
+    file: string,
     ctx: Connection.Context
-  ): Promise<string>
-  download(
-    params: Connection.DownloadParams,
-    ctx: Connection.Context
-  ): Promise<Connection.Download>
+  ): Promise<Connection.UploadResponse>
   delete(
     params: Connection.DeleteParams,
     ctx: Connection.Context

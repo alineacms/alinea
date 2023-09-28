@@ -5,11 +5,13 @@ import {useQuery} from 'react-query'
 //import {EntryProperty} from '../draft/EntryProperty.js'
 //import {useCurrentDraft} from '../hook/UseCurrentDraft.js'
 import {Entry, RootData} from 'alinea/core'
+import {workspaceMediaDir} from 'alinea/core/EntryFilenames'
 import {IcRoundArrowBack} from 'alinea/ui/icons/IcRoundArrowBack'
 import {useAtomValue} from 'jotai'
 import {graphAtom} from '../atoms/DbAtoms.js'
 import {EntryEditor} from '../atoms/EntryEditorAtoms.js'
 import {useNavigate} from '../atoms/LocationAtoms.js'
+import {useConfig} from '../hook/UseConfig.js'
 import {useNav} from '../hook/UseNav.js'
 import {useRoot} from '../hook/UseRoot.js'
 import {useWorkspace} from '../hook/UseWorkspace.js'
@@ -27,6 +29,7 @@ export interface MediaExplorerProps {
 }
 
 export function MediaExplorer({editor}: MediaExplorerProps) {
+  const config = useConfig()
   const parentId = editor?.entryId
   const workspace = useWorkspace()
   const root = useRoot()
@@ -97,7 +100,8 @@ export function MediaExplorer({editor}: MediaExplorerProps) {
             destination={{
               parentId,
               workspace: workspace.name,
-              root: root.name
+              root: root.name,
+              directory: workspaceMediaDir(config, workspace.name)
             }}
           />
         </div>

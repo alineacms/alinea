@@ -1,4 +1,3 @@
-import {Media} from 'alinea/backend'
 import {History, Revision} from 'alinea/backend/History'
 import {ResolveDefaults} from 'alinea/backend/Resolver'
 import {ChangeSet} from 'alinea/backend/data/ChangeSet'
@@ -24,7 +23,7 @@ export interface Connection extends Syncable, History {
   previewToken(): Promise<string>
   resolve(params: Connection.ResolveParams): Promise<unknown>
   mutate(mutations: Array<Mutation>): Promise<void>
-  uploadFile(params: Connection.UploadParams): Promise<Media.File>
+  prepareUpload(file: string): Promise<Connection.UploadResponse>
   revisions(file: string): Promise<Array<Revision>>
   revisionData(file: string, revisionId: string): Promise<EntryRecord>
 }
@@ -41,6 +40,16 @@ export namespace Connection {
     thumbHash?: string
     width?: number
     height?: number
+  }
+  export interface UploadResponse {
+    fileId: string
+    location: string
+    previewUrl: string
+    upload: {
+      url: string
+      method?: string
+      headers?: Record<string, string>
+    }
   }
   export interface ResolveParams extends ResolveDefaults {
     selection: Selection
@@ -99,6 +108,9 @@ export namespace Connection {
     },
     media() {
       return base + `/media`
+    },
+    prepareUpload() {
+      return base + `/upload`
     },
     files(location?: string) {
       return base + `/files${location ? '/' + location : ''}`

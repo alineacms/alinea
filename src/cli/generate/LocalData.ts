@@ -1,22 +1,24 @@
-import {JsonLoader} from 'alinea/backend'
+import {JsonLoader, Media} from 'alinea/backend'
 import {FS} from 'alinea/backend/FS'
-import {Connection, HttpError} from 'alinea/core'
+import {Connection, HttpError, createId, slugify} from 'alinea/core'
 import {Config} from 'alinea/core/Config'
 import {outcome} from 'alinea/core/Outcome'
 import {Root} from 'alinea/core/Root'
 import {Workspace} from 'alinea/core/Workspace'
 import {entries, keys, values} from 'alinea/core/util/Objects'
 import * as path from 'alinea/core/util/Paths'
-import {Media} from '../Media.js'
-import {Source, SourceEntry, WatchFiles} from '../Source.js'
-import {Target} from '../Target.js'
-import {applyJsonPatch} from '../util/JsonPatch.js'
-import {ChangeType} from './ChangeSet.js'
+import {Source, SourceEntry, WatchFiles} from '../../backend/Source.js'
+import {Target} from '../../backend/Target.js'
+import {ChangeType} from '../../backend/data/ChangeSet.js'
+import {applyJsonPatch} from '../../backend/util/JsonPatch.js'
 
-export type FileDataOptions = {
+import {basename, dirname, extname, join} from 'alinea/core/util/Paths'
+
+export interface LocalDataOptions {
   config: Config
   fs: FS
   rootDir?: string
+  dashboardUrl?: string
 }
 
 async function filesOfPath(fs: FS, dir: string): Promise<WatchFiles> {
@@ -40,10 +42,10 @@ async function filesOfPath(fs: FS, dir: string): Promise<WatchFiles> {
   }
 }
 
-export class FileData implements Source, Target, Media {
+export class LocalData implements Source, Target, Media {
   canRename = true
 
-  constructor(public options: FileDataOptions) {}
+  constructor(public options: LocalDataOptions) {}
 
   async watchFiles() {
     const {fs, config, rootDir = '.'} = this.options
@@ -169,33 +171,27 @@ export class FileData implements Source, Target, Media {
     return mediaDirs.some(dir => path.contains(path.join(rootDir, dir), file))
   }
 
-  async upload({
-    fileLocation,
-    buffer
-  }: Connection.MediaUploadParams): Promise<string> {
-    const {fs, rootDir = '.'} = this.options
-    const file = path.join(rootDir, fileLocation)
-    const isInMediaLocation = this.isInMediaLocation(file)
-    if (!isInMediaLocation) throw new HttpError(401)
-    const dir = path.dirname(file)
-    await fs.mkdir(dir, {recursive: true})
-    await fs.writeFile(file, Buffer.from(buffer))
-    return fileLocation
-  }
-
-  async download({
-    location,
-    workspace
-  }: Connection.DownloadParams): Promise<Connection.Download> {
-    const {fs, rootDir = '.'} = this.options
-    const mediaDir = Workspace.data(
-      this.options.config.workspaces[workspace]
-    ).mediaDir
-    if (!mediaDir) throw new HttpError(401)
-    const file = path.join(rootDir, mediaDir, location)
-    const isInMediaLocation = this.isInMediaLocation(file)
-    if (!isInMediaLocation) throw new HttpError(401)
-    return {type: 'buffer', buffer: await fs.readFile(file)}
+  async prepareUpload(file: string): Promise<Connection.UploadResponse> {
+    const {dashboardUrl} = this.options
+    if (!dashboardUrl)
+      throw new Error(`Cannot prepare upload without dashboard url`)
+    const fileId = createId()
+    const dir = dirname(file)
+    const extension = extname(file).toLowerCase()
+    const name = basename(file, extension)
+    const fileName = `${slugify(name)}.${createId()}${extension}`
+    const fileLocation = join(dir, fileName)
+    return {
+      fileId,
+      location: fileLocation,
+      previewUrl: '',
+      upload: {
+        url: new URL(
+          `/upload?file=${encodeURIComponent(fileLocation)}`,
+          dashboardUrl
+        ).href
+      }
+    }
   }
 
   async delete({location, workspace}: Connection.DeleteParams): Promise<void> {

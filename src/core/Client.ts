@@ -1,7 +1,6 @@
-import {AbortController, fetch, FormData, Response} from '@alinea/iso'
+import {AbortController, fetch, Response} from '@alinea/iso'
 import {AlineaMeta} from 'alinea/backend/db/AlineaMeta'
 import {Revision} from 'alinea/backend/History'
-import {Media} from 'alinea/backend/Media'
 import {Config, Connection, EntryPhase, HttpError} from 'alinea/core'
 import {UpdateResponse} from './Connection.js'
 import {EntryRecord} from './EntryRecord.js'
@@ -92,26 +91,11 @@ export class Client implements Connection {
     )
   }
 
-  uploadFile({
-    workspace,
-    root,
-    ...file
-  }: Connection.UploadParams): Promise<Media.File> {
-    const form = new FormData()
-    form.append('workspace', workspace as string)
-    form.append('root', root as string)
-    form.append('path', file.path)
-    form.append('parentId', file.parentId || '')
-    if (file.averageColor) form.append('averageColor', file.averageColor)
-    if (file.thumbHash) form.append('thumbHash', file.thumbHash)
-    if ('width' in file) form.append('width', String(file.width))
-    if ('height' in file) form.append('height', String(file.height))
-    form.append('buffer', new Blob([file.buffer]))
-    if (file.preview) form.append('preview', file.preview)
-    return this.request(Connection.routes.media(), {
+  prepareUpload(file: string): Promise<Connection.UploadResponse> {
+    return this.requestJson(Connection.routes.prepareUpload(), {
       method: 'POST',
-      body: form
-    }).then<Media.File>(failOnHttpError)
+      body: JSON.stringify({filename: file})
+    }).then<Connection.UploadResponse>(failOnHttpError)
   }
 
   protected request(endpoint: string, init?: RequestInit): Promise<Response> {

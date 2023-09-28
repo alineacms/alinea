@@ -1,17 +1,13 @@
 import {ReadableStream, Request, Response, TextEncoderStream} from '@alinea/iso'
 import {Handler} from 'alinea/backend'
-import {router} from 'alinea/backend/router/Router'
+import {HttpHandler, router} from 'alinea/backend/router/Router'
 import {Trigger, trigger} from 'alinea/core'
 import esbuild, {BuildOptions, BuildResult, OutputFile} from 'esbuild'
 import fs from 'node:fs'
-import {createRequire} from 'node:module'
 import path from 'node:path'
-import {dirname} from '../util/Dirname.js'
+import {Readable} from 'node:stream'
 import {publicDefines} from '../util/PublicDefines.js'
 import {ServeContext} from './ServeContext.js'
-
-const require = createRequire(import.meta.url)
-const __dirname = dirname(import.meta.url)
 
 type BuildDetails = Map<string, OutputFile>
 
@@ -60,7 +56,7 @@ function buildFiles(outdir: string, result: BuildResult) {
   )
 }
 
-export function createHandler(
+export function createLocalServer(
   {
     rootDir: cwd,
     staticDir,
@@ -70,7 +66,7 @@ export function createHandler(
     liveReload
   }: ServeContext,
   handler: Handler
-) {
+): HttpHandler {
   const devDir = path.join(staticDir, 'dev')
   const matcher = router.matcher()
   const entry = `alinea/cli/static/dashboard/dev`
@@ -136,18 +132,6 @@ export function createHandler(
     }
   })
 
-  /*const esbuildServer = esbuild.context(config).then(ctx => {
-    return ctx.watch().then(() => ctx.serve())
-  })
-
-  async function forwardBuild(request: Request) {
-    const {port} = await esbuildServer
-    const url = new URL(request.url)
-    url.host = '127.0.0.1'
-    url.port = port.toString()
-    return fetch(url, request)
-  }*/
-
   esbuild.context(config).then(ctx => ctx.watch())
 
   async function serveBrowserBuild(
@@ -172,7 +156,7 @@ export function createHandler(
     })
   }
 
-  return router(
+  const httpRouter = router(
     matcher.get('/~dev').map((): Response => {
       const stream = new ReadableStream({
         start(controller) {
@@ -191,6 +175,20 @@ export function createHandler(
           Connection: 'keep-alive'
         }
       })
+    }),
+    matcher.post('/upload').map(async ({request, url}) => {
+      if (!request.body) return new Response('No body', {status: 400})
+      const file = url.searchParams.get('file')!
+      const dir = path.join(cwd, path.dirname(file))
+      await fs.promises.mkdir(dir, {recursive: true})
+      await fs.promises.writeFile(
+        path.join(cwd, file),
+        Readable.fromWeb(request.body as any)
+      )
+      return new Response('Upload ok')
+    }),
+    matcher.get('/preview').map(async ({request, url}) => {
+      return new Response()
     }),
     router.compress(
       matcher.get('/').map(({url}): Response => {
@@ -221,13 +219,10 @@ export function createHandler(
       matcher.get('/config.css').map((): Response => {
         return new Response('', {headers: {'content-type': 'text/css'}})
       })
-      /*matcher.get('sqlite3.wasm').map(() => {
-        return new Response(
-          fs.readFileSync(
-            './node_modules/@sqlite.org/sqlite-wasm/sqlite-wasm/jswasm/sqlite3.wasm'
-          )
-        )
-      })*/
     )
   ).notFound(() => new Response('Not found', {status: 404}))
+
+  return async (request: Request) => {
+    return (await httpRouter.handle(request))!
+  }
 }

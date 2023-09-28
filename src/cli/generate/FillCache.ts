@@ -1,38 +1,32 @@
 import {Database} from 'alinea/backend/Database'
 import {Store} from 'alinea/backend/Store'
-import {FileData} from 'alinea/backend/data/FileData'
 import {Emitter, createEmitter} from 'alinea/cli/util/Emitter'
 import {Config} from 'alinea/core'
-import fs from 'node:fs'
 import pLimit from 'p-limit'
 import {createWatcher} from '../util/Watcher.js'
 import {GenerateContext} from './GenerateContext.js'
+import {LocalData} from './LocalData.js'
 
 export async function* fillCache(
   {watch, rootDir}: GenerateContext,
+  localData: LocalData,
   store: Store,
   config: Config,
   until: Promise<any>
 ) {
   const db = new Database(store, config)
-  const fileData = new FileData({
-    config,
-    fs: fs.promises,
-    rootDir: rootDir
-  })
   const limit = pLimit(1)
-  const cache = () => db.fill(fileData, fileData)
+  const cache = () => db.fill(localData, localData)
 
-  const result = await limit(cache)
-  yield result
+  yield limit(cache)
 
-  if (!watch || !fileData.watchFiles) return
+  if (!watch || !localData.watchFiles) return
 
-  const results = createEmitter<void>()
+  const results = createEmitter<Promise<void>>()
   const stopWatching = await createWatcher({
-    watchFiles: fileData.watchFiles.bind(fileData),
+    watchFiles: localData.watchFiles.bind(localData),
     async onChange() {
-      results.emit(await limit(cache))
+      results.emit(limit(cache))
     }
   })
   until.then(() => {

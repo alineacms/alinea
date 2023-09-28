@@ -6,13 +6,13 @@ import {
   DiscardDraftMutation,
   EditMutation,
   FileRemoveMutation,
-  FileUploadMutation,
   MoveMutation,
   Mutation,
   MutationType,
   OrderMutation,
   PublishMutation,
-  RemoveEntryMutation
+  RemoveEntryMutation,
+  UploadMutation
 } from 'alinea/core/Mutation'
 import {JsonLoader} from '../loader/JsonLoader.js'
 
@@ -20,7 +20,8 @@ export enum ChangeType {
   Write = 'write',
   Rename = 'rename',
   Patch = 'patch',
-  Delete = 'delete'
+  Delete = 'delete',
+  Upload = 'upload'
 }
 export interface WriteChange {
   type: ChangeType.Write
@@ -41,7 +42,17 @@ export interface DeleteChange {
   type: ChangeType.Delete
   file: string
 }
-export type Change = WriteChange | RenameChange | PatchChange | DeleteChange
+export interface UploadChange {
+  type: ChangeType.Upload
+  file: string
+  fileId: string
+}
+export type Change =
+  | WriteChange
+  | RenameChange
+  | PatchChange
+  | DeleteChange
+  | UploadChange
 export type ChangeWithMeta = {
   changes: Array<Change>
   meta: Mutation
@@ -185,12 +196,10 @@ export class ChangeSetCreator {
     return result
   }
 
-  fileUploadChanges(mutation: FileUploadMutation): Array<Change> {
-    return this.editChanges({
-      ...mutation,
-      previousFile: mutation.file,
-      type: MutationType.Edit
-    })
+  fileUploadChanges(mutation: UploadMutation): Array<Change> {
+    return [
+      {type: ChangeType.Upload, file: mutation.file, fileId: mutation.entryId}
+    ]
   }
 
   fileRemoveChanges({file: entryFile}: FileRemoveMutation): Array<Change> {
@@ -215,7 +224,7 @@ export class ChangeSetCreator {
         return this.orderChanges(mutation)
       case MutationType.Move:
         return this.moveChanges(mutation)
-      case MutationType.FileUpload:
+      case MutationType.Upload:
         return this.fileUploadChanges(mutation)
       case MutationType.FileRemove:
         return this.fileRemoveChanges(mutation)

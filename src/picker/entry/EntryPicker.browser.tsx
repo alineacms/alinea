@@ -1,9 +1,11 @@
 import {Root, WorkspaceData, createId} from 'alinea/core'
 import {Entry} from 'alinea/core/Entry'
+import {workspaceMediaDir} from 'alinea/core/EntryFilenames'
 import {Reference} from 'alinea/core/Reference'
 import {isMediaRoot} from 'alinea/core/media/MediaRoot'
 import {and} from 'alinea/core/pages/Expr'
 import {entries} from 'alinea/core/util/Objects'
+import {useConfig} from 'alinea/dashboard/hook/UseConfig'
 import {useFocusList} from 'alinea/dashboard/hook/UseFocusList'
 import {useGraph} from 'alinea/dashboard/hook/UseGraph'
 import {useLocale} from 'alinea/dashboard/hook/UseLocale'
@@ -77,6 +79,7 @@ export function EntryPickerModal({
   onConfirm,
   onCancel
 }: EntryPickerModalProps) {
+  const config = useConfig()
   const graph = useGraph()
   const {title, defaultView, max, condition, showMedia} = options
   const [search, setSearch] = useState('')
@@ -316,7 +319,10 @@ export function EntryPickerModal({
           {showMedia && (
             <FileUploader
               position="left"
-              destination={destination}
+              destination={{
+                ...destination,
+                directory: workspaceMediaDir(config, destination.workspace)
+              }}
               max={max}
               toggleSelect={handleSelect}
             />
