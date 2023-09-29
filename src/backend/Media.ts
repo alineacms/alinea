@@ -25,6 +25,7 @@ export namespace Media {
     height: number
     preview: string
     averageColor: string
+    focus: {x: number; y: number}
     thumbHash: string
   }
 

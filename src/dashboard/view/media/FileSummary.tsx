@@ -24,6 +24,7 @@ function fileSummarySelect() {
     preview: MediaFile.preview,
     thumbHash: MediaFile.thumbHash,
     averageColor: MediaFile.averageColor,
+    focus: MediaFile.focus,
     width: MediaFile.width,
     height: MediaFile.height,
     parents({parents}) {

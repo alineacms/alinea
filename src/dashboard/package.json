@@ -22,6 +22,7 @@
     "pretty-bytes": "^6.0.0",
     "react-query": "^3.39.1",
     "react-tiny-virtual-list": "^2.2.0",
+    "smartcrop": "^2.0.5",
     "thumbhash": "^0.1.1",
     "y-indexeddb": "^9.0.11",
     "y-webrtc": "^10.2.0"

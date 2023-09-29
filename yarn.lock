@@ -86,6 +86,7 @@ __metadata:
     pretty-bytes: ^6.0.0
     react-query: ^3.39.1
     react-tiny-virtual-list: ^2.2.0
+    smartcrop: ^2.0.5
     thumbhash: ^0.1.1
     y-indexeddb: ^9.0.11
     y-webrtc: ^10.2.0
@@ -9642,6 +9643,13 @@ resolve@^1.10.0:
   version: 4.2.0
   resolution: "smart-buffer@npm:4.2.0"
   checksum: b5167a7142c1da704c0e3af85c402002b597081dd9575031a90b4f229ca5678e9a36e8a374f1814c8156a725d17008ae3bde63b92f9cfd132526379e580bec8b
+  languageName: node
+  linkType: hard
+
+"smartcrop@npm:^2.0.5":
+  version: 2.0.5
+  resolution: "smartcrop@npm:2.0.5"
+  checksum: 42828b1c14ef1e9e6b86c0267517f1e444880b418dc1d4033ef45a860d06e0f00bee15f02f46300c6e1c97c48e5001c11375eaba692a00761ef37ccd95e34e05
   languageName: node
   linkType: hard
 

@@ -24,6 +24,11 @@ function ImageView({editor}: EntryEditProps) {
       <Property label="Dimensions">
         {image.data.width} x {image.data.height} pixels
       </Property>
+      {image.data.focus && (
+        <Property label="Focus">
+          ({image.data.focus.x.toFixed(2)}, {image.data.focus.y.toFixed(2)})
+        </Property>
+      )}
     </div>
   )
 }

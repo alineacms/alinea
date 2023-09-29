@@ -24,6 +24,7 @@ import {rgba, toHex} from 'color2k'
 import {useSetAtom} from 'jotai'
 import pLimit from 'p-limit'
 import {useState} from 'react'
+import smartcrop from 'smartcrop'
 import {rgbaToThumbHash, thumbHashToAverageRGBA} from 'thumbhash'
 import {useMutate} from '../atoms/DbAtoms.js'
 import {errorAtom} from '../atoms/ErrorAtoms.js'
@@ -54,6 +55,7 @@ export interface Upload {
   info?: Connection.UploadResponse
   preview?: string
   averageColor?: string
+  focus?: {x: number; y: number}
   thumbHash?: string
   width?: number
   height?: number
@@ -137,10 +139,17 @@ async function process(
       previewContext.drawImage(image, 0, 0, previewW, previewH)
       const preview = previewCanvas.toDataURL('image/webp')
 
+      const crop = await smartcrop.crop(image, {width: 100, height: 100})
+      const focus = {
+        x: (crop.topCrop.x + crop.topCrop.width / 2) / image.width,
+        y: (crop.topCrop.y + crop.topCrop.height / 2) / image.height
+      }
+
       return {
         ...upload,
         preview,
         averageColor,
+        focus,
         thumbHash: base64.stringify(thumbHash),
         width: image.naturalWidth,
         height: image.naturalHeight,
@@ -267,6 +276,7 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
         width: upload.width,
         height: upload.height,
         averageColor: upload.averageColor,
+        focus: upload.focus,
         thumbHash: upload.thumbHash,
         preview: upload.preview
       }
