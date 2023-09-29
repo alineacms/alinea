@@ -98,6 +98,7 @@ const localDbAtom = atom(
 
         return pending.flatMap(mutation => {
           switch (mutation.type) {
+            case MutationType.Create:
             case MutationType.Edit:
               if (mutation.entry.parent)
                 return [mutation.entryId, mutation.entry.parent]

@@ -10,7 +10,7 @@ import {
 } from 'alinea/core'
 import {entryFileName, entryFilepath} from 'alinea/core/EntryFilenames'
 import {createId} from 'alinea/core/Id'
-import {MutationType} from 'alinea/core/Mutation'
+import {Mutation, MutationType} from 'alinea/core/Mutation'
 import {base64} from 'alinea/core/util/Encoding'
 import {generateKeyBetween} from 'alinea/core/util/FractionalIndexing'
 import {
@@ -26,6 +26,7 @@ import {useSetAtom} from 'jotai'
 import pLimit from 'p-limit'
 import {useState} from 'react'
 import {rgbaToThumbHash, thumbHashToAverageRGBA} from 'thumbhash'
+import {useMutate} from '../atoms/DbAtoms.js'
 import {errorAtom} from '../atoms/ErrorAtoms.js'
 import {useConfig} from './UseConfig.js'
 import {useGraph} from './UseGraph.js'
@@ -79,7 +80,8 @@ async function process(
     file: string
     entry: Media.File
   }>,
-  client: Connection
+  client: Connection,
+  mutate: (...mutations: Array<Mutation>) => Promise<void>
 ): Promise<Upload> {
   switch (upload.status) {
     case UploadStatus.Queued:
@@ -157,17 +159,17 @@ async function process(
         if (!result.ok)
           throw new HttpError(
             result.status,
-            `Could not upload file: "${await result.text()}"`
+            `Could not reach server for upload`
           )
       })
       return {...upload, info, status: UploadStatus.Uploaded}
     }
     case UploadStatus.Uploaded: {
-      // Create entry
       const {file, entry} = await createEntry(upload)
-      await client.mutate([
+      const info = upload.info!
+      await mutate(
         {
-          type: MutationType.Edit,
+          type: MutationType.Create,
           entryId: entry.entryId,
           file,
           entry
@@ -175,11 +177,10 @@ async function process(
         {
           type: MutationType.Upload,
           entryId: entry.entryId,
-          fileId: upload.info!.fileId,
-          file: upload.info!.location
+          url: info.previewUrl,
+          file: info.location
         }
-      ])
-
+      )
       return {...upload, result: entry, status: UploadStatus.Done}
     }
     case UploadStatus.Done:
@@ -191,11 +192,12 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
   const config = useConfig()
   const graph = useGraph()
   const {cnx: client} = useSession()
+  const mutate = useMutate()
   const setErrorAtom = useSetAtom(errorAtom)
   const [uploads, setUploads] = useState<Array<Upload>>([])
 
   async function createEntry(upload: Upload) {
-    const entryId = createId()
+    const entryId = upload.info?.entryId ?? createId()
     const {parentId} = upload.to
     const buffer = await upload.file.arrayBuffer()
     const contentHash = await createContentHash(
@@ -242,7 +244,7 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
       parent: parent?.entryId ?? null,
       entryId: entryId,
       type: 'MediaFile',
-      url: (parent ? parent.url : '/') + path,
+      url: (parent ? parent.url : '') + '/' + path,
       title: basename(path, extension),
       seeded: false,
       modifiedAt: Date.now(),
@@ -253,14 +255,14 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
       level: parent ? parent.level + 1 : 0,
       parentDir: parentDir,
       filePath,
-      childrenDir: filePath.slice(0, -extension.length),
+      childrenDir: filePath.slice(0, -'.json'.length),
       contentHash,
       active: true,
       main: true,
       data: {
         title: basename(path, extension),
         location: fileLocation,
-        extension: extension.toLowerCase(),
+        extension: extension,
         size: buffer.byteLength,
         hash: contentHash,
         width: upload.width,
@@ -290,8 +292,10 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
     }
     while (true) {
       const next = await tasker[upload.status](() =>
-        process(upload, createEntry, client)
-      )
+        process(upload, createEntry, client, mutate)
+      ).catch(error => {
+        return {...upload, error, status: UploadStatus.Done}
+      })
       update(next)
       if (next.status === UploadStatus.Done) {
         if (next.error) {

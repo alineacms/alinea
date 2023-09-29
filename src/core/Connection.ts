@@ -42,7 +42,7 @@ export namespace Connection {
     height?: number
   }
   export interface UploadResponse {
-    fileId: string
+    entryId: string
     location: string
     previewUrl: string
     upload: {

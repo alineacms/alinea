@@ -38,7 +38,10 @@ export function FileUploadRow(upload: Upload) {
       </Chip>
       <div className={styles.root.status()}>
         {upload.status === UploadStatus.Done ? (
-          <Icon icon={upload.error ? IcBaselineErrorOutline : IcRoundCheck} />
+          <Icon
+            icon={upload.error ? IcBaselineErrorOutline : IcRoundCheck}
+            title={upload.error ? upload.error.message : 'Done'}
+          />
         ) : (
           <Loader />
         )}

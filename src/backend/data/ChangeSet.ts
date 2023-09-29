@@ -45,7 +45,7 @@ export interface DeleteChange {
 export interface UploadChange {
   type: ChangeType.Upload
   file: string
-  fileId: string
+  url: string
 }
 export type Change =
   | WriteChange
@@ -197,9 +197,7 @@ export class ChangeSetCreator {
   }
 
   fileUploadChanges(mutation: UploadMutation): Array<Change> {
-    return [
-      {type: ChangeType.Upload, file: mutation.file, fileId: mutation.entryId}
-    ]
+    return [{type: ChangeType.Upload, file: mutation.file, url: mutation.url}]
   }
 
   fileRemoveChanges({file: entryFile}: FileRemoveMutation): Array<Change> {

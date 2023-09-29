@@ -12,11 +12,11 @@ import {Projection} from 'alinea/core/pages/Projection'
 import {generateKeyBetween} from 'alinea/core/util/FractionalIndexing'
 import {entries} from 'alinea/core/util/Objects'
 import DataLoader from 'dataloader'
-import {atom, useAtomValue, useSetAtom} from 'jotai'
+import {atom, useAtomValue} from 'jotai'
 import {useMemo} from 'react'
 import {useDashboard} from '../hook/UseDashboard.js'
 import {configAtom} from './DashboardAtoms.js'
-import {graphAtom, mutateAtom} from './DbAtoms.js'
+import {graphAtom, useMutate} from './DbAtoms.js'
 import {rootAtom, workspaceAtom} from './NavigationAtoms.js'
 
 export function rootId(rootName: string) {
@@ -166,7 +166,7 @@ export function useEntryTreeProvider(): AsyncTreeDataLoader<EntryTreeItem> & {
   ): void
 } {
   const {loader} = useAtomValue(loaderAtom)
-  const mutate = useSetAtom(mutateAtom)
+  const mutate = useMutate()
   const {config} = useDashboard()
   return useMemo(() => {
     return {

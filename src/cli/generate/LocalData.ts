@@ -175,16 +175,19 @@ export class LocalData implements Source, Target, Media {
     const {dashboardUrl} = this.options
     if (!dashboardUrl)
       throw new Error(`Cannot prepare upload without dashboard url`)
-    const fileId = createId()
+    const entryId = createId()
     const dir = dirname(file)
     const extension = extname(file).toLowerCase()
     const name = basename(file, extension)
-    const fileName = `${slugify(name)}.${createId()}${extension}`
+    const fileName = `${slugify(name)}.${entryId}${extension}`
     const fileLocation = join(dir, fileName)
     return {
-      fileId,
+      entryId,
       location: fileLocation,
-      previewUrl: '',
+      previewUrl: new URL(
+        `/preview?file=${encodeURIComponent(fileLocation)}`,
+        dashboardUrl
+      ).href,
       upload: {
         url: new URL(
           `/upload?file=${encodeURIComponent(fileLocation)}`,
