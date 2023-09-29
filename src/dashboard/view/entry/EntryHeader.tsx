@@ -78,7 +78,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
   const saveDraft = useSetAtom(editor.saveDraft)
   const publishEdits = useSetAtom(editor.publishEdits)
   const publishDraft = useSetAtom(editor.publishDraft)
-  const publishRevision = useSetAtom(editor.publishRevision)
+  const restoreRevision = useSetAtom(editor.restoreRevision)
   const discardDraft = useSetAtom(editor.discardDraft)
   const archivePublished = useSetAtom(editor.archivePublished)
   const publishArchived = useSetAtom(editor.publishArchived)
@@ -265,8 +265,8 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
               </Button>
             )}
             {variant === 'revision' && (
-              <Button icon={IcRoundSave} onClick={publishRevision}>
-                Publish
+              <Button icon={IcRoundSave} onClick={restoreRevision}>
+                Restore
               </Button>
             )}
 

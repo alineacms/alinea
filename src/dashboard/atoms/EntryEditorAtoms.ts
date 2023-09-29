@@ -310,7 +310,7 @@ export function createEntryEditor(entryData: EntryData) {
     })
   })
 
-  const publishRevision = atom(null, async (get, set) => {
+  const restoreRevision = atom(null, async (get, set) => {
     const revision = get(previewRevision)
     if (!revision) return
     const data = await get(revisionData(revision))
@@ -536,7 +536,7 @@ export function createEntryEditor(entryData: EntryData) {
     hasChanges,
     saveDraft,
     publishEdits,
-    publishRevision,
+    restoreRevision,
     publishDraft,
     discardDraft,
     archivePublished,
