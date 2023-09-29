@@ -38,10 +38,10 @@ export function cleanupPending(modifiedAt: number) {
 }
 
 export function addPending(...mutations: Array<Mutation>) {
-  const mutationId = createId()
   const res: Array<PendingMutation> = []
   pendingDoc.transact(() => {
     for (const mutation of mutations) {
+      const mutationId = createId()
       const pending = {
         ...mutation,
         mutationId,
@@ -56,7 +56,10 @@ export function addPending(...mutations: Array<Mutation>) {
 
 export function removePending(...mutationIds: Array<string>) {
   pendingDoc.transact(() => {
-    for (const mutationId of mutationIds) pendingMap.delete(mutationId)
+    for (const mutationId of mutationIds) {
+      console.log(`Removing ${mutationId}`)
+      pendingMap.delete(mutationId)
+    }
   })
 }
 

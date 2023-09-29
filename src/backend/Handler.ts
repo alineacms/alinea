@@ -24,6 +24,10 @@ const ResolveBody: Type<Connection.ResolveParams> = object({
   }).optional
 })
 
+const PrepareBody = object({
+  filename: string
+})
+
 function createRouter(
   auth: Auth.Server,
   createApi: (context: Connection.Context) => Connection
@@ -108,29 +112,13 @@ function createRouter(
       .map(respond),
 
     matcher
-      .post(Connection.routes.media())
+      .post(Connection.routes.prepareUpload())
       .map(context)
-      .map(router.parseFormData)
-      .map(async ({ctx, body}) => {
+      .map(router.parseJson)
+      .map(({ctx, body}) => {
         const api = createApi(ctx)
-        const workspace = String(body.get('workspace'))
-        const root = String(body.get('root'))
-        const castOrUndefined = <T>(cast: (x: unknown) => T, value: unknown) =>
-          value !== null ? cast(value) : undefined
-        return ctx.logger.result(
-          api.uploadFile({
-            workspace,
-            root,
-            buffer: await (body.get('buffer') as File).arrayBuffer(),
-            parentId: String(body.get('parentId')) || undefined,
-            path: String(body.get('path')),
-            preview: castOrUndefined(String, body.get('preview')),
-            averageColor: castOrUndefined(String, body.get('averageColor')),
-            thumbHash: castOrUndefined(String, body.get('thumbHash')),
-            width: castOrUndefined(Number, body.get('width')),
-            height: castOrUndefined(Number, body.get('height'))
-          })
-        )
+        const {filename} = PrepareBody(body)
+        return ctx.logger.result(api.prepareUpload(filename))
       })
       .map(respond)
   ).recover(router.reportError)

@@ -7,6 +7,10 @@ import {join} from './util/Paths.js'
 
 const ALT_STATUS = [EntryPhase.Draft, EntryPhase.Archived]
 
+export function workspaceMediaDir(config: Config, workspace: string): string {
+  return Workspace.data(config.workspaces[workspace])?.mediaDir ?? ''
+}
+
 export function entryInfo(
   fileName: string
 ): [name: string, status: EntryPhase] {

@@ -24,7 +24,7 @@ export class GitHistory implements History {
     return list.all.map(row => {
       const parsedFile = row.diff?.files?.[0]?.file
       const fileLocation =
-        // SimpeGit seems to mis-parse these sometimes so we try to fix it here
+        // SimpleGit seems to mis-parse these sometimes so we try to fix it here
         parsedFile ? parsedFile.split('\t').pop()!.trim() : file
       return {
         ref: row.hash,

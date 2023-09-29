@@ -190,13 +190,8 @@ export class Database implements Syncable {
             root: mutation.root
           })
         )
-      case MutationType.FileUpload:
-        return this.store(
-          EntryRow({
-            entryId: mutation.entryId
-          }).delete(),
-          EntryRow().insert(mutation.entry)
-        )
+      case MutationType.Upload:
+        return
       default:
         throw unreachable(mutation)
     }

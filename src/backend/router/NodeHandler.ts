@@ -23,7 +23,7 @@ async function writeReadableStreamToWritable(
   }
 }
 
-async function apply(response: Response, to: http.ServerResponse) {
+export async function respondTo(to: http.ServerResponse, response: Response) {
   to.statusCode = response.status
   response.headers.forEach((value, key) => to.setHeader(key, value))
   if (response.body) {
@@ -34,7 +34,7 @@ async function apply(response: Response, to: http.ServerResponse) {
 
 const skipHeaders = new Set(['transfer-encoding', 'connection', 'keep-alive'])
 
-function fromNodeRequest(request: http.IncomingMessage) {
+export function fromNodeRequest(request: http.IncomingMessage) {
   const headers = new Headers()
   for (const key of Object.keys(request.headers)) {
     if (skipHeaders.has(key)) continue
@@ -79,7 +79,7 @@ export function nodeHandler(
     const request = fromNodeRequest(req)
     const result = await handler(request)
     if (result) {
-      await apply(result, res)
+      await respondTo(res, result)
     } else if (next) {
       next()
     } else {

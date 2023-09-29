@@ -11,6 +11,7 @@ import {fillCache} from './generate/FillCache.js'
 import {GenerateContext} from './generate/GenerateContext.js'
 import {generateDashboard} from './generate/GenerateDashboard.js'
 import {loadCMS} from './generate/LoadConfig.js'
+import {LocalData} from './generate/LocalData.js'
 import {dirname} from './util/Dirname.js'
 import {findConfigFile} from './util/FindConfigFile.js'
 
@@ -18,7 +19,7 @@ const __dirname = dirname(import.meta.url)
 const require = createRequire(import.meta.url)
 const alineaPackageDir = path.dirname(require.resolve('alinea/package.json'))
 
-export type GenerateOptions = {
+export interface GenerateOptions {
   cwd?: string
   staticDir?: string
   configFile?: string
@@ -27,6 +28,7 @@ export type GenerateOptions = {
   wasmCache?: boolean
   quiet?: boolean
   onAfterGenerate?: (env?: Record<string, string>) => void
+  dashboardUrl?: string
 }
 
 function generatePackage(context: GenerateContext, config: Config) {
@@ -60,6 +62,7 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
   {
     cms: CMS
     store: Store
+    localData: LocalData
   },
   void
 > {
@@ -107,8 +110,20 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
     try {
       const cms = await loadCMS(context.outDir)
       cms.exportStore(context.outDir, new Uint8Array())
-      for await (const _ of fillCache(context, store, cms, nextBuild)) {
-        yield {cms, store}
+      const fileData = new LocalData({
+        config: cms,
+        fs: fs.promises,
+        rootDir,
+        dashboardUrl: options.dashboardUrl
+      })
+      for await (const _ of fillCache(
+        context,
+        fileData,
+        store,
+        cms,
+        nextBuild
+      )) {
+        yield {cms, store, localData: fileData}
         // For debug reasons write out db
         if (process.env.NODE_ENV === 'development')
           fs.writeFileSync(

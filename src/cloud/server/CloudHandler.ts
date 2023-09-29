@@ -57,38 +57,24 @@ export class CloudApi implements Media, Target, History {
       .then<void>(json)
   }
 
-  upload(
-    {fileLocation, buffer}: Connection.MediaUploadParams,
+  prepareUpload(
+    file: string,
     ctx: Connection.Context
-  ): Promise<string> {
+  ): Promise<Connection.UploadResponse> {
     return fetch(
-      cloudConfig.media,
-      withAuth(ctx, {
-        method: 'POST',
-        headers: {
-          accept: 'application/json',
-          'content-type': 'application/octet-stream',
-          'x-file-location': fileLocation
-        },
-        body: buffer
-      })
+      cloudConfig.upload,
+      withAuth(
+        ctx,
+        asJson({
+          method: 'POST',
+          body: JSON.stringify({filename: file})
+        })
+      )
     )
       .then(failOnHttpError)
-      .then<OutcomeJSON<string>>(json)
-      .then<Outcome<string>>(Outcome.fromJSON)
+      .then<OutcomeJSON<Connection.UploadResponse>>(json)
+      .then<Outcome<Connection.UploadResponse>>(Outcome.fromJSON)
       .then(Outcome.unpack)
-  }
-
-  download(
-    {location}: Connection.DownloadParams,
-    ctx: Connection.Context
-  ): Promise<Connection.Download> {
-    return fetch(
-      cloudConfig.media + '?' + new URLSearchParams({location}),
-      withAuth(ctx)
-    )
-      .then(failOnHttpError)
-      .then(async res => ({type: 'buffer', buffer: await res.arrayBuffer()}))
   }
 
   delete(

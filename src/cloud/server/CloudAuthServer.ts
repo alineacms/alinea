@@ -2,9 +2,8 @@ import {fetch, Request, Response} from '@alinea/iso'
 import {Handler, router} from 'alinea/backend/router/Router'
 import {Auth, Config, Connection, HttpError, outcome, User} from 'alinea/core'
 import {verify} from 'alinea/core/util/JWT'
-const version = '0.0.0'
-// import {version} from '../../../package.json'
 import PLazy from 'p-lazy'
+import pkg from '../../../package.json'
 import {AuthResult, AuthResultType} from '../AuthResult.js'
 import {cloudConfig} from './CloudConfig.js'
 
@@ -73,7 +72,7 @@ export class CloudAuthServer implements Auth.Server {
           const body: any = {
             handshake_id: handShakeId,
             status: {
-              version,
+              version: pkg.version,
               roles: [
                 {
                   key: 'editor',

@@ -1,20 +1,17 @@
 import {JWTPreviews} from 'alinea/backend'
 import {Handler} from 'alinea/backend/Handler'
-import {FileData} from 'alinea/backend/data/FileData'
-import {nodeHandler} from 'alinea/backend/router/NodeHandler'
+import {HttpHandler} from 'alinea/backend/router/Router'
 import {createCloudHandler} from 'alinea/cloud/server/CloudHandler'
 import {CMS} from 'alinea/core/CMS'
 import {BuildOptions} from 'esbuild'
-import fs from 'node:fs'
-import {RequestListener} from 'node:http'
 import path from 'node:path'
 import {generate} from './Generate.js'
 import {buildOptions} from './build/BuildOptions.js'
-import {createHandler} from './serve/CreateHandler.js'
+import {createLocalServer} from './serve/CreateLocalServer.js'
 import {GitHistory} from './serve/GitHistory.js'
 import {LiveReload} from './serve/LiveReload.js'
 import {ServeContext} from './serve/ServeContext.js'
-import {startServer} from './serve/StartServer.js'
+import {startNodeServer} from './serve/StartNodeServer.js'
 import {dirname} from './util/Dirname.js'
 import {findConfigFile} from './util/FindConfigFile.js'
 
@@ -45,8 +42,10 @@ export async function serve(options: ServeOptions): Promise<void> {
     : findConfigFile(cwd)
   if (!configLocation) throw new Error(`No config file specified`)
 
-  const rootDir = path.resolve(cwd)
+  const preferredPort = options.port ? Number(options.port) : 4500
+  const server = await startNodeServer(preferredPort)
 
+  const rootDir = path.resolve(cwd)
   const context: ServeContext = {
     rootDir,
     staticDir,
@@ -61,15 +60,13 @@ export async function serve(options: ServeOptions): Promise<void> {
     production,
     liveReload: new LiveReload()
   }
-
-  const preferredPort = options.port ? Number(options.port) : 4500
-  const server = await startServer(preferredPort)
   const dashboardName = production ? '(production) dashboard' : 'dashboard'
   const dashboardUrl = `http://localhost:${server.port}`
   console.log(`> Alinea ${dashboardName} available on ${dashboardUrl}`)
 
   const gen = generate({
     ...options,
+    dashboardUrl,
     watch: true,
     onAfterGenerate: () => {
       options.onAfterGenerate?.({
@@ -79,20 +76,15 @@ export async function serve(options: ServeOptions): Promise<void> {
   })[Symbol.asyncIterator]()
   let nextGen = gen.next()
   let cms: CMS | undefined
-  let handler: RequestListener | undefined
+  let handle: HttpHandler | undefined
 
   while (true) {
     const current = await nextGen
     if (!current?.value) return
-    const currentCMS = current.value.cms
+    const {cms: currentCMS, localData: fileData} = current.value
     if (currentCMS === cms) {
       context.liveReload.reload('refetch')
     } else {
-      const fileData = new FileData({
-        config: currentCMS,
-        fs: fs.promises,
-        rootDir: rootDir
-      })
       const backend = process.env.ALINEA_CLOUD_URL
         ? createCloudHandler(
             currentCMS,
@@ -100,7 +92,6 @@ export async function serve(options: ServeOptions): Promise<void> {
             process.env.ALINEA_API_KEY
           )
         : new Handler({
-            // dashboardUrl,
             config: currentCMS,
             store: current.value.store,
             target: fileData,
@@ -108,13 +99,13 @@ export async function serve(options: ServeOptions): Promise<void> {
             history: new GitHistory(currentCMS, rootDir),
             previews: new JWTPreviews('dev')
           })
-      handler = nodeHandler(createHandler(context, backend).handle)
+      handle = createLocalServer(context, backend)
       cms = currentCMS
       context.liveReload.reload('refresh')
     }
     nextGen = gen.next()
-    for await (const [request, response] of server.serve(nextGen)) {
-      handler!(request, response)
+    for await (const {request, respondWith} of server.serve(nextGen)) {
+      handle!(request).then(respondWith)
     }
   }
 }

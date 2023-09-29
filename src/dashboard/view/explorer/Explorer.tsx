@@ -58,7 +58,7 @@ export function Explorer({
   const queryClient = useQueryClient()
   const changed = useAtomValue(changedEntriesAtom)
   useEffect(() => {
-    queryClient.invalidateQueries('explorer')
+    if (changed.length > 0) queryClient.invalidateQueries('explorer')
   }, [changed])
 
   const {data, isLoading} = useQuery(

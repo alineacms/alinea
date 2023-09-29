@@ -1,22 +1,42 @@
 import {Media} from 'alinea/backend/Media'
-import {Connection, EntryRow} from 'alinea/core'
+import {createContentHash} from 'alinea/backend/util/ContentHash'
+import {
+  Connection,
+  Entry,
+  EntryPhase,
+  EntryRow,
+  HttpError,
+  Workspace
+} from 'alinea/core'
+import {entryFileName, entryFilepath} from 'alinea/core/EntryFilenames'
 import {createId} from 'alinea/core/Id'
-import {MutationType} from 'alinea/core/Mutation'
+import {Mutation, MutationType} from 'alinea/core/Mutation'
 import {base64} from 'alinea/core/util/Encoding'
+import {generateKeyBetween} from 'alinea/core/util/FractionalIndexing'
+import {
+  basename,
+  dirname,
+  extname,
+  join,
+  normalize
+} from 'alinea/core/util/Paths'
 import {imageBlurUrl} from 'alinea/ui'
 import {rgba, toHex} from 'color2k'
 import {useSetAtom} from 'jotai'
 import pLimit from 'p-limit'
 import {useState} from 'react'
 import {rgbaToThumbHash, thumbHashToAverageRGBA} from 'thumbhash'
+import {useMutate} from '../atoms/DbAtoms.js'
 import {errorAtom} from '../atoms/ErrorAtoms.js'
-import {addPending} from '../atoms/PendingAtoms.js'
+import {useConfig} from './UseConfig.js'
+import {useGraph} from './UseGraph.js'
 import {useSession} from './UseSession.js'
 
 export enum UploadStatus {
   Queued,
   CreatingPreview,
   Uploading,
+  Uploaded,
   Done
 }
 
@@ -24,6 +44,7 @@ export interface UploadDestination {
   parentId?: string
   workspace: string
   root: string
+  directory: string
 }
 
 export interface Upload {
@@ -31,6 +52,7 @@ export interface Upload {
   file: File
   to: UploadDestination
   status: UploadStatus
+  info?: Connection.UploadResponse
   preview?: string
   averageColor?: string
   thumbHash?: string
@@ -48,10 +70,19 @@ const tasker = {
   [UploadStatus.Queued]: defaultTasker,
   [UploadStatus.CreatingPreview]: cpuTasker,
   [UploadStatus.Uploading]: networkTasker,
+  [UploadStatus.Uploaded]: defaultTasker,
   [UploadStatus.Done]: defaultTasker
 }
 
-async function process(upload: Upload, client: Connection): Promise<Upload> {
+async function process(
+  upload: Upload,
+  createEntry: (upload: Upload) => Promise<{
+    file: string
+    entry: Media.File
+  }>,
+  client: Connection,
+  mutate: (...mutations: Array<Mutation>) => Promise<void>
+): Promise<Upload> {
   switch (upload.status) {
     case UploadStatus.Queued:
       const isImage = Media.isImage(upload.file.name)
@@ -118,28 +149,39 @@ async function process(upload: Upload, client: Connection): Promise<Upload> {
       }
     }
     case UploadStatus.Uploading: {
-      const {to, file, preview, averageColor, thumbHash, width, height} = upload
-      const buffer = await file.arrayBuffer()
-      const path = file.name
-      try {
-        const result = await client.uploadFile({
-          ...to,
-          path,
-          buffer,
-          preview,
-          averageColor,
-          thumbHash,
-          width,
-          height
-        })
-        return {...upload, result, status: UploadStatus.Done}
-      } catch (error: unknown) {
-        return {
-          ...upload,
-          error: new Error('Could not upload file', {cause: error}),
-          status: UploadStatus.Done
+      const fileName = upload.file.name
+      const file = join(upload.to.directory, fileName)
+      const info = await client.prepareUpload(file)
+      await fetch(info.upload.url, {
+        method: info.upload.method ?? 'POST',
+        body: upload.file
+      }).then(async result => {
+        if (!result.ok)
+          throw new HttpError(
+            result.status,
+            `Could not reach server for upload`
+          )
+      })
+      return {...upload, info, status: UploadStatus.Uploaded}
+    }
+    case UploadStatus.Uploaded: {
+      const {file, entry} = await createEntry(upload)
+      const info = upload.info!
+      await mutate(
+        {
+          type: MutationType.Create,
+          entryId: entry.entryId,
+          file,
+          entry
+        },
+        {
+          type: MutationType.Upload,
+          entryId: entry.entryId,
+          url: info.previewUrl,
+          file: info.location
         }
-      }
+      )
+      return {...upload, result: entry, status: UploadStatus.Done}
     }
     case UploadStatus.Done:
       throw new Error('Should not end up here')
@@ -147,9 +189,96 @@ async function process(upload: Upload, client: Connection): Promise<Upload> {
 }
 
 export function useUploads(onSelect?: (entry: EntryRow) => void) {
+  const config = useConfig()
+  const graph = useGraph()
   const {cnx: client} = useSession()
+  const mutate = useMutate()
   const setErrorAtom = useSetAtom(errorAtom)
   const [uploads, setUploads] = useState<Array<Upload>>([])
+
+  async function createEntry(upload: Upload) {
+    const entryId = upload.info?.entryId ?? createId()
+    const {parentId} = upload.to
+    const buffer = await upload.file.arrayBuffer()
+    const contentHash = await createContentHash(
+      EntryPhase.Published,
+      new Uint8Array(buffer)
+    )
+    const parent = await graph.preferPublished.maybeGet(
+      Entry({entryId: parentId}).select({
+        level: Entry.level,
+        entryId: Entry.entryId,
+        url: Entry.url,
+        path: Entry.path,
+        parentPaths({parents}) {
+          return parents().select(Entry.path)
+        }
+      })
+    )
+    const prev = await graph.preferPublished.maybeGet(Entry({parent: parentId}))
+    const path = basename(upload.file.name.toLowerCase())
+    const entryLocation = {
+      workspace: upload.to.workspace,
+      root: upload.to.root,
+      locale: null,
+      path: path,
+      phase: EntryPhase.Published
+    }
+    const filePath = entryFilepath(
+      config,
+      entryLocation,
+      parent ? parent.parentPaths.concat(parent.path) : []
+    )
+    const extension = extname(path)
+    const parentDir = dirname(filePath)
+    const {location} = upload.info!
+    const workspace = Workspace.data(config.workspaces[upload.to.workspace])
+    const prefix = workspace.mediaDir && normalize(workspace.mediaDir)
+    const fileLocation =
+      prefix && location.startsWith(prefix)
+        ? location.slice(prefix.length)
+        : location
+
+    const entry: Media.File = {
+      ...entryLocation,
+      parent: parent?.entryId ?? null,
+      entryId: entryId,
+      type: 'MediaFile',
+      url: (parent ? parent.url : '') + '/' + path,
+      title: basename(path, extension),
+      seeded: false,
+      modifiedAt: Date.now(),
+      searchableText: '',
+      index: generateKeyBetween(null, prev?.index ?? null),
+      i18nId: entryId,
+
+      level: parent ? parent.level + 1 : 0,
+      parentDir: parentDir,
+      filePath,
+      childrenDir: filePath.slice(0, -'.json'.length),
+      contentHash,
+      active: true,
+      main: true,
+      data: {
+        title: basename(path, extension),
+        location: fileLocation,
+        extension: extension,
+        size: buffer.byteLength,
+        hash: contentHash,
+        width: upload.width,
+        height: upload.height,
+        averageColor: upload.averageColor,
+        thumbHash: upload.thumbHash,
+        preview: upload.preview
+      }
+    }
+    const file = entryFileName(
+      config,
+      entry,
+      parent ? parent.parentPaths.concat(parent.path) : []
+    )
+    return {file, entry}
+  }
 
   async function uploadFile(upload: Upload) {
     function update(upload: Upload) {
@@ -162,7 +291,11 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
       })
     }
     while (true) {
-      const next = await tasker[upload.status](() => process(upload, client))
+      const next = await tasker[upload.status](() =>
+        process(upload, createEntry, client, mutate)
+      ).catch(error => {
+        return {...upload, error, status: UploadStatus.Done}
+      })
       update(next)
       if (next.status === UploadStatus.Done) {
         if (next.error) {
@@ -176,12 +309,12 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
           result.data.preview = next.preview!
           result.data.location = previewSrc
         }
-        addPending({
-          type: MutationType.FileUpload,
+        /*addPending({
+          type: MutationType.Edit,
           entryId: result.entryId,
           file: result.filePath,
           entry: result
-        })
+        })*/
         onSelect?.(result)
         break
       } else {
