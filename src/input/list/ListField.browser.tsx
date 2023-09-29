@@ -26,13 +26,14 @@ import {entries} from 'alinea/core/util/Objects'
 import {Create} from 'alinea/dashboard/view/Create'
 import {IconButton} from 'alinea/dashboard/view/IconButton'
 import {InputForm, InputLabel, InputState, useInput} from 'alinea/editor'
-import {fromModule, Icon, Sink, TextLabel} from 'alinea/ui'
+import {fromModule, Icon, TextLabel} from 'alinea/ui'
 import {IcOutlineList} from 'alinea/ui/icons/IcOutlineList'
 import IcRoundAdd from 'alinea/ui/icons/IcRoundAdd'
 import {IcRoundClose} from 'alinea/ui/icons/IcRoundClose'
 import {IcRoundDragHandle} from 'alinea/ui/icons/IcRoundDragHandle'
 import {IcRoundKeyboardArrowDown} from 'alinea/ui/icons/IcRoundKeyboardArrowDown'
 import {IcRoundKeyboardArrowUp} from 'alinea/ui/icons/IcRoundKeyboardArrowUp'
+import {Sink} from 'alinea/ui/Sink'
 import {
   CSSProperties,
   HTMLAttributes,

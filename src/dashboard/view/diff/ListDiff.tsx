@@ -1,5 +1,5 @@
 import {ListRow, ListShape} from 'alinea/core/shape/ListShape'
-import {Sink} from 'alinea/ui'
+import {Sink} from 'alinea/ui/Sink'
 import {ChangeBox} from './ChangeBox.js'
 import {diffList, diffRecord} from './DiffUtils.js'
 import {FieldsDiff} from './FieldsDiff.js'

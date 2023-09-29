@@ -1,18 +1,15 @@
 import {fromModule} from 'alinea/ui'
-import {HTMLProps, createContext, useContext} from 'react'
+import {HTMLProps} from 'react'
 import css from './Lift.module.scss'
+import {ElevationProvider} from './util/Elevation.js'
 
 const styles = fromModule(css)
 
-const liftLevel = createContext(0)
-export const useLiftLevel = () => useContext(liftLevel)
-
 export function Lift(props: HTMLProps<HTMLDivElement>) {
-  const level = useLiftLevel()
   return (
-    <liftLevel.Provider value={level + 1}>
+    <ElevationProvider type="lift">
       <div {...props} className={styles.root.mergeProps(props)()} />
-    </liftLevel.Provider>
+    </ElevationProvider>
   )
 }
 

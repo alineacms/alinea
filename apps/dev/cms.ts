@@ -67,6 +67,23 @@ export namespace schema {
               checkbox2: alinea.check('Checkbox 2'),
               title: alinea.text('Title'),
               content: alinea.richText('Inner rich text')
+            }),
+
+            NestLayout: alinea.type('Nested layout fields', {
+              object: alinea.object('Object field', {
+                fields: alinea.type('Fields', {
+                  fieldA: alinea.text('Field A', {width: 0.5}),
+                  fieldB: alinea.text('Field B', {width: 0.5})
+                })
+              }),
+              ...alinea.tabs(
+                alinea.tab('Tab A', {
+                  tabA: alinea.text('Tab A')
+                }),
+                alinea.tab('Tab B', {
+                  tabB: alinea.text('Tab B')
+                })
+              )
             })
           }
         })

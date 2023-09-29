@@ -119,6 +119,16 @@
           "text": "Text continues alongside blocks."
         }
       ]
+    },
+    {
+      "id": "2W4VteHQ6frnKscoaa7KFHJ8BCk",
+      "type": "NestLayout",
+      "object": {
+        "fieldA": "Field A",
+        "fieldB": "Field B"
+      },
+      "tabA": "Tab A",
+      "tabB": "Tab B"
     }
   ],
   "street": "",
@@ -126,6 +136,12 @@
   "zip": "",
   "city": "",
   "country": "",
+  "object": {
+    "fieldA": "",
+    "fieldB": ""
+  },
+  "tabA": "",
+  "tabB": "",
   "@alinea": {
     "entryId": "2U6y6iIQIuQg2D0PViWdKenqgMv",
     "type": "Fields",

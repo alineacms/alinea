@@ -1,6 +1,6 @@
 import {RichTextShape, TextDoc} from 'alinea/core'
 import {RecordShape} from 'alinea/core/shape/RecordShape'
-import {Sink} from 'alinea/ui'
+import {Sink} from 'alinea/ui/Sink'
 import {ReactNode, useMemo} from 'react'
 import {ChangeBox} from './ChangeBox.js'
 import {diffList, diffRecord} from './DiffUtils.js'

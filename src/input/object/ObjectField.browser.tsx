@@ -1,6 +1,6 @@
 import {Field, Type} from 'alinea/core'
 import {InputForm, InputLabel, InputState} from 'alinea/editor'
-import {Sink} from 'alinea/ui'
+import {Sink} from 'alinea/ui/Sink'
 import {IcRoundFeed} from 'alinea/ui/icons/IcRoundFeed'
 import {ObjectField, object as createObject} from './ObjectField.js'
 

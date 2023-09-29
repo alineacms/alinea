@@ -11,12 +11,13 @@ import {createId, Field, Schema, Type} from 'alinea/core'
 import {entries} from 'alinea/core/util/Objects'
 import {IconButton} from 'alinea/dashboard/view/IconButton'
 import {InputForm, InputLabel, InputState, useInput} from 'alinea/editor'
-import {fromModule, HStack, Icon, px, Sink, TextLabel} from 'alinea/ui'
+import {fromModule, HStack, Icon, px, TextLabel} from 'alinea/ui'
 import {DropdownMenu} from 'alinea/ui/DropdownMenu'
 import IcRoundAddCircle from 'alinea/ui/icons/IcRoundAddCircle'
 import {IcRoundClose} from 'alinea/ui/icons/IcRoundClose'
 import {IcRoundDragHandle} from 'alinea/ui/icons/IcRoundDragHandle'
 import {IcRoundNotes} from 'alinea/ui/icons/IcRoundNotes'
+import {Sink} from 'alinea/ui/Sink'
 import {
   createContext,
   useCallback,
