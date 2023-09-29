@@ -1,8 +1,6 @@
 import alinea from 'alinea'
-import {IcOutlineInsertDriveFile} from 'alinea/ui/icons/IcOutlineInsertDriveFile'
-import {IcRoundLink} from 'alinea/ui/icons/IcRoundLink'
 
-export const Home = alinea.type(
+export const Home = alinea.document(
   'Home',
   alinea.tabs(
     alinea.tab('Homepage', {
@@ -24,11 +22,7 @@ export const Home = alinea.type(
           text: alinea.richText('Text')
           // code: CodeVariants
         })
-      }),
-      // blocks: BlocksSchema,
-      [alinea.type.meta]: {
-        icon: IcOutlineInsertDriveFile
-      }
+      })
     }),
     alinea.tab('Top navigation', {
       links: alinea.link.multiple('Links', {
@@ -38,10 +32,7 @@ export const Home = alinea.type(
             help: 'Active when this url is active'
           })
         })
-      }),
-      [alinea.tab.meta]: {
-        icon: IcRoundLink
-      }
+      })
     }),
     alinea.tab('Footer navigation', {
       footer: alinea.list('Navigation', {
@@ -55,10 +46,7 @@ export const Home = alinea.type(
             })
           })
         })
-      }),
-      [alinea.tab.meta]: {
-        icon: IcRoundLink
-      }
+      })
     })
   )
 )

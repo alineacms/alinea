@@ -1,10 +1,12 @@
 // Included inputs
+export {document} from 'alinea/core/Document'
 export {check} from 'alinea/input/check'
 export {code} from 'alinea/input/code'
 export {date} from 'alinea/input/date'
 export {json} from 'alinea/input/json'
 export {link} from 'alinea/input/link'
 export {list} from 'alinea/input/list'
+export {metadata} from 'alinea/input/metadata'
 export {number} from 'alinea/input/number'
 export {object} from 'alinea/input/object'
 export {path} from 'alinea/input/path'

@@ -9,7 +9,8 @@ import {TabsSection, tabs as createTabs} from './Tabs.js'
 
 export * from './Tabs.js'
 
-export const tabs = Section.provideView(TabsView, createTabs)
+// Todo: fix type here
+export const tabs = Section.provideView(TabsView, createTabs as any)
 
 interface TabsViewProps {
   state: InputState<any>

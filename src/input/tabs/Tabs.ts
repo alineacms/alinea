@@ -1,7 +1,6 @@
 import {
   Expand,
   Field,
-  Section,
   SectionData,
   SectionDefinition,
   Type,
@@ -32,7 +31,7 @@ type ArrayIntersection<T> = Expand<
 /** Create tabs */
 export function tabs<Types extends Array<Type>>(
   ...types: Types
-): Section<ArrayIntersection<Types>> {
+): ArrayIntersection<Types> {
   return section(new TabsSection(types))
 }
 
