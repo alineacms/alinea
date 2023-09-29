@@ -20,7 +20,6 @@ import {
   join,
   normalize
 } from 'alinea/core/util/Paths'
-import {imageBlurUrl} from 'alinea/ui'
 import {rgba, toHex} from 'color2k'
 import {useSetAtom} from 'jotai'
 import pLimit from 'p-limit'
@@ -303,18 +302,6 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
         }
         const result = next.result as Media.Image | undefined
         if (!result) break
-        const hasThumbHash = Boolean(result.data.thumbHash)
-        if (hasThumbHash) {
-          const previewSrc = imageBlurUrl(result.data)!
-          result.data.preview = next.preview!
-          result.data.location = previewSrc
-        }
-        /*addPending({
-          type: MutationType.Edit,
-          entryId: result.entryId,
-          file: result.filePath,
-          entry: result
-        })*/
         onSelect?.(result)
         break
       } else {
