@@ -41,7 +41,7 @@ export const LabelHeader = memo(function LabelHeader({
 })
 
 export type LabelProps = PropsWithChildren<{
-  label: Label
+  label?: Label
   asLabel?: boolean
   help?: Label
   optional?: boolean
@@ -81,14 +81,16 @@ export const InputLabel = forwardRef<HTMLElement, LabelProps>(
         ref={ref as any}
       >
         <div className={styles.root.inner()}>
-          <LabelHeader
-            label={label}
-            help={help}
-            optional={optional}
-            size={size}
-            focused={focused}
-            icon={icon}
-          />
+          {label && (
+            <LabelHeader
+              label={label}
+              help={help}
+              optional={optional}
+              size={size}
+              focused={focused}
+              icon={icon}
+            />
+          )}
           {children}
         </div>
       </Tag>

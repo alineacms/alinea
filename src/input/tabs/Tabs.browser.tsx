@@ -1,6 +1,7 @@
 import {Section, Type} from 'alinea/core'
-import {InputForm, InputState} from 'alinea/editor'
-import {HStack, TextLabel} from 'alinea/ui'
+import {InputForm, InputLabel, InputState} from 'alinea/editor'
+import {HStack, Sink, TextLabel} from 'alinea/ui'
+import {Lift, useLiftLevel} from 'alinea/ui/Lift'
 import {Tabs} from 'alinea/ui/Tabs'
 import {TabsSection, tabs as createTabs} from './Tabs.js'
 
@@ -14,10 +15,11 @@ interface TabsViewProps {
 }
 
 function TabsView({state, section}: TabsViewProps) {
+  const level = useLiftLevel()
   const tabs = section[Section.Data] as TabsSection
   const visibleTypes = tabs.types.filter(type => !Type.meta(type).isHidden)
   if (!visibleTypes.length) return null
-  return (
+  const inner = (
     <Tabs.Root>
       <Tabs.List>
         {visibleTypes.map((type, i) => {
@@ -33,15 +35,30 @@ function TabsView({state, section}: TabsViewProps) {
           )
         })}
       </Tabs.List>
-      <Tabs.Panels>
-        {visibleTypes.map((type, i) => {
-          return (
-            <Tabs.Panel key={i} tabIndex={i}>
-              <InputForm type={type} state={state} />
-            </Tabs.Panel>
-          )
-        })}
-      </Tabs.Panels>
+      <Lift>
+        <Tabs.Panels>
+          {visibleTypes.map((type, i) => {
+            return (
+              <Tabs.Panel key={i} tabIndex={i}>
+                <InputForm type={type} state={state} border={false} />
+              </Tabs.Panel>
+            )
+          })}
+        </Tabs.Panels>
+      </Lift>
     </Tabs.Root>
+  )
+  return (
+    <div>
+      {level > 0 ? (
+        <InputLabel inline>
+          <Sink.Root>
+            <Sink.Content>{inner}</Sink.Content>
+          </Sink.Root>
+        </InputLabel>
+      ) : (
+        inner
+      )}
+    </div>
   )
 }

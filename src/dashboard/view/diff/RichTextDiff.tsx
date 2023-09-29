@@ -1,6 +1,6 @@
 import {RichTextShape, TextDoc} from 'alinea/core'
 import {RecordShape} from 'alinea/core/shape/RecordShape'
-import {Card} from 'alinea/ui'
+import {Sink} from 'alinea/ui'
 import {ReactNode, useMemo} from 'react'
 import {ChangeBox} from './ChangeBox.js'
 import {diffList, diffRecord} from './DiffUtils.js'
@@ -78,7 +78,7 @@ export function RichTextDiff({shape, valueA, valueB}: RichTextDiffProps) {
   }
   const changes = diffList(parts.a, parts.b, equals)
   return (
-    <Card.Root>
+    <Sink.Root>
       {changes.map((change, i) => {
         switch (change.value.type) {
           case 'block': {
@@ -127,6 +127,6 @@ export function RichTextDiff({shape, valueA, valueB}: RichTextDiffProps) {
           }
         }
       })}
-    </Card.Root>
+    </Sink.Root>
   )
 }

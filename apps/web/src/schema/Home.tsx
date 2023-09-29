@@ -1,5 +1,5 @@
 import alinea from 'alinea'
-import {IcRoundInsertDriveFile} from 'alinea/ui/icons/IcRoundInsertDriveFile'
+import {IcOutlineInsertDriveFile} from 'alinea/ui/icons/IcOutlineInsertDriveFile'
 import {IcRoundLink} from 'alinea/ui/icons/IcRoundLink'
 
 export const Home = alinea.type(
@@ -27,7 +27,7 @@ export const Home = alinea.type(
       }),
       // blocks: BlocksSchema,
       [alinea.type.meta]: {
-        icon: IcRoundInsertDriveFile
+        icon: IcOutlineInsertDriveFile
       }
     }),
     alinea.tab('Top navigation', {

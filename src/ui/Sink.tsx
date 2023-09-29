@@ -1,9 +1,9 @@
-import css from './Card.module.scss'
+import css from './Sink.module.scss'
 import {fromModule} from './util/Styler.js'
 
 const styles = fromModule(css)
 
-export namespace Card {
+export namespace Sink {
   export const Root = styles.root.toElement('div')
   export const Row = styles.row.toElement('div')
   export const Content = styles.content.toElement('div')

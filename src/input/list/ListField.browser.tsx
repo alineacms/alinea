@@ -26,7 +26,7 @@ import {entries} from 'alinea/core/util/Objects'
 import {Create} from 'alinea/dashboard/view/Create'
 import {IconButton} from 'alinea/dashboard/view/IconButton'
 import {InputForm, InputLabel, InputState, useInput} from 'alinea/editor'
-import {Card, fromModule, Icon, TextLabel} from 'alinea/ui'
+import {fromModule, Icon, Sink, TextLabel} from 'alinea/ui'
 import {IcOutlineList} from 'alinea/ui/icons/IcOutlineList'
 import IcRoundAdd from 'alinea/ui/icons/IcRoundAdd'
 import {IcRoundClose} from 'alinea/ui/icons/IcRoundClose'
@@ -138,18 +138,18 @@ function ListInputRow({
           }}
         />
       )}
-      <Card.Header>
-        <Card.Options style={{zIndex: 1}}>
+      <Sink.Header>
+        <Sink.Options style={{zIndex: 1}}>
           <IconButton
             icon={Type.meta(type).icon || IcRoundDragHandle}
             {...handle}
             style={{cursor: handle ? 'grab' : 'grabbing'}}
           />
-        </Card.Options>
-        <Card.Title>
+        </Sink.Options>
+        <Sink.Title>
           <TextLabel label={Type.label(type)} />
-        </Card.Title>
-        <Card.Options>
+        </Sink.Title>
+        <Sink.Options>
           <IconButton
             icon={IcRoundKeyboardArrowUp}
             onClick={() => onMove?.(-1)}
@@ -159,11 +159,11 @@ function ListInputRow({
             onClick={() => onMove?.(1)}
           />
           <IconButton icon={IcRoundClose} onClick={onDelete} />
-        </Card.Options>
-      </Card.Header>
-      <Card.Content>
+        </Sink.Options>
+      </Sink.Header>
+      <Sink.Content>
         <InputForm type={type} state={path} />
-      </Card.Content>
+      </Sink.Content>
     </div>
   )
 }
@@ -259,7 +259,7 @@ export function ListInput({state, field}: ListInputProps) {
         <div className={styles.root()}>
           <div className={styles.root.inner({inline: options.inline})}>
             <SortableContext items={ids} strategy={verticalListSortingStrategy}>
-              <Card.Root>
+              <Sink.Root>
                 {rows.map((row, i) => {
                   return (
                     <ListInputRowSortable
@@ -282,7 +282,7 @@ export function ListInput({state, field}: ListInputProps) {
                     list.push({type} as any)
                   }}
                 />
-              </Card.Root>
+              </Sink.Root>
             </SortableContext>
 
             <DragOverlay

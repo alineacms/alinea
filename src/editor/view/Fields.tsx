@@ -1,11 +1,8 @@
 import {Field} from 'alinea/core'
 import {entries} from 'alinea/core/util/Objects'
-import {fromModule} from 'alinea/ui'
+import {Lift} from 'alinea/ui/Lift'
 import {InputState} from '../InputState.js'
-import css from './Fields.module.scss'
 import {Input} from './Input.js'
-
-const styles = fromModule(css)
 
 export interface FieldsProps {
   state: InputState<any>
@@ -14,13 +11,10 @@ export interface FieldsProps {
 }
 
 export function Fields({state, fields, border = true}: FieldsProps) {
-  return (
-    <div className={styles.root({border})}>
-      {entries(fields).map(([name, field]) => {
-        const isHidden = Field.options(field).hidden
-        if (isHidden) return null
-        return <Input key={name} state={state.child(name)} field={field} />
-      })}
-    </div>
-  )
+  const inner = entries(fields).map(([name, field]) => {
+    const isHidden = Field.options(field).hidden
+    if (isHidden) return null
+    return <Input key={name} state={state.child(name)} field={field} />
+  })
+  return border ? <Lift>{inner}</Lift> : <div>{inner}</div>
 }

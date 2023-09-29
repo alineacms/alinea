@@ -15,12 +15,14 @@ export function InputForm({state, type, border}: InputFormProps) {
         const View = Section.view(section)
         if (View) return <View state={state} section={section} key={i} />
         return (
-          <Fields
-            key={i}
-            fields={Section.fields(section)}
-            state={state}
-            border={border}
-          />
+          <div>
+            <Fields
+              key={i}
+              fields={Section.fields(section)}
+              state={state}
+              border={border}
+            />
+          </div>
         )
       })}
     </>

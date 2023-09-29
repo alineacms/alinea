@@ -1,10 +1,8 @@
 import {Shape} from 'alinea/core'
 import {InputLabel} from 'alinea/editor'
-import {VStack, fromModule} from 'alinea/ui'
-import css from '../../../editor/view/Fields.module.scss'
+import {VStack} from 'alinea/ui'
+import {Lift} from 'alinea/ui/Lift'
 import {FieldDiff} from './FieldDiff.js'
-
-const styles = fromModule(css)
 
 export type FieldsDiffProps = {
   changes: Array<[key: string, shape: Shape]>
@@ -14,7 +12,7 @@ export type FieldsDiffProps = {
 
 export function FieldsDiff({changes, targetA, targetB}: FieldsDiffProps) {
   return (
-    <div className={styles.root({border: true})}>
+    <Lift>
       <VStack gap={10}>
         {changes.map(([key, type], i) => {
           return (
@@ -30,6 +28,6 @@ export function FieldsDiff({changes, targetA, targetB}: FieldsDiffProps) {
           )
         })}
       </VStack>
-    </div>
+    </Lift>
   )
 }

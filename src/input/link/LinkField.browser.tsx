@@ -26,7 +26,7 @@ import {entries} from 'alinea/core/util/Objects'
 import {Create} from 'alinea/dashboard/view/Create'
 import {IconButton} from 'alinea/dashboard/view/IconButton'
 import {InputForm, InputLabel, InputState, useInput} from 'alinea/editor'
-import {Card, TextLabel, fromModule} from 'alinea/ui'
+import {Sink, TextLabel, fromModule} from 'alinea/ui'
 import {IcRoundClose} from 'alinea/ui/icons/IcRoundClose'
 import IcRoundDragHandle from 'alinea/ui/icons/IcRoundDragHandle'
 import {IcRoundLink} from 'alinea/ui/icons/IcRoundLink'
@@ -88,7 +88,7 @@ function LinkInput<Row extends Reference>({state, field}: LinkInputProps<Row>) {
       >
         <div className={styles.root()}>
           <div className={styles.root.inner()}>
-            <Card.Root>
+            <Sink.Root>
               {value && options.pickers[value.type] ? (
                 <LinkInputRow<Row>
                   fields={options.pickers[value.type].fields}
@@ -113,7 +113,7 @@ function LinkInput<Row extends Reference>({state, field}: LinkInputProps<Row>) {
                   </Create.Root>
                 </div>
               )}
-            </Card.Root>
+            </Sink.Root>
           </div>
         </div>
       </InputLabel>
@@ -222,7 +222,7 @@ function LinksInput<Row extends Reference>({
                 items={ids}
                 strategy={verticalListSortingStrategy}
               >
-                <Card.Root>
+                <Sink.Root>
                   {value.map(reference => {
                     if (!options.pickers[reference.type]) return null
                     return (
@@ -254,7 +254,7 @@ function LinksInput<Row extends Reference>({
                       </Create.Root>
                     </div>
                   )}
-                </Card.Root>
+                </Sink.Root>
               </SortableContext>
 
               <DragOverlay
@@ -351,8 +351,8 @@ function LinkInputRow<Row extends Reference>({
       ref={rootRef}
       {...rest}
     >
-      <Card.Header>
-        <Card.Options>
+      <Sink.Header>
+        <Sink.Options>
           {isSortable ? (
             <IconButton
               icon={IcRoundDragHandle}
@@ -364,20 +364,20 @@ function LinkInputRow<Row extends Reference>({
               <IcRoundLink />
             </div>
           )}
-        </Card.Options>
+        </Sink.Options>
         <div style={{flexGrow: 1, minWidth: 0}}>
           <Suspense fallback={null}>
             <RowView reference={reference} />
           </Suspense>
         </div>
-        <Card.Options>
+        <Sink.Options>
           <IconButton icon={IcRoundClose} onClick={onRemove} />
-        </Card.Options>
-      </Card.Header>
+        </Sink.Options>
+      </Sink.Header>
       {fields && (
-        <Card.Content>
+        <Sink.Content>
           <InputForm type={fields} state={state} />
-        </Card.Content>
+        </Sink.Content>
       )}
     </div>
   )

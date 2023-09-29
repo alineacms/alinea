@@ -161,27 +161,31 @@ export function EntryEdit({editor}: EntryEditProps) {
             />
 
             {untranslated && (
-              <EntryNotice
-                icon={IcRoundTranslate}
-                title="Untranslated"
-                variant="untranslated"
-              >
-                This page has not yet been translated to this language,
-                <br />
-                {editor.parentNeedsTranslation
-                  ? 'please translate the parent page first.'
-                  : 'please enter the details below and save to start translating.'}
-              </EntryNotice>
+              <div>
+                <EntryNotice
+                  icon={IcRoundTranslate}
+                  title="Untranslated"
+                  variant="untranslated"
+                >
+                  This page has not yet been translated to this language,
+                  <br />
+                  {editor.parentNeedsTranslation
+                    ? 'please translate the parent page first.'
+                    : 'please enter the details below and save to start translating.'}
+                </EntryNotice>
+              </div>
             )}
 
             {mode === EditMode.Diff ? (
               <ShowChanges editor={editor} />
             ) : (
-              <>
+              <div>
                 <SuspenseBoundary name="input form">
-                  <InputForm type={editor.type} state={state} />
+                  <VStack gap={18}>
+                    <InputForm type={editor.type} state={state} />
+                  </VStack>
                 </SuspenseBoundary>
-              </>
+              </div>
             )}
           </Main.Container>
           <FieldToolbar.Root />

@@ -1,6 +1,6 @@
 export * from './ui/Button.js'
-export * from './ui/Card.js'
 export * from './ui/Chip.js'
+export * from './ui/Sink.js'
 
 export * from './ui/ErrorMessage.js'
 export * from './ui/Icon.js'
