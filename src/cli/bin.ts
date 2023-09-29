@@ -1,6 +1,6 @@
 import sade from 'sade'
 // @ts-ignore
-import {version} from '../../package.json'
+import pkg from '../../package.json'
 import {ensureEnv} from './util/EnsureEnv.js'
 import {ensureNode} from './util/EnsureNode.js'
 import {ensureReact} from './util/EnsureReact.js'
@@ -9,7 +9,7 @@ import {forwardCommand} from './util/ForwardCommand.js'
 const prog = sade('alinea')
 
 prog
-  .version(version)
+  .version(pkg.version)
   .command('build')
   .alias('generate')
   .describe('Generate types and content cache')
