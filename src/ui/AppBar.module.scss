@@ -9,10 +9,6 @@
   backdrop-filter: blur(12px);
   transition: background 0.25s ease-out;
 
-  @include s {
-    overflow-x: auto;
-  }
-
   &.is-draft,
   &.is-editing,
   &.is-revision {

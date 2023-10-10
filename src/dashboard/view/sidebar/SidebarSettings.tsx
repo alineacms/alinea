@@ -55,6 +55,12 @@ export function SidebarSettings() {
   const updateFontSize = useSetAtom(sizePreferenceAtom)
   const updateWorkspace = useSetAtom(workspacePreferenceAtom)
 
+  function disableTransition(run: () => void) {
+    document.body.setAttribute('data-disable-transition', 'true')
+    run()
+    setTimeout(() => document.body.removeAttribute('data-disable-transition'))
+  }
+
   return (
     <DropdownMenu.Root style={{marginTop: 'auto', ...style}}>
       <DropdownMenu.Trigger style={{width: '100%'}}>
@@ -85,14 +91,7 @@ export function SidebarSettings() {
                 <Switch
                   checked={checked}
                   onChange={() => {
-                    document.body.setAttribute(
-                      'data-disable-transition',
-                      'true'
-                    )
-                    toggleSchemePreference()
-                    setTimeout(() =>
-                      document.body.removeAttribute('data-disable-transition')
-                    )
+                    disableTransition(toggleSchemePreference)
                   }}
                   className={styles.root.switch({checked})}
                 >
@@ -112,13 +111,17 @@ export function SidebarSettings() {
                 />
                 <IconButton
                   icon={IcRoundKeyboardArrowDown}
-                  onClick={() => updateFontSize(size - 1)}
+                  onClick={() =>
+                    disableTransition(() => updateFontSize(size - 1))
+                  }
                   disabled={size <= 16}
                   title="Decrease font size"
                 />
                 <IconButton
                   icon={IcRoundKeyboardArrowUp}
-                  onClick={() => updateFontSize(size + 1)}
+                  onClick={() =>
+                    disableTransition(() => updateFontSize(size + 1))
+                  }
                   disabled={size >= 40}
                   title="Increase font size"
                 />

@@ -75,10 +75,6 @@ export namespace Sidebar {
     )
     const {entryId: id} = useEntryLocation() || {}
     const {name: workspace} = useWorkspace()
-    useNonInitialEffect(() => {
-      if (!isSmall) return
-      if (id) dispatchOpen({nav: false})
-    }, [isSmall, id])
 
     useNonInitialEffect(() => {
       if (!isSmall) return

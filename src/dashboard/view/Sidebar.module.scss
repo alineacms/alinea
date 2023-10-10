@@ -12,7 +12,6 @@
   flex-shrink: 0;
   position: relative;
   z-index: 3;
-  background: var(--alinea-background);
 
   @include s {
     position: absolute;
@@ -24,12 +23,12 @@
 
   @include s {
     &.is-left {
-      padding-right: 25px;
+      padding-right: 35px;
       transform: translateX(-100%);
     }
 
     &.is-right {
-      padding-left: 25px;
+      padding-left: 35px;
       transform: translateX(100%);
     }
   }
@@ -51,6 +50,7 @@
       position: absolute;
       inset: 0;
       background: var(--alinea-shadow);
+      z-index: -1;
     }
 
     @include ml {

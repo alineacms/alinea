@@ -23,19 +23,17 @@
 
 .header {
   position: relative;
-  padding-bottom: 6px;
+  padding-bottom: 8px;
 
   &-title {
     display: inline-block;
     font-weight: 600;
     font-size: 13px;
     color: var(--alinea-fields-foreground);
-    padding-bottom: 4px;
   }
 
   &-help {
     font-weight: normal;
-    padding: 4px 0;
     font-style: italic;
     font-size: 12px;
   }

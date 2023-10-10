@@ -3,10 +3,7 @@ import {IcRoundTranslate} from 'alinea/ui/icons/IcRoundTranslate'
 import {IcRoundUploadFile} from 'alinea/ui/icons/IcRoundUploadFile'
 
 export namespace schema {
-  export const Page = alinea.type('Page', {
-    title: alinea.text('Title', {width: 0.5, multiline: true}),
-    path: alinea.path('Path', {width: 0.5})
-  })
+  export const Page = alinea.document('Page', {})
 
   export const Folder = alinea.type('Folder', {
     title: alinea.text('Title', {width: 0.5, multiline: true}),
@@ -17,8 +14,7 @@ export namespace schema {
     }
   })
 
-  export const Fields = alinea.type('Fields', {
-    ...Page,
+  export const Fields = alinea.document('Fields', {
     ...alinea.tabs(
       alinea.tab('Basic fields', {
         title: alinea.text('Text field'),

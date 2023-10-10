@@ -1,8 +1,10 @@
-import {EntryPhase} from 'alinea/core'
+import {EntryPhase, Section, Type} from 'alinea/core'
 import {Modal} from 'alinea/dashboard/view/Modal'
 import {InputForm} from 'alinea/editor'
+import {TabsHeader, TabsSection} from 'alinea/input/tabs/Tabs.browser'
 import {Button, HStack, Stack, VStack, fromModule} from 'alinea/ui'
 import {Main} from 'alinea/ui/Main'
+import {Tabs} from 'alinea/ui/Tabs'
 import {IcRoundTranslate} from 'alinea/ui/icons/IcRoundTranslate'
 import {useAtomValue, useSetAtom} from 'jotai'
 import {useEffect, useRef} from 'react'
@@ -89,6 +91,13 @@ export function EntryEdit({editor}: EntryEditProps) {
       document.removeEventListener('keydown', listener)
     }
   }, [editor, hasChanges, saveDraft, enableDrafts])
+  const sections = Type.sections(editor.type)
+  const hasRootTabs =
+    sections.length === 1 && sections[0][Section.Data] instanceof TabsSection
+  const tabs: TabsSection | false =
+    hasRootTabs && (sections[0][Section.Data] as TabsSection)
+  const visibleTypes =
+    tabs && tabs.types.filter(type => !Type.meta(type).isHidden)
   /*useEffect(() => {
     if (isBlocking && !isNavigationChange) confirm?.()
   }, [isBlocking, isNavigationChange, confirm])*/
@@ -139,54 +148,68 @@ export function EntryEdit({editor}: EntryEditProps) {
           </VStack>
         </Modal>
       )}
-      <Main
-        scrollRef={ref}
-        className={styles.root()}
-        // head={<EntryHeader editor={editor} />}
-      >
+      <Main scrollRef={ref} className={styles.root()}>
         <FieldToolbar.Provider>
           <EntryHeader editor={editor} />
           {showHistory && <EntryHistory editor={editor} />}
-          <EntryTitle
-            editor={editor}
-            backLink={
-              editor.activeVersion.parent
-                ? nav.entry({
-                    entryId: editor.activeVersion.parent,
-                    workspace: editor.activeVersion.workspace
-                  })
-                : nav.entry({entryId: undefined})
-            }
-          />
-          <Main.Container>
-            {untranslated && (
-              <div>
-                <EntryNotice
-                  icon={IcRoundTranslate}
-                  title="Untranslated"
-                  variant="untranslated"
-                >
-                  This page has not yet been translated to this language,
-                  <br />
-                  {editor.parentNeedsTranslation
-                    ? 'please translate the parent page first.'
-                    : 'please enter the details below and save to start translating.'}
-                </EntryNotice>
-              </div>
-            )}
+          <Tabs.Root>
+            <EntryTitle
+              editor={editor}
+              backLink={
+                editor.activeVersion.parent
+                  ? nav.entry({
+                      entryId: editor.activeVersion.parent,
+                      workspace: editor.activeVersion.workspace
+                    })
+                  : nav.entry({entryId: undefined})
+              }
+            >
+              {hasRootTabs && (
+                <div className={styles.root.tabs()}>
+                  <TabsHeader backdrop={false} section={sections[0]} />
+                </div>
+              )}
+            </EntryTitle>
+            <Main.Container>
+              {untranslated && (
+                <div>
+                  <EntryNotice
+                    icon={IcRoundTranslate}
+                    title="Untranslated"
+                    variant="untranslated"
+                  >
+                    This page has not yet been translated to this language,
+                    <br />
+                    {editor.parentNeedsTranslation
+                      ? 'please translate the parent page first.'
+                      : 'please enter the details below and save to start translating.'}
+                  </EntryNotice>
+                </div>
+              )}
 
-            {mode === EditMode.Diff ? (
-              <ShowChanges editor={editor} />
-            ) : (
-              <div>
-                <SuspenseBoundary name="input form">
-                  <VStack gap={18}>
-                    <InputForm type={editor.type} state={state} />
-                  </VStack>
-                </SuspenseBoundary>
-              </div>
-            )}
-          </Main.Container>
+              <SuspenseBoundary name="input form">
+                {mode === EditMode.Diff ? (
+                  <ShowChanges editor={editor} />
+                ) : hasRootTabs && visibleTypes ? (
+                  <Tabs.Panels>
+                    {visibleTypes.map((type, i) => {
+                      return (
+                        <Tabs.Panel key={i} tabIndex={i}>
+                          <InputForm type={type} state={state} />
+                        </Tabs.Panel>
+                      )
+                    })}
+                  </Tabs.Panels>
+                ) : (
+                  <div>
+                    <VStack gap={18}>
+                      <InputForm type={editor.type} state={state} />
+                    </VStack>
+                  </div>
+                )}
+              </SuspenseBoundary>
+            </Main.Container>
+          </Tabs.Root>
           <FieldToolbar.Root />
         </FieldToolbar.Provider>
       </Main>

@@ -9,12 +9,19 @@ const liftStyles = fromModule(liftCss)
 
 export namespace Tabs {
   export const Root: typeof Tab.Group = Tab.Group
-  export function List(
-    props: PropsWithChildren<ComponentPropsWithoutRef<typeof Tab>>
-  ) {
+  export function List({
+    backdrop = true,
+    ...props
+  }: PropsWithChildren<
+    ComponentPropsWithoutRef<typeof Tab> & {backdrop?: boolean}
+  >) {
     return (
       <Tab.List
-        className={liftStyles.header.mergeProps(props).with(styles.list)()}
+        className={
+          backdrop
+            ? liftStyles.header.mergeProps(props).with(styles.list)()
+            : styles.list
+        }
         {...props}
       />
     )

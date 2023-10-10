@@ -21,7 +21,7 @@ function PathInput({state, field}: PathInputProps) {
   const {width, from = 'title', help, optional} = options
   const [focus, setFocus] = useState(false)
   const parentState = state.parent()
-  if (!parentState) throw 'Parent state not found'
+  if (!parentState) throw new Error('Path field needs parent state')
   const [source = ''] = useInput<InputState.Scalar<string>>(
     parentState.child(from)
   )

@@ -40,11 +40,11 @@
   }
 
   &:hover {
-    color: var(--alinea-accent-foreground);
-    background: var(--alinea-accent);
+    color: var(--alinea-button-foreground);
+    background: var(--alinea-button-background);
   }
 
   &:hover &-add {
-    color: var(--alinea-accent-foreground);
+    color: var(--alinea-button-foreground);
   }
 }

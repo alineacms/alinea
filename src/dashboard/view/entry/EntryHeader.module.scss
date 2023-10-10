@@ -24,14 +24,22 @@
     }
   }
 
+  &-menuToggle {
+    @include l {
+      display: none;
+    }
+  }
+
   &-description {
     height: 100%;
     flex: 1;
-    padding: 0 20px;
+    margin: auto;
+    padding: 0 var(--alinea-main-padding-x);
+    max-width: var(--alinea-main-width);
 
     &-separator {
       border-right: 1px solid;
-      opacity: 0.2;
+      opacity: 0;
       height: 60%;
     }
 
@@ -45,6 +53,10 @@
       font-size: 14px;
       display: flex;
       align-items: center;
+
+      @include s {
+        display: none;
+      }
 
       &-button {
         height: 100%;

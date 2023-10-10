@@ -73,9 +73,9 @@ function EntryTreeItem({item, data}: EntryTreeItemProps) {
         {item.isFolder() && (
           <span className={styles.tree.item.arrow()}>
             {item.isExpanded() ? (
-              <Icon icon={IcRoundKeyboardArrowDown} size={20} />
+              <Icon icon={IcRoundKeyboardArrowDown} size={18} />
             ) : (
-              <Icon icon={IcRoundKeyboardArrowRight} size={20} />
+              <Icon icon={IcRoundKeyboardArrowRight} size={18} />
             )}
           </span>
         )}
@@ -84,7 +84,7 @@ function EntryTreeItem({item, data}: EntryTreeItemProps) {
           <span className={styles.tree.item.icon()}>
             <Icon
               icon={
-                isUntranslated ? IcRoundTranslate : icon || IcOutlineDescription
+                isUntranslated ? IcRoundTranslate : icon ?? IcOutlineDescription
               }
             />
           </span>

@@ -17,6 +17,33 @@ interface TabsViewProps {
   section: Section
 }
 
+export interface TabsHeaderProps {
+  section: Section
+  backdrop?: boolean
+}
+
+export function TabsHeader({section, backdrop}: TabsHeaderProps) {
+  const tabs = section[Section.Data] as TabsSection
+  const visibleTypes = tabs.types.filter(type => !Type.meta(type).isHidden)
+  if (!visibleTypes.length) return null
+  return (
+    <Tabs.List backdrop={backdrop}>
+      {visibleTypes.map((type, i) => {
+        const meta = Type.meta(type)
+        const Icon = meta.icon
+        return (
+          <Tabs.Trigger key={i}>
+            <HStack center gap={8}>
+              {Icon && <Icon />}
+              <TextLabel label={Type.label(type)} />
+            </HStack>
+          </Tabs.Trigger>
+        )
+      })}
+    </Tabs.List>
+  )
+}
+
 function TabsView({state, section}: TabsViewProps) {
   const {parent} = useElevation()
   const tabs = section[Section.Data] as TabsSection
@@ -24,20 +51,7 @@ function TabsView({state, section}: TabsViewProps) {
   if (!visibleTypes.length) return null
   const inner = (
     <Tabs.Root>
-      <Tabs.List>
-        {visibleTypes.map((type, i) => {
-          const meta = Type.meta(type)
-          const Icon = meta.icon
-          return (
-            <Tabs.Trigger key={i}>
-              <HStack center gap={8}>
-                {Icon && <Icon />}
-                <TextLabel label={Type.label(type)} />
-              </HStack>
-            </Tabs.Trigger>
-          )
-        })}
-      </Tabs.List>
+      <TabsHeader section={section} />
       <Lift>
         <Tabs.Panels>
           {visibleTypes.map((type, i) => {

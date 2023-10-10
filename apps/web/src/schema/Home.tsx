@@ -1,14 +1,11 @@
 import alinea from 'alinea'
+import {IcRoundInsertDriveFile} from 'alinea/ui/icons/IcRoundInsertDriveFile'
+import {IcRoundLink} from 'alinea/ui/icons/IcRoundLink'
 
 export const Home = alinea.document(
   'Home',
   alinea.tabs(
     alinea.tab('Homepage', {
-      title: alinea.text('Title', {
-        width: 0.5,
-        multiline: true
-      }),
-      path: alinea.path('Path', {width: 0.5}),
       headline: alinea.text('Headline', {multiline: true}),
       byline: alinea.text('Byline', {multiline: true}),
       action: alinea.link.entry('Action', {
@@ -22,7 +19,10 @@ export const Home = alinea.document(
           text: alinea.richText('Text')
           // code: CodeVariants
         })
-      })
+      }),
+      [alinea.meta]: {
+        icon: IcRoundInsertDriveFile
+      }
     }),
     alinea.tab('Top navigation', {
       links: alinea.link.multiple('Links', {
@@ -32,7 +32,10 @@ export const Home = alinea.document(
             help: 'Active when this url is active'
           })
         })
-      })
+      }),
+      [alinea.meta]: {
+        icon: IcRoundLink
+      }
     }),
     alinea.tab('Footer navigation', {
       footer: alinea.list('Navigation', {
@@ -46,7 +49,10 @@ export const Home = alinea.document(
             })
           })
         })
-      })
+      }),
+      [alinea.meta]: {
+        icon: IcRoundLink
+      }
     })
   )
 )

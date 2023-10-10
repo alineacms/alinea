@@ -2,6 +2,8 @@
   display: flex;
   overflow: auto;
   max-width: 100%;
+  padding: 8px !important;
+  gap: 5px;
 }
 
 .trigger {
@@ -13,7 +15,8 @@
   border: none;
   color: inherit;
   font: inherit;
-  padding: 14px 14px 14px 14px;
+  height: 30px;
+  padding: 0 12px;
   cursor: pointer;
   opacity: 0.7;
   font-size: 13px;
@@ -22,6 +25,7 @@
   font-weight: 600;
   white-space: nowrap;
   color: var(--alinea-tabs-trigger-foreground);
+  border-radius: var(--alinea-border-radius);
 
   &:hover {
     opacity: 1;
@@ -29,15 +33,7 @@
 
   &.is-selected {
     opacity: 1;
-
-    &:after {
-      content: '';
-      position: absolute;
-      bottom: 0;
-      left: 12px;
-      right: 12px;
-      height: 2px;
-      background: var(--alinea-button-hover);
-    }
+    background: var(--alinea-selected);
+    color: var(--alinea-selected-foreground);
   }
 }

@@ -4,11 +4,13 @@ import {AppBar} from 'alinea/ui/AppBar'
 import {DropdownMenu} from 'alinea/ui/DropdownMenu'
 import IcOutlineAvTimer from 'alinea/ui/icons/IcOutlineAvTimer'
 import {IcOutlineDrafts} from 'alinea/ui/icons/IcOutlineDrafts'
+import {IcOutlineKeyboardTab} from 'alinea/ui/icons/IcOutlineKeyboardTab'
 import {IcOutlineRemoveRedEye} from 'alinea/ui/icons/IcOutlineRemoveRedEye'
 import {IcRoundArchive} from 'alinea/ui/icons/IcRoundArchive'
 import {IcRoundCheck} from 'alinea/ui/icons/IcRoundCheck'
 import {IcRoundDelete} from 'alinea/ui/icons/IcRoundDelete'
 import {IcRoundEdit} from 'alinea/ui/icons/IcRoundEdit'
+import {IcRoundMenu} from 'alinea/ui/icons/IcRoundMenu'
 import {IcRoundMoreVert} from 'alinea/ui/icons/IcRoundMoreVert'
 import {IcRoundPublishedWithChanges} from 'alinea/ui/icons/IcRoundPublishedWithChanges'
 import {IcRoundSave} from 'alinea/ui/icons/IcRoundSave'
@@ -20,6 +22,7 @@ import {EntryEditor} from '../../atoms/EntryEditorAtoms.js'
 import {useLocation, useNavigate} from '../../atoms/LocationAtoms.js'
 import {useConfig} from '../../hook/UseConfig.js'
 import {useLocale} from '../../hook/UseLocale.js'
+import {useSidebar} from '../Sidebar.js'
 import css from './EntryHeader.module.scss'
 import {Langswitch} from './LangSwitch.js'
 
@@ -90,6 +93,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
   const [showHistory, setShowHistory] = useAtom(editor.showHistory)
   const navigate = useNavigate()
   const {pathname} = useLocation()
+  const {isNavOpen, isPreviewOpen, toggleNav, togglePreview} = useSidebar()
   useEffect(() => {
     // Reset the selected phase if we make edits
     if (hasChanges && selectedPhase) navigate(pathname)
@@ -138,6 +142,14 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
   return (
     <AppBar.Root className={styles.root()} variant={variant}>
       <HStack center gap={12} className={styles.root.description()}>
+        <button
+          title="Display menu"
+          onClick={() => toggleNav()}
+          className={styles.root.menuToggle()}
+        >
+          <Icon icon={IcRoundMenu} />
+        </button>
+
         <Icon icon={variantIcon[variant]} size={18} />
 
         <DropdownMenu.Root>
@@ -286,6 +298,19 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
                 {options}
               </DropdownMenu.Items>
             </DropdownMenu.Root>
+
+            <button
+              title="Display preview"
+              onClick={() => togglePreview()}
+              style={{cursor: 'pointer'}}
+            >
+              <Icon
+                icon={IcOutlineKeyboardTab}
+                style={{
+                  transform: `rotate(${isPreviewOpen ? 0 : 180}deg)`
+                }}
+              />
+            </button>
           </HStack>
         </Stack.Right>
       </HStack>
