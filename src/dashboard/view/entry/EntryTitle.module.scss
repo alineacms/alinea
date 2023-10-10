@@ -1,8 +1,17 @@
+@import '@alinea/ui/style.scss';
+
 .root {
-  padding-bottom: 30px;
+  background: var(--alinea-background);
+  border-bottom: 1px solid var(--alinea-outline);
+  height: var(--alinea-header-height);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+
+  padding: 0 16px;
 
   &-title {
-    font-size: 28px;
+    font-size: 16px;
     font-weight: 600;
   }
 }

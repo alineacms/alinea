@@ -4,7 +4,7 @@ import {InputForm} from 'alinea/editor'
 import {Button, HStack, Stack, VStack, fromModule} from 'alinea/ui'
 import {Main} from 'alinea/ui/Main'
 import {IcRoundTranslate} from 'alinea/ui/icons/IcRoundTranslate'
-import {useAtom, useAtomValue, useSetAtom} from 'jotai'
+import {useAtomValue, useSetAtom} from 'jotai'
 import {useEffect, useRef} from 'react'
 import {EntryEditor} from '../atoms/EntryEditorAtoms.js'
 import {useRouteBlocker} from '../atoms/RouterAtoms.js'
@@ -43,7 +43,7 @@ export function EntryEdit({editor}: EntryEditProps) {
   const locale = useLocale()
   const {preview, enableDrafts} = useConfig()
   const nav = useNav()
-  const [mode, setMode] = useAtom(editor.editMode)
+  const mode = useAtomValue(editor.editMode)
   const hasChanges = useAtomValue(editor.hasChanges)
   const selectedPhase = useAtomValue(editor.selectedPhase)
   const ref = useRef<HTMLDivElement>(null)
@@ -147,19 +147,18 @@ export function EntryEdit({editor}: EntryEditProps) {
         <FieldToolbar.Provider>
           <EntryHeader editor={editor} />
           {showHistory && <EntryHistory editor={editor} />}
+          <EntryTitle
+            editor={editor}
+            backLink={
+              editor.activeVersion.parent
+                ? nav.entry({
+                    entryId: editor.activeVersion.parent,
+                    workspace: editor.activeVersion.workspace
+                  })
+                : nav.entry({entryId: undefined})
+            }
+          />
           <Main.Container>
-            <EntryTitle
-              editor={editor}
-              backLink={
-                editor.activeVersion.parent
-                  ? nav.entry({
-                      entryId: editor.activeVersion.parent,
-                      workspace: editor.activeVersion.workspace
-                    })
-                  : nav.entry({entryId: undefined})
-              }
-            />
-
             {untranslated && (
               <div>
                 <EntryNotice
