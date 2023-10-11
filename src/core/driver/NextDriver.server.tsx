@@ -116,6 +116,9 @@ class NextDriver extends DefaultDriver implements NextApi {
     })) as string | null
     if (!url) return new Response('Not found', {status: 404})
     const source = new URL(request.url)
+    // Next.js incorrectly reports 0.0.0.0 as the hostname if the server is
+    // listening on all interfaces
+    if (source.hostname === '0.0.0.0') source.hostname = 'localhost'
     const location = new URL(url, source.origin)
     draftMode().enable()
     return new Response(`Redirecting...`, {
