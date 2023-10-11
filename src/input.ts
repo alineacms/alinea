@@ -14,6 +14,7 @@ export {richText} from 'alinea/input/richtext'
 export {select} from 'alinea/input/select'
 export {tab, tabs} from 'alinea/input/tabs'
 export {text} from 'alinea/input/text'
+export {view} from 'alinea/input/view'
 
 import {link} from 'alinea/input/link'
 export const entry = link.entry

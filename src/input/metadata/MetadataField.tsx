@@ -31,11 +31,11 @@ export class MetadataField extends Field.Record<
 export function metadata(options: MetadataOptions = {}) {
   const fields = type('Fields', {
     title: text('Title', {width: 0.5}),
+    image: link.image('Image', {width: 0.5}),
     description: text('Description', {multiline: true}),
-    image: link.image('Image'),
     ...tabs(
       tab('Search engines', {
-        'search:title': text('Title'),
+        'search:title': text('Title', {width: 0.5}),
         'search:description': text('Description', {multiline: true}),
         [Meta]: {
           icon: IcRoundSearch
@@ -43,7 +43,7 @@ export function metadata(options: MetadataOptions = {}) {
       }),
 
       tab('Social media', {
-        'og:title': text('Title'),
+        'og:title': text('Title', {width: 0.5}),
         'og:description': text('Description', {multiline: true}),
         [Meta]: {
           icon: IcBaselineWifiTethering

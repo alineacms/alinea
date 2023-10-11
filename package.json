@@ -203,6 +203,11 @@
       "browser": "./dist/input/text/TextField.browser.js",
       "default": "./dist/input/text/TextField.js"
     },
+    "./input/view/View": {
+      "worker": "./dist/input/view/View.js",
+      "browser": "./dist/input/view/View.browser.js",
+      "default": "./dist/input/view/View.js"
+    },
     "./picker/entry/EntryPicker": {
       "worker": "./dist/picker/entry/EntryPicker.js",
       "browser": "./dist/picker/entry/EntryPicker.browser.js",

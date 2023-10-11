@@ -19,10 +19,8 @@ function MetadataInput({state, field}: MetadataInputProps) {
   const {label, options} = field[Field.Data]
   const parentState = state.parent()
   if (!parentState) throw new Error('Metadata field needs parent state')
-  console.log(parentState)
   const [titleSource = ''] = useInput<InputState.Scalar<string>>(
     parentState.child('title')
   )
-  console.log(titleSource)
   return <InputForm state={state} type={options.fields} border={false} />
 }
