@@ -30,6 +30,7 @@ const SearchParams = object({
 class NextDriver extends DefaultDriver implements NextApi {
   apiKey = process.env.ALINEA_API_KEY
   jwtSecret = this.apiKey || 'dev'
+  store = PLazy.from(this.readStore.bind(this))
 
   async connection(): Promise<Connection> {
     const {cookies, draftMode} = await import('next/headers.js')
@@ -59,7 +60,7 @@ class NextDriver extends DefaultDriver implements NextApi {
         url: devUrl,
         resolveDefaults
       })
-    const store = await this.readStore()
+    const store = await this.store
     return new Server(
       {
         config: this.config,
@@ -83,7 +84,7 @@ class NextDriver extends DefaultDriver implements NextApi {
   }
 
   cloudHandler = PLazy.from(async () => {
-    const store = await this.readStore()
+    const store = await this.store
     const handler = createCloudHandler(this, store, this.apiKey)
     return async (request: Request) => {
       const response = await handler.handle(request)
