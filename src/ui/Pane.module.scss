@@ -5,6 +5,7 @@
   height: 100%;
   min-width: 0;
   flex-shrink: 0;
+  background: var(--alinea-background);
 
   @include s {
     width: 100% !important;

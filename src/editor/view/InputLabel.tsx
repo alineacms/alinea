@@ -1,5 +1,5 @@
 import {Label, renderLabel} from 'alinea/core/Label'
-import {fromModule} from 'alinea/ui'
+import {fromModule, px} from 'alinea/ui'
 import {Chip} from 'alinea/ui/Chip'
 import {HStack} from 'alinea/ui/Stack'
 import {ComponentType, PropsWithChildren, forwardRef, memo} from 'react'
@@ -26,7 +26,7 @@ export const LabelHeader = memo(function LabelHeader({
 }: LabelHeaderProps) {
   return (
     <header className={styles.header(size, {focused})}>
-      <HStack center wrap gap={8}>
+      <HStack center wrap gap={`${px(4)} ${px(8)}`}>
         <HStack center gap={8} className={styles.header.title()}>
           {/*Icon && <Icon />*/}
           <span>{renderLabel(label)}</span>
@@ -41,7 +41,7 @@ export const LabelHeader = memo(function LabelHeader({
 })
 
 export type LabelProps = PropsWithChildren<{
-  label: Label
+  label?: Label
   asLabel?: boolean
   help?: Label
   optional?: boolean
@@ -81,14 +81,16 @@ export const InputLabel = forwardRef<HTMLElement, LabelProps>(
         ref={ref as any}
       >
         <div className={styles.root.inner()}>
-          <LabelHeader
-            label={label}
-            help={help}
-            optional={optional}
-            size={size}
-            focused={focused}
-            icon={icon}
-          />
+          {label && (
+            <LabelHeader
+              label={label}
+              help={help}
+              optional={optional}
+              size={size}
+              focused={focused}
+              icon={icon}
+            />
+          )}
           {children}
         </div>
       </Tag>

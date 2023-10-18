@@ -11,12 +11,13 @@ import {createId, Field, Schema, Type} from 'alinea/core'
 import {entries} from 'alinea/core/util/Objects'
 import {IconButton} from 'alinea/dashboard/view/IconButton'
 import {InputForm, InputLabel, InputState, useInput} from 'alinea/editor'
-import {Card, fromModule, HStack, Icon, px, TextLabel} from 'alinea/ui'
+import {fromModule, HStack, Icon, px, TextLabel} from 'alinea/ui'
 import {DropdownMenu} from 'alinea/ui/DropdownMenu'
 import IcRoundAddCircle from 'alinea/ui/icons/IcRoundAddCircle'
 import {IcRoundClose} from 'alinea/ui/icons/IcRoundClose'
 import {IcRoundDragHandle} from 'alinea/ui/icons/IcRoundDragHandle'
 import {IcRoundNotes} from 'alinea/ui/icons/IcRoundNotes'
+import {Sink} from 'alinea/ui/Sink'
 import {
   createContext,
   useCallback,
@@ -56,28 +57,28 @@ function typeExtension(
     if (!id) return null
     return (
       <NodeViewWrapper>
-        <Card.Root style={{margin: `${px(18)} 0`}}>
-          <Card.Header>
-            <Card.Options>
+        <Sink.Root style={{margin: `${px(18)} 0`}}>
+          <Sink.Header>
+            <Sink.Options>
               <IconButton
                 icon={meta.icon || IcRoundDragHandle}
                 data-drag-handle
                 style={{cursor: 'grab'}}
               />
-            </Card.Options>
-            <Card.Title>
+            </Sink.Options>
+            <Sink.Title>
               <TextLabel label={Type.label(type)} />
-            </Card.Title>
-            <Card.Options>
+            </Sink.Title>
+            <Sink.Options>
               <IconButton icon={IcRoundClose} onClick={deleteNode} />
-            </Card.Options>
-          </Card.Header>
-          <Card.Content>
+            </Sink.Options>
+          </Sink.Header>
+          <Sink.Content>
             <IsNested.Provider value={true}>
               <InputForm state={parent.child(id)} type={type} />
             </IsNested.Provider>
-          </Card.Content>
-        </Card.Root>
+          </Sink.Content>
+        </Sink.Root>
       </NodeViewWrapper>
     )
   }

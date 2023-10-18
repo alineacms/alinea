@@ -1,8 +1,24 @@
+@import '@alinea/ui/style.scss';
+
 .root {
-  padding-bottom: 30px;
+  background: var(--alinea-background);
+  border-bottom: 1px solid var(--alinea-outline);
+  flex-shrink: 0;
+
+  &-inner {
+    padding: 26px var(--alinea-main-padding-x);
+    max-width: var(--alinea-main-width);
+    margin: auto;
+    @include s {
+      padding: var(--alinea-main-padding-x);
+    }
+  }
 
   &-title {
-    font-size: 28px;
     font-weight: 600;
+    font-size: 14px;
+    @include ml {
+      font-size: 22px;
+    }
   }
 }

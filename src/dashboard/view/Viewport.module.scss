@@ -1,3 +1,5 @@
+@import '@alinea/ui/style.scss';
+
 @mixin dark-theme {
   --alinea-hue: 212;
   --alinea-saturation: 18%;
@@ -11,8 +13,8 @@
   --alinea-inner-outline: hsl(var(--alinea-hue), var(--alinea-saturation), 13%);
   --alinea-highlight: hsla(var(--alinea-negative), 0.06);
   --alinea-lift: hsl(var(--alinea-hue), var(--alinea-saturation), 18%);
-  --alinea-selected: hsl(var(--alinea-hue), var(--alinea-saturation), 22%);
-  --alinea-selected-foreground: white;
+  --alinea-selected: #25344d;
+  --alinea-selected-foreground: #aec8f8;
   --alinea-outline: hsl(var(--alinea-hue), var(--alinea-saturation), 20%);
   --alinea-fields: hsl(var(--alinea-hue), var(--alinea-saturation), 10%);
   --alinea-fields-foreground: #dee1e4;
@@ -42,16 +44,16 @@
   --alinea-button-hover: #4a65e8;
 
   --alinea-variant-info-foreground: #f0f6ff;
-  --alinea-variant-info-background: hsla(230, 40%, 41%, 0.8);
+  --alinea-variant-info-background: hsla(230, 40%, 26%, 0.8);
   --alinea-variant-info-action: hsl(230, 40%, 50%);
   --alinea-variant-success-foreground: #f1fdf4;
-  --alinea-variant-success-background: hsla(140, 21%, 41%, 0.8);
+  --alinea-variant-success-background: hsla(140, 21%, 26%, 0.8);
   --alinea-variant-success-action: hsl(140, 21%, 50%);
   --alinea-variant-disabled-foreground: #f0f0f0;
-  --alinea-variant-disabled-background: hsla(0, 0%, 41%, 0.8);
+  --alinea-variant-disabled-background: hsla(0, 0%, 26%, 0.8);
   --alinea-variant-disabled-action: hsl(0, 0%, 50%);
   --alinea-variant-progress-foreground: #fef7ed;
-  --alinea-variant-progress-background: hsla(20, 29%, 41%, 0.8);
+  --alinea-variant-progress-background: hsla(20, 29%, 26%, 0.8);
   --alinea-variant-progress-actoion: hsl(15, 54%, 50%);
 }
 
@@ -114,9 +116,16 @@
   @include dark-theme;
   --alinea-border-radius: 6px;
   --alinea-header-height: 46px;
+  --alinea-main-padding-x: 26px;
+  --alinea-main-padding-y: 26px;
+  --alinea-main-width: 1024px;
   color: var(--alinea-foreground);
   font-size: 14px;
   font-family: Inter, sans-serif;
+
+  @include s {
+    --alinea-main-padding-x: 10px;
+  }
 
   @media (prefers-color-scheme: light) {
     @include light-theme;

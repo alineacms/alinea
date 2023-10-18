@@ -12,7 +12,6 @@ import {RootOverview} from '../view/RootOverview.js'
 import {SearchBox} from '../view/SearchBox.js'
 import {Sidebar} from '../view/Sidebar.js'
 import {NewEntry} from '../view/entry/NewEntry.js'
-import {RootHeader} from '../view/entry/RootHeader.js'
 import css from './ContentView.module.scss'
 
 const styles = fromModule(css)
@@ -33,7 +32,7 @@ export function ContentView({editor}: ContentViewProps) {
     <>
       <Sidebar.Tree>
         <SearchBox />
-        <RootHeader active={!editor} />
+        {/*<RootHeader active={!editor} />*/}
         <EntryTree
           i18nId={editor?.activeVersion.i18nId}
           selected={editor?.activeVersion.parents}

@@ -2,7 +2,7 @@ import {renderLabel} from 'alinea/core'
 import {RootData} from 'alinea/core/Root'
 import {Icon, TextLabel, Typo, fromModule} from 'alinea/ui'
 import {Main} from 'alinea/ui/Main'
-import {IcOutlineDescription} from 'alinea/ui/icons/IcOutlineDescription'
+import {IcRoundDescription} from 'alinea/ui/icons/IcRoundDescription'
 import {Head} from '../util/Head.js'
 import css from './RootOverview.module.scss'
 
@@ -21,7 +21,7 @@ export function RootOverview({root}: RootOverviewProps) {
       <Main>
         <div className={styles.root()}>
           <Icon
-            icon={root.icon || IcOutlineDescription}
+            icon={root.icon || IcRoundDescription}
             className={styles.root.icon()}
           />
           <Typo.H1>

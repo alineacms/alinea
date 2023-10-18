@@ -2,15 +2,10 @@ import alinea from 'alinea'
 import {IcRoundInsertDriveFile} from 'alinea/ui/icons/IcRoundInsertDriveFile'
 import {IcRoundLink} from 'alinea/ui/icons/IcRoundLink'
 
-export const Home = alinea.type(
+export const Home = alinea.document(
   'Home',
   alinea.tabs(
     alinea.tab('Homepage', {
-      title: alinea.text('Title', {
-        width: 0.5,
-        multiline: true
-      }),
-      path: alinea.path('Path', {width: 0.5}),
       headline: alinea.text('Headline', {multiline: true}),
       byline: alinea.text('Byline', {multiline: true}),
       action: alinea.link.entry('Action', {
@@ -25,8 +20,7 @@ export const Home = alinea.type(
           // code: CodeVariants
         })
       }),
-      // blocks: BlocksSchema,
-      [alinea.type.meta]: {
+      [alinea.meta]: {
         icon: IcRoundInsertDriveFile
       }
     }),
@@ -39,7 +33,7 @@ export const Home = alinea.type(
           })
         })
       }),
-      [alinea.tab.meta]: {
+      [alinea.meta]: {
         icon: IcRoundLink
       }
     }),
@@ -56,7 +50,7 @@ export const Home = alinea.type(
           })
         })
       }),
-      [alinea.tab.meta]: {
+      [alinea.meta]: {
         icon: IcRoundLink
       }
     })

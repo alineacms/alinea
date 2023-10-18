@@ -1,5 +1,5 @@
 import {ListRow, ListShape} from 'alinea/core/shape/ListShape'
-import {Card} from 'alinea/ui'
+import {Sink} from 'alinea/ui/Sink'
 import {ChangeBox} from './ChangeBox.js'
 import {diffList, diffRecord} from './DiffUtils.js'
 import {FieldsDiff} from './FieldsDiff.js'
@@ -16,7 +16,7 @@ export function ListDiff({shape, valueA, valueB}: ListDiffProps) {
   }
   const changes = diffList(valueA || [], valueB || [], equals)
   return (
-    <Card.Root>
+    <Sink.Root>
       {changes.map((change, i) => {
         const block = change.value
         const kind = shape.values[block.type]
@@ -38,6 +38,6 @@ export function ListDiff({shape, valueA, valueB}: ListDiffProps) {
           </ChangeBox>
         )
       })}
-    </Card.Root>
+    </Sink.Root>
   )
 }

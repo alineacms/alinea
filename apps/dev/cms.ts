@@ -3,10 +3,7 @@ import {IcRoundTranslate} from 'alinea/ui/icons/IcRoundTranslate'
 import {IcRoundUploadFile} from 'alinea/ui/icons/IcRoundUploadFile'
 
 export namespace schema {
-  export const Page = alinea.type('Page', {
-    title: alinea.text('Title', {width: 0.5, multiline: true}),
-    path: alinea.path('Path', {width: 0.5})
-  })
+  export const Page = alinea.document('Page', {})
 
   export const Folder = alinea.type('Folder', {
     title: alinea.text('Title', {width: 0.5, multiline: true}),
@@ -17,8 +14,7 @@ export namespace schema {
     }
   })
 
-  export const Fields = alinea.type('Fields', {
-    ...Page,
+  export const Fields = alinea.document('Fields', {
     ...alinea.tabs(
       alinea.tab('Basic fields', {
         title: alinea.text('Text field'),
@@ -67,6 +63,23 @@ export namespace schema {
               checkbox2: alinea.check('Checkbox 2'),
               title: alinea.text('Title'),
               content: alinea.richText('Inner rich text')
+            }),
+
+            NestLayout: alinea.type('Nested layout fields', {
+              object: alinea.object('Object field', {
+                fields: alinea.type('Fields', {
+                  fieldA: alinea.text('Field A', {width: 0.5}),
+                  fieldB: alinea.text('Field B', {width: 0.5})
+                })
+              }),
+              ...alinea.tabs(
+                alinea.tab('Tab A', {
+                  tabA: alinea.text('Tab A')
+                }),
+                alinea.tab('Tab B', {
+                  tabB: alinea.text('Tab B')
+                })
+              )
             })
           }
         })

@@ -56,7 +56,8 @@
       margin-right: 4px;
       height: 20px;
       flex-shrink: 0;
-      color: hsla(var(--alinea-negative), 0.5);
+      color: hsla(var(--alinea-negative), 0.4);
+      font-size: 12px;
     }
 
     &.is-selected &-icon {

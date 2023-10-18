@@ -77,6 +77,7 @@ export function ExplorerItem({
                 type="checkbox"
                 checked={isSelected}
                 onChange={() => {
+                  console.log('on select')
                   explorer.onSelect(entry)
                 }}
                 className={styles.root.checkbox()}

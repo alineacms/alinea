@@ -163,6 +163,11 @@
       "browser": "./dist/input/list/ListField.browser.js",
       "default": "./dist/input/list/ListField.js"
     },
+    "./input/metadata/MetadataField": {
+      "worker": "./dist/input/metadata/MetadataField.js",
+      "browser": "./dist/input/metadata/MetadataField.browser.js",
+      "default": "./dist/input/metadata/MetadataField.js"
+    },
     "./input/number/NumberField": {
       "worker": "./dist/input/number/NumberField.js",
       "browser": "./dist/input/number/NumberField.browser.js",
@@ -197,6 +202,11 @@
       "worker": "./dist/input/text/TextField.js",
       "browser": "./dist/input/text/TextField.browser.js",
       "default": "./dist/input/text/TextField.js"
+    },
+    "./input/view/View": {
+      "worker": "./dist/input/view/View.js",
+      "browser": "./dist/input/view/View.browser.js",
+      "default": "./dist/input/view/View.js"
     },
     "./picker/entry/EntryPicker": {
       "worker": "./dist/picker/entry/EntryPicker.js",

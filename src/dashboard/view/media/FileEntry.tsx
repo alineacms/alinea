@@ -50,18 +50,18 @@ export function FileEntry(props: EntryEditProps) {
   return (
     <Main className={styles.root()}>
       <EntryHeader editable={false} editor={editor} />
+      <EntryTitle
+        editor={editor}
+        backLink={
+          editor.activeVersion.parent
+            ? nav.entry({
+                entryId: editor.activeVersion.parent,
+                workspace: editor.activeVersion.workspace
+              })
+            : nav.entry({entryId: undefined})
+        }
+      />
       <Main.Container>
-        <EntryTitle
-          editor={editor}
-          backLink={
-            editor.activeVersion.parent
-              ? nav.entry({
-                  entryId: editor.activeVersion.parent,
-                  workspace: editor.activeVersion.workspace
-                })
-              : nav.entry({entryId: undefined})
-          }
-        />
         {isImage ? <ImageView {...props} /> : <FileView {...props} />}
       </Main.Container>
     </Main>
