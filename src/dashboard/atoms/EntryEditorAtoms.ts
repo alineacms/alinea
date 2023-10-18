@@ -453,7 +453,10 @@ export function createEntryEditor(entryData: EntryData) {
   const revisionsAtom = atom(async get => {
     const client = get(clientAtom)
     const file = entryFile(activeVersion)
-    return client.revisions(file)
+    const revisions = await client.revisions(file)
+    // Sort revisions by date
+    revisions.sort((a, b) => b.createdAt - a.createdAt)
+    return revisions
   })
 
   const revisionData = atomFamily(
