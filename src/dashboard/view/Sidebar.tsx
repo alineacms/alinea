@@ -125,7 +125,7 @@ export namespace Sidebar {
     return (
       <HStack as="header" center gap={12} className={styles.navHeader()}>
         {workspaces.length > 1 ? (
-          <DropdownMenu.Root>
+          <DropdownMenu.Root bottom>
             <DropdownMenu.Trigger>
               <HStack center gap={4}>
                 <WorkspaceLabel
@@ -137,7 +137,7 @@ export namespace Sidebar {
               </HStack>
             </DropdownMenu.Trigger>
 
-            <DropdownMenu.Items bottom>
+            <DropdownMenu.Items>
               {workspaces.map(([key, workspace]) => {
                 const {roots, label, color, icon} = Workspace.data(workspace)
                 const [name, root] = entries(roots)[0]

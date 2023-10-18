@@ -206,14 +206,14 @@ export function EntryPickerModal({
                     <button onClick={toRoot}>{workspace.label}</button>
                   </BreadcrumbsItem>
                   <BreadcrumbsItem>
-                    <DropdownMenu.Root>
+                    <DropdownMenu.Root bottom>
                       <DropdownMenu.Trigger>
                         <HStack center gap={4}>
                           {Root.label(workspace.roots[destination.root])}
                           <Icon icon={IcRoundUnfoldMore} />
                         </HStack>
                       </DropdownMenu.Trigger>
-                      <DropdownMenu.Items bottom>
+                      <DropdownMenu.Items>
                         {entries(workspace.roots).map(([name, root]) => {
                           return (
                             <DropdownMenu.Item

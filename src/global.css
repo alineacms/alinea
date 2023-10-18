@@ -11,8 +11,12 @@ body,
   margin: 0;
 }
 
-body[data-disable-transition='true'] * {
-  transition: none !important;
+body[data-disable-transition='true'] {
+  & *,
+  & *:before,
+  & *:after {
+    transition: none !important;
+  }
 }
 
 a {

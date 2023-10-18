@@ -1,32 +1,47 @@
 @import './style.scss';
 
 .root {
-  background-color: hsla(var(--alinea-positive), 1);
   flex-shrink: 0;
   // box-shadow: 0 1px 4px var(--alinea-shadow);
   height: var(--alinea-header-height);
   z-index: 2;
-  backdrop-filter: blur(12px);
-  transition: background 0.25s ease-out;
+
+  &:before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    backdrop-filter: blur(12px);
+    transition: background 0.25s ease-out;
+    background-color: hsla(var(--alinea-positive), 0.7);
+    z-index: -1;
+  }
 
   &.is-draft,
   &.is-editing,
   &.is-revision {
     color: var(--alinea-variant-info-foreground);
-    background: var(--alinea-variant-info-background);
+    &::before {
+      background: var(--alinea-variant-info-background);
+    }
   }
   &.is-published {
     color: var(--alinea-variant-success-foreground);
-    background: var(--alinea-variant-success-background);
+    &::before {
+      background: var(--alinea-variant-success-background);
+    }
   }
   &.is-archived {
     color: var(--alinea-variant-disabled-foreground);
-    background: var(--alinea-variant-disabled-background);
+    &::before {
+      background: var(--alinea-variant-disabled-background);
+    }
   }
   &.is-publishing,
   &.is-archiving {
     color: var(--alinea-variant-progress-foreground);
-    background: var(--alinea-variant-progress-background);
+    &::before {
+      background: var(--alinea-variant-progress-background);
+    }
   }
 }
 

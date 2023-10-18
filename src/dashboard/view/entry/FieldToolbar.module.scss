@@ -3,13 +3,14 @@
   bottom: 0;
   border-top: 1px solid var(--alinea-outline);
   box-shadow: 0 0 30px rgba(0, 0, 0, 0.08);
-  display: none;
+  height: calc(var(--alinea-header-height) - 1px) !important;
+  visibility: hidden;
 
   &-inner {
     height: 100%;
   }
 
   &.is-active {
-    display: block;
+    visibility: visible;
   }
 }

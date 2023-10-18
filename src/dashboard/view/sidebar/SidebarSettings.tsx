@@ -1,48 +1,39 @@
-import {Switch} from '@headlessui/react'
-import {Workspace} from 'alinea/core'
-import {entries, fromEntries} from 'alinea/core/util/Objects'
-import {InputField} from 'alinea/editor/view/InputField'
-import {select} from 'alinea/input'
-import {HStack, Icon, VStack, fromModule, px} from 'alinea/ui'
-import {DropdownMenu} from 'alinea/ui/DropdownMenu'
-import {Ellipsis} from 'alinea/ui/Ellipsis'
-import {PopoverMenu} from 'alinea/ui/PopoverMenu'
-import {IcBaselineAccountCircle} from 'alinea/ui/icons/IcBaselineAccountCircle'
-import {IcRoundKeyboardArrowDown} from 'alinea/ui/icons/IcRoundKeyboardArrowDown'
-import {IcRoundKeyboardArrowUp} from 'alinea/ui/icons/IcRoundKeyboardArrowUp'
-import {IcRoundTextFields} from 'alinea/ui/icons/IcRoundTextFields'
-import {IcSharpBrightnessMedium} from 'alinea/ui/icons/IcSharpBrightnessMedium'
-import {parseToHsla} from 'color2k'
-import {useAtomValue, useSetAtom} from 'jotai'
-import {dashboardOptionsAtom} from '../../atoms/DashboardAtoms.js'
+import { Switch } from '@headlessui/react'
+import { Workspace } from 'alinea/core'
+import { entries, fromEntries } from 'alinea/core/util/Objects'
+import { InputField } from 'alinea/editor/view/InputField'
+import { select } from 'alinea/input'
+import { HStack, Icon, VStack, fromModule, px } from 'alinea/ui'
+import { DropdownMenu } from 'alinea/ui/DropdownMenu'
+import { Ellipsis } from 'alinea/ui/Ellipsis'
+import { PopoverMenu } from 'alinea/ui/PopoverMenu'
+import { IcBaselineAccountCircle } from 'alinea/ui/icons/IcBaselineAccountCircle'
+import { IcRoundKeyboardArrowDown } from 'alinea/ui/icons/IcRoundKeyboardArrowDown'
+import { IcRoundKeyboardArrowUp } from 'alinea/ui/icons/IcRoundKeyboardArrowUp'
+import { IcRoundTextFields } from 'alinea/ui/icons/IcRoundTextFields'
+import { IcSharpBrightnessMedium } from 'alinea/ui/icons/IcSharpBrightnessMedium'
+import { useAtomValue, useSetAtom } from 'jotai'
+import { dashboardOptionsAtom } from '../../atoms/DashboardAtoms.js'
 import {
   preferencesAtom,
   sizePreferenceAtom,
   toggleSchemePreferenceAtom,
   workspacePreferenceAtom
 } from '../../atoms/PreferencesAtoms.js'
-import {accentColorAtom} from '../../atoms/StyleAtoms.js'
-import {useSession} from '../../hook/UseSession.js'
-import {IconButton} from '../IconButton.js'
-import {Sidebar} from '../Sidebar.js'
+import { useSession } from '../../hook/UseSession.js'
+import { IconButton } from '../IconButton.js'
+import { Sidebar } from '../Sidebar.js'
 import css from './SidebarSettings.module.scss'
 
 const styles = fromModule(css)
 
 export function SidebarSettings() {
-  const accentColor = useAtomValue(accentColorAtom)
   const session = useSession()
   const {config} = useAtomValue(dashboardOptionsAtom)
   const preferences = useAtomValue(preferencesAtom)
   const size = preferences.size || 16
   const checked = preferences?.scheme === 'dark'
   const workspaces = Object.entries(config.workspaces)
-  const [hue, saturation, lightness] = parseToHsla(accentColor)
-  const style: any = {
-    '--alinea-hue': hue,
-    '--alinea-saturation': `${saturation * 100}%`,
-    '--alinea-lightness': `${lightness * 100}%`
-  }
   const defaultWorkspace = select(
     'Default workspace',
     fromEntries(
@@ -62,14 +53,14 @@ export function SidebarSettings() {
   }
 
   return (
-    <DropdownMenu.Root style={{marginTop: 'auto', ...style}}>
+    <DropdownMenu.Root top style={{margin: 'auto', marginBottom: 0}}>
       <DropdownMenu.Trigger style={{width: '100%'}}>
         <Sidebar.Nav.Item aria-label="Settings">
           <Icon icon={IcBaselineAccountCircle} />
         </Sidebar.Nav.Item>
       </DropdownMenu.Trigger>
 
-      <DropdownMenu.Items top style={{left: px(14), maxWidth: px(200)}}>
+      <DropdownMenu.Items style={{maxWidth: px(200)}}>
         <VStack gap={10}>
           {session.user.name && (
             <PopoverMenu.Header>

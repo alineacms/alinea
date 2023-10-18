@@ -113,7 +113,7 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
         onBlur={e => focusToggle(e.relatedTarget)}
       >
         <HStack gap={10} center style={{height: '100%', padding: `${px(4)} 0`}}>
-          <DropdownMenu.Root>
+          <DropdownMenu.Root top>
             <DropdownMenu.Trigger
               title="Heading/paragraph"
               className={styles.root.dropdown()}
@@ -123,7 +123,7 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
                 <Icon icon={IcRoundUnfoldMore} />
               </HStack>
             </DropdownMenu.Trigger>
-            <DropdownMenu.Items top>
+            <DropdownMenu.Items>
               <DropdownMenu.Item onClick={() => exec().clearNodes().run()}>
                 <Typo.P>Normal text</Typo.P>
               </DropdownMenu.Item>
@@ -175,7 +175,7 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
             }}
             active={editor.isActive('small')}
           />
-          <DropdownMenu.Root>
+          <DropdownMenu.Root top>
             <DropdownMenu.Trigger
               title="Alignment"
               className={styles.root.dropdown()}
@@ -196,7 +196,7 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
                 <Icon icon={IcRoundUnfoldMore} />
               </HStack>
             </DropdownMenu.Trigger>
-            <DropdownMenu.Items top>
+            <DropdownMenu.Items>
               <DropdownMenu.Item
                 onClick={() => exec().setTextAlign('left').run()}
               >

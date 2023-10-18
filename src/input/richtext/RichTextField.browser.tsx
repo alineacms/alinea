@@ -143,16 +143,16 @@ function InsertMenu({editor, schema, onInsert}: InsertMenuProps) {
     <FloatingMenu
       editor={editor}
       tippyOptions={{
-        zIndex: 4,
+        zIndex: 1,
         maxWidth: 'none'
       }}
     >
-      <DropdownMenu.Root>
+      <DropdownMenu.Root bottom>
         <DropdownMenu.Trigger className={styles.insert.trigger()}>
           <Icon icon={IcRoundAddCircle} />
           <span>Insert block</span>
         </DropdownMenu.Trigger>
-        <DropdownMenu.Items bottom>{blocks}</DropdownMenu.Items>
+        <DropdownMenu.Items>{blocks}</DropdownMenu.Items>
       </DropdownMenu.Root>
     </FloatingMenu>
   )

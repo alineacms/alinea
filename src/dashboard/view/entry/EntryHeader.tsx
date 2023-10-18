@@ -152,7 +152,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
 
         <Icon icon={variantIcon[variant]} size={18} />
 
-        <DropdownMenu.Root>
+        <DropdownMenu.Root bottom>
           <DropdownMenu.Trigger className={styles.root.description.title()}>
             <HStack center gap={4}>
               <span>{variantDescription[variant]}</span>
@@ -161,7 +161,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
               )}
             </HStack>
           </DropdownMenu.Trigger>
-          <DropdownMenu.Items bottom>
+          <DropdownMenu.Items>
             {hasChanges && (
               <DropdownMenu.Item
                 onClick={() => {
@@ -282,12 +282,12 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
               </Button>
             )}
 
-            <DropdownMenu.Root>
+            <DropdownMenu.Root bottom left>
               <DropdownMenu.Trigger className={styles.root.more(variant)}>
                 <Icon icon={IcRoundMoreVert} />
               </DropdownMenu.Trigger>
 
-              <DropdownMenu.Items bottom right>
+              <DropdownMenu.Items>
                 {!isMediaFile && (
                   <DropdownMenu.Item
                     onClick={() => setShowHistory(!showHistory)}

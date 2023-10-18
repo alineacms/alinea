@@ -5,6 +5,7 @@
   overflow: hidden;
 
   &-bar {
+    position: relative;
     border-bottom: 1px solid var(--alinea-outline);
   }
 
