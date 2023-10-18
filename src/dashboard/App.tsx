@@ -31,7 +31,7 @@ import {useWorkspace} from './hook/UseWorkspace.js'
 import {Head} from './util/Head.js'
 import {SuspenseBoundary} from './util/SuspenseBoundary.js'
 import {ErrorBoundary} from './view/ErrorBoundary.js'
-import {Modal} from './view/Modal.js'
+import {Modal, ModalPortal} from './view/Modal.js'
 import {Sidebar} from './view/Sidebar.js'
 import {Toolbar} from './view/Toolbar.js'
 import {Viewport} from './view/Viewport.js'
@@ -185,6 +185,7 @@ export function App(props: AppProps) {
   return (
     <QueryClientProvider client={queryClient}>
       <AppRoot />
+      <ModalPortal />
     </QueryClientProvider>
   )
 }

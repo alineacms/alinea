@@ -51,7 +51,6 @@ export function UrlPickerForm({options, onConfirm, onCancel}: PickerProps) {
       description: data.description || '',
       target: data.blank ? '_blank' : '_self'
     }
-    if (!data.url) return
     onConfirm([reference])
   }
   return (
