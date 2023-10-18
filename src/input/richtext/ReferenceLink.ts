@@ -14,6 +14,7 @@ export function referenceToAttributes(reference: Reference): Anchor {
     const ref = reference as UrlReference
     return {
       'data-id': ref.id,
+      'data-entry': undefined,
       href: ref.url,
       target: ref.target
     }
@@ -21,7 +22,9 @@ export function referenceToAttributes(reference: Reference): Anchor {
     const ref = reference as EntryReference
     return {
       'data-id': ref.id,
-      'data-entry': ref.entry
+      'data-entry': ref.entry,
+      href: undefined,
+      target: undefined
     }
   }
   throw new Error(`Unexpected reference type: ${reference.type}`)

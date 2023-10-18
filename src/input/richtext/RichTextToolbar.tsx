@@ -82,7 +82,9 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
           title: picked.title,
           ...referenceToAttributes(link)
         }
-        if (isSelection) {
+        if (existing) {
+          exec().extendMarkRange('link').setLink(attrs).run()
+        } else if (isSelection) {
           // Try creating a link on selected text
           exec()
             .setLink(attrs as any)
@@ -101,7 +103,7 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
             .run()
         }
       })
-      .catch(() => {})
+      .catch(console.error)
   }
   return (
     <FieldToolbar.Slot>
