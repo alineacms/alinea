@@ -25,9 +25,9 @@ function linkForm({showDescription = true, showBlank = true}) {
       optional: true,
       help: 'Extra information that describes the link'
     }),
-    blank: check('Target', {
+    blank: check('Open link in new tab', {
       hidden: !showBlank,
-      label: 'Open link in new tab'
+      label: 'Target'
     })
   })
 }

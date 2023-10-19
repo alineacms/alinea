@@ -3,6 +3,7 @@ import {Mark, mergeAttributes} from '@tiptap/core'
 interface LinkAttributes {
   'data-id'?: string
   'data-entry'?: string
+  'data-type'?: string
   href?: string
   target?: string
   title?: string
@@ -53,6 +54,9 @@ export const Link = Mark.create<LinkOptions>({
         default: null
       },
       'data-entry': {
+        default: null
+      },
+      'data-type': {
         default: null
       },
       href: {

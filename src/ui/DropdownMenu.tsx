@@ -16,16 +16,20 @@ export namespace DropdownMenu {
     undefined!
   )
 
-  export function Root(
-    props: HTMLAttributes<HTMLDivElement> & {
-      top?: boolean
-      bottom?: boolean
-      left?: boolean
-      right?: boolean
-    }
-  ) {
-    const side = props.top ? 'top' : 'bottom'
-    const align = props.left ? 'end' : 'start'
+  export function Root({
+    top,
+    bottom,
+    left,
+    right,
+    ...props
+  }: HTMLAttributes<HTMLDivElement> & {
+    top?: boolean
+    bottom?: boolean
+    left?: boolean
+    right?: boolean
+  }) {
+    const side = top ? 'top' : 'bottom'
+    const align = left ? 'end' : 'start'
     const floating = useFloating({
       whileElementsMounted: autoUpdate,
       strategy: 'fixed',
