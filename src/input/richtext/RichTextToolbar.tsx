@@ -62,7 +62,7 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
     const {view, state} = editor
     const {from, to} = view.state.selection
     const isSelection = from !== to
-    pickLink({
+    return pickLink({
       link: existing,
       title: attrs.title,
       blank: attrs.target === '_blank',
@@ -76,11 +76,11 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
         }
         const link = picked.link
         const attrs = {
-          target:
-            (link as UrlReference).target ||
-            (picked.blank ? '_blank' : undefined),
           title: picked.title,
-          ...referenceToAttributes(link)
+          ...referenceToAttributes(link),
+          target:
+            (link as UrlReference).target ??
+            (picked.blank ? '_blank' : undefined)
         }
         if (existing) {
           exec().extendMarkRange('link').setLink(attrs).run()

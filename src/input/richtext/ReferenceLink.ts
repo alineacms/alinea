@@ -1,33 +1,50 @@
 import {Reference} from 'alinea/core/Reference'
-import {EntryReference} from 'alinea/picker/entry/EntryReference'
+import {EntryReference, FileReference} from 'alinea/picker/entry/EntryReference'
 import {UrlReference} from 'alinea/picker/url'
 import type {HTMLProps} from 'react'
 
 interface Anchor extends HTMLProps<HTMLAnchorElement> {
   'data-id'?: string
   'data-entry'?: string
+  'data-type'?: 'entry' | 'file' | 'url'
 }
 
 export function referenceToAttributes(reference: Reference): Anchor {
   // Todo: don't stringly type here
-  if (reference.type === 'url') {
-    const ref = reference as UrlReference
-    return {
-      'data-id': ref.id,
-      'data-entry': undefined,
-      href: ref.url,
-      target: ref.target
+  switch (reference.type) {
+    case 'url': {
+      const ref = reference as UrlReference
+      return {
+        'data-id': ref.id,
+        'data-entry': undefined,
+        'data-type': 'url',
+        href: ref.url,
+        target: ref.target
+      }
     }
-  } else if (reference.type === 'entry') {
-    const ref = reference as EntryReference
-    return {
-      'data-id': ref.id,
-      'data-entry': ref.entry,
-      href: undefined,
-      target: undefined
+    case 'entry': {
+      const ref = reference as EntryReference
+      return {
+        'data-id': ref.id,
+        'data-entry': ref.entry,
+        'data-type': 'entry',
+        href: undefined,
+        target: undefined
+      }
     }
+    case 'file': {
+      const ref = reference as FileReference
+      return {
+        'data-id': ref.id,
+        'data-entry': ref.entry,
+        'data-type': 'file',
+        href: undefined,
+        target: undefined
+      }
+    }
+    default:
+      throw new Error(`Unexpected reference type: ${reference.type}`)
   }
-  throw new Error(`Unexpected reference type: ${reference.type}`)
 }
 
 export function attributesToReference(
@@ -38,7 +55,7 @@ export function attributesToReference(
   if (attributes['data-entry'])
     return {
       id,
-      type: 'entry',
+      type: attributes['data-type'] === 'file' ? 'file' : 'entry',
       entry: attributes['data-entry']
     } as EntryReference
   return {
