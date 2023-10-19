@@ -76,6 +76,7 @@ export function filePicker<Fields>(
 type LinkData<Fields> =
   | (EntryReference & Type.Infer<Fields>)
   | (UrlReference & Type.Infer<Fields>)
+  | (FileReference & Type.Infer<Fields>)
 
 export interface LinkOptions<Fields> extends LinkFieldOptions {
   fields?: Type<Fields>
@@ -95,7 +96,8 @@ export function link<Fields>(label: Label, options: LinkOptions<Fields> = {}) {
         max: 1,
         selection: entryFields
       }),
-      url: urlPicker<Fields>(options)
+      url: urlPicker<Fields>(options),
+      file: filePicker(false, options)
     }
   })
 }
