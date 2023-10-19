@@ -15,6 +15,7 @@ import {useLocale} from '../hook/UseLocale.js'
 import {useNav} from '../hook/UseNav.js'
 import {SuspenseBoundary} from '../util/SuspenseBoundary.js'
 import css from './EntryEdit.module.scss'
+import {useSidebar} from './Sidebar.js'
 import {EntryDiff} from './diff/EntryDiff.js'
 import {EditMode} from './entry/EditModeToggle.js'
 import {EntryHeader} from './entry/EntryHeader.js'
@@ -44,6 +45,7 @@ export interface EntryEditProps {
 export function EntryEdit({editor}: EntryEditProps) {
   const locale = useLocale()
   const {preview, enableDrafts} = useConfig()
+  const {isPreviewOpen} = useSidebar()
   const nav = useNav()
   const mode = useAtomValue(editor.editMode)
   const hasChanges = useAtomValue(editor.hasChanges)
@@ -213,7 +215,7 @@ export function EntryEdit({editor}: EntryEditProps) {
           <FieldToolbar.Root />
         </FieldToolbar.Provider>
       </Main>
-      {preview && !untranslated && (
+      {preview && isPreviewOpen && !untranslated && (
         <EntryPreview preview={preview} editor={editor} />
       )}
     </>
