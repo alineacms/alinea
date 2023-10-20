@@ -10,6 +10,82 @@
           "text": "Rich text value"
         }
       ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "We can link to "
+        },
+        {
+          "type": "text",
+          "text": "internal pages",
+          "marks": [
+            {
+              "type": "link",
+              "attrs": {
+                "data-id": "2WyS6kjRXyd0vLoZP0p129IPnAA",
+                "data-entry": "2Ublmf4UWT5rHeIUSaJmqJYN0L9",
+                "href": null,
+                "title": ""
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "Or to "
+        },
+        {
+          "type": "text",
+          "text": "external pages",
+          "marks": [
+            {
+              "type": "link",
+              "attrs": {
+                "data-id": "2WyS9ETlIHWPmt0A2pqYjQrgRVR",
+                "data-entry": null,
+                "href": "https://example.com",
+                "target": "_blank",
+                "title": ""
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "And to "
+        },
+        {
+          "type": "text",
+          "text": "files",
+          "marks": [
+            {
+              "type": "link",
+              "attrs": {
+                "data-id": "2WyT7CRrYKKC4FlUOwvSVt7xCaV",
+                "data-entry": "2V4cZQX2vXGoBOko2s3apBX6oWG",
+                "href": null,
+                "title": ""
+              }
+            }
+          ]
+        }
+      ]
     }
   ],
   "select": "a",
@@ -142,6 +218,15 @@
   },
   "tabA": "",
   "tabB": "",
+  "metadata": {
+    "title": "",
+    "image": {},
+    "description": "",
+    "search:title": "",
+    "search:description": "",
+    "og:title": "",
+    "og:description": ""
+  },
   "@alinea": {
     "entryId": "2U6y6iIQIuQg2D0PViWdKenqgMv",
     "type": "Fields",
