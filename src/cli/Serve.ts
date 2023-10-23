@@ -43,7 +43,8 @@ export async function serve(options: ServeOptions): Promise<void> {
   if (!configLocation) throw new Error(`No config file specified`)
 
   const preferredPort = options.port ? Number(options.port) : 4500
-  const server = await startNodeServer(preferredPort)
+  const server = startNodeServer(preferredPort)
+  const dashboardUrl = server.then(server => `http://localhost:${server.port}`)
 
   const rootDir = path.resolve(cwd)
   const context: ServeContext = {
@@ -60,17 +61,19 @@ export async function serve(options: ServeOptions): Promise<void> {
     production,
     liveReload: new LiveReload()
   }
-  const dashboardName = production ? '(production) dashboard' : 'dashboard'
-  const dashboardUrl = `http://localhost:${server.port}`
-  console.log(`> Alinea ${dashboardName} available on ${dashboardUrl}`)
+
+  server.then(async () => {
+    const dashboardName = production ? '(production) dashboard' : 'dashboard'
+    console.log(`> Alinea ${dashboardName} available on ${await dashboardUrl}`)
+  })
 
   const gen = generate({
     ...options,
     dashboardUrl,
     watch: true,
-    onAfterGenerate: () => {
+    async onAfterGenerate() {
       options.onAfterGenerate?.({
-        ALINEA_DEV_SERVER: dashboardUrl
+        ALINEA_DEV_SERVER: await dashboardUrl
       })
     }
   })[Symbol.asyncIterator]()
@@ -104,7 +107,8 @@ export async function serve(options: ServeOptions): Promise<void> {
       context.liveReload.reload('refresh')
     }
     nextGen = gen.next()
-    for await (const {request, respondWith} of server.serve(nextGen)) {
+    const {serve} = await server
+    for await (const {request, respondWith} of serve(nextGen)) {
       handle!(request).then(respondWith)
     }
   }

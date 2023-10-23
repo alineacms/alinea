@@ -28,7 +28,7 @@ export interface GenerateOptions {
   wasmCache?: boolean
   quiet?: boolean
   onAfterGenerate?: (env?: Record<string, string>) => void
-  dashboardUrl?: string
+  dashboardUrl?: Promise<string>
 }
 
 function generatePackage(context: GenerateContext, config: Config) {
@@ -114,7 +114,7 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
         config: cms,
         fs: fs.promises,
         rootDir,
-        dashboardUrl: options.dashboardUrl
+        dashboardUrl: await options.dashboardUrl
       })
       for await (const _ of fillCache(
         context,
