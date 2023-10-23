@@ -5,7 +5,7 @@ import {Hint} from '../Hint.js'
 import {Label} from '../Label.js'
 import {Shape} from '../Shape.js'
 import {TextDoc, TextNode} from '../TextDoc.js'
-import {Expr} from '../pages/Expr.js'
+import type {Expr} from '../pages/Expr.js'
 import {entries, fromEntries} from '../util/Objects.js'
 import {RecordShape} from './RecordShape.js'
 
@@ -87,10 +87,9 @@ export interface TextDocSelected<Blocks> {
   linked: Array<{id: string; url: string}>
 }
 
-const linkInfoFields = {
-  url: Entry.url,
-  // This is MediaFile.location but we're avoiding circular imports here :(
-  location: (Entry.data as any as Expr<any>).get<string>('location')
+let linkInfoFields = undefined! as {
+  url: Expr<string>
+  location: Expr<string>
 }
 
 export class RichTextShape<Blocks>
@@ -204,6 +203,11 @@ export class RichTextShape<Blocks>
     })
     async function loadLinks() {
       const linkIds = Array.from(new Set(links.values()))
+      linkInfoFields ??= {
+        url: Entry.url,
+        // This is MediaFile.location - but we're avoiding circular imports here
+        location: (Entry.data as any).get('location')
+      }
       const entries = await loader.resolveLinks(linkInfoFields, linkIds)
       const info = new Map(linkIds.map((id, i) => [id, entries[i]]))
       for (const [mark, id] of links) {
