@@ -12,6 +12,7 @@ import {
 import {entryFileName, entryFilepath} from 'alinea/core/EntryFilenames'
 import {createId} from 'alinea/core/Id'
 import {Mutation, MutationType} from 'alinea/core/Mutation'
+import {MediaFile} from 'alinea/core/media/MediaSchema'
 import {base64} from 'alinea/core/util/Encoding'
 import {generateKeyBetween} from 'alinea/core/util/FractionalIndexing'
 import {
@@ -22,9 +23,8 @@ import {
   normalize
 } from 'alinea/core/util/Paths'
 import {rgba, toHex} from 'color2k'
-import {useSetAtom} from 'jotai'
+import {atom, useAtom, useSetAtom} from 'jotai'
 import pLimit from 'p-limit'
-import {useState} from 'react'
 import smartcrop from 'smartcrop'
 import {rgbaToThumbHash, thumbHashToAverageRGBA} from 'thumbhash'
 import {useMutate} from '../atoms/DbAtoms.js'
@@ -42,6 +42,8 @@ export enum UploadStatus {
 }
 
 export interface UploadDestination {
+  // Use to overwrite files
+  entryId?: string
   parentId?: string
   workspace: string
   root: string
@@ -62,6 +64,7 @@ export interface Upload {
   height?: number
   result?: Media.File
   error?: Error
+  replace?: {entry: EntryRow}
 }
 
 const defaultTasker = pLimit(Infinity)
@@ -175,22 +178,46 @@ async function process(
       return {...upload, info, status: UploadStatus.Uploaded}
     }
     case UploadStatus.Uploaded: {
+      const {replace} = upload
       const {file, entry} = await createEntry(upload)
       const info = upload.info!
-      await mutate(
-        {
-          type: MutationType.Create,
-          entryId: entry.entryId,
-          file,
-          entry
-        },
-        {
-          type: MutationType.Upload,
-          entryId: entry.entryId,
-          url: info.previewUrl,
-          file: info.location
-        }
-      )
+      const mutations = replace
+        ? [
+            {
+              type: MutationType.Create,
+              entryId: entry.entryId,
+              file,
+              entry
+            },
+            {
+              type: MutationType.Upload,
+              entryId: entry.entryId,
+              url: info.previewUrl,
+              file: info.location
+            },
+            {
+              type: MutationType.FileRemove,
+              entryId: replace.entry.entryId,
+              workspace: replace.entry.workspace,
+              location: (replace.entry.data as MediaFile).location,
+              file: entryFile(published)
+            }
+          ]
+        : [
+            {
+              type: MutationType.Create,
+              entryId: entry.entryId,
+              file,
+              entry
+            },
+            {
+              type: MutationType.Upload,
+              entryId: entry.entryId,
+              url: info.previewUrl,
+              file: info.location
+            }
+          ]
+      await mutate(...mutations)
       return {...upload, result: entry, status: UploadStatus.Done}
     }
     case UploadStatus.Done:
@@ -221,13 +248,15 @@ function createBatch(mutate: (...mutations: Array<Mutation>) => Promise<void>) {
   }
 }
 
+const uploadsAtom = atom<Array<Upload>>([])
+
 export function useUploads(onSelect?: (entry: EntryRow) => void) {
   const config = useConfig()
   const graph = useGraph()
   const {cnx: client} = useSession()
   const mutate = useMutate()
   const setErrorAtom = useSetAtom(errorAtom)
-  const [uploads, setUploads] = useState<Array<Upload>>([])
+  const [uploads, setUploads] = useAtom(uploadsAtom)
   const batch = createBatch(mutate)
 
   async function batchMutations(...mutations: Array<Mutation>) {
@@ -350,9 +379,13 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
     }
   }
 
-  async function upload(files: FileList, to: UploadDestination) {
-    const uploads = Array.from(files).map(file => {
-      return {id: createId(), file, to, status: UploadStatus.Queued}
+  async function upload(
+    files: Array<File>,
+    to: UploadDestination,
+    replace?: {entry: EntryRow}
+  ) {
+    const uploads: Array<Upload> = Array.from(files).map(file => {
+      return {id: createId(), file, to, replace, status: UploadStatus.Queued}
     })
     setUploads(current => [...uploads, ...current])
     return Promise.all(uploads.map(uploadFile))

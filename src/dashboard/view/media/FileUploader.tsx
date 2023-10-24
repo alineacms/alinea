@@ -15,7 +15,7 @@ import css from './FileUploader.module.scss'
 const styles = fromModule(css)
 
 export interface FileUploaderProps {
-  destination: UploadDestination
+  destination?: UploadDestination
   max?: number
   toggleSelect?: (id: Entry) => void
   position?: 'left' | 'right'
@@ -27,6 +27,7 @@ export function FileUploader({
   toggleSelect,
   position = 'right'
 }: FileUploaderProps) {
+  const readOnly = !destination
   const {upload, uploads} = useUploads(toggleSelect)
   const [isOver, setIsOver] = useState(false)
   const isUploading = uploads.length > 0
@@ -37,7 +38,8 @@ export function FileUploader({
   const todo = uploads.length - uploadsDone
   const [showUploads, setShowUploads] = useState(true)
   function uploadFiles(files: FileList) {
-    return upload(files, destination)
+    if (readOnly) return
+    return upload([...files], destination)
   }
   function handleFileInput(event: ChangeEvent<HTMLInputElement>) {
     const {files} = event.target
@@ -88,12 +90,14 @@ export function FileUploader({
       <VStack className={styles.root.content()}>
         <HStack as="header" className={styles.root.header()}>
           <label className={styles.root.header.label()}>
-            <input
-              type="file"
-              className={styles.root.header.label.input()}
-              multiple={max !== 1}
-              onChange={handleFileInput}
-            />
+            {!readOnly && (
+              <input
+                type="file"
+                className={styles.root.header.label.input()}
+                multiple={max !== 1}
+                onChange={handleFileInput}
+              />
+            )}
             <HStack center gap={8}>
               <Icon icon={IcOutlineCloudUpload} size={17} />
               <span>{description}</span>
