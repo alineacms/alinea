@@ -6,6 +6,7 @@ import {IcOutlineList} from 'alinea/ui/icons/IcOutlineList'
 import {IcRoundSearch} from 'alinea/ui/icons/IcRoundSearch'
 import {useLayoutEffect, useMemo, useState} from 'react'
 import {useFocusList} from '../hook/UseFocusList.js'
+import {useLocale} from '../hook/UseLocale.js'
 import {useNav} from '../hook/UseNav.js'
 import {IconButton} from './IconButton.js'
 import css from './SearchBox.module.scss'
@@ -17,6 +18,7 @@ export function SearchBox() {
   const nav = useNav()
   const navigate = useNavigate()
   const location = useLocation()
+  const locale = useLocale()
   const [search, setSearch] = useState('')
   const [isOpen, setIsOpen] = useState(false)
   const list = useFocusList({
@@ -24,8 +26,8 @@ export function SearchBox() {
   })
   const cursor = useMemo(() => {
     const terms = search.replace(/,/g, ' ').split(' ').filter(Boolean)
-    return Entry().search(...terms)
-  }, [search])
+    return Entry({locale}).search(...terms)
+  }, [search, locale])
   const [explorerView, setExplorerView] = useState<'row' | 'thumb'>('row')
   // If we navigate to another page (for example by selecting one of the items)
   // clear the search term
