@@ -8,6 +8,8 @@ import {useLayoutEffect, useMemo, useState} from 'react'
 import {useFocusList} from '../hook/UseFocusList.js'
 import {useLocale} from '../hook/UseLocale.js'
 import {useNav} from '../hook/UseNav.js'
+import {useRoot} from '../hook/UseRoot.js'
+import {useWorkspace} from '../hook/UseWorkspace.js'
 import {IconButton} from './IconButton.js'
 import css from './SearchBox.module.scss'
 import {Explorer} from './explorer/Explorer.js'
@@ -18,6 +20,8 @@ export function SearchBox() {
   const nav = useNav()
   const navigate = useNavigate()
   const location = useLocation()
+  const {name: workspace} = useWorkspace()
+  const {name: root} = useRoot()
   const locale = useLocale()
   const [search, setSearch] = useState('')
   const [isOpen, setIsOpen] = useState(false)
@@ -26,8 +30,10 @@ export function SearchBox() {
   })
   const cursor = useMemo(() => {
     const terms = search.replace(/,/g, ' ').split(' ').filter(Boolean)
-    return Entry({locale}).search(...terms)
-  }, [search, locale])
+    return Entry({workspace, root})
+      .where(locale ? Entry.locale.is(locale) : true)
+      .search(...terms)
+  }, [workspace, root, search, locale])
   const [explorerView, setExplorerView] = useState<'row' | 'thumb'>('row')
   // If we navigate to another page (for example by selecting one of the items)
   // clear the search term
@@ -80,6 +86,7 @@ export function SearchBox() {
         {isOpen && search && (
           <div className={styles.root.popover()}>
             <Explorer
+              border={false}
               cursor={cursor}
               type={explorerView}
               toggleSelect={entry => navigate(nav.entry(entry))}

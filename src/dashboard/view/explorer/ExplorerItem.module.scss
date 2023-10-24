@@ -25,9 +25,12 @@
     min-width: 0;
     background: var(--alinea-background);
     border-radius: var(--alinea-border-radius);
-    box-shadow: 0 2px 3.5px var(--alinea-shadow);
     display: flex;
     overflow: hidden;
+
+    &.is-border {
+      box-shadow: 0 2px 3.5px var(--alinea-shadow);
+    }
 
     &-hitBox {
       position: relative;

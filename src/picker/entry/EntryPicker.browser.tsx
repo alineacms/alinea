@@ -120,7 +120,7 @@ export function EntryPickerModal({
           }
         })
       )
-      return res.parents.concat({
+      return res?.parents.concat({
         id: destination.parentId,
         title: res.title
       })

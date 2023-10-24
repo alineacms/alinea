@@ -13,6 +13,7 @@ const styles = fromModule(css)
 export function entrySummaryQuery() {
   return {
     entryId: Entry.entryId,
+    i18nId: Entry.i18nId,
     type: Entry.type,
     workspace: Entry.workspace,
     root: Entry.root,

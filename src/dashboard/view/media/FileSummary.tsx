@@ -15,6 +15,7 @@ const styles = fromModule(css)
 function fileSummarySelect() {
   return {
     entryId: Entry.entryId,
+    i18nId: Entry.i18nId,
     type: Entry.type,
     workspace: Entry.workspace,
     root: Entry.root,

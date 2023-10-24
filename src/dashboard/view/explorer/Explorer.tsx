@@ -26,6 +26,7 @@ export interface ExporerItemSelect {
   workspace: string
   root: string
   title: string
+  i18nId?: string
   childrenAmount?: number
 }
 
@@ -39,6 +40,7 @@ export interface ExplorerProps {
   toggleSelect?: (entry: ExporerItemSelect) => void
   onNavigate?: (entryId: string) => void
   showMedia?: boolean
+  border?: boolean
 }
 
 export function Explorer({
@@ -49,8 +51,9 @@ export function Explorer({
   selectable,
   selection = [],
   toggleSelect = () => {},
-  onNavigate = () => {},
-  showMedia
+  onNavigate,
+  showMedia,
+  border = true
 }: ExplorerProps) {
   const {schema} = useConfig()
   const graph = useAtomValue(graphAtom)
@@ -101,7 +104,8 @@ export function Explorer({
         selection,
         onSelect: toggleSelect,
         onNavigate,
-        showMedia
+        showMedia,
+        border
       }}
     >
       <div ref={containerRef} className={styles.root()}>

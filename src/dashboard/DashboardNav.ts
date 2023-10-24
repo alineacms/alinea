@@ -1,5 +1,6 @@
 export type EntryLocation = {
   entryId?: string
+  i18nId?: string
   workspace?: string
   root?: string
   locale?: string
@@ -17,7 +18,9 @@ export function dashboardNav(defaults: Partial<EntryLocation>) {
     const workspace = location?.workspace ?? defaults.workspace
     const root = location?.root ?? defaults.root
     const locale = 'locale' in location ? location.locale : defaults.locale
-    const id = 'entryId' in location ? location.entryId : defaults.entryId
+    const id =
+      location.i18nId ??
+      ('entryId' in location ? location.entryId : defaults.entryId)
     const rootLocation = locale ? `${root}:${locale}` : root
     if (!id && !root) return `/${workspace}`
     if (!id) return `/${workspace}/${rootLocation}`

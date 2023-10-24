@@ -53,7 +53,7 @@ export function ExplorerItem({
   const childrenAmount = entry.childrenAmount ?? 0
 
   function navigateTo() {
-    explorer.onNavigate?.(entry.entryId)
+    explorer.onNavigate?.(entry.i18nId ?? entry.entryId)
   }
 
   return (
@@ -61,7 +61,8 @@ export function ExplorerItem({
       ref={itemRef}
       key={entry.entryId}
       className={styles.root(summaryView === 'summaryRow' ? 'row' : 'thumb', {
-        selected: isSelected
+        selected: isSelected,
+        border: explorer.border
       })}
       tabIndex={0}
     >
@@ -77,7 +78,6 @@ export function ExplorerItem({
                 type="checkbox"
                 checked={isSelected}
                 onChange={() => {
-                  console.log('on select')
                   explorer.onSelect(entry)
                 }}
                 className={styles.root.checkbox()}

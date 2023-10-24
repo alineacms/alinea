@@ -159,6 +159,16 @@ export function EntryTree({i18nId: entryId, selected = []}: EntryTreeProps) {
   })
   const changed = useAtomValue(changedEntriesAtom)
   useEffect(() => {
+    ;(async () => {
+      for (const id of selected) {
+        await treeProvider
+          .getChildren(id)
+          .then(() => new Promise(requestAnimationFrame))
+        tree.expandItem(id)
+      }
+    })()
+  }, [selected.join()])
+  useEffect(() => {
     tree.invalidateChildrenIds(rootId(root.name))
   }, [treeProvider])
   useEffect(() => {
