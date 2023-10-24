@@ -1,3 +1,4 @@
+import '@ungap/with-resolvers'
 import {Media} from 'alinea/backend/Media'
 import {createContentHash} from 'alinea/backend/util/ContentHash'
 import {
@@ -64,8 +65,9 @@ export interface Upload {
 }
 
 const defaultTasker = pLimit(Infinity)
-const cpuTasker = pLimit(4)
+const cpuTasker = pLimit(1)
 const networkTasker = pLimit(8)
+const batchTasker = pLimit(1)
 
 const tasker = {
   [UploadStatus.Queued]: defaultTasker,
@@ -196,6 +198,29 @@ async function process(
   }
 }
 
+function createBatch(mutate: (...mutations: Array<Mutation>) => Promise<void>) {
+  let trigger = Promise.withResolvers()
+  let nextRun: any = undefined
+  const batch = [] as Array<Mutation>
+  async function run() {
+    const todo = batch.splice(0, batch.length)
+    try {
+      await batchTasker(() => mutate(...todo))
+      trigger.resolve(void 0)
+    } catch (error) {
+      trigger.reject(error)
+    } finally {
+      trigger = Promise.withResolvers()
+    }
+  }
+  return (...mutations: Array<Mutation>) => {
+    batch.push(...mutations)
+    clearTimeout(nextRun)
+    nextRun = setTimeout(run, 200)
+    return trigger.promise
+  }
+}
+
 export function useUploads(onSelect?: (entry: EntryRow) => void) {
   const config = useConfig()
   const graph = useGraph()
@@ -203,6 +228,11 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
   const mutate = useMutate()
   const setErrorAtom = useSetAtom(errorAtom)
   const [uploads, setUploads] = useState<Array<Upload>>([])
+  const batch = createBatch(mutate)
+
+  async function batchMutations(...mutations: Array<Mutation>) {
+    await batch(...mutations)
+  }
 
   async function createEntry(upload: Upload) {
     const entryId = upload.info?.entryId ?? createId()
@@ -301,7 +331,7 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
     }
     while (true) {
       const next = await tasker[upload.status](() =>
-        process(upload, createEntry, client, mutate)
+        process(upload, createEntry, client, batchMutations)
       ).catch(error => {
         return {...upload, error, status: UploadStatus.Done}
       })

@@ -2547,6 +2547,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@ungap/with-resolvers@npm:^0.1.0":
+  version: 0.1.0
+  resolution: "@ungap/with-resolvers@npm:0.1.0"
+  checksum: ac0c6234414b87ec26e9603c5e57f6ae48477ccc901841e725e820bc026367987cc82dbdb8c702e058179dadbd16578c0fcc607d2122e72d9fe91373bade126c
+  languageName: node
+  linkType: hard
+
 "@vitejs/plugin-react-swc@npm:3.1.0":
   version: 3.1.0
   resolution: "@vitejs/plugin-react-swc@npm:3.1.0"
@@ -2693,6 +2700,7 @@ __metadata:
     "@types/react-dom": ^18.2.6
     "@types/sql.js": ^1.4.4
     "@typescript/analyze-trace": ^0.9.1
+    "@ungap/with-resolvers": ^0.1.0
     alinea: "link:."
     autoprefixer: ^10.4.2
     copy-env-cli: 1.0.0
