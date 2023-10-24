@@ -175,6 +175,7 @@ export function createEntryEditor(entryData: EntryData) {
   )
 
   const isPublishing = atom(get => {
+    return false
     const pending = get(pendingAtom)
     return pending.some(
       mutation =>
@@ -184,6 +185,7 @@ export function createEntryEditor(entryData: EntryData) {
   })
 
   const isArchiving = atom(get => {
+    return false
     const pending = get(pendingAtom)
     return pending.some(
       mutation =>
