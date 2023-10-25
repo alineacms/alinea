@@ -1,3 +1,4 @@
+import {createId} from 'alinea/core'
 import {Reference} from 'alinea/core/Reference'
 import {EntryReference, FileReference} from 'alinea/picker/entry/EntryReference'
 import {UrlReference} from 'alinea/picker/url'
@@ -51,7 +52,16 @@ export function attributesToReference(
   attributes: Anchor
 ): Reference | undefined {
   const id = attributes['data-id']
-  if (!id) return
+  if (!id) {
+    if (attributes.href)
+      return {
+        id: createId(),
+        type: 'url',
+        url: attributes.href,
+        target: attributes.target
+      } as UrlReference
+    return
+  }
   if (attributes['data-entry'])
     return {
       id,
