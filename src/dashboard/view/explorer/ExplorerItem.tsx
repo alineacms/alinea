@@ -53,7 +53,7 @@ export function ExplorerItem({
   const childrenAmount = entry.childrenAmount ?? 0
 
   function navigateTo() {
-    explorer.onNavigate?.(entry.i18nId ?? entry.entryId)
+    explorer.onNavigate?.(entry.entryId)
   }
 
   return (
