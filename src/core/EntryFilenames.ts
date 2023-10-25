@@ -1,6 +1,6 @@
 import {JsonLoader} from 'alinea/backend'
 import {Config} from './Config.js'
-import {EntryPhase} from './EntryRow.js'
+import {EntryPhase, EntryRow} from './EntryRow.js'
 import {Workspace} from './Workspace.js'
 import {values} from './util/Objects.js'
 import {join} from './util/Paths.js'
@@ -95,4 +95,15 @@ export function entryFileName(
   const root = Workspace.roots(workspace)[entry.root]
   if (!root) throw new Error(`Root "${entry.root}" does not exist`)
   return join(contentDir, entry.root, entryFilepath(config, entry, parentPaths))
+}
+
+export function entryFile(config: Config, entry: EntryRow) {
+  const workspace = config.workspaces[entry.workspace]
+  if (!workspace)
+    throw new Error(`Workspace "${entry.workspace}" does not exist`)
+  const filePath = entry.filePath
+  const {source: contentDir} = Workspace.data(workspace)
+  const root = Workspace.roots(workspace)[entry.root]
+  if (!root) throw new Error(`Root "${entry.root}" does not exist`)
+  return join(contentDir, entry.root, filePath)
 }
