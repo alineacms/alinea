@@ -1,5 +1,5 @@
 import {EntryPhase} from 'alinea/core'
-import {workspaceMediaDir} from 'alinea/core/EntryFilenames'
+import {entryFile, workspaceMediaDir} from 'alinea/core/EntryFilenames'
 import {Button, HStack, Icon, Stack, fromModule, px} from 'alinea/ui'
 import {AppBar} from 'alinea/ui/AppBar'
 import {DropdownMenu} from 'alinea/ui/DropdownMenu'
@@ -113,7 +113,10 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
         root: editor.activeVersion.root,
         directory: workspaceMediaDir(config, editor.activeVersion.workspace)
       }
-      await upload([file], destination, {entry: editor.activeVersion})
+      await upload([file], destination, {
+        entry: editor.activeVersion,
+        entryFile: entryFile(config, editor.activeVersion)
+      })
     }
     input.click()
   }

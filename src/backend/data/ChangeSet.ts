@@ -200,7 +200,12 @@ export class ChangeSetCreator {
     return [{type: ChangeType.Upload, file: mutation.file, url: mutation.url}]
   }
 
-  fileRemoveChanges({file: entryFile}: FileRemoveMutation): Array<Change> {
+  fileRemoveChanges({
+    file: entryFile,
+    replace
+  }: FileRemoveMutation): Array<Change> {
+    // Removing the binary file from the media instance happens in Server
+    if (replace) return []
     return [{type: ChangeType.Delete, file: entryFile}]
   }
 

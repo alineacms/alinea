@@ -107,4 +107,5 @@ export interface FileRemoveMutation {
   file: string
   workspace: string
   location: string
+  replace: boolean
 }

@@ -25,6 +25,7 @@ import {
 import {rgba, toHex} from 'color2k'
 import {atom, useAtom, useSetAtom} from 'jotai'
 import pLimit from 'p-limit'
+import {useEffect} from 'react'
 import smartcrop from 'smartcrop'
 import {rgbaToThumbHash, thumbHashToAverageRGBA} from 'thumbhash'
 import {useMutate} from '../atoms/DbAtoms.js'
@@ -64,7 +65,7 @@ export interface Upload {
   height?: number
   result?: Media.File
   error?: Error
-  replace?: {entry: EntryRow}
+  replace?: {entry: EntryRow; entryFile: string}
 }
 
 const defaultTasker = pLimit(Infinity)
@@ -179,45 +180,50 @@ async function process(
     }
     case UploadStatus.Uploaded: {
       const {replace} = upload
-      const {file, entry} = await createEntry(upload)
       const info = upload.info!
-      const mutations = replace
-        ? [
-            {
-              type: MutationType.Create,
-              entryId: entry.entryId,
-              file,
-              entry
-            },
-            {
-              type: MutationType.Upload,
-              entryId: entry.entryId,
-              url: info.previewUrl,
-              file: info.location
-            },
-            {
-              type: MutationType.FileRemove,
-              entryId: replace.entry.entryId,
-              workspace: replace.entry.workspace,
-              location: (replace.entry.data as MediaFile).location,
-              file: entryFile(published)
+      const {file, entry} = await createEntry(upload)
+      if (replace) {
+        await mutate(
+          {
+            type: MutationType.Edit,
+            entryId: replace.entry.entryId,
+            file: replace.entryFile,
+            entry: {
+              ...replace.entry,
+              data: {...entry.data, title: replace.entry.title}
             }
-          ]
-        : [
-            {
-              type: MutationType.Create,
-              entryId: entry.entryId,
-              file,
-              entry
-            },
-            {
-              type: MutationType.Upload,
-              entryId: entry.entryId,
-              url: info.previewUrl,
-              file: info.location
-            }
-          ]
-      await mutate(...mutations)
+          },
+          {
+            type: MutationType.Upload,
+            entryId: entry.entryId,
+            url: info.previewUrl,
+            file: info.location
+          },
+          {
+            type: MutationType.FileRemove,
+            entryId: replace.entry.entryId,
+            file: replace.entryFile,
+            workspace: replace.entry.workspace,
+            location: (replace.entry.data as MediaFile).location,
+            replace: true
+          }
+        )
+      } else {
+        await mutate(
+          {
+            type: MutationType.Create,
+            entryId: entry.entryId,
+            file,
+            entry
+          },
+          {
+            type: MutationType.Upload,
+            entryId: entry.entryId,
+            url: info.previewUrl,
+            file: info.location
+          }
+        )
+      }
       return {...upload, result: entry, status: UploadStatus.Done}
     }
     case UploadStatus.Done:
@@ -258,6 +264,11 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
   const setErrorAtom = useSetAtom(errorAtom)
   const [uploads, setUploads] = useAtom(uploadsAtom)
   const batch = createBatch(mutate)
+
+  useEffect(() => {
+    // Clear upload list on unmount
+    return () => setUploads([])
+  }, [])
 
   async function batchMutations(...mutations: Array<Mutation>) {
     await batch(...mutations)
@@ -382,7 +393,7 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
   async function upload(
     files: Array<File>,
     to: UploadDestination,
-    replace?: {entry: EntryRow}
+    replace?: {entry: EntryRow; entryFile: string}
   ) {
     const uploads: Array<Upload> = Array.from(files).map(file => {
       return {id: createId(), file, to, replace, status: UploadStatus.Queued}

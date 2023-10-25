@@ -410,7 +410,8 @@ export function createEntryEditor(entryData: EntryData) {
       entryId: published.entryId,
       workspace: published.workspace,
       location: (published.data as MediaFile).location,
-      file: entryFile(published)
+      file: entryFile(published),
+      replace: false
     }
     return set(mutateAtom, mutation).catch(error => {
       set(
