@@ -34,6 +34,7 @@ export function document<Definition extends TypeDefinition>(
           icon: IcRoundShare
         }
       })
-    )
+    ),
+    [Meta]: definition[Meta]
   } as any) as any
 }
