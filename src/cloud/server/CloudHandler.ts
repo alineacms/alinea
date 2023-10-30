@@ -1,9 +1,10 @@
 import {Handler, JWTPreviews, Media, Target} from 'alinea/backend'
 import {History, Revision} from 'alinea/backend/History'
 import {Store} from 'alinea/backend/Store'
-import {Config, Connection, HttpError} from 'alinea/core'
+import {Config, Connection, HttpError, Workspace} from 'alinea/core'
 import {EntryRecord} from 'alinea/core/EntryRecord'
 import {Outcome, OutcomeJSON} from 'alinea/core/Outcome'
+import {join} from 'alinea/core/util/Paths'
 import {CloudAuthServer} from './CloudAuthServer.js'
 import {cloudConfig} from './CloudConfig.js'
 
@@ -40,7 +41,7 @@ function asJson(init: RequestInit = {}) {
 export class CloudApi implements Media, Target, History {
   canRename = false
 
-  constructor() {}
+  constructor(private config: Config) {}
 
   mutate({mutations}: Connection.MutateParams, ctx: Connection.Context) {
     return fetch(
@@ -78,11 +79,14 @@ export class CloudApi implements Media, Target, History {
   }
 
   delete(
-    {location}: Connection.DeleteParams,
+    {location, workspace}: Connection.DeleteParams,
     ctx: Connection.Context
   ): Promise<void> {
+    const mediaDir =
+      Workspace.data(this.config.workspaces[workspace])?.mediaDir ?? ''
+    const finalLocation = join(mediaDir, location)
     return fetch(
-      cloudConfig.media + '?' + new URLSearchParams({location}),
+      cloudConfig.media + '?' + new URLSearchParams({location: finalLocation}),
       withAuth(ctx, {method: 'DELETE'})
     )
       .then(failOnHttpError)
@@ -121,7 +125,7 @@ export function createCloudHandler(
   store: Store,
   apiKey: string | undefined
 ) {
-  const api = new CloudApi()
+  const api = new CloudApi(config)
   return new Handler({
     auth: new CloudAuthServer({config, apiKey}),
     store,
