@@ -2,11 +2,12 @@ import {Entry} from 'alinea/core/Entry'
 import {Hint} from 'alinea/core/Hint'
 import {Label} from 'alinea/core/Label'
 import {Reference} from 'alinea/core/Reference'
-import {Shape} from 'alinea/core/Shape'
 import {Type} from 'alinea/core/Type'
 import {MediaFile} from 'alinea/core/media/MediaSchema'
 import {Expr} from 'alinea/core/pages/Expr'
 import {Projection} from 'alinea/core/pages/Projection'
+import {RecordShape} from 'alinea/core/shape/RecordShape'
+import {ScalarShape} from 'alinea/core/shape/ScalarShape'
 import {assign} from 'alinea/core/util/Objects'
 import {Picker} from 'alinea/editor/Picker'
 import {EntryLinkReference} from './EntryReference.js'
@@ -59,8 +60,8 @@ export function entryPicker<Ref extends Reference, Fields>(
     package: 'alinea/picker/entry'
   })*/
   return {
-    shape: Shape.Record('Entry', {
-      entry: Shape.Scalar('Entry')
+    shape: new RecordShape('Entry', {
+      entry: new ScalarShape('Entry')
     }).concat(extra),
     hint: options.fields
       ? Hint.Intersection(options.hint, Type.hint(options.fields))

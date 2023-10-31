@@ -7,6 +7,7 @@ import {Shape, ShapeInfo} from '../Shape.js'
 import {PostProcess} from '../pages/PostProcess.js'
 import {generateKeyBetween} from '../util/FractionalIndexing.js'
 import {RecordShape} from './RecordShape.js'
+import {ScalarShape} from './ScalarShape.js'
 
 export type ListRow = {
   id: string
@@ -42,9 +43,9 @@ export class ListShape<T>
         return [
           key,
           new RecordShape(label, {
-            id: Shape.Scalar('Id'),
-            index: Shape.Scalar('Index'),
-            type: Shape.Scalar('Type'),
+            id: new ScalarShape('Id'),
+            index: new ScalarShape('Index'),
+            type: new ScalarShape('Type'),
             ...type.properties
           })
         ]

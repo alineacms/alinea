@@ -7,6 +7,7 @@ import {Shape, ShapeInfo} from '../Shape.js'
 import {PostProcess} from '../pages/PostProcess.js'
 import {entries, fromEntries} from '../util/Objects.js'
 import {RecordShape} from './RecordShape.js'
+import {ScalarShape} from './ScalarShape.js'
 
 export type UnionRow = {
   id: string
@@ -31,8 +32,8 @@ export class UnionShape<T> implements Shape<UnionRow & T, UnionMutator<T>> {
         return [
           key,
           new RecordShape(label, {
-            id: Shape.Scalar('Id'),
-            type: Shape.Scalar('Type'),
+            id: new ScalarShape('Id'),
+            type: new ScalarShape('Type'),
             ...type.properties
           })
         ]
@@ -85,7 +86,7 @@ export class UnionShape<T> implements Shape<UnionRow & T, UnionMutator<T>> {
     if (currentType !== value.type) return void parent.set(key, this.toY(value))
     const shape = this.shapes[currentType]
     if (!shape) return
-    shape.applyY(value, current)
+    shape.applyY(value, parent, key)
   }
   watch(parent: Y.Map<any>, key: string) {
     return (fun: () => void) => {

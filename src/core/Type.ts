@@ -10,7 +10,6 @@ import {createId} from './Id.js'
 import {Label} from './Label.js'
 import {Meta, StripMeta} from './Meta.js'
 import {Section, section} from './Section.js'
-import {Shape} from './Shape.js'
 import type {View} from './View.js'
 import {RecordShape} from './shape/RecordShape.js'
 import {
@@ -156,7 +155,7 @@ class TypeInstance<Definition extends TypeDefinition> implements TypeData {
 
   constructor(public label: Label, public definition: Definition) {
     this.meta = this.definition[Meta] || {}
-    this.shape = Shape.Record(
+    this.shape = new RecordShape(
       label,
       fromEntries(
         fieldsOfDefinition(definition).map(([key, field]) => {

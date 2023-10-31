@@ -21,7 +21,7 @@ import {
   verticalListSortingStrategy
 } from '@dnd-kit/sortable'
 import {CSS, FirstArgument} from '@dnd-kit/utilities'
-import {Field, Reference, Type} from 'alinea/core'
+import {Field, ListRow, Reference, Type} from 'alinea/core'
 import {entries} from 'alinea/core/util/Objects'
 import {Create} from 'alinea/dashboard/view/Create'
 import {IconButton} from 'alinea/dashboard/view/IconButton'
@@ -127,7 +127,7 @@ const layoutMeasuringConfig = {
 }
 
 interface LinksInputProps<Row extends Reference> {
-  state: InputState<InputState.List<Reference>>
+  state: InputState<InputState.List<ListRow & Reference>>
   field: LinksField<Row>
 }
 
@@ -142,7 +142,7 @@ function LinksInput<Row extends Reference>({
   const [pickFrom, setPickFrom] = useState<string | undefined>()
   const picker = pickFrom ? options.pickers[pickFrom] : undefined
 
-  function handleConfirm(links: Array<Reference>) {
+  function handleConfirm(links: Array<ListRow & Reference>) {
     if (!pickFrom || !picker || !links) return
     const seen = new Set()
     for (const link of links) {
@@ -232,7 +232,7 @@ function LinksInput<Row extends Reference>({
                         fields={options.pickers[reference.type].fields}
                         state={state.child(reference.id)}
                         picker={options.pickers[reference.type]}
-                        reference={reference as Row}
+                        reference={reference as ListRow & Row}
                         onRemove={() => list.remove(reference.id)}
                         isSortable={options.max !== 1}
                       />

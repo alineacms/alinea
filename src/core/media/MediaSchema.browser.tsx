@@ -9,7 +9,7 @@ import {
 import {Meta} from '../Meta.js'
 import {MediaSchema as MediaSchemaConfig} from './MediaSchema.js'
 
-export const MediaLibrary = type('Media directory', {
+const MediaLibrary = type('Media directory', {
   ...MediaSchemaConfig.MediaLibrary,
   [Meta]: {
     isContainer: true,
@@ -19,7 +19,7 @@ export const MediaLibrary = type('Media directory', {
   }
 })
 
-export const MediaFile = type('File', {
+const MediaFile = type('File', {
   ...MediaSchemaConfig.MediaFile,
   [Meta]: {
     isHidden: true,

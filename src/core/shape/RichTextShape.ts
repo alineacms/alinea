@@ -8,6 +8,7 @@ import {TextDoc, TextNode} from '../TextDoc.js'
 import type {Expr} from '../pages/Expr.js'
 import {entries, fromEntries, keys} from '../util/Objects.js'
 import {RecordShape} from './RecordShape.js'
+import {ScalarShape} from './ScalarShape.js'
 
 // Adapted from: https://github.com/yjs/y-prosemirror/blob/1c393fb3254cc1ed4933e8326b57c1316793122a/src/lib.js#L245
 function serialize(
@@ -107,7 +108,7 @@ export class RichTextShape<Blocks>
             return [
               key,
               new RecordShape(value.label, {
-                type: Shape.Scalar('Type'),
+                type: new ScalarShape('Type'),
                 ...value.properties
               })
             ]
@@ -218,9 +219,9 @@ export class RichTextShape<Blocks>
       rowType.applyY(row, current, id)
     }
 
-    // Sync text by simply matching each row. This must be improved by diffing
-    // to enable continuous editing during deploys without losing all text
-    // context
+    // Sync text by simply matching each row.
+    // Todo: This must be improved by diffing to enable continuous editing
+    // during deploys without losing all text context
     const fragment: Y.XmlFragment = current.get('$text')
     let i = 0
     function syncText(source: Y.XmlText, target: TextNode.Text) {
