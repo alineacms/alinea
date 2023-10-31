@@ -29,7 +29,7 @@ const value1 = [
   },
   {
     id: 'unique0',
-    type: 'Block1',
+    type: 'Block2',
     field3: 'a',
     field4: 'b'
   },
