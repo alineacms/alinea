@@ -47,7 +47,6 @@
     "src/core",
     "src/dashboard",
     "src/ui",
-    "src/dev",
     "src/auth/passwordless",
     "src/input/richtext"
   ],
