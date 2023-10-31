@@ -2,7 +2,7 @@ import {LinkResolver} from 'alinea/backend/resolver/LinkResolver'
 import * as Y from 'yjs'
 import {Label} from '../Label.js'
 import {Shape} from '../Shape.js'
-import {entries} from '../util/Objects.js'
+import {entries, keys} from '../util/Objects.js'
 
 export type RecordMutator<T> = {
   set: <K extends keyof T>(k: K, v: T[K]) => void
@@ -42,17 +42,26 @@ export class RecordShape<T = object> implements Shape<T, RecordMutator<T>> {
   toY(value: T) {
     const self: Record<string, any> = value || {}
     const map = new Y.Map()
-    for (const key of Object.keys(this.properties)) {
+    for (const key of keys(this.properties)) {
       map.set(key, this.properties[key].toY(self[key]))
     }
     return map
   }
   fromY(map: Y.Map<any>) {
     const res: Record<string, any> = {}
-    for (const key of Object.keys(this.properties)) {
+    for (const key of keys(this.properties)) {
       res[key] = this.properties[key].fromY(map?.get(key))
     }
     return res as T
+  }
+  applyY(value: T, map: Y.Doc | Y.Map<any>, key: string) {
+    const current: Y.Map<any> | undefined =
+      'getMap' in map ? map.getMap(key) : map.get(key)
+    if (!current) return void (map as Y.Map<any>).set(key, this.toY(value))
+    const self: Record<string, any> = value ?? {}
+    for (const key of keys(this.properties)) {
+      this.properties[key].applyY(self[key], current, key)
+    }
   }
   watch(parent: Y.Map<any>, key: string) {
     return (fun: () => void) => {

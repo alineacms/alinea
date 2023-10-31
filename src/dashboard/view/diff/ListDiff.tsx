@@ -21,7 +21,7 @@ export function ListDiff({shape, valueA, valueB}: ListDiffProps) {
         const block = change.value
         const kind = shape.values[block.type]
         const compare =
-          change.type === 'unchanged'
+          change.type === 'keep'
             ? [change.old, change.value]
             : change.type === 'removal'
             ? [change.value, {}]

@@ -48,7 +48,7 @@ export function computeLcs<T>(
 export type Change<T> =
   | {type: 'addition'; value: T}
   | {type: 'removal'; value: T}
-  | {type: 'unchanged'; old: T; value: T}
+  | {type: 'keep'; old: T; value: T}
 
 export function diffList<T>(
   a: Array<T>,
@@ -68,7 +68,7 @@ export function diffList<T>(
       results.push({type: 'removal', value: a[i - 1]})
       i -= 1
     } else if (equals(a[i - 1], b[j - 1])) {
-      results.push({type: 'unchanged', old: a[i - 1], value: b[j - 1]})
+      results.push({type: 'keep', old: a[i - 1], value: b[j - 1]})
       i -= 1
       j -= 1
     } else if (lcs[i - 1][j] <= lcs[i][j - 1]) {

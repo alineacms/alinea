@@ -9,7 +9,7 @@ import {RichTextShape} from './shape/RichTextShape.js'
 import {ScalarShape} from './shape/ScalarShape.js'
 import {UnionRow, UnionShape} from './shape/UnionShape.js'
 
-type YType = Y.AbstractType<any>
+type YType = Y.Doc | Y.Map<any>
 
 export interface ShapeInfo {
   name: string
@@ -24,8 +24,9 @@ export interface Shape<Value = any, OnChange = any> {
   typeOfChild<C>(yValue: any, child: string): Shape<C, unknown>
   toY(value: Value): any
   fromY(yValue: any): Value
+  applyY(value: Value, parent: YType, key: string): void
   watch(parent: YType, key: string): (fun: () => void) => void
-  mutator(parent: Y.Doc | YType, key: string): OnChange
+  mutator(parent: YType, key: string): OnChange
   toString(): string
   applyLinks(value: Value, loader: LinkResolver): Promise<void>
 }
