@@ -1,6 +1,6 @@
 .root {
   &-input {
-    accent-color: var(--alinea-accent);
+    accent-color: var(--alinea-button-background);
     position: absolute;
     width: 0;
     height: 0;
@@ -10,10 +10,10 @@
   &-checkmark {
     cursor: pointer;
     position: relative;
-    width: 24px;
-    height: 24px;
+    width: 16px;
+    height: 16px;
     flex: 0 0 auto;
-    color: var(--alinea-accent);
+    color: var(--alinea-button-background);
     background: var(--alinea-fields);
     box-shadow: var(--alinea-fields-shadow);
     border-radius: 4px;

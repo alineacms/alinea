@@ -22,10 +22,7 @@ export interface CheckOptions extends FieldOptions {
 export class CheckField extends Field.Scalar<boolean, CheckOptions> {}
 
 /** Create a text field configuration */
-export function check(
-  label: Label,
-  options: CheckOptions = {label}
-): CheckField {
+export function check(label: Label, options: CheckOptions = {}): CheckField {
   return new CheckField({
     hint: Hint.Boolean(),
     label,

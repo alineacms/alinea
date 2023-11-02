@@ -26,12 +26,16 @@ function CheckInput({state, field}: CheckInputProps) {
   return (
     <InputLabel
       asLabel
-      label={label}
       {...options}
+      label={options.label ? label : undefined}
       focused={focus}
       icon={IcRoundTextFields}
     >
-      <HStack gap={8} style={{position: 'relative', display: 'inline-flex'}}>
+      <HStack
+        center
+        gap={10}
+        style={{position: 'relative', display: 'inline-flex'}}
+      >
         <input
           className={styles.root.input()}
           type="checkbox"
@@ -51,7 +55,10 @@ function CheckInput({state, field}: CheckInputProps) {
             />
           )}
         </span>
-        <TextLabel label={label} className={styles.root.label()} />
+        <TextLabel
+          label={options.label ?? label}
+          className={styles.root.label()}
+        />
       </HStack>
     </InputLabel>
   )
