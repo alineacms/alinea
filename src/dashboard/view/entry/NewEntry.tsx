@@ -1,4 +1,4 @@
-import {Entry, EntryPhase, EntryRow, Type, createId, slugify} from 'alinea/core'
+import {Entry, EntryPhase, Type, createId, slugify} from 'alinea/core'
 import {
   entryChildrenDir,
   entryFileName,
@@ -6,6 +6,7 @@ import {
 } from 'alinea/core/EntryFilenames'
 import {MutationType} from 'alinea/core/Mutation'
 import {Projection} from 'alinea/core/pages/Projection'
+import {createEntryRow} from 'alinea/core/util/EntryRows'
 import {generateKeyBetween} from 'alinea/core/util/FractionalIndexing'
 import {entries, fromEntries, keys} from 'alinea/core/util/Objects'
 import {dirname} from 'alinea/core/util/Paths'
@@ -127,7 +128,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
   const [isCreating, setIsCreating] = useState(false)
   const updateEntries = useSetAtom(changedEntriesAtom)
 
-  function handleCreate(e: FormEvent) {
+  async function handleCreate(e: FormEvent) {
     e.preventDefault()
     const title = titleField()
     const selected = selectedType()
@@ -147,7 +148,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
     const parentDir = dirname(filePath)
     const url =
       (parent?.url || '') + (parent?.url.endsWith('/') ? '' : '/') + path
-    const entry: EntryRow = {
+    const entry = await createEntryRow(config, {
       entryId,
       ...data,
       filePath,
@@ -165,10 +166,9 @@ function NewEntryForm({parentId}: NewEntryProps) {
       modifiedAt: Date.now(),
       active: true,
       main: false,
-      contentHash: '', // Todo: set content hash here
       data: {title, path},
       searchableText: ''
-    }
+    })
     const result = mutate({
       type: MutationType.Create,
       entryId: entry.entryId,

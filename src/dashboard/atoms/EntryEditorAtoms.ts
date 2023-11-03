@@ -21,15 +21,9 @@ import {atomFamily, unwrap} from 'jotai/utils'
 import * as Y from 'yjs'
 import {debounceAtom} from '../util/DebounceAtom.js'
 import {clientAtom, configAtom} from './DashboardAtoms.js'
-import {
-  entryRevisionAtoms,
-  graphAtom,
-  mutateAtom,
-  sourceGraphAtom
-} from './DbAtoms.js'
+import {entryRevisionAtoms, graphAtom, mutateAtom} from './DbAtoms.js'
 import {errorAtom} from './ErrorAtoms.js'
 import {locationAtom} from './LocationAtoms.js'
-import {pendingAtom} from './PendingAtoms.js'
 import {yAtom} from './YAtom.js'
 
 export enum EditMode {
@@ -55,7 +49,6 @@ export const entryEditorAtoms = atomFamily(
       if (!i18nId) return undefined
       const config = get(configAtom)
       const client = get(clientAtom)
-      const sourceGraph = await get(sourceGraphAtom)
       const graph = await get(graphAtom)
       const search = locale ? {i18nId, locale} : {i18nId}
       let entry = await graph.preferDraft.maybeGet(Entry(search))
@@ -71,7 +64,6 @@ export const entryEditorAtoms = atomFamily(
       if (!entry) return undefined
       const entryId = entry.entryId
       get(entryRevisionAtoms(entryId))
-      const sourceEntry = await sourceGraph.preferDraft.get(Entry({entryId}))
       const versions = await graph.all.find(
         Entry({entryId}).select({
           ...Entry,
@@ -111,7 +103,6 @@ export const entryEditorAtoms = atomFamily(
       )
       const previewToken = await get(previewTokenAtom)
       return createEntryEditor({
-        sourceEntry,
         parents,
         translations,
         parentNeedsTranslation,
@@ -129,7 +120,6 @@ export const entryEditorAtoms = atomFamily(
 )
 
 export interface EntryData {
-  sourceEntry: EntryRow | null
   parents: Array<{entryId: string; path: string}>
   client: Connection
   config: Config
@@ -174,29 +164,10 @@ export function createEntryEditor(entryData: EntryData) {
     }
   )
 
-  const isPublishing = atom(get => {
-    return false
-    const pending = get(pendingAtom)
-    return pending.some(
-      mutation =>
-        mutation.type === MutationType.Publish &&
-        mutation.entryId === activeVersion.entryId
-    )
-  })
+  const isPublishing = atom(false)
+  const isArchiving = atom(false)
 
-  const isArchiving = atom(get => {
-    return false
-    const pending = get(pendingAtom)
-    return pending.some(
-      mutation =>
-        mutation.type === MutationType.Archive &&
-        mutation.entryId === activeVersion.entryId
-    )
-  })
-
-  const yStateVector = Y.encodeStateVector(
-    createYDoc(type, entryData.sourceEntry)
-  )
+  const yStateVector = Y.encodeStateVector(createYDoc(type, null))
 
   const phaseInUrl = atom(get => {
     const {search} = get(locationAtom)
@@ -301,15 +272,21 @@ export function createEntryEditor(entryData: EntryData) {
       entryId: activeVersion.entryId,
       entry
     })
-    set(hasChanges, false)
-    return set(mutateAtom, ...mutations).catch(error => {
-      set(hasChanges, true)
-      set(
-        errorAtom,
-        'Could not complete publish action, please try again later',
-        error
-      )
-    })
+    set(isPublishing, true)
+    return set(mutateAtom, ...mutations)
+      .then(() => {
+        set(hasChanges, false)
+      })
+      .catch(error => {
+        set(
+          errorAtom,
+          'Could not complete publish action, please try again later',
+          error
+        )
+      })
+      .finally(() => {
+        set(isPublishing, false)
+      })
   })
 
   const restoreRevision = atom(null, async (get, set) => {
@@ -375,13 +352,18 @@ export function createEntryEditor(entryData: EntryData) {
       entryId: published.entryId,
       file: entryFile(published)
     }
-    return set(mutateAtom, mutation).catch(error => {
-      set(
-        errorAtom,
-        'Could not complete archive action, please try again later',
-        error
-      )
-    })
+    set(isArchiving, true)
+    return set(mutateAtom, mutation)
+      .catch(error => {
+        set(
+          errorAtom,
+          'Could not complete archive action, please try again later',
+          error
+        )
+      })
+      .finally(() => {
+        set(isArchiving, false)
+      })
   })
 
   const publishArchived = atom(null, (get, set) => {
@@ -500,7 +482,7 @@ export function createEntryEditor(entryData: EntryData) {
   })
 
   function createPreviewUpdate(entry: EntryRow) {
-    const sourceDoc = createYDoc(type, entryData.sourceEntry)
+    const sourceDoc = createYDoc(type, null)
     applyEntryData(sourceDoc, type, entry)
     return Y.encodeStateAsUpdateV2(sourceDoc, yStateVector)
   }

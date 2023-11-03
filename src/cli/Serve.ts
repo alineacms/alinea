@@ -1,6 +1,7 @@
 import {JWTPreviews} from 'alinea/backend'
 import {Handler} from 'alinea/backend/Handler'
 import {HttpHandler} from 'alinea/backend/router/Router'
+import {createCloudDebugHandler} from 'alinea/cloud/server/CloudDebugHandler'
 import {createCloudHandler} from 'alinea/cloud/server/CloudHandler'
 import {CMS} from 'alinea/core/CMS'
 import {BuildOptions} from 'esbuild'
@@ -84,27 +85,33 @@ export async function serve(options: ServeOptions): Promise<void> {
   while (true) {
     const current = await nextGen
     if (!current?.value) return
-    const {cms: currentCMS, localData: fileData} = current.value
+    const {cms: currentCMS, localData: fileData, store} = current.value
     if (currentCMS === cms) {
       context.liveReload.reload('refetch')
     } else {
-      const backend = process.env.ALINEA_CLOUD_URL
-        ? createCloudHandler(
-            currentCMS,
-            current.value.store,
-            process.env.ALINEA_API_KEY
-          )
-        : new Handler({
-            config: currentCMS,
-            store: current.value.store,
-            target: fileData,
-            media: fileData,
-            history: new GitHistory(currentCMS, rootDir),
-            previews: new JWTPreviews('dev')
-          })
+      const backend = createBackend()
       handle = createLocalServer(context, backend)
       cms = currentCMS
       context.liveReload.reload('refresh')
+
+      function createBackend(): Handler {
+        if (process.env.ALINEA_CLOUD_DEBUG)
+          return createCloudDebugHandler(currentCMS, store)
+        if (process.env.ALINEA_CLOUD_URL)
+          return createCloudHandler(
+            currentCMS,
+            store,
+            process.env.ALINEA_API_KEY
+          )
+        return new Handler({
+          config: currentCMS,
+          store: store,
+          target: fileData,
+          media: fileData,
+          history: new GitHistory(currentCMS, rootDir),
+          previews: new JWTPreviews('dev')
+        })
+      }
     }
     nextGen = gen.next()
     const {serve} = await server

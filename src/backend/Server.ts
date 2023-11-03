@@ -36,7 +36,7 @@ export class Server implements Connection {
     public options: ServerOptions,
     public context: Connection.Context
   ) {
-    this.db = new Database(options.store, options.config)
+    this.db = new Database(options.config, options.store)
     this.resolver = new Resolver(options.store, options.config.schema)
     this.graph = new Graph(this.options.config, this.resolve)
     this.changes = new ChangeSetCreator(options.config)

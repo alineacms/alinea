@@ -1,11 +1,9 @@
 import {JsonLoader} from 'alinea/backend'
 import {Config} from './Config.js'
-import {EntryPhase, EntryRow} from './EntryRow.js'
+import {ALT_STATUS, EntryPhase, EntryRow} from './EntryRow.js'
 import {Workspace} from './Workspace.js'
 import {values} from './util/Objects.js'
 import {join} from './util/Paths.js'
-
-const ALT_STATUS = [EntryPhase.Draft, EntryPhase.Archived]
 
 export function workspaceMediaDir(config: Config, workspace: string): string {
   return Workspace.data(config.workspaces[workspace])?.mediaDir ?? ''

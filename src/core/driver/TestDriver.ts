@@ -46,7 +46,7 @@ class TestDriver extends DefaultDriver implements TestApi {
   }
 
   async generate() {
-    const db = new Database(await this.store, this)
+    const db = new Database(this, await this.store)
     await db.fill({
       async *entries() {}
     })

@@ -74,12 +74,12 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
     ? 'revision'
     : untranslated
     ? 'untranslated'
-    : hasChanges && !phaseInUrl
-    ? 'editing'
     : selectedPhase === EntryPhase.Published && isPublishing
     ? 'publishing'
     : selectedPhase === EntryPhase.Archived && isArchiving
     ? 'archiving'
+    : hasChanges && !phaseInUrl
+    ? 'editing'
     : selectedPhase
   const saveDraft = useSetAtom(editor.saveDraft)
   const publishEdits = useSetAtom(editor.publishEdits)

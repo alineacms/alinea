@@ -182,8 +182,9 @@ export class CloudAuthServer implements Auth.Server {
           })
         }),
 
-      router
-        .use(async (request: Request) => {
+      matcher
+        .all(Connection.routes.base + '/*')
+        .map(async ({request}) => {
           try {
             const {user} = await this.contextFor(request)
           } catch (error) {

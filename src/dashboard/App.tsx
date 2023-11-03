@@ -20,7 +20,6 @@ import {useDbUpdater} from './atoms/DbAtoms.js'
 import {errorAtom} from './atoms/ErrorAtoms.js'
 import {locationAtom, matchAtoms, useLocation} from './atoms/LocationAtoms.js'
 import {usePreferredLanguage} from './atoms/NavigationAtoms.js'
-import {pendingAtom} from './atoms/PendingAtoms.js'
 import {RouteView, RouterProvider} from './atoms/RouterAtoms.js'
 import {useDashboard} from './hook/UseDashboard.js'
 import {useEntryLocation} from './hook/UseEntryLocation.js'
@@ -67,8 +66,7 @@ const isEntryAtom = atom(get => {
 })
 
 function AppAuthenticated() {
-  const pending = useAtomValue(pendingAtom)
-  useDbUpdater(pending.length > 0 ? 30 : 60)
+  useDbUpdater()
   const {fullPage} = useDashboard()
   const nav = useNav()
   const isEntry = useAtomValue(isEntryAtom)

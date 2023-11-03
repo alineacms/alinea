@@ -1,6 +1,7 @@
 import {ReadableStream, Request, Response, TextEncoderStream} from '@alinea/iso'
 import {Handler} from 'alinea/backend'
 import {HttpHandler, router} from 'alinea/backend/router/Router'
+import {cloudUrl} from 'alinea/cloud/server/CloudConfig'
 import {Trigger, trigger} from 'alinea/core'
 import esbuild, {BuildOptions, BuildResult, OutputFile} from 'esbuild'
 import fs from 'node:fs'
@@ -74,9 +75,6 @@ export function createLocalServer(
   const tsconfig = fs.existsSync(altConfig) ? altConfig : undefined
   let currentBuild: Trigger<BuildDetails> = trigger<BuildDetails>(),
     initial = true
-  const cloudUrl = process.env.ALINEA_CLOUD_URL
-    ? `'${process.env.ALINEA_CLOUD_URL}'`
-    : 'undefined'
   const config = {
     external: [
       'next/navigation',
@@ -101,11 +99,8 @@ export function createLocalServer(
     ...buildOptions,
     plugins: buildOptions?.plugins || [],
     define: {
-      'process.env.NODE_ENV':
-        production || process.env.ALINEA_CLOUD_URL
-          ? "'production'"
-          : "'development'",
-      'process.env.ALINEA_CLOUD_URL': cloudUrl,
+      'process.env.NODE_ENV': production ? "'production'" : "'development'",
+      'process.env.ALINEA_CLOUD_URL': JSON.stringify(cloudUrl),
       ...publicDefines(process.env)
     },
     logOverride: {
@@ -210,11 +205,7 @@ export function createLocalServer(
           }
         )
       }),
-      matcher
-        .all('/hub/*')
-        .map(async ({request}): Promise<Response | undefined> => {
-          return handler.handle(request)
-        }),
+      handler.handle,
       serveBrowserBuild,
       matcher.get('/config.css').map((): Response => {
         return new Response('', {headers: {'content-type': 'text/css'}})

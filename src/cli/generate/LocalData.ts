@@ -43,8 +43,6 @@ async function filesOfPath(fs: FS, dir: string): Promise<WatchFiles> {
 }
 
 export class LocalData implements Source, Target, Media {
-  canRename = true
-
   constructor(public options: LocalDataOptions) {}
 
   async watchFiles() {

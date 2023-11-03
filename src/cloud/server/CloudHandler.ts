@@ -39,8 +39,6 @@ function asJson(init: RequestInit = {}) {
 }
 
 export class CloudApi implements Media, Target, History {
-  canRename = false
-
   constructor(private config: Config) {}
 
   mutate({mutations}: Connection.MutateParams, ctx: Connection.Context) {

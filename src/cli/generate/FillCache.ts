@@ -14,7 +14,7 @@ export async function* fillCache(
   config: Config,
   until: Promise<any>
 ) {
-  const db = new Database(store, config)
+  const db = new Database(config, store)
   const limit = pLimit(1)
   const cache = () => db.fill(localData, localData)
 
