@@ -92,22 +92,24 @@ function createRouter(
       .map(respond),
 
     matcher
-      .get(Connection.routes.updates())
+      .get(Connection.routes.sync())
       .map(context)
       .map(({ctx, url}) => {
         const api = createApi(ctx)
         const contentHash = url.searchParams.get('contentHash')!
-        const modifiedAt = Number(url.searchParams.get('modifiedAt'))!
-        return ctx.logger.result(api.updates({contentHash, modifiedAt}))
+        return ctx.logger.result(api.syncRequired(contentHash))
       })
       .map(respond),
 
     matcher
-      .get(Connection.routes.versionIds())
+      .post(Connection.routes.sync())
       .map(context)
-      .map(({ctx}) => {
+      .map(router.parseJson)
+      .map(({ctx, body}) => {
         const api = createApi(ctx)
-        return ctx.logger.result(api.versionIds())
+        if (!Array.isArray(body)) throw new Error(`Array expected`)
+        const contentHashes = body as Array<string>
+        return ctx.logger.result(api.sync(contentHashes))
       })
       .map(respond),
 

@@ -1,7 +1,6 @@
 import {History, Revision} from 'alinea/backend/History'
 import {ResolveDefaults} from 'alinea/backend/Resolver'
 import {ChangeSet} from 'alinea/backend/data/ChangeSet'
-import {AlineaMeta} from 'alinea/backend/db/AlineaMeta'
 import {EntryRecord} from './EntryRecord.js'
 import {EntryRow} from './EntryRow.js'
 import {Mutation} from './Mutation.js'
@@ -9,14 +8,14 @@ import {User} from './User.js'
 import {Selection} from './pages/Selection.js'
 import {Logger} from './util/Logger.js'
 
-export interface UpdateResponse {
-  contentHash: string
-  entries: Array<EntryRow>
+export interface SyncResponse {
+  insert: Array<EntryRow>
+  remove: Array<string>
 }
 
 export interface Syncable {
-  updates(request: AlineaMeta): Promise<UpdateResponse>
-  versionIds(): Promise<Array<string>>
+  syncRequired(contentHash: string): Promise<boolean>
+  sync(contentHashes: Array<string>): Promise<SyncResponse>
 }
 
 export interface Connection extends Syncable, History {
@@ -99,11 +98,8 @@ export namespace Connection {
     revisions() {
       return base + `/revisions`
     },
-    updates() {
-      return base + `/updates`
-    },
-    versionIds() {
-      return base + `/versionIds`
+    sync() {
+      return base + `/sync`
     },
     media() {
       return base + `/media`

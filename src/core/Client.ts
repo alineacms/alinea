@@ -1,8 +1,7 @@
 import {AbortController, fetch, Response} from '@alinea/iso'
-import {AlineaMeta} from 'alinea/backend/db/AlineaMeta'
 import {Revision} from 'alinea/backend/History'
 import {Config, Connection, EntryPhase, HttpError} from 'alinea/core'
-import {UpdateResponse} from './Connection.js'
+import {SyncResponse} from './Connection.js'
 import {EntryRecord} from './EntryRecord.js'
 import {Mutation} from './Mutation.js'
 import {Realm} from './pages/Realm.js'
@@ -76,19 +75,18 @@ export class Client implements Connection {
     ).then<EntryRecord>(failOnHttpError)
   }
 
-  updates(request: AlineaMeta): Promise<UpdateResponse> {
-    const params = new URLSearchParams()
-    params.append('contentHash', request.contentHash)
-    params.append('modifiedAt', String(request.modifiedAt))
+  syncRequired(contentHash: string): Promise<boolean> {
+    const params = new URLSearchParams({contentHash})
     return this.requestJson(
-      Connection.routes.updates() + '?' + params.toString()
-    ).then<UpdateResponse>(failOnHttpError)
+      Connection.routes.sync() + '?' + params.toString()
+    ).then<boolean>(failOnHttpError)
   }
 
-  versionIds(): Promise<Array<string>> {
-    return this.requestJson(Connection.routes.versionIds()).then<Array<string>>(
-      failOnHttpError
-    )
+  sync(contentHashes: Array<string>): Promise<SyncResponse> {
+    return this.requestJson(Connection.routes.sync(), {
+      method: 'POST',
+      body: JSON.stringify(contentHashes)
+    }).then<SyncResponse>(failOnHttpError)
   }
 
   prepareUpload(file: string): Promise<Connection.UploadResponse> {

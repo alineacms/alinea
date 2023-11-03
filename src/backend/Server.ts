@@ -1,4 +1,4 @@
-import {Config, Connection} from 'alinea/core'
+import {Config, Connection, SyncResponse} from 'alinea/core'
 import {EntryRecord} from 'alinea/core/EntryRecord'
 import {Graph} from 'alinea/core/Graph'
 import {Mutation, MutationType} from 'alinea/core/Mutation'
@@ -10,7 +10,6 @@ import {ResolveDefaults, Resolver} from './Resolver.js'
 import {Store} from './Store.js'
 import {Target} from './Target.js'
 import {ChangeSetCreator} from './data/ChangeSet.js'
-import {AlineaMeta} from './db/AlineaMeta.js'
 
 export interface PreviewOptions {
   preview?: boolean
@@ -92,11 +91,11 @@ export class Server implements Connection {
 
   // Syncable
 
-  versionIds() {
-    return this.db.versionIds()
+  syncRequired(contentHash: string): Promise<boolean> {
+    return this.db.syncRequired(contentHash)
   }
 
-  updates(request: AlineaMeta) {
-    return this.db.updates(request)
+  sync(contentHashes: Array<string>): Promise<SyncResponse> {
+    return this.db.sync(contentHashes)
   }
 }

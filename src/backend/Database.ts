@@ -5,6 +5,7 @@ import {
   PageSeed,
   Root,
   Schema,
+  SyncResponse,
   Syncable,
   Type,
   Workspace,
@@ -48,75 +49,50 @@ export class Database implements Syncable {
     this.seed = this.seedData()
   }
 
-  async updates(request: AlineaMeta) {
-    const current = await this.meta()
-    if (current.contentHash === request.contentHash)
-      return {
-        contentHash: current.contentHash,
-        entries: []
-      }
-    return {
-      contentHash: current.contentHash,
-      entries: await this.store(
-        EntryRow().where(EntryRow.modifiedAt.isGreater(request.modifiedAt))
-      )
-    }
+  async syncRequired(contentHash: string): Promise<boolean> {
+    const meta = await this.meta()
+    return meta.contentHash !== contentHash
   }
 
-  async versionIds(): Promise<Array<string>> {
-    return this.store(EntryRow().select(EntryRow.versionId))
+  async sync(contentHashes: Array<string>): Promise<SyncResponse> {
+    return this.store.transaction(async tx => {
+      const insert = await tx(
+        EntryRow().where(EntryRow.contentHash.isNotIn(contentHashes))
+      )
+      const keep = new Set(
+        await tx(
+          EntryRow()
+            .where(EntryRow.contentHash.isIn(contentHashes))
+            .select(EntryRow.contentHash)
+        )
+      )
+      const remove = contentHashes.filter(hash => !keep.has(hash))
+      return {insert, remove}
+    })
+  }
+
+  async contentHashes() {
+    return this.store(EntryRow().select(EntryRow.contentHash))
   }
 
   // Syncs data with a remote database, returning the ids of changed entries
   async syncWith(remote: Syncable): Promise<Array<string>> {
     await this.init()
-    const current = await this.meta()
-    const update = await remote.updates(current)
-    const {contentHash, entries} = update
-    if (entries.length) await this.updateEntries(entries)
-    const updated = await this.meta()
-    const changedEntries = entries.map(e => e.entryId)
-    if (updated.contentHash === contentHash) return changedEntries
-    const remoteVersionIds = await remote.versionIds()
-    const excessEntries = await this.store.transaction(async query => {
-      const excess = await query(
+    const meta = await this.meta()
+    const isRequired = await remote.syncRequired(meta.contentHash)
+    if (!isRequired) return []
+    const {insert, remove} = await remote.sync(await this.contentHashes())
+    return this.store.transaction(async tx => {
+      const removed = await tx(
         EntryRow()
-          .select({entryId: EntryRow.entryId, versionId: EntryRow.versionId})
-          .where(
-            remoteVersionIds.length > 0
-              ? EntryRow.versionId.isNotIn(remoteVersionIds)
-              : true
-          )
+          .where(EntryRow.contentHash.isIn(remove))
+          .select(EntryRow.entryId)
       )
-      await query(
-        EntryRow()
-          .delete()
-          .where(EntryRow.versionId.isIn(excess.map(e => e.versionId)))
-      )
-      await Database.index(query)
-      await this.writeMeta(query)
-      return excess.map(e => e.entryId)
-    })
-    const afterRemoves = await this.meta()
-    if (afterRemoves.contentHash === contentHash)
-      return changedEntries.concat(excessEntries)
-    // Todo: we should abandon syncing and just fetch the full db
-    throw new Error('Sync failed')
-  }
-
-  async updateEntries(entries: Array<EntryRow>) {
-    await this.store.transaction(async query => {
-      for (const entry of entries) {
-        await query(
-          EntryRow({
-            entryId: entry.entryId,
-            phase: entry.phase
-          }).delete()
-        )
-        await query(EntryRow().insertOne(entry))
-      }
-      await Database.index(query)
-      await this.writeMeta(query)
+      await tx(EntryRow().delete().where(EntryRow.contentHash.isIn(remove)))
+      await tx(EntryRow().insert(insert))
+      await Database.index(tx)
+      await this.writeMeta(tx)
+      return removed.concat(insert.map(e => e.entryId))
     })
   }
 
