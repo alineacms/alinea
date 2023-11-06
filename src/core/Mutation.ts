@@ -42,6 +42,7 @@ export interface EditMutation {
   file: string
   previousFile?: string
   entry: EntryRow
+  update: string
 }
 
 export interface CreateMutation {

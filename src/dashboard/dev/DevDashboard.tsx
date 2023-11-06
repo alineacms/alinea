@@ -57,8 +57,8 @@ export function DevDashboard({loadConfig}: DevDashboardOptions) {
   useEffect(() => {
     getConfig()
     return setupDevReload({
-      refresh: () => getConfig().then(forceDbUpdate),
-      refetch: forceDbUpdate,
+      refresh: () => getConfig().then(() => forceDbUpdate(true)),
+      refetch: () => forceDbUpdate(true),
       open: () => setConnected(true),
       close: () => setConnected(false)
     })

@@ -1,6 +1,8 @@
+import {Drafts} from 'alinea/backend/Drafts'
 import {History, Revision} from 'alinea/backend/History'
 import {ResolveDefaults} from 'alinea/backend/Resolver'
 import {ChangeSet} from 'alinea/backend/data/ChangeSet'
+import {Draft} from './Draft.js'
 import {EntryRecord} from './EntryRecord.js'
 import {EntryRow} from './EntryRow.js'
 import {Mutation} from './Mutation.js'
@@ -18,13 +20,15 @@ export interface Syncable {
   sync(contentHashes: Array<string>): Promise<SyncResponse>
 }
 
-export interface Connection extends Syncable, History {
+export interface Connection extends Syncable, History, Drafts {
   previewToken(): Promise<string>
   resolve(params: Connection.ResolveParams): Promise<unknown>
   mutate(mutations: Array<Mutation>): Promise<void>
   prepareUpload(file: string): Promise<Connection.UploadResponse>
   revisions(file: string): Promise<Array<Revision>>
   revisionData(file: string, revisionId: string): Promise<EntryRecord>
+  getDraft(entryId: string): Promise<Draft | undefined>
+  storeDraft(draft: Draft): Promise<void>
 }
 
 export namespace Connection {
@@ -72,7 +76,8 @@ export namespace Connection {
   export interface RevisionsParams {
     file: string
   }
-  export type MutateParams = {
+  export interface MutateParams {
+    contentHash: string
     mutations: ChangeSet
   }
   export interface AuthContext {
@@ -100,6 +105,9 @@ export namespace Connection {
     },
     sync() {
       return base + `/sync`
+    },
+    draft() {
+      return base + `/draft`
     },
     media() {
       return base + `/media`

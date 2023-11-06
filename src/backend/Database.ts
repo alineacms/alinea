@@ -95,16 +95,15 @@ export class Database implements Syncable {
   }
 
   async applyMutations(mutations: Array<Mutation>) {
-    return this.store.transaction(async tx => {
+    await this.store.transaction(async tx => {
       for (const mutation of mutations) {
-        console.log(
-          `Applying mutation: ${mutation.type} to ${mutation.entryId}`
-        )
         this.applyMutation(tx, mutation)
       }
       await Database.index(tx)
       await this.writeMeta(tx)
     })
+    const updated = await this.meta()
+    return updated
   }
 
   async applyMutation(tx: Driver.Async, mutation: Mutation) {
@@ -192,9 +191,6 @@ export class Database implements Syncable {
     const entries = await tx(selection)
     for (const entry of entries) {
       const updated = await createEntryRow(this.config, entry)
-      console.log(
-        `update hash of ${entry.entryId} from ${entry.rowHash} to ${updated.rowHash}`
-      )
       await tx(
         EntryRow({entryId: entry.entryId, phase: entry.phase}).set({
           fileHash: updated.fileHash,
@@ -519,7 +515,10 @@ export class Database implements Syncable {
         }
       })
       const changes = changeSetCreator.create(mutations)
-      await target.mutate({mutations: changes}, {logger: new Logger('seed')})
+      await target.mutate(
+        {contentHash: undefined!, mutations: changes},
+        {logger: new Logger('seed')}
+      )
     }
   }
 }

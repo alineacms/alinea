@@ -2,8 +2,10 @@ import {Request, Response} from '@alinea/iso'
 import {Auth, Connection, EntryPhase} from 'alinea/core'
 import {Realm} from 'alinea/core/pages/Realm'
 import {Selection} from 'alinea/core/pages/Selection'
+import {base64} from 'alinea/core/util/Encoding'
 import {Logger, LoggerResult, Report} from 'alinea/core/util/Logger'
 import {Type, enums, object, string} from 'cito'
+import {DraftTransport} from './Drafts.js'
 import {Server, ServerOptions} from './Server.js'
 import {Handle, Route, router} from './router/Router.js'
 
@@ -55,6 +57,8 @@ function createRouter(
       })
       .map(respond),
 
+    // History
+
     matcher
       .get(Connection.routes.revisions())
       .map(context)
@@ -79,6 +83,8 @@ function createRouter(
       })
       .map(respond),
 
+    // Target
+
     matcher
       .post(Connection.routes.mutate())
       .map(context)
@@ -90,6 +96,8 @@ function createRouter(
         return ctx.logger.result(api.mutate(body))
       })
       .map(respond),
+
+    // Syncable
 
     matcher
       .get(Connection.routes.sync())
@@ -113,6 +121,8 @@ function createRouter(
       })
       .map(respond),
 
+    // Media
+
     matcher
       .post(Connection.routes.prepareUpload())
       .map(context)
@@ -121,6 +131,35 @@ function createRouter(
         const api = createApi(ctx)
         const {filename} = PrepareBody(body)
         return ctx.logger.result(api.prepareUpload(filename))
+      })
+      .map(respond),
+
+    // Drafts
+
+    matcher
+      .get(Connection.routes.draft())
+      .map(context)
+      .map(({ctx, url}) => {
+        const api = createApi(ctx)
+        const entryId = url.searchParams.get('entryId')!
+        return ctx.logger.result(
+          api.getDraft(entryId).then(draft => {
+            if (!draft) return null
+            return {...draft, draft: base64.stringify(draft.draft)}
+          })
+        )
+      })
+      .map(respond),
+
+    matcher
+      .post(Connection.routes.draft())
+      .map(context)
+      .map(router.parseJson)
+      .map(({ctx, body}) => {
+        const api = createApi(ctx)
+        const data = body as DraftTransport
+        const draft = {...data, draft: new Uint8Array(base64.parse(data.draft))}
+        return ctx.logger.result(api.storeDraft(draft))
       })
       .map(respond)
   ).recover(router.reportError)

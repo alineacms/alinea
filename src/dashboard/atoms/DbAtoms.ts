@@ -35,25 +35,33 @@ const localDbAtom = atom(async get => {
   const debounceSync = debounce(syncDb, 100)
   const sync = (force: boolean) =>
     limit(() => debounceSync(force).catch(() => [] as Array<string>))
-
+  const applyMutations = async (mutations: Array<Mutation>) => {
+    await db.applyMutations(mutations)
+    await flush()
+  }
   await limit(syncDb)
 
-  return {db, resolve: resolver.resolve, sync}
+  return {db, applyMutations, resolve: resolver.resolve, sync}
 })
 
 export const mutateAtom = atom(
   null,
-  (get, set, ...mutations: Array<Mutation>) => {
+  async (get, set, ...mutations: Array<Mutation>) => {
     const client = get(clientAtom)
-    return client.mutate(mutations)
+    await client.mutate(mutations)
+    const {applyMutations} = await get(localDbAtom)
+    await applyMutations(mutations)
   }
 )
 
-export const dbUpdateAtom = atom(null, async (get, set) => {
-  const {sync} = await get(localDbAtom)
-  const changed = await sync(true)
-  set(changedEntriesAtom, changed)
-})
+export const dbUpdateAtom = atom(
+  null,
+  async (get, set, force: boolean = false) => {
+    const {sync} = await get(localDbAtom)
+    const changed = await sync(force)
+    set(changedEntriesAtom, changed)
+  }
+)
 
 export const graphAtom = atom(async get => {
   const config = get(configAtom)
@@ -81,7 +89,7 @@ export function useMutate() {
   return useSetAtom(mutateAtom)
 }
 
-export function useDbUpdater(everySeconds = 60) {
+export function useDbUpdater(everySeconds = 30) {
   const forceDbUpdate = useSetAtom(dbUpdateAtom)
   useEffect(() => {
     const interval = setInterval(forceDbUpdate, everySeconds * 1000)

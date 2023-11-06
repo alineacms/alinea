@@ -1,10 +1,12 @@
 import {AbortController, fetch, Response} from '@alinea/iso'
+import {DraftTransport} from 'alinea/backend/Drafts'
 import {Revision} from 'alinea/backend/History'
-import {Config, Connection, EntryPhase, HttpError} from 'alinea/core'
+import {Config, Connection, Draft, EntryPhase, HttpError} from 'alinea/core'
 import {SyncResponse} from './Connection.js'
 import {EntryRecord} from './EntryRecord.js'
 import {Mutation} from './Mutation.js'
 import {Realm} from './pages/Realm.js'
+import {base64} from './util/Encoding.js'
 
 async function failOnHttpError<T>(
   res: Response,
@@ -41,6 +43,13 @@ export class Client implements Connection {
     )
   }
 
+  prepareUpload(file: string): Promise<Connection.UploadResponse> {
+    return this.requestJson(Connection.routes.prepareUpload(), {
+      method: 'POST',
+      body: JSON.stringify({filename: file})
+    }).then<Connection.UploadResponse>(failOnHttpError)
+  }
+
   resolve(params: Connection.ResolveParams): Promise<unknown> {
     const {resolveDefaults} = this.options
     const body = JSON.stringify({...resolveDefaults, ...params})
@@ -61,6 +70,7 @@ export class Client implements Connection {
     return new Client({...this.options, applyAuth, unauthorized})
   }
 
+  // History
   revisions(file: string): Promise<Array<Revision>> {
     const params = new URLSearchParams({file})
     return this.requestJson(
@@ -74,6 +84,8 @@ export class Client implements Connection {
       Connection.routes.revisions() + '?' + params.toString()
     ).then<EntryRecord>(failOnHttpError)
   }
+
+  // Syncable
 
   syncRequired(contentHash: string): Promise<boolean> {
     const params = new URLSearchParams({contentHash})
@@ -89,11 +101,24 @@ export class Client implements Connection {
     }).then<SyncResponse>(failOnHttpError)
   }
 
-  prepareUpload(file: string): Promise<Connection.UploadResponse> {
-    return this.requestJson(Connection.routes.prepareUpload(), {
+  // Drafts
+
+  getDraft(entryId: string): Promise<Draft | undefined> {
+    const params = new URLSearchParams({entryId})
+    return this.requestJson(Connection.routes.draft() + '?' + params.toString())
+      .then<DraftTransport | null>(failOnHttpError)
+      .then(draft =>
+        draft
+          ? {...draft, draft: new Uint8Array(base64.parse(draft.draft))}
+          : undefined
+      )
+  }
+
+  storeDraft(draft: Draft): Promise<void> {
+    return this.requestJson(Connection.routes.draft(), {
       method: 'POST',
-      body: JSON.stringify({filename: file})
-    }).then<Connection.UploadResponse>(failOnHttpError)
+      body: JSON.stringify({...draft, draft: base64.stringify(draft.draft)})
+    }).then<void>(res => failOnHttpError(res, false))
   }
 
   protected request(endpoint: string, init?: RequestInit): Promise<Response> {

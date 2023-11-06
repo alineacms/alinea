@@ -10,10 +10,13 @@ import {
   createYDoc,
   parseYDoc
 } from 'alinea/core'
+import {Edits} from 'alinea/core/Edits'
 import {Entry} from 'alinea/core/Entry'
 import {entryFileName} from 'alinea/core/EntryFilenames'
 import {Mutation, MutationType} from 'alinea/core/Mutation'
 import {MediaFile} from 'alinea/core/media/MediaSchema'
+import {base64} from 'alinea/core/util/Encoding'
+import {createEntryRow} from 'alinea/core/util/EntryRows'
 import {entries, fromEntries, values} from 'alinea/core/util/Objects'
 import {InputState} from 'alinea/editor'
 import {atom} from 'jotai'
@@ -51,7 +54,9 @@ export const entryEditorAtoms = atomFamily(
       const client = get(clientAtom)
       const graph = await get(graphAtom)
       const search = locale ? {i18nId, locale} : {i18nId}
-      let entry = await graph.preferDraft.maybeGet(Entry(search))
+      let entry: EntryRow | null = await graph.preferDraft.maybeGet(
+        Entry(search)
+      )
       if (!entry) {
         const {searchParams} = get(locationAtom)
         const preferredLanguage = searchParams.get('from')
@@ -64,6 +69,21 @@ export const entryEditorAtoms = atomFamily(
       if (!entry) return undefined
       const entryId = entry.entryId
       get(entryRevisionAtoms(entryId))
+
+      const edits = new Edits(config.schema[entry.type])
+      const draft = await client.getDraft(entryId)
+      if (draft) {
+        edits.applyRemoteUpdate(draft.draft)
+        // The draft is out of sync, this can happen if
+        // - updates done manually to the content files
+        // - the draft storage could not be reached after mutation
+        // We fast forward the draft with the actual current field data
+        // and will submit new updates including it
+        if (draft.fileHash !== entry.fileHash) edits.applyEntryData(entry.data)
+      } else {
+        edits.applyEntryData(entry.data)
+      }
+
       const versions = await graph.all.find(
         Entry({entryId}).select({
           ...Entry,
@@ -112,7 +132,8 @@ export const entryEditorAtoms = atomFamily(
         entryId,
         versions,
         phases,
-        availablePhases
+        availablePhases,
+        edits
       })
     })
   },
@@ -130,6 +151,7 @@ export interface EntryData {
   translations: Array<{locale: string; entryId: string}>
   parentNeedsTranslation: boolean
   previewToken: string
+  edits: Edits
 }
 
 export type EntryEditor = ReturnType<typeof createEntryEditor>
@@ -144,7 +166,7 @@ export function createEntryEditor(entryData: EntryData) {
   const docs = fromEntries(
     entries(entryData.phases).map(([phase, version]) => [
       phase,
-      createYDoc(type, version)
+      phase === activePhase ? entryData.edits.doc : createYDoc(type, version)
     ])
   )
   const yDoc = docs[activePhase]
@@ -189,14 +211,19 @@ export function createEntryEditor(entryData: EntryData) {
     )
   }
 
-  const saveDraft = atom(null, (get, set) => {
-    const entry = {...getDraftEntry(), phase: EntryPhase.Draft}
+  const saveDraft = atom(null, async (get, set) => {
+    const update = base64.stringify(entryData.edits.getLocalUpdate())
+    const entry = await createEntryRow(config, {
+      ...getDraftEntry(),
+      phase: EntryPhase.Published
+    })
     const mutation: Mutation = {
       type: MutationType.Edit,
       previousFile: entryFile(activeVersion),
       file: entryFile(entry),
       entryId: activeVersion.entryId,
-      entry
+      entry,
+      update
     }
     set(hasChanges, false)
     return set(mutateAtom, mutation).catch(error => {
@@ -260,9 +287,13 @@ export function createEntryEditor(entryData: EntryData) {
     })
   })
 
-  const publishEdits = atom(null, (get, set) => {
+  const publishEdits = atom(null, async (get, set) => {
     const currentFile = entryFile(activeVersion)
-    const entry = {...getDraftEntry(), phase: EntryPhase.Published}
+    const update = base64.stringify(entryData.edits.getLocalUpdate())
+    const entry = await createEntryRow(config, {
+      ...getDraftEntry(),
+      phase: EntryPhase.Published
+    })
     const mutations: Array<Mutation> = []
     const editedFile = entryFile(entry)
     mutations.push({
@@ -270,7 +301,8 @@ export function createEntryEditor(entryData: EntryData) {
       previousFile: currentFile,
       file: editedFile,
       entryId: activeVersion.entryId,
-      entry
+      entry,
+      update
     })
     set(isPublishing, true)
     return set(mutateAtom, ...mutations)
@@ -293,18 +325,21 @@ export function createEntryEditor(entryData: EntryData) {
     const revision = get(previewRevision)
     if (!revision) return
     const data = await get(revisionData(revision))
-    const entry: EntryRow = {
-      ...activeVersion,
-      phase: EntryPhase.Published,
-      data
-    }
+    const {edits} = entryData
+    edits.applyEntryData(data)
+    const update = base64.stringify(entryData.edits.getLocalUpdate())
+    const entry = await createEntryRow(config, {
+      ...getDraftEntry(),
+      phase: EntryPhase.Published
+    })
     const editedFile = entryFile(entry)
     return set(mutateAtom, {
       type: MutationType.Edit,
       previousFile: editedFile,
       file: editedFile,
       entryId: activeVersion.entryId,
-      entry
+      entry,
+      update
     }).catch(error => {
       set(hasChanges, true)
       set(

@@ -81,7 +81,7 @@ export class UnionShape<T> implements Shape<UnionRow & T, UnionMutator<T>> {
   }
   applyY(value: UnionRow & T, parent: Y.Map<any>, key: string): void {
     const current: Y.Map<any> | undefined = parent.get(key)
-    if (!current) return void parent.set(key, this.toY(value))
+    if (!current || !value) return void parent.set(key, this.toY(value))
     const currentType = current.get('type')
     if (currentType !== value.type) return void parent.set(key, this.toY(value))
     const shape = this.shapes[currentType]

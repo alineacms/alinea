@@ -1,4 +1,4 @@
-import {JWTPreviews, Media, Server, Target} from 'alinea/backend'
+import {JWTPreviews, Server} from 'alinea/backend'
 import {createCloudHandler} from 'alinea/cloud/server/CloudHandler'
 import {parseChunkedCookies} from 'alinea/preview/ChunkCookieValue'
 import {
@@ -65,12 +65,6 @@ class NextDriver extends DefaultDriver implements NextApi {
       {
         config: this.config,
         store,
-        get media(): Media {
-          throw new Error('Cannot access local media')
-        },
-        get target(): Target {
-          throw new Error('Cannot access local target')
-        },
         previews: new JWTPreviews(this.jwtSecret),
         resolveDefaults
       },

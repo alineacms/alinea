@@ -2712,6 +2712,7 @@ __metadata:
     "@ungap/with-resolvers": ^0.1.0
     alinea: "link:."
     autoprefixer: ^10.4.2
+    client-only: ^0.0.1
     copy-env-cli: 1.0.0
     cross-env: ^7.0.3
     dotenv: ^16.3.1
@@ -2726,6 +2727,7 @@ __metadata:
     react-dom: ^18.2.0
     rimraf: ^5.0.0
     sass: ^1.63.4
+    server-only: ^0.0.1
     speedscope: ^1.14.0
     typescript: ^5.2.2
     typescript-plugin-css-modules: ^5.0.1
@@ -9514,6 +9516,13 @@ resolve@^1.10.0:
   bin:
     semver: bin/semver.js
   checksum: 2d266937756689a76f124ffb4c1ea3e1bbb2b263219f90ada8a11aebebe1280b13bb76cca2ca96bdee3dbc554cbc0b24752eb895b2a51577aa644427e9229f2b
+  languageName: node
+  linkType: hard
+
+"server-only@npm:^0.0.1":
+  version: 0.0.1
+  resolution: "server-only@npm:0.0.1"
+  checksum: c432348956641ea3f460af8dc3765f3a1bdbcf7a1e0205b0756d868e6e6fe8934cdee6bff68401a1dd49ba4a831c75916517a877446d54b334f7de36fa273e53
   languageName: node
   linkType: hard
 

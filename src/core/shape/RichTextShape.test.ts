@@ -96,7 +96,15 @@ test('serialize', () => {
   assert.equal(pass2, value1)
 })
 
-test('apply', () => {
+test('apply over empty', () => {
+  const doc = new Y.Doc()
+  const root = doc.getMap(ROOT_KEY)
+  shape.applyY(value1, root, FIELD_KEY)
+  const pass1 = shape.fromY(root.get(FIELD_KEY))
+  assert.equal(pass1, value1)
+})
+
+test('apply over existing', () => {
   const doc = new Y.Doc()
   const root = doc.getMap(ROOT_KEY)
   root.set(FIELD_KEY, shape.toY(value1))
