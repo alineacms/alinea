@@ -9,7 +9,8 @@ function createCloudConfig(baseUrl: string) {
     upload: `${baseUrl}/api/v1/upload`,
     media: `${baseUrl}/api/v1/media`,
     logout: `${baseUrl}/api/v1/logout`,
-    history: `${baseUrl}/api/v1/history`
+    history: `${baseUrl}/api/v1/history`,
+    pending: `${baseUrl}/api/v1/pending`
   }
 }
 

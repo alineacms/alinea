@@ -1,6 +1,11 @@
-import {Config, Connection, Draft, SyncResponse} from 'alinea/core'
+import {
+  Config,
+  Connection,
+  Draft,
+  ResolveDefaults,
+  SyncResponse
+} from 'alinea/core'
 import {EntryRecord} from 'alinea/core/EntryRecord'
-import {Graph} from 'alinea/core/Graph'
 import {EditMutation, Mutation, MutationType} from 'alinea/core/Mutation'
 import {base64} from 'alinea/core/util/Encoding'
 import {mergeUpdatesV2} from 'yjs'
@@ -10,17 +15,17 @@ import {History, Revision} from './History.js'
 import {Media} from './Media.js'
 import {Pending} from './Pending.js'
 import {Previews} from './Previews'
-import {ResolveDefaults, Resolver} from './Resolver.js'
 import {Store} from './Store.js'
 import {Target} from './Target.js'
 import {ChangeSetCreator} from './data/ChangeSet.js'
+import {EntryResolver} from './resolver/EntryResolver.js'
 
 export interface PreviewOptions {
   preview?: boolean
   previewToken?: string
 }
 
-export type ServerOptions = {
+export interface ServerOptions {
   config: Config
   store: Store
   previews: Previews
@@ -32,47 +37,55 @@ export type ServerOptions = {
   resolveDefaults?: ResolveDefaults
 }
 
-export class Server implements Connection {
+interface ServerContext extends ServerOptions {
   db: Database
-  resolver: Resolver
-  protected graph: Graph
+  resolver: EntryResolver
   changes: ChangeSetCreator
+}
 
-  constructor(
-    public options: ServerOptions,
-    public context: Connection.Context
-  ) {
-    this.db = new Database(options.config, options.store)
-    this.resolver = new Resolver(options.store, options.config.schema)
-    this.graph = new Graph(this.options.config, this.resolve)
-    this.changes = new ChangeSetCreator(options.config)
+export class Server {
+  connect: (ctx: Connection.Context) => Connection
+  constructor(private options: ServerOptions) {
+    const context = {
+      db: new Database(options.config, options.store),
+      resolver: new EntryResolver(options.store, options.config.schema),
+      changes: new ChangeSetCreator(options.config),
+      ...this.options
+    }
+    this.connect = ctx => new ServerConnection(context, ctx)
   }
+}
+
+class ServerConnection implements Connection {
+  constructor(
+    protected server: ServerContext,
+    protected ctx: Connection.Context
+  ) {}
 
   // Api
-
   resolve = (params: Connection.ResolveParams) => {
-    const {resolveDefaults} = this.options
-    return this.resolver.resolve({...resolveDefaults, ...params})
+    const {resolveDefaults} = this.server
+    return this.server.resolver.resolve({...resolveDefaults, ...params})
   }
 
   // Target
 
   async mutate(mutations: Array<Mutation>): Promise<void> {
-    const {target, media} = this.options
+    const {target, media, changes, db} = this.server
     if (!target) throw new Error('Target not available')
     if (!media) throw new Error('Media not available')
-    const changes = this.changes.create(mutations)
+    const changeSet = changes.create(mutations)
     await this.syncPending()
-    const {contentHash} = await this.db.applyMutations(mutations)
-    await target.mutate({contentHash, mutations: changes}, this.context)
+    const {contentHash} = await db.applyMutations(mutations)
+    await target.mutate({contentHash, mutations: changeSet}, this.ctx)
     const tasks = []
     for (const mutation of mutations) {
       switch (mutation.type) {
         case MutationType.FileRemove:
           tasks.push(
-            media.delete(
+            media.deleteUpload(
               {location: mutation.location, workspace: mutation.workspace},
-              this.context
+              this.ctx
             )
           )
           continue
@@ -85,8 +98,8 @@ export class Server implements Connection {
   }
 
   previewToken(): Promise<string> {
-    const {previews} = this.options
-    const user = this.context.user
+    const {previews} = this.server
+    const user = this.ctx.user
     if (!user) return previews.sign({anonymous: true})
     return previews.sign({sub: user.sub})
   }
@@ -94,49 +107,51 @@ export class Server implements Connection {
   // Media
 
   prepareUpload(file: string): Promise<Connection.UploadResponse> {
-    const {media} = this.options
+    const {media} = this.server
     if (!media) throw new Error('Media not available')
-    return media.prepareUpload(file, this.context)
+    return media.prepareUpload(file, this.ctx)
   }
 
   // History
 
   async revisions(file: string): Promise<Array<Revision>> {
-    const {history} = this.options
+    const {history} = this.server
     if (!history) return []
-    return history.revisions(file, this.context)
+    return history.revisions(file, this.ctx)
   }
 
   async revisionData(file: string, revisionId: string): Promise<EntryRecord> {
-    const {history} = this.options
+    const {history} = this.server
     if (!history) throw new Error('History not available')
-    return history.revisionData(file, revisionId, this.context)
+    return history.revisionData(file, revisionId, this.ctx)
   }
 
   // Syncable
 
   async syncPending() {
-    const {pending} = this.options
+    const {pending, db} = this.server
     if (!pending) return
-    const {contentHash} = await this.db.meta()
-    const mutations = await pending.pendingSince(contentHash)
-    if (mutations.length > 0) await this.db.applyMutations(mutations)
+    const {contentHash} = await db.meta()
+    const mutations = await pending.pendingSince(contentHash, this.ctx)
+    if (mutations.length > 0) await db.applyMutations(mutations)
   }
 
   async syncRequired(contentHash: string): Promise<boolean> {
+    const {db} = this.server
     await this.syncPending()
-    return this.db.syncRequired(contentHash)
+    return db.syncRequired(contentHash)
   }
 
   async sync(contentHashes: Array<string>): Promise<SyncResponse> {
+    const {db} = this.server
     await this.syncPending()
-    return this.db.sync(contentHashes)
+    return db.sync(contentHashes)
   }
 
   // Drafts
 
   private async persistEdit(mutation: EditMutation) {
-    const {drafts} = this.options
+    const {drafts} = this.server
     if (!drafts) return
     const update = base64.parse(mutation.update)
     const currentDraft = await this.getDraft(mutation.entryId)
@@ -150,14 +165,14 @@ export class Server implements Connection {
   }
 
   getDraft(entryId: string): Promise<Draft | undefined> {
-    const {drafts} = this.options
+    const {drafts} = this.server
     if (!drafts) throw new Error('Drafts not available')
-    return drafts.getDraft(entryId, this.context)
+    return drafts.getDraft(entryId, this.ctx)
   }
 
   storeDraft(draft: Draft): Promise<void> {
-    const {drafts} = this.options
+    const {drafts} = this.server
     if (!drafts) throw new Error('Drafts not available')
-    return drafts.storeDraft(draft, this.context)
+    return drafts.storeDraft(draft, this.ctx)
   }
 }

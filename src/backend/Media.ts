@@ -5,7 +5,7 @@ export interface Media {
     file: string,
     ctx: Connection.Context
   ): Promise<Connection.UploadResponse>
-  delete(
+  deleteUpload(
     params: Connection.DeleteParams,
     ctx: Connection.Context
   ): Promise<void>

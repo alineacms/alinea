@@ -1,3 +1,4 @@
+import sqlInit from '@alinea/sqlite-wasm'
 import {Store} from 'alinea/backend/Store'
 import * as idb from 'lib0/indexeddb.js'
 import prettyMilliseconds from 'pretty-ms'
@@ -17,9 +18,7 @@ export async function createPersistentStore(): Promise<PersistentStore> {
   const storagePromise = idb.openDB(STORAGE_NAME, db =>
     idb.createStores(db, [[STORAGE_NAME, {autoIncrement: true}]])
   )
-  const sqlitePromise = import('@alinea/sqlite-wasm').then(
-    ({default: sqlInit}) => sqlInit()
-  )
+  const sqlitePromise = sqlInit()
   const [storage, {Database}] = await Promise.all([
     storagePromise,
     sqlitePromise

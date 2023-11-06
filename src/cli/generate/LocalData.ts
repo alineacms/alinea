@@ -195,7 +195,10 @@ export class LocalData implements Source, Target, Media {
     }
   }
 
-  async delete({location, workspace}: Connection.DeleteParams): Promise<void> {
+  async deleteUpload({
+    location,
+    workspace
+  }: Connection.DeleteParams): Promise<void> {
     const {fs, rootDir = '.'} = this.options
     const mediaDir = Workspace.data(
       this.options.config.workspaces[workspace]

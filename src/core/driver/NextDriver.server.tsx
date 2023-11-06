@@ -1,4 +1,5 @@
-import {JWTPreviews, Server} from 'alinea/backend'
+import {JWTPreviews} from 'alinea/backend'
+import {EntryResolver} from 'alinea/backend/resolver/EntryResolver'
 import {createCloudHandler} from 'alinea/cloud/server/CloudHandler'
 import {parseChunkedCookies} from 'alinea/preview/ChunkCookieValue'
 import {
@@ -9,15 +10,14 @@ import {
 import {enums, object, string} from 'cito'
 import PLazy from 'p-lazy'
 import {Suspense, lazy} from 'react'
-import {Client, ClientOptions} from '../Client.js'
+import {Client} from '../Client.js'
 import {Config} from '../Config.js'
-import {Connection} from '../Connection.js'
 import {Entry} from '../Entry.js'
 import {EntryPhase} from '../EntryRow.js'
 import {outcome} from '../Outcome.js'
+import {ResolveDefaults, Resolver} from '../Resolver.js'
 import {Realm} from '../pages/Realm.js'
 import {Selection} from '../pages/Selection.js'
-import {Logger} from '../util/Logger.js'
 import {DefaultDriver} from './DefaultDriver.server.js'
 import {NextApi} from './NextDriver.js'
 
@@ -32,12 +32,12 @@ class NextDriver extends DefaultDriver implements NextApi {
   jwtSecret = this.apiKey || 'dev'
   store = PLazy.from(this.readStore.bind(this))
 
-  async connection(): Promise<Connection> {
+  async connection(): Promise<Resolver> {
     const {cookies, draftMode} = await import('next/headers.js')
     const [draftStatus] = outcome(() => draftMode())
     const isDraft = draftStatus?.isEnabled
     const devUrl = process.env.ALINEA_DEV_SERVER
-    const resolveDefaults: ClientOptions['resolveDefaults'] = {
+    const resolveDefaults: ResolveDefaults = {
       realm: Realm.Published
     }
     if (isDraft) {
@@ -61,15 +61,7 @@ class NextDriver extends DefaultDriver implements NextApi {
         resolveDefaults
       })
     const store = await this.store
-    return new Server(
-      {
-        config: this.config,
-        store,
-        previews: new JWTPreviews(this.jwtSecret),
-        resolveDefaults
-      },
-      {logger: new Logger('CMSDriver')}
-    )
+    return new EntryResolver(store, this.config.schema, resolveDefaults)
   }
 
   backendHandler = async (request: Request) => {

@@ -1,6 +1,7 @@
 import {
   Connection,
   Field,
+  ResolveDefaults,
   Schema,
   Type,
   createYDoc,
@@ -28,22 +29,11 @@ import {
   withRecursive
 } from 'rado'
 import {iif, match, count as sqlCount} from 'rado/sqlite'
-import {EntryPhase, EntryRow, EntryTable} from '../core/EntryRow.js'
-import * as pages from '../core/pages/index.js'
-import {Database} from './Database.js'
-import {Store} from './Store.js'
-import {LinkResolver} from './resolver/LinkResolver.js'
-
-export interface PreviewUpdate {
-  entryId: string
-  phase: EntryPhase
-  update: string
-}
-
-export interface ResolveDefaults {
-  realm?: Realm
-  preview?: PreviewUpdate
-}
+import {EntryPhase, EntryRow, EntryTable} from '../../core/EntryRow.js'
+import * as pages from '../../core/pages/index.js'
+import {Database} from '../Database.js'
+import {Store} from '../Store.js'
+import {LinkResolver} from './LinkResolver.js'
 
 const unOps = {
   [pages.UnaryOp.Not]: UnOpType.Not,
@@ -174,10 +164,14 @@ enum ExprContext {
   InAccess = 1 << 2
 }
 
-export class Resolver {
+export class EntryResolver {
   targets: Schema.Targets
 
-  constructor(public store: Store, public schema: Schema) {
+  constructor(
+    public store: Store,
+    public schema: Schema,
+    public defaults?: ResolveDefaults
+  ) {
     this.targets = Schema.targets(schema)
   }
 
@@ -702,8 +696,8 @@ export class Resolver {
     selection,
     location,
     locale,
-    realm = Realm.Published,
-    preview
+    realm = this.defaults?.realm ?? Realm.Published,
+    preview = this.defaults?.preview
   }: Connection.ResolveParams): Promise<T> => {
     const ctx = new ResolveContext({realm, location, locale})
     const queryData = this.query(ctx, selection)

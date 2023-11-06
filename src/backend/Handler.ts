@@ -174,7 +174,8 @@ export class Handler {
 
   constructor(public options: HandlerOptions) {
     const auth = options.auth || Auth.anonymous()
-    const {handle} = createRouter(auth, context => new Server(options, context))
+    const server = new Server(options)
+    const {handle} = createRouter(auth, context => server.connect(context))
     this.handle = handle
   }
 }

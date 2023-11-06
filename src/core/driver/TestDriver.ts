@@ -17,24 +17,19 @@ class TestDriver extends DefaultDriver implements TestApi {
     connect(new Database()).toAsync()
   )
   server = this.store.then(async store => {
-    const server = new Server(
-      {
-        config: this,
-        store: store,
-        get target(): Target {
-          throw new Error('Test driver cannot publish')
-        },
-        get media(): Media {
-          throw new Error('Test driver has no media backend')
-        },
-        previews: new JWTPreviews('test')
+    const server = new Server({
+      config: this,
+      store: store,
+      get target(): Target {
+        throw new Error('Test driver cannot publish')
       },
-      {
-        logger: new Logger('test')
-      }
-    )
+      get media(): Media {
+        throw new Error('Test driver has no media backend')
+      },
+      previews: new JWTPreviews('test')
+    })
     await server.db.fill({async *entries() {}})
-    return server
+    return server.connect({logger: new Logger('test')})
   })
 
   async readStore(): Promise<Store> {

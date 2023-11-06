@@ -1,8 +1,10 @@
 import {Handler, JWTPreviews, Media, Target} from 'alinea/backend'
 import {History, Revision} from 'alinea/backend/History'
+import {Pending} from 'alinea/backend/Pending'
 import {Store} from 'alinea/backend/Store'
 import {Config, Connection, HttpError, Workspace} from 'alinea/core'
 import {EntryRecord} from 'alinea/core/EntryRecord'
+import {Mutation} from 'alinea/core/Mutation'
 import {Outcome, OutcomeJSON} from 'alinea/core/Outcome'
 import {join} from 'alinea/core/util/Paths'
 import {CloudAuthServer} from './CloudAuthServer.js'
@@ -38,7 +40,7 @@ function asJson(init: RequestInit = {}) {
   }
 }
 
-export class CloudApi implements Media, Target, History {
+export class CloudApi implements Media, Target, History, Pending {
   constructor(private config: Config) {}
 
   mutate({mutations}: Connection.MutateParams, ctx: Connection.Context) {
@@ -76,7 +78,7 @@ export class CloudApi implements Media, Target, History {
       .then(Outcome.unpack)
   }
 
-  delete(
+  deleteUpload(
     {location, workspace}: Connection.DeleteParams,
     ctx: Connection.Context
   ): Promise<void> {
@@ -116,6 +118,20 @@ export class CloudApi implements Media, Target, History {
       .then<Outcome<EntryRecord>>(Outcome.fromJSON)
       .then(Outcome.unpack)
   }
+
+  pendingSince(
+    contentHash: string,
+    ctx: Connection.Context
+  ): Promise<Array<Mutation>> {
+    return fetch(
+      cloudConfig.pending + '?' + new URLSearchParams({contentHash}),
+      withAuth(ctx)
+    )
+      .then(failOnHttpError)
+      .then<OutcomeJSON<Array<Mutation>>>(json)
+      .then<Outcome<Array<Mutation>>>(Outcome.fromJSON)
+      .then(Outcome.unpack)
+  }
 }
 
 export function createCloudHandler(
@@ -131,6 +147,7 @@ export function createCloudHandler(
     target: api,
     media: api,
     history: api,
+    pending: api,
     previews: new JWTPreviews(apiKey!)
   })
 }

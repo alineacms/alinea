@@ -1,11 +1,11 @@
-import { Database, Handler, JWTPreviews, Media, Target } from 'alinea/backend'
-import { Drafts } from 'alinea/backend/Drafts'
-import { History, Revision } from 'alinea/backend/History'
-import { Pending } from 'alinea/backend/Pending'
-import { Store } from 'alinea/backend/Store'
-import { Config, Connection, Draft } from 'alinea/core'
-import { EntryRecord } from 'alinea/core/EntryRecord'
-import { Mutation } from 'alinea/core/Mutation'
+import {Database, Handler, JWTPreviews, Media, Target} from 'alinea/backend'
+import {Drafts} from 'alinea/backend/Drafts'
+import {History, Revision} from 'alinea/backend/History'
+import {Pending} from 'alinea/backend/Pending'
+import {Store} from 'alinea/backend/Store'
+import {Config, Connection, Draft} from 'alinea/core'
+import {EntryRecord} from 'alinea/core/EntryRecord'
+import {Mutation} from 'alinea/core/Mutation'
 
 export class DebugCloud implements Media, Target, History, Drafts, Pending {
   db: Database
@@ -23,34 +23,26 @@ export class DebugCloud implements Media, Target, History, Drafts, Pending {
     this.pending.push(params)
   }
 
-  prepareUpload(
-    file: string
-  ): Promise<Connection.UploadResponse> {
+  prepareUpload(file: string): Promise<Connection.UploadResponse> {
     throw new Error(`Not implemented`)
   }
 
-  async delete(
-    {location, workspace}: Connection.DeleteParams
-  ): Promise<void> {
+  async deleteUpload({
+    location,
+    workspace
+  }: Connection.DeleteParams): Promise<void> {
     console.log(`delete`, location, workspace)
   }
 
-  async revisions(
-    file: string
-  ): Promise<Array<Revision>> {
+  async revisions(file: string): Promise<Array<Revision>> {
     return []
   }
 
-  async revisionData(
-    file: string,
-    revision: string
-  ): Promise<EntryRecord> {
+  async revisionData(file: string, revision: string): Promise<EntryRecord> {
     throw new Error(`Not implemented`)
   }
 
-  async getDraft(
-    entryId: string
-  ): Promise<Draft | undefined> {
+  async getDraft(entryId: string): Promise<Draft | undefined> {
     return this.drafts.get(entryId)
   }
 

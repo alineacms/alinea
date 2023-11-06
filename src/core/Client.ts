@@ -1,11 +1,16 @@
 import {AbortController, fetch, Response} from '@alinea/iso'
 import {DraftTransport} from 'alinea/backend/Drafts'
 import {Revision} from 'alinea/backend/History'
-import {Config, Connection, Draft, EntryPhase, HttpError} from 'alinea/core'
+import {
+  Config,
+  Connection,
+  Draft,
+  HttpError,
+  ResolveDefaults
+} from 'alinea/core'
 import {SyncResponse} from './Connection.js'
 import {EntryRecord} from './EntryRecord.js'
 import {Mutation} from './Mutation.js'
-import {Realm} from './pages/Realm.js'
 import {base64} from './util/Encoding.js'
 
 async function failOnHttpError<T>(
@@ -24,14 +29,7 @@ export interface ClientOptions {
   url: string
   applyAuth?: AuthenticateRequest
   unauthorized?: () => void
-  resolveDefaults?: {
-    realm?: Realm
-    preview?: {
-      entryId: string
-      phase: EntryPhase
-      update: string
-    }
-  }
+  resolveDefaults?: ResolveDefaults
 }
 
 export class Client implements Connection {
