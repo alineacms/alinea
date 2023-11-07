@@ -2,23 +2,21 @@ import {CompressionStream, Headers, Request, Response} from '@alinea/iso'
 import {Outcome} from 'alinea/core/Outcome'
 import {parse} from 'regexparam'
 
-export type Handle<In, Out> = {
+export interface HttpRouter {
+  (input: Request): Promise<Response>
+}
+
+export interface Handle<In, Out> {
   (input: In): Out | undefined | Promise<Out | undefined>
 }
 
-export type Handler<In, Out> = Handle<In, Out> | Route<In, Out>
-
-function callHandler<In, Out>(handler: Handler<In, Out>, input: In) {
-  return typeof handler === 'function' ? handler(input) : handler.handle(input)
-}
-
-export type HttpHandler = (input: Request) => Promise<Response>
+type Next<In, Out> = Handle<In, Out> | Route<In, Out>
 
 export class Route<In, Out> {
   constructor(public handle: Handle<In, Out>) {}
   map<T>(next: Handle<Out, T>): Route<In, T>
   map<T>(next: Route<Out, T>): Route<In, T>
-  map<T>(next: Handler<Out, T>): Route<In, T> {
+  map<T>(next: Next<Out, T>): Route<In, T> {
     return new Route<In, T>(input => {
       const result = this.handle(input)
       if (result instanceof Promise)
@@ -52,15 +50,20 @@ export class Route<In, Out> {
 }
 
 export function router(
-  ...routes: Array<Handler<Request, Response | undefined>>
+  ...routes: Array<Next<Request, Response | undefined> | undefined>
 ): Route<Request, Response | undefined> {
   return new Route<Request, Response | undefined>(async (request: Request) => {
     for (const handler of routes) {
+      if (!handler) continue
       let result = callHandler(handler, request)
       if (result instanceof Promise) result = await result
       if (result !== undefined) return result
     }
   })
+}
+
+function callHandler<In, Out>(handler: Next<In, Out>, input: In) {
+  return typeof handler === 'function' ? handler(input) : handler.handle(input)
 }
 
 export namespace router {
@@ -200,7 +203,7 @@ export namespace router {
   }
 
   export function compress(
-    ...routes: Array<Handler<Request, Response | undefined>>
+    ...routes: Array<Next<Request, Response | undefined>>
   ): Route<Request, Response | undefined> {
     const route = router(...routes)
     return new Route<Request, Response | undefined>(

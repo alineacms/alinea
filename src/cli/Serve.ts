@@ -1,6 +1,6 @@
 import {JWTPreviews} from 'alinea/backend'
 import {Handler} from 'alinea/backend/Handler'
-import {HttpHandler} from 'alinea/backend/router/Router'
+import {HttpRouter} from 'alinea/backend/router/Router'
 import {createCloudDebugHandler} from 'alinea/cloud/server/CloudDebugHandler'
 import {createCloudHandler} from 'alinea/cloud/server/CloudHandler'
 import {CMS} from 'alinea/core/CMS'
@@ -80,7 +80,7 @@ export async function serve(options: ServeOptions): Promise<void> {
   })[Symbol.asyncIterator]()
   let nextGen = gen.next()
   let cms: CMS | undefined
-  let handle: HttpHandler | undefined
+  let handle: HttpRouter | undefined
 
   while (true) {
     const current = await nextGen

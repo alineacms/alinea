@@ -1,5 +1,5 @@
 import sqlite from '@alinea/sqlite-wasm'
-import {Database, JWTPreviews, Media, Server, Target} from 'alinea/backend'
+import {Database, Handler, JWTPreviews, Media, Target} from 'alinea/backend'
 import {Store} from 'alinea/backend/Store'
 import {Connection} from 'alinea/core'
 import {DefaultDriver} from 'alinea/core/driver/DefaultDriver'
@@ -16,8 +16,10 @@ class TestDriver extends DefaultDriver implements TestApi {
   store: Promise<Store> = sqlite().then(({Database}) =>
     connect(new Database()).toAsync()
   )
-  server = this.store.then(async store => {
-    const server = new Server({
+  handler = this.store.then(async store => {
+    const db = new Database(this, store)
+    await db.fill({async *entries() {}})
+    const server = new Handler({
       config: this,
       store: store,
       get target(): Target {
@@ -28,7 +30,6 @@ class TestDriver extends DefaultDriver implements TestApi {
       },
       previews: new JWTPreviews('test')
     })
-    await server.db.fill({async *entries() {}})
     return server.connect({logger: new Logger('test')})
   })
 
@@ -37,7 +38,7 @@ class TestDriver extends DefaultDriver implements TestApi {
   }
 
   async connection(): Promise<Connection> {
-    return this.server
+    return this.handler
   }
 
   async generate() {

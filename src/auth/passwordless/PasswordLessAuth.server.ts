@@ -1,4 +1,4 @@
-import {Handler, router} from 'alinea/backend/router/Router'
+import {Route, router} from 'alinea/backend/router/Router'
 import {Auth, Connection, HttpError, Outcome, User} from 'alinea/core'
 import {sign, verify} from 'alinea/core/util/JWT'
 import type {Transporter} from 'nodemailer'
@@ -23,12 +23,12 @@ const LoginBody = object({
 // provided in the options to keep state.
 
 export class PasswordLessAuth implements Auth.Server {
-  handler: Handler<Request, Response | undefined>
+  router: Route<Request, Response | undefined>
   users = new WeakMap<Request, User>()
 
   constructor(protected options: PasswordLessAuthOptions) {
     const matcher = router.startAt(Connection.routes.base)
-    this.handler = router(
+    this.router = router(
       matcher
         .post(Connection.routes.base + '/auth.passwordless')
         .map(router.parseJson)

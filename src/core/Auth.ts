@@ -1,11 +1,11 @@
-import type {Handler} from 'alinea/backend/router/Router'
+import type {Route} from 'alinea/backend/router/Router'
 import type {ComponentType} from 'react'
 import {Connection} from './Connection.js'
 import {Session} from './Session.js'
 
 export namespace Auth {
   export type Server = {
-    handler: Handler<Request, Response | undefined>
+    router?: Route<Request, Response | undefined>
     contextFor(request: Request): Promise<Connection.AuthContext>
   }
   export type ViewProps = {setSession: (session: Session | undefined) => void}
@@ -15,9 +15,6 @@ export namespace Auth {
     return {
       async contextFor() {
         return {}
-      },
-      handler() {
-        return undefined
       }
     }
   }

@@ -73,7 +73,7 @@ class NextDriver extends DefaultDriver implements NextApi {
     const store = await this.store
     const handler = createCloudHandler(this, store, this.apiKey)
     return async (request: Request) => {
-      const response = await handler.handle(request)
+      const response = await handler.router.handle(request)
       return response ?? new Response('Not found', {status: 404})
     }
   })

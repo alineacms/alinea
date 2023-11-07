@@ -1,6 +1,6 @@
 import {ReadableStream, Request, Response, TextEncoderStream} from '@alinea/iso'
 import {Handler} from 'alinea/backend'
-import {HttpHandler, router} from 'alinea/backend/router/Router'
+import {HttpRouter, router} from 'alinea/backend/router/Router'
 import {cloudUrl} from 'alinea/cloud/server/CloudConfig'
 import {Trigger, trigger} from 'alinea/core'
 import esbuild, {BuildOptions, BuildResult, OutputFile} from 'esbuild'
@@ -67,7 +67,7 @@ export function createLocalServer(
     liveReload
   }: ServeContext,
   handler: Handler
-): HttpHandler {
+): HttpRouter {
   const devDir = path.join(staticDir, 'dev')
   const matcher = router.matcher()
   const entry = `alinea/cli/static/dashboard/dev`
@@ -205,7 +205,7 @@ export function createLocalServer(
           }
         )
       }),
-      handler.handle,
+      handler.router,
       serveBrowserBuild,
       matcher.get('/config.css').map((): Response => {
         return new Response('', {headers: {'content-type': 'text/css'}})

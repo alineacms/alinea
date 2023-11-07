@@ -1,5 +1,5 @@
 import {fetch, Request, Response} from '@alinea/iso'
-import {Handler, router} from 'alinea/backend/router/Router'
+import {Route, router} from 'alinea/backend/router/Router'
 import {Auth, Config, Connection, HttpError, outcome, User} from 'alinea/core'
 import {verify} from 'alinea/core/util/JWT'
 import PLazy from 'p-lazy'
@@ -38,7 +38,7 @@ function loadPublicKey(retry = 0): Promise<JsonWebKey> {
 const COOKIE_NAME = 'alinea.cloud'
 
 export class CloudAuthServer implements Auth.Server {
-  handler: Handler<Request, Response | undefined>
+  router: Route<Request, Response | undefined>
   context = new WeakMap<Request, {token: string; user: User}>()
   dashboardUrl: string
 
@@ -47,7 +47,7 @@ export class CloudAuthServer implements Auth.Server {
 
     this.dashboardUrl = config.dashboard?.dashboardUrl!
     const matcher = router.startAt(Connection.routes.base)
-    this.handler = router(
+    this.router = router(
       // We start by asking our backend whether we have:
       // - a logged in user => return the user so we can create a session
       // - no user, but a valid api key => we can redirect to cloud login

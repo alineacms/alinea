@@ -1,13 +1,190 @@
 import {Request, Response} from '@alinea/iso'
-import {Auth, Connection, EntryPhase} from 'alinea/core'
+import {
+  Auth,
+  Config,
+  Connection,
+  Draft,
+  EntryPhase,
+  ResolveDefaults,
+  SyncResponse
+} from 'alinea/core'
+import {EntryRecord} from 'alinea/core/EntryRecord'
+import {EditMutation, Mutation, MutationType} from 'alinea/core/Mutation'
 import {Realm} from 'alinea/core/pages/Realm'
 import {Selection} from 'alinea/core/pages/Selection'
 import {base64} from 'alinea/core/util/Encoding'
 import {Logger, LoggerResult, Report} from 'alinea/core/util/Logger'
 import {Type, enums, object, string} from 'cito'
-import {DraftTransport} from './Drafts.js'
-import {Server, ServerOptions} from './Server.js'
-import {Handle, Route, router} from './router/Router.js'
+import {mergeUpdatesV2} from 'yjs'
+import {Database} from './Database.js'
+import {DraftTransport, Drafts} from './Drafts.js'
+import {History, Revision} from './History.js'
+import {Media} from './Media.js'
+import {Pending} from './Pending.js'
+import {Previews} from './Previews'
+import {Store} from './Store.js'
+import {Target} from './Target.js'
+import {ChangeSetCreator} from './data/ChangeSet.js'
+import {EntryResolver} from './resolver/EntryResolver.js'
+import {Route, router} from './router/Router.js'
+
+export interface HandlerOptions {
+  config: Config
+  store: Store
+  previews: Previews
+  auth?: Auth.Server
+  target?: Target
+  media?: Media
+  drafts?: Drafts
+  history?: History
+  pending?: Pending
+  resolveDefaults?: ResolveDefaults
+}
+
+export class Handler {
+  connect: (ctx: Connection.Context) => Connection
+  router: Route<Request, Response | undefined>
+
+  constructor(private options: HandlerOptions) {
+    const context = {
+      db: new Database(options.config, options.store),
+      resolver: new EntryResolver(options.store, options.config.schema),
+      changes: new ChangeSetCreator(options.config),
+      ...this.options
+    }
+    const auth = options.auth || Auth.anonymous()
+    this.connect = ctx => new HandlerConnection(context, ctx)
+    this.router = createRouter(auth, this.connect)
+  }
+}
+
+interface HandlerContext extends HandlerOptions {
+  db: Database
+  resolver: EntryResolver
+  changes: ChangeSetCreator
+}
+
+class HandlerConnection implements Connection {
+  constructor(
+    protected handler: HandlerContext,
+    protected ctx: Connection.Context
+  ) {}
+
+  // Resolver
+
+  resolve = (params: Connection.ResolveParams) => {
+    const {resolveDefaults} = this.handler
+    return this.handler.resolver.resolve({...resolveDefaults, ...params})
+  }
+
+  // Target
+
+  async mutate(mutations: Array<Mutation>): Promise<void> {
+    const {target, media, changes, db} = this.handler
+    if (!target) throw new Error('Target not available')
+    if (!media) throw new Error('Media not available')
+    const changeSet = changes.create(mutations)
+    await this.syncPending()
+    const {contentHash} = await db.applyMutations(mutations)
+    await target.mutate({contentHash, mutations: changeSet}, this.ctx)
+    const tasks = []
+    for (const mutation of mutations) {
+      switch (mutation.type) {
+        case MutationType.FileRemove:
+          tasks.push(
+            media.deleteUpload(
+              {location: mutation.location, workspace: mutation.workspace},
+              this.ctx
+            )
+          )
+          continue
+        case MutationType.Edit:
+          tasks.push(this.persistEdit(mutation))
+          continue
+      }
+    }
+    await Promise.all(tasks)
+  }
+
+  previewToken(): Promise<string> {
+    const {previews} = this.handler
+    const user = this.ctx.user
+    if (!user) return previews.sign({anonymous: true})
+    return previews.sign({sub: user.sub})
+  }
+
+  // Media
+
+  prepareUpload(file: string): Promise<Connection.UploadResponse> {
+    const {media} = this.handler
+    if (!media) throw new Error('Media not available')
+    return media.prepareUpload(file, this.ctx)
+  }
+
+  // History
+
+  async revisions(file: string): Promise<Array<Revision>> {
+    const {history} = this.handler
+    if (!history) return []
+    return history.revisions(file, this.ctx)
+  }
+
+  async revisionData(file: string, revisionId: string): Promise<EntryRecord> {
+    const {history} = this.handler
+    if (!history) throw new Error('History not available')
+    return history.revisionData(file, revisionId, this.ctx)
+  }
+
+  // Syncable
+
+  private async syncPending() {
+    const {pending, db} = this.handler
+    if (!pending) return
+    const {contentHash} = await db.meta()
+    const mutations = await pending.pendingSince(contentHash, this.ctx)
+    if (mutations.length > 0) await db.applyMutations(mutations)
+  }
+
+  async syncRequired(contentHash: string): Promise<boolean> {
+    const {db} = this.handler
+    await this.syncPending()
+    return db.syncRequired(contentHash)
+  }
+
+  async sync(contentHashes: Array<string>): Promise<SyncResponse> {
+    const {db} = this.handler
+    await this.syncPending()
+    return db.sync(contentHashes)
+  }
+
+  // Drafts
+
+  private async persistEdit(mutation: EditMutation) {
+    const {drafts} = this.handler
+    if (!drafts) return
+    const update = base64.parse(mutation.update)
+    const currentDraft = await this.getDraft(mutation.entryId)
+    await this.storeDraft({
+      entryId: mutation.entryId,
+      fileHash: mutation.entry.fileHash,
+      draft: currentDraft
+        ? mergeUpdatesV2([currentDraft.draft, update])
+        : update
+    })
+  }
+
+  getDraft(entryId: string): Promise<Draft | undefined> {
+    const {drafts} = this.handler
+    if (!drafts) throw new Error('Drafts not available')
+    return drafts.getDraft(entryId, this.ctx)
+  }
+
+  storeDraft(draft: Draft): Promise<void> {
+    const {drafts} = this.handler
+    if (!drafts) throw new Error('Drafts not available')
+    return drafts.storeDraft(draft, this.ctx)
+  }
+}
 
 function respond<T>({result, logger}: LoggerResult<T>) {
   return router.jsonResponse(result, {
@@ -46,7 +223,7 @@ function createRouter(
     }
   }
   return router(
-    auth.handler,
+    auth.router,
 
     matcher
       .get(Connection.routes.previewToken())
@@ -163,19 +340,4 @@ function createRouter(
       })
       .map(respond)
   ).recover(router.reportError)
-}
-
-export interface HandlerOptions extends ServerOptions {
-  auth?: Auth.Server
-}
-
-export class Handler {
-  handle: Handle<Request, Response | undefined>
-
-  constructor(public options: HandlerOptions) {
-    const auth = options.auth || Auth.anonymous()
-    const server = new Server(options)
-    const {handle} = createRouter(auth, context => server.connect(context))
-    this.handle = handle
-  }
 }
