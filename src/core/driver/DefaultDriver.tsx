@@ -12,7 +12,7 @@ export class DefaultDriver extends CMS {
     throw new Error('Not implemented')
   }
 
-  async connection(): Promise<Resolver> {
+  async resolver(): Promise<Resolver> {
     throw new Error('Not implemented')
   }
 }

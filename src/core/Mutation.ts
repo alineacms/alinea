@@ -40,9 +40,9 @@ export interface EditMutation {
   type: MutationType.Edit
   entryId: string
   file: string
-  previousFile?: string
   entry: EntryRow
-  update: string
+  previousFile?: string
+  update?: string
 }
 
 export interface CreateMutation {

@@ -1,14 +1,16 @@
 import sqlite from '@alinea/sqlite-wasm'
 import {Database, Handler, JWTPreviews, Media, Target} from 'alinea/backend'
 import {Store} from 'alinea/backend/Store'
-import {Connection} from 'alinea/core'
-import {DefaultDriver} from 'alinea/core/driver/DefaultDriver'
 import {connect} from 'rado/driver/sql.js'
 import {CMSApi} from '../CMS.js'
 import {Config} from '../Config.js'
+import {Connection} from '../Connection.js'
+import {Resolver} from '../Resolver.js'
 import {Logger} from '../util/Logger.js'
+import {DefaultDriver} from './DefaultDriver.js'
 
 export interface TestApi extends CMSApi {
+  connection(): Promise<Connection>
   generate(): Promise<void>
 }
 
@@ -38,6 +40,10 @@ class TestDriver extends DefaultDriver implements TestApi {
   }
 
   async connection(): Promise<Connection> {
+    return this.handler
+  }
+
+  async resolver(): Promise<Resolver> {
     return this.handler
   }
 

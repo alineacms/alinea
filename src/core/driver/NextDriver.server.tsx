@@ -32,7 +32,7 @@ class NextDriver extends DefaultDriver implements NextApi {
   jwtSecret = this.apiKey || 'dev'
   store = PLazy.from(this.readStore.bind(this))
 
-  async connection(): Promise<Resolver> {
+  async resolver(): Promise<Resolver> {
     const {cookies, draftMode} = await import('next/headers.js')
     const [draftStatus] = outcome(() => draftMode())
     const isDraft = draftStatus?.isEnabled
@@ -94,7 +94,7 @@ class NextDriver extends DefaultDriver implements NextApi {
       cookies().delete(PREVIEW_ENTRYID_NAME)
       cookies().delete(PREVIEW_PHASE_NAME)
     }
-    const cnx = (await this.connection()) as Client
+    const cnx = (await this.resolver()) as Client
     const url = (await cnx.resolve({
       selection: Selection.create(
         Entry({entryId: params.entryId}).select(Entry.url).first()

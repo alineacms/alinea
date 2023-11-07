@@ -1,20 +1,19 @@
 import {Store} from 'alinea/backend/Store'
 import {CloudAuthView} from 'alinea/cloud/view/CloudAuth'
+import {Resolver} from 'alinea/core'
 import {MediaFile, MediaLibrary} from 'alinea/core/media/MediaSchema'
 import {Config, DashboardConfig} from './Config.js'
-import {Connection} from './Connection.js'
 import {GraphRealm, GraphRealmApi} from './Graph.js'
 import {Root} from './Root.js'
 import {Schema} from './Schema.js'
 import {Workspace} from './Workspace.js'
 import {entries} from './util/Objects.js'
-import {Resolver} from 'alinea/core'
 
 type Attachment = Workspace | Root
 const attached = new WeakMap<Attachment, CMS>()
 
 export interface CMSApi extends GraphRealmApi {
-  connection(): Promise<Resolver>
+  resolver(): Promise<Resolver>
 }
 
 export abstract class CMS extends GraphRealm implements Config, CMSApi {
@@ -23,7 +22,7 @@ export abstract class CMS extends GraphRealm implements Config, CMSApi {
 
   constructor(config: Config) {
     super(config, async params => {
-      const cnx = await this.connection()
+      const cnx = await this.resolver()
       return cnx.resolve(params)
     })
     this.schema = {
@@ -38,7 +37,7 @@ export abstract class CMS extends GraphRealm implements Config, CMSApi {
     this.#attach(config)
   }
 
-  abstract connection(): Promise<Resolver>
+  abstract resolver(): Promise<Resolver>
   abstract exportStore(cwd: string, store: Uint8Array): Promise<void>
   abstract readStore(): Promise<Store>
 

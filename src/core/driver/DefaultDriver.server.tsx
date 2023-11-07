@@ -20,7 +20,7 @@ export class DefaultDriver extends CMS {
     return createStore(new Uint8Array(base64.parse(storeData)))
   }
 
-  async connection(): Promise<Resolver> {
+  async resolver(): Promise<Resolver> {
     const devUrl = process.env.ALINEA_DEV_SERVER
     if (devUrl)
       return new Client({

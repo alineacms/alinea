@@ -161,7 +161,7 @@ class HandlerConnection implements Connection {
 
   private async persistEdit(mutation: EditMutation) {
     const {drafts} = this.handler
-    if (!drafts) return
+    if (!drafts || !mutation.update) return
     const update = base64.parse(mutation.update)
     const currentDraft = await this.getDraft(mutation.entryId)
     await this.storeDraft({
