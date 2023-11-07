@@ -71,7 +71,7 @@ export async function createPersistentStore(): Promise<PersistentStore> {
       const [store] = idb.transact(storage, [STORAGE_NAME], 'readwrite')
       await idb.del(store, 'db')
       db = new Database()
-      this.store = connect(db, driverOptions).toAsync()
+      persistent.store = connect(db, driverOptions).toAsync()
     }
   }
   return persistent

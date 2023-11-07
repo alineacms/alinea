@@ -118,15 +118,18 @@ export class Database implements Syncable {
         return this.updateHash(tx, row)
       }
       case MutationType.Archive: {
+        const archived = EntryRow({
+          entryId: mutation.entryId,
+          phase: EntryPhase.Archived
+        })
         const row = EntryRow({
           entryId: mutation.entryId,
           phase: EntryPhase.Published
         })
-        await tx(row.set({phase: EntryPhase.Archived}))
-        return this.updateHash(
-          tx,
-          EntryRow({entryId: mutation.entryId, phase: EntryPhase.Archived})
-        )
+        const published = await tx(row.maybeFirst())
+        if (!published) return
+        await tx(archived.delete(), row.set({phase: EntryPhase.Archived}))
+        return this.updateHash(tx, archived)
       }
       case MutationType.Publish: {
         const row = EntryRow({

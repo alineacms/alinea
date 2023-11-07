@@ -51,6 +51,8 @@ export const mutateAtom = atom(
     await client.mutate(mutations)
     const {applyMutations} = await get(localDbAtom)
     await applyMutations(mutations)
+    const changed = mutations.map(m => m.entryId)
+    set(changedEntriesAtom, changed)
   }
 )
 
@@ -92,7 +94,24 @@ export function useMutate() {
 export function useDbUpdater(everySeconds = 30) {
   const forceDbUpdate = useSetAtom(dbUpdateAtom)
   useEffect(() => {
-    const interval = setInterval(forceDbUpdate, everySeconds * 1000)
-    return () => clearInterval(interval)
+    let interval: any = 0
+    const focus = () => {
+      if (document.visibilityState === 'hidden') {
+        disable()
+      } else {
+        forceDbUpdate()
+        enable()
+      }
+    }
+    const enable = () =>
+      (interval = setInterval(forceDbUpdate, everySeconds * 1000))
+    const disable = () => clearInterval(interval)
+    enable()
+    window.addEventListener('visibilitychange', focus, false)
+    window.addEventListener('focus', focus, false)
+    return () => {
+      document.removeEventListener('visibilitychange', focus)
+      document.removeEventListener('focus', focus)
+    }
   }, [everySeconds, forceDbUpdate])
 }

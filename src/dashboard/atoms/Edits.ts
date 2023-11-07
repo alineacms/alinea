@@ -27,7 +27,7 @@ export class Edits {
 
   /** Apply local updates */
   applyLocalUpdate(update: Uint8Array) {
-    Y.applyUpdateV2(this.doc, update)
+    Y.applyUpdateV2(this.doc, update, 'self')
   }
 
   /** A Y.js update that contains our own edits, base64 encoded */
@@ -46,7 +46,7 @@ export class Edits {
     this.doc.clientID = 1
     this.doc.transact(() => {
       Type.shape(type).applyY(entryData, this.doc, ROOT_KEY)
-    })
+    }, 'self')
     this.doc.clientID = clientID
   }
 
@@ -59,7 +59,10 @@ export class Edits {
 function createChangesAtom(yMap: Y.Map<unknown>) {
   const hasChanges = atom(false)
   hasChanges.onMount = (setAtom: (value: boolean) => void) => {
-    const listener = () => setAtom(true)
+    const listener = (events: Array<Y.YEvent<any>>, tx: Y.Transaction) => {
+      if (tx.origin === 'self') return
+      setAtom(true)
+    }
     yMap.observeDeep(listener)
     return () => yMap.unobserveDeep(listener)
   }

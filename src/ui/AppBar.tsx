@@ -14,10 +14,9 @@ export namespace AppBar {
       | 'editing'
       | 'published'
       | 'archived'
-      | 'archiving'
-      | 'publishing'
       | 'untranslated'
       | 'revision'
+      | 'transition'
   }
 
   export function Root({variant, ...props}: RootProps) {

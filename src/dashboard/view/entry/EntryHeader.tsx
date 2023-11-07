@@ -3,7 +3,7 @@ import {entryFile, workspaceMediaDir} from 'alinea/core/EntryFilenames'
 import {Button, HStack, Icon, Stack, fromModule, px} from 'alinea/ui'
 import {AppBar} from 'alinea/ui/AppBar'
 import {DropdownMenu} from 'alinea/ui/DropdownMenu'
-import IcOutlineAvTimer from 'alinea/ui/icons/IcOutlineAvTimer'
+import {IcOutlineAvTimer} from 'alinea/ui/icons/IcOutlineAvTimer'
 import {IcOutlineDrafts} from 'alinea/ui/icons/IcOutlineDrafts'
 import {IcOutlineKeyboardTab} from 'alinea/ui/icons/IcOutlineKeyboardTab'
 import {IcOutlineRemoveRedEye} from 'alinea/ui/icons/IcOutlineRemoveRedEye'
@@ -19,7 +19,7 @@ import {IcRoundTranslate} from 'alinea/ui/icons/IcRoundTranslate'
 import {IcRoundUnfoldMore} from 'alinea/ui/icons/IcRoundUnfoldMore'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {useEffect, useState} from 'react'
-import {EntryEditor} from '../../atoms/EntryEditorAtoms.js'
+import {EntryEditor, EntryTransition} from '../../atoms/EntryEditorAtoms.js'
 import {useLocation, useNavigate} from '../../atoms/LocationAtoms.js'
 import {useConfig} from '../../hook/UseConfig.js'
 import {useLocale} from '../../hook/UseLocale.js'
@@ -35,22 +35,32 @@ const variantDescription = {
   draft: 'Draft',
   editing: 'Editing',
   published: 'Published',
-  publishing: 'Publishing',
   archived: 'Archived',
-  archiving: 'Archiving',
   untranslated: 'Untranslated',
   revision: 'Revision'
+}
+
+const transitions = {
+  [EntryTransition.SaveDraft]: 'Saving',
+  [EntryTransition.SaveTranslation]: 'Saving',
+  [EntryTransition.PublishEdits]: 'Publishing',
+  [EntryTransition.RestoreRevision]: 'Restoring',
+  [EntryTransition.PublishDraft]: 'Publishing',
+  [EntryTransition.DiscardDraft]: 'Discarding',
+  [EntryTransition.ArchivePublished]: 'Archiving',
+  [EntryTransition.PublishArchived]: 'Publishing',
+  [EntryTransition.DeleteFile]: 'Deleting',
+  [EntryTransition.DeleteArchived]: 'Deleting'
 }
 
 const variantIcon = {
   draft: IcOutlineDrafts,
   editing: IcRoundEdit,
   published: IcOutlineRemoveRedEye,
-  publishing: IcOutlineAvTimer,
   archived: IcRoundArchive,
-  archiving: IcOutlineAvTimer,
   untranslated: IcRoundTranslate,
-  revision: IcRoundPublishedWithChanges
+  revision: IcRoundPublishedWithChanges,
+  transition: IcOutlineAvTimer
 }
 
 export interface EntryHeaderProps {
@@ -65,19 +75,17 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
   const selectedPhase = useAtomValue(editor.selectedPhase)
   const previewRevision = useAtomValue(editor.previewRevision)
   const isActivePhase = editor.activePhase === selectedPhase
-  const isPublishing = useAtomValue(editor.isPublishing)
-  const isArchiving = useAtomValue(editor.isArchiving)
   const isMediaFile = editor.activeVersion.type === 'MediaFile'
   const hasChanges = useAtomValue(editor.hasChanges)
+  const currentTransition = useAtomValue(editor.transition)
+  const [isInTransition, setIsInTransition] = useState(currentTransition)
   const untranslated = locale && locale !== editor.activeVersion.locale
-  const variant = previewRevision
+  const variant = currentTransition
+    ? 'transition'
+    : previewRevision
     ? 'revision'
     : untranslated
     ? 'untranslated'
-    : selectedPhase === EntryPhase.Published && isPublishing
-    ? 'publishing'
-    : selectedPhase === EntryPhase.Archived && isArchiving
-    ? 'archiving'
     : hasChanges && !phaseInUrl
     ? 'editing'
     : selectedPhase
@@ -191,7 +199,11 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
           <DropdownMenu.Root bottom>
             <DropdownMenu.Trigger className={styles.root.description.title()}>
               <HStack center gap={4}>
-                <span>{variantDescription[variant]}</span>
+                <span>
+                  {variant === 'transition'
+                    ? transitions[currentTransition!]
+                    : variantDescription[variant]}
+                </span>
                 {!previewRevision && editor.availablePhases.length > 1 && (
                   <Icon icon={IcRoundUnfoldMore} />
                 )}
