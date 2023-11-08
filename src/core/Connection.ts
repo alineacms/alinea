@@ -76,7 +76,11 @@ export namespace Connection {
     file: string
   }
   export interface MutateParams {
-    contentHash: string
+    git?: {sha?: string; ref?: string}
+    contentHash: {
+      from: string
+      to: string
+    }
     mutations: ChangeSet
   }
   export interface AuthContext {

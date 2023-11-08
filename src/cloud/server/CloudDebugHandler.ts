@@ -53,7 +53,7 @@ export class DebugCloud implements Media, Target, History, Drafts, Pending {
   async pendingSince(contentHash: string): Promise<Array<Mutation>> {
     let i = this.pending.length
     for (; i >= 0; i--)
-      if (i > 0 && this.pending[i - 1].contentHash === contentHash) break
+      if (i > 0 && this.pending[i - 1].contentHash.from === contentHash) break
     return this.pending
       .slice(i)
       .flatMap(params => params.mutations.flatMap(mutate => mutate.meta))

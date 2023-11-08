@@ -1,11 +1,13 @@
 import {Handler, JWTPreviews, Media, Target} from 'alinea/backend'
+import {Drafts} from 'alinea/backend/Drafts'
 import {History, Revision} from 'alinea/backend/History'
 import {Pending} from 'alinea/backend/Pending'
 import {Store} from 'alinea/backend/Store'
-import {Config, Connection, HttpError, Workspace} from 'alinea/core'
+import {Config, Connection, Draft, HttpError, Workspace} from 'alinea/core'
 import {EntryRecord} from 'alinea/core/EntryRecord'
 import {Mutation} from 'alinea/core/Mutation'
 import {Outcome, OutcomeJSON} from 'alinea/core/Outcome'
+import {base64} from 'alinea/core/util/Encoding'
 import {join} from 'alinea/core/util/Paths'
 import {CloudAuthServer} from './CloudAuthServer.js'
 import {cloudConfig} from './CloudConfig.js'
@@ -40,17 +42,17 @@ function asJson(init: RequestInit = {}) {
   }
 }
 
-export class CloudApi implements Media, Target, History, Pending {
+export class CloudApi implements Media, Target, History, Pending, Drafts {
   constructor(private config: Config) {}
 
-  mutate({mutations}: Connection.MutateParams, ctx: Connection.Context) {
+  mutate(params: Connection.MutateParams, ctx: Connection.Context) {
     return fetch(
       cloudConfig.mutate,
       withAuth(
         ctx,
         asJson({
           method: 'POST',
-          body: JSON.stringify({mutations})
+          body: JSON.stringify(params)
         })
       )
     )
@@ -124,13 +126,51 @@ export class CloudApi implements Media, Target, History, Pending {
     ctx: Connection.Context
   ): Promise<Array<Mutation>> {
     return fetch(
-      cloudConfig.pending + '?' + new URLSearchParams({contentHash}),
+      cloudConfig.pending + '?' + new URLSearchParams({since: contentHash}),
       withAuth(ctx)
     )
       .then(failOnHttpError)
-      .then<OutcomeJSON<Array<Mutation>>>(json)
-      .then<Outcome<Array<Mutation>>>(Outcome.fromJSON)
+      .then<OutcomeJSON<Array<Connection.MutateParams>>>(json)
+      .then<Outcome<Array<Connection.MutateParams>>>(Outcome.fromJSON)
       .then(Outcome.unpack)
+      .then(mutations =>
+        mutations.flatMap(mutate => mutate.mutations.flatMap(m => m.meta))
+      )
+  }
+
+  storeDraft(draft: Draft, ctx: Connection.Context): Promise<void> {
+    const body = {
+      fileHash: draft.fileHash,
+      update: base64.stringify(draft.draft)
+    }
+    return fetch(
+      cloudConfig.drafts + '/' + draft.entryId,
+      withAuth(
+        ctx,
+        asJson({
+          method: 'POST',
+          body: JSON.stringify(body)
+        })
+      )
+    )
+      .then(failOnHttpError)
+      .then(() => undefined)
+  }
+
+  getDraft(
+    entryId: string,
+    ctx: Connection.Context
+  ): Promise<Draft | undefined> {
+    return fetch(cloudConfig.drafts + '/' + entryId, withAuth(ctx))
+      .then(failOnHttpError)
+      .then<OutcomeJSON<{fileHash: string; update: string}>>(json)
+      .then<Outcome<{fileHash: string; update: string}>>(Outcome.fromJSON)
+      .then(Outcome.unpack)
+      .then(({fileHash, update}) => ({
+        entryId,
+        fileHash,
+        draft: base64.parse(update)
+      }))
   }
 }
 
@@ -148,6 +188,7 @@ export function createCloudHandler(
     media: api,
     history: api,
     pending: api,
+    drafts: api,
     previews: new JWTPreviews(apiKey!)
   })
 }

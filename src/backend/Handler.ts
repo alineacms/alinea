@@ -84,9 +84,12 @@ class HandlerConnection implements Connection {
     if (!target) throw new Error('Target not available')
     if (!media) throw new Error('Media not available')
     const changeSet = changes.create(mutations)
-    await this.syncPending()
-    const {contentHash} = await db.applyMutations(mutations)
-    await target.mutate({contentHash, mutations: changeSet}, this.ctx)
+    const {contentHash: from} = await this.syncPending()
+    const {contentHash: to} = await db.applyMutations(mutations)
+    await target.mutate(
+      {contentHash: {from, to}, mutations: changeSet},
+      this.ctx
+    )
     const tasks = []
     for (const mutation of mutations) {
       switch (mutation.type) {
@@ -139,10 +142,11 @@ class HandlerConnection implements Connection {
 
   private async syncPending() {
     const {pending, db} = this.handler
-    if (!pending) return
-    const {contentHash} = await db.meta()
-    const mutations = await pending.pendingSince(contentHash, this.ctx)
-    if (mutations.length > 0) await db.applyMutations(mutations)
+    const meta = await db.meta()
+    if (!pending) return meta
+    const mutations = await pending.pendingSince(meta.contentHash, this.ctx)
+    if (mutations.length > 0) return await db.applyMutations(mutations)
+    return meta
   }
 
   async syncRequired(contentHash: string): Promise<boolean> {
