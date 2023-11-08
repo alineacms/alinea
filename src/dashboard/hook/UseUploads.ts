@@ -277,6 +277,7 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
       url: (parent ? parent.url : '') + '/' + path,
       title: basename(path, extension),
       seeded: false,
+      modifiedAt: Date.now(),
       searchableText: '',
       index: generateKeyBetween(null, prev?.index ?? null),
       i18nId: entryId,

@@ -3,6 +3,7 @@ export interface SourceEntry {
   root: string
   filePath: string
   contents: Uint8Array
+  modifiedAt: number
 }
 
 export interface WatchFiles {
