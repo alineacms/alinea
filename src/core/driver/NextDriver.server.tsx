@@ -30,7 +30,6 @@ const SearchParams = object({
 class NextDriver extends DefaultDriver implements NextApi {
   apiKey = process.env.ALINEA_API_KEY
   jwtSecret = this.apiKey || 'dev'
-  store = PLazy.from(this.readStore.bind(this))
 
   async resolver(): Promise<Resolver> {
     const {cookies, draftMode} = await import('next/headers.js')
@@ -60,8 +59,8 @@ class NextDriver extends DefaultDriver implements NextApi {
         url: devUrl,
         resolveDefaults
       })
-    const store = await this.store
-    return new EntryResolver(store, this.config.schema, resolveDefaults)
+    const db = await this.db
+    return new EntryResolver(db, this.config.schema, resolveDefaults)
   }
 
   backendHandler = async (request: Request) => {
@@ -70,8 +69,8 @@ class NextDriver extends DefaultDriver implements NextApi {
   }
 
   cloudHandler = PLazy.from(async () => {
-    const store = await this.store
-    const handler = createCloudHandler(this, store, this.apiKey)
+    const db = await this.db
+    const handler = createCloudHandler(this, db, this.apiKey)
     return async (request: Request) => {
       const response = await handler.router.handle(request)
       return response ?? new Response('Not found', {status: 404})
@@ -79,6 +78,7 @@ class NextDriver extends DefaultDriver implements NextApi {
   })
 
   previewHandler = async (request: Request) => {
+    console.log(request.headers)
     const {draftMode, cookies} = await import('next/headers.js')
     const {searchParams} = new URL(request.url)
     const params = SearchParams({

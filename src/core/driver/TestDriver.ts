@@ -23,7 +23,7 @@ class TestDriver extends DefaultDriver implements TestApi {
     await db.fill({async *entries() {}})
     const server = new Handler({
       config: this,
-      store: store,
+      db,
       get target(): Target {
         throw new Error('Test driver cannot publish')
       },

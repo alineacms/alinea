@@ -13,16 +13,19 @@ export async function* fillCache(
   store: Store,
   config: Config,
   until: Promise<any>
-) {
+): AsyncGenerator<Database> {
   const db = new Database(config, store)
   const limit = pLimit(1)
-  const cache = () => db.fill(localData, localData)
+  const cache = async () => {
+    db.fill(localData, localData)
+    return db
+  }
 
   yield limit(cache)
 
   if (!watch || !localData.watchFiles) return
 
-  const results = createEmitter<Promise<void>>()
+  const results = createEmitter<Promise<Database>>()
   const stopWatching = await createWatcher({
     watchFiles: localData.watchFiles.bind(localData),
     async onChange() {
@@ -34,7 +37,7 @@ export async function* fillCache(
   })
 
   try {
-    yield* results
+    for await (const result of results) yield result
   } catch (e) {
     if (e === Emitter.CANCELLED) return
     throw e

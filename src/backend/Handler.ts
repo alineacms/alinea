@@ -22,7 +22,6 @@ import {History, Revision} from './History.js'
 import {Media} from './Media.js'
 import {Pending} from './Pending.js'
 import {Previews} from './Previews'
-import {Store} from './Store.js'
 import {Target} from './Target.js'
 import {ChangeSetCreator} from './data/ChangeSet.js'
 import {EntryResolver} from './resolver/EntryResolver.js'
@@ -30,7 +29,7 @@ import {Route, router} from './router/Router.js'
 
 export interface HandlerOptions {
   config: Config
-  store: Store
+  db: Database
   previews: Previews
   auth?: Auth.Server
   target?: Target
@@ -47,8 +46,7 @@ export class Handler {
 
   constructor(private options: HandlerOptions) {
     const context = {
-      db: new Database(options.config, options.store),
-      resolver: new EntryResolver(options.store, options.config.schema),
+      resolver: new EntryResolver(options.db, options.config.schema),
       changes: new ChangeSetCreator(options.config),
       ...this.options
     }

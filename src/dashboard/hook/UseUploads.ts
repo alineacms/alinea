@@ -1,5 +1,5 @@
-import { Media } from 'alinea/backend/Media'
-import { createFileHash } from 'alinea/backend/util/ContentHash'
+import {Media} from 'alinea/backend/Media'
+import {createFileHash} from 'alinea/backend/util/ContentHash'
 import {
   Connection,
   Entry,
@@ -8,13 +8,13 @@ import {
   HttpError,
   Workspace
 } from 'alinea/core'
-import { entryFileName, entryFilepath } from 'alinea/core/EntryFilenames'
-import { createId } from 'alinea/core/Id'
-import { Mutation, MutationType } from 'alinea/core/Mutation'
-import { MediaFile } from 'alinea/core/media/MediaSchema'
-import { base64 } from 'alinea/core/util/Encoding'
-import { createEntryRow } from 'alinea/core/util/EntryRows'
-import { generateKeyBetween } from 'alinea/core/util/FractionalIndexing'
+import {entryFileName, entryFilepath} from 'alinea/core/EntryFilenames'
+import {createId} from 'alinea/core/Id'
+import {Mutation, MutationType} from 'alinea/core/Mutation'
+import {MediaFile} from 'alinea/core/media/MediaSchema'
+import {base64} from 'alinea/core/util/Encoding'
+import {createEntryRow} from 'alinea/core/util/EntryRows'
+import {generateKeyBetween} from 'alinea/core/util/FractionalIndexing'
 import {
   basename,
   dirname,
@@ -22,18 +22,18 @@ import {
   join,
   normalize
 } from 'alinea/core/util/Paths'
-import { rgba, toHex } from 'color2k'
-import { atom, useAtom, useSetAtom } from 'jotai'
+import {rgba, toHex} from 'color2k'
+import {atom, useAtom, useSetAtom} from 'jotai'
 import pLimit from 'p-limit'
-import { useEffect } from 'react'
+import {useEffect} from 'react'
 import smartcrop from 'smartcrop'
-import { rgbaToThumbHash, thumbHashToAverageRGBA } from 'thumbhash'
-import { useMutate } from '../atoms/DbAtoms.js'
-import { errorAtom } from '../atoms/ErrorAtoms.js'
-import { withResolvers } from '../util/WithResolvers.js'
-import { useConfig } from './UseConfig.js'
-import { useGraph } from './UseGraph.js'
-import { useSession } from './UseSession.js'
+import {rgbaToThumbHash, thumbHashToAverageRGBA} from 'thumbhash'
+import {useMutate} from '../atoms/DbAtoms.js'
+import {errorAtom} from '../atoms/ErrorAtoms.js'
+import {withResolvers} from '../util/WithResolvers.js'
+import {useConfig} from './UseConfig.js'
+import {useGraph} from './UseGraph.js'
+import {useSession} from './UseSession.js'
 
 export enum UploadStatus {
   Queued,
@@ -277,7 +277,6 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
       url: (parent ? parent.url : '') + '/' + path,
       title: basename(path, extension),
       seeded: false,
-      modifiedAt: Date.now(),
       searchableText: '',
       index: generateKeyBetween(null, prev?.index ?? null),
       i18nId: entryId,
@@ -346,49 +345,49 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
     const info = upload.info!
     const {file, entry} = await createEntry(upload)
     if (!replace) {
-    await batchMutations(
-      {
-        type: MutationType.Create,
-        entryId: entry.entryId,
-        file,
-        entry
-      },
-      {
-        type: MutationType.Upload,
-        entryId: entry.entryId,
-        url: info.previewUrl,
-        file: info.location
-      }
-    )
-    return entry
-    }
-      const newEntry = await createEntryRow<Media.File>(config, {
-        ...replace.entry,
-        data: {...entry.data, title: replace.entry.title}
-      })
       await batchMutations(
         {
-          type: MutationType.Edit,
-          entryId: replace.entry.entryId,
-          file: replace.entryFile,
-          entry: newEntry
+          type: MutationType.Create,
+          entryId: entry.entryId,
+          file,
+          entry
         },
         {
           type: MutationType.Upload,
           entryId: entry.entryId,
           url: info.previewUrl,
           file: info.location
-        },
-        {
-          type: MutationType.FileRemove,
-          entryId: replace.entry.entryId,
-          file: replace.entryFile,
-          workspace: replace.entry.workspace,
-          location: (replace.entry.data as MediaFile).location,
-          replace: true
         }
       )
-      return newEntry
+      return entry
+    }
+    const newEntry = await createEntryRow<Media.File>(config, {
+      ...replace.entry,
+      data: {...entry.data, title: replace.entry.title}
+    })
+    await batchMutations(
+      {
+        type: MutationType.Edit,
+        entryId: replace.entry.entryId,
+        file: replace.entryFile,
+        entry: newEntry
+      },
+      {
+        type: MutationType.Upload,
+        entryId: entry.entryId,
+        url: info.previewUrl,
+        file: info.location
+      },
+      {
+        type: MutationType.FileRemove,
+        entryId: replace.entry.entryId,
+        file: replace.entryFile,
+        workspace: replace.entry.workspace,
+        location: (replace.entry.data as MediaFile).location,
+        replace: true
+      }
+    )
+    return newEntry
   }
 
   async function upload(

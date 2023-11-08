@@ -1,8 +1,7 @@
-import {Handler, JWTPreviews, Media, Target} from 'alinea/backend'
+import {Database, Handler, JWTPreviews, Media, Target} from 'alinea/backend'
 import {Drafts} from 'alinea/backend/Drafts'
 import {History, Revision} from 'alinea/backend/History'
 import {Pending} from 'alinea/backend/Pending'
-import {Store} from 'alinea/backend/Store'
 import {Config, Connection, Draft, HttpError, Workspace} from 'alinea/core'
 import {EntryRecord} from 'alinea/core/EntryRecord'
 import {Mutation} from 'alinea/core/Mutation'
@@ -176,13 +175,13 @@ export class CloudApi implements Media, Target, History, Pending, Drafts {
 
 export function createCloudHandler(
   config: Config,
-  store: Store,
+  db: Database,
   apiKey: string | undefined
 ) {
   const api = new CloudApi(config)
   return new Handler({
     auth: new CloudAuthServer({config, apiKey}),
-    store,
+    db,
     config,
     target: api,
     media: api,

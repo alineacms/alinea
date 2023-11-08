@@ -74,7 +74,6 @@ export const EntryRow = table({
   },
   [table.indexes]() {
     return {
-      modifiedAt: index(this.modifiedAt),
       rowHash: index(this.rowHash),
       type: index(this.type),
       parent: index(this.parent),

@@ -1,3 +1,4 @@
+import {Database} from 'alinea/backend'
 import {Store} from 'alinea/backend/Store'
 import {CMS} from 'alinea/core/CMS'
 import {Config} from 'alinea/core/Config'
@@ -61,7 +62,7 @@ async function createDb(): Promise<[Store, () => Uint8Array]> {
 export async function* generate(options: GenerateOptions): AsyncGenerator<
   {
     cms: CMS
-    store: Store
+    db: Database
     localData: LocalData
   },
   void
@@ -116,14 +117,14 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
         rootDir,
         dashboardUrl: await options.dashboardUrl
       })
-      for await (const _ of fillCache(
+      for await (const db of fillCache(
         context,
         fileData,
         store,
         cms,
         nextBuild
       )) {
-        yield {cms, store, localData: fileData}
+        yield {cms, db, localData: fileData}
         // For debug reasons write out db
         if (process.env.NODE_ENV === 'development')
           fs.writeFileSync(

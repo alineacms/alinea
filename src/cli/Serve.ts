@@ -85,7 +85,7 @@ export async function serve(options: ServeOptions): Promise<void> {
   while (true) {
     const current = await nextGen
     if (!current?.value) return
-    const {cms: currentCMS, localData: fileData, store} = current.value
+    const {cms: currentCMS, localData: fileData, db} = current.value
     if (currentCMS === cms) {
       context.liveReload.reload('refetch')
     } else {
@@ -96,16 +96,12 @@ export async function serve(options: ServeOptions): Promise<void> {
 
       function createBackend(): Handler {
         if (process.env.ALINEA_CLOUD_DEBUG)
-          return createCloudDebugHandler(currentCMS, store)
+          return createCloudDebugHandler(currentCMS, db)
         if (process.env.ALINEA_CLOUD_URL)
-          return createCloudHandler(
-            currentCMS,
-            store,
-            process.env.ALINEA_API_KEY
-          )
+          return createCloudHandler(currentCMS, db, process.env.ALINEA_API_KEY)
         return new Handler({
           config: currentCMS,
-          store: store,
+          db,
           target: fileData,
           media: fileData,
           history: new GitHistory(currentCMS, rootDir),

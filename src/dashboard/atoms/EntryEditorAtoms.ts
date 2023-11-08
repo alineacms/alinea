@@ -5,7 +5,6 @@ import {
   EntryRow,
   ROOT_KEY,
   Type,
-  applyEntryData,
   createId,
   createYDoc,
   parseYDoc
@@ -521,12 +520,6 @@ export function createEntryEditor(entryData: EntryData) {
     return new InputState.YDocState(Type.shape(type), doc.getMap(ROOT_KEY), '')
   })
 
-  function createPreviewUpdate(entry: EntryRow) {
-    const sourceDoc = createYDoc(type, null)
-    applyEntryData(sourceDoc, type, entry)
-    return Y.encodeStateAsUpdateV2(sourceDoc, yStateVector)
-  }
-
   const docRevision = atomFamily((doc: Y.Doc) => {
     let revision = 0
     return debounceAtom(
@@ -539,11 +532,8 @@ export function createEntryEditor(entryData: EntryData) {
   // render for rich text fields. Some day that should be properly fixed.
   const yUpdate = debounceAtom(
     atom(get => {
-      const doc = get(currentDoc)
-      get(docRevision(doc))
-      const entryData = parseYDoc(type, doc)
-      const entry = {...activeVersion, ...entryData}
-      return createPreviewUpdate(entry)
+      get(currentDoc)
+      return edits.getLocalUpdate()
     }),
     10
   )

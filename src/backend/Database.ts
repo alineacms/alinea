@@ -32,8 +32,6 @@ import {AlineaMeta} from './db/AlineaMeta.js'
 import {createEntrySearch} from './db/CreateEntrySearch.js'
 import {createFileHash, createRowHash} from './util/ContentHash.js'
 
-const decoder = new TextDecoder()
-
 type Seed = {
   type: string
   workspace: string
@@ -227,13 +225,13 @@ export class Database implements Syncable {
   }
 
   private async writeMeta(tx: Driver.Async) {
-    const {h32ToString} = await xxhash()
+    const {create32} = await xxhash()
+    const hasher = create32()
     const contentHashes = await tx(
-      EntryRow()
-        .select(EntryRow.rowHash.concat('.').concat(EntryRow.phase))
-        .orderBy(EntryRow.rowHash)
+      EntryRow().select(EntryRow.rowHash).orderBy(EntryRow.rowHash)
     )
-    const contentHash = h32ToString(contentHashes.join(''))
+    for (const hash of contentHashes) hasher.update(hash)
+    const contentHash = hasher.digest().toString(16).padStart(8, '0')
     const modifiedAt = await tx(
       EntryRow()
         .select(EntryRow.modifiedAt)
