@@ -41,6 +41,7 @@ export class EntryTable {
   get versionId() {
     return this.entryId.concat('.').concat(this.phase)
   }
+  /** @deprecated */
   modifiedAt = column.number
   rowHash = column.string
   fileHash = column.string

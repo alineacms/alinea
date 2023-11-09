@@ -11,6 +11,7 @@ import {buildOptions} from './build/BuildOptions.js'
 import {createLocalServer} from './serve/CreateLocalServer.js'
 import {GitHistory} from './serve/GitHistory.js'
 import {LiveReload} from './serve/LiveReload.js'
+import {MemoryDrafts} from './serve/MemoryDrafts.js'
 import {ServeContext} from './serve/ServeContext.js'
 import {startNodeServer} from './serve/StartNodeServer.js'
 import {dirname} from './util/Dirname.js'
@@ -78,6 +79,7 @@ export async function serve(options: ServeOptions): Promise<void> {
       })
     }
   })[Symbol.asyncIterator]()
+  const drafts = new MemoryDrafts()
   let nextGen = gen.next()
   let cms: CMS | undefined
   let handle: HttpRouter | undefined
@@ -104,6 +106,7 @@ export async function serve(options: ServeOptions): Promise<void> {
           db,
           target: fileData,
           media: fileData,
+          drafts,
           history: new GitHistory(currentCMS, rootDir),
           previews: new JWTPreviews('dev')
         })

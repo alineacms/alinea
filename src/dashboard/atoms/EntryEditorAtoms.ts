@@ -3,6 +3,7 @@ import {
   Connection,
   EntryPhase,
   EntryRow,
+  EntryUrlMeta,
   ROOT_KEY,
   Type,
   createId,
@@ -10,12 +11,13 @@ import {
   parseYDoc
 } from 'alinea/core'
 import {Entry} from 'alinea/core/Entry'
-import {entryFileName} from 'alinea/core/EntryFilenames'
+import {entryFileName, entryInfo, entryUrl} from 'alinea/core/EntryFilenames'
 import {Mutation, MutationType} from 'alinea/core/Mutation'
 import {MediaFile} from 'alinea/core/media/MediaSchema'
 import {base64} from 'alinea/core/util/Encoding'
 import {createEntryRow} from 'alinea/core/util/EntryRows'
 import {entries, fromEntries, values} from 'alinea/core/util/Objects'
+import * as paths from 'alinea/core/util/Paths'
 import {InputState} from 'alinea/editor'
 import {atom} from 'jotai'
 import {atomFamily, unwrap} from 'jotai/utils'
@@ -260,10 +262,7 @@ export function createEntryEditor(entryData: EntryData) {
 
   const saveDraft = atom(null, async (get, set) => {
     const update = base64.stringify(edits.getLocalUpdate())
-    const entry = await createEntryRow(config, {
-      ...getDraftEntry(),
-      phase: EntryPhase.Published
-    })
+    const entry = await getDraftEntry({phase: EntryPhase.Published})
     const mutation: Mutation = {
       type: MutationType.Edit,
       previousFile: entryFile(activeVersion),
@@ -300,20 +299,22 @@ export function createEntryEditor(entryData: EntryData) {
       : undefined
     if (activeVersion.parent && !parentData)
       throw new Error('Parent not translated')
+    const parentPaths = parentData?.paths
+      ? parentData.paths.concat(parentData.path)
+      : []
     const entryId = createId()
-    const entry = await createEntryRow(config, {
-      ...getDraftEntry(),
-      parent: parentData?.entryId ?? null,
+    const entry = await getDraftEntry({
       entryId,
-      locale,
-      phase: EntryPhase.Published
+      phase: EntryPhase.Published,
+      parent: parentData?.entryId,
+      parentPaths,
+      locale
     })
+    console.log(entry)
+    console.log(entryFile(entry, parentPaths))
     const mutation: Mutation = {
       type: MutationType.Create,
-      file: entryFile(
-        entry,
-        parentData?.paths ? parentData.paths.concat(parentData.path) : []
-      ),
+      file: entryFile(entry, parentPaths),
       entryId,
       entry
     }
@@ -331,10 +332,7 @@ export function createEntryEditor(entryData: EntryData) {
   const publishEdits = atom(null, async (get, set) => {
     const currentFile = entryFile(activeVersion)
     const update = base64.stringify(edits.getLocalUpdate())
-    const entry = await createEntryRow(config, {
-      ...getDraftEntry(),
-      phase: EntryPhase.Published
-    })
+    const entry = await getDraftEntry({phase: EntryPhase.Published})
     const mutations: Array<Mutation> = []
     const editedFile = entryFile(entry)
     mutations.push({
@@ -359,10 +357,7 @@ export function createEntryEditor(entryData: EntryData) {
     const {edits} = entryData
     edits.applyEntryData(type, data)
     const update = base64.stringify(edits.getLocalUpdate())
-    const entry = await createEntryRow(config, {
-      ...getDraftEntry(),
-      phase: EntryPhase.Published
-    })
+    const entry = await getDraftEntry({phase: EntryPhase.Published})
     const editedFile = entryFile(entry)
     const mutation: Mutation = {
       type: MutationType.Edit,
@@ -474,9 +469,45 @@ export function createEntryEditor(entryData: EntryData) {
     () => yDoc.getMap(ROOT_KEY).get('title') as string
   )
 
-  function getDraftEntry(): EntryRow {
-    const entryData = parseYDoc(type, yDoc)
-    return {...activeVersion, ...entryData}
+  async function getDraftEntry(
+    meta: Partial<EntryUrlMeta> & {entryId?: string; parent?: string} = {}
+  ): Promise<EntryRow> {
+    const data = parseYDoc(type, yDoc)
+    const locale = meta.locale ?? activeVersion.locale
+    const path = meta.path ?? data.path
+    const phase = meta.phase ?? activeVersion.phase
+    const entryId = meta.entryId ?? activeVersion.entryId
+    const parent = meta.parent ?? activeVersion.parent
+    const parentPaths = meta.parentPaths ?? entryData.parents.map(p => p.path)
+    const draftEntry = {
+      ...activeVersion,
+      ...data,
+      entryId,
+      parent,
+      locale,
+      path,
+      phase
+    }
+    const filePath = entryFile(draftEntry, parentPaths)
+    const parentDir = paths.dirname(filePath)
+    const extension = paths.extname(filePath)
+    const fileName = paths.basename(filePath, extension)
+    const [entryPath] = entryInfo(fileName)
+    const childrenDir = paths.join(parentDir, entryPath)
+    const urlMeta: EntryUrlMeta = {
+      locale,
+      path,
+      phase,
+      parentPaths
+    }
+    const url = entryUrl(type, urlMeta)
+    return createEntryRow(config, {
+      ...draftEntry,
+      parentDir,
+      childrenDir,
+      filePath,
+      url
+    })
   }
 
   const revisionsAtom = atom(async get => {

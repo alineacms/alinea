@@ -9,7 +9,6 @@ import {Pane} from 'alinea/ui/Pane'
 import {useNonInitialEffect} from 'alinea/ui/hook/UseNonInitialEffect'
 import {IcRoundUnfoldMore} from 'alinea/ui/icons/IcRoundUnfoldMore'
 import {createSlots} from 'alinea/ui/util/Slots'
-import {useAtomValue} from 'jotai'
 import {
   Dispatch,
   HTMLProps,
@@ -18,9 +17,7 @@ import {
   useContext,
   useReducer
 } from 'react'
-import {dbHashAtom} from '../atoms/DbAtoms.js'
 import {useConfig} from '../hook/UseConfig.js'
-import {useDashboard} from '../hook/UseDashboard.js'
 import {useEntryLocation} from '../hook/UseEntryLocation.js'
 import {useLocale} from '../hook/UseLocale.js'
 import {useNav} from '../hook/UseNav.js'
@@ -190,9 +187,7 @@ export namespace Sidebar {
     )
   }
   export function Nav({children}: PropsWithChildren<{}>) {
-    const {dev} = useDashboard()
     const {isNavOpen, toggleNav} = use()
-    const dbHash = useAtomValue(dbHashAtom)
     return (
       <div className={styles.collapse('left', {open: isNavOpen})}>
         <div className={styles.collapse.overlay()} onClick={toggleNav} />
@@ -203,7 +198,6 @@ export namespace Sidebar {
           minWidth={200}
         >
           <div className={styles.nav.inner()}>
-            {dev && <div>{dbHash}</div>}
             <NavHeader />
             <div className={styles.nav.container()}>
               <nav className={styles.nav.menu()}>{children}</nav>

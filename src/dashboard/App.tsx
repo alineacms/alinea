@@ -1,7 +1,9 @@
 import {Config, Connection, Root, renderLabel} from 'alinea/core'
 import {Icon, Loader, px} from 'alinea/ui'
+import {Statusbar} from 'alinea/ui/Statusbar'
 import {FavIcon} from 'alinea/ui/branding/FavIcon'
 import {IcRoundDescription} from 'alinea/ui/icons/IcRoundDescription'
+import {MaterialSymbolsDatabase} from 'alinea/ui/icons/MaterialSymbolsDatabase'
 import {MdiSourceBranch} from 'alinea/ui/icons/MdiSourceBranch'
 import {atom, useAtom, useAtomValue} from 'jotai'
 import {useEffect} from 'react'
@@ -16,7 +18,7 @@ import {
   sessionAtom,
   useSetDashboardOptions
 } from './atoms/DashboardAtoms.js'
-import {useDbUpdater} from './atoms/DbAtoms.js'
+import {dbHashAtom, useDbUpdater} from './atoms/DbAtoms.js'
 import {errorAtom} from './atoms/ErrorAtoms.js'
 import {locationAtom, matchAtoms, useLocation} from './atoms/LocationAtoms.js'
 import {usePreferredLanguage} from './atoms/NavigationAtoms.js'
@@ -67,7 +69,7 @@ const isEntryAtom = atom(get => {
 
 function AppAuthenticated() {
   useDbUpdater()
-  const {fullPage} = useDashboard()
+  const {dev, fullPage} = useDashboard()
   const nav = useNav()
   const isEntry = useAtomValue(isEntryAtom)
   const {name: workspace, color, roots} = useWorkspace()
@@ -76,6 +78,7 @@ function AppAuthenticated() {
   const locale = useLocale()
   const [preferredLanguage, setPreferredLanguage] = usePreferredLanguage()
   const [errorMessage, setErrorMessage] = useAtom(errorAtom)
+  const dbHash = useAtomValue(dbHashAtom)
   useEffect(() => {
     setPreferredLanguage(locale)
   }, [locale])
@@ -86,55 +89,64 @@ function AppAuthenticated() {
           <div style={{padding: px(16)}}>{errorMessage}</div>
         </Modal>
       )}
-      <Toolbar.Provider>
-        <Sidebar.Provider>
-          <Viewport attachToBody={fullPage} contain color={color}>
-            <Head>
-              <FavIcon color={color} />
-            </Head>
-            <div
-              style={{
-                flex: '1',
-                display: 'flex',
-                minHeight: 0,
-                position: 'relative'
-              }}
-            >
-              <Sidebar.Nav>
-                {Object.entries(roots).map(([key, root], i) => {
-                  const isSelected = key === currentRoot
-                  const link =
-                    entryLocation && entryLocation.root === key
-                      ? nav.entry(entryLocation)
-                      : nav.root({
-                          workspace,
-                          root: key,
-                          locale: preferredLanguage
-                        })
-                  const {label, icon} = Root.data(root)
-                  return (
-                    <Sidebar.Nav.Item
-                      key={key}
-                      selected={isEntry && isSelected}
-                      href={link}
-                      aria-label={renderLabel(label)}
-                    >
-                      <Icon icon={icon ?? IcRoundDescription} />
-                    </Sidebar.Nav.Item>
-                  )
-                })}
-                {/*<DraftsButton />*/}
-                <SidebarSettings />
-              </Sidebar.Nav>
-              <ErrorBoundary>
-                <SuspenseBoundary name="main" fallback={<Loader absolute />}>
-                  <RouteView fallback={null} />
-                </SuspenseBoundary>
-              </ErrorBoundary>
-            </div>
-          </Viewport>
-        </Sidebar.Provider>
-      </Toolbar.Provider>
+      <Statusbar.Provider>
+        <Toolbar.Provider>
+          <Sidebar.Provider>
+            <Viewport attachToBody={fullPage} contain color={color}>
+              <Head>
+                <FavIcon color={color} />
+              </Head>
+              <div
+                style={{
+                  flex: '1',
+                  display: 'flex',
+                  minHeight: 0,
+                  position: 'relative'
+                }}
+              >
+                <Sidebar.Nav>
+                  {Object.entries(roots).map(([key, root], i) => {
+                    const isSelected = key === currentRoot
+                    const link =
+                      entryLocation && entryLocation.root === key
+                        ? nav.entry(entryLocation)
+                        : nav.root({
+                            workspace,
+                            root: key,
+                            locale: preferredLanguage
+                          })
+                    const {label, icon} = Root.data(root)
+                    return (
+                      <Sidebar.Nav.Item
+                        key={key}
+                        selected={isEntry && isSelected}
+                        href={link}
+                        aria-label={renderLabel(label)}
+                      >
+                        <Icon icon={icon ?? IcRoundDescription} />
+                      </Sidebar.Nav.Item>
+                    )
+                  })}
+                  {/*<DraftsButton />*/}
+                  <SidebarSettings />
+                </Sidebar.Nav>
+                <ErrorBoundary>
+                  <SuspenseBoundary name="main" fallback={<Loader absolute />}>
+                    <RouteView fallback={null} />
+                  </SuspenseBoundary>
+                </ErrorBoundary>
+              </div>
+              {dev && (
+                <Statusbar.Root>
+                  <Statusbar.Status icon={MaterialSymbolsDatabase}>
+                    {dbHash}
+                  </Statusbar.Status>
+                </Statusbar.Root>
+              )}
+            </Viewport>
+          </Sidebar.Provider>
+        </Toolbar.Provider>
+      </Statusbar.Provider>
     </>
   )
 }
