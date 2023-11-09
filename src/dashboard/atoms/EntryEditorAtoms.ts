@@ -21,7 +21,7 @@ import {atom} from 'jotai'
 import {atomFamily, unwrap} from 'jotai/utils'
 import * as Y from 'yjs'
 import {debounceAtom} from '../util/DebounceAtom.js'
-import {clientAtom, configAtom} from './DashboardAtoms.js'
+import {clientAtom, configAtom, dashboardOptionsAtom} from './DashboardAtoms.js'
 import {entryRevisionAtoms, graphAtom, mutateAtom} from './DbAtoms.js'
 import {Edits, entryEditsAtoms} from './Edits.js'
 import {errorAtom} from './ErrorAtoms.js'
@@ -66,6 +66,7 @@ export const entryEditorAtoms = atomFamily(
   ({locale, i18nId}: EntryEditorParams) => {
     return atom(async get => {
       if (!i18nId) return undefined
+      const {dev} = get(dashboardOptionsAtom)
       const config = get(configAtom)
       const client = get(clientAtom)
       const graph = await get(graphAtom)
@@ -88,7 +89,8 @@ export const entryEditorAtoms = atomFamily(
 
       const type = config.schema[entry.type]
       const edits = get(entryEditsAtoms(entryId))
-      const draft = await client.getDraft(entryId)
+
+      const draft = dev ? undefined : await client.getDraft(entryId)
       if (draft) {
         edits.applyRemoteUpdate(draft.draft)
         // The draft is out of sync, this can happen if

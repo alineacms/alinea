@@ -222,12 +222,15 @@ export class RichTextShape<Blocks>
     // Sync text by simply matching each row.
     // Todo: This must be improved by diffing to enable continuous editing
     // during deploys without losing all text context
-    const fragment: Y.XmlFragment = current.get('$text')
-    let i = 0
     function syncText(source: Y.XmlText, target: TextNode.Text) {
       const {text = '', marks = []} = target
-      source.delete(0, source.length)
-      source.insert(0, text, unserializeMarks(marks))
+      const str = Y.Text.prototype.toString.call(source)
+      if (text === str) {
+        source.format(0, source.length, unserializeMarks(marks))
+      } else {
+        source.delete(0, source.length)
+        source.insert(0, text, unserializeMarks(marks))
+      }
     }
     const syncElement = (
       source: Y.XmlElement,
@@ -238,32 +241,37 @@ export class RichTextShape<Blocks>
       const keysToHandle = isBlock ? ['id'] : keys(attrs)
       for (const key of keysToHandle)
         source.setAttribute(key, attrs[key] as string)
+      if (isBlock) return
       for (const key of keys(source.getAttributes()))
         if (!keysToHandle.includes(key)) source.removeAttribute(key)
-      source.delete(0, source.length)
-      source.insert(0, this.toXml(content ?? []))
+      syncNodes(source, content ?? [])
     }
-    for (; i < value.length; i++) {
-      const row = value[i]
-      const node = fragment.get(i)
-      if (!node) {
-        fragment.insert(i, this.toXml([row]))
-        continue
+    const syncNodes = (source: Y.XmlElement, value: TextDoc<any>) => {
+      let i = 0
+      for (; i < value.length; i++) {
+        const row = value[i]
+        const node = source.get(i)
+        if (!node) {
+          source.insert(i, this.toXml([row]))
+          continue
+        }
+        const typeA = node instanceof Y.XmlText ? 'text' : node.nodeName
+        const typeB = row.type
+        if (typeA !== typeB) {
+          source.delete(i)
+          source.insert(i, this.toXml([row]))
+          continue
+        }
+        if (typeA === 'text') {
+          console.log(row)
+          syncText(node as Y.XmlText, row as TextNode.Text)
+          continue
+        }
+        syncElement(node as Y.XmlElement, row as TextNode.Element<any>)
       }
-      const typeA = node instanceof Y.XmlText ? 'text' : node.nodeName
-      const typeB = row.type
-      if (typeA !== typeB) {
-        fragment.delete(i)
-        fragment.insert(i, this.toXml([row]))
-        continue
-      }
-      if (typeA === 'text') {
-        syncText(node as Y.XmlText, row as TextNode.Text)
-        continue
-      }
-      syncElement(node as Y.XmlElement, row as TextNode.Element<any>)
+      while (source.length > i) source.delete(i)
     }
-    while (fragment.length > i) fragment.delete(i)
+    syncNodes(current.get('$text'), value)
   }
   watch(parent: Y.Map<any>, key: string) {
     // There's no watching of the fragment involved
@@ -272,7 +280,7 @@ export class RichTextShape<Blocks>
   mutator(parent: Y.Map<any>, key: string) {
     const map = parent.get(key)
     return {
-      map: parent.get(key),
+      map,
       fragment: map.get('$text'),
       insert: (id: string, block: string) => {
         if (!this.values) throw new Error('No types defined')
