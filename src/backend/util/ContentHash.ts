@@ -2,7 +2,6 @@ import {EntryRow} from 'alinea/core'
 import xxhash from 'xxhash-wasm'
 
 const xxHash = xxhash()
-const textEncoder = new TextEncoder()
 
 export async function createFileHash(data: Uint8Array) {
   const {h32Raw} = await xxHash
@@ -10,26 +9,27 @@ export async function createFileHash(data: Uint8Array) {
 }
 
 export async function createRowHash(entry: Omit<EntryRow, 'rowHash'>) {
-  const {h32Raw} = await xxHash
-  const mightHaveRowHash = entry as EntryRow
-  const {rowHash, data, ...row} = mightHaveRowHash
-  const input = textEncoder.encode(JSON.stringify(row))
-  return h32Raw(input).toString(16).padStart(8, '0')
+  const {create32} = await xxhash()
+  const hash = create32()
+    .update(`entryId ${entry.entryId}`)
+    .update(`phase ${entry.phase}`)
+    .update(`title ${entry.title}`)
+    .update(`type ${entry.type}`)
+    .update(`seeded ${entry.seeded}`)
+    .update(`workspace ${entry.workspace}`)
+    .update(`root ${entry.root}`)
+    .update(`level ${entry.level}`)
+    .update(`filePath ${entry.filePath}`)
+    .update(`parentDir ${entry.parentDir}`)
+    .update(`childrenDir ${entry.childrenDir}`)
+    .update(`index ${entry.index}`)
+    .update(`parent ${entry.parent}`)
+    .update(`i18nId ${entry.i18nId}`)
+    .update(`locale ${entry.locale}`)
+    .update(`fileHash ${entry.fileHash}`)
+    .update(`active ${entry.active}`)
+    .update(`main ${entry.main}`)
+    .update(`path ${entry.path}`)
+    .update(`url ${entry.url}`)
+  return hash.digest().toString(16).padStart(8, '0')
 }
-
-/*export async function createContentHash(
-  phase: EntryPhase,
-  contents: Uint8Array,
-  seed?: string
-) {
-  const {h32Raw} = await xxHash
-  const seedData = seed ? textEncoder.encode(seed) : new Uint8Array(0)
-  const phaseData = textEncoder.encode(phase)
-  const hashData = new Uint8Array(
-    seedData.length + phaseData.length + contents.length
-  )
-  hashData.set(seedData)
-  hashData.set(phaseData, seedData.length)
-  hashData.set(contents, seedData.length + phaseData.length)
-  return h32Raw(hashData).toString(16).padStart(8, '0')
-}*/

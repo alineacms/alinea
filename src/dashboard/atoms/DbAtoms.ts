@@ -1,7 +1,7 @@
 import {Database} from 'alinea/backend'
 import {EntryResolver} from 'alinea/backend/resolver/EntryResolver'
 import {Graph} from 'alinea/core/Graph'
-import {Mutation} from 'alinea/core/Mutation'
+import {CreateMutation, Mutation, MutationType} from 'alinea/core/Mutation'
 import debounce from 'debounce-promise'
 import {atom, useSetAtom} from 'jotai'
 import {atomFamily} from 'jotai/utils'
@@ -14,7 +14,15 @@ export const persistentStoreAtom = atom(createPersistentStore)
 
 const limit = pLimit(1)
 
-const localDbAtom = atom(async get => {
+export const dbHashAtom = atom(async get => {
+  const db = await get(localDbAtom)
+  get(changedEntriesAtom)
+  const meta = await db.db.meta()
+  console.log(meta.contentHash)
+  return meta.contentHash
+})
+
+const localDbAtom = atom(async (get, set) => {
   const config = get(configAtom)
   const client = get(clientAtom)
   const {store, clear, flush} = await get(persistentStoreAtom)
@@ -36,8 +44,9 @@ const localDbAtom = atom(async get => {
   const sync = (force: boolean) =>
     limit(() => debounceSync(force).catch(() => [] as Array<string>))
   const applyMutations = async (mutations: Array<Mutation>) => {
-    await db.applyMutations(mutations)
+    const update = await db.applyMutations(mutations)
     await flush()
+    return update
   }
   await limit(syncDb)
 
@@ -50,9 +59,15 @@ export const mutateAtom = atom(
     const client = get(clientAtom)
     await client.mutate(mutations)
     const {applyMutations} = await get(localDbAtom)
-    await applyMutations(mutations)
+    const {contentHash} = await applyMutations(mutations)
     const changed = mutations.map(m => m.entryId)
-    set(changedEntriesAtom, changed)
+    const i18nIds = mutations
+      .filter(
+        (mutation): mutation is CreateMutation =>
+          mutation.type === MutationType.Create
+      )
+      .map(mutation => mutation.entry.i18nId)
+    set(changedEntriesAtom, changed.concat(i18nIds))
   }
 )
 

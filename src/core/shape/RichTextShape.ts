@@ -263,7 +263,6 @@ export class RichTextShape<Blocks>
           continue
         }
         if (typeA === 'text') {
-          console.log(row)
           syncText(node as Y.XmlText, row as TextNode.Text)
           continue
         }

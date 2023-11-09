@@ -86,11 +86,12 @@ export const entryEditorAtoms = atomFamily(
       if (!entry) return undefined
       const entryId = entry.entryId
       get(entryRevisionAtoms(entryId))
+      get(entryRevisionAtoms(entry.i18nId))
 
       const type = config.schema[entry.type]
       const edits = get(entryEditsAtoms(entryId))
 
-      const draft = dev ? undefined : await client.getDraft(entryId)
+      const draft = await client.getDraft(entryId)
       if (draft) {
         edits.applyRemoteUpdate(draft.draft)
         // The draft is out of sync, this can happen if
@@ -322,7 +323,9 @@ export function createEntryEditor(entryData: EntryData) {
       action: () => set(mutateAtom, mutation),
       errorMessage:
         'Could not complete translate action, please try again later'
-    }).then(() => set(hasChanges, false))
+    }).then(() => {
+      set(hasChanges, false)
+    })
   })
 
   const publishEdits = atom(null, async (get, set) => {

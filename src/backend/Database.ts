@@ -85,26 +85,37 @@ export class Database implements Syncable {
         EntryRow().where(EntryRow.rowHash.isIn(remove)).select(EntryRow.entryId)
       )
       await tx(EntryRow().delete().where(EntryRow.rowHash.isIn(remove)))
-      for (const entry of insert) await tx(EntryRow().insertOne(entry))
+      const changed = []
+      for (const entry of insert) {
+        await tx(EntryRow().insertOne(entry))
+        changed.push(entry.entryId)
+        changed.push(entry.i18nId)
+      }
       await Database.index(tx)
       await this.writeMeta(tx)
-      return removed.concat(insert.map(e => e.entryId))
+      return removed.concat(changed)
     })
   }
 
   async applyMutations(mutations: Array<Mutation>) {
     await this.store.transaction(async tx => {
+      const reHash = []
       for (const mutation of mutations) {
-        this.applyMutation(tx, mutation)
+        const process = await this.applyMutation(tx, mutation)
+        if (process) reHash.push(process)
       }
       await Database.index(tx)
+      await Promise.all(reHash.map(hash => hash()))
       await this.writeMeta(tx)
     })
     const updated = await this.meta()
     return updated
   }
 
-  async applyMutation(tx: Driver.Async, mutation: Mutation) {
+  async applyMutation(
+    tx: Driver.Async,
+    mutation: Mutation
+  ): Promise<(() => Promise<void>) | undefined> {
     switch (mutation.type) {
       case MutationType.Create:
       case MutationType.Edit: {
@@ -113,7 +124,7 @@ export class Database implements Syncable {
           phase: mutation.entry.phase
         })
         await tx(row.delete(), EntryRow().insert(mutation.entry))
-        return this.updateHash(tx, row)
+        return () => this.updateHash(tx, row)
       }
       case MutationType.Archive: {
         const archived = EntryRow({
@@ -127,7 +138,7 @@ export class Database implements Syncable {
         const published = await tx(row.maybeFirst())
         if (!published) return
         await tx(archived.delete(), row.set({phase: EntryPhase.Archived}))
-        return this.updateHash(tx, archived)
+        return () => this.updateHash(tx, archived)
       }
       case MutationType.Publish: {
         const row = EntryRow({
@@ -150,24 +161,26 @@ export class Database implements Syncable {
             phase: EntryPhase.Published
           })
         )
-        return this.updateHash(tx, row)
+        return () => this.updateHash(tx, row)
       }
       case MutationType.FileRemove:
         if (mutation.replace) return
       case MutationType.Remove:
-        return tx(EntryRow({entryId: mutation.entryId}).delete())
+        await tx(EntryRow({entryId: mutation.entryId}).delete())
+        return
       case MutationType.Discard:
-        return tx(
+        await tx(
           EntryRow({
             entryId: mutation.entryId,
             phase: EntryPhase.Draft
           }).delete()
         )
+        return
       case MutationType.Order: {
         const rows = EntryRow({entryId: mutation.entryId})
         // Todo: apply this to other languages too?
         await tx(rows.set({index: mutation.index}))
-        return this.updateHash(tx, rows)
+        return () => this.updateHash(tx, rows)
       }
       case MutationType.Move: {
         const rows = EntryRow({entryId: mutation.entryId})
@@ -179,7 +192,7 @@ export class Database implements Syncable {
             root: mutation.root
           })
         )
-        return this.updateHash(tx, rows)
+        return () => this.updateHash(tx, rows)
       }
       case MutationType.Upload:
         return
@@ -226,12 +239,12 @@ export class Database implements Syncable {
 
   private async writeMeta(tx: Driver.Async) {
     const {create32} = await xxhash()
-    const hasher = create32()
+    let hash = create32()
     const contentHashes = await tx(
       EntryRow().select(EntryRow.rowHash).orderBy(EntryRow.rowHash)
     )
-    for (const hash of contentHashes) hasher.update(hash)
-    const contentHash = hasher.digest().toString(16).padStart(8, '0')
+    for (const c of contentHashes) hash = hash.update(c)
+    const contentHash = hash.digest().toString(16).padStart(8, '0')
     const modifiedAt = await tx(
       EntryRow()
         .select(EntryRow.modifiedAt)
