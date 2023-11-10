@@ -152,8 +152,14 @@ export class ChangeSetCreator {
   }
 
   removeChanges({file}: RemoveEntryMutation): Array<Change> {
-    // Todo: remove all possible phases
-    return [{type: ChangeType.Delete, file}]
+    if (!file.endsWith(`.${EntryPhase.Archived}.json`)) return []
+    return [
+      {type: ChangeType.Delete, file},
+      {
+        type: ChangeType.Delete,
+        file: file.slice(0, -`.${EntryPhase.Archived}.json`.length)
+      }
+    ]
   }
 
   discardChanges({file}: DiscardDraftMutation): Array<Change> {
