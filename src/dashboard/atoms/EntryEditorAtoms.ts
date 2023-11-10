@@ -11,7 +11,12 @@ import {
   parseYDoc
 } from 'alinea/core'
 import {Entry} from 'alinea/core/Entry'
-import {entryFileName, entryInfo, entryUrl} from 'alinea/core/EntryFilenames'
+import {
+  entryFileName,
+  entryFilepath,
+  entryInfo,
+  entryUrl
+} from 'alinea/core/EntryFilenames'
 import {Mutation, MutationType} from 'alinea/core/Mutation'
 import {MediaFile} from 'alinea/core/media/MediaSchema'
 import {base64} from 'alinea/core/util/Encoding'
@@ -377,6 +382,7 @@ export function createEntryEditor(entryData: EntryData) {
   const publishDraft = atom(null, (get, set) => {
     const mutation: Mutation = {
       type: MutationType.Publish,
+      phase: EntryPhase.Draft,
       entryId: activeVersion.entryId,
       file: entryFile(activeVersion)
     }
@@ -418,6 +424,7 @@ export function createEntryEditor(entryData: EntryData) {
     const archived = entryData.phases[EntryPhase.Archived]
     const mutation: Mutation = {
       type: MutationType.Publish,
+      phase: EntryPhase.Archived,
       entryId: archived.entryId,
       file: entryFile(archived)
     }
@@ -488,7 +495,7 @@ export function createEntryEditor(entryData: EntryData) {
       path,
       phase
     }
-    const filePath = entryFile(draftEntry, parentPaths)
+    const filePath = entryFilepath(config, draftEntry, parentPaths)
     const parentDir = paths.dirname(filePath)
     const extension = paths.extname(filePath)
     const fileName = paths.basename(filePath, extension)

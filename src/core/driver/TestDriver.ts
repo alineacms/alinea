@@ -1,8 +1,8 @@
 import sqlite from '@alinea/sqlite-wasm'
-import {Database, Handler, JWTPreviews, Media, Target} from 'alinea/backend'
+import {Database, Handler, JWTPreviews} from 'alinea/backend'
 import {Store} from 'alinea/backend/Store'
 import {connect} from 'rado/driver/sql.js'
-import {CMSApi} from '../CMS.js'
+import {CMS, CMSApi} from '../CMS.js'
 import {Config} from '../Config.js'
 import {Connection} from '../Connection.js'
 import {Resolver} from '../Resolver.js'
@@ -10,6 +10,7 @@ import {Logger} from '../util/Logger.js'
 import {DefaultDriver} from './DefaultDriver.js'
 
 export interface TestApi extends CMSApi {
+  db: Promise<Database>
   connection(): Promise<Connection>
   generate(): Promise<void>
 }
@@ -18,21 +19,17 @@ class TestDriver extends DefaultDriver implements TestApi {
   store: Promise<Store> = sqlite().then(({Database}) =>
     connect(new Database()).toAsync()
   )
-  handler = this.store.then(async store => {
-    const db = new Database(this, store)
+  db = this.store.then(async store => {
+    return new Database(this, store)
+  })
+  handler = this.db.then(async db => {
     await db.fill({async *entries() {}})
-    const server = new Handler({
+    const handler = new Handler({
       config: this,
       db,
-      get target(): Target {
-        throw new Error('Test driver cannot publish')
-      },
-      get media(): Media {
-        throw new Error('Test driver has no media backend')
-      },
       previews: new JWTPreviews('test')
     })
-    return server.connect({logger: new Logger('test')})
+    return handler.connect({logger: new Logger('test')})
   })
 
   async readStore(): Promise<Store> {
@@ -57,6 +54,6 @@ class TestDriver extends DefaultDriver implements TestApi {
 
 export function createTestCMS<Definition extends Config>(
   config: Definition
-): Definition & TestApi {
+): Definition & TestApi & CMS {
   return new TestDriver(config) as any
 }

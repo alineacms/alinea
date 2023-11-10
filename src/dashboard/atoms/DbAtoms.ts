@@ -59,8 +59,7 @@ export const mutateAtom = atom(
     const client = get(clientAtom)
     await client.mutate(mutations)
     const {applyMutations} = await get(localDbAtom)
-    const {contentHash} = await applyMutations(mutations)
-    const changed = mutations.map(m => m.entryId)
+    const changed = await applyMutations(mutations)
     const i18nIds = mutations
       .filter(
         (mutation): mutation is CreateMutation =>

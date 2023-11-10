@@ -28,7 +28,7 @@ export class EntryTable {
   level = column.number // Amount of parents
   filePath = column.string
   parentDir = column.string
-  childrenDir = column.string.nullable
+  childrenDir = column.string
 
   index = column.string
   parent = column.string.nullable

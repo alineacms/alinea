@@ -22,7 +22,7 @@ import {timer} from 'alinea/core/util/Timer'
 import {Driver, Expr, Select, alias, create} from 'rado'
 import {exists} from 'rado/sqlite'
 import xxhash from 'xxhash-wasm'
-import {ALT_STATUS, EntryPhase, EntryRow} from '../core/EntryRow.js'
+import {EntryPhase, EntryRow} from '../core/EntryRow.js'
 import {Source} from './Source.js'
 import {Store} from './Store.js'
 import {Target} from './Target.js'
@@ -96,35 +96,88 @@ export class Database implements Syncable {
     })
   }
 
-  async applyMutations(mutations: Array<Mutation>) {
-    await this.store.transaction(async tx => {
+  applyMutations(mutations: Array<Mutation>) {
+    return this.store.transaction(async tx => {
       const reHash = []
       for (const mutation of mutations) {
-        const process = await this.applyMutation(tx, mutation)
-        if (process) reHash.push(process)
+        const updateRows = await this.applyMutation(tx, mutation)
+        if (updateRows) reHash.push(updateRows)
       }
       await Database.index(tx)
-      await Promise.all(reHash.map(hash => hash()))
+      const changed = (
+        await Promise.all(reHash.map(updateRows => updateRows()))
+      ).flat()
       await this.writeMeta(tx)
+      return changed
     })
-    const updated = await this.meta()
-    return updated
   }
 
-  async applyMutation(
+  async updateChildren(tx: Driver.Async, previous: EntryRow, next: EntryRow) {
+    const {childrenDir: dir} = previous
+    if (next.phase !== EntryPhase.Published || dir === next.childrenDir)
+      return []
+    const children = await tx(
+      EntryRow().where(
+        EntryRow.parentDir.is(dir).or(EntryRow.childrenDir.like(dir + '/%'))
+      )
+    )
+    for (const child of children) {
+      const filePath = next.childrenDir + child.filePath.slice(dir.length)
+      const childrenDir = next.childrenDir + child.childrenDir.slice(dir.length)
+      const parentDir = next.childrenDir + child.parentDir.slice(dir.length)
+      const parentPaths = parentDir.split('/').filter(Boolean)
+      if (child.locale) parentPaths.shift()
+      const url = entryUrl(this.config.schema[child.type], {
+        ...child,
+        parentPaths
+      })
+      await tx(
+        EntryRow({entryId: child.entryId, phase: child.phase}).set({
+          filePath,
+          childrenDir,
+          parentDir,
+          url
+        })
+      )
+    }
+    return children
+  }
+
+  private async applyMutation(
     tx: Driver.Async,
     mutation: Mutation
-  ): Promise<(() => Promise<void>) | undefined> {
+  ): Promise<(() => Promise<Array<string>>) | undefined> {
     switch (mutation.type) {
-      case MutationType.Create:
-      case MutationType.Edit: {
+      case MutationType.Create: {
         const row = EntryRow({
           entryId: mutation.entryId,
           phase: mutation.entry.phase
         })
-        await tx(row.delete(), EntryRow().insert(mutation.entry))
-        // Todo: We need to update children paths here
+        const current = await tx(row.maybeFirst())
+        if (current) return
+        await tx(EntryRow().insert(mutation.entry))
         return () => this.updateHash(tx, row)
+      }
+      case MutationType.Edit: {
+        const {entryId, entry} = mutation
+        const row = EntryRow({
+          entryId,
+          phase: entry.phase
+        })
+        const current = await tx(row.maybeFirst())
+        if (!current) return
+        await tx(row.delete(), EntryRow().insert(entry))
+        const children = await this.updateChildren(tx, current, entry)
+        return () => {
+          return this.updateHash(tx, row).then(self =>
+            this.updateHash(
+              tx,
+              EntryRow().where(
+                EntryRow.entryId.isIn(children.map(e => e.entryId))
+              )
+            ).then(children => self.concat(children))
+          )
+        }
       }
       case MutationType.Archive: {
         const archived = EntryRow({
@@ -153,31 +206,49 @@ export class Database implements Syncable {
           entryId: mutation.entryId,
           phase: EntryPhase.Published
         })
-        const phases = await tx(
+        const promoting = await tx(
           EntryRow({
-            entryId: mutation.entryId
-          })
+            entryId: mutation.entryId,
+            phase: mutation.phase
+          }).maybeFirst()
         )
-        const promoting = phases.find(e => ALT_STATUS.includes(e.phase))
         if (!promoting) return
-        const currentPhase = promoting.phase
-        const filePath =
-          promoting.filePath.slice(0, -`.${currentPhase}.json`.length) + '.json'
+        const childrenDir = promoting.filePath.slice(
+          0,
+          -`.${mutation.phase}.json`.length
+        )
+        const filePath = childrenDir + '.json'
+        const parentDir = path.dirname(childrenDir)
         await tx(
           row.delete(),
           EntryRow({
             entryId: mutation.entryId,
-            phase: currentPhase
+            phase: mutation.phase
           }).set({
             phase: EntryPhase.Published,
-            filePath
+            filePath,
+            parentDir,
+            childrenDir
           })
         )
-        return () => this.updateHash(tx, row)
+        const children = await this.updateChildren(tx, promoting, {
+          ...promoting,
+          phase: EntryPhase.Published
+        })
+        return () =>
+          this.updateHash(tx, row).then(rows => {
+            return this.updateHash(
+              tx,
+              EntryRow().where(
+                EntryRow.entryId.isIn(children.map(e => e.entryId))
+              )
+            ).then(r => rows.concat(r))
+          })
       }
       case MutationType.FileRemove:
         if (mutation.replace) return
       case MutationType.Remove:
+        // Todo: remove child entries
         await tx(EntryRow({entryId: mutation.entryId}).delete())
         return
       case MutationType.Discard:
@@ -215,10 +286,11 @@ export class Database implements Syncable {
   }
 
   async updateHash(tx: Driver.Async, selection: Select<EntryRow>) {
+    const changed = []
     const entries = await tx(selection)
     for (const entry of entries) {
       const updated = await createEntryRow(this.config, entry)
-      console.log(`${entry.entryId} - ${updated.rowHash}`)
+      changed.push(updated.entryId)
       await tx(
         EntryRow({entryId: entry.entryId, phase: entry.phase}).set({
           fileHash: updated.fileHash,
@@ -226,6 +298,7 @@ export class Database implements Syncable {
         })
       )
     }
+    return changed
   }
 
   async meta() {
@@ -509,8 +582,6 @@ export class Database implements Syncable {
       )
       for (const entry of entries) {
         const rowHash = await createRowHash(entry)
-        console.log(entry)
-        console.log(`${entry.entryId} - ${rowHash}`)
         await query(
           EntryRow({entryId: entry.entryId, phase: entry.phase}).set({
             rowHash

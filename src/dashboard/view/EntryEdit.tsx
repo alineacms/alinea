@@ -119,6 +119,11 @@ export function EntryEdit({editor}: EntryEditProps) {
           </Statusbar.Slot>
           <Statusbar.Slot>
             <Statusbar.Status>
+              Parent dir: {editor.activeVersion.parentDir}
+            </Statusbar.Status>
+          </Statusbar.Slot>
+          <Statusbar.Slot>
+            <Statusbar.Status>
               Children dir: {editor.activeVersion.childrenDir}
             </Statusbar.Status>
           </Statusbar.Slot>

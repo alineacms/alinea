@@ -1,4 +1,4 @@
-import {EntryRow} from './EntryRow.js'
+import {EntryPhase, EntryRow} from './EntryRow.js'
 
 export enum MutationProgress {
   Finished = 'finished',
@@ -55,6 +55,7 @@ export interface CreateMutation {
 export interface PublishMutation {
   type: MutationType.Publish
   entryId: string
+  phase: EntryPhase
   file: string
 }
 

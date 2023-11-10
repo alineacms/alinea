@@ -144,7 +144,7 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
         break
       }
     } catch (e: any) {
-      console.log(e.message)
+      console.error(e)
     }
   }
 }
