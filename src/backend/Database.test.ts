@@ -73,6 +73,24 @@ function remove(entry: EntryRow): Mutation {
   }
 }
 
+function edit(entry: EntryRow): Mutation {
+  return {
+    type: MutationType.Edit,
+    entryId: entry.entryId,
+    file: entry.filePath,
+    entry: entry
+  }
+}
+
+function publish(entry: EntryRow): Mutation {
+  return {
+    type: MutationType.Publish,
+    entryId: entry.entryId,
+    file: entry.filePath,
+    phase: entry.phase
+  }
+}
+
 test('create', async () => {
   const example = createExample()
   const db = await example.db
@@ -102,6 +120,29 @@ test('remove child entries', async () => {
 
   const res2 = await example.get(Entry({entryId: subSub.entryId}))
   assert.not.ok(res2)
+})
+
+test.only('change draft path', async () => {
+  const example = createExample()
+  const db = await example.db
+  const parent = await entry(example, example.schema.Container, {
+    path: 'parent'
+  })
+  const sub = await entry(
+    example,
+    example.schema.Container,
+    {path: 'sub'},
+    parent
+  )
+  await db.applyMutations([create(parent), create(sub)])
+  const draft = {...parent, phase: EntryPhase.Draft, path: 'new-path'}
+  await db.applyMutations([edit(draft)])
+  const resParent = await example.get(Entry({entryId: sub.entryId}))
+  const res1 = await example.get(Entry({entryId: sub.entryId}))
+  assert.is(res1.url, '/parent/sub')
+  await db.applyMutations([publish(draft)])
+  const res2 = await example.get(Entry({entryId: sub.entryId}))
+  assert.is(res2.url, '/new-path/sub')
 })
 
 test.run()

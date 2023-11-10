@@ -212,6 +212,7 @@ export class Database implements Syncable {
             phase: mutation.phase
           }).maybeFirst()
         )
+        console.log(promoting)
         if (!promoting) return
         const childrenDir = promoting.filePath.slice(
           0,
