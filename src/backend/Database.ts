@@ -248,7 +248,19 @@ export class Database implements Syncable {
       case MutationType.FileRemove:
         if (mutation.replace) return
       case MutationType.Remove:
-        // Todo: remove child entries
+        const phases = await tx(EntryRow({entryId: mutation.entryId}))
+        // Remove child entries
+        for (const phase of phases) {
+          await tx(
+            EntryRow()
+              .delete()
+              .where(
+                EntryRow.parentDir
+                  .is(phase.childrenDir)
+                  .or(EntryRow.childrenDir.like(phase.childrenDir + '/%'))
+              )
+          )
+        }
         await tx(EntryRow({entryId: mutation.entryId}).delete())
         return
       case MutationType.Discard:
