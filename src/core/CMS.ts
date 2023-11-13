@@ -7,6 +7,7 @@ import {GraphRealm, GraphRealmApi} from './Graph.js'
 import {Root} from './Root.js'
 import {Schema} from './Schema.js'
 import {Workspace} from './Workspace.js'
+import {Realm} from './pages/Realm.js'
 import {entries} from './util/Objects.js'
 
 type Attachment = Workspace | Root
@@ -19,6 +20,7 @@ export interface CMSApi extends GraphRealmApi {
 export abstract class CMS extends GraphRealm implements Config, CMSApi {
   schema: Schema
   dashboard: DashboardConfig
+  drafts: GraphRealmApi
 
   constructor(config: Config) {
     super(config, async params => {
@@ -34,6 +36,13 @@ export abstract class CMS extends GraphRealm implements Config, CMSApi {
       auth: CloudAuthView,
       ...(config.dashboard as DashboardConfig)
     }
+    this.drafts = new GraphRealm(this, async params => {
+      const {resolve} = await this.resolver()
+      return resolve({
+        ...params,
+        realm: Realm.PreferDraft
+      })
+    })
     this.#attach(config)
   }
 

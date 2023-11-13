@@ -122,7 +122,7 @@ test('remove child entries', async () => {
   assert.not.ok(res2)
 })
 
-test.only('change draft path', async () => {
+test('change draft path', async () => {
   const example = createExample()
   const db = await example.db
   const parent = await entry(example, example.schema.Container, {
@@ -135,12 +135,27 @@ test.only('change draft path', async () => {
     parent
   )
   await db.applyMutations([create(parent), create(sub)])
-  const draft = {...parent, phase: EntryPhase.Draft, path: 'new-path'}
+  const resParent0 = await example.get(Entry({entryId: parent.entryId}))
+  assert.is(resParent0.url, '/parent')
+
+  const draft = {
+    ...parent,
+    phase: EntryPhase.Draft,
+    data: {path: 'new-path'}
+  }
+
+  // Changing entry paths in draft should not have an influence on
+  // computed properties such as url, filePath etc. until we publish.
   await db.applyMutations([edit(draft)])
-  const resParent = await example.get(Entry({entryId: sub.entryId}))
+  const resParent1 = await example.drafts.get(Entry({entryId: parent.entryId}))
+  assert.is(resParent1.url, '/parent')
   const res1 = await example.get(Entry({entryId: sub.entryId}))
   assert.is(res1.url, '/parent/sub')
+
+  // Once we publish, the computed properties should be updated.
   await db.applyMutations([publish(draft)])
+  const resParent2 = await example.get(Entry({entryId: parent.entryId}))
+  assert.is(resParent2.url, '/new-path')
   const res2 = await example.get(Entry({entryId: sub.entryId}))
   assert.is(res2.url, '/new-path/sub')
 })

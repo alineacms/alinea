@@ -11,13 +11,14 @@ import {
   createId,
   unreachable
 } from 'alinea/core'
-import {entryInfo, entryUrl} from 'alinea/core/EntryFilenames'
+import {entryFilepath, entryInfo, entryUrl} from 'alinea/core/EntryFilenames'
 import {EntryRecord, META_KEY, createRecord} from 'alinea/core/EntryRecord'
 import {Mutation, MutationType} from 'alinea/core/Mutation'
 import {createEntryRow} from 'alinea/core/util/EntryRows'
 import {Logger} from 'alinea/core/util/Logger'
 import {entries} from 'alinea/core/util/Objects'
 import * as path from 'alinea/core/util/Paths'
+import * as paths from 'alinea/core/util/Paths'
 import {timer} from 'alinea/core/util/Timer'
 import {Driver, Expr, Select, alias, create} from 'rado'
 import {exists} from 'rado/sqlite'
@@ -112,7 +113,56 @@ export class Database implements Syncable {
     })
   }
 
-  async updateChildren(tx: Driver.Async, previous: EntryRow, next: EntryRow) {
+  private async applyPublish(tx: Driver.Async, entry: EntryRow) {
+    const path = entry.data.path
+    const parentPaths = entry.parentDir.split('/').filter(Boolean)
+    const filePath = entryFilepath(
+      this.config,
+      {
+        ...entry,
+        path,
+        phase: EntryPhase.Published
+      },
+      parentPaths
+    )
+    const parentDir = paths.dirname(filePath)
+    const extension = paths.extname(filePath)
+    const fileName = paths.basename(filePath, extension)
+    const [entryPath] = entryInfo(fileName)
+    const childrenDir = paths.join(parentDir, entryPath)
+    const urlMeta: EntryUrlMeta = {
+      locale: entry.locale,
+      path,
+      phase: entry.phase,
+      parentPaths
+    }
+    const url = entryUrl(this.config.schema[entry.type], urlMeta)
+    const next = {
+      ...entry,
+      phase: EntryPhase.Published,
+      path,
+      filePath,
+      parentDir,
+      childrenDir,
+      url
+    }
+    await tx(
+      EntryRow({entryId: entry.entryId, phase: entry.phase}).set({
+        phase: EntryPhase.Published,
+        filePath,
+        parentDir,
+        childrenDir,
+        url
+      })
+    )
+    return this.updateChildren(tx, entry, next)
+  }
+
+  private async updateChildren(
+    tx: Driver.Async,
+    previous: EntryRow,
+    next: EntryRow
+  ) {
     const {childrenDir: dir} = previous
     if (next.phase !== EntryPhase.Published || dir === next.childrenDir)
       return []
@@ -143,6 +193,20 @@ export class Database implements Syncable {
     return children
   }
 
+  async logEntries() {
+    const entries = await this.store(
+      EntryRow().orderBy(EntryRow.url.asc(), EntryRow.index.asc())
+    )
+    for (const entry of entries) {
+      console.log(
+        entry.url.padEnd(35),
+        entry.entryId.padEnd(12),
+        entry.phase.padEnd(12),
+        entry.title
+      )
+    }
+  }
+
   private async applyMutation(
     tx: Driver.Async,
     mutation: Mutation
@@ -165,9 +229,11 @@ export class Database implements Syncable {
           phase: entry.phase
         })
         const current = await tx(row.maybeFirst())
-        if (!current) return
         await tx(row.delete(), EntryRow().insert(entry))
-        const children = await this.updateChildren(tx, current, entry)
+        let children: Array<EntryRow> = []
+        if (entry.phase === EntryPhase.Published) {
+          if (current) children = await this.updateChildren(tx, current, entry)
+        }
         return () => {
           return this.updateHash(tx, row).then(self =>
             this.updateHash(
@@ -202,40 +268,19 @@ export class Database implements Syncable {
         return () => this.updateHash(tx, archived)
       }
       case MutationType.Publish: {
-        const row = EntryRow({
-          entryId: mutation.entryId,
-          phase: EntryPhase.Published
-        })
         const promoting = await tx(
           EntryRow({
             entryId: mutation.entryId,
             phase: mutation.phase
           }).maybeFirst()
         )
-        console.log(promoting)
         if (!promoting) return
-        const childrenDir = promoting.filePath.slice(
-          0,
-          -`.${mutation.phase}.json`.length
-        )
-        const filePath = childrenDir + '.json'
-        const parentDir = path.dirname(childrenDir)
-        await tx(
-          row.delete(),
-          EntryRow({
-            entryId: mutation.entryId,
-            phase: mutation.phase
-          }).set({
-            phase: EntryPhase.Published,
-            filePath,
-            parentDir,
-            childrenDir
-          })
-        )
-        const children = await this.updateChildren(tx, promoting, {
-          ...promoting,
+        const row = EntryRow({
+          entryId: mutation.entryId,
           phase: EntryPhase.Published
         })
+        await tx(row.delete())
+        const children = await this.applyPublish(tx, promoting)
         return () =>
           this.updateHash(tx, row).then(rows => {
             return this.updateHash(
