@@ -12,7 +12,6 @@ import {DefaultDriver} from './DefaultDriver.js'
 export interface TestApi extends CMSApi {
   db: Promise<Database>
   connection(): Promise<Connection>
-  generate(): Promise<void>
 }
 
 class TestDriver extends DefaultDriver implements TestApi {
@@ -23,7 +22,7 @@ class TestDriver extends DefaultDriver implements TestApi {
     return new Database(this, store)
   })
   handler = this.db.then(async db => {
-    await db.fill({async *entries() {}})
+    await db.fill({async *entries() {}}, '')
     const handler = new Handler({
       config: this,
       db,
@@ -42,13 +41,6 @@ class TestDriver extends DefaultDriver implements TestApi {
 
   async resolver(): Promise<Resolver> {
     return this.handler
-  }
-
-  async generate() {
-    const db = new Database(this, await this.store)
-    await db.fill({
-      async *entries() {}
-    })
   }
 }
 

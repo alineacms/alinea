@@ -3,6 +3,7 @@ import {Store} from 'alinea/backend/Store'
 import {Emitter, createEmitter} from 'alinea/cli/util/Emitter'
 import {Config} from 'alinea/core'
 import pLimit from 'p-limit'
+import {getCommitSha} from '../util/CommitSha.js'
 import {createWatcher} from '../util/Watcher.js'
 import {GenerateContext} from './GenerateContext.js'
 import {LocalData} from './LocalData.js'
@@ -16,8 +17,10 @@ export async function* fillCache(
 ): AsyncGenerator<Database> {
   const db = new Database(config, store)
   const limit = pLimit(1)
+  const commitSha = getCommitSha()
+
   const cache = async () => {
-    db.fill(localData, localData)
+    db.fill(localData, commitSha ?? '', localData)
     return db
   }
 

@@ -1,6 +1,7 @@
 import {column, table} from 'rado'
 
 class AlineaMetaTable {
+  commitHash = column.string
   contentHash = column.string
   modifiedAt = column.number
 }

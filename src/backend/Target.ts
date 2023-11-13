@@ -4,5 +4,5 @@ export interface Target {
   mutate(
     params: Connection.MutateParams,
     ctx: Connection.Context
-  ): Promise<void>
+  ): Promise<{commitHash: string}>
 }

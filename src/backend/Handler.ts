@@ -77,18 +77,17 @@ class HandlerConnection implements Connection {
 
   // Target
 
-  async mutate(mutations: Array<Mutation>): Promise<void> {
+  async mutate(mutations: Array<Mutation>): Promise<{commitHash: string}> {
     const {target, media, changes, db} = this.handler
     if (!target) throw new Error('Target not available')
     if (!media) throw new Error('Media not available')
     const changeSet = changes.create(mutations)
-    const {contentHash: from} = await this.syncPending()
-    await db.applyMutations(mutations)
-    const {contentHash: to} = await db.meta()
-    await target.mutate(
-      {contentHash: {from, to}, mutations: changeSet},
+    const {commitHash: fromCommitHash} = await this.syncPending()
+    const {commitHash: toCommitHash} = await target.mutate(
+      {commitHash: fromCommitHash, mutations: changeSet},
       this.ctx
     )
+    await db.applyMutations(mutations, toCommitHash)
     const tasks = []
     for (const mutation of mutations) {
       switch (mutation.type) {
@@ -106,6 +105,7 @@ class HandlerConnection implements Connection {
       }
     }
     await Promise.all(tasks)
+    return {commitHash: toCommitHash}
   }
 
   previewToken(): Promise<string> {
@@ -143,10 +143,10 @@ class HandlerConnection implements Connection {
     const {pending, db} = this.handler
     const meta = await db.meta()
     if (!pending) return meta
-    const mutations = await pending.pendingSince(meta.contentHash, this.ctx)
-    if (mutations.length === 0) return meta
-    await db.applyMutations(mutations)
-    return db.meta()
+    const toApply = await pending.pendingSince(meta.commitHash, this.ctx)
+    if (!toApply) return meta
+    await db.applyMutations(toApply.mutations, toApply.toCommitHash)
+    return await db.meta()
   }
 
   async syncRequired(contentHash: string): Promise<boolean> {

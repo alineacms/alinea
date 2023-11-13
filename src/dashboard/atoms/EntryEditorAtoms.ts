@@ -315,8 +315,6 @@ export function createEntryEditor(entryData: EntryData) {
       parentPaths,
       locale
     })
-    console.log(entry)
-    console.log(entryFile(entry, parentPaths))
     const mutation: Mutation = {
       type: MutationType.Create,
       file: entryFile(entry, parentPaths),

@@ -2,6 +2,7 @@ import {Database, Handler, JWTPreviews, Media, Target} from 'alinea/backend'
 import {Drafts} from 'alinea/backend/Drafts'
 import {History, Revision} from 'alinea/backend/History'
 import {Pending} from 'alinea/backend/Pending'
+import {ChangeSet} from 'alinea/backend/data/ChangeSet'
 import {Config, Connection, Draft, HttpError, Workspace} from 'alinea/core'
 import {EntryRecord} from 'alinea/core/EntryRecord'
 import {Mutation} from 'alinea/core/Mutation'
@@ -56,7 +57,9 @@ export class CloudApi implements Media, Target, History, Pending, Drafts {
       )
     )
       .then(failOnHttpError)
-      .then<void>(json)
+      .then<OutcomeJSON<{commitHash: string}>>(json)
+      .then<Outcome<{commitHash: string}>>(Outcome.fromJSON)
+      .then(Outcome.unpack)
   }
 
   prepareUpload(
@@ -121,20 +124,30 @@ export class CloudApi implements Media, Target, History, Pending, Drafts {
   }
 
   pendingSince(
-    contentHash: string,
+    commitHash: string,
     ctx: Connection.Context
-  ): Promise<Array<Mutation>> {
+  ): Promise<{toCommitHash: string; mutations: Array<Mutation>} | undefined> {
     return fetch(
-      cloudConfig.pending + '?' + new URLSearchParams({since: contentHash}),
+      cloudConfig.pending + '?' + new URLSearchParams({since: commitHash}),
       withAuth(ctx)
     )
       .then(failOnHttpError)
-      .then<OutcomeJSON<Array<Connection.MutateParams>>>(json)
-      .then<Outcome<Array<Connection.MutateParams>>>(Outcome.fromJSON)
-      .then(Outcome.unpack)
-      .then(mutations =>
-        mutations.flatMap(mutate => mutate.mutations.flatMap(m => m.meta))
+      .then<OutcomeJSON<Array<{commitHashTo: string; mutations: ChangeSet}>>>(
+        json
       )
+      .then<Outcome<Array<{commitHashTo: string; mutations: ChangeSet}>>>(
+        Outcome.fromJSON
+      )
+      .then(Outcome.unpack)
+      .then(pending => {
+        if (pending.length === 0) return undefined
+        return {
+          toCommitHash: pending[pending.length - 1].commitHashTo,
+          mutations: pending.flatMap(mutate =>
+            mutate.mutations.flatMap(m => m.meta)
+          )
+        }
+      })
   }
 
   storeDraft(draft: Draft, ctx: Connection.Context): Promise<void> {

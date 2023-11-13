@@ -2,13 +2,13 @@ import {Database, Handler, JWTPreviews, Media, Target} from 'alinea/backend'
 import {Drafts} from 'alinea/backend/Drafts'
 import {History, Revision} from 'alinea/backend/History'
 import {Pending} from 'alinea/backend/Pending'
-import {Config, Connection, Draft} from 'alinea/core'
+import {Config, Connection, Draft, createId} from 'alinea/core'
 import {EntryRecord} from 'alinea/core/EntryRecord'
 import {Mutation} from 'alinea/core/Mutation'
 
 export class DebugCloud implements Media, Target, History, Drafts, Pending {
   drafts = new Map<string, Draft>()
-  pending: Array<Connection.MutateParams> = []
+  pending: Array<Connection.MutateParams & {toCommitHash: string}> = []
 
   constructor(public config: Config, public db: Database) {}
 
@@ -19,9 +19,11 @@ export class DebugCloud implements Media, Target, History, Drafts, Pending {
         `> cloud: mutate ${mutation.meta.type} - ${mutation.meta.entryId}`
       )
     }
-    await this.db.applyMutations(mutations)
-    this.pending.push(params)
-    console.log(`> cloud: current ${params.contentHash.to}`)
+    const toCommitHash = createId()
+    await this.db.applyMutations(mutations, toCommitHash)
+    this.pending.push({...params, toCommitHash})
+    console.log(`> cloud: current ${toCommitHash}`)
+    return {commitHash: toCommitHash}
   }
 
   prepareUpload(file: string): Promise<Connection.UploadResponse> {
@@ -52,14 +54,21 @@ export class DebugCloud implements Media, Target, History, Drafts, Pending {
     this.drafts.set(draft.entryId, draft)
   }
 
-  async pendingSince(contentHash: string): Promise<Array<Mutation>> {
-    console.log(`> cloud: pending since ${contentHash}`)
+  async pendingSince(
+    commitHash: string
+  ): Promise<{toCommitHash: string; mutations: Array<Mutation>} | undefined> {
+    console.log(`> cloud: pending since ${commitHash}`)
     let i = this.pending.length
     for (; i >= 0; i--)
-      if (i > 0 && this.pending[i - 1].contentHash.to === contentHash) break
-    return this.pending
-      .slice(i)
-      .flatMap(params => params.mutations.flatMap(mutate => mutate.meta))
+      if (i > 0 && this.pending[i - 1].toCommitHash === commitHash) break
+    const pending = this.pending.slice(i)
+    if (pending.length === 0) return undefined
+    return {
+      toCommitHash: pending[pending.length - 1].toCommitHash,
+      mutations: pending.flatMap(params =>
+        params.mutations.flatMap(mutate => mutate.meta)
+      )
+    }
   }
 }
 

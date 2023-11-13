@@ -22,7 +22,7 @@ export interface Syncable {
 
 export interface Connection extends Resolver, Syncable, History, Drafts {
   previewToken(): Promise<string>
-  mutate(mutations: Array<Mutation>): Promise<void>
+  mutate(mutations: Array<Mutation>): Promise<{commitHash: string}>
   prepareUpload(file: string): Promise<Connection.UploadResponse>
   revisions(file: string): Promise<Array<Revision>>
   revisionData(file: string, revisionId: string): Promise<EntryRecord>
@@ -76,11 +76,7 @@ export namespace Connection {
     file: string
   }
   export interface MutateParams {
-    git?: {sha?: string; ref?: string}
-    contentHash: {
-      from: string
-      to: string
-    }
+    commitHash: string
     mutations: ChangeSet
   }
   export interface AuthContext {

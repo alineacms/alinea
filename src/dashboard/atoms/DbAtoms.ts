@@ -43,8 +43,11 @@ const localDbAtom = atom(async (get, set) => {
   const debounceSync = debounce(syncDb, 100)
   const sync = (force: boolean) =>
     limit(() => debounceSync(force).catch(() => [] as Array<string>))
-  const applyMutations = async (mutations: Array<Mutation>) => {
-    const update = await db.applyMutations(mutations)
+  const applyMutations = async (
+    mutations: Array<Mutation>,
+    commitHash: string
+  ) => {
+    const update = await db.applyMutations(mutations, commitHash)
     await flush()
     return update
   }
@@ -57,9 +60,10 @@ export const mutateAtom = atom(
   null,
   async (get, set, ...mutations: Array<Mutation>) => {
     const client = get(clientAtom)
-    await client.mutate(mutations)
+    const {commitHash} = await client.mutate(mutations)
     const {applyMutations} = await get(localDbAtom)
-    const changed = await applyMutations(mutations)
+    if (mutations.length === 0) return
+    const changed = await applyMutations(mutations, commitHash)
     const i18nIds = mutations
       .filter(
         (mutation): mutation is CreateMutation =>

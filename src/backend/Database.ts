@@ -92,12 +92,13 @@ export class Database implements Syncable {
         changed.push(entry.i18nId)
       }
       await Database.index(tx)
-      await this.writeMeta(tx)
+      // This is for a local db, we didn't receive a commit hash here
+      await this.writeMeta(tx, meta.commitHash)
       return removed.concat(changed)
     })
   }
 
-  applyMutations(mutations: Array<Mutation>) {
+  applyMutations(mutations: Array<Mutation>, commitHash: string) {
     return this.store.transaction(async tx => {
       const reHash = []
       for (const mutation of mutations) {
@@ -108,7 +109,7 @@ export class Database implements Syncable {
       const changed = (
         await Promise.all(reHash.map(updateRows => updateRows()))
       ).flat()
-      await this.writeMeta(tx)
+      await this.writeMeta(tx, commitHash)
       return changed
     })
   }
@@ -362,6 +363,7 @@ export class Database implements Syncable {
   async meta() {
     return (
       (await this.store(AlineaMeta().maybeFirst())) ?? {
+        commitHash: '',
         contentHash: '',
         modifiedAt: 0
       }
@@ -382,7 +384,7 @@ export class Database implements Syncable {
     return res
   }
 
-  private async writeMeta(tx: Driver.Async) {
+  private async writeMeta(tx: Driver.Async, commitHash: string) {
     const {create32} = await xxhash()
     let hash = create32()
     const contentHashes = await tx(
@@ -399,8 +401,9 @@ export class Database implements Syncable {
     await tx(AlineaMeta().delete())
     await tx(
       AlineaMeta().insertOne({
-        modifiedAt,
-        contentHash
+        commitHash,
+        contentHash,
+        modifiedAt
       })
     )
   }
@@ -414,6 +417,7 @@ export class Database implements Syncable {
         await tx(create(EntryRow, AlineaMeta))
         await createEntrySearch(tx)
       })
+      await this.meta()
     } catch (e) {
       this.inited = false
       throw e
@@ -536,7 +540,11 @@ export class Database implements Syncable {
     return res
   }
 
-  async fill(source: Source, target?: Target): Promise<void> {
+  async fill(
+    source: Source,
+    commitHash: string,
+    target?: Target
+  ): Promise<void> {
     // Todo: run a validation step for orders, paths, id matching on statuses
     // etc
     await this.init()
@@ -646,7 +654,7 @@ export class Database implements Syncable {
           })
         )
       }
-      await this.writeMeta(query)
+      await this.writeMeta(query, commitHash)
     })
 
     if (target && publishSeed.length > 0) {
@@ -667,7 +675,7 @@ export class Database implements Syncable {
       })
       const changes = changeSetCreator.create(mutations)
       await target.mutate(
-        {contentHash: undefined!, mutations: changes},
+        {commitHash: '', mutations: changes},
         {logger: new Logger('seed')}
       )
     }

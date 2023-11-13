@@ -57,11 +57,11 @@ export class Client implements Connection {
     }).then(failOnHttpError)
   }
 
-  mutate(mutations: Array<Mutation>): Promise<void> {
+  mutate(mutations: Array<Mutation>): Promise<{commitHash: string}> {
     return this.requestJson(Connection.routes.mutate(), {
       method: 'POST',
       body: JSON.stringify(mutations)
-    }).then<void>(res => failOnHttpError(res, false))
+    }).then<{commitHash: string}>(failOnHttpError)
   }
 
   authenticate(applyAuth: AuthenticateRequest, unauthorized: () => void) {

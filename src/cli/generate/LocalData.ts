@@ -159,6 +159,7 @@ export class LocalData implements Source, Target, Media {
         }
       }
     }
+    return {commitHash: createId()}
   }
 
   isInMediaLocation(file: string): boolean {
