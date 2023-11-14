@@ -75,7 +75,7 @@ export class Handler {
 
   async parsePreview(preview: PreviewUpdate) {
     const {config} = this.options
-    if (Date.now() - this.lastSync > 30_000) await this.syncPending()
+    await this.periodicSync()
     const update = unzlibSync(base64url.parse(preview.update))
     const entry = await this.resolver.resolve<EntryRow>({
       selection: Selection.create(
@@ -99,6 +99,14 @@ export class Handler {
     return {...entry, ...entryData, path: entry.path}
   }
 
+  async periodicSync() {
+    if (Date.now() - this.lastSync > 30_000) return
+    try {
+      await this.syncPending()
+    } catch {}
+    this.lastSync = Date.now()
+  }
+
   async syncPending() {
     const {pending, db} = this.options
     const meta = await db.meta()
@@ -107,7 +115,6 @@ export class Handler {
       meta.commitHash,
       this.previewAuth()
     )
-    this.lastSync = Date.now()
     if (!toApply) return meta
     await db.applyMutations(toApply.mutations, toApply.toCommitHash)
     return db.meta()
@@ -119,8 +126,9 @@ class HandlerConnection implements Connection {
 
   // Resolver
 
-  resolve = (params: Connection.ResolveParams) => {
+  resolve = async (params: Connection.ResolveParams) => {
     const {resolveDefaults} = this.handler.options
+    await this.handler.periodicSync()
     return this.handler.resolver.resolve({...resolveDefaults, ...params})
   }
 
