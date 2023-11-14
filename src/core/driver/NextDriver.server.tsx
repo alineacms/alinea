@@ -30,11 +30,10 @@ class NextDriver extends DefaultDriver implements NextApi {
   apiKey = process.env.ALINEA_API_KEY
   jwtSecret = this.apiKey || 'dev'
 
-  async resolver(): Promise<Resolver> {
+  async getDefaults(): Promise<ResolveDefaults> {
     const {cookies, draftMode} = await import('next/headers.js')
     const [draftStatus] = outcome(() => draftMode())
     const isDraft = draftStatus?.isEnabled
-    const devUrl = process.env.ALINEA_DEV_SERVER
     const resolveDefaults: ResolveDefaults = {
       realm: Realm.Published
     }
@@ -52,6 +51,12 @@ class NextDriver extends DefaultDriver implements NextApi {
         if (entryId && phase) resolveDefaults.preview = {entryId, phase, update}
       }
     }
+    return resolveDefaults
+  }
+
+  async resolver(): Promise<Resolver> {
+    const resolveDefaults = await this.getDefaults()
+    const devUrl = process.env.ALINEA_DEV_SERVER
     if (devUrl)
       return new Client({
         config: this.config,
@@ -94,11 +99,12 @@ class NextDriver extends DefaultDriver implements NextApi {
       cookies().delete(PREVIEW_PHASE_NAME)
     }
     const cnx = (await this.resolver()) as Client
+    const resolveDefaults = await this.getDefaults()
     const url = (await cnx.resolve({
+      ...resolveDefaults,
       selection: Selection.create(
         Entry({entryId: params.entryId}).select(Entry.url).first()
-      ),
-      realm: Realm.PreferDraft
+      )
     })) as string | null
     if (!url) return new Response('Not found', {status: 404})
     const source = new URL(request.url)
