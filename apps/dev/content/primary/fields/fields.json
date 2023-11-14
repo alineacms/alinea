@@ -1,5 +1,5 @@
 {
-  "title": "New title sdfgdqg",
+  "title": "New title",
   "richText": [
     {
       "type": "paragraph",
@@ -177,6 +177,16 @@
         {
           "type": "text",
           "text": "This is a block:"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "Ik voeg een zin toe"
         }
       ]
     },
