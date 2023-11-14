@@ -146,7 +146,7 @@ class HandlerConnection implements Connection {
     const toApply = await pending.pendingSince(meta.commitHash, this.ctx)
     if (!toApply) return meta
     await db.applyMutations(toApply.mutations, toApply.toCommitHash)
-    return await db.meta()
+    return db.meta()
   }
 
   async syncRequired(contentHash: string): Promise<boolean> {

@@ -46,6 +46,7 @@ export class CloudApi implements Media, Target, History, Pending, Drafts {
   constructor(private config: Config) {}
 
   mutate(params: Connection.MutateParams, ctx: Connection.Context) {
+    console.log(params)
     return fetch(
       cloudConfig.mutate,
       withAuth(
@@ -160,7 +161,7 @@ export class CloudApi implements Media, Target, History, Pending, Drafts {
       withAuth(
         ctx,
         asJson({
-          method: 'POST',
+          method: 'PUT',
           body: JSON.stringify(body)
         })
       )
@@ -175,14 +176,20 @@ export class CloudApi implements Media, Target, History, Pending, Drafts {
   ): Promise<Draft | undefined> {
     return fetch(cloudConfig.drafts + '/' + entryId, withAuth(ctx))
       .then(failOnHttpError)
-      .then<OutcomeJSON<{fileHash: string; update: string}>>(json)
-      .then<Outcome<{fileHash: string; update: string}>>(Outcome.fromJSON)
+      .then<OutcomeJSON<{fileHash: string; update: string} | null>>(json)
+      .then<Outcome<{fileHash: string; update: string} | null>>(
+        Outcome.fromJSON
+      )
       .then(Outcome.unpack)
-      .then(({fileHash, update}) => ({
-        entryId,
-        fileHash,
-        draft: base64.parse(update)
-      }))
+      .then(data => {
+        return data
+          ? {
+              entryId,
+              fileHash: data.fileHash,
+              draft: base64.parse(data.update)
+            }
+          : undefined
+      })
   }
 }
 
