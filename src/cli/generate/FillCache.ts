@@ -20,7 +20,7 @@ export async function* fillCache(
   const commitSha = getCommitSha()
 
   const cache = async () => {
-    db.fill(localData, commitSha ?? '', localData)
+    await db.fill(localData, commitSha ?? '', localData)
     return db
   }
 
