@@ -107,8 +107,11 @@ export const entryEditorAtoms = atomFamily(
             // - the draft storage could not be reached after mutation
             // We fast forward the draft with the actual current field data
             // and will submit new updates including it
-            if (draft.fileHash !== entry!.fileHash)
+            const matches = draft.fileHash === entry!.fileHash
+            const isEmpty = !edits.hasData()
+            if (!matches || isEmpty) {
               edits.applyEntryData(type, entry!.data)
+            }
           } else {
             edits.applyEntryData(type, entry!.data)
           }
