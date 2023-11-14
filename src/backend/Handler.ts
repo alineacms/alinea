@@ -100,7 +100,7 @@ export class Handler {
   }
 
   async periodicSync() {
-    if (Date.now() - this.lastSync > 30_000) return
+    if (Date.now() - this.lastSync > 1_000) return
     try {
       await this.syncPending()
     } catch {}
