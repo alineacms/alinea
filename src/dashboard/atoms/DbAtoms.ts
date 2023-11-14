@@ -112,23 +112,13 @@ export function useDbUpdater(everySeconds = 30) {
   const forceDbUpdate = useSetAtom(dbUpdateAtom)
   useEffect(() => {
     let interval: any = 0
-    const focus = () => {
-      if (document.visibilityState === 'hidden') {
-        disable()
-      } else {
-        forceDbUpdate()
-        enable()
-      }
-    }
-    const enable = () =>
-      (interval = setInterval(forceDbUpdate, everySeconds * 1000))
-    const disable = () => clearInterval(interval)
-    enable()
-    window.addEventListener('visibilitychange', focus, false)
-    window.addEventListener('focus', focus, false)
+    interval = setInterval(forceDbUpdate, everySeconds * 1000)
+    /*window.addEventListener('visibilitychange', focus, false)
+    window.addEventListener('focus', focus, false)*/
     return () => {
-      document.removeEventListener('visibilitychange', focus)
-      document.removeEventListener('focus', focus)
+      clearInterval(interval)
+      /*document.removeEventListener('visibilitychange', focus)
+      document.removeEventListener('focus', focus)*/
     }
   }, [everySeconds, forceDbUpdate])
 }
