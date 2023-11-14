@@ -1,5 +1,5 @@
 {
-  "title": "Translated fields",
+  "title": "Translated fields qsdfqsdfqsdf",
   "richText": [],
   "select": null,
   "number": "",
@@ -37,6 +37,19 @@
   "zip": "",
   "city": "",
   "country": "",
+  "object": {
+    "fieldA": "",
+    "fieldB": ""
+  },
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "title": "",
+      "image": {},
+      "description": ""
+    }
+  },
   "@alinea": {
     "entryId": "2Ublmf4UWT5rHeIUSaJmqJYN0L9",
     "type": "Fields",
