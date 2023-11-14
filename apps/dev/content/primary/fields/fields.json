@@ -166,15 +166,25 @@
       "content": [
         {
           "type": "text",
-          "text": "Blocks can be created within rich text fields. This is a block:"
+          "text": "Blocks can be created within rich text fields. "
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "This is a block:"
         }
       ]
     },
     {
       "id": "2U70XiwtuZ1GwGK5XJWauz5Da1m",
       "type": "Inner",
-      "checkbox1": false,
-      "checkbox2": false,
+      "checkbox1": true,
+      "checkbox2": true,
       "title": "Some title",
       "content": [
         {
