@@ -108,7 +108,8 @@ export async function serve(options: ServeOptions): Promise<void> {
           media: fileData,
           drafts,
           history: new GitHistory(currentCMS, rootDir),
-          previews: new JWTPreviews('dev')
+          previews: new JWTPreviews('dev'),
+          previewAuthToken: 'dev'
         })
       }
     }

@@ -1,19 +1,15 @@
 import {
   Connection,
   Field,
+  PreviewUpdate,
   ResolveDefaults,
   Schema,
   Type,
-  createYDoc,
-  parseYDoc,
   unreachable
 } from 'alinea/core'
 import {EntrySearch} from 'alinea/core/EntrySearch'
 import {Realm} from 'alinea/core/pages/Realm'
-import {base64url} from 'alinea/core/util/Encoding'
 import {entries, fromEntries, keys} from 'alinea/core/util/Objects'
-import * as Y from 'alinea/yjs'
-import {unzlibSync} from 'fflate'
 import {
   BinOpType,
   Expr,
@@ -169,6 +165,9 @@ export class EntryResolver {
   constructor(
     public db: Database,
     public schema: Schema,
+    public parsePreview?: (
+      preview: PreviewUpdate
+    ) => Promise<EntryRow | undefined>,
     public defaults?: ResolveDefaults
   ) {
     this.targets = Schema.targets(schema)
@@ -702,25 +701,17 @@ export class EntryResolver {
     const queryData = this.query(ctx, selection)
     const query = new Query<Interim>(queryData)
     if (preview) {
-      const current = EntryRow({
-        entryId: preview.entryId,
-        active: true
-      })
-      const entry = await this.db.store(current.maybeFirst())
-      if (entry)
+      const updated = await this.parsePreview?.(preview)
+      if (updated)
         try {
-          // Create yjs doc
-          const type = this.schema[entry.type]
-          const yDoc = createYDoc(type, entry)
-          // Apply update
-          const update = unzlibSync(base64url.parse(preview.update))
-          Y.applyUpdateV2(yDoc, update)
-          const entryData = parseYDoc(type, yDoc)
-          const previewEntry = {...entry, ...entryData}
           await this.db.store.transaction(async tx => {
+            const current = EntryRow({
+              entryId: preview.entryId,
+              active: true
+            })
             // Temporarily add preview entry
             await tx(current.delete())
-            await tx(EntryRow().insert(previewEntry))
+            await tx(EntryRow().insert(updated))
             await Database.index(tx)
             const result = await tx(query)
             const linkResolver = new LinkResolver(this, tx, ctx.realm)

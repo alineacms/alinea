@@ -264,6 +264,9 @@ export function createEntryEditor(entryData: EntryData) {
       const currentChanges = get(hasChanges)
       return options
         .action()
+        .then(() => {
+          if (options.clearChanges) set(hasChanges, false)
+        })
         .catch(error => {
           if (options.clearChanges) set(hasChanges, currentChanges)
           set(errorAtom, options.errorMessage, error)
@@ -552,16 +555,11 @@ export function createEntryEditor(entryData: EntryData) {
 
   const selectedState = atom(get => {
     const selected = get(selectedPhase)
-    const isLoading = get(edits.isLoading)
-    if (selected === activePhase && !isLoading) return edits.doc
+    if (selected === activePhase) return edits.doc
     return docs[selected]
   })
-  const draftTitle = yAtom(edits.root, () => edits.root.get('title') as string)
-  const activeTitle = atom(get => {
-    const isLoading = get(edits.isLoading)
-    if (isLoading) return activeVersion.title
-    return get(draftTitle)
-  })
+  const activeTitle = yAtom(edits.root, () => edits.root.get('title') as string)
+
   const revisionState = atom(get => {
     const revision = get(previewRevision)
     return revision ? get(revisionDocState(revision)) : undefined
@@ -582,13 +580,7 @@ export function createEntryEditor(entryData: EntryData) {
 
   // The debounce here prevents React warning us about a state change during
   // render for rich text fields. Some day that should be properly fixed.
-  const yUpdate = debounceAtom(
-    atom(get => {
-      get(currentDoc)
-      return edits.getLocalUpdate()
-    }),
-    10
-  )
+  const yUpdate = debounceAtom(edits.yUpdate, 10)
 
   const discardEdits = edits.resetChanges
   const isLoading = edits.isLoading

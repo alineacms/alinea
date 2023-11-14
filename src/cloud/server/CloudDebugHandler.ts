@@ -6,7 +6,7 @@ import {Config, Connection, Draft, createId} from 'alinea/core'
 import {EntryRecord} from 'alinea/core/EntryRecord'
 import {Mutation} from 'alinea/core/Mutation'
 
-const latency = 2000
+const latency = 0
 
 const lag = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
@@ -93,6 +93,7 @@ export function createCloudDebugHandler(config: Config, db: Database) {
     history: api,
     drafts: api,
     pending: api,
-    previews: new JWTPreviews('dev')
+    previews: new JWTPreviews('dev'),
+    previewAuthToken: 'dev'
   })
 }

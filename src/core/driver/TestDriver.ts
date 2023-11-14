@@ -26,7 +26,8 @@ class TestDriver extends DefaultDriver implements TestApi {
     const handler = new Handler({
       config: this,
       db,
-      previews: new JWTPreviews('test')
+      previews: new JWTPreviews('test'),
+      previewAuthToken: 'test'
     })
     return handler.connect({logger: new Logger('test')})
   })

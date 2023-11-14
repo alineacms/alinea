@@ -24,6 +24,9 @@ export class Edits {
   isLoading = yAtom(this.root, () => {
     return !this.hasData()
   })
+  yUpdate = yAtom(this.root, () => {
+    return this.getLocalUpdate()
+  })
 
   constructor(private entryId: string) {}
 

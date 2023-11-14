@@ -208,6 +208,7 @@ export function createCloudHandler(
     history: api,
     pending: api,
     drafts: api,
-    previews: new JWTPreviews(apiKey!)
+    previews: new JWTPreviews(apiKey!),
+    previewAuthToken: apiKey!
   })
 }

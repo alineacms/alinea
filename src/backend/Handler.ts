@@ -4,17 +4,23 @@ import {
   Config,
   Connection,
   Draft,
+  Entry,
   EntryPhase,
+  EntryRow,
+  PreviewUpdate,
   ResolveDefaults,
-  SyncResponse
+  SyncResponse,
+  parseYDoc
 } from 'alinea/core'
 import {EntryRecord} from 'alinea/core/EntryRecord'
 import {EditMutation, Mutation, MutationType} from 'alinea/core/Mutation'
 import {Realm} from 'alinea/core/pages/Realm'
 import {Selection} from 'alinea/core/pages/Selection'
-import {base64} from 'alinea/core/util/Encoding'
+import {base64, base64url} from 'alinea/core/util/Encoding'
 import {Logger, LoggerResult, Report} from 'alinea/core/util/Logger'
+import * as Y from 'alinea/yjs'
 import {Type, enums, object, string} from 'cito'
+import {unzlibSync} from 'fflate'
 import {mergeUpdatesV2} from 'yjs'
 import {Database} from './Database.js'
 import {DraftTransport, Drafts} from './Drafts.js'
@@ -31,6 +37,7 @@ export interface HandlerOptions {
   config: Config
   db: Database
   previews: Previews
+  previewAuthToken: string
   auth?: Auth.Server
   target?: Target
   media?: Media
@@ -43,46 +50,88 @@ export interface HandlerOptions {
 export class Handler {
   connect: (ctx: Connection.Context) => Connection
   router: Route<Request, Response | undefined>
+  resolver: EntryResolver
+  changes: ChangeSetCreator
+  lastSync = 0
 
-  constructor(private options: HandlerOptions) {
-    const context = {
-      resolver: new EntryResolver(options.db, options.config.schema),
-      changes: new ChangeSetCreator(options.config),
-      ...this.options
-    }
+  constructor(public options: HandlerOptions) {
+    this.resolver = new EntryResolver(
+      options.db,
+      options.config.schema,
+      this.parsePreview.bind(this)
+    )
+    this.changes = new ChangeSetCreator(options.config)
     const auth = options.auth || Auth.anonymous()
-    this.connect = ctx => new HandlerConnection(context, ctx)
+    this.connect = ctx => new HandlerConnection(this, ctx)
     this.router = createRouter(auth, this.connect)
+  }
+
+  previewAuth(): Connection.Context {
+    return {
+      logger: new Logger('parsePreview'),
+      token: this.options.previewAuthToken
+    }
+  }
+
+  async parsePreview(preview: PreviewUpdate) {
+    const {config} = this.options
+    if (Date.now() - this.lastSync > 30_000) await this.syncPending()
+    const update = unzlibSync(base64url.parse(preview.update))
+    const entry = await this.resolver.resolve<EntryRow>({
+      selection: Selection.create(
+        Entry({entryId: preview.entryId}).maybeFirst()
+      ),
+      realm: Realm.PreferDraft
+    })
+    if (!entry) return
+    const currentDraft = await this.options.drafts?.getDraft(
+      preview.entryId,
+      this.previewAuth()
+    )
+    const apply = currentDraft
+      ? mergeUpdatesV2([currentDraft.draft, update])
+      : update
+    const type = config.schema[entry.type]
+    if (!type) return
+    const doc = new Y.Doc()
+    Y.applyUpdateV2(doc, apply)
+    const entryData = parseYDoc(type, doc)
+    return {...entry, ...entryData, path: entry.path}
+  }
+
+  async syncPending() {
+    const {pending, db} = this.options
+    const meta = await db.meta()
+    if (!pending) return meta
+    const toApply = await pending.pendingSince(
+      meta.commitHash,
+      this.previewAuth()
+    )
+    this.lastSync = Date.now()
+    if (!toApply) return meta
+    await db.applyMutations(toApply.mutations, toApply.toCommitHash)
+    return db.meta()
   }
 }
 
-interface HandlerContext extends HandlerOptions {
-  db: Database
-  resolver: EntryResolver
-  changes: ChangeSetCreator
-}
-
 class HandlerConnection implements Connection {
-  constructor(
-    protected handler: HandlerContext,
-    protected ctx: Connection.Context
-  ) {}
+  constructor(protected handler: Handler, protected ctx: Connection.Context) {}
 
   // Resolver
 
   resolve = (params: Connection.ResolveParams) => {
-    const {resolveDefaults} = this.handler
+    const {resolveDefaults} = this.handler.options
     return this.handler.resolver.resolve({...resolveDefaults, ...params})
   }
 
   // Target
 
   async mutate(mutations: Array<Mutation>): Promise<{commitHash: string}> {
-    const {target, media, changes, db} = this.handler
+    const {target, media, db} = this.handler.options
     if (!target) throw new Error('Target not available')
     if (!media) throw new Error('Media not available')
-    const changeSet = changes.create(mutations)
-    const {commitHash: fromCommitHash} = await this.syncPending()
+    const changeSet = this.handler.changes.create(mutations)
+    const {commitHash: fromCommitHash} = await this.handler.syncPending()
     const {commitHash: toCommitHash} = await target.mutate(
       {commitHash: fromCommitHash, mutations: changeSet},
       this.ctx
@@ -109,7 +158,7 @@ class HandlerConnection implements Connection {
   }
 
   previewToken(): Promise<string> {
-    const {previews} = this.handler
+    const {previews} = this.handler.options
     const user = this.ctx.user
     if (!user) return previews.sign({anonymous: true})
     return previews.sign({sub: user.sub})
@@ -118,7 +167,7 @@ class HandlerConnection implements Connection {
   // Media
 
   prepareUpload(file: string): Promise<Connection.UploadResponse> {
-    const {media} = this.handler
+    const {media} = this.handler.options
     if (!media) throw new Error('Media not available')
     return media.prepareUpload(file, this.ctx)
   }
@@ -126,45 +175,35 @@ class HandlerConnection implements Connection {
   // History
 
   async revisions(file: string): Promise<Array<Revision>> {
-    const {history} = this.handler
+    const {history} = this.handler.options
     if (!history) return []
     return history.revisions(file, this.ctx)
   }
 
   async revisionData(file: string, revisionId: string): Promise<EntryRecord> {
-    const {history} = this.handler
+    const {history} = this.handler.options
     if (!history) throw new Error('History not available')
     return history.revisionData(file, revisionId, this.ctx)
   }
 
   // Syncable
 
-  private async syncPending() {
-    const {pending, db} = this.handler
-    const meta = await db.meta()
-    if (!pending) return meta
-    const toApply = await pending.pendingSince(meta.commitHash, this.ctx)
-    if (!toApply) return meta
-    await db.applyMutations(toApply.mutations, toApply.toCommitHash)
-    return db.meta()
-  }
-
   async syncRequired(contentHash: string): Promise<boolean> {
-    const {db} = this.handler
-    await this.syncPending()
+    const {db} = this.handler.options
+    await this.handler.syncPending()
     return db.syncRequired(contentHash)
   }
 
   async sync(contentHashes: Array<string>): Promise<SyncResponse> {
-    const {db} = this.handler
-    await this.syncPending()
+    const {db} = this.handler.options
+    await this.handler.syncPending()
     return db.sync(contentHashes)
   }
 
   // Drafts
 
   private async persistEdit(mutation: EditMutation) {
-    const {drafts} = this.handler
+    const {drafts} = this.handler.options
     if (!drafts || !mutation.update) return
     const update = base64.parse(mutation.update)
     const currentDraft = await this.getDraft(mutation.entryId)
@@ -178,13 +217,13 @@ class HandlerConnection implements Connection {
   }
 
   getDraft(entryId: string): Promise<Draft | undefined> {
-    const {drafts} = this.handler
+    const {drafts} = this.handler.options
     if (!drafts) throw new Error('Drafts not available')
     return drafts.getDraft(entryId, this.ctx)
   }
 
   storeDraft(draft: Draft): Promise<void> {
-    const {drafts} = this.handler
+    const {drafts} = this.handler.options
     if (!drafts) throw new Error('Drafts not available')
     return drafts.storeDraft(draft, this.ctx)
   }

@@ -1,5 +1,4 @@
 import {JWTPreviews} from 'alinea/backend'
-import {EntryResolver} from 'alinea/backend/resolver/EntryResolver'
 import {createCloudHandler} from 'alinea/cloud/server/CloudHandler'
 import {parseChunkedCookies} from 'alinea/preview/ChunkCookieValue'
 import {
@@ -59,22 +58,19 @@ class NextDriver extends DefaultDriver implements NextApi {
         url: devUrl,
         resolveDefaults
       })
-    const db = await this.db
-    return new EntryResolver(db, this.config.schema, resolveDefaults)
+    const handler = await this.cloudHandler
+    return handler.resolver
   }
 
   backendHandler = async (request: Request) => {
     const handler = await this.cloudHandler
-    return handler(request)
+    const response = await handler.router.handle(request)
+    return response ?? new Response('Not found', {status: 404})
   }
 
   cloudHandler = PLazy.from(async () => {
     const db = await this.db
-    const handler = createCloudHandler(this, db, this.apiKey)
-    return async (request: Request) => {
-      const response = await handler.router.handle(request)
-      return response ?? new Response('Not found', {status: 404})
-    }
+    return createCloudHandler(this, db, this.apiKey)
   })
 
   previewHandler = async (request: Request) => {
