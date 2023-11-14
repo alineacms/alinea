@@ -1,5 +1,5 @@
+import sqlInit from '@alinea/sqlite-wasm'
 import {Store} from 'alinea/backend/Store'
-import {assign} from 'alinea/core/util/Objects'
 import * as idb from 'lib0/indexeddb.js'
 import prettyMilliseconds from 'pretty-ms'
 import {DriverOptions} from 'rado'
@@ -7,18 +7,18 @@ import {connect} from 'rado/driver/sql.js'
 
 const STORAGE_NAME = '@alinea/peristent.store'
 
-export interface PersistentStore extends Store {
+export interface PersistentStore {
+  store: Store
   flush(): Promise<void>
   clone(): Store
+  clear(): Promise<void>
 }
 
 export async function createPersistentStore(): Promise<PersistentStore> {
   const storagePromise = idb.openDB(STORAGE_NAME, db =>
     idb.createStores(db, [[STORAGE_NAME, {autoIncrement: true}]])
   )
-  const sqlitePromise = import('@alinea/sqlite-wasm').then(
-    ({default: sqlInit}) => sqlInit()
-  )
+  const sqlitePromise = sqlInit()
   const [storage, {Database}] = await Promise.all([
     storagePromise,
     sqlitePromise
@@ -27,7 +27,7 @@ export async function createPersistentStore(): Promise<PersistentStore> {
   const [store] = idb.transact(storage, [STORAGE_NAME], 'readonly')
   const buffer = await idb.get(store, 'db')
   const init = ArrayBuffer.isView(buffer) ? buffer : undefined
-  const db = new Database(init)
+  let db = new Database(init)
   const driverOptions: DriverOptions = {
     logQuery(stmt, duration) {
       if (!stmt.sql.startsWith('SELECT')) return
@@ -57,7 +57,8 @@ export async function createPersistentStore(): Promise<PersistentStore> {
   }
   // Return an async connection so we can move the database to a worker later
   // without have to rewrite the dashboard
-  return assign(connect(db, driverOptions).toAsync(), {
+  const persistent = {
+    store: connect(db, driverOptions).toAsync(),
     async flush() {
       const [store] = idb.transact(storage, [STORAGE_NAME], 'readwrite')
       await idb.put(store, db.export(), 'db')
@@ -65,8 +66,15 @@ export async function createPersistentStore(): Promise<PersistentStore> {
     clone() {
       const clone = new Database(db.export())
       return connect(clone, driverOptions).toAsync()
+    },
+    async clear() {
+      const [store] = idb.transact(storage, [STORAGE_NAME], 'readwrite')
+      await idb.del(store, 'db')
+      db = new Database()
+      persistent.store = connect(db, driverOptions).toAsync()
     }
-  })
+  }
+  return persistent
 }
 
 interface QueryPlanItem {

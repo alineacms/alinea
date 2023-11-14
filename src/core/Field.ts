@@ -6,14 +6,15 @@ import {Hint} from './Hint.js'
 import {Label} from './Label.js'
 import {Shape} from './Shape.js'
 import {TextDoc} from './TextDoc.js'
-import {ListMutator} from './shape/ListShape.js'
+import {ListMutator, ListRow, ListShape} from './shape/ListShape.js'
 import {RecordMutator, RecordShape} from './shape/RecordShape.js'
-import {RichTextMutator} from './shape/RichTextShape.js'
-import {UnionMutator, UnionRow} from './shape/UnionShape.js'
+import {RichTextMutator, RichTextShape} from './shape/RichTextShape.js'
+import {ScalarShape} from './shape/ScalarShape.js'
+import {UnionMutator, UnionRow, UnionShape} from './shape/UnionShape.js'
 
 export interface FieldOptions {
   hidden?: boolean
-  readonly?: boolean
+  readOnly?: boolean
 }
 
 export interface FieldMeta<Value, OnChange, Options> {
@@ -55,23 +56,27 @@ export namespace Field {
   > {
     constructor(meta: FieldMeta<Value, (value: Value) => void, Options>) {
       super({
-        shape: Shape.Scalar(meta.label, meta.initialValue),
+        shape: new ScalarShape(meta.label, meta.initialValue),
         ...meta
       })
     }
   }
 
   export class List<Schema, Options> extends Field<
-    Array<Schema>,
-    ListMutator<Schema>,
+    Array<ListRow & Schema>,
+    ListMutator<ListRow & Schema>,
     Options
   > {
     constructor(
       shape: {[key: string]: RecordShape<any>},
-      meta: FieldMeta<Array<Schema>, ListMutator<Schema>, Options>
+      meta: FieldMeta<
+        Array<ListRow & Schema>,
+        ListMutator<ListRow & Schema>,
+        Options
+      >
     ) {
       super({
-        shape: Shape.List(
+        shape: new ListShape(
           meta.label,
           shape,
           meta.initialValue,
@@ -92,7 +97,7 @@ export namespace Field {
       meta: FieldMeta<UnionRow & Row, UnionMutator<Row>, Options>
     ) {
       super({
-        shape: Shape.Union<Row>(
+        shape: new UnionShape<Row>(
           meta.label,
           shapes,
           meta.initialValue,
@@ -126,7 +131,7 @@ export namespace Field {
       meta: FieldMeta<TextDoc<Blocks>, RichTextMutator<Blocks>, Options>
     ) {
       super({
-        shape: Shape.RichText(meta.label, shape, meta.initialValue),
+        shape: new RichTextShape(meta.label, shape, meta.initialValue),
         ...meta
       })
     }

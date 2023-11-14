@@ -8,7 +8,7 @@ export function CodeField() {
   const codeField = useField(code('Code'))
   const disabledCodeField = useField(
     code('Code (read-only)', {
-      readonly: true,
+      readOnly: true,
       initialValue: `console.log('Hello world!')`
     })
   )

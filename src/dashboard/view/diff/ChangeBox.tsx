@@ -9,7 +9,7 @@ import css from './ChangeBox.module.scss'
 const styles = fromModule(css)
 
 const icons = {
-  unchanged: IcOutlineArrowCircleRight,
+  keep: IcOutlineArrowCircleRight,
   addition: IcRoundAddCircleOutline,
   removal: IcRoundRemoveCircleOutline
 }

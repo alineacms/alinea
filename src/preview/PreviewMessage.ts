@@ -1,4 +1,4 @@
-import type {PreviewUpdate} from 'alinea/backend/Resolver'
+import type {PreviewUpdate} from 'alinea/core/Resolver'
 
 export enum PreviewAction {
   Ping = '[alinea-ping]',

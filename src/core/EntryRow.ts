@@ -7,6 +7,11 @@ export enum EntryPhase {
   Archived = 'archived'
 }
 
+export const ALT_STATUS: Array<EntryPhase> = [
+  EntryPhase.Draft,
+  EntryPhase.Archived
+]
+
 export type EntryLinks = {[field: string]: Array<string>}
 
 export class EntryTable {
@@ -23,7 +28,7 @@ export class EntryTable {
   level = column.number // Amount of parents
   filePath = column.string
   parentDir = column.string
-  childrenDir = column.string.nullable
+  childrenDir = column.string
 
   index = column.string
   parent = column.string.nullable
@@ -36,8 +41,10 @@ export class EntryTable {
   get versionId() {
     return this.entryId.concat('.').concat(this.phase)
   }
+  /** @deprecated */
   modifiedAt = column.number
-  contentHash = column.string
+  rowHash = column.string
+  fileHash = column.string
 
   // Entries from which a new draft can be created are marked as active,
   // there is only one active entry per entryId
@@ -68,8 +75,7 @@ export const EntryRow = table({
   },
   [table.indexes]() {
     return {
-      modifiedAt: index(this.modifiedAt),
-      contentHash: index(this.contentHash),
+      rowHash: index(this.rowHash),
       type: index(this.type),
       parent: index(this.parent),
       url: index(this.url),

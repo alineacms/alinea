@@ -4,13 +4,17 @@ import {InputForm} from 'alinea/editor'
 import {TabsHeader, TabsSection} from 'alinea/input/tabs/Tabs.browser'
 import {Button, HStack, Stack, VStack, fromModule} from 'alinea/ui'
 import {Main} from 'alinea/ui/Main'
+import {Statusbar} from 'alinea/ui/Statusbar'
 import {Tabs} from 'alinea/ui/Tabs'
+import {IcOutlineTableRows} from 'alinea/ui/icons/IcOutlineTableRows'
+import {IcRoundInsertDriveFile} from 'alinea/ui/icons/IcRoundInsertDriveFile'
 import {IcRoundTranslate} from 'alinea/ui/icons/IcRoundTranslate'
 import {useAtomValue, useSetAtom} from 'jotai'
 import {useEffect, useRef} from 'react'
 import {EntryEditor} from '../atoms/EntryEditorAtoms.js'
 import {useRouteBlocker} from '../atoms/RouterAtoms.js'
 import {useConfig} from '../hook/UseConfig.js'
+import {useDashboard} from '../hook/UseDashboard.js'
 import {useLocale} from '../hook/UseLocale.js'
 import {useNav} from '../hook/UseNav.js'
 import {SuspenseBoundary} from '../util/SuspenseBoundary.js'
@@ -43,6 +47,7 @@ export interface EntryEditProps {
 }
 
 export function EntryEdit({editor}: EntryEditProps) {
+  const {alineaDev} = useDashboard()
   const locale = useLocale()
   const {preview, enableDrafts} = useConfig()
   const {isPreviewOpen} = useSidebar()
@@ -100,11 +105,43 @@ export function EntryEdit({editor}: EntryEditProps) {
     hasRootTabs && (sections[0][Section.Data] as TabsSection)
   const visibleTypes =
     tabs && tabs.types.filter(type => !Type.meta(type).isHidden)
-  /*useEffect(() => {
+  useEffect(() => {
     if (isBlocking && !isNavigationChange) confirm?.()
-  }, [isBlocking, isNavigationChange, confirm])*/
+  }, [isBlocking, isNavigationChange, confirm])
   return (
     <>
+      {alineaDev && (
+        <>
+          <Statusbar.Slot>
+            <Statusbar.Status>
+              File path: {editor.activeVersion.filePath}
+            </Statusbar.Status>
+          </Statusbar.Slot>
+          <Statusbar.Slot>
+            <Statusbar.Status>
+              Parent dir: {editor.activeVersion.parentDir}
+            </Statusbar.Status>
+          </Statusbar.Slot>
+          <Statusbar.Slot>
+            <Statusbar.Status>
+              Children dir: {editor.activeVersion.childrenDir}
+            </Statusbar.Status>
+          </Statusbar.Slot>
+          <Statusbar.Slot>
+            <Statusbar.Status>Url: {editor.activeVersion.url}</Statusbar.Status>
+          </Statusbar.Slot>
+          <Statusbar.Slot>
+            <Statusbar.Status icon={IcRoundInsertDriveFile}>
+              {editor.activeVersion.fileHash}
+            </Statusbar.Status>
+          </Statusbar.Slot>
+          <Statusbar.Slot>
+            <Statusbar.Status icon={IcOutlineTableRows}>
+              {editor.activeVersion.rowHash}
+            </Statusbar.Status>
+          </Statusbar.Slot>
+        </>
+      )}
       {isBlocking && isNavigationChange && (
         <Modal open onClose={() => cancel()}>
           <VStack gap={30}>
@@ -203,11 +240,9 @@ export function EntryEdit({editor}: EntryEditProps) {
                     })}
                   </Tabs.Panels>
                 ) : (
-                  <div>
-                    <VStack gap={18}>
-                      <InputForm type={editor.type} state={state} />
-                    </VStack>
-                  </div>
+                  <VStack gap={18}>
+                    <InputForm type={editor.type} state={state} />
+                  </VStack>
                 )}
               </SuspenseBoundary>
             </Main.Container>

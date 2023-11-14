@@ -27,7 +27,7 @@ function DateInput({state, field}: DateInputProps) {
         value={value || ''}
         onChange={e => setValue(e.currentTarget.value)}
         autoFocus={options.autoFocus}
-        disabled={options.readonly}
+        disabled={options.readOnly}
       />
     </InputLabel>
   )

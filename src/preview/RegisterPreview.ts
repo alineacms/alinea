@@ -1,4 +1,4 @@
-import {PreviewUpdate} from 'alinea/backend/Resolver'
+import type {PreviewUpdate} from 'alinea/core/Resolver'
 import {PreviewAction, PreviewMessage} from 'alinea/preview/PreviewMessage'
 
 export interface PreviewApi {

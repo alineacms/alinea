@@ -5,20 +5,22 @@ import {
   PageSeed,
   Root,
   Schema,
+  SyncResponse,
   Syncable,
-  Type,
   Workspace,
   createId,
   unreachable
 } from 'alinea/core'
-import {entryInfo} from 'alinea/core/EntryFilenames'
-import {EntryRecord, META_KEY} from 'alinea/core/EntryRecord'
+import {entryFilepath, entryInfo, entryUrl} from 'alinea/core/EntryFilenames'
+import {EntryRecord, META_KEY, createRecord} from 'alinea/core/EntryRecord'
 import {Mutation, MutationType} from 'alinea/core/Mutation'
+import {createEntryRow} from 'alinea/core/util/EntryRows'
 import {Logger} from 'alinea/core/util/Logger'
 import {entries} from 'alinea/core/util/Objects'
 import * as path from 'alinea/core/util/Paths'
+import * as paths from 'alinea/core/util/Paths'
 import {timer} from 'alinea/core/util/Timer'
-import {Driver, Expr, Table, alias, create} from 'rado'
+import {Driver, Expr, Select, alias, create} from 'rado'
 import {exists} from 'rado/sqlite'
 import xxhash from 'xxhash-wasm'
 import {EntryPhase, EntryRow} from '../core/EntryRow.js'
@@ -28,11 +30,8 @@ import {Target} from './Target.js'
 import {ChangeSetCreator} from './data/ChangeSet.js'
 import {AlineaMeta} from './db/AlineaMeta.js'
 import {createEntrySearch} from './db/CreateEntrySearch.js'
-import {createContentHash} from './util/ContentHash.js'
+import {createFileHash, createRowHash} from './util/ContentHash.js'
 
-const decoder = new TextDecoder()
-
-const ALT_STATUS = [EntryPhase.Draft, EntryPhase.Archived]
 type Seed = {
   type: string
   workspace: string
@@ -44,153 +43,300 @@ type Seed = {
 export class Database implements Syncable {
   seed: Map<string, Seed>
 
-  constructor(public store: Store, public config: Config) {
+  constructor(public config: Config, public store: Store) {
     this.seed = this.seedData()
   }
 
-  async updates(request: AlineaMeta) {
-    const current = await this.meta()
-    if (current.contentHash === request.contentHash)
-      return {
-        contentHash: current.contentHash,
-        entries: []
-      }
-    return {
-      contentHash: current.contentHash,
-      entries: await this.store(
-        EntryRow().where(EntryRow.modifiedAt.isGreater(request.modifiedAt))
-      )
-    }
+  async syncRequired(contentHash: string): Promise<boolean> {
+    const meta = await this.meta()
+    return meta.contentHash !== contentHash
   }
 
-  async versionIds(): Promise<Array<string>> {
-    return this.store(EntryRow().select(EntryRow.versionId))
+  async sync(contentHashes: Array<string>): Promise<SyncResponse> {
+    return this.store.transaction(async tx => {
+      const insert = await tx(
+        EntryRow().where(EntryRow.rowHash.isNotIn(contentHashes))
+      )
+      const keep = new Set(
+        await tx(
+          EntryRow()
+            .where(EntryRow.rowHash.isIn(contentHashes))
+            .select(EntryRow.rowHash)
+        )
+      )
+      const remove = contentHashes.filter(hash => !keep.has(hash))
+      return {insert, remove}
+    })
+  }
+
+  async contentHashes() {
+    return this.store(EntryRow().select(EntryRow.rowHash))
   }
 
   // Syncs data with a remote database, returning the ids of changed entries
-  async syncWith(remote: Syncable): Promise<Array<string>> {
+  async syncWith(remote: Syncable, force = false): Promise<Array<string>> {
     await this.init()
-    const current = await this.meta()
-    const update = await remote.updates(current)
-    const {contentHash, entries} = update
-    if (entries.length) await this.updateEntries(entries)
-    const updated = await this.meta()
-    const changedEntries = entries.map(e => e.entryId)
-    if (updated.contentHash === contentHash) return changedEntries
-    const remoteVersionIds = await remote.versionIds()
-    const excessEntries = await this.store.transaction(async query => {
-      const excess = await query(
-        EntryRow()
-          .select({entryId: EntryRow.entryId, versionId: EntryRow.versionId})
-          .where(
-            remoteVersionIds.length > 0
-              ? EntryRow.versionId.isNotIn(remoteVersionIds)
-              : true
-          )
+    const meta = await this.meta()
+    const isRequired = force || (await remote.syncRequired(meta.contentHash))
+    if (!isRequired) return []
+    const {insert, remove} = await remote.sync(await this.contentHashes())
+    return this.store.transaction(async tx => {
+      const removed = await tx(
+        EntryRow().where(EntryRow.rowHash.isIn(remove)).select(EntryRow.entryId)
       )
-      await query(
-        EntryRow()
-          .delete()
-          .where(EntryRow.versionId.isIn(excess.map(e => e.versionId)))
-      )
-      await Database.index(query)
-      await this.writeMeta(query)
-      return excess.map(e => e.entryId)
-    })
-    const afterRemoves = await this.meta()
-    if (afterRemoves.contentHash === contentHash)
-      return changedEntries.concat(excessEntries)
-    // Todo: we should abandon syncing and just fetch the full db
-    throw new Error('Sync failed')
-  }
-
-  async updateEntries(entries: Array<EntryRow>) {
-    await this.store.transaction(async query => {
-      for (const entry of entries) {
-        await query(
-          EntryRow({
-            entryId: entry.entryId,
-            phase: entry.phase
-          }).delete()
-        )
-        await query(EntryRow().insertOne(entry))
+      await tx(EntryRow().delete().where(EntryRow.rowHash.isIn(remove)))
+      const changed = []
+      for (const entry of insert) {
+        await tx(EntryRow().insertOne(entry))
+        changed.push(entry.entryId)
+        changed.push(entry.i18nId)
       }
-      await Database.index(query)
-      await this.writeMeta(query)
+      await Database.index(tx)
+      // This is for a local db, we didn't receive a commit hash here
+      await this.writeMeta(tx, meta.commitHash)
+      return removed.concat(changed)
     })
   }
 
-  async applyMutations(mutations: Array<Mutation>) {
-    for (const mutation of mutations) {
-      console.log(`Applying mutation: ${mutation.type} to ${mutation.entryId}`)
-      this.applyMutation(mutation)
-    }
-    await Database.index(this.store)
+  applyMutations(mutations: Array<Mutation>, commitHash: string) {
+    return this.store.transaction(async tx => {
+      const reHash = []
+      for (const mutation of mutations) {
+        const updateRows = await this.applyMutation(tx, mutation)
+        if (updateRows) reHash.push(updateRows)
+      }
+      await Database.index(tx)
+      const changed = (
+        await Promise.all(reHash.map(updateRows => updateRows()))
+      ).flat()
+      await this.writeMeta(tx, commitHash)
+      return changed
+    })
   }
 
-  async applyMutation(mutation: Mutation) {
+  private async applyPublish(tx: Driver.Async, entry: EntryRow) {
+    const path = entry.data.path
+    const parentPaths = entry.parentDir.split('/').filter(Boolean)
+    const filePath = entryFilepath(
+      this.config,
+      {
+        ...entry,
+        path,
+        phase: EntryPhase.Published
+      },
+      parentPaths
+    )
+    const parentDir = paths.dirname(filePath)
+    const extension = paths.extname(filePath)
+    const fileName = paths.basename(filePath, extension)
+    const [entryPath] = entryInfo(fileName)
+    const childrenDir = paths.join(parentDir, entryPath)
+    const urlMeta: EntryUrlMeta = {
+      locale: entry.locale,
+      path,
+      phase: entry.phase,
+      parentPaths
+    }
+    const url = entryUrl(this.config.schema[entry.type], urlMeta)
+    const next = {
+      ...entry,
+      phase: EntryPhase.Published,
+      path,
+      filePath,
+      parentDir,
+      childrenDir,
+      url
+    }
+    await tx(
+      EntryRow({entryId: entry.entryId, phase: entry.phase}).set({
+        phase: EntryPhase.Published,
+        filePath,
+        parentDir,
+        childrenDir,
+        url
+      })
+    )
+    return this.updateChildren(tx, entry, next)
+  }
+
+  private async updateChildren(
+    tx: Driver.Async,
+    previous: EntryRow,
+    next: EntryRow
+  ) {
+    const {childrenDir: dir} = previous
+    if (next.phase !== EntryPhase.Published || dir === next.childrenDir)
+      return []
+    const children = await tx(
+      EntryRow().where(
+        EntryRow.parentDir.is(dir).or(EntryRow.childrenDir.like(dir + '/%'))
+      )
+    )
+    for (const child of children) {
+      const filePath = next.childrenDir + child.filePath.slice(dir.length)
+      const childrenDir = next.childrenDir + child.childrenDir.slice(dir.length)
+      const parentDir = next.childrenDir + child.parentDir.slice(dir.length)
+      const parentPaths = parentDir.split('/').filter(Boolean)
+      if (child.locale) parentPaths.shift()
+      const url = entryUrl(this.config.schema[child.type], {
+        ...child,
+        parentPaths
+      })
+      await tx(
+        EntryRow({entryId: child.entryId, phase: child.phase}).set({
+          filePath,
+          childrenDir,
+          parentDir,
+          url
+        })
+      )
+    }
+    return children
+  }
+
+  async logEntries() {
+    const entries = await this.store(
+      EntryRow().orderBy(EntryRow.url.asc(), EntryRow.index.asc())
+    )
+    for (const entry of entries) {
+      console.log(
+        entry.url.padEnd(35),
+        entry.entryId.padEnd(12),
+        entry.phase.padEnd(12),
+        entry.title
+      )
+    }
+  }
+
+  private async applyMutation(
+    tx: Driver.Async,
+    mutation: Mutation
+  ): Promise<(() => Promise<Array<string>>) | undefined> {
     switch (mutation.type) {
-      case MutationType.Create:
-      case MutationType.Edit:
-        return this.store(
-          EntryRow({
-            entryId: mutation.entryId,
-            phase: mutation.entry.phase
-          }).delete(),
-          EntryRow().insert(mutation.entry)
-        )
-      case MutationType.Archive:
-        return this.store(
-          EntryRow({
-            entryId: mutation.entryId,
-            phase: EntryPhase.Published
-          }).set({phase: EntryPhase.Archived})
-        )
-      case MutationType.Publish:
-        const phases = await this.store(
-          EntryRow({
-            entryId: mutation.entryId
-          }).select(EntryRow.phase)
-        )
-        const promoting = phases.find(p => ALT_STATUS.includes(p))
-        if (promoting)
-          await this.store(
-            EntryRow({
-              entryId: mutation.entryId,
-              phase: EntryPhase.Published
-            }).delete(),
-            EntryRow({
-              entryId: mutation.entryId,
-              phase: promoting
-            }).set({
-              phase: EntryPhase.Published
-            })
+      case MutationType.Create: {
+        const row = EntryRow({
+          entryId: mutation.entryId,
+          phase: mutation.entry.phase
+        })
+        const current = await tx(row.maybeFirst())
+        if (current) return
+        await tx(EntryRow().insert(mutation.entry))
+        return () => this.updateHash(tx, row)
+      }
+      case MutationType.Edit: {
+        const {entryId, entry} = mutation
+        const row = EntryRow({
+          entryId,
+          phase: entry.phase
+        })
+        const current = await tx(row.maybeFirst())
+        await tx(row.delete(), EntryRow().insert(entry))
+        let children: Array<EntryRow> = []
+        if (entry.phase === EntryPhase.Published) {
+          if (current) children = await this.updateChildren(tx, current, entry)
+        }
+        return () => {
+          return this.updateHash(tx, row).then(self =>
+            this.updateHash(
+              tx,
+              EntryRow().where(
+                EntryRow.entryId.isIn(children.map(e => e.entryId))
+              )
+            ).then(children => self.concat(children))
           )
-        return
+        }
+      }
+      case MutationType.Archive: {
+        const archived = EntryRow({
+          entryId: mutation.entryId,
+          phase: EntryPhase.Archived
+        })
+        const row = EntryRow({
+          entryId: mutation.entryId,
+          phase: EntryPhase.Published
+        })
+        const published = await tx(row.maybeFirst())
+        if (!published) return
+        const filePath =
+          published.filePath.slice(0, -5) + `.${EntryPhase.Archived}.json`
+        await tx(
+          archived.delete(),
+          row.set({
+            phase: EntryPhase.Archived,
+            filePath
+          })
+        )
+        return () => this.updateHash(tx, archived)
+      }
+      case MutationType.Publish: {
+        const promoting = await tx(
+          EntryRow({
+            entryId: mutation.entryId,
+            phase: mutation.phase
+          }).maybeFirst()
+        )
+        if (!promoting) return
+        const row = EntryRow({
+          entryId: mutation.entryId,
+          phase: EntryPhase.Published
+        })
+        await tx(row.delete())
+        const children = await this.applyPublish(tx, promoting)
+        return () =>
+          this.updateHash(tx, row).then(rows => {
+            return this.updateHash(
+              tx,
+              EntryRow().where(
+                EntryRow.entryId.isIn(children.map(e => e.entryId))
+              )
+            ).then(r => rows.concat(r))
+          })
+      }
       case MutationType.FileRemove:
         if (mutation.replace) return
       case MutationType.Remove:
-        return this.store(EntryRow({entryId: mutation.entryId}).delete())
+        const phases = await tx(EntryRow({entryId: mutation.entryId}))
+        // Remove child entries
+        for (const phase of phases) {
+          await tx(
+            EntryRow()
+              .delete()
+              .where(
+                EntryRow.parentDir
+                  .is(phase.childrenDir)
+                  .or(EntryRow.childrenDir.like(phase.childrenDir + '/%'))
+              )
+          )
+        }
+        await tx(EntryRow({entryId: mutation.entryId}).delete())
+        return
       case MutationType.Discard:
-        return this.store(
+        await tx(
           EntryRow({
             entryId: mutation.entryId,
             phase: EntryPhase.Draft
           }).delete()
         )
-      case MutationType.Order:
-        return this.store(
-          EntryRow({entryId: mutation.entryId}).set({index: mutation.index})
-        )
-      case MutationType.Move:
-        return this.store(
-          EntryRow({entryId: mutation.entryId}).set({
+        return
+      case MutationType.Order: {
+        const rows = EntryRow({entryId: mutation.entryId})
+        // Todo: apply this to other languages too
+        await tx(rows.set({index: mutation.index}))
+        return () => this.updateHash(tx, rows)
+      }
+      case MutationType.Move: {
+        const rows = EntryRow({entryId: mutation.entryId})
+        await tx(
+          rows.set({
             index: mutation.index,
             parent: mutation.parent,
             workspace: mutation.workspace,
             root: mutation.root
           })
         )
+        // Todo: update file & children paths
+        return () => this.updateHash(tx, rows)
+      }
       case MutationType.Upload:
         return
       default:
@@ -198,18 +344,35 @@ export class Database implements Syncable {
     }
   }
 
+  async updateHash(tx: Driver.Async, selection: Select<EntryRow>) {
+    const changed = []
+    const entries = await tx(selection)
+    for (const entry of entries) {
+      const updated = await createEntryRow(this.config, entry)
+      changed.push(updated.entryId)
+      await tx(
+        EntryRow({entryId: entry.entryId, phase: entry.phase}).set({
+          fileHash: updated.fileHash,
+          rowHash: updated.rowHash
+        })
+      )
+    }
+    return changed
+  }
+
   async meta() {
     return (
       (await this.store(AlineaMeta().maybeFirst())) ?? {
+        commitHash: '',
         contentHash: '',
         modifiedAt: 0
       }
     )
   }
 
-  static async index(query: Driver.Async) {
+  static async index(tx: Driver.Async) {
     const {Parent} = alias(EntryRow)
-    const res = await query(
+    const res = await tx(
       EntryRow().set({
         parent: Parent({childrenDir: EntryRow.parentDir})
           .select(Parent.entryId)
@@ -221,31 +384,32 @@ export class Database implements Syncable {
     return res
   }
 
-  private async writeMeta(query: Driver.Async) {
-    const {h32ToString} = await xxhash()
-    const contentHashes = await query(
-      EntryRow()
-        .select(EntryRow.contentHash.concat('.').concat(EntryRow.phase))
-        .orderBy(EntryRow.contentHash)
+  private async writeMeta(tx: Driver.Async, commitHash: string) {
+    const {create32} = await xxhash()
+    let hash = create32()
+    const contentHashes = await tx(
+      EntryRow().select(EntryRow.rowHash).orderBy(EntryRow.rowHash)
     )
-    const contentHash = h32ToString(contentHashes.join(''))
-    const modifiedAt = await query(
+    for (const c of contentHashes) hash = hash.update(c)
+    const contentHash = hash.digest().toString(16).padStart(8, '0')
+    const modifiedAt = await tx(
       EntryRow()
         .select(EntryRow.modifiedAt)
         .orderBy(EntryRow.modifiedAt.desc())
         .first()
     )
-    await query(AlineaMeta().delete())
-    await query(
+    await tx(AlineaMeta().delete())
+    await tx(
       AlineaMeta().insertOne({
-        modifiedAt,
-        contentHash
+        commitHash,
+        contentHash,
+        modifiedAt
       })
     )
   }
 
   inited = false
-  private async init() {
+  async init() {
     if (this.inited) return
     this.inited = true
     try {
@@ -253,38 +417,24 @@ export class Database implements Syncable {
         await tx(create(EntryRow, AlineaMeta))
         await createEntrySearch(tx)
       })
+      await this.meta()
     } catch (e) {
       this.inited = false
       throw e
     }
   }
 
-  entryUrl(type: Type, meta: EntryUrlMeta) {
-    const {entryUrl} = Type.meta(type)
-    if (entryUrl) return entryUrl(meta)
-    const segments = meta.locale ? [meta.locale] : []
-    return (
-      '/' +
-      segments
-        .concat(
-          meta.parentPaths
-            .concat(meta.path)
-            .filter(segment => segment !== 'index')
-        )
-        .join('/')
-    )
-  }
-
   computeEntry(
-    data: EntryRecord,
+    record: EntryRecord,
     meta: {
       workspace: string
       root: string
       filePath: string
     },
     seed?: Seed
-  ): Omit<Table.Insert<typeof EntryRow>, 'contentHash'> {
-    const typeName = data[META_KEY].type
+  ): Omit<EntryRow, 'rowHash' | 'fileHash'> {
+    const {[META_KEY]: alineaMeta, ...data} = record
+    const typeName = alineaMeta.type
     const parentDir = path.dirname(meta.filePath)
     const extension = path.extname(meta.filePath)
     const fileName = path.basename(meta.filePath, extension)
@@ -307,7 +457,7 @@ export class Database implements Syncable {
       )
     const childrenDir = path.join(parentDir, entryPath)
 
-    if (!data[META_KEY].entryId) throw new Error(`missing id`)
+    if (!record[META_KEY].entryId) throw new Error(`missing id`)
 
     const urlMeta: EntryUrlMeta = {
       locale,
@@ -329,28 +479,27 @@ export class Database implements Syncable {
       workspace: meta.workspace,
       root: meta.root,
       filePath: meta.filePath,
-      seeded: Boolean(seed || data[META_KEY].seeded || false),
-      // contentHash,
+      seeded: Boolean(seed || alineaMeta.seeded || false),
 
       modifiedAt: Date.now(), // file.modifiedAt,
       active: false,
       main: false,
 
-      entryId: data[META_KEY].entryId,
+      entryId: alineaMeta.entryId,
       phase: entryPhase,
-      type: data[META_KEY].type,
+      type: alineaMeta.type,
 
       parentDir,
       childrenDir,
       parent: null,
       level: parentDir === '/' ? 0 : segments.length,
-      index: data[META_KEY].index,
+      index: alineaMeta.index,
       locale,
-      i18nId: data[META_KEY].i18nId ?? data[META_KEY].entryId,
+      i18nId: alineaMeta.i18nId ?? alineaMeta.entryId,
 
       path: entryPath,
-      title: data.title ?? seedData?.title ?? '',
-      url: this.entryUrl(type, urlMeta),
+      title: record.title ?? seedData?.title ?? '',
+      url: entryUrl(type, urlMeta),
 
       data: entryData,
       searchableText
@@ -391,34 +540,28 @@ export class Database implements Syncable {
     return res
   }
 
-  async fill(source: Source, target?: Target): Promise<void> {
+  async fill(
+    source: Source,
+    commitHash: string,
+    target?: Target
+  ): Promise<void> {
     // Todo: run a validation step for orders, paths, id matching on statuses
     // etc
     await this.init()
-    const {h32Raw} = await xxhash()
     const typeNames = Schema.typeNames(this.config.schema)
     const publishSeed: Array<EntryRow> = []
 
     await this.store.transaction(async query => {
       const seenVersions: Array<string> = []
       const seenSeeds = new Set<string>()
-      let inserted = 0
+      const inserted = []
       const endScan = timer('Scanning entries')
       for await (const file of source.entries()) {
         const seed = this.seed.get(file.filePath)
-        const extension = path.extname(file.filePath)
-        const fileName = path.basename(file.filePath, extension)
-        const [, phase] = entryInfo(fileName)
-        const contentHash = await createContentHash(
-          phase,
-          file.contents,
-          seed
-            ? seed.type + JSON.stringify(PageSeed.data(seed.page).partial)
-            : undefined
-        )
+        const fileHash = await createFileHash(file.contents)
         const exists = await query(
           EntryRow({
-            contentHash,
+            fileHash: fileHash,
             filePath: file.filePath,
             workspace: file.workspace,
             root: file.root
@@ -443,14 +586,13 @@ export class Database implements Syncable {
           await query(
             EntryRow({entryId: entry.entryId, phase: entry.phase}).delete()
           )
-          const withHash = entry as Table.Insert<typeof EntryRow>
-          withHash.contentHash = contentHash
+          const withHash: EntryRow = {...entry, fileHash, rowHash: ''}
           seenVersions.push(
             await query(
               EntryRow().insert(withHash).returning(EntryRow.versionId)
             )
           )
-          inserted++
+          inserted.push(`${entry.entryId}.${entry.phase}`)
         } catch (e: any) {
           console.log(`> skipped ${file.filePath} — ${e.message}`)
         }
@@ -473,16 +615,14 @@ export class Database implements Syncable {
           },
           seed
         )
-        const seedData = new TextEncoder().encode(
-          seed.type + JSON.stringify(PageSeed.data(seed.page).partial)
-        )
-        const contentHash = h32Raw(seedData).toString(16).padStart(8, '0')
-        const withHash = entry as EntryRow
-        withHash.contentHash = contentHash
+        const record = createRecord(entry)
+        const fileContents = JsonLoader.format(this.config.schema, record)
+        const fileHash = await createFileHash(fileContents)
+        const withHash = {...entry, fileHash, rowHash: ''}
         seenVersions.push(
           await query(EntryRow().insert(withHash).returning(EntryRow.versionId))
         )
-        inserted++
+        inserted.push(`${entry.entryId}.${entry.phase}`)
         publishSeed.push({
           ...withHash,
           seeded: true,
@@ -496,15 +636,25 @@ export class Database implements Syncable {
       const {rowsAffected: removed} = await query(
         EntryRow().delete().where(EntryRow.versionId.isNotIn(seenVersions))
       )
-      const noChanges = inserted === 0 && removed === 0
+      const noChanges = inserted.length === 0 && removed === 0
       if (noChanges) return
       // if (inserted) console.log(`> updated ${inserted} entries`)
       // if (removed) console.log(`> removed ${removed} entries`)
 
       //const endIndex = timer('Indexing entries')
       await Database.index(query)
-      //endIndex()
-      await this.writeMeta(query)
+      const entries = await query(
+        EntryRow().where(EntryRow.versionId.isIn(inserted))
+      )
+      for (const entry of entries) {
+        const rowHash = await createRowHash(entry)
+        await query(
+          EntryRow({entryId: entry.entryId, phase: entry.phase}).set({
+            rowHash
+          })
+        )
+      }
+      await this.writeMeta(query, commitHash)
     })
 
     if (target && publishSeed.length > 0) {
@@ -524,7 +674,10 @@ export class Database implements Syncable {
         }
       })
       const changes = changeSetCreator.create(mutations)
-      await target.mutate({mutations: changes}, {logger: new Logger('seed')})
+      await target.mutate(
+        {commitHash: '', mutations: changes},
+        {logger: new Logger('seed')}
+      )
     }
   }
 }

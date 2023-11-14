@@ -20,7 +20,7 @@ type CheckInputProps = {
 
 function CheckInput({state, field}: CheckInputProps) {
   const {label, options} = field[Field.Data]
-  const {readonly} = options
+  const {readOnly: readonly} = options
   const [value, setValue] = useInput(state)
   const [focus, setFocus] = useState(false)
   return (
@@ -46,7 +46,7 @@ function CheckInput({state, field}: CheckInputProps) {
           autoFocus={options.autoFocus}
           disabled={readonly}
         />
-        <span className={styles.root.checkmark({disabled: options.readonly})}>
+        <span className={styles.root.checkmark({disabled: options.readOnly})}>
           {value && (
             <Icon
               size={20}

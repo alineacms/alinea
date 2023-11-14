@@ -3,33 +3,35 @@ import {
   Connection,
   EntryPhase,
   EntryRow,
+  EntryUrlMeta,
   ROOT_KEY,
   Type,
-  applyEntryData,
   createId,
   createYDoc,
   parseYDoc
 } from 'alinea/core'
 import {Entry} from 'alinea/core/Entry'
-import {entryFileName} from 'alinea/core/EntryFilenames'
+import {
+  entryFileName,
+  entryFilepath,
+  entryInfo,
+  entryUrl
+} from 'alinea/core/EntryFilenames'
 import {Mutation, MutationType} from 'alinea/core/Mutation'
 import {MediaFile} from 'alinea/core/media/MediaSchema'
+import {base64} from 'alinea/core/util/Encoding'
+import {createEntryRow} from 'alinea/core/util/EntryRows'
 import {entries, fromEntries, values} from 'alinea/core/util/Objects'
+import * as paths from 'alinea/core/util/Paths'
 import {InputState} from 'alinea/editor'
 import {atom} from 'jotai'
 import {atomFamily, unwrap} from 'jotai/utils'
-import * as Y from 'yjs'
 import {debounceAtom} from '../util/DebounceAtom.js'
-import {clientAtom, configAtom} from './DashboardAtoms.js'
-import {
-  entryRevisionAtoms,
-  graphAtom,
-  mutateAtom,
-  sourceGraphAtom
-} from './DbAtoms.js'
+import {clientAtom, configAtom, dashboardOptionsAtom} from './DashboardAtoms.js'
+import {entryRevisionAtoms, graphAtom, mutateAtom} from './DbAtoms.js'
+import {Edits, entryEditsAtoms} from './Edits.js'
 import {errorAtom} from './ErrorAtoms.js'
 import {locationAtom} from './LocationAtoms.js'
-import {pendingAtom} from './PendingAtoms.js'
 import {yAtom} from './YAtom.js'
 
 export enum EditMode {
@@ -49,16 +51,35 @@ interface EntryEditorParams {
   i18nId: string | undefined
 }
 
+export enum EntryTransition {
+  SaveDraft,
+  SaveTranslation,
+  PublishEdits,
+  RestoreRevision,
+  PublishDraft,
+  DiscardDraft,
+  ArchivePublished,
+  PublishArchived,
+  DeleteFile,
+  DeleteArchived
+}
+
+const entryTransitionAtoms = atomFamily((entryId: string) => {
+  return atom<EntryTransition | undefined>(undefined)
+})
+
 export const entryEditorAtoms = atomFamily(
   ({locale, i18nId}: EntryEditorParams) => {
     return atom(async get => {
       if (!i18nId) return undefined
+      const {dev} = get(dashboardOptionsAtom)
       const config = get(configAtom)
       const client = get(clientAtom)
-      const sourceGraph = await get(sourceGraphAtom)
       const graph = await get(graphAtom)
       const search = locale ? {i18nId, locale} : {i18nId}
-      let entry = await graph.preferDraft.maybeGet(Entry(search))
+      let entry: EntryRow | null = await graph.preferDraft.maybeGet(
+        Entry(search)
+      )
       if (!entry) {
         const {searchParams} = get(locationAtom)
         const preferredLanguage = searchParams.get('from')
@@ -71,7 +92,33 @@ export const entryEditorAtoms = atomFamily(
       if (!entry) return undefined
       const entryId = entry.entryId
       get(entryRevisionAtoms(entryId))
-      const sourceEntry = await sourceGraph.preferDraft.get(Entry({entryId}))
+      get(entryRevisionAtoms(entry.i18nId))
+
+      const type = config.schema[entry.type]
+      const edits = get(entryEditsAtoms(entryId))
+
+      const loadDraft = client
+        .getDraft(entryId)
+        .then(draft => {
+          if (draft) {
+            edits.applyRemoteUpdate(draft.draft)
+            // The draft is out of sync, this can happen if
+            // - updates done manually to the content files
+            // - the draft storage could not be reached after mutation
+            // We fast forward the draft with the actual current field data
+            // and will submit new updates including it
+            if (draft.fileHash !== entry!.fileHash)
+              edits.applyEntryData(type, entry!.data)
+          } else {
+            edits.applyEntryData(type, entry!.data)
+          }
+        })
+        .catch(() => {
+          edits.applyEntryData(type, entry!.data)
+        })
+
+      if (!edits.hasData()) await loadDraft
+
       const versions = await graph.all.find(
         Entry({entryId}).select({
           ...Entry,
@@ -111,7 +158,6 @@ export const entryEditorAtoms = atomFamily(
       )
       const previewToken = await get(previewTokenAtom)
       return createEntryEditor({
-        sourceEntry,
         parents,
         translations,
         parentNeedsTranslation,
@@ -121,7 +167,8 @@ export const entryEditorAtoms = atomFamily(
         entryId,
         versions,
         phases,
-        availablePhases
+        availablePhases,
+        edits
       })
     })
   },
@@ -129,7 +176,6 @@ export const entryEditorAtoms = atomFamily(
 )
 
 export interface EntryData {
-  sourceEntry: EntryRow | null
   parents: Array<{entryId: string; path: string}>
   client: Connection
   config: Config
@@ -140,6 +186,7 @@ export interface EntryData {
   translations: Array<{locale: string; entryId: string}>
   parentNeedsTranslation: boolean
   previewToken: string
+  edits: Edits
 }
 
 export type EntryEditor = ReturnType<typeof createEntryEditor>
@@ -147,7 +194,7 @@ export type EntryEditor = ReturnType<typeof createEntryEditor>
 const showHistoryAtom = atom(false)
 
 export function createEntryEditor(entryData: EntryData) {
-  const {config, availablePhases} = entryData
+  const {config, availablePhases, edits} = entryData
   const activePhase = availablePhases[0]
   const activeVersion = entryData.phases[activePhase]
   const type = config.schema[activeVersion.type]
@@ -157,11 +204,10 @@ export function createEntryEditor(entryData: EntryData) {
       createYDoc(type, version)
     ])
   )
-  const yDoc = docs[activePhase]
-  const hasChanges = createChangesAtom(yDoc.getMap(ROOT_KEY))
-  const draftEntry = yAtom(yDoc.getMap(ROOT_KEY), getDraftEntry)
+  const yDoc = edits.doc
+  const hasChanges = edits.hasChanges
+  const draftEntry = yAtom(edits.doc.getMap(ROOT_KEY), getDraftEntry)
   const editMode = atom(EditMode.Editing)
-  const isSaving = atom(false)
   const view = Type.meta(type).view
   const previewRevision = atom(
     undefined as {ref: string; file: string} | undefined
@@ -174,29 +220,7 @@ export function createEntryEditor(entryData: EntryData) {
     }
   )
 
-  const isPublishing = atom(get => {
-    return false
-    const pending = get(pendingAtom)
-    return pending.some(
-      mutation =>
-        mutation.type === MutationType.Publish &&
-        mutation.entryId === activeVersion.entryId
-    )
-  })
-
-  const isArchiving = atom(get => {
-    return false
-    const pending = get(pendingAtom)
-    return pending.some(
-      mutation =>
-        mutation.type === MutationType.Archive &&
-        mutation.entryId === activeVersion.entryId
-    )
-  })
-
-  const yStateVector = Y.encodeStateVector(
-    createYDoc(type, entryData.sourceEntry)
-  )
+  const transition = entryTransitionAtoms(activeVersion.entryId)
 
   const phaseInUrl = atom(get => {
     const {search} = get(locationAtom)
@@ -218,23 +242,59 @@ export function createEntryEditor(entryData: EntryData) {
     )
   }
 
-  const saveDraft = atom(null, (get, set) => {
-    const entry = {...getDraftEntry(), phase: EntryPhase.Draft}
+  let isTransacting = false
+  const transact = atom(
+    null,
+    (
+      get,
+      set,
+      options: {
+        clearChanges?: boolean
+        transition: EntryTransition
+        errorMessage: string
+        action: () => Promise<void>
+      }
+    ) => {
+      if (isTransacting) return Promise.resolve()
+      isTransacting = true
+      const timeout = setTimeout(() => {
+        if (options.clearChanges) set(hasChanges, false)
+        set(transition, options.transition)
+      }, 250)
+      const currentChanges = get(hasChanges)
+      return options
+        .action()
+        .then(() => {
+          if (options.clearChanges) set(hasChanges, false)
+        })
+        .catch(error => {
+          if (options.clearChanges) set(hasChanges, currentChanges)
+          set(errorAtom, options.errorMessage, error)
+        })
+        .finally(() => {
+          clearTimeout(timeout)
+          set(transition, undefined)
+          isTransacting = false
+        })
+    }
+  )
+
+  const saveDraft = atom(null, async (get, set) => {
+    const update = base64.stringify(edits.getLocalUpdate())
+    const entry = await getDraftEntry({phase: EntryPhase.Published})
     const mutation: Mutation = {
       type: MutationType.Edit,
       previousFile: entryFile(activeVersion),
       file: entryFile(entry),
       entryId: activeVersion.entryId,
-      entry
+      entry,
+      update
     }
-    set(hasChanges, false)
-    return set(mutateAtom, mutation).catch(error => {
-      set(hasChanges, true)
-      set(
-        errorAtom,
-        'Could not complete save action, please try again later',
-        error
-      )
+    return set(transact, {
+      clearChanges: true,
+      transition: EntryTransition.SaveDraft,
+      action: () => set(mutateAtom, mutation),
+      errorMessage: 'Could not complete save action, please try again later'
     })
   })
 
@@ -259,39 +319,37 @@ export function createEntryEditor(entryData: EntryData) {
       : undefined
     if (activeVersion.parent && !parentData)
       throw new Error('Parent not translated')
+    const parentPaths = parentData?.paths
+      ? parentData.paths.concat(parentData.path)
+      : []
     const entryId = createId()
-    const entry = {
-      ...getDraftEntry(),
-      parent: parentData?.entryId ?? null,
+    const entry = await getDraftEntry({
       entryId,
-      locale,
-      phase: EntryPhase.Published
-    }
+      phase: EntryPhase.Published,
+      parent: parentData?.entryId,
+      parentPaths,
+      locale
+    })
     const mutation: Mutation = {
       type: MutationType.Create,
-      file: entryFile(
-        entry,
-        parentData?.paths ? parentData.paths.concat(parentData.path) : []
-      ),
+      file: entryFile(entry, parentPaths),
       entryId,
       entry
     }
-    const res = set(mutateAtom, mutation)
     set(entryRevisionAtoms(activeVersion.entryId))
-    set(hasChanges, false)
-    return res.catch(error => {
-      set(hasChanges, true)
-      set(
-        errorAtom,
-        'Could not complete translate action, please try again later',
-        error
-      )
+    return set(transact, {
+      clearChanges: true,
+      transition: EntryTransition.SaveTranslation,
+      action: () => set(mutateAtom, mutation),
+      errorMessage:
+        'Could not complete translate action, please try again later'
     })
   })
 
-  const publishEdits = atom(null, (get, set) => {
+  const publishEdits = atom(null, async (get, set) => {
     const currentFile = entryFile(activeVersion)
-    const entry = {...getDraftEntry(), phase: EntryPhase.Published}
+    const update = base64.stringify(edits.getLocalUpdate())
+    const entry = await getDraftEntry({phase: EntryPhase.Published})
     const mutations: Array<Mutation> = []
     const editedFile = entryFile(entry)
     mutations.push({
@@ -299,16 +357,14 @@ export function createEntryEditor(entryData: EntryData) {
       previousFile: currentFile,
       file: editedFile,
       entryId: activeVersion.entryId,
-      entry
+      entry,
+      update
     })
-    set(hasChanges, false)
-    return set(mutateAtom, ...mutations).catch(error => {
-      set(hasChanges, true)
-      set(
-        errorAtom,
-        'Could not complete publish action, please try again later',
-        error
-      )
+    return set(transact, {
+      clearChanges: true,
+      transition: EntryTransition.PublishEdits,
+      action: () => set(mutateAtom, ...mutations),
+      errorMessage: 'Could not complete publish action, please try again later'
     })
   })
 
@@ -316,40 +372,38 @@ export function createEntryEditor(entryData: EntryData) {
     const revision = get(previewRevision)
     if (!revision) return
     const data = await get(revisionData(revision))
-    const entry: EntryRow = {
-      ...activeVersion,
-      phase: EntryPhase.Published,
-      data
-    }
+    const {edits} = entryData
+    edits.applyEntryData(type, data)
+    const update = base64.stringify(edits.getLocalUpdate())
+    const entry = await getDraftEntry({phase: EntryPhase.Published})
     const editedFile = entryFile(entry)
-    return set(mutateAtom, {
+    const mutation: Mutation = {
       type: MutationType.Edit,
       previousFile: editedFile,
       file: editedFile,
       entryId: activeVersion.entryId,
-      entry
-    }).catch(error => {
-      set(hasChanges, true)
-      set(
-        errorAtom,
-        'Could not complete publish action, please try again later',
-        error
-      )
+      entry,
+      update
+    }
+    return set(transact, {
+      clearChanges: true,
+      transition: EntryTransition.RestoreRevision,
+      action: () => set(mutateAtom, mutation),
+      errorMessage: 'Could not complete publish action, please try again later'
     })
   })
 
   const publishDraft = atom(null, (get, set) => {
     const mutation: Mutation = {
       type: MutationType.Publish,
+      phase: EntryPhase.Draft,
       entryId: activeVersion.entryId,
       file: entryFile(activeVersion)
     }
-    return set(mutateAtom, mutation).catch(error => {
-      set(
-        errorAtom,
-        'Could not complete publish action, please try again later',
-        error
-      )
+    return set(transact, {
+      transition: EntryTransition.PublishDraft,
+      action: () => set(mutateAtom, mutation),
+      errorMessage: 'Could not complete publish action, please try again later'
     })
   })
 
@@ -359,12 +413,10 @@ export function createEntryEditor(entryData: EntryData) {
       entryId: activeVersion.entryId,
       file: entryFile(activeVersion)
     }
-    return set(mutateAtom, mutation).catch(error => {
-      set(
-        errorAtom,
-        'Could not complete remove action, please try again later',
-        error
-      )
+    return set(transact, {
+      transition: EntryTransition.DiscardDraft,
+      action: () => set(mutateAtom, mutation),
+      errorMessage: 'Could not complete discard action, please try again later'
     })
   })
 
@@ -375,12 +427,10 @@ export function createEntryEditor(entryData: EntryData) {
       entryId: published.entryId,
       file: entryFile(published)
     }
-    return set(mutateAtom, mutation).catch(error => {
-      set(
-        errorAtom,
-        'Could not complete archive action, please try again later',
-        error
-      )
+    return set(transact, {
+      transition: EntryTransition.ArchivePublished,
+      action: () => set(mutateAtom, mutation),
+      errorMessage: 'Could not complete archive action, please try again later'
     })
   })
 
@@ -388,15 +438,14 @@ export function createEntryEditor(entryData: EntryData) {
     const archived = entryData.phases[EntryPhase.Archived]
     const mutation: Mutation = {
       type: MutationType.Publish,
+      phase: EntryPhase.Archived,
       entryId: archived.entryId,
       file: entryFile(archived)
     }
-    return set(mutateAtom, mutation).catch(error => {
-      set(
-        errorAtom,
-        'Could not complete publish action, please try again later',
-        error
-      )
+    return set(transact, {
+      transition: EntryTransition.PublishArchived,
+      action: () => set(mutateAtom, mutation),
+      errorMessage: 'Could not complete publish action, please try again later'
     })
   })
 
@@ -413,12 +462,10 @@ export function createEntryEditor(entryData: EntryData) {
       file: entryFile(published),
       replace: false
     }
-    return set(mutateAtom, mutation).catch(error => {
-      set(
-        errorAtom,
-        'Could not complete delete action, please try again later',
-        error
-      )
+    return set(transact, {
+      transition: EntryTransition.DeleteFile,
+      action: () => set(mutateAtom, mutation),
+      errorMessage: 'Could not complete delete action, please try again later'
     })
   })
 
@@ -429,28 +476,52 @@ export function createEntryEditor(entryData: EntryData) {
       entryId: archived.entryId,
       file: entryFile(archived)
     }
-    return set(mutateAtom, mutation).catch(error => {
-      set(
-        errorAtom,
-        'Could not complete delete action, please try again later',
-        error
-      )
+    return set(transact, {
+      transition: EntryTransition.DeleteArchived,
+      action: () => set(mutateAtom, mutation),
+      errorMessage: 'Could not complete delete action, please try again later'
     })
   })
 
-  const discardEdits = atom(null, (get, set) => {
-    set(hasChanges, false)
-    set(entryRevisionAtoms(activeVersion.entryId))
-  })
-
-  const activeTitle = yAtom(
-    yDoc.getMap(ROOT_KEY),
-    () => yDoc.getMap(ROOT_KEY).get('title') as string
-  )
-
-  function getDraftEntry(): EntryRow {
-    const entryData = parseYDoc(type, yDoc)
-    return {...activeVersion, ...entryData}
+  async function getDraftEntry(
+    meta: Partial<EntryUrlMeta> & {entryId?: string; parent?: string} = {}
+  ): Promise<EntryRow> {
+    const data = parseYDoc(type, yDoc)
+    const locale = meta.locale ?? activeVersion.locale
+    const path = meta.path ?? data.path
+    const phase = meta.phase ?? activeVersion.phase
+    const entryId = meta.entryId ?? activeVersion.entryId
+    const parent = meta.parent ?? activeVersion.parent
+    const parentPaths = meta.parentPaths ?? entryData.parents.map(p => p.path)
+    const draftEntry = {
+      ...activeVersion,
+      ...data,
+      entryId,
+      parent,
+      locale,
+      path,
+      phase
+    }
+    const filePath = entryFilepath(config, draftEntry, parentPaths)
+    const parentDir = paths.dirname(filePath)
+    const extension = paths.extname(filePath)
+    const fileName = paths.basename(filePath, extension)
+    const [entryPath] = entryInfo(fileName)
+    const childrenDir = paths.join(parentDir, entryPath)
+    const urlMeta: EntryUrlMeta = {
+      locale,
+      path,
+      phase,
+      parentPaths
+    }
+    const url = entryUrl(type, urlMeta)
+    return createEntryRow(config, {
+      ...draftEntry,
+      parentDir,
+      childrenDir,
+      filePath,
+      url
+    })
   }
 
   const revisionsAtom = atom(async get => {
@@ -484,8 +555,11 @@ export function createEntryEditor(entryData: EntryData) {
 
   const selectedState = atom(get => {
     const selected = get(selectedPhase)
+    if (selected === activePhase) return edits.doc
     return docs[selected]
   })
+  const activeTitle = yAtom(edits.root, () => edits.root.get('title') as string)
+
   const revisionState = atom(get => {
     const revision = get(previewRevision)
     return revision ? get(revisionDocState(revision)) : undefined
@@ -496,38 +570,24 @@ export function createEntryEditor(entryData: EntryData) {
   })
   const state = atom(get => {
     const doc = get(currentDoc)
-    return new InputState.YDocState(Type.shape(type), doc.getMap(ROOT_KEY), '')
-  })
-
-  function createPreviewUpdate(entry: EntryRow) {
-    const sourceDoc = createYDoc(type, entryData.sourceEntry)
-    applyEntryData(sourceDoc, type, entry)
-    return Y.encodeStateAsUpdateV2(sourceDoc, yStateVector)
-  }
-
-  const docRevision = atomFamily((doc: Y.Doc) => {
-    let revision = 0
-    return debounceAtom(
-      yAtom(doc.getMap(ROOT_KEY), () => revision++),
-      250
-    )
+    return new InputState.YDocState({
+      shape: Type.shape(type),
+      parentData: doc.getMap(ROOT_KEY),
+      key: '',
+      readOnly: doc !== edits.doc
+    })
   })
 
   // The debounce here prevents React warning us about a state change during
   // render for rich text fields. Some day that should be properly fixed.
-  const yUpdate = debounceAtom(
-    atom(get => {
-      const doc = get(currentDoc)
-      get(docRevision(doc))
-      const entryData = parseYDoc(type, doc)
-      const entry = {...activeVersion, ...entryData}
-      return createPreviewUpdate(entry)
-    }),
-    10
-  )
+  const yUpdate = debounceAtom(edits.yUpdate, 10)
+
+  const discardEdits = edits.resetChanges
+  const isLoading = edits.isLoading
 
   return {
     ...entryData,
+    transition,
     revisionId: createId(),
     activePhase,
     phaseInUrl,
@@ -551,25 +611,11 @@ export function createEntryEditor(entryData: EntryData) {
     deleteArchived,
     saveTranslation,
     discardEdits,
-    isSaving,
+    isLoading,
     showHistory,
-    isPublishing,
-    isArchiving,
     revisionsAtom,
     previewRevision,
     state,
     view
   }
-}
-
-function createChangesAtom(yMap: Y.Map<unknown>) {
-  const hasChanges = atom(false)
-  hasChanges.onMount = (setAtom: (value: boolean) => void) => {
-    const listener = (events: Array<Y.YEvent<any>>, tx: Y.Transaction) => {
-      setAtom(true)
-    }
-    yMap.observeDeep(listener)
-    return () => yMap.unobserveDeep(listener)
-  }
-  return hasChanges
 }

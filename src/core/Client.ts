@@ -1,11 +1,17 @@
 import {AbortController, fetch, Response} from '@alinea/iso'
-import {AlineaMeta} from 'alinea/backend/db/AlineaMeta'
+import {DraftTransport} from 'alinea/backend/Drafts'
 import {Revision} from 'alinea/backend/History'
-import {Config, Connection, EntryPhase, HttpError} from 'alinea/core'
-import {UpdateResponse} from './Connection.js'
+import {
+  Config,
+  Connection,
+  Draft,
+  HttpError,
+  ResolveDefaults
+} from 'alinea/core'
+import {SyncResponse} from './Connection.js'
 import {EntryRecord} from './EntryRecord.js'
 import {Mutation} from './Mutation.js'
-import {Realm} from './pages/Realm.js'
+import {base64} from './util/Encoding.js'
 
 async function failOnHttpError<T>(
   res: Response,
@@ -23,14 +29,7 @@ export interface ClientOptions {
   url: string
   applyAuth?: AuthenticateRequest
   unauthorized?: () => void
-  resolveDefaults?: {
-    realm?: Realm
-    preview?: {
-      entryId: string
-      phase: EntryPhase
-      update: string
-    }
-  }
+  resolveDefaults?: ResolveDefaults
 }
 
 export class Client implements Connection {
@@ -42,6 +41,13 @@ export class Client implements Connection {
     )
   }
 
+  prepareUpload(file: string): Promise<Connection.UploadResponse> {
+    return this.requestJson(Connection.routes.prepareUpload(), {
+      method: 'POST',
+      body: JSON.stringify({filename: file})
+    }).then<Connection.UploadResponse>(failOnHttpError)
+  }
+
   resolve(params: Connection.ResolveParams): Promise<unknown> {
     const {resolveDefaults} = this.options
     const body = JSON.stringify({...resolveDefaults, ...params})
@@ -51,17 +57,18 @@ export class Client implements Connection {
     }).then(failOnHttpError)
   }
 
-  mutate(mutations: Array<Mutation>): Promise<void> {
+  mutate(mutations: Array<Mutation>): Promise<{commitHash: string}> {
     return this.requestJson(Connection.routes.mutate(), {
       method: 'POST',
       body: JSON.stringify(mutations)
-    }).then<void>(res => failOnHttpError(res, false))
+    }).then<{commitHash: string}>(failOnHttpError)
   }
 
   authenticate(applyAuth: AuthenticateRequest, unauthorized: () => void) {
     return new Client({...this.options, applyAuth, unauthorized})
   }
 
+  // History
   revisions(file: string): Promise<Array<Revision>> {
     const params = new URLSearchParams({file})
     return this.requestJson(
@@ -76,26 +83,40 @@ export class Client implements Connection {
     ).then<EntryRecord>(failOnHttpError)
   }
 
-  updates(request: AlineaMeta): Promise<UpdateResponse> {
-    const params = new URLSearchParams()
-    params.append('contentHash', request.contentHash)
-    params.append('modifiedAt', String(request.modifiedAt))
+  // Syncable
+
+  syncRequired(contentHash: string): Promise<boolean> {
+    const params = new URLSearchParams({contentHash})
     return this.requestJson(
-      Connection.routes.updates() + '?' + params.toString()
-    ).then<UpdateResponse>(failOnHttpError)
+      Connection.routes.sync() + '?' + params.toString()
+    ).then<boolean>(failOnHttpError)
   }
 
-  versionIds(): Promise<Array<string>> {
-    return this.requestJson(Connection.routes.versionIds()).then<Array<string>>(
-      failOnHttpError
-    )
-  }
-
-  prepareUpload(file: string): Promise<Connection.UploadResponse> {
-    return this.requestJson(Connection.routes.prepareUpload(), {
+  sync(contentHashes: Array<string>): Promise<SyncResponse> {
+    return this.requestJson(Connection.routes.sync(), {
       method: 'POST',
-      body: JSON.stringify({filename: file})
-    }).then<Connection.UploadResponse>(failOnHttpError)
+      body: JSON.stringify(contentHashes)
+    }).then<SyncResponse>(failOnHttpError)
+  }
+
+  // Drafts
+
+  getDraft(entryId: string): Promise<Draft | undefined> {
+    const params = new URLSearchParams({entryId})
+    return this.requestJson(Connection.routes.draft() + '?' + params.toString())
+      .then<DraftTransport | null>(failOnHttpError)
+      .then(draft =>
+        draft
+          ? {...draft, draft: new Uint8Array(base64.parse(draft.draft))}
+          : undefined
+      )
+  }
+
+  storeDraft(draft: Draft): Promise<void> {
+    return this.requestJson(Connection.routes.draft(), {
+      method: 'POST',
+      body: JSON.stringify({...draft, draft: base64.stringify(draft.draft)})
+    }).then<void>(res => failOnHttpError(res, false))
   }
 
   protected request(endpoint: string, init?: RequestInit): Promise<Response> {

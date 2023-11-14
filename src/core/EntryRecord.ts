@@ -27,8 +27,16 @@ export const EntryRecord = object(
   }
 )
 
-export function createRecord(entry: EntryRow): EntryRecord {
-  const {path, ...data} = entry.data
+interface RequiredEntryFields extends Partial<EntryRow> {
+  entryId: string
+  type: string
+  index: string
+  title: string
+  data: Record<string, any>
+}
+
+export function createRecord(entry: RequiredEntryFields): EntryRecord {
+  const {path, title = entry.title, ...data} = entry.data
   const meta: EntryMeta = {
     entryId: entry.entryId,
     type: entry.type,
@@ -38,7 +46,7 @@ export function createRecord(entry: EntryRow): EntryRecord {
   if (entry.locale && entry.i18nId) meta.i18nId = entry.i18nId
   if (!entry.parent) meta.root = entry.root
   return {
-    title: entry.title,
+    title,
     ...data,
     [META_KEY]: meta
   }

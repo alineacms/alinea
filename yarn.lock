@@ -29,7 +29,7 @@ __metadata:
     cito: ^0.2.0
     dataloader: ^2.1.0
     pretty-ms: ^8.0.0
-    rado: ^0.4.3
+    rado: ^0.4.4
     regexparam: ^2.0.1
     xxhash-wasm: ^1.0.2
   languageName: unknown
@@ -75,9 +75,11 @@ __metadata:
     "@headlessui/react": ^1.7.17
     "@react-hook/size": ^2.1.2
     "@react-hook/window-size": ^3.0.7
+    "@types/debounce-promise": ^3.1.8
     "@types/diff-match-patch": ^1.0.32
     color2k: ^1.2.4
     dataloader: ^2.1.0
+    debounce-promise: ^3.1.2
     diff-match-patch: ^1.0.5
     fflate: ^0.8.0
     jotai: ^2.4.2
@@ -2169,6 +2171,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/debounce-promise@npm:^3.1.8":
+  version: 3.1.8
+  resolution: "@types/debounce-promise@npm:3.1.8"
+  checksum: 50ef1c9843ffef3f72fc7b176a90c231c8e2ece6ccc41bb7efaf9461f9111f337aae19fd55770357d0215d0292bd1c614ce59c8bf25a3d4d3f63be0f0f78b7d2
+  languageName: node
+  linkType: hard
+
 "@types/debug@npm:^4.0.0":
   version: 4.1.8
   resolution: "@types/debug@npm:4.1.8"
@@ -3660,6 +3669,13 @@ __metadata:
   version: 2.1.0
   resolution: "dataloader@npm:2.1.0"
   checksum: bbd43496c41697766f8611f60ed3bae437b450985499140b9603a2447c10d45975d3a0661caaebaa9750bc1bc9fd154676a314423294916c8b8ca1a59a08d139
+  languageName: node
+  linkType: hard
+
+"debounce-promise@npm:^3.1.2":
+  version: 3.1.2
+  resolution: "debounce-promise@npm:3.1.2"
+  checksum: 29bac4524c423cc852319d7455363909ea3d933a3b9e3eb1149d963cffc34c475fe37219d0bafc61af566500b5d663cba579bbad7ee4023bef06f8394ed900ad
   languageName: node
   linkType: hard
 
@@ -8739,10 +8755,10 @@ fsevents@~2.3.2:
   languageName: node
   linkType: hard
 
-"rado@npm:^0.4.3":
-  version: 0.4.3
-  resolution: "rado@npm:0.4.3"
-  checksum: 910cd98e4f5b0fcd2c0fe89eec364c59147bce478cb28400f4165daad14d7977383fca8fc9c5249bdbfc19580c921adadd14bcc4bcef37a5a6014065c62eb642
+"rado@npm:^0.4.4":
+  version: 0.4.4
+  resolution: "rado@npm:0.4.4"
+  checksum: c20af5ed1fbd7d564c915399e94314ab2f91f32f2956aa57e136eb93b82f6357f6639bb118567a5d6834223bd677a24ca5f2644f840ca59c9f14d0e010d216bc
   languageName: node
   linkType: hard
 

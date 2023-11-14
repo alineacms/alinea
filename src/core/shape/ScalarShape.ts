@@ -21,6 +21,10 @@ export class ScalarShape<T> implements Shape<T, ScalarMutator<T>> {
   fromY(yValue: any) {
     return yValue
   }
+  applyY(value: T, parent: Y.Map<any>, key: string): void {
+    const current = parent.get(key)
+    if (current !== value) parent.set(key, value)
+  }
   watch(parent: Y.Map<any>, key: string) {
     return (fun: () => void) => {
       function w(event: Y.YMapEvent<any>) {
@@ -30,8 +34,9 @@ export class ScalarShape<T> implements Shape<T, ScalarMutator<T>> {
       return () => parent.unobserve(w)
     }
   }
-  mutator(parent: Y.Map<any>, key: string) {
+  mutator(parent: Y.Map<any>, key: string, readOnly?: boolean) {
     return (value: T) => {
+      if (readOnly) return
       parent.set(key, value)
     }
   }

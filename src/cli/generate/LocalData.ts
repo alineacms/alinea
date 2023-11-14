@@ -43,8 +43,6 @@ async function filesOfPath(fs: FS, dir: string): Promise<WatchFiles> {
 }
 
 export class LocalData implements Source, Target, Media {
-  canRename = true
-
   constructor(public options: LocalDataOptions) {}
 
   async watchFiles() {
@@ -161,6 +159,7 @@ export class LocalData implements Source, Target, Media {
         }
       }
     }
+    return {commitHash: createId()}
   }
 
   isInMediaLocation(file: string): boolean {
@@ -197,7 +196,10 @@ export class LocalData implements Source, Target, Media {
     }
   }
 
-  async delete({location, workspace}: Connection.DeleteParams): Promise<void> {
+  async deleteUpload({
+    location,
+    workspace
+  }: Connection.DeleteParams): Promise<void> {
     const {fs, rootDir = '.'} = this.options
     const mediaDir = Workspace.data(
       this.options.config.workspaces[workspace]

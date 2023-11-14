@@ -5,8 +5,10 @@ import path from 'node:path'
 import sade from 'sade'
 
 async function run({production, dir, config}) {
+  const forceProduction = process.env.ALINEA_CLOUD_URL
   dotenv.config({path: findConfig('.env')})
-  process.env.NODE_ENV = production ? 'production' : 'development'
+  process.env.NODE_ENV =
+    forceProduction || production ? 'production' : 'development'
   const {serve} = await import('alinea/cli/Serve')
   return serve({
     alineaDev: true,

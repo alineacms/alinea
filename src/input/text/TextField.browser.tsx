@@ -61,7 +61,7 @@ function TextInput({state, field}: TextInputProps) {
           onBlur={() => setFocus(false)}
           placeholder={placeholder}
           autoFocus={autoFocus}
-          disabled={options.readonly}
+          disabled={options.readOnly}
         />
         {IconRight && <IconRight />}
       </HStack>

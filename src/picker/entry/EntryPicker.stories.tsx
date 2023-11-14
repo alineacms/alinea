@@ -1,4 +1,4 @@
-import {example} from 'alinea/backend/test/Example'
+import {createExample} from 'alinea/backend/test/Example'
 import {
   queryClientAtom,
   useSetDashboardOptions
@@ -9,6 +9,7 @@ import {useState} from 'react'
 import {QueryClientProvider} from 'react-query'
 import {EntryPickerModal} from './EntryPicker.browser.js'
 
+const example = createExample()
 const client = await example.connection()
 
 export function ImagePicker() {

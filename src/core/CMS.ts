@@ -1,28 +1,30 @@
 import {Store} from 'alinea/backend/Store'
 import {CloudAuthView} from 'alinea/cloud/view/CloudAuth'
+import {Resolver} from 'alinea/core'
 import {MediaFile, MediaLibrary} from 'alinea/core/media/MediaSchema'
 import {Config, DashboardConfig} from './Config.js'
-import {Connection} from './Connection.js'
 import {GraphRealm, GraphRealmApi} from './Graph.js'
 import {Root} from './Root.js'
 import {Schema} from './Schema.js'
 import {Workspace} from './Workspace.js'
+import {Realm} from './pages/Realm.js'
 import {entries} from './util/Objects.js'
 
 type Attachment = Workspace | Root
 const attached = new WeakMap<Attachment, CMS>()
 
 export interface CMSApi extends GraphRealmApi {
-  connection(): Promise<Connection>
+  resolver(): Promise<Resolver>
 }
 
 export abstract class CMS extends GraphRealm implements Config, CMSApi {
   schema: Schema
   dashboard: DashboardConfig
+  drafts: GraphRealmApi
 
   constructor(config: Config) {
     super(config, async params => {
-      const cnx = await this.connection()
+      const cnx = await this.resolver()
       return cnx.resolve(params)
     })
     this.schema = {
@@ -34,10 +36,17 @@ export abstract class CMS extends GraphRealm implements Config, CMSApi {
       auth: CloudAuthView,
       ...(config.dashboard as DashboardConfig)
     }
+    this.drafts = new GraphRealm(this, async params => {
+      const {resolve} = await this.resolver()
+      return resolve({
+        ...params,
+        realm: Realm.PreferDraft
+      })
+    })
     this.#attach(config)
   }
 
-  abstract connection(): Promise<Connection>
+  abstract resolver(): Promise<Resolver>
   abstract exportStore(cwd: string, store: Uint8Array): Promise<void>
   abstract readStore(): Promise<Store>
 

@@ -1,31 +1,33 @@
+import {Drafts} from 'alinea/backend/Drafts'
 import {History, Revision} from 'alinea/backend/History'
-import {ResolveDefaults} from 'alinea/backend/Resolver'
 import {ChangeSet} from 'alinea/backend/data/ChangeSet'
-import {AlineaMeta} from 'alinea/backend/db/AlineaMeta'
+import {Draft} from './Draft.js'
 import {EntryRecord} from './EntryRecord.js'
 import {EntryRow} from './EntryRow.js'
 import {Mutation} from './Mutation.js'
+import {ResolveDefaults, Resolver} from './Resolver.js'
 import {User} from './User.js'
 import {Selection} from './pages/Selection.js'
 import {Logger} from './util/Logger.js'
 
-export interface UpdateResponse {
-  contentHash: string
-  entries: Array<EntryRow>
+export interface SyncResponse {
+  insert: Array<EntryRow>
+  remove: Array<string>
 }
 
 export interface Syncable {
-  updates(request: AlineaMeta): Promise<UpdateResponse>
-  versionIds(): Promise<Array<string>>
+  syncRequired(contentHash: string): Promise<boolean>
+  sync(contentHashes: Array<string>): Promise<SyncResponse>
 }
 
-export interface Connection extends Syncable, History {
+export interface Connection extends Resolver, Syncable, History, Drafts {
   previewToken(): Promise<string>
-  resolve(params: Connection.ResolveParams): Promise<unknown>
-  mutate(mutations: Array<Mutation>): Promise<void>
+  mutate(mutations: Array<Mutation>): Promise<{commitHash: string}>
   prepareUpload(file: string): Promise<Connection.UploadResponse>
   revisions(file: string): Promise<Array<Revision>>
   revisionData(file: string, revisionId: string): Promise<EntryRecord>
+  getDraft(entryId: string): Promise<Draft | undefined>
+  storeDraft(draft: Draft): Promise<void>
 }
 
 export namespace Connection {
@@ -73,7 +75,8 @@ export namespace Connection {
   export interface RevisionsParams {
     file: string
   }
-  export type MutateParams = {
+  export interface MutateParams {
+    commitHash: string
     mutations: ChangeSet
   }
   export interface AuthContext {
@@ -99,11 +102,11 @@ export namespace Connection {
     revisions() {
       return base + `/revisions`
     },
-    updates() {
-      return base + `/updates`
+    sync() {
+      return base + `/sync`
     },
-    versionIds() {
-      return base + `/versionIds`
+    draft() {
+      return base + `/draft`
     },
     media() {
       return base + `/media`

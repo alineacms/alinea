@@ -1,6 +1,7 @@
 import {JWTPreviews} from 'alinea/backend'
 import {Handler} from 'alinea/backend/Handler'
-import {HttpHandler} from 'alinea/backend/router/Router'
+import {HttpRouter} from 'alinea/backend/router/Router'
+import {createCloudDebugHandler} from 'alinea/cloud/server/CloudDebugHandler'
 import {createCloudHandler} from 'alinea/cloud/server/CloudHandler'
 import {CMS} from 'alinea/core/CMS'
 import {BuildOptions} from 'esbuild'
@@ -10,6 +11,7 @@ import {buildOptions} from './build/BuildOptions.js'
 import {createLocalServer} from './serve/CreateLocalServer.js'
 import {GitHistory} from './serve/GitHistory.js'
 import {LiveReload} from './serve/LiveReload.js'
+import {MemoryDrafts} from './serve/MemoryDrafts.js'
 import {ServeContext} from './serve/ServeContext.js'
 import {startNodeServer} from './serve/StartNodeServer.js'
 import {dirname} from './util/Dirname.js'
@@ -77,34 +79,39 @@ export async function serve(options: ServeOptions): Promise<void> {
       })
     }
   })[Symbol.asyncIterator]()
+  const drafts = new MemoryDrafts()
   let nextGen = gen.next()
   let cms: CMS | undefined
-  let handle: HttpHandler | undefined
+  let handle: HttpRouter | undefined
 
   while (true) {
     const current = await nextGen
     if (!current?.value) return
-    const {cms: currentCMS, localData: fileData} = current.value
+    const {cms: currentCMS, localData: fileData, db} = current.value
     if (currentCMS === cms) {
       context.liveReload.reload('refetch')
     } else {
-      const backend = process.env.ALINEA_CLOUD_URL
-        ? createCloudHandler(
-            currentCMS,
-            current.value.store,
-            process.env.ALINEA_API_KEY
-          )
-        : new Handler({
-            config: currentCMS,
-            store: current.value.store,
-            target: fileData,
-            media: fileData,
-            history: new GitHistory(currentCMS, rootDir),
-            previews: new JWTPreviews('dev')
-          })
+      const backend = createBackend()
       handle = createLocalServer(context, backend)
       cms = currentCMS
       context.liveReload.reload('refresh')
+
+      function createBackend(): Handler {
+        if (process.env.ALINEA_CLOUD_DEBUG)
+          return createCloudDebugHandler(currentCMS, db)
+        if (process.env.ALINEA_CLOUD_URL)
+          return createCloudHandler(currentCMS, db, process.env.ALINEA_API_KEY)
+        return new Handler({
+          config: currentCMS,
+          db,
+          target: fileData,
+          media: fileData,
+          drafts,
+          history: new GitHistory(currentCMS, rootDir),
+          previews: new JWTPreviews('dev'),
+          previewAuthToken: 'dev'
+        })
+      }
     }
     nextGen = gen.next()
     const {serve} = await server

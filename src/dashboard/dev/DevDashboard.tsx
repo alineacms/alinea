@@ -57,8 +57,8 @@ export function DevDashboard({loadConfig}: DevDashboardOptions) {
   useEffect(() => {
     getConfig()
     return setupDevReload({
-      refresh: () => getConfig().then(forceDbUpdate),
-      refetch: forceDbUpdate,
+      refresh: () => getConfig().then(() => forceDbUpdate(true)),
+      refetch: () => forceDbUpdate(true),
       open: () => setConnected(true),
       close: () => setConnected(false)
     })
@@ -69,7 +69,7 @@ export function DevDashboard({loadConfig}: DevDashboardOptions) {
       queryClient={queryClient}
       config={cms}
       client={client!}
-      dev={!process.env.ALINEA_CLOUD_URL}
+      dev={process.env.NODE_ENV === 'development'}
     />
   )
 }

@@ -1,6 +1,5 @@
-import '@ungap/with-resolvers'
 import {Media} from 'alinea/backend/Media'
-import {createContentHash} from 'alinea/backend/util/ContentHash'
+import {createFileHash} from 'alinea/backend/util/ContentHash'
 import {
   Connection,
   Entry,
@@ -14,6 +13,7 @@ import {createId} from 'alinea/core/Id'
 import {Mutation, MutationType} from 'alinea/core/Mutation'
 import {MediaFile} from 'alinea/core/media/MediaSchema'
 import {base64} from 'alinea/core/util/Encoding'
+import {createEntryRow} from 'alinea/core/util/EntryRows'
 import {generateKeyBetween} from 'alinea/core/util/FractionalIndexing'
 import {
   basename,
@@ -30,6 +30,7 @@ import smartcrop from 'smartcrop'
 import {rgbaToThumbHash, thumbHashToAverageRGBA} from 'thumbhash'
 import {useMutate} from '../atoms/DbAtoms.js'
 import {errorAtom} from '../atoms/ErrorAtoms.js'
+import {withResolvers} from '../util/WithResolvers.js'
 import {useConfig} from './UseConfig.js'
 import {useGraph} from './UseGraph.js'
 import {useSession} from './UseSession.js'
@@ -83,12 +84,8 @@ const tasker = {
 
 async function process(
   upload: Upload,
-  createEntry: (upload: Upload) => Promise<{
-    file: string
-    entry: Media.File
-  }>,
-  client: Connection,
-  mutate: (...mutations: Array<Mutation>) => Promise<void>
+  publishUpload: (upload: Upload) => Promise<Media.File>,
+  client: Connection
 ): Promise<Upload> {
   switch (upload.status) {
     case UploadStatus.Queued:
@@ -181,49 +178,7 @@ async function process(
     case UploadStatus.Uploaded: {
       const {replace} = upload
       const info = upload.info!
-      const {file, entry} = await createEntry(upload)
-      if (replace) {
-        await mutate(
-          {
-            type: MutationType.Edit,
-            entryId: replace.entry.entryId,
-            file: replace.entryFile,
-            entry: {
-              ...replace.entry,
-              data: {...entry.data, title: replace.entry.title}
-            }
-          },
-          {
-            type: MutationType.Upload,
-            entryId: entry.entryId,
-            url: info.previewUrl,
-            file: info.location
-          },
-          {
-            type: MutationType.FileRemove,
-            entryId: replace.entry.entryId,
-            file: replace.entryFile,
-            workspace: replace.entry.workspace,
-            location: (replace.entry.data as MediaFile).location,
-            replace: true
-          }
-        )
-      } else {
-        await mutate(
-          {
-            type: MutationType.Create,
-            entryId: entry.entryId,
-            file,
-            entry
-          },
-          {
-            type: MutationType.Upload,
-            entryId: entry.entryId,
-            url: info.previewUrl,
-            file: info.location
-          }
-        )
-      }
+      const entry = await publishUpload(upload)
       return {...upload, result: entry, status: UploadStatus.Done}
     }
     case UploadStatus.Done:
@@ -232,7 +187,7 @@ async function process(
 }
 
 function createBatch(mutate: (...mutations: Array<Mutation>) => Promise<void>) {
-  let trigger = Promise.withResolvers()
+  let trigger = withResolvers()
   let nextRun: any = undefined
   const batch = [] as Array<Mutation>
   async function run() {
@@ -243,7 +198,7 @@ function createBatch(mutate: (...mutations: Array<Mutation>) => Promise<void>) {
     } catch (error) {
       trigger.reject(error)
     } finally {
-      trigger = Promise.withResolvers()
+      trigger = withResolvers()
     }
   }
   return (...mutations: Array<Mutation>) => {
@@ -278,10 +233,6 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
     const entryId = upload.info?.entryId ?? createId()
     const {parentId} = upload.to
     const buffer = await upload.file.arrayBuffer()
-    const contentHash = await createContentHash(
-      EntryPhase.Published,
-      new Uint8Array(buffer)
-    )
     const parent = await graph.preferPublished.maybeGet(
       Entry({entryId: parentId}).select({
         level: Entry.level,
@@ -317,7 +268,8 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
         ? location.slice(prefix.length)
         : location
 
-    const entry: Media.File = {
+    const hash = await createFileHash(new Uint8Array(buffer))
+    const entry = await createEntryRow<Media.File>(config, {
       ...entryLocation,
       parent: parent?.entryId ?? null,
       entryId: entryId,
@@ -334,7 +286,6 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
       parentDir: parentDir,
       filePath,
       childrenDir: filePath.slice(0, -'.json'.length),
-      contentHash,
       active: true,
       main: true,
       data: {
@@ -342,7 +293,7 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
         location: fileLocation,
         extension: extension,
         size: buffer.byteLength,
-        hash: contentHash,
+        hash,
         width: upload.width,
         height: upload.height,
         averageColor: upload.averageColor,
@@ -350,7 +301,7 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
         thumbHash: upload.thumbHash,
         preview: upload.preview
       }
-    }
+    })
     const file = entryFileName(
       config,
       entry,
@@ -371,7 +322,7 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
     }
     while (true) {
       const next = await tasker[upload.status](() =>
-        process(upload, createEntry, client, batchMutations)
+        process(upload, publishUpload, client)
       ).catch(error => {
         return {...upload, error, status: UploadStatus.Done}
       })
@@ -388,6 +339,56 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
         upload = next
       }
     }
+  }
+
+  async function publishUpload(upload: Upload) {
+    const {replace} = upload
+    const info = upload.info!
+    const {file, entry} = await createEntry(upload)
+    if (!replace) {
+      await batchMutations(
+        {
+          type: MutationType.Create,
+          entryId: entry.entryId,
+          file,
+          entry
+        },
+        {
+          type: MutationType.Upload,
+          entryId: entry.entryId,
+          url: info.previewUrl,
+          file: info.location
+        }
+      )
+      return entry
+    }
+    const newEntry = await createEntryRow<Media.File>(config, {
+      ...replace.entry,
+      data: {...entry.data, title: replace.entry.title}
+    })
+    await batchMutations(
+      {
+        type: MutationType.Edit,
+        entryId: replace.entry.entryId,
+        file: replace.entryFile,
+        entry: newEntry
+      },
+      {
+        type: MutationType.Upload,
+        entryId: entry.entryId,
+        url: info.previewUrl,
+        file: info.location
+      },
+      {
+        type: MutationType.FileRemove,
+        entryId: replace.entry.entryId,
+        file: replace.entryFile,
+        workspace: replace.entry.workspace,
+        location: (replace.entry.data as MediaFile).location,
+        replace: true
+      }
+    )
+    return newEntry
   }
 
   async function upload(

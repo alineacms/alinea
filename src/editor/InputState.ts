@@ -23,29 +23,39 @@ export namespace InputState {
   export type Text<T> = readonly [TextDoc<T>, RichTextMutator<T>]
   export type Union<T> = readonly [T, UnionMutator<T>]
 
+  export interface YDocStateOptions<V, M> {
+    shape: Shape<V, M>
+    parentData: Y.Map<any>
+    key: string | undefined
+    parent?: InputState<any>
+    readOnly?: boolean
+  }
+
   export class YDocState<V, M> implements InputState<readonly [V, M]> {
-    constructor(
-      protected shape: Shape<V, M>,
-      protected parentData: Y.Map<any>,
-      protected key: string | undefined,
-      protected _parent?: InputState<any>
-    ) {}
+    constructor(public options: YDocStateOptions<V, M>) {}
     parent() {
-      return this._parent
+      return this.options.parent
     }
     child(field: string): InputState<any> {
-      const {shape, parentData: data, key} = this
+      const {readOnly, shape, parentData: data, key} = this.options
       const child = key ? data.get(key) : data
-      return new YDocState(shape.typeOfChild(child, field), child, field, this)
+      return new YDocState({
+        shape: shape.typeOfChild(child, field),
+        parentData: child,
+        key: field,
+        parent: this,
+        readOnly
+      })
     }
     use() {
-      const value = this.key ? this.parentData.get(this.key) : this.parentData
-      const listener = this.shape.watch(this.parentData, this.key!)
+      const {shape, parentData, key, parent, readOnly} = this.options
+      const value = key ? parentData.get(key) : parentData
+      const listener = shape.watch(parentData, key!)
       const forceUpdate = useForceUpdate()
       useEffect(() => listener(forceUpdate), [this])
       return [
-        this.shape.fromY(value),
-        this.shape.mutator(this.parentData, this.key!)
+        shape.fromY(value),
+        shape.mutator(parentData, key!, Boolean(readOnly))
       ] as const
     }
   }
@@ -67,7 +77,7 @@ export namespace InputState {
       const current = record[field]
       const mutate = (state: V) => {
         if (typeof mutator !== 'function')
-          throw 'Cannot access child field of non-object'
+          throw new Error('Cannot access child field of non-object')
         mutator({...this.current, [field]: state})
       }
       // We don't have any field information here so we can only assume

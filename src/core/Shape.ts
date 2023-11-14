@@ -1,15 +1,9 @@
 import {LinkResolver} from 'alinea/backend/resolver/LinkResolver'
 import * as Y from 'yjs'
 import {Label} from './Label.js'
-import {TextDoc} from './TextDoc.js'
-import {PostProcess} from './pages/PostProcess.js'
-import {ListShape} from './shape/ListShape.js'
 import {RecordShape} from './shape/RecordShape.js'
-import {RichTextShape} from './shape/RichTextShape.js'
-import {ScalarShape} from './shape/ScalarShape.js'
-import {UnionRow, UnionShape} from './shape/UnionShape.js'
 
-type YType = Y.AbstractType<any>
+type YType = Y.Doc | Y.Map<any>
 
 export interface ShapeInfo {
   name: string
@@ -24,44 +18,9 @@ export interface Shape<Value = any, OnChange = any> {
   typeOfChild<C>(yValue: any, child: string): Shape<C, unknown>
   toY(value: Value): any
   fromY(yValue: any): Value
-  watch(parent: YType, key: string): (fun: () => void) => void
-  mutator(parent: Y.Doc | YType, key: string): OnChange
+  applyY(value: Value, parent: YType, key: string): void
+  watch(parent: YType, key: string): (fun: () => void) => () => void
+  mutator(parent: YType, key: string, readOnly: boolean): OnChange
   toString(): string
   applyLinks(value: Value, loader: LinkResolver): Promise<void>
-}
-
-export namespace Shape {
-  export function Scalar<T>(label: Label, initialValue?: T) {
-    return new ScalarShape<T>(label, initialValue)
-  }
-  export function RichText(
-    label: Label,
-    shapes?: Record<string, RecordShape<any>>,
-    initialValue?: TextDoc<any>
-  ) {
-    return new RichTextShape(label, shapes, initialValue)
-  }
-  export function List(
-    label: Label,
-    shapes: Record<string, RecordShape<any>>,
-    initialValue?: Array<any>,
-    postProcess?: PostProcess<Array<any>>
-  ) {
-    return new ListShape(label, shapes, initialValue, postProcess)
-  }
-  export function Record<T>(
-    label: Label,
-    shape: Record<string, Shape<any, unknown>>,
-    initialValue?: T
-  ): RecordShape<T> {
-    return new RecordShape(label, shape, initialValue)
-  }
-  export function Union<T>(
-    label: Label,
-    shapes: Record<string, RecordShape>,
-    initialValue?: UnionRow & T,
-    postProcess?: PostProcess<UnionRow & T>
-  ): UnionShape<T> {
-    return new UnionShape<T>(label, shapes, initialValue, postProcess)
-  }
 }

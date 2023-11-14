@@ -1,40 +1,35 @@
 import sqlite from '@alinea/sqlite-wasm'
-import {Database, JWTPreviews, Media, Server, Target} from 'alinea/backend'
+import {Database, Handler, JWTPreviews} from 'alinea/backend'
 import {Store} from 'alinea/backend/Store'
-import {Connection} from 'alinea/core'
-import {DefaultDriver} from 'alinea/core/driver/DefaultDriver'
 import {connect} from 'rado/driver/sql.js'
-import {CMSApi} from '../CMS.js'
+import {CMS, CMSApi} from '../CMS.js'
 import {Config} from '../Config.js'
+import {Connection} from '../Connection.js'
+import {Resolver} from '../Resolver.js'
 import {Logger} from '../util/Logger.js'
+import {DefaultDriver} from './DefaultDriver.js'
 
 export interface TestApi extends CMSApi {
-  generate(): Promise<void>
+  db: Promise<Database>
+  connection(): Promise<Connection>
 }
 
 class TestDriver extends DefaultDriver implements TestApi {
   store: Promise<Store> = sqlite().then(({Database}) =>
     connect(new Database()).toAsync()
   )
-  server = this.store.then(async store => {
-    const server = new Server(
-      {
-        config: this,
-        store: store,
-        get target(): Target {
-          throw new Error('Test driver cannot publish')
-        },
-        get media(): Media {
-          throw new Error('Test driver has no media backend')
-        },
-        previews: new JWTPreviews('test')
-      },
-      {
-        logger: new Logger('test')
-      }
-    )
-    await server.db.fill({async *entries() {}})
-    return server
+  db = this.store.then(async store => {
+    return new Database(this, store)
+  })
+  handler = this.db.then(async db => {
+    await db.fill({async *entries() {}}, '')
+    const handler = new Handler({
+      config: this,
+      db,
+      previews: new JWTPreviews('test'),
+      previewAuthToken: 'test'
+    })
+    return handler.connect({logger: new Logger('test')})
   })
 
   async readStore(): Promise<Store> {
@@ -42,19 +37,16 @@ class TestDriver extends DefaultDriver implements TestApi {
   }
 
   async connection(): Promise<Connection> {
-    return this.server
+    return this.handler
   }
 
-  async generate() {
-    const db = new Database(await this.store, this)
-    await db.fill({
-      async *entries() {}
-    })
+  async resolver(): Promise<Resolver> {
+    return this.handler
   }
 }
 
 export function createTestCMS<Definition extends Config>(
   config: Definition
-): Definition & TestApi {
+): Definition & TestApi & CMS {
   return new TestDriver(config) as any
 }

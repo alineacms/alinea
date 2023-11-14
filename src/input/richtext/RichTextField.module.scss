@@ -16,6 +16,7 @@
     resize: none;
     cursor: text;
     line-height: 1.5;
+    min-height: 40px;
   }
 
   &-editor.is-focus > * {

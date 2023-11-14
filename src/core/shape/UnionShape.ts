@@ -7,6 +7,7 @@ import {Shape, ShapeInfo} from '../Shape.js'
 import {PostProcess} from '../pages/PostProcess.js'
 import {entries, fromEntries} from '../util/Objects.js'
 import {RecordShape} from './RecordShape.js'
+import {ScalarShape} from './ScalarShape.js'
 
 export type UnionRow = {
   id: string
@@ -31,8 +32,8 @@ export class UnionShape<T> implements Shape<UnionRow & T, UnionMutator<T>> {
         return [
           key,
           new RecordShape(label, {
-            id: Shape.Scalar('Id'),
-            type: Shape.Scalar('Type'),
+            id: new ScalarShape('Id'),
+            type: new ScalarShape('Type'),
             ...type.properties
           })
         ]
@@ -78,6 +79,15 @@ export class UnionShape<T> implements Shape<UnionRow & T, UnionMutator<T>> {
     if (recordType) return recordType.fromY(map) as UnionRow & T
     return {} as UnionRow & T
   }
+  applyY(value: UnionRow & T, parent: Y.Map<any>, key: string): void {
+    const current: Y.Map<any> | undefined = parent.get(key)
+    if (!current || !value) return void parent.set(key, this.toY(value))
+    const currentType = current.get('type')
+    if (currentType !== value.type) return void parent.set(key, this.toY(value))
+    const shape = this.shapes[currentType]
+    if (!shape) return
+    shape.applyY(value, parent, key)
+  }
   watch(parent: Y.Map<any>, key: string) {
     return (fun: () => void) => {
       const observe = (event: Y.YMapEvent<any>) => {
@@ -87,13 +97,15 @@ export class UnionShape<T> implements Shape<UnionRow & T, UnionMutator<T>> {
       return () => parent.unobserve(observe)
     }
   }
-  mutator(parent: Y.Map<any>, key: string): UnionMutator<T> {
+  mutator(parent: Y.Map<any>, key: string, readOnly: boolean): UnionMutator<T> {
     return {
       replace: (v: (UnionRow & T) | undefined) => {
+        if (readOnly) return
         if (!v) parent.set(key, null)
         else parent.set(key, this.toY(v))
       },
       set: (k: any, v: any) => {
+        if (readOnly) return
         const record = parent.get(key)
         const type = record.get('type')
         const shape = this.shapes[type]

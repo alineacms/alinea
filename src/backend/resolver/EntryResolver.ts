@@ -1,18 +1,15 @@
 import {
   Connection,
   Field,
+  PreviewUpdate,
+  ResolveDefaults,
   Schema,
   Type,
-  createYDoc,
-  parseYDoc,
   unreachable
 } from 'alinea/core'
 import {EntrySearch} from 'alinea/core/EntrySearch'
 import {Realm} from 'alinea/core/pages/Realm'
-import {base64url} from 'alinea/core/util/Encoding'
 import {entries, fromEntries, keys} from 'alinea/core/util/Objects'
-import * as Y from 'alinea/yjs'
-import {unzlibSync} from 'fflate'
 import {
   BinOpType,
   Expr,
@@ -28,22 +25,10 @@ import {
   withRecursive
 } from 'rado'
 import {iif, match, count as sqlCount} from 'rado/sqlite'
-import {EntryPhase, EntryRow, EntryTable} from '../core/EntryRow.js'
-import * as pages from '../core/pages/index.js'
-import {Database} from './Database.js'
-import {Store} from './Store.js'
-import {LinkResolver} from './resolver/LinkResolver.js'
-
-export interface PreviewUpdate {
-  entryId: string
-  phase: EntryPhase
-  update: string
-}
-
-export interface ResolveDefaults {
-  realm?: Realm
-  preview?: PreviewUpdate
-}
+import {EntryPhase, EntryRow, EntryTable} from '../../core/EntryRow.js'
+import * as pages from '../../core/pages/index.js'
+import {Database} from '../Database.js'
+import {LinkResolver} from './LinkResolver.js'
 
 const unOps = {
   [pages.UnaryOp.Not]: UnOpType.Not,
@@ -174,10 +159,17 @@ enum ExprContext {
   InAccess = 1 << 2
 }
 
-export class Resolver {
+export class EntryResolver {
   targets: Schema.Targets
 
-  constructor(public store: Store, public schema: Schema) {
+  constructor(
+    public db: Database,
+    public schema: Schema,
+    public parsePreview?: (
+      preview: PreviewUpdate
+    ) => Promise<EntryRow | undefined>,
+    public defaults?: ResolveDefaults
+  ) {
     this.targets = Schema.targets(schema)
   }
 
@@ -702,32 +694,24 @@ export class Resolver {
     selection,
     location,
     locale,
-    realm = Realm.Published,
-    preview
+    realm = this.defaults?.realm ?? Realm.Published,
+    preview = this.defaults?.preview
   }: Connection.ResolveParams): Promise<T> => {
     const ctx = new ResolveContext({realm, location, locale})
     const queryData = this.query(ctx, selection)
     const query = new Query<Interim>(queryData)
     if (preview) {
-      const current = EntryRow({
-        entryId: preview.entryId,
-        active: true
-      })
-      const entry = await this.store(current.maybeFirst())
-      if (entry)
+      const updated = await this.parsePreview?.(preview)
+      if (updated)
         try {
-          // Create yjs doc
-          const type = this.schema[entry.type]
-          const yDoc = createYDoc(type, entry)
-          // Apply update
-          const update = unzlibSync(base64url.parse(preview.update))
-          Y.applyUpdateV2(yDoc, update)
-          const entryData = parseYDoc(type, yDoc)
-          const previewEntry = {...entry, ...entryData}
-          await this.store.transaction(async tx => {
+          await this.db.store.transaction(async tx => {
+            const current = EntryRow({
+              entryId: preview.entryId,
+              active: true
+            })
             // Temporarily add preview entry
             await tx(current.delete())
-            await tx(EntryRow().insert(previewEntry))
+            await tx(EntryRow().insert(updated))
             await Database.index(tx)
             const result = await tx(query)
             const linkResolver = new LinkResolver(this, tx, ctx.realm)
@@ -740,8 +724,8 @@ export class Resolver {
           // console.warn('Could not decode preview update', err)
         }
     }
-    const result = await this.store(query)
-    const linkResolver = new LinkResolver(this, this.store, ctx.realm)
+    const result = await this.db.store(query)
+    const linkResolver = new LinkResolver(this, this.db.store, ctx.realm)
     if (result) await this.post({linkResolver}, result, selection)
     return result
   }

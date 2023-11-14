@@ -17,7 +17,7 @@ export interface DateOptions extends FieldOptions {
   /** Hide this date field */
   hidden?: boolean
   /** Make this date field read-only*/
-  readonly?: boolean
+  readOnly?: boolean
 }
 
 /** Internal representation of a date field */

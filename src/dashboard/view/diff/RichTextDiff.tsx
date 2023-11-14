@@ -85,7 +85,7 @@ export function RichTextDiff({shape, valueA, valueB}: RichTextDiffProps) {
             const name = change.value.block.type
             const kind = shape.values?.[name]
             const compare =
-              change.type === 'unchanged'
+              change.type === 'keep'
                 ? [
                     ('block' in change.old && change.old.block) || {},
                     change.value.block
@@ -112,7 +112,7 @@ export function RichTextDiff({shape, valueA, valueB}: RichTextDiffProps) {
           }
           case 'text': {
             const compare =
-              change.type === 'unchanged'
+              change.type === 'keep'
                 ? ['text' in change.old && change.old.text, change.value.text]
                 : change.type === 'removal'
                 ? [change.value.text, '']

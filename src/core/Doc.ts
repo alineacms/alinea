@@ -8,21 +8,13 @@ export const ROOT_KEY = '#root'
 
 export function createYDoc(type: Type, entry: EntryRow | null) {
   const doc = new Y.Doc({gc: false})
-  const clientID = doc.clientID
-  doc.clientID = 1
-  doc.transact(() => {
-    const docRoot = doc.getMap(ROOT_KEY)
-    if (!entry) return
-    for (const [key, field] of entries(type)) {
-      const contents = entry.data[key]
-      docRoot.set(key, Field.shape(field).toY(contents))
-    }
-  })
-  doc.clientID = clientID
+  if (entry) applyEntryData(doc, type, entry)
   return doc
 }
 
 export function applyEntryData(doc: Y.Doc, type: Type, entry: EntryRow) {
+  const clientID = doc.clientID
+  doc.clientID = 1
   doc.transact(() => {
     const docRoot = doc.getMap(ROOT_KEY)
     for (const [key, field] of entries(type)) {
@@ -31,6 +23,7 @@ export function applyEntryData(doc: Y.Doc, type: Type, entry: EntryRow) {
       docRoot.set(key, Field.shape(field).toY(contents))
     }
   })
+  doc.clientID = clientID
 }
 
 export function parseYDoc(type: Type, doc: Y.Doc) {

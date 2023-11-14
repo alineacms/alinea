@@ -41,7 +41,7 @@ export class FormState<V extends Record<string, any>, M>
     const {root, shape, key, attach} = this.options
     const {current, mutator, observe} = useMemo(() => {
       const current = (): V => shape.fromY(root.get(key))
-      const mutator = shape.mutator(root, key) as any
+      const mutator = shape.mutator(root, key, false) as any
       const observe = (fun: () => void) => {
         const record = root.get(key)
         record.observeDeep(fun)

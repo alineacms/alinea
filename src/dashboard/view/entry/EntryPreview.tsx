@@ -1,4 +1,4 @@
-import {PreviewUpdate} from 'alinea/backend/Resolver'
+import {PreviewUpdate} from 'alinea/core'
 import {base64url} from 'alinea/core/util/Encoding'
 import {zlibSync} from 'fflate'
 import {useAtomValue} from 'jotai'

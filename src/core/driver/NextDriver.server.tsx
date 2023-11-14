@@ -1,4 +1,4 @@
-import {JWTPreviews, Media, Server, Target} from 'alinea/backend'
+import {JWTPreviews} from 'alinea/backend'
 import {createCloudHandler} from 'alinea/cloud/server/CloudHandler'
 import {parseChunkedCookies} from 'alinea/preview/ChunkCookieValue'
 import {
@@ -9,15 +9,14 @@ import {
 import {enums, object, string} from 'cito'
 import PLazy from 'p-lazy'
 import {Suspense, lazy} from 'react'
-import {Client, ClientOptions} from '../Client.js'
+import {Client} from '../Client.js'
 import {Config} from '../Config.js'
-import {Connection} from '../Connection.js'
 import {Entry} from '../Entry.js'
 import {EntryPhase} from '../EntryRow.js'
 import {outcome} from '../Outcome.js'
+import {ResolveDefaults, Resolver} from '../Resolver.js'
 import {Realm} from '../pages/Realm.js'
 import {Selection} from '../pages/Selection.js'
-import {Logger} from '../util/Logger.js'
 import {DefaultDriver} from './DefaultDriver.server.js'
 import {NextApi} from './NextDriver.js'
 
@@ -30,14 +29,13 @@ const SearchParams = object({
 class NextDriver extends DefaultDriver implements NextApi {
   apiKey = process.env.ALINEA_API_KEY
   jwtSecret = this.apiKey || 'dev'
-  store = PLazy.from(this.readStore.bind(this))
 
-  async connection(): Promise<Connection> {
+  async resolver(): Promise<Resolver> {
     const {cookies, draftMode} = await import('next/headers.js')
     const [draftStatus] = outcome(() => draftMode())
     const isDraft = draftStatus?.isEnabled
     const devUrl = process.env.ALINEA_DEV_SERVER
-    const resolveDefaults: ClientOptions['resolveDefaults'] = {
+    const resolveDefaults: ResolveDefaults = {
       realm: Realm.Published
     }
     if (isDraft) {
@@ -60,36 +58,19 @@ class NextDriver extends DefaultDriver implements NextApi {
         url: devUrl,
         resolveDefaults
       })
-    const store = await this.store
-    return new Server(
-      {
-        config: this.config,
-        store,
-        get media(): Media {
-          throw new Error('Cannot access local media')
-        },
-        get target(): Target {
-          throw new Error('Cannot access local target')
-        },
-        previews: new JWTPreviews(this.jwtSecret),
-        resolveDefaults
-      },
-      {logger: new Logger('CMSDriver')}
-    )
+    const handler = await this.cloudHandler
+    return handler.resolver
   }
 
   backendHandler = async (request: Request) => {
     const handler = await this.cloudHandler
-    return handler(request)
+    const response = await handler.router.handle(request)
+    return response ?? new Response('Not found', {status: 404})
   }
 
   cloudHandler = PLazy.from(async () => {
-    const store = await this.store
-    const handler = createCloudHandler(this, store, this.apiKey)
-    return async (request: Request) => {
-      const response = await handler.handle(request)
-      return response ?? new Response('Not found', {status: 404})
-    }
+    const db = await this.db
+    return createCloudHandler(this, db, this.apiKey)
   })
 
   previewHandler = async (request: Request) => {
@@ -108,7 +89,7 @@ class NextDriver extends DefaultDriver implements NextApi {
       cookies().delete(PREVIEW_ENTRYID_NAME)
       cookies().delete(PREVIEW_PHASE_NAME)
     }
-    const cnx = (await this.connection()) as Client
+    const cnx = (await this.resolver()) as Client
     const url = (await cnx.resolve({
       selection: Selection.create(
         Entry({entryId: params.entryId}).select(Entry.url).first()

@@ -1,4 +1,4 @@
-import {Entry, EntryPhase, EntryRow, Type, createId, slugify} from 'alinea/core'
+import {Entry, EntryPhase, Type, createId, slugify} from 'alinea/core'
 import {
   entryChildrenDir,
   entryFileName,
@@ -6,6 +6,7 @@ import {
 } from 'alinea/core/EntryFilenames'
 import {MutationType} from 'alinea/core/Mutation'
 import {Projection} from 'alinea/core/pages/Projection'
+import {createEntryRow} from 'alinea/core/util/EntryRows'
 import {generateKeyBetween} from 'alinea/core/util/FractionalIndexing'
 import {entries, fromEntries, keys} from 'alinea/core/util/Objects'
 import {dirname} from 'alinea/core/util/Paths'
@@ -127,7 +128,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
   const [isCreating, setIsCreating] = useState(false)
   const updateEntries = useSetAtom(changedEntriesAtom)
 
-  function handleCreate(e: FormEvent) {
+  async function handleCreate(e: FormEvent) {
     e.preventDefault()
     const title = titleField()
     const selected = selectedType()
@@ -147,7 +148,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
     const parentDir = dirname(filePath)
     const url =
       (parent?.url || '') + (parent?.url.endsWith('/') ? '' : '/') + path
-    const entry: EntryRow = {
+    const entry = await createEntryRow(config, {
       entryId,
       ...data,
       filePath,
@@ -165,38 +166,36 @@ function NewEntryForm({parentId}: NewEntryProps) {
       modifiedAt: Date.now(),
       active: true,
       main: false,
-      contentHash: '', // Todo: set content hash here
       data: {title, path},
       searchableText: ''
-    }
-    const result = mutate({
+    })
+    return mutate({
       type: MutationType.Create,
       entryId: entry.entryId,
       entry,
       file: entryFileName(config, data, parentPaths)
+    }).then(() => {
+      setIsCreating(false)
+      navigate(nav.entry({entryId: entry.i18nId}))
+      if (entry.parent) updateEntries([entry.parent])
     })
-    navigate(nav.entry({entryId: entry.i18nId}))
-    if (entry.parent) updateEntries([entry.parent])
-    return result
   }
   return (
-    <form onSubmit={handleCreate}>
-      {isCreating ? (
-        <Loader absolute />
-      ) : (
-        <>
-          {/*parent && <ParentView {...parent} />*/}
-          <InputField {...parentField} />
-          <InputField {...titleField} />
-          <InputField {...selectedType} />
-          <div className={styles.root.footer()}>
-            <Link href={pathname} className={styles.root.footer.link()}>
-              Cancel
-            </Link>
-            <Button>Create</Button>
-          </div>
-        </>
-      )}
+    <form
+      onSubmit={handleCreate}
+      className={styles.form({loading: isCreating})}
+    >
+      {isCreating && <Loader absolute />}
+      {/*parent && <ParentView {...parent} />*/}
+      <InputField {...parentField} />
+      <InputField {...titleField} />
+      <InputField {...selectedType} />
+      <div className={styles.root.footer()}>
+        <Link href={pathname} className={styles.root.footer.link()}>
+          Cancel
+        </Link>
+        <Button>Create</Button>
+      </div>
     </form>
   )
 }

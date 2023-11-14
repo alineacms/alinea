@@ -14,3 +14,17 @@
     }
   }
 }
+
+.form {
+  &.is-loading {
+    pointer-events: none;
+
+    &:after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: hsla(var(--alinea-negative), 0.1);
+      z-index: 1;
+    }
+  }
+}

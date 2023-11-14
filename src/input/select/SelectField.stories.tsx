@@ -12,7 +12,7 @@ const options = {
 export function SelectField() {
   const selectField = useField(select('Select', options))
   const readonlySelectField = useField(
-    select('Select (read-only)', options, {readonly: true, initialValue: '1'})
+    select('Select (read-only)', options, {readOnly: true, initialValue: '1'})
   )
   return (
     <UIStory>

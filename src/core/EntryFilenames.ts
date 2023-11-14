@@ -1,11 +1,10 @@
 import {JsonLoader} from 'alinea/backend'
 import {Config} from './Config.js'
-import {EntryPhase, EntryRow} from './EntryRow.js'
+import {ALT_STATUS, EntryPhase, EntryRow} from './EntryRow.js'
+import {EntryUrlMeta, Type} from './Type.js'
 import {Workspace} from './Workspace.js'
 import {values} from './util/Objects.js'
 import {join} from './util/Paths.js'
-
-const ALT_STATUS = [EntryPhase.Draft, EntryPhase.Archived]
 
 export function workspaceMediaDir(config: Config, workspace: string): string {
   return Workspace.data(config.workspaces[workspace])?.mediaDir ?? ''
@@ -106,4 +105,20 @@ export function entryFile(config: Config, entry: EntryRow) {
   const root = Workspace.roots(workspace)[entry.root]
   if (!root) throw new Error(`Root "${entry.root}" does not exist`)
   return join(contentDir, entry.root, filePath)
+}
+
+export function entryUrl(type: Type, meta: EntryUrlMeta) {
+  const {entryUrl} = Type.meta(type)
+  if (entryUrl) return entryUrl(meta)
+  const segments = meta.locale ? [meta.locale] : []
+  return (
+    '/' +
+    segments
+      .concat(
+        meta.parentPaths
+          .concat(meta.path)
+          .filter(segment => segment !== 'index')
+      )
+      .join('/')
+  )
 }

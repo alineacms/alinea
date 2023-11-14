@@ -21,7 +21,7 @@ export namespace Statusbar {
   }
 
   export type StatusProps = PropsWithChildren<{
-    icon: ComponentType
+    icon?: ComponentType
   }>
 
   export function Status({children, icon}: StatusProps) {

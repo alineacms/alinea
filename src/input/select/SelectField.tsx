@@ -21,7 +21,7 @@ export interface SelectConfig<Key> extends FieldOptions {
   /** Hide this select field */
   hidden?: boolean
   /** Make this select field read-only */
-  readonly?: boolean
+  readOnly?: boolean
 }
 
 export interface SelectOptions<Key, Items> extends SelectConfig<Key> {

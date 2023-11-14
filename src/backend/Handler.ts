@@ -1,11 +1,241 @@
 import {Request, Response} from '@alinea/iso'
-import {Auth, Connection, EntryPhase} from 'alinea/core'
+import {
+  Auth,
+  Config,
+  Connection,
+  Draft,
+  Entry,
+  EntryPhase,
+  EntryRow,
+  PreviewUpdate,
+  ResolveDefaults,
+  SyncResponse,
+  parseYDoc
+} from 'alinea/core'
+import {EntryRecord} from 'alinea/core/EntryRecord'
+import {EditMutation, Mutation, MutationType} from 'alinea/core/Mutation'
 import {Realm} from 'alinea/core/pages/Realm'
 import {Selection} from 'alinea/core/pages/Selection'
+import {base64, base64url} from 'alinea/core/util/Encoding'
 import {Logger, LoggerResult, Report} from 'alinea/core/util/Logger'
+import * as Y from 'alinea/yjs'
 import {Type, enums, object, string} from 'cito'
-import {Server, ServerOptions} from './Server.js'
-import {Handle, Route, router} from './router/Router.js'
+import {unzlibSync} from 'fflate'
+import {mergeUpdatesV2} from 'yjs'
+import {Database} from './Database.js'
+import {DraftTransport, Drafts} from './Drafts.js'
+import {History, Revision} from './History.js'
+import {Media} from './Media.js'
+import {Pending} from './Pending.js'
+import {Previews} from './Previews'
+import {Target} from './Target.js'
+import {ChangeSetCreator} from './data/ChangeSet.js'
+import {EntryResolver} from './resolver/EntryResolver.js'
+import {Route, router} from './router/Router.js'
+
+export interface HandlerOptions {
+  config: Config
+  db: Database
+  previews: Previews
+  previewAuthToken: string
+  auth?: Auth.Server
+  target?: Target
+  media?: Media
+  drafts?: Drafts
+  history?: History
+  pending?: Pending
+  resolveDefaults?: ResolveDefaults
+}
+
+export class Handler {
+  connect: (ctx: Connection.Context) => Connection
+  router: Route<Request, Response | undefined>
+  resolver: EntryResolver
+  changes: ChangeSetCreator
+  lastSync = 0
+
+  constructor(public options: HandlerOptions) {
+    this.resolver = new EntryResolver(
+      options.db,
+      options.config.schema,
+      this.parsePreview.bind(this)
+    )
+    this.changes = new ChangeSetCreator(options.config)
+    const auth = options.auth || Auth.anonymous()
+    this.connect = ctx => new HandlerConnection(this, ctx)
+    this.router = createRouter(auth, this.connect)
+  }
+
+  previewAuth(): Connection.Context {
+    return {
+      logger: new Logger('parsePreview'),
+      token: this.options.previewAuthToken
+    }
+  }
+
+  async parsePreview(preview: PreviewUpdate) {
+    const {config} = this.options
+    await this.periodicSync()
+    const update = unzlibSync(base64url.parse(preview.update))
+    const entry = await this.resolver.resolve<EntryRow>({
+      selection: Selection.create(
+        Entry({entryId: preview.entryId}).maybeFirst()
+      ),
+      realm: Realm.PreferDraft
+    })
+    if (!entry) return
+    const currentDraft = await this.options.drafts?.getDraft(
+      preview.entryId,
+      this.previewAuth()
+    )
+    const apply = currentDraft
+      ? mergeUpdatesV2([currentDraft.draft, update])
+      : update
+    const type = config.schema[entry.type]
+    if (!type) return
+    const doc = new Y.Doc()
+    Y.applyUpdateV2(doc, apply)
+    const entryData = parseYDoc(type, doc)
+    return {...entry, ...entryData, path: entry.path}
+  }
+
+  async periodicSync() {
+    if (Date.now() - this.lastSync > 30_000) return
+    try {
+      await this.syncPending()
+    } catch {}
+    this.lastSync = Date.now()
+  }
+
+  async syncPending() {
+    const {pending, db} = this.options
+    const meta = await db.meta()
+    if (!pending) return meta
+    const toApply = await pending.pendingSince(
+      meta.commitHash,
+      this.previewAuth()
+    )
+    if (!toApply) return meta
+    await db.applyMutations(toApply.mutations, toApply.toCommitHash)
+    return db.meta()
+  }
+}
+
+class HandlerConnection implements Connection {
+  constructor(protected handler: Handler, protected ctx: Connection.Context) {}
+
+  // Resolver
+
+  resolve = async (params: Connection.ResolveParams) => {
+    const {resolveDefaults} = this.handler.options
+    await this.handler.periodicSync()
+    return this.handler.resolver.resolve({...resolveDefaults, ...params})
+  }
+
+  // Target
+
+  async mutate(mutations: Array<Mutation>): Promise<{commitHash: string}> {
+    const {target, media, db} = this.handler.options
+    if (!target) throw new Error('Target not available')
+    if (!media) throw new Error('Media not available')
+    const changeSet = this.handler.changes.create(mutations)
+    const {commitHash: fromCommitHash} = await this.handler.syncPending()
+    const {commitHash: toCommitHash} = await target.mutate(
+      {commitHash: fromCommitHash, mutations: changeSet},
+      this.ctx
+    )
+    await db.applyMutations(mutations, toCommitHash)
+    const tasks = []
+    for (const mutation of mutations) {
+      switch (mutation.type) {
+        case MutationType.FileRemove:
+          tasks.push(
+            media.deleteUpload(
+              {location: mutation.location, workspace: mutation.workspace},
+              this.ctx
+            )
+          )
+          continue
+        case MutationType.Edit:
+          tasks.push(this.persistEdit(mutation))
+          continue
+      }
+    }
+    await Promise.all(tasks)
+    return {commitHash: toCommitHash}
+  }
+
+  previewToken(): Promise<string> {
+    const {previews} = this.handler.options
+    const user = this.ctx.user
+    if (!user) return previews.sign({anonymous: true})
+    return previews.sign({sub: user.sub})
+  }
+
+  // Media
+
+  prepareUpload(file: string): Promise<Connection.UploadResponse> {
+    const {media} = this.handler.options
+    if (!media) throw new Error('Media not available')
+    return media.prepareUpload(file, this.ctx)
+  }
+
+  // History
+
+  async revisions(file: string): Promise<Array<Revision>> {
+    const {history} = this.handler.options
+    if (!history) return []
+    return history.revisions(file, this.ctx)
+  }
+
+  async revisionData(file: string, revisionId: string): Promise<EntryRecord> {
+    const {history} = this.handler.options
+    if (!history) throw new Error('History not available')
+    return history.revisionData(file, revisionId, this.ctx)
+  }
+
+  // Syncable
+
+  async syncRequired(contentHash: string): Promise<boolean> {
+    const {db} = this.handler.options
+    await this.handler.syncPending()
+    return db.syncRequired(contentHash)
+  }
+
+  async sync(contentHashes: Array<string>): Promise<SyncResponse> {
+    const {db} = this.handler.options
+    await this.handler.syncPending()
+    return db.sync(contentHashes)
+  }
+
+  // Drafts
+
+  private async persistEdit(mutation: EditMutation) {
+    const {drafts} = this.handler.options
+    if (!drafts || !mutation.update) return
+    const update = base64.parse(mutation.update)
+    const currentDraft = await this.getDraft(mutation.entryId)
+    await this.storeDraft({
+      entryId: mutation.entryId,
+      fileHash: mutation.entry.fileHash,
+      draft: currentDraft
+        ? mergeUpdatesV2([currentDraft.draft, update])
+        : update
+    })
+  }
+
+  getDraft(entryId: string): Promise<Draft | undefined> {
+    const {drafts} = this.handler.options
+    if (!drafts) throw new Error('Drafts not available')
+    return drafts.getDraft(entryId, this.ctx)
+  }
+
+  storeDraft(draft: Draft): Promise<void> {
+    const {drafts} = this.handler.options
+    if (!drafts) throw new Error('Drafts not available')
+    return drafts.storeDraft(draft, this.ctx)
+  }
+}
 
 function respond<T>({result, logger}: LoggerResult<T>) {
   return router.jsonResponse(result, {
@@ -44,7 +274,7 @@ function createRouter(
     }
   }
   return router(
-    auth.handler,
+    auth.router,
 
     matcher
       .get(Connection.routes.previewToken())
@@ -54,6 +284,8 @@ function createRouter(
         return ctx.logger.result(api.previewToken())
       })
       .map(respond),
+
+    // History
 
     matcher
       .get(Connection.routes.revisions())
@@ -79,6 +311,8 @@ function createRouter(
       })
       .map(respond),
 
+    // Target
+
     matcher
       .post(Connection.routes.mutate())
       .map(context)
@@ -91,25 +325,31 @@ function createRouter(
       })
       .map(respond),
 
+    // Syncable
+
     matcher
-      .get(Connection.routes.updates())
+      .get(Connection.routes.sync())
       .map(context)
       .map(({ctx, url}) => {
         const api = createApi(ctx)
         const contentHash = url.searchParams.get('contentHash')!
-        const modifiedAt = Number(url.searchParams.get('modifiedAt'))!
-        return ctx.logger.result(api.updates({contentHash, modifiedAt}))
+        return ctx.logger.result(api.syncRequired(contentHash))
       })
       .map(respond),
 
     matcher
-      .get(Connection.routes.versionIds())
+      .post(Connection.routes.sync())
       .map(context)
-      .map(({ctx}) => {
+      .map(router.parseJson)
+      .map(({ctx, body}) => {
         const api = createApi(ctx)
-        return ctx.logger.result(api.versionIds())
+        if (!Array.isArray(body)) throw new Error(`Array expected`)
+        const contentHashes = body as Array<string>
+        return ctx.logger.result(api.sync(contentHashes))
       })
       .map(respond),
+
+    // Media
 
     matcher
       .post(Connection.routes.prepareUpload())
@@ -120,20 +360,35 @@ function createRouter(
         const {filename} = PrepareBody(body)
         return ctx.logger.result(api.prepareUpload(filename))
       })
+      .map(respond),
+
+    // Drafts
+
+    matcher
+      .get(Connection.routes.draft())
+      .map(context)
+      .map(({ctx, url}) => {
+        const api = createApi(ctx)
+        const entryId = url.searchParams.get('entryId')!
+        return ctx.logger.result(
+          api.getDraft(entryId).then(draft => {
+            if (!draft) return null
+            return {...draft, draft: base64.stringify(draft.draft)}
+          })
+        )
+      })
+      .map(respond),
+
+    matcher
+      .post(Connection.routes.draft())
+      .map(context)
+      .map(router.parseJson)
+      .map(({ctx, body}) => {
+        const api = createApi(ctx)
+        const data = body as DraftTransport
+        const draft = {...data, draft: new Uint8Array(base64.parse(data.draft))}
+        return ctx.logger.result(api.storeDraft(draft))
+      })
       .map(respond)
   ).recover(router.reportError)
-}
-
-export interface HandlerOptions extends ServerOptions {
-  auth?: Auth.Server
-}
-
-export class Handler {
-  handle: Handle<Request, Response | undefined>
-
-  constructor(public options: HandlerOptions) {
-    const auth = options.auth || Auth.anonymous()
-    const {handle} = createRouter(auth, context => new Server(options, context))
-    this.handle = handle
-  }
 }

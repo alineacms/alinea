@@ -7,7 +7,7 @@ import {UIStory} from 'alinea/ui/UIStory'
 export function JsonField() {
   const jsonField = useField(json('Json'))
   const focusedJsonField = useField(json('Json (autofocus)', {autoFocus: true}))
-  const readonlyJsonField = useField(json('Json (read-only)', {readonly: true}))
+  const readonlyJsonField = useField(json('Json (read-only)', {readOnly: true}))
   return (
     <UIStory>
       <VStack>

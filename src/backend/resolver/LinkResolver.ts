@@ -5,8 +5,8 @@ import {Selection} from 'alinea/core/pages/Selection'
 import {serializeSelection} from 'alinea/core/pages/Serialize'
 import DataLoader from 'dataloader'
 import {Query} from 'rado'
-import {ResolveContext, Resolver} from '../Resolver.js'
 import {Store} from '../Store.js'
+import {EntryResolver, ResolveContext} from './EntryResolver.js'
 
 interface LinkData {
   entryId: string
@@ -17,7 +17,7 @@ export class LinkResolver {
   loaders = new Map<Projection, DataLoader<string, object>>()
 
   constructor(
-    public resolver: Resolver,
+    public resolver: EntryResolver,
     public store: Store,
     public realm: Realm
   ) {}

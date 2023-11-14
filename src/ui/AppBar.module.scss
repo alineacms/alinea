@@ -36,8 +36,7 @@
       background: var(--alinea-variant-disabled-background);
     }
   }
-  &.is-publishing,
-  &.is-archiving {
+  &.is-transition {
     color: var(--alinea-variant-progress-foreground);
     &::before {
       background: var(--alinea-variant-progress-background);

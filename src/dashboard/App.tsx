@@ -1,7 +1,9 @@
 import {Config, Connection, Root, renderLabel} from 'alinea/core'
 import {Icon, Loader, px} from 'alinea/ui'
+import {Statusbar} from 'alinea/ui/Statusbar'
 import {FavIcon} from 'alinea/ui/branding/FavIcon'
 import {IcRoundDescription} from 'alinea/ui/icons/IcRoundDescription'
+import {MaterialSymbolsDatabase} from 'alinea/ui/icons/MaterialSymbolsDatabase'
 import {MdiSourceBranch} from 'alinea/ui/icons/MdiSourceBranch'
 import {atom, useAtom, useAtomValue} from 'jotai'
 import {useEffect} from 'react'
@@ -16,11 +18,10 @@ import {
   sessionAtom,
   useSetDashboardOptions
 } from './atoms/DashboardAtoms.js'
-import {useDbUpdater} from './atoms/DbAtoms.js'
+import {dbHashAtom, useDbUpdater} from './atoms/DbAtoms.js'
 import {errorAtom} from './atoms/ErrorAtoms.js'
 import {locationAtom, matchAtoms, useLocation} from './atoms/LocationAtoms.js'
 import {usePreferredLanguage} from './atoms/NavigationAtoms.js'
-import {pendingAtom} from './atoms/PendingAtoms.js'
 import {RouteView, RouterProvider} from './atoms/RouterAtoms.js'
 import {useDashboard} from './hook/UseDashboard.js'
 import {useEntryLocation} from './hook/UseEntryLocation.js'
@@ -67,9 +68,8 @@ const isEntryAtom = atom(get => {
 })
 
 function AppAuthenticated() {
-  const pending = useAtomValue(pendingAtom)
-  useDbUpdater(pending.length > 0 ? 30 : 60)
-  const {fullPage} = useDashboard()
+  useDbUpdater()
+  const {alineaDev, fullPage} = useDashboard()
   const nav = useNav()
   const isEntry = useAtomValue(isEntryAtom)
   const {name: workspace, color, roots} = useWorkspace()
@@ -78,6 +78,7 @@ function AppAuthenticated() {
   const locale = useLocale()
   const [preferredLanguage, setPreferredLanguage] = usePreferredLanguage()
   const [errorMessage, setErrorMessage] = useAtom(errorAtom)
+  const dbHash = useAtomValue(dbHashAtom)
   useEffect(() => {
     setPreferredLanguage(locale)
   }, [locale])
@@ -88,9 +89,9 @@ function AppAuthenticated() {
           <div style={{padding: px(16)}}>{errorMessage}</div>
         </Modal>
       )}
-      <Toolbar.Provider>
-        <Sidebar.Provider>
-          <Viewport attachToBody={fullPage} contain color={color}>
+      <Statusbar.Provider>
+        <Toolbar.Provider>
+          <Sidebar.Provider>
             <Head>
               <FavIcon color={color} />
             </Head>
@@ -134,9 +135,16 @@ function AppAuthenticated() {
                 </SuspenseBoundary>
               </ErrorBoundary>
             </div>
-          </Viewport>
-        </Sidebar.Provider>
-      </Toolbar.Provider>
+            {alineaDev && (
+              <Statusbar.Root>
+                <Statusbar.Status icon={MaterialSymbolsDatabase}>
+                  {dbHash}
+                </Statusbar.Status>
+              </Statusbar.Root>
+            )}
+          </Sidebar.Provider>
+        </Toolbar.Provider>
+      </Statusbar.Provider>
     </>
   )
 }
@@ -148,7 +156,7 @@ function AppRoot() {
   const Auth = config.dashboard?.auth
   if (!session)
     return (
-      <Viewport attachToBody={fullPage} contain color={color}>
+      <>
         <Head>
           <FavIcon color={color} />
         </Head>
@@ -157,14 +165,16 @@ function AppRoot() {
             <Auth setSession={setSession} />
           </SuspenseBoundary>
         )}
-      </Viewport>
+      </>
     )
   return (
-    <SuspenseBoundary name="router" fallback={<Loader absolute />}>
-      <RouterProvider router={router}>
-        <AppAuthenticated />
-      </RouterProvider>
-    </SuspenseBoundary>
+    <>
+      <SuspenseBoundary name="router" fallback={<Loader absolute />}>
+        <RouterProvider router={router}>
+          <AppAuthenticated />
+        </RouterProvider>
+      </SuspenseBoundary>
+    </>
   )
 }
 
@@ -177,14 +187,19 @@ export interface AppProps {
   queryClient?: QueryClient
   fullPage?: boolean
   dev?: boolean
+  alineaDev?: boolean
 }
 
 export function App(props: AppProps) {
-  useSetDashboardOptions({fullPage: props.fullPage !== false, ...props})
+  const fullPage = props.fullPage !== false
+  useSetDashboardOptions({fullPage, ...props})
+  const {color} = Config.mainWorkspace(props.config)
   const queryClient = useAtomValue(queryClientAtom)
   return (
     <QueryClientProvider client={queryClient}>
-      <AppRoot />
+      <Viewport attachToBody={fullPage} contain color={color}>
+        <AppRoot />
+      </Viewport>
       <ModalPortal />
     </QueryClientProvider>
   )

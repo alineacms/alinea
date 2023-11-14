@@ -11,8 +11,9 @@
 
 .status {
   display: flex;
+  align-items: center;
   height: 100%;
   font-size: 0.8em;
-  cursor: pointer;
   padding: 0 6px;
+  cursor: default;
 }
