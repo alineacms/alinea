@@ -3,7 +3,8 @@ import {TextDoc} from 'alinea/core/TextDoc'
 import {ListMutator} from 'alinea/core/shape/ListShape'
 import {RecordMutator} from 'alinea/core/shape/RecordShape'
 import {UnionMutator} from 'alinea/core/shape/UnionShape'
-import {useCallback, useSyncExternalStore} from 'react'
+import {useForceUpdate} from 'alinea/ui/hook/UseForceUpdate'
+import {useEffect} from 'react'
 import * as Y from 'yjs'
 
 export interface InputState<T = any> {
@@ -49,15 +50,9 @@ export namespace InputState {
     use() {
       const {shape, parentData, key, parent, readOnly} = this.options
       const value = key ? parentData.get(key) : parentData
-      const subscribe = useCallback(
-        (onChange: () => void) => {
-          const listener = shape.watch(parentData, key!)
-          return listener(onChange)
-        },
-        [shape, parentData]
-      )
-      const snapShot = () => null
-      const current = useSyncExternalStore(subscribe, snapShot)
+      const listener = shape.watch(parentData, key!)
+      const forceUpdate = useForceUpdate()
+      useEffect(() => listener(forceUpdate), [this])
       return [
         shape.fromY(value),
         shape.mutator(parentData, key!, Boolean(readOnly))
