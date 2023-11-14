@@ -134,16 +134,31 @@ class HandlerConnection implements Connection {
 
   // Target
 
-  async mutate(mutations: Array<Mutation>): Promise<{commitHash: string}> {
+  async mutate(
+    mutations: Array<Mutation>,
+    retry = 0
+  ): Promise<{commitHash: string}> {
     const {target, media, db} = this.handler.options
     if (!target) throw new Error('Target not available')
     if (!media) throw new Error('Media not available')
     const changeSet = this.handler.changes.create(mutations)
     const {commitHash: fromCommitHash} = await this.handler.syncPending()
-    const {commitHash: toCommitHash} = await target.mutate(
-      {commitHash: fromCommitHash, mutations: changeSet},
-      this.ctx
-    )
+    let toCommitHash: string
+    try {
+      const result = await target.mutate(
+        {commitHash: fromCommitHash, mutations: changeSet},
+        this.ctx
+      )
+      toCommitHash = result.commitHash
+    } catch (error: any) {
+      if ('expectedCommitHash' in error) {
+        // Attempt again after syncing
+        // Todo: this needs to be handled differently
+        if (retry >= 3) throw error
+        return this.mutate(mutations, retry + 1)
+      }
+      throw error
+    }
     await db.applyMutations(mutations, toCommitHash)
     const tasks = []
     for (const mutation of mutations) {
