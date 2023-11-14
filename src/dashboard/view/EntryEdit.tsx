@@ -47,7 +47,7 @@ export interface EntryEditProps {
 }
 
 export function EntryEdit({editor}: EntryEditProps) {
-  const {dev} = useDashboard()
+  const {alineaDev} = useDashboard()
   const locale = useLocale()
   const {preview, enableDrafts} = useConfig()
   const {isPreviewOpen} = useSidebar()
@@ -110,7 +110,7 @@ export function EntryEdit({editor}: EntryEditProps) {
   }, [isBlocking, isNavigationChange, confirm])
   return (
     <>
-      {dev && (
+      {alineaDev && (
         <>
           <Statusbar.Slot>
             <Statusbar.Status>

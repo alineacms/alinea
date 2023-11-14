@@ -46,7 +46,6 @@ export class CloudApi implements Media, Target, History, Pending, Drafts {
   constructor(private config: Config) {}
 
   mutate(params: Connection.MutateParams, ctx: Connection.Context) {
-    console.log(params)
     return fetch(
       cloudConfig.mutate,
       withAuth(

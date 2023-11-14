@@ -18,7 +18,6 @@ export const dbHashAtom = atom(async get => {
   const db = await get(localDbAtom)
   get(changedEntriesAtom)
   const meta = await db.db.meta()
-  console.log(meta.contentHash)
   return meta.contentHash
 })
 

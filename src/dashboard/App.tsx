@@ -69,7 +69,7 @@ const isEntryAtom = atom(get => {
 
 function AppAuthenticated() {
   useDbUpdater()
-  const {dev, fullPage} = useDashboard()
+  const {alineaDev, fullPage} = useDashboard()
   const nav = useNav()
   const isEntry = useAtomValue(isEntryAtom)
   const {name: workspace, color, roots} = useWorkspace()
@@ -135,7 +135,7 @@ function AppAuthenticated() {
                 </SuspenseBoundary>
               </ErrorBoundary>
             </div>
-            {dev && (
+            {alineaDev && (
               <Statusbar.Root>
                 <Statusbar.Status icon={MaterialSymbolsDatabase}>
                   {dbHash}
@@ -187,6 +187,7 @@ export interface AppProps {
   queryClient?: QueryClient
   fullPage?: boolean
   dev?: boolean
+  alineaDev?: boolean
 }
 
 export function App(props: AppProps) {
