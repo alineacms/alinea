@@ -78,7 +78,6 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
   const isMediaFile = editor.activeVersion.type === 'MediaFile'
   const hasChanges = useAtomValue(editor.hasChanges)
   const currentTransition = useAtomValue(editor.transition)
-  const [isInTransition, setIsInTransition] = useState(currentTransition)
   const untranslated = locale && locale !== editor.activeVersion.locale
   const variant = currentTransition
     ? 'transition'
@@ -236,6 +235,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
           </DropdownMenu.Root>
 
           {editable &&
+            !currentTransition &&
             !hasChanges &&
             isActivePhase &&
             !untranslated &&
@@ -248,7 +248,8 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
               </>
             )}
 
-          {!hasChanges &&
+          {!currentTransition &&
+            !hasChanges &&
             !isActivePhase &&
             editor.availablePhases.includes(EntryPhase.Draft) && (
               <>
@@ -259,32 +260,37 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
               </>
             )}
 
-          {untranslated && !editor.parentNeedsTranslation && !hasChanges && (
-            <>
-              <span className={styles.root.description.separator()} />
-              <div className={styles.root.description.action()}>
-                <HStack center>
-                  <span style={{marginRight: px(8)}}>Translate from</span>
-                  <Langswitch
-                    selected={editor.activeVersion.locale!}
-                    locales={editor.translations.map(({locale}) => locale)}
-                    onChange={locale => {
-                      navigate(pathname + `?from=` + locale)
-                    }}
-                  />
-                </HStack>
-              </div>
-            </>
-          )}
+          {!currentTransition &&
+            untranslated &&
+            !editor.parentNeedsTranslation &&
+            !hasChanges && (
+              <>
+                <span className={styles.root.description.separator()} />
+                <div className={styles.root.description.action()}>
+                  <HStack center>
+                    <span style={{marginRight: px(8)}}>Translate from</span>
+                    <Langswitch
+                      selected={editor.activeVersion.locale!}
+                      locales={editor.translations.map(({locale}) => locale)}
+                      onChange={locale => {
+                        navigate(pathname + `?from=` + locale)
+                      }}
+                    />
+                  </HStack>
+                </div>
+              </>
+            )}
 
-          {untranslated && editor.parentNeedsTranslation && (
-            <>
-              <span className={styles.root.description.separator()} />
-              <div className={styles.root.description.action()}>
-                Translate parent page first
-              </div>
-            </>
-          )}
+          {!currentTransition &&
+            untranslated &&
+            editor.parentNeedsTranslation && (
+              <>
+                <span className={styles.root.description.separator()} />
+                <div className={styles.root.description.action()}>
+                  Translate parent page first
+                </div>
+              </>
+            )}
 
           {variant === 'editing' && (
             <>
@@ -304,49 +310,54 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
 
           <Stack.Right>
             <HStack center gap={12}>
-              {untranslated && !editor.parentNeedsTranslation && (
-                <Button icon={IcRoundSave} onClick={translate}>
-                  Save translation
-                </Button>
-              )}
-              {config.enableDrafts && variant === 'editing' && (
-                <Button icon={IcRoundSave} onClick={saveDraft}>
-                  Save draft
-                </Button>
-              )}
-              {!config.enableDrafts && variant === 'editing' && (
-                <Button icon={IcRoundSave} onClick={publishEdits}>
-                  Publish
-                </Button>
-              )}
-              {!untranslated && !hasChanges && selectedPhase === 'draft' && (
-                <Button icon={IcRoundCheck} onClick={publishDraft}>
-                  Publish draft
-                </Button>
-              )}
-              {variant === 'revision' && (
-                <Button icon={IcRoundSave} onClick={restoreRevision}>
-                  Restore
-                </Button>
-              )}
-
-              <DropdownMenu.Root bottom left>
-                <DropdownMenu.Trigger className={styles.root.more(variant)}>
-                  <Icon icon={IcRoundMoreVert} />
-                </DropdownMenu.Trigger>
-
-                <DropdownMenu.Items>
-                  {!isMediaFile && (
-                    <DropdownMenu.Item
-                      onClick={() => setShowHistory(!showHistory)}
-                    >
-                      {showHistory ? 'Hide' : 'Show'} history
-                    </DropdownMenu.Item>
+              {!currentTransition && (
+                <>
+                  {untranslated && !editor.parentNeedsTranslation && (
+                    <Button icon={IcRoundSave} onClick={translate}>
+                      Save translation
+                    </Button>
                   )}
-                  {options}
-                </DropdownMenu.Items>
-              </DropdownMenu.Root>
+                  {config.enableDrafts && variant === 'editing' && (
+                    <Button icon={IcRoundSave} onClick={saveDraft}>
+                      Save draft
+                    </Button>
+                  )}
+                  {!config.enableDrafts && variant === 'editing' && (
+                    <Button icon={IcRoundSave} onClick={publishEdits}>
+                      Publish
+                    </Button>
+                  )}
+                  {!untranslated &&
+                    !hasChanges &&
+                    selectedPhase === 'draft' && (
+                      <Button icon={IcRoundCheck} onClick={publishDraft}>
+                        Publish draft
+                      </Button>
+                    )}
+                  {variant === 'revision' && (
+                    <Button icon={IcRoundSave} onClick={restoreRevision}>
+                      Restore
+                    </Button>
+                  )}
 
+                  <DropdownMenu.Root bottom left>
+                    <DropdownMenu.Trigger className={styles.root.more(variant)}>
+                      <Icon icon={IcRoundMoreVert} />
+                    </DropdownMenu.Trigger>
+
+                    <DropdownMenu.Items>
+                      {!isMediaFile && (
+                        <DropdownMenu.Item
+                          onClick={() => setShowHistory(!showHistory)}
+                        >
+                          {showHistory ? 'Hide' : 'Show'} history
+                        </DropdownMenu.Item>
+                      )}
+                      {options}
+                    </DropdownMenu.Items>
+                  </DropdownMenu.Root>
+                </>
+              )}
               <button
                 title="Display preview"
                 onClick={() => togglePreview()}

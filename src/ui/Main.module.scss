@@ -11,6 +11,13 @@
   background: var(--alinea-content);
   min-width: 0;
 
+  &-loading {
+    position: absolute;
+    background: hsla(var(--alinea-negative), 0.05);
+    inset: 0;
+    z-index: 5;
+  }
+
   &-inner {
     width: 100%;
     flex-grow: 1;

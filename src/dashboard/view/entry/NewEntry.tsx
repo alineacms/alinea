@@ -169,34 +169,33 @@ function NewEntryForm({parentId}: NewEntryProps) {
       data: {title, path},
       searchableText: ''
     })
-    const result = mutate({
+    return mutate({
       type: MutationType.Create,
       entryId: entry.entryId,
       entry,
       file: entryFileName(config, data, parentPaths)
+    }).then(() => {
+      setIsCreating(false)
+      navigate(nav.entry({entryId: entry.i18nId}))
+      if (entry.parent) updateEntries([entry.parent])
     })
-    navigate(nav.entry({entryId: entry.i18nId}))
-    if (entry.parent) updateEntries([entry.parent])
-    return result
   }
   return (
-    <form onSubmit={handleCreate}>
-      {isCreating ? (
-        <Loader absolute />
-      ) : (
-        <>
-          {/*parent && <ParentView {...parent} />*/}
-          <InputField {...parentField} />
-          <InputField {...titleField} />
-          <InputField {...selectedType} />
-          <div className={styles.root.footer()}>
-            <Link href={pathname} className={styles.root.footer.link()}>
-              Cancel
-            </Link>
-            <Button>Create</Button>
-          </div>
-        </>
-      )}
+    <form
+      onSubmit={handleCreate}
+      className={styles.form({loading: isCreating})}
+    >
+      {isCreating && <Loader absolute />}
+      {/*parent && <ParentView {...parent} />*/}
+      <InputField {...parentField} />
+      <InputField {...titleField} />
+      <InputField {...selectedType} />
+      <div className={styles.root.footer()}>
+        <Link href={pathname} className={styles.root.footer.link()}>
+          Cancel
+        </Link>
+        <Button>Create</Button>
+      </div>
     </form>
   )
 }

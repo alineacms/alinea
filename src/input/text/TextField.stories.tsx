@@ -8,7 +8,7 @@ export function TextField() {
   const textField = useField(text('Text'))
   const focusedTextField = useField(text('Text (autofocus)', {autoFocus: true}))
   const readonlyTextField = useField(
-    text('Text (read-only)', {readonly: true, initialValue: 'Hello world'})
+    text('Text (read-only)', {readOnly: true, initialValue: 'Hello world'})
   )
   return (
     <UIStory>

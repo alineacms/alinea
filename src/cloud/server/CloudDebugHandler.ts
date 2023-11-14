@@ -6,6 +6,10 @@ import {Config, Connection, Draft, createId} from 'alinea/core'
 import {EntryRecord} from 'alinea/core/EntryRecord'
 import {Mutation} from 'alinea/core/Mutation'
 
+const latency = 2000
+
+const lag = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
+
 export class DebugCloud implements Media, Target, History, Drafts, Pending {
   drafts = new Map<string, Draft>()
   pending: Array<Connection.MutateParams & {toCommitHash: string}> = []
@@ -13,6 +17,7 @@ export class DebugCloud implements Media, Target, History, Drafts, Pending {
   constructor(public config: Config, public db: Database) {}
 
   async mutate(params: Connection.MutateParams) {
+    await lag(latency)
     const mutations = params.mutations.flatMap(mutate => mutate.meta)
     for (const mutation of params.mutations) {
       console.log(
@@ -34,22 +39,27 @@ export class DebugCloud implements Media, Target, History, Drafts, Pending {
     location,
     workspace
   }: Connection.DeleteParams): Promise<void> {
+    await lag(latency)
     console.log(`> cloud: delete`, location, workspace)
   }
 
   async revisions(file: string): Promise<Array<Revision>> {
+    await lag(latency)
     return []
   }
 
   async revisionData(file: string, revision: string): Promise<EntryRecord> {
+    await lag(latency)
     throw new Error(`Not implemented`)
   }
 
   async getDraft(entryId: string): Promise<Draft | undefined> {
+    await lag(latency)
     return this.drafts.get(entryId)
   }
 
   async storeDraft(draft: Draft): Promise<void> {
+    await lag(latency)
     console.log(`> cloud: store draft ${draft.entryId}`)
     this.drafts.set(draft.entryId, draft)
   }
@@ -57,6 +67,7 @@ export class DebugCloud implements Media, Target, History, Drafts, Pending {
   async pendingSince(
     commitHash: string
   ): Promise<{toCommitHash: string; mutations: Array<Mutation>} | undefined> {
+    await lag(latency)
     console.log(`> cloud: pending since ${commitHash}`)
     let i = this.pending.length
     for (; i >= 0; i--)

@@ -34,8 +34,9 @@ export class ScalarShape<T> implements Shape<T, ScalarMutator<T>> {
       return () => parent.unobserve(w)
     }
   }
-  mutator(parent: Y.Map<any>, key: string) {
+  mutator(parent: Y.Map<any>, key: string, readOnly?: boolean) {
     return (value: T) => {
+      if (readOnly) return
       parent.set(key, value)
     }
   }

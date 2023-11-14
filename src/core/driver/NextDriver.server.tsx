@@ -78,7 +78,6 @@ class NextDriver extends DefaultDriver implements NextApi {
   })
 
   previewHandler = async (request: Request) => {
-    console.log(request.headers)
     const {draftMode, cookies} = await import('next/headers.js')
     const {searchParams} = new URL(request.url)
     const params = SearchParams({

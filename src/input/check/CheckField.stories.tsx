@@ -13,7 +13,7 @@ export function CheckField() {
     check('Check (checked by default)', {inline: true, initialValue: true})
   )
   const readonlyCheckField = useField(
-    check('Check (read-only)', {inline: true, readonly: true})
+    check('Check (read-only)', {inline: true, readOnly: true})
   )
   return (
     <UIStory>

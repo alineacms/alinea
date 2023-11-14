@@ -14,7 +14,7 @@ import {UnionMutator, UnionRow, UnionShape} from './shape/UnionShape.js'
 
 export interface FieldOptions {
   hidden?: boolean
-  readonly?: boolean
+  readOnly?: boolean
 }
 
 export interface FieldMeta<Value, OnChange, Options> {

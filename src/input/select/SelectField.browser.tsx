@@ -56,7 +56,7 @@ function SelectInput<Key extends string, Items extends Record<Key, string>>({
   return (
     <InputLabel label={label} {...options} icon={IcRoundArrowDropDownCircle}>
       <div className={styles.root()}>
-        <Listbox value={value} onChange={setValue} disabled={options.readonly}>
+        <Listbox value={value} onChange={setValue} disabled={options.readOnly}>
           {({open}) => (
             <div>
               <Listbox.Button

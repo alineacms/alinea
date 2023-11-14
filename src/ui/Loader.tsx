@@ -16,14 +16,7 @@ export function Loader({light, absolute, size = 22, ...props}: LoaderProps) {
       style={{fontSize: size}}
       className={styles.loader.mergeProps(props)({absolute})}
     >
-      <div
-        {...props}
-        className={styles.loader.inner()}
-        style={{
-          ...props.style,
-          borderColor: `var(--alinea-foreground) transparent transparent transparent`
-        }}
-      ></div>
+      <div {...props} className={styles.loader.inner()}></div>
     </div>
   )
 }

@@ -92,58 +92,56 @@ function AppAuthenticated() {
       <Statusbar.Provider>
         <Toolbar.Provider>
           <Sidebar.Provider>
-            <Viewport attachToBody={fullPage} contain color={color}>
-              <Head>
-                <FavIcon color={color} />
-              </Head>
-              <div
-                style={{
-                  flex: '1',
-                  display: 'flex',
-                  minHeight: 0,
-                  position: 'relative'
-                }}
-              >
-                <Sidebar.Nav>
-                  {Object.entries(roots).map(([key, root], i) => {
-                    const isSelected = key === currentRoot
-                    const link =
-                      entryLocation && entryLocation.root === key
-                        ? nav.entry(entryLocation)
-                        : nav.root({
-                            workspace,
-                            root: key,
-                            locale: preferredLanguage
-                          })
-                    const {label, icon} = Root.data(root)
-                    return (
-                      <Sidebar.Nav.Item
-                        key={key}
-                        selected={isEntry && isSelected}
-                        href={link}
-                        aria-label={renderLabel(label)}
-                      >
-                        <Icon icon={icon ?? IcRoundDescription} />
-                      </Sidebar.Nav.Item>
-                    )
-                  })}
-                  {/*<DraftsButton />*/}
-                  <SidebarSettings />
-                </Sidebar.Nav>
-                <ErrorBoundary>
-                  <SuspenseBoundary name="main" fallback={<Loader absolute />}>
-                    <RouteView fallback={null} />
-                  </SuspenseBoundary>
-                </ErrorBoundary>
-              </div>
-              {dev && (
-                <Statusbar.Root>
-                  <Statusbar.Status icon={MaterialSymbolsDatabase}>
-                    {dbHash}
-                  </Statusbar.Status>
-                </Statusbar.Root>
-              )}
-            </Viewport>
+            <Head>
+              <FavIcon color={color} />
+            </Head>
+            <div
+              style={{
+                flex: '1',
+                display: 'flex',
+                minHeight: 0,
+                position: 'relative'
+              }}
+            >
+              <Sidebar.Nav>
+                {Object.entries(roots).map(([key, root], i) => {
+                  const isSelected = key === currentRoot
+                  const link =
+                    entryLocation && entryLocation.root === key
+                      ? nav.entry(entryLocation)
+                      : nav.root({
+                          workspace,
+                          root: key,
+                          locale: preferredLanguage
+                        })
+                  const {label, icon} = Root.data(root)
+                  return (
+                    <Sidebar.Nav.Item
+                      key={key}
+                      selected={isEntry && isSelected}
+                      href={link}
+                      aria-label={renderLabel(label)}
+                    >
+                      <Icon icon={icon ?? IcRoundDescription} />
+                    </Sidebar.Nav.Item>
+                  )
+                })}
+                {/*<DraftsButton />*/}
+                <SidebarSettings />
+              </Sidebar.Nav>
+              <ErrorBoundary>
+                <SuspenseBoundary name="main" fallback={<Loader absolute />}>
+                  <RouteView fallback={null} />
+                </SuspenseBoundary>
+              </ErrorBoundary>
+            </div>
+            {dev && (
+              <Statusbar.Root>
+                <Statusbar.Status icon={MaterialSymbolsDatabase}>
+                  {dbHash}
+                </Statusbar.Status>
+              </Statusbar.Root>
+            )}
           </Sidebar.Provider>
         </Toolbar.Provider>
       </Statusbar.Provider>
@@ -158,7 +156,7 @@ function AppRoot() {
   const Auth = config.dashboard?.auth
   if (!session)
     return (
-      <Viewport attachToBody={fullPage} contain color={color}>
+      <>
         <Head>
           <FavIcon color={color} />
         </Head>
@@ -167,14 +165,16 @@ function AppRoot() {
             <Auth setSession={setSession} />
           </SuspenseBoundary>
         )}
-      </Viewport>
+      </>
     )
   return (
-    <SuspenseBoundary name="router" fallback={<Loader absolute />}>
-      <RouterProvider router={router}>
-        <AppAuthenticated />
-      </RouterProvider>
-    </SuspenseBoundary>
+    <>
+      <SuspenseBoundary name="router" fallback={<Loader absolute />}>
+        <RouterProvider router={router}>
+          <AppAuthenticated />
+        </RouterProvider>
+      </SuspenseBoundary>
+    </>
   )
 }
 
@@ -190,11 +190,15 @@ export interface AppProps {
 }
 
 export function App(props: AppProps) {
-  useSetDashboardOptions({fullPage: props.fullPage !== false, ...props})
+  const fullPage = props.fullPage !== false
+  useSetDashboardOptions({fullPage, ...props})
+  const {color} = Config.mainWorkspace(props.config)
   const queryClient = useAtomValue(queryClientAtom)
   return (
     <QueryClientProvider client={queryClient}>
-      <AppRoot />
+      <Viewport attachToBody={fullPage} contain color={color}>
+        <AppRoot />
+      </Viewport>
       <ModalPortal />
     </QueryClientProvider>
   )

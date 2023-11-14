@@ -19,8 +19,8 @@ export interface Shape<Value = any, OnChange = any> {
   toY(value: Value): any
   fromY(yValue: any): Value
   applyY(value: Value, parent: YType, key: string): void
-  watch(parent: YType, key: string): (fun: () => void) => void
-  mutator(parent: YType, key: string): OnChange
+  watch(parent: YType, key: string): (fun: () => void) => () => void
+  mutator(parent: YType, key: string, readOnly: boolean): OnChange
   toString(): string
   applyLinks(value: Value, loader: LinkResolver): Promise<void>
 }

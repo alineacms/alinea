@@ -240,11 +240,9 @@ export function EntryEdit({editor}: EntryEditProps) {
                     })}
                   </Tabs.Panels>
                 ) : (
-                  <div>
-                    <VStack gap={18}>
-                      <InputForm type={editor.type} state={state} />
-                    </VStack>
-                  </div>
+                  <VStack gap={18}>
+                    <InputForm type={editor.type} state={state} />
+                  </VStack>
                 )}
               </SuspenseBoundary>
             </Main.Container>

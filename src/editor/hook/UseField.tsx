@@ -37,7 +37,7 @@ export class FieldState<V, M> implements InputState<readonly [V, M]> {
     const {key, root, shape, attach} = this.options
     const {current, mutator, observe} = useMemo(() => {
       const current = (): V => shape.fromY(root.get(key))
-      const mutator = shape.mutator(root, key) as M
+      const mutator = shape.mutator(root, key, false) as M
       const observe = shape.watch(root, key)
       return {current, mutator, observe}
     }, [])

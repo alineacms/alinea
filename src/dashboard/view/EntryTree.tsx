@@ -21,6 +21,7 @@ import {
   rootId,
   useEntryTreeProvider
 } from '../atoms/EntryAtoms.js'
+import {entryLocationAtom} from '../atoms/NavigationAtoms.js'
 import {useConfig} from '../hook/UseConfig.js'
 import {useLocale} from '../hook/UseLocale.js'
 import {useNav} from '../hook/UseNav.js'
@@ -40,6 +41,7 @@ interface EntryTreeItemProps {
 }
 
 function EntryTreeItem({item, data}: EntryTreeItemProps) {
+  const {entryId} = useAtomValue(entryLocationAtom)
   const locale = useLocale()
   const {schema} = useConfig()
   const currentData = useRef<EntryTreeItem>(data)
@@ -52,13 +54,14 @@ function EntryTreeItem({item, data}: EntryTreeItemProps) {
   const isDraft = selected.phase === EntryPhase.Draft
   const isUntranslated = locale && selected.locale !== locale
   const isArchived = selected.phase === EntryPhase.Archived
+  const isSelected = entryId && itemData.id === entryId
   return (
     <div
       {...item.getProps()}
       ref={item.registerElement}
       className={styles.tree.item({
         untranslated: isUntranslated,
-        selected: /*entryId &&*/ item.isSelected(),
+        selected: isSelected,
         drop: item.isDropTarget() && item.isDraggingOver(),
         dropAbove: item.isDropTargetAbove() && item.isDraggingOver(),
         dropBelow: item.isDropTargetBelow() && item.isDraggingOver()
@@ -70,7 +73,7 @@ function EntryTreeItem({item, data}: EntryTreeItemProps) {
         className={styles.tree.item.label()}
         style={{paddingLeft: px((item.getItemMeta().level + 1) * 12)}}
       >
-        {item.isFolder() && (
+        {item.isFolder() ? (
           <span className={styles.tree.item.arrow()}>
             {item.isExpanded() ? (
               <Icon icon={IcRoundKeyboardArrowDown} size={18} />
@@ -78,9 +81,7 @@ function EntryTreeItem({item, data}: EntryTreeItemProps) {
               <Icon icon={IcRoundKeyboardArrowRight} size={18} />
             )}
           </span>
-        )}
-
-        {!item.isFolder() && (
+        ) : (
           <span className={styles.tree.item.icon()}>
             <Icon
               icon={
@@ -111,8 +112,6 @@ function EntryTreeItem({item, data}: EntryTreeItemProps) {
             <Icon icon={IcRoundArchive} size={18} />
           </span>
         )}
-
-        {/*item.isLoading() && <Loader />*/}
       </button>
     </div>
   )

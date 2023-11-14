@@ -69,7 +69,10 @@ export function DevDashboard({loadConfig}: DevDashboardOptions) {
       queryClient={queryClient}
       config={cms}
       client={client!}
-      dev={!process.env.ALINEA_CLOUD_URL}
+      dev={
+        process.env.NODE_ENV === 'development' ||
+        process.env.ALINEA_CLOUD_URL === ''
+      }
     />
   )
 }

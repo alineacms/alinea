@@ -7,7 +7,7 @@ import {UIStory} from 'alinea/ui/UIStory'
 export function NumberField() {
   const numberField = useField(number('Number'))
   const readonlyNumberField = useField(
-    number('Number (read-only)', {readonly: true, initialValue: 0})
+    number('Number (read-only)', {readOnly: true, initialValue: 0})
   )
   return (
     <UIStory>

@@ -100,7 +100,9 @@ export function createLocalServer(
     plugins: buildOptions?.plugins || [],
     define: {
       'process.env.NODE_ENV': production ? "'production'" : "'development'",
-      'process.env.ALINEA_CLOUD_URL': JSON.stringify(cloudUrl),
+      'process.env.ALINEA_CLOUD_URL': cloudUrl
+        ? JSON.stringify(cloudUrl)
+        : 'undefined',
       ...publicDefines(process.env)
     },
     logOverride: {

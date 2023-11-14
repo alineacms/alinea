@@ -18,7 +18,7 @@ export interface RichTextOptions<Blocks extends Schema> {
   /** Hide this rich text field */
   hidden?: boolean
   /** Make this rich text field read-only */
-  readonly?: boolean
+  readOnly?: boolean
 }
 
 /** Internal representation of a rich text field */

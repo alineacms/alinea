@@ -18,8 +18,16 @@ interface NumberInputProps {
 
 function NumberInput({state, field}: NumberInputProps) {
   const {label, options} = field[Field.Data]
-  const {inline, help, optional, width, minValue, maxValue, readonly, step} =
-    options
+  const {
+    inline,
+    help,
+    optional,
+    width,
+    minValue,
+    maxValue,
+    readOnly: readonly,
+    step
+  } = options
   const [value, setValue] = useInput(state)
 
   return (

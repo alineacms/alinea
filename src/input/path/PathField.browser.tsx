@@ -53,7 +53,7 @@ function PathInput({state, field}: PathInputProps) {
         onFocus={() => setFocus(true)}
         onBlur={() => setFocus(false)}
         placeholder={' '}
-        disabled={options.readonly}
+        disabled={options.readOnly}
       />
     </InputLabel>
   )

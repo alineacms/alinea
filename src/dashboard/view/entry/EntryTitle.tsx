@@ -1,6 +1,6 @@
 import {EntryPhase, Type} from 'alinea/core'
 import {renderLabel} from 'alinea/core/Label'
-import {Chip, HStack, Stack, fromModule, px} from 'alinea/ui'
+import {Chip, HStack, Loader, Stack, fromModule, px} from 'alinea/ui'
 import {IcRoundArrowBack} from 'alinea/ui/icons/IcRoundArrowBack'
 import {useAtom, useAtomValue} from 'jotai'
 import {PropsWithChildren} from 'react'
@@ -32,6 +32,7 @@ export function EntryTitle({
   const title =
     selectedPhase === editor.activePhase ? activeTitle : version.title
   const hasChanges = useAtomValue(editor.hasChanges)
+  const isLoading = useAtomValue(editor.isLoading)
   return (
     <>
       <Head>
@@ -53,6 +54,7 @@ export function EntryTitle({
               <span>{title}</span>
             </h1>
             <Chip>{renderLabel(Type.label(type))}</Chip>
+            {isLoading && <Loader size={15} />}
           </HStack>
           {/*<IconButton icon={MdOutlineMoreHoriz} />*/}
           <Stack.Right>

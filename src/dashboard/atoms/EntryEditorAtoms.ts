@@ -26,7 +26,6 @@ import * as paths from 'alinea/core/util/Paths'
 import {InputState} from 'alinea/editor'
 import {atom} from 'jotai'
 import {atomFamily, unwrap} from 'jotai/utils'
-import * as Y from 'yjs'
 import {debounceAtom} from '../util/DebounceAtom.js'
 import {clientAtom, configAtom, dashboardOptionsAtom} from './DashboardAtoms.js'
 import {entryRevisionAtoms, graphAtom, mutateAtom} from './DbAtoms.js'
@@ -98,19 +97,27 @@ export const entryEditorAtoms = atomFamily(
       const type = config.schema[entry.type]
       const edits = get(entryEditsAtoms(entryId))
 
-      const draft = await client.getDraft(entryId)
-      if (draft) {
-        edits.applyRemoteUpdate(draft.draft)
-        // The draft is out of sync, this can happen if
-        // - updates done manually to the content files
-        // - the draft storage could not be reached after mutation
-        // We fast forward the draft with the actual current field data
-        // and will submit new updates including it
-        if (draft.fileHash !== entry.fileHash)
-          edits.applyEntryData(type, entry.data)
-      } else {
-        edits.applyEntryData(type, entry.data)
-      }
+      const loadDraft = client
+        .getDraft(entryId)
+        .then(draft => {
+          if (draft) {
+            edits.applyRemoteUpdate(draft.draft)
+            // The draft is out of sync, this can happen if
+            // - updates done manually to the content files
+            // - the draft storage could not be reached after mutation
+            // We fast forward the draft with the actual current field data
+            // and will submit new updates including it
+            if (draft.fileHash !== entry!.fileHash)
+              edits.applyEntryData(type, entry!.data)
+          } else {
+            edits.applyEntryData(type, entry!.data)
+          }
+        })
+        .catch(() => {
+          edits.applyEntryData(type, entry!.data)
+        })
+
+      if (!edits.hasData()) await loadDraft
 
       const versions = await graph.all.find(
         Entry({entryId}).select({
@@ -194,14 +201,13 @@ export function createEntryEditor(entryData: EntryData) {
   const docs = fromEntries(
     entries(entryData.phases).map(([phase, version]) => [
       phase,
-      phase === activePhase ? edits.doc : createYDoc(type, version)
+      createYDoc(type, version)
     ])
   )
-  const yDoc = docs[activePhase]
+  const yDoc = edits.doc
   const hasChanges = edits.hasChanges
-  const draftEntry = yAtom(yDoc.getMap(ROOT_KEY), getDraftEntry)
+  const draftEntry = yAtom(edits.doc.getMap(ROOT_KEY), getDraftEntry)
   const editMode = atom(EditMode.Editing)
-  const isSaving = atom(false)
   const view = Type.meta(type).view
   const previewRevision = atom(
     undefined as {ref: string; file: string} | undefined
@@ -215,7 +221,6 @@ export function createEntryEditor(entryData: EntryData) {
   )
 
   const transition = entryTransitionAtoms(activeVersion.entryId)
-  const yStateVector = Y.encodeStateVector(createYDoc(type, null))
 
   const phaseInUrl = atom(get => {
     const {search} = get(locationAtom)
@@ -244,6 +249,7 @@ export function createEntryEditor(entryData: EntryData) {
       get,
       set,
       options: {
+        clearChanges?: boolean
         transition: EntryTransition
         errorMessage: string
         action: () => Promise<void>
@@ -251,10 +257,15 @@ export function createEntryEditor(entryData: EntryData) {
     ) => {
       if (isTransacting) return Promise.resolve()
       isTransacting = true
-      const timeout = setTimeout(() => set(transition, options.transition), 250)
+      const timeout = setTimeout(() => {
+        if (options.clearChanges) set(hasChanges, false)
+        set(transition, options.transition)
+      }, 250)
+      const currentChanges = get(hasChanges)
       return options
         .action()
         .catch(error => {
+          if (options.clearChanges) set(hasChanges, currentChanges)
           set(errorAtom, options.errorMessage, error)
         })
         .finally(() => {
@@ -277,10 +288,11 @@ export function createEntryEditor(entryData: EntryData) {
       update
     }
     return set(transact, {
+      clearChanges: true,
       transition: EntryTransition.SaveDraft,
       action: () => set(mutateAtom, mutation),
       errorMessage: 'Could not complete save action, please try again later'
-    }).then(() => set(hasChanges, false))
+    })
   })
 
   const saveTranslation = atom(null, async (get, set, locale: string) => {
@@ -323,12 +335,11 @@ export function createEntryEditor(entryData: EntryData) {
     }
     set(entryRevisionAtoms(activeVersion.entryId))
     return set(transact, {
+      clearChanges: true,
       transition: EntryTransition.SaveTranslation,
       action: () => set(mutateAtom, mutation),
       errorMessage:
         'Could not complete translate action, please try again later'
-    }).then(() => {
-      set(hasChanges, false)
     })
   })
 
@@ -347,10 +358,11 @@ export function createEntryEditor(entryData: EntryData) {
       update
     })
     return set(transact, {
+      clearChanges: true,
       transition: EntryTransition.PublishEdits,
       action: () => set(mutateAtom, ...mutations),
       errorMessage: 'Could not complete publish action, please try again later'
-    }).then(() => set(hasChanges, false))
+    })
   })
 
   const restoreRevision = atom(null, async (get, set) => {
@@ -371,10 +383,11 @@ export function createEntryEditor(entryData: EntryData) {
       update
     }
     return set(transact, {
+      clearChanges: true,
       transition: EntryTransition.RestoreRevision,
       action: () => set(mutateAtom, mutation),
       errorMessage: 'Could not complete publish action, please try again later'
-    }).then(() => set(hasChanges, false))
+    })
   })
 
   const publishDraft = atom(null, (get, set) => {
@@ -467,13 +480,6 @@ export function createEntryEditor(entryData: EntryData) {
     })
   })
 
-  const discardEdits = edits.resetChanges
-
-  const activeTitle = yAtom(
-    yDoc.getMap(ROOT_KEY),
-    () => yDoc.getMap(ROOT_KEY).get('title') as string
-  )
-
   async function getDraftEntry(
     meta: Partial<EntryUrlMeta> & {entryId?: string; parent?: string} = {}
   ): Promise<EntryRow> {
@@ -546,7 +552,15 @@ export function createEntryEditor(entryData: EntryData) {
 
   const selectedState = atom(get => {
     const selected = get(selectedPhase)
+    const isLoading = get(edits.isLoading)
+    if (selected === activePhase && !isLoading) return edits.doc
     return docs[selected]
+  })
+  const draftTitle = yAtom(edits.root, () => edits.root.get('title') as string)
+  const activeTitle = atom(get => {
+    const isLoading = get(edits.isLoading)
+    if (isLoading) return activeVersion.title
+    return get(draftTitle)
   })
   const revisionState = atom(get => {
     const revision = get(previewRevision)
@@ -558,15 +572,12 @@ export function createEntryEditor(entryData: EntryData) {
   })
   const state = atom(get => {
     const doc = get(currentDoc)
-    return new InputState.YDocState(Type.shape(type), doc.getMap(ROOT_KEY), '')
-  })
-
-  const docRevision = atomFamily((doc: Y.Doc) => {
-    let revision = 0
-    return debounceAtom(
-      yAtom(doc.getMap(ROOT_KEY), () => revision++),
-      250
-    )
+    return new InputState.YDocState({
+      shape: Type.shape(type),
+      parentData: doc.getMap(ROOT_KEY),
+      key: '',
+      readOnly: doc !== edits.doc
+    })
   })
 
   // The debounce here prevents React warning us about a state change during
@@ -578,6 +589,9 @@ export function createEntryEditor(entryData: EntryData) {
     }),
     10
   )
+
+  const discardEdits = edits.resetChanges
+  const isLoading = edits.isLoading
 
   return {
     ...entryData,
@@ -605,7 +619,7 @@ export function createEntryEditor(entryData: EntryData) {
     deleteArchived,
     saveTranslation,
     discardEdits,
-    isSaving,
+    isLoading,
     showHistory,
     revisionsAtom,
     previewRevision,

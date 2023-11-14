@@ -70,9 +70,10 @@ export class RecordShape<T = object> implements Shape<T, RecordMutator<T>> {
       return () => record.unobserve(fun)
     }
   }
-  mutator(parent: Y.Map<any>, key: string) {
+  mutator(parent: Y.Map<any>, key: string, readOnly: boolean) {
     return {
       set: <K extends keyof T>(k: K, v: T[K]) => {
+        if (readOnly) return
         const record = parent.get(key)
         const field = this.properties[k as string]
         record.set(k, field.toY(v))

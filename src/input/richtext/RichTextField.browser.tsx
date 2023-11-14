@@ -166,7 +166,7 @@ function RichTextEditor<Blocks extends Schema>({
   const picker = usePickTextLink()
   const {optional, inline, help, width, schema} = options
   const [focus, setFocus] = useState(false)
-  const [value, {fragment, insert}] = useInput(state)
+  const [value, {readOnly, fragment, insert}] = useInput(state)
   const toolbarRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLElement>(null)
   const focusToggle = useCallback(
@@ -223,7 +223,7 @@ function RichTextEditor<Blocks extends Schema>({
       onFocus,
       onBlur,
       extensions,
-      editable: !options.readonly
+      editable: !options.readOnly && !readOnly
     },
     []
   )
@@ -252,7 +252,7 @@ function RichTextEditor<Blocks extends Schema>({
       >
         <InsertMenu editor={editor} schema={schema} onInsert={insert} />
         <EditorContent
-          className={styles.root.editor({focus, readonly: options.readonly})}
+          className={styles.root.editor({focus, readonly: options.readOnly})}
           editor={editor}
         />
       </InputLabel>

@@ -73,6 +73,7 @@ function unserialize(node: TextNode): Y.XmlText | Y.XmlElement {
 }
 
 export type RichTextMutator<R> = {
+  readOnly: boolean
   map: Y.Map<any>
   fragment: Y.XmlFragment
   insert: (id: string, block: string) => void
@@ -274,11 +275,12 @@ export class RichTextShape<Blocks>
   }
   watch(parent: Y.Map<any>, key: string) {
     // There's no watching of the fragment involved
-    return () => {}
+    return () => () => {}
   }
-  mutator(parent: Y.Map<any>, key: string) {
+  mutator(parent: Y.Map<any>, key: string, readOnly: boolean) {
     const map = parent.get(key)
     return {
+      readOnly,
       map,
       fragment: map.get('$text'),
       insert: (id: string, block: string) => {

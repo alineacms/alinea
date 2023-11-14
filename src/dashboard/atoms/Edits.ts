@@ -2,6 +2,7 @@ import {ROOT_KEY, Type} from 'alinea/core'
 import {atom} from 'jotai'
 import {atomFamily} from 'jotai/utils'
 import * as Y from 'yjs'
+import {yAtom} from './YAtom.js'
 
 export class Edits {
   /** The mutable doc that we are editing */
@@ -14,10 +15,21 @@ export class Edits {
   hasChanges = createChangesAtom(this.root)
   /** Clear local changes, reset to source */
   resetChanges = atom(null, (get, set) => {
-    set(entryEditsAtoms(this.entryId), new Edits(this.entryId))
+    set(this.hasChanges, false)
+    const copy = new Edits(this.entryId)
+    copy.applyRemoteUpdate(this.getRemoteUpdate())
+    set(entryEditsAtoms(this.entryId), copy)
+  })
+  /** Whether we have a draft loaded */
+  isLoading = yAtom(this.root, () => {
+    return !this.hasData()
   })
 
   constructor(private entryId: string) {}
+
+  hasData() {
+    return !this.root.keys().next().done
+  }
 
   /** Apply updates from the source */
   applyRemoteUpdate(update: Uint8Array) {
