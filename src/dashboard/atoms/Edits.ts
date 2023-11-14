@@ -17,7 +17,7 @@ export class Edits {
   resetChanges = atom(null, (get, set) => {
     set(this.hasChanges, false)
     const copy = new Edits(this.entryId)
-    copy.applyRemoteUpdate(this.getRemoteUpdate())
+    if (this.sourceVector) copy.applyRemoteUpdate(this.getRemoteUpdate())
     set(entryEditsAtoms(this.entryId), copy)
   })
   /** Whether we have a draft loaded */
