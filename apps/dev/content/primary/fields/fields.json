@@ -1,5 +1,5 @@
 {
-  "title": "Fields",
+  "title": "Fields qss",
   "richText": [
     {
       "type": "paragraph",
@@ -28,6 +28,7 @@
               "attrs": {
                 "data-id": "2WyS6kjRXyd0vLoZP0p129IPnAA",
                 "data-entry": "2Ublmf4UWT5rHeIUSaJmqJYN0L9",
+                "data-type": null,
                 "href": null,
                 "title": ""
               }
@@ -53,6 +54,7 @@
               "attrs": {
                 "data-id": "2WyS9ETlIHWPmt0A2pqYjQrgRVR",
                 "data-entry": null,
+                "data-type": null,
                 "href": "https://example.com",
                 "target": "_blank",
                 "title": ""
@@ -79,6 +81,7 @@
               "attrs": {
                 "data-id": "2WyT7CRrYKKC4FlUOwvSVt7xCaV",
                 "data-entry": "2V4cZQX2vXGoBOko2s3apBX6oWG",
+                "data-type": null,
                 "href": null,
                 "title": ""
               }
@@ -220,12 +223,12 @@
   "tabB": "",
   "metadata": {
     "title": "",
-    "image": {},
     "description": "",
-    "search:title": "",
-    "search:description": "",
-    "og:title": "",
-    "og:description": ""
+    "openGraph": {
+      "title": "",
+      "image": {},
+      "description": ""
+    }
   },
   "@alinea": {
     "entryId": "2U6y6iIQIuQg2D0PViWdKenqgMv",
