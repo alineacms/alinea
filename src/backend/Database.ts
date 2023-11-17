@@ -102,8 +102,15 @@ export class Database implements Syncable {
     return this.store.transaction(async tx => {
       const reHash = []
       for (const mutation of mutations) {
-        const updateRows = await this.applyMutation(tx, mutation)
-        if (updateRows) reHash.push(updateRows)
+        try {
+          const updateRows = await this.applyMutation(tx, mutation)
+          if (updateRows) reHash.push(updateRows)
+        } catch (error) {
+          console.error(error)
+          console.warn(
+            `> could not apply mutation\n${JSON.stringify(mutation)}`
+          )
+        }
       }
       await Database.index(tx)
       const changed = (

@@ -111,12 +111,17 @@ export class Handler {
     const {pending, db} = this.options
     const meta = await db.meta()
     if (!pending) return meta
-    const toApply = await pending.pendingSince(
-      meta.commitHash,
-      this.previewAuth()
-    )
-    if (!toApply) return meta
-    await db.applyMutations(toApply.mutations, toApply.toCommitHash)
+    try {
+      const toApply = await pending.pendingSince(
+        meta.commitHash,
+        this.previewAuth()
+      )
+      if (!toApply) return meta
+      await db.applyMutations(toApply.mutations, toApply.toCommitHash)
+    } catch (error) {
+      console.error(error)
+      console.warn('> could not sync pending mutations')
+    }
     return db.meta()
   }
 }
