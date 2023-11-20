@@ -63,7 +63,12 @@ class NextDriver extends DefaultDriver implements NextApi {
         url: devUrl,
         resolveDefaults
       })
-    return this.cloudHandler
+    const handler = await this.cloudHandler
+    return {
+      resolve(params) {
+        return handler.resolve({...resolveDefaults, ...params})
+      }
+    }
   }
 
   backendHandler = async (request: Request) => {
