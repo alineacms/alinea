@@ -54,7 +54,7 @@ export interface HandlerOptions {
 export class Handler implements Resolver {
   connect: (ctx: Connection.Context) => Connection
   router: Route<Request, Response | undefined>
-  protected changes: ChangeSetCreator
+  changes: ChangeSetCreator
   protected lastSync = 0
   protected resolver: EntryResolver
 
