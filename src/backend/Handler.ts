@@ -100,11 +100,13 @@ export class Handler {
   }
 
   async periodicSync() {
-    if (Date.now() - this.lastSync < 5_000) return
+    // Todo: queue these properly
+    const now = Date.now()
+    if (now - this.lastSync < 5_000) return
+    this.lastSync = now
     try {
       await this.syncPending()
     } catch {}
-    this.lastSync = Date.now()
   }
 
   async syncPending() {
