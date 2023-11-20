@@ -65,7 +65,9 @@ class NextDriver extends DefaultDriver implements NextApi {
       })
     const handler = await this.cloudHandler
     return {
-      resolve(params) {
+      // Todo: there's overlap here and in the handler connection
+      async resolve(params) {
+        await handler.periodicSync()
         return handler.resolver.resolve({...resolveDefaults, ...params})
       }
     }
