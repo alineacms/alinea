@@ -637,7 +637,11 @@ export class Database implements Syncable {
           data: {}
         })
       }
-      endScan(`Scanned ${seenVersions.length} entries`)
+      endScan(
+        `Scanned ${seenVersions.length} entries${
+          commitHash ? ` (@${commitHash})` : ''
+        }`
+      )
       if (seenVersions.length === 0) return
 
       const {rowsAffected: removed} = await query(
