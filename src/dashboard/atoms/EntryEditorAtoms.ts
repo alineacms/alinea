@@ -284,7 +284,11 @@ export function createEntryEditor(entryData: EntryData) {
 
   const saveDraft = atom(null, async (get, set) => {
     const update = base64.stringify(edits.getLocalUpdate())
-    const entry = await getDraftEntry({phase: EntryPhase.Published})
+    // Use the existing path, when the entry gets published the path will change
+    const entry = await getDraftEntry({
+      phase: EntryPhase.Published,
+      path: activeVersion.path
+    })
     const mutation: Mutation = {
       type: MutationType.Edit,
       previousFile: entryFile(activeVersion),
@@ -378,7 +382,11 @@ export function createEntryEditor(entryData: EntryData) {
     const {edits} = entryData
     edits.applyEntryData(type, data)
     const update = base64.stringify(edits.getLocalUpdate())
-    const entry = await getDraftEntry({phase: EntryPhase.Published})
+    // We're not restoring the previous path because that is unavailable
+    const entry = await getDraftEntry({
+      phase: EntryPhase.Published,
+      path: activeVersion.path
+    })
     const editedFile = entryFile(entry)
     const mutation: Mutation = {
       type: MutationType.Edit,
@@ -486,16 +494,25 @@ export function createEntryEditor(entryData: EntryData) {
     })
   })
 
+  type DraftEntryOptions = {
+    phase?: EntryPhase
+    path?: string
+    parentPaths?: Array<string>
+    locale?: string | null
+    entryId?: string
+    parent?: string
+  }
   async function getDraftEntry(
-    meta: Partial<EntryUrlMeta> & {entryId?: string; parent?: string} = {}
+    options: DraftEntryOptions = {}
   ): Promise<EntryRow> {
     const data = parseYDoc(type, yDoc)
-    const locale = meta.locale ?? activeVersion.locale
-    const path = meta.path ?? data.path
-    const phase = meta.phase ?? activeVersion.phase
-    const entryId = meta.entryId ?? activeVersion.entryId
-    const parent = meta.parent ?? activeVersion.parent
-    const parentPaths = meta.parentPaths ?? entryData.parents.map(p => p.path)
+    const phase = options.phase ?? activeVersion.phase
+    const locale = options.locale ?? activeVersion.locale
+    const path = options.path ?? data.path ?? activeVersion.path
+    const entryId = options.entryId ?? activeVersion.entryId
+    const parent = options.parent ?? activeVersion.parent
+    const parentPaths =
+      options.parentPaths ?? entryData.parents.map(p => p.path)
     const draftEntry = {
       ...activeVersion,
       ...data,
@@ -581,9 +598,7 @@ export function createEntryEditor(entryData: EntryData) {
     })
   })
 
-  // The debounce here prevents React warning us about a state change during
-  // render for rich text fields. Some day that should be properly fixed.
-  const yUpdate = debounceAtom(edits.yUpdate, 10)
+  const yUpdate = debounceAtom(edits.yUpdate, 250)
 
   const discardEdits = edits.resetChanges
   const isLoading = edits.isLoading
@@ -599,10 +614,10 @@ export function createEntryEditor(entryData: EntryData) {
     editMode,
     activeVersion,
     type,
-    draftEntry,
     yUpdate,
     activeTitle,
     hasChanges,
+    draftEntry,
     saveDraft,
     publishEdits,
     restoreRevision,

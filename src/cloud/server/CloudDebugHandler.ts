@@ -2,6 +2,7 @@ import {Database, Handler, JWTPreviews, Media, Target} from 'alinea/backend'
 import {Drafts} from 'alinea/backend/Drafts'
 import {History, Revision} from 'alinea/backend/History'
 import {Pending} from 'alinea/backend/Pending'
+import {GitHistory} from 'alinea/cli/serve/GitHistory'
 import {Config, Connection, Draft, createId} from 'alinea/core'
 import {EntryRecord} from 'alinea/core/EntryRecord'
 import {Mutation} from 'alinea/core/Mutation'
@@ -13,8 +14,11 @@ const lag = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 export class DebugCloud implements Media, Target, History, Drafts, Pending {
   drafts = new Map<string, Draft>()
   pending: Array<Connection.MutateParams & {toCommitHash: string}> = []
+  history: History
 
-  constructor(public config: Config, public db: Database) {}
+  constructor(public config: Config, public db: Database, rootDir: string) {
+    this.history = new GitHistory(config, rootDir)
+  }
 
   async mutate(params: Connection.MutateParams) {
     await lag(latency)
@@ -45,12 +49,12 @@ export class DebugCloud implements Media, Target, History, Drafts, Pending {
 
   async revisions(file: string): Promise<Array<Revision>> {
     await lag(latency)
-    return []
+    return this.history.revisions(file, undefined!)
   }
 
   async revisionData(file: string, revision: string): Promise<EntryRecord> {
     await lag(latency)
-    throw new Error(`Not implemented`)
+    return this.history.revisionData(file, revision, undefined!)
   }
 
   async getDraft(entryId: string): Promise<Draft | undefined> {
@@ -83,8 +87,12 @@ export class DebugCloud implements Media, Target, History, Drafts, Pending {
   }
 }
 
-export function createCloudDebugHandler(config: Config, db: Database) {
-  const api = new DebugCloud(config, db)
+export function createCloudDebugHandler(
+  config: Config,
+  db: Database,
+  rootDir: string
+) {
+  const api = new DebugCloud(config, db, rootDir)
   return new Handler({
     db,
     config,

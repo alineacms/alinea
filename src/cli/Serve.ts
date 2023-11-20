@@ -98,7 +98,7 @@ export async function serve(options: ServeOptions): Promise<void> {
 
       function createBackend(): Handler {
         if (process.env.ALINEA_CLOUD_DEBUG)
-          return createCloudDebugHandler(currentCMS, db)
+          return createCloudDebugHandler(currentCMS, db, rootDir)
         if (process.env.ALINEA_CLOUD_URL)
           return createCloudHandler(currentCMS, db, process.env.ALINEA_API_KEY)
         return new Handler({

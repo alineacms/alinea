@@ -182,7 +182,7 @@ export class RichTextShape<Blocks>
   applyY(value: TextDoc<Blocks>, parent: Y.Map<any>, key: string): void {
     // Sync blocks
     const current: Y.Map<any> | undefined = parent.get(key)
-    if (!current) return void parent.set(key, this.toY(value))
+    if (!current || !value) return void parent.set(key, this.toY(value))
     const blocks = value.filter(
       row => this.values?.[row.type] && 'id' in row
     ) as Array<TextNode.Element<any>>
