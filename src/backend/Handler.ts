@@ -9,6 +9,7 @@ import {
   EntryRow,
   PreviewUpdate,
   ResolveDefaults,
+  Resolver,
   SyncResponse,
   parseYDoc
 } from 'alinea/core'
@@ -21,6 +22,7 @@ import {Logger, LoggerResult, Report} from 'alinea/core/util/Logger'
 import * as Y from 'alinea/yjs'
 import {Type, enums, object, string} from 'cito'
 import {unzlibSync} from 'fflate'
+import pLimit from 'p-limit'
 import {mergeUpdatesV2} from 'yjs'
 import {Database} from './Database.js'
 import {DraftTransport, Drafts} from './Drafts.js'
@@ -32,6 +34,8 @@ import {Target} from './Target.js'
 import {ChangeSetCreator} from './data/ChangeSet.js'
 import {EntryResolver} from './resolver/EntryResolver.js'
 import {Route, router} from './router/Router.js'
+
+const limit = pLimit(1)
 
 export interface HandlerOptions {
   config: Config
@@ -47,7 +51,7 @@ export interface HandlerOptions {
   resolveDefaults?: ResolveDefaults
 }
 
-export class Handler {
+export class Handler implements Resolver {
   connect: (ctx: Connection.Context) => Connection
   router: Route<Request, Response | undefined>
   resolver: EntryResolver
@@ -66,7 +70,13 @@ export class Handler {
     this.router = createRouter(auth, this.connect)
   }
 
-  previewAuth(): Connection.Context {
+  resolve = async (params: Connection.ResolveParams) => {
+    const {resolveDefaults} = this.options
+    await this.periodicSync()
+    return this.resolver.resolve({...resolveDefaults, ...params})
+  }
+
+  protected previewAuth(): Connection.Context {
     return {
       logger: new Logger('parsePreview'),
       token: this.options.previewAuthToken
@@ -100,7 +110,6 @@ export class Handler {
   }
 
   async periodicSync() {
-    // Todo: queue these properly
     const now = Date.now()
     if (now - this.lastSync < 5_000) return
     this.lastSync = now
@@ -109,34 +118,32 @@ export class Handler {
     } catch {}
   }
 
-  async syncPending() {
-    const {pending, db} = this.options
-    const meta = await db.meta()
-    if (!pending) return meta
-    try {
-      const toApply = await pending.pendingSince(
-        meta.commitHash,
-        this.previewAuth()
-      )
-      if (!toApply) return meta
-      await db.applyMutations(toApply.mutations, toApply.toCommitHash)
-    } catch (error) {
-      console.error(error)
-      console.warn('> could not sync pending mutations')
-    }
-    return db.meta()
+  syncPending() {
+    return limit(async () => {
+      const {pending, db} = this.options
+      const meta = await db.meta()
+      if (!pending) return meta
+      try {
+        const toApply = await pending.pendingSince(
+          meta.commitHash,
+          this.previewAuth()
+        )
+        if (!toApply) return meta
+        await db.applyMutations(toApply.mutations, toApply.toCommitHash)
+      } catch (error) {
+        console.error(error)
+        console.warn('> could not sync pending mutations')
+      }
+      return db.meta()
+    })
   }
 }
 
 class HandlerConnection implements Connection {
-  constructor(protected handler: Handler, protected ctx: Connection.Context) {}
+  resolve: Resolver['resolve']
 
-  // Resolver
-
-  resolve = async (params: Connection.ResolveParams) => {
-    const {resolveDefaults} = this.handler.options
-    await this.handler.periodicSync()
-    return this.handler.resolver.resolve({...resolveDefaults, ...params})
+  constructor(protected handler: Handler, protected ctx: Connection.Context) {
+    this.resolve = handler.resolve
   }
 
   // Target
