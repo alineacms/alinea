@@ -197,7 +197,7 @@ export function createCloudHandler(
   db: Database,
   apiKey: string | undefined
 ) {
-  const api = new CloudApi(config)
+  const api = apiKey ? new CloudApi(config) : undefined
   return new Handler({
     auth: new CloudAuthServer({config, apiKey}),
     db,
