@@ -98,6 +98,7 @@ export function createLocalServer(
     platform: 'browser',
     ...buildOptions,
     plugins: buildOptions?.plugins || [],
+    inject: ['alinea/cli/util/WarnPublicEnv'],
     define: {
       'process.env.NODE_ENV': production ? "'production'" : "'development'",
       'process.env.ALINEA_CLOUD_URL': cloudUrl
