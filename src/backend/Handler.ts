@@ -177,14 +177,6 @@ class HandlerConnection implements Connection {
     const tasks = []
     for (const mutation of mutations) {
       switch (mutation.type) {
-        case MutationType.FileRemove:
-          tasks.push(
-            media.deleteUpload(
-              {location: mutation.location, workspace: mutation.workspace},
-              this.ctx
-            )
-          )
-          continue
         case MutationType.Edit:
           tasks.push(this.persistEdit(mutation))
           continue

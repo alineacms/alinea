@@ -19,10 +19,13 @@ import {IcRoundTranslate} from 'alinea/ui/icons/IcRoundTranslate'
 import {IcRoundUnfoldMore} from 'alinea/ui/icons/IcRoundUnfoldMore'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {useEffect, useState} from 'react'
+import {useQueryClient} from 'react-query'
 import {EntryEditor, EntryTransition} from '../../atoms/EntryEditorAtoms.js'
 import {useLocation, useNavigate} from '../../atoms/LocationAtoms.js'
 import {useConfig} from '../../hook/UseConfig.js'
+import {useEntryLocation} from '../../hook/UseEntryLocation.js'
 import {useLocale} from '../../hook/UseLocale.js'
+import {useNav} from '../../hook/UseNav.js'
 import {useUploads} from '../../hook/UseUploads.js'
 import {useSidebar} from '../Sidebar.js'
 import {FileUploader} from '../media/FileUploader.js'
@@ -97,13 +100,22 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
   const publishArchived = useSetAtom(editor.publishArchived)
   const deleteArchived = useSetAtom(editor.deleteArchived)
   const deleteFile = useSetAtom(editor.deleteFile)
+  const queryClient = useQueryClient()
+  function deleteFileAndNavigate() {
+    return deleteFile()?.then(() => {
+      queryClient.invalidateQueries('explorer')
+      navigate(nav.root(entryLocation))
+    })
+  }
   const saveTranslation = useSetAtom(editor.saveTranslation)
   const discardEdits = useSetAtom(editor.discardEdits)
   const translate = () => saveTranslation(locale!)
   const [showHistory, setShowHistory] = useAtom(editor.showHistory)
+  const entryLocation = useEntryLocation()
   const navigate = useNavigate()
+  const nav = useNav()
   const {pathname} = useLocation()
-  const {isNavOpen, isPreviewOpen, toggleNav, togglePreview} = useSidebar()
+  const {isPreviewOpen, toggleNav, togglePreview} = useSidebar()
   const [isReplacing, setIsReplacing] = useState(false)
   const {upload} = useUploads()
   function replaceFile() {
@@ -150,7 +162,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
           </DropdownMenu.Item>
           <DropdownMenu.Item
             className={styles.root.action()}
-            onClick={deleteFile}
+            onClick={deleteFileAndNavigate}
           >
             Delete
           </DropdownMenu.Item>

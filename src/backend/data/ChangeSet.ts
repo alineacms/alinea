@@ -1,4 +1,4 @@
-import {Config, EntryPhase, EntryUrlMeta, Type} from 'alinea/core'
+import {Config, EntryPhase, EntryUrlMeta, Type, Workspace} from 'alinea/core'
 import {META_KEY, createRecord} from 'alinea/core/EntryRecord'
 import {
   ArchiveMutation,
@@ -14,6 +14,7 @@ import {
   RemoveEntryMutation,
   UploadMutation
 } from 'alinea/core/Mutation'
+import {join} from 'alinea/core/util/Paths'
 import {JsonLoader} from '../loader/JsonLoader.js'
 
 export enum ChangeType {
@@ -206,13 +207,13 @@ export class ChangeSetCreator {
     return [{type: ChangeType.Upload, file: mutation.file, url: mutation.url}]
   }
 
-  fileRemoveChanges({
-    file: entryFile,
-    replace
-  }: FileRemoveMutation): Array<Change> {
-    // Removing the binary file from the media instance happens in Server
-    if (replace) return []
-    return [{type: ChangeType.Delete, file: entryFile}]
+  fileRemoveChanges(mutation: FileRemoveMutation): Array<Change> {
+    const mediaDir =
+      Workspace.data(this.config.workspaces[mutation.workspace])?.mediaDir ?? ''
+    const binaryLocation = join(mediaDir, mutation.location)
+    const removeBinary: Change = {type: ChangeType.Delete, file: binaryLocation}
+    if (mutation.replace) return [removeBinary]
+    return [{type: ChangeType.Delete, file: mutation.file}, removeBinary]
   }
 
   mutationChanges(mutation: Mutation): Array<Change> {

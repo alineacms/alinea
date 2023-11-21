@@ -39,14 +39,6 @@ export class DebugCloud implements Media, Target, History, Drafts, Pending {
     throw new Error(`Not implemented`)
   }
 
-  async deleteUpload({
-    location,
-    workspace
-  }: Connection.DeleteParams): Promise<void> {
-    await lag(latency)
-    console.log(`> cloud: delete`, location, workspace)
-  }
-
   async revisions(file: string): Promise<Array<Revision>> {
     await lag(latency)
     return this.history.revisions(file, undefined!)

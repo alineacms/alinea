@@ -26,7 +26,7 @@ export function dashboardNav(defaults: Partial<EntryLocation>) {
     if (!id) return `/${workspace}/${rootLocation}`
     return `/${workspace}/${rootLocation}/${id}`
   }
-  function root(location: EntryLocation) {
+  function root({entryId, i18nId, ...location}: EntryLocation) {
     return entry(location)
   }
   function entry(location: EntryLocation) {

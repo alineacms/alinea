@@ -3,12 +3,11 @@ import {Drafts} from 'alinea/backend/Drafts'
 import {History, Revision} from 'alinea/backend/History'
 import {Pending} from 'alinea/backend/Pending'
 import {ChangeSet} from 'alinea/backend/data/ChangeSet'
-import {Config, Connection, Draft, HttpError, Workspace} from 'alinea/core'
+import {Config, Connection, Draft, HttpError} from 'alinea/core'
 import {EntryRecord} from 'alinea/core/EntryRecord'
 import {Mutation} from 'alinea/core/Mutation'
 import {Outcome, OutcomeJSON} from 'alinea/core/Outcome'
 import {base64} from 'alinea/core/util/Encoding'
-import {join} from 'alinea/core/util/Paths'
 import {CloudAuthServer} from './CloudAuthServer.js'
 import {cloudConfig} from './CloudConfig.js'
 
@@ -80,21 +79,6 @@ export class CloudApi implements Media, Target, History, Pending, Drafts {
       .then<OutcomeJSON<Connection.UploadResponse>>(json)
       .then<Outcome<Connection.UploadResponse>>(Outcome.fromJSON)
       .then(Outcome.unpack)
-  }
-
-  deleteUpload(
-    {location, workspace}: Connection.DeleteParams,
-    ctx: Connection.Context
-  ): Promise<void> {
-    const mediaDir =
-      Workspace.data(this.config.workspaces[workspace])?.mediaDir ?? ''
-    const finalLocation = join(mediaDir, location)
-    return fetch(
-      cloudConfig.media + '?' + new URLSearchParams({location: finalLocation}),
-      withAuth(ctx, {method: 'DELETE'})
-    )
-      .then(failOnHttpError)
-      .then(() => undefined)
   }
 
   revisions(file: string, ctx: Connection.Context): Promise<Array<Revision>> {

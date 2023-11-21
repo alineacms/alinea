@@ -1,6 +1,6 @@
 import {JsonLoader, Media} from 'alinea/backend'
 import {FS} from 'alinea/backend/FS'
-import {Connection, HttpError, createId, slugify} from 'alinea/core'
+import {Connection, createId, slugify} from 'alinea/core'
 import {Config} from 'alinea/core/Config'
 import {outcome} from 'alinea/core/Outcome'
 import {Root} from 'alinea/core/Root'
@@ -194,20 +194,5 @@ export class LocalData implements Source, Target, Media {
         ).href
       }
     }
-  }
-
-  async deleteUpload({
-    location,
-    workspace
-  }: Connection.DeleteParams): Promise<void> {
-    const {fs, rootDir = '.'} = this.options
-    const mediaDir = Workspace.data(
-      this.options.config.workspaces[workspace]
-    ).mediaDir
-    if (!mediaDir) throw new HttpError(401)
-    const file = path.join(rootDir, mediaDir, location)
-    const isInMediaLocation = this.isInMediaLocation(file)
-    if (!isInMediaLocation) throw new HttpError(401)
-    await fs.rm(file, {recursive: true, force: true})
   }
 }
