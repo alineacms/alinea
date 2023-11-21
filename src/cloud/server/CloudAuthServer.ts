@@ -1,6 +1,14 @@
 import {fetch, Request, Response} from '@alinea/iso'
 import {Route, router} from 'alinea/backend/router/Router'
-import {Auth, Config, Connection, HttpError, outcome, User} from 'alinea/core'
+import {
+  Auth,
+  Config,
+  Connection,
+  HttpError,
+  outcome,
+  User,
+  Workspace
+} from 'alinea/core'
 import {verify} from 'alinea/core/util/JWT'
 import PLazy from 'p-lazy'
 import pkg from '../../../package.json'
@@ -80,11 +88,12 @@ export class CloudAuthServer implements Auth.Server {
                   description: 'Can view and edit all pages'
                 }
               ],
-              sourceDirectories: Object.values(config.workspaces).map(
-                workspace => {
-                  return workspace.source
-                }
-              )
+              sourceDirectories: Object.values(config.workspaces)
+                .flatMap(workspace => {
+                  const {source, mediaDir} = Workspace.data(workspace)
+                  return [source, mediaDir]
+                })
+                .filter(Boolean)
             }
           }
           if (process.env.VERCEL) {
