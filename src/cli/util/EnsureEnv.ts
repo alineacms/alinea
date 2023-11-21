@@ -3,14 +3,20 @@ import path from 'node:path'
 
 // Source: stripped down version of dotenv
 
+const attempt = ['.env.local', '.env']
+
 export function ensureEnv(cwd = process.cwd()) {
-  const dotEnvFile = path.join(cwd, '.env')
   const LINE =
     /(?:^|^)\s*(?:export\s+)?([\w.-]+)(?:\s*=\s*?|:\s+?)(\s*'(?:\\'|[^'])*'|\s*"(?:\\"|[^"])*"|\s*`(?:\\`|[^`])*`|[^#\r\n]+)?\s*(?:#.*)?(?:$|$)/gm
-  let src: string
-  try {
-    src = fs.readFileSync(dotEnvFile, 'utf-8')
-  } catch (err) {
+  let src: string | undefined = undefined
+  for (const file of attempt) {
+    try {
+      const dotEnvFile = path.resolve(cwd, file)
+      src = fs.readFileSync(dotEnvFile, 'utf-8')
+      break
+    } catch {}
+  }
+  if (src === undefined) {
     const parent = path.dirname(cwd)
     if (parent === cwd) return
     return ensureEnv(path.dirname(cwd))
