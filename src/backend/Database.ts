@@ -344,8 +344,24 @@ export class Database implements Syncable {
         // Todo: update file & children paths
         return () => this.updateHash(tx, rows)
       }
-      case MutationType.Upload:
-        return
+      case MutationType.Upload: {
+        // Until this mutation is applied the uploaded file won't be locally
+        // available so the preview url is used. The fileHash is updated so that
+        // syncing to the client after a successful deploy will overwrite this
+        // change.
+        const row = EntryRow({
+          entryId: mutation.entryId,
+          phase: EntryPhase.Published
+        })
+        const existing = await tx(row.maybeFirst())
+        if (!existing) return
+        await tx(
+          row.set({
+            data: {...existing.data, location: mutation.url}
+          })
+        )
+        return () => this.updateHash(tx, row)
+      }
       default:
         throw unreachable(mutation)
     }
