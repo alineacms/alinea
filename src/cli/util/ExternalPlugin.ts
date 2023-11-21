@@ -21,7 +21,7 @@ export function externalPlugin(cwd: string): Plugin {
             kind: args.kind,
             resolveDir: rootDir
           })
-          if (resolved) return resolved
+          if (resolved.errors.length === 0) return resolved
         }
         return extern
       })
