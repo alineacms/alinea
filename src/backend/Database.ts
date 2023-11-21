@@ -1,4 +1,4 @@
-import {JsonLoader} from 'alinea/backend'
+import {JsonLoader, Media} from 'alinea/backend'
 import {
   Config,
   EntryUrlMeta,
@@ -357,7 +357,11 @@ export class Database implements Syncable {
         if (!existing) return
         await tx(
           row.set({
-            data: {...existing.data, location: mutation.url}
+            data: {
+              ...existing.data,
+              location: mutation.url,
+              [Media.ORIGINAL_LOCATION]: existing.data.location
+            }
           })
         )
         return () => this.updateHash(tx, row)

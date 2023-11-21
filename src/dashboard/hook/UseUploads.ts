@@ -366,6 +366,7 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
       ...replace.entry,
       data: {...entry.data, title: replace.entry.title}
     })
+    const mediaFile = replace.entry.data as MediaFile
     await batchMutations(
       {
         type: MutationType.Edit,
@@ -384,7 +385,10 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
         entryId: replace.entry.entryId,
         file: replace.entryFile,
         workspace: replace.entry.workspace,
-        location: (replace.entry.data as MediaFile).location,
+        location:
+          Media.ORIGINAL_LOCATION in mediaFile
+            ? (mediaFile[Media.ORIGINAL_LOCATION] as string)
+            : mediaFile.location,
         replace: true
       }
     )

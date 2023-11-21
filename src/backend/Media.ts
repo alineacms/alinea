@@ -25,6 +25,8 @@ export namespace Media {
     thumbHash: string
   }
 
+  export const ORIGINAL_LOCATION = '@alinea.location'
+
   export type File = EntryRow<FileProperties & Partial<ImageProperties>>
   export type Image = EntryRow<FileProperties & ImageProperties>
 

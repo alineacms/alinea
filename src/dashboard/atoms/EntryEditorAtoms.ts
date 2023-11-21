@@ -1,3 +1,4 @@
+import {Media} from 'alinea/backend'
 import {
   Config,
   Connection,
@@ -465,11 +466,15 @@ export function createEntryEditor(entryData: EntryData) {
     const result = confirm('Are you sure you want to delete this file?')
     if (!result) return
     const published = entryData.phases[EntryPhase.Published]
+    const file = published.data as MediaFile
     const mutation: Mutation = {
       type: MutationType.FileRemove,
       entryId: published.entryId,
       workspace: published.workspace,
-      location: (published.data as MediaFile).location,
+      location:
+        Media.ORIGINAL_LOCATION in file
+          ? (file[Media.ORIGINAL_LOCATION] as string)
+          : file.location,
       file: entryFile(published),
       replace: false
     }
