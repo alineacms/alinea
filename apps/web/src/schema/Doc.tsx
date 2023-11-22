@@ -1,6 +1,6 @@
 import alinea from 'alinea'
-import {TextField} from './blocks/TextBlock'
+import {BodyField} from './blocks/BodyField'
 
 export const Doc = alinea.document('Doc', {
-  body: TextField
+  body: BodyField
 })

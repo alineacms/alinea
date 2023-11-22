@@ -9,6 +9,7 @@ import {MdiTwitterCircle} from 'alinea/ui/icons/MdiTwitterCircle'
 import {Link} from '../nav/Link'
 import {NavTree} from '../nav/NavTree'
 import {Home} from '../schema/Home'
+import {HeaderRoot} from './Header.client'
 import css from './Header.module.scss'
 import {LayoutContainer} from './Layout'
 import {Logo} from './branding/Logo'
@@ -44,11 +45,11 @@ export async function Header() {
           </div>
         </div>
       </div>
-      <header className={styles.root()}>
+      <HeaderRoot>
         <LayoutContainer style={{height: '100%'}}>
           <Menu links={links} />
         </LayoutContainer>
-      </header>
+      </HeaderRoot>
     </>
   )
 }

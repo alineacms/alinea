@@ -5,13 +5,18 @@
   &-trigger {
     display: block;
     text-align: left;
-    padding: 8px;
+    padding: 8px 11px;
     width: 100%;
     cursor: pointer;
 
     &:hover {
       background-color: hsla(var(--web-negative-hsl), 0.05);
       border-radius: 8px;
+    }
+
+    &-arrow {
+      font-size: 18px;
+      margin-left: auto;
     }
 
     &:focus + .picker-options {
@@ -37,7 +42,7 @@
       display: block;
       width: 100%;
       text-align: left;
-      padding: 8px;
+      padding: 10px 11px;
       cursor: pointer;
 
       &.is-disabled {

@@ -44,11 +44,6 @@
       font-size: 15px;
     }
 
-    &.is-selected &-icon,
-    &:hover &-icon {
-      color: var(--web-selected-foreground);
-    }
-
     &.is-active {
       font-weight: 600;
       background: var(--web-selected);

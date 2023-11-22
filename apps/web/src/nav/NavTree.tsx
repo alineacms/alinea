@@ -4,8 +4,9 @@ import {fromModule, HStack} from 'alinea/ui'
 import {IcRoundKeyboardArrowDown} from 'alinea/ui/icons/IcRoundKeyboardArrowDown'
 import {IcRoundKeyboardArrowRight} from 'alinea/ui/icons/IcRoundKeyboardArrowRight'
 import Link from 'next/link'
-import {usePathname} from 'next/navigation'
+import {useParams, usePathname} from 'next/navigation'
 import {useEffect, useMemo, useState} from 'react'
+import {getFramework} from './Frameworks'
 import css from './NavTree.module.scss'
 import {Nav, NavItem, nestNav} from './NestNav'
 
@@ -22,6 +23,7 @@ interface NavTreeItemProps {
 
 function NavTreeItem({level, page}: NavTreeItemProps) {
   const pathname = usePathname()
+  const framework = getFramework(useParams().framework as string)
   const [showChildren, setShowChildren] = useState<boolean | undefined>(
     undefined
   )
@@ -57,7 +59,7 @@ function NavTreeItem({level, page}: NavTreeItemProps) {
       ) : (
         <div>
           <Link
-            href={page.url!}
+            href={framework.link(page.url!)}
             className={styles.root.link({
               active: pathname === page.url
             })}

@@ -11,11 +11,12 @@ const styles = fromModule(css)
 export async function CodeBlockView({
   code,
   compact,
-  fileName
+  fileName,
+  language
 }: Infer<typeof CodeBlock>) {
   const {codeToHtml} = await codeHighlighter
   const html = codeToHtml(code, {
-    lang: code.startsWith('#') ? 'shellscript' : 'tsx'
+    lang: language ?? 'tsx'
   })
   return (
     <div className={styles.root({compact})}>

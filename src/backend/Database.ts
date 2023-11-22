@@ -19,7 +19,6 @@ import {Logger} from 'alinea/core/util/Logger'
 import {entries} from 'alinea/core/util/Objects'
 import * as path from 'alinea/core/util/Paths'
 import * as paths from 'alinea/core/util/Paths'
-import {timer} from 'alinea/core/util/Timer'
 import {Driver, Expr, Select, alias, create} from 'rado'
 import {exists} from 'rado/sqlite'
 import xxhash from 'xxhash-wasm'
@@ -582,7 +581,7 @@ export class Database implements Syncable {
       const seenVersions: Array<string> = []
       const seenSeeds = new Set<string>()
       const inserted = []
-      const endScan = timer('Scanning entries')
+      // const endScan = timer('Scanning entries')
       for await (const file of source.entries()) {
         const seed = this.seed.get(file.filePath)
         const fileHash = await createFileHash(file.contents)
@@ -657,11 +656,11 @@ export class Database implements Syncable {
           data: {}
         })
       }
-      endScan(
+      /*endScan(
         `Scanned ${seenVersions.length} entries${
           commitHash ? ` (@${commitHash})` : ''
         }`
-      )
+      )*/
       if (seenVersions.length === 0) return
 
       const {rowsAffected: removed} = await query(

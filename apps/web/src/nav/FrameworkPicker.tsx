@@ -1,83 +1,56 @@
+'use client'
+
 import {HStack, fromModule} from 'alinea/ui'
 import {IcRoundKeyboardArrowDown} from 'alinea/ui/icons/IcRoundKeyboardArrowDown'
-import {SVGProps} from 'react'
+import Link from 'next/link'
+import {useParams, usePathname, useRouter} from 'next/navigation'
 import css from './FrameworkPicker.module.scss'
+import {getFramework, supportedFrameworks} from './Frameworks'
 
 const styles = fromModule(css)
 
-export function TablerBrandJavascript(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="1em"
-      height="1em"
-      viewBox="0 0 24 24"
-      {...props}
-    >
-      <g
-        fill="none"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="2"
-      >
-        <path d="m20 4l-2 14.5l-6 2l-6-2L4 4z"></path>
-        <path d="M7.5 8h3v8l-2-1m8-7H14a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h1.423a.5.5 0 0 1 .495.57L15.5 15.5l-2 .5"></path>
-      </g>
-    </svg>
-  )
-}
-
-export function TablerBrandNextjs(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="1em"
-      height="1em"
-      viewBox="0 0 24 24"
-      {...props}
-    >
-      <path
-        fill="none"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="2"
-        d="M9 15V9l7.745 10.65A9 9 0 1 1 19 17.657M15 12V9"
-      ></path>
-    </svg>
-  )
-}
-
 export function FrameworkPicker() {
+  const router = useRouter()
+  const pathname = usePathname()
+  const params = useParams()
+  const framework = getFramework(params.framework as string)
   return (
     <div className={styles.picker()}>
       <button className={styles.picker.trigger()}>
-        <HStack>
+        <HStack center>
           <div>
             <small>Integrate with</small>
             <HStack center gap={8}>
-              <TablerBrandNextjs />
-              <span>Next.js</span>
+              <framework.selected.icon />
+              <span>{framework.selected.label}</span>
             </HStack>
           </div>
-          <IcRoundKeyboardArrowDown />
+          <span className={styles.picker.trigger.arrow()}>
+            <IcRoundKeyboardArrowDown />
+          </span>
         </HStack>
       </button>
       <div className={styles.picker.options()}>
-        <button className={styles.picker.options.option()}>
-          <HStack center gap={8}>
-            <TablerBrandNextjs />
-            <span>Next.js</span>
-          </HStack>
-        </button>
-
-        <button className={styles.picker.options.option()}>
-          <HStack center gap={8}>
-            <TablerBrandJavascript />
-            <span>Vanilla js</span>
-          </HStack>
-        </button>
+        {supportedFrameworks.map((framework, i) => {
+          const href =
+            '/docs/' +
+            framework.name +
+            '/' +
+            pathname.split('/').slice(3).join('/')
+          return (
+            <Link
+              key={framework.name}
+              href={href}
+              onMouseDown={() => router.push(href)}
+              className={styles.picker.options.option()}
+            >
+              <HStack center gap={8}>
+                <framework.icon />
+                <span>{framework.label}</span>
+              </HStack>
+            </Link>
+          )
+        })}
 
         <div className={styles.picker.options.option({disabled: true})}>
           More coming soon

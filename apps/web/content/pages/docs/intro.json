@@ -1,6 +1,4 @@
 {
-  "id": "2AFn42lqIU86a9MI0I4rX3qMJQv",
-  "type": "Doc",
   "title": "Introduction",
   "body": [
     {
@@ -20,7 +18,7 @@
       "content": [
         {
           "type": "text",
-          "text": "Alinea is an open source headless CMS written in Typescript."
+          "text": "Alinea is an open source headless CMS written in Typescript. Its main highlights are:"
         }
       ]
     },
@@ -51,7 +49,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Content is queryable through an in-memory SQLite database, zero network overhead"
+                  "text": "Content is bundled with deploys, meaning zero network overhead while retrieving content"
                 }
               ]
             }
@@ -80,7 +78,7 @@
       "content": [
         {
           "type": "text",
-          "text": "It can be installed as a single NPM package that provides a CLI which let's you get going without setting up databases, environments or any other services. "
+          "text": "Alinea comes packaged as a single library on NPM. It provides a CLI that lets you get going without setting up databases, environments, or any other services."
         }
       ]
     },
@@ -90,7 +88,8 @@
       "link": {
         "id": "pQQ6PFuITK3HiaihU-4ax",
         "type": "entry",
-        "entry": "20580nQzbOBR3Lt4kIdxyRGglc6"
+        "entry": "20580nQzbOBR3Lt4kIdxyRGglc6",
+        "description": ""
       }
     },
     {
@@ -110,33 +109,17 @@
       "content": [
         {
           "type": "text",
-          "text": "The content schema is configured in a central config file with "
-        },
-        {
-          "type": "text",
-          "text": "types",
-          "marks": [
-            {
-              "type": "link",
-              "attrs": {
-                "data-id": "FXVYc0oWLl9w11PQFvH0W",
-                "data-entry": "267QuOShP41WnFxQFOcHZQoCsla",
-                "href": null,
-                "title": null
-              }
-            }
-          ]
-        },
-        {
-          "type": "text",
-          "text": ". A type holds different fields — alinea ships with a lot of preconfigured field types that can be added to by creating custom fields. "
+          "text": "The content schema is configured in a central config file. Content types define different fields — Alinea ships with a lot of field types but can be expanded by creating custom fields."
         }
       ]
     },
     {
       "id": "ywilQqjnFgpesqZ88ztfg",
       "type": "CodeBlock",
-      "code": "const BlogPost = alinea.type('Blog post', {\n  title: alinea.text('Blog entry title'),\n  path: alinea.path('Url path'),\n  body: alinea.richText('Body text')\n})"
+      "code": "const BlogPost = alinea.type('Blog post', {\n  title: alinea.text('Blog entry title'),\n  path: alinea.path('Url path'),\n  body: alinea.richText('Body text')\n})",
+      "fileName": "",
+      "language": "",
+      "compact": false
     },
     {
       "type": "paragraph",
@@ -155,6 +138,7 @@
               "attrs": {
                 "data-id": "yMjicncya9hmF_nyXNIK_",
                 "data-entry": "259EzPfnSUaKOrNL1S2bpIpMdKl",
+                "data-type": null,
                 "href": null,
                 "title": null
               }
@@ -174,6 +158,7 @@
               "attrs": {
                 "data-id": "2eukZ1z0XcPbzghBjKVAB",
                 "data-entry": "28hcdyq0sGJdgY6kM24NZd1XP5S",
+                "data-type": null,
                 "href": null,
                 "title": null
               }
@@ -224,6 +209,7 @@
               "attrs": {
                 "data-id": "cK3ZGUh6k2wYUjZdirQ8Y",
                 "data-entry": null,
+                "data-type": null,
                 "href": "https://github.com/alineacms/alinea/issues/10",
                 "target": "_blank",
                 "title": null
@@ -253,7 +239,8 @@
       "link": {
         "id": "s1TBmqCylqtoDnUtpwZhI",
         "type": "entry",
-        "entry": "28Ng6ZnpyhafrKdGMOO7BUUKP4S"
+        "entry": "28Ng6ZnpyhafrKdGMOO7BUUKP4S",
+        "description": ""
       }
     },
     {
@@ -273,7 +260,7 @@
       "content": [
         {
           "type": "text",
-          "text": "While developing locally the alinea CLI starts a server with the dashboard for you. Changes are written to the file system and can be committed to git manually during the development process. "
+          "text": "While developing locally the Alinea CLI starts a server with the dashboard for you. Changes are written to the file system and can be committed to git manually during the development process. "
         }
       ]
     },
@@ -283,7 +270,7 @@
       "content": [
         {
           "type": "text",
-          "text": "When your project is ready to deploy alinea exposes a handler that can be hosted on most Javascript runtimes (Node.js or edge/serverless functions). The handler needs access to a backend service that can authenticate users, store drafts and publish changes back to the git repository. Alinea ships with some packages that help you build a backend — or one can be hosted via our "
+          "text": "When your project is ready to deploy Alinea exposes a handler that can be hosted on most Javascript runtimes (Node.js or edge/serverless functions). The handler needs access to a backend service that can authenticate users, store drafts and publish changes back to the git repository. Alinea ships with some packages that help you build a backend — or one can be hosted via our "
         },
         {
           "type": "text",
@@ -294,6 +281,7 @@
               "attrs": {
                 "data-id": "bj69FWaHNlyj1-7nXADBM",
                 "data-entry": null,
+                "data-type": null,
                 "href": "https://www.alinea.cloud",
                 "target": "_blank",
                 "title": null
@@ -313,11 +301,23 @@
       "link": {
         "id": "4Og-Fit8qpxWgZmWZcYdT",
         "type": "entry",
-        "entry": "28NgU841OXMyHZX4EU1GRqxZaB0"
+        "entry": "28NgU841OXMyHZX4EU1GRqxZaB0",
+        "description": ""
       }
     }
   ],
-  "alinea": {
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "title": "",
+      "image": {},
+      "description": ""
+    }
+  },
+  "@alinea": {
+    "entryId": "2AFn42lqIU86a9MI0I4rX3qMJQv",
+    "type": "Doc",
     "index": "Zg"
   }
 }

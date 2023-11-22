@@ -1,0 +1,111 @@
+{
+  "title": "Install Alinea",
+  "body": [
+    {
+      "type": "heading",
+      "textAlign": "left",
+      "level": 1,
+      "content": [
+        {
+          "type": "text",
+          "text": "Install Alinea"
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "textAlign": "left",
+      "level": 2,
+      "content": [
+        {
+          "type": "text",
+          "text": "Setup"
+        }
+      ]
+    },
+    {
+      "id": "2YX0hoFtrkov2TMQT8cuHwhgN6L",
+      "type": "FrameworkBlock",
+      "next": [
+        {
+          "type": "paragraph",
+          "textAlign": "left",
+          "content": [
+            {
+              "type": "text",
+              "text": "Get started by creating a new Next.js project. Run the following:"
+            }
+          ]
+        },
+        {
+          "id": "2YXL5zGSUUiBumPIemixlnKqCyL",
+          "type": "CodeBlock",
+          "code": "Test code",
+          "fileName": "",
+          "language": "",
+          "compact": false
+        },
+        {
+          "id": "2YXKZ3Ds2lpGOsLh9adsGaBQlTx",
+          "type": "NoticeBlock",
+          "level": "info",
+          "body": [
+            {
+              "type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Check the recommended way to start at the "
+                },
+                {
+                  "type": "text",
+                  "text": "Next.js website",
+                  "marks": [
+                    {
+                      "type": "link",
+                      "attrs": {
+                        "data-id": "2YXKczB3joyKzGfrzWgivPA8N0K",
+                        "data-entry": null,
+                        "data-type": "url",
+                        "href": "https://nextjs.org/docs/getting-started/installation",
+                        "target": "_blank",
+                        "title": ""
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "js": [
+        {
+          "type": "paragraph",
+          "textAlign": "left",
+          "content": [
+            {
+              "type": "text",
+              "text": "Some body text V"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "title": "",
+      "image": {},
+      "description": ""
+    }
+  },
+  "@alinea": {
+    "entryId": "2YWqKUTrANlgEFMyBUEYdih2HpP",
+    "type": "Doc",
+    "index": "a0"
+  }
+}

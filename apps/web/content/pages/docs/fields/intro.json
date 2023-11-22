@@ -1,6 +1,4 @@
 {
-  "id": "tEBluF6vXUnc-WDPKN5K8",
-  "type": "Doc",
   "title": "Overview",
   "body": [
     {
@@ -51,9 +49,8 @@
       ]
     },
     {
-      "type": "heading",
+      "type": "paragraph",
       "textAlign": "left",
-      "level": 3,
       "content": [
         {
           "type": "text",
@@ -72,9 +69,8 @@
       ]
     },
     {
-      "type": "heading",
+      "type": "paragraph",
       "textAlign": "left",
-      "level": 3,
       "content": [
         {
           "type": "text",
@@ -93,9 +89,8 @@
       ]
     },
     {
-      "type": "heading",
+      "type": "paragraph",
       "textAlign": "left",
-      "level": 3,
       "content": [
         {
           "type": "text",
@@ -114,9 +109,8 @@
       ]
     },
     {
-      "type": "heading",
+      "type": "paragraph",
       "textAlign": "left",
-      "level": 3,
       "content": [
         {
           "type": "text",
@@ -135,9 +129,8 @@
       ]
     },
     {
-      "type": "heading",
+      "type": "paragraph",
       "textAlign": "left",
-      "level": 3,
       "content": [
         {
           "type": "text",
@@ -156,7 +149,18 @@
       ]
     }
   ],
-  "alinea": {
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "title": "",
+      "image": {},
+      "description": ""
+    }
+  },
+  "@alinea": {
+    "entryId": "tEBluF6vXUnc-WDPKN5K8",
+    "type": "Doc",
     "index": "Zz"
   }
 }

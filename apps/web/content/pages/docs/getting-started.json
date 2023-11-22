@@ -1,6 +1,4 @@
 {
-  "id": "20580nQzbOBR3Lt4kIdxyRGglc6",
-  "type": "Doc",
   "title": "Getting started",
   "body": [
     {
@@ -57,6 +55,7 @@
                       "attrs": {
                         "data-id": "_bZVO9jiPMeb8ssIPZECz",
                         "data-entry": null,
+                        "data-type": null,
                         "href": "https://nextjs.org/docs/getting-started",
                         "target": "_blank",
                         "title": null
@@ -92,6 +91,7 @@
                       "attrs": {
                         "data-id": "WpJVcicRJMS41iBIpiDQj",
                         "data-entry": null,
+                        "data-type": null,
                         "href": "https://github.com/alineacms/alinea/tree/main/examples",
                         "target": "_blank",
                         "title": null
@@ -133,14 +133,17 @@
       "content": [
         {
           "type": "text",
-          "text": "In the rest of the guide we assume you run the commands from the directory of your project."
+          "text": "In the rest of the guide we assume you run the commands from the directory of your project:"
         }
       ]
     },
     {
       "id": "fIiqdZvuoqYHVErMheNTz",
       "type": "CodeBlock",
-      "code": "cd alinea-example"
+      "code": "cd alinea-example",
+      "fileName": "",
+      "language": "",
+      "compact": false
     },
     {
       "id": "2AF9aFBkzjV4wUsEa0MAqhybHc8",
@@ -164,6 +167,7 @@
                   "attrs": {
                     "data-id": "rJNPFX77mIXHwzvalGxSO",
                     "data-entry": null,
+                    "data-type": null,
                     "href": "https://nodejs.org",
                     "target": "_blank",
                     "title": null
@@ -173,7 +177,7 @@
             },
             {
               "type": "text",
-              "text": " 14+"
+              "text": " 18+"
             }
           ]
         }
@@ -209,6 +213,7 @@
           "index": "a0",
           "type": "Variant",
           "name": "npm",
+          "language": "tsx",
           "code": "npm install alinea"
         },
         {
@@ -216,6 +221,7 @@
           "index": "a1",
           "type": "Variant",
           "name": "yarn",
+          "language": "tsx",
           "code": "yarn add alinea"
         },
         {
@@ -245,6 +251,7 @@
               "attrs": {
                 "data-id": "rNdsaMmARNlYjf0ukj6WG",
                 "data-entry": null,
+                "data-type": null,
                 "href": "https://reactjs.org/",
                 "target": "_blank",
                 "title": null
@@ -254,7 +261,7 @@
         },
         {
           "type": "text",
-          "text": " to render, but it is marked as peer dependency — which means it is not installed by default. If React is not already included in your project you can install it now."
+          "text": " to render, but it is marked as peer dependency which means it is not installed by default. If React is not already included in your project you can install it now."
         }
       ]
     },
@@ -318,6 +325,7 @@
           "index": "a0",
           "type": "Variant",
           "name": "npm",
+          "language": "tsx",
           "code": "npx alinea init"
         },
         {
@@ -325,6 +333,7 @@
           "index": "a1",
           "type": "Variant",
           "name": "yarn",
+          "language": "tsx",
           "code": "yarn alinea init"
         },
         {
@@ -368,7 +377,7 @@
           "type": "Variant",
           "name": "npm",
           "language": "tsx",
-          "code": "npx alinea serve"
+          "code": "npx alinea dev"
         },
         {
           "id": "6LpUfIYzrGMRXsut5aM1x",
@@ -376,7 +385,7 @@
           "type": "Variant",
           "name": "yarn",
           "language": "tsx",
-          "code": "yarn alinea serve"
+          "code": "yarn alinea dev"
         },
         {
           "id": "vQbqAen-LFO_2W_7-1zHn",
@@ -384,7 +393,7 @@
           "type": "Variant",
           "name": "pnpm",
           "language": "tsx",
-          "code": "pnpm exec alinea serve"
+          "code": "pnpm exec alinea dev"
         }
       ]
     },
@@ -394,51 +403,31 @@
       "content": [
         {
           "type": "text",
-          "text": "If you're using a framework with its own development server it's possible to prepend the serve command to it. This will wait until the Alinea package is generated before starting the dev server. This makes sure userland code can always depend on the package being available. It also simplifies running the dashboard and development server without requiring tools like npm-run-all. "
+          "text": "If you're using a framework with its own development server it's possible to prepend the serve command to it. This will wait until the Alinea package is generated before starting the dev server. This makes sure userland code can always depend on the content being available. It also simplifies running the dashboard and development server without requiring tools like npm-run-all. "
         }
       ]
     },
     {
       "id": "5EX0WWSSfvfk3Tf24UVPq",
       "type": "CodeBlock",
-      "code": "{\n  \"scripts\": {\n    \"dev\": \"alinea serve -- next dev\",\n    \"build\": \"alinea generate -- next build\"\n  }\n}",
-      "fileName": "package.json"
-    },
-    {
-      "type": "heading",
-      "textAlign": "left",
-      "level": 3,
-      "content": [
-        {
-          "type": "text",
-          "text": "Running publicly"
-        }
-      ]
-    },
-    {
-      "type": "paragraph",
-      "textAlign": "left",
-      "content": [
-        {
-          "type": "text",
-          "text": "To serve the dashboard publicly we'll need to add a backend with authentication. This is outlined in the deploy chapter."
-        }
-      ]
-    },
-    {
-      "id": "ZVufhJK-XzvqHUpJAvUmW",
-      "type": "ChapterLinkBlock",
-      "link": [
-        {
-          "id": "cldLhwTMbFhRddjIIq-O7",
-          "index": "a0",
-          "type": "entry",
-          "entry": "28NgU841OXMyHZX4EU1GRqxZaB0"
-        }
-      ]
+      "code": "{\n  \"scripts\": {\n    \"dev\": \"alinea dev -- next dev\",\n    \"build\": \"alinea build -- next build\"\n  }\n}",
+      "fileName": "package.json",
+      "language": "",
+      "compact": false
     }
   ],
-  "alinea": {
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "title": "",
+      "image": {},
+      "description": ""
+    }
+  },
+  "@alinea": {
+    "entryId": "20580nQzbOBR3Lt4kIdxyRGglc6",
+    "type": "Doc",
     "index": "ZgV"
   }
 }
