@@ -2,6 +2,7 @@ import {TextView} from '@/blocks/TextBlockView'
 import {cms} from '@/cms'
 import {Breadcrumbs} from '@/layout/Breadcrumbs'
 import {LayoutWithSidebar} from '@/layout/Layout'
+import {FrameworkPicker} from '@/nav/FrameworkPicker'
 import {Link} from '@/nav/Link'
 import {NavTree} from '@/nav/NavTree'
 import {NavItem, nestNav} from '@/nav/NestNav'
@@ -57,7 +58,14 @@ export default async function DocPage({params}: DocPageProps) {
   const prev = docs[index - 1]
   const next = docs[index + 1]
   return (
-    <LayoutWithSidebar sidebar={<NavTree nav={nav} />}>
+    <LayoutWithSidebar
+      sidebar={
+        <VStack gap={10}>
+          <FrameworkPicker />
+          <NavTree nav={nav} />
+        </VStack>
+      }
+    >
       <Breadcrumbs parents={page.parents} />
       <TextView text={page.body} />
       <HStack gap={20} justify="space-between" className={styles.root.nav()}>
