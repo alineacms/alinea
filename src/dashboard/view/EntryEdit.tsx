@@ -15,6 +15,7 @@ import {EntryEditor} from '../atoms/EntryEditorAtoms.js'
 import {useRouteBlocker} from '../atoms/RouterAtoms.js'
 import {useConfig} from '../hook/UseConfig.js'
 import {useDashboard} from '../hook/UseDashboard.js'
+import {EntryEditorProvider} from '../hook/UseEntryEditor.js'
 import {useLocale} from '../hook/UseLocale.js'
 import {useNav} from '../hook/UseNav.js'
 import {SuspenseBoundary} from '../util/SuspenseBoundary.js'
@@ -225,26 +226,27 @@ export function EntryEdit({editor}: EntryEditProps) {
                   </EntryNotice>
                 </div>
               )}
-
-              <SuspenseBoundary name="input form">
-                {mode === EditMode.Diff ? (
-                  <ShowChanges editor={editor} />
-                ) : hasRootTabs && visibleTypes ? (
-                  <Tabs.Panels>
-                    {visibleTypes.map((type, i) => {
-                      return (
-                        <Tabs.Panel key={i} tabIndex={i}>
-                          <InputForm type={type} state={state} />
-                        </Tabs.Panel>
-                      )
-                    })}
-                  </Tabs.Panels>
-                ) : (
-                  <VStack gap={18}>
-                    <InputForm type={editor.type} state={state} />
-                  </VStack>
-                )}
-              </SuspenseBoundary>
+              <EntryEditorProvider editor={editor}>
+                <SuspenseBoundary name="input form">
+                  {mode === EditMode.Diff ? (
+                    <ShowChanges editor={editor} />
+                  ) : hasRootTabs && visibleTypes ? (
+                    <Tabs.Panels>
+                      {visibleTypes.map((type, i) => {
+                        return (
+                          <Tabs.Panel key={i} tabIndex={i}>
+                            <InputForm type={type} state={state} />
+                          </Tabs.Panel>
+                        )
+                      })}
+                    </Tabs.Panels>
+                  ) : (
+                    <VStack gap={18}>
+                      <InputForm type={editor.type} state={state} />
+                    </VStack>
+                  )}
+                </SuspenseBoundary>
+              </EntryEditorProvider>
             </Main.Container>
           </Tabs.Root>
           <FieldToolbar.Root />
