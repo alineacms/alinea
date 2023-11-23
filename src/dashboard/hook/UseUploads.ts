@@ -376,7 +376,7 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
       },
       {
         type: MutationType.Upload,
-        entryId: entry.entryId,
+        entryId: replace.entry.entryId,
         url: info.previewUrl,
         file: info.location
       },
