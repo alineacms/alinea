@@ -1,0 +1,17 @@
+{
+  "id": "u66xIMuLG95CJKMj80W4f",
+  "type": "Author",
+  "title": "Joe Haddad",
+  "picture": [
+    {
+      "id": "4RgZsSzTWRfMsRY_oQ_8g",
+      "index": "a0",
+      "type": "image",
+      "entry": "bk4pNQRKKWNJiK8_FJezq"
+    }
+  ],
+  "alinea": {
+    "index": "a0",
+    "root": "authors"
+  }
+}

@@ -1,0 +1,19 @@
+.root {
+  padding: 16px;
+  width: 100%;
+  display: flex;
+
+  &-inner {
+    margin: auto;
+  }
+
+  &-mesage {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.9em;
+    font-feature-settings: 'tnum' 1;
+    max-width: 500px;
+    max-height: 300px;
+    overflow: auto;
+    white-space: pre-line;
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "id": "290i4FnT1HBujZ2qoNZPm4EX69B",
+  "type": "Doc",
+  "title": "Object",
+  "body": [
+    {
+      "type": "heading",
+      "level": 1,
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "Object"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "An object field groups multiple fields together. The fields are defined using the type function."
+        }
+      ]
+    },
+    {
+      "id": "290iDwpZVR0wrW2N3JaIHxtxc0I",
+      "type": "CodeBlock",
+      "code": "import {alinea} from 'alinea'\nalinea.object('Address', {\n  fields: alinea.type('Object fields', {\n    street: alinea.text('Street'),\n    zip: alinea.text('Zip code', {width: 0.5}),\n    city: alinea.text('City', {width: 0.5})\n  })\n})"
+    },
+    {
+      "id": "gwFTx1qVSxQvMi_joKo4Q",
+      "type": "ExampleBlock",
+      "code": "import {alinea} from 'alinea'\nexport default alinea.object('Address', {\n  fields: alinea.type('Object fields', {\n    street: alinea.text('Street'),\n    zip: alinea.text('Zip code', {width: 0.5}),\n    city: alinea.text('City', {width: 0.5})\n  })\n})"
+    }
+  ],
+  "alinea": {
+    "index": "a2O"
+  }
+}

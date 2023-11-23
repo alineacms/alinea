@@ -1,0 +1,38 @@
+.root {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.8em;
+  height: 1.8em;
+  border-radius: 50%;
+  font-size: 1em;
+  flex-shrink: 0;
+  border: none;
+  color: inherit;
+  background: transparent;
+
+  &.is-active {
+    background: hsla(var(--alinea-negative), 0.1);
+  }
+
+  &:hover {
+    background: var(--alinea-highlight);
+    box-shadow: 0 0 0 2px var(--alinea-highlight);
+  }
+
+  &:focus {
+    outline: none;
+    color: inherit;
+    background: var(--alinea-background);
+    box-shadow: 0 0 0 2px var(--alinea-fields-focus);
+  }
+
+  &:focus.is-active {
+    background: hsla(var(--alinea-negative), 0.1);
+  }
+
+  &:disabled {
+    pointer-events: none;
+    opacity: 0.5;
+  }
+}

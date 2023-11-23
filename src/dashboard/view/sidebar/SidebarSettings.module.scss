@@ -1,0 +1,37 @@
+.root {
+  &-switch {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    height: 20px;
+    width: 40px;
+    background-color: rgb(213, 216, 218);
+    border-radius: 25px;
+    border: none;
+    cursor: pointer;
+
+    &.is-checked {
+      background-color: var(--alinea-button-background);
+    }
+
+    &-slider {
+      position: absolute;
+      display: inline-block;
+      height: 16px;
+      width: 16px;
+      left: 2px;
+      border-radius: 50%;
+      background-color: var(--alinea-button-foreground);
+      transition: transform 0.2s ease-in;
+
+      &.is-checked {
+        transform: translateX(20px);
+      }
+    }
+  }
+
+  &-username {
+    padding: 8px 4px 4px 4px;
+    min-width: 0;
+  }
+}

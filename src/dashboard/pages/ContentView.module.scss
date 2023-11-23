@@ -1,0 +1,31 @@
+.root {
+  &-sidebar {
+    border-top-left-radius: 12px;
+    overflow: hidden;
+    background: var(--alinea-selected);
+    border-right: 1px solid var(--alinea-outline);
+    border-left: 1px solid var(--alinea-outline);
+    border-top: 1px solid var(--alinea-outline);
+  }
+
+  &-create {
+    flex-shrink: 0;
+    padding: 0 16px;
+    display: flex;
+    justify-content: flex-end;
+    border-top: 1px solid var(--alinea-outline);
+    height: var(--alinea-header-height);
+
+    &-button {
+      font-weight: 600;
+      font-size: 13px;
+      color: var(--alinea-fields-foreground);
+      padding: 8px 10px;
+      cursor: pointer;
+
+      &:hover {
+        color: inherit;
+      }
+    }
+  }
+}

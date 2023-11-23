@@ -1,0 +1,136 @@
+.row {
+  height: 100%;
+  min-width: 0;
+  font-size: 13px;
+  padding: 0 4px;
+
+  &-preview {
+    width: 34px;
+    height: 34px;
+    background: hsla(var(--alinea-negative), 0.05);
+    flex-shrink: 0;
+    overflow: hidden;
+    border-radius: 6px;
+    display: flex;
+
+    &-image {
+      display: block;
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: cover;
+      object-position: center center;
+      margin: auto;
+    }
+
+    &-icon {
+      display: block;
+      margin: auto;
+      opacity: 0.4;
+    }
+  }
+}
+
+.thumb {
+  height: 100%;
+  flex-grow: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  color: inherit;
+  text-decoration: none;
+
+  &-preview {
+    position: relative;
+    width: 100%;
+    min-height: 0;
+    overflow: hidden;
+    flex: 1 1 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    padding: 0 30px;
+
+    &-image {
+      display: block;
+      margin: auto;
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      object-position: center center;
+      background-size: 20px 20px;
+      background-position: 0px 0px, 10px 10px;
+      background-image: linear-gradient(
+          45deg,
+          #eee 25%,
+          transparent 25%,
+          transparent 75%,
+          #eee 75%,
+          #eee 100%
+        ),
+        linear-gradient(
+          45deg,
+          #eee 25%,
+          white 25%,
+          white 75%,
+          #eee 75%,
+          #eee 100%
+        );
+
+      &.is-cover {
+        width: 100%;
+        object-fit: cover;
+        background: transparent;
+      }
+    }
+
+    &-icon {
+      margin: auto;
+      opacity: 0.4;
+    }
+
+    &-extension {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+    }
+  }
+
+  &-footer {
+    padding: 10px;
+    width: 100%;
+    overflow: hidden;
+    flex-shrink: 0;
+
+    &-title + &-details {
+      margin-top: 5px;
+    }
+
+    &-title {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    &-details {
+      display: flex;
+      align-items: center;
+      color: hsla(var(--alinea-negative), 0.7);
+      font-size: 11px;
+
+      &-divider {
+        display: block;
+        height: 1em;
+        opacity: 0.5;
+        border-left: 1px solid currentColor;
+        margin: 0 8px;
+      }
+    }
+  }
+}

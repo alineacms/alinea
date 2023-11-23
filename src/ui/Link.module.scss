@@ -1,0 +1,9 @@
+.root {
+  text-decoration: none;
+  color: hsla(var(--alinea-negative), 0.6);
+  border-bottom: 1px solid currentColor;
+
+  &:hover {
+    color: hsla(var(--alinea-negative), 1);
+  }
+}

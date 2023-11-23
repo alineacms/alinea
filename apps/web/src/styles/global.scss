@@ -28,7 +28,7 @@
 @mixin dark-theme {
   color-scheme: dark;
   --web-accent-hsl: 230, 77%, 60%;
-  --web-accent: #5975ff;
+  --web-accent: hsl(230, 100%, 67%);
   --web-accent-light: hsl(230, 77%, 65%);
   --web-accent-foreground: white;
   --web-background: #1e232a;
@@ -63,7 +63,7 @@
   --web-header-background: hsl(var(--web-header-background-hsl));
   --web-negative-hsl: 0, 0%, 100%;
   --web-outline: #424242;
-  --web-code-inline-background: #ecebeb;
+  --web-code-inline-background: #f5f6f7;
   --web-code-inline-foreground: #1e232a;
   --web-section1-background: #302f34;
 }
@@ -82,10 +82,17 @@
   }
 }
 
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
 html,
 body,
-#__next {
+#root {
   height: 100%;
+  margin: 0;
 }
 
 html {
@@ -101,6 +108,7 @@ html {
 body {
   color: var(--web-foreground);
   font-size: 15px;
+  font-family: 'Inter', sans-serif;
 }
 
 a {
@@ -109,52 +117,11 @@ a {
   text-decoration: none;
 }
 
-@font-face {
-  font-family: 'Poppins';
-  font-style: normal;
-  font-display: block;
-  font-weight: 100;
-  src: url('./fonts/poppins-v20-latin-100.woff2') format('woff2');
-}
-
-@font-face {
-  font-family: 'Poppins';
-  font-style: normal;
-  font-display: block;
-  font-weight: 200;
-  src: url('./fonts/poppins-v20-latin-200.woff2') format('woff2');
-}
-
-@font-face {
-  font-family: 'Poppins';
-  font-style: normal;
-  font-display: block;
-  font-weight: 300;
-  src: url('./fonts/poppins-v20-latin-300.woff2') format('woff2');
-}
-
-@font-face {
-  font-family: 'Poppins';
-  font-style: normal;
-  font-display: block;
-  font-weight: 400;
-  src: url('./fonts/poppins-v20-latin-regular.woff2') format('woff2');
-}
-
-@font-face {
-  font-family: 'Poppins';
-  font-style: normal;
-  font-display: block;
-  font-weight: 500;
-  src: url('./fonts/poppins-v20-latin-500.woff2') format('woff2');
-}
-
-@font-face {
-  font-family: 'Poppins';
-  font-style: normal;
-  font-display: block;
-  font-weight: 600;
-  src: url('./fonts/poppins-v20-latin-600.woff2') format('woff2');
+button {
+  background: none;
+  border: none;
+  color: inherit;
+  font: inherit;
 }
 
 @font-face {
@@ -162,21 +129,42 @@ a {
   font-style: normal;
   font-display: block;
   font-weight: 700;
-  src: url('./fonts/poppins-v20-latin-700.woff2') format('woff2');
+  src: url('~@fontsource/poppins/files/poppins-latin-700-normal.woff2')
+    format('woff2');
 }
 
 @font-face {
-  font-family: 'Poppins';
+  font-family: 'Inter';
   font-style: normal;
   font-display: block;
-  font-weight: 800;
-  src: url('./fonts/poppins-v20-latin-800.woff2') format('woff2');
+  font-weight: 400;
+  src: url('~@fontsource/inter/files/inter-latin-400-normal.woff2')
+    format('woff2');
 }
 
 @font-face {
-  font-family: 'Poppins';
+  font-family: 'Inter';
   font-style: normal;
   font-display: block;
-  font-weight: 900;
-  src: url('./fonts/poppins-v20-latin-900.woff2') format('woff2');
+  font-weight: 700;
+  src: url('~@fontsource/inter/files/inter-latin-700-normal.woff2')
+    format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-display: block;
+  font-weight: 600;
+  src: url('~@fontsource/inter/files/inter-latin-600-normal.woff2')
+    format('woff2');
+}
+
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-display: block;
+  font-weight: 400;
+  src: url('~@fontsource/jetbrains-mono/files/jetbrains-mono-latin-400-normal.woff2')
+    format('woff2');
 }

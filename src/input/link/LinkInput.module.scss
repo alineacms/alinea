@@ -1,0 +1,50 @@
+.root {
+  position: relative;
+
+  &-inner {
+    position: relative;
+    /*padding: 15px;
+    border-radius: 12px;
+    background: var(--alinea-inner);*/
+  }
+}
+
+.row {
+  position: relative;
+
+  & + & {
+    box-shadow: var(--alinea-divider-top);
+  }
+
+  &.is-dragging {
+    opacity: 0.5;
+  }
+
+  &.is-overlay {
+    border-radius: 12px;
+    box-shadow: 0 2px 30px var(--alinea-shadow);
+    overflow: hidden;
+    background: var(--alinea-lift);
+  }
+
+  &-header {
+    padding: 8px 0;
+    flex-grow: 1;
+  }
+
+  &-staticHandle {
+    width: 1.8em;
+    height: 1.8em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+.create {
+  position: relative;
+  padding: 4px 0 5px 0;
+  .row + & {
+    box-shadow: var(--alinea-divider-top);
+  }
+}

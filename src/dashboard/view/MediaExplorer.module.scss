@@ -1,0 +1,52 @@
+@import '../../ui/style.scss';
+
+.root {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+
+  &-inner {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+
+    &-header {
+      padding: 12px;
+      @include ml {
+        padding: 40px var(--alinea-header-height);
+      }
+    }
+
+    &-content {
+      margin: 0 -30px;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+  }
+
+  &-title {
+    font-size: 28px;
+    font-weight: 600;
+  }
+
+  &-list {
+    &::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    &::-webkit-scrollbar-track {
+      background: transparent; //var(--alinea-outline);
+    }
+    &::-webkit-scrollbar-thumb {
+      background: hsla(var(--alinea-negative), 0.2);
+    }
+    &::-webkit-scrollbar-thumb:hover {
+      background: hsla(var(--alinea-negative), 0.4);
+    }
+    &::-webkit-scrollbar-thumb:active {
+      background: hsla(var(--alinea-negative), 0.9);
+    }
+  }
+}

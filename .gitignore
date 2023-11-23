@@ -11,3 +11,6 @@ node_modules
 .env.cache*
 /.types
 /private
+.DS_Store
+*.tsbuildinfo
+/generated

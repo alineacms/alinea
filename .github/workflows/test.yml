@@ -11,24 +11,35 @@ jobs:
   ci:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v1
-        with:
-          node-version: '16'
-      - id: yarn-cache-dir-path
-        run: echo "::set-output name=dir::$(yarn config get cacheFolder)"
-      - uses: actions/cache@v2
-        with:
-          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
-          key: ${{ runner.os }}-yarn
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with: {node-version: '18', cache: 'yarn'}
       - run: yarn
-      - run: yarn tsc
-      - if: startsWith(github.ref, 'refs/tags/v')
-        run: |
-          yarn bump ${GITHUB_REF#refs/tags/v}
-      - run: yarn build
       - run: yarn test
-      - if: startsWith(github.ref, 'refs/tags/v')
+      - uses: nowsprinting/check-version-format-action@v3
+        id: version
+        with: {prefix: 'v'}
+      - if: steps.version.outputs.is_valid == 'true'
         run: |
+          rm -r dist
+          yarn bump ${GITHUB_REF#refs/tags/v}
           npm config set //registry.npmjs.org/:_authToken ${{secrets.NPM_AUTH_TOKEN}}
-          npm publish --access public --tolerate-republish -ws
+      - if: steps.version.outputs.is_stable == 'true'
+        run: npm publish
+      - if: steps.version.outputs.prerelease
+        run: npm publish --tag preview
+      - if: steps.version.outputs.is_stable == 'true'
+        id: extract-release-notes
+        uses: ffurrer2/extract-release-notes@v1
+        with:
+          changelog_file: changelog.md
+      - if: steps.version.outputs.is_stable == 'true'
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: ${{ github.ref }}
+          draft: false
+          prerelease: false
+          body: ${{ steps.extract-release-notes.outputs.release_notes }}

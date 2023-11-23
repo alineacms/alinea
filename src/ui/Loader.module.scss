@@ -1,0 +1,45 @@
+.loader {
+  margin: auto;
+  position: relative;
+  animation: fadein 0.25s;
+
+  &-inner {
+    border-top: 0.18em solid currentColor;
+    border-right: 0.18em solid transparent;
+    border-bottom: 0.18em solid transparent;
+    border-left: 0.18em solid transparent;
+    transform: translateZ(0);
+    animation: load8 1.1s infinite linear;
+    &,
+    &:after {
+      border-radius: 50%;
+      width: 1.2em;
+      height: 1.2em;
+    }
+  }
+
+  &.is-absolute {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+}
+
+@keyframes load8 {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes fadein {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}

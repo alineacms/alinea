@@ -1,0 +1,41 @@
+{
+  "id": "BUQj_NQqEq7YYO1nevx1o",
+  "type": "Doc",
+  "title": "Code",
+  "body": [
+    {
+      "type": "heading",
+      "textAlign": "left",
+      "level": 1,
+      "content": [
+        {
+          "type": "text",
+          "text": "Code"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "A code field is used to input code."
+        }
+      ]
+    },
+    {
+      "id": "itHNQSxP3U_KYZ77Q3vIC",
+      "type": "CodeBlock",
+      "code": "import {alinea} from 'alinea'\nalinea.code('My code field', {\n  help: 'Paste your code here'\n})"
+    },
+    {
+      "id": "qsJHS5HxiYf1Hs8eUOG6M",
+      "type": "ExampleBlock",
+      "code": "import {alinea} from 'alinea'\nexport default alinea.code('My code field', {\n  help: 'Paste your code here'\n})"
+    }
+  ],
+  "alinea": {
+    "index": "a2C"
+  }
+}

@@ -1,0 +1,72 @@
+@import './style.scss';
+
+.root {
+  flex-shrink: 0;
+  // box-shadow: 0 1px 4px var(--alinea-shadow);
+  height: var(--alinea-header-height);
+  z-index: 2;
+
+  &:before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    backdrop-filter: blur(12px);
+    transition: background 0.25s ease-out;
+    background-color: hsla(var(--alinea-positive), 0.7);
+    z-index: -1;
+  }
+
+  &.is-draft,
+  &.is-editing,
+  &.is-revision {
+    color: var(--alinea-variant-info-foreground);
+    &::before {
+      background: var(--alinea-variant-info-background);
+    }
+  }
+  &.is-published {
+    color: var(--alinea-variant-success-foreground);
+    &::before {
+      background: var(--alinea-variant-success-background);
+    }
+  }
+  &.is-archived {
+    color: var(--alinea-variant-disabled-foreground);
+    &::before {
+      background: var(--alinea-variant-disabled-background);
+    }
+  }
+  &.is-transition {
+    color: var(--alinea-variant-progress-foreground);
+    &::before {
+      background: var(--alinea-variant-progress-background);
+    }
+  }
+}
+
+.item {
+  all: unset;
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  height: 100%;
+  font-size: 13px;
+  white-space: nowrap;
+
+  &-icon {
+    display: flex;
+    font-size: 1.2em;
+  }
+
+  &.is-interactive {
+    cursor: pointer;
+    &:focus,
+    &:hover {
+      background: var(--alinea-highlight);
+    }
+  }
+
+  &.is-active {
+    background: var(--alinea-selected);
+  }
+}

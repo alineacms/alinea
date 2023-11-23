@@ -4,26 +4,19 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "dev": "next dev",
-    "dev:check": "tsc -w",
-    "build": "yarn gen:types && yarn gen:bundle && alinea generate && next build",
+    "dev": "next dev -H 0.0.0.0",
+    "dev:test": "alinea dev -- next dev",
+    "build": "yarn build:alinea && alinea build -- next build",
     "start": "next start",
     "lint": "next lint"
   },
   "dependencies": {
-    "@alinea/auth.passwordless": "0.0.0",
-    "@alinea/backend": "0.0.0",
-    "@alinea/cli": "0.0.0",
-    "@alinea/content": "link:./.alinea",
-    "@alinea/core": "0.0.0",
-    "@alinea/dashboard": "0.0.0",
-    "@alinea/ui": "0.0.0",
     "@monaco-editor/react": "^4.4.5",
-    "esbuild-wasm": "^0.14.43",
-    "next": "^12.1.5",
-    "react": "^18.1.0",
-    "react-animate-height": "^3.0.3",
-    "react-dom": "^18.1.0",
+    "alinea": "0.0.0",
+    "lz-string": "^1.4.4",
+    "next": "^13.5.4",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
     "react-string-replace": "^1.0.0",
     "remark": "^14.0.2",
     "remark-html": "^15.0.1",
@@ -31,14 +24,24 @@
     "use-clipboard-copy": "^0.2.0"
   },
   "devDependencies": {
-    "@types/find-config": "^1.0.1",
-    "@types/react": "^18.0.5",
-    "@types/react-dom": "^18.0.0",
+    "@babel/standalone": "^7.22.5",
+    "@fontsource/inter": "5.0.1",
+    "@fontsource/jetbrains-mono": "5.0.1",
+    "@fontsource/poppins": "5.0.1",
+    "@types/node": "20.0.0",
+    "@types/react": "^18.2.13",
     "cross-env": "^7.0.3",
-    "dts-bundle": "^0.7.3",
-    "find-config": "^1.0.0",
-    "npm-run-all": "^4.1.5",
-    "postcss-pxtorem": "^6.0.0",
-    "raw-loader": "^4.0.2"
+    "eslint": "8.39.0",
+    "eslint-config-next": "13.4.0",
+    "file-loader": "^6.2.0",
+    "raw-loader": "^4.0.2",
+    "tsx": "^3.12.7",
+    "typescript": "^5.2.2"
+  },
+  "exports": {
+    ".": "./dist/index.js",
+    "./css": "./dist/index.css",
+    "./*.cjs": "./dist/*.cjs",
+    "./*": "./dist/*.js"
   }
 }

@@ -1,0 +1,42 @@
+@import '@alinea/ui/style.scss';
+
+.root {
+  background: var(--alinea-background);
+  box-shadow: 0 0 1.4px var(--alinea-shadow), 0 2px 3.5px var(--alinea-shadow);
+  transition: box-shadow 0.25s ease-out;
+  padding: 14px 20px 20px 20px;
+  @include s {
+    padding: 6px 10px 10px 10px;
+  }
+
+  & & {
+    padding: 6px 10px 10px 10px;
+  }
+  & .header {
+    padding: 0 3px;
+  }
+
+  &:first-child {
+    border-top-left-radius: var(--alinea-border-radius);
+    border-top-right-radius: var(--alinea-border-radius);
+  }
+  &:last-child {
+    border-bottom-left-radius: var(--alinea-border-radius);
+    border-bottom-right-radius: var(--alinea-border-radius);
+  }
+}
+
+.header {
+  background: var(--alinea-background);
+  box-shadow: 0 0 1.4px var(--alinea-shadow), 0 2px 3.5px var(--alinea-shadow);
+  padding: 0 13px;
+
+  &:first-child {
+    border-top-left-radius: var(--alinea-border-radius);
+    border-top-right-radius: var(--alinea-border-radius);
+  }
+  &:last-child {
+    border-bottom-left-radius: var(--alinea-border-radius);
+    border-bottom-right-radius: var(--alinea-border-radius);
+  }
+}

@@ -1,0 +1,202 @@
+{
+  "id": "286iEJsjhd8R9NxN6EVg59fELyd",
+  "type": "Doc",
+  "title": "Guide: creating custom fields",
+  "body": [
+    {
+      "type": "heading",
+      "level": 1,
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "Guide: creating custom fields"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "It's possible to create custom fields. A field needs a constructor function that users call to create instances of it in their configuration. "
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "textAlign": "left",
+      "level": 2,
+      "content": [
+        {
+          "type": "text",
+          "text": "Range field example"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "Let's create a custom field to demonstrate."
+        }
+      ]
+    },
+    {
+      "id": "tjXTNIX1E2w3fts1zXG9Z",
+      "type": "CodeBlock",
+      "code": "import {alinea} from 'alinea'\nimport {Field, Hint, Label, Shape} from 'alinea/core'\nimport {InputLabel, InputState, useInput} from 'alinea/editor'\n\nexport interface RangeFieldOptions {\n  min?: number\n  max?: number\n}\n\nexport interface RangeField extends Field.Scalar<number> {\n  label: Label\n  options?: RangeFieldOptions\n}\n\n// The constructor function is used to create fields in our schema\n// later on. It is usually passed a label and options.\nexport function range(label: Label, options?: RangeFieldOptions): RangeField {\n  return {\n    shape: new ScalarShape(label),\n    label,\n    options,\n    view: RangeInput,\n    hint: Hint.Number()\n  }\n}\n\ninterface RangeInputProps {\n  state: InputState<InputState.Scalar<number>>\n  field: RangeField\n}\n\n// To view our field we can create a React component. \n// This component can call the useInput hook to receive the\n// current value and a method to update it.\nfunction RangeInput({state, field}: RangeInputProps) {\n  const [value = 5, setValue] = useInput(state)\n  const {min = 0, max = 10} = field.options || {}\n  return (\n    <InputLabel label={field.label}>\n      <input \n        type=\"range\" \n        min={min} max={max} \n        value={value} \n        onChange={e => setValue(Number(e.target.value))} \n      />\n    </InputLabel>\n  )\n}"
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "To use the field in your types later just call the constructor function:"
+        }
+      ]
+    },
+    {
+      "id": "WnK5Nlvq82spn6R62dTQe",
+      "type": "CodeBlock",
+      "code": "alinea.type('My type', {\n  ...fields,\n  range: range('A range field', {min: 0, max: 20})\n})"
+    },
+    {
+      "id": "yhfKjT9ITmHHD0N5JRU4G",
+      "type": "ExampleBlock",
+      "code": "import {alinea} from 'alinea'\nimport {Field, Hint, Label, Shape} from 'alinea/core'\nimport {InputLabel, InputState, useInput} from 'alinea/editor'\n\nexport interface RangeFieldOptions {\n  min?: number\n  max?: number\n}\n\nexport interface RangeField extends Field.Scalar<number> {\n  label: Label\n  options?: RangeFieldOptions\n}\n\n// The constructor function is used to create fields in our schema\n// later on. It is usually passed a label and options.\nexport function range(label: Label, options?: RangeFieldOptions): RangeField {\n  return {\n    shape: new ScalarShape(label),\n    label,\n    options,\n    view: RangeInput,\n    hint: Hint.Number()\n  }\n}\n\ninterface RangeInputProps {\n  state: InputState<InputState.Scalar<number>>\n  field: RangeField\n}\n\n// To view our field we can create a React component. \n// This component can call the useInput hook to receive the\n// current value and a method to update it.\nfunction RangeInput({state, field}: RangeInputProps) {\n  const [value = 5, setValue] = useInput(state)\n  const {min = 0, max = 10} = field.options || {}\n  return (\n    <InputLabel label={field.label}>\n      <input \n        type=\"range\" \n        min={min} max={max} \n        value={value} \n        onChange={e => setValue(Number(e.target.value))} \n      />\n    </InputLabel>\n  )\n}\n\nexport default alinea.type('My type', {\n  range: range('A range field', {min: 0, max: 20})\n})"
+    },
+    {
+      "type": "heading",
+      "textAlign": "left",
+      "level": 2,
+      "content": [
+        {
+          "type": "text",
+          "text": "Shapes"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "To structure the underlying data we use shapes. Alinea ships with four kinds of shape primitives that can be nested inside each other. Under the covers these are created via "
+        },
+        {
+          "type": "text",
+          "text": "Yjs",
+          "marks": [
+            {
+              "type": "link",
+              "attrs": {
+                "data-id": "GKdJazwD5XXkZjkkVENGE",
+                "data-entry": null,
+                "href": "https://docs.yjs.dev/",
+                "target": "_blank",
+                "title": null
+              }
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": " allowing them to be fully collaborative."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "textAlign": "left",
+      "level": 3,
+      "content": [
+        {
+          "type": "text",
+          "text": " Scalar"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "Scalar values hold a single value that is overwritten anytime it is changed."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "textAlign": "left",
+      "level": 3,
+      "content": [
+        {
+          "type": "text",
+          "text": " Record"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "A record value store an object with data. The object values can take any shape."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "textAlign": "left",
+      "level": 3,
+      "content": [
+        {
+          "type": "text",
+          "text": "List"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "A list holds an array of values, which must be record shapes. Every item in a list has a type, an automatically generated id and an index for sorting added on."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "textAlign": "left",
+      "level": 3,
+      "content": [
+        {
+          "type": "text",
+          "text": "Rich text"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "Rich text is an xml like structure that can hold wysiwyg data."
+        }
+      ]
+    }
+  ],
+  "alinea": {
+    "index": "a6"
+  }
+}

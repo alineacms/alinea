@@ -1,0 +1,158 @@
+@import '@alinea/ui/style.scss';
+
+@mixin dark-theme {
+  --alinea-hue: 212;
+  --alinea-saturation: 18%;
+  --alinea-positive: var(--alinea-hue), var(--alinea-saturation), 14%;
+  --alinea-negative: 0, 8%, 92%;
+  --alinea-background: hsl(var(--alinea-positive));
+  --alinea-foreground: white;
+  --alinea-foreground-faded: hsl(0, 3%, 85%);
+  --alinea-toolbar: hsl(var(--alinea-hue), var(--alinea-saturation), 20%);
+  --alinea-inner: hsl(var(--alinea-hue), var(--alinea-saturation), 12%);
+  --alinea-inner-outline: hsl(var(--alinea-hue), var(--alinea-saturation), 13%);
+  --alinea-highlight: hsla(var(--alinea-negative), 0.06);
+  --alinea-lift: hsl(var(--alinea-hue), var(--alinea-saturation), 18%);
+  --alinea-selected: #25344d;
+  --alinea-selected-foreground: #aec8f8;
+  --alinea-outline: hsl(var(--alinea-hue), var(--alinea-saturation), 20%);
+  --alinea-fields: hsl(var(--alinea-hue), var(--alinea-saturation), 10%);
+  --alinea-fields-foreground: #dee1e4;
+  --alinea-fields-shadow: hsl(var(--alinea-hue), var(--alinea-saturation), 30%);
+  --alinea-fields-outline: var(--alinea-inner-outline);
+  --alinea-fields-selected: var(--alinea-fields);
+  --alinea-fields-focus: hsl(var(--alinea-hue), var(--alinea-saturation), 30%);
+  --alinea-focus-foreground: hsl(var(--alinea-negative));
+  --alinea-content: linear-gradient(
+    to bottom,
+    hsl(var(--alinea-hue), var(--alinea-saturation), 12%),
+    hsl(var(--alinea-hue), var(--alinea-saturation), 11%)
+  );
+  --alinea-shadow: rgba(0, 0, 0, 0.4);
+  --alinea-divider-top: 0 -1px 0 rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  --alinea-divider-bottom: 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.25);
+  --alinea-title-foreground: #ffffff;
+  --alinea-tabs-trigger-foreground: white;
+  --alinea-tabs-trigger-background: hsl(215, 17%, 35%);
+
+  --alinea-modal-background: hsla(200, 12%, 14%, 0.95);
+
+  --alinea-button-foreground: white;
+  --alinea-button-background: #3f61e8;
+  --alinea-button-hover: #4a65e8;
+
+  --alinea-variant-info-foreground: #f0f6ff;
+  --alinea-variant-info-background: hsla(230, 40%, 26%, 0.8);
+  --alinea-variant-info-action: hsl(230, 40%, 50%);
+  --alinea-variant-success-foreground: #f1fdf4;
+  --alinea-variant-success-background: hsla(140, 21%, 26%, 0.8);
+  --alinea-variant-success-action: hsl(140, 21%, 50%);
+  --alinea-variant-disabled-foreground: #f0f0f0;
+  --alinea-variant-disabled-background: hsla(0, 0%, 26%, 0.8);
+  --alinea-variant-disabled-action: hsl(0, 0%, 50%);
+  --alinea-variant-progress-foreground: #fef7ed;
+  --alinea-variant-progress-background: hsla(20, 29%, 26%, 0.8);
+  --alinea-variant-progress-actoion: hsl(15, 54%, 50%);
+}
+
+@mixin light-theme {
+  --alinea-hue: 200;
+  --alinea-saturation: 12%;
+  --alinea-positive: var(--alinea-hue), var(--alinea-saturation), 100%;
+  --alinea-negative: 200, 12%, 14%;
+  --alinea-background: hsl(var(--alinea-positive));
+  --alinea-foreground: #4b4b66;
+  --alinea-toolbar: hsl(var(--alinea-hue), var(--alinea-saturation), 98%);
+  --alinea-inner: hsl(var(--alinea-hue), var(--alinea-saturation), 98.5%);
+  --alinea-inner-outline: #dcdce4;
+  --alinea-highlight: hsla(var(--alinea-negative), 0.06);
+  --alinea-lift: #f5f5f7;
+  --alinea-selected: #f1f3fd;
+  --alinea-selected-foreground: #3f61e8;
+  --alinea-outline: #eaeaef;
+  --alinea-content: linear-gradient(
+    to bottom,
+    hsl(240, 8%, 97%),
+    hsl(228, 19%, 96%)
+  );
+  --alinea-shadow: rgba(0, 0, 0, 0.08);
+  --alinea-fields: white;
+  --alinea-fields-foreground: #6d7c92;
+  --alinea-fields-shadow: 0 0px 0 1px hsl(0, 0%, 94%);
+  --alinea-fields-selected: white;
+  --alinea-fields-focus: var(--alinea-outline);
+  --alinea-focus-foreground: var(--alinea-accent);
+  --alinea-divider-top: 0 -1px 0 rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  --alinea-divider-bottom: 0 1px 0 rgba(255, 255, 255, 0.2),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.06);
+  --alinea-title-foreground: rgb(62, 64, 67);
+  --alinea-tabs-trigger-foreground: inherit;
+  --alinea-tabs-trigger-background: white;
+
+  --alinea-modal-background: hsla(200, 12%, 14%, 0.6);
+
+  --alinea-button-foreground: white;
+  --alinea-button-background: #3f61e8;
+  --alinea-button-hover: #4a65e8;
+
+  --alinea-variant-info-background: hsla(216, 100%, 97%, 0.8);
+  --alinea-variant-info-foreground: hsl(230, 40%, 42%);
+  --alinea-variant-info-action: hsl(230, 100%, 91%);
+  --alinea-variant-success-background: hsla(135, 75%, 97%, 0.8);
+  --alinea-variant-success-foreground: hsl(140, 21%, 42%);
+  --alinea-variant-success-action: hsl(140, 70%, 87%);
+  --alinea-variant-disabled-background: hsla(0, 0%, 94%, 0.8);
+  --alinea-variant-disabled-foreground: hsl(0, 0%, 33%);
+  --alinea-variant-disabled-action: hsl(0, 0%, 90%);
+  --alinea-variant-progress-background: hsla(35, 89%, 96%, 0.8);
+  --alinea-variant-progress-foreground: hsl(15, 54%, 40%);
+  --alinea-variant-progress-action: hsl(15, 100%, 91%);
+}
+
+.root {
+  @include dark-theme;
+  --alinea-border-radius: 6px;
+  --alinea-header-height: 46px;
+  --alinea-main-padding-x: 26px;
+  --alinea-main-padding-y: 26px;
+  --alinea-main-width: 1024px;
+  color: var(--alinea-foreground);
+  font-size: 14px;
+  font-family: Inter, sans-serif;
+
+  @include s {
+    --alinea-main-padding-x: 10px;
+  }
+
+  @media (prefers-color-scheme: light) {
+    @include light-theme;
+  }
+
+  &.is-light,
+  html[data-theme='light'] & {
+    @include light-theme;
+    color-scheme: light;
+  }
+
+  &.is-dark,
+  html[data-theme='dark'] & {
+    @include dark-theme;
+    color-scheme: dark;
+  }
+}
+
+.main {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--alinea-background);
+  min-height: 100%;
+
+  &.is-contain {
+    height: 100%;
+    overflow: hidden;
+  }
+}

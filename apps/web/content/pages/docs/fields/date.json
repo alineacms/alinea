@@ -1,0 +1,41 @@
+{
+  "id": "A4UA9D0tJn2aanMDjODOj",
+  "type": "Doc",
+  "title": "Date",
+  "body": [
+    {
+      "type": "heading",
+      "textAlign": "left",
+      "level": 1,
+      "content": [
+        {
+          "type": "text",
+          "text": "Date"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "A date field is used to input a date."
+        }
+      ]
+    },
+    {
+      "id": "utmfOtYpwki29ZXEW5QPX",
+      "type": "CodeBlock",
+      "code": "import {alinea} from 'alinea'\nalinea.date('My date field')"
+    },
+    {
+      "id": "RHKsNdTj50LX0TFLU2_QH",
+      "type": "ExampleBlock",
+      "code": "import {alinea} from 'alinea'\nexport default alinea.date('My date field')"
+    }
+  ],
+  "alinea": {
+    "index": "a2B"
+  }
+}

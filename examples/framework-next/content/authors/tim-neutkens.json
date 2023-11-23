@@ -1,0 +1,17 @@
+{
+  "id": "0xiGCIapqLQyvBV9q991L",
+  "type": "Author",
+  "title": "Tim Neutkens",
+  "picture": [
+    {
+      "id": "up5LD8NX9NZ8iX2Yr1ArE",
+      "index": "a0",
+      "type": "image",
+      "entry": "2XzjtDoHlSkPYquhzp9HH"
+    }
+  ],
+  "alinea": {
+    "index": "a0",
+    "root": "authors"
+  }
+}

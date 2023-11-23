@@ -1,0 +1,47 @@
+{
+  "title": "Translated fields",
+  "richText": [],
+  "select": null,
+  "number": "",
+  "check": false,
+  "externalLink": {},
+  "entry": {},
+  "linkMultiple": [],
+  "image": {},
+  "images": [],
+  "file": {},
+  "list": [],
+  "nested": [
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "Translated "
+        },
+        {
+          "type": "text",
+          "text": "content",
+          "marks": [
+            {
+              "type": "bold"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "street": "",
+  "box": "",
+  "zip": "",
+  "city": "",
+  "country": "",
+  "@alinea": {
+    "entryId": "2Ublmf4UWT5rHeIUSaJmqJYN0L9",
+    "type": "Fields",
+    "index": "Zz",
+    "i18nId": "2Ublma8yQOzmuoJypIPTmQzW2SR",
+    "root": "pages"
+  }
+}

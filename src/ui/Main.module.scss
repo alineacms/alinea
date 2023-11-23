@@ -1,0 +1,62 @@
+@import './style.scss';
+
+.root {
+  position: relative;
+  flex-grow: 1;
+  min-width: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--alinea-content);
+  min-width: 0;
+
+  &-loading {
+    position: absolute;
+    background: hsla(var(--alinea-negative), 0.05);
+    inset: 0;
+    z-index: 5;
+  }
+
+  &-inner {
+    width: 100%;
+    flex-grow: 1;
+    min-width: 0;
+
+    @mixin ml {
+      min-width: 560px;
+    }
+
+    /*&::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    &::-webkit-scrollbar-track {
+      background: transparent; //var(--alinea-outline);
+    }
+    &::-webkit-scrollbar-thumb {
+      background: hsla(var(--alinea-negative), 0.2);
+    }
+    &::-webkit-scrollbar-thumb:hover {
+      background: hsla(var(--alinea-negative), 0.4);
+    }
+    &::-webkit-scrollbar-thumb:active {
+      background: hsla(var(--alinea-negative), 0.9);
+    }*/
+  }
+  &.is-scrollable &-inner {
+    overflow-y: scroll;
+  }
+}
+
+.container {
+  padding: 12px;
+  @include ml {
+    padding: var(--alinea-main-padding-y) var(--alinea-main-padding-x);
+    max-width: var(--alinea-main-width);
+  }
+  width: 100%;
+  // margin: 0 auto;
+  flex-grow: 1;
+  margin: 0 auto;
+}

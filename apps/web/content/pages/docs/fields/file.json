@@ -1,0 +1,41 @@
+{
+  "id": "tlhZ01MHUjv3Od172Ew6w",
+  "type": "Doc",
+  "title": "File",
+  "body": [
+    {
+      "type": "heading",
+      "textAlign": "left",
+      "level": 1,
+      "content": [
+        {
+          "type": "text",
+          "text": "File"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "The file field can be used to link to a file."
+        }
+      ]
+    },
+    {
+      "id": "tYljidhFDZXvLGHPdOUyj",
+      "type": "CodeBlock",
+      "code": "import {alinea} from 'alinea'\nalinea.file('My file field')"
+    },
+    {
+      "id": "3eoB38V86C426MvZT08Ww",
+      "type": "ExampleBlock",
+      "code": "import {alinea} from 'alinea'\nexport default alinea.file('My file field')"
+    }
+  ],
+  "alinea": {
+    "index": "a2Bd"
+  }
+}

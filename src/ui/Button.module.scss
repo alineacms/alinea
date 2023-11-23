@@ -1,0 +1,39 @@
+.root {
+  display: inline-block;
+  text-decoration: none;
+  position: relative;
+  border: none;
+  color: var(--alinea-button-foreground);
+  background: var(--alinea-button-background);
+  font: inherit;
+  cursor: pointer;
+  z-index: 0;
+  font-size: 13px;
+  // transition: 0.25s ease-out;
+
+  &.is-medium {
+    min-height: 22px;
+    padding: 7px 16px;
+    border-radius: 5.5px;
+  }
+
+  &.is-large {
+    min-height: 26px;
+    font-size: 14px;
+    padding: 6px 13px;
+    border-radius: 16px;
+  }
+
+  &:hover {
+    background: var(--alinea-button-hover);
+  }
+
+  &.is-outline {
+    background: transparent;
+    border: 1px solid var(--alinea-button-background);
+    color: var(--alinea-button-background);
+    &:hover {
+      border: 1px solid var(--alinea-button-hover);
+    }
+  }
+}

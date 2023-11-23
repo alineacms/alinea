@@ -1,0 +1,282 @@
+{
+  "id": "P7QDb99Sp1JS5FyqCXXn3",
+  "type": "Recipe",
+  "title": "Gingerbread",
+  "header": {
+    "image": [
+      {
+        "id": "Yh9PA9m70NKOnZ6OsRij_",
+        "index": "a0",
+        "type": "image",
+        "entry": "dVWlsY2oNt0H7YI-EWOOm"
+      }
+    ],
+    "credit": [
+      {
+        "type": "paragraph",
+        "textAlign": "left",
+        "content": [
+          {
+            "type": "text",
+            "text": "Photo by "
+          },
+          {
+            "type": "text",
+            "text": "Kelsey Weinkauf",
+            "marks": [
+              {
+                "type": "link",
+                "attrs": {
+                  "data-id": null,
+                  "data-entry": null,
+                  "href": "https://unsplash.com/@kejeki?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText",
+                  "title": null
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "intro": [
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "This gingerbread cookie is perfect for the holidays! The cookies are soft and chewy, and the gingerbread flavor is ideal for the season."
+        }
+      ]
+    }
+  ],
+  "ingredients": [
+    {
+      "type": "bulletList",
+      "content": [
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "1/2 cup (1 stick) butter, at room temperature"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "1 cup sugar"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "1 large egg"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "1/4 cup dark molasses"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "2 cups all-purpose flour"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "2 teaspoons baking soda"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "1 teaspoon ground ginger"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "1 teaspoon ground cinnamon"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "1/2 teaspoon ground cloves"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "1/4 teaspoon salt"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "instructions": [
+    {
+      "type": "orderedList",
+      "start": 1,
+      "content": [
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Preheat oven to 350°F. Line a baking sheet with parchment paper."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "In a bowl, cream butter and sugar together until light and fluffy. Beat in egg and molasses. In another bowl, whisk together flour, baking soda, ginger, cinnamon, cloves, and salt. Gradually add to butter mixture, mixing until just combined."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Place dough on prepared baking sheet. Using a rolling pin, roll out to 1/4-inch thickness. Using a gingerbread man cookie cutter, cut out shapes. Place cookies 1 inch apart on baking sheet."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Bake until cookies are firm to the touch, about 10 minutes. Transfer cookies to a wire rack to cool completely."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "alinea": {
+    "index": "Zw"
+  }
+}

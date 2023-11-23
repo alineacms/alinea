@@ -1,0 +1,29 @@
+.root {
+  padding: 20px;
+  margin-bottom: 30px;
+  line-height: 1.5;
+
+  &-title {
+    font-weight: bold;
+    font-size: 14px;
+    padding-top: 2px;
+    padding-bottom: 12px;
+  }
+
+  &.is-draft {
+    color: var(--alinea-variant-info-foreground);
+    background: var(--alinea-variant-info-background);
+  }
+  &.is-published {
+    color: var(--alinea-variant-success-foreground);
+    background: var(--alinea-variant-success-background);
+  }
+  &.is-archived {
+    color: var(--alinea-variant-disabled-foreground);
+    background: var(--alinea-variant-disabled-background);
+  }
+  &.is-publishing {
+    color: var(--alinea-variant-progress-foreground);
+    background: var(--alinea-variant-progress-background);
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "id": "puvJ7CKrr_pYcwTjorW1O",
+  "type": "Author",
+  "title": "JJ Kasper",
+  "picture": [
+    {
+      "id": "DPgBzjgu9Ev9DoK8z5qLI",
+      "index": "a0",
+      "type": "image",
+      "entry": "r6OLjFEz3L7uoiZrrND91"
+    }
+  ],
+  "alinea": {
+    "index": "a0",
+    "root": "authors"
+  }
+}

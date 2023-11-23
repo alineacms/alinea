@@ -1,0 +1,1 @@
+export const storeData = '$DB'

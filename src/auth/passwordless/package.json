@@ -1,0 +1,11 @@
+{
+  "name": "@alinea/auth.passwordless",
+  "type": "module",
+  "dependencies": {
+    "superstruct": "^1.0.3"
+  },
+  "devDependencies": {
+    "@types/nodemailer": "^6.4.4",
+    "nodemailer": "^6.6.5"
+  }
+}

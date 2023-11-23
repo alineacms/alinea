@@ -1,0 +1,27 @@
+.root {
+  background: var(--alinea-background);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 3px;
+
+  &-switch {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    cursor: pointer;
+
+    &:hover {
+      color: var(--alinea-button-background);
+    }
+
+    &.is-active {
+      color: var(--alinea-button-background);
+      background: var(--alinea-selected);
+    }
+  }
+}

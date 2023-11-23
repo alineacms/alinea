@@ -1,0 +1,128 @@
+@import '../../../ui/style.scss';
+
+.root {
+  position: sticky;
+  top: 0;
+  border-bottom: 1px solid var(--alinea-outline);
+
+  &-tabTrigger {
+    background: var(--alinea-outline);
+    display: flex;
+    align-items: center;
+    height: 100%;
+    padding: 0 20px;
+    gap: 10px;
+    color: var(--alinea-foreground);
+    background: var(--alinea-selected);
+
+    &:hover {
+      background: var(--alinea-highlight);
+    }
+
+    &.is-active {
+      background: var(--alinea-background);
+    }
+  }
+
+  &-menuToggle {
+    @include l {
+      display: none;
+    }
+  }
+
+  &-description {
+    height: 100%;
+    flex: 1;
+    margin: auto;
+    padding: 0 var(--alinea-main-padding-x);
+    max-width: var(--alinea-main-width);
+
+    &-separator {
+      border-right: 1px solid;
+      opacity: 0;
+      height: 60%;
+    }
+
+    &-title {
+      position: relative;
+      font-weight: bold;
+    }
+
+    &-action {
+      height: 100%;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+
+      @include s {
+        display: none;
+      }
+
+      &-button {
+        height: 100%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        text-underline-offset: 2px;
+        gap: 8px;
+        &:hover {
+          text-decoration: underline;
+        }
+      }
+    }
+  }
+
+  &-url {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    background: var(--alinea-fields);
+    padding: 6px 15px;
+    border-radius: var(--alinea-border-radius);
+
+    @include s {
+      display: none;
+    }
+  }
+
+  &-more {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: hsl(216, 100%, 91%);
+    cursor: pointer;
+    font-size: 16.5px;
+    transition: background 0.25s ease-out;
+
+    &:hover {
+      background: hsla(var(--alinea-positive), 1);
+    }
+
+    &.is-draft,
+    &.is-editing,
+    &.is-revision {
+      color: var(--alinea-variant-info-foreground);
+      background: var(--alinea-variant-info-action);
+    }
+    &.is-published {
+      color: var(--alinea-variant-success-foreground);
+      background: var(--alinea-variant-success-action);
+    }
+    &.is-archived {
+      color: var(--alinea-variant-disabled-foreground);
+      background: var(--alinea-variant-disabled-action);
+    }
+    &.is-publishing,
+    &.is-archiving {
+      color: var(--alinea-variant-progress-foreground);
+      background: var(--alinea-variant-progress-action);
+    }
+  }
+
+  &-action {
+    cursor: pointer;
+  }
+}

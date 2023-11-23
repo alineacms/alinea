@@ -1,0 +1,74 @@
+@import './style.scss';
+
+.root {
+  display: flex;
+  height: 100%;
+  min-width: 0;
+  flex-shrink: 0;
+  background: var(--alinea-background);
+
+  @include s {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  &-inner {
+    flex-grow: 1;
+    height: 100%;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+
+    &::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    &::-webkit-scrollbar-track {
+      background: transparent; //var(--alinea-outline);
+    }
+    &::-webkit-scrollbar-thumb {
+      background: hsla(var(--alinea-negative), 0.2);
+    }
+    &::-webkit-scrollbar-thumb:hover {
+      background: hsla(var(--alinea-negative), 0.4);
+    }
+    &::-webkit-scrollbar-thumb:active {
+      background: hsla(var(--alinea-negative), 0.9);
+    }
+  }
+}
+
+.divider {
+  position: relative;
+
+  &-handle {
+    position: absolute;
+    cursor: col-resize;
+    top: 0;
+    bottom: 0;
+
+    &-line {
+      height: 100%;
+      border-left: 1px solid var(--alinea-outline);
+      position: relative;
+      z-index: 4;
+    }
+
+    :global(.is-dragging) &-line,
+    &:hover &-line {
+      border-color: var(--alinea-button-background);
+      border-width: 3px;
+      transition: 0s border-width 0.25s, 0.25s border-color 0.25s;
+    }
+  }
+
+  &.is-left &-handle {
+    left: 0;
+    right: -6px;
+  }
+
+  &.is-right &-handle {
+    right: -6px;
+    left: 0;
+  }
+}

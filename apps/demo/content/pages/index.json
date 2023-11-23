@@ -1,0 +1,59 @@
+{
+  "id": "vTCpgsHfAjZtHabyjb8RG",
+  "type": "Home",
+  "title": "Milk & Cookies",
+  "hero": {
+    "header": {
+      "image": {
+        "id": "wjmGZf6Bvt11l22044tof",
+        "type": "entry",
+        "entry": "Lr282L3627dmnIWfsuOJG"
+      },
+      "credit": [
+        {
+          "type": "paragraph",
+          "textAlign": "left",
+          "content": [
+            {
+              "type": "text",
+              "text": "Photo by "
+            },
+            {
+              "type": "text",
+              "text": "Julissa Capdevilla",
+              "marks": [
+                {
+                  "type": "link",
+                  "attrs": {
+                    "data-id": null,
+                    "data-entry": null,
+                    "href": "https://unsplash.com/es/@juliedroz?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText",
+                    "title": null
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "title": "Milk &\nCookies",
+    "text": [
+      {
+        "type": "paragraph",
+        "textAlign": "left",
+        "content": [
+          {
+            "type": "text",
+            "text": "Grab a glass of milk, find your favorite recipe, and enjoy! Classic cookie recipes that are sure to satisfy your sweet tooth."
+          }
+        ]
+      }
+    ]
+  },
+  "alinea": {
+    "index": "He8hfze6W35ZPztcqouk",
+    "seeded": true,
+    "root": "pages"
+  }
+}

@@ -2,37 +2,24 @@
   "compilerOptions": {
     "module": "ESNext",
     "target": "ESNext",
-    "preserveWatchOutput": true,
-    "outDir": "dist",
-    "incremental": true,
-    "emitDeclarationOnly": true,
-    "skipLibCheck": true,
-    "strict": true,
-    "declaration": true,
     "moduleResolution": "node",
-    "resolveJsonModule": true,
-    "jsx": "react-jsx",
+    "strict": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
-    "importHelpers": true,
-    "paths": {
-      "@alinea/input.*/view": ["./packages/input.*/src/view.ts"],
-      "@alinea/auth.passwordless/*": ["./packages/auth.passwordless/src/*"],
-      "@alinea/core/*": ["./packages/core/src/*"],
-      "@alinea/cli/*": ["./packages/cli/src/*"],
-      "@alinea/dashboard/*": ["./packages/dashboard/src/*"],
-      "@alinea/backend/*": ["./packages/backend/src/*"],
-      "@alinea/store/*": ["./packages/store/src/*"],
-      "@alinea/editor/*": ["./packages/editor/src/*"],
-      "@alinea/ui": ["./packages/ui/src"],
-      "@alinea/ui/*": ["./packages/ui/src/*"],
-      "@alinea/content/*": ["./apps/web/.alinea/*"],
-      "@alinea/content": ["./apps/web/.alinea"],
-      "@alinea/*": ["./packages/*/src"]
-    },
+    "resolveJsonModule": true,
+    "outDir": "dist",
+    "skipLibCheck": true,
+    "preserveWatchOutput": true,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    // We'll want to enable this at some point
+    // "noUncheckedIndexedAccess": true,
+    "jsx": "react-jsx",
     "plugins": [{"name": "typescript-plugin-css-modules"}],
-    "types": ["react/next", "react-dom/next"]
+    "paths": {
+      "alinea/*": ["./src/*.js", "./src/*.browser", "./src/*"]
+    },
+    "rootDir": "src"
   },
-  "include": ["packages"],
-  "exclude": ["node_modules", "packages/website", "packages/**/dist"]
+  "include": ["src"]
 }

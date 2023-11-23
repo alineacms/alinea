@@ -1,0 +1,48 @@
+.root {
+  position: fixed;
+  inset: 0;
+  z-index: 4;
+  padding: 20px 30px;
+  display: none;
+
+  &.is-open {
+    display: flex;
+  }
+
+  &-background {
+    background: var(--alinea-modal-background);
+    position: absolute;
+    inset: 0;
+  }
+
+  &.is-open &-background {
+    opacity: 1;
+  }
+
+  &-inner {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    margin: auto;
+    padding: 20px 30px;
+    border-radius: var(--alinea-border-radius);
+    max-width: 100%;
+    max-height: 100%;
+    overflow: auto;
+    background: var(--alinea-background);
+    border: 1px solid var(--alinea-outline);
+    box-shadow: 0 2px 200px 10px var(--alinea-shadow),
+      0 8px 10px 0 var(--alinea-shadow);
+
+    &-close {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      cursor: pointer;
+
+      &:focus-visible {
+        outline: -webkit-focus-ring-color auto 1px;
+      }
+    }
+  }
+}

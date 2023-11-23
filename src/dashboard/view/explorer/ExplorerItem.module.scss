@@ -1,0 +1,117 @@
+.root {
+  position: relative;
+  display: block;
+  color: inherit;
+  text-decoration: none;
+  gap: 8px;
+  height: 100%;
+  min-width: 0;
+
+  &.is-row {
+    padding: 4px;
+  }
+
+  &.is-thumb {
+    padding: 10px;
+  }
+
+  &.is-thumb &-inner {
+    flex-direction: column;
+  }
+
+  &-inner {
+    height: 100%;
+    width: 100%;
+    min-width: 0;
+    background: var(--alinea-background);
+    border-radius: var(--alinea-border-radius);
+    display: flex;
+    overflow: hidden;
+
+    &.is-border {
+      box-shadow: 0 2px 3.5px var(--alinea-shadow);
+    }
+
+    &-hitBox {
+      position: relative;
+      display: flex;
+      align-items: center;
+
+      &:hover {
+        background: var(--alinea-highlight);
+      }
+    }
+  }
+
+  &-children {
+    cursor: pointer;
+    padding: 8px;
+    padding-left: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    min-width: 100px;
+
+    &-badge {
+      display: block;
+      background: var(--alinea-selected);
+      border-radius: 8px;
+      font-size: 10px;
+      height: 16px;
+      line-height: 16px;
+      font-weight: 600;
+      padding: 0 6px;
+      white-space: nowrap;
+    }
+
+    &:hover {
+      background: var(--alinea-highlight);
+    }
+  }
+
+  &.is-row &-children {
+    border-left: 1px solid var(--alinea-outline);
+  }
+
+  &.is-thumb &-children {
+    border-top: 1px solid var(--alinea-outline);
+  }
+
+  &-checkbox {
+    position: absolute;
+    left: 0;
+    top: 0;
+    opacity: 0;
+  }
+
+  &-selection {
+    font-size: 19px;
+
+    svg {
+      display: block;
+    }
+  }
+
+  &.is-row &-inner-hitBox {
+    padding: 0 12px;
+  }
+  &.is-row &-selection {
+    padding-right: 8px;
+  }
+
+  &.is-thumb &-selection {
+    position: absolute;
+    z-index: 1;
+    top: 5px;
+    left: 5px;
+  }
+
+  &.is-row &-selection {
+    align-items: center;
+  }
+
+  &[aria-selected] &-inner {
+    background: var(--alinea-highlight);
+  }
+}

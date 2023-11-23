@@ -1,31 +1,68 @@
 {
-  "private": true,
-  "name": "@alinea/root",
+  "bin": "./dist/cli.js",
+  "name": "alinea",
   "version": "0.0.0",
   "license": "MIT",
+  "type": "module",
   "scripts": {
-    "dev": "esbx prepare && run-p dev:check dev:next dev:compile",
-    "dev:compile": "esbx dev",
-    "dev:next": "yarn workspace @alinea/web dev",
+    "dev": "run-p dev:check dev:run",
+    "web": "run-p dev:check web:run",
+    "stories": "ladle serve",
+    "demo": "node build.js --watch -- node dev.js --dir apps/demo --config src/cms -- yarn workspace @alinea/demo dev",
+    "build": "tsc && node build.js",
+    "alinea": "node build.js && node dist/cli.js",
+    "build:alinea": "node build.js",
+    "release:types": "tsc",
+    "release:build": "node build.js",
+    "type": "tsc --diagnostics",
+    "test": "node build.js --test",
+    "tag": "esbx tag",
     "dev:check": "tsc -w",
-    "trace": "tsc --noEmit --incremental false --emitDeclarationOnly false --diagnostics --generateTrace private/trace && speedscope private/trace/trace.json",
-    "build": "esbx build",
-    "test": "esbx test",
-    "clean": "esbx clean",
+    "dev:run": "node build.js --watch -- node dev.js --dir apps/dev --config cms",
+    "web:run": "node build.js --watch -- node dev.js -- yarn workspace @alinea/web dev",
+    "dev:stories": "ladle serve --stories \"src/**/*.stories.tsx\"",
+    "gen:bundleTs": "esbx bundleTs",
+    "build:stories": "ladle build --base /stories --stories  \"packages/**/*.stories.tsx\" --outDir apps/web/public/stories",
+    "trace": "tsc --noEmit --incremental false --emitDeclarationOnly false --diagnostics --generateTrace private/trace && analyze-trace private/trace & speedscope private/trace/trace.json",
     "bump": "esbx version",
-    "prepare": "copy-env-cli",
-    "gen:types": "typedoc --json apps/web/src/data/types.json",
-    "gen:bundle": "esbx bundleTs"
+    "prepare": "yarn build"
   },
-  "files": [],
-  "workspaces": [
-    "apps/*",
-    "packages/*"
+  "sideEffects": false,
+  "typesVersions": {
+    "*": {
+      "*": [
+        "./dist/*"
+      ]
+    }
+  },
+  "files": [
+    "dist"
   ],
+  "workspaces": [
+    "apps/web",
+    "apps/demo",
+    "apps/dev",
+    "src/backend",
+    "src/cli",
+    "src/core",
+    "src/dashboard",
+    "src/ui",
+    "src/auth/passwordless",
+    "src/input/richtext"
+  ],
+  "dependencies": {
+    "@alinea/iso": "^0.3.1",
+    "@alinea/sqlite-wasm": "^0.1.14",
+    "esbuild": "^0.19.2"
+  },
+  "peerDependencies": {
+    "react": "*",
+    "react-dom": "*"
+  },
   "devDependencies": {
+    "@esbx/alias": "^0.0.20",
     "@esbx/extension": "^0.0.19",
     "@esbx/external": "^0.0.19",
-    "@esbx/react": "^0.0.19",
     "@esbx/reload": "^0.0.19",
     "@esbx/reporter": "^0.0.19",
     "@esbx/run": "^0.0.19",
@@ -33,29 +70,172 @@
     "@esbx/static": "^0.0.19",
     "@esbx/target": "^0.0.20",
     "@esbx/workspaces": "^0.0.19",
+    "@ladle/react": "^2.15.0",
+    "@types/better-sqlite3": "^7.6.4",
+    "@types/fs-extra": "^11.0.1",
     "@types/glob": "^7.1.4",
-    "@types/node": "^16.9.0",
+    "@types/node": "20.0.0",
+    "@types/react": "^18.2.13",
+    "@types/react-dom": "^18.2.6",
+    "@types/sql.js": "^1.4.4",
+    "@typescript/analyze-trace": "^0.9.1",
+    "@ungap/with-resolvers": "^0.1.0",
+    "alinea": "link:.",
     "autoprefixer": "^10.4.2",
-    "compare-versions": "^4.1.3",
     "copy-env-cli": "1.0.0",
     "cross-env": "^7.0.3",
-    "esbuild": "^0.14.11",
     "esbx": "^0.0.18",
-    "fs-extra": "^10.0.0",
+    "find-config": "^1.0.0",
     "glob": "^7.2.0",
     "memfs": "^3.4.1",
     "npm-run-all": "^4.1.5",
     "postcss-pxtorem": "^6.0.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "rimraf": "^5.0.0",
+    "sass": "^1.63.4",
     "speedscope": "^1.14.0",
-    "typedoc": "^0.22.15",
-    "typescript": "^4.7.3",
-    "typescript-plugin-css-modules": "^3.4.0",
+    "typescript": "^5.2.2",
+    "typescript-plugin-css-modules": "^5.0.1",
     "uvu": "^0.5.1"
   },
   "packageManager": "yarn@3.2.0",
   "resolutions": {
-    "prosemirror-model": "1.14.3",
-    "prosemirror-view": "1.20.3",
-    "mime-db": "1.51.0"
+    "esbuild": "0.19.2",
+    "mime-db": "1.51.0",
+    "yjs": "13.6.7",
+    "lib0": "0.2.74"
+  },
+  "exports": {
+    "./package.json": "./package.json",
+    ".": "./dist/index.js",
+    "./css": "./dist/index.css",
+    "./*.cjs": "./dist/*.cjs",
+    "./*": "./dist/*.js",
+    "./cloud/view/CloudAuth": {
+      "worker": "./dist/cloud/view/CloudAuth.js",
+      "browser": "./dist/cloud/view/CloudAuth.browser.js",
+      "default": "./dist/cloud/view/CloudAuth.js"
+    },
+    "./core/media/MediaRoot": {
+      "worker": "./dist/core/media/MediaRoot.js",
+      "browser": "./dist/core/media/MediaRoot.browser.js",
+      "default": "./dist/core/media/MediaRoot.js"
+    },
+    "./core/media/MediaSchema": {
+      "worker": "./dist/core/media/MediaSchema.js",
+      "browser": "./dist/core/media/MediaSchema.browser.js",
+      "default": "./dist/core/media/MediaSchema.js"
+    },
+    "./dashboard/view/Preview": {
+      "worker": "./dist/dashboard/view/Preview.js",
+      "browser": "./dist/dashboard/view/Preview.browser.js",
+      "default": "./dist/dashboard/view/Preview.js"
+    },
+    "./input/check/CheckField": {
+      "worker": "./dist/input/check/CheckField.js",
+      "browser": "./dist/input/check/CheckField.browser.js",
+      "default": "./dist/input/check/CheckField.js"
+    },
+    "./input/code/CodeField": {
+      "worker": "./dist/input/code/CodeField.js",
+      "browser": "./dist/input/code/CodeField.browser.js",
+      "default": "./dist/input/code/CodeField.js"
+    },
+    "./input/date/DateField": {
+      "worker": "./dist/input/date/DateField.js",
+      "browser": "./dist/input/date/DateField.browser.js",
+      "default": "./dist/input/date/DateField.js"
+    },
+    "./input/json/JsonField": {
+      "worker": "./dist/input/json/JsonField.js",
+      "browser": "./dist/input/json/JsonField.browser.js",
+      "default": "./dist/input/json/JsonField.js"
+    },
+    "./input/link/LinkField": {
+      "worker": "./dist/input/link/LinkField.js",
+      "browser": "./dist/input/link/LinkField.browser.js",
+      "default": "./dist/input/link/LinkField.js"
+    },
+    "./input/list/ListField": {
+      "worker": "./dist/input/list/ListField.js",
+      "browser": "./dist/input/list/ListField.browser.js",
+      "default": "./dist/input/list/ListField.js"
+    },
+    "./input/metadata/MetadataField": {
+      "worker": "./dist/input/metadata/MetadataField.js",
+      "browser": "./dist/input/metadata/MetadataField.browser.js",
+      "default": "./dist/input/metadata/MetadataField.js"
+    },
+    "./input/number/NumberField": {
+      "worker": "./dist/input/number/NumberField.js",
+      "browser": "./dist/input/number/NumberField.browser.js",
+      "default": "./dist/input/number/NumberField.js"
+    },
+    "./input/object/ObjectField": {
+      "worker": "./dist/input/object/ObjectField.js",
+      "browser": "./dist/input/object/ObjectField.browser.js",
+      "default": "./dist/input/object/ObjectField.js"
+    },
+    "./input/path/PathField": {
+      "worker": "./dist/input/path/PathField.js",
+      "browser": "./dist/input/path/PathField.browser.js",
+      "default": "./dist/input/path/PathField.js"
+    },
+    "./input/richtext/RichTextField": {
+      "worker": "./dist/input/richtext/RichTextField.js",
+      "browser": "./dist/input/richtext/RichTextField.browser.js",
+      "default": "./dist/input/richtext/RichTextField.js"
+    },
+    "./input/select/SelectField": {
+      "worker": "./dist/input/select/SelectField.js",
+      "browser": "./dist/input/select/SelectField.browser.js",
+      "default": "./dist/input/select/SelectField.js"
+    },
+    "./input/tabs/Tabs": {
+      "worker": "./dist/input/tabs/Tabs.js",
+      "browser": "./dist/input/tabs/Tabs.browser.js",
+      "default": "./dist/input/tabs/Tabs.js"
+    },
+    "./input/text/TextField": {
+      "worker": "./dist/input/text/TextField.js",
+      "browser": "./dist/input/text/TextField.browser.js",
+      "default": "./dist/input/text/TextField.js"
+    },
+    "./input/view/View": {
+      "worker": "./dist/input/view/View.js",
+      "browser": "./dist/input/view/View.browser.js",
+      "default": "./dist/input/view/View.js"
+    },
+    "./picker/entry/EntryPicker": {
+      "worker": "./dist/picker/entry/EntryPicker.js",
+      "browser": "./dist/picker/entry/EntryPicker.browser.js",
+      "default": "./dist/picker/entry/EntryPicker.js"
+    },
+    "./picker/url/UrlPicker": {
+      "worker": "./dist/picker/url/UrlPicker.js",
+      "browser": "./dist/picker/url/UrlPicker.browser.js",
+      "default": "./dist/picker/url/UrlPicker.js"
+    },
+    "./auth/passwordless/PasswordLessAuth": {
+      "worker": "./dist/auth/passwordless/PasswordLessAuth.server.js",
+      "browser": "./dist/auth/passwordless/PasswordLessAuth.js",
+      "default": "./dist/auth/passwordless/PasswordLessAuth.server.js"
+    },
+    "./cli/util/ExportStore": {
+      "worker": "./dist/cli/util/ExportStore.server.js",
+      "browser": "./dist/cli/util/ExportStore.js",
+      "default": "./dist/cli/util/ExportStore.server.js"
+    },
+    "./core/driver/DefaultDriver": {
+      "worker": "./dist/core/driver/DefaultDriver.server.js",
+      "browser": "./dist/core/driver/DefaultDriver.js",
+      "default": "./dist/core/driver/DefaultDriver.server.js"
+    },
+    "./core/driver/NextDriver": {
+      "worker": "./dist/core/driver/NextDriver.server.js",
+      "browser": "./dist/core/driver/NextDriver.js",
+      "default": "./dist/core/driver/NextDriver.server.js"
+    }
   }
 }

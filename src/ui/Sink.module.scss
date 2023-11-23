@@ -1,0 +1,50 @@
+//11234
+
+.root {
+  cursor: default;
+  position: relative;
+  border-radius: var(--alinea-border-radius);
+  background: var(--alinea-content);
+  //box-shadow: 0 2px 4px var(--alinea-shadow);
+  //border: 1px solid var(--alinea-shadow);
+}
+
+.row {
+  & + & {
+    box-shadow: var(--alinea-divider-top);
+  }
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+}
+
+.title {
+  font-size: 13px;
+  font-weight: 600;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  flex-grow: 1;
+  min-width: 0;
+}
+
+.content {
+  flex-grow: 1;
+  padding: 10px;
+
+  .header + & {
+    padding-top: 4px;
+  }
+}
+
+.options {
+  position: relative;
+  padding: 0;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}

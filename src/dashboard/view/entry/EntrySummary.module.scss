@@ -1,0 +1,35 @@
+.row {
+  height: 100%;
+  min-width: 0;
+  font-size: 13px;
+  padding: 0 4px;
+}
+
+.thumb {
+  height: 100%;
+  flex-grow: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 6px 0;
+  font-size: 13px;
+
+  &-header {
+    padding: 2px 30px 0 30px;
+  }
+
+  &-title {
+    font-size: 18px;
+    font-weight: bold;
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 12px;
+  }
+
+  &-footer {
+    display: flex;
+    padding: 10px;
+  }
+}

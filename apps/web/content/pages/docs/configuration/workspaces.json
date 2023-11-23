@@ -1,0 +1,120 @@
+{
+  "id": "259EzPfnSUaKOrNL1S2bpIpMdKl",
+  "type": "Doc",
+  "title": "Workspaces",
+  "body": [
+    {
+      "type": "heading",
+      "level": 1,
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "Workspaces"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "Workspaces allow you to structure content into logical categories. Editors can easily switch workspaces in the dashboard."
+        }
+      ]
+    },
+    {
+      "id": "267Q4Kyg9hOUVaJWolmaa1wOndr",
+      "type": "CodeBlock",
+      "code": "alinea.workspace('My workspace', {\n  source, schema, color, roots\n})"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "Configuration"
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "`source`"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "A directory in which published content is stored."
+        }
+      ]
+    },
+    {
+      "id": "28hgVxGUBKpMWwiKvfkoBZmYX15",
+      "type": "CodeBlock",
+      "code": "// content is stored in the `content` directory\nsource: './content'"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "`mediaDir`"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "A directory in which uploaded files are placed. In case you'r using alinea to manage web content this will often point to a directory that is made publicly available so an url can be created to download or display the file. "
+        }
+      ]
+    },
+    {
+      "id": "28hgYn07WY7s77bPgYhtBluKjAT",
+      "type": "CodeBlock",
+      "code": "// uploaded files are placed in the `public` folder\nmediaDir: './public'"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "`roots`"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "An object containing `Root` configurations and their keys. Use the `alinea.root` function to create one."
+        }
+      ]
+    }
+  ],
+  "alinea": {
+    "index": "Zw"
+  }
+}

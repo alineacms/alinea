@@ -1,0 +1,350 @@
+{
+  "id": "jgFq0M7-C3pchur1qyMmc",
+  "type": "Doc",
+  "title": "Guide: creating a custom backend",
+  "body": [
+    {
+      "type": "heading",
+      "textAlign": "left",
+      "level": 1,
+      "content": [
+        {
+          "type": "text",
+          "text": "Guide: creating a custom backend"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "Hosting an Alinea backend requires several services such as storing and retrieving drafts, publishing changes and authenticating users. We go through each of these and combine them into a handler which can be hosted on Node.js or serverless/edge Javascript runtimes. Let's start by adjusting the `alinea.config.tsx` file to include the backend setup."
+        }
+      ]
+    },
+    {
+      "id": "EV4vvLbPH96bn200K0r4q",
+      "type": "NoticeBlock",
+      "level": "info",
+      "body": [
+        {
+          "type": "paragraph",
+          "textAlign": "left",
+          "content": [
+            {
+              "type": "text",
+              "text": "Make sure you've "
+            },
+            {
+              "type": "text",
+              "text": "exported the dashboard",
+              "marks": [
+                {
+                  "type": "link",
+                  "attrs": {
+                    "data-id": "YVO300iu-cu47Ejqf2NoB",
+                    "data-entry": "lMnYxNx4Xk2ui-wclAHwG",
+                    "href": null,
+                    "title": null
+                  }
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "text": " first"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "9Sk_Fp5CiUTJXyPAFLL8x",
+      "type": "CodeBlock",
+      "code": "import {alinea} from 'alinea'\nimport {backend} from 'alinea/core'\nimport {passwordLess} from 'alinea/auth.passwordless'\nimport {configureBackend} from './alinea.server'\nexport const config = alinea.createConfig({\n  backend: backend({\n    auth: passwordLess\n  }).configure(configureBackend),\n  ...config\n})",
+      "fileName": "alinea.config.tsx"
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "We set up the backend in a separate `alinea.server.ts` file that can be imported from the main alinea config. This file will hold all the configuration for the server side of the custom backend. When importing files that end with `.server` alinea makes sure they're not included in the client bundle, so your secrets are safe."
+        }
+      ]
+    },
+    {
+      "id": "Xc_Ib4J4C-t7xBk8j_qB_",
+      "type": "CodeBlock",
+      "code": "import {PasswordLess} from 'alinea/auth.passwordless'\nimport {Backend, JsonLoader} from 'alinea/backend'\nimport {GithubData} from 'alinea/backend.github'\nimport {RedisDrafts} from 'alinea/backend.redis/RedisDrafts'\nimport {JWTPreviews} from 'alinea/backend/util/JWTPreviews'\nimport {backend} from 'alinea/core'\nimport Redis from 'ioredis'\nimport {createTransport} from 'nodemailer'\n\nexport const configureBackend = backend.configure<PasswordLess>(\n  ({auth, config, createStore}) => {\n\n    // The authentication service needs to link to your admin panel\n    // to create magic links and email them\n    const dashboardUrl = 'https://alinea.sh/admin.html'\n\n    // Configure the server side of the passwordless service\n    const passwordless = auth.configure({\n      dashboardUrl,\n      // This is the subject of the magic link mails\n      subject: 'Login',\n      // Send the mails from this address\n      from: `\"Alinea\" <no-reply@alinea.sh>`,\n      // We pass a nodemailer transporter so the service can send mails\n      transporter: createTransport(\n        // Pass all the required transport configuration options\n        // See: http://nodemailer.com/smtp/\n        {...smtpConfig} \n      ),\n      // A secret is needed to sign the magic link tokens\n      jwtSecret: process.env.JWT_SECRET!,\n      // Email adresses pass through here while logging in,\n      // return true when a user is valid and is allowed to log in\n      async isUser(email: string) {\n        return email.endsWith('@alinea.sh')\n      }\n    })\n\n    // Create a drafts instance that will save and retrieve drafts from Redis\n    const drafts = new RedisDrafts({\n      client: new Redis(process.env.REDIS_DSN)\n    })\n\n    // Publish content changes to Github\n    const data = new GithubData({\n      config,\n      loader: JsonLoader,\n      // Pass a token which is authorized to read and write to the repository \n      githubAuthToken: process.env.GITHUB_TOKEN!,\n      owner: 'alineacms',\n      repo: 'alinea',\n      branch: 'main',\n      author: {\n        name: 'My Name',\n        email: 'me@example.com'\n      }\n    })\n    \n    return new Backend({\n      dashboardUrl,\n      auth: passwordless,\n      config,\n      createStore,\n      drafts,\n      target: data,\n      media: data,\n      previews: new JWTPreviews(process.env.JWT_SECRET!)\n    })\n  }\n)",
+      "fileName": "alinea.server.ts"
+    },
+    {
+      "type": "heading",
+      "textAlign": "left",
+      "level": 2,
+      "content": [
+        {
+          "type": "text",
+          "text": "Authentication"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "The authentication service is the only one that provides not only a server implementation, but also a client part (the login screen). This is why the setup is included in the config file itself which is read by the client as well. We use the `@alinea/auth.passwordless` package. It can authenticate users with a magic link. It's ideal for serverless environments as it does not require a persistence layer. Install the backend and the nodemailer library which will handle sending emails."
+        }
+      ]
+    },
+    {
+      "id": "zqLk70YGz-ajiNGCpcJqK",
+      "type": "CodeVariantsBlock",
+      "variants": [
+        {
+          "id": "UrN3sXfsVBVYYPQaActx9",
+          "index": "a0",
+          "type": "Variant",
+          "name": "npm",
+          "language": "tsx",
+          "code": "npm install @alinea/auth.passwordless nodemailer"
+        },
+        {
+          "id": "fyMQEVYhPIjAXCJP7uEag",
+          "index": "a1",
+          "type": "Variant",
+          "name": "yarn",
+          "language": "tsx",
+          "code": "yarn add @alinea/auth.passwordless nodemailer"
+        },
+        {
+          "id": "X7gA0Hs_2rP4zwlrsiR5T",
+          "index": "a2",
+          "type": "Variant",
+          "name": "pnpm",
+          "language": "tsx",
+          "code": "pnpm install @alinea/auth.passwordless nodemailer"
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "textAlign": "left",
+      "level": 2,
+      "content": [
+        {
+          "type": "text",
+          "text": "Drafts"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "In the example we sync drafts to and from a Redis store. You can create a free persistent Redis store at "
+        },
+        {
+          "type": "text",
+          "text": "upstash.io",
+          "marks": [
+            {
+              "type": "link",
+              "attrs": {
+                "data-id": "yEvbSmES4yQ7rDqpkuSB6",
+                "data-entry": null,
+                "href": "https://upstash.com/",
+                "target": "_blank",
+                "title": null
+              }
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": " to get started. Install the backend and the ioredis library which will handle the connection."
+        }
+      ]
+    },
+    {
+      "id": "VeiEMCccBjCxAqHErX-6N",
+      "type": "CodeVariantsBlock",
+      "variants": [
+        {
+          "id": "odiOCO0sPLrAMtS7pn3wd",
+          "index": "a0",
+          "type": "Variant",
+          "name": "npm",
+          "language": "tsx",
+          "code": "npm install @alinea/backend.redis ioredis"
+        },
+        {
+          "id": "6kwX0BNEqCT9KQ5RUS8oc",
+          "index": "a1",
+          "type": "Variant",
+          "name": "yarn",
+          "language": "tsx",
+          "code": "yarn add @alinea/backend.redis ioredis"
+        },
+        {
+          "id": "neGxaRmlUC2lZeigwmxPj",
+          "index": "a2",
+          "type": "Variant",
+          "name": "pnpm",
+          "language": "tsx",
+          "code": "pnpm install @alinea/backend.redis ioredis"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "Another package is available to sync to Firebase."
+        }
+      ]
+    },
+    {
+      "id": "veWvfj3flTG4Mvol_mefq",
+      "type": "ChapterLinkBlock",
+      "link": [
+        {
+          "id": "eufcJOoOQfWhZQq-oySh8",
+          "index": "a0",
+          "type": "url",
+          "url": "https://www.npmjs.com/package/@alinea/backend.firestore",
+          "description": "@alinea/backend.firestore",
+          "target": "_blank"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "If you're setting up Alinea to run fully inside the browser (like we did with our "
+        },
+        {
+          "type": "text",
+          "text": "demo",
+          "marks": [
+            {
+              "type": "link",
+              "attrs": {
+                "data-id": "0a4H5B73fobSnDplWlGNo",
+                "data-entry": null,
+                "href": "https://demo.alinea.sh",
+                "target": "_blank",
+                "title": null
+              }
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": ") drafts can be synced to IndexedDB."
+        }
+      ]
+    },
+    {
+      "id": "8zTPovUreye4a-XYlPgx1",
+      "type": "ChapterLinkBlock",
+      "link": [
+        {
+          "id": "wFTFfTOBEhZq-U6bQN4Hk",
+          "index": "a0",
+          "type": "url",
+          "url": "https://www.npmjs.com/package/@alinea/backend.indexeddb",
+          "description": "@alinea/backend.indexeddb",
+          "target": "_blank"
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "textAlign": "left",
+      "level": 2,
+      "content": [
+        {
+          "type": "text",
+          "text": "Target and media"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "To publish content back to the git repository and store uploaded files we need a service that can handle that. Currently there is one package available to publish to Github hosted repositories. You'll have to "
+        },
+        {
+          "type": "text",
+          "text": "create a token",
+          "marks": [
+            {
+              "type": "link",
+              "attrs": {
+                "data-id": "OciIryjJiAMSjDMXXIQBT",
+                "data-entry": null,
+                "href": "https://github.com/settings/tokens",
+                "target": "_blank",
+                "title": null
+              }
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": " with read and write access to your repository."
+        }
+      ]
+    },
+    {
+      "id": "0zGAoSFXORkOQBGtTqbV6",
+      "type": "CodeVariantsBlock",
+      "variants": [
+        {
+          "id": "E4jW1jggp0g3JSr6Nk6L0",
+          "index": "a0",
+          "type": "Variant",
+          "name": "npm",
+          "language": "tsx",
+          "code": "npm install @alinea/backend.github"
+        },
+        {
+          "id": "J42J9VK4ru_NnYrZKnLTk",
+          "index": "a1",
+          "type": "Variant",
+          "name": "yarn",
+          "language": "tsx",
+          "code": "yarn add @alinea/backend.github"
+        },
+        {
+          "id": "esEmGtAtBWP-0s2MpMwbE",
+          "index": "a2",
+          "type": "Variant",
+          "name": "pnpm",
+          "language": "tsx",
+          "code": "pnpm install @alinea/backend.github"
+        }
+      ]
+    }
+  ],
+  "alinea": {
+    "index": "ZoG"
+  }
+}

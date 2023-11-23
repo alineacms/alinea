@@ -1,0 +1,32 @@
+{
+  "name": "@alinea/dashboard",
+  "type": "module",
+  "devDependencies": {
+    "@dnd-kit/core": "^3.1.1",
+    "@dnd-kit/sortable": "^4.0.0",
+    "@dnd-kit/utilities": "^2.0.0",
+    "@floating-ui/react-dom": "^0.7.1",
+    "@headless-tree/core": "^0.0.8",
+    "@headless-tree/react": "^0.0.7",
+    "@headlessui/react": "^1.7.17",
+    "@react-hook/size": "^2.1.2",
+    "@react-hook/window-size": "^3.0.7",
+    "@types/debounce-promise": "^3.1.8",
+    "@types/diff-match-patch": "^1.0.32",
+    "color2k": "^1.2.4",
+    "dataloader": "^2.1.0",
+    "debounce-promise": "^3.1.2",
+    "diff-match-patch": "^1.0.5",
+    "fflate": "^0.8.0",
+    "jotai": "^2.4.2",
+    "lib0": "^0.2.78",
+    "p-limit": "^4.0.0",
+    "pretty-bytes": "^6.0.0",
+    "react-query": "^3.39.1",
+    "react-tiny-virtual-list": "^2.2.0",
+    "smartcrop": "^2.0.5",
+    "thumbhash": "^0.1.1",
+    "y-indexeddb": "^9.0.11",
+    "y-webrtc": "^10.2.0"
+  }
+}

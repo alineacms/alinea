@@ -1,0 +1,19 @@
+.root {
+  height: 22px;
+  display: flex;
+  justify-content: flex-end;
+  background: var(--alinea-outline);
+  position: relative;
+  z-index: 5;
+  // background: var(--alinea-accent);
+  // color: var(--alinea-accent-foreground);
+}
+
+.status {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  font-size: 0.8em;
+  padding: 0 6px;
+  cursor: default;
+}

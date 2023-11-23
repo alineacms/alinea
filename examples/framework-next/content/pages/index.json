@@ -1,0 +1,72 @@
+{
+  "id": "MBUdFE7MZgShZBkjOpOPl",
+  "type": "HomePage",
+  "title": "Next.js Blog Example with Alinea CMS",
+  "intro": {
+    "title": "Blog.",
+    "byline": [
+      {
+        "type": "paragraph",
+        "textAlign": "left",
+        "content": [
+          {
+            "type": "text",
+            "text": "A statically generated blog example using "
+          },
+          {
+            "type": "text",
+            "text": "Next.js",
+            "marks": [
+              {
+                "type": "link",
+                "attrs": {
+                  "data-id": "II7fj9mhhZrx_YsSn9x9V",
+                  "data-entry": null,
+                  "href": "https://nextjs.org/",
+                  "target": "_blank",
+                  "title": null
+                }
+              }
+            ]
+          },
+          {
+            "type": "text",
+            "text": " and "
+          },
+          {
+            "type": "text",
+            "text": "Alinea CMS",
+            "marks": [
+              {
+                "type": "link",
+                "attrs": {
+                  "data-id": "WmOTftF0MdDzFNghA7bAl",
+                  "data-entry": null,
+                  "href": "https://alinea.sh",
+                  "target": "_blank",
+                  "title": null
+                }
+              }
+            ]
+          },
+          {
+            "type": "text",
+            "text": "."
+          }
+        ]
+      }
+    ]
+  },
+  "heroPost": [
+    {
+      "id": "aRRRDgbV8OmHgNiomcLan",
+      "index": "a0",
+      "type": "entry",
+      "entry": "LzjY3g5EhroSGZSvhIDSl"
+    }
+  ],
+  "alinea": {
+    "index": "a0",
+    "root": "pages"
+  }
+}
