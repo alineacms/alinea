@@ -1,7 +1,18 @@
 import {Database} from 'alinea/backend'
 import {EntryResolver} from 'alinea/backend/resolver/EntryResolver'
+import {Config, Entry} from 'alinea/core'
+import {
+  applySuffix,
+  entryFileName,
+  pathSuffix
+} from 'alinea/core/EntryFilenames'
 import {Graph} from 'alinea/core/Graph'
 import {CreateMutation, Mutation, MutationType} from 'alinea/core/Mutation'
+import {
+  createEntryRow,
+  entryParentPaths,
+  publishEntryRow
+} from 'alinea/core/util/EntryRows'
 import debounce from 'debounce-promise'
 import {atom, useSetAtom} from 'jotai'
 import {atomFamily} from 'jotai/utils'
@@ -46,24 +57,82 @@ const localDbAtom = atom(async (get, set) => {
     mutations: Array<Mutation>,
     commitHash: string
   ) => {
-    const update = await db.applyMutations(mutations, commitHash)
-    await flush()
-    return update
+    return limit(async () => {
+      const update = await db.applyMutations(mutations, commitHash)
+      await flush()
+      return update
+    })
   }
   await limit(syncDb)
 
   return {db, applyMutations, resolve: resolver.resolve, sync}
 })
 
+async function suffixPaths(
+  config: Config,
+  graph: Graph,
+  mutations: Array<Mutation>
+): Promise<Array<Mutation>> {
+  const res = []
+  for (const mutation of mutations) {
+    switch (mutation.type) {
+      case MutationType.Create: {
+        const {entry} = mutation
+        const sameLocation = Entry.root
+          .is(entry.root)
+          .and(
+            Entry.workspace.is(entry.workspace),
+            Entry.locale.is(entry.locale)
+          )
+        const sameParent = Entry.parent.is(entry.parent ?? null)
+        const isExact = Entry.path.is(entry.path)
+        const startsWith = Entry.path.like(entry.path + '-%')
+        const condition = sameLocation.and(sameParent, isExact.or(startsWith))
+        const conflictingPaths = await graph.preferPublished.find(
+          Entry().where(condition).select(Entry.path)
+        )
+        const suffix = pathSuffix(entry.path, conflictingPaths)
+        if (suffix) {
+          const updated = {
+            ...entry,
+            data: {...entry.data, path: applySuffix(entry.path, suffix)}
+          }
+          const suffixedEntry = await createEntryRow(
+            config,
+            publishEntryRow(config, updated)
+          )
+          const parentPaths = entryParentPaths(config, entry)
+          res.push({
+            ...mutation,
+            file: entryFileName(
+              config,
+              publishEntryRow(config, updated),
+              parentPaths
+            ),
+            entry: suffixedEntry
+          })
+          continue
+        }
+      }
+      default:
+        res.push(mutation)
+    }
+  }
+  return res
+}
+
 export const mutateAtom = atom(
   null,
   async (get, set, ...mutations: Array<Mutation>) => {
     const client = get(clientAtom)
-    const {commitHash} = await client.mutate(mutations)
+    const config = get(configAtom)
+    const graph = await get(graphAtom)
+    const normalized = await limit(() => suffixPaths(config, graph, mutations))
+    const {commitHash} = await client.mutate(normalized)
     const {applyMutations} = await get(localDbAtom)
-    if (mutations.length === 0) return
-    const changed = await applyMutations(mutations, commitHash)
-    const i18nIds = mutations
+    if (normalized.length === 0) return
+    const changed = await applyMutations(normalized, commitHash)
+    const i18nIds = normalized
       .filter(
         (mutation): mutation is CreateMutation =>
           mutation.type === MutationType.Create

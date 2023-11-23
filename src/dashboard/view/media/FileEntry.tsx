@@ -46,7 +46,7 @@ function FileView({editor}: EntryEditProps) {
 export function FileEntry(props: EntryEditProps) {
   const nav = useNav()
   const {editor} = props
-  const isImage = Media.isImage(editor.activeVersion.path)
+  const isImage = Media.isImage(editor.activeVersion.data.extension)
   return (
     <Main className={styles.root()}>
       <EntryHeader editable={false} editor={editor} />

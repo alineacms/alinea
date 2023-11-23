@@ -11,13 +11,12 @@ import {
   createId,
   unreachable
 } from 'alinea/core'
-import {entryFilepath, entryInfo, entryUrl} from 'alinea/core/EntryFilenames'
+import {entryInfo, entryUrl} from 'alinea/core/EntryFilenames'
 import {EntryRecord, META_KEY, createRecord} from 'alinea/core/EntryRecord'
 import {Mutation, MutationType} from 'alinea/core/Mutation'
-import {createEntryRow} from 'alinea/core/util/EntryRows'
+import {createEntryRow, publishEntryRow} from 'alinea/core/util/EntryRows'
 import {Logger} from 'alinea/core/util/Logger'
 import {entries} from 'alinea/core/util/Objects'
-import * as path from 'alinea/core/util/Paths'
 import * as paths from 'alinea/core/util/Paths'
 import {timer} from 'alinea/core/util/Timer'
 import {Driver, Expr, Select, alias, create} from 'rado'
@@ -123,49 +122,14 @@ export class Database implements Syncable {
   }
 
   private async applyPublish(tx: Driver.Async, entry: EntryRow) {
-    const path = entry.data.path
-    const root = Root.data(this.config.workspaces[entry.workspace][entry.root])
-    const parentPaths = entry.parentDir
-      .split('/')
-      .filter(Boolean)
-      .slice(root.i18n ? 1 : 0)
-    const filePath = entryFilepath(
-      this.config,
-      {
-        ...entry,
-        path,
-        phase: EntryPhase.Published
-      },
-      parentPaths
-    )
-    const parentDir = paths.dirname(filePath)
-    const extension = paths.extname(filePath)
-    const fileName = paths.basename(filePath, extension)
-    const [entryPath] = entryInfo(fileName)
-    const childrenDir = paths.join(parentDir, entryPath)
-    const urlMeta: EntryUrlMeta = {
-      locale: entry.locale,
-      path,
-      phase: entry.phase,
-      parentPaths
-    }
-    const url = entryUrl(this.config.schema[entry.type], urlMeta)
-    const next = {
-      ...entry,
-      phase: EntryPhase.Published,
-      path,
-      filePath,
-      parentDir,
-      childrenDir,
-      url
-    }
+    const next = publishEntryRow(this.config, entry)
     await tx(
       EntryRow({entryId: entry.entryId, phase: entry.phase}).set({
         phase: EntryPhase.Published,
-        filePath,
-        parentDir,
-        childrenDir,
-        url
+        filePath: next.filePath,
+        parentDir: next.parentDir,
+        childrenDir: next.childrenDir,
+        url: next.url
       })
     )
     return this.updateChildren(tx, entry, next)
@@ -467,9 +431,9 @@ export class Database implements Syncable {
   ): Omit<EntryRow, 'rowHash' | 'fileHash'> {
     const {[META_KEY]: alineaMeta, ...data} = record
     const typeName = alineaMeta.type
-    const parentDir = path.dirname(meta.filePath)
-    const extension = path.extname(meta.filePath)
-    const fileName = path.basename(meta.filePath, extension)
+    const parentDir = paths.dirname(meta.filePath)
+    const extension = paths.extname(meta.filePath)
+    const fileName = paths.basename(meta.filePath, extension)
     const [entryPath, entryPhase] = entryInfo(fileName)
     const segments = parentDir.split('/').filter(Boolean)
     const root = Root.data(this.config.workspaces[meta.workspace][meta.root])
@@ -487,7 +451,7 @@ export class Database implements Syncable {
       throw new Error(
         `Type mismatch between seed and file: "${seed.type}" !== "${typeName}"`
       )
-    const childrenDir = path.join(parentDir, entryPath)
+    const childrenDir = paths.join(parentDir, entryPath)
 
     if (!record[META_KEY].entryId) throw new Error(`missing id`)
 
@@ -552,7 +516,7 @@ export class Database implements Syncable {
             const [pagePath, page] = pages.shift()!
             if (!PageSeed.isPageSeed(page)) continue
             const {type} = PageSeed.data(page)
-            const filePath = path.join(target, pagePath) + '.json'
+            const filePath = paths.join(target, pagePath) + '.json'
             const typeName = typeNames.get(type)
             if (!typeName) continue
             res.set(filePath, {
@@ -564,7 +528,7 @@ export class Database implements Syncable {
             })
             const children = entries(page).map(
               ([childPath, child]) =>
-                [path.join(pagePath, childPath), child as PageSeed] as const
+                [paths.join(pagePath, childPath), child as PageSeed] as const
             )
             pages.push(...children)
           }
@@ -699,7 +663,7 @@ export class Database implements Syncable {
       const changeSetCreator = new ChangeSetCreator(this.config)
       const mutations = publishSeed.map((seed): Mutation => {
         const workspace = this.config.workspaces[seed.workspace]
-        const file = path.join(
+        const file = paths.join(
           Workspace.data(workspace).source,
           seed.root,
           seed.filePath

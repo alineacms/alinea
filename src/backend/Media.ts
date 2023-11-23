@@ -42,8 +42,8 @@ export namespace Media {
     '.svg'
   ]
 
-  export function isImage(path: string) {
-    const extension = path.toLowerCase().split('.').pop()
+  export function isImage(pathOrExtension: string) {
+    const extension = pathOrExtension.toLowerCase().split('.').pop()
     return extension && imageExtensions.includes(`.${extension}`)
   }
 }

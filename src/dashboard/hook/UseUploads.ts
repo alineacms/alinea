@@ -245,7 +245,9 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
       })
     )
     const prev = await graph.preferPublished.maybeGet(Entry({parent: parentId}))
-    const path = basename(upload.file.name.toLowerCase())
+    const extension = extname(upload.file.name.toLowerCase())
+    const path = basename(upload.file.name.toLowerCase(), extension)
+
     const entryLocation = {
       workspace: upload.to.workspace,
       root: upload.to.root,
@@ -258,7 +260,6 @@ export function useUploads(onSelect?: (entry: EntryRow) => void) {
       entryLocation,
       parent ? parent.parentPaths.concat(parent.path) : []
     )
-    const extension = extname(path)
     const parentDir = dirname(filePath)
     const {location} = upload.info!
     const workspace = Workspace.data(config.workspaces[upload.to.workspace])

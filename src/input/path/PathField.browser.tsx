@@ -1,4 +1,5 @@
 import {Entry, Field, isSeparator, slugify} from 'alinea/core'
+import {pathSuffix} from 'alinea/core/EntryFilenames'
 import {useEntryEditor} from 'alinea/dashboard/hook/UseEntryEditor'
 import {useGraph} from 'alinea/dashboard/hook/UseGraph'
 import {InputLabel, InputState, useInput} from 'alinea/editor'
@@ -41,45 +42,44 @@ function PathInput({state, field}: PathInputProps) {
   const inputValue = (value || '') + (endsWithSeparator ? '-' : '')
   const empty = value === ''
 
-  // WIP:
-  type Paths = Array<{entryId: string; path: string}>
-  async function getPaths() {
+  async function getConflictingPaths() {
     if (!editor) return []
-    const isParent = Entry.parent.is(editor.activeVersion.parent)
+    const sameLocation = Entry.root
+      .is(editor.activeVersion.root)
+      .and(
+        Entry.workspace.is(editor.activeVersion.workspace),
+        Entry.locale.is(editor.activeVersion.locale)
+      )
+    const sameParent = Entry.parent.is(editor.activeVersion.parent ?? null)
     const isExact = Entry.path.is(inputValue)
     const startsWith = Entry.path.like(inputValue + '-%')
-    const isNotSelf = Entry.entryId.isNot(editor.entryId)
-    const condition = isParent.and(isNotSelf).and(isExact.or(startsWith))
+    const isNotSelf = editor.entryId
+      ? Entry.entryId.isNot(editor.entryId)
+      : true
+    const condition = sameLocation.and(
+      sameParent,
+      isNotSelf,
+      isExact.or(startsWith)
+    )
     return graph.preferPublished.find(
-      Entry()
-        .where(condition)
-        .select({entryId: Entry.entryId, path: Entry.path})
+      Entry().where(condition).select(Entry.path)
     )
   }
 
-  const {data} = useQuery(
+  const {data: conflictingPaths} = useQuery(
     ['path', editor?.entryId, editor?.activeVersion.parent, inputValue],
-    getPaths
+    getConflictingPaths
   )
 
-  function getSuffix(data: Paths) {
-    if (!data.length) return
-    const otherPaths = data.map(d => d.path)
-    if (otherPaths.includes(inputValue)) {
-      let suffix = 0
-      while (true)
-        if (!otherPaths.includes(`${inputValue}-${++suffix}`)) return suffix
-    }
-  }
-
   async function applySuffix() {
-    const pathData = await getPaths()
-    const suffix = getSuffix(pathData)
+    const pathData = await getConflictingPaths()
+    const suffix = pathSuffix(inputValue, pathData)
     if (!suffix) return
     setValue(slugify(`${inputValue}-${suffix}`))
   }
 
-  const currentSuffix = data && getSuffix(data)
+  const currentSuffix =
+    conflictingPaths && pathSuffix(inputValue, conflictingPaths)
 
   function getSuffixPosition(): number {
     if (!currentSuffix) return 0
@@ -131,6 +131,7 @@ function PathInput({state, field}: PathInputProps) {
             applySuffix()
           }}
           style={{paddingRight: px(getRightInputPadding())}}
+          disabled={options.readOnly}
         />
         <div
           ref={suffixRef}

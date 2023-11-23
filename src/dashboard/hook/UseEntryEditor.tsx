@@ -1,10 +1,10 @@
 import {PropsWithChildren, createContext, useContext} from 'react'
 import {EntryEditor} from '../atoms/EntryEditorAtoms.js'
 
-const context = createContext(undefined as EntryEditor | undefined)
+const ctx = createContext(undefined as EntryEditor | undefined)
 
 export function useEntryEditor(): EntryEditor | undefined {
-  return useContext(context)
+  return useContext(ctx)
 }
 
 export interface EntryEditorProviderProps {
@@ -15,5 +15,5 @@ export function EntryEditorProvider({
   children,
   editor
 }: PropsWithChildren<EntryEditorProviderProps>) {
-  return <context.Provider value={editor}>{children}</context.Provider>
+  return <ctx.Provider value={editor}>{children}</ctx.Provider>
 }

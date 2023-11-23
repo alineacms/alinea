@@ -122,3 +122,18 @@ export function entryUrl(type: Type, meta: EntryUrlMeta) {
       .join('/')
   )
 }
+
+export function pathSuffix(
+  path: string,
+  conflictingPaths: Array<string>
+): number | undefined {
+  if (conflictingPaths.includes(path)) {
+    let suffix = 0
+    while (true)
+      if (!conflictingPaths.includes(`${path}-${++suffix}`)) return suffix
+  }
+}
+
+export function applySuffix(path: string, suffix: number) {
+  return `${path}-${suffix}`
+}

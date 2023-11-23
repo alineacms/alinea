@@ -175,20 +175,28 @@ export class ExprI<T> {
     return Expr(ExprData.UnOp(UnaryOp.Not, this[Expr.Data]))
   }
 
-  or(this: Expr<boolean>, that: EV<boolean>): Expr<boolean> {
-    const a = this
-    const b = Expr.create(that)
-    if (b.isConstant(true) || a.isConstant(false)) return b
-    if (a.isConstant(true) || b.isConstant(false)) return this
-    return Expr(ExprData.BinOp(a[Expr.Data], BinaryOp.Or, b[Expr.Data]))
+  or(this: Expr<boolean>, ...that: Array<EV<boolean>>): Expr<boolean> {
+    let res = this
+    if (this.isConstant(true)) return res
+    for (const e of that) {
+      const expr = Expr.create(e)
+      if (expr.isConstant(true)) return expr
+      if (expr.isConstant(false)) continue
+      res = Expr(ExprData.BinOp(res[Expr.Data], BinaryOp.Or, expr[Expr.Data]))
+    }
+    return res
   }
 
-  and(this: Expr<boolean>, that: EV<boolean>): Expr<boolean> {
-    const a = this
-    const b = Expr.create(that)
-    if (b.isConstant(true) || a.isConstant(false)) return this
-    if (a.isConstant(true) || b.isConstant(false)) return b
-    return Expr(ExprData.BinOp(a[Expr.Data], BinaryOp.And, b[Expr.Data]))
+  and(this: Expr<boolean>, ...that: Array<EV<boolean>>): Expr<boolean> {
+    let res = this
+    if (this.isConstant(false)) return res
+    for (const e of that) {
+      const expr = Expr.create(e)
+      if (expr.isConstant(false)) return expr
+      if (expr.isConstant(true)) continue
+      res = Expr(ExprData.BinOp(res[Expr.Data], BinaryOp.And, expr[Expr.Data]))
+    }
+    return res
   }
 
   is(that: EV<T>): Expr<boolean> {
