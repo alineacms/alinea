@@ -152,9 +152,8 @@ class HandlerConnection implements Connection {
     mutations: Array<Mutation>,
     retry = 0
   ): Promise<{commitHash: string}> {
-    const {target, media, db} = this.handler.options
+    const {target, db} = this.handler.options
     if (!target) throw new Error('Target not available')
-    if (!media) throw new Error('Media not available')
     const changeSet = this.handler.changes.create(mutations)
     const {commitHash: fromCommitHash} = await this.handler.syncPending()
     let toCommitHash: string

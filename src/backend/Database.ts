@@ -11,13 +11,12 @@ import {
   createId,
   unreachable
 } from 'alinea/core'
-import {entryFilepath, entryInfo, entryUrl} from 'alinea/core/EntryFilenames'
+import {entryInfo, entryUrl} from 'alinea/core/EntryFilenames'
 import {EntryRecord, META_KEY, createRecord} from 'alinea/core/EntryRecord'
 import {Mutation, MutationType} from 'alinea/core/Mutation'
-import {createEntryRow} from 'alinea/core/util/EntryRows'
+import {createEntryRow, publishEntryRow} from 'alinea/core/util/EntryRows'
 import {Logger} from 'alinea/core/util/Logger'
 import {entries} from 'alinea/core/util/Objects'
-import * as path from 'alinea/core/util/Paths'
 import * as paths from 'alinea/core/util/Paths'
 import {Driver, Expr, Select, alias, create} from 'rado'
 import {exists} from 'rado/sqlite'
@@ -31,7 +30,7 @@ import {AlineaMeta} from './db/AlineaMeta.js'
 import {createEntrySearch} from './db/CreateEntrySearch.js'
 import {createFileHash, createRowHash} from './util/ContentHash.js'
 
-type Seed = {
+interface Seed {
   type: string
   workspace: string
   root: string
@@ -97,7 +96,8 @@ export class Database implements Syncable {
     })
   }
 
-  applyMutations(mutations: Array<Mutation>, commitHash: string) {
+  async applyMutations(mutations: Array<Mutation>, commitHash?: string) {
+    const hash = commitHash ?? (await this.meta()).commitHash
     return this.store.transaction(async tx => {
       const reHash = []
       for (const mutation of mutations) {
@@ -115,51 +115,20 @@ export class Database implements Syncable {
       const changed = (
         await Promise.all(reHash.map(updateRows => updateRows()))
       ).flat()
-      await this.writeMeta(tx, commitHash)
+      await this.writeMeta(tx, hash)
       return changed
     })
   }
 
   private async applyPublish(tx: Driver.Async, entry: EntryRow) {
-    const path = entry.data.path
-    const parentPaths = entry.parentDir.split('/').filter(Boolean)
-    const filePath = entryFilepath(
-      this.config,
-      {
-        ...entry,
-        path,
-        phase: EntryPhase.Published
-      },
-      parentPaths
-    )
-    const parentDir = paths.dirname(filePath)
-    const extension = paths.extname(filePath)
-    const fileName = paths.basename(filePath, extension)
-    const [entryPath] = entryInfo(fileName)
-    const childrenDir = paths.join(parentDir, entryPath)
-    const urlMeta: EntryUrlMeta = {
-      locale: entry.locale,
-      path,
-      phase: entry.phase,
-      parentPaths
-    }
-    const url = entryUrl(this.config.schema[entry.type], urlMeta)
-    const next = {
-      ...entry,
-      phase: EntryPhase.Published,
-      path,
-      filePath,
-      parentDir,
-      childrenDir,
-      url
-    }
+    const next = publishEntryRow(this.config, entry)
     await tx(
       EntryRow({entryId: entry.entryId, phase: entry.phase}).set({
         phase: EntryPhase.Published,
-        filePath,
-        parentDir,
-        childrenDir,
-        url
+        filePath: next.filePath,
+        parentDir: next.parentDir,
+        childrenDir: next.childrenDir,
+        url: next.url
       })
     )
     return this.updateChildren(tx, entry, next)
@@ -461,9 +430,9 @@ export class Database implements Syncable {
   ): Omit<EntryRow, 'rowHash' | 'fileHash'> {
     const {[META_KEY]: alineaMeta, ...data} = record
     const typeName = alineaMeta.type
-    const parentDir = path.dirname(meta.filePath)
-    const extension = path.extname(meta.filePath)
-    const fileName = path.basename(meta.filePath, extension)
+    const parentDir = paths.dirname(meta.filePath)
+    const extension = paths.extname(meta.filePath)
+    const fileName = paths.basename(meta.filePath, extension)
     const [entryPath, entryPhase] = entryInfo(fileName)
     const segments = parentDir.split('/').filter(Boolean)
     const root = Root.data(this.config.workspaces[meta.workspace][meta.root])
@@ -481,7 +450,7 @@ export class Database implements Syncable {
       throw new Error(
         `Type mismatch between seed and file: "${seed.type}" !== "${typeName}"`
       )
-    const childrenDir = path.join(parentDir, entryPath)
+    const childrenDir = paths.join(parentDir, entryPath)
 
     if (!record[META_KEY].entryId) throw new Error(`missing id`)
 
@@ -537,17 +506,16 @@ export class Database implements Syncable {
     const typeNames = Schema.typeNames(this.config.schema)
     for (const [workspaceName, workspace] of entries(this.config.workspaces)) {
       for (const [rootName, root] of entries(workspace)) {
-        let pages = entries(root)
-        if (pages.length === 0) continue
         const {i18n} = Root.data(root)
-        const locales = i18n?.locales || [undefined]
+        const locales = i18n?.locales ?? [undefined]
         for (const locale of locales) {
+          const pages: Array<readonly [string, PageSeed]> = entries(root)
           const target = locale ? `/${locale}` : '/'
           while (pages.length > 0) {
             const [pagePath, page] = pages.shift()!
             if (!PageSeed.isPageSeed(page)) continue
             const {type} = PageSeed.data(page)
-            const filePath = path.join(target, pagePath) + '.json'
+            const filePath = paths.join(target, pagePath) + '.json'
             const typeName = typeNames.get(type)
             if (!typeName) continue
             res.set(filePath, {
@@ -557,7 +525,10 @@ export class Database implements Syncable {
               filePath,
               page: page
             })
-            const children = entries(page)
+            const children = entries(page).map(
+              ([childPath, child]) =>
+                [paths.join(pagePath, childPath), child as PageSeed] as const
+            )
             pages.push(...children)
           }
         }
@@ -691,7 +662,7 @@ export class Database implements Syncable {
       const changeSetCreator = new ChangeSetCreator(this.config)
       const mutations = publishSeed.map((seed): Mutation => {
         const workspace = this.config.workspaces[seed.workspace]
-        const file = path.join(
+        const file = paths.join(
           Workspace.data(workspace).source,
           seed.root,
           seed.filePath

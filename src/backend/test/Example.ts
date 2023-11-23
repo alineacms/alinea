@@ -38,7 +38,19 @@ export function createExample() {
         entry3: page(Page({title: 'Entry 3'}))
       }),
       [root.meta]: {
-        contains: ['TypeA']
+        contains: ['Page', 'Container']
+      }
+    }),
+    multiLanguage: root('Multi language', {
+      localised1: page(Page({title: 'Test title'})),
+      localised2: page(Container({title: 'Entry 2'}), {
+        localised3: page(Page({title: 'Entry 3'}))
+      }),
+      [root.meta]: {
+        contains: ['Page', 'Container'],
+        i18n: {
+          locales: ['en', 'fr']
+        }
       }
     }),
     media: createMediaRoot({

@@ -82,6 +82,14 @@ function edit(entry: EntryRow): Mutation {
   }
 }
 
+function archive(entry: EntryRow): Mutation {
+  return {
+    type: MutationType.Archive,
+    entryId: entry.entryId,
+    file: entry.filePath
+  }
+}
+
 function publish(entry: EntryRow): Mutation {
   return {
     type: MutationType.Publish,
@@ -97,7 +105,7 @@ test('create', async () => {
   const entry1 = await entry(example, example.schema.Page, {
     title: 'Test title'
   })
-  await db.applyMutations([create(entry1)], '')
+  await db.applyMutations([create(entry1)])
   const result = await example.get(Entry({entryId: entry1.entryId}))
   assert.is(result.entryId, entry1.entryId)
   assert.is(result.title, 'Test title')
@@ -110,13 +118,13 @@ test('remove child entries', async () => {
   const sub = await entry(example, example.schema.Container, {}, parent)
   const subSub = await entry(example, example.schema.Page, {}, sub)
 
-  await db.applyMutations([create(parent), create(sub), create(subSub)], '')
+  await db.applyMutations([create(parent), create(sub), create(subSub)])
 
   const res1 = await example.get(Entry({entryId: subSub.entryId}))
   assert.ok(res1)
   assert.is(res1.parent, sub.entryId)
 
-  await db.applyMutations([remove(parent)], '')
+  await db.applyMutations([remove(parent)])
 
   const res2 = await example.get(Entry({entryId: subSub.entryId}))
   assert.not.ok(res2)
@@ -134,7 +142,7 @@ test('change draft path', async () => {
     {path: 'sub'},
     parent
   )
-  await db.applyMutations([create(parent), create(sub)], '')
+  await db.applyMutations([create(parent), create(sub)])
   const resParent0 = await example.get(Entry({entryId: parent.entryId}))
   assert.is(resParent0.url, '/parent')
 
@@ -146,18 +154,41 @@ test('change draft path', async () => {
 
   // Changing entry paths in draft should not have an influence on
   // computed properties such as url, filePath etc. until we publish.
-  await db.applyMutations([edit(draft)], '')
-  const resParent1 = await example.drafts.get(Entry({entryId: parent.entryId}))
+  await db.applyMutations([edit(draft)])
+  const resParent1 = await example.graph.drafts.get(
+    Entry({entryId: parent.entryId})
+  )
   assert.is(resParent1.url, '/parent')
   const res1 = await example.get(Entry({entryId: sub.entryId}))
   assert.is(res1.url, '/parent/sub')
 
   // Once we publish, the computed properties should be updated.
-  await db.applyMutations([publish(draft)], '')
+  await db.applyMutations([publish(draft)])
   const resParent2 = await example.get(Entry({entryId: parent.entryId}))
   assert.is(resParent2.url, '/new-path')
   const res2 = await example.get(Entry({entryId: sub.entryId}))
   assert.is(res2.url, '/new-path/sub')
+})
+
+test('change published path for entry with language', async () => {
+  const example = createExample()
+  const db = await example.db
+  const multi = example.in(example.workspaces.main.multiLanguage)
+  const localised3 = await multi.get(Entry({path: 'localised3'}))
+  assert.is(localised3.url, '/en/localised2/localised3')
+
+  // Archive localised3
+  await db.applyMutations([archive(localised3)])
+
+  const localised3Archived = await example.graph.archived
+    .in(example.workspaces.main.multiLanguage)
+    .get(Entry({path: 'localised3'}))
+  assert.is(localised3Archived.phase, EntryPhase.Archived)
+
+  // And publish again
+  await db.applyMutations([publish(localised3Archived)])
+  const localised3Publish = await multi.get(Entry({path: 'localised3'}))
+  assert.is(localised3Publish.url, '/en/localised2/localised3')
 })
 
 test.run()
