@@ -3,11 +3,9 @@ import {CloudAuthView} from 'alinea/cloud/view/CloudAuth'
 import {Resolver} from 'alinea/core'
 import {MediaFile, MediaLibrary} from 'alinea/core/media/MediaSchema'
 import {Config, DashboardConfig} from './Config.js'
-import {GraphRealm, GraphRealmApi} from './Graph.js'
+import {Graph, GraphRealm, GraphRealmApi} from './Graph.js'
 import {Root} from './Root.js'
-import {Schema} from './Schema.js'
 import {Workspace} from './Workspace.js'
-import {Realm} from './pages/Realm.js'
 import {entries} from './util/Objects.js'
 
 type Attachment = Workspace | Root
@@ -18,30 +16,25 @@ export interface CMSApi extends GraphRealmApi {
 }
 
 export abstract class CMS extends GraphRealm implements Config, CMSApi {
-  schema: Schema
   dashboard: DashboardConfig
-  drafts: GraphRealmApi
+  graph: Graph
 
   constructor(config: Config) {
-    super(config, async params => {
+    const withMedia = {
+      ...config,
+      schema: {MediaLibrary, MediaFile, ...config.schema}
+    }
+    super(withMedia, async params => {
       const cnx = await this.resolver()
       return cnx.resolve(params)
     })
-    this.schema = {
-      MediaLibrary,
-      MediaFile,
-      ...config.schema
-    }
     this.dashboard = {
       auth: CloudAuthView,
       ...(config.dashboard as DashboardConfig)
     }
-    this.drafts = new GraphRealm(this, async params => {
+    this.graph = new Graph(this, async params => {
       const {resolve} = await this.resolver()
-      return resolve({
-        ...params,
-        realm: Realm.PreferDraft
-      })
+      return resolve(params)
     })
     this.#attach(config)
   }
@@ -61,6 +54,10 @@ export abstract class CMS extends GraphRealm implements Config, CMSApi {
         attached.set(root, this)
       }
     }
+  }
+
+  get schema() {
+    return this.config.schema
   }
 
   get workspaces() {

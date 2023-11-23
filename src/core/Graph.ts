@@ -99,6 +99,7 @@ export class GraphRealm implements GraphRealmApi {
 
 export class Graph {
   drafts: GraphRealm
+  archived: GraphRealm
   published: GraphRealm
   preferPublished: GraphRealm
   preferDraft: GraphRealm
@@ -112,6 +113,12 @@ export class Graph {
       return this.resolve({
         ...params,
         realm: Realm.Draft
+      })
+    })
+    this.archived = new GraphRealm(config, params => {
+      return resolve({
+        ...params,
+        realm: Realm.Archived
       })
     })
     this.published = new GraphRealm(config, params => {

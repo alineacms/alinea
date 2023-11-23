@@ -19,10 +19,11 @@ class TestDriver extends DefaultDriver implements TestApi {
     connect(new Database()).toAsync()
   )
   db = this.store.then(async store => {
-    return new Database(this, store)
+    const db = new Database(this, store)
+    await db.fill({async *entries() {}}, '')
+    return db
   })
   handler = this.db.then(async db => {
-    await db.fill({async *entries() {}}, '')
     const handler = new Handler({
       config: this,
       db,

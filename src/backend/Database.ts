@@ -32,7 +32,7 @@ import {AlineaMeta} from './db/AlineaMeta.js'
 import {createEntrySearch} from './db/CreateEntrySearch.js'
 import {createFileHash, createRowHash} from './util/ContentHash.js'
 
-type Seed = {
+interface Seed {
   type: string
   workspace: string
   root: string
@@ -98,7 +98,8 @@ export class Database implements Syncable {
     })
   }
 
-  applyMutations(mutations: Array<Mutation>, commitHash: string) {
+  async applyMutations(mutations: Array<Mutation>, commitHash?: string) {
+    const hash = commitHash ?? (await this.meta()).commitHash
     return this.store.transaction(async tx => {
       const reHash = []
       for (const mutation of mutations) {
@@ -116,14 +117,18 @@ export class Database implements Syncable {
       const changed = (
         await Promise.all(reHash.map(updateRows => updateRows()))
       ).flat()
-      await this.writeMeta(tx, commitHash)
+      await this.writeMeta(tx, hash)
       return changed
     })
   }
 
   private async applyPublish(tx: Driver.Async, entry: EntryRow) {
     const path = entry.data.path
-    const parentPaths = entry.parentDir.split('/').filter(Boolean)
+    const root = Root.data(this.config.workspaces[entry.workspace][entry.root])
+    const parentPaths = entry.parentDir
+      .split('/')
+      .filter(Boolean)
+      .slice(root.i18n ? 1 : 0)
     const filePath = entryFilepath(
       this.config,
       {
@@ -538,11 +543,10 @@ export class Database implements Syncable {
     const typeNames = Schema.typeNames(this.config.schema)
     for (const [workspaceName, workspace] of entries(this.config.workspaces)) {
       for (const [rootName, root] of entries(workspace)) {
-        let pages = entries(root)
-        if (pages.length === 0) continue
         const {i18n} = Root.data(root)
-        const locales = i18n?.locales || [undefined]
+        const locales = i18n?.locales ?? [undefined]
         for (const locale of locales) {
+          const pages: Array<readonly [string, PageSeed]> = entries(root)
           const target = locale ? `/${locale}` : '/'
           while (pages.length > 0) {
             const [pagePath, page] = pages.shift()!
@@ -558,7 +562,10 @@ export class Database implements Syncable {
               filePath,
               page: page
             })
-            const children = entries(page)
+            const children = entries(page).map(
+              ([childPath, child]) =>
+                [path.join(pagePath, childPath), child as PageSeed] as const
+            )
             pages.push(...children)
           }
         }
