@@ -38,7 +38,8 @@
   }
 
   @include l {
-    padding-left: 55px;
+    padding-left: 70px;
+    padding-right: 70px;
   }
 
   &-inner {
@@ -60,7 +61,7 @@
   }
 
   @include l {
-    max-width: 1100px;
+    max-width: 1280px;
   }
 }
 

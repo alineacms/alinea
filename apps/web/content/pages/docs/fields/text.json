@@ -1,6 +1,4 @@
 {
-  "id": "24yE3ttFwpZGiAOJWRTGvP9kK1R",
-  "type": "Doc",
   "title": "Text",
   "body": [
     {
@@ -27,15 +25,29 @@
     {
       "id": "267RNY6ruMlaKYh8ADfzxtq0jnA",
       "type": "CodeBlock",
-      "code": "import {alinea} from 'alinea'\nalinea.text('My text field', {\n  help: 'This is an example field',\n  multiline: true\n})"
+      "code": "import {alinea} from 'alinea'\n\nalinea.text('My text field', {\n  help: 'This is an example field',\n  multiline: true\n})",
+      "fileName": "",
+      "language": "",
+      "compact": false
     },
     {
       "id": "kLT1p_gpGFN1L9rIy9e5E",
       "type": "ExampleBlock",
-      "code": "export default alinea.text('My text field', {\n  help: 'This is an example field',\n  multiline: true\n})"
+      "code": "import {alinea} from 'alinea'\n\nexport default alinea.text('My text field', {\n  help: 'This is an example field',\n  multiline: true\n})"
     }
   ],
-  "alinea": {
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "title": "",
+      "image": {},
+      "description": ""
+    }
+  },
+  "@alinea": {
+    "entryId": "24yE3ttFwpZGiAOJWRTGvP9kK1R",
+    "type": "Doc",
     "index": "a0"
   }
 }

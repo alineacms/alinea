@@ -10,7 +10,7 @@ export const CodeVariants = alinea.list('Variants', {
         'Language',
         {
           tsx: 'Typescript',
-          bash: 'Shell'
+          shellscript: 'Shell'
         },
         {inline: true, width: 0.25, initialValue: 'tsx'}
       ),

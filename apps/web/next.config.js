@@ -11,6 +11,14 @@ const nextConfig = {
   },
   experimental: {
     serverComponentsExternalPackages: ['@alinea/generated']
+  },
+  rewrites() {
+    return [
+      {
+        source: '/docs\\::framework/:path*',
+        destination: '/docs/:framework/:path*'
+      }
+    ]
   }
 }
 

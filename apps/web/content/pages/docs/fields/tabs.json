@@ -1,6 +1,4 @@
 {
-  "id": "268hnUNLntD1TbeY1WPh34VFVcM",
-  "type": "Doc",
   "title": "Tabs",
   "body": [
     {
@@ -27,10 +25,24 @@
     {
       "id": "268hspT1GDy0ag8lya8m9dObKhX",
       "type": "CodeBlock",
-      "code": "import {alinea} from 'alinea'\nalinea.tabs(\n  alinea.tab('Tab A', {\n    // ... fields\n  }),\n  alinea.tab('Tab B', {\n    // ... fields\n  })\n)"
+      "code": "import {alinea} from 'alinea'\n\nalinea.tabs(\n  alinea.tab('Tab A', {\n    // ... fields\n  }),\n  alinea.tab('Tab B', {\n    // ... fields\n  })\n)",
+      "fileName": "",
+      "language": "",
+      "compact": false
     }
   ],
-  "alinea": {
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "title": "",
+      "image": {},
+      "description": ""
+    }
+  },
+  "@alinea": {
+    "entryId": "268hnUNLntD1TbeY1WPh34VFVcM",
+    "type": "Doc",
     "index": "a5"
   }
 }

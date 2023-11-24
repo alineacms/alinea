@@ -3,7 +3,7 @@ import {cms} from '@/cms'
 import {Breadcrumbs} from '@/layout/Breadcrumbs'
 import {LayoutWithSidebar} from '@/layout/Layout'
 import {FrameworkPicker} from '@/nav/FrameworkPicker'
-import {getFramework} from '@/nav/Frameworks'
+import {supportedFrameworks} from '@/nav/Frameworks'
 import {Link} from '@/nav/Link'
 import {NavTree} from '@/nav/NavTree'
 import {NavItem, nestNav} from '@/nav/NestNav'
@@ -18,52 +18,56 @@ import css from './page.module.scss'
 
 const styles = fromModule(css)
 
+interface DocPageParams {
+  slug: Array<string>
+  framework: string
+}
+
+interface DocPageProps {
+  params: DocPageParams
+}
+
 const summary = {
   id: Entry.entryId,
   title: Entry.title,
   url: Entry.url
 }
 
-function getPage(slug: Array<string>) {
-  return cms.maybeGet(
-    Doc()
-      .where(Entry.url.is(`/docs/${slug.map(decodeURIComponent).join('/')}`))
-      .select({
-        ...Doc,
-        id: Entry.entryId,
-        level: Entry.level,
-        parents({parents}) {
-          return parents().select(summary)
-        }
-      })
-  )
+async function getPage(params: DocPageParams) {
+  const slug = params.slug.slice()
+  const framework =
+    supportedFrameworks.find(f => f.name === params.framework) ??
+    supportedFrameworks[0]
+  if (params.framework && framework.name !== params.framework)
+    slug.unshift(params.framework)
+  return {
+    framework,
+    doc: await cms.maybeGet(
+      Doc()
+        .where(Entry.url.is(`/docs/${slug.map(decodeURIComponent).join('/')}`))
+        .select({
+          ...Doc,
+          id: Entry.entryId,
+          level: Entry.level,
+          parents({parents}) {
+            return parents().select(summary)
+          }
+        })
+    )
+  }
 }
 
 export async function generateMetadata({
   params
 }: DocPageProps): Promise<Metadata> {
-  const page = await getPage(params.slug)
-  if (!page) return notFound()
-  return {
-    title: page.title
-  }
-}
-
-export interface DocPageProps {
-  params: {
-    slug: Array<string>
-    framework: string
-  }
+  const {doc} = await getPage(params)
+  if (!doc) return notFound()
+  return {title: doc.title}
 }
 
 export default async function DocPage({params}: DocPageProps) {
-  const slug = params.slug.slice()
-  // Check if we start with a path segment
-  const framework = getFramework(params.framework)
-  if (params.framework !== framework.selected.name)
-    slug.unshift(params.framework)
-  const page = await getPage(slug)
-  if (!page) return notFound()
+  const {doc, framework} = await getPage(params)
+  if (!doc) return notFound()
   const nav = await cms.in(cms.workspaces.main.pages.docs).find(
     Entry().select({
       id: Entry.entryId,
@@ -77,7 +81,7 @@ export default async function DocPage({params}: DocPageProps) {
   const itemsIn = (item: NavItem): Array<NavItem> =>
     item.children ? [item, ...item.children.flatMap(itemsIn)] : [item]
   const docs = nested.flatMap(itemsIn).filter(page => page.type === 'Doc')
-  const index = docs.findIndex(item => item.id === page.id)
+  const index = docs.findIndex(item => item.id === doc.id)
   const prev = docs[index - 1]
   const next = docs[index + 1]
   return (
@@ -89,8 +93,8 @@ export default async function DocPage({params}: DocPageProps) {
         </VStack>
       }
     >
-      <Breadcrumbs parents={page.parents} />
-      <BodyView body={page.body} />
+      <Breadcrumbs parents={doc.parents} />
+      <BodyView body={doc.body} />
       <HStack
         gap={20}
         justify="space-between"

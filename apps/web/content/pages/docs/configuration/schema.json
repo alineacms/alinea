@@ -22,7 +22,7 @@
         },
         {
           "type": "text",
-          "text": "types",
+          "text": "Types",
           "marks": [
             {
               "type": "link",
@@ -74,7 +74,7 @@
     {
       "id": "286gbW4zHgdrAHcGBLGRtixZguV",
       "type": "CodeBlock",
-      "code": "alinea.schema({\n  BlogOverview: alinea.type('Blog overview', {\n    title: alinea.text('Title'),\n    path: alinea.path('Path')\n  }).configure({\n    isContainer: true,\n    contains: ['BlogPost']\n  }),\n  BlogPost: alinea.type('Blog post', {\n    title: alinea.text('Title'),\n    path: alinea.path('Path'),\n    publishDate: alinea.date('Publish date'),\n    body: alinea.richText('Body')\n  })\n})",
+      "code": "alinea.schema({\n  BlogOverview: alinea.document('Blog overview', {\n    [alinea.meta]: {\n      isContainer: true,\n      contains: ['BlogPost']\n    }\n  }),\n  BlogPost: alinea.document('Blog post', {\n    publishDate: alinea.date('Publish date'),\n    body: alinea.richText('Body')\n  })\n})",
       "fileName": "",
       "language": "",
       "compact": false

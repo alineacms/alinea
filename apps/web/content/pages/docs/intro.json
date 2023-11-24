@@ -18,67 +18,7 @@
       "content": [
         {
           "type": "text",
-          "text": "Alinea is an open source headless CMS written in Typescript. Its main highlights are:"
-        }
-      ]
-    },
-    {
-      "type": "bulletList",
-      "content": [
-        {
-          "type": "listItem",
-          "content": [
-            {
-              "type": "paragraph",
-              "textAlign": "left",
-              "content": [
-                {
-                  "type": "text",
-                  "text": "Content is stored in flat files and can be committed to a git repository"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "type": "listItem",
-          "content": [
-            {
-              "type": "paragraph",
-              "textAlign": "left",
-              "content": [
-                {
-                  "type": "text",
-                  "text": "Content is bundled with deploys, meaning zero network overhead while retrieving content"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "type": "listItem",
-          "content": [
-            {
-              "type": "paragraph",
-              "textAlign": "left",
-              "content": [
-                {
-                  "type": "text",
-                  "text": "Content is fully typed when using Typescript"
-                }
-              ]
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "type": "paragraph",
-      "textAlign": "left",
-      "content": [
-        {
-          "type": "text",
-          "text": "Alinea comes packaged as a single library on NPM. It provides a CLI that lets you get going without setting up databases, environments, or any other services."
+          "text": "Alinea is an open source headless CMS written in Typescript. It integrates with git by storing content in flat files. Content is bundled with deploys so you can retrieve it without network roundtrips. "
         }
       ]
     },
@@ -86,9 +26,9 @@
       "id": "0c3ZcIuX3S5DDMhK910DE",
       "type": "ChapterLinkBlock",
       "link": {
-        "id": "pQQ6PFuITK3HiaihU-4ax",
+        "id": "2YcxqfgYjNu2cvuFwNA37AMeUES",
         "type": "entry",
-        "entry": "20580nQzbOBR3Lt4kIdxyRGglc6",
+        "entry": "2YWqKUTrANlgEFMyBUEYdih2HpP",
         "description": ""
       }
     },
@@ -99,7 +39,7 @@
       "content": [
         {
           "type": "text",
-          "text": "Configuring the schema"
+          "text": "Configuring alinea"
         }
       ]
     },
@@ -109,7 +49,7 @@
       "content": [
         {
           "type": "text",
-          "text": "The content schema is configured in a central config file. Content types define different fields — Alinea ships with a lot of field types but can be expanded by creating custom fields."
+          "text": "The content schema is configured in a central config file. Content types define different fields that make up your page data. Alinea ships with a lot of field types but can easily be expanded with custom fields."
         }
       ]
     },
@@ -120,190 +60,6 @@
       "fileName": "",
       "language": "",
       "compact": false
-    },
-    {
-      "type": "paragraph",
-      "textAlign": "left",
-      "content": [
-        {
-          "type": "text",
-          "text": "On a higher level content can be structured into "
-        },
-        {
-          "type": "text",
-          "text": "workspaces",
-          "marks": [
-            {
-              "type": "link",
-              "attrs": {
-                "data-id": "yMjicncya9hmF_nyXNIK_",
-                "data-entry": "259EzPfnSUaKOrNL1S2bpIpMdKl",
-                "data-type": null,
-                "href": null,
-                "title": null
-              }
-            }
-          ]
-        },
-        {
-          "type": "text",
-          "text": ", which hold "
-        },
-        {
-          "type": "text",
-          "text": "roots",
-          "marks": [
-            {
-              "type": "link",
-              "attrs": {
-                "data-id": "2eukZ1z0XcPbzghBjKVAB",
-                "data-entry": "28hcdyq0sGJdgY6kM24NZd1XP5S",
-                "data-type": null,
-                "href": null,
-                "title": null
-              }
-            }
-          ]
-        },
-        {
-          "type": "text",
-          "text": ". This allows you to separate websites, apps or other publishing channels into logical categories. "
-        }
-      ]
-    },
-    {
-      "id": "UBTQRWVPpH2Lr6W2bnfhm",
-      "type": "ChapterLinkBlock",
-      "link": {
-        "id": "rUUw37CkIwtQzLTqnDDPV",
-        "type": "entry",
-        "entry": "25HWCBHEFdsLDtooZ4mzxeax3An",
-        "description": "Configuration"
-      }
-    },
-    {
-      "type": "heading",
-      "textAlign": "left",
-      "level": 2,
-      "content": [
-        {
-          "type": "text",
-          "text": "Content structure"
-        }
-      ]
-    },
-    {
-      "type": "paragraph",
-      "textAlign": "left",
-      "content": [
-        {
-          "type": "text",
-          "text": "Published content is formatted into JSON files, typically in a `/content` directory (we're "
-        },
-        {
-          "type": "text",
-          "text": "considering other formats",
-          "marks": [
-            {
-              "type": "link",
-              "attrs": {
-                "data-id": "cK3ZGUh6k2wYUjZdirQ8Y",
-                "data-entry": null,
-                "data-type": null,
-                "href": "https://github.com/alineacms/alinea/issues/10",
-                "target": "_blank",
-                "title": null
-              }
-            }
-          ]
-        },
-        {
-          "type": "text",
-          "text": " as well). The JSON files are manually editable when needed. They can be checked into git, making it easy to collaborate."
-        }
-      ]
-    },
-    {
-      "type": "paragraph",
-      "textAlign": "left",
-      "content": [
-        {
-          "type": "text",
-          "text": "Alinea indexes the JSON files into an embedded SQLite database. Having a database with indexed fields means querying content is fast and simple."
-        }
-      ]
-    },
-    {
-      "id": "Gs_7cGVP61b0kBG9DKV7u",
-      "type": "ChapterLinkBlock",
-      "link": {
-        "id": "s1TBmqCylqtoDnUtpwZhI",
-        "type": "entry",
-        "entry": "28Ng6ZnpyhafrKdGMOO7BUUKP4S",
-        "description": ""
-      }
-    },
-    {
-      "type": "heading",
-      "textAlign": "left",
-      "level": 2,
-      "content": [
-        {
-          "type": "text",
-          "text": "Hosting the dashboard"
-        }
-      ]
-    },
-    {
-      "type": "paragraph",
-      "textAlign": "left",
-      "content": [
-        {
-          "type": "text",
-          "text": "While developing locally the Alinea CLI starts a server with the dashboard for you. Changes are written to the file system and can be committed to git manually during the development process. "
-        }
-      ]
-    },
-    {
-      "type": "paragraph",
-      "textAlign": "left",
-      "content": [
-        {
-          "type": "text",
-          "text": "When your project is ready to deploy Alinea exposes a handler that can be hosted on most Javascript runtimes (Node.js or edge/serverless functions). The handler needs access to a backend service that can authenticate users, store drafts and publish changes back to the git repository. Alinea ships with some packages that help you build a backend — or one can be hosted via our "
-        },
-        {
-          "type": "text",
-          "text": "cloud service",
-          "marks": [
-            {
-              "type": "link",
-              "attrs": {
-                "data-id": "bj69FWaHNlyj1-7nXADBM",
-                "data-entry": null,
-                "data-type": null,
-                "href": "https://www.alinea.cloud",
-                "target": "_blank",
-                "title": null
-              }
-            }
-          ]
-        },
-        {
-          "type": "text",
-          "text": "."
-        }
-      ]
-    },
-    {
-      "id": "4YjqKZeamnpzzTli9ZJm4",
-      "type": "ChapterLinkBlock",
-      "link": {
-        "id": "4Og-Fit8qpxWgZmWZcYdT",
-        "type": "entry",
-        "entry": "28NgU841OXMyHZX4EU1GRqxZaB0",
-        "description": ""
-      }
     }
   ],
   "metadata": {

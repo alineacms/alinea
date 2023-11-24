@@ -1,6 +1,4 @@
 {
-  "id": "Gmy-svwmNKtK2as89D0hJ",
-  "type": "Doc",
   "title": "Internationalization",
   "body": [
     {
@@ -20,7 +18,7 @@
       "content": [
         {
           "type": "text",
-          "text": "It's possible to make content available in more than one language or region. To get started configure the `i18n` on a "
+          "text": "Alinea is built with internalization in mind. It's possible to make content available in more than one language or region. To get started configure the `i18n` on a "
         },
         {
           "type": "text",
@@ -31,6 +29,7 @@
               "attrs": {
                 "data-id": "XHuywJ5Fm6kEPueYKwPkt",
                 "data-entry": "28hcdyq0sGJdgY6kM24NZd1XP5S",
+                "data-type": null,
                 "href": null,
                 "title": null
               }
@@ -50,6 +49,7 @@
               "attrs": {
                 "data-id": "sQuOh2rPighhFO4a3-Q0e",
                 "data-entry": "267QuOShP41WnFxQFOcHZQoCsla",
+                "data-type": null,
                 "href": null,
                 "title": null
               }
@@ -61,14 +61,20 @@
           "text": ")."
         }
       ]
-    },
-    {
-      "id": "iNtPnN_nh2s8YA4sjw63w",
-      "type": "CodeBlock",
-      "code": "alinea.root('Website', {\n  i18n: {\n    locales: [\n      'en', \n      'fr', \n      'de'\n    ]\n  }\n})"
     }
   ],
-  "alinea": {
-    "index": "Zy"
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "title": "",
+      "image": {},
+      "description": ""
+    }
+  },
+  "@alinea": {
+    "entryId": "2YcyNztG4JXc8TLpT4l1l7njGtn",
+    "type": "Doc",
+    "index": "Zz"
   }
 }

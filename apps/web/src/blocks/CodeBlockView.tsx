@@ -16,7 +16,7 @@ export async function CodeBlockView({
 }: Infer<typeof CodeBlock>) {
   const {codeToHtml} = await codeHighlighter
   const html = codeToHtml(code, {
-    lang: language ?? 'tsx'
+    lang: language === 'shellscript' ? 'shellscript' : 'tsx'
   })
   return (
     <div className={styles.root({compact})}>

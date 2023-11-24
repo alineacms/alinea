@@ -1,6 +1,4 @@
 {
-  "id": "GyPkhJLrxgmfXYtYFOq9x",
-  "type": "Doc",
   "title": "Number",
   "body": [
     {
@@ -27,12 +25,15 @@
     {
       "id": "g4S5QLIWCAxleuIDzwNpk",
       "type": "CodeBlock",
-      "code": "import {alinea} from 'alinea'\nalinea.number('My number field', {\n  minValue: 0,\n  maxValue: 10,\n  step: 1\n})"
+      "code": "import {alinea} from 'alinea'\n\nalinea.number('My number field', {\n  minValue: 0,\n  maxValue: 10,\n  step: 1\n})",
+      "fileName": "",
+      "language": "",
+      "compact": false
     },
     {
       "id": "MFfouC0Ou_IJ8GmSx0nRK",
       "type": "ExampleBlock",
-      "code": "import {alinea} from 'alinea'\nexport default alinea.number('My number field', {\n  minValue: 0,\n  maxValue: 10,\n  step: 1\n})"
+      "code": "import {alinea} from 'alinea'\n\nexport default alinea.number('My number field', {\n  minValue: 0,\n  maxValue: 10,\n  step: 1\n})"
     },
     {
       "type": "heading",
@@ -76,7 +77,10 @@
     {
       "id": "TgFnfhtgWoXxn8JNTvLeU",
       "type": "CodeBlock",
-      "code": "import {alinea} from 'alinea'\nalinea.number('My decimal number field', {\n  step: 0.01\n})"
+      "code": "import {alinea} from 'alinea'\nalinea.number('My decimal number field', {\n  step: 0.01\n})",
+      "fileName": "",
+      "language": "",
+      "compact": false
     },
     {
       "id": "FTmS0mD2qcabtj5xwOI9D",
@@ -84,7 +88,18 @@
       "code": "import {alinea} from 'alinea'\nexport default alinea.number('My decimal number field', {\n  help: 'You can increase or decrease the value by 0.01',\n  initialValue: 0.01,\n  step: 0.01\n})"
     }
   ],
-  "alinea": {
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "title": "",
+      "image": {},
+      "description": ""
+    }
+  },
+  "@alinea": {
+    "entryId": "GyPkhJLrxgmfXYtYFOq9x",
+    "type": "Doc",
     "index": "a26"
   }
 }

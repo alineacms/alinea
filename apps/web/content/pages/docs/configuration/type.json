@@ -1,6 +1,4 @@
 {
-  "id": "267QuOShP41WnFxQFOcHZQoCsla",
-  "type": "Doc",
   "title": "Type",
   "body": [
     {
@@ -24,13 +22,14 @@
         },
         {
           "type": "text",
-          "text": "schema",
+          "text": "Schema",
           "marks": [
             {
               "type": "link",
               "attrs": {
                 "data-id": "a75tGMS2KoV50oYz5NOYQ",
                 "data-entry": "267KTV8uPHIdZgFUQvJf06sfm4h",
+                "data-type": null,
                 "href": null,
                 "title": null
               }
@@ -46,29 +45,10 @@
     {
       "id": "267QyzM4851hQU1DihfoV3fSIFg",
       "type": "CodeBlock",
-      "code": "alinea.type('My type', {\n  title: alinea.text('Title', {width: 0.5}),\n  path: alinea.path('Path', {width: 0.5})\n})"
-    },
-    {
-      "type": "paragraph",
-      "textAlign": "left",
-      "content": [
-        {
-          "type": "text",
-          "text": "Alinea ships with a number of useful fields that can be added to by creating custom fields."
-        }
-      ]
-    },
-    {
-      "id": "2AFiUPXm8zioQdrWk0K7GX8LNNR",
-      "type": "ChapterLinkBlock",
-      "link": [
-        {
-          "id": "2AFiUvnyeX4JiDCFI7CJbaQGUVh",
-          "index": "a0",
-          "type": "entry",
-          "entry": "286iEJsjhd8R9NxN6EVg59fELyd"
-        }
-      ]
+      "code": "alinea.type('My type', {\n  title: alinea.text('Title', {width: 0.5}),\n  path: alinea.path('Path', {width: 0.5}),\n  [alinea.meta]: {\n    isContainer: true\n  }\n})",
+      "fileName": "",
+      "language": "",
+      "compact": false
     },
     {
       "type": "heading",
@@ -87,30 +67,16 @@
       "content": [
         {
           "type": "text",
-          "text": "A type can be configured by using the `configure` function:"
-        }
-      ]
-    },
-    {
-      "id": "28hlt4OdKMFVCRzEf2TwQaUzbui",
-      "type": "CodeBlock",
-      "code": "alinea.type('Example type').configure({\n  ...configuration\n})"
-    },
-    {
-      "type": "heading",
-      "level": 3,
-      "textAlign": "left",
-      "content": [
+          "text": "`isContainer`",
+          "marks": [
+            {
+              "type": "bold"
+            }
+          ]
+        },
         {
-          "type": "text",
-          "text": "`isContainer`"
-        }
-      ]
-    },
-    {
-      "type": "paragraph",
-      "textAlign": "left",
-      "content": [
+          "type": "hardBreak"
+        },
         {
           "type": "text",
           "text": "When a type is marked as a container it can contain subpages."
@@ -120,23 +86,27 @@
     {
       "id": "28hm0oPtHKhLaCy81WA2kyAKIO2",
       "type": "CodeBlock",
-      "code": "isContainer: true"
-    },
-    {
-      "type": "heading",
-      "level": 3,
-      "textAlign": "left",
-      "content": [
-        {
-          "type": "text",
-          "text": "`contains`"
-        }
-      ]
+      "code": "isContainer: true",
+      "fileName": "",
+      "language": "",
+      "compact": false
     },
     {
       "type": "paragraph",
       "textAlign": "left",
       "content": [
+        {
+          "type": "text",
+          "text": "`contains`",
+          "marks": [
+            {
+              "type": "bold"
+            }
+          ]
+        },
+        {
+          "type": "hardBreak"
+        },
         {
           "type": "text",
           "text": "In case this type is a container the allowed sub types can be declared in an array."
@@ -146,23 +116,27 @@
     {
       "id": "28hmFQwpEgifAOoOnxkUe2FtXDJ",
       "type": "CodeBlock",
-      "code": "contains: ['PageA', 'PageB']"
-    },
-    {
-      "type": "heading",
-      "textAlign": "left",
-      "level": 3,
-      "content": [
-        {
-          "type": "text",
-          "text": "`entryUrl`"
-        }
-      ]
+      "code": "contains: ['PageA', 'PageB']",
+      "fileName": "",
+      "language": "",
+      "compact": false
     },
     {
       "type": "paragraph",
       "textAlign": "left",
       "content": [
+        {
+          "type": "text",
+          "text": "`entryUrl`",
+          "marks": [
+            {
+              "type": "bold"
+            }
+          ]
+        },
+        {
+          "type": "hardBreak"
+        },
         {
           "type": "text",
           "text": "The `url` property of entries can be controlled using the `entryUrl` function in the type options. Urls are computed during generation and this can help to keep them constant if you're using a web framework that does file system routing. The available parameters are `path`, `parentPaths` and `locale`. For example: making sure a doc page always has an url in the form of `/doc/$path` you can specify `entryUrl` as the following:"
@@ -172,23 +146,27 @@
     {
       "id": "aJxUeLtZdqDwmNG2_fSLq",
       "type": "CodeBlock",
-      "code": "entryUrl({path}) {\n  return `/doc/${path}`\n}"
-    },
-    {
-      "type": "heading",
-      "level": 3,
-      "textAlign": "left",
-      "content": [
-        {
-          "type": "text",
-          "text": "`icon`"
-        }
-      ]
+      "code": "entryUrl({path}) {\n  return `/doc/${path}`\n}",
+      "fileName": "",
+      "language": "",
+      "compact": false
     },
     {
       "type": "paragraph",
       "textAlign": "left",
       "content": [
+        {
+          "type": "text",
+          "text": "`icon`",
+          "marks": [
+            {
+              "type": "bold"
+            }
+          ]
+        },
+        {
+          "type": "hardBreak"
+        },
         {
           "type": "text",
           "text": "An icon can be used to label a type in the sidebar entry tree. Icons are implemented as a React component. You can find icons on "
@@ -202,6 +180,7 @@
               "attrs": {
                 "data-id": "qvoK8kMv_e7gV6hhapAn5",
                 "data-entry": null,
+                "data-type": null,
                 "href": "https://icones.js.org",
                 "target": "_blank",
                 "title": null
@@ -222,6 +201,7 @@
               "attrs": {
                 "data-id": "toXRTK13MpBaa1ijN3COj",
                 "data-entry": null,
+                "data-type": null,
                 "href": "https://react-icons.github.io/react-icons",
                 "target": "_blank",
                 "title": null
@@ -236,7 +216,18 @@
       ]
     }
   ],
-  "alinea": {
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "title": "",
+      "image": {},
+      "description": ""
+    }
+  },
+  "@alinea": {
+    "entryId": "267QuOShP41WnFxQFOcHZQoCsla",
+    "type": "Doc",
     "index": "Zx"
   }
 }

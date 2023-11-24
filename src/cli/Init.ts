@@ -10,6 +10,7 @@ const __dirname = dirname(import.meta.url)
 export type InitOptions = {
   cwd?: string
   quiet?: boolean
+  next?: boolean
 }
 
 enum PM {
@@ -37,10 +38,6 @@ async function detectPm(): Promise<PM> {
 
 export async function init(options: InitOptions) {
   const {cwd = process.cwd(), quiet = false} = options
-  if ((await outcome(fs.stat(path.join(cwd, '.alinea')))).isSuccess()) {
-    console.log(`> A folder named ".alinea" already exists in ${cwd}`)
-    process.exit(1)
-  }
   const configLocation = findConfigFile(cwd)
   if (configLocation) {
     console.log(`> An alinea config file already exists in ${cwd}`)
@@ -64,51 +61,32 @@ export async function init(options: InitOptions) {
     )
   )
   await fs.mkdir(path.join(cwd, 'content/media'), {recursive: true})
-  await fs.copyFile(
+  const configFile = await fs.readFile(
     path.join(__dirname, 'static/init/cms.js'),
-    path.join(cwd, 'cms.ts')
+    'utf-8'
   )
+  const frameworkSpecific = options.next
+    ? configFile.replaceAll('createCMS', 'createNextCMS')
+    : configFile
+  await fs.writeFile(path.join(cwd, 'cms.ts'), frameworkSpecific)
   const pm = await detectPm()
-  /*const [pkg, err] = await outcome(
-    fs
-      .readFile(path.join(cwd, 'package.json'), 'utf-8')
-      .then(contents => JSON.parse(contents))
-  )
-  if (pkg) {
-    if (!pkg.dependencies) pkg.dependencies = {}
-    pkg.dependencies['@alinea/generated'] = `${
-      pm !== 'npm' ? 'link' : 'file'
-    }:.alinea`
-    await fs.writeFile(
-      path.join(cwd, 'package.json'),
-      JSON.stringify(pkg, null, 2)
-    )
-    await fs.mkdir(path.join(cwd, '.alinea'))
-    const IS_WINDOWS =
-      process.platform === 'win32' ||
-      /^(msys|cygwin)$/.test(process.env.OSTYPE as string)
-    const symlinkType = IS_WINDOWS ? 'junction' : 'dir'
-    await outcome(
-      fs.mkdir(path.join(cwd, 'node_modules/@alinea'), {recursive: true})
-    )
-    await outcome(
-      fs.symlink(
-        path.join(cwd, '.alinea'),
-        path.join(cwd, 'node_modules/@alinea/generated'),
-        symlinkType
-      )
-    )
-    const installSucceeded = await outcome.succeeds(
-      fs.stat(path.join(cwd, 'node_modules/@alinea/generated'))
-    )
-    if (!installSucceeded) execSync(`${pm} install`, {cwd, stdio: 'inherit'})
-  }*/
+
   for await (const _ of generate({cwd: path.resolve(cwd), quiet})) {
+  }
+  if (options.next) {
+    let [pkg] = await outcome(
+      fs.readFile(path.join(cwd, 'package.json'), 'utf-8')
+    )
+    if (pkg) {
+      pkg = pkg.replace('"dev": "', '"dev": "alinea dev -- ')
+      pkg = pkg.replace('"build": "', '"build": "alinea build -- ')
+      await fs.writeFile(path.join(cwd, 'package.json'), pkg)
+    }
   }
   const runner = pm === 'npm' ? 'npx' : pm
   const command = `${runner} alinea dev`
   if (!quiet)
     console.log(
-      '> Alinea initialized. You can open the dashboard with `' + command + '`'
+      'Alinea initialized. You can open the dashboard with `' + command + '`'
     )
 }

@@ -5,14 +5,20 @@ export const supportedFrameworks = [
   {
     name: 'next',
     label: 'Next.js',
-    icon: TablerBrandNextjs
+    icon: TablerBrandNextjs,
+    link(url: string) {
+      return url
+    }
   },
   {
     name: 'js',
     icon: TablerBrandJavascript,
-    label: 'Vanilla js'
+    label: 'Vanilla js',
+    link(url: string) {
+      return url.replace('/docs/', '/docs:js/')
+    }
   }
-] as const
+]
 
 function selectedFramework(
   searchParams: string | undefined | ReadonlyURLSearchParams
@@ -31,13 +37,7 @@ function selectedFramework(
 export function getFramework(
   searchParams: string | undefined | ReadonlyURLSearchParams
 ) {
-  const selected = selectedFramework(searchParams)
-  return {
-    selected,
-    link(url: string) {
-      return '/docs/' + selected.name + url.slice('/docs'.length)
-    }
-  }
+  return selectedFramework(searchParams)
 }
 
 function TablerBrandJavascript(props: SVGProps<SVGSVGElement>) {

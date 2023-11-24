@@ -1,6 +1,4 @@
 {
-  "id": "268hmvl73nDMrfPTEpVq3AB5B3L",
-  "type": "Doc",
   "title": "Select",
   "body": [
     {
@@ -27,15 +25,29 @@
     {
       "id": "268iVJXDY23EWvw51STlvnDU0eR",
       "type": "CodeBlock",
-      "code": "import {alinea} from 'alinea'\nalinea.select('My select field', {\n  a: 'Option a',\n  b: 'Option b'\n})"
+      "code": "import {alinea} from 'alinea'\n\nalinea.select('My select field', {\n  a: 'Option a',\n  b: 'Option b'\n})",
+      "fileName": "",
+      "language": "",
+      "compact": false
     },
     {
       "id": "ezxODaRODivzR5kG0IyUo",
       "type": "ExampleBlock",
-      "code": "import {alinea} from 'alinea'\nexport default alinea.select('My select field', {\n  a: 'Option a',\n  b: 'Option b'\n})"
+      "code": "import {alinea} from 'alinea'\n\nexport default alinea.select('My select field', {\n  a: 'Option a',\n  b: 'Option b'\n})"
     }
   ],
-  "alinea": {
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "title": "",
+      "image": {},
+      "description": ""
+    }
+  },
+  "@alinea": {
+    "entryId": "268hmvl73nDMrfPTEpVq3AB5B3L",
+    "type": "Doc",
     "index": "a2"
   }
 }

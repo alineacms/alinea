@@ -21,8 +21,8 @@ export function FrameworkPicker() {
           <div>
             <small>Integrate with</small>
             <HStack center gap={8}>
-              <framework.selected.icon />
-              <span>{framework.selected.label}</span>
+              <framework.icon />
+              <span>{framework.label}</span>
             </HStack>
           </div>
           <span className={styles.picker.trigger.arrow()}>
@@ -32,11 +32,8 @@ export function FrameworkPicker() {
       </button>
       <div className={styles.picker.options()}>
         {supportedFrameworks.map((framework, i) => {
-          const href =
-            '/docs/' +
-            framework.name +
-            '/' +
-            pathname.split('/').slice(3).join('/')
+          const prefix = i === 0 ? '/docs' : '/docs:' + framework.name
+          const href = prefix + '/' + pathname.split('/').slice(2).join('/')
           return (
             <Link
               key={framework.name}

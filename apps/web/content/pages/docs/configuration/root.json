@@ -1,6 +1,4 @@
 {
-  "id": "28hcdyq0sGJdgY6kM24NZd1XP5S",
-  "type": "Doc",
   "title": "Roots",
   "body": [
     {
@@ -27,7 +25,10 @@
     {
       "id": "28hkhm5hPbTobb7YrlwX7qCuNJE",
       "type": "CodeBlock",
-      "code": "alinea.root('My root', {\n  icon, contains, i18n\n})"
+      "code": "alinea.root('My root', {\n  icon, contains, i18n\n})",
+      "fileName": "",
+      "language": "",
+      "compact": false
     },
     {
       "type": "heading",
@@ -41,20 +42,21 @@
       ]
     },
     {
-      "type": "heading",
-      "level": 3,
+      "type": "paragraph",
       "textAlign": "left",
       "content": [
         {
           "type": "text",
-          "text": "`icon`"
-        }
-      ]
-    },
-    {
-      "type": "paragraph",
-      "textAlign": "left",
-      "content": [
+          "text": "`icon`",
+          "marks": [
+            {
+              "type": "bold"
+            }
+          ]
+        },
+        {
+          "type": "hardBreak"
+        },
         {
           "type": "text",
           "text": "An icon can be used to label a root in the sidebar. Icons are implemented as a React component. You can find icons on "
@@ -68,6 +70,7 @@
               "attrs": {
                 "data-id": "qvoK8kMv_e7gV6hhapAn5",
                 "data-entry": null,
+                "data-type": null,
                 "href": "https://icones.js.org",
                 "target": "_blank",
                 "title": null
@@ -88,6 +91,7 @@
               "attrs": {
                 "data-id": "toXRTK13MpBaa1ijN3COj",
                 "data-entry": null,
+                "data-type": null,
                 "href": "https://react-icons.github.io/react-icons",
                 "target": "_blank",
                 "title": null
@@ -102,20 +106,21 @@
       ]
     },
     {
-      "type": "heading",
-      "level": 3,
+      "type": "paragraph",
       "textAlign": "left",
       "content": [
         {
           "type": "text",
-          "text": "`contains`"
-        }
-      ]
-    },
-    {
-      "type": "paragraph",
-      "textAlign": "left",
-      "content": [
+          "text": "`contains`",
+          "marks": [
+            {
+              "type": "bold"
+            }
+          ]
+        },
+        {
+          "type": "hardBreak"
+        },
         {
           "type": "text",
           "text": "An array of strings containing the names of types that can be created at the root."
@@ -125,23 +130,27 @@
     {
       "id": "28hlDtsmVPBtekQz2fiKZiQ0l7R",
       "type": "CodeBlock",
-      "code": "// only entries of type Page can be created at the top of the tree\ncontains: ['Page']"
-    },
-    {
-      "type": "heading",
-      "level": 3,
-      "textAlign": "left",
-      "content": [
-        {
-          "type": "text",
-          "text": "`i18n`"
-        }
-      ]
+      "code": "// only entries of type Page can be created at the top of the tree\ncontains: ['Page']",
+      "fileName": "",
+      "language": "",
+      "compact": false
     },
     {
       "type": "paragraph",
       "textAlign": "left",
       "content": [
+        {
+          "type": "text",
+          "text": "`i18n`",
+          "marks": [
+            {
+              "type": "bold"
+            }
+          ]
+        },
+        {
+          "type": "hardBreak"
+        },
         {
           "type": "text",
           "text": "An object with internationalization configuration. Locales is an array of strings, containing locales described by a key that will, by default, show up in the url structure as well."
@@ -151,22 +160,24 @@
     {
       "id": "28hlSdI7ooykir1ldfHW4lLtIUL",
       "type": "CodeBlock",
-      "code": "i18n: {\n  locales: ['en', 'fr', 'de']\n}"
-    },
-    {
-      "id": "cD4t19x1eBJYat1SFKTMa",
-      "type": "ChapterLinkBlock",
-      "link": [
-        {
-          "id": "F_HNgyK20PQE5sQpI12oz",
-          "index": "a0",
-          "type": "entry",
-          "entry": "Gmy-svwmNKtK2as89D0hJ"
-        }
-      ]
+      "code": "i18n: {\n  locales: ['en', 'fr', 'de']\n}",
+      "fileName": "",
+      "language": "",
+      "compact": false
     }
   ],
-  "alinea": {
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "title": "",
+      "image": {},
+      "description": ""
+    }
+  },
+  "@alinea": {
+    "entryId": "28hcdyq0sGJdgY6kM24NZd1XP5S",
+    "type": "Doc",
     "index": "ZwG"
   }
 }

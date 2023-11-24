@@ -12,7 +12,7 @@ export function RenderSelectedFramework({
 }: RenderSelectedFrameworkProps) {
   const params = useParams()
   const framework = getFramework(params.framework as string)
-  const selected = options.find(([name]) => name === framework.selected.name)
+  const selected = options.find(([name]) => name === framework.name)
   if (!selected) return null
   return selected[1]
 }

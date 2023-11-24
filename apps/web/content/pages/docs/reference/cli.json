@@ -1,6 +1,4 @@
 {
-  "id": "m5KGP-I5smg2S8o4A-j15",
-  "type": "Doc",
   "title": "CLI",
   "body": [
     {
@@ -17,7 +15,7 @@
     {
       "id": "-DXbyOqvbfbUVwbH8CNuJ",
       "type": "CodeBlock",
-      "code": "Usage\n  $ alinea <command> [options]\nAvailable Commands\n  generate    Generate types and content cache\n  init        Copy a sample config file to the current directory\n  serve       Start a development dashboard\nFor more info, run any command with the `--help` flag\n  $ alinea generate --help\n  $ alinea init --help\nOptions\n  -v, --version    Displays current version\n  -h, --help       Displays this message"
+      "code": "Usage\n  $ alinea <command> [options]\n\nAvailable Commands\n  init     Copy a sample config file to the current directory\n  dev      Start development dashboard\n  build    Generate content cache\n\nFor more info, run any command with the `--help` flag\n  $ alinea build --help\n  $ alinea init --help\n\nOptions\n  -v, --version    Displays current version\n  -h, --help       Displays this message"
     },
     {
       "type": "heading",
@@ -47,33 +45,7 @@
       "content": [
         {
           "type": "text",
-          "text": "alinea generate"
-        }
-      ]
-    },
-    {
-      "type": "paragraph",
-      "textAlign": "left",
-      "content": [
-        {
-          "type": "text",
-          "text": "The generate command indexes content and generates the `@alinea/generated` package. It's recommended to run it as part of the build step in your project."
-        }
-      ]
-    },
-    {
-      "id": "KipDFk3xI6h94TjE3Mhc_",
-      "type": "CodeBlock",
-      "code": "Options\n  -w, --watch     Watch for changes to source files\n  -c, --config    Location of the config file, defaults to \"alinea.config.tsx\"\n  --fix           Any missing or incorrect properties will be overwritten by their default"
-    },
-    {
-      "type": "heading",
-      "textAlign": "left",
-      "level": 2,
-      "content": [
-        {
-          "type": "text",
-          "text": "alinea serve"
+          "text": "alinea dev"
         }
       ]
     },
@@ -96,9 +68,42 @@
       "id": "P1sIdtOUVmGJBcPNDrfmU",
       "type": "CodeBlock",
       "code": "Options\n  -p, --port      Port to listen on\n  --production    Use production backend"
+    },
+    {
+      "type": "heading",
+      "textAlign": "left",
+      "level": 2,
+      "content": [
+        {
+          "type": "text",
+          "text": "alinea build"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "The build command indexes content and generates the `@alinea/generated` package. It's recommended to run it as part of the build step in your project."
+        }
+      ]
+    },
+    {
+      "id": "KipDFk3xI6h94TjE3Mhc_",
+      "type": "CodeBlock",
+      "code": "Options\n  -w, --watch     Watch for changes to source files\n  -c, --config    Location of the config file, defaults to \"alinea.config.tsx\"\n  --fix           Any missing or incorrect properties will be overwritten by their default"
     }
   ],
-  "alinea": {
+  "metadata": {
+    "openGraph": {
+      "image": {}
+    }
+  },
+  "@alinea": {
+    "entryId": "m5KGP-I5smg2S8o4A-j15",
+    "type": "Doc",
     "index": "a0"
   }
 }

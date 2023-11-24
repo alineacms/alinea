@@ -1,8 +1,8 @@
 {
-  "id": "2_c6AYBTy7svnFJMvOB0n",
-  "type": "Docs",
   "title": "Reference",
-  "alinea": {
+  "@alinea": {
+    "entryId": "2_c6AYBTy7svnFJMvOB0n",
+    "type": "Docs",
     "index": "Zq"
   }
 }

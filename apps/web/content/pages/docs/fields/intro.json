@@ -18,7 +18,7 @@
       "content": [
         {
           "type": "text",
-          "text": "Fields hold data that can be edited in the dashboard. Alinea ships with a number of useful fields that can be added to by creating custom fields."
+          "text": "Fields make data editable.Alinea ships with a lot of field types but can easily be expanded with custom fields."
         }
       ]
     },
@@ -54,14 +54,16 @@
       "content": [
         {
           "type": "text",
-          "text": "`initialValue`"
-        }
-      ]
-    },
-    {
-      "type": "paragraph",
-      "textAlign": "left",
-      "content": [
+          "text": "`initialValue`",
+          "marks": [
+            {
+              "type": "bold"
+            }
+          ]
+        },
+        {
+          "type": "hardBreak"
+        },
         {
           "type": "text",
           "text": "Prefill the fields value."
@@ -74,14 +76,16 @@
       "content": [
         {
           "type": "text",
-          "text": "`hidden`"
-        }
-      ]
-    },
-    {
-      "type": "paragraph",
-      "textAlign": "left",
-      "content": [
+          "text": "`hidden`",
+          "marks": [
+            {
+              "type": "bold"
+            }
+          ]
+        },
+        {
+          "type": "hardBreak"
+        },
         {
           "type": "text",
           "text": "Hide this field in the dashboard but keep its value intact."
@@ -94,14 +98,16 @@
       "content": [
         {
           "type": "text",
-          "text": "`help`"
-        }
-      ]
-    },
-    {
-      "type": "paragraph",
-      "textAlign": "left",
-      "content": [
+          "text": "`help`",
+          "marks": [
+            {
+              "type": "bold"
+            }
+          ]
+        },
+        {
+          "type": "hardBreak"
+        },
         {
           "type": "text",
           "text": "Display a help text next to the fields label."
@@ -114,14 +120,16 @@
       "content": [
         {
           "type": "text",
-          "text": "`inline`"
-        }
-      ]
-    },
-    {
-      "type": "paragraph",
-      "textAlign": "left",
-      "content": [
+          "text": "`inline`",
+          "marks": [
+            {
+              "type": "bold"
+            }
+          ]
+        },
+        {
+          "type": "hardBreak"
+        },
         {
           "type": "text",
           "text": "Show a minimal version of the field. In most cases this will mean the input label will be hidden, and the label will show up as a placeholder instead."
@@ -134,14 +142,16 @@
       "content": [
         {
           "type": "text",
-          "text": "`width`"
-        }
-      ]
-    },
-    {
-      "type": "paragraph",
-      "textAlign": "left",
-      "content": [
+          "text": "`width`",
+          "marks": [
+            {
+              "type": "bold"
+            }
+          ]
+        },
+        {
+          "type": "hardBreak"
+        },
         {
           "type": "text",
           "text": "Setting a width value will scale the fields width down, use a number between 0 and 1. This allows you to compose the dashboard UI better based on the content of the fields."

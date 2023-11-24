@@ -27,7 +27,8 @@ function NavTreeItem({level, page}: NavTreeItemProps) {
   const [showChildren, setShowChildren] = useState<boolean | undefined>(
     undefined
   )
-  const isOpen = showChildren ?? pathname.startsWith(page.url!)
+  const url = page.url && framework.link(page.url)
+  const isOpen = Boolean(showChildren ?? (url && pathname.startsWith(url)))
   const isContainer = page.children && page.children.length > 0
   useEffect(() => {
     setShowChildren(undefined)
@@ -59,9 +60,9 @@ function NavTreeItem({level, page}: NavTreeItemProps) {
       ) : (
         <div>
           <Link
-            href={framework.link(page.url!)}
+            href={url!}
             className={styles.root.link({
-              active: pathname === page.url
+              active: pathname === url
             })}
           >
             <HStack center gap={8}>
