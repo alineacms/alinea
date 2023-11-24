@@ -1,6 +1,6 @@
 import {Media} from 'alinea/backend/Media'
 import {EntryRow} from 'alinea/core'
-import {fromModule} from 'alinea/ui'
+import {Typo, fromModule} from 'alinea/ui'
 import {Main} from 'alinea/ui/Main'
 import {Property} from 'alinea/ui/Property'
 import {useAtomValue} from 'jotai'
@@ -23,6 +23,13 @@ function ImageView({editor}: EntryEditProps) {
       <Property label="File size">{prettyBytes(image.data.size)}</Property>
       <Property label="Dimensions">
         {image.data.width} x {image.data.height} pixels
+      </Property>
+      <Property label="URL">
+        <Typo.Monospace>
+          {Media.ORIGINAL_LOCATION in image.data
+            ? (image.data[Media.ORIGINAL_LOCATION] as string)
+            : image.data.location}
+        </Typo.Monospace>
       </Property>
       {image.data.focus && (
         <Property label="Focus">
