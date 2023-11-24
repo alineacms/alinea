@@ -2,7 +2,8 @@ import {Entry, EntryPhase, Type, createId, slugify} from 'alinea/core'
 import {
   entryChildrenDir,
   entryFileName,
-  entryFilepath
+  entryFilepath,
+  entryUrl
 } from 'alinea/core/EntryFilenames'
 import {MutationType} from 'alinea/core/Mutation'
 import {Projection} from 'alinea/core/pages/Projection'
@@ -133,7 +134,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
     e.preventDefault()
     const title = titleField()
     const selected = selectedType()
-    if (!selected || !title) return
+    if (!selected || !title || !type) return
     setIsCreating(true)
     const path = slugify(title)
     const entryId = createId()
@@ -147,8 +148,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
     const filePath = entryFilepath(config, data, parentPaths)
     const childrenDir = entryChildrenDir(config, data, parentPaths)
     const parentDir = dirname(filePath)
-    const url =
-      (parent?.url || '') + (parent?.url.endsWith('/') ? '' : '/') + path
+    const url = entryUrl(type, {...data, parentPaths})
     const entry = await createEntryRow(config, {
       entryId,
       ...data,
@@ -156,7 +156,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
       type: selected,
       path,
       title,
-      url: root.i18n ? `/${locale}${url}` : url,
+      url,
       index: generateKeyBetween(null, parent?.childrenIndex || null),
       parent: parent?.id ?? null,
       seeded: false,
