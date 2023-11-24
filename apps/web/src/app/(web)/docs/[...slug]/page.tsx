@@ -58,10 +58,10 @@ export interface DocPageProps {
 
 export default async function DocPage({params}: DocPageProps) {
   const slug = params.slug.slice()
+  // Check if we start with a path segment
   const framework = getFramework(params.framework)
   if (params.framework !== framework.selected.name)
     slug.unshift(params.framework)
-  console.log(slug)
   const page = await getPage(slug)
   if (!page) return notFound()
   const nav = await cms.in(cms.workspaces.main.pages.docs).find(
