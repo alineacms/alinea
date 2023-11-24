@@ -5,7 +5,7 @@ import {
   selectionFeature
 } from '@headless-tree/core'
 import {useTree} from '@headless-tree/react'
-import {Entry, EntryPhase, Type} from 'alinea/core'
+import {EntryPhase, Type} from 'alinea/core'
 import {Icon, fromModule, px} from 'alinea/ui'
 import {IcOutlineDescription} from 'alinea/ui/icons/IcOutlineDescription'
 import {IcRoundArchive} from 'alinea/ui/icons/IcRoundArchive'
@@ -171,30 +171,23 @@ export function EntryTree({i18nId: entryId, selected = []}: EntryTreeProps) {
     tree.invalidateChildrenIds(rootId(root.name))
   }, [treeProvider])
   useEffect(() => {
-    const all = locale
-      ? graph.preferDraft.find(
-          Entry().where(Entry.entryId.isIn(changed)).select(Entry.i18nId)
-        )
-      : Promise.resolve(changed)
-    all.then(ids => {
-      for (const id of ids) {
-        try {
-          const item = tree.getItemInstance(id)
-          if (!item) {
-            tree.invalidateChildrenIds(rootId(root.name))
-            continue
-          }
-          const parent = item.getParent()
-          const parentId = parent?.getId()
-          if (parentId) tree.invalidateChildrenIds(parentId)
-
-          tree.invalidateChildrenIds(id)
-          tree.invalidateItemData(id)
-        } catch (e) {
-          console.error(e)
+    for (const i18nId of changed) {
+      try {
+        const item = tree.getItemInstance(i18nId)
+        if (!item) {
+          tree.invalidateChildrenIds(rootId(root.name))
+          continue
         }
+        const parent = item.getParent()
+        const parentId = parent?.getId()
+        if (parentId) tree.invalidateChildrenIds(parentId)
+
+        tree.invalidateChildrenIds(i18nId)
+        tree.invalidateItemData(i18nId)
+      } catch (e) {
+        console.error(e)
       }
-    })
+    }
   }, [changed])
   return (
     <>

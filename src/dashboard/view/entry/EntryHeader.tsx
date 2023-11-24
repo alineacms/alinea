@@ -18,7 +18,7 @@ import {IcRoundSave} from 'alinea/ui/icons/IcRoundSave'
 import {IcRoundTranslate} from 'alinea/ui/icons/IcRoundTranslate'
 import {IcRoundUnfoldMore} from 'alinea/ui/icons/IcRoundUnfoldMore'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
-import {useEffect, useState} from 'react'
+import {useState} from 'react'
 import {useQueryClient} from 'react-query'
 import {EntryEditor, EntryTransition} from '../../atoms/EntryEditorAtoms.js'
 import {useLocation, useNavigate} from '../../atoms/LocationAtoms.js'
@@ -139,10 +139,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
     }
     input.click()
   }
-  useEffect(() => {
-    // Reset the selected phase if we make edits
-    if (hasChanges && selectedPhase) navigate(pathname)
-  }, [hasChanges])
+
   const options =
     variant === 'draft' ? (
       <DropdownMenu.Item

@@ -92,7 +92,6 @@ export const entryEditorAtoms = atomFamily(
       }
       if (!entry) return undefined
       const entryId = entry.entryId
-      get(entryRevisionAtoms(entryId))
       get(entryRevisionAtoms(entry.i18nId))
 
       const type = config.schema[entry.type]
@@ -344,7 +343,6 @@ export function createEntryEditor(entryData: EntryData) {
       entryId,
       entry
     }
-    set(entryRevisionAtoms(activeVersion.entryId))
     return set(transact, {
       clearChanges: true,
       transition: EntryTransition.SaveTranslation,

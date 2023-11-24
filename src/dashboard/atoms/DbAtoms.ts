@@ -7,7 +7,7 @@ import {
   pathSuffix
 } from 'alinea/core/EntryFilenames'
 import {Graph} from 'alinea/core/Graph'
-import {CreateMutation, Mutation, MutationType} from 'alinea/core/Mutation'
+import {Mutation, MutationType} from 'alinea/core/Mutation'
 import {
   createEntryRow,
   entryParentPaths,
@@ -132,13 +132,7 @@ export const mutateAtom = atom(
     const {applyMutations} = await get(localDbAtom)
     if (normalized.length === 0) return
     const changed = await applyMutations(normalized, commitHash)
-    const i18nIds = normalized
-      .filter(
-        (mutation): mutation is CreateMutation =>
-          mutation.type === MutationType.Create
-      )
-      .map(mutation => mutation.entry.i18nId)
-    set(changedEntriesAtom, changed.concat(i18nIds))
+    set(changedEntriesAtom, changed)
   }
 )
 
@@ -160,12 +154,12 @@ export const graphAtom = atom(async get => {
 const changedAtom = atom<Array<string>>([])
 export const changedEntriesAtom = atom(
   get => get(changedAtom),
-  (get, set, ids: Array<string>) => {
-    set(changedAtom, ids)
-    for (const id of ids) set(entryRevisionAtoms(id))
+  (get, set, i18nIds: Array<string>) => {
+    set(changedAtom, i18nIds)
+    for (const i18nId of i18nIds) set(entryRevisionAtoms(i18nId))
   }
 )
-export const entryRevisionAtoms = atomFamily((id: string) => {
+export const entryRevisionAtoms = atomFamily((i18nId: string) => {
   const revision = atom(0)
   return atom(
     get => get(revision),

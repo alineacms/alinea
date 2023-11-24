@@ -36,6 +36,7 @@ const styles = fromModule(css)
 
 const parentData = {
   id: Entry.entryId,
+  i18nId: Entry.i18nId,
   type: Entry.type,
   path: Entry.path,
   url: Entry.url,
@@ -177,7 +178,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
     }).then(() => {
       setIsCreating(false)
       navigate(nav.entry({entryId: entry.i18nId}))
-      if (entry.parent) updateEntries([entry.parent])
+      if (parent) updateEntries([parent.i18nId])
     })
   }
   return (
