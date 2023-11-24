@@ -21,6 +21,7 @@ export function entrySummaryQuery() {
     parents({parents}) {
       return parents(Entry).select({
         entryId: Entry.entryId,
+        i18nId: Entry.i18nId,
         title: Entry.title
       })
     },

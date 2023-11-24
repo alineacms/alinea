@@ -34,10 +34,10 @@ export const entrySummaryAtoms = atomFamily((id: string) => {
     const loader = await get(entrySummaryLoaderAtom)
     // We clear the dataloader cache because we use the atom family cache
     const summary = await loader.clear(id).load(id)
-    get(entryRevisionAtoms(id))
+    get(entryRevisionAtoms(summary.i18nId))
     if (summary?.parents)
       for (const parent of summary.parents)
-        get(entryRevisionAtoms(parent.entryId))
+        get(entryRevisionAtoms(parent.i18nId))
     return summary
   })
 })

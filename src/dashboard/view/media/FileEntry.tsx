@@ -1,9 +1,7 @@
 import {Media} from 'alinea/backend/Media'
-import {EntryRow} from 'alinea/core'
-import {fromModule} from 'alinea/ui'
+import {Typo, fromModule} from 'alinea/ui'
 import {Main} from 'alinea/ui/Main'
 import {Property} from 'alinea/ui/Property'
-import {useAtomValue} from 'jotai'
 import prettyBytes from 'pretty-bytes'
 import {useNav} from '../../hook/UseNav.js'
 import {EntryEditProps} from '../EntryEdit.js'
@@ -14,7 +12,7 @@ import css from './FileEntry.module.scss'
 const styles = fromModule(css)
 
 function ImageView({editor}: EntryEditProps) {
-  const image: Media.Image = useAtomValue(editor.draftEntry) as EntryRow<any>
+  const image: Media.Image = editor.activeVersion as any
   return (
     <div>
       <img src={image.data.preview} />
@@ -23,6 +21,13 @@ function ImageView({editor}: EntryEditProps) {
       <Property label="File size">{prettyBytes(image.data.size)}</Property>
       <Property label="Dimensions">
         {image.data.width} x {image.data.height} pixels
+      </Property>
+      <Property label="URL">
+        <Typo.Monospace>
+          {Media.ORIGINAL_LOCATION in image.data
+            ? (image.data[Media.ORIGINAL_LOCATION] as string)
+            : image.data.location}
+        </Typo.Monospace>
       </Property>
       {image.data.focus && (
         <Property label="Focus">
@@ -34,11 +39,19 @@ function ImageView({editor}: EntryEditProps) {
 }
 
 function FileView({editor}: EntryEditProps) {
-  const file: Media.File = useAtomValue(editor.draftEntry) as EntryRow<any>
+  const file: Media.File = editor.activeVersion as any
   return (
     <div>
       <Property label="Extension">{file.data.extension}</Property>
       <Property label="File size">{prettyBytes(file.data.size)}</Property>
+
+      <Property label="URL">
+        <Typo.Monospace>
+          {Media.ORIGINAL_LOCATION in file.data
+            ? (file.data[Media.ORIGINAL_LOCATION] as string)
+            : file.data.location}
+        </Typo.Monospace>
+      </Property>
     </div>
   )
 }

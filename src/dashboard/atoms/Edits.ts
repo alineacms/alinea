@@ -9,6 +9,7 @@ export class Edits {
   doc = new Y.Doc()
   /** The state vector of the source doc */
   sourceVector: Uint8Array | undefined
+  sourceUpdate: Uint8Array | undefined
   /** The root map containing field data */
   root = this.doc.getMap(ROOT_KEY)
   /** Did we make any local changes? */
@@ -17,7 +18,7 @@ export class Edits {
   resetChanges = atom(null, (get, set) => {
     set(this.hasChanges, false)
     const copy = new Edits(this.entryId)
-    if (this.sourceVector) copy.applyRemoteUpdate(this.getRemoteUpdate())
+    if (this.sourceUpdate) copy.applyRemoteUpdate(this.sourceUpdate)
     set(entryEditsAtoms(this.entryId), copy)
   })
   /** Whether we have a draft loaded */
@@ -36,6 +37,7 @@ export class Edits {
 
   /** Apply updates from the source */
   applyRemoteUpdate(update: Uint8Array) {
+    this.sourceUpdate = update
     this.applyLocalUpdate(update)
     this.sourceVector = Y.encodeStateVectorFromUpdateV2(update)
   }

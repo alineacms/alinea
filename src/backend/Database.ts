@@ -71,7 +71,7 @@ export class Database implements Syncable {
     return this.store(EntryRow().select(EntryRow.rowHash))
   }
 
-  // Syncs data with a remote database, returning the ids of changed entries
+  // Syncs data with a remote database, returning the i18nIds of changed entries
   async syncWith(remote: Syncable, force = false): Promise<Array<string>> {
     await this.init()
     const meta = await this.meta()
@@ -80,13 +80,12 @@ export class Database implements Syncable {
     const {insert, remove} = await remote.sync(await this.contentHashes())
     return this.store.transaction(async tx => {
       const removed = await tx(
-        EntryRow().where(EntryRow.rowHash.isIn(remove)).select(EntryRow.entryId)
+        EntryRow().where(EntryRow.rowHash.isIn(remove)).select(EntryRow.i18nId)
       )
       await tx(EntryRow().delete().where(EntryRow.rowHash.isIn(remove)))
       const changed = []
       for (const entry of insert) {
         await tx(EntryRow().insertOne(entry))
-        changed.push(entry.entryId)
         changed.push(entry.i18nId)
       }
       await Database.index(tx)
@@ -269,7 +268,11 @@ export class Database implements Syncable {
       }
       case MutationType.FileRemove:
         if (mutation.replace) return
-      case MutationType.Remove:
+      case MutationType.Remove: {
+        const existing = await tx(
+          EntryRow({entryId: mutation.entryId}).maybeFirst()
+        )
+        if (!existing) return
         const phases = await tx(EntryRow({entryId: mutation.entryId}))
         // Remove child entries
         for (const phase of phases) {
@@ -284,15 +287,21 @@ export class Database implements Syncable {
           )
         }
         await tx(EntryRow({entryId: mutation.entryId}).delete())
-        return
-      case MutationType.Discard:
+        return async () => phases.map(e => e.i18nId).concat(existing.i18nId)
+      }
+      case MutationType.Discard: {
+        const existing = await tx(
+          EntryRow({entryId: mutation.entryId}).maybeFirst()
+        )
+        if (!existing) return
         await tx(
           EntryRow({
             entryId: mutation.entryId,
             phase: EntryPhase.Draft
           }).delete()
         )
-        return
+        return async () => [existing.i18nId]
+      }
       case MutationType.Order: {
         const rows = EntryRow({entryId: mutation.entryId})
         // Todo: apply this to other languages too
@@ -344,7 +353,7 @@ export class Database implements Syncable {
     const entries = await tx(selection)
     for (const entry of entries) {
       const updated = await createEntryRow(this.config, entry)
-      changed.push(updated.entryId)
+      changed.push(updated.i18nId)
       await tx(
         EntryRow({entryId: entry.entryId, phase: entry.phase}).set({
           fileHash: updated.fileHash,
