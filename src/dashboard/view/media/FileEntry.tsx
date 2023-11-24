@@ -46,6 +46,14 @@ function FileView({editor}: EntryEditProps) {
     <div>
       <Property label="Extension">{file.data.extension}</Property>
       <Property label="File size">{prettyBytes(file.data.size)}</Property>
+
+      <Property label="URL">
+        <Typo.Monospace>
+          {Media.ORIGINAL_LOCATION in file.data
+            ? (file.data[Media.ORIGINAL_LOCATION] as string)
+            : file.data.location}
+        </Typo.Monospace>
+      </Property>
     </div>
   )
 }
