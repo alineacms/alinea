@@ -81,6 +81,16 @@
           "fileName": "",
           "language": "",
           "compact": false
+        },
+        {
+          "type": "paragraph",
+          "textAlign": "left",
+          "content": [
+            {
+              "type": "text",
+              "text": "Deploy your code and follow the instructions on `/admin.html` to configure your backend."
+            }
+          ]
         }
       ],
       "js": []
