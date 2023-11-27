@@ -51,13 +51,12 @@ Select only the fields you need.
 
 ```tsx
 import {cms} from '@/cms'
+
 console.log(
   await cms.find(
-    BlogPost().where(
-      BlogPost.author.is('Me')
-    ).select(
-      {title: BlogPost.title}
-    )
+    BlogPost()
+      .where(BlogPost.author.is('Me'))
+      .select({title: BlogPost.title})
   )
 )
 ```
