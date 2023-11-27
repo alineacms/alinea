@@ -1,5 +1,5 @@
 {
-  "title": "Alinea - Open source headless CMS",
+  "title": "Alinea",
   "headline": "Content management\nfor the modern web",
   "byline": "Structure, edit and query content with any web framework.\nFully typed and organized in your repository.",
   "action": {
@@ -18,7 +18,7 @@
         "content": [
           {
             "type": "text",
-            "text": "Open source headless"
+            "text": "Open source headless CMS"
           }
         ]
       },
@@ -131,7 +131,7 @@
     }
   ],
   "metadata": {
-    "title": "",
+    "title": "Alinea - Open source headless CMS",
     "description": "",
     "openGraph": {
       "title": "",

@@ -10,6 +10,10 @@ import css from './page.module.scss'
 
 const styles = fromModule(css)
 
+export const metadata = {
+  title: 'Changelog'
+}
+
 async function markdownToHtml(markdown: Buffer) {
   const result = await remark().use(html).process(markdown)
   return result.toString()

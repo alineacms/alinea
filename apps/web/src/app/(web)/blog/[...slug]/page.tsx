@@ -20,6 +20,14 @@ export interface BlogPostPageProps {
   }
 }
 
+export async function generateMetadata({params}: BlogPostPageProps) {
+  const page = await cms.maybeGet(
+    BlogPost().where(Entry.url.is(`/blog/${params.slug.join('/')}`))
+  )
+  if (!page) return notFound()
+  return {title: page.metadata.title || page.title}
+}
+
 export default async function BlogPostPage({params}: BlogPostPageProps) {
   const page = await cms.maybeGet(
     BlogPost().where(Entry.url.is(`/blog/${params.slug.join('/')}`))

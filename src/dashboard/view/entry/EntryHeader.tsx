@@ -80,7 +80,7 @@ export function EntryHeader({editor, editable = true}: EntryHeaderProps) {
   const isActivePhase = editor.activePhase === selectedPhase
   const isMediaFile = editor.activeVersion.type === 'MediaFile'
   const hasChanges = useAtomValue(editor.hasChanges)
-  const currentTransition = useAtomValue(editor.transition)
+  const currentTransition = useAtomValue(editor.transition)?.transition
   const untranslated = locale && locale !== editor.activeVersion.locale
   const variant = currentTransition
     ? 'transition'

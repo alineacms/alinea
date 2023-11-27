@@ -11,7 +11,7 @@ import {Type, TypeDefinition, type} from './Type.js'
 type Document<Definition> = {
   title: TextField
   path: PathField
-  meta: ReturnType<typeof metadata>
+  metadata: ReturnType<typeof metadata>
 } & Definition
 
 export function document<Definition extends TypeDefinition>(
@@ -36,5 +36,5 @@ export function document<Definition extends TypeDefinition>(
       })
     ),
     [Meta]: definition[Meta]
-  } as any) as any
+  }) as any
 }

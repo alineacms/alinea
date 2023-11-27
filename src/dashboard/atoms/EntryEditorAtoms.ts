@@ -66,7 +66,9 @@ export enum EntryTransition {
 }
 
 const entryTransitionAtoms = atomFamily((entryId: string) => {
-  return atom<EntryTransition | undefined>(undefined)
+  return atom<{transition: EntryTransition; done: Promise<any>} | undefined>(
+    undefined
+  )
 })
 
 export const entryEditorAtoms = atomFamily(
@@ -245,10 +247,9 @@ export function createEntryEditor(entryData: EntryData) {
     )
   }
 
-  let isTransacting = false
   const transact = atom(
     null,
-    (
+    async (
       get,
       set,
       options: {
@@ -258,24 +259,24 @@ export function createEntryEditor(entryData: EntryData) {
         action: () => Promise<void>
       }
     ) => {
-      if (isTransacting) return Promise.resolve()
-      isTransacting = true
-      const timeout = setTimeout(() => {
-        set(transition, options.transition)
-      }, 250)
+      const currentTransition = get(transition)
+      if (currentTransition) await currentTransition.done
       const currentChanges = get(hasChanges)
       if (options.clearChanges) set(hasChanges, false)
-      return options
+      const done = options
         .action()
         .catch(error => {
           if (options.clearChanges) set(hasChanges, currentChanges)
           set(errorAtom, options.errorMessage, error)
         })
         .finally(() => {
-          clearTimeout(timeout)
+          //clearTimeout(timeout)
           set(transition, undefined)
-          isTransacting = false
         })
+      //const timeout = setTimeout(() => {
+      set(transition, {transition: options.transition, done})
+      //}, 250)
+      return done
     }
   )
 

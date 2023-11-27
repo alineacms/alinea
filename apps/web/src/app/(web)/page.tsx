@@ -20,8 +20,13 @@ import css from './page.module.scss'
 
 const styles = fromModule(css)
 
+export async function generateMetadata() {
+  const home = await cms.get(Home())
+  return {title: home.metadata.title || home.title}
+}
+
 export default async function HomePage() {
-  const home = await cms.get(Home)
+  const home = await cms.get(Home())
   return (
     <main className={styles.home()}>
       <div

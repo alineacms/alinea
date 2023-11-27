@@ -36,6 +36,7 @@
               "attrs": {
                 "data-id": "tUQJ4YhRDGtJZwk7w0Lsa",
                 "data-entry": null,
+                "data-type": null,
                 "href": "https://codeurs.be/",
                 "target": "_blank",
                 "title": null
@@ -86,6 +87,7 @@
               "attrs": {
                 "data-id": "Rt6RzFDrREVC0dRXJbph4",
                 "data-entry": null,
+                "data-type": null,
                 "href": "https://www.npmjs.com/package/alinea",
                 "target": "_blank",
                 "title": null
@@ -106,6 +108,7 @@
               "attrs": {
                 "data-id": "TxX_2HQARYVc6te1ewpOv",
                 "data-entry": "tEBluF6vXUnc-WDPKN5K8",
+                "data-type": null,
                 "href": null,
                 "title": null
               }
@@ -125,6 +128,7 @@
               "attrs": {
                 "data-id": "v8gmN8mwB2IiH7cgZS4Ux",
                 "data-entry": "286iEJsjhd8R9NxN6EVg59fELyd",
+                "data-type": null,
                 "href": null,
                 "title": null
               }
@@ -154,6 +158,7 @@
               "attrs": {
                 "data-id": "o4XauEOqb4gRCdGGpisfp",
                 "data-entry": null,
+                "data-type": null,
                 "href": "https://demo.alinea.sh",
                 "target": "_self",
                 "title": null
@@ -184,6 +189,7 @@
               "attrs": {
                 "data-id": "hZuVomM3lwYhijS1taFRm",
                 "data-entry": null,
+                "data-type": null,
                 "href": "https://www.alinea.cloud",
                 "target": "_blank",
                 "title": null
@@ -198,19 +204,14 @@
       ]
     },
     {
-      "id": "pviuHYPv4K_CQgbCRbEKx",
+      "id": "2YlNBlNnDvFwItkzndyIF30F097",
       "type": "ChapterLinkBlock",
       "link": {
-        "id": "JOpW2joyR1Q0NpA0FpEI7",
+        "id": "2YlNCdLCxRMUdJseBFjB4cdkS1M",
         "type": "entry",
-        "entry": "20580nQzbOBR3Lt4kIdxyRGglc6",
-        "description": "Take it for a spin"
+        "entry": "2YWqKUTrANlgEFMyBUEYdih2HpP",
+        "description": ""
       }
-    },
-    {
-      "type": "heading",
-      "textAlign": "left",
-      "level": 2
     },
     {
       "type": "heading",
@@ -349,6 +350,7 @@
                       "attrs": {
                         "data-id": "vBGRn_VDaFKuQdMxrlbiy",
                         "data-entry": null,
+                        "data-type": null,
                         "href": "https://docs.yjs.dev/",
                         "target": "_blank",
                         "title": null
@@ -431,6 +433,15 @@
       }
     }
   ],
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "title": "",
+      "image": {},
+      "description": ""
+    }
+  },
   "@alinea": {
     "entryId": "jVMfGc-GJGY-GXyV4tDTX",
     "type": "BlogPost",

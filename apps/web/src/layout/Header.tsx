@@ -163,9 +163,9 @@ function HeaderLinks({links, style}: HeaderLinksProps) {
       <Link href="/changelog" className={style()}>
         Changelog
       </Link>
-      <a href="https://demo.alinea.sh" target="_blank" className={style()}>
+      {/*<a href="https://demo.alinea.sh" target="_blank" className={style()}>
         Demo
-      </a>
+      </a>*/}
     </>
   )
 }

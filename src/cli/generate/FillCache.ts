@@ -8,6 +8,8 @@ import {createWatcher} from '../util/Watcher.js'
 import {GenerateContext} from './GenerateContext.js'
 import {LocalData} from './LocalData.js'
 
+const dbCache = new WeakMap<Config, Database>()
+
 export async function* fillCache(
   {watch, rootDir}: GenerateContext,
   localData: LocalData,
@@ -15,7 +17,10 @@ export async function* fillCache(
   config: Config,
   until: Promise<any>
 ): AsyncGenerator<Database> {
-  const db = new Database(config, store)
+  const db = dbCache.has(config)
+    ? dbCache.get(config)!
+    : new Database(config, store)
+  dbCache.set(config, db)
   const limit = pLimit(1)
   const commitSha = getCommitSha()
 
