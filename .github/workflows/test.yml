@@ -28,12 +28,12 @@ jobs:
         run: npm publish
       - if: steps.version.outputs.prerelease
         run: npm publish --tag preview
-      - if: steps.version.outputs.is_stable == 'true'
+      - if: steps.version.outputs.is_valid == 'true' && !steps.version.outputs.prerelease
         id: extract-release-notes
         uses: ffurrer2/extract-release-notes@v1
         with:
           changelog_file: changelog.md
-      - if: steps.version.outputs.is_stable == 'true'
+      - if: steps.version.outputs.is_valid == 'true' && !steps.version.outputs.prerelease
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
