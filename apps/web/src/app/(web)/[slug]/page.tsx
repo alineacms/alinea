@@ -12,6 +12,12 @@ export interface AnyPageProps {
   }
 }
 
+export const dynamicParams = false
+export async function generateStaticParams() {
+  const slugs = await cms.find(Page().select(Entry.path))
+  return slugs.map(slug => ({slug}))
+}
+
 export async function generateMetadata({params}: AnyPageProps) {
   const page = await cms.maybeGet(Page().where(Entry.url.is(`/${params.slug}`)))
   if (!page) return notFound()
