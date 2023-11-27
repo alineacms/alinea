@@ -332,15 +332,16 @@ export class Database implements Syncable {
         })
         const existing = await tx(row.maybeFirst())
         if (!existing) return
-        await tx(
-          row.set({
-            data: {
-              ...existing.data,
-              location: mutation.url,
-              [Media.ORIGINAL_LOCATION]: existing.data.location
-            }
-          })
-        )
+        if (process.env.NODE_ENV !== 'develoment')
+          await tx(
+            row.set({
+              data: {
+                ...existing.data,
+                location: mutation.url,
+                [Media.ORIGINAL_LOCATION]: existing.data.location
+              }
+            })
+          )
         return () => this.updateHash(tx, row)
       }
       default:
