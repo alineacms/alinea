@@ -1,10 +1,7 @@
 [![npm](https://img.shields.io/npm/v/alinea.svg)](https://npmjs.org/package/alinea)
 [![install size](https://packagephobia.com/badge?p=alinea)](https://packagephobia.com/result?p=alinea)
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz_small.svg)](https://stackblitz.com/github/alineacms/alinea/tree/main/examples/framework-next)
 
 # [![Alinea CMS logo](https://github.com/alineacms/alinea/raw/HEAD/apps/web/public/logo.svg)](https://alinea.sh)
-
-> _Current status_: expect alpha software and out of date docs.
 
 Alinea is a modern content management system.
 
@@ -23,24 +20,20 @@ npm install alinea
 Initialize alinea's config file
 
 ```sh
-npx alinea init
+npx alinea init --next
 ```
 
 Open the dashboard to have a look around
 
 ```sh
-npx alinea serve
+npx alinea dev
 ```
 
-[Start configuring types and fields →](https://alinea.sh/docs/configuration/intro)
-
-## Examples
-
-- [Next.js Blog Starter](https://github.com/alineacms/alinea/tree/main/examples/framework-next)
+[Start configuring types and fields →](https://alinea.sh/docs/configuration)
 
 ## Configure
 
-Configure alinea in `alinea.config.tsx`
+Configure alinea in `cms.tsx`
 
 ```tsx
 const BlogPost = alinea.type('Blog post', {
@@ -49,7 +42,7 @@ const BlogPost = alinea.type('Blog post', {
 })
 ```
 
-[Type options and fields →](https://alinea.sh/docs/configuration/type)
+[Type options and fields →](https://alinea.sh/docs/configuration)
 
 ## Query
 
@@ -57,28 +50,30 @@ Retrieve content fully-typed and filter, order, limit and join as needed.
 Select only the fields you need.
 
 ```tsx
-import {initPages} from '@alinea/generated/pages'
-const pages = initPages()
+import {cms} from '@/cms'
 console.log(
-  await pages
-    .whereType('BlogPost')
-    .where(post => post.author.is('Me'))
-    .select(post => ({title: post.title}))
+  await cms.find(
+    BlogPost().where(
+      BlogPost.author.is('Me')
+    ).select(
+      {title: BlogPost.title}
+    )
+  )
 )
 ```
 
-[See the full api →](https://alinea.sh/docs/content/pages)
+[See the full api →](https://alinea.sh/docs/content/query)
 
 Content is available during static site generation and when server side querying.  
 Content is bundled with your code and can be queried with zero network overhead.
 
-[How alinea bundles content →](https://alinea.sh/docs/content/intro)
+[How alinea bundles content →](https://alinea.sh/docs/content)
 
 ## Deploy anywhere
 
 Alinea supports custom backends that can be hosted as a simple Node.js process or on serverless runtimes.
 
-[Setup your backend →](https://alinea.sh/docs/deploy/intro)
+[Setup your backend →](https://alinea.sh/docs/deploy)
 
 ## How to contribute to this project
 
