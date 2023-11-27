@@ -34,7 +34,7 @@ const summary = {
 }
 
 async function getPage(params: DocPageParams) {
-  const slug = params.slug.slice()
+  const slug = params.slug?.slice() ?? []
   const framework =
     supportedFrameworks.find(f => f.name === params.framework) ??
     supportedFrameworks[0]
@@ -55,6 +55,26 @@ async function getPage(params: DocPageParams) {
         })
     )
   }
+}
+
+export const dynamicParams = false
+export async function generateStaticParams() {
+  const urls = await cms
+    .in(cms.workspaces.main.pages.docs)
+    .find(Entry().select(Entry.url))
+  return urls.flatMap(url => {
+    return supportedFrameworks
+      .map(framework => {
+        return {
+          framework: framework.name,
+          slug: url.split('/').slice(2)
+        }
+      })
+      .concat({
+        framework: url.split('/')[2],
+        slug: url.split('/').slice(3)
+      })
+  })
 }
 
 export async function generateMetadata({

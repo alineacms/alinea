@@ -15,7 +15,7 @@ export interface AnyPageProps {
 export async function generateMetadata({params}: AnyPageProps) {
   const page = await cms.maybeGet(Page().where(Entry.url.is(`/${params.slug}`)))
   if (!page) return notFound()
-  return {title: page.metadata.title || page.title}
+  return {title: page.metadata?.title || page.title}
 }
 
 export default async function AnyPage({params}: AnyPageProps) {

@@ -15,22 +15,26 @@ import css from './page.module.scss'
 const styles = fromModule(css)
 
 export interface BlogPostPageProps {
-  params: {
-    slug: Array<string>
-  }
+  params: {slug: string}
+}
+
+export const dynamicParams = false
+export async function generateStaticParams() {
+  const slugs = await cms.find(BlogPost().select(Entry.path))
+  return slugs.map(slug => ({slug}))
 }
 
 export async function generateMetadata({params}: BlogPostPageProps) {
   const page = await cms.maybeGet(
-    BlogPost().where(Entry.url.is(`/blog/${params.slug.join('/')}`))
+    BlogPost().where(Entry.url.is(`/blog/${params.slug}`))
   )
   if (!page) return notFound()
-  return {title: page.metadata.title || page.title}
+  return {title: page.metadata?.title || page.title}
 }
 
 export default async function BlogPostPage({params}: BlogPostPageProps) {
   const page = await cms.maybeGet(
-    BlogPost().where(Entry.url.is(`/blog/${params.slug.join('/')}`))
+    BlogPost().where(Entry.url.is(`/blog/${params.slug}`))
   )
   if (!page) return notFound()
   return (
