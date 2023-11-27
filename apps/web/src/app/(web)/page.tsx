@@ -5,8 +5,7 @@ import {
   MdiSourceBranch
 } from '@/icons'
 import {Home} from '@/schema/Home'
-import {HStack, Stack, VStack} from 'alinea/ui/Stack'
-import {IcRoundOpenInNew} from 'alinea/ui/icons/IcRoundOpenInNew'
+import {HStack, VStack} from 'alinea/ui/Stack'
 import {fromModule} from 'alinea/ui/util/Styler'
 import {px} from 'alinea/ui/util/Units'
 import {Feature, Features} from '../../layout/Features'
@@ -101,7 +100,7 @@ export default async function HomePage() {
           <div className={styles.home.intro()}>
             <WebText doc={home.introduction.text} />
             <div className={styles.home.intro.code()}>
-              {/*<CodeVariantsBlock variants={props.introduction.code} />*/}
+              {/*<CodeVariantsBlock variants={props.introduction.code} />
               <HStack center>
                 <Stack.Right className={styles.home.intro.examples()}>
                   <HStack gap={25}>
@@ -178,7 +177,7 @@ export default async function HomePage() {
                     </WebTypo.Link>
                   </HStack>
                 </Stack.Right>
-              </HStack>
+              </HStack>*/}
             </div>
           </div>
         </LayoutContainer>
