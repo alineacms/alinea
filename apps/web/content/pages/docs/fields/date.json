@@ -1,6 +1,4 @@
 {
-  "id": "A4UA9D0tJn2aanMDjODOj",
-  "type": "Doc",
   "title": "Date",
   "body": [
     {
@@ -10,7 +8,7 @@
       "content": [
         {
           "type": "text",
-          "text": "Date"
+          "text": "Date field"
         }
       ]
     },
@@ -27,15 +25,29 @@
     {
       "id": "utmfOtYpwki29ZXEW5QPX",
       "type": "CodeBlock",
-      "code": "import {alinea} from 'alinea'\nalinea.date('My date field')"
+      "code": "import alinea from 'alinea'\n\nalinea.date('Date field')",
+      "fileName": "",
+      "language": "",
+      "compact": false
     },
     {
       "id": "RHKsNdTj50LX0TFLU2_QH",
       "type": "ExampleBlock",
-      "code": "import {alinea} from 'alinea'\nexport default alinea.date('My date field')"
+      "code": "export default alinea.type('Date field', {\n  date: alinea.date('Date field')\n})"
     }
   ],
-  "alinea": {
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "title": "",
+      "image": {},
+      "description": ""
+    }
+  },
+  "@alinea": {
+    "entryId": "A4UA9D0tJn2aanMDjODOj",
+    "type": "Doc",
     "index": "a2B"
   }
 }

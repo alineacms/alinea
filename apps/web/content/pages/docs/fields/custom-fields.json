@@ -1,7 +1,5 @@
 {
-  "id": "286iEJsjhd8R9NxN6EVg59fELyd",
-  "type": "Doc",
-  "title": "Guide: creating custom fields",
+  "title": "Custom fields",
   "body": [
     {
       "type": "heading",
@@ -10,7 +8,7 @@
       "content": [
         {
           "type": "text",
-          "text": "Guide: creating custom fields"
+          "text": "Custom fields"
         }
       ]
     },
@@ -48,7 +46,10 @@
     {
       "id": "tjXTNIX1E2w3fts1zXG9Z",
       "type": "CodeBlock",
-      "code": "import {alinea} from 'alinea'\nimport {Field, Hint, Label, Shape} from 'alinea/core'\nimport {InputLabel, InputState, useInput} from 'alinea/editor'\n\nexport interface RangeFieldOptions {\n  min?: number\n  max?: number\n}\n\nexport interface RangeField extends Field.Scalar<number> {\n  label: Label\n  options?: RangeFieldOptions\n}\n\n// The constructor function is used to create fields in our schema\n// later on. It is usually passed a label and options.\nexport function range(label: Label, options?: RangeFieldOptions): RangeField {\n  return {\n    shape: new ScalarShape(label),\n    label,\n    options,\n    view: RangeInput,\n    hint: Hint.Number()\n  }\n}\n\ninterface RangeInputProps {\n  state: InputState<InputState.Scalar<number>>\n  field: RangeField\n}\n\n// To view our field we can create a React component. \n// This component can call the useInput hook to receive the\n// current value and a method to update it.\nfunction RangeInput({state, field}: RangeInputProps) {\n  const [value = 5, setValue] = useInput(state)\n  const {min = 0, max = 10} = field.options || {}\n  return (\n    <InputLabel label={field.label}>\n      <input \n        type=\"range\" \n        min={min} max={max} \n        value={value} \n        onChange={e => setValue(Number(e.target.value))} \n      />\n    </InputLabel>\n  )\n}"
+      "code": "import {Field, Hint, Label} from 'alinea/core'\nimport {InputLabel, InputState, useInput} from 'alinea/editor'\n\ninterface RangeFieldOptions {\n  min?: number\n  max?: number\n}\n\nclass RangeField extends Field.Scalar<number, RangeFieldOptions> {\n}\n\n// The constructor function is used to create fields in our schema\n// later on. It is usually passed a label and options.\nexport function range(label: Label, options: RangeFieldOptions = {}): RangeField {\n  return new RangeField({\n    hint: Hint.Number(),\n    label,\n    options,\n    view: RangeInput\n  })\n}\n\ninterface RangeInputProps {\n  state: InputState<InputState.Scalar<number>>\n  field: RangeField\n}\n\n// To view our field we can create a React component. \n// This component can call the useInput hook to receive the\n// current value and a method to update it.\nfunction RangeInput({state, field}: RangeInputProps) {\n  const [value = 5, setValue] = useInput(state)\n  const {label, options} = field[Field.Data]\n  const {min = 0, max = 10} = options\n  return (\n    <InputLabel label={label}>\n      <input \n        type=\"range\" \n        min={min} max={max} \n        value={value} \n        onChange={e => setValue(Number(e.target.value))} \n      />\n    </InputLabel>\n  )\n}",
+      "fileName": "",
+      "language": "",
+      "compact": false
     },
     {
       "type": "paragraph",
@@ -63,12 +64,15 @@
     {
       "id": "WnK5Nlvq82spn6R62dTQe",
       "type": "CodeBlock",
-      "code": "alinea.type('My type', {\n  ...fields,\n  range: range('A range field', {min: 0, max: 20})\n})"
+      "code": "alinea.type('My type', {\n  ...fields,\n  myRangeField: range('A range field', {\n    min: 0, \n    max: 20\n  })\n})",
+      "fileName": "",
+      "language": "",
+      "compact": false
     },
     {
       "id": "yhfKjT9ITmHHD0N5JRU4G",
       "type": "ExampleBlock",
-      "code": "import {alinea} from 'alinea'\nimport {Field, Hint, Label, Shape} from 'alinea/core'\nimport {InputLabel, InputState, useInput} from 'alinea/editor'\n\nexport interface RangeFieldOptions {\n  min?: number\n  max?: number\n}\n\nexport interface RangeField extends Field.Scalar<number> {\n  label: Label\n  options?: RangeFieldOptions\n}\n\n// The constructor function is used to create fields in our schema\n// later on. It is usually passed a label and options.\nexport function range(label: Label, options?: RangeFieldOptions): RangeField {\n  return {\n    shape: new ScalarShape(label),\n    label,\n    options,\n    view: RangeInput,\n    hint: Hint.Number()\n  }\n}\n\ninterface RangeInputProps {\n  state: InputState<InputState.Scalar<number>>\n  field: RangeField\n}\n\n// To view our field we can create a React component. \n// This component can call the useInput hook to receive the\n// current value and a method to update it.\nfunction RangeInput({state, field}: RangeInputProps) {\n  const [value = 5, setValue] = useInput(state)\n  const {min = 0, max = 10} = field.options || {}\n  return (\n    <InputLabel label={field.label}>\n      <input \n        type=\"range\" \n        min={min} max={max} \n        value={value} \n        onChange={e => setValue(Number(e.target.value))} \n      />\n    </InputLabel>\n  )\n}\n\nexport default alinea.type('My type', {\n  range: range('A range field', {min: 0, max: 20})\n})"
+      "code": "import {Field, Hint, Label} from 'alinea/core'\nimport {InputLabel, InputState, useInput} from 'alinea/editor'\n\ninterface RangeFieldOptions {\n  min?: number\n  max?: number\n}\n\nclass RangeField extends Field.Scalar<number, RangeFieldOptions> {\n}\n\n// The constructor function is used to create fields in our schema\n// later on. It is usually passed a label and options.\nexport function range(label: Label, options: RangeFieldOptions = {}): RangeField {\n  return new RangeField({\n    hint: Hint.Number(),\n    label,\n    options,\n    view: RangeInput\n  })\n}\n\ninterface RangeInputProps {\n  state: InputState<InputState.Scalar<number>>\n  field: RangeField\n}\n\n// To view our field we can create a React component. \n// This component can call the useInput hook to receive the\n// current value and a method to update it.\nfunction RangeInput({state, field}: RangeInputProps) {\n  const [value = 5, setValue] = useInput(state)\n  const {label, options} = field[Field.Data]\n  const {min = 0, max = 10} = options\n  return (\n    <InputLabel label={label}>\n      <input \n        type=\"range\" \n        min={min} max={max} \n        value={value} \n        onChange={e => setValue(Number(e.target.value))} \n      />\n    </InputLabel>\n  )\n}\n\nexport default alinea.type('Custom fields', {\n  range: range('A range field', {min: 0, max: 20})\n})"
     },
     {
       "type": "heading",
@@ -91,13 +95,14 @@
         },
         {
           "type": "text",
-          "text": "Yjs",
+          "text": "Y.js",
           "marks": [
             {
               "type": "link",
               "attrs": {
                 "data-id": "GKdJazwD5XXkZjkkVENGE",
                 "data-entry": null,
+                "data-type": null,
                 "href": "https://docs.yjs.dev/",
                 "target": "_blank",
                 "title": null
@@ -149,7 +154,7 @@
       "content": [
         {
           "type": "text",
-          "text": "A record value store an object with data. The object values can take any shape."
+          "text": "A record value stores an object with data. The object values can take any shape."
         }
       ]
     },
@@ -191,12 +196,23 @@
       "content": [
         {
           "type": "text",
-          "text": "Rich text is an xml like structure that can hold wysiwyg data."
+          "text": "Rich text is an XML like structure for WYSIWYG data."
         }
       ]
     }
   ],
-  "alinea": {
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "title": "",
+      "image": {},
+      "description": ""
+    }
+  },
+  "@alinea": {
+    "entryId": "286iEJsjhd8R9NxN6EVg59fELyd",
+    "type": "Doc",
     "index": "a6"
   }
 }

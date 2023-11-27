@@ -1,6 +1,4 @@
 {
-  "id": "290i4FnT1HBujZ2qoNZPm4EX69B",
-  "type": "Doc",
   "title": "Object",
   "body": [
     {
@@ -10,7 +8,7 @@
       "content": [
         {
           "type": "text",
-          "text": "Object"
+          "text": "Object field"
         }
       ]
     },
@@ -27,15 +25,29 @@
     {
       "id": "290iDwpZVR0wrW2N3JaIHxtxc0I",
       "type": "CodeBlock",
-      "code": "import {alinea} from 'alinea'\nalinea.object('Address', {\n  fields: alinea.type('Object fields', {\n    street: alinea.text('Street'),\n    zip: alinea.text('Zip code', {width: 0.5}),\n    city: alinea.text('City', {width: 0.5})\n  })\n})"
+      "code": "import alinea from 'alinea'\n\nalinea.object('Address', {\n  fields: alinea.type('Object fields', {\n    street: alinea.text('Street'),\n    zip: alinea.text('Zip code', {width: 0.5}),\n    city: alinea.text('City', {width: 0.5})\n  })\n})",
+      "fileName": "",
+      "language": "",
+      "compact": false
     },
     {
       "id": "gwFTx1qVSxQvMi_joKo4Q",
       "type": "ExampleBlock",
-      "code": "import {alinea} from 'alinea'\nexport default alinea.object('Address', {\n  fields: alinea.type('Object fields', {\n    street: alinea.text('Street'),\n    zip: alinea.text('Zip code', {width: 0.5}),\n    city: alinea.text('City', {width: 0.5})\n  })\n})"
+      "code": "export default alinea.type('Object field', {\n  object: alinea.object('Address', {\n    fields: alinea.type('Object fields', {\n      street: alinea.text('Street'),\n      zip: alinea.text('Zip code', {width: 0.5}),\n      city: alinea.text('City', {width: 0.5})\n    })\n  })\n})"
     }
   ],
-  "alinea": {
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "title": "",
+      "image": {},
+      "description": ""
+    }
+  },
+  "@alinea": {
+    "entryId": "290i4FnT1HBujZ2qoNZPm4EX69B",
+    "type": "Doc",
     "index": "a2O"
   }
 }

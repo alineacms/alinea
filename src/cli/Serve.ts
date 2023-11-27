@@ -6,6 +6,7 @@ import {createCloudHandler} from 'alinea/cloud/server/CloudHandler'
 import {CMS} from 'alinea/core/CMS'
 import {BuildOptions} from 'esbuild'
 import path from 'node:path'
+import pkg from '../../package.json'
 import {generate} from './Generate.js'
 import {buildOptions} from './build/BuildOptions.js'
 import {createLocalServer} from './serve/CreateLocalServer.js'
@@ -65,8 +66,8 @@ export async function serve(options: ServeOptions): Promise<void> {
   }
 
   server.then(async () => {
-    const dashboardName = production ? '(production) dashboard' : 'dashboard'
-    console.log(`> Alinea ${dashboardName} available on ${await dashboardUrl}`)
+    console.log(`   \x1b[36mAlinea ${pkg.version}\x1b[39m`)
+    console.log(`   - Local CMS:    ${await dashboardUrl}\n`)
   })
 
   const gen = generate({

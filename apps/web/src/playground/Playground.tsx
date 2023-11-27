@@ -4,12 +4,15 @@
 import declarations from '!!raw-loader!./alinea.d.ts.txt'
 import Editor, {Monaco} from '@monaco-editor/react'
 import * as alinea from 'alinea'
+import {createExample} from 'alinea/backend/test/Example'
 import * as core from 'alinea/core'
 import {Field, Type, outcome} from 'alinea/core'
 import 'alinea/css'
+import {DashboardProvider} from 'alinea/dashboard/DashboardProvider'
 import {ErrorBoundary} from 'alinea/dashboard/view/ErrorBoundary'
-import {Toolbar} from 'alinea/dashboard/view/Toolbar'
 import {Viewport} from 'alinea/dashboard/view/Viewport'
+import {FieldToolbar} from 'alinea/dashboard/view/entry/FieldToolbar'
+import * as editor from 'alinea/editor'
 import {InputForm, useField} from 'alinea/editor'
 import {useForm} from 'alinea/editor/hook/UseForm'
 import {InputField} from 'alinea/editor/view/InputField'
@@ -51,13 +54,13 @@ function PreviewType({type}: PreviewTypeProps) {
   state.current = form()
   const label = core.Type.label(type)
   return (
-    <>
+    <div style={{margin: 'auto', width: '100%', padding: `20px 0`}}>
       <Typo.H1>
         <TextLabel label={label} />
       </Typo.H1>
 
       <InputForm {...form} />
-    </>
+    </div>
   )
 }
 
@@ -118,11 +121,9 @@ function SourceEditor({resizeable, code, setCode}: SourceEditorProps) {
   )
 }
 
-/*const init = esbuild.initialize({
-  wasmURL: '/esbuild.wasm'
-})*/
-
 const ts = core.trigger<typeof typescript>()
+const example = createExample()
+const connection = example.connection()
 
 export default function Playground() {
   const [view, setView] = useState<'both' | 'preview' | 'source'>(() => {
@@ -156,9 +157,13 @@ export default function Playground() {
   })
   async function compile(code: string) {
     try {
-      const {transpileModule, JsxEmit} = await ts
+      const {transpileModule, JsxEmit, ScriptTarget, ModuleKind} = await ts
       const body = transpileModule(code, {
-        compilerOptions: {jsx: JsxEmit.React}
+        compilerOptions: {
+          jsx: JsxEmit.React,
+          target: ScriptTarget.ES2022,
+          module: ModuleKind.CommonJS
+        }
       })
       const exec = new Function(
         'require',
@@ -168,7 +173,7 @@ export default function Playground() {
         body.outputText
       )
       const exports = Object.create(null)
-      const pkgs = {alinea, React}
+      const pkgs = {alinea, React, 'alinea/core': core, 'alinea/editor': editor}
       const require = (name: string) => pkgs[name]
       exec(require, exports, React, alinea.alinea)
       setState({result: exports.default})
@@ -188,8 +193,9 @@ export default function Playground() {
   useEffect(() => {
     compile(code)
   }, [code])
+  const client = React.use(connection)
   return (
-    <>
+    <DashboardProvider dev client={client} config={example}>
       <Script
         src="https://cdn.jsdelivr.net/npm/typescript@5.1.3/lib/typescript.min.js"
         onLoad={() => {
@@ -202,7 +208,7 @@ export default function Playground() {
         color="#5661E5"
         className={styles.root(view)}
       >
-        <Toolbar.Provider>
+        <FieldToolbar.Provider>
           {clipboard.copied && (
             <div className={styles.root.flash()}>
               <p className={styles.root.flash.msg()}>URL copied to clipboard</p>
@@ -218,49 +224,30 @@ export default function Playground() {
                 />
               )}
 
-              <div
-                style={{
-                  position: 'relative',
-                  flex: '1 0 0',
-                  display: view === 'source' ? 'none' : 'block',
-                  overflow: 'auto'
-                }}
-              >
-                <VStack style={{height: '100%'}}>
-                  <div className={styles.root.header()}>
-                    <Toolbar.Portal />
-                  </div>
-                  <ErrorBoundary dependencies={[state.result]}>
-                    <Main>
-                      <Main.Container
-                        style={{
-                          display: 'flex',
-                          flexDirection: 'column',
-                          height: '100%',
-                          paddingTop: 0
-                        }}
-                      >
-                        {!state.result ? (
-                          state.error && <Loader absolute />
-                        ) : Type.isType(state.result) ? (
-                          <PreviewType type={state.result} />
-                        ) : (
-                          <PreviewField field={state.result} />
-                        )}
-                      </Main.Container>
-                    </Main>
-                  </ErrorBoundary>
-                  {state.error && (
-                    <div className={styles.root.errors()}>
-                      <VStack gap={20}>
-                        <Typo.Monospace as="div">
-                          <p>{state.error.message}</p>
-                        </Typo.Monospace>
-                      </VStack>
-                    </div>
-                  )}
-                </VStack>
-              </div>
+              <ErrorBoundary dependencies={[state.result]}>
+                <Main>
+                  <Main.Container>
+                    {!state.result ? (
+                      state.error && <Loader absolute />
+                    ) : Type.isType(state.result) ? (
+                      <PreviewType type={state.result} />
+                    ) : (
+                      <PreviewField field={state.result} />
+                    )}
+                  </Main.Container>
+                  <FieldToolbar.Root />
+                </Main>
+              </ErrorBoundary>
+
+              {state.error && (
+                <div className={styles.root.errors()}>
+                  <VStack gap={20}>
+                    <Typo.Monospace as="div">
+                      <p>{state.error.message}</p>
+                    </Typo.Monospace>
+                  </VStack>
+                </div>
+              )}
             </HStack>
 
             <footer className={styles.root.footer()}>
@@ -316,8 +303,8 @@ export default function Playground() {
               )}
             </footer>
           </VStack>
-        </Toolbar.Provider>
+        </FieldToolbar.Provider>
       </Viewport>
-    </>
+    </DashboardProvider>
   )
 }

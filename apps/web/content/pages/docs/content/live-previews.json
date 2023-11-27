@@ -1,0 +1,121 @@
+{
+  "title": "Live previews",
+  "body": [
+    {
+      "type": "heading",
+      "textAlign": "left",
+      "level": 1,
+      "content": [
+        {
+          "type": "text",
+          "text": "Live previews"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "You can set up a live preview of your website inside the dashboard."
+        }
+      ]
+    },
+    {
+      "id": "2YlBukqI3TcPC4m3NMmmK4Spry6",
+      "type": "FrameworkBlock",
+      "next": [
+        {
+          "type": "paragraph",
+          "textAlign": "left",
+          "content": [
+            {
+              "type": "text",
+              "text": "Create the following route in the app folder to handle previews:"
+            }
+          ]
+        },
+        {
+          "id": "2YlByBMXwRLmN6kNpcOdoeWKtGC",
+          "type": "CodeBlock",
+          "code": "import {cms} from '@/cms'\n\nexport const GET = cms.previewHandler",
+          "fileName": "app/api/preview/route.ts",
+          "language": "",
+          "compact": false
+        },
+        {
+          "type": "paragraph",
+          "textAlign": "left",
+          "content": [
+            {
+              "type": "text",
+              "text": "Update your "
+            },
+            {
+              "type": "text",
+              "text": "CMS config",
+              "marks": [
+                {
+                  "type": "link",
+                  "attrs": {
+                    "data-id": "2YlC927lwX5hfm2G9JHx9j3yRux",
+                    "data-entry": "25HWCBHEFdsLDtooZ4mzxeax3An",
+                    "data-type": "entry",
+                    "href": null,
+                    "title": ""
+                  }
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "text": " with the preview url:"
+            }
+          ]
+        },
+        {
+          "id": "2YlCBIFhktYqXLnxlG8MWbFhkA4",
+          "type": "CodeBlock",
+          "code": "export const cms = createNextCMS({\n  // schema and workspaces ...\n  preview:\n    process.env.NODE_ENV === 'development'\n      ? 'http://localhost:3000/api/preview'\n      : '/api/preview'\n})",
+          "fileName": "cms.tsx",
+          "language": "",
+          "compact": false
+        },
+        {
+          "type": "paragraph",
+          "textAlign": "left",
+          "content": [
+            {
+              "type": "text",
+              "text": "Include the preview widget (`<cms.previews />`) in your root layout:"
+            }
+          ]
+        },
+        {
+          "id": "2YlDBfC8A8tt3H8vaxKz1JZuov8",
+          "type": "CodeBlock",
+          "code": "import {cms} from '@/cms'\n\nexport default async function Layout({children}: PropsWithChildren) {\n  return (\n    <>\n      <header />\n      <main>{children}</main>\n      <footer />\n      <cms.previews />\n    </>\n  )\n}",
+          "fileName": "app/layout.tsx",
+          "language": "",
+          "compact": false
+        }
+      ],
+      "js": []
+    }
+  ],
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "title": "",
+      "image": {},
+      "description": ""
+    }
+  },
+  "@alinea": {
+    "entryId": "2YlBsRF2vZwxcS27oOSJYmQM37q",
+    "type": "Doc",
+    "index": "a1V"
+  }
+}

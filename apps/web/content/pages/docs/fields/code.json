@@ -1,6 +1,4 @@
 {
-  "id": "BUQj_NQqEq7YYO1nevx1o",
-  "type": "Doc",
   "title": "Code",
   "body": [
     {
@@ -10,7 +8,7 @@
       "content": [
         {
           "type": "text",
-          "text": "Code"
+          "text": "Code field"
         }
       ]
     },
@@ -27,15 +25,29 @@
     {
       "id": "itHNQSxP3U_KYZ77Q3vIC",
       "type": "CodeBlock",
-      "code": "import {alinea} from 'alinea'\nalinea.code('My code field', {\n  help: 'Paste your code here'\n})"
+      "code": "import alinea from 'alinea'\n\nalinea.code('My code field', {\n  help: 'Paste your code here'\n})",
+      "fileName": "",
+      "language": "",
+      "compact": false
     },
     {
       "id": "qsJHS5HxiYf1Hs8eUOG6M",
       "type": "ExampleBlock",
-      "code": "import {alinea} from 'alinea'\nexport default alinea.code('My code field', {\n  help: 'Paste your code here'\n})"
+      "code": "export default alinea.type('Code field', {\n  code: alinea.code('My code field', {\n    help: 'Paste your code here'\n  })\n})"
     }
   ],
-  "alinea": {
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "title": "",
+      "image": {},
+      "description": ""
+    }
+  },
+  "@alinea": {
+    "entryId": "BUQj_NQqEq7YYO1nevx1o",
+    "type": "Doc",
     "index": "a2C"
   }
 }

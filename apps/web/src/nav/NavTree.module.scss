@@ -34,7 +34,7 @@
     font-size: 14px;
     color: inherit;
     text-decoration: none;
-    padding: 6px 10px;
+    padding: 7.5px 10px;
     margin: 1px;
     cursor: pointer;
     border-radius: 8px;
@@ -44,19 +44,14 @@
       font-size: 15px;
     }
 
-    &.is-selected &-icon,
-    &:hover &-icon {
-      color: var(--web-selected-foreground);
+    &:hover {
+      background: var(--web-highlight);
     }
 
     &.is-active {
       font-weight: 600;
       background: var(--web-selected);
       color: var(--web-selected-foreground);
-    }
-
-    &:hover {
-      background: var(--web-highlight);
     }
   }
 }

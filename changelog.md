@@ -1,9 +1,8 @@
 # Changelog
 
-## [Unreleased]
+## [0.4.0]
 
-- Added the step property to the number fields. It specifies the interval
-  between legal numbers in the input field. Default is 1.
+- This release contains a major rewrite. Read the blog post for more information.
 
 ## [0.3.2]
 

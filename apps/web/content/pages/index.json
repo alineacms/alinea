@@ -1,11 +1,11 @@
 {
-  "title": "Alinea - Open source headless CMS",
+  "title": "Alinea",
   "headline": "Content management\nfor the modern web",
   "byline": "Structure, edit and query content with any web framework.\nFully typed and organized in your repository.",
   "action": {
-    "id": "TqxVc_7RzU6y6l7UyI8oJ",
+    "id": "2YcxykzomCJyGwRFMXARgTxib4b",
     "type": "entry",
-    "entry": "20580nQzbOBR3Lt4kIdxyRGglc6",
+    "entry": "2YWqKUTrANlgEFMyBUEYdih2HpP",
     "label": "Getting started"
   },
   "screenshot": {},
@@ -18,7 +18,7 @@
         "content": [
           {
             "type": "text",
-            "text": "Open source headless"
+            "text": "Open source headless CMS"
           }
         ]
       },
@@ -130,6 +130,15 @@
       ]
     }
   ],
+  "metadata": {
+    "title": "Alinea - Open source headless CMS",
+    "description": "",
+    "openGraph": {
+      "title": "",
+      "image": {},
+      "description": ""
+    }
+  },
   "@alinea": {
     "entryId": "home",
     "type": "Home",

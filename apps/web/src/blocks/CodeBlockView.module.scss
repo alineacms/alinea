@@ -3,10 +3,10 @@
   margin: 20px 0 28px 0;
   background: var(--web-code-background);
   color: var(--web-code-foreground);
-  box-shadow: 0 1px 0 var(--web-outline);
   border: 1px solid var(--web-outline);
-  border-radius: 10px;
+  border-radius: 16px;
   overflow: hidden;
+  line-height: 1.5;
 
   &-fileName {
     font-family: 'JetBrains Mono', monospace;
@@ -19,6 +19,7 @@
     > pre {
       padding: 22px 25px;
       overflow: auto;
+      font-size: 14px;
 
       &::-webkit-scrollbar {
         width: 4px;

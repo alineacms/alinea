@@ -1,12 +1,10 @@
 {
-  "id": "20580nQzbOBR3Lt4kIdxyRGglc6",
-  "type": "Doc",
   "title": "Getting started",
   "body": [
     {
       "type": "heading",
-      "level": 1,
       "textAlign": "left",
+      "level": 1,
       "content": [
         {
           "type": "text",
@@ -15,276 +13,262 @@
       ]
     },
     {
-      "type": "paragraph",
+      "type": "heading",
       "textAlign": "left",
+      "level": 2,
       "content": [
         {
           "type": "text",
-          "text": "Alinea can be integrated in existing or new projects."
+          "text": "Setup"
         }
       ]
     },
     {
-      "type": "paragraph",
-      "textAlign": "left",
-      "content": [
-        {
-          "type": "text",
-          "text": "If you're starting from scratch you can either:"
-        }
-      ]
-    },
-    {
-      "type": "bulletList",
-      "content": [
-        {
-          "type": "listItem",
-          "content": [
-            {
-              "type": "paragraph",
-              "textAlign": "left",
-              "content": [
-                {
-                  "type": "text",
-                  "text": "Use a framework to get started (for example "
-                },
-                {
-                  "type": "text",
-                  "text": "Next.js",
-                  "marks": [
-                    {
-                      "type": "link",
-                      "attrs": {
-                        "data-id": "_bZVO9jiPMeb8ssIPZECz",
-                        "data-entry": null,
-                        "href": "https://nextjs.org/docs/getting-started",
-                        "target": "_blank",
-                        "title": null
-                      }
-                    }
-                  ]
-                },
-                {
-                  "type": "text",
-                  "text": ")"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "type": "listItem",
-          "content": [
-            {
-              "type": "paragraph",
-              "textAlign": "left",
-              "content": [
-                {
-                  "type": "text",
-                  "text": "Start from one of our "
-                },
-                {
-                  "type": "text",
-                  "text": "examples",
-                  "marks": [
-                    {
-                      "type": "link",
-                      "attrs": {
-                        "data-id": "WpJVcicRJMS41iBIpiDQj",
-                        "data-entry": null,
-                        "href": "https://github.com/alineacms/alinea/tree/main/examples",
-                        "target": "_blank",
-                        "title": null
-                      }
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "type": "listItem",
-          "content": [
-            {
-              "type": "paragraph",
-              "textAlign": "left",
-              "content": [
-                {
-                  "type": "text",
-                  "text": "Start blank with a new directory  "
-                },
-                {
-                  "type": "hardBreak"
-                },
-                {
-                  "type": "text",
-                  "text": "`mkdir alinea-example`"
-                }
-              ]
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "type": "paragraph",
-      "textAlign": "left",
-      "content": [
-        {
-          "type": "text",
-          "text": "In the rest of the guide we assume you run the commands from the directory of your project."
-        }
-      ]
-    },
-    {
-      "id": "fIiqdZvuoqYHVErMheNTz",
-      "type": "CodeBlock",
-      "code": "cd alinea-example"
-    },
-    {
-      "id": "2AF9aFBkzjV4wUsEa0MAqhybHc8",
-      "type": "NoticeBlock",
-      "level": "info",
-      "body": [
+      "id": "2YX0hoFtrkov2TMQT8cuHwhgN6L",
+      "type": "FrameworkBlock",
+      "next": [
         {
           "type": "paragraph",
           "textAlign": "left",
           "content": [
             {
               "type": "text",
-              "text": "Alinea requires "
-            },
+              "text": "Get started by creating a new `Next.js` project. The following will setup a new `Next.js` project in your chosen directory."
+            }
+          ]
+        },
+        {
+          "id": "2YXL5zGSUUiBumPIemixlnKqCyL",
+          "type": "CodeBlock",
+          "code": "npx create-next-app@latest",
+          "fileName": "",
+          "language": "shellscript",
+          "compact": false
+        },
+        {
+          "id": "2YXKZ3Ds2lpGOsLh9adsGaBQlTx",
+          "type": "NoticeBlock",
+          "level": "info",
+          "body": [
             {
-              "type": "text",
-              "text": "Node.js",
-              "marks": [
+              "type": "paragraph",
+              "textAlign": "left",
+              "content": [
                 {
-                  "type": "link",
-                  "attrs": {
-                    "data-id": "rJNPFX77mIXHwzvalGxSO",
-                    "data-entry": null,
-                    "href": "https://nodejs.org",
-                    "target": "_blank",
-                    "title": null
-                  }
+                  "type": "text",
+                  "text": "Read the full instructions in the "
+                },
+                {
+                  "type": "text",
+                  "text": "Next.js docs",
+                  "marks": [
+                    {
+                      "type": "link",
+                      "attrs": {
+                        "data-id": "2YXKczB3joyKzGfrzWgivPA8N0K",
+                        "data-entry": null,
+                        "data-type": "url",
+                        "href": "https://nextjs.org/docs/getting-started/installation",
+                        "target": "_blank",
+                        "title": ""
+                      }
+                    }
+                  ]
                 }
               ]
-            },
+            }
+          ]
+        },
+        {
+          "type": "heading",
+          "textAlign": "left",
+          "level": 2,
+          "content": [
             {
               "type": "text",
-              "text": " 14+"
+              "text": "Install Alinea"
             }
           ]
-        }
-      ]
-    },
-    {
-      "type": "heading",
-      "textAlign": "left",
-      "level": 2,
-      "content": [
-        {
-          "type": "text",
-          "text": "Install dependencies"
-        }
-      ]
-    },
-    {
-      "type": "paragraph",
-      "textAlign": "left",
-      "content": [
-        {
-          "type": "text",
-          "text": "Let's install the alinea package from NPM:"
-        }
-      ]
-    },
-    {
-      "id": "286VznLATfdsYV8ch7GMg7fIgyU",
-      "type": "CodeVariantsBlock",
-      "variants": [
-        {
-          "id": "286W0CPVQP985fqSjCYbM714ClP",
-          "index": "a0",
-          "type": "Variant",
-          "name": "npm",
-          "code": "npm install alinea"
         },
         {
-          "id": "286W3w5UazNW3hNi9KjzmGlzGR4",
-          "index": "a1",
-          "type": "Variant",
-          "name": "yarn",
-          "code": "yarn add alinea"
-        },
-        {
-          "id": "2XkEeLHEo_xoVs_B8Rm1H",
-          "index": "a2",
-          "type": "Variant",
-          "name": "pnpm",
-          "language": "tsx",
-          "code": "pnpm install alinea"
-        }
-      ]
-    },
-    {
-      "type": "paragraph",
-      "textAlign": "left",
-      "content": [
-        {
-          "type": "text",
-          "text": "The Alinea dashboard uses "
-        },
-        {
-          "type": "text",
-          "text": "React",
-          "marks": [
+          "type": "paragraph",
+          "textAlign": "left",
+          "content": [
             {
-              "type": "link",
-              "attrs": {
-                "data-id": "rNdsaMmARNlYjf0ukj6WG",
-                "data-entry": null,
-                "href": "https://reactjs.org/",
-                "target": "_blank",
-                "title": null
-              }
+              "type": "text",
+              "text": "Navigate to the newly created project directory and install the package with your preferred package manager."
             }
           ]
         },
         {
-          "type": "text",
-          "text": " to render, but it is marked as peer dependency — which means it is not installed by default. If React is not already included in your project you can install it now."
+          "id": "2YcqwSzePKnvF6rL4bu9cI0d4LN",
+          "type": "CodeVariantsBlock",
+          "variants": [
+            {
+              "id": "2Ycqwgl3s7szk2B92gnXY5unG3Q",
+              "index": "a0",
+              "type": "Variant",
+              "name": "npm",
+              "language": "shellscript",
+              "code": "npm install alinea"
+            },
+            {
+              "id": "2YcqyQsBjtLQbXB3v9l7AtdcH3U",
+              "index": "a1",
+              "type": "Variant",
+              "name": "yarn",
+              "language": "shellscript",
+              "code": "yarn add alinea"
+            },
+            {
+              "id": "2YcqzHpnfHK43fhtMEY6r7Wrpf1",
+              "index": "a2",
+              "type": "Variant",
+              "name": "pnpm",
+              "language": "shellscript",
+              "code": "pnpm install alinea"
+            }
+          ]
+        },
+        {
+          "type": "heading",
+          "textAlign": "left",
+          "level": 2,
+          "content": [
+            {
+              "type": "text",
+              "text": "Initialize the project"
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "textAlign": "left",
+          "content": [
+            {
+              "type": "text",
+              "text": "Alinea requires a config file which can be auto-generated by running:"
+            }
+          ]
+        },
+        {
+          "id": "2YcrGI2EPnmmIrHkfo1xKrcNVSI",
+          "type": "CodeVariantsBlock",
+          "variants": [
+            {
+              "id": "2YcrGaP9oBJwHo8pWmHLU7blTfN",
+              "index": "a0",
+              "type": "Variant",
+              "name": "npm",
+              "language": "shellscript",
+              "code": "npx alinea init --next"
+            },
+            {
+              "id": "2YcrHzKowUENzFVBgP5M7hf1qT1",
+              "index": "a1",
+              "type": "Variant",
+              "name": "yarn",
+              "language": "shellscript",
+              "code": "yarn alinea init --next"
+            },
+            {
+              "id": "2YcrJEDLa8oWOLJSSjsstOKg4Sl",
+              "index": "a2",
+              "type": "Variant",
+              "name": "pnpm",
+              "language": "shellscript",
+              "code": "pnpm alinea init --next"
+            }
+          ]
+        },
+        {
+          "type": "heading",
+          "textAlign": "left",
+          "level": 2,
+          "content": [
+            {
+              "type": "text",
+              "text": "Adjust Next.js config"
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "textAlign": "left",
+          "content": [
+            {
+              "type": "text",
+              "text": "Alinea generates a few files at build time which should not be cached when deployed in production. If you're hosting on Vercel add `@alinea/generated` to `experimental.serverComponentsExternalPackages` in `next.config.js`:"
+            }
+          ]
+        },
+        {
+          "id": "2YlJWtg13eze9KfsGwnL3TLmRWG",
+          "type": "CodeBlock",
+          "code": "const nextConfig = {\n  // ... other options\n  experimental: {\n    serverComponentsExternalPackages: ['@alinea/generated']\n  }\n}\n\nmodule.exports = nextConfig",
+          "fileName": "next.config.js",
+          "language": "",
+          "compact": false
         }
-      ]
-    },
-    {
-      "id": "1rXIsSpQPBgyVVQnp7TKs",
-      "type": "CodeVariantsBlock",
-      "variants": [
+      ],
+      "js": [
         {
-          "id": "h2LJQbBA8BseAUPYmyi8r",
-          "index": "a0",
-          "type": "Variant",
-          "name": "npm",
-          "language": "tsx",
-          "code": "npm install react react-dom"
+          "type": "heading",
+          "textAlign": "left",
+          "level": 2,
+          "content": [
+            {
+              "type": "text",
+              "text": "Install Alinea"
+            }
+          ]
         },
         {
-          "id": "VYek6Rf5NhYmmKi2-LTp7",
-          "index": "a1",
-          "type": "Variant",
-          "name": "yarn",
-          "language": "tsx",
-          "code": "yarn add react react-dom"
+          "type": "paragraph",
+          "textAlign": "left",
+          "content": [
+            {
+              "type": "text",
+              "text": "Install the package with your preferred package manager."
+            }
+          ]
         },
         {
-          "id": "QfZmv38Tyd5Ex3lW6PAF0",
-          "index": "a2",
-          "type": "Variant",
-          "name": "pnpm",
-          "language": "tsx",
-          "code": "pnpm install react react-dom"
+          "id": "2YlHrBFWnN4XWFd4eaBXxyaI7Lp",
+          "type": "CodeBlock",
+          "code": "npm install alinea",
+          "fileName": "",
+          "language": "",
+          "compact": false
+        },
+        {
+          "type": "heading",
+          "textAlign": "left",
+          "level": 2,
+          "content": [
+            {
+              "type": "text",
+              "text": "Initialize the project"
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "textAlign": "left",
+          "content": [
+            {
+              "type": "text",
+              "text": "Alinea requires a config file which can be auto-generated by running:"
+            }
+          ]
+        },
+        {
+          "id": "2YlHshvHKAKMR8oVOKyso6XXrx5",
+          "type": "CodeBlock",
+          "code": "npx alinea init",
+          "fileName": "",
+          "language": "",
+          "compact": false
         }
       ]
     },
@@ -295,7 +279,7 @@
       "content": [
         {
           "type": "text",
-          "text": "Initialize the project"
+          "text": "Access the dashboard"
         }
       ]
     },
@@ -305,140 +289,60 @@
       "content": [
         {
           "type": "text",
-          "text": "With the following command we'll create the necessary config file."
+          "text": "Congratulations, Alinea is now ready to boot!"
+        },
+        {
+          "type": "hardBreak"
+        },
+        {
+          "type": "text",
+          "text": "Have a look around in the dashboard by running:"
         }
       ]
     },
     {
-      "id": "286ZMh7zpMPVm42HJoaT9ENGYEs",
+      "id": "2YcsowsEWLDCcidcKeyJrTKCEOg",
       "type": "CodeVariantsBlock",
       "variants": [
         {
-          "id": "286ZN53uI47dgayZ703HHchWKmo",
+          "id": "2YcspJhldAQ2xaUIDqKHbWHrtSz",
           "index": "a0",
           "type": "Variant",
           "name": "npm",
-          "code": "npx alinea init"
+          "language": "shellscript",
+          "code": "npx alinea dev"
         },
         {
-          "id": "286ZOAv4FODNyn7lsUG4lqhXloV",
+          "id": "2YcsqDyTPJFoUeSjn6ZYJpcdWix",
           "index": "a1",
           "type": "Variant",
           "name": "yarn",
-          "code": "yarn alinea init"
+          "language": "shellscript",
+          "code": "yarn alinea dev"
         },
         {
-          "id": "Zb_GRrL5gvM9B-lrw0-dZ",
+          "id": "2YcsrOH1ImdTgzQ3C4nWULoN0lQ",
           "index": "a2",
           "type": "Variant",
           "name": "pnpm",
-          "language": "tsx",
-          "code": "pnpm exec alinea init"
-        }
-      ]
-    },
-    {
-      "type": "heading",
-      "textAlign": "left",
-      "level": 2,
-      "content": [
-        {
-          "type": "text",
-          "text": "Accessing the dashboard"
-        }
-      ]
-    },
-    {
-      "type": "paragraph",
-      "textAlign": "left",
-      "content": [
-        {
-          "type": "text",
-          "text": "The following command starts a local server on `http://localhost:4500`"
-        }
-      ]
-    },
-    {
-      "id": "59E9lVHJSO0d4rmAJpQNd",
-      "type": "CodeVariantsBlock",
-      "variants": [
-        {
-          "id": "U40Diky1cyY_P5NW3gL0v",
-          "index": "a0",
-          "type": "Variant",
-          "name": "npm",
-          "language": "tsx",
-          "code": "npx alinea serve"
-        },
-        {
-          "id": "6LpUfIYzrGMRXsut5aM1x",
-          "index": "a1",
-          "type": "Variant",
-          "name": "yarn",
-          "language": "tsx",
-          "code": "yarn alinea serve"
-        },
-        {
-          "id": "vQbqAen-LFO_2W_7-1zHn",
-          "index": "a2",
-          "type": "Variant",
-          "name": "pnpm",
-          "language": "tsx",
-          "code": "pnpm exec alinea serve"
-        }
-      ]
-    },
-    {
-      "type": "paragraph",
-      "textAlign": "left",
-      "content": [
-        {
-          "type": "text",
-          "text": "If you're using a framework with its own development server it's possible to prepend the serve command to it. This will wait until the Alinea package is generated before starting the dev server. This makes sure userland code can always depend on the package being available. It also simplifies running the dashboard and development server without requiring tools like npm-run-all. "
-        }
-      ]
-    },
-    {
-      "id": "5EX0WWSSfvfk3Tf24UVPq",
-      "type": "CodeBlock",
-      "code": "{\n  \"scripts\": {\n    \"dev\": \"alinea serve -- next dev\",\n    \"build\": \"alinea generate -- next build\"\n  }\n}",
-      "fileName": "package.json"
-    },
-    {
-      "type": "heading",
-      "textAlign": "left",
-      "level": 3,
-      "content": [
-        {
-          "type": "text",
-          "text": "Running publicly"
-        }
-      ]
-    },
-    {
-      "type": "paragraph",
-      "textAlign": "left",
-      "content": [
-        {
-          "type": "text",
-          "text": "To serve the dashboard publicly we'll need to add a backend with authentication. This is outlined in the deploy chapter."
-        }
-      ]
-    },
-    {
-      "id": "ZVufhJK-XzvqHUpJAvUmW",
-      "type": "ChapterLinkBlock",
-      "link": [
-        {
-          "id": "cldLhwTMbFhRddjIIq-O7",
-          "index": "a0",
-          "type": "entry",
-          "entry": "28NgU841OXMyHZX4EU1GRqxZaB0"
+          "language": "shellscript",
+          "code": "pnpm alinea dev"
         }
       ]
     }
   ],
-  "alinea": {
-    "index": "ZgV"
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "title": "",
+      "image": {},
+      "description": ""
+    }
+  },
+  "@alinea": {
+    "entryId": "2YWqKUTrANlgEFMyBUEYdih2HpP",
+    "type": "Doc",
+    "index": "Zgl"
   }
 }

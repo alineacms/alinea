@@ -12,6 +12,10 @@ export const metadata = {
   title: 'Alinea'
 }
 
+export const viewport = {
+  themeColor: '#4a65e8'
+}
+
 export default async function Layout({children}: PropsWithChildren) {
   return (
     <div className={styles.layout()}>

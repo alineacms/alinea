@@ -9,6 +9,7 @@ import {MdiTwitterCircle} from 'alinea/ui/icons/MdiTwitterCircle'
 import {Link} from '../nav/Link'
 import {NavTree} from '../nav/NavTree'
 import {Home} from '../schema/Home'
+import {HeaderRoot} from './Header.client'
 import css from './Header.module.scss'
 import {LayoutContainer} from './Layout'
 import {Logo} from './branding/Logo'
@@ -44,11 +45,11 @@ export async function Header() {
           </div>
         </div>
       </div>
-      <header className={styles.root()}>
+      <HeaderRoot>
         <LayoutContainer style={{height: '100%'}}>
           <Menu links={links} />
         </LayoutContainer>
-      </header>
+      </HeaderRoot>
     </>
   )
 }
@@ -95,7 +96,7 @@ interface MenuProps {
 
 function Menu({links}: MenuProps) {
   return (
-    <HStack center gap={36} className={styles.root.inner()}>
+    <HStack center gap={10} className={styles.root.inner()}>
       <Link href="/" className={styles.root.logo()}>
         <Logo />
       </Link>
@@ -104,7 +105,7 @@ function Menu({links}: MenuProps) {
           <HeaderLinks links={links} style={styles.root.nav.link} />
         </HStack>
       </Stack.Center>
-      <HStack gap={16} center>
+      <HStack gap={12} center>
         <a
           href="https://github.com/alineacms/alinea"
           target="_blank"
@@ -118,6 +119,12 @@ function Menu({links}: MenuProps) {
           className={styles.root.social()}
         >
           <MdiTwitterCircle className={styles.root.social.icon()} />
+        </a>
+        <a
+          href="https://www.alinea.cloud/app"
+          className={styles.root.dashboard()}
+        >
+          Dashboard
         </a>
         <label htmlFor="mobilemenu" className={styles.root.mobileButton()}>
           <IcRoundHamburger className={styles.root.mobileButton.hamburger()} />
@@ -156,9 +163,9 @@ function HeaderLinks({links, style}: HeaderLinksProps) {
       <Link href="/changelog" className={style()}>
         Changelog
       </Link>
-      <a href="https://demo.alinea.sh" target="_blank" className={style()}>
+      {/*<a href="https://demo.alinea.sh" target="_blank" className={style()}>
         Demo
-      </a>
+      </a>*/}
     </>
   )
 }

@@ -278,7 +278,11 @@ export class RichTextShape<Blocks>
     return () => () => {}
   }
   mutator(parent: Y.Map<any>, key: string, readOnly: boolean) {
-    const map = parent.get(key)
+    let map = parent.get(key)
+    if (!map) {
+      parent.set(key, this.toY([]))
+      map = parent.get(key)
+    }
     return {
       readOnly,
       map,

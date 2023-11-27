@@ -1,6 +1,4 @@
 {
-  "id": "24yE79dE2ssYPDQQHFFgT0eg2tH",
-  "type": "Doc",
   "title": "Link",
   "body": [
     {
@@ -10,7 +8,7 @@
       "content": [
         {
           "type": "text",
-          "text": "Link"
+          "text": "Link field"
         }
       ]
     },
@@ -27,16 +25,29 @@
     {
       "id": "268j43D4sYTv9i4LXKv8Isvwlzi",
       "type": "CodeBlock",
-      "code": "import {alinea} from 'alinea'\nalinea.link('My link field')",
+      "code": "import alinea from 'alinea'\n\nalinea.link('Link field')",
+      "fileName": "",
+      "language": "",
       "compact": false
     },
     {
       "id": "7JteCOtZTREVRHMMcZqMR",
       "type": "ExampleBlock",
-      "code": "import {alinea} from 'alinea'\nexport default alinea.link('My link field')"
+      "code": "export default alinea.type('Link field', {\n  file: alinea.link('Link field')\n})"
     }
   ],
-  "alinea": {
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "title": "",
+      "image": {},
+      "description": ""
+    }
+  },
+  "@alinea": {
+    "entryId": "24yE79dE2ssYPDQQHFFgT0eg2tH",
+    "type": "Doc",
     "index": "a2BV"
   }
 }

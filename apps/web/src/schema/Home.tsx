@@ -2,9 +2,8 @@ import alinea from 'alinea'
 import {IcRoundInsertDriveFile} from 'alinea/ui/icons/IcRoundInsertDriveFile'
 import {IcRoundLink} from 'alinea/ui/icons/IcRoundLink'
 
-export const Home = alinea.document(
-  'Home',
-  alinea.tabs(
+export const Home = alinea.document('Home', {
+  ...alinea.tabs(
     alinea.tab('Homepage', {
       headline: alinea.text('Headline', {multiline: true}),
       byline: alinea.text('Byline', {multiline: true}),
@@ -55,4 +54,4 @@ export const Home = alinea.document(
       }
     })
   )
-)
+})

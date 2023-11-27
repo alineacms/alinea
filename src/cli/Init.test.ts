@@ -10,13 +10,13 @@ async function setup(cwd: string) {
   await fs.mkdirp(cwd)
   await fs.writeFile(
     path.join(cwd, 'package.json'),
-    '{"dependencies": {}, "scripts": {}}'
+    '{"dependencies": {}, "scripts": {"dev": "next dev"}}'
   )
 }
 
 async function run(cwd: string) {
   // process.env.NODE_ENV = 'development'
-  await init({cwd, quiet: true})
+  await init({cwd, quiet: true, next: true})
   /*const cms = await loadCMS(path.join(cwd, '.alinea'))
   const welcome = await cms.get(Page())
   console.log(welcome)

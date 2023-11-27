@@ -8,9 +8,8 @@ import {useForm} from '../../editor/hook/UseForm.js'
 
 export function TabsField() {
   const tabsForm = useForm({
-    type: type(
-      'Tabs',
-      tabs(
+    type: type('Tabs', {
+      ...tabs(
         tab('Tab 1', {
           field1: text('Text field 1')
         }),
@@ -32,7 +31,7 @@ export function TabsField() {
           )
         })
       )
-    )
+    })
   })
   return (
     <UIStory>

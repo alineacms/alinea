@@ -1,6 +1,4 @@
 {
-  "id": "259EzPfnSUaKOrNL1S2bpIpMdKl",
-  "type": "Doc",
   "title": "Workspaces",
   "body": [
     {
@@ -27,7 +25,10 @@
     {
       "id": "267Q4Kyg9hOUVaJWolmaa1wOndr",
       "type": "CodeBlock",
-      "code": "alinea.workspace('My workspace', {\n  source, schema, color, roots\n})"
+      "code": "alinea.workspace('My workspace', {\n  source, schema, color, roots\n})",
+      "fileName": "",
+      "language": "",
+      "compact": false
     },
     {
       "type": "heading",
@@ -41,20 +42,21 @@
       ]
     },
     {
-      "type": "heading",
-      "level": 3,
+      "type": "paragraph",
       "textAlign": "left",
       "content": [
         {
           "type": "text",
-          "text": "`source`"
-        }
-      ]
-    },
-    {
-      "type": "paragraph",
-      "textAlign": "left",
-      "content": [
+          "text": "`source`",
+          "marks": [
+            {
+              "type": "bold"
+            }
+          ]
+        },
+        {
+          "type": "hardBreak"
+        },
         {
           "type": "text",
           "text": "A directory in which published content is stored."
@@ -64,23 +66,27 @@
     {
       "id": "28hgVxGUBKpMWwiKvfkoBZmYX15",
       "type": "CodeBlock",
-      "code": "// content is stored in the `content` directory\nsource: './content'"
-    },
-    {
-      "type": "heading",
-      "level": 3,
-      "textAlign": "left",
-      "content": [
-        {
-          "type": "text",
-          "text": "`mediaDir`"
-        }
-      ]
+      "code": "// content is stored in the `content` directory\nsource: './content'",
+      "fileName": "",
+      "language": "",
+      "compact": false
     },
     {
       "type": "paragraph",
       "textAlign": "left",
       "content": [
+        {
+          "type": "text",
+          "text": "`mediaDir`",
+          "marks": [
+            {
+              "type": "bold"
+            }
+          ]
+        },
+        {
+          "type": "hardBreak"
+        },
         {
           "type": "text",
           "text": "A directory in which uploaded files are placed. In case you'r using alinea to manage web content this will often point to a directory that is made publicly available so an url can be created to download or display the file. "
@@ -90,18 +96,10 @@
     {
       "id": "28hgYn07WY7s77bPgYhtBluKjAT",
       "type": "CodeBlock",
-      "code": "// uploaded files are placed in the `public` folder\nmediaDir: './public'"
-    },
-    {
-      "type": "heading",
-      "level": 3,
-      "textAlign": "left",
-      "content": [
-        {
-          "type": "text",
-          "text": "`roots`"
-        }
-      ]
+      "code": "// uploaded files are placed in the `public` folder\nmediaDir: './public'",
+      "fileName": "",
+      "language": "",
+      "compact": false
     },
     {
       "type": "paragraph",
@@ -109,12 +107,55 @@
       "content": [
         {
           "type": "text",
-          "text": "An object containing `Root` configurations and their keys. Use the `alinea.root` function to create one."
+          "text": "`roots`",
+          "marks": [
+            {
+              "type": "bold"
+            }
+          ]
+        },
+        {
+          "type": "hardBreak"
+        },
+        {
+          "type": "text",
+          "text": "An object containing "
+        },
+        {
+          "type": "text",
+          "text": "Root",
+          "marks": [
+            {
+              "type": "link",
+              "attrs": {
+                "data-id": "2YkhiO7Q55INBhaVgESti29CS6V",
+                "data-entry": "28hcdyq0sGJdgY6kM24NZd1XP5S",
+                "data-type": "entry",
+                "href": null,
+                "title": ""
+              }
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": " configurations and their keys. Use the `alinea.root` function to create one."
         }
       ]
     }
   ],
-  "alinea": {
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "title": "",
+      "image": {},
+      "description": ""
+    }
+  },
+  "@alinea": {
+    "entryId": "259EzPfnSUaKOrNL1S2bpIpMdKl",
+    "type": "Doc",
     "index": "Zw"
   }
 }

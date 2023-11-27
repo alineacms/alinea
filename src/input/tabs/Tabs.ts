@@ -1,9 +1,9 @@
 import {
-  Expand,
   Field,
   SectionData,
   SectionDefinition,
   Type,
+  UnionToIntersection,
   section,
   type
 } from 'alinea/core'
@@ -20,12 +20,8 @@ export class TabsSection implements SectionData {
   }
 }
 
-type ArrayIntersection<T> = Expand<
-  T extends [...infer Rest, infer Tail]
-    ? Tail extends Type<infer D>
-      ? Omit<ArrayIntersection<Rest>, keyof D> & D
-      : ArrayIntersection<Rest>
-    : unknown
+type ArrayIntersection<T> = Type<
+  UnionToIntersection<T extends Array<Type<infer V>> ? V : never>
 >
 
 /** Create tabs */

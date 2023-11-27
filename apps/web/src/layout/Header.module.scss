@@ -93,6 +93,16 @@
     }
   }
 
+  &-dashboard {
+    border: 1px solid #9ea6ff;
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    background: #5763e6;
+    color: white;
+  }
+
   &-social {
     display: block;
 
