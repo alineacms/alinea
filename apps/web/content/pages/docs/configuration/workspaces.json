@@ -119,7 +119,27 @@
         },
         {
           "type": "text",
-          "text": "An object containing `Root` configurations and their keys. Use the `alinea.root` function to create one."
+          "text": "An object containing "
+        },
+        {
+          "type": "text",
+          "text": "Root",
+          "marks": [
+            {
+              "type": "link",
+              "attrs": {
+                "data-id": "2YkhiO7Q55INBhaVgESti29CS6V",
+                "data-entry": "28hcdyq0sGJdgY6kM24NZd1XP5S",
+                "data-type": "entry",
+                "href": null,
+                "title": ""
+              }
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": " configurations and their keys. Use the `alinea.root` function to create one."
         }
       ]
     }

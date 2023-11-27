@@ -1,0 +1,45 @@
+{
+  "title": "Self-Hosted",
+  "body": [
+    {
+      "type": "heading",
+      "textAlign": "start",
+      "level": 1,
+      "content": [
+        {
+          "type": "text",
+          "text": "Self-hosting Alinea",
+          "marks": [
+            {
+              "type": "bold"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "start",
+      "content": [
+        {
+          "type": "text",
+          "text": "The current self-hosting options that were included in Alinea before version 0.4.0 are no longer up to date. A new option for self hosting will be included before we hit 1.0."
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "title": "",
+      "image": {},
+      "description": ""
+    }
+  },
+  "@alinea": {
+    "entryId": "2YlEGKqhO4mqRqEwQexeqRI8Jfu",
+    "type": "Doc",
+    "index": "Zn"
+  }
+}

@@ -1,6 +1,4 @@
 {
-  "id": "28hxVNf3JO9raYJ1HVQ6XgDX9pW",
-  "type": "Doc",
   "title": "Querying content",
   "body": [
     {
@@ -20,14 +18,43 @@
       "content": [
         {
           "type": "text",
-          "text": "A pages instance is used to query the data stored in the CMS. To create an instance use the `initPages` function."
+          "text": "The CMS instance that is exported in your config file can be used to query the stored data."
         }
       ]
     },
     {
-      "id": "KSTSIoTMXMiTf6PYZeqZ6",
-      "type": "CodeBlock",
-      "code": "import {initPages} from '@alinea/generated/pages'\n\n// The initPages method also accepts a previewToken to query\n// drafts while previewing, see the next chapter on how to obtain one\nconst pages = initPages()"
+      "id": "2YlCk9I5mZXiCO3tbjj941PI9rc",
+      "type": "FrameworkBlock",
+      "next": [
+        {
+          "type": "paragraph",
+          "textAlign": "left",
+          "content": [
+            {
+              "type": "text",
+              "text": "Content can be queried within React server components (and functions that run on the server such as generateStaticParams)."
+            }
+          ]
+        },
+        {
+          "id": "2YlCpSWtMLknsvHhIwtZlTf1MDI",
+          "type": "CodeBlock",
+          "code": "import {cms} from '@/cms'\n\nexport default async function HomePage() {\n  const homePage = await cms.get(HomePage())\n  return <h1>{homePage.title}</h1>\n}",
+          "fileName": "",
+          "language": "",
+          "compact": false
+        }
+      ],
+      "js": [
+        {
+          "id": "2YlCoQfFsitNdnsCxRgq0VkVdEU",
+          "type": "CodeBlock",
+          "code": "import {cms} from '@/cms'\n\nconst homePage = await cms.get(HomePage())",
+          "fileName": "",
+          "language": "",
+          "compact": false
+        }
+      ]
     },
     {
       "type": "heading",
@@ -46,14 +73,17 @@
       "content": [
         {
           "type": "text",
-          "text": "A single page can be fetched using the `first` method. Criteria can be passed to filter entries."
+          "text": "A single page can be fetched using the `get` method. Criteria can be passed to filter entries."
         }
       ]
     },
     {
       "id": "28hy8mAMZJiFhtaajix2fKGBKBE",
       "type": "CodeBlock",
-      "code": "// Fetch the first page where field equals the string 'value'\nconst page = await pages.first(page => page.field.is('value'))"
+      "code": "// Fetch the first page where field equals the string 'value'\nconst page = await cms.get(Page({field: 'value'}))",
+      "fileName": "",
+      "language": "",
+      "compact": false
     },
     {
       "type": "heading",
@@ -72,14 +102,17 @@
       "content": [
         {
           "type": "text",
-          "text": "Multiple pages can be fetched using the `where` method."
+          "text": "Multiple pages can be fetched using the `find` method."
         }
       ]
     },
     {
       "id": "28hyQUttn286uRfAArTKdMWNJVb",
       "type": "CodeBlock",
-      "code": "// Fetch all pages where field equals the string 'value'\nconst pages = await pages.where(page => page.field.is('value'))"
+      "code": "// Fetch all pages where field equals the string 'value'\nconst pages = await cms.find(Page({field: 'value'}))",
+      "fileName": "",
+      "language": "",
+      "compact": false
     },
     {
       "type": "heading",
@@ -105,7 +138,10 @@
     {
       "id": "28hyZtRcyC7fXKRHUiqhjA5O7iA",
       "type": "CodeBlock",
-      "code": "// Skip the first 10 pages and return a maximum of 10\nconst limited = await pages.skip(10).take(10)"
+      "code": "// Skip the first 10 pages and return a maximum of 10\nconst limited = await cms.find(Page().skip(10).take(10))",
+      "fileName": "",
+      "language": "",
+      "compact": false
     },
     {
       "type": "heading",
@@ -131,7 +167,10 @@
     {
       "id": "IEmT75lZgxznL9v7Zq9mW",
       "type": "CodeBlock",
-      "code": "import {initPages} from '@alinea/generated/pages'\n\nconst old = await pages.whereType('Animal').where(\n  animal => animal.age.greater(10)\n)\nconst teenager = await pages.whereType('Human').where(\n  human => \n    human.age.greater(10).or(\n      human.age.less(20)\n    )\n)\nconst applesOrOranges = await pages.whereType('Fruit').where(\n  fruit => fruit.title.isIn(['apple', 'orange'])\n)"
+      "code": "const old = await cms.find(\n  Animal().where(Animal.age.greater(10))\n)\nconst teenager = await cms.find(Human().where(\n   Human.age.greater(10).or(\n     Human.age.less(20)\n   )\n)\nconst applesOrOranges = await cms.find(\n  Fruit().where(Fruit.title.isIn(['apple', 'orange']))\n)",
+      "fileName": "",
+      "language": "",
+      "compact": false
     },
     {
       "type": "heading",
@@ -157,7 +196,10 @@
     {
       "id": "28hzjFJi5kuByP0j3ZX79ATIyyS",
       "type": "CodeBlock",
-      "code": "const ordered = await pages\n  .whereType('NewsItem')\n  .orderBy(item => [item.publishDate.desc()])"
+      "code": "const ordered = await cms.find(NewsItem().orderBy(NewsItem.publishDate.desc())",
+      "fileName": "",
+      "language": "",
+      "compact": false
     },
     {
       "type": "heading",
@@ -183,7 +225,10 @@
     {
       "id": "28i0B7nRFUqmGWdCmchhzy21bkt",
       "type": "CodeBlock",
-      "code": "const ordered = await pages\n  .whereType('NewsItem')\n  .orderBy(item => [item.category])"
+      "code": "const grouped = await cms.find(\n  NewsItem().groupBy(NewsItem.category)\n)",
+      "fileName": "",
+      "language": "",
+      "compact": false
     },
     {
       "type": "heading",
@@ -209,36 +254,24 @@
     {
       "id": "28hywuwvVMmRT7zhyZEumjM19tI",
       "type": "CodeBlock",
-      "code": "// Return only titles\nconst rows = await pages\n  .select(page => ({\n    title: page.title\n  })"
-    },
-    {
-      "type": "heading",
-      "level": 2,
-      "textAlign": "left",
-      "content": [
-        {
-          "type": "text",
-          "text": "Processing fields"
-        }
-      ]
-    },
-    {
-      "type": "paragraph",
-      "textAlign": "left",
-      "content": [
-        {
-          "type": "text",
-          "text": "It's possible to process field values by passing a function, which can be `async`."
-        }
-      ]
-    },
-    {
-      "id": "28hzx0owdbqFdAaJg0H31HP9OpI",
-      "type": "CodeBlock",
-      "code": "const row = await pages\n  .first()\n  .select(page => ({\n    title: \n      page.title.process(title => `process title ${title}`)\n  })"
+      "code": "// Return only titles\nconst rows = await cms.find(\n  Page().select({title: Page.title})\n)",
+      "fileName": "",
+      "language": "",
+      "compact": false
     }
   ],
-  "alinea": {
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "title": "",
+      "image": {},
+      "description": ""
+    }
+  },
+  "@alinea": {
+    "entryId": "28hxVNf3JO9raYJ1HVQ6XgDX9pW",
+    "type": "Doc",
     "index": "a1"
   }
 }

@@ -1,10 +1,110 @@
 {
-  "id": "259Ey7LXgqL7ZDGJ8XK1vBJmZrh",
-  "type": "Docs",
-  "root": "data",
-  "index": "Zm4",
-  "title": "Configuration",
-  "alinea": {
+  "title": "Configure",
+  "body": [
+    {
+      "type": "heading",
+      "textAlign": "left",
+      "level": 1,
+      "content": [
+        {
+          "type": "text",
+          "text": "Configuration"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "All configuration can be managed from the`cms.tsx` file. This file is created in the project root during `alinea init`. If you're using a `src` directory look for it there. It contains an example "
+        },
+        {
+          "type": "text",
+          "text": "Workspace",
+          "marks": [
+            {
+              "type": "link",
+              "attrs": {
+                "data-id": "2YkiCMTzc9nyvJWwhOfl3aR3SMw",
+                "data-entry": "259EzPfnSUaKOrNL1S2bpIpMdKl",
+                "data-type": "entry",
+                "href": null,
+                "title": ""
+              }
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": " to get started from. "
+        }
+      ]
+    },
+    {
+      "id": "2YkmeB4spbTne1YLUK5kP9psCPz",
+      "type": "NoticeBlock",
+      "level": "info",
+      "body": [
+        {
+          "type": "paragraph",
+          "textAlign": "left",
+          "content": [
+            {
+              "type": "text",
+              "text": "If you prefer plain Javascript over Typescript, just rename the file to `cms.jsx`"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "textAlign": "left",
+      "level": 2,
+      "content": [
+        {
+          "type": "text",
+          "text": "Configuration"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "`cms`",
+          "marks": [
+            {
+              "type": "bold"
+            }
+          ]
+        },
+        {
+          "type": "hardBreak"
+        },
+        {
+          "type": "text",
+          "text": "Export a CMS instance named `cms` from this file."
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "title": "",
+      "image": {},
+      "description": ""
+    }
+  },
+  "@alinea": {
+    "entryId": "259Ey7LXgqL7ZDGJ8XK1vBJmZrh",
+    "type": "Docs",
     "index": "Zm4"
   }
 }

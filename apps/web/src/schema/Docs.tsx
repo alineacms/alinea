@@ -1,8 +1,8 @@
 import alinea from 'alinea'
+import {BodyField} from './blocks/BodyField'
 
-export const Docs = alinea.type('Docs', {
-  title: alinea.text('Title', {width: 0.5, multiline: true}),
-  path: alinea.path('Path', {width: 0.5}),
+export const Docs = alinea.document('Docs', {
+  body: BodyField,
   [alinea.meta]: {
     isContainer: true,
     contains: ['Doc', 'Docs']

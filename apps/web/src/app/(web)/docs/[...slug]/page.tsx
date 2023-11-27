@@ -43,7 +43,7 @@ async function getPage(params: DocPageParams) {
   return {
     framework,
     doc: await cms.maybeGet(
-      Doc()
+      Entry()
         .where(Entry.url.is(`/docs/${slug.map(decodeURIComponent).join('/')}`))
         .select({
           ...Doc,
@@ -80,7 +80,7 @@ export default async function DocPage({params}: DocPageProps) {
   const nested = nestNav(nav)
   const itemsIn = (item: NavItem): Array<NavItem> =>
     item.children ? [item, ...item.children.flatMap(itemsIn)] : [item]
-  const docs = nested.flatMap(itemsIn).filter(page => page.type === 'Doc')
+  const docs = nested.flatMap(itemsIn)
   const index = docs.findIndex(item => item.id === doc.id)
   const prev = docs[index - 1]
   const next = docs[index + 1]

@@ -18,7 +18,7 @@
       "content": [
         {
           "type": "text",
-          "text": "Roots provide the means to organize content hierarchically in a tree. Pages can have subpages, subpages can have sub-subpages and so on. This hierarchy starts at a `root`."
+          "text": "Roots provide the means to organize content hierarchically in a tree. Pages can have subpages, subpages can have sub-subpages and so on. This hierarchy starts at a `Root`."
         }
       ]
     },

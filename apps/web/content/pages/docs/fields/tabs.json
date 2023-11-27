@@ -8,7 +8,7 @@
       "content": [
         {
           "type": "text",
-          "text": "Tabs"
+          "text": "Tabs field"
         }
       ]
     },
@@ -25,10 +25,15 @@
     {
       "id": "268hspT1GDy0ag8lya8m9dObKhX",
       "type": "CodeBlock",
-      "code": "import {alinea} from 'alinea'\n\nalinea.tabs(\n  alinea.tab('Tab A', {\n    // ... fields\n  }),\n  alinea.tab('Tab B', {\n    // ... fields\n  })\n)",
+      "code": "import alinea from 'alinea'\n\nalinea.tabs(\n  alinea.tab('Tab A', {\n    // ... fields\n  }),\n  alinea.tab('Tab B', {\n    // ... fields\n  })\n)",
       "fileName": "",
       "language": "",
       "compact": false
+    },
+    {
+      "id": "2YkqykVitVKoLg9NLRTwjLvsccv",
+      "type": "ExampleBlock",
+      "code": "import alinea from 'alinea'\n\nexport default alinea.type('Tabs field', {\n  ...alinea.tabs(\n    alinea.tab('Tab A', {\n      fieldA: alinea.text('Field in Tab A')\n    }),\n    alinea.tab('Tab B', {\n      fieldB: alinea.text('Field in Tab B')\n    })\n  )\n})"
     }
   ],
   "metadata": {

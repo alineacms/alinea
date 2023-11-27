@@ -1,6 +1,4 @@
 {
-  "id": "tlhZ01MHUjv3Od172Ew6w",
-  "type": "Doc",
   "title": "File",
   "body": [
     {
@@ -10,7 +8,7 @@
       "content": [
         {
           "type": "text",
-          "text": "File"
+          "text": "File field"
         }
       ]
     },
@@ -27,15 +25,29 @@
     {
       "id": "tYljidhFDZXvLGHPdOUyj",
       "type": "CodeBlock",
-      "code": "import {alinea} from 'alinea'\nalinea.file('My file field')"
+      "code": "import alinea from 'alinea'\n\nalinea.file('File link')",
+      "fileName": "",
+      "language": "",
+      "compact": false
     },
     {
-      "id": "3eoB38V86C426MvZT08Ww",
+      "id": "2Yks376YZg3E6MZZHv9KcuYgQos",
       "type": "ExampleBlock",
-      "code": "import {alinea} from 'alinea'\nexport default alinea.file('My file field')"
+      "code": "export default alinea.type('File field', {\n  file: alinea.file('File link')\n})"
     }
   ],
-  "alinea": {
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "title": "",
+      "image": {},
+      "description": ""
+    }
+  },
+  "@alinea": {
+    "entryId": "tlhZ01MHUjv3Od172Ew6w",
+    "type": "Doc",
     "index": "a2Bd"
   }
 }

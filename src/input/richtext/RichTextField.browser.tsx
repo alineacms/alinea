@@ -7,7 +7,7 @@ import {
   NodeViewWrapper,
   ReactNodeViewRenderer
 } from '@tiptap/react'
-import {createId, Field, Schema, Type} from 'alinea/core'
+import {createId, Field, outcome, Schema, Type} from 'alinea/core'
 import {entries} from 'alinea/core/util/Objects'
 import {IconButton} from 'alinea/dashboard/view/IconButton'
 import {InputForm, InputLabel, InputState, useInput} from 'alinea/editor'
@@ -54,7 +54,10 @@ function typeExtension(
   function View({node, deleteNode}: NodeViewProps) {
     const {id} = node.attrs
     const meta = Type.meta(type)
-    if (!id) return null
+    // Child data might be unavailable if this was dragged or pasted from
+    // another field
+    const state = outcome(() => parent.child(id))
+    if (!id || !state.isSuccess()) return null
     return (
       <NodeViewWrapper>
         <Sink.Root style={{margin: `${px(18)} 0`}}>
@@ -75,7 +78,7 @@ function typeExtension(
           </Sink.Header>
           <Sink.Content>
             <IsNested.Provider value={true}>
-              <InputForm state={parent.child(id)} type={type} />
+              <InputForm state={state.value} type={type} />
             </IsNested.Provider>
           </Sink.Content>
         </Sink.Root>

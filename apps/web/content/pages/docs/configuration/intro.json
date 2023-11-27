@@ -1,5 +1,5 @@
 {
-  "title": "Config file",
+  "title": "CMS config",
   "body": [
     {
       "type": "heading",
@@ -8,7 +8,7 @@
       "content": [
         {
           "type": "text",
-          "text": "Config file"
+          "text": "CMS config"
         }
       ]
     },
@@ -18,17 +18,7 @@
       "content": [
         {
           "type": "text",
-          "text": "All configuration can be managed by creating a CMS instance. The `alinea` package exports a general purpose `createCMS` function as well as framework specific functions such as `createNextCMS`. The framework specific instances expose helper methods to help integrate the content into your framework of choice."
-        }
-      ]
-    },
-    {
-      "type": "paragraph",
-      "textAlign": "left",
-      "content": [
-        {
-          "type": "text",
-          "text": "All configuration can be managed from your`cms.tsx` file. This file is created during `alinea init`. It contains an example workspace to get started from."
+          "text": "The `alinea` package exports a general purpose `createCMS` function as well as framework specific functions such as `createNextCMS`. The framework specific instances expose helper methods to help integrate the content into your framework of choice."
         }
       ]
     },
@@ -50,13 +40,41 @@
       ]
     },
     {
+      "id": "2YkmoanhN8dzZrf8P5fdrfVaA6A",
+      "type": "FrameworkBlock",
+      "next": [
+        {
+          "id": "2YkmpBI9sGmAXRE577Q17ItLxXf",
+          "type": "CodeBlock",
+          "code": "export const cms = createNextCMS({\n  schema, workspaces, dashboard\n})",
+          "fileName": "cms.tsx",
+          "language": "",
+          "compact": false
+        }
+      ],
+      "js": [
+        {
+          "type": "UNDEFINED",
+          "id": "25HWCBHEFdsLDtooZ4mzxeax3An"
+        },
+        {
+          "id": "2YknKQ52hbmP0BXioYxqs38Y4vv",
+          "type": "CodeBlock",
+          "code": "export const cms = createCMS({\n  schema, workspaces, dashboard\n})",
+          "fileName": "cms.tsx",
+          "language": "",
+          "compact": false
+        }
+      ]
+    },
+    {
       "type": "heading",
       "textAlign": "left",
       "level": 2,
       "content": [
         {
           "type": "text",
-          "text": "Example config"
+          "text": "Configuration"
         }
       ]
     },
@@ -66,67 +84,147 @@
       "content": [
         {
           "type": "text",
-          "text": "In the example below we find a schema which defines a generic `Page` type. The `main` workspace has the following settings:"
+          "text": "`schema`",
+          "marks": [
+            {
+              "type": "bold"
+            }
+          ]
+        },
+        {
+          "type": "hardBreak"
+        },
+        {
+          "type": "text",
+          "text": "A "
+        },
+        {
+          "type": "text",
+          "text": "collection of Types",
+          "marks": [
+            {
+              "type": "link",
+              "attrs": {
+                "data-id": "2YkhKab77FPvVbFuEKDFvTCeQqA",
+                "data-entry": "267KTV8uPHIdZgFUQvJf06sfm4h",
+                "data-type": "entry",
+                "href": null,
+                "title": ""
+              }
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": "."
         }
       ]
     },
     {
-      "type": "bulletList",
+      "type": "paragraph",
+      "textAlign": "left",
       "content": [
         {
-          "type": "listItem",
-          "content": [
+          "type": "text",
+          "text": "`workspaces`",
+          "marks": [
             {
-              "type": "paragraph",
-              "textAlign": "left",
-              "content": [
-                {
-                  "type": "text",
-                  "text": "`source`: content is stored in json files and can be found in the `content` directory"
-                }
-              ]
+              "type": "bold"
             }
           ]
         },
         {
-          "type": "listItem",
-          "content": [
+          "type": "hardBreak"
+        },
+        {
+          "type": "text",
+          "text": "Content can be bundled in separate "
+        },
+        {
+          "type": "text",
+          "text": "Workspaces",
+          "marks": [
             {
-              "type": "paragraph",
-              "textAlign": "left",
-              "content": [
-                {
-                  "type": "text",
-                  "text": "`mediaDir`: uploaded files are placed in the `public` folder"
-                }
-              ]
+              "type": "link",
+              "attrs": {
+                "data-id": "2YkhLyWRcJ1TaBwxb1l8MIeWbGP",
+                "data-entry": "259EzPfnSUaKOrNL1S2bpIpMdKl",
+                "data-type": "entry",
+                "href": null,
+                "title": ""
+              }
             }
           ]
         },
         {
-          "type": "listItem",
-          "content": [
-            {
-              "type": "paragraph",
-              "textAlign": "left",
-              "content": [
-                {
-                  "type": "text",
-                  "text": "`roots`: defines two separate web roots, one for data (our welcome page in this case), and one for media (file uploads)"
-                }
-              ]
-            }
-          ]
+          "type": "text",
+          "text": ". Defining at least one is required."
         }
       ]
     },
     {
-      "id": "25HWCBHEFdsLDtooZ4mzxeax3An",
-      "type": "CodeBlock",
-      "code": "import alinea, {createCMS} from 'alinea'\n\nconst Page = alinea.type('Page', {\n  title: alinea.text('Title'),\n  path: alinea.path('Path')\n})\n\nexport const cms = createCMS({\n  schema: {\n    Page\n  },\n  workspaces: {\n    main: alinea.workspace('Example', {\n      pages: alinea.root('Example project', {\n        welcome: alinea.page(\n          Page({title: 'Welcome'})\n        ),\n        [alinea.meta]: {\n          contains: ['Page']\n        }\n      }),\n      media: alinea.media(),\n      [alinea.meta]: {\n        source: 'content',\n        mediaDir: 'public'\n      }\n    })\n  }\n})\n",
-      "fileName": "cms.tsx",
-      "language": "",
-      "compact": false
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "`dashboard`",
+          "marks": [
+            {
+              "type": "bold"
+            }
+          ]
+        },
+        {
+          "type": "hardBreak"
+        },
+        {
+          "type": "text",
+          "text": "All configuration to generate the dashboard UI for deployment goes here."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "`preview`",
+          "marks": [
+            {
+              "type": "bold"
+            }
+          ]
+        },
+        {
+          "type": "hardBreak"
+        },
+        {
+          "type": "text",
+          "text": "A url which is used in the dashboard for "
+        },
+        {
+          "type": "text",
+          "text": "live previews",
+          "marks": [
+            {
+              "type": "link",
+              "attrs": {
+                "data-id": "2Ykhc45ka6F9yw3uJZmODGxyo7h",
+                "data-entry": "cifCRcc3FmFxJKqjRsTtv",
+                "data-type": "entry",
+                "href": null,
+                "title": ""
+              }
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": "."
+        }
+      ]
     }
   ],
   "metadata": {

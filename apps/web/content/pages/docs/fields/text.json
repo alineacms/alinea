@@ -8,7 +8,7 @@
       "content": [
         {
           "type": "text",
-          "text": "Text"
+          "text": "Text Field"
         }
       ]
     },
@@ -25,7 +25,7 @@
     {
       "id": "267RNY6ruMlaKYh8ADfzxtq0jnA",
       "type": "CodeBlock",
-      "code": "import {alinea} from 'alinea'\n\nalinea.text('My text field', {\n  help: 'This is an example field',\n  multiline: true\n})",
+      "code": "import alinea from 'alinea'\n\nalinea.text('My text field', {\n  help: 'This is an example field',\n  multiline: true\n})",
       "fileName": "",
       "language": "",
       "compact": false
@@ -33,7 +33,40 @@
     {
       "id": "kLT1p_gpGFN1L9rIy9e5E",
       "type": "ExampleBlock",
-      "code": "import {alinea} from 'alinea'\n\nexport default alinea.text('My text field', {\n  help: 'This is an example field',\n  multiline: true\n})"
+      "code": "export default alinea.type('Text field', {\n  text: alinea.text('My text field', {\n    help: 'This is an example field',\n    multiline: true,\n    initialValue: 'A text value'\n  })\n})"
+    },
+    {
+      "type": "heading",
+      "textAlign": "left",
+      "level": 2,
+      "content": [
+        {
+          "type": "text",
+          "text": "Configuration"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "`autoFocus`",
+          "marks": [
+            {
+              "type": "bold"
+            }
+          ]
+        },
+        {
+          "type": "hardBreak"
+        },
+        {
+          "type": "text",
+          "text": "Focus this input automatically"
+        }
+      ]
     }
   ],
   "metadata": {

@@ -44,14 +44,14 @@
       font-size: 15px;
     }
 
+    &:hover {
+      background: var(--web-highlight);
+    }
+
     &.is-active {
       font-weight: 600;
       background: var(--web-selected);
       color: var(--web-selected-foreground);
-    }
-
-    &:hover {
-      background: var(--web-highlight);
     }
   }
 }

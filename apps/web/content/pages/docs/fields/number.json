@@ -8,7 +8,7 @@
       "content": [
         {
           "type": "text",
-          "text": "Number"
+          "text": "Number field"
         }
       ]
     },
@@ -25,7 +25,7 @@
     {
       "id": "g4S5QLIWCAxleuIDzwNpk",
       "type": "CodeBlock",
-      "code": "import {alinea} from 'alinea'\n\nalinea.number('My number field', {\n  minValue: 0,\n  maxValue: 10,\n  step: 1\n})",
+      "code": "import alinea from 'alinea'\n\nalinea.number('My number field', {\n  minValue: 0,\n  maxValue: 10,\n  step: 1\n})",
       "fileName": "",
       "language": "",
       "compact": false

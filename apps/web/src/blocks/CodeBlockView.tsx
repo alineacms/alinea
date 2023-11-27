@@ -15,6 +15,7 @@ export async function CodeBlockView({
   language
 }: Infer<typeof CodeBlock>) {
   const {codeToHtml} = await codeHighlighter
+  if (!code) return null
   const html = codeToHtml(code, {
     lang: language === 'shellscript' ? 'shellscript' : 'tsx'
   })

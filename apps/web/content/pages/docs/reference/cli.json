@@ -15,7 +15,10 @@
     {
       "id": "-DXbyOqvbfbUVwbH8CNuJ",
       "type": "CodeBlock",
-      "code": "Usage\n  $ alinea <command> [options]\n\nAvailable Commands\n  init     Copy a sample config file to the current directory\n  dev      Start development dashboard\n  build    Generate content cache\n\nFor more info, run any command with the `--help` flag\n  $ alinea build --help\n  $ alinea init --help\n\nOptions\n  -v, --version    Displays current version\n  -h, --help       Displays this message"
+      "code": "Usage\n  $ alinea <command> [options]\n\nAvailable Commands\n  init     Copy a sample config file to the current directory\n  dev      Start development dashboard\n  build    Generate content cache\n\nFor more info, run any command with the `--help` flag\n  $ alinea build --help\n  $ alinea init --help\n\nOptions\n  -v, --version    Displays current version\n  -h, --help       Displays this message",
+      "fileName": "",
+      "language": "",
+      "compact": false
     },
     {
       "type": "heading",
@@ -24,7 +27,7 @@
       "content": [
         {
           "type": "text",
-          "text": "alinea init"
+          "text": "Commands"
         }
       ]
     },
@@ -32,6 +35,18 @@
       "type": "paragraph",
       "textAlign": "left",
       "content": [
+        {
+          "type": "text",
+          "text": "alinea init",
+          "marks": [
+            {
+              "type": "bold"
+            }
+          ]
+        },
+        {
+          "type": "hardBreak"
+        },
         {
           "type": "text",
           "text": "Creates an example config file. Run once during setup."
@@ -39,20 +54,21 @@
       ]
     },
     {
-      "type": "heading",
-      "textAlign": "left",
-      "level": 2,
-      "content": [
-        {
-          "type": "text",
-          "text": "alinea dev"
-        }
-      ]
-    },
-    {
       "type": "paragraph",
       "textAlign": "left",
       "content": [
+        {
+          "type": "text",
+          "text": "alinea dev",
+          "marks": [
+            {
+              "type": "bold"
+            }
+          ]
+        },
+        {
+          "type": "hardBreak"
+        },
         {
           "type": "text",
           "text": "Starts a development server to display the alinea dashboard. It can be prepended to another development command to run it in parallel."
@@ -62,28 +78,35 @@
     {
       "id": "XeX5lTJqsjNbbd4OwYOzD",
       "type": "CodeBlock",
-      "code": "// Example: start the dashboard and next development server\nalinea serve -- next dev"
+      "code": "// Example: start the dashboard and next development server\nalinea serve -- next dev",
+      "fileName": "",
+      "language": "",
+      "compact": false
     },
     {
       "id": "P1sIdtOUVmGJBcPNDrfmU",
       "type": "CodeBlock",
-      "code": "Options\n  -p, --port      Port to listen on\n  --production    Use production backend"
-    },
-    {
-      "type": "heading",
-      "textAlign": "left",
-      "level": 2,
-      "content": [
-        {
-          "type": "text",
-          "text": "alinea build"
-        }
-      ]
+      "code": "Options\n  -p, --port      Port to listen on\n  --production    Use production backend",
+      "fileName": "",
+      "language": "",
+      "compact": false
     },
     {
       "type": "paragraph",
       "textAlign": "left",
       "content": [
+        {
+          "type": "text",
+          "text": "alinea build",
+          "marks": [
+            {
+              "type": "bold"
+            }
+          ]
+        },
+        {
+          "type": "hardBreak"
+        },
         {
           "type": "text",
           "text": "The build command indexes content and generates the `@alinea/generated` package. It's recommended to run it as part of the build step in your project."
@@ -93,12 +116,19 @@
     {
       "id": "KipDFk3xI6h94TjE3Mhc_",
       "type": "CodeBlock",
-      "code": "Options\n  -w, --watch     Watch for changes to source files\n  -c, --config    Location of the config file, defaults to \"alinea.config.tsx\"\n  --fix           Any missing or incorrect properties will be overwritten by their default"
+      "code": "Options\n  -w, --watch     Watch for changes to source files\n  -c, --config    Location of the config file, defaults to \"alinea.config.tsx\"\n  --fix           Any missing or incorrect properties will be overwritten by their default",
+      "fileName": "",
+      "language": "",
+      "compact": false
     }
   ],
   "metadata": {
+    "title": "",
+    "description": "",
     "openGraph": {
-      "image": {}
+      "title": "",
+      "image": {},
+      "description": ""
     }
   },
   "@alinea": {

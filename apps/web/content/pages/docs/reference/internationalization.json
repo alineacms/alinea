@@ -22,7 +22,7 @@
         },
         {
           "type": "text",
-          "text": "root",
+          "text": "Root",
           "marks": [
             {
               "type": "link",
@@ -38,11 +38,11 @@
         },
         {
           "type": "text",
-          "text": " in your schema. It requires a list of supported locales. Any entry created within this root can then be translated to the other languages. The url of these entries will have the locale prepended (this behaviour can be configured, see the `entryUrl` when creating a "
+          "text": " in your schema. It requires a list of supported locales. Any entry created within this root can then be translated to the other languages. The url of these entries will have the locale prepended (this behaviour can be configured, see the `entryUrl` property when creating a "
         },
         {
           "type": "text",
-          "text": "type",
+          "text": "Type",
           "marks": [
             {
               "type": "link",

@@ -261,15 +261,12 @@ export function createEntryEditor(entryData: EntryData) {
       if (isTransacting) return Promise.resolve()
       isTransacting = true
       const timeout = setTimeout(() => {
-        if (options.clearChanges) set(hasChanges, false)
         set(transition, options.transition)
       }, 250)
       const currentChanges = get(hasChanges)
+      if (options.clearChanges) set(hasChanges, false)
       return options
         .action()
-        .then(() => {
-          if (options.clearChanges) set(hasChanges, false)
-        })
         .catch(error => {
           if (options.clearChanges) set(hasChanges, currentChanges)
           set(errorAtom, options.errorMessage, error)

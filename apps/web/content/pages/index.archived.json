@@ -94,7 +94,7 @@
         "index": "a1",
         "type": "Variant",
         "name": "Configure fields",
-        "code": "import {alinea} from 'alinea'\n\nconst BlogPost = alinea.type('Blog post', {\n  title: alinea.text('Blog entry title'),\n  body: alinea.richText('Body text')\n})"
+        "code": "import alinea from 'alinea'\n\nconst BlogPost = alinea.type('Blog post', {\n  title: alinea.text('Blog entry title'),\n  body: alinea.richText('Body text')\n})"
       },
       {
         "id": "ZCapLFBYLA2c5Qsdz_dqs",

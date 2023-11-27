@@ -1,6 +1,4 @@
 {
-  "id": "PzbIyWahkBmKgPac_X7FY",
-  "type": "Doc",
   "title": "TypeScript",
   "body": [
     {
@@ -20,57 +18,51 @@
       "content": [
         {
           "type": "text",
-          "text": "For every type used in your schema a TypeScript definition is automatically generated. They are all bundled in the `Page` namespace."
-        }
-      ]
-    },
-    {
-      "type": "paragraph",
-      "textAlign": "left",
-      "content": [
+          "text": "The type of a content "
+        },
         {
           "type": "text",
-          "text": "The example schema below:"
+          "text": "Type",
+          "marks": [
+            {
+              "type": "link",
+              "attrs": {
+                "data-id": "2Yl9ynH58z4tA5NUrpzBQbDeJ4r",
+                "data-entry": "267QuOShP41WnFxQFOcHZQoCsla",
+                "data-type": "entry",
+                "href": null,
+                "title": ""
+              }
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": " can be inferred."
         }
       ]
     },
     {
       "id": "x22_stOQkju1mt4F41ffb",
       "type": "CodeBlock",
-      "code": "alinea.schema({\n  BlogOverview: alinea.type('Blog overview', {\n    title: alinea.text('Title'),\n    path: alinea.path('Path')\n  }).configure({\n    isContainer: true,\n    contains: ['BlogPost']\n  }),\n  BlogPost: alinea.type('Blog post', {\n    title: alinea.text('Title'),\n    path: alinea.path('Path'),\n    publishDate: alinea.date('Publish date'),\n    body: alinea.richText('Body')\n  })\n})"
-    },
-    {
-      "type": "paragraph",
-      "textAlign": "left",
-      "content": [
-        {
-          "type": "text",
-          "text": "Will have the following types available:"
-        }
-      ]
-    },
-    {
-      "id": "onnwz8OLXQ1dIZgXD0Jpf",
-      "type": "CodeBlock",
-      "code": "import {Entry, TextDoc} from '@aline/core'\nexport namespace Page {\n  export interface BlogOverview extends Entry {\n    type: \"BlogOverview\"\n    title: string\n    path: string\n  }\n  export interface BlogPost extends Entry {\n    type: \"BlogPost\"\n    title: string\n    path: string\n    publishDate: string\n    body: TextDoc  \n  }\n}\nexport type Page = \n  | Page.BlogOverview\n  | Page.BlogPost"
-    },
-    {
-      "type": "paragraph",
-      "textAlign": "left",
-      "content": [
-        {
-          "type": "text",
-          "text": "Which can be imported from the content package."
-        }
-      ]
-    },
-    {
-      "id": "W2NnQtGHkU2m958whlPt_",
-      "type": "CodeBlock",
-      "code": "import {Page} from '@alinea/generated'"
+      "code": "import alinea from 'alinea'\n\nconst schema = alinea.schema({\n  BlogOverview: alinea.document('Blog overview', {\n    [alinea.meta]: {\n      isContainer: true,\n      contains: ['BlogPost']\n    }\n  }),\n  BlogPost: alinea.document('Blog post', {\n    publishDate: alinea.date('Publish date'),\n    body: alinea.richText('Body')\n  })\n})\n\ntype BlogOverview = alinea.infer<typeof schema.BlogOverview>\ntype BlogPost = alinea.infer<typeof schema.BlogPost>",
+      "fileName": "",
+      "language": "",
+      "compact": false
     }
   ],
-  "alinea": {
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "title": "",
+      "image": {},
+      "description": ""
+    }
+  },
+  "@alinea": {
+    "entryId": "PzbIyWahkBmKgPac_X7FY",
+    "type": "Doc",
     "index": "a2"
   }
 }

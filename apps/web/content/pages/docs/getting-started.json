@@ -42,7 +42,7 @@
           "type": "CodeBlock",
           "code": "npx create-next-app@latest",
           "fileName": "",
-          "language": "",
+          "language": "shellscript",
           "compact": false
         },
         {
@@ -96,7 +96,7 @@
           "content": [
             {
               "type": "text",
-              "text": "Change into the newly created project directory and install the package with your preferred package manager."
+              "text": "Navigate to the newly created project directory and install the package with your preferred package manager."
             }
           ]
         },

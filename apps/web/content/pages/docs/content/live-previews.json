@@ -1,5 +1,5 @@
 {
-  "title": "Deploy",
+  "title": "Live previews",
   "body": [
     {
       "type": "heading",
@@ -8,7 +8,7 @@
       "content": [
         {
           "type": "text",
-          "text": "Deploying Alinea"
+          "text": "Live previews"
         }
       ]
     },
@@ -18,12 +18,12 @@
       "content": [
         {
           "type": "text",
-          "text": "Once you're ready to deploy to production it's time to hook up Alinea to a backend. Alinea exposes a handler that can be hosted on most Javascript runtimes (Node.js or edge/serverless functions). The handler needs access to a backend service that can authenticate users, store drafts and publish changes back to the git repository."
+          "text": "You can set up a live preview of your website inside the dashboard."
         }
       ]
     },
     {
-      "id": "2YlDZu3VCLyEtX1gTkP607rdN1C",
+      "id": "2YlBukqI3TcPC4m3NMmmK4Spry6",
       "type": "FrameworkBlock",
       "next": [
         {
@@ -32,15 +32,15 @@
           "content": [
             {
               "type": "text",
-              "text": "Create the CMS handler in the app folder."
+              "text": "Create the following route in the app folder to handle previews:"
             }
           ]
         },
         {
-          "id": "2YlDbsyYSV7KaOpdP3SlyFKbgQf",
+          "id": "2YlByBMXwRLmN6kNpcOdoeWKtGC",
           "type": "CodeBlock",
-          "code": "import {cms} from '@/cms'\n\nexport const GET = cms.backendHandler\nexport const POST = cms.backendHandler",
-          "fileName": "app/api/cms/[...slug]/route.ts",
+          "code": "import {cms} from '@/cms'\n\nexport const GET = cms.previewHandler",
+          "fileName": "app/api/preview/route.ts",
           "language": "",
           "compact": false
         },
@@ -70,15 +70,33 @@
             },
             {
               "type": "text",
-              "text": " to inform Alinea where the handler is located and where to generate the admin dashboard."
+              "text": " with the preview url:"
             }
           ]
         },
         {
-          "id": "2YlDwmJLzaL93bp5gYZmshbJG1P",
+          "id": "2YlCBIFhktYqXLnxlG8MWbFhkA4",
           "type": "CodeBlock",
-          "code": "export const cms = createNextCMS({\n  // schema and workspaces ...\n  dashboard: {\n    handlerUrl: '/api/cms',\n    staticFile: 'public/admin.html',\n    dashboardUrl: '/admin.html'\n  }\n})",
-          "fileName": "",
+          "code": "export const cms = createNextCMS({\n  // schema and workspaces ...\n  preview:\n    process.env.NODE_ENV === 'development'\n      ? 'http://localhost:3000/api/preview'\n      : '/api/preview'\n})",
+          "fileName": "cms.tsx",
+          "language": "",
+          "compact": false
+        },
+        {
+          "type": "paragraph",
+          "textAlign": "left",
+          "content": [
+            {
+              "type": "text",
+              "text": "Include the preview widget (`<cms.previews />`) in your root layout:"
+            }
+          ]
+        },
+        {
+          "id": "2YlDBfC8A8tt3H8vaxKz1JZuov8",
+          "type": "CodeBlock",
+          "code": "import {cms} from '@/cms'\n\nexport default async function Layout({children}: PropsWithChildren) {\n  return (\n    <>\n      <header />\n      <main>{children}</main>\n      <footer />\n      <cms.previews />\n    </>\n  )\n}",
+          "fileName": "app/layout.tsx",
           "language": "",
           "compact": false
         }
@@ -96,8 +114,8 @@
     }
   },
   "@alinea": {
-    "entryId": "28NgMpMQkmTy4uyFhPj8z4XVqml",
-    "type": "Docs",
-    "index": "Zp"
+    "entryId": "2YlBsRF2vZwxcS27oOSJYmQM37q",
+    "type": "Doc",
+    "index": "a1V"
   }
 }

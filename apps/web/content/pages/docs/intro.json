@@ -31,35 +31,6 @@
         "entry": "2YWqKUTrANlgEFMyBUEYdih2HpP",
         "description": ""
       }
-    },
-    {
-      "type": "heading",
-      "textAlign": "left",
-      "level": 2,
-      "content": [
-        {
-          "type": "text",
-          "text": "Configuring alinea"
-        }
-      ]
-    },
-    {
-      "type": "paragraph",
-      "textAlign": "left",
-      "content": [
-        {
-          "type": "text",
-          "text": "The content schema is configured in a central config file. Content types define different fields that make up your page data. Alinea ships with a lot of field types but can easily be expanded with custom fields."
-        }
-      ]
-    },
-    {
-      "id": "ywilQqjnFgpesqZ88ztfg",
-      "type": "CodeBlock",
-      "code": "const BlogPost = alinea.type('Blog post', {\n  title: alinea.text('Blog entry title'),\n  path: alinea.path('Url path'),\n  body: alinea.richText('Body text')\n})",
-      "fileName": "",
-      "language": "",
-      "compact": false
     }
   ],
   "metadata": {

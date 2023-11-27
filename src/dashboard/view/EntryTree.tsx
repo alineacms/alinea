@@ -193,7 +193,8 @@ export function EntryTree({i18nId: entryId, selected = []}: EntryTreeProps) {
     <>
       <div ref={tree.registerElement} className={styles.tree()}>
         {tree.getItems().map((item, i) => {
-          return <EntryTreeItem key={i} item={item} data={item.getItemData()} />
+          const data = item.getItemData()
+          return <EntryTreeItem key={item.getId()} item={item} data={data} />
         })}
       </div>
     </>

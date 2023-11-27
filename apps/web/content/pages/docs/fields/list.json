@@ -1,6 +1,4 @@
 {
-  "id": "268hhWIV6twxD4PMp03isLY6Pac",
-  "type": "Doc",
   "title": "List",
   "body": [
     {
@@ -10,7 +8,7 @@
       "content": [
         {
           "type": "text",
-          "text": "List"
+          "text": "List field"
         }
       ]
     },
@@ -27,15 +25,29 @@
     {
       "id": "268j9BBXf8jwwZ427XxBT2O0snb",
       "type": "CodeBlock",
-      "code": "import {alinea} from 'alinea'\n\nalinea.list('My list field', {\n  schema: alinea.schema({\n    Text: alinea.type('Text', {\n      title: alinea.text('Item title'),\n      text: alinea.richText('Item body text')\n    }),\n    Image: alinea.type('Image', {\n      image: alinea.image('Image')\n    })\n  })\n})"
+      "code": "import alinea from 'alinea'\n\nalinea.list('My list field', {\n  schema: alinea.schema({\n    Text: alinea.type('Text', {\n      title: alinea.text('Item title'),\n      text: alinea.richText('Item body text')\n    }),\n    Image: alinea.type('Image', {\n      image: alinea.image('Image')\n    })\n  })\n})",
+      "fileName": "",
+      "language": "",
+      "compact": false
     },
     {
       "id": "MOMpcuuHwKl-kSmmbcKgx",
       "type": "ExampleBlock",
-      "code": "import {alinea} from 'alinea'\n\nexport default alinea.list('My list field', {\n  schema: alinea.schema({\n    Text: alinea.type('Text', {\n      title: alinea.text('Item title'),\n      text: alinea.richText('Item body text')\n    }),\n    Image: alinea.type('Image', {\n      image: alinea.image('Image')\n    })\n  })\n})"
+      "code": "export default alinea.type('List field', {\n  list: alinea.list('My list field', {\n    schema: alinea.schema({\n      Text: alinea.type('Text', {\n        title: alinea.text('Item title'),\n        text: alinea.richText('Item body text')\n      }),\n      Image: alinea.type('Image', {\n        image: alinea.image('Image')\n      })\n    })\n  })\n})"
     }
   ],
-  "alinea": {
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "title": "",
+      "image": {},
+      "description": ""
+    }
+  },
+  "@alinea": {
+    "entryId": "268hhWIV6twxD4PMp03isLY6Pac",
+    "type": "Doc",
     "index": "a2V"
   }
 }

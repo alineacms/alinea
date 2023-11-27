@@ -65,12 +65,16 @@ export async function init(options: InitOptions) {
     path.join(__dirname, 'static/init/cms.js'),
     'utf-8'
   )
-  const frameworkSpecific = options.next
+  const configFileContents = options.next
     ? configFile.replaceAll('createCMS', 'createNextCMS')
     : configFile
-  await fs.writeFile(path.join(cwd, 'cms.ts'), frameworkSpecific)
+  const hasSrcDir = (await outcome(fs.stat(path.join(cwd, 'src')))).isSuccess()
+  const configFileLocation = path.join(
+    cwd,
+    hasSrcDir ? 'src/cms.tsx' : 'cms.tsx'
+  )
+  await fs.writeFile(configFileLocation, configFileContents)
   const pm = await detectPm()
-
   for await (const _ of generate({cwd: path.resolve(cwd), quiet})) {
   }
   if (options.next) {

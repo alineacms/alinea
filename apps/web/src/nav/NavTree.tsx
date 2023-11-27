@@ -5,7 +5,7 @@ import {IcRoundKeyboardArrowDown} from 'alinea/ui/icons/IcRoundKeyboardArrowDown
 import {IcRoundKeyboardArrowRight} from 'alinea/ui/icons/IcRoundKeyboardArrowRight'
 import Link from 'next/link'
 import {useParams, usePathname} from 'next/navigation'
-import {useEffect, useMemo, useState} from 'react'
+import {ComponentProps, useEffect, useMemo, useState} from 'react'
 import {getFramework} from './Frameworks'
 import css from './NavTree.module.scss'
 import {Nav, NavItem, nestNav} from './NestNav'
@@ -14,6 +14,19 @@ const styles = fromModule(css)
 
 function useNavTree(nav: Nav) {
   return useMemo(() => nestNav(nav), [nav])
+}
+
+interface MaybeLinkProps extends Omit<ComponentProps<typeof Link>, 'href'> {
+  href?: string
+}
+
+function MaybeLink(props: MaybeLinkProps) {
+  if (!props.href) return props.children
+  return (
+    <Link {...props} href={props.href!}>
+      {props.children}
+    </Link>
+  )
 }
 
 interface NavTreeItemProps {
@@ -30,6 +43,7 @@ function NavTreeItem({level, page}: NavTreeItemProps) {
   const url = page.url && framework.link(page.url)
   const isOpen = Boolean(showChildren ?? (url && pathname.startsWith(url)))
   const isContainer = page.children && page.children.length > 0
+  const isActive = pathname === url
   useEffect(() => {
     setShowChildren(undefined)
   }, [pathname])
@@ -37,32 +51,36 @@ function NavTreeItem({level, page}: NavTreeItemProps) {
     <>
       {isContainer ? (
         <div className={styles.root.sub()}>
-          <HStack
-            center
-            gap={8}
-            className={styles.root.link({selected: isOpen, category: true})}
-            onClick={e => {
-              e.preventDefault()
-              setShowChildren(!isOpen)
-            }}
-          >
-            {isOpen ? (
-              <IcRoundKeyboardArrowDown className={styles.root.link.icon()} />
-            ) : (
-              <IcRoundKeyboardArrowRight className={styles.root.link.icon()} />
-            )}
-            <span>{page.label || page.title}</span>
-          </HStack>
+          <MaybeLink href={url}>
+            <HStack
+              center
+              gap={8}
+              className={styles.root.link({
+                selected: isOpen,
+                category: true,
+                active: isActive
+              })}
+            >
+              {isOpen ? (
+                <IcRoundKeyboardArrowDown className={styles.root.link.icon()} />
+              ) : (
+                <IcRoundKeyboardArrowRight
+                  className={styles.root.link.icon()}
+                />
+              )}
+              <span>{page.label || page.title}</span>
+            </HStack>
+          </MaybeLink>
           {page.children && (
             <NavTree nav={page.children} level={level + 1} open={isOpen} />
           )}
         </div>
       ) : (
         <div>
-          <Link
-            href={url!}
+          <MaybeLink
+            href={url}
             className={styles.root.link({
-              active: pathname === url
+              active: isActive
             })}
           >
             <HStack center gap={8}>
@@ -73,7 +91,7 @@ function NavTreeItem({level, page}: NavTreeItemProps) {
                 )*/}
               <span>{page.label || page.title}</span>
             </HStack>
-          </Link>
+          </MaybeLink>
         </div>
       )}
     </>

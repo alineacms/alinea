@@ -12,12 +12,9 @@ import {
   QueryClientProvider as ReactQueryClientProvider
 } from 'react-query'
 import {navMatchers} from './DashboardNav.js'
+import {DashboardProvider} from './DashboardProvider.js'
 import {router} from './Routes.js'
-import {
-  queryClientAtom,
-  sessionAtom,
-  useSetDashboardOptions
-} from './atoms/DashboardAtoms.js'
+import {sessionAtom} from './atoms/DashboardAtoms.js'
 import {dbHashAtom, useDbUpdater} from './atoms/DbAtoms.js'
 import {errorAtom} from './atoms/ErrorAtoms.js'
 import {locationAtom, matchAtoms, useLocation} from './atoms/LocationAtoms.js'
@@ -32,7 +29,7 @@ import {useWorkspace} from './hook/UseWorkspace.js'
 import {Head} from './util/Head.js'
 import {SuspenseBoundary} from './util/SuspenseBoundary.js'
 import {ErrorBoundary} from './view/ErrorBoundary.js'
-import {Modal, ModalPortal} from './view/Modal.js'
+import {Modal} from './view/Modal.js'
 import {Sidebar} from './view/Sidebar.js'
 import {Toolbar} from './view/Toolbar.js'
 import {Viewport} from './view/Viewport.js'
@@ -192,15 +189,12 @@ export interface AppProps {
 
 export function App(props: AppProps) {
   const fullPage = props.fullPage !== false
-  useSetDashboardOptions({fullPage, ...props})
   const {color} = Config.mainWorkspace(props.config)
-  const queryClient = useAtomValue(queryClientAtom)
   return (
-    <QueryClientProvider client={queryClient}>
+    <DashboardProvider {...props}>
       <Viewport attachToBody={fullPage} contain color={color}>
         <AppRoot />
       </Viewport>
-      <ModalPortal />
-    </QueryClientProvider>
+    </DashboardProvider>
   )
 }

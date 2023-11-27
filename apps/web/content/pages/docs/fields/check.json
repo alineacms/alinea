@@ -1,6 +1,4 @@
 {
-  "id": "28htwzY7qMeaV15j276Myvpek8y",
-  "type": "Doc",
   "title": "Check",
   "body": [
     {
@@ -10,7 +8,7 @@
       "content": [
         {
           "type": "text",
-          "text": "Check"
+          "text": "Check field"
         }
       ]
     },
@@ -27,16 +25,29 @@
     {
       "id": "28hu0MbpUcAOhWTWi954kRRNHcM",
       "type": "CodeBlock",
-      "code": "import {alinea} from 'alinea'\nalinea.check('My check field', {\n  label: 'This is an example check field'\n})",
+      "code": "import alinea from 'alinea'\n\nalinea.check('Check field', {\n  label: 'This is an example check field'\n})",
+      "fileName": "",
+      "language": "",
       "compact": true
     },
     {
       "id": "2LfI_a2TA_L7QW2kK-nDa",
       "type": "ExampleBlock",
-      "code": "import {alinea} from 'alinea'\nexport default alinea.check('My check field', {\n  label: 'This is an example check field'\n})"
+      "code": "export default alinea.type('Check field', {\n  check: alinea.check('Check field', {\n    label: 'This is an example check field'\n  })\n})"
     }
   ],
-  "alinea": {
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "title": "",
+      "image": {},
+      "description": ""
+    }
+  },
+  "@alinea": {
+    "entryId": "28htwzY7qMeaV15j276Myvpek8y",
+    "type": "Doc",
     "index": "a29"
   }
 }
