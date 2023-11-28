@@ -231,68 +231,6 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Enable collaboration",
-                  "marks": [
-                    {
-                      "type": "bold"
-                    }
-                  ]
-                },
-                {
-                  "type": "text",
-                  "text": " "
-                },
-                {
-                  "type": "text",
-                  "text": "#26",
-                  "marks": [
-                    {
-                      "type": "link",
-                      "attrs": {
-                        "data-id": "frPLzIVEREr5iLZE5b_tT",
-                        "data-entry": null,
-                        "data-type": null,
-                        "href": "https://github.com/alineacms/alinea/issues/26",
-                        "target": "_blank",
-                        "title": null
-                      }
-                    }
-                  ]
-                },
-                {
-                  "type": "text",
-                  "text": " "
-                },
-                {
-                  "type": "text",
-                  "text": "#51",
-                  "marks": [
-                    {
-                      "type": "link",
-                      "attrs": {
-                        "data-id": "R4L6DXi-yhcsXiPJ-R-3S",
-                        "data-entry": null,
-                        "data-type": null,
-                        "href": "https://github.com/alineacms/alinea/issues/51",
-                        "target": "_blank",
-                        "title": null
-                      }
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "type": "listItem",
-          "content": [
-            {
-              "type": "paragraph",
-              "textAlign": "left",
-              "content": [
-                {
-                  "type": "text",
                   "text": "Full text search",
                   "marks": [
                     {
