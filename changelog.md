@@ -1,5 +1,10 @@
 # Changelog
 
+## [Unreleased]
+
+- A type check before creating new entries was incorrect making it impossible
+  create new entries on the root level.
+
 ## [0.4.0]
 
 - This release contains a major rewrite. Read the blog post for more information.

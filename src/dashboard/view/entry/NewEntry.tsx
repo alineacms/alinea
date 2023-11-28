@@ -109,10 +109,10 @@ function NewEntryForm({parentId}: NewEntryProps) {
     {suspense: true, keepPreviousData: true, staleTime: 0}
   )
   const parentPaths = parent ? parent.parentPaths.concat(parent.path) : []
-  const type = parent && config.schema[parent.type]
+  const parentType = parent && config.schema[parent.type]
   const types: Array<string> = !parent
     ? root.contains || []
-    : (type && Type.meta(type).contains) || keys(config.schema)
+    : (parentType && Type.meta(parentType).contains) || keys(config.schema)
   const selectedType = useField(
     select(
       'Select type',
@@ -124,7 +124,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
       ),
       {initialValue: types[0]}
     ),
-    [type]
+    [parentType]
   )
   const titleField = useField(text('Title', {autoFocus: true}))
   const [isCreating, setIsCreating] = useState(false)
@@ -134,7 +134,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
     e.preventDefault()
     const title = titleField()
     const selected = selectedType()
-    if (!selected || !title || !type) return
+    if (!selected || !title) return
     setIsCreating(true)
     const path = slugify(title)
     const entryId = createId()
@@ -148,7 +148,8 @@ function NewEntryForm({parentId}: NewEntryProps) {
     const filePath = entryFilepath(config, data, parentPaths)
     const childrenDir = entryChildrenDir(config, data, parentPaths)
     const parentDir = dirname(filePath)
-    const url = entryUrl(type, {...data, parentPaths})
+    const entryType = config.schema[selected]!
+    const url = entryUrl(entryType, {...data, parentPaths})
     const entry = await createEntryRow(config, {
       entryId,
       ...data,
