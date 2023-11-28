@@ -3,12 +3,21 @@ import {atom, useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {atomFamily} from 'jotai/utils'
 import {parse} from 'regexparam'
 
-export const hashAtom = atom(location.hash, (get, set, hash: string) => {
-  if (get(hashAtom) !== hash) location.hash = hash
-  set(hashAtom, hash)
-})
+const browser = {
+  get location() {
+    return globalThis?.location! ?? {hash: ''}
+  }
+}
+
+export const hashAtom = atom(
+  browser.location.hash,
+  (get, set, hash: string) => {
+    if (get(hashAtom) !== hash) browser.location.hash = hash
+    set(hashAtom, hash)
+  }
+)
 hashAtom.onMount = set => {
-  const listener = () => set(location.hash)
+  const listener = () => set(browser.location.hash)
   window.addEventListener('hashchange', listener)
   return () => window.removeEventListener('hashchange', listener)
 }
@@ -17,7 +26,7 @@ export const locationAtom = atom(
   get => {
     const hash = get(hashAtom)
     const path = hash.slice(1) || '/'
-    return new URL(path, location.href)
+    return new URL(path, browser.location.href)
   },
   (get, set, url: string) => {
     const hash = `#${url}`

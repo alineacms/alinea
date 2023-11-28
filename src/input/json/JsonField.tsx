@@ -1,4 +1,5 @@
-import {Field, FieldOptions, Hint, Label} from 'alinea/core'
+import {FieldOptions, Hint, Label} from 'alinea/core'
+import {ScalarField} from 'alinea/core/field/ScalarField'
 
 /** Optional settings to configure a JSON field */
 export interface JsonOptions<Value> extends FieldOptions {
@@ -17,7 +18,7 @@ export interface JsonOptions<Value> extends FieldOptions {
 }
 
 /** Internal representation of a text field */
-export class JsonField<Value> extends Field.Scalar<Value, JsonOptions<Value>> {}
+export class JsonField<Value> extends ScalarField<Value, JsonOptions<Value>> {}
 
 /** Create a text field configuration */
 export function json<T>(

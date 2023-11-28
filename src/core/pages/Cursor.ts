@@ -1,10 +1,13 @@
 import {array, boolean, enums, number, object, string} from 'cito'
 import {Type} from '../Type.js'
 import {entries} from '../util/Objects.js'
-import {BinaryOp, EV, Expr, ExprData, and} from './Expr.js'
+import {createExprData} from './CreateExprData.js'
+import {createSelection} from './CreateSelection.js'
+import {EV, Expr, and} from './Expr.js'
+import {BinaryOp, ExprData} from './ExprData.js'
 import {Projection} from './Projection.js'
 import {Selection} from './Selection.js'
-import {TargetData} from './Target.js'
+import {TargetData} from './TargetData.js'
 
 export enum OrderDirection {
   Asc = 'Asc',
@@ -99,7 +102,7 @@ export namespace Cursor {
 
     get<S extends Projection>(select: S): Get<Selection.Infer<S>> {
       const query = this.with({first: true})
-      if (select) query.select = Selection.create(select)
+      if (select) query.select = createSelection(select)
       return new Get<Selection.Infer<S>>(query)
     }
 
@@ -119,12 +122,12 @@ export namespace Cursor {
 
     select<S extends Projection>(select: S): Find<Selection.Infer<S>> {
       return new Find<Selection.Infer<S>>(
-        this.with({select: Selection.create(select)})
+        this.with({select: createSelection(select)})
       )
     }
 
     groupBy(...groupBy: Array<Expr<any>>): Find<Row> {
-      return new Find<Row>(this.with({groupBy: groupBy.map(ExprData)}))
+      return new Find<Row>(this.with({groupBy: groupBy.map(createExprData)}))
     }
 
     orderBy(...orderBy: Array<OrderBy>): Find<Row> {
@@ -158,7 +161,11 @@ export namespace Cursor {
       const conditions = entries(input || {}).map(([key, value]) => {
         const field = Expr(ExprData.Field({type}, key))
         return Expr(
-          ExprData.BinOp(field[Expr.Data], BinaryOp.Equals, ExprData(value))
+          ExprData.BinOp(
+            field[Expr.Data],
+            BinaryOp.Equals,
+            createExprData(value)
+          )
         )
       })
       return and(...conditions)[Expr.Data]
@@ -181,7 +188,7 @@ export namespace Cursor {
 
     select<S extends Projection>(select: S): Get<Selection.Infer<S>> {
       return new Get<Selection.Infer<S>>(
-        this.with({select: Selection.create(select)})
+        this.with({select: createSelection(select)})
       )
     }
   }

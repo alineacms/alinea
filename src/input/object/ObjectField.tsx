@@ -1,4 +1,5 @@
-import {Field, FieldOptions, Label, Type} from 'alinea/core'
+import {FieldOptions, Label, Type} from 'alinea/core'
+import {RecordField} from 'alinea/core/field/RecordField'
 
 export interface ObjectOptions<Definition> extends FieldOptions {
   /** The fields */
@@ -8,7 +9,7 @@ export interface ObjectOptions<Definition> extends FieldOptions {
   inline?: boolean
 }
 
-export class ObjectField<Definition> extends Field.Record<
+export class ObjectField<Definition> extends RecordField<
   Type.Infer<Definition>,
   ObjectOptions<Definition>
 > {}

@@ -15,6 +15,7 @@ import {
 } from 'alinea/core'
 import {EntryRecord} from 'alinea/core/EntryRecord'
 import {EditMutation, Mutation, MutationType} from 'alinea/core/Mutation'
+import {createSelection} from 'alinea/core/pages/CreateSelection'
 import {Realm} from 'alinea/core/pages/Realm'
 import {Selection} from 'alinea/core/pages/Selection'
 import {base64, base64url} from 'alinea/core/util/Encoding'
@@ -88,7 +89,7 @@ export class Handler implements Resolver {
     await this.periodicSync()
     const update = unzlibSync(base64url.parse(preview.update))
     const entry = await this.resolver.resolve<EntryRow>({
-      selection: Selection.create(
+      selection: createSelection(
         Entry({entryId: preview.entryId}).maybeFirst()
       ),
       realm: Realm.PreferDraft

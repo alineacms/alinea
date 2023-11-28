@@ -5,12 +5,6 @@ import type {ComponentType} from 'react'
 import {Hint} from './Hint.js'
 import {Label} from './Label.js'
 import {Shape} from './Shape.js'
-import {TextDoc} from './TextDoc.js'
-import {ListMutator, ListRow, ListShape} from './shape/ListShape.js'
-import {RecordMutator, RecordShape} from './shape/RecordShape.js'
-import {RichTextMutator, RichTextShape} from './shape/RichTextShape.js'
-import {ScalarShape} from './shape/ScalarShape.js'
-import {UnionMutator, UnionRow, UnionShape} from './shape/UnionShape.js'
 
 export interface FieldOptions {
   hidden?: boolean
@@ -48,94 +42,6 @@ export class Field<Value = unknown, OnChange = unknown, Options = {}> {
 
 export namespace Field {
   export const Data = Symbol.for('@alinea/Field.Data')
-
-  export class Scalar<Value, Options> extends Field<
-    Value,
-    (value: Value) => void,
-    Options
-  > {
-    constructor(meta: FieldMeta<Value, (value: Value) => void, Options>) {
-      super({
-        shape: new ScalarShape(meta.label, meta.initialValue),
-        ...meta
-      })
-    }
-  }
-
-  export class List<Schema, Options> extends Field<
-    Array<ListRow & Schema>,
-    ListMutator<ListRow & Schema>,
-    Options
-  > {
-    constructor(
-      shape: {[key: string]: RecordShape<any>},
-      meta: FieldMeta<
-        Array<ListRow & Schema>,
-        ListMutator<ListRow & Schema>,
-        Options
-      >
-    ) {
-      super({
-        shape: new ListShape(
-          meta.label,
-          shape,
-          meta.initialValue,
-          meta.postProcess
-        ),
-        ...meta
-      })
-    }
-  }
-
-  export class Union<Row, Options> extends Field<
-    UnionRow & Row,
-    UnionMutator<Row>,
-    Options
-  > {
-    constructor(
-      shapes: {[key: string]: RecordShape<any>},
-      meta: FieldMeta<UnionRow & Row, UnionMutator<Row>, Options>
-    ) {
-      super({
-        shape: new UnionShape<Row>(
-          meta.label,
-          shapes,
-          meta.initialValue,
-          meta.postProcess
-        ),
-        ...meta
-      })
-    }
-  }
-
-  export class Record<Row, Options> extends Field<
-    Row,
-    RecordMutator<Row>,
-    Options
-  > {
-    constructor(
-      shape: RecordShape<any>,
-      meta: FieldMeta<Row, RecordMutator<Row>, Options>
-    ) {
-      super({shape, ...meta})
-    }
-  }
-
-  export class RichText<Blocks, Options> extends Field<
-    TextDoc<Blocks>,
-    RichTextMutator<Blocks>,
-    Options
-  > {
-    constructor(
-      shape: {[key: string]: RecordShape<any>} | undefined,
-      meta: FieldMeta<TextDoc<Blocks>, RichTextMutator<Blocks>, Options>
-    ) {
-      super({
-        shape: new RichTextShape(meta.label, shape, meta.initialValue),
-        ...meta
-      })
-    }
-  }
 
   export function provideView<
     Value,

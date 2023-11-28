@@ -8,6 +8,7 @@ import {
   ReactNodeViewRenderer
 } from '@tiptap/react'
 import {createId, Field, outcome, Schema, Type} from 'alinea/core'
+import {RichTextField} from 'alinea/core/field/RichTextField'
 import {entries} from 'alinea/core/util/Objects'
 import {IconButton} from 'alinea/dashboard/view/IconButton'
 import {InputForm, InputLabel, InputState, useInput} from 'alinea/editor'
@@ -28,7 +29,7 @@ import {
 } from 'react'
 import {useEditor} from './hook/UseEditor.js'
 import {PickTextLink, usePickTextLink} from './PickTextLink.js'
-import {richText as createRichText, RichTextField} from './RichTextField.js'
+import {richText as createRichText, RichTextOptions} from './RichTextField.js'
 import css from './RichTextField.module.scss'
 import {RichTextKit} from './RichTextKit.js'
 import {RichTextToolbar} from './RichTextToolbar.js'
@@ -265,7 +266,7 @@ function RichTextEditor<Blocks extends Schema>({
 
 export interface RichTextInputProps<Blocks extends Schema> {
   state: InputState<InputState.Text<Blocks>>
-  field: RichTextField<Blocks>
+  field: RichTextField<Blocks, RichTextOptions<Blocks>>
 }
 
 export function RichTextInput<Blocks extends Schema>({

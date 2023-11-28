@@ -1,4 +1,5 @@
-import {Field, Type, type} from 'alinea/core'
+import {Type, type} from 'alinea/core'
+import {RecordField} from 'alinea/core/field/RecordField'
 import {link} from 'alinea/input/link'
 import {ObjectField, object} from 'alinea/input/object'
 import {TextField, text} from 'alinea/input/text'
@@ -21,7 +22,7 @@ export interface MetadataFields {
   }>
 }
 
-export class MetadataField extends Field.Record<
+export class MetadataField extends RecordField<
   Type.Infer<MetadataFields>,
   MetadataOptions & {fields: Type<MetadataFields>}
 > {}

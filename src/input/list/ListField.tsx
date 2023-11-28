@@ -1,5 +1,6 @@
-import {Field, FieldOptions, Label, Schema} from 'alinea/core'
+import {FieldOptions, Label, Schema} from 'alinea/core'
 import {Infer} from 'alinea/core/Infer'
+import {ListField} from 'alinea/core/field/ListField'
 import {listHint} from 'alinea/core/util/Hints'
 
 /** Optional settings to configure a list field */
@@ -24,17 +25,11 @@ export interface ListRow {
   type: string
 }
 
-/** Internal representation of a list field */
-export class ListField<Definitions extends Schema> extends Field.List<
-  Infer<Definitions>,
-  ListOptions<Definitions>
-> {}
-
 /** Create a list field configuration */
 export function list<Definitions extends Schema>(
   label: Label,
   options: ListOptions<Definitions>
-): ListField<Definitions> {
+): ListField<Infer<Definitions>, ListOptions<Definitions>> {
   return new ListField(Schema.shapes(options.schema), {
     hint: listHint(options.schema),
     label,

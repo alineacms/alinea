@@ -15,8 +15,8 @@ import {Entry} from '../Entry.js'
 import {EntryPhase} from '../EntryRow.js'
 import {outcome} from '../Outcome.js'
 import {ResolveDefaults, Resolver} from '../Resolver.js'
+import {createSelection} from '../pages/CreateSelection.js'
 import {Realm} from '../pages/Realm.js'
-import {Selection} from '../pages/Selection.js'
 import {DefaultDriver} from './DefaultDriver.server.js'
 import {NextApi} from './NextDriver.js'
 
@@ -102,7 +102,7 @@ class NextDriver extends DefaultDriver implements NextApi {
     const resolveDefaults = await this.getDefaults()
     const url = (await cnx.resolve({
       ...resolveDefaults,
-      selection: Selection.create(
+      selection: createSelection(
         Entry({entryId: params.entryId}).select(Entry.url).first()
       )
     })) as string | null

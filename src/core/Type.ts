@@ -1,6 +1,6 @@
 import {EntryPhase, Expand} from 'alinea/core'
 import {Cursor} from 'alinea/core/pages/Cursor'
-import {BinaryOp, Expr, ExprData, and} from 'alinea/core/pages/Expr'
+import {Expr, and} from 'alinea/core/pages/Expr'
 import {EntryEditProps} from 'alinea/dashboard/view/EntryEdit'
 import {Callable} from 'rado/util/Callable'
 import type {ComponentType} from 'react'
@@ -11,6 +11,8 @@ import {Label} from './Label.js'
 import {Meta, StripMeta} from './Meta.js'
 import {Section, section} from './Section.js'
 import type {View} from './View.js'
+import {createExprData} from './pages/CreateExprData.js'
+import {BinaryOp, ExprData} from './pages/ExprData.js'
 import {RecordShape} from './shape/RecordShape.js'
 import {
   assign,
@@ -201,10 +203,14 @@ class TypeInstance<Definition extends TypeDefinition> implements TypeData {
       ? entries(input[0]).map(([key, value]) => {
           const field = Expr(ExprData.Field({type: this.target}, key))
           return Expr(
-            ExprData.BinOp(field[Expr.Data], BinaryOp.Equals, ExprData(value))
+            ExprData.BinOp(
+              field[Expr.Data],
+              BinaryOp.Equals,
+              createExprData(value)
+            )
           )
         })
-      : input.map(ev => Expr(ExprData(ev)))
+      : input.map(ev => Expr(createExprData(ev)))
     return and(...conditions)[Expr.Data]
   }
 

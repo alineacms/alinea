@@ -1,4 +1,5 @@
-import {Field, FieldOptions, Hint, Label} from 'alinea/core'
+import {FieldOptions, Hint, Label} from 'alinea/core'
+import {ScalarField} from 'alinea/core/field/ScalarField'
 
 /** Optional settings to configure a text field */
 export interface CheckOptions extends FieldOptions {
@@ -19,7 +20,7 @@ export interface CheckOptions extends FieldOptions {
 }
 
 /** Internal representation of a text field */
-export class CheckField extends Field.Scalar<boolean, CheckOptions> {}
+export class CheckField extends ScalarField<boolean, CheckOptions> {}
 
 /** Create a text field configuration */
 export function check(label: Label, options: CheckOptions = {}): CheckField {

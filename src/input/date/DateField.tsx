@@ -1,4 +1,5 @@
-import {Field, FieldOptions, Hint, Label} from 'alinea/core'
+import {FieldOptions, Hint, Label} from 'alinea/core'
+import {ScalarField} from 'alinea/core/field/ScalarField'
 
 /** Optional settings to configure a text field */
 export interface DateOptions extends FieldOptions {
@@ -21,7 +22,7 @@ export interface DateOptions extends FieldOptions {
 }
 
 /** Internal representation of a date field */
-export class DateField extends Field.Scalar<string, DateOptions> {}
+export class DateField extends ScalarField<string, DateOptions> {}
 
 /** Create a date field configuration */
 export function date(label: Label, options: DateOptions = {}): DateField {

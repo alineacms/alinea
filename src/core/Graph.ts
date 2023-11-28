@@ -5,6 +5,7 @@ import {Root} from './Root.js'
 import {Schema} from './Schema.js'
 import {Type} from './Type.js'
 import {Workspace} from './Workspace.js'
+import {createSelection} from './pages/CreateSelection.js'
 import {Cursor} from './pages/Cursor.js'
 import {Projection} from './pages/Projection.js'
 import {Realm} from './pages/Realm.js'
@@ -58,7 +59,7 @@ export class GraphRealm implements GraphRealmApi {
   async maybeGet(select: any) {
     if (select instanceof Cursor.Find) select = select.first()
     if (Type.isType(select)) select = select().first()
-    const selection = Selection.create(select)
+    const selection = createSelection(select)
     serializeSelection(this.targets, selection)
     return this.resolve({
       selection,
@@ -76,7 +77,7 @@ export class GraphRealm implements GraphRealmApi {
 
   find<S extends Projection | Type>(select: S): Promise<Selection.Infer<S>>
   async find(select: any) {
-    const selection = Selection.create(select)
+    const selection = createSelection(select)
     serializeSelection(this.targets, selection)
     return this.resolve({
       selection,
@@ -87,7 +88,7 @@ export class GraphRealm implements GraphRealmApi {
 
   count(cursor: Cursor.Find<any>): Promise<number>
   async count(cursor: Cursor.Find<any>) {
-    const selection = Selection.create(cursor.count())
+    const selection = createSelection(cursor.count())
     serializeSelection(this.targets, selection)
     return this.resolve({
       selection,

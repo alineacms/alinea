@@ -21,7 +21,8 @@ import {
   verticalListSortingStrategy
 } from '@dnd-kit/sortable'
 import {CSS, FirstArgument} from '@dnd-kit/utilities'
-import {Field, Schema, Type} from 'alinea/core'
+import {Field, Infer, Schema, Type} from 'alinea/core'
+import {ListField} from 'alinea/core/field/ListField'
 import {entries} from 'alinea/core/util/Objects'
 import {Create} from 'alinea/dashboard/view/Create'
 import {IconButton} from 'alinea/dashboard/view/IconButton'
@@ -41,7 +42,7 @@ import {
   Ref,
   useState
 } from 'react'
-import {list as createList, ListField, ListRow} from './ListField.js'
+import {list as createList, ListOptions, ListRow} from './ListField.js'
 import css from './ListInput.module.scss'
 export * from './ListField.js'
 
@@ -83,7 +84,7 @@ type ListInputRowProps = PropsWithChildren<
   {
     row: ListRow
     path: InputState<ListRow>
-    field: ListField<Schema>
+    field: ListField<Infer<Schema>, ListOptions<Schema>>
     isDragging?: boolean
     onMove?: (direction: 1 | -1) => void
     onDelete?: () => void
@@ -170,7 +171,7 @@ function ListInputRow({
 }
 
 interface ListCreateRowProps {
-  field: ListField<Schema>
+  field: ListField<Infer<Schema>, ListOptions<Schema>>
   inline?: boolean
   onCreate: (type: string) => void
 }
@@ -216,7 +217,7 @@ function ListInsertRow({first, open, onInsert}: ListInsertRowProps) {
 
 export interface ListInputProps {
   state: InputState<InputState.List<any>>
-  field: ListField<Schema>
+  field: ListField<Infer<Schema>, ListOptions<Schema>>
 }
 
 const layoutMeasuringConfig = {

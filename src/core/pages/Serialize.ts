@@ -7,9 +7,9 @@ import {Workspace} from '../Workspace.js'
 import {entries, values} from '../util/Objects.js'
 import {unreachable} from '../util/Types.js'
 import {CursorData} from './Cursor.js'
-import {ExprData} from './Expr.js'
+import {ExprData} from './ExprData.js'
 import {Selection} from './Selection.js'
-import {TargetData} from './Target.js'
+import {TargetData} from './TargetData.js'
 
 export function seralizeLocation(
   config: Config,

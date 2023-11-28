@@ -1,4 +1,6 @@
-import {Field, FieldOptions, Hint, Label, Reference} from 'alinea/core'
+import {FieldOptions, Hint, Label, Reference} from 'alinea/core'
+import {ListField} from 'alinea/core/field/ListField'
+import {UnionField} from 'alinea/core/field/UnionField'
 import {entries, fromEntries} from 'alinea/core/util/Objects'
 import type {Picker} from 'alinea/editor/Picker'
 
@@ -19,7 +21,7 @@ export interface LinkOptions<Row extends Reference> extends LinkFieldOptions {
   pickers: Record<string, Picker<any, any>>
 }
 
-export class LinkField<Row extends Reference> extends Field.Union<
+export class LinkField<Row extends Reference> extends UnionField<
   Row,
   LinkOptions<Row>
 > {}
@@ -51,7 +53,7 @@ export function createLink<Row extends Reference>(
 }
 
 /** Internal representation of a link field */
-export class LinksField<Row extends Reference> extends Field.List<
+export class LinksField<Row extends Reference> extends ListField<
   Row,
   LinkOptions<Row> & {max?: number}
 > {}

@@ -1,4 +1,5 @@
-import {Field, FieldOptions, Hint, Label} from 'alinea/core'
+import {FieldOptions, Hint, Label} from 'alinea/core'
+import {ScalarField} from 'alinea/core/field/ScalarField'
 
 export interface NumberOptions extends FieldOptions {
   /** Width of the field in the dashboard UI (0-1) */
@@ -19,7 +20,7 @@ export interface NumberOptions extends FieldOptions {
   step?: number
 }
 
-export class NumberField extends Field.Scalar<number | null, NumberOptions> {}
+export class NumberField extends ScalarField<number | null, NumberOptions> {}
 
 export function number(label: Label, options: NumberOptions = {}): NumberField {
   return new NumberField({

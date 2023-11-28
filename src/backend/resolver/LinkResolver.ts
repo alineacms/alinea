@@ -1,12 +1,13 @@
 import {Entry} from 'alinea/core'
+import {createSelection} from 'alinea/core/pages/CreateSelection'
 import {Projection} from 'alinea/core/pages/Projection'
 import {Realm} from 'alinea/core/pages/Realm'
-import {Selection} from 'alinea/core/pages/Selection'
 import {serializeSelection} from 'alinea/core/pages/Serialize'
 import DataLoader from 'dataloader'
 import {Query} from 'rado'
 import {Store} from '../Store.js'
-import {EntryResolver, ResolveContext} from './EntryResolver.js'
+import type {EntryResolver} from './EntryResolver.js'
+import {ResolveContext} from './ResolveContext.js'
 
 interface LinkData {
   entryId: string
@@ -25,7 +26,7 @@ export class LinkResolver {
   load(projection: Projection) {
     return new DataLoader<string, object>(
       async (ids: ReadonlyArray<string>) => {
-        const selection = Selection.create(
+        const selection = createSelection(
           Entry().where(Entry.entryId.isIn(ids)).select({
             entryId: Entry.entryId,
             projection: projection

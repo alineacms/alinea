@@ -1,5 +1,6 @@
-import {Field, FieldOptions, Label} from 'alinea/core'
+import {FieldOptions, Label} from 'alinea/core'
 import {Hint} from 'alinea/core/Hint'
+import {ScalarField} from 'alinea/core/field/ScalarField'
 
 /** A string record with option labels */
 export type SelectItems<T extends string> = Record<T, Label>
@@ -28,7 +29,7 @@ export interface SelectOptions<Key, Items> extends SelectConfig<Key> {
   items: Items
 }
 
-export class SelectField<Key extends string, Items> extends Field.Scalar<
+export class SelectField<Key extends string, Items> extends ScalarField<
   Key | null,
   SelectOptions<Key, Items>
 > {}

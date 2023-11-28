@@ -7,7 +7,11 @@ import {
   Type,
   unreachable
 } from 'alinea/core'
+import {EntryPhase, EntryRow, EntryTable} from 'alinea/core/EntryRow'
 import {EntrySearch} from 'alinea/core/EntrySearch'
+import type * as pages from 'alinea/core/pages'
+import {SourceType} from 'alinea/core/pages/Cursor'
+import {BinaryOp, UnaryOp} from 'alinea/core/pages/ExprData'
 import {Realm} from 'alinea/core/pages/Realm'
 import {entries, fromEntries, keys} from 'alinea/core/util/Objects'
 import {
@@ -25,34 +29,33 @@ import {
   withRecursive
 } from 'rado'
 import {iif, match, count as sqlCount} from 'rado/sqlite'
-import {EntryPhase, EntryRow, EntryTable} from '../../core/EntryRow.js'
-import * as pages from '../../core/pages/index.js'
 import {Database} from '../Database.js'
 import {LinkResolver} from './LinkResolver.js'
+import {ResolveContext} from './ResolveContext.js'
 
 const unOps = {
-  [pages.UnaryOp.Not]: UnOpType.Not,
-  [pages.UnaryOp.IsNull]: UnOpType.IsNull
+  [UnaryOp.Not]: UnOpType.Not,
+  [UnaryOp.IsNull]: UnOpType.IsNull
 }
 
 const binOps = {
-  [pages.BinaryOp.Add]: BinOpType.Add,
-  [pages.BinaryOp.Subt]: BinOpType.Subt,
-  [pages.BinaryOp.Mult]: BinOpType.Mult,
-  [pages.BinaryOp.Mod]: BinOpType.Mod,
-  [pages.BinaryOp.Div]: BinOpType.Div,
-  [pages.BinaryOp.Greater]: BinOpType.Greater,
-  [pages.BinaryOp.GreaterOrEqual]: BinOpType.GreaterOrEqual,
-  [pages.BinaryOp.Less]: BinOpType.Less,
-  [pages.BinaryOp.LessOrEqual]: BinOpType.LessOrEqual,
-  [pages.BinaryOp.Equals]: BinOpType.Equals,
-  [pages.BinaryOp.NotEquals]: BinOpType.NotEquals,
-  [pages.BinaryOp.And]: BinOpType.And,
-  [pages.BinaryOp.Or]: BinOpType.Or,
-  [pages.BinaryOp.Like]: BinOpType.Like,
-  [pages.BinaryOp.In]: BinOpType.In,
-  [pages.BinaryOp.NotIn]: BinOpType.NotIn,
-  [pages.BinaryOp.Concat]: BinOpType.Concat
+  [BinaryOp.Add]: BinOpType.Add,
+  [BinaryOp.Subt]: BinOpType.Subt,
+  [BinaryOp.Mult]: BinOpType.Mult,
+  [BinaryOp.Mod]: BinOpType.Mod,
+  [BinaryOp.Div]: BinOpType.Div,
+  [BinaryOp.Greater]: BinOpType.Greater,
+  [BinaryOp.GreaterOrEqual]: BinOpType.GreaterOrEqual,
+  [BinaryOp.Less]: BinOpType.Less,
+  [BinaryOp.LessOrEqual]: BinOpType.LessOrEqual,
+  [BinaryOp.Equals]: BinOpType.Equals,
+  [BinaryOp.NotEquals]: BinOpType.NotEquals,
+  [BinaryOp.And]: BinOpType.And,
+  [BinaryOp.Or]: BinOpType.Or,
+  [BinaryOp.Like]: BinOpType.Like,
+  [BinaryOp.In]: BinOpType.In,
+  [BinaryOp.NotIn]: BinOpType.NotIn,
+  [BinaryOp.Concat]: BinOpType.Concat
 }
 
 const MAX_DEPTH = 999
@@ -61,102 +64,8 @@ const pageFields = keys(EntryRow)
 
 type Interim = any
 
-interface ResolveContextData {
-  realm: Realm
-  location: Array<string>
-  locale: string | undefined
-  depth: number
-  expr: ExprContext
-}
-
-export class ResolveContext {
-  table: Table<EntryTable>
-  constructor(private data: Partial<ResolveContextData>) {
-    this.table = EntryRow().as(`E${this.depth}`)
-  }
-
-  linkContext() {
-    return new ResolveContext({
-      realm: this.realm
-    })
-  }
-
-  get depth() {
-    return this.data.depth ?? 0
-  }
-  get location() {
-    return this.data.location ?? []
-  }
-  get realm() {
-    return this.data.realm ?? Realm.Published
-  }
-  get locale() {
-    return this.data.locale
-  }
-  get expr() {
-    return this.data.expr ?? ExprContext.InNone
-  }
-
-  get Table() {
-    return this.table
-  }
-
-  increaseDepth(): ResolveContext {
-    return new ResolveContext({...this.data, depth: this.depth + 1})
-  }
-
-  decreaseDepth(): ResolveContext {
-    return new ResolveContext({...this.data, depth: this.depth - 1})
-  }
-
-  get isInSelect() {
-    return this.expr & ExprContext.InSelect
-  }
-  get isInCondition() {
-    return this.expr & ExprContext.InCondition
-  }
-  get isInAccess() {
-    return this.expr & ExprContext.InAccess
-  }
-
-  get select(): ResolveContext {
-    if (this.isInSelect) return this
-    return new ResolveContext({
-      ...this.data,
-      expr: this.expr | ExprContext.InSelect
-    })
-  }
-  get condition(): ResolveContext {
-    if (this.isInCondition) return this
-    return new ResolveContext({
-      ...this.data,
-      expr: this.expr | ExprContext.InCondition
-    })
-  }
-  get access(): ResolveContext {
-    if (this.isInAccess) return this
-    return new ResolveContext({
-      ...this.data,
-      expr: this.expr | ExprContext.InAccess
-    })
-  }
-  get none(): ResolveContext {
-    return new ResolveContext({
-      ...this.data,
-      expr: this.expr | ExprContext.InNone
-    })
-  }
-}
-
 export interface PostContext {
   linkResolver: LinkResolver
-}
-
-enum ExprContext {
-  InNone = 0,
-  InSelect = 1 << 0,
-  InCondition = 1 << 1,
-  InAccess = 1 << 2
 }
 
 export class EntryResolver {
@@ -371,27 +280,27 @@ export class EntryResolver {
     if (!source) return cursor.orderBy(ctx.Table.index.asc())
     const from = EntryRow().as(`E${ctx.depth - 1}`) // .as(source.id)
     switch (source.type) {
-      case pages.SourceType.Parent:
+      case SourceType.Parent:
         return cursor.where(ctx.Table.entryId.is(from.parent)).take(1)
-      case pages.SourceType.Next:
+      case SourceType.Next:
         return cursor
           .where(ctx.Table.parent.is(from.parent))
           .where(ctx.Table.index.isGreater(from.index))
           .take(1)
-      case pages.SourceType.Previous:
+      case SourceType.Previous:
         return cursor
           .where(ctx.Table.parent.is(from.parent))
           .where(ctx.Table.index.isLess(from.index))
           .take(1)
-      case pages.SourceType.Siblings:
+      case SourceType.Siblings:
         return cursor
           .where(ctx.Table.parent.is(from.parent))
           .where(ctx.Table.entryId.isNot(from.entryId))
-      case pages.SourceType.Translations:
+      case SourceType.Translations:
         return cursor
           .where(ctx.Table.i18nId.is(from.i18nId))
           .where(ctx.Table.entryId.isNot(from.entryId))
-      case pages.SourceType.Children:
+      case SourceType.Children:
         const Child = EntryRow().as('Child')
         const children = withRecursive(
           Child({entryId: from.entryId})
@@ -424,7 +333,7 @@ export class EntryResolver {
         return cursor
           .where(ctx.Table.entryId.isIn(childrenIds))
           .orderBy(ctx.Table.index.asc())
-      case pages.SourceType.Parents:
+      case SourceType.Parents:
         const Parent = EntryRow().as('Parent')
         const parents = withRecursive(
           Parent({entryId: from.entryId})

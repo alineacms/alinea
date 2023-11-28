@@ -1,147 +1,9 @@
-import {
-  Infer,
-  Type,
-  any,
-  array,
-  enums,
-  literal,
-  record,
-  string,
-  tuple,
-  union
-} from 'cito'
+import {createExprData} from './CreateExprData.js'
+import {createSelection} from './CreateSelection.js'
 import {Cursor, OrderBy, OrderDirection} from './Cursor.js'
+import {BinaryOp, ExprData, UnaryOp} from './ExprData.js'
 import {Projection} from './Projection.js'
-import {Selection} from './Selection.js'
-import {TargetData} from './Target.js'
-
-const {entries, fromEntries} = Object
-
-export enum UnaryOp {
-  Not = 'Not',
-  IsNull = 'IsNull'
-}
-
-export enum BinaryOp {
-  Add = 'Add',
-  Subt = 'Subt',
-  Mult = 'Mult',
-  Mod = 'Mod',
-  Div = 'Div',
-  Greater = 'Greater',
-  GreaterOrEqual = 'GreaterOrEqual',
-  Less = 'Less',
-  LessOrEqual = 'LessOrEqual',
-  Equals = 'Equals',
-  NotEquals = 'NotEquals',
-  And = 'And',
-  Or = 'Or',
-  Like = 'Like',
-  In = 'In',
-  NotIn = 'NotIn',
-  Concat = 'Concat'
-}
-
-export type ExprData =
-  | ExprData.UnOp
-  | ExprData.BinOp
-  | ExprData.Field
-  | ExprData.Access
-  | ExprData.Value
-  | ExprData.Record
-  | ExprData.Case
-
-export function ExprData(input: any): ExprData {
-  if (input === null || input === undefined) return ExprData.Value(null)
-  if (Expr.hasExpr(input)) input = input[Expr.ToExpr]()
-  if (Expr.isExpr(input)) return input[Expr.Data]
-  if (input && typeof input === 'object' && !Array.isArray(input))
-    return ExprData.Record(
-      fromEntries(entries(input).map(([key, value]) => [key, ExprData(value)]))
-    )
-  return ExprData.Value(input)
-}
-
-export namespace ExprData {
-  namespace types {
-    export class UnOp {
-      type = literal('unop')
-      op = enums(UnaryOp)
-      expr = adt
-    }
-    export class BinOp {
-      type = literal('binop')
-      a = adt
-      op = enums(BinaryOp)
-      b = adt
-    }
-    export class Field {
-      type = literal('field')
-      target = TargetData
-      field = string
-    }
-    export class Access {
-      type = literal('access')
-      expr = adt
-      field = string
-    }
-    export class Value {
-      type = literal('value')
-      value = any
-    }
-    export class Record {
-      type = literal('record')
-      fields = record(adt)
-    }
-    export class Case {
-      type = literal('case')
-      expr = adt
-      cases = array(tuple(adt, Selection.adt))
-      defaultCase? = Selection.adt.optional
-    }
-  }
-  export interface UnOp extends Infer<types.UnOp> {}
-  export function UnOp(op: UnaryOp, expr: ExprData): ExprData {
-    return {type: 'unop', op, expr}
-  }
-  export interface BinOp extends Infer<types.BinOp> {}
-  export function BinOp(a: ExprData, op: BinaryOp, b: ExprData): ExprData {
-    return {type: 'binop', a, op, b}
-  }
-  export interface Field extends Infer<types.Field> {}
-  export function Field(target: TargetData, field: string): ExprData {
-    return {type: 'field', target, field}
-  }
-  export interface Access extends Infer<types.Access> {}
-  export function Access(expr: ExprData, field: string): ExprData {
-    return {type: 'access', expr, field}
-  }
-  export interface Value extends Infer<types.Value> {}
-  export function Value(value: any): ExprData {
-    return {type: 'value', value}
-  }
-  export interface Record extends Infer<types.Record> {}
-  export function Record(fields: {[k: string]: ExprData}): ExprData {
-    return {type: 'record', fields}
-  }
-  export interface Case extends Infer<types.Case> {}
-  export function Case(
-    expr: ExprData,
-    cases: Array<[ExprData, Selection]>,
-    defaultCase?: Selection
-  ): ExprData {
-    return {type: 'case', expr, cases, defaultCase}
-  }
-  export const adt: Type<ExprData> = union(
-    types.UnOp,
-    types.BinOp,
-    types.Field,
-    types.Access,
-    types.Value,
-    types.Record,
-    types.Case
-  )
-}
+import type {Selection} from './Selection.js'
 
 /** Expression or value of type T */
 export type EV<T> = Expr<T> | T
@@ -203,7 +65,7 @@ export class ExprI<T> {
     if (that === null || (Expr.isExpr(that) && that.isConstant(null!)))
       return this.isNull()
     return Expr(
-      ExprData.BinOp(this[Expr.Data], BinaryOp.Equals, ExprData(that))
+      ExprData.BinOp(this[Expr.Data], BinaryOp.Equals, createExprData(that))
     )
   }
 
@@ -221,7 +83,7 @@ export class ExprI<T> {
     if (that === null || (Expr.isExpr(that) && that.isConstant(null!)))
       return this.isNotNull()
     return Expr(
-      ExprData.BinOp(this[Expr.Data], BinaryOp.NotEquals, ExprData(that))
+      ExprData.BinOp(this[Expr.Data], BinaryOp.NotEquals, createExprData(that))
     )
   }
 
@@ -234,63 +96,89 @@ export class ExprI<T> {
   }
 
   isIn(that: EV<ReadonlyArray<T>> | Cursor.Find<T>): Expr<boolean> {
-    return Expr(ExprData.BinOp(this[Expr.Data], BinaryOp.In, ExprData(that)))
+    return Expr(
+      ExprData.BinOp(this[Expr.Data], BinaryOp.In, createExprData(that))
+    )
   }
 
   isNotIn(that: EV<ReadonlyArray<T>> | Cursor.Find<T>): Expr<boolean> {
-    return Expr(ExprData.BinOp(this[Expr.Data], BinaryOp.NotIn, ExprData(that)))
+    return Expr(
+      ExprData.BinOp(this[Expr.Data], BinaryOp.NotIn, createExprData(that))
+    )
   }
 
   isGreater(that: EV<any>): Expr<boolean> {
     return Expr(
-      ExprData.BinOp(this[Expr.Data], BinaryOp.Greater, ExprData(that))
+      ExprData.BinOp(this[Expr.Data], BinaryOp.Greater, createExprData(that))
     )
   }
 
   isGreaterOrEqual(that: EV<any>): Expr<boolean> {
     return Expr(
-      ExprData.BinOp(this[Expr.Data], BinaryOp.GreaterOrEqual, ExprData(that))
+      ExprData.BinOp(
+        this[Expr.Data],
+        BinaryOp.GreaterOrEqual,
+        createExprData(that)
+      )
     )
   }
 
   isLess(that: EV<any>): Expr<boolean> {
-    return Expr(ExprData.BinOp(this[Expr.Data], BinaryOp.Less, ExprData(that)))
+    return Expr(
+      ExprData.BinOp(this[Expr.Data], BinaryOp.Less, createExprData(that))
+    )
   }
 
   isLessOrEqual(that: EV<any>): Expr<boolean> {
     return Expr(
-      ExprData.BinOp(this[Expr.Data], BinaryOp.LessOrEqual, ExprData(that))
+      ExprData.BinOp(
+        this[Expr.Data],
+        BinaryOp.LessOrEqual,
+        createExprData(that)
+      )
     )
   }
 
   add(this: Expr<number>, that: EV<number>): Expr<number> {
-    return Expr(ExprData.BinOp(this[Expr.Data], BinaryOp.Add, ExprData(that)))
+    return Expr(
+      ExprData.BinOp(this[Expr.Data], BinaryOp.Add, createExprData(that))
+    )
   }
 
   substract(this: Expr<number>, that: EV<number>): Expr<number> {
-    return Expr(ExprData.BinOp(this[Expr.Data], BinaryOp.Subt, ExprData(that)))
+    return Expr(
+      ExprData.BinOp(this[Expr.Data], BinaryOp.Subt, createExprData(that))
+    )
   }
 
   multiply(this: Expr<number>, that: EV<number>): Expr<number> {
-    return Expr(ExprData.BinOp(this[Expr.Data], BinaryOp.Mult, ExprData(that)))
+    return Expr(
+      ExprData.BinOp(this[Expr.Data], BinaryOp.Mult, createExprData(that))
+    )
   }
 
   remainder(this: Expr<number>, that: EV<number>): Expr<number> {
-    return Expr(ExprData.BinOp(this[Expr.Data], BinaryOp.Mod, ExprData(that)))
+    return Expr(
+      ExprData.BinOp(this[Expr.Data], BinaryOp.Mod, createExprData(that))
+    )
   }
 
   divide(this: Expr<number>, that: EV<number>): Expr<number> {
-    return Expr(ExprData.BinOp(this[Expr.Data], BinaryOp.Div, ExprData(that)))
+    return Expr(
+      ExprData.BinOp(this[Expr.Data], BinaryOp.Div, createExprData(that))
+    )
   }
 
   concat(this: Expr<string>, that: EV<string>): Expr<string> {
     return Expr(
-      ExprData.BinOp(this[Expr.Data], BinaryOp.Concat, ExprData(that))
+      ExprData.BinOp(this[Expr.Data], BinaryOp.Concat, createExprData(that))
     )
   }
 
   like(this: Expr<string>, that: EV<string>): Expr<boolean> {
-    return Expr(ExprData.BinOp(this[Expr.Data], BinaryOp.Like, ExprData(that)))
+    return Expr(
+      ExprData.BinOp(this[Expr.Data], BinaryOp.Like, createExprData(that))
+    )
   }
 
   /*dynamic<X = T>(...path: Array<string>): Fields<X> {
@@ -323,7 +211,7 @@ export class ExprI<T> {
   }
 
   includes<T>(this: Expr<Array<T>>, value: EV<T>): Expr<boolean> {
-    return Expr(ExprData(value)).isIn(this)
+    return Expr(createExprData(value)).isIn(this)
   }
 
   sure(): Expr<NonNullable<T>> {
@@ -352,14 +240,14 @@ export class CaseBuilder<T, Res> {
     return new CaseBuilder(
       this.expr,
       this.cases.concat([
-        [Expr.create(expr)[Expr.Data], Selection.create(select)]
+        [Expr.create(expr)[Expr.Data], createSelection(select)]
       ])
     )
   }
 
   orElse<S extends Projection>(select: S): Expr<Res | Projection.Infer<S>> {
     return Expr(
-      ExprData.Case(this.expr[Expr.Data], this.cases, Selection.create(select))
+      ExprData.Case(this.expr[Expr.Data], this.cases, createSelection(select))
     )
   }
 

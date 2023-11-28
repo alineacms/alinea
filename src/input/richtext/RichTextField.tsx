@@ -1,4 +1,5 @@
-import {Field, Label, Schema, TextDoc} from 'alinea/core'
+import {Label, Schema, TextDoc} from 'alinea/core'
+import {RichTextField} from 'alinea/core/field/RichTextField'
 import {richTextHint} from 'alinea/core/util/Hints'
 
 /** Optional settings to configure a rich text field */
@@ -21,17 +22,11 @@ export interface RichTextOptions<Blocks extends Schema> {
   readOnly?: boolean
 }
 
-/** Internal representation of a rich text field */
-export class RichTextField<Blocks extends Schema> extends Field.RichText<
-  Blocks,
-  RichTextOptions<Blocks>
-> {}
-
 /** Create a rich text field configuration */
 export function richText<Blocks extends Schema = {}>(
   label: Label,
   options: RichTextOptions<Blocks> = {}
-): RichTextField<Blocks> {
+): RichTextField<Blocks, RichTextOptions<Blocks>> {
   const shapes = options.schema && Schema.shapes(options.schema)
   return new RichTextField(shapes, {
     hint: richTextHint(options.schema),

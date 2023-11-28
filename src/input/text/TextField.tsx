@@ -1,6 +1,7 @@
-import {Field, FieldOptions} from 'alinea/core/Field'
+import {FieldOptions} from 'alinea/core/Field'
 import {Hint} from 'alinea/core/Hint'
 import {Label} from 'alinea/core/Label'
+import {ScalarField} from 'alinea/core/field/ScalarField'
 import type {ComponentType} from 'react'
 
 /** Optional settings to configure a text field */
@@ -24,7 +25,7 @@ export interface TextOptions extends FieldOptions {
   initialValue?: string
 }
 
-export class TextField extends Field.Scalar<string, TextOptions> {}
+export class TextField extends ScalarField<string, TextOptions> {}
 
 /** Create a text field */
 export function text(label: Label, options: TextOptions = {}) {

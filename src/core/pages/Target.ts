@@ -1,25 +1,13 @@
 import {createId} from 'alinea/core/Id'
-import {TypeTarget} from 'alinea/core/Type'
-import {object, string, type} from 'cito'
 import {Callable} from 'rado/util/Callable'
+import {createExprData} from './CreateExprData.js'
 import {Cursor} from './Cursor.js'
-import {BinaryOp, EV, Expr, ExprData, and} from './Expr.js'
+import {EV, Expr, and} from './Expr.js'
+import {BinaryOp, ExprData} from './ExprData.js'
 import {Fields} from './Fields.js'
+import {TargetData} from './TargetData.js'
 
 const {create, entries} = Object
-
-const TT = type(
-  (value): value is TypeTarget => value && typeof value === 'object'
-)
-
-export type TargetData = typeof TargetData.infer
-export const TargetData = object(
-  class {
-    name? = string.optional
-    // alias? = string.optional
-    type? = TT.optional
-  }
-)
 
 export declare class TargetI<Row = object> {
   get [Target.IsTarget](): true
@@ -65,10 +53,14 @@ export const Target = class {
       ? entries(input[0]).map(([key, value]) => {
           const field = Expr(ExprData.Field(this.data, key))
           return Expr(
-            ExprData.BinOp(field[Expr.Data], BinaryOp.Equals, ExprData(value))
+            ExprData.BinOp(
+              field[Expr.Data],
+              BinaryOp.Equals,
+              createExprData(value)
+            )
           )
         })
-      : input.map(ev => Expr(ExprData(ev)))
+      : input.map(ev => Expr(createExprData(ev)))
     return and(...conditions)[Expr.Data]
   }
 

@@ -2,6 +2,7 @@ import type {ComponentType} from 'react'
 import {Entry} from './Entry.js'
 import {Schema} from './Schema.js'
 import {Type} from './Type.js'
+import {createSelection} from './pages/CreateSelection.js'
 import {Projection} from './pages/Projection.js'
 import {Selection} from './pages/Selection.js'
 import {assign, entries} from './util/Objects.js'
@@ -45,7 +46,7 @@ export namespace View {
       }
     }
     return select
-      ? Selection.create(select.orElse(defaultSelection))
-      : Selection.create(defaultSelection)
+      ? createSelection(select.orElse(defaultSelection))
+      : createSelection(defaultSelection)
   }
 }
