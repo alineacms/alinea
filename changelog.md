@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.2]
+
+- Reduce circular dependencies within the alinea/core package. This would
+  previously result in "Cannot read properties of undefined (reading Scalar)" or
+  similar when implementing custom fields.
+  Thanks to https://github.com/antoine-coulon/skott
+
 ## [0.4.1]
 
 - A type check before creating new entries was incorrect making it impossible
