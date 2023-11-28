@@ -1,6 +1,7 @@
 import alinea, {createCMS} from 'alinea'
 import {IcRoundTranslate} from 'alinea/ui/icons/IcRoundTranslate'
 import {IcRoundUploadFile} from 'alinea/ui/icons/IcRoundUploadFile'
+import {position} from './src/PositionField'
 
 export namespace schema {
   export const Page = alinea.document('Page', {})
@@ -28,6 +29,9 @@ export namespace schema {
 
   export const Fields = alinea.document('Fields', {
     ...alinea.tabs(
+      alinea.tab('Custom field', {
+        position: position('Position field')
+      }),
       alinea.tab('Basic fields', {
         title: alinea.text('Text field'),
         path: alinea.path('Path field', {
