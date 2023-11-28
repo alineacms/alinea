@@ -234,6 +234,27 @@
         "type": "image",
         "entry": "2YlUadqGteQCGAVaJ6QuSiwsdHr"
       }
+    },
+    {
+      "type": "heading",
+      "textAlign": "left",
+      "level": 2,
+      "content": [
+        {
+          "type": "text",
+          "text": "Move to a single package"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "Alinea is now packaged in a single `alinea` NPM library. This allows us to more easily version things and publish canary versions. It also means installing is much faster now. Adding Alinea to your projects adds just 4 dependencies and has a total install size of less than 20MB. With Alinea you don't have to sit idly for minutes while your CMS installs."
+        }
+      ]
     }
   ],
   "metadata": {
