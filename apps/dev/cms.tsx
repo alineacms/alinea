@@ -14,6 +14,18 @@ export namespace schema {
     }
   })
 
+  export const CustomPage = alinea.document('Custom page', {
+    [alinea.meta]: {
+      view() {
+        return (
+          <div style={{width: '100%', height: '100%', background: 'red'}}>
+            Custom entry view
+          </div>
+        )
+      }
+    }
+  })
+
   export const Fields = alinea.document('Fields', {
     ...alinea.tabs(
       alinea.tab('Basic fields', {
@@ -135,6 +147,20 @@ export const cms = createCMS({
           contains: ['Fields', 'Page', 'Folder'],
           i18n: {
             locales: ['en', 'fr', 'nl']
+          }
+        }
+      }),
+      custom: alinea.root('Custom', {
+        [alinea.meta]: {
+          contains: ['CustomPage'],
+          view() {
+            return (
+              <div
+                style={{width: '100%', height: '100%', background: 'yellow'}}
+              >
+                Custom root view
+              </div>
+            )
           }
         }
       }),
