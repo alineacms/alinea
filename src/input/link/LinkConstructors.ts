@@ -122,7 +122,8 @@ export namespace link {
           title: 'Select a page',
           selection: entryFields
         }),
-        url: urlPicker<Fields>(options)
+        url: urlPicker<Fields>(options),
+        file: filePicker(true, options)
       }
     })
   }
