@@ -25,7 +25,7 @@
     {
       "id": "tYljidhFDZXvLGHPdOUyj",
       "type": "CodeBlock",
-      "code": "import alinea from 'alinea'\n\nalinea.file('File link')",
+      "code": "import alinea from 'alinea'\n\nalinea.file('Single file link')\n\nalinea.file.multiple('Multiple file links')",
       "fileName": "",
       "language": "",
       "compact": false
@@ -33,7 +33,7 @@
     {
       "id": "2Yks376YZg3E6MZZHv9KcuYgQos",
       "type": "ExampleBlock",
-      "code": "export default alinea.type('File field', {\n  file: alinea.file('File link')\n})"
+      "code": "export default alinea.type('File field', {\n  file: alinea.file('Single file link'),\n\n  fileMultiple: alinea.file.multiple('Multiple file links')\n})"
     }
   ],
   "metadata": {
