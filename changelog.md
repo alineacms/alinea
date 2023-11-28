@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [0.4.1]
 
 - A type check before creating new entries was incorrect making it impossible
   create new entries on the root level.
