@@ -25,7 +25,7 @@
     {
       "id": "YCDn4dBOi-_bHy32PAqzU",
       "type": "CodeBlock",
-      "code": "import alinea from 'alinea'\n\nalinea.image('Image link')",
+      "code": "import alinea from 'alinea'\n\nalinea.image('Single image link')\n\nalinea.image.multiple('Multiple image links')",
       "fileName": "",
       "language": "",
       "compact": false
@@ -33,7 +33,7 @@
     {
       "id": "D6afYJyRzrcvfZy1mTq5L",
       "type": "ExampleBlock",
-      "code": "export default alinea.type('Image field', {\n  image: alinea.image('Image link')\n})"
+      "code": "export default alinea.type('Image field', {\n  image: alinea.image('Single image link'),\n  imageMultiple: alinea.image.multiple('Multiple image links')\n})"
     }
   ],
   "metadata": {
