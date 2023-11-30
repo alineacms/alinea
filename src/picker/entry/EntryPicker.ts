@@ -35,7 +35,8 @@ export const imageFields = {
   width: MediaFile.width,
   height: MediaFile.height,
   averageColor: MediaFile.averageColor,
-  thumbHash: MediaFile.thumbHash
+  thumbHash: MediaFile.thumbHash,
+  focus: MediaFile.focus
 }
 
 export interface EntryPickerOptions<T = {}> {
