@@ -1,11 +1,9 @@
 {
-  "id": "P7QDb99Sp1JS5FyqCXXn3",
-  "type": "Recipe",
   "title": "Gingerbread",
   "header": {
     "image": {
-      "id": "WfwcRO6PFDsJ4NCrJz8wb",
-      "type": "entry",
+      "id": "2YtROX9toQXnyuLCrUaBFzhs2Gn",
+      "type": "image",
       "entry": "dVWlsY2oNt0H7YI-EWOOm"
     },
     "credit": [
@@ -26,6 +24,7 @@
                 "attrs": {
                   "data-id": null,
                   "data-entry": null,
+                  "data-type": null,
                   "href": "https://unsplash.com/@kejeki?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText",
                   "title": null
                 }
@@ -273,7 +272,9 @@
       ]
     }
   ],
-  "alinea": {
+  "@alinea": {
+    "entryId": "P7QDb99Sp1JS5FyqCXXn3",
+    "type": "Recipe",
     "index": "Zw"
   }
 }

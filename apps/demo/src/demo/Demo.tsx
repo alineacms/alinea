@@ -1,15 +1,24 @@
 'use client'
 
 import {cms} from '@/cms'
+import {Handler} from 'alinea/backend'
 import 'alinea/css'
 import {App} from 'alinea/dashboard/App'
 import {Modal} from 'alinea/dashboard/view/Modal'
 import {Viewport} from 'alinea/dashboard/view/Viewport'
 import {Button, HStack, Loader, Typo} from 'alinea/ui'
-import {Suspense, useState} from 'react'
+import {Suspense, use, useState} from 'react'
+
+const connection = cms.connection()
+
+const handler = new Handler({
+  config: cms
+  // ...
+})
 
 export default function Demo() {
   const [reminderOpen, setReminderOpen] = useState(true)
+  const client = use(connection)
   return (
     <>
       <style>{`#__next {height: 100%}`}</style>
@@ -29,7 +38,7 @@ export default function Demo() {
           </HStack>
         </Modal>
         <Suspense fallback={<Loader absolute />}>
-          <App config={cms} client={undefined!} />
+          <App dev config={cms} client={client} />
         </Suspense>
       </Viewport>
     </>

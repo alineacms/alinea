@@ -1,6 +1,5 @@
-import alinea, {createCMS} from 'alinea'
-import {MediaLibrary} from 'alinea/core/media/MediaSchema'
-import {IcRoundPermMedia} from 'alinea/ui/icons/IcRoundPermMedia'
+import alinea from 'alinea'
+import {createTestCMS} from 'alinea/core/driver/TestDriver'
 
 namespace schema {
   export const Home = alinea.type('Home', {
@@ -49,23 +48,12 @@ export const pages = alinea.root('Pages', {
   recipes: alinea.page(schema.Recipes({title: 'Recipes'}))
 })
 
-export const cms = createCMS({
-  dashboard: {
-    dashboardUrl: '/admin.html',
-    handlerUrl: '/api/cms',
-    staticFile: '../public/admin.html'
-  },
+export const cms = createTestCMS({
   schema,
   workspaces: {
     main: alinea.workspace('Recipes', {
       pages,
-      media: alinea.root('Media', {
-        media: alinea.page(MediaLibrary),
-        [alinea.meta]: {
-          contains: ['MediaLibrary'],
-          icon: IcRoundPermMedia
-        }
-      }),
+      media: alinea.media(),
       [alinea.meta]: {
         color: '#3F61E8',
         mediaDir: 'public',
