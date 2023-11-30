@@ -61,6 +61,19 @@
   }
 }
 
+.h5 {
+  min-width: 0;
+  font-size: 11.5px;
+  font-weight: bold;
+  margin-bottom: 3px;
+  white-space: pre-line;
+  text-rendering: optimizeLegibility;
+  @extend .hyphenate;
+  &.is-flat {
+    margin-bottom: 0;
+  }
+}
+
 .p {
   font-size: 14px;
   line-height: 1.6;
