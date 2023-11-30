@@ -13,12 +13,13 @@ import {GenericStyles, Styler} from './Styler.js'
 type TypoStyles =
   | {
       root: Styler
-      h1: Styler
       link: Styler
       small: Styler
+      h1: Styler
       h2: Styler
       h3: Styler
       h4: Styler
+      h5: Styler
       p: Styler
       hyphenate: Styler
       monospace: Styler
@@ -108,6 +109,21 @@ export function createTypo(
     )
   }
 
+  function H5Component(
+    props: PropsWithAs<TypoProps, 'h5'>,
+    ref: Ref<HTMLHeadingElement>
+  ) {
+    const {as: Type = 'h5', flat, light, ...rest} = props
+    return (
+      <Type
+        ref={ref}
+        id={idFor(rest.children)}
+        {...rest}
+        className={styles.h5.mergeProps(rest)({flat, light})}
+      />
+    )
+  }
+
   function PComponent(
     props: PropsWithAs<TypoProps, 'p'>,
     ref: Ref<HTMLHeadingElement>
@@ -169,6 +185,7 @@ export function createTypo(
     H2: forwardRefWithAs<TypoProps, 'h2'>(H2Component),
     H3: forwardRefWithAs<TypoProps, 'h3'>(H3Component),
     H4: forwardRefWithAs<TypoProps, 'h4'>(H4Component),
+    H5: forwardRefWithAs<TypoProps, 'h5'>(H5Component),
     P: forwardRefWithAs<TypoProps, 'p'>(PComponent),
     Link: LinkComponent,
     link: styles.link,

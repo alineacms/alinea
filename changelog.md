@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.3]
+
+- The description field for external links is renamed to "title".
+- Heading h4 and h5 are available in the Rich Text field.
+- Folder icon in the nav tree has been moved to the right allowing containers
+  to have a custom icon as well.
+
 ## [0.4.2]
 
 - Reduce circular dependencies within the alinea/core package. This would

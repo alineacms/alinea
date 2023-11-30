@@ -32,7 +32,9 @@ enum Styles {
   paragraph = 'Normal text',
   h1 = 'Heading 1',
   h2 = 'Heading 2',
-  h3 = 'Heading 3'
+  h3 = 'Heading 3',
+  h4 = 'Heading 4',
+  h5 = 'Heading 5'
 }
 
 export type RichTextToolbarProps = {
@@ -54,6 +56,10 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
     ? 'h2'
     : editor.isActive('heading', {level: 3})
     ? 'h3'
+    : editor.isActive('heading', {level: 4})
+    ? 'h4'
+    : editor.isActive('heading', {level: 5})
+    ? 'h5'
     : 'paragraph'
 
   function handleLink() {
@@ -94,8 +100,8 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
             .insertContent({
               type: 'text',
               text:
-                picked.description ||
-                (link as UrlReference).description ||
+                picked.title ||
+                (link as UrlReference).title ||
                 (link as UrlReference).url ||
                 '',
               marks: [{type: 'link', attrs}]
@@ -143,6 +149,16 @@ export const RichTextToolbar = forwardRef(function RichTextToolbar(
                 onClick={() => exec().setHeading({level: 3}).run()}
               >
                 <Typo.H3 flat>Heading 3</Typo.H3>
+              </DropdownMenu.Item>
+              <DropdownMenu.Item
+                onClick={() => exec().setHeading({level: 4}).run()}
+              >
+                <Typo.H4 flat>Heading 4</Typo.H4>
+              </DropdownMenu.Item>
+              <DropdownMenu.Item
+                onClick={() => exec().setHeading({level: 5}).run()}
+              >
+                <Typo.H5 flat>Heading 5</Typo.H5>
               </DropdownMenu.Item>
             </DropdownMenu.Items>
           </DropdownMenu.Root>

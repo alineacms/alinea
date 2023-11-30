@@ -8,7 +8,7 @@ import {Picker} from 'alinea/editor/Picker'
 export interface UrlReference extends Reference {
   ref: 'url'
   url: string
-  description: string
+  title: string
   target: string
 }
 
@@ -29,7 +29,7 @@ export function urlPicker<Fields>(
   return {
     shape: new RecordShape('Url', {
       url: new ScalarShape('Url'),
-      description: new ScalarShape('Description'),
+      title: new ScalarShape('Title'),
       target: new ScalarShape('Target')
     }).concat(extra),
     hint: Hint.Extern({name: 'UrlReference', package: 'alinea/picker/url'}),

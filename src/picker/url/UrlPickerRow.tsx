@@ -12,7 +12,7 @@ export function UrlPickerRow({reference}: UrlPickerRowProps) {
   return (
     <HStack gap={15} className={styles.root()}>
       <span className={styles.root.url()}>{reference.url}</span>
-      <span className={styles.root.desc()}>{reference.description}</span>
+      <span className={styles.root.desc()}>{reference.title}</span>
     </HStack>
   )
 }

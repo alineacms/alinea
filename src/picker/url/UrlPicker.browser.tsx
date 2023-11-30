@@ -21,7 +21,7 @@ const linkForm = type('Link', {
   url: text('Url', {
     help: 'Url of the link'
   }),
-  description: text('Description', {
+  title: text('Description', {
     optional: true,
     help: 'Text to display inside the link element'
   }),
@@ -48,7 +48,7 @@ export function UrlPickerForm({options, onConfirm, onCancel}: PickerProps) {
       type: 'url',
       ref: 'url',
       url: data.url,
-      description: data.description || '',
+      title: data.title || '',
       target: data.blank ? '_blank' : '_self'
     }
     onConfirm([reference])

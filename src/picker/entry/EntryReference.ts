@@ -41,6 +41,7 @@ export interface ImageReference extends EntryLinkReference {
   height: number
   averageColor: string
   thumbHash: string
+  focus: {x: number; y: number}
 }
 
 export namespace ImageReference {
