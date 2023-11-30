@@ -71,9 +71,22 @@ function EntryTreeItem({item, data}: EntryTreeItemProps) {
     >
       <button
         className={styles.tree.item.label()}
+        title={selectedEntry(locale, itemData).title}
         style={{paddingLeft: px((item.getItemMeta().level + 1) * 12)}}
       >
-        {item.isFolder() ? (
+        <span className={styles.tree.item.icon()}>
+          <Icon
+            icon={
+              isUntranslated ? IcRoundTranslate : icon ?? IcOutlineDescription
+            }
+          />
+        </span>
+
+        <span className={styles.tree.item.label.itemName()}>
+          {selectedEntry(locale, itemData).title}
+        </span>
+
+        {item.isFolder() && (
           <span className={styles.tree.item.arrow()}>
             {item.isExpanded() ? (
               <Icon icon={IcRoundKeyboardArrowDown} size={18} />
@@ -81,19 +94,7 @@ function EntryTreeItem({item, data}: EntryTreeItemProps) {
               <Icon icon={IcRoundKeyboardArrowRight} size={18} />
             )}
           </span>
-        ) : (
-          <span className={styles.tree.item.icon()}>
-            <Icon
-              icon={
-                isUntranslated ? IcRoundTranslate : icon ?? IcOutlineDescription
-              }
-            />
-          </span>
         )}
-
-        <span className={styles.tree.item.label.itemName()}>
-          {selectedEntry(locale, itemData).title}
-        </span>
 
         {/*isUntranslated && (
             <span className={styles.tree.status()}>
