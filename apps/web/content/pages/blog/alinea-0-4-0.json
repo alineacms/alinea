@@ -123,7 +123,7 @@
     {
       "id": "2YlQgd9V4FTWXfNlvqX49yTFn6C",
       "type": "CodeBlock",
-      "code": "const HomePage = alinea.type('Homepage', {\n  title: alinea.text('Title'),\n  path: alinea.path('Path'),\n  headline: alinea.text('Headline')\n})\n\nconst cms = createNextCMS({\n  schema: {HomePage}\n})\n\nexport default async function Home() {\n  const home = await cms.get(HomePage())\n  return (\n    <article>\n      <h1>{home.title}</h1>\n      <p>{home.headline}</p>\n    </article>\n  )\n}",
+      "code": "import alinea, {createNextCMS} from 'alinea'\n\nconst HomePage = alinea.type('Homepage', {\n  title: alinea.text('Title'),\n  path: alinea.path('Path'),\n  headline: alinea.text('Headline')\n})\n\nconst cms = createNextCMS({\n  schema: {HomePage}\n})\n\nexport default async function Home() {\n  const home = await cms.get(HomePage())\n  return (\n    <article>\n      <h1>{home.title}</h1>\n      <p>{home.headline}</p>\n    </article>\n  )\n}",
       "fileName": "",
       "language": "",
       "compact": false
@@ -166,7 +166,7 @@
       "content": [
         {
           "type": "text",
-          "text": "Editing content often requires making changes, previewing them and coming back later to continue editing. We don't alway want these changes reflected online right away. Doing this correctly requires content to be available in different phases. We introduced three phases: draft, published and archived. Editors can make new drafts and publish them only when needed. Pages can be archived when they're no longer in use, and re-published when needed."
+          "text": "Editing content often requires making changes, previewing them and coming back later to continue editing. We don't always want these changes reflected online right away. Doing this correctly requires content to be available in different phases. We introduced three phases: draft, published and archived. Editors can make new drafts and publish them only when needed. Pages can be archived when they're no longer in use, and re-published when needed."
         }
       ]
     },
