@@ -73,6 +73,7 @@ export class Database implements Syncable {
 
   // Syncs data with a remote database, returning the i18nIds of changed entries
   async syncWith(remote: Syncable, force = false): Promise<Array<string>> {
+    console.log({remote, self: this})
     await this.init()
     const meta = await this.meta()
     const isRequired = force || (await remote.syncRequired(meta.contentHash))

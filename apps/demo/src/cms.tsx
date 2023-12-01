@@ -1,5 +1,6 @@
 import alinea from 'alinea'
 import {createTestCMS} from 'alinea/core/driver/TestDriver'
+import chocolateChip from '../content/pages/recipes/chocolate-chip.json'
 
 namespace schema {
   export const Home = alinea.type('Home', {
@@ -45,7 +46,9 @@ namespace schema {
 
 export const pages = alinea.root('Pages', {
   index: alinea.page(schema.Home({title: 'Home'})),
-  recipes: alinea.page(schema.Recipes({title: 'Recipes'}))
+  recipes: alinea.page(schema.Recipes({title: 'Recipes'}), {
+    'chocolate-chip': alinea.page(schema.Recipe(chocolateChip))
+  })
 })
 
 export const cms = createTestCMS({
