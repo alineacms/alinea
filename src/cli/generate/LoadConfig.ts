@@ -1,5 +1,5 @@
 import {CMS} from 'alinea/core/CMS'
-import {values} from 'alinea/core/util/Objects'
+import {createCMS} from 'alinea/core/driver/DefaultDriver'
 import {createRequire} from 'node:module'
 import path from 'node:path'
 
@@ -12,8 +12,7 @@ export async function loadCMS(outDir: string): Promise<CMS> {
   const outFile = `file://${genConfigFile}?${unique}`
   global.require = createRequire(import.meta.url)
   const exports = await import(outFile)
-  for (const member of values(exports)) {
-    if (member instanceof CMS) return member
-  }
+  if ('cms' in exports && exports.cms instanceof CMS) return exports.cms
+  if ('config' in exports) return createCMS(exports.config)
   throw new Error(`No config found in "${genConfigFile}"`)
 }

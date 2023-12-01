@@ -44,6 +44,8 @@ namespace schema {
   })
 }
 
+console.log(chocolateChip)
+
 export const pages = alinea.root('Pages', {
   index: alinea.page(schema.Home({title: 'Home'})),
   recipes: alinea.page(schema.Recipes({title: 'Recipes'}), {

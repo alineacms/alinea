@@ -1,8 +1,7 @@
 import {Store} from 'alinea/backend/Store'
 import {CloudAuthView} from 'alinea/cloud/view/CloudAuth'
 import {Resolver} from 'alinea/core'
-import {MediaFile, MediaLibrary} from 'alinea/core/media/MediaSchema'
-import {Config, DashboardConfig} from './Config.js'
+import {Config, DashboardConfig, createConfig} from './Config.js'
 import {Graph, GraphRealm, GraphRealmApi} from './Graph.js'
 import {Root} from './Root.js'
 import {Workspace} from './Workspace.js'
@@ -15,24 +14,23 @@ export interface CMSApi extends GraphRealmApi {
   resolver(): Promise<Resolver>
 }
 
-export abstract class CMS extends GraphRealm implements Config, CMSApi {
+export abstract class CMS extends GraphRealm implements CMSApi {
   dashboard: DashboardConfig
   graph: Graph
+  config: Config
 
   constructor(config: Config) {
-    const withMedia = {
-      ...config,
-      schema: {MediaLibrary, MediaFile, ...config.schema}
-    }
-    super(withMedia, async params => {
+    const normalizedConfig = createConfig(config)
+    super(normalizedConfig, async params => {
       const cnx = await this.resolver()
       return cnx.resolve(params)
     })
+    this.config = normalizedConfig
     this.dashboard = {
       auth: CloudAuthView,
       ...(config.dashboard as DashboardConfig)
     }
-    this.graph = new Graph(this, async params => {
+    this.graph = new Graph(normalizedConfig, async params => {
       const {resolve} = await this.resolver()
       return resolve(params)
     })
@@ -62,10 +60,6 @@ export abstract class CMS extends GraphRealm implements Config, CMSApi {
 
   get workspaces() {
     return this.config.workspaces
-  }
-
-  get preview() {
-    return this.config.preview
   }
 }
 

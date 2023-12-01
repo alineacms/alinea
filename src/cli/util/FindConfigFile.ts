@@ -7,7 +7,7 @@ const defaultLocations = [
   'cms',
   'src/cms'
 ]
-const testExtensions = ['.js', '.ts', '.tsx', '.jsx']
+const testExtensions = ['.ts', '.tsx', '.js', '.jsx']
 
 export function findConfigFile(cwd: string) {
   for (const location of defaultLocations) {

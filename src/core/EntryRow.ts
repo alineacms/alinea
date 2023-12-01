@@ -63,8 +63,7 @@ export class EntryTable {
  * Represents an Entry row in the database,
  * field data is available in the data column in JSON format.
  */
-export interface EntryRow<Data = Record<string, any>>
-  extends table<EntryTable> {
+export type EntryRow<Data = Record<string, any>> = table<EntryTable> & {
   data: Data
 }
 

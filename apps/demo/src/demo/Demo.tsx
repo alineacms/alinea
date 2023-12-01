@@ -2,6 +2,7 @@
 
 import {cms} from '@/cms'
 import {createMemoryHandler} from 'alinea/backend/data/MemoryHandler'
+import {Logger} from 'alinea/core/util/Logger'
 import 'alinea/css'
 import {App} from 'alinea/dashboard/App'
 import {Modal} from 'alinea/dashboard/view/Modal'
@@ -13,7 +14,13 @@ export default function Demo() {
   const [reminderOpen, setReminderOpen] = useState(true)
   const db = use(cms.db)
   const handler = useMemo(() => createMemoryHandler(cms, db), [db])
-  const client = useMemo(() => handler.connect({}), [handler])
+  const client = useMemo(
+    () =>
+      handler.connect({
+        logger: new Logger('local')
+      }),
+    [handler]
+  )
   return (
     <>
       <style>{`#__next {height: 100%}`}</style>

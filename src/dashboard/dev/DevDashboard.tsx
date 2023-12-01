@@ -41,18 +41,18 @@ export type DevDashboardOptions = {
 const queryClient = new QueryClient({defaultOptions: {queries: {retry: false}}})
 
 export function DevDashboard({loadConfig}: DevDashboardOptions) {
-  const [cms, setCms] = useState<Config>()
+  const [config, setConfig] = useState<Config>()
   const [connected, setConnected] = useState(true)
   const forceDbUpdate = useSetAtom(dbUpdateAtom)
   const client = useMemo(() => {
-    if (!cms) return null
+    if (!config) return null
     return new Client({
-      config: cms,
+      config: config,
       url: joinPaths(location.origin, location.pathname)
     })
-  }, [cms])
+  }, [config])
   function getConfig() {
-    return loadConfig().then(setCms)
+    return loadConfig().then(setConfig)
   }
   useEffect(() => {
     getConfig()
@@ -63,11 +63,11 @@ export function DevDashboard({loadConfig}: DevDashboardOptions) {
       close: () => setConnected(false)
     })
   }, [])
-  if (!cms) return null
+  if (!config) return null
   return (
     <App
       queryClient={queryClient}
-      config={cms}
+      config={config}
       client={client!}
       dev={process.env.NODE_ENV === 'development'}
     />

@@ -7,10 +7,7 @@ import {MaterialSymbolsDatabase} from 'alinea/ui/icons/MaterialSymbolsDatabase'
 import {MdiSourceBranch} from 'alinea/ui/icons/MdiSourceBranch'
 import {atom, useAtom, useAtomValue} from 'jotai'
 import {useEffect} from 'react'
-import {
-  QueryClient,
-  QueryClientProvider as ReactQueryClientProvider
-} from 'react-query'
+import {QueryClient} from 'react-query'
 import {navMatchers} from './DashboardNav.js'
 import {DashboardProvider} from './DashboardProvider.js'
 import {router} from './Routes.js'
@@ -175,9 +172,6 @@ function AppRoot() {
     </>
   )
 }
-
-// facebook/react#24304
-const QueryClientProvider: any = ReactQueryClientProvider
 
 export interface AppProps {
   config: Config

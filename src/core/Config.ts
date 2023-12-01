@@ -1,3 +1,4 @@
+import {MediaSchema} from 'alinea/core/media/MediaSchema'
 import {Auth} from './Auth.js'
 import {Schema} from './Schema.js'
 import {Type} from './Type.js'
@@ -17,12 +18,18 @@ export interface Config {
   schema: Schema
   /** A record containing workspace configurations */
   workspaces: Record<string, Workspace>
-  // backend?: BackendConfig<any>
-  dashboard?: DashboardConfig
   /** A url which will be embedded in the dashboard for live previews */
   preview?: string
   /** Every edit will pass through a draft phase before being published */
   enableDrafts?: boolean
+
+  /**
+  publicDir?: string
+  dashboardFile?: string
+  handlerUrl?: 
+  */
+
+  dashboard?: DashboardConfig
 }
 
 export namespace Config {
@@ -44,5 +51,20 @@ export namespace Config {
 export function createConfig<Definition extends Config>(
   definition: Definition
 ) {
-  return definition
+  /*const publicDir = definition.publicDir ?? './public'
+  const staticFile = definition.dashboard?.staticFile
+  let dashboardFile = 'admin.html'
+  if (staticFile) {
+    if (staticFile.startsWith('public/'))
+      dashboardFile = staticFile.slice('public/'.length)
+    else
+      throw new Error(
+        `Usage of config.dashboard.staticFile is deprecated, please use config.dashboardFile`
+      )
+  }
+  const handlerUrl = definition.handlerUrl ?? definition.dashboard?.handlerUrl*/
+  return {
+    ...definition,
+    schema: {...MediaSchema, ...definition.schema}
+  }
 }

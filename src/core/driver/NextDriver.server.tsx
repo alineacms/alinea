@@ -79,7 +79,7 @@ class NextDriver extends DefaultDriver implements NextApi {
 
   cloudHandler = PLazy.from(async () => {
     const db = await this.db
-    return createCloudHandler(this, db, this.apiKey)
+    return createCloudHandler(this.config, db, this.apiKey)
   })
 
   previewHandler = async (request: Request) => {

@@ -112,7 +112,7 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
       const cms = await loadCMS(context.outDir)
       cms.exportStore(context.outDir, new Uint8Array())
       const fileData = new LocalData({
-        config: cms,
+        config: cms.config,
         fs: fs.promises,
         rootDir,
         dashboardUrl: await options.dashboardUrl
@@ -121,7 +121,7 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
         context,
         fileData,
         store,
-        cms,
+        cms.config,
         nextBuild
       )) {
         yield {cms, db, localData: fileData}
@@ -138,7 +138,7 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
       }
       if (done) {
         await Promise.all([
-          generatePackage(context, cms),
+          generatePackage(context, cms.config),
           cms.exportStore(context.outDir, exportStore())
         ])
         break

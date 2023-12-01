@@ -21,7 +21,7 @@ async function entry(
   data: Partial<EntryRow> = {title: 'Entry'},
   parent?: EntryRow
 ): Promise<EntryRow> {
-  const typeNames = Schema.typeNames(cms.schema)
+  const typeNames = Schema.typeNames(cms.config.schema)
   const title = data.title ?? 'Entry'
   const details = {
     entryId: createId(),
@@ -44,8 +44,8 @@ async function entry(
     searchableText: ''
   }
   const parentPaths = parent?.childrenDir.split('/').filter(Boolean) ?? []
-  const filePath = entryFilepath(cms, details, parentPaths)
-  const childrenDir = entryChildrenDir(cms, details, parentPaths)
+  const filePath = entryFilepath(cms.config, details, parentPaths)
+  const childrenDir = entryChildrenDir(cms.config, details, parentPaths)
   const row = {
     ...details,
     filePath,
@@ -53,7 +53,7 @@ async function entry(
     parentDir: childrenDir.split('/').slice(0, -1).join('/'),
     url: childrenDir
   }
-  return createEntryRow(cms, row)
+  return createEntryRow(cms.config, row)
 }
 
 function create(entry: EntryRow): Mutation {

@@ -99,16 +99,20 @@ export async function serve(options: ServeOptions): Promise<void> {
 
       function createBackend(): Handler {
         if (process.env.ALINEA_CLOUD_DEBUG)
-          return createCloudDebugHandler(currentCMS, db, rootDir)
+          return createCloudDebugHandler(currentCMS.config, db, rootDir)
         if (process.env.ALINEA_CLOUD_URL)
-          return createCloudHandler(currentCMS, db, process.env.ALINEA_API_KEY)
+          return createCloudHandler(
+            currentCMS.config,
+            db,
+            process.env.ALINEA_API_KEY
+          )
         return new Handler({
-          config: currentCMS,
+          config: currentCMS.config,
           db,
           target: fileData,
           media: fileData,
           drafts,
-          history: new GitHistory(currentCMS, rootDir),
+          history: new GitHistory(currentCMS.config, rootDir),
           previews: new JWTPreviews('dev'),
           previewAuthToken: 'dev'
         })
