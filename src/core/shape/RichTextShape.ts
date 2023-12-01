@@ -165,7 +165,7 @@ export class RichTextShape<Blocks>
     const isEmpty =
       content.length === 1 &&
       content[0].type === 'paragraph' &&
-      !content[0].content
+      content[0].content?.length === 0
     if (isEmpty) return []
     return content.map((node): TextNode<Blocks> => {
       const type = types[node.type]
