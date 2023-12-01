@@ -24,6 +24,7 @@ import {base64} from 'alinea/core/util/Encoding'
 import {createEntryRow} from 'alinea/core/util/EntryRows'
 import {entries, fromEntries, values} from 'alinea/core/util/Objects'
 import * as paths from 'alinea/core/util/Paths'
+import {keepPreviousData} from 'alinea/dashboard/util/KeepPreviousData'
 import {InputState} from 'alinea/editor'
 import {atom} from 'jotai'
 import {atomFamily, unwrap} from 'jotai/utils'
@@ -211,7 +212,9 @@ export function createEntryEditor(entryData: EntryData) {
   )
   const yDoc = edits.doc
   const hasChanges = edits.hasChanges
-  const draftEntry = yAtom(edits.doc.getMap(ROOT_KEY), getDraftEntry)
+  const draftEntry = keepPreviousData(
+    yAtom(edits.doc.getMap(ROOT_KEY), getDraftEntry)
+  )
   const editMode = atom(EditMode.Editing)
   const view = Type.meta(type).view
   const previewRevision = atom(

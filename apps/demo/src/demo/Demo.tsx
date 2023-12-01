@@ -1,7 +1,8 @@
 'use client'
 
-import {cms} from '@/cms'
 import {createMemoryHandler} from 'alinea/backend/data/MemoryHandler'
+//import {createTestCMS} from 'alinea/core/driver/TestDriver'
+import {createCMS} from 'alinea/core/driver/DefaultDriver.server'
 import {Logger} from 'alinea/core/util/Logger'
 import 'alinea/css'
 import {App} from 'alinea/dashboard/App'
@@ -9,6 +10,9 @@ import {Modal} from 'alinea/dashboard/view/Modal'
 import {Viewport} from 'alinea/dashboard/view/Viewport'
 import {Button, HStack, Loader, Typo} from 'alinea/ui'
 import {Suspense, use, useMemo, useState} from 'react'
+import {config} from '../../alinea.config'
+
+const cms = createCMS(config)
 
 export default function Demo() {
   const [reminderOpen, setReminderOpen] = useState(true)
@@ -40,7 +44,7 @@ export default function Demo() {
           </HStack>
         </Modal>
         <Suspense fallback={<Loader absolute />}>
-          <App dev config={cms} client={client} />
+          <App dev config={cms.config} client={client} />
         </Suspense>
       </Viewport>
     </>

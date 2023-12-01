@@ -401,14 +401,14 @@ export class Database implements Syncable {
       EntryRow()
         .select(EntryRow.modifiedAt)
         .orderBy(EntryRow.modifiedAt.desc())
-        .first()
+        .maybeFirst()
     )
     await tx(AlineaMeta().delete())
     await tx(
       AlineaMeta().insertOne({
         commitHash,
         contentHash,
-        modifiedAt
+        modifiedAt: modifiedAt ?? 0
       })
     )
   }

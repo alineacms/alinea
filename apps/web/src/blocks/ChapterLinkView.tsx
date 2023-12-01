@@ -21,7 +21,7 @@ export function ChapterLinkView({link}: Infer<typeof ChapterLinkBlock>) {
           {(link.description || link.title) as string}
         </span>
         <Stack.Right>
-          <IcRoundArrowForward />
+          <IcRoundArrowForward style={{display: 'block'}} />
         </Stack.Right>
       </HStack>
     </Link>

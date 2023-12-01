@@ -28,7 +28,8 @@
     "next-env.d.ts",
     "src/**/*.ts",
     "src/**/*.tsx",
-    ".next/types/**/*.ts"
+    ".next/types/**/*.ts",
+    "alinea.config.tsx"
   ],
   "exclude": ["node_modules"]
 }

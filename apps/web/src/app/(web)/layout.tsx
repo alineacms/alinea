@@ -1,9 +1,9 @@
 import {cms} from '@/cms'
+import '@/global.scss'
+import {Footer} from '@/layout/Footer'
+import {Header} from '@/layout/Header'
 import {fromModule} from 'alinea/ui'
 import {PropsWithChildren} from 'react'
-import {Footer} from '../../layout/Footer'
-import {Header} from '../../layout/Header'
-import '../../styles/global.scss'
 import css from './layout.module.scss'
 
 const styles = fromModule(css)

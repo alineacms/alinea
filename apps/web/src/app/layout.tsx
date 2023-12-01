@@ -1,6 +1,6 @@
+import '@/global.scss'
 import {btoa} from 'alinea/core/util/Encoding'
 import {PropsWithChildren} from 'react'
-import '../styles/global.scss'
 
 export const metadata = {
   title: 'Alinea'

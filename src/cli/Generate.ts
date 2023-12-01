@@ -83,7 +83,11 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
   const rootDir = path.resolve(cwd)
   const configDir = path.dirname(configLocation)
 
-  const nodeModules = alineaPackageDir.includes('node_modules')
+  const localModules = path.join(cwd, 'node_modules')
+  const hasLocalModules = fs.existsSync(localModules)
+  const nodeModules = hasLocalModules
+    ? localModules
+    : alineaPackageDir.includes('node_modules')
     ? path.join(alineaPackageDir, '..')
     : path.join(alineaPackageDir, 'node_modules')
 
