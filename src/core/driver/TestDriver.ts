@@ -32,7 +32,7 @@ class TestDriver extends DefaultDriver implements TestApi {
     })
     return handler.connect({logger: new Logger('test')})
   })
-
+  async exportStore(outDir: string, data: Uint8Array) {}
   async readStore(): Promise<Store> {
     return this.store
   }

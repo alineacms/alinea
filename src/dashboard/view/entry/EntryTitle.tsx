@@ -36,9 +36,7 @@ export function EntryTitle({
   return (
     <>
       <Head>
-        <title>
-          {title} - {renderLabel(label)}
-        </title>
+        <title>{title}</title>
       </Head>
       <div className={styles.root()}>
         <HStack center gap={8} className={styles.root.inner()}>
