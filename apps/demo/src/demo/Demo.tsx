@@ -1,8 +1,7 @@
 'use client'
 
 import {createMemoryHandler} from 'alinea/backend/data/MemoryHandler'
-//import {createTestCMS} from 'alinea/core/driver/TestDriver'
-import {createCMS} from 'alinea/core/driver/DefaultDriver.server'
+import {createTestCMS} from 'alinea/core/driver/TestDriver'
 import {Logger} from 'alinea/core/util/Logger'
 import 'alinea/css'
 import {App} from 'alinea/dashboard/App'
@@ -12,7 +11,7 @@ import {Button, HStack, Loader, Typo} from 'alinea/ui'
 import {Suspense, use, useMemo, useState} from 'react'
 import {config} from '../../alinea.config'
 
-const cms = createCMS(config)
+const cms = createTestCMS(config)
 
 export default function Demo() {
   const [reminderOpen, setReminderOpen] = useState(true)

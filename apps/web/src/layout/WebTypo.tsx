@@ -19,7 +19,9 @@ function H2(props: HTMLAttributes<HTMLHeadingElement>) {
   return (
     <h2 {...props}>
       {props.children}
-      {props.id && <a href={`#${props.id}`}>#</a>}
+      {props.id && (
+        <a href={`#${props.id}`} className={styles.h2.permaLink()} />
+      )}
     </h2>
   )
 }

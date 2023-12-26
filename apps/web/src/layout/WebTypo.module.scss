@@ -20,7 +20,7 @@
   font-size: 45px;
   font-weight: 700;
   line-height: 1;
-  margin: 35px 0 45px 0;
+  margin: 35px 0 35px 0;
   white-space: pre-line;
   text-rendering: optimizeLegibility;
   @extend .hyphenate;
@@ -40,17 +40,33 @@
   font-size: 25px;
   font-weight: 700;
   line-height: 1.33;
-  margin: 40px 0 14px 0;
-  padding-top: 30px;
-  border-top: 1px solid var(--web-outline);
+  margin-bottom: 14px;
+  padding-top: 20px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--web-outline);
   white-space: pre-line;
   text-rendering: optimizeLegibility;
   @extend .hyphenate;
-  scroll-margin-top: calc(var(--web-header-height) + 20px);
+  scroll-margin-top: var(--web-header-height);
+
   &.is-flat {
     margin: 0;
     padding: 0;
     border: none;
+  }
+
+  &-permaLink {
+    &:after {
+      content: ' #';
+      opacity: 0;
+      transition: opacity 0.25s ease-out;
+    }
+  }
+
+  &:hover &-permaLink {
+    &:after {
+      opacity: 0.4;
+    }
   }
 }
 

@@ -18,27 +18,7 @@
       "content": [
         {
           "type": "text",
-          "text": "All configuration can be managed from the`cms.tsx` file. This file is created in the project root during `alinea init`. If you're using a `src` directory look for it there. It contains an example "
-        },
-        {
-          "type": "text",
-          "text": "Workspace",
-          "marks": [
-            {
-              "type": "link",
-              "attrs": {
-                "data-id": "2YkiCMTzc9nyvJWwhOfl3aR3SMw",
-                "data-entry": "259EzPfnSUaKOrNL1S2bpIpMdKl",
-                "data-type": "entry",
-                "href": null,
-                "title": ""
-              }
-            }
-          ]
-        },
-        {
-          "type": "text",
-          "text": " to get started from. "
+          "text": "All configuration can be managed from the `cms.tsx` file. This file is created in the project root during `alinea init`."
         }
       ]
     },
@@ -66,7 +46,7 @@
       "content": [
         {
           "type": "text",
-          "text": "Configuration"
+          "text": "cms.tsx"
         }
       ]
     },
@@ -76,19 +56,52 @@
       "content": [
         {
           "type": "text",
-          "text": "`cms`",
+          "text": "The configuration file must export a "
+        },
+        {
+          "type": "text",
+          "text": "`cms` instance",
           "marks": [
             {
-              "type": "bold"
+              "type": "link",
+              "attrs": {
+                "data-id": "2a4tYNsvx6xjzLaAwam0pOKzusv",
+                "data-entry": "25HWCBHEFdsLDtooZ4mzxeax3An",
+                "data-type": "entry",
+                "href": null,
+                "title": ""
+              }
             }
           ]
         },
         {
-          "type": "hardBreak"
-        },
-        {
           "type": "text",
-          "text": "Export a CMS instance named `cms` from this file."
+          "text": "."
+        }
+      ]
+    },
+    {
+      "id": "2a4tC7lBmNMZUuJDec7zsG4st62",
+      "type": "CodeBlock",
+      "code": "export const cms = ...",
+      "fileName": "cms.tsx",
+      "language": "",
+      "compact": false
+    },
+    {
+      "id": "2a4tlNK7Hz0oQelptZVymGanGgu",
+      "type": "NoticeBlock",
+      "level": "info",
+      "body": [
+        {
+          "type": "paragraph",
+          "textAlign": "left",
+          "content": [
+            {
+              "type": "text",
+              "text": "If you're using a `src` directory the file will be located at `src/cms.tsx`"
+            }
+          ]
         }
       ]
     }

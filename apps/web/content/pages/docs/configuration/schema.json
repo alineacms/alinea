@@ -45,7 +45,7 @@
     {
       "id": "267QjRgoDq3nZ6Dth0o3MElJgzP",
       "type": "CodeBlock",
-      "code": "alinea.schema('My schema', {\n  TypeA, TypeB, TypeC\n})",
+      "code": "alinea.schema({\n  TypeA, TypeB, TypeC\n})",
       "fileName": "",
       "language": "",
       "compact": false

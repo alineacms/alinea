@@ -1,5 +1,5 @@
 {
-  "title": "CMS config",
+  "title": "CMS",
   "body": [
     {
       "type": "heading",
@@ -8,7 +8,7 @@
       "content": [
         {
           "type": "text",
-          "text": "CMS config"
+          "text": "CMS "
         }
       ]
     },
@@ -37,10 +37,6 @@
       ],
       "js": [
         {
-          "type": "UNDEFINED",
-          "id": "25HWCBHEFdsLDtooZ4mzxeax3An"
-        },
-        {
           "id": "2YknKQ52hbmP0BXioYxqs38Y4vv",
           "type": "CodeBlock",
           "code": "export const cms = createCMS({\n  schema, workspaces, dashboard\n})",
@@ -58,48 +54,6 @@
         {
           "type": "text",
           "text": "Configuration"
-        }
-      ]
-    },
-    {
-      "type": "paragraph",
-      "textAlign": "left",
-      "content": [
-        {
-          "type": "text",
-          "text": "`schema`",
-          "marks": [
-            {
-              "type": "bold"
-            }
-          ]
-        },
-        {
-          "type": "hardBreak"
-        },
-        {
-          "type": "text",
-          "text": "A "
-        },
-        {
-          "type": "text",
-          "text": "collection of Types",
-          "marks": [
-            {
-              "type": "link",
-              "attrs": {
-                "data-id": "2YkhKab77FPvVbFuEKDFvTCeQqA",
-                "data-entry": "267KTV8uPHIdZgFUQvJf06sfm4h",
-                "data-type": "entry",
-                "href": null,
-                "title": ""
-              }
-            }
-          ]
-        },
-        {
-          "type": "text",
-          "text": "."
         }
       ]
     },
@@ -151,6 +105,48 @@
       "content": [
         {
           "type": "text",
+          "text": "`schema`",
+          "marks": [
+            {
+              "type": "bold"
+            }
+          ]
+        },
+        {
+          "type": "hardBreak"
+        },
+        {
+          "type": "text",
+          "text": "Describe the structure of your content using a "
+        },
+        {
+          "type": "text",
+          "text": "collection of Types",
+          "marks": [
+            {
+              "type": "link",
+              "attrs": {
+                "data-id": "2YkhKab77FPvVbFuEKDFvTCeQqA",
+                "data-entry": "267KTV8uPHIdZgFUQvJf06sfm4h",
+                "data-type": "entry",
+                "href": null,
+                "title": ""
+              }
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": "."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
           "text": "`dashboard`",
           "marks": [
             {
@@ -163,7 +159,27 @@
         },
         {
           "type": "text",
-          "text": "All configuration to generate the dashboard UI for deployment goes here."
+          "text": "All configuration to generate the dashboard UI for "
+        },
+        {
+          "type": "text",
+          "text": "deployment",
+          "marks": [
+            {
+              "type": "link",
+              "attrs": {
+                "data-id": "2a4zuVMFhDy0YU5LCzGUUqjpyeW",
+                "data-entry": "28NgMpMQkmTy4uyFhPj8z4XVqml",
+                "data-type": "entry",
+                "href": null,
+                "title": ""
+              }
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": " goes here."
         }
       ]
     },

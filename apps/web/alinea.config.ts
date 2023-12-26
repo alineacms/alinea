@@ -21,10 +21,13 @@ export const main = alinea.workspace('Alinea', {
 })
 
 export const config = alinea.config({
-  dashboardFile: 'admin.html',
-  handlerUrl: '/api/cms',
   schema,
   workspaces: {main},
+  dashboard: {
+    dashboardUrl: '/admin.html',
+    handlerUrl: '/api/cms',
+    staticFile: 'public/admin.html'
+  },
   preview:
     process.env.NODE_ENV === 'development'
       ? 'http://localhost:3000/api/preview'
