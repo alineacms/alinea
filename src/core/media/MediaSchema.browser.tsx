@@ -7,20 +7,25 @@ import {
   FileSummaryThumb
 } from '../../dashboard/view/media/FileSummary.js'
 import {Meta} from '../Meta.js'
-import {MediaSchema as MediaSchemaConfig} from './MediaSchema.js'
+import * as config from './MediaSchema.js'
 
-export const MediaLibrary = type('Media directory', {
-  ...MediaSchemaConfig.MediaLibrary,
-  [Meta]: {
-    isContainer: true,
-    contains: ['MediaLibrary'],
-    view: MediaExplorer,
-    icon: IcRoundPermMedia
+export type MediaLibrary = config.MediaLibrary
+export const MediaLibrary: typeof config.MediaLibrary = type(
+  'Media directory',
+  {
+    ...config.MediaLibrary,
+    [Meta]: {
+      isContainer: true,
+      contains: ['MediaLibrary'],
+      view: MediaExplorer,
+      icon: IcRoundPermMedia
+    }
   }
-})
+)
 
-export const MediaFile = type('File', {
-  ...MediaSchemaConfig.MediaFile,
+export type MediaFile = config.MediaFile
+export const MediaFile: typeof config.MediaFile = type('File', {
+  ...config.MediaFile,
   [Meta]: {
     isHidden: true,
     summaryRow: FileSummaryRow,

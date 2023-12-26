@@ -76,9 +76,11 @@ export const FileSummaryRow = view(
             <TextLabel label={file.title} />
           </Ellipsis>
         </VStack>
-        <Chip style={{marginLeft: 'auto'}}>
-          {file.extension.slice(1).toUpperCase()}
-        </Chip>
+        {file.extension && (
+          <Chip style={{marginLeft: 'auto'}}>
+            {file.extension.slice(1).toUpperCase()}
+          </Chip>
+        )}
       </HStack>
     )
   }

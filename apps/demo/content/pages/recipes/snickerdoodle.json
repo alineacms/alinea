@@ -1,11 +1,9 @@
 {
-  "id": "uENumuMjqX0fSbGtrf2fj",
-  "type": "Recipe",
   "title": "Snickerdoodle",
   "header": {
     "image": {
-      "id": "Ek4h9NeaUSWFvbABIWu3t",
-      "type": "entry",
+      "id": "2YtRRDFq54OT9HvmPA8Zstnrasl",
+      "type": "image",
       "entry": "gyU39v_eQTqhE7QiU9OzB"
     },
     "credit": [
@@ -26,6 +24,7 @@
                 "attrs": {
                   "data-id": null,
                   "data-entry": null,
+                  "data-type": null,
                   "href": "https://unsplash.com/@gmalhotra?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText",
                   "title": null
                 }
@@ -303,7 +302,9 @@
       ]
     }
   ],
-  "alinea": {
+  "@alinea": {
+    "entryId": "uENumuMjqX0fSbGtrf2fj",
+    "type": "Recipe",
     "index": "Zy"
   }
 }

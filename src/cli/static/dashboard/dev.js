@@ -1,4 +1,3 @@
-import {CMS} from 'alinea/core'
 import 'alinea/css'
 import {DevDashboard} from 'alinea/dashboard/dev/DevDashboard'
 import {jsx} from 'react/jsx-runtime'
@@ -13,8 +12,7 @@ reactRender(jsx(DevDashboard, {loadConfig}), into)
 
 async function loadConfig() {
   const exports = await import('/config.js?' + Math.random())
-  for (const member of Object.values(exports)) {
-    if (member instanceof CMS) return member
-  }
+  if ('cms' in exports) return exports.cms.config
+  if ('config' in exports) return exports.config
   throw new Error(`No config found in "/config.js"`)
 }

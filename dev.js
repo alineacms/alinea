@@ -26,6 +26,6 @@ async function run({production, dir, config}) {
 sade('dev', true)
   .option('--production', `Run in production mode`)
   .option('--dir', `Development directory`, 'apps/web')
-  .option('--config', `Config file`, 'src/cms')
+  .option('--config', `Config file`)
   .action(opts => run(opts))
   .parse(process.argv)

@@ -60,7 +60,7 @@ export function compileConfig({
         setup(build) {
           build.onEnd(res => {
             if (res.errors.length) {
-              console.log('> config has errors')
+              console.log('> Could not compile Alinea config')
             } else {
               results.emit(res)
               if (!watch) results.return()

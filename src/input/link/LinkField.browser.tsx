@@ -41,6 +41,8 @@ import {
 } from './LinkField.js'
 import css from './LinkInput.module.scss'
 
+export type * from './LinkField.js'
+
 const styles = fromModule(css)
 
 export const createLink = Field.provideView(LinkInput, createLinkField)

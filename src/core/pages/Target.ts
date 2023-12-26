@@ -76,10 +76,11 @@ export const Target = class {
     const rowId = `@@@${createId()}`
     return new Proxy<any>(call, {
       ownKeys() {
-        return [rowId]
+        return ['prototype', rowId]
       },
-      getOwnPropertyDescriptor() {
-        return {enumerable: true, configurable: true}
+      getOwnPropertyDescriptor(target, prop) {
+        if (prop === rowId) return {enumerable: true, configurable: true}
+        return Reflect.getOwnPropertyDescriptor(target, prop)
       },
       get: (_, prop) => {
         if (typeof prop === 'string') {

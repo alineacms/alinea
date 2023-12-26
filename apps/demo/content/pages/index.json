@@ -1,12 +1,10 @@
 {
-  "id": "vTCpgsHfAjZtHabyjb8RG",
-  "type": "Home",
   "title": "Milk & Cookies",
   "hero": {
     "header": {
       "image": {
-        "id": "wjmGZf6Bvt11l22044tof",
-        "type": "entry",
+        "id": "2YwhgJkO2dfyQsgPevLSZSjkfOw",
+        "type": "image",
         "entry": "Lr282L3627dmnIWfsuOJG"
       },
       "credit": [
@@ -27,6 +25,7 @@
                   "attrs": {
                     "data-id": null,
                     "data-entry": null,
+                    "data-type": null,
                     "href": "https://unsplash.com/es/@juliedroz?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText",
                     "title": null
                   }
@@ -51,7 +50,9 @@
       }
     ]
   },
-  "alinea": {
+  "@alinea": {
+    "entryId": "vTCpgsHfAjZtHabyjb8RG",
+    "type": "Home",
     "index": "He8hfze6W35ZPztcqouk",
     "seeded": true,
     "root": "pages"

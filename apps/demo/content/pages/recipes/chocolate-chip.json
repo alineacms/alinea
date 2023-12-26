@@ -1,11 +1,9 @@
 {
-  "id": "oi4qtV9YaXNRIUDT2s61Y",
-  "type": "Recipe",
   "title": "Chocolate chip",
   "header": {
     "image": {
-      "id": "w0-p1Gciy-oPIBGw-j1EI",
-      "type": "entry",
+      "id": "2YtRRrpnZmsla15P7Sna9ApcPrU",
+      "type": "image",
       "entry": "sw3j0F5a-lzQ9ubqYuS53"
     },
     "credit": [
@@ -26,6 +24,7 @@
                 "attrs": {
                   "data-id": null,
                   "data-entry": null,
+                  "data-type": null,
                   "href": "https://unsplash.com/@foodess?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText",
                   "title": null
                 }
@@ -258,7 +257,9 @@
       ]
     }
   ],
-  "alinea": {
+  "@alinea": {
+    "entryId": "oi4qtV9YaXNRIUDT2s61Y",
+    "type": "Recipe",
     "index": "Zz"
   }
 }

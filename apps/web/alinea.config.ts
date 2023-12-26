@@ -1,5 +1,5 @@
-import alinea, {createNextCMS} from 'alinea'
-import * as schema from './schema'
+import alinea from 'alinea'
+import * as schema from './src/schema'
 
 export const pages = alinea.root('Pages', {
   index: alinea.page(schema.Home),
@@ -20,16 +20,11 @@ export const main = alinea.workspace('Alinea', {
   }
 })
 
-export const cms = createNextCMS({
-  dashboard: {
-    dashboardUrl: '/admin.html',
-    handlerUrl: '/api/cms',
-    staticFile: 'public/admin.html'
-  },
+export const config = alinea.config({
+  dashboardFile: 'admin.html',
+  handlerUrl: '/api/cms',
   schema,
-  workspaces: {
-    main
-  },
+  workspaces: {main},
   preview:
     process.env.NODE_ENV === 'development'
       ? 'http://localhost:3000/api/preview'

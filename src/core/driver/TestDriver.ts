@@ -19,20 +19,20 @@ class TestDriver extends DefaultDriver implements TestApi {
     connect(new Database()).toAsync()
   )
   db = this.store.then(async store => {
-    const db = new Database(this, store)
+    const db = new Database(this.config, store)
     await db.fill({async *entries() {}}, '')
     return db
   })
   handler = this.db.then(async db => {
     const handler = new Handler({
-      config: this,
+      config: this.config,
       db,
       previews: new JWTPreviews('test'),
       previewAuthToken: 'test'
     })
     return handler.connect({logger: new Logger('test')})
   })
-
+  async exportStore(outDir: string, data: Uint8Array) {}
   async readStore(): Promise<Store> {
     return this.store
   }

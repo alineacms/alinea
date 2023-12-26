@@ -40,13 +40,17 @@
   font-size: 25px;
   font-weight: 700;
   line-height: 1.33;
-  margin: 45px 0 14px 0;
+  margin: 40px 0 14px 0;
+  padding-top: 30px;
+  border-top: 1px solid var(--web-outline);
   white-space: pre-line;
   text-rendering: optimizeLegibility;
   @extend .hyphenate;
   scroll-margin-top: calc(var(--web-header-height) + 20px);
   &.is-flat {
     margin: 0;
+    padding: 0;
+    border: none;
   }
 }
 
