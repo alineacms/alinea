@@ -14,7 +14,7 @@ function Text({children}: {children: string}) {
   ))
 }
 
-export function WebText<T>(props: RichTextProps<T>) {
+export function WebText<T extends {}>(props: RichTextProps<T>) {
   return (
     <div className={styles.root()}>
       <RichText

@@ -44,6 +44,7 @@
   white-space: pre-line;
   text-rendering: optimizeLegibility;
   @extend .hyphenate;
+  scroll-margin-top: calc(var(--web-header-height) + 20px);
   &.is-flat {
     margin: 0;
   }

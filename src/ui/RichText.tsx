@@ -1,4 +1,4 @@
-import {Infer, Schema, TextDoc, TextNode} from 'alinea/core'
+import {Infer, Schema, TextDoc, TextNode, slugify} from 'alinea/core'
 import {ComponentType, Fragment, ReactElement, isValidElement} from 'react'
 
 export enum Elements {
@@ -22,9 +22,23 @@ export enum Elements {
 
 type Element = keyof typeof Elements
 
+function textContent(doc: TextDoc): string {
+  return doc.reduce((text, node) => {
+    switch (node.type) {
+      case 'text':
+        return text + node.text
+      default:
+        if ('content' in node && Array.isArray(node.content))
+          return text + textContent(node.content)
+        return text
+    }
+  }, '')
+}
+
 function nodeElement(
   type: string,
-  attributes: Record<string, any> | undefined
+  attributes: Record<string, any> | undefined,
+  content?: TextDoc
 ): ReactElement<any, Element> | undefined {
   const style = {
     textAlign:
@@ -33,7 +47,9 @@ function nodeElement(
   switch (type) {
     case 'heading':
       const Tag = `h${attributes?.level || 1}` as 'h1'
-      return <Tag style={style} />
+      const id =
+        attributes?.id ?? (content ? slugify(textContent(content)) : undefined)
+      return <Tag style={style} id={id} />
     case 'paragraph':
       return <p style={style} />
     case 'bold':
@@ -93,7 +109,7 @@ function RichTextNodeView<T>({views, node}: RichTextNodeViewProps<T>) {
     }
     default: {
       const {type, content, ...attrs} = node as TextNode.Element
-      const element = nodeElement(type, attrs)
+      const element = nodeElement(type, attrs, content)
       const View: any = views[element?.type || type]
       const inner =
         content?.map((node, i) => (

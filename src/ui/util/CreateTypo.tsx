@@ -1,10 +1,8 @@
-import {slugify} from 'alinea/core/util/Slugs'
 import {
   ComponentType,
   forwardRef,
   HTMLProps,
   PropsWithChildren,
-  ReactNode,
   Ref
 } from 'react'
 import {forwardRefWithAs, PropsWithAs} from './PropsWithAs.js'
@@ -26,14 +24,19 @@ type TypoStyles =
     }
   | GenericStyles
 
-function idFor(children: ReactNode): string | undefined {
-  return typeof children === 'string' ? slugify(children) : undefined
+interface Overrides {
+  a?: ComponentType<any>
+  h1?: ComponentType<any>
+  h2?: ComponentType<any>
+  h3?: ComponentType<any>
+  h4?: ComponentType<any>
+  h5?: ComponentType<any>
+  p?: ComponentType<any>
+  link?: ComponentType<any>
+  small?: ComponentType<any>
 }
 
-export function createTypo(
-  styles: TypoStyles,
-  InternalLink?: ComponentType<any>
-) {
+export function createTypo(styles: TypoStyles, overrides: Overrides = {}) {
   type TypoProps = {flat?: boolean; light?: boolean}
 
   function Typo({
@@ -53,11 +56,10 @@ export function createTypo(
     props: PropsWithAs<TypoProps, 'h1'>,
     ref: Ref<HTMLHeadingElement>
   ) {
-    const {as: Type = 'h1', flat, light, ...rest} = props
+    const {as: Type = overrides.h1 ?? 'h1', flat, light, ...rest} = props
     return (
       <Type
         ref={ref}
-        id={idFor(rest.children)}
         {...rest}
         className={styles.h1.mergeProps(rest)({flat, light})}
       />
@@ -68,11 +70,10 @@ export function createTypo(
     props: PropsWithAs<TypoProps, 'h2'>,
     ref: Ref<HTMLHeadingElement>
   ) {
-    const {as: Type = 'h2', flat, light, ...rest} = props
+    const {as: Type = overrides.h2 ?? 'h2', flat, light, ...rest} = props
     return (
       <Type
         ref={ref}
-        id={idFor(rest.children)}
         {...rest}
         className={styles.h2.mergeProps(rest)({flat, light})}
       />
@@ -83,11 +84,10 @@ export function createTypo(
     props: PropsWithAs<TypoProps, 'h3'>,
     ref: Ref<HTMLHeadingElement>
   ) {
-    const {as: Type = 'h3', flat, light, ...rest} = props
+    const {as: Type = overrides.h3 ?? 'h3', flat, light, ...rest} = props
     return (
       <Type
         ref={ref}
-        id={idFor(rest.children)}
         {...rest}
         className={styles.h3.mergeProps(rest)({flat, light})}
       />
@@ -98,11 +98,10 @@ export function createTypo(
     props: PropsWithAs<TypoProps, 'h4'>,
     ref: Ref<HTMLHeadingElement>
   ) {
-    const {as: Type = 'h4', flat, light, ...rest} = props
+    const {as: Type = overrides.h4 ?? 'h4', flat, light, ...rest} = props
     return (
       <Type
         ref={ref}
-        id={idFor(rest.children)}
         {...rest}
         className={styles.h4.mergeProps(rest)({flat, light})}
       />
@@ -113,11 +112,10 @@ export function createTypo(
     props: PropsWithAs<TypoProps, 'h5'>,
     ref: Ref<HTMLHeadingElement>
   ) {
-    const {as: Type = 'h5', flat, light, ...rest} = props
+    const {as: Type = overrides.h5 ?? 'h5', flat, light, ...rest} = props
     return (
       <Type
         ref={ref}
-        id={idFor(rest.children)}
         {...rest}
         className={styles.h5.mergeProps(rest)({flat, light})}
       />
@@ -128,7 +126,7 @@ export function createTypo(
     props: PropsWithAs<TypoProps, 'p'>,
     ref: Ref<HTMLHeadingElement>
   ) {
-    const {as: Type = 'p', flat, light, ...rest} = props
+    const {as: Type = overrides.p ?? 'p', flat, light, ...rest} = props
     return (
       <Type
         ref={ref}
@@ -142,17 +140,9 @@ export function createTypo(
     props: HTMLProps<HTMLAnchorElement>,
     ref: Ref<HTMLAnchorElement>
   ) {
-    if (InternalLink) {
-      return (
-        <InternalLink
-          {...props}
-          ref={ref}
-          className={styles.link.mergeProps(props)()}
-        />
-      )
-    }
+    const Tag = overrides.a ?? 'a'
     return (
-      <a {...props} ref={ref} className={styles.link.mergeProps(props)()} />
+      <Tag {...props} ref={ref} className={styles.link.mergeProps(props)()} />
     )
   })
 
@@ -171,10 +161,10 @@ export function createTypo(
   }
 
   function SmallComponent(
-    props: PropsWithAs<{}, 'span'>,
+    props: PropsWithAs<{}, 'small'>,
     ref: Ref<HTMLSpanElement>
   ) {
-    const {as: Type = 'span', ...rest} = props
+    const {as: Type = overrides.small ?? 'small', ...rest} = props
     return (
       <Type {...props} className={styles.small.mergeProps(props)()} ref={ref} />
     )
@@ -190,6 +180,6 @@ export function createTypo(
     Link: LinkComponent,
     link: styles.link,
     Monospace: forwardRefWithAs<{}, 'span'>(MonospaceComponent),
-    Small: forwardRefWithAs<TypoProps, 'span'>(SmallComponent)
+    Small: forwardRefWithAs<TypoProps, 'small'>(SmallComponent)
   })
 }
