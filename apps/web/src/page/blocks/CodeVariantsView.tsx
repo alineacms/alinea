@@ -1,6 +1,6 @@
+import {CodeVariantsBlock} from '@/schema/blocks/CodeVariantsBlock'
 import {Infer} from 'alinea'
 import {fromModule} from 'alinea/ui'
-import {CodeVariantsBlock} from '../schema/blocks/CodeVariantsBlock'
 import {CodeVariantTabs} from './CodeVariantsView.client'
 import css from './CodeVariantsView.module.scss'
 import {codeHighlighter} from './code/CodeHighlighter'

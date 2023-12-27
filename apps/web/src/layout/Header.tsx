@@ -6,13 +6,13 @@ import {IcRoundClose} from 'alinea/ui/icons/IcRoundClose'
 import {IcRoundHamburger} from 'alinea/ui/icons/IcRoundHamburger'
 import {MdiGithub} from 'alinea/ui/icons/MdiGithub'
 import {MdiTwitterCircle} from 'alinea/ui/icons/MdiTwitterCircle'
-import {Link} from '../nav/Link'
-import {NavTree} from '../nav/NavTree'
 import {Home} from '../schema/Home'
 import {HeaderRoot} from './Header.client'
 import css from './Header.module.scss'
 import {LayoutContainer} from './Layout'
 import {Logo} from './branding/Logo'
+import {Link} from './nav/Link'
+import {NavTree} from './nav/NavTree'
 
 const styles = fromModule(css)
 

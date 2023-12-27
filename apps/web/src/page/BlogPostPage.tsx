@@ -1,10 +1,10 @@
 /* eslint-disable @next/next/no-img-element */
 
-import {TextView} from '@/blocks/TextBlockView'
 import {cms} from '@/cms'
 import {LayoutWithSidebar} from '@/layout/Layout'
 import {WebTypo} from '@/layout/WebTypo'
-import {Link} from '@/nav/Link'
+import {Link} from '@/layout/nav/Link'
+import {TextView} from '@/page/blocks/TextBlockView'
 import {BlogPost} from '@/schema/BlogPost'
 import {Entry} from 'alinea/core'
 import {HStack, Stack, fromModule} from 'alinea/ui'

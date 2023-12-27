@@ -1,7 +1,7 @@
+import {ImageBlock} from '@/schema/blocks/ImageBlock'
 import {Infer} from 'alinea'
 import {fromModule, imageBlurUrl} from 'alinea/ui'
 import Image from 'next/image'
-import {ImageBlock} from '../schema/blocks/ImageBlock.js'
 import css from './ImageBlockView.module.scss'
 
 const styles = fromModule(css)

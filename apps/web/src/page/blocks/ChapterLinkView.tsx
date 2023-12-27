@@ -1,8 +1,8 @@
+import {Link} from '@/layout/nav/Link'
+import {ChapterLinkBlock} from '@/schema/blocks/ChapterLinkBlock'
 import {Infer} from 'alinea'
 import {fromModule, HStack, Stack} from 'alinea/ui'
 import {IcRoundArrowForward} from 'alinea/ui/icons/IcRoundArrowForward'
-import {Link} from '../nav/Link'
-import {ChapterLinkBlock} from '../schema/blocks/ChapterLinkBlock'
 import css from './ChapterLinkView.module.scss'
 
 const styles = fromModule(css)

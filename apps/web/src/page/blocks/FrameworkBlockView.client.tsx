@@ -1,7 +1,7 @@
 'use client'
 
+import {getFramework} from '@/layout/nav/Frameworks'
 import {useParams} from 'next/navigation'
-import {getFramework} from '../nav/Frameworks'
 
 export interface RenderSelectedFrameworkProps {
   options: Array<[string, React.ReactNode]>

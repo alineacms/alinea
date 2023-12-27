@@ -1,9 +1,9 @@
+import {Blocks} from '@/schema/blocks/Blocks'
 import {Infer} from 'alinea'
 import {fromModule} from 'alinea/ui'
 import {ComponentType} from 'react'
 import css from './BlocksView.module.scss'
-import {TextBlockView} from './blocks/TextBlockView'
-import {Blocks} from './schema/blocks/Blocks'
+import {TextBlockView} from './TextBlockView'
 
 const styles = fromModule(css)
 

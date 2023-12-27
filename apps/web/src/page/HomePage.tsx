@@ -1,20 +1,20 @@
+import heroBg from '@/assets/hero.jpg'
 import {cms} from '@/cms'
 import {
   IcRoundFastForward,
   MdiLanguageTypescript,
   MdiSourceBranch
 } from '@/icons'
+import {Feature, Features} from '@/layout/Features'
+import {Hero} from '@/layout/Hero'
+import {LayoutContainer} from '@/layout/Layout'
+import {WebText} from '@/layout/WebText'
+import {WebTypo} from '@/layout/WebTypo'
+import {Newsletter} from '@/layout/engage/Newsletter'
 import {Home} from '@/schema/Home'
 import {HStack, VStack} from 'alinea/ui/Stack'
 import {fromModule} from 'alinea/ui/util/Styler'
 import {px} from 'alinea/ui/util/Units'
-import heroBg from '../../media/hero.jpg'
-import {Feature, Features} from '../layout/Features'
-import {Hero} from '../layout/Hero'
-import {LayoutContainer} from '../layout/Layout'
-import {WebText} from '../layout/WebText'
-import {WebTypo} from '../layout/WebTypo'
-import {Newsletter} from '../layout/engage/Newsletter'
 import css from './HomePage.module.scss'
 
 const styles = fromModule(css)

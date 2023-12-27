@@ -1,8 +1,8 @@
 import {fromModule, Typo} from 'alinea/ui'
 //import {useClipboard} from 'use-clipboard-copy'
 //import MdiContentCopy from '../../icons/MdiContentCopy'
+import {CodeBlock} from '@/schema/blocks/CodeBlock'
 import {Infer} from 'alinea'
-import {CodeBlock} from '../schema/blocks/CodeBlock'
 import {codeHighlighter} from './code/CodeHighlighter'
 import css from './CodeBlockView.module.scss'
 

@@ -1,4 +1,4 @@
-import {supportedFrameworks} from '@/nav/Frameworks'
+import {supportedFrameworks} from '@/layout/nav/Frameworks'
 import alinea from 'alinea'
 import {TextField} from './TextBlock'
 

@@ -1,8 +1,8 @@
 import {IcOutlineInfo} from '@/icons'
+import {WebText} from '@/layout/WebText'
+import {NoticeBlock} from '@/schema/blocks/NoticeBlock'
 import {Infer} from 'alinea'
 import {fromModule, HStack} from 'alinea/ui'
-import {WebText} from '../layout/WebText'
-import {NoticeBlock} from '../schema/blocks/NoticeBlock'
 import css from './NoticeView.module.scss'
 
 const styles = fromModule(css)

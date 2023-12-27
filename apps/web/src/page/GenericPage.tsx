@@ -1,10 +1,10 @@
-import {TextView} from '@/blocks/TextBlockView'
 import {cms} from '@/cms'
 import {InformationBar} from '@/layout/InformationBar'
 import {LayoutWithSidebar} from '@/layout/Layout'
 import {Page} from '@/schema/Page'
 import {Entry} from 'alinea/core'
 import {notFound} from 'next/navigation'
+import {TextView} from './blocks/TextBlockView'
 
 export interface AnyPageProps {
   params: {

@@ -1,11 +1,11 @@
 'use client'
 
+import {WebTypo} from '@/layout/WebTypo'
+import {CodeVariantsBlock} from '@/schema/blocks/CodeVariantsBlock'
 import {Infer} from 'alinea'
 import {HStack, fromModule} from 'alinea/ui'
 import {useAtom} from 'jotai'
 import {atomWithStorage} from 'jotai/utils'
-import {WebTypo} from '../layout/WebTypo'
-import {CodeVariantsBlock} from '../schema/blocks/CodeVariantsBlock'
 import css from './CodeVariantsView.module.scss'
 
 const styles = fromModule(css)
