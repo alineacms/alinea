@@ -15,6 +15,7 @@ export const supportedFrameworks = [
     icon: TablerBrandJavascript,
     label: 'Vanilla js',
     link(url: string) {
+      if (url === '/docs') return '/docs:js'
       return url.replace('/docs/', '/docs:js/')
     }
   }

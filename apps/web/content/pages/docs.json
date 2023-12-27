@@ -1,11 +1,43 @@
 {
-  "id": "docs",
-  "type": "Docs",
-  "root": "data",
-  "index": "a0",
   "title": "Docs",
-  "alinea": {
+  "navigationTitle": "Introduction",
+  "body": [
+    {
+      "type": "heading",
+      "textAlign": "left",
+      "level": 1,
+      "content": [
+        {
+          "type": "text",
+          "text": "Introduction"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "Alinea is an open source headless CMS written in Typescript. It integrates with git by storing content in flat files. Content is bundled with deploys so you can retrieve it without network roundtrips. "
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "title": "",
+      "image": {},
+      "description": ""
+    }
+  },
+  "@alinea": {
+    "entryId": "docs",
+    "type": "Docs",
     "index": "a0",
-    "root": "data"
+    "seeded": true,
+    "root": "pages"
   }
 }

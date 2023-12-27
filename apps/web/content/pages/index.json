@@ -23,17 +23,6 @@
         ]
       },
       {
-        "type": "heading",
-        "textAlign": "left",
-        "level": 2,
-        "content": [
-          {
-            "type": "text",
-            "text": " "
-          }
-        ]
-      },
-      {
         "type": "paragraph",
         "textAlign": "left",
         "content": [
@@ -89,15 +78,15 @@
   },
   "links": [
     {
-      "id": "KFFmmbYVMbbO6ZcG51SEH",
+      "id": "2a7ftYTVOui6duXcA4Js0xG8QC6",
       "index": "a0",
       "type": "entry",
-      "entry": "2AFn42lqIU86a9MI0I4rX3qMJQv",
+      "entry": "docs",
       "label": "Docs",
-      "active": "/docs"
+      "active": ""
     },
     {
-      "id": "YcBOn-HADwb-hCGO0GeY_",
+      "id": "2a7ftRO1unpBDnfvXtgJUBIBwNr",
       "index": "a1",
       "type": "entry",
       "entry": "CC8aJ6-2U3s31micAzTLU",
@@ -105,7 +94,7 @@
       "active": ""
     },
     {
-      "id": "Q4Njy-I1fBzyuIBdZhb1f",
+      "id": "2a7ftUxPD7w8EMFYWjpYoJVF6GP",
       "index": "a2",
       "type": "entry",
       "entry": "gx3H52whBKO_DdfcMNI3I",
@@ -121,11 +110,11 @@
       "label": "Developer",
       "links": [
         {
-          "id": "2ANVLD5olNHL82kExSypIXaVndL",
-          "index": "a0",
+          "id": "2a7fvVi9M7zcX2wx3IJfYBrCqeC",
+          "index": "a1",
           "type": "entry",
-          "entry": "2AFn42lqIU86a9MI0I4rX3qMJQv",
-          "label": "Docs"
+          "entry": "docs",
+          "label": ""
         }
       ]
     }
