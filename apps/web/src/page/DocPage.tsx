@@ -1,6 +1,6 @@
 import {cms} from '@/cms'
 import {Breadcrumbs} from '@/layout/Breadcrumbs'
-import {LayoutWithSidebar} from '@/layout/Layout'
+import {PageWithSidebar} from '@/layout/Page'
 import {FrameworkPicker} from '@/layout/nav/FrameworkPicker'
 import {supportedFrameworks} from '@/layout/nav/Frameworks'
 import {Link} from '@/layout/nav/Link'
@@ -121,7 +121,7 @@ export default async function DocPage({params}: DocPageProps) {
   const prev = docs[index - 1]
   const next = docs[index + 1]
   return (
-    <LayoutWithSidebar
+    <PageWithSidebar
       sidebar={
         <VStack gap={10}>
           <FrameworkPicker />
@@ -129,7 +129,7 @@ export default async function DocPage({params}: DocPageProps) {
         </VStack>
       }
     >
-      <Breadcrumbs parents={doc.parents.slice(1)} />
+      <Breadcrumbs parents={doc.parents.slice(-1)} />
       <BodyView body={doc.body} />
       <HStack
         gap={20}
@@ -167,6 +167,6 @@ export default async function DocPage({params}: DocPageProps) {
           </Link>
         )}
       </HStack>
-    </LayoutWithSidebar>
+    </PageWithSidebar>
   )
 }

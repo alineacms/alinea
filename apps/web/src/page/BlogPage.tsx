@@ -1,6 +1,6 @@
 import {cms} from '@/cms'
 import {InformationBar} from '@/layout/InformationBar'
-import {LayoutWithSidebar} from '@/layout/Layout'
+import {PageWithSidebar} from '@/layout/Page'
 import {WebTypo} from '@/layout/WebTypo'
 import {Link} from '@/layout/nav/Link'
 import {BlogOverview} from '@/schema/BlogOverview'
@@ -26,7 +26,7 @@ export default async function BlogPage() {
     })
   )
   return (
-    <LayoutWithSidebar sidebar={<InformationBar />}>
+    <PageWithSidebar sidebar={<InformationBar />}>
       <WebTypo>
         <WebTypo.H1>{overview.title}</WebTypo.H1>
         <VStack gap={30} align="flex-start">
@@ -46,6 +46,6 @@ export default async function BlogPage() {
           })}
         </VStack>
       </WebTypo>
-    </LayoutWithSidebar>
+    </PageWithSidebar>
   )
 }

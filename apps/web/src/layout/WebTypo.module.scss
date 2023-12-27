@@ -35,7 +35,8 @@
 }
 
 .h2 {
-  font-family: var(--web-title-font);
+  // font-family: var(--web-title-font);
+  font-weight: 600;
   min-width: 0;
   font-size: 25px;
   font-weight: 700;
@@ -47,7 +48,7 @@
   white-space: pre-line;
   text-rendering: optimizeLegibility;
   @extend .hyphenate;
-  scroll-margin-top: var(--web-header-height);
+  // scroll-margin-top: var(--web-header-height);
 
   &.is-flat {
     margin: 0;
@@ -71,7 +72,8 @@
 }
 
 .h3 {
-  font-family: var(--web-title-font);
+  // font-family: var(--web-title-font);
+  font-weight: 600;
   min-width: 0;
   font-size: 18px;
   font-weight: 700;
@@ -86,7 +88,8 @@
 }
 
 .h4 {
-  font-family: var(--web-title-font);
+  // font-family: var(--web-title-font);
+  font-weight: 600;
   min-width: 0;
   font-size: 13px;
   font-weight: 700;

@@ -7,14 +7,14 @@ import {IcSharpBrightnessMedium} from 'alinea/ui/icons/IcSharpBrightnessMedium'
 import {fromModule} from 'alinea/ui/util/Styler'
 import Link from 'next/link'
 import css from './Footer.module.scss'
-import {LayoutContainer, LayoutTheme} from './Layout'
+import {PageContainer, PageTheme} from './Page'
 import {WebTypo} from './WebTypo'
 
 const styles = fromModule(css)
 
 export type FooterProps = {
-  theme: LayoutTheme
-  setTheme: (theme: LayoutTheme) => void
+  theme: PageTheme
+  setTheme: (theme: PageTheme) => void
 }
 
 const themeIcons = {
@@ -33,7 +33,7 @@ export function Footer() {
   }
   return (
     <footer className={styles.root()}>
-      <LayoutContainer>
+      <PageContainer>
         <HStack align="flex-start">
           <VStack gap={15}>
             <WebTypo.H4>Developer</WebTypo.H4>
@@ -78,7 +78,7 @@ export function Footer() {
             <span>{theme.charAt(0).toUpperCase() + theme.slice(1)}</span>
           </HStack>*/}
         </HStack>
-      </LayoutContainer>
+      </PageContainer>
     </footer>
   )
 }

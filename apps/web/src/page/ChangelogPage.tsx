@@ -1,6 +1,6 @@
 import {InformationBar} from '@/layout/InformationBar'
-import {LayoutContainer, LayoutScrollable} from '@/layout/Layout'
 import {NavSidebar} from '@/layout/NavSidebar'
+import {PageContainer, PageScrollable} from '@/layout/Page'
 import {HStack, fromModule} from 'alinea/ui'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -24,18 +24,18 @@ export default async function Changelog() {
   const doc = fs.readFileSync(filePath)
   const content = await markdownToHtml(doc || '')
   return (
-    <LayoutContainer>
+    <PageContainer>
       <HStack>
         <NavSidebar>
           <InformationBar />
         </NavSidebar>
-        <LayoutScrollable>
+        <PageScrollable>
           <div
             className={styles.root()}
             dangerouslySetInnerHTML={{__html: content}}
           />
-        </LayoutScrollable>
+        </PageScrollable>
       </HStack>
-    </LayoutContainer>
+    </PageContainer>
   )
 }

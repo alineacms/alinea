@@ -9,7 +9,7 @@ import {MdiTwitterCircle} from 'alinea/ui/icons/MdiTwitterCircle'
 import {Home} from '../schema/Home'
 import {HeaderRoot} from './Header.client'
 import css from './Header.module.scss'
-import {LayoutContainer} from './Layout'
+import {PageContainer} from './Page'
 import {Logo} from './branding/Logo'
 import {Link} from './nav/Link'
 import {NavTree} from './nav/NavTree'
@@ -37,18 +37,18 @@ export async function Header() {
       />
       <div className={styles.mobilemenu()}>
         <div className={styles.mobilemenu.container()}>
-          <LayoutContainer className={styles.mobilemenu.top()}>
+          <PageContainer className={styles.mobilemenu.top()}>
             <Menu links={links} />
-          </LayoutContainer>
+          </PageContainer>
           <div className={styles.mobilemenu.nav()}>
             <MobileNav />
           </div>
         </div>
       </div>
       <HeaderRoot>
-        <LayoutContainer style={{height: '100%'}}>
+        <PageContainer style={{height: '100%'}}>
           <Menu links={links} />
-        </LayoutContainer>
+        </PageContainer>
       </HeaderRoot>
     </>
   )
@@ -96,41 +96,43 @@ interface MenuProps {
 
 function Menu({links}: MenuProps) {
   return (
-    <HStack center gap={10} className={styles.root.inner()}>
+    <HStack center gap={20} className={styles.root.inner()}>
       <Link href="/" className={styles.root.logo()}>
         <Logo />
       </Link>
-      <Stack.Center>
-        <HStack as="nav" center className={styles.root.nav()}>
-          <HeaderLinks links={links} style={styles.root.nav.link} />
-        </HStack>
-      </Stack.Center>
-      <HStack gap={12} center>
-        <a
-          href="https://github.com/alineacms/alinea"
-          target="_blank"
-          className={styles.root.social()}
-        >
-          <MdiGithub className={styles.root.social.icon()} />
-        </a>
-        <a
-          href="https://twitter.com/alineacms"
-          target="_blank"
-          className={styles.root.social()}
-        >
-          <MdiTwitterCircle className={styles.root.social.icon()} />
-        </a>
-        <a
-          href="https://www.alinea.cloud/app"
-          className={styles.root.dashboard()}
-        >
-          Dashboard
-        </a>
-        <label htmlFor="mobilemenu" className={styles.root.mobileButton()}>
-          <IcRoundHamburger className={styles.root.mobileButton.hamburger()} />
-          <IcRoundClose className={styles.root.mobileButton.close()} />
-        </label>
+      <HStack as="nav" center className={styles.root.nav()}>
+        <HeaderLinks links={links} style={styles.root.nav.link} />
       </HStack>
+      <Stack.Right>
+        <HStack gap={12} center>
+          <a
+            href="https://github.com/alineacms/alinea"
+            target="_blank"
+            className={styles.root.social()}
+          >
+            <MdiGithub className={styles.root.social.icon()} />
+          </a>
+          <a
+            href="https://twitter.com/alineacms"
+            target="_blank"
+            className={styles.root.social()}
+          >
+            <MdiTwitterCircle className={styles.root.social.icon()} />
+          </a>
+          <a
+            href="https://www.alinea.cloud/app"
+            className={styles.root.dashboard()}
+          >
+            Dashboard
+          </a>
+          <label htmlFor="mobilemenu" className={styles.root.mobileButton()}>
+            <IcRoundHamburger
+              className={styles.root.mobileButton.hamburger()}
+            />
+            <IcRoundClose className={styles.root.mobileButton.close()} />
+          </label>
+        </HStack>
+      </Stack.Right>
     </HStack>
   )
 }

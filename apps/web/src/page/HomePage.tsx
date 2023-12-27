@@ -1,4 +1,4 @@
-import heroBg from '@/assets/hero.jpg'
+import heroBg from '@/assets/hero-alinea.jpg'
 import {cms} from '@/cms'
 import {
   IcRoundFastForward,
@@ -7,10 +7,9 @@ import {
 } from '@/icons'
 import {Feature, Features} from '@/layout/Features'
 import {Hero} from '@/layout/Hero'
-import {LayoutContainer} from '@/layout/Layout'
-import {WebText} from '@/layout/WebText'
+import {PageContainer} from '@/layout/Page'
+import WebLayout from '@/layout/WebLayout'
 import {WebTypo} from '@/layout/WebTypo'
-import {Newsletter} from '@/layout/engage/Newsletter'
 import {Home} from '@/schema/Home'
 import {HStack, VStack} from 'alinea/ui/Stack'
 import {fromModule} from 'alinea/ui/util/Styler'
@@ -27,23 +26,17 @@ export async function generateMetadata() {
 export default async function HomePage() {
   const home = await cms.get(Home())
   return (
-    <main className={styles.home()}>
-      <div
-        className={styles.hero()}
-        style={{backgroundImage: `url(${heroBg.src})`}}
-      >
-        <Hero>
-          <LayoutContainer>
-            <VStack center>
+    <WebLayout footer={false}>
+      <main className={styles.home()}>
+        <div
+          className={styles.hero()}
+          style={{backgroundImage: `url(${heroBg.src})`}}
+        >
+          <Hero>
+            <VStack>
               <Hero.Title>{home.headline}</Hero.Title>
               <Hero.ByLine>{home.byline}</Hero.ByLine>
-              <HStack
-                wrap
-                center
-                gap={24}
-                justify="center"
-                style={{paddingTop: px(20)}}
-              >
+              <HStack gap={24} style={{paddingTop: px(20)}}>
                 {home.action?.url && (
                   <Hero.Action href={home.action.url}>
                     {home.action.label}
@@ -60,11 +53,41 @@ export default async function HomePage() {
                 </WebTypo.Link>*/}
               </HStack>
             </VStack>
-          </LayoutContainer>
-        </Hero>
-      </div>
+          </Hero>
+          <PageContainer>
+            <Features>
+              <Feature icon={IcRoundFastForward}>
+                <WebTypo>
+                  <Feature.Title>Minimal setup</Feature.Title>
+                  <WebTypo.P className={styles.home.features.desc()}>
+                    Go straight to content modeling without having to deal with
+                    databases and migrations.
+                  </WebTypo.P>
+                </WebTypo>
+              </Feature>
+              <Feature icon={MdiSourceBranch}>
+                <WebTypo>
+                  <Feature.Title>Git based</Feature.Title>
+                  <WebTypo.P className={styles.home.features.desc()}>
+                    Content is version controlled in your git repository. Easily
+                    branch and feature test content changes.
+                  </WebTypo.P>
+                </WebTypo>
+              </Feature>
+              <Feature icon={MdiLanguageTypescript}>
+                <WebTypo>
+                  <Feature.Title>Fully typed</Feature.Title>
+                  <WebTypo.P className={styles.home.features.desc()}>
+                    An optimized, type-safe experience for Typescript users
+                    without overcomplicating things.
+                  </WebTypo.P>
+                </WebTypo>
+              </Feature>
+            </Features>
+          </PageContainer>
+        </div>
 
-      <section className={styles.home.features()}>
+        {/*<section className={styles.home.features()}>
         <Features>
           <Feature icon={MdiSourceBranch}>
             <WebTypo>
@@ -96,7 +119,7 @@ export default async function HomePage() {
       </section>
 
       <section className={styles.home.section('highlight')}>
-        <LayoutContainer>
+        <PageContainer>
           <div className={styles.home.intro()}>
             <WebText doc={home.introduction.text} />
             <div className={styles.home.intro.code()}>
@@ -177,15 +200,15 @@ export default async function HomePage() {
                     </WebTypo.Link>
                   </HStack>
                 </Stack.Right>
-              </HStack>*/}
+              </HStack>
             </div>
           </div>
-        </LayoutContainer>
+        </PageContainer>
       </section>
 
       <section className={styles.home.section()}>
         <VStack gap={50}>
-          <LayoutContainer>
+          <PageContainer>
             <WebTypo>
               <WebTypo.H2>User friendly dashboard</WebTypo.H2>
               <WebTypo.P>
@@ -195,18 +218,18 @@ export default async function HomePage() {
                 changes look like.
               </WebTypo.P>
             </WebTypo>
-          </LayoutContainer>
-          {/*<div className={styles.home.demo()}>
+          </PageContainer>
+          <div className={styles.home.demo()}>
             <iframe
               src="https://demo.alinea.sh"
               className={styles.home.demo.inner()}
             />
-          </div>*/}
+          </div>
         </VStack>
       </section>
 
       <section className={styles.home.section('highlight')}>
-        <LayoutContainer>
+        <PageContainer>
           <HStack gap={30} wrap center>
             <VStack align="flex-start" gap={30} style={{flexGrow: 1}}>
               <WebTypo>
@@ -224,7 +247,7 @@ export default async function HomePage() {
             </VStack>
             <Newsletter style={{flexGrow: 1}} />
           </HStack>
-        </LayoutContainer>
+        </PageContainer>
       </section>
 
       {/*
@@ -284,6 +307,7 @@ export default async function HomePage() {
           </WebTypo.P>
         </Layout.Container>
       </section>*/}
-    </main>
+      </main>
+    </WebLayout>
   )
 }

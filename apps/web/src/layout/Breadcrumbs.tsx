@@ -1,5 +1,5 @@
 import {Label} from 'alinea/core'
-import {fromModule, HStack, TextLabel} from 'alinea/ui'
+import {fromModule, HStack} from 'alinea/ui'
 import {Fragment} from 'react'
 import css from './Breadcrumbs.module.scss'
 
@@ -21,9 +21,7 @@ export function Breadcrumbs({parents}: BreadcrumbsProps) {
       {parents.map((parent, i) => {
         return (
           <Fragment key={parent.id}>
-            <span>
-              <TextLabel label={parent.title} />
-            </span>
+            <span>{parent.title}</span>
             {i !== parents.length - 1 && (
               <span className={styles.root.separator()}>/</span>
             )}

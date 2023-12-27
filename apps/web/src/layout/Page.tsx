@@ -1,17 +1,17 @@
 import {fromModule} from 'alinea/ui/util/Styler'
 import {HTMLAttributes, PropsWithChildren, ReactNode} from 'react'
-import css from './Layout.module.scss'
 import {NavSidebar} from './NavSidebar'
+import css from './Page.module.scss'
 
 const styles = fromModule(css)
 
-export type LayoutTheme = 'system' | 'dark' | 'light'
+export type PageTheme = 'system' | 'dark' | 'light'
 
-export function LayoutContent({children}: PropsWithChildren<{}>) {
+export function PageContent({children}: PropsWithChildren<{}>) {
   return <div className={styles.content()}>{children}</div>
 }
 
-export function LayoutScrollable({children}: PropsWithChildren<{}>) {
+export function PageScrollable({children}: PropsWithChildren<{}>) {
   return (
     <div className={styles.scrollable()}>
       <div className={styles.scrollable.inner()}>{children}</div>
@@ -23,21 +23,21 @@ interface WithSidebarProps {
   sidebar?: ReactNode
 }
 
-export function LayoutWithSidebar({
+export function PageWithSidebar({
   children,
   sidebar
 }: PropsWithChildren<WithSidebarProps>) {
   return (
-    <LayoutContainer>
+    <PageContainer>
       <div className={styles.withSidebar()}>
         <NavSidebar>{sidebar}</NavSidebar>
-        <LayoutScrollable>{children}</LayoutScrollable>
+        <PageScrollable>{children}</PageScrollable>
       </div>
-    </LayoutContainer>
+    </PageContainer>
   )
 }
 
-export function LayoutContainer(
+export function PageContainer(
   props: PropsWithChildren<HTMLAttributes<HTMLDivElement>>
 ) {
   return <div {...props} className={styles.container.mergeProps(props)()} />

@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 
 import {cms} from '@/cms'
-import {LayoutWithSidebar} from '@/layout/Layout'
+import {PageWithSidebar} from '@/layout/Page'
 import {WebTypo} from '@/layout/WebTypo'
 import {Link} from '@/layout/nav/Link'
 import {TextView} from '@/page/blocks/TextBlockView'
@@ -38,7 +38,7 @@ export default async function BlogPostPage({params}: BlogPostPageProps) {
   )
   if (!page) return notFound()
   return (
-    <LayoutWithSidebar
+    <PageWithSidebar
       sidebar={
         <Stack.Right>
           <Link href="/blog">
@@ -79,6 +79,6 @@ export default async function BlogPostPage({params}: BlogPostPageProps) {
         </header>
         <TextView text={page.body} />
       </article>
-    </LayoutWithSidebar>
+    </PageWithSidebar>
   )
 }

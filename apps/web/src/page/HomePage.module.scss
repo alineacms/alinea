@@ -83,16 +83,17 @@
 }
 
 .hero {
+  flex: 1;
   position: relative;
-  background-color: #dde9f8;
+  background-color: #daeefd;
   background-position: center;
   background-size: cover;
-  padding-bottom: 60px;
   color: #041d40;
-
-  + * {
-    margin-top: -80px;
-  }
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 60px;
+  padding: 50px 0;
 
   &-demo {
     font-family: var(--web-title-font);

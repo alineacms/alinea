@@ -1,12 +1,12 @@
 {
-  "title": "Alinea",
-  "headline": "Content management\nfor the modern web",
-  "byline": "Structure, edit and query content with any web framework.\nFully typed and organized in your repository.",
+  "title": "Homepage",
+  "headline": "Shape your\nweb content",
+  "byline": "Headless CMS with minimal setup, fully typed content right in your repository. Streamlined content structuring and fetching.\nOpen source.",
   "action": {
     "id": "2YcxykzomCJyGwRFMXARgTxib4b",
     "type": "entry",
     "entry": "2YWqKUTrANlgEFMyBUEYdih2HpP",
-    "label": "Getting started"
+    "label": "Get started"
   },
   "screenshot": {},
   "introduction": {
@@ -111,7 +111,7 @@
       "links": [
         {
           "id": "2a7fvVi9M7zcX2wx3IJfYBrCqeC",
-          "index": "a1",
+          "index": "a0",
           "type": "entry",
           "entry": "docs",
           "label": ""

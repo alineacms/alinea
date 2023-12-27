@@ -1,7 +1,6 @@
 @import '../style.scss';
 
 .root {
-  padding: 60px 0;
   // background: var(--web-background-variant);
 
   @include ml {
@@ -12,8 +11,6 @@
     position: relative;
     display: flex;
     align-items: center;
-    justify-content: center;
-    text-align: center;
     flex-grow: 1;
   }
 
@@ -23,7 +20,7 @@
     left: 0;
     right: 0;
     width: 100%;
-    fill: var(--web-background);
+    fill: var(--web-background-variant);
     transform: translateY(-100%);
   }
 }
@@ -64,10 +61,6 @@
   font-size: 14px;
   line-height: 1.5;
   max-width: 50ch;
-
-  @include s {
-    padding: 0 10px;
-  }
 
   @include ml {
     font-size: 17px;

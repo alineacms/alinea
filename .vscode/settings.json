@@ -6,7 +6,7 @@
   "typescript.preferences.importModuleSpecifierEnding": "js",
   "typescript.preferences.importModuleSpecifier": "project-relative",
   "editor.codeActionsOnSave": {
-    "source.organizeImports": true
+    "source.organizeImports": "explicit"
   },
   "typescript.tsdk": "node_modules\\typescript\\lib"
 }

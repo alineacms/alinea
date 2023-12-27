@@ -4,7 +4,7 @@ import {fromModule} from 'alinea/ui/util/Styler'
 import Link, {LinkProps} from 'next/link'
 import {HTMLProps, PropsWithChildren} from 'react'
 import css from './Hero.module.scss'
-import {LayoutContainer} from './Layout'
+import {PageContainer} from './Page'
 import {WebTypo} from './WebTypo'
 
 const styles = fromModule(css)
@@ -13,9 +13,9 @@ const BG_HEIGHT = 80
 
 export function Hero({children}: PropsWithChildren<{}>) {
   return (
-    <LayoutContainer className={styles.root()}>
+    <PageContainer>
       <div className={styles.root.inner()}>{children}</div>
-      <svg
+      {/*<svg
         className={styles.root.bg()}
         width="1440"
         height={BG_HEIGHT}
@@ -23,8 +23,8 @@ export function Hero({children}: PropsWithChildren<{}>) {
         preserveAspectRatio="none"
       >
         <path d={`M0 ${BG_HEIGHT}L1440 0V${BG_HEIGHT}H0Z`} />
-      </svg>
-    </LayoutContainer>
+    </svg>*/}
+    </PageContainer>
   )
 }
 

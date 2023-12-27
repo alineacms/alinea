@@ -1,6 +1,6 @@
 import {cms} from '@/cms'
 import {InformationBar} from '@/layout/InformationBar'
-import {LayoutWithSidebar} from '@/layout/Layout'
+import {PageWithSidebar} from '@/layout/Page'
 import {Page} from '@/schema/Page'
 import {Entry} from 'alinea/core'
 import {notFound} from 'next/navigation'
@@ -28,10 +28,10 @@ export default async function GenericPage({params}: AnyPageProps) {
   const page = await cms.maybeGet(Page().where(Entry.url.is(`/${params.slug}`)))
   if (!page) return notFound()
   return (
-    <LayoutWithSidebar sidebar={<InformationBar />}>
+    <PageWithSidebar sidebar={<InformationBar />}>
       <article>
         <TextView text={page.body} />
       </article>
-    </LayoutWithSidebar>
+    </PageWithSidebar>
   )
 }
