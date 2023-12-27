@@ -120,7 +120,10 @@ const bundleTs = {
           '\n  '
         )}\n}\n\n`
       }
-      fs.writeFileSync('./apps/web/src/playground/alinea.d.ts.txt', declaration)
+      fs.writeFileSync(
+        './apps/web/src/page/playground/alinea.d.ts.txt',
+        declaration
+      )
     })
   }
 }

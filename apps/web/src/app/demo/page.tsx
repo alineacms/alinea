@@ -1,3 +1,2 @@
-export default async function Demo() {
-  return 'ok'
-}
+export * from '@/page/DemoPage'
+export {default} from '@/page/DemoPage'

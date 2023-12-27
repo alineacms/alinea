@@ -2,6 +2,7 @@
 
 // @ts-ignore
 import declarations from '!!raw-loader!./alinea.d.ts.txt'
+import {Logo} from '@/layout/branding/Logo'
 import Editor, {Monaco} from '@monaco-editor/react'
 import * as alinea from 'alinea'
 import {createExample} from 'alinea/backend/test/Example'
@@ -34,7 +35,6 @@ import * as React from 'react'
 import {useEffect, useRef, useState} from 'react'
 import type typescript from 'typescript'
 import {useClipboard} from 'use-clipboard-copy'
-import {Logo} from '../layout/branding/Logo'
 import css from './Playground.module.scss'
 
 const styles = fromModule(css)

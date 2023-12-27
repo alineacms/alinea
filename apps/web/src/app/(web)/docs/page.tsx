@@ -1,2 +1,2 @@
-export * from './DocPage'
-export {default} from './DocPage'
+export * from '@/page/DocPage'
+export {default} from '@/page/DocPage'

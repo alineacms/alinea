@@ -36,4 +36,4 @@ yarn-error.log*
 next-env.d.ts
 
 /public/admin*
-/src/playground/alinea.d.ts.txt
+/src/page/playground/alinea.d.ts.txt
