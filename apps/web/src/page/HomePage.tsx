@@ -56,27 +56,33 @@ export default async function HomePage() {
           </Hero>
           <PageContainer>
             <Features>
-              <Feature icon={IcRoundFastForward}>
+              <Feature>
                 <WebTypo>
-                  <Feature.Title>Minimal setup</Feature.Title>
+                  <Feature.Title icon={IcRoundFastForward}>
+                    Minimal setup
+                  </Feature.Title>
                   <WebTypo.P className={styles.home.features.desc()}>
                     Go straight to content modeling without having to deal with
                     databases and migrations.
                   </WebTypo.P>
                 </WebTypo>
               </Feature>
-              <Feature icon={MdiSourceBranch}>
+              <Feature>
                 <WebTypo>
-                  <Feature.Title>Git based</Feature.Title>
+                  <Feature.Title icon={MdiSourceBranch}>
+                    Git based
+                  </Feature.Title>
                   <WebTypo.P className={styles.home.features.desc()}>
                     Content is version controlled in your git repository. Easily
                     branch and feature test content changes.
                   </WebTypo.P>
                 </WebTypo>
               </Feature>
-              <Feature icon={MdiLanguageTypescript}>
+              <Feature>
                 <WebTypo>
-                  <Feature.Title>Fully typed</Feature.Title>
+                  <Feature.Title icon={MdiLanguageTypescript}>
+                    Fully typed
+                  </Feature.Title>
                   <WebTypo.P className={styles.home.features.desc()}>
                     An optimized, type-safe experience for Typescript users
                     without overcomplicating things.

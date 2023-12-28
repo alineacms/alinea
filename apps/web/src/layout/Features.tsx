@@ -1,3 +1,4 @@
+import {HStack, px} from 'alinea/ui'
 import {fromModule} from 'alinea/ui/util/Styler'
 import {ComponentType, HTMLProps, PropsWithChildren} from 'react'
 import css from './Features.module.scss'
@@ -22,16 +23,25 @@ export type FeatureProps = PropsWithChildren<{
 export function Feature({icon: Icon, children}: FeatureProps) {
   return (
     <div className={styles.feature()}>
-      <div className={styles.feature.inner()}>
-        {Icon && <Icon className={styles.feature.icon()} />}
-        {children}
-      </div>
+      <div className={styles.feature.inner()}>{children}</div>
     </div>
   )
 }
 
+interface FeatureTitleProps {
+  icon?: ComponentType<{className?: string}>
+}
+
 export namespace Feature {
-  export function Title({children}: PropsWithChildren<{}>) {
-    return <h2 className={styles.feature.title()}>{children}</h2>
+  export function Title({
+    children,
+    icon: Icon
+  }: PropsWithChildren<FeatureTitleProps>) {
+    return (
+      <HStack center gap={16} style={{paddingBottom: px(8)}}>
+        {Icon && <Icon className={styles.feature.icon()} />}
+        <h2 className={styles.feature.title()}>{children}</h2>
+      </HStack>
+    )
   }
 }
