@@ -10,7 +10,7 @@ const nextConfig = {
     ignoreDuringBuilds: true
   },
   experimental: {
-    serverComponentsExternalPackages: ['alinea', '@alinea/generated']
+    serverComponentsExternalPackages: ['@alinea/generated']
   },
   rewrites() {
     return [
