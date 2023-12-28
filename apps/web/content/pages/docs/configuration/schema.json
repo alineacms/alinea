@@ -34,7 +34,7 @@
     {
       "id": "267QjRgoDq3nZ6Dth0o3MElJgzP",
       "type": "CodeBlock",
-      "code": "alinea.schema({\n  TypeA, TypeB, TypeC\n})",
+      "code": "export const cms = createCMS({\n  schema: alinea.schema({\n    TypeA, TypeB, TypeC\n  })\n})",
       "fileName": "",
       "language": "",
       "compact": false
