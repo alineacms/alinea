@@ -14,7 +14,7 @@
     {
       "id": "267Q4Kyg9hOUVaJWolmaa1wOndr",
       "type": "CodeBlock",
-      "code": "export const cms = createCMS({\n  workspaces: {\n    main: alinea.workspace('Main workspace', {\n      pages: alinea.root('Pages'),\n      media: alinea.media(),\n      [alinea.meta]: {\n        color: '#3F61E8',\n        source: 'content',\n        mediaDir: 'public'\n      }\n    })\n  },\n  // Other configuration\n})",
+      "code": "export const cms = createCMS({\n  workspaces: {\n    // Define a main workspace\n    main: alinea.workspace('Main workspace', {\n      // Define Roots\n      pages: alinea.root('Pages'),\n      media: alinea.media(),\n      // Workspace configuration\n      [alinea.meta]: {\n        color: '#3F61E8',\n        source: 'content',\n        mediaDir: 'public'\n      }\n    })\n  }\n})",
       "fileName": "cms.tsx",
       "language": "",
       "compact": false
