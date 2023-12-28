@@ -17,9 +17,9 @@
 .h1 {
   font-family: var(--web-title-font);
   min-width: 0;
-  font-size: 45px;
+  font-size: 50px;
   font-weight: 700;
-  line-height: 1;
+  line-height: 1.1;
   margin: 35px 0 35px 0;
   white-space: pre-line;
   text-rendering: optimizeLegibility;
@@ -36,15 +36,13 @@
 
 .h2 {
   // font-family: var(--web-title-font);
-  font-weight: 600;
+  font-weight: 700;
   min-width: 0;
   font-size: 25px;
-  font-weight: 700;
   line-height: 1.33;
-  margin-bottom: 14px;
   padding-top: 20px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid var(--web-outline);
+  padding-bottom: 14px;
+  //border-bottom: 1px solid var(--web-outline);
   white-space: pre-line;
   text-rendering: optimizeLegibility;
   @extend .hyphenate;
@@ -71,12 +69,27 @@
   }
 }
 
+.permaLink {
+  position: absolute;
+  margin-left: -1.35em;
+  width: 1.35em;
+
+  &:before {
+    content: ' #';
+    opacity: 0;
+    transition: opacity 0.25s ease-out;
+  }
+
+  *:hover > &:before {
+    opacity: 0.4;
+  }
+}
+
 .h3 {
   // font-family: var(--web-title-font);
   font-weight: 600;
   min-width: 0;
-  font-size: 18px;
-  font-weight: 700;
+  font-size: 16px;
   line-height: 1.2;
   margin: 18px 0 4px 0;
   white-space: pre-line;
@@ -92,7 +105,6 @@
   font-weight: 600;
   min-width: 0;
   font-size: 13px;
-  font-weight: 700;
   margin-bottom: 4px;
   white-space: pre-line;
   text-rendering: optimizeLegibility;

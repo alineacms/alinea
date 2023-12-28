@@ -1,13 +1,21 @@
 .root {
-  &-link {
-    display: inline-block;
-
-    &-publishDate {
-      display: block;
+  &-post {
+    & + & {
+      margin-top: 30px;
+      padding-top: 30px;
+      border-top: 1px solid var(--web-outline);
     }
 
-    &:hover {
-      color: var(--web-accent);
+    &-link {
+      display: inline-block;
+
+      &-publishDate {
+        display: block;
+      }
+
+      &:hover {
+        text-decoration: underline;
+      }
     }
   }
 }

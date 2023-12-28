@@ -7,17 +7,16 @@
       "id": "2YlPCEdeGLXkqwQQq4r482BrNmj",
       "type": "url",
       "url": "https://github.com/benmerckx",
-      "description": "",
       "target": "_blank"
     },
     "avatar": {
       "id": "2YlPFxJGo8JMh6ZDWt7NDu7MPSN",
       "type": "url",
       "url": "https://avatars.githubusercontent.com/u/10584189?v=4&s=48",
-      "description": "",
       "target": "_self"
     }
   },
+  "introduction": "Alinea 0.4.0 contains a major rewrite of many parts of the system. Now including support for React server components, instant deploys and content publishing workflow.",
   "body": [
     {
       "type": "paragraph",
@@ -169,15 +168,6 @@
           "text": "Editing content often requires making changes, previewing them and coming back later to continue editing. We don't always want these changes reflected online right away. Doing this correctly requires content to be available in different phases. We introduced three phases: draft, published and archived. Editors can make new drafts and publish them only when needed. Pages can be archived when they're no longer in use, and re-published when needed."
         }
       ]
-    },
-    {
-      "id": "2YlUi7a6SJkHVTp4GVQ4g27mYMr",
-      "type": "ImageBlock",
-      "image": {
-        "id": "2YlUiuUFVqXGiuCF9daH7fABtyL",
-        "type": "image",
-        "entry": "2YlUiv5w6doCcMj5BTJQZH3ohyU"
-      }
     },
     {
       "type": "heading",

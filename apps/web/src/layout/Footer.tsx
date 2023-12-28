@@ -1,6 +1,6 @@
 'use client'
 
-import {HStack, VStack} from 'alinea/ui/Stack'
+import {HStack, Stack, VStack} from 'alinea/ui/Stack'
 import {IcOutlineDarkMode} from 'alinea/ui/icons/IcOutlineDarkMode'
 import {IcOutlineLightMode} from 'alinea/ui/icons/IcOutlineLightMode'
 import {IcSharpBrightnessMedium} from 'alinea/ui/icons/IcSharpBrightnessMedium'
@@ -9,10 +9,11 @@ import Link from 'next/link'
 import css from './Footer.module.scss'
 import {PageContainer, PageTheme} from './Page'
 import {WebTypo} from './WebTypo'
+import {Newsletter} from './engage/Newsletter'
 
 const styles = fromModule(css)
 
-export type FooterProps = {
+export interface FooterProps {
   theme: PageTheme
   setTheme: (theme: PageTheme) => void
 }
@@ -34,39 +35,40 @@ export function Footer() {
   return (
     <footer className={styles.root()}>
       <PageContainer>
-        <HStack align="flex-start">
-          <VStack gap={15}>
-            <WebTypo.H4>Developer</WebTypo.H4>
-            <VStack gap={10} as="nav">
-              <div>
-                <Link href="/docs/intro" className={styles.root.link()}>
-                  Docs
-                </Link>
-              </div>
-              <div>
-                <Link href="/changelog" className={styles.root.link()}>
-                  Changelog
-                </Link>
-              </div>
-              <div>
-                <Link href="/playground" className={styles.root.link()}>
-                  Playground
-                </Link>
-              </div>
-              <div>
-                <a
-                  className={styles.root.link()}
-                  href="https://github.com/alineacms/alinea"
-                  target="_blank"
-                >
-                  Source
-                </a>
-              </div>
+        <HStack wrap center gap={30} align="flex-start">
+          <Stack.Left>
+            <VStack gap={15}>
+              <WebTypo.H4>Developer</WebTypo.H4>
+              <VStack gap={10} as="nav">
+                <div>
+                  <Link href="/docs/intro" className={styles.root.link()}>
+                    Docs
+                  </Link>
+                </div>
+                <div>
+                  <Link href="/changelog" className={styles.root.link()}>
+                    Changelog
+                  </Link>
+                </div>
+                <div>
+                  <Link href="/playground" className={styles.root.link()}>
+                    Playground
+                  </Link>
+                </div>
+                <div>
+                  <a
+                    className={styles.root.link()}
+                    href="https://github.com/alineacms/alinea"
+                    target="_blank"
+                  >
+                    Source
+                  </a>
+                </div>
+              </VStack>
             </VStack>
-          </VStack>
+          </Stack.Left>
 
           {/*<HStack
-            style={{marginTop: 'auto'}}
             center
             gap={8}
             as="button"
@@ -77,6 +79,8 @@ export function Footer() {
             <ThemeIcon />
             <span>{theme.charAt(0).toUpperCase() + theme.slice(1)}</span>
           </HStack>*/}
+
+          <Newsletter />
         </HStack>
       </PageContainer>
     </footer>

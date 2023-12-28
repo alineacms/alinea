@@ -32,24 +32,13 @@
       ]
     },
     {
-      "type": "paragraph",
+      "type": "heading",
       "textAlign": "left",
+      "level": 3,
       "content": [
         {
           "type": "text",
-          "text": "alinea init",
-          "marks": [
-            {
-              "type": "bold"
-            }
-          ]
-        },
-        {
-          "type": "hardBreak"
-        },
-        {
-          "type": "text",
-          "text": "Creates an example config file. Run once during setup."
+          "text": "alinea init"
         }
       ]
     },
@@ -59,16 +48,25 @@
       "content": [
         {
           "type": "text",
-          "text": "alinea dev",
-          "marks": [
-            {
-              "type": "bold"
-            }
-          ]
-        },
+          "text": "Creates an example config file. Run once during setup."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "textAlign": "left",
+      "level": 3,
+      "content": [
         {
-          "type": "hardBreak"
-        },
+          "type": "text",
+          "text": "alinea dev"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
         {
           "type": "text",
           "text": "Starts a development server to display the alinea dashboard. It can be prepended to another development command to run it in parallel."
@@ -92,21 +90,20 @@
       "compact": false
     },
     {
-      "type": "paragraph",
+      "type": "heading",
       "textAlign": "left",
+      "level": 3,
       "content": [
         {
           "type": "text",
-          "text": "alinea build",
-          "marks": [
-            {
-              "type": "bold"
-            }
-          ]
-        },
-        {
-          "type": "hardBreak"
-        },
+          "text": "alinea build"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
         {
           "type": "text",
           "text": "The build command indexes content and generates the `@alinea/generated` package. It's recommended to run it as part of the build step in your project."

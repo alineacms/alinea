@@ -21,7 +21,7 @@ export function CodeVariantTabs({variants}: Infer<typeof CodeVariantsBlock>) {
   const selectedVariant = isOption ? variantPreference : variants[0]?.name
   return (
     <div className={styles.root()}>
-      <HStack className={styles.root.triggers()}>
+      <HStack center gap={10} className={styles.root.triggers()}>
         {variants.map(variant => {
           return (
             <button
@@ -36,6 +36,7 @@ export function CodeVariantTabs({variants}: Infer<typeof CodeVariantsBlock>) {
           )
         })}
       </HStack>
+
       {variants.map(variant => {
         if (selectedVariant !== variant.name) return null
         return (

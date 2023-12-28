@@ -45,7 +45,7 @@
     {
       "id": "267QyzM4851hQU1DihfoV3fSIFg",
       "type": "CodeBlock",
-      "code": "alinea.type('My type', {\n  title: alinea.text('Title', {width: 0.5}),\n  path: alinea.path('Path', {width: 0.5}),\n  [alinea.meta]: {\n    isContainer: true\n  }\n})",
+      "code": "alinea.type('My type', {\n  title: alinea.text('Title', {width: 0.5}),\n  path: alinea.path('Path', {width: 0.5}),\n  // Extra fields\n  [alinea.meta]: {\n    // Configuration\n    isContainer: true\n  }\n})",
       "fileName": "",
       "language": "",
       "compact": false
@@ -67,16 +67,45 @@
       "content": [
         {
           "type": "text",
-          "text": "`isContainer`",
+          "text": "Tpes should be defined within a "
+        },
+        {
+          "type": "text",
+          "text": "Schema",
           "marks": [
             {
-              "type": "bold"
+              "type": "link",
+              "attrs": {
+                "data-id": "2aAy9jQj9cK5OR1RlFElYWSddy2",
+                "data-entry": "267KTV8uPHIdZgFUQvJf06sfm4h",
+                "data-type": "entry",
+                "href": null,
+                "title": ""
+              }
             }
           ]
         },
         {
-          "type": "hardBreak"
-        },
+          "type": "text",
+          "text": "."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "textAlign": "left",
+      "level": 3,
+      "content": [
+        {
+          "type": "text",
+          "text": "`isContainer`"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
         {
           "type": "text",
           "text": "When a type is marked as a container it can contain subpages."
@@ -92,21 +121,20 @@
       "compact": false
     },
     {
-      "type": "paragraph",
+      "type": "heading",
       "textAlign": "left",
+      "level": 3,
       "content": [
         {
           "type": "text",
-          "text": "`contains`",
-          "marks": [
-            {
-              "type": "bold"
-            }
-          ]
-        },
-        {
-          "type": "hardBreak"
-        },
+          "text": "`contains`"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
         {
           "type": "text",
           "text": "In case this type is a container the allowed sub types can be declared in an array."
@@ -122,21 +150,20 @@
       "compact": false
     },
     {
-      "type": "paragraph",
+      "type": "heading",
       "textAlign": "left",
+      "level": 3,
       "content": [
         {
           "type": "text",
-          "text": "`entryUrl`",
-          "marks": [
-            {
-              "type": "bold"
-            }
-          ]
-        },
-        {
-          "type": "hardBreak"
-        },
+          "text": "`entryUrl`"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
         {
           "type": "text",
           "text": "The `url` property of entries can be controlled using the `entryUrl` function in the type options. Urls are computed during generation and this can help to keep them constant if you're using a web framework that does file system routing. The available parameters are `path`, `parentPaths` and `locale`. For example: making sure a doc page always has an url in the form of `/doc/$path` you can specify `entryUrl` as the following:"
@@ -152,21 +179,20 @@
       "compact": false
     },
     {
-      "type": "paragraph",
+      "type": "heading",
       "textAlign": "left",
+      "level": 3,
       "content": [
         {
           "type": "text",
-          "text": "`icon`",
-          "marks": [
-            {
-              "type": "bold"
-            }
-          ]
-        },
-        {
-          "type": "hardBreak"
-        },
+          "text": "`icon`"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
         {
           "type": "text",
           "text": "An icon can be used to label a type in the sidebar entry tree. Icons are implemented as a React component. You can find icons on "

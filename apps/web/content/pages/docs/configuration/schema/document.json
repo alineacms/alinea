@@ -1,0 +1,174 @@
+{
+  "title": "Document",
+  "body": [
+    {
+      "type": "heading",
+      "textAlign": "left",
+      "level": 1,
+      "content": [
+        {
+          "type": "text",
+          "text": "Document"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "Use the `document` utility function to create a "
+        },
+        {
+          "type": "text",
+          "text": "Type",
+          "marks": [
+            {
+              "type": "link",
+              "attrs": {
+                "data-id": "2aB4jp089wI4K3VnNePMDLM7kvo",
+                "data-entry": "267QuOShP41WnFxQFOcHZQoCsla",
+                "data-type": "entry",
+                "href": null,
+                "title": ""
+              }
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": " with the following preconfigured fields:"
+        }
+      ]
+    },
+    {
+      "type": "bulletList",
+      "content": [
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "`title`",
+                  "marks": [
+                    {
+                      "type": "bold"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "`path`",
+                  "marks": [
+                    {
+                      "type": "bold"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "`metadata`",
+                  "marks": [
+                    {
+                      "type": "bold"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "2aB4qCnskaV2qenr0eibzXhpjU4",
+      "type": "CodeBlock",
+      "code": "alinea.document('Web page', {\n  // Extra fields\n  [alinea.meta]: {\n    // Configuration\n  }\n})",
+      "fileName": "",
+      "language": "",
+      "compact": false
+    },
+    {
+      "type": "heading",
+      "textAlign": "left",
+      "level": 2,
+      "content": [
+        {
+          "type": "text",
+          "text": "Configuration"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "Configuration options are the same as for a "
+        },
+        {
+          "type": "text",
+          "text": "Type",
+          "marks": [
+            {
+              "type": "link",
+              "attrs": {
+                "data-id": "2aB54j0l7HKydQyHuW0YlqGnlpZ",
+                "data-entry": "267QuOShP41WnFxQFOcHZQoCsla",
+                "data-type": "entry",
+                "href": null,
+                "title": ""
+              }
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": "."
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "title": "",
+      "image": {},
+      "description": ""
+    }
+  },
+  "@alinea": {
+    "entryId": "2aAyRD3ixey0IqznGhiPUjTd5Vp",
+    "type": "Doc",
+    "index": "Zy"
+  }
+}

@@ -35,7 +35,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "✔️ Polish UI ",
+                  "text": "Polish UI ",
                   "marks": [
                     {
                       "type": "bold"
@@ -102,6 +102,15 @@
                         "target": "_blank",
                         "title": null
                       }
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "text": " ✔️",
+                  "marks": [
+                    {
+                      "type": "bold"
                     }
                   ]
                 }
@@ -288,7 +297,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "✔️ Instant publish",
+                  "text": "Instant publish ✔️",
                   "marks": [
                     {
                       "type": "bold"

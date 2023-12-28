@@ -14,7 +14,7 @@ export function ImageBlockView({image}: Infer<typeof ImageBlock>) {
       className={styles.image()}
       alt={image.title}
       src={image.src}
-      sizes="(min-width: 1200px) 800px, 100vw"
+      sizes="(min-width: 1200px) 960px, 100vw"
       width={image.width}
       height={image.height}
       placeholder={blurUrl ? 'blur' : undefined}

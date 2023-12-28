@@ -57,6 +57,47 @@
       "content": [
         {
           "type": "text",
+          "text": "Configuration"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "Your Schema should be defined in the "
+        },
+        {
+          "type": "text",
+          "text": "CMS config",
+          "marks": [
+            {
+              "type": "link",
+              "attrs": {
+                "data-id": "2aAxVMSAONngMXzsR2poLuRALIY",
+                "data-entry": "259Ey7LXgqL7ZDGJ8XK1vBJmZrh",
+                "data-type": "entry",
+                "href": null,
+                "title": ""
+              }
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": ". There are currently no configuration options for it."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "textAlign": "left",
+      "level": 2,
+      "content": [
+        {
+          "type": "text",
           "text": "Example schema"
         }
       ]
@@ -67,7 +108,7 @@
       "content": [
         {
           "type": "text",
-          "text": "The schema below is a minimal example of a blog setup. It is comprised of two types: `BlogOverview` and `BlogPost`. The overview type corresponds to a page that lists the posts. To achieve that it is configured as a container which can hold blog posts as children."
+          "text": "The Schema below is a minimal example of a blog setup. It holds two types: `BlogOverview` and `BlogPost`. The overview type corresponds to a page that lists the posts. To achieve that it is configured as a container which can hold blog posts as children."
         }
       ]
     },
@@ -91,7 +132,7 @@
   },
   "@alinea": {
     "entryId": "267KTV8uPHIdZgFUQvJf06sfm4h",
-    "type": "Doc",
+    "type": "Docs",
     "index": "Zwd"
   }
 }

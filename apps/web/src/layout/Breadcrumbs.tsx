@@ -1,6 +1,6 @@
 import {Label} from 'alinea/core'
 import {fromModule, HStack} from 'alinea/ui'
-import {Fragment} from 'react'
+import Link from 'next/link'
 import css from './Breadcrumbs.module.scss'
 
 const styles = fromModule(css)
@@ -20,12 +20,12 @@ export function Breadcrumbs({parents}: BreadcrumbsProps) {
     <HStack gap={16} className={styles.root()}>
       {parents.map((parent, i) => {
         return (
-          <Fragment key={parent.id}>
+          <Link href={parent.url} key={parent.id}>
             <span>{parent.title}</span>
             {i !== parents.length - 1 && (
               <span className={styles.root.separator()}>/</span>
             )}
-          </Fragment>
+          </Link>
         )
       })}
     </HStack>

@@ -1,6 +1,5 @@
 import {cms} from '@/cms'
-import {InformationBar} from '@/layout/InformationBar'
-import {PageWithSidebar} from '@/layout/Page'
+import {PageContainer, PageContent} from '@/layout/Page'
 import {WebTypo} from '@/layout/WebTypo'
 import {Link} from '@/layout/nav/Link'
 import {BlogOverview} from '@/schema/BlogOverview'
@@ -8,6 +7,7 @@ import {BlogPost} from '@/schema/BlogPost'
 import {Entry} from 'alinea/core'
 import {VStack, fromModule} from 'alinea/ui'
 import css from './BlogPage.module.scss'
+import {BlogPostMeta} from './blog/BlogPostMeta'
 
 const styles = fromModule(css)
 
@@ -20,32 +20,41 @@ export default async function BlogPage() {
           id: Entry.entryId,
           url: Entry.url,
           title: BlogPost.title,
+          introduction: BlogPost.introduction,
+          author: BlogPost.author,
           publishDate: BlogPost.publishDate
         })
       }
     })
   )
   return (
-    <PageWithSidebar sidebar={<InformationBar />}>
-      <WebTypo>
-        <WebTypo.H1>{overview.title}</WebTypo.H1>
-        <VStack gap={30} align="flex-start">
-          {overview.posts.map(post => {
-            return (
-              <Link
-                key={post.id}
-                href={post.url}
-                className={styles.root.link()}
-              >
-                <time className={styles.root.link.publishDate()}>
-                  {post.publishDate}
-                </time>
-                <WebTypo.H2 flat>{post.title}</WebTypo.H2>
-              </Link>
-            )
-          })}
-        </VStack>
-      </WebTypo>
-    </PageWithSidebar>
+    <PageContainer>
+      <PageContent>
+        <WebTypo>
+          <VStack>
+            {overview.posts.map(post => {
+              return (
+                <VStack
+                  gap={8}
+                  key={post.id}
+                  className={styles.root.post()}
+                  align="flex-start"
+                >
+                  <div>
+                    <Link href={post.url} className={styles.root.post.link()}>
+                      <WebTypo.H2 flat>{post.title}</WebTypo.H2>
+                    </Link>
+                    <BlogPostMeta {...post} />
+                  </div>
+                  <Link href={post.url}>
+                    <WebTypo.P flat>{post.introduction}</WebTypo.P>
+                  </Link>
+                </VStack>
+              )
+            })}
+          </VStack>
+        </WebTypo>
+      </PageContent>
+    </PageContainer>
   )
 }

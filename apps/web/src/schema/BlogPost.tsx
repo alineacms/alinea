@@ -10,5 +10,6 @@ export const BlogPost = alinea.document('Blog post', {
       avatar: alinea.link.url('Avatar url')
     })
   }),
+  introduction: alinea.text('Short introduction', {multiline: true}),
   body: TextField
 })

@@ -1,12 +1,30 @@
 .layout {
+  position: relative;
+  z-index: 0;
   display: flex;
   flex-direction: column;
-  font-family: Inter, sans-serif;
   font-size: 15px;
   line-height: 1.4;
   color: var(--web-foreground);
   //background: var(--web-background);
   min-height: 100vh;
+  /*background: url('../assets/hero-alinea.jpg') no-repeat;
+  background-size: 100% auto;
+  overflow: hidden;
+
+  &:after {
+    content: '';
+    position: absolute;
+    background: linear-gradient(
+      to bottom,
+      hsla(var(--web-background-variant-hsl), 0) 0%,
+      hsla(var(--web-background-variant-hsl), 1) 100%
+    );
+    width: 100%;
+    padding-bottom: 74%;
+    top: 0;
+    z-index: -1;
+  }*/
 
   &-content {
     position: relative;

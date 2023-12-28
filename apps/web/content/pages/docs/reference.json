@@ -1,5 +1,37 @@
 {
   "title": "Reference",
+  "body": [
+    {
+      "type": "heading",
+      "textAlign": "left",
+      "level": 1,
+      "content": [
+        {
+          "type": "text",
+          "text": "Reference"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "Working with Alinea should feel intuitive but if you're looking for more in-depth information or feel like something is missing have a look here."
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "title": "",
+      "image": {},
+      "description": ""
+    }
+  },
   "@alinea": {
     "entryId": "2_c6AYBTy7svnFJMvOB0n",
     "type": "Docs",

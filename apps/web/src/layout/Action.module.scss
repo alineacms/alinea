@@ -5,6 +5,7 @@
   color: var(--web-accent-foreground);
   padding: 0.6em 1em;
   border-radius: 1.5em;
+  cursor: pointer;
 
   &.is-outline {
     border: 1px solid var(--web-accent-foreground);

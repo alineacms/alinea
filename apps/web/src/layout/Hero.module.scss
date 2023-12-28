@@ -26,17 +26,7 @@
 }
 
 .title {
-  font-size: 35px;
-  line-height: 1;
   margin-bottom: 24px;
-
-  @include m {
-    font-size: 45px;
-  }
-
-  @include l {
-    font-size: 50px;
-  }
 }
 
 .action {

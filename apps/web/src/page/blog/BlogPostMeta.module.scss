@@ -1,17 +1,7 @@
 .root {
-  max-width: 900px;
-
-  &-header {
-    padding-bottom: 40px;
-
-    &-title {
-      padding-bottom: 10px;
-    }
-  }
+  padding: 8px 0 15px 0;
 
   &-author {
-    padding-bottom: 10px;
-
     &-url {
       font-weight: bold;
       &:hover {

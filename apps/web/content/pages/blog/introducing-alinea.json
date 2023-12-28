@@ -7,17 +7,16 @@
       "id": "DiAsFDEHRKLhrgSoiPAVU",
       "type": "url",
       "url": "https://github.com/benmerckx",
-      "description": "",
       "target": "_blank"
     },
     "avatar": {
       "id": "Z4LBK9_vyKQLA_3WL6IZ6",
       "type": "url",
       "url": "https://avatars.githubusercontent.com/u/10584189?v=4&s=48",
-      "description": "",
       "target": "_self"
     }
   },
+  "introduction": "For about 8 years we've been using a custom built CMS to power the websites, apps and services we build. Over time we've seen our development workflow move from PHP to JavaScript cloud deployments. As it was time for a fresh start to shake off some technical debt, achieve new goals and open source everything we started work on a new content management system little over a year ago. Today an alpha version of Alinea is available to the public.",
   "body": [
     {
       "type": "paragraph",
@@ -34,12 +33,12 @@
             {
               "type": "link",
               "attrs": {
-                "data-id": "tUQJ4YhRDGtJZwk7w0Lsa",
+                "data-id": "2aAPnJnaENEtTGjDxfgOwjijTEO",
                 "data-entry": null,
-                "data-type": null,
-                "href": "https://codeurs.be/",
+                "data-type": "url",
+                "href": "https://codeurs.be/en",
                 "target": "_blank",
-                "title": null
+                "title": ""
               }
             }
           ]
@@ -54,9 +53,9 @@
       "id": "2U9fzC4RrGpYPrgl9rpk8IZbvJa",
       "type": "ImageBlock",
       "image": {
-        "id": "2U9fzPZ0ELQ3SyRzFp4HeppRTFG",
+        "id": "2aAv1Wwg7XpakKtlbQjUvpt5L6X",
         "type": "image",
-        "entry": "2U9fkdrboimLR37hC4sjIB7Ah8B"
+        "entry": "2aAa3AZWsipZefM1WJTKylGY5wM"
       }
     },
     {

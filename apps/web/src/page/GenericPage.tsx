@@ -1,12 +1,11 @@
 import {cms} from '@/cms'
-import {InformationBar} from '@/layout/InformationBar'
-import {PageWithSidebar} from '@/layout/Page'
+import {PageContainer, PageContent} from '@/layout/Page'
 import {Page} from '@/schema/Page'
 import {Entry} from 'alinea/core'
 import {notFound} from 'next/navigation'
 import {TextView} from './blocks/TextBlockView'
 
-export interface AnyPageProps {
+export interface GenericPageProps {
   params: {
     slug: string
   }
@@ -18,20 +17,22 @@ export async function generateStaticParams() {
   return slugs.map(slug => ({slug}))
 }
 
-export async function generateMetadata({params}: AnyPageProps) {
+export async function generateMetadata({params}: GenericPageProps) {
   const page = await cms.maybeGet(Page().where(Entry.url.is(`/${params.slug}`)))
   if (!page) return notFound()
   return {title: page.metadata?.title || page.title}
 }
 
-export default async function GenericPage({params}: AnyPageProps) {
+export default async function GenericPage({params}: GenericPageProps) {
   const page = await cms.maybeGet(Page().where(Entry.url.is(`/${params.slug}`)))
   if (!page) return notFound()
   return (
-    <PageWithSidebar sidebar={<InformationBar />}>
-      <article>
-        <TextView text={page.body} />
-      </article>
-    </PageWithSidebar>
+    <PageContainer>
+      <PageContent>
+        <article>
+          <TextView text={page.body} />
+        </article>
+      </PageContent>
+    </PageContainer>
   )
 }

@@ -18,35 +18,36 @@
       "content": [
         {
           "type": "text",
-          "text": "All configuration can be managed from the `cms.tsx` file. This file is created in the project root during `alinea init`."
+          "text": "All configuration can be managed from the `cms.tsx` file. This file is created in the project root (or your `src` folder if it exists) during `alinea init`."
         }
       ]
     },
     {
-      "id": "2YkmeB4spbTne1YLUK5kP9psCPz",
-      "type": "NoticeBlock",
-      "level": "info",
-      "body": [
+      "id": "2a4tC7lBmNMZUuJDec7zsG4st62",
+      "type": "CodeBlock",
+      "code": "import {createNextCMS} from 'alinea'\n\nexport const cms = createNextCMS({\n  workspaces, schema, dashboard, preview\n})",
+      "fileName": "cms.tsx",
+      "language": "",
+      "compact": false
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
         {
-          "type": "paragraph",
-          "textAlign": "left",
-          "content": [
-            {
-              "type": "text",
-              "text": "If you prefer plain Javascript over Typescript, just rename the file to `cms.jsx`"
-            }
-          ]
+          "type": "text",
+          "text": "The alinea package exports a general purpose `createCMS` function as well as framework specific functions such as `createNextCMS`. The framework specific instances expose helper methods to help integrate the content into your framework of choice."
         }
       ]
     },
     {
       "type": "heading",
       "textAlign": "left",
-      "level": 2,
+      "level": 3,
       "content": [
         {
           "type": "text",
-          "text": "cms.tsx"
+          "text": "`workspaces`"
         }
       ]
     },
@@ -56,17 +57,58 @@
       "content": [
         {
           "type": "text",
-          "text": "The configuration file must export a "
+          "text": "Content can be bundled in separate "
         },
         {
           "type": "text",
-          "text": "`cms` instance",
+          "text": "Workspaces",
           "marks": [
             {
               "type": "link",
               "attrs": {
-                "data-id": "2a4tYNsvx6xjzLaAwam0pOKzusv",
-                "data-entry": "25HWCBHEFdsLDtooZ4mzxeax3An",
+                "data-id": "2YkhLyWRcJ1TaBwxb1l8MIeWbGP",
+                "data-entry": "259EzPfnSUaKOrNL1S2bpIpMdKl",
+                "data-type": "entry",
+                "href": null,
+                "title": ""
+              }
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": ". Defining at least one is required."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "textAlign": "left",
+      "level": 3,
+      "content": [
+        {
+          "type": "text",
+          "text": "`schema`"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "Describe the structure of your content using a "
+        },
+        {
+          "type": "text",
+          "text": "collection of Types",
+          "marks": [
+            {
+              "type": "link",
+              "attrs": {
+                "data-id": "2YkhKab77FPvVbFuEKDFvTCeQqA",
+                "data-entry": "267KTV8uPHIdZgFUQvJf06sfm4h",
                 "data-type": "entry",
                 "href": null,
                 "title": ""
@@ -81,27 +123,84 @@
       ]
     },
     {
-      "id": "2a4tC7lBmNMZUuJDec7zsG4st62",
-      "type": "CodeBlock",
-      "code": "export const cms = ...",
-      "fileName": "cms.tsx",
-      "language": "",
-      "compact": false
+      "type": "heading",
+      "textAlign": "left",
+      "level": 3,
+      "content": [
+        {
+          "type": "text",
+          "text": "`dashboard`"
+        }
+      ]
     },
     {
-      "id": "2a4tlNK7Hz0oQelptZVymGanGgu",
-      "type": "NoticeBlock",
-      "level": "info",
-      "body": [
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
         {
-          "type": "paragraph",
-          "textAlign": "left",
-          "content": [
+          "type": "text",
+          "text": "All configuration to generate the dashboard UI for "
+        },
+        {
+          "type": "text",
+          "text": "deployment",
+          "marks": [
             {
-              "type": "text",
-              "text": "If you're using a `src` directory the file will be located at `src/cms.tsx`"
+              "type": "link",
+              "attrs": {
+                "data-id": "2a4zuVMFhDy0YU5LCzGUUqjpyeW",
+                "data-entry": "28NgMpMQkmTy4uyFhPj8z4XVqml",
+                "data-type": "entry",
+                "href": null,
+                "title": ""
+              }
             }
           ]
+        },
+        {
+          "type": "text",
+          "text": " goes here."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "textAlign": "left",
+      "level": 3,
+      "content": [
+        {
+          "type": "text",
+          "text": "`preview`"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "A url which is used in the dashboard for "
+        },
+        {
+          "type": "text",
+          "text": "live previews",
+          "marks": [
+            {
+              "type": "link",
+              "attrs": {
+                "data-id": "2a4lENV0tYD7pJsarKpb35IL4nG",
+                "data-entry": "2YlBsRF2vZwxcS27oOSJYmQM37q",
+                "data-type": "entry",
+                "href": null,
+                "title": ""
+              }
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": "."
         }
       ]
     }

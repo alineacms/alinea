@@ -23,11 +23,15 @@ function linkForm({showDescription = true, showBlank = true}) {
     }),
     title: text('Tooltip', {
       optional: true,
-      help: 'Extra information that describes the link'
+      help: 'Extra information that describes the link, shown on hover'
     }),
-    blank: check('Open link in new tab', {
+    /*hash: text('Anchor', {
+      optional: true,
+      help: 'The id of an element on the page to scroll to'
+    }),*/
+    blank: check('Target', {
       hidden: !showBlank,
-      label: 'Target'
+      label: 'Open link in new tab'
     })
   })
 }

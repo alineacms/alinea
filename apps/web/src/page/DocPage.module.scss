@@ -2,9 +2,10 @@
 
 .root {
   &-nav {
+    margin: 0 -14px;
     margin-top: 30px + 14px;
     padding-top: 30px;
-    border-top: 1px solid var(--web-outline);
+    // border-top: 1px solid var(--web-outline);
 
     &-link {
       display: inline-flex;

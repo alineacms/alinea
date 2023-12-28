@@ -15,15 +15,17 @@ function Link({href, ...props}: LinkProps) {
   return href ? <NextLink href={href!} {...props} /> : <a {...props} />
 }
 
-function H2(props: HTMLAttributes<HTMLHeadingElement>) {
-  return (
-    <h2 {...props}>
+function withPermaLink(Tag: string) {
+  return (props: HTMLAttributes<HTMLHeadingElement>) => (
+    <Tag {...props}>
+      {props.id && <a href={`#${props.id}`} className={styles.permaLink()} />}
       {props.children}
-      {props.id && (
-        <a href={`#${props.id}`} className={styles.h2.permaLink()} />
-      )}
-    </h2>
+    </Tag>
   )
 }
 
-export const WebTypo = createTypo(styles, {a: Link, h2: H2})
+export const WebTypo = createTypo(styles, {
+  a: Link,
+  h2: withPermaLink('h2'),
+  h3: withPermaLink('h3')
+})

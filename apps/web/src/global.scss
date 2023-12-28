@@ -19,7 +19,7 @@
   --web-negative-hsl: 215, 17%, 14%;
   --web-outline: #ecebeb;
   --web-section1-background: #f1f3fd;
-  --web-code-inline-background: #e1e4f6;
+  --web-code-inline-background: #eff0f9;
   --web-code-inline-foreground: #1e232a;
 }
 
@@ -49,8 +49,8 @@
 :root {
   --web-title-font: 'Poppins', sans-serif;
   --web-header-height: 80px;
-  --web-code-background: #1e232a;
-  --web-code-highlight: #464a61;
+  --web-code-background: #0a2540;
+  --web-code-highlight: var(--web-accent);
   --web-code-foreground: #fbfbfe;
 
   @include dark-theme;
@@ -92,6 +92,11 @@ body {
   background: var(--web-background-variant);
   font-size: 15px;
   font-family: 'Inter', sans-serif;
+}
+
+svg,
+img {
+  display: block;
 }
 
 a {

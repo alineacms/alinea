@@ -1,16 +1,16 @@
 /* eslint-disable @next/next/no-img-element */
 
 import {cms} from '@/cms'
-import {PageWithSidebar} from '@/layout/Page'
+import {PageContainer, PageContent} from '@/layout/Page'
 import {WebTypo} from '@/layout/WebTypo'
-import {Link} from '@/layout/nav/Link'
 import {TextView} from '@/page/blocks/TextBlockView'
 import {BlogPost} from '@/schema/BlogPost'
 import {Entry} from 'alinea/core'
-import {HStack, Stack, fromModule} from 'alinea/ui'
-import {IcRoundArrowBack} from 'alinea/ui/icons/IcRoundArrowBack'
+import {fromModule} from 'alinea/ui'
 import {notFound} from 'next/navigation'
+import {Breadcrumbs} from '../layout/Breadcrumbs'
 import css from './BlogPostPage.module.scss'
+import {BlogPostMeta} from './blog/BlogPostMeta'
 
 const styles = fromModule(css)
 
@@ -38,47 +38,27 @@ export default async function BlogPostPage({params}: BlogPostPageProps) {
   )
   if (!page) return notFound()
   return (
-    <PageWithSidebar
-      sidebar={
-        <Stack.Right>
-          <Link href="/blog">
-            <HStack gap={8} center>
-              <IcRoundArrowBack />
-              <span>Blog</span>
-            </HStack>
-          </Link>
-        </Stack.Right>
-      }
-    >
-      <article>
-        <header className={styles.root.header()}>
-          <time className={styles.root.publishDate()}>{page.publishDate}</time>
-          <WebTypo.H1 flat className={styles.root.header.title()}>
-            {page.title}
-          </WebTypo.H1>
-          <HStack className={styles.root.author()} gap={8} center>
-            By
-            {page.author && (
-              <a
-                href={page.author.url.url}
-                className={styles.root.author.url()}
-              >
-                <HStack center gap={8}>
-                  {page.author.avatar && (
-                    <img
-                      alt="Author avatar"
-                      className={styles.root.author.avatar()}
-                      src={page.author.avatar.url}
-                    />
-                  )}
-                  {page.author.name}
-                </HStack>
-              </a>
-            )}
-          </HStack>
-        </header>
-        <TextView text={page.body} />
-      </article>
-    </PageWithSidebar>
+    <PageContainer>
+      <PageContent>
+        <article className={styles.root()}>
+          <header className={styles.root.header()}>
+            <Breadcrumbs
+              parents={[
+                {
+                  id: 'blog',
+                  title: 'Blog',
+                  url: '/blog'
+                }
+              ]}
+            ></Breadcrumbs>
+            <WebTypo.H1 flat className={styles.root.header.title()}>
+              {page.title}
+            </WebTypo.H1>
+            <BlogPostMeta {...page} />
+          </header>
+          <TextView text={page.body} />
+        </article>
+      </PageContent>
+    </PageContainer>
   )
 }

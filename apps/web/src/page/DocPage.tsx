@@ -10,8 +10,6 @@ import {BodyView} from '@/page/blocks/BodyFieldView'
 import {Doc} from '@/schema/Doc'
 import {Entry} from 'alinea/core'
 import {HStack, VStack, fromModule} from 'alinea/ui'
-import {IcRoundArrowBack} from 'alinea/ui/icons/IcRoundArrowBack'
-import {IcRoundArrowForward} from 'alinea/ui/icons/IcRoundArrowForward'
 import {Metadata} from 'next'
 import {notFound} from 'next/navigation'
 import css from './DocPage.module.scss'
@@ -142,9 +140,9 @@ export default async function DocPage({params}: DocPageProps) {
             href={framework.link(prev.url)}
             className={styles.root.nav.link()}
           >
-            <span className={styles.root.nav.link.icon()}>
+            {/*<span className={styles.root.nav.link.icon()}>
               <IcRoundArrowBack />
-            </span>
+             </span>*/}
             <VStack gap={4}>
               <span className={styles.root.nav.link.label()}>Previous</span>
               <span className={styles.root.nav.link.title()}>{prev.title}</span>
@@ -161,9 +159,9 @@ export default async function DocPage({params}: DocPageProps) {
               <span className={styles.root.nav.link.title()}>{next.title}</span>
             </VStack>
 
-            <span className={styles.root.nav.link.icon()}>
+            {/*<span className={styles.root.nav.link.icon()}>
               <IcRoundArrowForward />
-            </span>
+             </span>*/}
           </Link>
         )}
       </HStack>

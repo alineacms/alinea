@@ -5,15 +5,15 @@
   --bg: var(--web-header-background);
   color: var(--web-foreground-faded);
   height: var(--web-header-height);
-  z-index: 7;
-  background-color: var(--bg-faded);
-  backdrop-filter: blur(12px);
   flex-shrink: 0;
+  z-index: 7;
 
   @include sm {
     position: sticky;
     top: 0;
     border-bottom: 1px solid hsla(var(--web-negative-hsl), 0.09);
+    background-color: var(--bg-faded);
+    backdrop-filter: blur(12px);
   }
 
   &.is-transparent {

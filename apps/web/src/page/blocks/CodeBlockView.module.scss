@@ -1,25 +1,26 @@
 .root {
   position: relative;
   margin: 20px 0 28px 0;
-  background: var(--web-code-background);
   color: var(--web-code-foreground);
-  border: 1px solid var(--web-outline);
-  border-radius: 16px;
-  overflow: hidden;
   line-height: 1.5;
 
   &-fileName {
+    align-self: flex-start;
     font-family: 'JetBrains Mono', monospace;
-    padding: 8px 15px;
-    font-size: 12px;
-    background: var(--web-code-highlight);
+    padding: 7.5px 10px;
+    border-radius: 8px;
+    font-size: 13.5px;
+    color: var(--web-accent);
+    background: var(--web-selected);
+    font-weight: 600;
   }
 
   &-code {
     > pre {
-      padding: 22px 25px;
-      overflow: auto;
       font-size: 14px;
+      padding: 22px 25px;
+      border-radius: 14px;
+      overflow: auto;
 
       &::-webkit-scrollbar {
         width: 4px;

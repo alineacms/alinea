@@ -1,10 +1,10 @@
 .root {
   margin: 20px 0 28px 0;
-  background: var(--web-code-highlight);
-  color: var(--web-code-foreground);
-  border-radius: 16px;
-  overflow: hidden;
-  border: 1px solid #424242;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  //background: var(--web-code-highlight);
+  //color: var(--web-code-foreground);
 
   &-triggers {
     overflow: auto;
@@ -13,26 +13,30 @@
   &-trigger {
     appearance: none;
     background: transparent;
-    padding: 9px 18px;
+    padding: 7.5px 10px;
     font: inherit;
     color: inherit;
     border: none;
     cursor: pointer;
-    // font-weight: bold;
-    font-size: 13px;
+    font-weight: 600;
+    font-size: 13.5px;
+    border-radius: 8px;
 
     &:hover {
-      background: #2a313a;
+      background: var(--web-highlight);
     }
 
     &.is-selected {
-      background: var(--web-code-background);
+      color: var(--web-accent);
+      background: var(--web-selected);
     }
   }
 
   &-code {
     > pre {
+      font-size: 14px;
       padding: 22px 25px;
+      border-radius: 14px;
       overflow: auto;
 
       &::-webkit-scrollbar {

@@ -47,21 +47,20 @@
       ]
     },
     {
-      "type": "paragraph",
+      "type": "heading",
       "textAlign": "left",
+      "level": 3,
       "content": [
         {
           "type": "text",
-          "text": "`autoFocus`",
-          "marks": [
-            {
-              "type": "bold"
-            }
-          ]
-        },
-        {
-          "type": "hardBreak"
-        },
+          "text": "`autoFocus`"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
         {
           "type": "text",
           "text": "Focus this input automatically"

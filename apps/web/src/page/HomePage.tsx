@@ -1,6 +1,9 @@
 import heroBg from '@/assets/hero-alinea.jpg'
 import {cms} from '@/cms'
 import {
+  IcBaselineCloudQueue,
+  IcBaselineDashboardCustomize,
+  IcBaselineWorkspaces,
   IcRoundFastForward,
   MdiLanguageTypescript,
   MdiSourceBranch
@@ -12,8 +15,14 @@ import WebLayout from '@/layout/WebLayout'
 import {WebTypo} from '@/layout/WebTypo'
 import {Home} from '@/schema/Home'
 import {HStack, VStack} from 'alinea/ui/Stack'
+import {IcRoundInsertDriveFile} from 'alinea/ui/icons/IcRoundInsertDriveFile'
+import {IcRoundPublish} from 'alinea/ui/icons/IcRoundPublish'
+import {PhGlobe} from 'alinea/ui/icons/PhGlobe'
+import {RiFlashlightFill} from 'alinea/ui/icons/RiFlashlightFill'
 import {fromModule} from 'alinea/ui/util/Styler'
 import {px} from 'alinea/ui/util/Units'
+import {ComponentType, PropsWithChildren} from 'react'
+import {Link} from '../layout/nav/Link'
 import css from './HomePage.module.scss'
 
 const styles = fromModule(css)
@@ -21,6 +30,26 @@ const styles = fromModule(css)
 export async function generateMetadata() {
   const home = await cms.get(Home())
   return {title: home.metadata?.title || home.title}
+}
+
+interface HighlightProps {
+  icon: ComponentType
+  href: string
+}
+
+function Highlight({
+  href,
+  icon: Icon,
+  children
+}: PropsWithChildren<HighlightProps>) {
+  return (
+    <Link className={styles.highlight()} href={href}>
+      <HStack gap={10}>
+        <Icon />
+        <span style={{lineHeight: 1}}>{children}</span>
+      </HStack>
+    </Link>
+  )
 }
 
 export default async function HomePage() {
@@ -54,42 +83,93 @@ export default async function HomePage() {
               </HStack>
             </VStack>
           </Hero>
+
           <PageContainer>
-            <Features>
-              <Feature>
-                <WebTypo>
-                  <Feature.Title icon={IcRoundFastForward}>
-                    Minimal setup
-                  </Feature.Title>
-                  <WebTypo.P className={styles.home.features.desc()}>
-                    Go straight to content modeling without having to deal with
-                    databases and migrations.
-                  </WebTypo.P>
-                </WebTypo>
-              </Feature>
-              <Feature>
-                <WebTypo>
-                  <Feature.Title icon={MdiSourceBranch}>
-                    Git based
-                  </Feature.Title>
-                  <WebTypo.P className={styles.home.features.desc()}>
-                    Content is version controlled in your git repository. Easily
-                    branch and feature test content changes.
-                  </WebTypo.P>
-                </WebTypo>
-              </Feature>
-              <Feature>
-                <WebTypo>
-                  <Feature.Title icon={MdiLanguageTypescript}>
-                    Fully typed
-                  </Feature.Title>
-                  <WebTypo.P className={styles.home.features.desc()}>
-                    An optimized, type-safe experience for Typescript users
-                    without overcomplicating things.
-                  </WebTypo.P>
-                </WebTypo>
-              </Feature>
-            </Features>
+            <VStack gap={40}>
+              <Features>
+                <Feature>
+                  <WebTypo>
+                    <Feature.Title icon={IcRoundFastForward}>
+                      Minimal setup
+                    </Feature.Title>
+                    <WebTypo.P className={styles.home.features.desc()}>
+                      Go straight to content modeling without having to deal
+                      with databases and migrations.
+                    </WebTypo.P>
+                  </WebTypo>
+                </Feature>
+                <Feature>
+                  <WebTypo>
+                    <Feature.Title icon={MdiSourceBranch}>
+                      Git based
+                    </Feature.Title>
+                    <WebTypo.P className={styles.home.features.desc()}>
+                      Content is version controlled in your git repository.
+                      Easily branch and feature test content changes.
+                    </WebTypo.P>
+                  </WebTypo>
+                </Feature>
+                <Feature>
+                  <WebTypo>
+                    <Feature.Title icon={MdiLanguageTypescript}>
+                      Fully typed
+                    </Feature.Title>
+                    <WebTypo.P className={styles.home.features.desc()}>
+                      An optimized, type-safe experience for Typescript users
+                      without overcomplicating things.
+                    </WebTypo.P>
+                  </WebTypo>
+                </Feature>
+              </Features>
+
+              <HStack justify="space-between" gap={`${px(16)} ${px(30)}`} wrap>
+                <Highlight
+                  href="/docs/content/live-previews"
+                  icon={RiFlashlightFill}
+                >
+                  Live previews
+                </Highlight>
+
+                <Highlight
+                  icon={IcRoundPublish}
+                  href="/blog/alinea-0-4-0#content-workflow"
+                >
+                  Editorial workflow
+                </Highlight>
+
+                <Highlight
+                  icon={IcRoundInsertDriveFile}
+                  href="/docs/content/query"
+                >
+                  Query engine
+                </Highlight>
+
+                <Highlight
+                  icon={IcBaselineDashboardCustomize}
+                  href="/docs/fields/custom-fields"
+                >
+                  Custom fields
+                </Highlight>
+
+                <Highlight
+                  icon={IcBaselineWorkspaces}
+                  href="/docs/configuration/workspaces"
+                >
+                  Workspaces
+                </Highlight>
+
+                <Highlight
+                  icon={PhGlobe}
+                  href="/docs/reference/internationalization"
+                >
+                  Internationalization
+                </Highlight>
+
+                <Highlight icon={IcBaselineCloudQueue} href="/docs/deploy">
+                  Self-host or cloud host
+                </Highlight>
+              </HStack>
+            </VStack>
           </PageContainer>
         </div>
 

@@ -1,0 +1,85 @@
+{
+  "title": "Media",
+  "body": [
+    {
+      "type": "heading",
+      "textAlign": "left",
+      "level": 1,
+      "content": [
+        {
+          "type": "text",
+          "text": "Media"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "To manage uploads a Media Root is added to a Workspace. Multiple Media Roots are supported but uploads will default to the first Media Root found."
+        }
+      ]
+    },
+    {
+      "id": "2aB4BmlaljcbjYyF3KAxVvZgLhW",
+      "type": "CodeBlock",
+      "code": "alinea.workspace('Main workspace', {\n  media: alinea.media()\n  // ...\n})",
+      "fileName": "",
+      "language": "",
+      "compact": false
+    },
+    {
+      "type": "heading",
+      "textAlign": "left",
+      "level": 2,
+      "content": [
+        {
+          "type": "text",
+          "text": "Configuration"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "Media Roots should be defined within a "
+        },
+        {
+          "type": "text",
+          "text": "Workspace",
+          "marks": [
+            {
+              "type": "link",
+              "attrs": {
+                "data-id": "2aAy4B81RXHCA8y06tSaep6CBen",
+                "data-entry": "259EzPfnSUaKOrNL1S2bpIpMdKl",
+                "data-type": "entry",
+                "href": null,
+                "title": ""
+              }
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": "."
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "openGraph": {
+      "image": {}
+    }
+  },
+  "@alinea": {
+    "entryId": "2aB45fUcIgu0Wx0NMULlU8VH7KK",
+    "type": "Doc",
+    "index": "Zx"
+  }
+}

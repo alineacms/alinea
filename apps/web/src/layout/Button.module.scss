@@ -1,5 +1,4 @@
 .root {
-  cursor: pointer;
   font: inherit;
   color: var(--web-accent-foreground);
   position: relative;
@@ -10,6 +9,7 @@
   border-radius: 50px;
   background-color: var(--web-accent);
   transition: 0.25s ease-out;
+  cursor: pointer;
 
   &:hover {
     background-color: var(--web-accent-light);

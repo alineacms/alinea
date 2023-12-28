@@ -1,4 +1,4 @@
-import {fromModule, Typo} from 'alinea/ui'
+import {fromModule, Typo, VStack} from 'alinea/ui'
 //import {useClipboard} from 'use-clipboard-copy'
 //import MdiContentCopy from '../../icons/MdiContentCopy'
 import {CodeBlock} from '@/schema/blocks/CodeBlock'
@@ -20,7 +20,7 @@ export async function CodeBlockView({
     lang: language === 'shellscript' ? 'shellscript' : 'tsx'
   })
   return (
-    <div className={styles.root({compact})}>
+    <VStack gap={8} className={styles.root({compact})}>
       {fileName && <div className={styles.root.fileName()}>{fileName}</div>}
       <div style={{position: 'relative'}}>
         <Typo.Monospace
@@ -29,6 +29,6 @@ export async function CodeBlockView({
           className={styles.root.code()}
         />
       </div>
-    </div>
+    </VStack>
   )
 }

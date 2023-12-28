@@ -7,21 +7,21 @@
   padding: 10px 16px;
   line-height: 1.2;
   font-size: 14px;
-  box-shadow: 0 1px 0 var(--web-outline);
-  border: 2px solid var(--web-outline);
+  //box-shadow: 0 1px 20px var(--web-outline);
+  background: var(--web-background);
   margin-bottom: 18px;
   margin-top: 12px;
   margin-right: 22px;
   margin-left: -6px;
-  transition: background 0.25s ease-out;
+  transition: 0.25s ease-out;
 
   &:hover {
-    background: hsla(var(--web-negative-hsl), 0.05);
+    color: var(--web-accent);
+    background: var(--web-selected);
   }
 
   &-title {
-    font-family: var(--web-title-font);
-    font-weight: bold;
+    font-weight: 600;
     font-size: 15px;
   }
 }

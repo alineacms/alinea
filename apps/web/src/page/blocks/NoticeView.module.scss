@@ -4,9 +4,8 @@
   padding: 10px 16px;
   line-height: 1.2;
   font-size: 14px;
-  box-shadow: 0 1px 0 var(--web-outline);
-  border: 1px solid var(--web-outline);
-  margin: 10px 0 18px 0;
+  margin: 10px 0;
+  background: var(--web-background);
 
   &-icon {
     display: block;
