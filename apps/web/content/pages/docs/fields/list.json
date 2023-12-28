@@ -2,17 +2,6 @@
   "title": "List",
   "body": [
     {
-      "type": "heading",
-      "level": 1,
-      "textAlign": "left",
-      "content": [
-        {
-          "type": "text",
-          "text": "List field"
-        }
-      ]
-    },
-    {
       "type": "paragraph",
       "textAlign": "left",
       "content": [

@@ -7,7 +7,7 @@ import {IcRoundHamburger} from 'alinea/ui/icons/IcRoundHamburger'
 import {MdiGithub} from 'alinea/ui/icons/MdiGithub'
 import {MdiTwitterCircle} from 'alinea/ui/icons/MdiTwitterCircle'
 import {Home} from '../schema/Home'
-import {HeaderRoot} from './Header.client'
+import {HeaderRoot, MobileMenu} from './Header.client'
 import css from './Header.module.scss'
 import {PageContainer} from './Page'
 import {Logo} from './branding/Logo'
@@ -35,7 +35,7 @@ export async function Header() {
         id="mobilemenu"
         className={styles.mobilemenu.check()}
       />
-      <div className={styles.mobilemenu()}>
+      <MobileMenu className={styles.mobilemenu()}>
         <div className={styles.mobilemenu.container()}>
           <PageContainer className={styles.mobilemenu.top()}>
             <Menu links={links} />
@@ -44,7 +44,7 @@ export async function Header() {
             <MobileNav />
           </div>
         </div>
-      </div>
+      </MobileMenu>
       <HeaderRoot>
         <PageContainer style={{height: '100%'}}>
           <Menu links={links} />
@@ -72,20 +72,7 @@ async function MobileNav() {
       if (page.parent) return page
       return {...page, parent: 'docs'}
     }),
-    {id: 'docs', url: '/docs', title: 'Docs'},
-    {id: 'developer', title: 'Developer'},
-    {
-      parent: 'developer',
-      id: 'changelog',
-      url: '/changelog',
-      title: 'Changelog'
-    },
-    {
-      parent: 'developer',
-      id: 'playground',
-      url: '/playground',
-      title: 'Playground'
-    }
+    {id: 'docs', url: '/docs', title: 'Docs'}
   ]
   return <NavTree nav={tree} />
 }

@@ -2,22 +2,6 @@
   "title": "Self-Hosted",
   "body": [
     {
-      "type": "heading",
-      "textAlign": "start",
-      "level": 1,
-      "content": [
-        {
-          "type": "text",
-          "text": "Self-hosting Alinea",
-          "marks": [
-            {
-              "type": "bold"
-            }
-          ]
-        }
-      ]
-    },
-    {
       "type": "paragraph",
       "textAlign": "start",
       "content": [

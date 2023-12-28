@@ -1,6 +1,20 @@
 @import '@/style';
 
 .root {
+  &-subNav {
+    margin-top: -20px;
+    padding-left: 15px;
+    padding-bottom: 25px;
+
+    @include l {
+      display: none !important;
+    }
+
+    &-link {
+      padding-left: 10px;
+    }
+  }
+
   &-nav {
     margin: 0 -14px;
     margin-top: 30px + 14px;

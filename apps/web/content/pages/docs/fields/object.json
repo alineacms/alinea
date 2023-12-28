@@ -2,17 +2,6 @@
   "title": "Object",
   "body": [
     {
-      "type": "heading",
-      "level": 1,
-      "textAlign": "left",
-      "content": [
-        {
-          "type": "text",
-          "text": "Object field"
-        }
-      ]
-    },
-    {
       "type": "paragraph",
       "textAlign": "left",
       "content": [

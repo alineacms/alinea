@@ -12,6 +12,7 @@ import {Entry} from 'alinea/core'
 import {HStack, VStack, fromModule} from 'alinea/ui'
 import {Metadata} from 'next'
 import {notFound} from 'next/navigation'
+import {WebTypo} from '../layout/WebTypo'
 import css from './DocPage.module.scss'
 
 const styles = fromModule(css)
@@ -100,18 +101,18 @@ export default async function DocPage({params}: DocPageProps) {
   const nav = await cms
     .in(cms.workspaces.main.pages.docs)
     .find(Entry().select(select))
-  const nested = nestNav(
-    [
-      root,
-      ...nav.map(item => ({
-        ...item,
-        parent: item.parent === root.id ? null : item.parent
-      }))
-    ].map(item => ({
+  const entries = [
+    root,
+    ...nav.map(item => ({
       ...item,
-      title: item.navigationTitle ?? item.title
+      parent: item.parent === root.id ? null : item.parent
     }))
-  )
+  ].map(item => ({
+    ...item,
+    title: item.navigationTitle ?? item.title
+  }))
+  const nested = nestNav(entries)
+  const directChildren = entries.filter(item => item.parent === doc.id)
   const itemsIn = (item: NavItem): Array<NavItem> =>
     item.children ? [item, ...item.children.flatMap(itemsIn)] : [item]
   const docs = nested.flatMap(itemsIn)
@@ -128,7 +129,24 @@ export default async function DocPage({params}: DocPageProps) {
       }
     >
       <Breadcrumbs parents={doc.parents.slice(-1)} />
-      <BodyView body={doc.body} />
+      <WebTypo>
+        <WebTypo.H1>{doc.navigationTitle ?? doc.title}</WebTypo.H1>
+        <VStack
+          as="ul"
+          gap={12}
+          align="flex-start"
+          className={styles.root.subNav()}
+        >
+          {directChildren.map(child => {
+            return (
+              <li key={child.id} className={styles.root.subNav.link()}>
+                <WebTypo.Link href={child.url}>{child.title}</WebTypo.Link>
+              </li>
+            )
+          })}
+        </VStack>
+        <BodyView body={doc.body} />
+      </WebTypo>
       <HStack
         gap={20}
         justify="space-between"

@@ -2,17 +2,6 @@
   "title": "Text",
   "body": [
     {
-      "type": "heading",
-      "level": 1,
-      "textAlign": "left",
-      "content": [
-        {
-          "type": "text",
-          "text": "Text Field"
-        }
-      ]
-    },
-    {
       "type": "paragraph",
       "textAlign": "left",
       "content": [

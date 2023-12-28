@@ -2,17 +2,6 @@
   "title": "Code",
   "body": [
     {
-      "type": "heading",
-      "textAlign": "left",
-      "level": 1,
-      "content": [
-        {
-          "type": "text",
-          "text": "Code field"
-        }
-      ]
-    },
-    {
       "type": "paragraph",
       "textAlign": "left",
       "content": [

@@ -2,17 +2,6 @@
   "title": "Deploy",
   "body": [
     {
-      "type": "heading",
-      "textAlign": "left",
-      "level": 1,
-      "content": [
-        {
-          "type": "text",
-          "text": "Deploying Alinea"
-        }
-      ]
-    },
-    {
       "type": "paragraph",
       "textAlign": "left",
       "content": [

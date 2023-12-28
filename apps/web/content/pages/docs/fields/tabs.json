@@ -2,17 +2,6 @@
   "title": "Tabs",
   "body": [
     {
-      "type": "heading",
-      "level": 1,
-      "textAlign": "left",
-      "content": [
-        {
-          "type": "text",
-          "text": "Tabs field"
-        }
-      ]
-    },
-    {
       "type": "paragraph",
       "textAlign": "left",
       "content": [

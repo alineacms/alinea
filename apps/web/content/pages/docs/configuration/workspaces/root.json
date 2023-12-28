@@ -2,17 +2,6 @@
   "title": "Roots",
   "body": [
     {
-      "type": "heading",
-      "level": 1,
-      "textAlign": "left",
-      "content": [
-        {
-          "type": "text",
-          "text": "Roots"
-        }
-      ]
-    },
-    {
       "type": "paragraph",
       "textAlign": "left",
       "content": [

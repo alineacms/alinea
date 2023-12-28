@@ -2,17 +2,6 @@
   "title": "CLI",
   "body": [
     {
-      "type": "heading",
-      "textAlign": "left",
-      "level": 1,
-      "content": [
-        {
-          "type": "text",
-          "text": "CLI"
-        }
-      ]
-    },
-    {
       "id": "-DXbyOqvbfbUVwbH8CNuJ",
       "type": "CodeBlock",
       "code": "Usage\n  $ alinea <command> [options]\n\nAvailable Commands\n  init     Copy a sample config file to the current directory\n  dev      Start development dashboard\n  build    Generate content cache\n\nFor more info, run any command with the `--help` flag\n  $ alinea build --help\n  $ alinea init --help\n\nOptions\n  -v, --version    Displays current version\n  -h, --help       Displays this message",

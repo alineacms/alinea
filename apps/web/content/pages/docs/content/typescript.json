@@ -2,17 +2,6 @@
   "title": "TypeScript",
   "body": [
     {
-      "type": "heading",
-      "textAlign": "left",
-      "level": 1,
-      "content": [
-        {
-          "type": "text",
-          "text": "TypeScript"
-        }
-      ]
-    },
-    {
       "type": "paragraph",
       "textAlign": "left",
       "content": [

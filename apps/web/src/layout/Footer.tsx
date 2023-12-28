@@ -41,7 +41,7 @@ export function Footer() {
               <WebTypo.H4>Developer</WebTypo.H4>
               <VStack gap={10} as="nav">
                 <div>
-                  <Link href="/docs/intro" className={styles.root.link()}>
+                  <Link href="/docs" className={styles.root.link()}>
                     Docs
                   </Link>
                 </div>

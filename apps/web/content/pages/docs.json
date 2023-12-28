@@ -3,17 +3,6 @@
   "navigationTitle": "Introduction",
   "body": [
     {
-      "type": "heading",
-      "textAlign": "left",
-      "level": 1,
-      "content": [
-        {
-          "type": "text",
-          "text": "Introduction"
-        }
-      ]
-    },
-    {
       "type": "paragraph",
       "textAlign": "left",
       "content": [
