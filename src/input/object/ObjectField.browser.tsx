@@ -1,5 +1,7 @@
-import {Field, Type} from 'alinea/core'
-import {InputForm, InputLabel, InputState} from 'alinea/editor'
+import {Field} from 'alinea/core'
+import {InputForm} from 'alinea/dashboard/editor/InputForm'
+import {useField} from 'alinea/dashboard/editor/UseField'
+import {InputLabel} from 'alinea/editor'
 import {Sink} from 'alinea/ui/Sink'
 import {IcRoundFeed} from 'alinea/ui/icons/IcRoundFeed'
 import {ObjectField, object as createObject} from './ObjectField.js'
@@ -8,18 +10,17 @@ export * from './ObjectField.js'
 
 export const object = Field.provideView(ObjectInput, createObject)
 
-type ObjectInputProps<Definition> = {
-  state: InputState<InputState.Record<Type.Infer<Definition>>>
+interface ObjectInputProps<Definition> {
   field: ObjectField<Definition>
 }
 
-function ObjectInput<Definition>({state, field}: ObjectInputProps<Definition>) {
-  const {label, options} = field[Field.Data]
+function ObjectInput<Definition>({field}: ObjectInputProps<Definition>) {
+  const {options, value, mutator, label} = useField(field)
   return (
     <InputLabel label={label} {...options} icon={IcRoundFeed}>
       <Sink.Root>
         <Sink.Content>
-          <InputForm state={state} type={options.fields} />
+          <InputForm type={options.fields} />
         </Sink.Content>
       </Sink.Root>
     </InputLabel>

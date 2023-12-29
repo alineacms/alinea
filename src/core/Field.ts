@@ -1,6 +1,5 @@
 import {LinkResolver} from 'alinea/backend/resolver/LinkResolver'
 import {Expr} from 'alinea/core/pages/Expr'
-import {InputState} from 'alinea/editor'
 import type {ComponentType} from 'react'
 import {Hint} from './Hint.js'
 import {Label} from './Label.js'
@@ -11,31 +10,39 @@ export interface FieldOptions {
   readOnly?: boolean
 }
 
-export interface FieldMeta<Value, OnChange, Options> {
+export interface FieldMeta<Value, Mutator, Options extends FieldOptions> {
   hint: Hint
   label: Label
   initialValue?: Value
   options: Options
-  view?: FieldView<Value, OnChange, Options>
+  view?: FieldView<Value, Mutator, Options>
   postProcess?: (value: Value, loader: LinkResolver) => Promise<void>
 }
 
-export interface FieldData<Value, OnChange, Options>
-  extends FieldMeta<Value, OnChange, Options> {
-  shape: Shape<Value, OnChange>
+export interface FieldData<Value, Mutator, Options extends FieldOptions>
+  extends FieldMeta<Value, Mutator, Options> {
+  shape: Shape<Value, Mutator>
 }
 
-export type FieldView<Value, OnChange, Options> = ComponentType<{
-  state: InputState<readonly [Value, OnChange]>
-  field: Field<Value, OnChange, Options>
+export type FieldView<
+  Value,
+  Mutator,
+  Options extends FieldOptions
+> = ComponentType<{
+  field: Field<Value, Mutator, Options>
 }>
 
-export interface Field<Value, OnChange, Options> extends Expr<Value> {
-  [Field.Data]: FieldData<Value, OnChange, Options>
+export interface Field<Value, Mutator, Options extends FieldOptions>
+  extends Expr<Value> {
+  [Field.Data]: FieldData<Value, Mutator, Options>
 }
 
-export class Field<Value = unknown, OnChange = unknown, Options = {}> {
-  constructor(data: FieldData<Value, OnChange, Options>) {
+export class Field<
+  Value = any,
+  Mutator = any,
+  Options extends FieldOptions = FieldOptions
+> {
+  constructor(data: FieldData<Value, Mutator, Options>) {
     this[Field.Data] = data
   }
 }
@@ -45,10 +52,10 @@ export namespace Field {
 
   export function provideView<
     Value,
-    OnChange,
-    Options,
-    Factory extends (...args: Array<any>) => Field<Value, OnChange, Options>
-  >(view: FieldView<Value, OnChange, Options>, factory: Factory): Factory {
+    Mutator,
+    Options extends FieldOptions,
+    Factory extends (...args: Array<any>) => Field<Value, Mutator, Options>
+  >(view: FieldView<Value, Mutator, Options>, factory: Factory): Factory {
     return ((...args: Array<any>) =>
       new Field({...factory(...args)[Field.Data], view})) as Factory
   }
@@ -61,13 +68,15 @@ export namespace Field {
     return field[Field.Data].hint
   }
 
-  export function view<Value, OnChange, Options>(
-    field: Field<Value, OnChange, Options>
-  ): FieldView<Value, OnChange, Options> | undefined {
+  export function view<Value, Mutator, Options extends FieldOptions>(
+    field: Field<Value, Mutator, Options>
+  ): FieldView<Value, Mutator, Options> | undefined {
     return field[Field.Data].view
   }
 
-  export function options(field: Field): FieldOptions {
+  export function options<Options extends FieldOptions>(
+    field: Field<any, any, Options>
+  ): Options {
     return field[Field.Data].options
   }
 

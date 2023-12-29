@@ -7,11 +7,14 @@ import {
   NodeViewWrapper,
   ReactNodeViewRenderer
 } from '@tiptap/react'
-import {createId, Field, outcome, Schema, Type} from 'alinea/core'
+import {createId, Field, Schema, Type} from 'alinea/core'
 import {RichTextField} from 'alinea/core/field/RichTextField'
 import {entries} from 'alinea/core/util/Objects'
+import {FieldRow} from 'alinea/dashboard/atoms/FieldAtoms'
+import {InputForm} from 'alinea/dashboard/editor/InputForm'
+import {useField, useFieldMutator} from 'alinea/dashboard/editor/UseField'
 import {IconButton} from 'alinea/dashboard/view/IconButton'
-import {InputForm, InputLabel, InputState, useInput} from 'alinea/editor'
+import {InputLabel} from 'alinea/editor'
 import {fromModule, HStack, Icon, px, TextLabel} from 'alinea/ui'
 import {DropdownMenu} from 'alinea/ui/DropdownMenu'
 import IcRoundAddCircle from 'alinea/ui/icons/IcRoundAddCircle'
@@ -47,43 +50,37 @@ type NodeViewProps = {
   deleteNode: () => void
 }
 
-function typeExtension(
-  parent: InputState<InputState.Text<any>>,
-  name: string,
-  type: Type
-) {
+function typeExtension(field: Field, name: string, type: Type) {
   function View({node, deleteNode}: NodeViewProps) {
     const {id} = node.attrs
     const meta = Type.meta(type)
-    // Child data might be unavailable if this was dragged or pasted from
-    // another field
-    const state = outcome(() => parent.child(id))
-    if (!id || !state.isSuccess()) return null
     return (
-      <NodeViewWrapper>
-        <Sink.Root style={{margin: `${px(18)} 0`}}>
-          <Sink.Header>
-            <Sink.Options>
-              <IconButton
-                icon={meta.icon || IcRoundDragHandle}
-                data-drag-handle
-                style={{cursor: 'grab'}}
-              />
-            </Sink.Options>
-            <Sink.Title>
-              <TextLabel label={Type.label(type)} />
-            </Sink.Title>
-            <Sink.Options>
-              <IconButton icon={IcRoundClose} onClick={deleteNode} />
-            </Sink.Options>
-          </Sink.Header>
-          <Sink.Content>
-            <IsNested.Provider value={true}>
-              <InputForm state={state.value} type={type} />
-            </IsNested.Provider>
-          </Sink.Content>
-        </Sink.Root>
-      </NodeViewWrapper>
+      <FieldRow field={field} id={id}>
+        <NodeViewWrapper>
+          <Sink.Root style={{margin: `${px(18)} 0`}}>
+            <Sink.Header>
+              <Sink.Options>
+                <IconButton
+                  icon={meta.icon || IcRoundDragHandle}
+                  data-drag-handle
+                  style={{cursor: 'grab'}}
+                />
+              </Sink.Options>
+              <Sink.Title>
+                <TextLabel label={Type.label(type)} />
+              </Sink.Title>
+              <Sink.Options>
+                <IconButton icon={IcRoundClose} onClick={deleteNode} />
+              </Sink.Options>
+            </Sink.Header>
+            <Sink.Content>
+              <IsNested.Provider value={true}>
+                <InputForm type={type} />
+              </IsNested.Provider>
+            </Sink.Content>
+          </Sink.Root>
+        </NodeViewWrapper>
+      </FieldRow>
     )
   }
   return Node.create({
@@ -108,13 +105,10 @@ function typeExtension(
   })
 }
 
-function schemaToExtensions(
-  path: InputState<InputState.Text<any>>,
-  schema: Schema | undefined
-) {
+function schemaToExtensions(field: Field, schema: Schema | undefined) {
   if (!schema) return []
   return entries(schema).map(([name, type]) => {
-    return typeExtension(path, name, type)
+    return typeExtension(field, name, type)
   })
 }
 
@@ -163,14 +157,13 @@ function InsertMenu({editor, schema, onInsert}: InsertMenuProps) {
 }
 
 function RichTextEditor<Blocks extends Schema>({
-  state,
   field
 }: RichTextInputProps<Blocks>) {
-  const {label, options} = field[Field.Data]
+  const {value, mutator, label, options} = useField(field)
+  const {readOnly, fragment, insert} = mutator
   const picker = usePickTextLink()
   const {optional, inline, help, width, schema} = options
   const [focus, setFocus] = useState(false)
-  const [value, {readOnly, fragment, insert}] = useInput(state)
   const toolbarRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLElement>(null)
   const focusToggle = useCallback(
@@ -191,7 +184,7 @@ function RichTextEditor<Blocks extends Schema>({
   const extensions = [
     Collaboration.configure({fragment}),
     RichTextKit,
-    ...schemaToExtensions(state, schema)
+    ...schemaToExtensions(field, schema)
   ]
   const isNested = useContext(IsNested)
   // The collaboration extension takes over content syncing after inital content
@@ -265,17 +258,15 @@ function RichTextEditor<Blocks extends Schema>({
 }
 
 export interface RichTextInputProps<Blocks extends Schema> {
-  state: InputState<InputState.Text<Blocks>>
   field: RichTextField<Blocks, RichTextOptions<Blocks>>
 }
 
 export function RichTextInput<Blocks extends Schema>({
-  state,
   field
 }: RichTextInputProps<Blocks>) {
-  const [_, {fragment}] = useInput(state)
+  const {fragment} = useFieldMutator(field)
   const key = useMemo(createId, [fragment])
   // We key here currently because the tiptap/yjs combination fails to register
   // changes when the fragment is changed while the editor is mounted.
-  return <RichTextEditor key={key} state={state} field={field} />
+  return <RichTextEditor key={key} field={field} />
 }

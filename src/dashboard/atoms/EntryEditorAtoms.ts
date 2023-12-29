@@ -29,7 +29,7 @@ import {InputState} from 'alinea/editor'
 import {atom} from 'jotai'
 import {atomFamily, unwrap} from 'jotai/utils'
 import {debounceAtom} from '../util/DebounceAtom.js'
-import {clientAtom, configAtom, dashboardOptionsAtom} from './DashboardAtoms.js'
+import {clientAtom, configAtom} from './DashboardAtoms.js'
 import {entryRevisionAtoms, graphAtom, mutateAtom} from './DbAtoms.js'
 import {Edits, entryEditsAtoms} from './Edits.js'
 import {errorAtom} from './ErrorAtoms.js'
@@ -76,7 +76,6 @@ export const entryEditorAtoms = atomFamily(
   ({locale, i18nId}: EntryEditorParams) => {
     return atom(async get => {
       if (!i18nId) return undefined
-      const {dev} = get(dashboardOptionsAtom)
       const config = get(configAtom)
       const client = get(clientAtom)
       const graph = await get(graphAtom)

@@ -1,5 +1,6 @@
-import {Entry, Field, isSeparator, slugify} from 'alinea/core'
+/*import {Entry, Field, isSeparator, slugify} from 'alinea/core'
 import {pathSuffix} from 'alinea/core/EntryFilenames'
+import {useField} from 'alinea/dashboard/editor/UseField'
 import {useEntryEditor} from 'alinea/dashboard/hook/UseEntryEditor'
 import {useGraph} from 'alinea/dashboard/hook/UseGraph'
 import {InputLabel, InputState, useInput} from 'alinea/editor'
@@ -7,6 +8,11 @@ import {fromModule, px} from 'alinea/ui'
 import {IcRoundLink} from 'alinea/ui/icons/IcRoundLink'
 import {useRef, useState} from 'react'
 import {useQuery} from 'react-query'
+import {PathField, path as createPath} from './PathField.js'
+import css from './PathInput.module.scss'
+export * from './PathField.js'*/
+import {Field} from 'alinea/core'
+import {fromModule} from 'alinea/ui'
 import {PathField, path as createPath} from './PathField.js'
 import css from './PathInput.module.scss'
 export * from './PathField.js'
@@ -17,15 +23,15 @@ const styles = fromModule(css)
 const INPUT_OFFSET_LEFT = 16
 const INPUT_OFFSET_RIGHT = 26
 
-type PathInputProps = {
-  state: InputState<InputState.Scalar<string>>
+interface PathInputProps {
   field: PathField
 }
 
-function PathInput({state, field}: PathInputProps) {
+function PathInput({field}: PathInputProps) {
+  return <div>path field needs updating</div>
+  /*const {value, mutator, label, options} = useField(field)
   const graph = useGraph()
   const editor = useEntryEditor()
-  const {label, options} = field[Field.Data]
   const {width, from = 'title', help, optional} = options
   const [focus, setFocus] = useState(false)
   const hiddenRef = useRef<HTMLSpanElement>(null)
@@ -145,5 +151,5 @@ function PathInput({state, field}: PathInputProps) {
         {inputValue}
       </span>
     </InputLabel>
-  )
+  )*/
 }

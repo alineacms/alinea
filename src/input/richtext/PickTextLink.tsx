@@ -1,6 +1,7 @@
 import {Reference, type} from 'alinea/core'
+import {InputForm} from 'alinea/dashboard/editor/InputForm'
 import {Modal} from 'alinea/dashboard/view/Modal'
-import {InputForm, useField} from 'alinea/editor'
+import {useField} from 'alinea/editor'
 import {useForm} from 'alinea/editor/hook/UseForm'
 import {InputField} from 'alinea/editor/view/InputField'
 import {check} from 'alinea/input/check'

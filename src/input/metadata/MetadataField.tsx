@@ -1,4 +1,4 @@
-import {Type, type} from 'alinea/core'
+import {FieldOptions, Type, type} from 'alinea/core'
 import {RecordField} from 'alinea/core/field/RecordField'
 import {link} from 'alinea/input/link'
 import {ObjectField, object} from 'alinea/input/object'
@@ -6,7 +6,7 @@ import {TextField, text} from 'alinea/input/text'
 import {ImageReference} from '../../picker/entry/EntryReference.js'
 import {LinkField} from '../link/LinkField.js'
 
-export interface MetadataOptions {
+export interface MetadataOptions extends FieldOptions {
   inferTitleFrom?: string
   inferDescriptionFrom?: string
   inferImageFrom?: string

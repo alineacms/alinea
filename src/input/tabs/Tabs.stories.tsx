@@ -1,5 +1,5 @@
 import {type} from 'alinea/core/Type'
-import {InputForm} from 'alinea/editor'
+import {InputForm} from 'alinea/dashboard/editor/InputForm'
 import {tab, tabs} from 'alinea/input/tabs'
 import {text} from 'alinea/input/text'
 import {VStack} from 'alinea/ui'

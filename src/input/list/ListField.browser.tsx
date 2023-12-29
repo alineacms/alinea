@@ -24,9 +24,12 @@ import {CSS, FirstArgument} from '@dnd-kit/utilities'
 import {Field, Infer, Schema, Type} from 'alinea/core'
 import {ListField} from 'alinea/core/field/ListField'
 import {entries} from 'alinea/core/util/Objects'
+import {FieldRow} from 'alinea/dashboard/atoms/FieldAtoms'
+import {InputForm} from 'alinea/dashboard/editor/InputForm'
+import {useField} from 'alinea/dashboard/editor/UseField'
 import {Create} from 'alinea/dashboard/view/Create'
 import {IconButton} from 'alinea/dashboard/view/IconButton'
-import {InputForm, InputLabel, InputState, useInput} from 'alinea/editor'
+import {InputLabel} from 'alinea/editor'
 import {fromModule, Icon, TextLabel} from 'alinea/ui'
 import {IcOutlineList} from 'alinea/ui/icons/IcOutlineList'
 import IcRoundAdd from 'alinea/ui/icons/IcRoundAdd'
@@ -83,7 +86,6 @@ function ListInputRowSortable(props: ListInputRowProps) {
 type ListInputRowProps = PropsWithChildren<
   {
     row: ListRow
-    path: InputState<ListRow>
     field: ListField<Infer<Schema>, ListOptions<Schema>>
     isDragging?: boolean
     onMove?: (direction: 1 | -1) => void
@@ -102,7 +104,6 @@ type ListInputRowProps = PropsWithChildren<
 function ListInputRow({
   row,
   field,
-  path,
   onMove,
   onDelete,
   handle,
@@ -164,7 +165,7 @@ function ListInputRow({
         </Sink.Options>
       </Sink.Header>
       <Sink.Content>
-        <InputForm type={type} state={path} />
+        <InputForm type={type} />
       </Sink.Content>
     </div>
   )
@@ -216,7 +217,6 @@ function ListInsertRow({first, open, onInsert}: ListInsertRowProps) {
 }
 
 export interface ListInputProps {
-  state: InputState<InputState.List<any>>
   field: ListField<Infer<Schema>, ListOptions<Schema>>
 }
 
@@ -224,9 +224,8 @@ const layoutMeasuringConfig = {
   strategy: LayoutMeasuringStrategy.Always
 }
 
-export function ListInput({state, field}: ListInputProps) {
-  const {label, options} = field[Field.Data]
-  const [value, list] = useInput(state)
+export function ListInput({field}: ListInputProps) {
+  const {options, value, mutator, label} = useField(field)
   const rows: Array<ListRow> = value as any
   const ids = rows.map(row => row.id)
   const [dragging, setDragging] = useState<ListRow | null>(null)
@@ -245,7 +244,7 @@ export function ListInput({state, field}: ListInputProps) {
   function handleDragEnd(event: DragEndEvent) {
     const {active, over} = event
     if (!over || active.id === over.id) return
-    list.move(ids.indexOf(active.id), ids.indexOf(over.id))
+    mutator.move(ids.indexOf(active.id), ids.indexOf(over.id))
     setDragging(null)
   }
 
@@ -264,24 +263,24 @@ export function ListInput({state, field}: ListInputProps) {
               <Sink.Root>
                 {rows.map((row, i) => {
                   return (
-                    <ListInputRowSortable
-                      key={row.id}
-                      row={row}
-                      field={field}
-                      path={state.child(row.id)}
-                      onMove={direction => list.move(i, i + direction)}
-                      onDelete={() => list.remove(row.id)}
-                      onCreate={(type: string) => {
-                        list.push({type} as any, i)
-                      }}
-                      firstRow={i === 0}
-                    />
+                    <FieldRow key={row.id} field={field} id={row.id}>
+                      <ListInputRowSortable
+                        row={row}
+                        field={field}
+                        onMove={direction => mutator.move(i, i + direction)}
+                        onDelete={() => mutator.remove(row.id)}
+                        onCreate={(type: string) => {
+                          mutator.push({type} as any, i)
+                        }}
+                        firstRow={i === 0}
+                      />
+                    </FieldRow>
                   )
                 })}
                 <ListCreateRow
                   field={field}
                   onCreate={(type: string) => {
-                    list.push({type} as any)
+                    mutator.push({type} as any)
                   }}
                 />
               </Sink.Root>
@@ -294,13 +293,14 @@ export function ListInput({state, field}: ListInputProps) {
               }}
             >
               {dragging ? (
-                <ListInputRow
-                  key="overlay"
-                  row={dragging}
-                  field={field}
-                  path={state.child(dragging.id)}
-                  isDragOverlay
-                />
+                <FieldRow key="overlay" field={field} id={dragging.id}>
+                  <ListInputRow
+                    key="overlay"
+                    row={dragging}
+                    field={field}
+                    isDragOverlay
+                  />
+                </FieldRow>
               ) : null}
             </DragOverlay>
           </div>

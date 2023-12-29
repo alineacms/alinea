@@ -1,5 +1,6 @@
 import {Section, Type} from 'alinea/core'
-import {InputForm, InputLabel, InputState} from 'alinea/editor'
+import {InputForm} from 'alinea/dashboard/editor/InputForm'
+import {InputLabel} from 'alinea/editor'
 import {HStack, TextLabel} from 'alinea/ui'
 import {Lift} from 'alinea/ui/Lift'
 import {Sink} from 'alinea/ui/Sink'
@@ -13,7 +14,6 @@ export * from './Tabs.js'
 export const tabs = Section.provideView(TabsView, createTabs as any)
 
 interface TabsViewProps {
-  state: InputState<any>
   section: Section
 }
 
@@ -44,7 +44,7 @@ export function TabsHeader({section, backdrop}: TabsHeaderProps) {
   )
 }
 
-function TabsView({state, section}: TabsViewProps) {
+function TabsView({section}: TabsViewProps) {
   const {parent} = useElevation()
   const tabs = section[Section.Data] as TabsSection
   const visibleTypes = tabs.types.filter(type => !Type.meta(type).isHidden)
@@ -57,7 +57,7 @@ function TabsView({state, section}: TabsViewProps) {
           {visibleTypes.map((type, i) => {
             return (
               <Tabs.Panel key={i} tabIndex={i}>
-                <InputForm type={type} state={state} border={false} />
+                <InputForm type={type} border={false} />
               </Tabs.Panel>
             )
           })}

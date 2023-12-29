@@ -1,4 +1,3 @@
-import type {InputState} from 'alinea/editor/InputState'
 import {ComponentType} from 'react'
 import {Field} from './Field.js'
 import {createId} from './Id.js'
@@ -12,7 +11,6 @@ export interface SectionData {
   definition: SectionDefinition
   fields: Record<string, Field>
   view?: ComponentType<{
-    state: InputState
     section: Section
   }>
 }
@@ -26,7 +24,6 @@ export declare class SectionI {
 export type Section<Fields = object> = Fields & SectionI
 
 export type SectionView<Fields> = ComponentType<{
-  state: InputState
   section: Section<Fields>
 }>
 

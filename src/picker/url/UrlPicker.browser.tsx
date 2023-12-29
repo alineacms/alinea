@@ -1,6 +1,6 @@
 import {createId, type} from 'alinea/core'
+import {InputForm} from 'alinea/dashboard/editor/InputForm'
 import {Modal} from 'alinea/dashboard/view/Modal'
-import {InputForm} from 'alinea/editor'
 import {Picker, PickerProps} from 'alinea/editor/Picker'
 import {useForm} from 'alinea/editor/hook/UseForm'
 import {check} from 'alinea/input/check'
