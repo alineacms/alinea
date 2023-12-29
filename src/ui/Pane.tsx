@@ -95,7 +95,7 @@ export function Pane({
   resizable,
   defaultWidth = 320,
   minWidth = 320,
-  maxWidth = 700,
+  maxWidth = 1200,
   ...props
 }: PaneProps) {
   const container = useRef<HTMLDivElement>(null)
