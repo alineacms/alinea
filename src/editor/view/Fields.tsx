@@ -11,10 +11,11 @@ export interface FieldsProps {
 }
 
 export function Fields({state, fields, border = true}: FieldsProps) {
-  const inner = entries(fields).map(([name, field]) => {
-    const isHidden = Field.options(field).hidden
-    if (isHidden) return null
-    return <Input key={name} state={state.child(name)} field={field} />
-  })
+  const inner = entries(fields)
+    .filter(([name, field]) => !Field.options(field).hidden)
+    .map(([name, field]) => {
+      return <Input key={name} state={state.child(name)} field={field} />
+    })
+  if (inner.length === 0) return null
   return border ? <Lift>{inner}</Lift> : <div>{inner}</div>
 }

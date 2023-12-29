@@ -117,10 +117,14 @@ function NewEntryForm({parentId}: NewEntryProps) {
     select(
       'Select type',
       fromEntries(
-        types.map(typeKey => {
-          const type = config.schema[typeKey]!
-          return [typeKey, (Type.label(type) || typeKey) as string]
-        })
+        types
+          .map(key => {
+            return [key, config.schema[key]] as const
+          })
+          .filter(row => row[1])
+          .map(([key, type]) => {
+            return [key, (Type.label(type) || key) as string]
+          })
       ),
       {initialValue: types[0]}
     ),

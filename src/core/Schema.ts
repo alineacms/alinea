@@ -6,7 +6,7 @@ import {entries, fromEntries} from './util/Objects.js'
 const shapesCache = new WeakMap<Schema, Record<string, RecordShape>>()
 const hintCache = new WeakMap<Schema, Hint.Union>()
 
-export interface Schema<Definitions = object> extends Record<string, Type> {}
+export interface Schema<Definitions = {}> extends Record<string, Type> {}
 
 export namespace Schema {
   export type Targets = Map<TypeTarget, string>

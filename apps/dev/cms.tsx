@@ -27,6 +27,21 @@ export namespace schema {
     }
   })
 
+  // alineacms/alinea#353
+  export const TabsExample = alinea.type('Tabs Example', {
+    path: alinea.path('Path', {
+      hidden: true
+    }),
+    ...alinea.tabs(
+      alinea.tab('Tab 1', {
+        title: alinea.text('Title')
+      }),
+      alinea.tab('Tab 2', {
+        another_title: alinea.text('Another title')
+      })
+    )
+  })
+
   export const Fields = alinea.document('Fields', {
     ...alinea.tabs(
       alinea.tab('Custom field', {
@@ -141,14 +156,14 @@ export const cms = createCMS({
     primary: alinea.workspace('Primary workspace', {
       fields: alinea.root('Fields', {
         [alinea.meta]: {
-          contains: ['Links'],
+          contains: ['TabsExample'],
           icon: IcRoundUploadFile
         }
       }),
       pages: alinea.root('Languages', {
         [alinea.meta]: {
           icon: IcRoundTranslate,
-          contains: ['Fields', 'Page', 'Folder'],
+          contains: ['TabsExample', 'Fields', 'Page', 'Folder'],
           i18n: {
             locales: ['en', 'fr', 'nl']
           }
