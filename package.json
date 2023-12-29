@@ -40,7 +40,6 @@
   ],
   "workspaces": [
     "apps/web",
-    "apps/demo",
     "apps/dev",
     "src/backend",
     "src/cli",
