@@ -15,7 +15,7 @@
       "id": "268iODr7pOAG2BeDXXfDEvDZYfr",
       "type": "CodeBlock",
       "code": "import alinea from 'alinea'\n\nalinea.richText('My rich text field', {\n  blocks: alinea.schema({\n    CodeBlock: CodeBlockSchema,\n    ImageBlock: ImageBlockSchema\n  })\n})",
-      "fileName": "abc",
+      "fileName": "",
       "language": "",
       "compact": false
     },
