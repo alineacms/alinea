@@ -32,7 +32,7 @@ import lzstring from 'lz-string'
 import Link from 'next/link'
 import Script from 'next/script'
 import * as React from 'react'
-import {useEffect, useRef, useState} from 'react'
+import {Suspense, useEffect, useRef, useState} from 'react'
 import type typescript from 'typescript'
 import {useClipboard} from 'use-clipboard-copy'
 import css from './Playground.module.scss'
@@ -178,7 +178,7 @@ export default function Playground() {
       exec(require, exports, React, alinea.alinea)
       setState({result: exports.default})
     } catch (error) {
-      setState({error})
+      setState({...state, error})
     }
   }
   function handleShare() {
@@ -224,29 +224,33 @@ export default function Playground() {
                 />
               )}
 
-              <ErrorBoundary dependencies={[state.result]}>
-                <Main>
-                  <Main.Container>
-                    {!state.result ? (
-                      state.error && <Loader absolute />
-                    ) : Type.isType(state.result) ? (
-                      <PreviewType type={state.result} />
-                    ) : (
-                      <PreviewField field={state.result} />
-                    )}
-                  </Main.Container>
-                  <FieldToolbar.Root />
-                </Main>
-              </ErrorBoundary>
+              {view !== 'source' && (
+                <Suspense fallback={<Loader absolute />}>
+                  <ErrorBoundary dependencies={[state.result]}>
+                    <Main>
+                      <Main.Container>
+                        {!state.result ? (
+                          state.error && <Loader absolute />
+                        ) : Type.isType(state.result) ? (
+                          <PreviewType type={state.result} />
+                        ) : (
+                          <PreviewField field={state.result} />
+                        )}
 
-              {state.error && (
-                <div className={styles.root.errors()}>
-                  <VStack gap={20}>
-                    <Typo.Monospace as="div">
-                      <p>{state.error.message}</p>
-                    </Typo.Monospace>
-                  </VStack>
-                </div>
+                        {state.error && (
+                          <div className={styles.root.errors()}>
+                            <VStack gap={20}>
+                              <Typo.Monospace as="div">
+                                <p>{state.error.message}</p>
+                              </Typo.Monospace>
+                            </VStack>
+                          </div>
+                        )}
+                      </Main.Container>
+                      <FieldToolbar.Root />
+                    </Main>
+                  </ErrorBoundary>
+                </Suspense>
               )}
             </HStack>
 
