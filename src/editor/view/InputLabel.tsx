@@ -81,7 +81,7 @@ export const InputLabel = forwardRef<HTMLElement, LabelProps>(
         ref={ref as any}
       >
         <div className={styles.root.inner()}>
-          {label && (
+          {!inline && label && (
             <LabelHeader
               label={label}
               help={help}
