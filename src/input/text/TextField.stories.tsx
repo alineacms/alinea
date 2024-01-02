@@ -1,22 +1,32 @@
-import {InputField} from 'alinea/editor/view/InputField'
+import {track, type} from 'alinea/core'
+import {useForm} from 'alinea/dashboard/atoms/FormAtoms'
+import {InputForm} from 'alinea/dashboard/editor/InputForm'
 import {text} from 'alinea/input/text'
 import {VStack} from 'alinea/ui'
 import {UIStory} from 'alinea/ui/UIStory'
 
-const textField = text('Text')
-const focusedTextField = text('Text (autofocus)', {autoFocus: true})
-const readonlyTextField = text('Text (read-only)', {
-  readOnly: true,
-  initialValue: 'Hello world'
+const fields = type({
+  text: text('Text', {initialValue: 'Hello world'}),
+  focused: text('Text (autofocus)', {autoFocus: true}),
+  readOnly: text('Text (read-only)', {
+    readOnly: true,
+    initialValue: 'Hello world'
+  })
+})
+
+track.options(fields.text, get => {
+  const value = get(fields.text)
+  return {
+    help: `Input is ${value.length} characters`
+  }
 })
 
 export function TextField() {
+  const form = useForm(fields)
   return (
     <UIStory>
       <VStack>
-        <InputField field={textField} />
-        <InputField field={focusedTextField} />
-        <InputField field={readonlyTextField} />
+        <InputForm form={form} type={fields} />
       </VStack>
     </UIStory>
   )

@@ -1,6 +1,6 @@
 import {EntryPhase, Section, Type} from 'alinea/core'
+import {InputForm} from 'alinea/dashboard/editor/InputForm'
 import {Modal} from 'alinea/dashboard/view/Modal'
-import {InputForm} from 'alinea/editor'
 import {TabsHeader, TabsSection} from 'alinea/input/tabs/Tabs.browser'
 import {Button, HStack, Stack, VStack, fromModule} from 'alinea/ui'
 import {Main} from 'alinea/ui/Main'
@@ -67,7 +67,7 @@ export function EntryEdit({editor}: EntryEditProps) {
   )
   const isNavigationChange =
     (nextRoute?.data.editor as EntryEditor)?.entryId !== editor.entryId
-  const state = useAtomValue(editor.state)
+  const form = useAtomValue(editor.form)
   const saveDraft = useSetAtom(editor.saveDraft)
   const publishDraft = useSetAtom(editor.publishDraft)
   const publishEdits = useSetAtom(editor.publishEdits)
@@ -235,14 +235,14 @@ export function EntryEdit({editor}: EntryEditProps) {
                       {visibleTypes.map((type, i) => {
                         return (
                           <Tabs.Panel key={i} tabIndex={i}>
-                            <InputForm type={type} state={state} />
+                            <InputForm type={type} form={form} />
                           </Tabs.Panel>
                         )
                       })}
                     </Tabs.Panels>
                   ) : (
                     <VStack gap={18}>
-                      <InputForm type={editor.type} state={state} />
+                      <InputForm type={editor.type} form={form} />
                     </VStack>
                   )}
                 </SuspenseBoundary>

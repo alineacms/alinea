@@ -1,8 +1,8 @@
-import {Field, FieldMeta} from '../Field.js'
+import {Field, FieldMeta, FieldOptions} from '../Field.js'
 import {RecordShape} from '../shape/RecordShape.js'
 import {UnionMutator, UnionRow, UnionShape} from '../shape/UnionShape.js'
 
-export class UnionField<Row, Options> extends Field<
+export class UnionField<Row, Options extends FieldOptions> extends Field<
   UnionRow & Row,
   UnionMutator<Row>,
   Options

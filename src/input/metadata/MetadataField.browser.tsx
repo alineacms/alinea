@@ -1,4 +1,5 @@
 import {Field} from 'alinea/core'
+import {FormRow} from 'alinea/dashboard/atoms/FormAtoms'
 import {InputForm} from 'alinea/dashboard/editor/InputForm'
 import {useFieldOptions} from 'alinea/dashboard/editor/UseField'
 import {MetadataField, metadata as createMetadata} from './MetadataField.js'
@@ -13,5 +14,9 @@ interface MetadataInputProps {
 
 function MetadataInput({field}: MetadataInputProps) {
   const options = useFieldOptions(field)
-  return <InputForm type={options.fields} border={false} />
+  return (
+    <FormRow type={options.fields} field={field}>
+      <InputForm type={options.fields} border={false} />
+    </FormRow>
+  )
 }

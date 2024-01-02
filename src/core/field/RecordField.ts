@@ -1,7 +1,7 @@
-import {Field, FieldMeta} from '../Field.js'
+import {Field, FieldMeta, FieldOptions} from '../Field.js'
 import {RecordMutator, RecordShape} from '../shape/RecordShape.js'
 
-export class RecordField<Row, Options> extends Field<
+export class RecordField<Row, Options extends FieldOptions> extends Field<
   Row,
   RecordMutator<Row>,
   Options

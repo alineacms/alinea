@@ -1,6 +1,6 @@
-import {TextDoc} from 'alinea/core'
-import {useField} from 'alinea/editor'
-import {InputField} from 'alinea/editor/view/InputField'
+import {TextDoc, type} from 'alinea/core'
+import {useForm} from 'alinea/dashboard/atoms/FormAtoms'
+import {InputForm} from 'alinea/dashboard/editor/InputForm'
 import {richText} from 'alinea/input/richtext'
 import {UIStory} from 'alinea/ui/UIStory'
 
@@ -71,15 +71,17 @@ const lipsumDoc: TextDoc = [
   }
 ]
 
+const fields = type({
+  richText: richText('Rich text example', {
+    initialValue: lipsumDoc
+  })
+})
+
 export function RichTextField() {
-  const richTextField = useField(
-    richText('Rich text example', {
-      initialValue: lipsumDoc
-    })
-  )
+  const form = useForm(fields)
   return (
     <UIStory>
-      <InputField {...richTextField} />
+      <InputForm type={fields} form={form} />
     </UIStory>
   )
 }

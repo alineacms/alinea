@@ -1,8 +1,7 @@
-import {createId, type} from 'alinea/core'
+import {Picker, PickerProps, createId, type} from 'alinea/core'
+import {useForm} from 'alinea/dashboard/atoms/FormAtoms'
 import {InputForm} from 'alinea/dashboard/editor/InputForm'
 import {Modal} from 'alinea/dashboard/view/Modal'
-import {Picker, PickerProps} from 'alinea/editor/Picker'
-import {useForm} from 'alinea/editor/hook/UseForm'
 import {check} from 'alinea/input/check'
 import {text} from 'alinea/input/text'
 import {Button, HStack, Stack} from 'alinea/ui'
@@ -32,17 +31,11 @@ const linkForm = type('Link', {
 })
 
 export function UrlPickerForm({options, onConfirm, onCancel}: PickerProps) {
-  const form = useForm(
-    {
-      type: linkForm,
-      initialValue: options
-    },
-    [options]
-  )
+  const form = useForm(linkForm, {initialValue: options})
   function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
     e.stopPropagation()
-    const data = form()
+    const data = form.data()
     const reference: UrlReference = {
       id: createId(),
       type: 'url',
@@ -55,7 +48,7 @@ export function UrlPickerForm({options, onConfirm, onCancel}: PickerProps) {
   }
   return (
     <form onSubmit={handleSubmit}>
-      <InputForm border={false} {...form} />
+      <InputForm border={false} form={form} type={linkForm} />
       <HStack>
         <Stack.Right>
           <HStack gap={16}>

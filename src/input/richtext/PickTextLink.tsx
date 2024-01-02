@@ -1,40 +1,48 @@
-import {Reference, type} from 'alinea/core'
+import {Reference, track, type} from 'alinea/core'
+import {useForm} from 'alinea/dashboard/atoms/FormAtoms'
 import {InputForm} from 'alinea/dashboard/editor/InputForm'
 import {Modal} from 'alinea/dashboard/view/Modal'
-import {useField} from 'alinea/editor'
-import {useForm} from 'alinea/editor/hook/UseForm'
-import {InputField} from 'alinea/editor/view/InputField'
 import {check} from 'alinea/input/check'
 import {link as createLink} from 'alinea/input/link'
 import {text} from 'alinea/input/text'
 import {Button, HStack, Stack, VStack, fromModule} from 'alinea/ui'
 import {useTrigger} from 'alinea/ui/hook/UseTrigger'
 import {IcRoundClose} from 'alinea/ui/icons/IcRoundClose'
-import {useObservable} from 'alinea/ui/util/Observable'
 import {FormEvent, useMemo} from 'react'
 import css from './PickLink.module.scss'
 
 const styles = fromModule(css)
 
-function linkForm({showDescription = true, showBlank = true}) {
-  return type('Link', {
+function linkForm(options: PickerOptions) {
+  const isExistingLink = Boolean(options.link)
+  const fields = type({
+    link: createLink('Link', {
+      initialValue: options.link
+    }),
     description: text('Description', {
-      hidden: !showDescription,
       help: 'Text to display inside the link element'
     }),
     title: text('Tooltip', {
       optional: true,
       help: 'Extra information that describes the link, shown on hover'
     }),
-    /*hash: text('Anchor', {
-      optional: true,
-      help: 'The id of an element on the page to scroll to'
-    }),*/
-    blank: check('Target', {
-      hidden: !showBlank,
-      label: 'Open link in new tab'
+    blank: check('Open link in new tab', {
+      inline: true
     })
   })
+  track.options(fields.description, get => {
+    const selected = get(fields.link)
+    const isUrl = selected?.type === 'url'
+    const descriptionRequired =
+      options.requireDescription && !(isExistingLink || isUrl)
+    return {hidden: !descriptionRequired}
+  })
+  track.options(fields.blank, get => {
+    const selected = get(fields.link)
+    const isUrl = selected?.type === 'url'
+    return {hidden: isUrl}
+  })
+  return fields
 }
 
 export type PickerValue = {
@@ -70,36 +78,14 @@ export function PickTextLinkForm({
   resolve,
   options = {}
 }: PickTextLinkState) {
-  const isExistingLink = Boolean(options.link)
-  const link = useField(
-    createLink('Link', {
-      initialValue: options.link
-    })
-  )
-  const selected = useObservable(link)
-  const isUrl = selected?.type === 'url'
-  const descriptionRequired =
-    options.requireDescription && !(isExistingLink || isUrl)
-  const formType = useMemo(
-    () =>
-      linkForm({
-        showDescription: descriptionRequired,
-        showBlank: !isUrl
-      }),
-    [descriptionRequired, isUrl]
-  )
-  const form = useForm(
-    {
-      type: formType,
-      initialValue: options
-    },
-    [formType]
-  )
+  const type = useMemo(() => linkForm(options), [options])
+  const form = useForm(type, {
+    initialValue: options as any
+  })
   function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
     e.stopPropagation()
-    const result = {...form(), link: selected}
-    if (descriptionRequired && !result.description) return
+    const result = form.data()
     return resolve(result)
   }
   return (
@@ -108,8 +94,7 @@ export function PickTextLinkForm({
         <form onSubmit={handleSubmit}>
           <VStack gap={18}>
             <div>
-              <InputField {...link} />
-              {selected && <InputForm {...form} border={false} />}
+              <InputForm form={form} type={type} border={false} />
             </div>
             <HStack>
               {options.hasLink && (

@@ -1,8 +1,8 @@
-import {Field, FieldMeta} from '../Field.js'
+import {Field, FieldMeta, FieldOptions} from '../Field.js'
 import {ListMutator, ListRow, ListShape} from '../shape/ListShape.js'
 import {RecordShape} from '../shape/RecordShape.js'
 
-export class ListField<Schema, Options> extends Field<
+export class ListField<Schema, Options extends FieldOptions> extends Field<
   Array<ListRow & Schema>,
   ListMutator<ListRow & Schema>,
   Options

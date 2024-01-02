@@ -24,12 +24,12 @@ import {CSS, FirstArgument} from '@dnd-kit/utilities'
 import {Field, Infer, Schema, Type} from 'alinea/core'
 import {ListField} from 'alinea/core/field/ListField'
 import {entries} from 'alinea/core/util/Objects'
-import {FieldRow} from 'alinea/dashboard/atoms/FieldAtoms'
+import {FormRow} from 'alinea/dashboard/atoms/FormAtoms'
 import {InputForm} from 'alinea/dashboard/editor/InputForm'
 import {useField} from 'alinea/dashboard/editor/UseField'
 import {Create} from 'alinea/dashboard/view/Create'
 import {IconButton} from 'alinea/dashboard/view/IconButton'
-import {InputLabel} from 'alinea/editor'
+import {InputLabel} from 'alinea/dashboard/view/InputLabel'
 import {fromModule, Icon, TextLabel} from 'alinea/ui'
 import {IcOutlineList} from 'alinea/ui/icons/IcOutlineList'
 import IcRoundAdd from 'alinea/ui/icons/IcRoundAdd'
@@ -262,8 +262,14 @@ export function ListInput({field}: ListInputProps) {
             <SortableContext items={ids} strategy={verticalListSortingStrategy}>
               <Sink.Root>
                 {rows.map((row, i) => {
+                  const type = options.schema[row.type]
                   return (
-                    <FieldRow key={row.id} field={field} id={row.id}>
+                    <FormRow
+                      key={row.id}
+                      field={field}
+                      rowId={row.id}
+                      type={type}
+                    >
                       <ListInputRowSortable
                         row={row}
                         field={field}
@@ -274,7 +280,7 @@ export function ListInput({field}: ListInputProps) {
                         }}
                         firstRow={i === 0}
                       />
-                    </FieldRow>
+                    </FormRow>
                   )
                 })}
                 <ListCreateRow
@@ -293,14 +299,19 @@ export function ListInput({field}: ListInputProps) {
               }}
             >
               {dragging ? (
-                <FieldRow key="overlay" field={field} id={dragging.id}>
+                <FormRow
+                  key="overlay"
+                  field={field}
+                  rowId={dragging.id}
+                  type={options.schema[dragging.type]}
+                >
                   <ListInputRow
                     key="overlay"
                     row={dragging}
                     field={field}
                     isDragOverlay
                   />
-                </FieldRow>
+                </FormRow>
               ) : null}
             </DragOverlay>
           </div>

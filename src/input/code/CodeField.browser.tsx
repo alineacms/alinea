@@ -1,6 +1,6 @@
 import {Field} from 'alinea/core'
 import {useField} from 'alinea/dashboard/editor/UseField'
-import {InputLabel} from 'alinea/editor'
+import {InputLabel} from 'alinea/dashboard/view/InputLabel'
 import {HStack, fromModule} from 'alinea/ui'
 import {IcRoundCode} from 'alinea/ui/icons/IcRoundCode'
 import {TextareaAutosize} from 'alinea/ui/util/TextareaAutosize'

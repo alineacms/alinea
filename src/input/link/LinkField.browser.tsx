@@ -21,21 +21,20 @@ import {
   verticalListSortingStrategy
 } from '@dnd-kit/sortable'
 import {CSS, FirstArgument} from '@dnd-kit/utilities'
-import {Field, ListRow, Reference, Type} from 'alinea/core'
+import {Field, ListRow, Picker, Reference, Type} from 'alinea/core'
 import {entries} from 'alinea/core/util/Objects'
-import {FieldRow} from 'alinea/dashboard/atoms/FieldAtoms'
+import {FormRow} from 'alinea/dashboard/atoms/FormAtoms'
 import {InputForm} from 'alinea/dashboard/editor/InputForm'
 import {useField} from 'alinea/dashboard/editor/UseField'
 import {Create} from 'alinea/dashboard/view/Create'
 import {IconButton} from 'alinea/dashboard/view/IconButton'
-import {InputLabel} from 'alinea/editor'
+import {InputLabel} from 'alinea/dashboard/view/InputLabel'
 import {TextLabel, fromModule} from 'alinea/ui'
 import {Sink} from 'alinea/ui/Sink'
 import {IcRoundClose} from 'alinea/ui/icons/IcRoundClose'
 import IcRoundDragHandle from 'alinea/ui/icons/IcRoundDragHandle'
 import {IcRoundLink} from 'alinea/ui/icons/IcRoundLink'
 import {CSSProperties, HTMLAttributes, Ref, Suspense, useState} from 'react'
-import {Picker} from '../../editor/Picker.js'
 import {
   LinkField,
   LinksField,
@@ -95,6 +94,8 @@ function LinkInput<Row extends Reference>({field}: LinkInputProps<Row>) {
             <Sink.Root>
               {value && options.pickers[value.type] ? (
                 <LinkInputRow<Row>
+                  field={field}
+                  rowId={value.id}
                   fields={options.pickers[value.type].fields}
                   picker={options.pickers[value.type]}
                   reference={value as Row}
@@ -223,20 +224,18 @@ function LinksInput<Row extends Reference>({field}: LinksInputProps<Row>) {
                 <Sink.Root>
                   {value.map(reference => {
                     if (!options.pickers[reference.type]) return null
+                    const type = options.pickers[reference.type].fields
                     return (
-                      <FieldRow
+                      <LinkInputRowSortable<Row>
                         key={reference.id}
+                        rowId={reference.id}
                         field={field}
-                        id={reference.id}
-                      >
-                        <LinkInputRowSortable<Row>
-                          fields={options.pickers[reference.type].fields}
-                          picker={options.pickers[reference.type]}
-                          reference={reference as ListRow & Row}
-                          onRemove={() => mutator.remove(reference.id)}
-                          isSortable={options.max !== 1}
-                        />
-                      </FieldRow>
+                        fields={type}
+                        picker={options.pickers[reference.type]}
+                        reference={reference as ListRow & Row}
+                        onRemove={() => mutator.remove(reference.id)}
+                        isSortable={options.max !== 1}
+                      />
                     )
                   })}
 
@@ -266,16 +265,16 @@ function LinksInput<Row extends Reference>({field}: LinksInputProps<Row>) {
                 }}
               >
                 {dragging && options.pickers[dragging.type] ? (
-                  <FieldRow field={field} id={dragging.id}>
-                    <LinkInputRow<Row>
-                      fields={options.pickers[dragging.type].fields}
-                      picker={options.pickers[dragging.type]}
-                      reference={dragging as Row}
-                      onRemove={() => mutator.remove(dragging.id)}
-                      isDragOverlay
-                      isSortable={options.max !== 1}
-                    />
-                  </FieldRow>
+                  <LinkInputRow<Row>
+                    field={field}
+                    rowId={dragging.id}
+                    fields={options.pickers[dragging.type].fields}
+                    picker={options.pickers[dragging.type]}
+                    reference={dragging as Row}
+                    onRemove={() => mutator.remove(dragging.id)}
+                    isDragOverlay
+                    isSortable={options.max !== 1}
+                  />
                 ) : null}
               </DragOverlay>
             </div>
@@ -319,6 +318,8 @@ function LinkInputRowSortable<Row extends Reference>(
 
 interface LinkInputRowProps<Row extends Reference>
   extends HTMLAttributes<HTMLDivElement> {
+  field: Field
+  rowId: string
   picker: Picker<Row>
   fields: Type<Row> | undefined
   reference: Row
@@ -331,6 +332,8 @@ interface LinkInputRowProps<Row extends Reference>
 }
 
 function LinkInputRow<Row extends Reference>({
+  field,
+  rowId,
   picker,
   fields,
   reference,
@@ -343,7 +346,7 @@ function LinkInputRow<Row extends Reference>({
   ...rest
 }: LinkInputRowProps<Row>) {
   const RowView = picker.viewRow!
-  return (
+  const inner = (
     <div
       className={styles.row({
         dragging: isDragging,
@@ -381,5 +384,11 @@ function LinkInputRow<Row extends Reference>({
         </Sink.Content>
       )}
     </div>
+  )
+  if (!fields) return inner
+  return (
+    <FormRow field={field} rowId={rowId} type={fields}>
+      {inner}
+    </FormRow>
   )
 }

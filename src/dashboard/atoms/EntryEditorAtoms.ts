@@ -24,8 +24,8 @@ import {base64} from 'alinea/core/util/Encoding'
 import {createEntryRow} from 'alinea/core/util/EntryRows'
 import {entries, fromEntries, values} from 'alinea/core/util/Objects'
 import * as paths from 'alinea/core/util/Paths'
+import {FormAtoms} from 'alinea/dashboard/atoms/FormAtoms'
 import {keepPreviousData} from 'alinea/dashboard/util/KeepPreviousData'
-import {InputState} from 'alinea/editor'
 import {atom} from 'jotai'
 import {atomFamily, unwrap} from 'jotai/utils'
 import {debounceAtom} from '../util/DebounceAtom.js'
@@ -591,12 +591,9 @@ export function createEntryEditor(entryData: EntryData) {
   const currentDoc = atom(get => {
     return get(unwrap(revisionState, identity)) ?? get(selectedState)
   })
-  const state = atom(get => {
+  const form = atom(get => {
     const doc = get(currentDoc)
-    return new InputState.YDocState({
-      shape: Type.shape(type),
-      parentData: doc.getMap(ROOT_KEY),
-      key: '',
+    return new FormAtoms(type, doc.getMap(ROOT_KEY), {
       readOnly: doc !== edits.doc
     })
   })
@@ -636,7 +633,7 @@ export function createEntryEditor(entryData: EntryData) {
     showHistory,
     revisionsAtom,
     previewRevision,
-    state,
+    form,
     view
   }
 }

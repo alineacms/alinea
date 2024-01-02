@@ -1,8 +1,9 @@
 import {Field} from 'alinea/core'
 import {useField} from 'alinea/dashboard/editor/UseField'
-import {InputLabel} from 'alinea/editor'
+import {InputLabel} from 'alinea/dashboard/view/InputLabel'
 import {fromModule} from 'alinea/ui'
 import {IcRoundNumbers} from 'alinea/ui/icons/IcRoundNumbers'
+import {useState} from 'react'
 import {NumberField, number as createNumber} from './NumberField.js'
 import css from './NumberInput.module.scss'
 
@@ -18,18 +19,22 @@ interface NumberInputProps {
 
 function NumberInput({field}: NumberInputProps) {
   const {options, value, mutator, label} = useField(field)
+  const [current, setCurrent] = useState(String(value ?? ''))
   const {minValue, maxValue, readOnly, step} = options
   return (
     <InputLabel asLabel label={label} {...options} icon={IcRoundNumbers}>
       <input
         type="number"
         className={styles.root.input()}
-        value={String(value ?? '')}
-        onBlur={e =>
-          mutator(
-            e.currentTarget.value === '' ? null : Number(e.currentTarget.value)
-          )
-        }
+        value={current}
+        onChange={e => {
+          setCurrent(e.currentTarget.value)
+        }}
+        onBlur={() => {
+          const newValue = current ? parseFloat(current) : null
+          mutator(newValue)
+          setCurrent(String(newValue ?? ''))
+        }}
         min={minValue}
         max={maxValue}
         disabled={readOnly}

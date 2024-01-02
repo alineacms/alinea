@@ -1,6 +1,6 @@
 import {Field} from 'alinea/core'
 import {useField} from 'alinea/dashboard/editor/UseField'
-import {InputLabel} from 'alinea/editor'
+import {InputLabel} from 'alinea/dashboard/view/InputLabel'
 import {fromModule} from 'alinea/ui'
 import {IcRoundDateRange} from 'alinea/ui/icons/IcRoundDateRange'
 import {DateField, date as createDate} from './DateField.js'

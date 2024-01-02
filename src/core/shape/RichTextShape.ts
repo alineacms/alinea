@@ -273,6 +273,9 @@ export class RichTextShape<Blocks>
     }
     syncNodes(current.get('$text'), value)
   }
+  init(parent: Y.Map<any>, key: string): void {
+    if (!parent.has(key)) parent.set(key, this.toY(this.create()))
+  }
   watch(parent: Y.Map<any>, key: string) {
     // There's no watching of the fragment involved
     return () => () => {}

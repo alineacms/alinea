@@ -1,9 +1,9 @@
 import {RichTextMutator, RichTextShape} from 'alinea/core'
-import {Field, FieldMeta} from '../Field.js'
+import {Field, FieldMeta, FieldOptions} from '../Field.js'
 import {TextDoc} from '../TextDoc.js'
 import {RecordShape} from '../shape/RecordShape.js'
 
-export class RichTextField<Blocks, Options> extends Field<
+export class RichTextField<Blocks, Options extends FieldOptions> extends Field<
   TextDoc<Blocks>,
   RichTextMutator<Blocks>,
   Options

@@ -10,11 +10,11 @@ import {
 import {createId, Field, Schema, Type} from 'alinea/core'
 import {RichTextField} from 'alinea/core/field/RichTextField'
 import {entries} from 'alinea/core/util/Objects'
-import {FieldRow} from 'alinea/dashboard/atoms/FieldAtoms'
+import {FormRow} from 'alinea/dashboard/atoms/FormAtoms'
 import {InputForm} from 'alinea/dashboard/editor/InputForm'
 import {useField, useFieldMutator} from 'alinea/dashboard/editor/UseField'
 import {IconButton} from 'alinea/dashboard/view/IconButton'
-import {InputLabel} from 'alinea/editor'
+import {InputLabel} from 'alinea/dashboard/view/InputLabel'
 import {fromModule, HStack, Icon, px, TextLabel} from 'alinea/ui'
 import {DropdownMenu} from 'alinea/ui/DropdownMenu'
 import IcRoundAddCircle from 'alinea/ui/icons/IcRoundAddCircle'
@@ -55,7 +55,7 @@ function typeExtension(field: Field, name: string, type: Type) {
     const {id} = node.attrs
     const meta = Type.meta(type)
     return (
-      <FieldRow field={field} id={id}>
+      <FormRow field={field} type={type} rowId={id}>
         <NodeViewWrapper>
           <Sink.Root style={{margin: `${px(18)} 0`}}>
             <Sink.Header>
@@ -80,7 +80,7 @@ function typeExtension(field: Field, name: string, type: Type) {
             </Sink.Content>
           </Sink.Root>
         </NodeViewWrapper>
-      </FieldRow>
+      </FormRow>
     )
   }
   return Node.create({

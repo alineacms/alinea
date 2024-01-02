@@ -1,6 +1,6 @@
 import {Field} from 'alinea/core'
 import {useField} from 'alinea/dashboard/editor/UseField'
-import {InputLabel} from 'alinea/editor'
+import {InputLabel} from 'alinea/dashboard/view/InputLabel'
 import {HStack, Icon, TextLabel, fromModule} from 'alinea/ui'
 import {IcRoundCheck} from 'alinea/ui/icons/IcRoundCheck'
 import {IcRoundTextFields} from 'alinea/ui/icons/IcRoundTextFields'
@@ -20,7 +20,7 @@ interface CheckInputProps {
 
 function CheckInput({field}: CheckInputProps) {
   const {value, mutator, label, options} = useField(field)
-  const {readOnly: readonly} = options
+  const {readOnly} = options
   const [focus, setFocus] = useState(false)
   return (
     <InputLabel
@@ -43,9 +43,9 @@ function CheckInput({field}: CheckInputProps) {
           onFocus={() => setFocus(true)}
           onBlur={() => setFocus(false)}
           autoFocus={options.autoFocus}
-          disabled={readonly}
+          disabled={readOnly}
         />
-        <span className={styles.root.checkmark({disabled: options.readOnly})}>
+        <span className={styles.root.checkmark({disabled: readOnly})}>
           {value && (
             <Icon
               size={20}

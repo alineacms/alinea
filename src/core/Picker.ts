@@ -1,9 +1,12 @@
-import {Hint, Label, Reference, Type} from 'alinea/core'
-import {PostProcess} from 'alinea/core/pages/PostProcess'
-import {RecordShape} from 'alinea/core/shape/RecordShape'
-import {ComponentType} from 'react'
+import type {ComponentType} from 'react'
+import {Hint} from './Hint.js'
+import {Label} from './Label.js'
+import {Reference} from './Reference.js'
+import {Type} from './Type.js'
+import {PostProcess} from './pages/PostProcess.js'
+import {RecordShape} from './shape/RecordShape.js'
 
-export interface PickerProps<T = {}> {
+export interface PickerProps<T = any> {
   type: string
   options: T
   selection: Array<Reference> | undefined

@@ -133,6 +133,9 @@ export class ListShape<T>
       rowType.applyY(row, current, id)
     }
   }
+  init(parent: Y.Map<any>, key: string): void {
+    if (!parent.has(key)) parent.set(key, this.toY(this.create()))
+  }
   watch(parent: Y.Map<any>, key: string) {
     const record: Y.Map<any> = parent.has(key)
       ? parent.get(key)

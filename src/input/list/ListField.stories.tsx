@@ -1,16 +1,31 @@
 import {type} from 'alinea/core'
 import {useForm} from 'alinea/dashboard/atoms/FormAtoms'
 import {InputForm} from 'alinea/dashboard/editor/InputForm'
-import {number} from 'alinea/input/number'
+import {list} from 'alinea/input/list/ListField'
+import {text} from 'alinea/input/text/TextField'
 import {VStack} from 'alinea/ui'
 import {UIStory} from 'alinea/ui/UIStory'
 
-const fields = type({
-  number: number('Number'),
-  readOnly: number('Number (read-only)', {readOnly: true, initialValue: 0})
+const RowA = type('Row A', {
+  fieldA: text('Field A'),
+  fieldB: text('Field B')
 })
 
-export function NumberField() {
+const RowB = type('Row B', {
+  fieldA: text('Field A'),
+  fieldB: text('Field B')
+})
+
+const fields = type({
+  list: list('List', {
+    schema: {
+      RowA,
+      RowB
+    }
+  })
+})
+
+export function ListField() {
   const form = useForm(fields)
   return (
     <UIStory>
@@ -22,5 +37,5 @@ export function NumberField() {
 }
 
 export default {
-  title: 'Fields / Number'
+  title: 'Fields / List'
 }

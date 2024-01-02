@@ -63,6 +63,9 @@ export class RecordShape<T = object> implements Shape<T, RecordMutator<T>> {
       this.properties[key].applyY(self[key], current, key)
     }
   }
+  init(parent: Y.Map<any>, key: string): void {
+    if (!parent.has(key)) parent.set(key, this.toY(this.create()))
+  }
   watch(parent: Y.Map<any>, key: string) {
     return (fun: () => void) => {
       const record = !key ? parent : parent.get(key)

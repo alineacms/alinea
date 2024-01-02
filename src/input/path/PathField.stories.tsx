@@ -1,15 +1,20 @@
-import {useField} from 'alinea/editor'
-import {InputField} from 'alinea/editor/view/InputField'
+import {type} from 'alinea/core'
+import {useForm} from 'alinea/dashboard/atoms/FormAtoms'
+import {InputForm} from 'alinea/dashboard/editor/InputForm'
 import {path} from 'alinea/input/path'
 import {VStack} from 'alinea/ui'
 import {UIStory} from 'alinea/ui/UIStory'
 
+const fields = type({
+  path: path('Path')
+})
+
 export function PathField() {
-  const pathField = useField(path('Path'))
+  const form = useForm(fields)
   return (
     <UIStory>
       <VStack>
-        <InputField {...pathField} />
+        <InputForm type={fields} form={form} />
       </VStack>
     </UIStory>
   )

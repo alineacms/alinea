@@ -1,4 +1,12 @@
-import {Entry, EntryPhase, Type, createId, slugify} from 'alinea/core'
+import {
+  Entry,
+  EntryPhase,
+  Type,
+  createId,
+  slugify,
+  track,
+  type
+} from 'alinea/core'
 import {
   entryChildrenDir,
   entryFileName,
@@ -11,19 +19,18 @@ import {createEntryRow} from 'alinea/core/util/EntryRows'
 import {generateKeyBetween} from 'alinea/core/util/FractionalIndexing'
 import {entries, fromEntries, keys} from 'alinea/core/util/Objects'
 import {dirname} from 'alinea/core/util/Paths'
+import {useForm} from 'alinea/dashboard/atoms/FormAtoms'
+import {InputForm} from 'alinea/dashboard/editor/InputForm'
 import {useLocation, useNavigate} from 'alinea/dashboard/util/HashRouter'
 import {Modal} from 'alinea/dashboard/view/Modal'
-import {useField} from 'alinea/editor'
-import {InputField} from 'alinea/editor/view/InputField'
 import {link} from 'alinea/input/link'
 import {select} from 'alinea/input/select'
 import {text} from 'alinea/input/text'
 import {EntryReference} from 'alinea/picker/entry/EntryReference'
 import {Button, Loader, fromModule} from 'alinea/ui'
 import {Link} from 'alinea/ui/Link'
-import {useObservable} from 'alinea/ui/util/Observable'
 import {useAtomValue, useSetAtom} from 'jotai'
-import {FormEvent, Suspense, useState} from 'react'
+import {FormEvent, Suspense, useMemo, useState} from 'react'
 import {useQuery} from 'react-query'
 import {changedEntriesAtom, graphAtom, useMutate} from '../../atoms/DbAtoms.js'
 import {useConfig} from '../../hook/UseConfig.js'
@@ -50,6 +57,8 @@ const parentData = {
     return children().select(Entry.index).orderBy(Entry.index.asc()).first()
   }
 } satisfies Projection
+
+const titleField = text('Title', {autoFocus: true})
 
 function NewEntryForm({parentId}: NewEntryProps) {
   const config = useConfig()
@@ -80,64 +89,57 @@ function NewEntryForm({parentId}: NewEntryProps) {
     })
     .map(pair => pair[0])
   const root = useRoot()
-  const parentField = useField(
-    link.entry('Parent', {
-      condition: Entry.type
-        .isIn(containerTypes)
-        .and(Entry.workspace.is(workspace))
-        .and(Entry.root.is(root.name)),
-      initialValue: preselectedId
-        ? ({
-            id: 'parent',
-            ref: 'entry',
-            type: 'entry',
-            entry: preselectedId
-          } as EntryReference)
-        : undefined
-    })
+  const parentField = useMemo(
+    () =>
+      link.entry('Parent', {
+        condition: Entry.type
+          .isIn(containerTypes)
+          .and(Entry.workspace.is(workspace))
+          .and(Entry.root.is(root.name)),
+        initialValue: preselectedId
+          ? ({
+              id: 'parent',
+              ref: 'entry',
+              type: 'entry',
+              entry: preselectedId
+            } as EntryReference)
+          : undefined
+      }),
+    []
   )
-  const selectedParent = useObservable(parentField)
-  const {data: parent} = useQuery(
-    ['parent', selectedParent],
-    async () => {
+  const typeField = useMemo(() => {
+    const result = select('Select type', {})
+
+    track.options(result, async get => {
+      const selectedParent = get(parentField)
       const parentId = selectedParent?.entry
-      if (!parentId) return
-      return graph.preferDraft.get(
+      if (!parentId) return {}
+      const parent = await graph.preferDraft.get(
         Entry({entryId: parentId}).select(parentData)
       )
-    },
-    {suspense: true, keepPreviousData: true, staleTime: 0}
-  )
-  const parentPaths = parent ? parent.parentPaths.concat(parent.path) : []
-  const parentType = parent && config.schema[parent.type]
-  const types: Array<string> = !parent
-    ? root.contains || []
-    : (parentType && Type.meta(parentType).contains) || keys(config.schema)
-  const selectedType = useField(
-    select(
-      'Select type',
-      fromEntries(
-        types
-          .map(key => {
-            return [key, config.schema[key]] as const
-          })
-          .filter(row => row[1])
-          .map(([key, type]) => {
-            return [key, (Type.label(type) || key) as string]
-          })
-      ),
-      {initialValue: types[0]}
-    ),
-    [parentType]
-  )
-  const titleField = useField(text('Title', {autoFocus: true}))
+      const parentType = parent && config.schema[parent.type]
+      const types: Array<string> = !parent
+        ? root.contains || []
+        : (parentType && Type.meta(parentType).contains) || keys(config.schema)
+      return {items: fromEntries(types.map(type => [type, type]))}
+    })
+
+    return result
+  }, [])
+
   const [isCreating, setIsCreating] = useState(false)
   const updateEntries = useSetAtom(changedEntriesAtom)
 
+  const formType = type({
+    parent: parentField,
+    title: titleField,
+    type: typeField
+  })
+  const form = useForm(formType)
+
   async function handleCreate(e: FormEvent) {
     e.preventDefault()
-    const title = titleField()
-    const selected = selectedType()
+    const {title, type: selected} = form.data()
     if (!selected || !title) return
     setIsCreating(true)
     const path = slugify(title)
@@ -149,6 +151,10 @@ function NewEntryForm({parentId}: NewEntryProps) {
       path,
       phase: config.enableDrafts ? EntryPhase.Draft : EntryPhase.Published
     }
+    const parent = await graph.preferDraft.get(
+      Entry({entryId: parentId}).select(parentData)
+    )
+    const parentPaths = parent ? parent.parentPaths.concat(parent.path) : []
     const filePath = entryFilepath(config, data, parentPaths)
     const childrenDir = entryChildrenDir(config, data, parentPaths)
     const parentDir = dirname(filePath)
@@ -193,9 +199,8 @@ function NewEntryForm({parentId}: NewEntryProps) {
     >
       {isCreating && <Loader absolute />}
       {/*parent && <ParentView {...parent} />*/}
-      <InputField {...parentField} />
-      <InputField {...titleField} />
-      <InputField {...selectedType} />
+
+      <InputForm form={form} type={formType} />
       <div className={styles.root.footer()}>
         <Link href={pathname} className={styles.root.footer.link()}>
           Cancel

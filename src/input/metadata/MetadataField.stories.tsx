@@ -1,16 +1,15 @@
 import {type} from 'alinea/core'
 import {useForm} from 'alinea/dashboard/atoms/FormAtoms'
 import {InputForm} from 'alinea/dashboard/editor/InputForm'
-import {number} from 'alinea/input/number'
+import {metadata} from 'alinea/input/metadata/MetadataField'
 import {VStack} from 'alinea/ui'
 import {UIStory} from 'alinea/ui/UIStory'
 
 const fields = type({
-  number: number('Number'),
-  readOnly: number('Number (read-only)', {readOnly: true, initialValue: 0})
+  metadata: metadata()
 })
 
-export function NumberField() {
+export function MetadataField() {
   const form = useForm(fields)
   return (
     <UIStory>
@@ -22,5 +21,5 @@ export function NumberField() {
 }
 
 export default {
-  title: 'Fields / Number'
+  title: 'Fields / Metadata'
 }

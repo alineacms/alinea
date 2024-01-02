@@ -1,4 +1,4 @@
-import {Root, WorkspaceData, createId} from 'alinea/core'
+import {Picker, PickerProps, Root, WorkspaceData, createId} from 'alinea/core'
 import {Entry} from 'alinea/core/Entry'
 import {workspaceMediaDir} from 'alinea/core/EntryFilenames'
 import {Reference} from 'alinea/core/Reference'
@@ -20,7 +20,6 @@ import {
   ExporerItemSelect
 } from 'alinea/dashboard/view/explorer/Explorer'
 import {FileUploader} from 'alinea/dashboard/view/media/FileUploader'
-import {Picker, PickerProps} from 'alinea/editor/Picker'
 import {
   Button,
   HStack,

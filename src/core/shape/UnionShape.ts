@@ -88,6 +88,9 @@ export class UnionShape<T> implements Shape<UnionRow & T, UnionMutator<T>> {
     if (!shape) return
     shape.applyY(value, parent, key)
   }
+  init(parent: Y.Map<any>, key: string): void {
+    if (!parent.has(key)) parent.set(key, this.toY(this.create()))
+  }
   watch(parent: Y.Map<any>, key: string) {
     return (fun: () => void) => {
       const observe = (event: Y.YMapEvent<any>) => {

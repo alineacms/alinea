@@ -55,10 +55,6 @@ const Fields = alinea.document('Fields', {
       position: position('Position field')
     }),
     alinea.tab('Basic fields', {
-      title: alinea.text('Text field'),
-      path: alinea.path('Path field', {
-        help: 'Creates a slug of the value of another field'
-      }),
       richText: alinea.richText('Rich text field'),
       select: alinea.select('Select field', {
         a: 'Option a',
@@ -128,7 +124,7 @@ const Fields = alinea.document('Fields', {
         inline: true,
         multiline: true
       }),
-      number: alinea.text('Number', {width: 0.2, inline: true}),
+      streetNr: alinea.text('Number', {width: 0.2, inline: true}),
       box: alinea.text('Box', {width: 0.2, inline: true}),
       zip: alinea.text('Zipcode', {width: 0.2, inline: true}),
       city: alinea.text('City', {width: 0.4, inline: true}),

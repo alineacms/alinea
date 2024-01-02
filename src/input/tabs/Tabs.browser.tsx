@@ -1,6 +1,6 @@
 import {Section, Type} from 'alinea/core'
 import {InputForm} from 'alinea/dashboard/editor/InputForm'
-import {InputLabel} from 'alinea/editor'
+import {InputLabel} from 'alinea/dashboard/view/InputLabel'
 import {HStack, TextLabel} from 'alinea/ui'
 import {Lift} from 'alinea/ui/Lift'
 import {Sink} from 'alinea/ui/Sink'

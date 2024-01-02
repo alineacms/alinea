@@ -35,6 +35,7 @@ export type FieldView<
 export interface Field<Value, Mutator, Options extends FieldOptions>
   extends Expr<Value> {
   [Field.Data]: FieldData<Value, Mutator, Options>
+  [Field.Ref]: symbol
 }
 
 export class Field<
@@ -42,13 +43,16 @@ export class Field<
   Mutator = any,
   Options extends FieldOptions = FieldOptions
 > {
+  static index = 0
   constructor(data: FieldData<Value, Mutator, Options>) {
     this[Field.Data] = data
+    this[Field.Ref] = Symbol(`Field.${data.label}.${Field.index++}`)
   }
 }
 
 export namespace Field {
   export const Data = Symbol.for('@alinea/Field.Data')
+  export const Ref = Symbol.for('@alinea/Field.Self')
 
   export function provideView<
     Value,
@@ -60,12 +64,22 @@ export namespace Field {
       new Field({...factory(...args)[Field.Data], view})) as Factory
   }
 
+  // Todo: because we wrap fields in an Expr proxy we need this
+  // reference - but maybe we shouldn't wrap in the future
+  export function ref(field: Field): symbol {
+    return field[Field.Ref]
+  }
+
   export function shape(field: Field<any, any>): Shape {
     return field[Field.Data].shape
   }
 
   export function hint(field: Field): Hint {
     return field[Field.Data].hint
+  }
+
+  export function label(field: Field): string {
+    return field[Field.Data].label
   }
 
   export function view<Value, Mutator, Options extends FieldOptions>(

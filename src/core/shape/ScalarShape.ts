@@ -25,6 +25,9 @@ export class ScalarShape<T> implements Shape<T, ScalarMutator<T>> {
     const current = parent.get(key)
     if (current !== value) parent.set(key, value)
   }
+  init(parent: Y.Map<any>, key: string): void {
+    if (!parent.has(key)) parent.set(key, this.toY(this.create()))
+  }
   watch(parent: Y.Map<any>, key: string) {
     return (fun: () => void) => {
       function w(event: Y.YMapEvent<any>) {

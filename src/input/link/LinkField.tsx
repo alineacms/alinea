@@ -1,8 +1,8 @@
+import type {Picker} from 'alinea/core'
 import {FieldOptions, Hint, Label, Reference} from 'alinea/core'
 import {ListField} from 'alinea/core/field/ListField'
 import {UnionField} from 'alinea/core/field/UnionField'
 import {entries, fromEntries} from 'alinea/core/util/Objects'
-import type {Picker} from 'alinea/editor/Picker'
 
 /** Optional settings to configure a link field */
 export interface LinkFieldOptions extends FieldOptions {

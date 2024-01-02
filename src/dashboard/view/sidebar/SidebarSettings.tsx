@@ -1,7 +1,6 @@
 import {Switch} from '@headlessui/react'
 import {Workspace} from 'alinea/core'
 import {entries, fromEntries} from 'alinea/core/util/Objects'
-import {InputField} from 'alinea/editor/view/InputField'
 import {select} from 'alinea/input'
 import {HStack, Icon, VStack, fromModule, px} from 'alinea/ui'
 import {DropdownMenu} from 'alinea/ui/DropdownMenu'
@@ -123,14 +122,14 @@ export function SidebarSettings() {
                 />
               </HStack>
             </HStack>
-            {workspaces.length > 1 && (
+            {/*workspaces.length > 1 && (
               <InputField
                 // Todo: we should use a form here to react to the value change
                 value={preferences.workspace || ''}
                 onChange={v => updateWorkspace(v ?? undefined)}
                 field={defaultWorkspace}
               />
-            )}
+            )*/}
           </VStack>
 
           {session.end && (
