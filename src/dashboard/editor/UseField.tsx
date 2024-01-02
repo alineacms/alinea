@@ -3,13 +3,18 @@ import {useAtomValue} from 'jotai'
 import {useFormContext} from '../atoms/FormAtoms.js'
 
 export function useField<Value, Mutator, Options extends FieldOptions>(
-  field: Field<Value, Mutator, Options>
+  field: Field<Value, Mutator, Options> | string
 ) {
-  const {label, initialValue} = field[Field.Data]
-  const fieldKey = useFieldKey(field)
-  const value = useFieldValue(field)
-  const mutator = useFieldMutator(field)
-  const options = useFieldOptions(field)
+  const atoms = useFormContext()
+  const actual =
+    typeof field === 'string'
+      ? (atoms.fieldByKey(field) as Field<Value, Mutator, Options>)
+      : field
+  const {label, initialValue} = actual[Field.Data]
+  const fieldKey = useFieldKey(actual)
+  const value = useFieldValue(actual)
+  const mutator = useFieldMutator(actual)
+  const options = useFieldOptions(actual)
   return {
     fieldKey,
     label,

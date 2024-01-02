@@ -1,18 +1,13 @@
-/*import {Entry, Field, isSeparator, slugify} from 'alinea/core'
+import {Entry, Field, isSeparator, slugify} from 'alinea/core'
 import {pathSuffix} from 'alinea/core/EntryFilenames'
+import {InputLabel} from 'alinea/dashboard'
 import {useField} from 'alinea/dashboard/editor/UseField'
 import {useEntryEditor} from 'alinea/dashboard/hook/UseEntryEditor'
 import {useGraph} from 'alinea/dashboard/hook/UseGraph'
-import {InputLabel, InputState, useInput} from 'alinea/editor'
 import {fromModule, px} from 'alinea/ui'
 import {IcRoundLink} from 'alinea/ui/icons/IcRoundLink'
 import {useRef, useState} from 'react'
 import {useQuery} from 'react-query'
-import {PathField, path as createPath} from './PathField.js'
-import css from './PathInput.module.scss'
-export * from './PathField.js'*/
-import {Field} from 'alinea/core'
-import {fromModule} from 'alinea/ui'
 import {PathField, path as createPath} from './PathField.js'
 import css from './PathInput.module.scss'
 export * from './PathField.js'
@@ -28,8 +23,7 @@ interface PathInputProps {
 }
 
 function PathInput({field}: PathInputProps) {
-  return <div>path field needs updating</div>
-  /*const {value, mutator, label, options} = useField(field)
+  const {value: fieldValue, mutator, label, options} = useField(field)
   const graph = useGraph()
   const editor = useEntryEditor()
   const {width, from = 'title', help, optional} = options
@@ -37,13 +31,8 @@ function PathInput({field}: PathInputProps) {
   const hiddenRef = useRef<HTMLSpanElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const suffixRef = useRef<HTMLDivElement>(null)
-  const parentState = state.parent()
-  if (!parentState) throw new Error('Path field needs parent state')
-  const [source = ''] = useInput<InputState.Scalar<string>>(
-    parentState.child(from)
-  )
-  const [value = slugify(source), setValue] =
-    useInput<InputState.Scalar<string>>(state)
+  const {value: source} = useField<string, unknown, any>(from)
+  const value = fieldValue ?? slugify(source)
   const [endsWithSeparator, setEndsWithSeparator] = useState(false)
   const inputValue = (value || '') + (endsWithSeparator ? '-' : '')
   const empty = value === ''
@@ -81,7 +70,7 @@ function PathInput({field}: PathInputProps) {
     const pathData = await getConflictingPaths()
     const suffix = pathSuffix(inputValue, pathData)
     if (!suffix) return
-    setValue(slugify(`${inputValue}-${suffix}`))
+    mutator(slugify(`${inputValue}-${suffix}`))
   }
 
   const currentSuffix =
@@ -129,7 +118,7 @@ function PathInput({field}: PathInputProps) {
           onChange={e => {
             const value = e.currentTarget.value
             setEndsWithSeparator(isSeparator(value.charAt(value.length - 1)))
-            setValue(slugify(value))
+            mutator(slugify(value))
           }}
           onFocus={() => setFocus(true)}
           onBlur={() => {
@@ -151,5 +140,5 @@ function PathInput({field}: PathInputProps) {
         {inputValue}
       </span>
     </InputLabel>
-  )*/
+  )
 }

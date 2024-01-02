@@ -19,6 +19,7 @@ export interface FieldInfo<
   Options extends FieldOptions = FieldOptions
 > {
   key: string
+  field: Field<Value, Mutator, Options>
   value: Atom<Value>
   options: Atom<Options | Promise<Options>>
   mutator: Mutator
@@ -48,6 +49,7 @@ export class FormAtoms<T = any> {
         const value = this.valueAtom(field, key)
         this.fieldInfo.set(ref, {
           key,
+          field,
           value,
           mutator,
           options
@@ -79,6 +81,12 @@ export class FormAtoms<T = any> {
       g(revision)
       return shape.fromY(this.container.get(key))
     })
+  }
+
+  fieldByKey(key: string): Field {
+    for (const info of this.fieldInfo.values())
+      if (info.key === key) return info.field
+    throw new Error(`Field not found: ${key}`)
   }
 
   keyOf(field: Field) {
