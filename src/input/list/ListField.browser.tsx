@@ -26,7 +26,7 @@ import {ListField} from 'alinea/core/field/ListField'
 import {entries} from 'alinea/core/util/Objects'
 import {FormRow} from 'alinea/dashboard/atoms/FormAtoms'
 import {InputForm} from 'alinea/dashboard/editor/InputForm'
-import {useField} from 'alinea/dashboard/editor/UseField'
+import {useField, useFieldOptions} from 'alinea/dashboard/editor/UseField'
 import {Create} from 'alinea/dashboard/view/Create'
 import {IconButton} from 'alinea/dashboard/view/IconButton'
 import {InputLabel} from 'alinea/dashboard/view/InputLabel'
@@ -114,7 +114,7 @@ function ListInputRow({
   firstRow,
   ...rest
 }: ListInputRowProps) {
-  const {label, options} = field[Field.Data]
+  const options = useFieldOptions(field)
   const type = options.schema[row.type]
   const [showInsert, setShowInsert] = useState(false)
   if (!type) return null
@@ -256,7 +256,7 @@ export function ListInput({field}: ListInputProps) {
       onDragEnd={handleDragEnd}
       layoutMeasuring={layoutMeasuringConfig}
     >
-      <InputLabel label={label} {...options} icon={IcOutlineList}>
+      <InputLabel {...options} icon={IcOutlineList}>
         <div className={styles.root()}>
           <div className={styles.root.inner({inline: options.inline})}>
             <SortableContext items={ids} strategy={verticalListSortingStrategy}>

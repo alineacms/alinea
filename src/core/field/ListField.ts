@@ -2,24 +2,19 @@ import {Field, FieldMeta, FieldOptions} from '../Field.js'
 import {ListMutator, ListRow, ListShape} from '../shape/ListShape.js'
 import {RecordShape} from '../shape/RecordShape.js'
 
-export class ListField<Schema, Options extends FieldOptions> extends Field<
-  Array<ListRow & Schema>,
-  ListMutator<ListRow & Schema>,
-  Options
-> {
+export class ListField<
+  Row extends ListRow,
+  Options extends FieldOptions<Array<Row>>
+> extends Field<Array<Row>, ListMutator<Row>, Options> {
   constructor(
     shape: {[key: string]: RecordShape<any>},
-    meta: FieldMeta<
-      Array<ListRow & Schema>,
-      ListMutator<ListRow & Schema>,
-      Options
-    >
+    meta: FieldMeta<Array<Row>, ListMutator<Row>, Options>
   ) {
     super({
       shape: new ListShape(
-        meta.label,
+        meta.options.label,
         shape,
-        meta.initialValue,
+        meta.options.initialValue,
         meta.postProcess
       ),
       ...meta

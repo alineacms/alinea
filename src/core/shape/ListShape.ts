@@ -28,15 +28,15 @@ export type ListMutator<T> = {
   move: (oldIndex: number, newIndex: number) => void
 }
 
-export class ListShape<T>
-  implements Shape<Array<ListRow & T>, ListMutator<ListRow & T>>
+export class ListShape<T extends ListRow>
+  implements Shape<Array<T>, ListMutator<T>>
 {
   values: Record<string, RecordShape>
   constructor(
     public label: Label,
     public shapes: Record<string, RecordShape>,
-    public initialValue?: Array<ListRow & T>,
-    protected postProcess?: PostProcess<Array<ListRow & T>>
+    public initialValue?: Array<T>,
+    protected postProcess?: PostProcess<Array<T>>
   ) {
     this.values = Object.fromEntries(
       Object.entries(shapes).map(([key, type]) => {
@@ -61,7 +61,7 @@ export class ListShape<T>
     })
   }
   create() {
-    return this.initialValue || ([] as Array<ListRow & T>)
+    return this.initialValue ?? ([] as Array<T>)
   }
   typeOfChild<C>(yValue: Y.Map<any>, child: string): Shape<C> {
     const row = yValue.get(child)
@@ -70,7 +70,7 @@ export class ListShape<T>
     if (value) return value as unknown as Shape<C>
     throw new Error(`Could not determine type of child "${child}"`)
   }
-  toY(value: Array<ListRow & T>) {
+  toY(value: Array<T>) {
     const map = new Y.Map()
     const rows = Array.isArray(value) ? value : []
     let currentIndex = null
@@ -84,20 +84,20 @@ export class ListShape<T>
     }
     return map
   }
-  fromY(map: Y.Map<any>): Array<ListRow & T> {
-    const rows: Array<ListRow & T> = []
+  fromY(map: Y.Map<any>): Array<T> {
+    const rows: Array<T> = []
     if (!map || typeof map.keys !== 'function') return rows
     for (const key of map.keys()) {
       const row = map.get(key)
       if (!row || typeof row.get !== 'function') continue
       const type = row.get('type')
       const rowType = this.values[type]
-      if (rowType) rows.push(rowType.fromY(row) as ListRow & T)
+      if (rowType) rows.push(rowType.fromY(row) as T)
     }
     rows.sort(sort)
     return rows
   }
-  applyY(value: (ListRow & T)[], parent: Y.Map<any>, key: string): void {
+  applyY(value: T[], parent: Y.Map<any>, key: string): void {
     if (!Array.isArray(value)) return
     const current: Y.Map<any> | undefined = parent.get(key)
     if (!current) return void parent.set(key, this.toY(value))
@@ -157,7 +157,7 @@ export class ListShape<T>
   mutator(parent: Y.Map<any>, key: string, readOnly: boolean) {
     const res = {
       readOnly,
-      replace: (id: string, row: ListRow & T) => {
+      replace: (id: string, row: T) => {
         if (readOnly) return
         const record = parent.get(key)
         const rows: Array<ListRow> = this.fromY(record) as any
@@ -165,7 +165,7 @@ export class ListShape<T>
         res.remove(id)
         res.push(row, index)
       },
-      push: (row: Omit<ListRow & T, 'id' | 'index'>, insertAt?: number) => {
+      push: (row: Omit<T, 'id' | 'index'>, insertAt?: number) => {
         if (readOnly) return
         const type = row.type
         const shape = this.values[type]
@@ -206,7 +206,7 @@ export class ListShape<T>
     }
     return res
   }
-  async applyLinks(value: Array<ListRow & T>, loader: LinkResolver) {
+  async applyLinks(value: Array<T>, loader: LinkResolver) {
     const tasks = []
     if (!Array.isArray(value)) return
     for (const row of value) {

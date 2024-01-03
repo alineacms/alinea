@@ -127,7 +127,7 @@ export class RichTextShape<Blocks>
     })
   }
   create() {
-    return this.initialValue || ([] as TextDoc<Blocks>)
+    return this.initialValue ?? ([] as TextDoc<Blocks>)
   }
   typeOfChild<C>(yValue: Y.Map<any>, child: string): Shape<C> {
     const block = yValue.get(child)

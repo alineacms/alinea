@@ -31,7 +31,6 @@ function CodeInput({field}: CodeInputProps) {
   return (
     <InputLabel
       asLabel
-      label={label}
       {...options}
       focused={focus}
       icon={IcRoundCode}

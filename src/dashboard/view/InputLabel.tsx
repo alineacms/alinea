@@ -9,7 +9,7 @@ const styles = fromModule(css)
 
 export type LabelHeaderProps = {
   label: Label
-  help?: Label
+  help?: string
   optional?: boolean
   size?: 'small' | 'medium' | 'large'
   focused?: boolean
@@ -43,7 +43,7 @@ export const LabelHeader = memo(function LabelHeader({
 export type LabelProps = PropsWithChildren<{
   label?: Label
   asLabel?: boolean
-  help?: Label
+  help?: string
   optional?: boolean
   width?: number
   inline?: boolean

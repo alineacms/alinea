@@ -12,6 +12,7 @@ export interface ShapeInfo {
 }
 
 export interface Shape<Value = any, Mutator = any> {
+  initialValue?: Value
   label: Label
   innerTypes(parents: Array<string>): Array<ShapeInfo>
   create(): Value

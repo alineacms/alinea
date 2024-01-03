@@ -1,22 +1,23 @@
-import {FieldOptions} from 'alinea/core/Field'
+import {FieldOptions, WithoutLabel} from 'alinea/core/Field'
 import {Hint} from 'alinea/core/Hint'
-import {Label} from 'alinea/core/Label'
 import {ScalarField} from 'alinea/core/field/ScalarField'
 
-export interface PathOptions extends FieldOptions {
+export interface PathOptions extends FieldOptions<string> {
   width?: number
   from?: string
-  help?: Label
+  help?: string
   inline?: boolean
   optional?: boolean
 }
 
 export class PathField extends ScalarField<string, PathOptions> {}
 
-export function path(label: Label, options: PathOptions = {}): PathField {
+export function path(
+  label: string,
+  options: WithoutLabel<PathOptions> = {}
+): PathField {
   return new PathField({
     hint: Hint.String(),
-    label,
-    options
+    options: {label, ...options}
   })
 }

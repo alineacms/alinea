@@ -1,4 +1,3 @@
-import {Label} from 'alinea/core'
 import {ScalarField} from 'alinea/core/field/ScalarField'
 import {InputLabel, useField} from 'alinea/dashboard'
 import {HStack, VStack} from 'alinea/ui'
@@ -13,7 +12,7 @@ export interface Position {
 
 class PositionField extends ScalarField<Position, PositionOptions> {}
 
-export function position(label: Label, options: PositionOptions = {}) {
+export function position(label: string, options: PositionOptions = {}) {
   return new PositionField({
     label,
     options,

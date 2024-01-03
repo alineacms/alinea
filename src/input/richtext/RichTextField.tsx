@@ -1,15 +1,16 @@
-import {Label, Schema, TextDoc} from 'alinea/core'
+import {FieldOptions, Schema, TextDoc, WithoutLabel} from 'alinea/core'
 import {RichTextField} from 'alinea/core/field/RichTextField'
 import {richTextHint} from 'alinea/core/util/Hints'
 
 /** Optional settings to configure a rich text field */
-export interface RichTextOptions<Blocks extends Schema> {
+export interface RichTextOptions<Blocks extends Schema>
+  extends FieldOptions<TextDoc<Blocks>> {
   /** Allow these blocks to be created between text fragments */
   schema?: Blocks
   /** Width of the field in the dashboard UI (0-1) */
   width?: number
   /** Add instructional text to a field */
-  help?: Label
+  help?: string
   /** Field is optional */
   optional?: boolean
   /** Display a minimal version */
@@ -24,14 +25,12 @@ export interface RichTextOptions<Blocks extends Schema> {
 
 /** Create a rich text field configuration */
 export function richText<Blocks extends Schema = {}>(
-  label: Label,
-  options: RichTextOptions<Blocks> = {}
+  label: string,
+  options: WithoutLabel<RichTextOptions<Blocks>> = {}
 ): RichTextField<Blocks, RichTextOptions<Blocks>> {
   const shapes = options.schema && Schema.shapes(options.schema)
   return new RichTextField(shapes, {
     hint: richTextHint(options.schema),
-    label,
-    options,
-    initialValue: options.initialValue ?? []
+    options: {label, ...options}
   })
 }

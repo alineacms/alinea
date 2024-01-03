@@ -28,7 +28,7 @@ export class RecordShape<T = object> implements Shape<T, RecordMutator<T>> {
   }
   create() {
     return (
-      this.initialValue ||
+      this.initialValue ??
       (Object.fromEntries(
         Object.entries(this.properties).map(([key, field]) => {
           return [key, field.create()]

@@ -49,7 +49,6 @@ export interface EntryPickerOptions<T = {}> {
   label?: Label
   title?: Label
   fields?: Type<T>
-  initialValue?: Reference | Array<Reference>
 }
 
 export function entryPicker<Ref extends Reference, Fields>(

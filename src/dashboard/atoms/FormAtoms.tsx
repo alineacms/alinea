@@ -5,6 +5,7 @@ import {
   ROOT_KEY,
   Section,
   Type,
+  ValueTracker,
   applyEntryData,
   track
 } from 'alinea/core'
@@ -16,12 +17,12 @@ import * as Y from 'yjs'
 export interface FieldInfo<
   Value = any,
   Mutator = any,
-  Options extends FieldOptions = FieldOptions
+  Options extends FieldOptions<Value> = FieldOptions<Value>
 > {
   key: string
   field: Field<Value, Mutator, Options>
   value: Atom<Value>
-  options: Atom<Options | Promise<Options>>
+  options: Atom<Options>
   mutator: Mutator
 }
 
@@ -31,9 +32,7 @@ export class FormAtoms<T = any> {
   constructor(
     public type: Type<T>,
     public container: Y.Map<any>,
-    private options: {
-      readOnly: boolean
-    } = {readOnly: false}
+    private options: {readOnly: boolean} = {readOnly: false}
   ) {
     for (const section of Type.sections(type)) {
       for (const [key, field] of entries(Section.fields(section))) {
@@ -44,9 +43,12 @@ export class FormAtoms<T = any> {
         shape.init(container, key)
         const mutator = shape.mutator(container, key, false)
         const options = optionsTracker
-          ? atom(get => optionsTracker(this.getter(get)))
+          ? atom(get => {
+              return {...defaultOptions, ...optionsTracker(this.getter(get))}
+            })
           : atom(defaultOptions)
-        const value = this.valueAtom(field, key)
+        const valueTracker = track.valueTrackerOf(field)
+        const value = this.valueAtom(field, key, valueTracker)
         this.fieldInfo.set(ref, {
           key,
           field,
@@ -68,7 +70,11 @@ export class FormAtoms<T = any> {
     return get(info.value)
   }
 
-  private valueAtom(field: Field, key: string) {
+  private valueAtom(
+    field: Field,
+    key: string,
+    tracker: ValueTracker | undefined
+  ) {
     const shape = Field.shape(field)
     const revision = atom(0)
     revision.onMount = setAtom => {
@@ -79,7 +85,11 @@ export class FormAtoms<T = any> {
     }
     return atom(g => {
       g(revision)
-      return shape.fromY(this.container.get(key))
+      const current = shape.fromY(this.container.get(key))
+      const next = tracker ? tracker(this.getter(g)) : current
+      // Todo: we shouldn't mutate here, this should run in a pass after
+      if (next !== current) shape.applyY(next, this.container, key)
+      return next
     })
   }
 
@@ -96,7 +106,7 @@ export class FormAtoms<T = any> {
     return res.key
   }
 
-  atomsOf<Value, Mutator, Options extends FieldOptions>(
+  atomsOf<Value, Mutator, Options extends FieldOptions<Value>>(
     field: Field<Value, Mutator, Options>
   ): FieldInfo<Value, Mutator, Options> {
     const res = this.fieldInfo.get(Field.ref(field))

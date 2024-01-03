@@ -34,7 +34,7 @@ function PathInput({field}: PathInputProps) {
   const {value: source} = useField<string, unknown, any>(from)
   const value = fieldValue ?? slugify(source)
   const [endsWithSeparator, setEndsWithSeparator] = useState(false)
-  const inputValue = (value || '') + (endsWithSeparator ? '-' : '')
+  const inputValue = (value ?? '') + (endsWithSeparator ? '-' : '')
   const empty = value === ''
 
   async function getConflictingPaths() {

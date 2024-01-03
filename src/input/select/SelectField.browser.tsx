@@ -24,13 +24,11 @@ export const select = Field.provideView(SelectInput, createSelect)
 
 const styles = fromModule(css)
 
-interface SelectInputProps<Key extends string, Items> {
-  field: SelectField<Key, Items>
+interface SelectInputProps<Key extends string> {
+  field: SelectField<Key>
 }
 
-function SelectInput<Key extends string, Items extends Record<Key, string>>({
-  field
-}: SelectInputProps<Key, Items>) {
+function SelectInput<Key extends string>({field}: SelectInputProps<Key>) {
   const {value, mutator, label, options} = useField(field)
   const items = options.items as Record<string, string>
   const {x, y, reference, floating, refs, strategy} = useFloating({
@@ -52,7 +50,7 @@ function SelectInput<Key extends string, Items extends Record<Key, string>>({
   })
 
   return (
-    <InputLabel label={label} {...options} icon={IcRoundArrowDropDownCircle}>
+    <InputLabel {...options} icon={IcRoundArrowDropDownCircle}>
       <div className={styles.root()}>
         <Listbox value={value} onChange={mutator} disabled={options.readOnly}>
           {({open}) => (

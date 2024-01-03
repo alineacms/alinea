@@ -48,7 +48,7 @@ export interface MissingViewProps {
 }
 
 export function MissingView({field}: MissingViewProps) {
-  return <div>Missing view for field: {field[Field.Data].label}</div>
+  return <div>Missing view for field: {Field.label(field)}</div>
 }
 
 export interface InputFieldProps<V, M> {

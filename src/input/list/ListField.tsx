@@ -1,16 +1,17 @@
-import {FieldOptions, Label, Schema} from 'alinea/core'
+import {FieldOptions, Schema, WithoutLabel} from 'alinea/core'
 import {Infer} from 'alinea/core/Infer'
 import {ListField} from 'alinea/core/field/ListField'
 import {listHint} from 'alinea/core/util/Hints'
 
 /** Optional settings to configure a list field */
-export interface ListOptions<Definitions extends Schema> extends FieldOptions {
+export interface ListOptions<Definitions extends Schema>
+  extends FieldOptions<Array<any>> {
   /** Allow these types of blocks to be created */
   schema: Definitions
   /** Width of the field in the dashboard UI (0-1) */
   width?: number
   /** Add instructional text to a field */
-  help?: Label
+  help?: string
   /** Field is optional */
   optional?: boolean
   /** Display a minimal version */
@@ -27,12 +28,11 @@ export interface ListRow {
 
 /** Create a list field configuration */
 export function list<Definitions extends Schema>(
-  label: Label,
-  options: ListOptions<Definitions>
+  label: string,
+  options: WithoutLabel<ListOptions<Definitions>>
 ): ListField<Infer<Definitions>, ListOptions<Definitions>> {
   return new ListField(Schema.shapes(options.schema), {
     hint: listHint(options.schema),
-    label,
-    options
+    options: {label, ...options}
   })
 }

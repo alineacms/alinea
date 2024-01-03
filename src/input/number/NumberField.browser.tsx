@@ -18,11 +18,11 @@ interface NumberInputProps {
 }
 
 function NumberInput({field}: NumberInputProps) {
-  const {options, value, mutator, label} = useField(field)
+  const {options, value, mutator} = useField(field)
   const [current, setCurrent] = useState(String(value ?? ''))
   const {minValue, maxValue, readOnly, step} = options
   return (
-    <InputLabel asLabel label={label} {...options} icon={IcRoundNumbers}>
+    <InputLabel asLabel {...options} icon={IcRoundNumbers}>
       <input
         type="number"
         className={styles.root.input()}

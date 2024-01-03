@@ -2,20 +2,19 @@ import {Field, FieldMeta, FieldOptions} from '../Field.js'
 import {RecordShape} from '../shape/RecordShape.js'
 import {UnionMutator, UnionRow, UnionShape} from '../shape/UnionShape.js'
 
-export class UnionField<Row, Options extends FieldOptions> extends Field<
-  UnionRow & Row,
-  UnionMutator<Row>,
-  Options
-> {
+export class UnionField<
+  Row extends UnionRow,
+  Options extends FieldOptions<Row>
+> extends Field<Row, UnionMutator<Row>, Options> {
   constructor(
     shapes: {[key: string]: RecordShape<any>},
-    meta: FieldMeta<UnionRow & Row, UnionMutator<Row>, Options>
+    meta: FieldMeta<Row, UnionMutator<Row>, Options>
   ) {
     super({
       shape: new UnionShape<Row>(
-        meta.label,
+        meta.options.label,
         shapes,
-        meta.initialValue,
+        meta.options.initialValue,
         meta.postProcess
       ),
       ...meta

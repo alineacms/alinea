@@ -1,15 +1,14 @@
-import {FieldOptions} from 'alinea/core/Field'
+import {FieldOptions, WithoutLabel} from 'alinea/core/Field'
 import {Hint} from 'alinea/core/Hint'
-import {Label} from 'alinea/core/Label'
 import {ScalarField} from 'alinea/core/field/ScalarField'
 import type {ComponentType} from 'react'
 
 /** Optional settings to configure a text field */
-export interface TextOptions extends FieldOptions {
+export interface TextOptions extends FieldOptions<string> {
   /** Width of the field in the dashboard UI (0-1) */
   width?: number
   /** Add instructional text to a field */
-  help?: Label
+  help?: string
   /** Field is optional */
   optional?: boolean
   /** Allow line breaks */
@@ -22,17 +21,14 @@ export interface TextOptions extends FieldOptions {
   iconRight?: ComponentType
   /** Focus this input automatically */
   autoFocus?: boolean
-  initialValue?: string
 }
 
 export class TextField extends ScalarField<string, TextOptions> {}
 
 /** Create a text field */
-export function text(label: Label, options: TextOptions = {}) {
+export function text(label: string, options: WithoutLabel<TextOptions> = {}) {
   return new TextField({
     hint: Hint.String(),
-    label,
-    options,
-    initialValue: options.initialValue ?? ''
+    options: {label, ...options, initialValue: options.initialValue ?? ''}
   })
 }

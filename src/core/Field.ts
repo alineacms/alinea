@@ -2,24 +2,35 @@ import {LinkResolver} from 'alinea/backend/resolver/LinkResolver'
 import {Expr} from 'alinea/core/pages/Expr'
 import type {ComponentType} from 'react'
 import {Hint} from './Hint.js'
-import {Label} from './Label.js'
 import {Shape} from './Shape.js'
 
-export interface FieldOptions {
+export interface FieldOptions<Value> {
+  label: string
+  /** Hide this field in the dashboard */
   hidden?: boolean
+  /** Mark this field as read-only */
   readOnly?: boolean
+  /** The initial value of the field */
+  initialValue?: Value
 }
 
-export interface FieldMeta<Value, Mutator, Options extends FieldOptions> {
+export type WithoutLabel<Options extends FieldOptions<any>> = Omit<
+  Options,
+  'label'
+>
+
+export interface FieldMeta<
+  Value,
+  Mutator,
+  Options extends FieldOptions<Value>
+> {
   hint: Hint
-  label: Label
-  initialValue?: Value
   options: Options
   view?: FieldView<Value, Mutator, Options>
   postProcess?: (value: Value, loader: LinkResolver) => Promise<void>
 }
 
-export interface FieldData<Value, Mutator, Options extends FieldOptions>
+export interface FieldData<Value, Mutator, Options extends FieldOptions<Value>>
   extends FieldMeta<Value, Mutator, Options> {
   shape: Shape<Value, Mutator>
 }
@@ -27,12 +38,12 @@ export interface FieldData<Value, Mutator, Options extends FieldOptions>
 export type FieldView<
   Value,
   Mutator,
-  Options extends FieldOptions
+  Options extends FieldOptions<Value>
 > = ComponentType<{
   field: Field<Value, Mutator, Options>
 }>
 
-export interface Field<Value, Mutator, Options extends FieldOptions>
+export interface Field<Value, Mutator, Options extends FieldOptions<Value>>
   extends Expr<Value> {
   [Field.Data]: FieldData<Value, Mutator, Options>
   [Field.Ref]: symbol
@@ -41,12 +52,12 @@ export interface Field<Value, Mutator, Options extends FieldOptions>
 export class Field<
   Value = any,
   Mutator = any,
-  Options extends FieldOptions = FieldOptions
+  Options extends FieldOptions<Value> = FieldOptions<Value>
 > {
   static index = 0
   constructor(data: FieldData<Value, Mutator, Options>) {
     this[Field.Data] = data
-    this[Field.Ref] = Symbol(`Field.${data.label}.${Field.index++}`)
+    this[Field.Ref] = Symbol(`Field.${data.options.label}.${Field.index++}`)
   }
 }
 
@@ -57,7 +68,7 @@ export namespace Field {
   export function provideView<
     Value,
     Mutator,
-    Options extends FieldOptions,
+    Options extends FieldOptions<Value>,
     Factory extends (...args: Array<any>) => Field<Value, Mutator, Options>
   >(view: FieldView<Value, Mutator, Options>, factory: Factory): Factory {
     return ((...args: Array<any>) =>
@@ -79,17 +90,17 @@ export namespace Field {
   }
 
   export function label(field: Field): string {
-    return field[Field.Data].label
+    return field[Field.Data].options.label
   }
 
-  export function view<Value, Mutator, Options extends FieldOptions>(
+  export function view<Value, Mutator, Options extends FieldOptions<Value>>(
     field: Field<Value, Mutator, Options>
   ): FieldView<Value, Mutator, Options> | undefined {
     return field[Field.Data].view
   }
 
-  export function options<Options extends FieldOptions>(
-    field: Field<any, any, Options>
+  export function options<Value, Options extends FieldOptions<Value>>(
+    field: Field<Value, any, Options>
   ): Options {
     return field[Field.Data].options
   }

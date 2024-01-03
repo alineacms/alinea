@@ -25,7 +25,7 @@ const linkForm = type('Link', {
     help: 'Text to display inside the link element'
   }),
   blank: check('Open link in new tab', {
-    label: 'Target',
+    description: 'Target',
     initialValue: true
   })
 })

@@ -78,7 +78,7 @@ type LinkData<Fields> =
   | (UrlReference & Type.Infer<Fields>)
   | (FileReference & Type.Infer<Fields>)
 
-export interface LinkOptions<Fields> extends LinkFieldOptions {
+export interface LinkOptions<Fields> extends LinkFieldOptions<any> {
   fields?: Type<Fields>
 }
 
@@ -235,13 +235,13 @@ export namespace link.image {
 }
 
 export namespace link {
-  export interface FileOptions<Fields>
-    extends LinkFieldOptions,
-      Omit<EntryPickerOptions<Fields>, 'hint' | 'selection'> {}
+  export interface FileOptions<Row>
+    extends LinkFieldOptions<Row>,
+      Omit<EntryPickerOptions<Row>, 'hint' | 'selection'> {}
 
   export function file<Fields>(
     label: Label,
-    options: FileOptions<Fields> = {}
+    options: FileOptions<FileReference & Type.Infer<Fields>> = {}
   ): LinkField<FileReference & Type.Infer<Fields>> {
     return createLink(label, {
       ...options,
@@ -253,7 +253,7 @@ export namespace link {
 export namespace link.file {
   export function multiple<Fields>(
     label: Label,
-    options: FileOptions<Fields> = {}
+    options: FileOptions<Array<FileReference & Type.Infer<Fields>>> = {}
   ): LinksField<FileReference & Type.Infer<Fields>> {
     return createLinks(label, {
       ...options,

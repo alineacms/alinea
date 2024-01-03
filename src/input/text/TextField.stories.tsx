@@ -1,4 +1,4 @@
-import {track, type} from 'alinea/core'
+import {type} from 'alinea/core'
 import {useForm} from 'alinea/dashboard/atoms/FormAtoms'
 import {InputForm} from 'alinea/dashboard/editor/InputForm'
 import {text} from 'alinea/input/text'
@@ -12,13 +12,6 @@ const fields = type({
     readOnly: true,
     initialValue: 'Hello world'
   })
-})
-
-track.options(fields.text, get => {
-  const value = get(fields.text)
-  return {
-    help: `Input is ${value.length} characters`
-  }
 })
 
 export function TextField() {

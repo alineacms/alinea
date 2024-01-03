@@ -20,13 +20,13 @@ interface CheckInputProps {
 
 function CheckInput({field}: CheckInputProps) {
   const {value, mutator, label, options} = useField(field)
-  const {readOnly} = options
+  const {description, readOnly} = options
   const [focus, setFocus] = useState(false)
   return (
     <InputLabel
       asLabel
       {...options}
-      label={options.label ? label : undefined}
+      label={description ? label : undefined}
       focused={focus}
       icon={IcRoundTextFields}
     >
@@ -55,7 +55,7 @@ function CheckInput({field}: CheckInputProps) {
           )}
         </span>
         <TextLabel
-          label={options.label ?? label}
+          label={description ?? label}
           className={styles.root.label()}
         />
       </HStack>

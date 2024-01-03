@@ -45,7 +45,6 @@ function JsonInput<T>({field}: JsonInputProps<T>) {
   return (
     <InputLabel
       asLabel
-      label={label}
       {...options}
       focused={focus}
       icon={IcRoundTextFields}

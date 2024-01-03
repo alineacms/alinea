@@ -17,9 +17,9 @@ interface DateInputProps {
 }
 
 function DateInput({field}: DateInputProps) {
-  const {options, value, mutator, label} = useField(field)
+  const {options, value, mutator} = useField(field)
   return (
-    <InputLabel asLabel label={label} {...options} icon={IcRoundDateRange}>
+    <InputLabel asLabel {...options} icon={IcRoundDateRange}>
       <input
         className={styles.root.input()}
         type="date"

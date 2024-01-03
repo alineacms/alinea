@@ -1,17 +1,15 @@
-import {FieldOptions, Hint, Label} from 'alinea/core'
+import {FieldOptions, Hint, WithoutLabel} from 'alinea/core'
 import {ScalarField} from 'alinea/core/field/ScalarField'
 
-export interface NumberOptions extends FieldOptions {
+export interface NumberOptions extends FieldOptions<number | null> {
   /** Width of the field in the dashboard UI (0-1) */
   width?: number
   /** Add instructional text to a field */
-  help?: Label
+  help?: string
   /** Field is optional */
   optional?: boolean
   /** Display a minimal version */
   inline?: boolean
-  /** A default value */
-  initialValue?: number
   /** A minimum value */
   minValue?: number
   /** A maximum value */
@@ -22,11 +20,12 @@ export interface NumberOptions extends FieldOptions {
 
 export class NumberField extends ScalarField<number | null, NumberOptions> {}
 
-export function number(label: Label, options: NumberOptions = {}): NumberField {
+export function number(
+  label: string,
+  options: WithoutLabel<NumberOptions> = {}
+): NumberField {
   return new NumberField({
     hint: Hint.Number(),
-    label,
-    options,
-    initialValue: options.initialValue ?? null
+    options: {label, ...options}
   })
 }
