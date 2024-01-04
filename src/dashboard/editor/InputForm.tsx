@@ -19,7 +19,7 @@ export function InputForm({type, form, border}: InputFormProps) {
         const View = Section.view(section)
         if (View) return <View section={section} key={i} />
         return (
-          <div key={i}>
+          <div key={i} style={{display: 'contents'}}>
             <Fields fields={Section.fields(section)} border={border} />
           </div>
         )

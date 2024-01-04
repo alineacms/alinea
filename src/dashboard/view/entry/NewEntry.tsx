@@ -111,17 +111,33 @@ function NewEntryForm({parentId}: NewEntryProps) {
     const result = select('Select type', {})
 
     track.options(result, async get => {
+      const types: Array<string> = []
       const selectedParent = get(parentField)
       const parentId = selectedParent?.entry
-      if (!parentId) return {}
-      const parent = await graph.preferDraft.get(
-        Entry({entryId: parentId}).select(parentData)
-      )
-      const parentType = parent && config.schema[parent.type]
-      const types: Array<string> = !parent
-        ? root.contains || []
-        : (parentType && Type.meta(parentType).contains) || keys(config.schema)
-      return {items: fromEntries(types.map(type => [type, type]))}
+      if (!parentId) {
+        types.push(...(root.contains ?? []))
+      } else {
+        const parent = await graph.preferDraft.get(
+          Entry({entryId: parentId}).select(parentData)
+        )
+        const parentType = parent && config.schema[parent.type]
+        types.push(
+          ...((parentType && Type.meta(parentType).contains) ||
+            keys(config.schema))
+        )
+      }
+      return {
+        items: fromEntries(
+          types
+            .map(key => {
+              return [key, config.schema[key]] as const
+            })
+            .filter(row => row[1])
+            .map(([key, type]) => {
+              return [key, (Type.label(type) || key) as string]
+            })
+        )
+      }
     })
 
     return result
@@ -130,11 +146,15 @@ function NewEntryForm({parentId}: NewEntryProps) {
   const [isCreating, setIsCreating] = useState(false)
   const updateEntries = useSetAtom(changedEntriesAtom)
 
-  const formType = type({
-    parent: parentField,
-    title: titleField,
-    type: typeField
-  })
+  const formType = useMemo(
+    () =>
+      type({
+        parent: parentField,
+        title: titleField,
+        type: typeField
+      }),
+    []
+  )
   const form = useForm(formType)
 
   async function handleCreate(e: FormEvent) {
@@ -198,9 +218,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
       className={styles.form({loading: isCreating})}
     >
       {isCreating && <Loader absolute />}
-      {/*parent && <ParentView {...parent} />*/}
-
-      <InputForm form={form} type={formType} />
+      <InputForm border={false} form={form} type={formType} />
       <div className={styles.root.footer()}>
         <Link href={pathname} className={styles.root.footer.link()}>
           Cancel

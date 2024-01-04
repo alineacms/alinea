@@ -5,7 +5,7 @@ export interface FieldGetter {
 }
 
 export interface OptionsTracker<Options = any> {
-  (getter: FieldGetter): Partial<Options> /* | Promise<Partial<Options>>*/
+  (getter: FieldGetter): Partial<Options> | Promise<Partial<Options>>
 }
 
 export interface ValueTracker<Value = any> {

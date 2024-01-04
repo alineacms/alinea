@@ -7,18 +7,13 @@ const Page = alinea.document('Page', {})
 
 const Folder = alinea.type('Folder', {
   title: alinea.text('Title', {
-    width: 0.5,
-    multiline: true
+    width: 0.5
   }),
-  path: alinea.path('Path'),
-  abc: alinea.text('ABC')
-})
-
-alinea.track.options(Folder.title, get => {
-  const title = get(Folder.title)
-  return {
-    multiline: title.length > 20,
-    readOnly: title.length > 50
+  path: alinea.path('Path', {
+    width: 0.5
+  }),
+  [alinea.meta]: {
+    isContainer: true
   }
 })
 
@@ -64,7 +59,7 @@ const Fields = alinea.document('Fields', {
         minValue: 0,
         maxValue: 10
       }),
-      check: alinea.check('Check field', {label: 'Check me please'}),
+      check: alinea.check('Check field', {description: 'Check me please'}),
       date: alinea.date('Date field'),
       code: alinea.code('Code field')
     }),
@@ -166,7 +161,7 @@ export const cms = createCMS({
     primary: alinea.workspace('Primary workspace', {
       fields: alinea.root('Fields', {
         [alinea.meta]: {
-          contains: ['TabsExample'],
+          contains: ['Folder', 'TabsExample'],
           icon: IcRoundUploadFile
         }
       }),

@@ -14,6 +14,8 @@ import {Atom, Getter, atom} from 'jotai'
 import {PropsWithChildren, createContext, useContext, useMemo} from 'react'
 import * as Y from 'yjs'
 
+import {unwrap} from 'jotai/utils'
+
 export interface FieldInfo<
   Value = any,
   Mutator = any,
@@ -22,7 +24,7 @@ export interface FieldInfo<
   key: string
   field: Field<Value, Mutator, Options>
   value: Atom<Value>
-  options: Atom<Options>
+  options: Atom<Options | Promise<Options>>
   mutator: Mutator
 }
 
@@ -43,9 +45,17 @@ export class FormAtoms<T = any> {
         shape.init(container, key)
         const mutator = shape.mutator(container, key, false)
         const options = optionsTracker
-          ? atom(get => {
-              return {...defaultOptions, ...optionsTracker(this.getter(get))}
-            })
+          ? unwrap(
+              atom(get => {
+                const tracked = optionsTracker(this.getter(get))
+                if (tracked instanceof Promise)
+                  return tracked.then(partial => {
+                    return {...defaultOptions, ...partial}
+                  })
+                return {...defaultOptions, ...tracked}
+              }),
+              prev => prev ?? defaultOptions
+            )
           : atom(defaultOptions)
         const valueTracker = track.valueTrackerOf(field)
         const value = this.valueAtom(field, key, valueTracker)
@@ -127,13 +137,13 @@ export function useForm<T>(
   type: Type<T>,
   options: UseFormOptions<T> = {}
 ): FormAtoms<T> {
-  const doc = options.doc ?? new Y.Doc()
   return useMemo(() => {
+    const doc = options.doc ?? new Y.Doc()
     if (options.initialValue) {
       applyEntryData(doc, type, {data: options.initialValue} as any)
     }
     return new FormAtoms(type, doc.getMap(ROOT_KEY))
-  }, [type, doc])
+  }, [type, options.doc])
 }
 
 export function useFormContext() {
