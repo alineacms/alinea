@@ -5,6 +5,7 @@ import {Modal} from 'alinea/dashboard/view/Modal'
 import {check} from 'alinea/input/check'
 import {link as createLink} from 'alinea/input/link'
 import {text} from 'alinea/input/text'
+import {EntryReference} from 'alinea/picker/entry/EntryReference'
 import {Button, HStack, Stack, VStack, fromModule} from 'alinea/ui'
 import {useTrigger} from 'alinea/ui/hook/UseTrigger'
 import {IcRoundClose} from 'alinea/ui/icons/IcRoundClose'
@@ -17,7 +18,7 @@ function linkForm(options: PickerOptions) {
   const isExistingLink = Boolean(options.link)
   const fields = type({
     link: createLink('Link', {
-      initialValue: options.link
+      initialValue: options.link as EntryReference
     }),
     description: text('Description', {
       help: 'Text to display inside the link element'

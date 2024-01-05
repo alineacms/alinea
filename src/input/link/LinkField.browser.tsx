@@ -129,11 +129,13 @@ const layoutMeasuringConfig = {
   strategy: LayoutMeasuringStrategy.Always
 }
 
-interface LinksInputProps<Row extends Reference> {
+interface LinksInputProps<Row extends Reference & ListRow> {
   field: LinksField<Row>
 }
 
-function LinksInput<Row extends Reference>({field}: LinksInputProps<Row>) {
+function LinksInput<Row extends Reference & ListRow>({
+  field
+}: LinksInputProps<Row>) {
   const {options, value, mutator, label} = useField(field)
   const {width, inline, optional, help} = options
 

@@ -46,7 +46,7 @@ export interface EntryPickerOptions<T = {}> {
   condition?: Expr<boolean>
   showMedia?: boolean
   max?: number
-  label?: Label
+  label?: string
   title?: Label
   fields?: Type<T>
 }
