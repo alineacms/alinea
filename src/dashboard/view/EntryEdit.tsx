@@ -235,14 +235,14 @@ export function EntryEdit({editor}: EntryEditProps) {
                       {visibleTypes.map((type, i) => {
                         return (
                           <Tabs.Panel key={i} tabIndex={i}>
-                            <InputForm type={type} form={form} />
+                            <InputForm form={form} />
                           </Tabs.Panel>
                         )
                       })}
                     </Tabs.Panels>
                   ) : (
                     <VStack gap={18}>
-                      <InputForm type={editor.type} form={form} />
+                      <InputForm form={form} />
                     </VStack>
                   )}
                 </SuspenseBoundary>

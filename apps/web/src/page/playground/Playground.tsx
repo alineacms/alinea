@@ -9,14 +9,12 @@ import {createExample} from 'alinea/backend/test/Example'
 import * as core from 'alinea/core'
 import {Field, Type, outcome} from 'alinea/core'
 import 'alinea/css'
+import * as dashboard from 'alinea/dashboard'
 import {DashboardProvider} from 'alinea/dashboard/DashboardProvider'
+import {InputForm} from 'alinea/dashboard/editor/InputForm'
 import {ErrorBoundary} from 'alinea/dashboard/view/ErrorBoundary'
 import {Viewport} from 'alinea/dashboard/view/Viewport'
 import {FieldToolbar} from 'alinea/dashboard/view/entry/FieldToolbar'
-import * as editor from 'alinea/editor'
-import {InputForm, useField} from 'alinea/editor'
-import {useForm} from 'alinea/editor/hook/UseForm'
-import {InputField} from 'alinea/editor/view/InputField'
 import {
   HStack,
   Loader,
@@ -50,8 +48,8 @@ type PreviewTypeProps = {
 
 function PreviewType({type}: PreviewTypeProps) {
   const state = useRef<any>()
-  const form = useForm({type, initialValue: state.current}, [type])
-  state.current = form()
+  const form = dashboard.useForm(type, {initialValue: state.current})
+  state.current = form.data()
   const label = core.Type.label(type)
   return (
     <div style={{margin: 'auto', width: '100%', padding: `20px 0`}}>
@@ -59,7 +57,7 @@ function PreviewType({type}: PreviewTypeProps) {
         <TextLabel label={label} />
       </Typo.H1>
 
-      <InputForm {...form} />
+      <InputForm form={form} />
     </div>
   )
 }
@@ -69,10 +67,11 @@ type PreviewFieldProps = {
 }
 
 function PreviewField({field}: PreviewFieldProps) {
-  const input = useField(field, [field])
+  const type = React.useMemo(() => core.type({field}), [field])
+  const form = dashboard.useForm(type)
   return (
     <div style={{margin: 'auto', width: '100%'}}>
-      <InputField {...input} />
+      <InputForm form={form} />
     </div>
   )
 }
@@ -173,7 +172,12 @@ export default function Playground() {
         body.outputText
       )
       const exports = Object.create(null)
-      const pkgs = {alinea, React, 'alinea/core': core, 'alinea/editor': editor}
+      const pkgs = {
+        alinea,
+        React,
+        'alinea/core': core,
+        'alinea/dashboard': dashboard
+      }
       const require = (name: string) => pkgs[name]
       exec(require, exports, React, alinea.alinea)
       setState({result: exports.default})

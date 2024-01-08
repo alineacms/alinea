@@ -1,5 +1,4 @@
-import {FieldOptions, WithoutLabel} from 'alinea/core'
-import {ScalarField} from 'alinea/core/field/ScalarField'
+import {FieldOptions, ScalarField, WithoutLabel} from 'alinea/core'
 import {InputLabel, useField} from 'alinea/dashboard'
 import {HStack, VStack} from 'alinea/ui'
 import {SVGProps, useState} from 'react'

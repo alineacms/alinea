@@ -16,8 +16,7 @@ export const BodyField = alinea.richText('Body', {
     ChapterLinkBlock,
     ExampleBlock,
     FrameworkBlock
-  }),
-  inline: true
+  })
 })
 
 export const BodyBlock = alinea.type('Body text', {

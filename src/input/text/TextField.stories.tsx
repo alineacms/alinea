@@ -19,7 +19,7 @@ export function TextField() {
   return (
     <UIStory>
       <VStack>
-        <InputForm form={form} type={fields} />
+        <InputForm form={form} />
       </VStack>
     </UIStory>
   )

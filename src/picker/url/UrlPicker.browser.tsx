@@ -48,7 +48,7 @@ export function UrlPickerForm({options, onConfirm, onCancel}: PickerProps) {
   }
   return (
     <form onSubmit={handleSubmit}>
-      <InputForm border={false} form={form} type={linkForm} />
+      <InputForm border={false} form={form} />
       <HStack>
         <Stack.Right>
           <HStack gap={16}>

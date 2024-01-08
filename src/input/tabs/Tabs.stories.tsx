@@ -36,7 +36,7 @@ export function TabsField() {
   return (
     <UIStory>
       <VStack style={{minWidth: '600px'}}>
-        <InputForm form={form} type={fields} />
+        <InputForm form={form} />
       </VStack>
     </UIStory>
   )

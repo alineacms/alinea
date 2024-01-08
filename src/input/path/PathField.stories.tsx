@@ -16,7 +16,7 @@ export function PathField() {
   return (
     <UIStory>
       <VStack>
-        <InputForm type={fields} form={form} />
+        <InputForm form={form} />
       </VStack>
     </UIStory>
   )

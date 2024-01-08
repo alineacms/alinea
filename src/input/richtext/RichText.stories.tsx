@@ -81,7 +81,7 @@ export function RichTextField() {
   const form = useForm(fields)
   return (
     <UIStory>
-      <InputForm type={fields} form={form} />
+      <InputForm form={form} />
     </UIStory>
   )
 }

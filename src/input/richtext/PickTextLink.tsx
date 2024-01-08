@@ -95,7 +95,7 @@ export function PickTextLinkForm({
         <form onSubmit={handleSubmit}>
           <VStack gap={18}>
             <div>
-              <InputForm form={form} type={type} border={false} />
+              <InputForm form={form} border={false} />
             </div>
             <HStack>
               {options.hasLink && (

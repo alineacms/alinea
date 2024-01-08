@@ -218,7 +218,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
       className={styles.form({loading: isCreating})}
     >
       {isCreating && <Loader absolute />}
-      <InputForm border={false} form={form} type={formType} />
+      <InputForm border={false} form={form} />
       <div className={styles.root.footer()}>
         <Link href={pathname} className={styles.root.footer.link()}>
           Cancel

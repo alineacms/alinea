@@ -6,13 +6,12 @@ import {VStack} from 'alinea/ui/Stack'
 import {FormAtoms, FormProvider} from '../atoms/FormAtoms.js'
 import {ErrorBoundary} from '../view/ErrorBoundary.js'
 
-export interface InputFormProps {
-  type: Type
-  form?: FormAtoms
+export type InputFormProps = {
   border?: boolean
-}
+} & ({type: Type; form?: undefined} | {form: FormAtoms<any>; type?: undefined})
 
-export function InputForm({type, form, border}: InputFormProps) {
+export function InputForm(props: InputFormProps) {
+  const type = props.type ?? props.form.type
   const inner = (
     <VStack gap={20}>
       {Type.sections(type).map((section, i) => {
@@ -20,14 +19,14 @@ export function InputForm({type, form, border}: InputFormProps) {
         if (View) return <View section={section} key={i} />
         return (
           <div key={i} style={{display: 'contents'}}>
-            <Fields fields={Section.fields(section)} border={border} />
+            <Fields fields={Section.fields(section)} border={props.border} />
           </div>
         )
       })}
     </VStack>
   )
-  if (!form) return inner
-  return <FormProvider form={form}>{inner}</FormProvider>
+  if (!props.form) return inner
+  return <FormProvider form={props.form}>{inner}</FormProvider>
 }
 
 export interface FieldsProps {
