@@ -109,7 +109,7 @@ export default async function DocPage({params}: DocPageProps) {
     }))
   ].map(item => ({
     ...item,
-    title: item.navigationTitle ?? item.title
+    title: item.navigationTitle || item.title
   }))
   const nested = nestNav(entries)
   const directChildren = entries.filter(item => item.parent === doc.id)
