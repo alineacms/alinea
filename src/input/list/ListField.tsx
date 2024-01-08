@@ -30,7 +30,7 @@ export interface ListRow {
 export function list<Definitions extends Schema>(
   label: string,
   options: WithoutLabel<ListOptions<Definitions>>
-): ListField<Infer<Definitions>, ListOptions<Definitions>> {
+): ListField<Infer<Definitions> & ListRow, ListOptions<Definitions>> {
   return new ListField(Schema.shapes(options.schema), {
     hint: listHint(options.schema),
     options: {label, ...options}

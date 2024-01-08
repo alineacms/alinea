@@ -26,7 +26,7 @@ import {ListField} from 'alinea/core/field/ListField'
 import {entries} from 'alinea/core/util/Objects'
 import {FormRow} from 'alinea/dashboard/atoms/FormAtoms'
 import {InputForm} from 'alinea/dashboard/editor/InputForm'
-import {useField, useFieldOptions} from 'alinea/dashboard/editor/UseField'
+import {useField} from 'alinea/dashboard/editor/UseField'
 import {Create} from 'alinea/dashboard/view/Create'
 import {IconButton} from 'alinea/dashboard/view/IconButton'
 import {InputLabel} from 'alinea/dashboard/view/InputLabel'
@@ -86,7 +86,7 @@ function ListInputRowSortable(props: ListInputRowProps) {
 type ListInputRowProps = PropsWithChildren<
   {
     row: ListRow
-    field: ListField<Infer<Schema>, ListOptions<Schema>>
+    schema: Schema
     isDragging?: boolean
     onMove?: (direction: 1 | -1) => void
     onDelete?: () => void
@@ -103,7 +103,7 @@ type ListInputRowProps = PropsWithChildren<
 
 function ListInputRow({
   row,
-  field,
+  schema,
   onMove,
   onDelete,
   handle,
@@ -114,8 +114,7 @@ function ListInputRow({
   firstRow,
   ...rest
 }: ListInputRowProps) {
-  const options = useFieldOptions(field)
-  const type = options.schema[row.type]
+  const type = schema[row.type]
   const [showInsert, setShowInsert] = useState(false)
   if (!type) return null
   return (
@@ -134,7 +133,7 @@ function ListInputRow({
       {showInsert && (
         <ListCreateRow
           inline
-          field={field}
+          schema={schema}
           onCreate={(type: string) => {
             onCreate!(type)
             setShowInsert(false)
@@ -172,13 +171,12 @@ function ListInputRow({
 }
 
 interface ListCreateRowProps {
-  field: ListField<Infer<Schema>, ListOptions<Schema>>
+  schema: Schema
   inline?: boolean
   onCreate: (type: string) => void
 }
 
-function ListCreateRow({field, inline, onCreate}: ListCreateRowProps) {
-  const schema = field[Field.Data].options.schema
+function ListCreateRow({schema, inline, onCreate}: ListCreateRowProps) {
   return (
     <div className={styles.create({inline})}>
       <Create.Root>
@@ -226,6 +224,7 @@ const layoutMeasuringConfig = {
 
 export function ListInput({field}: ListInputProps) {
   const {options, value, mutator, label} = useField(field)
+  const schema = options.schema
   const rows: Array<ListRow> = value as any
   const ids = rows.map(row => row.id)
   const [dragging, setDragging] = useState<ListRow | null>(null)
@@ -272,7 +271,7 @@ export function ListInput({field}: ListInputProps) {
                     >
                       <ListInputRowSortable
                         row={row}
-                        field={field}
+                        schema={schema}
                         onMove={direction => mutator.move(i, i + direction)}
                         onDelete={() => mutator.remove(row.id)}
                         onCreate={(type: string) => {
@@ -284,7 +283,7 @@ export function ListInput({field}: ListInputProps) {
                   )
                 })}
                 <ListCreateRow
-                  field={field}
+                  schema={schema}
                   onCreate={(type: string) => {
                     mutator.push({type} as any)
                   }}
@@ -308,7 +307,7 @@ export function ListInput({field}: ListInputProps) {
                   <ListInputRow
                     key="overlay"
                     row={dragging}
-                    field={field}
+                    schema={schema}
                     isDragOverlay
                   />
                 </FormRow>

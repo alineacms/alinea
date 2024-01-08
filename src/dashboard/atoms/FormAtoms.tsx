@@ -106,7 +106,7 @@ export class FormAtoms<T = any> {
   fieldByKey(key: string): Field {
     for (const info of this.fieldInfo.values())
       if (info.key === key) return info.field
-    throw new Error(`Field not found: ${key}`)
+    throw new Error(`Field not found: "${key}"`)
   }
 
   keyOf(field: Field) {
