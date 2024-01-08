@@ -1,4 +1,5 @@
 import {EntryPhase, Section, Type} from 'alinea/core'
+import {FormProvider} from 'alinea/dashboard'
 import {InputForm} from 'alinea/dashboard/editor/InputForm'
 import {Modal} from 'alinea/dashboard/view/Modal'
 import {TabsHeader, TabsSection} from 'alinea/input/tabs/Tabs.browser'
@@ -234,9 +235,11 @@ export function EntryEdit({editor}: EntryEditProps) {
                     <Tabs.Panels>
                       {visibleTypes.map((type, i) => {
                         return (
-                          <Tabs.Panel key={i} tabIndex={i}>
-                            <InputForm form={form} />
-                          </Tabs.Panel>
+                          <FormProvider form={form} key={i}>
+                            <Tabs.Panel tabIndex={i}>
+                              <InputForm type={type} />
+                            </Tabs.Panel>
+                          </FormProvider>
                         )
                       })}
                     </Tabs.Panels>
