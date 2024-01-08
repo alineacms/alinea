@@ -1,3 +1,4 @@
+import {Picker} from 'alinea/core'
 import {Entry} from 'alinea/core/Entry'
 import {Hint} from 'alinea/core/Hint'
 import {Label} from 'alinea/core/Label'
@@ -9,7 +10,6 @@ import {Projection} from 'alinea/core/pages/Projection'
 import {RecordShape} from 'alinea/core/shape/RecordShape'
 import {ScalarShape} from 'alinea/core/shape/ScalarShape'
 import {assign} from 'alinea/core/util/Objects'
-import {Picker} from 'alinea/editor/Picker'
 import {EntryLinkReference} from './EntryReference.js'
 
 export const entryFields = {
@@ -46,10 +46,9 @@ export interface EntryPickerOptions<T = {}> {
   condition?: Expr<boolean>
   showMedia?: boolean
   max?: number
-  label?: Label
+  label?: string
   title?: Label
   fields?: Type<T>
-  initialValue?: Reference | Array<Reference>
 }
 
 export function entryPicker<Ref extends Reference, Fields>(

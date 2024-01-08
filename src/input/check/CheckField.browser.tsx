@@ -1,5 +1,6 @@
 import {Field} from 'alinea/core'
-import {InputLabel, InputState, useInput} from 'alinea/editor'
+import {useField} from 'alinea/dashboard/editor/UseField'
+import {InputLabel} from 'alinea/dashboard/view/InputLabel'
 import {HStack, Icon, TextLabel, fromModule} from 'alinea/ui'
 import {IcRoundCheck} from 'alinea/ui/icons/IcRoundCheck'
 import {IcRoundTextFields} from 'alinea/ui/icons/IcRoundTextFields'
@@ -13,21 +14,19 @@ export const check = Field.provideView(CheckInput, createCheck)
 
 const styles = fromModule(css)
 
-type CheckInputProps = {
-  state: InputState<InputState.Scalar<boolean>>
+interface CheckInputProps {
   field: CheckField
 }
 
-function CheckInput({state, field}: CheckInputProps) {
-  const {label, options} = field[Field.Data]
-  const {readOnly: readonly} = options
-  const [value, setValue] = useInput(state)
+function CheckInput({field}: CheckInputProps) {
+  const {value, mutator, label, options} = useField(field)
+  const {description, readOnly} = options
   const [focus, setFocus] = useState(false)
   return (
     <InputLabel
       asLabel
       {...options}
-      label={options.label ? label : undefined}
+      label={description ? label : undefined}
       focused={focus}
       icon={IcRoundTextFields}
     >
@@ -40,13 +39,13 @@ function CheckInput({state, field}: CheckInputProps) {
           className={styles.root.input()}
           type="checkbox"
           checked={Boolean(value)}
-          onChange={e => setValue(e.currentTarget.checked)}
+          onChange={e => mutator(e.currentTarget.checked)}
           onFocus={() => setFocus(true)}
           onBlur={() => setFocus(false)}
           autoFocus={options.autoFocus}
-          disabled={readonly}
+          disabled={readOnly}
         />
-        <span className={styles.root.checkmark({disabled: options.readOnly})}>
+        <span className={styles.root.checkmark({disabled: readOnly})}>
           {value && (
             <Icon
               size={20}
@@ -56,7 +55,7 @@ function CheckInput({state, field}: CheckInputProps) {
           )}
         </span>
         <TextLabel
-          label={options.label ?? label}
+          label={description ?? label}
           className={styles.root.label()}
         />
       </HStack>

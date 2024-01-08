@@ -1,21 +1,25 @@
-import {useField} from 'alinea/editor'
-import {InputField} from 'alinea/editor/view/InputField'
+import {type} from 'alinea/core'
+import {useForm} from 'alinea/dashboard/atoms/FormAtoms'
+import {InputForm} from 'alinea/dashboard/editor/InputForm'
 import {date} from 'alinea/input/date'
 import {VStack} from 'alinea/ui'
 import {UIStory} from 'alinea/ui/UIStory'
 
+const fields = type('Field', {
+  date: date('Date', {}),
+  focused: date('Date', {autoFocus: true}),
+  readOnly: date('Date (read-only)', {
+    readOnly: true,
+    initialValue: '1900-01-01'
+  })
+})
+
 export function DateField() {
-  const dateField = useField(date('Date', {}))
-  const focusedDateField = useField(date('Date', {autoFocus: true}))
-  const readonlyDateField = useField(
-    date('Date (read-only)', {readOnly: true, initialValue: '1900-01-01'})
-  )
+  const form = useForm(fields)
   return (
     <UIStory>
       <VStack>
-        <InputField {...dateField} />
-        <InputField {...focusedDateField} />
-        <InputField {...readonlyDateField} />
+        <InputForm form={form} />
       </VStack>
     </UIStory>
   )

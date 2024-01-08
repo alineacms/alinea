@@ -1,12 +1,12 @@
-import {FieldOptions, Hint, Label} from 'alinea/core'
+import {FieldOptions, Hint, WithoutLabel} from 'alinea/core'
 import {ScalarField} from 'alinea/core/field/ScalarField'
 
 /** Optional settings to configure a text field */
-export interface DateOptions extends FieldOptions {
+export interface DateOptions extends FieldOptions<string> {
   /** Width of the field in the dashboard UI (0-1) */
   width?: number
   /** Add instructional text to a field */
-  help?: Label
+  help?: string
   /** Field is optional */
   optional?: boolean
   /** Display a minimal version */
@@ -25,11 +25,12 @@ export interface DateOptions extends FieldOptions {
 export class DateField extends ScalarField<string, DateOptions> {}
 
 /** Create a date field configuration */
-export function date(label: Label, options: DateOptions = {}): DateField {
+export function date(
+  label: string,
+  options: WithoutLabel<DateOptions> = {}
+): DateField {
   return new DateField({
     hint: Hint.String(),
-    label,
-    options,
-    initialValue: options.initialValue
+    options: {label, ...options}
   })
 }

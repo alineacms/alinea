@@ -9,6 +9,10 @@
     padding: 6px 10px 10px 10px;
   }
 
+  &:empty {
+    display: none;
+  }
+
   & & {
     padding: 6px 10px 10px 10px;
   }

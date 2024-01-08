@@ -7,8 +7,9 @@ import {
 } from '@floating-ui/react-dom'
 import {Listbox} from '@headlessui/react'
 import {Field} from 'alinea/core'
+import {useField} from 'alinea/dashboard/editor/UseField'
 import {IconButton} from 'alinea/dashboard/view/IconButton'
-import {InputLabel, InputState, useInput} from 'alinea/editor'
+import {InputLabel} from 'alinea/dashboard/view/InputLabel'
 import {HStack, Icon, TextLabel, fromModule} from 'alinea/ui'
 import {IcRoundArrowDropDownCircle} from 'alinea/ui/icons/IcRoundArrowDropDownCircle'
 import {IcRoundCheck} from 'alinea/ui/icons/IcRoundCheck'
@@ -23,17 +24,12 @@ export const select = Field.provideView(SelectInput, createSelect)
 
 const styles = fromModule(css)
 
-interface SelectInputProps<Key extends string, Items> {
-  state: InputState<InputState.Scalar<Key | null>>
-  field: SelectField<Key, Items>
+interface SelectInputProps<Key extends string> {
+  field: SelectField<Key>
 }
 
-function SelectInput<Key extends string, Items extends Record<Key, string>>({
-  state,
-  field
-}: SelectInputProps<Key, Items>) {
-  const {label, options} = field[Field.Data]
-  const [value, setValue] = useInput(state)
+function SelectInput<Key extends string>({field}: SelectInputProps<Key>) {
+  const {value, mutator, label, options} = useField(field)
   const items = options.items as Record<string, string>
   const {x, y, reference, floating, refs, strategy} = useFloating({
     whileElementsMounted: autoUpdate,
@@ -54,9 +50,9 @@ function SelectInput<Key extends string, Items extends Record<Key, string>>({
   })
 
   return (
-    <InputLabel label={label} {...options} icon={IcRoundArrowDropDownCircle}>
+    <InputLabel {...options} icon={IcRoundArrowDropDownCircle}>
       <div className={styles.root()}>
-        <Listbox value={value} onChange={setValue} disabled={options.readOnly}>
+        <Listbox value={value} onChange={mutator} disabled={options.readOnly}>
           {({open}) => (
             <div>
               <Listbox.Button
@@ -79,7 +75,7 @@ function SelectInput<Key extends string, Items extends Record<Key, string>>({
                 {value && options.optional && (
                   <IconButton
                     icon={IcRoundClose}
-                    onClick={() => setValue(undefined!)}
+                    onClick={() => mutator(undefined!)}
                     className={styles.root.input.delete()}
                   />
                 )}

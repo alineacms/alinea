@@ -1,17 +1,15 @@
 import {type} from 'alinea/core'
 import {useForm} from 'alinea/dashboard/atoms/FormAtoms'
 import {InputForm} from 'alinea/dashboard/editor/InputForm'
-import {json} from 'alinea/input/json'
+import {metadata} from 'alinea/input/metadata/MetadataField'
 import {VStack} from 'alinea/ui'
 import {UIStory} from 'alinea/ui/UIStory'
 
-const fields = type('Field', {
-  json: json('Json'),
-  focused: json('Json (autofocus)', {autoFocus: true}),
-  readOnly: json('Json (read-only)', {readOnly: true})
+const fields = type({
+  metadata: metadata()
 })
 
-export function JsonField() {
+export function MetadataField() {
   const form = useForm(fields)
   return (
     <UIStory>
@@ -23,5 +21,5 @@ export function JsonField() {
 }
 
 export default {
-  title: 'Fields / Json'
+  title: 'Fields / Metadata'
 }

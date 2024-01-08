@@ -127,7 +127,7 @@ export class RichTextShape<Blocks>
     })
   }
   create() {
-    return this.initialValue || ([] as TextDoc<Blocks>)
+    return this.initialValue ?? ([] as TextDoc<Blocks>)
   }
   typeOfChild<C>(yValue: Y.Map<any>, child: string): Shape<C> {
     const block = yValue.get(child)
@@ -272,6 +272,9 @@ export class RichTextShape<Blocks>
       while (source.length > i) source.delete(i)
     }
     syncNodes(current.get('$text'), value)
+  }
+  init(parent: Y.Map<any>, key: string): void {
+    if (!parent.has(key)) parent.set(key, this.toY(this.create()))
   }
   watch(parent: Y.Map<any>, key: string) {
     // There's no watching of the fragment involved

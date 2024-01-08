@@ -1,41 +1,33 @@
-import {type} from 'alinea/core/Type'
-import {useField} from 'alinea/editor'
-import {InputField} from 'alinea/editor/view/InputField'
+import {type} from 'alinea/core'
+import {useForm} from 'alinea/dashboard/atoms/FormAtoms'
+import {InputForm} from 'alinea/dashboard/editor/InputForm'
 import {link} from 'alinea/input/link/LinkConstructors'
 import {text} from 'alinea/input/text'
 import {VStack} from 'alinea/ui'
 import {UIStory} from 'alinea/ui/UIStory'
 
+const fields = type('Field', {
+  entry: link.entry('Entry link', {}),
+  multiple: link.entry.multiple('Multiple entry links', {}),
+  external: link.url('External link'),
+  image: link.image('Image link', {}),
+  file: link.file('File link', {}),
+  withFields: link.entry.multiple('With fields', {
+    fields: type('Fields', {
+      field1: text('Field 1')
+    })
+  })
+})
+
 export function LinkField() {
-  const entryLink = useField(link.entry('Entry link', {}))
-  const multipleEntryLink = useField(
-    link.entry.multiple('Multiple entry links', {})
-  )
-  const externalLink = useField(link.url('External link'))
-  const imageLink = useField(link.image('Image link', {}))
-  const fileLink = useField(link.file('File link', {}))
+  const form = useForm(fields)
   return (
     <UIStory>
       <VStack>
-        <InputField {...entryLink} />
-        <InputField {...multipleEntryLink} />
-        <InputField {...externalLink} />
-        <InputField {...imageLink} />
-        <InputField {...fileLink} />
+        <InputForm form={form} />
       </VStack>
     </UIStory>
   )
-}
-
-export function WithExtraFields() {
-  const entryLink = useField(
-    link.entry.multiple('Entry link', {
-      fields: type('Fields', {
-        field1: text('Field 1')
-      })
-    })
-  )
-  return <InputField {...entryLink} />
 }
 
 export default {

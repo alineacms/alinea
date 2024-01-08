@@ -1,5 +1,34 @@
 # Changelog
 
+## [Unreleased]
+
+- Conditional configuration (#364)
+
+  All field configuration can be adjusted based on the value of other fields.
+  After defining fields in a Type a tracker function can be set up.
+  The tracker function takes a reference to a field and a subscription function.
+  In the subscription function field values can be retrieved and new options
+  returned.
+
+  ```tsx
+  const Example = alinea.type('Conditional example', {
+    textField: alinea.text('Text field'),
+    readOnly: alinea.check('Make read-only'),
+    hidden: alinea.check('Hide field')
+  })
+
+  alinea.track.options(Example.textField, get => {
+    const textField = get(Example.textField)
+    const readOnly = get(Example.readOnly)
+    const hidden = get(Example.hidden)
+    return {
+      readOnly,
+      hidden,
+      help: `Text has ${textField.length} characters`
+    }
+  })
+  ```
+
 ## [0.4.3]
 
 - The description field for external links is renamed to "title".

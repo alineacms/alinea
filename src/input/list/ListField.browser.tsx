@@ -24,9 +24,12 @@ import {CSS, FirstArgument} from '@dnd-kit/utilities'
 import {Field, Infer, Schema, Type} from 'alinea/core'
 import {ListField} from 'alinea/core/field/ListField'
 import {entries} from 'alinea/core/util/Objects'
+import {FormRow} from 'alinea/dashboard/atoms/FormAtoms'
+import {InputForm} from 'alinea/dashboard/editor/InputForm'
+import {useField} from 'alinea/dashboard/editor/UseField'
 import {Create} from 'alinea/dashboard/view/Create'
 import {IconButton} from 'alinea/dashboard/view/IconButton'
-import {InputForm, InputLabel, InputState, useInput} from 'alinea/editor'
+import {InputLabel} from 'alinea/dashboard/view/InputLabel'
 import {fromModule, Icon, TextLabel} from 'alinea/ui'
 import {IcOutlineList} from 'alinea/ui/icons/IcOutlineList'
 import IcRoundAdd from 'alinea/ui/icons/IcRoundAdd'
@@ -83,8 +86,7 @@ function ListInputRowSortable(props: ListInputRowProps) {
 type ListInputRowProps = PropsWithChildren<
   {
     row: ListRow
-    path: InputState<ListRow>
-    field: ListField<Infer<Schema>, ListOptions<Schema>>
+    schema: Schema
     isDragging?: boolean
     onMove?: (direction: 1 | -1) => void
     onDelete?: () => void
@@ -101,8 +103,7 @@ type ListInputRowProps = PropsWithChildren<
 
 function ListInputRow({
   row,
-  field,
-  path,
+  schema,
   onMove,
   onDelete,
   handle,
@@ -113,8 +114,7 @@ function ListInputRow({
   firstRow,
   ...rest
 }: ListInputRowProps) {
-  const {label, options} = field[Field.Data]
-  const type = options.schema[row.type]
+  const type = schema[row.type]
   const [showInsert, setShowInsert] = useState(false)
   if (!type) return null
   return (
@@ -133,7 +133,7 @@ function ListInputRow({
       {showInsert && (
         <ListCreateRow
           inline
-          field={field}
+          schema={schema}
           onCreate={(type: string) => {
             onCreate!(type)
             setShowInsert(false)
@@ -164,20 +164,19 @@ function ListInputRow({
         </Sink.Options>
       </Sink.Header>
       <Sink.Content>
-        <InputForm type={type} state={path} />
+        <InputForm type={type} />
       </Sink.Content>
     </div>
   )
 }
 
 interface ListCreateRowProps {
-  field: ListField<Infer<Schema>, ListOptions<Schema>>
+  schema: Schema
   inline?: boolean
   onCreate: (type: string) => void
 }
 
-function ListCreateRow({field, inline, onCreate}: ListCreateRowProps) {
-  const schema = field[Field.Data].options.schema
+function ListCreateRow({schema, inline, onCreate}: ListCreateRowProps) {
   return (
     <div className={styles.create({inline})}>
       <Create.Root>
@@ -216,7 +215,6 @@ function ListInsertRow({first, open, onInsert}: ListInsertRowProps) {
 }
 
 export interface ListInputProps {
-  state: InputState<InputState.List<any>>
   field: ListField<Infer<Schema>, ListOptions<Schema>>
 }
 
@@ -224,9 +222,9 @@ const layoutMeasuringConfig = {
   strategy: LayoutMeasuringStrategy.Always
 }
 
-export function ListInput({state, field}: ListInputProps) {
-  const {label, options} = field[Field.Data]
-  const [value, list] = useInput(state)
+export function ListInput({field}: ListInputProps) {
+  const {options, value, mutator, label} = useField(field)
+  const schema = options.schema
   const rows: Array<ListRow> = value as any
   const ids = rows.map(row => row.id)
   const [dragging, setDragging] = useState<ListRow | null>(null)
@@ -245,7 +243,7 @@ export function ListInput({state, field}: ListInputProps) {
   function handleDragEnd(event: DragEndEvent) {
     const {active, over} = event
     if (!over || active.id === over.id) return
-    list.move(ids.indexOf(active.id), ids.indexOf(over.id))
+    mutator.move(ids.indexOf(active.id), ids.indexOf(over.id))
     setDragging(null)
   }
 
@@ -257,31 +255,37 @@ export function ListInput({state, field}: ListInputProps) {
       onDragEnd={handleDragEnd}
       layoutMeasuring={layoutMeasuringConfig}
     >
-      <InputLabel label={label} {...options} icon={IcOutlineList}>
+      <InputLabel {...options} icon={IcOutlineList}>
         <div className={styles.root()}>
           <div className={styles.root.inner({inline: options.inline})}>
             <SortableContext items={ids} strategy={verticalListSortingStrategy}>
               <Sink.Root>
                 {rows.map((row, i) => {
+                  const type = options.schema[row.type]
                   return (
-                    <ListInputRowSortable
+                    <FormRow
                       key={row.id}
-                      row={row}
                       field={field}
-                      path={state.child(row.id)}
-                      onMove={direction => list.move(i, i + direction)}
-                      onDelete={() => list.remove(row.id)}
-                      onCreate={(type: string) => {
-                        list.push({type} as any, i)
-                      }}
-                      firstRow={i === 0}
-                    />
+                      rowId={row.id}
+                      type={type}
+                    >
+                      <ListInputRowSortable
+                        row={row}
+                        schema={schema}
+                        onMove={direction => mutator.move(i, i + direction)}
+                        onDelete={() => mutator.remove(row.id)}
+                        onCreate={(type: string) => {
+                          mutator.push({type} as any, i)
+                        }}
+                        firstRow={i === 0}
+                      />
+                    </FormRow>
                   )
                 })}
                 <ListCreateRow
-                  field={field}
+                  schema={schema}
                   onCreate={(type: string) => {
-                    list.push({type} as any)
+                    mutator.push({type} as any)
                   }}
                 />
               </Sink.Root>
@@ -294,13 +298,19 @@ export function ListInput({state, field}: ListInputProps) {
               }}
             >
               {dragging ? (
-                <ListInputRow
+                <FormRow
                   key="overlay"
-                  row={dragging}
                   field={field}
-                  path={state.child(dragging.id)}
-                  isDragOverlay
-                />
+                  rowId={dragging.id}
+                  type={options.schema[dragging.type]}
+                >
+                  <ListInputRow
+                    key="overlay"
+                    row={dragging}
+                    schema={schema}
+                    isDragOverlay
+                  />
+                </FormRow>
               ) : null}
             </DragOverlay>
           </div>

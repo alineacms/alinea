@@ -1,24 +1,43 @@
-import {useField} from 'alinea/editor'
-import {InputField} from 'alinea/editor/view/InputField'
+import {track, type} from 'alinea/core'
+import {useForm} from 'alinea/dashboard/atoms/FormAtoms'
+import {InputForm} from 'alinea/dashboard/editor/InputForm'
 import {select} from 'alinea/input/select'
 import {VStack} from 'alinea/ui'
 import {UIStory} from 'alinea/ui/UIStory'
 
 const options = {
-  1: 'Option 1',
-  2: 'Option 2'
-} as const
+  option1: 'Option 1',
+  option2: 'Option 2'
+}
+
+const fields = type({
+  selectA: select(
+    'Select',
+    {
+      one: 'Option 1',
+      two: 'Option 2'
+    },
+    {initialValue: 'one'}
+  ),
+  selectB: select('Select (tracked)', options),
+  readOnly: select('Select (read-only)', options, {
+    readOnly: true
+  })
+})
+
+track.options(fields.selectB, get => {
+  const value = get(fields.selectA)
+  return {
+    readOnly: value === 'one'
+  }
+})
 
 export function SelectField() {
-  const selectField = useField(select('Select', options))
-  const readonlySelectField = useField(
-    select('Select (read-only)', options, {readOnly: true, initialValue: '1'})
-  )
+  const form = useForm(fields)
   return (
     <UIStory>
       <VStack>
-        <InputField {...selectField} />
-        <InputField {...readonlySelectField} />
+        <InputForm form={form} />
       </VStack>
     </UIStory>
   )

@@ -1,34 +1,35 @@
-import {FieldOptions, Hint, Label, Reference} from 'alinea/core'
+import type {ListRow, Picker, WithoutLabel} from 'alinea/core'
+import {FieldOptions, Hint, Reference} from 'alinea/core'
 import {ListField} from 'alinea/core/field/ListField'
 import {UnionField} from 'alinea/core/field/UnionField'
+import {UnionRow} from 'alinea/core/shape/UnionShape'
 import {entries, fromEntries} from 'alinea/core/util/Objects'
-import type {Picker} from 'alinea/editor/Picker'
 
 /** Optional settings to configure a link field */
-export interface LinkFieldOptions extends FieldOptions {
+export interface LinkFieldOptions<Value> extends FieldOptions<Value> {
   /** Width of the field in the dashboard UI (0-1) */
   width?: number
   /** Add instructional text to a field */
-  help?: Label
+  help?: string
   /** Field is optional */
   optional?: boolean
   /** Display a minimal version */
   inline?: boolean
-  initialValue?: Reference | Array<Reference>
+  max?: number
 }
 
-export interface LinkOptions<Row extends Reference> extends LinkFieldOptions {
+export interface LinkOptions<Value> extends LinkFieldOptions<Value> {
   pickers: Record<string, Picker<any, any>>
 }
 
-export class LinkField<Row extends Reference> extends UnionField<
+export class LinkField<Row extends Reference & UnionRow> extends UnionField<
   Row,
   LinkOptions<Row>
 > {}
 
-export function createLink<Row extends Reference>(
-  label: Label,
-  options: LinkOptions<Row>
+export function createLink<Row extends Reference & UnionRow>(
+  label: string,
+  options: WithoutLabel<LinkOptions<Row>>
 ): LinkField<Row> {
   const pickers = entries(options.pickers)
   const blocks = fromEntries(
@@ -40,9 +41,7 @@ export function createLink<Row extends Reference>(
       : Hint.Union(pickers.map(([, picker]) => picker.hint))
   return new LinkField(blocks, {
     hint,
-    label,
-    options,
-    initialValue: options.initialValue as Row,
+    options: {label, ...options},
     async postProcess(value, loader) {
       const type = value.type
       const picker = options.pickers[type]
@@ -53,15 +52,15 @@ export function createLink<Row extends Reference>(
 }
 
 /** Internal representation of a link field */
-export class LinksField<Row extends Reference> extends ListField<
+export class LinksField<Row extends Reference & ListRow> extends ListField<
   Row,
-  LinkOptions<Row> & {max?: number}
+  LinkOptions<Array<Row>>
 > {}
 
 /** Create a link field configuration */
-export function createLinks<Row extends Reference>(
-  label: Label,
-  options: LinkOptions<Row> & {max?: number}
+export function createLinks<Row extends Reference & ListRow>(
+  label: string,
+  options: WithoutLabel<LinkOptions<Array<ListRow & Row>>>
 ): LinksField<Row> {
   const pickers = entries(options.pickers)
   const blocks = fromEntries(
@@ -73,8 +72,7 @@ export function createLinks<Row extends Reference>(
       : Hint.Union(pickers.map(([, picker]) => picker.hint))
   return new LinksField(blocks, {
     hint: Hint.Array(hint),
-    label,
-    options,
+    options: {label, ...options},
     async postProcess(rows, loader) {
       const tasks = []
       for (const row of rows) {

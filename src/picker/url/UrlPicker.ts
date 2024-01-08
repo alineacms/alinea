@@ -1,9 +1,9 @@
+import {Picker} from 'alinea/core'
 import {Hint} from 'alinea/core/Hint'
 import {Reference} from 'alinea/core/Reference'
 import {Type} from 'alinea/core/Type'
 import {RecordShape} from 'alinea/core/shape/RecordShape'
 import {ScalarShape} from 'alinea/core/shape/ScalarShape'
-import {Picker} from 'alinea/editor/Picker'
 
 export interface UrlReference extends Reference {
   ref: 'url'

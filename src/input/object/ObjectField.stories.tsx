@@ -1,17 +1,21 @@
 import {type} from 'alinea/core'
 import {useForm} from 'alinea/dashboard/atoms/FormAtoms'
 import {InputForm} from 'alinea/dashboard/editor/InputForm'
-import {json} from 'alinea/input/json'
+import {object} from 'alinea/input/object'
+import {text} from 'alinea/input/text/TextField'
 import {VStack} from 'alinea/ui'
 import {UIStory} from 'alinea/ui/UIStory'
 
-const fields = type('Field', {
-  json: json('Json'),
-  focused: json('Json (autofocus)', {autoFocus: true}),
-  readOnly: json('Json (read-only)', {readOnly: true})
+const fields = type({
+  path: object('Object', {
+    fields: type({
+      field1: text('Field 1'),
+      field2: text('Field 2')
+    })
+  })
 })
 
-export function JsonField() {
+export function ObjectField() {
   const form = useForm(fields)
   return (
     <UIStory>
@@ -23,5 +27,5 @@ export function JsonField() {
 }
 
 export default {
-  title: 'Fields / Json'
+  title: 'Fields / Object'
 }

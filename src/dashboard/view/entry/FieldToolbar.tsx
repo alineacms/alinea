@@ -9,6 +9,9 @@ const styles = fromModule(css)
 export namespace FieldToolbar {
   export const {Provider, Portal, Slot, useSlots} = createSlots()
 
+  // Workaround a bug in Vite/SWC, whatever is used by Ladle
+  const InnerPortal = Portal
+
   export function Root(props: HTMLProps<HTMLDivElement>) {
     const {shown} = useSlots()
     return (
@@ -16,7 +19,7 @@ export namespace FieldToolbar {
         {...props}
         className={styles.root.mergeProps(props)({active: shown})}
       >
-        <Portal className={styles.root.inner()} />
+        <InnerPortal className={styles.root.inner()} />
       </AppBar.Root>
     )
   }

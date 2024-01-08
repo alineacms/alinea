@@ -3,7 +3,6 @@ import {Root as AlineaRoot, Config, Workspace} from 'alinea/core'
 import {Label} from 'alinea/core/Label'
 import {entries, fromEntries} from 'alinea/core/util/Objects'
 import {link, useNavigate} from 'alinea/dashboard/util/HashRouter'
-import {InputField} from 'alinea/editor/view/InputField'
 import {select} from 'alinea/input/select'
 import {Icon, TextLabel, VStack, fromModule, px} from 'alinea/ui'
 import {Avatar} from 'alinea/ui/Avatar'
@@ -206,13 +205,13 @@ export namespace Toolbar {
                         />
                       </HStack>
                     </HStack>
-                    {workspaces.length > 1 && (
+                    {/*workspaces.length > 1 && (
                       <InputField
                         value={preferences.workspace || ''}
                         onChange={v => updateWorkspace(v ?? undefined)}
                         field={defaultWorkspace}
                       />
-                    )}
+                    )*/}
                   </VStack>
 
                   {Config.hasAuth(config) && (

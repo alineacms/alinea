@@ -1,4 +1,4 @@
-import {Type, type} from 'alinea/core'
+import {FieldOptions, Type, WithoutLabel, type} from 'alinea/core'
 import {RecordField} from 'alinea/core/field/RecordField'
 import {link} from 'alinea/input/link'
 import {ObjectField, object} from 'alinea/input/object'
@@ -6,7 +6,8 @@ import {TextField, text} from 'alinea/input/text'
 import {ImageReference} from '../../picker/entry/EntryReference.js'
 import {LinkField} from '../link/LinkField.js'
 
-export interface MetadataOptions {
+export interface MetadataOptions
+  extends FieldOptions<Type.Infer<MetadataFields>> {
   inferTitleFrom?: string
   inferDescriptionFrom?: string
   inferImageFrom?: string
@@ -27,7 +28,10 @@ export class MetadataField extends RecordField<
   MetadataOptions & {fields: Type<MetadataFields>}
 > {}
 
-export function metadata(options: MetadataOptions = {}) {
+export function metadata(
+  label = 'Metadata',
+  options: WithoutLabel<MetadataOptions> = {}
+) {
   const fields = type('Fields', {
     title: text('Title', {width: 0.5}),
     description: text('Description', {multiline: true}),
@@ -41,7 +45,6 @@ export function metadata(options: MetadataOptions = {}) {
   })
   return new MetadataField(Type.shape(fields), {
     hint: Type.hint(fields),
-    label: 'Metadata',
-    options: {...options, fields}
+    options: {label, ...options, fields}
   })
 }

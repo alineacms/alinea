@@ -1,5 +1,5 @@
 import {Shape} from 'alinea/core'
-import {InputLabel} from 'alinea/editor'
+import {InputLabel} from 'alinea/dashboard/view/InputLabel'
 import {VStack} from 'alinea/ui'
 import {Lift} from 'alinea/ui/Lift'
 import {FieldDiff} from './FieldDiff.js'

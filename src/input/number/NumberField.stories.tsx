@@ -1,19 +1,21 @@
-import {useField} from 'alinea/editor'
-import {InputField} from 'alinea/editor/view/InputField'
+import {type} from 'alinea/core'
+import {useForm} from 'alinea/dashboard/atoms/FormAtoms'
+import {InputForm} from 'alinea/dashboard/editor/InputForm'
 import {number} from 'alinea/input/number'
 import {VStack} from 'alinea/ui'
 import {UIStory} from 'alinea/ui/UIStory'
 
+const fields = type({
+  number: number('Number'),
+  readOnly: number('Number (read-only)', {readOnly: true, initialValue: 0})
+})
+
 export function NumberField() {
-  const numberField = useField(number('Number'))
-  const readonlyNumberField = useField(
-    number('Number (read-only)', {readOnly: true, initialValue: 0})
-  )
+  const form = useForm(fields)
   return (
     <UIStory>
       <VStack>
-        <InputField {...numberField} />
-        <InputField {...readonlyNumberField} />
+        <InputForm form={form} />
       </VStack>
     </UIStory>
   )

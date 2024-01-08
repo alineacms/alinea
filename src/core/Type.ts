@@ -226,7 +226,8 @@ class TypeInstance<Definition extends TypeDefinition> implements TypeData {
 
   field(def: Field, name: string) {
     return assign(Expr(ExprData.Field({type: this.target}, name)), {
-      [Field.Data]: def[Field.Data]
+      [Field.Data]: def[Field.Data],
+      [Field.Ref]: def[Field.Ref]
     })
   }
 
@@ -252,10 +253,22 @@ export interface TypeDefinition {
 
 /** Create a new type */
 export function type<Definition extends TypeDefinition>(
-  label: Label,
   definition: Definition
+): Type<StripMeta<Definition>>
+export function type<Definition extends TypeDefinition>(
+  label: string,
+  definition: Definition
+): Type<StripMeta<Definition>>
+export function type<Definition extends TypeDefinition>(
+  label: string | Definition,
+  definition?: Definition
 ): Type<StripMeta<Definition>> {
-  const instance = new TypeInstance<StripMeta<Definition>>(label, definition)
+  const title = typeof label === 'string' ? label : 'Anonymous'
+  const def = typeof label === 'string' ? definition : label
+  const instance = new TypeInstance<StripMeta<Definition>>(
+    title,
+    def as Definition
+  )
   return instance.target
 }
 

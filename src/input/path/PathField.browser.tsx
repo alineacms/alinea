@@ -1,8 +1,9 @@
 import {Entry, Field, isSeparator, slugify} from 'alinea/core'
 import {pathSuffix} from 'alinea/core/EntryFilenames'
+import {InputLabel} from 'alinea/dashboard'
+import {useField} from 'alinea/dashboard/editor/UseField'
 import {useEntryEditor} from 'alinea/dashboard/hook/UseEntryEditor'
 import {useGraph} from 'alinea/dashboard/hook/UseGraph'
-import {InputLabel, InputState, useInput} from 'alinea/editor'
 import {fromModule, px} from 'alinea/ui'
 import {IcRoundLink} from 'alinea/ui/icons/IcRoundLink'
 import {useRef, useState} from 'react'
@@ -17,29 +18,23 @@ const styles = fromModule(css)
 const INPUT_OFFSET_LEFT = 16
 const INPUT_OFFSET_RIGHT = 26
 
-type PathInputProps = {
-  state: InputState<InputState.Scalar<string>>
+interface PathInputProps {
   field: PathField
 }
 
-function PathInput({state, field}: PathInputProps) {
+function PathInput({field}: PathInputProps) {
+  const {value: fieldValue, mutator, label, options} = useField(field)
   const graph = useGraph()
   const editor = useEntryEditor()
-  const {label, options} = field[Field.Data]
   const {width, from = 'title', help, optional} = options
   const [focus, setFocus] = useState(false)
   const hiddenRef = useRef<HTMLSpanElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const suffixRef = useRef<HTMLDivElement>(null)
-  const parentState = state.parent()
-  if (!parentState) throw new Error('Path field needs parent state')
-  const [source = ''] = useInput<InputState.Scalar<string>>(
-    parentState.child(from)
-  )
-  const [value = slugify(source), setValue] =
-    useInput<InputState.Scalar<string>>(state)
+  const {value: source} = useField<string, unknown, any>(from)
+  const value = fieldValue ?? slugify(source)
   const [endsWithSeparator, setEndsWithSeparator] = useState(false)
-  const inputValue = (value || '') + (endsWithSeparator ? '-' : '')
+  const inputValue = (value ?? '') + (endsWithSeparator ? '-' : '')
   const empty = value === ''
 
   async function getConflictingPaths() {
@@ -75,7 +70,7 @@ function PathInput({state, field}: PathInputProps) {
     const pathData = await getConflictingPaths()
     const suffix = pathSuffix(inputValue, pathData)
     if (!suffix) return
-    setValue(slugify(`${inputValue}-${suffix}`))
+    mutator(slugify(`${inputValue}-${suffix}`))
   }
 
   const currentSuffix =
@@ -123,7 +118,7 @@ function PathInput({state, field}: PathInputProps) {
           onChange={e => {
             const value = e.currentTarget.value
             setEndsWithSeparator(isSeparator(value.charAt(value.length - 1)))
-            setValue(slugify(value))
+            mutator(slugify(value))
           }}
           onFocus={() => setFocus(true)}
           onBlur={() => {

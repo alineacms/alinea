@@ -109,7 +109,7 @@ export default async function DocPage({params}: DocPageProps) {
     }))
   ].map(item => ({
     ...item,
-    title: item.navigationTitle ?? item.title
+    title: item.navigationTitle || item.title
   }))
   const nested = nestNav(entries)
   const directChildren = entries.filter(item => item.parent === doc.id)
@@ -130,7 +130,7 @@ export default async function DocPage({params}: DocPageProps) {
     >
       <Breadcrumbs parents={doc.parents.slice(-1)} />
       <WebTypo>
-        <WebTypo.H1>{doc.navigationTitle ?? doc.title}</WebTypo.H1>
+        <WebTypo.H1>{doc.navigationTitle || doc.title}</WebTypo.H1>
         <VStack
           as="ul"
           gap={12}

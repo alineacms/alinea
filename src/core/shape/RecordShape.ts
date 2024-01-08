@@ -28,7 +28,7 @@ export class RecordShape<T = object> implements Shape<T, RecordMutator<T>> {
   }
   create() {
     return (
-      this.initialValue ||
+      this.initialValue ??
       (Object.fromEntries(
         Object.entries(this.properties).map(([key, field]) => {
           return [key, field.create()]
@@ -62,6 +62,9 @@ export class RecordShape<T = object> implements Shape<T, RecordMutator<T>> {
     for (const key of keys(this.properties)) {
       this.properties[key].applyY(self[key], current, key)
     }
+  }
+  init(parent: Y.Map<any>, key: string): void {
+    if (!parent.has(key)) parent.set(key, this.toY(this.create()))
   }
   watch(parent: Y.Map<any>, key: string) {
     return (fun: () => void) => {

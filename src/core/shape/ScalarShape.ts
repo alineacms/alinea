@@ -5,7 +5,7 @@ import {Shape} from '../Shape.js'
 export type ScalarMutator<T> = (value: T) => void
 
 export class ScalarShape<T> implements Shape<T, ScalarMutator<T>> {
-  constructor(public label: Label, private initialValue?: T) {}
+  constructor(public label: Label, public initialValue?: T) {}
   innerTypes() {
     return []
   }
@@ -16,7 +16,7 @@ export class ScalarShape<T> implements Shape<T, ScalarMutator<T>> {
     throw new Error(`No children in scalar values`)
   }
   toY(value: T) {
-    return value ?? this.initialValue
+    return value
   }
   fromY(yValue: any) {
     return yValue
@@ -24,6 +24,9 @@ export class ScalarShape<T> implements Shape<T, ScalarMutator<T>> {
   applyY(value: T, parent: Y.Map<any>, key: string): void {
     const current = parent.get(key)
     if (current !== value) parent.set(key, value)
+  }
+  init(parent: Y.Map<any>, key: string): void {
+    if (!parent.has(key)) parent.set(key, this.toY(this.create()))
   }
   watch(parent: Y.Map<any>, key: string) {
     return (fun: () => void) => {

@@ -5,6 +5,7 @@ export {
   page,
   root,
   schema,
+  track,
   type,
   workspace
 } from 'alinea/core'

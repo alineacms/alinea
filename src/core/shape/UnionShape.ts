@@ -9,23 +9,25 @@ import {entries, fromEntries} from '../util/Objects.js'
 import {RecordShape} from './RecordShape.js'
 import {ScalarShape} from './ScalarShape.js'
 
-export type UnionRow = {
+export interface UnionRow {
   id: string
   type: string
 }
 
-export type UnionMutator<T> = {
-  replace: (v: (UnionRow & T) | undefined) => void
+export interface UnionMutator<T extends UnionRow> {
+  replace: (v: T | undefined) => void
   set: <K extends keyof T>(k: K, v: T[K]) => void
 }
 
-export class UnionShape<T> implements Shape<UnionRow & T, UnionMutator<T>> {
+export class UnionShape<T extends UnionRow>
+  implements Shape<T, UnionMutator<T>>
+{
   shapes: Record<string, RecordShape>
   constructor(
     public label: Label,
     shapes: Record<string, RecordShape>,
-    public initialValue?: UnionRow & T,
-    protected postProcess?: PostProcess<UnionRow & T>
+    public initialValue?: T,
+    protected postProcess?: PostProcess<T>
   ) {
     this.shapes = fromEntries(
       entries(shapes).map(([key, type]) => {
@@ -48,8 +50,8 @@ export class UnionShape<T> implements Shape<UnionRow & T, UnionMutator<T>> {
       return inner
     })
   }
-  create(): UnionRow & T {
-    return this.initialValue || ({} as UnionRow & T)
+  create(): T {
+    return this.initialValue ?? ({} as T)
   }
   typeOfChild<C>(yValue: Y.Map<any>, child: string): Shape<C> {
     const type = yValue && yValue.get('type')
@@ -57,7 +59,7 @@ export class UnionShape<T> implements Shape<UnionRow & T, UnionMutator<T>> {
     if (shape) return shape.typeOfChild(yValue, child)
     throw new Error(`Could not determine type of child "${child}"`)
   }
-  toY(value: UnionRow & T) {
+  toY(value: T) {
     if (Array.isArray(value)) value = value[0] ?? {}
     else value = value ?? {}
     const type = value.type
@@ -72,14 +74,14 @@ export class UnionShape<T> implements Shape<UnionRow & T, UnionMutator<T>> {
     }
     return map
   }
-  fromY(map: Y.Map<any>): UnionRow & T {
-    if (!map || typeof map.get !== 'function') return {} as UnionRow & T
+  fromY(map: Y.Map<any>): T {
+    if (!map || typeof map.get !== 'function') return {} as T
     const type = map.get('type')
     const recordType = this.shapes[type]
-    if (recordType) return recordType.fromY(map) as UnionRow & T
-    return {} as UnionRow & T
+    if (recordType) return recordType.fromY(map) as T
+    return {} as T
   }
-  applyY(value: UnionRow & T, parent: Y.Map<any>, key: string): void {
+  applyY(value: T, parent: Y.Map<any>, key: string): void {
     const current: Y.Map<any> | undefined = parent.get(key)
     if (!current || !value) return void parent.set(key, this.toY(value))
     const currentType = current.get('type')
@@ -87,6 +89,9 @@ export class UnionShape<T> implements Shape<UnionRow & T, UnionMutator<T>> {
     const shape = this.shapes[currentType]
     if (!shape) return
     shape.applyY(value, parent, key)
+  }
+  init(parent: Y.Map<any>, key: string): void {
+    if (!parent.has(key)) parent.set(key, this.toY(this.create()))
   }
   watch(parent: Y.Map<any>, key: string) {
     return (fun: () => void) => {
@@ -99,7 +104,7 @@ export class UnionShape<T> implements Shape<UnionRow & T, UnionMutator<T>> {
   }
   mutator(parent: Y.Map<any>, key: string, readOnly: boolean): UnionMutator<T> {
     return {
-      replace: (v: (UnionRow & T) | undefined) => {
+      replace: (v: T | undefined) => {
         if (readOnly) return
         if (!v) parent.set(key, null)
         else parent.set(key, this.toY(v))
@@ -114,7 +119,7 @@ export class UnionShape<T> implements Shape<UnionRow & T, UnionMutator<T>> {
       }
     }
   }
-  async applyLinks(value: UnionRow & T, loader: LinkResolver) {
+  async applyLinks(value: T, loader: LinkResolver) {
     if (!value) return
     const type = value.type
     if (!type) return

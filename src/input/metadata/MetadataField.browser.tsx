@@ -1,21 +1,22 @@
-import {Field, Type} from 'alinea/core'
-import {InputForm, InputState, useInput} from 'alinea/editor'
-import {
-  MetadataField,
-  MetadataFields,
-  metadata as createMetadata
-} from './MetadataField.js'
+import {Field} from 'alinea/core'
+import {FormRow} from 'alinea/dashboard/atoms/FormAtoms'
+import {InputForm} from 'alinea/dashboard/editor/InputForm'
+import {useFieldOptions} from 'alinea/dashboard/editor/UseField'
+import {MetadataField, metadata as createMetadata} from './MetadataField.js'
 
 export * from './MetadataField.js'
 
 export const metadata = Field.provideView(MetadataInput, createMetadata)
 
 interface MetadataInputProps {
-  state: InputState<InputState.Record<Type.Infer<MetadataFields>>>
   field: MetadataField
 }
 
-function MetadataInput({state, field}: MetadataInputProps) {
-  const {options} = field[Field.Data]
-  return <InputForm state={state} type={options.fields} border={false} />
+function MetadataInput({field}: MetadataInputProps) {
+  const options = useFieldOptions(field)
+  return (
+    <FormRow type={options.fields} field={field}>
+      <InputForm type={options.fields} border={false} />
+    </FormRow>
+  )
 }

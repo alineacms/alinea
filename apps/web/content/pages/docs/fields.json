@@ -1,5 +1,6 @@
 {
   "title": "Fields",
+  "navigationTitle": "",
   "body": [
     {
       "type": "paragraph",
@@ -34,7 +35,7 @@
     {
       "id": "2YklqLFpIIeyPugEBoAD6iZSvtr",
       "type": "ExampleBlock",
-      "code": "import {Field, ScalarField, Hint, Label} from 'alinea/core'\nimport {InputLabel, InputState, useInput} from 'alinea/editor'\n\ninterface RangeFieldOptions {\n  min?: number\n  max?: number\n}\n\nclass RangeField extends ScalarField<number, RangeFieldOptions> {\n}\n\nfunction range(label: Label, options: RangeFieldOptions = {}): RangeField {\n  return new RangeField({\n    hint: Hint.Number(),\n    label,\n    options,\n    view: RangeInput\n  })\n}\n\ninterface RangeInputProps {\n  state: InputState<InputState.Scalar<number>>\n  field: RangeField\n}\n\nfunction RangeInput({state, field}: RangeInputProps) {\n  const [value = 5, setValue] = useInput(state)\n  const {label, options} = field[Field.Data]\n  const {min = 0, max = 10} = options\n  return (\n    <InputLabel label={label}>\n      <input \n        type=\"range\" \n        min={min} max={max} \n        value={value} \n        onChange={e => setValue(Number(e.target.value))} \n      />\n    </InputLabel>\n  )\n}\n\nexport default alinea.type('Kitchen sink', {\n  ...alinea.tabs(\n    alinea.tab('Basic fields', {\n      title: alinea.text('Text field'),\n      path: alinea.path('Path field', {\n        help: 'Creates a slug of the value of another field'\n      }),\n      richText: alinea.richText('Rich text field'),\n      select: alinea.select('Select field', {\n        a: 'Option a',\n        b: 'Option b'\n      }),\n      number: alinea.number('Number field', {\n        minValue: 0,\n        maxValue: 10\n      }),\n      check: alinea.check('Check field', {label: 'Check me please'}),\n      date: alinea.date('Date field'),\n      code: alinea.code('Code field')\n    }),\n    alinea.tab('Link fields', {\n      externalLink: alinea.url('External link'),\n      entry: alinea.entry('Internal link'),\n      linkMultiple: alinea.link.multiple('Mixed links, multiple'),\n      image: alinea.entry('Image link'),\n      file: alinea.entry('File link')\n    }),\n    alinea.tab('List fields', {\n      list: alinea.list('My list field', {\n        schema: alinea.schema({\n          Text: alinea.type('Text', {\n            title: alinea.text('Item title'),\n            text: alinea.richText('Item body text')\n          }),\n          Image: alinea.type('Image', {\n            image: alinea.image('Image')\n          })\n        })\n      })  \n    }),\n    alinea.tab('Inline fields', {\n      street: alinea.text('Street', {width: 0.6, inline: true, multiline: true}),\n      number: alinea.text('Number', {width: 0.2, inline: true}),\n      box: alinea.text('Box', {width: 0.2, inline: true}),\n      zip: alinea.text('Zipcode', {width: 0.2, inline: true}),\n      city: alinea.text('City', {width: 0.4, inline: true}),\n      country: alinea.text('Country', {\n        width: 0.4,\n        inline: true\n      })\n    }),\n    alinea.tab('Custom fields', {\n      range: range('Range field')  \n    })\n  )\n})\n"
+      "code": "import {Field, ScalarField, Hint, Label} from 'alinea/core'\nimport {InputLabel, InputState, useInput} from 'alinea/editor'\n\ninterface RangeFieldOptions {\n  min?: number\n  max?: number\n}\n\nclass RangeField extends ScalarField<number, RangeFieldOptions> {\n}\n\nfunction range(label: Label, options: RangeFieldOptions = {}): RangeField {\n  return new RangeField({\n    hint: Hint.Number(),\n    label,\n    options,\n    view: RangeInput\n  })\n}\n\ninterface RangeInputProps {\n  state: InputState<InputState.Scalar<number>>\n  field: RangeField\n}\n\nfunction RangeInput({state, field}: RangeInputProps) {\n  const [value = 5, setValue] = useInput(state)\n  const {label, options} = field[Field.Data]\n  const {min = 0, max = 10} = options\n  return (\n    <InputLabel label={label}>\n      <input \n        type=\"range\" \n        min={min} max={max} \n        value={value} \n        onChange={e => setValue(Number(e.target.value))} \n      />\n    </InputLabel>\n  )\n}\n\nexport default alinea.type('Kitchen sink', {\n  ...alinea.tabs(\n    alinea.tab('Basic fields', {\n      title: alinea.text('Text field'),\n      path: alinea.path('Path field', {\n        help: 'Creates a slug of the value of another field'\n      }),\n      richText: alinea.richText('Rich text field'),\n      select: alinea.select('Select field', {\n        a: 'Option a',\n        b: 'Option b'\n      }),\n      number: alinea.number('Number field', {\n        minValue: 0,\n        maxValue: 10\n      }),\n      check: alinea.check('Check field', {label: 'Check me please'}),\n      date: alinea.date('Date field'),\n      code: alinea.code('Code field')\n    }),\n    alinea.tab('Link fields', {\n      externalLink: alinea.url('External link'),\n      entry: alinea.entry('Internal link'),\n      linkMultiple: alinea.link.multiple('Mixed links, multiple'),\n      image: alinea.entry('Image link'),\n      file: alinea.entry('File link')\n    }),\n    alinea.tab('List fields', {\n      list: alinea.list('My list field', {\n        schema: alinea.schema({\n          Text: alinea.type('Text', {\n            title: alinea.text('Item title'),\n            text: alinea.richText('Item body text')\n          }),\n          Image: alinea.type('Image', {\n            image: alinea.image('Image')\n          })\n        })\n      })  \n    }),\n    alinea.tab('Inline fields', {\n      street: alinea.text('Street', {width: 0.6, inline: true, multiline: true}),\n      streetNr: alinea.text('Number', {width: 0.2, inline: true}),\n      box: alinea.text('Box', {width: 0.2, inline: true}),\n      zip: alinea.text('Zipcode', {width: 0.2, inline: true}),\n      city: alinea.text('City', {width: 0.4, inline: true}),\n      country: alinea.text('Country', {\n        width: 0.4,\n        inline: true\n      })\n    }),\n    alinea.tab('Custom fields', {\n      range: range('Range field')  \n    })\n  )\n})\n"
     },
     {
       "type": "heading",
@@ -106,6 +107,27 @@
       "content": [
         {
           "type": "text",
+          "text": "`readOnly`"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "Mark field data as read-only."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "textAlign": "left",
+      "level": 3,
+      "content": [
+        {
+          "type": "text",
           "text": "`help`"
         }
       ]
@@ -161,6 +183,70 @@
           "text": "Setting a width value will scale the fields width down, use a number between 0 and 1. This allows you to compose the dashboard UI better based on the content of the fields."
         }
       ]
+    },
+    {
+      "type": "heading",
+      "textAlign": "left",
+      "level": 2,
+      "content": [
+        {
+          "type": "text",
+          "text": "Conditional configuration"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "All field configuration can be adjusted based on the value of other fields. After defining fields in a "
+        },
+        {
+          "type": "text",
+          "text": "Type",
+          "marks": [
+            {
+              "type": "link",
+              "attrs": {
+                "data-id": "2afa4s8NMzAW23BBRN7R7TZzpE2",
+                "data-entry": "267QuOShP41WnFxQFOcHZQoCsla",
+                "data-type": "entry",
+                "href": null,
+                "title": null
+              }
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": " a tracker function can be set up. The tracker function takes a reference to a field and a subscription function. In the subscription function field values can be retrieved and new options returned. "
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "textAlign": "left",
+      "level": 3,
+      "content": [
+        {
+          "type": "text",
+          "text": "Example"
+        }
+      ]
+    },
+    {
+      "id": "2afaVBuZZzzvIuZ6Zk5btTJfhTq",
+      "type": "CodeBlock",
+      "code": "const Example = alinea.type('Conditional example', {\n  textField: alinea.text('Text field'),\n  readOnly: alinea.check('Make read-only'),\n  hidden: alinea.check('Hide field')\n})\n\nalinea.track.options(Example.textField, get => {\n  const textField= get(Example.textField)\n  const readOnly = get(Example.readOnly)\n  const hidden = get(Example.hidden)\n  return {\n    readOnly, \n    hidden,\n    help: `Text has ${textField.length} characters`\n  }\n})",
+      "fileName": "",
+      "language": ""
+    },
+    {
+      "id": "2afb22WA7fkOOxeH0rRyxzaee9S",
+      "type": "ExampleBlock",
+      "code": "const Example = alinea.type('Conditional example', {\n  textField: alinea.text('Text field'),\n  readOnly: alinea.check('Make read-only'),\n  hidden: alinea.check('Hide field')\n})\n\nalinea.track.options(Example.textField, get => {\n  const textField= get(Example.textField)\n  const readOnly = get(Example.readOnly)\n  const hidden = get(Example.hidden)\n  return {\n    readOnly, \n    hidden,\n    help: `Text has ${textField.length} characters`\n  }\n})\n\nexport default Example"
     }
   ],
   "metadata": {

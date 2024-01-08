@@ -1,28 +1,28 @@
-import { Switch } from '@headlessui/react'
-import { Workspace } from 'alinea/core'
-import { entries, fromEntries } from 'alinea/core/util/Objects'
-import { InputField } from 'alinea/editor/view/InputField'
-import { select } from 'alinea/input'
-import { HStack, Icon, VStack, fromModule, px } from 'alinea/ui'
-import { DropdownMenu } from 'alinea/ui/DropdownMenu'
-import { Ellipsis } from 'alinea/ui/Ellipsis'
-import { PopoverMenu } from 'alinea/ui/PopoverMenu'
-import { IcBaselineAccountCircle } from 'alinea/ui/icons/IcBaselineAccountCircle'
-import { IcRoundKeyboardArrowDown } from 'alinea/ui/icons/IcRoundKeyboardArrowDown'
-import { IcRoundKeyboardArrowUp } from 'alinea/ui/icons/IcRoundKeyboardArrowUp'
-import { IcRoundTextFields } from 'alinea/ui/icons/IcRoundTextFields'
-import { IcSharpBrightnessMedium } from 'alinea/ui/icons/IcSharpBrightnessMedium'
-import { useAtomValue, useSetAtom } from 'jotai'
-import { dashboardOptionsAtom } from '../../atoms/DashboardAtoms.js'
+import {Switch} from '@headlessui/react'
+import {Workspace} from 'alinea/core'
+import {entries, fromEntries} from 'alinea/core/util/Objects'
+import {select} from 'alinea/input'
+import {HStack, Icon, VStack, fromModule, px} from 'alinea/ui'
+import {DropdownMenu} from 'alinea/ui/DropdownMenu'
+import {Ellipsis} from 'alinea/ui/Ellipsis'
+import {PopoverMenu} from 'alinea/ui/PopoverMenu'
+import {IcBaselineAccountCircle} from 'alinea/ui/icons/IcBaselineAccountCircle'
+import {IcRoundKeyboardArrowDown} from 'alinea/ui/icons/IcRoundKeyboardArrowDown'
+import {IcRoundKeyboardArrowUp} from 'alinea/ui/icons/IcRoundKeyboardArrowUp'
+import {IcRoundTextFields} from 'alinea/ui/icons/IcRoundTextFields'
+import {IcSharpBrightnessMedium} from 'alinea/ui/icons/IcSharpBrightnessMedium'
+import {useAtomValue, useSetAtom} from 'jotai'
+import {useMemo} from 'react'
+import {dashboardOptionsAtom} from '../../atoms/DashboardAtoms.js'
 import {
   preferencesAtom,
   sizePreferenceAtom,
   toggleSchemePreferenceAtom,
   workspacePreferenceAtom
 } from '../../atoms/PreferencesAtoms.js'
-import { useSession } from '../../hook/UseSession.js'
-import { IconButton } from '../IconButton.js'
-import { Sidebar } from '../Sidebar.js'
+import {useSession} from '../../hook/UseSession.js'
+import {IconButton} from '../IconButton.js'
+import {Sidebar} from '../Sidebar.js'
 import css from './SidebarSettings.module.scss'
 
 const styles = fromModule(css)
@@ -34,13 +34,17 @@ export function SidebarSettings() {
   const size = preferences.size || 16
   const checked = preferences?.scheme === 'dark'
   const workspaces = Object.entries(config.workspaces)
-  const defaultWorkspace = select(
-    'Default workspace',
-    fromEntries(
-      entries(config.workspaces).map(([key, workspace]) => {
-        return [key, (Workspace.label(workspace) as string) || key]
-      })
-    )
+  const defaultWorkspace = useMemo(
+    () =>
+      select(
+        'Default workspace',
+        fromEntries(
+          entries(config.workspaces).map(([key, workspace]) => {
+            return [key, (Workspace.label(workspace) as string) || key]
+          })
+        )
+      ),
+    [config.workspaces]
   )
   const toggleSchemePreference = useSetAtom(toggleSchemePreferenceAtom)
   const updateFontSize = useSetAtom(sizePreferenceAtom)
@@ -118,13 +122,14 @@ export function SidebarSettings() {
                 />
               </HStack>
             </HStack>
-            {workspaces.length > 1 && (
+            {/*workspaces.length > 1 && (
               <InputField
+                // Todo: we should use a form here to react to the value change
                 value={preferences.workspace || ''}
                 onChange={v => updateWorkspace(v ?? undefined)}
                 field={defaultWorkspace}
               />
-            )}
+            )*/}
           </VStack>
 
           {session.end && (

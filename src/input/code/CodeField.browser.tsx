@@ -1,5 +1,6 @@
 import {Field} from 'alinea/core'
-import {InputLabel, InputState, useInput} from 'alinea/editor'
+import {useField} from 'alinea/dashboard/editor/UseField'
+import {InputLabel} from 'alinea/dashboard/view/InputLabel'
 import {HStack, fromModule} from 'alinea/ui'
 import {IcRoundCode} from 'alinea/ui/icons/IcRoundCode'
 import {TextareaAutosize} from 'alinea/ui/util/TextareaAutosize'
@@ -14,7 +15,6 @@ export const code = Field.provideView(CodeInput, createCode)
 const styles = fromModule(css)
 
 interface CodeInputProps {
-  state: InputState<InputState.Scalar<string>>
   field: CodeField
 }
 
@@ -22,9 +22,8 @@ interface CodeInputProps {
 // extra value type "PlainText" which has no concept of blocks or formatting
 // and is stored as a simple string, but using an XMLFragment on the Yjs
 // side so we can have it be collaborative.
-function CodeInput({state, field}: CodeInputProps) {
-  const {label, options} = field[Field.Data]
-  const [value, setValue] = useInput(state)
+function CodeInput({field}: CodeInputProps) {
+  const {value, mutator, label, options} = useField(field)
   const [focus, setFocus] = useState(false)
 
   const placeholder = options.inline ? String(label) : ''
@@ -32,7 +31,6 @@ function CodeInput({state, field}: CodeInputProps) {
   return (
     <InputLabel
       asLabel
-      label={label}
       {...options}
       focused={focus}
       icon={IcRoundCode}
@@ -43,7 +41,7 @@ function CodeInput({state, field}: CodeInputProps) {
           className={styles.root.input()}
           type="text"
           value={value || ''}
-          onChange={e => setValue(e.currentTarget.value)}
+          onChange={e => mutator(e.currentTarget.value)}
           onFocus={() => setFocus(true)}
           onBlur={() => setFocus(false)}
           placeholder={placeholder}

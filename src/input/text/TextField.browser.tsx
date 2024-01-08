@@ -1,5 +1,6 @@
 import {Field} from 'alinea/core'
-import {InputLabel, InputState, useInput} from 'alinea/editor'
+import {useField} from 'alinea/dashboard/editor/UseField'
+import {InputLabel} from 'alinea/dashboard/view/InputLabel'
 import {HStack, fromModule} from 'alinea/ui'
 import {IcRoundTextFields} from 'alinea/ui/icons/IcRoundTextFields'
 import {TextareaAutosize} from 'alinea/ui/util/TextareaAutosize'
@@ -14,14 +15,12 @@ export const text = Field.provideView(TextInput, createText)
 const styles = fromModule(css)
 
 interface TextInputProps {
-  state: InputState<InputState.Scalar<string>>
   field: TextField
 }
 
-function TextInput({state, field}: TextInputProps) {
-  const [value, setValue] = useInput(state)
+function TextInput({field}: TextInputProps) {
+  const {value, mutator, label, options} = useField(field)
   const [focus, setFocus] = useState(false)
-  const {label, options} = field[Field.Data]
   const {
     width,
     multiline,
@@ -56,7 +55,7 @@ function TextInput({state, field}: TextInputProps) {
           className={styles.root.input()}
           type="text"
           value={value || ''}
-          onChange={e => setValue(e.currentTarget.value)}
+          onChange={e => mutator(e.currentTarget.value)}
           onFocus={() => setFocus(true)}
           onBlur={() => setFocus(false)}
           placeholder={placeholder}

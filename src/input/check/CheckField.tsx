@@ -1,14 +1,14 @@
-import {FieldOptions, Hint, Label} from 'alinea/core'
+import {FieldOptions, Hint, Label, WithoutLabel} from 'alinea/core'
 import {ScalarField} from 'alinea/core/field/ScalarField'
 
 /** Optional settings to configure a text field */
-export interface CheckOptions extends FieldOptions {
-  /** Label displayed next to the checkbox  */
-  label?: Label
+export interface CheckOptions extends FieldOptions<boolean> {
+  /** Description displayed next to the checkbox */
+  description?: Label
   /** Width of the field in the dashboard UI (0-1) */
   width?: number
   /** Add instructional text to a field */
-  help?: Label
+  help?: string
   /** Field is optional */
   optional?: boolean
   /** Display a minimal version */
@@ -23,11 +23,12 @@ export interface CheckOptions extends FieldOptions {
 export class CheckField extends ScalarField<boolean, CheckOptions> {}
 
 /** Create a text field configuration */
-export function check(label: Label, options: CheckOptions = {}): CheckField {
+export function check(
+  label: string,
+  options: WithoutLabel<CheckOptions> = {}
+): CheckField {
   return new CheckField({
     hint: Hint.Boolean(),
-    label,
-    options,
-    initialValue: options.initialValue ?? false
+    options: {...options, label}
   })
 }

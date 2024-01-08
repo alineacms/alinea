@@ -1,5 +1,6 @@
 {
   "title": "Custom fields",
+  "navigationTitle": "",
   "body": [
     {
       "type": "paragraph",
@@ -35,7 +36,7 @@
     {
       "id": "tjXTNIX1E2w3fts1zXG9Z",
       "type": "CodeBlock",
-      "code": "import {Field, ScalarField, Hint, Label} from 'alinea/core'\nimport {InputLabel, InputState, useInput} from 'alinea/editor'\n\ninterface RangeFieldOptions {\n  min?: number\n  max?: number\n}\n\nclass RangeField extends ScalarField<number, RangeFieldOptions> {\n}\n\n// The constructor function is used to create fields in our schema\n// later on. It is usually passed a label and options.\nexport function range(label: Label, options: RangeFieldOptions = {}): RangeField {\n  return new RangeField({\n    hint: Hint.Number(),\n    label,\n    options,\n    view: RangeInput\n  })\n}\n\ninterface RangeInputProps {\n  state: InputState<InputState.Scalar<number>>\n  field: RangeField\n}\n\n// To view our field we can create a React component. \n// This component can call the useInput hook to receive the\n// current value and a method to update it.\nfunction RangeInput({state, field}: RangeInputProps) {\n  const [value = 5, setValue] = useInput(state)\n  const {label, options} = field[Field.Data]\n  const {min = 0, max = 10} = options\n  return (\n    <InputLabel label={label}>\n      <input \n        type=\"range\" \n        min={min} max={max} \n        value={value} \n        onChange={e => setValue(Number(e.target.value))} \n      />\n    </InputLabel>\n  )\n}",
+      "code": "import {FieldOptions, ScalarField, Hint, WithoutLabel} from 'alinea/core'\nimport {InputLabel, useField} from 'alinea/dashboard'\n\ninterface RangeFieldOptions extends FieldOptions<number> {\n  min?: number\n  max?: number\n}\n\nclass RangeField extends ScalarField<number, RangeFieldOptions> {\n}\n\n// The constructor function is used to create fields in our schema\n// later on. It is usually passed a label and options.\nexport function range(label: string, options: WithoutLabel<RangeFieldOptions> = {}): RangeField {\n  return new RangeField({\n    hint: Hint.Number(),\n    options: {label, ...options},\n    view: RangeInput\n  })\n}\n\ninterface RangeInputProps {\n  field: RangeField\n}\n\n// To view our field we can create a React component. \n// This component can call the useInput hook to receive the\n// current value and a method to update it.\nfunction RangeInput({field}: RangeInputProps) {\n  const {value, mutator, options} = useField(field)\n  const {min = 0, max = 10} = options\n  return (\n    <InputLabel {...options}>\n      <input \n        type=\"range\" \n        min={min} max={max} \n        value={value} \n        onChange={e => mutator(Number(e.target.value))} \n      />\n    </InputLabel>\n  )\n}",
       "fileName": "",
       "language": "",
       "compact": false
@@ -46,7 +47,7 @@
       "content": [
         {
           "type": "text",
-          "text": "To use the field in your types later just call the constructor function:"
+          "text": "To use the field in your types later call the constructor function:"
         }
       ]
     },
@@ -61,7 +62,7 @@
     {
       "id": "yhfKjT9ITmHHD0N5JRU4G",
       "type": "ExampleBlock",
-      "code": "import {Field, ScalarField, Hint, Label} from 'alinea/core'\nimport {InputLabel, InputState, useInput} from 'alinea/editor'\n\ninterface RangeFieldOptions {\n  min?: number\n  max?: number\n}\n\nclass RangeField extends ScalarField<number, RangeFieldOptions> {\n}\n\n// The constructor function is used to create fields in our schema\n// later on. It is usually passed a label and options.\nexport function range(label: Label, options: RangeFieldOptions = {}): RangeField {\n  return new RangeField({\n    hint: Hint.Number(),\n    label,\n    options,\n    view: RangeInput\n  })\n}\n\ninterface RangeInputProps {\n  state: InputState<InputState.Scalar<number>>\n  field: RangeField\n}\n\n// To view our field we can create a React component. \n// This component can call the useInput hook to receive the\n// current value and a method to update it.\nfunction RangeInput({state, field}: RangeInputProps) {\n  const [value = 5, setValue] = useInput(state)\n  const {label, options} = field[Field.Data]\n  const {min = 0, max = 10} = options\n  return (\n    <InputLabel label={label}>\n      <input \n        type=\"range\" \n        min={min} max={max} \n        value={value} \n        onChange={e => setValue(Number(e.target.value))} \n      />\n    </InputLabel>\n  )\n}\n\nexport default alinea.type('Custom fields', {\n  range: range('A range field', {min: 0, max: 20})\n})"
+      "code": "import {FieldOptions, ScalarField, Hint, WithoutLabel} from 'alinea/core'\nimport {InputLabel, useField} from 'alinea/dashboard'\n\ninterface RangeFieldOptions extends FieldOptions<number> {\n  min?: number\n  max?: number\n}\n\nclass RangeField extends ScalarField<number, RangeFieldOptions> {\n}\n\n// The constructor function is used to create fields in our schema\n// later on. It is usually passed a label and options.\nexport function range(label: string, options: WithoutLabel<RangeFieldOptions> = {}): RangeField {\n  return new RangeField({\n    hint: Hint.Number(),\n    options: {label, ...options},\n    view: RangeInput\n  })\n}\n\ninterface RangeInputProps {\n  field: RangeField\n}\n\n// To view our field we can create a React component. \n// This component can call the useInput hook to receive the\n// current value and a method to update it.\nfunction RangeInput({field}: RangeInputProps) {\n  const {value, mutator, options} = useField(field)\n  const {min = 0, max = 10} = options\n  return (\n    <InputLabel {...options}>\n      <input \n        type=\"range\" \n        min={min} max={max} \n        value={value} \n        onChange={e => mutator(Number(e.target.value))} \n      />\n    </InputLabel>\n  )\n}\n\nexport default alinea.type('Custom fields', {\n  range: range('A range field', {min: 0, max: 20})\n})"
     },
     {
       "type": "heading",
@@ -70,7 +71,7 @@
       "content": [
         {
           "type": "text",
-          "text": "Shapes"
+          "text": "Field types"
         }
       ]
     },
@@ -80,7 +81,7 @@
       "content": [
         {
           "type": "text",
-          "text": "To structure the underlying data we use shapes. Alinea ships with four kinds of shape primitives that can be nested inside each other. Under the covers these are created via "
+          "text": "Alinea ships with four kinds of field primitives that can be nested inside each other. Under the covers these are created via "
         },
         {
           "type": "text",
@@ -112,7 +113,7 @@
       "content": [
         {
           "type": "text",
-          "text": " Scalar"
+          "text": " Scalar fields"
         }
       ]
     },
@@ -133,7 +134,7 @@
       "content": [
         {
           "type": "text",
-          "text": " Record"
+          "text": " Record fields"
         }
       ]
     },
@@ -154,7 +155,7 @@
       "content": [
         {
           "type": "text",
-          "text": "List"
+          "text": "List fields"
         }
       ]
     },
@@ -175,7 +176,7 @@
       "content": [
         {
           "type": "text",
-          "text": "Rich text"
+          "text": "Rich text fields"
         }
       ]
     },
