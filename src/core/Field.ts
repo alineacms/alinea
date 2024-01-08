@@ -12,6 +12,8 @@ export interface FieldOptions<Value> {
   readOnly?: boolean
   /** The initial value of the field */
   initialValue?: Value
+  /** The value of this field is shared across all languages  */
+  shared?: boolean
 }
 
 export type WithoutLabel<Options extends FieldOptions<any>> = Omit<

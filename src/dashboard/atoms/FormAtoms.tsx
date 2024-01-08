@@ -7,7 +7,8 @@ import {
   Type,
   ValueTracker,
   applyEntryData,
-  track
+  optionTrackerOf,
+  valueTrackerOf
 } from 'alinea/core'
 import {entries} from 'alinea/core/util/Objects'
 import {Atom, Getter, atom} from 'jotai'
@@ -41,7 +42,7 @@ export class FormAtoms<T = any> {
         const ref = Field.ref(field)
         const shape = Field.shape(field)
         const defaultOptions = Field.options(field)
-        const optionsTracker = track.optionTrackerOf(field)
+        const optionsTracker = optionTrackerOf(field)
         shape.init(container, key)
         const mutator = shape.mutator(container, key, false)
         const options = optionsTracker
@@ -57,7 +58,7 @@ export class FormAtoms<T = any> {
               prev => prev ?? defaultOptions
             )
           : atom(defaultOptions)
-        const valueTracker = track.valueTrackerOf(field)
+        const valueTracker = valueTrackerOf(field)
         const value = this.valueAtom(field, key, valueTracker)
         this.fieldInfo.set(ref, {
           key,

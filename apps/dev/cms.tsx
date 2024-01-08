@@ -143,6 +143,12 @@ const Fields = alinea.document('Fields', {
           tabB: alinea.text('Tab B')
         })
       )
+    }),
+    alinea.tab('I18n', {
+      shared: alinea.text('Shared field', {
+        help: `This field is shared between languages.`,
+        shared: true
+      })
     })
   )
 })
