@@ -183,6 +183,9 @@ export function FormRow({
   const rowForm = useMemo(() => {
     const key = form.keyOf(field)
     const inner = form.container.get(key)
+    if (rowId) {
+      if (!inner.has(rowId)) inner.set(rowId, new Y.Map())
+    }
     const row = rowId ? inner.get(rowId) : inner
     return new FormAtoms(type, row)
   }, [form, rowId])
