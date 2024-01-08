@@ -156,6 +156,15 @@
                   ]
                 },
                 {
+                  "type": "text",
+                  "text": " ✔️",
+                  "marks": [
+                    {
+                      "type": "bold"
+                    }
+                  ]
+                },
+                {
                   "type": "hardBreak"
                 },
                 {
