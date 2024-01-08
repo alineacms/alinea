@@ -239,14 +239,14 @@
     {
       "id": "2afaVBuZZzzvIuZ6Zk5btTJfhTq",
       "type": "CodeBlock",
-      "code": "const Example = alinea.type('Conditional example', {\n  textField: alinea.text('Text field'),\n  readOnly: alinea.check('Make read-only'),\n  hidden: alinea.check('Hide field')\n})\n\nalinea.track.options(Example.textField, get => {\n  const textField= get(Example.textField)\n  const readOnly = get(Example.readOnly)\n  const hidden = get(Example.hidden)\n  return {\n    readOnly, hidden,\n    help: `Text has ${textField.length} characters`\n  }\n})",
+      "code": "const Example = alinea.type('Conditional example', {\n  textField: alinea.text('Text field'),\n  readOnly: alinea.check('Make read-only'),\n  hidden: alinea.check('Hide field')\n})\n\nalinea.track.options(Example.textField, get => {\n  const textField= get(Example.textField)\n  const readOnly = get(Example.readOnly)\n  const hidden = get(Example.hidden)\n  return {\n    readOnly, \n    hidden,\n    help: `Text has ${textField.length} characters`\n  }\n})",
       "fileName": "",
       "language": ""
     },
     {
       "id": "2afb22WA7fkOOxeH0rRyxzaee9S",
       "type": "ExampleBlock",
-      "code": "const Example = alinea.type('Conditional example', {\n  textField: alinea.text('Text field'),\n  readOnly: alinea.check('Make read-only'),\n  hidden: alinea.check('Hide field')\n})\n\nalinea.track.options(Example.textField, get => {\n  const textField= get(Example.textField)\n  const readOnly = get(Example.readOnly)\n  const hidden = get(Example.hidden)\n  return {\n    readOnly, hidden,\n    help: `Text has ${textField.length} characters`\n  }\n})\n\nexport default Example"
+      "code": "const Example = alinea.type('Conditional example', {\n  textField: alinea.text('Text field'),\n  readOnly: alinea.check('Make read-only'),\n  hidden: alinea.check('Hide field')\n})\n\nalinea.track.options(Example.textField, get => {\n  const textField= get(Example.textField)\n  const readOnly = get(Example.readOnly)\n  const hidden = get(Example.hidden)\n  return {\n    readOnly, \n    hidden,\n    help: `Text has ${textField.length} characters`\n  }\n})\n\nexport default Example"
     }
   ],
   "metadata": {
