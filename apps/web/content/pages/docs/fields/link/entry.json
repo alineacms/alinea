@@ -1,0 +1,135 @@
+{
+  "title": "Entry",
+  "navigationTitle": "",
+  "body": [
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "The entry field can be used to link to an internal page."
+        }
+      ]
+    },
+    {
+      "id": "2aiLnCCudPz6D0aNgADlzuObGEs",
+      "type": "CodeBlock",
+      "code": "import alinea from 'alinea'\n\nalinea.entry('Single entry link')\n\nalinea.entry.multiple('Multiple entry links')",
+      "fileName": "",
+      "language": ""
+    },
+    {
+      "type": "heading",
+      "textAlign": "left",
+      "level": 2,
+      "content": [
+        {
+          "type": "text",
+          "text": "Configuration"
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "textAlign": "left",
+      "level": 3,
+      "content": [
+        {
+          "type": "text",
+          "text": "`max`"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "Limit the amount of rows in case of multiple links."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "textAlign": "left",
+      "level": 3,
+      "content": [
+        {
+          "type": "text",
+          "text": "`defaultView`"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "Preset the UI to show rows or thumbnails (possible values: \"row\", \"thumb\")"
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "textAlign": "left",
+      "level": 3,
+      "content": [
+        {
+          "type": "text",
+          "text": "`condition`"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "Limit the pages shown in the explorer to this condition. Conditions can be built using fields in the same way as when "
+        },
+        {
+          "type": "text",
+          "text": "querying data",
+          "marks": [
+            {
+              "type": "link",
+              "attrs": {
+                "data-id": "2aiNCLRQGpHXGPYZuNFjIInGujs",
+                "data-entry": null,
+                "data-type": "url",
+                "href": "/docs/content/query#querying-specific-pages",
+                "target": "_self",
+                "title": null
+              }
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": ". "
+        }
+      ]
+    },
+    {
+      "id": "2aiNY0EOVAiPH085iK0NelgMfhO",
+      "type": "CodeBlock",
+      "code": "import alinea from 'alinea'\nimport {Entry} from 'alinea/core'\n\nalinea.entry('Link to author', {\n  condition: Entry.type.is('Author')\n})",
+      "fileName": "",
+      "language": ""
+    }
+  ],
+  "metadata": {
+    "openGraph": {
+      "image": {}
+    }
+  },
+  "@alinea": {
+    "entryId": "2aiLjrXSg8gyirKnw9LmYKwsW2O",
+    "type": "Doc",
+    "index": "a0"
+  }
+}

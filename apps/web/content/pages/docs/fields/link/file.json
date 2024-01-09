@@ -1,5 +1,6 @@
 {
   "title": "File",
+  "navigationTitle": "",
   "body": [
     {
       "type": "paragraph",
@@ -23,6 +24,48 @@
       "id": "2Yks376YZg3E6MZZHv9KcuYgQos",
       "type": "ExampleBlock",
       "code": "export default alinea.type('File field', {\n  file: alinea.file('Single file link'),\n\n  fileMultiple: alinea.file.multiple('Multiple file links')\n})"
+    },
+    {
+      "type": "heading",
+      "textAlign": "start",
+      "level": 2,
+      "content": [
+        {
+          "type": "text",
+          "text": "Configuration",
+          "marks": [
+            {
+              "type": "bold"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "textAlign": "start",
+      "level": 3,
+      "content": [
+        {
+          "type": "text",
+          "text": "`max`",
+          "marks": [
+            {
+              "type": "bold"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "start",
+      "content": [
+        {
+          "type": "text",
+          "text": "Limit the amount of rows in case of multiple links."
+        }
+      ]
     }
   ],
   "metadata": {

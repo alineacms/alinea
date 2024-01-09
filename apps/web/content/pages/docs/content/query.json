@@ -1,5 +1,6 @@
 {
   "title": "Querying content",
+  "navigationTitle": "",
   "body": [
     {
       "type": "paragraph",
@@ -156,10 +157,27 @@
     {
       "id": "IEmT75lZgxznL9v7Zq9mW",
       "type": "CodeBlock",
-      "code": "const old = await cms.find(\n  Animal().where(Animal.age.greater(10))\n)\nconst teenager = await cms.find(Human().where(\n   Human.age.greater(10).or(\n     Human.age.less(20)\n   )\n)\nconst applesOrOranges = await cms.find(\n  Fruit().where(Fruit.title.isIn(['apple', 'orange']))\n)",
+      "code": "const old = await cms.find(\n  Animal().where(Animal.age.isGreater(10))\n)\nconst teenager = await cms.find(Human().where(\n   Human.age.isGreater(10).or(\n     Human.age.isLess(20)\n   )\n)\nconst applesOrOranges = await cms.find(\n  Fruit().where(Fruit.title.isIn(['apple', 'orange']))\n)",
       "fileName": "",
       "language": "",
       "compact": false
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "Conditions can be created by accessing the fields of the table instances and using the operators of Expr:"
+        }
+      ]
+    },
+    {
+      "id": "2aiMtwZlHXcQkToqIEv04u3V6VY",
+      "type": "CodeBlock",
+      "code": "BlogPost.title // This is an Expr<string> which has an `is` method to compare\nBlogPost.title.is(\"Test\") // Compare with a value, results in an Expr<boolean>",
+      "fileName": "",
+      "language": ""
     },
     {
       "type": "heading",
