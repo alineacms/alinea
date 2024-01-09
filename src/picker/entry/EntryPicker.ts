@@ -44,6 +44,7 @@ export interface EntryPickerOptions<T = {}> {
   selection: Projection
   defaultView?: 'row' | 'thumb'
   condition?: Expr<boolean>
+  withNavigation?: boolean
   showMedia?: boolean
   max?: number
   label?: string

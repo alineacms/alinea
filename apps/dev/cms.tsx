@@ -1,4 +1,5 @@
 import alinea, {createCMS} from 'alinea'
+import {Entry} from 'alinea/core'
 import {IcRoundTranslate} from 'alinea/ui/icons/IcRoundTranslate'
 import {IcRoundUploadFile} from 'alinea/ui/icons/IcRoundUploadFile'
 import {position} from './src/PositionField'
@@ -66,6 +67,10 @@ const Fields = alinea.document('Fields', {
     alinea.tab('Link fields', {
       externalLink: alinea.url('External link'),
       entry: alinea.entry('Internal link'),
+      entryWithCondition: alinea.entry('With condition', {
+        help: `Show only entries of type Fields`,
+        condition: Entry.type.is('Fields')
+      }),
       linkMultiple: alinea.link.multiple('Mixed links, multiple'),
       image: alinea.image('Image link'),
       images: alinea.image.multiple('Image link (multiple)'),
