@@ -122,6 +122,16 @@ export namespace Type {
     return Boolean(type && type[Type.Data])
   }
 
+  export function extractPatch(
+    type: Type,
+    entryData: Record<string, any>,
+    iter: (field: Field) => boolean | void
+  ) {
+    const res = {}
+
+    return res
+  }
+
   export function blankEntry(
     name: string,
     type: Type
