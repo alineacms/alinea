@@ -398,7 +398,7 @@ function LinkInputRow<Row extends Reference>({
   )
   if (!fields) return inner
   return (
-    <FormRow field={field} rowId={rowId} type={fields}>
+    <FormRow field={field} type={fields}>
       {inner}
     </FormRow>
   )

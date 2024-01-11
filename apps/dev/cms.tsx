@@ -74,7 +74,13 @@ const Fields = alinea.document('Fields', {
       linkMultiple: alinea.link.multiple('Mixed links, multiple'),
       image: alinea.image('Image link'),
       images: alinea.image.multiple('Image link (multiple)'),
-      file: alinea.entry('File link')
+      file: alinea.entry('File link'),
+      withFields: alinea.link('With extra fields', {
+        fields: alinea.type({
+          fieldA: alinea.text('Field A', {width: 0.5}),
+          fieldB: alinea.text('Field B', {width: 0.5})
+        })
+      })
     }),
     alinea.tab('List fields', {
       list: alinea.list('My list field', {
