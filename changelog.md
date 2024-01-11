@@ -1,5 +1,9 @@
 # Changelog
 
+## [Unreleased]
+
+- Add an edit button to Link field rows.
+
 ## [0.5.1]
 
 - Preview panel was missing in production deploys.
