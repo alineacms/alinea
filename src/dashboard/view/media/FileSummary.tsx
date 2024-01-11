@@ -120,9 +120,11 @@ export const FileSummaryThumb = view(
             {renderLabel(file.title)}
           </p>
           <p className={styles.thumb.footer.details()}>
-            {file.extension.slice(1).toUpperCase()}
+            {file.extension?.slice(1).toUpperCase()}
             {file.width && file.height && ` - ${file.width}x${file.height}`}
-            <span style={{marginLeft: 'auto'}}>{prettyBytes(file.size)}</span>
+            {file.size && (
+              <span style={{marginLeft: 'auto'}}>{prettyBytes(file.size)}</span>
+            )}
           </p>
         </div>
       </div>

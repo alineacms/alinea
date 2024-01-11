@@ -7,10 +7,11 @@ import {VStack} from 'alinea/ui'
 import {UIStory} from 'alinea/ui/UIStory'
 
 const fields = type('Field', {
+  multiple: link.multiple('Multiple', {}),
   entry: link.entry('Entry link', {}),
-  multiple: link.entry.multiple('Multiple entry links', {}),
+  multipleEntries: link.entry.multiple('Multiple entry links', {}),
   external: link.url('External link'),
-  image: link.image('Image link', {}),
+  image: link.image('Image link'),
   file: link.file('File link', {}),
   withFields: link.entry.multiple('With fields', {
     fields: type('Fields', {
