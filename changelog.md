@@ -1,5 +1,9 @@
 # Changelog
 
+## [Unreleased]
+
+- Preview panel was missing in production deploys.
+
 ## [0.5.0]
 
 - Conditional configuration (#364)
