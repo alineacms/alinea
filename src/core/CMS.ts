@@ -1,7 +1,6 @@
 import {Store} from 'alinea/backend/Store'
-import {CloudAuthView} from 'alinea/cloud/view/CloudAuth'
 import {Resolver} from 'alinea/core'
-import {Config, DashboardConfig, createConfig} from './Config.js'
+import {Config, createConfig} from './Config.js'
 import {Graph, GraphRealm, GraphRealmApi} from './Graph.js'
 import {Root} from './Root.js'
 import {Workspace} from './Workspace.js'
@@ -15,7 +14,6 @@ export interface CMSApi extends GraphRealmApi {
 }
 
 export abstract class CMS extends GraphRealm implements CMSApi {
-  dashboard: DashboardConfig
   graph: Graph
   config: Config
 
@@ -26,10 +24,6 @@ export abstract class CMS extends GraphRealm implements CMSApi {
       return cnx.resolve(params)
     })
     this.config = normalizedConfig
-    this.dashboard = {
-      auth: CloudAuthView,
-      ...(config.dashboard as DashboardConfig)
-    }
     this.graph = new Graph(normalizedConfig, async params => {
       const {resolve} = await this.resolver()
       return resolve(params)
