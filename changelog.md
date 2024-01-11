@@ -1,8 +1,9 @@
 # Changelog
 
-## [Unreleased]
+## [0.5.2]
 
 - Add an edit button to Link field rows.
+- Fix extra fields defined on Link fields not saving data.
 
 ## [0.5.1]
 
