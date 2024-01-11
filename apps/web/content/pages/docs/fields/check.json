@@ -1,5 +1,6 @@
 {
   "title": "Check",
+  "navigationTitle": "",
   "body": [
     {
       "type": "paragraph",
@@ -14,7 +15,7 @@
     {
       "id": "28hu0MbpUcAOhWTWi954kRRNHcM",
       "type": "CodeBlock",
-      "code": "import alinea from 'alinea'\n\nalinea.check('Check field', {\n  label: 'This is an example check field'\n})",
+      "code": "import alinea from 'alinea'\n\nalinea.check('Subscribe to the newsletter')",
       "fileName": "",
       "language": "",
       "compact": true
@@ -22,7 +23,7 @@
     {
       "id": "2LfI_a2TA_L7QW2kK-nDa",
       "type": "ExampleBlock",
-      "code": "export default alinea.type('Check field', {\n  check: alinea.check('Check field', {\n    label: 'This is an example check field'\n  })\n})"
+      "code": "export default alinea.type('Check field', {\n  check: alinea.check('Subscribe to the newsletter')\n})"
     }
   ],
   "metadata": {
