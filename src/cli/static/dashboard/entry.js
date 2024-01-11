@@ -1,4 +1,3 @@
-import {CMS} from 'alinea/core'
 import {Client} from 'alinea/core/Client'
 import 'alinea/css'
 import {App} from 'alinea/dashboard/App'
@@ -19,8 +18,7 @@ export async function boot(handlerUrl) {
 async function loadConfig() {
   const configModule = './config.js?' + Math.random()
   const exports = await import(configModule)
-  for (const member of Object.values(exports)) {
-    if (member instanceof CMS) return member
-  }
+  if ('cms' in exports) return exports.cms.config
+  if ('config' in exports) return exports.config
   throw new Error(`No config found in "/config.js"`)
 }
