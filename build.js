@@ -483,7 +483,7 @@ async function build({watch, test}) {
 }
 
 async function runTests() {
-  const filter = process.argv[3] || ''
+  const filter = (process.argv[3] || '').toLowerCase()
   const files = glob.sync('dist/**/*.test.js')
   const modules = files.filter(file => {
     if (!filter) return true
