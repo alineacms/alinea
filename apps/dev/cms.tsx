@@ -172,7 +172,7 @@ export const cms = createCMS({
     primary: alinea.workspace('Primary workspace', {
       fields: alinea.root('Fields', {
         [alinea.meta]: {
-          contains: ['Folder', 'TabsExample'],
+          contains: ['Folder', 'TabsExample', 'Fields'],
           icon: IcRoundUploadFile
         }
       }),
