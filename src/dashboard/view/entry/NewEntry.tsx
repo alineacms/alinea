@@ -26,6 +26,7 @@ import {Modal} from 'alinea/dashboard/view/Modal'
 import {link} from 'alinea/input/link'
 import {select} from 'alinea/input/select'
 import {text} from 'alinea/input/text'
+import {entryFields, entryPicker} from 'alinea/picker/entry/EntryPicker'
 import {EntryReference} from 'alinea/picker/entry/EntryReference'
 import {Button, Loader, fromModule} from 'alinea/ui'
 import {Link} from 'alinea/ui/Link'
@@ -89,29 +90,26 @@ function NewEntryForm({parentId}: NewEntryProps) {
     })
     .map(pair => pair[0])
   const root = useRoot()
-  const parentField = useMemo(
-    () =>
-      link.entry('Parent', {
-        condition: Entry.type
-          .isIn(containerTypes)
-          .and(Entry.workspace.is(workspace))
-          .and(Entry.root.is(root.name)),
-        initialValue: preselectedId
-          ? ({
-              id: 'parent',
-              ref: 'entry',
-              type: 'entry',
-              entry: preselectedId
-            } as EntryReference)
-          : undefined
-      }),
-    []
-  )
+  const parentField = useMemo(() => {
+    return link.entry('Parent', {
+      condition: Entry.type
+        .isIn(containerTypes)
+        .and(Entry.workspace.is(workspace))
+        .and(Entry.root.is(root.name)),
+      initialValue: preselectedId
+        ? ({
+            id: 'parent',
+            ref: 'entry',
+            type: 'entry',
+            entry: preselectedId
+          } as EntryReference)
+        : undefined
+    })
+  }, [])
 
   const typeField = useMemo(() => {
-    const result = select('Select type', {})
-
-    track.options(result, async get => {
+    const typeField = select('Select type', {})
+    return track.options(typeField, async get => {
       const types: Array<string> = []
       const selectedParent = get(parentField)
       const parentId = selectedParent?.entry
@@ -140,8 +138,26 @@ function NewEntryForm({parentId}: NewEntryProps) {
         )
       }
     })
+  }, [])
 
-    return result
+  const copyFromField = useMemo(() => {
+    const copyFromField = link.entry('Copy content from')
+    return track.options(copyFromField, get => {
+      const type = get(typeField)!
+      return {
+        readOnly: !type,
+        pickers: {
+          entry: entryPicker({
+            condition: Entry.type.is(type),
+            withNavigation: false,
+            hint: undefined!,
+            title: 'Copy content from',
+            max: 1,
+            selection: entryFields
+          })
+        }
+      }
+    })
   }, [])
 
   const [isCreating, setIsCreating] = useState(false)
@@ -152,7 +168,8 @@ function NewEntryForm({parentId}: NewEntryProps) {
       type({
         parent: parentField,
         title: titleField,
-        type: typeField
+        type: typeField,
+        copyFrom: copyFromField
       }),
     []
   )
@@ -173,7 +190,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
       phase: config.enableDrafts ? EntryPhase.Draft : EntryPhase.Published
     }
     const parentId = form.data().parent?.entry
-    const parent = await graph.preferDraft.get(
+    const parent = await graph.preferPublished.get(
       Entry({entryId: parentId}).select(parentData)
     )
     const parentPaths = parent ? parent.parentPaths.concat(parent.path) : []
@@ -182,6 +199,12 @@ function NewEntryForm({parentId}: NewEntryProps) {
     const parentDir = dirname(filePath)
     const entryType = config.schema[selected]!
     const url = entryUrl(entryType, {...data, parentPaths})
+    const copyFrom = form.data().copyFrom?.entry
+    const entryData = copyFrom
+      ? await graph.preferPublished.get(
+          Entry({entryId: copyFrom}).select(Entry.data)
+        )
+      : {}
     const entry = await createEntryRow(config, {
       entryId,
       ...data,
@@ -200,7 +223,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
       modifiedAt: Date.now(),
       active: true,
       main: false,
-      data: {title, path},
+      data: {...entryData, title, path},
       searchableText: ''
     })
     return mutate({

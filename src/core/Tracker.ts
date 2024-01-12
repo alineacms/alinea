@@ -35,14 +35,16 @@ export namespace track {
   export function options<Value, OnChange, Options extends FieldOptions<Value>>(
     field: Field<Value, OnChange, Options>,
     tracker: OptionsTracker<Options>
-  ): void {
+  ): Field<Value, OnChange, Options> {
     optionTrackers.set(Field.ref(field), tracker)
+    return field
   }
 
   export function value<Value>(
     field: Field<Value>,
     tracker: ValueTracker<Value>
-  ): void {
+  ): Field<Value> {
     valueTrackers.set(Field.ref(field), tracker)
+    return field
   }
 }
