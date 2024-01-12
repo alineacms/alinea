@@ -23,10 +23,10 @@ interface PathInputProps {
 }
 
 function PathInput({field}: PathInputProps) {
-  const {value: fieldValue, mutator, label, options} = useField(field)
+  const {value: fieldValue, mutator, options} = useField(field)
   const graph = useGraph()
   const editor = useEntryEditor()
-  const {width, from = 'title', help, optional} = options
+  const {from = 'title'} = options
   const [focus, setFocus] = useState(false)
   const hiddenRef = useRef<HTMLSpanElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -101,10 +101,7 @@ function PathInput({field}: PathInputProps) {
   return (
     <InputLabel
       asLabel
-      label={label}
-      help={help}
-      optional={optional}
-      width={width}
+      {...options}
       focused={focus}
       icon={IcRoundLink}
       empty={empty}

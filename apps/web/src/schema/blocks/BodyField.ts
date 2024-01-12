@@ -7,18 +7,20 @@ import {FrameworkBlock} from './FrameworkBlock'
 import {ImageBlock} from './ImageBlock'
 import {NoticeBlock} from './NoticeBlock'
 
-export const BodyField = alinea.richText('Body', {
-  schema: alinea.schema({
-    CodeBlock,
-    CodeVariantsBlock,
-    ImageBlock,
-    NoticeBlock,
-    ChapterLinkBlock,
-    ExampleBlock,
-    FrameworkBlock
+export function bodyField() {
+  return alinea.richText('Body', {
+    schema: alinea.schema({
+      CodeBlock,
+      CodeVariantsBlock,
+      ImageBlock,
+      NoticeBlock,
+      ChapterLinkBlock,
+      ExampleBlock,
+      FrameworkBlock
+    })
   })
-})
+}
 
 export const BodyBlock = alinea.type('Body text', {
-  body: BodyField
+  body: bodyField()
 })

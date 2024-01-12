@@ -16,6 +16,8 @@ export function path(
   label: string,
   options: WithoutLabel<PathOptions> = {}
 ): PathField {
+  if (options.shared)
+    throw new Error(`The shared option is not supported on Path fields`)
   return new PathField({
     hint: Hint.String(),
     options: {label, ...options}

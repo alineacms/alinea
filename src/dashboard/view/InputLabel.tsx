@@ -2,6 +2,7 @@ import {Label, renderLabel} from 'alinea/core/Label'
 import {fromModule, px} from 'alinea/ui'
 import {Chip} from 'alinea/ui/Chip'
 import {HStack} from 'alinea/ui/Stack'
+import {PhGlobe} from 'alinea/ui/icons/PhGlobe'
 import {ComponentType, PropsWithChildren, forwardRef, memo} from 'react'
 import css from './InputLabel.module.scss'
 
@@ -14,6 +15,7 @@ export type LabelHeaderProps = {
   size?: 'small' | 'medium' | 'large'
   focused?: boolean
   icon?: ComponentType
+  shared?: boolean
 }
 
 export const LabelHeader = memo(function LabelHeader({
@@ -22,7 +24,8 @@ export const LabelHeader = memo(function LabelHeader({
   help,
   size,
   focused,
-  icon: Icon
+  // icon: Icon,
+  shared
 }: LabelHeaderProps) {
   return (
     <header className={styles.header(size, {focused})}>
@@ -31,6 +34,7 @@ export const LabelHeader = memo(function LabelHeader({
           {/*Icon && <Icon />*/}
           <span>{renderLabel(label)}</span>
         </HStack>
+        {shared && <Chip icon={PhGlobe}>Shared</Chip>}
         {optional && <Chip>Optional</Chip>}
         {help && (
           <div className={styles.header.help()}>{renderLabel(help)}</div>
@@ -52,6 +56,7 @@ export type LabelProps = PropsWithChildren<{
   size?: 'small' | 'medium' | 'large'
   icon?: ComponentType
   empty?: boolean
+  shared?: boolean
 }>
 
 /** Label for an input */
@@ -69,7 +74,8 @@ export const InputLabel = forwardRef<HTMLElement, LabelProps>(
       focused = false,
       size,
       icon,
-      empty
+      empty,
+      shared
     },
     ref
   ) {
@@ -89,6 +95,7 @@ export const InputLabel = forwardRef<HTMLElement, LabelProps>(
               size={size}
               focused={focused}
               icon={icon}
+              shared={shared}
             />
           )}
           {children}

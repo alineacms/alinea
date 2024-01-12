@@ -220,6 +220,13 @@ export class Database implements Syncable {
           )
         }
       }
+      case MutationType.Patch: {
+        const {patch} = mutation
+        const rows = EntryRow({entryId: mutation.entryId, main: true})
+        const current = await tx(rows.maybeFirst())
+        if (current) await tx(rows.set({data: {...current.data, patch}}))
+        return () => this.updateHash(tx, rows)
+      }
       case MutationType.Archive: {
         const archived = EntryRow({
           entryId: mutation.entryId,

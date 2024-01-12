@@ -22,11 +22,8 @@ function TextInput({field}: TextInputProps) {
   const {value, mutator, label, options} = useField(field)
   const [focus, setFocus] = useState(false)
   const {
-    width,
     multiline,
     inline,
-    optional,
-    help,
     iconLeft: IconLeft,
     iconRight: IconRight,
     autoFocus
@@ -40,14 +37,10 @@ function TextInput({field}: TextInputProps) {
   return (
     <InputLabel
       asLabel
-      label={label}
-      help={help}
-      optional={optional}
-      inline={inline}
-      width={width}
+      {...options}
+      empty={empty}
       focused={focus}
       icon={IcRoundTextFields}
-      empty={empty}
     >
       <HStack center gap={8}>
         {IconLeft && <IconLeft />}

@@ -10,6 +10,7 @@ import {
   Mutation,
   MutationType,
   OrderMutation,
+  PatchMutation,
   PublishMutation,
   RemoveEntryMutation,
   UploadMutation
@@ -104,6 +105,10 @@ export class ChangeSetCreator {
       file,
       contents: decoder.decode(loader.format(this.config.schema, record))
     })
+  }
+
+  patchChanges({file, patch}: PatchMutation): Array<Change> {
+    return [{type: ChangeType.Patch, file, patch}]
   }
 
   createChanges({file, entry}: CreateMutation): Array<Change> {
@@ -220,6 +225,8 @@ export class ChangeSetCreator {
     switch (mutation.type) {
       case MutationType.Edit:
         return this.editChanges(mutation)
+      case MutationType.Patch:
+        return this.patchChanges(mutation)
       case MutationType.Create:
         return this.createChanges(mutation)
       case MutationType.Publish:

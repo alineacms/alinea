@@ -159,10 +159,10 @@ function InsertMenu({editor, schema, onInsert}: InsertMenuProps) {
 function RichTextEditor<Blocks extends Schema>({
   field
 }: RichTextInputProps<Blocks>) {
-  const {value, mutator, label, options} = useField(field)
+  const {value, mutator, options} = useField(field)
   const {readOnly, fragment, insert} = mutator
   const picker = usePickTextLink()
-  const {optional, inline, help, width, schema} = options
+  const {schema} = options
   const [focus, setFocus] = useState(false)
   const toolbarRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLElement>(null)
@@ -237,11 +237,7 @@ function RichTextEditor<Blocks extends Schema>({
       )}
       <PickTextLink picker={picker} />
       <InputLabel
-        label={label}
-        help={help}
-        optional={optional}
-        inline={inline}
-        width={width}
+        {...options}
         focused={focus}
         icon={IcRoundNotes}
         empty={editor.isEmpty}

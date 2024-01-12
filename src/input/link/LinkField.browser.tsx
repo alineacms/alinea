@@ -56,8 +56,7 @@ interface LinkInputProps<Row extends Reference> {
 }
 
 function LinkInput<Row extends Reference>({field}: LinkInputProps<Row>) {
-  const {options, value, mutator, label} = useField(field)
-  const {width, inline, optional, help} = options
+  const {options, value, mutator} = useField(field)
 
   const [pickFrom, setPickFrom] = useState<string | undefined>()
   const picker = pickFrom ? options.pickers[pickFrom] : undefined
@@ -82,14 +81,7 @@ function LinkInput<Row extends Reference>({field}: LinkInputProps<Row>) {
           onCancel={() => setPickFrom(undefined)}
         />
       )}
-      <InputLabel
-        label={label}
-        help={help}
-        optional={optional}
-        inline={inline}
-        width={width}
-        icon={IcRoundLink}
-      >
+      <InputLabel {...options} icon={IcRoundLink}>
         <div className={styles.root()}>
           <div className={styles.root.inner()}>
             <Sink.Root>
@@ -138,8 +130,7 @@ interface LinksInputProps<Row extends Reference & ListRow> {
 function LinksInput<Row extends Reference & ListRow>({
   field
 }: LinksInputProps<Row>) {
-  const {options, value, mutator, label} = useField(field)
-  const {width, inline, optional, help} = options
+  const {options, value, mutator} = useField(field)
 
   const [pickFrom, setPickFrom] = useState<
     {type: string; id?: string} | undefined
@@ -213,14 +204,7 @@ function LinksInput<Row extends Reference & ListRow>({
         onDragEnd={handleDragEnd}
         layoutMeasuring={layoutMeasuringConfig}
       >
-        <InputLabel
-          label={label}
-          help={help}
-          optional={optional}
-          inline={inline}
-          width={width}
-          icon={IcRoundLink}
-        >
+        <InputLabel {...options} icon={IcRoundLink}>
           <div className={styles.root()}>
             <div className={styles.root.inner()}>
               <SortableContext
