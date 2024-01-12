@@ -107,6 +107,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
       }),
     []
   )
+
   const typeField = useMemo(() => {
     const result = select('Select type', {})
 
@@ -171,6 +172,7 @@ function NewEntryForm({parentId}: NewEntryProps) {
       path,
       phase: config.enableDrafts ? EntryPhase.Draft : EntryPhase.Published
     }
+    const parentId = form.data().parent?.entry
     const parent = await graph.preferDraft.get(
       Entry({entryId: parentId}).select(parentData)
     )
