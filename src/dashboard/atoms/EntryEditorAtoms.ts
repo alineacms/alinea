@@ -19,6 +19,7 @@ import {
   entryInfo,
   entryUrl
 } from 'alinea/core/EntryFilenames'
+import {Graph} from 'alinea/core/Graph'
 import {Mutation, MutationType} from 'alinea/core/Mutation'
 import {MediaFile} from 'alinea/core/media/MediaSchema'
 import {base64} from 'alinea/core/util/Encoding'
@@ -353,6 +354,32 @@ export function createEntryEditor(entryData: EntryData) {
     })
   })
 
+  async function persistSharedFields(
+    graph: Graph,
+    entry: EntryRow
+  ): Promise<Array<Mutation>> {
+    const res: Array<Mutation> = []
+    const {i18n} = Root.data(config.workspaces[entry.workspace][entry.root])
+    if (i18n) {
+      const shared = Type.sharedData(type, entry.data)
+      if (shared) {
+        const translations = await graph.preferPublished.find(
+          Entry({i18nId: entry.i18nId})
+        )
+        for (const translation of translations) {
+          if (translation.locale === entry.locale) continue
+          res.push({
+            type: MutationType.Patch,
+            file: entryFile(translation),
+            entryId: translation.entryId,
+            patch: shared
+          })
+        }
+      }
+    }
+    return res
+  }
+
   const publishEdits = atom(null, async (get, set) => {
     const currentFile = entryFile(activeVersion)
     const update = base64.stringify(edits.getLocalUpdate())
@@ -367,25 +394,8 @@ export function createEntryEditor(entryData: EntryData) {
       entry,
       update
     })
-    const {i18n} = Root.data(config.workspaces[entry.workspace][entry.root])
-    if (i18n) {
-      const shared = Type.sharedData(type, entry.data)
-      if (shared) {
-        const graph = await get(graphAtom)
-        const translations = await graph.preferPublished.find(
-          Entry({i18nId: entry.i18nId})
-        )
-        for (const translation of translations) {
-          if (translation.locale === entry.locale) continue
-          mutations.push({
-            type: MutationType.Patch,
-            file: entryFile(translation),
-            entryId: translation.entryId,
-            patch: shared
-          })
-        }
-      }
-    }
+    const graph = await get(graphAtom)
+    mutations.push(...(await persistSharedFields(graph, entry)))
     return set(transact, {
       clearChanges: true,
       transition: EntryTransition.PublishEdits,
@@ -423,16 +433,21 @@ export function createEntryEditor(entryData: EntryData) {
     })
   })
 
-  const publishDraft = atom(null, (get, set) => {
-    const mutation: Mutation = {
-      type: MutationType.Publish,
-      phase: EntryPhase.Draft,
-      entryId: activeVersion.entryId,
-      file: entryFile(activeVersion)
-    }
+  const publishDraft = atom(null, async (get, set) => {
+    const mutations: Array<Mutation> = [
+      {
+        type: MutationType.Publish,
+        phase: EntryPhase.Draft,
+        entryId: activeVersion.entryId,
+        file: entryFile(activeVersion)
+      }
+    ]
+    const entry = entryData.phases[EntryPhase.Draft]
+    const graph = await get(graphAtom)
+    mutations.push(...(await persistSharedFields(graph, entry)))
     return set(transact, {
       transition: EntryTransition.PublishDraft,
-      action: () => set(mutateAtom, mutation),
+      action: () => set(mutateAtom, ...mutations),
       errorMessage: 'Could not complete publish action, please try again later'
     })
   })
