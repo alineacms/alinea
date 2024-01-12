@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.5.3]
+
+- Fix number field not reflecting up value changes
+- Fix creating new entries not picking up selected parent
+
 ## [0.5.2]
 
 - Add an edit button to Link field rows.
