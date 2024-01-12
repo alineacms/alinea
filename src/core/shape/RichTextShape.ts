@@ -1,7 +1,6 @@
 import {LinkResolver} from 'alinea/backend/resolver/LinkResolver'
 import * as Y from 'yjs'
 import {Entry} from '../Entry.js'
-import {Hint} from '../Hint.js'
 import {Label} from '../Label.js'
 import {Shape} from '../Shape.js'
 import {TextDoc, TextNode} from '../TextDoc.js'
@@ -117,24 +116,8 @@ export class RichTextShape<Blocks>
         )
       : {}
   }
-  innerTypes(parents: Array<string>) {
-    if (!this.shapes) return []
-    return entries(this.shapes).flatMap(([name, shape]) => {
-      const info = {name, shape, parents}
-      const inner = shape.innerTypes(parents.concat(name))
-      if (Hint.isDefinitionName(name)) return [info, ...inner]
-      return inner
-    })
-  }
   create() {
     return this.initialValue ?? ([] as TextDoc<Blocks>)
-  }
-  typeOfChild<C>(yValue: Y.Map<any>, child: string): Shape<C> {
-    const block = yValue.get(child)
-    const type = block && block.get('type')
-    const value = type && this.values && this.values[type]
-    if (value) return value as unknown as Shape<C>
-    throw new Error(`Type of block "${child}" not found`)
   }
   toXml(rows: TextDoc<Blocks>) {
     const types = this.values

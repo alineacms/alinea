@@ -1,9 +1,8 @@
 import {LinkResolver} from 'alinea/backend/resolver/LinkResolver'
 import * as Y from 'yjs'
-import {Hint} from '../Hint.js'
 import {createId} from '../Id.js'
 import {Label} from '../Label.js'
-import {Shape, ShapeInfo} from '../Shape.js'
+import {Shape} from '../Shape.js'
 import {PostProcess} from '../pages/PostProcess.js'
 import {entries, fromEntries} from '../util/Objects.js'
 import {RecordShape} from './RecordShape.js'
@@ -42,22 +41,8 @@ export class UnionShape<T extends UnionRow>
       })
     )
   }
-  innerTypes(parents: Array<string>): Array<ShapeInfo> {
-    return entries(this.shapes).flatMap(([name, shape]) => {
-      const info = {name, shape, parents}
-      const inner = shape.innerTypes(parents.concat(name))
-      if (Hint.isDefinitionName(name)) return [info, ...inner]
-      return inner
-    })
-  }
   create(): T {
     return this.initialValue ?? ({} as T)
-  }
-  typeOfChild<C>(yValue: Y.Map<any>, child: string): Shape<C> {
-    const type = yValue && yValue.get('type')
-    const shape = type && this.shapes[type]
-    if (shape) return shape.typeOfChild(yValue, child)
-    throw new Error(`Could not determine type of child "${child}"`)
   }
   toY(value: T) {
     if (Array.isArray(value)) value = value[0] ?? {}

@@ -6,7 +6,6 @@ import {Callable} from 'rado/util/Callable'
 import type {ComponentType} from 'react'
 import {Field} from './Field.js'
 import {Hint} from './Hint.js'
-import {createId} from './Id.js'
 import {Label} from './Label.js'
 import {Meta, StripMeta} from './Meta.js'
 import {Section, section} from './Section.js'
@@ -120,21 +119,6 @@ export namespace Type {
 
   export function isType(type: any): type is Type {
     return Boolean(type && type[Type.Data])
-  }
-
-  export function blankEntry(
-    name: string,
-    type: Type
-  ): {
-    id: string
-    type: string
-    [key: string]: any
-  } {
-    return {
-      ...Type.shape(type).create(),
-      type: name,
-      id: createId()
-    }
   }
 }
 

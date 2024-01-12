@@ -14,11 +14,6 @@ export class RecordShape<T = object> implements Shape<T, RecordMutator<T>> {
     public properties: Record<string, Shape>,
     public initialValue?: T
   ) {}
-  innerTypes(parents: Array<string>) {
-    return entries(this.properties).flatMap(([name, shape]) => {
-      return shape.innerTypes(parents.concat(name))
-    })
-  }
   concat<X>(that: RecordShape<X> | undefined): RecordShape<T & X> {
     if (!that) return this as any
     return new RecordShape<T & X>(that.label, {
@@ -35,9 +30,6 @@ export class RecordShape<T = object> implements Shape<T, RecordMutator<T>> {
         })
       ) as T)
     )
-  }
-  typeOfChild<C>(yValue: T, child: string): Shape<C> {
-    return this.properties[child]
   }
   toY(value: T) {
     const self: Record<string, any> = value || {}
