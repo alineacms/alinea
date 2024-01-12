@@ -187,6 +187,54 @@
     {
       "type": "heading",
       "textAlign": "left",
+      "level": 3,
+      "content": [
+        {
+          "type": "text",
+          "text": "`shared`"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "Fields can be persisted over all languages if your content is "
+        },
+        {
+          "type": "text",
+          "text": "localised",
+          "marks": [
+            {
+              "type": "link",
+              "attrs": {
+                "data-id": "2arLk4c7vuXfH8Dc7SCITAOiy3R",
+                "data-entry": "2YcyNztG4JXc8TLpT4l1l7njGtn",
+                "data-type": "entry",
+                "href": null,
+                "title": null
+              }
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": " by setting the `shared` option to `true`. When the entry is published the field data is copied to other locales. This is currently only supported on the root level, not on nested fields."
+        }
+      ]
+    },
+    {
+      "id": "2arMRXdHMiPwRAv9LYGf8LF4HQW",
+      "type": "CodeBlock",
+      "code": "const Type = alinea.type('Persist', {\n // Persist field data over all locales\n sharedField: alinea.text('Shared text', {shared: true})\n})",
+      "fileName": "",
+      "language": ""
+    },
+    {
+      "type": "heading",
+      "textAlign": "left",
       "level": 2,
       "content": [
         {

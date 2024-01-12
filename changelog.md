@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.5.4]
+
+- Introduce the shared option for Fields. Fields can be persisted over all
+  locales if your content is localised by setting the `shared` option to `true`.
+  When the entry is published the field data is copied to other locales.
+  This is currently only supported on the root level, not on nested fields.
+
+  ```tsx
+  const Type = alinea.type('Persist', {
+    // Persist field data over all locales
+    sharedField: alinea.text('Shared text', {shared: true})
+  })
+  ```
+
 ## [0.5.3]
 
 - Fix number field not reflecting up value changes
