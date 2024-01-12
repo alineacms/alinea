@@ -149,6 +149,7 @@ export namespace link {
       pickers: {
         entry: entryPicker<EntryReference, Fields>({
           ...options,
+          withNavigation: !options.condition,
           hint: Hint.Extern({
             name: 'EntryReference',
             package: 'alinea/picker/entry'
@@ -178,6 +179,7 @@ export namespace link.entry {
       pickers: {
         entry: entryPicker<EntryReference, Fields>({
           ...options,
+          withNavigation: !options.condition,
           hint: Hint.Extern({
             name: 'EntryReference',
             package: 'alinea/picker/entry'

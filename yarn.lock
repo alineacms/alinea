@@ -29,7 +29,7 @@ __metadata:
     cito: ^0.2.0
     dataloader: ^2.1.0
     pretty-ms: ^8.0.0
-    rado: ^0.4.5
+    rado: ^0.4.6
     regexparam: ^2.0.1
     xxhash-wasm: ^1.0.2
   languageName: unknown
@@ -9970,10 +9970,10 @@ fsevents@~2.3.2:
   languageName: node
   linkType: hard
 
-"rado@npm:^0.4.5":
-  version: 0.4.5
-  resolution: "rado@npm:0.4.5"
-  checksum: c6c4228703aca77bb63198bc4354293aaa5b5fe0635ff0790e9786527a85f7dd702d62d40a3e9121bb5c0f68fafb38d8552fcfa0a80d89879076cc3bb0189003
+"rado@npm:^0.4.6":
+  version: 0.4.6
+  resolution: "rado@npm:0.4.6"
+  checksum: a816c2db2e19d32dae182c4197fb2be2fb0ed71a2dece760a495888efac62e840b1ed420b723b623d0662004d4fa6869d37ea1860b818b97f3a0f84441aa742b
   languageName: node
   linkType: hard
 

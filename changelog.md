@@ -1,6 +1,20 @@
 # Changelog
 
-## [Unreleased]
+## [0.5.3]
+
+- Fix number field not reflecting up value changes
+- Fix creating new entries not picking up selected parent
+
+## [0.5.2]
+
+- Add an edit button to Link field rows.
+- Fix extra fields defined on Link fields not saving data.
+
+## [0.5.1]
+
+- Preview panel was missing in production deploys.
+
+## [0.5.0]
 
 - Conditional configuration (#364)
 

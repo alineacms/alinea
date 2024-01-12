@@ -1,5 +1,6 @@
 {
   "title": "Link",
+  "navigationTitle": "",
   "body": [
     {
       "type": "paragraph",
@@ -7,7 +8,87 @@
       "content": [
         {
           "type": "text",
-          "text": "The link field can be used to create a reference to other entries, or a an external resource (like a webpage or an email address)."
+          "text": "The link field can be used to create one or multiple references to other entries or an external resources (like a webpage or an email address). By default the user can choose between internal pages, external urls or uploaded files. If you want to limit to selection to just one of those options it's possible to declare the field as either an "
+        },
+        {
+          "type": "text",
+          "text": "Entry field",
+          "marks": [
+            {
+              "type": "link",
+              "attrs": {
+                "data-id": "2aiM1Ghv4EPsnyCwFTBaljNTqhe",
+                "data-entry": "2aiLjrXSg8gyirKnw9LmYKwsW2O",
+                "data-type": "entry",
+                "href": null,
+                "title": null
+              }
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": ", "
+        },
+        {
+          "type": "text",
+          "text": "Url field",
+          "marks": [
+            {
+              "type": "link",
+              "attrs": {
+                "data-id": "2aiNTO1P2dBKjx6oBxmdnwk7vuB",
+                "data-entry": "2aiM9Z6hrhingqGxBX6GGKEVBAh",
+                "data-type": "entry",
+                "href": null,
+                "title": null
+              }
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": ", "
+        },
+        {
+          "type": "text",
+          "text": "File field",
+          "marks": [
+            {
+              "type": "link",
+              "attrs": {
+                "data-id": "2aiM4jKizlp5cMp5nIZg1aG5zfw",
+                "data-entry": "tlhZ01MHUjv3Od172Ew6w",
+                "data-type": "entry",
+                "href": null,
+                "title": null
+              }
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": ", or "
+        },
+        {
+          "type": "text",
+          "text": "Image field",
+          "marks": [
+            {
+              "type": "link",
+              "attrs": {
+                "data-id": "2aiM5hmOU6jSqFdf9wHRoZw21TE",
+                "data-entry": "Xu4-sW6S0ynehY5zKR1VZ",
+                "data-type": "entry",
+                "href": null,
+                "title": null
+              }
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": "."
         }
       ]
     },
@@ -23,6 +104,48 @@
       "id": "7JteCOtZTREVRHMMcZqMR",
       "type": "ExampleBlock",
       "code": "export default alinea.type('Link field', {\n  link: alinea.link('Single link'),\n  linkMultiple: alinea.link.multiple('Multiple links')\n})"
+    },
+    {
+      "type": "heading",
+      "textAlign": "start",
+      "level": 2,
+      "content": [
+        {
+          "type": "text",
+          "text": "Configuration",
+          "marks": [
+            {
+              "type": "bold"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "textAlign": "start",
+      "level": 3,
+      "content": [
+        {
+          "type": "text",
+          "text": "`max`",
+          "marks": [
+            {
+              "type": "bold"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "start",
+      "content": [
+        {
+          "type": "text",
+          "text": "Limit the amount of rows in case of multiple links."
+        }
+      ]
     }
   ],
   "metadata": {
@@ -36,7 +159,7 @@
   },
   "@alinea": {
     "entryId": "24yE79dE2ssYPDQQHFFgT0eg2tH",
-    "type": "Doc",
+    "type": "Docs",
     "index": "a2BV"
   }
 }

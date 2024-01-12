@@ -33,6 +33,7 @@ import {TextLabel, fromModule} from 'alinea/ui'
 import {Sink} from 'alinea/ui/Sink'
 import {IcRoundClose} from 'alinea/ui/icons/IcRoundClose'
 import IcRoundDragHandle from 'alinea/ui/icons/IcRoundDragHandle'
+import {IcRoundEdit} from 'alinea/ui/icons/IcRoundEdit'
 import {IcRoundLink} from 'alinea/ui/icons/IcRoundLink'
 import {CSSProperties, HTMLAttributes, Ref, Suspense, useState} from 'react'
 import {
@@ -92,6 +93,7 @@ function LinkInput<Row extends Reference>({field}: LinkInputProps<Row>) {
                   picker={options.pickers[value.type]}
                   reference={value as Row}
                   onRemove={() => mutator.replace(undefined)}
+                  onEdit={() => setPickFrom(value.type)}
                 />
               ) : (
                 <div className={styles.create()}>
@@ -130,26 +132,24 @@ function LinksInput<Row extends Reference & ListRow>({
 }: LinksInputProps<Row>) {
   const {options, value, mutator} = useField(field)
 
-  const [pickFrom, setPickFrom] = useState<string | undefined>()
-  const picker = pickFrom ? options.pickers[pickFrom] : undefined
+  const [pickFrom, setPickFrom] = useState<
+    {type: string; id?: string} | undefined
+  >()
+  const picker = pickFrom ? options.pickers[pickFrom.type] : undefined
 
   function handleConfirm(links: Array<ListRow & Row>) {
     if (!pickFrom || !picker || !links) return
     const seen = new Set()
     for (const link of links) {
-      if (link.type !== pickFrom) continue
+      if (link.type !== pickFrom.type) continue
       seen.add(link.id)
-      if (picker.handlesMultiple) {
-        const index = value.findIndex(v => v.id === link.id)
-        if (index > -1) mutator.replace(link.id, link)
-        else mutator.push(link)
-      } else {
-        mutator.push(link)
-      }
+      const index = value.findIndex(v => v.id === link.id)
+      if (index > -1) mutator.replace(link.id, link)
+      else mutator.push(link)
     }
     if (picker.handlesMultiple)
       for (const link of value) {
-        if (link.type !== pickFrom) continue
+        if (link.type !== pickFrom.type) continue
         if (seen.has(link.id)) continue
         mutator.remove(link.id)
       }
@@ -184,11 +184,15 @@ function LinksInput<Row extends Reference & ListRow>({
 
   return (
     <>
-      {PickerView && (
+      {pickFrom && PickerView && (
         <PickerView
-          type={pickFrom!}
+          type={pickFrom.type}
           options={picker.options}
-          selection={value.filter(ref => ref.type === pickFrom)}
+          selection={value.filter(ref => {
+            if (ref.id === pickFrom.id) return true
+            if (picker.handlesMultiple) return ref.type === pickFrom.type
+            return false
+          })}
           onConfirm={handleConfirm}
           onCancel={() => setPickFrom(undefined)}
         />
@@ -220,6 +224,7 @@ function LinksInput<Row extends Reference & ListRow>({
                         picker={options.pickers[reference.type]}
                         reference={reference as ListRow & Row}
                         onRemove={() => mutator.remove(reference.id)}
+                        onEdit={() => setPickFrom(reference)}
                         isSortable={options.max !== 1}
                       />
                     )
@@ -232,7 +237,7 @@ function LinksInput<Row extends Reference & ListRow>({
                           return (
                             <Create.Button
                               key={name}
-                              onClick={() => setPickFrom(name)}
+                              onClick={() => setPickFrom({type: name})}
                             >
                               <TextLabel label={picker.label} />
                             </Create.Button>
@@ -258,6 +263,7 @@ function LinksInput<Row extends Reference & ListRow>({
                     picker={options.pickers[dragging.type]}
                     reference={dragging as Row}
                     onRemove={() => mutator.remove(dragging.id)}
+                    onEdit={() => setPickFrom(dragging)}
                     isDragOverlay
                     isSortable={options.max !== 1}
                   />
@@ -309,7 +315,8 @@ interface LinkInputRowProps<Row extends Reference>
   picker: Picker<Row>
   fields: Type<Row> | undefined
   reference: Row
-  onRemove: () => void
+  onEdit(): void
+  onRemove(): void
   isDragging?: boolean
   isDragOverlay?: boolean
   isSortable?: boolean
@@ -323,6 +330,7 @@ function LinkInputRow<Row extends Reference>({
   picker,
   fields,
   reference,
+  onEdit,
   onRemove,
   handle,
   rootRef,
@@ -361,6 +369,7 @@ function LinkInputRow<Row extends Reference>({
           </Suspense>
         </div>
         <Sink.Options>
+          <IconButton icon={IcRoundEdit} onClick={onEdit} />
           <IconButton icon={IcRoundClose} onClick={onRemove} />
         </Sink.Options>
       </Sink.Header>
@@ -373,7 +382,7 @@ function LinkInputRow<Row extends Reference>({
   )
   if (!fields) return inner
   return (
-    <FormRow field={field} rowId={rowId} type={fields}>
+    <FormRow field={field} type={fields}>
       {inner}
     </FormRow>
   )

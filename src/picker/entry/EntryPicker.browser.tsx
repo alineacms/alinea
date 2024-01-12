@@ -80,7 +80,14 @@ export function EntryPickerModal({
 }: EntryPickerModalProps) {
   const config = useConfig()
   const graph = useGraph()
-  const {title, defaultView, max, condition, showMedia} = options
+  const {
+    title,
+    defaultView,
+    max,
+    condition,
+    withNavigation = true,
+    showMedia
+  } = options
   const [search, setSearch] = useState('')
   const list = useFocusList({
     onClear: () => setSearch('')
@@ -127,6 +134,10 @@ export function EntryPickerModal({
   )
   const cursor = useMemo(() => {
     const terms = search.replace(/,/g, ' ').split(' ').filter(Boolean)
+    if (!withNavigation && condition)
+      return Entry()
+        .where(condition)
+        .search(...terms)
     const rootCondition = and(
       Entry.workspace.is(destination.workspace),
       Entry.root.is(destination.root)
@@ -139,9 +150,7 @@ export function EntryPickerModal({
       ? and(destinationCondition, Entry.locale.is(destinationLocale))
       : destinationCondition
     return Entry()
-      .where(
-        condition ? condition.and(translatedCondition) : translatedCondition
-      )
+      .where(translatedCondition)
       .search(...terms)
   }, [destination, destinationLocale, search, condition])
   const [view, setView] = useState<'row' | 'thumb'>(defaultView || 'row')
@@ -200,66 +209,68 @@ export function EntryPickerModal({
             <HStack align="flex-end" gap={18}>
               <IconButton icon={IcRoundArrowBack} onClick={goUp} />
               <VStack>
-                <Breadcrumbs>
-                  <BreadcrumbsItem>
-                    <button onClick={toRoot}>{workspace.label}</button>
-                  </BreadcrumbsItem>
-                  <BreadcrumbsItem>
-                    <DropdownMenu.Root bottom>
-                      <DropdownMenu.Trigger>
-                        <HStack center gap={4}>
-                          {Root.label(workspace.roots[destination.root])}
-                          <Icon icon={IcRoundUnfoldMore} />
-                        </HStack>
-                      </DropdownMenu.Trigger>
-                      <DropdownMenu.Items>
-                        {entries(workspace.roots).map(([name, root]) => {
-                          return (
-                            <DropdownMenu.Item
-                              key={name}
+                {withNavigation && (
+                  <Breadcrumbs>
+                    <BreadcrumbsItem>
+                      <button onClick={toRoot}>{workspace.label}</button>
+                    </BreadcrumbsItem>
+                    <BreadcrumbsItem>
+                      <DropdownMenu.Root bottom>
+                        <DropdownMenu.Trigger>
+                          <HStack center gap={4}>
+                            {Root.label(workspace.roots[destination.root])}
+                            <Icon icon={IcRoundUnfoldMore} />
+                          </HStack>
+                        </DropdownMenu.Trigger>
+                        <DropdownMenu.Items>
+                          {entries(workspace.roots).map(([name, root]) => {
+                            return (
+                              <DropdownMenu.Item
+                                key={name}
+                                onClick={() => {
+                                  setDestination({
+                                    workspace: destination.workspace,
+                                    root: name
+                                  })
+                                }}
+                              >
+                                {Root.label(root)}
+                              </DropdownMenu.Item>
+                            )
+                          })}
+                        </DropdownMenu.Items>
+                      </DropdownMenu.Root>
+                      {destinationRoot.i18n && (
+                        <Langswitch
+                          inline
+                          selected={destinationLocale!}
+                          locales={destinationRoot.i18n.locales}
+                          onChange={locale => {
+                            setDestination({
+                              ...destination,
+                              parentId: undefined,
+                              locale
+                            })
+                          }}
+                        />
+                      )}
+                    </BreadcrumbsItem>
+                    {!search &&
+                      parentEntries?.map(({id, title}) => {
+                        return (
+                          <BreadcrumbsItem key={id}>
+                            <button
                               onClick={() => {
-                                setDestination({
-                                  workspace: destination.workspace,
-                                  root: name
-                                })
+                                setDestination({...destination, parentId: id})
                               }}
                             >
-                              {Root.label(root)}
-                            </DropdownMenu.Item>
-                          )
-                        })}
-                      </DropdownMenu.Items>
-                    </DropdownMenu.Root>
-                    {destinationRoot.i18n && (
-                      <Langswitch
-                        inline
-                        selected={destinationLocale!}
-                        locales={destinationRoot.i18n.locales}
-                        onChange={locale => {
-                          setDestination({
-                            ...destination,
-                            parentId: undefined,
-                            locale
-                          })
-                        }}
-                      />
-                    )}
-                  </BreadcrumbsItem>
-                  {!search &&
-                    parentEntries?.map(({id, title}) => {
-                      return (
-                        <BreadcrumbsItem key={id}>
-                          <button
-                            onClick={() => {
-                              setDestination({...destination, parentId: id})
-                            }}
-                          >
-                            {title}
-                          </button>
-                        </BreadcrumbsItem>
-                      )
-                    })}
-                </Breadcrumbs>
+                              {title}
+                            </button>
+                          </BreadcrumbsItem>
+                        )
+                      })}
+                  </Breadcrumbs>
+                )}
                 <h2>
                   {title ? <TextLabel label={title} /> : 'Select a reference'}
                 </h2>

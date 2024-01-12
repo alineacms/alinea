@@ -6,14 +6,8 @@ export type ScalarMutator<T> = (value: T) => void
 
 export class ScalarShape<T> implements Shape<T, ScalarMutator<T>> {
   constructor(public label: Label, public initialValue?: T) {}
-  innerTypes() {
-    return []
-  }
   create(): T {
     return this.initialValue as T
-  }
-  typeOfChild<C>(yValue: T, child: string): Shape<C> {
-    throw new Error(`No children in scalar values`)
   }
   toY(value: T) {
     return value

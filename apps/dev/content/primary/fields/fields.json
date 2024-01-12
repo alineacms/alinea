@@ -1,8 +1,8 @@
 {
   "title": "Fields",
   "position": {
-    "x": 0.24333333333333335,
-    "y": 0.35333333333333333
+    "x": 0.6293332926432291,
+    "y": 0.2579999796549479
   },
   "richText": [
     {
@@ -106,6 +106,7 @@
     "type": "entry",
     "entry": "2U6iXfImlfChadgIccgNa9P4nd0"
   },
+  "entryWithCondition": {},
   "linkMultiple": [],
   "image": {
     "id": "2VQc6vHQFNmSAklVCvOuSE8aBBA",
@@ -133,6 +134,15 @@
     }
   ],
   "file": {},
+  "withFields": {
+    "id": "2aoSxnfF8xgFgJs9cg42NC6nJ3N",
+    "type": "url",
+    "url": "qsdf",
+    "title": "",
+    "target": "_self",
+    "fieldA": "A",
+    "fieldB": "B"
+  },
   "list": [
     {
       "id": "2U6zmJT84rFV9R1kGBKi6nENtTN",
@@ -215,6 +225,7 @@
     }
   ],
   "street": "",
+  "streetNr": "",
   "box": "",
   "zip": "",
   "city": "",

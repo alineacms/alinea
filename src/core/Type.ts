@@ -6,7 +6,6 @@ import {Callable} from 'rado/util/Callable'
 import type {ComponentType} from 'react'
 import {Field} from './Field.js'
 import {Hint} from './Hint.js'
-import {createId} from './Id.js'
 import {Label} from './Label.js'
 import {Meta, StripMeta} from './Meta.js'
 import {Section, section} from './Section.js'
@@ -122,28 +121,9 @@ export namespace Type {
     return Boolean(type && type[Type.Data])
   }
 
-  export function extractPatch(
-    type: Type,
-    entryData: Record<string, any>,
-    iter: (field: Field) => boolean | void
-  ) {
-    const res = {}
-
-    return res
-  }
-
-  export function blankEntry(
-    name: string,
-    type: Type
-  ): {
-    id: string
-    type: string
-    [key: string]: any
-  } {
-    return {
-      ...Type.shape(type).create(),
-      type: name,
-      id: createId()
+  export function iter(type: Type, each: (field: Field) => void) {
+    for (const [key, field] of entries(type)) {
+      each(field)
     }
   }
 }

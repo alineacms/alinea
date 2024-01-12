@@ -1,9 +1,8 @@
 import {LinkResolver} from 'alinea/backend/resolver/LinkResolver'
 import * as Y from 'yjs'
-import {Hint} from '../Hint.js'
 import {createId} from '../Id.js'
 import {Label} from '../Label.js'
-import {Shape, ShapeInfo} from '../Shape.js'
+import {Shape} from '../Shape.js'
 import {PostProcess} from '../pages/PostProcess.js'
 import {generateKeyBetween} from '../util/FractionalIndexing.js'
 import {RecordShape} from './RecordShape.js'
@@ -52,23 +51,8 @@ export class ListShape<T extends ListRow>
       })
     )
   }
-  innerTypes(parents: Array<string>): Array<ShapeInfo> {
-    return Object.entries(this.shapes).flatMap(([name, shape]) => {
-      const info = {name, shape, parents}
-      const inner = shape.innerTypes(parents.concat(name))
-      if (Hint.isDefinitionName(name)) return [info, ...inner]
-      return inner
-    })
-  }
   create() {
     return this.initialValue ?? ([] as Array<T>)
-  }
-  typeOfChild<C>(yValue: Y.Map<any>, child: string): Shape<C> {
-    const row = yValue.get(child)
-    const type = row && row.get('type')
-    const value = type && this.values[type]
-    if (value) return value as unknown as Shape<C>
-    throw new Error(`Could not determine type of child "${child}"`)
   }
   toY(value: Array<T>) {
     const map = new Y.Map()

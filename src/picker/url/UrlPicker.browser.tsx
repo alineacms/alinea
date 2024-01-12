@@ -24,20 +24,30 @@ const linkForm = type('Link', {
     optional: true,
     help: 'Text to display inside the link element'
   }),
-  blank: check('Open link in new tab', {
-    description: 'Target',
+  blank: check('Target', {
+    description: 'Open link in new tab',
     initialValue: true
   })
 })
 
-export function UrlPickerForm({options, onConfirm, onCancel}: PickerProps) {
-  const form = useForm(linkForm, {initialValue: options})
+export function UrlPickerForm({
+  selection,
+  options,
+  onConfirm,
+  onCancel
+}: PickerProps) {
+  const preSelected = selection?.[0] as UrlReference | undefined
+  const form = useForm(linkForm, {
+    initialValue: preSelected
+      ? {...preSelected, blank: preSelected.target === '_blank'}
+      : undefined
+  })
   function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
     e.stopPropagation()
     const data = form.data()
     const reference: UrlReference = {
-      id: createId(),
+      id: preSelected?.id ?? createId(),
       type: 'url',
       ref: 'url',
       url: data.url,

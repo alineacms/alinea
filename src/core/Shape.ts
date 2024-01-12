@@ -14,9 +14,7 @@ export interface ShapeInfo {
 export interface Shape<Value = any, Mutator = any> {
   initialValue?: Value
   label: Label
-  innerTypes(parents: Array<string>): Array<ShapeInfo>
   create(): Value
-  typeOfChild<C>(yValue: any, child: string): Shape<C, unknown>
   toY(value: Value): any
   fromY(yValue: any): Value
   applyY(value: Value, parent: YType, key: string): void

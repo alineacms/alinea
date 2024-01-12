@@ -1,0 +1,35 @@
+{
+  "title": "Fields 2",
+  "richText": [],
+  "number": 0.5,
+  "externalLink": {},
+  "entry": {},
+  "entryWithCondition": {},
+  "linkMultiple": [],
+  "image": {},
+  "images": [],
+  "file": {},
+  "withFields": {},
+  "list": [],
+  "nested": [],
+  "street": "",
+  "streetNr": "",
+  "box": "",
+  "zip": "",
+  "city": "",
+  "country": "",
+  "object": {},
+  "tabA": "",
+  "tabB": "",
+  "metadata": {
+    "openGraph": {
+      "image": {}
+    }
+  },
+  "@alinea": {
+    "entryId": "2aqpV5SN9JrZGSRkS3am07zPSmU",
+    "type": "Fields",
+    "index": "a0",
+    "root": "fields"
+  }
+}

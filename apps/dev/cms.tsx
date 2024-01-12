@@ -1,4 +1,5 @@
 import alinea, {createCMS} from 'alinea'
+import {Entry} from 'alinea/core'
 import {IcRoundTranslate} from 'alinea/ui/icons/IcRoundTranslate'
 import {IcRoundUploadFile} from 'alinea/ui/icons/IcRoundUploadFile'
 import {position} from './src/PositionField'
@@ -66,10 +67,20 @@ const Fields = alinea.document('Fields', {
     alinea.tab('Link fields', {
       externalLink: alinea.url('External link'),
       entry: alinea.entry('Internal link'),
+      entryWithCondition: alinea.entry('With condition', {
+        help: `Show only entries of type Fields`,
+        condition: Entry.type.is('Fields')
+      }),
       linkMultiple: alinea.link.multiple('Mixed links, multiple'),
       image: alinea.image('Image link'),
       images: alinea.image.multiple('Image link (multiple)'),
-      file: alinea.entry('File link')
+      file: alinea.entry('File link'),
+      withFields: alinea.link('With extra fields', {
+        fields: alinea.type({
+          fieldA: alinea.text('Field A', {width: 0.5}),
+          fieldB: alinea.text('Field B', {width: 0.5})
+        })
+      })
     }),
     alinea.tab('List fields', {
       list: alinea.list('My list field', {
@@ -167,7 +178,7 @@ export const cms = createCMS({
     primary: alinea.workspace('Primary workspace', {
       fields: alinea.root('Fields', {
         [alinea.meta]: {
-          contains: ['Folder', 'TabsExample'],
+          contains: ['Folder', 'TabsExample', 'Fields'],
           icon: IcRoundUploadFile
         }
       }),
