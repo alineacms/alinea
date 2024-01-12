@@ -6,6 +6,7 @@ import {
   EntryRow,
   EntryUrlMeta,
   ROOT_KEY,
+  Root,
   Type,
   createId,
   createYDoc,
@@ -366,6 +367,25 @@ export function createEntryEditor(entryData: EntryData) {
       entry,
       update
     })
+    const {i18n} = Root.data(config.workspaces[entry.workspace][entry.root])
+    if (i18n) {
+      const shared = Type.sharedData(type, entry.data)
+      if (shared) {
+        const graph = await get(graphAtom)
+        const translations = await graph.preferPublished.find(
+          Entry({i18nId: entry.i18nId})
+        )
+        for (const translation of translations) {
+          if (translation.locale === entry.locale) continue
+          mutations.push({
+            type: MutationType.Patch,
+            file: entryFile(translation),
+            entryId: translation.entryId,
+            patch: shared
+          })
+        }
+      }
+    }
     return set(transact, {
       clearChanges: true,
       transition: EntryTransition.PublishEdits,

@@ -151,12 +151,12 @@ export class RichTextShape<Blocks>
       content[0].content?.length === 0
     if (isEmpty) return []
     return content.map((node): TextNode<Blocks> => {
-      const type = types[node.type]
-      if (type && 'id' in node) {
+      const shape = types[node.type]
+      if (shape && 'id' in node) {
         return {
           id: node.id,
           type: node.type,
-          ...type.fromY(value.get(node.id))
+          ...shape.fromY(value.get(node.id))
         } as TextNode.Element<Blocks>
       }
       return node as TextNode<Blocks>

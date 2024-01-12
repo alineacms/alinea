@@ -97,6 +97,10 @@ export namespace Type {
     return type[Type.Data].shape
   }
 
+  export function fields(type: Type): Record<string, Field> {
+    return type as any
+  }
+
   export function hint(type: Type) {
     return type[Type.Data].hint
   }
@@ -121,10 +125,13 @@ export namespace Type {
     return Boolean(type && type[Type.Data])
   }
 
-  export function iter(type: Type, each: (field: Field) => void) {
-    for (const [key, field] of entries(type)) {
-      each(field)
+  export function sharedData(type: Type, entryData: Record<string, unknown>) {
+    const res: Record<string, unknown> = {}
+    for (const [key, field] of entries(fields(type))) {
+      if (Field.options(field).shared) res[key] = entryData[key]
     }
+    if (keys(res).length === 0) return undefined
+    return res
   }
 }
 

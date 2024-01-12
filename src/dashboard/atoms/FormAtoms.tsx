@@ -37,38 +37,40 @@ export class FormAtoms<T = any> {
     public container: Y.Map<any>,
     private options: {readOnly: boolean} = {readOnly: false}
   ) {
-    for (const section of Type.sections(type)) {
-      for (const [key, field] of entries(Section.fields(section))) {
-        const ref = Field.ref(field)
-        const shape = Field.shape(field)
-        const defaultOptions = Field.options(field)
-        const optionsTracker = optionTrackerOf(field)
-        shape.init(container, key)
-        const mutator = shape.mutator(container, key, false)
-        const options = optionsTracker
-          ? unwrap(
-              atom(get => {
-                const tracked = optionsTracker(this.getter(get))
-                if (tracked instanceof Promise)
-                  return tracked.then(partial => {
-                    return {...defaultOptions, ...partial}
-                  })
-                return {...defaultOptions, ...tracked}
-              }),
-              prev => prev ?? defaultOptions
-            )
-          : atom(defaultOptions)
-        const valueTracker = valueTrackerOf(field)
-        const value = this.valueAtom(field, key, valueTracker)
-        this.fieldInfo.set(ref, {
-          key,
-          field,
-          value,
-          mutator,
-          options
-        })
+    container.doc!.transact(() => {
+      for (const section of Type.sections(type)) {
+        for (const [key, field] of entries(Section.fields(section))) {
+          const ref = Field.ref(field)
+          const shape = Field.shape(field)
+          const defaultOptions = Field.options(field)
+          const optionsTracker = optionTrackerOf(field)
+          shape.init(container, key)
+          const mutator = shape.mutator(container, key, false)
+          const options = optionsTracker
+            ? unwrap(
+                atom(get => {
+                  const tracked = optionsTracker(this.getter(get))
+                  if (tracked instanceof Promise)
+                    return tracked.then(partial => {
+                      return {...defaultOptions, ...partial}
+                    })
+                  return {...defaultOptions, ...tracked}
+                }),
+                prev => prev ?? defaultOptions
+              )
+            : atom(defaultOptions)
+          const valueTracker = valueTrackerOf(field)
+          const value = this.valueAtom(field, key, valueTracker)
+          this.fieldInfo.set(ref, {
+            key,
+            field,
+            value,
+            mutator,
+            options
+          })
+        }
       }
-    }
+    }, 'self')
   }
 
   data(): Type.Infer<T> {

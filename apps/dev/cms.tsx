@@ -148,7 +148,7 @@ const Fields = alinea.document('Fields', {
       }),
       ...alinea.tabs(
         alinea.tab('Tab A', {
-          tabA: alinea.text('Tab A')
+          tabA: alinea.text('Tab A', {shared: true})
         }),
         alinea.tab('Tab B', {
           tabB: alinea.text('Tab B')

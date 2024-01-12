@@ -8,6 +8,7 @@ export enum MutationProgress {
 
 export enum MutationType {
   Edit = 'update',
+  Patch = 'patch',
   Create = 'create',
   Publish = 'publish',
   Archive = 'archive',
@@ -26,6 +27,7 @@ export type PendingMutation = Mutation & {
 
 export type Mutation =
   | EditMutation
+  | PatchMutation
   | CreateMutation
   | PublishMutation
   | ArchiveMutation
@@ -75,6 +77,13 @@ export interface DiscardDraftMutation {
   type: MutationType.Discard
   entryId: string
   file: string
+}
+
+export interface PatchMutation {
+  type: MutationType.Patch
+  entryId: string
+  file: string
+  patch: object
 }
 
 export interface OrderMutation {
