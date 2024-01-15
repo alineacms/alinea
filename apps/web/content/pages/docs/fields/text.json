@@ -1,5 +1,6 @@
 {
   "title": "Text",
+  "navigationTitle": "",
   "body": [
     {
       "type": "paragraph",
@@ -32,6 +33,27 @@
         {
           "type": "text",
           "text": "Configuration"
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "textAlign": "left",
+      "level": 3,
+      "content": [
+        {
+          "type": "text",
+          "text": "`searchable`"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "Index the content of this field so it can be found in a search query."
         }
       ]
     },

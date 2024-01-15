@@ -201,4 +201,17 @@ export class ListShape<T extends ListRow>
     await Promise.all(tasks)
     if (this.postProcess) await this.postProcess(value, loader)
   }
+
+  searchableText(value: Array<T>): string {
+    let res = ''
+    const rows = Array.isArray(value) ? value : []
+    for (const row of rows) {
+      const id = row.id
+      const type = row.type
+      const shape = this.values[type]
+      if (!id || !type || !shape) continue
+      res += shape.searchableText(row)
+    }
+    return res
+  }
 }

@@ -6,7 +6,7 @@ import {entryFilepath, entryInfo, entryUrl} from '../EntryFilenames.js'
 import {createRecord} from '../EntryRecord.js'
 import {EntryPhase, EntryRow} from '../EntryRow.js'
 import {Root} from '../Root.js'
-import {EntryUrlMeta} from '../Type.js'
+import {EntryUrlMeta, Type} from '../Type.js'
 
 export async function createEntryRow<T extends EntryRow>(
   config: Config,
@@ -16,7 +16,9 @@ export async function createEntryRow<T extends EntryRow>(
   const fileContents = JsonLoader.format(config.schema, record)
   const fileHash = await createFileHash(fileContents)
   const rowHash = await createRowHash({...input, fileHash})
-  return {...input, fileHash, rowHash} as T
+  const type = config.schema[input.type]
+  const searchableText = Type.searchableText(type, input.data)
+  return {...input, searchableText, fileHash, rowHash} as T
 }
 
 export function entryParentPaths(

@@ -1,5 +1,6 @@
 {
   "title": "Rich Text",
+  "navigationTitle": "",
   "body": [
     {
       "type": "paragraph",
@@ -23,6 +24,99 @@
       "id": "EuUkPtwTcHiQweiT_zZZI",
       "type": "ExampleBlock",
       "code": "export default alinea.type('Rich Text field', {\n  richText: alinea.richText('My rich text field', {\n    initialValue: [\n      {type: 'heading', level: 1, content: [\n        {type: 'text', text: \"Hello world\"}\n      ]},\n      {type: 'paragraph', content: [\n        {type: 'text', text: \"A paragraph follows\"}\n      ]}   \n    ]\n  })\n})\n "
+    },
+    {
+      "type": "heading",
+      "textAlign": "left",
+      "level": 2,
+      "content": [
+        {
+          "type": "text",
+          "text": "Configuration"
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "textAlign": "left",
+      "level": 3,
+      "content": [
+        {
+          "type": "text",
+          "text": "`blocks`"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "Allow "
+        },
+        {
+          "type": "text",
+          "text": "Types",
+          "marks": [
+            {
+              "type": "link",
+              "attrs": {
+                "data-id": "2b02QsqOf3nDEn2QtGmHSZDzf2o",
+                "data-entry": "267QuOShP41WnFxQFOcHZQoCsla",
+                "data-type": "entry",
+                "href": null,
+                "title": null
+              }
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": " of this "
+        },
+        {
+          "type": "text",
+          "text": "Schema",
+          "marks": [
+            {
+              "type": "link",
+              "attrs": {
+                "data-id": "2b02MX6i2ovEMRtlkX8ntt1uR3k",
+                "data-entry": "267KTV8uPHIdZgFUQvJf06sfm4h",
+                "data-type": "entry",
+                "href": null,
+                "title": null
+              }
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": " to be created between text fragments."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "textAlign": "left",
+      "level": 3,
+      "content": [
+        {
+          "type": "text",
+          "text": "`searchable`"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "Index the content of this field so it can be found in a search query."
+        }
+      ]
     },
     {
       "type": "heading",
