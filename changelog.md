@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.5.6]
+
+- Pages can be queried with search terms.
+  Any (rich) text field with the `searchable` option set to `true` is indexed.
+
+  ```tsx
+  const results = await cms.find(Page().search('search', 'terms'))
+  ```
+
 ## [0.5.5]
 
 - A source entry can be chosen in the modal where new entries are created.

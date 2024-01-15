@@ -140,6 +140,34 @@
       "content": [
         {
           "type": "text",
+          "text": "Full text search"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "type": "text",
+          "text": "Pages can be queried with search terms. Any (rich) text field with the `searchable` option set to `true` is indexed."
+        }
+      ]
+    },
+    {
+      "id": "2b05iLFLHZ4Vxcyao5sTiFKsFOi",
+      "type": "CodeBlock",
+      "code": "const results = await cms.find(\n  Page().search('query', 'content')\n)",
+      "fileName": "",
+      "language": ""
+    },
+    {
+      "type": "heading",
+      "textAlign": "left",
+      "level": 3,
+      "content": [
+        {
+          "type": "text",
           "text": "Querying specific pages"
         }
       ]
@@ -267,6 +295,7 @@
       "compact": false
     }
   ],
+  "extraField": [],
   "metadata": {
     "title": "",
     "description": "",
