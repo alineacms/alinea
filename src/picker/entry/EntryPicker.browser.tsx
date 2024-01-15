@@ -323,6 +323,7 @@ export function EntryPickerModal({
                         setDestination({...destination, parentId: entryId})
                       }
                 }
+                withNavigation={withNavigation}
               />
             </div>
           </list.Container>

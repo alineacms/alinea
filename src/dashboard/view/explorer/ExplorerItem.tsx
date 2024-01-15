@@ -95,21 +95,23 @@ export function ExplorerItem({
           <View {...entry} />
         </Tag>
 
-        {explorer.onNavigate && childrenAmount > 0 && (
-          <button
-            type="button"
-            className={styles.root.children()}
-            onClick={navigateTo}
-          >
-            <Icon icon={IcOutlineInsertDriveFile} size={18} />
+        {explorer.withNavigation &&
+          explorer.onNavigate &&
+          childrenAmount > 0 && (
+            <button
+              type="button"
+              className={styles.root.children()}
+              onClick={navigateTo}
+            >
+              <Icon icon={IcOutlineInsertDriveFile} size={18} />
 
-            <span className={styles.root.children.badge()}>
-              {childrenAmount}
-            </span>
+              <span className={styles.root.children.badge()}>
+                {childrenAmount}
+              </span>
 
-            <Icon icon={IcRoundKeyboardArrowRight} size={18} />
-          </button>
-        )}
+              <Icon icon={IcRoundKeyboardArrowRight} size={18} />
+            </button>
+          )}
       </div>
     </div>
   )

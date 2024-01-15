@@ -30,7 +30,7 @@ export interface FieldInfo<
 }
 
 export class FormAtoms<T = any> {
-  fieldInfo = new Map<symbol, FieldInfo>()
+  private fields = new Map<symbol, FieldInfo>()
 
   constructor(
     public type: Type<T>,
@@ -61,7 +61,7 @@ export class FormAtoms<T = any> {
             : atom(defaultOptions)
           const valueTracker = valueTrackerOf(field)
           const value = this.valueAtom(field, key, valueTracker)
-          this.fieldInfo.set(ref, {
+          this.fields.set(ref, {
             key,
             field,
             value,
@@ -77,8 +77,8 @@ export class FormAtoms<T = any> {
     return Type.shape(this.type).fromY(this.container) as Type.Infer<T>
   }
 
-  getter: (get: Getter) => FieldGetter = get => field => {
-    const info = this.fieldInfo.get(Field.ref(field))
+  private getter: (get: Getter) => FieldGetter = get => field => {
+    const info = this.fields.get(Field.ref(field))
     if (!info) throw new Error(`Field not found: ${Field.label(field)}`)
     return get(info.value)
   }
@@ -107,22 +107,22 @@ export class FormAtoms<T = any> {
   }
 
   fieldByKey(key: string): Field {
-    for (const info of this.fieldInfo.values())
+    for (const info of this.fields.values())
       if (info.key === key) return info.field
     throw new Error(`Field not found: "${key}"`)
   }
 
   keyOf(field: Field) {
-    const res = this.fieldInfo.get(Field.ref(field))
+    const res = this.fields.get(Field.ref(field))
     const label = Field.label(field)
     if (!res) throw new Error(`Field not found: ${label}`)
     return res.key
   }
 
-  atomsOf<Value, Mutator, Options extends FieldOptions<Value>>(
+  fieldInfo<Value, Mutator, Options extends FieldOptions<Value>>(
     field: Field<Value, Mutator, Options>
   ): FieldInfo<Value, Mutator, Options> {
-    const res = this.fieldInfo.get(Field.ref(field))
+    const res = this.fields.get(Field.ref(field))
     const label = Field.label(field)
     if (!res) throw new Error(`Field not found: ${label}`)
     return res as FieldInfo<Value, Mutator, Options>

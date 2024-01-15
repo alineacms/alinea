@@ -40,6 +40,7 @@ export interface ExplorerProps {
   toggleSelect?: (entry: ExporerItemSelect) => void
   onNavigate?: (entryId: string) => void
   showMedia?: boolean
+  withNavigation?: boolean
   border?: boolean
 }
 

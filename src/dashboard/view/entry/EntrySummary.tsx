@@ -1,6 +1,6 @@
 import {Entry, Type, view} from 'alinea/core'
 import {Projection} from 'alinea/core/pages/Projection'
-import {Chip, HStack, TextLabel, Typo, VStack, fromModule} from 'alinea/ui'
+import {Chip, HStack, TextLabel, Typo, VStack, fromModule, px} from 'alinea/ui'
 import {Ellipsis} from 'alinea/ui/Ellipsis'
 import {IcRoundKeyboardArrowRight} from 'alinea/ui/icons/IcRoundKeyboardArrowRight'
 import {Fragment, ReactNode} from 'react'
@@ -49,7 +49,7 @@ export const EntrySummaryRow = view(
       <HStack center full gap={10} className={styles.row()}>
         <VStack>
           {parents.length > 0 && (
-            <Ellipsis>
+            <Ellipsis style={{marginTop: px(-1)}}>
               <Typo.Small>
                 <HStack center gap={3}>
                   {parents

@@ -39,7 +39,7 @@ export function useFieldOptions<
   Options extends FieldOptions<Value>
 >(field: Field<Value, Mutator, Options>) {
   const atoms = useFormContext()
-  const atom = atoms.atomsOf(field)
+  const atom = atoms.fieldInfo(field)
   return useAtomValue(atom.options)
 }
 
@@ -49,7 +49,7 @@ export function useFieldValue<
   Options extends FieldOptions<Value>
 >(field: Field<Value, Mutator, Options>) {
   const atoms = useFormContext()
-  const atom = atoms.atomsOf(field)
+  const atom = atoms.fieldInfo(field)
   return useAtomValue(atom.value)
 }
 
@@ -59,6 +59,6 @@ export function useFieldMutator<
   Options extends FieldOptions<Value>
 >(field: Field<Value, Mutator, Options>) {
   const atoms = useFormContext()
-  const atom = atoms.atomsOf(field)
+  const atom = atoms.fieldInfo(field)
   return atom.mutator
 }
