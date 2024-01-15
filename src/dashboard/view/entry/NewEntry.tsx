@@ -31,7 +31,7 @@ import {EntryReference} from 'alinea/picker/entry/EntryReference'
 import {Button, Loader, fromModule} from 'alinea/ui'
 import {Link} from 'alinea/ui/Link'
 import {useAtomValue, useSetAtom} from 'jotai'
-import {FormEvent, Suspense, useMemo, useState} from 'react'
+import {FormEvent, Suspense, useEffect, useMemo, useState} from 'react'
 import {useQuery} from 'react-query'
 import {changedEntriesAtom, graphAtom, useMutate} from '../../atoms/DbAtoms.js'
 import {useConfig} from '../../hook/UseConfig.js'
@@ -174,6 +174,14 @@ function NewEntryForm({parentId}: NewEntryProps) {
     []
   )
   const form = useForm(formType)
+
+  const typeAtoms = form.fieldInfo(typeField)
+  const copyFromAtoms = form.fieldInfo(copyFromField)
+  const selectedType = useAtomValue(typeAtoms.value)
+
+  useEffect(() => {
+    copyFromAtoms.mutator.replace(undefined!)
+  }, [selectedType])
 
   async function handleCreate(e: FormEvent) {
     e.preventDefault()
